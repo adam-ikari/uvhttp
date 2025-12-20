@@ -70,7 +70,7 @@ endif()
 
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/llhttp/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/src/native)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/mbedtls/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/libwebsockets/include)
 include_directories(${CMAKE_BINARY_DIR}/deps/libwebsockets/include)  # 添加构建目录
