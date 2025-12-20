@@ -18,7 +18,7 @@ struct uvhttp_http2_server {
     uvhttp_http2_stream_handler_t handler;
     void* user_data;
     uint32_t next_stream_id;
-    uvhttp_http2_stream_t* streams[1024]; /* 简化：固定大小流表 */
+    uvhttp_http2_stream_t* streams[UVHTTP_HTTP2_MAX_STREAMS]; /* 简化：固定大小流表 */
     int stream_count;
 };
 
@@ -32,7 +32,7 @@ uvhttp_http2_server_t* uvhttp_http2_server_new(uv_loop_t* loop) {
     memset(server, 0, sizeof(uvhttp_http2_server_t));
     
     server->loop = loop;
-    server->next_stream_id = 1;
+    server->next_stream_id = UVHTTP_HTTP2_INITIAL_STREAM_ID;
     
     if (uv_tcp_init(loop, &server->tcp_handle) != 0) {
         uvhttp_dealloc(server);
@@ -69,7 +69,7 @@ int uvhttp_http2_server_listen(uvhttp_http2_server_t* server,
     int ret = uv_tcp_bind(&server->tcp_handle, (const struct sockaddr*)&addr, 0);
     if (ret != 0) return ret;
     
-    ret = uv_listen((uv_stream_t*)&server->tcp_handle, 128, NULL);
+    ret = uv_listen((uv_stream_t*)&server->tcp_handle, UVHTTP_MAX_CONNECTIONS, NULL);
     if (ret != 0) return ret;
     
     return 0;
@@ -87,7 +87,7 @@ void uvhttp_http2_server_set_handler(uvhttp_http2_server_t* server,
 
 /* 创建新流 */
 static uvhttp_http2_stream_t* create_stream(uvhttp_http2_server_t* server) {
-    if (!server || server->stream_count >= 1024) return NULL;
+    if (!server || server->stream_count >= UVHTTP_HTTP2_MAX_STREAMS) return NULL;
     
     uvhttp_http2_stream_t* stream = uvhttp_alloc(sizeof(uvhttp_http2_stream_t));
     if (!stream) return NULL;
@@ -99,7 +99,7 @@ static uvhttp_http2_stream_t* create_stream(uvhttp_http2_server_t* server) {
     stream->state = UVHTTP_HTTP2_STREAM_IDLE;
     
     server->streams[server->stream_count++] = stream;
-    server->next_stream_id += 2; /* HTTP/2客户端流ID为奇数，服务器为偶数 */
+    server->next_stream_id += UVHTTP_HTTP2_STREAM_ID_INCREMENT; /* HTTP/2客户端流ID为奇数，服务器为偶数 */
     
     return stream;
 }

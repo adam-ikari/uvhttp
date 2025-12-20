@@ -1,5 +1,7 @@
 #include "uvhttp_request.h"
 #include "uvhttp_utils.h"
+#include "uvhttp_allocator.h"
+#include "uvhttp_constants.h"
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -32,25 +34,25 @@ int uvhttp_request_init(uvhttp_request_t* request, void* client) {
     request->method = UVHTTP_GET; // 默认方法
     
     // 初始化HTTP解析器
-    request->parser_settings = malloc(sizeof(llhttp_settings_t));
+    request->parser_settings = uvhttp_malloc(sizeof(llhttp_settings_t));
     if (!request->parser_settings) {
         return -1;
     }
     llhttp_settings_init(request->parser_settings);
     
-    request->parser = malloc(sizeof(struct llhttp__internal_s));
+    request->parser = uvhttp_malloc(sizeof(struct llhttp__internal_s));
     if (!request->parser) {
-        free(request->parser_settings);
+        uvhttp_free(request->parser_settings);
         return -1;
     }
     llhttp_init(request->parser, HTTP_REQUEST, request->parser_settings);
     
     // 初始化body缓冲区
-    request->body_capacity = 1024;
-    request->body = malloc(request->body_capacity);
+    request->body_capacity = UVHTTP_INITIAL_BUFFER_SIZE;
+    request->body = uvhttp_malloc(request->body_capacity);
     if (!request->body) {
-        free(request->parser);
-        free(request->parser_settings);
+        uvhttp_free(request->parser);
+        uvhttp_free(request->parser_settings);
         return -1;
     }
     request->body_length = 0;
@@ -60,13 +62,13 @@ int uvhttp_request_init(uvhttp_request_t* request, void* client) {
 
 void uvhttp_request_cleanup(uvhttp_request_t* request) {
     if (request->body) {
-        free(request->body);
+        uvhttp_free(request->body);
     }
     if (request->parser) {
-        free(request->parser);
+        uvhttp_free(request->parser);
     }
     if (request->parser_settings) {
-        free(request->parser_settings);
+        uvhttp_free(request->parser_settings);
     }
 }
 

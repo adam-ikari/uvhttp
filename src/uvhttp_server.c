@@ -4,6 +4,8 @@
 #include "uvhttp_router.h"
 #include "uvhttp_connection.h"
 #include "uvhttp_error.h"
+#include "uvhttp_allocator.h"
+#include "uvhttp_constants.h"
 #include <stdlib.h>
 #include <string.h>
 #include <uv.h>
@@ -20,7 +22,7 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     /* 检查连接数限制 */
     if (server->active_connections >= MAX_CONNECTIONS) {
         /* 创建临时连接以发送503响应 */
-        uv_tcp_t* temp_client = malloc(sizeof(uv_tcp_t));
+        uv_tcp_t* temp_client = uvhttp_malloc(sizeof(uv_tcp_t));
         if (!temp_client) {
             return;
         }
@@ -30,14 +32,14 @@ static void on_connection(uv_stream_t* server_handle, int status) {
         if (uv_accept(server_handle, (uv_stream_t*)temp_client) == 0) {
             /* 发送HTTP 503响应 */
             const char* response_503 = 
-                "HTTP/1.1 503 Service Unavailable\r\n"
+                UVHTTP_VERSION_1_1 " 503 Service Unavailable\r\n"
                 "Content-Type: text/plain\r\n"
                 "Content-Length: 19\r\n"
                 "Connection: close\r\n"
                 "\r\n"
                 "Service Unavailable";
                 
-            uv_write_t* write_req = malloc(sizeof(uv_write_t));
+            uv_write_t* write_req = uvhttp_malloc(sizeof(uv_write_t));
             if (write_req) {
                 uv_buf_t buf = uv_buf_init((char*)response_503, strlen(response_503));
                 uv_write(write_req, (uv_stream_t*)temp_client, &buf, 1, NULL);
@@ -90,7 +92,7 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
         return NULL;
     } */
     
-    uvhttp_server_t* server = malloc(sizeof(uvhttp_server_t));
+    uvhttp_server_t* server = uvhttp_malloc(sizeof(uvhttp_server_t));
     if (!server) {
         return NULL;
     }
@@ -102,15 +104,13 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
         server->loop = loop;
         server->owns_loop = 0;
     } else {
-        server->loop = malloc(sizeof(uv_loop_t));
+        server->loop = uvhttp_malloc(sizeof(uv_loop_t));
         if (!server->loop) {
-            free(server);
-            return NULL;
-        }
+                    uvhttp_free(server);
+                    return NULL;        }
         if (uv_loop_init(server->loop) != 0) {
-            free(server->loop);
-            free(server);
-            return NULL;
+            uvhttp_free(server->loop);
+                uvhttp_free(server);            return NULL;
         }
         server->owns_loop = 1;
     }
@@ -118,9 +118,9 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     if (uv_tcp_init(server->loop, &server->tcp_handle) != 0) {
         if (server->owns_loop) {
             uv_loop_close(server->loop);
-            free(server->loop);
+            uvhttp_free(server->loop);
         }
-        free(server);
+        uvhttp_free(server);
         return NULL;
     }
     server->tcp_handle.data = server;
@@ -131,7 +131,11 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     return server;
 }
 
-void uvhttp_server_free(uvhttp_server_t* server) {
+uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
     if (server->router) {
         uvhttp_router_free(server->router);
     }
@@ -142,10 +146,11 @@ void uvhttp_server_free(uvhttp_server_t* server) {
     // 如果拥有循环，需要关闭并释放
     if (server->owns_loop && server->loop) {
         uv_loop_close(server->loop);
-        free(server->loop);
+        uvhttp_free(server->loop);
     }
     
-    free(server);
+    uvhttp_free(server);
+    return UVHTTP_OK;
 }
 
 uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, int port) {
@@ -157,7 +162,7 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
         return UVHTTP_ERROR_SERVER_LISTEN;
     }
     
-    ret = uv_listen((uv_stream_t*)&server->tcp_handle, 128, on_connection);
+    ret = uv_listen((uv_stream_t*)&server->tcp_handle, UVHTTP_MAX_CONNECTIONS, on_connection);
     if (ret != 0) {
         return UVHTTP_ERROR_SERVER_LISTEN;
     }
@@ -166,8 +171,13 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
     return UVHTTP_OK;
 }
 
-void uvhttp_server_set_handler(uvhttp_server_t* server, uvhttp_request_handler_t handler) {
+uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server, uvhttp_request_handler_t handler) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
     server->handler = handler;
+    return UVHTTP_OK;
 }
 
 uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server) {

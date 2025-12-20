@@ -2,65 +2,65 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* 编译时选择实现 */
-#if UVHTTP_ALLOCATOR_TYPE == UVHTTP_ALLOCATOR_MIMALLOC
+/* 自定义分配器实现 - 在所有情况下都定义 */
+uvhttp_allocator_t* uvhttp_custom_allocator = NULL;
 
-/* mimalloc实现 */
-static int g_mimalloc_initialized = 0;
+/* 编译时确定的分配器实现 */
 
+#if UVHTTP_ALLOCATOR_TYPE == 1  /* UVHTTP_ALLOCATOR_MIMALLOC */
+
+/* mimalloc实现 - 直接映射，零开销 */
+#include "mimalloc.h"
+
+/* 这些函数在编译时会被优化为直接调用mimalloc */
 void* uvhttp_mimalloc_malloc(size_t size) {
-    if (!g_mimalloc_initialized) {
-        mi_malloc_init();
-        g_mimalloc_initialized = 1;
-    }
     return mi_malloc(size);
 }
 
 void* uvhttp_mimalloc_realloc(void* ptr, size_t size) {
-    if (!g_mimalloc_initialized) {
-        mi_malloc_init();
-        g_mimalloc_initialized = 1;
-    }
     return mi_realloc(ptr, size);
 }
 
 void uvhttp_mimalloc_free(void* ptr) {
-    if (!ptr) return;
-    
-    if (!g_mimalloc_initialized) {
-        mi_malloc_init();
-        g_mimalloc_initialized = 1;
-    }
     mi_free(ptr);
 }
 
 void* uvhttp_mimalloc_calloc(size_t nmemb, size_t size) {
-    if (!g_mimalloc_initialized) {
-        mi_malloc_init();
-        g_mimalloc_initialized = 1;
-    }
     return mi_calloc(nmemb, size);
 }
 
-void uvhttp_mimalloc_init(void) {
-    /* mi_malloc_init() 会在首次调用时自动初始化 */
+#elif UVHTTP_ALLOCATOR_TYPE == 2  /* UVHTTP_ALLOCATOR_CUSTOM */
+
+void* uvhttp_custom_malloc(size_t size) {
+    if (uvhttp_custom_allocator && uvhttp_custom_allocator->malloc) {
+        return uvhttp_custom_allocator->malloc(size);
+    }
+    return malloc(size);
 }
 
-void uvhttp_mimalloc_cleanup(void) {
-    if (g_mimalloc_initialized) {
-        mi_collect(1);
-        g_mimalloc_initialized = 0;
+void* uvhttp_custom_realloc(void* ptr, size_t size) {
+    if (uvhttp_custom_allocator && uvhttp_custom_allocator->realloc) {
+        return uvhttp_custom_allocator->realloc(ptr, size);
+    }
+    return realloc(ptr, size);
+}
+
+void uvhttp_custom_free(void* ptr) {
+    if (uvhttp_custom_allocator && uvhttp_custom_allocator->free) {
+        uvhttp_custom_allocator->free(ptr);
+    } else {
+        free(ptr);
     }
 }
 
-#elif UVHTTP_ALLOCATOR_TYPE == UVHTTP_ALLOCATOR_CUSTOM
+void* uvhttp_custom_calloc(size_t nmemb, size_t size) {
+    if (uvhttp_custom_allocator && uvhttp_custom_allocator->calloc) {
+        return uvhttp_custom_allocator->calloc(nmemb, size);
+    }
+    return calloc(nmemb, size);
+}
 
-/* 自定义分配器 - 需要用户提供 */
-extern uvhttp_allocator_t* uvhttp_custom_allocator;
-
-#endif
-
-/* 通用分配器获取函数 */
+/* 运行时分配器管理 */
 uvhttp_allocator_t* uvhttp_allocator_get(void) {
     static uvhttp_allocator_t default_allocator = {
         .malloc = malloc,
@@ -71,57 +71,40 @@ uvhttp_allocator_t* uvhttp_allocator_get(void) {
         .type = UVHTTP_ALLOCATOR_DEFAULT
     };
     
-#if UVHTTP_ALLOCATOR_TYPE == UVHTTP_ALLOCATOR_MIMALLOC
-    static uvhttp_allocator_t mimalloc_allocator = {
-        .malloc = uvhttp_mimalloc_malloc,
-        .realloc = uvhttp_mimalloc_realloc,
-        .free = uvhttp_mimalloc_free,
-        .calloc = uvhttp_mimalloc_calloc,
-        .data = NULL,
-        .type = UVHTTP_ALLOCATOR_MIMALLOC
-    };
-    return &mimalloc_allocator;
-    
-#elif UVHTTP_ALLOCATOR_TYPE == UVHTTP_ALLOCATOR_CUSTOM
-    return uvhttp_custom_allocator;
-    
-#else
-    return &default_allocator;
-#endif
-}
-
-/* 设置分配器 */
-void uvhttp_allocator_set(uvhttp_allocator_t* allocator) {
-    /* 简化实现：直接替换全局实例 */
-}
-
-/* 内存池分配器创建 */
-uvhttp_allocator_t* uvhttp_pool_allocator_new(const uvhttp_pool_config_t* config) {
-    /* 简化实现：不支持内存池 */
-    return NULL;
-}
-
-void uvhttp_pool_allocator_free(uvhttp_allocator_t* allocator) {
-    /* 简化实现：不支持内存池 */
-}
-
-/* 统计分配器创建 */
-uvhttp_allocator_t* uvhttp_stats_allocator_new(uvhttp_allocator_t* wrapped) {
-    /* 简化实现：不支持统计 */
-    return NULL;
-}
-
-void uvhttp_stats_allocator_free(uvhttp_allocator_t* allocator) {
-    /* 简化实现：不支持统计 */
-}
-
-/* 内存统计 */
-void uvhttp_memory_stats_get(uvhttp_memory_stats_t* stats) {
-    if (stats) {
-        memset(stats, 0, sizeof(uvhttp_memory_stats_t));
+    if (uvhttp_custom_allocator) {
+        return uvhttp_custom_allocator;
     }
+    return &default_allocator;
 }
 
-void uvhttp_memory_stats_reset(void) {
-    /* 简化实现：不支持统计 */
+void uvhttp_allocator_set(uvhttp_allocator_t* allocator) {
+    uvhttp_custom_allocator = allocator;
 }
+
+#endif /* UVHTTP_ALLOCATOR_TYPE */
+
+/* 获取当前分配器名称 */
+const char* uvhttp_allocator_name(void) {
+    return UVHTTP_ALLOCATOR_NAME;
+}
+
+/* 自定义分配器函数的通用定义（确保在所有分配器类型下都可用） */
+#if UVHTTP_ALLOCATOR_TYPE != 2  /* UVHTTP_ALLOCATOR_CUSTOM */
+
+void* uvhttp_custom_malloc(size_t size) {
+    return malloc(size);
+}
+
+void* uvhttp_custom_realloc(void* ptr, size_t size) {
+    return realloc(ptr, size);
+}
+
+void uvhttp_custom_free(void* ptr) {
+    free(ptr);
+}
+
+void* uvhttp_custom_calloc(size_t nmemb, size_t size) {
+    return calloc(nmemb, size);
+}
+
+#endif /* UVHTTP_ALLOCATOR_TYPE != 2 */

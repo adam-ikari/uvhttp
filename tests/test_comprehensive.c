@@ -7,6 +7,7 @@
 #include "../include/uvhttp_router.h"
 #include <stdlib.h>
 #include <string.h>
+#include <uv.h>
 
 // 测试工具函数
 TEST(UtilsTest, SafeStrncpy) {
@@ -25,7 +26,7 @@ TEST_CLEANUP_LABEL:
 
 TEST(UtilsTest, ValidateUrl) {
     EXPECT_EQ(validate_url("http://example.com", 18), 0);
-    EXPECT_EQ(validate_url("/api/v1/users", 14), 0);
+    EXPECT_EQ(validate_url("/api/v1/users", 13), 0);  // 修正长度，不包含 NULL 字符
     EXPECT_EQ(validate_url("", 0), -1);
     EXPECT_EQ(validate_url(NULL, 0), -1);
     
@@ -46,8 +47,10 @@ TEST_CLEANUP_LABEL:
 // 测试请求模块
 TEST(RequestTest, Initialization) {
     uvhttp_request_t request;
+    uv_tcp_t mock_client; // 创建一个模拟的 TCP 客户端
+    memset(&mock_client, 0, sizeof(mock_client));
     
-    EXPECT_EQ(uvhttp_request_init(&request, NULL), 0);
+    EXPECT_EQ(uvhttp_request_init(&request, &mock_client), 0);
     EXPECT_EQ(request.method, UVHTTP_GET);
     EXPECT_NOTNULL_PTR(request.body);
     EXPECT_EQ(request.body_length, 0);
@@ -60,8 +63,10 @@ TEST_CLEANUP_LABEL:
 
 TEST(RequestTest, MethodParsing) {
     uvhttp_request_t request;
+    uv_tcp_t mock_client; // 创建一个模拟的 TCP 客户端
+    memset(&mock_client, 0, sizeof(mock_client));
     
-    EXPECT_EQ(uvhttp_request_init(&request, NULL), 0);
+    EXPECT_EQ(uvhttp_request_init(&request, &mock_client), 0);
     
     // 测试不同的方法
     request.method = UVHTTP_GET;
@@ -130,8 +135,9 @@ TEST_CLEANUP_LABEL:
 TEST(ServerTest, HandlerManagement) {
     struct uvhttp_server* server = uvhttp_server_new(NULL);
     
-    void test_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    int test_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         uvhttp_response_set_status(response, 200);
+        return 0;
     }
     
     uvhttp_server_set_handler(server, test_handler);
@@ -150,8 +156,9 @@ TEST(RouterTest, BasicOperations) {
     EXPECT_NOTNULL_PTR(router);
     EXPECT_EQ(router->route_count, 0);
     
-    void test_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    int test_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         uvhttp_response_set_status(response, 200);
+        return 0;
     }
     
     EXPECT_EQ(uvhttp_router_add_route(router, "/test", test_handler), 0);

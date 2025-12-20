@@ -1,3 +1,5 @@
+#include "uvhttp_allocator.h"
+#include "uvhttp_constants.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -69,7 +71,7 @@ int validate_url(const char* url, size_t length) {
     if (!url || length == 0) return -1;
     
     // 检查URL长度
-    if (length > 2048) return -1;
+    if (length > UVHTTP_MAX_URL_SIZE) return -1;
     
     for (size_t i = 0; i < length; i++) {
         char c = url[i];
@@ -131,13 +133,13 @@ char* uvhttp_escape_json_string(const char* str) {
                 break;
             default:
                 if (str[i] < 0x20) {
-                    escaped_len += 5; // 控制字符转义为 \uXXXX 格式
+                    escaped_len += UVHTTP_ESCAPE_SEQUENCE_LENGTH; // 控制字符转义为 \uXXXX 格式
                 }
                 break;
         }
     }
     
-    char* escaped = malloc(escaped_len + 1);
+    char* escaped = uvhttp_malloc(escaped_len + 1);
     if (!escaped) return NULL;
     
     size_t j = 0;

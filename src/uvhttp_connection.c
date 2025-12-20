@@ -3,6 +3,8 @@
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_server.h"
+#include "uvhttp_allocator.h"
+#include "uvhttp_constants.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -16,13 +18,11 @@ static const char* state_strings[] = {
     "CLOSING"
 };
 
-// 单线程并发实现 - 使用全局变量（libuv是单线程事件循环）
-static uvhttp_connection_t* current_connection = NULL;
-
 // HTTP解析器回调函数
 static int on_message_begin(llhttp_t* parser) {
-    (void)parser; // 避免未使用参数警告
-    uvhttp_connection_t* conn = current_connection;
+    // 直接从解析器内存布局获取data字段
+    void** parser_data = (void**)((char*)parser + sizeof(int) * UVHTTP_PARSER_FIELD_COUNT);
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)*parser_data;
     if (!conn || !conn->request) {
         return -1;
     }
@@ -35,7 +35,9 @@ static int on_message_begin(llhttp_t* parser) {
 }
 
 static int on_url(llhttp_t* parser, const char* at, size_t length) {
-    uvhttp_connection_t* conn = current_connection;
+    // 直接从解析器内存布局获取data字段
+    void** parser_data = (void**)((char*)parser + sizeof(int) * 8); // 跳过前8个int字段
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)*parser_data;
     if (!conn || !conn->request) {
         return -1;
     }
@@ -52,8 +54,9 @@ static int on_url(llhttp_t* parser, const char* at, size_t length) {
 }
 
 static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
-    (void)parser; // 避免未使用参数警告
-    uvhttp_connection_t* conn = current_connection;
+    // 直接从解析器内存布局获取data字段
+    void** parser_data = (void**)((char*)parser + sizeof(int) * 8); // 跳过前8个int字段
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)*parser_data;
     if (!conn || !conn->request) {
         return -1;
     }
@@ -66,11 +69,10 @@ static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
     uvhttp_header_t* header = &conn->request->headers[conn->request->header_count];
     
     // 复制header名称
-    if (uvhttp_safe_strcpy(header->name, sizeof(header->name), "") != 0) {
+    if (uvhttp_safe_strcpy(header->name, UVHTTP_MAX_HEADER_NAME_SIZE, "") != 0) {
         return -1;
     }
-    
-    size_t copy_len = length < sizeof(header->name) - 1 ? length : sizeof(header->name) - 1;
+    size_t copy_len = length < UVHTTP_MAX_HEADER_NAME_SIZE - 1 ? length : UVHTTP_MAX_HEADER_NAME_SIZE - 1;
     memcpy(header->name, at, copy_len);
     header->name[copy_len] = '\0';
     
@@ -78,8 +80,9 @@ static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
 }
 
 static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
-    (void)parser; // 避免未使用参数警告
-    uvhttp_connection_t* conn = current_connection;
+    // 直接从解析器内存布局获取data字段
+    void** parser_data = (void**)((char*)parser + sizeof(int) * 8); // 跳过前8个int字段
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)*parser_data;
     if (!conn || !conn->request) {
         return -1;
     }
@@ -87,11 +90,10 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
     uvhttp_header_t* header = &conn->request->headers[conn->request->header_count];
     
     // 复制header值
-    if (uvhttp_safe_strcpy(header->value, sizeof(header->value), "") != 0) {
+    if (uvhttp_safe_strcpy(header->value, UVHTTP_MAX_HEADER_VALUE_SIZE, "") != 0) {
         return -1;
     }
-    
-    size_t copy_len = length < sizeof(header->value) - 1 ? length : sizeof(header->value) - 1;
+    size_t copy_len = length < UVHTTP_MAX_HEADER_VALUE_SIZE - 1 ? length : UVHTTP_MAX_HEADER_VALUE_SIZE - 1;
     memcpy(header->value, at, copy_len);
     header->value[copy_len] = '\0';
     
@@ -105,21 +107,23 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
 }
 
 static int on_body(llhttp_t* parser, const char* at, size_t length) {
-    (void)parser; // 避免未使用参数警告
-    uvhttp_connection_t* conn = current_connection;
+    // 直接从解析器内存布局获取data字段
+    void** parser_data = (void**)((char*)parser + sizeof(int) * 8); // 跳过前8个int字段
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)*parser_data;
     if (!conn || !conn->request) {
         return -1;
     }
     
     // 检查body大小限制（1MB）
-    if (conn->body_received + length > 1024 * 1024) {
+    if (conn->body_received + length > UVHTTP_MAX_BODY_SIZE) {
         return -1;
     }
     
     // 重新分配内存以容纳body
-    char* new_body = realloc(conn->request->body, conn->body_received + length);
+    char* new_body = uvhttp_realloc(conn->request->body, conn->body_received + length);
     if (!new_body) {
-        return -1;
+        // 保留原有内存，避免内存泄漏
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
     conn->request->body = new_body;
@@ -131,7 +135,9 @@ static int on_body(llhttp_t* parser, const char* at, size_t length) {
 }
 
 static int on_message_complete(llhttp_t* parser) {
-    uvhttp_connection_t* conn = current_connection;
+    // 直接从解析器内存布局获取data字段
+    void** parser_data = (void**)((char*)parser + sizeof(int) * 8); // 跳过前8个int字段
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)*parser_data;
     if (!conn || !conn->request) {
         return -1;
     }
@@ -152,7 +158,7 @@ static int init_http_parser(uvhttp_connection_t* conn) {
     }
     
     // 分配解析器设置
-    conn->parser_settings = malloc(sizeof(llhttp_settings_t));
+    conn->parser_settings = uvhttp_malloc(sizeof(llhttp_settings_t));
     if (!conn->parser_settings) {
         return -1;
     }
@@ -167,15 +173,18 @@ static int init_http_parser(uvhttp_connection_t* conn) {
     conn->parser_settings->on_body = on_body;
     conn->parser_settings->on_message_complete = on_message_complete;
     
-    // 分配解析器
-    conn->http_parser = calloc(1, 100); // 简化版本使用固定大小
+    // 分配解析器 - 使用固定大小避免不完整类型
+    conn->http_parser = uvhttp_calloc(1, UVHTTP_PARSER_INTERNAL_SIZE);
     if (!conn->http_parser) {
-        free(conn->parser_settings);
+        uvhttp_free(conn->parser_settings);
         conn->parser_settings = NULL;
         return -1;
     }
     
-    llhttp_init(conn->http_parser, HTTP_REQUEST, conn->parser_settings);
+    // 初始化解析器并设置连接上下文
+    llhttp_init((llhttp_t*)conn->http_parser, HTTP_REQUEST, conn->parser_settings);
+    void** parser_data = (void**)((char*)conn->http_parser + sizeof(int) * 8); // 跳过前8个int字段
+    *parser_data = conn;
     
     return 0;
 }
@@ -187,7 +196,7 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
         return NULL;
     }
     
-    uvhttp_connection_t* conn = malloc(sizeof(uvhttp_connection_t));
+    uvhttp_connection_t* conn = uvhttp_malloc(sizeof(uvhttp_connection_t));
     if (!conn) {
         return NULL;
     }
@@ -201,39 +210,39 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     // 简化版本跳过TCP初始化
     
     // 分配读缓冲区
-    conn->read_buffer_size = 8192;
-    conn->read_buffer = malloc(conn->read_buffer_size);
+    conn->read_buffer_size = UVHTTP_READ_BUFFER_SIZE;
+    conn->read_buffer = uvhttp_malloc(conn->read_buffer_size);
     if (!conn->read_buffer) {
-        free(conn);
+        uvhttp_free(conn);
         return NULL;
     }
     
     // 初始化HTTP解析器
     if (init_http_parser(conn) != 0) {
-        free(conn->read_buffer);
-        free(conn);
+        uvhttp_free(conn->read_buffer);
+        uvhttp_free(conn);
         return NULL;
     }
     
     // 创建请求和响应对象
-    conn->request = malloc(sizeof(uvhttp_request_t));
+    conn->request = uvhttp_malloc(sizeof(uvhttp_request_t));
     if (!conn->request) {
-        free(conn->http_parser);
-        free(conn->parser_settings);
-        free(conn->read_buffer);
-        free(conn);
+        uvhttp_free(conn->http_parser);
+        uvhttp_free(conn->parser_settings);
+        uvhttp_free(conn->read_buffer);
+        uvhttp_free(conn);
         return NULL;
     }
     
     memset(conn->request, 0, sizeof(uvhttp_request_t));
     
-    conn->response = malloc(sizeof(uvhttp_response_t));
+    conn->response = uvhttp_malloc(sizeof(uvhttp_response_t));
     if (!conn->response) {
-        free(conn->request);
-        free(conn->http_parser);
-        free(conn->parser_settings);
-        free(conn->read_buffer);
-        free(conn);
+        uvhttp_free(conn->request);
+        uvhttp_free(conn->http_parser);
+        uvhttp_free(conn->parser_settings);
+        uvhttp_free(conn->read_buffer);
+        uvhttp_free(conn);
         return NULL;
     }
     
@@ -249,27 +258,27 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
     
     if (conn->request) {
         uvhttp_request_cleanup(conn->request);
-        free(conn->request);
+        uvhttp_free(conn->request);
     }
     
     if (conn->response) {
         uvhttp_response_cleanup(conn->response);
-        free(conn->response);
+        uvhttp_free(conn->response);
     }
     
     if (conn->http_parser) {
-        free(conn->http_parser);
+        uvhttp_free(conn->http_parser);
     }
     
     if (conn->parser_settings) {
-        free(conn->parser_settings);
+        uvhttp_free(conn->parser_settings);
     }
     
     if (conn->read_buffer) {
-        free(conn->read_buffer);
+        uvhttp_free(conn->read_buffer);
     }
     
-    free(conn);
+    uvhttp_free(conn);
 }
 
 int uvhttp_connection_start(uvhttp_connection_t* conn) {

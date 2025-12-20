@@ -1,5 +1,6 @@
 #include "uvhttp_tls.h"
 #include <stdio.h>
+#include "uvhttp_allocator.h"
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -40,12 +41,12 @@ static void init_tls(void) {
 static void cleanup_tls(void) {
     uv_mutex_lock(&tls_init_mutex);
     if (tls_initialized) {
-        mbedtls_entropy_free(&entropy);
-        mbedtls_ctr_drbg_free(&ctr_drbg);
-        mbedtls_ssl_config_free(&ssl_conf);
-        mbedtls_x509_crt_free(&cert);
-        mbedtls_pk_free(&pkey);
-        mbedtls_x509_crt_free(&ca_cert);
+        mbedtls_entropy_uvhttp_free(&entropy);
+        mbedtls_ctr_drbg_uvhttp_free(&ctr_drbg);
+        mbedtls_ssl_config_uvhttp_free(&ssl_conf);
+        mbedtls_x509_crt_uvhttp_free(&cert);
+        mbedtls_pk_uvhttp_free(&pkey);
+        mbedtls_x509_crt_uvhttp_free(&ca_cert);
         tls_initialized = 0;
     }
     uv_mutex_unlock(&tls_init_mutex);
@@ -68,7 +69,7 @@ void uvhttp_tls_cleanup(void) {
 uvhttp_tls_context_t* uvhttp_tls_context_new(void) {
     init_tls();
     
-    uvhttp_tls_context_t* ctx = malloc(sizeof(uvhttp_tls_context_t));
+    uvhttp_tls_context_t* ctx = uvhttp_malloc(sizeof(uvhttp_tls_context_t));
     if (!ctx) {
         return NULL;
     }
@@ -84,7 +85,7 @@ uvhttp_tls_context_t* uvhttp_tls_context_new(void) {
     
     ctx->pers = strdup("uvhttp_tls_server");
     ctx->client_auth_required = 0;
-    ctx->verify_depth = 1;
+    ctx->verify_depth = UVHTTP_TLS_VERIFY_DEPTH;
     
     // 初始化随机数生成器
     int ret = mbedtls_ctr_drbg_seed(&ctx->ctr_drbg, mbedtls_entropy_func,
@@ -122,17 +123,17 @@ uvhttp_tls_context_t* uvhttp_tls_context_new(void) {
 
 void uvhttp_tls_context_free(uvhttp_tls_context_t* ctx) {
     if (ctx) {
-        mbedtls_entropy_free(&ctx->entropy);
-        mbedtls_ctr_drbg_free(&ctx->ctr_drbg);
-        mbedtls_ssl_config_free(&ctx->ssl_conf);
-        mbedtls_x509_crt_free(&ctx->cert);
-        mbedtls_pk_free(&ctx->pkey);
-        mbedtls_x509_crt_free(&ctx->ca_cert);
+        mbedtls_entropy_uvhttp_free(&ctx->entropy);
+        mbedtls_ctr_drbg_uvhttp_free(&ctx->ctr_drbg);
+        mbedtls_ssl_config_uvhttp_free(&ctx->ssl_conf);
+        mbedtls_x509_crt_uvhttp_free(&ctx->cert);
+        mbedtls_pk_uvhttp_free(&ctx->pkey);
+        mbedtls_x509_crt_uvhttp_free(&ctx->ca_cert);
         if (ctx->pers) {
-            free(ctx->pers);
+            uvhttp_free(ctx->pers);
             ctx->pers = NULL;
         }
-        free(ctx);
+        uvhttp_free(ctx);
     }
 }
 
@@ -281,7 +282,7 @@ int uvhttp_tls_context_set_dh_parameters(uvhttp_tls_context_t* ctx, const char* 
     
     if (!dh_file) {
         // 使用默认的DH参数
-        mbedtls_ssl_conf_dh_min_bitlen(&ctx->ssl_conf, 2048);
+        mbedtls_ssl_conf_dh_min_bitlen(&ctx->ssl_conf, UVHTTP_TLS_DH_MIN_BITLEN);
         return 0;
     }
     
@@ -298,7 +299,7 @@ mbedtls_ssl_context* uvhttp_tls_create_ssl(uvhttp_tls_context_t* ctx) {
         return NULL;
     }
     
-    mbedtls_ssl_context* ssl = malloc(sizeof(mbedtls_ssl_context));
+    mbedtls_ssl_context* ssl = uvhttp_malloc(sizeof(mbedtls_ssl_context));
     if (!ssl) {
         return NULL;
     }
@@ -309,8 +310,8 @@ mbedtls_ssl_context* uvhttp_tls_create_ssl(uvhttp_tls_context_t* ctx) {
     if (ret != 0) {
         fprintf(stderr, "mbedtls_ssl_setup failed: %d\n", ret);
         uvhttp_tls_print_error(ret);
-        mbedtls_ssl_free(ssl);
-        free(ssl);
+        mbedtls_ssl_uvhttp_free(ssl);
+        uvhttp_free(ssl);
         return NULL;
     }
     
@@ -394,7 +395,7 @@ int uvhttp_tls_verify_peer_cert(mbedtls_ssl_context* ssl) {
     
     uint32_t flags = mbedtls_ssl_get_verify_result(ssl);
     if (flags != 0) {
-        char error_buf[256];
+        char error_buf[UVHTTP_TLS_ERROR_BUFFER_SIZE];
         mbedtls_x509_crt_verify_info(error_buf, sizeof(error_buf), "", flags);
         fprintf(stderr, "Certificate verification failed: %s\n", error_buf);
         return -1;
@@ -427,9 +428,8 @@ int uvhttp_tls_verify_hostname(const mbedtls_x509_crt* cert, const char* hostnam
     // 首先检查SAN（主题备用名称）
     while (san != NULL) {
         if (san->buf.len > 0) {
-            char san_name[256];
-            size_t san_len = (san->buf.len < sizeof(san_name) - 1) ? san->buf.len : sizeof(san_name) - 1;
-            memcpy(san_name, san->buf.p, san_len);
+            char san_name[UVHTTP_TLS_SAN_BUFFER_SIZE];
+            size_t san_len = (san->buf.len < UVHTTP_TLS_SAN_BUFFER_SIZE - 1) ? san->buf.len : UVHTTP_TLS_SAN_BUFFER_SIZE - 1;            memcpy(san_name, san->buf.p, san_len);
             san_name[san_len] = '\0';
             
             // 支持通配符匹配
@@ -441,7 +441,7 @@ int uvhttp_tls_verify_hostname(const mbedtls_x509_crt* cert, const char* hostnam
     }
     
     // 如果没有SAN，检查CN（通用名称）
-    char cn[256];
+    char cn[UVHTTP_TLS_CN_BUFFER_SIZE];
     if (uvhttp_tls_get_cert_common_name(cert, cn, sizeof(cn)) == 0) {
         return uvhttp_tls_match_hostname(cn, hostname);
     }

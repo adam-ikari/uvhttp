@@ -1,57 +1,20 @@
-/* WebSocket模块 */
+/* WebSocket模块 - 使用包装层隔离 libwebsockets */
 
 #ifndef UVHTTP_WEBSOCKET_H
 #define UVHTTP_WEBSOCKET_H
 
-#include "uvhttp.h"
-#include <stddef.h>
+/* 包含包装层头文件，避免直接包含 libwebsockets */
+#include "uvhttp_websocket_wrapper.h"
+
+/* 重新导出所有包装层的类型和函数，保持 API 兼容性 */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* WebSocket消息类型 */
-typedef enum {
-    UVHTTP_WEBSOCKET_TEXT,
-    UVHTTP_WEBSOCKET_BINARY,
-    UVHTTP_WEBSOCKET_PING,
-    UVHTTP_WEBSOCKET_PONG,
-    UVHTTP_WEBSOCKET_CLOSE
-} uvhttp_websocket_type_t;
+/* 包装层已经定义了所有必要的类型和函数，这里不需要重复定义 */
 
-/* WebSocket消息 */
-typedef struct {
-    uvhttp_websocket_type_t type;
-    const char* data;
-    size_t length;
-} uvhttp_websocket_message_t;
-
-/* WebSocket连接 */
-typedef struct uvhttp_websocket uvhttp_websocket_t;
-
-/* WebSocket处理器 */
-typedef void (*uvhttp_websocket_handler_t)(uvhttp_websocket_t* ws, 
-                                               const uvhttp_websocket_message_t* msg, 
-                                               void* user_data);
-
-/* WebSocket操作 */
-uvhttp_websocket_t* uvhttp_websocket_new(uvhttp_request_t* request, 
-                                          uvhttp_response_t* response);
-void uvhttp_websocket_free(uvhttp_websocket_t* ws);
-
-/* 消息发送 */
-int uvhttp_websocket_send(uvhttp_websocket_t* ws, 
-                          const char* data, 
-                          size_t length, 
-                          uvhttp_websocket_type_t type);
-
-/* 连接管理 */
-void uvhttp_websocket_set_handler(uvhttp_websocket_t* ws, 
-                                 uvhttp_websocket_handler_t handler, 
-                                 void* user_data);
-void uvhttp_websocket_close(uvhttp_websocket_t* ws, int code, const char* reason);
-
-/* 便捷宏 */
+/* 便捷宏 - 从包装层重新导出 */
 #define uvhttp_websocket_send_text(ws, text) \
     uvhttp_websocket_send(ws, text, strlen(text), UVHTTP_WEBSOCKET_TEXT)
 

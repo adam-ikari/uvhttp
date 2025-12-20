@@ -1,5 +1,7 @@
 #include "uvhttp_response.h"
 #include "uvhttp_common.h"
+#include "uvhttp_allocator.h"
+#include "uvhttp_constants.h"
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -7,18 +9,18 @@
 
 static const char* get_status_text(int status_code) {
     switch (status_code) {
-        case 200: return "OK";
-        case 201: return "Created";
-        case 204: return "No Content";
-        case 400: return "Bad Request";
-        case 401: return "Unauthorized";
-        case 403: return "Forbidden";
-        case 404: return "Not Found";
-        case 405: return "Method Not Allowed";
-        case 500: return "Internal Server Error";
-        case 501: return "Not Implemented";
-        case 502: return "Bad Gateway";
-        case 503: return "Service Unavailable";
+        case UVHTTP_STATUS_OK: return "OK";
+        case UVHTTP_STATUS_CREATED: return "Created";
+        case UVHTTP_STATUS_NO_CONTENT: return "No Content";
+        case UVHTTP_STATUS_BAD_REQUEST: return "Bad Request";
+        case UVHTTP_STATUS_UNAUTHORIZED: return "Unauthorized";
+        case UVHTTP_STATUS_FORBIDDEN: return "Forbidden";
+        case UVHTTP_STATUS_NOT_FOUND: return "Not Found";
+        case UVHTTP_STATUS_METHOD_NOT_ALLOWED: return "Method Not Allowed";
+        case UVHTTP_STATUS_INTERNAL_ERROR: return "Internal Server Error";
+        case UVHTTP_STATUS_NOT_IMPLEMENTED: return "Not Implemented";
+        case UVHTTP_STATUS_BAD_GATEWAY: return "Bad Gateway";
+        case UVHTTP_STATUS_SERVICE_UNAVAILABLE: return "Service Unavailable";
         default: return "Unknown";
     }
 }
@@ -27,7 +29,7 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer, si
     size_t pos = 0;
     
     // 状态行
-    pos += snprintf(buffer + pos, *length - pos, "HTTP/1.1 %d %s\r\n", 
+    pos += snprintf(buffer + pos, *length - pos, UVHTTP_VERSION_1_1 " %d %s\r\n", 
                    response->status_code, get_status_text(response->status_code));
     
     // 默认headers
@@ -77,7 +79,7 @@ int uvhttp_response_init(uvhttp_response_t* response, void* client) {
     memset(response, 0, sizeof(uvhttp_response_t));
     
     response->client = client;
-    response->status_code = 200;
+    response->status_code = UVHTTP_STATUS_OK;
     
     return 0;
 }
@@ -88,7 +90,7 @@ void uvhttp_response_cleanup(uvhttp_response_t* response) {
     }
     
     if (response->body) {
-        free(response->body);
+        uvhttp_free(response->body);
         response->body = NULL;
     }
     
@@ -102,7 +104,7 @@ void uvhttp_response_set_status(uvhttp_response_t* response, int status_code) {
     }
     
     // 验证状态码范围
-    if (status_code < 100 || status_code > 599) {
+    if (status_code < UVHTTP_STATUS_CONTINUE || status_code > 599) {
         fprintf(stderr, "Invalid status code: %d\n", status_code);
         return;
     }
@@ -128,12 +130,12 @@ void uvhttp_response_set_header(uvhttp_response_t* response, const char* name, c
     uvhttp_header_t* header = &response->headers[response->header_count];
     
     // 使用安全的字符串复制函数
-    if (uvhttp_safe_strcpy(header->name, sizeof(header->name), name) != 0) {
+    if (uvhttp_safe_strcpy(header->name, UVHTTP_MAX_HEADER_NAME_SIZE, name) != 0) {
         fprintf(stderr, "Failed to copy header name: %s\n", name);
         return;
     }
     
-    if (uvhttp_safe_strcpy(header->value, sizeof(header->value), value) != 0) {
+    if (uvhttp_safe_strcpy(header->value, UVHTTP_MAX_HEADER_VALUE_SIZE, value) != 0) {
         fprintf(stderr, "Failed to copy header value for: %s\n", name);
         return;
     }
@@ -141,7 +143,7 @@ void uvhttp_response_set_header(uvhttp_response_t* response, const char* name, c
     response->header_count++;
 }
 
-int uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length) {
+uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length) {
     if (!response) {
         fprintf(stderr, "Response object is NULL\n");
         return -1;
@@ -158,7 +160,7 @@ int uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size
     }
     
     // 检查长度限制 - 简化版本使用1MB限制
-    if (length > 1024 * 1024) {
+    if (length > UVHTTP_MAX_BODY_SIZE) {
         fprintf(stderr, "Body too large: %zu bytes (max 1MB)\n", length);
         return -1;
     }
@@ -166,21 +168,20 @@ int uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size
     // 验证body内容 - 检查无效字符
     for (size_t i = 0; i < length; i++) {
         // 允许所有二进制数据，但记录警告
-        if (body[i] == 0 && i < length - 1) {
+        if (i < length - 1 && body[i] == 0) {
             fprintf(stderr, "Warning: NULL byte found in body at position %zu\n", i);
         }
     }
     
     if (response->body) {
-        free(response->body);
+        uvhttp_free(response->body);
         response->body = NULL;
     }
     
-    response->body = malloc(length);
+    response->body = uvhttp_malloc(length);
     if (!response->body) {
-        fprintf(stderr, "Failed to allocate memory for body (%zu bytes)\n", length);
         response->body_length = 0;
-        return -1;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
     memcpy(response->body, body, length);
@@ -196,12 +197,13 @@ void uvhttp_response_send(uvhttp_response_t* response) {
     }
     
     // 计算所需的headers大小
-    size_t headers_size = 1024; // 初始预估
-    char* temp_buffer = malloc(headers_size);
+    size_t headers_size = UVHTTP_INITIAL_BUFFER_SIZE;
+    char* temp_buffer = uvhttp_malloc(headers_size);
     if (!temp_buffer) {
-        fprintf(stderr, "Failed to allocate temporary buffer\n");
         return;
     }
+    
+    
     
     // 第一次尝试构建headers以获取实际大小
     size_t headers_length = headers_size;
@@ -210,12 +212,14 @@ void uvhttp_response_send(uvhttp_response_t* response) {
     // 如果需要更多空间，重新分配
     if (headers_length >= headers_size) {
         size_t new_size = headers_length + 1;
-        char* new_buffer = realloc(temp_buffer, new_size);
+        char* new_buffer = uvhttp_malloc(new_size);
         if (!new_buffer) {
-            free(temp_buffer);
-            fprintf(stderr, "Failed to reallocate buffer\n");
+            uvhttp_free(temp_buffer);
             return;
         }
+        // 复制原有数据到新缓冲区
+        memcpy(new_buffer, temp_buffer, headers_size);
+        uvhttp_free(temp_buffer);
         temp_buffer = new_buffer;
         headers_size = new_size;
         
@@ -226,10 +230,9 @@ void uvhttp_response_send(uvhttp_response_t* response) {
     
     // 计算总大小并分配最终缓冲区
     size_t total_size = headers_length + response->body_length;
-    char* response_data = malloc(total_size);
+    char* response_data = uvhttp_malloc(total_size);
     if (!response_data) {
-        free(temp_buffer);
-        fprintf(stderr, "Failed to allocate response buffer\n");
+        uvhttp_free(temp_buffer); // temp_buffer需要释放
         return;
     }
     
@@ -251,10 +254,10 @@ void uvhttp_response_send(uvhttp_response_t* response) {
     
     success = 1; // 标记成功
     
-    // 清理临时缓冲区 - 确保在所有路径上都执行
-    free(temp_buffer);
+    // 清理临时缓冲区
+    uvhttp_free(temp_buffer);
     if (response_data) {
-        free(response_data);
+        uvhttp_free(response_data);
     }
     
     // 只有在成功时才标记响应已完成

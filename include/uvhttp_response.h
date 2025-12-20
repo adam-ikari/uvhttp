@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "uvhttp_common.h"
+#include "uvhttp_error.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,7 +50,7 @@ struct uvhttp_response {
 /* API functions */
 void uvhttp_response_set_status(uvhttp_response_t* response, int status_code);
 void uvhttp_response_set_header(uvhttp_response_t* response, const char* name, const char* value);
-int uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length);
+uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length);
 void uvhttp_response_send(uvhttp_response_t* response);
 void uvhttp_response_cleanup(uvhttp_response_t* response);
 

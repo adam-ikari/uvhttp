@@ -11,6 +11,7 @@
 #include "uvhttp_json.h"
 #include "uvhttp_middleware.h"
 #include "uvhttp_allocator.h"
+#include "uvhttp_constants.h"
 #include "uvhttp_error.h"
 #include "uvhttp_websocket.h"
 #include "uvhttp_http2.h"

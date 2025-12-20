@@ -4,23 +4,53 @@ project(uvhttp VERSION 1.0.0 LANGUAGES C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# 内存分配器选择
+# 内存分配器选择 - CMake配置选项
 set(UVHTTP_ALLOCATOR "default" CACHE STRING "Memory allocator type")
 set_property(CACHE UVHTTP_ALLOCATOR PROPERTY STRINGS "default" "mimalloc" "custom")
 
-# 设置编译定义
+# 根据CMake选项设置编译宏
 if(${UVHTTP_ALLOCATOR} STREQUAL "mimalloc")
-    add_definitions(-DUVHTTP_ALLOCATOR_TYPE=UVHTTP_ALLOCATOR_MIMALLOC)
-    add_definitions(-DUVHTTP_ENABLE_MIMALLOC=1)
-    include_directories(deps/mimalloc/include)
-    list(APPEND LIBS deps/mimalloc/build/libmimalloc.a)
-    message(STATUS "Using mimalloc allocator")
+    # 设置编译宏为枚举值
+    add_compile_definitions(UVHTTP_ALLOCATOR_TYPE=1)  # UVHTTP_ALLOCATOR_MIMALLOC
+    add_compile_definitions(UVHTTP_ENABLE_MIMALLOC=1)
+    
+    # 包含mimalloc头文件
+    include_directories(mimalloc/include)
+    
+    # 添加mimalloc作为子目录
+    add_subdirectory(mimalloc)
+    
+    # 链接mimalloc静态库
+    set(MIMALLOC_LIB mimalloc-static)
+    message(STATUS "Using mimalloc allocator (compile-time optimized)")
+    
 elseif(${UVHTTP_ALLOCATOR} STREQUAL "custom")
-    add_definitions(-DUVHTTP_ALLOCATOR_TYPE=UVHTTP_ALLOCATOR_CUSTOM)
-    message(STATUS "Using custom allocator")
+    # 设置编译宏为枚举值
+    add_compile_definitions(UVHTTP_ALLOCATOR_TYPE=2)  # UVHTTP_ALLOCATOR_CUSTOM
+    message(STATUS "Using custom allocator (runtime selection)")
+    
 else()
-    add_definitions(-DUVHTTP_ALLOCATOR_TYPE=UVHTTP_ALLOCATOR_DEFAULT)
-    message(STATUS "Using default allocator")
+    # 设置编译宏为枚举值
+    add_compile_definitions(UVHTTP_ALLOCATOR_TYPE=0)  # UVHTTP_ALLOCATOR_DEFAULT
+    message(STATUS "Using default allocator (zero-overhead abstraction)")
+endif()
+
+# 编译优化选项
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    # 发布版本优化：内联所有分配器调用
+    add_definitions(-DUVHTTP_INLINE_OPTIMIZED=1)
+    if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -flto")
+    endif()
+endif()
+
+# 调试选项
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    option(UVHTTP_DEBUG_ALLOCATOR "Enable allocator debugging" OFF)
+    if(UVHTTP_DEBUG_ALLOCATOR)
+        add_definitions(-DUVHTTP_DEBUG_ALLOCATOR=1)
+        message(STATUS "Allocator debugging enabled")
+    endif()
 endif()
 
 # 查找libuv - 手动设置路径
@@ -40,6 +70,8 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/llhttp/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/mbedtls/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/libwebsockets/include)
+include_directories(${CMAKE_BINARY_DIR}/deps/libwebsockets/include)  # 添加构建目录
 include_directories(${UV_INCLUDE_DIRS})
 
 # Source files (只包含我们的代码，不依赖libuv)
@@ -56,6 +88,7 @@ set(SOURCES
     src/uvhttp_allocator.c
     # src/uvhttp_mimalloc.c  # Temporarily disabled - requires mimalloc
     src/uvhttp_error.c
+    src/uvhttp_websocket_wrapper.c  # 使用包装层实现
 )
 
 # Header files
@@ -70,6 +103,7 @@ set(HEADERS
     include/uvhttp_connection.h
     include/uvhttp_log.h
     include/uvhttp_json.h
+    include/uvhttp_websocket.h
 )
 
 # Create library
@@ -77,6 +111,43 @@ add_library(uvhttp STATIC ${SOURCES} ${HEADERS})
 
 # Compiler flags
 target_compile_options(uvhttp PRIVATE -Wall -Wextra)
+
+# 链接mimalloc（如果启用）
+if(MIMALLOC_LIB)
+    target_link_libraries(uvhttp PRIVATE ${MIMALLOC_LIB})
+endif()
+
+# 添加libwebsockets支持 - 使用预编译方式
+find_path(LIBWEBSOCKETS_INCLUDE_DIR libwebsockets.h 
+          PATHS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libwebsockets/include)
+find_library(LIBWEBSOCKETS_LIBRARY websockets 
+             PATHS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libwebsockets/lib)
+
+if(LIBWEBSOCKETS_INCLUDE_DIR AND LIBWEBSOCKETS_LIBRARY)
+    target_include_directories(uvhttp PRIVATE ${LIBWEBSOCKETS_INCLUDE_DIR})
+    target_link_libraries(uvhttp PRIVATE ${LIBWEBSOCKETS_LIBRARY})
+    message(STATUS "Found libwebsockets: ${LIBWEBSOCKETS_LIBRARY}")
+else()
+    # 如果没有找到预编译库，尝试添加子目录
+    # 设置 libwebsockets 选项以避免交互式证书生成
+    # 保存当前的 SOURCES 变量
+    set(_SAVED_SOURCES ${SOURCES})
+    unset(SOURCES)
+    
+    # 设置 libwebsockets 选项
+    set(LWS_WITHOUT_TESTAPPS ON CACHE BOOL "Don't build the libwebsocket-test-apps")
+    set(LWS_WITHOUT_TEST_SERVER ON CACHE BOOL "Don't build the test server")
+    set(LWS_WITHOUT_TEST_CLIENT ON CACHE BOOL "Don't build the client test application")
+    
+    # 添加 libwebsockets 子目录
+    add_subdirectory(deps/libwebsockets)
+    
+    # 恢复 SOURCES 变量
+    set(SOURCES ${_SAVED_SOURCES})
+    unset(_SAVED_SOURCES)
+    
+    target_link_libraries(uvhttp PRIVATE websockets)
+endif()
 
 # 使用我们自己的llhttp实现
 add_library(llhttp STATIC third_party/llhttp/src/llhttp.c)
@@ -91,18 +162,58 @@ add_executable(uvhttp_unit_tests
     tests/test_comprehensive.c
     deps/googletest/gtest_fixed.c
 )
-target_link_libraries(uvhttp_unit_tests uvhttp llhttp ${UV_LIBRARIES} dl pthread gcov m)
-
-# 为测试添加覆盖率标志
-if(ENABLE_COVERAGE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-    if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-        target_compile_options(uvhttp_unit_tests PRIVATE --coverage -fprofile-arcs -ftest-coverage)
-    endif()
-endif()
 
 # 性能测试
 add_executable(uvhttp_test tests/test_basic.c deps/googletest/gtest_fixed.c)
-target_link_libraries(uvhttp_test uvhttp llhttp ${UV_LIBRARIES} dl pthread gcov m)
+
+# WebSocket测试
+add_executable(test_websocket_basic 
+    tests/test_websocket_basic.c
+    deps/googletest/gtest_fixed.c
+)
+
+# WebSocket集成测试
+add_executable(test_websocket_integration 
+    tests/test_websocket_integration.c
+    deps/googletest/gtest_fixed.c
+)
+
+# WebSocket压力测试
+add_executable(test_websocket_stress 
+    tests/test_websocket_stress.c
+    deps/googletest/gtest_fixed.c
+)
+
+# WebSocket性能测试
+add_executable(test_websocket_performance 
+    tests/test_websocket_performance.c
+    deps/googletest/gtest_fixed.c
+)
+
+# 设置链接库
+set(TEST_LIBS uvhttp llhttp websockets ${UV_LIBRARIES} dl pthread gcov m ssl crypto)
+
+# 添加 libwebsockets 库路径
+link_directories(${CMAKE_BINARY_DIR}/deps/libwebsockets/lib)
+
+# 链接mimalloc（如果启用）
+if(MIMALLOC_LIB)
+    list(APPEND TEST_LIBS ${MIMALLOC_LIB})
+endif()
+
+# WebSocket 示例
+add_executable(websocket_example examples/websocket_example.c)
+target_link_libraries(websocket_example ${TEST_LIBS})
+
+
+
+# 链接测试库
+target_link_libraries(uvhttp_unit_tests ${TEST_LIBS})
+target_link_libraries(uvhttp_test ${TEST_LIBS})
+target_link_libraries(test_websocket_basic ${TEST_LIBS})
+target_link_libraries(test_websocket_integration ${TEST_LIBS})
+target_link_libraries(test_websocket_stress ${TEST_LIBS})
+target_link_libraries(test_websocket_performance ${TEST_LIBS})
 
 # libuv集成测试 - 暂时注释
 # add_executable(uvhttp_libuv_tests 

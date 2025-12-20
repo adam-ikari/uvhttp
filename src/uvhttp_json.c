@@ -1,5 +1,6 @@
 #include "uvhttp_json.h"
 #include "uvhttp_utils.h"
+#include "uvhttp_constants.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,7 +51,7 @@ static int json_escape_complete(const char* src, char* dst, size_t dst_size) {
                     }
                 } else if (c >= 0x80) {
                     /* UTF-8字符处理 */
-                    if ((c & 0xE0) == 0xC0 && i + 1 < strlen(src)) {
+                    if ((c & UVHTTP_UTF8_2BYTE_MASK) == 0xC0 && i + 1 < strlen(src)) {
                         if (j + 1 < dst_size) { dst[j++] = src[i]; dst[j++] = src[i+1]; }
                         else return -1;
                         i++;
@@ -109,10 +110,9 @@ int uvhttp_response_json_simple(uvhttp_response_t* response, int status_code,
     }
     
     // 使用栈缓冲区避免动态分配
-    char escaped_key[512];
-    char escaped_value[1024];
-    char json_buffer[2048]; // 增加缓冲区大小
-    
+    char escaped_key[UVHTTP_JSON_ESCAPE_BUFFER_SIZE];
+    char escaped_value[UVHTTP_JSON_VALUE_BUFFER_SIZE];
+    char json_buffer[UVHTTP_JSON_BUFFER_SIZE];    
     // 转义键和值，检查错误
     if (json_escape_complete(key, escaped_key, sizeof(escaped_key)) != 0) {
         return -1;
@@ -141,9 +141,8 @@ int uvhttp_response_json_success(uvhttp_response_t* response, const char* messag
         return -1;
     }
     
-    char escaped_msg[1024];
-    char json_buffer[1280];
-    
+    char escaped_msg[UVHTTP_JSON_VALUE_BUFFER_SIZE];
+    char json_buffer[UVHTTP_JSON_ERROR_BUFFER_SIZE];    
     const char* msg = message ? message : "Success";
     if (json_escape_complete(msg, escaped_msg, sizeof(escaped_msg)) != 0) {
         return -1;
