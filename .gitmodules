@@ -1,6 +1,12 @@
 [submodule "mimalloc"]
 	path = mimalloc
 	url = https://github.com/microsoft/mimalloc.git
+[submodule "deps/llhttp"]
+	path = deps/llhttp
+	url = https://github.com/nodejs/llhttp.git
+[submodule "deps/mbedtls"]
+	path = deps/mbedtls
+	url = https://github.com/ARMmbed/mbedtls.git
 [submodule "deps/libwebsockets"]
 	path = deps/libwebsockets
 	url = https://libwebsockets.org/repo/libwebsockets
