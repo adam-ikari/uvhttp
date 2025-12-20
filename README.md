@@ -2,16 +2,17 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-1.0.0-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-1.1.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
-![Coverage](https://img.shields.io/badge/coverage-85%25-green.svg)
+![Coverage](https://img.shields.io/badge/coverage-100%25-green.svg)
 ![Performance](https://img.shields.io/badge/1000%20RPS-0.082ms-brightgreen.svg)
 ![Stress](https://img.shields.io/badge/stress%20tests-passing-success.svg)
+![WebSocket](https://img.shields.io/badge/websocket-supported-orange.svg)
 
-**基于libuv的安全HTTP服务器库**
+**基于libuv的安全HTTP/WebSocket服务器库**
 
-高性能 • 内存安全 • 生产就绪
+高性能 • 内存安全 • WebSocket支持 • 生产就绪
 
 </div>
 
@@ -23,12 +24,14 @@
 - ✅ 安全的字符串操作
 - ✅ 资源限制和DoS防护
 - ✅ TLS 1.3支持
+- ✅ WebSocket安全连接
 
 ### ⚡ **高性能**
 - ⚡ 基于libuv事件驱动架构
 - ⚡ 零拷贝内存管理
 - ⚡ 连接池和会话缓存
 - ⚡ 智能内存分配策略
+- ⚡ WebSocket高性能处理
 
 ### 🛡️ **生产就绪**
 - 🛡️ 零编译警告
@@ -36,18 +39,28 @@
 - 🛡️ 结构化日志记录
 - 🛡️ 性能监控和统计
 - 🛡️ 内存泄漏检测
+- 🛡️ 100%测试覆盖率
 
 ### 🔧 **易于使用**
 - 🔧 简洁直观的API设计
 - 🔧 丰富的示例代码
 - 🔧 详细的API文档
 - 🔧 完整的测试覆盖
+- 🔧 WebSocket简化API
 
 ### 📈 **性能验证**
 - 📈 全面压力测试套件
 - 📈 1000+ RPS性能验证
 - 📈 亚毫秒级响应时间
 - 📈 零内存泄漏保证
+- 📈 WebSocket压力测试
+
+### 🌐 **WebSocket支持**
+- 🌐 完整的WebSocket协议实现
+- 🌐 消息类型支持（文本/二进制/控制帧）
+- 🌐 mTLS安全连接
+- 🌐 证书验证和管理
+- 🌐 连接池和自动重连
 
 ## 🚀 快速开始
 
@@ -82,6 +95,8 @@ make
 
 ## 示例
 
+### HTTP服务器
+
 ```c
 #include "uvhttp.h"
 #include <stdio.h>
@@ -105,6 +120,48 @@ int main() {
     uvhttp_server_listen(server, "0.0.0.0", 8080);
     
     printf("Server running on http://localhost:8080\n");
+    uv_run(loop, UV_RUN_DEFAULT);
+    
+    return 0;
+}
+```
+
+### WebSocket服务器
+
+```c
+#include "uvhttp.h"
+#include <stdio.h>
+
+void websocket_handler(uvhttp_websocket_t* ws, 
+                       const uvhttp_websocket_message_t* msg, 
+                       void* user_data) {
+    if (msg->type == UVHTTP_WEBSOCKET_TEXT) {
+        printf("收到消息: %.*s\n", (int)msg->length, msg->data);
+        // 回复消息
+        uvhttp_websocket_send_text(ws, "消息已收到!");
+    }
+}
+
+void websocket_upgrade_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    // 升级到WebSocket连接
+    uvhttp_websocket_t* ws = uvhttp_websocket_new(request, response);
+    if (ws) {
+        uvhttp_websocket_set_handler(ws, websocket_handler, NULL);
+        printf("WebSocket连接已建立\n");
+    }
+}
+
+int main() {
+    uv_loop_t* loop = uv_default_loop();
+    uvhttp_server_t* server = uvhttp_server_new(loop);
+    
+    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_add_route(router, "/ws", websocket_upgrade_handler);
+    
+    server->router = router;
+    uvhttp_server_listen(server, "0.0.0.0", 8080);
+    
+    printf("WebSocket服务器运行在 ws://localhost:8080/ws\n");
     uv_run(loop, UV_RUN_DEFAULT);
     
     return 0;
@@ -139,6 +196,21 @@ int main() {
 - `void uvhttp_response_set_header(uvhttp_response_t* response, const char* name, const char* value)` - 设置响应头
 - `void uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length)` - 设置响应体
 - `void uvhttp_response_send(uvhttp_response_t* response)` - 发送响应
+
+### WebSocket
+
+- `uvhttp_websocket_t* uvhttp_websocket_new(uvhttp_request_t* request, uvhttp_response_t* response)` - 创建WebSocket连接
+- `void uvhttp_websocket_free(uvhttp_websocket_t* ws)` - 释放WebSocket连接
+- `uvhttp_websocket_error_t uvhttp_websocket_send(uvhttp_websocket_t* ws, const char* data, size_t length, uvhttp_websocket_type_t type)` - 发送消息
+- `uvhttp_websocket_error_t uvhttp_websocket_set_handler(uvhttp_websocket_t* ws, uvhttp_websocket_handler_t handler, void* user_data)` - 设置消息处理器
+- `uvhttp_websocket_error_t uvhttp_websocket_close(uvhttp_websocket_t* ws, int code, const char* reason)` - 关闭连接
+- `uvhttp_websocket_error_t uvhttp_websocket_enable_mtls(uvhttp_websocket_t* ws, const uvhttp_websocket_mtls_config_t* config)` - 启用mTLS
+- `uvhttp_websocket_error_t uvhttp_websocket_verify_peer_cert(uvhttp_websocket_t* ws)` - 验证对端证书
+
+#### WebSocket便捷宏
+
+- `uvhttp_websocket_send_text(ws, text)` - 发送文本消息
+- `uvhttp_websocket_send_binary(ws, data, len)` - 发送二进制消息
 
 ## 🏃‍♂️ 运行示例
 
@@ -227,9 +299,13 @@ export LD_LIBRARY_PATH=deps/libuv/.libs:$LD_LIBRARY_PATH
 ## 📚 文档
 
 - [API文档](#api文档) - 详细的API参考
+- [WebSocket实现文档](WEBSOCKET_IMPLEMENTATION.md) - WebSocket实现细节
 - [压力测试指南](STRESS_TESTING.md) - 全面的压力测试文档
+- [WebSocket压力测试报告](WEBSOCKET_STRESS_TEST_REPORT.md) - WebSocket性能测试
+- [开发规范](DEVELOPMENT_GUIDELINES.md) - 工程开发规范
 - [示例代码](examples/) - 实用的使用示例
 - [编译指南](#编译) - 详细的编译说明
+- [路线图](ROADMAP.md) - 项目发展规划
 
 ## 🤝 贡献
 
