@@ -1,6 +1,5 @@
 # 依赖库
-third_party/
-mbedtls/
+
 # deps目录下的子模块会被跟踪
 # 但其他文件会被忽略
 

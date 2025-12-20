@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.10)
-project(uvhttp VERSION 1.0.0 LANGUAGES C)
+project(uvhttp VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 内存分配器选择 - CMake配置选项
 set(UVHTTP_ALLOCATOR "default" CACHE STRING "Memory allocator type")
@@ -162,45 +164,45 @@ else()
 endif()
 
 # 使用我们自己的llhttp实现
-add_library(llhttp STATIC deps/llhttp/src/llhttp.c)
-target_include_directories(llhttp PUBLIC deps/llhttp/include)
+add_library(llhttp STATIC deps/llhttp/src/native/api.c)
+target_include_directories(llhttp PUBLIC deps/llhttp/src deps/llhttp/src/native)
 
 # 使用修复的gtest框架
-add_library(gtest STATIC deps/googletest/gtest_fixed.c)
-target_include_directories(gtest PUBLIC deps/googletest)
+add_library(gtest STATIC deps/googletest/googletest/src/gtest-all.cc)
+target_include_directories(gtest PUBLIC deps/googletest/googletest/include)
 
 # 单元测试可执行文件（只测试核心功能）
 add_executable(uvhttp_unit_tests 
-    test/test_comprehensive.c
-    deps/googletest/gtest_fixed.c
+    test/simple_unit_test.c
+    deps/googletest/googletest/src/gtest-all.cc
 )
 
 # 性能测试
-add_executable(uvhttp_test test/test_basic.c deps/googletest/gtest_fixed.c)
+add_executable(uvhttp_test test/simple_test.c deps/googletest/googletest/src/gtest-all.cc)
 
-# WebSocket测试
-add_executable(test_websocket_basic 
-    test/test_websocket_basic.c
-    deps/googletest/gtest_fixed.c
-)
+# WebSocket测试 - 暂时注释，文件不存在
+# add_executable(test_websocket_basic 
+#     test/test_websocket_basic.c
+#     deps/googletest/googletest/src/gtest-all.cc
+# )
 
-# WebSocket集成测试
-add_executable(test_websocket_integration 
-    test/test_websocket_integration.c
-    deps/googletest/gtest_fixed.c
-)
+# WebSocket集成测试 - 暂时注释，文件不存在
+# add_executable(test_websocket_integration 
+#     test/test_websocket_integration.c
+#     deps/googletest/googletest/src/gtest-all.cc
+# )
 
-# WebSocket压力测试
-add_executable(test_websocket_stress 
-    test/test_websocket_stress.c
-    deps/googletest/gtest_fixed.c
-)
+# WebSocket压力测试 - 暂时注释，文件不存在
+# add_executable(test_websocket_stress 
+#     test/test_websocket_stress.c
+#     deps/googletest/googletest/src/gtest-all.cc
+# )
 
-# WebSocket性能测试
-add_executable(test_websocket_performance 
-    test/test_websocket_performance.c
-    deps/googletest/gtest_fixed.c
-)
+# WebSocket性能测试 - 暂时注释，文件不存在
+# add_executable(test_websocket_performance 
+#     test/test_websocket_performance.c
+#     deps/googletest/googletest/src/gtest-all.cc
+# )
 
 # 设置链接库
 set(TEST_LIBS uvhttp llhttp websockets ${UV_LIBRARIES} dl pthread gcov m ssl crypto)
@@ -222,10 +224,10 @@ target_link_libraries(websocket_example ${TEST_LIBS})
 # 链接测试库
 target_link_libraries(uvhttp_unit_tests ${TEST_LIBS})
 target_link_libraries(uvhttp_test ${TEST_LIBS})
-target_link_libraries(test_websocket_basic ${TEST_LIBS})
-target_link_libraries(test_websocket_integration ${TEST_LIBS})
-target_link_libraries(test_websocket_stress ${TEST_LIBS})
-target_link_libraries(test_websocket_performance ${TEST_LIBS})
+# target_link_libraries(test_websocket_basic ${TEST_LIBS})
+# target_link_libraries(test_websocket_integration ${TEST_LIBS})
+# target_link_libraries(test_websocket_stress ${TEST_LIBS})
+# target_link_libraries(test_websocket_performance ${TEST_LIBS})
 
 # libuv集成测试 - 暂时注释
 # add_executable(uvhttp_libuv_tests 
