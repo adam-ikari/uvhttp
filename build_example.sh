@@ -16,13 +16,13 @@ mkdir -p build/examples
 
 # 编译参数
 CC=gcc
-CFLAGS="-std=c11 -Wall -Wextra -O2 -g"
-INCLUDES="-I include -I deps/libuv/include -I deps/mbedtls/include"
-LIBS="-L deps/libuv/.libs -luv -lpthread -lm"
+CFLAGS="-std=c11 -Wall -Wextra -O2 -g -D_GNU_SOURCE"
+INCLUDES="-I include -I deps/libuv/include -I deps/mbedtls/include -I third_party/llhttp/include -I deps/libwebsockets/include"
+LIBS="-L build -L deps/libuv/.libs -luvhttp -lllhttp -luv -lpthread -lm"
 
-# 编译完整示例程序
-echo "📦 编译完整示例程序..."
-$CC $CFLAGS $INCLUDES -o build/examples/complete_example examples/complete_example.c $LIBS
+# 编译简单示例程序
+echo "📦 编译简单示例程序..."
+$CC $CFLAGS $INCLUDES -o build/examples/simple_server examples/simple_server.c $LIBS
 
 if [ $? -eq 0 ]; then
     echo "✅ 编译成功!"
@@ -30,12 +30,11 @@ if [ $? -eq 0 ]; then
     echo "🚀 运行示例程序:"
     echo "   cd build/examples"
     echo "   export LD_LIBRARY_PATH=../../deps/libuv/.libs:\$LD_LIBRARY_PATH"
-    echo "   ./complete_example"
+    echo "   ./simple_server"
     echo ""
     echo "🧪 测试命令:"
     echo "   curl http://localhost:8080/"
-    echo "   curl http://localhost:8080/api/hello"
-    echo "   curl -X POST -d 'Hello UVHTTP' http://localhost:8080/api/echo"
+    echo "   curl http://localhost:8080/api"
 else
     echo "❌ 编译失败!"
     exit 1
