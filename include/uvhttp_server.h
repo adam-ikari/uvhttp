@@ -43,8 +43,6 @@ uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server, uvhttp_request
 // 内部函数声明
 uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client);
 void uvhttp_request_cleanup(uvhttp_request_t* request);
-uvhttp_error_t uvhttp_response_init(uvhttp_response_t* response, uv_tcp_t* client);
-void uvhttp_response_cleanup(uvhttp_response_t* response);
 
 // TLS函数声明 (暂时禁用)
 // uvhttp_error_t uvhttp_tls_init(void);

@@ -55,9 +55,13 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     endif()
 endif()
 
-# 查找libuv - 手动设置路径
+# 查找libuv - 作为子目录
 set(UV_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include)
-set(UV_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/.libs/libuv.a)
+# 添加 libuv 作为子目录
+set(BUILD_TESTING OFF CACHE BOOL "Disable libuv tests" FORCE)
+set(LIBUV_BUILD_SHARED OFF CACHE BOOL "Build static libuv" FORCE)
+add_subdirectory(deps/libuv)
+set(UV_LIBRARIES uv_a)
 
 # 代码覆盖率配置
 option(ENABLE_COVERAGE "Enable code coverage" ON)
@@ -70,7 +74,8 @@ endif()
 
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/src/native)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/build)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/mbedtls/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/libwebsockets/include)
 include_directories(${CMAKE_BINARY_DIR}/deps/libwebsockets/include)  # 添加构建目录
@@ -167,18 +172,16 @@ endif()
 add_library(llhttp STATIC deps/llhttp/src/native/api.c)
 target_include_directories(llhttp PUBLIC deps/llhttp/src deps/llhttp/src/native)
 
-# 使用修复的gtest框架
-add_library(gtest STATIC deps/googletest/googletest/src/gtest-all.cc)
-target_include_directories(gtest PUBLIC deps/googletest/googletest/include)
+# 使用 googletest 作为子目录
+add_subdirectory(deps/googletest)
 
 # 单元测试可执行文件（只测试核心功能）
 add_executable(uvhttp_unit_tests 
     test/simple_unit_test.c
-    deps/googletest/googletest/src/gtest-all.cc
 )
 
 # 性能测试
-add_executable(uvhttp_test test/simple_test.c deps/googletest/googletest/src/gtest-all.cc)
+add_executable(uvhttp_test test/simple_test.c)
 
 # WebSocket测试 - 暂时注释，文件不存在
 # add_executable(test_websocket_basic 
@@ -205,7 +208,12 @@ add_executable(uvhttp_test test/simple_test.c deps/googletest/googletest/src/gte
 # )
 
 # 设置链接库
-set(TEST_LIBS uvhttp llhttp websockets ${UV_LIBRARIES} dl pthread gcov m ssl crypto)
+set(TEST_LIBS uvhttp llhttp websockets gtest gtest_main ${UV_LIBRARIES} dl pthread m)
+if(APPLE)
+    list(APPEND TEST_LIBS /opt/homebrew/opt/openssl@3/lib/libssl.dylib /opt/homebrew/opt/openssl@3/lib/libcrypto.dylib)
+else()
+    list(APPEND TEST_LIBS ssl crypto)
+endif()
 
 # 添加 libwebsockets 库路径
 link_directories(${CMAKE_BINARY_DIR}/deps/libwebsockets/lib)

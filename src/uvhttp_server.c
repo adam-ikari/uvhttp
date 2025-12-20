@@ -27,7 +27,7 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     
     /* 检查连接数限制 */
     if (server->active_connections >= MAX_CONNECTIONS) {
-        fprintf(stderr, "Connection limit reached: %d/%d\n", 
+        fprintf(stderr, "Connection limit reached: %zu/%d\n", 
                 server->active_connections, MAX_CONNECTIONS);
         
         /* 创建临时连接以发送503响应 */

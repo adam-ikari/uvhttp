@@ -48,6 +48,7 @@ struct uvhttp_response {
 };
 
 /* API functions */
+int uvhttp_response_init(uvhttp_response_t* response, void* client);
 void uvhttp_response_set_status(uvhttp_response_t* response, int status_code);
 void uvhttp_response_set_header(uvhttp_response_t* response, const char* name, const char* value);
 uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length);

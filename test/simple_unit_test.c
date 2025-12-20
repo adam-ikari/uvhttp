@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "include/uvhttp_response_simple.h"
-#include "include/uvhttp_utils.h"
+#include "uvhttp_response.h"
+#include "uvhttp_utils.h"
 
 int test_response_init() {
     printf("测试响应初始化...\n");

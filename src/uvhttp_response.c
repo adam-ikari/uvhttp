@@ -206,10 +206,10 @@ void uvhttp_response_send(uvhttp_response_t* response) {
     
     // 第一次尝试构建headers以获取实际大小
     size_t headers_length = headers_size;
-    int build_result = build_response_headers(response, temp_buffer, &headers_length);
+    build_response_headers(response, temp_buffer, &headers_length);
     
     // 检查构建结果和缓冲区大小
-    if (build_result != 0 || headers_length >= headers_size - 1) {
+    if (headers_length >= headers_size - 1) {
         // 需要更大的缓冲区 - 添加安全边界
         size_t new_size = headers_length + 256; // 添加256字节安全边界
         if (new_size > UVHTTP_MAX_BODY_SIZE) { // 防止过大分配
@@ -227,13 +227,7 @@ void uvhttp_response_send(uvhttp_response_t* response) {
         
         // 重新构建headers
         headers_length = new_size;
-        build_result = build_response_headers(response, new_buffer, &headers_length);
-        if (build_result != 0) {
-            fprintf(stderr, "Failed to build response headers\n");
-            uvhttp_free(temp_buffer);
-            uvhttp_free(new_buffer);
-            return;
-        }
+        build_response_headers(response, new_buffer, &headers_length);
         
         uvhttp_free(temp_buffer);
         temp_buffer = new_buffer;

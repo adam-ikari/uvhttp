@@ -7,21 +7,7 @@
 #include <strings.h>
 #include <stdio.h>
 
-// Include the internal llhttp structure definition
-struct llhttp__internal_s {
-  llhttp_type_t type;
-  const llhttp_settings_t* settings;
-  llhttp_errno_t error;
-  const char* error_pos;
-  llhttp_method_t method;
-  llhttp_status_t status_code;
-  uint16_t http_major;
-  uint16_t http_minor;
-  uint8_t finish;
-  uint8_t flags;
-  uint8_t upgrade;
-  uint8_t lenient_flags;
-};
+
 
 int uvhttp_request_init(uvhttp_request_t* request, void* client) {
     if (!request || !client) {
