@@ -1,8 +1,70 @@
+# 依赖库
 deps/
 llhttp/
 mbedtls/
+mimalloc/
+third_party/
+
+# 构建目录
 build/
+cmake-build-*/
+
+# 测试和覆盖率
 *.gcda
 *.gcno
+*.gcov
 *.info
 coverage_html/
+test_*
+simple_test
+simple_unit_test
+uvhttp_test
+uvhttp_unit_tests
+
+# 静态分析报告
+cppcheck-report*.xml
+
+# 压力测试结果
+stress_test_results_*/
+*.txt
+
+# IDE 和编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.bak
+*.orig
+*.rej
+.~*
+
+# 日志文件
+*.log
+
+# 编译产物
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+
+# 文档草稿
+*_draft.*
+*_temp.*
+
+# 性能分析文件
+*.prof
+*.perf
+
+# 内存检查
+valgrind-*.log
+
+# 自动生成的文档
+docs/generated/
