@@ -17,7 +17,7 @@ if(${UVHTTP_ALLOCATOR} STREQUAL "mimalloc")
     add_compile_definitions(UVHTTP_ENABLE_MIMALLOC=1)
     
     # 包含mimalloc头文件
-    include_directories(mimalloc/include)
+    include_directories(deps/mimalloc/include)
     
     # 添加mimalloc作为子目录
     add_subdirectory(mimalloc)
