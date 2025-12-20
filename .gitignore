@@ -2,7 +2,6 @@
 deps/
 llhttp/
 mbedtls/
-mimalloc/
 third_party/
 
 # 构建目录
