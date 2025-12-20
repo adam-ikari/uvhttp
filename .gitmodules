@@ -1,5 +1,5 @@
 [submodule "deps/mimalloc"]
-	path = mimalloc
+	path = deps/mimalloc
 	url = https://github.com/microsoft/mimalloc.git
 [submodule "deps/llhttp"]
 	path = deps/llhttp
