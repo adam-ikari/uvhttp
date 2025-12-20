@@ -1,0 +1,268 @@
+        -:    0:Source:/home/zhaodi-chen/project/uvhttp/src/uvhttp_response.c
+        -:    0:Graph:build/CMakeFiles/uvhttp.dir/src/uvhttp_response.c.gcno
+        -:    0:Data:build/CMakeFiles/uvhttp.dir/src/uvhttp_response.c.gcda
+        -:    0:Runs:4
+        -:    1:#include "uvhttp_response_simple.h"
+        -:    2:#include "uvhttp_common.h"
+        -:    3:#include <stdlib.h>
+        -:    4:#include <string.h>
+        -:    5:#include <strings.h>
+        -:    6:#include <stdio.h>
+        -:    7:
+    #####:    8:static const char* get_status_text(int status_code) {
+    #####:    9:    switch (status_code) {
+    #####:   10:        case 200: return "OK";
+    #####:   11:        case 201: return "Created";
+    #####:   12:        case 204: return "No Content";
+    #####:   13:        case 400: return "Bad Request";
+    #####:   14:        case 401: return "Unauthorized";
+    #####:   15:        case 403: return "Forbidden";
+    #####:   16:        case 404: return "Not Found";
+    #####:   17:        case 405: return "Method Not Allowed";
+    #####:   18:        case 500: return "Internal Server Error";
+    #####:   19:        case 501: return "Not Implemented";
+    #####:   20:        case 502: return "Bad Gateway";
+    #####:   21:        case 503: return "Service Unavailable";
+    #####:   22:        default: return "Unknown";
+        -:   23:    }
+        -:   24:}
+        -:   25:
+    #####:   26:static void build_response_headers(uvhttp_response_t* response, char* buffer, size_t* length) {
+    #####:   27:    size_t pos = 0;
+        -:   28:    
+        -:   29:    // 状态行
+    #####:   30:    pos += snprintf(buffer + pos, *length - pos, "HTTP/1.1 %d %s\r\n", 
+        -:   31:                   response->status_code, get_status_text(response->status_code));
+        -:   32:    
+        -:   33:    // 默认headers
+    #####:   34:    int has_content_type = 0;
+    #####:   35:    int has_content_length = 0;
+        -:   36:    
+    #####:   37:    for (size_t i = 0; i < response->header_count; i++) {
+    #####:   38:        pos += snprintf(buffer + pos, *length - pos, "%s: %s\r\n",
+    #####:   39:                       response->headers[i].name, response->headers[i].value);
+        -:   40:        
+    #####:   41:        if (strcasecmp(response->headers[i].name, "Content-Type") == 0) {
+    #####:   42:            has_content_type = 1;
+        -:   43:        }
+    #####:   44:        if (strcasecmp(response->headers[i].name, "Content-Length") == 0) {
+    #####:   45:            has_content_length = 1;
+        -:   46:        }
+        -:   47:    }
+        -:   48:    
+        -:   49:    // 添加默认Content-Type
+    #####:   50:    if (!has_content_type) {
+    #####:   51:        pos += snprintf(buffer + pos, *length - pos, "Content-Type: text/plain\r\n");
+        -:   52:    }
+        -:   53:    
+        -:   54:    // 添加Content-Length
+    #####:   55:    if (!has_content_length && response->body) {
+    #####:   56:        pos += snprintf(buffer + pos, *length - pos, "Content-Length: %zu\r\n", 
+        -:   57:                       response->body_length);
+        -:   58:    }
+        -:   59:    
+        -:   60:    // 结束headers
+    #####:   61:    pos += snprintf(buffer + pos, *length - pos, "\r\n");
+        -:   62:    
+    #####:   63:    *length = pos;
+    #####:   64:}
+        -:   65:
+       12:   66:int uvhttp_response_init(uvhttp_response_t* response, void* client) {
+       12:   67:    if (!response) {
+    #####:   68:        fprintf(stderr, "Response object is NULL\n");
+    #####:   69:        return -1;
+        -:   70:    }
+        -:   71:    
+       12:   72:    if (!client) {
+    #####:   73:        fprintf(stderr, "Client handle is NULL\n");
+    #####:   74:        return -1;
+        -:   75:    }
+        -:   76:    
+       12:   77:    memset(response, 0, sizeof(uvhttp_response_t));
+        -:   78:    
+       12:   79:    response->client = client;
+       12:   80:    response->status_code = 200;
+        -:   81:    
+       12:   82:    return 0;
+        -:   83:}
+        -:   84:
+       15:   85:void uvhttp_response_cleanup(uvhttp_response_t* response) {
+       15:   86:    if (!response) {
+        3:   87:        return;
+        -:   88:    }
+        -:   89:    
+       12:   90:    if (response->body) {
+        6:   91:        free(response->body);
+        6:   92:        response->body = NULL;
+        -:   93:    }
+        -:   94:    
+       12:   95:    response->body_length = 0;
+        -:   96:}
+        -:   97:
+       45:   98:void uvhttp_response_set_status(uvhttp_response_t* response, int status_code) {
+       45:   99:    if (!response) {
+        3:  100:        fprintf(stderr, "Response object is NULL\n");
+        3:  101:        return;
+        -:  102:    }
+        -:  103:    
+        -:  104:    // 验证状态码范围
+       42:  105:    if (status_code < 100 || status_code > 599) {
+        9:  106:        fprintf(stderr, "Invalid status code: %d\n", status_code);
+        9:  107:        return;
+        -:  108:    }
+        -:  109:    
+       33:  110:    response->status_code = status_code;
+        -:  111:}
+        -:  112:
+      204:  113:void uvhttp_response_set_header(uvhttp_response_t* response, const char* name, const char* value) {
+      204:  114:    if (!response || !name || !value) {
+        3:  115:        return;
+        -:  116:    }
+        -:  117:    
+      201:  118:    if (response->header_count >= MAX_HEADERS) {
+        3:  119:        return;
+        -:  120:    }
+        -:  121:    
+        -:  122:    // 验证header名称和值
+      198:  123:    if (uvhttp_validate_header_value(name, value) != 0) {
+    #####:  124:        fprintf(stderr, "Invalid header: %s\n", name);
+    #####:  125:        return;
+        -:  126:    }
+        -:  127:    
+      198:  128:    uvhttp_header_t* header = &response->headers[response->header_count];
+        -:  129:    
+        -:  130:    // 使用安全的字符串复制函数
+      198:  131:    if (uvhttp_safe_strcpy(header->name, sizeof(header->name), name) != 0) {
+    #####:  132:        fprintf(stderr, "Failed to copy header name: %s\n", name);
+    #####:  133:        return;
+        -:  134:    }
+        -:  135:    
+      198:  136:    if (uvhttp_safe_strcpy(header->value, sizeof(header->value), value) != 0) {
+    #####:  137:        fprintf(stderr, "Failed to copy header value for: %s\n", name);
+    #####:  138:        return;
+        -:  139:    }
+        -:  140:    
+      198:  141:    response->header_count++;
+        -:  142:}
+        -:  143:
+       18:  144:int uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length) {
+       18:  145:    if (!response) {
+        3:  146:        fprintf(stderr, "Response object is NULL\n");
+        3:  147:        return -1;
+        -:  148:    }
+        -:  149:    
+       15:  150:    if (!body) {
+    #####:  151:        fprintf(stderr, "Body data is NULL\n");
+    #####:  152:        return -1;
+        -:  153:    }
+        -:  154:    
+       15:  155:    if (length == 0) {
+        3:  156:        fprintf(stderr, "Body length is zero\n");
+        3:  157:        return -1;
+        -:  158:    }
+        -:  159:    
+        -:  160:    // 检查长度限制 - 简化版本使用1MB限制
+       12:  161:    if (length > 1024 * 1024) {
+    #####:  162:        fprintf(stderr, "Body too large: %zu bytes (max 1MB)\n", length);
+    #####:  163:        return -1;
+        -:  164:    }
+        -:  165:    
+        -:  166:    // 验证body内容 - 检查无效字符
+      372:  167:    for (size_t i = 0; i < length; i++) {
+        -:  168:        // 允许所有二进制数据，但记录警告
+     360*:  169:        if (body[i] == 0 && i < length - 1) {
+    #####:  170:            fprintf(stderr, "Warning: NULL byte found in body at position %zu\n", i);
+        -:  171:        }
+        -:  172:    }
+        -:  173:    
+       12:  174:    if (response->body) {
+        6:  175:        free(response->body);
+        6:  176:        response->body = NULL;
+        -:  177:    }
+        -:  178:    
+       12:  179:    response->body = malloc(length);
+       12:  180:    if (!response->body) {
+    #####:  181:        fprintf(stderr, "Failed to allocate memory for body (%zu bytes)\n", length);
+    #####:  182:        response->body_length = 0;
+    #####:  183:        return -1;
+        -:  184:    }
+        -:  185:    
+       12:  186:    memcpy(response->body, body, length);
+       12:  187:    response->body_length = length;
+        -:  188:    
+       12:  189:    return 0;
+        -:  190:}
+        -:  191:
+        3:  192:void uvhttp_response_send(uvhttp_response_t* response) {
+        3:  193:    if (!response) {
+        3:  194:        fprintf(stderr, "Invalid response object\n");
+        3:  195:        return;
+        -:  196:    }
+        -:  197:    
+        -:  198:    // 计算所需的headers大小
+    #####:  199:    size_t headers_size = 1024; // 初始预估
+    #####:  200:    char* temp_buffer = malloc(headers_size);
+    #####:  201:    if (!temp_buffer) {
+    #####:  202:        fprintf(stderr, "Failed to allocate temporary buffer\n");
+    #####:  203:        return;
+        -:  204:    }
+        -:  205:    
+        -:  206:    // 第一次尝试构建headers以获取实际大小
+    #####:  207:    size_t headers_length = headers_size;
+    #####:  208:    build_response_headers(response, temp_buffer, &headers_length);
+        -:  209:    
+        -:  210:    // 如果需要更多空间，重新分配
+    #####:  211:    if (headers_length >= headers_size) {
+    #####:  212:        size_t new_size = headers_length + 1;
+    #####:  213:        char* new_buffer = realloc(temp_buffer, new_size);
+    #####:  214:        if (!new_buffer) {
+    #####:  215:            free(temp_buffer);
+    #####:  216:            fprintf(stderr, "Failed to reallocate buffer\n");
+    #####:  217:            return;
+        -:  218:        }
+    #####:  219:        temp_buffer = new_buffer;
+    #####:  220:        headers_size = new_size;
+        -:  221:        
+        -:  222:        // 重新构建headers
+    #####:  223:        headers_length = headers_size;
+    #####:  224:        build_response_headers(response, temp_buffer, &headers_length);
+        -:  225:    }
+        -:  226:    
+        -:  227:    // 计算总大小并分配最终缓冲区
+    #####:  228:    size_t total_size = headers_length + response->body_length;
+    #####:  229:    char* response_data = malloc(total_size);
+    #####:  230:    if (!response_data) {
+    #####:  231:        free(temp_buffer);
+    #####:  232:        fprintf(stderr, "Failed to allocate response buffer\n");
+    #####:  233:        return;
+        -:  234:    }
+        -:  235:    
+        -:  236:    // 确保在所有错误路径上清理资源
+    #####:  237:    int success = 0;
+        -:  238:    
+        -:  239:    // 复制headers
+    #####:  240:    memcpy(response_data, temp_buffer, headers_length);
+        -:  241:    
+        -:  242:    // 复制body
+    #####:  243:    if (response->body && response->body_length > 0) {
+    #####:  244:        memcpy(response_data + headers_length, response->body, response->body_length);
+        -:  245:    }
+        -:  246:    
+        -:  247:    // 这里应该实际发送response_data
+        -:  248:    // 简化版本模拟发送 - 在实际实现中应该调用网络发送函数
+    #####:  249:    printf("Sending response (%zu bytes):\n%.*s", total_size, 
+        -:  250:           (int)headers_length, response_data);
+        -:  251:    
+    #####:  252:    success = 1; // 标记成功
+        -:  253:    
+        -:  254:    // 清理临时缓冲区 - 确保在所有路径上都执行
+    #####:  255:    free(temp_buffer);
+    #####:  256:    if (response_data) {
+    #####:  257:        free(response_data);
+        -:  258:    }
+        -:  259:    
+        -:  260:    // 只有在成功时才标记响应已完成
+    #####:  261:    if (success) {
+    #####:  262:        response->finished = 1;
+        -:  263:    }
+        -:  264:}

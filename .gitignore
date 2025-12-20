@@ -1,0 +1,8 @@
+deps/
+llhttp/
+mbedtls/
+build/
+*.gcda
+*.gcno
+*.info
+coverage_html/

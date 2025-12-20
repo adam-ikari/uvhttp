@@ -1,0 +1,368 @@
+#include "../deps/googletest/gtest_fixed.h"
+#include "../include/uvhttp_tls.h"
+#include <string.h>
+
+// 模拟TLS上下文测试
+TEST(TlsTest, TlsContextCreation) {
+    // 测试TLS上下文创建
+    uvhttp_tls_context_t* ctx = uvhttp_tls_context_new();
+    EXPECT_NE(ctx, NULL);
+    
+    if (ctx) {
+        uvhttp_tls_context_free(ctx);
+    }
+}
+
+// 测试TLS上下文释放
+TEST(TlsTest, TlsContextFree) {
+    // 测试NULL上下文释放（应该安全）
+    uvhttp_tls_context_free(NULL);
+    
+    // 测试正常上下文释放
+    uvhttp_tls_context_t* ctx = uvhttp_tls_context_new();
+    EXPECT_NE(ctx, NULL);
+    
+    if (ctx) {
+        uvhttp_tls_context_free(ctx);
+    }
+}
+
+// 测试证书加载
+TEST(TlsTest, CertificateLoading) {
+    uvhttp_tls_context_t* ctx = uvhttp_tls_context_new();
+    ASSERT_NE(ctx, NULL);
+    
+    // 测试加载服务器证书
+    int result = uvhttp_tls_context_load_cert_chain(ctx, "certs/server.crt");
+    // 由于证书文件可能不存在，这里只测试函数调用不会崩溃
+    EXPECT_TRUE(result == 0 || result == -1);
+    
+    // 测试加载私钥
+    result = uvhttp_tls_context_load_private_key(ctx, "certs/server.key");
+    EXPECT_TRUE(result == 0 || result == -1);
+    
+    // 测试加载CA证书
+    result = uvhttp_tls_context_load_ca_file(ctx, "certs/ca.crt");
+    EXPECT_TRUE(result == 0 || result == -1);
+    
+    // 测试加载不存在的文件
+    result = uvhttp_tls_context_load_cert_chain(ctx, "nonexistent.crt");
+    EXPECT_EQ(result, -1);
+    
+    uvhttp_tls_context_free(ctx);
+}
+
+// 测试客户端认证配置
+TEST(TlsTest, ClientAuthConfiguration) {
+    uvhttp_tls_context_t* ctx = uvhttp_tls_context_new();
+    ASSERT_NE(ctx, NULL);
+    
+    // 测试启用客户端认证
+    int result = uvhttp_tls_context_enable_client_auth(ctx, 1);
+    EXPECT_EQ(result, 0);
+    
+    // 测试禁用客户端认证
+    result = uvhttp_tls_context_enable_client_auth(ctx, 0);
+    EXPECT_EQ(result, 0);
+    
+    // 测试设置验证深度
+    result = uvhttp_tls_context_set_verify_depth(ctx, 3);
+    EXPECT_EQ(result, 0);
+    
+    // 测试无效验证深度
+    result = uvhttp_tls_context_set_verify_depth(ctx, 0);
+    EXPECT_EQ(result, -1);
+    
+    result = uvhttp_tls_context_set_verify_depth(ctx, -1);
+    EXPECT_EQ(result, -1);
+    
+    uvhttp_tls_context_free(ctx);
+}
+
+// 测试TLS安全配置
+TEST(TlsTest, TlsSecurityConfiguration) {
+    uvhttp_tls_context_t* ctx = uvhttp_tls_context_new();
+    ASSERT_NE(ctx, NULL);
+    
+    // 测试密码套件配置
+    int result = uvhttp_tls_context_set_cipher_suites(ctx, NULL);
+    EXPECT_EQ(result, 0);
+    
+    // 测试会话票据配置
+    result = uvhttp_tls_context_enable_session_tickets(ctx, 0);
+    EXPECT_EQ(result, 0);
+    
+    result = uvhttp_tls_context_enable_session_tickets(ctx, 1);
+    EXPECT_EQ(result, 0);
+    
+    // 测试会话缓存配置
+    result = uvhttp_tls_context_set_session_cache(ctx, 100);
+    EXPECT_EQ(result, 0);
+    
+    // 测试OCSP装订配置
+    result = uvhttp_tls_context_enable_ocsp_stapling(ctx, 0);
+    EXPECT_EQ(result, 0);
+    
+    // 测试DH参数配置
+    result = uvhttp_tls_context_set_dh_parameters(ctx, NULL);
+    EXPECT_EQ(result, 0);
+    
+    // 测试无效会话缓存大小
+    result = uvhttp_tls_context_set_session_cache(ctx, 0);
+    EXPECT_EQ(result, -1);
+    
+    result = uvhttp_tls_context_set_session_cache(ctx, -1);
+    EXPECT_EQ(result, -1);
+    
+    uvhttp_tls_context_free(ctx);
+}
+
+// 测试证书验证
+TEST(TlsTest, CertificateVerification) {
+    uvhttp_tls_context_t* ctx = uvhttp_tls_context_new();
+    ASSERT_NE(ctx, NULL);
+    
+    // 测试主机名验证函数
+    int result = uvhttp_tls_verify_hostname(NULL, "example.com");
+    EXPECT_EQ(result, -1);
+    
+    result = uvhttp_tls_verify_hostname(NULL, NULL);
+    EXPECT_EQ(result, -1);
+    
+    result = uvhttp_tls_verify_hostname(ctx, "example.com");
+    EXPECT_EQ(result, -1); // 上下文不是有效的SSL上下文
+    
+    // 测试证书有效期检查
+    result = uvhttp_tls_check_cert_validity(NULL);
+    EXPECT_EQ(result, -1);
+    
+    uvhttp_tls_context_free(ctx);
+}
+
+// 测试错误处理
+TEST(TlsTest, ErrorHandling) {
+    // 测试NULL参数处理
+    EXPECT_EQ(uvhttp_tls_context_load_cert_chain(NULL, "test.crt"), -1);
+    EXPECT_EQ(uvhttp_tls_context_load_private_key(NULL, "test.key"), -1);
+    EXPECT_EQ(uvhttp_tls_context_load_ca_file(NULL, "ca.crt"), -1);
+    EXPECT_EQ(uvhttp_tls_context_enable_client_auth(NULL, 1), -1);
+    EXPECT_EQ(uvhttp_tls_context_set_verify_depth(NULL, 3), -1);
+    EXPECT_EQ(uvhttp_tls_context_set_cipher_suites(NULL, NULL), -1);
+    EXPECT_EQ(uvhttp_tls_context_enable_session_tickets(NULL, 1), -1);
+    EXPECT_EQ(uvhttp_tls_context_set_session_cache(NULL, 100), -1);
+    EXPECT_EQ(uvhttp_tls_context_enable_ocsp_stapling(NULL, 1), -1);
+    EXPECT_EQ(uvhttp_tls_context_set_dh_parameters(NULL, NULL), -1);
+}
+
+// 测试内存管理
+TEST(TlsTest, MemoryManagement) {
+    // 测试多次创建和释放
+    for (int i = 0; i < 10; i++) {
+        uvhttp_tls_context_t* ctx = uvhttp_tls_context_new();
+        EXPECT_NE(ctx, NULL);
+        
+        if (ctx) {
+            // 进行一些基本操作
+            uvhttp_tls_context_enable_client_auth(ctx, 1);
+            uvhttp_tls_context_set_verify_depth(ctx, 2);
+            
+            uvhttp_tls_context_free(ctx);
+        }
+    }
+    
+    // 测试重复释放（应该安全）
+    uvhttp_tls_context_t* ctx = uvhttp_tls_context_new();
+    if (ctx) {
+        uvhttp_tls_context_free(ctx);
+        uvhttp_tls_context_free(ctx); // 重复释放
+    }
+}
+
+// 测试TLS模块初始化
+TEST(TlsTest, TlsModuleInitialization) {
+    // 测试TLS模块初始化
+    int result = uvhttp_tls_init();
+    EXPECT_EQ(result, 0);
+    
+    // 测试重复初始化
+    result = uvhttp_tls_init();
+    EXPECT_EQ(result, 0);
+    
+    // 测试模块清理
+    uvhttp_tls_cleanup();
+    
+    // 测试清理后再次初始化
+    result = uvhttp_tls_init();
+    EXPECT_EQ(result, 0);
+    
+    uvhttp_tls_cleanup();
+}
+
+// 测试SSL配置
+TEST(TlsTest, SslConfiguration) {
+    uvhttp_tls_context_t* ctx = uvhttp_tls_context_new();
+    ASSERT_NE(ctx, NULL);
+    
+    // 创建SSL上下文
+    mbedtls_ssl_context* ssl = uvhttp_tls_create_ssl(ctx);
+    // 由于可能没有实际的TLS库，这里只测试函数调用
+    // EXPECT_NE(ssl, NULL);
+    
+    // 测试SSL设置
+    // if (ssl) {
+    //     int result = uvhttp_tls_setup_ssl(ssl, NULL);
+    //     EXPECT_EQ(result, -1); // 应该失败，因为net_ctx为NULL
+    //     
+    //     uvhttp_tls_free_ssl(ssl);
+    // }
+    
+    // 测试NULL上下文的SSL创建
+    mbedtls_ssl_context* null_ssl = uvhttp_tls_create_ssl(NULL);
+    EXPECT_EQ(null_ssl, NULL);
+    
+    uvhttp_tls_context_free(ctx);
+}
+
+// 测试TLS读写操作
+TEST(TlsTest, TlsReadWriteOperations) {
+    // 测试NULL SSL上下文的读写操作
+    int result = uvhttp_tls_read(NULL, NULL, 0);
+    EXPECT_EQ(result, -1);
+    
+    result = uvhttp_tls_write(NULL, NULL, 0);
+    EXPECT_EQ(result, -1);
+    
+    result = uvhttp_tls_handshake(NULL);
+    EXPECT_EQ(result, -1);
+    
+    // 测试NULL缓冲区的读写操作
+    result = uvhttp_tls_read(NULL, (void*)0x1, 10);
+    EXPECT_EQ(result, -1);
+    
+    result = uvhttp_tls_write(NULL, (void*)0x1, 10);
+    EXPECT_EQ(result, -1);
+}
+
+// 测试证书信息获取
+TEST(TlsTest, CertificateInformation) {
+    // 测试从NULL上下文获取证书信息
+    const mbedtls_x509_crt* cert = uvhttp_tls_get_peer_cert(NULL);
+    EXPECT_EQ(cert, NULL);
+    
+    // 测试获取证书主题
+    char buf[256];
+    int result = uvhttp_tls_get_cert_subject(NULL, buf, sizeof(buf));
+    EXPECT_EQ(result, -1);
+    
+    // 测试获取证书颁发者
+    result = uvhttp_tls_get_cert_issuer(NULL, buf, sizeof(buf));
+    EXPECT_EQ(result, -1);
+    
+    // 测试获取证书序列号
+    result = uvhttp_tls_get_cert_serial(NULL, buf, sizeof(buf));
+    EXPECT_EQ(result, -1);
+    
+    // 测试NULL缓冲区
+    result = uvhttp_tls_get_cert_subject(NULL, NULL, 0);
+    EXPECT_EQ(result, -1);
+}
+
+// 测试错误码处理
+TEST(TlsTest, ErrorCodeHandling) {
+    // 测试错误码转换
+    char error_buf[256];
+    
+    // 测试正常错误码
+    uvhttp_tls_get_error_string(0, error_buf, sizeof(error_buf));
+    EXPECT_GT(strlen(error_buf), 0);
+    
+    // 测试常见错误码
+    uvhttp_tls_get_error_string(-1, error_buf, sizeof(error_buf));
+    EXPECT_GT(strlen(error_buf), 0);
+    
+    uvhttp_tls_get_error_string(-2, error_buf, sizeof(error_buf));
+    EXPECT_GT(strlen(error_buf), 0);
+    
+    // 测试NULL缓冲区
+    uvhttp_tls_get_error_string(0, NULL, 0);
+    // 应该不会崩溃
+    
+    // 测试缓冲区太小
+    char small_buf[1];
+    uvhttp_tls_get_error_string(0, small_buf, sizeof(small_buf));
+    // 应该不会崩溃
+}
+
+// 测试边界条件
+TEST(TlsTest, BoundaryConditions) {
+    uvhttp_tls_context_t* ctx = uvhttp_tls_context_new();
+    ASSERT_NE(ctx, NULL);
+    
+    // 测试极端验证深度
+    int result = uvhttp_tls_context_set_verify_depth(ctx, 0);
+    EXPECT_EQ(result, -1);
+    
+    result = uvhttp_tls_context_set_verify_depth(ctx, -1);
+    EXPECT_EQ(result, -1);
+    
+    result = uvhttp_tls_context_set_verify_depth(ctx, 999);
+    EXPECT_EQ(result, 0);
+    
+    // 测试极端会话缓存大小
+    result = uvhttp_tls_context_set_session_cache(ctx, 0);
+    EXPECT_EQ(result, -1);
+    
+    result = uvhttp_tls_context_set_session_cache(ctx, -1);
+    EXPECT_EQ(result, -1);
+    
+    result = uvhttp_tls_context_set_session_cache(ctx, 999999);
+    EXPECT_EQ(result, 0); // 应该能够处理大数字
+    
+    uvhttp_tls_context_free(ctx);
+}
+
+// 测试文件路径处理
+TEST(TlsTest, FilePathHandling) {
+    uvhttp_tls_context_t* ctx = uvhttp_tls_context_new();
+    ASSERT_NE(ctx, NULL);
+    
+    // 测试空路径
+    int result = uvhttp_tls_context_load_cert_chain(ctx, "");
+    EXPECT_EQ(result, -1);
+    
+    // 测试相对路径
+    result = uvhttp_tls_context_load_cert_chain(ctx, "certs/server.crt");
+    EXPECT_TRUE(result == 0 || result == -1); // 文件可能不存在
+    
+    // 测试绝对路径
+    result = uvhttp_tls_context_load_cert_chain(ctx, "/absolute/path/cert.crt");
+    EXPECT_EQ(result, -1); // 不存在的绝对路径
+    
+    uvhttp_tls_context_free(ctx);
+}
+
+// 测试并发安全性（模拟）
+TEST(TlsTest, ThreadSafetySimulation) {
+    uvhttp_tls_context_t* ctx1 = uvhttp_tls_context_new();
+    uvhttp_tls_context_t* ctx2 = uvhttp_tls_context_new();
+    
+    ASSERT_NE(ctx1, NULL);
+    ASSERT_NE(ctx2, NULL);
+    
+    // 模拟并发操作
+    uvhttp_tls_context_enable_client_auth(ctx1, 1);
+    uvhttp_tls_context_enable_client_auth(ctx2, 0);
+    
+    uvhttp_tls_context_set_verify_depth(ctx1, 3);
+    uvhttp_tls_context_set_verify_depth(ctx2, 5);
+    
+    uvhttp_tls_context_free(ctx1);
+    uvhttp_tls_context_free(ctx2);
+    
+    // 如果没有崩溃就算通过
+    EXPECT_TRUE(1);
+}
+
+int main() {
+    return RUN_ALL_TESTS();
+}

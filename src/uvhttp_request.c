@@ -1,8 +1,25 @@
-#include "uvhttp_request_simple.h"
+#include "uvhttp_request.h"
 #include "uvhttp_utils.h"
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <stdio.h>
+
+// Include the internal llhttp structure definition
+struct llhttp__internal_s {
+  llhttp_type_t type;
+  const llhttp_settings_t* settings;
+  llhttp_errno_t error;
+  const char* error_pos;
+  llhttp_method_t method;
+  llhttp_status_t status_code;
+  uint16_t http_major;
+  uint16_t http_minor;
+  uint8_t finish;
+  uint8_t flags;
+  uint8_t upgrade;
+  uint8_t lenient_flags;
+};
 
 int uvhttp_request_init(uvhttp_request_t* request, void* client) {
     if (!request || !client) {
@@ -14,10 +31,26 @@ int uvhttp_request_init(uvhttp_request_t* request, void* client) {
     request->client = client;
     request->method = UVHTTP_GET; // 默认方法
     
+    // 初始化HTTP解析器
+    request->parser_settings = malloc(sizeof(llhttp_settings_t));
+    if (!request->parser_settings) {
+        return -1;
+    }
+    llhttp_settings_init(request->parser_settings);
+    
+    request->parser = malloc(sizeof(struct llhttp__internal_s));
+    if (!request->parser) {
+        free(request->parser_settings);
+        return -1;
+    }
+    llhttp_init(request->parser, HTTP_REQUEST, request->parser_settings);
+    
     // 初始化body缓冲区
     request->body_capacity = 1024;
     request->body = malloc(request->body_capacity);
     if (!request->body) {
+        free(request->parser);
+        free(request->parser_settings);
         return -1;
     }
     request->body_length = 0;
@@ -28,6 +61,12 @@ int uvhttp_request_init(uvhttp_request_t* request, void* client) {
 void uvhttp_request_cleanup(uvhttp_request_t* request) {
     if (request->body) {
         free(request->body);
+    }
+    if (request->parser) {
+        free(request->parser);
+    }
+    if (request->parser_settings) {
+        free(request->parser_settings);
     }
 }
 

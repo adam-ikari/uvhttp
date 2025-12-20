@@ -15,6 +15,9 @@ int validate_header_value(const char* value, size_t length);
 int validate_url(const char* url, size_t length);
 int validate_method(const char* method, size_t length);
 
+// JSON工具函数
+char* uvhttp_escape_json_string(const char* str);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,6 +1,8 @@
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <strings.h>
 #include "uvhttp_common.h"
 
 // 安全的字符串复制函数 - 匹配头文件声明
@@ -106,4 +108,80 @@ int validate_method(const char* method, size_t length) {
     }
     
     return -1;
+}
+
+// JSON字符串转义函数
+char* uvhttp_escape_json_string(const char* str) {
+    if (!str) return NULL;
+    
+    size_t len = strlen(str);
+    size_t escaped_len = len;
+    
+    // 计算转义后的长度
+    for (size_t i = 0; i < len; i++) {
+        switch (str[i]) {
+            case '"':
+            case '\\':
+            case '\b':
+            case '\f':
+            case '\n':
+            case '\r':
+            case '\t':
+                escaped_len++; // 每个需要转义的字符增加1个字符
+                break;
+            default:
+                if (str[i] < 0x20) {
+                    escaped_len += 5; // 控制字符转义为 \uXXXX 格式
+                }
+                break;
+        }
+    }
+    
+    char* escaped = malloc(escaped_len + 1);
+    if (!escaped) return NULL;
+    
+    size_t j = 0;
+    for (size_t i = 0; i < len; i++) {
+        switch (str[i]) {
+            case '"':
+                escaped[j++] = '\\';
+                escaped[j++] = '"';
+                break;
+            case '\\':
+                escaped[j++] = '\\';
+                escaped[j++] = '\\';
+                break;
+            case '\b':
+                escaped[j++] = '\\';
+                escaped[j++] = 'b';
+                break;
+            case '\f':
+                escaped[j++] = '\\';
+                escaped[j++] = 'f';
+                break;
+            case '\n':
+                escaped[j++] = '\\';
+                escaped[j++] = 'n';
+                break;
+            case '\r':
+                escaped[j++] = '\\';
+                escaped[j++] = 'r';
+                break;
+            case '\t':
+                escaped[j++] = '\\';
+                escaped[j++] = 't';
+                break;
+            default:
+                if (str[i] < 0x20) {
+                    // 控制字符转义为 \uXXXX 格式
+                    j += snprintf(escaped + j, escaped_len - j + 1, "\\u%04x", (unsigned char)str[i]);
+                } else {
+                    escaped[j++] = str[i];
+                }
+                break;
+        }
+    }
+    
+    escaped[j] = '\0';
+    return escaped;
 }

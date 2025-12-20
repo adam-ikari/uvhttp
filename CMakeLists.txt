@@ -4,9 +4,28 @@ project(uvhttp VERSION 1.0.0 LANGUAGES C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# 内存分配器选择
+set(UVHTTP_ALLOCATOR "default" CACHE STRING "Memory allocator type")
+set_property(CACHE UVHTTP_ALLOCATOR PROPERTY STRINGS "default" "mimalloc" "custom")
+
+# 设置编译定义
+if(${UVHTTP_ALLOCATOR} STREQUAL "mimalloc")
+    add_definitions(-DUVHTTP_ALLOCATOR_TYPE=UVHTTP_ALLOCATOR_MIMALLOC)
+    add_definitions(-DUVHTTP_ENABLE_MIMALLOC=1)
+    include_directories(deps/mimalloc/include)
+    list(APPEND LIBS deps/mimalloc/build/libmimalloc.a)
+    message(STATUS "Using mimalloc allocator")
+elseif(${UVHTTP_ALLOCATOR} STREQUAL "custom")
+    add_definitions(-DUVHTTP_ALLOCATOR_TYPE=UVHTTP_ALLOCATOR_CUSTOM)
+    message(STATUS "Using custom allocator")
+else()
+    add_definitions(-DUVHTTP_ALLOCATOR_TYPE=UVHTTP_ALLOCATOR_DEFAULT)
+    message(STATUS "Using default allocator")
+endif()
+
 # 查找libuv - 手动设置路径
-set(UV_INCLUDE_DIRS deps/libuv/include)
-set(UV_LIBRARIES deps/libuv/.libs/libuv.a)
+set(UV_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include)
+set(UV_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/.libs/libuv.a)
 
 # 代码覆盖率配置
 option(ENABLE_COVERAGE "Enable code coverage" ON)
@@ -20,6 +39,8 @@ endif()
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/llhttp/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/mbedtls/include)
+include_directories(${UV_INCLUDE_DIRS})
 
 # Source files (只包含我们的代码，不依赖libuv)
 set(SOURCES
@@ -28,7 +49,13 @@ set(SOURCES
     src/uvhttp_response.c
     src/uvhttp_router.c
     src/uvhttp_connection.c
-    src/uvhttp_server_no_tls.c
+    src/uvhttp_server.c
+    # src/uvhttp_tls.c  # Temporarily disabled - requires mbedtls
+    src/uvhttp_json.c
+    src/uvhttp_middleware.c
+    src/uvhttp_allocator.c
+    # src/uvhttp_mimalloc.c  # Temporarily disabled - requires mimalloc
+    src/uvhttp_error.c
 )
 
 # Header files
@@ -39,8 +66,10 @@ set(HEADERS
     include/uvhttp_response.h
     include/uvhttp_router.h
     include/uvhttp_utils.h
-    include/uvhttp_tls.h
+    # include/uvhttp_tls.h  # Temporarily disabled - requires mbedtls
     include/uvhttp_connection.h
+    include/uvhttp_log.h
+    include/uvhttp_json.h
 )
 
 # Create library
@@ -62,7 +91,7 @@ add_executable(uvhttp_unit_tests
     tests/test_comprehensive.c
     deps/googletest/gtest_fixed.c
 )
-target_link_libraries(uvhttp_unit_tests uvhttp gcov m)
+target_link_libraries(uvhttp_unit_tests uvhttp llhttp ${UV_LIBRARIES} dl pthread gcov m)
 
 # 为测试添加覆盖率标志
 if(ENABLE_COVERAGE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -73,7 +102,7 @@ endif()
 
 # 性能测试
 add_executable(uvhttp_test tests/test_basic.c deps/googletest/gtest_fixed.c)
-target_link_libraries(uvhttp_test uvhttp gcov m)
+target_link_libraries(uvhttp_test uvhttp llhttp ${UV_LIBRARIES} dl pthread gcov m)
 
 # libuv集成测试 - 暂时注释
 # add_executable(uvhttp_libuv_tests 

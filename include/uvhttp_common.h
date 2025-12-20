@@ -22,6 +22,13 @@ int uvhttp_validate_header_value(const char* name, const char* value);
 #define MAX_HEADER_NAME_LEN 255
 #define MAX_HEADER_VALUE_LEN 4095
 
+// 前向声明
+typedef struct uvhttp_request uvhttp_request_t;
+typedef struct uvhttp_response uvhttp_response_t;
+
+// 请求处理器类型
+typedef int (*uvhttp_request_handler_t)(uvhttp_request_t* request, uvhttp_response_t* response);
+
 #ifdef __cplusplus
 }
 #endif

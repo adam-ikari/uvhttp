@@ -1,8 +1,8 @@
 #include "uvhttp_connection.h"
 #include "uvhttp_utils.h"
-#include "uvhttp_request_simple.h"
-#include "uvhttp_response_simple.h"
-#include "uvhttp_server_simple.h"
+#include "uvhttp_request.h"
+#include "uvhttp_response.h"
+#include "uvhttp_server.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -35,23 +35,13 @@ static int on_message_begin(llhttp_t* parser) {
 }
 
 static int on_url(llhttp_t* parser, const char* at, size_t length) {
-    (void)parser; // 避免未使用参数警告
     uvhttp_connection_t* conn = current_connection;
     if (!conn || !conn->request) {
         return -1;
     }
     
-    // 验证URL长度
-    if (length > 2048) {
-        return -1;
-    }
-    
-    // 复制URL到请求对象
-    if (conn->request->url) {
-        free(conn->request->url);
-    }
-    conn->request->url = malloc(length + 1);
-    if (!conn->request->url) {
+    // 确保URL长度不超过限制
+    if (length >= MAX_URL_LEN) {
         return -1;
     }
     

@@ -1,7 +1,8 @@
-#include "uvhttp_response_simple.h"
+#include "uvhttp_response.h"
 #include "uvhttp_common.h"
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <stdio.h>
 
 static const char* get_status_text(int status_code) {

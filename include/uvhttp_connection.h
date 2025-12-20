@@ -2,10 +2,11 @@
 #define UVHTTP_CONNECTION_H
 
 #include <stdlib.h>
+#include <stddef.h>
 #include "uvhttp_common.h"
-#include "uvhttp_request_simple.h"
-#include "uvhttp_response_simple.h"
-#include "uvhttp_server_simple.h"
+#include "uvhttp_request.h"
+#include "uvhttp_response.h"
+#include "uvhttp_server.h"
 #include "llhttp.h"
 
 #ifdef __cplusplus
@@ -29,8 +30,8 @@ struct uvhttp_connection {
     uvhttp_request_t* request;
     uvhttp_response_t* response;
     
-    // 网络连接 - 简化版本
-    void* tcp_handle;
+    // 网络连接
+    uv_tcp_t tcp_handle;
     
     // TLS相关 - 简化版本
     void* ssl;

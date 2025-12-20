@@ -1,0 +1,71 @@
+        -:    0:Source:/home/zhaodi-chen/project/uvhttp/src/uvhttp_request.c
+        -:    0:Graph:build/CMakeFiles/uvhttp.dir/src/uvhttp_request.c.gcno
+        -:    0:Data:build/CMakeFiles/uvhttp.dir/src/uvhttp_request.c.gcda
+        -:    0:Runs:4
+        -:    1:#include "uvhttp_request_simple.h"
+        -:    2:#include "uvhttp_utils.h"
+        -:    3:#include <stdlib.h>
+        -:    4:#include <string.h>
+        -:    5:#include <strings.h>
+        -:    6:#include <stdio.h>
+        -:    7:
+        3:    8:int uvhttp_request_init(uvhttp_request_t* request, void* client) {
+        3:    9:    if (!request || !client) {
+    #####:   10:        return -1;
+        -:   11:    }
+        -:   12:    
+        3:   13:    memset(request, 0, sizeof(uvhttp_request_t));
+        -:   14:    
+        3:   15:    request->client = client;
+        3:   16:    request->method = UVHTTP_GET; // 默认方法
+        -:   17:    
+        -:   18:    // 初始化body缓冲区
+        3:   19:    request->body_capacity = 1024;
+        3:   20:    request->body = malloc(request->body_capacity);
+        3:   21:    if (!request->body) {
+    #####:   22:        return -1;
+        -:   23:    }
+        3:   24:    request->body_length = 0;
+        -:   25:    
+        3:   26:    return 0;
+        -:   27:}
+        -:   28:
+        3:   29:void uvhttp_request_cleanup(uvhttp_request_t* request) {
+        3:   30:    if (request->body) {
+        3:   31:        free(request->body);
+        -:   32:    }
+        3:   33:}
+        -:   34:
+    #####:   35:const char* uvhttp_request_get_method(uvhttp_request_t* request) {
+    #####:   36:    switch (request->method) {
+    #####:   37:        case UVHTTP_GET: return "GET";
+    #####:   38:        case UVHTTP_POST: return "POST";
+    #####:   39:        case UVHTTP_PUT: return "PUT";
+    #####:   40:        case UVHTTP_DELETE: return "DELETE";
+    #####:   41:        case UVHTTP_HEAD: return "HEAD";
+    #####:   42:        case UVHTTP_OPTIONS: return "OPTIONS";
+    #####:   43:        case UVHTTP_PATCH: return "PATCH";
+    #####:   44:        default: return "UNKNOWN";
+        -:   45:    }
+        -:   46:}
+        -:   47:
+    #####:   48:const char* uvhttp_request_get_url(uvhttp_request_t* request) {
+    #####:   49:    return request->url;
+        -:   50:}
+        -:   51:
+    #####:   52:const char* uvhttp_request_get_header(uvhttp_request_t* request, const char* name) {
+    #####:   53:    for (size_t i = 0; i < request->header_count; i++) {
+    #####:   54:        if (strcasecmp(request->headers[i].name, name) == 0) {
+    #####:   55:            return request->headers[i].value;
+        -:   56:        }
+        -:   57:    }
+    #####:   58:    return NULL;
+        -:   59:}
+        -:   60:
+    #####:   61:const char* uvhttp_request_get_body(uvhttp_request_t* request) {
+    #####:   62:    return request->body;
+        -:   63:}
+        -:   64:
+    #####:   65:size_t uvhttp_request_get_body_length(uvhttp_request_t* request) {
+    #####:   66:    return request->body_length;
+        -:   67:}
