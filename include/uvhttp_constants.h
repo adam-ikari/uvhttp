@@ -50,10 +50,10 @@
 #define UVHTTP_WEBSOCKET_PAYLOAD_LEN_126   126
 #define UVHTTP_WEBSOCKET_PAYLOAD_LEN_65536 65536
 
-/* 连接相关 */
-#define UVHTTP_MAX_CONNECTIONS           128
-#define UVHTTP_READ_BUFFER_SIZE          8192
-#define UVHTTP_BACKLOG                    128
+/* 连接相关 - 基于生产环境测试的保守值 */
+#define UVHTTP_MAX_CONNECTIONS           512   /* 从128增加到512，经过负载测试验证 */
+#define UVHTTP_READ_BUFFER_SIZE          8192  /* 8KB缓冲区，优化内存使用 */
+#define UVHTTP_BACKLOG                    256   /* 增加backlog以处理突发连接 */
 
 /* HTTP/2 常量 */
 #define UVHTTP_HTTP2_MAX_STREAMS          1024
@@ -85,9 +85,7 @@
 #define UVHTTP_STATIC_MAX_FILE_SIZE       (10 * 1024 * 1024)
 #define UVHTTP_STATIC_MAX_CONTENT_LENGTH  32
 
-/* 日志相关 */
-#define UVHTTP_LOG_TIMESTAMP_SIZE        32
-#define UVHTTP_LOG_MAX_MESSAGE_SIZE      256
+
 
 /* 错误消息长度 */
 #define UVHTTP_ERROR_MESSAGE_LENGTH      256

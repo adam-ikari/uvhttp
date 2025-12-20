@@ -35,7 +35,7 @@ uvhttp/
 ├── examples/         # 示例代码
 │   ├── simple_server.c
 │   └── complete_example.c
-├── tests/            # 测试文件
+├── test/             # 测试文件
 │   ├── test_*.c      # 单元测试
 │   └── test_*_stress.c  # 压力测试
 ├── deps/             # 依赖库
@@ -43,7 +43,7 @@ uvhttp/
 │   ├── llhttp/       # HTTP 解析器
 │   ├── mbedtls/      # TLS 实现
 │   └── googletest/   # 测试框架
-├── certs/            # TLS 证书
+├── test/certs/       # TLS 证书
 ├── build/            # 构建输出目录
 └── docs/             # 文档
 ```
@@ -209,24 +209,7 @@ int main() {
 }
 ```
 
-### 初始化日志系统
 
-```c
-#include "uvhttp_logging.h"
-
-int main() {
-    // 初始化日志系统
-    uvhttp_log_init(UVHTTP_LOG_INFO);
-    
-    // 记录日志
-    uvhttp_log_info("Server starting...");
-    uvhttp_log_error("Failed to bind port: %d", port);
-    
-    // 清理
-    uvhttp_log_cleanup();
-    return 0;
-}
-```
 
 ## 性能指标
 

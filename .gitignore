@@ -1,8 +1,8 @@
 # 依赖库
-deps/
-llhttp/
-mbedtls/
 third_party/
+mbedtls/
+# deps目录下的子模块会被跟踪
+# 但其他文件会被忽略
 
 # 构建目录
 build/

@@ -26,22 +26,46 @@ int uvhttp_validate_header_value(const char* name, const char* value) {
     size_t value_len = strlen(value);
     
     // 检查长度限制
-    if (name_len > MAX_HEADER_NAME_LEN || value_len > MAX_HEADER_VALUE_LEN) {
+    if (name_len == 0 || name_len > MAX_HEADER_NAME_LEN || 
+        value_len == 0 || value_len > MAX_HEADER_VALUE_LEN) {
         return -1;
     }
     
-    // 验证header名称
+    // 验证header名称 - 防止HTTP响应分割攻击
     for (size_t i = 0; i < name_len; i++) {
         char c = name[i];
+        // 只允许字母、数字、连字符和下划线
         if (!isalnum(c) && c != '-' && c != '_') {
+            return -1;
+        }
+        // 防止换行符注入
+        if (c == '\r' || c == '\n') {
             return -1;
         }
     }
     
-    // 验证header值 - 检查控制字符
+    // 验证header值 - 检查控制字符和注入攻击
     for (size_t i = 0; i < value_len; i++) {
-        if (value[i] < 0x20 || value[i] == 0x7F) {
+        char c = value[i];
+        // 禁止控制字符（除了tab）
+        if ((c < 0x20 && c != '\t') || c == 0x7F) {
             return -1;
+        }
+        // 防止HTTP响应分割攻击
+        if (c == '\r' || c == '\n') {
+            return -1;
+        }
+    }
+    
+    // 检查常见的危险header名称
+    if (strcasecmp(name, "Location") == 0 || 
+        strcasecmp(name, "Set-Cookie") == 0 ||
+        strcasecmp(name, "Refresh") == 0) {
+        // 这些header需要额外的URL验证
+        for (size_t i = 0; i < value_len; i++) {
+            if (value[i] == '\r' || value[i] == '\n') {
+                return -1;
+            }
         }
     }
     

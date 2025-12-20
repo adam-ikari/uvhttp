@@ -1,5 +1,4 @@
 #include "uvhttp_middleware.h"
-#include "uvhttp_log.h"
 #include "uvhttp_json.h"
 #include "uvhttp_constants.h"
 #include <stdio.h>

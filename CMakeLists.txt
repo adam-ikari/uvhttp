@@ -101,7 +101,7 @@ set(HEADERS
     include/uvhttp_utils.h
     # include/uvhttp_tls.h  # Temporarily disabled - requires mbedtls
     include/uvhttp_connection.h
-    include/uvhttp_log.h
+    
     include/uvhttp_json.h
     include/uvhttp_websocket.h
 )
@@ -109,8 +109,20 @@ set(HEADERS
 # Create library
 add_library(uvhttp STATIC ${SOURCES} ${HEADERS})
 
-# Compiler flags
-target_compile_options(uvhttp PRIVATE -Wall -Wextra)
+# Compiler flags - 启用安全编译选项
+target_compile_options(uvhttp PRIVATE 
+    -Wall 
+    -Wextra 
+    -Werror
+    -Wformat=2
+    -Wformat-security
+    -Wnull-dereference
+    -Wstack-protector
+    -fstack-protector-strong
+    -D_FORTIFY_SOURCE=2
+    -fno-strict-overflow
+    -Wno-missing-field-initializers
+)
 
 # 链接mimalloc（如果启用）
 if(MIMALLOC_LIB)
@@ -150,8 +162,8 @@ else()
 endif()
 
 # 使用我们自己的llhttp实现
-add_library(llhttp STATIC third_party/llhttp/src/llhttp.c)
-target_include_directories(llhttp PUBLIC third_party/llhttp/include)
+add_library(llhttp STATIC deps/llhttp/src/llhttp.c)
+target_include_directories(llhttp PUBLIC deps/llhttp/include)
 
 # 使用修复的gtest框架
 add_library(gtest STATIC deps/googletest/gtest_fixed.c)
@@ -159,34 +171,34 @@ target_include_directories(gtest PUBLIC deps/googletest)
 
 # 单元测试可执行文件（只测试核心功能）
 add_executable(uvhttp_unit_tests 
-    tests/test_comprehensive.c
+    test/test_comprehensive.c
     deps/googletest/gtest_fixed.c
 )
 
 # 性能测试
-add_executable(uvhttp_test tests/test_basic.c deps/googletest/gtest_fixed.c)
+add_executable(uvhttp_test test/test_basic.c deps/googletest/gtest_fixed.c)
 
 # WebSocket测试
 add_executable(test_websocket_basic 
-    tests/test_websocket_basic.c
+    test/test_websocket_basic.c
     deps/googletest/gtest_fixed.c
 )
 
 # WebSocket集成测试
 add_executable(test_websocket_integration 
-    tests/test_websocket_integration.c
+    test/test_websocket_integration.c
     deps/googletest/gtest_fixed.c
 )
 
 # WebSocket压力测试
 add_executable(test_websocket_stress 
-    tests/test_websocket_stress.c
+    test/test_websocket_stress.c
     deps/googletest/gtest_fixed.c
 )
 
 # WebSocket性能测试
 add_executable(test_websocket_performance 
-    tests/test_websocket_performance.c
+    test/test_websocket_performance.c
     deps/googletest/gtest_fixed.c
 )
 
@@ -217,7 +229,7 @@ target_link_libraries(test_websocket_performance ${TEST_LIBS})
 
 # libuv集成测试 - 暂时注释
 # add_executable(uvhttp_libuv_tests 
-#     tests/test_libuv_integration.c
+#     test/test_libuv_integration.c
 #     deps/googletest/gtest_fixed.c
 # )
 # target_link_libraries(uvhttp_libuv_tests uvhttp ${UV_LIBRARIES} gcov m)

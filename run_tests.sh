@@ -107,7 +107,7 @@ generate_coverage() {
             lcov --remove coverage.info '/usr/*' --output-file coverage.info 2>/dev/null
             
             # 过滤测试文件
-            lcov --remove coverage.info 'tests/*' --output-file coverage.info 2>/dev/null
+            lcov --remove coverage.info 'test/*' --output-file coverage.info 2>/dev/null
             
             # 显示覆盖率摘要
             echo "=== 覆盖率摘要 ==="

@@ -58,7 +58,7 @@ int uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client);
 ```c
 int result = some_function();
 if (result != UVHTTP_ERROR_NONE) {
-    uvhttp_log_error("Function failed: %s", uvhttp_error_string(result));
+    fprintf(stderr, "Function failed: %s\n", uvhttp_error_string(result));
     return result;
 }
 ```

@@ -40,10 +40,9 @@ void http_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     if (upgrade && strcmp(upgrade, "websocket") == 0) {
         /* 配置mTLS */
         uvhttp_websocket_mtls_config_t mtls_config = {
-            .server_cert_path = "certs/server.crt",
-            .server_key_path = "certs/server.key",
-            .ca_cert_path = "certs/ca.crt",
-            .require_client_cert = 1,
+            .server_cert_path = "test/certs/server.crt",
+                .server_key_path = "test/certs/server.key",
+                .ca_cert_path = "test/certs/ca.crt",            .require_client_cert = 1,
             .verify_depth = 3
         };
         

@@ -37,7 +37,7 @@ include/
 src/
 └── uvhttp_websocket_wrapper.c   # 包装层实现
 
-tests/
+test/
 ├── test_websocket_basic.c       # 基础 API 测试
 └── test_websocket_integration.c # 集成测试
 
@@ -144,11 +144,11 @@ if (ws) {
 
 ```c
 uvhttp_websocket_mtls_config_t mtls_config = {
-    .server_cert_path = "certs/server.crt",
-    .server_key_path = "certs/server.key",
-    .ca_cert_path = "certs/ca.crt",
-    .client_cert_path = "certs/client.crt",
-    .client_key_path = "certs/client.key",
+    .server_cert_path = "test/certs/server.crt",
+    .server_key_path = "test/certs/server.key",
+    .ca_cert_path = "test/certs/ca.crt",
+    .client_cert_path = "test/certs/client.crt",
+    .client_key_path = "test/certs/client.key",
     .require_client_cert = 1,
     .verify_depth = 3,
     .cipher_list = "HIGH:!aNULL:!MD5"

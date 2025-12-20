@@ -602,9 +602,6 @@ uvhttp_websocket_error_t uvhttp_websocket_verify_peer_cert(uvhttp_websocket_t* w
     }
     
     /* 简化的证书验证 - 检查基本有效性 */
-    if (!cert) {
-        return UVHTTP_WEBSOCKET_ERROR_CERT_VERIFY;
-    }
     
     /* 释放证书资源 */
     X509_free(cert);

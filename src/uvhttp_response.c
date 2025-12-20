@@ -196,53 +196,72 @@ void uvhttp_response_send(uvhttp_response_t* response) {
         return;
     }
     
-    // 计算所需的headers大小
+    // 计算所需的headers大小 - 增加安全边界
     size_t headers_size = UVHTTP_INITIAL_BUFFER_SIZE;
     char* temp_buffer = uvhttp_malloc(headers_size);
     if (!temp_buffer) {
+        fprintf(stderr, "Failed to allocate temporary buffer\n");
         return;
     }
-    
-    
     
     // 第一次尝试构建headers以获取实际大小
     size_t headers_length = headers_size;
-    build_response_headers(response, temp_buffer, &headers_length);
+    int build_result = build_response_headers(response, temp_buffer, &headers_length);
     
-    // 如果需要更多空间，重新分配
-    if (headers_length >= headers_size) {
-        size_t new_size = headers_length + 1;
-        char* new_buffer = uvhttp_malloc(new_size);
-        if (!new_buffer) {
+    // 检查构建结果和缓冲区大小
+    if (build_result != 0 || headers_length >= headers_size - 1) {
+        // 需要更大的缓冲区 - 添加安全边界
+        size_t new_size = headers_length + 256; // 添加256字节安全边界
+        if (new_size > UVHTTP_MAX_BODY_SIZE) { // 防止过大分配
+            fprintf(stderr, "Response headers too large: %zu bytes\n", headers_length);
             uvhttp_free(temp_buffer);
             return;
         }
-        // 复制原有数据到新缓冲区
-        memcpy(new_buffer, temp_buffer, headers_size);
+        
+        char* new_buffer = uvhttp_malloc(new_size);
+        if (!new_buffer) {
+            fprintf(stderr, "Failed to allocate larger buffer\n");
+            uvhttp_free(temp_buffer);
+            return;
+        }
+        
+        // 重新构建headers
+        headers_length = new_size;
+        build_result = build_response_headers(response, new_buffer, &headers_length);
+        if (build_result != 0) {
+            fprintf(stderr, "Failed to build response headers\n");
+            uvhttp_free(temp_buffer);
+            uvhttp_free(new_buffer);
+            return;
+        }
+        
         uvhttp_free(temp_buffer);
         temp_buffer = new_buffer;
         headers_size = new_size;
-        
-        // 重新构建headers
-        headers_length = headers_size;
-        build_response_headers(response, temp_buffer, &headers_length);
     }
     
-    // 计算总大小并分配最终缓冲区
+    // 验证总大小不会过大
     size_t total_size = headers_length + response->body_length;
-    char* response_data = uvhttp_malloc(total_size);
-    if (!response_data) {
-        uvhttp_free(temp_buffer); // temp_buffer需要释放
+    if (total_size > UVHTTP_MAX_BODY_SIZE * 2) { // 限制总响应大小
+        fprintf(stderr, "Response too large: %zu bytes\n", total_size);
+        uvhttp_free(temp_buffer);
         return;
     }
     
-    // 确保在所有错误路径上清理资源
-    int success = 0;
+    // 分配最终缓冲区
+    char* response_data = uvhttp_malloc(total_size);
+    if (!response_data) {
+        fprintf(stderr, "Failed to allocate response buffer\n");
+        uvhttp_free(temp_buffer);
+        return;
+    }
     
-    // 复制headers
-    memcpy(response_data, temp_buffer, headers_length);
+    // 安全复制headers
+    if (headers_length > 0) {
+        memcpy(response_data, temp_buffer, headers_length);
+    }
     
-    // 复制body
+    // 安全复制body
     if (response->body && response->body_length > 0) {
         memcpy(response_data + headers_length, response->body, response->body_length);
     }
@@ -252,16 +271,10 @@ void uvhttp_response_send(uvhttp_response_t* response) {
     printf("Sending response (%zu bytes):\n%.*s", total_size, 
            (int)headers_length, response_data);
     
-    success = 1; // 标记成功
-    
-    // 清理临时缓冲区
+    // 清理所有分配的资源
     uvhttp_free(temp_buffer);
-    if (response_data) {
-        uvhttp_free(response_data);
-    }
+    uvhttp_free(response_data);
     
-    // 只有在成功时才标记响应已完成
-    if (success) {
-        response->finished = 1;
-    }
+    // 标记响应已完成
+    response->finished = 1;
 }

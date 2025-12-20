@@ -14,6 +14,12 @@
 
 static void on_connection(uv_stream_t* server_handle, int status) {
     if (status < 0) {
+        fprintf(stderr, "Connection error: %s\n", uv_strerror(status));
+        return;
+    }
+    
+    if (!server_handle || !server_handle->data) {
+        fprintf(stderr, "Invalid server handle or data\n");
         return;
     }
     
@@ -21,13 +27,21 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     
     /* 检查连接数限制 */
     if (server->active_connections >= MAX_CONNECTIONS) {
+        fprintf(stderr, "Connection limit reached: %d/%d\n", 
+                server->active_connections, MAX_CONNECTIONS);
+        
         /* 创建临时连接以发送503响应 */
         uv_tcp_t* temp_client = uvhttp_malloc(sizeof(uv_tcp_t));
         if (!temp_client) {
+            fprintf(stderr, "Failed to allocate temporary client\n");
             return;
         }
         
-        uv_tcp_init(server->loop, temp_client);
+        if (uv_tcp_init(server->loop, temp_client) != 0) {
+            fprintf(stderr, "Failed to initialize temporary client\n");
+            uvhttp_free(temp_client);
+            return;
+        }
         
         if (uv_accept(server_handle, (uv_stream_t*)temp_client) == 0) {
             /* 发送HTTP 503响应 */
@@ -42,12 +56,18 @@ static void on_connection(uv_stream_t* server_handle, int status) {
             uv_write_t* write_req = uvhttp_malloc(sizeof(uv_write_t));
             if (write_req) {
                 uv_buf_t buf = uv_buf_init((char*)response_503, strlen(response_503));
-                uv_write(write_req, (uv_stream_t*)temp_client, &buf, 1, NULL);
+                int write_result = uv_write(write_req, (uv_stream_t*)temp_client, &buf, 1, NULL);
+                if (write_result < 0) {
+                    fprintf(stderr, "Failed to send 503 response: %s\n", uv_strerror(write_result));
+                    uvhttp_free(write_req);
+                }
             }
+        } else {
+            fprintf(stderr, "Failed to accept temporary connection\n");
         }
         
         /* 关闭临时连接 */
-        uv_close((uv_handle_t*)temp_client, (uv_close_cb)free);
+        uv_close((uv_handle_t*)temp_client, (uv_close_cb)uvhttp_free);
         return;
     }
     

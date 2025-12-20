@@ -60,10 +60,9 @@ int main() {
     
     /* 配置 mTLS（可选） */
     uvhttp_websocket_mtls_config_t mtls_config = {
-        .server_cert_path = "certs/server.crt",
-        .server_key_path = "certs/server.key",
-        .ca_cert_path = "certs/ca.crt",
-        .require_client_cert = 0,
+        .server_cert_path = "test/certs/server.crt",
+            .server_key_path = "test/certs/server.key",
+            .ca_cert_path = "test/certs/ca.crt",        .require_client_cert = 0,
         .verify_depth = 3
     };
     

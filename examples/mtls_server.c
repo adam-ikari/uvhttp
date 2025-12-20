@@ -46,18 +46,18 @@ int main() {
     }
     
     // 加载服务器证书和私钥
-    if (uvhttp_tls_context_load_cert_chain(tls_ctx, "certs/server.crt") != 0) {
+    if (uvhttp_tls_context_load_cert_chain(tls_ctx, "test/certs/server.crt") != 0) {
         fprintf(stderr, "Failed to load server certificate\n");
         return 1;
     }
     
-    if (uvhttp_tls_context_load_private_key(tls_ctx, "certs/server.key") != 0) {
+    if (uvhttp_tls_context_load_private_key(tls_ctx, "test/certs/server.key") != 0) {
         fprintf(stderr, "Failed to load server private key\n");
         return 1;
     }
     
     // 加载CA证书用于验证客户端证书
-    if (uvhttp_tls_context_load_ca_file(tls_ctx, "certs/ca.crt") != 0) {
+    if (uvhttp_tls_context_load_ca_file(tls_ctx, "test/certs/ca.crt") != 0) {
         fprintf(stderr, "Failed to load CA certificate\n");
         return 1;
     }
