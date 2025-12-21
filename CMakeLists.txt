@@ -63,6 +63,14 @@ set(LIBUV_BUILD_SHARED OFF CACHE BOOL "Build static libuv" FORCE)
 add_subdirectory(deps/libuv)
 set(UV_LIBRARIES uv_a)
 
+# 添加mbedtls作为子目录
+set(ENABLE_TESTING OFF CACHE BOOL "Disable mbedtls tests" FORCE)
+set(ENABLE_PROGRAMS OFF CACHE BOOL "Disable mbedtls programs" FORCE)
+add_subdirectory(deps/mbedtls)
+set(MBEDTLS_LIBRARIES mbedtls mbedx509 mbedcrypto)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/library)
+
 # 代码覆盖率配置
 option(ENABLE_COVERAGE "Enable code coverage" ON)
 if(ENABLE_COVERAGE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -74,9 +82,8 @@ endif()
 
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/src)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/build)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/mbedtls/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/libwebsockets/include)
 include_directories(${CMAKE_BINARY_DIR}/deps/libwebsockets/include)  # 添加构建目录
 include_directories(${UV_INCLUDE_DIRS})
@@ -89,7 +96,7 @@ set(SOURCES
     src/uvhttp_router.c
     src/uvhttp_connection.c
     src/uvhttp_server.c
-    # src/uvhttp_tls.c  # Temporarily disabled - requires mbedtls
+    src/uvhttp_tls_real.c  # 启用TLS支持（真实OpenSSL实现）
     src/uvhttp_json.c
     src/uvhttp_middleware.c
     src/uvhttp_allocator.c
@@ -106,7 +113,7 @@ set(HEADERS
     include/uvhttp_response.h
     include/uvhttp_router.h
     include/uvhttp_utils.h
-    # include/uvhttp_tls.h  # Temporarily disabled - requires mbedtls
+    include/uvhttp_tls.h  # 启用TLS头文件
     include/uvhttp_connection.h
     
     include/uvhttp_json.h
@@ -169,8 +176,13 @@ else()
 endif()
 
 # 使用我们自己的llhttp实现
-add_library(llhttp STATIC deps/llhttp/src/native/api.c)
-target_include_directories(llhttp PUBLIC deps/llhttp/src deps/llhttp/src/native)
+set(LLHTTP_SOURCES
+    deps/cllhttp/llhttp.c
+    deps/cllhttp/api.c
+)
+
+# 创建 llhttp 静态库
+add_library(llhttp STATIC ${LLHTTP_SOURCES})
 
 # 使用 googletest 作为子目录
 add_subdirectory(deps/googletest)
@@ -208,7 +220,7 @@ add_executable(uvhttp_test test/simple_test.c)
 # )
 
 # 设置链接库
-set(TEST_LIBS uvhttp llhttp websockets gtest gtest_main ${UV_LIBRARIES} dl pthread m)
+set(TEST_LIBS uvhttp llhttp websockets gtest gtest_main ${UV_LIBRARIES} dl pthread m ssl crypto)
 if(APPLE)
     list(APPEND TEST_LIBS /opt/homebrew/opt/openssl@3/lib/libssl.dylib /opt/homebrew/opt/openssl@3/lib/libcrypto.dylib)
 else()
@@ -220,12 +232,36 @@ link_directories(${CMAKE_BINARY_DIR}/deps/libwebsockets/lib)
 
 # 链接mimalloc（如果启用）
 if(MIMALLOC_LIB)
+    target_link_libraries(uvhttp PRIVATE ${MIMALLOC_LIB})
     list(APPEND TEST_LIBS ${MIMALLOC_LIB})
 endif()
+
+# 链接OpenSSL库
+target_link_libraries(uvhttp PRIVATE ssl crypto)
 
 # WebSocket 示例
 add_executable(websocket_example examples/websocket_example.c)
 target_link_libraries(websocket_example ${TEST_LIBS})
+
+# Hello World 示例
+add_executable(helloworld examples/helloworld.c)
+target_link_libraries(helloworld uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
+
+# TLS测试示例
+add_executable(tls_test examples/tls_test.c)
+target_link_libraries(tls_test uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
+
+# 真实TLS测试示例
+add_executable(tls_real_test examples/tls_real_test.c)
+target_link_libraries(tls_real_test uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
+
+# 真实TLS服务器示例
+add_executable(tls_server_real examples/tls_server_real.c)
+target_link_libraries(tls_server_real uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
+
+# TLS功能测试程序
+add_executable(tls_feature_test examples/tls_feature_test.c)
+target_link_libraries(tls_feature_test uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
 
 
 
