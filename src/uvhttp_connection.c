@@ -20,9 +20,8 @@ static const char* state_strings[] = {
 
 // HTTP解析器回调函数
 static int on_message_begin(llhttp_t* parser) {
-    // 直接从解析器内存布局获取data字段
-    void** parser_data = (void**)((char*)parser + sizeof(int) * UVHTTP_PARSER_FIELD_COUNT);
-    uvhttp_connection_t* conn = (uvhttp_connection_t*)*parser_data;
+    // 使用官方API获取data字段
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
         return -1;
     }
@@ -35,9 +34,8 @@ static int on_message_begin(llhttp_t* parser) {
 }
 
 static int on_url(llhttp_t* parser, const char* at, size_t length) {
-    // 直接从解析器内存布局获取data字段
-    void** parser_data = (void**)((char*)parser + sizeof(int) * 8); // 跳过前8个int字段
-    uvhttp_connection_t* conn = (uvhttp_connection_t*)*parser_data;
+    // 使用官方API获取data字段
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
         return -1;
     }
@@ -54,9 +52,8 @@ static int on_url(llhttp_t* parser, const char* at, size_t length) {
 }
 
 static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
-    // 直接从解析器内存布局获取data字段
-    void** parser_data = (void**)((char*)parser + sizeof(int) * 8); // 跳过前8个int字段
-    uvhttp_connection_t* conn = (uvhttp_connection_t*)*parser_data;
+    // 使用官方API获取data字段
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
         return -1;
     }
@@ -80,9 +77,8 @@ static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
 }
 
 static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
-    // 直接从解析器内存布局获取data字段
-    void** parser_data = (void**)((char*)parser + sizeof(int) * 8); // 跳过前8个int字段
-    uvhttp_connection_t* conn = (uvhttp_connection_t*)*parser_data;
+    // 使用官方API获取data字段
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
         return -1;
     }
@@ -107,9 +103,8 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
 }
 
 static int on_body(llhttp_t* parser, const char* at, size_t length) {
-    // 直接从解析器内存布局获取data字段
-    void** parser_data = (void**)((char*)parser + sizeof(int) * 8); // 跳过前8个int字段
-    uvhttp_connection_t* conn = (uvhttp_connection_t*)*parser_data;
+    // 使用官方API获取data字段
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
         return -1;
     }
@@ -135,9 +130,8 @@ static int on_body(llhttp_t* parser, const char* at, size_t length) {
 }
 
 static int on_message_complete(llhttp_t* parser) {
-    // 直接从解析器内存布局获取data字段
-    void** parser_data = (void**)((char*)parser + sizeof(int) * 8); // 跳过前8个int字段
-    uvhttp_connection_t* conn = (uvhttp_connection_t*)*parser_data;
+    // 使用官方API获取data字段
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
         return -1;
     }
@@ -183,8 +177,8 @@ static int init_http_parser(uvhttp_connection_t* conn) {
     
     // 初始化解析器并设置连接上下文
     llhttp_init((llhttp_t*)conn->http_parser, HTTP_REQUEST, conn->parser_settings);
-    void** parser_data = (void**)((char*)conn->http_parser + sizeof(int) * 8); // 跳过前8个int字段
-    *parser_data = conn;
+    // 设置解析器数据指针 - 使用官方API
+    conn->http_parser->data = conn;
     
     return 0;
 }
