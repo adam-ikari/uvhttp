@@ -249,9 +249,15 @@ target_link_libraries(uvhttp PRIVATE llhttp)
 # 使用 googletest 作为子目录
 add_subdirectory(deps/googletest)
 
-# 单元测试可执行文件（只测试核心功能）
+# 单元测试可执行文件
 add_executable(uvhttp_unit_tests 
-    test/simple_unit_test.c
+    test/uvhttp_test_framework.c
+    test/test_utils.c
+    test/test_response.c
+    test/test_request.c
+    test/test_router.c
+    test/test_main.c
+    ${SOURCES}
 )
 
 # 性能测试
