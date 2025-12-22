@@ -4,7 +4,7 @@
 
 ### 1.1 C 语言规范
 
-- **标准**：使用 C11 标准
+- **标准**：uvhttp 库源代码使用 C11 标准, 测试代码使用 C++17，实例代码包含 C 和 CPP 两个版本
 - **缩进**：使用 4 个空格，不使用 Tab
 - **大括号**：K&R 风格
 - **行长度**：最大 120 字符
@@ -13,6 +13,7 @@
   - 变量：`snake_case`（如 `request_count`）
   - 常量：`UPPER_SNAKE_CASE`（如 `UVHTTP_MAX_URL_SIZE`）
   - 类型定义：`snake_case_t`（如 `uvhttp_request_t`）
+- **代码风格**：uvhttp 库源代码使用 Linux 内核代码风格，测试代码和实例代码使用 google cpp 风格
 
 ### 1.2 头文件组织
 
@@ -138,7 +139,7 @@ test_<module>_<feature>.c
 
 ### 5.3 提交示例
 
-```
+```text
 feat(websocket): 添加 WebSocket 连接管理
 
 - 实现连接池机制
@@ -255,7 +256,6 @@ target_compile_options(${TARGET} PRIVATE -Wall -Wextra -Werror)
 
 ### 12.1 第三方库
 
-- 最小化外部依赖
 - 使用稳定版本
 - 文档化依赖关系
 
@@ -295,7 +295,7 @@ target_compile_options(${TARGET} PRIVATE -Wall -Wextra -Werror)
 ### 14.2 常见问题
 
 - 内存泄漏：使用 RAII 模式
-- 竞态条件：使用适当的同步
+- 竞态条件：使用单线程模型避免竞争，并确保在多线程环境中多实例无竞争
 - 性能问题：使用性能分析工具
 
 ## 15. 持续改进
