@@ -22,21 +22,6 @@ typedef enum {
     UVHTTP_ALLOCATOR_CUSTOM      /* 自定义 */
 } uvhttp_allocator_type_t;
 
-/* 分配器接口 */
-typedef struct uvhttp_allocator {
-    void* (*malloc)(size_t size);
-    void* (*realloc)(void* ptr, size_t size);
-    void (*free)(void* ptr);
-    void* (*calloc)(size_t nmemb, size_t size);
-    void* data;
-    uvhttp_allocator_type_t type;
-} uvhttp_allocator_t;
-
-/* 确保 UVHTTP_ALLOCATOR_TYPE 总是有定义 */
-#ifndef UVHTTP_ALLOCATOR_TYPE
-#define UVHTTP_ALLOCATOR_TYPE 0  /* 默认为系统分配器 */
-#endif
-
 /* 编译宏控制的分配器选择 */
 #if UVHTTP_ALLOCATOR_TYPE == 1  /* UVHTTP_ALLOCATOR_MIMALLOC */
 
@@ -56,16 +41,13 @@ typedef struct uvhttp_allocator {
 
 #elif UVHTTP_ALLOCATOR_TYPE == 2  /* UVHTTP_ALLOCATOR_CUSTOM */
 
-    /* 自定义分配器 - 运行时选择 */
-    extern uvhttp_allocator_t* uvhttp_custom_allocator;
+    /* 自定义分配器外部函数声明 - 用户需要在外部实现 */
+    extern void* uvhttp_custom_malloc(size_t size);
+    extern void* uvhttp_custom_realloc(void* ptr, size_t size);
+    extern void  uvhttp_custom_free(void* ptr);
+    extern void* uvhttp_custom_calloc(size_t nmemb, size_t size);
 
-    /* 自定义分配器函数 */
-    void* uvhttp_custom_malloc(size_t size);
-    void* uvhttp_custom_realloc(void* ptr, size_t size);
-    void  uvhttp_custom_free(void* ptr);
-    void* uvhttp_custom_calloc(size_t nmemb, size_t size);
-
-    /* 映射到自定义分配器函数 */
+    /* 映射到自定义分配器外部函数 */
     #define UVHTTP_MALLOC(size) uvhttp_custom_malloc(size)
     #define UVHTTP_REALLOC(ptr, size) uvhttp_custom_realloc(ptr, size)
     #define UVHTTP_FREE(ptr) uvhttp_custom_free(ptr)
@@ -82,14 +64,6 @@ typedef struct uvhttp_allocator {
 #endif
 
 /* 兼容性函数声明 */
-#if UVHTTP_ALLOCATOR_TYPE == 2  /* UVHTTP_ALLOCATOR_CUSTOM */
-/* 自定义分配器需要运行时函数 */
-void* uvhttp_malloc(size_t size);
-void* uvhttp_realloc(void* ptr, size_t size);
-void uvhttp_free(void* ptr);
-void* uvhttp_calloc(size_t nmemb, size_t size);
-#else
-/* 其他分配器类型提供内联函数实现 */
 static inline void* uvhttp_malloc(size_t size) {
     return UVHTTP_MALLOC(size);
 }
@@ -105,43 +79,6 @@ static inline void uvhttp_free(void* ptr) {
 static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
     return UVHTTP_CALLOC(nmemb, size);
 }
-#endif
-
-/* 运行时分配器获取函数（仅用于自定义分配器） */
-#if UVHTTP_ALLOCATOR_TYPE == 2  /* UVHTTP_ALLOCATOR_CUSTOM */
-uvhttp_allocator_t* uvhttp_allocator_get(void);
-void uvhttp_allocator_set(uvhttp_allocator_t* allocator);
-#else
-/* 编译时确定的分配器不需要运行时查询 */
-static inline uvhttp_allocator_t* uvhttp_allocator_get(void) {
-    static uvhttp_allocator_t allocator = {0};
-    static int initialized = 0;
-    
-    if (!initialized) {
-#if UVHTTP_ALLOCATOR_TYPE == 1  /* UVHTTP_ALLOCATOR_MIMALLOC */
-        allocator.malloc = mi_malloc;
-        allocator.realloc = mi_realloc;
-        allocator.free = mi_free;
-        allocator.calloc = mi_calloc;
-#elif UVHTTP_ALLOCATOR_TYPE == 2  /* UVHTTP_ALLOCATOR_CUSTOM */
-        allocator.malloc = uvhttp_custom_malloc;
-        allocator.realloc = uvhttp_custom_realloc;
-        allocator.free = uvhttp_custom_free;
-        allocator.calloc = uvhttp_custom_calloc;
-#else
-        allocator.malloc = malloc;
-        allocator.realloc = realloc;
-        allocator.free = free;
-        allocator.calloc = calloc;
-#endif
-        allocator.data = NULL;
-        allocator.type = UVHTTP_ALLOCATOR_TYPE;
-        initialized = 1;
-    }
-    
-    return &allocator;
-}
-#endif
 
 /* 便捷宏 */
 #define uvhttp_alloc(size) UVHTTP_MALLOC(size)
@@ -156,8 +93,64 @@ static inline uvhttp_allocator_t* uvhttp_allocator_get(void) {
 #define UVHTTP_ALLOCATOR_NAME "default"
 #endif
 
+/* 自定义分配器函数需要用户在外部实现 */
+
 /* 获取当前分配器名称 */
-const char* uvhttp_allocator_name(void);
+static inline const char* uvhttp_allocator_name(void) {
+    return UVHTTP_ALLOCATOR_NAME;
+}
+
+/*
+ * ============================================================================
+ * 内存分配器使用说明
+ * ============================================================================
+ * 
+ * 本内存分配器通过编译时宏控制，支持三种分配器类型：
+ * 
+ * 1. 系统默认分配器（UVHTTP_ALLOCATOR_TYPE=0）
+ *    - 直接使用标准库的 malloc/free
+ *    - 无额外依赖，性能稳定
+ *    - 适用于大多数场景
+ * 
+ * 2. mimalloc分配器（UVHTTP_ALLOCATOR_TYPE=1）
+ *    - 使用高性能的mimalloc库
+ *    - 更好的多线程性能和内存碎片管理
+ *    - 适用于高并发场景
+ *    - 编译时需要链接mimalloc库
+ * 
+ * 3. 自定义分配器（UVHTTP_ALLOCATOR_TYPE=2）
+ *    - 用户通过外部链接实现自定义分配策略
+ *    - 适用于特殊内存管理需求
+ *    - 需要在外部实现4个分配函数
+ *    - 支持内存池、对象池等高级策略
+ * 
+ * 使用方法：
+ * 
+ * 编译时指定分配器类型：
+ *   cmake -DUVHTTP_ALLOCATOR_TYPE=0 ..  # 默认分配器
+ *   cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..  # mimalloc分配器
+ *   cmake -DUVHTTP_ALLOCATOR_TYPE=2 ..  # 自定义分配器
+ * 
+ * 代码中使用：
+ *   void* ptr = UVHTTP_MALLOC(size);     // 分配内存
+ *   ptr = UVHTTP_REALLOC(ptr, new_size); // 重新分配
+ *   UVHTTP_FREE(ptr);                    // 释放内存
+ *   ptr = UVHTTP_CALLOC(count, size);   // 分配并初始化
+ * 
+ * 或者使用内联函数：
+ *   void* ptr = uvhttp_malloc(size);
+ *   ptr = uvhttp_realloc(ptr, new_size);
+ *   uvhttp_free(ptr);
+ *   ptr = uvhttp_calloc(count, size);
+ * 
+ * 性能建议：
+ * - 默认场景使用系统分配器
+ * - 高并发多线程场景使用mimalloc
+ * - 特殊需求时可实现自定义分配器
+ * - 所有分配操作都有统一的错误返回值检查
+ * 
+ * ============================================================================
+ */
 
 #ifdef __cplusplus
 }

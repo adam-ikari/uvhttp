@@ -31,6 +31,8 @@
 #define UVHTTP_MAX_HEADERS                64
 #define UVHTTP_MAX_HEADER_NAME_SIZE       256
 #define UVHTTP_MAX_HEADER_VALUE_SIZE     1024
+#define UVHTTP_MAX_HEADER_NAME_LENGTH     256
+#define UVHTTP_MAX_HEADER_VALUE_LENGTH    1024
 #define UVHTTP_MAX_URL_SIZE              2048
 #define UVHTTP_MAX_METHOD_SIZE           16
 #define UVHTTP_MAX_PATH_SIZE             1024
@@ -55,10 +57,7 @@
 #define UVHTTP_READ_BUFFER_SIZE          8192  /* 8KB缓冲区，优化内存使用 */
 #define UVHTTP_BACKLOG                    256   /* 增加backlog以处理突发连接 */
 
-/* HTTP/2 常量 */
-#define UVHTTP_HTTP2_MAX_STREAMS          1024
-#define UVHTTP_HTTP2_INITIAL_STREAM_ID    1
-#define UVHTTP_HTTP2_STREAM_ID_INCREMENT   2
+
 
 /* TLS 相关 */
 #define UVHTTP_TLS_VERIFY_DEPTH           1
@@ -68,6 +67,7 @@
 #define UVHTTP_TLS_CERT_BUFFER_SIZE       256
 #define UVHTTP_TLS_CN_BUFFER_SIZE         256
 #define UVHTTP_TLS_SAN_BUFFER_SIZE       256
+#define UVHTTP_TLS_PATH_MAX_SIZE          256
 
 /* JSON 相关 */
 #define UVHTTP_JSON_ESCAPE_BUFFER_SIZE    512

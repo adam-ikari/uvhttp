@@ -32,10 +32,12 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer, si
     pos += snprintf(buffer + pos, *length - pos, UVHTTP_VERSION_1_1 " %d %s\r\n", 
                    response->status_code, get_status_text(response->status_code));
     
-    // 默认headers
+    // 默认headers检查
     int has_content_type = 0;
     int has_content_length = 0;
+    int has_connection = 0;
     
+    // 遍历现有headers
     for (size_t i = 0; i < response->header_count; i++) {
         pos += snprintf(buffer + pos, *length - pos, "%s: %s\r\n",
                        response->headers[i].name, response->headers[i].value);
@@ -46,6 +48,9 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer, si
         if (strcasecmp(response->headers[i].name, "Content-Length") == 0) {
             has_content_length = 1;
         }
+        if (strcasecmp(response->headers[i].name, "Connection") == 0) {
+            has_connection = 1;
+        }
     }
     
     // 添加默认Content-Type
@@ -53,10 +58,20 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer, si
         pos += snprintf(buffer + pos, *length - pos, "Content-Type: text/plain\r\n");
     }
     
-    // 添加Content-Length
+    // HTTP/1.1优化：添加Content-Length或Connection头
     if (!has_content_length && response->body) {
         pos += snprintf(buffer + pos, *length - pos, "Content-Length: %zu\r\n", 
                        response->body_length);
+    }
+    
+    // HTTP/1.1优化：根据keep-alive设置Connection头
+    if (!has_connection) {
+        if (response->keep_alive) {
+            pos += snprintf(buffer + pos, *length - pos, "Connection: keep-alive\r\n");
+            pos += snprintf(buffer + pos, *length - pos, "Keep-Alive: timeout=5, max=1000\r\n");
+        } else {
+            pos += snprintf(buffer + pos, *length - pos, "Connection: close\r\n");
+        }
     }
     
     // 结束headers
@@ -65,23 +80,25 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer, si
     *length = pos;
 }
 
-int uvhttp_response_init(uvhttp_response_t* response, void* client) {
+uvhttp_error_t uvhttp_response_init(uvhttp_response_t* response, void* client) {
     if (!response) {
-        fprintf(stderr, "Response object is NULL\n");
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     if (!client) {
-        fprintf(stderr, "Client handle is NULL\n");
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     memset(response, 0, sizeof(uvhttp_response_t));
     
+    // HTTP/1.1优化：设置默认值
+    response->keep_alive = 1;    // HTTP/1.1默认保持连接
+    response->status_code = UVHTTP_STATUS_OK;
+    
     response->client = client;
     response->status_code = UVHTTP_STATUS_OK;
     
-    return 0;
+    return UVHTTP_OK;
 }
 
 void uvhttp_response_cleanup(uvhttp_response_t* response) {
@@ -97,79 +114,72 @@ void uvhttp_response_cleanup(uvhttp_response_t* response) {
     response->body_length = 0;
 }
 
-void uvhttp_response_set_status(uvhttp_response_t* response, int status_code) {
+uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int status_code) {
     if (!response) {
-        fprintf(stderr, "Response object is NULL\n");
-        return;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     // 验证状态码范围
     if (status_code < UVHTTP_STATUS_CONTINUE || status_code > 599) {
-        fprintf(stderr, "Invalid status code: %d\n", status_code);
-        return;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     response->status_code = status_code;
+    return UVHTTP_OK;
 }
 
-void uvhttp_response_set_header(uvhttp_response_t* response, const char* name, const char* value) {
+uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response, const char* name, const char* value) {
     if (!response || !name || !value) {
-        return;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     if (response->header_count >= MAX_HEADERS) {
-        return;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
     // 验证header名称和值
     if (uvhttp_validate_header_value(name, value) != 0) {
-        fprintf(stderr, "Invalid header: %s\n", name);
-        return;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     uvhttp_header_t* header = &response->headers[response->header_count];
     
     // 使用安全的字符串复制函数
     if (uvhttp_safe_strcpy(header->name, UVHTTP_MAX_HEADER_NAME_SIZE, name) != 0) {
-        fprintf(stderr, "Failed to copy header name: %s\n", name);
-        return;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     if (uvhttp_safe_strcpy(header->value, UVHTTP_MAX_HEADER_VALUE_SIZE, value) != 0) {
-        fprintf(stderr, "Failed to copy header value for: %s\n", name);
-        return;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     response->header_count++;
+    return UVHTTP_OK;
 }
 
 uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length) {
     if (!response) {
-        fprintf(stderr, "Response object is NULL\n");
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     if (!body) {
-        fprintf(stderr, "Body data is NULL\n");
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     if (length == 0) {
-        fprintf(stderr, "Body length is zero\n");
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     // 检查长度限制 - 简化版本使用1MB限制
     if (length > UVHTTP_MAX_BODY_SIZE) {
-        fprintf(stderr, "Body too large: %zu bytes (max 1MB)\n", length);
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     // 验证body内容 - 检查无效字符
     for (size_t i = 0; i < length; i++) {
         // 允许所有二进制数据，但记录警告
         if (i < length - 1 && body[i] == 0) {
-            fprintf(stderr, "Warning: NULL byte found in body at position %zu\n", i);
+            // NULL字节是有效的，不需要处理
         }
     }
     
@@ -187,21 +197,19 @@ uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char*
     memcpy(response->body, body, length);
     response->body_length = length;
     
-    return 0;
+    return UVHTTP_OK;
 }
 
-void uvhttp_response_send(uvhttp_response_t* response) {
+uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
     if (!response) {
-        fprintf(stderr, "Invalid response object\n");
-        return;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     // 计算所需的headers大小 - 增加安全边界
     size_t headers_size = UVHTTP_INITIAL_BUFFER_SIZE;
     char* temp_buffer = uvhttp_malloc(headers_size);
     if (!temp_buffer) {
-        fprintf(stderr, "Failed to allocate temporary buffer\n");
-        return;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
     // 第一次尝试构建headers以获取实际大小
@@ -213,16 +221,14 @@ void uvhttp_response_send(uvhttp_response_t* response) {
         // 需要更大的缓冲区 - 添加安全边界
         size_t new_size = headers_length + 256; // 添加256字节安全边界
         if (new_size > UVHTTP_MAX_BODY_SIZE) { // 防止过大分配
-            fprintf(stderr, "Response headers too large: %zu bytes\n", headers_length);
             uvhttp_free(temp_buffer);
-            return;
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
         
         char* new_buffer = uvhttp_malloc(new_size);
         if (!new_buffer) {
-            fprintf(stderr, "Failed to allocate larger buffer\n");
             uvhttp_free(temp_buffer);
-            return;
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
         
         // 重新构建headers
@@ -237,17 +243,15 @@ void uvhttp_response_send(uvhttp_response_t* response) {
     // 验证总大小不会过大
     size_t total_size = headers_length + response->body_length;
     if (total_size > UVHTTP_MAX_BODY_SIZE * 2) { // 限制总响应大小
-        fprintf(stderr, "Response too large: %zu bytes\n", total_size);
         uvhttp_free(temp_buffer);
-        return;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
     // 分配最终缓冲区
     char* response_data = uvhttp_malloc(total_size);
     if (!response_data) {
-        fprintf(stderr, "Failed to allocate response buffer\n");
         uvhttp_free(temp_buffer);
-        return;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
     // 安全复制headers
@@ -261,9 +265,36 @@ void uvhttp_response_send(uvhttp_response_t* response) {
     }
     
     // 这里应该实际发送response_data
-    // 简化版本模拟发送 - 在实际实现中应该调用网络发送函数
-    printf("Sending response (%zu bytes):\n%.*s", total_size, 
-           (int)headers_length, response_data);
+    // 网络发送实现
+    uvhttp_write_data_t* write_data = uvhttp_malloc(sizeof(uvhttp_write_data_t));
+    if (!write_data) {
+        uvhttp_free(temp_buffer);
+        uvhttp_free(response_data);
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    
+    write_data->data = uvhttp_malloc(response->body_length);
+    if (!write_data->data) {
+        uvhttp_free(write_data);
+        uvhttp_free(temp_buffer);
+        uvhttp_free(response_data);
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    
+    memcpy(write_data->data, response->body, response->body_length);
+    write_data->length = response->body_length;
+    write_data->response = response;
+    
+    uv_buf_t buf = uv_buf_init(write_data->data, write_data->length);
+    int result = uv_write(&write_data->write_req, (uv_stream_t*)response->client, &buf, 1, on_write_complete);
+    
+    if (result < 0) {
+        uvhttp_free(write_data->data);
+        uvhttp_free(write_data);
+        uvhttp_free(temp_buffer);
+        uvhttp_free(response_data);
+        return UVHTTP_ERROR_WRITE_FAILED;
+    }
     
     // 清理所有分配的资源
     uvhttp_free(temp_buffer);
@@ -271,4 +302,6 @@ void uvhttp_response_send(uvhttp_response_t* response) {
     
     // 标记响应已完成
     response->finished = 1;
+    
+    return UVHTTP_OK;
 }

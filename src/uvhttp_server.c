@@ -4,22 +4,29 @@
 #include "uvhttp_router.h"
 #include "uvhttp_connection.h"
 #include "uvhttp_error.h"
+#include "uvhttp_error_handler.h"
+#include "uvhttp_tls.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <uv.h>
 
 
 
 static void on_connection(uv_stream_t* server_handle, int status) {
     if (status < 0) {
+#if UVHTTP_DEBUG
         fprintf(stderr, "Connection error: %s\n", uv_strerror(status));
+#endif
         return;
     }
     
     if (!server_handle || !server_handle->data) {
+#if UVHTTP_DEBUG
         fprintf(stderr, "Invalid server handle or data\n");
+#endif
         return;
     }
     
@@ -27,18 +34,24 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     
     /* 检查连接数限制 */
     if (server->active_connections >= MAX_CONNECTIONS) {
+#if UVHTTP_DEBUG
         fprintf(stderr, "Connection limit reached: %zu/%d\n", 
                 server->active_connections, MAX_CONNECTIONS);
+#endif
         
         /* 创建临时连接以发送503响应 */
         uv_tcp_t* temp_client = uvhttp_malloc(sizeof(uv_tcp_t));
         if (!temp_client) {
+#if UVHTTP_DEBUG
             fprintf(stderr, "Failed to allocate temporary client\n");
+#endif
             return;
         }
         
         if (uv_tcp_init(server->loop, temp_client) != 0) {
+#if UVHTTP_DEBUG
             fprintf(stderr, "Failed to initialize temporary client\n");
+#endif
             uvhttp_free(temp_client);
             return;
         }
@@ -58,12 +71,16 @@ static void on_connection(uv_stream_t* server_handle, int status) {
                 uv_buf_t buf = uv_buf_init((char*)response_503, strlen(response_503));
                 int write_result = uv_write(write_req, (uv_stream_t*)temp_client, &buf, 1, NULL);
                 if (write_result < 0) {
+#if UVHTTP_DEBUG
                     fprintf(stderr, "Failed to send 503 response: %s\n", uv_strerror(write_result));
+#endif
                     uvhttp_free(write_req);
                 }
             }
         } else {
+#if UVHTTP_DEBUG
             fprintf(stderr, "Failed to accept temporary connection\n");
+#endif
         }
         
         /* 关闭临时连接 */
@@ -107,12 +124,13 @@ static void on_connection(uv_stream_t* server_handle, int status) {
 
 
 uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
-    /* 初始化TLS模块（如果还没有初始化） - 暂时禁用 */
-    /* if (uvhttp_tls_init() != UVHTTP_OK) {
+    /* 初始化TLS模块（如果还没有初始化） */
+    /* TODO: TLS模块需要完全实现后启用
+    if (uvhttp_tls_init() != UVHTTP_OK) {
+        UVHTTP_LOG_ERROR("Failed to initialize TLS module");
         return NULL;
-    } */
-    
-    uvhttp_server_t* server = uvhttp_malloc(sizeof(uvhttp_server_t));
+    }
+    */    uvhttp_server_t* server = uvhttp_malloc(sizeof(uvhttp_server_t));
     if (!server) {
         return NULL;
     }
@@ -160,7 +178,7 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
         uvhttp_router_free(server->router);
     }
     if (server->tls_ctx) {
-        // uvhttp_tls_context_free(server->tls_ctx);  // 暂时禁用
+        uvhttp_tls_context_free(server->tls_ctx);
     }
     
     // 如果拥有循环，需要关闭并释放
@@ -220,7 +238,7 @@ uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server, uvhttp_tls_cont
     }
     
     if (server->tls_ctx) {
-        // uvhttp_tls_context_free(server->tls_ctx);  // 暂时禁用
+        uvhttp_tls_context_free(server->tls_ctx);
     }
     
     server->tls_ctx = tls_ctx;
@@ -235,7 +253,7 @@ uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server) {
     }
     
     if (server->tls_ctx) {
-        // uvhttp_tls_context_free(server->tls_ctx);  // 暂时禁用
+        uvhttp_tls_context_free(server->tls_ctx);
         server->tls_ctx = NULL;
     }
     

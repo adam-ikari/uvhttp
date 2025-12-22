@@ -53,6 +53,96 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         add_definitions(-DUVHTTP_DEBUG_ALLOCATOR=1)
         message(STATUS "Allocator debugging enabled")
     endif()
+    # 启用调试日志
+    add_definitions(-DUVHTTP_DEBUG=1)
+    message(STATUS "Debug logging enabled")
+else()
+    # Release版本禁用调试日志
+    add_definitions(-DUVHTTP_DEBUG=0)
+endif()
+
+# 中间件功能选项
+option(UVHTTP_ENABLE_CORS "Enable CORS middleware" ON)
+if(UVHTTP_ENABLE_CORS)
+    add_definitions(-DUVHTTP_ENABLE_CORS=1)
+    message(STATUS "CORS middleware enabled")
+else()
+    add_definitions(-DUVHTTP_ENABLE_CORS=0)
+endif()
+
+option(UVHTTP_ENABLE_RATE_LIMIT "Enable rate limiting middleware" ON)
+if(UVHTTP_ENABLE_RATE_LIMIT)
+    add_definitions(-DUVHTTP_ENABLE_RATE_LIMIT=1)
+    message(STATUS "Rate limiting middleware enabled")
+else()
+    add_definitions(-DUVHTTP_ENABLE_RATE_LIMIT=0)
+endif()
+
+option(UVHTTP_ENABLE_AUTH "Enable authentication middleware" ON)
+if(UVHTTP_ENABLE_AUTH)
+    add_definitions(-DUVHTTP_ENABLE_AUTH=1)
+    message(STATUS "Authentication middleware enabled")
+else()
+    add_definitions(-DUVHTTP_ENABLE_AUTH=0)
+endif()
+
+option(UVHTTP_ENABLE_COMPRESSION "Enable compression middleware" OFF)
+if(UVHTTP_ENABLE_COMPRESSION)
+    add_definitions(-DUVHTTP_ENABLE_COMPRESSION=1)
+    message(STATUS "Compression middleware enabled")
+else()
+    add_definitions(-DUVHTTP_ENABLE_COMPRESSION=0)
+endif()
+
+option(UVHTTP_ENABLE_STATIC "Enable static file middleware" ON)
+if(UVHTTP_ENABLE_STATIC)
+    add_definitions(-DUVHTTP_ENABLE_STATIC=1)
+    message(STATUS "Static file middleware enabled")
+else()
+    add_definitions(-DUVHTTP_ENABLE_STATIC=0)
+endif()
+
+# 中间件功能选项
+option(UVHTTP_ENABLE_CORS "Enable CORS middleware" ON)
+option(UVHTTP_ENABLE_RATE_LIMIT "Enable rate limiting middleware" ON)
+option(UVHTTP_ENABLE_AUTH "Enable authentication middleware" ON)
+option(UVHTTP_ENABLE_COMPRESSION "Enable compression middleware" OFF)
+option(UVHTTP_ENABLE_LOGGING "Enable access logging middleware" ON)
+
+# 设置中间件编译宏
+if(UVHTTP_ENABLE_CORS)
+    add_definitions(-DUVHTTP_ENABLE_CORS=1)
+    message(STATUS "CORS middleware enabled")
+else()
+    add_definitions(-DUVHTTP_ENABLE_CORS=0)
+endif()
+
+if(UVHTTP_ENABLE_RATE_LIMIT)
+    add_definitions(-DUVHTTP_ENABLE_RATE_LIMIT=1)
+    message(STATUS "Rate limiting middleware enabled")
+else()
+    add_definitions(-DUVHTTP_ENABLE_RATE_LIMIT=0)
+endif()
+
+if(UVHTTP_ENABLE_AUTH)
+    add_definitions(-DUVHTTP_ENABLE_AUTH=1)
+    message(STATUS "Authentication middleware enabled")
+else()
+    add_definitions(-DUVHTTP_ENABLE_AUTH=0)
+endif()
+
+if(UVHTTP_ENABLE_COMPRESSION)
+    add_definitions(-DUVHTTP_ENABLE_COMPRESSION=1)
+    message(STATUS "Compression middleware enabled")
+else()
+    add_definitions(-DUVHTTP_ENABLE_COMPRESSION=0)
+endif()
+
+if(UVHTTP_ENABLE_LOGGING)
+    add_definitions(-DUVHTTP_ENABLE_LOGGING=1)
+    message(STATUS "Access logging middleware enabled")
+else()
+    add_definitions(-DUVHTTP_ENABLE_LOGGING=0)
 endif()
 
 # 查找libuv - 作为子目录
@@ -143,6 +233,23 @@ if(MIMALLOC_LIB)
     target_link_libraries(uvhttp PRIVATE ${MIMALLOC_LIB})
 endif()
 
+# 添加cjson支持 - 使用预编译方式
+find_path(CJSON_INCLUDE_DIR cJSON.h 
+          PATHS ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson)
+find_library(CJSON_LIBRARY cjson 
+             PATHS ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson)
+
+if(CJSON_INCLUDE_DIR AND CJSON_LIBRARY)
+    target_include_directories(uvhttp PRIVATE ${CJSON_INCLUDE_DIR})
+    target_link_libraries(uvhttp PRIVATE ${CJSON_LIBRARY})
+    message(STATUS "Found cjson: ${CJSON_LIBRARY}")
+else()
+    # 如果没有找到预编译库，尝试添加子目录
+    add_subdirectory(deps/cjson)
+    target_link_libraries(uvhttp PRIVATE cjson)
+    message(STATUS "Using cjson from subdirectory")
+endif()
+
 # 添加libwebsockets支持 - 使用预编译方式
 find_path(LIBWEBSOCKETS_INCLUDE_DIR libwebsockets.h 
           PATHS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libwebsockets/include)
@@ -220,7 +327,7 @@ add_executable(uvhttp_test test/simple_test.c)
 # )
 
 # 设置链接库
-set(TEST_LIBS uvhttp llhttp websockets gtest gtest_main ${UV_LIBRARIES} dl pthread m ssl crypto)
+set(TEST_LIBS uvhttp llhttp cjson websockets gtest gtest_main ${UV_LIBRARIES} dl pthread m ssl crypto)
 if(APPLE)
     list(APPEND TEST_LIBS /opt/homebrew/opt/openssl@3/lib/libssl.dylib /opt/homebrew/opt/openssl@3/lib/libcrypto.dylib)
 else()
@@ -241,27 +348,27 @@ target_link_libraries(uvhttp PRIVATE ssl crypto)
 
 # WebSocket 示例
 add_executable(websocket_example examples/websocket_example.c)
-target_link_libraries(websocket_example ${TEST_LIBS})
+target_link_libraries(websocket_example uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
 
 # Hello World 示例
 add_executable(helloworld examples/helloworld.c)
-target_link_libraries(helloworld uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
+target_link_libraries(helloworld uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
 
 # TLS测试示例
 add_executable(tls_test examples/tls_test.c)
-target_link_libraries(tls_test uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
+target_link_libraries(tls_test uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
 
 # 真实TLS测试示例
 add_executable(tls_real_test examples/tls_real_test.c)
-target_link_libraries(tls_real_test uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
+target_link_libraries(tls_real_test uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
 
 # 真实TLS服务器示例
 add_executable(tls_server_real examples/tls_server_real.c)
-target_link_libraries(tls_server_real uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
+target_link_libraries(tls_server_real uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
 
 # TLS功能测试程序
 add_executable(tls_feature_test examples/tls_feature_test.c)
-target_link_libraries(tls_feature_test uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
+target_link_libraries(tls_feature_test uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
 
 
 

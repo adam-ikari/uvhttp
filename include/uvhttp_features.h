@@ -1,0 +1,119 @@
+/* UVHTTP 特性配置定义 */
+
+#ifndef UVHTTP_FEATURES_H
+#define UVHTTP_FEATURES_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* 核心 HTTP 功能 - 始终启用 */
+#define UVHTTP_FEATURE_HTTP 1
+
+/* 可选功能定义 - 用户可通过编译宏控制 */
+#ifndef UVHTTP_FEATURE_WEBSOCKET
+#define UVHTTP_FEATURE_WEBSOCKET 0  /* WebSocket 支持 */
+#endif
+
+
+
+#ifndef UVHTTP_FEATURE_TLS
+#define UVHTTP_FEATURE_TLS 0        /* TLS/SSL 支持 */
+#endif
+
+#ifndef UVHTTP_FEATURE_JSON
+#define UVHTTP_FEATURE_JSON 0       /* JSON 解析支持 */
+#endif
+
+#ifndef UVHTTP_FEATURE_MIDDLEWARE
+#define UVHTTP_FEATURE_MIDDLEWARE 0 /* 中间件支持 */
+#endif
+
+#ifndef UVHTTP_FEATURE_ROUTER_CACHE
+#define UVHTTP_FEATURE_ROUTER_CACHE 0 /* 路由缓存支持 */
+#endif
+
+#ifndef UVHTTP_FEATURE_CORS
+#define UVHTTP_FEATURE_CORS 0       /* CORS 支持 */
+#endif
+
+#ifndef UVHTTP_FEATURE_RATE_LIMIT
+#define UVHTTP_FEATURE_RATE_LIMIT 0 /* 限流支持 */
+#endif
+
+#ifndef UVHTTP_FEATURE_STATIC_FILES
+#define UVHTTP_FEATURE_STATIC_FILES 0 /* 静态文件支持 */
+#endif
+
+#ifndef UVHTTP_FEATURE_COMPRESSION
+#define UVHTTP_FEATURE_COMPRESSION 0 /* 压缩支持 */
+#endif
+
+#ifndef UVHTTP_FEATURE_METRICS
+#define UVHTTP_FEATURE_METRICS 0    /* 指标监控支持 */
+#endif
+
+#ifndef UVHTTP_FEATURE_CONFIG_FILE
+#define UVHTTP_FEATURE_CONFIG_FILE 0 /* 配置文件支持 */
+#endif
+
+#ifndef UVHTTP_FEATURE_ALLOCATOR
+#define UVHTTP_FEATURE_ALLOCATOR 0  /* 自定义分配器支持 */
+#endif
+
+/* 条件编译宏 */
+#if UVHTTP_FEATURE_WEBSOCKET
+#define UVHTTP_WEBSOCKET_ENABLED
+#endif
+
+
+
+#if UVHTTP_FEATURE_TLS
+#define UVHTTP_TLS_ENABLED
+#endif
+
+#if UVHTTP_FEATURE_JSON
+#define UVHTTP_JSON_ENABLED
+#endif
+
+#if UVHTTP_FEATURE_MIDDLEWARE
+#define UVHTTP_MIDDLEWARE_ENABLED
+#endif
+
+#if UVHTTP_FEATURE_ROUTER_CACHE
+#define UVHTTP_ROUTER_CACHE_ENABLED
+#endif
+
+#if UVHTTP_FEATURE_CORS
+#define UVHTTP_CORS_ENABLED
+#endif
+
+#if UVHTTP_FEATURE_RATE_LIMIT
+#define UVHTTP_RATE_LIMIT_ENABLED
+#endif
+
+#if UVHTTP_FEATURE_STATIC_FILES
+#define UVHTTP_STATIC_FILES_ENABLED
+#endif
+
+#if UVHTTP_FEATURE_COMPRESSION
+#define UVHTTP_COMPRESSION_ENABLED
+#endif
+
+#if UVHTTP_FEATURE_METRICS
+#define UVHTTP_METRICS_ENABLED
+#endif
+
+#if UVHTTP_FEATURE_CONFIG_FILE
+#define UVHTTP_CONFIG_FILE_ENABLED
+#endif
+
+#if UVHTTP_FEATURE_ALLOCATOR
+#define UVHTTP_ALLOCATOR_ENABLED
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* UVHTTP_FEATURES_H */

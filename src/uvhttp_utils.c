@@ -11,7 +11,10 @@
 int uvhttp_safe_strcpy(char* dest, size_t dest_size, const char* src) {
     if (!dest || !src || dest_size == 0) return -1;
     
-    size_t src_len = strnlen(src, dest_size - 1);
+    size_t src_len = strlen(src);
+    if (src_len >= dest_size) {
+        src_len = dest_size - 1;
+    }
     memcpy(dest, src, src_len);
     dest[src_len] = '\0';
     

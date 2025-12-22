@@ -45,14 +45,20 @@ struct uvhttp_response {
     
     int headers_sent;
     int finished;
+    
+    // HTTP/1.1优化字段
+    int keep_alive;         // 是否保持连接
+    int compress;           // 是否启用压缩
+    int cache_ttl;          // 缓存TTL（秒）
+    time_t cache_expires;   // 缓存过期时间
 };
 
 /* API functions */
-int uvhttp_response_init(uvhttp_response_t* response, void* client);
-void uvhttp_response_set_status(uvhttp_response_t* response, int status_code);
-void uvhttp_response_set_header(uvhttp_response_t* response, const char* name, const char* value);
+uvhttp_error_t uvhttp_response_init(uvhttp_response_t* response, void* client);
+uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int status_code);
+uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response, const char* name, const char* value);
 uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length);
-void uvhttp_response_send(uvhttp_response_t* response);
+uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
 void uvhttp_response_cleanup(uvhttp_response_t* response);
 
 #ifdef __cplusplus

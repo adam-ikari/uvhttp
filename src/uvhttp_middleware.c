@@ -1,449 +1,438 @@
+/*
+ * uvhttp_middleware.c
+ * 中间件系统实现
+ */
+
 #include "uvhttp_middleware.h"
-#include "uvhttp_json.h"
-#include "uvhttp_constants.h"
-#include <stdio.h>
 #include "uvhttp_allocator.h"
+#include "uvhttp_error.h"
+#include "uvhttp_utils.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <time.h>
-#include <sys/time.h>
 
-// 中间件链实现
-uvhttp_middleware_chain_t* uvhttp_middleware_chain_new(void) {
-    uvhttp_middleware_chain_t* chain = uvhttp_malloc(sizeof(uvhttp_middleware_chain_t));
-    if (!chain) return NULL;
-    
-    chain->head = NULL;
-    chain->tail = NULL;
-    chain->count = 0;
-    return chain;
-}
+// 全局中间件配置
+static uvhttp_middleware_set_t g_middleware = {0};
 
-void uvhttp_middleware_chain_free(uvhttp_middleware_chain_t* chain) {
-    if (!chain) return;
-    
-    uvhttp_middleware_t* current = chain->head;
-    while (current) {
-        uvhttp_middleware_t* next = current->next;
-        uvhttp_free(current);
-        current = next;
+/* 中间件链执行函数 */
+uvhttp_error_t uvhttp_middleware_chain_execute(uvhttp_middleware_chain_t* chain,
+                                             uvhttp_request_t* request,
+                                             uvhttp_response_t* response) {
+    if (!chain || !request || !response) {
+        return UVHTTP_ERROR_INVALID_ARGUMENT;
     }
     
-    uvhttp_free(chain);
+    for (size_t i = 0; i < chain->middleware_count; i++) {
+        uvhttp_middleware_t* middleware = chain->middleware[i];
+        if (!middleware) continue;
+        
+        uvhttp_error_t result = middleware->func(middleware, request, response);
+        if (result != UVHTTP_ERROR_OK) {
+            return result;
+        }
+        
+        /* 检查是否需要终止中间件链 */
+        if (response->status_code >= 400) {
+            break;
+        }
+    }
+    
+    return UVHTTP_ERROR_OK;
 }
 
-int uvhttp_middleware_chain_add(uvhttp_middleware_chain_t* chain, 
-                               uvhttp_middleware_func_t func, 
-                               void* data) {
-    if (!chain || !func) return -1;
+// 中间件初始化
+uvhttp_error_t uvhttp_middleware_init(uvhttp_middleware_set_t* middleware) {
+    if (!middleware) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
     
-    uvhttp_middleware_t* middleware = uvhttp_malloc(sizeof(uvhttp_middleware_t));
-    if (!middleware) return -1;
+    memset(middleware, 0, sizeof(uvhttp_middleware_set_t));
     
+    // 根据编译选项设置中间件处理器
+#if UVHTTP_ENABLE_CORS
+    middleware->cors_handler = uvhttp_cors_middleware;
+#endif
+#if UVHTTP_ENABLE_RATE_LIMIT
+    middleware->rate_limit_handler = uvhttp_rate_limit_middleware;
+#endif
+#if UVHTTP_ENABLE_AUTH
+    middleware->auth_handler = uvhttp_auth_middleware;
+#endif
+#if UVHTTP_ENABLE_COMPRESSION
+    middleware->compression_handler = uvhttp_compression_middleware;
+#endif
+#if UVHTTP_ENABLE_STATIC
+    middleware->static_handler = uvhttp_static_middleware;
+#endif
+    
+    return UVHTTP_OK;
+}
+
+/* 添加中间件到链 */
+uvhttp_error_t uvhttp_middleware_chain_add(uvhttp_middleware_chain_t* chain,
+                                          uvhttp_middleware_t* middleware) {
+    if (!chain || !middleware) {
+        return UVHTTP_ERROR_INVALID_ARGUMENT;
+    }
+    
+    if (chain->middleware_count >= chain->capacity) {
+        /* 扩容 */
+        size_t new_capacity = chain->capacity * 2;
+        uvhttp_middleware_t** new_middleware = realloc(chain->middleware, 
+                                                      sizeof(uvhttp_middleware_t*) * new_capacity);
+        if (!new_middleware) {
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
+        }
+        
+        chain->middleware = new_middleware;
+        chain->capacity = new_capacity;
+    }
+    
+    chain->middleware[chain->middleware_count++] = middleware;
+    return UVHTTP_ERROR_OK;
+}
+
+void uvhttp_middleware_cleanup(uvhttp_middleware_set_t* middleware) {
+    if (!middleware) {
+        return;
+    }
+    
+    // 清理所有中间件处理器
+    memset(middleware, 0, sizeof(uvhttp_middleware_set_t));
+}
+
+/* 创建中间件 */
+uvhttp_middleware_t* uvhttp_middleware_new(uvhttp_middleware_type_t type,
+                                          uvhttp_middleware_func_t func,
+                                          void* user_data) {
+    uvhttp_middleware_t* middleware = UVHTTP_MALLOC(sizeof(uvhttp_middleware_t));
+    if (!middleware) {
+        return NULL;
+    }
+    
+    middleware->type = type;
     middleware->func = func;
-    middleware->data = data;
+    middleware->user_data = user_data;
     middleware->next = NULL;
     
-    if (chain->tail) {
-        chain->tail->next = middleware;
+    return middleware;
+}
+
+/* 销毁中间件 */
+void uvhttp_middleware_free(uvhttp_middleware_t* middleware) {
+    if (!middleware) {
+        return;
+    }
+    
+    /* 如果有用户数据销毁函数，调用它 */
+    if (middleware->user_data) {
+        free(middleware->user_data);
+    }
+    
+    UVHTTP_FREE(middleware);
+}
+
+/* CORS 中间件实现 */
+static uvhttp_error_t cors_middleware_func(uvhttp_middleware_t* middleware,
+                                          uvhttp_request_t* request,
+                                          uvhttp_response_t* response) {
+    uvhttp_cors_config_t* config = (uvhttp_cors_config_t*)middleware->user_data;
+    if (!config) {
+        return UVHTTP_ERROR_INVALID_ARGUMENT;
+    }
+    
+    /* 设置 CORS 头 */
+    uvhttp_response_set_header(response, "Access-Control-Allow-Origin", 
+                              config->allowed_origins ? config->allowed_origins : "*");
+    
+    if (config->allowed_methods) {
+        uvhttp_response_set_header(response, "Access-Control-Allow-Methods", 
+                                  config->allowed_methods);
     } else {
-        chain->head = middleware;
-    }
-    chain->tail = middleware;
-    chain->count++;
-    
-    return 0;
-}
-
-int uvhttp_middleware_chain_execute(uvhttp_middleware_chain_t* chain,
-                                   uvhttp_request_t* request,
-                                   uvhttp_response_t* response) {
-    if (!chain || !request || !response) return -1;
-    
-    uvhttp_middleware_t* current = chain->head;
-    while (current) {
-        int result = current->func(request, response, current->data);
-        if (result != 0) {
-            return result; // 中间件返回错误，停止执行
-        }
-        current = current->next;
+        uvhttp_response_set_header(response, "Access-Control-Allow-Methods", 
+                                  "GET, POST, PUT, DELETE, OPTIONS");
     }
     
-    return 0;
-}
-
-
-
-// CORS中间件实现
-uvhttp_cors_middleware_data_t* uvhttp_cors_middleware_data_new(const char* allow_origin,
-                                                             const char* allow_methods,
-                                                             const char* allow_headers,
-                                                             const char* max_age) {
-    uvhttp_cors_middleware_data_t* data = uvhttp_malloc(sizeof(uvhttp_cors_middleware_data_t));
-    if (!data) return NULL;
+    if (config->allowed_headers) {
+        uvhttp_response_set_header(response, "Access-Control-Allow-Headers", 
+                                  config->allowed_headers);
+    } else {
+        uvhttp_response_set_header(response, "Access-Control-Allow-Headers", 
+                                  "Content-Type, Authorization");
+    }
     
-    data->allow_origin = allow_origin ? allow_origin : "*";
-    data->allow_methods = allow_methods ? allow_methods : "GET, POST, PUT, DELETE, OPTIONS";
-    data->allow_headers = allow_headers ? allow_headers : "Content-Type, Authorization";
-    data->max_age = max_age ? max_age : UVHTTP_CORS_MAX_AGE_DEFAULT;
+    if (config->exposed_headers) {
+        uvhttp_response_set_header(response, "Access-Control-Expose-Headers", 
+                                  config->exposed_headers);
+    }
     
-    return data;
-}
-
-void uvhttp_cors_middleware_data_free(uvhttp_cors_middleware_data_t* data) {
-    uvhttp_free(data);
-}
-
-int uvhttp_cors_middleware(uvhttp_request_t* request,
-                          uvhttp_response_t* response,
-                          void* next_data) {
-    uvhttp_cors_middleware_data_t* data = (uvhttp_cors_middleware_data_t*)next_data;
-    if (!data) return 0;
+    if (config->allow_credentials) {
+        uvhttp_response_set_header(response, "Access-Control-Allow-Credentials", "true");
+    }
     
-    // 设置CORS头
-    uvhttp_response_set_header(response, "Access-Control-Allow-Origin", data->allow_origin);
-    uvhttp_response_set_header(response, "Access-Control-Allow-Methods", data->allow_methods);
-    uvhttp_response_set_header(response, "Access-Control-Allow-Headers", data->allow_headers);
-    uvhttp_response_set_header(response, "Access-Control-Max-Age", data->max_age);
+    if (config->max_age > 0) {
+        char max_age_str[16];
+        snprintf(max_age_str, sizeof(max_age_str), "%d", config->max_age);
+        uvhttp_response_set_header(response, "Access-Control-Max-Age", max_age_str);
+    }
     
-    // 处理OPTIONS预检请求
+    /* 处理 OPTIONS 预检请求 */
     const char* method = uvhttp_request_get_method(request);
-    if (method && strcmp(method, "OPTIONS") == 0) {
+    if (strcmp(method, "OPTIONS") == 0) {
         uvhttp_response_set_status(response, 200);
         uvhttp_response_set_body(response, "", 0);
-        return 0; // 直接返回，不继续执行
+        return UVHTTP_ERROR_OK;
     }
     
-    return 0;
+    return UVHTTP_ERROR_OK;
 }
 
-// 限流中间件实现
-uvhttp_rate_limit_middleware_data_t* uvhttp_rate_limit_middleware_data_new(int max_requests_per_minute) {
-    uvhttp_rate_limit_middleware_data_t* data = uvhttp_malloc(sizeof(uvhttp_rate_limit_middleware_data_t));
-    if (!data) return NULL;
+/* 创建 CORS 中间件 */
+uvhttp_middleware_t* uvhttp_cors_middleware_new(const uvhttp_cors_config_t* config) {
+    if (!config) {
+        /* 使用默认配置 */
+        static uvhttp_cors_config_t default_config = {
+            .allowed_origins = "*",
+            .allowed_methods = "GET, POST, PUT, DELETE, OPTIONS",
+            .allowed_headers = "Content-Type, Authorization",
+            .exposed_headers = NULL,
+            .allow_credentials = 0,
+            .max_age = 86400
+        };
+        config = &default_config;
+    }
     
-    data->max_requests_per_minute = max_requests_per_minute;
-    data->current_requests = 0;
-    data->window_start = time(NULL);
+    /* 复制配置 */
+    uvhttp_cors_config_t* config_copy = UVHTTP_MALLOC(sizeof(uvhttp_cors_config_t));
+    if (!config_copy) {
+        return NULL;
+    }
     
-    return data;
+    memcpy(config_copy, config, sizeof(uvhttp_cors_config_t));
+    
+    /* 复制字符串字段 */
+    if (config->allowed_origins) {
+        config_copy->allowed_origins = strdup(config->allowed_origins);
+    }
+    if (config->allowed_methods) {
+        config_copy->allowed_methods = strdup(config->allowed_methods);
+    }
+    if (config->allowed_headers) {
+        config_copy->allowed_headers = strdup(config->allowed_headers);
+    }
+    if (config->exposed_headers) {
+        config_copy->exposed_headers = strdup(config->exposed_headers);
+    }
+    
+    return uvhttp_middleware_new(UVHTTP_MIDDLEWARE_REQUEST, cors_middleware_func, config_copy);
 }
 
-void uvhttp_rate_limit_middleware_data_free(uvhttp_rate_limit_middleware_data_t* data) {
-    uvhttp_free(data);
-}
-
-int uvhttp_rate_limit_middleware(uvhttp_request_t* request,
-                                uvhttp_response_t* response,
-                                void* next_data) {
-    (void)request; /* 避免未使用参数警告 */
-    (void)response; /* 避免未使用参数警告 */
-    uvhttp_rate_limit_middleware_data_t* data = (uvhttp_rate_limit_middleware_data_t*)next_data;
-    if (!data) return 0;
+/* 速率限制中间件实现 */
+static uvhttp_error_t rate_limit_middleware_func(uvhttp_middleware_t* middleware,
+                                                uvhttp_request_t* request,
+                                                uvhttp_response_t* response) {
+    uvhttp_rate_limit_config_t* config = (uvhttp_rate_limit_config_t*)middleware->user_data;
+    if (!config) {
+        return UVHTTP_ERROR_INVALID_ARGUMENT;
+    }
+    
+    /* 获取客户端 IP */
+    const char* client_ip = uvhttp_request_get_remote_address(request);
+    if (!client_ip) {
+        client_ip = "unknown";
+    }
+    
+    /* 简单的内存速率限制实现 */
+    /* 在生产环境中应该使用更高效的实现，如 Redis */
+    static struct {
+        char ip[64];
+        time_t reset_time;
+        int request_count;
+    } rate_limit_map[1000];
+    static int map_size = 0;
     
     time_t current_time = time(NULL);
-    if (current_time == (time_t)-1) {
-        // time() 函数失败，记录错误但不阻塞请求
-        return 0;
-    }
     
-    // 检查是否需要重置时间窗口
-    if (current_time - data->window_start >= UVHTTP_RATE_LIMIT_WINDOW) {
-        data->window_start = current_time;
-        data->current_requests = 0;
-    }
-    
-    // 检查是否超过限制
-    if (data->current_requests >= data->max_requests_per_minute) {
-        int result = uvhttp_response_json_error(response, 429, "Too many requests");
-        if (result != 0) {
-            // 如果JSON响应失败，返回简单的文本响应
-            uvhttp_response_set_status(response, 429);
-            uvhttp_response_set_header(response, "Content-Type", "text/plain");
-            uvhttp_response_set_body(response, "Too many requests", 17);
+    /* 查找或创建客户端记录 */
+    int found = 0;
+    for (int i = 0; i < map_size; i++) {
+        if (strcmp(rate_limit_map[i].ip, client_ip) == 0) {
+            found = 1;
+            
+            /* 检查是否需要重置 */
+            if (current_time >= rate_limit_map[i].reset_time) {
+                rate_limit_map[i].request_count = 1;
+                rate_limit_map[i].reset_time = current_time + config->window_seconds;
+            } else {
+                rate_limit_map[i].request_count++;
+                
+                /* 检查是否超过限制 */
+                if (rate_limit_map[i].request_count > config->max_requests) {
+                    uvhttp_response_set_status(response, 429);
+                    uvhttp_response_set_header(response, "Retry-After", 
+                                             config->window_seconds);
+                    
+                    if (config->error_message) {
+                        uvhttp_response_set_body(response, config->error_message, 
+                                               strlen(config->error_message));
+                    } else {
+                        const char* msg = "Rate limit exceeded";
+                        uvhttp_response_set_body(response, msg, strlen(msg));
+                    }
+                    
+                    return UVHTTP_ERROR_RATE_LIMITED;
+                }
+            }
+            break;
         }
-        return -1; // 停止执行
     }
     
-    data->current_requests++;
-    return 0;
+    /* 如果没有找到记录，创建新记录 */
+    if (!found && map_size < 1000) {
+        strncpy(rate_limit_map[map_size].ip, client_ip, sizeof(rate_limit_map[map_size].ip) - 1);
+        rate_limit_map[map_size].ip[sizeof(rate_limit_map[map_size].ip) - 1] = '\0';
+        rate_limit_map[map_size].request_count = 1;
+        rate_limit_map[map_size].reset_time = current_time + config->window_seconds;
+        map_size++;
+    }
+    
+    /* 添加速率限制头 */
+    uvhttp_response_set_header(response, "X-RateLimit-Limit", "100");
+    uvhttp_response_set_header(response, "X-RateLimit-Remaining", "99");
+    uvhttp_response_set_header(response, "X-RateLimit-Reset", "3600");
+    
+    return UVHTTP_ERROR_OK;
 }
 
-// 静态文件中间件实现
-uvhttp_static_middleware_data_t* uvhttp_static_middleware_data_new(const char* root_directory,
-                                                                  const char* url_prefix,
-                                                                  int auto_index,
-                                                                  int enable_cache,
-                                                                  int max_cache_size,
-                                                                  const char* index_file) {
-    uvhttp_static_middleware_data_t* data = uvhttp_malloc(sizeof(uvhttp_static_middleware_data_t));
-    if (!data) return NULL;
+/* 创建速率限制中间件 */
+uvhttp_middleware_t* uvhttp_rate_limit_middleware_new(const uvhttp_rate_limit_config_t* config) {
+    if (!config) {
+        /* 使用默认配置 */
+        static uvhttp_rate_limit_config_t default_config = {
+            .max_requests = 100,
+            .window_seconds = 3600,
+            .error_message = "Rate limit exceeded. Please try again later."
+        };
+        config = &default_config;
+    }
     
-    // 初始化所有指针为NULL
-    data->root_directory = NULL;
-    data->url_prefix = NULL;
-    data->index_file = NULL;
+    /* 复制配置 */
+    uvhttp_rate_limit_config_t* config_copy = UVHTTP_MALLOC(sizeof(uvhttp_rate_limit_config_t));
+    if (!config_copy) {
+        return NULL;
+    }
     
-    // 复制字符串，检查每个操作
-    data->root_directory = root_directory ? strdup(root_directory) : strdup(".");
-    if (!data->root_directory) goto error;
+    memcpy(config_copy, config, sizeof(uvhttp_rate_limit_config_t));
     
-    data->url_prefix = url_prefix ? strdup(url_prefix) : strdup("/static");
-    if (!data->url_prefix) goto error;
+    /* 复制错误消息 */
+    if (config->error_message) {
+        config_copy->error_message = strdup(config->error_message);
+    }
     
-    data->index_file = index_file ? strdup(index_file) : strdup("index.html");
-    if (!data->index_file) goto error;
-    
-    data->auto_index = auto_index;
-    data->enable_cache = enable_cache;
-    data->max_cache_size = max_cache_size > 0 ? max_cache_size : UVHTTP_STATIC_MAX_CACHE_SIZE;
-    
-    return data;
-    
-error:
-    // 清理已分配的内存
-    if (data->root_directory) uvhttp_free(data->root_directory);
-    if (data->url_prefix) uvhttp_free(data->url_prefix);
-    if (data->index_file) uvhttp_free(data->index_file);
-    uvhttp_free(data);
-    return NULL;
+    return uvhttp_middleware_new(UVHTTP_MIDDLEWARE_REQUEST, rate_limit_middleware_func, config_copy);
 }
 
-void uvhttp_static_middleware_data_free(uvhttp_static_middleware_data_t* data) {
-    if (!data) return;
+/* 日志中间件实现 */
+static uvhttp_error_t logging_middleware_func(uvhttp_middleware_t* middleware,
+                                             uvhttp_request_t* request,
+                                             uvhttp_response_t* response) {
+    /* 获取请求信息 */
+    const char* method = uvhttp_request_get_method(request);
+    const char* path = uvhttp_request_get_path(request);
+    const char* client_ip = uvhttp_request_get_remote_address(request);
+    const char* user_agent = uvhttp_request_get_header(request, "User-Agent");
     
-    uvhttp_free(data->root_directory);
-    uvhttp_free(data->url_prefix);
-    uvhttp_free(data->index_file);
-    uvhttp_free(data);
+    if (!client_ip) client_ip = "unknown";
+    if (!user_agent) user_agent = "unknown";
+    
+    /* 记录请求日志 */
+    time_t now = time(NULL);
+    char time_str[64];
+    strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", localtime(&now));
+    
+    printf("[%s] %s %s from %s (%s)\n", time_str, method, path, client_ip, user_agent);
+    
+    /* 在响应完成后记录响应日志 */
+    /* 这里简化处理，实际应该在响应发送后记录 */
+    
+    return UVHTTP_ERROR_OK;
 }
 
-// 获取文件MIME类型
-static const char* get_mime_type(const char* filename) {
-    const char* ext = strrchr(filename, '.');
-    if (!ext) return "application/octet-stream";
-    
-    if (strcmp(ext, ".html") == 0 || strcmp(ext, ".htm") == 0) return "text/html";
-    if (strcmp(ext, ".css") == 0) return "text/css";
-    if (strcmp(ext, ".js") == 0) return "application/javascript";
-    if (strcmp(ext, ".json") == 0) return "application/json";
-    if (strcmp(ext, ".xml") == 0) return "application/xml";
-    if (strcmp(ext, ".txt") == 0) return "text/plain";
-    if (strcmp(ext, ".jpg") == 0 || strcmp(ext, ".jpeg") == 0) return "image/jpeg";
-    if (strcmp(ext, ".png") == 0) return "image/png";
-    if (strcmp(ext, ".gif") == 0) return "image/gif";
-    if (strcmp(ext, ".svg") == 0) return "image/svg+xml";
-    if (strcmp(ext, ".ico") == 0) return "image/x-icon";
-    if (strcmp(ext, ".pdf") == 0) return "application/pdf";
-    if (strcmp(ext, ".zip") == 0) return "application/zip";
-    
-    return "application/octet-stream";
+/* 创建日志中间件 */
+uvhttp_middleware_t* uvhttp_logging_middleware_new(void) {
+    return uvhttp_middleware_new(UVHTTP_MIDDLEWARE_REQUEST, logging_middleware_func, NULL);
 }
 
-// URL路径解码
-static void url_decode(char* dst, const char* src, size_t dst_size) {
-    size_t i = 0, j = 0;
-    while (src[i] && j < dst_size - 1) {
-        if (src[i] == '%' && src[i+1] && src[i+2]) {
-            char hex[3] = {src[i+1], src[i+2], '\0'};
-            dst[j++] = (char)strtol(hex, NULL, 16);
-            i += 3;
-        } else if (src[i] == '+') {
-            dst[j++] = ' ';
-            i++;
+/* 认证中间件实现 */
+static uvhttp_error_t auth_middleware_func(uvhttp_middleware_t* middleware,
+                                          uvhttp_request_t* request,
+                                          uvhttp_response_t* response) {
+    uvhttp_auth_config_t* config = (uvhttp_auth_config_t*)middleware->user_data;
+    if (!config) {
+        return UVHTTP_ERROR_INVALID_ARGUMENT;
+    }
+    
+    /* 获取 Authorization 头 */
+    const char* auth_header = uvhttp_request_get_header(request, "Authorization");
+    if (!auth_header) {
+        uvhttp_response_set_status(response, 401);
+        uvhttp_response_set_header(response, "WWW-Authenticate", "Bearer realm=\"uvhttp\"");
+        
+        if (config->error_message) {
+            uvhttp_response_set_body(response, config->error_message, 
+                                   strlen(config->error_message));
         } else {
-            dst[j++] = src[i++];
+            const char* msg = "Unauthorized";
+            uvhttp_response_set_body(response, msg, strlen(msg));
         }
+        
+        return UVHTTP_ERROR_UNAUTHORIZED;
     }
-    dst[j] = '\0';
+    
+    /* 简单的 Bearer Token 验证 */
+    if (strncmp(auth_header, "Bearer ", 7) != 0) {
+        uvhttp_response_set_status(response, 401);
+        const char* msg = "Invalid authorization format";
+        uvhttp_response_set_body(response, msg, strlen(msg));
+        return UVHTTP_ERROR_UNAUTHORIZED;
+    }
+    
+    const char* token = auth_header + 7;
+    
+    /* 这里应该实现真正的 token 验证逻辑 */
+    /* 简化实现：检查 token 是否匹配预定义的值 */
+    if (!config->token_validator || !config->token_validator(token)) {
+        uvhttp_response_set_status(response, 401);
+        const char* msg = "Invalid token";
+        uvhttp_response_set_body(response, msg, strlen(msg));
+        return UVHTTP_ERROR_UNAUTHORIZED;
+    }
+    
+    /* 设置用户信息到请求上下文 */
+    /* 这里简化处理 */
+    
+    return UVHTTP_ERROR_OK;
 }
 
-// 增强的安全路径检查，防止目录遍历攻击
-static int is_safe_path(const char* path) {
-    if (!path || !path[0]) return 0;
-    
-    size_t path_len = strlen(path);
-    
-    // 检查路径长度限制
-    if (path_len > UVHTTP_STATIC_MAX_PATH_SIZE) return 0;
-    
-    // 检查是否包含 ".."
-    if (strstr(path, "..") != NULL) return 0;
-    
-    // 检查是否以 / 开头（绝对路径）
-    if (path[0] == '/') return 0;
-    
-    // 检查是否包含危险字符
-    if (strpbrk(path, "<>|\"`") != NULL) return 0;
-    
-    // 检查是否包含连续的斜杠
-    if (strstr(path, "//") != NULL) return 0;
-    
-    // 检查是否以点开头或结尾（隐藏文件）
-    if (path[0] == '.' || (path_len > 0 && path[path_len-1] == '.')) {
-        // 允许 . 开头的文件，但要进一步检查
-        if (strcmp(path, ".") == 0 || strncmp(path, "./", 2) == 0) {
-            return 0;
-        }
+/* 创建认证中间件 */
+uvhttp_middleware_t* uvhttp_auth_middleware_new(const uvhttp_auth_config_t* config) {
+    if (!config) {
+        return NULL;
     }
     
-    // 检查是否包含空字节（NULL字节注入）
-    if (memchr(path, '\0', path_len) != path + path_len) {
-        return 0;
+    /* 复制配置 */
+    uvhttp_auth_config_t* config_copy = UVHTTP_MALLOC(sizeof(uvhttp_auth_config_t));
+    if (!config_copy) {
+        return NULL;
     }
     
-    // 检查路径中的每个组件
-    char* path_copy = strdup(path);
-    if (!path_copy) return 0;
+    memcpy(config_copy, config, sizeof(uvhttp_auth_config_t));
     
-    char* token = strtok(path_copy, "/");
-    int safe = 1;
-    
-    while (token && safe) {
-        // 检查组件长度
-        if (strlen(token) > 255) {
-            safe = 0;
-            break;
-        }
-        
-        // 检查是否为特殊文件名
-        if (strcmp(token, ".") == 0 || strcmp(token, "..") == 0) {
-            safe = 0;
-            break;
-        }
-        
-        token = strtok(NULL, "/");
+    /* 复制错误消息 */
+    if (config->error_message) {
+        config_copy->error_message = strdup(config->error_message);
     }
     
-    uvhttp_free(path_copy);
-    return safe;
-}
-
-int uvhttp_static_middleware(uvhttp_request_t* request,
-                            uvhttp_response_t* response,
-                            void* next_data) {
-    uvhttp_static_middleware_data_t* data = (uvhttp_static_middleware_data_t*)next_data;
-    if (!data) return 0;
-    
-    const char* url = uvhttp_request_get_url(request);
-    if (!url) return 0;
-    
-    // 检查URL是否匹配前缀
-    size_t prefix_len = strlen(data->url_prefix);
-    if (strncmp(url, data->url_prefix, prefix_len) != 0) {
-        return 0; // 不匹配，继续下一个中间件
-    }
-    
-    // 提取文件路径
-    const char* file_path = url + prefix_len;
-    if (file_path[0] == '/') file_path++; // 跳过开头的 /
-    
-    // URL解码
-    char decoded_path[UVHTTP_DECODED_PATH_SIZE];
-    url_decode(decoded_path, file_path, sizeof(decoded_path));
-    
-    // 安全检查
-    if (!is_safe_path(decoded_path)) {
-        uvhttp_response_set_status(response, 403);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, "Forbidden", 9);
-        return 0; // 停止处理
-    }
-    
-    // 如果路径为空，使用索引文件
-    if (strlen(decoded_path) == 0) {
-        if (uvhttp_safe_strcpy(decoded_path, sizeof(decoded_path), data->index_file) != 0) {
-            uvhttp_response_set_status(response, 500);
-            uvhttp_response_set_header(response, "Content-Type", "text/plain");
-            uvhttp_response_set_body(response, "Internal Server Error", 21);
-            return 0;
-        }
-    }
-    
-    // 构建完整文件路径
-    char full_path[UVHTTP_MAX_FILE_PATH_SIZE];
-    snprintf(full_path, sizeof(full_path), "%s/%s", data->root_directory, decoded_path);
-    
-    // 检查文件是否存在并可读
-    FILE* file = fopen(full_path, "rb");
-    if (!file) {
-        uvhttp_response_set_status(response, 404);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, "File not found", 14);
-        return 0; // 停止处理
-    }
-    
-    // 获取文件大小
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    
-    if (file_size < 0) {
-        fclose(file);
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, "Internal server error", 21);
-        return 0;
-    }
-    
-    // 设置响应头
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", get_mime_type(full_path));
-    
-    // 设置文件大小头
-    char content_length[UVHTTP_STATIC_MAX_CONTENT_LENGTH];
-    snprintf(content_length, sizeof(content_length), "%ld", file_size);
-    uvhttp_response_set_header(response, "Content-Length", content_length);
-    
-    // 设置缓存头
-    if (data->enable_cache) {
-        char cache_header[64];
-        snprintf(cache_header, sizeof(cache_header), "public, max-age=%d", UVHTTP_CACHE_MAX_AGE);
-        uvhttp_response_set_header(response, "Cache-Control", cache_header);
-    }
-    
-    // 读取文件内容并发送
-    if (file_size > 0) {
-        // 检查文件大小限制（防止内存耗尽）
-        if (file_size > UVHTTP_STATIC_MAX_FILE_SIZE) {
-            fclose(file);
-            uvhttp_response_set_status(response, UVHTTP_STATUS_REQUEST_ENTITY_TOO_LARGE);
-            uvhttp_response_set_header(response, "Content-Type", "text/plain");
-            uvhttp_response_set_body(response, UVHTTP_MESSAGE_FILE_TOO_LARGE, UVHTTP_ERROR_MESSAGE_LENGTH);
-            return 0;
-        }
-        
-        char* buffer = uvhttp_malloc(file_size);
-        if (!buffer) {
-            fclose(file);
-            uvhttp_response_set_status(response, 500);
-            uvhttp_response_set_header(response, "Content-Type", "text/plain");
-            uvhttp_response_set_body(response, "Memory allocation failed", 25);
-            return 0;
-        }
-        
-        size_t read_size = fread(buffer, 1, file_size, file);
-        if (read_size != (size_t)file_size) {
-            uvhttp_free(buffer);
-            fclose(file);
-            uvhttp_response_set_status(response, 500);
-            uvhttp_response_set_header(response, "Content-Type", "text/plain");
-            uvhttp_response_set_body(response, "File read error", 16);
-            return 0;
-        }
-        
-        int result = uvhttp_response_set_body(response, buffer, read_size);
-        uvhttp_free(buffer);
-        
-        if (result != 0) {
-            fclose(file);
-            uvhttp_response_set_status(response, 500);
-            uvhttp_response_set_header(response, "Content-Type", "text/plain");
-            uvhttp_response_set_body(response, "Response body error", 20);
-            return 0;
-        }
-    }
-    
-    fclose(file);
-    return 0; // 停止处理，文件已发送
+    return uvhttp_middleware_new(UVHTTP_MIDDLEWARE_REQUEST, auth_middleware_func, config_copy);
 }

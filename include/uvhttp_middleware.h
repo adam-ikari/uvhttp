@@ -1,115 +1,85 @@
+/**
+ * @file uvhttp_middleware.h
+ * @brief 简化的中间件系统
+ * 
+ * 通过编译选项控制中间件功能，减少运行时开销
+ */
+
 #ifndef UVHTTP_MIDDLEWARE_H
 #define UVHTTP_MIDDLEWARE_H
 
-#include "uvhttp_request.h"
-#include "uvhttp_response.h"
+#include "uvhttp_error.h"
+#include "uvhttp_common.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// 中间件函数类型定义
-typedef int (*uvhttp_middleware_func_t)(uvhttp_request_t* request, 
-                                        uvhttp_response_t* response, 
-                                        void* next_data);
+// 前向声明
+typedef struct uvhttp_request uvhttp_request_t;
+typedef struct uvhttp_response uvhttp_response_t;
 
-// 中间件链节点
-typedef struct uvhttp_middleware {
-    uvhttp_middleware_func_t func;
-    void* data;
-    struct uvhttp_middleware* next;
-} uvhttp_middleware_t;
+// 中间件函数类型 - 统一接口
+typedef uvhttp_error_t (*uvhttp_middleware_func_t)(uvhttp_request_t* request, 
+                                                  uvhttp_response_t* response);
 
-// 中间件链
+// 简化的中间件配置结构
 typedef struct {
-    uvhttp_middleware_t* head;
-    uvhttp_middleware_t* tail;
-    int count;
-} uvhttp_middleware_chain_t;
+    uvhttp_middleware_func_t request_handler;   // 请求处理函数
+    uvhttp_middleware_func_t response_handler;  // 响应处理函数
+    void* user_data;                            // 用户数据
+} uvhttp_middleware_config_t;
 
-// 创建中间件链
-uvhttp_middleware_chain_t* uvhttp_middleware_chain_new(void);
-
-// 释放中间件链
-void uvhttp_middleware_chain_free(uvhttp_middleware_chain_t* chain);
-
-// 添加中间件到链尾
-int uvhttp_middleware_chain_add(uvhttp_middleware_chain_t* chain, 
-                               uvhttp_middleware_func_t func, 
-                               void* data);
-
-// 执行中间件链
-int uvhttp_middleware_chain_execute(uvhttp_middleware_chain_t* chain,
-                                   uvhttp_request_t* request,
-                                   uvhttp_response_t* response);
-
-// 内置中间件函数
-
-// CORS中间件数据
+// 全局中间件配置（编译时确定）
 typedef struct {
-    const char* allow_origin;
-    const char* allow_methods;
-    const char* allow_headers;
-    const char* max_age;
-} uvhttp_cors_middleware_data_t;
+#if UVHTTP_ENABLE_CORS
+    uvhttp_middleware_config_t cors;
+#endif
+#if UVHTTP_ENABLE_RATE_LIMIT
+    uvhttp_middleware_config_t rate_limit;
+#endif
+#if UVHTTP_ENABLE_AUTH
+    uvhttp_middleware_config_t auth;
+#endif
+#if UVHTTP_ENABLE_COMPRESSION
+    uvhttp_middleware_config_t compression;
+#endif
+#if UVHTTP_ENABLE_STATIC
+    uvhttp_middleware_config_t static_files;
+#endif
+} uvhttp_middleware_global_config_t;
+    // 简化的中间件API
+uvhttp_error_t uvhttp_middleware_init_global_config(void);
+uvhttp_error_t uvhttp_middleware_execute_request_handlers(uvhttp_request_t* request, 
+                                                        uvhttp_response_t* response);
+uvhttp_error_t uvhttp_middleware_execute_response_handlers(uvhttp_request_t* request, 
+                                                         uvhttp_response_t* response);
 
-// 创建CORS中间件数据
-uvhttp_cors_middleware_data_t* uvhttp_cors_middleware_data_new(const char* allow_origin,
-                                                             const char* allow_methods,
-                                                             const char* allow_headers,
-                                                             const char* max_age);
+// 中间件配置API（仅在相应功能启用时编译）
+#if UVHTTP_ENABLE_CORS
+uvhttp_error_t uvhttp_middleware_enable_cors(const char* allowed_origins, 
+                                            const char* allowed_methods, 
+                                            const char* allowed_headers);
+#endif
 
-// 释放CORS中间件数据
-void uvhttp_cors_middleware_data_free(uvhttp_cors_middleware_data_t* data);
+#if UVHTTP_ENABLE_RATE_LIMIT
+uvhttp_error_t uvhttp_middleware_set_rate_limit(int max_requests, int window_seconds);
+#endif
 
-// CORS中间件函数
-int uvhttp_cors_middleware(uvhttp_request_t* request,
-                          uvhttp_response_t* response,
-                          void* next_data);
+#if UVHTTP_ENABLE_AUTH
+uvhttp_error_t uvhttp_middleware_set_auth(const char* secret_key, const char* algorithm);
+#endif
 
-// 限流中间件数据
-typedef struct {
-    int max_requests_per_minute;
-    int current_requests;
-    time_t window_start;
-} uvhttp_rate_limit_middleware_data_t;
+#if UVHTTP_ENABLE_COMPRESSION
+uvhttp_error_t uvhttp_middleware_enable_compression(int level);
+#endif
 
-// 创建限流中间件数据
-uvhttp_rate_limit_middleware_data_t* uvhttp_rate_limit_middleware_data_new(int max_requests_per_minute);
+#if UVHTTP_ENABLE_STATIC
+uvhttp_error_t uvhttp_middleware_set_static_root(const char* root_path);
+#endif
 
-// 释放限流中间件数据
-void uvhttp_rate_limit_middleware_data_free(uvhttp_rate_limit_middleware_data_t* data);
-
-// 限流中间件函数
-int uvhttp_rate_limit_middleware(uvhttp_request_t* request,
-                                uvhttp_response_t* response,
-                                void* next_data);
-
-// 静态文件中间件数据
-typedef struct {
-    char* root_directory;       // 静态文件根目录
-    char* url_prefix;          // URL前缀，如 "/static"
-    int auto_index;            // 是否自动生成目录索引
-    int enable_cache;          // 是否启用缓存
-    int max_cache_size;        // 最大缓存大小（字节）
-    char* index_file;          // 默认索引文件名，如 "index.html"
-} uvhttp_static_middleware_data_t;
-
-// 创建静态文件中间件数据
-uvhttp_static_middleware_data_t* uvhttp_static_middleware_data_new(const char* root_directory,
-                                                                  const char* url_prefix,
-                                                                  int auto_index,
-                                                                  int enable_cache,
-                                                                  int max_cache_size,
-                                                                  const char* index_file);
-
-// 释放静态文件中间件数据
-void uvhttp_static_middleware_data_free(uvhttp_static_middleware_data_t* data);
-
-// 静态文件中间件函数
-int uvhttp_static_middleware(uvhttp_request_t* request,
-                            uvhttp_response_t* response,
-                            void* next_data);
+// 中间件清理
+void uvhttp_middleware_cleanup(void);
 
 #ifdef __cplusplus
 }

@@ -55,10 +55,14 @@ int uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client);
 
 ### 2.2 错误处理原则
 
+uvhttp 的 release 版本中不输出任何 log，只有 debug 版本的时候会使用编译宏开启 log 输出
+
 ```c
 int result = some_function();
 if (result != UVHTTP_ERROR_NONE) {
+#if UVHTTP_DEBUG
     fprintf(stderr, "Function failed: %s\n", uvhttp_error_string(result));
+#endif
     return result;
 }
 ```
@@ -247,38 +251,23 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 target_compile_options(${TARGET} PRIVATE -Wall -Wextra -Werror)
 ```
 
-## 12. 日志规范
+## 12. 依赖管理
 
-### 12.1 日志级别
-
-- `ERROR`: 错误信息
-- `WARN`: 警告信息
-- `INFO`: 一般信息
-- `DEBUG`: 调试信息
-
-### 12.2 日志格式
-
-```
-[YYYY-MM-DD HH:MM:SS] [LEVEL] [MODULE] message
-```
-
-## 13. 依赖管理
-
-### 13.1 第三方库
+### 12.1 第三方库
 
 - 最小化外部依赖
 - 使用稳定版本
 - 文档化依赖关系
 
-### 13.2 子模块
+### 12.2 子模块
 
-- Git 子模块用于大型依赖
+- 使用 Git 子模块管理和下载依赖
 - 固定到特定版本
 - 定期更新安全补丁
 
-## 14. 发布流程
+## 13. 发布流程
 
-### 14.1 发布检查
+### 13.1 发布检查
 
 - [ ] 所有测试通过
 - [ ] 文档更新
@@ -286,7 +275,7 @@ target_compile_options(${TARGET} PRIVATE -Wall -Wextra -Werror)
 - [ ] 变更日志更新
 - [ ] 性能测试通过
 
-### 14.2 发布步骤
+### 13.2 发布步骤
 
 1. 更新版本号
 2. 更新 CHANGELOG
@@ -294,31 +283,31 @@ target_compile_options(${TARGET} PRIVATE -Wall -Wextra -Werror)
 4. 构建发布包
 5. 发布到仓库
 
-## 15. 故障排除
+## 14. 故障排除
 
-### 15.1 调试工具
+### 14.1 调试工具
 
 - GDB：核心转储分析
 - Valgrind：内存泄漏检测
 - AddressSanitizer：运行时错误检测
 - 静态分析：cppcheck
 
-### 15.2 常见问题
+### 14.2 常见问题
 
 - 内存泄漏：使用 RAII 模式
 - 竞态条件：使用适当的同步
 - 性能问题：使用性能分析工具
 
-## 16. 持续改进
+## 15. 持续改进
 
-### 16.1 代码质量
+### 15.1 代码质量
 
 - 定期代码审查
 - 自动化测试
 - 静态分析
 - 性能监控
 
-### 16.2 技术债务
+### 15.2 技术债务
 
 - 记录技术债务
 - 制定偿还计划

@@ -49,6 +49,14 @@ struct uvhttp_connection {
     llhttp_t* http_parser;
     llhttp_settings_t* parser_settings;
     
+    // HTTP/1.1优化字段
+    int current_header_is_important;    // 当前头部是否为关键字段
+    int keep_alive;                     // 是否保持连接
+    int chunked_encoding;               // 是否使用分块传输
+    size_t content_length;              // 内容长度
+    size_t body_received;               // 已接收的body长度
+    int parsing_complete;               // 解析是否完成
+    
     // 解析状态
     int parsing_complete;
     size_t content_length;

@@ -1,6 +1,9 @@
 #ifndef UVHTTP_ERROR_H
 #define UVHTTP_ERROR_H
 
+#include <stddef.h>
+#include <time.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,13 +54,26 @@ typedef enum {
     UVHTTP_ERROR_WEBSOCKET_FRAME = -702,
     
     /* HTTP/2 errors */
-    UVHTTP_ERROR_HTTP2_INIT = -800,
-    UVHTTP_ERROR_HTTP2_STREAM = -801,
-    UVHTTP_ERROR_HTTP2_SESSION = -802
-} uvhttp_error_t;
+    } uvhttp_error_t;
 
 /* Error code to string */
 const char* uvhttp_error_string(uvhttp_error_t error);
+
+/* Error recovery and retry mechanism */
+void uvhttp_set_error_recovery_config(int max_retries, int base_delay_ms, 
+                                     int max_delay_ms, double backoff_multiplier);
+uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*), 
+                                     void* context, const char* operation_name);
+
+/* Error logging and statistics */
+void uvhttp_log_error(uvhttp_error_t error, const char* context);
+void uvhttp_get_error_stats(size_t* error_counts, time_t* last_error_time, 
+                           const char** last_error_context);
+void uvhttp_reset_error_stats(void);
+uvhttp_error_t uvhttp_get_most_frequent_error(void);
+
+/* Maximum error code for statistics */
+#define UVHTTP_ERROR_MAX 1000
 
 #ifdef __cplusplus
 }

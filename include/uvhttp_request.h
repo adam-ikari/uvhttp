@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <llhttp.h>
+#include "llhttp.h"
 #include "uvhttp_common.h"
 
 #ifdef __cplusplus
@@ -48,6 +48,10 @@ struct uvhttp_request {
 /* API functions */
 const char* uvhttp_request_get_method(uvhttp_request_t* request);
 const char* uvhttp_request_get_url(uvhttp_request_t* request);
+const char* uvhttp_request_get_path(uvhttp_request_t* request);
+const char* uvhttp_request_get_query_string(uvhttp_request_t* request);
+const char* uvhttp_request_get_query_param(uvhttp_request_t* request, const char* name);
+const char* uvhttp_request_get_client_ip(uvhttp_request_t* request);
 const char* uvhttp_request_get_header(uvhttp_request_t* request, const char* name);
 const char* uvhttp_request_get_body(uvhttp_request_t* request);
 size_t uvhttp_request_get_body_length(uvhttp_request_t* request);

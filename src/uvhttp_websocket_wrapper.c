@@ -55,8 +55,10 @@ static const char* uvhttp_websocket_error_string(uvhttp_websocket_error_t error)
 /* 错误日志记录函数 */
 static void uvhttp_websocket_log_error(const char* function, const char* message, 
                                      uvhttp_websocket_error_t error) {
+#if UVHTTP_DEBUG
     fprintf(stderr, "[WebSocket Error] %s: %s (%s)\n", 
             function, message, uvhttp_websocket_error_string(error));
+#endif
 }
 
 /* 内部函数声明 */
@@ -111,12 +113,31 @@ static enum lws_write_protocol uvhttp_websocket_type_to_lws(uvhttp_websocket_typ
     }
 }
 
-/* 简化的 SHA1 哈希函数（用于 WebSocket 握手） */
-static void uvhttp_simple_sha1(const char* input, size_t len, unsigned char* output) {
-    /* 这是一个简化的 SHA1 实现，生产环境应该使用 OpenSSL 或其他加密库 */
-    /* 简化实现 - 实际应该使用完整的 SHA1 */
-    memset(output, 0, 20);
-    memcpy(output, input, (len < 20) ? len : 20);
+/* SHA1 哈希函数（用于 WebSocket 握手） - 使用mbedtls实现 */
+static int uvhttp_sha1(const char* input, size_t len, unsigned char* output) {
+    if (!input || !output) {
+        return -1;
+    }
+    
+    mbedtls_sha1_context ctx;
+    mbedtls_sha1_init(&ctx);
+    
+    int ret = mbedtls_sha1_starts_ret(&ctx);
+    if (ret != 0) {
+        mbedtls_sha1_free(&ctx);
+        return -1;
+    }
+    
+    ret = mbedtls_sha1_update_ret(&ctx, (const unsigned char*)input, len);
+    if (ret != 0) {
+        mbedtls_sha1_free(&ctx);
+        return -1;
+    }
+    
+    ret = mbedtls_sha1_finish_ret(&ctx, output);
+    mbedtls_sha1_free(&ctx);
+    
+    return (ret == 0) ? 0 : -1;
 }
 
 /* WebSocket 握手实现 */
@@ -133,14 +154,18 @@ static int uvhttp_websocket_handshake(uvhttp_websocket_t* ws,
     
     /* 验证 WebSocket Key 存在 */
     if (!ws_key || strlen(ws_key) == 0) {
+#if UVHTTP_DEBUG
         fprintf(stderr, "Missing Sec-WebSocket-Key header\n");
+#endif
         return -1;
     }
     
     /* 验证 WebSocket Key 格式（应该是 base64 编码） */
     size_t ws_key_len = strlen(ws_key);
     if (ws_key_len < 16 || ws_key_len > 64) {
+#if UVHTTP_DEBUG
         fprintf(stderr, "Invalid Sec-WebSocket-Key length: %zu\n", ws_key_len);
+#endif
         return -1;
     }
     
@@ -149,7 +174,12 @@ static int uvhttp_websocket_handshake(uvhttp_websocket_t* ws,
     snprintf(combined, sizeof(combined), "%s%s", ws_key, WS_MAGIC_STRING);
     
     unsigned char sha1_hash[20];
-    uvhttp_simple_sha1(combined, strlen(combined), sha1_hash);
+    if (uvhttp_sha1(combined, strlen(combined), sha1_hash) != 0) {
+#if UVHTTP_DEBUG
+        fprintf(stderr, "SHA1 calculation failed\n");
+#endif
+        return -1;
+    }
     
     char accept_key[40];
     if (!uvhttp_base64_encode(sha1_hash, 20, accept_key, sizeof(accept_key))) {
@@ -637,7 +667,9 @@ int uvhttp_websocket_verify_peer_cert(uvhttp_websocket_t* ws) {
     result = lws_tls_peer_cert_info(ws->wsi, LWS_TLS_CERT_INFO_COMMON_NAME, 
                                     &cert_info, sizeof(cert_info));
     if (result == 0) {
+#if UVHTTP_DEBUG
         fprintf(stderr, "Peer certificate CN: %s\n", cert_info.ns.name);
+#endif
     }
     
     /* 获取颁发者 */
@@ -645,7 +677,9 @@ int uvhttp_websocket_verify_peer_cert(uvhttp_websocket_t* ws) {
     result = lws_tls_peer_cert_info(ws->wsi, LWS_TLS_CERT_INFO_ISSUER_NAME, 
                                     &cert_info, sizeof(cert_info));
     if (result == 0) {
+#if UVHTTP_DEBUG
         fprintf(stderr, "Peer certificate Issuer: %s\n", cert_info.ns.name);
+#endif
     }
     
     return 0; /* 成功 */

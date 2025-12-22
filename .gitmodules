@@ -1,9 +1,7 @@
 [submodule "deps/mimalloc"]
 	path = deps/mimalloc
 	url = https://github.com/microsoft/mimalloc.git
-[submodule "deps/llhttp"]
-	path = deps/llhttp
-	url = https://github.com/nodejs/llhttp.git
+
 [submodule "deps/mbedtls"]
 	path = deps/mbedtls
 	url = https://github.com/ARMmbed/mbedtls.git
