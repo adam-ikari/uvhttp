@@ -56,7 +56,7 @@ int uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client);
 
 ### 2.2 错误处理原则
 
-uvhttp 的 release 版本中不输出任何 log，只有 debug 版本的时候会使用LOG宏开启 log 输出
+uvhttp 的 release 版本中不输出任何 log，只有 debug 版本的时候会使用 LOG 宏开启 log 输出
 
 ```c
 int result = some_function();
@@ -99,7 +99,7 @@ buffer = NULL; /* 避免悬空指针 */
 
 ### 4.2 测试命名
 
-```
+```text
 test_<module>_<feature>.c
 例如：
 - test_request_init.c
@@ -117,7 +117,7 @@ test_<module>_<feature>.c
 
 ### 5.1 提交消息格式
 
-```
+```text
 <type>(<scope>): <subject>
 
 <body>
