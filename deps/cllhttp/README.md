@@ -19,7 +19,7 @@ cllhttp is a lightweight HTTP parser for C, generated from the llhttp project. I
 
 ## Usage
 
-\`\`\`c
+```c
 #include "llhttp.h"
 
 // Initialize parser
@@ -33,7 +33,7 @@ llhttp_init(&parser, HTTP_REQUEST, &settings);
 const char* data = "GET / HTTP/1.1\\r\\n\\r\\n";
 size_t len = strlen(data);
 llhttp_execute(&parser, data, len);
-\`\`\`
+```
 
 ## Integration
 
