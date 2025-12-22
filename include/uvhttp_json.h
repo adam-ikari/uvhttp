@@ -15,7 +15,7 @@
 
 #ifdef UVHTTP_JSON_ENABLED
 
-#include <cjson/cJSON.h>
+#include "../../deps/cjson/cJSON.h"
 #include <stddef.h>
 
 #ifdef __cplusplus

@@ -12,17 +12,17 @@ extern "C" {
 
 /* 可选功能定义 - 用户可通过编译宏控制 */
 #ifndef UVHTTP_FEATURE_WEBSOCKET
-#define UVHTTP_FEATURE_WEBSOCKET 0  /* WebSocket 支持 */
+#define UVHTTP_FEATURE_WEBSOCKET 1  /* WebSocket 支持 */
 #endif
 
 
 
 #ifndef UVHTTP_FEATURE_TLS
-#define UVHTTP_FEATURE_TLS 0        /* TLS/SSL 支持 */
+#define UVHTTP_FEATURE_TLS 1        /* TLS/SSL 支持 */
 #endif
 
 #ifndef UVHTTP_FEATURE_JSON
-#define UVHTTP_FEATURE_JSON 0       /* JSON 解析支持 */
+#define UVHTTP_FEATURE_JSON 1       /* JSON 解析支持 */
 #endif
 
 #ifndef UVHTTP_FEATURE_MIDDLEWARE

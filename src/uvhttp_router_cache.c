@@ -60,20 +60,20 @@ static inline uint32_t crc32_hash(const char* str) {
 
 // 快速方法解析（避免字符串比较）
 static inline uvhttp_method_t fast_method_parse(const char* method) {
-    if (!method) return UVHTTP_METHOD_ANY;
+    if (!method) return UVHTTP_ANY;
     
     // 使用前缀快速判断
     switch (method[0]) {
-        case 'G': return method[1] == 'E' ? UVHTTP_METHOD_GET : UVHTTP_METHOD_ANY;
+        case 'G': return method[1] == 'E' ? UVHTTP_GET : UVHTTP_ANY;
         case 'P': 
-            if (method[1] == 'O') return UVHTTP_METHOD_POST;
-            if (method[1] == 'U') return UVHTTP_METHOD_PUT;
-            return UVHTTP_METHOD_ANY;
-        case 'D': return UVHTTP_METHOD_DELETE;
-        case 'H': return UVHTTP_METHOD_HEAD;
-        case 'O': return UVHTTP_METHOD_OPTIONS;
-        case 'C': return UVHTTP_METHOD_PATCH;
-        default: return UVHTTP_METHOD_ANY;
+            if (method[1] == 'O') return UVHTTP_POST;
+            if (method[1] == 'U') return UVHTTP_PUT;
+            return UVHTTP_ANY;
+        case 'D': return UVHTTP_DELETE;
+        case 'H': return UVHTTP_HEAD;
+        case 'O': return UVHTTP_OPTIONS;
+        case 'C': return UVHTTP_PATCH;
+        default: return UVHTTP_ANY;
     }
 }
 
@@ -165,7 +165,7 @@ static uvhttp_error_t add_to_hot_routes(cache_optimized_router_t* cr,
 uvhttp_error_t uvhttp_router_add_route(uvhttp_router_t* router, 
                                            const char* path, 
                                            uvhttp_request_handler_t handler) {
-    return uvhttp_router_add_route_method(router, path, UVHTTP_METHOD_ANY, handler);
+    return uvhttp_router_add_route_method(router, path, UVHTTP_ANY, handler);
 }
 
 uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
@@ -200,28 +200,28 @@ static inline uvhttp_request_handler_t find_in_hot_routes(cache_optimized_router
     // 循环展开以减少分支预测失败
     for (size_t i = 0; i < cr->hot_count; i += 4) {
         // 批量比较4个路由
-        if ((cr->hot_routes[i].method == method || cr->hot_routes[i].method == UVHTTP_METHOD_ANY) &&
+        if ((cr->hot_routes[i].method == method || cr->hot_routes[i].method == UVHTTP_ANY) &&
             strcmp(cr->hot_routes[i].path, path) == 0) {
             cr->access_count[i]++;
             return cr->hot_routes[i].handler;
         }
         
         if (i + 1 < cr->hot_count &&
-            (cr->hot_routes[i + 1].method == method || cr->hot_routes[i + 1].method == UVHTTP_METHOD_ANY) &&
+            (cr->hot_routes[i + 1].method == method || cr->hot_routes[i + 1].method == UVHTTP_ANY) &&
             strcmp(cr->hot_routes[i + 1].path, path) == 0) {
             cr->access_count[i + 1]++;
             return cr->hot_routes[i + 1].handler;
         }
         
         if (i + 2 < cr->hot_count &&
-            (cr->hot_routes[i + 2].method == method || cr->hot_routes[i + 2].method == UVHTTP_METHOD_ANY) &&
+            (cr->hot_routes[i + 2].method == method || cr->hot_routes[i + 2].method == UVHTTP_ANY) &&
             strcmp(cr->hot_routes[i + 2].path, path) == 0) {
             cr->access_count[i + 2]++;
             return cr->hot_routes[i + 2].handler;
         }
         
         if (i + 3 < cr->hot_count &&
-            (cr->hot_routes[i + 3].method == method || cr->hot_routes[i + 3].method == UVHTTP_METHOD_ANY) &&
+            (cr->hot_routes[i + 3].method == method || cr->hot_routes[i + 3].method == UVHTTP_ANY) &&
             strcmp(cr->hot_routes[i + 3].path, path) == 0) {
             cr->access_count[i + 3]++;
             return cr->hot_routes[i + 3].handler;
@@ -239,7 +239,7 @@ static uvhttp_request_handler_t find_in_hash_table(cache_optimized_router_t* cr,
     
     route_hash_entry_t* entry = cr->hash_table[hash];
     while (entry) {
-        if ((entry->method == method || entry->method == UVHTTP_METHOD_ANY) &&
+        if ((entry->method == method || entry->method == UVHTTP_ANY) &&
             strcmp(entry->path, path) == 0) {
             return entry->handler;
         }

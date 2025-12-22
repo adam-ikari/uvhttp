@@ -261,3 +261,12 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
     
     return "127.0.0.1"; // 默认值
 }
+
+void uvhttp_request_free(uvhttp_request_t* request) {
+    if (!request) {
+        return;
+    }
+    
+    uvhttp_request_cleanup(request);
+    uvhttp_free(request);
+}

@@ -507,3 +507,25 @@ void llhttp__debug(llhttp_t* s, const char* p, const char* endp,
             s->type, s->flags, *p, msg);
   }
 }
+
+/* Missing callback implementations */
+int llhttp__after_message_complete(llhttp__internal_t* s, const unsigned char* p,
+                                   const unsigned char* endp) {
+  int err;
+  CALLBACK_MAYBE(s, on_message_complete);
+  return err;
+}
+
+int llhttp__before_headers_complete(llhttp__internal_t* s, const unsigned char* p,
+                                    const unsigned char* endp) {
+  int err;
+  CALLBACK_MAYBE(s, on_headers_complete);
+  return err;
+}
+
+int llhttp__after_headers_complete(llhttp__internal_t* s, const unsigned char* p,
+                                  const unsigned char* endp) {
+  int err;
+  CALLBACK_MAYBE(s, on_headers_complete);
+  return err;
+}

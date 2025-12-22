@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <errno.h>
+#include <openssl/sha.h>
 
 /* 函数声明 */
 const char* uvhttp_request_get_header(uvhttp_request_t* request, const char* name);
@@ -36,6 +37,7 @@ struct uvhttp_response;
 static const char* WS_MAGIC_STRING = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
 /* 错误码到字符串映射 */
+static const char* uvhttp_websocket_error_string(uvhttp_websocket_error_t error) __attribute__((unused));
 static const char* uvhttp_websocket_error_string(uvhttp_websocket_error_t error) {
     switch (error) {
         case UVHTTP_WEBSOCKET_ERROR_NONE: return "No error";
@@ -58,6 +60,11 @@ static void uvhttp_websocket_log_error(const char* function, const char* message
 #if UVHTTP_DEBUG
     fprintf(stderr, "[WebSocket Error] %s: %s (%s)\n", 
             function, message, uvhttp_websocket_error_string(error));
+#else
+    // 避免未使用参数警告
+    (void)function;
+    (void)message;
+    (void)error;
 #endif
 }
 
@@ -113,31 +120,15 @@ static enum lws_write_protocol uvhttp_websocket_type_to_lws(uvhttp_websocket_typ
     }
 }
 
-/* SHA1 哈希函数（用于 WebSocket 握手） - 使用mbedtls实现 */
+/* SHA1 哈希函数（用于 WebSocket 握手） - 使用OpenSSL实现 */
 static int uvhttp_sha1(const char* input, size_t len, unsigned char* output) {
     if (!input || !output) {
         return -1;
     }
     
-    mbedtls_sha1_context ctx;
-    mbedtls_sha1_init(&ctx);
-    
-    int ret = mbedtls_sha1_starts_ret(&ctx);
-    if (ret != 0) {
-        mbedtls_sha1_free(&ctx);
-        return -1;
-    }
-    
-    ret = mbedtls_sha1_update_ret(&ctx, (const unsigned char*)input, len);
-    if (ret != 0) {
-        mbedtls_sha1_free(&ctx);
-        return -1;
-    }
-    
-    ret = mbedtls_sha1_finish_ret(&ctx, output);
-    mbedtls_sha1_free(&ctx);
-    
-    return (ret == 0) ? 0 : -1;
+    // 使用OpenSSL的SHA1函数
+    SHA1((const unsigned char*)input, len, output);
+    return 0;
 }
 
 /* WebSocket 握手实现 */

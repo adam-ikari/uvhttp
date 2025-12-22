@@ -60,6 +60,7 @@ uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response, const cha
 uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length);
 uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
 void uvhttp_response_cleanup(uvhttp_response_t* response);
+void uvhttp_response_free(uvhttp_response_t* response);
 
 #ifdef __cplusplus
 }

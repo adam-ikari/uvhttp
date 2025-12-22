@@ -2,12 +2,15 @@
 #define UVHTTP_ROUTER_H
 
 #include <stddef.h>
+
 #include "uvhttp_error.h"
 #include "uvhttp_common.h"
+#include "uvhttp_request.h"
 
 // Forward declarations
-typedef struct uvhttp_request uvhttp_request_t;
 typedef struct uvhttp_response uvhttp_response_t;
+
+// HTTP方法枚举 - 使用uvhttp_request.h中的定义
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,17 +22,7 @@ extern "C" {
 #define MAX_PARAM_NAME_LEN 64
 #define MAX_PARAM_VALUE_LEN 256
 
-// HTTP方法枚举
-typedef enum {
-    UVHTTP_METHOD_ANY = 0,
-    UVHTTP_METHOD_GET,
-    UVHTTP_METHOD_POST,
-    UVHTTP_METHOD_PUT,
-    UVHTTP_METHOD_DELETE,
-    UVHTTP_METHOD_HEAD,
-    UVHTTP_METHOD_OPTIONS,
-    UVHTTP_METHOD_PATCH
-} uvhttp_method_t;
+
 
 // 路由参数
 typedef struct {

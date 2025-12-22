@@ -57,11 +57,6 @@ struct uvhttp_connection {
     size_t body_received;               // 已接收的body长度
     int parsing_complete;               // 解析是否完成
     
-    // 解析状态
-    int parsing_complete;
-    size_t content_length;
-    size_t body_received;
-    
     // 错误处理
     int last_error;
 };
@@ -76,6 +71,8 @@ void uvhttp_connection_close(uvhttp_connection_t* conn);
 int uvhttp_connection_start_tls_handshake(uvhttp_connection_t* conn);
 int uvhttp_connection_tls_read(uvhttp_connection_t* conn);
 int uvhttp_connection_tls_write(uvhttp_connection_t* conn, const void* data, size_t len);
+int uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn);
+void uvhttp_connection_tls_cleanup(uvhttp_connection_t* conn);
 
 // 状态管理
 void uvhttp_connection_set_state(uvhttp_connection_t* conn, uvhttp_connection_state_t state);

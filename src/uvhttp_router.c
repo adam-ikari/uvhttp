@@ -11,14 +11,14 @@ static const struct {
     const char* name;
     uvhttp_method_t method;
 } method_map[] = {
-    {"GET", UVHTTP_METHOD_GET},
-    {"POST", UVHTTP_METHOD_POST},
-    {"PUT", UVHTTP_METHOD_PUT},
-    {"DELETE", UVHTTP_METHOD_DELETE},
-    {"HEAD", UVHTTP_METHOD_HEAD},
-    {"OPTIONS", UVHTTP_METHOD_OPTIONS},
-    {"PATCH", UVHTTP_METHOD_PATCH},
-    {NULL, UVHTTP_METHOD_ANY}
+    {"GET", UVHTTP_GET},
+    {"POST", UVHTTP_POST},
+    {"PUT", UVHTTP_PUT},
+    {"DELETE", UVHTTP_DELETE},
+    {"HEAD", UVHTTP_HEAD},
+    {"OPTIONS", UVHTTP_OPTIONS},
+    {"PATCH", UVHTTP_PATCH},
+    {NULL, UVHTTP_ANY}
 };
 
 #define HYBRID_THRESHOLD 100  // 切换到Trie的路由数量阈值
@@ -29,7 +29,7 @@ uvhttp_method_t uvhttp_method_from_string(const char* method) {
             return method_map[i].method;
         }
     }
-    return UVHTTP_METHOD_ANY;
+    return UVHTTP_ANY;
 }
 
 const char* uvhttp_method_to_string(uvhttp_method_t method) {
@@ -207,7 +207,7 @@ static uvhttp_request_handler_t find_array_route(uvhttp_router_t* router,
                                                 uvhttp_method_t method) {
     for (size_t i = 0; i < router->array_route_count; i++) {
         array_route_t* route = &router->array_routes[i];
-        if (route->method == method || route->method == UVHTTP_METHOD_ANY) {
+        if (route->method == method || route->method == UVHTTP_ANY) {
             if (strcmp(route->path, path) == 0) {
                 return route->handler;
             }
@@ -272,7 +272,7 @@ static uvhttp_error_t migrate_to_trie(uvhttp_router_t* router) {
 uvhttp_error_t uvhttp_router_add_route(uvhttp_router_t* router, 
                                            const char* path, 
                                            uvhttp_request_handler_t handler) {
-    return uvhttp_router_add_route_method(router, path, UVHTTP_METHOD_ANY, handler);
+    return uvhttp_router_add_route_method(router, path, UVHTTP_ANY, handler);
 }
 
 uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
@@ -351,7 +351,7 @@ static int match_route_node(uvhttp_route_node_t* node,
     
     // 如果是叶子节点
     if (segment_index >= segment_count) {
-        if (node->handler && (node->method == UVHTTP_METHOD_ANY || node->method == method)) {
+        if (node->handler && (node->method == UVHTTP_ANY || node->method == method)) {
             match->handler = node->handler;
             match->param_count = 0;
             return 0;

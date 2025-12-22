@@ -15,8 +15,10 @@ extern "C" {
 #define MAX_URL_LEN 2048
 #define MAX_BODY_LEN (1024 * 1024)  // 1MB
 
+// HTTP方法枚举
 typedef enum {
-    UVHTTP_GET = 0,
+    UVHTTP_ANY = 0,
+    UVHTTP_GET,
     UVHTTP_POST,
     UVHTTP_PUT,
     UVHTTP_DELETE,
@@ -24,6 +26,8 @@ typedef enum {
     UVHTTP_OPTIONS,
     UVHTTP_PATCH
 } uvhttp_method_t;
+
+
 
 typedef struct uvhttp_request uvhttp_request_t;
 
@@ -34,6 +38,8 @@ struct uvhttp_request {
     
     uvhttp_method_t method;
     char url[MAX_URL_LEN];
+    char* path;
+    char* query;
     char* body;
     size_t body_length;
     size_t body_capacity;
@@ -48,6 +54,8 @@ struct uvhttp_request {
 /* API functions */
 const char* uvhttp_request_get_method(uvhttp_request_t* request);
 const char* uvhttp_request_get_url(uvhttp_request_t* request);
+void uvhttp_request_free(uvhttp_request_t* request);
+void uvhttp_request_cleanup(uvhttp_request_t* request);
 const char* uvhttp_request_get_path(uvhttp_request_t* request);
 const char* uvhttp_request_get_query_string(uvhttp_request_t* request);
 const char* uvhttp_request_get_query_param(uvhttp_request_t* request, const char* name);

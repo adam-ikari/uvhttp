@@ -5,6 +5,7 @@
 #include "uvhttp_server.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
+#include "uvhttp_tls.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -341,34 +342,82 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
     uvhttp_free(conn);
 }
 
+static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
+    (void)suggested_size; // 避免未使用参数警告
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
+    if (!conn || !conn->read_buffer) {
+        buf->base = NULL;
+        buf->len = 0;
+        return;
+    }
+    
+    size_t remaining = conn->read_buffer_size - conn->read_buffer_used;
+    buf->base = conn->read_buffer + conn->read_buffer_used;
+    buf->len = remaining;
+}
+
+static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
+    (void)buf; // 避免未使用参数警告
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)stream->data;
+    if (!conn) {
+        return;
+    }
+    
+    if (nread < 0) {
+        if (nread != UV_EOF) {
+            // 连接错误
+            uvhttp_connection_close(conn);
+        }
+        return;
+    }
+    
+    if (nread == 0) {
+        return;
+    }
+    
+    // 处理接收到的数据
+    if (conn->http_parser) {
+        int result = llhttp_execute(conn->http_parser, buf->base, nread);
+        if (result != nread) {
+            // 解析错误
+            uvhttp_connection_close(conn);
+            return;
+        }
+    }
+    
+    conn->read_buffer_used = 0;
+}
+
 int uvhttp_connection_start(uvhttp_connection_t* conn) {
     if (!conn) {
         return -1;
     }
     
     // 开始HTTP读取 - 完整实现
-    if (uv_read_start((uv_stream_t*)&conn->tcp_handle, on_alloc_buffer, on_read) != 0) {
+    if (uv_read_start((uv_stream_t*)&conn->tcp_handle, (uv_alloc_cb)on_alloc_buffer, (uv_read_cb)on_read) != 0) {
 #if UVHTTP_DEBUG
         fprintf(stderr, "Failed to start reading\n");
 #endif
         uvhttp_connection_close(conn);
-        return;
+        return -1;
     }
     uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_HTTP_READING);
-    return 0; // 成功
-}
-
-// TLS处理 - 完整实现
+    
+    // TLS处理
     if (conn->tls_enabled) {
-        // TLS握手处理
-        if (uvhttp_tls_handshake(conn) != 0) {
+        if (uvhttp_connection_tls_handshake_func(conn) != 0) {
 #if UVHTTP_DEBUG
             fprintf(stderr, "TLS handshake failed\n");
 #endif
             uvhttp_connection_close(conn);
-            return;
+            return -1;
         }
     }
+    
+    return 0;
+}
+
+
 
 
 
@@ -420,7 +469,7 @@ void uvhttp_connection_close(uvhttp_connection_t* conn) {
     
     // TLS清理
     if (conn->tls_enabled && conn->ssl) {
-        uvhttp_tls_cleanup(conn);
+        uvhttp_connection_tls_cleanup(conn);
     }
     on_close(conn);
 }
@@ -441,6 +490,24 @@ const char* uvhttp_connection_get_state_string(uvhttp_connection_state_t state) 
 
 
 
+
+// TLS适配函数 - 注意这个函数与uvhttp_tls.h中的函数名冲突
+// 这里实现connection版本的包装函数
+int uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn) {
+    if (!conn || !conn->ssl) {
+        return -1;
+    }
+    // 调用实际的TLS握手函数
+    uvhttp_tls_error_t result = uvhttp_tls_handshake((SSL*)conn->ssl);
+    return (result == UVHTTP_TLS_OK) ? 0 : -1;
+}
+
+void uvhttp_connection_tls_cleanup(uvhttp_connection_t* conn) {
+    if (conn && conn->ssl) {
+        SSL_free((SSL*)conn->ssl);
+        conn->ssl = NULL;
+    }
+}
 
 static void on_close(void* handle) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)handle;

@@ -286,14 +286,14 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
     write_data->response = response;
     
     uv_buf_t buf = uv_buf_init(write_data->data, write_data->length);
-    int result = uv_write(&write_data->write_req, (uv_stream_t*)response->client, &buf, 1, on_write_complete);
+    int result = uv_write(&write_data->write_req, (uv_stream_t*)response->client, &buf, 1, NULL);
     
     if (result < 0) {
         uvhttp_free(write_data->data);
         uvhttp_free(write_data);
         uvhttp_free(temp_buffer);
         uvhttp_free(response_data);
-        return UVHTTP_ERROR_WRITE_FAILED;
+        return UVHTTP_ERROR_CONNECTION_INIT;
     }
     
     // 清理所有分配的资源
@@ -304,4 +304,13 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
     response->finished = 1;
     
     return UVHTTP_OK;
+}
+
+void uvhttp_response_free(uvhttp_response_t* response) {
+    if (!response) {
+        return;
+    }
+    
+    uvhttp_response_cleanup(response);
+    uvhttp_free(response);
 }

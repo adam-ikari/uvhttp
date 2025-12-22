@@ -61,89 +61,41 @@ else()
     add_definitions(-DUVHTTP_DEBUG=0)
 endif()
 
-# 中间件功能选项
-option(UVHTTP_ENABLE_CORS "Enable CORS middleware" ON)
+# 功能配置选项 - 使用编译宏控制
+option(UVHTTP_ENABLE_CORS "Enable CORS support" ON)
 if(UVHTTP_ENABLE_CORS)
     add_definitions(-DUVHTTP_ENABLE_CORS=1)
-    message(STATUS "CORS middleware enabled")
+    message(STATUS "CORS support enabled")
 else()
     add_definitions(-DUVHTTP_ENABLE_CORS=0)
 endif()
 
-option(UVHTTP_ENABLE_RATE_LIMIT "Enable rate limiting middleware" ON)
+option(UVHTTP_ENABLE_RATE_LIMIT "Enable rate limiting support" ON)
 if(UVHTTP_ENABLE_RATE_LIMIT)
     add_definitions(-DUVHTTP_ENABLE_RATE_LIMIT=1)
-    message(STATUS "Rate limiting middleware enabled")
+    message(STATUS "Rate limiting support enabled")
 else()
     add_definitions(-DUVHTTP_ENABLE_RATE_LIMIT=0)
 endif()
 
-option(UVHTTP_ENABLE_AUTH "Enable authentication middleware" ON)
+option(UVHTTP_ENABLE_AUTH "Enable authentication support" ON)
 if(UVHTTP_ENABLE_AUTH)
     add_definitions(-DUVHTTP_ENABLE_AUTH=1)
-    message(STATUS "Authentication middleware enabled")
+    message(STATUS "Authentication support enabled")
 else()
     add_definitions(-DUVHTTP_ENABLE_AUTH=0)
 endif()
 
-option(UVHTTP_ENABLE_COMPRESSION "Enable compression middleware" OFF)
+option(UVHTTP_ENABLE_COMPRESSION "Enable compression support" OFF)
 if(UVHTTP_ENABLE_COMPRESSION)
     add_definitions(-DUVHTTP_ENABLE_COMPRESSION=1)
-    message(STATUS "Compression middleware enabled")
+    message(STATUS "Compression support enabled")
 else()
     add_definitions(-DUVHTTP_ENABLE_COMPRESSION=0)
-endif()
-
-option(UVHTTP_ENABLE_STATIC "Enable static file middleware" ON)
-if(UVHTTP_ENABLE_STATIC)
-    add_definitions(-DUVHTTP_ENABLE_STATIC=1)
-    message(STATUS "Static file middleware enabled")
-else()
-    add_definitions(-DUVHTTP_ENABLE_STATIC=0)
 endif()
 
 # 中间件功能选项
-option(UVHTTP_ENABLE_CORS "Enable CORS middleware" ON)
-option(UVHTTP_ENABLE_RATE_LIMIT "Enable rate limiting middleware" ON)
-option(UVHTTP_ENABLE_AUTH "Enable authentication middleware" ON)
-option(UVHTTP_ENABLE_COMPRESSION "Enable compression middleware" OFF)
-option(UVHTTP_ENABLE_LOGGING "Enable access logging middleware" ON)
-
-# 设置中间件编译宏
-if(UVHTTP_ENABLE_CORS)
-    add_definitions(-DUVHTTP_ENABLE_CORS=1)
-    message(STATUS "CORS middleware enabled")
-else()
-    add_definitions(-DUVHTTP_ENABLE_CORS=0)
-endif()
-
-if(UVHTTP_ENABLE_RATE_LIMIT)
-    add_definitions(-DUVHTTP_ENABLE_RATE_LIMIT=1)
-    message(STATUS "Rate limiting middleware enabled")
-else()
-    add_definitions(-DUVHTTP_ENABLE_RATE_LIMIT=0)
-endif()
-
-if(UVHTTP_ENABLE_AUTH)
-    add_definitions(-DUVHTTP_ENABLE_AUTH=1)
-    message(STATUS "Authentication middleware enabled")
-else()
-    add_definitions(-DUVHTTP_ENABLE_AUTH=0)
-endif()
-
-if(UVHTTP_ENABLE_COMPRESSION)
-    add_definitions(-DUVHTTP_ENABLE_COMPRESSION=1)
-    message(STATUS "Compression middleware enabled")
-else()
-    add_definitions(-DUVHTTP_ENABLE_COMPRESSION=0)
-endif()
-
-if(UVHTTP_ENABLE_LOGGING)
-    add_definitions(-DUVHTTP_ENABLE_LOGGING=1)
-    message(STATUS "Access logging middleware enabled")
-else()
-    add_definitions(-DUVHTTP_ENABLE_LOGGING=0)
-endif()
+# 编译选项已在上面的统一配置中设置
 
 # 查找libuv - 作为子目录
 set(UV_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include)
@@ -188,8 +140,8 @@ set(SOURCES
     src/uvhttp_server.c
     src/uvhttp_tls_real.c  # 启用TLS支持（真实OpenSSL实现）
     src/uvhttp_json.c
-    src/uvhttp_middleware.c
-    src/uvhttp_allocator.c
+    
+    
     # src/uvhttp_mimalloc.c  # Temporarily disabled - requires mimalloc
     src/uvhttp_error.c
     src/uvhttp_websocket_wrapper.c  # 使用包装层实现
@@ -290,6 +242,9 @@ set(LLHTTP_SOURCES
 
 # 创建 llhttp 静态库
 add_library(llhttp STATIC ${LLHTTP_SOURCES})
+
+# 将llhttp链接到主库
+target_link_libraries(uvhttp PRIVATE llhttp)
 
 # 使用 googletest 作为子目录
 add_subdirectory(deps/googletest)

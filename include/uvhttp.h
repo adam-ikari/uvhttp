@@ -15,10 +15,6 @@
 #include "uvhttp_json.h"
 #endif
 
-#if UVHTTP_FEATURE_MIDDLEWARE
-#include "uvhttp_middleware.h"
-#endif
-
 #if UVHTTP_FEATURE_ALLOCATOR
 #include "uvhttp_allocator.h"
 #endif
@@ -31,29 +27,9 @@
 #include "uvhttp_websocket.h"
 #endif
 
-
-
 #if UVHTTP_FEATURE_TLS
 #include "uvhttp_tls.h"
 #endif
-
-/* 已移除函数式编程支持 */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* 版本信息 */
-#define UVHTTP_VERSION_MAJOR 1
-#define UVHTTP_VERSION_MINOR 0
-#define UVHTTP_VERSION_PATCH 0
-#define UVHTTP_VERSION_STRING "1.0.0"
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* UVHTTP_H */
 
 #ifdef __cplusplus
 extern "C" {
