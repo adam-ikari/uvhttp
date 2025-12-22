@@ -56,14 +56,12 @@ int uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client);
 
 ### 2.2 错误处理原则
 
-uvhttp 的 release 版本中不输出任何 log，只有 debug 版本的时候会使用编译宏开启 log 输出
+uvhttp 的 release 版本中不输出任何 log，只有 debug 版本的时候会使用LOG宏开启 log 输出
 
 ```c
 int result = some_function();
 if (result != UVHTTP_ERROR_NONE) {
-#if UVHTTP_DEBUG
-    fprintf(stderr, "Function failed: %s\n", uvhttp_error_string(result));
-#endif
+    UVHTTP_ERROR("Function failed: %s\n", uvhttp_error_string(result));
     return result;
 }
 ```

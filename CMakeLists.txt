@@ -58,7 +58,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "Debug logging enabled")
 else()
     # Release版本禁用调试日志
-    add_definitions(-DUVHTTP_DEBUG=0)
+    add_definitions(-DUVHTTP_DEBUG=1)
 endif()
 
 # 功能配置选项 - 使用编译宏控制
@@ -135,15 +135,15 @@ set(SOURCES
     src/uvhttp_utils.c
     src/uvhttp_request.c
     src/uvhttp_response.c
-    src/uvhttp_router.c
-    src/uvhttp_connection.c
-    src/uvhttp_server.c
-    src/uvhttp_tls_real.c  # 启用TLS支持（真实OpenSSL实现）
-    src/uvhttp_json.c
-    
-    
-    # src/uvhttp_mimalloc.c  # Temporarily disabled - requires mimalloc
-    src/uvhttp_error.c
+        src/uvhttp_router.c
+        src/uvhttp_connection.c
+        src/uvhttp_server.c
+        src/uvhttp_tls_real.c  # 启用TLS支持（真实OpenSSL实现）
+        src/uvhttp_json.c
+        
+        # src/uvhttp_mimalloc.c  # Temporarily disabled - requires mimalloc
+        src/uvhttp_error.c
+        src/uvhttp_error_handler.c
     src/uvhttp_websocket_wrapper.c  # 使用包装层实现
 )
 
@@ -257,30 +257,6 @@ add_executable(uvhttp_unit_tests
 # 性能测试
 add_executable(uvhttp_test test/simple_test.c)
 
-# WebSocket测试 - 暂时注释，文件不存在
-# add_executable(test_websocket_basic 
-#     test/test_websocket_basic.c
-#     deps/googletest/googletest/src/gtest-all.cc
-# )
-
-# WebSocket集成测试 - 暂时注释，文件不存在
-# add_executable(test_websocket_integration 
-#     test/test_websocket_integration.c
-#     deps/googletest/googletest/src/gtest-all.cc
-# )
-
-# WebSocket压力测试 - 暂时注释，文件不存在
-# add_executable(test_websocket_stress 
-#     test/test_websocket_stress.c
-#     deps/googletest/googletest/src/gtest-all.cc
-# )
-
-# WebSocket性能测试 - 暂时注释，文件不存在
-# add_executable(test_websocket_performance 
-#     test/test_websocket_performance.c
-#     deps/googletest/googletest/src/gtest-all.cc
-# )
-
 # 设置链接库
 set(TEST_LIBS uvhttp llhttp cjson websockets gtest gtest_main ${UV_LIBRARIES} dl pthread m ssl crypto)
 if(APPLE)
@@ -301,31 +277,12 @@ endif()
 # 链接OpenSSL库
 target_link_libraries(uvhttp PRIVATE ssl crypto)
 
-# WebSocket 示例
-add_executable(websocket_example examples/websocket_example.c)
-target_link_libraries(websocket_example uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
-
 # Hello World 示例
 add_executable(helloworld examples/helloworld.c)
 target_link_libraries(helloworld uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
 
-# TLS测试示例
-add_executable(tls_test examples/tls_test.c)
-target_link_libraries(tls_test uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
-
-# 真实TLS测试示例
-add_executable(tls_real_test examples/tls_real_test.c)
-target_link_libraries(tls_real_test uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
-
-# 真实TLS服务器示例
-add_executable(tls_server_real examples/tls_server_real.c)
-target_link_libraries(tls_server_real uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
-
-# TLS功能测试程序
-add_executable(tls_feature_test examples/tls_feature_test.c)
-target_link_libraries(tls_feature_test uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
-
-
+add_executable(simple_test examples/simple_test.c)
+target_link_libraries(simple_test uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
 
 # 链接测试库
 target_link_libraries(uvhttp_unit_tests ${TEST_LIBS})

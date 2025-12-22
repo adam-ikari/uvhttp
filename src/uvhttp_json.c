@@ -84,7 +84,12 @@ uvhttp_json_t* uvhttp_json_parse_file(const char* filename, int* error) {
         return NULL;
     }
     
-    fread(buffer, 1, size, file);
+    size_t bytes_read = fread(buffer, 1, (size_t)size, file);
+    if (bytes_read < (size_t)size) {
+        uvhttp_free(buffer);
+        fclose(file);
+        return NULL;
+    }
     buffer[size] = '\0';
     fclose(file);
     

@@ -13,7 +13,7 @@
 
 /* 全局错误处理配置 */
 uvhttp_error_config_t g_error_config = {
-    .minLogLevel = UVHTTP_LOG_LEVEL_INFO,
+    .min_logLevel = UVHTTP_LOG_LEVEL_INFO,
     .customHandler = NULL,
     .enableRecovery = 1,
     .maxRetries = 3,
@@ -188,7 +188,7 @@ static void sleep_ms(int ms) {
 
 /* 日志函数 */
 void uvhttp_log(uvhttp_log_level_t level, const char* format, ...) {
-    if (level < g_error_config.minLogLevel) {
+    if (level < g_error_config.min_logLevel) {
         return;
     }
     
@@ -213,40 +213,4 @@ void uvhttp_log(uvhttp_log_level_t level, const char* format, ...) {
     if (level == UVHTTP_LOG_LEVEL_FATAL) {
         fflush(stderr);
     }
-}
-
-/* 获取错误统计 */
-void uvhttp_get_error_stats(size_t* error_counts, time_t* last_error_time, 
-                           const char** last_error_context) {
-    if (error_counts) {
-        memcpy(error_counts, g_error_stats.error_counts, 
-               sizeof(g_error_stats.error_counts));
-    }
-    if (last_error_time) {
-        *last_error_time = g_error_stats.last_error_time;
-    }
-    if (last_error_context) {
-        *last_error_context = g_error_stats.last_error_context;
-    }
-}
-
-/* 重置错误统计 */
-void uvhttp_reset_error_stats(void) {
-    memset(&g_error_stats, 0, sizeof(g_error_stats));
-    UVHTTP_LOG_INFO("Error statistics reset");
-}
-
-/* 获取最频繁的错误 */
-uvhttp_error_t uvhttp_get_most_frequent_error(void) {
-    size_t max_count = 0;
-    uvhttp_error_t most_frequent = UVHTTP_OK;
-    
-    for (int i = 0; i < UVHTTP_ERROR_MAX; i++) {
-        if (g_error_stats.error_counts[i] > max_count) {
-            max_count = g_error_stats.error_counts[i];
-            most_frequent = (uvhttp_error_t)i;
-        }
-    }
-    
-    return most_frequent;
 }

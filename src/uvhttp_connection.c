@@ -3,8 +3,10 @@
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_server.h"
+#include "uvhttp_router.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
+#include "uvhttp_error_handler.h"
 #include "uvhttp_tls.h"
 #include <stdlib.h>
 #include <string.h>
@@ -194,6 +196,36 @@ static int on_message_complete(llhttp_t* parser) {
     
     // 标记解析完成
     conn->parsing_complete = 1;
+    
+    // 触发HTTP请求处理
+    if (conn->server && conn->server->router && conn->request && conn->response) {
+        // 安全检查路径
+        if (!conn->request->path) {
+            conn->request->path = "/";
+        }
+        
+        // 使用我们自己的方法转换
+        const char* method_str = uvhttp_method_to_string((uvhttp_method_t)llhttp_get_method(parser));
+        if (!method_str) {
+            method_str = "GET"; // 默认方法
+        }
+        
+        uvhttp_request_handler_t handler = uvhttp_router_find_handler(
+            conn->server->router, 
+            conn->request->path, 
+            method_str
+        );
+        
+        if (handler) {
+            handler(conn->request, conn->response);
+        } else {
+            // 404 Not Found
+            uvhttp_response_set_status(conn->response, 404);
+            uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
+            uvhttp_response_set_body(conn->response, "Not Found", 9);
+            uvhttp_response_send(conn->response);
+        }
+    }
     
     return 0;
 }
@@ -395,9 +427,6 @@ int uvhttp_connection_start(uvhttp_connection_t* conn) {
     
     // 开始HTTP读取 - 完整实现
     if (uv_read_start((uv_stream_t*)&conn->tcp_handle, (uv_alloc_cb)on_alloc_buffer, (uv_read_cb)on_read) != 0) {
-#if UVHTTP_DEBUG
-        fprintf(stderr, "Failed to start reading\n");
-#endif
         uvhttp_connection_close(conn);
         return -1;
     }
@@ -406,9 +435,6 @@ int uvhttp_connection_start(uvhttp_connection_t* conn) {
     // TLS处理
     if (conn->tls_enabled) {
         if (uvhttp_connection_tls_handshake_func(conn) != 0) {
-#if UVHTTP_DEBUG
-            fprintf(stderr, "TLS handshake failed\n");
-#endif
             uvhttp_connection_close(conn);
             return -1;
         }
