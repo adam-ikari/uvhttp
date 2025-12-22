@@ -81,7 +81,7 @@
 
 ### 📦 **依赖管理**
 
-UVHTTP使用git子模块管理第三方依赖，确保版本兼容性和依赖完整性：
+UVHTTP 使用 git 子模块管理第三方依赖，确保版本兼容性和依赖完整性：
 
 ```bash
 # 克隆项目（包含所有子模块）
@@ -96,7 +96,6 @@ mkdir build && cd build
 cmake ..
 make
 ```
-
 
 - ⚙️ 零运行时开销设计
 
@@ -257,27 +256,7 @@ git submodule update --init --recursive
 ./build/helloworld
 ```
 
-然后在浏览器中访问 http://localhost:9999
-
-### 快速测试
-
-```bash
-# 运行单元测试
-./build/uvhttp_unit_tests
-
-# 运行压力测试
-./run_stress_tests.sh
-
-# 测试特定功能
-curl http://localhost:9999/  # HTTP测试
-curl -i -N -H "Connection: Upgrade" \
-     -H "Upgrade: websocket" \
-     -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
-     -H "Sec-WebSocket-Version: 13" \
-     http://localhost:9999/ws  # WebSocket测试
-```
-
-预期结果：1000 RPS，0.082ms 平均延迟，100%成功率
+然后在浏览器中访问 http://localhost:8080
 
 ## 🧪 测试
 
@@ -286,82 +265,6 @@ curl -i -N -H "Connection: Upgrade" \
 ```bash
 ./build/uvhttp_test
 ```
-
-### 压力测试
-
-UVHTTP 提供了全面的压力测试套件，基于 libuv 事件驱动架构，可以真实评估服务器性能：
-
-```bash
-# 运行完整压力测试套件
-./run_stress_tests.sh
-```
-
-#### 压力测试特性
-
-- **🔥 高并发测试** - 支持 1000+并发连接
-- **⚡ 吞吐量测试** - 测量 RPS 性能（支持 1000-5000 RPS）
-- **🛡️ 内存泄漏检测** - 长时间运行稳定性测试
-- **🎯 边界条件测试** - 极限负载下的系统行为
-- **📊 性能基准** - 系统基础性能指标测量
-
-#### 测试结果示例
-
-```
---- 单元测试结果 ---
-总测试数: 35
-通过测试: 34 (97.1%)
-失败测试: 1 (2.9%)
-代码覆盖率: 97%
-内存泄漏: 无检测到
-编译警告: 0
-
---- 压力测试结果 ---
-测试持续时间: 30.00 秒
-总请求数: 30000
-成功请求: 30000 (100.0%)
-失败请求: 0 (0.0%)
-目标RPS: 1000
-实际RPS: 1000.0
-RPS达成率: 100.0%
-平均响应时间: 0.082 ms
-最小响应时间: 0.066 ms
-最大响应时间: 0.620 ms
-内存使用变化: 0 KB
-```
-
-#### 单独运行测试
-
-```bash
-# 确保子模块已初始化
-git submodule update --init --recursive
-
-# 使用CMake构建测试
-mkdir build && cd build
-cmake ..
-make
-
-# 启动测试服务器
-export LD_LIBRARY_PATH=deps/libuv/.libs:$LD_LIBRARY_PATH
-./test_server_simple &
-
-# 运行压力测试
-./test_simple_stress
-```
-
-详细的压力测试文档请参考：[STRESS_TESTING.md](STRESS_TESTING.md)
-
-## 📚 文档
-
-- [API 文档](#api文档) - 详细的 API 参考
-- [WebSocket 实现文档](WEBSOCKET_IMPLEMENTATION.md) - WebSocket 实现细节
-- [压力测试指南](STRESS_TESTING.md) - 全面的压力测试文档
-- [WebSocket 压力测试报告](WEBSOCKET_STRESS_TEST_REPORT.md) - WebSocket 性能测试
-- [开发规范](DEVELOPMENT_GUIDELINES.md) - 工程开发规范
-- [开发规格](DEVELOPMENT_SPECIFICATION.md) - 详细开发规格
-- [示例代码](examples/) - 实用的使用示例
-- [编译指南](#编译) - 详细的编译说明
-- [依赖管理](#依赖管理) - git子模块管理说明
-- [路线图](ROADMAP.md) - 项目发展规划
 
 ## 🚀 版本规划
 
