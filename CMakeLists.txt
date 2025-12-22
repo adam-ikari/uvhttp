@@ -1,6 +1,24 @@
 cmake_minimum_required(VERSION 3.10)
 project(uvhttp VERSION 1.0.0 LANGUAGES C CXX)
 
+# 设置输出目录结构
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib)
+
+# 为不同配置类型设置子目录
+foreach(CONFIG ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER ${CONFIG} CONFIG_UPPER)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UPPER} ${CMAKE_BINARY_DIR}/dist/bin/${CONFIG})
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CONFIG_UPPER} ${CMAKE_BINARY_DIR}/dist/lib/${CONFIG})
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CONFIG_UPPER} ${CMAKE_BINARY_DIR}/dist/lib/${CONFIG})
+endforeach()
+
+# 创建dist目录结构
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib)
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin)
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/dist/test)
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 17)
@@ -99,15 +117,24 @@ endif()
 
 # 查找libuv - 作为子目录
 set(UV_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include)
-# 添加 libuv 作为子目录
+# 添加 libuv 作为子目录 - 禁用所有不必要的组件
 set(BUILD_TESTING OFF CACHE BOOL "Disable libuv tests" FORCE)
 set(LIBUV_BUILD_SHARED OFF CACHE BOOL "Build static libuv" FORCE)
+set(LIBUV_BUILD_BENCH OFF CACHE BOOL "Disable libuv benchmarks" FORCE)
+set(LIBUV_BUILD_DOCS OFF CACHE BOOL "Disable libuv docs" FORCE)
 add_subdirectory(deps/libuv)
 set(UV_LIBRARIES uv_a)
 
-# 添加mbedtls作为子目录
+# 确保libuv别名目标存在
+if(NOT TARGET libuv::libuv)
+    add_library(libuv::libuv ALIAS uv_a)
+endif()
+
+# 添加mbedtls作为子目录 - 禁用所有不必要的组件
 set(ENABLE_TESTING OFF CACHE BOOL "Disable mbedtls tests" FORCE)
 set(ENABLE_PROGRAMS OFF CACHE BOOL "Disable mbedtls programs" FORCE)
+set(ENABLE_FUZZING OFF CACHE BOOL "Disable mbedtls fuzzing" FORCE)
+set(ENABLE_TESTING OFF CACHE BOOL "Disable mbedtls testing" FORCE)
 add_subdirectory(deps/mbedtls)
 set(MBEDTLS_LIBRARIES mbedtls mbedx509 mbedcrypto)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/include)
@@ -162,8 +189,21 @@ set(HEADERS
     include/uvhttp_websocket.h
 )
 
-# Create library
+# Create static library
 add_library(uvhttp STATIC ${SOURCES} ${HEADERS})
+set_target_properties(uvhttp PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib
+)
+
+# Create shared library
+add_library(uvhttp_shared SHARED ${SOURCES} ${HEADERS})
+set_target_properties(uvhttp_shared PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib
+    OUTPUT_NAME "uvhttp"
+)
 
 # Compiler flags - 启用安全编译选项
 target_compile_options(uvhttp PRIVATE 
@@ -180,9 +220,25 @@ target_compile_options(uvhttp PRIVATE
     -Wno-missing-field-initializers
 )
 
+# 为动态库添加相同的编译选项
+target_compile_options(uvhttp_shared PRIVATE 
+    -Wall 
+    -Wextra 
+    -Werror
+    -Wformat=2
+    -Wformat-security
+    -Wnull-dereference
+    -Wstack-protector
+    -fstack-protector-strong
+    -D_FORTIFY_SOURCE=2
+    -fno-strict-overflow
+    -Wno-missing-field-initializers
+)
+
 # 链接mimalloc（如果启用）
 if(MIMALLOC_LIB)
     target_link_libraries(uvhttp PRIVATE ${MIMALLOC_LIB})
+    target_link_libraries(uvhttp_shared PRIVATE ${MIMALLOC_LIB})
 endif()
 
 # 添加cjson支持 - 使用预编译方式
@@ -194,11 +250,17 @@ find_library(CJSON_LIBRARY cjson
 if(CJSON_INCLUDE_DIR AND CJSON_LIBRARY)
     target_include_directories(uvhttp PRIVATE ${CJSON_INCLUDE_DIR})
     target_link_libraries(uvhttp PRIVATE ${CJSON_LIBRARY})
+    target_include_directories(uvhttp_shared PRIVATE ${CJSON_INCLUDE_DIR})
+    target_link_libraries(uvhttp_shared PRIVATE ${CJSON_LIBRARY})
     message(STATUS "Found cjson: ${CJSON_LIBRARY}")
 else()
     # 如果没有找到预编译库，尝试添加子目录
+    # 禁用cjson测试程序，只构建库
+    set(ENABLE_CJSON_TEST OFF CACHE BOOL "Disable cjson tests" FORCE)
+    set(ENABLE_CJSON_UTILS OFF CACHE BOOL "Disable cjson utils" FORCE)
     add_subdirectory(deps/cjson)
     target_link_libraries(uvhttp PRIVATE cjson)
+    target_link_libraries(uvhttp_shared PRIVATE cjson)
     message(STATUS "Using cjson from subdirectory")
 endif()
 
@@ -211,6 +273,8 @@ find_library(LIBWEBSOCKETS_LIBRARY websockets
 if(LIBWEBSOCKETS_INCLUDE_DIR AND LIBWEBSOCKETS_LIBRARY)
     target_include_directories(uvhttp PRIVATE ${LIBWEBSOCKETS_INCLUDE_DIR})
     target_link_libraries(uvhttp PRIVATE ${LIBWEBSOCKETS_LIBRARY})
+    target_include_directories(uvhttp_shared PRIVATE ${LIBWEBSOCKETS_INCLUDE_DIR})
+    target_link_libraries(uvhttp_shared PRIVATE ${LIBWEBSOCKETS_LIBRARY})
     message(STATUS "Found libwebsockets: ${LIBWEBSOCKETS_LIBRARY}")
 else()
     # 如果没有找到预编译库，尝试添加子目录
@@ -219,10 +283,14 @@ else()
     set(_SAVED_SOURCES ${SOURCES})
     unset(SOURCES)
     
-    # 设置 libwebsockets 选项
+    # 设置 libwebsockets 选项 - 只保留基本功能
     set(LWS_WITHOUT_TESTAPPS ON CACHE BOOL "Don't build the libwebsocket-test-apps")
     set(LWS_WITHOUT_TEST_SERVER ON CACHE BOOL "Don't build the test server")
     set(LWS_WITHOUT_TEST_CLIENT ON CACHE BOOL "Don't build the client test application")
+    set(LWS_WITHOUT_EXTENSIONS OFF CACHE BOOL "Disable extensions" FORCE)
+    set(LWS_ROLE_H2 OFF CACHE BOOL "HTTP/2 role not needed" FORCE)
+    set(LWS_WITH_HTTP2 OFF CACHE BOOL "Disable HTTP/2" FORCE)
+    set(LWS_WITHOUT_SERVER ON CACHE BOOL "Don't build standalone server" FORCE)
     
     # 添加 libwebsockets 子目录
     add_subdirectory(deps/libwebsockets)
@@ -231,7 +299,11 @@ else()
     set(SOURCES ${_SAVED_SOURCES})
     unset(_SAVED_SOURCES)
     
+    # 为libwebsockets添加-fPIC支持
+    set_target_properties(websockets PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    
     target_link_libraries(uvhttp PRIVATE websockets)
+    target_link_libraries(uvhttp_shared PRIVATE websockets)
 endif()
 
 # 使用我们自己的llhttp实现
@@ -242,11 +314,21 @@ set(LLHTTP_SOURCES
 
 # 创建 llhttp 静态库
 add_library(llhttp STATIC ${LLHTTP_SOURCES})
+target_compile_options(llhttp PRIVATE -fPIC)
 
 # 将llhttp链接到主库
 target_link_libraries(uvhttp PRIVATE llhttp)
+target_link_libraries(uvhttp_shared PRIVATE llhttp)
 
-# 使用 googletest 作为子目录
+# 链接OpenSSL库
+target_link_libraries(uvhttp PRIVATE ssl crypto)
+target_link_libraries(uvhttp_shared PRIVATE ssl crypto)
+
+# 使用 googletest 作为子目录 - 禁用不必要的组件
+set(gtest_build_samples OFF CACHE BOOL "Disable gtest samples" FORCE)
+set(gtest_build_tests OFF CACHE BOOL "Disable gtest tests" FORCE)
+set(gtest_disable_pthreads ON CACHE BOOL "Disable pthreads" FORCE)
+set(gmock_build_tests OFF CACHE BOOL "Disable gmock tests" FORCE)
 add_subdirectory(deps/googletest)
 
 # 单元测试可执行文件
@@ -259,9 +341,15 @@ add_executable(uvhttp_unit_tests
     test/test_main.c
     ${SOURCES}
 )
+set_target_properties(uvhttp_unit_tests PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/test
+)
 
 # 性能测试
 add_executable(uvhttp_test test/simple_test.c)
+set_target_properties(uvhttp_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/test
+)
 
 # 设置链接库
 set(TEST_LIBS uvhttp llhttp cjson websockets gtest gtest_main ${UV_LIBRARIES} dl pthread m ssl crypto)
@@ -286,9 +374,15 @@ target_link_libraries(uvhttp PRIVATE ssl crypto)
 # Hello World 示例
 add_executable(helloworld examples/helloworld.c)
 target_link_libraries(helloworld uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
+set_target_properties(helloworld PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+)
 
 add_executable(simple_test examples/simple_test.c)
 target_link_libraries(simple_test uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
+set_target_properties(simple_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+)
 
 # 链接测试库
 target_link_libraries(uvhttp_unit_tests ${TEST_LIBS})
@@ -337,5 +431,10 @@ if(ENABLE_COVERAGE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 # 安装规则
-install(TARGETS uvhttp DESTINATION lib)
+install(TARGETS uvhttp uvhttp_shared DESTINATION lib)
 install(FILES ${HEADERS} DESTINATION include/uvhttp)
+install(PROGRAMS 
+    ${CMAKE_BINARY_DIR}/dist/bin/helloworld 
+    ${CMAKE_BINARY_DIR}/dist/bin/simple_test
+    DESTINATION bin
+)

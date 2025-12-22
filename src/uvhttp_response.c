@@ -239,7 +239,9 @@ static void uvhttp_free_write_data(uv_write_t* req, int status) {
     (void)status; // 避免未使用参数警告
     uvhttp_write_data_t* write_data = (uvhttp_write_data_t*)req->data;
     if (write_data) {
-        uvhttp_free(write_data->data);
+        if (write_data->data) {
+            uvhttp_free(write_data->data);
+        }
         uvhttp_free(write_data);
     }
 }

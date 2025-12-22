@@ -162,6 +162,6 @@
 
 /* 解析器相关 */
 #define UVHTTP_PARSER_FIELD_COUNT        8
-#define UVHTTP_PARSER_INTERNAL_SIZE      100
+#define UVHTTP_PARSER_INTERNAL_SIZE      sizeof(llhttp_t)
 
 #endif /* UVHTTP_CONSTANTS_H */

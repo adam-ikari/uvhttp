@@ -45,9 +45,7 @@ struct uvhttp_connection {
     size_t read_buffer_size;
     size_t read_buffer_used;
     
-    // HTTP解析器
-    llhttp_t* http_parser;
-    llhttp_settings_t* parser_settings;
+    // HTTP解析器在request中管理
     
     // HTTP/1.1优化字段
     int current_header_is_important;    // 当前头部是否为关键字段

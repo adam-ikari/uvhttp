@@ -253,7 +253,7 @@ int main() {
 git submodule update --init --recursive
 
 # 编译完成后
-./build/helloworld
+./dist/bin/helloworld
 ```
 
 然后在浏览器中访问 http://localhost:8080
@@ -263,7 +263,13 @@ git submodule update --init --recursive
 ### 单元测试
 
 ```bash
-./build/uvhttp_test
+./dist/test/uvhttp_unit_tests
+```
+
+### 性能测试
+
+```bash
+./dist/test/uvhttp_test
 ```
 
 ## 🚀 版本规划

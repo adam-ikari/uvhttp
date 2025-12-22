@@ -1,4 +1,6 @@
 #include "uvhttp_request.h"
+#include "uvhttp_connection.h"
+#include "uvhttp_router.h"
 #include "uvhttp_utils.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
@@ -7,9 +9,17 @@
 #include <strings.h>
 #include <stdio.h>
 
+// HTTP解析器回调函数声明
+static int on_message_begin(llhttp_t* parser);
+static int on_url(llhttp_t* parser, const char* at, size_t length);
+static int on_header_field(llhttp_t* parser, const char* at, size_t length);
+static int on_header_value(llhttp_t* parser, const char* at, size_t length);
+static int on_body(llhttp_t* parser, const char* at, size_t length);
+static int on_message_complete(llhttp_t* parser);
 
 
-int uvhttp_request_init(uvhttp_request_t* request, void* client) {
+
+int uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client) {
     if (!request || !client) {
         return -1;
     }
@@ -26,11 +36,21 @@ int uvhttp_request_init(uvhttp_request_t* request, void* client) {
     }
     llhttp_settings_init(request->parser_settings);
     
-    request->parser = uvhttp_malloc(sizeof(struct llhttp__internal_s));
+    request->parser = uvhttp_malloc(sizeof(llhttp_t));
     if (!request->parser) {
         uvhttp_free(request->parser_settings);
         return -1;
     }
+    llhttp_settings_init(request->parser_settings);
+    
+    // 设置回调函数
+    request->parser_settings->on_message_begin = on_message_begin;
+    request->parser_settings->on_url = on_url;
+    request->parser_settings->on_header_field = on_header_field;
+    request->parser_settings->on_header_value = on_header_value;
+    request->parser_settings->on_body = on_body;
+    request->parser_settings->on_message_complete = on_message_complete;
+    
     llhttp_init(request->parser, HTTP_REQUEST, request->parser_settings);
     
     // 初始化body缓冲区
@@ -56,6 +76,96 @@ void uvhttp_request_cleanup(uvhttp_request_t* request) {
     if (request->parser_settings) {
         uvhttp_free(request->parser_settings);
     }
+}
+
+// HTTP解析器回调函数实现
+static int on_message_begin(llhttp_t* parser) {
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
+    if (!conn || !conn->request) {
+        return -1;
+    }
+    
+    // 重置解析状态
+    conn->parsing_complete = 0;
+    conn->content_length = 0;
+    conn->body_received = 0;
+    
+    return 0;
+}
+
+static int on_url(llhttp_t* parser, const char* at, size_t length) {
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
+    if (!conn || !conn->request) {
+        return -1;
+    }
+    
+    // 确保URL长度不超过限制
+    if (length >= MAX_URL_LEN) {
+        return -1;
+    }
+    
+    memcpy(conn->request->url, at, length);
+    conn->request->url[length] = '\0';
+    
+    return 0;
+}
+
+static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
+    (void)parser; (void)at; (void)length;
+    return 0;
+}
+
+static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
+    (void)parser; (void)at; (void)length;
+    return 0;
+}
+
+static int on_body(llhttp_t* parser, const char* at, size_t length) {
+    (void)parser; (void)at; (void)length;
+    return 0;
+}
+
+static int on_message_complete(llhttp_t* parser) {
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
+    if (!conn || !conn->request) {
+        return -1;
+    }
+    
+    // 设置HTTP方法
+    conn->request->method = (uvhttp_method_t)llhttp_get_method(parser);
+    
+    // 标记解析完成
+    conn->parsing_complete = 1;
+    
+    // 处理请求
+    if (conn->server && conn->server->router) {
+        uvhttp_request_handler_t handler = uvhttp_router_find_handler(
+            conn->server->router, conn->request->url, 
+            uvhttp_method_to_string(conn->request->method));
+        
+        if (handler) {
+            handler(conn->request, conn->response);
+        } else {
+            // 未找到路由，发送404响应
+            uvhttp_response_set_status(conn->response, 404);
+            uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
+            uvhttp_response_set_body(conn->response, "Not Found", 9);
+            uvhttp_response_send(conn->response);
+        }
+    } else {
+        // 没有路由器，发送默认响应
+        uvhttp_response_set_status(conn->response, 200);
+        uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(conn->response, "OK", 2);
+        uvhttp_response_send(conn->response);
+    }
+    
+    // HTTP/1.1连接管理：如果不是keep-alive则关闭连接
+    if (!conn->keep_alive) {
+        uvhttp_connection_close(conn);
+    }
+    
+    return 0;
 }
 
 const char* uvhttp_request_get_method(uvhttp_request_t* request) {
