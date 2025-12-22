@@ -31,9 +31,7 @@ static struct {
 } g_error_stats = {0};
 
 /* 日志级别字符串 */
-static const char* log_level_strings[] = {
-    "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
-};
+
 
 /* 内部函数声明 */
 static void default_error_handler(const uvhttp_error_context_t* context);
@@ -205,12 +203,22 @@ void uvhttp_log(uvhttp_log_level_t level, const char* format, ...) {
     vsnprintf(message, sizeof(message), format, args);
     va_end(args);
     
-    /* 输出日志 */
-    fprintf(stderr, "[%s] %s: %s\n", 
-            timestamp, log_level_strings[level], message);
-    
-    /* 对于致命错误，刷新输出 */
-    if (level == UVHTTP_LOG_LEVEL_FATAL) {
-        fflush(stderr);
+    /* 输出日志 - 使用统一日志系统 */
+    switch (level) {
+        case UVHTTP_LOG_LEVEL_DEBUG:
+            UVHTTP_LOG_DEBUG("%s", message);
+            break;
+        case UVHTTP_LOG_LEVEL_INFO:
+            UVHTTP_LOG_INFO("%s", message);
+            break;
+        case UVHTTP_LOG_LEVEL_WARN:
+            UVHTTP_LOG_WARN("%s", message);
+            break;
+        case UVHTTP_LOG_LEVEL_ERROR:
+            UVHTTP_LOG_ERROR("%s", message);
+            break;
+        case UVHTTP_LOG_LEVEL_FATAL:
+            UVHTTP_LOG_FATAL("%s", message);
+            break;
     }
 }

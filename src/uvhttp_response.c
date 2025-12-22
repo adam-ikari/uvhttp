@@ -7,6 +7,9 @@
 #include <strings.h>
 #include <stdio.h>
 
+// 函数声明
+static void uvhttp_free_write_data(uv_write_t* req, int status);
+
 static const char* get_status_text(int status_code) {
     switch (status_code) {
         case UVHTTP_STATUS_OK: return "OK";
@@ -96,7 +99,6 @@ uvhttp_error_t uvhttp_response_init(uvhttp_response_t* response, void* client) {
     response->status_code = UVHTTP_STATUS_OK;
     
     response->client = client;
-    response->status_code = UVHTTP_STATUS_OK;
     
     return UVHTTP_OK;
 }
@@ -200,110 +202,96 @@ uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char*
     return UVHTTP_OK;
 }
 
+uvhttp_error_t uvhttp_send_response_data(uvhttp_response_t* response, const char* data, size_t length) {
+    if (!response || !data || length == 0) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    uvhttp_write_data_t* write_data = uvhttp_malloc(sizeof(uvhttp_write_data_t));
+    if (!write_data) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    
+    write_data->data = uvhttp_malloc(length);
+    if (!write_data->data) {
+        uvhttp_free(write_data);
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    
+    memcpy(write_data->data, data, length);
+    write_data->length = length;
+    write_data->response = response;
+    
+    uv_buf_t buf = uv_buf_init(write_data->data, write_data->length);
+    int result = uv_write(&write_data->write_req, (uv_stream_t*)response->client, &buf, 1, 
+                         (uv_write_cb)uvhttp_free_write_data);
+    
+    if (result < 0) {
+        uvhttp_free(write_data->data);
+        uvhttp_free(write_data);
+        return UVHTTP_ERROR_RESPONSE_SEND;
+    }
+    
+    return UVHTTP_OK;
+}
+
+static void uvhttp_free_write_data(uv_write_t* req, int status) {
+    (void)status; // 避免未使用参数警告
+    uvhttp_write_data_t* write_data = (uvhttp_write_data_t*)req->data;
+    if (write_data) {
+        uvhttp_free(write_data->data);
+        uvhttp_free(write_data);
+    }
+}
+
 uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
     if (!response) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    // 计算所需的headers大小 - 增加安全边界
+    // 构建完整的HTTP响应
     size_t headers_size = UVHTTP_INITIAL_BUFFER_SIZE;
-    char* temp_buffer = uvhttp_malloc(headers_size);
-    if (!temp_buffer) {
+    char* headers_buffer = uvhttp_malloc(headers_size);
+    if (!headers_buffer) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
-    // 第一次尝试构建headers以获取实际大小
     size_t headers_length = headers_size;
-    build_response_headers(response, temp_buffer, &headers_length);
+    build_response_headers(response, headers_buffer, &headers_length);
     
-    // 检查构建结果和缓冲区大小
-    if (headers_length >= headers_size - 1) {
-        // 需要更大的缓冲区 - 添加安全边界
-        size_t new_size = headers_length + 256; // 添加256字节安全边界
-        if (new_size > UVHTTP_MAX_BODY_SIZE) { // 防止过大分配
-            uvhttp_free(temp_buffer);
-            return UVHTTP_ERROR_OUT_OF_MEMORY;
-        }
-        
-        char* new_buffer = uvhttp_malloc(new_size);
-        if (!new_buffer) {
-            uvhttp_free(temp_buffer);
-            return UVHTTP_ERROR_OUT_OF_MEMORY;
-        }
-        
-        // 重新构建headers
-        headers_length = new_size;
-        build_response_headers(response, new_buffer, &headers_length);
-        
-        uvhttp_free(temp_buffer);
-        temp_buffer = new_buffer;
-        headers_size = new_size;
-    }
-    
-    // 验证总大小不会过大
+    // 计算总大小
     size_t total_size = headers_length + response->body_length;
-    if (total_size > UVHTTP_MAX_BODY_SIZE * 2) { // 限制总响应大小
-        uvhttp_free(temp_buffer);
+    if (total_size > UVHTTP_MAX_BODY_SIZE * 2) {
+        uvhttp_free(headers_buffer);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
-    // 分配最终缓冲区
+    // 分配完整响应数据
     char* response_data = uvhttp_malloc(total_size);
     if (!response_data) {
-        uvhttp_free(temp_buffer);
+        uvhttp_free(headers_buffer);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
-    // 安全复制headers
-    if (headers_length > 0) {
-        memcpy(response_data, temp_buffer, headers_length);
-    }
+    // 复制headers
+    memcpy(response_data, headers_buffer, headers_length);
     
-    // 安全复制body
+    // 复制body
     if (response->body && response->body_length > 0) {
         memcpy(response_data + headers_length, response->body, response->body_length);
     }
     
-    // 这里应该实际发送response_data
-    // 网络发送实现
-    uvhttp_write_data_t* write_data = uvhttp_malloc(sizeof(uvhttp_write_data_t));
-    if (!write_data) {
-        uvhttp_free(temp_buffer);
-        uvhttp_free(response_data);
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
-    }
+    // 发送完整响应
+    uvhttp_error_t result = uvhttp_send_response_data(response, response_data, total_size);
     
-    write_data->data = uvhttp_malloc(response->body_length);
-    if (!write_data->data) {
-        uvhttp_free(write_data);
-        uvhttp_free(temp_buffer);
-        uvhttp_free(response_data);
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
-    }
-    
-    memcpy(write_data->data, response->body, response->body_length);
-    write_data->length = response->body_length;
-    write_data->response = response;
-    
-    uv_buf_t buf = uv_buf_init(write_data->data, write_data->length);
-    int result = uv_write(&write_data->write_req, (uv_stream_t*)response->client, &buf, 1, NULL);
-    
-    if (result < 0) {
-        uvhttp_free(write_data->data);
-        uvhttp_free(write_data);
-        uvhttp_free(temp_buffer);
-        uvhttp_free(response_data);
-        return UVHTTP_ERROR_CONNECTION_INIT;
-    }
-    
-    // 清理所有分配的资源
-    uvhttp_free(temp_buffer);
+    uvhttp_free(headers_buffer);
     uvhttp_free(response_data);
     
-    // 标记响应已完成
-    response->finished = 1;
+    if (result == UVHTTP_OK) {
+        response->finished = 1;
+    }
     
-    return UVHTTP_OK;
+    return result;
 }
 
 void uvhttp_response_free(uvhttp_response_t* response) {

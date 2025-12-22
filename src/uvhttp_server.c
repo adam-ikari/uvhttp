@@ -17,16 +17,12 @@
 
 static void on_connection(uv_stream_t* server_handle, int status) {
     if (status < 0) {
-#if UVHTTP_DEBUG
-        fprintf(stderr, "Connection error: %s\n", uv_strerror(status));
-#endif
+        UVHTTP_LOG_ERROR("Connection error: %s\n", uv_strerror(status));
         return;
     }
     
     if (!server_handle || !server_handle->data) {
-#if UVHTTP_DEBUG
-        fprintf(stderr, "Invalid server handle or data\n");
-#endif
+        UVHTTP_LOG_ERROR("Invalid server handle or data\n");
         return;
     }
     
@@ -34,24 +30,18 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     
     /* 检查连接数限制 */
     if (server->active_connections >= MAX_CONNECTIONS) {
-#if UVHTTP_DEBUG
-        fprintf(stderr, "Connection limit reached: %zu/%d\n", 
+        UVHTTP_LOG_WARN("Connection limit reached: %zu/%d\n", 
                 server->active_connections, MAX_CONNECTIONS);
-#endif
         
         /* 创建临时连接以发送503响应 */
         uv_tcp_t* temp_client = uvhttp_malloc(sizeof(uv_tcp_t));
         if (!temp_client) {
-#if UVHTTP_DEBUG
-            fprintf(stderr, "Failed to allocate temporary client\n");
-#endif
+            UVHTTP_LOG_ERROR("Failed to allocate temporary client\n");
             return;
         }
         
         if (uv_tcp_init(server->loop, temp_client) != 0) {
-#if UVHTTP_DEBUG
-            fprintf(stderr, "Failed to initialize temporary client\n");
-#endif
+            UVHTTP_LOG_ERROR("Failed to initialize temporary client\n");
             uvhttp_free(temp_client);
             return;
         }
@@ -71,16 +61,12 @@ static void on_connection(uv_stream_t* server_handle, int status) {
                 uv_buf_t buf = uv_buf_init((char*)response_503, strlen(response_503));
                 int write_result = uv_write(write_req, (uv_stream_t*)temp_client, &buf, 1, NULL);
                 if (write_result < 0) {
-#if UVHTTP_DEBUG
-                    fprintf(stderr, "Failed to send 503 response: %s\n", uv_strerror(write_result));
-#endif
+                    UVHTTP_LOG_ERROR("Failed to send 503 response: %s\n", uv_strerror(write_result));
                     uvhttp_free(write_req);
                 }
             }
         } else {
-#if UVHTTP_DEBUG
-            fprintf(stderr, "Failed to accept temporary connection\n");
-#endif
+            UVHTTP_LOG_ERROR("Failed to accept temporary connection\n");
         }
         
         /* 关闭临时连接 */
@@ -100,16 +86,7 @@ static void on_connection(uv_stream_t* server_handle, int status) {
         return;
     }
     
-    /* 初始化请求和响应对象 */
-    if (uvhttp_request_init(conn->request, &conn->tcp_handle) != 0) {
-        uvhttp_connection_free(conn);
-        return;
-    }
-    
-    if (uvhttp_response_init(conn->response, &conn->tcp_handle) != 0) {
-        uvhttp_connection_free(conn);
-        return;
-    }
+    /* 请求和响应对象已在连接创建时初始化 */
     
     /* 增加活跃连接计数 */
     server->active_connections++;
@@ -197,11 +174,13 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
     
     int ret = uv_tcp_bind(&server->tcp_handle, (const struct sockaddr*)&addr, 0);
     if (ret != 0) {
+        UVHTTP_LOG_ERROR("uv_tcp_bind failed: %s\n", uv_strerror(ret));
         return UVHTTP_ERROR_SERVER_LISTEN;
     }
     
     ret = uv_listen((uv_stream_t*)&server->tcp_handle, UVHTTP_MAX_CONNECTIONS, on_connection);
     if (ret != 0) {
+        UVHTTP_LOG_ERROR("uv_listen failed: %s\n", uv_strerror(ret));
         return UVHTTP_ERROR_SERVER_LISTEN;
     }
     

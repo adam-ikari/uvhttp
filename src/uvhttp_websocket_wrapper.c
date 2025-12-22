@@ -1,6 +1,7 @@
 /* WebSocket 包装层实现 - 完全隔离 libwebsockets */
 
 #include "uvhttp_websocket_wrapper.h"
+#include "uvhttp_error_handler.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -57,15 +58,8 @@ static const char* uvhttp_websocket_error_string(uvhttp_websocket_error_t error)
 /* 错误日志记录函数 */
 static void uvhttp_websocket_log_error(const char* function, const char* message, 
                                      uvhttp_websocket_error_t error) {
-#if UVHTTP_DEBUG
-    fprintf(stderr, "[WebSocket Error] %s: %s (%s)\n", 
+    UVHTTP_LOG_ERROR("[WebSocket Error] %s: %s (%s)\n", 
             function, message, uvhttp_websocket_error_string(error));
-#else
-    // 避免未使用参数警告
-    (void)function;
-    (void)message;
-    (void)error;
-#endif
 }
 
 /* 内部函数声明 */
@@ -145,18 +139,14 @@ static int uvhttp_websocket_handshake(uvhttp_websocket_t* ws,
     
     /* 验证 WebSocket Key 存在 */
     if (!ws_key || strlen(ws_key) == 0) {
-#if UVHTTP_DEBUG
-        fprintf(stderr, "Missing Sec-WebSocket-Key header\n");
-#endif
+        UVHTTP_LOG_ERROR("Missing Sec-WebSocket-Key header\n");
         return -1;
     }
     
     /* 验证 WebSocket Key 格式（应该是 base64 编码） */
     size_t ws_key_len = strlen(ws_key);
     if (ws_key_len < 16 || ws_key_len > 64) {
-#if UVHTTP_DEBUG
-        fprintf(stderr, "Invalid Sec-WebSocket-Key length: %zu\n", ws_key_len);
-#endif
+        UVHTTP_LOG_ERROR("Invalid Sec-WebSocket-Key length: %zu\n", ws_key_len);
         return -1;
     }
     
@@ -166,9 +156,7 @@ static int uvhttp_websocket_handshake(uvhttp_websocket_t* ws,
     
     unsigned char sha1_hash[20];
     if (uvhttp_sha1(combined, strlen(combined), sha1_hash) != 0) {
-#if UVHTTP_DEBUG
-        fprintf(stderr, "SHA1 calculation failed\n");
-#endif
+        UVHTTP_LOG_ERROR("SHA1 calculation failed\n");
         return -1;
     }
     
@@ -659,7 +647,7 @@ int uvhttp_websocket_verify_peer_cert(uvhttp_websocket_t* ws) {
                                     &cert_info, sizeof(cert_info));
     if (result == 0) {
 #if UVHTTP_DEBUG
-        fprintf(stderr, "Peer certificate CN: %s\n", cert_info.ns.name);
+        UVHTTP_LOG_DEBUG("Peer certificate CN: %s\n", cert_info.ns.name);
 #endif
     }
     
@@ -669,7 +657,7 @@ int uvhttp_websocket_verify_peer_cert(uvhttp_websocket_t* ws) {
                                     &cert_info, sizeof(cert_info));
     if (result == 0) {
 #if UVHTTP_DEBUG
-        fprintf(stderr, "Peer certificate Issuer: %s\n", cert_info.ns.name);
+        UVHTTP_LOG_DEBUG("Peer certificate Issuer: %s\n", cert_info.ns.name);
 #endif
     }
     

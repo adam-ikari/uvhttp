@@ -29,6 +29,7 @@ static int on_message_begin(llhttp_t* parser) {
         return -1;
     }
     
+    // 重置解析状态
     conn->parsing_complete = 0;
     conn->content_length = 0;
     conn->body_received = 0;
@@ -176,7 +177,7 @@ static int on_message_complete(llhttp_t* parser) {
     }
     
     // 设置HTTP方法
-    conn->request->method = (int)llhttp_get_method(parser);
+    conn->request->method = (uvhttp_method_t)llhttp_get_method(parser);
     
     // HTTP/1.1优化：根据HTTP版本和Connection头决定keep-alive
     int http_major = llhttp_get_http_major(parser);
@@ -261,9 +262,10 @@ static int init_http_parser(uvhttp_connection_t* conn) {
     }
     
     // 初始化解析器并设置连接上下文
-    llhttp_init((llhttp_t*)conn->http_parser, HTTP_REQUEST, conn->parser_settings);
+    llhttp_t* parser = (llhttp_t*)conn->http_parser;
+    llhttp_init(parser, HTTP_REQUEST, conn->parser_settings);
     // 设置解析器数据指针 - 使用官方API
-    conn->http_parser->data = conn;
+    parser->data = conn;
     
     return 0;
 }
@@ -327,10 +329,8 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
         return NULL;
     }
     
-    memset(conn->request, 0, sizeof(uvhttp_request_t));
-    
-    conn->response = uvhttp_malloc(sizeof(uvhttp_response_t));
-    if (!conn->response) {
+    // 正确初始化request对象
+    if (uvhttp_request_init(conn->request, &conn->tcp_handle) != 0) {
         uvhttp_free(conn->request);
         uvhttp_free(conn->http_parser);
         uvhttp_free(conn->parser_settings);
@@ -339,7 +339,28 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
         return NULL;
     }
     
-    memset(conn->response, 0, sizeof(uvhttp_response_t));
+    conn->response = uvhttp_malloc(sizeof(uvhttp_response_t));
+    if (!conn->response) {
+        uvhttp_request_cleanup(conn->request);
+        uvhttp_free(conn->request);
+        uvhttp_free(conn->http_parser);
+        uvhttp_free(conn->parser_settings);
+        uvhttp_free(conn->read_buffer);
+        uvhttp_free(conn);
+        return NULL;
+    }
+    
+    // 正确初始化response对象
+    if (uvhttp_response_init(conn->response, &conn->tcp_handle) != 0) {
+        uvhttp_request_cleanup(conn->request);
+        uvhttp_free(conn->request);
+        uvhttp_free(conn->response);
+        uvhttp_free(conn->http_parser);
+        uvhttp_free(conn->parser_settings);
+        uvhttp_free(conn->read_buffer);
+        uvhttp_free(conn);
+        return NULL;
+    }
     
     return conn;
 }
@@ -409,8 +430,9 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     
     // 处理接收到的数据
     if (conn->http_parser) {
-        int result = llhttp_execute(conn->http_parser, buf->base, nread);
-        if (result != nread) {
+        llhttp_t* parser = (llhttp_t*)conn->http_parser;
+        int result = llhttp_execute(parser, buf->base, nread);
+        if (result != HPE_OK) {
             // 解析错误
             uvhttp_connection_close(conn);
             return;
