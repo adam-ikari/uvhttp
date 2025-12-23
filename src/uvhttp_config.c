@@ -46,7 +46,6 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config) {
     config->max_body_size = UVHTTP_DEFAULT_MAX_BODY_SIZE;
     config->max_header_size = UVHTTP_DEFAULT_MAX_HEADER_SIZE;
     config->max_url_size = UVHTTP_DEFAULT_MAX_URL_SIZE;
-    config->worker_threads = UVHTTP_DEFAULT_WORKER_THREADS;
     
     config->max_requests_per_connection = UVHTTP_DEFAULT_MAX_REQUESTS_PER_CONN;
     config->rate_limit_window = UVHTTP_DEFAULT_RATE_LIMIT_WINDOW;
@@ -133,7 +132,6 @@ int uvhttp_config_save_file(const uvhttp_config_t* config, const char* filename)
     fprintf(file, "max_body_size=%zu\n", config->max_body_size);
     fprintf(file, "max_header_size=%zu\n", config->max_header_size);
     fprintf(file, "max_url_size=%zu\n", config->max_url_size);
-    fprintf(file, "worker_threads=%d\n", config->worker_threads);
     
     fprintf(file, "\n# Security Configuration\n");
     fprintf(file, "max_requests_per_connection=%d\n", config->max_requests_per_connection);
@@ -221,9 +219,7 @@ void uvhttp_config_print(const uvhttp_config_t* config) {
     printf("\nPerformance:\n");
     printf("  Max Body Size: %zu bytes\n", config->max_body_size);
     printf("  Max Header Size: %zu bytes\n", config->max_header_size);
-    printf("  Max URL Size: %zu bytes\n", config->max_url_size);
-    printf("  Worker Threads: %d\n", config->worker_threads);
-    
+    printf("  Max URL Size: %zu bytes\n", config->max_url_size);    
     printf("\nSecurity:\n");
     printf("  Max Requests per Connection: %d\n", config->max_requests_per_connection);
     printf("  Rate Limit Window: %d seconds\n", config->rate_limit_window);

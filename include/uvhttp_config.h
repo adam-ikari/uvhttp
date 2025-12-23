@@ -28,8 +28,6 @@ typedef struct {
     size_t max_body_size;
     size_t max_header_size;
     size_t max_url_size;
-    /* 移除多线程相关配置 */
-    /* int worker_threads; */
     
     /* 安全配置 */
     int max_requests_per_connection;
@@ -57,8 +55,6 @@ typedef struct {
 #define UVHTTP_DEFAULT_MAX_BODY_SIZE         (1024 * 1024)
 #define UVHTTP_DEFAULT_MAX_HEADER_SIZE       8192
 #define UVHTTP_DEFAULT_MAX_URL_SIZE          2048
-/* 移除多线程默认值 */
-/* #define UVHTTP_DEFAULT_WORKER_THREADS        0 */
 #define UVHTTP_DEFAULT_MAX_REQUESTS_PER_CONN 100
 #define UVHTTP_DEFAULT_RATE_LIMIT_WINDOW     60
 #define UVHTTP_DEFAULT_ENABLE_COMPRESSION     1

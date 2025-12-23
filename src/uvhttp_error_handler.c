@@ -203,22 +203,29 @@ void uvhttp_log(uvhttp_log_level_t level, const char* format, ...) {
     vsnprintf(message, sizeof(message), format, args);
     va_end(args);
     
-    /* 输出日志 - 使用统一日志系统 */
+    /* 输出日志 - 直接输出避免递归 */
+    const char* level_str;
     switch (level) {
         case UVHTTP_LOG_LEVEL_DEBUG:
-            UVHTTP_LOG_DEBUG("%s", message);
+            level_str = "DEBUG";
             break;
         case UVHTTP_LOG_LEVEL_INFO:
-            UVHTTP_LOG_INFO("%s", message);
+            level_str = "INFO";
             break;
         case UVHTTP_LOG_LEVEL_WARN:
-            UVHTTP_LOG_WARN("%s", message);
+            level_str = "WARN";
             break;
         case UVHTTP_LOG_LEVEL_ERROR:
-            UVHTTP_LOG_ERROR("%s", message);
+            level_str = "ERROR";
             break;
         case UVHTTP_LOG_LEVEL_FATAL:
-            UVHTTP_LOG_FATAL("%s", message);
+            level_str = "FATAL";
+            break;
+        default:
+            level_str = "UNKNOWN";
             break;
     }
+    
+    fprintf(stderr, "[%s] %s %s", timestamp, level_str, message);
+    fflush(stderr);
 }

@@ -15,6 +15,10 @@
 
 
 
+/* 单线程事件驱动连接处理回调
+ * 这是libuv事件循环的核心回调函数，所有新连接都在这个单线程中处理
+ * 无需锁机制，因为libuv保证所有回调都在同一个事件循环线程中执行
+ */
 static void on_connection(uv_stream_t* server_handle, int status) {
     if (status < 0) {
         UVHTTP_LOG_ERROR("Connection error: %s\n", uv_strerror(status));
@@ -28,10 +32,10 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     
     uvhttp_server_t* server = (uvhttp_server_t*)server_handle->data;
     
-    /* 检查连接数限制 */
-    if (server->active_connections >= MAX_CONNECTIONS) {
+    /* 单线程连接数检查 - 无需原子操作或锁 */
+    if (server->active_connections >= UVHTTP_MAX_CONNECTIONS) {
         UVHTTP_LOG_WARN("Connection limit reached: %zu/%d\n", 
-                server->active_connections, MAX_CONNECTIONS);
+                server->active_connections, UVHTTP_MAX_CONNECTIONS);
         
         /* 创建临时连接以发送503响应 */
         uv_tcp_t* temp_client = uvhttp_malloc(sizeof(uv_tcp_t));
@@ -69,12 +73,12 @@ static void on_connection(uv_stream_t* server_handle, int status) {
             UVHTTP_LOG_ERROR("Failed to accept temporary connection\n");
         }
         
-        /* 关闭临时连接 */
+        /* 异步关闭临时连接 - 使用libuv的异步关闭机制 */
         uv_close((uv_handle_t*)temp_client, (uv_close_cb)uvhttp_free);
         return;
     }
     
-    /* 创建新的连接对象 */
+    /* 创建新的连接对象 - 单线程分配，无需同步 */
     uvhttp_connection_t* conn = uvhttp_connection_new(server);
     if (!conn) {
         return;
@@ -88,10 +92,12 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     
     /* 请求和响应对象已在连接创建时初始化 */
     
-    /* 增加活跃连接计数 */
+    /* 单线程安全的连接计数递增 */
     server->active_connections++;
     
-    /* 开始连接处理（TLS握手或HTTP读取） */
+    /* 开始连接处理（TLS握手或HTTP读取）
+     * 所有后续处理都通过libuv回调在事件循环中异步进行
+     */
     if (uvhttp_connection_start(conn) != 0) {
         uvhttp_connection_close(conn);
         return;
@@ -100,6 +106,16 @@ static void on_connection(uv_stream_t* server_handle, int status) {
 
 
 
+/* 创建基于单线程事件驱动的HTTP服务器
+ * loop: libuv事件循环，如果为NULL则创建新的事件循环
+ * 返回: 服务器对象，所有操作都在单个事件循环线程中进行
+ * 
+ * 单线程设计优势：
+ * 1. 无需锁机制，避免死锁和竞态条件
+ * 2. 内存访问更安全，无需原子操作
+ * 3. 性能可预测，避免线程切换开销
+ * 4. 调试简单，执行流清晰
+ */
 uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     /* 初始化TLS模块（如果还没有初始化） */
     /* TODO: TLS模块需要完全实现后启用
@@ -107,7 +123,8 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
         UVHTTP_LOG_ERROR("Failed to initialize TLS module");
         return NULL;
     }
-    */    uvhttp_server_t* server = uvhttp_malloc(sizeof(uvhttp_server_t));
+    */
+    uvhttp_server_t* server = uvhttp_malloc(sizeof(uvhttp_server_t));
     if (!server) {
         return NULL;
     }

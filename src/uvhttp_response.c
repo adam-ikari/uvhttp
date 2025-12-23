@@ -2,6 +2,7 @@
 #include "uvhttp_common.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
+#include "uvhttp_connection.h"
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -61,17 +62,24 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer, si
         pos += snprintf(buffer + pos, *length - pos, "Content-Type: text/plain\r\n");
     }
     
-    // HTTP/1.1优化：添加Content-Length或Connection头
-    if (!has_content_length && response->body) {
-        pos += snprintf(buffer + pos, *length - pos, "Content-Length: %zu\r\n", 
-                       response->body_length);
+    // HTTP/1.1要求：必须有Content-Length或使用chunked编码
+    // 这里我们总是添加Content-Length以确保兼容性
+    if (!has_content_length) {
+        if (response->body && response->body_length > 0) {
+            pos += snprintf(buffer + pos, *length - pos, "Content-Length: %zu\r\n", 
+                           response->body_length);
+        } else {
+            // 即使没有body也要设置Content-Length: 0
+            pos += snprintf(buffer + pos, *length - pos, "Content-Length: 0\r\n");
+        }
+        has_content_length = 1;
     }
     
     // HTTP/1.1优化：根据keep-alive设置Connection头
     if (!has_connection) {
         if (response->keep_alive) {
             pos += snprintf(buffer + pos, *length - pos, "Connection: keep-alive\r\n");
-            pos += snprintf(buffer + pos, *length - pos, "Keep-Alive: timeout=5, max=1000\r\n");
+            pos += snprintf(buffer + pos, *length - pos, "Keep-Alive: timeout=5, max=100\r\n");
         } else {
             pos += snprintf(buffer + pos, *length - pos, "Connection: close\r\n");
         }
@@ -97,6 +105,8 @@ uvhttp_error_t uvhttp_response_init(uvhttp_response_t* response, void* client) {
     // HTTP/1.1优化：设置默认值
     response->keep_alive = 1;    // HTTP/1.1默认保持连接
     response->status_code = UVHTTP_STATUS_OK;
+    response->sent = 0;          // 未发送
+    response->finished = 0;       // 未完成
     
     response->client = client;
     
@@ -223,6 +233,7 @@ uvhttp_error_t uvhttp_send_response_data(uvhttp_response_t* response, const char
     write_data->response = response;
     
     uv_buf_t buf = uv_buf_init(write_data->data, write_data->length);
+    write_data->write_req.data = write_data;
     int result = uv_write(&write_data->write_req, (uv_stream_t*)response->client, &buf, 1, 
                          (uv_write_cb)uvhttp_free_write_data);
     
@@ -235,10 +246,27 @@ uvhttp_error_t uvhttp_send_response_data(uvhttp_response_t* response, const char
     return UVHTTP_OK;
 }
 
+/* 单线程安全的写入完成回调
+ * 在libuv事件循环线程中执行，安全释放写入相关资源
+ * 单线程优势：无需锁，资源释放顺序可预测
+ */
 static void uvhttp_free_write_data(uv_write_t* req, int status) {
     (void)status; // 避免未使用参数警告
     uvhttp_write_data_t* write_data = (uvhttp_write_data_t*)req->data;
     if (write_data) {
+        /* 检查是否需要关闭连接 */
+        if (write_data->response && !write_data->response->keep_alive) {
+            /* 获取连接对象并关闭连接 */
+            uv_tcp_t* client = (uv_tcp_t*)write_data->response->client;
+            if (client) {
+                uvhttp_connection_t* conn = (uvhttp_connection_t*)client->data;
+                if (conn) {
+                    uvhttp_connection_close(conn);
+                }
+            }
+        }
+        
+        /* 单线程安全的资源释放 */
         if (write_data->data) {
             uvhttp_free(write_data->data);
         }
@@ -246,12 +274,21 @@ static void uvhttp_free_write_data(uv_write_t* req, int status) {
     }
 }
 
+/* 单线程事件驱动的HTTP响应发送
+ * 修复ab兼容性，确保HTTP响应格式正确
+ */
 uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
     if (!response) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    // 构建完整的HTTP响应
+    /* 单线程安全的重复发送检查 */
+    if (response->sent) {
+        return UVHTTP_OK;
+    }
+    response->sent = 1;
+    
+    /* 构建完整的HTTP响应 - 单线程内存操作 */
     size_t headers_size = UVHTTP_INITIAL_BUFFER_SIZE;
     char* headers_buffer = uvhttp_malloc(headers_size);
     if (!headers_buffer) {
@@ -261,39 +298,72 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
     size_t headers_length = headers_size;
     build_response_headers(response, headers_buffer, &headers_length);
     
-    // 计算总大小
+    /* 计算总大小 */
     size_t total_size = headers_length + response->body_length;
     if (total_size > UVHTTP_MAX_BODY_SIZE * 2) {
         uvhttp_free(headers_buffer);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
-    // 分配完整响应数据
-    char* response_data = uvhttp_malloc(total_size);
+    /* 分配完整响应数据 - 这个内存将在异步回调中安全释放 */
+    char* response_data = uvhttp_malloc(total_size + 1);  /* +1 for null terminator */
     if (!response_data) {
         uvhttp_free(headers_buffer);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
-    // 复制headers
+    /* 复制headers */
     memcpy(response_data, headers_buffer, headers_length);
     
-    // 复制body
+    /* 复制body */
     if (response->body && response->body_length > 0) {
         memcpy(response_data + headers_length, response->body, response->body_length);
     }
     
-    // 发送完整响应
-    uvhttp_error_t result = uvhttp_send_response_data(response, response_data, total_size);
+    /* 确保以null结尾（虽然HTTP不需要，但为了安全） */
+    response_data[total_size] = '\0';
     
+    /* 立即释放headers_buffer，不再需要 */
     uvhttp_free(headers_buffer);
-    uvhttp_free(response_data);
     
-    if (result == UVHTTP_OK) {
-        response->finished = 1;
+    /* 创建写数据结构，确保response_data在异步发送完成后被正确释放 */
+    uvhttp_write_data_t* write_data = uvhttp_malloc(sizeof(uvhttp_write_data_t));
+    if (!write_data) {
+        uvhttp_free(response_data);
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
-    return result;
+    write_data->data = response_data;  /* response_data将在异步回调中释放 */
+    write_data->length = total_size;
+    write_data->response = response;
+    
+    uv_buf_t buf = uv_buf_init(write_data->data, write_data->length);
+    write_data->write_req.data = write_data;
+    
+    /* 异步写入 - libuv在事件循环线程中执行，完成后调用回调释放资源 */
+    int result = uv_write(&write_data->write_req, (uv_stream_t*)response->client, &buf, 1, 
+                         (uv_write_cb)uvhttp_free_write_data);
+    
+    if (result < 0) {
+        /* 写入失败，立即清理资源 */
+        uvhttp_free(write_data->data);
+        uvhttp_free(write_data);
+        return UVHTTP_ERROR_RESPONSE_SEND;
+    }
+    
+    response->finished = 1;
+    
+    /* 如果响应设置了 Connection: close，需要在发送完成后关闭连接 */
+    if (!response->keep_alive) {
+        /* 获取连接对象 */
+        uvhttp_connection_t* conn = (uvhttp_connection_t*)((uv_tcp_t*)response->client)->data;
+        if (conn) {
+            /* 设置连接不保持活跃，确保在响应发送完成后关闭 */
+            conn->keep_alive = 0;
+        }
+    }
+    
+    return UVHTTP_OK;
 }
 
 void uvhttp_response_free(uvhttp_response_t* response) {

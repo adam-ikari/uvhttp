@@ -352,7 +352,7 @@ set_target_properties(uvhttp_test PROPERTIES
 )
 
 # 设置链接库
-set(TEST_LIBS uvhttp llhttp cjson websockets gtest gtest_main ${UV_LIBRARIES} dl pthread m ssl crypto)
+set(TEST_LIBS uvhttp llhttp cjson websockets gtest gtest_main ${UV_LIBRARIES} dl m ssl crypto)
 if(APPLE)
     list(APPEND TEST_LIBS /opt/homebrew/opt/openssl@3/lib/libssl.dylib /opt/homebrew/opt/openssl@3/lib/libcrypto.dylib)
 else()
@@ -373,7 +373,7 @@ target_link_libraries(uvhttp PRIVATE ssl crypto)
 
 # Hello World 示例
 add_executable(helloworld examples/helloworld.c)
-target_link_libraries(helloworld uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
+target_link_libraries(helloworld uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
 set_target_properties(helloworld PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
 )

@@ -5,6 +5,8 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
+#include <uv.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,21 +65,102 @@ typedef enum {
 
 #endif
 
+/* 内存池管理 */
+#define MEMORY_POOL_SIZE 1000
+#define MEMORY_POOL_BLOCK_SIZE 1024
+static char* memory_pool[MEMORY_POOL_SIZE];
+static size_t memory_pool_sizes[MEMORY_POOL_SIZE];
+static int memory_pool_used[MEMORY_POOL_SIZE];
+
+// 初始化内存池 - 简化版本（单线程环境）
+static void init_memory_pool() {
+    static int initialized = 0;
+    if (initialized) return;
+    
+    for (int i = 0; i < MEMORY_POOL_SIZE; i++) {
+        memory_pool[i] = NULL;
+        memory_pool_sizes[i] = 0;
+        memory_pool_used[i] = 0;
+    }
+    initialized = 1;
+}
+
+// 从内存池分配内存
+static void* pool_malloc(size_t size) {
+    init_memory_pool();
+    
+    for (int i = 0; i < MEMORY_POOL_SIZE; i++) {
+        if (!memory_pool[i] || !memory_pool_used[i]) {
+            if (!memory_pool[i]) {
+                memory_pool[i] = UVHTTP_MALLOC(MEMORY_POOL_BLOCK_SIZE);
+                if (!memory_pool[i]) {
+                    return NULL;
+                }
+                memory_pool_sizes[i] = MEMORY_POOL_BLOCK_SIZE;
+            }
+            
+            if (size <= memory_pool_sizes[i]) {
+                memory_pool_used[i] = 1;
+                return memory_pool[i];
+            }
+        }
+    }
+    
+    // 内存池已满，使用系统分配器
+    return UVHTTP_MALLOC(size);
+}
+
+// 释放内存到内存池
+static void pool_free(void* ptr) {
+    if (!ptr) return;
+    
+    for (int i = 0; i < MEMORY_POOL_SIZE; i++) {
+        if (memory_pool[i] == ptr && memory_pool_used[i]) {
+            memory_pool_used[i] = 0;
+            return;
+        }
+    }
+    
+    // 不在内存池中，使用系统释放器
+    free(ptr);
+}
+
+
+
 /* 兼容性函数声明 */
 static inline void* uvhttp_malloc(size_t size) {
+    if (size <= MEMORY_POOL_BLOCK_SIZE) {
+        return pool_malloc(size);
+    }
     return UVHTTP_MALLOC(size);
 }
 
 static inline void* uvhttp_realloc(void* ptr, size_t size) {
-    return UVHTTP_REALLOC(ptr, size);
+    // 简化实现：直接使用系统分配器
+    void* new_ptr = UVHTTP_REALLOC(ptr, size);
+    return new_ptr;
+}
+
+
+
+static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
+    size_t total_size = nmemb * size;
+    if (total_size <= MEMORY_POOL_BLOCK_SIZE) {
+        void* ptr = pool_malloc(total_size);
+        if (ptr) {
+            memset(ptr, 0, total_size);
+        }
+        return ptr;
+    }
+    return UVHTTP_CALLOC(nmemb, size);
 }
 
 static inline void uvhttp_free(void* ptr) {
-    UVHTTP_FREE(ptr);
-}
-
-static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
-    return UVHTTP_CALLOC(nmemb, size);
+    if (!ptr) return;
+    
+    // 检查是否在内存池范围内（简化检查）
+    // 这里使用一个简单的方法：尝试从内存池释放
+    pool_free(ptr);
 }
 
 /* 便捷宏 */

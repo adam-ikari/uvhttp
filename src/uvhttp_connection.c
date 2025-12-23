@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <uv.h>
 
+// 简化连接管理 - 暂时禁用连接池解决并发问题
+
 static void on_close(uv_handle_t* handle);
 
 static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
@@ -26,6 +28,10 @@ static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t
     buf->len = remaining;
 }
 
+/* 单线程事件驱动的读取回调
+ * 这个函数在libuv事件循环线程中被调用，处理所有传入数据
+ * 单线程模型优势：无需锁，数据访问安全，执行流可预测
+ */
 static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     (void)buf; // 避免未使用参数警告
     uvhttp_connection_t* conn = (uvhttp_connection_t*)stream->data;
@@ -37,6 +43,7 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
         if (nread != UV_EOF) {
             fprintf(stderr, "Read error: %s\n", uv_err_name(nread));
         }
+        /* 异步关闭连接 - 在事件循环中安全执行 */
         uvhttp_connection_close(conn);
         return;
     }
@@ -45,7 +52,7 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
         return;
     }
     
-    // 使用request中的解析器处理数据
+    /* 单线程HTTP解析 - 无需同步机制 */
     llhttp_t* parser = (llhttp_t*)conn->request->parser;
     if (parser) {
         enum llhttp_errno err = llhttp_execute(parser, buf->base, nread);
@@ -53,24 +60,44 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
             fprintf(stderr, "HTTP parse error: %s %s\n", 
                            llhttp_errno_name(err), 
                            llhttp_get_error_reason(parser));
+            /* 解析错误时异步关闭连接 */
             uvhttp_connection_close(conn);
             return;
         }
     }
 }
 
+/* 单线程安全的连接关闭回调
+ * 在libuv事件循环线程中执行，确保资源安全释放
+ * 无需锁机制，因为所有操作都在同一线程中
+ */
 static void on_close(uv_handle_t* handle) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
     if (conn) {
+        /* 单线程安全的连接计数递减 */
+        if (conn->server) {
+            conn->server->active_connections--;
+        }
+        /* 释放连接资源 - 在事件循环线程中安全执行 */
         uvhttp_connection_free(conn);
     }
 }
 
+/* 创建新的HTTP连接对象（单线程事件驱动）
+ * server: 所属的HTTP服务器
+ * 返回: 连接对象，所有操作都在事件循环线程中处理
+ * 
+ * 单线程连接管理特点：
+ * 1. 无需连接池锁机制
+ * 2. 内存分配在单线程中进行，安全可靠
+ * 3. 所有状态变更都在事件循环中串行化
+ */
 uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     if (!server) {
         return NULL;
     }
     
+    /* 单线程安全的内存分配 */
     uvhttp_connection_t* conn = uvhttp_malloc(sizeof(uvhttp_connection_t));
     if (!conn) {
         return NULL;
@@ -154,6 +181,7 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
         return;
     }
     
+    // 清理请求和响应数据
     if (conn->request) {
         uvhttp_request_cleanup(conn->request);
         uvhttp_free(conn->request);
@@ -168,6 +196,7 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
         uvhttp_free(conn->read_buffer);
     }
     
+    // 释放连接内存
     uvhttp_free(conn);
 }
 

@@ -38,10 +38,9 @@ int uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client) {
     
     request->parser = uvhttp_malloc(sizeof(llhttp_t));
     if (!request->parser) {
-        uvhttp_free(request->parser_settings);
+        UVHTTP_FREE(request->parser_settings);
         return -1;
     }
-    llhttp_settings_init(request->parser_settings);
     
     // 设置回调函数
     request->parser_settings->on_message_begin = on_message_begin;
@@ -71,10 +70,10 @@ void uvhttp_request_cleanup(uvhttp_request_t* request) {
         uvhttp_free(request->body);
     }
     if (request->parser) {
-        uvhttp_free(request->parser);
+        UVHTTP_FREE(request->parser);
     }
     if (request->parser_settings) {
-        uvhttp_free(request->parser_settings);
+        UVHTTP_FREE(request->parser_settings);
     }
 }
 
@@ -125,43 +124,67 @@ static int on_body(llhttp_t* parser, const char* at, size_t length) {
     return 0;
 }
 
+/* 单线程事件驱动的HTTP请求完成处理
+ * 在libuv事件循环线程中执行，处理完整的HTTP请求
+ * 单线程优势：无竞态条件，请求处理顺序可预测
+ */
 static int on_message_complete(llhttp_t* parser) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
         return -1;
     }
     
-    // 设置HTTP方法
+    /* 防止重复处理：单线程中简单的状态检查就足够 */
+    if (conn->parsing_complete) {
+        return 0;
+    }
+    
+    /* 设置HTTP方法 - 单线程安全 */
     conn->request->method = (uvhttp_method_t)llhttp_get_method(parser);
     
-    // 标记解析完成
+    /* 标记解析完成 - 无需原子操作 */
     conn->parsing_complete = 1;
     
-    // 处理请求
+    /* 单线程请求处理 - 无需锁机制 */
     if (conn->server && conn->server->router) {
         uvhttp_request_handler_t handler = uvhttp_router_find_handler(
             conn->server->router, conn->request->url, 
             uvhttp_method_to_string(conn->request->method));
         
         if (handler) {
+            /* 同步执行用户处理器 - 在事件循环线程中 */
             handler(conn->request, conn->response);
         } else {
-            // 未找到路由，发送404响应
+            /* 未找到路由，发送404响应 */
             uvhttp_response_set_status(conn->response, 404);
             uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
             uvhttp_response_set_body(conn->response, "Not Found", 9);
             uvhttp_response_send(conn->response);
         }
     } else {
-        // 没有路由器，发送默认响应
+        /* 没有路由器，发送默认响应 */
         uvhttp_response_set_status(conn->response, 200);
         uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
         uvhttp_response_set_body(conn->response, "OK", 2);
         uvhttp_response_send(conn->response);
     }
     
-    // HTTP/1.1连接管理：如果不是keep-alive则关闭连接
-    if (!conn->keep_alive) {
+    /* HTTP/1.1连接管理：单线程安全的连接生命周期控制 */
+    /* 检查是否应该关闭连接：
+       1. 客户端请求 Connection: close
+       2. HTTP/1.0 协议（默认不保持连接）
+       3. 响应设置了 Connection: close
+    */
+    int should_close = !conn->keep_alive || 
+                      (conn->response && !conn->response->keep_alive);
+    
+    /* 检查HTTP版本 - HTTP/1.0默认不保持连接 */
+    if (parser && llhttp_get_http_major(parser) == 1 && llhttp_get_http_minor(parser) == 0) {
+        should_close = 1;  /* HTTP/1.0 connections close by default */
+    }
+    
+    if (should_close) {
+        /* 异步关闭连接 - 在事件循环中安全执行 */
         uvhttp_connection_close(conn);
     }
     

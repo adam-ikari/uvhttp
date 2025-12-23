@@ -44,10 +44,11 @@ struct uvhttp_response {
     size_t body_length;
     
     int headers_sent;
-    int finished;
     
     // HTTP/1.1优化字段
-    int keep_alive;         // 是否保持连接
+    int keep_alive;                     // 是否保持连接
+    int sent;                            // 是否已发送响应
+    int finished;                        // 响应是否完成
     int compress;           // 是否启用压缩
     int cache_ttl;          // 缓存TTL（秒）
     time_t cache_expires;   // 缓存过期时间
