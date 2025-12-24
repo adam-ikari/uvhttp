@@ -4,6 +4,7 @@
 #include "uvhttp_constants.h"
 #include "uvhttp_connection.h"
 #include "uvhttp_error_handler.h"
+#include "uvhttp_validation.h"
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -178,7 +179,7 @@ uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response, const cha
     }
     
     // 验证header名称和值
-    if (uvhttp_validate_header_value(name, value) != 0) {
+    if (uvhttp_validate_header_name(name) != 0 || uvhttp_validate_header_value_safe(value) != 0) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     

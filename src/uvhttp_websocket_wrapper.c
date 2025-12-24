@@ -606,17 +606,29 @@ uvhttp_websocket_error_t uvhttp_websocket_enable_mtls(uvhttp_websocket_t* ws,
         /* 注意：这里需要重新创建上下文以应用TLS设置 */
         /* 实际实现中应该保存原始的创建信息 */
         if (config->require_client_cert) {
-            /* TODO: 需要根据 libwebsockets 版本设置正确的客户端证书选项 */
+            /* 设置客户端证书验证选项 */
+            info.options |= LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
+            UVHTTP_LOG_DEBUG("Client certificate verification required");
         }
         
         /* 设置验证深度 */
         if (config->verify_depth > 0) {
-            /* TODO: 需要根据 libwebsockets 版本设置正确的验证深度 */
+            /* 设置证书验证深度 */
+            info.ssl_ca_filepath = config->ca_cert_path;
+            if (config->client_cert_path) {
+                info.ssl_cert_filepath = config->client_cert_path;
+            }
+            if (config->client_key_path) {
+                info.ssl_private_key_filepath = config->client_key_path;
+            }
+            UVHTTP_LOG_DEBUG("SSL verification depth set to: %d", config->verify_depth);
         }
         
         /* 设置密码套件 */
         if (config->cipher_list) {
-            /* TODO: 需要根据 libwebsockets 版本设置正确的密码套件 */
+            /* 设置SSL密码套件 */
+            info.ssl_cipher_list = config->cipher_list;
+            UVHTTP_LOG_DEBUG("SSL cipher list set to: %s", config->cipher_list);
         }
     }
     
@@ -722,11 +734,69 @@ uvhttp_websocket_error_t uvhttp_websocket_verify_peer_cert_enhanced(uvhttp_webso
         return UVHTTP_WEBSOCKET_ERROR_CERT_VERIFY;
     }
     
-    /* 简化的证书链验证 */
-    /* TODO: 实现完整的证书链验证逻辑 */
+    /* 获取第一个证书（对端证书） */
+    X509* cert = sk_X509_value(cert_chain, 0);
+    if (!cert) {
+        return UVHTTP_WEBSOCKET_ERROR_CERT_VERIFY;
+    }
+    
+    /* 实现证书链验证 */
+    X509_STORE_CTX* store_ctx = X509_STORE_CTX_new();
+    if (!store_ctx) {
+        UVHTTP_LOG_ERROR("Failed to create X509_STORE_CTX");
+        return UVHTTP_WEBSOCKET_ERROR_CERT_VERIFY;
+    }
+    
+    /* 创建证书存储 */
+    X509_STORE* store = X509_STORE_new();
+    if (!store) {
+        X509_STORE_CTX_free(store_ctx);
+        UVHTTP_LOG_ERROR("Failed to create X509_STORE");
+        return UVHTTP_WEBSOCKET_ERROR_CERT_VERIFY;
+    }
+    
+    /* 加载CA证书（如果配置了） */
+    if (ws->mtls_config && ws->mtls_config->ca_cert_path) {
+        FILE* ca_file = fopen(ws->mtls_config->ca_cert_path, "r");
+        if (ca_file) {
+            X509* ca_cert = PEM_read_X509(ca_file, NULL, NULL, NULL);
+            fclose(ca_file);
+            
+            if (ca_cert) {
+                X509_STORE_add_cert(store, ca_cert);
+                X509_free(ca_cert);
+                UVHTTP_LOG_DEBUG("Loaded CA certificate: %s", ws->mtls_config->ca_cert_path);
+            } else {
+                UVHTTP_LOG_WARN("Failed to load CA certificate: %s", ws->mtls_config->ca_cert_path);
+            }
+        } else {
+            UVHTTP_LOG_WARN("Could not open CA certificate file: %s", ws->mtls_config->ca_cert_path);
+        }
+    }
+    
+    /* 初始化验证上下文 */
+    X509_STORE_CTX_init(store_ctx, store, cert, cert_chain);
+    
+    /* 设置验证时间 */
+    X509_STORE_CTX_set_time(store_ctx, 0, time(NULL));
+    
+    /* 执行证书链验证 */
+    int verify_result = X509_verify_cert(store_ctx);
+    int verify_error = X509_STORE_CTX_get_error(store_ctx);
+    
+    /* 清理资源 */
+    X509_STORE_CTX_free(store_ctx);
+    X509_STORE_free(store);
+    
+    if (verify_result <= 0) {
+        UVHTTP_LOG_ERROR("Certificate verification failed: %s", 
+                        X509_verify_cert_error_string(verify_error));
+        return UVHTTP_WEBSOCKET_ERROR_CERT_VERIFY;
+    }
+    
+    UVHTTP_LOG_DEBUG("Certificate chain verification successful");
     
     /* 获取证书信息进行额外验证 */
-    X509* cert = sk_X509_value(cert_chain, 0);
     if (cert) {
         /* 获取证书主题 */
         X509_NAME* subject = X509_get_subject_name(cert);
@@ -737,7 +807,39 @@ uvhttp_websocket_error_t uvhttp_websocket_verify_peer_cert_enhanced(uvhttp_webso
             /* 可以添加特定的主题验证逻辑 */
             if (ws->mtls_config && ws->mtls_config->ca_cert_path) {
                 /* 验证证书是否由指定的 CA 签发 */
-                /* TODO: 实现具体的 CA 验证逻辑 */
+                FILE* ca_file = fopen(ws->mtls_config->ca_cert_path, "r");
+                if (ca_file) {
+                    X509* ca_cert = PEM_read_X509(ca_file, NULL, NULL, NULL);
+                    fclose(ca_file);
+                    
+                    if (ca_cert) {
+                        /* 验证证书签名 */
+                        EVP_PKEY* ca_pubkey = X509_get_pubkey(ca_cert);
+                        if (ca_pubkey) {
+                            int verify_result = X509_verify(cert, ca_pubkey);
+                            EVP_PKEY_free(ca_pubkey);
+                            
+                            if (verify_result <= 0) {
+                                UVHTTP_LOG_ERROR("Certificate not signed by specified CA");
+                                X509_free(ca_cert);
+                                return UVHTTP_WEBSOCKET_ERROR_CERT_VERIFY;
+                            }
+                            
+                            UVHTTP_LOG_DEBUG("Certificate verified against specified CA");
+                        } else {
+                            UVHTTP_LOG_ERROR("Failed to get CA public key");
+                        }
+                        
+                        X509_free(ca_cert);
+                    } else {
+                        UVHTTP_LOG_ERROR("Failed to load CA certificate for verification");
+                        return UVHTTP_WEBSOCKET_ERROR_CERT_VERIFY;
+                    }
+                } else {
+                    UVHTTP_LOG_ERROR("Could not open CA certificate file: %s", 
+                                   ws->mtls_config->ca_cert_path);
+                    return UVHTTP_WEBSOCKET_ERROR_CERT_VERIFY;
+                }
             }
         }
         

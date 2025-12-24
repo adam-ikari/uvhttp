@@ -91,12 +91,12 @@ uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
                                                 uvhttp_request_handler_t handler);
 
 // 路由查找
-uvhttp_request_handler_t uvhttp_router_find_handler(uvhttp_router_t* router, 
+uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* router, 
                                                    const char* path,
                                                    const char* method);
 
 // 路由匹配（获取参数）
-uvhttp_error_t uvhttp_router_match(uvhttp_router_t* router,
+uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
                                       const char* path,
                                       const char* method,
                                       uvhttp_route_match_t* match);

@@ -202,7 +202,7 @@ static uvhttp_error_t add_array_route(uvhttp_router_t* router, const char* path,
 }
 
 // 数组路由查找
-static uvhttp_request_handler_t find_array_route(uvhttp_router_t* router, 
+static uvhttp_request_handler_t find_array_route(const uvhttp_router_t* router, 
                                                 const char* path, 
                                                 uvhttp_method_t method) {
     for (size_t i = 0; i < router->array_route_count; i++) {
@@ -394,7 +394,7 @@ static int match_route_node(uvhttp_route_node_t* node,
     return -1;
 }
 
-uvhttp_request_handler_t uvhttp_router_find_handler(uvhttp_router_t* router, 
+uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* router, 
                                                    const char* path,
                                                    const char* method) {
     if (!router || !path || !method) {
@@ -435,7 +435,7 @@ uvhttp_request_handler_t uvhttp_router_find_handler(uvhttp_router_t* router,
     return NULL;
 }
 
-uvhttp_error_t uvhttp_router_match(uvhttp_router_t* router,
+uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
                                       const char* path,
                                       const char* method,
                                       uvhttp_route_match_t* match) {

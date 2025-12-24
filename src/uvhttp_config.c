@@ -104,10 +104,10 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
         
         /* 设置核心配置 - 使用安全的strtol()进行验证 */
         if (strcmp(key, "max_connections") == 0) {
-            printf("DEBUG: Parsing max_connections, value='%s'\n", value);
+            UVHTTP_LOG_DEBUG("Parsing max_connections, value='%s'", value);
             char* endptr;
             long val = strtol(value, &endptr, 10);
-            printf("DEBUG: strtol result: val=%ld, endptr='%s' (char=%d)\n", val, endptr, *endptr);
+            UVHTTP_LOG_DEBUG("strtol result: val=%ld, endptr='%s' (char=%d)", val, endptr, *endptr);
             if (*endptr != '\0') {
                 UVHTTP_LOG_ERROR("Invalid max_connections=%s: contains non-numeric characters", value);
                 fclose(file);

@@ -163,22 +163,21 @@ static void on_connection(uv_stream_t* server_handle, int status) {
  */
 uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     /* 初始化TLS模块（如果还没有初始化） */
-#if UVHTTP_FEATURE_TLS
-    printf("DEBUG: Initializing TLS module...\n");
-    if (uvhttp_tls_init() != UVHTTP_OK) {
-        UVHTTP_LOG_ERROR("Failed to initialize TLS module");
-        return NULL;
-    }
-    printf("DEBUG: TLS module initialized successfully\n");
-#endif
-    printf("DEBUG: Allocating uvhttp_server_t, size=%zu\n", sizeof(uvhttp_server_t));
-    uvhttp_server_t* server = uvhttp_malloc(sizeof(uvhttp_server_t));
-    if (!server) {
-        printf("DEBUG: uvhttp_malloc failed\n");
-        return NULL;
-    }
-    
-    printf("DEBUG: uvhttp_malloc success, server=%p\n", (void*)server);
+    #if UVHTTP_FEATURE_TLS
+        UVHTTP_LOG_DEBUG("Initializing TLS module...");
+        if (uvhttp_tls_init() != UVHTTP_OK) {
+            UVHTTP_LOG_ERROR("Failed to initialize TLS module");
+            return NULL;
+        }
+        UVHTTP_LOG_DEBUG("TLS module initialized successfully");
+    #endif
+        UVHTTP_LOG_DEBUG("Allocating uvhttp_server_t, size=%zu", sizeof(uvhttp_server_t));
+        uvhttp_server_t* server = uvhttp_malloc(sizeof(uvhttp_server_t));
+        if (!server) {
+            UVHTTP_LOG_ERROR("Failed to allocate uvhttp_server_t");
+            return NULL;
+        }
+        UVHTTP_LOG_DEBUG("uvhttp_malloc success, server=%p", (void*)server);
     memset(server, 0, sizeof(uvhttp_server_t));
     
     // 如果没有提供loop，内部创建新循环

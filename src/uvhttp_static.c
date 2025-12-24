@@ -2,7 +2,11 @@
 
 #if UVHTTP_FEATURE_STATIC_FILES
 
+#define _XOPEN_SOURCE 600 /* 启用 strptime, timegm */
+#define _DEFAULT_SOURCE /* 启用 strcasecmp */
+
 #include "uvhttp_static.h"
+#include "uvhttp_async_file.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_allocator.h"
@@ -16,6 +20,13 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <errno.h>
+#include <time.h>
+#include <uv.h>
+
+#include "uvhttp_error_handler.h"
+
+/* 前向声明 */
+static void on_async_file_read_complete(uvhttp_async_file_request_t* req, int status);
 
 /* MIME类型映射表 */
 static const uvhttp_mime_mapping_t mime_types[] = {
@@ -99,6 +110,7 @@ static uvhttp_static_cache_entry_t* find_in_cache(uvhttp_static_context_t* ctx,
     if (!ctx || !file_path) return NULL;
     
     uvhttp_static_cache_entry_t* entry = ctx->cache_head;
+    uvhttp_static_cache_entry_t* prev = NULL;
     while (entry) {
         if (strcmp(entry->file_path, file_path) == 0) {
             /* 检查缓存是否过期 */
@@ -106,12 +118,28 @@ static uvhttp_static_cache_entry_t* find_in_cache(uvhttp_static_context_t* ctx,
                 time_t now = time(NULL);
                 if (now - entry->cache_time > ctx->config.cache_ttl) {
                     /* 缓存过期，移除并返回NULL */
-                    /* TODO: 实现LRU缓存清理 */
+                    UVHTTP_LOG_DEBUG("Cache entry expired: %s", entry->file_path);
+                    
+                    /* 从链表中移除过期条目 */
+                    if (prev) {
+                        prev->next = entry->next;
+                    } else {
+                        ctx->cache_head = entry->next;
+                    }
+                    
+                    /* 更新缓存大小 */
+                    ctx->current_cache_size -= entry->content_length;
+                    
+                    /* 释放过期条目 */
+                    free_cache_entry(entry);
+                    UVHTTP_LOG_DEBUG("Expired cache entry removed");
+                    
                     return NULL;
                 }
             }
             return entry;
         }
+        prev = entry;
         entry = entry->next;
     }
     return NULL;
@@ -132,9 +160,25 @@ static int add_to_cache(uvhttp_static_context_t* ctx,
     /* 检查缓存大小限制 */
     if (ctx->config.max_cache_size > 0 &&
         ctx->current_cache_size + content_length > ctx->config.max_cache_size) {
-        /* TODO: 实现LRU缓存清理 */
-        uvhttp_log_safe_error(0, "static_cache", "Cache size limit reached");
-        return -1;
+        /* 实现LRU缓存清理 - 移除最旧的条目直到有足够空间 */
+        UVHTTP_LOG_DEBUG("Cache size limit reached, starting LRU cleanup");
+        
+        while (ctx->cache_head && 
+               ctx->current_cache_size + content_length > ctx->config.max_cache_size) {
+            uvhttp_static_cache_entry_t* oldest = ctx->cache_head;
+            
+            /* 移除最旧的条目（链表头部） */
+            ctx->cache_head = oldest->next;
+            ctx->current_cache_size -= oldest->content_length;
+            
+            UVHTTP_LOG_DEBUG("LRU cleanup: removed entry %s (freed %zu bytes)", 
+                           oldest->file_path, oldest->content_length);
+            
+            free_cache_entry(oldest);
+        }
+        
+        UVHTTP_LOG_DEBUG("LRU cleanup completed, current cache size: %zu bytes", 
+                       ctx->current_cache_size);
     }
     
     uvhttp_static_cache_entry_t* entry = uvhttp_malloc(sizeof(uvhttp_static_cache_entry_t));
@@ -198,6 +242,9 @@ uvhttp_static_context_t* uvhttp_static_create(const uvhttp_static_config_t* conf
     /* 复制配置 */
     memcpy(&ctx->config, config, sizeof(uvhttp_static_config_t));
     
+    /* 初始化统计信息 */
+    memset(&ctx->stats, 0, sizeof(uvhttp_static_stats_t));
+    
     /* 验证根目录 */
     if (!uvhttp_validate_file_path(config->root_directory)) {
         uvhttp_log_safe_error(0, "static_create", "Invalid root directory");
@@ -210,6 +257,11 @@ uvhttp_static_context_t* uvhttp_static_create(const uvhttp_static_config_t* conf
         strcpy(ctx->config.index_file, "index.html");
     }
     
+    /* 初始化异步读取设置 */
+    ctx->enable_async_read = 1;  /* 默认启用异步读取 */
+    ctx->async_file_threshold = 64 * 1024;  /* 默认64KB阈值 */
+    ctx->async_manager = NULL;
+    
     return ctx;
 }
 
@@ -218,6 +270,9 @@ void uvhttp_static_free(uvhttp_static_context_t* ctx) {
     
     /* 清理缓存 */
     uvhttp_static_clear_cache(ctx);
+    
+    /* 清理异步文件管理器 */
+    uvhttp_static_cleanup_async(ctx);
     
     uvhttp_free(ctx);
 }
@@ -335,8 +390,20 @@ int uvhttp_static_check_conditional_request(void* request,
     /* 检查If-Modified-Since */
     const char* if_modified_since = uvhttp_request_get_header(request, "If-Modified-Since");
     if (if_modified_since) {
-        /* 简单的时间比较（实际实现需要解析HTTP日期格式） */
-        /* TODO: 实现HTTP日期解析 */
+        /* 解析HTTP日期格式 (RFC 1123): Wed, 21 Oct 2015 07:28:00 GMT */
+        struct tm tm_mod_since = {0};
+        
+        /* 使用更安全的日期解析方式 */
+        char* result = strptime(if_modified_since, "%a, %d %b %Y %H:%M:%S GMT", &tm_mod_since);
+        if (result) {
+            time_t mod_since_time = timegm(&tm_mod_since);
+            if (last_modified <= mod_since_time) {
+                /* 文件未修改，返回304 Not Modified */
+                return 1; /* 调用者需要设置304状态 */
+            }
+        } else {
+            UVHTTP_LOG_WARN("Failed to parse If-Modified-Since header: %s", if_modified_since);
+        }
     }
     
     return 0; /* 需要返回完整内容 */
@@ -363,9 +430,14 @@ int uvhttp_static_set_response_headers(void* response,
     /* 设置Last-Modified */
     if (last_modified > 0) {
         char time_str[64];
-        /* TODO: 实现HTTP日期格式化 */
-        strftime(time_str, sizeof(time_str), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&last_modified));
-        uvhttp_response_set_header(response, "Last-Modified", time_str);
+        /* HTTP日期格式化 (RFC 1123): Wed, 21 Oct 2015 07:28:00 GMT */
+        struct tm* gm_time = gmtime(&last_modified);
+        if (gm_time) {
+            strftime(time_str, sizeof(time_str), "%a, %d %b %Y %H:%M:%S GMT", gm_time);
+            uvhttp_response_set_header(response, "Last-Modified", time_str);
+        } else {
+            UVHTTP_LOG_ERROR("Failed to format last modified time");
+        }
     }
     
     /* 设置ETag */
@@ -454,24 +526,178 @@ static int get_file_info(const char* file_path, size_t* file_size, time_t* last_
  * 生成目录列表HTML
  */
 static char* generate_directory_listing(const char* dir_path, const char* request_path) {
-    (void)dir_path; /* 避免未使用参数警告 */
+    if (!dir_path || !request_path) {
+        return NULL;
+    }
     
-    /* TODO: 实现目录列表生成 */
-    char* html = uvhttp_malloc(1024);
-    if (!html) return NULL;
+    DIR* dir = opendir(dir_path);
+    if (!dir) {
+        UVHTTP_LOG_ERROR("Failed to open directory: %s", dir_path);
+        return NULL;
+    }
     
-    snprintf(html, 1024,
+    /* 计算所需缓冲区大小 */
+    size_t buffer_size = 4096; /* 基础HTML大小 */
+    size_t entry_count = 0;
+    struct dirent* entry;
+    
+    /* 第一次遍历：计算条目数量和所需缓冲区大小 */
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0) {
+            continue; /* 跳过当前目录 */
+        }
+        
+        buffer_size += strlen(entry->d_name) + 200; /* 每个条目的HTML开销 */
+        entry_count++;
+    }
+    
+    /* 分配缓冲区 */
+    char* html = uvhttp_malloc(buffer_size);
+    if (!html) {
+        closedir(dir);
+        return NULL;
+    }
+    
+    /* 开始生成HTML */
+    size_t offset = 0;
+    offset += snprintf(html + offset, buffer_size - offset,
         "<!DOCTYPE html>\n"
         "<html>\n"
-        "<head><title>Directory listing for %s</title></head>\n"
+        "<head>\n"
+        "<meta charset=\"UTF-8\">\n"
+        "<title>Directory listing for %s</title>\n"
+        "<style>\n"
+        "body { font-family: Arial, sans-serif; margin: 20px; }\n"
+        "h1 { color: #333; }\n"
+        "table { border-collapse: collapse; width: 100%%; }\n"
+        "th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }\n"
+        "th { background-color: #f2f2f2; }\n"
+        "a { text-decoration: none; color: #0066cc; }\n"
+        "a:hover { text-decoration: underline; }\n"
+        ".dir { font-weight: bold; }\n"
+        ".size { text-align: right; color: #666; }\n"
+        "</style>\n"
+        "</head>\n"
         "<body>\n"
         "<h1>Directory listing for %s</h1>\n"
-        "<ul>\n"
-        "<li><a href=\"../\">../</a></li>\n"
-        "</ul>\n"
+        "<table>\n"
+        "<tr><th>Name</th><th>Size</th><th>Modified</th></tr>\n",
+        request_path, request_path);
+    
+    /* 添加父目录链接 */
+    if (strcmp(request_path, "/") != 0) {
+        offset += snprintf(html + offset, buffer_size - offset,
+            "<tr><td><a href=\"../\">../</a></td><td class=\"dir\">-</td><td>-</td></tr>\n");
+    }
+    
+    /* 重置目录位置 */
+    rewinddir(dir);
+    
+    /* 收集目录条目信息 */
+    typedef struct {
+        char name[256];
+        size_t size;
+        time_t mtime;
+        int is_dir;
+    } dir_entry_t;
+    
+    dir_entry_t* entries = uvhttp_malloc(entry_count * sizeof(dir_entry_t));
+    if (!entries) {
+        uvhttp_free(html);
+        closedir(dir);
+        return NULL;
+    }
+    
+    size_t actual_count = 0;
+    
+    /* 第二次遍历：收集条目信息 */
+    while ((entry = readdir(dir)) != NULL && actual_count < entry_count) {
+        if (strcmp(entry->d_name, ".") == 0) {
+            continue;
+        }
+        
+        dir_entry_t* dir_entry = &entries[actual_count];
+        strncpy(dir_entry->name, entry->d_name, sizeof(dir_entry->name) - 1);
+        dir_entry->name[sizeof(dir_entry->name) - 1] = '\0';
+        
+        /* 获取文件信息 */
+        char full_path[UVHTTP_MAX_FILE_PATH_SIZE];
+        snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, entry->d_name);
+        
+        struct stat st;
+        if (stat(full_path, &st) == 0) {
+            dir_entry->size = st.st_size;
+            dir_entry->mtime = st.st_mtime;
+            dir_entry->is_dir = S_ISDIR(st.st_mode);
+        } else {
+            dir_entry->size = 0;
+            dir_entry->mtime = 0;
+            dir_entry->is_dir = 0;
+        }
+        
+        actual_count++;
+    }
+    closedir(dir);
+    
+    /* 排序：目录在前，然后按名称排序 */
+    for (size_t i = 0; i < actual_count - 1; i++) {
+        for (size_t j = i + 1; j < actual_count; j++) {
+            /* 目录优先 */
+            if (!entries[i].is_dir && entries[j].is_dir) {
+                dir_entry_t temp = entries[i];
+                entries[i] = entries[j];
+                entries[j] = temp;
+            }
+            /* 同类型按名称排序 */
+            else if (entries[i].is_dir == entries[j].is_dir) {
+                if (strcmp(entries[i].name, entries[j].name) > 0) {
+                    dir_entry_t temp = entries[i];
+                    entries[i] = entries[j];
+                    entries[j] = temp;
+                }
+            }
+        }
+    }
+    
+    /* 生成HTML表格行 */
+    for (size_t i = 0; i < actual_count; i++) {
+        dir_entry_t* dir_entry = &entries[i];
+        
+        /* 格式化修改时间 */
+        char time_str[64];
+        if (dir_entry->mtime > 0) {
+            struct tm* tm_info = localtime(&dir_entry->mtime);
+            strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", tm_info);
+        } else {
+            strcpy(time_str, "-");
+        }
+        
+        /* 生成表格行 */
+        if (dir_entry->is_dir) {
+            offset += snprintf(html + offset, buffer_size - offset,
+                "<tr><td><a href=\"%s/\" class=\"dir\">%s/</a></td><td class=\"dir\">-</td><td>%s</td></tr>\n",
+                dir_entry->name, dir_entry->name, time_str);
+        } else {
+            offset += snprintf(html + offset, buffer_size - offset,
+                "<tr><td><a href=\"%s\">%s</a></td><td class=\"size\">%zu</td><td>%s</td></tr>\n",
+                dir_entry->name, dir_entry->name, dir_entry->size, time_str);
+        }
+    }
+    
+    /* 完成HTML */
+    offset += snprintf(html + offset, buffer_size - offset,
+        "</table>\n"
+        "<p style=\"margin-top: 20px; color: #666; font-size: small;\">"
+        "%zu entries total"
+        "</p>\n"
         "</body>\n"
         "</html>",
-        request_path, request_path);
+        actual_count);
+    
+    /* 清理 */
+    uvhttp_free(entries);
+    
+    UVHTTP_LOG_DEBUG("Generated directory listing for %s (%zu entries)", request_path, actual_count);
     
     return html;
 }
@@ -483,6 +709,9 @@ int uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                                 void* request,
                                 void* response) {
     if (!ctx || !request || !response) return -1;
+    
+    /* 更新请求统计 */
+    ctx->stats.total_requests++;
     
     const char* url = uvhttp_request_get_url(request);
     if (!url) {
@@ -521,6 +750,14 @@ int uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     
     /* 检查缓存 */
     uvhttp_static_cache_entry_t* cache_entry = find_in_cache(ctx, safe_path);
+    
+    if (cache_entry) {
+        /* 缓存命中 */
+        ctx->stats.cache_hits++;
+    } else {
+        /* 缓存未命中 */
+        ctx->stats.cache_misses++;
+    }
     
     /* 如果不在缓存中，读取文件 */
     if (!cache_entry) {
@@ -569,7 +806,85 @@ int uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
             return -1;
         }
         
-        /* 读取文件内容 */
+        /* 生成ETag */
+        char etag[UVHTTP_MAX_HEADER_VALUE_SIZE];
+        uvhttp_static_generate_etag(safe_path, last_modified, file_size, 
+                                   etag, sizeof(etag));
+        
+        /* 检查条件请求 */
+        if (uvhttp_static_check_conditional_request(request, etag, last_modified)) {
+            uvhttp_response_set_status(response, 304); /* Not Modified */
+            return 0;
+        }
+        
+        /* 智能选择读取策略 */
+        int use_async = 0;
+        
+        if (ctx->enable_async_read && ctx->async_manager) {
+            /* 检查文件大小是否超过异步阈值 */
+            if (file_size >= ctx->async_file_threshold) {
+                /* 获取异步管理器统计信息 */
+                int current_reads, max_concurrent;
+                if (uvhttp_async_file_get_stats(ctx->async_manager, &current_reads, &max_concurrent) == 0) {
+                    /* 如果当前并发数低于最大值的80%，使用异步读取 */
+                    if (current_reads < (max_concurrent * 8 / 10)) {
+                        use_async = 1;
+                    }
+                }
+            }
+            
+            /* 对于大文件（>1MB），强制使用异步或流式传输 */
+            if (file_size >= 1024 * 1024) {
+                use_async = 1;
+            }
+        }
+        
+        if (use_async) {
+            /* 检查是否需要流式传输（超大文件） */
+            if (file_size >= UVHTTP_STATIC_MAX_FILE_SIZE / 2) {
+                /* 使用流式传输 */
+                ctx->stats.stream_transfers++;
+                
+                int ret = uvhttp_async_file_stream(ctx->async_manager, safe_path, 
+                                                  response, 64 * 1024); /* 64KB chunks */
+                if (ret == 0) {
+                    /* 设置流式传输响应头 */
+                    char etag[UVHTTP_MAX_HEADER_VALUE_SIZE];
+                    uvhttp_static_generate_etag(safe_path, last_modified, 
+                                               file_size, etag, sizeof(etag));
+                    
+                    uvhttp_static_set_response_headers(response, safe_path, 
+                                                      file_size, last_modified, etag);
+                    uvhttp_response_set_header(response, "Transfer-Encoding", "chunked");
+                    uvhttp_response_set_status(response, 200);
+                    uvhttp_response_send(response);
+                    
+                    /* 更新统计信息 */
+                    ctx->stats.total_bytes_served += file_size;
+                    
+                    return 0;
+                } else {
+                    uvhttp_log_safe_error(ret, "static_stream_fallback", safe_path);
+                }
+            } else {
+                /* 异步读取文件 */
+                ctx->stats.async_reads++;
+                
+                int ret = uvhttp_async_file_read(ctx->async_manager, safe_path, 
+                                               request, response, ctx, 
+                                               on_async_file_read_complete);
+                if (ret == 0) {
+                    return 0;  /* 异步处理中 */
+                } else {
+                    /* 异步读取失败，回退到同步读取 */
+                    uvhttp_log_safe_error(ret, "static_async_fallback", safe_path);
+                }
+            }
+        }
+        
+        /* 同步读取文件（回退方案） */
+        ctx->stats.sync_reads++;
+        
         char* file_content = read_file_content(safe_path, &file_size);
         if (!file_content) {
             uvhttp_response_set_status(response, 500); /* Internal Server Error */
@@ -580,18 +895,6 @@ int uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
         char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
         uvhttp_static_get_mime_type(safe_path, mime_type, sizeof(mime_type));
         
-        /* 生成ETag */
-        char etag[UVHTTP_MAX_HEADER_VALUE_SIZE];
-        uvhttp_static_generate_etag(safe_path, last_modified, file_size, 
-                                   etag, sizeof(etag));
-        
-        /* 检查条件请求 */
-        if (uvhttp_static_check_conditional_request(request, etag, last_modified)) {
-            uvhttp_free(file_content);
-            uvhttp_response_set_status(response, 304); /* Not Modified */
-            return 0;
-        }
-        
         /* 添加到缓存 */
         add_to_cache(ctx, safe_path, file_content, file_size, 
                     mime_type, last_modified, etag);
@@ -601,6 +904,9 @@ int uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                                           last_modified, etag);
         uvhttp_response_set_body(response, file_content, file_size);
         uvhttp_response_set_status(response, 200);
+        
+        /* 更新统计信息 */
+        ctx->stats.total_bytes_served += file_size;
         
         uvhttp_free(file_content);
     } else {
@@ -616,6 +922,9 @@ int uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
             uvhttp_response_set_body(response, cache_entry->content, 
                                    cache_entry->content_length);
             uvhttp_response_set_status(response, 200);
+            
+            /* 更新统计信息 */
+            ctx->stats.total_bytes_served += cache_entry->content_length;
         }
     }
     
@@ -635,6 +944,173 @@ void uvhttp_static_clear_cache(uvhttp_static_context_t* ctx) {
     ctx->cache_head = NULL;
     ctx->current_cache_size = 0;
     ctx->cache_count = 0;
+}
+
+/**
+ * 异步文件读取完成回调
+ */
+static void on_async_file_read_complete(uvhttp_async_file_request_t* req, int status) {
+    if (!req) return;
+    
+    void* response = req->response;
+    uvhttp_static_context_t* ctx = (uvhttp_static_context_t*)req->static_context;
+    
+    /* 计算读取时间（简化实现，实际应该使用高精度计时器） */
+    double read_time = 0.0; /* 这里应该从请求开始时间计算 */
+    
+    if (status == 0 && req->state == UVHTTP_ASYNC_FILE_STATE_COMPLETED && req->buffer) {
+        /* 读取成功 */
+        char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
+        uvhttp_static_get_mime_type(req->file_path, mime_type, sizeof(mime_type));
+        
+        char etag[UVHTTP_MAX_HEADER_VALUE_SIZE];
+        uvhttp_static_generate_etag(req->file_path, req->last_modified, 
+                                   req->file_size, etag, sizeof(etag));
+        
+        /* 添加到缓存 */
+        if (ctx) {
+            add_to_cache(ctx, req->file_path, req->buffer, req->file_size, 
+                        mime_type, req->last_modified, etag);
+        }
+        
+        /* 设置响应头 */
+        uvhttp_static_set_response_headers(response, req->file_path, 
+                                          req->file_size, req->last_modified, etag);
+        
+        /* 发送响应 */
+        uvhttp_response_set_body(response, req->buffer, req->file_size);
+        uvhttp_response_set_status(response, 200);
+        
+        /* 更新统计信息 */
+        if (ctx) {
+            ctx->stats.total_bytes_served += req->file_size;
+            uvhttp_static_update_read_time_stats(ctx, read_time);
+        }
+    } else {
+        /* 读取失败，回退到同步读取 */
+        if (ctx) {
+            size_t file_size;
+            time_t last_modified;
+            
+            if (get_file_info(req->file_path, &file_size, &last_modified) == 0) {
+                char* file_content = read_file_content(req->file_path, &file_size);
+                if (file_content) {
+                    char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
+                    uvhttp_static_get_mime_type(req->file_path, mime_type, sizeof(mime_type));
+                    
+                    char etag[UVHTTP_MAX_HEADER_VALUE_SIZE];
+                    uvhttp_static_generate_etag(req->file_path, last_modified, 
+                                               file_size, etag, sizeof(etag));
+                    
+                    /* 添加到缓存 */
+                    add_to_cache(ctx, req->file_path, file_content, file_size, 
+                                mime_type, last_modified, etag);
+                    
+                    /* 设置响应头 */
+                    uvhttp_static_set_response_headers(response, req->file_path, 
+                                                      file_size, last_modified, etag);
+                    
+                    /* 发送响应 */
+                    uvhttp_response_set_body(response, file_content, file_size);
+                    uvhttp_response_set_status(response, 200);
+                    
+                    uvhttp_free(file_content);
+                } else {
+                    uvhttp_response_set_status(response, 500);
+                }
+            } else {
+                uvhttp_response_set_status(response, 404);
+            }
+        } else {
+            uvhttp_response_set_status(response, 500);
+        }
+    }
+    
+    /* 发送响应 */
+    uvhttp_response_send(response);
+}
+
+/**
+ * 初始化异步文件读取功能
+ */
+int uvhttp_static_init_async(uvhttp_static_context_t* ctx,
+                            uv_loop_t* loop,
+                            int max_concurrent,
+                            size_t buffer_size,
+                            size_t file_threshold) {
+    if (!ctx || !loop) {
+        return -1;
+    }
+    
+    /* 创建异步文件管理器 */
+    ctx->async_manager = uvhttp_async_file_manager_create(loop, max_concurrent, 
+                                                         buffer_size, 
+                                                         UVHTTP_STATIC_MAX_FILE_SIZE);
+    if (!ctx->async_manager) {
+        uvhttp_log_safe_error(0, "static_async_init", "Failed to create async manager");
+        return -1;
+    }
+    
+    ctx->enable_async_read = 1;
+    ctx->async_file_threshold = file_threshold;
+    
+    return 0;
+}
+
+/**
+ * 清理异步文件读取功能
+ */
+void uvhttp_static_cleanup_async(uvhttp_static_context_t* ctx) {
+    if (!ctx) return;
+    
+    if (ctx->async_manager) {
+        uvhttp_async_file_manager_free(ctx->async_manager);
+        ctx->async_manager = NULL;
+    }
+    
+    ctx->enable_async_read = 0;
+}
+
+/**
+ * 获取静态文件服务统计信息
+ */
+int uvhttp_static_get_stats(uvhttp_static_context_t* ctx, uvhttp_static_stats_t* stats) {
+    if (!ctx || !stats) return -1;
+    
+    memcpy(stats, &ctx->stats, sizeof(uvhttp_static_stats_t));
+    return 0;
+}
+
+/**
+ * 重置静态文件服务统计信息
+ */
+int uvhttp_static_reset_stats(uvhttp_static_context_t* ctx) {
+    if (!ctx) return -1;
+    
+    memset(&ctx->stats, 0, sizeof(uvhttp_static_stats_t));
+    return 0;
+}
+
+/**
+ * 更新读取时间统计
+ */
+int uvhttp_static_update_read_time_stats(uvhttp_static_context_t* ctx, double read_time) {
+    if (!ctx) return -1;
+    
+    /* 更新平均读取时间 */
+    if (ctx->stats.sync_reads + ctx->stats.async_reads > 0) {
+        size_t total_reads = ctx->stats.sync_reads + ctx->stats.async_reads;
+        ctx->stats.avg_read_time = (ctx->stats.avg_read_time * (total_reads - 1) + read_time) / total_reads;
+    } else {
+        ctx->stats.avg_read_time = read_time;
+    }
+    
+    /* 更新最大读取时间 */
+    if (read_time > ctx->stats.max_read_time) {
+        ctx->stats.max_read_time = read_time;
+    }
+    
+    return 0;
 }
 
 #endif /* UVHTTP_FEATURE_STATIC_FILES */

@@ -7,6 +7,7 @@
 
 #include <stddef.h>
 #include <time.h>
+#include <uv.h>
 #include "uvhttp_constants.h"
 
 #ifdef __cplusplus
@@ -38,12 +39,32 @@ typedef struct uvhttp_static_cache_entry {
     struct uvhttp_static_cache_entry* next;          /* 链表指针 */
 } uvhttp_static_cache_entry_t;
 
+/* 前向声明 */
+typedef struct uvhttp_async_file_manager uvhttp_async_file_manager_t;
+
+/* 静态文件性能统计 */
+typedef struct uvhttp_static_stats {
+    size_t total_requests;                           /* 总请求数 */
+    size_t cache_hits;                               /* 缓存命中数 */
+    size_t cache_misses;                             /* 缓存未命中数 */
+    size_t sync_reads;                               /* 同步读取数 */
+    size_t async_reads;                              /* 异步读取数 */
+    size_t stream_transfers;                         /* 流式传输数 */
+    size_t total_bytes_served;                       /* 总服务字节数 */
+    double avg_read_time;                            /* 平均读取时间（毫秒） */
+    double max_read_time;                            /* 最大读取时间（毫秒） */
+} uvhttp_static_stats_t;
+
 /* 静态文件服务上下文 */
 typedef struct uvhttp_static_context {
     uvhttp_static_config_t config;                   /* 配置 */
     uvhttp_static_cache_entry_t* cache_head;        /* 缓存链表头 */
     size_t current_cache_size;                       /* 当前缓存大小 */
     int cache_count;                                 /* 缓存条目数 */
+    uvhttp_async_file_manager_t* async_manager;      /* 异步文件管理器 */
+    int enable_async_read;                           /* 是否启用异步读取 */
+    size_t async_file_threshold;                     /* 异步读取文件大小阈值 */
+    uvhttp_static_stats_t stats;                     /* 性能统计 */
 } uvhttp_static_context_t;
 
 /* MIME类型映射条目 */
@@ -155,6 +176,55 @@ int uvhttp_static_set_response_headers(void* response,
                                       size_t file_size,
                                       time_t last_modified,
                                       const char* etag);
+
+/**
+ * 初始化异步文件读取功能
+ * 
+ * @param ctx 静态文件服务上下文
+ * @param loop 事件循环
+ * @param max_concurrent 最大并发读取数
+ * @param buffer_size 读取缓冲区大小
+ * @param file_threshold 异步读取文件大小阈值
+ * @return 0成功，-1失败
+ */
+int uvhttp_static_init_async(uvhttp_static_context_t* ctx,
+                            uv_loop_t* loop,
+                            int max_concurrent,
+                            size_t buffer_size,
+                            size_t file_threshold);
+
+/**
+ * 清理异步文件读取功能
+ * 
+ * @param ctx 静态文件服务上下文
+ */
+void uvhttp_static_cleanup_async(uvhttp_static_context_t* ctx);
+
+/**
+ * 获取静态文件服务统计信息
+ * 
+ * @param ctx 静态文件服务上下文
+ * @param stats 输出统计信息
+ * @return 0成功，-1失败
+ */
+int uvhttp_static_get_stats(uvhttp_static_context_t* ctx, uvhttp_static_stats_t* stats);
+
+/**
+ * 重置静态文件服务统计信息
+ * 
+ * @param ctx 静态文件服务上下文
+ * @return 0成功，-1失败
+ */
+int uvhttp_static_reset_stats(uvhttp_static_context_t* ctx);
+
+/**
+ * 更新读取时间统计
+ * 
+ * @param ctx 静态文件服务上下文
+ * @param read_time 读取时间（毫秒）
+ * @return 0成功，-1失败
+ */
+int uvhttp_static_update_read_time_stats(uvhttp_static_context_t* ctx, double read_time);
 
 #ifdef __cplusplus
 }
