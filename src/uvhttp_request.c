@@ -4,6 +4,7 @@
 #include "uvhttp_utils.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
+#include "uvhttp_validation.h"
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -51,6 +52,9 @@ int uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client) {
     request->parser_settings->on_message_complete = on_message_complete;
     
     llhttp_init(request->parser, HTTP_REQUEST, request->parser_settings);
+    
+    // 启用 lenient keep-alive 模式以正确处理 Connection: close 后的数据
+    llhttp_set_lenient_keep_alive(request->parser, 1);
     
     // 初始化body缓冲区
     request->body_capacity = UVHTTP_INITIAL_BUFFER_SIZE;
@@ -114,18 +118,117 @@ static int on_url(llhttp_t* parser, const char* at, size_t length) {
     return 0;
 }
 
+// 全局变量来跟踪当前正在解析的header字段名
+static char current_header_field[UVHTTP_MAX_HEADER_NAME_SIZE] = {0};
+static size_t current_header_field_len = 0;
+static int parsing_header_field = 0;  // 用于标识是否正在解析header字段名
+
 static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
-    (void)parser; (void)at; (void)length;
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
+    if (!conn || !conn->request) {
+        return -1;
+    }
+    
+    // 重置当前header字段名
+    memset(current_header_field, 0, sizeof(current_header_field));
+    current_header_field_len = 0;
+    parsing_header_field = 1;
+    
+    // 检查header字段名长度限制
+    if (length >= UVHTTP_MAX_HEADER_NAME_SIZE) {
+        return -1;  // 字段名太长
+    }
+    
+    // 复制header字段名
+    memcpy(current_header_field, at, length);
+    current_header_field_len = length;
+    
     return 0;
 }
 
 static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
-    (void)parser; (void)at; (void)length;
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
+    if (!conn || !conn->request) {
+        return -1;
+    }
+    
+    // 检查header值长度限制
+    if (length >= UVHTTP_MAX_HEADER_VALUE_SIZE) {
+        return -1;  // 值太长
+    }
+    
+    // 检查是否还有空间存储header
+    if (conn->request->header_count >= UVHTTP_MAX_HEADERS) {
+        return -1;  // header数量达到限制
+    }
+    
+    // 检查当前header字段名是否存在
+    if (current_header_field_len == 0) {
+        return -1;  // 没有对应的header字段名
+    }
+    
+    // 存储header
+    uvhttp_header_t* header = &conn->request->headers[conn->request->header_count];
+    
+    // 复制header字段名
+    size_t field_len = current_header_field_len;
+    if (field_len >= sizeof(header->name)) {
+        field_len = sizeof(header->name) - 1;
+    }
+    memcpy(header->name, current_header_field, field_len);
+    header->name[field_len] = '\0';
+    
+    // 复制header值
+    if (length >= sizeof(header->value)) {
+        length = sizeof(header->value) - 1;
+    }
+    memcpy(header->value, at, length);
+    header->value[length] = '\0';
+    
+    // 增加header计数
+    conn->request->header_count++;
+    
+    // 重置当前header字段名
+    memset(current_header_field, 0, sizeof(current_header_field));
+    current_header_field_len = 0;
+    parsing_header_field = 0;
+    
     return 0;
 }
 
 static int on_body(llhttp_t* parser, const char* at, size_t length) {
-    (void)parser; (void)at; (void)length;
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
+    if (!conn || !conn->request) {
+        return -1;
+    }
+    
+    // 检查是否需要扩容body缓冲区
+    if (conn->request->body_length + length > conn->request->body_capacity) {
+        // 计算新的容量（至少扩容到之前的两倍或满足所需大小）
+        size_t new_capacity = conn->request->body_capacity * 2;
+        if (new_capacity < conn->request->body_length + length) {
+            new_capacity = conn->request->body_length + length;
+        }
+        
+        // 检查是否超过最大限制
+        if (new_capacity > UVHTTP_MAX_BODY_SIZE) {
+            return -1;  // body太大
+        }
+        
+        // 重新分配内存
+        char* new_body = uvhttp_realloc(conn->request->body, new_capacity);
+        if (!new_body) {
+            return -1;  // 内存分配失败
+        }
+        
+        conn->request->body = new_body;
+        conn->request->body_capacity = new_capacity;
+    }
+    
+    // 复制body数据
+    memcpy(conn->request->body + conn->request->body_length, at, length);
+    conn->request->body_length += length;
+    
     return 0;
 }
 
@@ -183,43 +286,6 @@ static int on_message_complete(llhttp_t* parser) {
         uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
         uvhttp_response_set_body(conn->response, "OK", 2);
         uvhttp_response_send(conn->response);
-    }
-    
-    /* HTTP/1.1连接管理：单线程安全的连接生命周期控制 */
-    /* 检查是否应该关闭连接 */
-    int should_close = 0;  // 默认不关闭连接
-    
-    // 对于HTTP/1.0，检查客户端是否请求了keep-alive
-    if (parser && llhttp_get_http_major(parser) == 1 && llhttp_get_http_minor(parser) == 0) {
-        if (conn->request) {
-            const char* connection_header = uvhttp_request_get_header(conn->request, "Connection");
-            if (connection_header && 
-                (strcasecmp(connection_header, "keep-alive") == 0 || 
-                 strcasecmp(connection_header, "Keep-Alive") == 0)) {
-                // 客户端请求keep-alive，在响应中设置相应标志
-                if (conn->response) {
-                    conn->response->keep_alive = 1;
-                }
-                should_close = 0;  // 保持连接
-            } else {
-                should_close = 1;  // HTTP/1.0默认关闭连接
-            }
-        }
-    } else {
-        // HTTP/1.1及以上版本，保持连接
-        if (conn->response) {
-            conn->response->keep_alive = 1;  // 默认保持连接
-        }
-        should_close = 0;
-    }
-    
-    if (should_close && conn->response) {
-        conn->response->keep_alive = 0;  // 确保响应也标记为不keep-alive
-    }
-    
-    if (should_close) {
-        /* 异步关闭连接 - 在事件循环中安全执行 */
-        uvhttp_connection_close(conn);
     }
     
     return 0;
@@ -304,13 +370,19 @@ const char* uvhttp_request_get_path(uvhttp_request_t* request) {
     
     if (query_start) {
         // 返回路径部分（不包含查询参数）
-        static char path_buffer[MAX_URL_LEN];
+        static char path_buffer[UVHTTP_MAX_PATH_SIZE];
         size_t path_len = query_start - url;
         if (path_len >= sizeof(path_buffer)) {
             path_len = sizeof(path_buffer) - 1;
         }
         strncpy(path_buffer, url, path_len);
         path_buffer[path_len] = '\0';
+        
+        // 验证路径安全性
+        if (!uvhttp_validate_url_path(path_buffer)) {
+            return "/";
+        }
+        
         return path_buffer;
     }
     
@@ -323,7 +395,14 @@ const char* uvhttp_request_get_query_string(uvhttp_request_t* request) {
     }
     
     const char* query_start = strchr(request->url, '?');
-    return query_start ? query_start + 1 : NULL;
+    const char* query_string = query_start ? query_start + 1 : NULL;
+    
+    // 验证查询字符串安全性
+    if (query_string && !uvhttp_validate_query_string(query_string)) {
+        return NULL;
+    }
+    
+    return query_string;
 }
 
 const char* uvhttp_request_get_query_param(uvhttp_request_t* request, const char* name) {
@@ -345,7 +424,7 @@ const char* uvhttp_request_get_query_param(uvhttp_request_t* request, const char
             const char* value = p + name_len + 1;
             const char* end = strchr(value, '&');
             
-            static char param_value[MAX_URL_LEN];
+            static char param_value[UVHTTP_MAX_URL_SIZE];
             size_t value_len;
             
             if (end) {
@@ -381,7 +460,7 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
     const char* forwarded_for = uvhttp_request_get_header(request, "X-Forwarded-For");
     if (forwarded_for) {
         // X-Forwarded-For可能包含多个IP，取第一个
-        static char client_ip[46]; // IPv6最大长度
+        static char client_ip[UVHTTP_IPV6_MAX_STRING_LENGTH];
         const char* comma = strchr(forwarded_for, ',');
         size_t ip_len;
         
@@ -412,7 +491,7 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
         int addr_len = sizeof(addr);
         
         if (uv_tcp_getpeername(request->client, (struct sockaddr*)&addr, &addr_len) == 0) {
-            static char ip_string[46];
+            static char ip_string[UVHTTP_IPV6_MAX_STRING_LENGTH];
             
             if (addr.ss_family == AF_INET) {
                 struct sockaddr_in* addr_in = (struct sockaddr_in*)&addr;

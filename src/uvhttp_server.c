@@ -1,3 +1,10 @@
+/*
+ * UVHTTP 服务器模块
+ * 
+ * 提供HTTP服务器的核心功能，包括连接管理、请求路由和响应处理
+ * 基于libuv事件驱动架构实现高性能异步I/O
+ */
+
 #include "uvhttp_server.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
@@ -5,11 +12,10 @@
 #include "uvhttp_connection.h"
 #include "uvhttp_error.h"
 #include "uvhttp_error_handler.h"
+#include "uvhttp_error_helpers.h"
 #include "uvhttp_tls.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
-#include "uvhttp_config.h"
-#include "uvhttp_config.h"
 #include "uvhttp_config.h"
 #include <stdlib.h>
 #include <string.h>
@@ -18,22 +24,30 @@
 
 
 
-/* 写完成回调函数 - 用于释放503响应的write_req资源 */
+/**
+ * 503响应写完成回调函数
+ * 
+ * 处理503 Service Unavailable响应发送完成后的清理工作
+ * 
+ * @param req 写请求对象
+ * @param status 写操作状态
+ */
 static void write_503_response_cb(uv_write_t* req, int status) {
-    (void)status;  // 避免未使用参数警告
-    // 写操作完成后释放write_req
-    if (req) {
-        uvhttp_free(req);
-    }
+    uvhttp_handle_write_error(req, status, "503_response");
 }
 
-/* 单线程事件驱动连接处理回调
- * 这是libuv事件循环的核心回调函数，所有新连接都在这个单线程中处理
- * 无需锁机制，因为libuv保证所有回调都在同一个事件循环线程中执行
+/**
+ * 单线程事件驱动连接处理回调
+ * 
+ * 这是libuv事件循环的核心回调函数，处理所有新连接
+ * 单线程模型优势：无需锁，数据访问安全，执行流可预测
+ * 
+ * @param server_handle 服务器句柄
+ * @param status 连接状态
  */
 static void on_connection(uv_stream_t* server_handle, int status) {
     if (status < 0) {
-        UVHTTP_LOG_ERROR("Connection error: %s\n", uv_strerror(status));
+        uvhttp_log_safe_error(status, "connection_accept", NULL);
         return;
     }
     
@@ -63,7 +77,7 @@ static void on_connection(uv_stream_t* server_handle, int status) {
         /* 创建临时连接以发送503响应 */
         uv_tcp_t* temp_client = uvhttp_malloc(sizeof(uv_tcp_t));
         if (!temp_client) {
-            UVHTTP_LOG_ERROR("Failed to allocate temporary client\n");
+            uvhttp_handle_memory_failure("temporary_client_allocation", NULL, NULL);
             return;
         }
         
@@ -78,7 +92,7 @@ static void on_connection(uv_stream_t* server_handle, int status) {
             static const char response_503[] = 
                 UVHTTP_VERSION_1_1 " 503 Service Unavailable\r\n"
                 "Content-Type: text/plain\r\n"
-                "Content-Length: 19\r\n"
+                "Content-Length: " UVHTTP_STRINGIFY(UVHTTP_503_RESPONSE_CONTENT_LENGTH) "\r\n"
                 "Connection: close\r\n"
                 "\r\n"
                 "Service Unavailable";

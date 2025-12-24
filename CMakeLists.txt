@@ -172,6 +172,8 @@ set(SOURCES
         # src/uvhttp_mimalloc.c  # Temporarily disabled - requires mimalloc
         src/uvhttp_error.c
         src/uvhttp_error_handler.c
+        src/uvhttp_error_helpers.c  # 新增的错误处理辅助函数
+        src/uvhttp_validation.c     # 新增的输入验证模块
     src/uvhttp_websocket_wrapper.c  # 使用包装层实现
 )
 
@@ -189,6 +191,8 @@ set(HEADERS
     
     include/uvhttp_json.h
     include/uvhttp_websocket.h
+    include/uvhttp_error_helpers.h  # 新增的错误处理辅助函数头文件
+    include/uvhttp_validation.h     # 新增的输入验证头文件
 )
 
 # Create static library

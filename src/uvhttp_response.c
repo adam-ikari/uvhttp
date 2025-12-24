@@ -3,6 +3,7 @@
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_connection.h"
+#include "uvhttp_error_handler.h"
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -29,6 +30,24 @@ static const char* get_status_text(int status_code) {
     }
 }
 
+// 辅助函数：检查字符串中是否包含控制字符（包括换行符）
+static int contains_control_chars(const char* str) {
+    if (!str) return 0;
+    
+    for (const char* p = str; *p; p++) {
+        unsigned char c = (unsigned char)*p;
+        // 检查是否包含控制字符 (0-31) 但排除制表符 (9) 和空格 (32)
+        if (c < UVHTTP_SPACE_CHARACTER && c != UVHTTP_TAB_CHARACTER) {
+            return 1;  // 包含控制字符
+        }
+        // 检查删除字符
+        if (c == UVHTTP_DELETE_CHARACTER) {
+            return 1;  // 包含删除字符
+        }
+    }
+    return 0;
+}
+
 static void build_response_headers(uvhttp_response_t* response, char* buffer, size_t* length) {
     size_t pos = 0;
     
@@ -43,6 +62,14 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer, si
     
     // 遍历现有headers
     for (size_t i = 0; i < response->header_count; i++) {
+        // 安全检查：验证header值不包含控制字符，防止响应拆分
+        if (contains_control_chars(response->headers[i].value)) {
+            // 如果header值包含控制字符，跳过该header
+            UVHTTP_LOG_ERROR("Invalid header value detected: header '%s' contains control characters\n", 
+                           response->headers[i].name);
+            continue;
+        }
+        
         pos += snprintf(buffer + pos, *length - pos, "%s: %s\r\n",
                        response->headers[i].name, response->headers[i].value);
         
@@ -79,7 +106,8 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer, si
     if (!has_connection) {
         if (response->keep_alive) {
             pos += snprintf(buffer + pos, *length - pos, "Connection: keep-alive\r\n");
-            pos += snprintf(buffer + pos, *length - pos, "Keep-Alive: timeout=5, max=100\r\n");
+            pos += snprintf(buffer + pos, *length - pos, "Keep-Alive: timeout=%d, max=%d\r\n", 
+                   UVHTTP_DEFAULT_KEEP_ALIVE_TIMEOUT, UVHTTP_DEFAULT_KEEP_ALIVE_MAX);
         } else {
             pos += snprintf(buffer + pos, *length - pos, "Connection: close\r\n");
         }
@@ -132,7 +160,7 @@ uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int statu
     }
     
     // 验证状态码范围
-    if (status_code < UVHTTP_STATUS_CONTINUE || status_code > 599) {
+    if (status_code < UVHTTP_STATUS_MIN_CONTINUE || status_code > UVHTTP_STATUS_MAX) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
@@ -151,6 +179,12 @@ uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response, const cha
     
     // 验证header名称和值
     if (uvhttp_validate_header_value(name, value) != 0) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 额外验证：检查header值是否包含控制字符，防止响应拆分
+    if (contains_control_chars(value)) {
+        UVHTTP_LOG_ERROR("Invalid header value: contains control characters\n");
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     

@@ -5,6 +5,7 @@
 #include "uvhttp_router.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
+#include "uvhttp_error_helpers.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -13,6 +14,9 @@
 // 简化连接管理 - 暂时禁用连接池解决并发问题
 
 static void on_close(uv_handle_t* handle);
+
+// 用于安全连接重用的idle回调
+static void on_idle_restart_read(uv_idle_t* handle);
 
 static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
     (void)suggested_size; // 避免未使用参数警告
@@ -41,7 +45,7 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     
     if (nread < 0) {
         if (nread != UV_EOF) {
-            fprintf(stderr, "Read error: %s\n", uv_err_name(nread));
+            uvhttp_log_safe_error(nread, "connection_read", NULL);
         }
         /* 异步关闭连接 - 在事件循环中安全执行 */
         uvhttp_connection_close(conn);
@@ -57,14 +61,58 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     if (parser) {
         enum llhttp_errno err = llhttp_execute(parser, buf->base, nread);
         if (err != HPE_OK) {
-            fprintf(stderr, "HTTP parse error: %s %s\n", 
-                           llhttp_errno_name(err), 
-                           llhttp_get_error_reason(parser));
+            uvhttp_log_safe_error(err, "http_parse", llhttp_errno_name(err));
             /* 解析错误时异步关闭连接 */
             uvhttp_connection_close(conn);
             return;
         }
     }
+}
+
+/* 重新开始读取新请求 - 用于keep-alive连接 */
+int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
+    if (!conn || !conn->request || !conn->response || !conn->request->parser || !conn->request->parser_settings) {
+        return -1;
+    }
+    
+    /* 检查连接状态，确保连接没有在关闭过程中 */
+    if (conn->state == UVHTTP_CONN_STATE_CLOSING) {
+        return -1;
+    }
+    
+    /* 先停止当前的读取（如果正在进行） */
+    uv_read_stop((uv_stream_t*)&conn->tcp_handle);
+    
+    /* 完全重置请求对象状态 */
+    memset(conn->request, 0, sizeof(uvhttp_request_t));
+    
+    /* 重新初始化请求对象 */
+    if (uvhttp_request_init(conn->request, &conn->tcp_handle) != 0) {
+        return -1;
+    }
+    
+    /* 完全重置响应对象状态 */
+    memset(conn->response, 0, sizeof(uvhttp_response_t));
+    
+    /* 重新初始化响应对象 */
+    if (uvhttp_response_init(conn->response, &conn->tcp_handle) != 0) {
+        return -1;
+    }
+    
+    /* 重置HTTP/1.1状态标志 */
+    conn->parsing_complete = 0;
+    conn->content_length = 0;
+    conn->body_received = 0;
+    conn->keep_alive = 1;  // 继续保持连接
+    
+    /* 更新连接状态 */
+    conn->state = UVHTTP_CONN_STATE_HTTP_READING;
+    
+    /* 重新开始读取以接收新请求 */
+    int result = uv_read_start((uv_stream_t*)&conn->tcp_handle, 
+                      on_alloc_buffer, on_read);
+    
+    return result;
 }
 
 /* 单线程安全的连接关闭回调
@@ -108,6 +156,14 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     conn->server = server;
     conn->state = UVHTTP_CONN_STATE_NEW;
     conn->tls_enabled = 0; // 简化版本暂时禁用TLS
+    conn->need_restart_read = 0; // 初始化为0，不需要重启读取
+    
+    // 初始化idle句柄用于安全的连接重用
+    if (uv_idle_init(server->loop, &conn->idle_handle) != 0) {
+        uvhttp_free(conn);
+        return NULL;
+    }
+    conn->idle_handle.data = conn;
     
     // HTTP/1.1优化：初始化默认值
     conn->keep_alive = 1;           // HTTP/1.1默认保持连接
@@ -250,4 +306,40 @@ int uvhttp_connection_tls_write(uvhttp_connection_t* conn, const void* data, siz
     (void)data;
     (void)len;
     return -1;
+}
+
+/* 用于安全重启读取的idle回调函数
+ * 在下一个事件循环中执行，避免在写入完成回调中直接操作状态
+ */
+static void on_idle_restart_read(uv_idle_t* handle) {
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
+    if (!conn) {
+        return;
+    }
+    
+    // 停止idle句柄
+    uv_idle_stop(handle);
+    
+    // 检查连接状态
+    if (conn->state == UVHTTP_CONN_STATE_CLOSING) {
+        return;
+    }
+    
+    // 执行连接重启
+    if (uvhttp_connection_restart_read(conn) != 0) {
+        // 重启失败，关闭连接
+        uvhttp_connection_close(conn);
+    }
+}
+
+// 启动安全的连接重用
+int uvhttp_connection_schedule_restart_read(uvhttp_connection_t* conn) {
+    if (!conn) {
+        return -1;
+    }
+    
+    // 使用idle句柄在下一个事件循环中安全重启读取
+    conn->idle_handle.data = conn;
+    int result = uv_idle_start(&conn->idle_handle, on_idle_restart_read);
+    return result;
 }
