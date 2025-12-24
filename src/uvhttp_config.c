@@ -95,23 +95,30 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
         while (isspace(*key)) key++;
         while (isspace(*value)) value++;
         
-        /* 设置核心配置 - 添加边界检查 */
+        /* 设置核心配置 - 使用安全的strtol()进行验证 */
         if (strcmp(key, "max_connections") == 0) {
-            int val = atoi(value);
+            char* endptr;
+            long val = strtol(value, &endptr, 10);
+            if (*endptr != '\0') {
+                UVHTTP_LOG_ERROR("Invalid max_connections=%s: contains non-numeric characters", value);
+                fclose(file);
+                return UVHTTP_ERROR_INVALID_PARAM;
+            }
             if (val < 1 || val > 65535) {
-                UVHTTP_LOG_ERROR("Invalid max_connections=%d in config file", val);
+                UVHTTP_LOG_ERROR("Invalid max_connections=%ld: out of range [1-65535]", val);
                 fclose(file);
                 return UVHTTP_ERROR_INVALID_PARAM;
             }
-            config->max_connections = val;
+            config->max_connections = (int)val;
         } else if (strcmp(key, "read_buffer_size") == 0) {
-            int val = atoi(value);
-            if (val < 1024 || val > 1024 * 1024) {
-                UVHTTP_LOG_ERROR("Invalid read_buffer_size=%d in config file", val);
+            char* endptr;
+            long val = strtol(value, &endptr, 10);
+            if (*endptr != '\0' || val < 1024 || val > 1024 * 1024) {
+                UVHTTP_LOG_ERROR("Invalid read_buffer_size=%s in config file", value);
                 fclose(file);
                 return UVHTTP_ERROR_INVALID_PARAM;
             }
-            config->read_buffer_size = val;
+            config->read_buffer_size = (int)val;
         } else if (strcmp(key, "max_body_size") == 0) {
             char* endptr;
             unsigned long long val = strtoull(value, &endptr, 10);
@@ -188,23 +195,53 @@ int uvhttp_config_load_env(uvhttp_config_t* config) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    /* 检查环境变量并更新配置 */
+    /* 检查环境变量并更新配置 - 使用安全验证 */
     const char* env_val;
     
     if ((env_val = getenv("UVHTTP_MAX_CONNECTIONS"))) {
-        config->max_connections = atoi(env_val);
+        char* endptr;
+        long val = strtol(env_val, &endptr, 10);
+        if (*endptr == '\0' && val >= 1 && val <= 65535) {
+            config->max_connections = (int)val;
+        } else {
+            UVHTTP_LOG_WARN("Invalid UVHTTP_MAX_CONNECTIONS=%s, using default", env_val);
+        }
     }
     if ((env_val = getenv("UVHTTP_READ_BUFFER_SIZE"))) {
-        config->read_buffer_size = atoi(env_val);
+        char* endptr;
+        long val = strtol(env_val, &endptr, 10);
+        if (*endptr == '\0' && val >= 1024 && val <= 1024 * 1024) {
+            config->read_buffer_size = (int)val;
+        } else {
+            UVHTTP_LOG_WARN("Invalid UVHTTP_READ_BUFFER_SIZE=%s, using default", env_val);
+        }
     }
     if ((env_val = getenv("UVHTTP_MAX_BODY_SIZE"))) {
-        config->max_body_size = (size_t)strtoull(env_val, NULL, 10);
+        char* endptr;
+        unsigned long long val = strtoull(env_val, &endptr, 10);
+        if (*endptr == '\0' && val <= UVHTTP_MAX_BODY_SIZE_CONFIG) {
+            config->max_body_size = (size_t)val;
+        } else {
+            UVHTTP_LOG_WARN("Invalid UVHTTP_MAX_BODY_SIZE=%s, using default", env_val);
+        }
     }
     if ((env_val = getenv("UVHTTP_ENABLE_TLS"))) {
-        config->enable_tls = atoi(env_val);
+        char* endptr;
+        long val = strtol(env_val, &endptr, 10);
+        if (*endptr == '\0' && (val == 0 || val == 1)) {
+            config->enable_tls = (int)val;
+        } else {
+            UVHTTP_LOG_WARN("Invalid UVHTTP_ENABLE_TLS=%s, using default", env_val);
+        }
     }
     if ((env_val = getenv("UVHTTP_LOG_LEVEL"))) {
-        config->log_level = atoi(env_val);
+        char* endptr;
+        long val = strtol(env_val, &endptr, 10);
+        if (*endptr == '\0' && val >= 0 && val <= 5) {
+            config->log_level = (int)val;
+        } else {
+            UVHTTP_LOG_WARN("Invalid UVHTTP_LOG_LEVEL=%s, using default", env_val);
+        }
     }
     
     return UVHTTP_OK;
@@ -216,7 +253,20 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    /* 定义合理的配置范围 */
+    /* 
+     * 配置范围定义 - 基于性能测试和系统限制
+     * 
+     * UVHTTP_MIN_CONNECTIONS: 最小连接数，确保服务器基本功能
+     * UVHTTP_MAX_CONNECTIONS_HARD: 硬限制，基于系统文件描述符限制
+     * UVHTTP_MIN_BUFFER_SIZE: 最小缓冲区，确保基本HTTP处理能力
+     * UVHTTP_MAX_BUFFER_SIZE: 最大缓冲区，平衡内存使用和性能
+     * UVHTTP_MAX_BODY_SIZE_CONFIG: 最大请求体，防止内存耗尽攻击
+     * 
+     * 性能考虑:
+     * - 每个连接约消耗4KB内存（缓冲区+结构体）
+     * - 65535连接约消耗256MB内存
+     * - 建议生产环境根据服务器内存调整max_connections
+     */
 #define UVHTTP_MIN_CONNECTIONS 1
 #define UVHTTP_MAX_CONNECTIONS_HARD 65535  /* 基于系统限制 */
 #define UVHTTP_MIN_BUFFER_SIZE 1024
@@ -299,6 +349,9 @@ void uvhttp_config_print(const uvhttp_config_t* config) {
 
 /* 获取当前配置 */
 const uvhttp_config_t* uvhttp_config_get_current(void) {
+    if (!g_current_config) {
+        UVHTTP_LOG_WARN("Global configuration not initialized");
+    }
     return g_current_config;
 }
 

@@ -74,8 +74,8 @@ static void on_connection(uv_stream_t* server_handle, int status) {
         }
         
         if (uv_accept(server_handle, (uv_stream_t*)temp_client) == 0) {
-            /* 发送HTTP 503响应 */
-            const char* response_503 = 
+            /* 发送HTTP 503响应 - 使用静态常量避免重复分配 */
+            static const char response_503[] = 
                 UVHTTP_VERSION_1_1 " 503 Service Unavailable\r\n"
                 "Content-Type: text/plain\r\n"
                 "Content-Length: 19\r\n"
@@ -85,22 +85,27 @@ static void on_connection(uv_stream_t* server_handle, int status) {
                 
             uv_write_t* write_req = uvhttp_malloc(sizeof(uv_write_t));
             if (write_req) {
-                uv_buf_t buf = uv_buf_init((char*)response_503, strlen(response_503));
+                uv_buf_t buf = uv_buf_init((char*)response_503, sizeof(response_503) - 1);
                 
                 int write_result = uv_write(write_req, (uv_stream_t*)temp_client, &buf, 1, 
                     write_503_response_cb);
                 if (write_result < 0) {
                     UVHTTP_LOG_ERROR("Failed to send 503 response: %s\n", uv_strerror(write_result));
-                    // 如果写入失败，立即释放write_req
+                    // 如果写入失败，立即释放write_req并关闭连接
                     uvhttp_free(write_req);
+                    uv_close((uv_handle_t*)temp_client, (uv_close_cb)uvhttp_free);
+                    return;
                 }
+            } else {
+                UVHTTP_LOG_ERROR("Failed to allocate write request for 503 response\n");
+                uv_close((uv_handle_t*)temp_client, (uv_close_cb)uvhttp_free);
+                return;
             }
         } else {
             UVHTTP_LOG_ERROR("Failed to accept temporary connection\n");
+            uvhttp_free(temp_client);
         }
         
-        /* 异步关闭临时连接 - 使用libuv的异步关闭机制 */
-        uv_close((uv_handle_t*)temp_client, (uv_close_cb)uvhttp_free);
         return;
     }
     
