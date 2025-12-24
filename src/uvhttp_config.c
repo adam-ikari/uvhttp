@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/resource.h>
 
 /* 全局配置实例 */
 static uvhttp_config_t* g_current_config = NULL;
@@ -67,6 +68,9 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
+    /* 配置解析时的限制 */
+#define UVHTTP_MAX_BODY_SIZE_CONFIG (100 * 1024 * 1024)  /* 避免与头文件中的宏冲突 */
+    
     FILE* file = fopen(filename, "r");
     if (!file) {
         return UVHTTP_ERROR_NOT_FOUND;
@@ -91,13 +95,37 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
         while (isspace(*key)) key++;
         while (isspace(*value)) value++;
         
-        /* 设置核心配置 */
+        /* 设置核心配置 - 添加边界检查 */
         if (strcmp(key, "max_connections") == 0) {
-            config->max_connections = atoi(value);
+            int val = atoi(value);
+            if (val < 1 || val > 65535) {
+                UVHTTP_LOG_ERROR("Invalid max_connections=%d in config file", val);
+                fclose(file);
+                return UVHTTP_ERROR_INVALID_PARAM;
+            }
+            config->max_connections = val;
         } else if (strcmp(key, "read_buffer_size") == 0) {
-            config->read_buffer_size = atoi(value);
+            int val = atoi(value);
+            if (val < 1024 || val > 1024 * 1024) {
+                UVHTTP_LOG_ERROR("Invalid read_buffer_size=%d in config file", val);
+                fclose(file);
+                return UVHTTP_ERROR_INVALID_PARAM;
+            }
+            config->read_buffer_size = val;
         } else if (strcmp(key, "max_body_size") == 0) {
-            config->max_body_size = (size_t)strtoull(value, NULL, 10);
+            char* endptr;
+            unsigned long long val = strtoull(value, &endptr, 10);
+            if (*endptr != '\0') {
+                UVHTTP_LOG_ERROR("Invalid max_body_size=%s: non-numeric characters", value);
+                fclose(file);
+                return UVHTTP_ERROR_INVALID_PARAM;
+            }
+            if (val > UVHTTP_MAX_BODY_SIZE_CONFIG) {
+                UVHTTP_LOG_ERROR("Invalid max_body_size=%llu: exceeds limit %llu", val, UVHTTP_MAX_BODY_SIZE_CONFIG);
+                fclose(file);
+                return UVHTTP_ERROR_INVALID_PARAM;
+            }
+            config->max_body_size = (size_t)val;
         }
     }
     
@@ -188,17 +216,48 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
+    /* 定义合理的配置范围 */
+#define UVHTTP_MIN_CONNECTIONS 1
+#define UVHTTP_MAX_CONNECTIONS_HARD 65535  /* 基于系统限制 */
+#define UVHTTP_MIN_BUFFER_SIZE 1024
+#define UVHTTP_MAX_BUFFER_SIZE (1024 * 1024)
+#define UVHTTP_MIN_BODY_SIZE 1024
+#define UVHTTP_MAX_BODY_SIZE_CONFIG (100 * 1024 * 1024)  /* 避免与头文件中的宏冲突 */
+    
     /* 核心验证：连接数和缓冲区大小 */
-    if (config->max_connections < 1 || config->max_connections > 10000) {
+    if (config->max_connections < UVHTTP_MIN_CONNECTIONS || 
+        config->max_connections > UVHTTP_MAX_CONNECTIONS_HARD) {
+        UVHTTP_LOG_ERROR("max_connections=%d exceeds valid range [%d-%d]",
+                         config->max_connections, UVHTTP_MIN_CONNECTIONS, 
+                         UVHTTP_MAX_CONNECTIONS_HARD);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    if (config->read_buffer_size < 1024 || config->read_buffer_size > 1024 * 1024) {
+    if (config->read_buffer_size < UVHTTP_MIN_BUFFER_SIZE || 
+        config->read_buffer_size > UVHTTP_MAX_BUFFER_SIZE) {
+        UVHTTP_LOG_ERROR("read_buffer_size=%d exceeds valid range [%d-%d]",
+                         config->read_buffer_size, UVHTTP_MIN_BUFFER_SIZE, 
+                         UVHTTP_MAX_BUFFER_SIZE);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    if (config->max_body_size < 1024 || config->max_body_size > 100 * 1024 * 1024) {
+    if (config->max_body_size < UVHTTP_MIN_BODY_SIZE || 
+        config->max_body_size > UVHTTP_MAX_BODY_SIZE_CONFIG) {
+        UVHTTP_LOG_ERROR("max_body_size=%zu exceeds valid range [%zu-%llu]",
+                         config->max_body_size, (size_t)UVHTTP_MIN_BODY_SIZE, 
+                         UVHTTP_MAX_BODY_SIZE_CONFIG);
         return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    /* 检查文件描述符限制 */
+    struct rlimit rl;
+    if (getrlimit(RLIMIT_NOFILE, &rl) == 0) {
+        /* 为系统保留一些文件描述符 */
+        int reserved_fds = 10;
+        if ((size_t)config->max_connections > (size_t)rl.rlim_cur - (size_t)reserved_fds) {
+            UVHTTP_LOG_WARN("max_connections=%d may exceed file descriptor limit=%zu",
+                           config->max_connections, (size_t)rl.rlim_cur - reserved_fds);
+        }
     }
     
     return UVHTTP_OK;
@@ -241,6 +300,107 @@ void uvhttp_config_print(const uvhttp_config_t* config) {
 /* 获取当前配置 */
 const uvhttp_config_t* uvhttp_config_get_current(void) {
     return g_current_config;
+}
+
+/* 动态更新最大连接数 */
+int uvhttp_config_update_max_connections(int max_connections) {
+    if (max_connections < 1 || max_connections > 10000) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    if (g_current_config) {
+        int old_value = g_current_config->max_connections;
+        g_current_config->max_connections = max_connections;
+        
+        UVHTTP_LOG_INFO("Max connections updated: %d -> %d", old_value, max_connections);
+        return UVHTTP_OK;
+    }
+    
+    return UVHTTP_ERROR_INVALID_PARAM;
+}
+
+/* 动态更新缓冲区大小 */
+int uvhttp_config_update_buffer_size(int buffer_size) {
+    if (buffer_size < 1024 || buffer_size > 1024 * 1024) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    if (g_current_config) {
+        int old_value = g_current_config->read_buffer_size;
+        g_current_config->read_buffer_size = buffer_size;
+        
+        UVHTTP_LOG_INFO("Read buffer size updated: %d -> %d", old_value, buffer_size);
+        return UVHTTP_OK;
+    }
+    
+    return UVHTTP_ERROR_INVALID_PARAM;
+}
+
+/* 动态更新限制参数 */
+int uvhttp_config_update_limits(size_t max_body_size, size_t max_header_size) {
+    if (max_body_size < 1024 || max_body_size > 100 * 1024 * 1024) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    if (max_header_size < 512 || max_header_size > 64 * 1024) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    if (g_current_config) {
+        size_t old_body = g_current_config->max_body_size;
+        size_t old_header = g_current_config->max_header_size;
+        
+        g_current_config->max_body_size = max_body_size;
+        g_current_config->max_header_size = max_header_size;
+        
+        UVHTTP_LOG_INFO("Limits updated - Body: %zu -> %zu, Header: %zu -> %zu", 
+                       old_body, max_body_size, old_header, max_header_size);
+        return UVHTTP_OK;
+    }
+    
+    return UVHTTP_ERROR_INVALID_PARAM;
+}
+
+
+
+/* 配置变更回调 */
+static uvhttp_config_change_callback_t g_config_callback = NULL;
+
+int uvhttp_config_monitor_changes(uvhttp_config_change_callback_t callback) {
+    g_config_callback = callback;
+    return UVHTTP_OK;
+}
+
+/* 热重载配置 */
+int uvhttp_config_reload(void) {
+    if (!g_current_config) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    /* 保存当前配置作为备份 */
+    uvhttp_config_t backup = *g_current_config;
+    
+    /* 尝试重新加载配置文件 */
+    int result = uvhttp_config_load_file(g_current_config, "uvhttp.conf");
+    if (result != UVHTTP_OK) {
+        /* 恢复备份 */
+        *g_current_config = backup;
+        return result;
+    }
+    
+    /* 验证新配置 */
+    if (uvhttp_config_validate(g_current_config) != UVHTTP_OK) {
+        /* 恢复备份 */
+        *g_current_config = backup;
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    /* 触发配置变更回调 */
+    if (g_config_callback) {
+        g_config_callback("config_reload", &backup, g_current_config);
+    }
+    
+    UVHTTP_LOG_INFO("Configuration reloaded successfully");
+    return UVHTTP_OK;
 }
 
 /* 初始化全局配置 */

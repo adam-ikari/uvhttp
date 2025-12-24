@@ -167,6 +167,7 @@ set(SOURCES
         src/uvhttp_server.c
         src/uvhttp_tls_real.c  # 启用TLS支持（真实OpenSSL实现）
         src/uvhttp_json.c
+        src/uvhttp_config.c
         
         # src/uvhttp_mimalloc.c  # Temporarily disabled - requires mimalloc
         src/uvhttp_error.c
@@ -184,6 +185,7 @@ set(HEADERS
     include/uvhttp_utils.h
     include/uvhttp_tls.h  # 启用TLS头文件
     include/uvhttp_connection.h
+    include/uvhttp_config.h
     
     include/uvhttp_json.h
     include/uvhttp_websocket.h

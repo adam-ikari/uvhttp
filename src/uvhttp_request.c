@@ -70,10 +70,10 @@ void uvhttp_request_cleanup(uvhttp_request_t* request) {
         uvhttp_free(request->body);
     }
     if (request->parser) {
-        UVHTTP_FREE(request->parser);
+        uvhttp_free(request->parser);
     }
     if (request->parser_settings) {
-        UVHTTP_FREE(request->parser_settings);
+        uvhttp_free(request->parser_settings);
     }
 }
 
@@ -103,6 +103,11 @@ static int on_url(llhttp_t* parser, const char* at, size_t length) {
         return -1;
     }
     
+    // 检查是否超出目标缓冲区大小，确保安全性
+    if (length >= sizeof(conn->request->url)) {
+        return -1;
+    }
+    
     memcpy(conn->request->url, at, length);
     conn->request->url[length] = '\0';
     
@@ -129,8 +134,12 @@ static int on_body(llhttp_t* parser, const char* at, size_t length) {
  * 单线程优势：无竞态条件，请求处理顺序可预测
  */
 static int on_message_complete(llhttp_t* parser) {
+    if (!parser) {
+        return -1;
+    }
+    
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
-    if (!conn || !conn->request) {
+    if (!conn || !conn->request || !conn->response) {
         return -1;
     }
     
@@ -147,6 +156,13 @@ static int on_message_complete(llhttp_t* parser) {
     
     /* 单线程请求处理 - 无需锁机制 */
     if (conn->server && conn->server->router) {
+        // 额外检查request->url是否有效
+        if (!conn->request->url[0]) {
+            // 如果URL为空，设置为"/"
+            strncpy(conn->request->url, "/", sizeof(conn->request->url) - 1);
+            conn->request->url[sizeof(conn->request->url) - 1] = '\0';
+        }
+        
         uvhttp_request_handler_t handler = uvhttp_router_find_handler(
             conn->server->router, conn->request->url, 
             uvhttp_method_to_string(conn->request->method));
@@ -170,17 +186,35 @@ static int on_message_complete(llhttp_t* parser) {
     }
     
     /* HTTP/1.1连接管理：单线程安全的连接生命周期控制 */
-    /* 检查是否应该关闭连接：
-       1. 客户端请求 Connection: close
-       2. HTTP/1.0 协议（默认不保持连接）
-       3. 响应设置了 Connection: close
-    */
-    int should_close = !conn->keep_alive || 
-                      (conn->response && !conn->response->keep_alive);
+    /* 检查是否应该关闭连接 */
+    int should_close = 0;  // 默认不关闭连接
     
-    /* 检查HTTP版本 - HTTP/1.0默认不保持连接 */
+    // 对于HTTP/1.0，检查客户端是否请求了keep-alive
     if (parser && llhttp_get_http_major(parser) == 1 && llhttp_get_http_minor(parser) == 0) {
-        should_close = 1;  /* HTTP/1.0 connections close by default */
+        if (conn->request) {
+            const char* connection_header = uvhttp_request_get_header(conn->request, "Connection");
+            if (connection_header && 
+                (strcasecmp(connection_header, "keep-alive") == 0 || 
+                 strcasecmp(connection_header, "Keep-Alive") == 0)) {
+                // 客户端请求keep-alive，在响应中设置相应标志
+                if (conn->response) {
+                    conn->response->keep_alive = 1;
+                }
+                should_close = 0;  // 保持连接
+            } else {
+                should_close = 1;  // HTTP/1.0默认关闭连接
+            }
+        }
+    } else {
+        // HTTP/1.1及以上版本，保持连接
+        if (conn->response) {
+            conn->response->keep_alive = 1;  // 默认保持连接
+        }
+        should_close = 0;
+    }
+    
+    if (should_close && conn->response) {
+        conn->response->keep_alive = 0;  // 确保响应也标记为不keep-alive
     }
     
     if (should_close) {

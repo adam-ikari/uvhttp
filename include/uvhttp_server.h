@@ -4,6 +4,7 @@
 #include <uv.h>
 #include "uvhttp_error.h"
 #include "uvhttp_common.h"
+#include "uvhttp_config.h"
 
 // Forward declarations
 typedef struct uvhttp_request uvhttp_request_t;
@@ -29,6 +30,7 @@ struct uvhttp_server {
     int tls_enabled;
     size_t active_connections;
     int owns_loop;  /* 是否拥有循环（内部创建的） */
+    uvhttp_config_t* config;  /* 服务器配置 */
 };
 
 /* API函数 */
