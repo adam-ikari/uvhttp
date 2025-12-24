@@ -118,11 +118,6 @@ static int on_url(llhttp_t* parser, const char* at, size_t length) {
     return 0;
 }
 
-// 全局变量来跟踪当前正在解析的header字段名
-static char current_header_field[UVHTTP_MAX_HEADER_NAME_SIZE] = {0};
-static size_t current_header_field_len = 0;
-static int parsing_header_field = 0;  // 用于标识是否正在解析header字段名
-
 static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
@@ -130,9 +125,9 @@ static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
     }
     
     // 重置当前header字段名
-    memset(current_header_field, 0, sizeof(current_header_field));
-    current_header_field_len = 0;
-    parsing_header_field = 1;
+    memset(conn->current_header_field, 0, sizeof(conn->current_header_field));
+    conn->current_header_field_len = 0;
+    conn->parsing_header_field = 1;
     
     // 检查header字段名长度限制
     if (length >= UVHTTP_MAX_HEADER_NAME_SIZE) {
@@ -140,8 +135,8 @@ static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
     }
     
     // 复制header字段名
-    memcpy(current_header_field, at, length);
-    current_header_field_len = length;
+    memcpy(conn->current_header_field, at, length);
+    conn->current_header_field_len = length;
     
     return 0;
 }
@@ -163,7 +158,7 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
     }
     
     // 检查当前header字段名是否存在
-    if (current_header_field_len == 0) {
+    if (conn->current_header_field_len == 0) {
         return -1;  // 没有对应的header字段名
     }
     
@@ -171,11 +166,11 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
     uvhttp_header_t* header = &conn->request->headers[conn->request->header_count];
     
     // 复制header字段名
-    size_t field_len = current_header_field_len;
+    size_t field_len = conn->current_header_field_len;
     if (field_len >= sizeof(header->name)) {
         field_len = sizeof(header->name) - 1;
     }
-    memcpy(header->name, current_header_field, field_len);
+    memcpy(header->name, conn->current_header_field, field_len);
     header->name[field_len] = '\0';
     
     // 复制header值
@@ -189,9 +184,9 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
     conn->request->header_count++;
     
     // 重置当前header字段名
-    memset(current_header_field, 0, sizeof(current_header_field));
-    current_header_field_len = 0;
-    parsing_header_field = 0;
+    memset(conn->current_header_field, 0, sizeof(conn->current_header_field));
+    conn->current_header_field_len = 0;
+    conn->parsing_header_field = 0;
     
     return 0;
 }

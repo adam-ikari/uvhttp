@@ -33,6 +33,9 @@ struct uvhttp_connection {
     // 网络连接
     uv_tcp_t tcp_handle;
     
+    // 用于keep-alive连接重用的idle句柄
+    uv_idle_t idle_handle;
+    
     // TLS相关 - 简化版本
     void* ssl;
     int tls_enabled;
@@ -55,6 +58,14 @@ struct uvhttp_connection {
     size_t body_received;               // 已接收的body长度
     int parsing_complete;               // 解析是否完成
     
+    // HTTP解析状态（替代全局变量）
+    char current_header_field[UVHTTP_MAX_HEADER_NAME_SIZE];  // 当前解析的头部字段名
+    size_t current_header_field_len;     // 当前头部字段名长度
+    int parsing_header_field;            // 是否正在解析头部字段名
+    
+    // 用于keep-alive连接重用
+    int need_restart_read;              // 标记是否需要重启读取
+    
     // 错误处理
     int last_error;
 };
@@ -64,6 +75,8 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server);
 void uvhttp_connection_free(uvhttp_connection_t* conn);
 int uvhttp_connection_start(uvhttp_connection_t* conn);
 void uvhttp_connection_close(uvhttp_connection_t* conn);
+int uvhttp_connection_restart_read(uvhttp_connection_t* conn);
+int uvhttp_connection_schedule_restart_read(uvhttp_connection_t* conn);
 
 // TLS处理函数
 int uvhttp_connection_start_tls_handshake(uvhttp_connection_t* conn);

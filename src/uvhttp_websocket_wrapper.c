@@ -88,6 +88,7 @@ struct uvhttp_websocket {
     uvhttp_request_t* request;          /* 原始 HTTP 请求 */
     uvhttp_response_t* response;        /* 原始 HTTP 响应 */
     uvhttp_websocket_mtls_config_t* mtls_config; /* mTLS 配置 */
+    struct lws_client_connect_info connect_info; /* 连接信息 */
 };
 
 /* 协议名称 */
@@ -151,6 +152,11 @@ static int uvhttp_websocket_handshake(uvhttp_websocket_t* ws,
     }
     
     /* 计算 Sec-WebSocket-Accept 值 */
+    size_t combined_len = strlen(ws_key) + strlen(WS_MAGIC_STRING);
+    if (combined_len >= 128) {
+        UVHTTP_LOG_ERROR("Combined key length too long: %zu\n", combined_len);
+        return -1;
+    }
     char combined[128];
     snprintf(combined, sizeof(combined), "%s%s", ws_key, WS_MAGIC_STRING);
     
@@ -182,8 +188,8 @@ static int uvhttp_websocket_handshake(uvhttp_websocket_t* ws,
     /* 发送响应 */
     uvhttp_response_send(response);
     
-    /* 标记握手成功 */
-    ws->is_connected = 1;
+    /* 标记握手成功，但实际连接将在 HTTP 升级后建立 */
+    ws->is_connected = 0;  /* 实际连接将在 LWS_CALLBACK_ESTABLISHED 时设置 */
     
     return 0;
 }
@@ -299,16 +305,19 @@ static int uvhttp_websocket_callback(struct lws* wsi,
                                      void* user, 
                                      void* in, 
                                      size_t len) {
-    (void)wsi; /* 避免未使用参数警告 */
-    uvhttp_websocket_t* ws = (uvhttp_websocket_t*)user;
+    (void)user;  /* 避免未使用参数警告 */
+    uvhttp_websocket_t* ws = (uvhttp_websocket_t*)lws_get_opaque_user_data(wsi);
     
     switch (reason) {
         case LWS_CALLBACK_ESTABLISHED:
-            ws->is_connected = 1;
+            if (ws) {
+                ws->wsi = wsi;  /* 设置实际的 libwebsockets 实例 */
+                ws->is_connected = 1;
+            }
             break;
             
         case LWS_CALLBACK_RECEIVE:
-            if (ws->handler && in && len > 0) {
+            if (ws && ws->handler && in && len > 0) {
                 uvhttp_websocket_message_t msg = {0};
                 msg.data = (const char*)in;
                 msg.length = len;
@@ -318,8 +327,27 @@ static int uvhttp_websocket_callback(struct lws* wsi,
             }
             break;
             
+        case LWS_CALLBACK_SERVER_WRITEABLE:
+            /* 可写回调 - 发送数据 */
+            break;
+            
         case LWS_CALLBACK_CLOSED:
-            ws->is_connected = 0;
+            if (ws) {
+                ws->is_connected = 0;
+                ws->wsi = NULL;
+            }
+            break;
+            
+        case LWS_CALLBACK_HTTP:
+            /* HTTP 请求回调 - 应该在握手后处理 */
+            UVHTTP_LOG_DEBUG("[WebSocket] HTTP callback received\n");
+            break;
+            
+        case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
+            /* 协议连接过滤回调 */
+            if (ws) {
+                lws_set_opaque_user_data(wsi, ws);
+            }
             break;
             
         default:
@@ -370,7 +398,7 @@ uvhttp_websocket_t* uvhttp_websocket_new(uvhttp_request_t* request,
     
     /* 创建 libwebsockets 上下文 */
     struct lws_context_creation_info info = {0};
-    info.port = CONTEXT_PORT_NO_LISTEN;
+    info.port = CONTEXT_PORT_NO_LISTEN; /* 不监听端口 - 用于客户端 */
     info.protocols = uvhttp_websocket_protocols;
     info.gid = -1;
     info.uid = -1;
@@ -393,6 +421,10 @@ uvhttp_websocket_t* uvhttp_websocket_new(uvhttp_request_t* request,
         UVHTTP_FREE(ws);
         return NULL;
     }
+    
+    /* 如果是在处理 HTTP 升级请求，我们需要创建服务器端的 WebSocket 连接 */
+    /* 这是 WebSocket 服务器端的实现，不需要创建客户端连接 */
+    /* 连接将在 HTTP 升级后通过 libwebsockets 回调自动建立 */
     
     return ws;
 }
@@ -455,10 +487,10 @@ uvhttp_websocket_error_t uvhttp_websocket_send(uvhttp_websocket_t* ws,
         return err;
     }
     
-    /* 复制数据到缓冲区 */
+    /* 复制数据到缓冲区，考虑预填充 */
     memcpy(ws->write_buffer + LWS_SEND_BUFFER_PRE_PADDING, data, length);
     
-    /* 发送数据 */
+    /* 发送数据 - 使用 lws_callback_on_writable 触发写入 */
     int result = lws_write(ws->wsi, 
                           (unsigned char*)(ws->write_buffer + LWS_SEND_BUFFER_PRE_PADDING), 
                           length, 
@@ -471,6 +503,9 @@ uvhttp_websocket_error_t uvhttp_websocket_send(uvhttp_websocket_t* ws,
                                    error);
         return error;
     }
+    
+    /* 尝试写入更多数据 */
+    lws_callback_on_writable(ws->wsi);
     
     return UVHTTP_WEBSOCKET_ERROR_NONE;
 }

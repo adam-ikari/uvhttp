@@ -36,6 +36,26 @@ install: $(BUILD_DIR)/Makefile
 cppcheck:
 	@cppcheck --enable=warning --std=c11 src/ include/
 
+# 示例程序
+examples: $(BUILD_DIR)/Makefile
+	@$(MAKE) -C $(BUILD_DIR) examples
+	@echo "示例程序构建完成"
+
+# 运行简单配置示例
+run-simple-config: examples
+	@echo "运行简单配置示例..."
+	@cd $(BUILD_DIR) && ./examples/simple_config
+
+# 运行配置演示程序
+run-config-demo: examples
+	@echo "运行配置演示程序..."
+	@cd $(BUILD_DIR) && ./examples/config_demo
+
+# 运行Hello World示例
+run-helloworld: examples
+	@echo "运行Hello World示例..."
+	@cd $(BUILD_DIR) && ./examples/helloworld
+
 # 帮助
 help:
 	@echo "UVHTTP HTTP框架构建系统"
@@ -44,6 +64,12 @@ help:
 	@echo "  make                    - 构建项目"
 	@echo "  make clean              - 清理构建文件"
 	@echo "  make test               - 运行所有测试"
+	@echo ""
+	@echo "示例程序:"
+	@echo "  make examples           - 构建所有示例程序"
+	@echo "  make run-helloworld     - 运行Hello World示例"
+	@echo "  make run-simple-config  - 运行简单配置示例"
+	@echo "  make run-config-demo    - 运行配置演示程序"
 	@echo ""
 	@echo "代码质量:"
 	@echo "  make cppcheck          - 运行代码检查"

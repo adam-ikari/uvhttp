@@ -91,14 +91,23 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
         char* key = ptr;
         char* value = eq + 1;
         
-        /* 去除空格 */
+        /* 去除空格和换行符 */
         while (isspace(*key)) key++;
         while (isspace(*value)) value++;
         
+        /* 去除value末尾的换行符和空格 */
+        char* end = value + strlen(value) - 1;
+        while (end >= value && isspace(*end)) {
+            *end = '\0';
+            end--;
+        }
+        
         /* 设置核心配置 - 使用安全的strtol()进行验证 */
         if (strcmp(key, "max_connections") == 0) {
+            printf("DEBUG: Parsing max_connections, value='%s'\n", value);
             char* endptr;
             long val = strtol(value, &endptr, 10);
+            printf("DEBUG: strtol result: val=%ld, endptr='%s' (char=%d)\n", val, endptr, *endptr);
             if (*endptr != '\0') {
                 UVHTTP_LOG_ERROR("Invalid max_connections=%s: contains non-numeric characters", value);
                 fclose(file);

@@ -31,6 +31,10 @@
 #include "uvhttp_tls.h"
 #endif
 
+#if UVHTTP_FEATURE_STATIC_FILES
+#include "uvhttp_static.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

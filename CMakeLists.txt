@@ -112,6 +112,15 @@ else()
     add_definitions(-DUVHTTP_ENABLE_COMPRESSION=0)
 endif()
 
+option(UVHTTP_ENABLE_STATIC_FILES "Enable static file serving support" ON)
+if(UVHTTP_ENABLE_STATIC_FILES)
+    add_definitions(-DUVHTTP_FEATURE_STATIC_FILES=1)
+    message(STATUS "Static file serving support enabled")
+else()
+    add_definitions(-DUVHTTP_FEATURE_STATIC_FILES=0)
+    message(STATUS "Static file serving support disabled")
+endif()
+
 # 中间件功能选项
 # 编译选项已在上面的统一配置中设置
 
@@ -152,6 +161,7 @@ endif()
 # Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/uthash/src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/libwebsockets/include)
 include_directories(${CMAKE_BINARY_DIR}/deps/libwebsockets/include)  # 添加构建目录
@@ -177,6 +187,14 @@ set(SOURCES
     src/uvhttp_websocket_wrapper.c  # 使用包装层实现
 )
 
+# 静态文件功能相关源文件
+if(UVHTTP_ENABLE_STATIC_FILES)
+    list(APPEND SOURCES
+        src/uvhttp_static.c         # 静态文件服务模块
+        src/uvhttp_lru_cache.c     # LRU缓存模块
+    )
+endif()
+
 # Header files
 set(HEADERS
     include/uvhttp.h
@@ -194,6 +212,14 @@ set(HEADERS
     include/uvhttp_error_helpers.h  # 新增的错误处理辅助函数头文件
     include/uvhttp_validation.h     # 新增的输入验证头文件
 )
+
+# 静态文件功能相关头文件
+if(UVHTTP_ENABLE_STATIC_FILES)
+    list(APPEND HEADERS
+        include/uvhttp_static.h         # 静态文件服务模块头文件
+        include/uvhttp_lru_cache.h     # LRU缓存模块头文件
+    )
+endif()
 
 # Create static library
 add_library(uvhttp STATIC ${SOURCES} ${HEADERS})
@@ -385,10 +411,19 @@ set_target_properties(helloworld PROPERTIES
 )
 
 add_executable(simple_test examples/simple_test.c)
-target_link_libraries(simple_test uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl pthread m ssl crypto)
+target_link_libraries(simple_test uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
 set_target_properties(simple_test PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
 )
+
+# 静态文件服务器示例
+if(UVHTTP_ENABLE_STATIC_FILES)
+    add_executable(static_file_server examples/static_file_server.c)
+    target_link_libraries(static_file_server uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+    set_target_properties(static_file_server PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+    )
+endif()
 
 # 链接测试库
 target_link_libraries(uvhttp_unit_tests ${TEST_LIBS})

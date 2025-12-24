@@ -54,7 +54,19 @@ typedef enum {
     UVHTTP_ERROR_WEBSOCKET_FRAME = -702,
     
     /* HTTP/2 errors */
-    } uvhttp_error_t;
+    UVHTTP_ERROR_HTTP2_INIT = -800,
+    UVHTTP_ERROR_HTTP2_STREAM = -801,
+    UVHTTP_ERROR_HTTP2_SETTINGS = -802,
+    UVHTTP_ERROR_HTTP2_FLOW_CONTROL = -803,
+    UVHTTP_ERROR_HTTP2_HEADER_COMPRESS = -804,
+    UVHTTP_ERROR_HTTP2_PRIORITY = -805,
+    
+    /* Configuration errors */
+    UVHTTP_ERROR_CONFIG_PARSE = -900,
+    UVHTTP_ERROR_CONFIG_INVALID = -901,
+    
+    UVHTTP_ERROR_MAX /* 动态计算最大值 */
+} uvhttp_error_t;
 
 /* Error code to string */
 const char* uvhttp_error_string(uvhttp_error_t error);

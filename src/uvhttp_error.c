@@ -226,17 +226,33 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
             return "Allocator set failed";
         
         /* WebSocket errors */
-        case UVHTTP_ERROR_WEBSOCKET_INIT:
-            return "WebSocket initialization failed";
-        case UVHTTP_ERROR_WEBSOCKET_HANDSHAKE:
-            return "WebSocket handshake failed";
-        case UVHTTP_ERROR_WEBSOCKET_FRAME:
-            return "WebSocket frame processing failed";
-        
-        /* HTTP/2 errors */
-
-        
-        default:
-            return "Unknown error";
-    }
+                case UVHTTP_ERROR_WEBSOCKET_INIT:
+                    return "WebSocket initialization failed";
+                case UVHTTP_ERROR_WEBSOCKET_HANDSHAKE:
+                    return "WebSocket handshake failed";
+                case UVHTTP_ERROR_WEBSOCKET_FRAME:
+                    return "WebSocket frame processing failed";
+                
+                /* HTTP/2 errors */
+                case UVHTTP_ERROR_HTTP2_INIT:
+                    return "HTTP/2 initialization failed";
+                case UVHTTP_ERROR_HTTP2_STREAM:
+                    return "HTTP/2 stream error";
+                case UVHTTP_ERROR_HTTP2_SETTINGS:
+                    return "HTTP/2 settings error";
+                case UVHTTP_ERROR_HTTP2_FLOW_CONTROL:
+                    return "HTTP/2 flow control error";
+                case UVHTTP_ERROR_HTTP2_HEADER_COMPRESS:
+                    return "HTTP/2 header compression error";
+                case UVHTTP_ERROR_HTTP2_PRIORITY:
+                    return "HTTP/2 priority error";
+                
+                /* Configuration errors */
+                case UVHTTP_ERROR_CONFIG_PARSE:
+                    return "Configuration parse error";
+                case UVHTTP_ERROR_CONFIG_INVALID:
+                    return "Invalid configuration";
+                
+                default:
+                    return "Unknown error";    }
 }

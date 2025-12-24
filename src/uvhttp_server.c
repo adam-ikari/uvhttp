@@ -163,17 +163,22 @@ static void on_connection(uv_stream_t* server_handle, int status) {
  */
 uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     /* 初始化TLS模块（如果还没有初始化） */
-    /* TODO: TLS模块需要完全实现后启用
+#if UVHTTP_FEATURE_TLS
+    printf("DEBUG: Initializing TLS module...\n");
     if (uvhttp_tls_init() != UVHTTP_OK) {
         UVHTTP_LOG_ERROR("Failed to initialize TLS module");
         return NULL;
     }
-    */
+    printf("DEBUG: TLS module initialized successfully\n");
+#endif
+    printf("DEBUG: Allocating uvhttp_server_t, size=%zu\n", sizeof(uvhttp_server_t));
     uvhttp_server_t* server = uvhttp_malloc(sizeof(uvhttp_server_t));
     if (!server) {
+        printf("DEBUG: uvhttp_malloc failed\n");
         return NULL;
     }
     
+    printf("DEBUG: uvhttp_malloc success, server=%p\n", (void*)server);
     memset(server, 0, sizeof(uvhttp_server_t));
     
     // 如果没有提供loop，内部创建新循环
@@ -202,8 +207,10 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     }
     server->tcp_handle.data = server;
     server->active_connections = 0;
+#if UVHTTP_FEATURE_TLS
     server->tls_enabled = 0;
     server->tls_ctx = NULL;
+#endif
     
     return server;
 }
@@ -216,9 +223,11 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
     if (server->router) {
         uvhttp_router_free(server->router);
     }
+#if UVHTTP_FEATURE_TLS
     if (server->tls_ctx) {
         uvhttp_tls_context_free(server->tls_ctx);
     }
+#endif
     if (server->config) {
         uvhttp_config_free(server->config);
     }
@@ -280,6 +289,7 @@ uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server) {
     return UVHTTP_ERROR_SERVER_STOP;
 }
 
+#if UVHTTP_FEATURE_TLS
 uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server, uvhttp_tls_context_t* tls_ctx) {
     if (!server || !tls_ctx) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -313,3 +323,19 @@ uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server) {
 int uvhttp_server_is_tls_enabled(uvhttp_server_t* server) {
     return server ? server->tls_enabled : 0;
 }
+#else
+uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server, void* tls_ctx) {
+    (void)server; (void)tls_ctx;
+    return UVHTTP_ERROR_INVALID_PARAM;
+}
+
+uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server) {
+    (void)server;
+    return UVHTTP_ERROR_INVALID_PARAM;
+}
+
+int uvhttp_server_is_tls_enabled(uvhttp_server_t* server) {
+    (void)server;
+    return 0;
+}
+#endif

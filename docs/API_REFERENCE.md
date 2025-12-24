@@ -368,6 +368,244 @@ const char* uvhttp_error_string(uvhttp_error_t error);
 
 ---
 
+## 配置管理
+
+### 配置结构体
+
+#### uvhttp_config_t
+```c
+typedef struct {
+    /* 服务器配置 */
+    int max_connections;              // 最大并发连接数 (1-10000)
+    int max_requests_per_connection;  // 每个连接的最大请求数
+    
+    /* 性能配置 */
+    size_t max_body_size;             // 最大请求体大小
+    size_t max_header_size;           // 最大请求头大小
+    
+    /* 安全配置 */
+    int rate_limit_window;            // 速率限制窗口时间(秒)
+    
+    /* 其他配置... */
+} uvhttp_config_t;
+```
+
+### 配置管理函数
+
+#### uvhttp_config_new
+```c
+uvhttp_config_t* uvhttp_config_new(void);
+```
+创建新的配置实例。
+
+**返回值:**
+- 成功: 配置实例指针
+- 失败: NULL
+
+#### uvhttp_config_set_defaults
+```c
+void uvhttp_config_set_defaults(uvhttp_config_t* config);
+```
+设置默认配置值。
+
+**默认值:**
+- `max_connections`: 1000
+- `max_requests_per_connection`: 100
+- `max_body_size`: 1MB
+- `max_header_size`: 8KB
+
+#### uvhttp_config_update_max_connections
+```c
+int uvhttp_config_update_max_connections(int max_connections);
+```
+动态更新最大并发连接数。
+
+**参数:**
+- `max_connections`: 新的最大连接数 (1-10000)
+
+**返回值:**
+- `UVHTTP_OK`: 更新成功
+- `UVHTTP_ERROR_INVALID_PARAM`: 参数超出范围
+- `UVHTTP_ERROR_INVALID_STATE`: 配置未初始化
+
+**示例:**
+```c
+// 运行时动态调整连接限制
+int result = uvhttp_config_update_max_connections(5000);
+if (result == UVHTTP_OK) {
+    printf("连接限制已更新为5000\n");
+}
+```
+
+#### uvhttp_config_load_file
+```c
+int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename);
+```
+从配置文件加载设置。
+
+**配置文件格式:**
+```
+max_connections=3000
+max_requests_per_connection=200
+max_body_size=2097152
+max_header_size=16384
+```
+
+#### uvhttp_config_load_env
+```c
+int uvhttp_config_load_env(uvhttp_config_t* config);
+```
+从环境变量加载配置。
+
+**支持的环境变量:**
+- `UVHTTP_MAX_CONNECTIONS`: 最大连接数
+- `UVHTTP_MAX_REQUESTS_PER_CONNECTION`: 每连接最大请求数
+
+**示例:**
+```bash
+export UVHTTP_MAX_CONNECTIONS=4000
+export UVHTTP_MAX_REQUESTS_PER_CONNECTION=150
+./your_server
+```
+
+#### uvhttp_config_validate
+```c
+int uvhttp_config_validate(const uvhttp_config_t* config);
+```
+验证配置参数的有效性。
+
+**返回值:**
+- `UVHTTP_OK`: 配置有效
+- `UVHTTP_ERROR_INVALID_PARAM`: 存在无效参数
+
+#### uvhttp_config_get_current
+```c
+const uvhttp_config_t* uvhttp_config_get_current(void);
+```
+获取当前全局配置实例。
+
+#### uvhttp_config_monitor_changes
+```c
+int uvhttp_config_monitor_changes(uvhttp_config_change_callback_t callback);
+```
+监控配置变化。
+
+**回调函数类型:**
+```c
+typedef void (*uvhttp_config_change_callback_t)(const char* key, 
+                                                 const void* old_value, 
+                                                 const void* new_value);
+```
+
+**示例:**
+```c
+void on_config_change(const char* key, const void* old_value, const void* new_value) {
+    if (strcmp(key, "max_connections") == 0) {
+        printf("最大连接数从 %d 变更为 %d\n", 
+               *(int*)old_value, *(int*)new_value);
+    }
+}
+
+uvhttp_config_monitor_changes(on_config_change);
+```
+
+### 配置常量
+
+#### 连接相关常量
+```c
+#define UVHTTP_MAX_CONNECTIONS           2048    // 编译时默认最大连接数
+#define UVHTTP_DEFAULT_MAX_CONNECTIONS   1000    // 运行时默认最大连接数
+#define UVHTTP_DEFAULT_BACKLOG           1024    // 监听队列大小
+```
+
+### 错误处理
+
+#### 连接限制错误
+```c
+#define UVHTTP_ERROR_CONNECTION_LIMIT    -103    // 连接数达到上限
+```
+
+当活动连接数达到 `max_connections` 限制时，服务器会：
+1. 记录警告日志
+2. 拒绝新连接
+3. 返回 `UVHTTP_ERROR_CONNECTION_LIMIT` 错误
+
+### 使用示例
+
+#### 基本配置使用
+```c
+#include "uvhttp.h"
+#include "uvhttp_config.h"
+
+int main() {
+    uv_loop_t* loop = uv_default_loop();
+    uvhttp_server_t* server = uvhttp_server_new(loop);
+    
+    // 创建配置
+    uvhttp_config_t* config = uvhttp_config_new();
+    uvhttp_config_set_defaults(config);
+    
+    // 自定义连接限制
+    config->max_connections = 3000;
+    config->max_requests_per_connection = 200;
+    
+    // 验证配置
+    if (uvhttp_config_validate(config) != UVHTTP_OK) {
+        fprintf(stderr, "配置验证失败\n");
+        return 1;
+    }
+    
+    // 应用配置
+    server->config = config;
+    
+    // 启动服务器
+    uvhttp_server_listen(server, "0.0.0.0", 8080);
+    uv_run(loop, UV_RUN_DEFAULT);
+    
+    return 0;
+}
+```
+
+#### 动态配置调整
+```c
+void adjust_connections_based_on_load() {
+    // 获取当前配置
+    const uvhttp_config_t* current = uvhttp_config_get_current();
+    
+    // 根据系统负载动态调整
+    if (system_load > 0.8) {
+        // 高负载时降低连接数
+        uvhttp_config_update_max_connections(current->max_connections * 0.8);
+    } else if (system_load < 0.3) {
+        // 低负载时增加连接数
+        uvhttp_config_update_max_connections(current->max_connections * 1.2);
+    }
+}
+```
+
+#### 配置文件和环境变量
+```c
+int load_config_from_multiple_sources(uvhttp_config_t* config) {
+    // 1. 设置默认值
+    uvhttp_config_set_defaults(config);
+    
+    // 2. 从配置文件加载
+    if (uvhttp_config_load_file(config, "uvhttp.conf") != UVHTTP_OK) {
+        printf("配置文件加载失败，使用默认配置\n");
+    }
+    
+    // 3. 从环境变量加载 (会覆盖配置文件设置)
+    if (uvhttp_config_load_env(config) != UVHTTP_OK) {
+        printf("环境变量加载失败\n");
+    }
+    
+    // 4. 验证最终配置
+    return uvhttp_config_validate(config);
+}
+```
+
+---
+
 ### 错误恢复
 
 #### uvhttp_set_error_recovery_config

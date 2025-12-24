@@ -173,6 +173,11 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     conn->parsing_complete = 0;     // 解析未完成
     conn->current_header_is_important = 0; // 当前头部非关键字段
     
+    // HTTP解析状态初始化
+    memset(conn->current_header_field, 0, sizeof(conn->current_header_field));
+    conn->current_header_field_len = 0;
+    conn->parsing_header_field = 0;
+    
     // TCP初始化 - 完整实现
     if (uv_tcp_init(server->loop, &conn->tcp_handle) != 0) {
         uvhttp_free(conn);
@@ -217,7 +222,7 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     if (uvhttp_response_init(conn->response, &conn->tcp_handle) != 0) {
         uvhttp_request_cleanup(conn->request);
         uvhttp_free(conn->request);
-        uvhttp_free(conn->response);
+        uvhttp_free(conn->response);  // 直接释放，不需要cleanup（因为初始化失败）
         uvhttp_free(conn->read_buffer);
         uvhttp_free(conn);
         return NULL;

@@ -42,7 +42,7 @@ extern "C" {
 #endif
 
 #ifndef UVHTTP_FEATURE_STATIC_FILES
-#define UVHTTP_FEATURE_STATIC_FILES 0 /* 静态文件支持 */
+#define UVHTTP_FEATURE_STATIC_FILES 1 /* 静态文件支持 */
 #endif
 
 #ifndef UVHTTP_FEATURE_COMPRESSION
