@@ -55,6 +55,24 @@
 - 🔧 WebSocket 简化 API
 - 🔧 编译宏功能控制
 
+### 💾 **智能缓存系统**
+
+- 💾 LRU缓存算法实现
+- 💾 内存使用优化
+- 💾 TTL过期机制
+- 💾 缓存统计和监控
+- 💾 静态文件缓存支持
+- 💾 英文日志记录系统
+
+### 📊 **日志和监控**
+
+- 📊 分级日志系统（DEBUG/INFO/WARN/ERROR）
+- 📊 英文日志消息
+- 📊 缓存操作详细记录
+- 📊 性能统计信息
+- 📊 错误追踪和调试支持
+- 📊 可配置日志级别
+
 ### 📈 **性能验证**
 
 - 📈 全面压力测试套件
@@ -200,6 +218,118 @@ int main() {
 }
 ```
 
+### 静态文件服务器（带LRU缓存）
+
+```c
+#include "uvhttp.h"
+#include "uvhttp_lru_cache.h"
+#include <stdio.h>
+
+// 全局缓存管理器
+static cache_manager_t* g_cache = NULL;
+
+void static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    const char* file_path = uvhttp_request_get_url(request);
+    
+    // 尝试从缓存中获取文件
+    cache_entry_t* entry = uvhttp_lru_cache_find(g_cache, file_path);
+    
+    if (entry) {
+        // 缓存命中，直接返回
+        uvhttp_response_set_status(response, 200);
+        uvhttp_response_set_header(response, "Content-Type", entry->mime_type);
+        uvhttp_response_set_header(response, "Cache-Control", "public, max-age=300");
+        uvhttp_response_set_body(response, entry->content, entry->content_length);
+        uvhttp_response_send(response);
+        return;
+    }
+    
+    // 缓存未命中，读取文件（简化示例）
+    FILE* file = fopen(file_path + 1, "rb"); // 跳过前导 '/'
+    if (!file) {
+        uvhttp_response_set_status(response, 404);
+        uvhttp_response_set_body(response, "File not found", 14);
+        uvhttp_response_send(response);
+        return;
+    }
+    
+    // 读取文件内容
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    
+    char* content = malloc(file_size);
+    fread(content, 1, file_size, file);
+    fclose(file);
+    
+    // 添加到缓存
+    uvhttp_lru_cache_put(g_cache, file_path, content, file_size, 
+                        "text/html", time(NULL), NULL);
+    
+    // 返回响应
+    uvhttp_response_set_status(response, 200);
+    uvhttp_response_set_header(response, "Content-Type", "text/html");
+    uvhttp_response_set_body(response, content, file_size);
+    uvhttp_response_send(response);
+}
+
+int main() {
+    // 初始化缓存：最大1MB内存，最多100个条目，TTL为300秒
+    g_cache = uvhttp_lru_cache_create(1024*1024, 100, 300);
+    
+    uv_loop_t* loop = uv_default_loop();
+    uvhttp_server_t* server = uvhttp_server_new(loop);
+
+    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_add_route(router, "/*", static_file_handler);
+
+    server->router = router;
+    uvhttp_server_listen(server, "0.0.0.0", 8080);
+
+    printf("静态文件服务器运行在 http://localhost:8080 (带LRU缓存)\n");
+    uv_run(loop, UV_RUN_DEFAULT);
+
+    // 清理资源
+    uvhttp_lru_cache_free(g_cache);
+    return 0;
+}
+```
+
+### 日志配置示例
+
+```c
+#include "uvhttp.h"
+#include "uvhttp_error_handler.h"
+#include <stdio.h>
+
+void log_config_example() {
+    // 配置日志级别为DEBUG，查看所有日志信息
+    g_error_config.min_logLevel = UVHTTP_LOG_LEVEL_DEBUG;
+    
+    // 启用日志恢复功能
+    g_error_config.enableRecovery = 1;
+    g_error_config.maxRetries = 3;
+    g_error_config.baseDelayMs = 100;
+    
+    // 自定义错误处理器
+    g_error_config.customHandler = my_error_handler;
+    
+    UVHTTP_LOG_INFO("日志系统已初始化");
+    UVHTTP_LOG_DEBUG("调试信息：当前日志级别为DEBUG");
+    UVHTTP_LOG_WARN("警告信息：这是一个示例警告");
+    UVHTTP_LOG_ERROR("错误信息：这是一个示例错误");
+}
+
+int main() {
+    // 配置日志系统
+    log_config_example();
+    
+    // 其他应用逻辑...
+    
+    return 0;
+}
+```
+
 ## API 文档
 
 ### 服务器
@@ -243,6 +373,27 @@ int main() {
 
 - `uvhttp_websocket_send_text(ws, text)` - 发送文本消息
 - `uvhttp_websocket_send_binary(ws, data, len)` - 发送二进制消息
+
+### LRU缓存
+
+- `cache_manager_t* uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries, int cache_ttl)` - 创建LRU缓存管理器
+- `void uvhttp_lru_cache_free(cache_manager_t* cache)` - 释放LRU缓存管理器
+- `cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache, const char* file_path)` - 查找缓存条目
+- `int uvhttp_lru_cache_put(cache_manager_t* cache, const char* file_path, char* content, size_t content_length, const char* mime_type, time_t last_modified, const char* etag)` - 添加或更新缓存条目
+- `int uvhttp_lru_cache_remove(cache_manager_t* cache, const char* file_path)` - 删除缓存条目
+- `void uvhttp_lru_cache_clear(cache_manager_t* cache)` - 清空所有缓存
+- `void uvhttp_lru_cache_get_stats(cache_manager_t* cache, size_t* total_memory_usage, int* entry_count, int* hit_count, int* miss_count, int* eviction_count)` - 获取缓存统计信息
+- `int uvhttp_lru_cache_cleanup_expired(cache_manager_t* cache)` - 清理过期条目
+- `double uvhttp_lru_cache_get_hit_rate(cache_manager_t* cache)` - 计算缓存命中率
+
+### 日志系统
+
+- `void uvhttp_log(uvhttp_log_level_t level, const char* format, ...)` - 核心日志函数
+- `UVHTTP_LOG_DEBUG(fmt, ...)` - 调试级别日志
+- `UVHTTP_LOG_INFO(fmt, ...)` - 信息级别日志
+- `UVHTTP_LOG_WARN(fmt, ...)` - 警告级别日志
+- `UVHTTP_LOG_ERROR(fmt, ...)` - 错误级别日志
+- `UVHTTP_LOG_FATAL(fmt, ...)` - 致命错误级别日志
 
 ## 🏃‍♂️ 运行示例
 
@@ -289,6 +440,9 @@ git submodule update --init --recursive
 - 🎯 WebSocket 性能优化
 - 🎯 TLS 功能完善
 - 🎯 编译宏系统实现
+- 🎯 LRU缓存性能优化
+- 🎯 缓存策略扩展（LFU、FIFO）
+- 🎯 分布式缓存支持
 
 ### v1.2.0 (规划中 - 6 个月)
 
