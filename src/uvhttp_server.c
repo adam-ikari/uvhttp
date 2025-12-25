@@ -274,6 +274,15 @@ uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server, uvhttp_request
     return UVHTTP_OK;
 }
 
+uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server, uvhttp_router_t* router) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    server->router = router;
+    return UVHTTP_OK;
+}
+
 uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;

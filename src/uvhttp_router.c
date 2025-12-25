@@ -1,6 +1,7 @@
 #include "uvhttp_router.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_utils.h"
+#include "uvhttp_constants.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -11,13 +12,13 @@ static const struct {
     const char* name;
     uvhttp_method_t method;
 } method_map[] = {
-    {"GET", UVHTTP_GET},
-    {"POST", UVHTTP_POST},
-    {"PUT", UVHTTP_PUT},
-    {"DELETE", UVHTTP_DELETE},
-    {"HEAD", UVHTTP_HEAD},
-    {"OPTIONS", UVHTTP_OPTIONS},
-    {"PATCH", UVHTTP_PATCH},
+    {UVHTTP_METHOD_GET, UVHTTP_GET},
+    {UVHTTP_METHOD_POST, UVHTTP_POST},
+    {UVHTTP_METHOD_PUT, UVHTTP_PUT},
+    {UVHTTP_METHOD_DELETE, UVHTTP_DELETE},
+    {UVHTTP_METHOD_HEAD, UVHTTP_HEAD},
+    {UVHTTP_METHOD_OPTIONS, UVHTTP_OPTIONS},
+    {UVHTTP_METHOD_PATCH, UVHTTP_PATCH},
     {NULL, UVHTTP_ANY}
 };
 

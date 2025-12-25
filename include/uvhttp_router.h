@@ -6,6 +6,7 @@
 #include "uvhttp_error.h"
 #include "uvhttp_common.h"
 #include "uvhttp_request.h"
+#include "uvhttp_constants.h"
 
 // Forward declarations
 typedef struct uvhttp_response uvhttp_response_t;
@@ -42,7 +43,7 @@ typedef struct uvhttp_route_node {
     char segment[64];  // 路径段
     uvhttp_method_t method;
     uvhttp_request_handler_t handler;
-    struct uvhttp_route_node* children[16];  // 子节点
+    struct uvhttp_route_node* children[UVHTTP_ROUTER_MAX_CHILDREN];  // 子节点
     size_t child_count;
     int is_param;  // 是否参数节点
     char param_name[MAX_PARAM_NAME_LEN];  // 参数名

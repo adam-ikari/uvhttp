@@ -356,7 +356,7 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
     /* 检查缓冲区是否太小，如果是则重新分配更大的缓冲区 */
     if (headers_length >= headers_size) {
         uvhttp_free(headers_buffer);
-        headers_size = headers_length + 256; /* 添加安全边距 */
+        headers_size = headers_length + UVHTTP_RESPONSE_HEADER_SAFETY_MARGIN; /* 添加安全边距 */
         headers_buffer = uvhttp_malloc(headers_size);
         if (!headers_buffer) {
             return UVHTTP_ERROR_OUT_OF_MEMORY;

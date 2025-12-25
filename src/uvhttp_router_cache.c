@@ -1,6 +1,8 @@
 #include "uvhttp_router.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_utils.h"
+#include "uvhttp_hash.h"
+#include "uvhttp_constants.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -9,12 +11,12 @@
 
 // 方法字符串映射 - 使用编译器优化的查找表
 static const uvhttp_method_t method_map[256] = {
-    ['G'] = UVHTTP_METHOD_GET,
-    ['P'] = UVHTTP_METHOD_POST,  // POST 和 PUT 都以P开头
-    ['D'] = UVHTTP_METHOD_DELETE,
-    ['H'] = UVHTTP_METHOD_HEAD,
-    ['O'] = UVHTTP_METHOD_OPTIONS,
-    ['C'] = UVHTTP_METHOD_PATCH  // PATCH 有时缩写为 C(PATCH)
+    ['G'] = UVHTTP_GET,
+    ['P'] = UVHTTP_POST,  // POST 和 PUT 都以P开头
+    ['D'] = UVHTTP_DELETE,
+    ['H'] = UVHTTP_HEAD,
+    ['O'] = UVHTTP_OPTIONS,
+    ['C'] = UVHTTP_PATCH  // PATCH 有时缩写为 C(PATCH)
 };
 
 // CRC32哈希表用于快速路由查找
@@ -46,16 +48,17 @@ typedef struct {
     size_t total_routes;
 } cache_optimized_router_t;
 
-// CRC32哈希函数（编译时可计算常量）
-static inline uint32_t crc32_hash(const char* str) {
-    uint32_t crc = 0xFFFFFFFF;
-    while (*str) {
-        crc ^= *str++;
-        for (int i = 0; i < 8; i++) {
-            crc = (crc >> 1) ^ (0xEDB88320 & -(crc & 1));
-        }
+// 使用统一的hash函数
+static inline uint32_t route_hash(const char* str) {
+    if (!str) return 0;
+    
+    // 限制最大字符串长度以防止哈希冲突攻击
+    size_t len = strlen(str);
+    if (len > 1024) {
+        len = 1024;  // 截断过长的字符串
     }
-    return crc;
+    
+    return (uint32_t)XXH64(str, len, UVHTTP_HASH_DEFAULT_SEED);
 }
 
 // 快速方法解析（避免字符串比较）
@@ -97,6 +100,7 @@ void uvhttp_router_free(uvhttp_router_t* router) {
         route_hash_entry_t* entry = cr->hash_table[i];
         while (entry) {
             route_hash_entry_t* next = entry->next;
+            UVHTTP_FREE((void*)entry->path);  // 释放路径字符串
             UVHTTP_FREE(entry);
             entry = next;
         }
@@ -110,14 +114,27 @@ static uvhttp_error_t add_to_hash_table(cache_optimized_router_t* cr,
                                        const char* path,
                                        uvhttp_method_t method,
                                        uvhttp_request_handler_t handler) {
-    uint32_t hash = crc32_hash(path) % ROUTE_HASH_SIZE;
+    if (!cr || !path || !handler) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    uint32_t hash = route_hash(path) % ROUTE_HASH_SIZE;
     
     route_hash_entry_t* entry = UVHTTP_MALLOC(sizeof(route_hash_entry_t));
     if (!entry) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
-    entry->path = path;  // 注意：实际应该复制字符串
+    // 安全地复制字符串
+    size_t path_len = strlen(path);
+    char* path_copy = UVHTTP_MALLOC(path_len + 1);
+    if (!path_copy) {
+        UVHTTP_FREE(entry);
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    strcpy(path_copy, path);
+    
+    entry->path = path_copy;
     entry->method = method;
     entry->handler = handler;
     entry->next = cr->hash_table[hash];
@@ -235,7 +252,7 @@ static inline uvhttp_request_handler_t find_in_hot_routes(cache_optimized_router
 static uvhttp_request_handler_t find_in_hash_table(cache_optimized_router_t* cr,
                                                   const char* path,
                                                   uvhttp_method_t method) {
-    uint32_t hash = crc32_hash(path) % ROUTE_HASH_SIZE;
+    uint32_t hash = route_hash(path) % ROUTE_HASH_SIZE;
     
     route_hash_entry_t* entry = cr->hash_table[hash];
     while (entry) {
@@ -249,7 +266,7 @@ static uvhttp_request_handler_t find_in_hash_table(cache_optimized_router_t* cr,
     return NULL;
 }
 
-uvhttp_request_handler_t uvhttp_router_find_handler(uvhttp_router_t* router, 
+uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* router, 
                                                    const char* path,
                                                    const char* method) {
     if (!router || !path || !method) {
@@ -275,9 +292,9 @@ static const struct {
     uvhttp_method_t method;
     uvhttp_request_handler_t handler;
 } static_routes[] = {
-    { "/api/users", UVHTTP_METHOD_GET, NULL },
-    { "/api/posts", UVHTTP_METHOD_GET, NULL },
-    { "/health", UVHTTP_METHOD_GET, NULL },
+    { "/api/users", UVHTTP_GET, NULL },
+    { "/api/posts", UVHTTP_GET, NULL },
+    { "/health", UVHTTP_GET, NULL },
     // 更多静态路由...
 };
 
@@ -294,7 +311,7 @@ static uvhttp_request_handler_t find_static_route(const char* path, uvhttp_metho
 }
 
 // 其他必要函数的简化实现
-uvhttp_error_t uvhttp_router_match(uvhttp_router_t* router,
+uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
                                       const char* path,
                                       const char* method,
                                       uvhttp_route_match_t* match) {
@@ -319,13 +336,13 @@ uvhttp_method_t uvhttp_method_from_string(const char* method) {
 
 const char* uvhttp_method_to_string(uvhttp_method_t method) {
     switch (method) {
-        case UVHTTP_METHOD_GET: return "GET";
-        case UVHTTP_METHOD_POST: return "POST";
-        case UVHTTP_METHOD_PUT: return "PUT";
-        case UVHTTP_METHOD_DELETE: return "DELETE";
-        case UVHTTP_METHOD_HEAD: return "HEAD";
-        case UVHTTP_METHOD_OPTIONS: return "OPTIONS";
-        case UVHTTP_METHOD_PATCH: return "PATCH";
+        case UVHTTP_GET: return UVHTTP_METHOD_GET;
+        case UVHTTP_POST: return UVHTTP_METHOD_POST;
+        case UVHTTP_PUT: return UVHTTP_METHOD_PUT;
+        case UVHTTP_DELETE: return UVHTTP_METHOD_DELETE;
+        case UVHTTP_HEAD: return UVHTTP_METHOD_HEAD;
+        case UVHTTP_OPTIONS: return UVHTTP_METHOD_OPTIONS;
+        case UVHTTP_PATCH: return UVHTTP_METHOD_PATCH;
         default: return "UNKNOWN";
     }
 }

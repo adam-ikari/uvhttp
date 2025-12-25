@@ -219,8 +219,6 @@
 #define UVHTTP_ROUTER_HOT_PATH_SIZE      64
 #define UVHTTP_ROUTER_HOT_ROUTES_COUNT   16
 #define UVHTTP_ROUTER_ACCESS_COUNT_SIZE  1024
-#define UVHTTP_ROUTER_CRC32_INITIAL      0xFFFFFFFF
-#define UVHTTP_ROUTER_CRC32_POLYNOMIAL   0xEDB88320
 #define UVHTTP_ROUTER_HYBRID_THRESHOLD   100
 #define UVHTTP_ROUTER_MAX_CHILD_COUNT    16
 #define UVHTTP_ROUTER_INITIAL_POOL_SIZE  64
@@ -235,5 +233,30 @@
 /* HTTP 状态码范围 */
 #define UVHTTP_STATUS_MIN_CONTINUE       100
 #define UVHTTP_STATUS_MAX                599
+
+/* ========== 网络和服务器配置 ========== */
+#define UVHTTP_DEFAULT_PORT              8080
+#define UVHTTP_DEFAULT_HOST              "0.0.0.0"
+
+/* ========== 缓冲区大小配置 ========== */
+#define UVHTTP_DIR_LISTING_BUFFER_SIZE   4096
+#define UVHTTP_DIR_ENTRY_HTML_OVERHEAD   200
+#define UVHTTP_RESPONSE_HEADER_SAFETY_MARGIN 256
+
+/* ========== 连接和池配置 ========== */
+#define UVHTTP_DEFAULT_CONNECTION_POOL_SIZE 100
+#define UVHTTP_ROUTER_MAX_CHILDREN       16
+
+/* ========== WebSocket配置 ========== */
+#define UVHTTP_WEBSOCKET_MIN_BUFFER_EXPANSION_SIZE 1024
+
+/* ========== 错误恢复配置（如果未定义）========== */
+#ifndef UVHTTP_DEFAULT_BASE_DELAY_MS
+#define UVHTTP_DEFAULT_BASE_DELAY_MS     100
+#endif
+
+#ifndef UVHTTP_DEFAULT_MAX_DELAY_MS
+#define UVHTTP_DEFAULT_MAX_DELAY_MS      5000
+#endif
 
 #endif /* UVHTTP_CONSTANTS_H */

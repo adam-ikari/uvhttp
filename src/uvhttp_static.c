@@ -13,6 +13,7 @@
 #include "uvhttp_validation.h"
 #include "uvhttp_error_helpers.h"
 #include "uvhttp_utils.h"
+#include "uvhttp_constants.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -196,7 +197,7 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
     }
     
     /* 计算所需缓冲区大小 */
-    size_t buffer_size = 4096; /* 基础HTML大小 */
+    size_t buffer_size = UVHTTP_DIR_LISTING_BUFFER_SIZE; /* 基础HTML大小 */
     size_t entry_count = 0;
     struct dirent* entry;
     
@@ -206,7 +207,7 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
             continue; /* 跳过当前目录 */
         }
         
-        buffer_size += strlen(entry->d_name) + 200; /* 每个条目的HTML开销 */
+        buffer_size += strlen(entry->d_name) + UVHTTP_DIR_ENTRY_HTML_OVERHEAD; /* 每个条目的HTML开销 */
         entry_count++;
     }
     

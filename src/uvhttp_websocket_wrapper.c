@@ -2,6 +2,7 @@
 
 #include "uvhttp_websocket_wrapper.h"
 #include "uvhttp_error_handler.h"
+#include "uvhttp_constants.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -225,10 +226,10 @@ static uvhttp_websocket_error_t uvhttp_ensure_buffer_capacity(uvhttp_websocket_t
         return UVHTTP_WEBSOCKET_ERROR_NONE;
     }
     
-    // 扩容策略：至少 1KB 或所需大小的 2 倍
+    // 扩容策略：至少最小扩容大小 或所需大小的 2 倍
     size_t new_capacity = ws->write_buffer_size * 2;
-    if (new_capacity < 1024) {
-        new_capacity = 1024;
+    if (new_capacity < UVHTTP_WEBSOCKET_MIN_BUFFER_EXPANSION_SIZE) {
+        new_capacity = UVHTTP_WEBSOCKET_MIN_BUFFER_EXPANSION_SIZE;
     }
     if (new_capacity < needed) {
         new_capacity = needed;

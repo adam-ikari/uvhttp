@@ -4,6 +4,7 @@
 #define UVHTTP_STRING_POOL_H
 
 #include "uvhttp_allocator.h"
+#include "uvhttp_hash.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -65,14 +66,10 @@ static inline const char* uvhttp_string_pool_strdup(const char* str) {
     return uvhttp_string_pool_intern(str, strlen(str));
 }
 
-/* 哈希函数 - FNV-1a */
+/* 哈希函数 - 使用统一哈希接口 */
 static inline uint32_t uvhttp_string_hash(const char* str, size_t length) {
-    uint32_t hash = 2166136261U;
-    for (size_t i = 0; i < length; i++) {
-        hash ^= (uint8_t)str[i];
-        hash *= 16777619U;
-    }
-    return hash;
+    (void)length; /* 长度信息已在uvhttp_hash_string中处理 */
+    return (uint32_t)uvhttp_hash_string(str);
 }
 
 /*

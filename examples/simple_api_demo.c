@@ -4,6 +4,7 @@
  */
 
 #include "../include/uvhttp.h"
+#include "../include/uvhttp_constants.h"
 #include <stdio.h>
 
 // 简单的处理器
@@ -38,7 +39,7 @@ int simple_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 int main() {
     printf("🚀 启动UVHTTP最简演示服务器...\n");
-    printf("📡 服务器将运行在 http://localhost:8080\n");
+    printf("📡 服务器将运行在 http://localhost:%d\n", UVHTTP_DEFAULT_PORT);
     printf("⏹️  按 Ctrl+C 停止服务器\n");
     printf("\n✨ 这展示了核心API的最简用法\n");
     printf("💡 只需几行代码即可启动完整的HTTP服务器!\n\n");
@@ -61,7 +62,7 @@ int main() {
     uvhttp_router_add_route(router, "/*", simple_handler);
     
     // 启动服务器
-    int result = uvhttp_server_listen(server, "0.0.0.0", 8080);
+    int result = uvhttp_server_listen(server, UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "❌ 服务器启动失败: %d\n", result);
         return 1;

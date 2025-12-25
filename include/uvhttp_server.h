@@ -57,6 +57,7 @@ uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server);
 #endif
 uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server, uvhttp_request_handler_t handler);
+uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server, uvhttp_router_t* router);
 
 // ========== 统一API函数 ==========
 

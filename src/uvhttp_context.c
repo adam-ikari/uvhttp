@@ -5,6 +5,7 @@
 #include "uvhttp_connection.h"
 #include "uvhttp_server.h"
 #include "uvhttp_router.h"
+#include "uvhttp_constants.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -66,7 +67,7 @@ uvhttp_connection_provider_t* uvhttp_default_connection_provider_create(void) {
     provider->base.cleanup_expired = default_cleanup_expired;
     
     provider->pool_size = 0;
-    provider->max_pool_size = 100; /* 默认最大连接池大小 */
+    provider->max_pool_size = UVHTTP_DEFAULT_CONNECTION_POOL_SIZE; /* 默认最大连接池大小 */
     
     return &provider->base;
 }

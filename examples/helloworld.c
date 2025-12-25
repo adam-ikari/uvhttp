@@ -1,6 +1,7 @@
 #include "../include/uvhttp.h"
 #include "../include/uvhttp_allocator.h"
 #include "../include/uvhttp_config.h"
+#include "../include/uvhttp_constants.h"
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -207,13 +208,13 @@ int main() {
     printf("Router set to server\n");
     
     // 启动服务器监听
-    printf("Starting server listen on port 8080...\n");
-    uvhttp_error_t result = uvhttp_server_listen(g_server, "0.0.0.0", 8080);
+    printf("Starting server listen on port %d...\n", UVHTTP_DEFAULT_PORT);
+    uvhttp_error_t result = uvhttp_server_listen(g_server, UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to start server, error code: %d\n", result);
         return 1;
     }
-    printf("Server listening on http://0.0.0.0:8080\n");
+    printf("Server listening on http://%s:%d\n", UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
     printf("Server is running! Press Ctrl+C to stop.\n");
     
     // 启动事件循环

@@ -1,5 +1,6 @@
 #include "uvhttp_error.h"
 #include "uvhttp_allocator.h"
+#include "uvhttp_constants.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -15,8 +16,8 @@ typedef struct {
 
 static uvhttp_error_recovery_config_t recovery_config = {
     .max_retries = 3,
-    .base_delay_ms = 100,
-    .max_delay_ms = 5000,
+    .base_delay_ms = UVHTTP_DEFAULT_BASE_DELAY_MS,
+    .max_delay_ms = UVHTTP_DEFAULT_MAX_DELAY_MS,
     .backoff_multiplier = 2.0
 };
 
@@ -33,8 +34,8 @@ static uvhttp_error_stats_t error_stats = {0};
 void uvhttp_set_error_recovery_config(int max_retries, int base_delay_ms, 
                                      int max_delay_ms, double backoff_multiplier) {
     recovery_config.max_retries = max_retries > 0 ? max_retries : 3;
-    recovery_config.base_delay_ms = base_delay_ms > 0 ? base_delay_ms : 100;
-    recovery_config.max_delay_ms = max_delay_ms > 0 ? max_delay_ms : 5000;
+    recovery_config.base_delay_ms = base_delay_ms > 0 ? base_delay_ms : UVHTTP_DEFAULT_BASE_DELAY_MS;
+    recovery_config.max_delay_ms = max_delay_ms > 0 ? max_delay_ms : UVHTTP_DEFAULT_MAX_DELAY_MS;
     recovery_config.backoff_multiplier = backoff_multiplier > 1.0 ? backoff_multiplier : 2.0;
 }
 
