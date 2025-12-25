@@ -20,9 +20,9 @@ typedef struct uvhttp_response uvhttp_response_t;
 
 typedef struct {
     uv_write_t write_req;
-    char* data;
     size_t length;
     uvhttp_response_t* response;
+    char data[];  /* 灵活数组成员，自动处理内存对齐 */
 } uvhttp_write_data_t;
 
 typedef struct {
@@ -75,7 +75,7 @@ uvhttp_error_t uvhttp_response_send_raw(const char* data,
                                        void* client, 
                                        uvhttp_response_t* response);
 
-/* 组合函数：保持API兼容性 */
+/* 响应发送函数 */
 uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
 
 /* ============ 测试专用函数 ============ */

@@ -108,9 +108,11 @@ int uvhttp_sanitize_error_message(const char* message,
     size_t msg_len = strlen(message);
     if (msg_len >= buffer_size) {
         strncpy(safe_buffer, message, buffer_size - 4);
-        strcpy(safe_buffer + buffer_size - 4, "...");
+        safe_buffer[buffer_size - 4] = '\0';
+        strcat(safe_buffer, "...");
     } else {
-        strcpy(safe_buffer, message);
+        strncpy(safe_buffer, message, buffer_size - 1);
+        safe_buffer[buffer_size - 1] = '\0';
     }
     
     return 0;

@@ -49,16 +49,16 @@ int main() {
     
     // 测试安全函数
     char dest[10];
-    int result = safe_strncpy(dest, "test", sizeof(dest));
+    int result = uvhttp_safe_strncpy(dest, "test", sizeof(dest));
     if (result != 0) {
-        printf("FAIL: safe_strncpy\n");
+        printf("FAIL: uvhttp_safe_strncpy\n");
         close(server_fd);
         return 1;
     }
     
-    result = validate_url("/test", 5);
+    result = uvhttp_validate_url_path("/test", 5);
     if (result != 0) {
-        printf("FAIL: validate_url\n");
+        printf("FAIL: uvhttp_validate_url_path\n");
         close(server_fd);
         return 1;
     }

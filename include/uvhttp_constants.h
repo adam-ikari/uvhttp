@@ -8,6 +8,7 @@
 
 /* HTTP 状态码 */
 #define UVHTTP_STATUS_CONTINUE           100
+#define UVHTTP_STATUS_MIN_CONTINUE       100
 #define UVHTTP_STATUS_SWITCHING_PROTOCOLS 101
 #define UVHTTP_STATUS_OK                 200
 #define UVHTTP_STATUS_CREATED            201
@@ -23,6 +24,7 @@
 #define UVHTTP_STATUS_NOT_IMPLEMENTED     501
 #define UVHTTP_STATUS_BAD_GATEWAY         502
 #define UVHTTP_STATUS_SERVICE_UNAVAILABLE 503
+#define UVHTTP_STATUS_MAX                 599
 
 /* HTTP 版本 */
 #define UVHTTP_VERSION_1_1 "HTTP/1.1"
@@ -58,6 +60,17 @@
 /* 连接相关 - 基于生产环境测试的保守值 */
 #define UVHTTP_MAX_CONNECTIONS           2048  /* 从512增加到2048，支持更高并发需求 */
 #define UVHTTP_READ_BUFFER_SIZE          8192  /* 8KB缓冲区，优化内存使用 */
+
+/* HTTP响应头安全边距 */
+#define UVHTTP_RESPONSE_HEADER_SAFETY_MARGIN 256  /* 响应头安全边距，防止缓冲区溢出 */
+
+/* 静态文件服务常量 */
+#define UVHTTP_DIR_LISTING_BUFFER_SIZE 4096     /* 目录列表HTML缓冲区大小 */
+#define UVHTTP_DIR_ENTRY_HTML_OVERHEAD 200      /* 每个目录条目的HTML开销 */
+
+/* 默认网络配置 */
+#define UVHTTP_DEFAULT_HOST "0.0.0.0"           /* 默认监听地址 */
+#define UVHTTP_DEFAULT_PORT 8080                /* 默认端口 */
 #define UVHTTP_BACKLOG                    1024  /* 从256增加到1024，匹配更高的连接限制 */
 
 
@@ -214,6 +227,33 @@
 #define UVHTTP_ERROR_LOG_BUFFER_SIZE     1024
 
 /* 路由缓存常量 */
+
+
+/* 路由查找模式选择 */
+#ifndef UVHTTP_ROUTER_SEARCH_MODE
+#define UVHTTP_ROUTER_SEARCH_MODE 2  /* 0=纯线性, 1=纯哈希, 2=混合策略(默认) */
+#endif
+#ifndef UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION
+#define UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION 1
+#endif
+
+/* 路由缓存统计功能开关（默认禁用） */
+#ifndef UVHTTP_ENABLE_ROUTER_CACHE_STATS
+#define UVHTTP_ENABLE_ROUTER_CACHE_STATS 0
+#endif
+
+/* 路由缓存动态调整功能开关（默认禁用） */
+#ifndef UVHTTP_ENABLE_ROUTER_CACHE_DYNAMIC
+#define UVHTTP_ENABLE_ROUTER_CACHE_DYNAMIC 0
+#endif
+
+/* 路由缓存性能监控功能开关（默认禁用） */
+#ifndef UVHTTP_ENABLE_ROUTER_CACHE_MONITORING
+#define UVHTTP_ENABLE_ROUTER_CACHE_MONITORING 0
+#endif
+
+#if UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION
+/* ========== 路由缓存相关常量 ========== */
 #define UVHTTP_ROUTER_METHOD_MAP_SIZE    256
 #define UVHTTP_ROUTER_HASH_SIZE          256
 #define UVHTTP_ROUTER_HOT_PATH_SIZE      64
@@ -222,26 +262,7 @@
 #define UVHTTP_ROUTER_HYBRID_THRESHOLD   100
 #define UVHTTP_ROUTER_MAX_CHILD_COUNT    16
 #define UVHTTP_ROUTER_INITIAL_POOL_SIZE  64
-
-/* TLS/SSL 常量 */
-#define UVHTTP_TLS_MIN_KEY_SIZE          16
-#define UVHTTP_TLS_DERIVED_KEY_SIZE      48
-#define UVHTTP_TLS_EARLY_DATA_SIZE       0x1000  /* 4KB */
-#define UVHTTP_TLS_CONFIG_LINE_SIZE      512
-#define UVHTTP_TLS_RESERVED_FDS          10
-
-/* HTTP 状态码范围 */
-#define UVHTTP_STATUS_MIN_CONTINUE       100
-#define UVHTTP_STATUS_MAX                599
-
-/* ========== 网络和服务器配置 ========== */
-#define UVHTTP_DEFAULT_PORT              8080
-#define UVHTTP_DEFAULT_HOST              "0.0.0.0"
-
-/* ========== 缓冲区大小配置 ========== */
-#define UVHTTP_DIR_LISTING_BUFFER_SIZE   4096
-#define UVHTTP_DIR_ENTRY_HTML_OVERHEAD   200
-#define UVHTTP_RESPONSE_HEADER_SAFETY_MARGIN 256
+#endif /* UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION */
 
 /* ========== 连接和池配置 ========== */
 #define UVHTTP_DEFAULT_CONNECTION_POOL_SIZE 100

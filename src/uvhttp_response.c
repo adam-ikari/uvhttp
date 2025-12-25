@@ -102,9 +102,8 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer, si
     }
     
     // HTTP/1.1要求：必须有Content-Length或使用chunked编码
-    // 这里我们总是添加Content-Length以确保兼容性
-    if (!has_content_length) {
-        if (response->body && response->body_length > 0) {
+    // 这里我们总是添加Content-Length以确保协议合规性
+        if (!has_content_length) {        if (response->body && response->body_length > 0) {
             pos += snprintf(buffer + pos, *length - pos, "Content-Length: %zu\r\n", 
                            response->body_length);
         } else {
@@ -263,31 +262,61 @@ uvhttp_error_t uvhttp_send_response_data(uvhttp_response_t* response, const char
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    uvhttp_write_data_t* write_data = uvhttp_malloc(sizeof(uvhttp_write_data_t));
-    if (!write_data) {
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
-    }
+    /* 检查整数溢出 */
     
-    write_data->data = uvhttp_malloc(length);
-    if (!write_data->data) {
-        uvhttp_free(write_data);
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
-    }
+        if (length > SIZE_MAX - sizeof(uvhttp_write_data_t)) {
     
-    memcpy(write_data->data, data, length);
-    write_data->length = length;
-    write_data->response = response;
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
     
-    uv_buf_t buf = uv_buf_init(write_data->data, write_data->length);
-    write_data->write_req.data = write_data;
-    int result = uv_write(&write_data->write_req, (uv_stream_t*)response->client, &buf, 1, 
-                         (uv_write_cb)uvhttp_free_write_data);
+        }
     
-    if (result < 0) {
-        uvhttp_free(write_data->data);
-        uvhttp_free(write_data);
-        return UVHTTP_ERROR_RESPONSE_SEND;
-    }
+        
+    
+        /* 优化：将write_data和数据缓冲区合并为一次分配，减少内存碎片 */
+    
+        size_t total_size = sizeof(uvhttp_write_data_t) + length;
+    
+        uvhttp_write_data_t* write_data = uvhttp_malloc(total_size);
+    
+        if (!write_data) {
+    
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
+    
+        }
+    
+        
+    
+        /* 使用灵活数组成员，自动处理内存对齐 */
+    
+        memcpy(write_data->data, data, length);
+    
+        write_data->length = length;
+    
+        write_data->response = response;
+    
+        
+    
+        uv_buf_t buf = uv_buf_init(write_data->data, write_data->length);
+    
+        write_data->write_req.data = write_data;
+    
+        
+    
+        int result = uv_write(&write_data->write_req, (uv_stream_t*)response->client, &buf, 1, 
+    
+                             (uv_write_cb)uvhttp_free_write_data);
+    
+        
+    
+        if (result < 0) {
+    
+            /* 修复内存泄漏：只需释放整个结构体，不需要单独释放data */
+    
+            uvhttp_free(write_data);
+    
+            return UVHTTP_ERROR_RESPONSE_SEND;
+    
+        }
     
     return UVHTTP_OK;
 }
@@ -312,10 +341,7 @@ static void uvhttp_free_write_data(uv_write_t* req, int status) {
             }
         }
         
-        /* 单线程安全的资源释放 */
-        if (write_data->data) {
-            uvhttp_free(write_data->data);
-        }
+        /* 优化后的资源释放：数据缓冲区和write_data是一次分配的 */
         uvhttp_free(write_data);
     }
 }
@@ -415,19 +441,19 @@ uvhttp_error_t uvhttp_response_send_raw(const char* data,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    /* 创建写数据结构，确保data在异步发送完成后被正确释放 */
-    uvhttp_write_data_t* write_data = uvhttp_malloc(sizeof(uvhttp_write_data_t));
+    /* 检查整数溢出 */
+    if (length > SIZE_MAX - sizeof(uvhttp_write_data_t)) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    
+    /* 创建写数据结构：将write_data和数据缓冲区合并为一次分配 */
+    size_t total_size = sizeof(uvhttp_write_data_t) + length;
+    uvhttp_write_data_t* write_data = uvhttp_malloc(total_size);
     if (!write_data) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
-    /* 分配并复制数据（因为原始数据可能被调用者释放） */
-    write_data->data = uvhttp_malloc(length);
-    if (!write_data->data) {
-        uvhttp_free(write_data);
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
-    }
-    
+    /* 使用灵活数组成员，自动处理内存对齐 */
     memcpy(write_data->data, data, length);
     write_data->length = length;
     write_data->response = response;
@@ -446,8 +472,7 @@ uvhttp_error_t uvhttp_response_send_raw(const char* data,
 #endif
     
     if (result < 0) {
-        /* 写入失败，立即清理资源 */
-        uvhttp_free(write_data->data);
+        /* 写入失败，立即清理资源 - 只需释放整个结构体 */
         uvhttp_free(write_data);
         return UVHTTP_ERROR_RESPONSE_SEND;
     }
@@ -465,11 +490,11 @@ uvhttp_error_t uvhttp_response_send_raw(const char* data,
     return UVHTTP_OK;
 }
 
-/* ============ 组合函数：保持API兼容性 ============ */
+/* ============ 响应发送函数 ============ */
 /* 单线程事件驱动的HTTP响应发送
- * 修复ab兼容性，确保HTTP响应格式正确
+ * 确保HTTP响应格式正确
  * 
- * 这个函数组合了纯函数和副作用函数，保持原有API兼容性
+ * 这个函数组合了数据构建和实际发送
  */
 uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
     if (!response) {

@@ -13,32 +13,32 @@
 TEST(UtilsTest, SafeStrncpy) {
     char dest[100];
     
-    EXPECT_EQ(safe_strncpy(dest, "hello", sizeof(dest)), 0);
+    EXPECT_EQ(uvhttp_safe_strncpy(dest, "hello", sizeof(dest)), 0);
     EXPECT_STREQ(dest, "hello");
     
-    EXPECT_EQ(safe_strncpy(NULL, "hello", sizeof(dest)), -1);
-    EXPECT_EQ(safe_strncpy(dest, NULL, sizeof(dest)), -1);
-    EXPECT_EQ(safe_strncpy(dest, "hello", 0), -1);
+    EXPECT_EQ(uvhttp_safe_strncpy(NULL, "hello", sizeof(dest)), -1);
+    EXPECT_EQ(uvhttp_safe_strncpy(dest, NULL, sizeof(dest)), -1);
+    EXPECT_EQ(uvhttp_safe_strncpy(dest, "hello", 0), -1);
     
 TEST_CLEANUP_LABEL:
     return;
 }
 
 TEST(UtilsTest, ValidateUrl) {
-    EXPECT_EQ(validate_url("http://example.com", 18), 0);
-    EXPECT_EQ(validate_url("/api/v1/users", 13), 0);  // 修正长度，不包含 NULL 字符
-    EXPECT_EQ(validate_url("", 0), -1);
-    EXPECT_EQ(validate_url(NULL, 0), -1);
+    EXPECT_EQ(uvhttp_validate_url_path("http://example.com", 18), 0);
+    EXPECT_EQ(uvhttp_validate_url_path("/api/v1/users", 13), 0);  // 修正长度，不包含 NULL 字符
+    EXPECT_EQ(uvhttp_validate_url_path("", 0), -1);
+    EXPECT_EQ(uvhttp_validate_url_path(NULL, 0), -1);
     
 TEST_CLEANUP_LABEL:
     return;
 }
 
 TEST(UtilsTest, ValidateMethod) {
-    EXPECT_EQ(validate_method("GET", 3), 0);
-    EXPECT_EQ(validate_method("POST", 4), 0);
-    EXPECT_EQ(validate_method(NULL, 3), -1);
-    EXPECT_EQ(validate_method("", 0), -1);
+    EXPECT_EQ(uvhttp_validate_http_method("GET", 3), 0);
+    EXPECT_EQ(uvhttp_validate_http_method("POST", 4), 0);
+    EXPECT_EQ(uvhttp_validate_http_method(NULL, 3), -1);
+    EXPECT_EQ(uvhttp_validate_http_method("", 0), -1);
     
 TEST_CLEANUP_LABEL:
     return;

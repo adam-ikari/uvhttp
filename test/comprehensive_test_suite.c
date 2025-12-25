@@ -244,11 +244,11 @@ void test_utility_functions() {
     TEST_ASSERT(result > 0, "Base64 编码");
     
     /* 测试字符串验证 */
-    result = uvhttp_validate_header_value("Content-Type", "text/html");
-    TEST_ASSERT(result == 0, "有效 Header 验证");
+    result = uvhttp_validate_header_value_safe("text/html");
+    TEST_ASSERT(result == 1, "有效 Header 验证");
     
-    result = uvhttp_validate_header_value("Bad\nHeader", "value");
-    TEST_ASSERT(result != 0, "无效 Header 拒绝");
+    result = uvhttp_validate_header_value_safe("Bad\nHeader");
+    TEST_ASSERT(result == 0, "无效 Header 拒绝");
     
     /* 测试安全字符串复制 */
     char dest[10];

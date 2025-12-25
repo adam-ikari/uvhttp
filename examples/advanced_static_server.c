@@ -212,7 +212,7 @@ int main() {
     /* 启动服务器 */
     if (uvhttp_server_listen(server, "0.0.0.0", 8080) != 0) {
         fprintf(stderr, "❌ 无法启动服务器\n");
-        uvhttp_static_v2_free(static_ctx);
+        uvhttp_static_free(static_ctx);
         uvhttp_server_free(server);
         return 1;
     }
@@ -237,7 +237,7 @@ int main() {
     
     if (static_ctx) {
         printf("\n📊 静态文件服务已停止\n");
-        uvhttp_static_v2_free(static_ctx);
+        uvhttp_static_free(static_ctx);
     }
     
     if (server) {

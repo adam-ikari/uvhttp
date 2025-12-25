@@ -153,12 +153,12 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 /* 重新开始读取新请求 - 用于keep-alive连接 */
 int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     if (!conn || !conn->request || !conn->response || !conn->request->parser || !conn->request->parser_settings) {
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     /* 检查连接状态，确保连接没有在关闭过程中 */
     if (conn->state == UVHTTP_CONN_STATE_CLOSING) {
-        return -1;
+        return UVHTTP_ERROR_CONNECTION_CLOSE;
     }
     
     /* 先停止当前的读取（如果正在进行） */
@@ -169,7 +169,7 @@ int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     
     /* 重新初始化请求对象 */
     if (uvhttp_request_init(conn->request, &conn->tcp_handle) != 0) {
-        return -1;
+        return UVHTTP_ERROR_REQUEST_INIT;
     }
     
     /* 完全重置响应对象状态 */
@@ -177,7 +177,7 @@ int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     
     /* 重新初始化响应对象 */
     if (uvhttp_response_init(conn->response, &conn->tcp_handle) != 0) {
-        return -1;
+        return UVHTTP_ERROR_RESPONSE_INIT;
     }
     
     /* 重置HTTP/1.1状态标志 */

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(uvhttp VERSION 1.0.0 LANGUAGES C CXX)
+project(uvhttp VERSION 1.1.0 LANGUAGES C CXX)
 
 # 设置输出目录结构
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin)

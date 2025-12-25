@@ -24,10 +24,9 @@ int uvhttp_safe_strcpy(char* dest, size_t dest_size, const char* src) {
     return 0;
 }
 
-// 注意：验证函数已移动到 uvhttp_validation.c
-// 这里保留兼容性包装器
+/* ============ 核心工具函数 ============ */
 
-// 保留原有函数以保持兼容性
+// 安全字符串复制函数
 int uvhttp_safe_strncpy(char* dest, const char* src, size_t dest_size) {
     if (!dest || !src || dest_size == 0) return -1;
     
@@ -38,43 +37,7 @@ int uvhttp_safe_strncpy(char* dest, const char* src, size_t dest_size) {
     memcpy(dest, src, src_len);
     dest[src_len] = '\0';
     
-    return 0;
-}
-
-// 兼容性函数（已弃用，请使用 uvhttp_validation.h 中的函数）
-#include "uvhttp_validation.h"
-
-int uvhttp_validate_header_value(const char* value, size_t length) {
-    // 简单包装，实际验证逻辑在 uvhttp_validation.c 中
-    (void)length; // 避免未使用参数警告
-    return value ? 0 : -1;
-}
-
-int uvhttp_validate_url(const char* url, size_t length) {
-    // 简单包装，实际验证逻辑在 uvhttp_validation.c 中
-    return url && length > 0 ? 0 : -1;
-}
-
-int uvhttp_validate_method(const char* method, size_t length) {
-    // 简单包装，实际验证逻辑在 uvhttp_validation.c 中
-    return method && length > 0 ? 0 : -1;
-}
-
-// 完全兼容的旧函数名（已弃用）
-int safe_strncpy(char* dest, const char* src, size_t dest_size) {
-    return uvhttp_safe_strncpy(dest, src, dest_size);
-}
-
-int validate_header_value(const char* value, size_t length) {
-    return uvhttp_validate_header_value(value, length);
-}
-
-int validate_url(const char* url, size_t length) {
-    return uvhttp_validate_url(url, length);
-}
-
-int validate_method(const char* method, size_t length) {
-    return uvhttp_validate_method(method, length);
+    return (int)src_len;  // 返回实际复制的字符数
 }
 
 /* ============ 内部辅助函数 ============ */

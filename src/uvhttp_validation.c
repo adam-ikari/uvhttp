@@ -16,7 +16,7 @@ static const char* valid_methods[] = {
 
 /* 危险的路径字符 */
 static const char dangerous_path_chars[] = {
-    '\0', '<', '>', ':', '"', '|', '?', '*', '\n', '\r'
+    '<', '>', ':', '"', '|', '?', '*', '\n', '\r'
 };
 
 /* 危险的查询字符 */

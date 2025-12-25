@@ -37,7 +37,7 @@ int mock_tls_load_cert(mock_tls_context_t* ctx, const char* cert_file) {
     if (!ctx || !cert_file) return -1;
     
     // 验证证书文件路径
-    if (validate_header_value(cert_file, strlen(cert_file)) != 0) {
+    if (uvhttp_validate_header_value_safe(cert_file, strlen(cert_file)) != 0) {
         return -1;
     }
     
@@ -49,7 +49,7 @@ int mock_tls_load_key(mock_tls_context_t* ctx, const char* key_file) {
     if (!ctx || !key_file) return -1;
     
     // 验证密钥文件路径
-    if (validate_header_value(key_file, strlen(key_file)) != 0) {
+    if (uvhttp_validate_header_value_safe(key_file, strlen(key_file)) != 0) {
         return -1;
     }
     
@@ -61,7 +61,7 @@ int mock_tls_load_ca(mock_tls_context_t* ctx, const char* ca_file) {
     if (!ctx || !ca_file) return -1;
     
     // 验证CA文件路径
-    if (validate_header_value(ca_file, strlen(ca_file)) != 0) {
+    if (uvhttp_validate_header_value_safe(ca_file, strlen(ca_file)) != 0) {
         return -1;
     }
     

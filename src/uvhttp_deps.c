@@ -17,7 +17,7 @@ static uv_loop_t* default_get_default_loop(void* user_data) {
 
 static uv_loop_t* default_create_loop(void* user_data) {
     (void)user_data;
-    uv_loop_t* loop = malloc(sizeof(uv_loop_t));
+    uv_loop_t* loop = uvhttp_malloc(sizeof(uv_loop_t));
     if (loop) {
         uv_loop_init(loop);
     }
@@ -38,7 +38,7 @@ static void default_close_loop(uv_loop_t* loop, void* user_data) {
 }
 
 uvhttp_loop_provider_t* uvhttp_default_loop_provider_new(void) {
-    uvhttp_loop_provider_t* provider = malloc(sizeof(uvhttp_loop_provider_t));
+    uvhttp_loop_provider_t* provider = uvhttp_malloc(sizeof(uvhttp_loop_provider_t));
     if (!provider) return NULL;
     
     provider->get_default_loop = default_get_default_loop;
@@ -79,7 +79,7 @@ static size_t default_get_allocated_size(void* ptr, void* user_data) {
 }
 
 uvhttp_memory_provider_t* uvhttp_default_memory_provider_new(void) {
-    uvhttp_memory_provider_t* provider = malloc(sizeof(uvhttp_memory_provider_t));
+    uvhttp_memory_provider_t* provider = uvhttp_malloc(sizeof(uvhttp_memory_provider_t));
     if (!provider) return NULL;
     
     provider->malloc = default_malloc;
@@ -130,7 +130,7 @@ static void default_close_socket(int sockfd, void* user_data) {
 }
 
 uvhttp_network_provider_t* uvhttp_default_network_provider_new(void) {
-    uvhttp_network_provider_t* provider = malloc(sizeof(uvhttp_network_provider_t));
+    uvhttp_network_provider_t* provider = uvhttp_malloc(sizeof(uvhttp_network_provider_t));
     if (!provider) return NULL;
     
     provider->create_socket = default_create_socket;
@@ -183,7 +183,7 @@ static int default_access(const char* pathname, int mode, void* user_data) {
 }
 
 uvhttp_file_provider_t* uvhttp_default_file_provider_new(void) {
-    uvhttp_file_provider_t* provider = malloc(sizeof(uvhttp_file_provider_t));
+    uvhttp_file_provider_t* provider = uvhttp_malloc(sizeof(uvhttp_file_provider_t));
     if (!provider) return NULL;
     
     provider->fopen = default_fopen;
@@ -241,15 +241,15 @@ static size_t test_get_allocated_size(void* ptr, void* user_data) {
 }
 
 uvhttp_memory_provider_t* uvhttp_test_memory_provider_new(void) {
-    test_memory_data_t* data = malloc(sizeof(test_memory_data_t));
+    test_memory_data_t* data = uvhttp_malloc(sizeof(test_memory_data_t));
     if (!data) return NULL;
     
     memset(data, 0, sizeof(test_memory_data_t));
     data->track_allocations = true;
     
-    uvhttp_memory_provider_t* provider = malloc(sizeof(uvhttp_memory_provider_t));
+    uvhttp_memory_provider_t* provider = uvhttp_malloc(sizeof(uvhttp_memory_provider_t));
     if (!provider) {
-        free(data);
+        uvhttp_free(data);
         return NULL;
     }
     
@@ -301,15 +301,15 @@ static ssize_t test_recv_data(int sockfd, void* buf, size_t len, int flags, void
 }
 
 uvhttp_network_provider_t* uvhttp_test_network_provider_new(void) {
-    test_network_data_t* data = malloc(sizeof(test_network_data_t));
+    test_network_data_t* data = uvhttp_malloc(sizeof(test_network_data_t));
     if (!data) return NULL;
     
     memset(data, 0, sizeof(test_network_data_t));
     data->mock_socket_result = -1; /* 默认失败 */
     
-    uvhttp_network_provider_t* provider = malloc(sizeof(uvhttp_network_provider_t));
+    uvhttp_network_provider_t* provider = uvhttp_malloc(sizeof(uvhttp_network_provider_t));
     if (!provider) {
-        free(data);
+        uvhttp_free(data);
         return NULL;
     }
     
@@ -365,14 +365,14 @@ static int test_access(const char* pathname, int mode, void* user_data) {
 }
 
 uvhttp_file_provider_t* uvhttp_test_file_provider_new(void) {
-    test_file_data_t* data = malloc(sizeof(test_file_data_t));
+    test_file_data_t* data = uvhttp_malloc(sizeof(test_file_data_t));
     if (!data) return NULL;
     
     memset(data, 0, sizeof(test_file_data_t));
     
-    uvhttp_file_provider_t* provider = malloc(sizeof(uvhttp_file_provider_t));
+    uvhttp_file_provider_t* provider = uvhttp_malloc(sizeof(uvhttp_file_provider_t));
     if (!provider) {
-        free(data);
+        uvhttp_free(data);
         return NULL;
     }
     
@@ -395,25 +395,25 @@ static void default_cleanup(uvhttp_deps_t* deps) {
     
     if (deps->owns_providers) {
         if (deps->loop_provider) {
-            free(deps->loop_provider);
+            uvhttp_free(deps->loop_provider);
         }
         if (deps->memory_provider) {
-            free(deps->memory_provider->user_data);
-            free(deps->memory_provider);
+            uvhttp_free(deps->memory_provider->user_data);
+            uvhttp_free(deps->memory_provider);
         }
         if (deps->network_provider) {
-            free(deps->network_provider->user_data);
-            free(deps->network_provider);
+            uvhttp_free(deps->network_provider->user_data);
+            uvhttp_free(deps->network_provider);
         }
         if (deps->file_provider) {
-            free(deps->file_provider->user_data);
-            free(deps->file_provider);
+            uvhttp_free(deps->file_provider->user_data);
+            uvhttp_free(deps->file_provider);
         }
     }
 }
 
 uvhttp_deps_t* uvhttp_deps_new(void) {
-    uvhttp_deps_t* deps = malloc(sizeof(uvhttp_deps_t));
+    uvhttp_deps_t* deps = uvhttp_malloc(sizeof(uvhttp_deps_t));
     if (!deps) return NULL;
     
     memset(deps, 0, sizeof(uvhttp_deps_t));
@@ -495,5 +495,5 @@ void uvhttp_deps_free(uvhttp_deps_t* deps) {
         deps->cleanup(deps);
     }
     
-    free(deps);
+    uvhttp_free(deps);
 }

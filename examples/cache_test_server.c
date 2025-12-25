@@ -5,7 +5,7 @@
  */
 
 #include "uvhttp.h"
-#include "uvhttp_static_v2.h"
+#include "uvhttp_static.h"
 #include "uvhttp_lru_cache.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,13 +18,13 @@ static uvhttp_static_context_t* g_static_ctx = NULL;
 /**
  * 静态文件请求处理器
  */
-void static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     if (!g_static_ctx) {
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_header(response, "Content-Type", "text/plain");
         uvhttp_response_set_body(response, "Static file service not initialized", 35);
         uvhttp_response_send(response);
-        return;
+        return -1;
     }
     
     /* 处理静态文件请求 */
@@ -37,17 +37,18 @@ void static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response)
     }
     
     uvhttp_response_send(response);
+    return 0;
 }
 
 /**
  * 缓存统计处理器
  */
-void cache_stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+int cache_stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     if (!g_static_ctx) {
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_body(response, "Service not initialized", 21);
         uvhttp_response_send(response);
-        return;
+        return -1;
     }
     
     /* 获取缓存统计信息 */
@@ -58,7 +59,7 @@ void cache_stats_handler(uvhttp_request_t* request, uvhttp_response_t* response)
     uvhttp_static_get_cache_stats(g_static_ctx, &total_memory_usage, &entry_count,
                                   &hit_count, &miss_count, &eviction_count);
     
-    double hit_rate = uvhttp_static_v2_get_cache_hit_rate(g_static_ctx);
+    double hit_rate = uvhttp_static_get_cache_hit_rate(g_static_ctx);
     
     /* 生成统计信息HTML */
     char stats_html[2048];
@@ -123,21 +124,22 @@ void cache_stats_handler(uvhttp_request_t* request, uvhttp_response_t* response)
     uvhttp_response_set_header(response, "Content-Type", "text/html");
     uvhttp_response_set_body(response, stats_html, strlen(stats_html));
     uvhttp_response_send(response);
+    return 0;
 }
 
 /**
  * 清理过期缓存处理器
  */
-void clear_cache_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+int clear_cache_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     if (!g_static_ctx) {
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_body(response, "Service not initialized", 21);
         uvhttp_response_send(response);
-        return;
+        return -1;
     }
     
     /* 清理过期缓存 */
-    int cleaned_count = uvhttp_static_v2_cleanup_expired_cache(g_static_ctx);
+    int cleaned_count = uvhttp_static_cleanup_expired_cache(g_static_ctx);
     
     char result[256];
     snprintf(result, sizeof(result), "清理了 %d 个过期缓存条目", cleaned_count);
@@ -146,12 +148,13 @@ void clear_cache_handler(uvhttp_request_t* request, uvhttp_response_t* response)
     uvhttp_response_set_header(response, "Content-Type", "text/plain");
     uvhttp_response_set_body(response, result, strlen(result));
     uvhttp_response_send(response);
+    return 0;
 }
 
 /**
  * 主页处理器
  */
-void home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     const char* html_content = 
         "<!DOCTYPE html>\n"
         "<html>\n"
@@ -214,6 +217,7 @@ void home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     uvhttp_response_set_header(response, "Content-Type", "text/html");
     uvhttp_response_set_body(response, html_content, strlen(html_content));
     uvhttp_response_send(response);
+    return 0;
 }
 
 /**
@@ -309,7 +313,7 @@ int main() {
     /* 启动服务器 */
     if (uvhttp_server_listen(server, "0.0.0.0", 8080) != 0) {
         fprintf(stderr, "Failed to start server\n");
-        uvhttp_static_v2_free(g_static_ctx);
+        uvhttp_static_free(g_static_ctx);
         return 1;
     }
     
@@ -320,7 +324,7 @@ int main() {
     uv_run(loop, UV_RUN_DEFAULT);
     
     /* 清理资源 */
-    uvhttp_static_v2_free(g_static_ctx);
+    uvhttp_static_free(g_static_ctx);
     
     return 0;
 }

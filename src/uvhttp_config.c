@@ -59,7 +59,8 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config) {
     
     config->log_level = UVHTTP_DEFAULT_LOG_LEVEL;
     config->enable_access_log = UVHTTP_DEFAULT_ENABLE_ACCESS_LOG;
-    strcpy(config->log_file_path, "");
+    strncpy(config->log_file_path, "", sizeof(config->log_file_path) - 1);
+    config->log_file_path[sizeof(config->log_file_path) - 1] = '\0';
 }
 
 /* 从文件加载配置 */
@@ -142,6 +143,26 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
                 return UVHTTP_ERROR_INVALID_PARAM;
             }
             config->max_body_size = (size_t)val;
+        } else if (strcmp(key, "log_file_path") == 0) {
+            /* 安全处理 log_file_path - 防止缓冲区溢出和路径遍历攻击 */
+            if (strlen(value) >= sizeof(config->log_file_path)) {
+                UVHTTP_LOG_ERROR("log_file_path too long: max %zu characters allowed", 
+                                sizeof(config->log_file_path) - 1);
+                fclose(file);
+                return UVHTTP_ERROR_INVALID_PARAM;
+            }
+            
+            /* 路径遍历攻击检查 */
+            if (strstr(value, "..") != NULL || strstr(value, "/") == value || 
+                strstr(value, "\\") == value || strstr(value, "//") != NULL ||
+                strstr(value, "\\\\") != NULL) {
+                UVHTTP_LOG_ERROR("log_file_path contains invalid path sequences: %s", value);
+                fclose(file);
+                return UVHTTP_ERROR_INVALID_PARAM;
+            }
+            
+            strncpy(config->log_file_path, value, sizeof(config->log_file_path) - 1);
+            config->log_file_path[sizeof(config->log_file_path) - 1] = '\0';
         }
     }
     
@@ -250,6 +271,22 @@ int uvhttp_config_load_env(uvhttp_config_t* config) {
             config->log_level = (int)val;
         } else {
             UVHTTP_LOG_WARN("Invalid UVHTTP_LOG_LEVEL=%s, using default", env_val);
+        }
+    }
+    if ((env_val = getenv("UVHTTP_LOG_FILE_PATH"))) {
+        /* 安全处理环境变量中的 log_file_path */
+        if (strlen(env_val) < sizeof(config->log_file_path)) {
+            /* 路径遍历攻击检查 */
+            if (strstr(env_val, "..") != NULL || strstr(env_val, "/") == env_val || 
+                strstr(env_val, "\\") == env_val || strstr(env_val, "//") != NULL ||
+                strstr(env_val, "\\\\") != NULL) {
+                UVHTTP_LOG_WARN("UVHTTP_LOG_FILE_PATH contains invalid path sequences, using default");
+            } else {
+                strncpy(config->log_file_path, env_val, sizeof(config->log_file_path) - 1);
+                config->log_file_path[sizeof(config->log_file_path) - 1] = '\0';
+            }
+        } else {
+            UVHTTP_LOG_WARN("UVHTTP_LOG_FILE_PATH too long, using default");
         }
     }
     

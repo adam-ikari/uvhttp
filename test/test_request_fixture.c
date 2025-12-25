@@ -39,7 +39,7 @@ TEST_CLEANUP_LABEL:
 
 TEST_F(HttpRequestTest, SafeStrncpyWithFixture) {
     // 使用夹具提供的缓冲区
-    EXPECT_EQ(safe_strncpy(fixture->test_buffer, "test message", fixture->buffer_size), 0);
+    EXPECT_EQ(uvhttp_safe_strncpy(fixture->test_buffer, "test message", fixture->buffer_size), 0);
     EXPECT_STREQ(fixture->test_buffer, "test message");
     
 TEST_CLEANUP_LABEL:
@@ -48,9 +48,9 @@ TEST_CLEANUP_LABEL:
 
 TEST_F(HttpRequestTest, UrlValidationWithFixture) {
     // 测试URL验证功能
-    EXPECT_EQ(validate_url("http://example.com", 18), 0);
-    EXPECT_EQ(validate_url("/api/v1/users", 14), 0);
-    EXPECT_EQ(validate_url("", 0), -1);
+    EXPECT_EQ(uvhttp_validate_url_path("http://example.com", 18), 0);
+    EXPECT_EQ(uvhttp_validate_url_path("/api/v1/users", 14), 0);
+    EXPECT_EQ(uvhttp_validate_url_path("", 0), -1);
     
 TEST_CLEANUP_LABEL:
     return;
@@ -60,7 +60,7 @@ TEST_CLEANUP_LABEL:
 TEST(UtilsTest, BasicValidation) {
     char buffer[100];
     
-    EXPECT_EQ(safe_strncpy(buffer, "hello", sizeof(buffer)), 0);
+    EXPECT_EQ(uvhttp_safe_strncpy(buffer, "hello", sizeof(buffer)), 0);
     EXPECT_STREQ(buffer, "hello");
     
 TEST_CLEANUP_LABEL:

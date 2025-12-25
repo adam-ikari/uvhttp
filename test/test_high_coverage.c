@@ -108,7 +108,7 @@ int test_utils_comprehensive() {
     };
     
     for (int i = 0; i < 6; i++) {
-        if (uvhttp_validate_header_value("URL", valid_urls[i]) != 0) {
+        if (uvhttp_validate_header_value_safe("URL", valid_urls[i]) != 0) {
             printf("✗ 有效URL验证失败: %s\n", valid_urls[i]);
             return -1;
         }
@@ -124,7 +124,7 @@ int test_utils_comprehensive() {
     };
     
     for (int i = 0; i < 4; i++) {
-        if (i < 2 && uvhttp_validate_header_value("URL", invalid_urls[i]) == 0) {
+        if (i < 2 && uvhttp_validate_header_value_safe("URL", invalid_urls[i]) == 0) {
             printf("✗ 无效URL验证失败: %s\n", invalid_urls[i] ? "NULL" : "empty");
             return -1;
         }
@@ -134,7 +134,7 @@ int test_utils_comprehensive() {
     // 测试HTTP方法验证
     const char* methods[] = {"GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "PATCH"};
     for (int i = 0; i < 7; i++) {
-        if (uvhttp_validate_header_value("Method", methods[i]) != 0) {
+        if (uvhttp_validate_header_value_safe("Method", methods[i]) != 0) {
             printf("✗ HTTP方法验证失败: %s\n", methods[i]);
             return -1;
         }

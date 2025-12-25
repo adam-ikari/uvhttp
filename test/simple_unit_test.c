@@ -143,8 +143,8 @@ int test_utils_functions() {
     }
     
     // 测试header验证
-    result = uvhttp_validate_header_value("Content-Type", "text/plain");
-    if (result == 0) {
+    result = uvhttp_validate_header_value_safe("text/plain");
+    if (result == 1) {
         printf("✓ Header验证测试通过\n");
     } else {
         printf("✗ Header验证测试失败\n");

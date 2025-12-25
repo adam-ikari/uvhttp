@@ -328,7 +328,8 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
         strncpy(entry->mime_type, mime_type, sizeof(entry->mime_type) - 1);
         entry->mime_type[sizeof(entry->mime_type) - 1] = '\0';
     } else {
-        strcpy(entry->mime_type, "application/octet-stream");
+        strncpy(entry->mime_type, "application/octet-stream", sizeof(entry->mime_type) - 1);
+        entry->mime_type[sizeof(entry->mime_type) - 1] = '\0';
     }
     
     /* 设置ETag */

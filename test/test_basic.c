@@ -9,14 +9,14 @@ int main() {
     
     // 测试安全的字符串操作
     char dest[10];
-    int result = safe_strncpy(dest, "hello", sizeof(dest));
-    if (result != 0) {
-        printf("FAIL: safe_strncpy failed\n");
+    int result = uvhttp_safe_strncpy(dest, "hello", sizeof(dest));
+    if (result != 5) {
+        printf("FAIL: uvhttp_safe_strncpy failed\n");
         return 1;
     }
     
     if (strcmp(dest, "hello") != 0) {
-        printf("FAIL: safe_strncpy incorrect result\n");
+        printf("FAIL: uvhttp_safe_strncpy incorrect result\n");
         return 1;
     }
     

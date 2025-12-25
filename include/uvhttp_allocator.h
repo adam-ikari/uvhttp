@@ -72,7 +72,7 @@ typedef enum {
 #define UVHTTP_MALLOC_DEFINED
 #endif /* UVHTTP_MALLOC_DEFINED */
 
-/* 兼容性函数声明 */
+/* 统一分配器接口 */
 static inline void* uvhttp_malloc(size_t size) {
     return UVHTTP_MALLOC(size);
 }
@@ -82,7 +82,11 @@ static inline void* uvhttp_realloc(void* ptr, size_t size) {
 }
 
 static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
+#ifndef UVHTTP_CALLOC
+    return calloc(nmemb, size);
+#else
     return UVHTTP_CALLOC(nmemb, size);
+#endif
 }
 
 static inline void uvhttp_free(void* ptr) {

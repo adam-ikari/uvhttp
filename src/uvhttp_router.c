@@ -315,8 +315,9 @@ uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
             int is_param = (token[0] == ':');
             if (is_param) {
                 token++;
-                // 保存参数名
-                for (size_t i = 0; i < strlen(token); i++) {
+                // 保存参数名 - 优化：只计算一次strlen
+                size_t token_len = strlen(token);
+                for (size_t i = 0; i < token_len; i++) {
                     if (token[i] == '/') {
                         strncpy(current->param_name, token, i);
                         current->param_name[i] = '\0';

@@ -54,7 +54,7 @@ static void default_cleanup_expired(uvhttp_connection_provider_t* provider) {
 
 uvhttp_connection_provider_t* uvhttp_default_connection_provider_create(void) {
     uvhttp_default_connection_provider_t* provider = 
-        (uvhttp_default_connection_provider_t*)malloc(sizeof(uvhttp_default_connection_provider_t));
+        (uvhttp_default_connection_provider_t*)uvhttp_malloc(sizeof(uvhttp_default_connection_provider_t));
     if (!provider) {
         return NULL;
     }
@@ -109,7 +109,7 @@ static void test_cleanup_expired(uvhttp_connection_provider_t* provider) {
 
 uvhttp_connection_provider_t* uvhttp_test_connection_provider_create(void) {
     uvhttp_test_connection_provider_t* provider = 
-        (uvhttp_test_connection_provider_t*)malloc(sizeof(uvhttp_test_connection_provider_t));
+        (uvhttp_test_connection_provider_t*)uvhttp_malloc(sizeof(uvhttp_test_connection_provider_t));
     if (!provider) {
         return NULL;
     }
@@ -200,7 +200,7 @@ static void default_set_level(uvhttp_logger_provider_t* provider, uvhttp_log_lev
 
 uvhttp_logger_provider_t* uvhttp_default_logger_provider_create(uvhttp_log_level_t level) {
     uvhttp_default_logger_provider_t* provider = 
-        (uvhttp_default_logger_provider_t*)malloc(sizeof(uvhttp_default_logger_provider_t));
+        (uvhttp_default_logger_provider_t*)uvhttp_malloc(sizeof(uvhttp_default_logger_provider_t));
     if (!provider) {
         return NULL;
     }
@@ -260,7 +260,7 @@ static void test_log(uvhttp_logger_provider_t* provider,
     size_t entry_len = strlen(log_entry);
     char* new_logs = (char*)realloc(impl->cached_logs, impl->cached_size + entry_len + 1);
     if (new_logs) {
-        strcpy(new_logs + impl->cached_size, log_entry);
+        memcpy(new_logs + impl->cached_size, log_entry, entry_len + 1);  /* +1 for null terminator */
         impl->cached_logs = new_logs;
         impl->cached_size += entry_len;
     }
@@ -273,7 +273,7 @@ static void test_set_level(uvhttp_logger_provider_t* provider, uvhttp_log_level_
 
 uvhttp_logger_provider_t* uvhttp_test_logger_provider_create(void) {
     uvhttp_test_logger_provider_t* provider = 
-        (uvhttp_test_logger_provider_t*)malloc(sizeof(uvhttp_test_logger_provider_t));
+        (uvhttp_test_logger_provider_t*)uvhttp_malloc(sizeof(uvhttp_test_logger_provider_t));
     if (!provider) {
         return NULL;
     }
@@ -334,7 +334,7 @@ static int default_set_int(uvhttp_config_provider_t* provider,
 
 uvhttp_config_provider_t* uvhttp_default_config_provider_create(void) {
     uvhttp_default_config_provider_t* provider = 
-        (uvhttp_default_config_provider_t*)malloc(sizeof(uvhttp_default_config_provider_t));
+        (uvhttp_default_config_provider_t*)uvhttp_malloc(sizeof(uvhttp_default_config_provider_t));
     if (!provider) {
         return NULL;
     }
@@ -352,7 +352,7 @@ uvhttp_config_provider_t* uvhttp_default_config_provider_create(void) {
 /* ============ 上下文管理实现 ============ */
 
 uvhttp_context_t* uvhttp_context_create(uv_loop_t* loop) {
-    uvhttp_context_t* context = (uvhttp_context_t*)malloc(sizeof(uvhttp_context_t));
+    uvhttp_context_t* context = (uvhttp_context_t*)uvhttp_malloc(sizeof(uvhttp_context_t));
     if (!context) {
         return NULL;
     }
@@ -372,7 +372,7 @@ void uvhttp_context_destroy(uvhttp_context_t* context) {
     
     /* 销毁各种提供者 */
     if (context->connection_provider) {
-        free(context->connection_provider);
+        uvhttp_free(context->connection_provider);
     }
     
     /* 注意：内存分配器使用编译时宏，无需运行时清理 */
@@ -380,20 +380,20 @@ void uvhttp_context_destroy(uvhttp_context_t* context) {
     if (context->logger_provider) {
         uvhttp_test_logger_provider_t* logger = (uvhttp_test_logger_provider_t*)context->logger_provider;
         if (logger->cached_logs) {
-            free(logger->cached_logs);
+            uvhttp_free(logger->cached_logs);
         }
-        free(context->logger_provider);
+        uvhttp_free(context->logger_provider);
     }
     
     if (context->config_provider) {
-        free(context->config_provider);
+        uvhttp_free(context->config_provider);
     }
     
     if (context->network_interface) {
         uvhttp_network_interface_destroy(context->network_interface);
     }
     
-    free(context);
+    uvhttp_free(context);
 }
 
 int uvhttp_context_init(uvhttp_context_t* context) {
@@ -447,7 +447,7 @@ int uvhttp_context_set_connection_provider(uvhttp_context_t* context,
     }
     
     if (context->connection_provider) {
-        free(context->connection_provider);
+        uvhttp_free(context->connection_provider);
     }
     
     context->connection_provider = provider;

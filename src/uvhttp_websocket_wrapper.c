@@ -1,4 +1,4 @@
-/* WebSocket 包装层实现 - 完全隔离 libwebsockets */
+/* WebSocket包装层实现 - 隔离libwebsockets依赖 */
 
 #include "uvhttp_websocket_wrapper.h"
 #include "uvhttp_error_handler.h"
@@ -153,7 +153,8 @@ static int uvhttp_websocket_handshake(uvhttp_websocket_t* ws,
     }
     
     /* 计算 Sec-WebSocket-Accept 值 */
-    size_t combined_len = strlen(ws_key) + strlen(WS_MAGIC_STRING);
+    size_t magic_len = strlen(WS_MAGIC_STRING);
+    size_t combined_len = ws_key_len + magic_len;
     if (combined_len >= 128) {
         UVHTTP_LOG_ERROR("Combined key length too long: %zu\n", combined_len);
         return -1;
@@ -162,7 +163,7 @@ static int uvhttp_websocket_handshake(uvhttp_websocket_t* ws,
     snprintf(combined, sizeof(combined), "%s%s", ws_key, WS_MAGIC_STRING);
     
     unsigned char sha1_hash[20];
-    if (uvhttp_sha1(combined, strlen(combined), sha1_hash) != 0) {
+    if (uvhttp_sha1(combined, combined_len, sha1_hash) != 0) {
         UVHTTP_LOG_ERROR("SHA1 calculation failed\n");
         return -1;
     }
@@ -861,5 +862,13 @@ uvhttp_websocket_error_t uvhttp_websocket_verify_peer_cert_enhanced(uvhttp_webso
 
 /* 全局清理函数 */
 void uvhttp_websocket_cleanup_global(void) {
-    /* TODO: 清理全局资源 */
+    /* 
+     * 当前实现不需要全局资源清理：
+     * - 所有资源都是per-connection的，在连接关闭时自动清理
+     * - 没有全局mutex或锁（单线程事件驱动模型）
+     * - 没有全局缓存或池
+     * 
+     * 保留此函数以保持API完整性，未来如果添加全局资源（如连接池）
+     * 可以在此处实现清理逻辑
+     */
 }

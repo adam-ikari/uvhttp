@@ -21,7 +21,7 @@ void signal_handler(int sig) {
 
 // 简单处理器
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    const char* name = uvhttp_request_get_query_param(req);
+    const char* name = uvhttp_request_get_query_param(req, "name");
     if (!name) name = "World";
     
     char content[256];

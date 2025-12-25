@@ -49,7 +49,7 @@ TEST(validate_url_valid) {
 }
 
 TEST(validate_url_invalid) {
-    EXPECT_EQ(uvhttp_validate_url_path("/test\x00"), 0);
+    EXPECT_EQ(uvhttp_validate_url_path("no-leading-slash"), 0);
     EXPECT_EQ(uvhttp_validate_url_path(NULL), 0);
     EXPECT_EQ(uvhttp_validate_url_path(""), 0);
     tests_run++;
@@ -92,11 +92,19 @@ TEST(validate_method_invalid) {
 // 边界条件测试
 TEST(edge_cases_min_buffer) {
     char dest[1];
-    EXPECT_EQ(uvhttp_safe_strncpy(dest, "a", sizeof(dest)), 1);
-    EXPECT_EQ(dest[0], 'a');
+    // dest_size=1只能存储null终止符，无法存储任何字符
+    EXPECT_EQ(uvhttp_safe_strncpy(dest, "a", sizeof(dest)), 0);
+    EXPECT_EQ(dest[0], '\0');
     
+    // 空字符串也应该返回0
     EXPECT_EQ(uvhttp_safe_strncpy(dest, "", sizeof(dest)), 0);
     EXPECT_EQ(dest[0], '\0');
+    
+    // 测试实际可以复制一个字符的情况
+    char dest2[2];
+    EXPECT_EQ(uvhttp_safe_strncpy(dest2, "a", sizeof(dest2)), 1);
+    EXPECT_EQ(dest2[0], 'a');
+    EXPECT_EQ(dest2[1], '\0');
     tests_run++;
 }
 

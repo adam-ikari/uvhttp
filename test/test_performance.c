@@ -23,13 +23,13 @@ void test_string_performance() {
     double start_time = get_time_ms();
     
     for (int i = 0; i < iterations; i++) {
-        safe_strncpy(dest, src, sizeof(dest));
+        uvhttp_safe_strncpy(dest, src, sizeof(dest));
     }
     
     double end_time = get_time_ms();
     double ops_per_sec = iterations / ((end_time - start_time) / 1000.0);
     
-    printf("✓ safe_strncpy: %.0f operations/second\n", ops_per_sec);
+    printf("✓ uvhttp_safe_strncpy: %.0f operations/second\n", ops_per_sec);
     printf("✓ Average time per operation: %.3f microseconds\n", 
            (end_time - start_time) * 1000.0 / iterations);
 }
@@ -48,29 +48,29 @@ void test_validation_performance() {
     // URL验证测试
     start_time = get_time_ms();
     for (int i = 0; i < iterations; i++) {
-        validate_url(test_url, strlen(test_url));
+        uvhttp_validate_url_path(test_url, strlen(test_url));
     }
     end_time = get_time_ms();
     double url_ops_per_sec = iterations / ((end_time - start_time) / 1000.0);
-    printf("✓ validate_url: %.0f operations/second\n", url_ops_per_sec);
+    printf("✓ uvhttp_validate_url_path: %.0f operations/second\n", url_ops_per_sec);
     
     // 头部验证测试
     start_time = get_time_ms();
     for (int i = 0; i < iterations; i++) {
-        validate_header_value(test_header, strlen(test_header));
+        uvhttp_validate_header_value_safe(test_header, strlen(test_header));
     }
     end_time = get_time_ms();
     double header_ops_per_sec = iterations / ((end_time - start_time) / 1000.0);
-    printf("✓ validate_header_value: %.0f operations/second\n", header_ops_per_sec);
+    printf("✓ uvhttp_validate_header_value_safe: %.0f operations/second\n", header_ops_per_sec);
     
     // 方法验证测试
     start_time = get_time_ms();
     for (int i = 0; i < iterations; i++) {
-        validate_method(test_method, strlen(test_method));
+        uvhttp_validate_http_method(test_method, strlen(test_method));
     }
     end_time = get_time_ms();
     double method_ops_per_sec = iterations / ((end_time - start_time) / 1000.0);
-    printf("✓ validate_method: %.0f operations/second\n", method_ops_per_sec);
+    printf("✓ uvhttp_validate_http_method: %.0f operations/second\n", method_ops_per_sec);
 }
 
 // 内存分配性能测试
@@ -129,10 +129,10 @@ void test_http_parsing_performance() {
         size_t url_len = url_end - url_start;
         
         // 验证方法
-        validate_method(method_start, method_len);
+        uvhttp_validate_http_method(method_start, method_len);
         
         // 验证URL
-        validate_url(url_start, url_len);
+        uvhttp_validate_url_path(url_start, url_len);
         
         // 模拟头部解析
         const char* headers = url_end + 1;
@@ -145,7 +145,7 @@ void test_http_parsing_performance() {
                 const char* value_start = colon + 1;
                 while (*value_start == ' ' || *value_start == '\t') value_start++;
                 
-                validate_header_value(value_start, line_end - value_start);
+                uvhttp_validate_header_value_safe(value_start, line_end - value_start);
             }
             
             headers = line_end + 2;

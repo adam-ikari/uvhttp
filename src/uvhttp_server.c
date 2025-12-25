@@ -352,7 +352,7 @@ int uvhttp_server_is_tls_enabled(uvhttp_server_t* server) {
 
 // 内部辅助函数
 static uvhttp_server_simple_t* create_simple_server_internal(const char* host, int port) {
-    uvhttp_server_simple_t* simple = malloc(sizeof(uvhttp_server_simple_t));
+    uvhttp_server_simple_t* simple = uvhttp_malloc(sizeof(uvhttp_server_simple_t));
     if (!simple) return NULL;
     
     memset(simple, 0, sizeof(uvhttp_server_simple_t));
@@ -360,14 +360,14 @@ static uvhttp_server_simple_t* create_simple_server_internal(const char* host, i
     // 获取或创建事件循环
     simple->loop = uv_default_loop();
     if (!simple->loop) {
-        free(simple);
+        uvhttp_free(simple);
         return NULL;
     }
     
     // 创建服务器
     simple->server = uvhttp_server_new(simple->loop);
     if (!simple->server) {
-        free(simple);
+        uvhttp_free(simple);
         return NULL;
     }
     
@@ -375,7 +375,7 @@ static uvhttp_server_simple_t* create_simple_server_internal(const char* host, i
     simple->router = uvhttp_router_new();
     if (!simple->router) {
         uvhttp_server_free(simple->server);
-        free(simple);
+        uvhttp_free(simple);
         return NULL;
     }
     
@@ -396,10 +396,9 @@ static uvhttp_server_simple_t* create_simple_server_internal(const char* host, i
     // 启动监听
     if (uvhttp_server_listen(simple->server, host, port) != UVHTTP_OK) {
         uvhttp_config_free(simple->config);
-        uvhttp_router_free(simple->router);
-        uvhttp_server_free(simple->server);
-        free(simple);
-        return NULL;
+            uvhttp_router_free(simple->router);
+            uvhttp_server_free(simple->server);
+            uvhttp_free(simple);        return NULL;
     }
     
     return simple;
@@ -507,7 +506,7 @@ void uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
     size_t file_size = (size_t)file_size_long;
     
     // 读取文件内容
-    char* content = malloc(file_size + 1);
+    char* content = uvhttp_malloc(file_size + 1);
     if (!content) {
         fclose(file);
         uvhttp_quick_response(response, 500, "text/plain", "Internal server error");
@@ -515,7 +514,7 @@ void uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
     }
     
     if (fread(content, 1, file_size, file) != file_size) {
-        free(content);
+        uvhttp_free(content);
         uvhttp_quick_response(response, 500, "text/plain", "File read error");
         return;
     }
@@ -569,7 +568,7 @@ void uvhttp_server_simple_free(uvhttp_server_simple_t* server) {
     
     // 注意：router和config由server负责释放，不要重复释放
     
-    free(server);
+    uvhttp_free(server);
 }
 
 // 默认处理器（用于一键启动）

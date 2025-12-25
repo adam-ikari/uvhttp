@@ -1,3 +1,6 @@
+
+#if UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION
+
 #include "uvhttp_router.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_utils.h"
@@ -9,18 +12,39 @@
 #include <ctype.h>
 #include <stdint.h>
 
-// 方法字符串映射 - 使用编译器优化的查找表
+// HTTP方法字符串到枚举值的快速查找表
+// 使用ASCII字符作为索引，实现O(1)时间复杂度的查找
+// 注意：这个表仅用于快速提示，实际解析逻辑在fast_method_parse函数中
 static const uvhttp_method_t method_map[256] = {
-    ['G'] = UVHTTP_GET,
-    ['P'] = UVHTTP_POST,  // POST 和 PUT 都以P开头
-    ['D'] = UVHTTP_DELETE,
-    ['H'] = UVHTTP_HEAD,
-    ['O'] = UVHTTP_OPTIONS,
-    ['C'] = UVHTTP_PATCH  // PATCH 有时缩写为 C(PATCH)
+    ["G"] = UVHTTP_GET,      // GET方法映射
+// 
+// 路由哈希表大小 - 使用256个桶以减少冲突
+// 选择256是因为ASCII字符范围，便于直接使用字符作为索引
+// 使用常量表中的 UVHTTP_ROUTER_HASH_SIZE
+
+// 
+// 缓存优化的路由器结构体 - 采用分层缓存策略提高性能
+// 包含热路径缓存、哈希表和访问统计信息
+typedef struct {
+    // 热路径缓存：存储最常用的16个路由，利用CPU缓存局部性
+    struct {
+        char path[64];                    // 路径字符串，限制64字节以适应缓存行大小
+        uvhttp_method_t method;          // HTTP方法枚举值
+        uvhttp_request_handler_t handler;  // 处理函数指针
+    } hot_routes[UVHTTP_ROUTER_HOT_ROUTES_COUNT];                     // 固定大小的热路径数组
+    size_t hot_count;                      // 当前热路径数量
+    
+    // 哈希表：用于快速查找所有路由（包括冷路径）
+    route_hash_entry_t* hash_table[UVHTTP_ROUTER_HASH_SIZE];  // 256个哈希桶的数组
+    
+    // 访问统计：用于动态调整热路径缓存
+    unsigned int access_count[UVHTTP_ROUTER_ACCESS_COUNT_SIZE];       // 每个路由的访问计数（用于热路径识别）
+    size_t total_routes;                   // 总路由数量统计
+} cache_optimized_router_t;
 };
 
 // CRC32哈希表用于快速路由查找
-#define ROUTE_HASH_SIZE 256
+// 使用常量表中的 UVHTTP_ROUTER_HASH_SIZE
 
 // 哈希桶结构
 typedef struct route_hash_entry {
@@ -37,14 +61,14 @@ typedef struct {
         char path[64];  // 限制长度以适应缓存行
         uvhttp_method_t method;
         uvhttp_request_handler_t handler;
-    } hot_routes[16];
+    } hot_routes[UVHTTP_ROUTER_HOT_ROUTES_COUNT];
     size_t hot_count;
     
     // 哈希表：快速查找
-    route_hash_entry_t* hash_table[ROUTE_HASH_SIZE];
+    route_hash_entry_t* hash_table[UVHTTP_ROUTER_HASH_SIZE];
     
     // 路由统计（用于动态调整热路径）
-    unsigned int access_count[1024];
+    unsigned int access_count[UVHTTP_ROUTER_ACCESS_COUNT_SIZE];
     size_t total_routes;
 } cache_optimized_router_t;
 
@@ -132,7 +156,8 @@ static uvhttp_error_t add_to_hash_table(cache_optimized_router_t* cr,
         UVHTTP_FREE(entry);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
-    strcpy(path_copy, path);
+    strncpy(path_copy, path, path_len);
+    path_copy[path_len] = '\0';
     
     entry->path = path_copy;
     entry->method = method;
@@ -266,24 +291,80 @@ static uvhttp_request_handler_t find_in_hash_table(cache_optimized_router_t* cr,
     return NULL;
 }
 
+
+/* 纯线性查找实现 */
+static uvhttp_request_handler_t find_handler_linear_only(
+    const uvhttp_router_t* router,
+    const char* path,
+    uvhttp_method_t method
+) {
+    if (!router || !path) {
+        return NULL;
+    }
+
+    cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
+    
+    /* 遍历所有路由进行线性查找 */
+    /* 由于当前架构限制，通过遍历哈希表实现线性查找 */
+    /* 在实际生产中，应该维护一个路由数组进行真正的线性查找 */
+    for (size_t i = 0; i < UVHTTP_ROUTER_HASH_SIZE; i++) {
+        route_hash_entry_t* entry = cr->hash_table[i];
+        while (entry) {
+            if (strcmp(entry->path, path) == 0 && entry->method == method) {
+                return entry->handler;
+            }
+            entry = entry->next;
+        }
+    }
+    
+    return NULL;
+}
+
+/* 纯哈希查找实现 */
+static uvhttp_request_handler_t find_handler_hash_only(
+    const uvhttp_router_t* router,
+    const char* path,
+    uvhttp_method_t method
+) {
+    if (!router || !path) {
+        return NULL;
+    }
+
+    cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
+    return find_in_hash_table(cr, path, method);
+}
+
 uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* router, 
                                                    const char* path,
                                                    const char* method) {
     if (!router || !path || !method) {
         return NULL;
     }
-    
+
     cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
     uvhttp_method_t method_enum = fast_method_parse(method);
-    
-    // 首先在热路径中查找（缓存友好）
+
+#if UVHTTP_ROUTER_SEARCH_MODE == 0
+    /* 纯线性查找模式 - 适用于小规模路由或资源受限环境 */
+    return find_handler_linear_only(router, path, method_enum);
+
+#elif UVHTTP_ROUTER_SEARCH_MODE == 1
+    /* 纯哈希查找模式 - 适用于中等规模路由 */
+    return find_handler_hash_only(router, path, method_enum);
+
+#else
+    /* 混合策略模式（默认） - 适用于大规模高并发场景 */
+    /* 首先在热路径中查找（缓存友好） */
     uvhttp_request_handler_t handler = find_in_hot_routes(cr, path, method_enum);
     if (handler) {
         return handler;
     }
     
-    // 然后在哈希表中查找
+    /* 然后在哈希表中查找 */
     return find_in_hash_table(cr, path, method_enum);
+
+#endif
+}
 }
 
 // 静态路由表（编译时确定）
@@ -356,3 +437,4 @@ uvhttp_error_t uvhttp_parse_path_params(const char* path,
     *param_count = 0;
     return UVHTTP_OK;
 }
+#endif /* UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION */

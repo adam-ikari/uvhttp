@@ -5,7 +5,7 @@
  */
 
 #include "uvhttp.h"
-#include "uvhttp_static_v2.h"
+#include "uvhttp_static.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -201,7 +201,7 @@ int main() {
     uvhttp_server_t* server = uvhttp_server_new(loop);
     if (!server) {
         printf("错误：无法创建HTTP服务器\n");
-        uvhttp_static_v2_free(g_static_ctx);
+        uvhttp_static_free(g_static_ctx);
         return 1;
     }
     
@@ -220,7 +220,7 @@ int main() {
     int result = uvhttp_server_listen(server, "0.0.0.0", 8080);
     if (result != 0) {
         printf("错误：无法启动服务器 (错误码: %d)\n", result);
-        uvhttp_static_v2_free(g_static_ctx);
+        uvhttp_static_free(g_static_ctx);
         uvhttp_server_free(server);
         return 1;
     }
@@ -238,7 +238,7 @@ int main() {
     uv_run(loop, UV_RUN_DEFAULT);
     
     /* 清理资源 */
-    uvhttp_static_v2_free(g_static_ctx);
+    uvhttp_static_free(g_static_ctx);
     uvhttp_server_free(server);
     
     printf("\n服务器已停止\n");

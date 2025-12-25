@@ -397,7 +397,7 @@ int uvhttp_tls_verify_hostname(X509* cert, const char* hostname) {
     }
     return UVHTTP_TLS_ERROR_VERIFY;
 #else
-    // 降级到CN字段检查（仅用于兼容性）
+    // 降级到CN字段检查（SAN扩展不可用时的后备方案）
     X509_NAME* subject = X509_get_subject_name(cert);
     if (!subject) {
         return UVHTTP_TLS_ERROR_VERIFY;
@@ -727,7 +727,7 @@ uvhttp_tls_error_t uvhttp_tls_context_set_ticket_key(uvhttp_tls_context_t* ctx, 
     
 #ifdef SSL_CTX_set_tlsext_ticket_keys
     // OpenSSL内部会复制密钥，我们可以直接传递const指针
-    // 但为了兼容性，我们需要临时转换为非const
+    // 但API需要非const指针，因此需要临时转换
     int result = SSL_CTX_set_tlsext_ticket_keys(ctx->ssl_ctx, (void*)key, key_len);
     
     if (result != 1) {

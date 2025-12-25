@@ -28,7 +28,7 @@ TEST_FUNC(test_null_pointer_handling) {
     /* 测试各种空指针情况 */
     TEST_ASSERT_EQ(-1, uvhttp_safe_strncpy(NULL, "test", 10));
     TEST_ASSERT_EQ(-1, uvhttp_safe_strncpy((char*)"dest", NULL, 10));
-    TEST_ASSERT_EQ(-1, uvhttp_validate_url_path(NULL));
+    TEST_ASSERT_EQ(0, uvhttp_validate_url_path(NULL));
     
     return 0;
 }
@@ -100,17 +100,17 @@ TEST_FUNC(test_buffer_boundary) {
 /* 测试HTTP方法验证边界 */
 TEST_FUNC(test_http_method_validation) {
     /* 测试有效的HTTP方法 */
-    TEST_ASSERT_EQ(0, uvhttp_validate_method("GET", 3));
-    TEST_ASSERT_EQ(0, uvhttp_validate_method("POST", 4));
-    TEST_ASSERT_EQ(0, uvhttp_validate_method("PUT", 3));
-    TEST_ASSERT_EQ(0, uvhttp_validate_method("DELETE", 6));
-    TEST_ASSERT_EQ(0, uvhttp_validate_method("HEAD", 4));
-    TEST_ASSERT_EQ(0, uvhttp_validate_method("OPTIONS", 7));
+    TEST_ASSERT_EQ(1, uvhttp_validate_http_method("GET"));
+    TEST_ASSERT_EQ(1, uvhttp_validate_http_method("POST"));
+    TEST_ASSERT_EQ(1, uvhttp_validate_http_method("PUT"));
+    TEST_ASSERT_EQ(1, uvhttp_validate_http_method("DELETE"));
+    TEST_ASSERT_EQ(1, uvhttp_validate_http_method("HEAD"));
+    TEST_ASSERT_EQ(1, uvhttp_validate_http_method("OPTIONS"));
     
     /* 测试无效的HTTP方法 */
-    TEST_ASSERT_EQ(-1, uvhttp_validate_method("INVALID", 7));
-    TEST_ASSERT_EQ(-1, uvhttp_validate_method("", 0));
-    TEST_ASSERT_EQ(-1, uvhttp_validate_method("get", 3)); /* 小写 */
+    TEST_ASSERT_EQ(0, uvhttp_validate_http_method("INVALID"));
+    TEST_ASSERT_EQ(0, uvhttp_validate_http_method(""));
+    TEST_ASSERT_EQ(0, uvhttp_validate_http_method("get")); /* 小写 */
     
     return 0;
 }
@@ -118,16 +118,16 @@ TEST_FUNC(test_http_method_validation) {
 /* 测试URL路径验证边界 */
 TEST_FUNC(test_url_path_validation) {
     /* 测试有效的URL路径 */
-    TEST_ASSERT_EQ(0, uvhttp_validate_url_path("/"));
-    TEST_ASSERT_EQ(0, uvhttp_validate_url_path("/path"));
-    TEST_ASSERT_EQ(0, uvhttp_validate_url_path("/path/to/resource"));
-    TEST_ASSERT_EQ(0, uvhttp_validate_url_path("/api/v1/users"));
+    TEST_ASSERT_EQ(1, uvhttp_validate_url_path("/"));
+    TEST_ASSERT_EQ(1, uvhttp_validate_url_path("/path"));
+    TEST_ASSERT_EQ(1, uvhttp_validate_url_path("/path/to/resource"));
+    TEST_ASSERT_EQ(1, uvhttp_validate_url_path("/api/v1/users"));
     
     /* 测试无效的URL路径 */
-    TEST_ASSERT_EQ(-1, uvhttp_validate_url_path("")); /* 空 */
-    TEST_ASSERT_EQ(-1, uvhttp_validate_url_path("no-leading-slash"));
-    TEST_ASSERT_EQ(-1, uvhttp_validate_url_path("/path/with space"));
-    TEST_ASSERT_EQ(-1, uvhttp_validate_url_path("/path/with\nnewline"));
+    TEST_ASSERT_EQ(0, uvhttp_validate_url_path("")); /* 空 */
+    TEST_ASSERT_EQ(0, uvhttp_validate_url_path("no-leading-slash"));
+    TEST_ASSERT_EQ(0, uvhttp_validate_url_path("/path/with space"));
+    TEST_ASSERT_EQ(0, uvhttp_validate_url_path("/path/with\nnewline"));
     
     return 0;
 }

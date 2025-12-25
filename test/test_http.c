@@ -178,7 +178,7 @@ TEST(HttpTest, UrlParsing) {
         EXPECT_GT(strlen(urls[i]), 0);
         
         // 模拟URL验证
-        EXPECT_EQ(validate_url(urls[i], strlen(urls[i])), 0);
+        EXPECT_EQ(uvhttp_validate_url_path(urls[i], strlen(urls[i])), 0);
     }
     
     uvhttp_request_cleanup(&request);
