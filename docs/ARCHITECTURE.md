@@ -177,6 +177,27 @@ struct route_node {
 3. 支持通配符和参数提取
 4. 返回最佳匹配的处理器
 
+#### 性能优化
+- **哈希加速**: 使用xxHash算法进行快速路径哈希
+- **缓存机制**: 热路径缓存减少查找开销
+- **内存池**: 节点内存池减少分配开销
+
+```c
+// 路由哈希计算
+uint32_t route_hash = (uint32_t)uvhttp_hash_string(path);
+
+// 缓存友好的路由查找
+if (route_hash < HOT_PATH_SIZE && 
+    hot_paths[route_hash].method == method) {
+    return hot_paths[route_hash].handler;
+}
+```
+
+#### 哈希算法选择
+- **xxHash**: 极快的非加密哈希算法
+- **64位哈希**: 减少冲突概率
+- **安全防护**: 1024字符长度限制防止哈希冲突攻击
+
 ### 3. 请求处理 (Request)
 
 #### 生命周期

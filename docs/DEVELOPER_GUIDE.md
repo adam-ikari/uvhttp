@@ -1209,6 +1209,89 @@ if (uvhttp_check_memory_leaks()) {
 }
 ```
 
+## 使用常量和哈希API的最佳实践
+
+### 1. 使用预定义常量
+
+**推荐做法:**
+```c
+// 使用预定义常量
+uvhttp_server_listen(server, UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
+
+// 使用缓冲区常量
+char* buffer = uvhttp_malloc(UVHTTP_DIR_LISTING_BUFFER_SIZE);
+
+// 使用配置常量
+provider->max_pool_size = UVHTTP_DEFAULT_CONNECTION_POOL_SIZE;
+```
+
+**避免做法:**
+```c
+// 避免硬编码
+uvhttp_server_listen(server, "0.0.0.0", 8080);
+char* buffer = uvhttp_malloc(4096);
+provider->max_pool_size = 100;
+```
+
+### 2. 哈希API使用
+
+**基本用法:**
+```c
+#include "uvhttp_hash.h"
+
+// 计算字符串哈希
+uint64_t session_hash = uvhttp_hash_string("user_session_123");
+
+// 计算数据哈希
+uint64_t data_hash = uvhttp_hash(data, data_len, UVHTTP_HASH_DEFAULT_SEED);
+
+// 使用默认种子
+uint64_t quick_hash = uvhttp_hash_default(data, data_len);
+```
+
+**性能优化:**
+```c
+// 缓存哈希结果以避免重复计算
+static uint64_t cached_route_hash = 0;
+if (cached_route_hash == 0) {
+    cached_route_hash = uvhttp_hash_string(route_path);
+}
+
+// 批量哈希计算
+for (int i = 0; i < count; i++) {
+    hashes[i] = uvhttp_hash(data[i], lengths[i], base_seed + i);
+}
+```
+
+### 3. 安全考虑
+
+**输入验证:**
+```c
+// 检查空指针
+if (!data || length == 0) {
+    return 0;  // 安全的默认值
+}
+
+// 限制输入长度
+if (length > MAX_SAFE_HASH_LENGTH) {
+    length = MAX_SAFE_HASH_LENGTH;
+}
+```
+
+**哈希冲突处理:**
+```c
+// 使用64位哈希减少冲突
+uint64_t hash = uvhttp_hash_string(input);
+
+// 对于关键应用，可以添加额外的验证
+if (potential_collision) {
+    // 进行字符串比较确认
+    if (strcmp(stored_input, current_input) == 0) {
+        // 确认匹配
+    }
+}
+```
+
 ## 贡献指南
 
 1. Fork 项目

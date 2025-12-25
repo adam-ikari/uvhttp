@@ -559,7 +559,7 @@ int main() {
     server->config = config;
     
     // 启动服务器
-    uvhttp_server_listen(server, "0.0.0.0", 8080);
+    uvhttp_server_listen(server, UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
     uv_run(loop, UV_RUN_DEFAULT);
     
     return 0;
@@ -673,6 +673,64 @@ URL 解码。
 
 ---
 
+### 哈希函数
+
+#### uvhttp_hash
+```c
+uint64_t uvhttp_hash(const void* data, size_t length, uint64_t seed);
+```
+计算数据的64位哈希值（基于xxHash算法）。
+
+**参数:**
+- `data`: 要哈希的数据
+- `length`: 数据长度
+- `seed`: 哈希种子
+
+**返回值:**
+- 64位哈希值
+
+**示例:**
+```c
+const char* data = "Hello, World!";
+uint64_t hash = uvhttp_hash(data, strlen(data), 0x12345678);
+```
+
+---
+
+#### uvhttp_hash_string
+```c
+uint64_t uvhttp_hash_string(const char* str);
+```
+计算字符串的64位哈希值（使用默认种子）。
+
+**参数:**
+- `str`: 要哈希的字符串
+
+**返回值:**
+- 64位哈希值
+
+**示例:**
+```c
+uint64_t hash = uvhttp_hash_string("user_session_token");
+```
+
+---
+
+#### uvhttp_hash_default
+```c
+uint64_t uvhttp_hash_default(const void* data, size_t length);
+```
+使用默认种子计算数据的哈希值。
+
+**参数:**
+- `data`: 要哈希的数据
+- `length`: 数据长度
+
+**返回值:**
+- 64位哈希值
+
+---
+
 ### 编码转换
 
 #### uvhttp_base64_encode
@@ -783,6 +841,41 @@ void uvhttp_rate_limit_middleware(uvhttp_request_t* request,
 #define UVHTTP_MAX_URL_SIZE              2048
 ```
 
+### 网络和服务器配置
+
+```c
+#define UVHTTP_DEFAULT_PORT              8080
+#define UVHTTP_DEFAULT_HOST              "0.0.0.0"
+```
+
+### 缓冲区大小配置
+
+```c
+#define UVHTTP_DIR_LISTING_BUFFER_SIZE   4096
+#define UVHTTP_DIR_ENTRY_HTML_OVERHEAD   200
+#define UVHTTP_RESPONSE_HEADER_SAFETY_MARGIN 256
+```
+
+### 连接和池配置
+
+```c
+#define UVHTTP_DEFAULT_CONNECTION_POOL_SIZE 100
+#define UVHTTP_ROUTER_MAX_CHILDREN       16
+```
+
+### WebSocket配置
+
+```c
+#define UVHTTP_WEBSOCKET_MIN_BUFFER_EXPANSION_SIZE 1024
+```
+
+### 错误恢复配置
+
+```c
+#define UVHTTP_DEFAULT_BASE_DELAY_MS     100
+#define UVHTTP_DEFAULT_MAX_DELAY_MS      5000
+```
+
 ---
 
 ## 使用示例
@@ -806,8 +899,8 @@ int main() {
     uvhttp_router_t* router = uvhttp_router_new();
     uvhttp_router_add_route(router, "/", handler);
     
-    server->router = router;
-    uvhttp_server_listen(server, "0.0.0.0", 8080);
+    uvhttp_server_set_router(server, router);
+    uvhttp_server_listen(server, UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
     
     uv_run(loop, UV_RUN_DEFAULT);
     return 0;
