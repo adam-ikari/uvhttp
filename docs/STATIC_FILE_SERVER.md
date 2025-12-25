@@ -80,7 +80,6 @@ uvhttp_static_config_t advanced_config = {
     .custom_headers = "X-Content-Type-Options: nosniff\r\n"
                      "X-Frame-Options: DENY\r\n"
                      "X-XSS-Protection: 1; mode=block",
-    .allowed_extensions = ".html,.css,.js,.png,.jpg,.gif,.ico,.svg",
     .max_file_size = 50 * 1024 * 1024,     // 50MB文件大小限制
     .enable_compression = 1                 // 启用压缩
 };
@@ -109,7 +108,6 @@ uvhttp_static_config_t advanced_config = {
 
 | 选项 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `allowed_extensions` | `const char*` | `NULL` | 允许的文件扩展名 |
 | `max_file_size` | `size_t` | `50*1024*1024` | 最大文件大小 |
 | `enable_compression` | `int` | `0` | 是否启用压缩 |
 
@@ -185,49 +183,58 @@ project/
 uvhttp_static_config_t secure_config = {
     .root_directory = "/var/www/html",
     .enable_directory_listing = 0,  // 禁用目录列表
-    .allowed_extensions = ".html,.css,.js,.png,.jpg,.gif,.ico,.svg,.woff,.woff2",
-    .max_file_size = 10 * 1024 * 1024,  // 10MB限制
-    .custom_headers = 
-        "X-Content-Type-Options: nosniff\r\n"
-        "X-Frame-Options: DENY\r\n"
-        "X-XSS-Protection: 1; mode=block\r\n"
-        "Strict-Transport-Security: max-age=31536000; includeSubDomains"
+    // 使用MIME类型映射表进行文件类型控制
+## 文件类型控制
+
+### MIME类型映射
+
+UVHTTP 使用内置的MIME类型映射表来处理不同文件类型，无需配置扩展名列表：
+
+```c
+// 内置支持的文件类型（部分）
+static const uvhttp_mime_mapping_t default_mime_types[] = {
+    {".html", "text/html"},
+    {".css", "text/css"},
+    {".js", "application/javascript"},
+    {".json", "application/json"},
+    {".png", "image/png"},
+    {".jpg", "image/jpeg"},
+    {".gif", "image/gif"},
+    {".svg", "image/svg+xml"},
+    {".ico", "image/x-icon"},
+    {NULL, NULL}
 };
 ```
 
-### 3. 性能优化
+### 优势
 
+- ✅ **零配置**：开箱即用，无需手动配置扩展名
+- ✅ **高性能**：编译时确定，无运行时解析开销
+- ✅ **安全性**：基于MIME类型而非简单扩展名匹配
+- ✅ **可扩展**：支持添加新的MIME类型映射
+
+### 如需扩展控制
+
+如果需要特殊的文件类型控制，可以考虑：
+
+1. **添加自定义MIME类型**：
 ```c
-// 高性能配置
-uvhttp_static_config_t perf_config = {
-    .max_cache_size = 500 * 1024 * 1024,  // 500MB缓存
-    .cache_ttl = 86400,                     // 24小时TTL
-    .enable_compression = 1,                // 启用压缩
-    .enable_etag = 1,                       // 启用ETag
-    .enable_last_modified = 1               // 启用Last-Modified
-};
+// 在初始化时添加自定义映射
+uvhttp_add_mime_mapping(".custom", "application/custom");
 ```
 
-### 4. 错误处理
-
+2. **使用请求处理器**：
 ```c
-void static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    int result = uvhttp_static_handle_request(g_static_ctx, request, response);
-    
-    if (result != 0) {
-        // 根据错误类型返回不同的错误页面
-        switch (result) {
-            case UVHTTP_STATIC_ERROR_NOT_FOUND:
-                serve_404_page(response);
-                break;
-            case UVHTTP_STATIC_ERROR_FORBIDDEN:
-                serve_403_page(response);
-                break;
-            case UVHTTP_STATIC_ERROR_TOO_LARGE:
-                serve_413_page(response);
-                break;
-            default:
-                serve_500_page(response);
+// 在处理器中进行自定义验证
+void custom_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    const char* path = uvhttp_request_get_path(req);
+    if (!is_allowed_file(path)) {
+        uvhttp_response_set_status(res, 403);
+        return uvhttp_response_send(res);
+    }
+    // 处理请求
+}
+```                serve_500_page(response);
                 break;
         }
     }
