@@ -340,10 +340,9 @@ UVHTTP 集成 **xxHash** 算法，提供极快的哈希计算：
 
 - 🚀 **高性能**：比 CRC32 快 3-5 倍
 - 🎯 **低冲突**：优秀的哈希分布
-- 🔧 **易使用**：统一的 API 接口
 
-```c
-#include "uvhttp_hash.h"
+// 快速哈希计算\nuint64_t hash = uvhttp_hash_string("user_data");\n\n📖 **详细文档**: 查看 [docs/XXHASH_INTEGRATION.md](docs/XXHASH_INTEGRATION.md)\n
+- 🔧 **易使用**：统一的 API 接口
 
 📖 **详细文档**: 查看 [docs/XXHASH_INTEGRATION.md](docs/XXHASH_INTEGRATION.md)
 
