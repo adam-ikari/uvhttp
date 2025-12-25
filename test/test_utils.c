@@ -9,7 +9,7 @@
 
 TEST_FUNC(safe_strcpy_normal) {
     char dest[10];
-    int result = safe_strncpy(dest, "hello", sizeof(dest));
+    int result = uvhttp_safe_strncpy(dest, "hello", sizeof(dest));
     
     TEST_ASSERT_EQ(0, result);
     TEST_ASSERT_STREQ("hello", dest);
@@ -19,7 +19,7 @@ TEST_FUNC(safe_strcpy_normal) {
 
 TEST_FUNC(safe_strcpy_overflow) {
     char dest[5];
-    int result = safe_strncpy(dest, "123456789", sizeof(dest));
+    int result = uvhttp_safe_strncpy(dest, "123456789", sizeof(dest));
     
     TEST_ASSERT_EQ(0, result);
     TEST_ASSERT_STREQ("1234", dest);
@@ -47,7 +47,7 @@ TEST_FUNC(safe_strcpy_null) {
 }
 
 TEST_FUNC(validate_header_value_valid) {
-    int result = validate_header_value("text/plain", 10);
+    int result = uvhttp_validate_header_value("text/plain", 10);
     TEST_ASSERT_EQ(0, result);
     
     result = validate_header_value("example.com", 11);
@@ -67,7 +67,7 @@ TEST_FUNC(validate_header_value_invalid) {
 }
 
 TEST_FUNC(validate_url_valid) {
-    int result = validate_url("/path", 5);
+    int result = uvhttp_validate_url_path("/path");
     TEST_ASSERT_EQ(0, result);
     
     result = validate_url("/", 1);
@@ -87,7 +87,7 @@ TEST_FUNC(validate_url_invalid) {
 }
 
 TEST_FUNC(validate_method_valid) {
-    int result = validate_method("GET", 3);
+    int result = uvhttp_validate_method("GET", 3);
     TEST_ASSERT_EQ(0, result);
     
     result = validate_method("POST", 4);

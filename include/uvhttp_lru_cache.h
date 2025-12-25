@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include <time.h>
 #include "uvhttp_constants.h"
+#include "uvhttp_error.h"
 
 /* 包含uthash头文件 */
 #include "uthash.h"
@@ -97,24 +98,24 @@ cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache,
  * @param mime_type MIME类型
  * @param last_modified 最后修改时间
  * @param etag ETag值
- * @return 0成功，-1失败
+ * @return UVHTTP_OK成功，其他值表示失败
  */
-int uvhttp_lru_cache_put(cache_manager_t* cache,
-                         const char* file_path,
-                         char* content,
-                         size_t content_length,
-                         const char* mime_type,
-                         time_t last_modified,
-                         const char* etag);
+uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
+                                    const char* file_path,
+                                    char* content,
+                                    size_t content_length,
+                                    const char* mime_type,
+                                    time_t last_modified,
+                                    const char* etag);
 
 /**
  * 删除缓存条目
  * 
  * @param cache 缓存管理器
  * @param file_path 文件路径
- * @return 0成功，-1失败
+ * @return UVHTTP_OK成功，其他值表示失败
  */
-int uvhttp_lru_cache_remove(cache_manager_t* cache, const char* file_path);
+uvhttp_error_t uvhttp_lru_cache_remove(cache_manager_t* cache, const char* file_path);
 
 /**
  * 清空所有缓存

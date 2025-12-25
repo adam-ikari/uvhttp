@@ -1,126 +1,128 @@
-# UVHTTP 统一响应处理指南
+# UVHTTP 响应处理指南
 
 ## 概述
 
-UVHTTP 现在提供统一的响应处理机制，简化响应发送流程，由使用者自行控制 Content-Type 设置。这样开发者可以使用统一的 API 处理各种类型的响应内容，同时保持对 Content-Type 的完全控制。
+UVHTTP 提供简洁高效的响应处理机制，基于核心API构建。开发者通过直接操作响应对象，完全控制HTTP响应的各个方面，包括状态码、头部和内容。
 
 ## 核心特性
 
-- **使用者控制 Content-Type**：由使用者自行设置 Content-Type，不进行自动检测
-- **统一响应接口**：使用相同的函数处理不同类型的响应
-- **便捷函数**：提供针对特定内容类型的便捷函数
-- **错误处理**：统一的错误响应格式和处理方式
+- **直接控制**：开发者直接设置响应状态码、头部和内容
 - **类型安全**：编译时类型检查，运行时验证
+- **灵活性**：支持任意内容类型和自定义头部
+- **性能优化**：零开销抽象，直接映射到libuv操作
+- **错误处理**：统一的错误响应格式和处理方式
 
-## API 参考
+## 核心 API 参考
 
-### 主要函数
+### 响应对象操作
 
-#### `uvhttp_send_unified_response()`
+#### `uvhttp_response_set_status()`
 
-统一的响应发送函数，由使用者设置 Content-Type。
+设置HTTP状态码。
 
 ```c
-uvhttp_error_t uvhttp_send_unified_response(uvhttp_response_t* response, 
-                                          const char* content, 
-                                          size_t length, 
-                                          int status_code);
+uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int status_code);
 ```
 
 **参数：**
 - `response`: 响应对象
-- `content`: 内容数据
-- `length`: 内容长度（如果为0，会自动计算字符串长度）
-- `status_code`: HTTP状态码（如果为0，使用响应对象中已有的状态码）
+- `status_code`: HTTP状态码（如200、404等）
 
 **返回值：**
 - `UVHTTP_OK`: 成功
 - 其他值：错误代码
 
-**使用说明：**
-- 使用者需要在使用此函数前设置 Content-Type
-- 不进行自动内容类型检测
-- 提供统一的响应发送接口
+#### `uvhttp_response_set_header()`
 
-#### 便捷函数
+设置响应头。
 
 ```c
-// 发送 JSON 响应
-uvhttp_error_t uvhttp_send_json_response(uvhttp_response_t* response, 
-                                        const char* json_content, 
-                                        int status_code);
+uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response, 
+                                         const char* name, 
+                                         const char* value);
+```
 
-// 发送 HTML 响应
-uvhttp_error_t uvhttp_send_html_response(uvhttp_response_t* response, 
-                                        const char* html_content, 
-                                        int status_code);
+**参数：**
+- `response`: 响应对象
+- `name`: 头部名称
+- `value`: 头部值
 
-// 发送文本响应
-uvhttp_error_t uvhttp_send_text_response(uvhttp_response_t* response, 
-                                        const char* text_content, 
-                                        int status_code);
+#### `uvhttp_response_set_body()`
 
-// 发送错误响应（JSON格式）
-uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response, 
-                                         int error_code, 
-                                         const char* error_message, 
-                                         const char* details);
+设置响应体。
+
+```c
+uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, 
+                                       const char* body, 
+                                       size_t length);
+```
+
+**参数：**
+- `response`: 响应对象
+- `body`: 响应体内容
+- `length`: 内容长度
+
+#### `uvhttp_response_send()`
+
+发送响应。
+
+```c
+uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
 ```
 
 ## 使用示例
 
-#### 旧方式 vs 新方式
-
-##### 旧方式（多个步骤）
+### JSON 响应
 
 ```c
-// JSON 响应
-uvhttp_response_set_status(res, 200);
-uvhttp_response_set_header(res, "Content-Type", "application/json");
-uvhttp_response_set_body(res, json_string, strlen(json_string));
-uvhttp_response_send(res);
-
-// HTML 响应
-uvhttp_response_set_status(res, 200);
-uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-uvhttp_response_set_body(res, html_string, strlen(html_string));
-uvhttp_response_send(res);
+int json_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    const char* json = "{\"message\":\"Hello World\"}";
+    
+    uvhttp_response_set_status(res, 200);
+    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
+    uvhttp_response_set_body(res, json, strlen(json));
+    
+    return uvhttp_response_send(res);
+}
 ```
 
-##### 新方式（统一处理，由使用者控制 Content-Type）
+### HTML 响应
 
 ```c
-// JSON 响应
-uvhttp_response_set_header(res, "Content-Type", "application/json");
-uvhttp_send_unified_response(res, json_string, strlen(json_string), 200);
-
-// HTML 响应
-uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-uvhttp_send_unified_response(res, html_string, strlen(html_string), 200);
+int html_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    const char* html = "<html><body><h1>Hello World</h1></body></html>";
+    
+    uvhttp_response_set_status(res, 200);
+    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
+    uvhttp_response_set_body(res, html, strlen(html));
+    
+    return uvhttp_response_send(res);
+}
 ```
 
 ### 完整示例
 
 ```c
 #include "uvhttp.h"
-#include "uvhttp_utils.h"
 
-uvhttp_result_t handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* accept_header = uvhttp_request_get_header(req, "Accept");
     
     if (accept_header && strstr(accept_header, "application/json")) {
         // JSON 响应
         const char* json = "{\"message\":\"Hello World\"}";
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        return uvhttp_send_unified_response(res, json, strlen(json), 200) == UVHTTP_OK 
-               ? UVHTTP_OK : UVHTTP_ERROR_RESPONSE_SEND;
+        uvhttp_response_set_status(res, 200);
+        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
+        uvhttp_response_set_body(res, json, strlen(json));
+        return uvhttp_response_send(res);
     }
     else {
         // HTML 响应
         const char* html = "<html><body><h1>Hello World</h1></body></html>";
+        uvhttp_response_set_status(res, 200);
         uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-        return uvhttp_send_unified_response(res, html, strlen(html), 200) == UVHTTP_OK 
-               ? UVHTTP_OK : UVHTTP_ERROR_RESPONSE_SEND;
+        uvhttp_response_set_body(res, html, strlen(html));
+        return uvhttp_response_send(res);
     }
 }
 ```

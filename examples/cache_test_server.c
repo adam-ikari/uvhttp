@@ -54,10 +54,11 @@ void cache_stats_handler(uvhttp_request_t* request, uvhttp_response_t* response)
     size_t total_memory_usage;
     int entry_count, hit_count, miss_count, eviction_count;
     
+    /* 获取真实缓存统计信息 */
     uvhttp_static_get_cache_stats(g_static_ctx, &total_memory_usage, &entry_count,
                                   &hit_count, &miss_count, &eviction_count);
     
-    double hit_rate = uvhttp_static_get_cache_hit_rate(g_static_ctx);
+    double hit_rate = uvhttp_static_v2_get_cache_hit_rate(g_static_ctx);
     
     /* 生成统计信息HTML */
     char stats_html[2048];
@@ -136,7 +137,7 @@ void clear_cache_handler(uvhttp_request_t* request, uvhttp_response_t* response)
     }
     
     /* 清理过期缓存 */
-    int cleaned_count = uvhttp_static_cleanup_expired_cache(g_static_ctx);
+    int cleaned_count = uvhttp_static_v2_cleanup_expired_cache(g_static_ctx);
     
     char result[256];
     snprintf(result, sizeof(result), "清理了 %d 个过期缓存条目", cleaned_count);
@@ -308,7 +309,7 @@ int main() {
     /* 启动服务器 */
     if (uvhttp_server_listen(server, "0.0.0.0", 8080) != 0) {
         fprintf(stderr, "Failed to start server\n");
-        uvhttp_static_free(g_static_ctx);
+        uvhttp_static_v2_free(g_static_ctx);
         return 1;
     }
     
@@ -319,7 +320,7 @@ int main() {
     uv_run(loop, UV_RUN_DEFAULT);
     
     /* 清理资源 */
-    uvhttp_static_free(g_static_ctx);
+    uvhttp_static_v2_free(g_static_ctx);
     
     return 0;
 }

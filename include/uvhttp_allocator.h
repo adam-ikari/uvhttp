@@ -8,6 +8,9 @@
 #include <string.h>
 #include <uv.h>
 
+/* 防止与 uvhttp_features.h 中的宏定义冲突 */
+#ifndef UVHTTP_MALLOC_DEFINED
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -64,6 +67,10 @@ typedef enum {
     #define UVHTTP_CALLOC(nmemb, size) calloc(nmemb, size)
 
 #endif
+
+/* 定义宏已定义标志 */
+#define UVHTTP_MALLOC_DEFINED
+#endif /* UVHTTP_MALLOC_DEFINED */
 
 /* 兼容性函数声明 */
 static inline void* uvhttp_malloc(size_t size) {

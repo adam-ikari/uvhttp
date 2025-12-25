@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
     uvhttp_test_init(verbose);
     
     /* 安装内存跟踪器 */
-    uvhttp_test_install_memory_tracker();
+    uvhttp_test_reset_memory_tracker();
     
     /* 运行所有测试 */
     int failed_suites = uvhttp_test_run_all();

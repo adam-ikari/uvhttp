@@ -23,6 +23,15 @@ extern "C" {
 
 typedef struct uvhttp_server uvhttp_server_t;
 
+// 简化的服务器结构体（统一API）
+typedef struct {
+    uvhttp_server_t* server;
+    uvhttp_router_t* router;
+    uvhttp_config_t* config;
+    uv_loop_t* loop;
+    int auto_cleanup;
+} uvhttp_server_simple_t;
+
 struct uvhttp_server {
     uv_loop_t* loop;
     uv_tcp_t tcp_handle;
@@ -49,6 +58,41 @@ uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server, uvhttp_request_handler_t handler);
 
+// ========== 统一API函数 ==========
+
+// 快速创建和启动服务器
+uvhttp_server_simple_t* uvhttp_server_create(const char* host, int port);
+
+// 链式路由API
+uvhttp_server_simple_t* uvhttp_get(uvhttp_server_simple_t* server, const char* path, uvhttp_request_handler_t handler);
+uvhttp_server_simple_t* uvhttp_post(uvhttp_server_simple_t* server, const char* path, uvhttp_request_handler_t handler);
+uvhttp_server_simple_t* uvhttp_put(uvhttp_server_simple_t* server, const char* path, uvhttp_request_handler_t handler);
+uvhttp_server_simple_t* uvhttp_delete(uvhttp_server_simple_t* server, const char* path, uvhttp_request_handler_t handler);
+uvhttp_server_simple_t* uvhttp_any(uvhttp_server_simple_t* server, const char* path, uvhttp_request_handler_t handler);
+
+// 简化配置API
+uvhttp_server_simple_t* uvhttp_set_max_connections(uvhttp_server_simple_t* server, int max_conn);
+uvhttp_server_simple_t* uvhttp_set_timeout(uvhttp_server_simple_t* server, int timeout);
+uvhttp_server_simple_t* uvhttp_set_max_body_size(uvhttp_server_simple_t* server, size_t size);
+
+// 快速响应API
+void uvhttp_quick_response(uvhttp_response_t* response, int status, const char* content_type, const char* body);
+void uvhttp_html_response(uvhttp_response_t* response, const char* html_body);
+void uvhttp_file_response(uvhttp_response_t* response, const char* file_path);
+
+// 便捷请求参数获取
+const char* uvhttp_get_param(uvhttp_request_t* request, const char* name);
+const char* uvhttp_get_header(uvhttp_request_t* request, const char* name);
+const char* uvhttp_get_body(uvhttp_request_t* request);
+
+// 服务器运行和清理
+int uvhttp_server_run(uvhttp_server_simple_t* server);
+void uvhttp_server_stop_simple(uvhttp_server_simple_t* server);
+void uvhttp_server_simple_free(uvhttp_server_simple_t* server);
+
+// 一键启动函数（最简API）
+int uvhttp_serve(const char* host, int port);
+
 // 内部函数声明
 uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client);
 void uvhttp_request_cleanup(uvhttp_request_t* request);
@@ -56,9 +100,6 @@ void uvhttp_request_cleanup(uvhttp_request_t* request);
 // TLS函数声明 (暂时禁用)
 // uvhttp_error_t uvhttp_tls_init(void);
 // void uvhttp_tls_context_free(uvhttp_tls_context_t* ctx);
-
-// Router函数声明
-void uvhttp_router_free(uvhttp_router_t* router);
 
 #ifdef __cplusplus
 }

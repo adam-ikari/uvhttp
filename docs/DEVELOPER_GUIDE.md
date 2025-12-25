@@ -150,6 +150,61 @@ typedef enum {
 
 ## 开发规范
 
+### 🚀 API 使用规范
+
+#### 1. **统一使用核心API**
+
+UVHTTP 采用统一的核心API设计，不再支持多层次的API抽象。所有开发应直接使用核心API：
+
+**推荐用法**：
+```c
+int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    // 设置状态码
+    uvhttp_response_set_status(res, 200);
+    
+    // 设置响应头
+    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
+    
+    // 设置响应体
+    const char* body = "{\"message\":\"Hello World\"}";
+    uvhttp_response_set_body(res, body, strlen(body));
+    
+    // 发送响应
+    return uvhttp_response_send(res);
+}
+```
+
+**已废弃的API**（不再使用）：
+- `uvhttp_api_*` 系列函数
+- `uvhttp_serve()` 一行启动函数
+- `uvhttp_send_json_response()` 等便捷函数
+- 响应构建器模式
+
+#### 2. **服务器创建标准模式**
+
+```c
+// 标准服务器创建流程
+uv_loop_t* loop = uv_default_loop();
+uvhttp_server_t* server = uvhttp_server_new(loop);
+uvhttp_router_t* router = uvhttp_router_new();
+server->router = router;
+
+// 添加路由
+uvhttp_router_add_route(router, "/api", api_handler);
+
+// 启动服务器
+uvhttp_server_listen(server, "0.0.0.0", 8080);
+uv_run(loop, UV_RUN_DEFAULT);
+```
+
+#### 3. **响应处理标准模式**
+
+所有响应处理应遵循以下模式：
+1. 设置状态码（`uvhttp_response_set_status`）
+2. 设置响应头（`uvhttp_response_set_header`）
+3. 设置响应体（`uvhttp_response_set_body`）
+4. 发送响应（`uvhttp_response_send`）
+
 ### 📝 代码规范
 
 #### 1. **命名约定**

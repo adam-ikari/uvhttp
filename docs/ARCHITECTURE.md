@@ -45,6 +45,85 @@ UVHTTP 是一个基于 libuv 的高性能、轻量级 HTTP 服务器库。本文
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## API 设计
+
+### 设计原则
+
+UVHTTP 采用统一的核心API设计，摒弃多层次的抽象，提供简洁、高效、一致的接口：
+
+#### 1. **零开销抽象**
+- 所有API直接映射到核心功能
+- 编译时优化，运行时无额外开销
+- 避免过度封装和隐藏
+
+#### 2. **一致性原则**
+- 统一的错误处理机制
+- 一致的命名约定
+- 标准化的参数顺序
+
+#### 3. **灵活性与控制力**
+- 开发者完全控制HTTP响应的每个方面
+- 支持任意内容类型和自定义头部
+- 不强制特定的使用模式
+
+### 核心API组成
+
+#### 服务器管理
+```c
+uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop);
+uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, int port);
+uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server);
+void uvhttp_server_free(uvhttp_server_t* server);
+```
+
+#### 路由系统
+```c
+uvhttp_router_t* uvhttp_router_new(void);
+int uvhttp_router_add_route(uvhttp_router_t* router, const char* path, uvhttp_request_handler_t handler);
+void uvhttp_router_free(uvhttp_router_t* router);
+```
+
+#### 请求处理
+```c
+const char* uvhttp_request_get_method(uvhttp_request_t* request);
+const char* uvhttp_request_get_url(uvhttp_request_t* request);
+const char* uvhttp_request_get_header(uvhttp_request_t* request, const char* name);
+const char* uvhttp_request_get_body(uvhttp_request_t* request);
+```
+
+#### 响应构建
+```c
+uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int status_code);
+uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response, const char* name, const char* value);
+uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length);
+uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
+```
+
+### 标准使用模式
+
+```c
+// 1. 创建服务器
+uv_loop_t* loop = uv_default_loop();
+uvhttp_server_t* server = uvhttp_server_new(loop);
+
+// 2. 设置路由
+uvhttp_router_t* router = uvhttp_router_new();
+server->router = router;
+uvhttp_router_add_route(router, "/api", api_handler);
+
+// 3. 启动服务器
+uvhttp_server_listen(server, "0.0.0.0", 8080);
+uv_run(loop, UV_RUN_DEFAULT);
+
+// 4. 处理请求
+int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    uvhttp_response_set_status(res, 200);
+    uvhttp_response_set_header(res, "Content-Type", "application/json");
+    uvhttp_response_set_body(res, "{\"status\":\"ok\"}", 15);
+    return uvhttp_response_send(res);
+}
+```
+
 ## 核心模块
 
 ### 1. 服务器模块 (Server)

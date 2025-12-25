@@ -172,6 +172,10 @@ void uvhttp_router_free(uvhttp_router_t* router) {
             UVHTTP_FREE(router->array_routes);
             router->array_routes = NULL;
         }
+        if (router->static_prefix) {
+            free(router->static_prefix);
+            router->static_prefix = NULL;
+        }
         UVHTTP_FREE(router);
     }
 }
@@ -423,13 +427,30 @@ uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* route
             token = strtok(NULL, "/");
         }
         
-        // 匹配路由
+        // 首先检查静态路由
+    if (router->static_prefix && router->static_context) {
+        size_t prefix_len = strlen(router->static_prefix);
+        if (strncmp(path, router->static_prefix, prefix_len) == 0) {
+            // 匹配静态路由，返回静态文件处理器
+            return (uvhttp_request_handler_t)router->static_context;
+        }
+    }
+    
+    // 匹配路由
         if (match_route_node(router->root, segments, segment_count, 0, method_enum, &match) == 0) {
             return match.handler;
         }
     } else {
         // 数组查找
-        return find_array_route(router, path, method_enum);
+        uvhttp_request_handler_t handler = find_array_route(router, path, method_enum);
+        if (handler) {
+            return handler;
+        }
+    }
+    
+    // 如果没有匹配的路由，检查回退路由
+    if (router->fallback_context) {
+        return (uvhttp_request_handler_t)router->fallback_context;
     }
     
     return NULL;
@@ -479,4 +500,46 @@ uvhttp_error_t uvhttp_parse_path_params(const char* path,
                                          uvhttp_param_t* params,
                                          size_t* param_count) {
     return parse_path_params(path, params, param_count);
+}
+
+/**
+ * 添加静态文件路由
+ */
+uvhttp_error_t uvhttp_router_add_static_route(uvhttp_router_t* router,
+                                               const char* prefix_path,
+                                               void* static_context) {
+    if (!router || !prefix_path || !static_context) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 释放之前的前缀
+    if (router->static_prefix) {
+        UVHTTP_FREE(router->static_prefix);
+    }
+    
+    // 复制新的前缀
+    router->static_prefix = strdup(prefix_path);
+    if (!router->static_prefix) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    
+    router->static_context = static_context;
+    router->static_handler = NULL; // 将使用静态文件处理逻辑
+    
+    return UVHTTP_OK;
+}
+
+/**
+ * 添加回退路由
+ */
+uvhttp_error_t uvhttp_router_add_fallback_route(uvhttp_router_t* router,
+                                                 void* static_context) {
+    if (!router || !static_context) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    router->fallback_context = static_context;
+    router->fallback_handler = NULL; // 将使用静态文件处理逻辑
+    
+    return UVHTTP_OK;
 }

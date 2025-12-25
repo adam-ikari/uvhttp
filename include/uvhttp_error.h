@@ -68,6 +68,9 @@ typedef enum {
     UVHTTP_ERROR_MAX /* 动态计算最大值 */
 } uvhttp_error_t;
 
+/* 统一的返回类型别名，用于所有API函数 */
+typedef uvhttp_error_t uvhttp_result_t;
+
 /* Error code to string */
 const char* uvhttp_error_string(uvhttp_error_t error);
 

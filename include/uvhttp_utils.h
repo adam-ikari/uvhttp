@@ -25,20 +25,7 @@ uvhttp_error_t uvhttp_send_unified_response(uvhttp_response_t* response,
                                           size_t length, 
                                           int status_code);
 
-// 便捷响应发送函数
-uvhttp_error_t uvhttp_send_json_response(uvhttp_response_t* response, 
-                                        const char* json_content, 
-                                        int status_code);
-
-uvhttp_error_t uvhttp_send_html_response(uvhttp_response_t* response, 
-                                        const char* html_content, 
-                                        int status_code);
-
-uvhttp_error_t uvhttp_send_text_response(uvhttp_response_t* response, 
-                                        const char* text_content, 
-                                        int status_code);
-
-// 错误响应
+// 错误响应 - 统一处理，返回 JSON 格式错误
 uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response, 
                                          int error_code, 
                                          const char* error_message, 

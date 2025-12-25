@@ -338,3 +338,264 @@ int uvhttp_server_is_tls_enabled(uvhttp_server_t* server) {
     return 0;
 }
 #endif
+
+// ========== 统一API实现 ==========
+
+// 内部辅助函数
+static uvhttp_server_simple_t* create_simple_server_internal(const char* host, int port) {
+    uvhttp_server_simple_t* simple = malloc(sizeof(uvhttp_server_simple_t));
+    if (!simple) return NULL;
+    
+    memset(simple, 0, sizeof(uvhttp_server_simple_t));
+    
+    // 获取或创建事件循环
+    simple->loop = uv_default_loop();
+    if (!simple->loop) {
+        free(simple);
+        return NULL;
+    }
+    
+    // 创建服务器
+    simple->server = uvhttp_server_new(simple->loop);
+    if (!simple->server) {
+        free(simple);
+        return NULL;
+    }
+    
+    // 创建路由器
+    simple->router = uvhttp_router_new();
+    if (!simple->router) {
+        uvhttp_server_free(simple->server);
+        free(simple);
+        return NULL;
+    }
+    
+    // 创建并设置默认配置
+    simple->config = uvhttp_config_new();
+    if (!simple->config) {
+        uvhttp_router_free(simple->router);
+        uvhttp_server_free(simple->server);
+        free(simple);
+        return NULL;
+    }
+    
+    uvhttp_config_set_defaults(simple->config);
+    simple->server->config = simple->config;
+    simple->server->router = simple->router;
+    simple->auto_cleanup = 1;
+    
+    // 启动监听
+    if (uvhttp_server_listen(simple->server, host, port) != UVHTTP_OK) {
+        uvhttp_config_free(simple->config);
+        uvhttp_router_free(simple->router);
+        uvhttp_server_free(simple->server);
+        free(simple);
+        return NULL;
+    }
+    
+    return simple;
+}
+
+// 快速创建和启动服务器
+uvhttp_server_simple_t* uvhttp_server_create(const char* host, int port) {
+    return create_simple_server_internal(host, port);
+}
+
+// 路由添加辅助函数
+static uvhttp_server_simple_t* add_route_internal(uvhttp_server_simple_t* server, 
+                                                   const char* path, 
+                                                   uvhttp_method_t method,
+                                                   uvhttp_request_handler_t handler) {
+    if (!server || !path || !handler) return server;
+    
+    uvhttp_router_add_route_method(server->router, path, method, handler);
+    return server;
+}
+
+// 链式路由API
+uvhttp_server_simple_t* uvhttp_get(uvhttp_server_simple_t* server, const char* path, uvhttp_request_handler_t handler) {
+    return add_route_internal(server, path, UVHTTP_GET, handler);
+}
+
+uvhttp_server_simple_t* uvhttp_post(uvhttp_server_simple_t* server, const char* path, uvhttp_request_handler_t handler) {
+    return add_route_internal(server, path, UVHTTP_POST, handler);
+}
+
+uvhttp_server_simple_t* uvhttp_put(uvhttp_server_simple_t* server, const char* path, uvhttp_request_handler_t handler) {
+    return add_route_internal(server, path, UVHTTP_PUT, handler);
+}
+
+uvhttp_server_simple_t* uvhttp_delete(uvhttp_server_simple_t* server, const char* path, uvhttp_request_handler_t handler) {
+    return add_route_internal(server, path, UVHTTP_DELETE, handler);
+}
+
+uvhttp_server_simple_t* uvhttp_any(uvhttp_server_simple_t* server, const char* path, uvhttp_request_handler_t handler) {
+    return add_route_internal(server, path, UVHTTP_ANY, handler);
+}
+
+// 简化配置API
+uvhttp_server_simple_t* uvhttp_set_max_connections(uvhttp_server_simple_t* server, int max_conn) {
+    if (server && server->config) {
+        server->config->max_connections = max_conn;
+    }
+    return server;
+}
+
+uvhttp_server_simple_t* uvhttp_set_timeout(uvhttp_server_simple_t* server, int timeout) {
+    if (server && server->config) {
+        server->config->request_timeout = timeout;
+        server->config->keepalive_timeout = timeout;
+    }
+    return server;
+}
+
+uvhttp_server_simple_t* uvhttp_set_max_body_size(uvhttp_server_simple_t* server, size_t size) {
+    if (server && server->config) {
+        server->config->max_body_size = size;
+    }
+    return server;
+}
+
+// 快速响应API
+void uvhttp_quick_response(uvhttp_response_t* response, int status, const char* content_type, const char* body) {
+    if (!response) return;
+    
+    uvhttp_response_set_status(response, status);
+    if (content_type) {
+        uvhttp_response_set_header(response, "Content-Type", content_type);
+    }
+    if (body) {
+        uvhttp_response_set_body(response, body, strlen(body));
+    }
+    uvhttp_response_send(response);
+}
+
+
+
+void uvhttp_html_response(uvhttp_response_t* response, const char* html_body) {
+    uvhttp_quick_response(response, 200, "text/html", html_body);
+}
+
+void uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
+    // 简单的文件响应实现
+    FILE* file = fopen(file_path, "r");
+    if (!file) {
+        uvhttp_quick_response(response, 404, "text/plain", "File not found");
+        return;
+    }
+    
+    // 获取文件大小
+    fseek(file, 0, SEEK_END);
+    long file_size_long = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    
+    if (file_size_long < 0) {
+        fclose(file);
+        uvhttp_quick_response(response, 500, "text/plain", "File size error");
+        return;
+    }
+    
+    size_t file_size = (size_t)file_size_long;
+    
+    // 读取文件内容
+    char* content = malloc(file_size + 1);
+    if (!content) {
+        fclose(file);
+        uvhttp_quick_response(response, 500, "text/plain", "Internal server error");
+        return;
+    }
+    
+    if (fread(content, 1, file_size, file) != file_size) {
+        free(content);
+        uvhttp_quick_response(response, 500, "text/plain", "File read error");
+        return;
+    }
+    content[file_size] = '\0';
+    fclose(file);
+    
+    // 设置内容类型
+    const char* content_type = "text/plain";
+    if (strstr(file_path, ".html")) content_type = "text/html";
+    else if (strstr(file_path, ".css")) content_type = "text/css";
+    else if (strstr(file_path, ".js")) content_type = "application/javascript";
+    else if (strstr(file_path, ".json")) content_type = "application/json";
+    else if (strstr(file_path, ".png")) content_type = "image/png";
+    else if (strstr(file_path, ".jpg") || strstr(file_path, ".jpeg")) content_type = "image/jpeg";
+    
+    uvhttp_quick_response(response, 200, content_type, content);
+    free(content);
+}
+
+// 便捷请求参数获取
+const char* uvhttp_get_param(uvhttp_request_t* request, const char* name) {
+    return uvhttp_request_get_query_param(request, name);
+}
+
+const char* uvhttp_get_header(uvhttp_request_t* request, const char* name) {
+    return uvhttp_request_get_header(request, name);
+}
+
+const char* uvhttp_get_body(uvhttp_request_t* request) {
+    return uvhttp_request_get_body(request);
+}
+
+// 服务器运行和清理
+int uvhttp_server_run(uvhttp_server_simple_t* server) {
+    if (!server || !server->loop) return -1;
+    return uv_run(server->loop, UV_RUN_DEFAULT);
+}
+
+void uvhttp_server_stop_simple(uvhttp_server_simple_t* server) {
+    if (server && server->server) {
+        uvhttp_server_stop(server->server);
+    }
+}
+
+void uvhttp_server_simple_free(uvhttp_server_simple_t* server) {
+    if (!server) return;
+    
+    if (server->server) {
+        uvhttp_server_free(server->server);
+    }
+    
+    // 注意：router和config由server负责释放，不要重复释放
+    
+    free(server);
+}
+
+// 默认处理器（用于一键启动）
+static int default_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    const char* method = uvhttp_request_get_method(request);
+    const char* url = uvhttp_request_get_url(request);
+    
+    char response_body[512];
+    snprintf(response_body, sizeof(response_body),
+        "UVHTTP 统一API服务器\n\n"
+        "请求信息:\n"
+        "- 方法: %s\n"
+        "- URL: %s\n"
+        "- 时间: %ld\n"
+        "\n欢迎使用 UVHTTP 统一API!",
+        method, url, time(NULL)
+    );
+    
+    uvhttp_quick_response(response, 200, "text/plain", response_body);
+    return 0;
+}
+
+// 一键启动函数（最简API）
+int uvhttp_serve(const char* host, int port) {
+    uvhttp_server_simple_t* server = uvhttp_server_create(host, port);
+    if (!server) return -1;
+    
+    // 添加默认路由
+    uvhttp_any(server, "/", default_handler);
+    
+    printf("UVHTTP 服务器运行在 http://%s:%d\n", host ? host : "0.0.0.0", port);
+    printf("按 Ctrl+C 停止服务器\n");
+    
+    int result = uvhttp_server_run(server);
+    uvhttp_server_simple_free(server);
+    
+    return result;
+}

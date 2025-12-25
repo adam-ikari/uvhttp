@@ -141,119 +141,7 @@ uvhttp_error_t uvhttp_send_unified_response(uvhttp_response_t* response,
     return uvhttp_response_send(response);
 }
 
-/**
- * @brief 发送 JSON 响应的便捷函数
- * @param response 响应对象
- * @param json_content JSON 内容字符串
- * @param status_code HTTP状态码
- * @return UVHTTP_OK 成功，其他值表示错误
- */
-uvhttp_error_t uvhttp_send_json_response(uvhttp_response_t* response, 
-                                        const char* json_content, 
-                                        int status_code) {
-    // 参数验证
-    if (!response || !json_content) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    
-    // 验证状态码范围
-    if (!is_valid_status_code(status_code)) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    
-    // 验证内容长度
-    size_t content_len = strlen(json_content);
-    if (content_len == 0 || content_len > UVHTTP_MAX_BODY_SIZE) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    
-    // 基本JSON格式验证 - 检查是否以 { 或 [ 开头
-    const char* trimmed = json_content;
-    while (*trimmed && isspace((unsigned char)*trimmed)) {
-        trimmed++;
-    }
-    
-    if (*trimmed != '{' && *trimmed != '[') {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    
-    uvhttp_response_set_status(response, status_code);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_body(response, json_content, content_len);
-    
-    return uvhttp_response_send(response);
-}
 
-/**
- * @brief 发送 HTML 响应的便捷函数
- * @param response 响应对象
- * @param html_content HTML 内容字符串
- * @param status_code HTTP状态码
- * @return UVHTTP_OK 成功，其他值表示错误
- */
-uvhttp_error_t uvhttp_send_html_response(uvhttp_response_t* response, 
-                                        const char* html_content, 
-                                        int status_code) {
-    // 参数验证
-    if (!response || !html_content) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    
-    // 验证状态码范围
-    if (!is_valid_status_code(status_code)) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    
-    // 验证内容长度
-    size_t content_len = strlen(html_content);
-    if (content_len == 0 || content_len > UVHTTP_MAX_BODY_SIZE) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    
-    // 基本HTML格式验证 - 检查是否包含HTML标签
-    if (!strstr(html_content, "<") || !strstr(html_content, ">")) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    
-    uvhttp_response_set_status(response, status_code);
-    uvhttp_response_set_header(response, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(response, html_content, content_len);
-    
-    return uvhttp_response_send(response);
-}
-
-/**
- * @brief 发送文本响应的便捷函数
- * @param response 响应对象
- * @param text_content 文本内容字符串
- * @param status_code HTTP状态码
- * @return UVHTTP_OK 成功，其他值表示错误
- */
-uvhttp_error_t uvhttp_send_text_response(uvhttp_response_t* response, 
-                                        const char* text_content, 
-                                        int status_code) {
-    // 参数验证
-    if (!response || !text_content) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    
-    // 验证状态码范围
-    if (!is_valid_status_code(status_code)) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    
-    // 验证内容长度
-    size_t content_len = strlen(text_content);
-    if (content_len == 0 || content_len > UVHTTP_MAX_BODY_SIZE) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    
-    uvhttp_response_set_status(response, status_code);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain; charset=utf-8");
-    uvhttp_response_set_body(response, text_content, content_len);
-    
-    return uvhttp_response_send(response);
-}
 
 /**
  * @brief 创建标准错误响应（JSON格式）
@@ -308,7 +196,10 @@ uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    return uvhttp_send_json_response(response, error_json, error_code);
+    uvhttp_response_set_status(response, error_code);
+    uvhttp_response_set_header(response, "Content-Type", "application/json; charset=utf-8");
+    uvhttp_response_set_body(response, error_json, strlen(error_json));
+    return uvhttp_response_send(response);
 }
 
 /* ============ 公共验证函数实现 ============ */

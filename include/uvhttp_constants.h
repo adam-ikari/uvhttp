@@ -72,12 +72,7 @@
 #define UVHTTP_TLS_SAN_BUFFER_SIZE       256
 #define UVHTTP_TLS_PATH_MAX_SIZE          256
 
-/* JSON 相关 */
-#define UVHTTP_JSON_ESCAPE_BUFFER_SIZE    512
-#define UVHTTP_JSON_VALUE_BUFFER_SIZE     1024
-#define UVHTTP_JSON_BUFFER_SIZE          2048
-#define UVHTTP_JSON_ERROR_BUFFER_SIZE     1280
-#define UVHTTP_JSON_MAX_ESCAPE_LENGTH     6
+
 
 /* 中间件相关 */
 #define UVHTTP_CORS_MAX_AGE_DEFAULT       "86400"
@@ -130,7 +125,7 @@
 #define UVHTTP_CONTENT_TYPE_HTML         "text/html"
 #define UVHTTP_CONTENT_TYPE_CSS          "text/css"
 #define UVHTTP_CONTENT_TYPE_JS           "application/javascript"
-#define UVHTTP_CONTENT_TYPE_JSON         "application/json"
+
 #define UVHTTP_CONTENT_TYPE_XML          "application/xml"
 #define UVHTTP_CONTENT_TYPE_IMAGE_JPEG   "image/jpeg"
 #define UVHTTP_CONTENT_TYPE_IMAGE_PNG    "image/png"

@@ -1,0 +1,82 @@
+# UVHTTP 可测试性改进验证 Makefile
+
+CC = gcc
+CFLAGS = -std=c11 -Wall -Wextra -g -O0
+LDFLAGS = -luv
+
+# 测试模式编译标志
+TEST_FLAGS = -DUVHTTP_TEST_MODE=1 -DUVHTTP_FEATURE_MEMORY_TRACKING=1 -DUVHTTP_FEATURE_NETWORK_MOCK=1
+
+# 包含目录
+INCLUDES = -I../include -I../deps/libuv/include -I../deps/cllhttp
+
+# 源文件
+TEST_SOURCES = test_testability_improvements.c \
+               ./uvhttp_test_helpers.c \
+               ../src/uvhttp_response.c \
+               ../src/uvhttp_network.c \
+               ../src/uvhttp_context.c \
+               ../src/uvhttp_request.c \
+               ../src/uvhttp_connection.c \
+               ../src/uvhttp_validation.c \
+               ../src/uvhttp_utils.c \
+               ../src/uvhttp_error.c \
+               ../src/uvhttp_error_helpers.c \
+               ../src/uvhttp_error_handler.c \
+               ../src/uvhttp_config.c \
+               ../src/uvhttp_json.c \
+               ../src/uvhttp_deps.c
+
+# 目标文件
+TARGET = test_testability_improvements
+
+# 默认目标
+all: $(TARGET)
+
+# 编译测试程序
+$(TARGET): $(TEST_SOURCES)
+	$(CC) $(CFLAGS) $(TEST_FLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
+
+# 运行测试
+test: $(TARGET)
+	./$(TARGET)
+
+# 运行内存检查
+memcheck: $(TARGET)
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(TARGET)
+
+# 运行性能分析
+profile: $(TARGET)
+	valgrind --tool=callgrind ./$(TARGET)
+	callgrind_annotate callgrind.out.*
+
+# 清理
+clean:
+	rm -f $(TARGET) callgrind.out.*
+
+# 检查代码风格
+check-style:
+	cppcheck --enable=all --std=c11 $(TEST_SOURCES)
+
+# 生成覆盖率报告
+coverage: CFLAGS += --coverage
+coverage: LDFLAGS += --coverage
+coverage: clean $(TARGET)
+	./$(TARGET)
+	gcov $(TEST_SOURCES)
+	lcov --capture --directory . --output-file coverage.info
+	genhtml coverage.info --output-directory coverage_html
+
+# 帮助信息
+help:
+	@echo "Available targets:"
+	@echo "  all       - Build the test program"
+	@echo "  test      - Run the test program"
+	@echo "  memcheck  - Run with valgrind memory check"
+	@echo "  profile   - Run with valgrind profiler"
+	@echo "  clean     - Clean build files"
+	@echo "  check-style - Run cppcheck code analysis"
+	@echo "  coverage  - Generate code coverage report"
+	@echo "  help      - Show this help message"
+
+.PHONY: all test memcheck profile clean check-style coverage help

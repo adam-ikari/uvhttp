@@ -6,6 +6,7 @@
 #include "uvhttp_allocator.h"
 #include "uvhttp_error_helpers.h"
 #include "uvhttp_error_handler.h"
+#include "uvhttp_error.h"
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
@@ -207,27 +208,31 @@ int uvhttp_lru_cache_is_expired(cache_entry_t* entry, int cache_ttl) {
 /**
  * 添加或更新缓存条目 - 单线程版本
  */
-int uvhttp_lru_cache_put(cache_manager_t* cache,
-                         const char* file_path,
-                         char* content,
-                         size_t content_length,
-                         const char* mime_type,
-                         time_t last_modified,
-                         const char* etag) {
+uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
+                                     const char* file_path,
+                                     char* content,
+                                     size_t content_length,
+                                     const char* mime_type,
+                                     time_t last_modified,
+                                     const char* etag) {
     if (!cache || !file_path || !content) {
         UVHTTP_LOG_WARN("Invalid cache add parameters: cache=%p, file_path=%p, content=%p", 
                         cache, file_path, content);
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     /* 检查文件大小是否超过限制 */
     if (content_length > UVHTTP_STATIC_MAX_FILE_SIZE) {
         UVHTTP_LOG_WARN("File size exceeds limit: %s (size: %zu, limit: %d)", 
                         file_path, content_length, UVHTTP_STATIC_MAX_FILE_SIZE);
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    /* 计算内存使用量 */
+    /* 计算内存使用量，检查整数溢出 */
+    if (content_length > SIZE_MAX - sizeof(cache_entry_t)) {
+        UVHTTP_LOG_ERROR("Content length too large: %zu (causes integer overflow)", content_length);
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
     size_t memory_usage = sizeof(cache_entry_t) + content_length;
     
     UVHTTP_LOG_DEBUG("Adding cache entry: %s (size: %zu, type: %s)", 
@@ -283,10 +288,18 @@ int uvhttp_lru_cache_put(cache_manager_t* cache,
         if (!entry) {
             UVHTTP_LOG_ERROR("Failed to create cache entry: memory allocation error");
             uvhttp_handle_memory_failure("cache_entry", NULL, NULL);
-            return -1;
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
         
         memset(entry, 0, sizeof(cache_entry_t));
+        
+        /* 验证文件路径长度，防止缓冲区溢出 */
+        if (strlen(file_path) >= sizeof(entry->file_path)) {
+            UVHTTP_LOG_ERROR("File path too long: %s (max: %zu)", file_path, sizeof(entry->file_path) - 1);
+            uvhttp_free(entry);
+            return UVHTTP_ERROR_INVALID_PARAM;
+        }
+        
         strncpy(entry->file_path, file_path, sizeof(entry->file_path) - 1);
         entry->file_path[sizeof(entry->file_path) - 1] = '\0';
         
@@ -335,16 +348,16 @@ int uvhttp_lru_cache_put(cache_manager_t* cache,
     UVHTTP_LOG_DEBUG("Cache entry added successfully: %s (total memory: %zu, entries: %d)", 
                      file_path, cache->total_memory_usage, cache->entry_count);
     
-    return 0;
+    return UVHTTP_OK;
 }
 
 /**
  * 删除缓存条目 - 单线程版本
  */
-int uvhttp_lru_cache_remove(cache_manager_t* cache, const char* file_path) {
+uvhttp_error_t uvhttp_lru_cache_remove(cache_manager_t* cache, const char* file_path) {
     if (!cache || !file_path) {
         UVHTTP_LOG_WARN("Invalid cache remove parameters: cache=%p, file_path=%p", cache, file_path);
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     UVHTTP_LOG_DEBUG("Removing cache entry: %s", file_path);
@@ -356,7 +369,7 @@ int uvhttp_lru_cache_remove(cache_manager_t* cache, const char* file_path) {
     
     if (!entry) {
         UVHTTP_LOG_WARN("Attempting to remove non-existent cache entry: %s", file_path);
-        return -1;
+        return UVHTTP_ERROR_NOT_FOUND;
     }
     
     /* 从哈希表中移除 */
@@ -385,7 +398,7 @@ int uvhttp_lru_cache_remove(cache_manager_t* cache, const char* file_path) {
     /* 释放内存 */
     free_cache_entry(entry);
     
-    return 0;
+    return UVHTTP_OK;
 }
 
 /**

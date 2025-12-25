@@ -11,6 +11,7 @@ extern int test_suite_utils(void);
 extern int test_suite_response(void);
 extern int test_suite_request(void);
 extern int test_suite_router(void);
+extern int test_suite_boundary_conditions(void);
 
 /* 全局测试上下文 */
 uvhttp_test_context_t g_test_context = {0};
@@ -40,6 +41,26 @@ void uvhttp_test_init(int verbose) {
         printf("详细模式: 开启\n");
     }
     printf("\n");
+}
+
+void uvhttp_test_reset_memory_tracker(void) {
+    g_allocated_bytes = 0;
+    g_allocation_count = 0;
+    if (g_test_context.verbose) {
+        printf("内存跟踪器已重置\n");
+    }
+}
+
+void uvhttp_test_check_memory_leaks(void) {
+    if (g_allocated_bytes > 0 || g_allocation_count > 0) {
+        printf("警告: 检测到内存泄漏!\n");
+        printf("未释放字节数: %zu\n", g_allocated_bytes);
+        printf("未释放块数: %zu\n", g_allocation_count);
+    } else {
+        if (g_test_context.verbose) {
+            printf("✓ 无内存泄漏\n");
+        }
+    }
 }
 
 void uvhttp_test_cleanup(void) {
@@ -82,6 +103,7 @@ int uvhttp_test_run_all(void) {
     if (test_suite_response() != 0) failed_suites++;
     if (test_suite_request() != 0) failed_suites++;
     if (test_suite_router() != 0) failed_suites++;
+    if (test_suite_boundary_conditions() != 0) failed_suites++;
     
     return failed_suites;
 }
@@ -147,25 +169,4 @@ static void* test_calloc(size_t count, size_t size) {
         g_allocation_count++;
     }
     return ptr;
-}
-
-void uvhttp_test_check_memory_leaks(void) {
-    if (g_allocation_count > 0) {
-        printf("警告: 检测到可能的内存泄漏\n");
-        printf("未释放分配: %zu 个\n", g_allocation_count);
-        printf("未释放字节: %zu\n", g_allocated_bytes);
-    } else {
-        printf("✓ 无内存泄漏检测\n");
-    }
-}
-
-void uvhttp_test_reset_memory_tracker(void) {
-    g_allocated_bytes = 0;
-    g_allocation_count = 0;
-}
-
-/* 重写内存分配函数进行测试 */
-void uvhttp_test_install_memory_tracker(void) {
-    /* 这里应该设置自定义分配器，但为了简化暂时跳过 */
-    /* 实际实现需要修改 uvhttp_allocator.h 中的宏定义 */
 }

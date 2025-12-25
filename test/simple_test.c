@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../include/uvhttp_utils.h"
+#include "../include/uvhttp_validation.h"
 
 // 简化的测试框架
 #define TEST(name) void test_##name()
@@ -20,81 +21,81 @@ static int tests_passed = 0;
 // 工具函数测试
 TEST(safe_strncpy_normal) {
     char dest[10];
-    EXPECT_EQ(safe_strncpy(dest, "hello", sizeof(dest)), 0);
+    EXPECT_EQ(uvhttp_safe_strncpy(dest, "hello", sizeof(dest)), 5);
     EXPECT_STREQ(dest, "hello");
     tests_run++;
 }
 
 TEST(safe_strncpy_overflow) {
     char dest[5];
-    EXPECT_EQ(safe_strncpy(dest, "123456789", sizeof(dest)), 0);
+    EXPECT_EQ(uvhttp_safe_strncpy(dest, "123456789", sizeof(dest)), 4);
     EXPECT_TRUE(strlen(dest) < sizeof(dest));
     tests_run++;
 }
 
 TEST(safe_strncpy_null_checks) {
     char dest[10];
-    EXPECT_EQ(safe_strncpy(NULL, "test", sizeof(dest)), -1);
-    EXPECT_EQ(safe_strncpy(dest, NULL, sizeof(dest)), -1);
-    EXPECT_EQ(safe_strncpy(dest, "test", 0), -1);
+    EXPECT_EQ(uvhttp_safe_strncpy(NULL, "test", sizeof(dest)), -1);
+    EXPECT_EQ(uvhttp_safe_strncpy(dest, NULL, sizeof(dest)), -1);
+    EXPECT_EQ(uvhttp_safe_strncpy(dest, "test", 0), -1);
     tests_run++;
 }
 
 TEST(validate_url_valid) {
-    EXPECT_EQ(validate_url("/", 1), 0);
-    EXPECT_EQ(validate_url("/api/users", 10), 0);
-    EXPECT_EQ(validate_url("/api/v1/users/123", 17), 0);
+    EXPECT_EQ(uvhttp_validate_url_path("/"), 1);
+    EXPECT_EQ(uvhttp_validate_url_path("/api/users"), 1);
+    EXPECT_EQ(uvhttp_validate_url_path("/api/v1/users/123"), 1);
     tests_run++;
 }
 
 TEST(validate_url_invalid) {
-    EXPECT_EQ(validate_url("/test\x00", 6), -1);
-    EXPECT_EQ(validate_url(NULL, 5), -1);
-    EXPECT_EQ(validate_url("/test", 0), -1);
+    EXPECT_EQ(uvhttp_validate_url_path("/test\x00"), 0);
+    EXPECT_EQ(uvhttp_validate_url_path(NULL), 0);
+    EXPECT_EQ(uvhttp_validate_url_path(""), 0);
     tests_run++;
 }
 
 TEST(validate_header_value_valid) {
-    EXPECT_EQ(validate_header_value("application/json", 16), 0);
-    EXPECT_EQ(validate_header_value("text/plain", 10), 0);
-    EXPECT_EQ(validate_header_value("Mozilla/5.0", 11), 0);
+    EXPECT_EQ(uvhttp_validate_header_value_safe("application/json"), 1);
+    EXPECT_EQ(uvhttp_validate_header_value_safe("text/plain"), 1);
+    EXPECT_EQ(uvhttp_validate_header_value_safe("Mozilla/5.0"), 1);
     tests_run++;
 }
 
 TEST(validate_header_value_invalid) {
-    EXPECT_EQ(validate_header_value("value\x01", 6), -1);
-    EXPECT_EQ(validate_header_value("value\x1F", 6), -1);
-    EXPECT_EQ(validate_header_value("value\x7F", 6), -1);
-    EXPECT_EQ(validate_header_value(NULL, 5), -1);
+    EXPECT_EQ(uvhttp_validate_header_value_safe("value\x01"), 0);
+    EXPECT_EQ(uvhttp_validate_header_value_safe("value\x1F"), 0);
+    EXPECT_EQ(uvhttp_validate_header_value_safe("value\x7F"), 0);
+    EXPECT_EQ(uvhttp_validate_header_value_safe(NULL), 0);
     tests_run++;
 }
 
 TEST(validate_method_valid) {
-    EXPECT_EQ(validate_method("GET", 3), 0);
-    EXPECT_EQ(validate_method("POST", 4), 0);
-    EXPECT_EQ(validate_method("PUT", 3), 0);
-    EXPECT_EQ(validate_method("DELETE", 6), 0);
-    EXPECT_EQ(validate_method("HEAD", 4), 0);
-    EXPECT_EQ(validate_method("OPTIONS", 7), 0);
-    EXPECT_EQ(validate_method("PATCH", 5), 0);
+    EXPECT_EQ(uvhttp_validate_http_method("GET"), 1);
+    EXPECT_EQ(uvhttp_validate_http_method("POST"), 1);
+    EXPECT_EQ(uvhttp_validate_http_method("PUT"), 1);
+    EXPECT_EQ(uvhttp_validate_http_method("DELETE"), 1);
+    EXPECT_EQ(uvhttp_validate_http_method("HEAD"), 1);
+    EXPECT_EQ(uvhttp_validate_http_method("OPTIONS"), 1);
+    EXPECT_EQ(uvhttp_validate_http_method("PATCH"), 1);
     tests_run++;
 }
 
 TEST(validate_method_invalid) {
-    EXPECT_EQ(validate_method("INVALID", 7), -1);
-    EXPECT_EQ(validate_method("get", 3), -1); // 小写
-    EXPECT_EQ(validate_method("", 0), -1);
-    EXPECT_EQ(validate_method(NULL, 3), -1);
+    EXPECT_EQ(uvhttp_validate_http_method("INVALID"), 0);
+    EXPECT_EQ(uvhttp_validate_http_method("get"), 0); // 小写
+    EXPECT_EQ(uvhttp_validate_http_method(""), 0);
+    EXPECT_EQ(uvhttp_validate_http_method(NULL), 0);
     tests_run++;
 }
 
 // 边界条件测试
 TEST(edge_cases_min_buffer) {
     char dest[1];
-    EXPECT_EQ(safe_strncpy(dest, "a", sizeof(dest)), 0);
+    EXPECT_EQ(uvhttp_safe_strncpy(dest, "a", sizeof(dest)), 1);
     EXPECT_EQ(dest[0], 'a');
     
-    EXPECT_EQ(safe_strncpy(dest, "", sizeof(dest)), 0);
+    EXPECT_EQ(uvhttp_safe_strncpy(dest, "", sizeof(dest)), 0);
     EXPECT_EQ(dest[0], '\0');
     tests_run++;
 }
@@ -102,7 +103,8 @@ TEST(edge_cases_min_buffer) {
 TEST(edge_cases_long_string) {
     char dest[256];
     const char* long_string = "This is a very long string that should still be handled efficiently without causing any buffer overflows";
-    EXPECT_EQ(safe_strncpy(dest, long_string, sizeof(dest)), 0);
+    int result = uvhttp_safe_strncpy(dest, long_string, sizeof(dest));
+    EXPECT_TRUE(result > 0 && result < sizeof(dest));
     EXPECT_TRUE(strlen(dest) < sizeof(dest));
     EXPECT_TRUE(strncmp(dest, long_string, strlen(dest)) == 0);
     tests_run++;
@@ -115,10 +117,10 @@ TEST(performance_many_operations) {
     
     // 执行多次操作测试性能
     for (int i = 0; i < 1000; i++) {
-        EXPECT_EQ(safe_strncpy(dest, src, sizeof(dest)), 0);
-        EXPECT_EQ(validate_url("/api/test", 9), 0);
-        EXPECT_EQ(validate_header_value("value", 5), 0);
-        EXPECT_EQ(validate_method("GET", 3), 0);
+        EXPECT_EQ(uvhttp_safe_strncpy(dest, src, sizeof(dest)), 4);
+        EXPECT_EQ(uvhttp_validate_url_path("/api/test"), 1);
+        EXPECT_EQ(uvhttp_validate_header_value_safe("value"), 1);
+        EXPECT_EQ(uvhttp_validate_http_method("GET"), 1);
     }
     tests_run++;
 }
@@ -129,7 +131,7 @@ TEST(memory_management_repeated_alloc) {
     
     // 重复分配和释放模式
     for (int i = 0; i < 100; i++) {
-        EXPECT_EQ(safe_strncpy(dest, "test", sizeof(dest)), 0);
+        EXPECT_EQ(uvhttp_safe_strncpy(dest, "test", sizeof(dest)), 4);
         EXPECT_STREQ(dest, "test");
     }
     tests_run++;
@@ -140,12 +142,12 @@ TEST(error_recovery_sequence) {
     char dest[10];
     
     // 连续错误后正常操作
-    EXPECT_EQ(safe_strncpy(NULL, "test", sizeof(dest)), -1);
-    EXPECT_EQ(safe_strncpy(dest, NULL, sizeof(dest)), -1);
-    EXPECT_EQ(safe_strncpy(dest, "test", 0), -1);
+    EXPECT_EQ(uvhttp_safe_strncpy(NULL, "test", sizeof(dest)), -1);
+    EXPECT_EQ(uvhttp_safe_strncpy(dest, NULL, sizeof(dest)), -1);
+    EXPECT_EQ(uvhttp_safe_strncpy(dest, "test", 0), -1);
     
     // 恢复正常操作
-    EXPECT_EQ(safe_strncpy(dest, "ok", sizeof(dest)), 0);
+    EXPECT_EQ(uvhttp_safe_strncpy(dest, "ok", sizeof(dest)), 2);
     EXPECT_STREQ(dest, "ok");
     tests_run++;
 }
@@ -156,9 +158,9 @@ TEST(thread_safety_simulation) {
     char dest3[10];
     
     // 模拟并发操作
-    EXPECT_EQ(safe_strncpy(dest1, "test1", sizeof(dest1)), 0);
-    EXPECT_EQ(safe_strncpy(dest2, "test2", sizeof(dest2)), 0);
-    EXPECT_EQ(safe_strncpy(dest3, "test3", sizeof(dest3)), 0);
+    EXPECT_EQ(uvhttp_safe_strncpy(dest1, "test1", sizeof(dest1)), 5);
+    EXPECT_EQ(uvhttp_safe_strncpy(dest2, "test2", sizeof(dest2)), 5);
+    EXPECT_EQ(uvhttp_safe_strncpy(dest3, "test3", sizeof(dest3)), 5);
     
     EXPECT_STREQ(dest1, "test1");
     EXPECT_STREQ(dest2, "test2");
@@ -175,14 +177,14 @@ TEST(extreme_conditions) {
     char dest[256];
     
     // 测试极端验证深度
-    EXPECT_EQ(validate_header_value("a", 1), 0);
-    EXPECT_EQ(validate_header_value("", 0), -1);
+    EXPECT_EQ(uvhttp_validate_header_value_safe("a"), 1);
+    EXPECT_EQ(uvhttp_validate_header_value_safe(""), 1);
     
     // 测试极长URL
     char long_url[3000];
     memset(long_url, 'a', sizeof(long_url) - 1);
     long_url[sizeof(long_url) - 1] = '\0';
-    EXPECT_EQ(validate_url(long_url, strlen(long_url)), -1);
+    EXPECT_EQ(uvhttp_validate_url_path(long_url), 0);
     tests_run++;
 }
 

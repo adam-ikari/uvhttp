@@ -1,0 +1,95 @@
+# UVHTTP 内存分配器性能测试 Makefile
+
+CC = gcc
+CFLAGS = -std=c11 -Wall -Wextra -O2 -DNDEBUG
+LDFLAGS = -lm
+
+# 测试配置
+TEST_FLAGS = -DUVHTTP_TEST_MODE=0  # 生产模式测试性能
+
+# 包含目录
+INCLUDES = -I../include
+
+# 源文件
+TEST_SOURCES = test_allocator_performance.c
+
+# 目标文件
+TARGET = test_allocator_performance
+
+# 默认目标
+all: $(TARGET)
+
+# 编译性能测试
+$(TARGET): $(TEST_SOURCES)
+	$(CC) $(CFLAGS) $(TEST_FLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
+
+# 运行性能测试
+test: $(TARGET)
+	./$(TARGET)
+
+# 测试不同分配器类型
+test-default: CFLAGS += -DUVHTTP_ALLOCATOR_TYPE=0
+test-default: clean $(TARGET)
+	@echo "🔧 测试系统默认分配器..."
+	./$(TARGET)
+
+test-mimalloc: CFLAGS += -DUVHTTP_ALLOCATOR_TYPE=1
+test-mimalloc: clean $(TARGET)
+	@echo "🚀 测试 mimalloc 分配器..."
+	./$(TARGET)
+
+test-custom: CFLAGS += -DUVHTTP_ALLOCATOR_TYPE=2
+test-custom: clean $(TARGET)
+	@echo "🛠️ 测试自定义分配器..."
+	./$(TARGET)
+
+# 比较不同分配器性能
+compare: test-default test-mimalloc
+	@echo "📊 性能比较完成"
+
+# 内存检查（调试模式）
+memcheck: CFLAGS = -std=c11 -Wall -Wextra -g -O0 -DUVHTTP_TEST_MODE=1
+memcheck: clean $(TARGET)
+	valgrind --tool=massif ./$(TARGET)
+
+# 性能分析
+profile: CFLAGS += -pg
+profile: clean $(TARGET)
+	./$(TARGET)
+	gprof $(TARGET) gmon.out > profile_report.txt
+	@echo "📈 性能分析报告已生成: profile_report.txt"
+
+# 编译时优化检查
+optimization-check:
+	@echo "🔍 检查编译时优化..."
+	$(CC) $(CFLAGS) $(TEST_FLAGS) $(INCLUDES) -S test_allocator_performance.c -o - | grep -E "(call|jmp)" | wc -l
+	@echo "📊 函数调用数量（越少越好）"
+
+# 清理
+clean:
+	rm -f $(TARGET) gmon.out profile_report.txt
+
+# 帮助信息
+help:
+	@echo "UVHTTP 内存分配器性能测试"
+	@echo "==========================="
+	@echo ""
+	@echo "可用目标:"
+	@echo "  all           - 编译性能测试"
+	@echo "  test          - 运行性能测试"
+	@echo "  test-default  - 测试系统默认分配器"
+	@echo "  test-mimalloc - 测试 mimalloc 分配器"
+	@echo "  test-custom   - 测试自定义分配器"
+	@echo "  compare       - 比较不同分配器性能"
+	@echo "  memcheck      - 内存使用分析"
+	@echo "  profile       - 性能分析"
+	@echo "  optimization-check - 检查编译优化"
+	@echo "  clean         - 清理构建文件"
+	@echo "  help          - 显示此帮助信息"
+	@echo ""
+	@echo "示例用法:"
+	@echo "  make test-default    # 测试系统分配器"
+	@echo "  make compare         # 比较性能"
+	@echo "  make memcheck        # 内存分析"
+
+.PHONY: all test test-default test-mimalloc test-custom compare memcheck profile optimization-check clean help

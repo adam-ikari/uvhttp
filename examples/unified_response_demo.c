@@ -182,20 +182,29 @@ uvhttp_result_t demo_convenience_handler(uvhttp_request_t* req, uvhttp_response_
     
     if (accept_header && strstr(accept_header, "application/json")) {
         // 使用 JSON 便捷函数
-        const char* json_response = "{\"message\":\"使用便捷函数发送的JSON响应\",\"method\":\"uvhttp_send_json_response\"}";
-        uvhttp_error_t result = uvhttp_send_json_response(res, json_response, 200);
+        const char* json_response = "{\"message\":\"使用核心API发送的JSON响应\",\"method\":\"uvhttp_response_set_body\"}";
+        uvhttp_response_set_status(res, 200);
+        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
+        uvhttp_response_set_body(res, json_response, strlen(json_response));
+        uvhttp_error_t result = uvhttp_response_send(res);
         return (result == UVHTTP_OK) ? UVHTTP_OK : UVHTTP_ERROR_RESPONSE_SEND;
     }
     else if (accept_header && strstr(accept_header, "text/html")) {
         // 使用 HTML 便捷函数
-        const char* html_response = "<html><body><h1>HTML 便捷函数演示</h1><p>使用 uvhttp_send_html_response 发送</p></body></html>";
-        uvhttp_error_t result = uvhttp_send_html_response(res, html_response, 200);
+        const char* html_response = "<html><body><h1>HTML 核心API演示</h1><p>使用 uvhttp_response_set_body 发送</p></body></html>";
+        uvhttp_response_set_status(res, 200);
+        uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
+        uvhttp_response_set_body(res, html_response, strlen(html_response));
+        uvhttp_error_t result = uvhttp_response_send(res);
         return (result == UVHTTP_OK) ? UVHTTP_OK : UVHTTP_ERROR_RESPONSE_SEND;
     }
     else {
         // 使用文本便捷函数
-        const char* text_response = "使用 uvhttp_send_text_response 发送的文本响应";
-        uvhttp_error_t result = uvhttp_send_text_response(res, text_response, 200);
+        const char* text_response = "使用 uvhttp_response_set_body 发送的文本响应";
+        uvhttp_response_set_status(res, 200);
+        uvhttp_response_set_header(res, "Content-Type", "text/plain; charset=utf-8");
+        uvhttp_response_set_body(res, text_response, strlen(text_response));
+        uvhttp_error_t result = uvhttp_response_send(res);
         return (result == UVHTTP_OK) ? UVHTTP_OK : UVHTTP_ERROR_RESPONSE_SEND;
     }
 }

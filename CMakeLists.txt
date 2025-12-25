@@ -38,7 +38,7 @@ if(${UVHTTP_ALLOCATOR} STREQUAL "mimalloc")
     include_directories(deps/mimalloc/include)
     
     # 添加mimalloc作为子目录
-    add_subdirectory(mimalloc)
+    add_subdirectory(deps/mimalloc)
     
     # 链接mimalloc静态库
     set(MIMALLOC_LIB mimalloc-static)
@@ -134,11 +134,6 @@ set(LIBUV_BUILD_DOCS OFF CACHE BOOL "Disable libuv docs" FORCE)
 add_subdirectory(deps/libuv)
 set(UV_LIBRARIES uv_a)
 
-# 确保libuv别名目标存在
-if(NOT TARGET libuv::libuv)
-    add_library(libuv::libuv ALIAS uv_a)
-endif()
-
 # 添加mbedtls作为子目录 - 禁用所有不必要的组件
 set(ENABLE_TESTING OFF CACHE BOOL "Disable mbedtls tests" FORCE)
 set(ENABLE_PROGRAMS OFF CACHE BOOL "Disable mbedtls programs" FORCE)
@@ -175,39 +170,51 @@ set(SOURCES
         src/uvhttp_router.c
         src/uvhttp_connection.c
         src/uvhttp_server.c
-        src/uvhttp_tls_real.c  # 启用TLS支持（真实OpenSSL实现）
-        src/uvhttp_json.c
+        src/uvhttp_tls_openssl.c  # 启用TLS支持（OpenSSL实现）
         src/uvhttp_config.c
+        src/uvhttp_network.c
+        
         
         # src/uvhttp_mimalloc.c  # Temporarily disabled - requires mimalloc
         src/uvhttp_error.c
         src/uvhttp_error_handler.c
         src/uvhttp_error_helpers.c  # 新增的错误处理辅助函数
         src/uvhttp_validation.c     # 新增的输入验证模块
-    src/uvhttp_websocket_wrapper.c  # 使用包装层实现
+        src/uvhttp_websocket_wrapper.c  # 使用包装层实现
 )
-
 # 静态文件功能相关源文件
 if(UVHTTP_ENABLE_STATIC_FILES)
     list(APPEND SOURCES
-        src/uvhttp_static.c         # 静态文件服务模块
+        src/uvhttp_static.c          # 统一的静态文件服务模块
         src/uvhttp_lru_cache.c     # LRU缓存模块
+        src/uvhttp_async_file.c    # 异步文件读取模块
     )
 endif()
 
 # Header files
+
 set(HEADERS
+
     include/uvhttp.h
+
     include/uvhttp_server.h
+
     include/uvhttp_request.h
+
     include/uvhttp_response.h
+
     include/uvhttp_router.h
+
     include/uvhttp_utils.h
+
     include/uvhttp_tls.h  # 启用TLS头文件
+
     include/uvhttp_connection.h
+
     include/uvhttp_config.h
+
+    include/uvhttp_network.h
     
-    include/uvhttp_json.h
     include/uvhttp_websocket.h
     include/uvhttp_error_helpers.h  # 新增的错误处理辅助函数头文件
     include/uvhttp_validation.h     # 新增的输入验证头文件
@@ -216,8 +223,9 @@ set(HEADERS
 # 静态文件功能相关头文件
 if(UVHTTP_ENABLE_STATIC_FILES)
     list(APPEND HEADERS
-        include/uvhttp_static.h         # 静态文件服务模块头文件
+        include/uvhttp_static.h        # 静态文件服务模块头文件
         include/uvhttp_lru_cache.h     # LRU缓存模块头文件
+        include/uvhttp_async_file.h    # 异步文件读取模块头文件
     )
 endif()
 
@@ -273,28 +281,7 @@ if(MIMALLOC_LIB)
     target_link_libraries(uvhttp_shared PRIVATE ${MIMALLOC_LIB})
 endif()
 
-# 添加cjson支持 - 使用预编译方式
-find_path(CJSON_INCLUDE_DIR cJSON.h 
-          PATHS ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson)
-find_library(CJSON_LIBRARY cjson 
-             PATHS ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson)
-
-if(CJSON_INCLUDE_DIR AND CJSON_LIBRARY)
-    target_include_directories(uvhttp PRIVATE ${CJSON_INCLUDE_DIR})
-    target_link_libraries(uvhttp PRIVATE ${CJSON_LIBRARY})
-    target_include_directories(uvhttp_shared PRIVATE ${CJSON_INCLUDE_DIR})
-    target_link_libraries(uvhttp_shared PRIVATE ${CJSON_LIBRARY})
-    message(STATUS "Found cjson: ${CJSON_LIBRARY}")
-else()
-    # 如果没有找到预编译库，尝试添加子目录
-    # 禁用cjson测试程序，只构建库
-    set(ENABLE_CJSON_TEST OFF CACHE BOOL "Disable cjson tests" FORCE)
-    set(ENABLE_CJSON_UTILS OFF CACHE BOOL "Disable cjson utils" FORCE)
-    add_subdirectory(deps/cjson)
-    target_link_libraries(uvhttp PRIVATE cjson)
-    target_link_libraries(uvhttp_shared PRIVATE cjson)
-    message(STATUS "Using cjson from subdirectory")
-endif()
+# cJSON依赖已被移除
 
 # 添加libwebsockets支持 - 使用预编译方式
 find_path(LIBWEBSOCKETS_INCLUDE_DIR libwebsockets.h 
@@ -363,6 +350,9 @@ set(gtest_disable_pthreads ON CACHE BOOL "Disable pthreads" FORCE)
 set(gmock_build_tests OFF CACHE BOOL "Disable gmock tests" FORCE)
 add_subdirectory(deps/googletest)
 
+# 添加cJSON支持
+add_subdirectory(deps/cjson)
+
 # 单元测试可执行文件
 add_executable(uvhttp_unit_tests 
     test/uvhttp_test_framework.c
@@ -370,6 +360,7 @@ add_executable(uvhttp_unit_tests
     test/test_response.c
     test/test_request.c
     test/test_router.c
+    test/test_boundary_conditions.c
     test/test_main.c
     ${SOURCES}
 )
@@ -383,8 +374,29 @@ set_target_properties(uvhttp_test PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/test
 )
 
+# 压力测试程序
+add_executable(test_server_simple test/test_server_simple.c)
+set_target_properties(test_server_simple PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+)
+
+add_executable(test_simple_stress test/test_simple_stress.c)
+set_target_properties(test_simple_stress PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+)
+
+add_executable(test_performance_benchmark test/test_performance_benchmark.c)
+set_target_properties(test_performance_benchmark PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+)
+
+add_executable(test_basic_functionality test/test_basic_functionality.c)
+set_target_properties(test_basic_functionality PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+)
+
 # 设置链接库
-set(TEST_LIBS uvhttp llhttp cjson websockets gtest gtest_main ${UV_LIBRARIES} dl m ssl crypto)
+set(TEST_LIBS uvhttp llhttp websockets gtest gtest_main ${UV_LIBRARIES} dl m ssl crypto)
 if(APPLE)
     list(APPEND TEST_LIBS /opt/homebrew/opt/openssl@3/lib/libssl.dylib /opt/homebrew/opt/openssl@3/lib/libcrypto.dylib)
 else()
@@ -405,13 +417,38 @@ target_link_libraries(uvhttp PRIVATE ssl crypto)
 
 # Hello World 示例
 add_executable(helloworld examples/helloworld.c)
-target_link_libraries(helloworld uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+target_link_libraries(helloworld uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
 set_target_properties(helloworld PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
 )
 
 add_executable(simple_test examples/simple_test.c)
-target_link_libraries(simple_test uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+target_link_libraries(simple_test uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+
+# API演示程序
+add_executable(api_demo examples/api_demo.c)
+target_link_libraries(api_demo uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+set_target_properties(api_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+)
+
+add_executable(simple_api_demo examples/simple_api_demo.c)
+target_link_libraries(simple_api_demo uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+set_target_properties(simple_api_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+)
+
+add_executable(quick_api_demo examples/quick_api_demo.c)
+target_link_libraries(quick_api_demo uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+set_target_properties(quick_api_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+)
+
+# 链接压力测试程序
+target_link_libraries(test_server_simple uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+target_link_libraries(test_simple_stress uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+target_link_libraries(test_performance_benchmark uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+target_link_libraries(test_basic_functionality uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
 set_target_properties(simple_test PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
 )
@@ -419,11 +456,68 @@ set_target_properties(simple_test PROPERTIES
 # 静态文件服务器示例
 if(UVHTTP_ENABLE_STATIC_FILES)
     add_executable(static_file_server examples/static_file_server.c)
-    target_link_libraries(static_file_server uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+    target_link_libraries(static_file_server uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
     set_target_properties(static_file_server PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
     )
+    
+    # 高级静态文件服务示例（集成文件读取功能演示）
+    add_executable(advanced_static_server examples/advanced_static_server.c)
+    target_link_libraries(advanced_static_server uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+    set_target_properties(advanced_static_server PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+    )
 endif()
+
+# 配置演示示例
+add_executable(config_demo examples/config_demo.c)
+target_link_libraries(config_demo uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+set_target_properties(config_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+)
+
+# 简单配置示例
+add_executable(simple_config examples/simple_config.c)
+target_link_libraries(simple_config uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+set_target_properties(simple_config PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+)
+
+# 缓存测试服务器示例
+add_executable(cache_test_server examples/cache_test_server.c)
+target_link_libraries(cache_test_server uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+set_target_properties(cache_test_server PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+)
+
+
+
+
+
+# mimalloc 内存池演示程序
+if(UVHTTP_ENABLE_MIMALLOC OR ${UVHTTP_ALLOCATOR} STREQUAL "mimalloc")
+    add_executable(mimalloc_demo examples/mimalloc_demo.c)
+    target_link_libraries(mimalloc_demo uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto ${MIMALLOC_LIB})
+    set_target_properties(mimalloc_demo PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+    )
+    message(STATUS "mimalloc demo enabled")
+endif()
+
+# JSON API演示程序 - 需要cJSON支持
+add_executable(json_api_demo examples/json_api_demo.c)
+target_link_libraries(json_api_demo uvhttp llhttp cjson websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto)
+set_target_properties(json_api_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+)
+
+# 轻量级JSON处理示例 - 已替换为统一响应处理示例
+add_executable(unified_response_demo examples/unified_response_demo.c)
+target_link_libraries(unified_response_demo uvhttp llhttp websockets ${UV_LIBRARIES} gtest_main dl m ssl crypto cjson)
+
+set_target_properties(unified_response_demo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin
+)
 
 # 链接测试库
 target_link_libraries(uvhttp_unit_tests ${TEST_LIBS})
@@ -477,5 +571,13 @@ install(FILES ${HEADERS} DESTINATION include/uvhttp)
 install(PROGRAMS 
     ${CMAKE_BINARY_DIR}/dist/bin/helloworld 
     ${CMAKE_BINARY_DIR}/dist/bin/simple_test
+    ${CMAKE_BINARY_DIR}/dist/bin/static_file_server
+    ${CMAKE_BINARY_DIR}/dist/bin/advanced_static_server
+    ${CMAKE_BINARY_DIR}/dist/bin/config_demo
+    ${CMAKE_BINARY_DIR}/dist/bin/simple_config
+    ${CMAKE_BINARY_DIR}/dist/bin/cache_test_server
+    ${CMAKE_BINARY_DIR}/dist/bin/api_demo
+    ${CMAKE_BINARY_DIR}/dist/bin/simple_api_demo
+    ${CMAKE_BINARY_DIR}/dist/bin/quick_api_demo
     DESTINATION bin
 )

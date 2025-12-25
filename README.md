@@ -64,15 +64,6 @@
 - 💾 静态文件缓存支持
 - 💾 英文日志记录系统
 
-### 📊 **日志和监控**
-
-- 📊 分级日志系统（DEBUG/INFO/WARN/ERROR）
-- 📊 英文日志消息
-- 📊 缓存操作详细记录
-- 📊 性能统计信息
-- 📊 错误追踪和调试支持
-- 📊 可配置日志级别
-
 ### 📈 **性能验证**
 
 - 📈 全面压力测试套件
@@ -249,6 +240,97 @@ int main() {
 - `UVHTTP_LOG_WARN(fmt, ...)` - 警告级别日志
 - `UVHTTP_LOG_ERROR(fmt, ...)` - 错误级别日志
 - `UVHTTP_LOG_FATAL(fmt, ...)` - 致命错误级别日志
+
+## 📝 JSON 处理指南
+
+UVHTTP 采用**轻量级设计原则**，不内置 JSON 序列化/反序列化功能，推荐用户根据需求选择合适的 JSON 库。
+
+### 推荐方案：cJSON
+
+UVHTTP 项目已集成 **cJSON** 作为依赖，提供以下优势：
+- ✅ **轻量级**：只有 2 个源文件，无外部依赖
+- ✅ **高性能**：优化的解析和生成算法
+- ✅ **易集成**：简单的 API 设计
+- ✅ **MIT 许可证**：商业友好
+
+### 基础使用示例
+
+```c
+#include "../../deps/cjson/cJSON.h"
+
+// 创建 JSON 对象
+cJSON* root = cJSON_CreateObject();
+cJSON_AddStringToObject(root, "status", "success");
+cJSON_AddNumberToObject(root, "code", 200);
+cJSON_AddBoolToObject(root, "active", true);
+
+// 添加数组
+cJSON* tags = cJSON_CreateArray();
+cJSON_AddItemToArray(tags, cJSON_CreateString("developer"));
+cJSON_AddItemToArray(tags, cJSON_CreateString("golang"));
+cJSON_AddItemToObject(root, "tags", tags);
+
+// 序列化为字符串
+char* json_string = cJSON_PrintUnformatted(root);
+// 输出: {"status":"success","code":200,"active":true,"tags":["developer","golang"]}
+
+// 发送响应
+uvhttp_response_set_status(response, 200);
+uvhttp_response_set_header(response, "Content-Type", "application/json");
+uvhttp_response_set_body(response, json_string, strlen(json_string));
+uvhttp_response_send(response);
+
+// 清理资源
+free(json_string);
+cJSON_Delete(root);
+```
+
+### 高级功能
+
+```c
+// 解析 JSON
+cJSON* parsed = cJSON_Parse(json_string);
+if (!parsed) {
+    const char* error_ptr = cJSON_GetErrorPtr();
+    fprintf(stderr, "JSON 解析错误: %s\n", error_ptr);
+    return UVHTTP_ERROR_PARSE_ERROR;
+}
+
+// 获取值
+cJSON* status = cJSON_GetObjectItem(parsed, "status");
+if (cJSON_IsString(status)) {
+    printf("状态: %s\n", cJSON_GetStringValue(status));
+}
+
+// 遍历数组
+cJSON* tags = cJSON_GetObjectItem(parsed, "tags");
+if (cJSON_IsArray(tags)) {
+    cJSON* tag = NULL;
+    cJSON_ArrayForEach(tag, tags) {
+        if (cJSON_IsString(tag)) {
+            printf("标签: %s\n", cJSON_GetStringValue(tag));
+        }
+    }
+}
+
+cJSON_Delete(parsed);
+```
+
+### 其他 JSON 库选择
+
+| 库 | 特点 | 适用场景 |
+|------|------|----------|
+| **cJSON** | 轻量级、无依赖 | 嵌入式系统、简单应用 |
+| **yyjson** | 超高性能、SIMD 优化 | 高性能需求 |
+| **rapidjson** | C++、功能丰富 | C++ 项目、复杂需求 |
+| **json-c** | 功能完整、稳定可靠 | 企业级应用 |
+
+### 最佳实践
+
+1. **错误处理**：始终检查解析结果
+2. **内存管理**：及时释放 cJSON 对象
+3. **性能优化**：使用 `cJSON_PrintUnformatted` 减少内存分配
+4. **类型检查**：使用 `cJSON_Is*` 函数验证类型
 
 ## 🏃‍♂️ 运行示例
 

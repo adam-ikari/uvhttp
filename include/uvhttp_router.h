@@ -73,6 +73,15 @@ struct uvhttp_router {
     
     // 总路由数量
     size_t route_count;
+    
+    // 静态文件路由支持
+    char* static_prefix;
+    void* static_context;
+    uvhttp_request_handler_t static_handler;
+    
+    // 回退路由支持
+    void* fallback_context;
+    uvhttp_request_handler_t fallback_handler;
 };
 
 typedef struct uvhttp_router uvhttp_router_t;
@@ -109,6 +118,15 @@ uvhttp_error_t uvhttp_parse_path_params(const char* path,
 // 方法字符串转换
 uvhttp_method_t uvhttp_method_from_string(const char* method);
 const char* uvhttp_method_to_string(uvhttp_method_t method);
+
+// 静态文件路由支持
+uvhttp_error_t uvhttp_router_add_static_route(uvhttp_router_t* router,
+                                               const char* prefix_path,
+                                               void* static_context);
+
+// 回退路由支持
+uvhttp_error_t uvhttp_router_add_fallback_route(uvhttp_router_t* router,
+                                                 void* static_context);
 
 #ifdef __cplusplus
 }

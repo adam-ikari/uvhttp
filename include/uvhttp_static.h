@@ -1,4 +1,4 @@
-/* UVHTTP 静态文件服务模块 */
+/* UVHTTP 静态文件服务模块 - 统一版本，支持可选LRU缓存 */
 
 #ifndef UVHTTP_STATIC_H
 #define UVHTTP_STATIC_H
@@ -7,8 +7,17 @@
 
 #include <stddef.h>
 #include <time.h>
-#include <uv.h>
 #include "uvhttp_constants.h"
+#include "uvhttp_error.h"
+
+/* LRU缓存条件编译支持 */
+#if UVHTTP_FEATURE_LRU_CACHE
+#include "uvhttp_lru_cache.h"
+#endif
+
+/* 前向声明 */
+typedef struct cache_manager cache_manager_t;
+typedef struct cache_entry cache_entry_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,48 +32,14 @@ typedef struct uvhttp_static_config {
     int enable_last_modified;                        /* 是否启用Last-Modified */
     size_t max_cache_size;                           /* 最大缓存大小（字节） */
     int cache_ttl;                                   /* 缓存TTL（秒） */
+    int max_cache_entries;                           /* 最大缓存条目数 */
     char custom_headers[UVHTTP_MAX_HEADER_VALUE_SIZE]; /* 自定义响应头 */
 } uvhttp_static_config_t;
-
-/* 文件缓存条目 */
-typedef struct uvhttp_static_cache_entry {
-    char file_path[UVHTTP_MAX_FILE_PATH_SIZE];       /* 文件路径 */
-    char* content;                                   /* 文件内容 */
-    size_t content_length;                           /* 内容长度 */
-    char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];    /* MIME类型 */
-    time_t last_modified;                            /* 最后修改时间 */
-    char etag[UVHTTP_MAX_HEADER_VALUE_SIZE];         /* ETag值 */
-    time_t cache_time;                               /* 缓存时间 */
-    int is_compressed;                               /* 是否压缩 */
-    struct uvhttp_static_cache_entry* next;          /* 链表指针 */
-} uvhttp_static_cache_entry_t;
-
-/* 前向声明 */
-typedef struct uvhttp_async_file_manager uvhttp_async_file_manager_t;
-
-/* 静态文件性能统计 */
-typedef struct uvhttp_static_stats {
-    size_t total_requests;                           /* 总请求数 */
-    size_t cache_hits;                               /* 缓存命中数 */
-    size_t cache_misses;                             /* 缓存未命中数 */
-    size_t sync_reads;                               /* 同步读取数 */
-    size_t async_reads;                              /* 异步读取数 */
-    size_t stream_transfers;                         /* 流式传输数 */
-    size_t total_bytes_served;                       /* 总服务字节数 */
-    double avg_read_time;                            /* 平均读取时间（毫秒） */
-    double max_read_time;                            /* 最大读取时间（毫秒） */
-} uvhttp_static_stats_t;
 
 /* 静态文件服务上下文 */
 typedef struct uvhttp_static_context {
     uvhttp_static_config_t config;                   /* 配置 */
-    uvhttp_static_cache_entry_t* cache_head;        /* 缓存链表头 */
-    size_t current_cache_size;                       /* 当前缓存大小 */
-    int cache_count;                                 /* 缓存条目数 */
-    uvhttp_async_file_manager_t* async_manager;      /* 异步文件管理器 */
-    int enable_async_read;                           /* 是否启用异步读取 */
-    size_t async_file_threshold;                     /* 异步读取文件大小阈值 */
-    uvhttp_static_stats_t stats;                     /* 性能统计 */
+    cache_manager_t* cache;                          /* LRU缓存管理器 */
 } uvhttp_static_context_t;
 
 /* MIME类型映射条目 */
@@ -94,11 +69,11 @@ void uvhttp_static_free(uvhttp_static_context_t* ctx);
  * @param ctx 静态文件服务上下文
  * @param request HTTP请求
  * @param response HTTP响应
- * @return 0成功，-1失败
+ * @return UVHTTP_OK成功，其他值表示失败
  */
-int uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
-                                void* request,
-                                void* response);
+uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
+                                             void* request,
+                                             void* response);
 
 /**
  * 根据文件扩展名获取MIME类型
@@ -106,11 +81,11 @@ int uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
  * @param file_path 文件路径
  * @param mime_type 输出MIME类型缓冲区
  * @param buffer_size 缓冲区大小
- * @return 0成功，-1失败
+ * @return UVHTTP_OK成功，其他值表示失败
  */
-int uvhttp_static_get_mime_type(const char* file_path,
-                               char* mime_type,
-                               size_t buffer_size);
+uvhttp_result_t uvhttp_static_get_mime_type(const char* file_path,
+                                             char* mime_type,
+                                             size_t buffer_size);
 
 /**
  * 清理文件缓存
@@ -141,13 +116,13 @@ int uvhttp_static_resolve_safe_path(const char* root_dir,
  * @param file_size 文件大小
  * @param etag 输出ETag缓冲区
  * @param buffer_size 缓冲区大小
- * @return 0成功，-1失败
+ * @return UVHTTP_OK成功，其他值表示失败
  */
-int uvhttp_static_generate_etag(const char* file_path,
-                               time_t last_modified,
-                               size_t file_size,
-                               char* etag,
-                               size_t buffer_size);
+uvhttp_result_t uvhttp_static_generate_etag(const char* file_path,
+                                             time_t last_modified,
+                                             size_t file_size,
+                                             char* etag,
+                                             size_t buffer_size);
 
 /**
  * 检查条件请求（If-None-Match, If-Modified-Since）
@@ -169,62 +144,67 @@ int uvhttp_static_check_conditional_request(void* request,
  * @param file_size 文件大小
  * @param last_modified 最后修改时间
  * @param etag ETag值
- * @return 0成功，-1失败
+ * @return UVHTTP_OK成功，其他值表示失败
  */
-int uvhttp_static_set_response_headers(void* response,
-                                      const char* file_path,
-                                      size_t file_size,
-                                      time_t last_modified,
-                                      const char* etag);
+uvhttp_result_t uvhttp_static_set_response_headers(void* response,
+                                                     const char* file_path,
+                                                     size_t file_size,
+                                                     time_t last_modified,
+                                                     const char* etag);
 
 /**
- * 初始化异步文件读取功能
+ * 获取缓存统计信息
  * 
  * @param ctx 静态文件服务上下文
- * @param loop 事件循环
- * @param max_concurrent 最大并发读取数
- * @param buffer_size 读取缓冲区大小
- * @param file_threshold 异步读取文件大小阈值
- * @return 0成功，-1失败
+ * @param total_memory_usage 输出总内存使用量
+ * @param entry_count 输出条目数量
+ * @param hit_count 输出命中次数
+ * @param miss_count 输出未命中次数
+ * @param eviction_count 输出驱逐次数
  */
-int uvhttp_static_init_async(uvhttp_static_context_t* ctx,
-                            uv_loop_t* loop,
-                            int max_concurrent,
-                            size_t buffer_size,
-                            size_t file_threshold);
+void uvhttp_static_get_cache_stats(uvhttp_static_context_t* ctx,
+                                  size_t* total_memory_usage,
+                                  int* entry_count,
+                                  int* hit_count,
+                                  int* miss_count,
+                                  int* eviction_count);
 
 /**
- * 清理异步文件读取功能
+ * 获取缓存命中率
  * 
  * @param ctx 静态文件服务上下文
+ * @return 命中率（0.0-1.0）
  */
-void uvhttp_static_cleanup_async(uvhttp_static_context_t* ctx);
+double uvhttp_static_get_cache_hit_rate(uvhttp_static_context_t* ctx);
 
 /**
- * 获取静态文件服务统计信息
+ * 清理过期缓存条目
  * 
  * @param ctx 静态文件服务上下文
- * @param stats 输出统计信息
- * @return 0成功，-1失败
+ * @return 清理的条目数量
  */
-int uvhttp_static_get_stats(uvhttp_static_context_t* ctx, uvhttp_static_stats_t* stats);
+int uvhttp_static_cleanup_expired_cache(uvhttp_static_context_t* ctx);
 
 /**
- * 重置静态文件服务统计信息
+ * 启用缓存（如果之前被禁用）
  * 
  * @param ctx 静态文件服务上下文
- * @return 0成功，-1失败
+ * @param max_memory 最大内存使用量
+ * @param max_entries 最大条目数
+ * @param ttl 缓存TTL（秒）
+ * @return UVHTTP_OK成功，其他值表示失败
  */
-int uvhttp_static_reset_stats(uvhttp_static_context_t* ctx);
+uvhttp_result_t uvhttp_static_enable_cache(uvhttp_static_context_t* ctx,
+                                           size_t max_memory,
+                                           int max_entries,
+                                           int ttl);
 
 /**
- * 更新读取时间统计
+ * 禁用缓存
  * 
  * @param ctx 静态文件服务上下文
- * @param read_time 读取时间（毫秒）
- * @return 0成功，-1失败
  */
-int uvhttp_static_update_read_time_stats(uvhttp_static_context_t* ctx, double read_time);
+void uvhttp_static_disable_cache(uvhttp_static_context_t* ctx);
 
 #ifdef __cplusplus
 }

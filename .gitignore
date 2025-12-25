@@ -1,1 +1,43 @@
+# Build directory
 build/
+
+# Test executables
+test_memory_simple
+test_simple
+test_*
+
+# Stress test results
+stress_test_results_*/
+
+# Coverage reports
+coverage_html/
+*.gcov
+*.gcda
+*.gcno
+coverage.info
+
+# Profiling results
+callgrind.out.*
+gmon.out
+
+# Editor files
+*.swp
+*.swo
+*~
+.DS_Store
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Core dumps
+core
+core.*

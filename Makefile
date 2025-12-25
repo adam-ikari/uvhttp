@@ -32,13 +32,28 @@ install: $(BUILD_DIR)/Makefile
 	@$(MAKE) -C $(BUILD_DIR) install
 	@echo "安装完成"
 
+# mimalloc 演示程序
+mimalloc-demo: $(BUILD_DIR)/Makefile
+	@echo "构建mimalloc演示程序..."
+	@cd $(BUILD_DIR) && $(MAKE) mimalloc_demo
+	@echo "运行mimalloc演示程序:"
+	@./$(BUILD_DIR)/dist/bin/mimalloc_demo
+
+# 使用mimalloc构建
+build-mimalloc:
+	@echo "使用mimalloc构建..."
+	@mkdir -p $(BUILD_DIR)
+	@cd $(BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DUVHTTP_ALLOCATOR=mimalloc ..
+	@$(MAKE) -C $(BUILD_DIR)
+	@echo "mimalloc构建完成"
+
 # 代码检查
 cppcheck:
 	@cppcheck --enable=warning --std=c11 src/ include/
 
 # 示例程序
 examples: $(BUILD_DIR)/Makefile
-	@$(MAKE) -C $(BUILD_DIR) examples
+	@$(MAKE) -C $(BUILD_DIR) helloworld simple_test static_file_server advanced_static_server config_demo simple_config cache_test_server simple_api_demo ultra_simple_demo json_api_demo
 	@echo "示例程序构建完成"
 
 # 运行简单配置示例
@@ -56,6 +71,16 @@ run-helloworld: examples
 	@echo "运行Hello World示例..."
 	@cd $(BUILD_DIR) && ./examples/helloworld
 
+# 运行高级静态文件服务示例
+run-advanced-static: examples
+	@echo "运行高级静态文件服务示例..."
+	@cd $(BUILD_DIR) && ./examples/advanced_static_server
+
+# 运行JSON API演示
+run-json-api: examples
+	@echo "运行JSON API演示..."
+	@cd $(BUILD_DIR) && ./examples/json_api_demo
+
 # 帮助
 help:
 	@echo "UVHTTP HTTP框架构建系统"
@@ -67,9 +92,12 @@ help:
 	@echo ""
 	@echo "示例程序:"
 	@echo "  make examples           - 构建所有示例程序"
+	@echo "  make example            - 构建所有示例程序（别名）"
 	@echo "  make run-helloworld     - 运行Hello World示例"
 	@echo "  make run-simple-config  - 运行简单配置示例"
 	@echo "  make run-config-demo    - 运行配置演示程序"
+	@echo "  make run-advanced-static - 运行高级静态文件服务示例"
+	@echo "  make run-json-api        - 运行JSON API演示"
 	@echo ""
 	@echo "代码质量:"
 	@echo "  make cppcheck          - 运行代码检查"
