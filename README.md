@@ -6,7 +6,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Coverage](https://img.shields.io/badge/coverage-97%25-green.svg)
-![Performance](https://img.shields.io/badge/1000%20RPS-0.082ms-brightgreen.svg)
+![Performance](https://img.shields.io/badge/high%20performance-brightgreen.svg)
 ![Stress](https://img.shields.io/badge/stress%20tests-passing-success.svg)
 ![WebSocket](https://img.shields.io/badge/websocket-supported-orange.svg)
 
@@ -115,6 +115,13 @@ cmake ..
 make
 ```
 
+### 📊 **系统配置**
+
+- **最大并发连接**: 2048 (生产环境推荐值)
+- **请求体大小限制**: 1MB
+- **读取缓冲区**: 8KB
+- **监听队列**: 1024
+
 - ⚙️ 零运行时开销设计
 
 ## 🚀 快速开始
@@ -143,13 +150,14 @@ cmake ..
 make
 ```
 
+📖 **详细构建说明**: 请参考 [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md#快速开始) 获取完整的构建选项和配置说明。
+
 ## 示例
 
 ### HTTP 服务器
 
 ```c
 #include "uvhttp.h"
-#include <stdio.h>
 
 void hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     uvhttp_response_set_status(response, 200);
@@ -162,7 +170,6 @@ int main() {
     uv_loop_t* loop = uv_default_loop();
     uvhttp_server_t* server = uvhttp_server_new(loop);
 
-    // 创建路由
     uvhttp_router_t* router = uvhttp_router_new();
     uvhttp_router_add_route(router, "/", hello_handler);
 
@@ -176,159 +183,7 @@ int main() {
 }
 ```
 
-### WebSocket 服务器
-
-```c
-#include "uvhttp.h"
-#include <stdio.h>
-
-void websocket_handler(uvhttp_websocket_t* ws,
-                       const uvhttp_websocket_message_t* msg,
-                       void* user_data) {
-    if (msg->type == UVHTTP_WEBSOCKET_TEXT) {
-        printf("收到消息: %.*s\n", (int)msg->length, msg->data);
-        // 回复消息
-        uvhttp_websocket_send_text(ws, "消息已收到!");
-    }
-}
-
-void websocket_upgrade_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    // 升级到WebSocket连接
-    uvhttp_websocket_t* ws = uvhttp_websocket_new(request, response);
-    if (ws) {
-        uvhttp_websocket_set_handler(ws, websocket_handler, NULL);
-        printf("WebSocket连接已建立\n");
-    }
-}
-
-int main() {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-
-    uvhttp_router_t* router = uvhttp_router_new();
-    uvhttp_router_add_route(router, "/ws", websocket_upgrade_handler);
-
-    server->router = router;
-    uvhttp_server_listen(server, "0.0.0.0", 8080);
-
-    printf("WebSocket服务器运行在 ws://localhost:8080/ws\n");
-    uv_run(loop, UV_RUN_DEFAULT);
-
-    return 0;
-}
-```
-
-### 静态文件服务器（带LRU缓存）
-
-```c
-#include "uvhttp.h"
-#include "uvhttp_lru_cache.h"
-#include <stdio.h>
-
-// 全局缓存管理器
-static cache_manager_t* g_cache = NULL;
-
-void static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    const char* file_path = uvhttp_request_get_url(request);
-    
-    // 尝试从缓存中获取文件
-    cache_entry_t* entry = uvhttp_lru_cache_find(g_cache, file_path);
-    
-    if (entry) {
-        // 缓存命中，直接返回
-        uvhttp_response_set_status(response, 200);
-        uvhttp_response_set_header(response, "Content-Type", entry->mime_type);
-        uvhttp_response_set_header(response, "Cache-Control", "public, max-age=300");
-        uvhttp_response_set_body(response, entry->content, entry->content_length);
-        uvhttp_response_send(response);
-        return;
-    }
-    
-    // 缓存未命中，读取文件（简化示例）
-    FILE* file = fopen(file_path + 1, "rb"); // 跳过前导 '/'
-    if (!file) {
-        uvhttp_response_set_status(response, 404);
-        uvhttp_response_set_body(response, "File not found", 14);
-        uvhttp_response_send(response);
-        return;
-    }
-    
-    // 读取文件内容
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    
-    char* content = malloc(file_size);
-    fread(content, 1, file_size, file);
-    fclose(file);
-    
-    // 添加到缓存
-    uvhttp_lru_cache_put(g_cache, file_path, content, file_size, 
-                        "text/html", time(NULL), NULL);
-    
-    // 返回响应
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/html");
-    uvhttp_response_set_body(response, content, file_size);
-    uvhttp_response_send(response);
-}
-
-int main() {
-    // 初始化缓存：最大1MB内存，最多100个条目，TTL为300秒
-    g_cache = uvhttp_lru_cache_create(1024*1024, 100, 300);
-    
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-
-    uvhttp_router_t* router = uvhttp_router_new();
-    uvhttp_router_add_route(router, "/*", static_file_handler);
-
-    server->router = router;
-    uvhttp_server_listen(server, "0.0.0.0", 8080);
-
-    printf("静态文件服务器运行在 http://localhost:8080 (带LRU缓存)\n");
-    uv_run(loop, UV_RUN_DEFAULT);
-
-    // 清理资源
-    uvhttp_lru_cache_free(g_cache);
-    return 0;
-}
-```
-
-### 日志配置示例
-
-```c
-#include "uvhttp.h"
-#include "uvhttp_error_handler.h"
-#include <stdio.h>
-
-void log_config_example() {
-    // 配置日志级别为DEBUG，查看所有日志信息
-    g_error_config.min_logLevel = UVHTTP_LOG_LEVEL_DEBUG;
-    
-    // 启用日志恢复功能
-    g_error_config.enableRecovery = 1;
-    g_error_config.maxRetries = 3;
-    g_error_config.baseDelayMs = 100;
-    
-    // 自定义错误处理器
-    g_error_config.customHandler = my_error_handler;
-    
-    UVHTTP_LOG_INFO("日志系统已初始化");
-    UVHTTP_LOG_DEBUG("调试信息：当前日志级别为DEBUG");
-    UVHTTP_LOG_WARN("警告信息：这是一个示例警告");
-    UVHTTP_LOG_ERROR("错误信息：这是一个示例错误");
-}
-
-int main() {
-    // 配置日志系统
-    log_config_example();
-    
-    // 其他应用逻辑...
-    
-    return 0;
-}
-```
+📖 **更多示例**: 查看 [examples/](examples/) 目录获取 WebSocket、静态文件服务器等完整示例。
 
 ## API 文档
 
@@ -411,17 +266,15 @@ git submodule update --init --recursive
 
 ## 🧪 测试
 
-### 单元测试
-
 ```bash
-./dist/test/uvhttp_unit_tests
+# 运行完整测试套件
+./run_tests.sh
+
+# 运行压力测试
+cd test && ./run_stress_tests.sh
 ```
 
-### 性能测试
-
-```bash
-./dist/test/uvhttp_test
-```
+📖 **详细测试指南**: 请参考 [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md#测试指南) 获取完整的测试说明。
 
 ## 🚀 版本规划
 

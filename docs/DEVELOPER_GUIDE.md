@@ -1,13 +1,473 @@
 # UVHTTP 开发指南
 
 ## 目录
-1. [快速开始](#快速开始)
-2. [配置管理](#配置管理)
-3. [API 参考](#api-参考)
-4. [示例程序](#示例程序)
-5. [测试指南](#测试指南)
-6. [性能优化](#性能优化)
-7. [常见问题](#常见问题)
+1. [设计原则](#设计原则)
+2. [开发规范](#开发规范)
+3. [快速开始](#快速开始)
+4. [配置管理](#配置管理)
+5. [API 参考](#api-参考)
+6. [示例程序](#示例程序)
+7. [测试指南](#测试指南)
+8. [性能优化](#性能优化)
+9. [常见问题](#常见问题)
+10. [贡献指南](#贡献指南)
+11. [许可证](#许可证)
+
+## 设计原则
+
+### 🎯 核心设计理念
+
+UVHTTP 遵循以下核心设计原则，确保项目既高性能又易于维护：
+
+#### 1. **零开销抽象 (Zero-Cost Abstraction)**
+
+**概念**：所有抽象通过编译时实现，运行时无额外开销
+
+**实现方式**：
+```c
+// 编译时选择分配器类型
+#if UVHTTP_ALLOCATOR_TYPE == 1
+    #define UVHTTP_MALLOC(size) mi_malloc(size)  // 直接调用
+#else
+    #define UVHTTP_MALLOC(size) malloc(size)     // 直接调用
+#endif
+```
+
+**优势**：
+- 生产环境性能等同于直接调用
+- 编译器可进行充分优化
+- 无运行时多态开销
+
+#### 2. **超轻量级架构**
+
+**目标**：最小化依赖和内存占用
+
+**实现策略**：
+- 仅依赖必要的库（libuv、llhttp）
+- 紧凑的数据结构设计
+- 避免过度工程化
+
+**示例**：
+```c
+// 紧凑的响应结构
+typedef struct uvhttp_response {
+    uv_tcp_t* client;
+    int status_code;
+    uvhttp_header_t headers[MAX_HEADERS];
+    size_t header_count;
+    char* body;
+    size_t body_length;
+    int keep_alive;
+    int sent;
+    int finished;
+} uvhttp_response_t;
+```
+
+#### 3. **性能优先原则**
+
+**优先级**：性能 > 功能 > 代码量
+
+**具体措施**：
+- 内存分配器零开销设计
+- 网络层直接使用 libuv
+- 避免不必要的数据拷贝
+- 使用编译器内联优化
+
+#### 4. **可测试性设计**
+
+**策略**：在不影响性能的前提下提供测试支持
+
+**实现**：
+- 纯函数与副作用分离
+- 编译时测试宏控制
+- 模拟对象支持
+
+### 🏗️ 架构设计原则
+
+#### 1. **模块化设计**
+
+**原则**：每个模块职责单一，接口清晰
+
+**目录结构**：
+```
+uvhttp/
+├── include/           # 公共头文件
+├── src/              # 源代码实现
+├── examples/         # 示例代码
+├── test/             # 测试代码
+└── docs/             # 文档
+```
+
+**接口设计**：
+```c
+// 不暴露内部结构细节
+typedef struct uvhttp_response uvhttp_response_t;
+
+// 清晰的函数命名
+uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int status);
+```
+
+#### 2. **编译时配置**
+
+**理念**：尽可能在编译时做决策，减少运行时开销
+
+**功能开关**：
+```c
+// 功能特性编译时控制
+#ifndef UVHTTP_FEATURE_WEBSOCKET
+#define UVHTTP_FEATURE_WEBSOCKET 1
+#endif
+
+// 分配器类型选择
+#ifndef UVHTTP_ALLOCATOR_TYPE
+#define UVHTTP_ALLOCATOR_TYPE 0
+#endif
+```
+
+#### 3. **错误处理统一**
+
+**策略**：使用统一的错误类型和处理方式
+
+**错误类型**：
+```c
+typedef enum {
+    UVHTTP_OK = 0,
+    UVHTTP_ERROR_INVALID_PARAM = -1,
+    UVHTTP_ERROR_OUT_OF_MEMORY = -2,
+    UVHTTP_ERROR_NETWORK = -3,
+    // ...
+} uvhttp_error_t;
+```
+
+**错误检查宏**：
+```c
+#define UVHTTP_RETURN_IF_ERROR(expr) \
+    do { \
+        int _err = (expr); \
+        if (UVHTTP_UNLIKELY(_err != 0)) return _err; \
+    } while(0)
+```
+
+## 开发规范
+
+### 📝 代码规范
+
+#### 1. **命名约定**
+
+**文件命名**：
+- 头文件：`uvhttp_模块名.h` (如 `uvhttp_response.h`)
+- 源文件：`uvhttp_模块名.c` (如 `uvhttp_response.c`)
+- 测试文件：`test_功能名.c` (如 `test_response.c`)
+- 示例文件：`功能名_demo.c` (如 `helloworld_demo.c`)
+
+**类型命名**：
+```c
+// 结构体类型定义
+typedef struct uvhttp_response uvhttp_response_t;
+typedef struct uvhttp_request uvhttp_request_t;
+
+// 枚举类型
+typedef enum {
+    UVHTTP_STATE_INIT,
+    UVHTTP_STATE_RUNNING,
+    UVHTTP_STATE_STOPPED
+} uvhttp_state_t;
+
+// 常量命名
+#define UVHTTP_MAX_HEADERS 64
+#define UVHTTP_DEFAULT_PORT 8080
+```
+
+**函数命名**：
+```c
+// 公共API函数：uvhttp_模块_动作
+uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int status);
+uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, int port);
+
+// 静态辅助函数：模块化命名
+static void build_response_headers(uvhttp_response_t* response, char* buffer, size_t* length);
+static int validate_header_value(const char* value);
+```
+
+#### 2. **代码组织**
+
+**文件结构顺序**：
+```c
+// 1. 版权和许可证信息
+// 2. 头文件包含
+#include "uvhttp_common.h"
+#include "uvhttp_error.h"
+#include <uv.h>
+
+// 3. 宏定义和常量
+#define MAX_BUFFER_SIZE 8192
+
+// 4. 类型定义
+typedef struct {
+    // ...
+} internal_struct_t;
+
+// 5. 静态函数声明
+static void helper_function(void);
+static int validate_input(const char* input);
+
+// 6. 公共API实现
+uvhttp_error_t uvhttp_public_function(void) {
+    // 实现
+}
+
+// 7. 静态函数实现
+static void helper_function(void) {
+    // 实现
+}
+```
+
+#### 3. **注释规范**
+
+**文件头注释**：
+```c
+/**
+ * @file uvhttp_response.c
+ * @brief HTTP响应处理模块实现
+ * @author UVHTTP Team
+ * @date 2025
+ * 
+ * 本模块提供HTTP响应的构建、发送和管理功能。
+ * 遵循零开销抽象原则，性能优先。
+ */
+```
+
+**函数注释**：
+```c
+/**
+ * @brief 设置HTTP响应状态码
+ * @param response 响应对象指针，不能为NULL
+ * @param status_code HTTP状态码，范围100-599
+ * @return UVHTTP_OK 成功，其他值表示错误
+ * 
+ * @note 此函数为纯函数，无副作用，便于测试
+ * @see uvhttp_response_set_header
+ */
+uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int status_code);
+```
+
+#### 4. **内存管理规范**
+
+**分配原则**：
+```c
+// 使用统一的分配器宏
+void* ptr = UVHTTP_MALLOC(size);
+if (!ptr) {
+    return UVHTTP_ERROR_OUT_OF_MEMORY;
+}
+
+// 确保释放
+UVHTTP_FREE(ptr);
+```
+
+**RAII 风格**：
+```c
+// 资源获取即初始化
+uvhttp_response_t* response = uvhttp_response_new();
+if (!response) {
+    return UVHTTP_ERROR_OUT_OF_MEMORY;
+}
+
+// 使用资源
+// ...
+
+// 确保清理
+uvhttp_response_free(response);
+```
+
+### 🔧 性能编码规范
+
+#### 1. **编译器优化**
+
+**内联函数**：
+```c
+// 关键路径函数使用内联
+static inline UVHTTP_INLINE int fast_path_function(void) {
+    // 简单操作，编译器内联
+    return result;
+}
+```
+
+**分支预测**：
+```c
+// 使用分支预测宏
+#define UVHTTP_LIKELY(x) __builtin_expect(!!(x), 1)
+#define UVHTTP_UNLIKELY(x) __builtin_expect(!!(x), 0)
+
+if (UVHTTP_LIKELY(response != NULL)) {
+    // 常见路径
+} else {
+    // 异常路径
+}
+```
+
+#### 2. **内存优化**
+
+**栈分配优先**：
+```c
+// 优先使用栈分配
+char buffer[UVHTTP_STACK_BUFFER_SIZE];
+
+// 大内存才使用堆分配
+if (size > UVHTTP_STACK_BUFFER_SIZE) {
+    buffer = UVHTTP_MALLOC(size);
+}
+```
+
+**内存对齐**：
+```c
+// 确保结构体对齐
+typedef struct UVHTTP_ALIGNED(16) {
+    // 频繁访问的数据
+} aligned_struct_t;
+```
+
+#### 3. **系统调用优化**
+
+**批量操作**：
+```c
+// 批量发送headers，减少系统调用
+int uvhttp_response_send_headers_batch(uvhttp_response_t* response) {
+    // 一次性发送所有headers
+}
+```
+
+**异步优先**：
+```c
+// 使用异步I/O，避免阻塞
+uv_write(&write_req, stream, &buf, 1, callback);
+```
+
+### 🧪 测试规范
+
+#### 1. **测试结构**
+
+**测试文件组织**：
+```c
+// 测试文件结构
+#include "uvhttp_test_helpers.h"
+
+// 测试用例
+static int test_function_name(void) {
+    // 测试代码
+    return 0;  // 成功返回0
+}
+
+// 主测试函数
+int main(void) {
+    UVHTTP_TEST_ASSERT_SUCCESS(uvhttp_test_env_init());
+    
+    int result = 0;
+    result |= test_function_name();
+    
+    uvhttp_test_env_cleanup();
+    return result;
+}
+```
+
+#### 2. **断言使用**
+
+**标准断言**：
+```c
+// 使用测试专用断言
+UVHTTP_TEST_ASSERT(condition);
+UVHTTP_TEST_ASSERT_EQ(expected, actual);
+UVHTTP_TEST_ASSERT_NOT_NULL(ptr);
+UVHTTP_TEST_ASSERT_SUCCESS(error_code);
+```
+
+#### 3. **性能测试**
+
+**基准测试**：
+```c
+// 性能测试模式
+UVHTTP_PERF_START(operation_name);
+for (int i = 0; i < iterations; i++) {
+    operation();
+}
+UVHTTP_PERF_END(operation_name);
+```
+
+### 📋 项目管理规范
+
+#### 1. **版本控制**
+
+**提交信息格式**：
+```
+类型(范围): 简短描述
+
+详细描述（可选）
+
+相关问题: #123
+```
+
+**分支命名**：
+- `feature/功能名称` - 新功能开发
+- `fix/问题描述` - 错误修复
+- `perf/优化描述` - 性能优化
+
+#### 2. **代码审查**
+
+**审查要点**：
+- 性能影响评估
+- 内存安全性检查
+- API兼容性验证
+- 测试覆盖率确认
+
+#### 3. **发布流程**
+
+**发布检查清单**：
+- [ ] 所有测试通过
+- [ ] 性能基准测试通过
+- [ ] 内存泄漏检查通过
+- [ ] 文档更新完成
+- [ ] 版本号更新
+
+### 🎯 质量保证
+
+#### 1. **静态分析**
+
+**编译警告**：
+```bash
+# 启用所有警告
+gcc -Wall -Wextra -Werror -std=c11
+```
+
+**代码检查**：
+```bash
+# 使用 cppcheck
+cppcheck --enable=all --std=c11 src/
+```
+
+#### 2. **内存安全**
+
+**检测工具**：
+```bash
+# 内存泄漏检测
+valgrind --leak-check=full ./test_program
+
+# 地址消毒器
+gcc -fsanitize=address -g -o test test.c
+./test
+```
+
+#### 3. **性能监控**
+
+**基准测试**：
+```bash
+# 运行性能基准
+./test_allocator_performance
+
+# 性能回归测试
+make -f test/Makefile.allocator compare
+```
+
+这些设计原则和开发规范确保了 UVHTTP 项目的高质量、高性能和可维护性。所有开发者都应遵循这些规范，以保持项目的一致性和卓越性能。
 
 ## 快速开始
 
@@ -548,7 +1008,7 @@ make test
 ./build/websocket_integration_test
 
 # 运行压力测试
-./run_stress_tests.sh
+cd test && ./run_stress_tests.sh
 ```
 
 ### 测试类型

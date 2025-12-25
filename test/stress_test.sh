@@ -3,7 +3,7 @@
 echo "启动 UVHTTP 服务器..."
 
 # 启动服务器
-./build/dist/bin/helloworld &
+../build/dist/bin/helloworld &
 SERVER_PID=$!
 echo "服务器 PID: $SERVER_PID"
 

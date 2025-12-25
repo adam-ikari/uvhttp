@@ -409,7 +409,7 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config);
 设置默认配置值。
 
 **默认值:**
-- `max_connections`: 1000
+- `max_connections`: 2048
 - `max_requests_per_connection`: 100
 - `max_body_size`: 1MB
 - `max_header_size`: 8KB
@@ -514,7 +514,7 @@ uvhttp_config_monitor_changes(on_config_change);
 #### 连接相关常量
 ```c
 #define UVHTTP_MAX_CONNECTIONS           2048    // 编译时默认最大连接数
-#define UVHTTP_DEFAULT_MAX_CONNECTIONS   1000    // 运行时默认最大连接数
+#define UVHTTP_DEFAULT_MAX_CONNECTIONS   2048    // 运行时默认最大连接数
 #define UVHTTP_DEFAULT_BACKLOG           1024    // 监听队列大小
 ```
 
@@ -777,7 +777,7 @@ void uvhttp_rate_limit_middleware(uvhttp_request_t* request,
 ### 限制常量
 
 ```c
-#define UVHTTP_MAX_CONNECTIONS           1000
+#define UVHTTP_MAX_CONNECTIONS           2048
 #define UVHTTP_MAX_BODY_SIZE             (1024 * 1024)  // 1MB
 #define UVHTTP_MAX_HEADERS               64
 #define UVHTTP_MAX_URL_SIZE              2048
