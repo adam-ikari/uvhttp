@@ -54,12 +54,44 @@ struct uvhttp_response {
     time_t cache_expires;   // 缓存过期时间
 };
 
-/* API functions */
+/* ============ 核心 API 函数 ============ */
 uvhttp_error_t uvhttp_response_init(uvhttp_response_t* response, void* client);
 uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int status_code);
 uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response, const char* name, const char* value);
 uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length);
+
+/* ============ 重构后的函数：分离纯函数和副作用 ============ */
+
+/* 纯函数：构建HTTP响应数据，无副作用，易于测试
+ * 调用者负责释放返回的 *out_data 内存
+ */
+uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response, 
+                                         char** out_data, 
+                                         size_t* out_length);
+
+/* 副作用函数：发送原始数据，包含网络I/O */
+uvhttp_error_t uvhttp_response_send_raw(const char* data, 
+                                       size_t length, 
+                                       void* client, 
+                                       uvhttp_response_t* response);
+
+/* 组合函数：保持API兼容性 */
 uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
+
+/* ============ 测试专用函数 ============ */
+#ifdef UVHTTP_TEST_MODE
+
+/* 测试用纯函数：验证响应数据构建 */
+uvhttp_error_t uvhttp_response_build_for_test(uvhttp_response_t* response, 
+                                             char** out_data, 
+                                             size_t* out_length);
+
+/* 测试用函数：模拟发送但不实际网络I/O */
+uvhttp_error_t uvhttp_response_send_mock(uvhttp_response_t* response);
+
+#endif /* UVHTTP_TEST_MODE */
+
+/* ============ 原有函数 ============ */
 void uvhttp_response_cleanup(uvhttp_response_t* response);
 void uvhttp_response_free(uvhttp_response_t* response);
 

@@ -1,14 +1,21 @@
 #include "uvhttp_response.h"
 #include "uvhttp_common.h"
-#include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_connection.h"
 #include "uvhttp_error_handler.h"
 #include "uvhttp_validation.h"
+#include "uvhttp_allocator.h"
+#include "uvhttp_features.h"
+#include "uvhttp_network.h"
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <stdio.h>
+
+/* 外部全局变量声明（仅在测试模式下使用） */
+#ifdef UVHTTP_TEST_MODE
+extern uvhttp_network_interface_t* g_uvhttp_network_interface;
+#endif
 
 // 函数声明
 static void uvhttp_free_write_data(uv_write_t* req, int status);
@@ -40,6 +47,10 @@ static int contains_control_chars(const char* str) {
         // 检查是否包含控制字符 (0-31) 但排除制表符 (9) 和空格 (32)
         if (c < UVHTTP_SPACE_CHARACTER && c != UVHTTP_TAB_CHARACTER) {
             return 1;  // 包含控制字符
+        }
+        // 明确检查回车符和换行符，防止HTTP响应拆分攻击
+        if (c == UVHTTP_CARRIAGE_RETURN || c == UVHTTP_LINE_FEED) {
+            return 1;  // HTTP响应拆分尝试
         }
         // 检查删除字符
         if (c == UVHTTP_DELETE_CHARACTER) {
@@ -309,21 +320,30 @@ static void uvhttp_free_write_data(uv_write_t* req, int status) {
     }
 }
 
-/* 单线程事件驱动的HTTP响应发送
- * 修复ab兼容性，确保HTTP响应格式正确
+/* ============ 纯函数：构建响应数据 ============ */
+/* 纯函数：构建HTTP响应数据，无副作用，易于测试
+ * response: 响应对象
+ * out_data: 输出参数，返回构建的响应数据
+ * out_length: 输出参数，返回响应数据长度
+ * 返回: UVHTTP_OK 成功，其他值表示错误
+ * 
+ * 注意：调用者负责释放返回的 *out_data 内存
  */
-uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
-    if (!response) {
+uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response, 
+                                         char** out_data, 
+                                         size_t* out_length) {
+    if (!response || !out_data || !out_length) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    /* 单线程安全的重复发送检查 */
+    /* 重复发送检查 */
     if (response->sent) {
+        *out_data = NULL;
+        *out_length = 0;
         return UVHTTP_OK;
     }
-    response->sent = 1;
     
-    /* 构建完整的HTTP响应 - 单线程内存操作 */
+    /* 构建完整的HTTP响应 - 纯内存操作 */
     size_t headers_size = UVHTTP_INITIAL_BUFFER_SIZE;
     char* headers_buffer = uvhttp_malloc(headers_size);
     if (!headers_buffer) {
@@ -333,6 +353,18 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
     size_t headers_length = headers_size;
     build_response_headers(response, headers_buffer, &headers_length);
     
+    /* 检查缓冲区是否太小，如果是则重新分配更大的缓冲区 */
+    if (headers_length >= headers_size) {
+        uvhttp_free(headers_buffer);
+        headers_size = headers_length + 256; /* 添加安全边距 */
+        headers_buffer = uvhttp_malloc(headers_size);
+        if (!headers_buffer) {
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
+        }
+        headers_length = headers_size;
+        build_response_headers(response, headers_buffer, &headers_length);
+    }
+    
     /* 计算总大小 */
     size_t total_size = headers_length + response->body_length;
     if (total_size > UVHTTP_MAX_BODY_SIZE * 2) {
@@ -340,7 +372,7 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
-    /* 分配完整响应数据 - 这个内存将在异步回调中安全释放 */
+    /* 分配完整响应数据 */
     char* response_data = uvhttp_malloc(total_size + 1);  /* +1 for null terminator */
     if (!response_data) {
         uvhttp_free(headers_buffer);
@@ -361,23 +393,57 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
     /* 立即释放headers_buffer，不再需要 */
     uvhttp_free(headers_buffer);
     
-    /* 创建写数据结构，确保response_data在异步发送完成后被正确释放 */
+    *out_data = response_data;
+    *out_length = total_size;
+    
+    return UVHTTP_OK;
+}
+
+/* ============ 副作用函数：发送原始数据 ============ */
+/* 副作用函数：发送原始数据，包含网络I/O
+ * data: 要发送的数据
+ * length: 数据长度
+ * client: 客户端连接
+ * response: 响应对象（用于回调处理）
+ * 返回: UVHTTP_OK 成功，其他值表示错误
+ */
+uvhttp_error_t uvhttp_response_send_raw(const char* data, 
+                                       size_t length, 
+                                       void* client, 
+                                       uvhttp_response_t* response) {
+    if (!data || length == 0 || !client) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    /* 创建写数据结构，确保data在异步发送完成后被正确释放 */
     uvhttp_write_data_t* write_data = uvhttp_malloc(sizeof(uvhttp_write_data_t));
     if (!write_data) {
-        uvhttp_free(response_data);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
-    write_data->data = response_data;  /* response_data将在异步回调中释放 */
-    write_data->length = total_size;
+    /* 分配并复制数据（因为原始数据可能被调用者释放） */
+    write_data->data = uvhttp_malloc(length);
+    if (!write_data->data) {
+        uvhttp_free(write_data);
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    
+    memcpy(write_data->data, data, length);
+    write_data->length = length;
     write_data->response = response;
     
     uv_buf_t buf = uv_buf_init(write_data->data, write_data->length);
     write_data->write_req.data = write_data;
     
-    /* 异步写入 - libuv在事件循环线程中执行，完成后调用回调释放资源 */
-    int result = uv_write(&write_data->write_req, (uv_stream_t*)response->client, &buf, 1, 
+    /* 使用网络接口发送（如果启用）或直接调用libuv */
+#ifdef UVHTTP_USE_NETWORK_INTERFACE
+    int result = uvhttp_network_write((uv_stream_t*)client, &buf, 1, 
+                                      (uv_write_cb)uvhttp_free_write_data);
+#else
+    /* 直接调用libuv，零开销 */
+    int result = uv_write(&write_data->write_req, (uv_stream_t*)client, &buf, 1, 
                          (uv_write_cb)uvhttp_free_write_data);
+#endif
     
     if (result < 0) {
         /* 写入失败，立即清理资源 */
@@ -386,12 +452,10 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
         return UVHTTP_ERROR_RESPONSE_SEND;
     }
     
-    response->finished = 1;
-    
     /* 如果响应设置了 Connection: close，需要在发送完成后关闭连接 */
-    if (!response->keep_alive) {
+    if (response && !response->keep_alive) {
         /* 获取连接对象 */
-        uvhttp_connection_t* conn = (uvhttp_connection_t*)((uv_tcp_t*)response->client)->data;
+        uvhttp_connection_t* conn = (uvhttp_connection_t*)((uv_tcp_t*)client)->data;
         if (conn) {
             /* 设置连接不保持活跃，确保在响应发送完成后关闭 */
             conn->keep_alive = 0;
@@ -400,6 +464,99 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
     
     return UVHTTP_OK;
 }
+
+/* ============ 组合函数：保持API兼容性 ============ */
+/* 单线程事件驱动的HTTP响应发送
+ * 修复ab兼容性，确保HTTP响应格式正确
+ * 
+ * 这个函数组合了纯函数和副作用函数，保持原有API兼容性
+ */
+uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
+    if (!response) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    /* 单线程安全的重复发送检查 */
+    if (response->sent) {
+        return UVHTTP_OK;
+    }
+    response->sent = 1;
+    
+    /* 调用纯函数构建响应数据 */
+    char* response_data = NULL;
+    size_t response_length = 0;
+    uvhttp_error_t err = uvhttp_response_build_data(response, &response_data, &response_length);
+    if (err != UVHTTP_OK) {
+        return err;
+    }
+    
+    /* 调用副作用函数发送数据 */
+    err = uvhttp_response_send_raw(response_data, response_length, 
+                                   response->client, response);
+    
+    /* 释放纯函数分配的内存 */
+    uvhttp_free(response_data);
+    
+    if (err == UVHTTP_OK) {
+        response->finished = 1;
+    }
+    
+    return err;
+}
+
+/* ============ 测试专用函数 ============ */
+#ifdef UVHTTP_TEST_MODE
+
+/* 测试用纯函数：验证响应数据构建
+ * 这个函数只构建数据但不发送，便于测试验证
+ */
+uvhttp_error_t uvhttp_response_build_for_test(uvhttp_response_t* response, 
+                                             char** out_data, 
+                                             size_t* out_length) {
+    return uvhttp_response_build_data(response, out_data, out_length);
+}
+
+/* 测试用函数：模拟发送但不实际网络I/O */
+uvhttp_error_t uvhttp_response_send_mock(uvhttp_response_t* response) {
+    if (!response) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    if (response->sent) {
+        return UVHTTP_OK;
+    }
+    
+    /* 构建数据 */
+    char* response_data = NULL;
+    size_t response_length = 0;
+    uvhttp_error_t err = uvhttp_response_build_data(response, &response_data, &response_length);
+    if (err != UVHTTP_OK) {
+        return err;
+    }
+    
+    /* 模拟发送 - 只更新统计，不实际发送 */
+    UVHTTP_TEST_LOG("Mock sending response: %zu bytes", response_length);
+    
+    /* 更新网络接口统计（如果可用） */
+    uvhttp_network_reset_stats();
+    uvhttp_network_simulate_error(0); /* 确保没有错误模拟 */
+    
+    /* 模拟发送成功 */
+    if (g_uvhttp_network_interface) {
+        uv_buf_t buf = uv_buf_init(response_data, response_length);
+        g_uvhttp_network_interface->write(g_uvhttp_network_interface, 
+                                          (uv_stream_t*)response->client, 
+                                          &buf, 1, NULL);
+    }
+    
+    uvhttp_free(response_data);
+    response->sent = 1;
+    response->finished = 1;
+    
+    return UVHTTP_OK;
+}
+
+#endif /* UVHTTP_TEST_MODE */
 
 void uvhttp_response_free(uvhttp_response_t* response) {
     if (!response) {

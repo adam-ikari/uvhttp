@@ -5,7 +5,10 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <strings.h>
+#include <time.h>
 #include "uvhttp_common.h"
+#include "uvhttp_response.h"
+#include "uvhttp_utils.h"
 
 // 安全的字符串复制函数 - 匹配头文件声明
 int uvhttp_safe_strcpy(char* dest, size_t dest_size, const char* src) {
@@ -74,78 +77,285 @@ int validate_method(const char* method, size_t length) {
     return uvhttp_validate_method(method, length);
 }
 
-// JSON字符串转义函数
-char* uvhttp_escape_json_string(const char* str) {
-    if (!str) return NULL;
+/* ============ 内部辅助函数 ============ */
+
+// 内部辅助函数：验证状态码有效性
+static int is_valid_status_code(int code) {
+    return (code >= 100 && code <= 599);
+}
+
+// 内部辅助函数：验证字符串长度
+static int is_valid_string_length(const char* str, size_t max_len) {
+    if (!str) return 0;
+    return (strlen(str) <= max_len);
+}
+
+
+
+/* ============ 统一响应处理函数 ============ */
+
+/**
+ * @brief 统一的响应发送函数 - 由使用者设置 Content-Type
+ * @param response 响应对象
+ * @param content 内容数据
+ * @param length 内容长度（如果为0则自动计算）
+ * @param status_code HTTP状态码（如果为0则使用响应对象中已有的状态码）
+ * @return UVHTTP_OK 成功，其他值表示错误
+ */
+uvhttp_error_t uvhttp_send_unified_response(uvhttp_response_t* response, 
+                                          const char* content, 
+                                          size_t length, 
+                                          int status_code) {
+    // 参数验证
+    if (!response || !content) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
     
-    size_t len = strlen(str);
-    size_t escaped_len = len;
+    // 验证状态码（如果提供）
+    if (status_code != 0 && !is_valid_status_code(status_code)) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
     
-    // 计算转义后的长度
-    for (size_t i = 0; i < len; i++) {
-        switch (str[i]) {
-            case '"':
-            case '\\':
-            case '\b':
-            case '\f':
-            case '\n':
-            case '\r':
-            case '\t':
-                escaped_len++; // 每个需要转义的字符增加1个字符
-                break;
-            default:
-                if (str[i] < 0x20) {
-                    escaped_len += UVHTTP_ESCAPE_SEQUENCE_LENGTH; // 控制字符转义为 \uXXXX 格式
-                }
-                break;
+    // 处理长度参数
+    if (length == 0) {
+        length = strlen(content);
+    }
+    
+    // 验证内容长度
+    if (length == 0 || length > UVHTTP_MAX_BODY_SIZE) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 设置状态码（如果提供了有效状态码）
+    if (status_code != 0) {
+        uvhttp_response_set_status(response, status_code);
+    }
+    
+    // 设置响应体
+    uvhttp_error_t err = uvhttp_response_set_body(response, content, length);
+    if (err != UVHTTP_OK) {
+        return err;
+    }
+    
+    // 发送响应
+    return uvhttp_response_send(response);
+}
+
+/**
+ * @brief 发送 JSON 响应的便捷函数
+ * @param response 响应对象
+ * @param json_content JSON 内容字符串
+ * @param status_code HTTP状态码
+ * @return UVHTTP_OK 成功，其他值表示错误
+ */
+uvhttp_error_t uvhttp_send_json_response(uvhttp_response_t* response, 
+                                        const char* json_content, 
+                                        int status_code) {
+    // 参数验证
+    if (!response || !json_content) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 验证状态码范围
+    if (!is_valid_status_code(status_code)) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 验证内容长度
+    size_t content_len = strlen(json_content);
+    if (content_len == 0 || content_len > UVHTTP_MAX_BODY_SIZE) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 基本JSON格式验证 - 检查是否以 { 或 [ 开头
+    const char* trimmed = json_content;
+    while (*trimmed && isspace((unsigned char)*trimmed)) {
+        trimmed++;
+    }
+    
+    if (*trimmed != '{' && *trimmed != '[') {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    uvhttp_response_set_status(response, status_code);
+    uvhttp_response_set_header(response, "Content-Type", "application/json");
+    uvhttp_response_set_body(response, json_content, content_len);
+    
+    return uvhttp_response_send(response);
+}
+
+/**
+ * @brief 发送 HTML 响应的便捷函数
+ * @param response 响应对象
+ * @param html_content HTML 内容字符串
+ * @param status_code HTTP状态码
+ * @return UVHTTP_OK 成功，其他值表示错误
+ */
+uvhttp_error_t uvhttp_send_html_response(uvhttp_response_t* response, 
+                                        const char* html_content, 
+                                        int status_code) {
+    // 参数验证
+    if (!response || !html_content) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 验证状态码范围
+    if (!is_valid_status_code(status_code)) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 验证内容长度
+    size_t content_len = strlen(html_content);
+    if (content_len == 0 || content_len > UVHTTP_MAX_BODY_SIZE) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 基本HTML格式验证 - 检查是否包含HTML标签
+    if (!strstr(html_content, "<") || !strstr(html_content, ">")) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    uvhttp_response_set_status(response, status_code);
+    uvhttp_response_set_header(response, "Content-Type", "text/html; charset=utf-8");
+    uvhttp_response_set_body(response, html_content, content_len);
+    
+    return uvhttp_response_send(response);
+}
+
+/**
+ * @brief 发送文本响应的便捷函数
+ * @param response 响应对象
+ * @param text_content 文本内容字符串
+ * @param status_code HTTP状态码
+ * @return UVHTTP_OK 成功，其他值表示错误
+ */
+uvhttp_error_t uvhttp_send_text_response(uvhttp_response_t* response, 
+                                        const char* text_content, 
+                                        int status_code) {
+    // 参数验证
+    if (!response || !text_content) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 验证状态码范围
+    if (!is_valid_status_code(status_code)) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 验证内容长度
+    size_t content_len = strlen(text_content);
+    if (content_len == 0 || content_len > UVHTTP_MAX_BODY_SIZE) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    uvhttp_response_set_status(response, status_code);
+    uvhttp_response_set_header(response, "Content-Type", "text/plain; charset=utf-8");
+    uvhttp_response_set_body(response, text_content, content_len);
+    
+    return uvhttp_response_send(response);
+}
+
+/**
+ * @brief 创建标准错误响应（JSON格式）
+ * @param response 响应对象
+ * @param error_code 错误代码
+ * @param error_message 错误消息
+ * @param details 详细信息（可选）
+ * @return UVHTTP_OK 成功，其他值表示错误
+ */
+uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response, 
+                                         int error_code, 
+                                         const char* error_message, 
+                                         const char* details) {
+    // 参数验证
+    if (!response || !error_message) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 验证错误代码范围
+    if (!is_valid_status_code(error_code)) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 验证字符串长度，防止缓冲区溢出
+    #define MAX_ERROR_MSG_LEN 200
+    #define MAX_ERROR_DETAILS_LEN 400
+    
+    if (!is_valid_string_length(error_message, MAX_ERROR_MSG_LEN)) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    if (details && !is_valid_string_length(details, MAX_ERROR_DETAILS_LEN)) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 创建安全的 JSON 错误响应
+    char error_json[1024];
+    int json_len;
+    
+    if (details && strlen(details) > 0) {
+        json_len = snprintf(error_json, sizeof(error_json), 
+                "{\"error\":\"%s\",\"details\":\"%s\",\"code\":%d,\"timestamp\":%ld}",
+                error_message, details, error_code, time(NULL));
+    } else {
+        json_len = snprintf(error_json, sizeof(error_json), 
+                "{\"error\":\"%s\",\"code\":%d,\"timestamp\":%ld}",
+                error_message, error_code, time(NULL));
+    }
+    
+    // 验证 snprintf 是否成功
+    if (json_len < 0 || json_len >= (int)sizeof(error_json)) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    return uvhttp_send_json_response(response, error_json, error_code);
+}
+
+/* ============ 公共验证函数实现 ============ */
+
+/**
+ * @brief 验证 HTTP 状态码有效性
+ * @param status_code 状态码
+ * @return 1 表示有效，0 表示无效
+ */
+int uvhttp_is_valid_status_code(int status_code) {
+    return (status_code >= 100 && status_code <= 599);
+}
+
+/**
+ * @brief 验证 Content-Type 格式
+ * @param content_type Content-Type 字符串
+ * @return 1 表示有效，0 表示无效
+ */
+int uvhttp_is_valid_content_type(const char* content_type) {
+    if (!content_type || strlen(content_type) == 0) {
+        return 0;
+    }
+    
+    // 基本格式验证：应该包含 '/'
+    const char* slash = strchr(content_type, '/');
+    if (!slash) {
+        return 0;
+    }
+    
+    // 检查是否有非法字符
+    const char* invalid_chars = "\"\\()<>@,;:\\[]?=";
+    for (const char* p = content_type; *p; p++) {
+        if (strchr(invalid_chars, *p)) {
+            return 0;
         }
     }
     
-    char* escaped = uvhttp_malloc(escaped_len + 1);
-    if (!escaped) return NULL;
-    
-    size_t j = 0;
-    for (size_t i = 0; i < len; i++) {
-        switch (str[i]) {
-            case '"':
-                escaped[j++] = '\\';
-                escaped[j++] = '"';
-                break;
-            case '\\':
-                escaped[j++] = '\\';
-                escaped[j++] = '\\';
-                break;
-            case '\b':
-                escaped[j++] = '\\';
-                escaped[j++] = 'b';
-                break;
-            case '\f':
-                escaped[j++] = '\\';
-                escaped[j++] = 'f';
-                break;
-            case '\n':
-                escaped[j++] = '\\';
-                escaped[j++] = 'n';
-                break;
-            case '\r':
-                escaped[j++] = '\\';
-                escaped[j++] = 'r';
-                break;
-            case '\t':
-                escaped[j++] = '\\';
-                escaped[j++] = 't';
-                break;
-            default:
-                if (str[i] < 0x20) {
-                    // 控制字符转义为 \uXXXX 格式
-                    j += snprintf(escaped + j, escaped_len - j + 1, "\\u%04x", (unsigned char)str[i]);
-                } else {
-                    escaped[j++] = str[i];
-                }
-                break;
-        }
-    }
-    
-    escaped[j] = '\0';
-    return escaped;
+    return 1;
+}
+
+/**
+ * @brief 验证字符串长度
+ * @param str 字符串
+ * @param max_len 最大长度
+ * @return 1 表示有效，0 表示无效
+ */
+int uvhttp_is_valid_string_length(const char* str, size_t max_len) {
+    if (!str) return 0;
+    return (strlen(str) <= max_len);
 }
