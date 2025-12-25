@@ -334,62 +334,22 @@ cJSON_Delete(parsed);
 4. **类型检查**：使用 `cJSON_Is*` 函数验证类型
 
 ## 🏃‍♂️ 运行示例
-## ⚡ xxHash 高性能哈希集成
+## ⚡ xxHash 高性能哈希
 
-UVHTTP 项目已集成 **xxHash** 作为核心哈希算法，提供以下优势：
-- ✅ **极高性能**：比 CRC32 快 3-5 倍，接近 RAM 速度限制
-- ✅ **优秀分布**：低冲突率，适合哈希表和缓存
-- ✅ **跨平台**：支持所有主流平台和架构
-- ✅ **简单易用**：统一的 API 接口，无需复杂配置
+UVHTTP 集成 **xxHash** 算法，提供极快的哈希计算：
 
-### 基础使用示例
+- 🚀 **高性能**：比 CRC32 快 3-5 倍
+- 🎯 **低冲突**：优秀的哈希分布
+- 🔧 **易使用**：统一的 API 接口
 
 ```c
 #include "uvhttp_hash.h"
 
-// 计算字符串哈希
-const char* data = "Hello, UVHTTP!";
-uint64_t hash = uvhttp_hash_string(data);
+📖 **详细文档**: 查看 [docs/XXHASH_INTEGRATION.md](docs/XXHASH_INTEGRATION.md)
 
-// 计算数据哈希
-uint64_t hash2 = uvhttp_hash(data, strlen(data), UVHTTP_HASH_DEFAULT_SEED);
-
-// 使用默认种子
-uint64_t hash3 = uvhttp_hash_default(data, strlen(data));
 ```
 
-### 路由系统优化
-
-xxHash 显著提升了路由查找性能：
-
-```c
-// 路由哈希计算（内部使用）
-uint32_t route_hash = uvhttp_route_hash("/api/users", UVHTTP_GET);
-
-// 缓存键生成
-uint64_t cache_key = uvhttp_hash_string("user:123:profile");
-```
-
-### 性能对比
-
-| 算法 | 速度 | 冲突率 | 适用场景 |
-|------|------|--------|----------|
-| **xxHash** | ⚡⚡⚡ 极快 | 低 | 路由、缓存、哈希表 |
-| CRC32 | ⚡⚡ 快 | 中 | 校验和、简单哈希 |
-| FNV-1a | ⚡ 中等 | 中 | 字符串哈希 |
-| MD5 | ⚡ 慢 | 极低 | 安全哈希 |
-
-### 最佳实践
-
-1. **字符串哈希**：使用 `uvhttp_hash_string()` 处理字符串
-2. **数据哈希**：使用 `uvhttp_hash()` 处理二进制数据
-3. **默认种子**：使用 `UVHTTP_HASH_DEFAULT_SEED` 获得一致性
-4. **安全考虑**：xxHash 适用于非加密场景### v1.2.0 (规划中 - 6 个月)
-
-- 🎯 负载均衡支持
-- 🎯 监控和指标系统
-- 🎯 配置管理系统
-- 🎯 高级 WebSocket 功能
+📖 **详细文档**: 查看 [docs/XXHASH_INTEGRATION.md](docs/XXHASH_INTEGRATION.md)- 🎯 高级 WebSocket 功能
 - 🎯 安全增强特性
 
 ### v2.0.0 (规划中 - 12 个月)
