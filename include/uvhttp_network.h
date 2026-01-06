@@ -102,7 +102,8 @@ extern uvhttp_network_interface_t* g_uvhttp_network_interface;
                                           const uv_buf_t* bufs, 
                                           unsigned int nbufs, 
                                           uv_write_cb cb) {
-        return uv_write(&((uv_write_t){0}), stream, bufs, nbufs, cb);
+        uv_write_t req;
+        return uv_write(&req, stream, bufs, nbufs, cb);
     }
     
     static inline int uvhttp_network_read_start(uv_stream_t* stream,

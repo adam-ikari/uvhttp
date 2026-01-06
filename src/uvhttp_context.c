@@ -6,6 +6,7 @@
 #include "uvhttp_server.h"
 #include "uvhttp_router.h"
 #include "uvhttp_constants.h"
+#include "uvhttp_error_handler.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -182,11 +183,11 @@ static void default_log(uvhttp_logger_provider_t* provider,
     
     const char* level_str = "UNKNOWN";
     switch (level) {
-        case UVHTTP_LOG_DEBUG: level_str = "DEBUG"; break;
-        case UVHTTP_LOG_INFO:  level_str = "INFO"; break;
-        case UVHTTP_LOG_WARN:  level_str = "WARN"; break;
-        case UVHTTP_LOG_ERROR: level_str = "ERROR"; break;
-        case UVHTTP_LOG_FATAL: level_str = "FATAL"; break;
+        case UVHTTP_LOG_LEVEL_DEBUG: level_str = "DEBUG"; break;
+        case UVHTTP_LOG_LEVEL_INFO:  level_str = "INFO"; break;
+        case UVHTTP_LOG_LEVEL_WARN:  level_str = "WARN"; break;
+        case UVHTTP_LOG_LEVEL_ERROR: level_str = "ERROR"; break;
+        case UVHTTP_LOG_LEVEL_FATAL: level_str = "FATAL"; break;
     }
     
     fprintf(impl->output, "[%s] %s:%d %s(): %s\n", level_str, file, line, func, message);
@@ -245,11 +246,11 @@ static void test_log(uvhttp_logger_provider_t* provider,
     /* 缓存日志用于测试验证 */
     const char* level_str = "UNKNOWN";
     switch (level) {
-        case UVHTTP_LOG_DEBUG: level_str = "DEBUG"; break;
-        case UVHTTP_LOG_INFO:  level_str = "INFO"; break;
-        case UVHTTP_LOG_WARN:  level_str = "WARN"; break;
-        case UVHTTP_LOG_ERROR: level_str = "ERROR"; break;
-        case UVHTTP_LOG_FATAL: level_str = "FATAL"; break;
+        case UVHTTP_LOG_LEVEL_DEBUG: level_str = "DEBUG"; break;
+        case UVHTTP_LOG_LEVEL_INFO:  level_str = "INFO"; break;
+        case UVHTTP_LOG_LEVEL_WARN:  level_str = "WARN"; break;
+        case UVHTTP_LOG_LEVEL_ERROR: level_str = "ERROR"; break;
+        case UVHTTP_LOG_LEVEL_FATAL: level_str = "FATAL"; break;
     }
     
     char log_entry[512];
@@ -266,11 +267,6 @@ static void test_log(uvhttp_logger_provider_t* provider,
     }
 }
 
-static void test_set_level(uvhttp_logger_provider_t* provider, uvhttp_log_level_t level) {
-    uvhttp_test_logger_provider_t* impl = (uvhttp_test_logger_provider_t*)provider;
-    impl->level = level;
-}
-
 uvhttp_logger_provider_t* uvhttp_test_logger_provider_create(void) {
     uvhttp_test_logger_provider_t* provider = 
         (uvhttp_test_logger_provider_t*)uvhttp_malloc(sizeof(uvhttp_test_logger_provider_t));
@@ -281,9 +277,8 @@ uvhttp_logger_provider_t* uvhttp_test_logger_provider_create(void) {
     memset(provider, 0, sizeof(uvhttp_test_logger_provider_t));
     
     provider->base.log = test_log;
-    provider->base.set_level = test_set_level;
     
-    provider->level = UVHTTP_LOG_DEBUG;
+    provider->level = UVHTTP_LOG_LEVEL_DEBUG;
     provider->cached_logs = NULL;
     provider->cached_size = 0;
     provider->silent = 0;
@@ -414,7 +409,7 @@ int uvhttp_context_init(uvhttp_context_t* context) {
      */
     
     if (!context->logger_provider) {
-        context->logger_provider = uvhttp_default_logger_provider_create(UVHTTP_LOG_INFO);
+        context->logger_provider = uvhttp_default_logger_provider_create(UVHTTP_LOG_LEVEL_INFO);
         if (!context->logger_provider) {
             return -1;
         }

@@ -2,12 +2,14 @@
 #define UVHTTP_TLS_H
 
 #include <uv.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/rand.h>
-#include <openssl/ocsp.h>
+#include <mbedtls/ssl.h>
+#include <mbedtls/entropy.h>
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/x509.h>
+#include <mbedtls/ssl_cache.h>
+#include <mbedtls/error.h>
+#include <mbedtls/debug.h>
+#include <mbedtls/timing.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,6 +31,7 @@ typedef enum {
     UVHTTP_TLS_ERROR_WRITE = -8,
     UVHTTP_TLS_ERROR_INVALID_PARAM = -9,
     UVHTTP_TLS_ERROR_MEMORY = -10,
+    UVHTTP_TLS_ERROR_NOT_IMPLEMENTED = -11,
     UVHTTP_TLS_ERROR_WANT_READ = 1,
     UVHTTP_TLS_ERROR_WANT_WRITE = 2
 } uvhttp_tls_error_t;
@@ -58,28 +61,28 @@ uvhttp_tls_error_t uvhttp_tls_context_enable_ocsp_stapling(uvhttp_tls_context_t*
 uvhttp_tls_error_t uvhttp_tls_context_set_dh_parameters(uvhttp_tls_context_t* ctx, const char* dh_file);
 
 // TLS连接管理
-SSL* uvhttp_tls_create_ssl(uvhttp_tls_context_t* ctx);
-uvhttp_tls_error_t uvhttp_tls_setup_ssl(SSL* ssl, int fd);
-uvhttp_tls_error_t uvhttp_tls_handshake(SSL* ssl);
-uvhttp_tls_error_t uvhttp_tls_read(SSL* ssl, void* buf, size_t len);
-uvhttp_tls_error_t uvhttp_tls_write(SSL* ssl, const void* buf, size_t len);
+mbedtls_ssl_context* uvhttp_tls_create_ssl(uvhttp_tls_context_t* ctx);
+uvhttp_tls_error_t uvhttp_tls_setup_ssl(mbedtls_ssl_context* ssl, int fd);
+uvhttp_tls_error_t uvhttp_tls_handshake(mbedtls_ssl_context* ssl);
+uvhttp_tls_error_t uvhttp_tls_read(mbedtls_ssl_context* ssl, void* buf, size_t len);
+uvhttp_tls_error_t uvhttp_tls_write(mbedtls_ssl_context* ssl, const void* buf, size_t len);
 
 // 证书验证
-int uvhttp_tls_verify_peer_cert(SSL* ssl);
-int uvhttp_tls_verify_hostname(X509* cert, const char* hostname);
-int uvhttp_tls_check_cert_validity(X509* cert);
-X509* uvhttp_tls_get_peer_cert(SSL* ssl);
-int uvhttp_tls_get_cert_subject(X509* cert, char* buf, size_t buf_size);
-int uvhttp_tls_get_cert_issuer(X509* cert, char* buf, size_t buf_size);
-int uvhttp_tls_get_cert_serial(X509* cert, char* buf, size_t buf_size);
+int uvhttp_tls_verify_peer_cert(mbedtls_ssl_context* ssl);
+int uvhttp_tls_verify_hostname(mbedtls_x509_crt* cert, const char* hostname);
+int uvhttp_tls_check_cert_validity(mbedtls_x509_crt* cert);
+mbedtls_x509_crt* uvhttp_tls_get_peer_cert(mbedtls_ssl_context* ssl);
+int uvhttp_tls_get_cert_subject(mbedtls_x509_crt* cert, char* buf, size_t buf_size);
+int uvhttp_tls_get_cert_issuer(mbedtls_x509_crt* cert, char* buf, size_t buf_size);
+int uvhttp_tls_get_cert_serial(mbedtls_x509_crt* cert, char* buf, size_t buf_size);
 
 // 证书吊销检查
 uvhttp_tls_error_t uvhttp_tls_context_enable_crl_checking(uvhttp_tls_context_t* ctx, int enable);
 uvhttp_tls_error_t uvhttp_tls_load_crl_file(uvhttp_tls_context_t* ctx, const char* crl_file);
 
 // OCSP装订
-uvhttp_tls_error_t uvhttp_tls_get_ocsp_response(SSL* ssl, unsigned char** ocsp_response, size_t* response_len);
-uvhttp_tls_error_t uvhttp_tls_verify_ocsp_response(X509* cert, const unsigned char* ocsp_response, size_t response_len);
+uvhttp_tls_error_t uvhttp_tls_get_ocsp_response(mbedtls_ssl_context* ssl, unsigned char** ocsp_response, size_t* response_len);
+uvhttp_tls_error_t uvhttp_tls_verify_ocsp_response(mbedtls_x509_crt* cert, const unsigned char* ocsp_response, size_t response_len);
 
 // TLS 1.3支持
 uvhttp_tls_error_t uvhttp_tls_context_enable_tls13(uvhttp_tls_context_t* ctx, int enable);
@@ -92,9 +95,9 @@ uvhttp_tls_error_t uvhttp_tls_context_rotate_ticket_key(uvhttp_tls_context_t* ct
 uvhttp_tls_error_t uvhttp_tls_context_set_ticket_lifetime(uvhttp_tls_context_t* ctx, int lifetime_seconds);
 
 // 证书链验证
-uvhttp_tls_error_t uvhttp_tls_verify_cert_chain(SSL* ssl);
+uvhttp_tls_error_t uvhttp_tls_verify_cert_chain(mbedtls_ssl_context* ssl);
 uvhttp_tls_error_t uvhttp_tls_context_add_extra_chain_cert(uvhttp_tls_context_t* ctx, const char* cert_file);
-uvhttp_tls_error_t uvhttp_tls_get_cert_chain(SSL* ssl, STACK_OF(X509)** chain);
+uvhttp_tls_error_t uvhttp_tls_get_cert_chain(mbedtls_ssl_context* ssl, mbedtls_x509_crt** chain);
 
 // TLS性能监控
 typedef struct uvhttp_tls_stats {
@@ -109,7 +112,7 @@ typedef struct uvhttp_tls_stats {
 
 uvhttp_tls_error_t uvhttp_tls_get_stats(uvhttp_tls_context_t* ctx, uvhttp_tls_stats_t* stats);
 uvhttp_tls_error_t uvhttp_tls_reset_stats(uvhttp_tls_context_t* ctx);
-uvhttp_tls_error_t uvhttp_tls_get_connection_info(SSL* ssl, char* buf, size_t buf_size);
+uvhttp_tls_error_t uvhttp_tls_get_connection_info(mbedtls_ssl_context* ssl, char* buf, size_t buf_size);
 
 // 错误处理
 void uvhttp_tls_get_error_string(int ret, char* buf, size_t buf_size);

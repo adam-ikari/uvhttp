@@ -6,6 +6,7 @@
 #include "uvhttp_network.h"
 #include "uvhttp_connection.h"
 #include "uvhttp_config.h"
+#include "uvhttp_error_handler.h"
 #include <uv.h>
 #include <time.h>
 
@@ -59,14 +60,6 @@ typedef struct uvhttp_connection_provider {
  */
 
 /* ============ 日志提供者接口 ============ */
-
-typedef enum {
-    UVHTTP_LOG_DEBUG,
-    UVHTTP_LOG_INFO,
-    UVHTTP_LOG_WARN,
-    UVHTTP_LOG_ERROR,
-    UVHTTP_LOG_FATAL
-} uvhttp_log_level_t;
 
 typedef struct uvhttp_logger_provider {
     /* 日志输出函数 */
