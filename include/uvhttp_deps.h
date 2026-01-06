@@ -7,6 +7,7 @@
 #include <uv.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
