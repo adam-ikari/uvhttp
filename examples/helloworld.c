@@ -178,6 +178,10 @@ int main() {
     printf("Server created successfully: %p\n", (void*)g_server);
     printf("Applied configuration with max_connections=%d\n", config->max_connections);
     
+    // 设置全局配置（重要：这会消除"Global configuration not initialized"警告）
+    uvhttp_config_set_current(config);
+    printf("Global configuration set\n");
+    
     // 创建路由器
     printf("Creating router...\n");
     g_router = uvhttp_router_new();

@@ -6,10 +6,6 @@
 	path = deps/mbedtls
 	url = https://github.com/ARMmbed/mbedtls.git
 	branch = v3.6.0
-[submodule "deps/libwebsockets"]
-	path = deps/libwebsockets
-	url = https://libwebsockets.org/repo/libwebsockets
-	branch = v4.5.0
 [submodule "deps/cjson"]
 	path = deps/cjson
 	url = https://github.com/DaveGamble/cJSON.git

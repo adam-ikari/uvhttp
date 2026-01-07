@@ -3,7 +3,7 @@ project(uvhttp VERSION 1.1.0 LANGUAGES C)
 
 # 构建选项
 option(BUILD_WITH_WEBSOCKET "Build with WebSocket support" ON)
-option(BUILD_WITH_MIMALLOC "Build with mimalloc allocator" OFF)
+option(BUILD_WITH_MIMALLOC "Build with mimalloc allocator" ON)
 option(ENABLE_DEBUG "Enable debug build with -O0" OFF)
 option(ENABLE_COVERAGE "Enable code coverage" OFF)
 
@@ -147,13 +147,20 @@ endif()
 # mimalloc 支持
 if(BUILD_WITH_MIMALLOC)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/include)
-    find_library(MIMALLOC_LIB mimalloc
-        PATHS ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/build
-        NO_DEFAULT_PATH
-    )
+    # 优先使用静态库
+    set(MIMALLOC_STATIC_LIB ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/build/libmimalloc.a)
+    if(EXISTS ${MIMALLOC_STATIC_LIB})
+        message(STATUS "Found mimalloc static library: ${MIMALLOC_STATIC_LIB}")
+        set(MIMALLOC_LIB ${MIMALLOC_STATIC_LIB})
+    else()
+        # 回退到动态库
+        find_library(MIMALLOC_LIB mimalloc
+            PATHS ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/build
+            NO_DEFAULT_PATH
+        )
+    endif()
     if(MIMALLOC_LIB)
-        message(STATUS "Found mimalloc library: ${MIMALLOC_LIB}")
-        list(APPEND LIBS ${MIMALLOC_LIB})
+        message(STATUS "Using mimalloc library: ${MIMALLOC_LIB}")
         add_definitions(-DUVHTTP_FEATURE_ALLOCATOR=1)
     else()
         message(WARNING "mimalloc library not found, BUILD_WITH_MIMALLOC will be ignored")
@@ -162,7 +169,6 @@ endif()
 
 # 库文件
 set(LIBS
-    ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/.libs/libuv.a
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson/libcjson.a
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp/libllhttp.a
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/library/libmbedtls.a
@@ -170,9 +176,30 @@ set(LIBS
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/library/libmbedcrypto.a
     ${XXHASH_LIB}
     pthread
-    dl
     m
 )
+
+# 添加mimalloc库（如果找到）
+if(BUILD_WITH_MIMALLOC AND MIMALLOC_LIB)
+    list(APPEND LIBS ${MIMALLOC_LIB})
+endif()
+
+# 尝试使用pkg-config查找libuv
+find_package(PkgConfig)
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(LIBUV libuv)
+    if(LIBUV_FOUND)
+        list(APPEND LIBS ${LIBUV_LIBRARIES})
+        include_directories(${LIBUV_INCLUDE_DIRS})
+        link_directories(${LIBUV_LIBRARY_DIRS})
+    endif()
+endif()
+
+# 如果pkg-config没有找到，使用deps/libuv
+if(NOT LIBUV_FOUND)
+    list(APPEND LIBS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/.libs/libuv.a)
+    list(APPEND LIBS dl)  # dl库必须在libuv之后
+endif()
 
 # 创建静态库
 add_library(uvhttp STATIC ${SOURCES})
@@ -191,6 +218,48 @@ foreach(test_file ${TEST_FILES})
     add_executable(${test_name} ${test_file} ${SOURCES})
     target_link_libraries(${test_name} ${LIBS})
 endforeach()
+
+# 添加压力测试
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stress.c)
+    add_executable(test_stress test/test_stress.c ${SOURCES})
+    target_link_libraries(test_stress ${LIBS})
+    message(STATUS "压力测试程序已配置")
+endif()
+
+# 添加测试服务器
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_server.c)
+    add_executable(uvhttp_test_server test/test_server.c ${SOURCES})
+    target_link_libraries(uvhttp_test_server ${LIBS})
+    message(STATUS "测试服务器已配置")
+endif()
+
+# 添加简单性能测试服务器
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple_bench_server.c)
+    add_executable(simple_bench_server examples/simple_bench_server.c ${SOURCES})
+    target_link_libraries(simple_bench_server ${LIBS})
+    message(STATUS "简单性能测试服务器已配置")
+endif()
+
+# 添加性能测试服务器
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/examples/bench_server.c)
+    add_executable(bench_server examples/bench_server.c ${SOURCES})
+    target_link_libraries(bench_server ${LIBS})
+    message(STATUS "性能测试服务器已配置")
+endif()
+
+# 添加uvhttp压力测试服务器
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/uvhttp_bench_server.c)
+    add_executable(uvhttp_bench_server test/uvhttp_bench_server.c ${SOURCES})
+    target_link_libraries(uvhttp_bench_server ${LIBS})
+    message(STATUS "uvhttp压力测试服务器已配置")
+endif()
+
+# 添加uvhttp直接测试服务器
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/uvhttp_direct_server.c)
+    add_executable(uvhttp_direct_server test/uvhttp_direct_server.c ${SOURCES})
+    target_link_libraries(uvhttp_direct_server ${LIBS})
+    message(STATUS "uvhttp直接测试服务器已配置")
+endif()
 
 # 添加自定义目标来运行所有测试
 add_custom_target(run_tests

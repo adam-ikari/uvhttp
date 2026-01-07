@@ -91,6 +91,9 @@ int uvhttp_config_monitor_changes(uvhttp_config_change_callback_t callback);
 /* 获取当前配置 */
 const uvhttp_config_t* uvhttp_config_get_current(void);
 
+/* 设置全局配置 */
+void uvhttp_config_set_current(uvhttp_config_t* config);
+
 /* 配置热重载 */
 int uvhttp_config_reload(void);
 

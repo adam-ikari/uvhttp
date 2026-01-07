@@ -427,7 +427,8 @@ mbedtls_x509_crt* uvhttp_tls_get_peer_cert(mbedtls_ssl_context* ssl) {
         return NULL;
     }
     
-    return mbedtls_ssl_get_peer_cert(ssl);
+    const mbedtls_x509_crt* cert = mbedtls_ssl_get_peer_cert(ssl);
+    return (mbedtls_x509_crt*)cert;
 }
 
 int uvhttp_tls_get_cert_subject(mbedtls_x509_crt* cert, char* buf, size_t buf_size) {
@@ -623,10 +624,14 @@ uvhttp_tls_error_t uvhttp_tls_get_connection_info(mbedtls_ssl_context* ssl, char
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
     
-    const mbedtls_ssl_ciphersuite_t* ciphersuite = mbedtls_ssl_get_ciphersuite(ssl);
+    const char* ciphersuite = mbedtls_ssl_get_ciphersuite(ssl);
     const char* version = mbedtls_ssl_get_version(ssl);
     
-    snprintf(buf, buf_size, "Version: %s, Cipher: %s", version, mbedtls_ssl_get_ciphersuite_name(ciphersuite));
+    if (ciphersuite) {
+        snprintf(buf, buf_size, "Version: %s, Cipher: %s", version, ciphersuite);
+    } else {
+        snprintf(buf, buf_size, "Version: %s, Cipher: unknown", version);
+    }
     
     return UVHTTP_TLS_OK;
 }

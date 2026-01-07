@@ -22,7 +22,7 @@ typedef struct {
     uv_write_t write_req;
     size_t length;
     uvhttp_response_t* response;
-    char data[];  /* 灵活数组成员，自动处理内存对齐 */
+    char data[1];  /* 数据缓冲区，至少1字节 */
 } uvhttp_write_data_t;
 
 typedef struct {
