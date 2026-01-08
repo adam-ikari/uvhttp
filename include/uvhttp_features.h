@@ -49,21 +49,22 @@ extern "C" {
     #define UVHTTP_FEATURE_STATISTICS 0
 #endif
 
-/* ============ 可选功能定义 - 用户可通过编译宏控制 ============ */
+/* 可选功能定义 - 用户可通过编译宏控制 */
+#ifndef UVHTTP_FEATURE_MIDDLEWARE
+#define UVHTTP_FEATURE_MIDDLEWARE 1 /* 中间件支持 - 已启用 */
+#endif
+
+/* 可选功能模块 */
 #ifndef UVHTTP_FEATURE_WEBSOCKET
-#define UVHTTP_FEATURE_WEBSOCKET 1  /* WebSocket 支持 */
+#define UVHTTP_FEATURE_WEBSOCKET 1  /* WebSocket 功能模块 */
+#endif
+
+#ifndef UVHTTP_FEATURE_STATIC_FILES
+#define UVHTTP_FEATURE_STATIC_FILES 1 /* 静态文件功能模块 */
 #endif
 
 #ifndef UVHTTP_FEATURE_TLS
 #define UVHTTP_FEATURE_TLS 1        /* TLS/SSL 支持 */
-#endif
-
-#ifndef UVHTTP_FEATURE_JSON
-#define UVHTTP_FEATURE_JSON 0       /* JSON 解析支持 - 已禁用 */
-#endif
-
-#ifndef UVHTTP_FEATURE_MIDDLEWARE
-#define UVHTTP_FEATURE_MIDDLEWARE 0 /* 中间件支持 */
 #endif
 
 #ifndef UVHTTP_FEATURE_ROUTER_CACHE
@@ -139,10 +140,6 @@ extern "C" {
 
 #if UVHTTP_FEATURE_TLS
 #define UVHTTP_TLS_ENABLED
-#endif
-
-#if UVHTTP_FEATURE_JSON
-#define UVHTTP_JSON_ENABLED
 #endif
 
 #if UVHTTP_FEATURE_MIDDLEWARE

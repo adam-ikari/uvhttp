@@ -278,3 +278,11 @@ message(STATUS "  WebSocket: ${BUILD_WITH_WEBSOCKET}")
 message(STATUS "  mimalloc: ${BUILD_WITH_MIMALLOC}")
 message(STATUS "  Debug: ${ENABLE_DEBUG}")
 message(STATUS "  Coverage: ${ENABLE_COVERAGE}")
+
+# 添加示例编译支持
+option(BUILD_EXAMPLES "Build example programs" ON)
+
+if(BUILD_EXAMPLES)
+    add_subdirectory(examples)
+    message(STATUS "示例编译: 已启用")
+endif()
