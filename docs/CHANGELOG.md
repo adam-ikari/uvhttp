@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-01-07
+
+### Added
+- **TLS安全功能**: 实现CRL检查、DH参数设置、会话票证管理、证书链验证
+- **性能基准测试**: 新增性能基准测试程序和文档
+- **安全策略文档**: 完整的安全策略和依赖管理文档
+- **mimalloc支持**: 启用mimalloc作为默认内存分配器
+- **原生WebSocket**: 使用原生WebSocket实现替代libwebsockets
+
+### Changed
+- **TLS实现**: 从OpenSSL迁移到mbedTLS，提升安全性和性能
+- **性能优化**: Keep-alive连接管理优化，性能提升约1000倍（4-16 RPS → 14,000-16,000 RPS）
+- **代码精简**: 移除15,192行冗余代码，提升代码可维护性
+- **文档重组**: 移动文档到docs/目录，优化项目结构
+- **依赖管理**: 清理.gitmodules，移除不再使用的依赖
+
+### Fixed
+- **空指针检查**: 修复request getter函数的空指针检查（11个函数）
+- **TLS类型错误**: 修复mbedTLS API类型不兼容问题
+- **编译警告**: 修复所有编译警告（未使用变量、strncpy截断等）
+- **HTTP头验证**: 修复HTTP头验证逻辑错误
+- **响应构建**: 修复响应数据构建时机问题
+
+### Security
+- **CRL检查**: 实现证书撤销列表检查功能
+- **证书链验证**: 完整的证书链验证支持
+- **依赖更新策略**: 明确的安全更新、功能更新、维护更新策略
+- **安全审计**: 建立每周依赖扫描、每月代码审查、季度渗透测试计划
+- **漏洞响应**: 定义完整的漏洞发现、评估、修复、通知流程
+
+### Performance
+- **Keep-alive连接**: 修复连接复用，性能提升约1000倍
+- **TCP优化**: 启用TCP_NODELAY和TCP keepalive
+- **响应缓冲区**: 优化响应缓冲区大小（512 → 1024字节）
+- **内存分配器**: mimalloc提供更快的内存分配和释放
+
+### Testing
+- **NULL参数测试**: 完整的NULL参数覆盖测试（TLS 32个，Request 11个）
+- **性能验证**: 1000倍性能提升已通过基准测试验证
+- **代码质量**: 编译无错误无警告，启用安全编译选项
+
+### Documentation
+- **PERFORMANCE_BENCHMARK.md**: 详细的性能基准测试文档
+- **SECURITY.md**: 完整的安全策略文档
+- **依赖文档**: 更新DEPENDENCIES.md，包含所有依赖版本和更新策略
+
+### Breaking Changes
+- **TLS API变更**: 从OpenSSL迁移到mbedTLS，API签名有所变化
+- **WebSocket实现**: 从libwebsockets迁移到原生实现
+- **依赖变更**: 移除libwebsockets依赖，使用mbedTLS替代OpenSSL
+
 ## [1.1.0] - 2025-12-25
 
 ### Added
