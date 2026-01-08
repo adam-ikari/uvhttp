@@ -10,6 +10,16 @@
 #include <strings.h>
 #include <stdio.h>
 
+#if UVHTTP_FEATURE_WEBSOCKET
+#include <openssl/sha.h>
+#include <openssl/evp.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
+#endif
+
+// WebSocket握手检测函数
+static int is_websocket_handshake(uvhttp_request_t* request);
+
 // HTTP解析器回调函数声明
 static int on_message_begin(llhttp_t* parser);
 static int on_url(llhttp_t* parser, const char* at, size_t length);
@@ -291,6 +301,30 @@ static int on_message_complete(llhttp_t* parser) {
     }
     
     return 0;
+}
+
+// 检查是否为WebSocket握手请求
+static int is_websocket_handshake(uvhttp_request_t* request) {
+    const char* upgrade = uvhttp_request_get_header(request, "Upgrade");
+    const char* connection = uvhttp_request_get_header(request, "Connection");
+    const char* ws_key = uvhttp_request_get_header(request, "Sec-WebSocket-Key");
+
+    // 检查必需的头部
+    if (!upgrade || !connection || !ws_key) {
+        return 0;
+    }
+
+    // 检查Upgrade头部（不区分大小写）
+    if (strcasecmp(upgrade, "websocket") != 0) {
+        return 0;
+    }
+
+    // 检查Connection头部（可能包含多个值）
+    if (strstr(connection, "Upgrade") == NULL) {
+        return 0;
+    }
+
+    return 1;
 }
 
 const char* uvhttp_request_get_method(uvhttp_request_t* request) {
