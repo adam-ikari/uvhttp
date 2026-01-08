@@ -1,304 +1,662 @@
-# Pull Request #2 最终评估报告
+# Pull Request #3 评审报告
+## Feature: 完整实现WebSocket服务器功能
 
-**评估日期**: 2026年1月8日
-**评估人**: Senior Code Reviewer
-**PR标题**: Refactor: 代码质量改进和性能优化
-**分支**: refactor-code-quality-and-performance
-**基础分支**: main
-
----
-
-## 任务完成状态
-
-✅ **评估完成** - 已完成对PR #2的全面重新评估
+**评审日期**: 2026年1月8日
+**评审人**: Code Reviewer
+**PR状态**: 已合并 (commit 3b5d0bf)
+**分支**: feature-websocket-implementation → main
 
 ---
 
-## 工作总结
+## 1. 任务完成状态
 
-本次重新评估针对PR #2的最新提交（commit 2561ba9），检查了以下方面：
-
-1. **TLS安全功能实现状态** - 验证了之前识别的NOT_IMPLEMENTED函数
-2. **性能基准测试** - 检查了性能优化的验证情况
-3. **安全文档** - 审查了新增的安全策略文档
-4. **依赖管理** - 评估了依赖版本固定策略
-5. **代码质量** - 验证了编译状态和测试结果
-6. **迁移文档** - 检查了OpenSSL→mbedTLS迁移的文档支持
+✅ **已完成** - Pull Request已成功合并到main分支
 
 ---
 
-## 关键发现和结果
+## 2. 工作总结
 
-### 1. ✅ TLS安全功能大幅改进
+本次PR为uvhttp项目添加了完整的WebSocket服务器功能，包括：
+- WebSocket握手检测机制
+- WebSocket路由注册API
+- 消息处理回调系统
+- 连接管理功能
+- 示例代码和测试文件
 
-**之前状态（64174fa）**:
-- 11个TLS安全功能标记为NOT_IMPLEMENTED
-- 包括CRL检查、OCSP装订、证书链验证等关键安全功能
-
-**当前状态（2561ba9）**:
-- **已实现9个功能**（从11个减少到2个）:
-  - ✅ CRL检查功能 (`uvhttp_tls_context_enable_crl_checking`, `uvhttp_tls_load_crl_file`)
-  - ✅ DH参数设置（使用默认ECDH组）
-  - ✅ 会话票证功能（通过mbedTLS会话缓存）
-  - ✅ 证书链功能 (`uvhttp_tls_context_add_extra_chain_cert`, `uvhttp_tls_get_cert_chain`)
-  - ✅ TLS 1.3早期数据（已禁用以确保安全性）
-  - ✅ 会话票证密钥管理（由mbedTLS内部管理）
-
-- **仍为NOT_IMPLEMENTED（2个）**:
-  - ⚠️ `uvhttp_tls_get_ocsp_response()` - OCSP装订响应获取
-  - ⚠️ `uvhttp_tls_verify_ocsp_response()` - OCSP响应验证
-
-**安全影响评估**:
-- **CRL检查已实现** ✅ - 可以撤销已泄露的证书
-- **OCSP装订未实现** ⚠️ - 但可通过CRL检查替代，影响可控
-- **证书链验证已实现** ✅ - 满足安全合规要求
-
-**结论**: TLS安全功能已达到生产可用标准，剩余2个NOT_IMPLEMENTED功能有可行的替代方案。
+**变更统计**:
+- 新增文件: 3个 (2个示例, 1个测试HTML)
+- 修改文件: 3个 (2个头文件, 2个源文件)
+- 新增代码: 578行
+- 删除代码: 6行
 
 ---
 
-### 2. ✅ 性能基准测试已添加
+## 3. 关键发现和结果
 
-**新增文件**:
-- `test/benchmark_performance.c` (198行) - 性能基准测试程序
-- `docs/PERFORMANCE_BENCHMARK.md` (186行) - 性能基准测试文档
+### 3.1 代码质量评估
 
-**验证结果**:
-- ✅ 编译成功
-- ✅ 测试通过
-- ✅ 性能提升得到验证（14,000-16,000 RPS，约1000倍提升）
+#### ✅ 优点
 
-**测试数据**:
-```
-总请求数: 10000
-成功请求: 10000
-失败请求: 0
-成功率: 100.00%
+1. **代码组织良好**
+   - WebSocket功能使用条件编译 (`#if UVHTTP_FEATURE_WEBSOCKET`)
+   - 清晰的模块化设计，将WebSocket相关代码集中在特定区域
+   - 符合现有代码风格和命名规范
 
-总耗时: 0.714 秒
-平均每请求耗时: 0.000071 秒
-吞吐量: 14005.60 请求/秒
+2. **安全性考虑**
+   - 实现了WebSocket握手验证 (`is_websocket_handshake`)
+   - 检查必需的HTTP头部 (Upgrade, Connection, Sec-WebSocket-Key)
+   - 使用不区分大小写的比较 (`strcasecmp`, `strstr`)
+   - 正确的内存管理 (使用 `uvhttp_malloc`/`uvhttp_free`)
+
+3. **API设计合理**
+   - 提供了简洁的回调机制 (`uvhttp_ws_handler_t`)
+   - 支持连接、消息和关闭事件
+   - 与现有HTTP服务器API风格一致
+
+#### ⚠️ 问题和缺陷
+
+#### 严重问题 (P0)
+
+**1. API声明但未实现 - uvhttp_ws_send 和 uvhttp_ws_close**
+
+**位置**: `include/uvhttp_server.h` 第113-114行
+
+```c
+uvhttp_error_t uvhttp_ws_send(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len);
+uvhttp_error_t uvhttp_ws_close(uvhttp_ws_connection_t* ws_conn, int code, const char* reason);
 ```
 
-**结论**: 性能优化声明已通过基准测试验证，数据可信。
+**问题描述**:
+- 在头文件中声明了这两个函数
+- 但在 `src/uvhttp_server.c` 中没有实现
+- 示例代码 `examples/websocket_echo_server.c` 第19行使用了 `uvhttp_ws_send`
+- 这会导致链接错误
+
+**影响**: 
+- 示例代码无法编译
+- 用户无法使用这些API
+- 功能不完整
+
+**建议修复**:
+```c
+// 在 src/uvhttp_server.c 中添加实现
+uvhttp_error_t uvhttp_ws_send(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len) {
+    if (!ws_conn || !data || len == 0) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    // 调用底层实现
+    return uvhttp_ws_send_text(ws_conn, data, len) == 0 ? UVHTTP_OK : UVHTTP_ERROR_FAILED;
+}
+
+uvhttp_error_t uvhttp_ws_close(uvhttp_ws_connection_t* ws_conn, int code, const char* reason) {
+    if (!ws_conn) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    // 调用底层实现
+    return uvhttp_ws_close(ws_conn, code, reason) == 0 ? UVHTTP_OK : UVHTTP_ERROR_FAILED;
+}
+```
+
+**2. 示例代码使用不存在的类型和函数**
+
+**位置**: `examples/websocket_echo_server.c` 第47-48行
+
+```c
+uvhttp_server_config_t config;
+uvhttp_server_config_init(&config);
+```
+
+**问题描述**:
+- `uvhttp_server_config_t` 类型在头文件中不存在
+- `uvhttp_server_config_init` 函数不存在
+- 应该使用 `uvhttp_config_t` 和 `uvhttp_config_set_defaults`
+
+**影响**:
+- 示例代码无法编译
+- 用户无法参考示例学习如何使用
+
+**建议修复**:
+```c
+// 修改为使用正确的API
+uvhttp_config_t config;
+uvhttp_config_set_defaults(&config);
+// 然后使用 uvhttp_server_create(host, port) 创建服务器
+```
+
+**3. 全局路由表缺少线程安全保护**
+
+**位置**: `src/uvhttp_server.c` 第620行
+
+```c
+static ws_route_entry_t* g_ws_routes = NULL;
+```
+
+**问题描述**:
+- 使用全局变量存储WebSocket路由表
+- 没有任何锁机制保护
+- 在多线程环境下可能导致竞态条件
+- 即使是单线程，如果多个服务器实例也会冲突
+
+**影响**:
+- 多线程环境下不安全
+- 多服务器实例时会互相干扰
+- 可能导致内存泄漏或崩溃
+
+**建议修复**:
+```c
+// 将路由表移到服务器实例中
+struct uvhttp_server {
+    uv_loop_t* loop;
+    uv_tcp_t tcp_handle;
+    uvhttp_request_handler_t handler;
+    uvhttp_router_t* router;
+    int is_listening;
+#if UVHTTP_FEATURE_TLS
+    uvhttp_tls_context_t* tls_ctx;
+    int tls_enabled;
+#endif
+#if UVHTTP_FEATURE_WEBSOCKET
+    ws_route_entry_t* ws_routes;  // 移到这里
+#endif
+    size_t active_connections;
+    int owns_loop;
+    uvhttp_config_t* config;
+};
+```
+
+#### 高优先级问题 (P1)
+
+**4. WebSocket握手响应函数未被使用**
+
+**位置**: `src/uvhttp_server.c` 第637-673行
+
+```c
+__attribute__((unused)) static int create_websocket_handshake_response(...)
+```
+
+**问题描述**:
+- 实现了握手响应创建函数
+- 但标记为 `unused`
+- 没有在任何地方调用
+- WebSocket升级请求无法被正确处理
+
+**影响**:
+- WebSocket功能实际上无法工作
+- 握手流程不完整
+
+**建议**:
+- 需要在请求处理流程中集成WebSocket握手检测
+- 当检测到WebSocket升级请求时调用此函数
+- 将连接转换为WebSocket连接
+
+**5. 缺少WebSocket连接生命周期管理**
+
+**问题描述**:
+- 注册了WebSocket处理器
+- 但没有在HTTP请求处理中检测WebSocket升级
+- 没有创建WebSocket连接对象
+- 没有从HTTP到WebSocket的转换逻辑
+
+**影响**:
+- WebSocket功能无法实际使用
+- 代码处于半完成状态
+
+**建议**:
+在 `uvhttp_request.c` 的 `on_message_complete` 函数中添加：
+```c
+// 检查是否为WebSocket握手
+if (is_websocket_handshake(conn->request)) {
+    // 查找WebSocket处理器
+    uvhttp_ws_handler_t* ws_handler = find_ws_handler(conn->server, conn->request->url);
+    if (ws_handler) {
+        // 执行握手并转换连接
+        handle_websocket_upgrade(conn, ws_handler);
+        return 0;
+    }
+}
+```
+
+**6. 编译警告 - 类型不匹配**
+
+**位置**: `src/uvhttp_websocket_native.c` 第774, 785, 844行
+
+```
+warning: pointer targets in passing argument 2 of 'conn->on_message' differ in signedness
+```
+
+**问题描述**:
+- 回调函数期望 `const char*`
+- 但传递的是 `uint8_t*`
+- 类型签名不一致
+
+**建议修复**:
+统一使用 `const char*` 或 `const uint8_t*`，保持一致性。
+
+**7. 内存泄漏风险 - 路由表未释放**
+
+**位置**: `src/uvhttp_server.c` 第620-672行
+
+**问题描述**:
+- 分配了路由条目但从未释放
+- 没有提供注销路由的函数
+- 服务器清理时没有清理路由表
+
+**建议**:
+```c
+// 添加清理函数
+static void cleanup_ws_routes(ws_route_entry_t* routes) {
+    while (routes) {
+        ws_route_entry_t* next = routes->next;
+        free(routes->path);
+        uvhttp_free(routes);
+        routes = next;
+    }
+}
+
+// 在 uvhttp_server_free 中调用
+#if UVHTTP_FEATURE_WEBSOCKET
+    cleanup_ws_routes(server->ws_routes);
+#endif
+```
+
+#### 中优先级问题 (P2)
+
+**8. 测试覆盖不足**
+
+**问题描述**:
+- 只有NULL参数测试
+- 缺少功能测试
+- 缺少集成测试
+- 缺少端到端测试
+- GTest测试文件为空
+
+**建议**:
+- 添加WebSocket握手测试
+- 添加消息发送和接收测试
+- 添加连接生命周期测试
+- 添加错误处理测试
+- 添加性能测试
+
+**9. 缺少错误处理代码**
+
+**位置**: `src/uvhttp_server.c` 第653-672行
+
+```c
+int written = snprintf(response, *response_len, ...);
+if (written < 0 || (size_t)written >= *response_len) {
+    return -1;
+}
+```
+
+**问题描述**:
+- Base64编码可能失败但未检查
+- SHA1计算可能失败但未检查
+- 缓冲区溢出检查不够严格
+
+**建议**:
+添加更完善的错误处理和边界检查。
+
+**10. 文档不完整**
+
+**问题描述**:
+- API文档缺少详细说明
+- 没有使用示例
+- 没有WebSocket协议说明
+- 回调函数参数说明不清晰
+
+**建议**:
+- 添加完整的API文档
+- 提供更多示例代码
+- 说明WebSocket握手流程
+- 说明回调函数的使用方法
+
+### 3.2 功能完整性评估
+
+#### ✅ 已实现
+- WebSocket握手检测函数
+- WebSocket路由注册API
+- 回调函数结构体定义
+- Base64编码实现
+- SHA-1哈希计算
+- 基础的WebSocket原生实现 (uvhttp_websocket_native.c)
+
+#### ❌ 未实现
+- WebSocket握手响应的实际使用
+- HTTP到WebSocket的连接转换
+- WebSocket连接生命周期管理
+- `uvhttp_ws_send` 和 `uvhttp_ws_close` 函数实现
+- WebSocket消息接收和发送的集成
+- Ping/Pong自动处理
+- 连接超时管理
+
+### 3.3 兼容性评估
+
+#### ✅ 向后兼容
+- 使用条件编译，不影响现有功能
+- 新增API不会破坏现有代码
+- 没有修改现有API签名
+
+#### ⚠️ 潜在问题
+- 全局路由表可能与未来多线程支持冲突
+- 示例代码无法编译，影响用户体验
+
+### 3.4 性能评估
+
+#### ✅ 优点
+- 使用高效的链表结构存储路由
+- 避免不必要的内存分配
+- 使用libuv事件循环，性能良好
+
+#### ⚠️ 潜在问题
+- 路由查找是O(n)复杂度，大量路由时性能下降
+- 没有路由缓存机制
+- Base64编码每次都分配内存
+
+### 3.5 安全性评估
+
+#### ✅ 优点
+- 输入验证基本完善
+- 使用安全的字符串比较
+- 内存管理使用自定义分配器
+
+#### ⚠️ 潜在问题
+- 缺少WebSocket协议版本验证
+- 缺少Origin头部验证 (CSRF保护)
+- 缺少消息大小限制
+- 缺少连接频率限制
+- 全局路由表无锁保护
 
 ---
 
-### 3. ✅ 安全文档已完善
+## 4. 遇到的问题
 
-**新增文件**:
-- `docs/SECURITY.md` (248行) - 安全策略文档
+### 4.1 编译问题
 
-**文档内容**:
-- ✅ 依赖管理策略（安全更新、功能更新、维护更新）
-- ✅ 安全审计计划（每周扫描、每月审查、季度渗透测试）
-- ✅ 漏洞响应流程（发现、评估、修复、通知）
-- ✅ TLS安全配置建议
-- ✅ 已知安全限制说明
-- ✅ 安全报告流程
+1. **链接错误**: 示例代码无法编译，因为 `uvhttp_ws_send` 和 `uvhttp_ws_close` 未实现
+2. **类型错误**: 示例代码使用不存在的 `uvhttp_server_config_t` 类型
+3. **警告**: 编译时产生类型不匹配警告
 
-**依赖更新策略**:
-- **安全更新**: 7天内评估，14天内修复
-- **功能更新**: 每季度评估
-- **维护更新**: 每半年评估
+### 4.2 功能问题
 
-**结论**: 安全文档完善，建立了清晰的安全管理流程。
+1. **功能不完整**: WebSocket握手检测已实现但未集成到请求处理流程
+2. **无法使用**: 缺少HTTP到WebSocket的转换逻辑，导致功能无法实际使用
+3. **测试失败**: 单元测试可执行文件未找到
 
----
+### 4.3 设计问题
 
-### 4. ✅ 依赖管理策略已明确
-
-**变更**:
-- 所有依赖版本在`.gitmodules`中固定
-- 移除了`libwebsockets`依赖（使用原生WebSocket实现）
-
-**当前依赖版本**:
-| 依赖 | 版本 | 用途 |
-|------|------|------|
-| libuv | v1.51.0 | 事件循环 |
-| mbedtls | v3.6.0 | TLS/SSL |
-| mimalloc | v3.1.5 | 内存分配器 |
-| cjson | v1.7.15 | JSON解析 |
-| llhttp | 最新 | HTTP解析 |
-| uthash | v1.9.8 | 哈希表 |
-| xxhash | v0.7.4 | 快速哈希 |
-| googletest | release-1.12.1 | 测试框架 |
-
-**安全缓解措施**:
-- ✅ 定期安全扫描（每周）
-- ✅ 订阅安全公告
-- ✅ 明确的更新策略
-- ✅ 漏洞响应流程
-
-**结论**: 依赖版本固定策略合理，已建立完善的安全更新机制。
+1. **架构缺陷**: 使用全局路由表，不支持多服务器实例
+2. **缺少清理**: 路由表没有释放机制，存在内存泄漏
+3. **线程安全**: 全局变量无锁保护，不安全
 
 ---
 
-### 5. ✅ 代码质量达到生产标准
+## 5. 下一步行动建议
 
-**编译状态**:
-- ✅ 编译成功，无错误
-- ✅ 无编译警告
-- ✅ 启用了安全编译选项（`-fstack-protector-strong`, `-D_FORTIFY_SOURCE=2`）
+### 5.1 立即修复 (P0 - 必须在合并前修复)
 
-**测试状态**:
-- ✅ 所有NULL参数覆盖测试通过
-- ✅ TLS NULL参数测试通过（32个测试）
-- ✅ Request NULL参数测试通过（11个测试）
+由于PR已经合并，建议立即创建修复PR：
 
-**代码变更统计**:
-- 6个提交
-- 112个文件变更
-- +6,028行插入
-- -13,283行删除
+1. **实现缺失的API函数**
+   - 实现 `uvhttp_ws_send` 函数
+   - 实现 `uvhttp_ws_close` 函数
+   - 确保示例代码可以编译
 
-**结论**: 代码质量良好，达到生产标准。
+2. **修复示例代码**
+   - 将 `uvhttp_server_config_t` 改为 `uvhttp_config_t`
+   - 使用正确的初始化函数
+   - 确保示例可以运行
+
+3. **修复全局路由表**
+   - 将路由表移到服务器实例中
+   - 添加清理函数
+   - 确保多服务器实例正常工作
+
+### 5.2 短期改进 (P1 - 1-2周内完成)
+
+1. **完成WebSocket集成**
+   - 在请求处理中检测WebSocket升级
+   - 实现HTTP到WebSocket的转换
+   - 完整实现握手流程
+
+2. **添加错误处理**
+   - 完善所有函数的错误处理
+   - 添加边界检查
+   - 处理内存分配失败
+
+3. **修复编译警告**
+   - 统一回调函数类型
+   - 修复类型不匹配问题
+
+4. **添加清理机制**
+   - 实现路由表清理
+   - 在服务器释放时清理资源
+   - 避免内存泄漏
+
+### 5.3 中期改进 (P2 - 1个月内完成)
+
+1. **增强安全性**
+   - 添加Origin头部验证
+   - 实现消息大小限制
+   - 添加连接频率限制
+   - 实现协议版本验证
+
+2. **完善测试**
+   - 添加功能测试
+   - 添加集成测试
+   - 添加端到端测试
+   - 提高测试覆盖率到80%以上
+
+3. **性能优化**
+   - 实现路由缓存
+   - 优化路由查找算法
+   - 减少内存分配
+
+4. **完善文档**
+   - 添加完整的API文档
+   - 提供更多示例代码
+   - 说明WebSocket协议实现
+   - 添加最佳实践指南
+
+### 5.4 长期改进 (P3 - 未来版本)
+
+1. **高级功能**
+   - 支持WebSocket子协议
+   - 支持WebSocket扩展
+   - 实现消息压缩
+   - 添加心跳机制
+
+2. **监控和调试**
+   - 添加连接统计
+   - 添加消息统计
+   - 实现调试日志
+   - 添加性能监控
+
+3. **多线程支持**
+   - 实现线程安全的路由表
+   - 支持多线程WebSocket处理
+   - 添加连接池
 
 ---
 
-### 6. ⚠️ 迁移文档需要改进
+## 6. 总体评估
 
-**当前状态**:
-- ✅ `docs/DEPENDENCIES.md` - 说明了使用mbedTLS作为TLS实现
-- ✅ `docs/SECURITY.md` - 提供了安全配置建议
-- ❌ **缺少详细的迁移指南** - 没有提供从OpenSSL迁移到mbedTLS的具体步骤
+### 6.1 代码质量: ⭐⭐⭐☆☆ (3/5)
 
-**文档缺失内容**:
-1. OpenSSL和mbedTLS API差异说明
-2. 代码迁移示例
-3. 配置文件变更指南
-4. 兼容性矩阵
-5. 常见问题解答
+**优点**:
+- 代码组织良好，符合项目规范
+- 基本的错误处理和输入验证
+- 使用条件编译，不影响现有功能
 
-**结论**: 迁移文档不够完善，但考虑到这是全新的TLS实现，影响可控。
+**缺点**:
+- 关键功能未实现 (API声明但未实现)
+- 全局变量导致线程安全问题
+- 缺少完整的错误处理
+- 存在内存泄漏风险
+
+### 6.2 功能完整性: ⭐⭐☆☆☆ (2/5)
+
+**优点**:
+- WebSocket握手检测已实现
+- 路由注册API已定义
+- 底层WebSocket实现基本完成
+
+**缺点**:
+- 核心功能未集成到请求处理流程
+- HTTP到WebSocket转换未实现
+- 示例代码无法编译运行
+- 功能处于半完成状态
+
+### 6.3 测试覆盖: ⭐⭐☆☆☆ (2/5)
+
+**优点**:
+- 有NULL参数测试
+- 测试框架已搭建
+
+**缺点**:
+- 只有基础NULL测试
+- 缺少功能测试
+- 缺少集成测试
+- GTest测试为空
+- 测试覆盖率不足
+
+### 6.4 文档质量: ⭐⭐☆☆☆ (2/5)
+
+**优点**:
+- 代码有基本注释
+- 有示例代码框架
+
+**缺点**:
+- API文档不完整
+- 示例代码无法编译
+- 缺少使用说明
+- 缺少协议说明
+
+### 6.5 安全性: ⭐⭐⭐☆☆ (3/5)
+
+**优点**:
+- 基本的输入验证
+- 使用安全的字符串比较
+
+**缺点**:
+- 缺少Origin验证
+- 缺少大小限制
+- 全局变量无锁保护
+- 缺少CSRF防护
 
 ---
 
-## 遇到的问题
+## 7. 是否应该合并的结论
 
-### 问题1: 性能基准测试未编译到构建目录
-**描述**: `test/benchmark_performance.c`已添加，但未编译为可执行文件
-**影响**: 无法直接运行性能测试
-**解决方案**: 需要在CMakeLists.txt中添加编译规则
+### 7.1 如果在合并前评审
 
-### 问题2: OCSP装订功能未实现
-**描述**: 2个OCSP相关函数仍标记为NOT_IMPLEMENTED
-**影响**: 无法实时验证证书撤销状态
-**缓解措施**: 已实现CRL检查作为替代方案
-**风险等级**: 低 - CRL检查可以满足大多数使用场景
-
-### 问题3: OpenSSL实现文件残留
-**描述**: `src/uvhttp_tls_openssl.c`文件仍然存在
-**影响**: 可能造成混淆
-**建议**: 应该移除或重命名为备份文件
-
----
-
-## 潜在风险评估
-
-### 1. 低风险: OCSP装订未实现
-- **影响**: 无法实时验证证书撤销状态
-- **缓解**: CRL检查已实现，可以满足大多数场景
-- **建议**: 未来版本考虑实现OCSP装订
-
-### 2. 低风险: 迁移文档不完善
-- **影响**: 用户可能需要额外时间适应新API
-- **缓解**: 代码注释清晰，头文件定义完整
-- **建议**: 补充迁移指南文档
-
-### 3. 极低风险: 依赖版本固定
-- **影响**: 可能错过安全更新
-- **缓解**: 已建立定期安全扫描和更新机制
-- **建议**: 保持定期更新依赖
-
----
-
-## 最终结论
-
-### ✅ **建议批准合并到主分支**
+**结论**: ❌ **不建议合并**
 
 **理由**:
+1. **功能不完整**: 核心功能未实现，无法实际使用
+2. **示例无法编译**: 用户体验差，误导用户
+3. **严重缺陷**: API声明但未实现，导致链接错误
+4. **设计问题**: 全局路由表不支持多实例
+5. **内存泄漏**: 路由表没有清理机制
 
-1. **✅ 关键问题已解决**:
-   - TLS安全功能已大幅改进（11→2个NOT_IMPLEMENTED）
-   - 剩余2个NOT_IMPLEMENTED功能有可行的替代方案（CRL检查）
-   - 安全功能达到生产可用标准
+**建议**: 
+- 完成核心功能实现
+- 修复所有编译错误
+- 添加完整的测试
+- 完善文档
+- 修复设计问题后再合并
 
-2. **✅ 性能优化已验证**:
-   - 添加了性能基准测试
-   - 1000倍性能提升声明已验证
-   - 数据可信
+### 7.2 实际情况 (已合并)
 
-3. **✅ 安全文档完善**:
-   - 建立了安全策略
-   - 明确了依赖更新流程
-   - 定义了漏洞响应机制
+**结论**: ⚠️ **合并过早，需要立即修复**
 
-4. **✅ 代码质量达标**:
-   - 编译无错误无警告
-   - 所有测试通过
-   - 启用了安全编译选项
+**理由**:
+1. PR已经合并，但存在严重问题
+2. 示例代码无法编译
+3. 功能无法实际使用
+4. 存在内存泄漏风险
 
-5. **✅ 风险可控**:
-   - 剩余问题风险等级低
-   - 有明确的缓解措施
-   - 不影响生产部署
-
----
-
-## 合并前建议（非阻塞）
-
-### 1. 补充迁移文档
-创建`docs/MIGRATION_GUIDE.md`，包含：
-- OpenSSL→mbedTLS API差异
-- 代码迁移示例
-- 配置变更指南
-
-### 2. 添加性能测试到构建系统
-在CMakeLists.txt中添加：
-```cmake
-add_executable(benchmark_performance test/benchmark_performance.c)
-target_link_libraries(benchmark_performance uvhttp ${LIBS})
-```
-
-### 3. 清理OpenSSL残留文件
-移除或重命名`src/uvhttp_tls_openssl.c`
-
-### 4. 更新README
-说明TLS实现的变更和迁移注意事项
+**建议**:
+1. 立即创建修复PR解决P0问题
+2. 在1-2周内完成P1问题修复
+3. 在1个月内完成P2改进
+4. 考虑回滚此PR直到问题修复
 
 ---
 
-## 合并后跟进任务
+## 8. 评审建议总结
 
-1. **短期（1周内）**:
-   - 补充迁移文档
-   - 添加性能测试到构建系统
-   - 清理OpenSSL残留文件
+### 8.1 对开发者的建议
 
-2. **中期（1个月内）**:
-   - 实现OCSP装订功能
-   - 添加WebSocket集成测试
-   - 建立自动化依赖扫描
+1. **代码审查流程**
+   - 在提交PR前确保所有代码可以编译
+   - 确保示例代码可以运行
+   - 进行自测，确保基本功能可用
+   - 添加足够的测试
 
-3. **长期（3个月内）**:
-   - 性能监控和回归测试
-   - 安全审计
-   - 用户反馈收集
+2. **开发实践**
+   - 避免使用全局变量
+   - 实现完整的资源清理
+   - 添加完善的错误处理
+   - 保持API一致性
+
+3. **文档要求**
+   - 确保所有公开API都有文档
+   - 提供可运行的示例
+   - 说明使用方法和注意事项
+
+### 8.2 对项目维护者的建议
+
+1. **PR审核流程**
+   - 建立更严格的PR审核标准
+   - 要求所有示例代码可以编译运行
+   - 要求测试覆盖率达标
+   - 要求文档完整
+
+2. **CI/CD改进**
+   - 添加示例代码编译检查
+   - 添加链接检查
+   - 添加内存泄漏检测
+   - 添加代码覆盖率检查
+
+3. **代码质量标准**
+   - 制定代码审查清单
+   - 建立代码质量门禁
+   - 定期进行代码审查培训
 
 ---
 
-## 评估签名
+## 9. 附录
 
-**评估人**: Senior Code Reviewer
-**评估日期**: 2026年1月8日
-**评估结果**: ✅ **批准合并**
+### 9.1 文件变更清单
 
-**最终建议**:
-- 该PR可以合并到主分支
-- 建议在合并后1-2周内完成非阻塞建议任务
-- 建议在合并后密切监控生产环境表现
+**新增文件**:
+- `examples/websocket_echo_server.c` (76行)
+- `examples/websocket_test_server.c` (115行)
+- `test/websocket_test.html` (183行)
+
+**修改文件**:
+- `include/uvhttp_connection.h` (+6行)
+- `include/uvhttp_server.h` (+20行)
+- `include/uvhttp_websocket_native.h` (+10行, -6行)
+- `src/uvhttp_request.c` (+34行)
+- `src/uvhttp_server.c` (+140行)
+
+### 9.2 问题优先级定义
+
+- **P0 (严重)**: 阻止功能使用，必须立即修复
+- **P1 (高)**: 影响功能完整性，1-2周内修复
+- **P2 (中)**: 改进建议，1个月内修复
+- **P3 (低)**: 未来改进，不紧急
+
+### 9.3 测试状态
+
+- ✅ 编译通过 (有警告)
+- ❌ 示例代码无法编译
+- ❌ 单元测试未找到
+- ⚠️ 测试覆盖率不足
 
 ---
 
-*报告结束*
+**评审完成日期**: 2026年1月8日
+**评审人签名**: Code Reviewer
+**下次评审**: 修复PR提交后
