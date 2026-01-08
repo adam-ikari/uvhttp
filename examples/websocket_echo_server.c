@@ -9,15 +9,15 @@
 #include "uvhttp.h"
 
 // WebSocket消息处理回调
-static int ws_message_handler(uvhttp_ws_connection_t* ws_conn, 
-                             const char* data, 
-                             size_t len, 
+static int ws_message_handler(uvhttp_ws_connection_t* ws_conn,
+                             const char* data,
+                             size_t len,
                              int opcode) {
     printf("收到WebSocket消息: %.*s\n", (int)len, data);
-    
+
     // 回显消息
-    uvhttp_ws_send(ws_conn, data, len);
-    
+    uvhttp_server_ws_send(ws_conn, data, len);
+
     return 0;
 }
 
@@ -41,9 +41,9 @@ int main(int argc, char* argv[]) {
     }
     
     printf("启动WebSocket Echo服务器，端口: %d\n", port);
-    
+
     // 使用统一API创建服务器
-    uvhttp_server_simple_t* server = uvhttp_server_create("0.0.0.0", port);
+    uvhttp_server_builder_t* server = uvhttp_server_create("0.0.0.0", port);
     if (!server) {
         fprintf(stderr, "服务器创建失败\n");
         return 1;
@@ -67,5 +67,4 @@ int main(int argc, char* argv[]) {
     uvhttp_server_simple_free(server);
     
     return result;
-}
 }
