@@ -74,6 +74,7 @@ set(SOURCES
     src/uvhttp_router.c
     src/uvhttp_connection.c
     src/uvhttp_server.c
+    src/uvhttp_middleware.c
     src/uvhttp_tls_mbedtls.c
     src/uvhttp_config.c
     src/uvhttp_network.c
@@ -109,6 +110,8 @@ set(HEADERS
     include/uvhttp_features.h
     include/uvhttp_hash.h
     include/uvhttp_lru_cache.h
+    include/uvhttp_log_middleware.h
+    include/uvhttp_middleware.h
     include/uvhttp_network.h
     include/uvhttp_request.h
     include/uvhttp_response.h
@@ -120,6 +123,7 @@ set(HEADERS
     include/uvhttp_tls.h
     include/uvhttp_utils.h
     include/uvhttp_validation.h
+    include/uvhttp_websocket_middleware.h
 )
 
 if(BUILD_WITH_WEBSOCKET)

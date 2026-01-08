@@ -241,6 +241,9 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
+    /* 清理中间件链 - 零开销设计 */
+    uvhttp_server_cleanup_middleware(server);
+    
     if (server->router) {
         uvhttp_router_free(server->router);
     }

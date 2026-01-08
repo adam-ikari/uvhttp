@@ -1,6 +1,7 @@
 #include "uvhttp_request.h"
 #include "uvhttp_connection.h"
 #include "uvhttp_router.h"
+#include "uvhttp_middleware.h"
 #include "uvhttp_utils.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
@@ -297,6 +298,20 @@ static int on_message_complete(llhttp_t* parser) {
         
         uvhttp_response_send(conn->response);
         return 0;
+    }
+    
+    /* 执行中间件链 - 零开销设计 */
+    if (conn->server && conn->server->middleware_chain) {
+        int middleware_result = uvhttp_http_middleware_execute(
+            conn->server->middleware_chain,
+            conn->request,
+            conn->response
+        );
+        
+        /* 如果中间件返回非零，停止执行（中间件已处理响应） */
+        if (middleware_result != 0) {
+            return 0;
+        }
     }
     
     /* 单线程请求处理 - 无需锁机制 */

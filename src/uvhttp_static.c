@@ -6,6 +6,7 @@
 #define _DEFAULT_SOURCE /* 启用 strcasecmp */
 
 #include "uvhttp_static.h"
+#include "uvhttp_middleware.h"
 #include "uvhttp_lru_cache.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
@@ -81,9 +82,76 @@ static const uvhttp_mime_mapping_t mime_types[] = {
  */
 static const char* get_file_extension(const char* file_path) {
     if (!file_path) return NULL;
-    
+
     const char* last_dot = strrchr(file_path, '.');
     return last_dot ? last_dot : "";
+}
+
+/**
+ * HTML转义函数 - 防止XSS攻击
+ */
+static void html_escape(char* dest, const char* src, size_t dest_size) {
+    if (!dest || !src || dest_size == 0) {
+        return;
+    }
+
+    size_t i = 0;
+    size_t j = 0;
+
+    while (src[i] != '\0' && j < dest_size - 1) {
+        switch (src[i]) {
+            case '<':
+                if (j + 4 < dest_size) {
+                    dest[j++] = '&';
+                    dest[j++] = 'l';
+                    dest[j++] = 't';
+                    dest[j++] = ';';
+                }
+                break;
+            case '>':
+                if (j + 4 < dest_size) {
+                    dest[j++] = '&';
+                    dest[j++] = 'g';
+                    dest[j++] = 't';
+                    dest[j++] = ';';
+                }
+                break;
+            case '&':
+                if (j + 5 < dest_size) {
+                    dest[j++] = '&';
+                    dest[j++] = 'a';
+                    dest[j++] = 'm';
+                    dest[j++] = 'p';
+                    dest[j++] = ';';
+                }
+                break;
+            case '"':
+                if (j + 6 < dest_size) {
+                    dest[j++] = '&';
+                    dest[j++] = 'q';
+                    dest[j++] = 'u';
+                    dest[j++] = 'o';
+                    dest[j++] = 't';
+                    dest[j++] = ';';
+                }
+                break;
+            case '\'':
+                if (j + 6 < dest_size) {
+                    dest[j++] = '&';
+                    dest[j++] = '#';
+                    dest[j++] = '3';
+                    dest[j++] = '9';
+                    dest[j++] = ';';
+                }
+                break;
+            default:
+                dest[j++] = src[i];
+                break;
+        }
+        i++;
+    }
+
+    dest[j] = '\0';
 }
 
 /**
@@ -326,7 +394,7 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
     /* 生成HTML表格行 */
     for (size_t i = 0; i < actual_count; i++) {
         dir_entry_t* dir_entry = &entries[i];
-        
+
         /* 格式化修改时间 */
         char time_str[64];
         if (dir_entry->mtime > 0) {
@@ -336,16 +404,20 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
             time_str[0] = '-';
             time_str[1] = '\0';
         }
-        
+
+        /* HTML转义文件名 */
+        char escaped_name[UVHTTP_MAX_FILE_PATH_SIZE * 6];  /* 最多6倍膨胀 */
+        html_escape(escaped_name, dir_entry->name, sizeof(escaped_name));
+
         /* 生成表格行 */
         if (dir_entry->is_dir) {
             offset += snprintf(html + offset, buffer_size - offset,
                 "<tr><td><a href=\"%s/\" class=\"dir\">%s/</a></td><td class=\"dir\">-</td><td>%s</td></tr>\n",
-                dir_entry->name, dir_entry->name, time_str);
+                dir_entry->name, escaped_name, time_str);
         } else {
             offset += snprintf(html + offset, buffer_size - offset,
                 "<tr><td><a href=\"%s\">%s</a></td><td class=\"size\">%zu</td><td>%s</td></tr>\n",
-                dir_entry->name, dir_entry->name, dir_entry->size, time_str);
+                dir_entry->name, escaped_name, dir_entry->size, time_str);
         }
     }
     
@@ -549,16 +621,33 @@ int uvhttp_static_resolve_safe_path(const char* root_dir,
         return 0;
     }
     
-    /* 检查路径遍历攻击 */
-    if (strstr(resolved_path, "..") || strstr(resolved_path, "//")) {
+    /* 使用 realpath 进行路径规范化，防止路径遍历攻击 */
+    char realpath_buf[PATH_MAX];
+    char* resolved = realpath(resolved_path, realpath_buf);
+
+    if (!resolved) {
+        /* 路径不存在或无效 */
         return 0;
     }
-    
-    /* 确保路径在根目录内 */
-    if (strncmp(resolved_path, root_dir, strlen(root_dir)) != 0) {
+
+    /* 确保规范化后的路径在根目录内 */
+    size_t root_dir_len = strlen(root_dir);
+    if (strncmp(resolved, root_dir, root_dir_len) != 0) {
+        /* 路径不在根目录内 */
         return 0;
     }
-    
+
+    /* 确保路径在根目录下（不是根目录本身或父目录） */
+    if (strlen(resolved) > root_dir_len && resolved[root_dir_len] != '/') {
+        return 0;
+    }
+
+    /* 将规范化后的路径复制回输出缓冲区 */
+    if (strlen(resolved) >= buffer_size) {
+        return 0;
+    }
+    strcpy(resolved_path, resolved);
+
     return 1;
 }
 
@@ -580,13 +669,14 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     char clean_path[UVHTTP_MAX_PATH_SIZE];
     const char* query_start = strchr(url, '?');
     size_t path_len = query_start ? (size_t)(query_start - url) : strlen(url);
-    
+
     if (path_len >= sizeof(clean_path)) {
         uvhttp_response_set_status(response, 414); /* URI Too Long */
         return -1;
     }
-    
-    strncpy(clean_path, url, path_len);
+
+    /* 使用安全的字符串复制 */
+    memcpy(clean_path, url, path_len);
     clean_path[path_len] = '\0';
     
     /* 处理根路径 */
@@ -772,8 +862,182 @@ int uvhttp_static_cleanup_expired_cache(uvhttp_static_context_t* ctx) {
     if (!ctx || !ctx->cache) {
         return 0;
     }
-    
+
     return uvhttp_lru_cache_cleanup_expired(ctx->cache);
+}
+
+/* ========== 静态文件中间件实现 ========== */
+
+/* 静态文件中间件上下文 */
+typedef struct {
+    uvhttp_static_context_t* static_ctx;  /* 静态文件服务上下文 */
+    char* path_prefix;                    /* 路径前缀 */
+} static_middleware_context_t;
+
+/* 静态文件中间件清理函数 */
+static void static_middleware_cleanup(void* data) {
+    if (!data) {
+        return;
+    }
+
+    static_middleware_context_t* ctx = (static_middleware_context_t*)data;
+
+    /* 释放静态文件服务上下文 */
+    if (ctx->static_ctx) {
+        uvhttp_static_free(ctx->static_ctx);
+    }
+
+    /* 释放路径前缀 */
+    if (ctx->path_prefix) {
+        uvhttp_free(ctx->path_prefix);
+    }
+
+    /* 释放中间件上下文 */
+    uvhttp_free(ctx);
+}
+
+/* 静态文件中间件处理函数 */
+static int static_middleware_handler(
+    uvhttp_request_t* request,
+    uvhttp_response_t* response,
+    uvhttp_middleware_context_t* ctx
+) {
+    if (!request || !response || !ctx || !ctx->data) {
+        return UVHTTP_MIDDLEWARE_CONTINUE;
+    }
+
+    static_middleware_context_t* mw_ctx = (static_middleware_context_t*)ctx->data;
+
+    /* 获取请求路径 */
+    const char* request_path = uvhttp_request_get_path(request);
+    if (!request_path) {
+        return UVHTTP_MIDDLEWARE_CONTINUE;
+    }
+
+    /* 检查路径是否匹配 */
+    if (mw_ctx->path_prefix) {
+        size_t prefix_len = strlen(mw_ctx->path_prefix);
+        if (strncmp(request_path, mw_ctx->path_prefix, prefix_len) != 0) {
+            /* 路径不匹配，继续执行下一个中间件 */
+            return UVHTTP_MIDDLEWARE_CONTINUE;
+        }
+    }
+
+    /* 调用静态文件服务处理请求 */
+    uvhttp_result_t result = uvhttp_static_handle_request(
+        mw_ctx->static_ctx,
+        request,
+        response
+    );
+
+    if (result == UVHTTP_OK) {
+        /* 静态文件服务已处理请求，停止中间件链 */
+        return UVHTTP_MIDDLEWARE_STOP;
+    }
+
+    /* 静态文件服务未处理（如文件不存在），继续执行 */
+    return UVHTTP_MIDDLEWARE_CONTINUE;
+}
+
+/**
+ * 创建静态文件中间件
+ *
+ * @param path 路径模式（如 "/static", "/assets"）
+ * @param root_dir 根目录路径
+ * @param priority 中间件优先级
+ * @return 中间件对象，失败返回NULL
+ */
+uvhttp_http_middleware_t* uvhttp_static_middleware_create(
+    const char* path,
+    const char* root_dir,
+    uvhttp_middleware_priority_t priority
+) {
+    /* 参数验证 */
+    if (!root_dir) {
+        return NULL;
+    }
+
+    /* 创建默认配置 */
+    uvhttp_static_config_t config;
+    memset(&config, 0, sizeof(config));
+    strncpy(config.root_directory, root_dir, sizeof(config.root_directory) - 1);
+    strncpy(config.index_file, "index.html", sizeof(config.index_file) - 1);
+    config.enable_directory_listing = 0;
+    config.enable_etag = 1;
+    config.enable_last_modified = 1;
+    config.max_cache_size = 10 * 1024 * 1024;  /* 10MB */
+    config.cache_ttl = 3600;  /* 1小时 */
+    config.max_cache_entries = 1000;
+
+    return uvhttp_static_middleware_create_with_config(path, &config, priority);
+}
+
+/**
+ * 创建带配置的静态文件中间件
+ *
+ * @param path 路径模式
+ * @param config 静态文件配置
+ * @param priority 中间件优先级
+ * @return 中间件对象，失败返回NULL
+ */
+uvhttp_http_middleware_t* uvhttp_static_middleware_create_with_config(
+    const char* path,
+    const uvhttp_static_config_t* config,
+    uvhttp_middleware_priority_t priority
+) {
+    /* 参数验证 */
+    if (!config) {
+        return NULL;
+    }
+
+    /* 创建静态文件服务上下文 */
+    uvhttp_static_context_t* static_ctx = uvhttp_static_create(config);
+    if (!static_ctx) {
+        return NULL;
+    }
+
+    /* 创建中间件上下文 */
+    static_middleware_context_t* mw_ctx = (static_middleware_context_t*)uvhttp_malloc(sizeof(static_middleware_context_t));
+    if (!mw_ctx) {
+        uvhttp_static_free(static_ctx);
+        return NULL;
+    }
+
+    memset(mw_ctx, 0, sizeof(static_middleware_context_t));
+    mw_ctx->static_ctx = static_ctx;
+
+    /* 复制路径前缀 */
+    if (path) {
+        size_t path_len = strlen(path);
+        mw_ctx->path_prefix = (char*)uvhttp_malloc(path_len + 1);
+        if (!mw_ctx->path_prefix) {
+            uvhttp_free(mw_ctx);
+            uvhttp_static_free(static_ctx);
+            return NULL;
+        }
+        strcpy(mw_ctx->path_prefix, path);
+    }
+
+    /* 创建中间件 */
+    uvhttp_http_middleware_t* middleware = uvhttp_http_middleware_create(
+        path,
+        static_middleware_handler,
+        priority
+    );
+
+    if (!middleware) {
+        if (mw_ctx->path_prefix) {
+            uvhttp_free(mw_ctx->path_prefix);
+        }
+        uvhttp_free(mw_ctx);
+        uvhttp_static_free(static_ctx);
+        return NULL;
+    }
+
+    /* 设置中间件上下文 */
+    uvhttp_http_middleware_set_context(middleware, mw_ctx, static_middleware_cleanup);
+
+    return middleware;
 }
 
 #endif /* UVHTTP_FEATURE_STATIC_FILES */

@@ -73,6 +73,7 @@ uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server, uvhttp_router_t
 // ========== 中间件 API ==========
 uvhttp_error_t uvhttp_server_add_middleware(uvhttp_server_t* server, uvhttp_http_middleware_t* middleware);
 uvhttp_error_t uvhttp_server_remove_middleware(uvhttp_server_t* server, const char* path);
+void uvhttp_server_cleanup_middleware(uvhttp_server_t* server);
 
 // ========== 统一API函数 ==========
 

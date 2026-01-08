@@ -771,7 +771,7 @@ int uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                     conn->fragmented_size += header.payload_len;
                     
                     if (conn->on_message) {
-                        conn->on_message(conn, conn->fragmented_message, conn->fragmented_size, 
+                        conn->on_message(conn, (const char*)conn->fragmented_message, conn->fragmented_size, 
                                   conn->fragmented_opcode);
                     }
                     
@@ -782,7 +782,7 @@ int uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                 } else {
                     /* 完整消息 */
                     if (conn->on_message) {
-                        conn->on_message(conn, payload, header.payload_len, header.opcode);
+                        conn->on_message(conn, (const char*)payload, header.payload_len, header.opcode);
                     }
                 }
             }
@@ -841,7 +841,7 @@ static void uvhttp_ws_trigger_message_callback(struct uvhttp_ws_connection* conn
                                                   size_t len,
                                                   uvhttp_ws_opcode_t opcode) {
     if (conn && conn->on_message) {
-        conn->on_message(conn, data, len, opcode);
+        conn->on_message(conn, (const char*)data, len, opcode);
     }
 }
 

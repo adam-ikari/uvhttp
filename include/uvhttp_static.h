@@ -9,6 +9,7 @@
 #include <time.h>
 #include "uvhttp_constants.h"
 #include "uvhttp_error.h"
+#include "uvhttp_middleware.h"
 
 /* LRU缓存条件编译支持 */
 #if UVHTTP_FEATURE_LRU_CACHE
@@ -201,10 +202,45 @@ uvhttp_result_t uvhttp_static_enable_cache(uvhttp_static_context_t* ctx,
 
 /**
  * 禁用缓存
- * 
+ *
  * @param ctx 静态文件服务上下文
  */
 void uvhttp_static_disable_cache(uvhttp_static_context_t* ctx);
+
+/* ========== 静态文件中间件接口 ========== */
+
+/**
+ * 创建静态文件中间件
+ *
+ * @param path 路径模式（如 "/static", "/assets"）
+ * @param root_dir 根目录路径
+ * @param priority 中间件优先级
+ * @return 中间件对象，失败返回NULL
+ *
+ * 零开销设计：
+ * - 使用中间件系统框架
+ * - 复用静态文件服务核心功能
+ * - 支持路径匹配和优先级
+ */
+uvhttp_http_middleware_t* uvhttp_static_middleware_create(
+    const char* path,
+    const char* root_dir,
+    uvhttp_middleware_priority_t priority
+);
+
+/**
+ * 创建带配置的静态文件中间件
+ *
+ * @param path 路径模式
+ * @param config 静态文件配置
+ * @param priority 中间件优先级
+ * @return 中间件对象，失败返回NULL
+ */
+uvhttp_http_middleware_t* uvhttp_static_middleware_create_with_config(
+    const char* path,
+    const uvhttp_static_config_t* config,
+    uvhttp_middleware_priority_t priority
+);
 
 #ifdef __cplusplus
 }

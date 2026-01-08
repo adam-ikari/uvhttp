@@ -28,6 +28,10 @@ typedef enum {
     UVHTTP_MIDDLEWARE_PRIORITY_HIGH = 2
 } uvhttp_middleware_priority_t;
 
+/* 中间件返回值 */
+#define UVHTTP_MIDDLEWARE_CONTINUE 0    /* 继续执行下一个中间件 */
+#define UVHTTP_MIDDLEWARE_STOP 1        /* 停止执行中间件链 */
+
 /* 中间件上下文 */
 typedef struct uvhttp_middleware_context {
     void* data;  /* 中间件私有数据 */
