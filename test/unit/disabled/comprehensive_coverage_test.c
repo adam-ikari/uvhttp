@@ -931,7 +931,7 @@ TEST(async_file_get_stats_null_manager) {
     ASSERT_NE(result, 0);
 }
 
-/* ============ uvhttp_tls_openssl.c 测试 ============ */
+/* ============ uvhttp_tls_mbedtls.c 测试 ============ */
 
 TEST(tls_init) {
     uvhttp_tls_error_t err = uvhttp_tls_init();
@@ -2252,7 +2252,7 @@ int main() {
     RUN_TEST(async_file_get_stats_null_manager);
     
     /* TLS module tests */
-    printf("\nTesting uvhttp_tls_openssl.c...\n");
+    printf("\nTesting uvhttp_tls_mbedtls.c...\n");
     RUN_TEST(tls_init);
     RUN_TEST(tls_cleanup);
     RUN_TEST(tls_context_new);
