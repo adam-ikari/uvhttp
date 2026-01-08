@@ -7,26 +7,28 @@
 #include <stdlib.h>
 #include <string.h>
 #include "uvhttp.h"
-#include "uvhttp_websocket_native.h"
 
-static int on_ws_message(uvhttp_ws_connection_t* ws_conn, 
-                        const char* data, 
-                        size_t len, 
-                        int opcode) {
-    printf("收到WebSocket消息: %.*s (opcode: %d)\n", (int)len, data, opcode);
+// WebSocket消息处理回调
+static int ws_message_handler(uvhttp_ws_connection_t* ws_conn, 
+                             const char* data, 
+                             size_t len, 
+                             int opcode) {
+    printf("收到WebSocket消息: %.*s\n", (int)len, data);
     
     // 回显消息
-    uvhttp_ws_send(ws_conn, data, len, opcode);
+    uvhttp_ws_send(ws_conn, data, len);
     
     return 0;
 }
 
-static int on_ws_connect(uvhttp_ws_connection_t* ws_conn) {
+// WebSocket连接建立回调
+static int ws_connect_handler(uvhttp_ws_connection_t* ws_conn) {
     printf("WebSocket连接建立\n");
     return 0;
 }
 
-static int on_ws_close(uvhttp_ws_connection_t* ws_conn) {
+// WebSocket连接关闭回调
+static int ws_close_handler(uvhttp_ws_connection_t* ws_conn) {
     printf("WebSocket连接关闭\n");
     return 0;
 }
@@ -40,17 +42,8 @@ int main(int argc, char* argv[]) {
     
     printf("启动WebSocket Echo服务器，端口: %d\n", port);
     
-    // 创建事件循环
-    uv_loop_t* loop = uv_default_loop();
-    
-    // 创建服务器配置
-    uvhttp_server_config_t config;
-    uvhttp_server_config_init(&config);
-    config.port = port;
-    config.host = "0.0.0.0";
-    
-    // 创建服务器
-    uvhttp_server_t* server = uvhttp_server_create(&config);
+    // 使用统一API创建服务器
+    uvhttp_server_simple_t* server = uvhttp_server_create("0.0.0.0", port);
     if (!server) {
         fprintf(stderr, "服务器创建失败\n");
         return 1;
@@ -58,19 +51,21 @@ int main(int argc, char* argv[]) {
     
     // 注册WebSocket处理器
     uvhttp_ws_handler_t ws_handler;
-    ws_handler.on_connect = on_ws_connect;
-    ws_handler.on_message = on_ws_message;
-    ws_handler.on_close = on_ws_close;
+    ws_handler.on_connect = ws_connect_handler;
+    ws_handler.on_message = ws_message_handler;
+    ws_handler.on_close = ws_close_handler;
     
-    uvhttp_server_register_ws_handler(server, "/ws", &ws_handler);
+    uvhttp_server_register_ws_handler(server->server, "/ws", &ws_handler);
     
     printf("服务器运行中，按Ctrl+C停止...\n");
+    printf("WebSocket URL: ws://localhost:%d/ws\n", port);
     
     // 运行服务器
-    uvhttp_server_run(server);
+    int result = uvhttp_server_run(server);
     
     // 清理
-    uvhttp_server_free(server);
+    uvhttp_server_simple_free(server);
     
-    return 0;
+    return result;
+}
 }

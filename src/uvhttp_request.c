@@ -269,6 +269,18 @@ static int on_message_complete(llhttp_t* parser) {
     /* 重置读缓冲区使用量，为下一个请求做准备 */
     conn->read_buffer_used = 0;
     
+    /* 检查是否为WebSocket握手请求 */
+    if (is_websocket_handshake(conn->request)) {
+        // WebSocket握手需要特殊处理
+        // TODO: 实现WebSocket握手响应和协议升级
+        // 当前发送400错误，提示WebSocket功能尚未完全集成
+        uvhttp_response_set_status(conn->response, 400);
+        uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(conn->response, "WebSocket handshake not fully implemented yet", 40);
+        uvhttp_response_send(conn->response);
+        return 0;
+    }
+    
     /* 单线程请求处理 - 无需锁机制 */
     if (conn->server && conn->server->router) {
         // 额外检查request->url是否有效
