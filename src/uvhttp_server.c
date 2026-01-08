@@ -610,3 +610,141 @@ int uvhttp_serve(const char* host, int port) {
     
     return result;
 }
+
+// ========== WebSocket 实现 ==========
+
+#if UVHTTP_FEATURE_WEBSOCKET
+
+#include "uvhttp_websocket_native.h"
+#include <openssl/sha.h>
+#include <openssl/evp.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
+
+// WebSocket路由表
+typedef struct ws_route_entry {
+    char* path;
+    uvhttp_ws_handler_t handler;
+    struct ws_route_entry* next;
+} ws_route_entry_t;
+
+static ws_route_entry_t* g_ws_routes = NULL;
+
+// Base64编码
+static char* base64_encode(const unsigned char* input, int length) {
+    BIO *bmem, *b64;
+    BUF_MEM *bptr;
+
+    b64 = BIO_new(BIO_f_base64());
+    bmem = BIO_new(BIO_s_mem());
+    b64 = BIO_push(b64, bmem);
+    BIO_write(b64, input, length);
+    BIO_flush(b64);
+    BIO_get_mem_ptr(b64, &bptr);
+
+    char* buff = (char*)uvhttp_malloc(bptr->length);
+    memcpy(buff, bptr->data, bptr->length - 1);
+    buff[bptr->length - 1] = 0;
+
+    BIO_free_all(b64);
+
+    return buff;
+}
+
+// WebSocket握手验证
+__attribute__((unused)) static int verify_websocket_handshake(uvhttp_request_t* request) {
+    const char* upgrade = uvhttp_request_get_header(request, "Upgrade");
+    const char* connection = uvhttp_request_get_header(request, "Connection");
+    const char* ws_key = uvhttp_request_get_header(request, "Sec-WebSocket-Key");
+    const char* ws_version = uvhttp_request_get_header(request, "Sec-WebSocket-Version");
+
+    if (!upgrade || strcasecmp(upgrade, "websocket") != 0) {
+        return 0;
+    }
+
+    if (!connection || strstr(connection, "Upgrade") == NULL) {
+        return 0;
+    }
+
+    if (!ws_key) {
+        return 0;
+    }
+
+    if (!ws_version || strcmp(ws_version, "13") != 0) {
+        return 0;
+    }
+
+    return 1;
+}
+
+// 创建WebSocket握手响应
+__attribute__((unused)) static int create_websocket_handshake_response(uvhttp_request_t* request, char* response, size_t* response_len) {
+    const char* ws_key = uvhttp_request_get_header(request, "Sec-WebSocket-Key");
+    
+    // 构建accept key
+    char accept_key[128];
+    snprintf(accept_key, sizeof(accept_key), "%s258EAFA5-E914-47DA-95CA-C5AB0DC85B11", ws_key);
+    
+    // 计算SHA-1
+    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
+    SHA1((unsigned char*)accept_key, strlen(accept_key), sha1_hash);
+    
+    // Base64编码
+    char* accept_value = base64_encode(sha1_hash, SHA_DIGEST_LENGTH);
+    
+    // 构建响应
+    int written = snprintf(response, *response_len,
+        "HTTP/1.1 101 Switching Protocols\r\n"
+        "Upgrade: websocket\r\n"
+        "Connection: Upgrade\r\n"
+        "Sec-WebSocket-Accept: %s\r\n"
+        "\r\n",
+        accept_value
+    );
+    
+    uvhttp_free(accept_value);
+    
+    if (written < 0 || (size_t)written >= *response_len) {
+        return -1;
+    }
+    
+    *response_len = written;
+    return 0;
+}
+
+// 注册WebSocket处理器
+uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server, const char* path, uvhttp_ws_handler_t* handler) {
+    if (!server || !path || !handler) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    // 创建新路由条目
+    ws_route_entry_t* entry = (ws_route_entry_t*)uvhttp_malloc(sizeof(ws_route_entry_t));
+    if (!entry) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+
+    entry->path = strdup(path);
+    if (!entry->path) {
+        uvhttp_free(entry);
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+
+    memcpy(&entry->handler, handler, sizeof(uvhttp_ws_handler_t));
+    entry->next = NULL;
+
+    // 添加到路由表
+    if (!g_ws_routes) {
+        g_ws_routes = entry;
+    } else {
+        ws_route_entry_t* current = g_ws_routes;
+        while (current->next) {
+            current = current->next;
+        }
+        current->next = entry;
+    }
+
+    return UVHTTP_OK;
+}
+
+#endif // UVHTTP_FEATURE_WEBSOCKET

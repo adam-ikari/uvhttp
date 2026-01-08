@@ -67,14 +67,14 @@ typedef struct {
 struct uvhttp_ws_connection;
 
 /* 回调函数类型 */
-typedef void (*uvhttp_ws_on_message_callback)(struct uvhttp_ws_connection* conn, 
-                                               const uint8_t* data, 
+typedef int (*uvhttp_ws_on_message_callback)(struct uvhttp_ws_connection* conn, 
+                                               const char* data, 
                                                size_t len, 
-                                               uvhttp_ws_opcode_t opcode);
-typedef void (*uvhttp_ws_on_close_callback)(struct uvhttp_ws_connection* conn, 
+                                               int opcode);
+typedef int (*uvhttp_ws_on_close_callback)(struct uvhttp_ws_connection* conn, 
                                               int code, 
                                               const char* reason);
-typedef void (*uvhttp_ws_on_error_callback)(struct uvhttp_ws_connection* conn, 
+typedef int (*uvhttp_ws_on_error_callback)(struct uvhttp_ws_connection* conn, 
                                               int error_code, 
                                               const char* error_msg);
 

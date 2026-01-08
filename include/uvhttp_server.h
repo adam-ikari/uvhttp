@@ -15,6 +15,10 @@ typedef struct uvhttp_router uvhttp_router_t;
 typedef struct uvhttp_tls_context uvhttp_tls_context_t;
 #endif
 
+#if UVHTTP_FEATURE_WEBSOCKET
+typedef struct uvhttp_ws_connection uvhttp_ws_connection_t;
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -93,6 +97,22 @@ void uvhttp_server_simple_free(uvhttp_server_simple_t* server);
 
 // 一键启动函数（最简API）
 int uvhttp_serve(const char* host, int port);
+
+// WebSocket API
+#if UVHTTP_FEATURE_WEBSOCKET
+#include "uvhttp_websocket_native.h"
+
+typedef struct {
+    int (*on_connect)(uvhttp_ws_connection_t* ws_conn);
+    int (*on_message)(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len, int opcode);
+    int (*on_close)(uvhttp_ws_connection_t* ws_conn);
+    void* user_data;
+} uvhttp_ws_handler_t;
+
+uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server, const char* path, uvhttp_ws_handler_t* handler);
+uvhttp_error_t uvhttp_ws_send(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len);
+uvhttp_error_t uvhttp_ws_close(uvhttp_ws_connection_t* ws_conn, int code, const char* reason);
+#endif
 
 // 内部函数声明
 uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client);

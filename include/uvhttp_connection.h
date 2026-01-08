@@ -40,6 +40,12 @@ struct uvhttp_connection {
     void* ssl;
     int tls_enabled;
     
+    // WebSocket相关
+#if UVHTTP_FEATURE_WEBSOCKET
+    void* ws_connection;  // uvhttp_ws_connection_t*
+    int is_websocket;
+#endif
+    
     // 连接状态
     uvhttp_connection_state_t state;
     
