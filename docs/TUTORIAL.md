@@ -1137,9 +1137,13 @@ curl http://localhost:8080/static/index.html
 
 ```c
 #include "uvhttp.h"
+#include "uvhttp_websocket_middleware.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// WebSocket 中间件实例
+static uvhttp_ws_middleware_t* g_ws_middleware = NULL;
 
 /**
  * @brief WebSocket 消息处理回调
@@ -1147,11 +1151,12 @@ curl http://localhost:8080/static/index.html
 int ws_message_handler(uvhttp_ws_connection_t* ws_conn, 
                         const char* data, 
                         size_t len, 
-                        int opcode) {
+                        int opcode,
+                        void* user_data) {
     printf("收到 WebSocket 消息: %.*s\n", (int)len, data);
     
     // 回显消息
-    uvhttp_server_ws_send(ws_conn, data, len);
+    uvhttp_ws_middleware_send(g_ws_middleware, ws_conn, data, len);
     
     return 0;
 }
@@ -1159,7 +1164,7 @@ int ws_message_handler(uvhttp_ws_connection_t* ws_conn,
 /**
  * @brief WebSocket 连接建立回调
  */
-int ws_connect_handler(uvhttp_ws_connection_t* ws_conn) {
+int ws_connect_handler(uvhttp_ws_connection_t* ws_conn, void* user_data) {
     printf("WebSocket 连接建立\n");
     return 0;
 }
@@ -1167,7 +1172,7 @@ int ws_connect_handler(uvhttp_ws_connection_t* ws_conn) {
 /**
  * @brief WebSocket 连接关闭回调
  */
-int ws_close_handler(uvhttp_ws_connection_t* ws_conn) {
+int ws_close_handler(uvhttp_ws_connection_t* ws_conn, void* user_data) {
     printf("WebSocket 连接关闭\n");
     return 0;
 }

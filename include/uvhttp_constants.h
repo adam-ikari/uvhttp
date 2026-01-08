@@ -3,6 +3,15 @@
 #ifndef UVHTTP_CONSTANTS_H
 #define UVHTTP_CONSTANTS_H
 
+/* 布尔值宏 */
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
 /* 字符串化宏 */
 #define UVHTTP_STRINGIFY(x) #x
 

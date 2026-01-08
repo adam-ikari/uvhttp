@@ -24,7 +24,7 @@ uvhttp_error_config_t g_error_config = {
 
 /* 错误统计 */
 static struct {
-    size_t error_counts[UVHTTP_ERROR_MAX];
+    size_t error_counts[UVHTTP_ERROR_COUNT];
     time_t last_error_time;
     char last_error_context[256];
     size_t total_errors;
@@ -66,8 +66,9 @@ void uvhttp_error_report_(uvhttp_error_t error_code,
                          int line,
                          void* user_data) {
     /* 更新统计 */
-    if (error_code < UVHTTP_ERROR_MAX) {
-        g_error_stats.error_counts[error_code]++;
+    int index = (error_code < 0) ? -error_code : 0;
+    if (index >= 0 && index < UVHTTP_ERROR_COUNT) {
+        g_error_stats.error_counts[index]++;
     }
     g_error_stats.total_errors++;
     g_error_stats.last_error_time = time(NULL);

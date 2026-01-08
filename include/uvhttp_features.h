@@ -63,6 +63,10 @@ extern "C" {
 #define UVHTTP_FEATURE_STATIC_FILES 1 /* 静态文件功能模块 */
 #endif
 
+#ifndef UVHTTP_FEATURE_LOGGING
+#define UVHTTP_FEATURE_LOGGING 1  /* 日志中间件 */
+#endif
+
 #ifndef UVHTTP_FEATURE_TLS
 #define UVHTTP_FEATURE_TLS 1        /* TLS/SSL 支持 */
 #endif
@@ -136,6 +140,10 @@ extern "C" {
 /* 基础功能宏 */
 #if UVHTTP_FEATURE_WEBSOCKET
 #define UVHTTP_WEBSOCKET_ENABLED
+#endif
+
+#if UVHTTP_FEATURE_LOGGING
+#define UVHTTP_LOGGING_ENABLED
 #endif
 
 #if UVHTTP_FEATURE_TLS

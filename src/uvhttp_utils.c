@@ -44,13 +44,13 @@ int uvhttp_safe_strncpy(char* dest, const char* src, size_t dest_size) {
 
 // 内部辅助函数：验证状态码有效性
 static int is_valid_status_code(int code) {
-    return (code >= 100 && code <= 599);
+    return (code >= 100 && code <= 599) ? TRUE : FALSE;
 }
 
 // 内部辅助函数：验证字符串长度
 static int is_valid_string_length(const char* str, size_t max_len) {
-    if (!str) return 0;
-    return (strlen(str) <= max_len);
+    if (!str) return FALSE;
+    return (strlen(str) <= max_len) ? TRUE : FALSE;
 }
 
 
@@ -168,48 +168,48 @@ uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response,
 /* ============ 公共验证函数实现 ============ */
 
 /**
- * @brief 验证 HTTP 状态码有效性
- * @param status_code 状态码
- * @return 1 表示有效，0 表示无效
+ * @brief 验证 HTTP 状态码是否有效
+ * @param status_code HTTP 状态码
+ * @return TRUE 表示有效，FALSE 表示无效
  */
 int uvhttp_is_valid_status_code(int status_code) {
-    return (status_code >= 100 && status_code <= 599);
+    return (status_code >= 100 && status_code <= 599) ? TRUE : FALSE;
 }
 
 /**
  * @brief 验证 Content-Type 格式
  * @param content_type Content-Type 字符串
- * @return 1 表示有效，0 表示无效
+ * @return TRUE 表示有效，FALSE 表示无效
  */
 int uvhttp_is_valid_content_type(const char* content_type) {
     if (!content_type || strlen(content_type) == 0) {
-        return 0;
+        return FALSE;
     }
     
     // 基本格式验证：应该包含 '/'
     const char* slash = strchr(content_type, '/');
     if (!slash) {
-        return 0;
+        return FALSE;
     }
     
     // 检查是否有非法字符
     const char* invalid_chars = "\"\\()<>@,;:\\[]?=";
     for (const char* p = content_type; *p; p++) {
         if (strchr(invalid_chars, *p)) {
-            return 0;
+            return FALSE;
         }
     }
     
-    return 1;
+    return TRUE;
 }
 
 /**
- * @brief 验证字符串长度
+ * @brief 验证字符串长度是否在有效范围内
  * @param str 字符串
  * @param max_len 最大长度
- * @return 1 表示有效，0 表示无效
+ * @return TRUE 表示有效，FALSE 表示无效
  */
 int uvhttp_is_valid_string_length(const char* str, size_t max_len) {
-    if (!str) return 0;
-    return (strlen(str) <= max_len);
+    if (!str) return FALSE;
+    return (strlen(str) <= max_len) ? TRUE : FALSE;
 }

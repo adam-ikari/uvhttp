@@ -341,20 +341,20 @@ static int is_websocket_handshake(uvhttp_request_t* request) {
 
     // 检查必需的头部
     if (!upgrade || !connection || !ws_key) {
-        return 0;
+        return FALSE;
     }
 
     // 检查Upgrade头部（不区分大小写）
     if (strcasecmp(upgrade, "websocket") != 0) {
-        return 0;
+        return FALSE;
     }
 
     // 检查Connection头部（可能包含多个值）
     if (strstr(connection, "Upgrade") == NULL) {
-        return 0;
+        return FALSE;
     }
 
-    return 1;
+    return TRUE;
 }
 
 const char* uvhttp_request_get_method(uvhttp_request_t* request) {

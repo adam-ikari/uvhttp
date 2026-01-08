@@ -27,6 +27,9 @@ extern "C" {
 
 typedef struct uvhttp_server uvhttp_server_t;
 
+/* 前向声明 */
+typedef struct uvhttp_http_middleware uvhttp_http_middleware_t;
+
 // 服务器构建器结构体（统一API）
 typedef struct {
     uvhttp_server_t* server;
@@ -50,8 +53,9 @@ struct uvhttp_server {
     int owns_loop;  /* 是否拥有循环（内部创建的） */
     uvhttp_config_t* config;  /* 服务器配置 */
 #if UVHTTP_FEATURE_WEBSOCKET
-    void* ws_routes;  /* WebSocket路由表 */
+    void* ws_routes;  /* WebSocket路由表（已废弃，使用中间件） */
 #endif
+    uvhttp_http_middleware_t* middleware_chain;  /* 中间件链 */
 };
 
 /* API函数 */
@@ -65,6 +69,10 @@ uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server, uvhttp_request_handler_t handler);
 uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server, uvhttp_router_t* router);
+
+// ========== 中间件 API ==========
+uvhttp_error_t uvhttp_server_add_middleware(uvhttp_server_t* server, uvhttp_http_middleware_t* middleware);
+uvhttp_error_t uvhttp_server_remove_middleware(uvhttp_server_t* server, const char* path);
 
 // ========== 统一API函数 ==========
 

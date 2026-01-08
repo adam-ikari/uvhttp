@@ -658,29 +658,6 @@ int uvhttp_serve(const char* host, int port) {
 #if UVHTTP_FEATURE_WEBSOCKET
 
 // WebSocket握手验证（单线程安全）
-static int verify_websocket_handshake(uvhttp_request_t* request) {
-    const char* upgrade = uvhttp_request_get_header(request, "Upgrade");
-    const char* connection = uvhttp_request_get_header(request, "Connection");
-    const char* ws_key = uvhttp_request_get_header(request, "Sec-WebSocket-Key");
-
-    // 检查必需的头部
-    if (!upgrade || !connection || !ws_key) {
-        return 0;
-    }
-
-    // 检查Upgrade头部（不区分大小写）
-    if (strcasecmp(upgrade, "websocket") != 0) {
-        return 0;
-    }
-
-    // 检查Connection头部（可能包含多个值）
-    if (strstr(connection, "Upgrade") == NULL) {
-        return 0;
-    }
-
-    return 1;
-}
-
 // 注册WebSocket处理器（添加到服务器的路由表中）
 uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server, const char* path, uvhttp_ws_handler_t* handler) {
     if (!server || !path || !handler) {

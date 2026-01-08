@@ -1,25 +1,40 @@
-# UVHTTP 功能模块系统
+# UVHTTP 中间件系统
 
 ## 概述
 
-UVHTTP 采用模块化的功能架构，提供可配置的功能模块，包括静态文件服务、WebSocket 等。这些功能模块通过编译时宏进行控制，实现按需编译和功能裁剪。
+UVHTTP 采用模块化的中间件架构，提供可配置的功能模块，包括静态文件服务、WebSocket 等。这些功能模块通过编译时宏进行控制，实现按需编译和功能裁剪。
 
-## 功能模块架构
+## 中间件架构
 
 ### 核心特性
 
-- **模块化设计**：每个功能模块独立实现，互不干扰
+- **模块化设计**：每个中间件独立实现，互不干扰
 - **编译时控制**：通过 CMake 宏启用/禁用功能模块
-- **路由集成**：静态文件服务通过路由系统集成
-- **处理器注册**：WebSocket 通过处理器注册机制实现
+- **统一接口**：所有中间件通过 `uvhttp_http_middleware_t` 统一接口
+- **优先级控制**：支持中间件优先级，控制执行顺序
 - **零开销**：未启用的功能模块不会增加运行时开销
 
-### 功能模块类型
+### 中间件类型
 
 | 功能模块 | 宏定义 | 默认状态 | 实现方式 |
 |----------|--------|----------|----------|
-| 静态文件服务 | `UVHTTP_FEATURE_STATIC_FILES` | 启用 | 路由集成 + 上下文 |
-| WebSocket | `BUILD_WITH_WEBSOCKET` | 启用 | 处理器注册 |
+| 静态文件服务 | `UVHTTP_FEATURE_STATIC_FILES` | 启用 | HTTP 中间件 |
+| WebSocket | `BUILD_WITH_WEBSOCKET` | 启用 | WebSocket 中间件 |
+| 日志系统 | `UVHTTP_FEATURE_LOGGING` | 启用 | 日志中间件 |
+
+### 中间件工作流程
+
+```
+HTTP 请求
+    ↓
+中间件链（按优先级执行）
+    ↓
+路由系统
+    ↓
+业务处理器
+    ↓
+响应
+```
 
 ## 编译时控制
 
@@ -31,6 +46,9 @@ cmake -DBUILD_WITH_WEBSOCKET=ON ..
 
 # 禁用 WebSocket
 cmake -DBUILD_WITH_WEBSOCKET=OFF ..
+
+# 禁用日志系统
+cmake -DUVHTTP_FEATURE_LOGGING=OFF ..
 
 # 静态文件服务始终启用
 ```
@@ -47,73 +65,42 @@ cmake -DBUILD_WITH_WEBSOCKET=OFF ..
 #if UVHTTP_FEATURE_WEBSOCKET
 // WebSocket 相关代码
 #endif
+
+#if UVHTTP_FEATURE_LOGGING
+// 日志系统相关代码
+#endif
 ```
 
 ## 功能模块使用
 
-### 静态文件服务
+### 日志中间件
 
-静态文件服务使用上下文模式和路由集成：
+日志中间件提供灵活的日志功能，支持多种输出方式和格式：
 
 ```c
-#include "uvhttp.h"
-#include "uvhttp_static.h"
+#include "uvhttp_log_middleware.h"
 
-#if UVHTTP_FEATURE_STATIC_FILES
-
-static uvhttp_static_context_t* g_static_ctx = NULL;
-
-int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    if (!g_static_ctx) {
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, "Static file service not initialized", 35);
-        uvhttp_response_send(response);
-        return -1;
-    }
-    
-    int result = uvhttp_static_handle_request(g_static_ctx, request, response);
-    if (result != 0) {
-        const char* error_body = "Error processing static file request";
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error_body, strlen(error_body));
-    }
-    
-    uvhttp_response_send(response);
-    return 0;
-}
+#if UVHTTP_FEATURE_LOGGING
 
 int main() {
-    uv_loop_t* loop = uv_default_loop();
+    // 创建日志中间件
+    uvhttp_log_context_t log_context = UVHTTP_LOG_DEFAULT_CONTEXT;
+    log_context.level = UVHTTP_LOG_LEVEL_DEBUG;
+    log_context.output = UVHTTP_LOG_OUTPUT_FILE;
+    strcpy(log_context.file_path, "uvhttp.log");
     
-    // 创建静态文件上下文
-    uvhttp_static_config_t static_config = {
-        .root_directory = "./public",
-        .index_file = "index.html",
-        .enable_directory_listing = 1,
-        .enable_etag = 1,
-        .enable_last_modified = 1,
-        .max_cache_size = 10 * 1024 * 1024,
-        .cache_ttl = 3600
-    };
+    uvhttp_log_middleware_t* log_middleware = uvhttp_log_middleware_create(&log_context);
     
-    g_static_ctx = uvhttp_static_create(&static_config);
+    // 设置为全局日志中间件
+    uvhttp_log_set_global_middleware(log_middleware);
     
-    // 创建服务器和路由
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
-    
-    // 注册静态文件路由
-    uvhttp_router_add_route(router, "/static/*", static_file_handler);
-    
-    uvhttp_server_set_router(server, router);
-    uvhttp_server_listen(server, "0.0.0.0", 8080);
-    uv_run(loop, UV_RUN_DEFAULT);
+    // 使用日志
+    UVHTTP_LOG_INFO(log_middleware, "服务器启动");
+    UVHTTP_LOG_DEBUG(log_middleware, "调试信息: %s", "详细内容");
+    UVHTTP_LOG_ERROR(log_middleware, "发生错误: %d", error_code);
     
     // 清理
-    if (g_static_ctx) {
-        uvhttp_static_destroy(g_static_ctx);
-    }
+    uvhttp_log_middleware_destroy(log_middleware);
     
     return 0;
 }
@@ -121,12 +108,37 @@ int main() {
 #endif
 ```
 
-### WebSocket
+### 日志级别
 
-WebSocket 使用处理器注册机制：
+| 级别 | 说明 | 使用场景 |
+|------|------|----------|
+| `TRACE` | 最详细的跟踪信息 | 调试非常详细的问题 |
+| `DEBUG` | 调试信息 | 开发和调试 |
+| `INFO` | 一般信息 | 正常运行信息 |
+| `WARN` | 警告信息 | 潜在问题 |
+| `ERROR` | 错误信息 | 错误发生 |
+| `FATAL` | 致命错误 | 程序无法继续运行 |
+
+### 日志配置选项
+
+| 选项 | 类型 | 说明 |
+|------|------|------|
+| `level` | `uvhttp_log_level_t` | 日志级别 |
+| `format` | `uvhttp_log_format_t` | 日志格式（文本/JSON） |
+| `output` | `uvhttp_log_output_t` | 输出目标 |
+| `file_path` | `char[256]` | 文件路径（如果输出到文件） |
+| `enable_colors` | `int` | 启用颜色 |
+| `enable_timestamp` | `int` | 启用时间戳 |
+| `enable_source_location` | `int` | 启用源代码位置 |
+| `thread_safe` | `int` | 线程安全 |
+
+### WebSocket 中间件
+
+WebSocket 使用独立的中间件模块：
 
 ```c
 #include "uvhttp.h"
+#include "uvhttp_websocket_middleware.h"
 
 #if UVHTTP_FEATURE_WEBSOCKET
 
@@ -134,23 +146,24 @@ WebSocket 使用处理器注册机制：
 int ws_message_handler(uvhttp_ws_connection_t* ws_conn,
                        const char* data,
                        size_t len,
-                       int opcode) {
+                       int opcode,
+                       void* user_data) {
     printf("收到 WebSocket 消息: %.*s\n", (int)len, data);
     
     // 回显消息
-    uvhttp_server_ws_send(ws_conn, data, len);
+    uvhttp_ws_middleware_send(ws_middleware, ws_conn, data, len);
     
     return 0;
 }
 
 // WebSocket 连接建立回调
-int ws_connect_handler(uvhttp_ws_connection_t* ws_conn) {
+int ws_connect_handler(uvhttp_ws_connection_t* ws_conn, void* user_data) {
     printf("WebSocket 连接建立\n");
     return 0;
 }
 
 // WebSocket 连接关闭回调
-int ws_close_handler(uvhttp_ws_connection_t* ws_conn) {
+int ws_close_handler(uvhttp_ws_connection_t* ws_conn, void* user_data) {
     printf("WebSocket 连接关闭\n");
     return 0;
 }
@@ -165,13 +178,28 @@ int main() {
         return 1;
     }
     
-    // 注册 WebSocket 处理器
-    uvhttp_ws_handler_t ws_handler;
-    ws_handler.on_connect = ws_connect_handler;
-    ws_handler.on_message = ws_message_handler;
-    ws_handler.on_close = ws_close_handler;
+    // 创建 WebSocket 中间件
+    uvhttp_ws_middleware_config_t ws_config = UVHTTP_WS_MIDDLEWARE_DEFAULT_CONFIG;
+    ws_config.max_connections = 1000;
     
-    uvhttp_server_register_ws_handler(server->server, "/ws", &ws_handler);
+    uvhttp_ws_middleware_t* ws_middleware = uvhttp_ws_middleware_create("/ws", &ws_config);
+    if (!ws_middleware) {
+        fprintf(stderr, "WebSocket 中间件创建失败\n");
+        return 1;
+    }
+    
+    // 设置回调函数
+    uvhttp_ws_middleware_callbacks_t callbacks = {
+        .on_connect = ws_connect_handler,
+        .on_message = ws_message_handler,
+        .on_close = ws_close_handler,
+        .user_data = NULL
+    };
+    uvhttp_ws_middleware_set_callbacks(ws_middleware, &callbacks);
+    
+    // 注册中间件到服务器
+    uvhttp_http_middleware_t* http_middleware = uvhttp_ws_middleware_get_http_middleware(ws_middleware);
+    uvhttp_server_add_middleware(server->server, http_middleware);
     
     printf("服务器运行中，按 Ctrl+C 停止...\n");
     printf("WebSocket URL: ws://localhost:%d/ws\n", port);
@@ -180,6 +208,7 @@ int main() {
     int result = uvhttp_server_run(server);
     
     // 清理
+    uvhttp_ws_middleware_destroy(ws_middleware);
     uvhttp_server_simple_free(server);
     
     return result;
@@ -190,47 +219,37 @@ int main() {
 
 ## 功能模块组合
 
-多个功能模块可以同时使用：
+多个中间件可以同时使用，按照注册顺序执行：
 
 ```c
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    
-#if UVHTTP_FEATURE_STATIC_FILES
-    // 1. 创建静态文件上下文
-    uvhttp_static_config_t static_config = {
-        .root_directory = "./public",
-        .index_file = "index.html"
-    };
-    uvhttp_static_context_t* static_ctx = uvhttp_static_create(&static_config);
-#endif
-
-    // 2. 创建服务器和路由
     uvhttp_server_t* server = uvhttp_server_new(loop);
     uvhttp_router_t* router = uvhttp_router_new();
     
-#if UVHTTP_FEATURE_STATIC_FILES
-    // 3. 注册静态文件路由
-    uvhttp_router_add_route(router, "/static/*", static_file_handler);
-#endif
-
 #if UVHTTP_FEATURE_WEBSOCKET
-    // 4. 注册 WebSocket 处理器
-    uvhttp_ws_handler_t ws_handler = { /* ... */ };
-    uvhttp_server_register_ws_handler(server, "/ws", &ws_handler);
+    // 1. 创建并注册 WebSocket 中间件
+    uvhttp_ws_middleware_config_t ws_config = UVHTTP_WS_MIDDLEWARE_DEFAULT_CONFIG;
+    uvhttp_ws_middleware_t* ws_middleware = uvhttp_ws_middleware_create("/ws", &ws_config);
+    
+    uvhttp_ws_middleware_callbacks_t ws_callbacks = { /* ... */ };
+    uvhttp_ws_middleware_set_callbacks(ws_middleware, &ws_callbacks);
+    
+    uvhttp_server_add_middleware(server, uvhttp_ws_middleware_get_http_middleware(ws_middleware));
 #endif
     
-    // 5. 注册其他业务路由
+    // 2. 注册业务路由
     uvhttp_router_add_route(router, "/api/status", status_handler);
+    uvhttp_router_add_route(router, "/api/data", data_handler);
     
     uvhttp_server_set_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
     uv_run(loop, UV_RUN_DEFAULT);
     
-    // 6. 清理
-#if UVHTTP_FEATURE_STATIC_FILES
-    if (static_ctx) {
-        uvhttp_static_destroy(static_ctx);
+    // 3. 清理
+#if UVHTTP_FEATURE_WEBSOCKET
+    if (ws_middleware) {
+        uvhttp_ws_middleware_destroy(ws_middleware);
     }
 #endif
     
@@ -255,38 +274,75 @@ int main() {
 
 ## API 参考
 
-### 静态文件服务 API
+### 中间件 API
 
 ```c
-// 创建静态文件上下文
-uvhttp_static_context_t* uvhttp_static_create(const uvhttp_static_config_t* config);
+// 创建 HTTP 中间件
+uvhttp_http_middleware_t* uvhttp_http_middleware_create(
+    const char* path,
+    uvhttp_http_middleware_handler_t handler,
+    uvhttp_middleware_priority_t priority
+);
 
-// 处理静态文件请求
-int uvhttp_static_handle_request(uvhttp_static_context_t* ctx, 
-                                 uvhttp_request_t* request, 
-                                 uvhttp_response_t* response);
+// 销毁中间件
+void uvhttp_http_middleware_destroy(uvhttp_http_middleware_t* middleware);
 
-// 销毁静态文件上下文
-void uvhttp_static_destroy(uvhttp_static_context_t* ctx);
+// 添加中间件到服务器
+uvhttp_error_t uvhttp_server_add_middleware(uvhttp_server_t* server, 
+                                              uvhttp_http_middleware_t* middleware);
+
+// 移除中间件
+uvhttp_error_t uvhttp_server_remove_middleware(uvhttp_server_t* server, 
+                                                 const char* path);
 ```
 
-### WebSocket API
+### WebSocket 中间件 API
 
 ```c
-// 注册 WebSocket 处理器
-uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server, 
-                                                 const char* path, 
-                                                 uvhttp_ws_handler_t* handler);
+// 创建 WebSocket 中间件
+uvhttp_ws_middleware_t* uvhttp_ws_middleware_create(
+    const char* path,
+    const uvhttp_ws_middleware_config_t* config
+);
 
-// 发送 WebSocket 消息
-int uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn, 
-                          const char* data, 
-                          size_t len);
+// 设置回调函数
+void uvhttp_ws_middleware_set_callbacks(
+    uvhttp_ws_middleware_t* middleware,
+    const uvhttp_ws_middleware_callbacks_t* callbacks
+);
 
-// 关闭 WebSocket 连接
-int uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, 
-                          int code, 
-                          const char* reason);
+// 获取 HTTP 中间件（用于注册）
+uvhttp_http_middleware_t* uvhttp_ws_middleware_get_http_middleware(
+    uvhttp_ws_middleware_t* middleware
+);
+
+// 发送消息
+int uvhttp_ws_middleware_send(
+    uvhttp_ws_middleware_t* middleware,
+    uvhttp_ws_connection_t* ws_conn,
+    const char* data,
+    size_t len
+);
+
+// 关闭连接
+int uvhttp_ws_middleware_close(
+    uvhttp_ws_middleware_t* middleware,
+    uvhttp_ws_connection_t* ws_conn,
+    int code,
+    const char* reason
+);
+
+// 获取连接数
+int uvhttp_ws_middleware_get_connection_count(
+    uvhttp_ws_middleware_t* middleware
+);
+
+// 广播消息
+int uvhttp_ws_middleware_broadcast(
+    uvhttp_ws_middleware_t* middleware,
+    const char* data,
+    size_t len
+);
 ```
 
 ## 最佳实践
@@ -302,8 +358,8 @@ int uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn,
 
 完整示例请参考：
 
-- `examples/static_file_server.c` - 静态文件服务
-- `examples/websocket_echo_server.c` - WebSocket 服务器
+- `examples/websocket_echo_server.c` - WebSocket 服务器（使用中间件）
+- `examples/05_advanced/03_websocket_middleware.c` - WebSocket 中间件示例
 
 ## 故障排查
 

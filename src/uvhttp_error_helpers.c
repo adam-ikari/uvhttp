@@ -21,7 +21,7 @@ static const char* sensitive_keywords[] = {
  * 检查字符串是否包含敏感信息
  */
 static int contains_sensitive_info(const char* str) {
-    if (!str) return 0;
+    if (!str) return FALSE;
     
     char lower_str[UVHTTP_ERROR_MESSAGE_BUFFER_SIZE];
     strncpy(lower_str, str, sizeof(lower_str) - 1);
@@ -34,10 +34,10 @@ static int contains_sensitive_info(const char* str) {
     
     for (int i = 0; sensitive_keywords[i]; i++) {
         if (strstr(lower_str, sensitive_keywords[i])) {
-            return 1;
+            return TRUE;
         }
     }
-    return 0;
+    return FALSE;
 }
 
 void uvhttp_cleanup_connection(uv_handle_t* handle, const char* error_message) {
@@ -48,7 +48,7 @@ void uvhttp_cleanup_connection(uv_handle_t* handle, const char* error_message) {
     }
     
     if (!uv_is_closing(handle)) {
-        uv_close(handle, (uv_close_cb)uvhttp_free);
+        uv_close(handle, NULL);
     }
 }
 
