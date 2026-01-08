@@ -49,6 +49,9 @@ struct uvhttp_server {
     size_t active_connections;
     int owns_loop;  /* 是否拥有循环（内部创建的） */
     uvhttp_config_t* config;  /* 服务器配置 */
+#if UVHTTP_FEATURE_WEBSOCKET
+    void* ws_routes;  /* WebSocket路由表 */
+#endif
 };
 
 /* API函数 */

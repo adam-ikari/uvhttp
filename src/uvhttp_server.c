@@ -184,6 +184,11 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
         UVHTTP_LOG_DEBUG("uvhttp_malloc success, server=%p", (void*)server);
     memset(server, 0, sizeof(uvhttp_server_t));
     
+    // 初始化WebSocket路由表
+    #if UVHTTP_FEATURE_WEBSOCKET
+    server->ws_routes = NULL;
+    #endif
+    
     // 如果没有提供loop，内部创建新循环
     if (loop) {
         server->loop = loop;
@@ -234,6 +239,11 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
     if (server->config) {
         uvhttp_config_free(server->config);
     }
+    
+    // 释放WebSocket路由表
+    #if UVHTTP_FEATURE_WEBSOCKET
+    // TODO: 释放WebSocket路由表内存
+    #endif
     
     // 如果拥有循环，需要关闭并释放
     if (server->owns_loop && server->loop) {

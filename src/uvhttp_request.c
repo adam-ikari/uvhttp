@@ -272,7 +272,8 @@ static int on_message_complete(llhttp_t* parser) {
     /* 检查是否为WebSocket握手请求 */
     if (is_websocket_handshake(conn->request)) {
         // WebSocket握手需要特殊处理
-        // TODO: 实现WebSocket握手响应和协议升级
+        // 检查是否有WebSocket处理器注册
+        // TODO: 完整实现WebSocket握手响应和协议升级
         // 当前发送400错误，提示WebSocket功能尚未完全集成
         uvhttp_response_set_status(conn->response, 400);
         uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
