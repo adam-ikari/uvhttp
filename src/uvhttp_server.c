@@ -130,7 +130,9 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     }
     
     /* 接受连接 */
-    if (uv_accept(server_handle, (uv_stream_t*)&conn->tcp_handle) != 0) {
+    int accept_result = uv_accept(server_handle, (uv_stream_t*)&conn->tcp_handle);
+    
+    if (accept_result != 0) {
         uvhttp_connection_free(conn);
         return;
     }
@@ -143,7 +145,9 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     /* 开始连接处理（TLS握手或HTTP读取）
      * 所有后续处理都通过libuv回调在事件循环中异步进行
      */
-    if (uvhttp_connection_start(conn) != 0) {
+    int start_result = uvhttp_connection_start(conn);
+    
+    if (start_result != 0) {
         uvhttp_connection_close(conn);
         return;
     }
@@ -165,7 +169,7 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     /* 初始化TLS模块（如果还没有初始化） */
     #if UVHTTP_FEATURE_TLS
         UVHTTP_LOG_DEBUG("Initializing TLS module...");
-        if (uvhttp_tls_init() != UVHTTP_OK) {
+        if (uvhttp_tls_init() != UVHTTP_TLS_OK) {
             UVHTTP_LOG_ERROR("Failed to initialize TLS module");
             return NULL;
         }
@@ -257,7 +261,6 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
     
     ret = uv_listen((uv_stream_t*)&server->tcp_handle, backlog, on_connection);
     if (ret != 0) {
-        UVHTTP_LOG_ERROR("uv_listen failed: %s\n", uv_strerror(ret));
         return UVHTTP_ERROR_SERVER_LISTEN;
     }
     

@@ -90,6 +90,9 @@ int main() {
     // 应用配置
     g_server->config = config;
     
+    // 设置全局配置（重要：这会消除"Global configuration not initialized"警告）
+    uvhttp_config_set_current(config);
+    
     // 创建路由
     g_router = uvhttp_router_new();
     uvhttp_router_add_route(g_router, "/", simple_handler);

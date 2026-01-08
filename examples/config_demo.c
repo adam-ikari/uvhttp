@@ -338,6 +338,10 @@ int main(int argc, char* argv[]) {
     
     // 应用配置
     g_server->config = config;
+    
+    // 设置全局配置（重要：这会消除"Global configuration not initialized"警告）
+    uvhttp_config_set_current(config);
+    
     printf("✅ 服务器创建成功\n");
     
     // 创建路由器

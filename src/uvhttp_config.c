@@ -502,7 +502,7 @@ int uvhttp_config_reload(void) {
     return UVHTTP_OK;
 }
 
-/* 初始化全局配置 */
-void uvhttp_config_init_global(uvhttp_config_t* config) {
+/* 设置全局配置 */
+void uvhttp_config_set_current(uvhttp_config_t* config) {
     g_current_config = config;
 }

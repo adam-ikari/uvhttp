@@ -282,7 +282,11 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
         
         /* 获取文件信息 */
         char full_path[UVHTTP_MAX_FILE_PATH_SIZE];
-        snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, entry->d_name);
+        int written = snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, entry->d_name);
+        if (written < 0 || (size_t)written >= sizeof(full_path)) {
+            /* 路径过长，跳过此条目 */
+            continue;
+        }
         
         struct stat st;
         if (stat(full_path, &st) == 0) {

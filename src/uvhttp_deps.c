@@ -1,7 +1,7 @@
 /* UVHTTP - 依赖注入框架实现 */
 
-#include "uvhttp_deps.h"
 #include "uvhttp_allocator.h"
+#include "uvhttp_deps.h"
 #include <stdlib.h>
 #include <string.h>
 #include <uv.h>

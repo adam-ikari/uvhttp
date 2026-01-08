@@ -78,8 +78,13 @@ void uvhttp_error_report_(uvhttp_error_t error_code,
              "%s:%d in %s() - %s (%s)",
              file, line, function, message, uvhttp_error_string(error_code));
     
-    strncpy(g_error_stats.last_error_context, context_msg, 
-            sizeof(g_error_stats.last_error_context) - 1);
+    /* 确保不超过目标缓冲区大小 */
+    size_t copy_len = strlen(context_msg);
+    if (copy_len >= sizeof(g_error_stats.last_error_context)) {
+        copy_len = sizeof(g_error_stats.last_error_context) - 1;
+    }
+    memcpy(g_error_stats.last_error_context, context_msg, copy_len);
+    g_error_stats.last_error_context[copy_len] = '\0';
     
     /* 创建错误上下文 */
     uvhttp_error_context_t context = {

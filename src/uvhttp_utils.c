@@ -37,7 +37,7 @@ int uvhttp_safe_strncpy(char* dest, const char* src, size_t dest_size) {
     memcpy(dest, src, src_len);
     dest[src_len] = '\0';
     
-    return (int)src_len;  // 返回实际复制的字符数
+    return 0;  // 成功返回0，失败返回-1
 }
 
 /* ============ 内部辅助函数 ============ */

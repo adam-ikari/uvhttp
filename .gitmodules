@@ -1,24 +1,28 @@
 [submodule "deps/mimalloc"]
 	path = deps/mimalloc
 	url = https://github.com/microsoft/mimalloc.git
+	branch = v3.1.5
 [submodule "deps/mbedtls"]
 	path = deps/mbedtls
 	url = https://github.com/ARMmbed/mbedtls.git
-[submodule "deps/libwebsockets"]
-	path = deps/libwebsockets
-	url = https://libwebsockets.org/repo/libwebsockets
+	branch = v3.6.0
 [submodule "deps/cjson"]
 	path = deps/cjson
 	url = https://github.com/DaveGamble/cJSON.git
+	branch = v1.7.15
 [submodule "deps/googletest"]
 	path = deps/googletest
 	url = https://github.com/google/googletest.git
+	branch = release-1.12.1
 [submodule "deps/libuv"]
 	path = deps/libuv
 	url = https://github.com/libuv/libuv.git
+	branch = v1.51.0
 [submodule "deps/uthash"]
 	path = deps/uthash
 	url = https://github.com/troydhanson/uthash.git
+	branch = v1.9.8
 [submodule "deps/xxhash"]
 	path = deps/xxhash
 	url = https://github.com/Cyan4973/xxHash.git
+	branch = v0.7.4

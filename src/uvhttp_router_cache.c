@@ -186,15 +186,15 @@ static uvhttp_error_t add_to_hot_routes(cache_optimized_router_t* cr,
         }
         
         // 替换
-        strncpy(cr->hot_routes[min_index].path, path, 63);
-        cr->hot_routes[min_index].path[63] = '\0';
+        snprintf(cr->hot_routes[min_index].path, sizeof(cr->hot_routes[min_index].path),
+                 "%s", path);
         cr->hot_routes[min_index].method = method;
         cr->hot_routes[min_index].handler = handler;
         cr->access_count[min_index] = 0;
     } else {
         // 添加到热路径
-        strncpy(cr->hot_routes[cr->hot_count].path, path, 63);
-        cr->hot_routes[cr->hot_count].path[63] = '\0';
+        snprintf(cr->hot_routes[cr->hot_count].path, sizeof(cr->hot_routes[cr->hot_count].path),
+                 "%s", path);
         cr->hot_routes[cr->hot_count].method = method;
         cr->hot_routes[cr->hot_count].handler = handler;
         cr->access_count[cr->hot_count] = 0;

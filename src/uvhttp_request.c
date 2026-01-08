@@ -70,6 +70,10 @@ int uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client) {
 }
 
 void uvhttp_request_cleanup(uvhttp_request_t* request) {
+    if (!request) {
+        return;
+    }
+    
     if (request->body) {
         uvhttp_free(request->body);
     }
@@ -252,6 +256,9 @@ static int on_message_complete(llhttp_t* parser) {
     /* 标记解析完成 - 无需原子操作 */
     conn->parsing_complete = 1;
     
+    /* 重置读缓冲区使用量，为下一个请求做准备 */
+    conn->read_buffer_used = 0;
+    
     /* 单线程请求处理 - 无需锁机制 */
     if (conn->server && conn->server->router) {
         // 额外检查request->url是否有效
@@ -287,6 +294,7 @@ static int on_message_complete(llhttp_t* parser) {
 }
 
 const char* uvhttp_request_get_method(uvhttp_request_t* request) {
+    if (!request) return NULL;
     switch (request->method) {
         case UVHTTP_GET: return "GET";
         case UVHTTP_POST: return "POST";
@@ -300,6 +308,7 @@ const char* uvhttp_request_get_method(uvhttp_request_t* request) {
 }
 
 const char* uvhttp_request_get_url(uvhttp_request_t* request) {
+    if (!request) return NULL;
     return request->url;
 }
 
@@ -348,10 +357,12 @@ const char* uvhttp_request_get_header(uvhttp_request_t* request, const char* nam
 }
 
 const char* uvhttp_request_get_body(uvhttp_request_t* request) {
+    if (!request) return NULL;
     return request->body;
 }
 
 size_t uvhttp_request_get_body_length(uvhttp_request_t* request) {
+    if (!request) return 0;
     return request->body_length;
 }
 

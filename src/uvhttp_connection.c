@@ -100,7 +100,7 @@ static void uvhttp_connection_pool_cleanup(void) {
 }
 
 static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-    (void)suggested_size; // 避免未使用参数警告
+    (void)suggested_size;
     uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
     if (!conn || !conn->read_buffer) {
         buf->base = NULL;
@@ -109,6 +109,7 @@ static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t
     }
     
     size_t remaining = conn->read_buffer_size - conn->read_buffer_used;
+    
     buf->base = conn->read_buffer + conn->read_buffer_used;
     buf->len = remaining;
 }
@@ -123,7 +124,7 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     if (!conn || !conn->request) {
         return;
     }
-    
+
     if (nread < 0) {
         if (nread != UV_EOF) {
             uvhttp_log_safe_error(nread, "connection_read", NULL);
@@ -148,6 +149,9 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
             return;
         }
     }
+    
+    /* 更新已使用的缓冲区大小 */
+    conn->read_buffer_used += nread;
 }
 
 /* 重新开始读取新请求 - 用于keep-alive连接 */
@@ -161,17 +165,23 @@ int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
         return UVHTTP_ERROR_CONNECTION_CLOSE;
     }
     
-    /* 先停止当前的读取（如果正在进行） */
+    /* 优化：先停止当前的读取（如果正在进行） */
     uv_read_stop((uv_stream_t*)&conn->tcp_handle);
     
-    /* 完全重置请求对象状态 */
+    /* 优化：快速重置请求对象状态 */
     memset(conn->request, 0, sizeof(uvhttp_request_t));
     
     /* 重新初始化请求对象 */
     if (uvhttp_request_init(conn->request, &conn->tcp_handle) != 0) {
         return UVHTTP_ERROR_REQUEST_INIT;
     }
-    
+
+    /* 重要：重新将parser->data设置为connection */
+    llhttp_t* parser = (llhttp_t*)conn->request->parser;
+    if (parser) {
+        parser->data = conn;
+    }
+
     /* 完全重置响应对象状态 */
     memset(conn->response, 0, sizeof(uvhttp_response_t));
     
@@ -253,6 +263,7 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     conn->body_received = 0;        // 已接收body长度
     conn->parsing_complete = 0;     // 解析未完成
     conn->current_header_is_important = 0; // 当前头部非关键字段
+    conn->read_buffer_used = 0;     // 重置读缓冲区使用量
     
     // HTTP解析状态初始化
     memset(conn->current_header_field, 0, sizeof(conn->current_header_field));
@@ -266,6 +277,13 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     }
     conn->tcp_handle.data = conn;
     
+    // TCP性能优化：设置TCP_NODELAY禁用Nagle算法
+    int enable = 1;
+    uv_tcp_nodelay(&conn->tcp_handle, enable);
+    
+    // TCP性能优化：设置SO_REUSEADDR允许快速重用端口
+    uv_tcp_keepalive(&conn->tcp_handle, enable, 60);
+    
     // 分配读缓冲区
     conn->read_buffer_size = UVHTTP_READ_BUFFER_SIZE;
     conn->read_buffer = uvhttp_malloc(conn->read_buffer_size);
@@ -273,6 +291,7 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
         uvhttp_free(conn);
         return NULL;
     }
+    conn->read_buffer_used = 0;
     
     // 创建请求和响应对象
     conn->request = uvhttp_malloc(sizeof(uvhttp_request_t));

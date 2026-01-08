@@ -59,7 +59,7 @@
 
 /* 连接相关 - 基于生产环境测试的保守值 */
 #define UVHTTP_MAX_CONNECTIONS           2048  /* 从512增加到2048，支持更高并发需求 */
-#define UVHTTP_READ_BUFFER_SIZE          8192  /* 8KB缓冲区，优化内存使用 */
+#define UVHTTP_READ_BUFFER_SIZE          16384 /* 16KB缓冲区，提升吞吐量 */
 
 /* HTTP响应头安全边距 */
 #define UVHTTP_RESPONSE_HEADER_SAFETY_MARGIN 256  /* 响应头安全边距，防止缓冲区溢出 */
@@ -71,7 +71,7 @@
 /* 默认网络配置 */
 #define UVHTTP_DEFAULT_HOST "0.0.0.0"           /* 默认监听地址 */
 #define UVHTTP_DEFAULT_PORT 8080                /* 默认端口 */
-#define UVHTTP_BACKLOG                    1024  /* 从256增加到1024，匹配更高的连接限制 */
+#define UVHTTP_BACKLOG                    2048  /* 从1024增加到2048，支持更高并发 */
 
 
 
