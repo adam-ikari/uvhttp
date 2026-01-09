@@ -290,8 +290,7 @@ static void configure_server(uvhttp_server_t* server, const test_config_t* confi
         uvhttp_server_enable_rate_limit(
             server, 
             config->max_requests, 
-            config->window_seconds, 
-            UVHTTP_RATE_LIMIT_FIXED_WINDOW
+            config->window_seconds
         );
         
         // 添加白名单

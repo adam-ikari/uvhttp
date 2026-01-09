@@ -107,8 +107,7 @@ int main() {
     uvhttp_error_t result = uvhttp_server_enable_rate_limit(
         server,
         100,  // 最大请求数
-        60,   // 时间窗口（秒）
-        UVHTTP_RATE_LIMIT_TOKEN_BUCKET  // 令牌桶算法
+        60    // 时间窗口（秒）
     );
 
     if (result != UVHTTP_OK) {

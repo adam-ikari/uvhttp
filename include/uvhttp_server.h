@@ -29,15 +29,7 @@ extern "C" {
 
 typedef struct uvhttp_server uvhttp_server_t;
 
-#if UVHTTP_FEATURE_RATE_LIMIT
-/* 限流算法类型 */
-typedef enum {
-    UVHTTP_RATE_LIMIT_TOKEN_BUCKET,    /* 令牌桶算法 */
-    UVHTTP_RATE_LIMIT_FIXED_WINDOW,    /* 固定窗口算法 */
-    UVHTTP_RATE_LIMIT_LEAKY_BUCKET,    /* 漏桶算法 */
-    UVHTTP_RATE_LIMIT_SLIDING_WINDOW   /* 滑动窗口算法 */
-} uvhttp_rate_limit_algorithm_t;
-#endif
+
 
 /* 前向声明 */
 typedef struct uvhttp_http_middleware uvhttp_http_middleware_t;
@@ -70,12 +62,12 @@ struct uvhttp_server {
     uvhttp_http_middleware_t* middleware_chain;  /* 中间件链 */
     
 #if UVHTTP_FEATURE_RATE_LIMIT
-    /* 限流功能（核心功能） */
+    /* 限流功能（核心功能 - 固定窗口算法） */
     int rate_limit_enabled;                          /* 是否启用限流 */
     int rate_limit_max_requests;                       /* 最大请求数 */
     int rate_limit_window_seconds;                     /* 时间窗口（秒） */
-    uvhttp_rate_limit_algorithm_t rate_limit_algorithm; /* 限流算法 */
-    void* rate_limit_context;                          /* 限流上下文（内部使用） */
+    int rate_limit_request_count;                      /* 当前窗口内的请求数 */
+    uint64_t rate_limit_window_start_time;            /* 窗口开始时间（毫秒） */
     void** rate_limit_whitelist;                       /* 限流白名单路径数组 */
     size_t rate_limit_whitelist_count;                   /* 白名单路径数量 */
 #endif
@@ -107,7 +99,6 @@ void uvhttp_server_cleanup_middleware(uvhttp_server_t* server);
  * @param server 服务器实例
  * @param max_requests 时间窗口内允许的最大请求数（范围：1-1000000）
  * @param window_seconds 时间窗口（秒，范围：1-86400）
- * @param algorithm 限流算法（当前仅支持 UVHTTP_RATE_LIMIT_FIXED_WINDOW）
  * @return UVHTTP_OK 成功，其他值表示失败
  * 
  * 注意：
@@ -115,13 +106,12 @@ void uvhttp_server_cleanup_middleware(uvhttp_server_t* server);
  * - 限流状态在服务器级别管理，所有客户端共享计数器
  * - 适用于防止 DDoS 攻击，不适用于按客户端限流
  * - 建议在调用 uvhttp_server_listen 之前调用
- * - 当前仅支持固定窗口算法，其他算法参数会被忽略
+ * - 使用固定窗口算法实现
  */
 uvhttp_error_t uvhttp_server_enable_rate_limit(
     uvhttp_server_t* server,
     int max_requests,
-    int window_seconds,
-    uvhttp_rate_limit_algorithm_t algorithm
+    int window_seconds
 );
 
 /**
