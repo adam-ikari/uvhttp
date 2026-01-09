@@ -105,15 +105,17 @@ void uvhttp_server_cleanup_middleware(uvhttp_server_t* server);
  * 启用服务器级别的限流功能
  * 
  * @param server 服务器实例
- * @param max_requests 时间窗口内允许的最大请求数
- * @param window_seconds 时间窗口（秒）
- * @param algorithm 限流算法
+ * @param max_requests 时间窗口内允许的最大请求数（范围：1-1000000）
+ * @param window_seconds 时间窗口（秒，范围：1-86400）
+ * @param algorithm 限流算法（当前仅支持 UVHTTP_RATE_LIMIT_FIXED_WINDOW）
  * @return UVHTTP_OK 成功，其他值表示失败
  * 
  * 注意：
- * - 限流功能对所有请求生效
- * - 限流状态在服务器级别管理
+ * - 限流功能对所有请求生效（服务器级别限流）
+ * - 限流状态在服务器级别管理，所有客户端共享计数器
+ * - 适用于防止 DDoS 攻击，不适用于按客户端限流
  * - 建议在调用 uvhttp_server_listen 之前调用
+ * - 当前仅支持固定窗口算法，其他算法参数会被忽略
  */
 uvhttp_error_t uvhttp_server_enable_rate_limit(
     uvhttp_server_t* server,
@@ -139,25 +141,29 @@ uvhttp_error_t uvhttp_server_disable_rate_limit(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_check_rate_limit(uvhttp_server_t* server);
 
 /**
- * 添加限流白名单路径（不受限流限制）
+ * 添加限流白名单IP地址（不受限流限制）
  * 
  * @param server 服务器实例
- * @param path 路径模式（如 "/api/health"）
+ * @param client_ip 客户端IP地址（如 "127.0.0.1"）
  * @return UVHTTP_OK 成功，其他值表示失败
  */
 uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(
     uvhttp_server_t* server,
-    const char* path
+    const char* client_ip
 );
 
 /**
- * 获取客户端的限流状态
+ * 获取服务器的限流状态
  * 
  * @param server 服务器实例
- * @param client_ip 客户端IP地址
+ * @param client_ip 客户端IP地址（当前未使用，保留参数以备将来扩展）
  * @param remaining 剩余请求数（输出）
  * @param reset_time 重置时间戳（输出，毫秒）
  * @return UVHTTP_OK 成功，其他值表示失败
+ * 
+ * 注意：
+ * - 当前实现为服务器级别限流，client_ip 参数未使用
+ * - 返回的是服务器的总体限流状态，不是特定客户端的状态
  */
 uvhttp_error_t uvhttp_server_get_rate_limit_status(
     uvhttp_server_t* server,
@@ -167,11 +173,15 @@ uvhttp_error_t uvhttp_server_get_rate_limit_status(
 );
 
 /**
- * 重置特定客户端的限流状态
+ * 重置服务器的限流状态
  * 
  * @param server 服务器实例
- * @param client_ip 客户端IP地址
+ * @param client_ip 客户端IP地址（当前未使用，保留参数以备将来扩展）
  * @return UVHTTP_OK 成功，其他值表示失败
+ * 
+ * 注意：
+ * - 当前实现为服务器级别限流，client_ip 参数未使用
+ * - 重置的是服务器的总体限流计数器，不是特定客户端的计数器
  */
 uvhttp_error_t uvhttp_server_reset_rate_limit_client(
     uvhttp_server_t* server,

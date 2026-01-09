@@ -778,6 +778,10 @@ uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code,
 #if UVHTTP_FEATURE_RATE_LIMIT
 // ========== 限流功能实现 ==========
 
+// 限流参数限制
+#define MAX_RATE_LIMIT_REQUESTS 1000000    // 最大请求数：100万
+#define MAX_RATE_LIMIT_WINDOW_SECONDS 86400 // 最大时间窗口：24小时
+
 // 启用限流功能
 uvhttp_error_t uvhttp_server_enable_rate_limit(
     uvhttp_server_t* server,
@@ -789,7 +793,11 @@ uvhttp_error_t uvhttp_server_enable_rate_limit(
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    if (max_requests <= 0 || window_seconds <= 0) {
+    if (max_requests <= 0 || max_requests > MAX_RATE_LIMIT_REQUESTS) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    if (window_seconds <= 0 || window_seconds > MAX_RATE_LIMIT_WINDOW_SECONDS) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
@@ -864,14 +872,17 @@ uvhttp_error_t uvhttp_server_check_rate_limit(uvhttp_server_t* server) {
     return UVHTTP_OK;
 }
 
-// 添加限流白名单路径
+// 添加限流白名单IP地址
 uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(
     uvhttp_server_t* server,
-    const char* path
+    const char* client_ip
 ) {
-    if (!server || !path) {
+    if (!server || !client_ip) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
+    
+    // 验证IP地址格式（简单验证）
+    // TODO: 可以添加更严格的IP地址验证
     
     // 重新分配白名单数组
     size_t new_count = server->rate_limit_whitelist_count + 1;
@@ -884,14 +895,21 @@ uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(
     server->rate_limit_whitelist = new_whitelist;
     server->rate_limit_whitelist_count = new_count;
     
-    // 复制路径
-    size_t path_len = strlen(path) + 1;
-    char* path_copy = uvhttp_malloc(path_len);
-    if (!path_copy) {
+    // 复制IP地址
+    size_t ip_len = strlen(client_ip) + 1;
+    char* ip_copy = uvhttp_malloc(ip_len);
+    if (!ip_copy) {
+        // 回退：恢复原来的数组大小
+        server->rate_limit_whitelist_count = new_count - 1;
+        void** old_whitelist = uvhttp_realloc(server->rate_limit_whitelist, 
+                                             sizeof(void*) * (new_count - 1));
+        if (old_whitelist) {
+            server->rate_limit_whitelist = old_whitelist;
+        }
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
-    memcpy(path_copy, path, path_len);
-    server->rate_limit_whitelist[new_count - 1] = path_copy;
+    memcpy(ip_copy, client_ip, ip_len);
+    server->rate_limit_whitelist[new_count - 1] = ip_copy;
     
     return UVHTTP_OK;
 }
