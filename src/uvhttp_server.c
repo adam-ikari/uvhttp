@@ -17,6 +17,7 @@
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_config.h"
+#include "uvhttp_features.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -24,6 +25,14 @@
 
 #if UVHTTP_FEATURE_WEBSOCKET
 #include "uvhttp_websocket_native.h"
+#endif
+
+#if UVHTTP_FEATURE_RATE_LIMIT
+// 限流上下文结构（简化版）
+typedef struct {
+    int request_count;
+    uint64_t window_start_time;
+} simple_rate_limit_context_t;
 #endif
 
 // WebSocket路由条目前向声明
@@ -202,6 +211,7 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     server->ws_routes = NULL;
     #endif
     
+#if UVHTTP_FEATURE_RATE_LIMIT
     // 初始化限流功能字段
     server->rate_limit_enabled = 0;
     server->rate_limit_max_requests = 0;
@@ -210,6 +220,7 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     server->rate_limit_context = NULL;
     server->rate_limit_whitelist = NULL;
     server->rate_limit_whitelist_count = 0;
+#endif
     
     // 如果没有提供loop，内部创建新循环
     if (loop) {
@@ -744,11 +755,8 @@ uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code,
 
 // ========== 限流功能实现（核心功能） ==========
 
-// 限流上下文结构（简化版）
-typedef struct {
-    int request_count;
-    uint64_t window_start_time;
-} simple_rate_limit_context_t;
+#if UVHTTP_FEATURE_RATE_LIMIT
+// ========== 限流功能实现 ==========
 
 // 启用限流功能
 uvhttp_error_t uvhttp_server_enable_rate_limit(
@@ -913,3 +921,4 @@ uvhttp_error_t uvhttp_server_reset_rate_limit_client(
     
     return UVHTTP_OK;
 }
+#endif /* UVHTTP_FEATURE_RATE_LIMIT */

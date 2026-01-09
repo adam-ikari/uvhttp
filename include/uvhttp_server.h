@@ -5,6 +5,8 @@
 #include "uvhttp_error.h"
 #include "uvhttp_common.h"
 #include "uvhttp_config.h"
+#include "uvhttp_allocator.h"
+#include "uvhttp_features.h"
 
 // Forward declarations
 typedef struct uvhttp_request uvhttp_request_t;
@@ -27,6 +29,7 @@ extern "C" {
 
 typedef struct uvhttp_server uvhttp_server_t;
 
+#if UVHTTP_FEATURE_RATE_LIMIT
 /* 限流算法类型 */
 typedef enum {
     UVHTTP_RATE_LIMIT_TOKEN_BUCKET,    /* 令牌桶算法 */
@@ -34,6 +37,7 @@ typedef enum {
     UVHTTP_RATE_LIMIT_LEAKY_BUCKET,    /* 漏桶算法 */
     UVHTTP_RATE_LIMIT_SLIDING_WINDOW   /* 滑动窗口算法 */
 } uvhttp_rate_limit_algorithm_t;
+#endif
 
 /* 前向声明 */
 typedef struct uvhttp_http_middleware uvhttp_http_middleware_t;
@@ -65,6 +69,7 @@ struct uvhttp_server {
 #endif
     uvhttp_http_middleware_t* middleware_chain;  /* 中间件链 */
     
+#if UVHTTP_FEATURE_RATE_LIMIT
     /* 限流功能（核心功能） */
     int rate_limit_enabled;                          /* 是否启用限流 */
     int rate_limit_max_requests;                       /* 最大请求数 */
@@ -73,6 +78,7 @@ struct uvhttp_server {
     void* rate_limit_context;                          /* 限流上下文（内部使用） */
     void** rate_limit_whitelist;                       /* 限流白名单路径数组 */
     size_t rate_limit_whitelist_count;                   /* 白名单路径数量 */
+#endif
 };
 
 /* API函数 */
@@ -92,6 +98,7 @@ uvhttp_error_t uvhttp_server_add_middleware(uvhttp_server_t* server, uvhttp_http
 uvhttp_error_t uvhttp_server_remove_middleware(uvhttp_server_t* server, const char* path);
 void uvhttp_server_cleanup_middleware(uvhttp_server_t* server);
 
+#if UVHTTP_FEATURE_RATE_LIMIT
 // ========== 限流 API（核心功能） ==========
 
 /**
@@ -178,6 +185,7 @@ uvhttp_error_t uvhttp_server_reset_rate_limit_client(
  * @return UVHTTP_OK 成功，其他值表示失败
  */
 uvhttp_error_t uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server);
+#endif /* UVHTTP_FEATURE_RATE_LIMIT */
 
 // ========== 统一API函数 ==========
 

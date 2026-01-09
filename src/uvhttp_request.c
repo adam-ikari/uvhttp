@@ -6,6 +6,7 @@
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_validation.h"
+#include "uvhttp_features.h"
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -271,6 +272,7 @@ static int on_message_complete(llhttp_t* parser) {
     /* 重置读缓冲区使用量，为下一个请求做准备 */
     conn->read_buffer_used = 0;
     
+#if UVHTTP_FEATURE_RATE_LIMIT
     /* 限流检查 - 在中间件之前执行 */
     if (conn->server && conn->server->rate_limit_enabled) {
         /* 检查客户端IP是否在白名单中 */
@@ -305,6 +307,7 @@ static int on_message_complete(llhttp_t* parser) {
             return 0;
         }
     }
+#endif /* UVHTTP_FEATURE_RATE_LIMIT */
     
     /* 检查是否为WebSocket握手请求 */
     if (is_websocket_handshake(conn->request)) {

@@ -84,7 +84,7 @@ extern "C" {
 #endif
 
 #ifndef UVHTTP_FEATURE_RATE_LIMIT
-#define UVHTTP_FEATURE_RATE_LIMIT 0 /* 限流支持 */
+#define UVHTTP_FEATURE_RATE_LIMIT 1 /* 限流支持 - 默认启用 */
 #endif
 
 #ifndef UVHTTP_FEATURE_STATIC_FILES
