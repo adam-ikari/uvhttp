@@ -2,7 +2,7 @@
 
 ## 概述
 
-UVHTTP 提供服务器级别的限流功能，用于防止 DDoS 攻击和过载。限流功能是核心功能，不是中间件，可以在编译时通过宏配置启用或禁用。
+UVHTTP 提供服务器级别的限流功能，用于防止 DDoS 攻击和过载。限流功能是核心功能，可以在编译时通过宏配置启用或禁用。
 
 ## 特性
 
@@ -42,17 +42,20 @@ uvhttp_error_t uvhttp_server_enable_rate_limit(
 ```
 
 **参数:**
+
 - `server`: 服务器实例
 - `max_requests`: 时间窗口内允许的最大请求数（范围：1-1000000）
 - `window_seconds`: 时间窗口（秒）（范围：1-86400）
 - `algorithm`: 限流算法类型
 
 **返回值:**
+
 - `UVHTTP_OK`: 成功
 - `UVHTTP_ERROR_INVALID_PARAM`: 参数无效
 - `UVHTTP_ERROR_OUT_OF_MEMORY`: 内存分配失败
 
 **限流算法类型:**
+
 ```c
 typedef enum {
     UVHTTP_RATE_LIMIT_TOKEN_BUCKET,    /* 令牌桶算法 */
@@ -63,6 +66,7 @@ typedef enum {
 ```
 
 **示例:**
+
 ```c
 // 每秒最多 1000 个请求
 uvhttp_server_enable_rate_limit(server, 1000, 1, UVHTTP_RATE_LIMIT_FIXED_WINDOW);
@@ -78,13 +82,16 @@ uvhttp_error_t uvhttp_server_disable_rate_limit(uvhttp_server_t* server);
 ```
 
 **参数:**
+
 - `server`: 服务器实例
 
 **返回值:**
+
 - `UVHTTP_OK`: 成功
 - `UVHTTP_ERROR_INVALID_PARAM`: 参数无效
 
 **示例:**
+
 ```c
 uvhttp_server_disable_rate_limit(server);
 ```
@@ -99,15 +106,18 @@ uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(
 ```
 
 **参数:**
+
 - `server`: 服务器实例
 - `client_ip`: 客户端 IP 地址（如 "127.0.0.1"）
 
 **返回值:**
+
 - `UVHTTP_OK`: 成功
 - `UVHTTP_ERROR_INVALID_PARAM`: 参数无效
 - `UVHTTP_ERROR_OUT_OF_MEMORY`: 内存分配失败
 
 **示例:**
+
 ```c
 // 本地回环地址不受限流
 uvhttp_server_add_rate_limit_whitelist(server, "127.0.0.1");
@@ -128,20 +138,24 @@ uvhttp_error_t uvhttp_server_get_rate_limit_status(
 ```
 
 **参数:**
+
 - `server`: 服务器实例
 - `client_ip`: 客户端 IP 地址（当前未使用，保留以备将来扩展）
 - `remaining`: 剩余请求数（输出参数）
 - `reset_time`: 重置时间戳（毫秒）（输出参数）
 
 **返回值:**
+
 - `UVHTTP_OK`: 成功
 - `UVHTTP_ERROR_INVALID_PARAM`: 参数无效
 
 **注意:**
+
 - 当前实现是服务器级别限流，`client_ip` 参数未使用
 - 返回的 `remaining` 和 `reset_time` 是服务器级别的状态
 
 **示例:**
+
 ```c
 int remaining;
 uint64_t reset_time;
@@ -159,18 +173,22 @@ uvhttp_error_t uvhttp_server_reset_rate_limit_client(
 ```
 
 **参数:**
+
 - `server`: 服务器实例
 - `client_ip`: 客户端 IP 地址（当前未使用，保留以备将来扩展）
 
 **返回值:**
+
 - `UVHTTP_OK`: 成功
 - `UVHTTP_ERROR_INVALID_PARAM`: 参数无效
 
 **注意:**
+
 - 当前实现会重置整个服务器的限流计数器
 - `client_ip` 参数未使用，保留以备将来扩展
 
 **示例:**
+
 ```c
 uvhttp_server_reset_rate_limit_client(server, "127.0.0.1");
 ```
@@ -182,13 +200,16 @@ uvhttp_error_t uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server);
 ```
 
 **参数:**
+
 - `server`: 服务器实例
 
 **返回值:**
+
 - `UVHTTP_OK`: 成功
 - `UVHTTP_ERROR_INVALID_PARAM`: 参数无效
 
 **示例:**
+
 ```c
 uvhttp_server_clear_rate_limit_all(server);
 ```
@@ -203,18 +224,18 @@ uvhttp_server_clear_rate_limit_all(server);
 int main() {
     uv_loop_t* loop = uv_default_loop();
     uvhttp_server_t* server = uvhttp_server_new(loop);
-    
+
     // 启用限流：每秒最多 1000 个请求
-    uvhttp_server_enable_rate_limit(server, 1000, 1, 
+    uvhttp_server_enable_rate_limit(server, 1000, 1,
                                     UVHTTP_RATE_LIMIT_FIXED_WINDOW);
-    
+
     // 添加白名单
     uvhttp_server_add_rate_limit_whitelist(server, "127.0.0.1");
-    
+
     // 启动服务器
     uvhttp_server_listen(server, "0.0.0.0", 8080);
     uv_run(loop, UV_RUN_DEFAULT);
-    
+
     uvhttp_server_free(server);
     return 0;
 }
@@ -227,9 +248,9 @@ int main() {
 void adjust_rate_limit(uvhttp_server_t* server, int new_max_requests) {
     // 先禁用
     uvhttp_server_disable_rate_limit(server);
-    
+
     // 重新启用
-    uvhttp_server_enable_rate_limit(server, new_max_requests, 1, 
+    uvhttp_server_enable_rate_limit(server, new_max_requests, 1,
                                     UVHTTP_RATE_LIMIT_FIXED_WINDOW);
 }
 ```
@@ -294,16 +315,19 @@ UVHTTP_ERROR_RATE_LIMIT_EXCEEDED = -550  // 超过限流
 ## 最佳实践
 
 1. **合理配置限流参数**
+
    - 根据服务器性能设置 `max_requests`
    - 根据业务需求设置 `window_seconds`
    - 避免过于严格的限流影响正常用户
 
 2. **使用白名单**
+
    - 将受信任的 IP 地址添加到白名单
    - 包括监控系统、内部服务等
    - 避免限流影响关键服务
 
 3. **监控限流状态**
+
    - 定期检查 `remaining` 和 `reset_time`
    - 记录限流触发事件
    - 根据实际情况调整参数
