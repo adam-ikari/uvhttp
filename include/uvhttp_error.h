@@ -146,13 +146,6 @@ void uvhttp_get_error_stats(size_t* error_counts, time_t* last_error_time,
 void uvhttp_reset_error_stats(void);
 uvhttp_error_t uvhttp_get_most_frequent_error(void);
 
-/* Error code introspection functions */
-const char* uvhttp_error_string(uvhttp_error_t error);
-const char* uvhttp_error_category_string(uvhttp_error_t error);
-const char* uvhttp_error_description(uvhttp_error_t error);
-const char* uvhttp_error_suggestion(uvhttp_error_t error);
-int uvhttp_error_is_recoverable(uvhttp_error_t error);
-
 /* Error code count for statistics array */
 #define UVHTTP_ERROR_COUNT 120
 

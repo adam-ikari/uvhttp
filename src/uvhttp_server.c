@@ -292,6 +292,26 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
     }
     #endif
     
+#if UVHTTP_FEATURE_RATE_LIMIT
+    // 清理限流白名单
+    if (server->rate_limit_whitelist) {
+        for (size_t i = 0; i < server->rate_limit_whitelist_count; i++) {
+            if (server->rate_limit_whitelist[i]) {
+                uvhttp_free(server->rate_limit_whitelist[i]);
+            }
+        }
+        uvhttp_free(server->rate_limit_whitelist);
+        server->rate_limit_whitelist = NULL;
+        server->rate_limit_whitelist_count = 0;
+    }
+    
+    // 清理限流上下文
+    if (server->rate_limit_context) {
+        uvhttp_free(server->rate_limit_context);
+        server->rate_limit_context = NULL;
+    }
+#endif
+    
     // 如果拥有循环，需要关闭并释放
     if (server->owns_loop && server->loop) {
         uv_loop_close(server->loop);
@@ -898,6 +918,21 @@ uvhttp_error_t uvhttp_server_get_rate_limit_status(
     if (reset_time) {
         uint64_t window_duration = server->rate_limit_window_seconds * 1000;
         *reset_time = ctx->window_start_time + window_duration;
+    }
+    
+    return UVHTTP_OK;
+}
+
+// 清空所有限流状态
+uvhttp_error_t uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    if (server->rate_limit_context) {
+        simple_rate_limit_context_t* ctx = (simple_rate_limit_context_t*)server->rate_limit_context;
+        ctx->request_count = 0;
+        ctx->window_start_time = 0;
     }
     
     return UVHTTP_OK;
