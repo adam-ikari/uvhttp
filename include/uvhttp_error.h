@@ -68,6 +68,9 @@ typedef enum {
     UVHTTP_ERROR_ROUTE_ALREADY_EXISTS = -503,
     UVHTTP_ERROR_INVALID_ROUTE_PATTERN = -504,
     
+    /* Rate limit errors */
+    UVHTTP_ERROR_RATE_LIMIT_EXCEEDED = -550,
+    
     /* Allocator errors */
     UVHTTP_ERROR_ALLOCATOR_INIT = -600,
     UVHTTP_ERROR_ALLOCATOR_SET = -601,

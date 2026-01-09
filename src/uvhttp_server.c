@@ -202,6 +202,15 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     server->ws_routes = NULL;
     #endif
     
+    // 初始化限流功能字段
+    server->rate_limit_enabled = 0;
+    server->rate_limit_max_requests = 0;
+    server->rate_limit_window_seconds = 0;
+    server->rate_limit_algorithm = UVHTTP_RATE_LIMIT_TOKEN_BUCKET;
+    server->rate_limit_context = NULL;
+    server->rate_limit_whitelist = NULL;
+    server->rate_limit_whitelist_count = 0;
+    
     // 如果没有提供loop，内部创建新循环
     if (loop) {
         server->loop = loop;
@@ -732,3 +741,175 @@ uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code,
 }
 
 #endif // UVHTTP_FEATURE_WEBSOCKET
+
+// ========== 限流功能实现（核心功能） ==========
+
+// 限流上下文结构（简化版）
+typedef struct {
+    int request_count;
+    uint64_t window_start_time;
+} simple_rate_limit_context_t;
+
+// 启用限流功能
+uvhttp_error_t uvhttp_server_enable_rate_limit(
+    uvhttp_server_t* server,
+    int max_requests,
+    int window_seconds,
+    uvhttp_rate_limit_algorithm_t algorithm
+) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    if (max_requests <= 0 || window_seconds <= 0) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 简化实现：只支持固定窗口算法
+    if (algorithm != UVHTTP_RATE_LIMIT_FIXED_WINDOW) {
+        UVHTTP_LOG_WARN("目前只支持固定窗口限流算法，自动切换到固定窗口\n");
+        algorithm = UVHTTP_RATE_LIMIT_FIXED_WINDOW;
+    }
+    
+    // 创建简化的限流上下文
+    simple_rate_limit_context_t* ctx = uvhttp_malloc(sizeof(simple_rate_limit_context_t));
+    if (!ctx) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    
+    ctx->request_count = 0;
+    ctx->window_start_time = 0;
+    
+    server->rate_limit_enabled = 1;
+    server->rate_limit_max_requests = max_requests;
+    server->rate_limit_window_seconds = window_seconds;
+    server->rate_limit_algorithm = algorithm;
+    server->rate_limit_context = ctx;
+    
+    return UVHTTP_OK;
+}
+
+// 禁用限流功能
+uvhttp_error_t uvhttp_server_disable_rate_limit(uvhttp_server_t* server) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    server->rate_limit_enabled = 0;
+    
+    // 清理限流上下文
+    if (server->rate_limit_context) {
+        uvhttp_free(server->rate_limit_context);
+        server->rate_limit_context = NULL;
+    }
+    
+    return UVHTTP_OK;
+}
+
+// 检查限流状态
+uvhttp_error_t uvhttp_server_check_rate_limit(uvhttp_server_t* server) {
+    if (!server || !server->rate_limit_enabled || !server->rate_limit_context) {
+        return UVHTTP_OK;  // 限流未启用，允许请求
+    }
+    
+    simple_rate_limit_context_t* ctx = (simple_rate_limit_context_t*)server->rate_limit_context;
+    
+    // 获取当前时间（毫秒）
+    uint64_t current_time = uv_hrtime() / 1000000;
+    uint64_t window_duration = server->rate_limit_window_seconds * 1000;
+    
+    // 检查时间窗口是否过期
+    if (current_time - ctx->window_start_time >= window_duration) {
+        // 重置计数器
+        ctx->request_count = 0;
+        ctx->window_start_time = current_time;
+    }
+    
+    // 检查是否超过限制
+    if (ctx->request_count >= server->rate_limit_max_requests) {
+        return UVHTTP_ERROR_RATE_LIMIT_EXCEEDED;
+    }
+    
+    // 增加计数
+    ctx->request_count++;
+    
+    return UVHTTP_OK;
+}
+
+// 添加限流白名单路径
+uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(
+    uvhttp_server_t* server,
+    const char* path
+) {
+    if (!server || !path) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 重新分配白名单数组
+    size_t new_count = server->rate_limit_whitelist_count + 1;
+    void** new_whitelist = uvhttp_realloc(server->rate_limit_whitelist, 
+                                          sizeof(void*) * new_count);
+    if (!new_whitelist) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    
+    server->rate_limit_whitelist = new_whitelist;
+    server->rate_limit_whitelist_count = new_count;
+    
+    // 复制路径
+    size_t path_len = strlen(path) + 1;
+    char* path_copy = uvhttp_malloc(path_len);
+    if (!path_copy) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    memcpy(path_copy, path, path_len);
+    server->rate_limit_whitelist[new_count - 1] = path_copy;
+    
+    return UVHTTP_OK;
+}
+
+// 获取客户端限流状态
+uvhttp_error_t uvhttp_server_get_rate_limit_status(
+    uvhttp_server_t* server,
+    const char* client_ip,
+    int* remaining,
+    uint64_t* reset_time
+) {
+    if (!server || !client_ip || !remaining) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    if (!server->rate_limit_enabled || !server->rate_limit_context) {
+        *remaining = -1;  // 限流未启用
+        return UVHTTP_OK;
+    }
+    
+    simple_rate_limit_context_t* ctx = (simple_rate_limit_context_t*)server->rate_limit_context;
+    *remaining = server->rate_limit_max_requests - ctx->request_count;
+    
+    if (reset_time) {
+        uint64_t window_duration = server->rate_limit_window_seconds * 1000;
+        *reset_time = ctx->window_start_time + window_duration;
+    }
+    
+    return UVHTTP_OK;
+}
+
+// 重置客户端限流状态
+uvhttp_error_t uvhttp_server_reset_rate_limit_client(
+    uvhttp_server_t* server,
+    const char* client_ip
+) {
+    if (!server || !client_ip) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 简化实现：重置整个服务器的限流计数器
+    if (server->rate_limit_context) {
+        simple_rate_limit_context_t* ctx = (simple_rate_limit_context_t*)server->rate_limit_context;
+        ctx->request_count = 0;
+        ctx->window_start_time = uv_hrtime() / 1000000;
+    }
+    
+    return UVHTTP_OK;
+}

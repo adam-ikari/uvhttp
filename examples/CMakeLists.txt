@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 11)
 
 # 查找 UVHTTP
 find_path(UVHTTP_INCLUDE_DIR uvhttp.h PATHS ../include NO_DEFAULT_PATH)
-find_library(UVHTTP_LIBRARY uvhttp PATHS ../build NO_DEFAULT_PATH)
+find_library(UVHTTP_LIBRARY uvhttp PATHS ../build/dist/lib NO_DEFAULT_PATH)
 
 if(NOT UVHTTP_INCLUDE_DIR)
     message(FATAL_ERROR "找不到 uvhttp.h，请先编译 UVHTTP")

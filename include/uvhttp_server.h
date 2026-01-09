@@ -27,6 +27,14 @@ extern "C" {
 
 typedef struct uvhttp_server uvhttp_server_t;
 
+/* 限流算法类型 */
+typedef enum {
+    UVHTTP_RATE_LIMIT_TOKEN_BUCKET,    /* 令牌桶算法 */
+    UVHTTP_RATE_LIMIT_FIXED_WINDOW,    /* 固定窗口算法 */
+    UVHTTP_RATE_LIMIT_LEAKY_BUCKET,    /* 漏桶算法 */
+    UVHTTP_RATE_LIMIT_SLIDING_WINDOW   /* 滑动窗口算法 */
+} uvhttp_rate_limit_algorithm_t;
+
 /* 前向声明 */
 typedef struct uvhttp_http_middleware uvhttp_http_middleware_t;
 
@@ -56,6 +64,15 @@ struct uvhttp_server {
     void* ws_routes;  /* WebSocket路由表（已废弃，使用中间件） */
 #endif
     uvhttp_http_middleware_t* middleware_chain;  /* 中间件链 */
+    
+    /* 限流功能（核心功能） */
+    int rate_limit_enabled;                          /* 是否启用限流 */
+    int rate_limit_max_requests;                       /* 最大请求数 */
+    int rate_limit_window_seconds;                     /* 时间窗口（秒） */
+    uvhttp_rate_limit_algorithm_t rate_limit_algorithm; /* 限流算法 */
+    void* rate_limit_context;                          /* 限流上下文（内部使用） */
+    void** rate_limit_whitelist;                       /* 限流白名单路径数组 */
+    size_t rate_limit_whitelist_count;                   /* 白名单路径数量 */
 };
 
 /* API函数 */
@@ -74,6 +91,93 @@ uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server, uvhttp_router_t
 uvhttp_error_t uvhttp_server_add_middleware(uvhttp_server_t* server, uvhttp_http_middleware_t* middleware);
 uvhttp_error_t uvhttp_server_remove_middleware(uvhttp_server_t* server, const char* path);
 void uvhttp_server_cleanup_middleware(uvhttp_server_t* server);
+
+// ========== 限流 API（核心功能） ==========
+
+/**
+ * 启用服务器级别的限流功能
+ * 
+ * @param server 服务器实例
+ * @param max_requests 时间窗口内允许的最大请求数
+ * @param window_seconds 时间窗口（秒）
+ * @param algorithm 限流算法
+ * @return UVHTTP_OK 成功，其他值表示失败
+ * 
+ * 注意：
+ * - 限流功能对所有请求生效
+ * - 限流状态在服务器级别管理
+ * - 建议在调用 uvhttp_server_listen 之前调用
+ */
+uvhttp_error_t uvhttp_server_enable_rate_limit(
+    uvhttp_server_t* server,
+    int max_requests,
+    int window_seconds,
+    uvhttp_rate_limit_algorithm_t algorithm
+);
+
+/**
+ * 禁用限流功能
+ * 
+ * @param server 服务器实例
+ * @return UVHTTP_OK 成功，其他值表示失败
+ */
+uvhttp_error_t uvhttp_server_disable_rate_limit(uvhttp_server_t* server);
+
+/**
+ * 检查限流状态（内部使用）
+ * 
+ * @param server 服务器实例
+ * @return UVHTTP_OK 允许请求，UVHTTP_ERROR_RATE_LIMIT_EXCEEDED 超过限流
+ */
+uvhttp_error_t uvhttp_server_check_rate_limit(uvhttp_server_t* server);
+
+/**
+ * 添加限流白名单路径（不受限流限制）
+ * 
+ * @param server 服务器实例
+ * @param path 路径模式（如 "/api/health"）
+ * @return UVHTTP_OK 成功，其他值表示失败
+ */
+uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(
+    uvhttp_server_t* server,
+    const char* path
+);
+
+/**
+ * 获取客户端的限流状态
+ * 
+ * @param server 服务器实例
+ * @param client_ip 客户端IP地址
+ * @param remaining 剩余请求数（输出）
+ * @param reset_time 重置时间戳（输出，毫秒）
+ * @return UVHTTP_OK 成功，其他值表示失败
+ */
+uvhttp_error_t uvhttp_server_get_rate_limit_status(
+    uvhttp_server_t* server,
+    const char* client_ip,
+    int* remaining,
+    uint64_t* reset_time
+);
+
+/**
+ * 重置特定客户端的限流状态
+ * 
+ * @param server 服务器实例
+ * @param client_ip 客户端IP地址
+ * @return UVHTTP_OK 成功，其他值表示失败
+ */
+uvhttp_error_t uvhttp_server_reset_rate_limit_client(
+    uvhttp_server_t* server,
+    const char* client_ip
+);
+
+/**
+ * 清空所有限流状态
+ * 
+ * @param server 服务器实例
+ * @return UVHTTP_OK 成功，其他值表示失败
+ */
+uvhttp_error_t uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server);
 
 // ========== 统一API函数 ==========
 

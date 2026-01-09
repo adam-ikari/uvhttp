@@ -89,6 +89,7 @@ set(SOURCES
     src/uvhttp_static.c
     src/uvhttp_async_file.c
     src/uvhttp_validation.c
+    src/uvhttp_cors_middleware.c
 )
 
 if(BUILD_WITH_WEBSOCKET)
@@ -124,6 +125,8 @@ set(HEADERS
     include/uvhttp_utils.h
     include/uvhttp_validation.h
     include/uvhttp_websocket_middleware.h
+    include/uvhttp_cors_middleware.h
+    include/uvhttp_simple_middleware.h
 )
 
 if(BUILD_WITH_WEBSOCKET)

@@ -271,6 +271,41 @@ static int on_message_complete(llhttp_t* parser) {
     /* 重置读缓冲区使用量，为下一个请求做准备 */
     conn->read_buffer_used = 0;
     
+    /* 限流检查 - 在中间件之前执行 */
+    if (conn->server && conn->server->rate_limit_enabled) {
+        /* 检查客户端IP是否在白名单中 */
+        int is_whitelisted = 0;
+        if (conn->server->rate_limit_whitelist && conn->server->rate_limit_whitelist_count > 0) {
+            /* 获取客户端IP地址 */
+            struct sockaddr_in client_addr;
+            int addr_len = sizeof(client_addr);
+            if (uv_tcp_getpeername(&conn->tcp_handle, (struct sockaddr*)&client_addr, &addr_len) == 0) {
+                char client_ip[INET_ADDRSTRLEN];
+                uv_inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, sizeof(client_ip));
+                
+                /* 检查是否在白名单中 */
+                for (size_t i = 0; i < conn->server->rate_limit_whitelist_count; i++) {
+                    if (conn->server->rate_limit_whitelist[i] && 
+                        strcmp(client_ip, (char*)conn->server->rate_limit_whitelist[i]) == 0) {
+                        is_whitelisted = 1;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        /* 如果不在白名单中，进行限流检查 */
+        if (!is_whitelisted && uvhttp_server_check_rate_limit(conn->server) != UVHTTP_OK) {
+            /* 超过限流，返回429 Too Many Requests */
+            uvhttp_response_set_status(conn->response, 429);
+            uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
+            uvhttp_response_set_header(conn->response, "Retry-After", "60");
+            uvhttp_response_set_body(conn->response, "Too Many Requests", 18);
+            uvhttp_response_send(conn->response);
+            return 0;
+        }
+    }
+    
     /* 检查是否为WebSocket握手请求 */
     if (is_websocket_handshake(conn->request)) {
         // WebSocket握手需要特殊处理
