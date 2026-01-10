@@ -7,6 +7,9 @@
 #include "uvhttp_config.h"
 #include "uvhttp_allocator.h"
 
+/* 包含 uthash 头文件用于哈希表实现 */
+#include "uthash.h"
+
 /* 白名单哈希表项 */
 struct whitelist_item {
     char ip[INET_ADDRSTRLEN];
