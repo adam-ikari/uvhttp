@@ -657,7 +657,9 @@ int uvhttp_static_resolve_safe_path(const char* root_dir,
 uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                                              void* request,
                                              void* response) {
-    if (!ctx || !request || !response) return -1;
+    if (!ctx || !request || !response) {
+        return -1;
+    }
     
     const char* url = uvhttp_request_get_url(request);
     if (!url) {

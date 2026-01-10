@@ -2,6 +2,8 @@
 #include "uvhttp_allocator.h"
 #include "uvhttp_utils.h"
 #include "uvhttp_constants.h"
+#include "uvhttp_static.h"
+#include "uvhttp_connection.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -400,6 +402,52 @@ static int match_route_node(uvhttp_route_node_t* node,
     return -1;
 }
 
+/* 静态文件请求处理器包装函数 */
+static int static_file_handler_wrapper(uvhttp_request_t* request, uvhttp_response_t* response) {
+    /* 获取连接 */
+    uv_tcp_t* client = request->client;
+    if (!client) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_header(response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(response, "Internal Server Error", 21);
+        uvhttp_response_send(response);
+        return -1;
+    }
+    
+    /* 从 client 获取 connection */
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)uv_handle_get_data((uv_handle_t*)client);
+    if (!conn || !conn->server || !conn->server->router) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_header(response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(response, "Internal Server Error", 21);
+        uvhttp_response_send(response);
+        return -1;
+    }
+    
+    /* 获取路由器 */
+    uvhttp_router_t* router = conn->server->router;
+    
+    /* 调用静态文件处理函数 */
+    if (router->static_context) {
+        uvhttp_result_t result = uvhttp_static_handle_request(
+            (uvhttp_static_context_t*)router->static_context,
+            request,
+            response
+        );
+        
+        if (result == UVHTTP_OK) {
+            return 0;
+        }
+    }
+    
+    /* 静态文件服务失败，返回 404 */
+    uvhttp_response_set_status(response, 404);
+    uvhttp_response_set_header(response, "Content-Type", "text/plain");
+    uvhttp_response_set_body(response, "Not Found", 9);
+    uvhttp_response_send(response);
+    return -1;
+}
+
 uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* router, 
                                                    const char* path,
                                                    const char* method) {
@@ -434,7 +482,7 @@ uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* route
         size_t prefix_len = strlen(router->static_prefix);
         if (strncmp(path, router->static_prefix, prefix_len) == 0) {
             // 匹配静态路由，返回静态文件处理器
-            return (uvhttp_request_handler_t)router->static_context;
+            return static_file_handler_wrapper;
         }
     }
     
@@ -452,7 +500,7 @@ uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* route
     
     // 如果没有匹配的路由，检查回退路由
     if (router->fallback_context) {
-        return (uvhttp_request_handler_t)router->fallback_context;
+        return static_file_handler_wrapper;
     }
     
     return NULL;
