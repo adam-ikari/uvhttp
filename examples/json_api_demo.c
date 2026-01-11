@@ -17,6 +17,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdbool.h>
+#include "uvhttp_allocator.h"
 
 static uvhttp_server_t* g_server = NULL;
 

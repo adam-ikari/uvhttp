@@ -10,6 +10,7 @@
  */
 
 #include "../../include/uvhttp.h"
+#include "../../include/uvhttp_allocator.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -32,7 +33,7 @@ typedef struct {
  * @brief 创建应用上下文
  */
 app_context_t* app_context_create(uv_loop_t* loop, const char* name) {
-    app_context_t* ctx = (app_context_t*)malloc(sizeof(app_context_t));
+    app_context_t* ctx = (app_context_t*)UVHTTP_MALLOC(sizeof(app_context_t));
     if (!ctx) {
         fprintf(stderr, "错误: 无法分配内存\n");
         return NULL;
@@ -50,7 +51,7 @@ app_context_t* app_context_create(uv_loop_t* loop, const char* name) {
     ctx->server = uvhttp_server_new(loop);
     if (!ctx->server) {
         fprintf(stderr, "错误: 无法创建服务器\n");
-        free(ctx);
+        UVHTTP_FREE(ctx);
         return NULL;
     }
     
@@ -59,7 +60,7 @@ app_context_t* app_context_create(uv_loop_t* loop, const char* name) {
     if (!ctx->router) {
         fprintf(stderr, "错误: 无法创建路由器\n");
         uvhttp_server_free(ctx->server);
-        free(ctx);
+        UVHTTP_FREE(ctx);
         return NULL;
     }
     
