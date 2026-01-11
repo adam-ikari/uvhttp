@@ -7,6 +7,7 @@
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_server.h"
+#include "uvhttp_mempool.h"
 #include "llhttp.h"
 
 #ifdef __cplusplus
@@ -71,6 +72,9 @@ struct uvhttp_connection {
     
     // 用于keep-alive连接重用
     int need_restart_read;              // 标记是否需要重启读取
+    
+    // 内存池（用于请求/响应的临时内存分配）
+    uvhttp_mempool_t* mempool;
     
     // 错误处理
     int last_error;

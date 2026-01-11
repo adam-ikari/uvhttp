@@ -15,31 +15,38 @@ void test_static_get_mime_type(void) {
     result = uvhttp_static_get_mime_type("test.html", mime_type, sizeof(mime_type));
     assert(result == 0);
     assert(strstr(mime_type, "text/html") != NULL);
+    (void)result;
 
     result = uvhttp_static_get_mime_type("test.css", mime_type, sizeof(mime_type));
     assert(result == 0);
     assert(strstr(mime_type, "text/css") != NULL);
+    (void)result;
 
     result = uvhttp_static_get_mime_type("test.js", mime_type, sizeof(mime_type));
     assert(result == 0);
     assert(strstr(mime_type, "application/javascript") != NULL);
+    (void)result;
 
     result = uvhttp_static_get_mime_type("test.json", mime_type, sizeof(mime_type));
     assert(result == 0);
     assert(strstr(mime_type, "application/json") != NULL);
+    (void)result;
 
     result = uvhttp_static_get_mime_type("test.png", mime_type, sizeof(mime_type));
     assert(result == 0);
     assert(strstr(mime_type, "image/png") != NULL);
+    (void)result;
 
     result = uvhttp_static_get_mime_type("test.jpg", mime_type, sizeof(mime_type));
     assert(result == 0);
     assert(strstr(mime_type, "image/jpeg") != NULL);
+    (void)result;
 
     /* 测试未知文件类型 */
     result = uvhttp_static_get_mime_type("test.unknown", mime_type, sizeof(mime_type));
     assert(result == 0);
     assert(strstr(mime_type, "application/octet-stream") != NULL);
+    (void)result;
 
     printf("test_static_get_mime_type: PASSED\n");
 }
@@ -51,9 +58,11 @@ void test_static_get_mime_type_null(void) {
 
     result = uvhttp_static_get_mime_type(NULL, mime_type, sizeof(mime_type));
     assert(result != 0);
+    (void)result;
 
     result = uvhttp_static_get_mime_type("test.html", NULL, sizeof(mime_type));
     assert(result != 0);
+    (void)result;
 
     printf("test_static_get_mime_type_null: PASSED\n");
 }
@@ -66,6 +75,7 @@ void test_static_generate_etag(void) {
     result = uvhttp_static_generate_etag("test.html", 0, 100, etag, sizeof(etag));
     assert(result == UVHTTP_OK);
     assert(strlen(etag) > 0);
+    (void)result;
 
     printf("test_static_generate_etag: PASSED\n");
 }
@@ -77,9 +87,11 @@ void test_static_generate_etag_null(void) {
 
     result = uvhttp_static_generate_etag(NULL, 0, 0, etag, sizeof(etag));
     assert(result != UVHTTP_OK);
+    (void)result;
 
     result = uvhttp_static_generate_etag("test.html", 0, 0, NULL, sizeof(etag));
     assert(result != UVHTTP_OK);
+    (void)result;
 
     printf("test_static_generate_etag_null: PASSED\n");
 }
@@ -101,6 +113,7 @@ void test_static_free_null(void) {
 void test_static_set_response_headers_null(void) {
     uvhttp_result_t result = uvhttp_static_set_response_headers(NULL, NULL, 0, 0, NULL);
     assert(result != UVHTTP_OK);
+    (void)result;
 
     printf("test_static_set_response_headers_null: PASSED\n");
 }

@@ -6,6 +6,15 @@
 #include "uvhttp_common.h"
 #include "uvhttp_config.h"
 #include "uvhttp_allocator.h"
+
+/* 包含 uthash 头文件用于哈希表实现 */
+#include "uthash.h"
+
+/* 白名单哈希表项 */
+struct whitelist_item {
+    char ip[INET_ADDRSTRLEN];
+    UT_hash_handle hh;
+};
 #include "uvhttp_features.h"
 
 // Forward declarations
@@ -70,6 +79,7 @@ struct uvhttp_server {
     uint64_t rate_limit_window_start_time;            /* 窗口开始时间（毫秒） */
     void** rate_limit_whitelist;                       /* 限流白名单路径数组 */
     size_t rate_limit_whitelist_count;                   /* 白名单路径数量 */
+    struct whitelist_item* rate_limit_whitelist_hash;  /* 白名单哈希表 */
 #endif
 };
 

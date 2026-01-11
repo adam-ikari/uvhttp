@@ -31,6 +31,7 @@ void test_ws_handshake_client_null(void) {
     size_t request_len = sizeof(request);
     int result = uvhttp_ws_handshake_client(NULL, "ws://example.com", "/", request, &request_len);
     assert(result != 0);
+    (void)result;
 
     printf("test_ws_handshake_client_null: PASSED\n");
 }
@@ -41,6 +42,7 @@ void test_ws_handshake_server_null(void) {
     size_t response_len = sizeof(response);
     int result = uvhttp_ws_handshake_server(NULL, "GET /ws HTTP/1.1", 0, response, &response_len);
     assert(result != 0);
+    (void)result;
 
     printf("test_ws_handshake_server_null: PASSED\n");
 }
@@ -49,6 +51,7 @@ void test_ws_handshake_server_null(void) {
 void test_ws_verify_handshake_response_null(void) {
     int result = uvhttp_ws_verify_handshake_response(NULL, NULL, 0);
     assert(result != 0);
+    (void)result;
 
     printf("test_ws_verify_handshake_response_null: PASSED\n");
 }
@@ -58,6 +61,7 @@ void test_ws_recv_frame_null(void) {
     uvhttp_ws_frame_t frame;
     int result = uvhttp_ws_recv_frame(NULL, &frame);
     assert(result != 0);
+    (void)result;
 
     printf("test_ws_recv_frame_null: PASSED\n");
 }
@@ -66,6 +70,7 @@ void test_ws_recv_frame_null(void) {
 void test_ws_send_frame_null(void) {
     int result = uvhttp_ws_send_frame(NULL, NULL, 0, UVHTTP_WS_OPCODE_TEXT);
     assert(result != 0);
+    (void)result;
 
     printf("test_ws_send_frame_null: PASSED\n");
 }
@@ -74,6 +79,7 @@ void test_ws_send_frame_null(void) {
 void test_ws_send_text_null(void) {
     int result = uvhttp_ws_send_text(NULL, NULL, 0);
     assert(result != 0);
+    (void)result;
 
     printf("test_ws_send_text_null: PASSED\n");
 }
@@ -82,6 +88,7 @@ void test_ws_send_text_null(void) {
 void test_ws_send_binary_null(void) {
     int result = uvhttp_ws_send_binary(NULL, NULL, 0);
     assert(result != 0);
+    (void)result;
 
     printf("test_ws_send_binary_null: PASSED\n");
 }
@@ -90,6 +97,7 @@ void test_ws_send_binary_null(void) {
 void test_ws_send_ping_null(void) {
     int result = uvhttp_ws_send_ping(NULL, NULL, 0);
     assert(result != 0);
+    (void)result;
 
     printf("test_ws_send_ping_null: PASSED\n");
 }
@@ -98,6 +106,7 @@ void test_ws_send_ping_null(void) {
 void test_ws_send_pong_null(void) {
     int result = uvhttp_ws_send_pong(NULL, NULL, 0);
     assert(result != 0);
+    (void)result;
 
     printf("test_ws_send_pong_null: PASSED\n");
 }
@@ -112,6 +121,7 @@ void test_ws_get_state_string(void) {
 void test_ws_close_null(void) {
     int result = uvhttp_ws_close(NULL, 1000, "");
     assert(result != 0);
+    (void)result;
 
     printf("test_ws_close_null: PASSED\n");
 }

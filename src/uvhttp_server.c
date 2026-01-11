@@ -299,6 +299,14 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
         server->rate_limit_whitelist_count = 0;
     }
     
+    // 清理白名单哈希表
+    struct whitelist_item *current, *tmp;
+    HASH_ITER(hh, server->rate_limit_whitelist_hash, current, tmp) {
+        HASH_DEL(server->rate_limit_whitelist_hash, current);
+        uvhttp_free(current);
+    }
+    server->rate_limit_whitelist_hash = NULL;
+    
     // 限流状态已嵌入到结构体中，无需额外清理
 #endif
     
@@ -324,11 +332,19 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
     struct sockaddr_in addr;
     uv_ip4_addr(host, port, &addr);
 
+    /* Nginx 优化：绑定端口 */
     int ret = uv_tcp_bind(&server->tcp_handle, (const struct sockaddr*)&addr, 0);
     if (ret != 0) {
         UVHTTP_LOG_ERROR("uv_tcp_bind failed: %s\n", uv_strerror(ret));
         return UVHTTP_ERROR_SERVER_LISTEN;
     }
+    
+    /* TCP优化：设置TCP_NODELAY和TCP_KEEPALIVE */
+    int enable = 1;
+    uv_tcp_nodelay(&server->tcp_handle, enable);
+    
+    /* 设置keepalive */
+    uv_tcp_keepalive(&server->tcp_handle, enable, 60);
     
     /* 使用配置系统的backlog设置 */
     const uvhttp_config_t* config = uvhttp_config_get_current();
@@ -671,6 +687,16 @@ static int default_handler(uvhttp_request_t* request, uvhttp_response_t* respons
 
 // 一键启动函数（最简API）
 int uvhttp_serve(const char* host, int port) {
+    // 参数验证
+    if (port < 1 || port > 65535) {
+        fprintf(stderr, "错误: 端口号必须在 1-65535 范围内\n");
+        return -1;
+    }
+    
+    if (!host) {
+        fprintf(stderr, "警告: host 参数为 NULL，使用默认值 0.0.0.0\n");
+    }
+    
     uvhttp_server_builder_t* server = uvhttp_server_create(host, port);
     if (!server) return -1;
     
@@ -853,6 +879,13 @@ uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(
     // 验证IP地址格式（简单验证）
     // TODO: 可以添加更严格的IP地址验证
     
+    // 检查是否已经存在于哈希表中（避免重复添加）
+    struct whitelist_item *existing_item;
+    HASH_FIND_STR(server->rate_limit_whitelist_hash, client_ip, existing_item);
+    if (existing_item) {
+        return UVHTTP_OK;  // 已经存在，无需重复添加
+    }
+    
     // 重新分配白名单数组
     size_t new_count = server->rate_limit_whitelist_count + 1;
     void** new_whitelist = uvhttp_realloc(server->rate_limit_whitelist, 
@@ -879,6 +912,23 @@ uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(
     }
     memcpy(ip_copy, client_ip, ip_len);
     server->rate_limit_whitelist[new_count - 1] = ip_copy;
+    
+    // 添加到哈希表（用于O(1)查找）
+    struct whitelist_item *hash_item = uvhttp_malloc(sizeof(struct whitelist_item));
+    if (!hash_item) {
+        // 回退：清理已分配的IP字符串
+        uvhttp_free(ip_copy);
+        server->rate_limit_whitelist_count = new_count - 1;
+        void** old_whitelist = uvhttp_realloc(server->rate_limit_whitelist, 
+                                             sizeof(void*) * (new_count - 1));
+        if (old_whitelist) {
+            server->rate_limit_whitelist = old_whitelist;
+        }
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    strncpy(hash_item->ip, client_ip, INET_ADDRSTRLEN - 1);
+    hash_item->ip[INET_ADDRSTRLEN - 1] = '\0';
+    HASH_ADD_STR(server->rate_limit_whitelist_hash, ip, hash_item);
     
     return UVHTTP_OK;
 }
@@ -937,3 +987,10 @@ uvhttp_error_t uvhttp_server_reset_rate_limit_client(
     return UVHTTP_OK;
 }
 #endif /* UVHTTP_FEATURE_RATE_LIMIT */
+
+#if !UVHTTP_FEATURE_TLS
+// 空的 TLS 函数定义，用于禁用 TLS 时的链接
+void uvhttp_tls_context_free(void* ctx) {
+    (void)ctx;
+}
+#endif

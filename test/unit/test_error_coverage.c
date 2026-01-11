@@ -11,16 +11,20 @@ void test_error_string(void) {
 
     str = uvhttp_error_string(UVHTTP_OK);
     assert(str != NULL);
+    (void)str;
 
     str = uvhttp_error_string(UVHTTP_ERROR_INVALID_PARAM);
     assert(str != NULL);
+    (void)str;
 
     str = uvhttp_error_string(UVHTTP_ERROR_OUT_OF_MEMORY);
     assert(str != NULL);
+    (void)str;
 
     /* 测试未知错误码 */
     str = uvhttp_error_string((uvhttp_error_t)9999);
     assert(str != NULL);
+    (void)str;
 
     printf("test_error_string: PASSED\n");
 }

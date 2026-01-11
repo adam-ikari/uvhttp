@@ -22,6 +22,7 @@ void test_request_cleanup_null(void) {
 void test_request_get_method_null(void) {
     const char* method = uvhttp_request_get_method(NULL);
     assert(method == NULL);
+    (void)method;
 
     printf("test_request_get_method_null: PASSED\n");
 }
@@ -30,6 +31,7 @@ void test_request_get_method_null(void) {
 void test_request_get_url_null(void) {
     const char* url = uvhttp_request_get_url(NULL);
     assert(url == NULL);
+    (void)url;
 
     printf("test_request_get_url_null: PASSED\n");
 }
@@ -38,6 +40,7 @@ void test_request_get_url_null(void) {
 void test_request_get_path_null(void) {
     const char* path = uvhttp_request_get_path(NULL);
     assert(path == NULL);
+    (void)path;
 
     printf("test_request_get_path_null: PASSED\n");
 }
@@ -46,6 +49,7 @@ void test_request_get_path_null(void) {
 void test_request_get_query_string_null(void) {
     const char* query = uvhttp_request_get_query_string(NULL);
     assert(query == NULL);
+    (void)query;
 
     printf("test_request_get_query_string_null: PASSED\n");
 }
@@ -54,6 +58,7 @@ void test_request_get_query_string_null(void) {
 void test_request_get_query_param_null(void) {
     const char* param = uvhttp_request_get_query_param(NULL, "test");
     assert(param == NULL);
+    (void)param;
 
     printf("test_request_get_query_param_null: PASSED\n");
 }
@@ -62,6 +67,7 @@ void test_request_get_query_param_null(void) {
 void test_request_get_client_ip_null(void) {
     const char* ip = uvhttp_request_get_client_ip(NULL);
     assert(ip == NULL);
+    (void)ip;
 
     printf("test_request_get_client_ip_null: PASSED\n");
 }
@@ -70,6 +76,7 @@ void test_request_get_client_ip_null(void) {
 void test_request_get_header_null(void) {
     const char* header = uvhttp_request_get_header(NULL, "test");
     assert(header == NULL);
+    (void)header;
 
     printf("test_request_get_header_null: PASSED\n");
 }
@@ -78,6 +85,7 @@ void test_request_get_header_null(void) {
 void test_request_get_body_null(void) {
     const char* body = uvhttp_request_get_body(NULL);
     assert(body == NULL);
+    (void)body;
 
     printf("test_request_get_body_null: PASSED\n");
 }
@@ -86,6 +94,7 @@ void test_request_get_body_null(void) {
 void test_request_get_body_length_null(void) {
     size_t len = uvhttp_request_get_body_length(NULL);
     assert(len == 0);
+    (void)len;
 
     printf("test_request_get_body_length_null: PASSED\n");
 }

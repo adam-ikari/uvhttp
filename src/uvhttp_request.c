@@ -8,6 +8,7 @@
 #include "uvhttp_validation.h"
 #include "uvhttp_features.h"
 #include <stdlib.h>
+#include "uthash.h"
 #include <string.h>
 #include <strings.h>
 #include <stdio.h>
@@ -286,12 +287,11 @@ static int on_message_complete(llhttp_t* parser) {
                 uv_inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, sizeof(client_ip));
                 
                 /* 检查是否在白名单中 */
-                for (size_t i = 0; i < conn->server->rate_limit_whitelist_count; i++) {
-                    if (conn->server->rate_limit_whitelist[i] && 
-                        strcmp(client_ip, (char*)conn->server->rate_limit_whitelist[i]) == 0) {
-                        is_whitelisted = 1;
-                        break;
-                    }
+                /* 使用哈希表优化白名单查找（O(1) 复杂度） */
+                struct whitelist_item *item;
+                HASH_FIND_STR(conn->server->rate_limit_whitelist_hash, client_ip, item);
+                if (item) {
+                    is_whitelisted = 1;
                 }
             }
         }
