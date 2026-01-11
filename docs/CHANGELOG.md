@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-01-11
+
+### Added
+- **分支管理规范**: 完整的Git Flow分支管理策略和开发规范
+- **性能对比测试**: Nginx vs UVHTTP性能对比综合报告
+- **性能测试标准**: 详细的性能测试标准文档
+- **服务器配置指南**: 服务器配置性能优化指南
+- **限流功能**: 完整的限流功能实现和API文档
+- **性能测试工具**: 全面的性能测试框架和工具
+
+### Changed
+- **限流API重构**: 将限流功能从中间件改为服务器核心功能
+- **中间件系统**: 实现零开销中间件系统
+- **静态文件服务**: 静态文件中间件解耦，性能优化
+- **错误码机制**: 增强错误码机制和错误处理
+- **WebSocket功能**: 完善WebSocket功能，添加路由支持
+
+### Fixed
+- **白名单内存泄漏**: 修复白名单哈希表内存泄漏和重复添加问题
+- **NULL参数处理**: 修复uvhttp_request_get_path的NULL参数处理
+- **测试崩溃**: 修复test_request_null_coverage测试崩溃问题
+- **PR评审问题**: 修复PR评审中发现的关键问题
+
+### Performance
+- **性能优化**: 完成性能优化和代码质量改进
+- **测试覆盖**: 添加全面的限流功能测试框架
+- **API简化**: 简化限流API，移除未使用的算法参数
+
+### Testing
+- **测试通过率**: 所有测试通过 (69/69, 100%)
+- **NULL参数测试**: 完整的NULL参数覆盖测试
+- **性能验证**: 性能基准测试验证通过
+
+### Documentation
+- **开发指南**: 更新开发指南，包含分支管理规范
+- **性能文档**: 添加性能测试标准和配置指南
+- **API文档**: 添加限流功能API文档
+- **测试文档**: 添加性能对比测试报告
+
+### Breaking Changes
+- **限流API变更**: 限流功能从中间件改为服务器核心功能，API有所变化
+
 ## [1.2.0] - 2026-01-07
 
 ### Added

@@ -42,9 +42,9 @@ extern "C" {
 
 /* 版本信息 */
 #define UVHTTP_VERSION_MAJOR 1
-#define UVHTTP_VERSION_MINOR 2
+#define UVHTTP_VERSION_MINOR 3
 #define UVHTTP_VERSION_PATCH 0
-#define UVHTTP_VERSION_STRING "1.2.0"
+#define UVHTTP_VERSION_STRING "1.3.0"
 
 /* API使用说明：
  * 
