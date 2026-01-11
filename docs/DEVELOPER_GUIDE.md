@@ -624,6 +624,104 @@ git stash pop
 
 ## 贡献指南
 
+## 长期目标
+
+### 云原生支持
+
+#### 健康检查
+```c
+// 添加健康检查端点
+void uvhttp_server_set_health_check(uvhttp_server_t* server, 
+                                     uvhttp_health_check_fn fn);
+```
+
+#### 指标导出
+```c
+// 支持 Prometheus 指标
+void uvhttp_metrics_export_prometheus(uvhttp_server_t* server, 
+                                       char* buffer, size_t len);
+```
+
+#### 配置管理
+```c
+// 支持环境变量和 ConfigMap
+void uvhttp_config_load_from_env(uvhttp_config_t* config);
+void uvhttp_config_load_from_k8s(uvhttp_config_t* config);
+```
+
+### WebAssembly 支持
+
+#### wasilibuv 集成
+- 使用 wasilibuv 替代 libuv 支持 WASM 编译
+- 保持 API 兼容性
+
+#### WASM 编译配置
+```cmake
+# CMakeLists.txt
+option(BUILD_WASM "Build for WebAssembly" OFF)
+
+if(BUILD_WASM)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s WASM=1")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s EXPORTED_RUNTIME_METHODS=['cwrap']")
+    add_subdirectory(deps/wasilibuv)
+else()
+    add_subdirectory(deps/libuv)
+endif()
+```
+
+#### WASI 抽象层
+```c
+// 添加 WASI 抽象层
+#ifdef UVHTTP_WASI
+    #include <wasi/libc.h>
+#else
+    #include <unistd.h>
+#endif
+```
+
+#### JavaScript 绑定
+```javascript
+// JavaScript 绑定
+const uvhttp = Module({
+    uvhttp_server_new: cwrap('uvhttp_server_new', 'number', []),
+    uvhttp_server_listen: cwrap('uvhttp_server_listen', 'number', ['number', 'string', 'number'])
+});
+```
+
+### 边缘计算优化
+
+#### 冷启动优化
+- 减少初始化代码
+- 延迟加载非必要模块
+- 优化内存分配
+
+#### 内存优化
+- 降低静态内存占用
+- 优化内存池管理
+- 添加内存限制配置
+
+#### 离线模式
+- 支持缓存模式
+- 支持本地存储
+- 优化网络重试
+
+### 性能优化
+
+#### 缩小与 Nginx 的性能差距
+- 优化事件循环
+- 优化网络 I/O
+- 优化内存拷贝
+
+#### 中等文件传输优化
+- 修复超时问题
+- 优化缓冲区管理
+- 添加流式传输
+
+#### 连接池
+- 添加连接池支持
+- 优化连接复用
+- 添加连接限制
+
 ## 许可证
 
 MIT License - 详见 LICENSE 文件

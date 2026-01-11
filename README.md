@@ -67,3 +67,32 @@ MIT License
 
 - 项目主页: https://github.com/adam-ikari/uvhttp
 - 问题反馈: https://github.com/adam-ikari/uvhttp/issues
+
+## 🎯 长期目标
+
+### 云原生支持
+- [ ] 添加健康检查端点
+- [ ] 添加 Prometheus 指标导出
+- [ ] 添加 Kubernetes ConfigMap 支持
+- [ ] 添加服务发现集成
+- [ ] 添加分布式追踪支持
+
+### WebAssembly 支持
+- [ ] 集成 wasilibuv 替代 libuv
+- [ ] 添加 WASM 编译配置
+- [ ] 添加 WASI 抽象层
+- [ ] 添加 JavaScript 绑定
+- [ ] 优化 WASM 内存管理
+- [ ] 添加 WASM 性能基准测试
+
+### 边缘计算
+- [ ] 优化冷启动时间
+- [ ] 降低内存占用
+- [ ] 添加离线模式支持
+- [ ] 优化网络传输
+
+### 性能优化
+- [ ] 缩小与 Nginx 的性能差距
+- [ ] 优化中等文件传输性能
+- [ ] 添加连接池支持
+- [ ] 优化零拷贝传输
