@@ -44,7 +44,7 @@ extern "C" {
 #define UVHTTP_VERSION_MAJOR 1
 #define UVHTTP_VERSION_MINOR 3
 #define UVHTTP_VERSION_PATCH 0
-#define UVHTTP_VERSION_STRING "1.3.0"
+#define UVHTTP_VERSION_STRING "1.4.0"
 
 /* API使用说明：
  * 
