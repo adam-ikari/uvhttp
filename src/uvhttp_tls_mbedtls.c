@@ -3,6 +3,7 @@
  */
 
 #include "uvhttp_tls.h"
+#include "uvhttp_allocator.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -143,7 +144,7 @@ void uvhttp_tls_context_free(uvhttp_tls_context_t* ctx) {
     mbedtls_entropy_free(&ctx->entropy);
     mbedtls_ctr_drbg_free(&ctx->ctr_drbg);
     
-    free(ctx);
+    UVHTTP_FREE(ctx);
 }
 
 // 证书配置
@@ -290,7 +291,7 @@ mbedtls_ssl_context* uvhttp_tls_create_ssl(uvhttp_tls_context_t* ctx) {
     int ret = mbedtls_ssl_setup(ssl, &ctx->conf);
     if (ret != 0) {
         mbedtls_ssl_free(ssl);
-        free(ssl);
+        UVHTTP_FREE(ssl);
         return NULL;
     }
     

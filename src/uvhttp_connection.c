@@ -6,6 +6,7 @@
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_error_helpers.h"
+#include "uvhttp_error_handler.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -174,6 +175,7 @@ int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     
     /* 重新初始化请求对象 */
     if (uvhttp_request_init(conn->request, &conn->tcp_handle) != 0) {
+        UVHTTP_LOG_ERROR("Failed to reinitialize request object during connection restart\n");
         return UVHTTP_ERROR_REQUEST_INIT;
     }
 
@@ -188,6 +190,7 @@ int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     
     /* 重新初始化响应对象 */
     if (uvhttp_response_init(conn->response, &conn->tcp_handle) != 0) {
+        UVHTTP_LOG_ERROR("Failed to reinitialize response object during connection restart\n");
         return UVHTTP_ERROR_RESPONSE_INIT;
     }
     
@@ -203,6 +206,10 @@ int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     /* 重新开始读取以接收新请求 */
     int result = uv_read_start((uv_stream_t*)&conn->tcp_handle, 
                       on_alloc_buffer, on_read);
+    
+    if (result != 0) {
+        UVHTTP_LOG_ERROR("Failed to restart reading on connection: %s\n", uv_strerror(result));
+    }
     
     return result;
 }
@@ -382,6 +389,7 @@ int uvhttp_connection_start(uvhttp_connection_t* conn) {
     
     // 开始HTTP读取 - 完整实现
     if (uv_read_start((uv_stream_t*)&conn->tcp_handle, (uv_alloc_cb)on_alloc_buffer, (uv_read_cb)on_read) != 0) {
+        UVHTTP_LOG_ERROR("Failed to start reading on connection\n");
         uvhttp_connection_close(conn);
         return -1;
     }
@@ -390,6 +398,7 @@ int uvhttp_connection_start(uvhttp_connection_t* conn) {
     // TLS处理
     if (conn->tls_enabled) {
         if (uvhttp_connection_tls_handshake_func(conn) != 0) {
+            UVHTTP_LOG_ERROR("TLS handshake failed\n");
             uvhttp_connection_close(conn);
             return -1;
         }

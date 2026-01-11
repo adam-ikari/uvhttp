@@ -6,27 +6,54 @@
 #include <signal.h>
 #include <stdlib.h>
 
-// Global variables for cleanup
-static uvhttp_server_t* g_server = NULL;
-static uvhttp_router_t* g_router = NULL;
-static uv_loop_t* g_loop = NULL;
+// 应用上下文结构 - 使用循环注入模式
+typedef struct {
+    uvhttp_server_t* server;
+    uvhttp_router_t* router;
+    uvhttp_config_t* config;
+    int request_count;
+} app_context_t;
+
+// 创建应用上下文
+app_context_t* app_context_new(uv_loop_t* loop) {
+    app_context_t* ctx = (app_context_t*)UVHTTP_MALLOC(sizeof(app_context_t));
+    if (!ctx) {
+        return NULL;
+    }
+    memset(ctx, 0, sizeof(app_context_t));
+    return ctx;
+}
+
+// 释放应用上下文
+void app_context_free(app_context_t* ctx) {
+    if (ctx) {
+        if (ctx->server) {
+            uvhttp_server_free(ctx->server);
+            ctx->server = NULL;
+        }
+        // Router is freed by server_free
+        if (ctx->config) {
+            uvhttp_config_free(ctx->config);
+            ctx->config = NULL;
+        }
+        UVHTTP_FREE(ctx);
+    }
+}
 
 // Signal handler for graceful shutdown
 void signal_handler(int sig) {
     printf("\nReceived signal %d, shutting down gracefully...\n", sig);
     
-    if (g_server) {
-        printf("Stopping server...\n");
-        uvhttp_server_stop(g_server);
-        // Note: uvhttp_server_free will also free the router and config, so don't free them separately
-        uvhttp_server_free(g_server);
-        g_server = NULL;
-        g_router = NULL;  // Router is freed by server_free
+    uv_loop_t* loop = uv_default_loop();
+    if (loop && loop->data) {
+        app_context_t* ctx = (app_context_t*)loop->data;
+        if (ctx) {
+            printf("Stopping server...\n");
+            uvhttp_server_stop(ctx->server);
+            app_context_free(ctx);
+            loop->data = NULL;
+        }
     }
-    
-    // Note: Don't close the default loop - it's managed by libuv
-    // Only close loops that we created ourselves
-    g_loop = NULL;
     
     printf("Cleanup completed. Exiting.\n");
     exit(0);
@@ -37,14 +64,22 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         return -1;
     }
     
-    // 获取服务器特定的配置信息
-    const uvhttp_config_t* config = NULL;
-    if (g_server && g_server->config) {
-        config = g_server->config;
-    } else {
-        // 回退到全局配置
-        config = uvhttp_config_get_current();
+    // 从循环获取应用上下文
+    uv_loop_t* loop = uvhttp_request_get_loop(request);
+    app_context_t* ctx = (app_context_t*)loop->data;
+    
+    if (!ctx) {
+        fprintf(stderr, "Error: Application context not found\n");
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_body(response, "Internal Server Error", 21);
+        uvhttp_response_send(response);
+        return -1;
     }
+    
+    ctx->request_count++;
+    
+    // 获取配置信息
+    const uvhttp_config_t* config = ctx->config;
     
     // 创建包含配置信息的响应
     char response_body[512];
@@ -59,7 +94,7 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         "========================\n",
         config ? config->max_connections : 0,
         config ? config->max_requests_per_connection : 0,
-        g_server ? g_server->active_connections : 0,
+        ctx->server ? ctx->server->active_connections : 0,
         config ? config->max_body_size / (1024 * 1024) : 0,
         config ? config->read_buffer_size / 1024 : 0
     );
@@ -73,7 +108,7 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     printf("Request handled: %s %s (Active connections: %zu/%d)\n", 
            uvhttp_method_to_string(request->method), 
            request->url,
-           g_server ? g_server->active_connections : 0,
+           ctx->server ? ctx->server->active_connections : 0,
            config ? config->max_connections : 0);
     
     return 0;
@@ -154,28 +189,45 @@ int main() {
     printf("  Read buffer size: %d bytes\n", config->read_buffer_size);
     
     // 获取默认循环
-    g_loop = uv_default_loop();
-    if (!g_loop) {
+    uv_loop_t* loop = uv_default_loop();
+    if (!loop) {
         fprintf(stderr, "Failed to get default loop\n");
-        uvhttp_config_free(config);
-        return 1;
-    }
-    printf("Default loop obtained: %p\n", (void*)g_loop);
-    
-    // 创建服务器
-    printf("Creating server...\n");
-    g_server = uvhttp_server_new(g_loop);
-    if (!g_server) {
-        fprintf(stderr, "Failed to create server\n");
         if (cleanup_needed) {
             uvhttp_config_free(config);
         }
         return 1;
     }
+    printf("Default loop obtained: %p\n", (void*)loop);
+    
+    // 创建应用上下文
+    printf("Creating application context...\n");
+    app_context_t* ctx = app_context_new(loop);
+    if (!ctx) {
+        fprintf(stderr, "Failed to create application context\n");
+        if (cleanup_needed) {
+            uvhttp_config_free(config);
+        }
+        return 1;
+    }
+    ctx->config = config;
+    printf("Application context created successfully: %p\n", (void*)ctx);
+    
+    // 注入到循环
+    loop->data = ctx;
+    printf("Context injected to loop\n");
+    
+    // 创建服务器
+    printf("Creating server...\n");
+    ctx->server = uvhttp_server_new(loop);
+    if (!ctx->server) {
+        fprintf(stderr, "Failed to create server\n");
+        app_context_free(ctx);
+        return 1;
+    }
     
     // 应用配置到服务器
-    g_server->config = config;
-    printf("Server created successfully: %p\n", (void*)g_server);
+    ctx->server->config = config;
+    printf("Server created successfully: %p\n", (void*)ctx->server);
     printf("Applied configuration with max_connections=%d\n", config->max_connections);
     
     // 设置全局配置（重要：这会消除"Global configuration not initialized"警告）
@@ -184,56 +236,48 @@ int main() {
     
     // 创建路由器
     printf("Creating router...\n");
-    g_router = uvhttp_router_new();
-    if (!g_router) {
+    ctx->router = uvhttp_router_new();
+    if (!ctx->router) {
         fprintf(stderr, "Failed to create router\n");
-        if (g_server) {
-            uvhttp_server_free(g_server);
-            g_server = NULL;
-        }
-        if (cleanup_needed) {
-            uvhttp_config_free(config);
-        }
+        app_context_free(ctx);
         return 1;
     }
-    printf("Router created successfully: %p\n", (void*)g_router);
+    printf("Router created successfully: %p\n", (void*)ctx->router);
     
     // 添加路由
     printf("Adding route...\n");
-    int route_result = uvhttp_router_add_route(g_router, "/", hello_handler);
+    int route_result = uvhttp_router_add_route(ctx->router, "/", hello_handler);
     if (route_result != UVHTTP_OK) {
         fprintf(stderr, "Failed to add route, error: %d\n", route_result);
+        app_context_free(ctx);
         return 1;
     }
     printf("Route added successfully\n");
     
     // 设置路由器到服务器
-    g_server->router = g_router;
+    ctx->server->router = ctx->router;
     printf("Router set to server\n");
     
     // 启动服务器监听
     printf("Starting server listen on port %d...\n", UVHTTP_DEFAULT_PORT);
-    uvhttp_error_t result = uvhttp_server_listen(g_server, UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
+    uvhttp_error_t result = uvhttp_server_listen(ctx->server, UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to start server, error code: %d\n", result);
+        app_context_free(ctx);
         return 1;
     }
     printf("Server listening on http://%s:%d\n", UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
     printf("Server is running! Press Ctrl+C to stop.\n");
     
     // 启动事件循环
-    // Use UV_RUN_ONCE to have more control, or just let it run until stopped
-    uv_run(g_loop, UV_RUN_DEFAULT);
+    uv_run(loop, UV_RUN_DEFAULT);
     printf("Event loop finished\n");
     
-    // 正常退出时的清理 - only if not already cleaned up by signal
-    if (g_server) {
+    // 正常退出时的清理
+    if (loop && loop->data) {
         printf("Performing final cleanup...\n");
-        // Don't call signal_handler again if it already ran (it calls exit)
-        // Instead, just ensure server is NULL to prevent double cleanup
-        uvhttp_server_free(g_server);
-        g_server = NULL;
-        g_router = NULL;  // Router is freed by server_free
+        app_context_free((app_context_t*)loop->data);
+        loop->data = NULL;
     }
     
     return 0;

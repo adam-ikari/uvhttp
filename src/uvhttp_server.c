@@ -277,7 +277,7 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
         while (current) {
             ws_route_entry_t* next = current->next;
             if (current->path) {
-                free(current->path);
+                UVHTTP_FREE(current->path);
             }
             uvhttp_free(current);
             current = next;
@@ -352,6 +352,7 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
     
     ret = uv_listen((uv_stream_t*)&server->tcp_handle, backlog, on_connection);
     if (ret != 0) {
+        UVHTTP_LOG_ERROR("uv_listen failed: %s\n", uv_strerror(ret));
         return UVHTTP_ERROR_SERVER_LISTEN;
     }
     
@@ -478,7 +479,7 @@ static uvhttp_server_builder_t* create_simple_server_internal(const char* host, 
     if (!simple->config) {
         uvhttp_router_free(simple->router);
         uvhttp_server_free(simple->server);
-        free(simple);
+        UVHTTP_FREE(simple);
         return NULL;
     }
     
@@ -489,10 +490,12 @@ static uvhttp_server_builder_t* create_simple_server_internal(const char* host, 
     
     // 启动监听
     if (uvhttp_server_listen(simple->server, host, port) != UVHTTP_OK) {
+        UVHTTP_LOG_ERROR("Failed to start server on %s:%d\n", host, port);
         uvhttp_config_free(simple->config);
-            uvhttp_router_free(simple->router);
-            uvhttp_server_free(simple->server);
-            uvhttp_free(simple);        return NULL;
+        uvhttp_router_free(simple->router);
+        uvhttp_server_free(simple->server);
+        UVHTTP_FREE(simple);
+        return NULL;
     }
     
     return simple;
@@ -625,7 +628,7 @@ void uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
     else if (strstr(file_path, ".jpg") || strstr(file_path, ".jpeg")) content_type = "image/jpeg";
     
     uvhttp_quick_response(response, 200, content_type, content);
-    free(content);
+    UVHTTP_FREE(content);
 }
 
 // 便捷请求参数获取

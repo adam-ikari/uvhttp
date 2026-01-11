@@ -467,9 +467,9 @@ int uvhttp_context_set_logger_provider(uvhttp_context_t* context,
     if (context->logger_provider) {
         uvhttp_test_logger_provider_t* logger = (uvhttp_test_logger_provider_t*)context->logger_provider;
         if (logger->cached_logs) {
-            free(logger->cached_logs);
+            UVHTTP_FREE(logger->cached_logs);
         }
-        free(context->logger_provider);
+        UVHTTP_FREE(context->logger_provider);
     }
     
     context->logger_provider = provider;
@@ -483,7 +483,7 @@ int uvhttp_context_set_config_provider(uvhttp_context_t* context,
     }
     
     if (context->config_provider) {
-        free(context->config_provider);
+        UVHTTP_FREE(context->config_provider);
     }
     
     context->config_provider = provider;

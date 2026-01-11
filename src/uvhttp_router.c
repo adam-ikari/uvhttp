@@ -201,7 +201,7 @@ void uvhttp_router_free(uvhttp_router_t* router) {
             router->array_routes = NULL;
         }
         if (router->static_prefix) {
-            free(router->static_prefix);
+            UVHTTP_FREE(router->static_prefix);
             router->static_prefix = NULL;
         }
         UVHTTP_FREE(router);
