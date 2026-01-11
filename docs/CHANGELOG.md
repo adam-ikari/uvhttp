@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-01-11
+
+### Added
+- **改进的超时检测机制**: 使用 libuv 定时器实现主动超时检测
+- **配置值文档说明**: 添加 sendfile 配置参数选择依据
+- **性能基准测试**: 完整的性能测试数据（15,000+ RPS）
+
+### Changed
+- **sendfile 超时检测**: 从被动检测改为主动检测
+- **示例程序内存管理**: 统一使用 UVHTTP_MALLOC/UVHTTP_FREE
+- **文档完善**: 添加性能优化章节到 STATIC_FILE_SERVER.md
+
+### Fixed
+- **中等文件传输超时**: 使用分块发送（1MB chunks）
+- **示例程序内存泄漏**: 修复所有示例程序的内存管理不一致问题
+- **超时检测不完整**: 确保网络完全阻塞时也能及时响应
+
+### Performance
+- **性能测试结果**: 
+  - 主页: 15,967 RPS (79.8% 目标)
+  - 中等文件: 14,285 RPS (71.4% 目标)
+  - 大文件: 15,480 RPS (77.4% 目标)
+  - 平均延迟: 3-6ms
+- **分块传输影响**: 性能影响 < 1%
+
+### Testing
+- **测试通过率**: 100% (所有现有测试)
+- **性能测试**: wrk 测试全部通过
+- **代码质量**: 零编译警告
+
+## [1.3.2] - 2026-01-11
+
+### Added
+- **sendfile 超时测试**: test_sendfile_timeout.c 测试用例
+
+### Fixed
+- **中等文件传输超时**: 使用分块发送（每次1MB）
+- **超时检测**: 添加30秒超时检测
+- **错误处理**: 改进错误处理，添加重试机制（最多3次）
+
+### Testing
+- **测试通过率**: 100% (10/10)
+- **测试覆盖**: 中等文件、边界情况、分类测试
+
+## [1.3.1] - 2026-01-11
+
+### Added
+- **分支管理规范**: 完整的Git Flow分支管理策略
+- **Linux 内核开发节奏**: 持续开发-快速修复-稳定发布
+
+### Changed
+- **开发流程**: 采用 Git Flow 分支管理策略
+
 ## [1.3.0] - 2026-01-11
 
 ### Added
