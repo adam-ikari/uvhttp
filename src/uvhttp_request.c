@@ -484,7 +484,10 @@ size_t uvhttp_request_get_body_length(uvhttp_request_t* request) {
 }
 
 const char* uvhttp_request_get_path(uvhttp_request_t* request) {
-    if (!request || !request->url) {
+    if (!request) {
+        return NULL;
+    }
+    if (!request->url) {
         return "/";
     }
     

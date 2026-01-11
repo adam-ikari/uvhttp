@@ -282,35 +282,347 @@ A: 使用valgrind检测内存泄漏：
 valgrind --leak-check=full --show-leak-kinds=all ./your_server
 ```
 
-## 贡献指南
+## 分支管理规范
+
+### 分支策略
+
+UVHTTP 采用 Git Flow 分支管理策略，确保代码质量和开发效率。
+
+#### 主要分支
+
+| 分支名称 | 用途 | 保护状态 |
+|---------|------|----------|
+| `main` | 生产环境代码，始终保持可发布状态 | ✅ 受保护 |
+| `develop` | 开发主分支，包含最新的开发功能 | ✅ 受保护 |
+
+#### 辅助分支
+
+| 分支类型 | 命名规范 | 用途 | 合并目标 |
+|---------|---------|------|----------|
+| 功能分支 | `feature/功能名称` | 开发新功能 | `develop` |
+| 修复分支 | `fix/问题描述` | 修复生产问题 | `main` 和 `develop` |
+| 重构分支 | `refactor/描述` | 代码重构 | `develop` |
+| 发布分支 | `release/v版本号` | 准备发布 | `main` 和 `develop` |
+| 热修复分支 | `hotfix/问题描述` | 紧急修复生产问题 | `main` 和 `develop` |
+
+### 分支命名规范
+
+#### 功能分支
+```
+feature/功能名称-简要描述
+feature/websocket-support
+feature/static-file-optimization
+```
+
+#### 修复分支
+```
+fix/问题描述
+fix/memory-leak-in-connection
+fix/rate-limit-bug
+```
+
+#### 重构分支
+```
+refactor/模块名称-重构内容
+refactor/router-performance
+refactor/memory-management
+```
+
+#### 发布分支
+```
+release/v1.2.0
+release/v2.0.0-beta
+```
+
+#### 热修复分支
+```
+hotfix/关键问题描述
+hotfix/crash-in-server
+hotfix/security-vulnerability
+```
+
+### 工作流程
+
+#### 1. 开发新功能
+
+```bash
+# 从 develop 创建功能分支
+git checkout develop
+git pull origin develop
+git checkout -b feature/new-feature-name
+
+# 开发和提交
+git add .
+git commit -m "feat: 添加新功能描述"
+
+# 推送到远程
+git push origin feature/new-feature-name
+
+# 创建 Pull Request 到 develop
+```
+
+#### 2. 修复生产问题
+
+```bash
+# 从 main 创建修复分支
+git checkout main
+git pull origin main
+git checkout -b fix/critical-bug-description
+
+# 修复和测试
+# ... 修复代码 ...
+git add .
+git commit -m "fix: 修复关键问题"
+
+# 推送并创建 PR 到 main
+git push origin fix/critical-bug-description
+
+# 合并到 main 后，也要合并到 develop
+git checkout main
+git merge fix/critical-bug-description
+git checkout develop
+git merge main
+```
+
+#### 3. 准备发布
+
+```bash
+# 从 develop 创建发布分支
+git checkout develop
+git pull origin develop
+git checkout -b release/v1.2.0
+
+# 更新版本号和 CHANGELOG
+# ... 更新文件 ...
+git add .
+git commit -m "chore: 准备 v1.2.0 发布"
+
+# 推送并创建 PR 到 main
+git push origin release/v1.2.0
+
+# 合并到 main 后打标签
+git checkout main
+git merge release/v1.2.0
+git tag -a v1.2.0 -m "Release v1.2.0"
+git push origin v1.2.0
+
+# 合并回 develop
+git checkout develop
+git merge release/v1.2.0
+```
+
+#### 4. 紧急热修复
+
+```bash
+# 从 main 创建热修复分支
+git checkout main
+git pull origin main
+git checkout -b hotfix/urgent-fix
+
+# 快速修复
+# ... 修复代码 ...
+git add .
+git commit -m "hotfix: 紧急修复严重问题"
+
+# 推送并创建 PR 到 main
+git push origin hotfix/urgent-fix
+
+# 合并到 main 后打标签
+git checkout main
+git merge hotfix/urgent-fix
+git tag -a v1.2.1 -m "Hotfix v1.2.1"
+git push origin v1.2.1
+
+# 合并回 develop
+git checkout develop
+git merge hotfix/urgent-fix
+```
+
+### 分支保护规则
+
+#### main 分支
+- ✅ 需要至少 1 个审查批准
+- ✅ 需要通过所有 CI 检查
+- ✅ 禁止直接推送
+- ✅ 要求分支是最新的
+
+#### develop 分支
+- ✅ 需要至少 1 个审查批准
+- ✅ 需要通过所有 CI 检查
+- ✅ 禁止直接推送
+- ✅ 要求分支是最新的
 
 ### 提交规范
+
+#### 提交信息格式
 
 ```
 类型(范围): 简短描述
 
-详细描述
+详细描述（可选）
 
 相关问题: #123
 ```
 
-**类型**: feat, fix, docs, style, refactor, test, chore
+#### 提交类型
 
-### 代码审查
+| 类型 | 说明 | 示例 |
+|-----|------|------|
+| `feat` | 新功能 | `feat(router): 添加正则表达式路由支持` |
+| `fix` | 修复 bug | `fix(connection): 修复内存泄漏问题` |
+| `docs` | 文档更新 | `docs(api): 更新服务器 API 文档` |
+| `style` | 代码格式 | `style: 统一代码缩进` |
+| `refactor` | 重构 | `refactor(memory): 优化内存分配策略` |
+| `test` | 测试相关 | `test(router): 添加路由测试用例` |
+| `chore` | 构建/工具 | `chore(deps): 更新 libuv 版本` |
+| `perf` | 性能优化 | `perf(server): 优化事件循环性能` |
 
-- [ ] 代码符合项目规范
-- [ ] 错误处理完整
-- [ ] 内存管理安全
-- [ ] 测试覆盖充分
-- [ ] 文档更新及时
+#### 提交范围
+
+常用范围：`server`, `router`, `connection`, `request`, `response`, `tls`, `websocket`, `static`, `config`, `test`, `docs`, `build`
+
+#### 提交示例
+
+```
+feat(router): 添加正则表达式路由支持
+
+- 实现基于 PCRE 的正则表达式匹配
+- 支持捕获组和命名组
+- 添加相关测试用例
+
+Closes #123
+```
+
+```
+fix(connection): 修复内存泄漏问题
+
+修复连接关闭时未释放请求对象导致的内存泄漏。
+使用 valgrind 验证修复效果。
+
+Fixes #456
+```
+
+### 代码审查清单
+
+在提交 Pull Request 前，请确保：
+
+- [ ] 代码符合项目代码规范
+- [ ] 所有错误处理完整
+- [ ] 内存管理安全，无泄漏
+- [ ] 测试覆盖充分（新功能 > 80%）
+- [ ] 文档已更新（API 变更）
+- [ ] 提交信息符合规范
+- [ ] 所有 CI 检查通过
+- [ ] 性能基准测试通过（如有影响）
 
 ### 发布流程
 
-1. 更新版本号
-2. 更新CHANGELOG
-3. 所有测试通过
-4. 性能基准测试通过
-5. 创建Git标签
+1. **准备发布**
+   - 创建发布分支 `release/vX.Y.Z`
+   - 更新版本号（`include/uvhttp_version.h`）
+   - 更新 CHANGELOG.md
+   - 运行完整测试套件
+
+2. **合并到 main**
+   - 创建 Pull Request 到 main
+   - 通过代码审查
+   - 合并到 main
+
+3. **打标签**
+   ```bash
+   git tag -a vX.Y.Z -m "Release vX.Y.Z"
+   git push origin vX.Y.Z
+   ```
+
+4. **合并回 develop**
+   ```bash
+   git checkout develop
+   git merge release/vX.Y.Z
+   ```
+
+5. **删除发布分支**
+   ```bash
+   git branch -d release/vX.Y.Z
+   ```
+
+### 分支清理
+
+定期清理已合并的分支：
+
+```bash
+# 查看已合并的本地分支
+git branch --merged
+
+# 删除已合并的本地分支
+git branch -d feature/old-feature
+
+# 查看已合并的远程分支
+git branch -r --merged
+
+# 删除已合并的远程分支
+git push origin --delete feature/old-feature
+```
+
+### 最佳实践
+
+1. **保持分支简短**
+   - 功能分支应在 1-2 周内完成
+   - 避免长期运行的分支
+
+2. **频繁提交**
+   - 每完成一个小功能就提交
+   - 保持提交历史清晰
+
+3. **及时同步**
+   - 定期从主分支拉取更新
+   - 解决冲突时尽早处理
+
+4. **清晰的提交信息**
+   - 使用规范的提交格式
+   - 提交信息应说明"为什么"而非"什么"
+
+5. **测试驱动**
+   - 先写测试，再写代码
+   - 确保所有测试通过
+
+### 常见命令速查
+
+```bash
+# 查看所有分支
+git branch -a
+
+# 查看当前分支状态
+git status
+
+# 创建并切换到新分支
+git checkout -b feature/new-feature
+
+# 合并分支（不使用 fast-forward）
+git merge --no-ff feature/new-feature
+
+# 变基分支
+git rebase develop
+
+# 删除本地分支
+git branch -d feature/old-feature
+
+# 删除远程分支
+git push origin --delete feature/old-feature
+
+# 查看分支差异
+git diff develop
+
+# 查看提交历史
+git log --oneline --graph --all
+
+# 暂存当前更改
+git stash
+
+# 恢复暂存的更改
+git stash pop
+```
+
+## 贡献指南
 
 ## 许可证
 

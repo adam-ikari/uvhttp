@@ -1,11 +1,31 @@
 BUILD_DIR ?= build
 BUILD_TYPE ?= Release
-CMAKE_ARGS = -DCMAKE_BUILD_TYPE=$(BUILD_TYPE)
+CMAKE_ARGS = -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON -DBUILD_WITH_TLS=ON
 
-.PHONY: all clean test help cppcheck install coverage coverage-clean examples
+.PHONY: all clean test help cppcheck install coverage coverage-clean examples build build-deps
 
 all: $(BUILD_DIR)/Makefile
 	@$(MAKE) -C $(BUILD_DIR)
+
+build: build-deps all
+	@echo "✅ 构建完成！"
+	@echo "可执行文件位置: $(BUILD_DIR)/dist/bin/"
+
+build-deps:
+	@echo "🔨 检查并编译依赖..."
+	@echo "  - 编译 libuv..."
+	@if [ ! -f "deps/libuv/.libs/libuv.a" ]; then \
+		cd deps/libuv && mkdir -p build && cd build && cmake .. && make -j$$(nproc); \
+	fi
+	@echo "  - 编译 mbedtls..."
+	@if [ ! -f "deps/mbedtls/library/libmbedtls.a" ]; then \
+		cd deps/mbedtls && python3 scripts/config.py set MBEDTLS_X509_USE_C && make -j$$(nproc); \
+	fi
+	@echo "  - 编译 llhttp..."
+	@if [ ! -f "deps/cllhttp/libllhttp.a" ]; then \
+		cd deps/cllhttp && gcc -c llhttp.c -o llhttp.o && ar rcs libllhttp.a llhttp.o; \
+	fi
+	@echo "✅ 依赖编译完成！"
 
 $(BUILD_DIR)/Makefile:
 	@mkdir -p $(BUILD_DIR) && cd $(BUILD_DIR) && cmake $(CMAKE_ARGS) ..
@@ -100,6 +120,8 @@ run-json-api: examples
 help:
 	@echo "UVHTTP 构建系统"
 	@echo "  make                    - 构建项目"
+	@echo "  make build              - 构建项目（包括依赖）"
+	@echo "  make rebuild            - 完全重新构建"
 	@echo "  make clean              - 清理构建"
 	@echo "  make test               - 运行测试"
 	@echo "  make coverage           - 生成覆盖率报告"
@@ -108,3 +130,6 @@ help:
 	@echo "  make examples           - 构建示例"
 	@echo "  make cppcheck           - 代码检查"
 	@echo "  BUILD_DIR=$(BUILD_DIR)  BUILD_TYPE=$(BUILD_TYPE)"
+
+rebuild: clean build
+	@echo "🔄 重新构建完成！"

@@ -1,0 +1,25 @@
+--- CMakeLists.txt
++++ CMakeLists.txt
+@@ -23,9 +25,17 @@ if(ENABLE_DEBUG)
+     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
+ else()
+     # 默认使用安全的优化选项
+-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -march=native -mtune=native")
+-    # 函数内联优化
+-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -finline-functions -finline-limit=1000")
+-    # 循环优化
+-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -funroll-loops")
++    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -pipe")
++    
++    # 可选的激进优化（需要用户明确启用）
++    if(ENABLE_AGGRESSIVE_OPTIMIZATION)
++        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
++        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -finline-functions")
++        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -funroll-loops")
++    endif()
++    
++    # 可选的本地优化（不推荐用于生产）
++    if(ENABLE_NATIVE_OPTIMIZATION)
++        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native -mtune=native")
++    endif()
+ endif()
