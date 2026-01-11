@@ -8,6 +8,7 @@
 void test_tls_init(void) {
     uvhttp_tls_error_t err = uvhttp_tls_init();
     assert(err == UVHTTP_TLS_OK || err == UVHTTP_TLS_ERROR_INIT);
+    (void)err;
 
     printf("test_tls_init: PASSED\n");
 }
@@ -34,6 +35,7 @@ void test_tls_context_free_null(void) {
 void test_tls_context_load_cert_chain_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_load_cert_chain(NULL, NULL);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_load_cert_chain_null: PASSED\n");
 }
@@ -42,6 +44,7 @@ void test_tls_context_load_cert_chain_null(void) {
 void test_tls_context_load_private_key_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_load_private_key(NULL, NULL);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_load_private_key_null: PASSED\n");
 }
@@ -50,6 +53,7 @@ void test_tls_context_load_private_key_null(void) {
 void test_tls_context_load_ca_file_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_load_ca_file(NULL, NULL);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_load_ca_file_null: PASSED\n");
 }
@@ -58,6 +62,7 @@ void test_tls_context_load_ca_file_null(void) {
 void test_tls_context_enable_client_auth_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_enable_client_auth(NULL, 0);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_enable_client_auth_null: PASSED\n");
 }
@@ -66,6 +71,7 @@ void test_tls_context_enable_client_auth_null(void) {
 void test_tls_context_set_verify_depth_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_set_verify_depth(NULL, 0);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_set_verify_depth_null: PASSED\n");
 }
@@ -74,6 +80,7 @@ void test_tls_context_set_verify_depth_null(void) {
 void test_tls_context_set_cipher_suites_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_set_cipher_suites(NULL, NULL);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_set_cipher_suites_null: PASSED\n");
 }
@@ -82,6 +89,7 @@ void test_tls_context_set_cipher_suites_null(void) {
 void test_tls_context_enable_session_tickets_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_enable_session_tickets(NULL, 0);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_enable_session_tickets_null: PASSED\n");
 }
@@ -90,6 +98,7 @@ void test_tls_context_enable_session_tickets_null(void) {
 void test_tls_context_set_session_cache_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_set_session_cache(NULL, 0);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_set_session_cache_null: PASSED\n");
 }
@@ -105,6 +114,7 @@ void test_tls_context_enable_ocsp_stapling_null(void) {
 void test_tls_context_set_dh_parameters_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_set_dh_parameters(NULL, NULL);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_set_dh_parameters_null: PASSED\n");
 }
@@ -113,6 +123,7 @@ void test_tls_context_set_dh_parameters_null(void) {
 void test_tls_setup_ssl_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_setup_ssl(NULL, -1);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_setup_ssl_null: PASSED\n");
 }
@@ -121,6 +132,7 @@ void test_tls_setup_ssl_null(void) {
 void test_tls_handshake_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_handshake(NULL);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_handshake_null: PASSED\n");
 }
@@ -130,6 +142,7 @@ void test_tls_read_null(void) {
     char buf[1024];
     uvhttp_tls_error_t err = uvhttp_tls_read(NULL, buf, sizeof(buf));
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_read_null: PASSED\n");
 }
@@ -139,6 +152,7 @@ void test_tls_write_null(void) {
     const char* data = "test";
     uvhttp_tls_error_t err = uvhttp_tls_write(NULL, data, 4);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_write_null: PASSED\n");
 }
@@ -147,6 +161,7 @@ void test_tls_write_null(void) {
 void test_tls_context_enable_crl_checking_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_enable_crl_checking(NULL, 0);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_enable_crl_checking_null: PASSED\n");
 }
@@ -155,6 +170,7 @@ void test_tls_context_enable_crl_checking_null(void) {
 void test_tls_load_crl_file_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_load_crl_file(NULL, NULL);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_load_crl_file_null: PASSED\n");
 }
@@ -165,6 +181,7 @@ void test_tls_get_ocsp_response_null(void) {
     size_t response_len = 0;
     uvhttp_tls_error_t err = uvhttp_tls_get_ocsp_response(NULL, &ocsp_response, &response_len);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_get_ocsp_response_null: PASSED\n");
 }
@@ -173,6 +190,7 @@ void test_tls_get_ocsp_response_null(void) {
 void test_tls_verify_ocsp_response_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_verify_ocsp_response(NULL, NULL, 0);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_verify_ocsp_response_null: PASSED\n");
 }
@@ -181,6 +199,7 @@ void test_tls_verify_ocsp_response_null(void) {
 void test_tls_context_enable_tls13_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_enable_tls13(NULL, 0);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_enable_tls13_null: PASSED\n");
 }
@@ -196,6 +215,7 @@ void test_tls_context_set_tls13_cipher_suites_null(void) {
 void test_tls_context_enable_early_data_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_enable_early_data(NULL, 0);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_enable_early_data_null: PASSED\n");
 }
@@ -204,6 +224,7 @@ void test_tls_context_enable_early_data_null(void) {
 void test_tls_context_set_ticket_key_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_set_ticket_key(NULL, NULL, 0);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_set_ticket_key_null: PASSED\n");
 }
@@ -212,6 +233,7 @@ void test_tls_context_set_ticket_key_null(void) {
 void test_tls_context_rotate_ticket_key_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_rotate_ticket_key(NULL);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_rotate_ticket_key_null: PASSED\n");
 }
@@ -220,6 +242,7 @@ void test_tls_context_rotate_ticket_key_null(void) {
 void test_tls_context_set_ticket_lifetime_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_set_ticket_lifetime(NULL, 0);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_set_ticket_lifetime_null: PASSED\n");
 }
@@ -228,6 +251,7 @@ void test_tls_context_set_ticket_lifetime_null(void) {
 void test_tls_verify_cert_chain_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_verify_cert_chain(NULL);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_verify_cert_chain_null: PASSED\n");
 }
@@ -236,6 +260,7 @@ void test_tls_verify_cert_chain_null(void) {
 void test_tls_context_add_extra_chain_cert_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_context_add_extra_chain_cert(NULL, NULL);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_context_add_extra_chain_cert_null: PASSED\n");
 }
@@ -245,6 +270,7 @@ void test_tls_get_cert_chain_null(void) {
     mbedtls_x509_crt* chain = NULL;
     uvhttp_tls_error_t err = uvhttp_tls_get_cert_chain(NULL, &chain);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_get_cert_chain_null: PASSED\n");
 }
@@ -254,6 +280,7 @@ void test_tls_get_stats_null(void) {
     uvhttp_tls_stats_t stats;
     uvhttp_tls_error_t err = uvhttp_tls_get_stats(NULL, &stats);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_get_stats_null: PASSED\n");
 }
@@ -262,6 +289,7 @@ void test_tls_get_stats_null(void) {
 void test_tls_reset_stats_null(void) {
     uvhttp_tls_error_t err = uvhttp_tls_reset_stats(NULL);
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_reset_stats_null: PASSED\n");
 }
@@ -271,6 +299,7 @@ void test_tls_get_connection_info_null(void) {
     char buf[256];
     uvhttp_tls_error_t err = uvhttp_tls_get_connection_info(NULL, buf, sizeof(buf));
     assert(err != UVHTTP_TLS_OK);
+    (void)err;
 
     printf("test_tls_get_connection_info_null: PASSED\n");
 }

@@ -332,34 +332,19 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
     struct sockaddr_in addr;
     uv_ip4_addr(host, port, &addr);
 
-    /* Nginx 优化：在绑定之前设置 TCP 选项 */
-    int enable = 1;
-    
-    /* Nginx 优化：启用 TCP_NODELAY 禁用 Nagle 算法 */
-    int ret = uv_tcp_nodelay(&server->tcp_handle, enable);
-    if (ret != 0) {
-        UVHTTP_LOG_WARN("Failed to set TCP_NODELAY: %s\n", uv_strerror(ret));
-    }
-    
-    /* Nginx 优化：启用 TCP_KEEPALIVE（65秒超时，与 Nginx 一致） */
-    ret = uv_tcp_keepalive(&server->tcp_handle, enable, 65);
-    if (ret != 0) {
-        UVHTTP_LOG_WARN("Failed to set TCP_KEEPALIVE: %s\n", uv_strerror(ret));
-    }
-    
-    /* Nginx 优化：绑定端口（SO_REUSEADDR 需要通过 setsockopt 设置） */
-    ret = uv_tcp_bind(&server->tcp_handle, (const struct sockaddr*)&addr, 0);
+    /* Nginx 优化：绑定端口 */
+    int ret = uv_tcp_bind(&server->tcp_handle, (const struct sockaddr*)&addr, 0);
     if (ret != 0) {
         UVHTTP_LOG_ERROR("uv_tcp_bind failed: %s\n", uv_strerror(ret));
         return UVHTTP_ERROR_SERVER_LISTEN;
     }
     
-    /* Nginx 优化：设置 SO_REUSEADDR 允许快速重用端口 */
-    int reuseaddr = 1;
-    if (setsockopt(server->tcp_handle.io_watcher.fd, SOL_SOCKET, SO_REUSEADDR, 
-                   &reuseaddr, sizeof(reuseaddr)) != 0) {
-        UVHTTP_LOG_WARN("Failed to set SO_REUSEADDR\n");
-    }
+    /* TCP优化：设置TCP_NODELAY和TCP_KEEPALIVE */
+    int enable = 1;
+    uv_tcp_nodelay(&server->tcp_handle, enable);
+    
+    /* 设置keepalive */
+    uv_tcp_keepalive(&server->tcp_handle, enable, 60);
     
     /* 使用配置系统的backlog设置 */
     const uvhttp_config_t* config = uvhttp_config_get_current();

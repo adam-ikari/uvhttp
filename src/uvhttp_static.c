@@ -714,6 +714,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                                       cache_entry->content_length);
             uvhttp_response_set_status(response, 200);
         }
+        uvhttp_response_send(response);
         return 0;
     }
     
@@ -764,7 +765,35 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
         return -1;
     }
     
-    /* 读取文件内容 */
+    /* 对于大文件（> 1MB），使用sendfile零拷贝优化 */
+    if (file_size > 1024 * 1024) {
+        /* 获取MIME类型 */
+        char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
+        uvhttp_static_get_mime_type(safe_path, mime_type, sizeof(mime_type));
+        
+        /* 生成ETag */
+        char etag[UVHTTP_MAX_HEADER_VALUE_SIZE];
+        uvhttp_static_generate_etag(safe_path, last_modified, file_size, 
+                                   etag, sizeof(etag));
+        
+        /* 检查条件请求 */
+        if (uvhttp_static_check_conditional_request(request, etag, last_modified)) {
+            uvhttp_response_set_status(response, 304); /* Not Modified */
+            return 0;
+        }
+        
+        /* 使用sendfile发送 */
+        uvhttp_result_t sendfile_result = uvhttp_static_sendfile(safe_path, response);
+        if (sendfile_result != UVHTTP_OK) {
+            UVHTTP_LOG_ERROR("sendfile failed: %s", uvhttp_error_string(sendfile_result));
+            /* 回退到传统方式 */
+        } else {
+            /* sendfile成功，返回 */
+            return 0;
+        }
+    }
+    
+    /* 读取文件内容（小文件或sendfile失败时的回退） */
     char* file_content = read_file_content(safe_path, &file_size);
     if (!file_content) {
         uvhttp_response_set_status(response, 500); /* Internal Server Error */
@@ -799,6 +828,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                                           last_modified, etag);
     uvhttp_response_set_body(response, file_content, file_size);
     uvhttp_response_set_status(response, 200);
+    uvhttp_response_send(response);
     
     /* 注意：文件内容的内存现在由缓存管理，不要在这里释放 */
     
@@ -1040,6 +1070,451 @@ uvhttp_http_middleware_t* uvhttp_static_middleware_create_with_config(
     uvhttp_http_middleware_set_context(middleware, mw_ctx, static_middleware_cleanup);
 
     return middleware;
+}
+
+/**
+ * 缓存预热：预加载指定的文件到缓存中
+ */
+uvhttp_result_t uvhttp_static_prewarm_cache(uvhttp_static_context_t* ctx,
+                                            const char* file_path) {
+    if (!ctx || !file_path) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    /* 构建完整文件路径 */
+    char full_path[UVHTTP_MAX_FILE_PATH_SIZE];
+    int result = snprintf(full_path, sizeof(full_path), "%s/%s", 
+                         ctx->config.root_directory, file_path);
+    if (result >= (int)sizeof(full_path)) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    /* 检查文件是否存在 */
+    struct stat st;
+    if (stat(full_path, &st) != 0 || S_ISDIR(st.st_mode)) {
+        return UVHTTP_ERROR_NOT_FOUND;
+    }
+    
+    /* 获取文件信息 */
+    size_t file_size = (size_t)st.st_size;
+    time_t last_modified = st.st_mtime;
+    
+    /* 检查文件大小限制 */
+    if (file_size > UVHTTP_STATIC_MAX_FILE_SIZE) {
+        UVHTTP_LOG_WARN("File too large for prewarming: %s (size: %zu)", 
+                        file_path, file_size);
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    /* 读取文件内容 */
+    char* file_content = read_file_content(full_path, &file_size);
+    if (!file_content) {
+        UVHTTP_LOG_ERROR("Failed to read file for prewarming: %s", file_path);
+        return UVHTTP_ERROR_SERVER_INIT;
+    }
+    
+    /* 获取MIME类型 */
+    char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
+    uvhttp_static_get_mime_type(full_path, mime_type, sizeof(mime_type));
+    
+    /* 生成ETag */
+    char etag[UVHTTP_MAX_HEADER_VALUE_SIZE];
+    uvhttp_static_generate_etag(full_path, last_modified, file_size, 
+                               etag, sizeof(etag));
+    
+    /* 添加到缓存 */
+    uvhttp_error_t cache_result = uvhttp_lru_cache_put(ctx->cache, full_path, 
+                                                       file_content, file_size,
+                                                       mime_type, last_modified, etag);
+    if (cache_result != UVHTTP_OK) {
+        UVHTTP_LOG_WARN("Failed to cache file for prewarming: %s", file_path);
+        uvhttp_free(file_content);
+        return cache_result;
+    }
+    
+    UVHTTP_LOG_INFO("Prewarmed cache: %s (size: %zu)", file_path, file_size);
+    return UVHTTP_OK;
+}
+
+/**
+ * 缓存预热：预加载目录中的所有文件
+ */
+int uvhttp_static_prewarm_directory(uvhttp_static_context_t* ctx,
+                                    const char* dir_path,
+                                    int max_files) {
+    if (!ctx || !dir_path) {
+        UVHTTP_LOG_ERROR("Invalid parameters for directory prewarming");
+        return -1;
+    }
+    
+    if (!ctx->cache) {
+        UVHTTP_LOG_ERROR("Cache not initialized for prewarming");
+        return -1;
+    }
+    
+    /* 构建完整目录路径 */
+    char full_dir_path[UVHTTP_MAX_FILE_PATH_SIZE];
+    int result = snprintf(full_dir_path, sizeof(full_dir_path), "%s/%s", 
+                         ctx->config.root_directory, dir_path);
+    if (result >= (int)sizeof(full_dir_path)) {
+        UVHTTP_LOG_ERROR("Directory path too long: %s", dir_path);
+        return -1;
+    }
+    
+    /* 检查目录是否存在 */
+    struct stat st;
+    if (stat(full_dir_path, &st) != 0 || !S_ISDIR(st.st_mode)) {
+        UVHTTP_LOG_ERROR("Directory not found: %s", dir_path);
+        return -1;
+    }
+    
+    /* 打开目录 */
+    DIR* dir = opendir(full_dir_path);
+    if (!dir) {
+        UVHTTP_LOG_ERROR("Failed to open directory: %s (errno: %d)", dir_path, errno);
+        return -1;
+    }
+    
+    int prewarmed_count = 0;
+    struct dirent* entry;
+    
+    while ((entry = readdir(dir)) != NULL) {
+        /* 跳过 . 和 .. */
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+        
+        /* 跳过目录 */
+        if (entry->d_type == DT_DIR) {
+            continue;
+        }
+        
+        /* 检查文件数量限制 */
+        if (max_files > 0 && prewarmed_count >= max_files) {
+            UVHTTP_LOG_INFO("Reached max files limit for prewarming: %d", max_files);
+            break;
+        }
+        
+        /* 构建相对路径 */
+        char relative_path[UVHTTP_MAX_FILE_PATH_SIZE];
+        result = snprintf(relative_path, sizeof(relative_path), "%s/%s", 
+                         dir_path, entry->d_name);
+        if (result < 0 || result >= (int)sizeof(relative_path)) {
+            UVHTTP_LOG_WARN("File path too long, skipping: %s/%s", dir_path, entry->d_name);
+            continue;
+        }
+        
+        /* 预热文件 */
+        if (uvhttp_static_prewarm_cache(ctx, relative_path) == UVHTTP_OK) {
+            prewarmed_count++;
+        } else {
+            UVHTTP_LOG_WARN("Failed to prewarm file: %s", relative_path);
+        }
+    }
+    
+    closedir(dir);
+    
+    UVHTTP_LOG_INFO("Prewarmed directory: %s (%d files)", dir_path, prewarmed_count);
+    return prewarmed_count;
+}
+
+/* ============ 零拷贝优化：sendfile 实现 ============ */
+
+/* sendfile 上下文结构 */
+typedef struct {
+    uv_fs_t open_req;
+    uv_fs_t sendfile_req;
+    uv_fs_t close_req;
+    uv_file in_fd;
+    uvhttp_response_t* response;
+    char* file_path;
+    size_t file_size;
+    size_t bytes_sent;
+    int64_t offset;
+    int completed;
+    uv_os_fd_t out_fd;  /* 输出文件描述符 */
+} sendfile_context_t;
+
+/* sendfile 回调函数 */
+/* 文件关闭回调 */
+static void on_file_close(uv_fs_t* req) {
+    sendfile_context_t* ctx = (sendfile_context_t*)req->data;
+    
+    if (req->result < 0) {
+        UVHTTP_LOG_ERROR("Failed to close file: %s", uv_strerror(req->result));
+    }
+    
+    uv_fs_req_cleanup(req);
+    
+    /* 释放上下文内存 */
+    if (ctx) {
+        if (ctx->file_path) {
+            UVHTTP_FREE(ctx->file_path);
+            ctx->file_path = NULL;
+        }
+        UVHTTP_FREE(ctx);
+    }
+}
+
+/* sendfile 回调函数 */
+static void on_sendfile_complete(uv_fs_t* req) {
+    sendfile_context_t* ctx = (sendfile_context_t*)req->data;
+    
+    if (!ctx) {
+        return;
+    }
+    
+    /* 获取event loop */
+    uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)ctx->response->client);
+    
+    /* 检查是否发送完成或出错 */
+    if (req->result < 0) {
+        UVHTTP_LOG_ERROR("sendfile failed: %s", uv_strerror(req->result));
+        /* 发送失败，关闭文件并清理 */
+        uv_fs_req_cleanup(req);
+        uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
+        return;
+    }
+    
+    ctx->bytes_sent += req->result;
+    ctx->offset += req->result;
+    
+    /* 检查是否发送完成 */
+    if (ctx->offset >= (int64_t)ctx->file_size) {
+        /* 关闭文件 */
+        uv_fs_req_cleanup(req);
+        uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
+        
+        /* 标记完成 */
+        ctx->completed = 1;
+        UVHTTP_LOG_INFO("sendfile completed: %s (%zu bytes)", ctx->file_path, ctx->bytes_sent);
+    } else {
+        /* 继续发送剩余数据 */
+        size_t remaining = ctx->file_size - ctx->offset;
+        size_t chunk_size = (remaining > 1024 * 1024) ? 1024 * 1024 : remaining;  /* 1MB chunks */
+        
+        uv_fs_req_cleanup(req);
+        uv_fs_sendfile(loop, &ctx->sendfile_req, 
+                      ctx->out_fd,
+                      ctx->in_fd, ctx->offset, chunk_size, on_sendfile_complete);
+    }
+}
+
+/* 零拷贝发送静态文件（混合策略） */
+uvhttp_result_t uvhttp_static_sendfile(const char* file_path, void* response) {
+    uvhttp_response_t* resp = (uvhttp_response_t*)response;
+    
+    /* 获取文件大小 */
+    struct stat st;
+    if (stat(file_path, &st) != 0) {
+        UVHTTP_LOG_ERROR("Failed to stat file: %s", file_path);
+        return UVHTTP_ERROR_NOT_FOUND;
+    }
+    
+    size_t file_size = (size_t)st.st_size;
+    
+    /* 策略选择 */
+    if (file_size < 4096) {
+        /* 小文件：使用传统方式（避免 sendfile 开销） */
+        UVHTTP_LOG_DEBUG("Small file detected, using traditional method: %s (%zu bytes)", 
+                        file_path, file_size);
+        
+        /* 读取文件内容 */
+        FILE* fp = fopen(file_path, "rb");
+        if (!fp) {
+            UVHTTP_LOG_ERROR("Failed to open file: %s", file_path);
+            return UVHTTP_ERROR_NOT_FOUND;
+        }
+        
+        char* buffer = (char*)UVHTTP_MALLOC(file_size);
+        if (!buffer) {
+            fclose(fp);
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
+        }
+        
+        size_t bytes_read = fread(buffer, 1, file_size, fp);
+        fclose(fp);
+        
+        if (bytes_read != file_size) {
+            UVHTTP_FREE(buffer);
+            return UVHTTP_ERROR_SERVER_INIT;
+        }
+        
+        /* 设置响应 */
+        char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
+        uvhttp_static_get_mime_type(file_path, mime_type, sizeof(mime_type));
+        
+        uvhttp_response_set_status(resp, 200);
+        uvhttp_response_set_header(resp, "Content-Type", mime_type);
+        uvhttp_response_set_header(resp, "Content-Length", "");
+        uvhttp_response_set_body(resp, buffer, bytes_read);
+        
+        UVHTTP_FREE(buffer);
+        return UVHTTP_OK;
+    }
+    else if (file_size <= 10 * 1024 * 1024) {
+        /* 中等文件：使用异步 sendfile */
+        UVHTTP_LOG_DEBUG("Medium file detected, using async sendfile: %s (%zu bytes)", 
+                        file_path, file_size);
+        
+        /* 获取event loop */
+        uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)resp->client);
+        
+        /* 创建 sendfile 上下文 */
+        sendfile_context_t* ctx = (sendfile_context_t*)UVHTTP_MALLOC(sizeof(sendfile_context_t));
+        if (!ctx) {
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
+        }
+        
+        memset(ctx, 0, sizeof(sendfile_context_t));
+        ctx->response = resp;
+        ctx->file_size = file_size;
+        ctx->offset = 0;
+        ctx->bytes_sent = 0;
+        ctx->completed = 0;
+        
+        /* 分配文件路径内存 */
+        size_t path_len = strlen(file_path);
+        ctx->file_path = (char*)UVHTTP_MALLOC(path_len + 1);
+        if (!ctx->file_path) {
+            UVHTTP_FREE(ctx);
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
+        }
+        memcpy(ctx->file_path, file_path, path_len);
+        ctx->file_path[path_len] = '\0';
+        
+        /* 获取输出文件描述符 */
+        int fd_result = uv_fileno((uv_handle_t*)resp->client, &ctx->out_fd);
+        if (fd_result < 0) {
+            UVHTTP_LOG_ERROR("Failed to get client fd: %s", uv_strerror(fd_result));
+            UVHTTP_FREE(ctx->file_path);
+            UVHTTP_FREE(ctx);
+            return UVHTTP_ERROR_SERVER_INIT;
+        }
+        
+        /* 打开文件 */
+        ctx->open_req.data = ctx;
+        ctx->sendfile_req.data = ctx;
+        
+        int result = uv_fs_open(loop, &ctx->open_req, file_path, 
+                               O_RDONLY, 0644, NULL);
+        if (result < 0) {
+            UVHTTP_LOG_ERROR("Failed to open file for sendfile: %s", file_path);
+            UVHTTP_FREE(ctx->file_path);
+            UVHTTP_FREE(ctx);
+            return UVHTTP_ERROR_NOT_FOUND;
+        }
+        
+        ctx->in_fd = result;
+        
+        /* 设置响应头 */
+        char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
+        uvhttp_static_get_mime_type(file_path, mime_type, sizeof(mime_type));
+        
+        char content_length[64];
+        snprintf(content_length, sizeof(content_length), "%zu", file_size);
+        
+        uvhttp_response_set_status(resp, 200);
+        uvhttp_response_set_header(resp, "Content-Type", mime_type);
+        uvhttp_response_set_header(resp, "Content-Length", content_length);
+        
+        /* 发送响应头 */
+        uvhttp_error_t send_result = uvhttp_response_send(resp);
+        if (send_result != UVHTTP_OK) {
+            UVHTTP_LOG_ERROR("Failed to send response headers: %s", uvhttp_error_string(send_result));
+            uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
+            return send_result;
+        }
+        
+        /* 开始 sendfile */
+        uv_fs_sendfile(loop, &ctx->sendfile_req,
+                      ctx->out_fd,
+                      ctx->in_fd, 0, file_size, on_sendfile_complete);
+        
+        return UVHTTP_OK;
+    }
+    else {
+        /* 大文件：使用分块 sendfile */
+        UVHTTP_LOG_DEBUG("Large file detected, using chunked sendfile: %s (%zu bytes)", 
+                        file_path, file_size);
+        
+        /* 获取event loop */
+        uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)resp->client);
+        
+        /* 创建 sendfile 上下文 */
+        sendfile_context_t* ctx = (sendfile_context_t*)UVHTTP_MALLOC(sizeof(sendfile_context_t));
+        if (!ctx) {
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
+        }
+        
+        memset(ctx, 0, sizeof(sendfile_context_t));
+        ctx->response = resp;
+        ctx->file_size = file_size;
+        ctx->offset = 0;
+        ctx->bytes_sent = 0;
+        ctx->completed = 0;
+        
+        /* 分配文件路径内存 */
+        size_t path_len = strlen(file_path);
+        ctx->file_path = (char*)UVHTTP_MALLOC(path_len + 1);
+        if (!ctx->file_path) {
+            UVHTTP_FREE(ctx);
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
+        }
+        memcpy(ctx->file_path, file_path, path_len);
+        ctx->file_path[path_len] = '\0';
+        
+        /* 获取输出文件描述符 */
+        int fd_result = uv_fileno((uv_handle_t*)resp->client, &ctx->out_fd);
+        if (fd_result < 0) {
+            UVHTTP_LOG_ERROR("Failed to get client fd: %s", uv_strerror(fd_result));
+            UVHTTP_FREE(ctx->file_path);
+            UVHTTP_FREE(ctx);
+            return UVHTTP_ERROR_SERVER_INIT;
+        }
+        
+        /* 打开文件 */
+        ctx->open_req.data = ctx;
+        ctx->sendfile_req.data = ctx;
+        
+        int result = uv_fs_open(loop, &ctx->open_req, file_path, 
+                               O_RDONLY, 0644, NULL);
+        if (result < 0) {
+            UVHTTP_LOG_ERROR("Failed to open file for sendfile: %s", file_path);
+            UVHTTP_FREE(ctx->file_path);
+            UVHTTP_FREE(ctx);
+            return UVHTTP_ERROR_NOT_FOUND;
+        }
+        
+        ctx->in_fd = result;
+        
+        /* 设置响应头 */
+        char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
+        uvhttp_static_get_mime_type(file_path, mime_type, sizeof(mime_type));
+        
+        char content_length[64];
+        snprintf(content_length, sizeof(content_length), "%zu", file_size);
+        
+        uvhttp_response_set_status(resp, 200);
+        uvhttp_response_set_header(resp, "Content-Type", mime_type);
+        uvhttp_response_set_header(resp, "Content-Length", content_length);
+        
+        /* 发送响应头 */
+        uvhttp_error_t send_result = uvhttp_response_send(resp);
+        if (send_result != UVHTTP_OK) {
+            UVHTTP_LOG_ERROR("Failed to send response headers: %s", uvhttp_error_string(send_result));
+            uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
+            return send_result;
+        }
+        
+        /* 开始分块 sendfile（每次发送 1MB） */
+        size_t chunk_size = 1024 * 1024;
+        uv_fs_sendfile(loop, &ctx->sendfile_req,
+                      ctx->out_fd,
+                      ctx->in_fd, 0, chunk_size, on_sendfile_complete);
+        
+        return UVHTTP_OK;
+    }
 }
 
 #endif /* UVHTTP_FEATURE_STATIC_FILES */

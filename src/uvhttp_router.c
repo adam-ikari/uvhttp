@@ -4,42 +4,62 @@
 #include "uvhttp_constants.h"
 #include "uvhttp_static.h"
 #include "uvhttp_connection.h"
+#include "uvhttp_router_cache.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
 
-// 方法字符串映射
-static const struct {
-    const char* name;
-    uvhttp_method_t method;
-} method_map[] = {
-    {UVHTTP_METHOD_GET, UVHTTP_GET},
-    {UVHTTP_METHOD_POST, UVHTTP_POST},
-    {UVHTTP_METHOD_PUT, UVHTTP_PUT},
-    {UVHTTP_METHOD_DELETE, UVHTTP_DELETE},
-    {UVHTTP_METHOD_HEAD, UVHTTP_HEAD},
-    {UVHTTP_METHOD_OPTIONS, UVHTTP_OPTIONS},
-    {UVHTTP_METHOD_PATCH, UVHTTP_PATCH},
-    {NULL, UVHTTP_ANY}
-};
+#define HYBRID_THRESHOLD 100  /* 切换到Trie的路由数量阈值 */
 
-#define HYBRID_THRESHOLD 100  // 切换到Trie的路由数量阈值
-
+/* 优化：快速方法解析（使用前缀匹配） */
 uvhttp_method_t uvhttp_method_from_string(const char* method) {
-    for (int i = 0; method_map[i].name; i++) {
-        if (strcmp(method, method_map[i].name) == 0) {
-            return method_map[i].method;
-        }
+    if (!method || !method[0]) {
+        return UVHTTP_ANY;
     }
-    return UVHTTP_ANY;
+    
+    /* 快速前缀匹配 */
+    switch (method[0]) {
+        case 'G':
+            return (method[1] == 'E' && method[2] == 'T' && method[3] == '\0') ? UVHTTP_GET : UVHTTP_ANY;
+        case 'P':
+            if (method[1] == 'O') {
+                return (method[2] == 'S' && method[3] == 'T' && method[4] == '\0') ? UVHTTP_POST : UVHTTP_ANY;
+            } else if (method[1] == 'U') {
+                return (method[2] == 'T' && method[3] == '\0') ? UVHTTP_PUT : UVHTTP_ANY;
+            } else if (method[1] == 'A') {
+                return (method[2] == 'T' && method[3] == 'C' && method[4] == 'H' && method[5] == '\0') ? UVHTTP_PATCH : UVHTTP_ANY;
+            }
+            return UVHTTP_ANY;
+        case 'D':
+            return (method[1] == 'E' && method[2] == 'L' && method[3] == 'E' && 
+                    method[4] == 'T' && method[5] == 'E' && method[6] == '\0') ? UVHTTP_DELETE : UVHTTP_ANY;
+        case 'H':
+            return (method[1] == 'E' && method[2] == 'A' && method[3] == 'D' && method[4] == '\0') ? UVHTTP_HEAD : UVHTTP_ANY;
+        case 'O':
+            return (method[1] == 'P' && method[2] == 'T' && method[3] == 'I' && 
+                    method[4] == 'O' && method[5] == 'N' && method[6] == 'S' && method[7] == '\0') ? UVHTTP_OPTIONS : UVHTTP_ANY;
+        default:
+            return UVHTTP_ANY;
+    }
 }
 
+/* 优化：方法到字符串转换（使用直接索引） */
 const char* uvhttp_method_to_string(uvhttp_method_t method) {
-    for (int i = 0; method_map[i].name; i++) {
-        if (method_map[i].method == method) {
-            return method_map[i].name;
-        }
+    /* 使用静态常量数组，避免重复字符串比较 */
+    static const char* method_strings[] = {
+        [UVHTTP_GET] = UVHTTP_METHOD_GET,
+        [UVHTTP_POST] = UVHTTP_METHOD_POST,
+        [UVHTTP_PUT] = UVHTTP_METHOD_PUT,
+        [UVHTTP_DELETE] = UVHTTP_METHOD_DELETE,
+        [UVHTTP_HEAD] = UVHTTP_METHOD_HEAD,
+        [UVHTTP_OPTIONS] = UVHTTP_METHOD_OPTIONS,
+        [UVHTTP_PATCH] = UVHTTP_METHOD_PATCH,
+        [UVHTTP_ANY] = "ANY"
+    };
+    
+    if (method >= 0 && method < (int)(sizeof(method_strings) / sizeof(method_strings[0]))) {
+        return method_strings[method];
     }
     return "UNKNOWN";
 }
@@ -130,6 +150,7 @@ static int parse_path_params(const char* path, uvhttp_param_t* params, size_t* p
 
 uvhttp_router_t* uvhttp_router_new(void) {
     uvhttp_router_t* router = UVHTTP_MALLOC(sizeof(uvhttp_router_t));
+    
     if (!router) {
         return NULL;
     }
@@ -138,6 +159,7 @@ uvhttp_router_t* uvhttp_router_new(void) {
     
     // 初始化数组路由
     router->array_routes = UVHTTP_CALLOC(HYBRID_THRESHOLD, sizeof(array_route_t));
+    
     if (!router->array_routes) {
         UVHTTP_FREE(router);
         return NULL;
@@ -147,6 +169,7 @@ uvhttp_router_t* uvhttp_router_new(void) {
     // 初始化节点池（用于Trie）
     router->node_pool_size = 64;
     router->node_pool = UVHTTP_CALLOC(router->node_pool_size, sizeof(uvhttp_route_node_t));
+    
     if (!router->node_pool) {
         UVHTTP_FREE(router->array_routes);
         UVHTTP_FREE(router);
@@ -154,6 +177,7 @@ uvhttp_router_t* uvhttp_router_new(void) {
     }
     
     router->root = create_route_node(router);
+    
     if (!router->root) {
         UVHTTP_FREE(router->node_pool);
         UVHTTP_FREE(router->array_routes);
@@ -161,7 +185,8 @@ uvhttp_router_t* uvhttp_router_new(void) {
         return NULL;
     }
     
-    router->use_trie = 0;  // 默认使用数组路由
+    router->use_trie = 0;  /* 默认使用数组路由 */
+    
     return router;
 }
 
@@ -518,7 +543,7 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
     
     uvhttp_method_t method_enum = uvhttp_method_from_string(method);
     
-    // 目前只支持Trie模式的参数匹配
+    /* 优化1：快速路径 - 检查数组路由（适用于少量路由） */
     if (!router->use_trie) {
         uvhttp_request_handler_t handler = find_array_route(router, path, method_enum);
         if (handler) {
@@ -528,7 +553,28 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
         return UVHTTP_ERROR_NOT_FOUND;
     }
     
-    // 解析路径段
+    /* 优化2：快速路径 - 检查静态路由（无参数） */
+    /* 对于没有参数的路径，使用快速查找 */
+    int has_params = 0;
+    for (const char* p = path; *p; p++) {
+        if (*p == ':' || *p == '{') {
+            has_params = 1;
+            break;
+        }
+    }
+    
+    if (!has_params && router->array_routes && router->array_route_count > 0) {
+        /* 无参数路径，使用数组路由快速查找 */
+        /* 但需要检查 array_routes 是否仍然有效 */
+        uvhttp_request_handler_t handler = find_array_route(router, path, method_enum);
+        if (handler) {
+            match->handler = handler;
+            return UVHTTP_OK;
+        }
+    }
+    
+    /* 优化3：Trie树匹配（支持参数） */
+    /* 解析路径段 */
     char path_copy[MAX_ROUTE_PATH_LEN];
     strncpy(path_copy, path, sizeof(path_copy) - 1);
     path_copy[sizeof(path_copy) - 1] = '\0';

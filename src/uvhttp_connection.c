@@ -119,7 +119,7 @@ static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t
  * 单线程模型优势：无需锁，数据访问安全，执行流可预测
  */
 static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-    (void)buf; // 避免未使用参数警告
+    (void)buf; /* 避免未使用参数警告 */
     uvhttp_connection_t* conn = (uvhttp_connection_t*)stream->data;
     if (!conn || !conn->request) {
         return;
@@ -142,6 +142,7 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     llhttp_t* parser = (llhttp_t*)conn->request->parser;
     if (parser) {
         enum llhttp_errno err = llhttp_execute(parser, buf->base, nread);
+        
         if (err != HPE_OK) {
             uvhttp_log_safe_error(err, "http_parse", llhttp_errno_name(err));
             /* 解析错误时异步关闭连接 */
@@ -277,12 +278,8 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     }
     conn->tcp_handle.data = conn;
     
-    // TCP性能优化：设置TCP_NODELAY禁用Nagle算法
-    int enable = 1;
-    uv_tcp_nodelay(&conn->tcp_handle, enable);
-    
-    // TCP性能优化：设置SO_REUSEADDR允许快速重用端口
-    uv_tcp_keepalive(&conn->tcp_handle, enable, 60);
+    // TCP 选项已在服务器级别统一设置（TCP_NODELAY 和 TCP_KEEPALIVE）
+    // 避免重复设置以提高性能
     
     // 分配读缓冲区
     conn->read_buffer_size = UVHTTP_READ_BUFFER_SIZE;
@@ -334,6 +331,18 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
         parser->data = conn;
     }
     
+    // 初始化内存池
+    conn->mempool = uvhttp_mempool_create();
+    if (!conn->mempool) {
+        uvhttp_request_cleanup(conn->request);
+        uvhttp_free(conn->request);
+        uvhttp_response_cleanup(conn->response);
+        uvhttp_free(conn->response);
+        uvhttp_free(conn->read_buffer);
+        uvhttp_free(conn);
+        return NULL;
+    }
+    
     return conn;
 }
 
@@ -355,6 +364,11 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
     
     if (conn->read_buffer) {
         uvhttp_free(conn->read_buffer);
+    }
+    
+    // 释放内存池
+    if (conn->mempool) {
+        uvhttp_mempool_destroy(conn->mempool);
     }
     
     // 释放连接内存

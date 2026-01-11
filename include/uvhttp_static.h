@@ -77,6 +77,20 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                                              void* response);
 
 /**
+ * Nginx 优化：使用 sendfile 零拷贝发送静态文件（混合策略）
+ * 
+ * 根据文件大小自动选择最优策略：
+ * - 小文件 (< 4KB): 使用传统方式（避免 sendfile 开销）
+ * - 中等文件 (4KB - 10MB): 使用异步 sendfile
+ * - 大文件 (> 10MB): 使用分块 sendfile
+ * 
+ * @param file_path 文件路径
+ * @param response HTTP响应
+ * @return UVHTTP_OK成功，其他值表示失败
+ */
+uvhttp_result_t uvhttp_static_sendfile(const char* file_path, void* response);
+
+/**
  * 根据文件扩展名获取MIME类型
  * 
  * @param file_path 文件路径
@@ -94,6 +108,28 @@ uvhttp_result_t uvhttp_static_get_mime_type(const char* file_path,
  * @param ctx 静态文件服务上下文
  */
 void uvhttp_static_clear_cache(uvhttp_static_context_t* ctx);
+
+/**
+ * 缓存预热：预加载指定的文件到缓存中
+ * 
+ * @param ctx 静态文件服务上下文
+ * @param file_path 文件路径（相对于根目录）
+ * @return UVHTTP_OK成功，其他值表示失败
+ */
+uvhttp_result_t uvhttp_static_prewarm_cache(uvhttp_static_context_t* ctx,
+                                            const char* file_path);
+
+/**
+ * 缓存预热：预加载目录中的所有文件
+ * 
+ * @param ctx 静态文件服务上下文
+ * @param dir_path 目录路径（相对于根目录）
+ * @param max_files 最大文件数（0表示无限制）
+ * @return 预热的文件数量，-1表示失败
+ */
+int uvhttp_static_prewarm_directory(uvhttp_static_context_t* ctx,
+                                    const char* dir_path,
+                                    int max_files);
 
 /**
  * 检查文件路径是否安全（防止路径遍历攻击）

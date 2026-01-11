@@ -55,10 +55,11 @@ int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_header(response, "Content-Type", "text/plain");
         uvhttp_response_set_body(response, error_body, strlen(error_body));
+        uvhttp_response_send(response);
+        return -1;
     }
     
-    /* 发送响应 */
-    uvhttp_response_send(response);
+    /* 成功情况下，uvhttp_static_handle_request 已经发送了响应 */
     return 0;
 }
 
@@ -115,6 +116,9 @@ void print_usage(const char* program_name) {
 }
 
 int main(int argc, char* argv[]) {
+    printf("程序启动...\n");
+    fflush(stdout);
+    
     const char* root_directory = "./public";
     int port = 8080;
     
@@ -158,17 +162,26 @@ int main(int argc, char* argv[]) {
     g_loop = uv_default_loop();
     
     // 应用 Nginx 优化配置
+    printf("创建配置...\n");
+    fflush(stdout);
     uvhttp_config_t* config = uvhttp_config_new();
     if (!config) {
         printf("错误：无法创建配置\n");
+        fflush(stdout);
         return 1;
     }
+    printf("配置创建成功\n");
+    fflush(stdout);
     
     uvhttp_config_set_current(config);
     uvhttp_config_update_max_connections(5000);  /* 增加到5000连接 */
     uvhttp_config_update_buffer_size(16384);     /* 增加缓冲区到16KB */
+    printf("配置更新成功\n");
+    fflush(stdout);
     
     // 配置静态文件服务（优化小文件性能）
+    printf("配置静态文件服务...\n");
+    fflush(stdout);
     uvhttp_static_config_t static_config;
     memset(&static_config, 0, sizeof(static_config));
     strncpy(static_config.root_directory, root_directory, sizeof(static_config.root_directory) - 1);
@@ -180,43 +193,75 @@ int main(int argc, char* argv[]) {
     static_config.enable_last_modified = 1;
     static_config.max_cache_size = 100 * 1024 * 1024;  /* 100MB缓存 - 增加缓存大小 */
     static_config.cache_ttl = 7200;                    /* 2小时TTL - 延长缓存时间 */
+    printf("静态文件配置完成\n");
+    fflush(stdout);
     
     // 创建静态文件服务上下文
+    printf("创建静态文件服务上下文...\n");
+    fflush(stdout);
     g_static_ctx = uvhttp_static_create(&static_config);
     if (!g_static_ctx) {
         printf("错误：无法创建静态文件服务上下文\n");
+        fflush(stdout);
         uvhttp_config_free(config);
         return 1;
     }
+    printf("静态文件服务上下文创建成功\n");
+    fflush(stdout);
     
     // 创建HTTP服务器
+    printf("创建HTTP服务器...\n");
+    fflush(stdout);
     g_server = uvhttp_server_new(g_loop);
     if (!g_server) {
         printf("错误：无法创建HTTP服务器\n");
+        fflush(stdout);
         uvhttp_static_free(g_static_ctx);
         uvhttp_config_free(config);
         return 1;
     }
+    printf("HTTP服务器创建成功\n");
+    fflush(stdout);
     
     // 创建路由
     g_router = uvhttp_router_new();
+    if (!g_router) {
+        printf("错误：无法创建路由器\n");
+        fflush(stdout);
+        uvhttp_static_free(g_static_ctx);
+        uvhttp_config_free(config);
+        uvhttp_server_free(g_server);
+        return 1;
+    }
+    printf("路由器创建成功\n");
+    fflush(stdout);
     
     // 添加路由
     uvhttp_router_add_route(g_router, "/", home_handler);
+    printf("主页路由添加成功\n");
+    fflush(stdout);
     
     /* 设置静态文件路由 */
     uvhttp_router_add_static_route(g_router, "/static/", g_static_ctx);
+    printf("静态文件路由添加成功\n");
+    fflush(stdout);
     
     /* 设置回退路由（处理所有其他请求） */
     uvhttp_router_add_fallback_route(g_router, g_static_ctx);
+    printf("回退路由添加成功\n");
+    fflush(stdout);
     
     // 设置路由
     g_server->router = g_router;
+    printf("路由器设置成功\n");
+    fflush(stdout);
     
     // 启动服务器
     int result = uvhttp_server_listen(g_server, "0.0.0.0", port);
     if (result != 0) {
         printf("错误：无法启动服务器 (错误码: %d)\n", result);
+        fflush(stdout);
+        uvhttp_router_free(g_router);
         uvhttp_static_free(g_static_ctx);
         uvhttp_config_free(config);
         uvhttp_server_free(g_server);
@@ -224,9 +269,13 @@ int main(int argc, char* argv[]) {
     }
     
     printf("🚀 静态文件服务启动成功！\n");
+    fflush(stdout);
     printf("📍 服务地址: http://localhost:%d\n", port);
+    fflush(stdout);
     printf("📁 静态文件目录: %s\n", static_config.root_directory);
+    fflush(stdout);
     printf("\n按 Ctrl+C 停止服务器\n");
+    fflush(stdout);
     
     // 运行事件循环
     uv_run(g_loop, UV_RUN_DEFAULT);

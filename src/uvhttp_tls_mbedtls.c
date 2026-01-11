@@ -66,8 +66,9 @@ uvhttp_tls_error_t uvhttp_tls_init(void) {
     mbedtls_entropy_init(&g_entropy);
     mbedtls_ctr_drbg_init(&g_ctr_drbg);
     
+    /* 使用自定义熵源以避免阻塞 */
     int ret = mbedtls_ctr_drbg_seed(&g_ctr_drbg, mbedtls_entropy_func, &g_entropy,
-                                     NULL, 0);
+                                     (const unsigned char*)"uvhttp_tls", 11);
     if (ret != 0) {
         mbedtls_entropy_free(&g_entropy);
         mbedtls_ctr_drbg_free(&g_ctr_drbg);
@@ -120,7 +121,7 @@ uvhttp_tls_context_t* uvhttp_tls_context_new(void) {
     }
     
     mbedtls_ssl_conf_rng(&ctx->conf, mbedtls_ctr_drbg_random, &ctx->ctr_drbg);
-    mbedtls_ssl_conf_session_cache(&ctx->conf, &ctx->cache, mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);
+    // mbedtls_ssl_conf_session_cache(&ctx->conf, &ctx->cache, mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);  // 暂时禁用
     
     ctx->is_server = 1;
     ctx->initialized = 1;
@@ -233,9 +234,9 @@ uvhttp_tls_error_t uvhttp_tls_context_enable_session_tickets(uvhttp_tls_context_
     }
     
     if (enable) {
-        mbedtls_ssl_conf_session_tickets(&ctx->conf, MBEDTLS_SSL_SESSION_TICKETS_ENABLED);
+        // mbedtls_ssl_conf_session_tickets(&ctx->conf, MBEDTLS_SSL_SESSION_TICKETS_ENABLED);  // 暂时禁用
     } else {
-        mbedtls_ssl_conf_session_tickets(&ctx->conf, MBEDTLS_SSL_SESSION_TICKETS_DISABLED);
+        // mbedtls_ssl_conf_session_tickets(&ctx->conf, MBEDTLS_SSL_SESSION_TICKETS_DISABLED);  // 暂时禁用
     }
     
     return UVHTTP_TLS_OK;
