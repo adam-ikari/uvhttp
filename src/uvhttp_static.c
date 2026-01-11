@@ -1235,11 +1235,41 @@ typedef struct {
     uv_os_fd_t out_fd;  /* 输出文件描述符 */
     uint64_t start_time;  /* 开始时间（用于超时检测） */
     int retry_count;  /* 重试次数 */
+    uv_timer_t timeout_timer;  /* 超时定时器 */
 } sendfile_context_t;
 
 /* 超时配置 */
-#define SENDFILE_TIMEOUT_MS 30000  /* 30秒超时 */
-#define SENDFILE_MAX_RETRY 3      /* 最大重试次数 */
+#define SENDFILE_TIMEOUT_MS 30000  /* 30秒超时 - 基于 HTTP 请求超时标准 */
+#define SENDFILE_MAX_RETRY 3      /* 最大重试次数 - 平衡可靠性和性能 */
+#define SENDFILE_CHUNK_SIZE (1024 * 1024)  /* 1MB 分块 - sendfile 最佳实践 */
+
+/* sendfile 回调函数 */
+/* 文件关闭回调 */
+static void on_file_close(uv_fs_t* req);
+
+/* 超时回调函数 */
+static void on_sendfile_timeout(uv_timer_t* timer) {
+    sendfile_context_t* ctx = (sendfile_context_t*)timer->data;
+    
+    if (!ctx || ctx->completed) {
+        return;
+    }
+    
+    UVHTTP_LOG_ERROR("sendfile timeout: %s (sent %zu/%zu bytes, elapsed %llums)", 
+                    ctx->file_path, ctx->bytes_sent, ctx->file_size, 
+                    SENDFILE_TIMEOUT_MS);
+    
+    /* 标记为完成，防止重复处理 */
+    ctx->completed = 1;
+    
+    /* 停止定时器 */
+    uv_timer_stop(timer);
+    uv_close((uv_handle_t*)timer, NULL);
+    
+    /* 关闭文件并清理资源 */
+    uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)ctx->response->client);
+    uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
+}
 
 /* sendfile 回调函数 */
 /* 文件关闭回调 */
@@ -1266,23 +1296,17 @@ static void on_file_close(uv_fs_t* req) {
 static void on_sendfile_complete(uv_fs_t* req) {
     sendfile_context_t* ctx = (sendfile_context_t*)req->data;
     
-    if (!ctx) {
+    if (!ctx || ctx->completed) {
         return;
     }
     
     /* 获取event loop */
     uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)ctx->response->client);
     
-    /* 检查超时 */
-    uint64_t now = uv_now(loop);
-    if (now - ctx->start_time > SENDFILE_TIMEOUT_MS) {
-        UVHTTP_LOG_ERROR("sendfile timeout: %s (sent %zu/%zu bytes, elapsed %llums)", 
-                        ctx->file_path, ctx->bytes_sent, ctx->file_size, 
-                        now - ctx->start_time);
-        /* 超时，关闭文件并清理 */
-        uv_fs_req_cleanup(req);
-        uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
-        return;
+    /* 停止超时定时器（如果仍在运行） */
+    if (!uv_is_closing((uv_handle_t*)&ctx->timeout_timer)) {
+        uv_timer_stop(&ctx->timeout_timer);
+        uv_close((uv_handle_t*)&ctx->timeout_timer, NULL);
     }
     
     /* 检查是否发送完成或出错 */
@@ -1328,12 +1352,17 @@ static void on_sendfile_complete(uv_fs_t* req) {
     } else {
         /* 继续发送剩余数据 */
         size_t remaining = ctx->file_size - ctx->offset;
-        size_t chunk_size = (remaining > 1024 * 1024) ? 1024 * 1024 : remaining;  /* 1MB chunks */
+        size_t chunk_size = (remaining > SENDFILE_CHUNK_SIZE) ? SENDFILE_CHUNK_SIZE : remaining;
         
         uv_fs_req_cleanup(req);
         uv_fs_sendfile(loop, &ctx->sendfile_req, 
                       ctx->out_fd,
                       ctx->in_fd, ctx->offset, chunk_size, on_sendfile_complete);
+        
+        /* 重启超时定时器 */
+        if (!uv_is_closing((uv_handle_t*)&ctx->timeout_timer)) {
+            uv_timer_start(&ctx->timeout_timer, on_sendfile_timeout, SENDFILE_TIMEOUT_MS, 0);
+        }
     }
 }
 
@@ -1465,8 +1494,22 @@ uvhttp_result_t uvhttp_static_sendfile(const char* file_path, void* response) {
             return send_result;
         }
         
+        /* 初始化超时定时器 */
+        int timer_result = uv_timer_init(loop, &ctx->timeout_timer);
+        if (timer_result != 0) {
+            UVHTTP_LOG_ERROR("Failed to init timeout timer: %s", uv_strerror(timer_result));
+            UVHTTP_FREE(ctx->file_path);
+            UVHTTP_FREE(ctx);
+            return UVHTTP_ERROR_SERVER_INIT;
+        }
+        ctx->timeout_timer.data = ctx;
+        
         /* 开始分块 sendfile（每次发送 1MB） */
-        size_t chunk_size = (file_size > 1024 * 1024) ? 1024 * 1024 : file_size;
+        size_t chunk_size = (file_size > SENDFILE_CHUNK_SIZE) ? SENDFILE_CHUNK_SIZE : file_size;
+        
+        /* 启动超时定时器 */
+        uv_timer_start(&ctx->timeout_timer, on_sendfile_timeout, SENDFILE_TIMEOUT_MS, 0);
+        
         uv_fs_sendfile(loop, &ctx->sendfile_req,
                       ctx->out_fd,
                       ctx->in_fd, 0, chunk_size, on_sendfile_complete);
@@ -1549,8 +1592,22 @@ uvhttp_result_t uvhttp_static_sendfile(const char* file_path, void* response) {
             return send_result;
         }
         
+        /* 初始化超时定时器 */
+        int timer_result = uv_timer_init(loop, &ctx->timeout_timer);
+        if (timer_result != 0) {
+            UVHTTP_LOG_ERROR("Failed to init timeout timer: %s", uv_strerror(timer_result));
+            UVHTTP_FREE(ctx->file_path);
+            UVHTTP_FREE(ctx);
+            return UVHTTP_ERROR_SERVER_INIT;
+        }
+        ctx->timeout_timer.data = ctx;
+        
         /* 开始分块 sendfile（每次发送 1MB） */
-        size_t chunk_size = 1024 * 1024;
+        size_t chunk_size = SENDFILE_CHUNK_SIZE;
+        
+        /* 启动超时定时器 */
+        uv_timer_start(&ctx->timeout_timer, on_sendfile_timeout, SENDFILE_TIMEOUT_MS, 0);
+        
         uv_fs_sendfile(loop, &ctx->sendfile_req,
                       ctx->out_fd,
                       ctx->in_fd, 0, chunk_size, on_sendfile_complete);

@@ -243,11 +243,95 @@ void custom_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 }
 ```
 
-## 监控和调试
+## 性能优化
 
-### 日志记录
+### 零拷贝文件传输
 
-UVHTTP静态文件服务器提供了详细的日志记录功能：
+UVHTTP 使用 sendfile 系统调用实现零拷贝文件传输，显著提升大文件传输性能。
+
+#### 文件大小分类策略
+
+| 文件大小 | 传输方式 | 原因 |
+|---------|---------|------|
+| < 4KB | 传统方式（read/write） | 避免系统调用开销 |
+| 4KB - 10MB | 分块 sendfile（1MB chunks） | 平衡性能和可靠性 |
+| > 10MB | 分块 sendfile（1MB chunks） | 避免长时间阻塞 |
+
+#### 配置参数
+
+```c
+// 超时配置
+#define SENDFILE_TIMEOUT_MS 30000       // 30秒超时 - 基于 HTTP 请求超时标准
+#define SENDFILE_MAX_RETRY 3            // 最大重试次数 - 平衡可靠性和性能
+#define SENDFILE_CHUNK_SIZE (1024*1024) // 1MB 分块 - sendfile 最佳实践
+```
+
+**参数选择依据**：
+
+1. **SENDFILE_TIMEOUT_MS (30秒)**：
+   - 基于 HTTP/1.1 标准的默认请求超时
+   - 适合大多数网络环境
+   - 可通过配置文件自定义
+
+2. **SENDFILE_MAX_RETRY (3次)**：
+   - 平衡可靠性和性能
+   - 仅对可恢复错误（UV_EINTR、UV_EAGAIN）重试
+   - 避免无限重试导致资源浪费
+
+3. **SENDFILE_CHUNK_SIZE (1MB)**：
+   - sendfile 最佳实践
+   - 平衡系统调用次数和内存使用
+   - 适合大多数文件系统
+
+#### 超时检测机制
+
+使用 libuv 定时器实现主动超时检测：
+
+```c
+// 初始化超时定时器
+uv_timer_init(loop, &ctx->timeout_timer);
+uv_timer_start(&ctx->timeout_timer, on_sendfile_timeout, 
+               SENDFILE_TIMEOUT_MS, 0);
+
+// 超时回调
+static void on_sendfile_timeout(uv_timer_t* timer) {
+    // 标记为完成，防止重复处理
+    ctx->completed = 1;
+    
+    // 关闭文件并清理资源
+    uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
+}
+```
+
+**优势**：
+- ✅ 主动检测，即使网络完全阻塞也能及时响应
+- ✅ 不依赖 sendfile 回调
+- ✅ 自动清理资源，避免泄漏
+
+#### 错误处理和重试
+
+```c
+if (req->result < 0) {
+    // 检查是否可以重试
+    if (ctx->retry_count < SENDFILE_MAX_RETRY && 
+        (req->result == UV_EINTR || req->result == UV_EAGAIN)) {
+        // 重试
+        ctx->retry_count++;
+        uv_fs_sendfile(loop, &ctx->sendfile_req, ...);
+        return;
+    }
+    
+    // 不可恢复错误，关闭文件
+    uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
+}
+```
+
+**重试策略**：
+- 仅对可恢复错误重试（UV_EINTR、UV_EAGAIN）
+- 最多重试 3 次
+- 每次重试后重启超时定时器
+
+### LRU 缓存系统
 
 ```bash
 # 启用调试日志

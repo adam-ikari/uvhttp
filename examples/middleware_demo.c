@@ -9,6 +9,7 @@
  */
 
 #include <stdio.h>
+#include "uvhttp_allocator.h"
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -196,7 +197,11 @@ int main(int argc, char** argv) {
     /* ========== 添加中间件 ========== */
     
     /* 1. 日志中间件（高优先级，最先执行） */
-    log_middleware_data_t* log_data = malloc(sizeof(log_middleware_data_t));
+    log_middleware_data_t* log_data = (log_middleware_data_t*)UVHTTP_MALLOC(sizeof(log_middleware_data_t));
+    if (!log_data) {
+        fprintf(stderr, "Failed to allocate log middleware data\n");
+        return 1;
+    }
     log_data->log_file = stdout;
     log_data->request_count = 0;
     
@@ -210,7 +215,11 @@ int main(int argc, char** argv) {
     printf("[INIT] Log middleware added\n");
     
     /* 2. 认证中间件（正常优先级） */
-    auth_middleware_data_t* auth_data = malloc(sizeof(auth_middleware_data_t));
+    auth_middleware_data_t* auth_data = (auth_middleware_data_t*)UVHTTP_MALLOC(sizeof(auth_middleware_data_t));
+    if (!auth_data) {
+        fprintf(stderr, "Failed to allocate auth middleware data\n");
+        return 1;
+    }
     auth_data->api_key = "secret-key-12345";
     
     uvhttp_http_middleware_t* auth_middleware = uvhttp_http_middleware_create(
@@ -223,7 +232,7 @@ int main(int argc, char** argv) {
     printf("[INIT] Auth middleware added for /api\n");
     
     /* 3. 请求计时中间件（低优先级，最后执行） */
-    timing_middleware_data_t* timing_data = malloc(sizeof(timing_middleware_data_t));
+    timing_middleware_data_t* timing_data = (timing_middleware_data_t*)UVHTTP_MALLOC(sizeof(timing_middleware_data_t));
     timing_data->start_time = 0;
     
     uvhttp_http_middleware_t* timing_middleware = uvhttp_http_middleware_create(
