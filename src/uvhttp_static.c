@@ -1233,7 +1233,13 @@ typedef struct {
     int64_t offset;
     int completed;
     uv_os_fd_t out_fd;  /* 输出文件描述符 */
+    uint64_t start_time;  /* 开始时间（用于超时检测） */
+    int retry_count;  /* 重试次数 */
 } sendfile_context_t;
+
+/* 超时配置 */
+#define SENDFILE_TIMEOUT_MS 30000  /* 30秒超时 */
+#define SENDFILE_MAX_RETRY 3      /* 最大重试次数 */
 
 /* sendfile 回调函数 */
 /* 文件关闭回调 */
@@ -1267,9 +1273,40 @@ static void on_sendfile_complete(uv_fs_t* req) {
     /* 获取event loop */
     uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)ctx->response->client);
     
+    /* 检查超时 */
+    uint64_t now = uv_now(loop);
+    if (now - ctx->start_time > SENDFILE_TIMEOUT_MS) {
+        UVHTTP_LOG_ERROR("sendfile timeout: %s (sent %zu/%zu bytes, elapsed %llums)", 
+                        ctx->file_path, ctx->bytes_sent, ctx->file_size, 
+                        now - ctx->start_time);
+        /* 超时，关闭文件并清理 */
+        uv_fs_req_cleanup(req);
+        uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
+        return;
+    }
+    
     /* 检查是否发送完成或出错 */
     if (req->result < 0) {
         UVHTTP_LOG_ERROR("sendfile failed: %s", uv_strerror(req->result));
+        
+        /* 检查是否可以重试 */
+        if (ctx->retry_count < SENDFILE_MAX_RETRY && 
+            (req->result == UV_EINTR || req->result == UV_EAGAIN)) {
+            ctx->retry_count++;
+            UVHTTP_LOG_INFO("Retrying sendfile: %s (attempt %d/%d)", 
+                           ctx->file_path, ctx->retry_count, SENDFILE_MAX_RETRY);
+            
+            /* 重试发送 */
+            size_t remaining = ctx->file_size - ctx->offset;
+            size_t chunk_size = (remaining > 1024 * 1024) ? 1024 * 1024 : remaining;
+            
+            uv_fs_req_cleanup(req);
+            uv_fs_sendfile(loop, &ctx->sendfile_req, 
+                          ctx->out_fd, ctx->in_fd, ctx->offset, chunk_size, 
+                          on_sendfile_complete);
+            return;
+        }
+        
         /* 发送失败，关闭文件并清理 */
         uv_fs_req_cleanup(req);
         uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
@@ -1353,8 +1390,8 @@ uvhttp_result_t uvhttp_static_sendfile(const char* file_path, void* response) {
         return UVHTTP_OK;
     }
     else if (file_size <= 10 * 1024 * 1024) {
-        /* 中等文件：使用异步 sendfile */
-        UVHTTP_LOG_DEBUG("Medium file detected, using async sendfile: %s (%zu bytes)", 
+        /* 中等文件：使用分块异步 sendfile（与 大文件一致） */
+        UVHTTP_LOG_DEBUG("Medium file detected, using chunked async sendfile: %s (%zu bytes)", 
                         file_path, file_size);
         
         /* 获取event loop */
@@ -1372,6 +1409,8 @@ uvhttp_result_t uvhttp_static_sendfile(const char* file_path, void* response) {
         ctx->offset = 0;
         ctx->bytes_sent = 0;
         ctx->completed = 0;
+        ctx->start_time = uv_now(loop);
+        ctx->retry_count = 0;
         
         /* 分配文件路径内存 */
         size_t path_len = strlen(file_path);
@@ -1426,10 +1465,11 @@ uvhttp_result_t uvhttp_static_sendfile(const char* file_path, void* response) {
             return send_result;
         }
         
-        /* 开始 sendfile */
+        /* 开始分块 sendfile（每次发送 1MB） */
+        size_t chunk_size = (file_size > 1024 * 1024) ? 1024 * 1024 : file_size;
         uv_fs_sendfile(loop, &ctx->sendfile_req,
                       ctx->out_fd,
-                      ctx->in_fd, 0, file_size, on_sendfile_complete);
+                      ctx->in_fd, 0, chunk_size, on_sendfile_complete);
         
         return UVHTTP_OK;
     }
@@ -1453,6 +1493,8 @@ uvhttp_result_t uvhttp_static_sendfile(const char* file_path, void* response) {
         ctx->offset = 0;
         ctx->bytes_sent = 0;
         ctx->completed = 0;
+        ctx->start_time = uv_now(loop);
+        ctx->retry_count = 0;
         
         /* 分配文件路径内存 */
         size_t path_len = strlen(file_path);
