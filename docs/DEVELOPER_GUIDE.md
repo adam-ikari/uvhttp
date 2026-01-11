@@ -8,6 +8,7 @@
 5. [性能优化](#性能优化)
 6. [常见问题](#常见问题)
 7. [贡献指南](#贡献指南)
+8. [开发准则](#开发准则)
 
 ## 核心API使用
 
@@ -721,6 +722,229 @@ const uvhttp = Module({
 - 添加连接池支持
 - 优化连接复用
 - 添加连接限制
+
+## 开发准则
+
+### 1. libuv 循环注入原则
+
+#### 原则说明
+UVHTTP 必须支持 libuv 循环注入，避免使用全局变量。这是为了支持多实例、单元测试和云原生场景。
+
+#### 标准模式
+
+**❌ 错误做法 - 使用全局变量**:
+```c
+// 错误示例
+static uvhttp_server_t* g_server = NULL;
+
+void my_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    // 使用全局变量 - 不可测试、不支持多实例
+    g_server->request_count++;
+    uvhttp_response_send(res);
+}
+
+int main() {
+    uv_loop_t* loop = uv_default_loop();
+    g_server = uvhttp_server_new(loop);
+    // ...
+}
+```
+
+**✅ 正确做法 - 使用循环注入**:
+```c
+// 正确示例
+typedef struct {
+    uvhttp_server_t* server;
+    uvhttp_router_t* router;
+    int request_count;
+} app_context_t;
+
+void my_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    // 从循环获取上下文
+    uv_loop_t* loop = req->client->loop;
+    app_context_t* ctx = (app_context_t*)loop->data;
+    
+    ctx->request_count++;
+    uvhttp_response_send(res);
+}
+
+int main() {
+    uv_loop_t* loop = uv_default_loop();
+    
+    // 创建并设置上下文
+    app_context_t* ctx = malloc(sizeof(app_context_t));
+    ctx->server = uvhttp_server_new(loop);
+    ctx->router = uvhttp_router_new();
+    ctx->request_count = 0;
+    
+    // 注入到循环
+    loop->data = ctx;
+    
+    // ...
+}
+```
+
+#### 实现要求
+
+1. **所有处理器必须支持循环注入**
+```c
+// 处理器必须能够从请求中获取循环
+void handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    uv_loop_t* loop = uvhttp_request_get_loop(req);
+    app_context_t* ctx = (app_context_t*)loop->data;
+    // 使用 ctx 而不是全局变量
+}
+```
+
+2. **服务器必须支持自定义循环**
+```c
+// 服务器必须接受自定义循环
+uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop);
+// 而不是
+uvhttp_server_t* uvhttp_server_new(void); // 错误
+```
+
+3. **测试必须使用独立循环**
+```c
+// 测试必须创建独立循环
+void test_server() {
+    uv_loop_t* loop = uv_loop_new();
+    uvhttp_server_t* server = uvhttp_server_new(loop);
+    
+    // 测试代码
+    
+    uv_loop_close(loop);
+    free(loop);
+}
+```
+
+#### 优势
+
+| 优势 | 说明 |
+|-----|------|
+| **可测试性** | 每个测试使用独立循环，避免冲突 |
+| **多实例** | 支持在同一进程中运行多个服务器实例 |
+| **云原生** | 适合容器化和 Serverless 场景 |
+| **线程安全** | 避免全局变量导致的线程安全问题 |
+
+#### 最佳实践
+
+**创建上下文结构**:
+```c
+typedef struct {
+    uvhttp_server_t* server;
+    uvhttp_router_t* router;
+    // 应用特定数据
+    int request_count;
+    time_t start_time;
+    // ...
+} app_context_t;
+
+app_context_t* app_context_new(uv_loop_t* loop) {
+    app_context_t* ctx = malloc(sizeof(app_context_t));
+    ctx->server = uvhttp_server_new(loop);
+    ctx->router = uvhttp_router_new();
+    ctx->request_count = 0;
+    ctx->start_time = time(NULL);
+    return ctx;
+}
+
+void app_context_free(app_context_t* ctx) {
+    if (ctx) {
+        uvhttp_server_free(ctx->server);
+        uvhttp_router_free(ctx->router);
+        free(ctx);
+    }
+}
+```
+
+**在处理器中使用**:
+```c
+void api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    uv_loop_t* loop = uvhttp_request_get_loop(req);
+    app_context_t* ctx = (app_context_t*)loop->data;
+    
+    // 使用上下文
+    char response[256];
+    snprintf(response, sizeof(response), 
+             "{\"count\":%d,\"uptime\":%ld}", 
+             ctx->request_count, 
+             time(NULL) - ctx->start_time);
+    
+    uvhttp_response_set_status(res, 200);
+    uvhttp_response_set_header(res, "Content-Type", "application/json");
+    uvhttp_response_set_body(res, response, strlen(response));
+    uvhttp_response_send(res);
+}
+```
+
+**完整示例**:
+```c
+#include "uvhttp.h"
+
+typedef struct {
+    uvhttp_server_t* server;
+    uvhttp_router_t* router;
+    int request_count;
+} app_context_t;
+
+void hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    uv_loop_t* loop = uvhttp_request_get_loop(req);
+    app_context_t* ctx = (app_context_t*)loop->data;
+    ctx->request_count++;
+    
+    uvhttp_response_set_status(res, 200);
+    uvhttp_response_set_header(res, "Content-Type", "text/plain");
+    uvhttp_response_set_body(res, "Hello, World!", 13);
+    uvhttp_response_send(res);
+}
+
+int main() {
+    uv_loop_t* loop = uv_default_loop();
+    
+    // 创建上下文
+    app_context_t* ctx = app_context_new(loop);
+    
+    // 配置服务器
+    uvhttp_router_add_route(ctx->router, "/", hello_handler);
+    ctx->server->router = ctx->router;
+    
+    // 注入到循环
+    loop->data = ctx;
+    
+    // 启动服务器
+    uvhttp_server_listen(ctx->server, "0.0.0.0", 8080);
+    
+    printf("Server running on http://localhost:8080\n");
+    uv_run(loop, UV_RUN_DEFAULT);
+    
+    // 清理
+    app_context_free(ctx);
+    return 0;
+}
+```
+
+### 2. 其他开发准则
+
+#### 错误处理
+- 检查所有可能失败的函数调用
+- 使用统一的错误类型 `uvhttp_error_t`
+- 提供有意义的错误信息
+
+#### 内存管理
+- 使用统一分配器宏: `UVHTTP_MALLOC`、`UVHTTP_FREE`
+- 确保每个分配都有对应的释放
+- 避免内存泄漏
+
+#### 命名约定
+- 函数: `uvhttp_module_action`
+- 类型: `uvhttp_name_t`
+- 常量: `UVHTTP_UPPER_CASE`
+
+#### 代码风格
+- 使用 C11 标准
+- 4 空格缩进
+- K&R 风格大括号
 
 ## 许可证
 
