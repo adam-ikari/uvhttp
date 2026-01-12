@@ -60,6 +60,12 @@ add_definitions(-DUVHTTP_FEATURE_STATIC_FILES=1)
 add_definitions(-DUVHTTP_FEATURE_TLS=1)
 add_definitions(-DUVHTTP_FEATURE_LRU_CACHE=1)
 
+# 内存分配器类型
+if(NOT DEFINED UVHTTP_ALLOCATOR_TYPE)
+    set(UVHTTP_ALLOCATOR_TYPE 0)
+endif()
+add_definitions(-DUVHTTP_ALLOCATOR_TYPE=${UVHTTP_ALLOCATOR_TYPE})
+
 if(BUILD_WITH_WEBSOCKET)
     add_definitions(-DUVHTTP_FEATURE_WEBSOCKET=1)
 endif()
@@ -98,6 +104,7 @@ set(SOURCES
     src/uvhttp_async_file.c
     src/uvhttp_validation.c
     src/uvhttp_cors_middleware.c
+    src/uvhttp_allocator.c
 )
 
 if(BUILD_WITH_WEBSOCKET)
@@ -136,6 +143,7 @@ set(HEADERS
     include/uvhttp_websocket_middleware.h
     include/uvhttp_cors_middleware.h
     include/uvhttp_simple_middleware.h
+    include/uvhttp_allocator.h
 )
 
 if(BUILD_WITH_WEBSOCKET)
@@ -163,6 +171,7 @@ endif()
 # mimalloc 支持
 if(BUILD_WITH_MIMALLOC)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/include)
+    add_definitions(-DUVHTTP_ENABLE_MIMALLOC)
     # 优先使用静态库
     set(MIMALLOC_STATIC_LIB ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/build/libmimalloc.a)
     if(EXISTS ${MIMALLOC_STATIC_LIB})
@@ -229,10 +238,10 @@ target_link_libraries(uvhttp ${LIBS})
 # 添加测试
 file(GLOB TEST_FILES test/unit/test_*.c)
 list(FILTER TEST_FILES EXCLUDE REGEX ".*disabled.*")
-list(FILTER TEST_FILES EXCLUDE REGEX ".*websocket.*")  # 暂时禁用 WebSocket 测试
+list(FILTER TEST_FILES EXCLUDE REGEX ".*test_memory_helpers\\.c")  # 排除辅助文件
 foreach(test_file ${TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
-    add_executable(${test_name} ${test_file} ${SOURCES})
+    add_executable(${test_name} ${test_file} test/unit/test_memory_helpers.c ${SOURCES})
     target_link_libraries(${test_name} ${LIBS})
 endforeach()
 
