@@ -80,24 +80,14 @@ void uvhttp_log_middleware_log(uvhttp_log_middleware_t* middleware,
                                 const char* fmt,
                                 ...);
 
-/* 便捷宏 */
-#define UVHTTP_LOG_TRACE(middleware, fmt, ...) \
-    uvhttp_log_middleware_log(middleware, UVHTTP_LOG_LEVEL_TRACE, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
-
-#define UVHTTP_LOG_DEBUG(middleware, fmt, ...) \
-    uvhttp_log_middleware_log(middleware, UVHTTP_LOG_LEVEL_DEBUG, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
-
-#define UVHTTP_LOG_INFO(middleware, fmt, ...) \
-    uvhttp_log_middleware_log(middleware, UVHTTP_LOG_LEVEL_INFO, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
-
-#define UVHTTP_LOG_WARN(middleware, fmt, ...) \
-    uvhttp_log_middleware_log(middleware, UVHTTP_LOG_LEVEL_WARN, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
-
-#define UVHTTP_LOG_ERROR(middleware, fmt, ...) \
-    uvhttp_log_middleware_log(middleware, UVHTTP_LOG_LEVEL_ERROR, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
-
-#define UVHTTP_LOG_FATAL(middleware, fmt, ...) \
-    uvhttp_log_middleware_log(middleware, UVHTTP_LOG_LEVEL_FATAL, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
+/* 便捷宏 - 已禁用 */
+/* 日志功能已完全移除以提高性能 */
+#define UVHTTP_LOG_TRACE(middleware, fmt, ...) ((void)0)
+#define UVHTTP_LOG_DEBUG(middleware, fmt, ...) ((void)0)
+#define UVHTTP_LOG_INFO(middleware, fmt, ...)  ((void)0)
+#define UVHTTP_LOG_WARN(middleware, fmt, ...)  ((void)0)
+#define UVHTTP_LOG_ERROR(middleware, fmt, ...) ((void)0)
+#define UVHTTP_LOG_FATAL(middleware, fmt, ...) ((void)0)
 
 /* 全局日志中间件（可选） */
 extern uvhttp_log_middleware_t* g_uvhttp_log_middleware;

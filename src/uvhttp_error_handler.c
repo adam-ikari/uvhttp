@@ -98,11 +98,6 @@ void uvhttp_error_report_(uvhttp_error_t error_code,
         .user_data = user_data
     };
     
-    /* 记录日志 */
-    uvhttp_log_level_t log_level = (error_code < 0) ? 
-        UVHTTP_LOG_LEVEL_ERROR : UVHTTP_LOG_LEVEL_WARN;
-    uvhttp_log(log_level, "%s", context_msg);
-    
     /* 调用错误处理器 */
     if (g_error_config.customHandler) {
         g_error_config.customHandler(&context);
@@ -122,7 +117,7 @@ static void default_error_handler(const uvhttp_error_context_t* context) {
     /* 对于致命错误，可能需要退出 */
     if (context->error_code == UVHTTP_ERROR_OUT_OF_MEMORY ||
         context->error_code == UVHTTP_ERROR_SERVER_INIT) {
-        UVHTTP_LOG_FATAL("Fatal error encountered, consider graceful shutdown");
+        /* 致命错误，考虑优雅关闭 */
     }
 }
 

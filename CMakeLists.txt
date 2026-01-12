@@ -70,6 +70,15 @@ if(NOT UVHTTP_ALLOCATOR_TYPE EQUAL 0 AND NOT UVHTTP_ALLOCATOR_TYPE EQUAL 1)
     message(FATAL_ERROR "UVHTTP_ALLOCATOR_TYPE must be 0 (system) or 1 (mimalloc), got: ${UVHTTP_ALLOCATOR_TYPE}")
 endif()
 
+# 开发模式 - 启用日志输出
+option(ENABLE_DEV_MODE "Enable development mode with logging" OFF)
+if(ENABLE_DEV_MODE)
+    add_definitions(-DUVHTTP_DEV_MODE)
+    message(STATUS "Development mode: ENABLED (logging enabled)")
+else()
+    message(STATUS "Development mode: DISABLED (no logging)")
+endif()
+
 add_definitions(-DUVHTTP_ALLOCATOR_TYPE=${UVHTTP_ALLOCATOR_TYPE})
 
 if(BUILD_WITH_WEBSOCKET)

@@ -64,7 +64,7 @@ extern "C" {
 #endif
 
 #ifndef UVHTTP_FEATURE_LOGGING
-#define UVHTTP_FEATURE_LOGGING 1  /* 日志中间件 */
+#define UVHTTP_FEATURE_LOGGING 0  /* 日志中间件 - 已禁用以提高性能 */
 #endif
 
 #ifndef UVHTTP_FEATURE_TLS
