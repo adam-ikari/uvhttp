@@ -260,6 +260,64 @@ make
 3. **启用压缩**：对大文本响应启用gzip压缩
 4. **缓冲区优化**：根据请求大小调整缓冲区
 
+### 性能测试规范
+
+**重要：性能测试必须使用 CMake 编译的测试程序**
+
+性能测试必须使用 CMake 构建系统编译出的测试程序，不得直接调用 gcc 编译。这确保：
+
+1. **编译选项一致性**：所有性能测试使用相同的编译选项和优化级别
+2. **依赖管理正确**：确保所有依赖库正确链接
+3. **可重复性**：构建结果可重现，便于性能对比
+4. **自动化集成**：便于集成到 CI/CD 流程
+
+**正确的性能测试流程：**
+
+```bash
+# 1. 使用 CMake 构建项目
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+
+# 2. 使用 CMake 编译的测试程序
+./dist/bin/performance_static_server -d ../public -p 8080 &
+
+# 3. 运行性能测试
+wrk -t4 -c100 -d30s http://localhost:8080/
+
+# 4. 清理
+pkill performance_static_server
+```
+
+**禁止的做法：**
+
+```bash
+# ❌ 错误：直接使用 gcc 编译
+gcc -o my_test test.c -I./include -L./build -luvhttp
+
+# ❌ 错误：使用不同的编译选项
+gcc -O3 -o my_test test.c  # 与 CMake 的优化级别不一致
+```
+
+**性能测试工具：**
+
+- **wrk**: HTTP 基准测试工具（推荐）
+- **ab**: Apache Bench（备选）
+- **测试程序**: `performance_static_server`, `performance_test`
+
+**性能测试命令：**
+
+```bash
+# 低并发测试
+wrk -t2 -c10 -d30s http://localhost:8080/
+
+# 中等并发测试
+wrk -t4 -c50 -d30s http://localhost:8080/
+
+# 高并发测试
+wrk -t8 -c200 -d30s http://localhost:8080/
+```
+
 ## 常见问题
 
 ### Q: 如何处理静态文件？
