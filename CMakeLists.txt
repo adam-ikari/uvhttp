@@ -241,6 +241,9 @@ target_link_libraries(uvhttp ${LIBS})
 # set_target_properties(uvhttp_shared PROPERTIES POSITION_INDEPENDENT_CODE ON)
 # target_link_libraries(uvhttp_shared ${LIBS})
 
+# 启用测试
+enable_testing()
+
 # 添加测试
 file(GLOB TEST_FILES test/unit/test_*.c)
 list(FILTER TEST_FILES EXCLUDE REGEX ".*disabled.*")
@@ -249,6 +252,7 @@ foreach(test_file ${TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
     add_executable(${test_name} ${test_file} test/unit/test_memory_helpers.c ${SOURCES})
     target_link_libraries(${test_name} ${LIBS})
+    add_test(NAME ${test_name} COMMAND ${test_name})
 endforeach()
 
 # 添加压力测试
