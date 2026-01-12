@@ -7,6 +7,7 @@
 #include "uvhttp_constants.h"
 #include "uvhttp_validation.h"
 #include "uvhttp_features.h"
+#include "uvhttp_error_handler.h"
 #include <stdlib.h>
 #include "uthash.h"
 #include <string.h>
@@ -312,29 +313,45 @@ static int on_message_complete(llhttp_t* parser) {
     /* 检查是否为WebSocket握手请求 */
     if (is_websocket_handshake(conn->request)) {
         // WebSocket握手需要特殊处理
+        // 获取WebSocket Key
+        const char* ws_key = uvhttp_request_get_header(conn->request, "Sec-WebSocket-Key");
+        if (!ws_key) {
+            // 没有WebSocket Key，返回错误响应
+            uvhttp_response_set_status(conn->response, 400);
+            uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
+            uvhttp_response_set_body(conn->response, "Missing Sec-WebSocket-Key header", 32);
+            uvhttp_response_send(conn->response);
+            return 0;
+        }
+
         // 发送101 Switching Protocols响应
         uvhttp_response_set_status(conn->response, 101);
         uvhttp_response_set_header(conn->response, "Upgrade", "websocket");
         uvhttp_response_set_header(conn->response, "Connection", "Upgrade");
-        
-        // 获取WebSocket Key并计算Accept值
-        const char* ws_key = uvhttp_request_get_header(conn->request, "Sec-WebSocket-Key");
-        if (ws_key) {
-            // 使用正确的API生成Accept值
-            char accept[64];
-            if (uvhttp_ws_generate_accept(ws_key, accept, sizeof(accept)) == 0) {
-                uvhttp_response_set_header(conn->response, "Sec-WebSocket-Accept", accept);
-            } else {
-                // 如果生成失败，返回错误响应
-                uvhttp_response_set_status(conn->response, 500);
-                uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
-                uvhttp_response_set_body(conn->response, "WebSocket handshake failed", 24);
-                uvhttp_response_send(conn->response);
-                return 0;
-            }
+
+        // 使用正确的API生成Accept值
+        char accept[64];
+        if (uvhttp_ws_generate_accept(ws_key, accept, sizeof(accept)) != 0) {
+            // 如果生成失败，返回错误响应
+            uvhttp_response_set_status(conn->response, 500);
+            uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
+            uvhttp_response_set_body(conn->response, "WebSocket handshake failed", 24);
+            uvhttp_response_send(conn->response);
+            return 0;
         }
-        
+        uvhttp_response_set_header(conn->response, "Sec-WebSocket-Accept", accept);
+
+        // 发送握手响应
         uvhttp_response_send(conn->response);
+
+        // 握手成功后，处理WebSocket连接
+        int ws_result = uvhttp_connection_handle_websocket_handshake(conn, ws_key);
+        if (ws_result != 0) {
+            UVHTTP_LOG_ERROR("Failed to handle WebSocket handshake: %d\n", ws_result);
+            uvhttp_connection_close(conn);
+            return 0;
+        }
+
         return 0;
     }
     

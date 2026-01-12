@@ -57,4 +57,12 @@ endif()
 if(BUILD_WITH_WEBSOCKET)
     add_executable(performance_test_websocket performance_test_websocket.c)
     target_link_libraries(performance_test_websocket ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a m pthread dl)
+    
+    # WebSocket Echo 服务器示例
+    add_executable(websocket_echo_server websocket_echo_server.c)
+    target_link_libraries(websocket_echo_server ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a m pthread dl)
+    
+    # WebSocket 测试服务器示例
+    add_executable(websocket_test_server websocket_test_server.c)
+    target_link_libraries(websocket_test_server ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a m pthread dl)
 endif()

@@ -13,6 +13,7 @@ static int ws_message_handler(uvhttp_ws_connection_t* ws_conn,
                              const char* data,
                              size_t len,
                              int opcode) {
+    (void)opcode;  // 避免未使用参数警告
     printf("收到WebSocket消息: %.*s\n", (int)len, data);
 
     // 回显消息
@@ -23,12 +24,14 @@ static int ws_message_handler(uvhttp_ws_connection_t* ws_conn,
 
 // WebSocket连接建立回调
 static int ws_connect_handler(uvhttp_ws_connection_t* ws_conn) {
+    (void)ws_conn;  // 避免未使用参数警告
     printf("WebSocket连接建立\n");
     return 0;
 }
 
 // WebSocket连接关闭回调
 static int ws_close_handler(uvhttp_ws_connection_t* ws_conn) {
+    (void)ws_conn;  // 避免未使用参数警告
     printf("WebSocket连接关闭\n");
     return 0;
 }

@@ -59,3 +59,28 @@ add_dependencies(performance_static_server uvhttp)
 add_executable(test_static_middleware ../test_static_middleware.c)
 target_link_libraries(test_static_middleware ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/libuv/.libs/libuv.a ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a m pthread dl)
 add_dependencies(test_static_middleware uvhttp)
+
+# WebSocket 示例（如果启用）
+if(BUILD_WITH_WEBSOCKET)
+    add_executable(websocket_echo_server ../websocket_echo_server.c)
+    target_link_libraries(websocket_echo_server
+        ${UVHTTP_LIBRARY}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/libuv/.libs/libuv.a
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
+        m pthread dl)
+    add_dependencies(websocket_echo_server uvhttp)
+    
+    add_executable(websocket_test_server ../websocket_test_server.c)
+    target_link_libraries(websocket_test_server
+        ${UVHTTP_LIBRARY}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/libuv/.libs/libuv.a
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
+        m pthread dl)
+    add_dependencies(websocket_test_server uvhttp)
+endif()
