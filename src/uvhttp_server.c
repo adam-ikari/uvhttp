@@ -203,6 +203,7 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     // 初始化WebSocket路由表
     #if UVHTTP_FEATURE_WEBSOCKET
     server->ws_routes = NULL;
+    server->ws_connection_manager = NULL;
     #endif
     
 #if UVHTTP_FEATURE_RATE_LIMIT
@@ -759,6 +760,26 @@ uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server, const 
     return UVHTTP_OK;
 }
 
+// 查找WebSocket处理器（根据路径）
+uvhttp_ws_handler_t* uvhttp_server_find_ws_handler(uvhttp_server_t* server, const char* path) {
+    if (!server || !path) {
+        return NULL;
+    }
+
+    // 遍历WebSocket路由表
+    ws_route_entry_t* current = (ws_route_entry_t*)server->ws_routes;
+    while (current) {
+        if (current->path && strcmp(current->path, path) == 0) {
+            // 找到匹配的路径，返回处理器指针
+            return &current->handler;
+        }
+        current = current->next;
+    }
+
+    // 未找到匹配的处理器
+    return NULL;
+}
+
 // 发送WebSocket消息
 uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len) {
     if (!ws_conn || !data) {
@@ -1000,3 +1021,492 @@ void uvhttp_tls_context_free(void* ctx) {
     (void)ctx;
 }
 #endif
+
+// ========== WebSocket 连接管理实现 ==========
+
+#if UVHTTP_FEATURE_WEBSOCKET
+
+/**
+ * 超时检测定时器回调
+ * 检查所有连接的活动时间，关闭超时连接
+ */
+static void ws_timeout_timer_callback(uv_timer_t* handle) {
+    if (!handle || !handle->data) {
+        return;
+    }
+    
+    ws_connection_manager_t* manager = (ws_connection_manager_t*)handle->data;
+    uint64_t current_time = uv_hrtime() / 1000000;  /* 转换为毫秒 */
+    uint64_t timeout_ms = manager->timeout_seconds * 1000;
+    
+    ws_connection_node_t* current = manager->connections;
+    ws_connection_node_t* prev = NULL;
+    
+    while (current) {
+        ws_connection_node_t* next = current->next;
+        
+        /* 检查连接是否超时 */
+        if (current_time - current->last_activity > timeout_ms) {
+            UVHTTP_LOG_WARN("WebSocket connection timeout, closing...\n");
+            
+            /* 关闭超时连接 */
+            if (current->ws_conn) {
+                uvhttp_ws_close(current->ws_conn, 1000, "Connection timeout");
+            }
+            
+            /* 从链表中移除 */
+            if (prev) {
+                prev->next = next;
+            } else {
+                manager->connections = next;
+            }
+            
+            /* 释放节点 */
+            UVHTTP_FREE(current);
+            manager->connection_count--;
+        } else {
+            prev = current;
+        }
+        
+        current = next;
+    }
+}
+
+/**
+ * 心跳检测定时器回调
+ * 定期发送 Ping 帧以检测连接活跃状态
+ */
+static void ws_heartbeat_timer_callback(uv_timer_t* handle) {
+    if (!handle || !handle->data) {
+        return;
+    }
+    
+    ws_connection_manager_t* manager = (ws_connection_manager_t*)handle->data;
+    uint64_t current_time = uv_hrtime() / 1000000;  /* 转换为毫秒 */
+    
+    ws_connection_node_t* current = manager->connections;
+    
+    while (current) {
+        if (current->ws_conn && current->ws_conn->state == UVHTTP_WS_STATE_OPEN) {
+            /* 检查是否需要发送 Ping */
+            if (!current->ping_pending) {
+                /* 发送 Ping 帧 */
+                if (uvhttp_ws_send_ping(current->ws_conn, NULL, 0) == 0) {
+                    current->last_ping_sent = current_time;
+                    current->ping_pending = 1;
+                }
+            } else {
+                /* 检查 Ping 是否超时（未收到 Pong 响应） */
+                uint64_t ping_timeout_ms = 10000;  /* 10秒 Ping 超时 */
+                if (current_time - current->last_ping_sent > ping_timeout_ms) {
+                    UVHTTP_LOG_WARN("WebSocket ping timeout, closing connection...\n");
+                    
+                    /* 关闭无响应的连接 */
+                    uvhttp_ws_close(current->ws_conn, 1000, "Ping timeout");
+                }
+            }
+        }
+        
+        current = current->next;
+    }
+}
+
+/**
+ * 启用 WebSocket 连接管理
+ * 
+ * @param server 服务器实例
+ * @param timeout_seconds 超时时间（秒），范围：10-3600
+ * @param heartbeat_interval 心跳间隔（秒），范围：5-300
+ * @return UVHTTP_OK 成功，其他值表示失败
+ */
+uvhttp_error_t uvhttp_server_ws_enable_connection_management(
+    uvhttp_server_t* server,
+    int timeout_seconds,
+    int heartbeat_interval
+) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    /* 参数验证 */
+    if (timeout_seconds < 10 || timeout_seconds > 3600) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    if (heartbeat_interval < 5 || heartbeat_interval > 300) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    /* 如果已经启用，先禁用 */
+    if (server->ws_connection_manager) {
+        uvhttp_error_t result = uvhttp_server_ws_disable_connection_management(server);
+        if (result != UVHTTP_OK) {
+            return result;
+        }
+    }
+    
+    /* 创建连接管理器 */
+    ws_connection_manager_t* manager = UVHTTP_MALLOC(sizeof(ws_connection_manager_t));
+    if (!manager) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    
+    memset(manager, 0, sizeof(ws_connection_manager_t));
+    manager->connections = NULL;
+    manager->connection_count = 0;
+    manager->timeout_seconds = timeout_seconds;
+    manager->heartbeat_interval = heartbeat_interval;
+    manager->enabled = 1;
+    
+    /* 初始化超时检测定时器 */
+    int ret = uv_timer_init(server->loop, &manager->timeout_timer);
+    if (ret != 0) {
+        UVHTTP_FREE(manager);
+        return UVHTTP_ERROR_SERVER_INIT;
+    }
+    manager->timeout_timer.data = manager;
+    
+    /* 初始化心跳检测定时器 */
+    ret = uv_timer_init(server->loop, &manager->heartbeat_timer);
+    if (ret != 0) {
+        uv_close((uv_handle_t*)&manager->timeout_timer, NULL);
+        UVHTTP_FREE(manager);
+        return UVHTTP_ERROR_SERVER_INIT;
+    }
+    manager->heartbeat_timer.data = manager;
+    
+    /* 启动定时器 */
+    ret = uv_timer_start(&manager->timeout_timer, ws_timeout_timer_callback,
+                        timeout_seconds * 1000, timeout_seconds * 1000);
+    if (ret != 0) {
+        uv_close((uv_handle_t*)&manager->timeout_timer, NULL);
+        uv_close((uv_handle_t*)&manager->heartbeat_timer, NULL);
+        UVHTTP_FREE(manager);
+        return UVHTTP_ERROR_SERVER_INIT;
+    }
+    
+    ret = uv_timer_start(&manager->heartbeat_timer, ws_heartbeat_timer_callback,
+                        heartbeat_interval * 1000, heartbeat_interval * 1000);
+    if (ret != 0) {
+        uv_timer_stop(&manager->timeout_timer);
+        uv_close((uv_handle_t*)&manager->timeout_timer, NULL);
+        uv_close((uv_handle_t*)&manager->heartbeat_timer, NULL);
+        UVHTTP_FREE(manager);
+        return UVHTTP_ERROR_SERVER_INIT;
+    }
+    
+    server->ws_connection_manager = manager;
+    
+    UVHTTP_LOG_INFO("WebSocket connection management enabled: timeout=%ds, heartbeat=%ds\n",
+                   timeout_seconds, heartbeat_interval);
+    
+    return UVHTTP_OK;
+}
+
+/**
+ * 禁用 WebSocket 连接管理
+ * 
+ * @param server 服务器实例
+ * @return UVHTTP_OK 成功，其他值表示失败
+ */
+uvhttp_error_t uvhttp_server_ws_disable_connection_management(
+    uvhttp_server_t* server
+) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    ws_connection_manager_t* manager = server->ws_connection_manager;
+    if (!manager) {
+        return UVHTTP_OK;  /* 未启用，直接返回成功 */
+    }
+    
+    /* 停止定时器 */
+    if (!uv_is_closing((uv_handle_t*)&manager->timeout_timer)) {
+        uv_timer_stop(&manager->timeout_timer);
+        uv_close((uv_handle_t*)&manager->timeout_timer, NULL);
+    }
+    
+    if (!uv_is_closing((uv_handle_t*)&manager->heartbeat_timer)) {
+        uv_timer_stop(&manager->heartbeat_timer);
+        uv_close((uv_handle_t*)&manager->heartbeat_timer, NULL);
+    }
+    
+    /* 关闭所有连接 */
+    ws_connection_node_t* current = manager->connections;
+    while (current) {
+        ws_connection_node_t* next = current->next;
+        
+        if (current->ws_conn) {
+            uvhttp_ws_close(current->ws_conn, 1000, "Server shutdown");
+        }
+        
+        UVHTTP_FREE(current);
+        current = next;
+    }
+    
+    manager->connections = NULL;
+    manager->connection_count = 0;
+    manager->enabled = 0;
+    
+    /* 释放管理器 */
+    UVHTTP_FREE(manager);
+    server->ws_connection_manager = NULL;
+    
+    UVHTTP_LOG_INFO("WebSocket connection management disabled\n");
+    
+    return UVHTTP_OK;
+}
+
+/**
+ * 获取 WebSocket 连接总数
+ * 
+ * @param server 服务器实例
+ * @return 连接数量
+ */
+int uvhttp_server_ws_get_connection_count(uvhttp_server_t* server) {
+    if (!server || !server->ws_connection_manager) {
+        return 0;
+    }
+    
+    return server->ws_connection_manager->connection_count;
+}
+
+/**
+ * 获取指定路径的 WebSocket 连接数量
+ * 
+ * @param server 服务器实例
+ * @param path 路径
+ * @return 连接数量
+ */
+int uvhttp_server_ws_get_connection_count_by_path(
+    uvhttp_server_t* server,
+    const char* path
+) {
+    if (!server || !server->ws_connection_manager || !path) {
+        return 0;
+    }
+    
+    int count = 0;
+    ws_connection_node_t* current = server->ws_connection_manager->connections;
+    
+    while (current) {
+        if (strcmp(current->path, path) == 0) {
+            count++;
+        }
+        current = current->next;
+    }
+    
+    return count;
+}
+
+/**
+ * 向指定路径的所有连接广播消息
+ * 
+ * @param server 服务器实例
+ * @param path 路径（NULL 表示广播到所有连接）
+ * @param data 消息数据
+ * @param len 消息长度
+ * @return UVHTTP_OK 成功，其他值表示失败
+ */
+uvhttp_error_t uvhttp_server_ws_broadcast(
+    uvhttp_server_t* server,
+    const char* path,
+    const char* data,
+    size_t len
+) {
+    if (!server || !server->ws_connection_manager) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    if (!data || len == 0) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    int sent_count = 0;
+    ws_connection_node_t* current = server->ws_connection_manager->connections;
+    
+    while (current) {
+        /* 检查路径是否匹配（如果指定了路径） */
+        if (!path || strcmp(current->path, path) == 0) {
+            if (current->ws_conn && current->ws_conn->state == UVHTTP_WS_STATE_OPEN) {
+                if (uvhttp_ws_send_text(current->ws_conn, data, len) == 0) {
+                    sent_count++;
+                }
+            }
+        }
+        
+        current = current->next;
+    }
+    
+    UVHTTP_LOG_DEBUG("WebSocket broadcast: sent to %d connections\n", sent_count);
+    
+    return UVHTTP_OK;
+}
+
+/**
+ * 关闭指定路径的所有连接
+ * 
+ * @param server 服务器实例
+ * @param path 路径（NULL 表示关闭所有连接）
+ * @return UVHTTP_OK 成功，其他值表示失败
+ */
+uvhttp_error_t uvhttp_server_ws_close_all(
+    uvhttp_server_t* server,
+    const char* path
+) {
+    if (!server || !server->ws_connection_manager) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    int closed_count = 0;
+    ws_connection_node_t* current = server->ws_connection_manager->connections;
+    ws_connection_node_t* prev = NULL;
+    
+    while (current) {
+        ws_connection_node_t* next = current->next;
+        
+        /* 检查路径是否匹配（如果指定了路径） */
+        if (!path || strcmp(current->path, path) == 0) {
+            /* 关闭连接 */
+            if (current->ws_conn) {
+                uvhttp_ws_close(current->ws_conn, 1000, "Server closed connection");
+            }
+            
+            /* 从链表中移除 */
+            if (prev) {
+                prev->next = next;
+            } else {
+                server->ws_connection_manager->connections = next;
+            }
+            
+            /* 释放节点 */
+            UVHTTP_FREE(current);
+            server->ws_connection_manager->connection_count--;
+            closed_count++;
+        } else {
+            prev = current;
+        }
+        
+        current = next;
+    }
+    
+    UVHTTP_LOG_DEBUG("WebSocket close_all: closed %d connections\n", closed_count);
+    
+    return UVHTTP_OK;
+}
+
+/**
+ * 内部函数：添加 WebSocket 连接到管理器
+ */
+void uvhttp_server_ws_add_connection(
+    uvhttp_server_t* server,
+    uvhttp_ws_connection_t* ws_conn,
+    const char* path
+) {
+    if (!server || !ws_conn || !path) {
+        return;
+    }
+    
+    ws_connection_manager_t* manager = server->ws_connection_manager;
+    if (!manager || !manager->enabled) {
+        return;
+    }
+    
+    /* 创建连接节点 */
+    ws_connection_node_t* node = UVHTTP_MALLOC(sizeof(ws_connection_node_t));
+    if (!node) {
+        UVHTTP_LOG_ERROR("Failed to allocate WebSocket connection node\n");
+        return;
+    }
+    
+    memset(node, 0, sizeof(ws_connection_node_t));
+    node->ws_conn = ws_conn;
+    strncpy(node->path, path, sizeof(node->path) - 1);
+    node->path[sizeof(node->path) - 1] = '\0';
+    node->last_activity = uv_hrtime() / 1000000;  /* 转换为毫秒 */
+    node->last_ping_sent = 0;
+    node->ping_pending = 0;
+    node->next = NULL;
+    
+    /* 添加到链表头部 */
+    node->next = manager->connections;
+    manager->connections = node;
+    manager->connection_count++;
+    
+    UVHTTP_LOG_DEBUG("WebSocket connection added: path=%s, total=%d\n",
+                   path, manager->connection_count);
+}
+
+/**
+ * 内部函数：从管理器中移除 WebSocket 连接
+ */
+void uvhttp_server_ws_remove_connection(
+    uvhttp_server_t* server,
+    uvhttp_ws_connection_t* ws_conn
+) {
+    if (!server || !ws_conn) {
+        return;
+    }
+    
+    ws_connection_manager_t* manager = server->ws_connection_manager;
+    if (!manager || !manager->enabled) {
+        return;
+    }
+    
+    ws_connection_node_t* current = manager->connections;
+    ws_connection_node_t* prev = NULL;
+    
+    while (current) {
+        if (current->ws_conn == ws_conn) {
+            /* 从链表中移除 */
+            if (prev) {
+                prev->next = current->next;
+            } else {
+                manager->connections = current->next;
+            }
+            
+            /* 释放节点 */
+            UVHTTP_FREE(current);
+            manager->connection_count--;
+            
+            UVHTTP_LOG_DEBUG("WebSocket connection removed: total=%d\n",
+                           manager->connection_count);
+            return;
+        }
+        
+        prev = current;
+        current = current->next;
+    }
+}
+
+/**
+ * 内部函数：更新 WebSocket 连接活动时间
+ */
+void uvhttp_server_ws_update_activity(
+    uvhttp_server_t* server,
+    uvhttp_ws_connection_t* ws_conn
+) {
+    if (!server || !ws_conn) {
+        return;
+    }
+    
+    ws_connection_manager_t* manager = server->ws_connection_manager;
+    if (!manager || !manager->enabled) {
+        return;
+    }
+    
+    ws_connection_node_t* current = manager->connections;
+    
+    while (current) {
+        if (current->ws_conn == ws_conn) {
+            current->last_activity = uv_hrtime() / 1000000;  /* 转换为毫秒 */
+            current->ping_pending = 0;  /* 清除待处理的 Ping 标记 */
+            return;
+        }
+        
+        current = current->next;
+    }
+}
+
+#endif /* UVHTTP_FEATURE_WEBSOCKET */

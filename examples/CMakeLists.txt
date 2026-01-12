@@ -40,29 +40,8 @@ add_subdirectory(05_advanced)
 # 生产环境示例（待添加）
 # add_subdirectory(06_production)
 
-# 性能测试示例
-add_executable(performance_test performance_test.c)
-target_link_libraries(performance_test ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/libllhttp.a m pthread dl)
-
-add_executable(performance_test_static performance_test_static.c)
-target_link_libraries(performance_test_static ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/libllhttp.a m pthread dl)
-
-# TLS 性能测试（如果启用）
-if(BUILD_WITH_TLS)
-    add_executable(performance_test_tls performance_test_tls.c)
-    target_link_libraries(performance_test_tls ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a m pthread dl)
-endif()
-
-# WebSocket 性能测试（如果启用）
+# WebSocket 连接管理测试示例（如果启用）
 if(BUILD_WITH_WEBSOCKET)
-    add_executable(performance_test_websocket performance_test_websocket.c)
-    target_link_libraries(performance_test_websocket ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a m pthread dl)
-    
-    # WebSocket Echo 服务器示例
-    add_executable(websocket_echo_server websocket_echo_server.c)
-    target_link_libraries(websocket_echo_server ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a m pthread dl)
-    
-    # WebSocket 测试服务器示例
-    add_executable(websocket_test_server websocket_test_server.c)
-    target_link_libraries(websocket_test_server ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a m pthread dl)
+    add_executable(test_ws_connection_management test_ws_connection_management.c)
+    target_link_libraries(test_ws_connection_management ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedcrypto.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedtls.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedx509.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/libllhttp.a m pthread dl)
 endif()

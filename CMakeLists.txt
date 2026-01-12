@@ -330,5 +330,6 @@ option(BUILD_EXAMPLES "Build example programs" ON)
 if(BUILD_EXAMPLES)
     # 暂时只编译性能测试，跳过其他有问题的示例
     add_subdirectory(examples/performance_only)
-    message(STATUS "示例编译: 已启用（仅性能测试）")
+    add_subdirectory(examples)
+    message(STATUS "示例编译: 已启用")
 endif()
