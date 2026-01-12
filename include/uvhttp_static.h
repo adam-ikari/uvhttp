@@ -24,16 +24,25 @@ typedef struct cache_entry cache_entry_t;
 extern "C" {
 #endif
 
-/* 静态文件配置结构 */
+/* 静态文件配置结构 - CPU 缓存优化布局 */
 typedef struct uvhttp_static_config {
-    char root_directory[UVHTTP_MAX_FILE_PATH_SIZE];  /* 根目录路径 */
-    char index_file[UVHTTP_MAX_PATH_SIZE];           /* 默认索引文件 */
+    /* 8字节对齐字段 - 热路径 */
+    size_t max_cache_size;                           /* 最大缓存大小（字节） */
+    size_t sendfile_chunk_size;                       /* sendfile 分块大小（字节） */
+    
+    /* 4字节对齐字段 - 中等访问频率 */
+    int cache_ttl;                                   /* 缓存TTL（秒） */
+    int max_cache_entries;                           /* 最大缓存条目数 */
+    int sendfile_timeout_ms;                         /* sendfile 超时时间（毫秒） */
+    int sendfile_max_retry;                          /* sendfile 最大重试次数 */
     int enable_directory_listing;                    /* 是否启用目录列表 */
     int enable_etag;                                 /* 是否启用ETag */
     int enable_last_modified;                        /* 是否启用Last-Modified */
-    size_t max_cache_size;                           /* 最大缓存大小（字节） */
-    int cache_ttl;                                   /* 缓存TTL（秒） */
-    int max_cache_entries;                           /* 最大缓存条目数 */
+    int enable_sendfile;                             /* 是否启用 sendfile 零拷贝优化 */
+    
+    /* 字符串字段 - 冷路径 */
+    char root_directory[UVHTTP_MAX_FILE_PATH_SIZE];  /* 根目录路径 */
+    char index_file[UVHTTP_MAX_PATH_SIZE];           /* 默认索引文件 */
     char custom_headers[UVHTTP_MAX_HEADER_VALUE_SIZE]; /* 自定义响应头 */
 } uvhttp_static_config_t;
 
@@ -53,9 +62,23 @@ typedef struct uvhttp_mime_mapping {
  * 创建静态文件服务上下文
  * 
  * @param config 静态文件配置
- * @return 静态文件服务上下文指针，失败返回NULL
+ * @return 静态文件服务上下文，失败返回NULL
  */
 uvhttp_static_context_t* uvhttp_static_create(const uvhttp_static_config_t* config);
+
+/**
+ * 设置 sendfile 配置参数
+ * 
+ * @param ctx 静态文件服务上下文
+ * @param timeout_ms 超时时间（毫秒），0 表示使用默认值
+ * @param max_retry 最大重试次数，0 表示使用默认值
+ * @param chunk_size 分块大小（字节），0 表示使用默认值
+ * @return UVHTTP_OK 成功，其他值表示失败
+ */
+uvhttp_error_t uvhttp_static_set_sendfile_config(uvhttp_static_context_t* ctx,
+                                                int timeout_ms,
+                                                int max_retry,
+                                                size_t chunk_size);
 
 /**
  * 释放静态文件服务上下文

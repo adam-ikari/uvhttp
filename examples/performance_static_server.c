@@ -1,6 +1,9 @@
 /**
- * UVHTTP 静态文件服务性能测试
+ * @file performance_static_server_refactored.c
+ * @brief UVHTTP 静态文件服务性能测试（使用 libuv data 指针模式）
+ * 
  * 用于测试真实场景下的静态文件服务性能
+ * 使用 libuv data 指针模式避免全局变量
  */
 
 #include "../include/uvhttp.h"
@@ -10,35 +13,66 @@
 #include <string.h>
 #include <sys/stat.h>
 
-// 全局变量
-static uvhttp_server_t* g_server = NULL;
-static uvhttp_router_t* g_router = NULL;
-static uv_loop_t* g_loop = NULL;
-static uvhttp_static_context_t* g_static_ctx = NULL;
+/**
+ * @brief 应用上下文结构
+ * 
+ * 使用 libuv data 指针模式避免全局变量
+ */
+typedef struct {
+    uvhttp_server_t* server;
+    uvhttp_router_t* router;
+    uvhttp_static_context_t* static_ctx;
+    uvhttp_config_t* config;
+    int request_count;
+    time_t start_time;
+} app_context_t;
 
 // 信号处理器
 void signal_handler(int sig) {
     (void)sig;
     
-    if (g_server) {
-        uvhttp_server_stop(g_server);
-        uvhttp_server_free(g_server);
-        g_server = NULL;
-        g_router = NULL;
+    uv_loop_t* loop = uv_default_loop();
+    if (!loop || !loop->data) {
+        exit(0);
     }
     
-    if (g_static_ctx) {
-        uvhttp_static_free(g_static_ctx);
-        g_static_ctx = NULL;
+    app_context_t* ctx = (app_context_t*)loop->data;
+    
+    if (ctx->server) {
+        uvhttp_server_stop(ctx->server);
+        uvhttp_server_free(ctx->server);
+        ctx->server = NULL;
+        ctx->router = NULL;
     }
     
-    g_loop = NULL;
+    if (ctx->static_ctx) {
+        uvhttp_static_free(ctx->static_ctx);
+        ctx->static_ctx = NULL;
+    }
+    
+    if (ctx->config) {
+        uvhttp_config_free(ctx->config);
+        ctx->config = NULL;
+    }
+    
     exit(0);
 }
 
 // 静态文件请求处理器
 int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    if (!g_static_ctx) {
+    // 从请求中获取事件循环
+    uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)request->client);
+    if (!loop || !loop->data) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_header(response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(response, "Application context not initialized", 35);
+        uvhttp_response_send(response);
+        return -1;
+    }
+    
+    app_context_t* ctx = (app_context_t*)loop->data;
+    
+    if (!ctx->static_ctx) {
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_header(response, "Content-Type", "text/plain");
         uvhttp_response_set_body(response, "Static file service not initialized", 35);
@@ -47,60 +81,72 @@ int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
     }
     
     /* 处理静态文件请求 */
-    int result = uvhttp_static_handle_request(g_static_ctx, request, response);
+    int result = uvhttp_static_handle_request(ctx->static_ctx, request, response);
     
-    if (result != 0) {
-        /* 设置错误响应 */
-        const char* error_body = "Error processing static file request";
+    if (result == 0) {
+        ctx->request_count++;
+    }
+    
+    return result;
+}
+
+// 主页请求处理器
+int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    // 从请求中获取事件循环
+    uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)request->client);
+    if (!loop || !loop->data) {
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error_body, strlen(error_body));
+        uvhttp_response_set_body(response, "Application context not initialized", 35);
         uvhttp_response_send(response);
         return -1;
     }
     
-    /* 成功情况下，uvhttp_static_handle_request 已经发送了响应 */
-    return 0;
-}
-
-// 主页处理器
-int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    (void)request;
+    app_context_t* ctx = (app_context_t*)loop->data;
     
+    // 生成HTML内容
     const char* html_content = 
-        "<!DOCTYPE html>\n"
-        "<html>\n"
-        "<head>\n"
-        "    <title>UVHTTP 静态文件服务性能测试</title>\n"
-        "    <style>\n"
-        "        body { font-family: Arial, sans-serif; margin: 40px; }\n"
-        "        .container { max-width: 800px; margin: 0 auto; }\n"
-        "        .file-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }\n"
-        "        .file-item { padding: 15px; background: #f0f0f0; border-radius: 5px; text-decoration: none; color: #333; }\n"
-        "        .file-item:hover { background: #e0e0e0; }\n"
-        "    </style>\n"
-        "</head>\n"
-        "<body>\n"
-        "    <div class=\"container\">\n"
-        "        <h1>🚀 UVHTTP 静态文件服务性能测试</h1>\n"
-        "        <h2>测试文件列表</h2>\n"
-        "        <div class=\"file-list\">\n"
-        "            <a href=\"/static/small.html\" class=\"file-item\">小文件 (1KB)</a>\n"
-        "            <a href=\"/static/medium.html\" class=\"file-item\">中等文件 (10KB)</a>\n"
-        "            <a href=\"/static/large.html\" class=\"file-item\">大文件 (100KB)</a>\n"
-        "            <a href=\"/static/image.png\" class=\"file-item\">图片 (50KB)</a>\n"
-        "            <a href=\"/static/script.js\" class=\"file-item\">脚本 (8KB)</a>\n"
-        "            <a href=\"/static/style.css\" class=\"file-item\">样式 (5KB)</a>\n"
-        "            <a href=\"/static/data.json\" class=\"file-item\">JSON (29B)</a>\n"
-        "        </div>\n"
-        "    </div>\n"
-        "</body>\n"
+        "<!DOCTYPE html>"
+        "<html>"
+        "<head>"
+        "<title>UVHTTP 性能测试服务器</title>"
+        "<style>"
+        "body { font-family: Arial, sans-serif; margin: 40px; }"
+        "h1 { color: #333; }"
+        ".stats { background: #f5f5f5; padding: 20px; border-radius: 5px; }"
+        "</style>"
+        "</head>"
+        "<body>"
+        "<h1>🚀 UVHTTP 性能测试服务器</h1>"
+        "<div class='stats'>"
+        "<p><strong>服务器信息:</strong></p>"
+        "<ul>"
+        "<li>版本: 1.2.0</li>"
+        "<li>状态: 运行中</li>"
+        "<li>请求计数: %d</li>"
+        "<li>运行时间: %ld 秒</li>"
+        "</ul>"
+        "</div>"
+        "<p><strong>测试端点:</strong></p>"
+        "<ul>"
+        "<li><a href='/static/'>静态文件目录</a></li>"
+        "<li><a href='/static/index.html'>小文件 (12B)</a></li>"
+        "<li><a href='/static/medium.html'>中等文件 (10KB)</a></li>"
+        "<li><a href='/static/large.html'>大文件 (100KB)</a></li>"
+        "</ul>"
+        "</body>"
         "</html>";
+    
+    char html_body[2048];
+    time_t uptime = time(NULL) - ctx->start_time;
+    snprintf(html_body, sizeof(html_body), html_content, ctx->request_count, (long)uptime);
     
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/html");
-    uvhttp_response_set_body(response, html_content, strlen(html_content));
+    uvhttp_response_set_body(response, html_body, strlen(html_body));
     uvhttp_response_send(response);
+    
+    ctx->request_count++;
     
     return 0;
 }
@@ -154,12 +200,24 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
+    // 创建事件循环
+    uv_loop_t* loop = uv_default_loop();
+    
+    // 创建应用上下文
+    app_context_t* ctx = UVHTTP_MALLOC(sizeof(app_context_t));
+    if (!ctx) {
+        fprintf(stderr, "错误: 无法分配应用上下文\n");
+        return 1;
+    }
+    memset(ctx, 0, sizeof(app_context_t));
+    ctx->start_time = time(NULL);
+    
+    // 将上下文设置到事件循环的 data 指针
+    loop->data = ctx;
+    
     // 设置信号处理
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
-    
-    // 创建事件循环
-    g_loop = uv_default_loop();
     
     // 应用 Nginx 优化配置
     printf("创建配置...\n");
@@ -168,8 +226,10 @@ int main(int argc, char* argv[]) {
     if (!config) {
         printf("错误：无法创建配置\n");
         fflush(stdout);
+        UVHTTP_FREE(ctx);
         return 1;
     }
+    ctx->config = config;
     printf("配置创建成功\n");
     fflush(stdout);
     
@@ -199,11 +259,12 @@ int main(int argc, char* argv[]) {
     // 创建静态文件服务上下文
     printf("创建静态文件服务上下文...\n");
     fflush(stdout);
-    g_static_ctx = uvhttp_static_create(&static_config);
-    if (!g_static_ctx) {
+    ctx->static_ctx = uvhttp_static_create(&static_config);
+    if (!ctx->static_ctx) {
         printf("错误：无法创建静态文件服务上下文\n");
         fflush(stdout);
         uvhttp_config_free(config);
+        UVHTTP_FREE(ctx);
         return 1;
     }
     printf("静态文件服务上下文创建成功\n");
@@ -212,59 +273,61 @@ int main(int argc, char* argv[]) {
     // 创建HTTP服务器
     printf("创建HTTP服务器...\n");
     fflush(stdout);
-    g_server = uvhttp_server_new(g_loop);
-    if (!g_server) {
+    ctx->server = uvhttp_server_new(loop);
+    if (!ctx->server) {
         printf("错误：无法创建HTTP服务器\n");
         fflush(stdout);
-        uvhttp_static_free(g_static_ctx);
+        uvhttp_static_free(ctx->static_ctx);
         uvhttp_config_free(config);
+        UVHTTP_FREE(ctx);
         return 1;
     }
     printf("HTTP服务器创建成功\n");
     fflush(stdout);
     
     // 创建路由
-    g_router = uvhttp_router_new();
-    if (!g_router) {
+    ctx->router = uvhttp_router_new();
+    if (!ctx->router) {
         printf("错误：无法创建路由器\n");
         fflush(stdout);
-        uvhttp_static_free(g_static_ctx);
+        uvhttp_static_free(ctx->static_ctx);
+        uvhttp_server_free(ctx->server);
         uvhttp_config_free(config);
-        uvhttp_server_free(g_server);
+        UVHTTP_FREE(ctx);
         return 1;
     }
     printf("路由器创建成功\n");
     fflush(stdout);
     
     // 添加路由
-    uvhttp_router_add_route(g_router, "/", home_handler);
+    uvhttp_router_add_route(ctx->router, "/", home_handler);
     printf("主页路由添加成功\n");
     fflush(stdout);
     
     /* 设置静态文件路由 */
-    uvhttp_router_add_static_route(g_router, "/static/", g_static_ctx);
+    uvhttp_router_add_static_route(ctx->router, "/static/", ctx->static_ctx);
     printf("静态文件路由添加成功\n");
     fflush(stdout);
     
     /* 设置回退路由（处理所有其他请求） */
-    uvhttp_router_add_fallback_route(g_router, g_static_ctx);
+    uvhttp_router_add_fallback_route(ctx->router, ctx->static_ctx);
     printf("回退路由添加成功\n");
     fflush(stdout);
     
     // 设置路由
-    g_server->router = g_router;
+    ctx->server->router = ctx->router;
     printf("路由器设置成功\n");
     fflush(stdout);
     
     // 启动服务器
-    int result = uvhttp_server_listen(g_server, "0.0.0.0", port);
+    int result = uvhttp_server_listen(ctx->server, "0.0.0.0", port);
     if (result != 0) {
         printf("错误：无法启动服务器 (错误码: %d)\n", result);
         fflush(stdout);
-        uvhttp_router_free(g_router);
-        uvhttp_static_free(g_static_ctx);
+        uvhttp_static_free(ctx->static_ctx);
         uvhttp_config_free(config);
-        uvhttp_server_free(g_server);
+        uvhttp_server_free(ctx->server);
+        UVHTTP_FREE(ctx);
         return 1;
     }
     
@@ -277,14 +340,29 @@ int main(int argc, char* argv[]) {
     printf("\n按 Ctrl+C 停止服务器\n");
     fflush(stdout);
     
+    // 缓存预热：预加载常用小文件
+    printf("🔥 缓存预热中...\n");
+    fflush(stdout);
+    uvhttp_static_prewarm_cache(ctx->static_ctx, "/static/index.html");
+    uvhttp_static_prewarm_cache(ctx->static_ctx, "/static/style.css");
+    uvhttp_static_prewarm_cache(ctx->static_ctx, "/static/script.js");
+    printf("✅ 缓存预热完成\n");
+    fflush(stdout);
+    
     // 运行事件循环
-    uv_run(g_loop, UV_RUN_DEFAULT);
+    uv_run(loop, UV_RUN_DEFAULT);
     
-    // 清理资源
-    uvhttp_static_free(g_static_ctx);
-    uvhttp_config_free(config);
-    uvhttp_server_free(g_server);
+    // 清理（正常退出）
+    if (ctx->server) {
+        uvhttp_server_free(ctx->server);
+    }
+    if (ctx->static_ctx) {
+        uvhttp_static_free(ctx->static_ctx);
+    }
+    if (ctx->config) {
+        uvhttp_config_free(ctx->config);
+    }
+    UVHTTP_FREE(ctx);
     
-    printf("\n服务器已停止\n");
     return 0;
 }

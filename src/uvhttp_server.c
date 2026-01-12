@@ -732,11 +732,14 @@ uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server, const 
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
 
-    entry->path = strdup(path);
+    // 分配并复制路径（使用 UVHTTP_MALLOC 避免混用分配器）
+    size_t path_len = strlen(path);
+    entry->path = (char*)UVHTTP_MALLOC(path_len + 1);
     if (!entry->path) {
         uvhttp_free(entry);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
+    memcpy(entry->path, path, path_len + 1);
 
     // 复制handler
     memcpy(&entry->handler, handler, sizeof(uvhttp_ws_handler_t));

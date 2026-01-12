@@ -41,9 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **sendfile 超时测试**: test_sendfile_timeout.c 测试用例
 
 ### Fixed
-- **中等文件传输超时**: 使用分块发送（每次1MB）
-- **超时检测**: 添加30秒超时检测
-- **错误处理**: 改进错误处理，添加重试机制（最多3次）
+- **中等文件传输超时**: 使用分块发送（每次64KB，优化后）
+- **超时检测**: 添加10秒超时检测（优化后）
+- **错误处理**: 改进错误处理，添加重试机制（最多2次，优化后）
 
 ### Testing
 - **测试通过率**: 100% (10/10)

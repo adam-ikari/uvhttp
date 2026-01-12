@@ -400,10 +400,20 @@ static int match_route_node(uvhttp_route_node_t* node,
         
         if (child->is_param) {
             // 参数节点，匹配任意段
-            strncpy(match->params[match->param_count].name, child->param_name, 
-                    sizeof(match->params[match->param_count].name) - 1);
-            strncpy(match->params[match->param_count].value, segment, 
-                    sizeof(match->params[match->param_count].value) - 1);
+            size_t name_len = strlen(child->param_name);
+            size_t name_copy_len = name_len < sizeof(match->params[match->param_count].name) - 1 
+                                   ? name_len 
+                                   : sizeof(match->params[match->param_count].name) - 1;
+            memcpy(match->params[match->param_count].name, child->param_name, name_copy_len);
+            match->params[match->param_count].name[name_copy_len] = '\0';
+            
+            size_t value_len = strlen(segment);
+            size_t value_copy_len = value_len < sizeof(match->params[match->param_count].value) - 1 
+                                    ? value_len 
+                                    : sizeof(match->params[match->param_count].value) - 1;
+            memcpy(match->params[match->param_count].value, segment, value_copy_len);
+            match->params[match->param_count].value[value_copy_len] = '\0';
+            
             match->param_count++;
             
             int result = match_route_node(child, segments, segment_count, 
@@ -613,11 +623,13 @@ uvhttp_error_t uvhttp_router_add_static_route(uvhttp_router_t* router,
         UVHTTP_FREE(router->static_prefix);
     }
     
-    // 复制新的前缀
-    router->static_prefix = strdup(prefix_path);
+    // 复制新的前缀（使用 UVHTTP_MALLOC 避免混用分配器）
+    size_t prefix_len = strlen(prefix_path);
+    router->static_prefix = (char*)UVHTTP_MALLOC(prefix_len + 1);
     if (!router->static_prefix) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
+    memcpy(router->static_prefix, prefix_path, prefix_len + 1);
     
     router->static_context = static_context;
     router->static_handler = NULL; // 将使用静态文件处理逻辑
