@@ -1342,6 +1342,12 @@ static void on_sendfile_complete(uv_fs_t* req) {
     
     /* 检查是否发送完成 */
     if (ctx->offset >= (int64_t)ctx->file_size) {
+        /* 停止超时定时器 */
+        if (!uv_is_closing((uv_handle_t*)&ctx->timeout_timer)) {
+            uv_timer_stop(&ctx->timeout_timer);
+            uv_close((uv_handle_t*)&ctx->timeout_timer, NULL);
+        }
+        
         /* 关闭文件 */
         uv_fs_req_cleanup(req);
         uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
