@@ -92,29 +92,19 @@
 
 ### 🚀 性能优化
 
-- **[性能基准](PERFORMANCE_BENCHMARK.md)** - 性能测试报告
-  - 测试环境和配置
-  - 性能优化措施
-  - 实际测试结果
-  - 测试覆盖度分析
-
-- **[服务器配置与性能优化指南](SERVER_CONFIG_PERFORMANCE_GUIDE.md)** - 配置和优化指南
-  - 性能基准
-  - 配置优化
-  - 缓存优化
-  - 并发优化
-  - 网络优化
-  - 最佳实践
-
 - **[性能测试标准](PERFORMANCE_TESTING_STANDARD.md)** - 性能测试标准
   - 测试环境标准
   - 测试工具标准
   - 测试方法标准
   - 性能指标标准
   - 报告格式标准
-  - 性能测试计划（附录 A）
 
-> **注意**: `PERFORMANCE_TESTING_STANDARD.md` 包含了性能测试计划的完整内容（附录 A），确保测试的完整性和规范性。
+- **[性能文档审计报告](../PERFORMANCE_DOCUMENTATION_AUDIT_REPORT.md)** - 性能文档审计
+  - 文档准确性评估
+  - 实际测试结果
+  - 问题分析和改进建议
+
+> **注意**: 性能基准测试请参考 `PERFORMANCE_TESTING_STANDARD.md` 中的测试标准和方法。
 
 ### 🧪 测试与质量
 
@@ -167,8 +157,7 @@
 - [限流 API](RATE_LIMIT_API.md) - 限流
 
 #### 性能文档
-- [性能基准](PERFORMANCE_BENCHMARK.md) - 基准测试
-- [服务器配置与性能优化指南](SERVER_CONFIG_PERFORMANCE_GUIDE.md) - 优化指南
+- [性能测试标准](PERFORMANCE_TESTING_STANDARD.md) - 测试标准
 - [性能测试标准](PERFORMANCE_TESTING_STANDARD.md) - 测试标准
 
 #### 安全文档
@@ -201,8 +190,8 @@
 5. [限流 API](RATE_LIMIT_API.md) - 限流功能
 
 #### 性能优化者
-1. [性能基准](PERFORMANCE_BENCHMARK.md) - 了解性能
-2. [服务器配置与性能优化指南](SERVER_CONFIG_PERFORMANCE_GUIDE.md) - 优化配置
+1. [性能测试标准](PERFORMANCE_TESTING_STANDARD.md) - 了解性能测试方法
+2. [性能文档审计报告](../PERFORMANCE_DOCUMENTATION_AUDIT_REPORT.md) - 查看性能分析
 3. [性能测试标准](PERFORMANCE_TESTING_STANDARD.md) - 测试标准
 
 #### 核心开发者
@@ -262,9 +251,9 @@
 | 中间件 | [中间件系统](MIDDLEWARE_SYSTEM.md) |
 | 限流 | [限流 API](RATE_LIMIT_API.md) |
 | TLS/HTTPS | [API 参考](API_REFERENCE.md), [依赖说明](DEPENDENCIES.md) |
-| 缓存 | [服务器配置与性能优化指南](SERVER_CONFIG_PERFORMANCE_GUIDE.md) |
+| 缓存 | [静态文件服务](STATIC_FILE_SERVER.md) |
 | 错误处理 | [错误码参考](ERROR_CODES.md) |
-| 性能优化 | [服务器配置与性能优化指南](SERVER_CONFIG_PERFORMANCE_GUIDE.md) |
+| 性能优化 | [性能测试标准](PERFORMANCE_TESTING_STANDARD.md) |
 
 ### 按场景查找
 
@@ -274,7 +263,7 @@
 | API 开发 | [API 参考](API_REFERENCE.md), [教程](TUTORIAL.md) |
 | Web 应用 | [中间件系统](MIDDLEWARE_SYSTEM.md), [路由系统](ROUTER_SEARCH_MODES.md) |
 | 静态网站 | [静态文件服务](STATIC_FILE_SERVER.md) |
-| 高并发服务 | [服务器配置与性能优化指南](SERVER_CONFIG_PERFORMANCE_GUIDE.md) |
+| 高并发服务 | [性能测试标准](PERFORMANCE_TESTING_STANDARD.md) |
 | 安全应用 | [安全指南](SECURITY.md), [错误码参考](ERROR_CODES.md) |
 | 性能测试 | [性能测试标准](PERFORMANCE_TESTING_STANDARD.md) |
 | 核心开发 | [架构设计](ARCHITECTURE.md), [开发者指南](DEVELOPER_GUIDE.md) |
@@ -292,8 +281,7 @@
 - **参考文档**: 2
 
 **性能文档说明**：
-- `PERFORMANCE_BENCHMARK.md` - 性能测试报告
-- `SERVER_CONFIG_PERFORMANCE_GUIDE.md` - 配置和优化指南
+- `PERFORMANCE_TESTING_STANDARD.md` - 性能测试标准
 - `PERFORMANCE_TESTING_STANDARD.md` - 性能测试标准（包含测试计划）
 
 **重要**：所有性能基准值都基于实际测试结果，不使用虚假的预期性能。

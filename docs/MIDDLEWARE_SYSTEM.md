@@ -20,7 +20,6 @@ UVHTTP 采用模块化的中间件架构，提供可配置的功能模块，包�
 |----------|--------|----------|----------|
 | 静态文件服务 | `UVHTTP_FEATURE_STATIC_FILES` | 启用 | HTTP 中间件 |
 | WebSocket | `BUILD_WITH_WEBSOCKET` | 启用 | WebSocket 中间件 |
-| 日志系统 | `UVHTTP_FEATURE_LOGGING` | 启用 | 日志中间件 |
 
 ### 中间件工作流程
 
