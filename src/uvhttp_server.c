@@ -618,6 +618,7 @@ void uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
     
     if (fread(content, 1, file_size, file) != file_size) {
         uvhttp_free(content);
+        fclose(file);
         uvhttp_quick_response(response, 500, "text/plain", "File read error");
         return;
     }
