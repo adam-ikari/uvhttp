@@ -25,11 +25,6 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y cmake build-essential valgrind
 
-    - name: Build dependencies
-      run: |
-        chmod +x scripts/build_deps.sh
-        ./scripts/build_deps.sh
-
     - name: Configure CMake
       run: |
         cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
@@ -66,8 +61,6 @@ jobs:
 
     - name: Build project
       run: |
-        chmod +x scripts/build_deps.sh
-        ./scripts/build_deps.sh
         cmake -B build -DCMAKE_BUILD_TYPE=Release
         cmake --build build --config Release -j$(nproc)
 
@@ -94,8 +87,6 @@ jobs:
 
     - name: Build project
       run: |
-        chmod +x scripts/build_deps.sh
-        ./scripts/build_deps.sh
         cmake -B build -DCMAKE_BUILD_TYPE=Debug
         cmake --build build --config Debug -j$(nproc)
 
