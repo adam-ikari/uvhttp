@@ -192,9 +192,7 @@ add_library(uvhttp STATIC ${SOURCES})
 
 # 添加依赖关系
 add_dependencies(uvhttp libuv mbedtls xxhash)
-if(BUILD_WITH_MIMALLOC)
-    add_dependencies(uvhttp mimalloc)
-endif()
+# 不添加 mimalloc 依赖，因为它会构建测试程序导致失败
 
 # 链接库
 target_link_libraries(uvhttp ${LIBS})
