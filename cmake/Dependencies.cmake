@@ -191,7 +191,12 @@ if(BUILD_WITH_MIMALLOC)
     message(STATUS "Configuring mimalloc...")
 
     set(MIMALLOC_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/build)
-    set(MIMALLOC_LIB ${MIMALLOC_BUILD_DIR}/libmimalloc.a)
+    # 根据构建类型选择正确的库文件名
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(MIMALLOC_LIB ${MIMALLOC_BUILD_DIR}/libmimalloc-debug.a)
+    else()
+        set(MIMALLOC_LIB ${MIMALLOC_BUILD_DIR}/libmimalloc.a)
+    endif()
 
     if(NOT EXISTS ${MIMALLOC_LIB})
 
