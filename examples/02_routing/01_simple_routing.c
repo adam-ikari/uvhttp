@@ -164,6 +164,9 @@ int status_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* method = uvhttp_request_get_method(req);
     const char* url = uvhttp_request_get_url(req);
     
+    // 从请求中获取服务器
+    uvhttp_server_t* server = uvhttp_request_get_server(req);
+    
     char json[512];
     snprintf(json, sizeof(json),
         "{\n"
@@ -175,7 +178,7 @@ int status_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "    \"url\": \"%s\"\n"
         "  }\n"
         "}\n",
-        g_server ? g_server->active_connections : 0,
+        server ? server->active_connections : 0,
         method ? method : "unknown",
         url ? url : "unknown");
     
