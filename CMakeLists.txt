@@ -217,6 +217,7 @@ set(LIBS
     ${XXHASH_LIB}
     pthread
     m
+    dl
 )
 
 # 添加mimalloc库（如果找到）
@@ -237,7 +238,16 @@ endif()
 
 # 如果pkg-config没有找到，使用deps/libuv
 if(NOT LIBUV_FOUND)
-    list(APPEND LIBS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/.libs/libuv.a)
+    # 尝试多个可能的libuv库路径
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/build/libuv.a)
+        list(APPEND LIBS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/build/libuv.a)
+        message(STATUS "Using libuv from deps/libuv/build/libuv.a")
+    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/.libs/libuv.a)
+        list(APPEND LIBS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/.libs/libuv.a)
+        message(STATUS "Using libuv from deps/libuv/.libs/libuv.a")
+    else()
+        message(FATAL_ERROR "libuv library not found in deps/libuv/build or deps/libuv/.libs")
+    endif()
     list(APPEND LIBS dl)  # dl库必须在libuv之后
 endif()
 

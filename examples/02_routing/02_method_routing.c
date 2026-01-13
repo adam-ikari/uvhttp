@@ -269,13 +269,13 @@ int main() {
     printf("测试命令：\n");
     printf("  # GET 请求 - 获取资源\n");
     printf("  curl http://localhost:8080/resource\n\n");
-    
+
     printf("  # POST 请求 - 创建资源\n");
-    printf("  curl -X POST http://localhost:8080/resource -d '{"name":"test"}'\n\n");
-    
+    printf("  curl -X POST http://localhost:8080/resource -d '{\"name\":\"test\"}'\n\n");
+
     printf("  # PUT 请求 - 更新资源\n");
-    printf("  curl -X PUT http://localhost:8080/resource -d '{"name":"updated"}'\n\n");
-    
+    printf("  curl -X PUT http://localhost:8080/resource -d '{\"name\":\"updated\"}'\n\n");
+
     printf("  # DELETE 请求 - 删除资源\n");
     printf("  curl -X DELETE http://localhost:8080/resource\n\n");
     

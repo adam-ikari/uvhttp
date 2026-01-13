@@ -5,7 +5,7 @@
 
 #include "uvhttp.h"
 #include "uvhttp_cors_middleware.h"
-#include "uvhttp_middleware_macros.h"
+#include "uvhttp_simple_middleware.h"
 #include <stdio.h>
 #include <string.h>
 

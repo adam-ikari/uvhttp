@@ -42,10 +42,19 @@ add_subdirectory(05_advanced)
 
 # WebSocket 连接管理测试示例（如果启用）
 if(BUILD_WITH_WEBSOCKET)
+    # 确定libuv库路径
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/build/libuv.a)
+        set(LIBUV_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/build/libuv.a)
+    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a)
+        set(LIBUV_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a)
+    else()
+        message(FATAL_ERROR "libuv library not found")
+    endif()
+
     add_executable(test_ws_connection_management test_ws_connection_management.c)
-    target_link_libraries(test_ws_connection_management ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedcrypto.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedtls.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedx509.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/libllhttp.a m pthread dl)
+    target_link_libraries(test_ws_connection_management ${UVHTTP_LIBRARY} ${LIBUV_LIB} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedcrypto.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedtls.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedx509.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/libllhttp.a m pthread dl)
 
     # WebSocket 认证示例
     add_executable(websocket_auth_server websocket_auth_server.c)
-    target_link_libraries(websocket_auth_server ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedcrypto.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedtls.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedx509.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/libllhttp.a m pthread dl)
+    target_link_libraries(websocket_auth_server ${UVHTTP_LIBRARY} ${LIBUV_LIB} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedcrypto.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedtls.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedx509.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/libllhttp.a m pthread dl)
 endif()
