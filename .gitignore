@@ -31,7 +31,6 @@ CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
-*.cmake
 
 # Temporary files
 *.tmp
@@ -41,3 +40,4 @@ Makefile
 # Core dumps
 core
 core.*
+!cmake/Dependencies.cmake
