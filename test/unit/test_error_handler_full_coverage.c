@@ -26,15 +26,15 @@ void test_error_cleanup(void) {
 
 /* 测试设置错误处理配置 */
 void test_error_set_config(void) {
-    /* 测试设置配置 */
+    /* 测试设置配置 - 使用快速配置以加快测试速度 */
     uvhttp_error_config_t config = {
         .min_logLevel = UVHTTP_LOG_LEVEL_DEBUG,
         .customHandler = NULL,
         .enableRecovery = 1,
-        .maxRetries = 5,
-        .baseDelayMs = 200,
-        .maxDelayMs = 10000,
-        .backoffMultiplier = 3.0
+        .maxRetries = 2,
+        .baseDelayMs = 10,
+        .maxDelayMs = 100,
+        .backoffMultiplier = 2.0
     };
     
     uvhttp_error_set_config(&config);
@@ -65,7 +65,18 @@ void test_error_report(void) {
 
 /* 测试错误恢复 */
 void test_error_recovery(void) {
-    /* 测试错误恢复 */
+    /* 测试错误恢复 - 使用快速配置以加快测试速度 */
+    uvhttp_error_config_t fast_config = {
+        .min_logLevel = UVHTTP_LOG_LEVEL_INFO,
+        .customHandler = NULL,
+        .enableRecovery = 1,
+        .maxRetries = 2,
+        .baseDelayMs = 10,
+        .maxDelayMs = 100,
+        .backoffMultiplier = 2.0
+    };
+    uvhttp_error_set_config(&fast_config);
+    
     uvhttp_error_context_t context = {
         .error_code = UVHTTP_ERROR_CONNECTION_ACCEPT,
         .function = "test_function",
@@ -77,23 +88,16 @@ void test_error_recovery(void) {
     };
     
     uvhttp_error_t result = uvhttp_error_attempt_recovery(&context);
-    /* 结果取决于实现 */
+    (void)result;  /* 结果取决于实现 */
     
     /* 测试内存不足错误恢复 */
     context.error_code = UVHTTP_ERROR_OUT_OF_MEMORY;
     result = uvhttp_error_attempt_recovery(&context);
+    (void)result;
     
     /* 测试禁用恢复 */
-    uvhttp_error_config_t config = {
-        .min_logLevel = UVHTTP_LOG_LEVEL_INFO,
-        .customHandler = NULL,
-        .enableRecovery = 0,
-        .maxRetries = 3,
-        .baseDelayMs = 100,
-        .maxDelayMs = 5000,
-        .backoffMultiplier = 2.0
-    };
-    uvhttp_error_set_config(&config);
+    fast_config.enableRecovery = 0;
+    uvhttp_error_set_config(&fast_config);
     
     result = uvhttp_error_attempt_recovery(&context);
     
@@ -155,14 +159,14 @@ void custom_error_handler(const uvhttp_error_context_t* context) {
 }
 
 void test_custom_handler(void) {
-    /* 测试自定义错误处理器 */
+    /* 测试自定义错误处理器 - 使用快速配置以加快测试速度 */
     uvhttp_error_config_t config = {
         .min_logLevel = UVHTTP_LOG_LEVEL_INFO,
         .customHandler = custom_error_handler,
         .enableRecovery = 1,
-        .maxRetries = 3,
-        .baseDelayMs = 100,
-        .maxDelayMs = 5000,
+        .maxRetries = 2,
+        .baseDelayMs = 10,
+        .maxDelayMs = 100,
         .backoffMultiplier = 2.0
     };
     uvhttp_error_set_config(&config);
