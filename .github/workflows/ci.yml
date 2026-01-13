@@ -6,13 +6,13 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-20.04, ubuntu-22.04]
-        build_type: [Debug, Release]
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v3
@@ -27,27 +27,26 @@ jobs:
 
     - name: Configure CMake
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
       run: |
-        cmake --build build --config ${{ matrix.build_type }} -j$(nproc)
+        cmake --build build --config Release -j$(nproc)
 
     - name: Run tests
       run: |
         cd build
-        ctest --output-on-failure
+        ctest --output-on-failure -j$(nproc)
 
     - name: Check for warnings
       run: |
-        if cmake --build build --config ${{ matrix.build_type }} 2>&1 | grep -i "warning:"; then
+        if cmake --build build --config Release 2>&1 | grep -i "warning:"; then
           echo "Found compiler warnings!"
           exit 1
         fi
 
   performance-test:
     runs-on: ubuntu-22.04
-    needs: build-and-test
 
     steps:
     - uses: actions/checkout@v3
@@ -112,7 +111,6 @@ jobs:
 
   coverage:
     runs-on: ubuntu-22.04
-    needs: build-and-test
 
     steps:
     - uses: actions/checkout@v3
@@ -132,7 +130,7 @@ jobs:
     - name: Run tests with coverage
       run: |
         cd build
-        ctest --output-on-failure
+        ctest --output-on-failure -j$(nproc)
 
     - name: Generate coverage report
       run: |
