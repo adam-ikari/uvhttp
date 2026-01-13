@@ -58,3 +58,7 @@ if(BUILD_WITH_WEBSOCKET)
     add_executable(websocket_auth_server websocket_auth_server.c)
     target_link_libraries(websocket_auth_server ${UVHTTP_LIBRARY} ${LIBUV_LIB} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedcrypto.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedtls.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedx509.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/libllhttp.a m pthread dl)
 endif()
+
+# 性能测试示例
+add_executable(performance_static_server performance_static_server.c)
+target_link_libraries(performance_static_server ${UVHTTP_LIBRARY} ${LIBUV_LIB} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedcrypto.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedtls.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/library/libmbedx509.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/libllhttp.a m pthread dl)
