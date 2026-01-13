@@ -92,7 +92,18 @@ jobs:
 
     - name: Run cppcheck
       run: |
-        cppcheck --enable=all --error-exitcode=1 --suppress=missingIncludeSystem src/
+        cppcheck --enable=all --error-exitcode=1 --suppress=missingIncludeSystem \
+          -DUVHTTP_STRINGIFY(x)=#x \
+          -DUVHTTP_FEATURE_WEBSOCKET=1 \
+          -DUVHTTP_FEATURE_STATIC_FILES=1 \
+          -DUVHTTP_FEATURE_TLS=1 \
+          -DUVHTTP_FEATURE_RATE_LIMIT=1 \
+          -DUVHTTP_FEATURE_LOGGING=1 \
+          -DUVHTTP_FEATURE_LRU_CACHE=1 \
+          -DUVHTTP_FEATURE_ROUTER_CACHE=1 \
+          -DUVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION=1 \
+          -DUVHTTP_ROUTER_SEARCH_MODE=2 \
+          src/
 
     - name: Memory leak check
       run: |
