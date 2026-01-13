@@ -83,7 +83,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake build-essential clang-tidy cppcheck
+        sudo apt-get install -y cmake build-essential clang-tidy cppcheck lcov
 
     - name: Build project
       run: |
@@ -109,3 +109,43 @@ jobs:
       run: |
         cd build
         valgrind --leak-check=full --error-exitcode=1 ./dist/bin/test_connection_full_coverage || true
+
+  coverage:
+    runs-on: ubuntu-22.04
+    needs: build-and-test
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential lcov
+
+    - name: Build with coverage
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
+        cmake --build build --config Debug -j$(nproc)
+
+    - name: Run tests with coverage
+      run: |
+        cd build
+        ctest --output-on-failure
+
+    - name: Generate coverage report
+      run: |
+        cd build
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' --output-file coverage.info
+        lcov --remove coverage.info 'test/*' --output-file coverage.info
+        lcov --remove coverage.info 'examples/*' --output-file coverage.info
+        lcov --summary coverage.info
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./build/coverage.info
+        flags: unittests
+        name: codecov-umbrella
