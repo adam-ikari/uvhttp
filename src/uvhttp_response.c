@@ -502,9 +502,9 @@ uvhttp_error_t uvhttp_response_send_raw(const char* data,
     if (response && !response->keep_alive) {
 
         /* 获取连接对象并关闭连接 */
-        uv_tcp_t* client = (uv_tcp_t*)response->client;
-        if (client) {
-            uvhttp_connection_t* conn = (uvhttp_connection_t*)client->data;
+        uv_tcp_t* client_tcp = (uv_tcp_t*)response->client;
+        if (client_tcp) {
+            uvhttp_connection_t* conn = (uvhttp_connection_t*)client_tcp->data;
             if (conn) {
                 conn->keep_alive = 0;
             }

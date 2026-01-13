@@ -36,6 +36,7 @@ typedef struct uvhttp_async_file_request {
     void* static_context;                /* 静态文件上下文 */
     void (*completion_cb)(struct uvhttp_async_file_request* req, int status);  /* 完成回调 */
     struct uvhttp_async_file_request* next; /* 链表指针 */
+    struct uvhttp_async_file_manager* manager; /* 管理器指针 */
 } uvhttp_async_file_request_t;
 
 /* 异步文件读取管理器 */

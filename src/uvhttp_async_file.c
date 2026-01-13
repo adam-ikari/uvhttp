@@ -120,7 +120,7 @@ static void on_file_read_complete(uv_fs_t* req) {
         return;
     }
     
-    uvhttp_async_file_manager_t* manager = (uvhttp_async_file_manager_t*)async_req->static_context;
+    uvhttp_async_file_manager_t* manager = async_req->manager;
     if (!manager) {
         cleanup_async_request(async_req);
         uv_fs_req_cleanup(req);
@@ -172,7 +172,7 @@ static void on_file_stat_complete(uv_fs_t* req) {
         return;
     }
     
-    uvhttp_async_file_manager_t* manager = (uvhttp_async_file_manager_t*)async_req->static_context;
+    uvhttp_async_file_manager_t* manager = async_req->manager;
     if (!manager) {
         cleanup_async_request(async_req);
         uv_fs_req_cleanup(req);
@@ -283,6 +283,7 @@ int uvhttp_async_file_read(uvhttp_async_file_manager_t* manager,
     async_req->completion_cb = completion_cb;
     async_req->state = UVHTTP_ASYNC_FILE_STATE_PENDING;
     async_req->fs_req.data = async_req;
+    async_req->manager = manager;
     
     /* 添加到管理器 */
     async_req->next = manager->active_requests;

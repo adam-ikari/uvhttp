@@ -365,7 +365,6 @@ uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* route
 
 #endif
 }
-}
 
 // 静态路由表（编译时确定）
 static const struct {
