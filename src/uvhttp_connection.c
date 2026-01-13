@@ -50,14 +50,14 @@ static uvhttp_connection_t* uvhttp_connection_pool_acquire(void) {
         /* 连接过期，从池中移除并销毁 */
         g_connection_pool = entry->next;
         uvhttp_connection_free(conn);
-        uvhttp_free(entry);
+        UVHTTP_FREE(entry);
         g_pool_size--;
         return NULL;
     }
     
     /* 从池中移除 */
     g_connection_pool = entry->next;
-    uvhttp_free(entry);
+    UVHTTP_FREE(entry);
     g_pool_size--;
     
     /* 重置连接状态 */
@@ -76,7 +76,7 @@ static void uvhttp_connection_pool_release(uvhttp_connection_t* conn) {
     }
     
     /* 创建池条目 */
-    uvhttp_connection_pool_entry_t* entry = uvhttp_malloc(sizeof(uvhttp_connection_pool_entry_t));
+    uvhttp_connection_pool_entry_t* entry = UVHTTP_MALLOC(sizeof(uvhttp_connection_pool_entry_t));
     if (!entry) {
         uvhttp_connection_free(conn);
         return;
@@ -95,7 +95,7 @@ static void uvhttp_connection_pool_cleanup(void) {
         uvhttp_connection_pool_entry_t* entry = g_connection_pool;
         g_connection_pool = entry->next;
         uvhttp_connection_free(entry->connection);
-        uvhttp_free(entry);
+        UVHTTP_FREE(entry);
         g_pool_size--;
     }
 }
@@ -245,7 +245,7 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     }
     
     /* 单线程安全的内存分配 */
-    uvhttp_connection_t* conn = uvhttp_malloc(sizeof(uvhttp_connection_t));
+    uvhttp_connection_t* conn = UVHTTP_MALLOC(sizeof(uvhttp_connection_t));
     if (!conn) {
         return NULL;
     }
@@ -259,7 +259,7 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     
     // 初始化idle句柄用于安全的连接重用
     if (uv_idle_init(server->loop, &conn->idle_handle) != 0) {
-        uvhttp_free(conn);
+        UVHTTP_FREE(conn);
         return NULL;
     }
     conn->idle_handle.data = conn;
@@ -280,7 +280,7 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     
     // TCP初始化 - 完整实现
     if (uv_tcp_init(server->loop, &conn->tcp_handle) != 0) {
-        uvhttp_free(conn);
+        UVHTTP_FREE(conn);
         return NULL;
     }
     conn->tcp_handle.data = conn;
@@ -290,45 +290,45 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     
     // 分配读缓冲区
     conn->read_buffer_size = UVHTTP_READ_BUFFER_SIZE;
-    conn->read_buffer = uvhttp_malloc(conn->read_buffer_size);
+    conn->read_buffer = UVHTTP_MALLOC(conn->read_buffer_size);
     if (!conn->read_buffer) {
-        uvhttp_free(conn);
+        UVHTTP_FREE(conn);
         return NULL;
     }
     conn->read_buffer_used = 0;
     
     // 创建请求和响应对象
-    conn->request = uvhttp_malloc(sizeof(uvhttp_request_t));
+    conn->request = UVHTTP_MALLOC(sizeof(uvhttp_request_t));
     if (!conn->request) {
-        uvhttp_free(conn->read_buffer);
-        uvhttp_free(conn);
+        UVHTTP_FREE(conn->read_buffer);
+        UVHTTP_FREE(conn);
         return NULL;
     }
     
     // 正确初始化request对象（包含HTTP解析器）
     if (uvhttp_request_init(conn->request, &conn->tcp_handle) != 0) {
-        uvhttp_free(conn->request);
-        uvhttp_free(conn->read_buffer);
-        uvhttp_free(conn);
+        UVHTTP_FREE(conn->request);
+        UVHTTP_FREE(conn->read_buffer);
+        UVHTTP_FREE(conn);
         return NULL;
     }
     
-    conn->response = uvhttp_malloc(sizeof(uvhttp_response_t));
+    conn->response = UVHTTP_MALLOC(sizeof(uvhttp_response_t));
     if (!conn->response) {
         uvhttp_request_cleanup(conn->request);
-        uvhttp_free(conn->request);
-        uvhttp_free(conn->read_buffer);
-        uvhttp_free(conn);
+        UVHTTP_FREE(conn->request);
+        UVHTTP_FREE(conn->read_buffer);
+        UVHTTP_FREE(conn);
         return NULL;
     }
     
     // 正确初始化response对象
     if (uvhttp_response_init(conn->response, &conn->tcp_handle) != 0) {
         uvhttp_request_cleanup(conn->request);
-        uvhttp_free(conn->request);
-        uvhttp_free(conn->response);  // 直接释放，不需要cleanup（因为初始化失败）
-        uvhttp_free(conn->read_buffer);
-        uvhttp_free(conn);
+        UVHTTP_FREE(conn->request);
+        UVHTTP_FREE(conn->response);  // 直接释放，不需要cleanup（因为初始化失败）
+        UVHTTP_FREE(conn->read_buffer);
+        UVHTTP_FREE(conn);
         return NULL;
     }
     
@@ -342,11 +342,11 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     conn->mempool = uvhttp_mempool_create();
     if (!conn->mempool) {
         uvhttp_request_cleanup(conn->request);
-        uvhttp_free(conn->request);
+        UVHTTP_FREE(conn->request);
         uvhttp_response_cleanup(conn->response);
-        uvhttp_free(conn->response);
-        uvhttp_free(conn->read_buffer);
-        uvhttp_free(conn);
+        UVHTTP_FREE(conn->response);
+        UVHTTP_FREE(conn->read_buffer);
+        UVHTTP_FREE(conn);
         return NULL;
     }
     
@@ -361,16 +361,16 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
     // 清理请求和响应数据
     if (conn->request) {
         uvhttp_request_cleanup(conn->request);
-        uvhttp_free(conn->request);
+        UVHTTP_FREE(conn->request);
     }
     
     if (conn->response) {
         uvhttp_response_cleanup(conn->response);
-        uvhttp_free(conn->response);
+        UVHTTP_FREE(conn->response);
     }
     
     if (conn->read_buffer) {
-        uvhttp_free(conn->read_buffer);
+        UVHTTP_FREE(conn->read_buffer);
     }
     
     // 释放内存池
@@ -379,7 +379,7 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
     }
     
     // 释放连接内存
-    uvhttp_free(conn);
+    UVHTTP_FREE(conn);
 }
 
 int uvhttp_connection_start(uvhttp_connection_t* conn) {
@@ -536,7 +536,7 @@ static int on_websocket_close(uvhttp_ws_connection_t* ws_conn, int code, const c
     }
 
     /* 释放wrapper */
-    uvhttp_free(wrapper);
+    UVHTTP_FREE(wrapper);
     ws_conn->user_data = NULL;
 
     (void)code;
@@ -555,8 +555,14 @@ static int on_websocket_error(uvhttp_ws_connection_t* ws_conn, int error_code, c
     /* 从wrapper中获取用户处理器 */
     uvhttp_ws_wrapper_t* wrapper = (uvhttp_ws_wrapper_t*)ws_conn->user_data;
     if (wrapper && wrapper->user_handler) {
-        /* 用户错误回调暂时未实现，保留扩展点 */
-        (void)wrapper;
+        /* 调用用户注册的错误回调 */
+        if (wrapper->user_handler->on_error) {
+            int result = wrapper->user_handler->on_error(ws_conn, error_code, error_msg);
+            if (result != 0) {
+                UVHTTP_LOG_ERROR("User on_error callback failed: %d\n", result);
+            }
+            return result;
+        }
     }
 
     return -1;
@@ -637,7 +643,7 @@ int uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, cons
     ws_conn->client_key[sizeof(ws_conn->client_key) - 1] = '\0';
 
     /* 创建wrapper以保存连接对象和用户处理器 */
-    uvhttp_ws_wrapper_t* wrapper = uvhttp_malloc(sizeof(uvhttp_ws_wrapper_t));
+    uvhttp_ws_wrapper_t* wrapper = UVHTTP_MALLOC(sizeof(uvhttp_ws_wrapper_t));
     if (!wrapper) {
         UVHTTP_LOG_ERROR("Failed to allocate WebSocket wrapper\n");
         uvhttp_ws_connection_free(ws_conn);

@@ -32,7 +32,7 @@ typedef struct uvhttp_ws_connection uvhttp_ws_connection_t;
 /* WebSocket 连接节点 */
 typedef struct ws_connection_node {
     uvhttp_ws_connection_t* ws_conn;
-    char path[256];
+    char path[4096];
     uint64_t last_activity;      /* 最后活动时间（毫秒） */
     uint64_t last_ping_sent;     /* 最后发送 Ping 的时间（毫秒） */
     int ping_pending;            /* 是否有待处理的 Ping */
@@ -47,6 +47,7 @@ typedef struct {
     uv_timer_t heartbeat_timer;         /* 心跳检测定时器 */
     int timeout_seconds;                /* 超时时间（秒） */
     int heartbeat_interval;             /* 心跳间隔（秒） */
+    uint64_t ping_timeout_ms;           /* Ping 超时时间（毫秒） */
     int enabled;                        /* 是否启用连接管理 */
 } ws_connection_manager_t;
 #endif
@@ -91,6 +92,8 @@ struct uvhttp_server {
     ws_connection_manager_t* ws_connection_manager;  /* WebSocket连接管理器 */
 #endif
     uvhttp_http_middleware_t* middleware_chain;  /* 中间件链 */
+    size_t max_connections;  /* 最大连接数限制，默认10000 */
+    size_t max_message_size;  /* 最大消息大小（字节），默认1MB */
     
 #if UVHTTP_FEATURE_RATE_LIMIT
     /* 限流功能（核心功能 - 固定窗口算法） */
@@ -262,6 +265,7 @@ typedef struct {
     int (*on_connect)(uvhttp_ws_connection_t* ws_conn);
     int (*on_message)(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len, int opcode);
     int (*on_close)(uvhttp_ws_connection_t* ws_conn);
+    int (*on_error)(uvhttp_ws_connection_t* ws_conn, int error_code, const char* error_msg);
     void* user_data;
 } uvhttp_ws_handler_t;
 

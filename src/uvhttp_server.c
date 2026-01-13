@@ -200,6 +200,10 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
         UVHTTP_LOG_DEBUG("uvhttp_malloc success, server=%p", (void*)server);
     memset(server, 0, sizeof(uvhttp_server_t));
     
+    // 初始化连接限制默认值
+    server->max_connections = 10000;  // 默认最大连接数
+    server->max_message_size = 1024 * 1024;  // 默认最大消息大小1MB
+    
     // 初始化WebSocket路由表
     #if UVHTTP_FEATURE_WEBSOCKET
     server->ws_routes = NULL;
@@ -1097,10 +1101,9 @@ static void ws_heartbeat_timer_callback(uv_timer_t* handle) {
                 }
             } else {
                 /* 检查 Ping 是否超时（未收到 Pong 响应） */
-                uint64_t ping_timeout_ms = 10000;  /* 10秒 Ping 超时 */
-                if (current_time - current->last_ping_sent > ping_timeout_ms) {
+                if (current_time - current->last_ping_sent > manager->ping_timeout_ms) {
                     UVHTTP_LOG_WARN("WebSocket ping timeout, closing connection...\n");
-                    
+
                     /* 关闭无响应的连接 */
                     uvhttp_ws_close(current->ws_conn, 1000, "Ping timeout");
                 }
@@ -1156,6 +1159,7 @@ uvhttp_error_t uvhttp_server_ws_enable_connection_management(
     manager->connection_count = 0;
     manager->timeout_seconds = timeout_seconds;
     manager->heartbeat_interval = heartbeat_interval;
+    manager->ping_timeout_ms = 10000;  /* 默认10秒 Ping 超时 */
     manager->enabled = 1;
     
     /* 初始化超时检测定时器 */
