@@ -51,8 +51,9 @@ void signal_handler(int sig) {
  * @brief GET 请求处理器 - 获取资源
  */
 int get_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 未使用的参数
     printf("处理 GET 请求\n");
-    
+
     const char* json = "{\n"
         "  \"method\": \"GET\",\n"
         "  \"action\": \"获取资源\",\n"
@@ -63,11 +64,11 @@ int get_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "    \"description\": \"这是一个示例资源\"\n"
         "  }\n"
         "}\n";
-    
+
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
     uvhttp_response_set_body(res, json, strlen(json));
-    
+
     return uvhttp_response_send(res);
 }
 
@@ -153,8 +154,9 @@ int put_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
  * @brief DELETE 请求处理器 - 删除资源
  */
 int delete_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 未使用的参数
     printf("处理 DELETE 请求\n");
-    
+
     const char* json = "{\n"
         "  \"method\": \"DELETE\",\n"
         "  \"action\": \"删除资源\",\n"
@@ -162,11 +164,11 @@ int delete_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "  \"message\": \"资源删除成功\",\n"
         "  \"deleted_id\": 1\n"
         "}\n";
-    
+
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
     uvhttp_response_set_body(res, json, strlen(json));
-    
+
     return uvhttp_response_send(res);
 }
 

@@ -30,18 +30,19 @@ static int log_middleware_handler(
     uvhttp_response_t* response,
     uvhttp_middleware_context_t* ctx
 ) {
+    (void)response;  // 未使用的参数
     log_middleware_data_t* data = (log_middleware_data_t*)ctx->data;
-    
+
     const char* method = uvhttp_request_get_method(request);
     const char* path = uvhttp_request_get_path(request);
     const char* client_ip = uvhttp_request_get_client_ip(request);
-    
+
     data->request_count++;
-    
+
     /* 记录请求信息 */
     printf("[LOG] Request #%d: %s %s from %s\n",
            data->request_count, method, path, client_ip);
-    
+
     /* 继续执行下一个中间件 */
     return UVHTTP_MIDDLEWARE_CONTINUE;
 }
@@ -106,22 +107,23 @@ static int timing_middleware_handler(
     uvhttp_response_t* response,
     uvhttp_middleware_context_t* ctx
 ) {
+    (void)response;  // 未使用的参数
     timing_middleware_data_t* data = (timing_middleware_data_t*)ctx->data;
-    
+
     const char* path = uvhttp_request_get_path(request);
-    
+
     /* 记录开始时间 */
     data->start_time = clock();
-    
+
     /* 继续执行 */
     int result = UVHTTP_MIDDLEWARE_CONTINUE;
-    
+
     /* 计算处理时间 */
     clock_t end_time = clock();
     double elapsed = (double)(end_time - data->start_time) / CLOCKS_PER_SEC * 1000.0;
-    
+
     printf("[TIMING] %s processed in %.2f ms\n", path, elapsed);
-    
+
     return result;
 }
 
@@ -129,9 +131,10 @@ static int timing_middleware_handler(
 
 /* 根路径处理器 */
 static int root_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;  // 未使用的参数
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/html");
-    
+
     const char* html =
         "<!DOCTYPE html>"
         "<html>"
@@ -153,6 +156,7 @@ static int root_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
 
 /* 公开页面处理器 */
 static int public_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;  // 未使用的参数
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "application/json");
 
@@ -164,6 +168,7 @@ static int public_handler(uvhttp_request_t* request, uvhttp_response_t* response
 
 /* API 数据处理器 */
 static int api_data_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;  // 未使用的参数
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "application/json");
 
@@ -176,13 +181,15 @@ static int api_data_handler(uvhttp_request_t* request, uvhttp_response_t* respon
 /* ========== 主函数 ========== */
 
 int main(int argc, char** argv) {
+    (void)argc;  // 未使用的参数
+    (void)argv;  // 未使用的参数
     printf("========================================\n");
     printf("UVHTTP Middleware Demo\n");
     printf("========================================\n\n");
-    
+
     /* 创建事件循环 */
     uv_loop_t* loop = uv_default_loop();
-    
+
     /* 创建服务器 */
     uvhttp_server_t* server = uvhttp_server_new(loop);
     if (!server) {

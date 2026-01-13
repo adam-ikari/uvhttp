@@ -82,28 +82,28 @@ int main(int argc, char* argv[]) {
         .user_data = NULL
     };
 
-    uvhttp_error_t result = uvhttp_server_register_ws_handler(server, "/ws", &ws_handler);
+    uvhttp_error_t result = uvhttp_server_register_ws_handler(server->server, "/ws", &ws_handler);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "注册 WebSocket 处理器失败\n");
         return 1;
     }
 
     /* 启用 Token 认证 */
-    result = uvhttp_server_ws_enable_token_auth(server, "/ws", validate_token, NULL);
+    result = uvhttp_server_ws_enable_token_auth(server->server, "/ws", validate_token, NULL);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "启用 Token 认证失败\n");
         return 1;
     }
 
     /* 添加 IP 白名单（可选） */
-    /* result = uvhttp_server_ws_add_ip_to_whitelist(server, "/ws", "127.0.0.1"); */
+    /* result = uvhttp_server_ws_add_ip_to_whitelist(server->server, "/ws", "127.0.0.1"); */
     /* if (result != UVHTTP_OK) { */
     /*     fprintf(stderr, "添加 IP 白名单失败\n"); */
     /*     return 1; */
     /* } */
 
     /* 添加 IP 黑名单（可选） */
-    /* result = uvhttp_server_ws_add_ip_to_blacklist(server, "/ws", "192.168.1.100"); */
+    /* result = uvhttp_server_ws_add_ip_to_blacklist(server->server, "/ws", "192.168.1.100"); */
     /* if (result != UVHTTP_OK) { */
     /*     fprintf(stderr, "添加 IP 黑名单失败\n"); */
     /*     return 1; */
@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
     printf("\n按 Ctrl+C 停止服务器\n");
 
     /* 启动服务器 */
-    result = uvhttp_server_listen(server, host, port);
+    result = uvhttp_server_run(server);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "启动服务器失败\n");
         return 1;
@@ -129,7 +129,7 @@ int main(int argc, char* argv[]) {
     uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 
     /* 清理 */
-    uvhttp_server_free(server);
+    uvhttp_server_simple_free(server);
 
     return 0;
 }

@@ -411,9 +411,19 @@ void uvhttp_connection_close(uvhttp_connection_t* conn) {
     if (!conn) {
         return;
     }
-    
+
     uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_CLOSING);
-    uv_close((uv_handle_t*)&conn->tcp_handle, on_close);
+
+    /* 停止 idle handle（如果正在运行） */
+    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
+        uv_idle_stop(&conn->idle_handle);
+        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
+    }
+
+    /* 关闭 TCP handle */
+    if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
+        uv_close((uv_handle_t*)&conn->tcp_handle, on_close);
+    }
 }
 
 void uvhttp_connection_set_state(uvhttp_connection_t* conn, uvhttp_connection_state_t state) {

@@ -111,7 +111,6 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer, si
             // 即使没有body也要设置Content-Length: 0
             pos += snprintf(buffer + pos, *length - pos, "Content-Length: 0\r\n");
         }
-        has_content_length = 1;
     }
     
     // HTTP/1.1优化：根据keep-alive设置Connection头

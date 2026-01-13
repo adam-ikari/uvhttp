@@ -109,9 +109,10 @@ void app_context_destroy(app_context_t* ctx, uv_loop_t* loop) {
  * @brief 主页处理器
  */
 int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 未使用的参数
     uv_loop_t* loop = uv_default_loop();
     app_context_t* ctx = GET_CTX(loop);
-    
+
     // 检查上下文是否存在
     if (!ctx) {
         const char* error = "{\"error\":\"上下文未初始化\"}";
@@ -120,8 +121,9 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         uvhttp_response_set_body(res, error, strlen(error));
         return uvhttp_response_send(res);
     }
-    
-    const char* html = 
+
+    char response[1024];
+    snprintf(response, sizeof(response),
         "<!DOCTYPE html>"
         "<html>"
         "<head>"
@@ -153,18 +155,15 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "</ul>"
         "</div>"
         "</body>"
-        "</html>";
-    
-    char response[1024];
-    snprintf(response, sizeof(response), html,
+        "</html>",
         ctx->server_name,
         ctx->request_count,
         time(NULL) - ctx->start_time);
-    
+
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
     uvhttp_response_set_body(res, response, strlen(response));
-    
+
     ctx->request_count++;
     
     return uvhttp_response_send(res);
@@ -174,9 +173,10 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
  * @brief 统计处理器
  */
 int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 未使用的参数
     uv_loop_t* loop = uv_default_loop();
     app_context_t* ctx = GET_CTX(loop);
-    
+
     if (!ctx) {
         const char* error = "{\"error\":\"上下文未初始化\"}";
         uvhttp_response_set_status(res, 500);
@@ -184,10 +184,10 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         uvhttp_response_set_body(res, error, strlen(error));
         return uvhttp_response_send(res);
     }
-    
+
     long uptime = time(NULL) - ctx->start_time;
     double rps = uptime > 0 ? (double)ctx->request_count / uptime : 0.0;
-    
+
     char response[512];
     snprintf(response, sizeof(response),
         "{\n"
@@ -216,9 +216,10 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
  * @brief 信息处理器
  */
 int info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 未使用的参数
     uv_loop_t* loop = uv_default_loop();
     app_context_t* ctx = GET_CTX(loop);
-    
+
     if (!ctx) {
         const char* error = "{\"error\":\"上下文未初始化\"}";
         uvhttp_response_set_status(res, 500);
@@ -226,7 +227,7 @@ int info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         uvhttp_response_set_body(res, error, strlen(error));
         return uvhttp_response_send(res);
     }
-    
+
     char response[512];
     snprintf(response, sizeof(response),
         "{\n"

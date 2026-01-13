@@ -93,7 +93,7 @@ jobs:
     - name: Run cppcheck
       run: |
         cppcheck --enable=all --error-exitcode=1 --suppress=missingIncludeSystem \
-          -DUVHTTP_STRINGIFY(x)=#x \
+          -DUVHTTP_STRINGIFY\(x\)=\#x \
           -DUVHTTP_FEATURE_WEBSOCKET=1 \
           -DUVHTTP_FEATURE_STATIC_FILES=1 \
           -DUVHTTP_FEATURE_TLS=1 \

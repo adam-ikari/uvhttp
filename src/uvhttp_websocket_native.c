@@ -721,12 +721,12 @@ int uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
         
         /* 提取载荷 */
         uint8_t* payload = NULL;
-        uint8_t masking_key[4] = {0};
-        
+
         if (header.payload_len > 0) {
             payload = conn->recv_buffer + header_size;
-            
+
             if (header.mask) {
+                uint8_t masking_key[4] = {0};
                 memcpy(masking_key, conn->recv_buffer + header_size, 4);
                 payload += 4;
                 uvhttp_ws_apply_mask(payload, header.payload_len, masking_key);

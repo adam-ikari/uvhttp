@@ -334,14 +334,13 @@ static uvhttp_request_handler_t find_handler_hash_only(
     return find_in_hash_table(cr, path, method);
 }
 
-uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* router, 
+uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* router,
                                                    const char* path,
                                                    const char* method) {
     if (!router || !path || !method) {
         return NULL;
     }
 
-    cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
     uvhttp_method_t method_enum = fast_method_parse(method);
 
 #if UVHTTP_ROUTER_SEARCH_MODE == 0
@@ -354,12 +353,14 @@ uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* route
 
 #else
     /* 混合策略模式（默认） - 适用于大规模高并发场景 */
+    cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
+
     /* 首先在热路径中查找（缓存友好） */
     uvhttp_request_handler_t handler = find_in_hot_routes(cr, path, method_enum);
     if (handler) {
         return handler;
     }
-    
+
     /* 然后在哈希表中查找 */
     return find_in_hash_table(cr, path, method_enum);
 

@@ -428,7 +428,7 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
     }
     
     /* 完成HTML */
-    offset += snprintf(html + offset, buffer_size - offset,
+    snprintf(html + offset, buffer_size - offset,
         "</table>\n"
         "<p style=\"margin-top: 20px; color: #666; font-size: small;\">"
         "%zu entries total"

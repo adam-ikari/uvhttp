@@ -178,9 +178,7 @@ static void on_file_stat_complete(uv_fs_t* req) {
         uv_fs_req_cleanup(req);
         return;
     }
-    
-    int status = -1;
-    
+
     if (req->result == 0) {
         /* stat成功 */
         uv_stat_t* stat_buf = (uv_stat_t*)req->ptr;
@@ -238,6 +236,7 @@ static void on_file_stat_complete(uv_fs_t* req) {
     /* 出错处理 */
     async_req->state = UVHTTP_ASYNC_FILE_STATE_ERROR;
     if (async_req->completion_cb) {
+        int status = -1;
         async_req->completion_cb(async_req, status);
     }
     
