@@ -123,7 +123,7 @@ set(SOURCES
 )
 
 if(BUILD_WITH_WEBSOCKET)
-    list(APPEND SOURCES src/uvhttp_websocket_native.c)
+    list(APPEND SOURCES src/uvhttp_websocket_native.c src/uvhttp_websocket_auth.c)
 endif()
 
 # 头文件

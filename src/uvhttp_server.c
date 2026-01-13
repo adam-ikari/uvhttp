@@ -34,6 +34,7 @@
 typedef struct ws_route_entry {
     char* path;
     uvhttp_ws_handler_t handler;
+    uvhttp_ws_auth_config_t* auth_config;  /* 认证配置 */
     struct ws_route_entry* next;
 } ws_route_entry_t;
 #endif
@@ -748,6 +749,7 @@ uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server, const 
 
     // 复制handler
     memcpy(&entry->handler, handler, sizeof(uvhttp_ws_handler_t));
+    entry->auth_config = NULL;  /* 初始化认证配置为 NULL */
     entry->next = NULL;
 
     // 添加到服务器的WebSocket路由表（单线程安全）
@@ -1494,23 +1496,263 @@ void uvhttp_server_ws_update_activity(
     if (!server || !ws_conn) {
         return;
     }
-    
+
     ws_connection_manager_t* manager = server->ws_connection_manager;
     if (!manager || !manager->enabled) {
         return;
     }
-    
+
     ws_connection_node_t* current = manager->connections;
-    
+
     while (current) {
         if (current->ws_conn == ws_conn) {
             current->last_activity = uv_hrtime() / 1000000;  /* 转换为毫秒 */
             current->ping_pending = 0;  /* 清除待处理的 Ping 标记 */
             return;
         }
-        
+
         current = current->next;
     }
+}
+
+/* ========== WebSocket 认证 API ========== */
+
+/**
+ * 设置 WebSocket 路由的认证配置
+ */
+uvhttp_error_t uvhttp_server_ws_set_auth_config(
+    uvhttp_server_t* server,
+    const char* path,
+    uvhttp_ws_auth_config_t* config
+) {
+    if (!server || !path || !config) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    /* 查找对应的路由条目 */
+    ws_route_entry_t* entry = (ws_route_entry_t*)server->ws_routes;
+    while (entry) {
+        if (strcmp(entry->path, path) == 0) {
+            /* 释放旧的认证配置 */
+            if (entry->auth_config) {
+                uvhttp_ws_auth_config_destroy(entry->auth_config);
+            }
+
+            /* 复制新的认证配置 */
+            entry->auth_config = uvhttp_ws_auth_config_create();
+            if (!entry->auth_config) {
+                return UVHTTP_ERROR_OUT_OF_MEMORY;
+            }
+
+            memcpy(entry->auth_config, config, sizeof(uvhttp_ws_auth_config_t));
+
+            /* 复制 IP 白名单 */
+            ip_entry_t* whitelist = config->ip_whitelist;
+            while (whitelist) {
+                uvhttp_ws_auth_add_ip_to_whitelist(entry->auth_config, whitelist->ip);
+                whitelist = whitelist->next;
+            }
+
+            /* 复制 IP 黑名单 */
+            ip_entry_t* blacklist = config->ip_blacklist;
+            while (blacklist) {
+                uvhttp_ws_auth_add_ip_to_blacklist(entry->auth_config, blacklist->ip);
+                blacklist = blacklist->next;
+            }
+
+            return UVHTTP_OK;
+        }
+        entry = entry->next;
+    }
+
+    return UVHTTP_ERROR_NOT_FOUND;
+}
+
+/**
+ * 获取 WebSocket 路由的认证配置
+ */
+uvhttp_ws_auth_config_t* uvhttp_server_ws_get_auth_config(
+    uvhttp_server_t* server,
+    const char* path
+) {
+    if (!server || !path) {
+        return NULL;
+    }
+
+    /* 查找对应的路由条目 */
+    ws_route_entry_t* entry = (ws_route_entry_t*)server->ws_routes;
+    while (entry) {
+        if (strcmp(entry->path, path) == 0) {
+            return entry->auth_config;
+        }
+        entry = entry->next;
+    }
+
+    return NULL;
+}
+
+/**
+ * 启用 Token 认证
+ */
+uvhttp_error_t uvhttp_server_ws_enable_token_auth(
+    uvhttp_server_t* server,
+    const char* path,
+    uvhttp_ws_token_validator_callback validator,
+    void* user_data
+) {
+    if (!server || !path || !validator) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    /* 获取或创建认证配置 */
+    ws_route_entry_t* entry = (ws_route_entry_t*)server->ws_routes;
+    while (entry) {
+        if (strcmp(entry->path, path) == 0) {
+            /* 创建认证配置（如果不存在） */
+            if (!entry->auth_config) {
+                entry->auth_config = uvhttp_ws_auth_config_create();
+                if (!entry->auth_config) {
+                    return UVHTTP_ERROR_OUT_OF_MEMORY;
+                }
+            }
+
+            /* 设置 Token 验证器 */
+            uvhttp_ws_auth_set_token_validator(
+                entry->auth_config,
+                validator,
+                user_data
+            );
+
+            return UVHTTP_OK;
+        }
+        entry = entry->next;
+    }
+
+    return UVHTTP_ERROR_NOT_FOUND;
+}
+
+/**
+ * 添加 IP 到白名单
+ */
+uvhttp_error_t uvhttp_server_ws_add_ip_to_whitelist(
+    uvhttp_server_t* server,
+    const char* path,
+    const char* ip
+) {
+    if (!server || !path || !ip) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    /* 获取或创建认证配置 */
+    ws_route_entry_t* entry = (ws_route_entry_t*)server->ws_routes;
+    while (entry) {
+        if (strcmp(entry->path, path) == 0) {
+            /* 创建认证配置（如果不存在） */
+            if (!entry->auth_config) {
+                entry->auth_config = uvhttp_ws_auth_config_create();
+                if (!entry->auth_config) {
+                    return UVHTTP_ERROR_OUT_OF_MEMORY;
+                }
+            }
+
+            /* 添加 IP 到白名单 */
+            if (uvhttp_ws_auth_add_ip_to_whitelist(entry->auth_config, ip) != 0) {
+                return UVHTTP_ERROR_WEBSOCKET_HANDSHAKE;
+            }
+
+            return UVHTTP_OK;
+        }
+        entry = entry->next;
+    }
+
+    return UVHTTP_ERROR_NOT_FOUND;
+}
+
+/**
+ * 添加 IP 到黑名单
+ */
+uvhttp_error_t uvhttp_server_ws_add_ip_to_blacklist(
+    uvhttp_server_t* server,
+    const char* path,
+    const char* ip
+) {
+    if (!server || !path || !ip) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    /* 获取或创建认证配置 */
+    ws_route_entry_t* entry = (ws_route_entry_t*)server->ws_routes;
+    while (entry) {
+        if (strcmp(entry->path, path) == 0) {
+            /* 创建认证配置（如果不存在） */
+            if (!entry->auth_config) {
+                entry->auth_config = uvhttp_ws_auth_config_create();
+                if (!entry->auth_config) {
+                    return UVHTTP_ERROR_OUT_OF_MEMORY;
+                }
+            }
+
+            /* 添加 IP 到黑名单 */
+            if (uvhttp_ws_auth_add_ip_to_blacklist(entry->auth_config, ip) != 0) {
+                return UVHTTP_ERROR_WEBSOCKET_HANDSHAKE;
+            }
+
+            return UVHTTP_OK;
+        }
+        entry = entry->next;
+    }
+
+    return UVHTTP_ERROR_NOT_FOUND;
+}
+
+/**
+ * 内部函数：查找 WebSocket 路由条目
+ */
+ws_route_entry_t* uvhttp_server_find_ws_route_entry(
+    uvhttp_server_t* server,
+    const char* path
+) {
+    if (!server || !path) {
+        return NULL;
+    }
+
+    ws_route_entry_t* entry = (ws_route_entry_t*)server->ws_routes;
+    while (entry) {
+        if (strcmp(entry->path, path) == 0) {
+            return entry;
+        }
+        entry = entry->next;
+    }
+
+    return NULL;
+}
+
+/**
+ * 内部函数：执行 WebSocket 认证
+ */
+uvhttp_ws_auth_result_t uvhttp_server_ws_authenticate(
+    uvhttp_server_t* server,
+    const char* path,
+    const char* client_ip,
+    const char* token
+) {
+    if (!server || !path) {
+        return UVHTTP_WS_AUTH_INTERNAL_ERROR;
+    }
+
+    /* 查找路由条目 */
+    ws_route_entry_t* entry = uvhttp_server_find_ws_route_entry(server, path);
+    if (!entry) {
+        return UVHTTP_WS_AUTH_SUCCESS;  /* 没有认证配置，允许连接 */
+    }
+
+    /* 如果没有认证配置，允许连接 */
+    if (!entry->auth_config) {
+        return UVHTTP_WS_AUTH_SUCCESS;
+    }
+
+    /* 执行认证 */
+    return uvhttp_ws_authenticate(entry->auth_config, client_ip, token);
 }
 
 #endif /* UVHTTP_FEATURE_WEBSOCKET */

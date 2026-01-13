@@ -613,6 +613,56 @@ int uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, cons
         return -1;
     }
 
+    /* 获取客户端 IP 地址 */
+    char client_ip[64] = {0};
+    struct sockaddr_in addr;
+    int addr_len = sizeof(addr);
+    if (uv_tcp_getpeername(&conn->tcp_handle, (struct sockaddr*)&addr, &addr_len) == 0) {
+        uv_ip4_name(&addr, client_ip, sizeof(client_ip));
+    }
+
+    /* 从查询参数或头部获取 Token */
+    char token[256] = {0};
+    if (conn->request) {
+        /* 尝试从查询参数获取 */
+        const char* query = conn->request->query;
+        if (query && strstr(query, "token=")) {
+            const char* token_start = strstr(query, "token=") + 6;
+            const char* token_end = strchr(token_start, '&');
+            if (token_end) {
+                size_t token_len = token_end - token_start;
+                if (token_len < sizeof(token)) {
+                    strncpy(token, token_start, token_len);
+                    token[token_len] = '\0';
+                }
+            } else {
+                strncpy(token, token_start, sizeof(token) - 1);
+                token[sizeof(token) - 1] = '\0';
+            }
+        }
+
+        /* 如果查询参数中没有，尝试从头部获取 */
+        if (token[0] == '\0') {
+            const char* auth_header = uvhttp_request_get_header(conn->request, "Authorization");
+            if (auth_header && strncmp(auth_header, "Bearer ", 7) == 0) {
+                strncpy(token, auth_header + 7, sizeof(token) - 1);
+                token[sizeof(token) - 1] = '\0';
+            }
+        }
+    }
+
+    /* 执行认证检查 */
+    uvhttp_ws_auth_result_t auth_result = UVHTTP_WS_AUTH_SUCCESS;
+    if (conn->server) {
+        auth_result = uvhttp_server_ws_authenticate(conn->server, path, client_ip, token);
+    }
+
+    if (auth_result != UVHTTP_WS_AUTH_SUCCESS) {
+        UVHTTP_LOG_WARN("WebSocket authentication failed for path %s: %s\n",
+                       path, uvhttp_ws_auth_result_string(auth_result));
+        return -1;
+    }
+
     /* 查找用户注册的WebSocket处理器 */
     uvhttp_ws_handler_t* user_handler = NULL;
     if (conn->server) {
