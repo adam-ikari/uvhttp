@@ -65,23 +65,6 @@ extern "C" {
     }
 #endif
 
-/* ========== 内存分配器信息 ========== */
-
-/* 向后兼容的函数声明（用于源文件中） */
-/* 注意：uvhttp_free 是内联函数，不需要外部声明 */
-void* uvhttp_malloc(size_t size);
-void* uvhttp_realloc(void* ptr, size_t size);
-void* uvhttp_calloc(size_t nmemb, size_t size);
-
-/* 向后兼容的宏定义 - 仅在未定义时才定义 */
-#ifndef UVHTTP_MALLOC_DEFINED
-#define UVHTTP_MALLOC(size) uvhttp_malloc(size)
-#define UVHTTP_FREE(ptr) uvhttp_free(ptr)
-#define UVHTTP_REALLOC(ptr, size) uvhttp_realloc(ptr, size)
-#define UVHTTP_CALLOC(nmemb, size) uvhttp_calloc(nmemb, size)
-#define UVHTTP_MALLOC_DEFINED
-#endif
-
 /* ========== 分配器信息 ========== */
 
 static inline const char* uvhttp_allocator_name(void) {

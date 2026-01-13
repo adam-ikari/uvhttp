@@ -217,7 +217,7 @@ static char* read_file_content(const char* file_path, size_t* file_size) {
     }
     
     /* 分配内存并读取文件 */
-    char* content = uvhttp_malloc(*file_size);
+    char* content = uvhttp_alloc(*file_size);
     if (!content) {
         fclose(file);
         uvhttp_handle_memory_failure("file_content", NULL, NULL);
@@ -286,7 +286,7 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
     }
     
     /* 分配缓冲区 */
-    char* html = uvhttp_malloc(buffer_size);
+    char* html = uvhttp_alloc(buffer_size);
     if (!html) {
         closedir(dir);
         return NULL;
@@ -335,7 +335,7 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
         int is_dir;
     } dir_entry_t;
     
-    dir_entry_t* entries = uvhttp_malloc(entry_count * sizeof(dir_entry_t));
+    dir_entry_t* entries = uvhttp_alloc(entry_count * sizeof(dir_entry_t));
     if (!entries) {
         uvhttp_free(html);
         closedir(dir);
@@ -536,7 +536,7 @@ int uvhttp_static_check_conditional_request(void* request,
 uvhttp_static_context_t* uvhttp_static_create(const uvhttp_static_config_t* config) {
     if (!config) return NULL;
     
-    uvhttp_static_context_t* ctx = uvhttp_malloc(sizeof(uvhttp_static_context_t));
+    uvhttp_static_context_t* ctx = uvhttp_alloc(sizeof(uvhttp_static_context_t));
     if (!ctx) {
         uvhttp_handle_memory_failure("static_context", NULL, NULL);
         return NULL;
@@ -1043,7 +1043,7 @@ uvhttp_http_middleware_t* uvhttp_static_middleware_create_with_config(
     }
 
     /* 创建中间件上下文 */
-    static_middleware_context_t* mw_ctx = (static_middleware_context_t*)uvhttp_malloc(sizeof(static_middleware_context_t));
+    static_middleware_context_t* mw_ctx = (static_middleware_context_t*)uvhttp_alloc(sizeof(static_middleware_context_t));
     if (!mw_ctx) {
         uvhttp_static_free(static_ctx);
         return NULL;
@@ -1055,7 +1055,7 @@ uvhttp_http_middleware_t* uvhttp_static_middleware_create_with_config(
     /* 复制路径前缀 */
     if (path) {
         size_t path_len = strlen(path);
-        mw_ctx->path_prefix = (char*)uvhttp_malloc(path_len + 1);
+        mw_ctx->path_prefix = (char*)uvhttp_alloc(path_len + 1);
         if (!mw_ctx->path_prefix) {
             uvhttp_free(mw_ctx);
             uvhttp_static_free(static_ctx);
@@ -1301,10 +1301,10 @@ static void on_file_close(uv_fs_t* req) {
     /* 释放上下文内存 */
     if (ctx) {
         if (ctx->file_path) {
-            UVHTTP_FREE(ctx->file_path);
+            uvhttp_free(ctx->file_path);
             ctx->file_path = NULL;
         }
-        UVHTTP_FREE(ctx);
+        uvhttp_free(ctx);
     }
 }
 
@@ -1442,7 +1442,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
         }
         
         /* 读取文件内容 */
-        char* buffer = (char*)UVHTTP_MALLOC(file_size + 1);
+        char* buffer = (char*)uvhttp_alloc(file_size + 1);
         if (!buffer) {
             close(fd);
             return UVHTTP_ERROR_OUT_OF_MEMORY;
@@ -1453,7 +1453,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
         
         if (bytes_read < 0) {
             UVHTTP_LOG_ERROR("Failed to read file: %s", file_path);
-            UVHTTP_FREE(buffer);
+            uvhttp_free(buffer);
             return UVHTTP_ERROR_RESPONSE_SEND;
         }
         
@@ -1466,7 +1466,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
         uvhttp_response_set_header(resp, "Content-Length", "");
         uvhttp_response_set_body(resp, buffer, (size_t)bytes_read);
         
-        UVHTTP_FREE(buffer);
+        uvhttp_free(buffer);
         return UVHTTP_OK;
     }
     else if (file_size <= 10 * 1024 * 1024) {
@@ -1478,7 +1478,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
         uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)resp->client);
         
         /* 创建 sendfile 上下文 */
-        sendfile_context_t* ctx = (sendfile_context_t*)UVHTTP_MALLOC(sizeof(sendfile_context_t));
+        sendfile_context_t* ctx = (sendfile_context_t*)uvhttp_alloc(sizeof(sendfile_context_t));
         if (!ctx) {
             return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
@@ -1513,9 +1513,9 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
         
         /* 分配文件路径内存 */
         size_t path_len = strlen(file_path);
-        ctx->file_path = (char*)UVHTTP_MALLOC(path_len + 1);
+        ctx->file_path = (char*)uvhttp_alloc(path_len + 1);
         if (!ctx->file_path) {
-            UVHTTP_FREE(ctx);
+            uvhttp_free(ctx);
             return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
         memcpy(ctx->file_path, file_path, path_len);
@@ -1525,8 +1525,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
         int fd_result = uv_fileno((uv_handle_t*)resp->client, &ctx->out_fd);
         if (fd_result < 0) {
             UVHTTP_LOG_ERROR("Failed to get client fd: %s", uv_strerror(fd_result));
-            UVHTTP_FREE(ctx->file_path);
-            UVHTTP_FREE(ctx);
+            uvhttp_free(ctx->file_path);
+            uvhttp_free(ctx);
             return UVHTTP_ERROR_SERVER_INIT;
         }
         
@@ -1534,8 +1534,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
         ctx->in_fd = open(file_path, O_RDONLY);
         if (ctx->in_fd < 0) {
             UVHTTP_LOG_ERROR("Failed to open file for sendfile: %s", file_path);
-            UVHTTP_FREE(ctx->file_path);
-            UVHTTP_FREE(ctx);
+            uvhttp_free(ctx->file_path);
+            uvhttp_free(ctx);
             return UVHTTP_ERROR_NOT_FOUND;
         }
         
@@ -1544,8 +1544,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
         if (timer_result != 0) {
             UVHTTP_LOG_ERROR("Failed to init timeout timer: %s", uv_strerror(timer_result));
             close(ctx->in_fd);
-            UVHTTP_FREE(ctx->file_path);
-            UVHTTP_FREE(ctx);
+            uvhttp_free(ctx->file_path);
+            uvhttp_free(ctx);
             return UVHTTP_ERROR_SERVER_INIT;
         }
         ctx->timeout_timer.data = ctx;
@@ -1566,8 +1566,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
             uv_timer_stop(&ctx->timeout_timer);
             uv_close((uv_handle_t*)&ctx->timeout_timer, NULL);
             uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
-            UVHTTP_FREE(ctx->file_path);
-            UVHTTP_FREE(ctx);
+            uvhttp_free(ctx->file_path);
+            uvhttp_free(ctx);
             return UVHTTP_ERROR_RESPONSE_SEND;
         }
         
@@ -1582,7 +1582,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
         uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)resp->client);
         
         /* 创建 sendfile 上下文 */
-        sendfile_context_t* ctx = (sendfile_context_t*)UVHTTP_MALLOC(sizeof(sendfile_context_t));
+        sendfile_context_t* ctx = (sendfile_context_t*)uvhttp_alloc(sizeof(sendfile_context_t));
         if (!ctx) {
             return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
@@ -1617,9 +1617,9 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
         
         /* 分配文件路径内存 */
         size_t path_len = strlen(file_path);
-        ctx->file_path = (char*)UVHTTP_MALLOC(path_len + 1);
+        ctx->file_path = (char*)uvhttp_alloc(path_len + 1);
         if (!ctx->file_path) {
-            UVHTTP_FREE(ctx);
+            uvhttp_free(ctx);
             return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
         memcpy(ctx->file_path, file_path, path_len);
@@ -1629,8 +1629,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
         int fd_result = uv_fileno((uv_handle_t*)resp->client, &ctx->out_fd);
         if (fd_result < 0) {
             UVHTTP_LOG_ERROR("Failed to get client fd: %s", uv_strerror(fd_result));
-            UVHTTP_FREE(ctx->file_path);
-            UVHTTP_FREE(ctx);
+            uvhttp_free(ctx->file_path);
+            uvhttp_free(ctx);
             return UVHTTP_ERROR_SERVER_INIT;
         }
         
@@ -1638,8 +1638,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
         ctx->in_fd = open(file_path, O_RDONLY);
         if (ctx->in_fd < 0) {
             UVHTTP_LOG_ERROR("Failed to open file for sendfile: %s", file_path);
-            UVHTTP_FREE(ctx->file_path);
-            UVHTTP_FREE(ctx);
+            uvhttp_free(ctx->file_path);
+            uvhttp_free(ctx);
             return UVHTTP_ERROR_NOT_FOUND;
         }
         
@@ -1666,8 +1666,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
         int timer_result = uv_timer_init(loop, &ctx->timeout_timer);
         if (timer_result != 0) {
             UVHTTP_LOG_ERROR("Failed to init timeout timer: %s", uv_strerror(timer_result));
-            UVHTTP_FREE(ctx->file_path);
-            UVHTTP_FREE(ctx);
+            uvhttp_free(ctx->file_path);
+            uvhttp_free(ctx);
             return UVHTTP_ERROR_SERVER_INIT;
         }
         ctx->timeout_timer.data = ctx;
@@ -1688,8 +1688,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
             uv_timer_stop(&ctx->timeout_timer);
             uv_close((uv_handle_t*)&ctx->timeout_timer, NULL);
             uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
-            UVHTTP_FREE(ctx->file_path);
-            UVHTTP_FREE(ctx);
+            uvhttp_free(ctx->file_path);
+            uvhttp_free(ctx);
             return UVHTTP_ERROR_RESPONSE_SEND;
         }
         

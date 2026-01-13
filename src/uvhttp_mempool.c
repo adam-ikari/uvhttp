@@ -4,7 +4,7 @@
 
 /* 创建内存池 */
 uvhttp_mempool_t* uvhttp_mempool_create(void) {
-    uvhttp_mempool_t* pool = uvhttp_malloc(sizeof(uvhttp_mempool_t));
+    uvhttp_mempool_t* pool = uvhttp_alloc(sizeof(uvhttp_mempool_t));
     if (!pool) {
         return NULL;
     }
@@ -43,14 +43,14 @@ void* uvhttp_mempool_alloc(uvhttp_mempool_t* pool, size_t size) {
     /* 检查是否超过块大小 */
     if (size > UVHTTP_MEMPOOL_BLOCK_SIZE) {
         /* 大于块大小的分配应该使用普通分配器，内存池不跟踪这些分配 */
-        /* 返回 NULL 强制调用者使用 uvhttp_malloc/uvhttp_free */
+        /* 返回 NULL 强制调用者使用 uvhttp_alloc/uvhttp_free */
         return NULL;
     }
     
     /* 检查当前块是否有足够空间 */
     if (!pool->current_block || pool->free_offset + size > UVHTTP_MEMPOOL_BLOCK_SIZE) {
         /* 需要新块 */
-        uvhttp_mempool_block_t* new_block = uvhttp_malloc(sizeof(uvhttp_mempool_block_t));
+        uvhttp_mempool_block_t* new_block = uvhttp_alloc(sizeof(uvhttp_mempool_block_t));
         if (!new_block) {
             return NULL;
         }

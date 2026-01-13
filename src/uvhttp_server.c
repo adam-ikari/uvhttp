@@ -91,7 +91,7 @@ static void on_connection(uv_stream_t* server_handle, int status) {
                 server->active_connections, max_connections);
         
         /* 创建临时连接以发送503响应 */
-        uv_tcp_t* temp_client = uvhttp_malloc(sizeof(uv_tcp_t));
+        uv_tcp_t* temp_client = uvhttp_alloc(sizeof(uv_tcp_t));
         if (!temp_client) {
             uvhttp_handle_memory_failure("temporary_client_allocation", NULL, NULL);
             return;
@@ -113,7 +113,7 @@ static void on_connection(uv_stream_t* server_handle, int status) {
                 "\r\n"
                 "Service Unavailable";
                 
-            uv_write_t* write_req = uvhttp_malloc(sizeof(uv_write_t));
+            uv_write_t* write_req = uvhttp_alloc(sizeof(uv_write_t));
             if (write_req) {
                 uv_buf_t buf = uv_buf_init((char*)response_503, sizeof(response_503) - 1);
                 
@@ -192,12 +192,12 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
         UVHTTP_LOG_DEBUG("TLS module initialized successfully");
     #endif
         UVHTTP_LOG_DEBUG("Allocating uvhttp_server_t, size=%zu", sizeof(uvhttp_server_t));
-        uvhttp_server_t* server = uvhttp_malloc(sizeof(uvhttp_server_t));
+        uvhttp_server_t* server = uvhttp_alloc(sizeof(uvhttp_server_t));
         if (!server) {
             UVHTTP_LOG_ERROR("Failed to allocate uvhttp_server_t");
             return NULL;
         }
-        UVHTTP_LOG_DEBUG("uvhttp_malloc success, server=%p", (void*)server);
+        UVHTTP_LOG_DEBUG("uvhttp_alloc success, server=%p", (void*)server);
     memset(server, 0, sizeof(uvhttp_server_t));
     
     // 初始化连接限制默认值
@@ -226,7 +226,7 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
         server->loop = loop;
         server->owns_loop = 0;
     } else {
-        server->loop = uvhttp_malloc(sizeof(uv_loop_t));
+        server->loop = uvhttp_alloc(sizeof(uv_loop_t));
         if (!server->loop) {
                     uvhttp_free(server);
                     return NULL;        }
@@ -282,7 +282,7 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
         while (current) {
             ws_route_entry_t* next = current->next;
             if (current->path) {
-                UVHTTP_FREE(current->path);
+                uvhttp_free(current->path);
             }
             uvhttp_free(current);
             current = next;
@@ -452,7 +452,7 @@ int uvhttp_server_is_tls_enabled(uvhttp_server_t* server) {
 
 // 内部辅助函数
 static uvhttp_server_builder_t* create_simple_server_internal(const char* host, int port) {
-    uvhttp_server_builder_t* simple = uvhttp_malloc(sizeof(uvhttp_server_builder_t));
+    uvhttp_server_builder_t* simple = uvhttp_alloc(sizeof(uvhttp_server_builder_t));
     if (!simple) return NULL;
 
     memset(simple, 0, sizeof(uvhttp_server_builder_t));
@@ -484,7 +484,7 @@ static uvhttp_server_builder_t* create_simple_server_internal(const char* host, 
     if (!simple->config) {
         uvhttp_router_free(simple->router);
         uvhttp_server_free(simple->server);
-        UVHTTP_FREE(simple);
+        uvhttp_free(simple);
         return NULL;
     }
     
@@ -499,7 +499,7 @@ static uvhttp_server_builder_t* create_simple_server_internal(const char* host, 
         uvhttp_config_free(simple->config);
         uvhttp_router_free(simple->router);
         uvhttp_server_free(simple->server);
-        UVHTTP_FREE(simple);
+        uvhttp_free(simple);
         return NULL;
     }
     
@@ -608,7 +608,7 @@ void uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
     size_t file_size = (size_t)file_size_long;
     
     // 读取文件内容
-    char* content = uvhttp_malloc(file_size + 1);
+    char* content = uvhttp_alloc(file_size + 1);
     if (!content) {
         fclose(file);
         uvhttp_quick_response(response, 500, "text/plain", "Internal server error");
@@ -633,7 +633,7 @@ void uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
     else if (strstr(file_path, ".jpg") || strstr(file_path, ".jpeg")) content_type = "image/jpeg";
     
     uvhttp_quick_response(response, 200, content_type, content);
-    UVHTTP_FREE(content);
+    uvhttp_free(content);
 }
 
 // 便捷请求参数获取
@@ -732,14 +732,14 @@ uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server, const 
     }
 
     // 创建新路由条目
-    ws_route_entry_t* entry = (ws_route_entry_t*)uvhttp_malloc(sizeof(ws_route_entry_t));
+    ws_route_entry_t* entry = (ws_route_entry_t*)uvhttp_alloc(sizeof(ws_route_entry_t));
     if (!entry) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
 
-    // 分配并复制路径（使用 UVHTTP_MALLOC 避免混用分配器）
+    // 分配并复制路径（使用 uvhttp_alloc 避免混用分配器）
     size_t path_len = strlen(path);
-    entry->path = (char*)UVHTTP_MALLOC(path_len + 1);
+    entry->path = (char*)uvhttp_alloc(path_len + 1);
     if (!entry->path) {
         uvhttp_free(entry);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
@@ -930,7 +930,7 @@ uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(
     
     // 复制IP地址
     size_t ip_len = strlen(client_ip) + 1;
-    char* ip_copy = uvhttp_malloc(ip_len);
+    char* ip_copy = uvhttp_alloc(ip_len);
     if (!ip_copy) {
         // 回退：恢复原来的数组大小
         server->rate_limit_whitelist_count = new_count - 1;
@@ -945,7 +945,7 @@ uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(
     server->rate_limit_whitelist[new_count - 1] = ip_copy;
     
     // 添加到哈希表（用于O(1)查找）
-    struct whitelist_item *hash_item = uvhttp_malloc(sizeof(struct whitelist_item));
+    struct whitelist_item *hash_item = uvhttp_alloc(sizeof(struct whitelist_item));
     if (!hash_item) {
         // 回退：清理已分配的IP字符串
         uvhttp_free(ip_copy);
@@ -1066,7 +1066,7 @@ static void ws_timeout_timer_callback(uv_timer_t* handle) {
             }
             
             /* 释放节点 */
-            UVHTTP_FREE(current);
+            uvhttp_free(current);
             manager->connection_count--;
         } else {
             prev = current;
@@ -1149,7 +1149,7 @@ uvhttp_error_t uvhttp_server_ws_enable_connection_management(
     }
     
     /* 创建连接管理器 */
-    ws_connection_manager_t* manager = UVHTTP_MALLOC(sizeof(ws_connection_manager_t));
+    ws_connection_manager_t* manager = uvhttp_alloc(sizeof(ws_connection_manager_t));
     if (!manager) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
@@ -1165,7 +1165,7 @@ uvhttp_error_t uvhttp_server_ws_enable_connection_management(
     /* 初始化超时检测定时器 */
     int ret = uv_timer_init(server->loop, &manager->timeout_timer);
     if (ret != 0) {
-        UVHTTP_FREE(manager);
+        uvhttp_free(manager);
         return UVHTTP_ERROR_SERVER_INIT;
     }
     manager->timeout_timer.data = manager;
@@ -1174,7 +1174,7 @@ uvhttp_error_t uvhttp_server_ws_enable_connection_management(
     ret = uv_timer_init(server->loop, &manager->heartbeat_timer);
     if (ret != 0) {
         uv_close((uv_handle_t*)&manager->timeout_timer, NULL);
-        UVHTTP_FREE(manager);
+        uvhttp_free(manager);
         return UVHTTP_ERROR_SERVER_INIT;
     }
     manager->heartbeat_timer.data = manager;
@@ -1185,7 +1185,7 @@ uvhttp_error_t uvhttp_server_ws_enable_connection_management(
     if (ret != 0) {
         uv_close((uv_handle_t*)&manager->timeout_timer, NULL);
         uv_close((uv_handle_t*)&manager->heartbeat_timer, NULL);
-        UVHTTP_FREE(manager);
+        uvhttp_free(manager);
         return UVHTTP_ERROR_SERVER_INIT;
     }
     
@@ -1195,7 +1195,7 @@ uvhttp_error_t uvhttp_server_ws_enable_connection_management(
         uv_timer_stop(&manager->timeout_timer);
         uv_close((uv_handle_t*)&manager->timeout_timer, NULL);
         uv_close((uv_handle_t*)&manager->heartbeat_timer, NULL);
-        UVHTTP_FREE(manager);
+        uvhttp_free(manager);
         return UVHTTP_ERROR_SERVER_INIT;
     }
     
@@ -1245,7 +1245,7 @@ uvhttp_error_t uvhttp_server_ws_disable_connection_management(
             uvhttp_ws_close(current->ws_conn, 1000, "Server shutdown");
         }
         
-        UVHTTP_FREE(current);
+        uvhttp_free(current);
         current = next;
     }
     
@@ -1254,7 +1254,7 @@ uvhttp_error_t uvhttp_server_ws_disable_connection_management(
     manager->enabled = 0;
     
     /* 释放管理器 */
-    UVHTTP_FREE(manager);
+    uvhttp_free(manager);
     server->ws_connection_manager = NULL;
     
     UVHTTP_LOG_INFO("WebSocket connection management disabled\n");
@@ -1385,7 +1385,7 @@ uvhttp_error_t uvhttp_server_ws_close_all(
             }
             
             /* 释放节点 */
-            UVHTTP_FREE(current);
+            uvhttp_free(current);
             server->ws_connection_manager->connection_count--;
             closed_count++;
         } else {
@@ -1418,7 +1418,7 @@ void uvhttp_server_ws_add_connection(
     }
     
     /* 创建连接节点 */
-    ws_connection_node_t* node = UVHTTP_MALLOC(sizeof(ws_connection_node_t));
+    ws_connection_node_t* node = uvhttp_alloc(sizeof(ws_connection_node_t));
     if (!node) {
         UVHTTP_LOG_ERROR("Failed to allocate WebSocket connection node\n");
         return;
@@ -1471,7 +1471,7 @@ void uvhttp_server_ws_remove_connection(
             }
             
             /* 释放节点 */
-            UVHTTP_FREE(current);
+            uvhttp_free(current);
             manager->connection_count--;
             
             UVHTTP_LOG_DEBUG("WebSocket connection removed: total=%d\n",

@@ -28,7 +28,7 @@ void signal_handler(int sig) {
     printf("\n收到信号 %d，正在优雅关闭服务器...\n", sig);
     
 if (g_config_timer) {
-        UVHTTP_FREE(g_config_timer);
+        uvhttp_free(g_config_timer);
         g_config_timer = NULL;
     }
     
@@ -362,7 +362,7 @@ int main(int argc, char* argv[]) {
     
     // 启动配置动态调整定时器
     printf("\n⏰ 启动动态配置调整定时器...\n");
-    g_config_timer = (uv_timer_t*)UVHTTP_MALLOC(sizeof(uv_timer_t));
+    g_config_timer = (uv_timer_t*)uvhttp_alloc(sizeof(uv_timer_t));
     uv_timer_init(g_loop, g_config_timer);
     uv_timer_start(g_config_timer, config_adjustment_timer, 10000, 10000); // 10秒后开始，每10秒执行一次
     printf("✅ 定时器已启动（每10秒检查一次）\n");
@@ -396,7 +396,7 @@ int main(int argc, char* argv[]) {
     // 清理资源（正常退出时）
     if (g_config_timer) {
         uv_timer_stop(g_config_timer);
-        UVHTTP_FREE(g_config_timer);
+        uvhttp_free(g_config_timer);
     }
     
     printf("👋 服务器已停止\n");

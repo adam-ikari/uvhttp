@@ -106,7 +106,7 @@ static inline uvhttp_method_t fast_method_parse(const char* method) {
 
 // 创建缓存优化的路由器
 uvhttp_router_t* uvhttp_router_new(void) {
-    cache_optimized_router_t* router = UVHTTP_CALLOC(1, sizeof(cache_optimized_router_t));
+    cache_optimized_router_t* router = uvhttp_calloc(1, sizeof(cache_optimized_router_t));
     if (!router) {
         return NULL;
     }
@@ -124,13 +124,13 @@ void uvhttp_router_free(uvhttp_router_t* router) {
         route_hash_entry_t* entry = cr->hash_table[i];
         while (entry) {
             route_hash_entry_t* next = entry->next;
-            UVHTTP_FREE((void*)entry->path);  // 释放路径字符串
-            UVHTTP_FREE(entry);
+            uvhttp_free((void*)entry->path);  // 释放路径字符串
+            uvhttp_free(entry);
             entry = next;
         }
     }
     
-    UVHTTP_FREE(router);
+    uvhttp_free(router);
 }
 
 // 添加路由到哈希表
@@ -144,16 +144,16 @@ static uvhttp_error_t add_to_hash_table(cache_optimized_router_t* cr,
     
     uint32_t hash = route_hash(path) % ROUTE_HASH_SIZE;
     
-    route_hash_entry_t* entry = UVHTTP_MALLOC(sizeof(route_hash_entry_t));
+    route_hash_entry_t* entry = uvhttp_alloc(sizeof(route_hash_entry_t));
     if (!entry) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
     // 安全地复制字符串
     size_t path_len = strlen(path);
-    char* path_copy = UVHTTP_MALLOC(path_len + 1);
+    char* path_copy = uvhttp_alloc(path_len + 1);
     if (!path_copy) {
-        UVHTTP_FREE(entry);
+        uvhttp_free(entry);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     strncpy(path_copy, path, path_len);

@@ -248,7 +248,7 @@ uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char*
         response->body = NULL;
     }
     
-    response->body = uvhttp_malloc(length);
+    response->body = uvhttp_alloc(length);
     if (!response->body) {
         response->body_length = 0;
         return UVHTTP_ERROR_OUT_OF_MEMORY;
@@ -279,7 +279,7 @@ uvhttp_error_t uvhttp_send_response_data(uvhttp_response_t* response, const char
     
         size_t total_size = sizeof(uvhttp_write_data_t) + length;
     
-        uvhttp_write_data_t* write_data = uvhttp_malloc(total_size);
+        uvhttp_write_data_t* write_data = uvhttp_alloc(total_size);
     
         if (!write_data) {
     
@@ -380,7 +380,7 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
     /* 构建完整的HTTP响应 - 纯内存操作 */
     /* 优化：增加初始缓冲区大小，减少重新分配 */
     size_t headers_size = UVHTTP_INITIAL_BUFFER_SIZE * 2;  /* 从512增加到1024 */
-    char* headers_buffer = uvhttp_malloc(headers_size);
+    char* headers_buffer = uvhttp_alloc(headers_size);
     if (!headers_buffer) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
@@ -392,7 +392,7 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
     if (headers_length >= headers_size) {
         uvhttp_free(headers_buffer);
         headers_size = headers_length + UVHTTP_RESPONSE_HEADER_SAFETY_MARGIN; /* 添加安全边距 */
-        headers_buffer = uvhttp_malloc(headers_size);
+        headers_buffer = uvhttp_alloc(headers_size);
         if (!headers_buffer) {
             return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
@@ -408,7 +408,7 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
     }
     
     /* 分配完整响应数据 */
-    char* response_data = uvhttp_malloc(total_size + 1);  /* +1 for null terminator */
+    char* response_data = uvhttp_alloc(total_size + 1);  /* +1 for null terminator */
     if (!response_data) {
         uvhttp_free(headers_buffer);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
@@ -458,7 +458,7 @@ uvhttp_error_t uvhttp_response_send_raw(const char* data,
     /* 创建写数据结构 */
     size_t total_size = sizeof(uvhttp_write_data_t) + length - 1;  /* -1因为data已经有1字节 */
 
-    uvhttp_write_data_t* write_data = uvhttp_malloc(total_size);
+    uvhttp_write_data_t* write_data = uvhttp_alloc(total_size);
     if (!write_data) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }

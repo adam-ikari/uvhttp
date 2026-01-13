@@ -46,15 +46,15 @@ int uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client) {
     request->method = UVHTTP_GET; // 默认方法
     
     // 初始化HTTP解析器
-    request->parser_settings = uvhttp_malloc(sizeof(llhttp_settings_t));
+    request->parser_settings = uvhttp_alloc(sizeof(llhttp_settings_t));
     if (!request->parser_settings) {
         return -1;
     }
     llhttp_settings_init(request->parser_settings);
     
-    request->parser = uvhttp_malloc(sizeof(llhttp_t));
+    request->parser = uvhttp_alloc(sizeof(llhttp_t));
     if (!request->parser) {
-        UVHTTP_FREE(request->parser_settings);
+        uvhttp_free(request->parser_settings);
         return -1;
     }
     
@@ -73,7 +73,7 @@ int uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client) {
     
     // 初始化body缓冲区
     request->body_capacity = UVHTTP_INITIAL_BUFFER_SIZE;
-    request->body = uvhttp_malloc(request->body_capacity);
+    request->body = uvhttp_alloc(request->body_capacity);
     if (!request->body) {
         uvhttp_free(request->parser);
         uvhttp_free(request->parser_settings);

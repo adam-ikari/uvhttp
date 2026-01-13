@@ -17,7 +17,7 @@ static uvhttp_config_t* g_current_config = NULL;
 
 /* 创建新配置 */
 uvhttp_config_t* uvhttp_config_new(void) {
-    uvhttp_config_t* config = UVHTTP_MALLOC(sizeof(uvhttp_config_t));
+    uvhttp_config_t* config = uvhttp_alloc(sizeof(uvhttp_config_t));
     if (!config) {
         UVHTTP_ERROR_REPORT(UVHTTP_ERROR_OUT_OF_MEMORY, "Failed to allocate config");
         return NULL;
@@ -30,7 +30,7 @@ uvhttp_config_t* uvhttp_config_new(void) {
 /* 释放配置 */
 void uvhttp_config_free(uvhttp_config_t* config) {
     if (config) {
-        UVHTTP_FREE(config);
+        uvhttp_free(config);
     }
 }
 

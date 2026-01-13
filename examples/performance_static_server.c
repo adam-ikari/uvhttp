@@ -204,7 +204,7 @@ int main(int argc, char* argv[]) {
     uv_loop_t* loop = uv_default_loop();
     
     // 创建应用上下文
-    app_context_t* ctx = UVHTTP_MALLOC(sizeof(app_context_t));
+    app_context_t* ctx = uvhttp_alloc(sizeof(app_context_t));
     if (!ctx) {
         fprintf(stderr, "错误: 无法分配应用上下文\n");
         return 1;
@@ -226,7 +226,7 @@ int main(int argc, char* argv[]) {
     if (!config) {
         printf("错误：无法创建配置\n");
         fflush(stdout);
-        UVHTTP_FREE(ctx);
+        uvhttp_free(ctx);
         return 1;
     }
     ctx->config = config;
@@ -264,7 +264,7 @@ int main(int argc, char* argv[]) {
         printf("错误：无法创建静态文件服务上下文\n");
         fflush(stdout);
         uvhttp_config_free(config);
-        UVHTTP_FREE(ctx);
+        uvhttp_free(ctx);
         return 1;
     }
     printf("静态文件服务上下文创建成功\n");
@@ -279,7 +279,7 @@ int main(int argc, char* argv[]) {
         fflush(stdout);
         uvhttp_static_free(ctx->static_ctx);
         uvhttp_config_free(config);
-        UVHTTP_FREE(ctx);
+        uvhttp_free(ctx);
         return 1;
     }
     printf("HTTP服务器创建成功\n");
@@ -293,7 +293,7 @@ int main(int argc, char* argv[]) {
         uvhttp_static_free(ctx->static_ctx);
         uvhttp_server_free(ctx->server);
         uvhttp_config_free(config);
-        UVHTTP_FREE(ctx);
+        uvhttp_free(ctx);
         return 1;
     }
     printf("路由器创建成功\n");
@@ -327,7 +327,7 @@ int main(int argc, char* argv[]) {
         uvhttp_static_free(ctx->static_ctx);
         uvhttp_config_free(config);
         uvhttp_server_free(ctx->server);
-        UVHTTP_FREE(ctx);
+        uvhttp_free(ctx);
         return 1;
     }
     
@@ -362,7 +362,7 @@ int main(int argc, char* argv[]) {
     if (ctx->config) {
         uvhttp_config_free(ctx->config);
     }
-    UVHTTP_FREE(ctx);
+    uvhttp_free(ctx);
     
     return 0;
 }

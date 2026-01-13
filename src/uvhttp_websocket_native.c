@@ -81,9 +81,9 @@ struct uvhttp_ws_connection* uvhttp_ws_connection_create(int fd,
     
     /* 分配接收缓冲区 */
     conn->recv_buffer_size = WS_DEFAULT_RECV_BUFFER_SIZE;
-    conn->recv_buffer = UVHTTP_MALLOC(conn->recv_buffer_size);
+    conn->recv_buffer = uvhttp_alloc(conn->recv_buffer_size);
     if (!conn->recv_buffer) {
-        UVHTTP_FREE(conn);
+        uvhttp_free(conn);
         return NULL;
     }
     
@@ -97,18 +97,18 @@ void uvhttp_ws_connection_free(struct uvhttp_ws_connection* conn) {
     }
     
     if (conn->recv_buffer) {
-        UVHTTP_FREE(conn->recv_buffer);
+        uvhttp_free(conn->recv_buffer);
     }
     
     if (conn->send_buffer) {
-        UVHTTP_FREE(conn->send_buffer);
+        uvhttp_free(conn->send_buffer);
     }
     
     if (conn->fragmented_message) {
-        UVHTTP_FREE(conn->fragmented_message);
+        uvhttp_free(conn->fragmented_message);
     }
     
-    UVHTTP_FREE(conn);
+    uvhttp_free(conn);
 }
 
 /* 解析帧头 */
@@ -222,7 +222,7 @@ int uvhttp_ws_build_frame(uint8_t* buffer,
     if (mask) {
         uint8_t masking_key[4];
         if (uvhttp_ws_random_bytes(masking_key, 4) != 0) {
-            UVHTTP_FREE(buffer);
+            uvhttp_free(buffer);
             return -1;
         }
         for (int i = 0; i < 4; i++) {
@@ -467,7 +467,7 @@ int uvhttp_ws_send_frame(struct uvhttp_ws_connection* conn,
     
     /* 分配发送缓冲区 */
     size_t buffer_size = 10 + len + 4; /* 最大帧头 + 载荷 + 掩码 */
-    uint8_t* buffer = UVHTTP_MALLOC(buffer_size);
+    uint8_t* buffer = uvhttp_alloc(buffer_size);
     if (!buffer) {
         return -1;
     }
@@ -476,7 +476,7 @@ int uvhttp_ws_send_frame(struct uvhttp_ws_connection* conn,
     int frame_len = uvhttp_ws_build_frame(buffer, buffer_size, data, len, 
                                           opcode, conn->is_server ? 0 : 1, 1);
     if (frame_len < 0) {
-        UVHTTP_FREE(buffer);
+        uvhttp_free(buffer);
         return -1;
     }
     
@@ -488,7 +488,7 @@ int uvhttp_ws_send_frame(struct uvhttp_ws_connection* conn,
         ret = send(conn->fd, buffer, frame_len, 0);
     }
     
-    UVHTTP_FREE(buffer);
+    uvhttp_free(buffer);
     
     if (ret < 0) {
         return -1;
@@ -619,7 +619,7 @@ int uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
             return -1;
         }
         
-        frame->payload = UVHTTP_MALLOC(frame->header.payload_len);
+        frame->payload = uvhttp_alloc(frame->header.payload_len);
         if (!frame->payload) {
             return -1;
         }
@@ -633,7 +633,7 @@ int uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
         }
         
         if (ret != (int)frame->header.payload_len) {
-            UVHTTP_FREE(frame->payload);
+            uvhttp_free(frame->payload);
             frame->payload = NULL;
             return -1;
         }
@@ -743,7 +743,7 @@ int uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                     /* 新的分片消息 */
                     conn->fragmented_opcode = header.opcode;
                     conn->fragmented_capacity = header.payload_len * 2;
-                    conn->fragmented_message = UVHTTP_MALLOC(conn->fragmented_capacity);
+                    conn->fragmented_message = uvhttp_alloc(conn->fragmented_capacity);
                     conn->fragmented_size = 0;
                 }
                 
@@ -776,7 +776,7 @@ int uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                                   conn->fragmented_opcode);
                     }
                     
-                    UVHTTP_FREE(conn->fragmented_message);
+                    uvhttp_free(conn->fragmented_message);
                     conn->fragmented_message = NULL;
                     conn->fragmented_size = 0;
                     conn->fragmented_capacity = 0;

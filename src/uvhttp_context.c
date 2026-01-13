@@ -61,7 +61,7 @@ static void default_cleanup_expired(uvhttp_connection_provider_t* provider) {
 
 uvhttp_connection_provider_t* uvhttp_default_connection_provider_create(void) {
     uvhttp_default_connection_provider_t* provider = 
-        (uvhttp_default_connection_provider_t*)uvhttp_malloc(sizeof(uvhttp_default_connection_provider_t));
+        (uvhttp_default_connection_provider_t*)uvhttp_alloc(sizeof(uvhttp_default_connection_provider_t));
     if (!provider) {
         return NULL;
     }
@@ -119,7 +119,7 @@ static void test_cleanup_expired(uvhttp_connection_provider_t* provider) {
 
 uvhttp_connection_provider_t* uvhttp_test_connection_provider_create(void) {
     uvhttp_test_connection_provider_t* provider = 
-        (uvhttp_test_connection_provider_t*)uvhttp_malloc(sizeof(uvhttp_test_connection_provider_t));
+        (uvhttp_test_connection_provider_t*)uvhttp_alloc(sizeof(uvhttp_test_connection_provider_t));
     if (!provider) {
         return NULL;
     }
@@ -153,8 +153,8 @@ uvhttp_connection_provider_t* uvhttp_test_connection_provider_create(void) {
  * 
  * 使用方式：
  *   #include "uvhttp_allocator.h"
- *   void* ptr = UVHTTP_MALLOC(size);
- *   UVHTTP_FREE(ptr);
+ *   void* ptr = uvhttp_alloc(size);
+ *   uvhttp_free(ptr);
  */
 
 /* ============ 测试模式内存分配器说明 ============ */
@@ -162,8 +162,8 @@ uvhttp_connection_provider_t* uvhttp_test_connection_provider_create(void) {
  * 测试模式下，内存分配器通过编译宏实现跟踪：
  * 
  * #ifdef UVHTTP_TEST_MODE
- *     #define UVHTTP_MALLOC(size) uvhttp_test_malloc(size, __FILE__, __LINE__)
- *     #define UVHTTP_FREE(ptr) uvhttp_test_free(ptr, __FILE__, __LINE__)
+ *     #define uvhttp_alloc(size) uvhttp_test_malloc(size, __FILE__, __LINE__)
+ *     #define uvhttp_free(ptr) uvhttp_test_free(ptr, __FILE__, __LINE__)
  * #endif
  * 
  * 这样既保持了性能（编译时宏展开），又提供了测试时的内存跟踪能力。
@@ -212,7 +212,7 @@ static void default_set_level(uvhttp_logger_provider_t* provider, uvhttp_log_lev
 
 uvhttp_logger_provider_t* uvhttp_default_logger_provider_create(uvhttp_log_level_t level) {
     uvhttp_default_logger_provider_t* provider = 
-        (uvhttp_default_logger_provider_t*)uvhttp_malloc(sizeof(uvhttp_default_logger_provider_t));
+        (uvhttp_default_logger_provider_t*)uvhttp_alloc(sizeof(uvhttp_default_logger_provider_t));
     if (!provider) {
         return NULL;
     }
@@ -281,7 +281,7 @@ static void test_log(uvhttp_logger_provider_t* provider,
 
 uvhttp_logger_provider_t* uvhttp_test_logger_provider_create(void) {
     uvhttp_test_logger_provider_t* provider = 
-        (uvhttp_test_logger_provider_t*)uvhttp_malloc(sizeof(uvhttp_test_logger_provider_t));
+        (uvhttp_test_logger_provider_t*)uvhttp_alloc(sizeof(uvhttp_test_logger_provider_t));
     if (!provider) {
         return NULL;
     }
@@ -341,7 +341,7 @@ static int default_set_int(uvhttp_config_provider_t* provider,
 
 uvhttp_config_provider_t* uvhttp_default_config_provider_create(void) {
     uvhttp_default_config_provider_t* provider = 
-        (uvhttp_default_config_provider_t*)uvhttp_malloc(sizeof(uvhttp_default_config_provider_t));
+        (uvhttp_default_config_provider_t*)uvhttp_alloc(sizeof(uvhttp_default_config_provider_t));
     if (!provider) {
         return NULL;
     }
@@ -359,7 +359,7 @@ uvhttp_config_provider_t* uvhttp_default_config_provider_create(void) {
 /* ============ 上下文管理实现 ============ */
 
 uvhttp_context_t* uvhttp_context_create(uv_loop_t* loop) {
-    uvhttp_context_t* context = (uvhttp_context_t*)uvhttp_malloc(sizeof(uvhttp_context_t));
+    uvhttp_context_t* context = (uvhttp_context_t*)uvhttp_alloc(sizeof(uvhttp_context_t));
     if (!context) {
         return NULL;
     }
@@ -473,12 +473,12 @@ int uvhttp_context_set_connection_provider(uvhttp_context_t* context,
         if (context->connection_provider->acquire_connection == test_acquire_connection) {
             uvhttp_test_connection_provider_t* impl =
                 (uvhttp_test_connection_provider_t*)((char*)context->connection_provider - offsetof(uvhttp_test_connection_provider_t, base));
-            UVHTTP_FREE(impl);
+            uvhttp_free(impl);
         } else {
             /* 默认连接提供者 */
             uvhttp_default_connection_provider_t* impl =
                 (uvhttp_default_connection_provider_t*)((char*)context->connection_provider - offsetof(uvhttp_default_connection_provider_t, base));
-            UVHTTP_FREE(impl);
+            uvhttp_free(impl);
         }
     }
 
@@ -507,14 +507,14 @@ int uvhttp_context_set_logger_provider(uvhttp_context_t* context,
             uvhttp_test_logger_provider_t* logger =
                 (uvhttp_test_logger_provider_t*)((char*)context->logger_provider - offsetof(uvhttp_test_logger_provider_t, base));
             if (logger->cached_logs) {
-                UVHTTP_FREE(logger->cached_logs);
+                uvhttp_free(logger->cached_logs);
             }
-            UVHTTP_FREE(logger);
+            uvhttp_free(logger);
         } else {
             /* 默认日志提供者 */
             uvhttp_default_logger_provider_t* logger =
                 (uvhttp_default_logger_provider_t*)((char*)context->logger_provider - offsetof(uvhttp_default_logger_provider_t, base));
-            UVHTTP_FREE(logger);
+            uvhttp_free(logger);
         }
     }
 
@@ -531,7 +531,7 @@ int uvhttp_context_set_config_provider(uvhttp_context_t* context,
     if (context->config_provider) {
         uvhttp_default_config_provider_t* impl =
             (uvhttp_default_config_provider_t*)((char*)context->config_provider - offsetof(uvhttp_default_config_provider_t, base));
-        UVHTTP_FREE(impl);
+        uvhttp_free(impl);
     }
 
     context->config_provider = provider;

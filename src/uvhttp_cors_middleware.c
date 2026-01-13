@@ -23,7 +23,7 @@ static uvhttp_cors_config_t g_default_cors_config = {
 
 /* 创建默认 CORS 配置 */
 uvhttp_cors_config_t* uvhttp_cors_config_default(void) {
-    uvhttp_cors_config_t* config = (uvhttp_cors_config_t*)UVHTTP_MALLOC(sizeof(uvhttp_cors_config_t));
+    uvhttp_cors_config_t* config = (uvhttp_cors_config_t*)uvhttp_alloc(sizeof(uvhttp_cors_config_t));
     if (!config) {
         return NULL;
     }
@@ -38,7 +38,7 @@ uvhttp_cors_config_t* uvhttp_cors_config_create(
     const char* allow_methods,
     const char* allow_headers
 ) {
-    uvhttp_cors_config_t* config = (uvhttp_cors_config_t*)UVHTTP_MALLOC(sizeof(uvhttp_cors_config_t));
+    uvhttp_cors_config_t* config = (uvhttp_cors_config_t*)uvhttp_alloc(sizeof(uvhttp_cors_config_t));
     if (!config) {
         return NULL;
     }
@@ -51,7 +51,7 @@ uvhttp_cors_config_t* uvhttp_cors_config_create(
     char* copy_string(const char* src) {
         if (!src) return NULL;
         size_t len = strlen(src) + 1;
-        char* copy = (char*)UVHTTP_MALLOC(len);
+        char* copy = (char*)uvhttp_alloc(len);
         if (copy) {
             memcpy(copy, src, len);
         }
@@ -101,25 +101,25 @@ void uvhttp_cors_config_destroy(uvhttp_cors_config_t* config) {
         /* 只释放拥有的字符串 */
         if (config->owns_strings) {
             if (config->allow_origin) {
-                UVHTTP_FREE(config->allow_origin);
+                uvhttp_free(config->allow_origin);
             }
             if (config->allow_methods) {
-                UVHTTP_FREE(config->allow_methods);
+                uvhttp_free(config->allow_methods);
             }
             if (config->allow_headers) {
-                UVHTTP_FREE(config->allow_headers);
+                uvhttp_free(config->allow_headers);
             }
             if (config->expose_headers) {
-                UVHTTP_FREE(config->expose_headers);
+                uvhttp_free(config->expose_headers);
             }
             if (config->allow_credentials) {
-                UVHTTP_FREE(config->allow_credentials);
+                uvhttp_free(config->allow_credentials);
             }
             if (config->max_age) {
-                UVHTTP_FREE(config->max_age);
+                uvhttp_free(config->max_age);
             }
         }
-        UVHTTP_FREE(config);
+        uvhttp_free(config);
     }
 }
 
