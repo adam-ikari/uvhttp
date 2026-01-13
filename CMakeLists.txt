@@ -85,14 +85,14 @@ if(BUILD_WITH_WEBSOCKET)
     add_definitions(-DUVHTTP_FEATURE_WEBSOCKET=1)
 endif()
 
-# 包含目录
+# ============================================================================
+# 包含依赖构建配置
+# ============================================================================
+include(cmake/Dependencies.cmake)
+
+# 添加依赖包含目录
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/uthash/src)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/xxhash)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/include)
+include_directories(${DEPS_INCLUDE_DIRS})
 
 # 源文件
 set(SOURCES
@@ -165,102 +165,43 @@ if(BUILD_WITH_WEBSOCKET)
     list(APPEND HEADERS include/uvhttp_websocket_native.h)
 endif()
 
-# xxhash 支持
-set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/deps/xxhash/libxxhash.a)
-if(EXISTS ${XXHASH_LIB})
-    message(STATUS "Found xxhash library: ${XXHASH_LIB}")
-    list(APPEND LIBS ${XXHASH_LIB})
-else()
-    find_path(XXHASH_SRC xxhash.c
-        PATHS ${CMAKE_CURRENT_SOURCE_DIR}/deps/xxhash
-        NO_DEFAULT_PATH
-    )
-    if(XXHASH_SRC)
-        message(STATUS "Found xxhash source: ${XXHASH_SRC}")
-        list(APPEND SOURCES ${XXHASH_SRC})
-    else()
-        message(FATAL_ERROR "xxhash library not found")
-    endif()
-endif()
-
-# mimalloc 支持
-if(BUILD_WITH_MIMALLOC)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/include)
-    add_definitions(-DUVHTTP_ENABLE_MIMALLOC)
-    # 优先使用静态库
-    set(MIMALLOC_STATIC_LIB ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/build/libmimalloc.a)
-    if(EXISTS ${MIMALLOC_STATIC_LIB})
-        message(STATUS "Found mimalloc static library: ${MIMALLOC_STATIC_LIB}")
-        set(MIMALLOC_LIB ${MIMALLOC_STATIC_LIB})
-    else()
-        # 回退到动态库
-        find_library(MIMALLOC_LIB mimalloc
-            PATHS ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/build
-            NO_DEFAULT_PATH
-        )
-    endif()
-    if(MIMALLOC_LIB)
-        message(STATUS "Using mimalloc library: ${MIMALLOC_LIB}")
-        add_definitions(-DUVHTTP_FEATURE_ALLOCATOR=1)
-    else()
-        message(WARNING "mimalloc library not found, BUILD_WITH_MIMALLOC will be ignored")
-    endif()
-endif()
-
-# 库文件
+# ============================================================================
+# 设置依赖库
+# ============================================================================
 set(LIBS
-    ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson/libcjson.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp/libllhttp.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/library/libmbedtls.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/library/libmbedx509.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/library/libmbedcrypto.a
+    ${LIBUV_LIB}
+    ${MBEDTLS_LIBS}
     ${XXHASH_LIB}
+    ${LLHTTP_LIB}
+    ${CJSON_LIB}
     pthread
     m
     dl
 )
 
-# 添加mimalloc库（如果找到）
-if(BUILD_WITH_MIMALLOC AND MIMALLOC_LIB)
+if(BUILD_WITH_MIMALLOC)
     list(APPEND LIBS ${MIMALLOC_LIB})
+    add_definitions(-DUVHTTP_ENABLE_MIMALLOC)
+    add_definitions(-DUVHTTP_FEATURE_ALLOCATOR=1)
 endif()
 
-# 尝试使用pkg-config查找libuv
-find_package(PkgConfig)
-if(PKG_CONFIG_FOUND)
-    pkg_check_modules(LIBUV libuv)
-    if(LIBUV_FOUND)
-        list(APPEND LIBS ${LIBUV_LIBRARIES})
-        include_directories(${LIBUV_INCLUDE_DIRS})
-        link_directories(${LIBUV_LIBRARY_DIRS})
-    endif()
-endif()
-
-# 如果pkg-config没有找到，使用deps/libuv
-if(NOT LIBUV_FOUND)
-    # 尝试多个可能的libuv库路径
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/build/libuv.a)
-        list(APPEND LIBS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/build/libuv.a)
-        message(STATUS "Using libuv from deps/libuv/build/libuv.a")
-    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/.libs/libuv.a)
-        list(APPEND LIBS ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/.libs/libuv.a)
-        message(STATUS "Using libuv from deps/libuv/.libs/libuv.a")
-    else()
-        message(FATAL_ERROR "libuv library not found in deps/libuv/build or deps/libuv/.libs")
-    endif()
-    list(APPEND LIBS dl)  # dl库必须在libuv之后
-endif()
-
+# ============================================================================
 # 创建静态库
+# ============================================================================
 add_library(uvhttp STATIC ${SOURCES})
+
+# 添加依赖关系
+add_dependencies(uvhttp libuv mbedtls xxhash)
+if(BUILD_WITH_MIMALLOC)
+    add_dependencies(uvhttp mimalloc)
+endif()
+
+# 链接库
 target_link_libraries(uvhttp ${LIBS})
 
-# 共享库需要 -fPIC，暂时禁用
-# add_library(uvhttp_shared SHARED ${SOURCES})
-# set_target_properties(uvhttp_shared PROPERTIES POSITION_INDEPENDENT_CODE ON)
-# target_link_libraries(uvhttp_shared ${LIBS})
-
+# ============================================================================
 # 启用测试
+# ============================================================================
 enable_testing()
 
 # 添加测试
@@ -270,6 +211,10 @@ list(FILTER TEST_FILES EXCLUDE REGEX ".*test_memory_helpers\\.c")  # 排除辅�
 foreach(test_file ${TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
     add_executable(${test_name} ${test_file} test/unit/test_memory_helpers.c ${SOURCES})
+    add_dependencies(${test_name} libuv mbedtls xxhash)
+    if(BUILD_WITH_MIMALLOC)
+        add_dependencies(${test_name} mimalloc)
+    endif()
     target_link_libraries(${test_name} ${LIBS})
     add_test(NAME ${test_name} COMMAND ${test_name})
 endforeach()
@@ -277,69 +222,48 @@ endforeach()
 # 添加压力测试
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stress.c)
     add_executable(test_stress test/test_stress.c ${SOURCES})
+    add_dependencies(test_stress libuv mbedtls xxhash)
+    if(BUILD_WITH_MIMALLOC)
+        add_dependencies(test_stress mimalloc)
+    endif()
     target_link_libraries(test_stress ${LIBS})
-    message(STATUS "压力测试程序已配置")
 endif()
 
-# 添加测试服务器
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_server.c)
-    add_executable(uvhttp_test_server test/test_server.c ${SOURCES})
-    target_link_libraries(uvhttp_test_server ${LIBS})
-    message(STATUS "测试服务器已配置")
+# ============================================================================
+# 构建示例程序
+# ============================================================================
+if(BUILD_EXAMPLES)
+    add_subdirectory(examples)
 endif()
 
-# 添加简单性能测试服务器
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/examples/simple_bench_server.c)
-    add_executable(simple_bench_server examples/simple_bench_server.c ${SOURCES})
-    target_link_libraries(simple_bench_server ${LIBS})
-    message(STATUS "简单性能测试服务器已配置")
-endif()
-
-# 添加性能测试服务器
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/examples/bench_server.c)
-    add_executable(bench_server examples/bench_server.c ${SOURCES})
-    target_link_libraries(bench_server ${LIBS})
-    message(STATUS "性能测试服务器已配置")
-endif()
-
-# 添加uvhttp压力测试服务器
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/uvhttp_bench_server.c)
-    add_executable(uvhttp_bench_server test/uvhttp_bench_server.c ${SOURCES})
-    target_link_libraries(uvhttp_bench_server ${LIBS})
-    message(STATUS "uvhttp压力测试服务器已配置")
-endif()
-
-# 添加uvhttp直接测试服务器
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/uvhttp_direct_server.c)
-    add_executable(uvhttp_direct_server test/uvhttp_direct_server.c ${SOURCES})
-    target_link_libraries(uvhttp_direct_server ${LIBS})
-    message(STATUS "uvhttp直接测试服务器已配置")
-endif()
-
-# 添加自定义目标来运行所有测试
-add_custom_target(run_tests
-    COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" bash -c "for f in test_*; do echo \"Running \$f...\" && ./\$f || true; done"
-    DEPENDS ${TEST_FILES}
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+# ============================================================================
+# 安装规则
+# ============================================================================
+install(TARGETS uvhttp
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
 )
 
-# 安装规则
-install(TARGETS uvhttp DESTINATION lib)
-install(FILES ${HEADERS} DESTINATION include/uvhttp)
+install(DIRECTORY include/
+    DESTINATION include
+    FILES_MATCHING PATTERN "*.h"
+)
 
+# ============================================================================
 # 打印配置信息
-message(STATUS "Build configuration:")
-message(STATUS "  WebSocket: ${BUILD_WITH_WEBSOCKET}")
-message(STATUS "  mimalloc: ${BUILD_WITH_MIMALLOC}")
-message(STATUS "  Debug: ${ENABLE_DEBUG}")
-message(STATUS "  Coverage: ${ENABLE_COVERAGE}")
-
-# 添加示例编译支持
-option(BUILD_EXAMPLES "Build example programs" ON)
-
-if(BUILD_EXAMPLES)
-    # 暂时只编译性能测试，跳过其他有问题的示例
-    add_subdirectory(examples/performance_only)
-    add_subdirectory(examples)
-    message(STATUS "示例编译: 已启用")
-endif()
+# ============================================================================
+message(STATUS "")
+message(STATUS "========================================")
+message(STATUS "UVHTTP Configuration Summary")
+message(STATUS "========================================")
+message(STATUS "Version: ${PROJECT_VERSION}")
+message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "C Standard: ${CMAKE_C_STANDARD}")
+message(STATUS "WebSocket Support: ${BUILD_WITH_WEBSOCKET}")
+message(STATUS "mimalloc Support: ${BUILD_WITH_MIMALLOC}")
+message(STATUS "TLS Support: ${BUILD_WITH_TLS}")
+message(STATUS "Debug Mode: ${ENABLE_DEBUG}")
+message(STATUS "Coverage: ${ENABLE_COVERAGE}")
+message(STATUS "Examples: ${BUILD_EXAMPLES}")
+message(STATUS "========================================")
+message(STATUS "")
