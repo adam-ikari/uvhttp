@@ -94,34 +94,19 @@ build_mbedtls() {
 }
 
 build_llhttp() {
-    log_info "开始构建 llhttp..."
+    log_info "检查 llhttp..."
 
-    cd "$PROJECT_ROOT/deps/llhttp"
+    cd "$PROJECT_ROOT/deps/cllhttp"
 
     # 检查是否已构建
-    if [ -f "build/libllhttp.a" ]; then
-        log_warn "llhttp 已构建，跳过"
+    if [ -f "libllhttp.a" ]; then
+        log_info "llhttp 库已存在，跳过构建"
         cd "$PROJECT_ROOT"
         return 0
     fi
 
-    mkdir -p build && cd build
-
-    cmake .. \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_SHARED_LIBS=OFF \
-        -DLLHTTP_BUILD_SHARED_LIBS=OFF
-
-    make -j$(nproc)
-
-    if [ -f "libllhttp.a" ]; then
-        log_info "llhttp 构建成功"
-    else
-        log_error "llhttp 构建失败"
-        exit 1
-    fi
-
-    cd "$PROJECT_ROOT"
+    log_error "llhttp 库不存在，请确保 deps/cllhttp/libllhttp.a 存在"
+    exit 1
 }
 
 build_xxhash() {
