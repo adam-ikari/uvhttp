@@ -1,0 +1,109 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, release/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04]
+        build_type: [Debug, Release]
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential valgrind
+
+    - name: Build dependencies
+      run: |
+        chmod +x scripts/build_deps.sh
+        ./scripts/build_deps.sh
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+    - name: Build
+      run: |
+        cmake --build build --config ${{ matrix.build_type }} -j$(nproc)
+
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure
+
+    - name: Check for warnings
+      run: |
+        if cmake --build build --config ${{ matrix.build_type }} 2>&1 | grep -i "warning:"; then
+          echo "Found compiler warnings!"
+          exit 1
+        fi
+
+  performance-test:
+    runs-on: ubuntu-22.04
+    needs: build-and-test
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential wrk
+
+    - name: Build project
+      run: |
+        chmod +x scripts/build_deps.sh
+        ./scripts/build_deps.sh
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
+        cmake --build build --config Release -j$(nproc)
+
+    - name: Run performance tests
+      run: |
+        cd build
+        ./dist/bin/performance_static_server -d ./public -p 8080 &
+        sleep 5
+        wrk -t4 -c100 -d10s http://localhost:8080/
+        pkill -f performance_static_server
+
+  code-quality:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential clang-tidy cppcheck
+
+    - name: Build project
+      run: |
+        chmod +x scripts/build_deps.sh
+        ./scripts/build_deps.sh
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug
+        cmake --build build --config Debug -j$(nproc)
+
+    - name: Run cppcheck
+      run: |
+        cppcheck --enable=all --error-exitcode=1 --suppress=missingIncludeSystem src/
+
+    - name: Memory leak check
+      run: |
+        cd build
+        valgrind --leak-check=full --error-exitcode=1 ./dist/bin/test_connection_full_coverage || true
