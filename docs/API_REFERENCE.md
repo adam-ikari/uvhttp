@@ -38,7 +38,7 @@ void uvhttp_server_free(uvhttp_server_t* server);
 
 #### uvhttp_server_listen
 ```c
-int uvhttp_server_listen(uvhttp_server_t* server, const char* host, int port);
+uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, int port);
 ```
 启动服务器监听。
 
@@ -48,8 +48,8 @@ int uvhttp_server_listen(uvhttp_server_t* server, const char* host, int port);
 - `port`: 监听端口 (如 8080)
 
 **返回值:**
-- 成功: 0
-- 失败: 负数错误码
+- 成功: UVHTTP_OK
+- 失败: 其他 uvhttp_error_t 值
 
 ---
 
@@ -931,7 +931,7 @@ void upgrade_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 ```c
 #define UVHTTP_VERSION_MAJOR    1
-#define UVHTTP_VERSION_MINOR    0
+#define UVHTTP_VERSION_MINOR    4
 #define UVHTTP_VERSION_PATCH    0
-#define UVHTTP_VERSION_STRING   "1.0.0"
+#define UVHTTP_VERSION_STRING   "1.4.0"
 ```

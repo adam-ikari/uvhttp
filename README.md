@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-1.1.0-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-1.4.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 
@@ -18,6 +18,8 @@
 - 🔒 **安全**: 缓冲区溢出保护、输入验证、TLS 1.3 支持
 - 🛡️ **生产就绪**: 零编译警告、完整错误处理、性能监控
 - 🔧 **易于使用**: 简洁的 API、丰富的示例、完善的文档
+- 🔐 **WebSocket 认证**: Token 认证、IP 白名单/黑名单
+- 🔄 **连接管理**: 连接池、超时检测、心跳检测、广播功能
 
 ## 🚀 快速开始
 

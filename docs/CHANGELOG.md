@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-01-13
+
+### Added
+- **WebSocket 认证功能**: Token 认证、IP 白名单/黑名单
+- **WebSocket 连接管理**: 连接池、超时检测、心跳检测、广播功能
+- **内存管理优化**: 使用内联函数替代宏定义
+
+### Changed
+- **内存分配器 API**: 从宏改为内联函数（uvhttp_alloc/uvhttp_free）
+- **WebSocket 实现**: 完全原生实现，移除 libwebsockets 依赖
+
+### Fixed
+- **内存泄漏**: 修复 WebSocket 连接管理中的内存泄漏
+- **认证逻辑**: 修复 IP 白名单/黑名单匹配逻辑
+
+### Breaking Changes
+- **内存分配器 API**: UVHTTP_MALLOC/UVHTTP_FREE 改为 uvhttp_alloc/uvhttp_free
+
 ## [1.4.0] - 2026-01-11
 
 ### Added
