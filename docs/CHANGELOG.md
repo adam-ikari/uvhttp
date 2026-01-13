@@ -11,31 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **WebSocket 认证功能**: Token 认证、IP 白名单/黑名单
 - **WebSocket 连接管理**: 连接池、超时检测、心跳检测、广播功能
 - **内存管理优化**: 使用内联函数替代宏定义
-
-### Changed
-- **内存分配器 API**: 从宏改为内联函数（uvhttp_alloc/uvhttp_free）
-- **WebSocket 实现**: 完全原生实现，移除 libwebsockets 依赖
-
-### Fixed
-- **内存泄漏**: 修复 WebSocket 连接管理中的内存泄漏
-- **认证逻辑**: 修复 IP 白名单/黑名单匹配逻辑
-
-### Breaking Changes
-- **内存分配器 API**: UVHTTP_MALLOC/UVHTTP_FREE 改为 uvhttp_alloc/uvhttp_free
-
-## [1.4.0] - 2026-01-11
-
-### Added
 - **改进的超时检测机制**: 使用 libuv 定时器实现主动超时检测
 - **配置值文档说明**: 添加 sendfile 配置参数选择依据
 - **性能基准测试**: 完整的性能测试数据（15,000+ RPS）
 
 ### Changed
+- **内存分配器 API**: 从宏改为内联函数（uvhttp_alloc/uvhttp_free）
+- **WebSocket 实现**: 完全原生实现，移除 libwebsockets 依赖
 - **sendfile 超时检测**: 从被动检测改为主动检测
 - **示例程序内存管理**: 统一使用 UVHTTP_MALLOC/UVHTTP_FREE
 - **文档完善**: 添加性能优化章节到 STATIC_FILE_SERVER.md
 
 ### Fixed
+- **内存泄漏**: 修复 WebSocket 连接管理中的内存泄漏
+- **认证逻辑**: 修复 IP 白名单/黑名单匹配逻辑
 - **中等文件传输超时**: 使用分块发送（1MB chunks）
 - **示例程序内存泄漏**: 修复所有示例程序的内存管理不一致问题
 - **超时检测不完整**: 确保网络完全阻塞时也能及时响应
@@ -52,6 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **测试通过率**: 100% (所有现有测试)
 - **性能测试**: wrk 测试全部通过
 - **代码质量**: 零编译警告
+
+### Breaking Changes
+- **内存分配器 API**: UVHTTP_MALLOC/UVHTTP_FREE 改为 uvhttp_alloc/uvhttp_free
 
 ## [1.3.2] - 2026-01-11
 
