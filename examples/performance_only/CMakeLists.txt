@@ -21,6 +21,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../deps/libuv/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson)
 
 # 性能测试示例
 add_executable(performance_test ../performance_test.c)
@@ -70,5 +71,6 @@ target_link_libraries(health_check_demo
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson/libcjson.a
     m pthread dl)
 add_dependencies(health_check_demo uvhttp)

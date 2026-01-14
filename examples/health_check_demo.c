@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <time.h>
+#include <cJSON.h>
 
 // 应用上下文结构 - 使用循环注入模式
 typedef struct {
@@ -86,9 +87,19 @@ int health_check_handler(uvhttp_request_t* request, uvhttp_response_t* response)
     if (!ctx || !ctx->server) {
         uvhttp_response_set_status(response, 503);
         uvhttp_response_set_header(response, "Content-Type", "application/json");
-        char body[256];
-        snprintf(body, sizeof(body), "{\"status\":\"unhealthy\",\"error\":\"context_not_found\",\"timestamp\":%ld}", (long)time(NULL));
+        
+        // 使用 cJSON 生成错误响应
+        cJSON* root = cJSON_CreateObject();
+        cJSON_AddStringToObject(root, "status", "unhealthy");
+        cJSON_AddStringToObject(root, "error", "context_not_found");
+        cJSON_AddNumberToObject(root, "timestamp", (double)time(NULL));
+        
+        char* body = cJSON_PrintUnformatted(root);
         uvhttp_response_set_body(response, body, strlen(body));
+        
+        cJSON_Delete(root);
+        free(body);
+        
         return uvhttp_response_send(response);
     }
     
@@ -117,29 +128,34 @@ int health_check_handler(uvhttp_request_t* request, uvhttp_response_t* response)
         status = "degraded";
     }
     
-    // 构建 JSON 响应
-    // 添加简单的引号转义检查
-    char safe_status[64];
-    const char* src = status;
-    char* dst = safe_status;
-    while (*src && dst < safe_status + sizeof(safe_status) - 1) {
-        if (*src == '"' || *src == '\\') {
-            *dst++ = '\\';
-        }
-        *dst++ = *src++;
-    }
-    *dst = '\0';
-
-    char body[512];
-    snprintf(body, sizeof(body),
-        "{\"status\":\"%s\",\"timestamp\":%ld,\"connections\":{\"active\":%zu,\"max\":%zu},\"request_count\":%d}",
-        safe_status, (long)time(NULL), active_connections, max_connections, ctx->request_count);
+    // 使用 cJSON 构建 JSON 响应
+    cJSON* root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "status", status);
+    cJSON_AddNumberToObject(root, "timestamp", (double)time(NULL));
+    
+    // 添加连接信息对象
+    cJSON* connections = cJSON_CreateObject();
+    cJSON_AddNumberToObject(connections, "active", (double)active_connections);
+    cJSON_AddNumberToObject(connections, "max", (double)max_connections);
+    cJSON_AddItemToObject(root, "connections", connections);
+    
+    // 添加请求计数
+    cJSON_AddNumberToObject(root, "request_count", ctx->request_count);
+    
+    // 生成 JSON 字符串
+    char* body = cJSON_PrintUnformatted(root);
     
     uvhttp_response_set_status(response, status_code);
     uvhttp_response_set_header(response, "Content-Type", "application/json");
     uvhttp_response_set_body(response, body, strlen(body));
     
-    return uvhttp_response_send(response);
+    int result = uvhttp_response_send(response);
+    
+    // 释放 cJSON 对象和字符串
+    cJSON_Delete(root);
+    free(body);
+    
+    return result;
 }
 
 // 主页处理器
