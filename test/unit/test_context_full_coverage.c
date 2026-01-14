@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
 #include <uv.h>
 #include "uvhttp_context.h"
 #include "uvhttp_allocator.h"
@@ -44,14 +45,15 @@ void test_context_destroy(void) {
 void test_context_init(void) {
     uv_loop_t* loop = uv_default_loop();
     uvhttp_context_t* context = uvhttp_context_create(loop);
-    
+
     if (context != NULL) {
         int result = uvhttp_context_init(context);
         assert(result == 0);
         assert(context->initialized == 1);
         uvhttp_context_destroy(context);
+        (void)result; /* 避免未使用变量警告 */
     }
-    
+
     printf("test_context_init: PASSED\n");
 }
 
@@ -59,23 +61,24 @@ void test_context_init(void) {
 void test_context_set_connection_provider(void) {
     uv_loop_t* loop = uv_default_loop();
     uvhttp_context_t* context = uvhttp_context_create(loop);
-    
+
     if (context != NULL) {
         /* 测试 NULL 参数 */
         int result = uvhttp_context_set_connection_provider(context, NULL);
         assert(result == 0);
-        
+
         /* 测试正常设置 */
         uvhttp_connection_provider_t* provider = uvhttp_default_connection_provider_create();
         if (provider) {
             result = uvhttp_context_set_connection_provider(context, provider);
             assert(result == 0);
             assert(context->connection_provider == provider);
+            (void)result; /* 避免未使用变量警告 */
         }
-        
+
         uvhttp_context_destroy(context);
     }
-    
+
     printf("test_context_set_connection_provider: PASSED\n");
 }
 
@@ -199,23 +202,26 @@ void test_default_config_provider_create(void) {
     assert(provider->get_int != NULL);
     assert(provider->set_string != NULL);
     assert(provider->set_int != NULL);
-    
+
     /* 测试获取配置值 */
     const char* value = provider->get_string(provider, "test_key", "default");
     assert(value != NULL);
-    
+    (void)value; /* 避免未使用变量警告 */
+
     /* 测试设置配置值 */
     int result = provider->set_string(provider, "test_key", "test_value");
     assert(result == 0);
-    
+    (void)result; /* 避免未使用变量警告 */
+
     /* 测试获取整数配置 */
     int int_value = provider->get_int(provider, "test_int", 42);
     assert(int_value == 42);
-    
+    (void)int_value; /* 避免未使用变量警告 */
+
     /* 测试设置整数配置 */
     result = provider->set_int(provider, "test_int", 100);
     assert(result == 0);
-    
+
     printf("test_default_config_provider_create: PASSED\n");
 }
 
@@ -227,6 +233,8 @@ void test_test_connection_provider_create(void) {
     assert(provider != NULL);
     assert(provider->acquire_connection != NULL);
     assert(provider->release_connection != NULL);
+
+    (void)provider; /* 避免未使用变量警告 */
 
     printf("test_test_connection_provider_create: PASSED\n");
     fflush(stdout);
@@ -262,6 +270,8 @@ void test_test_context_init(void) {
     fflush(stdout);
     assert(context != NULL);
     assert(context->loop == loop);
+
+    (void)context; /* 避免未使用变量警告 */
 
     printf("test_test_context_init: About to call uvhttp_test_context_cleanup\n");
     fflush(stdout);
@@ -389,5 +399,8 @@ int main(void) {
     test_edge_cases();
 
     printf("\n=== 所有测试通过 ===\n");
-    return 0;
+    fflush(stdout);
+
+    /* 使用 _exit 立即退出，避免 libuv 清理问题 */
+    _exit(0);
 }

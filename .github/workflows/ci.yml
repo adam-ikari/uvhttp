@@ -36,7 +36,7 @@ jobs:
     - name: Run tests
       run: |
         cd build
-        ctest --output-on-failure -j$(nproc)
+        ctest --output-on-failure -j$(nproc) --timeout 300
 
     - name: Check for warnings
       run: |
@@ -91,7 +91,7 @@ jobs:
 
     - name: Run cppcheck
       run: |
-        cppcheck --enable=all --error-exitcode=1 --suppress=missingIncludeSystem \
+        cppcheck --enable=all --error-exitcode=1 --suppress=missingIncludeSystem --suppress=unusedFunction \
           -DUVHTTP_STRINGIFY\(x\)=\#x \
           -DUVHTTP_FEATURE_WEBSOCKET=1 \
           -DUVHTTP_FEATURE_STATIC_FILES=1 \

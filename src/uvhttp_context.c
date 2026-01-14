@@ -423,6 +423,11 @@ int uvhttp_context_init(uvhttp_context_t* context) {
         return -1;
     }
 
+    /* 如果已经初始化，直接返回成功（幂等） */
+    if (context->initialized) {
+        return 0;
+    }
+
     /* 创建默认提供者 */
     if (!context->connection_provider) {
         context->connection_provider = uvhttp_default_connection_provider_create();

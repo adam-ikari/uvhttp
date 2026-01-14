@@ -354,15 +354,13 @@ int uvhttp_ws_handshake_client(struct uvhttp_ws_connection* conn,
     /* Base64 编码 key */
     unsigned char base64_key[32];
     size_t olen;
-    mbedtls_base64_encode(base64_key, sizeof(base64_key), &olen, 
+    mbedtls_base64_encode(base64_key, sizeof(base64_key), &olen,
                          raw_key, 16);
     base64_key[olen] = '\0';
-    
+
     /* 保存 key 到连接（用于后续验证） */
-    if (conn) {
-        strncpy(conn->client_key, (char*)base64_key, sizeof(conn->client_key) - 1);
-        conn->client_key[sizeof(conn->client_key) - 1] = '\0';
-    }
+    strncpy(conn->client_key, (char*)base64_key, sizeof(conn->client_key) - 1);
+    conn->client_key[sizeof(conn->client_key) - 1] = '\0';
     
     /* 构建请求 */
     int len = snprintf(request, *request_len,
