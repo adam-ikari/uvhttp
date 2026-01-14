@@ -47,11 +47,12 @@ void test_safe_strncpy_normal(void) {
     printf("test_safe_strncpy_normal: START\n");
     char dest[100];
     const char* src = "Hello, World!";
-    
+
     int result = uvhttp_safe_strncpy(dest, src, sizeof(dest));
     assert(result == 0);
     assert(strcmp(dest, src) == 0);
-    
+    (void)result;
+
     printf("test_safe_strncpy_normal: PASSED\n");
 }
 
@@ -59,11 +60,12 @@ void test_safe_strncpy_exact_size(void) {
     printf("test_safe_strncpy_exact_size: START\n");
     char dest[14];
     const char* src = "Hello, World!";
-    
+
     int result = uvhttp_safe_strncpy(dest, src, sizeof(dest));
     assert(result == 0);
     assert(strcmp(dest, src) == 0);
-    
+    (void)result;
+
     printf("test_safe_strncpy_exact_size: PASSED\n");
 }
 
@@ -71,12 +73,13 @@ void test_safe_strncpy_truncate(void) {
     printf("test_safe_strncpy_truncate: START\n");
     char dest[10];
     const char* src = "Hello, World!";
-    
+
     int result = uvhttp_safe_strncpy(dest, src, sizeof(dest));
     assert(result == 0);
     assert(strcmp(dest, "Hello, Wo") == 0);
     assert(dest[9] == '\0');
-    
+    (void)result;
+
     printf("test_safe_strncpy_truncate: PASSED\n");
 }
 
@@ -84,20 +87,22 @@ void test_safe_strncpy_null_dest(void) {
     printf("test_safe_strncpy_null_dest: START\n");
     char dest[100];
     const char* src = "Hello, World!";
-    
+
     int result = uvhttp_safe_strncpy(NULL, src, sizeof(dest));
     assert(result == -1);
-    
+    (void)result;
+
     printf("test_safe_strncpy_null_dest: PASSED\n");
 }
 
 void test_safe_strncpy_null_src(void) {
     printf("test_safe_strncpy_null_src: START\n");
     char dest[100];
-    
+
     int result = uvhttp_safe_strncpy(dest, NULL, sizeof(dest));
     assert(result == -1);
-    
+    (void)result;
+
     printf("test_safe_strncpy_null_src: PASSED\n");
 }
 
@@ -105,10 +110,11 @@ void test_safe_strncpy_zero_size(void) {
     printf("test_safe_strncpy_zero_size: START\n");
     char dest[100];
     const char* src = "Hello, World!";
-    
+
     int result = uvhttp_safe_strncpy(dest, src, 0);
     assert(result == -1);
-    
+    (void)result;
+
     printf("test_safe_strncpy_zero_size: PASSED\n");
 }
 
@@ -133,7 +139,8 @@ void test_send_unified_response_null_response(void) {
     const char* content = "Hello, World!";
     uvhttp_error_t err = uvhttp_send_unified_response(NULL, content, strlen(content), 200);
     assert(err == UVHTTP_ERROR_INVALID_PARAM);
-    
+    (void)err;
+
     printf("test_send_unified_response_null_response: PASSED\n");
 }
 
@@ -141,10 +148,11 @@ void test_send_unified_response_null_content(void) {
     printf("test_send_unified_response_null_content: START\n");
     uvhttp_response_t* resp = create_test_response();
     assert(resp != NULL);
-    
+
     uvhttp_error_t err = uvhttp_send_unified_response(resp, NULL, 0, 200);
     assert(err == UVHTTP_ERROR_INVALID_PARAM);
-    
+    (void)err;
+
     destroy_test_response(resp);
     printf("test_send_unified_response_null_content: PASSED\n");
 }
@@ -153,11 +161,12 @@ void test_send_unified_response_invalid_status(void) {
     printf("test_send_unified_response_invalid_status: START\n");
     uvhttp_response_t* resp = create_test_response();
     assert(resp != NULL);
-    
+
     const char* content = "Hello, World!";
     uvhttp_error_t err = uvhttp_send_unified_response(resp, content, strlen(content), 999);
     assert(err == UVHTTP_ERROR_INVALID_PARAM);
-    
+    (void)err;
+
     destroy_test_response(resp);
     printf("test_send_unified_response_invalid_status: PASSED\n");
 }
@@ -179,11 +188,12 @@ void test_send_unified_response_zero_length(void) {
     printf("test_send_unified_response_zero_length: START\n");
     uvhttp_response_t* resp = create_test_response();
     assert(resp != NULL);
-    
+
     const char* content = "";
     uvhttp_error_t err = uvhttp_send_unified_response(resp, content, 0, 200);
     assert(err == UVHTTP_ERROR_INVALID_PARAM);
-    
+    (void)err;
+
     destroy_test_response(resp);
     printf("test_send_unified_response_zero_length: PASSED\n");
 }
@@ -209,7 +219,8 @@ void test_send_error_response_null_response(void) {
     const char* error_message = "Not Found";
     uvhttp_error_t err = uvhttp_send_error_response(NULL, 404, error_message, NULL);
     assert(err == UVHTTP_ERROR_INVALID_PARAM);
-    
+    (void)err;
+
     printf("test_send_error_response_null_response: PASSED\n");
 }
 
@@ -217,10 +228,11 @@ void test_send_error_response_null_message(void) {
     printf("test_send_error_response_null_message: START\n");
     uvhttp_response_t* resp = create_test_response();
     assert(resp != NULL);
-    
+
     uvhttp_error_t err = uvhttp_send_error_response(resp, 404, NULL, NULL);
     assert(err == UVHTTP_ERROR_INVALID_PARAM);
-    
+    (void)err;
+
     destroy_test_response(resp);
     printf("test_send_error_response_null_message: PASSED\n");
 }
@@ -229,11 +241,12 @@ void test_send_error_response_invalid_code(void) {
     printf("test_send_error_response_invalid_code: START\n");
     uvhttp_response_t* resp = create_test_response();
     assert(resp != NULL);
-    
+
     const char* error_message = "Not Found";
     uvhttp_error_t err = uvhttp_send_error_response(resp, 999, error_message, NULL);
     assert(err == UVHTTP_ERROR_INVALID_PARAM);
-    
+    (void)err;
+
     destroy_test_response(resp);
     printf("test_send_error_response_invalid_code: PASSED\n");
 }
@@ -242,15 +255,16 @@ void test_send_error_response_long_message(void) {
     printf("test_send_error_response_long_message: START\n");
     uvhttp_response_t* resp = create_test_response();
     assert(resp != NULL);
-    
+
     /* 创建一个超过 MAX_ERROR_MSG_LEN (200) 的消息 */
     char long_message[300];
     memset(long_message, 'A', sizeof(long_message) - 1);
     long_message[sizeof(long_message) - 1] = '\0';
-    
+
     uvhttp_error_t err = uvhttp_send_error_response(resp, 404, long_message, NULL);
     assert(err == UVHTTP_ERROR_INVALID_PARAM);
-    
+    (void)err;
+
     destroy_test_response(resp);
     printf("test_send_error_response_long_message: PASSED\n");
 }
@@ -259,16 +273,17 @@ void test_send_error_response_long_details(void) {
     printf("test_send_error_response_long_details: START\n");
     uvhttp_response_t* resp = create_test_response();
     assert(resp != NULL);
-    
+
     const char* error_message = "Not Found";
     /* 创建一个超过 MAX_ERROR_DETAILS_LEN (400) 的详细信息 */
     char long_details[500];
     memset(long_details, 'B', sizeof(long_details) - 1);
     long_details[sizeof(long_details) - 1] = '\0';
-    
+
     uvhttp_error_t err = uvhttp_send_error_response(resp, 404, error_message, long_details);
     assert(err == UVHTTP_ERROR_INVALID_PARAM);
-    
+    (void)err;
+
     destroy_test_response(resp);
     printf("test_send_error_response_long_details: PASSED\n");
 }

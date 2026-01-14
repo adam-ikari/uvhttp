@@ -410,8 +410,9 @@ int uvhttp_config_update_max_connections(int max_connections) {
     if (g_current_config) {
         int old_value = g_current_config->max_connections;
         g_current_config->max_connections = max_connections;
-        
+
         UVHTTP_LOG_INFO("Max connections updated: %d -> %d", old_value, max_connections);
+        (void)old_value;
         return UVHTTP_OK;
     }
     
@@ -427,8 +428,9 @@ int uvhttp_config_update_buffer_size(int buffer_size) {
     if (g_current_config) {
         int old_value = g_current_config->read_buffer_size;
         g_current_config->read_buffer_size = buffer_size;
-        
+
         UVHTTP_LOG_INFO("Read buffer size updated: %d -> %d", old_value, buffer_size);
+        (void)old_value;
         return UVHTTP_OK;
     }
     
@@ -447,12 +449,14 @@ int uvhttp_config_update_limits(size_t max_body_size, size_t max_header_size) {
     if (g_current_config) {
         size_t old_body = g_current_config->max_body_size;
         size_t old_header = g_current_config->max_header_size;
-        
+
         g_current_config->max_body_size = max_body_size;
         g_current_config->max_header_size = max_header_size;
-        
-        UVHTTP_LOG_INFO("Limits updated - Body: %zu -> %zu, Header: %zu -> %zu", 
+
+        UVHTTP_LOG_INFO("Limits updated - Body: %zu -> %zu, Header: %zu -> %zu",
                        old_body, max_body_size, old_header, max_header_size);
+        (void)old_body;
+        (void)old_header;
         return UVHTTP_OK;
     }
     

@@ -104,42 +104,15 @@ int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     
     app_context_t* ctx = (app_context_t*)loop->data;
     
-    // 生成HTML内容
-    const char* html_content = 
-        "<!DOCTYPE html>"
-        "<html>"
-        "<head>"
-        "<title>UVHTTP 性能测试服务器</title>"
-        "<style>"
-        "body { font-family: Arial, sans-serif; margin: 40px; }"
-        "h1 { color: #333; }"
-        ".stats { background: #f5f5f5; padding: 20px; border-radius: 5px; }"
-        "</style>"
-        "</head>"
-        "<body>"
-        "<h1>🚀 UVHTTP 性能测试服务器</h1>"
-        "<div class='stats'>"
-        "<p><strong>服务器信息:</strong></p>"
-        "<ul>"
-        "<li>版本: 1.2.0</li>"
-        "<li>状态: 运行中</li>"
-        "<li>请求计数: %d</li>"
-        "<li>运行时间: %ld 秒</li>"
-        "</ul>"
-        "</div>"
-        "<p><strong>测试端点:</strong></p>"
-        "<ul>"
-        "<li><a href='/static/'>静态文件目录</a></li>"
-        "<li><a href='/static/index.html'>小文件 (12B)</a></li>"
-        "<li><a href='/static/medium.html'>中等文件 (10KB)</a></li>"
-        "<li><a href='/static/large.html'>大文件 (100KB)</a></li>"
-        "</ul>"
-        "</body>"
-        "</html>";
-    
     char html_body[2048];
     time_t uptime = time(NULL) - ctx->start_time;
-    snprintf(html_body, sizeof(html_body), html_content, ctx->request_count, (long)uptime);
+    /* 使用字符串连接避免格式化警告 */
+    snprintf(html_body, sizeof(html_body), "%s", "<html><head><title>UVHTTP Performance Test</title></head><body>");
+    char stats[256];
+    snprintf(stats, sizeof(stats), "<h1>UVHTTP Performance Test</h1><p>Requests: %lu</p><p>Uptime: %ld seconds</p>",
+             (unsigned long)ctx->request_count, (long)uptime);
+    strncat(html_body, stats, sizeof(html_body) - strlen(html_body) - 1);
+    strncat(html_body, "</body></html>", sizeof(html_body) - strlen(html_body) - 1);
     
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/html");

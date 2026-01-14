@@ -114,6 +114,7 @@ void test_async_file_read_normal(void) {
     const char* test_file = "/tmp/test_async_file_read.txt";
     const char* test_content = "Hello, async file!";
     assert(create_test_file(test_file, test_content) == 0);
+    (void)test_content;
     
     /* 创建管理器 */
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
@@ -127,6 +128,7 @@ void test_async_file_read_normal(void) {
     /* 异步读取文件 */
     int result = uvhttp_async_file_read(manager, test_file, 
         (void*)0x1, (void*)0x2, (void*)0x3, test_completion_callback);
+    (void)result;
     assert(result == 0);
     
     /* 运行事件循环 */
@@ -149,6 +151,7 @@ void test_async_file_read_null_manager(void) {
     
     int result = uvhttp_async_file_read(NULL, test_file, 
         (void*)0x1, (void*)0x2, (void*)0x3, test_completion_callback);
+    (void)result;
     assert(result == -1);
     
     printf("test_async_file_read_null_manager: PASSED\n");
@@ -164,6 +167,7 @@ void test_async_file_read_null_path(void) {
     
     int result = uvhttp_async_file_read(manager, NULL, 
         (void*)0x1, (void*)0x2, (void*)0x3, test_completion_callback);
+    (void)result;
     assert(result == -1);
     
     uvhttp_async_file_manager_free(manager);
@@ -181,6 +185,7 @@ void test_async_file_read_null_request(void) {
     
     int result = uvhttp_async_file_read(manager, test_file, 
         NULL, (void*)0x2, (void*)0x3, test_completion_callback);
+    (void)result;
     assert(result == -1);
     
     uvhttp_async_file_manager_free(manager);
@@ -198,6 +203,7 @@ void test_async_file_read_null_response(void) {
     
     int result = uvhttp_async_file_read(manager, test_file, 
         (void*)0x1, NULL, (void*)0x3, test_completion_callback);
+    (void)result;
     assert(result == -1);
     
     uvhttp_async_file_manager_free(manager);
@@ -215,6 +221,7 @@ void test_async_file_read_null_callback(void) {
     
     int result = uvhttp_async_file_read(manager, test_file, 
         (void*)0x1, (void*)0x2, (void*)0x3, NULL);
+    (void)result;
     assert(result == -1);
     
     uvhttp_async_file_manager_free(manager);
@@ -237,6 +244,7 @@ void test_async_file_read_nonexistent_file(void) {
     const char* test_file = "/tmp/nonexistent_file_12345.txt";
     int result = uvhttp_async_file_read(manager, test_file, 
         (void*)0x1, (void*)0x2, (void*)0x3, test_completion_callback);
+    (void)result;
     assert(result == 0);
     
     /* 运行事件循环 */
@@ -272,6 +280,7 @@ void test_async_file_read_too_large(void) {
     /* 尝试读取过大的文件 */
     int result = uvhttp_async_file_read(manager, test_file, 
         (void*)0x1, (void*)0x2, (void*)0x3, test_completion_callback);
+    (void)result;
     assert(result == 0);
     
     /* 运行事件循环 */
@@ -294,6 +303,7 @@ void test_async_file_cancel_null_manager(void) {
     printf("test_async_file_cancel_null_manager: START\n");
     
     int result = uvhttp_async_file_cancel(NULL, NULL);
+    (void)result;
     assert(result == -1);
     
     printf("test_async_file_cancel_null_manager: PASSED\n");
@@ -308,6 +318,7 @@ void test_async_file_cancel_null_request(void) {
     assert(manager != NULL);
     
     int result = uvhttp_async_file_cancel(manager, NULL);
+    (void)result;
     assert(result == -1);
     
     uvhttp_async_file_manager_free(manager);
@@ -324,6 +335,7 @@ void test_async_file_stream_normal(void) {
     const char* test_file = "/tmp/test_async_file_stream.txt";
     const char* test_content = "Hello, async file stream!";
     assert(create_test_file(test_file, test_content) == 0);
+    (void)test_content;
     
     /* 创建管理器 */
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
@@ -333,6 +345,7 @@ void test_async_file_stream_normal(void) {
     /* 流式传输文件 */
     int result = uvhttp_async_file_stream(manager, test_file, 
         (void*)0x1, 1024);
+    (void)result;
     assert(result == 0);
     
     /* 运行事件循环 */
@@ -351,6 +364,7 @@ void test_async_file_stream_null_manager(void) {
     
     int result = uvhttp_async_file_stream(NULL, test_file, 
         (void*)0x1, 1024);
+    (void)result;
     assert(result == -1);
     
     printf("test_async_file_stream_null_manager: PASSED\n");
@@ -366,6 +380,7 @@ void test_async_file_stream_null_path(void) {
     
     int result = uvhttp_async_file_stream(manager, NULL, 
         (void*)0x1, 1024);
+    (void)result;
     assert(result == -1);
     
     uvhttp_async_file_manager_free(manager);
@@ -383,6 +398,7 @@ void test_async_file_stream_null_response(void) {
     
     int result = uvhttp_async_file_stream(manager, test_file, 
         NULL, 1024);
+    (void)result;
     assert(result == -1);
     
     uvhttp_async_file_manager_free(manager);
@@ -400,6 +416,7 @@ void test_async_file_stream_zero_chunk_size(void) {
     
     int result = uvhttp_async_file_stream(manager, test_file, 
         (void*)0x1, 0);
+    (void)result;
     assert(result == -1);
     
     uvhttp_async_file_manager_free(manager);
@@ -418,6 +435,7 @@ void test_async_file_stream_nonexistent_file(void) {
     const char* test_file = "/tmp/nonexistent_file_stream_12345.txt";
     int result = uvhttp_async_file_stream(manager, test_file, 
         (void*)0x1, 1024);
+    (void)result;
     assert(result == -1);
     
     uvhttp_async_file_manager_free(manager);
@@ -430,6 +448,7 @@ void test_async_file_stream_stop_null(void) {
     printf("test_async_file_stream_stop_null: START\n");
     
     int result = uvhttp_async_file_stream_stop(NULL);
+    (void)result;
     assert(result == -1);
     
     printf("test_async_file_stream_stop_null: PASSED\n");
@@ -447,6 +466,7 @@ void test_get_stats_normal(void) {
     
     int current_reads, max_concurrent;
     int result = uvhttp_async_file_get_stats(manager, &current_reads, &max_concurrent);
+    (void)result;
     assert(result == 0);
     assert(current_reads == 0);
     assert(max_concurrent == 10);
@@ -460,6 +480,7 @@ void test_get_stats_null_manager(void) {
     
     int current_reads, max_concurrent;
     int result = uvhttp_async_file_get_stats(NULL, &current_reads, &max_concurrent);
+    (void)result;
     assert(result == -1);
     
     printf("test_get_stats_null_manager: PASSED\n");
@@ -475,14 +496,17 @@ void test_get_stats_null_outputs(void) {
     
     /* 测试 NULL 输出参数 */
     int result = uvhttp_async_file_get_stats(manager, NULL, NULL);
+    (void)result;
     assert(result == 0);
     
     /* 测试部分 NULL 输出参数 */
     int current_reads, max_concurrent;
     result = uvhttp_async_file_get_stats(manager, &current_reads, NULL);
+    (void)result;
     assert(result == 0);
     
     result = uvhttp_async_file_get_stats(manager, NULL, &max_concurrent);
+    (void)result;
     assert(result == 0);
     
     uvhttp_async_file_manager_free(manager);
@@ -505,17 +529,20 @@ void test_edge_cases(void) {
     const char* test_file = "/tmp/test_edge_case.txt";
     const char* test_content = "Edge case test";
     assert(create_test_file(test_file, test_content) == 0);
+    (void)test_content;
     
     /* 尝试读取文件（应该成功） */
     completion_count = 0;
     completion_status = 0;
     int result = uvhttp_async_file_read(manager, test_file, 
         (void*)0x1, (void*)0x2, (void*)0x3, test_completion_callback);
+    (void)result;
     assert(result == 0);
     
     /* 尝试再次读取（应该失败，因为达到并发限制） */
     result = uvhttp_async_file_read(manager, test_file, 
         (void*)0x1, (void*)0x2, (void*)0x3, test_completion_callback);
+    (void)result;
     assert(result == -1);
     
     /* 运行事件循环 */

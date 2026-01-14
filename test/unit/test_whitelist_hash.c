@@ -61,10 +61,10 @@ int main() {
             uvhttp_server_free(server);
             return 1;
         }
-        printf("   ✓ 添加IP: %s (哈希表大小: %zu, 数组大小: %zu)\n",
+        printf("   ✓ 添加IP: %s (哈希表大小: %u, 数组大小: %u)\n",
                test_ips[i],
-               HASH_COUNT(server->rate_limit_whitelist_hash),
-               server->rate_limit_whitelist_count);
+               (unsigned int)HASH_COUNT(server->rate_limit_whitelist_hash),
+               (unsigned int)server->rate_limit_whitelist_count);
     }
     assert(HASH_COUNT(server->rate_limit_whitelist_hash) == 5);
     assert(server->rate_limit_whitelist_count == 5);

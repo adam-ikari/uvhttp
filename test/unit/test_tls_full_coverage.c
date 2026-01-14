@@ -188,6 +188,7 @@ void test_tls_create_ssl_null(void) {
     mbedtls_ssl_context* ssl = uvhttp_tls_create_ssl(NULL);
     /* 应该返回NULL */
     assert(ssl == NULL);
+    (void)ssl;
 
     printf("test_tls_create_ssl_null: PASSED\n");
 }
@@ -270,6 +271,7 @@ void test_tls_get_peer_cert_null(void) {
     mbedtls_x509_crt* cert = uvhttp_tls_get_peer_cert(NULL);
     /* 应该返回NULL */
     assert(cert == NULL);
+    (void)cert;
 
     printf("test_tls_get_peer_cert_null: PASSED\n");
 }

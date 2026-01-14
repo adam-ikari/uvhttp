@@ -15,6 +15,7 @@ void test_ws_parse_frame_header_basic(void) {
     size_t header_size;
     
     int result = uvhttp_ws_parse_frame_header(data, sizeof(data), &header, &header_size);
+    (void)result;
     assert(result == 0);
     assert(header.fin == 1);
     assert(header.opcode == UVHTTP_WS_OPCODE_TEXT);
@@ -32,6 +33,7 @@ void test_ws_parse_frame_header_masked(void) {
     size_t header_size;
     
     int result = uvhttp_ws_parse_frame_header(data, sizeof(data), &header, &header_size);
+    (void)result;
     assert(result == 0);
     assert(header.fin == 1);
     assert(header.opcode == UVHTTP_WS_OPCODE_TEXT);
@@ -49,6 +51,7 @@ void test_ws_parse_frame_header_extended_126(void) {
     size_t header_size;
     
     int result = uvhttp_ws_parse_frame_header(data, sizeof(data), &header, &header_size);
+    (void)result;
     assert(result == 0);
     assert(header.fin == 1);
     assert(header.opcode == UVHTTP_WS_OPCODE_BINARY);
@@ -68,6 +71,7 @@ void test_ws_parse_frame_header_extended_127(void) {
     size_t header_size;
     
     int result = uvhttp_ws_parse_frame_header(data, sizeof(data), &header, &header_size);
+    (void)result;
     assert(result == 0);
     assert(header.fin == 1);
     assert(header.opcode == UVHTTP_WS_OPCODE_BINARY);
@@ -87,6 +91,7 @@ void test_ws_parse_frame_header_fragmented(void) {
     size_t header_size;
     
     int result = uvhttp_ws_parse_frame_header(data, sizeof(data), &header, &header_size);
+    (void)result;
     assert(result == 0);
     assert(header.fin == 0);
     assert(header.opcode == UVHTTP_WS_OPCODE_TEXT);
@@ -102,15 +107,19 @@ void test_ws_parse_frame_header_null(void) {
     size_t header_size;
     
     int result = uvhttp_ws_parse_frame_header(NULL, sizeof(data), &header, &header_size);
+    (void)result;
     assert(result != 0);
     
     result = uvhttp_ws_parse_frame_header(data, sizeof(data), NULL, &header_size);
+    (void)result;
     assert(result != 0);
     
     result = uvhttp_ws_parse_frame_header(data, sizeof(data), &header, NULL);
+    (void)result;
     assert(result != 0);
     
     result = uvhttp_ws_parse_frame_header(data, 1, &header, &header_size); /* 数据不足 */
+    (void)result;
     assert(result != 0);
     
     printf("test_ws_parse_frame_header_null: PASSED\n");
@@ -158,6 +167,7 @@ void test_ws_build_frame_simple(void) {
     int result = uvhttp_ws_build_frame(buffer, sizeof(buffer), 
                                        (const uint8_t*)payload, strlen(payload),
                                        opcode, 0, 1);
+    (void)result;
     assert(result >= 0);
     
     /* 验证帧头 */
@@ -179,6 +189,7 @@ void test_ws_build_frame_masked(void) {
     int result = uvhttp_ws_build_frame(buffer, sizeof(buffer), 
                                        (const uint8_t*)payload, strlen(payload),
                                        opcode, 1, 1);
+    (void)result;
     assert(result >= 0);
     
     /* 验证帧头 */
@@ -197,6 +208,7 @@ void test_ws_build_frame_binary(void) {
     int result = uvhttp_ws_build_frame(buffer, sizeof(buffer), 
                                        payload, sizeof(payload),
                                        opcode, 0, 1);
+    (void)result;
     assert(result >= 0);
     
     /* 验证帧头 */
@@ -214,6 +226,7 @@ void test_ws_build_frame_ping(void) {
     int result = uvhttp_ws_build_frame(buffer, sizeof(buffer), 
                                        NULL, 0,
                                        opcode, 0, 1);
+    (void)result;
     assert(result >= 0);
     
     /* 验证帧头 */
@@ -231,6 +244,7 @@ void test_ws_build_frame_pong(void) {
     int result = uvhttp_ws_build_frame(buffer, sizeof(buffer), 
                                        NULL, 0,
                                        opcode, 0, 1);
+    (void)result;
     assert(result >= 0);
     
     /* 验证帧头 */
@@ -248,6 +262,7 @@ void test_ws_build_frame_close(void) {
     int result = uvhttp_ws_build_frame(buffer, sizeof(buffer), 
                                        NULL, 0,
                                        opcode, 0, 1);
+    (void)result;
     assert(result >= 0);
     
     /* 验证帧头 */
@@ -266,6 +281,7 @@ void test_ws_build_frame_fragmented(void) {
     int result = uvhttp_ws_build_frame(buffer, sizeof(buffer), 
                                        (const uint8_t*)payload, strlen(payload),
                                        opcode, 0, 0); /* FIN=0 */
+    (void)result;
     assert(result >= 0);
     
     /* 验证帧头 */
@@ -280,15 +296,18 @@ void test_ws_build_frame_null(void) {
     
     int result = uvhttp_ws_build_frame(NULL, sizeof(buffer), NULL, 0, 
                                        UVHTTP_WS_OPCODE_TEXT, 0, 1);
+    (void)result;
     assert(result < 0);
     
     result = uvhttp_ws_build_frame(buffer, 0, NULL, 0, 
                                    UVHTTP_WS_OPCODE_TEXT, 0, 1);
+    (void)result;
     assert(result < 0);
     
     /* 缓冲区不足 */
     result = uvhttp_ws_build_frame(buffer, 1, (const uint8_t*)"Hello", 5, 
                                    UVHTTP_WS_OPCODE_TEXT, 0, 1);
+    (void)result;
     assert(result < 0);
     
     printf("test_ws_build_frame_null: PASSED\n");
@@ -300,12 +319,14 @@ void test_ws_generate_accept(void) {
     char accept[64];
     
     int result = uvhttp_ws_generate_accept(key, accept, sizeof(accept));
+    (void)result;
     assert(result == 0);
-    
+
     /* RFC 6455 示例期望的值 */
     const char* expected = "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=";
     assert(strcmp(accept, expected) == 0);
-    
+    (void)expected;
+
     printf("test_ws_generate_accept: PASSED\n");
 }
 
@@ -314,12 +335,15 @@ void test_ws_generate_accept_null(void) {
     char accept[64];
     
     int result = uvhttp_ws_generate_accept(NULL, accept, sizeof(accept));
+    (void)result;
     assert(result != 0);
     
     result = uvhttp_ws_generate_accept("key", NULL, sizeof(accept));
+    (void)result;
     assert(result != 0);
     
     result = uvhttp_ws_generate_accept("key", accept, 0);
+    (void)result;
     assert(result != 0);
     
     printf("test_ws_generate_accept_null: PASSED\n");
@@ -329,14 +353,17 @@ void test_ws_generate_accept_null(void) {
 void test_ws_verify_accept(void) {
     const char* key = "dGhlIHNhbXBsZSBub25jZQ==";
     const char* accept = "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=";
-    
+
     int result = uvhttp_ws_verify_accept(key, accept);
+    (void)result;
     assert(result == 0);
-    
+
     /* 错误的 accept 值 */
     result = uvhttp_ws_verify_accept(key, "invalid");
+    (void)result;
     assert(result != 0);
-    
+    (void)result;
+
     printf("test_ws_verify_accept: PASSED\n");
 }
 
@@ -345,11 +372,13 @@ void test_ws_verify_accept_null(void) {
     int result = uvhttp_ws_verify_accept(NULL, "accept");
     /* 注意：uvhttp_ws_verify_accept 函数没有检查 NULL 参数，可能导致段错误 */
     /* 这里我们只测试 NULL key 的情况 */
+    (void)result;
     assert(result != 0);
-    
+    (void)result;
+
     /* NULL accept 会导致段错误，跳过此测试 */
     /* result = uvhttp_ws_verify_accept("key", NULL); */
-    
+
     printf("test_ws_verify_accept_null: PASSED\n");
 }
 

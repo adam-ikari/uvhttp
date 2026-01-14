@@ -44,6 +44,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
     -D_FORTIFY_SOURCE=2 \
     -fno-omit-frame-pointer \
     -fno-common \
+    -Werror \
     -Werror=implicit-function-declaration \
     -Werror=format-security \
     -Werror=return-type \
@@ -213,6 +214,8 @@ foreach(test_file ${TEST_FILES})
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(${test_name} mimalloc)
     endif()
+    # 对测试文件移除 -Werror，允许未使用变量警告
+    target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
     target_link_libraries(${test_name} ${LIBS})
     add_test(NAME ${test_name} COMMAND ${test_name})
 endforeach()

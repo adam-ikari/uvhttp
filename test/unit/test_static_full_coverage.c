@@ -111,6 +111,7 @@ void test_static_get_mime_type_extended(void) {
     result = uvhttp_static_get_mime_type("test", mime_type, sizeof(mime_type));
     assert(result == 0);
     assert(strstr(mime_type, "application/octet-stream") != NULL);
+    (void)result;
 
     printf("test_static_get_mime_type_extended: PASSED\n");
 }
@@ -142,6 +143,7 @@ void test_static_generate_etag_extended(void) {
     result = uvhttp_static_generate_etag("large.bin", 1609459200, 1024*1024*100, etag, sizeof(etag));
     assert(result == UVHTTP_OK);
     assert(strlen(etag) > 0);
+    (void)result;
 
     printf("test_static_generate_etag_extended: PASSED\n");
 }
@@ -294,6 +296,7 @@ void test_static_get_cache_hit_rate(void) {
 
         /* 初始命中率应该为0或有效值 */
         assert(hit_rate >= 0.0 && hit_rate <= 1.0);
+        (void)hit_rate;
 
         uvhttp_static_free(ctx);
     }
@@ -308,6 +311,7 @@ void test_static_get_cache_hit_rate_null(void) {
     /* NULL上下文应该返回0或安全值 */
     hit_rate = uvhttp_static_get_cache_hit_rate(NULL);
     assert(hit_rate >= 0.0 && hit_rate <= 1.0);
+    (void)hit_rate;
 
     printf("test_static_get_cache_hit_rate_null: PASSED\n");
 }
@@ -329,6 +333,7 @@ void test_static_cleanup_expired_cache(void) {
         count = uvhttp_static_cleanup_expired_cache(ctx);
         /* 应该返回清理的条目数（可能为0） */
         assert(count >= 0);
+        (void)count;
 
         uvhttp_static_free(ctx);
     }
@@ -343,6 +348,7 @@ void test_static_cleanup_expired_cache_null(void) {
     /* NULL上下文应该返回0 */
     count = uvhttp_static_cleanup_expired_cache(NULL);
     assert(count == 0);
+    (void)count;
 
     printf("test_static_cleanup_expired_cache_null: PASSED\n");
 }
@@ -384,6 +390,7 @@ void test_static_resolve_safe_path_null(void) {
 
     result = uvhttp_static_resolve_safe_path("/tmp", "index.html", NULL, sizeof(resolved_path));
     assert(result == 0);
+    (void)result;
 
     printf("test_static_resolve_safe_path_null: PASSED\n");
 }
@@ -438,6 +445,7 @@ void test_static_prewarm_directory(void) {
         count = uvhttp_static_prewarm_directory(ctx, "static", 100);
         /* 可能返回文件数或-1 */
         assert(count >= -1);
+        (void)count;
 
         uvhttp_static_free(ctx);
     }
@@ -451,6 +459,7 @@ void test_static_prewarm_directory_null(void) {
 
     count = uvhttp_static_prewarm_directory(NULL, "static", 100);
     assert(count == -1);
+    (void)count;
 
     printf("test_static_prewarm_directory_null: PASSED\n");
 }

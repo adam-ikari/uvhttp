@@ -504,7 +504,7 @@ void test_hash_performance(void) {
     uint64_t result;
     char data[1000];
     size_t i;
-    int iterations = 1000;
+    size_t iterations = 1000;
 
     /* 填充数据 */
     for (i = 0; i < sizeof(data); i++) {

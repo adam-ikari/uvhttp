@@ -78,40 +78,42 @@ void test_method_to_string(void) {
 /* 测试路由添加 */
 void test_router_add_route(void) {
     uvhttp_router_t* router = uvhttp_router_new();
-    
+
     if (router != NULL) {
         /* 测试简单路由添加 */
         uvhttp_error_t result = uvhttp_router_add_route(router, "/api", NULL);
         /* 结果可能是成功或失败，取决于实现 */
-        
+        (void)result;
+
         /* 测试多个路由添加 */
         uvhttp_router_add_route(router, "/api/users", NULL);
         uvhttp_router_add_route(router, "/api/posts", NULL);
         uvhttp_router_add_route(router, "/health", NULL);
-        
+
         uvhttp_router_free(router);
     }
-    
+
     printf("test_router_add_route: PASSED\n");
 }
 
 /* 测试路由添加带方法 */
 void test_router_add_route_method(void) {
     uvhttp_router_t* router = uvhttp_router_new();
-    
+
     if (router != NULL) {
         /* 测试带方法的路由添加 */
         uvhttp_error_t result = uvhttp_router_add_route_method(router, "/api", UVHTTP_GET, NULL);
         /* 结果可能是成功或失败，取决于实现 */
-        
+        (void)result;
+
         /* 测试多个方法的路由添加 */
         uvhttp_router_add_route_method(router, "/api/users", UVHTTP_GET, NULL);
         uvhttp_router_add_route_method(router, "/api/users", UVHTTP_POST, NULL);
         uvhttp_router_add_route_method(router, "/api/posts", UVHTTP_GET, NULL);
-        
+
         uvhttp_router_free(router);
     }
-    
+
     printf("test_router_add_route_method: PASSED\n");
 }
 
@@ -123,16 +125,17 @@ void test_router_find_handler(void) {
         /* 添加路由 */
         uvhttp_router_add_route(router, "/api", NULL);
         uvhttp_router_add_route(router, "/api/users", NULL);
-        
+
         /* 查找路由 */
         uvhttp_request_handler_t handler = uvhttp_router_find_handler(router, "/api", "GET");
         /* 结果可能是 NULL 或有效指针，取决于实现 */
-        
+
         handler = uvhttp_router_find_handler(router, "/api/users", "GET");
-        
+
         /* 查找不存在的路由 */
         handler = uvhttp_router_find_handler(router, "/nonexistent", "GET");
-        
+        (void)handler;
+
         uvhttp_router_free(router);
     }
     
@@ -146,15 +149,16 @@ void test_router_match(void) {
     if (router != NULL) {
         /* 添加路由 */
         uvhttp_router_add_route(router, "/api", NULL);
-        
+
         /* 匹配路由 */
         uvhttp_route_match_t match;
         uvhttp_error_t result = uvhttp_router_match(router, "/api", "GET", &match);
         /* 结果可能是成功或失败，取决于实现 */
-        
+
         /* 匹配不存在的路由 */
         result = uvhttp_router_match(router, "/nonexistent", "GET", &match);
-        
+        (void)result;
+
         uvhttp_router_free(router);
     }
     
