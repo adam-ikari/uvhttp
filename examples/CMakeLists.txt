@@ -58,3 +58,7 @@ if(BUILD_WITH_WEBSOCKET)
     add_executable(performance_test_websocket performance_test_websocket.c)
     target_link_libraries(performance_test_websocket ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a m pthread dl)
 endif()
+
+# 健康检查示例
+add_executable(health_check_demo health_check_demo.c)
+target_link_libraries(health_check_demo ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/libllhttp.a m pthread dl)

@@ -23,7 +23,10 @@ typedef struct {
 
 // 创建应用上下文
 app_context_t* app_context_new(uv_loop_t* loop) {
-    app_context_t* ctx = (app_context_t*)UVHTTP_MALLOC(sizeof(app_context_t));
+    if (!loop) {
+        return NULL;
+    }
+    app_context_t* ctx = (app_context_t*)malloc(sizeof(app_context_t));
     if (!ctx) {
         return NULL;
     }
@@ -38,27 +41,26 @@ void app_context_free(app_context_t* ctx) {
             uvhttp_server_free(ctx->server);
             ctx->server = NULL;
         }
-        UVHTTP_FREE(ctx);
+        free(ctx);
     }
 }
 
 // Signal handler for graceful shutdown
 void signal_handler(int sig) {
     printf("\nReceived signal %d, shutting down gracefully...\n", sig);
-    
+
     uv_loop_t* loop = uv_default_loop();
     if (loop && loop->data) {
         app_context_t* ctx = (app_context_t*)loop->data;
         if (ctx) {
             printf("Stopping server...\n");
             uvhttp_server_stop(ctx->server);
-            app_context_free(ctx);
-            loop->data = NULL;
+            // 不在这里释放 context，让主循环正常清理
         }
     }
-    
-    printf("Cleanup completed. Exiting.\n");
-    exit(0);
+
+    // 停止事件循环
+    uv_stop(loop);
 }
 
 /**
@@ -76,17 +78,16 @@ int health_check_handler(uvhttp_request_t* request, uvhttp_response_t* response)
     if (!request || !response) {
         return -1;
     }
-    
+
     // 从循环获取应用上下文
-    uv_loop_t* loop = uvhttp_request_get_loop(request);
+    uv_loop_t* loop = request->client->loop;
     app_context_t* ctx = (app_context_t*)loop->data;
     
     if (!ctx || !ctx->server) {
         uvhttp_response_set_status(response, 503);
         uvhttp_response_set_header(response, "Content-Type", "application/json");
-        const char* error_body = "{\"status\":\"unhealthy\",\"error\":\"context_not_found\",\"timestamp\":%ld}";
         char body[256];
-        snprintf(body, sizeof(body), error_body, (long)time(NULL));
+        snprintf(body, sizeof(body), "{\"status\":\"unhealthy\",\"error\":\"context_not_found\",\"timestamp\":%ld}", (long)time(NULL));
         uvhttp_response_set_body(response, body, strlen(body));
         return uvhttp_response_send(response);
     }
@@ -117,10 +118,22 @@ int health_check_handler(uvhttp_request_t* request, uvhttp_response_t* response)
     }
     
     // 构建 JSON 响应
+    // 添加简单的引号转义检查
+    char safe_status[64];
+    const char* src = status;
+    char* dst = safe_status;
+    while (*src && dst < safe_status + sizeof(safe_status) - 1) {
+        if (*src == '"' || *src == '\\') {
+            *dst++ = '\\';
+        }
+        *dst++ = *src++;
+    }
+    *dst = '\0';
+
     char body[512];
-    snprintf(body, sizeof(body), 
+    snprintf(body, sizeof(body),
         "{\"status\":\"%s\",\"timestamp\":%ld,\"connections\":{\"active\":%zu,\"max\":%zu},\"request_count\":%d}",
-        status, (long)time(NULL), active_connections, max_connections, ctx->request_count);
+        safe_status, (long)time(NULL), active_connections, max_connections, ctx->request_count);
     
     uvhttp_response_set_status(response, status_code);
     uvhttp_response_set_header(response, "Content-Type", "application/json");
@@ -134,9 +147,9 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     if (!request || !response) {
         return -1;
     }
-    
+
     // 从循环获取应用上下文
-    uv_loop_t* loop = uvhttp_request_get_loop(request);
+    uv_loop_t* loop = request->client->loop;
     app_context_t* ctx = (app_context_t*)loop->data;
     
     if (!ctx) {
