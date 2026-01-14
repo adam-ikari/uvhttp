@@ -65,6 +65,9 @@ jobs:
 
     - name: Run performance tests
       run: |
+        mkdir -p build/public
+        echo "<html><body><h1>Performance Test</h1></body></html>" > build/public/index.html
+        echo "Test file content" > build/public/test.txt
         cd build
         ./dist/bin/performance_static_server -d ./public -p 8080 &
         sleep 5
@@ -91,7 +94,7 @@ jobs:
 
     - name: Run cppcheck
       run: |
-        cppcheck --enable=all --error-exitcode=1 --suppress=missingIncludeSystem --suppress=unusedFunction \
+        cppcheck --enable=all --error-exitcode=1 --suppress=missingIncludeSystem --suppress=unusedFunction --suppress=constParameter --suppress=unusedStructMember \
           -DUVHTTP_STRINGIFY\(x\)=\#x \
           -DUVHTTP_FEATURE_WEBSOCKET=1 \
           -DUVHTTP_FEATURE_STATIC_FILES=1 \

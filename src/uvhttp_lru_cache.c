@@ -121,7 +121,7 @@ void uvhttp_lru_cache_move_to_head(cache_manager_t* cache, cache_entry_t* entry)
     if (entry == cache->lru_head) return;
     
     /* 检查entry是否在链表中（防止野指针） */
-    if (entry->lru_prev == NULL && entry != cache->lru_head && cache->lru_head != NULL) {
+    if (entry->lru_prev == NULL && cache->lru_head != NULL) {
         /* entry不在链表中，直接添加到头部 */
         entry->lru_prev = NULL;
         entry->lru_next = cache->lru_head;
