@@ -9,25 +9,10 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <assert.h>
 
 #include "uvhttp.h"
 #include "uvhttp_static.h"
-
-/* 测试结果统计 */
-static int tests_passed = 0;
-static int tests_failed = 0;
-
-/* 测试宏 */
-#define TEST_ASSERT(condition, test_name) \
-    do { \
-        if (condition) { \
-            printf("✓ %s: PASSED\n", test_name); \
-            tests_passed++; \
-        } else { \
-            printf("✗ %s: FAILED\n", test_name); \
-            tests_failed++; \
-        } \
-    } while(0)
 
 /* 创建测试文件 */
 static int create_test_file(const char* path, size_t size) {
@@ -55,161 +40,113 @@ static int create_test_file(const char* path, size_t size) {
 }
 
 /* 测试 1: 中等文件分块传输 */
-static void test_medium_file_chunked_transfer() {
+static void test_medium_file_chunked_transfer(void) {
     const char* test_file = "/tmp/test_sendfile_medium_5mb.bin";
     const size_t file_size = 5 * 1024 * 1024; /* 5MB */
     
     /* 创建测试文件 */
-    if (create_test_file(test_file, file_size) != 0) {
-        printf("✗ test_medium_file_chunked_transfer: Failed to create test file\n");
-        tests_failed++;
-        return;
-    }
+    assert(create_test_file(test_file, file_size) == 0);
     
     /* 验证文件创建 */
     struct stat st;
-    if (stat(test_file, &st) != 0) {
-        printf("✗ test_medium_file_chunked_transfer: Failed to stat test file\n");
-        tests_failed++;
-        unlink(test_file);
-        return;
-    }
-    
-    TEST_ASSERT(st.st_size == (ssize_t)file_size, "Medium file size check");
+    assert(stat(test_file, &st) == 0);
+    assert(st.st_size == (ssize_t)file_size);
     
     /* 清理 */
     unlink(test_file);
 }
 
 /* 测试 2: 中等文件边界情况（刚好 1MB） */
-static void test_medium_file_boundary_1mb() {
+static void test_medium_file_boundary_1mb(void) {
     const char* test_file = "/tmp/test_sendfile_boundary_1mb.bin";
     const size_t file_size = 1 * 1024 * 1024; /* 1MB */
     
-    if (create_test_file(test_file, file_size) != 0) {
-        printf("✗ test_medium_file_boundary_1mb: Failed to create test file\n");
-        tests_failed++;
-        return;
-    }
+    assert(create_test_file(test_file, file_size) == 0);
     
     struct stat st;
-    if (stat(test_file, &st) != 0) {
-        printf("✗ test_medium_file_boundary_1mb: Failed to stat test file\n");
-        tests_failed++;
-        unlink(test_file);
-        return;
-    }
-    
-    TEST_ASSERT(st.st_size == (ssize_t)file_size, "1MB boundary file size check");
+    assert(stat(test_file, &st) == 0);
+    assert(st.st_size == (ssize_t)file_size);
     
     unlink(test_file);
 }
 
 /* 测试 3: 中等文件边界情况（刚好 10MB） */
-static void test_medium_file_boundary_10mb() {
+static void test_medium_file_boundary_10mb(void) {
     const char* test_file = "/tmp/test_sendfile_boundary_10mb.bin";
     const size_t file_size = 10 * 1024 * 1024; /* 10MB */
     
-    if (create_test_file(test_file, file_size) != 0) {
-        printf("✗ test_medium_file_boundary_10mb: Failed to create test file\n");
-        tests_failed++;
-        return;
-    }
+    assert(create_test_file(test_file, file_size) == 0);
     
     struct stat st;
-    if (stat(test_file, &st) != 0) {
-        printf("✗ test_medium_file_boundary_10mb: Failed to stat test file\n");
-        tests_failed++;
-        unlink(test_file);
-        return;
-    }
-    
-    TEST_ASSERT(st.st_size == (ssize_t)file_size, "10MB boundary file size check");
+    assert(stat(test_file, &st) == 0);
+    assert(st.st_size == (ssize_t)file_size);
     
     unlink(test_file);
 }
 
 /* 测试 4: 小文件（应该使用传统方式） */
-static void test_small_file_traditional() {
+static void test_small_file_traditional(void) {
     const char* test_file = "/tmp/test_sendfile_small.bin";
     const size_t file_size = 2048; /* 2KB */
     
-    if (create_test_file(test_file, file_size) != 0) {
-        printf("✗ test_small_file_traditional: Failed to create test file\n");
-        tests_failed++;
-        return;
-    }
+    assert(create_test_file(test_file, file_size) == 0);
     
     struct stat st;
-    if (stat(test_file, &st) != 0) {
-        printf("✗ test_small_file_traditional: Failed to stat test file\n");
-        tests_failed++;
-        unlink(test_file);
-        return;
-    }
-    
-    TEST_ASSERT(st.st_size == (ssize_t)file_size, "Small file size check");
-    TEST_ASSERT(file_size < 4096, "Small file should use traditional method");
+    assert(stat(test_file, &st) == 0);
+    assert(st.st_size == (ssize_t)file_size);
+    assert(file_size < 4096);
     
     unlink(test_file);
 }
 
 /* 测试 5: 大文件（应该使用分块 sendfile） */
-static void test_large_file_chunked() {
+static void test_large_file_chunked(void) {
     const char* test_file = "/tmp/test_sendfile_large_15mb.bin";
     const size_t file_size = 15 * 1024 * 1024; /* 15MB */
     
-    if (create_test_file(test_file, file_size) != 0) {
-        printf("✗ test_large_file_chunked: Failed to create test file\n");
-        tests_failed++;
-        return;
-    }
+    assert(create_test_file(test_file, file_size) == 0);
     
     struct stat st;
-    if (stat(test_file, &st) != 0) {
-        printf("✗ test_large_file_chunked: Failed to stat test file\n");
-        tests_failed++;
-        unlink(test_file);
-        return;
-    }
-    
-    TEST_ASSERT(st.st_size == (ssize_t)file_size, "Large file size check");
-    TEST_ASSERT(file_size > 10 * 1024 * 1024, "Large file should use chunked sendfile");
+    assert(stat(test_file, &st) == 0);
+    assert(st.st_size == (ssize_t)file_size);
+    assert(file_size > 10 * 1024 * 1024);
     
     unlink(test_file);
 }
 
 /* 测试 6: 超时配置验证 */
-static void test_timeout_configuration() {
+static void test_timeout_configuration(void) {
     /* 验证超时配置常量 */
     /* 注意：这些常量在 uvhttp_static.c 中定义，测试文件无法直接访问 */
     /* 这里我们验证文件大小分类逻辑 */
     
-    TEST_ASSERT(4096 < (1 * 1024 * 1024), "Small file threshold (4KB < 1MB)");
-    TEST_ASSERT((1 * 1024 * 1024) < (10 * 1024 * 1024), "Medium file threshold (1MB < 10MB)");
-    TEST_ASSERT((10 * 1024 * 1024) < (15 * 1024 * 1024), "Large file threshold (10MB < 15MB)");
+    assert(4096 < (1 * 1024 * 1024));
+    assert((1 * 1024 * 1024) < (10 * 1024 * 1024));
+    assert((10 * 1024 * 1024) < (15 * 1024 * 1024));
 }
 
 int main() {
     printf("=== sendfile 超时和分块传输测试 ===\n\n");
     
     test_medium_file_chunked_transfer();
+    printf("✓ test_medium_file_chunked_transfer: PASSED\n");
+    
     test_medium_file_boundary_1mb();
+    printf("✓ test_medium_file_boundary_1mb: PASSED\n");
+    
     test_medium_file_boundary_10mb();
+    printf("✓ test_medium_file_boundary_10mb: PASSED\n");
+    
     test_small_file_traditional();
+    printf("✓ test_small_file_traditional: PASSED\n");
+    
     test_large_file_chunked();
+    printf("✓ test_large_file_chunked: PASSED\n");
+    
     test_timeout_configuration();
+    printf("✓ test_timeout_configuration: PASSED\n");
     
-    printf("\n=== 测试结果 ===\n");
-    printf("通过: %d\n", tests_passed);
-    printf("失败: %d\n", tests_failed);
-    printf("总计: %d\n", tests_passed + tests_failed);
+    printf("\n=== 所有测试通过 ===\n");
     
-    if (tests_failed == 0) {
-        printf("\n=== 所有测试通过 ===\n");
-        return 0;
-    } else {
-        printf("\n=== 有测试失败 ===\n");
-        return 1;
-    }
+    return 0;
 }

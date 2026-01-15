@@ -8,6 +8,7 @@
 #include <string.h>
 #include <time.h>
 #include "uvhttp_hierarchical_allocator.h"
+#include <assert.h>
 
 /* 性能测试函数 */
 static double get_time_ms(void) {
@@ -235,6 +236,7 @@ void performance_comparison(void) {
     printf("========================================");
     
     uvhttp_halloc_t* halloc = uvhttp_halloc_create(&config);
+    assert(halloc != NULL);
     if (halloc) {
         test_small_alloc_performance(halloc, "分层分配器");
         test_large_alloc_performance(halloc, "分层分配器");
@@ -287,6 +289,7 @@ void memory_usage_test(void) {
     
     /* 分层分配器 */
     uvhttp_halloc_t* halloc = uvhttp_halloc_create(&config);
+    assert(halloc != NULL);
     if (halloc) {
         const int iterations = 1000;
         void* ptrs[1000];
