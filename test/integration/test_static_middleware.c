@@ -37,7 +37,6 @@ int main() {
     // 创建HTTP服务器
     g_server = uvhttp_server_new(g_loop);
     if (!g_server) {
-        printf("错误：无法创建HTTP服务器\n");
         return 1;
     }
     
@@ -66,7 +65,6 @@ int main() {
     );
     
     if (!static_middleware) {
-        printf("错误：无法创建静态文件中间件\n");
         uvhttp_server_free(g_server);
         return 1;
     }
@@ -77,16 +75,10 @@ int main() {
     // 启动服务器
     int result = uvhttp_server_listen(g_server, "0.0.0.0", 8080);
     if (result != 0) {
-        printf("错误：无法启动服务器 (错误码: %d)\n", result);
         uvhttp_server_free(g_server);
         return 1;
     }
     
-    printf("🚀 静态文件服务启动成功！\n");
-    printf("📍 服务地址: http://localhost:8080\n");
-    printf("📁 静态文件目录: %s\n", static_config.root_directory);
-    printf("🔧 路径前缀: /static\n");
-    printf("\n按 Ctrl+C 停止服务器\n");
     
     // 运行事件循环
     uv_run(g_loop, UV_RUN_DEFAULT);
@@ -94,6 +86,5 @@ int main() {
     // 清理资源
     uvhttp_server_free(g_server);
     
-    printf("\n服务器已停止\n");
     return 0;
 }

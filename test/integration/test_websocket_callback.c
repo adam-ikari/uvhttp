@@ -19,7 +19,6 @@ static char g_last_message[256] = {0};
 static int on_connect(uvhttp_ws_connection_t* ws_conn) {
     (void)ws_conn;
     g_connect_called++;
-    printf("[测试] WebSocket 连接建立回调被调用\n");
     return 0;
 }
 
@@ -34,7 +33,6 @@ static int on_message(uvhttp_ws_connection_t* ws_conn, const char* data, size_t 
     memcpy(g_last_message, data, copy_len);
     g_last_message[copy_len] = '\0';
 
-    printf("[测试] 收到 WebSocket 消息 #%d: %s\n", g_message_count, g_last_message);
 
     /* 回显消息 */
     uvhttp_server_ws_send(ws_conn, data, len);
@@ -45,7 +43,6 @@ static int on_message(uvhttp_ws_connection_t* ws_conn, const char* data, size_t 
 static int on_close(uvhttp_ws_connection_t* ws_conn) {
     (void)ws_conn;
     g_close_called++;
-    printf("[测试] WebSocket 连接关闭回调被调用\n");
     return 0;
 }
 
@@ -90,7 +87,6 @@ int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
 
-    printf("=== WebSocket 用户回调集成测试 ===\n\n");
 
     /* 创建事件循环 */
     uv_loop_t* loop = uv_default_loop();
@@ -116,7 +112,6 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    printf("[测试] WebSocket 处理器已注册到路径: /ws\n");
 
     /* 设置 HTTP 处理器 */
     result = uvhttp_server_set_handler(server, http_handler);
@@ -132,10 +127,6 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    printf("[测试] 服务器已启动，监听 0.0.0.0:8080\n");
-    printf("[测试] 访问 http://localhost:8080 查看测试页面\n");
-    printf("[测试] WebSocket 端点: ws://localhost:8080/ws\n");
-    printf("[测试] 按 Ctrl+C 停止服务器\n\n");
 
     /* 运行事件循环 */
     uv_run(loop, UV_RUN_DEFAULT);
@@ -144,10 +135,6 @@ int main(int argc, char** argv) {
     uvhttp_server_free(server);
     uv_loop_close(loop);
 
-    printf("\n=== 测试结束 ===\n");
-    printf("连接回调调用次数: %d\n", g_connect_called);
-    printf("消息回调调用次数: %d\n", g_message_count);
-    printf("关闭回调调用次数: %d\n", g_close_called);
 
     return 0;
 }

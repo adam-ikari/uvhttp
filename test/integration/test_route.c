@@ -23,7 +23,7 @@ void signal_handler(int sig) {
 
 int test_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     const char* path = uvhttp_request_get_url(request);
-    printf("Handler called with path: %s\n", path);
+    (void)path;  // Suppress unused variable warning
     
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/plain");
@@ -73,7 +73,6 @@ int main() {
     // 启动服务器
     uvhttp_server_listen(ctx->server, "0.0.0.0", 8080);
     
-    printf("Server started on http://localhost:8080\n");
     uv_run(loop, UV_RUN_DEFAULT);
     
     // 清理

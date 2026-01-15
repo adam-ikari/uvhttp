@@ -13,7 +13,6 @@
 static int on_ws_message(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len, int opcode) {
     (void)opcode;
 
-    printf("[WebSocket] 收到消息: %.*s\n", (int)len, data);
 
     /* 回显消息 */
     char response[256];
@@ -25,20 +24,17 @@ static int on_ws_message(uvhttp_ws_connection_t* ws_conn, const char* data, size
 
 /* WebSocket 关闭回调 */
 static int on_ws_close(uvhttp_ws_connection_t* ws_conn, int code, const char* reason) {
-    printf("[WebSocket] 连接关闭: code=%d, reason=%s\n", code, reason);
     return 0;
 }
 
 /* WebSocket 错误回调 */
 static int on_ws_error(uvhttp_ws_connection_t* ws_conn, int error_code, const char* error_msg) {
-    printf("[WebSocket] 错误: code=%d, msg=%s\n", error_code, error_msg);
     return 0;
 }
 
 /* HTTP 请求处理器 */
 static int http_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     const char* url = uvhttp_request_get_url(request);
-    printf("[HTTP] 收到请求: %s\n", url);
 
     /* 返回简单的 HTML 页面 */
     const char* html = "<html><body><h1>WebSocket 测试服务器</h1>"
@@ -68,10 +64,6 @@ int main(int argc, char** argv) {
         }
     }
 
-    printf("启动 WebSocket 集成测试服务器...\n");
-    printf("监听地址: http://%s:%d\n", host, port);
-    printf("WebSocket 端点: ws://%s:%d/ws\n", host, port);
-    printf("按 Ctrl+C 停止服务器\n");
 
     /* 创建服务器 */
     uvhttp_server_builder_t* server = uvhttp_server_create(host, port);
