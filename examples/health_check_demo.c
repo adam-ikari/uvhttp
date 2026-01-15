@@ -23,11 +23,11 @@ typedef struct {
 } app_context_t;
 
 // 创建应用上下文
-app_context_t* app_context_new(uv_loop_t* loop) {
+app_context_t* app_context_new(uvhttp_loop_t* loop) {
     if (!loop) {
         return NULL;
     }
-    app_context_t* ctx = (app_context_t*)malloc(sizeof(app_context_t));
+    app_context_t* ctx = (app_context_t*)UVHTTP_MALLOC(sizeof(app_context_t));
     if (!ctx) {
         return NULL;
     }
@@ -42,7 +42,7 @@ void app_context_free(app_context_t* ctx) {
             uvhttp_server_free(ctx->server);
             ctx->server = NULL;
         }
-        free(ctx);
+        UVHTTP_FREE(ctx);
     }
 }
 
@@ -53,7 +53,7 @@ void signal_handler(int sig) {
     uv_loop_t* loop = uv_default_loop();
     if (loop && loop->data) {
         app_context_t* ctx = (app_context_t*)loop->data;
-        if (ctx) {
+        if (ctx && ctx->server) {
             printf("Stopping server...\n");
             uvhttp_server_stop(ctx->server);
             // 不在这里释放 context，让主循环正常清理
@@ -61,7 +61,9 @@ void signal_handler(int sig) {
     }
 
     // 停止事件循环
-    uv_stop(loop);
+    if (loop) {
+        uv_stop(loop);
+    }
 }
 
 /**
@@ -178,7 +180,16 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     
     ctx->request_count++;
     
-    const char* body = 
+    // 动态构建 HTML 响应，显示实际请求计数
+    char* body = (char*)UVHTTP_MALLOC(1024);
+    if (!body) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_body(response, "Internal Server Error", 21);
+        uvhttp_response_send(response);
+        return -1;
+    }
+    
+    int len = snprintf(body, 1024,
         "<!DOCTYPE html>\n"
         "<html>\n"
         "<head>\n"
@@ -204,11 +215,15 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         "        </div>\n"
         "    </div>\n"
         "</body>\n"
-        "</html>\n";
+        "</html>\n",
+        ctx->request_count);
     
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(response, body, strlen(body));
+    uvhttp_response_set_body(response, body, len);
+    int result = uvhttp_response_send(response);
+    UVHTTP_FREE(body);
+    return result;
     return uvhttp_response_send(response);
 }
 
