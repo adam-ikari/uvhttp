@@ -42,3 +42,4 @@ Makefile
 core
 core.*
 !cmake/Dependencies.cmake
+test/results/

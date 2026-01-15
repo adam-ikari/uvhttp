@@ -1,12 +1,21 @@
 #include "include/uvhttp.h"
 #include <signal.h>
 
-static uvhttp_server_t* g_server = NULL;
+// 应用上下文结构 - 使用循环注入模式
+typedef struct {
+    uvhttp_server_t* server;
+    uvhttp_router_t* router;
+} app_context_t;
 
 void signal_handler(int sig) {
-    if (g_server) {
-        uvhttp_server_stop(g_server);
-        uvhttp_server_free(g_server);
+    uv_loop_t* loop = uv_default_loop();
+    if (loop && loop->data) {
+        app_context_t* ctx = (app_context_t*)loop->data;
+        if (ctx && ctx->server) {
+            uvhttp_server_stop(ctx->server);
+            uvhttp_server_free(ctx->server);
+            ctx->server = NULL;
+        }
     }
     exit(0);
 }
@@ -27,16 +36,54 @@ int main() {
     signal(SIGINT, signal_handler);
     
     uv_loop_t* loop = uv_default_loop();
-    g_server = uvhttp_server_new(loop);
     
-    uvhttp_router_t* router = uvhttp_router_new();
-    uvhttp_router_add_route(router, "/*", test_handler);
-    g_server->router = router;
+    // 创建应用上下文
+    app_context_t* ctx = (app_context_t*)malloc(sizeof(app_context_t));
+    if (!ctx) {
+        fprintf(stderr, "Failed to allocate context\n");
+        return 1;
+    }
+    memset(ctx, 0, sizeof(app_context_t));
     
-    uvhttp_server_listen(g_server, "0.0.0.0", 8080);
+    // 注入到循环
+    loop->data = ctx;
+    
+    // 创建服务器
+    ctx->server = uvhttp_server_new(loop);
+    if (!ctx->server) {
+        fprintf(stderr, "Failed to create server\n");
+        free(ctx);
+        return 1;
+    }
+    
+    // 创建路由器
+    ctx->router = uvhttp_router_new();
+    if (!ctx->router) {
+        fprintf(stderr, "Failed to create router\n");
+        uvhttp_server_free(ctx->server);
+        free(ctx);
+        return 1;
+    }
+    
+    // 添加路由
+    uvhttp_router_add_route(ctx->router, "/*", test_handler);
+    ctx->server->router = ctx->router;
+    
+    // 启动服务器
+    uvhttp_server_listen(ctx->server, "0.0.0.0", 8080);
     
     printf("Server started on http://localhost:8080\n");
     uv_run(loop, UV_RUN_DEFAULT);
+    
+    // 清理
+    if (ctx) {
+        if (ctx->server) {
+            uvhttp_server_free(ctx->server);
+            ctx->server = NULL;
+        }
+        free(ctx);
+        loop->data = NULL;
+    }
     
     return 0;
 }
