@@ -144,3 +144,216 @@ TEST(UvhttpConnectionFullCoverageTest, ConnectionMemoryAllocation) {
     
     EXPECT_GE(sizeof(uvhttp_connection_t), expected_size);
 }
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionSetStateValid) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    conn.state = UVHTTP_CONN_STATE_NEW;
+    
+    uvhttp_connection_set_state(&conn, UVHTTP_CONN_STATE_HTTP_READING);
+    EXPECT_EQ(conn.state, UVHTTP_CONN_STATE_HTTP_READING);
+    
+    uvhttp_connection_set_state(&conn, UVHTTP_CONN_STATE_HTTP_PROCESSING);
+    EXPECT_EQ(conn.state, UVHTTP_CONN_STATE_HTTP_PROCESSING);
+    
+    uvhttp_connection_set_state(&conn, UVHTTP_CONN_STATE_HTTP_WRITING);
+    EXPECT_EQ(conn.state, UVHTTP_CONN_STATE_HTTP_WRITING);
+    
+    uvhttp_connection_set_state(&conn, UVHTTP_CONN_STATE_CLOSING);
+    EXPECT_EQ(conn.state, UVHTTP_CONN_STATE_CLOSING);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionStateTransitionsFull) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    conn.state = UVHTTP_CONN_STATE_NEW;
+    
+    for (int state = UVHTTP_CONN_STATE_NEW; state <= UVHTTP_CONN_STATE_CLOSING; state++) {
+        uvhttp_connection_set_state(&conn, (uvhttp_connection_state_t)state);
+        EXPECT_EQ(conn.state, state);
+    }
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionKeepAliveFlag) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    conn.keep_alive = 0;
+    EXPECT_EQ(conn.keep_alive, 0);
+    
+    conn.keep_alive = 1;
+    EXPECT_EQ(conn.keep_alive, 1);
+    
+    conn.keep_alive = 2;
+    EXPECT_EQ(conn.keep_alive, 2);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionChunkedEncoding) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    conn.chunked_encoding = 0;
+    EXPECT_EQ(conn.chunked_encoding, 0);
+    
+    conn.chunked_encoding = 1;
+    EXPECT_EQ(conn.chunked_encoding, 1);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionContentLength) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    conn.content_length = 0;
+    EXPECT_EQ(conn.content_length, 0);
+    
+    conn.content_length = 1024;
+    EXPECT_EQ(conn.content_length, 1024);
+    
+    conn.content_length = 1024 * 1024;
+    EXPECT_EQ(conn.content_length, 1024 * 1024);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionBodyReceived) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    conn.body_received = 0;
+    EXPECT_EQ(conn.body_received, 0);
+    
+    conn.body_received = 512;
+    EXPECT_EQ(conn.body_received, 512);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionParsingComplete) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    conn.parsing_complete = 0;
+    EXPECT_EQ(conn.parsing_complete, 0);
+    
+    conn.parsing_complete = 1;
+    EXPECT_EQ(conn.parsing_complete, 1);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionNeedRestartRead) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    conn.need_restart_read = 0;
+    EXPECT_EQ(conn.need_restart_read, 0);
+    
+    conn.need_restart_read = 1;
+    EXPECT_EQ(conn.need_restart_read, 1);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionLastError) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    conn.last_error = 0;
+    EXPECT_EQ(conn.last_error, 0);
+    
+    conn.last_error = -1;
+    EXPECT_EQ(conn.last_error, -1);
+    
+    conn.last_error = 1;
+    EXPECT_EQ(conn.last_error, 1);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionReadBuffer) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    conn.read_buffer = nullptr;
+    EXPECT_EQ(conn.read_buffer, nullptr);
+    
+    conn.read_buffer_size = 0;
+    EXPECT_EQ(conn.read_buffer_size, 0);
+    
+    conn.read_buffer_used = 0;
+    EXPECT_EQ(conn.read_buffer_used, 0);
+    
+    conn.read_buffer_size = 4096;
+    conn.read_buffer_used = 1024;
+    EXPECT_EQ(conn.read_buffer_size, 4096);
+    EXPECT_EQ(conn.read_buffer_used, 1024);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionCurrentHeaderField) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    EXPECT_EQ(conn.current_header_field_len, 0);
+    EXPECT_EQ(conn.parsing_header_field, 0);
+    
+    conn.current_header_field_len = 10;
+    conn.parsing_header_field = 1;
+    EXPECT_EQ(conn.current_header_field_len, 10);
+    EXPECT_EQ(conn.parsing_header_field, 1);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionCurrentHeaderIsImportant) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    conn.current_header_is_important = 0;
+    EXPECT_EQ(conn.current_header_is_important, 0);
+    
+    conn.current_header_is_important = 1;
+    EXPECT_EQ(conn.current_header_is_important, 1);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionMempool) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    conn.mempool = nullptr;
+    EXPECT_EQ(conn.mempool, nullptr);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionTcpHandle) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    EXPECT_EQ(conn.tcp_handle.data, nullptr);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionIdleHandle) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    EXPECT_EQ(conn.idle_handle.data, nullptr);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionRequestResponse) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    EXPECT_EQ(conn.request, nullptr);
+    EXPECT_EQ(conn.response, nullptr);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionServer) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    EXPECT_EQ(conn.server, nullptr);
+}
+
+TEST(UvhttpConnectionFullCoverageTest, ConnectionSsl) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    EXPECT_EQ(conn.ssl, nullptr);
+    EXPECT_EQ(conn.tls_enabled, 0);
+}
+
+#if UVHTTP_FEATURE_WEBSOCKET
+TEST(UvhttpConnectionFullCoverageTest, ConnectionWebSocket) {
+    uvhttp_connection_t conn;
+    memset(&conn, 0, sizeof(conn));
+    
+    EXPECT_EQ(conn.ws_connection, nullptr);
+    EXPECT_EQ(conn.is_websocket, 0);
+}
+#endif

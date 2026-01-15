@@ -189,3 +189,164 @@ TEST(UvhttpServerFullCoverageTest, ServerInitializationState) {
         uvhttp_server_free(server);
     }
 }
+
+TEST(UvhttpServerFullCoverageTest, ServerSetHandlerValid) {
+    uvhttp_server_t* server = uvhttp_server_new(NULL);
+    if (server != NULL) {
+        uvhttp_error_t result = uvhttp_server_set_handler(server, [](uvhttp_request_t* req, uvhttp_response_t* resp) -> int {
+            (void)req;
+            (void)resp;
+            return 0;
+        });
+        EXPECT_EQ(result, UVHTTP_OK);
+        uvhttp_server_free(server);
+    }
+}
+
+TEST(UvhttpServerFullCoverageTest, ServerSetRouterValid) {
+    uvhttp_server_t* server = uvhttp_server_new(NULL);
+    if (server != NULL) {
+        uvhttp_router_t* router = uvhttp_router_new();
+        if (router != NULL) {
+            uvhttp_error_t result = uvhttp_server_set_router(server, router);
+            EXPECT_EQ(result, UVHTTP_OK);
+            uvhttp_router_free(router);
+        }
+        uvhttp_server_free(server);
+    }
+}
+
+TEST(UvhttpServerFullCoverageTest, ServerListenInvalidHost) {
+    uvhttp_server_t* server = uvhttp_server_new(NULL);
+    if (server != NULL) {
+        uvhttp_error_t result = uvhttp_server_listen(server, NULL, 8080);
+        EXPECT_NE(result, UVHTTP_OK);
+        uvhttp_server_free(server);
+    }
+}
+
+TEST(UvhttpServerFullCoverageTest, ServerStructAlignment) {
+    EXPECT_GE(sizeof(uvhttp_server_t), sizeof(void*));
+    EXPECT_GE(sizeof(uvhttp_server_t), sizeof(int));
+    EXPECT_GE(sizeof(uvhttp_server_t), sizeof(size_t));
+}
+
+TEST(UvhttpServerFullCoverageTest, ServerBuilderStructAlignment) {
+    EXPECT_GE(sizeof(uvhttp_server_builder_t), sizeof(void*));
+    EXPECT_GE(sizeof(uvhttp_server_builder_t), sizeof(int));
+}
+
+TEST(UvhttpServerFullCoverageTest, ServerConstantsValidation) {
+    EXPECT_GT(MAX_CONNECTIONS, 0);
+    EXPECT_GE(MAX_CONNECTIONS, 100);
+    EXPECT_LE(MAX_CONNECTIONS, 100000);
+    
+    EXPECT_GT(INET_ADDRSTRLEN, 0);
+    EXPECT_GE(INET_ADDRSTRLEN, 16);
+}
+
+TEST(UvhttpServerFullCoverageTest, ServerMultipleNullOperations) {
+    for (int i = 0; i < 100; i++) {
+        uvhttp_server_set_handler(NULL, NULL);
+        uvhttp_server_set_router(NULL, NULL);
+        uvhttp_server_listen(NULL, "0.0.0.0", 8080);
+        uvhttp_server_stop(NULL);
+        uvhttp_server_add_middleware(NULL, NULL);
+        uvhttp_server_remove_middleware(NULL, NULL);
+        uvhttp_server_cleanup_middleware(NULL);
+        
+        uvhttp_request_init(NULL, NULL);
+        uvhttp_request_cleanup(NULL);
+        
+        uvhttp_quick_response(NULL, 200, "text/plain", "Hello");
+        uvhttp_html_response(NULL, "<html></html>");
+        uvhttp_file_response(NULL, "/path/to/file");
+        
+        uvhttp_get_param(NULL, "name");
+        uvhttp_get_header(NULL, "Content-Type");
+        uvhttp_get_body(NULL);
+    }
+}
+
+TEST(UvhttpServerFullCoverageTest, RequestInitInvalidParams) {
+    uvhttp_request_t request;
+    memset(&request, 0, sizeof(request));
+    
+    uvhttp_error_t result = uvhttp_request_init(NULL, NULL);
+    EXPECT_NE(result, UVHTTP_OK);
+}
+
+TEST(UvhttpServerFullCoverageTest, GetParamEmptyName) {
+    uvhttp_request_t request;
+    memset(&request, 0, sizeof(request));
+    
+    const char* result = uvhttp_get_param(&request, "");
+    EXPECT_EQ(result, nullptr);
+}
+
+TEST(UvhttpServerFullCoverageTest, GetHeaderEmptyName) {
+    uvhttp_request_t request;
+    memset(&request, 0, sizeof(request));
+    
+    const char* result = uvhttp_get_header(&request, "");
+    EXPECT_EQ(result, nullptr);
+}
+
+TEST(UvhttpServerFullCoverageTest, GetHeaderNullName) {
+    uvhttp_request_t request;
+    memset(&request, 0, sizeof(request));
+    
+    const char* result = uvhttp_get_header(&request, NULL);
+    EXPECT_EQ(result, nullptr);
+}
+
+TEST(UvhttpServerFullCoverageTest, GetParamNullName) {
+    uvhttp_request_t request;
+    memset(&request, 0, sizeof(request));
+    
+    const char* result = uvhttp_get_param(&request, NULL);
+    EXPECT_EQ(result, nullptr);
+}
+
+TEST(UvhttpServerFullCoverageTest, QuickResponseNullRequest) {
+    uvhttp_quick_response(NULL, 200, "text/plain", "Hello");
+}
+
+TEST(UvhttpServerFullCoverageTest, HtmlResponseNullRequest) {
+    uvhttp_html_response(NULL, "<html></html>");
+}
+
+TEST(UvhttpServerFullCoverageTest, FileResponseNullRequest) {
+    uvhttp_file_response(NULL, "/path/to/file");
+}
+
+TEST(UvhttpServerFullCoverageTest, ServerStructFieldValidation) {
+    uvhttp_server_t server;
+    memset(&server, 0, sizeof(server));
+    
+    EXPECT_EQ(server.is_listening, 0);
+    EXPECT_EQ(server.active_connections, 0);
+    EXPECT_EQ(server.handler, nullptr);
+    EXPECT_EQ(server.router, nullptr);
+    EXPECT_EQ(server.middleware_chain, nullptr);
+}
+
+TEST(UvhttpServerFullCoverageTest, ServerBuilderStructFieldValidation) {
+    uvhttp_server_builder_t builder;
+    memset(&builder, 0, sizeof(builder));
+    
+    EXPECT_EQ(sizeof(builder), sizeof(uvhttp_server_builder_t));
+}
+
+TEST(UvhttpServerFullCoverageTest, ServerMemoryLayout) {
+    size_t expected_size = sizeof(uv_loop_t*) +
+                           sizeof(int) +     /* is_listening */
+                           sizeof(int) +     /* active_connections */
+                           sizeof(uvhttp_request_handler_t) +
+                           sizeof(uvhttp_router_t*) +
+                           sizeof(void*) +   /* middleware_chain */
+                           sizeof(uv_tcp_t) +
+                           sizeof(uv_idle_t);
+    
+    EXPECT_GE(sizeof(uvhttp_server_t), expected_size);
+}
