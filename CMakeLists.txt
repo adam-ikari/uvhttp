@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(uvhttp VERSION 1.4.0 LANGUAGES C)
+project(uvhttp VERSION 1.4.0 LANGUAGES C CXX)
 
 # 构建选项
 option(BUILD_WITH_WEBSOCKET "Build with WebSocket support" ON)
@@ -203,22 +203,37 @@ target_link_libraries(uvhttp ${LIBS})
 # ============================================================================
 enable_testing()
 
-# 添加测试
-file(GLOB TEST_FILES test/unit/test_*.c)
-list(FILTER TEST_FILES EXCLUDE REGEX ".*disabled.*")
-list(FILTER TEST_FILES EXCLUDE REGEX ".*test_memory_helpers\\.c")  # 排除辅助文件
-foreach(test_file ${TEST_FILES})
+# 添加 gtest 测试
+file(GLOB GTEST_TEST_FILES test/unit/test_*.c)
+list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
+list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_memory_helpers\\.c")  # 排除辅助文件
+list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*simple_test\\.c")  # 排除旧测试框架的测试
+
+foreach(test_file ${GTEST_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
     add_executable(${test_name} ${test_file} test/unit/test_memory_helpers.c ${SOURCES})
-    add_dependencies(${test_name} libuv mbedtls xxhash)
+    add_dependencies(${test_name} libuv mbedtls xxhash gtest)
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(${test_name} mimalloc)
     endif()
     # 对测试文件移除 -Werror，允许未使用变量警告
     target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
-    target_link_libraries(${test_name} ${LIBS})
+    target_link_libraries(${test_name} ${LIBS} ${GTEST_LIBS})
+    target_include_directories(${test_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
     add_test(NAME ${test_name} COMMAND ${test_name})
 endforeach()
+
+# 添加 gtest 示例测试（使用 C++ 编译）
+add_executable(gtest_example test/unit/simple_test.cpp ${SOURCES})
+set_target_properties(gtest_example PROPERTIES LINKER_LANGUAGE CXX)
+add_dependencies(gtest_example libuv mbedtls xxhash gtest)
+if(BUILD_WITH_MIMALLOC)
+    add_dependencies(gtest_example mimalloc)
+endif()
+target_compile_options(gtest_example PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+target_link_libraries(gtest_example ${LIBS} ${GTEST_LIBS})
+target_include_directories(gtest_example PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
+add_test(NAME gtest_example COMMAND gtest_example)
 
 # 添加压力测试
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stress.c)
