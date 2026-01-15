@@ -23,7 +23,7 @@ cache_manager_t* uvhttp_lru_cache_create(size_t max_memory_usage,
     UVHTTP_LOG_DEBUG("Creating LRU cache: max_memory=%zu, max_entries=%d, ttl=%d", 
                      max_memory_usage, max_entries, cache_ttl);
     
-    cache_manager_t* cache = uvhttp_malloc(sizeof(cache_manager_t));
+    cache_manager_t* cache = uvhttp_alloc(sizeof(cache_manager_t));
     if (!cache) {
         UVHTTP_LOG_ERROR("Failed to create LRU cache: memory allocation error");
         uvhttp_handle_memory_failure("cache_manager", NULL, NULL);
@@ -121,7 +121,7 @@ void uvhttp_lru_cache_move_to_head(cache_manager_t* cache, cache_entry_t* entry)
     if (entry == cache->lru_head) return;
     
     /* 检查entry是否在链表中（防止野指针） */
-    if (entry->lru_prev == NULL && entry != cache->lru_head && cache->lru_head != NULL) {
+    if (entry->lru_prev == NULL && cache->lru_head != NULL) {
         /* entry不在链表中，直接添加到头部 */
         entry->lru_prev = NULL;
         entry->lru_next = cache->lru_head;
@@ -284,7 +284,7 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
         cache->total_memory_usage -= entry->memory_usage;
     } else {
         /* 创建新条目 */
-        entry = uvhttp_malloc(sizeof(cache_entry_t));
+        entry = uvhttp_alloc(sizeof(cache_entry_t));
         if (!entry) {
             UVHTTP_LOG_ERROR("Failed to create cache entry: memory allocation error");
             uvhttp_handle_memory_failure("cache_entry", NULL, NULL);

@@ -51,7 +51,7 @@ uvhttp_http_middleware_t* uvhttp_http_middleware_create(
     
     /* 单次分配 - 零开销 */
     uvhttp_http_middleware_t* middleware = 
-        (uvhttp_http_middleware_t*)uvhttp_malloc(sizeof(uvhttp_http_middleware_t));
+        (uvhttp_http_middleware_t*)uvhttp_alloc(sizeof(uvhttp_http_middleware_t));
     if (!middleware) {
         /* Memory allocation failed */
         return NULL;
@@ -63,7 +63,7 @@ uvhttp_http_middleware_t* uvhttp_http_middleware_create(
     /* 复制路径字符串（如果提供） */
     if (path) {
         size_t path_len = strlen(path);
-        middleware->path = (char*)uvhttp_malloc(path_len + 1);
+        middleware->path = (char*)uvhttp_alloc(path_len + 1);
         if (!middleware->path) {
             /* Failed to allocate path */
             uvhttp_free(middleware);

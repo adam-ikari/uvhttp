@@ -58,7 +58,7 @@ static char* create_error_response(const char* error, const char* details) {
 uvhttp_result_t info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     cJSON* info = cJSON_CreateObject();
     cJSON_AddStringToObject(info, "server", "UVHTTP");
-    cJSON_AddStringToObject(info, "version", "1.0.0");
+    cJSON_AddStringToObject(info, "version", UVHTTP_VERSION_STRING);
     cJSON_AddStringToObject(info, "description", "高性能 HTTP 服务器库");
     cJSON_AddStringToObject(info, "response_type", "unified_processing");
     
@@ -206,7 +206,7 @@ uvhttp_result_t health_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     cJSON* health = cJSON_CreateObject();
     cJSON_AddStringToObject(health, "status", "healthy");
     cJSON_AddNumberToObject(health, "uptime", 3600);
-    cJSON_AddStringToObject(health, "version", "1.0.0");
+    cJSON_AddStringToObject(health, "version", UVHTTP_VERSION_STRING);
     
     cJSON* checks = cJSON_CreateArray();
     

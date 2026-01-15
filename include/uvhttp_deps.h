@@ -93,12 +93,11 @@ void uvhttp_deps_free(uvhttp_deps_t* deps);
 void uvhttp_free_deps(uvhttp_deps_t* deps);
 
 /* ========== 便利宏 ========== */
-#ifndef UVHTTP_MALLOC_DEFINED
+#ifndef UVHTTP_DEPS_MACROS_DEFINED
 #define UVHTTP_GET_LOOP() (g_uvhttp_deps ? g_uvhttp_deps->get_loop() : uv_default_loop())
-#define UVHTTP_MALLOC(size) (g_uvhttp_deps ? g_uvhttp_deps->malloc(size) : malloc(size))
-#define UVHTTP_FREE(ptr) do { if (g_uvhttp_deps) { g_uvhttp_deps->free(ptr); } else { free(ptr); } } while(0)
 #define UVHTTP_FOPEN(filename, mode) (g_uvhttp_deps ? g_uvhttp_deps->fopen(filename, mode) : fopen(filename, mode))
 #define UVHTTP_ACCESS(pathname, mode) (g_uvhttp_deps ? g_uvhttp_deps->access(pathname, mode) : access(pathname, mode))
+#define UVHTTP_DEPS_MACROS_DEFINED
 #else
 #define UVHTTP_GET_LOOP() (g_uvhttp_deps ? g_uvhttp_deps->get_loop() : uv_default_loop())
 #define UVHTTP_FOPEN(filename, mode) (g_uvhttp_deps ? g_uvhttp_deps->fopen(filename, mode) : fopen(filename, mode))

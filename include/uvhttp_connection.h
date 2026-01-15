@@ -46,7 +46,7 @@ struct uvhttp_connection {
     void* ws_connection;  // uvhttp_ws_connection_t*
     int is_websocket;
 #endif
-    
+
     // 连接状态
     uvhttp_connection_state_t state;
     
@@ -98,6 +98,27 @@ void uvhttp_connection_tls_cleanup(uvhttp_connection_t* conn);
 // 状态管理
 void uvhttp_connection_set_state(uvhttp_connection_t* conn, uvhttp_connection_state_t state);
 const char* uvhttp_connection_get_state_string(uvhttp_connection_state_t state);
+
+// WebSocket处理函数（内部）
+#if UVHTTP_FEATURE_WEBSOCKET
+int uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, const char* ws_key);
+void uvhttp_connection_switch_to_websocket(uvhttp_connection_t* conn);
+void uvhttp_connection_websocket_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
+void uvhttp_connection_websocket_close(uvhttp_connection_t* conn);
+
+/* WebSocket处理器查找函数 - 前向声明 */
+uvhttp_ws_handler_t* uvhttp_server_find_ws_handler(struct uvhttp_server* server, const char* path);
+
+/* WebSocket认证相关内部函数 */
+typedef struct ws_route_entry ws_route_entry_t;
+ws_route_entry_t* uvhttp_server_find_ws_route_entry(struct uvhttp_server* server, const char* path);
+uvhttp_ws_auth_result_t uvhttp_server_ws_authenticate(
+    struct uvhttp_server* server,
+    const char* path,
+    const char* client_ip,
+    const char* token
+);
+#endif
 
 #ifdef __cplusplus
 }

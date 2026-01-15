@@ -5,7 +5,7 @@
 
 #include "uvhttp.h"
 #include "uvhttp_cors_middleware.h"
-#include "uvhttp_middleware_macros.h"
+#include "uvhttp_simple_middleware.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -13,6 +13,7 @@
 
 /* 根路径处理器 */
 static int root_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
+    (void)req;  // 未使用的参数
     const char* html =
         "<!DOCTYPE html>"
         "<html><head><title>CORS 和限流功能示例</title></head>"
@@ -48,7 +49,7 @@ static int root_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
 static int api_data_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     /* 使用编译宏中间件系统 - CORS 中间件 */
     UVHTTP_MIDDLEWARE(req, resp,
-        uvhttp_cors_middleware_simple
+        uvhttp_middleware_cors
     );
 
     /* 返回 API 数据 */
@@ -65,7 +66,7 @@ static int api_data_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
 static int api_admin_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     /* 使用编译宏中间件系统 - CORS 中间件 */
     UVHTTP_MIDDLEWARE(req, resp,
-        uvhttp_cors_middleware_simple
+        uvhttp_middleware_cors
     );
 
     /* 返回管理员数据 */
@@ -82,7 +83,7 @@ static int api_admin_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
 static int api_public_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     /* 使用编译宏中间件系统 - CORS 中间件 */
     UVHTTP_MIDDLEWARE(req, resp,
-        uvhttp_cors_middleware_simple
+        uvhttp_middleware_cors
     );
 
     /* 返回公开数据 */

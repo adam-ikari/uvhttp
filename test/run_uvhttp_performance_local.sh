@@ -139,7 +139,7 @@ main() {
     run_wrk_test "uvhttp_homepage" "http://127.0.0.1:$UVHTTP_PORT/"
     
     # 测试2: 静态文件
-    run_wrk_test "uvhttp_static" "http://127.0.0.1:$UVHTTP_PORT/static/test.html"
+    run_wrk_test "uvhttp_static" "http://127.0.0.1:$UVHTTP_PORT/static/index.html"
     
     # 测试3: 不同并发级别
     run_wrk_test "uvhttp_low_concurrency" "http://127.0.0.1:$UVHTTP_PORT/"

@@ -1,10 +1,11 @@
 # Build directory
 build/
 
-# Test executables
+# Test executables (but not source files)
 test_memory_simple
 test_simple
-test_*
+# Ignore test executables in root directory, but not in test/unit/
+/test_*
 
 # Stress test results
 stress_test_results_*/
@@ -31,7 +32,6 @@ CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
-*.cmake
 
 # Temporary files
 *.tmp
@@ -41,3 +41,4 @@ Makefile
 # Core dumps
 core
 core.*
+!cmake/Dependencies.cmake

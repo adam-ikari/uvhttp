@@ -34,7 +34,7 @@ uvhttp_async_file_manager_t* uvhttp_async_file_manager_create(uv_loop_t* loop,
         return NULL;
     }
     
-    uvhttp_async_file_manager_t* manager = uvhttp_malloc(sizeof(uvhttp_async_file_manager_t));
+    uvhttp_async_file_manager_t* manager = uvhttp_alloc(sizeof(uvhttp_async_file_manager_t));
     if (!manager) {
         uvhttp_handle_memory_failure("async_file_manager", NULL, NULL);
         return NULL;
@@ -120,7 +120,7 @@ static void on_file_read_complete(uv_fs_t* req) {
         return;
     }
     
-    uvhttp_async_file_manager_t* manager = (uvhttp_async_file_manager_t*)async_req->static_context;
+    uvhttp_async_file_manager_t* manager = async_req->manager;
     if (!manager) {
         cleanup_async_request(async_req);
         uv_fs_req_cleanup(req);
@@ -172,15 +172,13 @@ static void on_file_stat_complete(uv_fs_t* req) {
         return;
     }
     
-    uvhttp_async_file_manager_t* manager = (uvhttp_async_file_manager_t*)async_req->static_context;
+    uvhttp_async_file_manager_t* manager = async_req->manager;
     if (!manager) {
         cleanup_async_request(async_req);
         uv_fs_req_cleanup(req);
         return;
     }
-    
-    int status = -1;
-    
+
     if (req->result == 0) {
         /* stat成功 */
         uv_stat_t* stat_buf = (uv_stat_t*)req->ptr;
@@ -191,7 +189,7 @@ static void on_file_stat_complete(uv_fs_t* req) {
                 async_req->last_modified = stat_buf->st_mtime;
                 
                 /* 分配缓冲区 */
-                async_req->buffer = uvhttp_malloc(async_req->file_size);
+                async_req->buffer = uvhttp_alloc(async_req->file_size);
                 if (async_req->buffer) {
                     /* 开始异步读取 */
                     async_req->state = UVHTTP_ASYNC_FILE_STATE_READING;
@@ -238,6 +236,7 @@ static void on_file_stat_complete(uv_fs_t* req) {
     /* 出错处理 */
     async_req->state = UVHTTP_ASYNC_FILE_STATE_ERROR;
     if (async_req->completion_cb) {
+        int status = -1;
         async_req->completion_cb(async_req, status);
     }
     
@@ -266,7 +265,7 @@ int uvhttp_async_file_read(uvhttp_async_file_manager_t* manager,
     }
     
     /* 创建异步请求 */
-    uvhttp_async_file_request_t* async_req = uvhttp_malloc(sizeof(uvhttp_async_file_request_t));
+    uvhttp_async_file_request_t* async_req = uvhttp_alloc(sizeof(uvhttp_async_file_request_t));
     if (!async_req) {
         uvhttp_handle_memory_failure("async_file_request", NULL, NULL);
         return -1;
@@ -283,6 +282,7 @@ int uvhttp_async_file_read(uvhttp_async_file_manager_t* manager,
     async_req->completion_cb = completion_cb;
     async_req->state = UVHTTP_ASYNC_FILE_STATE_PENDING;
     async_req->fs_req.data = async_req;
+    async_req->manager = manager;
     
     /* 添加到管理器 */
     async_req->next = manager->active_requests;
@@ -384,7 +384,7 @@ int uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager,
     }
     
     /* 创建流传输上下文 */
-    uvhttp_file_stream_context_t* stream_ctx = uvhttp_malloc(sizeof(uvhttp_file_stream_context_t));
+    uvhttp_file_stream_context_t* stream_ctx = uvhttp_alloc(sizeof(uvhttp_file_stream_context_t));
     if (!stream_ctx) {
         uvhttp_handle_memory_failure("file_stream_context", NULL, NULL);
         return -1;
@@ -397,7 +397,7 @@ int uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager,
     stream_ctx->is_active = 1;
     
     /* 分配分块缓冲区 */
-    stream_ctx->chunk_buffer = uvhttp_malloc(chunk_size);
+    stream_ctx->chunk_buffer = uvhttp_alloc(chunk_size);
     if (!stream_ctx->chunk_buffer) {
         uvhttp_free(stream_ctx);
         uvhttp_handle_memory_failure("file_stream_buffer", NULL, NULL);

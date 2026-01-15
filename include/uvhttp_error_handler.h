@@ -75,15 +75,24 @@ void uvhttp_error_report_(uvhttp_error_t error_code,
 /* 错误恢复函数 */
 uvhttp_error_t uvhttp_error_attempt_recovery(const uvhttp_error_context_t* context);
 
-/* 日志函数 */
+/* 日志函数 - 开发环境日志接口 */
+/* 应用层可以自定义日志实现来记录错误信息 */
 void uvhttp_log(uvhttp_log_level_t level, const char* format, ...);
 
-/* 日志宏 */
+/* 日志宏 - 生产环境为空操作，开发环境可启用 */
+#ifdef UVHTTP_DEV_MODE
 #define UVHTTP_LOG_DEBUG(fmt, ...) uvhttp_log(UVHTTP_LOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__)
 #define UVHTTP_LOG_INFO(fmt, ...)  uvhttp_log(UVHTTP_LOG_LEVEL_INFO, fmt, ##__VA_ARGS__)
 #define UVHTTP_LOG_WARN(fmt, ...)  uvhttp_log(UVHTTP_LOG_LEVEL_WARN, fmt, ##__VA_ARGS__)
 #define UVHTTP_LOG_ERROR(fmt, ...) uvhttp_log(UVHTTP_LOG_LEVEL_ERROR, fmt, ##__VA_ARGS__)
 #define UVHTTP_LOG_FATAL(fmt, ...) uvhttp_log(UVHTTP_LOG_LEVEL_FATAL, fmt, ##__VA_ARGS__)
+#else
+#define UVHTTP_LOG_DEBUG(fmt, ...) ((void)0)
+#define UVHTTP_LOG_INFO(fmt, ...)  ((void)0)
+#define UVHTTP_LOG_WARN(fmt, ...)  ((void)0)
+#define UVHTTP_LOG_ERROR(fmt, ...) ((void)0)
+#define UVHTTP_LOG_FATAL(fmt, ...) ((void)0)
+#endif
 
 /* 错误检查宏 */
 #define UVHTTP_CHECK(condition, error_code, message) \

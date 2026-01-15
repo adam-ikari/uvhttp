@@ -33,7 +33,7 @@ typedef struct {
  * @brief 创建应用上下文
  */
 app_context_t* app_context_create(uv_loop_t* loop, const char* name) {
-    app_context_t* ctx = (app_context_t*)UVHTTP_MALLOC(sizeof(app_context_t));
+    app_context_t* ctx = (app_context_t*)uvhttp_alloc(sizeof(app_context_t));
     if (!ctx) {
         fprintf(stderr, "错误: 无法分配内存\n");
         return NULL;
@@ -51,7 +51,7 @@ app_context_t* app_context_create(uv_loop_t* loop, const char* name) {
     ctx->server = uvhttp_server_new(loop);
     if (!ctx->server) {
         fprintf(stderr, "错误: 无法创建服务器\n");
-        UVHTTP_FREE(ctx);
+        uvhttp_free(ctx);
         return NULL;
     }
     
@@ -60,7 +60,7 @@ app_context_t* app_context_create(uv_loop_t* loop, const char* name) {
     if (!ctx->router) {
         fprintf(stderr, "错误: 无法创建路由器\n");
         uvhttp_server_free(ctx->server);
-        UVHTTP_FREE(ctx);
+        uvhttp_free(ctx);
         return NULL;
     }
     
@@ -109,9 +109,10 @@ void app_context_destroy(app_context_t* ctx, uv_loop_t* loop) {
  * @brief 主页处理器
  */
 int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 未使用的参数
     uv_loop_t* loop = uv_default_loop();
     app_context_t* ctx = GET_CTX(loop);
-    
+
     // 检查上下文是否存在
     if (!ctx) {
         const char* error = "{\"error\":\"上下文未初始化\"}";
@@ -120,8 +121,9 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         uvhttp_response_set_body(res, error, strlen(error));
         return uvhttp_response_send(res);
     }
-    
-    const char* html = 
+
+    char response[1024];
+    snprintf(response, sizeof(response),
         "<!DOCTYPE html>"
         "<html>"
         "<head>"
@@ -153,18 +155,15 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "</ul>"
         "</div>"
         "</body>"
-        "</html>";
-    
-    char response[1024];
-    snprintf(response, sizeof(response), html,
+        "</html>",
         ctx->server_name,
         ctx->request_count,
         time(NULL) - ctx->start_time);
-    
+
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
     uvhttp_response_set_body(res, response, strlen(response));
-    
+
     ctx->request_count++;
     
     return uvhttp_response_send(res);
@@ -174,9 +173,10 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
  * @brief 统计处理器
  */
 int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 未使用的参数
     uv_loop_t* loop = uv_default_loop();
     app_context_t* ctx = GET_CTX(loop);
-    
+
     if (!ctx) {
         const char* error = "{\"error\":\"上下文未初始化\"}";
         uvhttp_response_set_status(res, 500);
@@ -184,10 +184,10 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         uvhttp_response_set_body(res, error, strlen(error));
         return uvhttp_response_send(res);
     }
-    
+
     long uptime = time(NULL) - ctx->start_time;
     double rps = uptime > 0 ? (double)ctx->request_count / uptime : 0.0;
-    
+
     char response[512];
     snprintf(response, sizeof(response),
         "{\n"
@@ -216,9 +216,10 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
  * @brief 信息处理器
  */
 int info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 未使用的参数
     uv_loop_t* loop = uv_default_loop();
     app_context_t* ctx = GET_CTX(loop);
-    
+
     if (!ctx) {
         const char* error = "{\"error\":\"上下文未初始化\"}";
         uvhttp_response_set_status(res, 500);
@@ -226,7 +227,7 @@ int info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         uvhttp_response_set_body(res, error, strlen(error));
         return uvhttp_response_send(res);
     }
-    
+
     char response[512];
     snprintf(response, sizeof(response),
         "{\n"

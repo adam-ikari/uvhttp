@@ -69,7 +69,7 @@ static uvhttp_route_node_t* create_route_node(uvhttp_router_t* router) {
     if (router->node_pool_used >= router->node_pool_size) {
         // 扩展节点池
         size_t new_size = router->node_pool_size * 2;
-        uvhttp_route_node_t* new_pool = UVHTTP_REALLOC(router->node_pool, 
+        uvhttp_route_node_t* new_pool = uvhttp_realloc(router->node_pool, 
                                                    new_size * sizeof(uvhttp_route_node_t));
         if (!new_pool) {
             return NULL;
@@ -149,7 +149,7 @@ static int parse_path_params(const char* path, uvhttp_param_t* params, size_t* p
 }
 
 uvhttp_router_t* uvhttp_router_new(void) {
-    uvhttp_router_t* router = UVHTTP_MALLOC(sizeof(uvhttp_router_t));
+    uvhttp_router_t* router = uvhttp_alloc(sizeof(uvhttp_router_t));
     
     if (!router) {
         return NULL;
@@ -158,30 +158,30 @@ uvhttp_router_t* uvhttp_router_new(void) {
     memset(router, 0, sizeof(uvhttp_router_t));
     
     // 初始化数组路由
-    router->array_routes = UVHTTP_CALLOC(HYBRID_THRESHOLD, sizeof(array_route_t));
+    router->array_routes = uvhttp_calloc(HYBRID_THRESHOLD, sizeof(array_route_t));
     
     if (!router->array_routes) {
-        UVHTTP_FREE(router);
+        uvhttp_free(router);
         return NULL;
     }
     router->array_capacity = HYBRID_THRESHOLD;
     
     // 初始化节点池（用于Trie）
     router->node_pool_size = 64;
-    router->node_pool = UVHTTP_CALLOC(router->node_pool_size, sizeof(uvhttp_route_node_t));
+    router->node_pool = uvhttp_calloc(router->node_pool_size, sizeof(uvhttp_route_node_t));
     
     if (!router->node_pool) {
-        UVHTTP_FREE(router->array_routes);
-        UVHTTP_FREE(router);
+        uvhttp_free(router->array_routes);
+        uvhttp_free(router);
         return NULL;
     }
     
     router->root = create_route_node(router);
     
     if (!router->root) {
-        UVHTTP_FREE(router->node_pool);
-        UVHTTP_FREE(router->array_routes);
-        UVHTTP_FREE(router);
+        uvhttp_free(router->node_pool);
+        uvhttp_free(router->array_routes);
+        uvhttp_free(router);
         return NULL;
     }
     
@@ -193,18 +193,18 @@ uvhttp_router_t* uvhttp_router_new(void) {
 void uvhttp_router_free(uvhttp_router_t* router) {
     if (router) {
         if (router->node_pool) {
-            UVHTTP_FREE(router->node_pool);
+            uvhttp_free(router->node_pool);
             router->node_pool = NULL;
         }
         if (router->array_routes) {
-            UVHTTP_FREE(router->array_routes);
+            uvhttp_free(router->array_routes);
             router->array_routes = NULL;
         }
         if (router->static_prefix) {
-            UVHTTP_FREE(router->static_prefix);
+            uvhttp_free(router->static_prefix);
             router->static_prefix = NULL;
         }
-        UVHTTP_FREE(router);
+        uvhttp_free(router);
     }
 }
 
@@ -214,7 +214,7 @@ static uvhttp_error_t add_array_route(uvhttp_router_t* router, const char* path,
     if (router->array_route_count >= router->array_capacity) {
         // 扩展数组容量
         size_t new_capacity = router->array_capacity * 2;
-        array_route_t* new_routes = UVHTTP_REALLOC(router->array_routes, 
+        array_route_t* new_routes = uvhttp_realloc(router->array_routes, 
                                                  new_capacity * sizeof(array_route_t));
         if (!new_routes) {
             return UVHTTP_ERROR_OUT_OF_MEMORY;
@@ -277,7 +277,7 @@ static uvhttp_error_t migrate_to_trie(uvhttp_router_t* router) {
             
             current = find_or_create_child(router, current, token, is_param);
             if (!current) {
-                UVHTTP_FREE(old_routes);  // 清理已分配的内存
+                uvhttp_free(old_routes);  // 清理已分配的内存
                 return UVHTTP_ERROR_OUT_OF_MEMORY;
             }
             
@@ -296,7 +296,7 @@ static uvhttp_error_t migrate_to_trie(uvhttp_router_t* router) {
     router->array_capacity = 0;
     
     // 释放旧的数组路由内存
-    UVHTTP_FREE(old_routes);
+    uvhttp_free(old_routes);
     
     return UVHTTP_OK;
 }
@@ -400,10 +400,20 @@ static int match_route_node(uvhttp_route_node_t* node,
         
         if (child->is_param) {
             // 参数节点，匹配任意段
-            strncpy(match->params[match->param_count].name, child->param_name, 
-                    sizeof(match->params[match->param_count].name) - 1);
-            strncpy(match->params[match->param_count].value, segment, 
-                    sizeof(match->params[match->param_count].value) - 1);
+            size_t name_len = strlen(child->param_name);
+            size_t name_copy_len = name_len < sizeof(match->params[match->param_count].name) - 1 
+                                   ? name_len 
+                                   : sizeof(match->params[match->param_count].name) - 1;
+            memcpy(match->params[match->param_count].name, child->param_name, name_copy_len);
+            match->params[match->param_count].name[name_copy_len] = '\0';
+            
+            size_t value_len = strlen(segment);
+            size_t value_copy_len = value_len < sizeof(match->params[match->param_count].value) - 1 
+                                    ? value_len 
+                                    : sizeof(match->params[match->param_count].value) - 1;
+            memcpy(match->params[match->param_count].value, segment, value_copy_len);
+            match->params[match->param_count].value[value_copy_len] = '\0';
+            
             match->param_count++;
             
             int result = match_route_node(child, segments, segment_count, 
@@ -610,14 +620,16 @@ uvhttp_error_t uvhttp_router_add_static_route(uvhttp_router_t* router,
     
     // 释放之前的前缀
     if (router->static_prefix) {
-        UVHTTP_FREE(router->static_prefix);
+        uvhttp_free(router->static_prefix);
     }
     
-    // 复制新的前缀
-    router->static_prefix = strdup(prefix_path);
+    // 复制新的前缀（使用 uvhttp_alloc 避免混用分配器）
+    size_t prefix_len = strlen(prefix_path);
+    router->static_prefix = (char*)uvhttp_alloc(prefix_len + 1);
     if (!router->static_prefix) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
+    memcpy(router->static_prefix, prefix_path, prefix_len + 1);
     
     router->static_context = static_context;
     router->static_handler = NULL; // 将使用静态文件处理逻辑

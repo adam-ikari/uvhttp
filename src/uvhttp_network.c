@@ -19,7 +19,7 @@ static int libuv_write_impl(uvhttp_network_interface_t* self,
     (void)self; /* 避免未使用参数警告 */
     
     /* 创建写请求（在栈上分配，调用者负责生命周期） */
-    uv_write_t* req = (uv_write_t*)uvhttp_malloc(sizeof(uv_write_t));
+    uv_write_t* req = (uv_write_t*)uvhttp_alloc(sizeof(uv_write_t));
     if (!req) {
         return UV_ENOMEM;
     }
@@ -91,13 +91,16 @@ static void libuv_set_error_simulation_impl(uvhttp_network_interface_t* self, in
 uvhttp_network_interface_t* uvhttp_libuv_network_create(uv_loop_t* loop) {
     (void)loop; /* 避免未使用参数警告 */
     
-    uvhttp_network_interface_t* interface = 
-        (uvhttp_network_interface_t*)uvhttp_malloc(sizeof(uvhttp_network_interface_t));
+    uvhttp_network_interface_t* interface =
+        (uvhttp_network_interface_t*)uvhttp_alloc(sizeof(uvhttp_network_interface_t));
     if (!interface) {
         return NULL;
     }
     
     memset(interface, 0, sizeof(uvhttp_network_interface_t));
+    
+    /* 设置类型 */
+    interface->type = UVHTTP_NETWORK_LIBUV;
     
     /* 设置libuv实现函数 */
     interface->write = libuv_write_impl;
@@ -126,12 +129,12 @@ typedef struct {
 
 static int mock_write_impl(uvhttp_network_interface_t* self, 
                           uv_stream_t* stream, 
-                          const uv_buf_t* bufs, 
-                          unsigned int nbufs, 
+                          const uv_buf_t* bufs,
+                          unsigned int nbufs,
                           uv_write_cb cb) {
     (void)stream; // 避免未使用参数警告
-    uvhttp_mock_network_t* mock = (uvhttp_mock_network_t*)self;
-    
+    uvhttp_mock_network_t* mock = (uvhttp_mock_network_t*)((char*)self - offsetof(uvhttp_mock_network_t, base));
+
     /* 错误模拟 */
     if (mock->simulate_error != 0) {
         self->error_count++;
@@ -213,17 +216,17 @@ static void* mock_get_stats_impl(uvhttp_network_interface_t* self) {
 }
 
 static void mock_reset_stats_impl(uvhttp_network_interface_t* self) {
-    uvhttp_mock_network_t* mock = (uvhttp_mock_network_t*)self;
-    
+    uvhttp_mock_network_t* mock = (uvhttp_mock_network_t*)((char*)self - offsetof(uvhttp_mock_network_t, base));
+
     self->bytes_sent = 0;
     self->bytes_received = 0;
     self->error_count = 0;
     self->write_count = 0;
     self->read_count = 0;
-    
+
     mock->simulate_error = 0;
     mock->delayed_writes = 0;
-    
+
     if (mock->captured_data) {
         uvhttp_free(mock->captured_data);
         mock->captured_data = NULL;
@@ -232,19 +235,22 @@ static void mock_reset_stats_impl(uvhttp_network_interface_t* self) {
 }
 
 static void mock_set_error_simulation_impl(uvhttp_network_interface_t* self, int error_code) {
-    uvhttp_mock_network_t* mock = (uvhttp_mock_network_t*)self;
+    uvhttp_mock_network_t* mock = (uvhttp_mock_network_t*)((char*)self - offsetof(uvhttp_mock_network_t, base));
     mock->simulate_error = error_code;
 }
 
 /* 创建测试环境网络接口 */
 uvhttp_network_interface_t* uvhttp_mock_network_create(uv_loop_t* loop) {
-    uvhttp_mock_network_t* mock = 
-        (uvhttp_mock_network_t*)uvhttp_malloc(sizeof(uvhttp_mock_network_t));
+    uvhttp_mock_network_t* mock =
+        (uvhttp_mock_network_t*)uvhttp_alloc(sizeof(uvhttp_mock_network_t));
     if (!mock) {
         return NULL;
     }
     
     memset(mock, 0, sizeof(uvhttp_mock_network_t));
+    
+    /* 设置类型 */
+    mock->base.type = UVHTTP_NETWORK_MOCK;
     
     /* 设置模拟实现函数 */
     mock->base.write = mock_write_impl;
@@ -320,13 +326,16 @@ static int benchmark_close_impl(uvhttp_network_interface_t* self,
 uvhttp_network_interface_t* uvhttp_benchmark_network_create(uv_loop_t* loop) {
     (void)loop; /* 避免未使用参数警告 */
     
-    uvhttp_network_interface_t* interface = 
-        (uvhttp_network_interface_t*)uvhttp_malloc(sizeof(uvhttp_network_interface_t));
+    uvhttp_network_interface_t* interface =
+        (uvhttp_network_interface_t*)uvhttp_alloc(sizeof(uvhttp_network_interface_t));
     if (!interface) {
         return NULL;
     }
     
     memset(interface, 0, sizeof(uvhttp_network_interface_t));
+    
+    /* 设置类型 */
+    interface->type = UVHTTP_NETWORK_BENCHMARK;
     
     /* 设置性能测试实现函数 */
     interface->write = benchmark_write_impl;
@@ -365,14 +374,34 @@ void uvhttp_network_interface_destroy(uvhttp_network_interface_t* interface) {
     if (!interface) {
         return;
     }
-    
-    /* 清理模拟网络特有的资源 */
-    uvhttp_mock_network_t* mock = (uvhttp_mock_network_t*)interface;
-    if (mock->captured_data) {
-        uvhttp_free(mock->captured_data);
+
+    /* 通过类型字段判断网络接口类型 */
+    switch (interface->type) {
+        case UVHTTP_NETWORK_LIBUV:
+            /* libuv 网络接口直接释放 */
+            uvhttp_free(interface);
+            break;
+
+        case UVHTTP_NETWORK_BENCHMARK:
+            /* benchmark 网络接口也直接释放 */
+            uvhttp_free(interface);
+            break;
+
+        case UVHTTP_NETWORK_MOCK: {
+            /* mock 网络接口需要清理额外资源 */
+            uvhttp_mock_network_t* mock = (uvhttp_mock_network_t*)((char*)interface - offsetof(uvhttp_mock_network_t, base));
+            if (mock->captured_data) {
+                uvhttp_free(mock->captured_data);
+            }
+            uvhttp_free(mock);
+            break;
+        }
+
+        default:
+            /* 未知类型，直接释放 */
+            uvhttp_free(interface);
+            break;
     }
-    
-    uvhttp_free(interface);
 }
 
 /* 测试辅助函数 */

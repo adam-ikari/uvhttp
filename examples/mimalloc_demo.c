@@ -30,7 +30,7 @@ static void benchmark_allocation(const char* name, size_t size, int iterations) 
     
     /* 分配测试 */
     for (int i = 0; i < iterations; i++) {
-        ptrs[i] = UVHTTP_MALLOC(size);
+        ptrs[i] = uvhttp_alloc(size);
         if (!ptrs[i]) {
             printf("Allocation failed at iteration %d\n", i);
             return;
@@ -43,7 +43,7 @@ static void benchmark_allocation(const char* name, size_t size, int iterations) 
     
     /* 释放测试 */
     for (int i = 0; i < iterations; i++) {
-        UVHTTP_FREE(ptrs[i]);
+        uvhttp_free(ptrs[i]);
     }
     
     long long free_time = get_time_us();
@@ -87,7 +87,7 @@ static void test_memory_leak(void) {
     for (int i = 0; i < 1000; i++) {
         size_t size = (i % 3 == 0) ? SMALL_SIZE : 
                      (i % 3 == 1) ? MEDIUM_SIZE : LARGE_SIZE;
-        ptrs[i] = UVHTTP_MALLOC(size);
+        ptrs[i] = uvhttp_alloc(size);
         if (ptrs[i]) {
             memset(ptrs[i], i, size);
         }
@@ -95,12 +95,12 @@ static void test_memory_leak(void) {
     
     /* 释放一半的内存 */
     for (int i = 0; i < 500; i++) {
-        UVHTTP_FREE(ptrs[i]);
+        uvhttp_free(ptrs[i]);
     }
     
     /* 释放剩余内存 */
     for (int i = 500; i < 1000; i++) {
-        UVHTTP_FREE(ptrs[i]);
+        uvhttp_free(ptrs[i]);
     }
     
     printf("内存泄漏测试完成\n");

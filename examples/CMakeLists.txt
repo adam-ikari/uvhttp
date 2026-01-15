@@ -10,14 +10,28 @@ if(NOT UVHTTP_INCLUDE_DIR)
     message(FATAL_ERROR "找不到 uvhttp.h，请先编译 UVHTTP")
 endif()
 
-# 设置 UVHTTP 库路径（将在编译时生成）
-set(UVHTTP_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/../build/dist/lib/libuvhttp.a)
-
-message(STATUS "UVHTTP 头文件: ${UVHTTP_INCLUDE_DIR}")
-message(STATUS "UVHTTP 库文件: ${UVHTTP_LIBRARY}")
-
 include_directories(${UVHTTP_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/include)
+
+# 获取主项目中定义的库
+# 这些库应该在主 CMakeLists.txt 中定义
+set(LIBUV_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/build/libuv.a)
+set(MBEDTLS_LIBS
+    ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/build/library/libmbedtls.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/build/library/libmbedx509.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/build/library/libmbedcrypto.a
+)
+set(LLHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/libllhttp.a)
+set(CJSON_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cjson/build/libcjson.a)
+set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/xxhash/libxxhash.a)
+
+# UVHTTP 库路径
+set(UVHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../build/dist/lib/libuvhttp.a)
+
+message(STATUS "UVHTTP 头文件: ${UVHTTP_INCLUDE_DIR}")
+message(STATUS "UVHTTP 库文件: ${UVHTTP_LIB}")
+
+# 基础示例
 
 # 基础示例
 add_subdirectory(01_basics)
@@ -40,25 +54,25 @@ add_subdirectory(05_advanced)
 # 生产环境示例（待添加）
 # add_subdirectory(06_production)
 
-# 性能测试示例
-add_executable(performance_test performance_test.c)
-target_link_libraries(performance_test ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/libllhttp.a m pthread dl)
-
-add_executable(performance_test_static performance_test_static.c)
-target_link_libraries(performance_test_static ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/libllhttp.a m pthread dl)
-
-# TLS 性能测试（如果启用）
-if(BUILD_WITH_TLS)
-    add_executable(performance_test_tls performance_test_tls.c)
-    target_link_libraries(performance_test_tls ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a m pthread dl)
-endif()
-
-# WebSocket 性能测试（如果启用）
+# WebSocket 连接管理测试示例（如果启用）
 if(BUILD_WITH_WEBSOCKET)
-    add_executable(performance_test_websocket performance_test_websocket.c)
-    target_link_libraries(performance_test_websocket ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a m pthread dl)
+    # WebSocket 连接管理测试
+    add_executable(test_ws_connection_management test_ws_connection_management.c)
+    target_link_libraries(test_ws_connection_management ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
+    add_dependencies(test_ws_connection_management uvhttp)
+
+    # WebSocket 认证示例
+    add_executable(websocket_auth_server websocket_auth_server.c)
+    target_link_libraries(websocket_auth_server ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
+    add_dependencies(websocket_auth_server uvhttp)
 endif()
 
 # 健康检查示例
 add_executable(health_check_demo health_check_demo.c)
-target_link_libraries(health_check_demo ${UVHTTP_LIBRARY} ${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/.libs/libuv.a ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/libllhttp.a m pthread dl)
+target_link_libraries(health_check_demo ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
+add_dependencies(health_check_demo uvhttp)
+
+# 性能测试示例
+add_executable(performance_static_server performance_static_server.c)
+target_link_libraries(performance_static_server ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
+add_dependencies(performance_static_server uvhttp)

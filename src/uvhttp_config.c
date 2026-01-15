@@ -17,7 +17,7 @@ static uvhttp_config_t* g_current_config = NULL;
 
 /* 创建新配置 */
 uvhttp_config_t* uvhttp_config_new(void) {
-    uvhttp_config_t* config = UVHTTP_MALLOC(sizeof(uvhttp_config_t));
+    uvhttp_config_t* config = uvhttp_alloc(sizeof(uvhttp_config_t));
     if (!config) {
         UVHTTP_ERROR_REPORT(UVHTTP_ERROR_OUT_OF_MEMORY, "Failed to allocate config");
         return NULL;
@@ -30,7 +30,7 @@ uvhttp_config_t* uvhttp_config_new(void) {
 /* 释放配置 */
 void uvhttp_config_free(uvhttp_config_t* config) {
     if (config) {
-        UVHTTP_FREE(config);
+        uvhttp_free(config);
     }
 }
 
@@ -410,8 +410,9 @@ int uvhttp_config_update_max_connections(int max_connections) {
     if (g_current_config) {
         int old_value = g_current_config->max_connections;
         g_current_config->max_connections = max_connections;
-        
+
         UVHTTP_LOG_INFO("Max connections updated: %d -> %d", old_value, max_connections);
+        (void)old_value;
         return UVHTTP_OK;
     }
     
@@ -427,8 +428,9 @@ int uvhttp_config_update_buffer_size(int buffer_size) {
     if (g_current_config) {
         int old_value = g_current_config->read_buffer_size;
         g_current_config->read_buffer_size = buffer_size;
-        
+
         UVHTTP_LOG_INFO("Read buffer size updated: %d -> %d", old_value, buffer_size);
+        (void)old_value;
         return UVHTTP_OK;
     }
     
@@ -447,12 +449,14 @@ int uvhttp_config_update_limits(size_t max_body_size, size_t max_header_size) {
     if (g_current_config) {
         size_t old_body = g_current_config->max_body_size;
         size_t old_header = g_current_config->max_header_size;
-        
+
         g_current_config->max_body_size = max_body_size;
         g_current_config->max_header_size = max_header_size;
-        
-        UVHTTP_LOG_INFO("Limits updated - Body: %zu -> %zu, Header: %zu -> %zu", 
+
+        UVHTTP_LOG_INFO("Limits updated - Body: %zu -> %zu, Header: %zu -> %zu",
                        old_body, max_body_size, old_header, max_header_size);
+        (void)old_body;
+        (void)old_header;
         return UVHTTP_OK;
     }
     

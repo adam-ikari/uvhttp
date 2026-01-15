@@ -10,10 +10,9 @@
 
 /* 测试 TLS 握手函数 */
 void test_connection_tls_handshake_func(void) {
-    uv_loop_t* loop = uvhttp_malloc(sizeof(uv_loop_t));
-    uv_loop_init(loop);
+    uv_loop_t* loop = uv_default_loop();
 
-    uvhttp_server_t* server = uvhttp_malloc(sizeof(uvhttp_server_t));
+    uvhttp_server_t* server = uvhttp_alloc(sizeof(uvhttp_server_t));
     memset(server, 0, sizeof(uvhttp_server_t));
     server->loop = loop;
 
@@ -26,18 +25,15 @@ void test_connection_tls_handshake_func(void) {
 
     uvhttp_connection_free(conn);
     uvhttp_free(server);
-    uv_loop_close(loop);
-    uvhttp_free(loop);
 
     printf("test_connection_tls_handshake_func: PASSED\n");
 }
 
 /* 测试连接状态转换 */
 void test_connection_state_transitions(void) {
-    uv_loop_t* loop = uvhttp_malloc(sizeof(uv_loop_t));
-    uv_loop_init(loop);
+    uv_loop_t* loop = uv_default_loop();
 
-    uvhttp_server_t* server = uvhttp_malloc(sizeof(uvhttp_server_t));
+    uvhttp_server_t* server = uvhttp_alloc(sizeof(uvhttp_server_t));
     memset(server, 0, sizeof(uvhttp_server_t));
     server->loop = loop;
 
@@ -57,8 +53,6 @@ void test_connection_state_transitions(void) {
 
     uvhttp_connection_free(conn);
     uvhttp_free(server);
-    uv_loop_close(loop);
-    uvhttp_free(loop);
 
     printf("test_connection_state_transitions: PASSED\n");
 }

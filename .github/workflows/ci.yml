@@ -1,0 +1,152 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, release/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential valgrind
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: |
+        cmake --build build --config Release -j$(nproc)
+
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure -j$(nproc) --timeout 300
+
+    - name: Check for warnings
+      run: |
+        if cmake --build build --config Release 2>&1 | grep -i "warning:"; then
+          echo "Found compiler warnings!"
+          exit 1
+        fi
+
+  performance-test:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential wrk
+
+    - name: Build project
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
+        cmake --build build --config Release -j$(nproc)
+
+    - name: Run performance tests
+      run: |
+        mkdir -p build/public
+        echo "<html><body><h1>Performance Test</h1></body></html>" > build/public/index.html
+        echo "Test file content" > build/public/test.txt
+        cd build
+        ./dist/bin/performance_static_server -d ./public -p 8080 &
+        sleep 5
+        wrk -t4 -c100 -d10s http://localhost:8080/
+        pkill -f performance_static_server
+
+  code-quality:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential clang-tidy cppcheck lcov
+
+    - name: Build project
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug
+        cmake --build build --config Debug -j$(nproc)
+
+    - name: Run cppcheck
+      run: |
+        cppcheck --enable=all --error-exitcode=1 --suppress=missingIncludeSystem --suppress=unusedFunction --suppress=constParameter --suppress=unusedStructMember \
+          -DUVHTTP_STRINGIFY\(x\)=\#x \
+          -DUVHTTP_FEATURE_WEBSOCKET=1 \
+          -DUVHTTP_FEATURE_STATIC_FILES=1 \
+          -DUVHTTP_FEATURE_TLS=1 \
+          -DUVHTTP_FEATURE_RATE_LIMIT=1 \
+          -DUVHTTP_FEATURE_LOGGING=1 \
+          -DUVHTTP_FEATURE_LRU_CACHE=1 \
+          -DUVHTTP_FEATURE_ROUTER_CACHE=1 \
+          -DUVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION=1 \
+          -DUVHTTP_ROUTER_SEARCH_MODE=2 \
+          src/
+
+    - name: Memory leak check
+      run: |
+        cd build
+        valgrind --leak-check=full --error-exitcode=1 ./dist/bin/test_connection_full_coverage || true
+
+  coverage:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential lcov
+
+    - name: Build with coverage
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
+        cmake --build build --config Debug -j$(nproc)
+
+    - name: Run tests with coverage
+      run: |
+        cd build
+        ctest --output-on-failure -j$(nproc)
+
+    - name: Generate coverage report
+      run: |
+        cd build
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' --output-file coverage.info
+        lcov --remove coverage.info 'test/*' --output-file coverage.info
+        lcov --remove coverage.info 'examples/*' --output-file coverage.info
+        lcov --summary coverage.info
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./build/coverage.info
+        flags: unittests
+        name: codecov-umbrella

@@ -11,13 +11,23 @@
 extern "C" {
 #endif
 
+/* 网络接口类型枚举 */
+typedef enum {
+    UVHTTP_NETWORK_LIBUV,    /* 生产环境：直接使用libuv */
+    UVHTTP_NETWORK_MOCK,     /* 测试环境：模拟libuv行为 */
+    UVHTTP_NETWORK_BENCHMARK /* 性能测试：零开销模拟 */
+} uvhttp_network_type_t;
+
 /* 网络层抽象接口结构 */
 typedef struct uvhttp_network_interface {
+    /* 网络接口类型 */
+    uvhttp_network_type_t type;
+    
     /* 核心 libuv 操作的抽象函数指针 */
-    int (*write)(struct uvhttp_network_interface* self, 
-                 uv_stream_t* stream, 
-                 const uv_buf_t* bufs, 
-                 unsigned int nbufs, 
+    int (*write)(struct uvhttp_network_interface* self,
+                 uv_stream_t* stream,
+                 const uv_buf_t* bufs,
+                 unsigned int nbufs,
                  uv_write_cb cb);
     
     int (*read_start)(struct uvhttp_network_interface* self,
@@ -46,15 +56,8 @@ typedef struct uvhttp_network_interface {
     uint32_t error_count;
     uint32_t write_count;
     uint32_t read_count;
-    
-} uvhttp_network_interface_t;
 
-/* 网络接口类型枚举 */
-typedef enum {
-    UVHTTP_NETWORK_LIBUV,    /* 生产环境：直接使用libuv */
-    UVHTTP_NETWORK_MOCK,     /* 测试环境：模拟libuv行为 */
-    UVHTTP_NETWORK_BENCHMARK /* 性能测试：零开销模拟 */
-} uvhttp_network_type_t;
+} uvhttp_network_interface_t;
 
 /* 网络接口创建函数 */
 uvhttp_network_interface_t* uvhttp_network_interface_create(

@@ -16,7 +16,7 @@ typedef struct {
 
 // 创建应用上下文
 app_context_t* app_context_new(uv_loop_t* loop) {
-    app_context_t* ctx = (app_context_t*)UVHTTP_MALLOC(sizeof(app_context_t));
+    app_context_t* ctx = (app_context_t*)uvhttp_alloc(sizeof(app_context_t));
     if (!ctx) {
         return NULL;
     }
@@ -36,7 +36,7 @@ void app_context_free(app_context_t* ctx) {
             uvhttp_config_free(ctx->config);
             ctx->config = NULL;
         }
-        UVHTTP_FREE(ctx);
+        uvhttp_free(ctx);
     }
 }
 

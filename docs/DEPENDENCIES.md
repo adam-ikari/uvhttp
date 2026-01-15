@@ -40,14 +40,10 @@
 - **许可证**: BSD Revised
 - **状态**: ✅ 已锁定
 
-### 6. libwebsockets
-- **版本**: v4.5.0
-- **用途**: WebSocket 协议支持
-- **类型**: 必需依赖
-- **许可证**: LGPL 2.1
-- **状态**: ✅ 已锁定
-- **TLS 后端**: OpenSSL (libwebsockets 预编译库)
-- **说明**: libwebsockets 预编译库使用 OpenSSL 作为 TLS 后端，但项目自身的 TLS 实现使用 mbedtls。
+### WebSocket 实现
+- **实现方式**: 原生实现（uvhttp_websocket_native.c）
+- **说明**: 不依赖第三方 WebSocket 库，完全自主实现
+- **优势**: 更轻量、更可控、无额外依赖
 
 ## 可选依赖
 
@@ -112,6 +108,28 @@
 | googletest | release-1.12.1 | release-1.10.0 | release-1.12.1 |
 
 **注意**: 项目使用 mbedtls 作为 TLS 库实现。libwebsockets 预编译库使用 OpenSSL，但项目自身的 TLS 功能完全基于 mbedtls。
+
+## 编译选项
+
+### 内存分配器选择
+
+```bash
+# 系统分配器（默认）
+cmake -DUVHTTP_ALLOCATOR_TYPE=0 ..
+
+# mimalloc 分配器
+cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..
+```
+
+### 日志系统
+
+```bash
+# 启用日志系统（默认）
+cmake -DUVHTTP_FEATURE_LOGGING=ON ..
+
+# 禁用日志系统（零开销）
+cmake -DUVHTTP_FEATURE_LOGGING=OFF ..
+```
 
 ## 构建选项
 

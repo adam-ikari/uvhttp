@@ -64,7 +64,7 @@ extern "C" {
 #endif
 
 #ifndef UVHTTP_FEATURE_LOGGING
-#define UVHTTP_FEATURE_LOGGING 1  /* 日志中间件 */
+#define UVHTTP_FEATURE_LOGGING 0  /* 日志中间件 - 已禁用以提高性能 */
 #endif
 
 #ifndef UVHTTP_FEATURE_TLS
@@ -216,13 +216,6 @@ extern "C" {
 
 /* 内存跟踪宏 */
 #ifdef UVHTTP_MEMORY_TRACKING_ENABLED
-    #ifndef UVHTTP_MALLOC_DEFINED
-        #define UVHTTP_MALLOC(size) uvhttp_test_malloc(size, __FILE__, __LINE__)
-        #define UVHTTP_FREE(ptr) uvhttp_test_free(ptr, __FILE__, __LINE__)
-        #define UVHTTP_REALLOC(ptr, size) uvhttp_test_realloc(ptr, size, __FILE__, __LINE__)
-        #define UVHTTP_MALLOC_DEFINED
-    #endif
-    
     /* 内存跟踪函数声明 */
     void* uvhttp_test_malloc(size_t size, const char* file, int line);
     void uvhttp_test_free(void* ptr, const char* file, int line);
@@ -238,14 +231,7 @@ extern "C" {
     int uvhttp_test_memory_get_leak_count(void);
     
 #else
-    /* 不启用内存跟踪时使用标准分配 */
-    #ifndef UVHTTP_MALLOC_DEFINED
-        #define UVHTTP_MALLOC(size) malloc(size)
-        #define UVHTTP_FREE(ptr) free(ptr)
-        #define UVHTTP_REALLOC(ptr, size) realloc(ptr, size)
-        #define UVHTTP_MALLOC_DEFINED
-    #endif
-    
+    /* 不启用内存跟踪时的空宏 */
     #define UVHTTP_MEMORY_CHECK_START() do {} while(0)
     #define UVHTTP_MEMORY_CHECK_END() do {} while(0)
     #define UVHTTP_MEMORY_LEAKS() 0

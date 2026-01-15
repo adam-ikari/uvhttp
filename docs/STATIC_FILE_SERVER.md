@@ -253,35 +253,94 @@ UVHTTP 使用 sendfile 系统调用实现零拷贝文件传输，显著提升大
 
 | 文件大小 | 传输方式 | 原因 |
 |---------|---------|------|
-| < 4KB | 传统方式（read/write） | 避免系统调用开销 |
-| 4KB - 10MB | 分块 sendfile（1MB chunks） | 平衡性能和可靠性 |
-| > 10MB | 分块 sendfile（1MB chunks） | 避免长时间阻塞 |
+| < 4KB | 传统方式（open/read/close） | 减少系统调用开销 |
+| 4KB - 10MB | 分块 sendfile（可配置 chunks） | 平衡性能和可靠性 |
+| > 10MB | 分块 sendfile（可配置 chunks） | 避免长时间阻塞 |
 
 #### 配置参数
 
 ```c
-// 超时配置
-#define SENDFILE_TIMEOUT_MS 30000       // 30秒超时 - 基于 HTTP 请求超时标准
-#define SENDFILE_MAX_RETRY 3            // 最大重试次数 - 平衡可靠性和性能
-#define SENDFILE_CHUNK_SIZE (1024*1024) // 1MB 分块 - sendfile 最佳实践
+// sendfile 默认配置（可通过 uvhttp_static_set_sendfile_config 修改）
+#define SENDFILE_DEFAULT_TIMEOUT_MS  10000  // 10秒超时
+#define SENDFILE_DEFAULT_MAX_RETRY    2      // 最大重试次数
+#define SENDFILE_DEFAULT_CHUNK_SIZE   (64 * 1024)  // 64KB 分块
+```
+
+**配置结构体**：
+
+```c
+typedef struct uvhttp_static_config {
+    /* 热路径配置（高频访问） */
+    int enable_etag;                                 /* 是否启用ETag */
+    int enable_last_modified;                        /* 是否启用Last-Modified */
+    int enable_directory_listing;                    /* 是否启用目录列表 */
+    
+    /* sendfile 配置（性能关键） */
+    int enable_sendfile;                             /* 是否启用 sendfile 零拷贝优化 */
+    int sendfile_timeout_ms;                         /* sendfile 超时时间（毫秒） */
+    int sendfile_max_retry;                          /* sendfile 最大重试次数 */
+    size_t sendfile_chunk_size;                       /* sendfile 分块大小（字节） */
+    
+    /* 缓存配置（性能关键） */
+    size_t max_cache_size;                           /* 最大缓存大小（字节） */
+    int cache_ttl;                                   /* 缓存TTL（秒） */
+    int max_cache_entries;                           /* 最大缓存条目数 */
+    
+    /* 路径配置（较少访问） */
+    char root_directory[UVHTTP_MAX_FILE_PATH_SIZE];  /* 根目录路径 */
+    char index_file[UVHTTP_MAX_PATH_SIZE];           /* 默认索引文件 */
+    char custom_headers[UVHTTP_MAX_HEADER_VALUE_SIZE]; /* 自定义响应头 */
+} uvhttp_static_config_t;
 ```
 
 **参数选择依据**：
 
-1. **SENDFILE_TIMEOUT_MS (30秒)**：
-   - 基于 HTTP/1.1 标准的默认请求超时
+1. **sendfile_timeout_ms（默认 10 秒）**：
+   - 优化后更快失败，减少资源占用
    - 适合大多数网络环境
    - 可通过配置文件自定义
 
-2. **SENDFILE_MAX_RETRY (3次)**：
-   - 平衡可靠性和性能
+2. **sendfile_max_retry（默认 2 次）**：
+   - 减少重试以降低延迟
    - 仅对可恢复错误（UV_EINTR、UV_EAGAIN）重试
    - 避免无限重试导致资源浪费
 
-3. **SENDFILE_CHUNK_SIZE (1MB)**：
-   - sendfile 最佳实践
+3. **sendfile_chunk_size（默认 64KB）**：
+   - 优化小文件传输，减少延迟
    - 平衡系统调用次数和内存使用
    - 适合大多数文件系统
+
+**动态配置 API**：
+
+```c
+// 设置 sendfile 配置参数
+uvhttp_error_t uvhttp_static_set_sendfile_config(
+    uvhttp_static_context_t* ctx,
+    int timeout_ms,      // 超时时间（毫秒），0 表示使用默认值
+    int max_retry,       // 最大重试次数，0 表示使用默认值
+    size_t chunk_size    // 分块大小（字节），0 表示使用默认值
+);
+```
+
+**配置示例**：
+
+```c
+uvhttp_static_config_t config;
+memset(&config, 0, sizeof(config));
+strncpy(config.root_directory, "./public", sizeof(config.root_directory) - 1);
+config.enable_etag = 1;
+config.enable_last_modified = 1;
+config.max_cache_size = 100 * 1024 * 1024;  // 100MB
+config.cache_ttl = 7200;  // 2小时
+
+// sendfile 配置（可选）
+config.enable_sendfile = 1;
+config.sendfile_timeout_ms = 15000;  // 15秒超时
+config.sendfile_max_retry = 3;       // 最多重试3次
+config.sendfile_chunk_size = 128 * 1024;  // 128KB分块
+
+uvhttp_static_context_t* ctx = uvhttp_static_create(&config);
+```
 
 #### 超时检测机制
 

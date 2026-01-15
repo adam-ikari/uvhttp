@@ -76,7 +76,7 @@ static void uvhttp_connection_pool_release(uvhttp_connection_t* conn) {
     }
     
     /* 创建池条目 */
-    uvhttp_connection_pool_entry_t* entry = uvhttp_malloc(sizeof(uvhttp_connection_pool_entry_t));
+    uvhttp_connection_pool_entry_t* entry = uvhttp_alloc(sizeof(uvhttp_connection_pool_entry_t));
     if (!entry) {
         uvhttp_connection_free(conn);
         return;
@@ -245,7 +245,7 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     }
     
     /* 单线程安全的内存分配 */
-    uvhttp_connection_t* conn = uvhttp_malloc(sizeof(uvhttp_connection_t));
+    uvhttp_connection_t* conn = uvhttp_alloc(sizeof(uvhttp_connection_t));
     if (!conn) {
         return NULL;
     }
@@ -290,7 +290,7 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     
     // 分配读缓冲区
     conn->read_buffer_size = UVHTTP_READ_BUFFER_SIZE;
-    conn->read_buffer = uvhttp_malloc(conn->read_buffer_size);
+    conn->read_buffer = uvhttp_alloc(conn->read_buffer_size);
     if (!conn->read_buffer) {
         uvhttp_free(conn);
         return NULL;
@@ -298,7 +298,7 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     conn->read_buffer_used = 0;
     
     // 创建请求和响应对象
-    conn->request = uvhttp_malloc(sizeof(uvhttp_request_t));
+    conn->request = uvhttp_alloc(sizeof(uvhttp_request_t));
     if (!conn->request) {
         uvhttp_free(conn->read_buffer);
         uvhttp_free(conn);
@@ -313,7 +313,7 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
         return NULL;
     }
     
-    conn->response = uvhttp_malloc(sizeof(uvhttp_response_t));
+    conn->response = uvhttp_alloc(sizeof(uvhttp_response_t));
     if (!conn->response) {
         uvhttp_request_cleanup(conn->request);
         uvhttp_free(conn->request);
@@ -411,9 +411,19 @@ void uvhttp_connection_close(uvhttp_connection_t* conn) {
     if (!conn) {
         return;
     }
-    
+
     uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_CLOSING);
-    uv_close((uv_handle_t*)&conn->tcp_handle, on_close);
+
+    /* 停止 idle handle（如果正在运行） */
+    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
+        uv_idle_stop(&conn->idle_handle);
+        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
+    }
+
+    /* 关闭 TCP handle */
+    if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
+        uv_close((uv_handle_t*)&conn->tcp_handle, on_close);
+    }
 }
 
 void uvhttp_connection_set_state(uvhttp_connection_t* conn, uvhttp_connection_state_t state) {
@@ -465,9 +475,322 @@ int uvhttp_connection_schedule_restart_read(uvhttp_connection_t* conn) {
     if (!conn) {
         return -1;
     }
-    
+
     // 使用idle句柄在下一个事件循环中安全重启读取
     conn->idle_handle.data = conn;
-    int result = uv_idle_start(&conn->idle_handle, on_idle_restart_read);
-    return result;
+
+    if (uv_idle_start(&conn->idle_handle, on_idle_restart_read) != 0) {
+        UVHTTP_LOG_ERROR("Failed to start idle handle for connection restart\n");
+        return -1;
+    }
+
+    return 0;
 }
+
+#if UVHTTP_FEATURE_WEBSOCKET
+
+/* WebSocket数据读取回调
+ * 在WebSocket握手成功后，使用此回调处理WebSocket帧数据
+ */
+static void on_websocket_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)stream->data;
+    if (!conn || !conn->ws_connection) {
+        return;
+    }
+
+    if (nread < 0) {
+        if (nread != UV_EOF) {
+            UVHTTP_LOG_ERROR("WebSocket read error: %s\n", uv_strerror(nread));
+        }
+        uvhttp_connection_websocket_close(conn);
+        return;
+    }
+
+    if (nread == 0) {
+        return;
+    }
+
+    /* 处理WebSocket帧数据 */
+    uvhttp_ws_connection_t* ws_conn = (uvhttp_ws_connection_t*)conn->ws_connection;
+    int result = uvhttp_ws_process_data(ws_conn, (const uint8_t*)buf->base, nread);
+    if (result != 0) {
+        UVHTTP_LOG_ERROR("WebSocket data processing failed: %d\n", result);
+        uvhttp_connection_websocket_close(conn);
+    }
+}
+
+/* WebSocket连接包装器 - 用于保存用户处理器和连接对象 */
+typedef struct {
+    uvhttp_connection_t* conn;
+    uvhttp_ws_handler_t* user_handler;
+} uvhttp_ws_wrapper_t;
+
+/* WebSocket连接关闭回调 */
+static int on_websocket_close(uvhttp_ws_connection_t* ws_conn, int code, const char* reason) {
+    if (!ws_conn) {
+        return -1;
+    }
+
+    /* 从wrapper中获取连接对象和用户处理器 */
+    uvhttp_ws_wrapper_t* wrapper = (uvhttp_ws_wrapper_t*)ws_conn->user_data;
+    if (!wrapper || !wrapper->conn) {
+        return -1;
+    }
+
+    /* 调用用户注册的关闭回调 */
+    if (wrapper->user_handler && wrapper->user_handler->on_close) {
+        int result = wrapper->user_handler->on_close(ws_conn);
+        if (result != 0) {
+            UVHTTP_LOG_ERROR("User on_close callback failed: %d\n", result);
+        }
+    }
+
+    /* 释放wrapper */
+    uvhttp_free(wrapper);
+    ws_conn->user_data = NULL;
+
+    (void)code;
+    (void)reason;
+    return 0;
+}
+
+/* WebSocket错误回调 */
+static int on_websocket_error(uvhttp_ws_connection_t* ws_conn, int error_code, const char* error_msg) {
+    if (!ws_conn) {
+        return -1;
+    }
+
+    UVHTTP_LOG_ERROR("WebSocket error: %s (code: %d)\n", error_msg, error_code);
+
+    /* 从wrapper中获取用户处理器 */
+    uvhttp_ws_wrapper_t* wrapper = (uvhttp_ws_wrapper_t*)ws_conn->user_data;
+    if (wrapper && wrapper->user_handler) {
+        /* 调用用户注册的错误回调 */
+        if (wrapper->user_handler->on_error) {
+            int result = wrapper->user_handler->on_error(ws_conn, error_code, error_msg);
+            if (result != 0) {
+                UVHTTP_LOG_ERROR("User on_error callback failed: %d\n", result);
+            }
+            return result;
+        }
+    }
+
+    return -1;
+}
+
+/* WebSocket消息回调 */
+static int on_websocket_message(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len, int opcode) {
+    if (!ws_conn) {
+        return -1;
+    }
+
+    /* 更新连接活动时间 */
+    uvhttp_ws_wrapper_t* wrapper = (uvhttp_ws_wrapper_t*)ws_conn->user_data;
+    if (wrapper && wrapper->conn && wrapper->conn->server) {
+        uvhttp_server_ws_update_activity(wrapper->conn->server, ws_conn);
+    }
+
+    /* 从wrapper中获取用户处理器 */
+    if (!wrapper || !wrapper->user_handler) {
+        /* 没有用户处理器，忽略消息 */
+        return 0;
+    }
+
+    /* 调用用户注册的消息回调 */
+    if (wrapper->user_handler->on_message) {
+        int result = wrapper->user_handler->on_message(ws_conn, data, len, opcode);
+        if (result != 0) {
+            UVHTTP_LOG_ERROR("User on_message callback failed: %d\n", result);
+            return result;
+        }
+    }
+
+    return 0;
+}
+
+/* 处理WebSocket握手
+ * 在握手响应发送后调用，创建WebSocket连接对象并设置回调
+ */
+int uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, const char* ws_key) {
+    if (!conn || !ws_key) {
+        return -1;
+    }
+
+    /* 获取请求路径 */
+    const char* path = conn->request ? conn->request->url : NULL;
+    if (!path) {
+        UVHTTP_LOG_ERROR("Failed to get request path for WebSocket handshake\n");
+        return -1;
+    }
+
+    /* 获取客户端 IP 地址 */
+    char client_ip[64] = {0};
+    struct sockaddr_in addr;
+    int addr_len = sizeof(addr);
+    if (uv_tcp_getpeername(&conn->tcp_handle, (struct sockaddr*)&addr, &addr_len) == 0) {
+        uv_ip4_name(&addr, client_ip, sizeof(client_ip));
+    }
+
+    /* 从查询参数或头部获取 Token */
+    char token[256] = {0};
+    if (conn->request) {
+        /* 尝试从查询参数获取 */
+        const char* query = conn->request->query;
+        if (query && strstr(query, "token=")) {
+            const char* token_start = strstr(query, "token=") + 6;
+            const char* token_end = strchr(token_start, '&');
+            if (token_end) {
+                size_t token_len = token_end - token_start;
+                if (token_len < sizeof(token)) {
+                    strncpy(token, token_start, token_len);
+                    token[token_len] = '\0';
+                }
+            } else {
+                strncpy(token, token_start, sizeof(token) - 1);
+                token[sizeof(token) - 1] = '\0';
+            }
+        }
+
+        /* 如果查询参数中没有，尝试从头部获取 */
+        if (token[0] == '\0') {
+            const char* auth_header = uvhttp_request_get_header(conn->request, "Authorization");
+            if (auth_header && strncmp(auth_header, "Bearer ", 7) == 0) {
+                strncpy(token, auth_header + 7, sizeof(token) - 1);
+                token[sizeof(token) - 1] = '\0';
+            }
+        }
+    }
+
+    /* 执行认证检查 */
+    uvhttp_ws_auth_result_t auth_result = UVHTTP_WS_AUTH_SUCCESS;
+    if (conn->server) {
+        auth_result = uvhttp_server_ws_authenticate(conn->server, path, client_ip, token);
+    }
+
+    if (auth_result != UVHTTP_WS_AUTH_SUCCESS) {
+        UVHTTP_LOG_WARN("WebSocket authentication failed for path %s: %s\n",
+                       path, uvhttp_ws_auth_result_string(auth_result));
+        return -1;
+    }
+
+    /* 查找用户注册的WebSocket处理器 */
+    uvhttp_ws_handler_t* user_handler = NULL;
+    if (conn->server) {
+        user_handler = uvhttp_server_find_ws_handler(conn->server, path);
+    }
+
+    if (!user_handler) {
+        UVHTTP_LOG_WARN("No WebSocket handler found for path: %s\n", path);
+        /* 继续创建连接，但使用默认回调 */
+    }
+
+    /* 获取TCP文件描述符 */
+    int fd = 0;
+    if (uv_fileno((uv_handle_t*)&conn->tcp_handle, &fd) != 0) {
+        UVHTTP_LOG_ERROR("Failed to get file descriptor for WebSocket connection\n");
+        return -1;
+    }
+
+    /* 创建WebSocket连接对象 */
+    uvhttp_ws_connection_t* ws_conn = uvhttp_ws_connection_create(fd, NULL, 1);
+    if (!ws_conn) {
+        UVHTTP_LOG_ERROR("Failed to create WebSocket connection object\n");
+        return -1;
+    }
+
+    /* 保存WebSocket Key（用于验证） */
+    strncpy(ws_conn->client_key, ws_key, sizeof(ws_conn->client_key) - 1);
+    ws_conn->client_key[sizeof(ws_conn->client_key) - 1] = '\0';
+
+    /* 创建wrapper以保存连接对象和用户处理器 */
+    uvhttp_ws_wrapper_t* wrapper = uvhttp_alloc(sizeof(uvhttp_ws_wrapper_t));
+    if (!wrapper) {
+        UVHTTP_LOG_ERROR("Failed to allocate WebSocket wrapper\n");
+        uvhttp_ws_connection_free(ws_conn);
+        return -1;
+    }
+    wrapper->conn = conn;
+    wrapper->user_handler = user_handler;
+
+    /* 设置wrapper为WebSocket连接的user_data */
+    ws_conn->user_data = wrapper;
+
+    /* 设置回调函数（内部回调会调用用户回调） */
+    uvhttp_ws_set_callbacks(ws_conn, on_websocket_message, on_websocket_close, on_websocket_error);
+
+    /* 保存到连接对象 */
+    conn->ws_connection = ws_conn;
+    conn->is_websocket = 1;
+
+    /* 调用用户注册的连接回调 */
+    if (user_handler && user_handler->on_connect) {
+        int result = user_handler->on_connect(ws_conn);
+        if (result != 0) {
+            UVHTTP_LOG_ERROR("User on_connect callback failed: %d\n", result);
+            /* 连接回调失败，关闭连接 */
+            uvhttp_connection_websocket_close(conn);
+            return -1;
+        }
+    }
+
+    /* 切换到WebSocket数据读取模式 */
+    uvhttp_connection_switch_to_websocket(conn);
+
+    /* 添加到连接管理器 */
+    if (conn->server) {
+        uvhttp_server_ws_add_connection(conn->server, ws_conn, path);
+    }
+
+    UVHTTP_LOG_DEBUG("WebSocket handshake completed for path: %s\n", path);
+    return 0;
+}
+
+/* 切换到WebSocket数据处理模式
+ * 停止HTTP读取，启动WebSocket帧读取
+ */
+void uvhttp_connection_switch_to_websocket(uvhttp_connection_t* conn) {
+    if (!conn) {
+        return;
+    }
+
+    /* 停止HTTP读取 */
+    uv_read_stop((uv_stream_t*)&conn->tcp_handle);
+
+    /* 更新连接状态 */
+    conn->state = UVHTTP_CONN_STATE_HTTP_PROCESSING;
+
+    /* 启动WebSocket数据读取 */
+    if (uv_read_start((uv_stream_t*)&conn->tcp_handle, on_alloc_buffer, on_websocket_read) != 0) {
+        UVHTTP_LOG_ERROR("Failed to start WebSocket reading\n");
+        uvhttp_connection_close(conn);
+        return;
+    }
+
+    UVHTTP_LOG_DEBUG("Switched to WebSocket mode for connection\n");
+}
+
+/* 关闭WebSocket连接 */
+void uvhttp_connection_websocket_close(uvhttp_connection_t* conn) {
+    if (!conn) {
+        return;
+    }
+
+    /* 从连接管理器中移除 */
+    if (conn->server && conn->ws_connection) {
+        uvhttp_server_ws_remove_connection(conn->server,
+                                          (uvhttp_ws_connection_t*)conn->ws_connection);
+    }
+
+    /* 释放WebSocket连接对象 */
+    if (conn->ws_connection) {
+        uvhttp_ws_connection_free((uvhttp_ws_connection_t*)conn->ws_connection);
+        conn->ws_connection = NULL;
+    }
+
+    conn->is_websocket = 0;
+
+    /* 关闭底层TCP连接 */
+    uvhttp_connection_close(conn);
+}
+
+#endif /* UVHTTP_FEATURE_WEBSOCKET */

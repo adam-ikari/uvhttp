@@ -26,14 +26,23 @@
 #include <string.h>
 #include <signal.h>
 
-static uvhttp_server_t* g_server = NULL;
+/**
+ * @brief 应用上下文结构
+ */
+typedef struct {
+    uvhttp_server_t* server;
+    uv_loop_t* loop;
+    int is_running;
+} app_context_t;
+
+static app_context_t* g_ctx = NULL;
 
 void signal_handler(int sig) {
     printf("\n收到信号 %d，正在关闭服务器...\n", sig);
-    if (g_server) {
-        uvhttp_server_stop(g_server);
-        uvhttp_server_free(g_server);
-        g_server = NULL;
+    if (g_ctx && g_ctx->server) {
+        uvhttp_server_stop(g_ctx->server);
+        uvhttp_server_free(g_ctx->server);
+        g_ctx->server = NULL;
     }
     exit(0);
 }
@@ -42,8 +51,9 @@ void signal_handler(int sig) {
  * @brief GET 请求处理器 - 获取资源
  */
 int get_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 未使用的参数
     printf("处理 GET 请求\n");
-    
+
     const char* json = "{\n"
         "  \"method\": \"GET\",\n"
         "  \"action\": \"获取资源\",\n"
@@ -54,11 +64,11 @@ int get_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "    \"description\": \"这是一个示例资源\"\n"
         "  }\n"
         "}\n";
-    
+
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
     uvhttp_response_set_body(res, json, strlen(json));
-    
+
     return uvhttp_response_send(res);
 }
 
@@ -144,8 +154,9 @@ int put_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
  * @brief DELETE 请求处理器 - 删除资源
  */
 int delete_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 未使用的参数
     printf("处理 DELETE 请求\n");
-    
+
     const char* json = "{\n"
         "  \"method\": \"DELETE\",\n"
         "  \"action\": \"删除资源\",\n"
@@ -153,11 +164,11 @@ int delete_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "  \"message\": \"资源删除成功\",\n"
         "  \"deleted_id\": 1\n"
         "}\n";
-    
+
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
     uvhttp_response_set_body(res, json, strlen(json));
-    
+
     return uvhttp_response_send(res);
 }
 
@@ -214,14 +225,21 @@ int main() {
     signal(SIGTERM, signal_handler);
     
     // 创建应用上下文
-    app_context_t ctx = {0};
+    app_context_t* ctx = (app_context_t*)malloc(sizeof(app_context_t));
+    if (!ctx) {
+        fprintf(stderr, "错误: 无法分配内存\n");
+        return 1;
+    }
+    memset(ctx, 0, sizeof(app_context_t));
+    g_ctx = ctx;
     
     // 创建服务器
-    ctx.loop = uv_default_loop();
-    ctx.server = uvhttp_server_new(ctx.loop);
+    ctx->loop = uv_default_loop();
+    ctx->server = uvhttp_server_new(ctx->loop);
     
-    if (!ctx.server) {
+    if (!ctx->server) {
         fprintf(stderr, "错误: 无法创建服务器\n");
+        free(ctx);
         return 1;
     }
     
@@ -235,13 +253,14 @@ int main() {
     printf("\n");
     
     // 设置路由器
-    uvhttp_server_set_router(ctx.server, router);
+    uvhttp_server_set_router(ctx->server, router);
     
     // 启动服务器
-    int result = uvhttp_server_listen(ctx.server, "0.0.0.0", 8080);
+    int result = uvhttp_server_listen(ctx->server, "0.0.0.0", 8080);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "错误: 服务器启动失败 (错误码: %d)\n", result);
-        uvhttp_server_free(ctx.server);
+        uvhttp_server_free(ctx->server);
+        free(ctx);
         return 1;
     }
     
@@ -252,25 +271,26 @@ int main() {
     printf("测试命令：\n");
     printf("  # GET 请求 - 获取资源\n");
     printf("  curl http://localhost:8080/resource\n\n");
-    
+
     printf("  # POST 请求 - 创建资源\n");
-    printf("  curl -X POST http://localhost:8080/resource -d '{"name":"test"}'\n\n");
-    
+    printf("  curl -X POST http://localhost:8080/resource -d '{\"name\":\"test\"}'\n\n");
+
     printf("  # PUT 请求 - 更新资源\n");
-    printf("  curl -X PUT http://localhost:8080/resource -d '{"name":"updated"}'\n\n");
-    
+    printf("  curl -X PUT http://localhost:8080/resource -d '{\"name\":\"updated\"}'\n\n");
+
     printf("  # DELETE 请求 - 删除资源\n");
     printf("  curl -X DELETE http://localhost:8080/resource\n\n");
     
     printf("按 Ctrl+C 停止服务器\n\n");
     
     // 运行事件循环
-    uv_run(ctx.loop, UV_RUN_DEFAULT);
+    uv_run(ctx->loop, UV_RUN_DEFAULT);
     
     // 清理
-    if (ctx.server) {
-        uvhttp_server_free(ctx.server);
+    if (ctx->server) {
+        uvhttp_server_free(ctx->server);
     }
+    free(ctx);
     
     return 0;
 }

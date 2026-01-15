@@ -28,6 +28,28 @@ typedef struct uvhttp_tls_context uvhttp_tls_context_t;
 
 #if UVHTTP_FEATURE_WEBSOCKET
 typedef struct uvhttp_ws_connection uvhttp_ws_connection_t;
+
+/* WebSocket 连接节点 */
+typedef struct ws_connection_node {
+    uvhttp_ws_connection_t* ws_conn;
+    char path[4096];
+    uint64_t last_activity;      /* 最后活动时间（毫秒） */
+    uint64_t last_ping_sent;     /* 最后发送 Ping 的时间（毫秒） */
+    int ping_pending;            /* 是否有待处理的 Ping */
+    struct ws_connection_node* next;
+} ws_connection_node_t;
+
+/* WebSocket 连接管理器 */
+typedef struct {
+    ws_connection_node_t* connections;  /* 连接链表 */
+    int connection_count;               /* 连接计数 */
+    uv_timer_t timeout_timer;           /* 超时检测定时器 */
+    uv_timer_t heartbeat_timer;         /* 心跳检测定时器 */
+    int timeout_seconds;                /* 超时时间（秒） */
+    int heartbeat_interval;             /* 心跳间隔（秒） */
+    uint64_t ping_timeout_ms;           /* Ping 超时时间（毫秒） */
+    int enabled;                        /* 是否启用连接管理 */
+} ws_connection_manager_t;
 #endif
 
 #ifdef __cplusplus
@@ -67,8 +89,11 @@ struct uvhttp_server {
     uvhttp_config_t* config;  /* 服务器配置 */
 #if UVHTTP_FEATURE_WEBSOCKET
     void* ws_routes;  /* WebSocket路由表（已废弃，使用中间件） */
+    ws_connection_manager_t* ws_connection_manager;  /* WebSocket连接管理器 */
 #endif
     uvhttp_http_middleware_t* middleware_chain;  /* 中间件链 */
+    size_t max_connections;  /* 最大连接数限制，默认10000 */
+    size_t max_message_size;  /* 最大消息大小（字节），默认1MB */
     
 #if UVHTTP_FEATURE_RATE_LIMIT
     /* 限流功能（核心功能 - 固定窗口算法） */
@@ -235,17 +260,97 @@ int uvhttp_serve(const char* host, int port);
 // WebSocket API
 #if UVHTTP_FEATURE_WEBSOCKET
 #include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket_auth.h"
 
 typedef struct {
     int (*on_connect)(uvhttp_ws_connection_t* ws_conn);
     int (*on_message)(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len, int opcode);
     int (*on_close)(uvhttp_ws_connection_t* ws_conn);
+    int (*on_error)(uvhttp_ws_connection_t* ws_conn, int error_code, const char* error_msg);
     void* user_data;
 } uvhttp_ws_handler_t;
 
 uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server, const char* path, uvhttp_ws_handler_t* handler);
 uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len);
 uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code, const char* reason);
+
+/* WebSocket 认证 API */
+uvhttp_error_t uvhttp_server_ws_set_auth_config(
+    uvhttp_server_t* server,
+    const char* path,
+    uvhttp_ws_auth_config_t* config
+);
+
+uvhttp_ws_auth_config_t* uvhttp_server_ws_get_auth_config(
+    uvhttp_server_t* server,
+    const char* path
+);
+
+uvhttp_error_t uvhttp_server_ws_enable_token_auth(
+    uvhttp_server_t* server,
+    const char* path,
+    uvhttp_ws_token_validator_callback validator,
+    void* user_data
+);
+
+uvhttp_error_t uvhttp_server_ws_add_ip_to_whitelist(
+    uvhttp_server_t* server,
+    const char* path,
+    const char* ip
+);
+
+uvhttp_error_t uvhttp_server_ws_add_ip_to_blacklist(
+    uvhttp_server_t* server,
+    const char* path,
+    const char* ip
+);
+
+/* 连接管理 API */
+uvhttp_error_t uvhttp_server_ws_enable_connection_management(
+    uvhttp_server_t* server,
+    int timeout_seconds,
+    int heartbeat_interval
+);
+
+uvhttp_error_t uvhttp_server_ws_disable_connection_management(
+    uvhttp_server_t* server
+);
+
+int uvhttp_server_ws_get_connection_count(uvhttp_server_t* server);
+
+int uvhttp_server_ws_get_connection_count_by_path(
+    uvhttp_server_t* server,
+    const char* path
+);
+
+uvhttp_error_t uvhttp_server_ws_broadcast(
+    uvhttp_server_t* server,
+    const char* path,
+    const char* data,
+    size_t len
+);
+
+uvhttp_error_t uvhttp_server_ws_close_all(
+    uvhttp_server_t* server,
+    const char* path
+);
+
+/* 内部函数（由 uvhttp_connection 调用） */
+void uvhttp_server_ws_add_connection(
+    uvhttp_server_t* server,
+    uvhttp_ws_connection_t* ws_conn,
+    const char* path
+);
+
+void uvhttp_server_ws_remove_connection(
+    uvhttp_server_t* server,
+    uvhttp_ws_connection_t* ws_conn
+);
+
+void uvhttp_server_ws_update_activity(
+    uvhttp_server_t* server,
+    uvhttp_ws_connection_t* ws_conn
+);
 #endif
 
 // 内部函数声明

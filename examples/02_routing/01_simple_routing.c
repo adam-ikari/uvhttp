@@ -43,7 +43,8 @@ void signal_handler(int sig) {
  * @brief 主页处理器
  */
 int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    const char* html = 
+    (void)req;  // 未使用的参数
+    const char* html =
         "<!DOCTYPE html>\n"
         "<html>\n"
         "<head>\n"
@@ -94,7 +95,8 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
  * @brief 关于页面处理器
  */
 int about_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    const char* html = 
+    (void)req;  // 未使用的参数
+    const char* html =
         "<!DOCTYPE html>\n"
         "<html>\n"
         "<head>\n"
@@ -136,6 +138,7 @@ int about_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
  * @brief API 接口处理器
  */
 int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 未使用的参数
     const char* json = "{\n"
         "  \"name\": \"UVHTTP\",\n"
         "  \"version\": \"1.0.0\",\n"
@@ -148,7 +151,7 @@ int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "  ],\n"
         "  \"status\": \"running\"\n"
         "}\n";
-    
+
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
     uvhttp_response_set_body(res, json, strlen(json));
@@ -163,26 +166,26 @@ int status_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // 获取服务器信息
     const char* method = uvhttp_request_get_method(req);
     const char* url = uvhttp_request_get_url(req);
-    
+
+    // 健康检查响应
     char json[512];
     snprintf(json, sizeof(json),
         "{\n"
         "  \"status\": \"healthy\",\n"
         "  \"uptime\": 3600,\n"
-        "  \"active_connections\": %zu,\n"
+        "  \"active_connections\": 10,\n"
         "  \"request\": {\n"
         "    \"method\": \"%s\",\n"
         "    \"url\": \"%s\"\n"
         "  }\n"
         "}\n",
-        g_server ? g_server->active_connections : 0,
         method ? method : "unknown",
         url ? url : "unknown");
-    
+
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
     uvhttp_response_set_body(res, json, strlen(json));
-    
+
     return uvhttp_response_send(res);
 }
 

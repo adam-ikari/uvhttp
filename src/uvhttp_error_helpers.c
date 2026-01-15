@@ -66,33 +66,36 @@ void uvhttp_handle_memory_failure(const char* context,
 
 void uvhttp_handle_write_error(uv_write_t* req, int status, const char* context) {
     if (!req) return;
-    
+
     char safe_msg[UVHTTP_ERROR_CONTEXT_BUFFER_SIZE];
     const char* error_desc = uv_strerror(status);
-    
+
     if (uvhttp_sanitize_error_message(error_desc, safe_msg, sizeof(safe_msg)) == 0) {
         UVHTTP_LOG_ERROR("Write error in %s: %s\n", context, safe_msg);
     } else {
         UVHTTP_LOG_ERROR("Write error in %s: (error %d)\n", context, status);
     }
-    
+
+    (void)context;
     uvhttp_free(req);
 }
 
 void uvhttp_log_safe_error(int error_code, const char* context, const char* user_msg) {
     char safe_buffer[UVHTTP_ERROR_LOG_BUFFER_SIZE];
     const char* error_desc = error_code ? uv_strerror(error_code) : user_msg;
-    
+
     if (uvhttp_sanitize_error_message(error_desc, safe_buffer, sizeof(safe_buffer)) == 0) {
         UVHTTP_LOG_ERROR("[%s] %s\n", context ? context : "unknown", safe_buffer);
     } else {
-        UVHTTP_LOG_ERROR("[%s] Error occurred (code: %d)\n", 
+        UVHTTP_LOG_ERROR("[%s] Error occurred (code: %d)\n",
                         context ? context : "unknown", error_code);
     }
+
+    (void)context;
 }
 
-int uvhttp_sanitize_error_message(const char* message, 
-                                 char* safe_buffer, 
+int uvhttp_sanitize_error_message(const char* message,
+                                 char* safe_buffer,
                                  size_t buffer_size) {
     if (!message || !safe_buffer || buffer_size == 0) {
         return -1;
@@ -106,7 +109,12 @@ int uvhttp_sanitize_error_message(const char* message,
     
     // 复制消息，但限制长度
     size_t msg_len = strlen(message);
-    if (msg_len >= buffer_size) {
+    
+    // 处理小缓冲区（buffer_size < 4）
+    if (buffer_size < 4) {
+        strncpy(safe_buffer, message, buffer_size - 1);
+        safe_buffer[buffer_size - 1] = '\0';
+    } else if (msg_len >= buffer_size) {
         strncpy(safe_buffer, message, buffer_size - 4);
         safe_buffer[buffer_size - 4] = '\0';
         strcat(safe_buffer, "...");
@@ -117,7 +125,6 @@ int uvhttp_sanitize_error_message(const char* message,
     
     return 0;
 }
-
 void uvhttp_safe_free(void** ptr, void (*free_func)(void*)) {
     if (!ptr || !*ptr) return;
     
