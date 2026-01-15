@@ -9,6 +9,7 @@
  */
 
 #include "../include/uvhttp.h"
+#include "../include/uvhttp_allocator.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -23,11 +24,11 @@ typedef struct {
 } app_context_t;
 
 // 创建应用上下文
-app_context_t* app_context_new(uvhttp_loop_t* loop) {
+app_context_t* app_context_new(uv_loop_t* loop) {
     if (!loop) {
         return NULL;
     }
-    app_context_t* ctx = (app_context_t*)UVHTTP_MALLOC(sizeof(app_context_t));
+    app_context_t* ctx = (app_context_t*)malloc(sizeof(app_context_t));
     if (!ctx) {
         return NULL;
     }
@@ -42,7 +43,7 @@ void app_context_free(app_context_t* ctx) {
             uvhttp_server_free(ctx->server);
             ctx->server = NULL;
         }
-        UVHTTP_FREE(ctx);
+        free(ctx);
     }
 }
 
@@ -181,7 +182,7 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     ctx->request_count++;
     
     // 动态构建 HTML 响应，显示实际请求计数
-    char* body = (char*)UVHTTP_MALLOC(1024);
+    char* body = (char*)malloc(1024);
     if (!body) {
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_body(response, "Internal Server Error", 21);
@@ -222,9 +223,8 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     uvhttp_response_set_header(response, "Content-Type", "text/html; charset=utf-8");
     uvhttp_response_set_body(response, body, len);
     int result = uvhttp_response_send(response);
-    UVHTTP_FREE(body);
+    free(body);
     return result;
-    return uvhttp_response_send(response);
 }
 
 int main() {
