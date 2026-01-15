@@ -1,4 +1,4 @@
-#include "include/uvhttp.h"
+#include "uvhttp.h"
 #include <signal.h>
 
 // 应用上下文结构 - 使用循环注入模式
@@ -8,6 +8,7 @@ typedef struct {
 } app_context_t;
 
 void signal_handler(int sig) {
+    (void)sig;  // Suppress unused parameter warning
     uv_loop_t* loop = uv_default_loop();
     if (loop && loop->data) {
         app_context_t* ctx = (app_context_t*)loop->data;
