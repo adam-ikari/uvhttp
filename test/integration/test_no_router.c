@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 static uvhttp_server_t* g_server = NULL;
-static uvhttp_loop_t* g_loop = NULL;
+static uv_loop_t* g_loop = NULL;
 
 void signal_handler(int sig) {
     (void)sig;
@@ -17,6 +17,7 @@ void signal_handler(int sig) {
 }
 
 int handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     const char* body = "Hello World";
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/plain");

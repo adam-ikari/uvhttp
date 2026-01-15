@@ -15,13 +15,13 @@ int main() {
     test_header_t header;
     
     printf("sizeof(test_header_t): %zu\n", sizeof(test_header_t));
-    printf("sizeof(header.payload_len): %zu\n", sizeof(header.payload_len));
+    /* 不能对位域使用 sizeof，因为位域不占用完整的字节 */
     
-    header.payload_len = 255;
-    printf("header.payload_len after setting to 255: %d\n", header.payload_len);
+    header.payload_len = 127;  /* 7 位位域的最大值 */
+    printf("header.payload_len after setting to 127: %d\n", header.payload_len);
     
-    header.payload_len = 256;
-    printf("header.payload_len after setting to 256: %d\n", header.payload_len);
+    header.payload_len = 64;
+    printf("header.payload_len after setting to 64: %d\n", header.payload_len);
     
     return 0;
 }

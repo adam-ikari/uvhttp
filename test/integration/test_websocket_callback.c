@@ -47,8 +47,11 @@ static int on_close(uvhttp_ws_connection_t* ws_conn) {
 }
 
 /* HTTP 请求处理器（用于普通 HTTP 请求） */
-static void http_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    const char* html_content =
+static int http_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
+    /* 使用字符串字面量作为格式字符串 */
+    char html_body[1024];
+    snprintf(html_body, sizeof(html_body),
         "<!DOCTYPE html>"
         "<html>"
         "<head>"
@@ -70,17 +73,15 @@ static void http_handler(uvhttp_request_t* request, uvhttp_response_t* response)
         "ws.onclose = function() { console.log('WebSocket 连接已关闭'); };"
         "</script>"
         "</body>"
-        "</html>";
-
-    char html_body[1024];
-    snprintf(html_body, sizeof(html_body), html_content,
-             g_connect_called, g_message_count, g_close_called,
-             g_last_message[0] ? g_last_message : "(无)");
+        "</html>",
+        g_connect_called, g_message_count, g_close_called,
+        g_last_message[0] ? g_last_message : "(无)");
 
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/html; charset=utf-8");
     uvhttp_response_set_body(response, html_body, strlen(html_body));
     uvhttp_response_send(response);
+    return 0;
 }
 
 int main(int argc, char** argv) {

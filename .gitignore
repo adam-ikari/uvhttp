@@ -37,6 +37,8 @@ Makefile
 *.tmp
 *.temp
 *.log
+*.orig
+*.rej
 
 # Core dumps
 core
