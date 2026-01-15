@@ -73,11 +73,11 @@ MIT License
 ## 🎯 长期目标
 
 ### 云原生支持
-- [ ] 添加健康检查端点
-- [ ] 添加 Prometheus 指标导出
-- [ ] 添加 Kubernetes ConfigMap 支持
-- [ ] 添加服务发现集成
-- [ ] 添加分布式追踪支持
+- [ ] 支持 WebAssembly 运行时（WASI）
+- [ ] 优化边缘计算场景
+- [ ] 降低冷启动时间
+- [ ] 优化内存占用
+- [ ] 支持无服务器架构
 
 ### WebAssembly 支持
 - [ ] 集成 wasilibuv 替代 libuv

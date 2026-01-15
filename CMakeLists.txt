@@ -123,7 +123,6 @@ set(SOURCES
     src/uvhttp_validation.c
     src/uvhttp_cors_middleware.c
     src/uvhttp_allocator.c
-    src/uvhttp_health.c
 )
 
 if(BUILD_WITH_WEBSOCKET)

@@ -15,7 +15,6 @@
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_router.h"
-#include "uvhttp_health.h"
 
 /* 可选功能的条件包含 */
 

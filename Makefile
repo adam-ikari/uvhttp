@@ -95,13 +95,10 @@ cppcheck:
 	@cppcheck --enable=warning --std=c11 src/ include/
 
 examples: all
-	@$(MAKE) -C $(BUILD_DIR) hello_world simple_routing method_routing health_check_demo cors_rate_limit_demo middleware_demo libuv_data_pointer
+	@$(MAKE) -C $(BUILD_DIR) hello_world simple_routing method_routing cors_rate_limit_demo middleware_demo libuv_data_pointer
 
 run-helloworld: examples
 	@cd $(BUILD_DIR) && ./dist/bin/hello_world
-
-run-health-check: examples
-	@cd $(BUILD_DIR) && ./dist/bin/health_check_demo
 
 run-simple-routing: examples
 	@cd $(BUILD_DIR) && ./dist/bin/simple_routing

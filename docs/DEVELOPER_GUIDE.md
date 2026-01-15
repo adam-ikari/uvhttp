@@ -202,13 +202,21 @@ export UVHTTP_ENABLE_COMPRESSION=1
 cd build
 make test
 
-# 运行特定测试
-./test/unit/test_response
-./test/unit/test_server
+# 使用 CTest 运行测试
+cd build
+ctest --output-on-failure
 
-# 内存泄漏检测
-valgrind --leak-check=full ./test/unit/test_response
+# 运行特定测试
+./dist/bin/test_response
+./dist/bin/test_server
+
+# 生成覆盖率报告
+make coverage
 ```
+
+### 测试框架
+
+UVHTTP 使用 **Google Test (GTest)** 框架进行单元测试。
 
 ### 测试结构
 
@@ -219,19 +227,89 @@ valgrind --leak-check=full ./test/unit/test_response
 
 ### 编写测试
 
-```c
-#include "uvhttp_test_helpers.h"
+```cpp
+#include <gtest/gtest.h>
+#include "uvhttp_response.h"
 
-static int test_response_status() {
+TEST(UvhttpResponseTest, SetStatus) {
     uvhttp_response_t* response = uvhttp_response_new();
-    UVHTTP_TEST_ASSERT_NOT_NULL(response);
+    ASSERT_NE(response, nullptr);
     
     int result = uvhttp_response_set_status(response, 200);
-    UVHTTP_TEST_ASSERT_SUCCESS(result);
+    EXPECT_EQ(result, UVHTTP_OK);
     
     uvhttp_response_free(response);
-    return 0;
 }
+
+TEST(UvhttpResponseTest, SetHeader) {
+    uvhttp_response_t* response = uvhttp_response_new();
+    ASSERT_NE(response, nullptr);
+    
+    int result = uvhttp_response_set_header(response, "Content-Type", "application/json");
+    EXPECT_EQ(result, UVHTTP_OK);
+    
+    uvhttp_response_free(response);
+}
+```
+
+### 测试命名约定
+
+测试文件命名: `test_<module>_<type>.cpp`
+- `test_allocator.cpp` - 分配器测试
+- `test_connection_full_coverage.cpp` - 连接模块覆盖率测试
+- `test_server_full_coverage.cpp` - 服务器模块覆盖率测试
+
+### AAA 模式
+
+所有测试应遵循 **Arrange-Act-Assert** 模式：
+
+```cpp
+TEST(UvhttpResponseTest, SendResponse) {
+    // Arrange
+    uvhttp_response_t* response = uvhttp_response_new();
+    const char* body = "Hello World";
+    
+    // Act
+    uvhttp_response_set_status(response, 200);
+    uvhttp_response_set_header(response, "Content-Type", "text/plain");
+    uvhttp_response_set_body(response, body, strlen(body));
+    int result = uvhttp_response_send(response);
+    
+    // Assert
+    EXPECT_EQ(result, UVHTTP_OK);
+    
+    // Cleanup
+    uvhttp_response_free(response);
+}
+```
+
+### 测试断言
+
+使用 GTest 断言：
+- `EXPECT_EQ(expected, actual)` - 相等断言（失败继续）
+- `ASSERT_EQ(expected, actual)` - 相等断言（失败停止）
+- `EXPECT_NE(val1, val2)` - 不等断言
+- `EXPECT_TRUE(condition)` - 真值断言
+- `EXPECT_FALSE(condition)` - 假值断言
+- `EXPECT_STREQ(str1, str2)` - 字符串相等
+- `EXPECT_PTR_NULL(ptr)` - 空指针断言
+- `EXPECT_PTR_NOT_NULL(ptr)` - 非空指针断言
+
+### 测试覆盖率
+
+```bash
+# 生成覆盖率报告
+cd build
+cmake .. -DENABLE_COVERAGE=ON
+make
+ctest
+lcov --capture --directory . --output-file coverage.info
+genhtml coverage.info --output-directory coverage_html
+```
+
+查看覆盖率报告：
+```bash
+open coverage_html/index.html
 ```
 
 ## 性能优化
