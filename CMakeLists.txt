@@ -205,15 +205,24 @@ target_link_libraries(uvhttp ${LIBS})
 # ============================================================================
 enable_testing()
 
-# 添加 gtest 测试
-file(GLOB GTEST_TEST_FILES test/unit/test_*.c)
+# 添加 gtest 测试（支持 C 和 C++ 测试文件）
+file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp test/unit/test_*.c)
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_memory_helpers\\.c")  # 排除辅助文件
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*simple_test\\.c")  # 排除旧测试框架的测试
 
 foreach(test_file ${GTEST_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
-    add_executable(${test_name} ${test_file} test/unit/test_memory_helpers.c ${SOURCES})
+    get_filename_component(test_ext ${test_file} EXT)
+    
+    # 判断是 C++ 还是 C 文件
+    if(test_ext STREQUAL ".cpp")
+        add_executable(${test_name} ${test_file} test/unit/test_memory_helpers.c ${SOURCES})
+        set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
+    else()
+        add_executable(${test_name} ${test_file} test/unit/test_memory_helpers.c ${SOURCES})
+    endif()
+    
     add_dependencies(${test_name} libuv mbedtls xxhash gtest)
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(${test_name} mimalloc)
@@ -315,15 +324,3 @@ foreach(test_file ${PERFORMANCE_TEST_FILES})
     target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
     target_link_libraries(${test_name} ${LIBS})
 endforeach()
-
-# 添加 allocator 测试（使用 C++ 编译）
-add_executable(test_allocator test/unit/test_allocator.cpp ${SOURCES})
-set_target_properties(test_allocator PROPERTIES LINKER_LANGUAGE CXX)
-add_dependencies(test_allocator libuv mbedtls xxhash gtest)
-if(BUILD_WITH_MIMALLOC)
-    add_dependencies(test_allocator mimalloc)
-endif()
-target_compile_options(test_allocator PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
-target_link_libraries(test_allocator ${LIBS} ${GTEST_LIBS})
-target_include_directories(test_allocator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
-add_test(NAME test_allocator COMMAND test_allocator)

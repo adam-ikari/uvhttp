@@ -13,7 +13,6 @@
 static int on_ws_message(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len, int opcode) {
     (void)opcode;
 
-
     /* 回显消息 */
     char response[256];
     snprintf(response, sizeof(response), "Echo: %.*s", (int)len, data);
@@ -23,18 +22,14 @@ static int on_ws_message(uvhttp_ws_connection_t* ws_conn, const char* data, size
 }
 
 /* WebSocket 关闭回调 */
-static int on_ws_close(uvhttp_ws_connection_t* ws_conn, int code, const char* reason) {
-    return 0;
-}
-
-/* WebSocket 错误回调 */
-static int on_ws_error(uvhttp_ws_connection_t* ws_conn, int error_code, const char* error_msg) {
+static int on_ws_close(uvhttp_ws_connection_t* ws_conn) {
+    (void)ws_conn;
     return 0;
 }
 
 /* HTTP 请求处理器 */
 static int http_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    const char* url = uvhttp_request_get_url(request);
+    (void)request;
 
     /* 返回简单的 HTML 页面 */
     const char* html = "<html><body><h1>WebSocket 测试服务器</h1>"
