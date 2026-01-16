@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <uv.h>
 #include "uvhttp_async_file.h"
+#include "test_loop_helper.h"
 
 /* 测试完成回调计数器 */
 static int completion_count = 0;
@@ -36,12 +37,13 @@ static void delete_test_file(const char* path) {
 
 /* 测试管理器创建和销毁 */
 TEST(UvhttpAsyncFileFullCoverageTest, ManagerCreateNormal) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
-    EXPECT_EQ(manager->loop, loop);
+    EXPECT_EQ(manager->loop, loop.get());
     EXPECT_EQ(manager->max_concurrent_reads, 10);
     EXPECT_EQ(manager->current_reads, 0);
     EXPECT_EQ(manager->read_buffer_size, 4096);
@@ -58,24 +60,26 @@ TEST(UvhttpAsyncFileFullCoverageTest, ManagerCreateNullLoop) {
 }
 
 TEST(UvhttpAsyncFileFullCoverageTest, ManagerCreateInvalidConcurrent) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 测试零并发 */
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 0, 4096, 1024 * 1024);
+        loop.get(), 0, 4096, 1024 * 1024);
     EXPECT_EQ(manager, nullptr);
     
     /* 测试负并发 */
     manager = uvhttp_async_file_manager_create(
-        loop, -1, 4096, 1024 * 1024);
+        loop.get(), -1, 4096, 1024 * 1024);
     EXPECT_EQ(manager, nullptr);
 }
 
 TEST(UvhttpAsyncFileFullCoverageTest, ManagerCreateZeroBufferSize) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 0, 1024 * 1024);
+        loop.get(), 10, 0, 1024 * 1024);
     EXPECT_EQ(manager, nullptr);
 }
 
@@ -86,7 +90,8 @@ TEST(UvhttpAsyncFileFullCoverageTest, ManagerFreeNull) {
 
 /* 测试异步文件读取 */
 TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadNormal) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建测试文件 */
     const char* test_file = "/tmp/test_async_file_read.txt";
@@ -95,7 +100,7 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadNormal) {
     
     /* 创建管理器 */
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     
     /* 重置回调计数器 */
@@ -108,7 +113,7 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadNormal) {
     EXPECT_EQ(result, 0);
     
     /* 运行事件循环 */
-    uv_run(loop, UV_RUN_DEFAULT);
+    uv_run(loop.get(), UV_RUN_DEFAULT);
     
     /* 验证回调被调用 */
     EXPECT_EQ(completion_count, 1);
@@ -128,10 +133,11 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadNullManager) {
 }
 
 TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadNullPath) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     
     int result = uvhttp_async_file_read(manager, NULL, 
@@ -142,11 +148,12 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadNullPath) {
 }
 
 TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadNullRequest) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     const char* test_file = "/tmp/test_async_file_read.txt";
     
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     
     int result = uvhttp_async_file_read(manager, test_file, 
@@ -157,11 +164,12 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadNullRequest) {
 }
 
 TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadNullResponse) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     const char* test_file = "/tmp/test_async_file_read.txt";
     
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     
     int result = uvhttp_async_file_read(manager, test_file, 
@@ -172,11 +180,12 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadNullResponse) {
 }
 
 TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadNullCallback) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     const char* test_file = "/tmp/test_async_file_read.txt";
     
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     
     int result = uvhttp_async_file_read(manager, test_file, 
@@ -187,10 +196,11 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadNullCallback) {
 }
 
 TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadNonexistentFile) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     
     /* 重置回调计数器 */
@@ -204,7 +214,7 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadNonexistentFile) {
     EXPECT_EQ(result, 0);
     
     /* 运行事件循环 */
-    uv_run(loop, UV_RUN_DEFAULT);
+    uv_run(loop.get(), UV_RUN_DEFAULT);
     
     /* 验证回调被调用，但状态为错误 */
     EXPECT_EQ(completion_count, 1);
@@ -214,7 +224,8 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadNonexistentFile) {
 }
 
 TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadTooLarge) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建大文件 */
     const char* test_file = "/tmp/test_large_file.txt";
@@ -224,7 +235,7 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadTooLarge) {
     
     /* 创建管理器，限制最大文件大小为 1MB */
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     
     /* 重置回调计数器 */
@@ -237,7 +248,7 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileReadTooLarge) {
     EXPECT_EQ(result, 0);
     
     /* 运行事件循环 */
-    uv_run(loop, UV_RUN_DEFAULT);
+    uv_run(loop.get(), UV_RUN_DEFAULT);
     
     /* 验证回调被调用，但状态为错误 */
     EXPECT_EQ(completion_count, 1);
@@ -255,10 +266,11 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileCancelNullManager) {
 }
 
 TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileCancelNullRequest) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     
     int result = uvhttp_async_file_cancel(manager, NULL);
@@ -269,7 +281,8 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileCancelNullRequest) {
 
 /* 测试文件流传输 */
 TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileStreamNormal) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建测试文件 */
     const char* test_file = "/tmp/test_async_file_stream.txt";
@@ -278,7 +291,7 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileStreamNormal) {
     
     /* 创建管理器 */
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     
     /* 流式传输文件 */
@@ -287,7 +300,7 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileStreamNormal) {
     EXPECT_EQ(result, 0);
     
     /* 运行事件循环 */
-    uv_run(loop, UV_RUN_DEFAULT);
+    uv_run(loop.get(), UV_RUN_DEFAULT);
     
     /* 清理 */
     uvhttp_async_file_manager_free(manager);
@@ -303,10 +316,11 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileStreamNullManager) {
 }
 
 TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileStreamNullPath) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     
     int result = uvhttp_async_file_stream(manager, NULL, 
@@ -317,11 +331,12 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileStreamNullPath) {
 }
 
 TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileStreamNullResponse) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     const char* test_file = "/tmp/test_async_file_stream.txt";
     
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     
     int result = uvhttp_async_file_stream(manager, test_file, 
@@ -332,11 +347,12 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileStreamNullResponse) {
 }
 
 TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileStreamZeroChunkSize) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     const char* test_file = "/tmp/test_async_file_stream.txt";
     
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     
     int result = uvhttp_async_file_stream(manager, test_file, 
@@ -347,10 +363,11 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileStreamZeroChunkSize) {
 }
 
 TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileStreamNonexistentFile) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     
     /* 尝试流传输不存在的文件 */
@@ -370,10 +387,11 @@ TEST(UvhttpAsyncFileFullCoverageTest, AsyncFileStreamStopNull) {
 
 /* 测试获取统计信息 */
 TEST(UvhttpAsyncFileFullCoverageTest, GetStatsNormal) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     
     int current_reads, max_concurrent;
@@ -392,10 +410,11 @@ TEST(UvhttpAsyncFileFullCoverageTest, GetStatsNullManager) {
 }
 
 TEST(UvhttpAsyncFileFullCoverageTest, GetStatsNullOutputs) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 10, 4096, 1024 * 1024);
+        loop.get(), 10, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     
     /* 测试 NULL 输出参数 */
@@ -415,11 +434,12 @@ TEST(UvhttpAsyncFileFullCoverageTest, GetStatsNullOutputs) {
 
 /* 测试边界条件 */
 TEST(UvhttpAsyncFileFullCoverageTest, EdgeCases) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 测试最大并发数 */
     uvhttp_async_file_manager_t* manager = uvhttp_async_file_manager_create(
-        loop, 1, 4096, 1024 * 1024);
+        loop.get(), 1, 4096, 1024 * 1024);
     ASSERT_NE(manager, nullptr);
     EXPECT_EQ(manager->max_concurrent_reads, 1);
     
@@ -441,7 +461,7 @@ TEST(UvhttpAsyncFileFullCoverageTest, EdgeCases) {
     EXPECT_EQ(result, -1);
     
     /* 运行事件循环 */
-    uv_run(loop, UV_RUN_DEFAULT);
+    uv_run(loop.get(), UV_RUN_DEFAULT);
     
     /* 清理 */
     uvhttp_async_file_manager_free(manager);
