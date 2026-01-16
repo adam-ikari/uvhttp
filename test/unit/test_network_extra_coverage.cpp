@@ -15,19 +15,21 @@
 #include <uv.h>
 #include "uvhttp_network.h"
 #include "uvhttp_allocator.h"
+#include "test_loop_helper.h"
 #include <cstring>
 
 /* 测试 libuv_write_impl */
 TEST(UvhttpNetworkExtraTest, LibuvWriteImpl) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建 libuv 网络接口 */
-    uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop);
+    uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop.get());
     ASSERT_NE(interface, nullptr);
     
     /* 创建一个 TCP 句柄 */
     uv_tcp_t tcp_handle;
-    uv_tcp_init(loop, &tcp_handle);
+    uv_tcp_init(loop.get(), &tcp_handle);
     
     /* 准备写缓冲区 */
     uv_buf_t bufs[1];
@@ -52,20 +54,21 @@ TEST(UvhttpNetworkExtraTest, LibuvWriteImpl) {
     uvhttp_network_interface_destroy(interface);
     
     /* 运行事件循环以处理所有待处理的回调 */
-    uv_run(loop, UV_RUN_NOWAIT);
+    uv_run(loop.get(), UV_RUN_NOWAIT);
 }
 
 /* 测试 libuv_read_start_impl */
 TEST(UvhttpNetworkExtraTest, LibuvReadStartImpl) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建 libuv 网络接口 */
-    uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop);
+    uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop.get());
     ASSERT_NE(interface, nullptr);
     
     /* 创建一个 TCP 句柄 */
     uv_tcp_t tcp_handle;
-    uv_tcp_init(loop, &tcp_handle);
+    uv_tcp_init(loop.get(), &tcp_handle);
     
     /* 分配回调 */
     auto alloc_cb = [](uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
@@ -95,20 +98,21 @@ TEST(UvhttpNetworkExtraTest, LibuvReadStartImpl) {
     uvhttp_network_interface_destroy(interface);
     
     /* 运行事件循环以处理所有待处理的回调 */
-    uv_run(loop, UV_RUN_NOWAIT);
+    uv_run(loop.get(), UV_RUN_NOWAIT);
 }
 
 /* 测试 libuv_read_stop_impl */
 TEST(UvhttpNetworkExtraTest, LibuvReadStopImpl) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建 libuv 网络接口 */
-    uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop);
+    uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop.get());
     ASSERT_NE(interface, nullptr);
     
     /* 创建一个 TCP 句柄 */
     uv_tcp_t tcp_handle;
-    uv_tcp_init(loop, &tcp_handle);
+    uv_tcp_init(loop.get(), &tcp_handle);
     
     /* 调用 libuv_read_stop_impl */
     int result = interface->read_stop(interface, (uv_stream_t*)&tcp_handle);
@@ -121,20 +125,21 @@ TEST(UvhttpNetworkExtraTest, LibuvReadStopImpl) {
     uvhttp_network_interface_destroy(interface);
     
     /* 运行事件循环以处理所有待处理的回调 */
-    uv_run(loop, UV_RUN_NOWAIT);
+    uv_run(loop.get(), UV_RUN_NOWAIT);
 }
 
 /* 测试 libuv_close_impl */
 TEST(UvhttpNetworkExtraTest, LibuvCloseImpl) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建 libuv 网络接口 */
-    uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop);
+    uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop.get());
     ASSERT_NE(interface, nullptr);
     
     /* 创建一个 TCP 句柄 */
     uv_tcp_t tcp_handle;
-    uv_tcp_init(loop, &tcp_handle);
+    uv_tcp_init(loop.get(), &tcp_handle);
     
     /* 调用 libuv_close_impl */
     int result = interface->close(interface, (uv_handle_t*)&tcp_handle, 
@@ -149,15 +154,16 @@ TEST(UvhttpNetworkExtraTest, LibuvCloseImpl) {
     uvhttp_network_interface_destroy(interface);
     
     /* 运行事件循环以处理所有待处理的回调 */
-    uv_run(loop, UV_RUN_NOWAIT);
+    uv_run(loop.get(), UV_RUN_NOWAIT);
 }
 
 /* 测试 libuv_set_error_simulation_impl */
 TEST(UvhttpNetworkExtraTest, LibuvSetErrorSimulationImpl) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建 libuv 网络接口 */
-    uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop);
+    uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop.get());
     ASSERT_NE(interface, nullptr);
     
     /* 调用 libuv_set_error_simulation_impl */
@@ -173,10 +179,11 @@ TEST(UvhttpNetworkExtraTest, LibuvSetErrorSimulationImpl) {
 
 /* 测试 mock_get_stats_impl */
 TEST(UvhttpNetworkExtraTest, MockGetStatsImpl) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建 mock 网络接口 */
-    uvhttp_network_interface_t* interface = uvhttp_mock_network_create(loop);
+    uvhttp_network_interface_t* interface = uvhttp_mock_network_create(loop.get());
     ASSERT_NE(interface, nullptr);
     
     /* 调用 mock_get_stats_impl */
@@ -191,10 +198,11 @@ TEST(UvhttpNetworkExtraTest, MockGetStatsImpl) {
 
 /* 测试 libuv_get_stats_impl */
 TEST(UvhttpNetworkExtraTest, LibuvGetStatsImpl) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建 libuv 网络接口 */
-    uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop);
+    uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop.get());
     ASSERT_NE(interface, nullptr);
     
     /* 调用 libuv_get_stats_impl */
@@ -209,10 +217,11 @@ TEST(UvhttpNetworkExtraTest, LibuvGetStatsImpl) {
 
 /* 测试 libuv_reset_stats_impl */
 TEST(UvhttpNetworkExtraTest, LibuvResetStatsImpl) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建 libuv 网络接口 */
-    uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop);
+    uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop.get());
     ASSERT_NE(interface, nullptr);
     
     /* 设置一些统计数据 */
@@ -238,25 +247,26 @@ TEST(UvhttpNetworkExtraTest, LibuvResetStatsImpl) {
 
 /* 测试网络接口创建 */
 TEST(UvhttpNetworkExtraTest, NetworkInterfaceCreate) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 测试创建 libuv 网络接口 */
     uvhttp_network_interface_t* libuv_interface = 
-        uvhttp_network_interface_create(UVHTTP_NETWORK_LIBUV, loop);
+        uvhttp_network_interface_create(UVHTTP_NETWORK_LIBUV, loop.get());
     ASSERT_NE(libuv_interface, nullptr);
     EXPECT_EQ(libuv_interface->type, UVHTTP_NETWORK_LIBUV);
     uvhttp_network_interface_destroy(libuv_interface);
     
     /* 测试创建 mock 网络接口 */
     uvhttp_network_interface_t* mock_interface = 
-        uvhttp_network_interface_create(UVHTTP_NETWORK_MOCK, loop);
+        uvhttp_network_interface_create(UVHTTP_NETWORK_MOCK, loop.get());
     ASSERT_NE(mock_interface, nullptr);
     EXPECT_EQ(mock_interface->type, UVHTTP_NETWORK_MOCK);
     uvhttp_network_interface_destroy(mock_interface);
     
     /* 测试创建 benchmark 网络接口 */
     uvhttp_network_interface_t* benchmark_interface = 
-        uvhttp_network_interface_create(UVHTTP_NETWORK_BENCHMARK, loop);
+        uvhttp_network_interface_create(UVHTTP_NETWORK_BENCHMARK, loop.get());
     ASSERT_NE(benchmark_interface, nullptr);
     EXPECT_EQ(benchmark_interface->type, UVHTTP_NETWORK_BENCHMARK);
     uvhttp_network_interface_destroy(benchmark_interface);
@@ -264,10 +274,11 @@ TEST(UvhttpNetworkExtraTest, NetworkInterfaceCreate) {
 
 /* 测试网络接口 NULL 参数处理 */
 TEST(UvhttpNetworkExtraTest, NetworkInterfaceNullHandling) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建网络接口 */
-    uvhttp_network_interface_t* interface = uvhttp_mock_network_create(loop);
+    uvhttp_network_interface_t* interface = uvhttp_mock_network_create(loop.get());
     ASSERT_NE(interface, nullptr);
     
     /* 测试 NULL 流处理 - mock 接口可能不检查 NULL */
@@ -291,10 +302,11 @@ TEST(UvhttpNetworkExtraTest, NetworkInterfaceNullHandling) {
 
 /* 测试网络接口统计 */
 TEST(UvhttpNetworkExtraTest, NetworkInterfaceStats) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建 mock 网络接口 */
-    uvhttp_network_interface_t* interface = uvhttp_mock_network_create(loop);
+    uvhttp_network_interface_t* interface = uvhttp_mock_network_create(loop.get());
     ASSERT_NE(interface, nullptr);
     
     /* 验证初始统计 */
@@ -325,10 +337,11 @@ TEST(UvhttpNetworkExtraTest, NetworkInterfaceStats) {
 
 /* 测试网络接口错误模拟 */
 TEST(UvhttpNetworkExtraTest, NetworkInterfaceErrorSimulation) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建 mock 网络接口 */
-    uvhttp_network_interface_t* interface = uvhttp_mock_network_create(loop);
+    uvhttp_network_interface_t* interface = uvhttp_mock_network_create(loop.get());
     ASSERT_NE(interface, nullptr);
     
     /* 设置错误模拟 */
@@ -343,22 +356,23 @@ TEST(UvhttpNetworkExtraTest, NetworkInterfaceErrorSimulation) {
 
 /* 测试网络接口类型 */
 TEST(UvhttpNetworkExtraTest, NetworkInterfaceTypes) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 测试 libuv 网络接口 */
-    uvhttp_network_interface_t* libuv_interface = uvhttp_libuv_network_create(loop);
+    uvhttp_network_interface_t* libuv_interface = uvhttp_libuv_network_create(loop.get());
     ASSERT_NE(libuv_interface, nullptr);
     EXPECT_EQ(libuv_interface->type, UVHTTP_NETWORK_LIBUV);
     uvhttp_network_interface_destroy(libuv_interface);
     
     /* 测试 mock 网络接口 */
-    uvhttp_network_interface_t* mock_interface = uvhttp_mock_network_create(loop);
+    uvhttp_network_interface_t* mock_interface = uvhttp_mock_network_create(loop.get());
     ASSERT_NE(mock_interface, nullptr);
     EXPECT_EQ(mock_interface->type, UVHTTP_NETWORK_MOCK);
     uvhttp_network_interface_destroy(mock_interface);
     
     /* 测试 benchmark 网络接口 */
-    uvhttp_network_interface_t* benchmark_interface = uvhttp_benchmark_network_create(loop);
+    uvhttp_network_interface_t* benchmark_interface = uvhttp_benchmark_network_create(loop.get());
     ASSERT_NE(benchmark_interface, nullptr);
     EXPECT_EQ(benchmark_interface->type, UVHTTP_NETWORK_BENCHMARK);
     uvhttp_network_interface_destroy(benchmark_interface);
@@ -366,11 +380,12 @@ TEST(UvhttpNetworkExtraTest, NetworkInterfaceTypes) {
 
 /* 测试网络接口多次创建销毁 */
 TEST(UvhttpNetworkExtraTest, NetworkInterfaceMultipleCreateDestroy) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 多次创建和销毁网络接口 */
     for (int i = 0; i < 5; i++) {
-        uvhttp_network_interface_t* interface = uvhttp_mock_network_create(loop);
+        uvhttp_network_interface_t* interface = uvhttp_mock_network_create(loop.get());
         ASSERT_NE(interface, nullptr);
         uvhttp_network_interface_destroy(interface);
     }
@@ -381,13 +396,14 @@ TEST(UvhttpNetworkExtraTest, NetworkInterfaceMultipleCreateDestroy) {
 
 /* 测试网络接口并发操作 */
 TEST(UvhttpNetworkExtraTest, NetworkInterfaceConcurrentOperations) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建多个网络接口 */
     uvhttp_network_interface_t* interfaces[3];
     
     for (int i = 0; i < 3; i++) {
-        interfaces[i] = uvhttp_mock_network_create(loop);
+        interfaces[i] = uvhttp_mock_network_create(loop.get());
         ASSERT_NE(interfaces[i], nullptr);
     }
     
