@@ -15,11 +15,15 @@
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_server.h"
+#include "test_loop_helper.h"
 #include <cstring>
 #include <cstdlib>
 
 /* 测试 html_escape */
 TEST(UvhttpStaticDirectoryListingTest, HtmlEscape) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
     /* 创建静态上下文 */
     uvhttp_static_config_t config;
     memset(&config, 0, sizeof(config));
@@ -38,7 +42,7 @@ TEST(UvhttpStaticDirectoryListingTest, HtmlEscape) {
     
     /* 创建 TCP 客户端 */
     uv_tcp_t client;
-    uv_tcp_init(uv_default_loop(), &client);
+    uv_tcp_init(loop.get(), &client);
     
     /* 初始化响应 */
     uvhttp_response_init(&response, &client);
@@ -59,6 +63,9 @@ TEST(UvhttpStaticDirectoryListingTest, HtmlEscape) {
 
 /* 测试目录列表生成 */
 TEST(UvhttpStaticDirectoryListingTest, GenerateDirectoryListing) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
     /* 创建测试目录 */
     const char* test_dir = "/tmp/uvhttp_test_dir";
     mkdir(test_dir, 0755);
@@ -92,7 +99,7 @@ TEST(UvhttpStaticDirectoryListingTest, GenerateDirectoryListing) {
     
     /* 创建 TCP 客户端 */
     uv_tcp_t client;
-    uv_tcp_init(uv_default_loop(), &client);
+    uv_tcp_init(loop.get(), &client);
     
     /* 初始化响应 */
     uvhttp_response_init(&response, &client);
@@ -117,6 +124,9 @@ TEST(UvhttpStaticDirectoryListingTest, GenerateDirectoryListing) {
 
 /* 测试 sendfile 完成 */
 TEST(UvhttpStaticDirectoryListingTest, SendfileComplete) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
     /* 创建静态上下文 */
     uvhttp_static_config_t config;
     memset(&config, 0, sizeof(config));
@@ -143,7 +153,7 @@ TEST(UvhttpStaticDirectoryListingTest, SendfileComplete) {
     
     /* 创建 TCP 客户端 */
     uv_tcp_t client;
-    uv_tcp_init(uv_default_loop(), &client);
+    uv_tcp_init(loop.get(), &client);
     
     /* 初始化响应 */
     uvhttp_response_init(&response, &client);
@@ -167,6 +177,9 @@ TEST(UvhttpStaticDirectoryListingTest, SendfileComplete) {
 
 /* 测试 sendfile 超时 */
 TEST(UvhttpStaticDirectoryListingTest, SendfileTimeout) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
     /* 创建静态上下文 */
     uvhttp_static_config_t config;
     memset(&config, 0, sizeof(config));
@@ -194,7 +207,7 @@ TEST(UvhttpStaticDirectoryListingTest, SendfileTimeout) {
     
     /* 创建 TCP 客户端 */
     uv_tcp_t client;
-    uv_tcp_init(uv_default_loop(), &client);
+    uv_tcp_init(loop.get(), &client);
     
     /* 初始化响应 */
     uvhttp_response_init(&response, &client);
@@ -218,6 +231,9 @@ TEST(UvhttpStaticDirectoryListingTest, SendfileTimeout) {
 
 /* 测试文件关闭 */
 TEST(UvhttpStaticDirectoryListingTest, FileClose) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
     /* 创建静态上下文 */
     uvhttp_static_config_t config;
     memset(&config, 0, sizeof(config));
@@ -244,7 +260,7 @@ TEST(UvhttpStaticDirectoryListingTest, FileClose) {
     
     /* 创建 TCP 客户端 */
     uv_tcp_t client;
-    uv_tcp_init(uv_default_loop(), &client);
+    uv_tcp_init(loop.get(), &client);
     
     /* 初始化响应 */
     uvhttp_response_init(&response, &client);
@@ -268,6 +284,9 @@ TEST(UvhttpStaticDirectoryListingTest, FileClose) {
 
 /* 测试目录列表中的特殊字符 */
 TEST(UvhttpStaticDirectoryListingTest, DirectoryListingSpecialChars) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
     /* 创建测试目录 */
     const char* test_dir = "/tmp/uvhttp_test_special";
     mkdir(test_dir, 0755);
@@ -298,7 +317,7 @@ TEST(UvhttpStaticDirectoryListingTest, DirectoryListingSpecialChars) {
     
     /* 创建 TCP 客户端 */
     uv_tcp_t client;
-    uv_tcp_init(uv_default_loop(), &client);
+    uv_tcp_init(loop.get(), &client);
     
     /* 初始化响应 */
     uvhttp_response_init(&response, &client);
@@ -323,6 +342,9 @@ TEST(UvhttpStaticDirectoryListingTest, DirectoryListingSpecialChars) {
 
 /* 测试空目录列表 */
 TEST(UvhttpStaticDirectoryListingTest, EmptyDirectoryListing) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
     /* 创建测试目录 */
     const char* test_dir = "/tmp/uvhttp_test_empty";
     mkdir(test_dir, 0755);
@@ -346,7 +368,7 @@ TEST(UvhttpStaticDirectoryListingTest, EmptyDirectoryListing) {
     
     /* 创建 TCP 客户端 */
     uv_tcp_t client;
-    uv_tcp_init(uv_default_loop(), &client);
+    uv_tcp_init(loop.get(), &client);
     
     /* 初始化响应 */
     uvhttp_response_init(&response, &client);
@@ -370,6 +392,9 @@ TEST(UvhttpStaticDirectoryListingTest, EmptyDirectoryListing) {
 
 /* 测试目录列表中的子目录 */
 TEST(UvhttpStaticDirectoryListingTest, DirectoryListingWithSubdirs) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
     /* 创建测试目录结构 */
     mkdir("/tmp/uvhttp_test_nested", 0755);
     mkdir("/tmp/uvhttp_test_nested/dir1", 0755);
@@ -407,7 +432,7 @@ TEST(UvhttpStaticDirectoryListingTest, DirectoryListingWithSubdirs) {
     
     /* 创建 TCP 客户端 */
     uv_tcp_t client;
-    uv_tcp_init(uv_default_loop(), &client);
+    uv_tcp_init(loop.get(), &client);
     
     /* 初始化响应 */
     uvhttp_response_init(&response, &client);
