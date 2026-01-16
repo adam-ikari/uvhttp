@@ -6,13 +6,15 @@
 #include "uvhttp_connection.h"
 #include "uvhttp_server.h"
 #include "uvhttp_allocator.h"
+#include "test_loop_helper.h"
 
 TEST(UvhttpConnectionExtendedCoverageTest, ConnectionTlsHandshakeFunc) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
 
     uvhttp_server_t* server = (uvhttp_server_t*)uvhttp_alloc(sizeof(uvhttp_server_t));
     memset(server, 0, sizeof(uvhttp_server_t));
-    server->loop = loop;
+    server->loop = loop.get();
 
     uvhttp_connection_t* conn = uvhttp_connection_new(server);
     ASSERT_NE(conn, nullptr);
@@ -24,11 +26,12 @@ TEST(UvhttpConnectionExtendedCoverageTest, ConnectionTlsHandshakeFunc) {
 }
 
 TEST(UvhttpConnectionExtendedCoverageTest, ConnectionStateTransitions) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
 
     uvhttp_server_t* server = (uvhttp_server_t*)uvhttp_alloc(sizeof(uvhttp_server_t));
     memset(server, 0, sizeof(uvhttp_server_t));
-    server->loop = loop;
+    server->loop = loop.get();
 
     uvhttp_connection_t* conn = uvhttp_connection_new(server);
     ASSERT_NE(conn, nullptr);

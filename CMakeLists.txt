@@ -210,7 +210,7 @@ file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
 
 # 添加测试辅助文件
-set(TEST_HELPER_FILES test/unit/test_time_mock.cpp)
+set(TEST_HELPER_FILES test/unit/test_time_mock.cpp test/unit/test_loop_helper.cpp)
 
 foreach(test_file ${GTEST_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)

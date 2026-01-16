@@ -2,17 +2,22 @@
 #include <stddef.h>
 #include <uv.h>
 #include "uvhttp_context.h"
+#include "test_loop_helper.h"
 
+/* 测试上下文创建和销毁 */
 TEST(UvhttpContextSimpleTest, CreateDestroy) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_context_t* context = uvhttp_context_create(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
+    uvhttp_context_t* context = uvhttp_context_create(loop.get());
     ASSERT_NE(context, nullptr);
-    EXPECT_EQ(context->loop, loop);
+    EXPECT_EQ(context->loop, loop.get());
     EXPECT_EQ(context->initialized, 0);
     
     uvhttp_context_destroy(context);
 }
 
+/* 测试日志提供者 */
 TEST(UvhttpContextSimpleTest, LoggerProvider) {
     uvhttp_logger_provider_t* provider = uvhttp_default_logger_provider_create(UVHTTP_LOG_LEVEL_INFO);
     ASSERT_NE(provider, nullptr);
@@ -23,6 +28,7 @@ TEST(UvhttpContextSimpleTest, LoggerProvider) {
     provider->set_level(provider, UVHTTP_LOG_LEVEL_ERROR);
 }
 
+/* 测试配置提供者 */
 TEST(UvhttpContextSimpleTest, ConfigProvider) {
     uvhttp_config_provider_t* provider = uvhttp_default_config_provider_create();
     ASSERT_NE(provider, nullptr);
@@ -42,9 +48,12 @@ TEST(UvhttpContextSimpleTest, ConfigProvider) {
     EXPECT_EQ(provider->set_int(provider, "test_int", 100), 0);
 }
 
+/* 测试上下文与提供者集成 */
 TEST(UvhttpContextSimpleTest, ContextWithProviders) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_context_t* context = uvhttp_context_create(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
+    uvhttp_context_t* context = uvhttp_context_create(loop.get());
     ASSERT_NE(context, nullptr);
     
     uvhttp_logger_provider_t* logger = uvhttp_default_logger_provider_create(UVHTTP_LOG_LEVEL_INFO);

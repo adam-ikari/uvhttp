@@ -15,6 +15,7 @@
 #include "uvhttp_context.h"
 #include "uvhttp_connection.h"
 #include "uvhttp_network.h"
+#include "test_loop_helper.h"
 #include <cstring>
 
 /* 测试 default_acquire_connection */
@@ -195,14 +196,15 @@ TEST(UvhttpContextExtraTest, DefaultCleanupExpired) {
 
 /* 测试上下文创建和销毁 */
 TEST(UvhttpContextExtraTest, ContextCreateDestroy) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建上下文 */
-    uvhttp_context_t* context = uvhttp_context_create(loop);
+    uvhttp_context_t* context = uvhttp_context_create(loop.get());
     ASSERT_NE(context, nullptr);
     
     /* 验证上下文 */
-    EXPECT_EQ(context->loop, loop);
+    EXPECT_EQ(context->loop, loop.get());
     EXPECT_FALSE(context->initialized);
     
     /* 销毁上下文 */
@@ -211,10 +213,11 @@ TEST(UvhttpContextExtraTest, ContextCreateDestroy) {
 
 /* 测试上下文初始化 */
 TEST(UvhttpContextExtraTest, ContextInit) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建上下文 */
-    uvhttp_context_t* context = uvhttp_context_create(loop);
+    uvhttp_context_t* context = uvhttp_context_create(loop.get());
     ASSERT_NE(context, nullptr);
     
     /* 初始化上下文 */
@@ -233,10 +236,11 @@ TEST(UvhttpContextExtraTest, ContextInit) {
 
 /* 测试上下文设置连接提供者 */
 TEST(UvhttpContextExtraTest, ContextSetConnectionProvider) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建上下文 */
-    uvhttp_context_t* context = uvhttp_context_create(loop);
+    uvhttp_context_t* context = uvhttp_context_create(loop.get());
     ASSERT_NE(context, nullptr);
     
     /* 创建默认连接提供者 */
@@ -254,14 +258,15 @@ TEST(UvhttpContextExtraTest, ContextSetConnectionProvider) {
 
 /* 测试上下文设置网络接口 */
 TEST(UvhttpContextExtraTest, ContextSetNetworkInterface) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建上下文 */
-    uvhttp_context_t* context = uvhttp_context_create(loop);
+    uvhttp_context_t* context = uvhttp_context_create(loop.get());
     ASSERT_NE(context, nullptr);
     
     /* 创建网络接口 */
-    uvhttp_network_interface_t* interface = uvhttp_mock_network_create(loop);
+    uvhttp_network_interface_t* interface = uvhttp_mock_network_create(loop.get());
     ASSERT_NE(interface, nullptr);
     
     /* 设置网络接口 */

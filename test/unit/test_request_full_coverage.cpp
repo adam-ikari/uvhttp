@@ -5,6 +5,7 @@
 #include <uvhttp_allocator.h>
 #include <uvhttp_constants.h>
 #include <string.h>
+#include "test_loop_helper.h"
 
 /* 测试请求初始化 NULL 客户端 */
 TEST(UvhttpRequestTest, InitNullClient) {
@@ -15,9 +16,11 @@ TEST(UvhttpRequestTest, InitNullClient) {
 
 /* 测试请求初始化 NULL 请求 */
 TEST(UvhttpRequestTest, InitNullRequest) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
     uv_tcp_t client;
-    uv_tcp_init(loop, &client);
+    uv_tcp_init(loop.get(), &client);
     
     int result = uvhttp_request_init(NULL, &client);
     EXPECT_EQ(result, -1);
@@ -25,9 +28,11 @@ TEST(UvhttpRequestTest, InitNullRequest) {
 
 /* 测试请求初始化 */
 TEST(UvhttpRequestTest, Init) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
     uv_tcp_t client;
-    uv_tcp_init(loop, &client);
+    uv_tcp_init(loop.get(), &client);
     
     uvhttp_request_t request;
     int result = uvhttp_request_init(&request, &client);
@@ -50,9 +55,11 @@ TEST(UvhttpRequestTest, CleanupNull) {
 
 /* 测试请求清理 */
 TEST(UvhttpRequestTest, Cleanup) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
     uv_tcp_t client;
-    uv_tcp_init(loop, &client);
+    uv_tcp_init(loop.get(), &client);
     
     uvhttp_request_t request;
     uvhttp_request_init(&request, &client);
@@ -72,9 +79,11 @@ TEST(UvhttpRequestTest, Free) {
     uvhttp_request_t* request = (uvhttp_request_t*)uvhttp_alloc(sizeof(uvhttp_request_t));
     ASSERT_NE(request, nullptr);
     
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
     uv_tcp_t client;
-    uv_tcp_init(loop, &client);
+    uv_tcp_init(loop.get(), &client);
     
     uvhttp_request_init(request, &client);
     

@@ -4,6 +4,7 @@
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_allocator.h"
+#include "test_loop_helper.h"
 #include <string.h>
 
 /* 静态变量用于测试 */
@@ -426,8 +427,10 @@ TEST(UvhttpMiddlewareTest, ExecuteMiddlewareNullParams) {
 
 /* 测试向服务器添加中间件 */
 TEST(UvhttpMiddlewareTest, AddMiddlewareToServer) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     uvhttp_http_middleware_t* middleware = uvhttp_http_middleware_create(
@@ -448,8 +451,10 @@ TEST(UvhttpMiddlewareTest, AddMiddlewareToServer) {
 
 /* 测试向服务器添加多个中间件 */
 TEST(UvhttpMiddlewareTest, AddMultipleMiddlewareToServer) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     uvhttp_http_middleware_t* m1 = uvhttp_http_middleware_create(
@@ -479,8 +484,10 @@ TEST(UvhttpMiddlewareTest, AddMultipleMiddlewareToServer) {
 
 /* 测试从服务器移除中间件 */
 TEST(UvhttpMiddlewareTest, RemoveMiddlewareFromServer) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     uvhttp_http_middleware_t* middleware = uvhttp_http_middleware_create(
@@ -503,8 +510,10 @@ TEST(UvhttpMiddlewareTest, RemoveMiddlewareFromServer) {
 
 /* 测试从服务器移除不存在的中间件 */
 TEST(UvhttpMiddlewareTest, RemoveNonExistentMiddleware) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     uvhttp_error_t result = uvhttp_server_remove_middleware(server, "/api");
@@ -516,8 +525,10 @@ TEST(UvhttpMiddlewareTest, RemoveNonExistentMiddleware) {
 
 /* 测试清理服务器中间件链 */
 TEST(UvhttpMiddlewareTest, CleanupServerMiddleware) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     uvhttp_http_middleware_t* m1 = uvhttp_http_middleware_create(
@@ -548,8 +559,10 @@ TEST(UvhttpMiddlewareTest, CleanupServerMiddleware) {
 
 /* 测试清理空中间件链 */
 TEST(UvhttpMiddlewareTest, CleanupEmptyMiddlewareChain) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     /* 清理空中间件链不会崩溃 */
