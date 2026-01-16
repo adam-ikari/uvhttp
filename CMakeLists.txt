@@ -208,6 +208,8 @@ enable_testing()
 # 添加 gtest 测试（仅支持 C++ 测试文件）
 file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
+list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_loop_helper.cpp")
+list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_time_mock.cpp")
 
 # 添加测试辅助文件
 set(TEST_HELPER_FILES test/unit/test_time_mock.cpp test/unit/test_loop_helper.cpp)
