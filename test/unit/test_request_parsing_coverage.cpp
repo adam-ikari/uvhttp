@@ -17,15 +17,17 @@
 #include "uvhttp_connection.h"
 #include "uvhttp_server.h"
 #include "uvhttp_response.h"
+#include "test_loop_helper.h"
 #include <cstring>
 #include <cstdlib>
 
 /* 测试 HTTP 请求解析 - 基本 GET 请求 */
 TEST(UvhttpRequestParsingTest, BasicGetRequest) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建服务器 */
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     /* 创建连接 */
@@ -36,7 +38,7 @@ TEST(UvhttpRequestParsingTest, BasicGetRequest) {
     /* 创建 TCP 客户端 */
     uv_tcp_t* client = (uv_tcp_t*)uvhttp_alloc(sizeof(uv_tcp_t));
     ASSERT_NE(client, nullptr);
-    uv_tcp_init(loop, client);
+    uv_tcp_init(loop.get(), client);
     
     /* 初始化请求 */
     conn->request = (uvhttp_request_t*)uvhttp_alloc(sizeof(uvhttp_request_t));
@@ -81,10 +83,11 @@ TEST(UvhttpRequestParsingTest, BasicGetRequest) {
 
 /* 测试 HTTP 请求解析 - POST 请求带 body */
 TEST(DISABLED_UvhttpRequestParsingTest, DISABLED_PostRequestWithBody) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建服务器 */
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     /* 创建连接 */
@@ -95,7 +98,7 @@ TEST(DISABLED_UvhttpRequestParsingTest, DISABLED_PostRequestWithBody) {
     /* 创建 TCP 客户端 */
     uv_tcp_t* client = (uv_tcp_t*)uvhttp_alloc(sizeof(uv_tcp_t));
     ASSERT_NE(client, nullptr);
-    uv_tcp_init(loop, client);
+    uv_tcp_init(loop.get(), client);
     
     /* 初始化请求 */
     conn->request = (uvhttp_request_t*)uvhttp_alloc(sizeof(uvhttp_request_t));
@@ -141,10 +144,11 @@ TEST(DISABLED_UvhttpRequestParsingTest, DISABLED_PostRequestWithBody) {
 
 /* 测试 HTTP 请求解析 - 多个 header */
 TEST(DISABLED_UvhttpRequestParsingTest, MultipleHeaders) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建服务器 */
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     /* 创建连接 */
@@ -155,7 +159,7 @@ TEST(DISABLED_UvhttpRequestParsingTest, MultipleHeaders) {
     /* 创建 TCP 客户端 */
     uv_tcp_t* client = (uv_tcp_t*)uvhttp_alloc(sizeof(uv_tcp_t));
     ASSERT_NE(client, nullptr);
-    uv_tcp_init(loop, client);
+    uv_tcp_init(loop.get(), client);
     
     /* 初始化请求 */
     conn->request = (uvhttp_request_t*)uvhttp_alloc(sizeof(uvhttp_request_t));
@@ -200,10 +204,11 @@ TEST(DISABLED_UvhttpRequestParsingTest, MultipleHeaders) {
 
 /* 测试 HTTP 请求解析 - WebSocket 握手 */
 TEST(DISABLED_UvhttpRequestParsingTest, WebSocketHandshake) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建服务器 */
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     /* 创建连接 */
@@ -214,7 +219,7 @@ TEST(DISABLED_UvhttpRequestParsingTest, WebSocketHandshake) {
     /* 创建 TCP 客户端 */
     uv_tcp_t* client = (uv_tcp_t*)uvhttp_alloc(sizeof(uv_tcp_t));
     ASSERT_NE(client, nullptr);
-    uv_tcp_init(loop, client);
+    uv_tcp_init(loop.get(), client);
     
     /* 初始化请求 */
     conn->request = (uvhttp_request_t*)uvhttp_alloc(sizeof(uvhttp_request_t));
@@ -269,10 +274,11 @@ TEST(DISABLED_UvhttpRequestParsingTest, WebSocketHandshake) {
 
 /* 测试 HTTP 请求解析 - 大 body */
 TEST(DISABLED_UvhttpRequestParsingTest, LargeBody) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建服务器 */
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     /* 创建连接 */
@@ -283,7 +289,7 @@ TEST(DISABLED_UvhttpRequestParsingTest, LargeBody) {
     /* 创建 TCP 客户端 */
     uv_tcp_t* client = (uv_tcp_t*)uvhttp_alloc(sizeof(uv_tcp_t));
     ASSERT_NE(client, nullptr);
-    uv_tcp_init(loop, client);
+    uv_tcp_init(loop.get(), client);
     
     /* 初始化请求 */
     conn->request = (uvhttp_request_t*)uvhttp_alloc(sizeof(uvhttp_request_t));
@@ -335,10 +341,11 @@ TEST(DISABLED_UvhttpRequestParsingTest, LargeBody) {
 
 /* 测试 HTTP 请求解析 - 查询参数 */
 TEST(DISABLED_UvhttpRequestParsingTest, QueryParameters) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建服务器 */
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     /* 创建连接 */
@@ -349,7 +356,7 @@ TEST(DISABLED_UvhttpRequestParsingTest, QueryParameters) {
     /* 创建 TCP 客户端 */
     uv_tcp_t* client = (uv_tcp_t*)uvhttp_alloc(sizeof(uv_tcp_t));
     ASSERT_NE(client, nullptr);
-    uv_tcp_init(loop, client);
+    uv_tcp_init(loop.get(), client);
     
     /* 初始化请求 */
     conn->request = (uvhttp_request_t*)uvhttp_alloc(sizeof(uvhttp_request_t));
@@ -399,10 +406,11 @@ TEST(DISABLED_UvhttpRequestParsingTest, QueryParameters) {
 
 /* 测试 HTTP 请求解析 - OPTIONS 请求 */
 TEST(DISABLED_UvhttpRequestParsingTest, OptionsRequest) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建服务器 */
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     /* 创建连接 */
@@ -413,7 +421,7 @@ TEST(DISABLED_UvhttpRequestParsingTest, OptionsRequest) {
     /* 创建 TCP 客户端 */
     uv_tcp_t* client = (uv_tcp_t*)uvhttp_alloc(sizeof(uv_tcp_t));
     ASSERT_NE(client, nullptr);
-    uv_tcp_init(loop, client);
+    uv_tcp_init(loop.get(), client);
     
     /* 初始化请求 */
     conn->request = (uvhttp_request_t*)uvhttp_alloc(sizeof(uvhttp_request_t));
@@ -456,10 +464,11 @@ TEST(DISABLED_UvhttpRequestParsingTest, OptionsRequest) {
 
 /* 测试 HTTP 请求解析 - PUT 请求 */
 TEST(DISABLED_UvhttpRequestParsingTest, PutRequest) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建服务器 */
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     /* 创建连接 */
@@ -470,7 +479,7 @@ TEST(DISABLED_UvhttpRequestParsingTest, PutRequest) {
     /* 创建 TCP 客户端 */
     uv_tcp_t* client = (uv_tcp_t*)uvhttp_alloc(sizeof(uv_tcp_t));
     ASSERT_NE(client, nullptr);
-    uv_tcp_init(loop, client);
+    uv_tcp_init(loop.get(), client);
     
     /* 初始化请求 */
     conn->request = (uvhttp_request_t*)uvhttp_alloc(sizeof(uvhttp_request_t));
@@ -515,10 +524,11 @@ TEST(DISABLED_UvhttpRequestParsingTest, PutRequest) {
 
 /* 测试 HTTP 请求解析 - DELETE 请求 */
 TEST(DISABLED_UvhttpRequestParsingTest, DeleteRequest) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建服务器 */
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     /* 创建连接 */
@@ -529,7 +539,7 @@ TEST(DISABLED_UvhttpRequestParsingTest, DeleteRequest) {
     /* 创建 TCP 客户端 */
     uv_tcp_t* client = (uv_tcp_t*)uvhttp_alloc(sizeof(uv_tcp_t));
     ASSERT_NE(client, nullptr);
-    uv_tcp_init(loop, client);
+    uv_tcp_init(loop.get(), client);
     
     /* 初始化请求 */
     conn->request = (uvhttp_request_t*)uvhttp_alloc(sizeof(uvhttp_request_t));
@@ -570,10 +580,11 @@ TEST(DISABLED_UvhttpRequestParsingTest, DeleteRequest) {
 
 /* 测试 HTTP 请求解析 - PATCH 请求 */
 TEST(DISABLED_UvhttpRequestParsingTest, PatchRequest) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建服务器 */
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     /* 创建连接 */
@@ -584,7 +595,7 @@ TEST(DISABLED_UvhttpRequestParsingTest, PatchRequest) {
     /* 创建 TCP 客户端 */
     uv_tcp_t* client = (uv_tcp_t*)uvhttp_alloc(sizeof(uv_tcp_t));
     ASSERT_NE(client, nullptr);
-    uv_tcp_init(loop, client);
+    uv_tcp_init(loop.get(), client);
     
     /* 初始化请求 */
     conn->request = (uvhttp_request_t*)uvhttp_alloc(sizeof(uvhttp_request_t));
@@ -629,10 +640,11 @@ TEST(DISABLED_UvhttpRequestParsingTest, PatchRequest) {
 
 /* 测试 HTTP 请求解析 - HEAD 请求 */
 TEST(DISABLED_UvhttpRequestParsingTest, HeadRequest) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     /* 创建服务器 */
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     /* 创建连接 */
@@ -643,7 +655,7 @@ TEST(DISABLED_UvhttpRequestParsingTest, HeadRequest) {
     /* 创建 TCP 客户端 */
     uv_tcp_t* client = (uv_tcp_t*)uvhttp_alloc(sizeof(uv_tcp_t));
     ASSERT_NE(client, nullptr);
-    uv_tcp_init(loop, client);
+    uv_tcp_init(loop.get(), client);
     
     /* 初始化请求 */
     conn->request = (uvhttp_request_t*)uvhttp_alloc(sizeof(uvhttp_request_t));
