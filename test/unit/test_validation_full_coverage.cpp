@@ -313,14 +313,14 @@ TEST(UvhttpValidationFullCoverageTest, ValidateQueryNull) {
 }
 
 TEST(UvhttpValidationFullCoverageTest, ValidateQueryValid) {
-    // 空字符串是有效的（NULL 返回 1，但空字符串会检查危险字符）
-    // 由于 dangerous_query_chars 包含 '\0'，空字符串会被 strchr 检测到
-    EXPECT_EQ(uvhttp_validate_query_string(""), 0);
-    // 由于 dangerous_query_chars 包含 '\0'，任何字符串都会被 strchr 检测到
-    // 这是一个实现问题，strchr 总是能找到 '\0' 在字符串末尾
-    EXPECT_EQ(uvhttp_validate_query_string("key=value"), 0);
-    EXPECT_EQ(uvhttp_validate_query_string("key1=value1&key2=value2"), 0);
-    EXPECT_EQ(uvhttp_validate_query_string("?key=value"), 0);
+    EXPECT_EQ(uvhttp_validate_query_string(nullptr), 1);
+    // 空字符串是有效的
+    EXPECT_EQ(uvhttp_validate_query_string(""), 1);
+    // 修复 bug 后，移除了 dangerous_query_chars 中的 '\0'
+    // 现在正常的查询字符串应该返回 1（TRUE）
+    EXPECT_EQ(uvhttp_validate_query_string("key=value"), 1);
+    EXPECT_EQ(uvhttp_validate_query_string("key1=value1&key2=value2"), 1);
+    EXPECT_EQ(uvhttp_validate_query_string("?key=value"), 1);
 }
 
 TEST(UvhttpValidationFullCoverageTest, ValidateQueryInvalid) {
@@ -334,11 +334,10 @@ TEST(UvhttpValidationFullCoverageTest, ValidateQueryInvalid) {
 
 TEST(UvhttpValidationFullCoverageTest, ValidateQueryStringSafety) {
     // 查询字符串中的 & 和 = 字符应该是安全的
-    // 但当前实现可能对这些字符有不同的处理
-    // 让我们测试一些简单的查询字符串
-    // 由于 dangerous_query_chars 包含 '\0'，任何字符串都会被 strchr 检测到
-    EXPECT_EQ(uvhttp_validate_query_string("key"), 0);
-    EXPECT_EQ(uvhttp_validate_query_string("key=value"), 0);
+    // 修复 bug 后，移除了 dangerous_query_chars 中的 '\0'
+    // 现在正常的查询字符串应该返回 1（TRUE）
+    EXPECT_EQ(uvhttp_validate_query_string("key"), 1);
+    EXPECT_EQ(uvhttp_validate_query_string("key=value"), 1);
 }
 
 TEST(UvhttpValidationFullCoverageTest, ValidateStringSafetyNull) {
