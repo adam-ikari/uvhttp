@@ -9,6 +9,7 @@
 #include "uvhttp_static.h"
 #include "uvhttp_response.h"
 #include "uvhttp_allocator.h"
+#include "test_time_mock.h"
 
 /* 测试根目录 */
 #define TEST_ROOT_DIR "/tmp/uvhttp_test_file_ops"
@@ -93,6 +94,11 @@ TEST(UvhttpStaticFileOpsTest, GetCacheHitRateNullContext) {
 
 /* 测试清理过期缓存 */
 TEST(UvhttpStaticFileOpsTest, CleanupExpiredCache) {
+    /* 设置时间 Mock */
+    MockTime mock_time;
+    mock_time.set_current_time(1000); /* 设置一个固定时间 */
+    set_time_mock(&mock_time);
+    
     setup_test_directory();
     
     /* 创建测试文件 */
@@ -112,8 +118,8 @@ TEST(UvhttpStaticFileOpsTest, CleanupExpiredCache) {
     /* 预热缓存 */
     uvhttp_static_prewarm_cache(ctx, "/test.txt");
     
-    /* 等待缓存过期 (使用更短的时间) */
-    usleep(1100000); /* 1.1秒，确保超过1秒TTL */
+    /* 推进时间 2 秒，使缓存过期 */
+    advance_time(2);
     
     /* 清理过期缓存 */
     int result = uvhttp_static_cleanup_expired_cache(ctx);
@@ -121,6 +127,7 @@ TEST(UvhttpStaticFileOpsTest, CleanupExpiredCache) {
     
     uvhttp_static_free(ctx);
     cleanup_test_directory();
+    set_time_mock(nullptr); /* 清理 Mock */
 }
 
 /* 测试清理过期缓存 - NULL 上下文 */

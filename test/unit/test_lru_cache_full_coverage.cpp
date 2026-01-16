@@ -3,6 +3,7 @@
 #include <uvhttp_allocator.h>
 #include <string.h>
 #include <time.h>
+#include "test_time_mock.h"
 
 /* 测试创建 LRU 缓存 NULL 参数 */
 TEST(UvhttpLruCacheTest, CreateNullParams) {
@@ -198,16 +199,21 @@ TEST(UvhttpLruCacheTest, FindFound) {
 
 /* 测试查找缓存过期 */
 TEST(UvhttpLruCacheTest, FindExpired) {
+    /* 设置时间 Mock */
+    MockTime mock_time;
+    mock_time.set_current_time(1000); /* 设置一个固定时间 */
+    set_time_mock(&mock_time);
+    
     cache_manager_t* cache = uvhttp_lru_cache_create(1024 * 1024, 100, 1);
     ASSERT_NE(cache, nullptr);
     
     char content[] = "test content";
-    time_t now = time(NULL);
+    time_t now = get_current_time();
     uvhttp_error_t result = uvhttp_lru_cache_put(cache, "/test/file.txt", content, strlen(content), "text/plain", now, "etag");
     EXPECT_EQ(result, UVHTTP_OK);
     
-    /* 等待缓存过期 (使用更短的时间) */
-    usleep(1100000); /* 1.1秒，确保超过1秒TTL */
+    /* 推进时间 2 秒，使缓存过期 */
+    advance_time(2);
     
     /* 现在应该找不到缓存了 */
     cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/test/file.txt");
@@ -216,6 +222,7 @@ TEST(UvhttpLruCacheTest, FindExpired) {
     EXPECT_EQ(cache->entry_count, 0);
     
     uvhttp_lru_cache_free(cache);
+    set_time_mock(nullptr); /* 清理 Mock */
 }
 
 /* 测试删除缓存 NULL 缓存 */

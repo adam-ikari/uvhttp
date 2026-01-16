@@ -209,11 +209,21 @@ enable_testing()
 file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
 
+# 添加测试辅助文件
+set(TEST_HELPER_FILES test/unit/test_time_mock.cpp)
+
 foreach(test_file ${GTEST_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
     
     # 所有测试文件都是 C++ 文件
-    add_executable(${test_name} ${test_file} ${SOURCES})
+    # 如果测试需要时间 mock，则添加辅助文件
+    if(${test_name} STREQUAL "test_lru_cache_full_coverage" OR 
+       ${test_name} STREQUAL "test_static_file_operations_coverage")
+        add_executable(${test_name} ${test_file} ${TEST_HELPER_FILES} ${SOURCES})
+    else()
+        add_executable(${test_name} ${test_file} ${SOURCES})
+    endif()
+    
     set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
     
     add_dependencies(${test_name} libuv mbedtls xxhash gtest)
