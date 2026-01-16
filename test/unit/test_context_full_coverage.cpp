@@ -6,13 +6,15 @@
 #include <uv.h>
 #include "uvhttp_context.h"
 #include "uvhttp_allocator.h"
+#include "test_loop_helper.h"
 
 TEST(UvhttpContextFullCoverageTest, ContextCreate) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_context_t* context = uvhttp_context_create(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    uvhttp_context_t* context = uvhttp_context_create(loop.get());
     
     if (context != nullptr) {
-        EXPECT_EQ(context->loop, loop);
+        EXPECT_EQ(context->loop, loop.get());
         EXPECT_EQ(context->initialized, 0);
         EXPECT_EQ(context->total_requests, 0);
         EXPECT_EQ(context->total_connections, 0);
@@ -24,16 +26,18 @@ TEST(UvhttpContextFullCoverageTest, ContextCreate) {
 TEST(UvhttpContextFullCoverageTest, ContextDestroy) {
     uvhttp_context_destroy(nullptr);
     
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_context_t* context = uvhttp_context_create(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    uvhttp_context_t* context = uvhttp_context_create(loop.get());
     if (context != nullptr) {
         uvhttp_context_destroy(context);
     }
 }
 
 TEST(UvhttpContextFullCoverageTest, ContextInit) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_context_t* context = uvhttp_context_create(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    uvhttp_context_t* context = uvhttp_context_create(loop.get());
 
     if (context != nullptr) {
         EXPECT_EQ(uvhttp_context_init(context), 0);
@@ -43,8 +47,9 @@ TEST(UvhttpContextFullCoverageTest, ContextInit) {
 }
 
 TEST(UvhttpContextFullCoverageTest, ContextSetConnectionProvider) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_context_t* context = uvhttp_context_create(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    uvhttp_context_t* context = uvhttp_context_create(loop.get());
 
     if (context != nullptr) {
         EXPECT_EQ(uvhttp_context_set_connection_provider(context, nullptr), 0);
@@ -60,8 +65,9 @@ TEST(UvhttpContextFullCoverageTest, ContextSetConnectionProvider) {
 }
 
 TEST(UvhttpContextFullCoverageTest, ContextSetLoggerProvider) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_context_t* context = uvhttp_context_create(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    uvhttp_context_t* context = uvhttp_context_create(loop.get());
     
     if (context != nullptr) {
         EXPECT_EQ(uvhttp_context_set_logger_provider(context, nullptr), 0);
@@ -77,8 +83,9 @@ TEST(UvhttpContextFullCoverageTest, ContextSetLoggerProvider) {
 }
 
 TEST(UvhttpContextFullCoverageTest, ContextSetConfigProvider) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_context_t* context = uvhttp_context_create(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    uvhttp_context_t* context = uvhttp_context_create(loop.get());
     
     if (context != nullptr) {
         EXPECT_EQ(uvhttp_context_set_config_provider(context, nullptr), 0);
@@ -94,13 +101,14 @@ TEST(UvhttpContextFullCoverageTest, ContextSetConfigProvider) {
 }
 
 TEST(UvhttpContextFullCoverageTest, ContextSetNetworkInterface) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_context_t* context = uvhttp_context_create(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    uvhttp_context_t* context = uvhttp_context_create(loop.get());
     
     if (context != nullptr) {
         EXPECT_EQ(uvhttp_context_set_network_interface(context, nullptr), 0);
         
-        uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop);
+        uvhttp_network_interface_t* interface = uvhttp_libuv_network_create(loop.get());
         if (interface) {
             EXPECT_EQ(uvhttp_context_set_network_interface(context, interface), 0);
             EXPECT_EQ(context->network_interface, interface);
@@ -172,19 +180,21 @@ TEST(UvhttpContextFullCoverageTest, TestLoggerProviderCreate) {
 }
 
 TEST(UvhttpContextFullCoverageTest, TestContextInit) {
-    uv_loop_t* loop = uv_default_loop();
-    EXPECT_EQ(uvhttp_test_context_init(loop), 0);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    EXPECT_EQ(uvhttp_test_context_init(loop.get()), 0);
 
     uvhttp_context_t* context = uvhttp_test_get_context();
     ASSERT_NE(context, nullptr);
-    EXPECT_EQ(context->loop, loop);
+    EXPECT_EQ(context->loop, loop.get());
 
     uvhttp_test_context_cleanup();
 }
 
 TEST(UvhttpContextFullCoverageTest, TestContextResetStats) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_test_context_init(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    uvhttp_test_context_init(loop.get());
 
     uvhttp_context_t* context = uvhttp_test_get_context();
     if (context) {
@@ -202,10 +212,11 @@ TEST(UvhttpContextFullCoverageTest, TestContextResetStats) {
 }
 
 TEST(UvhttpContextFullCoverageTest, MultipleCreateDestroy) {
-    uv_loop_t* loop = uv_default_loop();
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
 
     for (int i = 0; i < 10; i++) {
-        uvhttp_context_t* context = uvhttp_context_create(loop);
+        uvhttp_context_t* context = uvhttp_context_create(loop.get());
         if (context) {
             uvhttp_context_destroy(context);
         }
@@ -213,8 +224,9 @@ TEST(UvhttpContextFullCoverageTest, MultipleCreateDestroy) {
 }
 
 TEST(UvhttpContextFullCoverageTest, EdgeCases) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_context_t* context = uvhttp_context_create(loop);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+    uvhttp_context_t* context = uvhttp_context_create(loop.get());
     if (context) {
         uvhttp_context_init(context);
         uvhttp_context_init(context);
