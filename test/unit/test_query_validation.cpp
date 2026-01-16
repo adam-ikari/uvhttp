@@ -54,7 +54,7 @@ TEST(UvhttpQueryValidationTest, InvalidQueryStringNoValue) {
 /* 测试查询字符串包含特殊字符 */
 TEST(UvhttpQueryValidationTest, QueryStringWithSpecialChars) {
     const char* query = "key=value%20with%20spaces";
-    int result = uvhttp_query_string(query);
+    int result = uvhttp_validate_query_string(query);
     EXPECT_EQ(result, 1);
 }
 
