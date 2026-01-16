@@ -15,6 +15,15 @@ static uv_loop_t* default_get_default_loop(void* user_data) {
     return uv_default_loop();
 }
 
+/* ========== 测试循环提供者实现 ========== */
+
+static uv_loop_t* test_get_default_loop(void* user_data) {
+    (void)user_data;
+    /* 测试环境返回 NULL，避免使用 uv_default_loop() */
+    /* 测试代码应该使用 create_loop() 来创建独立的循环 */
+    return NULL;
+}
+
 static uv_loop_t* default_create_loop(void* user_data) {
     (void)user_data;
     uv_loop_t* loop = uvhttp_alloc(sizeof(uv_loop_t));
@@ -479,7 +488,20 @@ uvhttp_deps_t* uvhttp_deps_create_test(void) {
     uvhttp_deps_t* deps = uvhttp_deps_new();
     if (!deps) return NULL;
     
-    deps->loop_provider = uvhttp_default_loop_provider_new();
+    /* 创建测试版本的循环提供者 */
+    uvhttp_loop_provider_t* loop_provider = uvhttp_alloc(sizeof(uvhttp_loop_provider_t));
+    if (!loop_provider) {
+        uvhttp_deps_free(deps);
+        return NULL;
+    }
+    
+    loop_provider->get_default_loop = test_get_default_loop;
+    loop_provider->create_loop = default_create_loop;
+    loop_provider->run_loop = default_run_loop;
+    loop_provider->close_loop = default_close_loop;
+    loop_provider->user_data = NULL;
+    
+    deps->loop_provider = loop_provider;
     deps->memory_provider = uvhttp_test_memory_provider_new();
     deps->network_provider = uvhttp_test_network_provider_new();
     deps->file_provider = uvhttp_test_file_provider_new();
