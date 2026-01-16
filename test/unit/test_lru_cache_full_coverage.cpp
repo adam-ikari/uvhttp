@@ -202,13 +202,17 @@ TEST(UvhttpLruCacheTest, FindExpired) {
     ASSERT_NE(cache, nullptr);
     
     char content[] = "test content";
-    uvhttp_error_t result = uvhttp_lru_cache_put(cache, "/test/file.txt", content, strlen(content), "text/plain", time(NULL), "etag");
+    time_t now = time(NULL);
+    uvhttp_error_t result = uvhttp_lru_cache_put(cache, "/test/file.txt", content, strlen(content), "text/plain", now, "etag");
     EXPECT_EQ(result, UVHTTP_OK);
     
-    /* 等待缓存过期 */
-    sleep(2);
-    
+    /* 手动修改缓存时间戳以模拟过期 */
     cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/test/file.txt");
+    ASSERT_NE(entry, nullptr);
+    entry->cache_time = now - 2;  // 设置为2秒前，使其过期
+    
+    /* 现在应该找不到缓存了 */
+    entry = uvhttp_lru_cache_find(cache, "/test/file.txt");
     EXPECT_EQ(entry, nullptr);
     EXPECT_EQ(cache->miss_count, 1);
     EXPECT_EQ(cache->entry_count, 0);
@@ -370,14 +374,19 @@ TEST(UvhttpLruCacheTest, CleanupExpired) {
     ASSERT_NE(cache, nullptr);
     
     char content1[] = "test content 1";
-    uvhttp_lru_cache_put(cache, "/test/file1.txt", content1, strlen(content1), "text/plain", time(NULL), "etag1");
+    time_t now = time(NULL);
+    uvhttp_lru_cache_put(cache, "/test/file1.txt", content1, strlen(content1), "text/plain", now, "etag1");
     
     char content2[] = "test content 2";
-    uvhttp_lru_cache_put(cache, "/test/file2.txt", content2, strlen(content2), "text/plain", time(NULL), "etag2");
+    uvhttp_lru_cache_put(cache, "/test/file2.txt", content2, strlen(content2), "text/plain", now, "etag2");
     
-    /* 等待缓存过期 */
-    sleep(2);
+    /* 手动修改缓存时间戳以模拟过期 */
+    cache_entry_t* entry1 = uvhttp_lru_cache_find(cache, "/test/file1.txt");
+    cache_entry_t* entry2 = uvhttp_lru_cache_find(cache, "/test/file2.txt");
+    if (entry1) entry1->cache_time = now - 2;
+    if (entry2) entry2->cache_time = now - 2;
     
+    /* 清理过期条目 */
     int count = uvhttp_lru_cache_cleanup_expired(cache);
     EXPECT_EQ(count, 2);
     EXPECT_EQ(cache->entry_count, 0);
@@ -415,13 +424,14 @@ TEST(UvhttpLruCacheTest, IsExpired) {
     ASSERT_NE(cache, nullptr);
     
     char content[] = "test content";
-    uvhttp_lru_cache_put(cache, "/test/file.txt", content, strlen(content), "text/plain", time(NULL), "etag");
+    time_t now = time(NULL);
+    uvhttp_lru_cache_put(cache, "/test/file.txt", content, strlen(content), "text/plain", now, "etag");
     
     cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/test/file.txt");
     ASSERT_NE(entry, nullptr);
     
-    /* 等待缓存过期 */
-    sleep(2);
+    /* 手动修改缓存时间戳以模拟过期 */
+    entry->cache_time = now - 2;
     
     int result = uvhttp_lru_cache_is_expired(entry, 1);
     EXPECT_EQ(result, 1);
