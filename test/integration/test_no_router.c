@@ -1,6 +1,7 @@
 #include "../include/uvhttp.h"
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 
 static uvhttp_server_t* g_server = NULL;
 static uv_loop_t* g_loop = NULL;

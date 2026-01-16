@@ -1,5 +1,7 @@
 #include "uvhttp.h"
+#include "uvhttp_allocator.h"
 #include <signal.h>
+#include <string.h>
 
 // 应用上下文结构 - 使用循环注入模式
 typedef struct {
@@ -41,8 +43,8 @@ int main() {
     
     uv_loop_t* loop = uv_default_loop();
     
-    // 创建应用上下文
-    app_context_t* ctx = (app_context_t*)malloc(sizeof(app_context_t));
+    // 创建应用上下文 - 使用 uvhttp_alloc
+    app_context_t* ctx = (app_context_t*)uvhttp_alloc(sizeof(app_context_t));
     if (!ctx) {
         fprintf(stderr, "Failed to allocate context\n");
         return 1;
@@ -56,7 +58,7 @@ int main() {
     ctx->server = uvhttp_server_new(loop);
     if (!ctx->server) {
         fprintf(stderr, "Failed to create server\n");
-        free(ctx);
+        uvhttp_free(ctx);
         return 1;
     }
     
@@ -65,7 +67,7 @@ int main() {
     if (!ctx->router) {
         fprintf(stderr, "Failed to create router\n");
         uvhttp_server_free(ctx->server);
-        free(ctx);
+        uvhttp_free(ctx);
         return 1;
     }
     
@@ -84,7 +86,7 @@ int main() {
             uvhttp_server_free(ctx->server);
             ctx->server = NULL;
         }
-        free(ctx);
+        uvhttp_free(ctx);
         loop->data = NULL;
     }
     
