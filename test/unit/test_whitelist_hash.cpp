@@ -13,14 +13,15 @@
 #include <string.h>
 #include "uvhttp.h"
 #include "uvhttp_server.h"
+#include "test_loop_helper.h"
 
 TEST(UvhttpWhitelistHashTest, HashTableInitialization) {
     // 创建事件循环
-    uv_loop_t* loop = uv_default_loop();
-    ASSERT_NE(loop, nullptr);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     // 创建服务器
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     // 验证哈希表初始化
@@ -32,11 +33,11 @@ TEST(UvhttpWhitelistHashTest, HashTableInitialization) {
 
 TEST(UvhttpWhitelistHashTest, AddWhitelistIP) {
     // 创建事件循环
-    uv_loop_t* loop = uv_default_loop();
-    ASSERT_NE(loop, nullptr);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     // 创建服务器
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     // 启用限流
@@ -65,11 +66,11 @@ TEST(UvhttpWhitelistHashTest, AddWhitelistIP) {
 
 TEST(UvhttpWhitelistHashTest, DuplicateAddition) {
     // 创建事件循环
-    uv_loop_t* loop = uv_default_loop();
-    ASSERT_NE(loop, nullptr);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     // 创建服务器
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     // 启用限流
@@ -92,11 +93,11 @@ TEST(UvhttpWhitelistHashTest, DuplicateAddition) {
 
 TEST(UvhttpWhitelistHashTest, HashTableLookup) {
     // 创建事件循环
-    uv_loop_t* loop = uv_default_loop();
-    ASSERT_NE(loop, nullptr);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     // 创建服务器
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     // 启用限流
@@ -125,11 +126,11 @@ TEST(UvhttpWhitelistHashTest, NullParameterHandling) {
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
     
     // 创建事件循环
-    uv_loop_t* loop = uv_default_loop();
-    ASSERT_NE(loop, nullptr);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     // 创建服务器
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     // 测试NULL IP参数
@@ -141,11 +142,11 @@ TEST(UvhttpWhitelistHashTest, NullParameterHandling) {
 
 TEST(UvhttpWhitelistHashTest, MemoryCleanup) {
     // 创建事件循环
-    uv_loop_t* loop = uv_default_loop();
-    ASSERT_NE(loop, nullptr);
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
     
     // 创建服务器
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = uvhttp_server_new(loop.get());
     ASSERT_NE(server, nullptr);
     
     // 启用限流
