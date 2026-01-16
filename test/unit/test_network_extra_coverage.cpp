@@ -50,6 +50,9 @@ TEST(UvhttpNetworkExtraTest, LibuvWriteImpl) {
     /* 清理 */
     uv_close((uv_handle_t*)&tcp_handle, NULL);
     uvhttp_network_interface_destroy(interface);
+    
+    /* 运行事件循环以处理所有待处理的回调 */
+    uv_run(loop, UV_RUN_NOWAIT);
 }
 
 /* 测试 libuv_read_start_impl */
@@ -90,6 +93,9 @@ TEST(UvhttpNetworkExtraTest, LibuvReadStartImpl) {
     /* 清理 */
     uv_close((uv_handle_t*)&tcp_handle, NULL);
     uvhttp_network_interface_destroy(interface);
+    
+    /* 运行事件循环以处理所有待处理的回调 */
+    uv_run(loop, UV_RUN_NOWAIT);
 }
 
 /* 测试 libuv_read_stop_impl */
@@ -113,6 +119,9 @@ TEST(UvhttpNetworkExtraTest, LibuvReadStopImpl) {
     /* 清理 */
     uv_close((uv_handle_t*)&tcp_handle, NULL);
     uvhttp_network_interface_destroy(interface);
+    
+    /* 运行事件循环以处理所有待处理的回调 */
+    uv_run(loop, UV_RUN_NOWAIT);
 }
 
 /* 测试 libuv_close_impl */
@@ -138,6 +147,9 @@ TEST(UvhttpNetworkExtraTest, LibuvCloseImpl) {
     
     /* 清理 */
     uvhttp_network_interface_destroy(interface);
+    
+    /* 运行事件循环以处理所有待处理的回调 */
+    uv_run(loop, UV_RUN_NOWAIT);
 }
 
 /* 测试 libuv_set_error_simulation_impl */
