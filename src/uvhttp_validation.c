@@ -21,7 +21,7 @@ static const char dangerous_path_chars[] = {
 
 /* 危险的查询字符 */
 static const char dangerous_query_chars[] = {
-    '\0', '<', '>', '"', '\'', '\n', '\r'
+    '<', '>', '"', '\'', '\n', '\r'
 };
 
 int uvhttp_validate_string_length(const char* str, size_t min_len, size_t max_len) {
