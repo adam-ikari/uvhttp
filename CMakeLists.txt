@@ -205,23 +205,16 @@ target_link_libraries(uvhttp ${LIBS})
 # ============================================================================
 enable_testing()
 
-# 添加 gtest 测试（支持 C 和 C++ 测试文件）
-file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp test/unit/test_*.c)
+# 添加 gtest 测试（仅支持 C++ 测试文件）
+file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
-list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_memory_helpers\\.c")  # 排除辅助文件
-list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*simple_test\\.c")  # 排除旧测试框架的测试
 
 foreach(test_file ${GTEST_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
-    get_filename_component(test_ext ${test_file} EXT)
     
-    # 判断是 C++ 还是 C 文件
-    if(test_ext STREQUAL ".cpp")
-        add_executable(${test_name} ${test_file} test/unit/test_memory_helpers.c ${SOURCES})
-        set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
-    else()
-        add_executable(${test_name} ${test_file} test/unit/test_memory_helpers.c ${SOURCES})
-    endif()
+    # 所有测试文件都是 C++ 文件
+    add_executable(${test_name} ${test_file} ${SOURCES})
+    set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
     
     add_dependencies(${test_name} libuv mbedtls xxhash gtest)
     if(BUILD_WITH_MIMALLOC)
