@@ -1,22 +1,129 @@
-/* UVHTTP 错误处理模块完整覆盖率测试 */
-
 #include <gtest/gtest.h>
-#include <string.h>
-#include "uvhttp.h"
 #include "uvhttp_error_handler.h"
-#include "uvhttp_constants.h"
+#include "uvhttp_allocator.h"
+#include <string.h>
 
-TEST(UvhttpErrorHandlerFullCoverageTest, ErrorInit) {
+/* 测试错误处理初始化 */
+TEST(UvhttpErrorHandlerTest, ErrorInit) {
+    /* 测试初始化错误处理系统 */
     uvhttp_error_init();
 }
 
-TEST(UvhttpErrorHandlerFullCoverageTest, ErrorCleanup) {
+/* 测试错误处理清理 */
+TEST(UvhttpErrorHandlerTest, ErrorCleanup) {
+    /* 测试清理错误处理系统 */
+    uvhttp_error_init();
     uvhttp_error_cleanup();
 }
 
-TEST(UvhttpErrorHandlerFullCoverageTest, ErrorSetConfig) {
+/* 测试设置错误处理配置 - 正常情况 */
+TEST(UvhttpErrorHandlerTest, SetConfigNormal) {
     uvhttp_error_config_t config = {
         .min_logLevel = UVHTTP_LOG_LEVEL_DEBUG,
+        .customHandler = nullptr,
+        .enableRecovery = 1,
+        .maxRetries = 5,
+        .baseDelayMs = 200,
+        .maxDelayMs = 10000,
+        .backoffMultiplier = 3.0
+    };
+    
+    uvhttp_error_set_config(&config);
+}
+
+/* 测试设置错误处理配置 - NULL 配置 */
+TEST(UvhttpErrorHandlerTest, SetConfigNull) {
+    /* 测试 NULL 配置不会崩溃 */
+    uvhttp_error_set_config(nullptr);
+}
+
+/* 测试错误报告 - 正常情况 */
+TEST(UvhttpErrorHandlerTest, ErrorReportNormal) {
+    uvhttp_error_init();
+    
+    /* 测试错误报告 */
+    UVHTTP_ERROR_REPORT(UVHTTP_ERROR_INVALID_PARAM, "Invalid parameter test");
+    
+    uvhttp_error_cleanup();
+}
+
+/* 测试错误报告 - 带用户数据 */
+TEST(UvhttpErrorHandlerTest, ErrorReportWithData) {
+    uvhttp_error_init();
+    
+    int user_data = 42;
+    UVHTTP_ERROR_REPORT_WITH_DATA(UVHTTP_ERROR_OUT_OF_MEMORY, "Out of memory test", &user_data);
+    
+    uvhttp_error_cleanup();
+}
+
+/* 测试错误报告 - 不同错误码 */
+TEST(UvhttpErrorHandlerTest, ErrorReportDifferentCodes) {
+    uvhttp_error_init();
+    
+    UVHTTP_ERROR_REPORT(UVHTTP_ERROR_INVALID_PARAM, "Test 1");
+    UVHTTP_ERROR_REPORT(UVHTTP_ERROR_OUT_OF_MEMORY, "Test 2");
+    UVHTTP_ERROR_REPORT(UVHTTP_ERROR_NOT_FOUND, "Test 3");
+    UVHTTP_ERROR_REPORT(UVHTTP_ERROR_SERVER_INIT, "Test 4");
+    UVHTTP_ERROR_REPORT(UVHTTP_ERROR_CONNECTION_INIT, "Test 5");
+    
+    uvhttp_error_cleanup();
+}
+
+/* 测试错误报告 - 空消息 */
+TEST(UvhttpErrorHandlerTest, ErrorReportEmptyMessage) {
+    uvhttp_error_init();
+    
+    /* 测试空消息不会崩溃 */
+    UVHTTP_ERROR_REPORT(UVHTTP_ERROR_INVALID_PARAM, "");
+    
+    uvhttp_error_cleanup();
+}
+
+/* 测试错误报告 - NULL 消息 */
+TEST(UvhttpErrorHandlerTest, ErrorReportNullMessage) {
+    uvhttp_error_init();
+    
+    /* 测试 NULL 消息不会崩溃 */
+    UVHTTP_ERROR_REPORT(UVHTTP_ERROR_INVALID_PARAM, nullptr);
+    
+    uvhttp_error_cleanup();
+}
+
+/* 测试错误恢复 - 禁用恢复 */
+TEST(UvhttpErrorHandlerTest, ErrorAttemptRecoveryDisabled) {
+    uvhttp_error_config_t config = {
+        .min_logLevel = UVHTTP_LOG_LEVEL_INFO,
+        .customHandler = nullptr,
+        .enableRecovery = 0,
+        .maxRetries = 3,
+        .baseDelayMs = 100,
+        .maxDelayMs = 5000,
+        .backoffMultiplier = 2.0
+    };
+    
+    uvhttp_error_set_config(&config);
+    
+    uvhttp_error_context_t context = {
+        .error_code = UVHTTP_ERROR_CONNECTION_ACCEPT,
+        .function = "test_function",
+        .file = "test_file.c",
+        .line = 42,
+        .message = "Test error",
+        .timestamp = 0,
+        .user_data = nullptr
+    };
+    
+    uvhttp_error_t result = uvhttp_error_attempt_recovery(&context);
+    
+    /* 恢复被禁用，应该返回原始错误码 */
+    EXPECT_EQ(result, UVHTTP_ERROR_CONNECTION_ACCEPT);
+}
+
+/* 测试错误恢复 - 连接接受错误 */
+TEST(UvhttpErrorHandlerTest, ErrorAttemptRecoveryConnectionAccept) {
+    uvhttp_error_config_t config = {
+        .min_logLevel = UVHTTP_LOG_LEVEL_INFO,
         .customHandler = nullptr,
         .enableRecovery = 1,
         .maxRetries = 2,
@@ -27,71 +134,138 @@ TEST(UvhttpErrorHandlerFullCoverageTest, ErrorSetConfig) {
     
     uvhttp_error_set_config(&config);
     
-    uvhttp_error_set_config(nullptr);
-}
-
-TEST(UvhttpErrorHandlerFullCoverageTest, ErrorReport) {
-    uvhttp_error_report_(UVHTTP_ERROR_INVALID_PARAM, "Invalid parameter", 
-                        "test_function", "test_file.c", 100, nullptr);
-    
-    uvhttp_error_report_(UVHTTP_ERROR_OUT_OF_MEMORY, "Out of memory", 
-                        "test_function", "test_file.c", 200, nullptr);
-    
-    uvhttp_error_report_(UVHTTP_ERROR_CONNECTION_ACCEPT, "Connection accept failed", 
-                        "test_function", "test_file.c", 300, nullptr);
-    
-    uvhttp_error_report_(UVHTTP_OK, "Success", 
-                        "test_function", "test_file.c", 400, nullptr);
-}
-
-TEST(UvhttpErrorHandlerFullCoverageTest, ErrorRecovery) {
-    uvhttp_error_config_t fast_config = {
-        .min_logLevel = UVHTTP_LOG_LEVEL_INFO,
-        .customHandler = nullptr,
-        .enableRecovery = 1,
-        .maxRetries = 2,
-        .baseDelayMs = 10,
-        .maxDelayMs = 100,
-        .backoffMultiplier = 2.0
-    };
-    uvhttp_error_set_config(&fast_config);
-    
     uvhttp_error_context_t context = {
         .error_code = UVHTTP_ERROR_CONNECTION_ACCEPT,
         .function = "test_function",
         .file = "test_file.c",
-        .line = 100,
-        .message = "Connection accept failed",
+        .line = 42,
+        .message = "Test error",
         .timestamp = 0,
         .user_data = nullptr
     };
     
     uvhttp_error_t result = uvhttp_error_attempt_recovery(&context);
-    (void)result;
     
-    context.error_code = UVHTTP_ERROR_OUT_OF_MEMORY;
-    result = uvhttp_error_attempt_recovery(&context);
-    (void)result;
-    
-    fast_config.enableRecovery = 0;
-    uvhttp_error_set_config(&fast_config);
-    
-    result = uvhttp_error_attempt_recovery(&context);
+    /* 恢复失败，应该返回原始错误码 */
+    EXPECT_EQ(result, UVHTTP_ERROR_CONNECTION_ACCEPT);
 }
 
-TEST(UvhttpErrorHandlerFullCoverageTest, LogFunctions) {
+/* 测试错误恢复 - 内存不足错误 */
+TEST(UvhttpErrorHandlerTest, ErrorAttemptRecoveryOutOfMemory) {
+    uvhttp_error_config_t config = {
+        .min_logLevel = UVHTTP_LOG_LEVEL_INFO,
+        .customHandler = nullptr,
+        .enableRecovery = 1,
+        .maxRetries = 3,
+        .baseDelayMs = 100,
+        .maxDelayMs = 5000,
+        .backoffMultiplier = 2.0
+    };
+    
+    uvhttp_error_set_config(&config);
+    
+    uvhttp_error_context_t context = {
+        .error_code = UVHTTP_ERROR_OUT_OF_MEMORY,
+        .function = "test_function",
+        .file = "test_file.c",
+        .line = 42,
+        .message = "Test error",
+        .timestamp = 0,
+        .user_data = nullptr
+    };
+    
+    uvhttp_error_t result = uvhttp_error_attempt_recovery(&context);
+    
+    /* 内存恢复应该返回成功 */
+    EXPECT_EQ(result, UVHTTP_OK);
+}
+
+/* 测试错误恢复 - 其他错误 */
+TEST(UvhttpErrorHandlerTest, ErrorAttemptRecoveryOtherError) {
+    uvhttp_error_config_t config = {
+        .min_logLevel = UVHTTP_LOG_LEVEL_INFO,
+        .customHandler = nullptr,
+        .enableRecovery = 1,
+        .maxRetries = 3,
+        .baseDelayMs = 100,
+        .maxDelayMs = 5000,
+        .backoffMultiplier = 2.0
+    };
+    
+    uvhttp_error_set_config(&config);
+    
+    uvhttp_error_context_t context = {
+        .error_code = UVHTTP_ERROR_INVALID_PARAM,
+        .function = "test_function",
+        .file = "test_file.c",
+        .line = 42,
+        .message = "Test error",
+        .timestamp = 0,
+        .user_data = nullptr
+    };
+    
+    uvhttp_error_t result = uvhttp_error_attempt_recovery(&context);
+    
+    /* 其他错误不进行恢复，应该返回成功 */
+    EXPECT_EQ(result, UVHTTP_OK);
+}
+
+/* 测试日志函数 - DEBUG 级别 */
+TEST(UvhttpErrorHandlerTest, LogDebug) {
+    uvhttp_error_config_t config = {
+        .min_logLevel = UVHTTP_LOG_LEVEL_DEBUG,
+        .customHandler = nullptr,
+        .enableRecovery = 1,
+        .maxRetries = 3,
+        .baseDelayMs = 100,
+        .maxDelayMs = 5000,
+        .backoffMultiplier = 2.0
+    };
+    
+    uvhttp_error_set_config(&config);
+    
+    /* 测试 DEBUG 日志 */
     uvhttp_log(UVHTTP_LOG_LEVEL_DEBUG, "Debug message");
-    uvhttp_log(UVHTTP_LOG_LEVEL_INFO, "Info message");
-    uvhttp_log(UVHTTP_LOG_LEVEL_WARN, "Warning message");
-    uvhttp_log(UVHTTP_LOG_LEVEL_ERROR, "Error message");
-    uvhttp_log(UVHTTP_LOG_LEVEL_FATAL, "Fatal message");
-    
-    uvhttp_log(UVHTTP_LOG_LEVEL_INFO, "Formatted message: %d, %s, %f", 42, "test", 3.14);
-    
-    uvhttp_log(UVHTTP_LOG_LEVEL_INFO, nullptr);
 }
 
-TEST(UvhttpErrorHandlerFullCoverageTest, LogLevelFiltering) {
+/* 测试日志函数 - INFO 级别 */
+TEST(UvhttpErrorHandlerTest, LogInfo) {
+    uvhttp_error_config_t config = {
+        .min_logLevel = UVHTTP_LOG_LEVEL_INFO,
+        .customHandler = nullptr,
+        .enableRecovery = 1,
+        .maxRetries = 3,
+        .baseDelayMs = 100,
+        .maxDelayMs = 5000,
+        .backoffMultiplier = 2.0
+    };
+    
+    uvhttp_error_set_config(&config);
+    
+    /* 测试 INFO 日志 */
+    uvhttp_log(UVHTTP_LOG_LEVEL_INFO, "Info message");
+}
+
+/* 测试日志函数 - WARN 级别 */
+TEST(UvhttpErrorHandlerTest, LogWarn) {
+    uvhttp_error_config_t config = {
+        .min_logLevel = UVHTTP_LOG_LEVEL_WARN,
+        .customHandler = nullptr,
+        .enableRecovery = 1,
+        .maxRetries = 3,
+        .baseDelayMs = 100,
+        .maxDelayMs = 5000,
+        .backoffMultiplier = 2.0
+    };
+    
+    uvhttp_error_set_config(&config);
+    
+    /* 测试 WARN 日志 */
+    uvhttp_log(UVHTTP_LOG_LEVEL_WARN, "Warning message");
+}
+
+/* 测试日志函数 - ERROR 级别 */
+TEST(UvhttpErrorHandlerTest, LogError) {
     uvhttp_error_config_t config = {
         .min_logLevel = UVHTTP_LOG_LEVEL_ERROR,
         .customHandler = nullptr,
@@ -101,65 +275,168 @@ TEST(UvhttpErrorHandlerFullCoverageTest, LogLevelFiltering) {
         .maxDelayMs = 5000,
         .backoffMultiplier = 2.0
     };
+    
     uvhttp_error_set_config(&config);
     
-    uvhttp_log(UVHTTP_LOG_LEVEL_DEBUG, "Debug message (should be filtered)");
-    uvhttp_log(UVHTTP_LOG_LEVEL_INFO, "Info message (should be filtered)");
-    uvhttp_log(UVHTTP_LOG_LEVEL_WARN, "Warning message (should be filtered)");
-    
-    uvhttp_log(UVHTTP_LOG_LEVEL_ERROR, "Error message (should be output)");
-    uvhttp_log(UVHTTP_LOG_LEVEL_FATAL, "Fatal message (should be output)");
-    
-    config.min_logLevel = UVHTTP_LOG_LEVEL_INFO;
-    uvhttp_error_set_config(&config);
+    /* 测试 ERROR 日志 */
+    uvhttp_log(UVHTTP_LOG_LEVEL_ERROR, "Error message");
 }
 
-TEST(UvhttpErrorHandlerFullCoverageTest, CustomHandler) {
-    auto custom_error_handler = [](const uvhttp_error_context_t* context) {
-        (void)context;
+/* 测试日志函数 - FATAL 级别 */
+TEST(UvhttpErrorHandlerTest, LogFatal) {
+    uvhttp_error_config_t config = {
+        .min_logLevel = UVHTTP_LOG_LEVEL_FATAL,
+        .customHandler = nullptr,
+        .enableRecovery = 1,
+        .maxRetries = 3,
+        .baseDelayMs = 100,
+        .maxDelayMs = 5000,
+        .backoffMultiplier = 2.0
     };
     
+    uvhttp_error_set_config(&config);
+    
+    /* 测试 FATAL 日志 */
+    uvhttp_log(UVHTTP_LOG_LEVEL_FATAL, "Fatal message");
+}
+
+/* 测试日志函数 - 低于最小级别 */
+TEST(UvhttpErrorHandlerTest, LogBelowMinLevel) {
+    uvhttp_error_config_t config = {
+        .min_logLevel = UVHTTP_LOG_LEVEL_ERROR,
+        .customHandler = nullptr,
+        .enableRecovery = 1,
+        .maxRetries = 3,
+        .baseDelayMs = 100,
+        .maxDelayMs = 5000,
+        .backoffMultiplier = 2.0
+    };
+    
+    uvhttp_error_set_config(&config);
+    
+    /* DEBUG 日志应该被忽略 */
+    uvhttp_log(UVHTTP_LOG_LEVEL_DEBUG, "This should not be logged");
+}
+
+/* 测试日志函数 - 格式化字符串 */
+TEST(UvhttpErrorHandlerTest, LogFormatString) {
     uvhttp_error_config_t config = {
         .min_logLevel = UVHTTP_LOG_LEVEL_INFO,
-        .customHandler = custom_error_handler,
+        .customHandler = nullptr,
         .enableRecovery = 1,
-        .maxRetries = 2,
+        .maxRetries = 3,
+        .baseDelayMs = 100,
+        .maxDelayMs = 5000,
+        .backoffMultiplier = 2.0
+    };
+    
+    uvhttp_error_set_config(&config);
+    
+    /* 测试格式化字符串 */
+    uvhttp_log(UVHTTP_LOG_LEVEL_INFO, "Test message: %d, %s", 42, "hello");
+}
+
+/* 测试错误检查宏 - UVHTTP_CHECK */
+TEST(UvhttpErrorHandlerTest, CheckMacroSuccess) {
+    /* 测试条件为真的情况 */
+    int result = 0;
+    
+    /* 使用 lambda 模拟函数内的 UVHTTP_CHECK */
+    auto test_check = [&result]() -> uvhttp_error_t {
+        UVHTTP_CHECK(1 == 1, UVHTTP_ERROR_INVALID_PARAM, "Test check");
+        result = 1;
+        return UVHTTP_OK;
+    };
+    
+    uvhttp_error_t err = test_check();
+    EXPECT_EQ(err, UVHTTP_OK);
+    EXPECT_EQ(result, 1);
+}
+
+/* 测试错误检查宏 - UVHTTP_CHECK 失败 */
+TEST(UvhttpErrorHandlerTest, CheckMacroFailure) {
+    uvhttp_error_init();
+    
+    /* 测试条件为假的情况 */
+    auto test_check = []() -> uvhttp_error_t {
+        UVHTTP_CHECK(1 == 0, UVHTTP_ERROR_INVALID_PARAM, "Test check failed");
+        return UVHTTP_OK;
+    };
+    
+    uvhttp_error_t err = test_check();
+    EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
+    
+    uvhttp_error_cleanup();
+}
+
+/* 测试错误报告多次调用 */
+TEST(UvhttpErrorHandlerTest, ErrorReportMultiple) {
+    uvhttp_error_init();
+    
+    /* 测试多次错误报告 */
+    for (int i = 0; i < 10; i++) {
+        UVHTTP_ERROR_REPORT(UVHTTP_ERROR_INVALID_PARAM, "Test error");
+    }
+    
+    uvhttp_error_cleanup();
+}
+
+/* 测试错误恢复配置 - 不同重试次数 */
+TEST(UvhttpErrorHandlerTest, ErrorRecoveryDifferentRetries) {
+    uvhttp_error_config_t config = {
+        .min_logLevel = UVHTTP_LOG_LEVEL_INFO,
+        .customHandler = nullptr,
+        .enableRecovery = 1,
+        .maxRetries = 1,
         .baseDelayMs = 10,
         .maxDelayMs = 100,
         .backoffMultiplier = 2.0
     };
+    
     uvhttp_error_set_config(&config);
     
-    uvhttp_error_report_(UVHTTP_ERROR_INVALID_PARAM, "Invalid parameter", 
-                        "test_function", "test_file.c", 100, nullptr);
+    uvhttp_error_context_t context = {
+        .error_code = UVHTTP_ERROR_CONNECTION_ACCEPT,
+        .function = "test_function",
+        .file = "test_file.c",
+        .line = 42,
+        .message = "Test error",
+        .timestamp = 0,
+        .user_data = nullptr
+    };
     
-    config.customHandler = nullptr;
+    uvhttp_error_t result = uvhttp_error_attempt_recovery(&context);
+    
+    /* 恢复失败，应该返回原始错误码 */
+    EXPECT_EQ(result, UVHTTP_ERROR_CONNECTION_ACCEPT);
+}
+
+/* 测试错误恢复配置 - 不同延迟参数 */
+TEST(UvhttpErrorHandlerTest, ErrorRecoveryDifferentDelays) {
+    uvhttp_error_config_t config = {
+        .min_logLevel = UVHTTP_LOG_LEVEL_INFO,
+        .customHandler = nullptr,
+        .enableRecovery = 1,
+        .maxRetries = 3,
+        .baseDelayMs = 50,
+        .maxDelayMs = 200,
+        .backoffMultiplier = 1.5
+    };
+    
     uvhttp_error_set_config(&config);
-}
-
-TEST(UvhttpErrorHandlerFullCoverageTest, DifferentErrorTypes) {
-    uvhttp_error_report_(UVHTTP_ERROR_SERVER_INIT, "Server init failed", 
-                        "test_function", "test_file.c", 100, nullptr);
     
-    uvhttp_error_report_(UVHTTP_ERROR_CONNECTION_INIT, "Connection init failed", 
-                        "test_function", "test_file.c", 200, nullptr);
+    uvhttp_error_context_t context = {
+        .error_code = UVHTTP_ERROR_CONNECTION_ACCEPT,
+        .function = "test_function",
+        .file = "test_file.c",
+        .line = 42,
+        .message = "Test error",
+        .timestamp = 0,
+        .user_data = nullptr
+    };
     
-    uvhttp_error_report_(UVHTTP_ERROR_REQUEST_INIT, "Request init failed", 
-                        "test_function", "test_file.c", 300, nullptr);
+    uvhttp_error_t result = uvhttp_error_attempt_recovery(&context);
     
-    uvhttp_error_report_(UVHTTP_ERROR_RESPONSE_INIT, "Response init failed", 
-                        "test_function", "test_file.c", 400, nullptr);
-    
-    uvhttp_error_report_(UVHTTP_ERROR_TLS_INIT, "TLS init failed", 
-                        "test_function", "test_file.c", 500, nullptr);
-    
-    uvhttp_error_report_(UVHTTP_ERROR_ROUTER_INIT, "Router init failed", 
-                        "test_function", "test_file.c", 600, nullptr);
-}
-
-TEST(UvhttpErrorHandlerFullCoverageTest, MultipleInitCleanup) {
-    for (int i = 0; i < 5; i++) {
-        uvhttp_error_init();
-        uvhttp_error_cleanup();
-    }
+    /* 恢复失败，应该返回原始错误码 */
+    EXPECT_EQ(result, UVHTTP_ERROR_CONNECTION_ACCEPT);
 }

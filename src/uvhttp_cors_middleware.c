@@ -21,6 +21,17 @@ static uvhttp_cors_config_t g_default_cors_config = {
     .allow_credentials_enabled = 0
 };
 
+/* 辅助函数：复制字符串 */
+static char* copy_string(const char* src) {
+    if (!src) return NULL;
+    size_t len = strlen(src) + 1;
+    char* copy = (char*)uvhttp_alloc(len);
+    if (copy) {
+        memcpy(copy, src, len);
+    }
+    return copy;
+}
+
 /* 创建默认 CORS 配置 */
 uvhttp_cors_config_t* uvhttp_cors_config_default(void) {
     uvhttp_cors_config_t* config = (uvhttp_cors_config_t*)uvhttp_alloc(sizeof(uvhttp_cors_config_t));
@@ -46,17 +57,6 @@ uvhttp_cors_config_t* uvhttp_cors_config_create(
     /* 初始化所有指针为 NULL */
     memset(config, 0, sizeof(uvhttp_cors_config_t));
     config->owns_strings = 1;  /* 标记拥有字符串 */
-
-    /* 辅助函数：复制字符串 */
-    char* copy_string(const char* src) {
-        if (!src) return NULL;
-        size_t len = strlen(src) + 1;
-        char* copy = (char*)uvhttp_alloc(len);
-        if (copy) {
-            memcpy(copy, src, len);
-        }
-        return copy;
-    }
 
     /* 复制自定义配置（复制字符串以确保安全） */
     if (allow_origin) {
@@ -125,6 +125,9 @@ void uvhttp_cors_config_destroy(uvhttp_cors_config_t* config) {
 
 /* 检查是否为预检请求 */
 int uvhttp_cors_is_preflight_request(const uvhttp_request_t* request) {
+    if (!request) {
+        return 0;
+    }
     return request->method == UVHTTP_OPTIONS;
 }
 

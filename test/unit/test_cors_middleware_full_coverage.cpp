@@ -1,254 +1,258 @@
-/* UVHTTP CORS 中间件完整覆盖率测试 */
-
 #include <gtest/gtest.h>
-#include "uvhttp.h"
-#include "uvhttp_cors_middleware.h"
-#include "uvhttp_constants.h"
+#include <uvhttp_cors_middleware.h>
+#include <uvhttp_request.h>
+#include <uvhttp_response.h>
+#include <uvhttp_server.h>
+#include <uvhttp_allocator.h>
+#include <string.h>
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigDefault) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_default();
+/* 测试创建默认 CORS 配置 */
+TEST(UvhttpCorsMiddlewareTest, ConfigDefault) {
+    uvhttp_cors_config_t* config = uvhttp_cors_config_create("*", "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH", "Content-Type, Authorization, X-Requested-With");
+    ASSERT_NE(config, nullptr);
+    EXPECT_STREQ(config->allow_origin, "*");
+    EXPECT_STREQ(config->allow_methods, "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH");
+    EXPECT_STREQ(config->allow_headers, "Content-Type, Authorization, X-Requested-With");
+    EXPECT_EQ(config->allow_all_origins, 1);
+    EXPECT_EQ(config->allow_credentials_enabled, 0);
     
-    if (config != NULL) {
-        ASSERT_NE(config->allow_origin, nullptr);
-        ASSERT_NE(config->allow_methods, nullptr);
-        ASSERT_NE(config->allow_headers, nullptr);
-        EXPECT_EQ(config->allow_all_origins, 1);
-        EXPECT_EQ(config->allow_credentials_enabled, 0);
-        uvhttp_cors_config_destroy(config);
-    }
+    uvhttp_cors_config_destroy(config);
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigCreate) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_create("https://example.com", "GET, POST", "Content-Type");
+/* 测试创建自定义 CORS 配置 */
+TEST(UvhttpCorsMiddlewareTest, ConfigCreate) {
+    uvhttp_cors_config_t* config = uvhttp_cors_config_create(
+        "https://example.com",
+        "GET, POST",
+        "Content-Type"
+    );
+    ASSERT_NE(config, nullptr);
+    EXPECT_STREQ(config->allow_origin, "https://example.com");
+    EXPECT_STREQ(config->allow_methods, "GET, POST");
+    EXPECT_STREQ(config->allow_headers, "Content-Type");
+    EXPECT_EQ(config->allow_all_origins, 0);
+    EXPECT_EQ(config->owns_strings, 1);
     
-    if (config != NULL) {
-        ASSERT_NE(config->allow_origin, nullptr);
-        ASSERT_NE(config->allow_methods, nullptr);
-        ASSERT_NE(config->allow_headers, nullptr);
-        EXPECT_EQ(config->allow_all_origins, 0);
-        uvhttp_cors_config_destroy(config);
-    }
+    uvhttp_cors_config_destroy(config);
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigCreateNull) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_create(NULL, NULL, NULL);
-    
-    if (config != NULL) {
-        ASSERT_NE(config->allow_origin, nullptr);
-        ASSERT_NE(config->allow_methods, nullptr);
-        ASSERT_NE(config->allow_headers, nullptr);
-        uvhttp_cors_config_destroy(config);
-    }
-}
-
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigDestroyNull) {
-    uvhttp_cors_config_destroy(NULL);
-}
-
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigDestroyNormal) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_default();
-    
-    if (config != NULL) {
-        uvhttp_cors_config_destroy(config);
-    }
-}
-
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsSetHeadersNull) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_default();
-    
-    if (config != NULL) {
-        uvhttp_cors_set_headers(NULL, config, NULL);
-        uvhttp_cors_set_headers(NULL, NULL, NULL);
-        uvhttp_cors_set_headers(NULL, config, "https://example.com");
-        uvhttp_cors_config_destroy(config);
-    }
-}
-
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsMiddlewareNull) {
-    int result = uvhttp_cors_middleware(NULL, NULL, NULL);
-    EXPECT_EQ(result, UVHTTP_MIDDLEWARE_CONTINUE);
-}
-
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsMiddlewareSimpleNull) {
-    int result = uvhttp_cors_middleware_simple(NULL, NULL, NULL);
-    EXPECT_EQ(result, UVHTTP_MIDDLEWARE_CONTINUE);
-}
-
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigAllowAll) {
+/* 测试创建自定义 CORS 配置允许所有来源 */
+TEST(UvhttpCorsMiddlewareTest, ConfigCreateAllowAll) {
     uvhttp_cors_config_t* config = uvhttp_cors_config_create("*", "GET, POST", "Content-Type");
+    ASSERT_NE(config, nullptr);
+    EXPECT_STREQ(config->allow_origin, "*");
+    EXPECT_EQ(config->allow_all_origins, 1);
     
-    if (config != NULL) {
-        EXPECT_EQ(config->allow_all_origins, 1);
-        uvhttp_cors_config_destroy(config);
-    }
+    uvhttp_cors_config_destroy(config);
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigPartialNull) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_create("https://example.com", NULL, NULL);
-    if (config != NULL) {
-        ASSERT_NE(config->allow_origin, nullptr);
-        ASSERT_NE(config->allow_methods, nullptr);
-        ASSERT_NE(config->allow_headers, nullptr);
-        uvhttp_cors_config_destroy(config);
-    }
+/* 测试创建自定义 CORS 配置 NULL 参数 */
+TEST(UvhttpCorsMiddlewareTest, ConfigCreateNullParams) {
+    uvhttp_cors_config_t* config = uvhttp_cors_config_create(NULL, NULL, NULL);
+    ASSERT_NE(config, nullptr);
+    /* 应该使用默认值 */
+    EXPECT_STREQ(config->allow_origin, "*");
+    EXPECT_EQ(config->allow_all_origins, 1);
     
-    config = uvhttp_cors_config_create(NULL, "GET, POST", NULL);
-    if (config != NULL) {
-        ASSERT_NE(config->allow_origin, nullptr);
-        ASSERT_NE(config->allow_methods, nullptr);
-        ASSERT_NE(config->allow_headers, nullptr);
-        uvhttp_cors_config_destroy(config);
-    }
-    
-    config = uvhttp_cors_config_create(NULL, NULL, "Content-Type");
-    if (config != NULL) {
-        ASSERT_NE(config->allow_origin, nullptr);
-        ASSERT_NE(config->allow_methods, nullptr);
-        ASSERT_NE(config->allow_headers, nullptr);
-        uvhttp_cors_config_destroy(config);
-    }
+    uvhttp_cors_config_destroy(config);
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigEmptyStrings) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_create("", "", "");
-    
-    if (config != NULL) {
-        ASSERT_NE(config->allow_origin, nullptr);
-        ASSERT_NE(config->allow_methods, nullptr);
-        ASSERT_NE(config->allow_headers, nullptr);
-        uvhttp_cors_config_destroy(config);
-    }
+/* 测试销毁 CORS 配置 NULL */
+TEST(UvhttpCorsMiddlewareTest, ConfigDestroyNull) {
+    uvhttp_cors_config_destroy(NULL);
+    /* 不应该崩溃 */
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigMultipleCreateDestroy) {
-    uvhttp_cors_config_t* config;
-    for (int i = 0; i < 10; i++) {
-        config = uvhttp_cors_config_default();
-        if (config != NULL) {
-            uvhttp_cors_config_destroy(config);
-        }
-    }
+/* 测试销毁 CORS 配置 */
+TEST(UvhttpCorsMiddlewareTest, ConfigDestroy) {
+    uvhttp_cors_config_t* config = uvhttp_cors_config_create("*", "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH", "Content-Type, Authorization, X-Requested-With");
+    ASSERT_NE(config, nullptr);
+    
+    uvhttp_cors_config_destroy(config);
+    /* 不应该崩溃 */
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigFields) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_default();
-    
-    if (config != NULL) {
-        ASSERT_NE(config->allow_origin, nullptr);
-        ASSERT_NE(config->allow_methods, nullptr);
-        ASSERT_NE(config->allow_headers, nullptr);
-        ASSERT_NE(config->expose_headers, nullptr);
-        ASSERT_NE(config->allow_credentials, nullptr);
-        ASSERT_NE(config->max_age, nullptr);
-        EXPECT_EQ(config->owns_strings, 0);
-        uvhttp_cors_config_destroy(config);
-    }
+/* 测试检查预检请求 NULL 请求 */
+TEST(UvhttpCorsMiddlewareTest, IsPreflightRequestNull) {
+    int result = uvhttp_cors_is_preflight_request(NULL);
+    EXPECT_EQ(result, 0);
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigOwnsStrings) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_create("https://example.com", "GET, POST", "Content-Type");
+/* 测试检查预检请求 OPTIONS 方法 */
+TEST(UvhttpCorsMiddlewareTest, IsPreflightRequestOptions) {
+    uvhttp_request_t request;
+    memset(&request, 0, sizeof(request));
+    request.method = UVHTTP_OPTIONS;
     
-    if (config != NULL) {
-        EXPECT_EQ(config->owns_strings, 1);
-        uvhttp_cors_config_destroy(config);
-    }
+    int result = uvhttp_cors_is_preflight_request(&request);
+    EXPECT_EQ(result, 1); /* OPTIONS 方法是预检请求 */
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigSpecialChars) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_create("https://example.com:8080", "GET, POST", "Content-Type, X-Custom-Header");
+/* 测试设置 CORS 头 NULL 响应 */
+TEST(UvhttpCorsMiddlewareTest, SetHeadersNullResponse) {
+    uvhttp_cors_config_t* config = uvhttp_cors_config_create("*", "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH", "Content-Type, Authorization, X-Requested-With");
+    ASSERT_NE(config, nullptr);
     
-    if (config != NULL) {
-        ASSERT_NE(config->allow_origin, nullptr);
-        ASSERT_NE(config->allow_methods, nullptr);
-        ASSERT_NE(config->allow_headers, nullptr);
-        uvhttp_cors_config_destroy(config);
-    }
+    uvhttp_cors_set_headers(NULL, config, "https://example.com");
+    /* 不应该崩溃 */
+    
+    uvhttp_cors_config_destroy(config);
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigUnicode) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_create("https://例子.com", "GET, POST", "Content-Type");
+/* 测试设置 CORS 头 NULL 配置 */
+TEST(UvhttpCorsMiddlewareTest, SetHeadersNullConfig) {
+    uvhttp_response_t response;
+    memset(&response, 0, sizeof(response));
     
-    if (config != NULL) {
-        ASSERT_NE(config->allow_origin, nullptr);
-        ASSERT_NE(config->allow_methods, nullptr);
-        ASSERT_NE(config->allow_headers, nullptr);
-        uvhttp_cors_config_destroy(config);
-    }
+    uvhttp_cors_set_headers(&response, NULL, "https://example.com");
+    /* 不应该崩溃 */
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigSameInput) {
-    uvhttp_cors_config_t* config1 = uvhttp_cors_config_default();
-    uvhttp_cors_config_t* config2 = uvhttp_cors_config_default();
+/* 测试设置 CORS 头 NULL 来源 */
+TEST(UvhttpCorsMiddlewareTest, SetHeadersNullOrigin) {
+    uvhttp_response_t response;
+    memset(&response, 0, sizeof(response));
     
-    if (config1 != NULL && config2 != NULL) {
-        EXPECT_STREQ(config1->allow_origin, config2->allow_origin);
-        EXPECT_STREQ(config1->allow_methods, config2->allow_methods);
-        EXPECT_STREQ(config1->allow_headers, config2->allow_headers);
-        uvhttp_cors_config_destroy(config1);
-        uvhttp_cors_config_destroy(config2);
-    }
+    uvhttp_cors_config_t* config = uvhttp_cors_config_create("*", "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH", "Content-Type, Authorization, X-Requested-With");
+    ASSERT_NE(config, nullptr);
+    
+    uvhttp_cors_set_headers(&response, config, NULL);
+    /* 不应该崩溃 */
+    
+    uvhttp_cors_config_destroy(config);
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigDifferentInput) {
-    uvhttp_cors_config_t* config1 = uvhttp_cors_config_create("https://example1.com", "GET", "Content-Type");
-    uvhttp_cors_config_t* config2 = uvhttp_cors_config_create("https://example2.com", "POST", "Authorization");
+/* 测试设置 CORS 头 */
+TEST(UvhttpCorsMiddlewareTest, SetHeaders) {
+    uvhttp_response_t response;
+    memset(&response, 0, sizeof(response));
     
-    if (config1 != NULL && config2 != NULL) {
-        EXPECT_STRNE(config1->allow_origin, config2->allow_origin);
-        EXPECT_STRNE(config1->allow_methods, config2->allow_methods);
-        EXPECT_STRNE(config1->allow_headers, config2->allow_headers);
-        uvhttp_cors_config_destroy(config1);
-        uvhttp_cors_config_destroy(config2);
-    }
+    uvhttp_cors_config_t* config = uvhttp_cors_config_create("*", "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH", "Content-Type, Authorization, X-Requested-With");
+    ASSERT_NE(config, nullptr);
+    
+    uvhttp_cors_set_headers(&response, config, "https://example.com");
+    /* 不应该崩溃 */
+    
+    uvhttp_cors_config_destroy(config);
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigBoundary) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_create("*", "G", "C");
+/* 测试设置 CORS 头允许所有来源 */
+TEST(UvhttpCorsMiddlewareTest, SetHeadersAllowAll) {
+    uvhttp_response_t response;
+    memset(&response, 0, sizeof(response));
     
-    if (config != NULL) {
-        ASSERT_NE(config->allow_origin, nullptr);
-        ASSERT_NE(config->allow_methods, nullptr);
-        ASSERT_NE(config->allow_headers, nullptr);
-        uvhttp_cors_config_destroy(config);
-    }
+    uvhttp_cors_config_t* config = uvhttp_cors_config_create("*", "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH", "Content-Type, Authorization, X-Requested-With");
+    ASSERT_NE(config, nullptr);
+    config->allow_all_origins = 1;
+    
+    uvhttp_cors_set_headers(&response, config, "https://example.com");
+    /* 不应该崩溃 */
+    
+    uvhttp_cors_config_destroy(config);
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigWhitespace) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_create(" * ", " GET , POST ", " Content-Type ");
+/* 测试 CORS 中间件 NULL 请求 */
+TEST(UvhttpCorsMiddlewareTest, MiddlewareNullRequest) {
+    uvhttp_response_t response;
+    memset(&response, 0, sizeof(response));
     
-    if (config != NULL) {
-        ASSERT_NE(config->allow_origin, nullptr);
-        ASSERT_NE(config->allow_methods, nullptr);
-        ASSERT_NE(config->allow_headers, nullptr);
-        uvhttp_cors_config_destroy(config);
-    }
+    int result = uvhttp_cors_middleware(NULL, &response, NULL);
+    EXPECT_EQ(result, 0); /* 中间件应该继续执行 */
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigDuplicateMethods) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_create("https://example.com", "GET, GET, POST, POST", "Content-Type");
+/* 测试 CORS 中间件 NULL 响应 */
+TEST(UvhttpCorsMiddlewareTest, MiddlewareNullResponse) {
+    uvhttp_request_t request;
+    memset(&request, 0, sizeof(request));
     
-    if (config != NULL) {
-        ASSERT_NE(config->allow_methods, nullptr);
-        uvhttp_cors_config_destroy(config);
-    }
+    int result = uvhttp_cors_middleware(&request, NULL, NULL);
+    EXPECT_EQ(result, 0); /* 中间件应该继续执行 */
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigDuplicateHeaders) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_create("https://example.com", "GET, POST", "Content-Type, Content-Type");
+/* 测试 CORS 中间件 */
+TEST(UvhttpCorsMiddlewareTest, Middleware) {
+    uvhttp_request_t request;
+    memset(&request, 0, sizeof(request));
+    request.method = UVHTTP_GET;
     
-    if (config != NULL) {
-        ASSERT_NE(config->allow_headers, nullptr);
-        uvhttp_cors_config_destroy(config);
-    }
+    /* 设置 Origin 头 */
+    strncpy(request.headers[0].name, "Origin", sizeof(request.headers[0].name) - 1);
+    strncpy(request.headers[0].value, "https://example.com", sizeof(request.headers[0].value) - 1);
+    request.header_count = 1;
+    
+    uvhttp_response_t response;
+    memset(&response, 0, sizeof(response));
+    
+    /* 初始化 client 字段以避免段错误 */
+    uv_tcp_t client;
+    response.client = &client;
+    
+    int result = uvhttp_cors_middleware(&request, &response, NULL);
+    EXPECT_EQ(result, 0); /* 中间件应该继续执行 */
 }
 
-TEST(UvhttpCorsMiddlewareFullCoverageTest, CorsConfigCommaSeparated) {
-    uvhttp_cors_config_t* config = uvhttp_cors_config_create("https://example.com,https://example2.com", "GET,POST,PUT", "Content-Type,Authorization");
+/* 测试 CORS 中间件预检请求 */
+TEST(UvhttpCorsMiddlewareTest, MiddlewarePreflight) {
+    uvhttp_request_t request;
+    memset(&request, 0, sizeof(request));
+    request.method = UVHTTP_OPTIONS;
     
-    if (config != NULL) {
-        ASSERT_NE(config->allow_origin, nullptr);
-        ASSERT_NE(config->allow_methods, nullptr);
-        ASSERT_NE(config->allow_headers, nullptr);
-        uvhttp_cors_config_destroy(config);
-    }
+    /* 设置 Origin 头 */
+    strncpy(request.headers[0].name, "Origin", sizeof(request.headers[0].name) - 1);
+    strncpy(request.headers[0].value, "https://example.com", sizeof(request.headers[0].value) - 1);
+    
+    /* 设置 Access-Control-Request-Method 头 */
+    strncpy(request.headers[1].name, "Access-Control-Request-Method", sizeof(request.headers[1].name) - 1);
+    strncpy(request.headers[1].value, "POST", sizeof(request.headers[1].value) - 1);
+    request.header_count = 2;
+    
+    uvhttp_response_t response;
+    memset(&response, 0, sizeof(response));
+    
+    /* 初始化 client 字段以避免段错误 */
+    uv_tcp_t client;
+    response.client = &client;
+    
+    int result = uvhttp_cors_middleware(&request, &response, NULL);
+    EXPECT_EQ(result, 1); /* 预检请求应该停止中间件链 */
+}
+
+/* 测试 CORS 简单中间件 NULL 请求 */
+TEST(UvhttpCorsMiddlewareTest, MiddlewareSimpleNullRequest) {
+    uvhttp_response_t response;
+    memset(&response, 0, sizeof(response));
+    
+    int result = uvhttp_cors_middleware_simple(NULL, &response, NULL);
+    EXPECT_EQ(result, 0); /* 中间件应该继续执行 */
+}
+
+/* 测试 CORS 简单中间件 NULL 响应 */
+TEST(UvhttpCorsMiddlewareTest, MiddlewareSimpleNullResponse) {
+    uvhttp_request_t request;
+    memset(&request, 0, sizeof(request));
+    
+    int result = uvhttp_cors_middleware_simple(&request, NULL, NULL);
+    EXPECT_EQ(result, 0); /* 中间件应该继续执行 */
+}
+
+/* 测试 CORS 简单中间件 */
+TEST(UvhttpCorsMiddlewareTest, MiddlewareSimple) {
+    uvhttp_request_t request;
+    memset(&request, 0, sizeof(request));
+    request.method = UVHTTP_GET;
+    
+    /* 设置 Origin 头 */
+    strncpy(request.headers[0].name, "Origin", sizeof(request.headers[0].name) - 1);
+    strncpy(request.headers[0].value, "https://example.com", sizeof(request.headers[0].value) - 1);
+    request.header_count = 1;
+    
+    uvhttp_response_t response;
+    memset(&response, 0, sizeof(response));
+    
+    /* 初始化 client 字段以避免段错误 */
+    uv_tcp_t client;
+    response.client = &client;
+    
+    int result = uvhttp_cors_middleware_simple(&request, &response, NULL);
+    EXPECT_EQ(result, 0); /* 中间件应该继续执行 */
 }

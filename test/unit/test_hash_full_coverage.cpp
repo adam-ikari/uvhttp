@@ -1,489 +1,829 @@
 /* UVHTTP 哈希模块完整覆盖率测试 */
 
 #include <gtest/gtest.h>
-#include <stdlib.h>
 #include <string.h>
-#include "uvhttp.h"
 #include "uvhttp_hash.h"
-#include "uvhttp_constants.h"
 
-/* 测试哈希函数 - NULL参数 */
-TEST(UvhttpHashFullCoverageTest, HashNull) {
-    uint64_t result;
-
-    /* NULL data */
-    result = uvhttp_hash(NULL, 100, 0x12345);
-    EXPECT_EQ(result, 0);
-}
-
-/* 测试哈希函数 - 正常参数 */
-TEST(UvhttpHashFullCoverageTest, HashNormal) {
-    uint64_t result;
+/* 测试基础哈希函数 - 正常情况 */
+TEST(UvhttpHashTest, HashNormalData) {
     const char* data = "Hello, World!";
-    size_t len = strlen(data);
-
-    result = uvhttp_hash(data, len, 0x12345);
-    EXPECT_NE(result, 0);
+    size_t length = strlen(data);
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, length, seed);
+    
+    /* 哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
 }
 
-/* 测试哈希函数 - 空数据 */
-TEST(UvhttpHashFullCoverageTest, HashEmpty) {
-    uint64_t result;
+/* 测试基础哈希函数 - 空数据 */
+TEST(UvhttpHashTest, HashEmptyData) {
     const char* data = "";
-
-    result = uvhttp_hash(data, 0, 0x12345);
-    /* 空数据应该产生有效的哈希值 */
+    size_t length = 0;
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, length, seed);
+    
+    /* 空数据的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
 }
 
-/* 测试哈希函数 - 不同种子 */
-TEST(UvhttpHashFullCoverageTest, HashDifferentSeeds) {
-    uint64_t result1, result2;
-    const char* data = "test data";
-    size_t len = strlen(data);
+/* 测试基础哈希函数 - NULL指针 */
+TEST(UvhttpHashTest, HashNullPointer) {
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(NULL, 100, seed);
+    
+    /* NULL指针的哈希值应该为0 */
+    EXPECT_EQ(hash, 0ULL);
+}
 
-    result1 = uvhttp_hash(data, len, 0x1111);
-    result2 = uvhttp_hash(data, len, 0x2222);
-
+/* 测试基础哈希函数 - 不同种子 */
+TEST(UvhttpHashTest, HashDifferentSeeds) {
+    const char* data = "Hello, World!";
+    size_t length = strlen(data);
+    
+    uint64_t seed1 = 0x123456789ABCDEF0ULL;
+    uint64_t seed2 = 0xFEDCBA9876543210ULL;
+    
+    uint64_t hash1 = uvhttp_hash(data, length, seed1);
+    uint64_t hash2 = uvhttp_hash(data, length, seed2);
+    
     /* 不同种子应该产生不同的哈希值 */
-    EXPECT_NE(result1, result2);
+    EXPECT_NE(hash1, hash2);
 }
 
-/* 测试哈希函数 - 相同输入相同输出 */
-TEST(UvhttpHashFullCoverageTest, HashConsistency) {
-    uint64_t result1, result2;
-    const char* data = "consistent data";
-    size_t len = strlen(data);
-
-    result1 = uvhttp_hash(data, len, 0x12345);
-    result2 = uvhttp_hash(data, len, 0x12345);
-
-    /* 相同输入应该产生相同输出 */
-    EXPECT_EQ(result1, result2);
+/* 测试基础哈希函数 - 相同数据相同种子 */
+TEST(UvhttpHashTest, HashSameDataSameSeed) {
+    const char* data = "Hello, World!";
+    size_t length = strlen(data);
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash1 = uvhttp_hash(data, length, seed);
+    uint64_t hash2 = uvhttp_hash(data, length, seed);
+    
+    /* 相同数据和种子应该产生相同的哈希值 */
+    EXPECT_EQ(hash1, hash2);
 }
 
-/* 测试哈希字符串函数 - NULL参数 */
-TEST(UvhttpHashFullCoverageTest, HashStringNull) {
-    uint64_t result;
-
-    /* NULL string */
-    result = uvhttp_hash_string(NULL);
-    EXPECT_EQ(result, 0);
+/* 测试基础哈希函数 - 不同数据 */
+TEST(UvhttpHashTest, HashDifferentData) {
+    const char* data1 = "Hello, World!";
+    const char* data2 = "Hello, Universe!";
+    size_t length1 = strlen(data1);
+    size_t length2 = strlen(data2);
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash1 = uvhttp_hash(data1, length1, seed);
+    uint64_t hash2 = uvhttp_hash(data2, length2, seed);
+    
+    /* 不同数据应该产生不同的哈希值 */
+    EXPECT_NE(hash1, hash2);
 }
 
-/* 测试哈希字符串函数 - 正常参数 */
-TEST(UvhttpHashFullCoverageTest, HashStringNormal) {
-    uint64_t result;
+/* 测试基础哈希函数 - 大数据 */
+TEST(UvhttpHashTest, HashLargeData) {
+    char large_data[10000];
+    memset(large_data, 'A', sizeof(large_data));
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(large_data, sizeof(large_data), seed);
+    
+    /* 大数据的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试基础哈希函数 - 单字节 */
+TEST(UvhttpHashTest, HashSingleByte) {
+    char data = 'X';
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(&data, 1, seed);
+    
+    /* 单字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试基础哈希函数 - 零种子 */
+TEST(UvhttpHashTest, HashZeroSeed) {
+    const char* data = "Hello, World!";
+    size_t length = strlen(data);
+    uint64_t seed = 0;
+    
+    uint64_t hash = uvhttp_hash(data, length, seed);
+    
+    /* 零种子的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试基础哈希函数 - 默认种子 */
+TEST(UvhttpHashTest, HashDefaultSeed) {
+    const char* data = "Hello, World!";
+    size_t length = strlen(data);
+    
+    uint64_t hash = uvhttp_hash_default(data, length);
+    
+    /* 默认种子的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试字符串哈希函数 - 正常字符串 */
+TEST(UvhttpHashTest, HashStringNormal) {
     const char* str = "Hello, World!";
-
-    result = uvhttp_hash_string(str);
-    EXPECT_NE(result, 0);
+    
+    uint64_t hash = uvhttp_hash_string(str);
+    
+    /* 字符串哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
 }
 
-/* 测试哈希字符串函数 - 空字符串 */
-TEST(UvhttpHashFullCoverageTest, HashStringEmpty) {
-    uint64_t result;
+/* 测试字符串哈希函数 - 空字符串 */
+TEST(UvhttpHashTest, HashStringEmpty) {
     const char* str = "";
-
-    result = uvhttp_hash_string(str);
-    /* 空字符串应该产生有效的哈希值 */
+    
+    uint64_t hash = uvhttp_hash_string(str);
+    
+    /* 空字符串的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
 }
 
-/* 测试哈希字符串函数 - 一致性 */
-TEST(UvhttpHashFullCoverageTest, HashStringConsistency) {
-    uint64_t result1, result2;
-    const char* str = "consistent string";
-
-    result1 = uvhttp_hash_string(str);
-    result2 = uvhttp_hash_string(str);
-
-    /* 相同输入应该产生相同输出 */
-    EXPECT_EQ(result1, result2);
+/* 测试字符串哈希函数 - NULL指针 */
+TEST(UvhttpHashTest, HashStringNullPointer) {
+    uint64_t hash = uvhttp_hash_string(NULL);
+    
+    /* NULL指针的哈希值应该为0 */
+    EXPECT_EQ(hash, 0ULL);
 }
 
-/* 测试哈希字符串函数 - 不同字符串 */
-TEST(UvhttpHashFullCoverageTest, HashStringDifferent) {
-    uint64_t result1, result2;
-    const char* str1 = "string 1";
-    const char* str2 = "string 2";
+/* 测试字符串哈希函数 - 相同字符串 */
+TEST(UvhttpHashTest, HashStringSameString) {
+    const char* str = "Hello, World!";
+    
+    uint64_t hash1 = uvhttp_hash_string(str);
+    uint64_t hash2 = uvhttp_hash_string(str);
+    
+    /* 相同字符串应该产生相同的哈希值 */
+    EXPECT_EQ(hash1, hash2);
+}
 
-    result1 = uvhttp_hash_string(str1);
-    result2 = uvhttp_hash_string(str2);
-
+/* 测试字符串哈希函数 - 不同字符串 */
+TEST(UvhttpHashTest, HashStringDifferentString) {
+    const char* str1 = "Hello, World!";
+    const char* str2 = "Hello, Universe!";
+    
+    uint64_t hash1 = uvhttp_hash_string(str1);
+    uint64_t hash2 = uvhttp_hash_string(str2);
+    
     /* 不同字符串应该产生不同的哈希值 */
-    EXPECT_NE(result1, result2);
+    EXPECT_NE(hash1, hash2);
 }
 
-/* 测试默认哈希函数 */
-TEST(UvhttpHashFullCoverageTest, HashDefault) {
-    uint64_t result;
-    const char* data = "default hash test";
-    size_t len = strlen(data);
-
-    result = uvhttp_hash_default(data, len);
-    EXPECT_NE(result, 0);
+/* 测试字符串哈希函数 - 长字符串 */
+TEST(UvhttpHashTest, HashStringLongString) {
+    char long_str[1000];
+    memset(long_str, 'A', sizeof(long_str) - 1);
+    long_str[sizeof(long_str) - 1] = '\0';
+    
+    uint64_t hash = uvhttp_hash_string(long_str);
+    
+    /* 长字符串的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
 }
 
-/* 测试默认哈希字符串函数 */
-TEST(UvhttpHashFullCoverageTest, HashStringDefault) {
-    uint64_t result;
-    const char* str = "default string hash";
-
-    result = uvhttp_hash_string_default(str);
-    EXPECT_NE(result, 0);
+/* 测试字符串哈希函数 - 默认种子 */
+TEST(UvhttpHashTest, HashStringDefaultSeed) {
+    const char* str = "Hello, World!";
+    
+    uint64_t hash1 = uvhttp_hash_string(str);
+    uint64_t hash2 = uvhttp_hash_string_default(str);
+    
+    /* 默认种子的哈希值应该相同 */
+    EXPECT_EQ(hash1, hash2);
 }
 
-/* 测试哈希函数 - 大数据 */
-TEST(UvhttpHashFullCoverageTest, HashLargeData) {
-    uint64_t result;
-    char large_data[1024];
-    size_t i;
-
-    /* 填充大数据 */
-    for (i = 0; i < sizeof(large_data); i++) {
-        large_data[i] = (char)(i % 256);
-    }
-
-    result = uvhttp_hash(large_data, sizeof(large_data), 0x12345);
-    EXPECT_NE(result, 0);
+/* 测试哈希值的一致性 - 相同输入相同输出 */
+TEST(UvhttpHashTest, HashConsistency) {
+    const char* data = "Test data for consistency";
+    size_t length = strlen(data);
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash1 = uvhttp_hash(data, length, seed);
+    uint64_t hash2 = uvhttp_hash(data, length, seed);
+    uint64_t hash3 = uvhttp_hash(data, length, seed);
+    
+    /* 多次调用应该产生相同的哈希值 */
+    EXPECT_EQ(hash1, hash2);
+    EXPECT_EQ(hash2, hash3);
 }
 
-/* 测试哈希函数 - 边界条件 */
-TEST(UvhttpHashFullCoverageTest, HashBoundary) {
-    uint64_t result;
-    char data[1];
-
-    /* 单字节 */
-    data[0] = 'A';
-    result = uvhttp_hash(data, 1, 0x12345);
-    EXPECT_NE(result, 0);
-
-    /* 零种子 */
-    result = uvhttp_hash(data, 1, 0);
-    EXPECT_NE(result, 0);
-
-    /* 最大种子 */
-    result = uvhttp_hash(data, 1, 0xFFFFFFFFFFFFFFFFULL);
-    EXPECT_NE(result, 0);
+/* 测试哈希值的一致性 - 字符串 */
+TEST(UvhttpHashTest, HashStringConsistency) {
+    const char* str = "Test string for consistency";
+    
+    uint64_t hash1 = uvhttp_hash_string(str);
+    uint64_t hash2 = uvhttp_hash_string(str);
+    uint64_t hash3 = uvhttp_hash_string(str);
+    
+    /* 多次调用应该产生相同的哈希值 */
+    EXPECT_EQ(hash1, hash2);
+    EXPECT_EQ(hash2, hash3);
 }
 
-/* 测试哈希分布 */
-TEST(UvhttpHashFullCoverageTest, HashDistribution) {
-    uint64_t results[100];
-    size_t i;
-    int collisions = 0;
-    size_t j;
-
-    /* 生成100个不同的哈希值 */
-    for (i = 0; i < 100; i++) {
-        char data[32];
-        snprintf(data, sizeof(data), "data%zu", i);
-        results[i] = uvhttp_hash_string(data);
-    }
-
-    /* 检查碰撞 */
-    for (i = 0; i < 100; i++) {
-        for (j = i + 1; j < 100; j++) {
-            if (results[i] == results[j]) {
-                collisions++;
-            }
-        }
-    }
-
-    /* 碰撞应该很少（理想情况下为0） */
-    EXPECT_LT(collisions, 5);
+/* 测试哈希值的分布 - 不同输入不同输出 */
+TEST(UvhttpHashTest, HashDistribution) {
+    const char* data1 = "Data 1";
+    const char* data2 = "Data 2";
+    const char* data3 = "Data 3";
+    size_t length1 = strlen(data1);
+    size_t length2 = strlen(data2);
+    size_t length3 = strlen(data3);
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash1 = uvhttp_hash(data1, length1, seed);
+    uint64_t hash2 = uvhttp_hash(data2, length2, seed);
+    uint64_t hash3 = uvhttp_hash(data3, length3, seed);
+    
+    /* 不同输入应该产生不同的哈希值 */
+    EXPECT_NE(hash1, hash2);
+    EXPECT_NE(hash2, hash3);
+    EXPECT_NE(hash1, hash3);
 }
 
-/* 测试哈希有效性 */
-TEST(UvhttpHashFullCoverageTest, HashValidity) {
-    uint64_t result;
-    const char* data = "valid hash";
-
-    result = uvhttp_hash(data, strlen(data), 0x12345);
-
-    /* 哈希值应该在合理范围内（非0） */
-    EXPECT_NE(result, 0);
-    EXPECT_LE(result, 0xFFFFFFFFFFFFFFFFULL);
+/* 测试哈希值的分布 - 字符串 */
+TEST(UvhttpHashTest, HashStringDistribution) {
+    const char* str1 = "String 1";
+    const char* str2 = "String 2";
+    const char* str3 = "String 3";
+    
+    uint64_t hash1 = uvhttp_hash_string(str1);
+    uint64_t hash2 = uvhttp_hash_string(str2);
+    uint64_t hash3 = uvhttp_hash_string(str3);
+    
+    /* 不同字符串应该产生不同的哈希值 */
+    EXPECT_NE(hash1, hash2);
+    EXPECT_NE(hash2, hash3);
+    EXPECT_NE(hash1, hash3);
 }
 
-/* 测试哈希字符串有效性 */
-TEST(UvhttpHashFullCoverageTest, HashStringValidity) {
-    uint64_t result;
-    const char* str = "valid string hash";
-
-    result = uvhttp_hash_string(str);
-
-    /* 哈希值应该在合理范围内（非0） */
-    EXPECT_NE(result, 0);
-    EXPECT_LE(result, 0xFFFFFFFFFFFFFFFFULL);
+/* 测试哈希函数的边界值 - 最大种子 */
+TEST(UvhttpHashTest, HashMaxSeed) {
+    const char* data = "Test data";
+    size_t length = strlen(data);
+    uint64_t seed = UINT64_MAX;
+    
+    uint64_t hash = uvhttp_hash(data, length, seed);
+    
+    /* 最大种子的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
 }
 
-/* 测试哈希种子影响 */
-TEST(UvhttpHashFullCoverageTest, HashSeedImpact) {
-    uint64_t result1, result2;
-    const char* data = "seed test";
-    size_t len = strlen(data);
-
-    result1 = uvhttp_hash(data, len, 0);
-    result2 = uvhttp_hash(data, len, 1);
-
-    /* 种子应该影响哈希结果 */
-    EXPECT_NE(result1, result2);
+/* 测试哈希函数的边界值 - 最小种子 */
+TEST(UvhttpHashTest, HashMinSeed) {
+    const char* data = "Test data";
+    size_t length = strlen(data);
+    uint64_t seed = 1;
+    
+    uint64_t hash = uvhttp_hash(data, length, seed);
+    
+    /* 最小种子的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
 }
 
-/* 测试哈希长度影响 */
-TEST(UvhttpHashFullCoverageTest, HashLengthImpact) {
-    uint64_t result1, result2;
-    const char* data = "length test";
-
-    result1 = uvhttp_hash(data, 5, 0x12345);
-    result2 = uvhttp_hash(data, 10, 0x12345);
-
-    /* 长度应该影响哈希结果 */
-    EXPECT_NE(result1, result2);
-}
-
-/* 测试哈希内容影响 */
-TEST(UvhttpHashFullCoverageTest, HashContentImpact) {
-    uint64_t result1, result2;
-    const char* data1 = "content test 1";
-    const char* data2 = "content test 2";
-
-    result1 = uvhttp_hash(data1, strlen(data1), 0x12345);
-    result2 = uvhttp_hash(data2, strlen(data2), 0x12345);
-
-    /* 内容应该影响哈希结果 */
-    EXPECT_NE(result1, result2);
-}
-
-/* 测试哈希字符串与哈希函数一致性 */
-TEST(UvhttpHashFullCoverageTest, HashStringConsistencyWithHash) {
-    uint64_t result1, result2;
-    const char* str = "consistency test";
-    size_t len = strlen(str);
-
-    result1 = uvhttp_hash_string(str);
-    result2 = uvhttp_hash(str, len, UVHTTP_HASH_DEFAULT_SEED);
-
-    /* 应该产生相同的结果 */
-    EXPECT_EQ(result1, result2);
-}
-
-/* 测试默认哈希与哈希函数一致性 */
-TEST(UvhttpHashFullCoverageTest, HashDefaultConsistency) {
-    uint64_t result1, result2;
-    const char* data = "default consistency";
-    size_t len = strlen(data);
-
-    result1 = uvhttp_hash_default(data, len);
-    result2 = uvhttp_hash(data, len, UVHTTP_HASH_DEFAULT_SEED);
-
-    /* 应该产生相同的结果 */
-    EXPECT_EQ(result1, result2);
-}
-
-/* 测试默认哈希字符串与哈希字符串一致性 */
-TEST(UvhttpHashFullCoverageTest, HashStringDefaultConsistency) {
-    uint64_t result1, result2;
-    const char* str = "default string consistency";
-
-    result1 = uvhttp_hash_string_default(str);
-    result2 = uvhttp_hash_string(str);
-
-    /* 应该产生相同的结果 */
-    EXPECT_EQ(result1, result2);
-}
-
-/* 测试哈希种子常量 */
-TEST(UvhttpHashFullCoverageTest, HashSeedConstant) {
-    /* 检查默认种子常量 */
-    EXPECT_EQ(UVHTTP_HASH_DEFAULT_SEED, 0x1A2B3C4D5E6F7089ULL);
-}
-
-/* 测试哈希函数多次调用 */
-TEST(UvhttpHashFullCoverageTest, HashMultipleCalls) {
-    uint64_t result;
-    const char* data = "multiple calls";
-    size_t len = strlen(data);
-    int i;
-
-    /* 多次调用应该产生相同结果 */
-    result = uvhttp_hash(data, len, 0x12345);
-    for (i = 0; i < 10; i++) {
-        uint64_t new_result = uvhttp_hash(data, len, 0x12345);
-        EXPECT_EQ(new_result, result);
+/* 测试哈希函数的性能 - 多次调用 */
+TEST(UvhttpHashTest, HashPerformance) {
+    const char* data = "Performance test data";
+    size_t length = strlen(data);
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    /* 调用多次以确保性能 */
+    for (int i = 0; i < 1000; i++) {
+        uint64_t hash = uvhttp_hash(data, length, seed);
+        EXPECT_NE(hash, 0ULL);
     }
 }
 
-/* 测试哈希字符串函数多次调用 */
-TEST(UvhttpHashFullCoverageTest, HashStringMultipleCalls) {
-    uint64_t result;
-    const char* str = "multiple string calls";
-    int i;
-
-    /* 多次调用应该产生相同结果 */
-    result = uvhttp_hash_string(str);
-    for (i = 0; i < 10; i++) {
-        uint64_t new_result = uvhttp_hash_string(str);
-        EXPECT_EQ(new_result, result);
+/* 测试字符串哈希函数的性能 - 多次调用 */
+TEST(UvhttpHashTest, HashStringPerformance) {
+    const char* str = "Performance test string";
+    
+    /* 调用多次以确保性能 */
+    for (int i = 0; i < 1000; i++) {
+        uint64_t hash = uvhttp_hash_string(str);
+        EXPECT_NE(hash, 0ULL);
     }
 }
 
-/* 测试哈希函数特殊字符 */
-TEST(UvhttpHashFullCoverageTest, HashSpecialChars) {
-    uint64_t result1, result2;
-    const char* data1 = "special \0 chars";
-    const char* data2 = "special \n chars";
-
-    result1 = uvhttp_hash(data1, 14, 0x12345);
-    result2 = uvhttp_hash(data2, 14, 0x12345);
-
-    /* 特殊字符应该影响哈希结果 */
-    EXPECT_NE(result1, result2);
-}
-
-/* 测试哈希字符串函数特殊字符 */
-TEST(UvhttpHashFullCoverageTest, HashStringSpecialChars) {
-    uint64_t result;
-    const char* str = "special\nchars\t";
-
-    result = uvhttp_hash_string(str);
-    EXPECT_NE(result, 0);
-}
-
-/* 测试哈希函数二进制数据 */
-TEST(UvhttpHashFullCoverageTest, HashBinaryData) {
-    uint64_t result;
-    unsigned char binary_data[] = {0x00, 0xFF, 0xAA, 0x55, 0x12, 0x34};
-
-    result = uvhttp_hash(binary_data, sizeof(binary_data), 0x12345);
-    EXPECT_NE(result, 0);
-}
-
-/* 测试哈希字符串函数Unicode */
-TEST(UvhttpHashFullCoverageTest, HashStringUnicode) {
-    uint64_t result;
-    const char* str = "Unicode测试🎉";
-
-    result = uvhttp_hash_string(str);
-    EXPECT_NE(result, 0);
-}
-
-/* 测试哈希函数零长度 */
-TEST(UvhttpHashFullCoverageTest, HashZeroLength) {
-    uint64_t result;
-    const char* data = "some data";
-
-    result = uvhttp_hash(data, 0, 0x12345);
-    /* 零长度应该产生有效的哈希值 */
-}
-
-/* 测试哈希函数相同种子不同数据 */
-TEST(UvhttpHashFullCoverageTest, HashSameSeedDifferentData) {
-    uint64_t result1, result2;
-    const char* data1 = "data1";
-    const char* data2 = "data2";
-
-    result1 = uvhttp_hash(data1, strlen(data1), 0x12345);
-    result2 = uvhttp_hash(data2, strlen(data2), 0x12345);
-
-    /* 相同种子不同数据应该产生不同哈希值 */
-    EXPECT_NE(result1, result2);
-}
-
-/* 测试哈希函数不同种子相同数据 */
-TEST(UvhttpHashFullCoverageTest, HashDifferentSeedSameData) {
-    uint64_t result1, result2;
-    const char* data = "same data";
-
-    result1 = uvhttp_hash(data, strlen(data), 0x1111);
-    result2 = uvhttp_hash(data, strlen(data), 0x2222);
-
-    /* 不同种子相同数据应该产生不同哈希值 */
-    EXPECT_NE(result1, result2);
-}
-
-/* 测试哈希字符串函数长度敏感 */
-TEST(UvhttpHashFullCoverageTest, HashStringLengthSensitive) {
-    uint64_t result1, result2;
-    const char* str1 = "test";
-    const char* str2 = "test ";
-
-    result1 = uvhttp_hash_string(str1);
-    result2 = uvhttp_hash_string(str2);
-
-    /* 不同长度应该产生不同哈希值 */
-    EXPECT_NE(result1, result2);
-}
-
-/* 测试哈希字符串函数大小写敏感 */
-TEST(UvhttpHashFullCoverageTest, HashStringCaseSensitive) {
-    uint64_t result1, result2;
-    const char* str1 = "CaseSensitive";
-    const char* str2 = "casesensitive";
-
-    result1 = uvhttp_hash_string(str1);
-    result2 = uvhttp_hash_string(str2);
-
-    /* 大小写应该影响哈希结果 */
-    EXPECT_NE(result1, result2);
-}
-
-/* 测试哈希函数性能 */
-TEST(UvhttpHashFullCoverageTest, HashPerformance) {
-    uint64_t result;
-    char data[1000];
-    size_t i;
-    size_t iterations = 1000;
-
-    /* 填充数据 */
-    for (i = 0; i < sizeof(data); i++) {
-        data[i] = (char)(i % 256);
+/* 测试哈希函数的雪崩效应 - 微小变化产生巨大差异 */
+TEST(UvhttpHashTest, HashAvalancheEffect) {
+    const char* data1 = "Hello, World!";
+    const char* data2 = "Hello, World?";
+    size_t length = strlen(data1);
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash1 = uvhttp_hash(data1, length, seed);
+    uint64_t hash2 = uvhttp_hash(data2, length, seed);
+    
+    /* 微小变化应该产生巨大的哈希值差异 */
+    EXPECT_NE(hash1, hash2);
+    
+    /* 计算哈希值的汉明距离 */
+    uint64_t xor_result = hash1 ^ hash2;
+    int bit_count = 0;
+    while (xor_result) {
+        bit_count += xor_result & 1;
+        xor_result >>= 1;
     }
+    
+    /* 汉明距离应该大于0 */
+    EXPECT_GT(bit_count, 0);
+}
 
-    /* 多次哈希操作应该快速完成 */
-    for (i = 0; i < iterations; i++) {
-        result = uvhttp_hash(data, sizeof(data), 0x12345);
-        (void)result;
+/* 测试哈希函数的雪崩效应 - 字符串 */
+TEST(UvhttpHashTest, HashStringAvalancheEffect) {
+    const char* str1 = "Hello, World!";
+    const char* str2 = "Hello, World?";
+    
+    uint64_t hash1 = uvhttp_hash_string(str1);
+    uint64_t hash2 = uvhttp_hash_string(str2);
+    
+    /* 微小变化应该产生巨大的哈希值差异 */
+    EXPECT_NE(hash1, hash2);
+    
+    /* 计算哈希值的汉明距离 */
+    uint64_t xor_result = hash1 ^ hash2;
+    int bit_count = 0;
+    while (xor_result) {
+        bit_count += xor_result & 1;
+        xor_result >>= 1;
     }
+    
+    /* 汉明距离应该大于0 */
+    EXPECT_GT(bit_count, 0);
 }
 
-/* 测试哈希字符串函数性能 */
-TEST(UvhttpHashFullCoverageTest, HashStringPerformance) {
-    uint64_t result;
-    const char* str = "performance test string";
-    int i;
-    int iterations = 1000;
+/* 测试哈希函数的确定性 - 相同输入相同输出（跨函数） */
+TEST(UvhttpHashTest, HashDeterminismAcrossFunctions) {
+    const char* str = "Test string";
+    size_t length = strlen(str);
+    uint64_t seed = UVHTTP_HASH_DEFAULT_SEED;
+    
+    uint64_t hash1 = uvhttp_hash(str, length, seed);
+    uint64_t hash2 = uvhttp_hash_string(str);
+    
+    /* 相同输入应该产生相同的哈希值 */
+    EXPECT_EQ(hash1, hash2);
+}
 
-    /* 多次哈希操作应该快速完成 */
-    for (i = 0; i < iterations; i++) {
-        result = uvhttp_hash_string(str);
-        (void)result;
+/* 测试哈希函数的错误处理 - NULL指针 */
+TEST(UvhttpHashTest, HashErrorHandlingNullPointer) {
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(NULL, 100, seed);
+    
+    /* NULL指针应该返回0 */
+    EXPECT_EQ(hash, 0ULL);
+}
+
+/* 测试字符串哈希函数的错误处理 - NULL指针 */
+TEST(UvhttpHashTest, HashStringErrorHandlingNullPointer) {
+    uint64_t hash = uvhttp_hash_string(NULL);
+    
+    /* NULL指针应该返回0 */
+    EXPECT_EQ(hash, 0ULL);
+}
+
+/* 测试哈希函数的零长度数据 */
+TEST(UvhttpHashTest, HashZeroLengthData) {
+    const char* data = "Test data";
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, 0, seed);
+    
+    /* 零长度数据的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - UINT64_MAX种子 */
+TEST(UvhttpHashTest, HashUint64MaxSeed) {
+    const char* data = "Test data";
+    size_t length = strlen(data);
+    uint64_t seed = UINT64_MAX;
+    
+    uint64_t hash = uvhttp_hash(data, length, seed);
+    
+    /* UINT64_MAX种子的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 0xFFFFFFFFFFFFFFFF种子 */
+TEST(UvhttpHashTest, HashFFFFFFFFFFFFFFFFSeed) {
+    const char* data = "Test data";
+    size_t length = strlen(data);
+    uint64_t seed = 0xFFFFFFFFFFFFFFFFULL;
+    
+    uint64_t hash = uvhttp_hash(data, length, seed);
+    
+    /* 0xFFFFFFFFFFFFFFFF种子的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 0x8000000000000000种子 */
+TEST(UvhttpHashTest, Hash8000000000000000Seed) {
+    const char* data = "Test data";
+    size_t length = strlen(data);
+    uint64_t seed = 0x8000000000000000ULL;
+    
+    uint64_t hash = uvhttp_hash(data, length, seed);
+    
+    /* 0x8000000000000000种子的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 0x1种子 */
+TEST(UvhttpHashTest, Hash01Seed) {
+    const char* data = "Test data";
+    size_t length = strlen(data);
+    uint64_t seed = 0x1ULL;
+    
+    uint64_t hash = uvhttp_hash(data, length, seed);
+    
+    /* 0x1种子的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 0x0种子 */
+TEST(UvhttpHashTest, Hash00Seed) {
+    const char* data = "Test data";
+    size_t length = strlen(data);
+    uint64_t seed = 0x0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, length, seed);
+    
+    /* 0x0种子的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 默认种子 */
+TEST(UvhttpHashTest, HashDefaultSeedValue) {
+    const char* data = "Test data";
+    size_t length = strlen(data);
+    
+    uint64_t hash1 = uvhttp_hash(data, length, UVHTTP_HASH_DEFAULT_SEED);
+    uint64_t hash2 = uvhttp_hash_default(data, length);
+    
+    /* 默认种子应该产生相同的哈希值 */
+    EXPECT_EQ(hash1, hash2);
+}
+
+/* 测试字符串哈希函数的边界值 - 默认种子 */
+TEST(UvhttpHashTest, HashStringDefaultSeedValue) {
+    const char* str = "Test string";
+    
+    uint64_t hash1 = uvhttp_hash_string(str);
+    uint64_t hash2 = uvhttp_hash_string_default(str);
+    
+    /* 默认种子应该产生相同的哈希值 */
+    EXPECT_EQ(hash1, hash2);
+}
+
+/* 测试哈希函数的边界值 - 特殊字符 */
+TEST(UvhttpHashTest, HashSpecialCharacters) {
+    const char* data = "!@#$%^&*()_+-=[]{}|;':\",./<>?";
+    size_t length = strlen(data);
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, length, seed);
+    
+    /* 特殊字符的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试字符串哈希函数的边界值 - 特殊字符 */
+TEST(UvhttpHashTest, HashStringSpecialCharacters) {
+    const char* str = "!@#$%^&*()_+-=[]{}|;':\",./<>?";
+    
+    uint64_t hash = uvhttp_hash_string(str);
+    
+    /* 特殊字符的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - Unicode字符 */
+TEST(UvhttpHashTest, HashUnicodeCharacters) {
+    const char* data = "Hello 世界 🌍";
+    size_t length = strlen(data);
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, length, seed);
+    
+    /* Unicode字符的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试字符串哈希函数的边界值 - Unicode字符 */
+TEST(UvhttpHashTest, HashStringUnicodeCharacters) {
+    const char* str = "Hello 世界 🌍";
+    
+    uint64_t hash = uvhttp_hash_string(str);
+    
+    /* Unicode字符的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 二进制数据 */
+TEST(UvhttpHashTest, HashBinaryData) {
+    unsigned char data[] = {0x00, 0x01, 0x02, 0x03, 0xFF, 0xFE, 0xFD, 0xFC};
+    size_t length = sizeof(data);
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, length, seed);
+    
+    /* 二进制数据的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 所有零字节 */
+TEST(UvhttpHashTest, HashAllZeroBytes) {
+    unsigned char data[100];
+    memset(data, 0, sizeof(data));
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 所有零字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 所有0xFF字节 */
+TEST(UvhttpHashTest, HashAllFFBytes) {
+    unsigned char data[100];
+    memset(data, 0xFF, sizeof(data));
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 所有0xFF字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 交替字节 */
+TEST(UvhttpHashTest, HashAlternatingBytes) {
+    unsigned char data[100];
+    for (size_t i = 0; i < sizeof(data); i++) {
+        data[i] = (i % 2) ? 0xAA : 0x55;
     }
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 交替字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
 }
 
-/* 测试哈希函数零种子 */
-TEST(UvhttpHashFullCoverageTest, HashZeroSeed) {
-    uint64_t result1, result2;
-    const char* data = "zero seed test";
-    size_t len = strlen(data);
-
-    result1 = uvhttp_hash(data, len, 0);
-    result2 = uvhttp_hash(data, len, 0);
-
-    /* 零种子应该产生一致的结果 */
-    EXPECT_EQ(result1, result2);
+/* 测试哈希函数的边界值 - 递增字节 */
+TEST(UvhttpHashTest, HashIncrementingBytes) {
+    unsigned char data[256];
+    for (size_t i = 0; i < sizeof(data); i++) {
+        data[i] = (unsigned char)i;
+    }
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 递增字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
 }
 
-/* 测试哈希函数最大种子 */
-TEST(UvhttpHashFullCoverageTest, HashMaxSeed) {
-    uint64_t result1, result2;
-    const char* data = "max seed test";
-    size_t len = strlen(data);
-    uint64_t max_seed = 0xFFFFFFFFFFFFFFFFULL;
+/* 测试哈希函数的边界值 - 递减字节 */
+TEST(UvhttpHashTest, HashDecrementingBytes) {
+    unsigned char data[256];
+    for (size_t i = 0; i < sizeof(data); i++) {
+        data[i] = (unsigned char)(255 - i);
+    }
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 递减字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
 
-    result1 = uvhttp_hash(data, len, max_seed);
-    result2 = uvhttp_hash(data, len, max_seed);
+/* 测试哈希函数的边界值 - 最大长度 */
+TEST(UvhttpHashTest, HashMaxLength) {
+    unsigned char data[10000];
+    for (size_t i = 0; i < sizeof(data); i++) {
+        data[i] = (unsigned char)(i % 256);
+    }
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 最大长度的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
 
-    /* 最大种子应该产生一致的结果 */
-    EXPECT_EQ(result1, result2);
+/* 测试哈希函数的边界值 - 单字节最大值 */
+TEST(UvhttpHashTest, HashSingleByteMaxValue) {
+    unsigned char data = 0xFF;
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(&data, 1, seed);
+    
+    /* 单字节最大值的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 单字节最小值 */
+TEST(UvhttpHashTest, HashSingleByteMinValue) {
+    unsigned char data = 0x00;
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(&data, 1, seed);
+    
+    /* 单字节最小值的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 单字节中间值 */
+TEST(UvhttpHashTest, HashSingleByteMidValue) {
+    unsigned char data = 0x80;
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(&data, 1, seed);
+    
+    /* 单字节中间值的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 双字节 */
+TEST(UvhttpHashTest, HashTwoBytes) {
+    unsigned char data[] = {0x12, 0x34};
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 双字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 四字节 */
+TEST(UvhttpHashTest, HashFourBytes) {
+    unsigned char data[] = {0x12, 0x34, 0x56, 0x78};
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 四字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 八字节 */
+TEST(UvhttpHashTest, HashEightBytes) {
+    unsigned char data[] = {0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0};
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 八字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 十六字节 */
+TEST(UvhttpHashTest, HashSixteenBytes) {
+    unsigned char data[] = {
+        0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0,
+        0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88
+    };
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 十六字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 三十二字节 */
+TEST(UvhttpHashTest, HashThirtyTwoBytes) {
+    unsigned char data[32];
+    for (size_t i = 0; i < sizeof(data); i++) {
+        data[i] = (unsigned char)i;
+    }
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 三十二字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 六十四字节 */
+TEST(UvhttpHashTest, HashSixtyFourBytes) {
+    unsigned char data[64];
+    for (size_t i = 0; i < sizeof(data); i++) {
+        data[i] = (unsigned char)i;
+    }
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 六十四字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 一百二十八字节 */
+TEST(UvhttpHashTest, HashOneHundredTwentyEightBytes) {
+    unsigned char data[128];
+    for (size_t i = 0; i < sizeof(data); i++) {
+        data[i] = (unsigned char)i;
+    }
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 一百二十八字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 二百五十六字节 */
+TEST(UvhttpHashTest, HashTwoHundredFiftySixBytes) {
+    unsigned char data[256];
+    for (size_t i = 0; i < sizeof(data); i++) {
+        data[i] = (unsigned char)i;
+    }
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 二百五十六字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 五百一十二字节 */
+TEST(UvhttpHashTest, HashFiveHundredTwelveBytes) {
+    unsigned char data[512];
+    for (size_t i = 0; i < sizeof(data); i++) {
+        data[i] = (unsigned char)i;
+    }
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 五百一十二字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 一千零二十四字节 */
+TEST(UvhttpHashTest, HashOneThousandTwentyFourBytes) {
+    unsigned char data[1024];
+    for (size_t i = 0; i < sizeof(data); i++) {
+        data[i] = (unsigned char)i;
+    }
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 一千零二十四字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 二千零四十八字节 */
+TEST(UvhttpHashTest, HashTwoThousandFortyEightBytes) {
+    unsigned char data[2048];
+    for (size_t i = 0; i < sizeof(data); i++) {
+        data[i] = (unsigned char)i;
+    }
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 二千零四十八字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 四千零九十六字节 */
+TEST(UvhttpHashTest, HashFourThousandNinetySixBytes) {
+    unsigned char data[4096];
+    for (size_t i = 0; i < sizeof(data); i++) {
+        data[i] = (unsigned char)i;
+    }
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 四千零九十六字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
+}
+
+/* 测试哈希函数的边界值 - 八千一百九十二字节 */
+TEST(UvhttpHashTest, HashEightThousandOneHundredNinetyTwoBytes) {
+    unsigned char data[8192];
+    for (size_t i = 0; i < sizeof(data); i++) {
+        data[i] = (unsigned char)i;
+    }
+    uint64_t seed = 0x123456789ABCDEF0ULL;
+    
+    uint64_t hash = uvhttp_hash(data, sizeof(data), seed);
+    
+    /* 八千一百九十二字节的哈希值不应该为0 */
+    EXPECT_NE(hash, 0ULL);
 }

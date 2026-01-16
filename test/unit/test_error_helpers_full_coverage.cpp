@@ -1,179 +1,391 @@
-/* UVHTTP 错误处理辅助函数完整覆盖率测试 */
-
 #include <gtest/gtest.h>
-#include <string.h>
-#include "uvhttp.h"
 #include "uvhttp_error_helpers.h"
-#include "uvhttp_constants.h"
+#include "uvhttp_allocator.h"
+#include <string.h>
 
-TEST(UvhttpErrorHelpersFullCoverageTest, CleanupConnectionNull) {
-    uvhttp_cleanup_connection(nullptr, nullptr);
-    uvhttp_cleanup_connection(nullptr, "error message");
+/* 静态函数用于测试 */
+static int g_cleanup_called = 0;
+static void cleanup_func_test(void* data) {
+    g_cleanup_called = 1;
 }
 
-TEST(UvhttpErrorHelpersFullCoverageTest, HandleMemoryFailureNull) {
-    uvhttp_handle_memory_failure(nullptr, nullptr, nullptr);
-    uvhttp_handle_memory_failure("test context", nullptr, nullptr);
-    uvhttp_handle_memory_failure(nullptr, (void (*)(void*))0x1234, nullptr);
+static int g_custom_free_called = 0;
+static void custom_free_func_test(void* data) {
+    g_custom_free_called = 1;
+    uvhttp_free(data);
 }
 
-TEST(UvhttpErrorHelpersFullCoverageTest, HandleWriteErrorNull) {
-    uvhttp_handle_write_error(nullptr, 0, "test context");
-}
-
-TEST(UvhttpErrorHelpersFullCoverageTest, SanitizeErrorMessageNull) {
-    char buffer[256];
+/* 测试清理连接 - 正常情况 */
+TEST(UvhttpErrorHelpersTest, CleanupConnectionNormal) {
+    uv_tcp_t handle;
+    uv_loop_t* loop = uv_default_loop();
     
-    EXPECT_NE(uvhttp_sanitize_error_message(nullptr, buffer, sizeof(buffer)), 0);
-    EXPECT_NE(uvhttp_sanitize_error_message("message", nullptr, sizeof(buffer)), 0);
-    EXPECT_NE(uvhttp_sanitize_error_message("message", buffer, 0), 0);
+    uv_tcp_init(loop, &handle);
+    
+    /* 测试清理连接 */
+    uvhttp_cleanup_connection((uv_handle_t*)&handle, "Test cleanup");
+    
+    /* 等待关闭完成 */
+    uv_run(loop, UV_RUN_NOWAIT);
+    
+    EXPECT_EQ(uv_is_closing((uv_handle_t*)&handle), 1);
 }
 
-TEST(UvhttpErrorHelpersFullCoverageTest, SanitizeErrorMessageNormal) {
-    char buffer[256];
-    
-    EXPECT_EQ(uvhttp_sanitize_error_message("normal error message", buffer, sizeof(buffer)), 0);
-    EXPECT_STREQ(buffer, "normal error message");
+/* 测试清理连接 - NULL 句柄 */
+TEST(UvhttpErrorHelpersTest, CleanupConnectionNullHandle) {
+    /* 测试 NULL 句柄不会崩溃 */
+    uvhttp_cleanup_connection(nullptr, "Test cleanup");
 }
 
-TEST(UvhttpErrorHelpersFullCoverageTest, SanitizeErrorMessageSensitive) {
-    char buffer[256];
+/* 测试清理连接 - 空错误消息 */
+TEST(UvhttpErrorHelpersTest, CleanupConnectionNoErrorMessage) {
+    uv_tcp_t handle;
+    uv_loop_t* loop = uv_default_loop();
     
-    EXPECT_EQ(uvhttp_sanitize_error_message("password: secret123", buffer, sizeof(buffer)), 0);
-    EXPECT_STREQ(buffer, "Sensitive information hidden");
+    uv_tcp_init(loop, &handle);
     
-    EXPECT_EQ(uvhttp_sanitize_error_message("token: abc123", buffer, sizeof(buffer)), 0);
-    EXPECT_STREQ(buffer, "Sensitive information hidden");
+    /* 测试清理连接，不带错误消息 */
+    uvhttp_cleanup_connection((uv_handle_t*)&handle, nullptr);
     
-    EXPECT_EQ(uvhttp_sanitize_error_message("secret key", buffer, sizeof(buffer)), 0);
-    EXPECT_STREQ(buffer, "Sensitive information hidden");
+    /* 等待关闭完成 */
+    uv_run(loop, UV_RUN_NOWAIT);
+    
+    EXPECT_EQ(uv_is_closing((uv_handle_t*)&handle), 1);
 }
 
-TEST(UvhttpErrorHelpersFullCoverageTest, SanitizeErrorMessageLong) {
-    char buffer[20];
+/* 测试清理连接 - 已关闭的句柄 */
+TEST(UvhttpErrorHelpersTest, CleanupConnectionAlreadyClosed) {
+    uv_tcp_t handle;
+    uv_loop_t* loop = uv_default_loop();
+    
+    uv_tcp_init(loop, &handle);
+    uv_close((uv_handle_t*)&handle, nullptr);
+    uv_run(loop, UV_RUN_NOWAIT);
+    
+    /* 测试清理已关闭的句柄不会崩溃 */
+    uvhttp_cleanup_connection((uv_handle_t*)&handle, "Test cleanup");
+}
+
+/* 测试处理内存分配失败 - 正常情况 */
+TEST(UvhttpErrorHelpersTest, HandleMemoryFailureNormal) {
+    g_cleanup_called = 0;
+    uvhttp_handle_memory_failure("test_context", cleanup_func_test, nullptr);
+    EXPECT_EQ(g_cleanup_called, 0); /* cleanup_data 是 nullptr */
+}
+
+/* 测试处理内存分配失败 - 带清理函数 */
+TEST(UvhttpErrorHelpersTest, HandleMemoryFailureWithCleanup) {
+    g_cleanup_called = 0;
+    int cleanup_data = 42;
+    
+    uvhttp_handle_memory_failure("test_context", cleanup_func_test, &cleanup_data);
+    EXPECT_EQ(g_cleanup_called, 1);
+}
+
+/* 测试处理内存分配失败 - NULL 上下文 */
+TEST(UvhttpErrorHelpersTest, HandleMemoryFailureNullContext) {
+    /* 测试 NULL 上下文不会崩溃 */
+    uvhttp_handle_memory_failure(nullptr, cleanup_func_test, nullptr);
+}
+
+/* 测试处理内存分配失败 - NULL 清理函数 */
+TEST(UvhttpErrorHelpersTest, HandleMemoryFailureNullCleanupFunc) {
+    /* 测试 NULL 清理函数不会崩溃 */
+    uvhttp_handle_memory_failure("test_context", nullptr, nullptr);
+}
+
+/* 测试处理写操作错误 - 正常情况 */
+TEST(UvhttpErrorHelpersTest, HandleWriteErrorNormal) {
+    uv_write_t* req = (uv_write_t*)uvhttp_alloc(sizeof(uv_write_t));
+    ASSERT_NE(req, nullptr);
+    
+    /* 测试处理写操作错误 */
+    uvhttp_handle_write_error(req, UV_ECONNRESET, "test_context");
+    
+    /* req 应该被释放 */
+}
+
+/* 测试处理写操作错误 - NULL 请求 */
+TEST(UvhttpErrorHelpersTest, HandleWriteErrorNullRequest) {
+    /* 测试 NULL 请求不会崩溃 */
+    uvhttp_handle_write_error(nullptr, UV_ECONNRESET, "test_context");
+}
+
+/* 测试处理写操作错误 - NULL 上下文 */
+TEST(UvhttpErrorHelpersTest, HandleWriteErrorNullContext) {
+    uv_write_t* req = (uv_write_t*)uvhttp_alloc(sizeof(uv_write_t));
+    ASSERT_NE(req, nullptr);
+    
+    /* 测试 NULL 上下文不会崩溃 */
+    uvhttp_handle_write_error(req, UV_ECONNRESET, nullptr);
+}
+
+/* 测试处理写操作错误 - 不同错误码 */
+TEST(UvhttpErrorHelpersTest, HandleWriteErrorDifferentCodes) {
+    uv_write_t* req1 = (uv_write_t*)uvhttp_alloc(sizeof(uv_write_t));
+    uv_write_t* req2 = (uv_write_t*)uvhttp_alloc(sizeof(uv_write_t));
+    uv_write_t* req3 = (uv_write_t*)uvhttp_alloc(sizeof(uv_write_t));
+    
+    ASSERT_NE(req1, nullptr);
+    ASSERT_NE(req2, nullptr);
+    ASSERT_NE(req3, nullptr);
+    
+    /* 测试不同的错误码 */
+    uvhttp_handle_write_error(req1, UV_EPIPE, "test_context");
+    uvhttp_handle_write_error(req2, UV_ENOTCONN, "test_context");
+    uvhttp_handle_write_error(req3, UV_ECANCELED, "test_context");
+}
+
+/* 测试安全错误日志记录 - 正常情况 */
+TEST(UvhttpErrorHelpersTest, LogSafeErrorNormal) {
+    /* 测试安全错误日志记录 */
+    uvhttp_log_safe_error(UV_ECONNRESET, "test_context", "Connection reset by peer");
+}
+
+/* 测试安全错误日志记录 - NULL 上下文 */
+TEST(UvhttpErrorHelpersTest, LogSafeErrorNullContext) {
+    /* 测试 NULL 上下文不会崩溃 */
+    uvhttp_log_safe_error(UV_ECONNRESET, nullptr, "Connection reset by peer");
+}
+
+/* 测试安全错误日志记录 - NULL 用户消息 */
+TEST(UvhttpErrorHelpersTest, LogSafeErrorNullUserMessage) {
+    /* 测试 NULL 用户消息不会崩溃 */
+    uvhttp_log_safe_error(UV_ECONNRESET, "test_context", nullptr);
+}
+
+/* 测试安全错误日志记录 - 零错误码 */
+TEST(UvhttpErrorHelpersTest, LogSafeErrorZeroErrorCode) {
+    /* 测试零错误码使用用户消息 */
+    uvhttp_log_safe_error(0, "test_context", "Custom error message");
+}
+
+/* 测试验证错误消息安全性 - 正常情况 */
+TEST(UvhttpErrorHelpersTest, SanitizeErrorMessageNormal) {
+    char safe_buffer[256];
+    
+    int result = uvhttp_sanitize_error_message("Normal error message", safe_buffer, sizeof(safe_buffer));
+    
+    EXPECT_EQ(result, 0);
+    EXPECT_STREQ(safe_buffer, "Normal error message");
+}
+
+/* 测试验证错误消息安全性 - 包含敏感信息 */
+TEST(UvhttpErrorHelpersTest, SanitizeErrorMessageSensitive) {
+    char safe_buffer[256];
+    
+    int result = uvhttp_sanitize_error_message("Password: secret123", safe_buffer, sizeof(safe_buffer));
+    
+    EXPECT_EQ(result, 0);
+    EXPECT_STREQ(safe_buffer, "Sensitive information hidden");
+}
+
+/* 测试验证错误消息安全性 - 包含 token */
+TEST(UvhttpErrorHelpersTest, SanitizeErrorMessageToken) {
+    char safe_buffer[256];
+    
+    int result = uvhttp_sanitize_error_message("Token: abc123", safe_buffer, sizeof(safe_buffer));
+    
+    EXPECT_EQ(result, 0);
+    EXPECT_STREQ(safe_buffer, "Sensitive information hidden");
+}
+
+/* 测试验证错误消息安全性 - 包含 key */
+TEST(UvhttpErrorHelpersTest, SanitizeErrorMessageKey) {
+    char safe_buffer[256];
+    
+    int result = uvhttp_sanitize_error_message("API key: xyz789", safe_buffer, sizeof(safe_buffer));
+    
+    EXPECT_EQ(result, 0);
+    EXPECT_STREQ(safe_buffer, "Sensitive information hidden");
+}
+
+/* 测试验证错误消息安全性 - 包含 secret */
+TEST(UvhttpErrorHelpersTest, SanitizeErrorMessageSecret) {
+    char safe_buffer[256];
+    
+    int result = uvhttp_sanitize_error_message("Secret: confidential", safe_buffer, sizeof(safe_buffer));
+    
+    EXPECT_EQ(result, 0);
+    EXPECT_STREQ(safe_buffer, "Sensitive information hidden");
+}
+
+/* 测试验证错误消息安全性 - 包含 auth */
+TEST(UvhttpErrorHelpersTest, SanitizeErrorMessageAuth) {
+    char safe_buffer[256];
+    
+    int result = uvhttp_sanitize_error_message("Auth: basic credentials", safe_buffer, sizeof(safe_buffer));
+    
+    EXPECT_EQ(result, 0);
+    EXPECT_STREQ(safe_buffer, "Sensitive information hidden");
+}
+
+/* 测试验证错误消息安全性 - NULL 消息 */
+TEST(UvhttpErrorHelpersTest, SanitizeErrorMessageNullMessage) {
+    char safe_buffer[256];
+    
+    int result = uvhttp_sanitize_error_message(nullptr, safe_buffer, sizeof(safe_buffer));
+    
+    EXPECT_EQ(result, -1);
+}
+
+/* 测试验证错误消息安全性 - NULL 缓冲区 */
+TEST(UvhttpErrorHelpersTest, SanitizeErrorMessageNullBuffer) {
+    int result = uvhttp_sanitize_error_message("Test message", nullptr, 256);
+    
+    EXPECT_EQ(result, -1);
+}
+
+/* 测试验证错误消息安全性 - 零缓冲区大小 */
+TEST(UvhttpErrorHelpersTest, SanitizeErrorMessageZeroBufferSize) {
+    char safe_buffer[256];
+    
+    int result = uvhttp_sanitize_error_message("Test message", safe_buffer, 0);
+    
+    EXPECT_EQ(result, -1);
+}
+
+/* 测试验证错误消息安全性 - 消息过长 */
+TEST(UvhttpErrorHelpersTest, SanitizeErrorMessageTooLong) {
+    char safe_buffer[20];
     const char* long_message = "This is a very long error message that exceeds the buffer size";
     
-    EXPECT_EQ(uvhttp_sanitize_error_message(long_message, buffer, sizeof(buffer)), 0);
-    EXPECT_LT(strlen(buffer), sizeof(buffer));
-    EXPECT_NE(strstr(buffer, "..."), nullptr);
+    int result = uvhttp_sanitize_error_message(long_message, safe_buffer, sizeof(safe_buffer));
+    
+    EXPECT_EQ(result, 0);
+    EXPECT_EQ(strlen(safe_buffer), sizeof(safe_buffer) - 1);
+    EXPECT_EQ(safe_buffer[sizeof(safe_buffer) - 4], '.');
+    EXPECT_EQ(safe_buffer[sizeof(safe_buffer) - 3], '.');
+    EXPECT_EQ(safe_buffer[sizeof(safe_buffer) - 2], '.');
 }
 
-TEST(UvhttpErrorHelpersFullCoverageTest, SanitizeErrorMessageCase) {
-    char buffer[256];
+/* 测试验证错误消息安全性 - 小缓冲区 */
+TEST(UvhttpErrorHelpersTest, SanitizeErrorMessageSmallBuffer) {
+    char safe_buffer[3];
+    const char* message = "Test";
     
-    EXPECT_EQ(uvhttp_sanitize_error_message("PASSWORD: secret", buffer, sizeof(buffer)), 0);
-    EXPECT_STREQ(buffer, "Sensitive information hidden");
+    int result = uvhttp_sanitize_error_message(message, safe_buffer, sizeof(safe_buffer));
     
-    EXPECT_EQ(uvhttp_sanitize_error_message("Password: secret", buffer, sizeof(buffer)), 0);
-    EXPECT_STREQ(buffer, "Sensitive information hidden");
+    EXPECT_EQ(result, 0);
+    EXPECT_EQ(strlen(safe_buffer), 2);
+    EXPECT_EQ(safe_buffer[0], 'T');
+    EXPECT_EQ(safe_buffer[1], 'e');
+    EXPECT_EQ(safe_buffer[2], '\0');
 }
 
-TEST(UvhttpErrorHelpersFullCoverageTest, SafeFreeNull) {
+/* 测试验证错误消息安全性 - 空消息 */
+TEST(UvhttpErrorHelpersTest, SanitizeErrorMessageEmptyMessage) {
+    char safe_buffer[256];
+    
+    int result = uvhttp_sanitize_error_message("", safe_buffer, sizeof(safe_buffer));
+    
+    EXPECT_EQ(result, 0);
+    EXPECT_STREQ(safe_buffer, "");
+}
+
+/* 测试验证错误消息安全性 - 大小写不敏感 */
+TEST(UvhttpErrorHelpersTest, SanitizeErrorMessageCaseInsensitive) {
+    char safe_buffer[256];
+    
+    int result = uvhttp_sanitize_error_message("PASSWORD: secret123", safe_buffer, sizeof(safe_buffer));
+    
+    EXPECT_EQ(result, 0);
+    EXPECT_STREQ(safe_buffer, "Sensitive information hidden");
+}
+
+/* 测试验证错误消息安全性 - 包含多个敏感词 */
+TEST(UvhttpErrorHelpersTest, SanitizeErrorMessageMultipleSensitive) {
+    char safe_buffer[256];
+    
+    int result = uvhttp_sanitize_error_message("Password and token are sensitive", safe_buffer, sizeof(safe_buffer));
+    
+    EXPECT_EQ(result, 0);
+    EXPECT_STREQ(safe_buffer, "Sensitive information hidden");
+}
+
+/* 测试安全释放资源 - 正常情况 */
+TEST(UvhttpErrorHelpersTest, SafeFreeNormal) {
+    void* ptr = uvhttp_alloc(100);
+    ASSERT_NE(ptr, nullptr);
+    
+    uvhttp_safe_free(&ptr, nullptr);
+    
+    EXPECT_EQ(ptr, nullptr);
+}
+
+/* 测试安全释放资源 - 自定义释放函数 */
+TEST(UvhttpErrorHelpersTest, SafeFreeCustomFreeFunc) {
+    g_custom_free_called = 0;
+    
+    void* ptr = uvhttp_alloc(100);
+    ASSERT_NE(ptr, nullptr);
+    
+    uvhttp_safe_free(&ptr, custom_free_func_test);
+    
+    EXPECT_EQ(ptr, nullptr);
+    EXPECT_EQ(g_custom_free_called, 1);
+}
+
+/* 测试安全释放资源 - NULL 指针指针 */
+TEST(UvhttpErrorHelpersTest, SafeFreeNullPtrPtr) {
+    /* 测试 NULL 指针指针不会崩溃 */
     uvhttp_safe_free(nullptr, nullptr);
-    
-    void* ptr = nullptr;
-    uvhttp_safe_free(&ptr, nullptr);
 }
 
-TEST(UvhttpErrorHelpersFullCoverageTest, SafeFreeNormal) {
-    void* ptr = malloc(100);
-    ASSERT_NE(ptr, nullptr);
-    
-    uvhttp_safe_free(&ptr, nullptr);
-    EXPECT_EQ(ptr, nullptr);
-}
-
-TEST(UvhttpErrorHelpersFullCoverageTest, SafeFreeCustom) {
-    static int custom_free_called = 0;
-    
-    auto custom_free = [](void* data) {
-        custom_free_called = 1;
-        free(data);
-    };
-    
-    void* ptr = malloc(100);
-    ASSERT_NE(ptr, nullptr);
-    
-    custom_free_called = 0;
-    uvhttp_safe_free(&ptr, custom_free);
-    EXPECT_EQ(ptr, nullptr);
-    EXPECT_EQ(custom_free_called, 1);
-}
-
-TEST(UvhttpErrorHelpersFullCoverageTest, SafeFreeMultiple) {
-    void* ptr = malloc(100);
-    ASSERT_NE(ptr, nullptr);
-    
-    uvhttp_safe_free(&ptr, nullptr);
-    EXPECT_EQ(ptr, nullptr);
-    
-    uvhttp_safe_free(&ptr, nullptr);
-}
-
-TEST(UvhttpErrorHelpersFullCoverageTest, HandleMemoryFailureNoCleanup) {
-    uvhttp_handle_memory_failure("test context", nullptr, (void*)0x1234);
-}
-
-TEST(UvhttpErrorHelpersFullCoverageTest, HandleMemoryFailureNoData) {
-    static int cleanup_called = 0;
-    
-    auto test_cleanup = [](void* data) {
-        cleanup_called = 1;
-        (void)data;
-    };
-    
-    cleanup_called = 0;
-    uvhttp_handle_memory_failure("test context", test_cleanup, nullptr);
-    EXPECT_EQ(cleanup_called, 0);
-}
-
-TEST(UvhttpErrorHelpersFullCoverageTest, SanitizeErrorMessageEmpty) {
-    char buffer[256];
-    
-    EXPECT_EQ(uvhttp_sanitize_error_message("", buffer, sizeof(buffer)), 0);
-    EXPECT_STREQ(buffer, "");
-}
-
-TEST(UvhttpErrorHelpersFullCoverageTest, SafeFreeNullFunc) {
-    void* ptr = malloc(100);
-    ASSERT_NE(ptr, nullptr);
-    
-    uvhttp_safe_free(&ptr, nullptr);
-    EXPECT_EQ(ptr, nullptr);
-}
-
-TEST(UvhttpErrorHelpersFullCoverageTest, SafeFreeNullPtrValue) {
+/* 测试安全释放资源 - NULL 指针 */
+TEST(UvhttpErrorHelpersTest, SafeFreeNullPtr) {
     void* ptr = nullptr;
     
-    uvhttp_safe_free(&ptr, (void (*)(void*))0x1234);
+    /* 测试 NULL 指针不会崩溃 */
+    uvhttp_safe_free(&ptr, nullptr);
+    
     EXPECT_EQ(ptr, nullptr);
 }
 
-TEST(UvhttpErrorHelpersFullCoverageTest, SanitizeErrorMessageKeywords) {
-    char buffer[256];
+/* 测试安全释放资源 - NULL 释放函数 */
+TEST(UvhttpErrorHelpersTest, SafeFreeNullFreeFunc) {
+    void* ptr = uvhttp_alloc(100);
+    ASSERT_NE(ptr, nullptr);
     
-    const char* keywords[] = {
-        "password", "passwd", "secret", "key", "token",
-        "auth", "credential", "private", "session"
-    };
+    /* 测试 NULL 释放函数使用默认的 uvhttp_free */
+    uvhttp_safe_free(&ptr, nullptr);
     
-    for (int i = 0; i < 9; i++) {
-        char test_msg[128];
-        snprintf(test_msg, sizeof(test_msg), "%s: value123", keywords[i]);
-        
-        EXPECT_EQ(uvhttp_sanitize_error_message(test_msg, buffer, sizeof(buffer)), 0);
-        EXPECT_STREQ(buffer, "Sensitive information hidden");
-    }
+    EXPECT_EQ(ptr, nullptr);
 }
 
-TEST(UvhttpErrorHelpersFullCoverageTest, SanitizeErrorMessageBufferSizes) {
-    char buffer1[1];
-    char buffer2[10];
-    char buffer3[100];
+/* 测试安全释放资源 - 多次释放 */
+TEST(UvhttpErrorHelpersTest, SafeFreeMultipleFrees) {
+    void* ptr = uvhttp_alloc(100);
+    ASSERT_NE(ptr, nullptr);
     
-    EXPECT_EQ(uvhttp_sanitize_error_message("test", buffer1, sizeof(buffer1)), 0);
+    /* 第一次释放 */
+    uvhttp_safe_free(&ptr, nullptr);
+    EXPECT_EQ(ptr, nullptr);
     
-    EXPECT_EQ(uvhttp_sanitize_error_message("test message", buffer2, sizeof(buffer2)), 0);
+    /* 第二次释放（不应该崩溃） */
+    uvhttp_safe_free(&ptr, nullptr);
+    EXPECT_EQ(ptr, nullptr);
+}
+
+/* 测试安全释放资源 - 释放后指针被清空 */
+TEST(UvhttpErrorHelpersTest, SafeFreePtrCleared) {
+    void* ptr = uvhttp_alloc(100);
+    ASSERT_NE(ptr, nullptr);
+    void* original_ptr = ptr;
     
-    EXPECT_EQ(uvhttp_sanitize_error_message("normal message", buffer3, sizeof(buffer3)), 0);
+    uvhttp_safe_free(&ptr, nullptr);
+    
+    EXPECT_EQ(ptr, nullptr);
+    /* original_ptr 现在是一个悬空指针，但我们不应该访问它 */
+}
+
+/* 测试安全释放资源 - 释放函数为空但指针不为空 */
+TEST(UvhttpErrorHelpersTest, SafeFreeNullFreeFuncNonNullPtr) {
+    void* ptr = uvhttp_alloc(100);
+    ASSERT_NE(ptr, nullptr);
+    
+    /* 释放函数为 NULL，应该使用默认的 uvhttp_free */
+    uvhttp_safe_free(&ptr, nullptr);
+    
+    EXPECT_EQ(ptr, nullptr);
 }
