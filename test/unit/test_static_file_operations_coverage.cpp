@@ -112,8 +112,8 @@ TEST(UvhttpStaticFileOpsTest, CleanupExpiredCache) {
     /* 预热缓存 */
     uvhttp_static_prewarm_cache(ctx, "/test.txt");
     
-    /* 等待缓存过期 */
-    sleep(2);
+    /* 等待缓存过期 (使用更短的时间) */
+    usleep(1100000); /* 1.1秒，确保超过1秒TTL */
     
     /* 清理过期缓存 */
     int result = uvhttp_static_cleanup_expired_cache(ctx);

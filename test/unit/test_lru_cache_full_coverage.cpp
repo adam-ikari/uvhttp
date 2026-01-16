@@ -206,8 +206,8 @@ TEST(UvhttpLruCacheTest, FindExpired) {
     uvhttp_error_t result = uvhttp_lru_cache_put(cache, "/test/file.txt", content, strlen(content), "text/plain", now, "etag");
     EXPECT_EQ(result, UVHTTP_OK);
     
-    /* 等待缓存过期 */
-    sleep(2);
+    /* 等待缓存过期 (使用更短的时间) */
+    usleep(1100000); /* 1.1秒，确保超过1秒TTL */
     
     /* 现在应该找不到缓存了 */
     cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/test/file.txt");
