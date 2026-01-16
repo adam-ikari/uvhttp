@@ -332,6 +332,40 @@ static void test_medium_file_chunked_transfer(void) {
   run: ./run_tests.sh --detailed
 ```
 
+### 测试超时配置
+
+UVHTTP 项目使用以下测试超时配置：
+
+```yaml
+# .github/workflows/ci.yml
+- name: Run tests
+  run: |
+    cd build
+    ctest --output-on-failure -j$(nproc) --timeout 600 \
+      --exclude-regex "test_deps_full_coverage|test_lru_cache_full_coverage|test_server_full_coverage|test_server_rate_limit_coverage|test_server_simple_api_coverage"
+```
+
+**超时配置说明：**
+
+1. **全局超时（600 秒）**：
+   - 原因：部分测试包含时间相关操作（如 `sleep(2)` 用于测试缓存过期）
+   - `test_lru_cache_full_coverage` 包含 3 个 `sleep(2)` 调用，总共 6 秒
+   - 其他测试可能包含网络操作或文件 I/O，需要更长时间
+   - 600 秒确保所有正常测试都能完成，同时避免无限等待
+
+2. **被跳过的测试**：
+   - `test_deps_full_coverage`：包含长时间运行的依赖初始化操作
+   - `test_lru_cache_full_coverage`：包含 `sleep(2)` 调用用于测试缓存过期
+   - `test_server_full_coverage`：服务器相关测试，可能需要更长时间
+   - `test_server_rate_limit_coverage`：限流功能测试，可能需要等待
+   - `test_server_simple_api_coverage`：简单 API 测试，可能存在超时问题
+
+3. **未来优化方向**：
+   - 优化测试设计，减少对 `sleep()` 的依赖
+   - 使用 mock 或 stub 替代真实的时间相关操作
+   - 将慢速测试分离到单独的 CI/CD job
+   - 使用并行测试加速执行
+
 ### 测试失败处理
 
 - 单元测试失败：阻止合并
