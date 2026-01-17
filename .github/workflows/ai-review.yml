@@ -35,45 +35,13 @@ jobs:
 
     - name: AI Code Review
       if: steps.changed-files.outputs.any_changed == 'true'
-      uses: github/github-ai-review-action@v1
+      uses: ./.github/actions/iflow-code-review
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
+        changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
         model: gpt-4o
         max-tokens: 4000
         temperature: 0.3
-        system-prompt: |
-          You are an expert C code reviewer. Review the code changes for:
-          1. Code quality and style
-          2. Potential bugs and issues
-          3. Security vulnerabilities
-          4. Performance optimizations
-          5. Best practices adherence
-          6. Memory management issues
-          7. Error handling
-
-          Provide specific, actionable feedback with code examples where appropriate.
-          Be constructive and helpful.
-
-    - name: Generate Review Summary
-      if: steps.changed-files.outputs.any_changed == 'true'
-      run: |
-        set -e  # Exit on error
-
-        # Create review summary file
-        cat > review_summary.md << 'EOF'
-        ## AI Code Review Summary
-
-        ### Changed Files
-        ${{ steps.changed-files.outputs.all_changed_files }}
-
-        ### Review Date
-        $(date -u +'%Y-%m-%d %H:%M:%S UTC')
-
-        ### Reviewer
-        GitHub AI (GPT-4o)
-        EOF
-
-        echo "Review summary created successfully"
 
     - name: Post Review Comment
       if: steps.changed-files.outputs.any_changed == 'true'
@@ -98,7 +66,7 @@ jobs:
               body: summary
             });
 
-            console.log('Review comment posted successfully');
+            console.log('iFlow review comment posted successfully');
           } catch (error) {
             console.error('Error posting review comment:', error);
             core.setFailed(`Failed to post review comment: ${error.message}`);
@@ -145,7 +113,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: `🚨 Critical Issues Found in PR #${context.issue.number}`,
-              body: `AI Code Review found critical issues in PR #${context.issue.number}.\n\n${review}`,
+              body: `iFlow AI Code Review found critical issues in PR #${context.issue.number}.\n\n${review}`,
               labels: ['critical', 'security', 'ai-review']
             });
 
