@@ -9,7 +9,7 @@ on:
 jobs:
   nightly-build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
     - uses: actions/checkout@v3
@@ -21,40 +21,156 @@ jobs:
       run: |
         echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
         echo "timestamp=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+        echo "datetime=$(date +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
 
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake build-essential lcov
+        sudo apt-get install -y cmake build-essential lcov wrk valgrind
 
-    - name: Configure CMake
+    - name: Configure CMake (Release)
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
+        cmake -B build-release -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
 
-    - name: Build
+    - name: Build (Release)
       run: |
-        cmake --build build --config Release -j$(nproc)
+        cmake --build build-release --config Release -j$(nproc)
 
-    - name: Run tests
+    - name: Run fast tests
+      id: fast-tests
       run: |
-        cd build
-        ctest --output-on-failure -j1 --timeout 1800 --schedule-random || {
-          echo "Tests failed, continuing with nightly build"
+        cd build-release
+        start_time=$(date +%s)
+        ctest --output-on-failure -j1 --timeout 300 --schedule-random \
+          --exclude-regex "test_deps_full_coverage|test_lru_cache_full_coverage|test_server_full_coverage|test_server_rate_limit_coverage|test_server_simple_api_coverage" || {
+          echo "Fast tests failed"
+          exit 1
         }
+        end_time=$(date +%s)
+        duration=$((end_time - start_time))
+        echo "duration=$duration" >> $GITHUB_OUTPUT
+        echo "result=success" >> $GITHUB_OUTPUT
+
+    - name: Run slow tests
+      id: slow-tests
+      run: |
+        cd build-release
+        start_time=$(date +%s)
+        ctest --output-on-failure -j1 --timeout 1800 --schedule-random \
+          --tests-regex "test_deps_full_coverage|test_lru_cache_full_coverage|test_server_full_coverage|test_server_rate_limit_coverage|test_server_simple_api_coverage" || {
+          echo "Slow tests failed"
+          exit 1
+        }
+        end_time=$(date +%s)
+        duration=$((end_time - start_time))
+        echo "duration=$duration" >> $GITHUB_OUTPUT
+        echo "result=success" >> $GITHUB_OUTPUT
+
+    - name: Configure CMake (Debug with Coverage)
+      run: |
+        cmake -B build-coverage -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
+
+    - name: Build (Debug with Coverage)
+      run: |
+        cmake --build build-coverage --config Debug -j$(nproc)
+
+    - name: Run all tests with coverage
+      id: coverage-tests
+      run: |
+        cd build-coverage
+        start_time=$(date +%s)
+        ctest --output-on-failure -j1 --timeout 1800 --schedule-random || {
+          echo "Some tests failed, continuing with coverage report"
+        }
+        end_time=$(date +%s)
+        duration=$((end_time - start_time))
+        echo "duration=$duration" >> $GITHUB_OUTPUT
 
     - name: Generate coverage report
+      id: coverage
       run: |
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON ..
-        cmake --build . --config Debug -j$(nproc)
-        ctest --output-on-failure -j1 --timeout 1800 --schedule-random || true
+        cd build-coverage
         lcov --capture --directory . --output-file coverage.info 2>/dev/null || echo "No coverage data"
         if [ -f coverage.info ]; then
           lcov --remove coverage.info '/usr/*' --output-file coverage.info
           lcov --remove coverage.info 'test/*' --output-file coverage.info
           lcov --remove coverage.info 'examples/*' --output-file coverage.info
-          lcov --summary coverage.info
+          lcov --summary coverage.info > coverage-summary.txt
+          lcov --list coverage.info > coverage-details.txt
+          
+          # 提取覆盖率数据
+          lines_cov=$(grep "lines" coverage-summary.txt | awk '{print $2}' | tr -d '%')
+          funcs_cov=$(grep "functions" coverage-summary.txt | awk '{print $2}' | tr -d '%' || echo 0)
+          branches_cov=$(grep "branches" coverage-summary.txt | awk '{print $2}' | tr -d '%' || echo 0)
+          
+          echo "lines=$lines_cov" >> $GITHUB_OUTPUT
+          echo "functions=$funcs_cov" >> $GITHUB_OUTPUT
+          echo "branches=$branches_cov" >> $GITHUB_OUTPUT
         fi
+
+    - name: Performance test
+      id: performance
+      run: |
+        mkdir -p build-release/public
+        echo "<html><body><h1>Performance Test</h1></body></html>" > build-release/public/index.html
+        echo "Test file content" > build-release/public/test.txt
+        echo "Large test file" > build-release/public/large.txt
+        dd if=/dev/zero of=build-release/public/large.bin bs=1M count=10 2>/dev/null
+        
+        cd build-release
+        if [ -f "./dist/bin/performance_static_server" ]; then
+          ./dist/bin/performance_static_server -d ./public -p 8080 &
+          SERVER_PID=$!
+          
+          # 等待服务器启动
+          for i in {1..10}; do
+            if curl -s http://localhost:8080/ > /dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+          
+          # 运行性能测试
+          wrk -t4 -c100 -d10s --timeout 5s http://localhost:8080/ > performance.log 2>&1
+          
+          # 提取性能指标
+          rps=$(grep "Requests/sec" performance.log | awk '{print $2}')
+          latency_avg=$(grep "Latency" performance.log | awk '{print $2}')
+          latency_p99=$(grep "99%" performance.log | awk '{print $2}')
+          
+          echo "rps=$rps" >> $GITHUB_OUTPUT
+          echo "latency_avg=$latency_avg" >> $GITHUB_OUTPUT
+          echo "latency_p99=$latency_p99" >> $GITHUB_OUTPUT
+          
+          kill $SERVER_PID 2>/dev/null || true
+        fi
+
+    - name: Memory leak check
+      id: memory
+      run: |
+        cd build-release
+        if [ -f "./dist/bin/test_connection_full_coverage" ]; then
+          valgrind --leak-check=full --error-exitcode=0 --log-file=valgrind.log \
+            ./dist/bin/test_connection_full_coverage || true
+          
+          # 检查内存泄漏
+          leaks=$(grep "definitely lost:" valgrind.log | awk '{print $4}')
+          echo "leaks=$leaks" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Generate test report
+      run: |
+        cd build-release
+        ctest --verbose --no-compress-output -T Test > test-report.txt 2>&1 || true
+        
+        # 统计测试结果
+        total=$(grep -c "Test #" test-report.txt 2>/dev/null || echo 0)
+        passed=$(grep -c "Passed" test-report.txt 2>/dev/null || echo 0)
+        failed=$(grep -c "Failed" test-report.txt 2>/dev/null || echo 0)
+        
+        echo "total_tests=$total" >> $GITHUB_ENV
+        echo "passed_tests=$passed" >> $GITHUB_ENV
+        echo "failed_tests=$failed" >> $GITHUB_ENV
 
     - name: Create nightly build archive
       run: |
@@ -63,18 +179,25 @@ jobs:
         
         # 复制库文件
         mkdir -p lib include
-        cp ../build/dist/lib/*.a lib/ 2>/dev/null || true
+        cp ../build-release/dist/lib/*.a lib/ 2>/dev/null || true
         cp -r ../include/*.h include/ 2>/dev/null || true
         
         # 复制示例程序
         mkdir -p bin
-        cp ../build/dist/bin/* bin/ 2>/dev/null || true
+        cp ../build-release/dist/bin/* bin/ 2>/dev/null || true
+        
+        # 复制测试报告
+        cp ../build-release/test-report.txt . 2>/dev/null || true
+        cp ../build-coverage/coverage-summary.txt . 2>/dev/null || true
+        cp ../build-coverage/coverage-details.txt . 2>/dev/null || true
+        cp ../build-release/performance.log . 2>/dev/null || true
+        cp ../build-release/valgrind.log . 2>/dev/null || true
         
         # 创建 README
         cat > README.md << EOF
 # UVHTTP Nightly Build
 
-**Build Date**: ${{ steps.date.outputs.date }}
+**Build Date**: ${{ steps.date.outputs.datetime }}
 **Commit**: $(git rev-parse --short HEAD)
 **Branch**: main
 
@@ -84,6 +207,24 @@ jobs:
 2. Copy headers to \`/usr/local/include/uvhttp/\`
 3. Copy library to \`/usr/local/lib/\`
 4. Run \`ldconfig\`
+
+## Test Results
+
+- **Total Tests**: ${{ env.total_tests }}
+- **Passed**: ${{ env.passed_tests }}
+- **Failed**: ${{ env.failed_tests }}
+
+## Coverage
+
+- **Lines**: ${{ steps.coverage.outputs.lines }}%
+- **Functions**: ${{ steps.coverage.outputs.functions }}%
+- **Branches**: ${{ steps.coverage.outputs.branches }}%
+
+## Performance
+
+- **RPS**: ${{ steps.performance.outputs.rps }}
+- **Avg Latency**: ${{ steps.performance.outputs.latency_avg }}
+- **P99 Latency**: ${{ steps.performance.outputs.latency_p99 }}
 
 ## Build Information
 
@@ -100,6 +241,75 @@ EOF
         cd ..
         tar -czf uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz nightly-${{ steps.date.outputs.timestamp }}
 
+    - name: Generate detailed report
+      run: |
+        cat > NIGHTLY_REPORT.md << EOF
+# Nightly Build Report - ${{ steps.date.outputs.date }}
+
+## Build Information
+
+- **Date**: ${{ steps.date.outputs.datetime }}
+- **Commit**: $(git rev-parse --short HEAD)
+- **Branch**: main
+- **Build Number**: ${{ github.run_number }}
+- **Run ID**: ${{ github.run_id }}
+
+## Test Results
+
+### Fast Tests
+- **Status**: ${{ steps.fast-tests.outputs.result }}
+- **Duration**: ${{ steps.fast-tests.outputs.duration }}s
+
+### Slow Tests
+- **Status**: ${{ steps.slow-tests.outputs.result }}
+- **Duration**: ${{ steps.slow-tests.outputs.duration }}s
+
+### Coverage Tests
+- **Duration**: ${{ steps.coverage-tests.outputs.duration }}s
+
+### Overall
+- **Total Tests**: ${{ env.total_tests }}
+- **Passed**: ${{ env.passed_tests }}
+- **Failed**: ${{ env.failed_tests }}
+- **Pass Rate**: $(python3 -c "print(f'{(${{ env.passed_tests }} / ${{ env.total_tests }} * 100):.2f}%' if ${{ env.total_tests }} > 0 else 'N/A')")
+
+## Code Coverage
+
+- **Lines**: ${{ steps.coverage.outputs.lines }}%
+- **Functions**: ${{ steps.coverage.outputs.functions }}%
+- **Branches**: ${{ steps.coverage.outputs.branches }}%
+
+## Performance Metrics
+
+- **Requests/sec**: ${{ steps.performance.outputs.rps }}
+- **Average Latency**: ${{ steps.performance.outputs.latency_avg }}
+- **P99 Latency**: ${{ steps.performance.outputs.latency_p99 }}
+
+## Memory Check
+
+- **Memory Leaks**: ${{ steps.memory.outputs.leaks }} bytes
+
+## Recent Commits
+
+\`\`\`
+$(git log --since="1 day ago" --pretty=format:"%h - %s (%an, %ar)" || echo "No commits in the last 24 hours")
+\`\`\`
+
+## Build Artifacts
+
+- **Archive**: [uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz](https://github.com/${{ github.repository }}/releases/download/nightly-${{ steps.date.outputs.timestamp }}/uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz)
+- **Size**: $(du -h uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz | cut -f1)
+
+## Notes
+
+This is an automated nightly build and may contain unstable features.
+For production use, please use the latest stable release.
+
+---
+
+Generated by GitHub Actions
+EOF
+
     - name: Upload nightly build artifact
       uses: actions/upload-artifact@v3
       with:
@@ -107,30 +317,24 @@ EOF
         path: uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz
         retention-days: 7
 
+    - name: Upload report artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: nightly-report-${{ steps.date.outputs.timestamp }}
+        path: NIGHTLY_REPORT.md
+        retention-days: 7
+
     - name: Create nightly build release
       uses: softprops/action-gh-release@v1
       with:
         tag_name: nightly-${{ steps.date.outputs.timestamp }}
         name: Nightly Build - ${{ steps.date.outputs.date }}
-        body: |
-          ## Nightly Build ${{ steps.date.outputs.date }}
-          
-          This is an automated nightly build from the main branch.
-          
-          **Build Information**:
-          - **Date**: ${{ steps.date.outputs.date }}
-          - **Commit**: $(git rev-parse --short HEAD)
-          - **Branch**: main
-          
-          **Changes in this build**:
-          $(git log --since="1 day ago" --pretty=format:"- %s" || echo "No commits in the last 24 hours")
-          
-          **⚠️ Warning**: Nightly builds may contain unstable features and are not recommended for production use.
-          
-          **Download**: [uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz](https://github.com/${{ github.repository }}/releases/download/nightly-${{ steps.date.outputs.timestamp }}/uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz)
+        body_path: NIGHTLY_REPORT.md
         draft: false
         prerelease: true
-        files: uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz
+        files: |
+          uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz
+          NIGHTLY_REPORT.md
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -144,15 +348,32 @@ EOF
 
     - name: Create nightly build summary
       run: |
-        echo "## Nightly Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "## 🚀 Nightly Build Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "- **Build Date**: ${{ steps.date.outputs.date }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Commit**: $(git rev-parse --short HEAD)" >> $GITHUB_STEP_SUMMARY
-        echo "- **Branch**: main" >> $GITHUB_STEP_SUMMARY
-        echo "- **Build Type**: Release" >> $GITHUB_STEP_SUMMARY
-        echo "- **Archive**: uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz" >> $GITHUB_STEP_SUMMARY
+        echo "**Build Date**: ${{ steps.date.outputs.datetime }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit**: $(git rev-parse --short HEAD)" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch**: main" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Recent Commits" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "- **Total Tests**: ${{ env.total_tests }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Passed**: ${{ env.passed_tests }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Failed**: ${{ env.failed_tests }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Pass Rate**: $(python3 -c "print(f'{(${{ env.passed_tests }} / ${{ env.total_tests }} * 100):.2f}%' if ${{ env.total_tests }} > 0 else 'N/A')")" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📈 Coverage" >> $GITHUB_STEP_SUMMARY
+        echo "- **Lines**: ${{ steps.coverage.outputs.lines }}%" >> $GITHUB_STEP_SUMMARY
+        echo "- **Functions**: ${{ steps.coverage.outputs.functions }}%" >> $GITHUB_STEP_SUMMARY
+        echo "- **Branches**: ${{ steps.coverage.outputs.branches }}%" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ⚡ Performance" >> $GITHUB_STEP_SUMMARY
+        echo "- **RPS**: ${{ steps.performance.outputs.rps }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Avg Latency**: ${{ steps.performance.outputs.latency_avg }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **P99 Latency**: ${{ steps.performance.outputs.latency_p99 }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 Download" >> $GITHUB_STEP_SUMMARY
+        echo "[uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz](https://github.com/${{ github.repository }}/releases/download/nightly-${{ steps.date.outputs.timestamp }}/uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📝 Recent Commits" >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
         git log --since="1 day ago" --pretty=format:"%h - %s" || echo "No commits in the last 24 hours" >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
