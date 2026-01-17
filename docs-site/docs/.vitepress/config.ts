@@ -12,6 +12,7 @@ export default defineConfig({
       { text: '首页', link: '/' },
       { text: '指南', link: '/guide/getting-started' },
       { text: 'API', link: '/api/introduction' },
+      { text: '版本', link: '/versions' },
       { text: '更多', link: '/changelog' },
       { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' }
     ],
@@ -38,6 +39,10 @@ export default defineConfig({
     footer: {
       message: '基于 MIT 许可证发布',
       copyright: 'Copyright © 2024-present UVHTTP Contributors'
-    }
+    },
+    
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/adam-ikari/uvhttp' }
+    ]
   }
 })
