@@ -158,10 +158,6 @@ UVHTTP 在性能测试中表现优异：
 ## 文档
 
 - [快速开始](/guide/getting-started) - 快速上手指南
-- [API 文档](/api/introduction) - 完整的 API 参考
-- [架构设计](/guide/architecture) - 系统架构说明
-- [性能优化](/guide/performance) - 性能优化指南
-- [最佳实践](/guide/best-practices) - 开发最佳实践
 
 ## 社区
 

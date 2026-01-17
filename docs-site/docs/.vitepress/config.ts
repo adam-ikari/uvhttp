@@ -17,26 +17,7 @@ export default defineConfig({
       { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' }
     ],
     
-    sidebar: {
-      '/guide/': [
-        { text: '快速开始', link: '/guide/getting-started' },
-        { text: '架构设计', link: '/guide/architecture' },
-        { text: '路由', link: '/guide/routing' },
-        { text: '中间件', link: '/guide/middleware' },
-        { text: 'WebSocket', link: '/guide/websocket' },
-        { text: '性能优化', link: '/guide/performance' },
-        { text: '最佳实践', link: '/guide/best-practices' }
-      ],
-      '/api/': [
-        { text: 'API 介绍', link: '/api/introduction' }
-      ],
-      '/en/guide/': [
-        { text: 'Quick Start', link: '/en/guide/getting-started' }
-      ],
-      '/en/api/': [
-        { text: 'API Introduction', link: '/en/api/introduction' }
-      ]
-    },
+    sidebar: false,
     
     search: {
       provider: 'local'

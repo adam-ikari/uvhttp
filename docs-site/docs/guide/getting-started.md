@@ -134,7 +134,4 @@ cmake -DBUILD_EXAMPLES=ON ..
 
 ## 下一步
 
-- [API 文档](/api/introduction) - 了解完整的 API
-- [路由](/guide/routing) - 学习如何使用路由
-- [中间件](/guide/middleware) - 使用中间件功能
-- [WebSocket](/guide/websocket) - WebSocket 支持
+- [API 文档](/api/introduction) - 学习完整的 API

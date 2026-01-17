@@ -234,8 +234,6 @@ wrk -t4 -c50 -d10s http://localhost:8080/large.bin
 - 目标错误率：< 0.05%
 - 目标内存占用：< 15MB
 
-## 更多信息
+## 相关文档
 
-- [性能优化指南](/guide/performance)
-- [性能测试标准](https://github.com/adam-ikari/uvhttp/blob/main/docs/PERFORMANCE_TESTING_STANDARD.md)
-- [性能基准测试](https://github.com/adam-ikari/uvhttp/blob/main/docs/PERFORMANCE_BENCHMARK.md)
+- [API 参考](/api/introduction) - 完整的 API 文档
