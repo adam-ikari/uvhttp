@@ -13,18 +13,17 @@ concurrency:
 jobs:
   build-and-test:
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 20
 
     steps:
     - uses: actions/checkout@v3
       with:
         submodules: recursive
 
-    - name: Install dependencies (Linux)
-      if: runner.os == 'Linux'
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake build-essential valgrind
+        sudo apt-get install -y cmake build-essential
 
     - name: Configure CMake
       run: |
@@ -51,9 +50,11 @@ jobs:
           exit 1
         fi
 
+  # 慢速测试只在 main 分支和 PR 中运行
   slow-tests:
     runs-on: ubuntu-22.04
     timeout-minutes: 45
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
 
     steps:
     - uses: actions/checkout@v3
@@ -83,9 +84,11 @@ jobs:
           exit 1
         }
 
+  # 性能测试只在 main 分支和 PR 中运行
   performance-test:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
 
     steps:
     - uses: actions/checkout@v3
@@ -146,9 +149,11 @@ jobs:
           echo "performance_static_server not found, skipping performance test"
         fi
 
+  # 代码质量检查只在 main 分支和 PR 中运行
   code-quality:
     runs-on: ubuntu-22.04
     timeout-minutes: 20
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
 
     steps:
     - uses: actions/checkout@v3
@@ -189,9 +194,11 @@ jobs:
           echo "test_connection_full_coverage not found, skipping valgrind"
         fi
 
+  # 覆盖率测试只在 main 分支和 PR 中运行
   coverage:
     runs-on: ubuntu-22.04
     timeout-minutes: 45
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
 
     steps:
     - uses: actions/checkout@v3
