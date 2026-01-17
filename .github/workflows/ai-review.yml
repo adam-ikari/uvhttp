@@ -38,6 +38,7 @@ jobs:
       uses: ./.github/actions/iflow-code-review
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
+        iflow-token: ${{ secrets.IFLOW_TOKEN }}
         changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
         model: gpt-4o
         max-tokens: 4000

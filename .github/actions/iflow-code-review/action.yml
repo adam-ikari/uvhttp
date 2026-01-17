@@ -5,6 +5,9 @@ inputs:
   github-token:
     description: 'GitHub token'
     required: true
+  iflow-token:
+    description: 'iFlow API token for authentication'
+    required: true
   changed-files:
     description: '变更的文件列表'
     required: true
@@ -34,16 +37,31 @@ runs:
       shell: bash
       run: |
         echo "Setting up iFlow CLI for code review"
+        
+        # 设置 iFlow CLI 认证
+        export IFLOW_TOKEN="${{ inputs.iflow-token }}"
+        echo "IFLOW_TOKEN configured"
+        
         # 检查 iflow 是否可用
         if ! command -v iflow &> /dev/null; then
           echo "Warning: iFlow CLI not found, using fallback review"
           echo "IFLOW_AVAILABLE=false" >> $GITHUB_ENV
         else
           echo "IFLOW_AVAILABLE=true" >> $GITHUB_ENV
+          
+          # 验证 iflow CLI 认证
+          if iflow --version &> /dev/null; then
+            echo "iFlow CLI is ready"
+          else
+            echo "Warning: iFlow CLI authentication failed, using fallback review"
+            echo "IFLOW_AVAILABLE=false" >> $GITHUB_ENV
+          fi
         fi
 
     - name: Run iFlow Code Review
       shell: bash
+      env:
+        IFLOW_TOKEN: ${{ inputs.iflow-token }}
       run: |
         # 使用 iFlow CLI 进行代码审查
         echo "Running iFlow code review on changed files:"
@@ -78,7 +96,7 @@ runs:
             
             # 使用 iflow CLI 审查文件
             if [ -f "$file" ]; then
-              iflow code-review --file "$file" --model "${{ inputs.model }}" >> review_summary.md 2>&1 || echo "Review completed with warnings"
+              iflow code-review --file "$file" --model "${{ inputs.model }}" --max-tokens "${{ inputs.max-tokens }}" --temperature "${{ inputs.temperature }}" >> review_summary.md 2>&1 || echo "Review completed with warnings"
             else
               echo "File not found: $file" >> review_summary.md
             fi
