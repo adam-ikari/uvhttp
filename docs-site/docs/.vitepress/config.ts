@@ -14,6 +14,14 @@ export default defineConfig({
       { text: 'API', link: '/api/introduction' },
       { text: '性能', link: '/performance' },
       { text: '版本', link: '/versions' },
+      { 
+        text: 'English', 
+        link: '/en/',
+        items: [
+          { text: 'English', link: '/en/' },
+          { text: '中文', link: '/' }
+        ]
+      },
       { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' }
     ],
     
@@ -29,6 +37,18 @@ export default defineConfig({
       ],
       '/api/': [
         { text: 'API 介绍', link: '/api/introduction' }
+      ],
+      '/en/guide/': [
+        { text: 'Quick Start', link: '/en/guide/getting-started' },
+        { text: 'Architecture', link: '/en/guide/architecture' },
+        { text: 'Routing', link: '/en/guide/routing' },
+        { text: 'Middleware', link: '/en/guide/middleware' },
+        { text: 'WebSocket', link: '/en/guide/websocket' },
+        { text: 'Performance', link: '/en/guide/performance' },
+        { text: 'Best Practices', link: '/en/guide/best-practices' }
+      ],
+      '/en/api/': [
+        { text: 'API Introduction', link: '/en/api/introduction' }
       ]
     },
     
