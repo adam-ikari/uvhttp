@@ -12,29 +12,24 @@ export default defineConfig({
       { text: '首页', link: '/' },
       { text: '指南', link: '/guide/getting-started' },
       { text: 'API', link: '/api/introduction' },
+      { text: '更多', link: '/changelog' },
       { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' }
     ],
     
-    sidebar: [
-      {
-        text: '指南',
-        items: [
-          { text: '快速开始', link: '/guide/getting-started' },
-          { text: '架构设计', link: '/guide/architecture' },
-          { text: '路由', link: '/guide/routing' },
-          { text: '中间件', link: '/guide/middleware' },
-          { text: 'WebSocket', link: '/guide/websocket' },
-          { text: '性能优化', link: '/guide/performance' },
-          { text: '最佳实践', link: '/guide/best-practices' }
-        ]
-      },
-      {
-        text: 'API',
-        items: [
-          { text: 'API 介绍', link: '/api/introduction' }
-        ]
-      }
-    ],
+    sidebar: {
+      '/guide/': [
+        { text: '快速开始', link: '/guide/getting-started' },
+        { text: '架构设计', link: '/guide/architecture' },
+        { text: '路由', link: '/guide/routing' },
+        { text: '中间件', link: '/guide/middleware' },
+        { text: 'WebSocket', link: '/guide/websocket' },
+        { text: '性能优化', link: '/guide/performance' },
+        { text: '最佳实践', link: '/guide/best-practices' }
+      ],
+      '/api/': [
+        { text: 'API 介绍', link: '/api/introduction' }
+      ]
+    },
     
     search: {
       provider: 'local'
