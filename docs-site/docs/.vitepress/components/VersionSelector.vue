@@ -1,6 +1,6 @@
 <template>
   <div class="version-selector">
-    <select v-model="selectedVersion" @change="onVersionChange" class="version-select" aria-label="Select documentation version" id="version-selector">
+    <select v-model="selectedVersion" @change="onVersionChange" class="version-select" aria-label="Select documentation version">
       <option v-for="version in versions" :key="version.label" :value="version.label">
         {{ version.label }} {{ version.isCurrent ? '(当前)' : '' }}
       </option>
@@ -17,14 +17,14 @@ interface Version {
   isCurrent: boolean
 }
 
-const versions = ref<Version[]>([
+const versions: Version[] = [
   { label: '1.5.0', link: '/v1.5.0/', isCurrent: true },
   { label: '1.4.0', link: '/v1.4.0/', isCurrent: false },
   { label: '1.3.0', link: '/v1.3.0/', isCurrent: false },
   { label: '1.2.0', link: '/v1.2.0/', isCurrent: false },
   { label: '1.1.0', link: '/v1.1.0/', isCurrent: false },
   { label: '1.0.0', link: '/v1.0.0/', isCurrent: false }
-])
+]
 
 const selectedVersion = ref('1.5.0')
 
@@ -33,7 +33,7 @@ onMounted(() => {
     const path = window.location.pathname
     const versionMatch = path.match(/\/v(\d+\.\d+\.\d+)\//)
     if (versionMatch) {
-      const version = versions.value.find(v => v.label === versionMatch[1])
+      const version = versions.find(v => v.label === versionMatch[1])
       if (version) {
         selectedVersion.value = versionMatch[1]
       }
@@ -45,7 +45,7 @@ onMounted(() => {
 
 const onVersionChange = () => {
   try {
-    const version = versions.value.find(v => v.label === selectedVersion.value)
+    const version = versions.find(v => v.label === selectedVersion.value)
     if (version) {
       window.location.href = version.link
     }

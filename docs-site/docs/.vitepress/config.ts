@@ -7,21 +7,6 @@ export default defineConfig({
   base: '/uvhttp/',
   lang: 'zh-CN',
   
-  // 禁用死链检查
-  vite: {
-    build: {
-      rollupOptions: {
-        onwarn(warning, warn) {
-          // 忽略死链警告
-          if (warning.code === 'PLUGIN_ERROR' && warning.plugin === 'vitepress' && warning.hook === 'renderStart') {
-            return
-          }
-          warn(warning)
-        }
-      }
-    }
-  },
-  
   themeConfig: {
     nav: [
       { text: '首页', link: '/' },
@@ -29,13 +14,6 @@ export default defineConfig({
       { text: 'API', link: '/api/introduction' },
       { text: '性能', link: '/performance' },
       { text: '版本', link: '/versions' },
-      { 
-        text: '语言 / Language', 
-        items: [
-          { text: '中文', link: '/' },
-          { text: 'English', link: '/en/' }
-        ]
-      },
       { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' }
     ],
     
@@ -53,13 +31,7 @@ export default defineConfig({
         { text: 'API 介绍', link: '/api/introduction' }
       ],
       '/en/guide/': [
-        { text: 'Quick Start', link: '/en/guide/getting-started' },
-        { text: 'Architecture', link: '/en/guide/architecture' },
-        { text: 'Routing', link: '/en/guide/routing' },
-        { text: 'Middleware', link: '/en/guide/middleware' },
-        { text: 'WebSocket', link: '/en/guide/websocket' },
-        { text: 'Performance', link: '/en/guide/performance' },
-        { text: 'Best Practices', link: '/en/guide/best-practices' }
+        { text: 'Quick Start', link: '/en/guide/getting-started' }
       ],
       '/en/api/': [
         { text: 'API Introduction', link: '/en/api/introduction' }

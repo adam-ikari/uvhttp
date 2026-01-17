@@ -99,7 +99,7 @@ gcc -o hello hello.c -I./include -L./build/dist/lib -luvhttp -luv -lpthread
 ./hello
 ```
 
-Visit http://localhost:8080 to see "Hello, World!".
+Visit `http://localhost:8080` to see "Hello, World!".
 
 ## Project Structure
 
@@ -135,6 +135,3 @@ cmake -DBUILD_EXAMPLES=ON ..
 ## Next Steps
 
 - [API Documentation](/en/api/introduction) - Learn the complete API
-- [Routing](/en/guide/routing) - Learn how to use routing
-- [Middleware](/en/guide/middleware) - Use middleware features
-- [WebSocket](/en/guide/websocket) - WebSocket support

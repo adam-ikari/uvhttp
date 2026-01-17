@@ -122,9 +122,6 @@ UVHTTP performs exceptionally well in performance tests:
 
 - [Quick Start](/en/guide/getting-started) - Quick start guide
 - [API Docs](/en/api/introduction) - Complete API reference
-- [Architecture](/en/guide/architecture) - System architecture
-- [Performance](/en/guide/performance) - Performance optimization
-- [Best Practices](/en/guide/best-practices) - Development best practices
 
 ## Community
 
