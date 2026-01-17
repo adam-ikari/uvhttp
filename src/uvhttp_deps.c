@@ -42,7 +42,7 @@ static void default_close_loop(uv_loop_t* loop, void* user_data) {
     (void)user_data;
     if (loop) {
         uv_loop_close(loop);
-        free(loop);
+        uvhttp_free(loop);
     }
 }
 
