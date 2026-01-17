@@ -36,7 +36,7 @@ jobs:
     - name: Run tests
       run: |
         cd build
-        ctest --output-on-failure -j1 --timeout 600 -E "test_deps_full_coverage"
+        ctest --output-on-failure -j1 --timeout 1200
 
     - name: Check for warnings
       run: |

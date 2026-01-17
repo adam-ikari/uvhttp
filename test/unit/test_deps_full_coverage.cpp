@@ -3,12 +3,22 @@
  * @brief uvhttp_deps.c 的完整覆盖率测试
  */
 
+/* 禁用 Google Test 的死亡测试功能，避免 fork 子进程导致测试无法退出 */
+#ifndef GTEST_HAS_DEATH_TEST
+#define GTEST_HAS_DEATH_TEST 0
+#else
+#undef GTEST_HAS_DEATH_TEST
+#define GTEST_HAS_DEATH_TEST 0
+#endif
+
+/* 禁用 libuv 的 fork 处理，避免 fork 子进程导致测试无法退出 */
+#define UV_DISABLE_FORK 1
+
 #include <gtest/gtest.h>
 #include <uvhttp_deps.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 
 /* 测试依赖创建 */
 TEST(UvhttpDepsTest, DepsNew) {
@@ -184,4 +194,10 @@ TEST(UvhttpDepsTest, CleanupNullFunction) {
     
     /* 不应该崩溃 */
     uvhttp_deps_free(deps);
+}
+
+/* 自定义 main 函数，避免 Google Test 创建子进程导致测试无法退出 */
+int main(int argc, char** argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
