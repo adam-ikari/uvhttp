@@ -1,0 +1,110 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v42
+      with:
+        files: |
+          **/*.c
+          **/*.h
+          **/*.cpp
+          **/*.hpp
+          **/*.cc
+          **/*.cxx
+          **/*.m
+          **/*.mm
+    
+    - name: AI Code Review
+      if: steps.changed-files.outputs.any_changed == 'true'
+      uses: github/github-ai-review-action@v1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        model: gpt-4
+        max-tokens: 4000
+        temperature: 0.3
+        system-prompt: |
+          You are an expert C code reviewer. Review the code changes for:
+          1. Code quality and style
+          2. Potential bugs and issues
+          3. Security vulnerabilities
+          4. Performance optimizations
+          5. Best practices adherence
+          6. Memory management issues
+          7. Error handling
+          
+          Provide specific, actionable feedback with code examples where appropriate.
+          Be constructive and helpful.
+    
+    - name: Generate Review Summary
+      if: steps.changed-files.outputs.any_changed == 'true'
+      run: |
+        echo "## AI Code Review Summary" >> review_summary.md
+        echo "" >> review_summary.md
+        echo "### Changed Files" >> review_summary.md
+        echo "${{ steps.changed-files.outputs.all_changed_files }}" >> review_summary.md
+        echo "" >> review_summary.md
+        echo "### Review Date" >> review_summary.md
+        echo "$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> review_summary.md
+        echo "" >> review_summary.md
+        echo "### Reviewer" >> review_summary.md
+        echo "GitHub AI (GPT-4)" >> review_summary.md
+    
+    - name: Post Review Comment
+      if: steps.changed-files.outputs.any_changed == 'true'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const summary = fs.readFileSync('review_summary.md', 'utf8');
+          
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: summary
+          });
+    
+    - name: Check for Critical Issues
+      if: steps.changed-files.outputs.any_changed == 'true'
+      run: |
+        # 检查是否有严重问题
+        if grep -q "critical\|security\|memory leak\|buffer overflow" review.md 2>/dev/null; then
+          echo "CRITICAL_ISSUES_FOUND=true" >> $GITHUB_OUTPUT
+        else
+          echo "CRITICAL_ISSUES_FOUND=false" >> $GITHUB_OUTPUT
+        fi
+        echo "output=critical_issues_found" >> $GITHUB_OUTPUT
+    
+    - name: Alert on Critical Issues
+      if: steps.changed-files.outputs.any_changed == 'true'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const review = fs.readFileSync('review.md', 'utf8');
+          
+          if (review.includes('critical') || review.includes('security') || 
+              review.includes('memory leak') || review.includes('buffer overflow')) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Critical Issues Found in PR #${context.issue.number}`,
+              body: `AI Code Review found critical issues in PR #${context.issue.number}.\n\n${review}`,
+              labels: ['critical', 'security', 'ai-review']
+            });
+          }
