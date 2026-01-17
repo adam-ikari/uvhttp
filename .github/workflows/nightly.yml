@@ -1,0 +1,158 @@
+name: Nightly Build
+
+on:
+  schedule:
+    # 每天 UTC 时间 0:00 运行（北京时间 8:00）
+    - cron: '0 0 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  nightly-build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Get current date
+      id: date
+      run: |
+        echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+        echo "timestamp=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential lcov
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
+
+    - name: Build
+      run: |
+        cmake --build build --config Release -j$(nproc)
+
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure -j1 --timeout 1800 --schedule-random || {
+          echo "Tests failed, continuing with nightly build"
+        }
+
+    - name: Generate coverage report
+      run: |
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON ..
+        cmake --build . --config Debug -j$(nproc)
+        ctest --output-on-failure -j1 --timeout 1800 --schedule-random || true
+        lcov --capture --directory . --output-file coverage.info 2>/dev/null || echo "No coverage data"
+        if [ -f coverage.info ]; then
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info
+          lcov --remove coverage.info 'test/*' --output-file coverage.info
+          lcov --remove coverage.info 'examples/*' --output-file coverage.info
+          lcov --summary coverage.info
+        fi
+
+    - name: Create nightly build archive
+      run: |
+        mkdir -p nightly-${{ steps.date.outputs.timestamp }}
+        cd nightly-${{ steps.date.outputs.timestamp }}
+        
+        # 复制库文件
+        mkdir -p lib include
+        cp ../build/dist/lib/*.a lib/ 2>/dev/null || true
+        cp -r ../include/*.h include/ 2>/dev/null || true
+        
+        # 复制示例程序
+        mkdir -p bin
+        cp ../build/dist/bin/* bin/ 2>/dev/null || true
+        
+        # 创建 README
+        cat > README.md << EOF
+# UVHTTP Nightly Build
+
+**Build Date**: ${{ steps.date.outputs.date }}
+**Commit**: $(git rev-parse --short HEAD)
+**Branch**: main
+
+## Installation
+
+1. Extract the archive
+2. Copy headers to \`/usr/local/include/uvhttp/\`
+3. Copy library to \`/usr/local/lib/\`
+4. Run \`ldconfig\`
+
+## Build Information
+
+- Build Type: Release
+- Examples: Enabled
+- Coverage: Enabled
+
+## Notes
+
+This is an automated nightly build and may contain unstable features.
+For production use, please use the latest stable release.
+EOF
+        
+        cd ..
+        tar -czf uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz nightly-${{ steps.date.outputs.timestamp }}
+
+    - name: Upload nightly build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: uvhttp-nightly-${{ steps.date.outputs.timestamp }}
+        path: uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz
+        retention-days: 7
+
+    - name: Create nightly build release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: nightly-${{ steps.date.outputs.timestamp }}
+        name: Nightly Build - ${{ steps.date.outputs.date }}
+        body: |
+          ## Nightly Build ${{ steps.date.outputs.date }}
+          
+          This is an automated nightly build from the main branch.
+          
+          **Build Information**:
+          - **Date**: ${{ steps.date.outputs.date }}
+          - **Commit**: $(git rev-parse --short HEAD)
+          - **Branch**: main
+          
+          **Changes in this build**:
+          $(git log --since="1 day ago" --pretty=format:"- %s" || echo "No commits in the last 24 hours")
+          
+          **⚠️ Warning**: Nightly builds may contain unstable features and are not recommended for production use.
+          
+          **Download**: [uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz](https://github.com/${{ github.repository }}/releases/download/nightly-${{ steps.date.outputs.timestamp }}/uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz)
+        draft: false
+        prerelease: true
+        files: uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Clean up old nightly releases
+      uses: dev-drprasad/delete-older-releases@v0.3.2
+      with:
+        keep_latest: 7
+        delete_tag_pattern: nightly-
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create nightly build summary
+      run: |
+        echo "## Nightly Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Build Date**: ${{ steps.date.outputs.date }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Commit**: $(git rev-parse --short HEAD)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Branch**: main" >> $GITHUB_STEP_SUMMARY
+        echo "- **Build Type**: Release" >> $GITHUB_STEP_SUMMARY
+        echo "- **Archive**: uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Recent Commits" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        git log --since="1 day ago" --pretty=format:"%h - %s" || echo "No commits in the last 24 hours" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
