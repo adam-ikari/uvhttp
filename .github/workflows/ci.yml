@@ -34,13 +34,13 @@ jobs:
       run: |
         cmake --build build --config Release -j$(nproc)
 
-    - name: Run tests
+    - name: Run fast tests
       run: |
         cd build
-        # 排除慢速测试以避免超时，这些测试在 coverage job 中单独运行
-        ctest --output-on-failure -j1 --timeout 900 --schedule-random \
+        # 只运行快速测试，排除慢速测试
+        ctest --output-on-failure -j1 --timeout 300 --schedule-random \
           --exclude-regex "test_deps_full_coverage|test_lru_cache_full_coverage|test_server_full_coverage|test_server_rate_limit_coverage|test_server_simple_api_coverage" || {
-          echo "Tests failed or timed out"
+          echo "Fast tests failed or timed out"
           exit 1
         }
 
@@ -50,6 +50,38 @@ jobs:
           echo "Found compiler warnings!"
           exit 1
         fi
+
+  slow-tests:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: |
+        cmake --build build --config Release -j$(nproc)
+
+    - name: Run slow tests
+      run: |
+        cd build
+        # 只运行慢速测试
+        ctest --output-on-failure -j1 --timeout 1800 --schedule-random \
+          --tests-regex "test_deps_full_coverage|test_lru_cache_full_coverage|test_server_full_coverage|test_server_rate_limit_coverage|test_server_simple_api_coverage" || {
+          echo "Slow tests failed or timed out"
+          exit 1
+        }
 
   performance-test:
     runs-on: ubuntu-22.04
@@ -159,7 +191,7 @@ jobs:
 
   coverage:
     runs-on: ubuntu-22.04
-    timeout-minutes: 25
+    timeout-minutes: 45
 
     steps:
     - uses: actions/checkout@v3
@@ -176,11 +208,11 @@ jobs:
         cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
         cmake --build build --config Debug -j$(nproc)
 
-    - name: Run tests with coverage
+    - name: Run all tests with coverage
       run: |
         cd build
-        # 运行所有测试（包括慢速测试），增加超时时间
-        ctest --output-on-failure -j1 --timeout 900 --schedule-random || {
+        # 运行所有测试（包括快速测试和慢速测试）以生成完整覆盖率报告
+        ctest --output-on-failure -j1 --timeout 1800 --schedule-random || {
           echo "Some tests failed, continuing with coverage report"
         }
 
