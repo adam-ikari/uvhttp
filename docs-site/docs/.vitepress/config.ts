@@ -12,8 +12,8 @@ export default defineConfig({
       { text: '首页', link: '/' },
       { text: '指南', link: '/guide/getting-started' },
       { text: 'API', link: '/api/introduction' },
+      { text: '性能', link: '/performance' },
       { text: '版本', link: '/versions' },
-      { text: '更多', link: '/changelog' },
       { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' }
     ],
     
