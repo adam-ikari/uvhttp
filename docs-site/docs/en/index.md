@@ -54,13 +54,21 @@ int main() {
     uvhttp_router_t* router = uvhttp_router_new();
     server->router = router;
 
-    uvhttp_router_add_route(router, "/", [](uvhttp_request_t* req) {
-        uvhttp_response_t* res = uvhttp_response_new(req);
-        uvhttp_response_set_status(res, 200);
-        uvhttp_response_set_header(res, "Content-Type", "text/plain");
-        uvhttp_response_set_body(res, "Hello, World!");
-        uvhttp_response_send(res);
-    });
+    void hello_handler(uvhttp_request_t* req) {
+    uvhttp_response_t* res = uvhttp_response_new(req);
+    uvhttp_response_set_status(res, 200);
+    uvhttp_response_set_header(res, "Content-Type", "text/plain");
+    uvhttp_response_set_body(res, "Hello, World!");
+    uvhttp_response_send(res);
+}
+
+int main() {
+    uv_loop_t* loop = uv_default_loop();
+    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_router_t* router = uvhttp_router_new();
+    server->router = router;
+
+    uvhttp_router_add_route(router, "/", hello_handler);
 
     uvhttp_server_listen(server, "0.0.0.0", 8080);
     uv_run(loop, UV_RUN_DEFAULT);

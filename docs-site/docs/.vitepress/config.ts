@@ -15,11 +15,10 @@ export default defineConfig({
       { text: '性能', link: '/performance' },
       { text: '版本', link: '/versions' },
       { 
-        text: 'English', 
-        link: '/en/',
+        text: '语言 / Language', 
         items: [
-          { text: 'English', link: '/en/' },
-          { text: '中文', link: '/' }
+          { text: '中文', link: '/' },
+          { text: 'English', link: '/en/' }
         ]
       },
       { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' }

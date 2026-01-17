@@ -59,8 +59,10 @@
 
 ## 迁移指南
 
-如果您需要从旧版本升级，请参考以下迁移指南：
+如果您需要从旧版本升级，请参考以下文档：
 
-- [从 1.4.x 升级到 1.5.0](https://github.com/adam-ikari/uvhttp/blob/main/docs/MIGRATION.md)
-- [从 1.3.x 升级到 1.4.0](https://github.com/adam-ikari/uvhttp/blob/v1.4.0/docs/MIGRATION.md)
-- [从 1.2.x 升级到 1.3.0](https://github.com/adam-ikari/uvhttp/blob/v1.3.0/docs/MIGRATION.md)
+- [从 1.4.x 升级到 1.5.0](https://github.com/adam-ikari/uvhttp/blob/main/docs/MIGRATION_1_5.md)
+- [从 1.3.x 升级到 1.4.0](https://github.com/adam-ikari/uvhttp/blob/v1.4.0/docs/MIGRATION_1_4.md)
+- [从 1.2.x 升级到 1.3.0](https://github.com/adam-ikari/uvhttp/blob/v1.3.0/docs/MIGRATION_1_3.md)
+
+> 注意：如果迁移指南链接失效，请查看对应版本的 GitHub Release 页面获取迁移信息。
