@@ -39,12 +39,12 @@ jobs:
       working-directory: ./docs-site
       run: |
         npm run build
-        ls -la .vitepress/dist || echo "dist directory not found"
+        ls -la docs/.vitepress/dist || echo "dist directory not found"
 
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: docs-site/.vitepress/dist
+        path: docs-site/docs/.vitepress/dist
 
   deploy:
     environment:
