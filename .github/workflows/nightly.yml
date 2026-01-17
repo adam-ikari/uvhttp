@@ -8,6 +8,7 @@ on:
 
 jobs:
   nightly-build:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-22.04
     timeout-minutes: 90
 
