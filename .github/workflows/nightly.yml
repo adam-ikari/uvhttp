@@ -10,7 +10,7 @@ jobs:
   nightly-build:
     if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-22.04
-    timeout-minutes: 90
+    timeout-minutes: 120
 
     steps:
     - uses: actions/checkout@v3
@@ -120,32 +120,86 @@ jobs:
         
         cd build-release
         if [ -f "./dist/bin/performance_static_server" ]; then
-          ./dist/bin/performance_static_server -d ./public -p 8080 &
+          ./dist/bin/performance_static_server -d ./public -p 8080 > /tmp/server.log 2>&1 &
           SERVER_PID=$!
           
           # 等待服务器启动
           for i in {1..10}; do
             if curl -s http://localhost:8080/ > /dev/null 2>&1; then
+              echo "Server started"
               break
             fi
             sleep 1
           done
           
-          # 运行性能测试
-          wrk -t4 -c100 -d10s --timeout 5s http://localhost:8080/ > performance.log 2>&1
+          # ========== 基准性能测试 ==========
+          echo "=== Baseline Performance Test ===" > /tmp/performance.log
+          echo "Test 1: Low concurrency (10 connections, 10 seconds)" >> /tmp/performance.log
+          wrk -t4 -c10 -d10s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
+          echo "" >> /tmp/performance.log
           
-          # 提取性能指标
-          rps=$(grep "Requests/sec" performance.log | awk '{print $2}')
-          latency_avg=$(grep "Latency" performance.log | awk '{print $2}')
-          latency_p99=$(grep "99%" performance.log | awk '{print $2}')
+          echo "Test 2: Medium concurrency (50 connections, 10 seconds)" >> /tmp/performance.log
+          wrk -t4 -c50 -d10s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
+          echo "" >> /tmp/performance.log
+          
+          echo "Test 3: High concurrency (100 connections, 10 seconds)" >> /tmp/performance.log
+          wrk -t4 -c100 -d10s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
+          echo "" >> /tmp/performance.log
+          
+          # ========== 压力测试 ==========
+          echo "=== Stress Test ===" >> /tmp/performance.log
+          echo "Test 4: Extreme concurrency (500 connections, 30 seconds)" >> /tmp/performance.log
+          wrk -t8 -c500 -d30s --timeout 10s http://localhost:8080/ >> /tmp/performance.log 2>&1
+          echo "" >> /tmp/performance.log
+          
+          echo "Test 5: Very high concurrency (1000 connections, 30 seconds)" >> /tmp/performance.log
+          wrk -t8 -c1000 -d30s --timeout 10s http://localhost:8080/ >> /tmp/performance.log 2>&1
+          echo "" >> /tmp/performance.log
+          
+          # ========== 持续负载测试 ==========
+          echo "=== Sustained Load Test ===" >> /tmp/performance.log
+          echo "Test 6: Sustained load (100 connections, 60 seconds)" >> /tmp/performance.log
+          wrk -t4 -c100 -d60s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
+          echo "" >> /tmp/performance.log
+          
+          # ========== 文件下载测试 ==========
+          echo "=== File Download Test ===" >> /tmp/performance.log
+          echo "Test 7: Small file download (100 connections, 10 seconds)" >> /tmp/performance.log
+          wrk -t4 -c100 -d10s --timeout 5s http://localhost:8080/test.txt >> /tmp/performance.log 2>&1
+          echo "" >> /tmp/performance.log
+          
+          echo "Test 8: Large file download (50 connections, 10 seconds)" >> /tmp/performance.log
+          wrk -t4 -c50 -d10s --timeout 10s http://localhost:8080/large.bin >> /tmp/performance.log 2>&1
+          echo "" >> /tmp/performance.log
+          
+          # 提取基准性能指标（Test 3: 100 connections）
+          rps=$(grep -A 20 "Test 3" /tmp/performance.log | grep "Requests/sec" | tail -1 | awk '{print $2}')
+          latency_avg=$(grep -A 20 "Test 3" /tmp/performance.log | grep "Latency" | tail -1 | awk '{print $2}')
+          latency_p99=$(grep -A 20 "Test 3" /tmp/performance.log | grep "99%" | tail -1 | awk '{print $2}')
+          
+          # 提取压力测试指标（Test 5: 1000 connections）
+          stress_rps=$(grep -A 20 "Test 5" /tmp/performance.log | grep "Requests/sec" | tail -1 | awk '{print $2}')
+          stress_latency_avg=$(grep -A 20 "Test 5" /tmp/performance.log | grep "Latency" | tail -1 | awk '{print $2}')
+          stress_latency_p99=$(grep -A 20 "Test 5" /tmp/performance.log | grep "99%" | tail -1 | awk '{print $2}')
           
           echo "rps=$rps" >> $GITHUB_OUTPUT
           echo "latency_avg=$latency_avg" >> $GITHUB_OUTPUT
           echo "latency_p99=$latency_p99" >> $GITHUB_OUTPUT
+          echo "stress_rps=$stress_rps" >> $GITHUB_OUTPUT
+          echo "stress_latency_avg=$stress_latency_avg" >> $GITHUB_OUTPUT
+          echo "stress_latency_p99=$stress_latency_p99" >> $GITHUB_OUTPUT
           
           kill $SERVER_PID 2>/dev/null || true
+          wait $SERVER_PID 2>/dev/null || true
+        else
+          echo "performance_static_server not found, skipping performance test"
+          echo "rps=0" >> $GITHUB_OUTPUT
+          echo "latency_avg=0" >> $GITHUB_OUTPUT
+          echo "latency_p99=0" >> $GITHUB_OUTPUT
+          echo "stress_rps=0" >> $GITHUB_OUTPUT
+          echo "stress_latency_avg=0" >> $GITHUB_OUTPUT
+          echo "stress_latency_p99=0" >> $GITHUB_OUTPUT
         fi
-
     - name: Memory leak check
       id: memory
       run: |
@@ -223,9 +277,25 @@ jobs:
 
 ## Performance
 
+### Baseline Performance (100 connections)
 - **RPS**: ${{ steps.performance.outputs.rps }}
 - **Avg Latency**: ${{ steps.performance.outputs.latency_avg }}
 - **P99 Latency**: ${{ steps.performance.outputs.latency_p99 }}
+
+### Stress Test (1000 connections)
+- **RPS**: ${{ steps.performance.outputs.stress_rps }}
+- **Avg Latency**: ${{ steps.performance.outputs.stress_latency_avg }}
+- **P99 Latency**: ${{ steps.performance.outputs.stress_latency_p99 }}
+
+### Test Scenarios
+- **Test 1**: Low concurrency (10 connections, 10s)
+- **Test 2**: Medium concurrency (50 connections, 10s)
+- **Test 3**: High concurrency (100 connections, 10s)
+- **Test 4**: Extreme concurrency (500 connections, 30s)
+- **Test 5**: Very high concurrency (1000 connections, 30s)
+- **Test 6**: Sustained load (100 connections, 60s)
+- **Test 7**: Small file download (100 connections, 10s)
+- **Test 8**: Large file download (50 connections, 10s)
 
 ## Build Information
 
@@ -282,9 +352,25 @@ EOF
 
 ## Performance Metrics
 
+### Baseline (100 connections)
 - **Requests/sec**: ${{ steps.performance.outputs.rps }}
 - **Average Latency**: ${{ steps.performance.outputs.latency_avg }}
 - **P99 Latency**: ${{ steps.performance.outputs.latency_p99 }}
+
+### Stress Test (1000 connections)
+- **Requests/sec**: ${{ steps.performance.outputs.stress_rps }}
+- **Average Latency**: ${{ steps.performance.outputs.stress_latency_avg }}
+- **P99 Latency**: ${{ steps.performance.outputs.stress_latency_p99 }}
+
+### Test Scenarios
+- Test 1: Low concurrency (10 connections, 10s)
+- Test 2: Medium concurrency (50 connections, 10s)
+- Test 3: High concurrency (100 connections, 10s)
+- Test 4: Extreme concurrency (500 connections, 30s)
+- Test 5: Very high concurrency (1000 connections, 30s)
+- Test 6: Sustained load (100 connections, 60s)
+- Test 7: Small file download (100 connections, 10s)
+- Test 8: Large file download (50 connections, 10s)
 
 ## Memory Check
 
