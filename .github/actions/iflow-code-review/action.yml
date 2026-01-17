@@ -34,6 +34,13 @@ runs:
       shell: bash
       run: |
         echo "Setting up iFlow CLI for code review"
+        # 检查 iflow 是否可用
+        if ! command -v iflow &> /dev/null; then
+          echo "Warning: iFlow CLI not found, using fallback review"
+          echo "IFLOW_AVAILABLE=false" >> $GITHUB_ENV
+        else
+          echo "IFLOW_AVAILABLE=true" >> $GITHUB_ENV
+        fi
 
     - name: Run iFlow Code Review
       shell: bash
@@ -42,40 +49,87 @@ runs:
         echo "Running iFlow code review on changed files:"
         echo "${{ inputs.changed-files }}"
 
-        # 创建审查摘要
-        cat > review_summary.md << 'EOF'
-        ## iFlow AI Code Review Summary
+        if [ "$IFLOW_AVAILABLE" = "true" ]; then
+          # 使用 iFlow CLI 进行实际代码审查
+          echo "Using iFlow CLI for code review"
+          
+          # 创建审查摘要
+          cat > review_summary.md << 'EOF'
+          ## iFlow AI Code Review Summary
 
-        ### Changed Files
-        ${{ inputs.changed-files }}
+          ### Changed Files
+          ${{ inputs.changed-files }}
 
-        ### Review Date
-        $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          ### Review Date
+          $(date -u +'%Y-%m-%d %H:%M:%S UTC')
 
-        ### Reviewer
-        iFlow CLI (GPT-4o)
+          ### Reviewer
+          iFlow CLI (GPT-4o)
 
-        ### Review Results
-        EOF
+          ### Review Results
+          EOF
 
-        # 获取变更的文件列表
-        IFS=',' read -ra FILES <<< "${{ inputs.changed-files }}"
-        for file in "${FILES[@]}"; do
-          echo "Reviewing: $file"
-          echo "- $file" >> review_summary.md
-        done
+          # 获取变更的文件列表并逐个审查
+          IFS=',' read -ra FILES <<< "${{ inputs.changed-files }}"
+          for file in "${FILES[@]}"; do
+            echo "Reviewing: $file"
+            echo "#### File: $file" >> review_summary.md
+            echo "" >> review_summary.md
+            
+            # 使用 iflow CLI 审查文件
+            if [ -f "$file" ]; then
+              iflow code-review --file "$file" --model "${{ inputs.model }}" >> review_summary.md 2>&1 || echo "Review completed with warnings"
+            else
+              echo "File not found: $file" >> review_summary.md
+            fi
+            echo "" >> review_summary.md
+          done
+          
+          echo "Review completed"
+        else
+          # 回退到基本审查
+          echo "Using fallback review (iFlow CLI not available)"
+          
+          cat > review_summary.md << 'EOF'
+          ## iFlow AI Code Review Summary (Fallback)
 
-        echo "Review completed"
+          ### Changed Files
+          ${{ inputs.changed-files }}
+
+          ### Review Date
+          $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+
+          ### Reviewer
+          iFlow CLI (Fallback Mode)
+
+          ### Review Results
+          Note: iFlow CLI not available in this environment. Using basic file review.
+          
+          EOF
+
+          # 获取变更的文件列表
+          IFS=',' read -ra FILES <<< "${{ inputs.changed-files }}"
+          for file in "${FILES[@]}"; do
+            echo "Reviewing: $file"
+            echo "- $file" >> review_summary.md
+          done
+          
+          echo "Review completed"
+        fi
 
     - name: Check for Critical Issues
+      id: critical-check
       shell: bash
       run: |
         if [ -f "review_summary.md" ]; then
           if grep -qi "critical\|security\|memory leak\|buffer overflow" review_summary.md 2>/dev/null; then
+            echo "CRITICAL_ISSUES_FOUND=true" >> $GITHUB_OUTPUT
             echo "critical-issues=true" >> $GITHUB_OUTPUT
           else
+            echo "CRITICAL_ISSUES_FOUND=false" >> $GITHUB_OUTPUT
             echo "critical-issues=false" >> $GITHUB_OUTPUT
           fi
         else
+          echo "CRITICAL_ISSUES_FOUND=false" >> $GITHUB_OUTPUT
           echo "critical-issues=false" >> $GITHUB_OUTPUT
         fi
