@@ -410,6 +410,6 @@ int main() {
 
 ## 更多资源
 
-- [API 文档](/api/middleware)
-- [路由](/guide/routing)
-- [最佳实践](/guide/best-practices)
+- [API 文档](/api/introduction) - API 介绍
+- [路由](/guide/routing) - 路由系统
+- [最佳实践](/guide/best-practices) - 最佳实践指南

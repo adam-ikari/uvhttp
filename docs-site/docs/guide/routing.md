@@ -349,6 +349,6 @@ int main() {
 
 ## 更多资源
 
-- [API 文档](/api/router)
-- [中间件](/guide/middleware)
-- [最佳实践](/guide/best-practices)
+- [API 文档](/api/introduction) - API 介绍
+- [中间件](/guide/middleware) - 中间件系统
+- [最佳实践](/guide/best-practices) - 最佳实践指南

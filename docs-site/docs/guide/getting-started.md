@@ -99,7 +99,7 @@ gcc -o hello hello.c -I./include -L./build/dist/lib -luvhttp -luv -lpthread
 ./hello
 ```
 
-访问 http://localhost:8080 查看 "Hello, World!"。
+访问 `http://localhost:8080` 查看 "Hello, World!"。
 
 ## 项目结构
 

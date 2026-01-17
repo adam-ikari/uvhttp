@@ -75,7 +75,7 @@ gcc -o server server.c -I./include -L./build/dist/lib -luvhttp -luv -lpthread
 ./server
 ```
 
-访问 http://localhost:8080 查看结果。
+访问 `http://localhost:8080` 查看结果。
 
 ## 性能
 

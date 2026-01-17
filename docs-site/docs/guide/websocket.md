@@ -422,6 +422,6 @@ if __name__ == "__main__":
 
 ## 更多资源
 
-- [API 文档](/api/websocket)
-- [WebSocket 认证](https://github.com/adam-ikari/uvhttp/blob/main/docs/WEBSOCKET_AUTH.md)
-- [最佳实践](/guide/best-practices)
+- [API 文档](/api/introduction) - API 介绍
+- [中间件](/guide/middleware) - 中间件系统
+- [最佳实践](/guide/best-practices) - 最佳实践指南

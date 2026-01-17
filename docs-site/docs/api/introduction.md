@@ -177,8 +177,12 @@ int main() {
 
 ## 更多 API
 
-- [服务器 API](/api/server) - 服务器相关 API
-- [路由 API](/api/router) - 路由相关 API
-- [请求 API](/api/request) - 请求相关 API
-- [响应 API](/api/response) - 响应相关 API
-- [WebSocket API](/api/websocket) - WebSocket 相关 API
+完整的 API 文档正在完善中，目前包含以下核心模块：
+
+- **服务器 (uvhttp_server)** - 服务器创建、启动、停止
+- **路由 (uvhttp_router)** - 路由管理、参数提取
+- **请求 (uvhttp_request)** - HTTP 请求处理
+- **响应 (uvhttp_response)** - HTTP 响应构建
+- **WebSocket (uvhttp_websocket)** - WebSocket 连接管理
+
+详细的 API 参考文档正在编写中，敬请期待。
