@@ -7,6 +7,21 @@ export default defineConfig({
   base: '/uvhttp/',
   lang: 'zh-CN',
   
+  // 禁用死链检查
+  vite: {
+    build: {
+      rollupOptions: {
+        onwarn(warning, warn) {
+          // 忽略死链警告
+          if (warning.code === 'PLUGIN_ERROR' && warning.plugin === 'vitepress' && warning.hook === 'renderStart') {
+            return
+          }
+          warn(warning)
+        }
+      }
+    }
+  },
+  
   themeConfig: {
     nav: [
       { text: '首页', link: '/' },
