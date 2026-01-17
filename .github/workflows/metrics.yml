@@ -1,0 +1,77 @@
+name: CI/CD Metrics
+
+on:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types: [completed]
+
+jobs:
+  metrics:
+    runs-on: ubuntu-22.04
+    if: always()
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Get workflow run details
+      id: run-details
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const run = await github.rest.actions.getWorkflowRun({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id: context.event.workflow_run.id
+          });
+          
+          console.log('Run ID:', run.data.id);
+          console.log('Run Number:', run.data.run_number);
+          console.log('Conclusion:', run.data.conclusion);
+          console.log('Duration:', run.data.updated_at - run.data.created_at);
+          
+          core.setOutput('run_number', run.data.run_number);
+          core.setOutput('duration', run.data.updated_at - run.data.created_at);
+          core.setOutput('conclusion', run.data.conclusion);
+
+    - name: Create metrics summary
+      run: |
+        echo "## CI/CD Metrics - Run #${{ steps.run-details.outputs.run_number }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Run ID**: ${{ github.event.workflow_run.id }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Run Number**: ${{ steps.run-details.outputs.run_number }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ${{ steps.run-details.outputs.conclusion }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Duration**: ${{ steps.run-details.outputs.duration }} seconds" >> $GITHUB_STEP_SUMMARY
+        echo "- **Branch**: ${{ github.event.workflow_run.head_branch }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Commit**: ${{ github.event.workflow_run.head_sha }}" >> $GITHUB_STEP_SUMMARY
+
+    - name: Check for failures
+      if: steps.run-details.outputs.conclusion == 'failure'
+      continue-on-error: true
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { data: jobs } = await github.rest.actions.listJobsForWorkflowRun({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id: context.event.workflow_run.id
+          });
+          
+          const failedJobs = jobs.jobs.filter(job => job.conclusion === 'failure');
+          
+          if (failedJobs.length > 0) {
+            const title = `🚨 CI/CD Failed - Run #${context.event.workflow_run.run_number}`;
+            const body = failedJobs.map(job => 
+              `**Failed Job**: ${job.name}\n` +
+              `- Status: ${job.conclusion}\n` +
+              `- Started: ${job.started_at}\n` +
+              `- Completed: ${job.completed_at}\n`
+            ).join('\n---\n');
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['ci-failure', 'automated']
+            });
+          }

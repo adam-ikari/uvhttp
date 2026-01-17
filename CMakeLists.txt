@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(uvhttp VERSION 1.4.0 LANGUAGES C)
+project(uvhttp VERSION 1.4.0 LANGUAGES C CXX)
 
 # 构建选项
 option(BUILD_WITH_WEBSOCKET "Build with WebSocket support" ON)
@@ -15,6 +15,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib)
 
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # 编译选项
@@ -203,22 +205,51 @@ target_link_libraries(uvhttp ${LIBS})
 # ============================================================================
 enable_testing()
 
-# 添加测试
-file(GLOB TEST_FILES test/unit/test_*.c)
-list(FILTER TEST_FILES EXCLUDE REGEX ".*disabled.*")
-list(FILTER TEST_FILES EXCLUDE REGEX ".*test_memory_helpers\\.c")  # 排除辅助文件
-foreach(test_file ${TEST_FILES})
+# 添加 gtest 测试（仅支持 C++ 测试文件）
+file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
+list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
+list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_loop_helper.cpp")
+list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_time_mock.cpp")
+
+# 添加测试辅助文件
+set(TEST_HELPER_FILES test/unit/test_time_mock.cpp test/unit/test_loop_helper.cpp)
+
+foreach(test_file ${GTEST_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
-    add_executable(${test_name} ${test_file} test/unit/test_memory_helpers.c ${SOURCES})
-    add_dependencies(${test_name} libuv mbedtls xxhash)
+    
+    # 所有测试文件都是 C++ 文件
+    # 如果测试需要时间 mock，则添加辅助文件
+    if(${test_name} STREQUAL "test_lru_cache_full_coverage" OR 
+       ${test_name} STREQUAL "test_static_file_operations_coverage")
+        add_executable(${test_name} ${test_file} ${TEST_HELPER_FILES} ${SOURCES})
+    else()
+        add_executable(${test_name} ${test_file} ${SOURCES})
+    endif()
+    
+    set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
+    
+    add_dependencies(${test_name} libuv mbedtls xxhash gtest)
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(${test_name} mimalloc)
     endif()
     # 对测试文件移除 -Werror，允许未使用变量警告
     target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
-    target_link_libraries(${test_name} ${LIBS})
+    target_link_libraries(${test_name} ${LIBS} ${GTEST_LIBS})
+    target_include_directories(${test_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
     add_test(NAME ${test_name} COMMAND ${test_name})
 endforeach()
+
+# 添加 gtest 示例测试（使用 C++ 编译）
+add_executable(uvhttp_unit_tests test/unit/simple_test.cpp ${SOURCES})
+set_target_properties(uvhttp_unit_tests PROPERTIES LINKER_LANGUAGE CXX)
+add_dependencies(uvhttp_unit_tests libuv mbedtls xxhash gtest)
+if(BUILD_WITH_MIMALLOC)
+    add_dependencies(uvhttp_unit_tests mimalloc)
+endif()
+target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+target_link_libraries(uvhttp_unit_tests ${LIBS} ${GTEST_LIBS})
+target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
+add_test(NAME uvhttp_unit_tests COMMAND uvhttp_unit_tests)
 
 # 添加压力测试
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stress.c)
@@ -268,3 +299,33 @@ message(STATUS "Coverage: ${ENABLE_COVERAGE}")
 message(STATUS "Examples: ${BUILD_EXAMPLES}")
 message(STATUS "========================================")
 message(STATUS "")
+
+# ============================================================================
+# 集成测试
+# ============================================================================
+file(GLOB INTEGRATION_TEST_FILES test/integration/*.c)
+foreach(test_file ${INTEGRATION_TEST_FILES})
+    get_filename_component(test_name ${test_file} NAME_WE)
+    add_executable(${test_name} ${test_file} ${SOURCES})
+    add_dependencies(${test_name} libuv mbedtls xxhash)
+    if(BUILD_WITH_MIMALLOC)
+        add_dependencies(${test_name} mimalloc)
+    endif()
+    target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+    target_link_libraries(${test_name} ${LIBS})
+endforeach()
+
+# ============================================================================
+# 性能测试
+# ============================================================================
+file(GLOB PERFORMANCE_TEST_FILES test/performance/*.c)
+foreach(test_file ${PERFORMANCE_TEST_FILES})
+    get_filename_component(test_name ${test_file} NAME_WE)
+    add_executable(${test_name} ${test_file} ${SOURCES})
+    add_dependencies(${test_name} libuv mbedtls xxhash)
+    if(BUILD_WITH_MIMALLOC)
+        add_dependencies(${test_name} mimalloc)
+    endif()
+    target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+    target_link_libraries(${test_name} ${LIBS})
+endforeach()

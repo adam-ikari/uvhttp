@@ -37,8 +37,11 @@ Makefile
 *.tmp
 *.temp
 *.log
+*.orig
+*.rej
 
 # Core dumps
 core
 core.*
 !cmake/Dependencies.cmake
+test/results/

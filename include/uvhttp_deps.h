@@ -92,6 +92,18 @@ void uvhttp_deps_free(uvhttp_deps_t* deps);
 /* ========== 释放依赖 ========== */
 void uvhttp_free_deps(uvhttp_deps_t* deps);
 
+/* ========== Provider Getter 函数 ========== */
+uvhttp_loop_provider_t* uvhttp_deps_get_loop_provider(uvhttp_deps_t* deps);
+uvhttp_memory_provider_t* uvhttp_deps_get_memory_provider(uvhttp_deps_t* deps);
+uvhttp_network_provider_t* uvhttp_deps_get_network_provider(uvhttp_deps_t* deps);
+uvhttp_file_provider_t* uvhttp_deps_get_file_provider(uvhttp_deps_t* deps);
+
+/* ========== Provider Setter 函数 ========== */
+uvhttp_error_t uvhttp_deps_set_loop_provider(uvhttp_deps_t* deps, uvhttp_loop_provider_t* provider);
+uvhttp_error_t uvhttp_deps_set_memory_provider(uvhttp_deps_t* deps, uvhttp_memory_provider_t* provider);
+uvhttp_error_t uvhttp_deps_set_network_provider(uvhttp_deps_t* deps, uvhttp_network_provider_t* provider);
+uvhttp_error_t uvhttp_deps_set_file_provider(uvhttp_deps_t* deps, uvhttp_file_provider_t* provider);
+
 /* ========== 便利宏 ========== */
 #ifndef UVHTTP_DEPS_MACROS_DEFINED
 #define UVHTTP_GET_LOOP() (g_uvhttp_deps ? g_uvhttp_deps->get_loop() : uv_default_loop())

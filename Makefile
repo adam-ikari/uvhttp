@@ -2,7 +2,7 @@ BUILD_DIR ?= build
 BUILD_TYPE ?= Release
 CMAKE_ARGS = -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON -DBUILD_WITH_TLS=ON
 
-.PHONY: all clean test help cppcheck install coverage coverage-clean examples build build-deps
+.PHONY: all clean test help cppcheck install coverage coverage-clean examples build build-deps rebuild
 
 all: $(BUILD_DIR)/Makefile
 	@$(MAKE) -C $(BUILD_DIR)
@@ -14,16 +14,32 @@ build: build-deps all
 build-deps:
 	@echo "🔨 检查并编译依赖..."
 	@echo "  - 编译 libuv..."
-	@if [ ! -f "deps/libuv/.libs/libuv.a" ]; then \
-		cd deps/libuv && mkdir -p build && cd build && cmake .. && make -j$$(nproc); \
+	@if [ ! -f "deps/libuv/build/libuv.a" ]; then \
+		cd deps/libuv && mkdir -p build && cd build && cmake .. -DBUILD_TESTING=OFF && make -j$$(nproc); \
 	fi
 	@echo "  - 编译 mbedtls..."
-	@if [ ! -f "deps/mbedtls/library/libmbedtls.a" ]; then \
-		cd deps/mbedtls && python3 scripts/config.py set MBEDTLS_X509_USE_C && make -j$$(nproc); \
+	@if [ ! -f "deps/mbedtls/build/library/libmbedtls.a" ]; then \
+		cd deps/mbedtls && mkdir -p build && cd build && cmake .. && make -j$$(nproc); \
 	fi
 	@echo "  - 编译 llhttp..."
 	@if [ ! -f "deps/cllhttp/libllhttp.a" ]; then \
 		cd deps/cllhttp && gcc -c llhttp.c -o llhttp.o && ar rcs libllhttp.a llhttp.o; \
+	fi
+	@echo "  - 编译 xxhash..."
+	@if [ ! -f "deps/xxhash/libxxhash.a" ]; then \
+		cd deps/xxhash && make -j$$(nproc); \
+	fi
+	@echo "  - 编译 cjson..."
+	@if [ ! -f "deps/cjson/build/libcjson.a" ]; then \
+		cd deps/cjson && mkdir -p build && cd build && cmake .. && make -j$$(nproc); \
+	fi
+	@echo "  - 编译 mimalloc..."
+	@if [ ! -f "deps/mimalloc/build/libmimalloc.a" ]; then \
+		cd deps/mimalloc && mkdir -p build && cd build && cmake .. && make -j$$(nproc); \
+	fi
+	@echo "  - 编译 googletest..."
+	@if [ ! -f "deps/googletest/build/lib/libgtest.a" ]; then \
+		cd deps/googletest && mkdir -p build && cd build && cmake .. && make -j$$(nproc); \
 	fi
 	@echo "✅ 依赖编译完成！"
 
@@ -34,7 +50,8 @@ clean:
 	@rm -rf $(BUILD_DIR)
 
 test: all
-	@cd $(BUILD_DIR)/dist/test && ./uvhttp_test
+	@echo "🧪 运行测试..."
+	@cd $(BUILD_DIR) && ctest --output-on-failure
 
 coverage: $(BUILD_DIR)/Makefile
 	@if ! command -v lcov >/dev/null 2>&1; then \
@@ -44,43 +61,21 @@ coverage: $(BUILD_DIR)/Makefile
 	fi
 	@if [ "$(BUILD_TYPE)" != "Debug" ]; then \
 		rm -rf $(BUILD_DIR); \
-		mkdir -p $(BUILD_DIR); \
-		cd $(BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON ..; \
 	fi
-	@$(MAKE) -C $(BUILD_DIR) all
-	@find $(BUILD_DIR) -name "*.gcda" -delete 2>/dev/null || true
-	@cd $(BUILD_DIR)/dist/test && ./uvhttp_test > /dev/null 2>&1 || true
-	@cd $(BUILD_DIR)/dist/test && ./test_lru_cache_coverage > /dev/null 2>&1 || true
-	@cd $(BUILD_DIR)/dist/test && ./test_basic_functionality > /dev/null 2>&1 || true
-	@cd $(BUILD_DIR)/dist/test && ./test_utils_coverage > /dev/null 2>&1 || true
-	@cd $(BUILD_DIR)/dist/test && ./test_error_hash_coverage > /dev/null 2>&1 || true
-	@cd $(BUILD_DIR)/dist/test && ./test_response_coverage > /dev/null 2>&1 || true
-	@cd $(BUILD_DIR)/dist/test && ./test_hash_coverage > /dev/null 2>&1 || true
-	@cd $(BUILD_DIR)/dist/test && ./test_response_send_coverage > /dev/null 2>&1 || true
-	@cd $(BUILD_DIR)/dist/test && ./test_context_coverage > /dev/null 2>&1 || true
-	@cd $(BUILD_DIR)/dist/test && ./test_error_coverage > /dev/null 2>&1 || true
-	@cd $(BUILD_DIR)/dist/test && ./test_config_coverage > /dev/null 2>&1 || true
-	@cd $(BUILD_DIR)/dist/test && ./test_error_helpers_coverage > /dev/null 2>&1 || true
-	@cd $(BUILD_DIR)/dist/test && ./test_error_handler_coverage > /dev/null 2>&1 || true
-	@cd $(BUILD_DIR) && lcov --capture --directory CMakeFiles/test_utils_coverage.dir --output-file coverage_utils.info --base-directory .. || true
-	@cd $(BUILD_DIR) && lcov --capture --directory CMakeFiles/test_error_hash_coverage.dir --output-file coverage_error_hash.info --base-directory .. || true
-	@cd $(BUILD_DIR) && lcov --capture --directory CMakeFiles/test_hash_coverage.dir --output-file coverage_hash.info --base-directory .. || true
-	@cd $(BUILD_DIR) && lcov --capture --directory CMakeFiles/test_response_send_coverage.dir --output-file coverage_response_send.info --base-directory .. || true
-	@cd $(BUILD_DIR) && lcov --capture --directory CMakeFiles/test_context_coverage.dir --output-file coverage_context.info --base-directory .. || true
-	@cd $(BUILD_DIR) && lcov --capture --directory CMakeFiles/test_lru_cache_coverage.dir --output-file coverage_lru.info --base-directory .. || true
-	@cd $(BUILD_DIR) && lcov --capture --directory CMakeFiles/test_basic_functionality.dir --output-file coverage_basic.info --base-directory .. || true
-	@cd $(BUILD_DIR) && lcov --capture --directory CMakeFiles/test_response_coverage.dir --output-file coverage_response.info --base-directory .. || true
-	@cd $(BUILD_DIR) && lcov --capture --directory CMakeFiles/test_error_coverage.dir --output-file coverage_error.info --base-directory .. || true
-	@cd $(BUILD_DIR) && lcov --capture --directory CMakeFiles/test_config_coverage.dir --output-file coverage_config.info --base-directory .. || true
-	@cd $(BUILD_DIR) && lcov --capture --directory CMakeFiles/test_error_helpers_coverage.dir --output-file coverage_error_helpers.info --base-directory .. || true
-	@cd $(BUILD_DIR) && lcov --capture --directory CMakeFiles/test_error_handler_coverage.dir --output-file coverage_error_handler.info --base-directory .. || true
-	@cd $(BUILD_DIR) && lcov --capture --directory CMakeFiles/uvhttp_test.dir --output-file coverage_uvhttp_test.info --base-directory .. || true
-	@cd $(BUILD_DIR) && cat coverage_utils.info coverage_lru.info coverage_response.info coverage_error.info coverage_config.info coverage_error_helpers.info coverage_error_handler.info coverage_hash.info coverage_response_send.info coverage_context.info > coverage_combined.info 2>/dev/null || cp coverage_utils.info coverage_combined.info
-	@cd $(BUILD_DIR) && lcov --remove coverage_combined.info '*/deps/*' --output-file coverage.info
+	@mkdir -p $(BUILD_DIR)
+	@cd $(BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON ..
+	@$(MAKE) -C $(BUILD_DIR) -j$$(nproc)
+	@echo "🧪 运行测试以生成覆盖率数据..."
+	@cd $(BUILD_DIR) && for test in test_allocator test_async_file_full_coverage test_config_full_coverage test_connection_extended_coverage test_connection_full_coverage test_context_full_coverage test_context_simple test_cors_middleware_full_coverage test_deps_full_coverage test_error_coverage test_error_full_coverage test_error_handler_full_coverage test_error_helpers_full_coverage test_hash_full_coverage test_lru_cache_full_coverage test_mempool_full_coverage test_middleware_full_coverage test_network_full_coverage test_request_full_coverage test_request_null_coverage test_response_full_coverage test_router_full_coverage test_sendfile_timeout test_server_full_coverage test_static_coverage test_static_full_coverage test_tls_full_coverage test_tls_null_coverage test_utils_full_coverage test_validation_full_coverage test_websocket_full_coverage test_websocket_null_coverage test_whitelist_hash; do \
+		./dist/bin/$$test > /dev/null 2>&1 || true; \
+	done
+	@echo "📊 生成覆盖率报告..."
+	@cd $(BUILD_DIR) && lcov --capture --directory . --output-file coverage.info --base-directory ..
+	@cd $(BUILD_DIR) && lcov --remove coverage.info '*/deps/*' --output-file coverage.info
 	@cd $(BUILD_DIR) && lcov --remove coverage.info '*/test/*' --output-file coverage.info
 	@cd $(BUILD_DIR) && lcov --list coverage.info
 	@cd $(BUILD_DIR) && genhtml coverage.info --output-directory coverage_html --title "UVHTTP Code Coverage"
-	@echo "覆盖率报告已生成: $(BUILD_DIR)/coverage_html/index.html"
+	@echo "✅ 覆盖率报告已生成: $(BUILD_DIR)/coverage_html/index.html"
 
 coverage-clean:
 	@find $(BUILD_DIR) -name "*.gcda" -delete 2>/dev/null || true
@@ -100,22 +95,16 @@ cppcheck:
 	@cppcheck --enable=warning --std=c11 src/ include/
 
 examples: all
-	@$(MAKE) -C $(BUILD_DIR) helloworld simple_test static_file_server advanced_static_server config_demo simple_config cache_test_server simple_api_demo ultra_simple_demo json_api_demo
-
-run-simple-config: examples
-	@cd $(BUILD_DIR) && ./examples/simple_config
-
-run-config-demo: examples
-	@cd $(BUILD_DIR) && ./examples/config_demo
+	@$(MAKE) -C $(BUILD_DIR) hello_world simple_routing method_routing cors_rate_limit_demo middleware_demo libuv_data_pointer
 
 run-helloworld: examples
-	@cd $(BUILD_DIR) && ./examples/helloworld
+	@cd $(BUILD_DIR) && ./dist/bin/hello_world
 
-run-advanced-static: examples
-	@cd $(BUILD_DIR) && ./examples/advanced_static_server
+run-simple-routing: examples
+	@cd $(BUILD_DIR) && ./dist/bin/simple_routing
 
-run-json-api: examples
-	@cd $(BUILD_DIR) && ./examples/json_api_demo
+run-method-routing: examples
+	@cd $(BUILD_DIR) && ./dist/bin/method_routing
 
 help:
 	@echo "UVHTTP 构建系统"

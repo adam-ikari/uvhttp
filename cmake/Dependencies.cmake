@@ -10,6 +10,8 @@ set(DEPS_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/uthash/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
 )
 
 # ============================================================================
@@ -299,6 +301,57 @@ if(BUILD_WITH_MIMALLOC)
 endif()
 
 # ============================================================================
+# googletest
+# ============================================================================
+message(STATUS "Configuring googletest...")
+
+set(GTEST_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/build)
+set(GTEST_LIBS
+    ${GTEST_BUILD_DIR}/lib/libgtest.a
+    ${GTEST_BUILD_DIR}/lib/libgtest_main.a
+    ${GTEST_BUILD_DIR}/lib/libgmock.a
+    ${GTEST_BUILD_DIR}/lib/libgmock_main.a
+)
+
+if(NOT EXISTS ${GTEST_BUILD_DIR}/lib/libgtest.a)
+    message(STATUS "Building googletest...")
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest -B ${GTEST_BUILD_DIR}
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DBUILD_GTEST=ON
+            -DBUILD_GMOCK=ON
+            -DINSTALL_GTEST=OFF
+            -DBUILD_SHARED_LIBS=OFF
+            -Dgtest_force_shared_crt=OFF
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest
+        RESULT_VARIABLE GTEST_CONFIG_RESULT
+    )
+
+    if(GTEST_CONFIG_RESULT)
+        message(FATAL_ERROR "Failed to configure googletest")
+    endif()
+
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} --build ${GTEST_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest
+        RESULT_VARIABLE GTEST_BUILD_RESULT
+    )
+
+    if(GTEST_BUILD_RESULT)
+        message(FATAL_ERROR "Failed to build googletest")
+    endif()
+
+    message(STATUS "googletest built successfully")
+else()
+    message(STATUS "googletest already built")
+endif()
+
+add_custom_target(gtest
+    COMMAND ${CMAKE_COMMAND} --build ${GTEST_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest
+)
+
+# ============================================================================
 # 打印依赖信息
 # ============================================================================
 message(STATUS "")
@@ -313,5 +366,6 @@ message(STATUS "cjson: ${CJSON_LIB}")
 if(BUILD_WITH_MIMALLOC)
     message(STATUS "mimalloc: ${MIMALLOC_LIB}")
 endif()
+message(STATUS "googletest: ${GTEST_LIBS}")
 message(STATUS "========================================")
 message(STATUS "")

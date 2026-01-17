@@ -271,39 +271,8 @@ extern "C" {
 #else
     #define UVHTTP_PERF_START(name) do {} while(0)
     #define UVHTTP_PERF_END(name) do {} while(0)
-#endif
-
-#else
-    /* ============ 生产环境宏 ============ */
-    
-    /* 生产环境使用优化后的内存分配 */
-    #if UVHTTP_INLINE_OPTIMIZED
-        /* 内联版本的内存分配，编译器优化 */
-        static inline void* UVHTTP_MALLOC(size_t size) {
-            return malloc(size);
-        }
-        static inline void UVHTTP_FREE(void* ptr) {
-            free(ptr);
-        }
-        static inline void* UVHTTP_REALLOC(void* ptr, size_t size) {
-            return realloc(ptr, size);
-        }
-    #else
-        /* 函数调用版本 */
-        #define UVHTTP_MALLOC(size) malloc(size)
-        #define UVHTTP_FREE(ptr) free(ptr)
-        #define UVHTTP_REALLOC(ptr, size) realloc(ptr, size)
-    #endif
-    
-    /* 生产环境空宏 - 编译器会优化掉 */
-    #define UVHTTP_MEMORY_CHECK_START() do {} while(0)
-    #define UVHTTP_MEMORY_CHECK_END() do {} while(0)
-    #define UVHTTP_MEMORY_LEAKS() 0
-    #define UVHTTP_TEST_LOG(fmt, ...) do {} while(0)
-    #define UVHTTP_TEST_ASSERT(condition) do {} while(0)
-    #define UVHTTP_PERF_START(name) do {} while(0)
-    #define UVHTTP_PERF_END(name) do {} while(0)
-#endif
+#endif /* UVHTTP_TEST_PERFORMANCE_PROFILING */
+#endif /* UVHTTP_TEST_MODE */
 
 /* ============ 编译时断言宏 ============ */
 #define UVHTTP_STATIC_ASSERT(condition, message) \

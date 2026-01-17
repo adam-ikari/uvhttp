@@ -267,6 +267,10 @@ int uvhttp_ws_generate_accept(const char* key, char* accept, size_t accept_len) 
 
 /* 验证 Sec-WebSocket-Accept */
 int uvhttp_ws_verify_accept(const char* key, const char* accept) {
+    if (!key || !accept) {
+        return -1;
+    }
+    
     char expected[64];
     if (uvhttp_ws_generate_accept(key, expected, sizeof(expected)) != 0) {
         return -1;
