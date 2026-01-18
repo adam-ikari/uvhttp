@@ -2,7 +2,7 @@ name: Deploy Docs
 
 on:
   push:
-    branches: [release]
+    branches: [main]
     paths:
       - 'docs-site/**'
   workflow_dispatch:
