@@ -11,7 +11,7 @@ export default defineConfig({
     ['meta', { name: 'keywords', content: 'HTTP, WebSocket, libuv, C, 高性能, 服务器, 异步 I/O' }],
     ['meta', { name: 'author', content: 'UVHTTP Contributors' }],
     ['meta', { name: 'viewport', content: 'width=device-width,initial-scale=1' }],
-    ['link', { rel: 'icon', href: '/favicon.ico' }],
+    ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
     ['meta', {
       'http-equiv': 'Content-Security-Policy',
       content: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;"
