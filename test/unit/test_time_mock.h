@@ -53,7 +53,7 @@ extern TimeMock* g_time_mock;
 void set_time_mock(TimeMock* mock);
 
 /* 获取当前时间（使用 Mock 或真实时间） */
-time_t get_current_time();
+extern "C" time_t get_current_time();
 
 /* 推进时间（用于测试） */
 void advance_time(time_t seconds);

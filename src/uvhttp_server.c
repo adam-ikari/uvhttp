@@ -261,6 +261,18 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
+    /* 关闭 TCP handle */
+    if (!uv_is_closing((uv_handle_t*)&server->tcp_handle)) {
+        uv_close((uv_handle_t*)&server->tcp_handle, NULL);
+    }
+    
+    /* 运行循环多次以处理关闭回调 */
+    if (server->loop && !server->owns_loop) {
+        for (int i = 0; i < 10; i++) {
+            uv_run(server->loop, UV_RUN_NOWAIT);
+        }
+    }
+    
     /* 清理中间件链 - 零开销设计 */
     uvhttp_server_cleanup_middleware(server);
     

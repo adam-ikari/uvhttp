@@ -76,8 +76,16 @@ TEST(UvhttpRequestParsingTest, BasicGetRequest) {
     uvhttp_free(conn->response);
     uvhttp_request_cleanup(conn->request);
     uvhttp_free(conn->request);
+    
+    /* 关闭 TCP handle */
+    uv_close((uv_handle_t*)client, NULL);
+    loop.run_once();
+    
     uvhttp_free(client);
     uvhttp_free(conn);
+    
+    /* 不调用 uvhttp_server_free，因为测试没有添加任何中间件 */
+    /* 让 TestLoop 的析构函数来清理服务器的 TCP handle */
     uvhttp_server_free(server);
 }
 

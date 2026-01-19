@@ -21,7 +21,36 @@ TEST(UvhttpConnectionExtendedCoverageTest, ConnectionTlsHandshakeFunc) {
 
     EXPECT_EQ(uvhttp_connection_tls_handshake_func(conn), -1);
 
-    uvhttp_connection_free(conn);
+    // 手动关闭句柄
+    uv_idle_stop(&conn->idle_handle);
+    uv_close((uv_handle_t*)&conn->idle_handle, NULL);
+    uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
+    
+    // 运行循环以处理关闭回调
+    loop.run_once();
+    
+    // 清理请求和响应数据
+    if (conn->request) {
+        uvhttp_request_cleanup(conn->request);
+        uvhttp_free(conn->request);
+    }
+    
+    if (conn->response) {
+        uvhttp_response_cleanup(conn->response);
+        uvhttp_free(conn->response);
+    }
+    
+    if (conn->read_buffer) {
+        uvhttp_free(conn->read_buffer);
+    }
+    
+    // 释放内存池
+    if (conn->mempool) {
+        uvhttp_mempool_destroy(conn->mempool);
+    }
+    
+    // 释放连接内存
+    uvhttp_free(conn);
     uvhttp_free(server);
 }
 
@@ -46,7 +75,36 @@ TEST(UvhttpConnectionExtendedCoverageTest, ConnectionStateTransitions) {
     uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_CLOSING);
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_CLOSING);
 
-    uvhttp_connection_free(conn);
+    // 手动关闭句柄
+    uv_idle_stop(&conn->idle_handle);
+    uv_close((uv_handle_t*)&conn->idle_handle, NULL);
+    uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
+    
+    // 运行循环以处理关闭回调
+    loop.run_once();
+    
+    // 清理请求和响应数据
+    if (conn->request) {
+        uvhttp_request_cleanup(conn->request);
+        uvhttp_free(conn->request);
+    }
+    
+    if (conn->response) {
+        uvhttp_response_cleanup(conn->response);
+        uvhttp_free(conn->response);
+    }
+    
+    if (conn->read_buffer) {
+        uvhttp_free(conn->read_buffer);
+    }
+    
+    // 释放内存池
+    if (conn->mempool) {
+        uvhttp_mempool_destroy(conn->mempool);
+    }
+    
+    // 释放连接内存
+    uvhttp_free(conn);
     uvhttp_free(server);
 }
 
