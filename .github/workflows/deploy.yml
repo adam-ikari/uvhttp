@@ -2,7 +2,7 @@ name: Deploy Docs
 
 on:
   push:
-    branches: [main]
+    branches: [release/*]
     paths:
       - 'docs-site/**'
   workflow_dispatch:
@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -33,13 +33,28 @@ jobs:
 
     - name: Install dependencies
       working-directory: ./docs-site
-      run: npm ci
+      run: |
+        npm ci --ignore-scripts
+        npm audit --production=false || true
 
     - name: Build
       working-directory: ./docs-site
       run: |
         npm run build
         ls -la docs/.vitepress/dist || echo "dist directory not found"
+
+    - name: Verify build output
+      working-directory: ./docs-site
+      run: |
+        if [ ! -d "docs/.vitepress/dist" ]; then
+          echo "Error: Build output directory not found"
+          exit 1
+        fi
+        if [ ! -f "docs/.vitepress/dist/index.html" ]; then
+          echo "Error: index.html not found in build output"
+          exit 1
+        fi
+        echo "Build verification passed"
 
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
