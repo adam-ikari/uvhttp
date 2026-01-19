@@ -173,15 +173,17 @@ int uvhttp_static_get_mime_type(const char* file_path,
     /* 查找MIME类型 */
     for (int i = 0; mime_types[i].extension; i++) {
         if (strcasecmp(extension, mime_types[i].extension) == 0) {
-            strncpy(mime_type, mime_types[i].mime_type, buffer_size - 1);
-            mime_type[buffer_size - 1] = '\0';
+            if (uvhttp_safe_strncpy(mime_type, mime_types[i].mime_type, buffer_size) != 0) {
+                UVHTTP_LOG_ERROR("Failed to copy MIME type: %s", mime_types[i].mime_type);
+            }
             return 0;
         }
     }
-    
+
     /* 默认MIME类型 */
-    strncpy(mime_type, "application/octet-stream", buffer_size - 1);
-    mime_type[buffer_size - 1] = '\0';
+    if (uvhttp_safe_strncpy(mime_type, "application/octet-stream", buffer_size) != 0) {
+        UVHTTP_LOG_ERROR("Failed to copy default MIME type");
+    }
     
     return 0;
 }

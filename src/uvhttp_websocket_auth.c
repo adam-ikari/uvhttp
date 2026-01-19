@@ -13,9 +13,54 @@
 
 /* IP 地址匹配辅助函数 */
 static int ip_match(const char* pattern, const char* ip) {
-    /* 简单实现：支持精确匹配和 CIDR */
-    /* TODO: 实现完整的 CIDR 匹配 */
-    return strcmp(pattern, ip) == 0;
+    /* 支持精确匹配和 CIDR 表示法 */
+    const char* slash = strchr(pattern, '/');
+    if (!slash) {
+        /* 精确匹配 */
+        return strcmp(pattern, ip) == 0;
+    }
+
+    /* CIDR 匹配 */
+    int prefix_len = atoi(slash + 1);
+    if (prefix_len < 0 || prefix_len > 32) {
+        return 0;  /* 无效的前缀长度 */
+    }
+
+    /* 将 IP 地址转换为 32 位整数 */
+    unsigned int pattern_ip = 0;
+    unsigned int target_ip = 0;
+    char pattern_copy[INET_ADDRSTRLEN];
+    char target_copy[INET_ADDRSTRLEN];
+
+    /* 复制并截断 CIDR 部分 */
+    size_t pattern_len = slash - pattern;
+    if (pattern_len >= sizeof(pattern_copy)) {
+        return 0;
+    }
+    strncpy(pattern_copy, pattern, pattern_len);
+    pattern_copy[pattern_len] = '\0';
+
+    /* 复制目标 IP */
+    strncpy(target_copy, ip, sizeof(target_copy) - 1);
+    target_copy[sizeof(target_copy) - 1] = '\0';
+
+    /* 转换为网络字节序 */
+    struct in_addr pattern_addr, target_addr;
+    if (inet_pton(AF_INET, pattern_copy, &pattern_addr) != 1) {
+        return 0;
+    }
+    if (inet_pton(AF_INET, target_copy, &target_addr) != 1) {
+        return 0;
+    }
+
+    pattern_ip = ntohl(pattern_addr.s_addr);
+    target_ip = ntohl(target_addr.s_addr);
+
+    /* 创建掩码 */
+    unsigned int mask = prefix_len == 0 ? 0 : (0xFFFFFFFF << (32 - prefix_len));
+
+    /* 比较网络部分 */
+    return (pattern_ip & mask) == (target_ip & mask);
 }
 
 /* 创建认证配置 */
