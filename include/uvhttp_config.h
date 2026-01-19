@@ -47,7 +47,7 @@ typedef struct {
 } uvhttp_config_t;
 
 /* 默认配置值 */
-#define UVHTTP_DEFAULT_MAX_CONNECTIONS       10000  /* 增加到 10000 支持更高并发 */
+#define UVHTTP_DEFAULT_MAX_CONNECTIONS       2048   /* 使用默认值，适合大多数应用 */
 #define UVHTTP_DEFAULT_READ_BUFFER_SIZE      8192
 #define UVHTTP_DEFAULT_BACKLOG               256
 #define UVHTTP_DEFAULT_KEEPALIVE_TIMEOUT     30

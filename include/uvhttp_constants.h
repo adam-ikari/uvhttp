@@ -72,7 +72,9 @@
 #define UVHTTP_WEBSOCKET_PAYLOAD_LEN_65536 65536
 
 /* 连接相关 - 基于生产环境测试的保守值 */
-#define UVHTTP_MAX_CONNECTIONS           2048  /* 从512增加到2048，支持更高并发需求 */
+#define UVHTTP_MAX_CONNECTIONS_HARD      65535  /* 硬限制，基于系统文件描述符 */
+#define UVHTTP_MAX_CONNECTIONS_DEFAULT  2048   /* 默认值，适合大多数应用 */
+#define UVHTTP_MAX_CONNECTIONS_MAX      10000  /* 最大推荐值，需要系统调优 */
 #define UVHTTP_READ_BUFFER_SIZE          16384 /* 16KB缓冲区，提升吞吐量 */
 
 /* HTTP响应头安全边距 */

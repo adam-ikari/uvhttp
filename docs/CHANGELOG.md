@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI/CD 配置**: 测试超时时间从 300 秒增加到 600 秒
 - **构建系统**: 更新 CMakeLists.txt 和 Makefile 支持 C++ 测试
 - **开发者指南**: 更新测试框架说明和最佳实践
+- **连接数限制配置**: 默认最大连接数从 10000 降低到 2048
+  - **原因**: 2048 更适合大多数应用场景，避免资源浪费
+  - **影响**: 现有高并发应用可能需要调整配置
+  - **解决方案**: 如需更高并发，可通过配置调整（最大支持 10000）
+  - **配置示例**:
+    ```c
+    config->max_connections = 10000;  // 高并发场景
+    ```
 
 ### Fixed
 - **查询字符串验证 bug**: 修复 `uvhttp_validate_query_string` 函数中的 bug

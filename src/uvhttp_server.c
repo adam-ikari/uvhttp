@@ -76,7 +76,7 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     uvhttp_server_t* server = (uvhttp_server_t*)server_handle->data;
     
     /* 单线程连接数检查 - 使用服务器特定配置 */
-    size_t max_connections = UVHTTP_MAX_CONNECTIONS;  // 默认值
+    size_t max_connections = UVHTTP_MAX_CONNECTIONS_DEFAULT;  // 默认值
     if (server->config) {
         max_connections = server->config->max_connections;
     } else {
