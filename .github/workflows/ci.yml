@@ -36,9 +36,8 @@ jobs:
     - name: Run fast tests
       run: |
         cd build
-        # 只运行快速测试，排除慢速测试
-        ctest --output-on-failure -j1 --timeout 300 --schedule-random \
-          --exclude-regex "test_deps_full_coverage|test_lru_cache_full_coverage|test_server_full_coverage|test_server_rate_limit_coverage|test_server_simple_api_coverage" || {
+        # 运行所有快速测试
+        ctest --output-on-failure -j1 --timeout 300 --schedule-random || {
           echo "Fast tests failed or timed out"
           exit 1
         }
@@ -50,39 +49,7 @@ jobs:
           exit 1
         fi
 
-  # 慢速测试只在 main 分支和 PR 中运行
-  slow-tests:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 45
-    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
-
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake build-essential
-
-    - name: Configure CMake
-      run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=Release
-
-    - name: Build
-      run: |
-        cmake --build build --config Release -j$(nproc)
-
-    - name: Run slow tests
-      run: |
-        cd build
-        # 只运行慢速测试
-        ctest --output-on-failure -j1 --timeout 1800 --schedule-random \
-          --tests-regex "test_deps_full_coverage|test_lru_cache_full_coverage|test_server_full_coverage|test_server_rate_limit_coverage|test_server_simple_api_coverage" || {
-          echo "Slow tests failed or timed out"
-          exit 1
-        }
+  
 
   # 性能测试只在 main 分支和 PR 中运行
   performance-test:
