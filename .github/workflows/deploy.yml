@@ -1,9 +1,10 @@
 name: Deploy Docs
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches: [release]
+    paths:
+      - 'docs-site/**'
   workflow_dispatch:
 
 permissions:
