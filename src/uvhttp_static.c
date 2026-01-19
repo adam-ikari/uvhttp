@@ -1258,7 +1258,7 @@ typedef struct {
 } sendfile_context_t;
 
 /* sendfile 默认配置（宏定义） */
-#define SENDFILE_DEFAULT_TIMEOUT_MS  10000  /* 10秒超时 */
+#define SENDFILE_DEFAULT_TIMEOUT_MS  30000  /* 30秒超时，适应慢速网络环境 */
 #define SENDFILE_DEFAULT_MAX_RETRY    2      /* 最大重试次数 */
 #define SENDFILE_DEFAULT_CHUNK_SIZE   (64 * 1024)  /* 64KB 分块 */
 
