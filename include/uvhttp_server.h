@@ -106,6 +106,10 @@ struct uvhttp_server {
     size_t rate_limit_whitelist_count;                   /* 白名单路径数量 */
     struct whitelist_item* rate_limit_whitelist_hash;  /* 白名单哈希表 */
 #endif
+
+    /* 连接池管理（避免全局变量，使用服务器级别的连接池） */
+    void* connection_pool;  /* 连接池头指针 */
+    size_t connection_pool_size;  /* 连接池大小 */
 };
 
 /* API函数 */
