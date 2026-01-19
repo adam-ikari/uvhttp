@@ -45,3 +45,7 @@ core
 core.*
 !cmake/Dependencies.cmake
 test/results/
+
+# VitePress
+docs-site/node_modules/
+docs-site/docs/.vitepress/dist/
