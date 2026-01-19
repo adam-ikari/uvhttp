@@ -47,14 +47,9 @@ make -j$(nproc)
 
 ```c
 #include <uvhttp.h>
+#include <stdio.h>
 
-int main() {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
-    server->router = router;
-
-    void hello_handler(uvhttp_request_t* req) {
+void hello_handler(uvhttp_request_t* req) {
     uvhttp_response_t* res = uvhttp_response_new(req);
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
@@ -69,8 +64,9 @@ int main() {
     server->router = router;
 
     uvhttp_router_add_route(router, "/", hello_handler);
-
     uvhttp_server_listen(server, "0.0.0.0", 8080);
+
+    printf("Server running at http://localhost:8080\n");
     uv_run(loop, UV_RUN_DEFAULT);
     return 0;
 }
