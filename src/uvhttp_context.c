@@ -377,6 +377,12 @@ void uvhttp_context_destroy(uvhttp_context_t* context) {
         return;
     }
     
+    /* 清理全局变量替代字段 */
+    uvhttp_context_cleanup_tls(context);
+    uvhttp_context_cleanup_websocket(context);
+    uvhttp_context_cleanup_error_stats(context);
+    uvhttp_context_cleanup_config(context);
+    
     /* 销毁各种提供者 */
     if (context->connection_provider) {
         /* 使用 offsetof 计算原始指针 */
@@ -463,8 +469,146 @@ int uvhttp_context_init(uvhttp_context_t* context) {
     }
 
     context->initialized = 1;
+    
+    /* 初始化全局变量替代字段 */
+    uvhttp_context_init_tls(context);
+    uvhttp_context_init_websocket(context);
+    uvhttp_context_init_error_stats(context);
+    uvhttp_context_init_config(context);
 
     return 0;
+}
+
+/* ===== 全局变量替代字段初始化函数 ===== */
+
+/* 初始化 TLS 模块状态 */
+int uvhttp_context_init_tls(uvhttp_context_t* context) {
+    if (!context) {
+        return -1;
+    }
+
+    /* 如果已经初始化，直接返回成功（幂等） */
+    if (context->tls_initialized) {
+        return 0;
+    }
+
+    /* TODO: 实现 TLS 初始化
+     * 需要包含 mbedtls 头文件并实现实际初始化逻辑
+     */
+    context->tls_initialized = 1;
+
+    return 0;
+}
+
+/* 清理 TLS 模块状态 */
+void uvhttp_context_cleanup_tls(uvhttp_context_t* context) {
+    if (!context || !context->tls_initialized) {
+        return;
+    }
+
+    /* TODO: 实现 TLS 清理
+     * 释放 mbedtls_entropy_context 和 mbedtls_ctr_drbg_context
+     */
+
+    context->tls_initialized = 0;
+    context->tls_entropy = NULL;
+    context->tls_drbg = NULL;
+}
+
+/* 初始化 WebSocket 模块状态 */
+int uvhttp_context_init_websocket(uvhttp_context_t* context) {
+    if (!context) {
+        return -1;
+    }
+
+    /* 如果已经初始化，直接返回成功（幂等） */
+    if (context->drbg_initialized) {
+        return 0;
+    }
+
+    /* TODO: 实现 WebSocket DRBG 初始化
+     * 需要包含相关头文件并实现实际初始化逻辑
+     */
+    context->drbg_initialized = 1;
+
+    return 0;
+}
+
+/* 清理 WebSocket 模块状态 */
+void uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
+    if (!context || !context->drbg_initialized) {
+        return;
+    }
+
+    /* TODO: 实现 WebSocket DRBG 清理 */
+
+    context->drbg_initialized = 0;
+}
+
+/* 初始化错误统计 */
+int uvhttp_context_init_error_stats(uvhttp_context_t* context) {
+    if (!context) {
+        return -1;
+    }
+
+    /* 如果已经初始化，直接返回成功（幂等） */
+    if (context->error_stats) {
+        return 0;
+    }
+
+    /* TODO: 分配错误统计结构
+     * error_stats = uvhttp_alloc(sizeof(uvhttp_error_stats_t));
+     */
+
+    return 0;
+}
+
+/* 清理错误统计 */
+void uvhttp_context_cleanup_error_stats(uvhttp_context_t* context) {
+    if (!context) {
+        return;
+    }
+
+    if (context->error_stats) {
+        /* TODO: 释放错误统计结构
+         * uvhttp_free(context->error_stats);
+         */
+        context->error_stats = NULL;
+    }
+}
+
+/* 初始化配置管理 */
+int uvhttp_context_init_config(uvhttp_context_t* context) {
+    if (!context) {
+        return -1;
+    }
+
+    /* 如果已经初始化，直接返回成功（幂等） */
+    if (context->current_config) {
+        return 0;
+    }
+
+    /* TODO: 初始化配置管理
+     * current_config = uvhttp_config_create();
+     */
+
+    return 0;
+}
+
+/* 清理配置管理 */
+void uvhttp_context_cleanup_config(uvhttp_context_t* context) {
+    if (!context) {
+        return;
+    }
+
+    if (context->current_config) {
+        /* TODO: 释放配置
+         * uvhttp_config_destroy(context->current_config);
+         */
+        context->current_config = NULL;
+    }
+
+    context->config_callback = NULL;
 }
 
 int uvhttp_context_set_connection_provider(uvhttp_context_t* context,
