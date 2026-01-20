@@ -287,24 +287,24 @@ TEST(UvhttpLruCacheEnhancedTest, CacheClear) {
 TEST(UvhttpLruCacheEnhancedTest, CacheGetStats) {
     cache_manager_t* cache = uvhttp_lru_cache_create(1024 * 1024, 100, 3600);
     ASSERT_NE(cache, nullptr);
-    
+
     char content[] = "test content";
     uvhttp_lru_cache_put(cache, "/test.txt", content, strlen(content), "text/plain", 0, "etag123");
-    
+
     size_t total_memory_usage = 0;
     int entry_count = 0;
     int hit_count = 0;
     int miss_count = 0;
     int eviction_count = 0;
-    
+
     uvhttp_lru_cache_get_stats(cache, &total_memory_usage, &entry_count, &hit_count, &miss_count, &eviction_count);
-    
+
     EXPECT_GT(total_memory_usage, 0);
     EXPECT_EQ(entry_count, 1);
-    EXPECT_EQ(hit_count, 1);
+    EXPECT_EQ(hit_count, 0);  // 只 put 了数据，没有 get，所以 hit_count 应该是 0
     EXPECT_EQ(miss_count, 0);
     EXPECT_EQ(eviction_count, 0);
-    
+
     uvhttp_lru_cache_free(cache);
 }
 
@@ -315,15 +315,17 @@ TEST(UvhttpLruCacheEnhancedTest, CacheResetStats) {
     
     char content[] = "test content";
     uvhttp_lru_cache_put(cache, "/test.txt", content, strlen(content), "text/plain", 0, "etag123");
-    
+
+    // 先 get 数据以增加 hit_count
+    uvhttp_lru_cache_find(cache, "/test.txt");
     EXPECT_GT(cache->hit_count, 0);
-    
+
     uvhttp_lru_cache_reset_stats(cache);
-    
+
     EXPECT_EQ(cache->hit_count, 0);
     EXPECT_EQ(cache->miss_count, 0);
     EXPECT_EQ(cache->eviction_count, 0);
-    
+
     uvhttp_lru_cache_free(cache);
 }
 
