@@ -12,6 +12,14 @@
 #include <stdio.h>
 #include <uv.h>
 
+/* ========== 编译时验证 ========== */
+/* 验证结构体大小，确保内存布局优化不会被破坏 */
+#ifdef __cplusplus
+#define UVHTTP_STATIC_ASSERT(cond, msg) static_assert(cond, msg)
+#else
+#define UVHTTP_STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
+#endif
+
 /* 连接池管理 - 优化连接复用 */
 #define UVHTTP_CONNECTION_POOL_SIZE  100
 #define UVHTTP_CONNECTION_POOL_TTL   30  // 连接池TTL（秒）
@@ -23,6 +31,20 @@ typedef struct uvhttp_connection_pool_entry {
 } uvhttp_connection_pool_entry_t;
 
 /* 连接池管理函数 - 使用服务器级别的连接池，避免全局变量 */
+static uvhttp_connection_t* uvhttp_connection_pool_acquire(uvhttp_server_t* server);
+static void uvhttp_connection_pool_release(uvhttp_server_t* server, uvhttp_connection_t* conn);
+
+/* 连接池清理函数 - 非静态，供 uvhttp_server_free 调用 */
+void uvhttp_connection_pool_cleanup(uvhttp_server_t* server);
+
+/* ========== 结构体大小验证 ========== */
+/* 验证关键结构体的大小，确保内存布局优化不会被意外破坏 */
+UVHTTP_STATIC_ASSERT(sizeof(uvhttp_request_t) == 280664,
+                      "uvhttp_request_t size changed unexpectedly");
+UVHTTP_STATIC_ASSERT(sizeof(uvhttp_response_t) == 278600,
+                      "uvhttp_response_t size changed unexpectedly");
+
+static void on_close(uv_handle_t* handle);
 static uvhttp_connection_t* uvhttp_connection_pool_acquire(uvhttp_server_t* server);
 static void uvhttp_connection_pool_release(uvhttp_server_t* server, uvhttp_connection_t* conn);
 
@@ -173,7 +195,25 @@ int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     /* 优化：先停止当前的读取（如果正在进行） */
     uv_read_stop((uv_stream_t*)&conn->tcp_handle);
     
-    /* 性能优化：只重置必要的字段，避免清零整个结构体（280KB） */
+    /* 性能优化：只重置必要的字段，避免清零整个结构体（280KB）
+     * 
+     * 优化原理：
+     * - 原方案：memset(conn->request, 0, sizeof(uvhttp_request_t)) 清零 280KB
+     * - 新方案：只重置 10 个字段，共约 80 字节
+     * - 性能提升：每次连接复用节省 279,920 字节的内存操作
+     * 
+     * 注意事项：
+     * - 必须确保所有状态字段都被正确重置
+     * - 指针字段需要特殊处理（保持不变或释放）
+     * - 大块内存（headers 数组）不需要清零，因为 header_count 已重置
+     * 
+     * 字段重置清单：
+     * - 热路径字段：method, parsing_complete, header_count
+     * - 指针字段：path, query, body, user_data（设置为 NULL）
+     * - 缓冲区字段：url（清零第一个字节）
+     * - 大块内存：headers 数组（通过 header_count 标记无效）
+     */
+    
     /* 重置请求对象的热路径字段 */
     conn->request->method = UVHTTP_ANY;
     conn->request->parsing_complete = 0;
@@ -198,7 +238,15 @@ int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
         parser->data = conn;
     }
 
-    /* 性能优化：只重置响应对象的热路径字段，避免清零整个结构体（278KB） */
+    /* 性能优化：只重置响应对象的热路径字段，避免清零整个结构体（278KB）
+     * 
+     * 优化原理：
+     * - 原方案：memset(conn->response, 0, sizeof(uvhttp_response_t)) 清零 278KB
+     * - 新方案：只重置 10 个字段，共约 80 字节
+     * - 性能提升：每次连接复用节省 277,920 字节的内存操作
+     */
+    
+    /* 重置响应对象的热路径字段 */
     conn->response->status_code = 0;
     conn->response->headers_sent = 0;
     conn->response->sent = 0;
@@ -221,6 +269,7 @@ int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     conn->content_length = 0;
     conn->body_received = 0;
     conn->keep_alive = 1;  /* 继续保持连接 */
+    conn->chunked_encoding = 0;  /* 重置分块传输编码标志 */
     conn->current_header_is_important = 0;
     conn->parsing_header_field = 0;
     conn->need_restart_read = 0;
