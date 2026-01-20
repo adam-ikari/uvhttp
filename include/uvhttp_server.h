@@ -2,6 +2,7 @@
 #define UVHTTP_SERVER_H
 
 #include <uv.h>
+#include <assert.h>
 #include "uvhttp_error.h"
 #include "uvhttp_common.h"
 #include "uvhttp_config.h"
@@ -130,6 +131,22 @@ struct uvhttp_server {
     void* connection_pool;                       /* 8 字节 */
     size_t connection_pool_size;                   /* 8 字节 */
 };
+
+/* ========== 内存布局验证静态断言 ========== */
+
+/* 验证指针对齐（8字节对齐） */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, loop) % 8 == 0,
+                      "loop pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, router) % 8 == 0,
+                      "router pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, config) % 8 == 0,
+                      "config pointer not 8-byte aligned");
+
+/* 验证size_t对齐（8字节对齐） */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, active_connections) % 8 == 0,
+                      "active_connections not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, max_connections) % 8 == 0,
+                      "max_connections not 8-byte aligned");
 
 /* API函数 */
 uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop);  /* loop可为NULL，内部创建新循环 */

@@ -2,6 +2,7 @@
 #define UVHTTP_ROUTER_H
 
 #include <stddef.h>
+#include <assert.h>
 
 #include "uvhttp_error.h"
 #include "uvhttp_common.h"
@@ -84,6 +85,26 @@ struct uvhttp_router {
 };
 
 typedef struct uvhttp_router uvhttp_router_t;
+
+/* ========== 内存布局验证静态断言 ========== */
+
+/* 验证指针对齐（8字节对齐） */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, root) % 8 == 0,
+                      "root pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, node_pool) % 8 == 0,
+                      "node_pool pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, array_routes) % 8 == 0,
+                      "array_routes pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, static_prefix) % 8 == 0,
+                      "static_prefix pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, static_context) % 8 == 0,
+                      "static_context pointer not 8-byte aligned");
+
+/* 验证size_t对齐（8字节对齐） */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, route_count) % 8 == 0,
+                      "route_count not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, node_pool_size) % 8 == 0,
+                      "node_pool_size not 8-byte aligned");
 
 // 路由API函数
 uvhttp_router_t* uvhttp_router_new(void);

@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "uvhttp_common.h"
 #include "uvhttp_error.h"
 
@@ -55,6 +56,26 @@ struct uvhttp_response {
     /* 头部数组（放在最后） */
     uvhttp_header_t headers[MAX_HEADERS];  /* 64 * (256 + 4096) = 278,528 字节 */
 };
+
+/* ========== 内存布局验证静态断言 ========== */
+
+/* 验证指针对齐（8字节对齐） */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, client) % 8 == 0,
+                      "client pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, body) % 8 == 0,
+                      "body pointer not 8-byte aligned");
+
+/* 验证size_t对齐（8字节对齐） */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, header_count) % 8 == 0,
+                      "header_count not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, body_length) % 8 == 0,
+                      "body_length not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, cache_expires) % 8 == 0,
+                      "cache_expires not 8-byte aligned");
+
+/* 验证大型缓冲区在结构体末尾 */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, headers) >= 64,
+                      "headers array should be after first 64 bytes");
 
 /* ============ 核心 API 函数 ============ */
 uvhttp_error_t uvhttp_response_init(uvhttp_response_t* response, void* client);

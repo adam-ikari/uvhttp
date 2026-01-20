@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stddef.h>
+#include <assert.h>
 #include "uvhttp_common.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
@@ -70,6 +71,30 @@ struct uvhttp_connection {
     /* 缓冲区字段（放在最后） */
     char current_header_field[UVHTTP_MAX_HEADER_NAME_SIZE];  /* 大块内存 */
 };
+
+/* ========== 内存布局验证静态断言 ========== */
+
+/* 验证指针对齐（8字节对齐） */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, server) % 8 == 0,
+                      "server pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, request) % 8 == 0,
+                      "request pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, response) % 8 == 0,
+                      "response pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, mempool) % 8 == 0,
+                      "mempool pointer not 8-byte aligned");
+
+/* 验证size_t对齐（8字节对齐） */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, content_length) % 8 == 0,
+                      "content_length not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, body_received) % 8 == 0,
+                      "body_received not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, read_buffer_size) % 8 == 0,
+                      "read_buffer_size not 8-byte aligned");
+
+/* 验证大型缓冲区在结构体末尾 */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, current_header_field) >= 64,
+                      "current_header_field should be after first 64 bytes");
 
 // 连接管理函数
 uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server);

@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "llhttp.h"
 #include "uvhttp_common.h"
 
@@ -54,6 +55,34 @@ struct uvhttp_request {
     /* 头部数组（放在最后） */
     uvhttp_header_t headers[MAX_HEADERS];  /* 64 * (256 + 4096) = 278,528 字节 */
 };
+
+/* ========== 内存布局验证静态断言 ========== */
+
+/* 验证指针对齐（8字节对齐） */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, client) % 8 == 0,
+                      "client pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, parser) % 8 == 0,
+                      "parser pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, parser_settings) % 8 == 0,
+                      "parser_settings pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, path) % 8 == 0,
+                      "path pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, query) % 8 == 0,
+                      "query pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, body) % 8 == 0,
+                      "body pointer not 8-byte aligned");
+
+/* 验证size_t对齐（8字节对齐） */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, header_count) % 8 == 0,
+                      "header_count not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, body_length) % 8 == 0,
+                      "body_length not 8-byte aligned");
+
+/* 验证大型缓冲区在结构体末尾 */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, url) >= 64,
+                      "url buffer should be after first 64 bytes");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, headers) >= 64,
+                      "headers array should be after first 64 bytes");
 
 /* API functions */
 const char* uvhttp_request_get_method(uvhttp_request_t* request);
