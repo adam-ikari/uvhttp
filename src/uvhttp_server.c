@@ -187,27 +187,9 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     /* 初始化TLS模块（如果还没有初始化） */
     #if UVHTTP_FEATURE_TLS
         UVHTTP_LOG_DEBUG("Initializing TLS module...");
-        /* 检查 loop->data 是否为 NULL，如果是则创建上下文（向后兼容） */
-        uvhttp_context_t* context = (uvhttp_context_t*)loop->data;
-        if (!context) {
-            UVHTTP_LOG_DEBUG("loop->data is NULL, creating context for backward compatibility");
-            context = uvhttp_context_create(loop);
-            UVHTTP_LOG_DEBUG("Created context at %p", (void*)context);
-            if (!context) {
-                UVHTTP_LOG_ERROR("Failed to create context");
-                return NULL;
-            }
-            loop->data = context;
-            UVHTTP_LOG_DEBUG("Set loop->data to %p", (void*)context);
-        }
-        
-        UVHTTP_LOG_DEBUG("Calling uvhttp_tls_init with context=%p", (void*)context);
-        if (uvhttp_tls_init(context) != UVHTTP_TLS_OK) {
-            UVHTTP_LOG_ERROR("Failed to initialize TLS module");
-            /* 不要在这里释放 context，因为 loop->data 可能被其他地方使用 */
-            return NULL;
-        }
-        UVHTTP_LOG_DEBUG("TLS module initialized successfully");
+        /* 暂时跳过 TLS 初始化，使用全局变量（向后兼容） */
+        /* TODO: 在后续版本中完全移除全局变量 */
+        UVHTTP_LOG_DEBUG("TLS module initialization skipped (using global variables for backward compatibility)");
     #endif
         UVHTTP_LOG_DEBUG("Allocating uvhttp_server_t, size=%zu", sizeof(uvhttp_server_t));
         uvhttp_server_t* server = uvhttp_alloc(sizeof(uvhttp_server_t));
