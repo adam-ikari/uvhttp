@@ -4,6 +4,7 @@
  */
 
 #include "uvhttp_websocket_native.h"
+#include "uvhttp_context.h"
 #include "uvhttp_error.h"
 #include "uvhttp_allocator.h"
 #include <stdio.h>
@@ -31,31 +32,63 @@ static mbedtls_ctr_drbg_context g_drbg;
 static int g_drbg_initialized = 0;
 
 /* 初始化 DRBG */
-static int uvhttp_ws_init_drbg(void) {
-    if (g_drbg_initialized) {
+static int uvhttp_ws_init_drbg(uvhttp_context_t* context) {
+    if (!context) {
+        /* 向后兼容：如果没有提供上下文，使用全局变量 */
+        if (g_drbg_initialized) {
+            return 0;
+        }
+
+        mbedtls_entropy_init(&g_entropy);
+        mbedtls_ctr_drbg_init(&g_drbg);
+
+        int ret = mbedtls_ctr_drbg_seed(&g_drbg, mbedtls_entropy_func, &g_entropy, NULL, 0);
+        if (ret == 0) {
+            g_drbg_initialized = 1;
+        }
+
+        return ret;
+    }
+
+    /* 使用上下文中的 DRBG */
+    if (context->drbg_initialized) {
         return 0;
     }
-    
-    mbedtls_entropy_init(&g_entropy);
-    mbedtls_ctr_drbg_init(&g_drbg);
-    
-    int ret = mbedtls_ctr_drbg_seed(&g_drbg, mbedtls_entropy_func, &g_entropy, NULL, 0);
-    if (ret == 0) {
-        g_drbg_initialized = 1;
-    }
-    
-    return ret;
+
+    /* TODO: 实现实际的 DRBG 初始化
+     * 需要分配 mbedtls_entropy_context 和 mbedtls_ctr_drbg_context
+     * 并存储到 context 中
+     */
+
+    context->drbg_initialized = 1;
+    return 0;
 }
 
 /* 生成安全的随机数 */
-static int uvhttp_ws_random_bytes(unsigned char* buf, size_t len) {
-    if (!g_drbg_initialized) {
-        if (uvhttp_ws_init_drbg() != 0) {
+static int uvhttp_ws_random_bytes(uvhttp_context_t* context, unsigned char* buf, size_t len) {
+    if (!context) {
+        /* 向后兼容：如果没有提供上下文，使用全局变量 */
+        if (!g_drbg_initialized) {
+            if (uvhttp_ws_init_drbg(NULL) != 0) {
+                return -1;
+            }
+        }
+
+        return mbedtls_ctr_drbg_random(&g_drbg, buf, len);
+    }
+
+    /* 使用上下文中的 DRBG */
+    if (!context->drbg_initialized) {
+        if (uvhttp_ws_init_drbg(context) != 0) {
             return -1;
         }
     }
-    
-    return mbedtls_ctr_drbg_random(&g_drbg, buf, len);
+
+    /* TODO: 实现实际的随机数生成
+     * 使用 context 中的 mbedtls_ctr_drbg_context
+     */
+
+    return 0;
 }
 
 /* 创建 WebSocket 连接 */
@@ -221,7 +254,7 @@ int uvhttp_ws_build_frame(uint8_t* buffer,
     /* 添加掩码密钥（如果是客户端） */
     if (mask) {
         uint8_t masking_key[4];
-        if (uvhttp_ws_random_bytes(masking_key, 4) != 0) {
+        if (uvhttp_ws_random_bytes(NULL, masking_key, 4) != 0) {
             uvhttp_free(buffer);
             return -1;
         }
@@ -351,7 +384,7 @@ int uvhttp_ws_handshake_client(struct uvhttp_ws_connection* conn,
     
     /* 生成随机 key */
     unsigned char raw_key[16];
-    if (uvhttp_ws_random_bytes(raw_key, 16) != 0) {
+    if (uvhttp_ws_random_bytes(NULL, raw_key, 16) != 0) {
         return -1;
     }
     

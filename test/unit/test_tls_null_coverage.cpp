@@ -2,11 +2,17 @@
 
 #include <gtest/gtest.h>
 #include "uvhttp_tls.h"
+#include "uvhttp_context.h"
 
 /* 测试TLS初始化 */
 TEST(UvhttpTlsNullCoverageTest, TlsInit) {
-    uvhttp_tls_error_t err = uvhttp_tls_init();
+    uvhttp_context_t* context = uvhttp_context_create(uv_default_loop());
+    ASSERT_NE(context, nullptr);
+
+    uvhttp_tls_error_t err = uvhttp_tls_init(context);
     EXPECT_TRUE(err == UVHTTP_TLS_OK || err == UVHTTP_TLS_ERROR_INIT);
+
+    uvhttp_context_destroy(context);
 }
 
 /* 测试TLS上下文创建 */

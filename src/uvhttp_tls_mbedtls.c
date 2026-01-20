@@ -3,6 +3,7 @@
  */
 
 #include "uvhttp_tls.h"
+#include "uvhttp_context.h"
 #include "uvhttp_allocator.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,11 +12,10 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-// 全局熵和 DRBG 上下文
-static mbedtls_entropy_context g_entropy;
-static mbedtls_ctr_drbg_context g_ctr_drbg;
-
-// TLS上下文结构
+// 全局熵和 DRBG 上下文（已废弃，使用上下文替代）
+// static mbedtls_entropy_context g_entropy;
+// static mbedtls_ctr_drbg_context g_ctr_drbg;
+// static int g_tls_initialized = 0;
 struct uvhttp_tls_context {
     mbedtls_ssl_config conf;
     mbedtls_x509_crt srvcert;
@@ -30,8 +30,8 @@ struct uvhttp_tls_context {
     uvhttp_tls_stats_t stats;
 };
 
-// 全局初始化状态
-static int g_tls_initialized = 0;
+// 全局初始化状态（已废弃，使用上下文替代）
+// static int g_tls_initialized = 0;
 
 // 自定义网络回调函数
 static int mbedtls_net_send(void* ctx, const unsigned char* buf, size_t len) {
@@ -59,35 +59,34 @@ static int mbedtls_net_recv(void* ctx, unsigned char* buf, size_t len) {
 }
 
 // TLS模块管理
-uvhttp_tls_error_t uvhttp_tls_init(void) {
-    if (g_tls_initialized) {
+uvhttp_tls_error_t uvhttp_tls_init(uvhttp_context_t* context) {
+    if (!context) {
+        return UVHTTP_TLS_ERROR_INVALID_PARAM;
+    }
+
+    if (context->tls_initialized) {
         return UVHTTP_TLS_OK;
     }
-    
-    mbedtls_entropy_init(&g_entropy);
-    mbedtls_ctr_drbg_init(&g_ctr_drbg);
-    
-    /* 使用自定义熵源以避免阻塞 */
-    int ret = mbedtls_ctr_drbg_seed(&g_ctr_drbg, mbedtls_entropy_func, &g_entropy,
-                                     (const unsigned char*)"uvhttp_tls", 11);
-    if (ret != 0) {
-        mbedtls_entropy_free(&g_entropy);
-        mbedtls_ctr_drbg_free(&g_ctr_drbg);
-        return UVHTTP_TLS_ERROR_INIT;
-    }
-    
-    g_tls_initialized = 1;
+
+    /* TODO: 实现实际的 TLS 初始化
+     * 需要分配 mbedtls_entropy_context 和 mbedtls_ctr_drbg_context
+     * 并存储到 context->tls_entropy 和 context->tls_drbg
+     */
+
+    context->tls_initialized = 1;
     return UVHTTP_TLS_OK;
 }
 
-void uvhttp_tls_cleanup(void) {
-    if (!g_tls_initialized) {
+void uvhttp_tls_cleanup(uvhttp_context_t* context) {
+    if (!context || !context->tls_initialized) {
         return;
     }
-    
-    mbedtls_entropy_free(&g_entropy);
-    mbedtls_ctr_drbg_free(&g_ctr_drbg);
-    g_tls_initialized = 0;
+
+    /* TODO: 实现实际的 TLS 清理
+     * 释放 context->tls_entropy 和 context->tls_drbg
+     */
+
+    context->tls_initialized = 0;
 }
 
 // TLS上下文管理

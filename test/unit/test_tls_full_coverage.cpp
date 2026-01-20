@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 #include "uvhttp_tls.h"
+#include "uvhttp_context.h"
 #include "uvhttp_allocator.h"
 #include <string.h>
 
@@ -34,14 +35,24 @@ TEST(UvhttpTlsFullCoverageTest, TlsErrorEnumValues) {
 
 /* 测试TLS初始化 */
 TEST(UvhttpTlsFullCoverageTest, TlsInit) {
-    uvhttp_tls_error_t result = uvhttp_tls_init();
+    uvhttp_context_t* context = uvhttp_context_create(uv_default_loop());
+    ASSERT_NE(context, nullptr);
+
+    uvhttp_tls_error_t result = uvhttp_tls_init(context);
     /* 可能返回UVHTTP_TLS_OK或错误，取决于实现 */
+
+    uvhttp_context_destroy(context);
 }
 
 /* 测试TLS清理 */
 TEST(UvhttpTlsFullCoverageTest, TlsCleanup) {
+    uvhttp_context_t* context = uvhttp_context_create(uv_default_loop());
+    ASSERT_NE(context, nullptr);
+
     /* 应该安全处理 */
-    uvhttp_tls_cleanup();
+    uvhttp_tls_cleanup(context);
+
+    uvhttp_context_destroy(context);
 }
 
 /* 测试创建TLS上下文 */

@@ -186,7 +186,7 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     /* 初始化TLS模块（如果还没有初始化） */
     #if UVHTTP_FEATURE_TLS
         UVHTTP_LOG_DEBUG("Initializing TLS module...");
-        if (uvhttp_tls_init() != UVHTTP_TLS_OK) {
+        if (uvhttp_tls_init(loop->data) != UVHTTP_TLS_OK) {
             UVHTTP_LOG_ERROR("Failed to initialize TLS module");
             return NULL;
         }

@@ -12,6 +12,9 @@
 #include <mbedtls/debug.h>
 #include <mbedtls/timing.h>
 
+/* 前向声明 */
+typedef struct uvhttp_context uvhttp_context_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,8 +43,8 @@ typedef enum {
 } uvhttp_tls_error_t;
 
 // TLS模块管理
-uvhttp_tls_error_t uvhttp_tls_init(void);
-void uvhttp_tls_cleanup(void);
+uvhttp_tls_error_t uvhttp_tls_init(uvhttp_context_t* context);
+void uvhttp_tls_cleanup(uvhttp_context_t* context);
 
 // TLS上下文管理
 uvhttp_tls_context_t* uvhttp_tls_context_new(void);
