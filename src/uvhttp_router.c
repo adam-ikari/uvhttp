@@ -214,7 +214,7 @@ static uvhttp_error_t add_array_route(uvhttp_router_t* router, const char* path,
     if (router->array_route_count >= router->array_capacity) {
         // 扩展数组容量
         size_t new_capacity = router->array_capacity * 2;
-        array_route_t* new_routes = uvhttp_realloc(router->array_routes, 
+        array_route_t* new_routes = uvhttp_realloc(router->array_routes,
                                                  new_capacity * sizeof(array_route_t));
         if (!new_routes) {
             return UVHTTP_ERROR_OUT_OF_MEMORY;
@@ -222,14 +222,15 @@ static uvhttp_error_t add_array_route(uvhttp_router_t* router, const char* path,
         router->array_routes = new_routes;
         router->array_capacity = new_capacity;
     }
-    
+
     array_route_t* route = &router->array_routes[router->array_route_count];
     strncpy(route->path, path, sizeof(route->path) - 1);
     route->path[sizeof(route->path) - 1] = '\0';
     route->method = method;
     route->handler = handler;
     router->array_route_count++;
-    
+    router->route_count++;
+
     return UVHTTP_OK;
 }
 
@@ -314,14 +315,23 @@ uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
     if (!router || !path || !handler) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
+    if (strlen(path) == 0) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
     if (strlen(path) >= MAX_ROUTE_PATH_LEN) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
+    // 检查路径是否包含查询字符串（不允许）
+    if (strchr(path, '?') != NULL) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
     // 检查是否包含路径参数
     int has_params = (strchr(path, ':') != NULL);
-    
+
     // 如果有参数或路由数量超过阈值，使用Trie
     if (has_params || router->array_route_count >= HYBRID_THRESHOLD) {
         if (!router->use_trie) {
