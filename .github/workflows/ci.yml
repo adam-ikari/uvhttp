@@ -51,11 +51,11 @@ jobs:
 
   
 
-  # 性能测试只在 main 分支和 PR 中运行
+  # 性能测试在 main、develop、feature 分支和 PR 中运行
   performance-test:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
-    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
 
     steps:
     - uses: actions/checkout@v3
@@ -116,11 +116,11 @@ jobs:
           echo "performance_static_server not found, skipping performance test"
         fi
 
-  # 代码质量检查只在 main 分支和 PR 中运行
+  # 代码质量检查在 main、develop、feature 分支和 PR 中运行
   code-quality:
     runs-on: ubuntu-22.04
     timeout-minutes: 20
-    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
 
     steps:
     - uses: actions/checkout@v3
@@ -161,11 +161,11 @@ jobs:
           echo "test_connection_full_coverage not found, skipping valgrind"
         fi
 
-  # 覆盖率测试只在 main 分支和 PR 中运行
+  # 覆盖率测试在 main、develop、feature 分支和 PR 中运行
   coverage:
     runs-on: ubuntu-22.04
     timeout-minutes: 45
-    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
 
     steps:
     - uses: actions/checkout@v3
