@@ -12,6 +12,9 @@
 #include <stdio.h>
 #include <uv.h>
 
+/* 内存分配宏 */
+#define UVHTTP_FREE(ptr) do { if (ptr) { free(ptr); (ptr) = NULL; } } while(0)
+
 /* 连接池管理 - 优化连接复用 */
 #define UVHTTP_CONNECTION_POOL_SIZE  100
 #define UVHTTP_CONNECTION_POOL_TTL   30  // 连接池TTL（秒）
@@ -173,35 +176,60 @@ int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     /* 优化：先停止当前的读取（如果正在进行） */
     uv_read_stop((uv_stream_t*)&conn->tcp_handle);
     
-    /* 优化：快速重置请求对象状态 */
-    memset(conn->request, 0, sizeof(uvhttp_request_t));
+    /* 性能优化：只重置必要的字段，避免清零整个结构体（280KB） */
+    /* 重置请求对象的热路径字段 */
+    conn->request->method = UVHTTP_ANY;
+    conn->request->parsing_complete = 0;
+    conn->request->header_count = 0;
+    conn->request->path = NULL;
+    conn->request->query = NULL;
+    conn->request->body = NULL;
+    conn->request->body_length = 0;
+    conn->request->body_capacity = 0;
+    conn->request->user_data = NULL;
     
-    /* 重新初始化请求对象 */
-    if (uvhttp_request_init(conn->request, &conn->tcp_handle) != 0) {
-        UVHTTP_LOG_ERROR("Failed to reinitialize request object during connection restart\n");
-        return UVHTTP_ERROR_REQUEST_INIT;
-    }
-
-    /* 重要：重新将parser->data设置为connection */
+    /* 重置URL缓冲区 */
+    conn->request->url[0] = '\0';
+    
+    /* 重置headers数组（只重置已使用的部分） */
+    /* 注意：不需要清零整个headers数组，因为header_count已经重置为0 */
+    
+    /* 重置HTTP解析器 */
     llhttp_t* parser = (llhttp_t*)conn->request->parser;
     if (parser) {
+        llhttp_reset(parser);
         parser->data = conn;
     }
 
-    /* 完全重置响应对象状态 */
-    memset(conn->response, 0, sizeof(uvhttp_response_t));
+    /* 性能优化：只重置响应对象的热路径字段，避免清零整个结构体（278KB） */
+    conn->response->status_code = 0;
+    conn->response->headers_sent = 0;
+    conn->response->sent = 0;
+    conn->response->finished = 0;
+    conn->response->keep_alive = 0;
+    conn->response->compress = 0;
+    conn->response->cache_ttl = 0;
+    conn->response->header_count = 0;
+    conn->response->body_length = 0;
+    conn->response->cache_expires = 0;
     
-    /* 重新初始化响应对象 */
-    if (uvhttp_response_init(conn->response, &conn->tcp_handle) != 0) {
-        UVHTTP_LOG_ERROR("Failed to reinitialize response object during connection restart\n");
-        return UVHTTP_ERROR_RESPONSE_INIT;
+    /* 重置响应body */
+    if (conn->response->body) {
+        UVHTTP_FREE(conn->response->body);
+        conn->response->body = NULL;
     }
     
-    /* 重置HTTP/1.1状态标志 */
+    /* 重置连接的HTTP/1.1状态标志 */
     conn->parsing_complete = 0;
     conn->content_length = 0;
     conn->body_received = 0;
-    conn->keep_alive = 1;  // 继续保持连接
+    conn->keep_alive = 1;  /* 继续保持连接 */
+    conn->current_header_is_important = 0;
+    conn->parsing_header_field = 0;
+    conn->need_restart_read = 0;
+    
+    /* 重置当前头部字段 */
+    conn->current_header_field_len = 0;
     
     /* 更新连接状态 */
     conn->state = UVHTTP_CONN_STATE_HTTP_READING;

@@ -143,17 +143,16 @@ static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
         return -1;
     }
     
-    // 重置当前header字段名
-    memset(conn->current_header_field, 0, sizeof(conn->current_header_field));
+    /* 性能优化：只设置长度标记，避免清零整个缓冲区（256字节） */
     conn->current_header_field_len = 0;
     conn->parsing_header_field = 1;
     
-    // 检查header字段名长度限制
+    /* 检查header字段名长度限制 */
     if (length >= UVHTTP_MAX_HEADER_NAME_SIZE) {
-        return -1;  // 字段名太长
+        return -1;  /* 字段名太长 */
     }
     
-    // 复制header字段名
+    /* 复制header字段名 */
     memcpy(conn->current_header_field, at, length);
     conn->current_header_field_len = length;
     
@@ -199,11 +198,10 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
     memcpy(header->value, at, length);
     header->value[length] = '\0';
     
-    // 增加header计数
+    /* 增加header计数 */
     conn->request->header_count++;
     
-    // 重置当前header字段名
-    memset(conn->current_header_field, 0, sizeof(conn->current_header_field));
+    /* 性能优化：只设置长度标记，避免清零整个缓冲区（256字节） */
     conn->current_header_field_len = 0;
     conn->parsing_header_field = 0;
     
