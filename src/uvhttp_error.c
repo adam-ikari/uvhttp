@@ -1,6 +1,7 @@
 #include "uvhttp_error.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
+#include "uvhttp_context.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -198,37 +199,70 @@ void uvhttp_log_error(uvhttp_error_t error, const char* context) {
 }
 
 /* 获取错误统计 */
-void uvhttp_get_error_stats(size_t* error_counts, time_t* last_error_time, 
+void uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts, time_t* last_error_time, 
                            const char** last_error_context) {
-    if (error_counts) {
-        memcpy(error_counts, error_stats.error_counts, sizeof(error_stats.error_counts));
+    /* 如果没有提供上下文，使用全局变量（向后兼容） */
+    uvhttp_error_stats_t* stats = NULL;
+    if (context) {
+        stats = (uvhttp_error_stats_t*)context->error_stats;
+    } else {
+        stats = &error_stats;
     }
-    if (last_error_time) {
-        *last_error_time = error_stats.last_error_time;
-    }
-    if (last_error_context) {
-        *last_error_context = error_stats.last_error_context;
+    
+    if (stats) {
+        if (error_counts) {
+            memcpy(error_counts, stats->error_counts, sizeof(stats->error_counts));
+        }
+        if (last_error_time) {
+            *last_error_time = stats->last_error_time;
+        }
+        if (last_error_context) {
+            *last_error_context = stats->last_error_context;
+        }
     }
 }
 
 /* 重置错误统计 */
-void uvhttp_reset_error_stats(void) {
-    memset(&error_stats, 0, sizeof(error_stats));
+void uvhttp_reset_error_stats(uvhttp_context_t* context) {
+    /* 如果没有提供上下文，使用全局变量（向后兼容） */
+    uvhttp_error_stats_t* stats = NULL;
+    if (context) {
+        stats = (uvhttp_error_stats_t*)context->error_stats;
+    } else {
+        stats = &error_stats;
+    }
+    
+    if (stats) {
+        memset(stats, 0, sizeof(*stats));
+    }
 }
 
 /* 获取最频繁的错误 */
-uvhttp_error_t uvhttp_get_most_frequent_error(void) {
+uvhttp_error_t uvhttp_get_most_frequent_error(uvhttp_context_t* context) {
+    /* 如果没有提供上下文，使用全局变量（向后兼容） */
+    uvhttp_error_stats_t* stats = NULL;
+    if (context) {
+        stats = (uvhttp_error_stats_t*)context->error_stats;
+    } else {
+        stats = &error_stats;
+    }
+    
+    if (!stats) {
+        return UVHTTP_OK;
+    }
+    
     size_t max_count = 0;
-    uvhttp_error_t most_frequent = UVHTTP_OK;
+    int max_index = 0;
     
     for (int i = 0; i < UVHTTP_ERROR_COUNT; i++) {
-        if (error_stats.error_counts[i] > max_count) {
-            max_count = error_stats.error_counts[i];
-            most_frequent = (uvhttp_error_t)-i;
+        if (stats->error_counts[i] > max_count) {
+            max_count = stats->error_counts[i];
+            max_index = i;
         }
     }
     
-    return most_frequent;
+    /* 返回负数错误码 */
+    return -max_index;
 }
 
 const char* uvhttp_error_string(uvhttp_error_t error) {

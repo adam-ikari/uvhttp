@@ -24,5 +24,5 @@ TEST(UvhttpErrorCoverageTest, SetErrorRecoveryConfig) {
 }
 
 TEST(UvhttpErrorCoverageTest, ResetErrorStats) {
-    uvhttp_reset_error_stats();
+    uvhttp_reset_error_stats(NULL);
 }
