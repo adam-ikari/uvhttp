@@ -58,31 +58,29 @@ typedef struct {
 
 // 路由器结构
 struct uvhttp_router {
-    // Trie路由相关
-    uvhttp_route_node_t* root;
-    uvhttp_route_node_t* node_pool;
-    size_t node_pool_size;
-    size_t node_pool_used;
+    /* 热路径字段（频繁访问）- 优化内存局部性 */
+    int use_trie;                            /* 4 字节 - 是否使用Trie */
+    size_t route_count;                        /* 8 字节 - 总路由数量 */
     
-    // 数组路由相关
-    array_route_t* array_routes;
-    size_t array_route_count;
-    size_t array_capacity;
+    /* Trie路由相关（8字节对齐） */
+    uvhttp_route_node_t* root;                 /* 8 字节 */
+    uvhttp_route_node_t* node_pool;            /* 8 字节 */
+    size_t node_pool_size;                      /* 8 字节 */
+    size_t node_pool_used;                      /* 8 字节 */
     
-    // 混合模式标志
-    int use_trie;
+    /* 数组路由相关（8字节对齐） */
+    array_route_t* array_routes;                /* 8 字节 */
+    size_t array_route_count;                   /* 8 字节 */
+    size_t array_capacity;                       /* 8 字节 */
     
-    // 总路由数量
-    size_t route_count;
+    /* 静态文件路由支持（8字节对齐） */
+    char* static_prefix;                        /* 8 字节 */
+    void* static_context;                        /* 8 字节 */
+    uvhttp_request_handler_t static_handler;     /* 8 字节 */
     
-    // 静态文件路由支持
-    char* static_prefix;
-    void* static_context;
-    uvhttp_request_handler_t static_handler;
-    
-    // 回退路由支持
-    void* fallback_context;
-    uvhttp_request_handler_t fallback_handler;
+    /* 回退路由支持（8字节对齐） */
+    void* fallback_context;                      /* 8 字节 */
+    uvhttp_request_handler_t fallback_handler;    /* 8 字节 */
 };
 
 typedef struct uvhttp_router uvhttp_router_t;

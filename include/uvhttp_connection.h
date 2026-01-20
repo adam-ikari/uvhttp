@@ -27,57 +27,48 @@ typedef enum {
 typedef struct uvhttp_connection uvhttp_connection_t;
 
 struct uvhttp_connection {
-    struct uvhttp_server* server;
-    uvhttp_request_t* request;
-    uvhttp_response_t* response;
+    /* 热路径字段（频繁访问）- 优化内存局部性 */
+    uvhttp_connection_state_t state;        /* 4 字节 - 连接状态 */
+    int parsing_complete;                    /* 4 字节 - 解析是否完成 */
+    int keep_alive;                         /* 4 字节 - 是否保持连接 */
+    int chunked_encoding;                    /* 4 字节 - 是否使用分块传输 */
     
-    // 网络连接
-    uv_tcp_t tcp_handle;
+    /* 指针字段（8字节对齐） */
+    struct uvhttp_server* server;          /* 8 字节 */
+    uvhttp_request_t* request;               /* 8 字节 */
+    uvhttp_response_t* response;             /* 8 字节 */
+    uvhttp_mempool_t* mempool;              /* 8 字节 - 内存池 */
     
-    // 用于keep-alive连接重用的idle句柄
-    uv_idle_t idle_handle;
+    /* 网络连接（16字节对齐） */
+    uv_tcp_t tcp_handle;                      /* 8 字节 */
+    uv_idle_t idle_handle;                    /* 8 字节 */
     
-    // TLS相关 - 简化版本
-    void* ssl;
-    int tls_enabled;
+    /* HTTP/1.1优化字段 */
+    int current_header_is_important;         /* 4 字节 */
+    int parsing_header_field;                 /* 4 字节 */
+    int need_restart_read;                    /* 4 字节 */
+    int tls_enabled;                          /* 4 字节 */
     
-    // WebSocket相关
+    /* 大块内存字段（8字节对齐） */
+    size_t content_length;                   /* 8 字节 */
+    size_t body_received;                    /* 8 字节 */
+    size_t read_buffer_size;                  /* 8 字节 */
+    size_t read_buffer_used;                  /* 8 字节 */
+    size_t current_header_field_len;          /* 8 字节 */
+    
+    /* 其他指针和状态 */
+    void* ssl;                               /* 8 字节 */
+    char* read_buffer;                        /* 8 字节 */
+    int last_error;                           /* 4 字节 */
+    
+    /* WebSocket相关 */
 #if UVHTTP_FEATURE_WEBSOCKET
-    void* ws_connection;  // uvhttp_ws_connection_t*
-    int is_websocket;
+    void* ws_connection;                      /* 8 字节 */
+    int is_websocket;                         /* 4 字节 */
 #endif
-
-    // 连接状态
-    uvhttp_connection_state_t state;
     
-    // 读写缓冲区
-    char* read_buffer;
-    size_t read_buffer_size;
-    size_t read_buffer_used;
-    
-    // HTTP解析器在request中管理
-    
-    // HTTP/1.1优化字段
-    int current_header_is_important;    // 当前头部是否为关键字段
-    int keep_alive;                     // 是否保持连接
-    int chunked_encoding;               // 是否使用分块传输
-    size_t content_length;              // 内容长度
-    size_t body_received;               // 已接收的body长度
-    int parsing_complete;               // 解析是否完成
-    
-    // HTTP解析状态（替代全局变量）
-    char current_header_field[UVHTTP_MAX_HEADER_NAME_SIZE];  // 当前解析的头部字段名
-    size_t current_header_field_len;     // 当前头部字段名长度
-    int parsing_header_field;            // 是否正在解析头部字段名
-    
-    // 用于keep-alive连接重用
-    int need_restart_read;              // 标记是否需要重启读取
-    
-    // 内存池（用于请求/响应的临时内存分配）
-    uvhttp_mempool_t* mempool;
-    
-    // 错误处理
-    int last_error;
+    /* 缓冲区字段（放在最后） */
+    char current_header_field[UVHTTP_MAX_HEADER_NAME_SIZE];  /* 大块内存 */
 };
 
 // 连接管理函数

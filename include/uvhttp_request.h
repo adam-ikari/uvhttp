@@ -32,23 +32,27 @@ typedef enum {
 typedef struct uvhttp_request uvhttp_request_t;
 
 struct uvhttp_request {
-    uv_tcp_t* client;
-    llhttp_t* parser;
-    llhttp_settings_t* parser_settings;
+    /* 热路径字段（频繁访问）- 优化内存局部性 */
+    uvhttp_method_t method;          /* 4 字节 */
+    int parsing_complete;             /* 4 字节 */
+    size_t header_count;              /* 8 字节 */
     
-    uvhttp_method_t method;
-    char url[MAX_URL_LEN];
-    char* path;
-    char* query;
-    char* body;
-    size_t body_length;
-    size_t body_capacity;
+    /* 指针字段（8字节对齐） */
+    uv_tcp_t* client;                /* 8 字节 */
+    llhttp_t* parser;                 /* 8 字节 */
+    llhttp_settings_t* parser_settings; /* 8 字节 */
+    char* path;                       /* 8 字节 */
+    char* query;                      /* 8 字节 */
+    char* body;                       /* 8 字节 */
+    void* user_data;                  /* 8 字节 */
     
-    uvhttp_header_t headers[MAX_HEADERS];
-    size_t header_count;
+    /* 缓冲区字段（大块内存，放在后面） */
+    char url[MAX_URL_LEN];            /* 2048 字节 */
+    size_t body_length;               /* 8 字节 */
+    size_t body_capacity;             /* 8 字节 */
     
-    int parsing_complete;
-    void* user_data;
+    /* 头部数组（放在最后） */
+    uvhttp_header_t headers[MAX_HEADERS];  /* 64 * (256 + 4096) = 278,528 字节 */
 };
 
 /* API functions */
