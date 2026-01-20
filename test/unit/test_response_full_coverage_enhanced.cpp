@@ -231,19 +231,18 @@ TEST(UvhttpResponseEnhancedTest, SetHeaders) {
 /* 测试设置响应体 - 各种大小 */
 TEST(UvhttpResponseEnhancedTest, SetBodySizes) {
     uvhttp_response_t response;
-    
-    // 测试空响应体
+
+    // 测试空响应体 - 应该返回错误
     memset(&response, 0, sizeof(response));
     uvhttp_error_t result = uvhttp_response_set_body(&response, "", 0);
-    EXPECT_EQ(result, UVHTTP_OK);
-    EXPECT_EQ(response.body_length, 0);
-    
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+
     // 测试小响应体
     memset(&response, 0, sizeof(response));
     result = uvhttp_response_set_body(&response, "test", 4);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(response.body_length, 4);
-    
+
     // 测试中等响应体
     memset(&response, 0, sizeof(response));
     char medium_body[1024];

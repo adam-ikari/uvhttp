@@ -59,13 +59,14 @@ vcpkg install libuv
 ```c
 #include <uvhttp.h>
 #include <stdio.h>
+#include <string.h>
 
-void hello_handler(uvhttp_request_t* req) {
-    uvhttp_response_t* res = uvhttp_response_new(req);
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello, World!");
-    uvhttp_response_send(res);
+int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    uvhttp_response_set_status(response, 200);
+    uvhttp_response_set_header(response, "Content-Type", "text/plain");
+    uvhttp_response_set_body(response, "Hello, World!", strlen("Hello, World!"));
+    uvhttp_response_send(response);
+    return UVHTTP_OK;
 }
 
 int main() {
@@ -78,7 +79,11 @@ int main() {
     uvhttp_router_add_route(router, "/", hello_handler);
 
     // 启动服务器
-    uvhttp_server_listen(server, "0.0.0.0", 8080);
+    uvhttp_error_t result = uvhttp_server_listen(server, "0.0.0.0", 8080);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to start server: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
 
     printf("Server running at http://localhost:8080\n");
     uv_run(loop, UV_RUN_DEFAULT);

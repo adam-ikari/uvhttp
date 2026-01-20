@@ -48,7 +48,7 @@ TEST(UvhttpRequestExtraCoverageTest, RequestGetMethod) {
     request->method = UVHTTP_ANY;
     method = uvhttp_request_get_method(request);
     ASSERT_NE(method, nullptr);
-    EXPECT_STREQ(method, "UNKNOWN");
+    EXPECT_STREQ(method, "ANY");
     
     method = uvhttp_request_get_method(nullptr);
     EXPECT_EQ(method, nullptr);
@@ -449,11 +449,11 @@ TEST(UvhttpRequestExtraCoverageTest, RequestMethodAll) {
     method = uvhttp_request_get_method(request);
     ASSERT_NE(method, nullptr);
     EXPECT_STREQ(method, "PATCH");
-    
+
     request->method = UVHTTP_ANY;
     method = uvhttp_request_get_method(request);
     ASSERT_NE(method, nullptr);
-    EXPECT_STREQ(method, "UNKNOWN");
-    
+    EXPECT_STREQ(method, "ANY");
+
     uvhttp_free(request);
 }

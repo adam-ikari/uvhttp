@@ -74,36 +74,30 @@ const char* uvhttp_request_get_body(uvhttp_request_t* req, size_t* len);
 
 ### 响应 (uvhttp_response)
 
-`uvhttp_response_t` 用于构建 HTTP 响应。
-
-#### 创建响应
-
-```c
-uvhttp_response_t* uvhttp_response_new(uvhttp_request_t* req);
-```
+`uvhttp_response_t` 用于构建 HTTP 响应。响应对象由框架创建并传递给请求处理器。
 
 #### 设置状态码
 
 ```c
-void uvhttp_response_set_status(uvhttp_response_t* res, int status);
+uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int status);
 ```
 
 #### 设置响应头
 
 ```c
-void uvhttp_response_set_header(uvhttp_response_t* res, const char* name, const char* value);
+uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response, const char* name, const char* value);
 ```
 
 #### 设置响应体
 
 ```c
-void uvhttp_response_set_body(uvhttp_response_t* res, const char* body);
+uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length);
 ```
 
 #### 发送响应
 
 ```c
-void uvhttp_response_send(uvhttp_response_t* res);
+uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
 ```
 
 ## 错误处理
@@ -135,21 +129,23 @@ if (result != UVHTTP_OK) {
 ```c
 #include <uvhttp.h>
 #include <stdio.h>
+#include <string.h>
 
-void index_handler(uvhttp_request_t* req) {
-    uvhttp_response_t* res = uvhttp_response_new(req);
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/html");
-    uvhttp_response_set_body(res, "<h1>Hello, UVHTTP!</h1>");
-    uvhttp_response_send(res);
+int index_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    uvhttp_response_set_status(response, 200);
+    uvhttp_response_set_header(response, "Content-Type", "text/html");
+    uvhttp_response_set_body(response, "<h1>Hello, UVHTTP!</h1>", strlen("<h1>Hello, UVHTTP!</h1>"));
+    uvhttp_response_send(response);
+    return UVHTTP_OK;
 }
 
-void api_handler(uvhttp_request_t* req) {
-    uvhttp_response_t* res = uvhttp_response_new(req);
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, "{\"message\":\"API response\"}");
-    uvhttp_response_send(res);
+int api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    uvhttp_response_set_status(response, 200);
+    uvhttp_response_set_header(response, "Content-Type", "application/json");
+    const char* json_body = "{\"message\":\"API response\"}";
+    uvhttp_response_set_body(response, json_body, strlen(json_body));
+    uvhttp_response_send(response);
+    return UVHTTP_OK;
 }
 
 int main() {
