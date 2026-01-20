@@ -18,6 +18,7 @@
 #include "uvhttp_constants.h"
 #include "uvhttp_config.h"
 #include "uvhttp_features.h"
+#include "uvhttp_context.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -186,8 +187,24 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     /* 初始化TLS模块（如果还没有初始化） */
     #if UVHTTP_FEATURE_TLS
         UVHTTP_LOG_DEBUG("Initializing TLS module...");
-        if (uvhttp_tls_init(loop->data) != UVHTTP_TLS_OK) {
+        /* 检查 loop->data 是否为 NULL，如果是则创建上下文（向后兼容） */
+        uvhttp_context_t* context = (uvhttp_context_t*)loop->data;
+        if (!context) {
+            UVHTTP_LOG_DEBUG("loop->data is NULL, creating context for backward compatibility");
+            context = uvhttp_context_create(loop);
+            UVHTTP_LOG_DEBUG("Created context at %p", (void*)context);
+            if (!context) {
+                UVHTTP_LOG_ERROR("Failed to create context");
+                return NULL;
+            }
+            loop->data = context;
+            UVHTTP_LOG_DEBUG("Set loop->data to %p", (void*)context);
+        }
+        
+        UVHTTP_LOG_DEBUG("Calling uvhttp_tls_init with context=%p", (void*)context);
+        if (uvhttp_tls_init(context) != UVHTTP_TLS_OK) {
             UVHTTP_LOG_ERROR("Failed to initialize TLS module");
+            /* 不要在这里释放 context，因为 loop->data 可能被其他地方使用 */
             return NULL;
         }
         UVHTTP_LOG_DEBUG("TLS module initialized successfully");

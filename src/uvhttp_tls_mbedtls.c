@@ -60,8 +60,9 @@ static int mbedtls_net_recv(void* ctx, unsigned char* buf, size_t len) {
 
 // TLS模块管理
 uvhttp_tls_error_t uvhttp_tls_init(uvhttp_context_t* context) {
+    /* 如果没有提供上下文，暂时跳过初始化（向后兼容） */
     if (!context) {
-        return UVHTTP_TLS_ERROR_INVALID_PARAM;
+        return UVHTTP_TLS_OK;
     }
 
     if (context->tls_initialized) {
