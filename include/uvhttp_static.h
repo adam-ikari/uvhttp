@@ -268,6 +268,7 @@ void uvhttp_static_disable_cache(uvhttp_static_context_t* ctx);
 
 /* ========== 静态文件中间件接口 ========== */
 
+#if UVHTTP_FEATURE_MIDDLEWARE
 /**
  * 创建静态文件中间件
  *
@@ -300,6 +301,7 @@ uvhttp_http_middleware_t* uvhttp_static_middleware_create_with_config(
     const uvhttp_static_config_t* config,
     uvhttp_middleware_priority_t priority
 );
+#endif
 
 #ifdef __cplusplus
 }

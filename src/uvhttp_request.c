@@ -355,6 +355,7 @@ static int on_message_complete(llhttp_t* parser) {
         return 0;
     }
     
+    #if UVHTTP_FEATURE_MIDDLEWARE
     /* 执行中间件链 - 零开销设计 */
     if (conn->server && conn->server->middleware_chain) {
         int middleware_result = uvhttp_http_middleware_execute(
@@ -368,6 +369,7 @@ static int on_message_complete(llhttp_t* parser) {
             return 0;
         }
     }
+#endif
     
     /* 单线程请求处理 - 无需锁机制 */
     if (conn->server && conn->server->router) {

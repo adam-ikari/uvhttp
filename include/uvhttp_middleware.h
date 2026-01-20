@@ -6,6 +6,10 @@
 #ifndef UVHTTP_MIDDLEWARE_H
 #define UVHTTP_MIDDLEWARE_H
 
+#include "uvhttp_features.h"
+
+#if UVHTTP_FEATURE_MIDDLEWARE
+
 #include "uvhttp_common.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
@@ -81,5 +85,7 @@ int uvhttp_http_middleware_execute(
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* UVHTTP_FEATURE_MIDDLEWARE */
 
 #endif /* UVHTTP_MIDDLEWARE_H */

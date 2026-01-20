@@ -2,6 +2,10 @@
  * UVHTTP CORS 中间件实现
  */
 
+#include "uvhttp_features.h"
+
+#if UVHTTP_FEATURE_MIDDLEWARE
+
 #include "uvhttp_cors_middleware.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_utils.h"
@@ -242,3 +246,5 @@ int uvhttp_cors_middleware_simple(
     /* 直接使用默认配置 */
     return uvhttp_cors_middleware(request, response, ctx);
 }
+
+#endif /* UVHTTP_FEATURE_MIDDLEWARE */

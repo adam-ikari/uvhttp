@@ -35,7 +35,7 @@ static void on_close(uv_handle_t* handle);
 static void on_idle_restart_read(uv_idle_t* handle);
 
 /* 连接池获取函数实现 */
-static uvhttp_connection_t* uvhttp_connection_pool_acquire(uvhttp_server_t* server) {
+static __attribute__((unused)) uvhttp_connection_t* uvhttp_connection_pool_acquire(uvhttp_server_t* server) {
     if (!server || !server->connection_pool) {
         return NULL;
     }
@@ -68,7 +68,7 @@ static uvhttp_connection_t* uvhttp_connection_pool_acquire(uvhttp_server_t* serv
 }
 
 /* 连接池释放函数实现 */
-static void uvhttp_connection_pool_release(uvhttp_server_t* server, uvhttp_connection_t* conn) {
+static __attribute__((unused)) void uvhttp_connection_pool_release(uvhttp_server_t* server, uvhttp_connection_t* conn) {
     if (!server || !conn || server->connection_pool_size >= UVHTTP_CONNECTION_POOL_SIZE) {
         uvhttp_connection_free(conn);
         return;

@@ -916,12 +916,13 @@ int uvhttp_static_cleanup_expired_cache(uvhttp_static_context_t* ctx) {
 
 /* ========== 静态文件中间件实现 ========== */
 
+#if UVHTTP_FEATURE_MIDDLEWARE
+
 /* 静态文件中间件上下文 */
 typedef struct {
     uvhttp_static_context_t* static_ctx;  /* 静态文件服务上下文 */
     char* path_prefix;                    /* 路径前缀 */
 } static_middleware_context_t;
-
 /* 静态文件中间件清理函数 */
 static void static_middleware_cleanup(void* data) {
     if (!data) {
@@ -987,6 +988,9 @@ static int static_middleware_handler(
     return UVHTTP_MIDDLEWARE_CONTINUE;
 }
 
+#endif /* UVHTTP_FEATURE_MIDDLEWARE */
+
+#if UVHTTP_FEATURE_MIDDLEWARE
 /**
  * 创建静态文件中间件
  *
@@ -1087,6 +1091,7 @@ uvhttp_http_middleware_t* uvhttp_static_middleware_create_with_config(
 
     return middleware;
 }
+#endif
 
 /**
  * 缓存预热：预加载指定的文件到缓存中

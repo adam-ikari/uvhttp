@@ -280,8 +280,10 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
     /* 清理连接池 */
     uvhttp_connection_pool_cleanup(server);
     
+#if UVHTTP_FEATURE_MIDDLEWARE
     /* 清理中间件链 - 零开销设计 */
     uvhttp_server_cleanup_middleware(server);
+#endif
     
     if (server->router) {
         uvhttp_router_free(server->router);
