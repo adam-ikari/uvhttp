@@ -222,7 +222,7 @@ TEST(UvhttpCorsMiddlewareTest, MiddlewareSimpleNullRequest) {
     uvhttp_response_t response;
     memset(&response, 0, sizeof(response));
     
-    int result = uvhttp_cors_middleware_simple(NULL, &response, NULL);
+    int result = uvhttp_cors_middleware(NULL, &response, NULL);
     EXPECT_EQ(result, 0); /* 中间件应该继续执行 */
 }
 
@@ -231,7 +231,7 @@ TEST(UvhttpCorsMiddlewareTest, MiddlewareSimpleNullResponse) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
     
-    int result = uvhttp_cors_middleware_simple(&request, NULL, NULL);
+    int result = uvhttp_cors_middleware(&request, NULL, NULL);
     EXPECT_EQ(result, 0); /* 中间件应该继续执行 */
 }
 
@@ -253,6 +253,6 @@ TEST(UvhttpCorsMiddlewareTest, MiddlewareSimple) {
     uv_tcp_t client;
     response.client = &client;
     
-    int result = uvhttp_cors_middleware_simple(&request, &response, NULL);
+    int result = uvhttp_cors_middleware(&request, &response, NULL);
     EXPECT_EQ(result, 0); /* 中间件应该继续执行 */
 }

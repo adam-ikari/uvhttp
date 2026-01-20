@@ -1,13 +1,14 @@
 /**
  * @file config_demo.c
  * @brief UVHTTP 配置管理演示程序
- * 
+ *
  * 本示例演示了如何使用 UVHTTP 的配置管理系统来设置并发连接数限制
  * 和其他服务器参数。包括代码配置、文件配置、环境变量配置和动态调整。
  */
 
 #include "../include/uvhttp.h"
 #include "../include/uvhttp_config.h"
+#include "../include/uvhttp_context.h"
 #include "../include/uvhttp_allocator.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,6 +23,7 @@ static uvhttp_router_t* g_router = NULL;
 static uv_loop_t* g_loop = NULL;
 static uv_timer_t* g_config_timer = NULL;
 static int g_request_count = 0;
+static uvhttp_context_t* g_context = NULL;
 
 // 信号处理器
 void signal_handler(int sig) {
@@ -48,9 +50,9 @@ int demo_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     }
     
     g_request_count++;
-    
+
     // 获取当前配置
-    const uvhttp_config_t* config = uvhttp_config_get_current();
+    const uvhttp_config_t* config = uvhttp_config_get_current(g_context);
     
     // 创建响应内容
     char response_body[1024];
@@ -90,7 +92,7 @@ int demo_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
 
 // 配置管理API演示处理器
 int config_api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    const uvhttp_config_t* config = uvhttp_config_get_current();
+    const uvhttp_config_t* config = uvhttp_config_get_current(g_context);
     
     // 解析查询参数
     char query_param[256] = {0};
@@ -103,8 +105,8 @@ int config_api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     if (strstr(query_param, "action=update") && strstr(query_param, "max_connections=")) {
         char* max_conn_str = strstr(query_param, "max_connections=") + strlen("max_connections=");
         int new_max_conn = atoi(max_conn_str);
-        
-        int result = uvhttp_config_update_max_connections(new_max_conn);
+
+        int result = uvhttp_config_update_max_connections(g_context, new_max_conn);
         
         char response_body[512];
         if (result == UVHTTP_OK) {
@@ -184,19 +186,19 @@ void on_config_change(const char* key, const void* old_value, const void* new_va
 void config_adjustment_timer(uv_timer_t* handle) {
     static int adjustment_count = 0;
     adjustment_count++;
-    
+
     // 模拟基于时间的配置调整（实际应用中应基于系统负载）
-    const uvhttp_config_t* current = uvhttp_config_get_current();
+    const uvhttp_config_t* current = uvhttp_config_get_current(g_context);
     int current_max = current->max_connections;
-    
+
     // 每5次调整进行一次变化
     if (adjustment_count % 5 == 0) {
         // 在 2000-4000 之间循环调整
         int new_max = 2000 + (adjustment_count / 5 % 3) * 1000;
-        
+
         if (new_max != current_max) {
             printf("⏰ 定时调整: 最大连接数 %d -> %d\n", current_max, new_max);
-            uvhttp_config_update_max_connections(new_max);
+            uvhttp_config_update_max_connections(g_context, new_max);
         }
     }
     
@@ -334,10 +336,18 @@ int main(int argc, char* argv[]) {
     
     // 应用配置
     g_server->config = config;
-    
+
+    // 创建上下文
+    g_context = uvhttp_context_create(g_loop);
+    if (!g_context) {
+        fprintf(stderr, "❌ 上下文创建失败\n");
+        uvhttp_server_free(g_server);
+        return 1;
+    }
+
     // 设置全局配置（重要：这会消除"Global configuration not initialized"警告）
-    uvhttp_config_set_current(config);
-    
+    uvhttp_config_set_current(g_context, config);
+
     printf("✅ 服务器创建成功\n");
     
     // 创建路由器
@@ -357,7 +367,7 @@ int main(int argc, char* argv[]) {
     
     // 启用配置变化监控
     printf("\n👂 启用配置变化监控...\n");
-    uvhttp_config_monitor_changes(on_config_change);
+    uvhttp_config_monitor_changes(g_context, on_config_change);
     printf("✅ 配置监控已启用\n");
     
     // 启动配置动态调整定时器
@@ -398,7 +408,11 @@ int main(int argc, char* argv[]) {
         uv_timer_stop(g_config_timer);
         uvhttp_free(g_config_timer);
     }
-    
+
+    if (g_context) {
+        uvhttp_context_destroy(g_context);
+    }
+
     printf("👋 服务器已停止\n");
     return 0;
 }

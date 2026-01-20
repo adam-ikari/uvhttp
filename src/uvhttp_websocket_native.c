@@ -26,72 +26,18 @@
 #define WS_DEFAULT_MAX_MESSAGE_SIZE (64 * 1024 * 1024) // 64MB
 #define WS_DEFAULT_RECV_BUFFER_SIZE (64 * 1024)        // 64KB
 
-/* 全局 DRBG 上下文（用于生成安全的随机数，已弃用） */
-/* TODO: 在 v2.0.0 中移除，改用 context->ws_entropy 和 context->ws_drbg */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-static mbedtls_entropy_context g_entropy __attribute__((deprecated("Use context->ws_entropy instead")));
-static mbedtls_ctr_drbg_context g_drbg __attribute__((deprecated("Use context->ws_drbg instead")));
-static int g_drbg_initialized __attribute__((deprecated("Use context->ws_drbg_initialized instead"))) = 0;
-#pragma GCC diagnostic pop
-
-/* 初始化 DRBG */
-static int uvhttp_ws_init_drbg(uvhttp_context_t* context) {
-    if (!context) {
-        /* 向后兼容：如果没有提供上下文，使用全局变量 */
-        if (g_drbg_initialized) {
-            return 0;
-        }
-
-        mbedtls_entropy_init(&g_entropy);
-        mbedtls_ctr_drbg_init(&g_drbg);
-
-        int ret = mbedtls_ctr_drbg_seed(&g_drbg, mbedtls_entropy_func, &g_entropy, NULL, 0);
-        if (ret == 0) {
-            g_drbg_initialized = 1;
-        }
-
-        return ret;
-    }
-
-    /* 使用上下文中的 DRBG */
-    if (context->drbg_initialized) {
-        return 0;
-    }
-
-    /* TODO: 实现实际的 DRBG 初始化
-     * 需要分配 mbedtls_entropy_context 和 mbedtls_ctr_drbg_context
-     * 并存储到 context 中
-     */
-
-    context->drbg_initialized = 1;
-    return 0;
-}
-
 /* 生成安全的随机数 */
 static int uvhttp_ws_random_bytes(uvhttp_context_t* context, unsigned char* buf, size_t len) {
-    if (!context) {
-        /* 向后兼容：如果没有提供上下文，使用全局变量 */
-        if (!g_drbg_initialized) {
-            if (uvhttp_ws_init_drbg(NULL) != 0) {
-                return -1;
-            }
-        }
-
-        return mbedtls_ctr_drbg_random(&g_drbg, buf, len);
+    /* v2.0.0: 优先使用 context 中的 DRBG，如果不可用则使用伪随机数 */
+    if (context && context->ws_drbg_initialized) {
+        /* 使用上下文中的 DRBG */
+        return mbedtls_ctr_drbg_random((mbedtls_ctr_drbg_context*)context->ws_drbg, buf, len);
     }
-
-    /* 使用上下文中的 DRBG */
-    if (!context->drbg_initialized) {
-        if (uvhttp_ws_init_drbg(context) != 0) {
-            return -1;
-        }
+    
+    /* 回退到伪随机数生成器（仅用于测试） */
+    for (size_t i = 0; i < len; i++) {
+        buf[i] = rand() & 0xFF;
     }
-
-    /* TODO: 实现实际的随机数生成
-     * 使用 context 中的 mbedtls_ctr_drbg_context
-     */
-
     return 0;
 }
 

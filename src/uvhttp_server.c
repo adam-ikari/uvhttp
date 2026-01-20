@@ -81,8 +81,9 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     if (server->config) {
         max_connections = server->config->max_connections;
     } else {
-        // 回退到全局配置
-        const uvhttp_config_t* global_config = uvhttp_config_get_current();
+        // 回退到全局配置（从 loop->data 获取）
+        uvhttp_context_t* context = (uvhttp_context_t*)server->loop->data;
+        const uvhttp_config_t* global_config = uvhttp_config_get_current(context);
         if (global_config) {
             max_connections = global_config->max_connections;
         }
@@ -373,8 +374,14 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
     uv_tcp_keepalive(&server->tcp_handle, enable, 60);
     
     /* 使用配置系统的backlog设置 */
-    const uvhttp_config_t* config = uvhttp_config_get_current();
-    int backlog = config ? config->backlog : UVHTTP_BACKLOG;
+    uvhttp_context_t* context = (uvhttp_context_t*)server->loop->data;
+    const uvhttp_config_t* config = NULL;
+    
+    if (context) {
+        config = uvhttp_config_get_current(context);
+    }
+    
+    int backlog = (config && config->backlog > 0) ? config->backlog : UVHTTP_BACKLOG;
     
     ret = uv_listen((uv_stream_t*)&server->tcp_handle, backlog, on_connection);
     if (ret != 0) {

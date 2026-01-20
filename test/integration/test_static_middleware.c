@@ -4,6 +4,7 @@
 
 #include "../include/uvhttp.h"
 #include "../include/uvhttp_static.h"
+#include "../include/uvhttp_context.h"
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +12,7 @@
 // 全局变量
 static uvhttp_server_t* g_server = NULL;
 static uv_loop_t* g_loop = NULL;
+static uvhttp_context_t* g_context = NULL;
 
 // 信号处理器
 void signal_handler(int sig) {
@@ -39,11 +41,18 @@ int main() {
     if (!g_server) {
         return 1;
     }
-    
+
+    // 创建上下文
+    g_context = uvhttp_context_create(g_loop);
+    if (!g_context) {
+        uvhttp_server_free(g_server);
+        return 1;
+    }
+
     // 初始化配置
     uvhttp_config_t* config = uvhttp_config_new();
     if (config) {
-        uvhttp_config_set_current(config);
+        uvhttp_config_set_current(g_context, config);
     }
     // 配置静态文件服务
     uvhttp_static_config_t static_config = {
@@ -82,9 +91,13 @@ int main() {
     
     // 运行事件循环
     uv_run(g_loop, UV_RUN_DEFAULT);
-    
+
     // 清理资源
+    if (g_context) {
+        uvhttp_context_destroy(g_context);
+        g_context = NULL;
+    }
     uvhttp_server_free(g_server);
-    
+
     return 0;
 }

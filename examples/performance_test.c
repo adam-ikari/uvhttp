@@ -5,6 +5,7 @@
 
 #include "../include/uvhttp.h"
 #include "../include/uvhttp_config.h"
+#include "../include/uvhttp_context.h"
 #include <signal.h>
 #include <stdlib.h>
 
@@ -12,6 +13,7 @@
 static uvhttp_server_t* g_server = NULL;
 static uvhttp_router_t* g_router = NULL;
 static uv_loop_t* g_loop = NULL;
+static uvhttp_context_t* g_context = NULL;
 
 // 信号处理器
 void signal_handler(int sig) {
@@ -313,7 +315,16 @@ int main() {
     
     // 应用配置（注意：config 的所有权转移给 server，不要单独释放）
     g_server->config = config;
-    uvhttp_config_set_current(config);
+
+    // 创建上下文
+    g_context = uvhttp_context_create(g_loop);
+    if (!g_context) {
+        uvhttp_server_free(g_server);
+        g_server = NULL;
+        return 1;
+    }
+
+    uvhttp_config_set_current(g_context, config);
     config = NULL;  // 防止后续误用
     
     // 创建路由器
@@ -357,14 +368,11 @@ int main() {
     
     // 运行事件循环
     uv_run(g_loop, UV_RUN_DEFAULT);
-    
-    // 清理
-    // 注意：config 由 g_server 管理，不需要单独释放
-    if (g_server) {
-        uvhttp_server_free(g_server);
-        g_server = NULL;
-        g_router = NULL;
+
+    // 清理上下文
+    if (g_context) {
+        uvhttp_context_destroy(g_context);
     }
-    
+
     return 0;
 }
