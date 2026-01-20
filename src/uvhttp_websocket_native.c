@@ -26,10 +26,14 @@
 #define WS_DEFAULT_MAX_MESSAGE_SIZE (64 * 1024 * 1024) // 64MB
 #define WS_DEFAULT_RECV_BUFFER_SIZE (64 * 1024)        // 64KB
 
-/* 全局 DRBG 上下文（用于生成安全的随机数） */
-static mbedtls_entropy_context g_entropy;
-static mbedtls_ctr_drbg_context g_drbg;
-static int g_drbg_initialized = 0;
+/* 全局 DRBG 上下文（用于生成安全的随机数，已弃用） */
+/* TODO: 在 v2.0.0 中移除，改用 context->ws_entropy 和 context->ws_drbg */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+static mbedtls_entropy_context g_entropy __attribute__((deprecated("Use context->ws_entropy instead")));
+static mbedtls_ctr_drbg_context g_drbg __attribute__((deprecated("Use context->ws_drbg instead")));
+static int g_drbg_initialized __attribute__((deprecated("Use context->ws_drbg_initialized instead"))) = 0;
+#pragma GCC diagnostic pop
 
 /* 初始化 DRBG */
 static int uvhttp_ws_init_drbg(uvhttp_context_t* context) {

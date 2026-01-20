@@ -13,8 +13,11 @@
 #include <stdio.h>
 #include <strings.h>  /* for strcasecmp */
 
-/* 全局默认配置 */
-static uvhttp_cors_config_t g_default_cors_config = {
+/* 全局默认配置（已弃用，建议使用中间件实例配置） */
+/* TODO: 在 v2.0.0 中移除，改用中间件实例配置 */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+static uvhttp_cors_config_t g_default_cors_config __attribute__((deprecated("Use middleware instance config instead"))) = {
     .allow_origin = "*",
     .allow_methods = "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH",
     .allow_headers = "Content-Type, Authorization, X-Requested-With",
@@ -24,6 +27,7 @@ static uvhttp_cors_config_t g_default_cors_config = {
     .allow_all_origins = 1,
     .allow_credentials_enabled = 0
 };
+#pragma GCC diagnostic pop
 
 /* 辅助函数：复制字符串 */
 static char* copy_string(const char* src) {

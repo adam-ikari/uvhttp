@@ -12,8 +12,19 @@
 #include <ctype.h>
 #include <sys/resource.h>
 
-/* 全局配置实例 */
-static uvhttp_config_t* g_current_config = NULL;
+/* 全局配置实例（已弃用，建议使用服务器上下文） */
+/* TODO: 在 v2.0.0 中移除，改用 context->config */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+static uvhttp_config_t* g_current_config __attribute__((deprecated("Use server context instead"))) = NULL;
+#pragma GCC diagnostic pop
+
+/* 配置变更回调（已弃用，建议使用服务器上下文） */
+/* TODO: 在 v2.0.0 中移除，改用 context->config_callback */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+static uvhttp_config_change_callback_t g_config_callback __attribute__((deprecated("Use server context instead"))) = NULL;
+#pragma GCC diagnostic pop
 
 /* 创建新配置 */
 uvhttp_config_t* uvhttp_config_new(void) {
