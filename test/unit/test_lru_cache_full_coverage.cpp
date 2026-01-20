@@ -211,14 +211,16 @@ TEST(UvhttpLruCacheTest, FindExpired) {
     time_t now = get_current_time();
     uvhttp_error_t result = uvhttp_lru_cache_put(cache, "/test/file.txt", content, strlen(content), "text/plain", now, "etag");
     EXPECT_EQ(result, UVHTTP_OK);
+    EXPECT_EQ(cache->entry_count, 1);
     
     /* 推进时间 2 秒，使缓存过期 */
     advance_time(2);
     
-    /* 现在应该找不到缓存了 */
+    /* 现在应该找不到缓存了，因为已过期 */
     cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/test/file.txt");
     EXPECT_EQ(entry, nullptr);
     EXPECT_EQ(cache->miss_count, 1);
+    /* 过期的缓存应该被自动清理，entry_count 应该为 0 */
     EXPECT_EQ(cache->entry_count, 0);
     
     uvhttp_lru_cache_free(cache);
