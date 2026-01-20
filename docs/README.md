@@ -99,11 +99,6 @@
   - 性能指标标准
   - 报告格式标准
 
-- **[性能文档审计报告](../PERFORMANCE_DOCUMENTATION_AUDIT_REPORT.md)** - 性能文档审计
-  - 文档准确性评估
-  - 实际测试结果
-  - 问题分析和改进建议
-
 > **注意**: 性能基准测试请参考 `PERFORMANCE_TESTING_STANDARD.md` 中的测试标准和方法。
 
 ### 🧪 测试与质量
@@ -158,7 +153,6 @@
 
 #### 性能文档
 - [性能测试标准](PERFORMANCE_TESTING_STANDARD.md) - 测试标准
-- [性能测试标准](PERFORMANCE_TESTING_STANDARD.md) - 测试标准
 
 #### 安全文档
 - [安全指南](SECURITY.md) - 安全特性
@@ -191,8 +185,6 @@
 
 #### 性能优化者
 1. [性能测试标准](PERFORMANCE_TESTING_STANDARD.md) - 了解性能测试方法
-2. [性能文档审计报告](../PERFORMANCE_DOCUMENTATION_AUDIT_REPORT.md) - 查看性能分析
-3. [性能测试标准](PERFORMANCE_TESTING_STANDARD.md) - 测试标准
 
 #### 核心开发者
 1. [架构设计](ARCHITECTURE.md) - 理解架构
@@ -281,7 +273,6 @@
 - **参考文档**: 2
 
 **性能文档说明**：
-- `PERFORMANCE_TESTING_STANDARD.md` - 性能测试标准
 - `PERFORMANCE_TESTING_STANDARD.md` - 性能测试标准（包含测试计划）
 
 **重要**：所有性能基准值都基于实际测试结果，不使用虚假的预期性能。
@@ -338,6 +329,6 @@
 
 ---
 
-**UVHTTP 版本**: 1.4.0
-**文档更新**: 2026-01-13
+**UVHTTP 版本**: 1.5.0
+**文档更新**: 2026-01-20
 **维护者**: UVHTTP 团队

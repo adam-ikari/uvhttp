@@ -231,24 +231,32 @@ UVHTTP 使用 **Google Test (GTest)** 框架进行单元测试。
 #include <gtest/gtest.h>
 #include "uvhttp_response.h"
 
+/* 模拟客户端连接 */
+typedef struct {
+    int dummy;
+} mock_client_t;
+
 TEST(UvhttpResponseTest, SetStatus) {
-    uvhttp_response_t* response = uvhttp_response_new();
-    ASSERT_NE(response, nullptr);
-    
-    int result = uvhttp_response_set_status(response, 200);
+    uvhttp_response_t response;
+    mock_client_t client;
+
+    uvhttp_error_t result = uvhttp_response_init(&response, &client);
     EXPECT_EQ(result, UVHTTP_OK);
-    
-    uvhttp_response_free(response);
+
+    result = uvhttp_response_set_status(&response, 200);
+    EXPECT_EQ(result, UVHTTP_OK);
+    EXPECT_EQ(response.status_code, 200);
 }
 
 TEST(UvhttpResponseTest, SetHeader) {
-    uvhttp_response_t* response = uvhttp_response_new();
-    ASSERT_NE(response, nullptr);
-    
-    int result = uvhttp_response_set_header(response, "Content-Type", "application/json");
+    uvhttp_response_t response;
+    mock_client_t client;
+
+    uvhttp_error_t result = uvhttp_response_init(&response, &client);
     EXPECT_EQ(result, UVHTTP_OK);
-    
-    uvhttp_response_free(response);
+
+    result = uvhttp_response_set_header(&response, "Content-Type", "application/json");
+    EXPECT_EQ(result, UVHTTP_OK);
 }
 ```
 
@@ -264,22 +272,26 @@ TEST(UvhttpResponseTest, SetHeader) {
 所有测试应遵循 **Arrange-Act-Assert** 模式：
 
 ```cpp
+/* 模拟客户端连接 */
+typedef struct {
+    int dummy;
+} mock_client_t;
+
 TEST(UvhttpResponseTest, SendResponse) {
     // Arrange
-    uvhttp_response_t* response = uvhttp_response_new();
+    uvhttp_response_t response;
+    mock_client_t client;
+    uvhttp_response_init(&response, &client);
     const char* body = "Hello World";
-    
+
     // Act
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    int result = uvhttp_response_send(response);
-    
+    uvhttp_response_set_status(&response, 200);
+    uvhttp_response_set_header(&response, "Content-Type", "text/plain");
+    uvhttp_response_set_body(&response, body, strlen(body));
+    uvhttp_error_t result = uvhttp_response_send(&response);
+
     // Assert
     EXPECT_EQ(result, UVHTTP_OK);
-    
-    // Cleanup
-    uvhttp_response_free(response);
 }
 ```
 
@@ -956,10 +968,11 @@ int main() {
 1. **所有处理器必须支持循环注入**
 ```c
 // 处理器必须能够从请求中获取循环
-void handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    uv_loop_t* loop = uvhttp_request_get_loop(req);
+int handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)request->client);
     app_context_t* ctx = (app_context_t*)loop->data;
     // 使用 ctx 而不是全局变量
+    return UVHTTP_OK;
 }
 ```
 
@@ -1027,19 +1040,19 @@ void app_context_free(app_context_t* ctx) {
 
 **在处理器中使用**:
 ```c
-void api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    uv_loop_t* loop = uvhttp_request_get_loop(req);
+int api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)request->client);
     app_context_t* ctx = (app_context_t*)loop->data;
-    
+
     // 使用上下文
     char response[256];
-    snprintf(response, sizeof(response), 
-             "{\"count\":%d,\"uptime\":%ld}", 
-             ctx->request_count, 
+    snprintf(response, sizeof(response),
+             "{\"count\":%d,\"uptime\":%ld}",
+             ctx->request_count,
              time(NULL) - ctx->start_time);
-    
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
+
+    uvhttp_response_set_status(response, 200);
+    uvhttp_response_set_header(response, "Content-Type", "application/json");
     uvhttp_response_set_body(res, response, strlen(response));
     uvhttp_response_send(res);
 }
@@ -1055,15 +1068,16 @@ typedef struct {
     int request_count;
 } app_context_t;
 
-void hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    uv_loop_t* loop = uvhttp_request_get_loop(req);
+int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)request->client);
     app_context_t* ctx = (app_context_t*)loop->data;
     ctx->request_count++;
-    
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello, World!", 13);
-    uvhttp_response_send(res);
+
+    uvhttp_response_set_status(response, 200);
+    uvhttp_response_set_header(response, "Content-Type", "text/plain");
+    uvhttp_response_set_body(response, "Hello, World!", 13);
+    uvhttp_response_send(response);
+    return UVHTTP_OK;
 }
 
 int main() {
