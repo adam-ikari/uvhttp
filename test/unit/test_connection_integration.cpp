@@ -1,0 +1,278 @@
+/**
+ * @file test_connection_integration.cpp
+ * @brief 连接集成测试 - 使用实际的 libuv 循环
+ * 
+ * 目标：提升 uvhttp_connection.c 覆盖率到 80%
+ * 
+ * 测试内容：
+ * - 实际的连接创建和初始化
+ * - 连接状态设置
+ * - TLS 功能
+ * - WebSocket 功能
+ * - 连接池功能
+ */
+
+#include <gtest/gtest.h>
+#include <string.h>
+#include <unistd.h>
+#include "uvhttp_connection.h"
+#include "uvhttp_server.h"
+#include "uvhttp_response.h"
+#include "uvhttp_request.h"
+#include "uvhttp_router.h"
+#include "test_loop_helper.h"
+#include "uvhttp_allocator.h"
+
+/* 测试连接创建和初始化 */
+TEST(UvhttpConnectionIntegrationTest, ConnectionCreateAndInit) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+
+    uvhttp_server_t* server = (uvhttp_server_t*)uvhttp_alloc(sizeof(uvhttp_server_t));
+    ASSERT_NE(server, nullptr);
+    memset(server, 0, sizeof(uvhttp_server_t));
+    server->loop = loop.get();
+
+    uvhttp_connection_t* conn = uvhttp_connection_new(server);
+    ASSERT_NE(conn, nullptr);
+    EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_NEW);
+    EXPECT_EQ(conn->keep_alive, 1);
+    EXPECT_EQ(conn->chunked_encoding, 0);
+    EXPECT_EQ(conn->content_length, 0);
+    
+    // 清理
+    uvhttp_connection_free(conn);
+    uvhttp_free(server);
+}
+
+/* 测试连接调度重启读取功能 */
+TEST(UvhttpConnectionIntegrationTest, ConnectionScheduleRestartRead) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+
+    uvhttp_server_t* server = (uvhttp_server_t*)uvhttp_alloc(sizeof(uvhttp_server_t));
+    ASSERT_NE(server, nullptr);
+    memset(server, 0, sizeof(uvhttp_server_t));
+    server->loop = loop.get();
+
+    uvhttp_connection_t* conn = uvhttp_connection_new(server);
+    ASSERT_NE(conn, nullptr);
+    
+    // 测试调度重启读取
+    int result = uvhttp_connection_schedule_restart_read(conn);
+    EXPECT_EQ(result, 0);
+    
+    // 运行事件循环以处理 idle 回调
+    loop.run_once();
+    
+    // 清理
+    uv_idle_stop(&conn->idle_handle);
+    uv_close((uv_handle_t*)&conn->idle_handle, NULL);
+    uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
+    loop.run_once();
+    
+    uvhttp_connection_free(conn);
+    uvhttp_free(server);
+}
+
+/* 测试连接状态设置 */
+TEST(UvhttpConnectionIntegrationTest, ConnectionStateSet) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+
+    uvhttp_server_t* server = (uvhttp_server_t*)uvhttp_alloc(sizeof(uvhttp_server_t));
+    ASSERT_NE(server, nullptr);
+    memset(server, 0, sizeof(uvhttp_server_t));
+    server->loop = loop.get();
+
+    uvhttp_connection_t* conn = uvhttp_connection_new(server);
+    ASSERT_NE(conn, nullptr);
+    
+    // 测试状态设置
+    uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_TLS_HANDSHAKE);
+    EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_TLS_HANDSHAKE);
+    
+    uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_HTTP_READING);
+    EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_HTTP_READING);
+    
+    uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_HTTP_PROCESSING);
+    EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_HTTP_PROCESSING);
+    
+    uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_HTTP_WRITING);
+    EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_HTTP_WRITING);
+    
+    uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_CLOSING);
+    EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_CLOSING);
+    
+    // 清理
+    uvhttp_connection_free(conn);
+    uvhttp_free(server);
+}
+
+/* 测试连接关闭功能 */
+TEST(UvhttpConnectionIntegrationTest, ConnectionClose) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+
+    uvhttp_server_t* server = (uvhttp_server_t*)uvhttp_alloc(sizeof(uvhttp_server_t));
+    ASSERT_NE(server, nullptr);
+    memset(server, 0, sizeof(uvhttp_server_t));
+    server->loop = loop.get();
+
+    uvhttp_connection_t* conn = uvhttp_connection_new(server);
+    ASSERT_NE(conn, nullptr);
+    
+    // 测试连接关闭
+    uvhttp_connection_close(conn);
+    EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_CLOSING);
+    
+    // 清理
+    uvhttp_connection_free(conn);
+    uvhttp_free(server);
+}
+
+/* 测试 TLS 握手功能 */
+TEST(UvhttpConnectionIntegrationTest, ConnectionTlsHandshakeFunc) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+
+    uvhttp_server_t* server = (uvhttp_server_t*)uvhttp_alloc(sizeof(uvhttp_server_t));
+    ASSERT_NE(server, nullptr);
+    memset(server, 0, sizeof(uvhttp_server_t));
+    server->loop = loop.get();
+
+    uvhttp_connection_t* conn = uvhttp_connection_new(server);
+    ASSERT_NE(conn, nullptr);
+    
+    // 测试 TLS 握手（应该失败，因为未启用 TLS）
+    int result = uvhttp_connection_tls_handshake_func(conn);
+    EXPECT_EQ(result, -1);
+    
+    // 清理
+    uvhttp_connection_free(conn);
+    uvhttp_free(server);
+}
+
+/* 测试 TLS 写入功能 */
+TEST(UvhttpConnectionIntegrationTest, ConnectionTlsWrite) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+
+    uvhttp_server_t* server = (uvhttp_server_t*)uvhttp_alloc(sizeof(uvhttp_server_t));
+    ASSERT_NE(server, nullptr);
+    memset(server, 0, sizeof(uvhttp_server_t));
+    server->loop = loop.get();
+
+    uvhttp_connection_t* conn = uvhttp_connection_new(server);
+    ASSERT_NE(conn, nullptr);
+    
+    // 测试 TLS 写入（应该失败，因为未启用 TLS）
+    const char* data = "test data";
+    int result = uvhttp_connection_tls_write(conn, data, strlen(data));
+    EXPECT_EQ(result, -1);
+    
+    // 清理
+    uvhttp_connection_free(conn);
+    uvhttp_free(server);
+}
+
+/* 测试 WebSocket 握手功能 */
+TEST(UvhttpConnectionIntegrationTest, WebsocketHandshake) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+
+    uvhttp_server_t* server = (uvhttp_server_t*)uvhttp_alloc(sizeof(uvhttp_server_t));
+    ASSERT_NE(server, nullptr);
+    memset(server, 0, sizeof(uvhttp_server_t));
+    server->loop = loop.get();
+
+    uvhttp_connection_t* conn = uvhttp_connection_new(server);
+    ASSERT_NE(conn, nullptr);
+    
+    // 测试 WebSocket 握手（应该失败，因为没有请求）
+    const char* ws_key = "dGhlIHNhbXBsZSBwbGVhc3VyZQ==";
+    int result = uvhttp_connection_handle_websocket_handshake(conn, ws_key);
+    EXPECT_NE(result, 0);
+    
+    // 清理
+    uvhttp_connection_free(conn);
+    uvhttp_free(server);
+}
+
+/* 测试 WebSocket 切换功能 */
+TEST(UvhttpConnectionIntegrationTest, WebsocketSwitch) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+
+    uvhttp_server_t* server = (uvhttp_server_t*)uvhttp_alloc(sizeof(uvhttp_server_t));
+    ASSERT_NE(server, nullptr);
+    memset(server, 0, sizeof(uvhttp_server_t));
+    server->loop = loop.get();
+
+    uvhttp_connection_t* conn = uvhttp_connection_new(server);
+    ASSERT_NE(conn, nullptr);
+    
+    // 测试 WebSocket 切换
+    uvhttp_connection_switch_to_websocket(conn);
+    
+    // 清理
+    uvhttp_connection_free(conn);
+    uvhttp_free(server);
+}
+
+/* 测试 WebSocket 关闭功能 */
+TEST(UvhttpConnectionIntegrationTest, WebsocketClose) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+
+    uvhttp_server_t* server = (uvhttp_server_t*)uvhttp_alloc(sizeof(uvhttp_server_t));
+    ASSERT_NE(server, nullptr);
+    memset(server, 0, sizeof(uvhttp_server_t));
+    server->loop = loop.get();
+
+    uvhttp_connection_t* conn = uvhttp_connection_new(server);
+    ASSERT_NE(conn, nullptr);
+    
+    // 测试 WebSocket 关闭
+    uvhttp_connection_websocket_close(conn);
+    
+    // 清理
+    uvhttp_connection_free(conn);
+    uvhttp_free(server);
+}
+
+/* 测试连接池清理功能 */
+TEST(UvhttpConnectionIntegrationTest, ConnectionPoolCleanup) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+
+    uvhttp_server_t* server = (uvhttp_server_t*)uvhttp_alloc(sizeof(uvhttp_server_t));
+    ASSERT_NE(server, nullptr);
+    memset(server, 0, sizeof(uvhttp_server_t));
+    server->loop = loop.get();
+    
+    // 测试连接池清理
+    uvhttp_connection_pool_cleanup(server);
+    
+    // 不应该崩溃
+    uvhttp_free(server);
+}
+
+/* 测试连接释放功能 */
+TEST(UvhttpConnectionIntegrationTest, ConnectionFree) {
+    TestLoop loop;
+    ASSERT_TRUE(loop.is_valid());
+
+    uvhttp_server_t* server = (uvhttp_server_t*)uvhttp_alloc(sizeof(uvhttp_server_t));
+    ASSERT_NE(server, nullptr);
+    memset(server, 0, sizeof(uvhttp_server_t));
+    server->loop = loop.get();
+
+    uvhttp_connection_t* conn = uvhttp_connection_new(server);
+    ASSERT_NE(conn, nullptr);
+    
+    // 测试连接释放
+    uvhttp_connection_free(conn);
+    
+    uvhttp_free(server);
+}

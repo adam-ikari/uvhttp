@@ -6,6 +6,10 @@
 #ifndef UVHTTP_CORS_MIDDLEWARE_H
 #define UVHTTP_CORS_MIDDLEWARE_H
 
+#include "uvhttp_features.h"
+
+#if UVHTTP_FEATURE_MIDDLEWARE
+
 #include "uvhttp_common.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
@@ -68,5 +72,7 @@ int uvhttp_cors_is_preflight_request(const uvhttp_request_t* request);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* UVHTTP_FEATURE_MIDDLEWARE */
 
 #endif /* UVHTTP_CORS_MIDDLEWARE_H */

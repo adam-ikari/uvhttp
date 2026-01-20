@@ -59,6 +59,10 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
 ")
 
 # 特性定义
+if(NOT DEFINED UVHTTP_FEATURE_MIDDLEWARE)
+    set(UVHTTP_FEATURE_MIDDLEWARE 1)
+endif()
+add_definitions(-DUVHTTP_FEATURE_MIDDLEWARE=${UVHTTP_FEATURE_MIDDLEWARE})
 add_definitions(-DUVHTTP_FEATURE_STATIC_FILES=1)
 add_definitions(-DUVHTTP_FEATURE_TLS=1)
 add_definitions(-DUVHTTP_FEATURE_LRU_CACHE=1)
@@ -105,7 +109,6 @@ set(SOURCES
     src/uvhttp_router.c
     src/uvhttp_connection.c
     src/uvhttp_server.c
-    src/uvhttp_middleware.c
     src/uvhttp_tls_mbedtls.c
     src/uvhttp_config.c
     src/uvhttp_network.c
@@ -121,9 +124,16 @@ set(SOURCES
     src/uvhttp_static.c
     src/uvhttp_async_file.c
     src/uvhttp_validation.c
-    src/uvhttp_cors_middleware.c
     src/uvhttp_allocator.c
 )
+
+# 条件编译中间件源文件
+if(UVHTTP_FEATURE_MIDDLEWARE)
+    list(APPEND SOURCES 
+        src/uvhttp_middleware.c
+        src/uvhttp_cors_middleware.c
+    )
+endif()
 
 if(BUILD_WITH_WEBSOCKET)
     list(APPEND SOURCES src/uvhttp_websocket_native.c src/uvhttp_websocket_auth.c)
@@ -144,8 +154,6 @@ set(HEADERS
     include/uvhttp_features.h
     include/uvhttp_hash.h
     include/uvhttp_lru_cache.h
-    include/uvhttp_log_middleware.h
-    include/uvhttp_middleware.h
     include/uvhttp_mempool.h
     include/uvhttp_network.h
     include/uvhttp_request.h
@@ -158,11 +166,19 @@ set(HEADERS
     include/uvhttp_tls.h
     include/uvhttp_utils.h
     include/uvhttp_validation.h
-    include/uvhttp_websocket_middleware.h
-    include/uvhttp_cors_middleware.h
-    include/uvhttp_simple_middleware.h
     include/uvhttp_allocator.h
 )
+
+# 条件编译中间件相关头文件
+if(UVHTTP_FEATURE_MIDDLEWARE)
+    list(APPEND HEADERS
+        include/uvhttp_log_middleware.h
+        include/uvhttp_middleware.h
+        include/uvhttp_websocket_middleware.h
+        include/uvhttp_cors_middleware.h
+        include/uvhttp_simple_middleware.h
+    )
+endif()
 
 if(BUILD_WITH_WEBSOCKET)
     list(APPEND HEADERS include/uvhttp_websocket_native.h)
@@ -210,6 +226,12 @@ file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_loop_helper.cpp")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_time_mock.cpp")
+
+# 条件编译中间件相关测试
+if(NOT UVHTTP_FEATURE_MIDDLEWARE)
+    list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*middleware.*")
+    list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*cors.*")
+endif()
 
 # 添加测试辅助文件
 set(TEST_HELPER_FILES test/unit/test_time_mock.cpp test/unit/test_loop_helper.cpp)
@@ -294,6 +316,7 @@ message(STATUS "C Standard: ${CMAKE_C_STANDARD}")
 message(STATUS "WebSocket Support: ${BUILD_WITH_WEBSOCKET}")
 message(STATUS "mimalloc Support: ${BUILD_WITH_MIMALLOC}")
 message(STATUS "TLS Support: ${BUILD_WITH_TLS}")
+message(STATUS "Middleware Support: ${UVHTTP_FEATURE_MIDDLEWARE}")
 message(STATUS "Debug Mode: ${ENABLE_DEBUG}")
 message(STATUS "Coverage: ${ENABLE_COVERAGE}")
 message(STATUS "Examples: ${BUILD_EXAMPLES}")

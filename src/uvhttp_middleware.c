@@ -13,6 +13,10 @@
  * 4. 上下文数据在中间件生命周期内有效
  */
 
+#include "uvhttp_features.h"
+
+#if UVHTTP_FEATURE_MIDDLEWARE
+
 #include "uvhttp_middleware.h"
 #include "uvhttp_server.h"
 #include "uvhttp_allocator.h"
@@ -384,3 +388,5 @@ void uvhttp_server_cleanup_middleware(uvhttp_server_t* server) {
     /* 清空链表 */
     server->middleware_chain = NULL;
 }
+
+#endif /* UVHTTP_FEATURE_MIDDLEWARE */

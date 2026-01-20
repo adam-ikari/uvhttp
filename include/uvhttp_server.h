@@ -17,6 +17,10 @@ struct whitelist_item {
 };
 #include "uvhttp_features.h"
 
+#if UVHTTP_FEATURE_MIDDLEWARE
+#include "uvhttp_middleware.h"
+#endif
+
 // Forward declarations
 typedef struct uvhttp_request uvhttp_request_t;
 typedef struct uvhttp_response uvhttp_response_t;
@@ -91,7 +95,9 @@ struct uvhttp_server {
     void* ws_routes;  /* WebSocket路由表（已废弃，使用中间件） */
     ws_connection_manager_t* ws_connection_manager;  /* WebSocket连接管理器 */
 #endif
+#if UVHTTP_FEATURE_MIDDLEWARE
     uvhttp_http_middleware_t* middleware_chain;  /* 中间件链 */
+#endif
     size_t max_connections;  /* 最大连接数限制，默认10000 */
     size_t max_message_size;  /* 最大消息大小（字节），默认1MB */
     
@@ -106,6 +112,10 @@ struct uvhttp_server {
     size_t rate_limit_whitelist_count;                   /* 白名单路径数量 */
     struct whitelist_item* rate_limit_whitelist_hash;  /* 白名单哈希表 */
 #endif
+
+    /* 连接池管理（避免全局变量，使用服务器级别的连接池） */
+    void* connection_pool;  /* 连接池头指针 */
+    size_t connection_pool_size;  /* 连接池大小 */
 };
 
 /* API函数 */
@@ -120,10 +130,12 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server, uvhttp_request_handler_t handler);
 uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server, uvhttp_router_t* router);
 
+#if UVHTTP_FEATURE_MIDDLEWARE
 // ========== 中间件 API ==========
 uvhttp_error_t uvhttp_server_add_middleware(uvhttp_server_t* server, uvhttp_http_middleware_t* middleware);
 uvhttp_error_t uvhttp_server_remove_middleware(uvhttp_server_t* server, const char* path);
 void uvhttp_server_cleanup_middleware(uvhttp_server_t* server);
+#endif
 
 #if UVHTTP_FEATURE_RATE_LIMIT
 // ========== 限流 API（核心功能） ==========

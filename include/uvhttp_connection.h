@@ -99,6 +99,9 @@ void uvhttp_connection_tls_cleanup(uvhttp_connection_t* conn);
 void uvhttp_connection_set_state(uvhttp_connection_t* conn, uvhttp_connection_state_t state);
 const char* uvhttp_connection_get_state_string(uvhttp_connection_state_t state);
 
+// 连接池管理（内部使用）
+void uvhttp_connection_pool_cleanup(struct uvhttp_server* server);
+
 // WebSocket处理函数（内部）
 #if UVHTTP_FEATURE_WEBSOCKET
 int uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, const char* ws_key);

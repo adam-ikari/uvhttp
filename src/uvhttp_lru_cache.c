@@ -198,10 +198,16 @@ cache_entry_t* uvhttp_lru_cache_remove_tail(cache_manager_t* cache) {
 /**
  * 检查缓存条目是否过期
  */
+/* 支持测试的时间 Mock 函数（弱符号） */
+__attribute__((weak)) time_t get_current_time() {
+    return time(NULL);
+}
+
 int uvhttp_lru_cache_is_expired(cache_entry_t* entry, int cache_ttl) {
     if (!entry || cache_ttl <= 0) return 0;
     
-    time_t now = time(NULL);
+    /* 使用 get_current_time() 以支持 Mock 时间系统（用于测试） */
+    time_t now = get_current_time();
     return (now - entry->cache_time) > cache_ttl;
 }
 
@@ -314,12 +320,26 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
         UVHTTP_LOG_DEBUG("Created new cache entry: %s", file_path);
     }
     
+    /* 分配并复制内容 */
+    entry->content = (char*)uvhttp_alloc(content_length + 1);
+    if (!entry->content) {
+        UVHTTP_LOG_ERROR("Failed to allocate content buffer: size=%zu", content_length);
+        if (!entry->file_path[0]) {
+            /* 新条目，需要从哈希表中移除并释放 */
+            HASH_DEL(cache->hash_table, entry);
+            cache->entry_count--;
+            uvhttp_free(entry);
+        }
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    memcpy(entry->content, content, content_length);
+    entry->content[content_length] = '\0';
+    
     /* 设置条目内容 */
-    entry->content = content;
     entry->content_length = content_length;
     entry->memory_usage = memory_usage;
     entry->last_modified = last_modified;
-    entry->access_time = time(NULL);
+    entry->access_time = get_current_time();
     entry->cache_time = entry->access_time;
     entry->is_compressed = 0;
     
