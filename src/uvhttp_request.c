@@ -439,6 +439,7 @@ const char* uvhttp_request_get_method(uvhttp_request_t* request) {
         case UVHTTP_HEAD: return "HEAD";
         case UVHTTP_OPTIONS: return "OPTIONS";
         case UVHTTP_PATCH: return "PATCH";
+        case UVHTTP_ANY: return "ANY";
         default: return "UNKNOWN";
     }
 }

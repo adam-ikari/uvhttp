@@ -39,8 +39,16 @@ TEST(UvhttpConnectionIntegrationTest, ConnectionCreateAndInit) {
     EXPECT_EQ(conn->keep_alive, 1);
     EXPECT_EQ(conn->chunked_encoding, 0);
     EXPECT_EQ(conn->content_length, 0);
-    
-    // 清理
+
+    // 清理：手动关闭 handle 并释放连接
+    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
+        uv_idle_stop(&conn->idle_handle);
+        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
+    }
+    if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
+        uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
+    }
+    loop.run_once();  // 运行一次以处理 close 回调
     uvhttp_connection_free(conn);
     uvhttp_free(server);
 }
@@ -57,21 +65,17 @@ TEST(UvhttpConnectionIntegrationTest, ConnectionScheduleRestartRead) {
 
     uvhttp_connection_t* conn = uvhttp_connection_new(server);
     ASSERT_NE(conn, nullptr);
-    
+
     // 测试调度重启读取
     int result = uvhttp_connection_schedule_restart_read(conn);
     EXPECT_EQ(result, 0);
-    
+
     // 运行事件循环以处理 idle 回调
     loop.run_once();
-    
-    // 清理
-    uv_idle_stop(&conn->idle_handle);
-    uv_close((uv_handle_t*)&conn->idle_handle, NULL);
-    uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
-    loop.run_once();
-    
-    uvhttp_connection_free(conn);
+
+    // 清理：close 会触发 on_close 回调，后者会调用 uvhttp_connection_free
+    uvhttp_connection_close(conn);
+    loop.run_once();  // 运行一次以处理 close 回调
     uvhttp_free(server);
 }
 
@@ -87,24 +91,26 @@ TEST(UvhttpConnectionIntegrationTest, ConnectionStateSet) {
 
     uvhttp_connection_t* conn = uvhttp_connection_new(server);
     ASSERT_NE(conn, nullptr);
-    
+
     // 测试状态设置
     uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_TLS_HANDSHAKE);
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_TLS_HANDSHAKE);
-    
+
     uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_HTTP_READING);
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_HTTP_READING);
-    
+
     uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_HTTP_PROCESSING);
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_HTTP_PROCESSING);
-    
+
     uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_HTTP_WRITING);
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_HTTP_WRITING);
-    
+
     uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_CLOSING);
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_CLOSING);
-    
+
     // 清理
+    uvhttp_connection_close(conn);
+    loop.run_once();
     uvhttp_connection_free(conn);
     uvhttp_free(server);
 }
@@ -121,12 +127,13 @@ TEST(UvhttpConnectionIntegrationTest, ConnectionClose) {
 
     uvhttp_connection_t* conn = uvhttp_connection_new(server);
     ASSERT_NE(conn, nullptr);
-    
+
     // 测试连接关闭
     uvhttp_connection_close(conn);
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_CLOSING);
-    
+
     // 清理
+    loop.run_once();
     uvhttp_connection_free(conn);
     uvhttp_free(server);
 }
@@ -143,12 +150,14 @@ TEST(UvhttpConnectionIntegrationTest, ConnectionTlsHandshakeFunc) {
 
     uvhttp_connection_t* conn = uvhttp_connection_new(server);
     ASSERT_NE(conn, nullptr);
-    
+
     // 测试 TLS 握手（应该失败，因为未启用 TLS）
     int result = uvhttp_connection_tls_handshake_func(conn);
     EXPECT_EQ(result, -1);
-    
+
     // 清理
+    uvhttp_connection_close(conn);
+    loop.run_once();
     uvhttp_connection_free(conn);
     uvhttp_free(server);
 }
@@ -165,13 +174,15 @@ TEST(UvhttpConnectionIntegrationTest, ConnectionTlsWrite) {
 
     uvhttp_connection_t* conn = uvhttp_connection_new(server);
     ASSERT_NE(conn, nullptr);
-    
+
     // 测试 TLS 写入（应该失败，因为未启用 TLS）
     const char* data = "test data";
     int result = uvhttp_connection_tls_write(conn, data, strlen(data));
     EXPECT_EQ(result, -1);
-    
+
     // 清理
+    uvhttp_connection_close(conn);
+    loop.run_once();
     uvhttp_connection_free(conn);
     uvhttp_free(server);
 }
@@ -188,13 +199,15 @@ TEST(UvhttpConnectionIntegrationTest, WebsocketHandshake) {
 
     uvhttp_connection_t* conn = uvhttp_connection_new(server);
     ASSERT_NE(conn, nullptr);
-    
+
     // 测试 WebSocket 握手（应该失败，因为没有请求）
     const char* ws_key = "dGhlIHNhbXBsZSBwbGVhc3VyZQ==";
     int result = uvhttp_connection_handle_websocket_handshake(conn, ws_key);
     EXPECT_NE(result, 0);
-    
+
     // 清理
+    uvhttp_connection_close(conn);
+    loop.run_once();
     uvhttp_connection_free(conn);
     uvhttp_free(server);
 }
@@ -211,11 +224,13 @@ TEST(UvhttpConnectionIntegrationTest, WebsocketSwitch) {
 
     uvhttp_connection_t* conn = uvhttp_connection_new(server);
     ASSERT_NE(conn, nullptr);
-    
+
     // 测试 WebSocket 切换
     uvhttp_connection_switch_to_websocket(conn);
-    
+
     // 清理
+    uvhttp_connection_close(conn);
+    loop.run_once();
     uvhttp_connection_free(conn);
     uvhttp_free(server);
 }
@@ -232,11 +247,13 @@ TEST(UvhttpConnectionIntegrationTest, WebsocketClose) {
 
     uvhttp_connection_t* conn = uvhttp_connection_new(server);
     ASSERT_NE(conn, nullptr);
-    
+
     // 测试 WebSocket 关闭
     uvhttp_connection_websocket_close(conn);
-    
+
     // 清理
+    uvhttp_connection_close(conn);
+    loop.run_once();
     uvhttp_connection_free(conn);
     uvhttp_free(server);
 }
@@ -270,9 +287,11 @@ TEST(UvhttpConnectionIntegrationTest, ConnectionFree) {
 
     uvhttp_connection_t* conn = uvhttp_connection_new(server);
     ASSERT_NE(conn, nullptr);
-    
+
     // 测试连接释放
+    uvhttp_connection_close(conn);
+    loop.run_once();
     uvhttp_connection_free(conn);
-    
+
     uvhttp_free(server);
 }

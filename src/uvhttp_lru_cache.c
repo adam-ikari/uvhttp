@@ -204,8 +204,9 @@ __attribute__((weak)) time_t get_current_time() {
 }
 
 int uvhttp_lru_cache_is_expired(cache_entry_t* entry, int cache_ttl) {
-    if (!entry || cache_ttl <= 0) return 0;
-    
+    if (!entry) return 1;  /* NULL 条目视为过期 */
+    if (cache_ttl <= 0) return 0;  /* TTL 为 0 表示永不过期 */
+
     /* 使用 get_current_time() 以支持 Mock 时间系统（用于测试） */
     time_t now = get_current_time();
     return (now - entry->cache_time) > cache_ttl;

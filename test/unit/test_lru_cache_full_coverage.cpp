@@ -402,8 +402,8 @@ TEST(UvhttpLruCacheTest, CleanupExpired) {
 /* 测试检查过期 NULL 条目 */
 TEST(UvhttpLruCacheTest, IsExpiredNullEntry) {
     int result = uvhttp_lru_cache_is_expired(NULL, 3600);
-    /* NULL 条目返回 0（未过期）而不是 1 */
-    EXPECT_EQ(result, 0);
+    /* NULL 条目返回 1（已过期） */
+    EXPECT_EQ(result, 1);
 }
 
 /* 测试检查过期永不过期 */
