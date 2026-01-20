@@ -12,9 +12,6 @@
 #include <stdio.h>
 #include <uv.h>
 
-/* 内存分配宏 */
-#define UVHTTP_FREE(ptr) do { if (ptr) { free(ptr); (ptr) = NULL; } } while(0)
-
 /* 连接池管理 - 优化连接复用 */
 #define UVHTTP_CONNECTION_POOL_SIZE  100
 #define UVHTTP_CONNECTION_POOL_TTL   30  // 连接池TTL（秒）
@@ -215,7 +212,7 @@ int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     
     /* 重置响应body */
     if (conn->response->body) {
-        UVHTTP_FREE(conn->response->body);
+        uvhttp_free(conn->response->body);
         conn->response->body = NULL;
     }
     
