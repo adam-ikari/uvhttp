@@ -226,6 +226,7 @@ file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_loop_helper.cpp")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_time_mock.cpp")
+list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_mock_coverage.cpp")
 
 # 条件编译中间件相关测试
 if(NOT UVHTTP_FEATURE_MIDDLEWARE)
@@ -272,6 +273,12 @@ target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno
 target_link_libraries(uvhttp_unit_tests ${LIBS} ${GTEST_LIBS})
 target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
 add_test(NAME uvhttp_unit_tests COMMAND uvhttp_unit_tests)
+
+# ============================================================================
+# CMocka + GTest 集成测试
+# ============================================================================
+# 注意：CMocka 已移除，因为链接器 wrap 机制与项目现有代码不兼容
+# 如需 mock 功能，请考虑其他测试策略
 
 # 添加压力测试
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stress.c)
