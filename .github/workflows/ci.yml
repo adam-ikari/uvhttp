@@ -36,8 +36,8 @@ jobs:
     - name: Run fast tests
       run: |
         cd build
-        # 运行所有快速测试
-        ctest --output-on-failure -j1 --timeout 300 --schedule-random || {
+        # 运行所有快速测试（每个测试最多60秒超时）
+        ctest --output-on-failure -j1 --timeout 60 --schedule-random || {
           echo "Fast tests failed or timed out"
           exit 1
         }
