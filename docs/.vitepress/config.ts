@@ -4,8 +4,12 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'UVHTTP',
   description: '高性能 HTTP/1.1 和 WebSocket 服务器库',
-  base: '/uvhttp/',
+  // 开发环境使用根路径，生产环境（GitHub Pages）使用 /uvhttp/
+  // 修改为生产环境时，将下面的 '/' 改为 '/uvhttp/'
+  base: '/uvhttp',
   lang: 'zh-CN',
+
+  ignoreDeadLinks: true,
 
   head: [
     ['meta', { name: 'keywords', content: 'HTTP, WebSocket, libuv, C, 高性能, 服务器, 异步 I/O' }],
@@ -14,8 +18,17 @@ export default defineConfig({
     ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
     ['meta', {
       'http-equiv': 'Content-Security-Policy',
-      content: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;"
-    }]
+      content: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://adam-ikari.github.io; object-src 'none'; base-uri 'self';"
+    }],
+    ['meta', { property: 'og:title', content: 'UVHTTP - 高性能 HTTP/1.1 和 WebSocket 服务器库' }],
+    ['meta', { property: 'og:description', content: '基于 libuv 事件驱动架构，峰值吞吐量达 16,832 RPS' }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:url', content: 'https://adam-ikari.github.io/uvhttp' }],
+    ['meta', { property: 'og:site_name', content: 'UVHTTP' }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:title', content: 'UVHTTP - 高性能 HTTP/1.1 和 WebSocket 服务器库' }],
+    ['meta', { name: 'twitter:description', content: '基于 libuv 事件驱动架构，峰值吞吐量达 16,832 RPS' }],
+    ['link', { rel: 'canonical', href: 'https://adam-ikari.github.io/uvhttp/' }]
   ],
 
   themeConfig: {
@@ -52,7 +65,7 @@ export default defineConfig({
       options: {
         locales: {
           root: {
-            placeholder: '搜索文档',
+            // placeholder: '搜索文档',
             translations: {
               button: {
                 buttonText: '搜索文档',
@@ -87,10 +100,6 @@ export default defineConfig({
         dateStyle: 'full',
         timeStyle: 'short'
       }
-    },
-
-    markdown: {
-      lineNumbers: true
     }
   }
 })

@@ -49,5 +49,6 @@ core.*
 test/results/
 
 # VitePress
-docs-site/node_modules/
-docs-site/docs/.vitepress/dist/
+docs/node_modules/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
