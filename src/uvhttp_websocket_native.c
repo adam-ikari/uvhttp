@@ -45,7 +45,7 @@ static int uvhttp_ws_random_bytes(uvhttp_context_t* context, unsigned char* buf,
 struct uvhttp_ws_connection* uvhttp_ws_connection_create(int fd, 
                                                      mbedtls_ssl_context* ssl, 
                                                      int is_server) {
-    struct uvhttp_ws_connection* conn = calloc(1, sizeof(uvhttp_ws_connection_t));
+    struct uvhttp_ws_connection* conn = uvhttp_calloc(1, sizeof(uvhttp_ws_connection_t));
     if (!conn) {
         return NULL;
     }
@@ -672,7 +672,7 @@ int uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
             }
         }
         
-        uint8_t* new_buffer = realloc(conn->recv_buffer, new_size);
+        uint8_t* new_buffer = uvhttp_realloc(conn->recv_buffer, new_size);
         if (!new_buffer) {
             return -1;
         }
@@ -735,7 +735,7 @@ int uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                 /* 扩展缓冲区（如果需要） */
                 while (conn->fragmented_size + header.payload_len > conn->fragmented_capacity) {
                     conn->fragmented_capacity *= 2;
-                    conn->fragmented_message = realloc(conn->fragmented_message, 
+                    conn->fragmented_message = uvhttp_realloc(conn->fragmented_message, 
                                                        conn->fragmented_capacity);
                 }
                 
@@ -748,7 +748,7 @@ int uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                     /* 完成分片消息 */
                     while (conn->fragmented_size + header.payload_len > conn->fragmented_capacity) {
                         conn->fragmented_capacity *= 2;
-                        conn->fragmented_message = realloc(conn->fragmented_message, 
+                        conn->fragmented_message = uvhttp_realloc(conn->fragmented_message, 
                                                            conn->fragmented_capacity);
                     }
                     

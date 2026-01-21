@@ -109,7 +109,7 @@ void uvhttp_tls_cleanup(uvhttp_context_t* context) {
 
 // TLS上下文管理
 uvhttp_tls_context_t* uvhttp_tls_context_new(void) {
-    uvhttp_tls_context_t* ctx = calloc(1, sizeof(uvhttp_tls_context_t));
+    uvhttp_tls_context_t* ctx = uvhttp_calloc(1, sizeof(uvhttp_tls_context_t));
     if (!ctx) {
         return NULL;
     }
@@ -298,7 +298,7 @@ mbedtls_ssl_context* uvhttp_tls_create_ssl(uvhttp_tls_context_t* ctx) {
         return NULL;
     }
     
-    mbedtls_ssl_context* ssl = calloc(1, sizeof(mbedtls_ssl_context));
+    mbedtls_ssl_context* ssl = uvhttp_calloc(1, sizeof(mbedtls_ssl_context));
     if (!ssl) {
         return NULL;
     }
@@ -645,7 +645,7 @@ uvhttp_tls_error_t uvhttp_tls_context_add_extra_chain_cert(uvhttp_tls_context_t*
     while (current->next != NULL) {
         current = current->next;
     }
-    current->next = calloc(1, sizeof(mbedtls_x509_crt));
+    current->next = uvhttp_calloc(1, sizeof(mbedtls_x509_crt));
     if (!current->next) {
         mbedtls_x509_crt_free(&extra_cert);
         return UVHTTP_TLS_ERROR_MEMORY;
