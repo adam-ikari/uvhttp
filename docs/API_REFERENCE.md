@@ -2297,14 +2297,63 @@ uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server,
 ```
 注册 WebSocket 处理器。
 
+**详细说明:**
+为指定路径注册 WebSocket 处理器，处理 WebSocket 连接、消息、关闭等事件。
+
 **参数:**
 - `server`: 服务器实例
-- `path`: WebSocket 路径 (如 "/ws")
-- `handler`: WebSocket 处理器
+- `path`: WebSocket 路径（如 "/ws", "/chat"）
+- `handler`: WebSocket 处理器结构体
 
 **返回值:**
 - 成功: UVHTTP_OK
 - 失败: 其他 uvhttp_error_t 值
+
+**示例:**
+```c
+// WebSocket 消息处理回调
+int on_ws_message(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len, int opcode) {
+    if (opcode == UVHTTP_WS_OPCODE_TEXT) {
+        printf("收到消息: %s\n", data);
+        // 回显消息
+        uvhttp_server_ws_send(ws_conn, data, len);
+    }
+    return 0;
+}
+
+// WebSocket 连接关闭回调
+int on_ws_close(uvhttp_ws_connection_t* ws_conn) {
+    printf("WebSocket 连接关闭\n");
+    return 0;
+}
+
+// WebSocket 错误回调
+int on_ws_error(uvhttp_ws_connection_t* ws_conn, int error_code, const char* error_msg) {
+    fprintf(stderr, "WebSocket 错误: %s\n", error_msg);
+    return 0;
+}
+
+int main() {
+    uvhttp_server_t* server = uvhttp_server_new(loop);
+
+    // 创建 WebSocket 处理器
+    uvhttp_ws_handler_t ws_handler = {
+        .on_connect = NULL,
+        .on_message = on_ws_message,
+        .on_close = on_ws_close,
+        .on_error = on_ws_error,
+        .user_data = NULL
+    };
+
+    // 注册 WebSocket 处理器
+    uvhttp_server_register_ws_handler(server, "/ws", &ws_handler);
+
+    uvhttp_server_listen(server, "0.0.0.0", 8080);
+    uv_run(loop, UV_RUN_DEFAULT);
+
+    return 0;
+}
+```
 
 ---
 
@@ -2316,6 +2365,9 @@ uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn,
 ```
 发送 WebSocket 消息。
 
+**详细说明:**
+向指定的 WebSocket 连接发送消息。默认发送文本消息。
+
 **参数:**
 - `ws_conn`: WebSocket 连接
 - `data`: 消息数据
@@ -2324,6 +2376,19 @@ uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn,
 **返回值:**
 - 成功: UVHTTP_OK
 - 失败: 其他 uvhttp_error_t 值
+
+**示例:**
+```c
+void broadcast_message(uvhttp_server_t* server, const char* message) {
+    // 向所有连接广播消息
+    uvhttp_server_ws_broadcast(server, "/ws", message, strlen(message));
+}
+
+void send_private_message(uvhttp_ws_connection_t* ws_conn, const char* message) {
+    // 向单个连接发送消息
+    uvhttp_server_ws_send(ws_conn, message, strlen(message));
+}
+```
 
 ---
 
@@ -2335,14 +2400,34 @@ uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn,
 ```
 关闭 WebSocket 连接。
 
+**详细说明:**
+优雅地关闭 WebSocket 连接，发送关闭帧并清理资源。
+
 **参数:**
 - `ws_conn`: WebSocket 连接
 - `code`: 关闭代码
-- `reason`: 关闭原因
+  - 1000: 正常关闭
+  - 1001: 端点离开
+  - 1002: 协议错误
+  - 1003: 不支持的数据类型
+  - 1008: 策略违规
+  - 1011: 服务器错误
+- `reason`: 关闭原因（可选）
 
 **返回值:**
 - 成功: UVHTTP_OK
 - 失败: 其他 uvhttp_error_t 值
+
+**示例:**
+```c
+void disconnect_client(uvhttp_ws_connection_t* ws_conn) {
+    uvhttp_server_ws_close(ws_conn, 1000, "Client disconnected");
+}
+
+void handle_protocol_error(uvhttp_ws_connection_t* ws_conn) {
+    uvhttp_server_ws_close(ws_conn, 1002, "Protocol error");
+}
+```
 
 ---
 
@@ -2356,14 +2441,41 @@ uvhttp_error_t uvhttp_server_ws_enable_connection_management(uvhttp_server_t* se
 ```
 启用 WebSocket 连接管理。
 
+**详细说明:**
+启用自动连接管理，包括超时检测和心跳机制。
+
 **参数:**
 - `server`: 服务器实例
 - `timeout_seconds`: 超时时间（秒）
+  - 推荐值: 300-600 秒
 - `heartbeat_interval`: 心跳间隔（秒）
+  - 推荐值: 30-60 秒
 
 **返回值:**
 - 成功: UVHTTP_OK
 - 失败: 其他 uvhttp_error_t 值
+
+**功能:**
+- 自动检测空闲连接
+- 定期发送 Ping 帧
+- 自动清理超时连接
+- 监控连接状态
+
+**示例:**
+```c
+int main() {
+    uvhttp_server_t* server = uvhttp_server_new(loop);
+
+    // 启用连接管理：5分钟超时，30秒心跳
+    uvhttp_server_ws_enable_connection_management(server, 300, 30);
+
+    uvhttp_server_register_ws_handler(server, "/ws", &ws_handler);
+    uvhttp_server_listen(server, "0.0.0.0", 8080);
+
+    uv_run(loop, UV_RUN_DEFAULT);
+    return 0;
+}
+```
 
 ---
 
@@ -2373,11 +2485,27 @@ int uvhttp_server_ws_get_connection_count(uvhttp_server_t* server);
 ```
 获取 WebSocket 连接总数。
 
+**详细说明:**
+返回当前服务器上所有 WebSocket 连接的总数。
+
 **参数:**
 - `server`: 服务器实例
 
 **返回值:**
 - 连接数量
+
+**示例:**
+```c
+void status_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    int count = uvhttp_server_ws_get_connection_count(server);
+
+    char response[256];
+    snprintf(response, sizeof(response),
+             "{\"websocket_connections\":%d}", count);
+
+    uvhttp_quick_response(res, 200, "application/json", response);
+}
+```
 
 ---
 
@@ -2386,6 +2514,213 @@ int uvhttp_server_ws_get_connection_count(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_ws_broadcast(uvhttp_server_t* server,
                                          const char* path,
                                          const char* data,
+                                         size_t len);
+```
+向指定路径的所有连接广播消息。
+
+**详细说明:**
+向所有连接到指定路径的 WebSocket 客户端发送相同的消息。
+
+**参数:**
+- `server`: 服务器实例
+- `path`: WebSocket 路径
+- `data`: 消息数据
+- `len`: 数据长度
+
+**返回值:**
+- 成功: UVHTTP_OK
+- 失败: 其他 uvhttp_error_t 值
+
+**示例:**
+```c
+// 聊天室广播
+void broadcast_chat_message(uvhttp_server_t* server, const char* room, const char* message) {
+    char broadcast_msg[1024];
+    snprintf(broadcast_msg, sizeof(broadcast_msg),
+             "{\"type\":\"message\",\"room\":\"%s\",\"content\":\"%s\"}",
+             room, message);
+
+    uvhttp_server_ws_broadcast(server, room, broadcast_msg, strlen(broadcast_msg));
+}
+
+// 系统通知
+void send_system_notification(uvhttp_server_t* server, const char* notification) {
+    char msg[512];
+    snprintf(msg, sizeof(msg),
+             "{\"type\":\"notification\",\"message\":\"%s\"}",
+             notification);
+
+    uvhttp_server_ws_broadcast(server, "/ws", msg, strlen(msg));
+}
+```
+
+---
+
+### WebSocket 完整示例
+
+#### 示例 1: 简单的 Echo 服务器
+
+```c
+#include "uvhttp.h"
+
+int on_ws_message(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len, int opcode) {
+    if (opcode == UVHTTP_WS_OPCODE_TEXT) {
+        // 回显收到的消息
+        uvhttp_server_ws_send(ws_conn, data, len);
+    }
+    return 0;
+}
+
+int on_ws_close(uvhttp_ws_connection_t* ws_conn) {
+    printf("客户端断开连接\n");
+    return 0;
+}
+
+int on_ws_error(uvhttp_ws_connection_t* ws_conn, int error_code, const char* error_msg) {
+    fprintf(stderr, "WebSocket 错误: %s\n", error_msg);
+    return 0;
+}
+
+int main() {
+    uv_loop_t* loop = uv_default_loop();
+    uvhttp_server_t* server = uvhttp_server_new(loop);
+
+    uvhttp_ws_handler_t ws_handler = {
+        .on_connect = NULL,
+        .on_message = on_ws_message,
+        .on_close = on_ws_close,
+        .on_error = on_ws_error,
+        .user_data = NULL
+    };
+
+    uvhttp_server_register_ws_handler(server, "/ws", &ws_handler);
+    uvhttp_server_listen(server, "0.0.0.0", 8080);
+
+    printf("WebSocket Echo 服务器启动在 ws://0.0.0.0:8080/ws\n");
+    uv_run(loop, UV_RUN_DEFAULT);
+
+    return 0;
+}
+```
+
+#### 示例 2: 聊天室服务器
+
+```c
+#include "uvhttp.h"
+#include <string.h>
+
+typedef struct {
+    char username[64];
+    char room[64];
+} client_info_t;
+
+int on_ws_connect(uvhttp_ws_connection_t* ws_conn) {
+    printf("新客户端连接\n");
+    return 0;
+}
+
+int on_ws_message(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len, int opcode) {
+    if (opcode != UVHTTP_WS_OPCODE_TEXT) {
+        return 0;
+    }
+
+    // 解析消息（简化版）
+    char type[32] = {0};
+    char content[512] = {0};
+    sscanf(data, "{\"type\":\"%[^\"]\",\"content\":\"%[^\"]}", type, content);
+
+    if (strcmp(type, "join") == 0) {
+        // 加入房间
+        printf("客户端加入房间: %s\n", content);
+    } else if (strcmp(type, "message") == 0) {
+        // 广播消息
+        char broadcast[1024];
+        snprintf(broadcast, sizeof(broadcast),
+                 "{\"type\":\"message\",\"content\":\"%s\"}", content);
+        uvhttp_server_ws_broadcast(ws_conn->server, "/chat", broadcast, strlen(broadcast));
+    }
+
+    return 0;
+}
+
+int on_ws_close(uvhttp_ws_connection_t* ws_conn) {
+    printf("客户端离开聊天室\n");
+    return 0;
+}
+
+int main() {
+    uv_loop_t* loop = uv_default_loop();
+    uvhttp_server_t* server = uvhttp_server_new(loop);
+
+    // 启用连接管理
+    uvhttp_server_ws_enable_connection_management(server, 300, 30);
+
+    uvhttp_ws_handler_t ws_handler = {
+        .on_connect = on_ws_connect,
+        .on_message = on_ws_message,
+        .on_close = on_ws_close,
+        .on_error = NULL,
+        .user_data = NULL
+    };
+
+    uvhttp_server_register_ws_handler(server, "/chat", &ws_handler);
+    uvhttp_server_listen(server, "0.0.0.0", 8080);
+
+    printf("聊天室服务器启动在 ws://0.0.0.0:8080/chat\n");
+    uv_run(loop, UV_RUN_DEFAULT);
+
+    return 0;
+}
+```
+
+#### 示例 3: 实时数据推送
+
+```c
+#include "uvhttp.h"
+#include <time.h>
+
+// 定时推送数据
+void push_data_timer_cb(uv_timer_t* handle) {
+    uvhttp_server_t* server = (uvhttp_server_t*)handle->data;
+
+    // 生成随机数据
+    char data[256];
+    time_t now = time(NULL);
+    snprintf(data, sizeof(data),
+             "{\"type\":\"update\",\"timestamp\":%ld,\"value\":%d}",
+             now, rand() % 100);
+
+    // 推送给所有客户端
+    uvhttp_server_ws_broadcast(server, "/data", data, strlen(data));
+}
+
+int main() {
+    uv_loop_t* loop = uv_default_loop();
+    uvhttp_server_t* server = uvhttp_server_new(loop);
+
+    uvhttp_ws_handler_t ws_handler = {
+        .on_connect = NULL,
+        .on_message = NULL,
+        .on_close = NULL,
+        .on_error = NULL,
+        .user_data = NULL
+    };
+
+    uvhttp_server_register_ws_handler(server, "/data", &ws_handler);
+    uvhttp_server_listen(server, "0.0.0.0", 8080);
+
+    // 创建定时器，每秒推送数据
+    uv_timer_t timer;
+    timer.data = server;
+    uv_timer_init(loop, &timer);
+    uv_timer_start(&timer, push_data_timer_cb, 1000, 1000);
+
+    printf("实时数据服务器启动在 ws://0.0.0.0:8080/data\n");
+    uv_run(loop, UV_RUN_DEFAULT);
+
+    return 0;
+}
+```
                                          size_t len);
 ```
 向指定路径的所有连接广播消息。
