@@ -56,7 +56,7 @@ jobs:
       run: |
         cd build-release
         start_time=$(date +%s)
-        ctest --output-on-failure -j1 --timeout 1800 --label-regex "^slow$" --schedule-random || {
+        ctest --output-on-failure -j1 --timeout 180 --label-regex "^slow$" --schedule-random || {
           echo "Slow tests failed"
           exit 1
         }

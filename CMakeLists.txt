@@ -286,6 +286,7 @@ target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno
 target_link_libraries(uvhttp_unit_tests ${LIBS} ${GTEST_LIBS})
 target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
 add_test(NAME uvhttp_unit_tests COMMAND uvhttp_unit_tests)
+set_tests_properties(uvhttp_unit_tests PROPERTIES TIMEOUT 60 LABELS "fast")
 
 # ============================================================================
 # CMocka + GTest 集成测试
