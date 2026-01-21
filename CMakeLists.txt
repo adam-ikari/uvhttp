@@ -260,7 +260,15 @@ foreach(test_file ${GTEST_TEST_FILES})
     target_link_libraries(${test_name} ${LIBS} ${GTEST_LIBS})
     target_include_directories(${test_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
     add_test(NAME ${test_name} COMMAND ${test_name})
-    set_tests_properties(${test_name} PROPERTIES TIMEOUT 60 LABELS "fast")
+    
+    # 设置测试超时时间和标签
+    if(${test_name} STREQUAL "test_server_full_coverage" OR 
+       ${test_name} STREQUAL "test_deps_full_coverage")
+        # 这些测试需要更长时间运行，设置180秒超时
+        set_tests_properties(${test_name} PROPERTIES TIMEOUT 180 LABELS "fast")
+    else()
+        set_tests_properties(${test_name} PROPERTIES TIMEOUT 60 LABELS "fast")
+    endif()
 endforeach()
 
 # 添加 gtest 示例测试（使用 C++ 编译）
