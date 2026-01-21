@@ -245,15 +245,21 @@ jobs:
     - name: Verify build output
       working-directory: ./docs
       run: |
-        if [ ! -d "docs/.vitepress/dist" ]; then
+        if [ ! -d ".vitepress/dist" ]; then
           echo "Error: Build output directory not found"
           exit 1
         fi
-        if [ ! -f "docs/.vitepress/dist/index.html" ]; then
+        # 检查是否有 index.html（可能在根目录或 uvhttp 子目录）
+        if [ -f ".vitepress/dist/index.html" ]; then
+          echo "Docs build verification passed (index.html in root)"
+        elif [ -f ".vitepress/dist/uvhttp/index.html" ]; then
+          echo "Docs build verification passed (index.html in uvhttp/)"
+        else
           echo "Error: index.html not found in build output"
+          echo "Contents of dist directory:"
+          ls -la .vitepress/dist/
           exit 1
         fi
-        echo "Docs build verification passed"
 
     - name: Check for broken links
       working-directory: ./docs
