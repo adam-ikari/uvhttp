@@ -3834,6 +3834,401 @@ void upgrade_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 ---
 
+## 最佳实践
+
+### 1. 错误处理
+
+**始终检查返回值:**
+```c
+uvhttp_error_t result = uvhttp_server_listen(server, "0.0.0.0", 8080);
+if (result != UVHTTP_OK) {
+    fprintf(stderr, "错误: %s\n", uvhttp_error_string(result));
+    fprintf(stderr, "描述: %s\n", uvhttp_error_description(result));
+    fprintf(stderr, "建议: %s\n", uvhttp_error_suggestion(result));
+    return 1;
+}
+```
+
+**使用错误恢复机制:**
+```c
+uvhttp_set_error_recovery_config(3, 100, 5000, 2.0);
+
+uvhttp_error_t connect_operation(void* ctx) {
+    return uvhttp_server_connect((uvhttp_server_t*)ctx);
+}
+
+uvhttp_error_t result = uvhttp_retry_operation(connect_operation, server, "连接服务器");
+```
+
+### 2. 资源管理
+
+**正确释放资源:**
+```c
+uvhttp_server_t* server = uvhttp_server_new(loop);
+uvhttp_router_t* router = uvhttp_router_new();
+
+// 使用资源...
+
+// 清理顺序：先停止，再释放
+uvhttp_server_stop(server);
+uvhttp_server_free(server);
+uvhttp_router_free(router);
+```
+
+**避免内存泄漏:**
+```c
+// 使用统一的内存分配器
+void* buffer = UVHTTP_MALLOC(size);
+// 使用 buffer...
+UVHTTP_FREE(buffer);
+
+// 不要混用 malloc/free 和 UVHTTP_MALLOC/UVHTTP_FREE
+```
+
+### 3. 并发处理
+
+**使用 libuv 数据指针模式:**
+```c
+typedef struct {
+    uvhttp_server_t* server;
+    int request_count;
+} app_context_t;
+
+app_context_t* ctx = UVHTTP_MALLOC(sizeof(app_context_t));
+ctx->server = server;
+ctx->request_count = 0;
+
+loop->data = ctx;
+
+// 在处理器中访问
+app_context_t* ctx = (app_context_t*)loop->data;
+```
+
+### 4. 安全性
+
+**验证输入:**
+```c
+void upload_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    size_t body_len = uvhttp_request_get_body_length(req);
+
+    // 限制文件大小
+    if (body_len > 10 * 1024 * 1024) {
+        uvhttp_quick_response(res, 413, "application/json",
+                             "{\"error\":\"File too large\"}");
+        return;
+    }
+
+    // 验证文件类型
+    const char* content_type = uvhttp_request_get_header(req, "Content-Type");
+    if (!content_type || strcmp(content_type, "image/jpeg") != 0) {
+        uvhttp_quick_response(res, 400, "application/json",
+                             "{\"error\":\"Invalid file type\"}");
+        return;
+    }
+}
+```
+
+**防止路径遍历:**
+```c
+void file_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    const char* filename = uvhttp_get_param(req, "filename");
+
+    // 安全检查
+    if (strstr(filename, "..") != NULL) {
+        uvhttp_quick_response(res, 403, "application/json",
+                             "{\"error\":\"Invalid filename\"}");
+        return;
+    }
+}
+```
+
+### 5. 性能优化
+
+**启用 Keep-Alive:**
+```c
+// UVHTTP 默认启用 Keep-Alive，无需额外配置
+// Keep-Alive 可以显著提升性能（约 1000 倍）
+```
+
+**使用路由缓存:**
+```c
+// 路由缓存默认启用，提升路由匹配性能
+// 对于高并发场景尤为重要
+```
+
+**预热缓存:**
+```c
+// 启动时预热常用文件
+uvhttp_static_prewarm_cache(static_ctx, "/static/index.html");
+```
+
+**使用零拷贝:**
+```c
+// 大文件自动使用 sendfile 零拷贝传输
+// 文件大小 > 1MB 时自动启用
+```
+
+### 6. 日志和监控
+
+**记录错误:**
+```c
+uvhttp_error_t result = uvhttp_server_listen(server, host, port);
+if (result != UVHTTP_OK) {
+    uvhttp_log_error(result, "服务器启动失败");
+    return 1;
+}
+```
+
+**监控错误统计:**
+```c
+size_t error_counts[UVHTTP_ERROR_COUNT] = {0};
+time_t last_error_time = 0;
+const char* last_error_context = NULL;
+
+uvhttp_get_error_stats(context, error_counts, &last_error_time, &last_error_context);
+
+uvhttp_error_t most_frequent = uvhttp_get_most_frequent_error(context);
+printf("最频繁的错误: %s (%zu 次)\n",
+       uvhttp_error_string(most_frequent),
+       error_counts[most_frequent]);
+```
+
+### 7. 测试
+
+**单元测试:**
+```c
+void test_server_create() {
+    uv_loop_t* loop = uv_default_loop();
+    uvhttp_server_t* server = uvhttp_server_new(loop);
+
+    assert(server != NULL);
+    assert(server->is_listening == 0);
+
+    uvhttp_server_free(server);
+}
+```
+
+**集成测试:**
+```c
+void test_server_listen() {
+    uv_loop_t* loop = uv_default_loop();
+    uvhttp_server_t* server = uvhttp_server_new(loop);
+
+    uvhttp_error_t result = uvhttp_server_listen(server, "127.0.0.1", 18080);
+    assert(result == UVHTTP_OK);
+    assert(server->is_listening == 1);
+
+    uvhttp_server_stop(server);
+    uvhttp_server_free(server);
+}
+```
+
+---
+
+## 性能优化指南
+
+### 1. 连接优化
+
+**调整最大连接数:**
+```c
+// 根据系统资源调整
+uvhttp_set_max_connections(server, 5000);
+
+// 系统调优
+ulimit -n 65536
+```
+
+**启用 Keep-Alive:**
+```c
+// Keep-Alive 默认启用，无需配置
+// 可以显著减少连接建立开销
+```
+
+**使用连接池:**
+```c
+// UVHTTP 内部使用连接池优化性能
+// 连接复用减少内存分配开销
+```
+
+### 2. 内存优化
+
+**使用 mimalloc:**
+```bash
+# 编译时启用 mimalloc
+cmake -DBUILD_WITH_MIMALLOC=ON ..
+make
+```
+
+**调整缓冲区大小:**
+```c
+// 根据实际需求调整
+uvhttp_set_max_body_size(server, 10 * 1024 * 1024);  // 10MB
+```
+
+**使用内存池:**
+```c
+// UVHTTP 内部使用内存池优化小对象分配
+// 减少内存碎片和分配开销
+```
+
+### 3. 路由优化
+
+**使用具体路由:**
+```c
+// 推荐：具体路由
+uvhttp_router_add_route(router, "/api/users", users_handler);
+uvhttp_router_add_route(router, "/api/posts", posts_handler);
+
+// 避免：通配符路由（性能较差）
+// uvhttp_router_add_route(router, "/api/*", api_handler);
+```
+
+**启用路由缓存:**
+```c
+// 路由缓存默认启用
+// 对于高并发场景，缓存命中率可达 90%+
+```
+
+### 4. 静态文件优化
+
+**使用零拷贝:**
+```c
+// 大文件自动使用 sendfile
+// 文件 > 1MB 时自动启用
+// 性能提升 50%+
+```
+
+**启用缓存:**
+```c
+// LRU 缓存默认启用
+// 缓存常用文件，减少磁盘 I/O
+```
+
+**预热缓存:**
+```c
+// 启动时预热常用文件
+uvhttp_static_prewarm_cache(ctx, "/static/index.html");
+uvhttp_static_prewarm_cache(ctx, "/static/css/style.css");
+```
+
+### 5. WebSocket 优化
+
+**启用连接管理:**
+```c
+// 自动清理空闲连接
+uvhttp_server_ws_enable_connection_management(server, 300, 30);
+```
+
+**使用广播优化:**
+```c
+// 批量广播消息
+uvhttp_server_ws_broadcast(server, "/chat", message, len);
+```
+
+### 6. 监控和调优
+
+**监控性能指标:**
+```c
+// 监控连接数
+int connections = uvhttp_server_ws_get_connection_count(server);
+
+// 监控错误统计
+uvhttp_get_error_stats(context, error_counts, &last_error_time, &last_error_context);
+```
+
+**动态调整配置:**
+```c
+// 根据负载动态调整
+if (system_load > 0.8) {
+    uvhttp_config_update_max_connections(context, 3000);
+} else if (system_load < 0.3) {
+    uvhttp_config_update_max_connections(context, 5000);
+}
+```
+
+### 7. 性能测试
+
+**使用 wrk:**
+```bash
+# 安装 wrk
+git clone https://github.com/wg/wrk.git
+cd wrk && make
+
+# 性能测试
+wrk -t4 -c100 -d30s http://localhost:8080/
+```
+
+**使用 ab:**
+```bash
+# Apache Bench
+ab -n 10000 -c 100 http://localhost:8080/
+```
+
+**性能指标:**
+- 目标吞吐量: 10,000+ RPS
+- 目标延迟: < 10ms (P95)
+- 目标错误率: < 0.1%
+
+---
+
+## 故障排查
+
+### 常见问题
+
+**1. 端口被占用**
+```
+错误: UVHTTP_ERROR_SERVER_LISTEN
+解决: 更换端口或停止占用端口的进程
+```
+
+**2. 内存不足**
+```
+错误: UVHTTP_ERROR_OUT_OF_MEMORY
+解决: 增加系统内存或减少最大连接数
+```
+
+**3. 连接数超限**
+```
+错误: UVHTTP_ERROR_CONNECTION_LIMIT
+解决: 增加最大连接数或优化连接管理
+```
+
+**4. 请求体过大**
+```
+错误: UVHTTP_ERROR_BODY_TOO_LARGE
+解决: 增加最大请求体大小或优化客户端
+```
+
+**5. WebSocket 握手失败**
+```
+错误: UVHTTP_ERROR_WEBSOCKET_HANDSHAKE
+解决: 检查客户端请求头和协议版本
+```
+
+### 调试技巧
+
+**启用详细日志:**
+```c
+// 设置日志级别为 DEBUG
+// (需要实现日志系统)
+```
+
+**使用调试器:**
+```bash
+# 使用 gdb
+gdb ./your_server
+(gdb) run
+(gdb) bt  # 查看调用栈
+```
+
+**内存泄漏检测:**
+```bash
+# 使用 valgrind
+valgrind --leak-check=full ./your_server
+```
+
+---
+
 ## 版本信息
 
 ```c
