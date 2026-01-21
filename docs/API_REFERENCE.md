@@ -1681,9 +1681,34 @@ uvhttp_router_t* uvhttp_router_new(void);
 ```
 创建新的路由器。
 
+**详细说明:**
+创建一个新的路由器实例，用于管理 HTTP 路由规则。路由器支持静态路径、参数路径和通配符路径。
+
 **返回值:**
 - 成功: 路由器实例指针
-- 失败: NULL
+- 失败: NULL（内存分配失败）
+
+**路由类型:**
+1. **静态路径**: `/api/users`, `/home`
+2. **参数路径**: `/users/:id`, `/posts/:postId/comments/:commentId`
+3. **通配符路径**: `/api/*`, `/static/*`
+
+**示例:**
+```c
+uvhttp_router_t* router = uvhttp_router_new();
+if (!router) {
+    fprintf(stderr, "路由器创建失败\n");
+    return 1;
+}
+
+// 添加路由
+uvhttp_router_add_route(router, "/", home_handler);
+uvhttp_router_add_route(router, "/api/users", users_handler);
+uvhttp_router_add_route(router, "/users/:id", user_handler);
+
+// 设置到服务器
+uvhttp_server_set_router(server, router);
+```
 
 ---
 
@@ -1692,6 +1717,19 @@ uvhttp_router_t* uvhttp_router_new(void);
 void uvhttp_router_free(uvhttp_router_t* router);
 ```
 释放路由器资源。
+
+**详细说明:**
+释放路由器实例及其关联的所有路由规则。
+
+**参数:**
+- `router`: 路由器实例
+
+**示例:**
+```c
+uvhttp_router_t* router = uvhttp_router_new();
+// 使用路由器...
+uvhttp_router_free(router);
+```
 
 ---
 
@@ -1703,14 +1741,49 @@ uvhttp_error_t uvhttp_router_add_route(uvhttp_router_t* router,
 ```
 添加路由规则。
 
+**详细说明:**
+向路由器添加一个新的路由规则。路由按照添加顺序进行匹配。
+
 **参数:**
 - `router`: 路由器实例
-- `path`: 路由路径 (如 "/api/users")
+- `path`: 路由路径
+  - 静态路径: `"/api/users"`
+  - 参数路径: `"/users/:id"`（参数名以 `:` 开头）
+  - 通配符: `"/api/*"`（匹配所有子路径）
 - `handler`: 请求处理函数
 
 **返回值:**
 - 成功: UVHTTP_OK
 - 失败: 其他 uvhttp_error_t 值
+
+**路由匹配规则:**
+1. 精确匹配优先于参数匹配
+2. 参数匹配优先于通配符匹配
+3. 先添加的路由优先于后添加的路由
+
+**示例:**
+```c
+// 静态路由
+uvhttp_router_add_route(router, "/api/status", status_handler);
+
+// 参数路由
+uvhttp_router_add_route(router, "/users/:id", get_user_handler);
+uvhttp_router_add_route(router, "/posts/:postId/comments/:commentId", get_comment_handler);
+
+// 通配符路由
+uvhttp_router_add_route(router, "/static/*", static_file_handler);
+
+// 处理函数中获取参数
+void get_user_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    const char* user_id = uvhttp_get_param(req, "id");
+    // user_id 包含 URL 中的 id 值
+}
+```
+
+**最佳实践:**
+- 将具体路由放在通配符路由之前
+- 使用有意义的参数名（如 `:id` 而不是 `:x`）
+- 避免路由冲突
 
 ---
 
@@ -1722,14 +1795,115 @@ uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* route
 ```
 查找路径对应的处理器。
 
+**详细说明:**
+根据路径和 HTTP 方法查找对应的请求处理器。
+
 **参数:**
 - `router`: 路由器实例
 - `path`: 请求路径
-- `method`: HTTP 方法 ("GET", "POST", 等)
+- `method`: HTTP 方法（"GET", "POST", "PUT", "DELETE" 等）
 
 **返回值:**
 - 找到: 处理器函数指针
 - 未找到: NULL
+
+**示例:**
+```c
+uvhttp_request_handler_t handler = uvhttp_router_find_handler(
+    router,
+    "/api/users/123",
+    "GET"
+);
+
+if (handler) {
+    handler(request, response);
+} else {
+    // 404 Not Found
+}
+```
+
+---
+
+#### uvhttp_router_add_route_method
+```c
+uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
+                                                const char* path,
+                                                uvhttp_method_t method,
+                                                uvhttp_request_handler_t handler);
+```
+按 HTTP 方法添加路由。
+
+**详细说明:**
+为特定的 HTTP 方法添加路由规则，提供更精确的路由控制。
+
+**参数:**
+- `router`: 路由器实例
+- `path`: 路由路径
+- `method`: HTTP 方法枚举
+  - `UVHTTP_METHOD_GET`
+  - `UVHTTP_METHOD_POST`
+  - `UVHTTP_METHOD_PUT`
+  - `UVHTTP_METHOD_DELETE`
+  - `UVHTTP_METHOD_HEAD`
+  - `UVHTTP_METHOD_OPTIONS`
+  - `UVHTTP_METHOD_PATCH`
+- `handler`: 请求处理函数
+
+**返回值:**
+- 成功: UVHTTP_OK
+- 失败: 其他 uvhttp_error_t 值
+
+**示例:**
+```c
+// 为不同方法添加不同处理器
+uvhttp_router_add_route_method(router, "/api/users", UVHTTP_METHOD_GET, get_users_handler);
+uvhttp_router_add_route_method(router, "/api/users", UVHTTP_METHOD_POST, create_user_handler);
+
+// 组合使用参数路由
+uvhttp_router_add_route_method(router, "/users/:id", UVHTTP_METHOD_GET, get_user_handler);
+uvhttp_router_add_route_method(router, "/users/:id", UVHTTP_METHOD_PUT, update_user_handler);
+uvhttp_router_add_route_method(router, "/users/:id", UVHTTP_METHOD_DELETE, delete_user_handler);
+```
+
+---
+
+#### uvhttp_router_match
+```c
+uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
+                                      const char* path,
+                                      const char* method,
+                                      uvhttp_route_match_t* match);
+```
+路由匹配并提取参数。
+
+**详细说明:**
+匹配路由并提取路径参数，返回匹配结果和参数列表。
+
+**参数:**
+- `router`: 路由器实例
+- `path`: 请求路径
+- `method`: HTTP 方法
+- `match`: 匹配结果（输出）
+
+**返回值:**
+- 成功: UVHTTP_OK
+- 失败: 其他 uvhttp_error_t 值
+
+**示例:**
+```c
+uvhttp_route_match_t match;
+uvhttp_error_t result = uvhttp_router_match(router, "/users/123/posts/456", "GET", &match);
+
+if (result == UVHTTP_OK && match.handler) {
+    // 访问参数
+    for (size_t i = 0; i < match.param_count; i++) {
+        printf("参数 %s = %s\n", match.params[i].name, match.params[i].value);
+    }
+
+    // 调用处理器
+    match.handler(request, response);
+}
+```
 
 ---
 
@@ -1741,8 +1915,24 @@ const char* uvhttp_request_get_method(uvhttp_request_t* request);
 ```
 获取 HTTP 方法。
 
+**详细说明:**
+返回 HTTP 请求方法字符串，如 "GET", "POST", "PUT", "DELETE" 等。
+
 **返回值:**
-- HTTP 方法字符串 ("GET", "POST", 等)
+- HTTP 方法字符串
+
+**示例:**
+```c
+void handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    const char* method = uvhttp_request_get_method(req);
+
+    if (strcmp(method, "GET") == 0) {
+        // 处理 GET 请求
+    } else if (strcmp(method, "POST") == 0) {
+        // 处理 POST 请求
+    }
+}
+```
 
 ---
 
@@ -1752,25 +1942,70 @@ const char* uvhttp_request_get_url(uvhttp_request_t* request);
 ```
 获取请求 URL。
 
+**详细说明:**
+返回请求的完整 URL 路径（不包含查询字符串）。
+
 **返回值:**
-- URL 字符串
+- URL 路径字符串
+
+**示例:**
+```c
+void handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    const char* url = uvhttp_request_get_url(req);
+    printf("请求路径: %s\n", url);
+}
+```
 
 ---
 
 #### uvhttp_request_get_header
 ```c
-const char* uvhttp_request_get_header(uvhttp_request_t* request, 
+const char* uvhttp_request_get_header(uvhttp_request_t* request,
                                      const char* name);
 ```
 获取请求头。
 
+**详细说明:**
+获取指定的 HTTP 请求头值。头部名称不区分大小写。
+
 **参数:**
 - `request`: 请求实例
-- `name`: 头部名称 (如 "Content-Type")
+- `name`: 头部名称（如 "Content-Type", "Authorization"）
 
 **返回值:**
 - 找到: 头部值字符串
 - 未找到: NULL
+
+**常用头部:**
+- `"Content-Type"`: 内容类型
+- `"Content-Length"`: 内容长度
+- `"Authorization"`: 认证信息
+- `"User-Agent"`: 用户代理
+- `"Accept"`: 接受的内容类型
+- `"Cookie"`: Cookie
+- `"X-Forwarded-For"`: 客户端真实 IP
+
+**示例:**
+```c
+void handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    const char* content_type = uvhttp_request_get_header(req, "Content-Type");
+    const char* auth = uvhttp_request_get_header(req, "Authorization");
+
+    if (!content_type || strcmp(content_type, "application/json") != 0) {
+        uvhttp_quick_response(res, 400, "application/json",
+                             "{\"error\":\"Invalid content type\"}");
+        return;
+    }
+
+    if (!auth) {
+        uvhttp_quick_response(res, 401, "application/json",
+                             "{\"error\":\"Unauthorized\"}");
+        return;
+    }
+
+    // 处理请求...
+}
+```
 
 ---
 
@@ -1780,8 +2015,31 @@ const char* uvhttp_request_get_body(uvhttp_request_t* request);
 ```
 获取请求体。
 
+**详细说明:**
+返回 HTTP 请求体的原始数据。适用于 POST、PUT 等包含请求体的方法。
+
 **返回值:**
 - 请求体数据指针
+- 如果没有请求体，返回 NULL 或空字符串
+
+**示例:**
+```c
+void json_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    const char* body = uvhttp_request_get_body(req);
+    if (!body || strlen(body) == 0) {
+        uvhttp_quick_response(res, 400, "application/json",
+                             "{\"error\":\"Empty body\"}");
+        return;
+    }
+
+    // 解析 JSON（需要 JSON 库）
+    // cJSON* json = cJSON_Parse(body);
+    // ...
+
+    uvhttp_quick_response(res, 200, "application/json",
+                         "{\"status\":\"success\"}");
+}
+```
 
 ---
 
@@ -1791,8 +2049,183 @@ size_t uvhttp_request_get_body_length(uvhttp_request_t* request);
 ```
 获取请求体长度。
 
+**详细说明:**
+返回请求体的字节长度。
+
 **返回值:**
 - 请求体字节数
+
+**示例:**
+```c
+void upload_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    size_t body_len = uvhttp_request_get_body_length(req);
+    printf("上传文件大小: %zu 字节\n", body_len);
+
+    if (body_len > 10 * 1024 * 1024) {  // 10MB
+        uvhttp_quick_response(res, 413, "application/json",
+                             "{\"error\":\"File too large\"}");
+        return;
+    }
+
+    // 处理文件上传...
+}
+```
+
+---
+
+### 响应处理
+
+#### uvhttp_response_set_status
+```c
+void uvhttp_response_set_status(uvhttp_response_t* response, int status_code);
+```
+设置响应状态码。
+
+**详细说明:**
+设置 HTTP 响应状态码，如 200, 404, 500 等。
+
+**参数:**
+- `response`: 响应实例
+- `status_code`: HTTP 状态码
+
+**常用状态码:**
+- 2xx: 成功
+  - 200: OK
+  - 201: Created
+  - 204: No Content
+- 4xx: 客户端错误
+  - 400: Bad Request
+  - 401: Unauthorized
+  - 403: Forbidden
+  - 404: Not Found
+- 5xx: 服务器错误
+  - 500: Internal Server Error
+  - 503: Service Unavailable
+
+**示例:**
+```c
+void handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    // 成功
+    uvhttp_response_set_status(res, 200);
+
+    // 创建资源
+    uvhttp_response_set_status(res, 201);
+
+    // 未找到
+    uvhttp_response_set_status(res, 404);
+
+    // 服务器错误
+    uvhttp_response_set_status(res, 500);
+}
+```
+
+---
+
+#### uvhttp_response_set_header
+```c
+void uvhttp_response_set_header(uvhttp_response_t* response,
+                               const char* name,
+                               const char* value);
+```
+设置响应头。
+
+**详细说明:**
+设置 HTTP 响应头部。
+
+**参数:**
+- `response`: 响应实例
+- `name`: 头部名称
+- `value`: 头部值
+
+**常用响应头:**
+- `"Content-Type"`: 内容类型
+- `"Content-Length"`: 内容长度
+- `"Cache-Control"`: 缓存控制
+- `"Set-Cookie"`: 设置 Cookie
+- `"Access-Control-Allow-Origin"`: CORS
+- `"Location"`: 重定向位置
+
+**示例:**
+```c
+void handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    uvhttp_response_set_status(res, 200);
+    uvhttp_response_set_header(res, "Content-Type", "application/json");
+    uvhttp_response_set_header(res, "Cache-Control", "no-cache");
+
+    uvhttp_response_set_body(res, "{\"status\":\"ok\"}", 14);
+    uvhttp_response_send(res);
+}
+```
+
+---
+
+#### uvhttp_response_set_body
+```c
+int uvhttp_response_set_body(uvhttp_response_t* response,
+                            const char* body,
+                            size_t length);
+```
+设置响应体。
+
+**详细说明:**
+设置 HTTP 响应体数据。
+
+**参数:**
+- `response`: 响应实例
+- `body`: 响应体数据
+- `length`: 数据长度
+
+**返回值:**
+- 成功: 0
+- 失败: 负数错误码
+
+**示例:**
+```c
+void handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    const char* html = "<h1>Hello</h1>";
+    uvhttp_response_set_status(res, 200);
+    uvhttp_response_set_header(res, "Content-Type", "text/html");
+    uvhttp_response_set_body(res, html, strlen(html));
+    uvhttp_response_send(res);
+}
+```
+
+---
+
+#### uvhttp_response_send
+```c
+void uvhttp_response_send(uvhttp_response_t* response);
+```
+发送响应。
+
+**详细说明:**
+发送完整的 HTTP 响应给客户端。必须在设置状态码、头部和响应体后调用。
+
+**参数:**
+- `response`: 响应实例
+
+**标准响应流程:**
+```c
+void standard_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    // 1. 设置状态码
+    uvhttp_response_set_status(res, 200);
+
+    // 2. 设置响应头
+    uvhttp_response_set_header(res, "Content-Type", "application/json");
+
+    // 3. 设置响应体
+    const char* body = "{\"message\":\"Hello\"}";
+    uvhttp_response_set_body(res, body, strlen(body));
+
+    // 4. 发送响应
+    uvhttp_response_send(res);
+}
+```
+
+**注意事项:**
+- 只能调用一次
+- 调用后不能再修改响应
+- 必须在处理器中调用
 
 ---
 
