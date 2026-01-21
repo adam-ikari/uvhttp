@@ -5,10 +5,21 @@ on:
     # 每天 UTC 时间 0:00 运行（北京时间 8:00）
     - cron: '0 0 * * *'
   workflow_dispatch:  # 允许手动触发
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'test/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+      - 'deps/**'
 
 jobs:
   nightly-build:
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    # 只在 main 分支运行
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-22.04
     timeout-minutes: 120
 
