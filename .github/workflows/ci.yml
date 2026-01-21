@@ -208,3 +208,52 @@ jobs:
         flags: unittests
         name: codecov-umbrella
       continue-on-error: true
+
+  # 文档构建测试
+  docs-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: docs/package-lock.json
+
+    - name: Install dependencies
+      working-directory: ./docs
+      run: |
+        pnpm install
+
+    - name: Build docs
+      working-directory: ./docs
+      run: |
+        pnpm build
+
+    - name: Verify build output
+      working-directory: ./docs
+      run: |
+        if [ ! -d "docs/.vitepress/dist" ]; then
+          echo "Error: Build output directory not found"
+          exit 1
+        fi
+        if [ ! -f "docs/.vitepress/dist/index.html" ]; then
+          echo "Error: index.html not found in build output"
+          exit 1
+        fi
+        echo "Docs build verification passed"
+
+    - name: Check for broken links
+      working-directory: ./docs
+      run: |
+        pnpm build 2>&1 | grep -i "dead link\|broken link" && {
+          echo "Found broken links in documentation"
+          exit 1
+        } || echo "No broken links found"
