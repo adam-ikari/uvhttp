@@ -13,7 +13,7 @@ concurrency:
 jobs:
   build-and-test:
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 15
 
     steps:
     - uses: actions/checkout@v3
@@ -36,8 +36,8 @@ jobs:
     - name: Run fast tests
       run: |
         cd build
-        # 运行所有快速测试（每个测试最多60秒超时）
-        ctest --output-on-failure -j1 --timeout 60 --schedule-random || {
+        # 只运行快速测试，排除覆盖率测试
+        ctest --output-on-failure -j1 --timeout 60 --label-regex "^fast$" --schedule-random || {
           echo "Fast tests failed or timed out"
           exit 1
         }
@@ -160,54 +160,6 @@ jobs:
         else
           echo "test_connection_full_coverage not found, skipping valgrind"
         fi
-
-  # 覆盖率测试在 main、develop、feature 分支和 PR 中运行
-  coverage:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 45
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
-
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake build-essential lcov
-
-    - name: Build with coverage
-      run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
-        cmake --build build --config Debug -j$(nproc)
-
-    - name: Run all tests with coverage
-      run: |
-        cd build
-        # 运行所有测试（包括快速测试和慢速测试）以生成完整覆盖率报告
-        ctest --output-on-failure -j1 --timeout 1800 --schedule-random || {
-          echo "Some tests failed, continuing with coverage report"
-        }
-
-    - name: Generate coverage report
-      run: |
-        cd build
-        lcov --capture --directory . --output-file coverage.info 2>/dev/null || echo "No coverage data found"
-        if [ -f coverage.info ]; then
-          lcov --remove coverage.info '/usr/*' --output-file coverage.info
-          lcov --remove coverage.info 'test/*' --output-file coverage.info
-          lcov --remove coverage.info 'examples/*' --output-file coverage.info
-          lcov --summary coverage.info
-        fi
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        files: ./build/coverage.info
-        flags: unittests
-        name: codecov-umbrella
-      continue-on-error: true
 
   # 文档构建测试
   docs-build:

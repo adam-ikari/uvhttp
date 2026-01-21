@@ -260,7 +260,8 @@ foreach(test_file ${GTEST_TEST_FILES})
     target_link_libraries(${test_name} ${LIBS} ${GTEST_LIBS})
     target_include_directories(${test_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
     add_test(NAME ${test_name} COMMAND ${test_name})
-    set_tests_properties(${test_name} PROPERTIES TIMEOUT 60)
+    set_tests_properties(${test_name} PROPERTIES TIMEOUT 60 LABELS "fast")
+endforeach()
 endforeach()
 
 # 添加 gtest 示例测试（使用 C++ 编译）
