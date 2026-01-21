@@ -18,7 +18,7 @@ export default defineConfig({
     ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
     ['meta', {
       'http-equiv': 'Content-Security-Policy',
-      content: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://adam-ikari.github.io; object-src 'none'; base-uri 'self';"
+      content: "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://adam-ikari.github.io; object-src 'none'; base-uri 'self'; form-action 'self';"
     }],
     ['meta', { property: 'og:title', content: 'UVHTTP - 高性能 HTTP/1.1 和 WebSocket 服务器库' }],
     ['meta', { property: 'og:description', content: '基于 libuv 事件驱动架构，峰值吞吐量达 16,832 RPS' }],

@@ -59,7 +59,7 @@ export default {
       ]
     }
   ],
-  '/dev': [
+  '/dev/': [
     {
       text: '开发者指南',
       collapsible: true,

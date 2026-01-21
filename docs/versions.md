@@ -1,68 +1,71 @@
 # 文档版本
 
-本文档提供 UVHTTP 的不同版本文档。
+本文档提供 UVHTTP 的版本信息。
 
 ## 当前版本
 
-**1.5.0** - 最新稳定版本
+**2.0.0** - 最新稳定版本
 
-- [在线文档](/)
-- [GitHub Release](https://github.com/adam-ikari/uvhttp/releases/tag/v1.5.0)
-
-## 历史版本
-
-### 1.4.0
-
-- [在线文档](https://adam-ikari.github.io/uvhttp/v1.4.0/)
-- [GitHub Release](https://github.com/adam-ikari/uvhttp/releases/tag/v1.4.0)
-
-### 1.3.0
-
-- [在线文档](https://adam-ikari.github.io/uvhttp/v1.3.0/)
-- [GitHub Release](https://github.com/adam-ikari/uvhttp/releases/tag/v1.3.0)
-
-### 1.2.0
-
-- [在线文档](https://adam-ikari.github.io/uvhttp/v1.2.0/)
-- [GitHub Release](https://github.com/adam-ikari/uvhttp/releases/tag/v1.2.0)
-
-### 1.1.0
-
-- [在线文档](https://adam-ikari.github.io/uvhttp/v1.1.0/)
-- [GitHub Release](https://github.com/adam-ikari/uvhttp/releases/tag/v1.1.0)
-
-### 1.0.0
-
-- [在线文档](https://adam-ikari.github.io/uvhttp/v1.0.0/)
-- [GitHub Release](https://github.com/adam-ikari/uvhttp/releases/tag/v1.0.0)
+- [查看文档](/)
+- [GitHub Release](https://github.com/adam-ikari/uvhttp/releases/tag/v2.0.0)
+- [更新日志](https://github.com/adam-ikari/uvhttp/blob/main/CHANGELOG.md)
 
 ## 版本说明
 
-- **当前版本**：最新稳定版本，推荐用于生产环境
-- **历史版本**：旧版本文档，仅供参考
-- **开发版本**：最新的开发版本，可能包含不稳定功能
+**2.0.0** 是 UVHTTP 的最新稳定版本，推荐用于生产环境。该版本完全支持，持续更新。
 
-## 版本切换
+## 历史版本
 
-您可以通过以下方式切换文档版本：
+当前没有历史版本。历史版本将在发布新版本后添加到此页面。
 
-1. 使用导航栏中的"版本"下拉菜单
-2. 访问版本说明页面选择版本
-3. 直接访问特定版本的 URL（例如：`https://adam-ikari.github.io/uvhttp/v1.4.0/`）
+## 查看历史版本
 
-## 版本支持策略
+如果您需要查看历史版本的信息，请访问 [GitHub Releases](https://github.com/adam-ikari/uvhttp/releases) 页面。
 
-- **当前版本**：完全支持，持续更新
-- **前一个版本**：安全更新，有限支持
-- **更早版本**：仅维护关键安全更新
-- **弃用版本**：不再支持，建议升级
+## 版本管理说明
 
-## 迁移指南
+### 添加新版本
 
-如果您需要从旧版本升级，请参考以下文档：
+当发布新版本时，需要更新以下文件：
 
-- [从 1.4.x 升级到 1.5.0](https://github.com/adam-ikari/uvhttp/blob/main/docs/MIGRATION_1_5.md)
-- [从 1.3.x 升级到 1.4.0](https://github.com/adam-ikari/uvhttp/blob/v1.4.0/docs/MIGRATION_1_4.md)
-- [从 1.2.x 升级到 1.3.0](https://github.com/adam-ikari/uvhttp/blob/v1.3.0/docs/MIGRATION_1_3.md)
+1. **更新版本配置** (`docs/.vitepress/versions.json`)
+   ```json
+   {
+     "current": "2.1.0",
+     "versions": [
+       {
+         "version": "2.1.0",
+         "status": "current",
+         "releaseDate": "2026-02-01",
+         "url": "/",
+         "githubUrl": "https://github.com/adam-ikari/uvhttp/releases/tag/v2.1.0"
+       },
+       {
+         "version": "2.0.0",
+         "status": "limited",
+         "releaseDate": "2026-01-21",
+         "url": "https://github.com/adam-ikari/uvhttp/releases/tag/v2.0.0",
+         "githubUrl": "https://github.com/adam-ikari/uvhttp/releases/tag/v2.0.0"
+       }
+     ]
+   }
+   ```
 
-> 注意：如果迁移指南链接失效，请查看对应版本的 GitHub Release 页面获取迁移信息。
+2. **更新版本页面** (`docs/versions.md`)
+   - 在"历史版本"部分添加新版本信息
+   - 更新版本状态
+
+### 版本状态说明
+
+- **current** - 当前版本，完全支持，持续更新
+- **security** - 安全更新版本，仅提供关键安全修复
+- **limited** - 有限支持版本，仅维护关键安全更新
+- **deprecated** - 不再支持版本，存在已知问题
+
+## 获取帮助
+
+如果您在使用过程中遇到问题：
+
+- 📖 查看文档：[API 参考](/api/introduction) | [开发者指南](/DEVELOPER_GUIDE.md)
+- 💬 提交问题：[GitHub Issues](https://github.com/adam-ikari/uvhttp/issues)
+- 🗣️ 社区讨论：[GitHub Discussions](https://github.com/adam-ikari/uvhttp/discussions)

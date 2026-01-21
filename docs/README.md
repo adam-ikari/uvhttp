@@ -209,7 +209,7 @@
 → 查看 [API 参考](API_REFERENCE.md)
 
 **如何优化性能？**
-→ 查看 [服务器配置与性能优化指南](SERVER_CONFIG_PERFORMANCE_GUIDE.md)
+→ 查看 [性能测试标准](PERFORMANCE_TESTING_STANDARD.md)
 
 **如何处理错误？**
 → 查看 [错误码参考](ERROR_CODES.md)
@@ -282,7 +282,6 @@
 ### 最新更新
 
 - **2026-01-10**
-  - 新增 [服务器配置与性能优化指南](SERVER_CONFIG_PERFORMANCE_GUIDE.md)
   - 修正所有性能基准值，使用实际测试数据
   - 整合性能测试相关文档，明确文档定位和关系
   - 合并 [性能测试计划](PERFORMANCE_TESTING_PLAN.md) 到 [性能测试标准](PERFORMANCE_TESTING_STANDARD.md)
@@ -329,6 +328,6 @@
 
 ---
 
-**UVHTTP 版本**: 1.5.0
+**UVHTTP 版本**: 2.0.0
 **文档更新**: 2026-01-20
 **维护者**: UVHTTP 团队
