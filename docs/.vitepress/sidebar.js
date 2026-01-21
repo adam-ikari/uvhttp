@@ -5,39 +5,87 @@ export default {
       link: '/'
     },
     {
-      text: '快速开始',
-      link: '/guide/getting-started'
+      text: '📚 使用者文档',
+      link: '/guide/'
     },
     {
-      text: 'API 文档',
-      link: '/api/introduction'
+      text: '🔧 开发者文档',
+      link: '/dev/'
     }
   ],
   '/guide/': [
     {
-      text: '指南',
+      text: '📖 快速开始',
       collapsible: true,
       items: [
         {
+          text: '简介',
+          link: '/guide/introduction'
+        },
+        {
+          text: '安装',
+          link: '/guide/installation'
+        },
+        {
           text: '快速开始',
           link: '/guide/getting-started'
+        },
+        {
+          text: '第一个服务器',
+          link: '/guide/first-server'
         }
       ]
     },
     {
-      text: '教程',
+      text: '🎯 基础教程',
       collapsible: true,
       items: [
         {
           text: '教程',
           link: '/TUTORIAL.md'
+        },
+        {
+          text: '路由系统',
+          link: '/guide/routing'
+        },
+        {
+          text: '请求处理',
+          link: '/guide/requests'
+        },
+        {
+          text: '响应处理',
+          link: '/guide/responses'
         }
       ]
-    }
-  ],
-  '/api/': [
+    },
     {
-      text: 'API 文档',
+      text: '🚀 高级功能',
+      collapsible: true,
+      items: [
+        {
+          text: '中间件系统',
+          link: '/MIDDLEWARE_SYSTEM.md'
+        },
+        {
+          text: '静态文件服务',
+          link: '/STATIC_FILE_SERVER.md'
+        },
+        {
+          text: 'WebSocket',
+          link: '/guide/websocket'
+        },
+        {
+          text: 'WebSocket 认证',
+          link: '/WEBSOCKET_AUTH.md'
+        },
+        {
+          text: '限流功能',
+          link: '/RATE_LIMIT_API.md'
+        }
+      ]
+    },
+    {
+      text: '📋 API 参考',
       collapsible: true,
       items: [
         {
@@ -49,19 +97,57 @@ export default {
           link: '/API_REFERENCE.md'
         },
         {
-          text: '错误码',
-          link: '/ERROR_CODES.md'
+          text: '统一 API',
+          link: '/guide/unified-api'
         },
         {
-          text: '限流 API',
-          link: '/RATE_LIMIT_API.md'
+          text: '错误码',
+          link: '/ERROR_CODES.md'
+        }
+      ]
+    },
+    {
+      text: '⚡ 性能优化',
+      collapsible: true,
+      items: [
+        {
+          text: '性能基准',
+          link: '/PERFORMANCE_BENCHMARK.md'
+        },
+        {
+          text: '性能优化指南',
+          link: '/guide/performance'
+        }
+      ]
+    },
+    {
+      text: '🔒 安全',
+      collapsible: true,
+      items: [
+        {
+          text: '安全指南',
+          link: '/SECURITY.md'
+        }
+      ]
+    },
+    {
+      text: '📖 其他',
+      collapsible: true,
+      items: [
+        {
+          text: '常见问题',
+          link: '/guide/faq'
+        },
+        {
+          text: '最佳实践',
+          link: '/guide/best-practices'
         }
       ]
     }
   ],
   '/dev/': [
     {
-      text: '开发者指南',
+      text: '🏗️ 开发指南',
       collapsible: true,
       items: [
         {
@@ -69,21 +155,21 @@ export default {
           link: '/DEVELOPER_GUIDE.md'
         },
         {
-          text: '开发计划',
-          link: '/DEVELOPMENT_PLAN.md'
+          text: '开发环境搭建',
+          link: '/dev/setup'
         },
         {
-          text: '测试指南',
-          link: '/TESTABILITY_GUIDE.md'
+          text: '代码规范',
+          link: '/dev/coding-standards'
         },
         {
-          text: '测试标准',
-          link: '/TESTING_STANDARDS.md'
+          text: '贡献指南',
+          link: '/dev/contributing'
         }
       ]
     },
     {
-      text: '架构',
+      text: '📐 架构设计',
       collapsible: true,
       items: [
         {
@@ -91,26 +177,12 @@ export default {
           link: '/ARCHITECTURE.md'
         },
         {
-          text: '中间件系统',
-          link: '/MIDDLEWARE_SYSTEM.md'
+          text: '模块设计',
+          link: '/dev/modules'
         },
         {
           text: '路由搜索模式',
           link: '/ROUTER_SEARCH_MODES.md'
-        }
-      ]
-    },
-    {
-      text: '功能模块',
-      collapsible: true,
-      items: [
-        {
-          text: '静态文件服务器',
-          link: '/STATIC_FILE_SERVER.md'
-        },
-        {
-          text: 'WebSocket 认证',
-          link: '/WEBSOCKET_AUTH.md'
         },
         {
           text: '统一响应指南',
@@ -119,12 +191,16 @@ export default {
       ]
     },
     {
-      text: '性能',
+      text: '🧪 测试',
       collapsible: true,
       items: [
         {
-          text: '性能基准',
-          link: '/PERFORMANCE_BENCHMARK.md'
+          text: '测试指南',
+          link: '/TESTABILITY_GUIDE.md'
+        },
+        {
+          text: '测试标准',
+          link: '/TESTING_STANDARDS.md'
         },
         {
           text: '性能测试标准',
@@ -133,27 +209,57 @@ export default {
       ]
     },
     {
-      text: '安全',
+      text: '📊 性能分析',
       collapsible: true,
       items: [
         {
-          text: '安全',
-          link: '/SECURITY.md'
+          text: '性能分析',
+          link: '/dev/performance-analysis'
+        },
+        {
+          text: '内存分析',
+          link: '/dev/memory-analysis'
         }
       ]
     },
     {
-      text: '依赖',
+      text: '🔧 开发工具',
       collapsible: true,
       items: [
         {
-          text: '依赖',
+          text: '依赖管理',
           link: '/DEPENDENCIES.md'
+        },
+        {
+          text: '构建系统',
+          link: '/dev/build-system'
+        },
+        {
+          text: '调试技巧',
+          link: '/dev/debugging'
         }
       ]
     },
     {
-      text: '重构计划',
+      text: '📋 开发计划',
+      collapsible: true,
+      items: [
+        {
+          text: '开发计划',
+          link: '/DEVELOPMENT_PLAN.md'
+        },
+        {
+          text: '路线图',
+          link: '/ROADMAP.md'
+        },
+        {
+          text: '变更日志',
+          link: '/CHANGELOG.md'
+        }
+      ]
+    },
+    {
+      text: '🔄 重构计划',
       collapsible: true,
       items: [
         {

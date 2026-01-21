@@ -119,11 +119,28 @@ UVHTTP 采用现代化的技术栈，确保高性能和可维护性：
 
 ## 文档导航
 
+### 📚 选择你的文档路径
+
+#### 我是应用开发者
+如果你正在使用 UVHTTP 构建应用：
 - **[快速开始](/guide/getting-started)** - 5 分钟快速上手
-- **[API 参考](/api/introduction)** - 完整的 API 文档
+- **[API 参考](/api/introduction)** - 完整的 API 文档（推荐！）
+- **[完整教程](/TUTORIAL.md)** - 从基础到高级的教程
+- **[统一 API](/guide/unified-api.md)** - 简化的 API 接口
+- **[性能优化](/guide/performance.md)** - 优化你的应用性能
+
+#### 我是贡献者/开发者
+如果你正在贡献代码或深入了解内部实现：
+- **[开发者指南](/DEVELOPER_GUIDE.md)** - 开发者必读
 - **[架构设计](ARCHITECTURE.md)** - 深入了解系统架构
+- **[测试指南](TESTABILITY_GUIDE.md)** - 测试标准和覆盖率
 - **[性能基准](PERFORMANCE_BENCHMARK.md)** - 详细的性能测试数据
-- **[开发者指南](DEVELOPER_GUIDE.md)** - 贡献代码和开发规范
+- **[贡献指南](/dev/contributing.md)** - 如何贡献代码
+
+### 📖 完整文档索引
+
+- **[使用者文档](/guide/)** - 应用开发者文档
+- **[开发者文档](/dev/)** - 贡献者和维护者文档
 
 ## 社区与支持
 
