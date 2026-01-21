@@ -263,7 +263,10 @@ foreach(test_file ${GTEST_TEST_FILES})
     
     # 设置测试超时时间和标签
     if(${test_name} STREQUAL "test_server_full_coverage" OR 
-       ${test_name} STREQUAL "test_deps_full_coverage")
+       ${test_name} STREQUAL "test_deps_full_coverage" OR
+       ${test_name} STREQUAL "test_server_rate_limit_coverage" OR
+       ${test_name} STREQUAL "test_server_simple_api_coverage" OR
+       ${test_name} STREQUAL "test_static_prewarm_coverage")
         # 这些测试需要更长时间运行，设置为慢速测试，超时180秒
         set_tests_properties(${test_name} PROPERTIES TIMEOUT 180 LABELS "slow")
     else()
