@@ -1,0 +1,132 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Rate limiting: Only run once per hour per repository
+    concurrency:
+      group: ai-review-${{ github.repository }}-${{ github.head_ref }}
+      cancel-in-progress: false
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v42
+      with:
+        files: |
+          **/*.c
+          **/*.h
+          **/*.cpp
+          **/*.hpp
+          **/*.cc
+          **/*.cxx
+          **/*.m
+          **/*.mm
+
+    - name: AI Code Review
+      if: steps.changed-files.outputs.any_changed == 'true'
+      uses: ./.github/actions/iflow-code-review
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        iflow-token: ${{ secrets.IFLOW_TOKEN }}
+        changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
+        model: gpt-4o
+        max-tokens: 4000
+        temperature: 0.3
+
+    - name: Post Review Comment
+      if: steps.changed-files.outputs.any_changed == 'true'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          if (!fs.existsSync('review_summary.md')) {
+            console.error('Error: review_summary.md not found');
+            core.setFailed('Review summary file not found');
+            return;
+          }
+
+          try {
+            const summary = fs.readFileSync('review_summary.md', 'utf8');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: summary
+            });
+
+            console.log('iFlow review comment posted successfully');
+          } catch (error) {
+            console.error('Error posting review comment:', error);
+            core.setFailed(`Failed to post review comment: ${error.message}`);
+          }
+
+    - name: Check for Critical Issues
+      id: critical-check
+      if: steps.changed-files.outputs.any_changed == 'true'
+      run: |
+        set -e  # Exit on error
+
+        # Check if review summary file exists
+        if [ ! -f "review_summary.md" ]; then
+          echo "Error: review_summary.md not found"
+          echo "CRITICAL_ISSUES_FOUND=false" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+
+        # Check for critical issues in the review summary
+        if grep -qi "critical\|security\|memory leak\|buffer overflow" review_summary.md 2>/dev/null; then
+          echo "CRITICAL_ISSUES_FOUND=true" >> $GITHUB_OUTPUT
+          echo "Found critical issues in review"
+        else
+          echo "CRITICAL_ISSUES_FOUND=false" >> $GITHUB_OUTPUT
+          echo "No critical issues found"
+        fi
+
+    - name: Alert on Critical Issues
+      if: steps.changed-files.outputs.any_changed == 'true' && steps.critical-check.outputs.CRITICAL_ISSUES_FOUND == 'true'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          if (!fs.existsSync('review_summary.md')) {
+            console.error('Error: review_summary.md not found');
+            return;
+          }
+
+          try {
+            const review = fs.readFileSync('review_summary.md', 'utf8');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Critical Issues Found in PR #${context.issue.number}`,
+              body: `iFlow AI Code Review found critical issues in PR #${context.issue.number}.\n\n${review}`,
+              labels: ['critical', 'security', 'ai-review']
+            });
+
+            console.log('Critical issue alert created successfully');
+          } catch (error) {
+            console.error('Error creating critical issue alert:', error);
+            core.setFailed(`Failed to create critical issue alert: ${error.message}`);
+          }
+
+    - name: Cleanup
+      if: always()
+      run: |
+        # Clean up temporary files
+        rm -f review_summary.md
+        echo "Cleanup completed"
