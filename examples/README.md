@@ -447,12 +447,12 @@ signal(SIGINT, signal_handler);
 signal(SIGTERM, signal_handler);
 ```
 
-### 5. 使用 TRUE 和 FALSE
+### 5. 使用 UVHTTP_TRUE 和 UVHTTP_FALSE
 
 ```c
 // ✅ 推荐
-server->is_listening = TRUE;
-conn->keep_alive = FALSE;
+server->is_listening = UVHTTP_TRUE;
+conn->keep_alive = UVHTTP_FALSE;
 
 // ❌ 不推荐
 server->is_listening = 1;
@@ -525,7 +525,7 @@ curl -X DELETE http://localhost:8080/api/posts/1
 2. 添加详细的注释
 3. 包含测试命令
 4. 更新 README 文档
-5. 使用 TRUE 和 FALSE 宏代替数字 1 和 0
+5. 使用 UVHTTP_TRUE 和 UVHTTP_FALSE 宏代替数字 1 和 0
 
 ## 相关文档
 

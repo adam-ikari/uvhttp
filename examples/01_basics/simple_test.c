@@ -3,6 +3,8 @@
 #include <unistd.h>
 
 int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;  // 避免未使用参数警告
+    
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/plain");
     uvhttp_response_set_body(response, "OK", 2);

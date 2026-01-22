@@ -56,6 +56,8 @@ static char* create_error_response(const char* error, const char* details) {
 
 // 处理 GET /api/info - 返回服务器信息（使用统一响应处理）
 uvhttp_result_t info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 避免未使用参数警告
+    
     cJSON* info = cJSON_CreateObject();
     cJSON_AddStringToObject(info, "server", "UVHTTP");
     cJSON_AddStringToObject(info, "version", UVHTTP_VERSION_STRING);
@@ -203,6 +205,8 @@ uvhttp_result_t list_users_handler(uvhttp_request_t* req, uvhttp_response_t* res
 
 // 处理 GET /api/health - 健康检查
 uvhttp_result_t health_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 避免未使用参数警告
+    
     cJSON* health = cJSON_CreateObject();
     cJSON_AddStringToObject(health, "status", "healthy");
     cJSON_AddNumberToObject(health, "uptime", 3600);
@@ -236,6 +240,8 @@ uvhttp_result_t health_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 // 主页处理器 - 返回 HTML 说明页面（使用统一响应处理）
 uvhttp_result_t home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 避免未使用参数警告
+    
     const char* html = 
         "<!DOCTYPE html>"
         "<html>"

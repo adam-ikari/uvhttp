@@ -33,7 +33,7 @@ else()
 endif()
 
 # 性能测试示例
-add_executable(performance_test ../performance_test.c)
+add_executable(performance_test performance_test.c)
 target_link_libraries(performance_test
     ${UVHTTP_LIBRARY}
     ${LIBUV_LIB}
@@ -44,7 +44,7 @@ target_link_libraries(performance_test
     m pthread dl)
 add_dependencies(performance_test uvhttp)
 
-add_executable(performance_test_static ../performance_test_static.c)
+add_executable(performance_test_static performance_test_static.c)
 target_link_libraries(performance_test_static
     ${UVHTTP_LIBRARY}
     ${LIBUV_LIB}
@@ -55,7 +55,7 @@ target_link_libraries(performance_test_static
     m pthread dl)
 add_dependencies(performance_test_static uvhttp)
 
-add_executable(performance_static_server ../performance_static_server.c)
+add_executable(performance_static_server performance_static_server.c)
 target_link_libraries(performance_static_server
     ${UVHTTP_LIBRARY}
     ${LIBUV_LIB}
@@ -66,46 +66,35 @@ target_link_libraries(performance_static_server
     m pthread dl)
 add_dependencies(performance_static_server uvhttp)
 
-add_executable(test_static_middleware ../test_static_middleware.c)
-target_link_libraries(test_static_middleware ${UVHTTP_LIBRARY} ${LIBUV_LIB} ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a m pthread dl)
-add_dependencies(test_static_middleware uvhttp)
-
-# 健康检查示例
-add_executable(health_check_demo ../health_check_demo.c)
-target_compile_definitions(health_check_demo PRIVATE UVHTTP_TEST_MODE=0 UVHTTP_ALLOCATOR_TYPE=1)
-target_link_libraries(health_check_demo
+add_executable(performance_static_server_broken performance_static_server_broken.c)
+target_link_libraries(performance_static_server_broken
     ${UVHTTP_LIBRARY}
     ${LIBUV_LIB}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mimalloc/build/libmimalloc.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson/libcjson.a
     m pthread dl)
-add_dependencies(health_check_demo uvhttp)
+add_dependencies(performance_static_server_broken uvhttp)
 
-# WebSocket 示例（如果启用）
-if(BUILD_WITH_WEBSOCKET)
-    add_executable(websocket_echo_server ../websocket_echo_server.c)
-    target_link_libraries(websocket_echo_server
-        ${UVHTTP_LIBRARY}
-        ${LIBUV_LIB}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
-        m pthread dl)
-    add_dependencies(websocket_echo_server uvhttp)
+add_executable(performance_test_tls performance_test_tls.c)
+target_link_libraries(performance_test_tls
+    ${UVHTTP_LIBRARY}
+    ${LIBUV_LIB}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
+    m pthread dl)
+add_dependencies(performance_test_tls uvhttp)
 
-    add_executable(websocket_test_server ../websocket_test_server.c)
-    target_link_libraries(websocket_test_server
-        ${UVHTTP_LIBRARY}
-        ${LIBUV_LIB}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
-        m pthread dl)
-    add_dependencies(websocket_test_server uvhttp)
-endif()
+add_executable(performance_test_websocket performance_test_websocket.c)
+target_link_libraries(performance_test_websocket
+    ${UVHTTP_LIBRARY}
+    ${LIBUV_LIB}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
+    m pthread dl)
+add_dependencies(performance_test_websocket uvhttp)

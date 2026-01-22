@@ -67,7 +67,7 @@ static void init_sample_data() {
         g_todos[i].id = g_next_id++;
         strncpy(g_todos[i].title, titles[i], sizeof(g_todos[i].title) - 1);
         strncpy(g_todos[i].description, descriptions[i], sizeof(g_todos[i].description) - 1);
-        g_todos[i].completed = (i == 2) ? TRUE : FALSE;  // 第3个已完成
+        g_todos[i].completed = (i == 2) ? UVHTTP_TRUE : UVHTTP_FALSE;  // 第3个已完成
         g_todos[i].priority = priorities[i];
         snprintf(g_todos[i].created_at, sizeof(g_todos[i].created_at),
                  "2025-01-%02dT09:00:00Z", i + 1);
@@ -341,7 +341,7 @@ int create_todo_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         strcpy(new_todo.description, "");
     }
     
-    new_todo.completed = FALSE;
+    new_todo.completed = UVHTTP_FALSE;
     
     if (cJSON_IsNumber(priority)) {
         int prio = cJSON_GetNumberValue(priority);

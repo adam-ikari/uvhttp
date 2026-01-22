@@ -17,6 +17,8 @@ typedef struct {
 
 // 创建应用上下文
 app_context_t* app_context_new(uv_loop_t* loop) {
+    (void)loop;  // 避免未使用参数警告
+    
     app_context_t* ctx = (app_context_t*)uvhttp_alloc(sizeof(app_context_t));
     if (!ctx) {
         return NULL;
@@ -69,8 +71,8 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         return -1;
     }
     
-    // 从循环获取应用上下文
-    uv_loop_t* loop = uvhttp_request_get_loop(request);
+    // 从客户端连接获取循环
+    uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)request->client);
     app_context_t* ctx = (app_context_t*)loop->data;
     
     if (!ctx) {
@@ -82,17 +84,6 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     }
     
     ctx->request_count++;
-    
-    // 使用静态缓冲区避免动态分配
-    static const char* response_template = 
-        "Hello, World!\n\n"
-        "=== 服务器配置信息 ===\n"
-        "最大连接数: %d\n"
-        "每连接最大请求数: %d\n"
-        "当前活动连接数: %zu\n"
-        "最大请求体大小: %zuMB\n"
-        "读取缓冲区大小: %zuKB\n"
-        "========================\n";
     
     // 使用栈上的缓冲区而不是动态分配
     char response_body[512];
@@ -118,7 +109,14 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     
     // 使用snprintf的安全版本
     int written = snprintf(response_body, sizeof(response_body),
-        response_template,
+        "Hello, World!\n\n"
+        "=== 服务器配置信息 ===\n"
+        "最大连接数: %d\n"
+        "每连接最大请求数: %d\n"
+        "当前活动连接数: %zu\n"
+        "最大请求体大小: %zuMB\n"
+        "读取缓冲区大小: %zuKB\n"
+        "========================\n",
         max_connections,
         max_requests,
         active_connections,
@@ -127,7 +125,7 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     );
     
     // 检查snprintf是否成功
-    if (written < 0 || written >= sizeof(response_body)) {
+    if (written < 0 || (size_t)written >= sizeof(response_body)) {
         // 如果失败，使用简单的响应
         const char* simple_response = "Hello, World!\n";
         uvhttp_response_set_status(response, 200);
@@ -295,18 +293,6 @@ int main() {
         printf("Performing final cleanup...\n");
         app_context_free((app_context_t*)loop->data);
         loop->data = NULL;
-    }
-    
-    return 0;
-}
-        uvhttp_server_free(g_server);
-        g_server = NULL;
-        g_router = NULL;
-    }
-    
-    if (g_config) {
-        uvhttp_config_free(g_config);
-        g_config = NULL;
     }
     
     return 0;

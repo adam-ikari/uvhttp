@@ -174,9 +174,9 @@ int main() {
     uvhttp_static_config_t static_config = {0};
     strcpy(static_config.root_directory, "./public");
     strcpy(static_config.index_file, "index.html");
-    static_config.enable_directory_listing = TRUE;
-    static_config.enable_etag = TRUE;
-    static_config.enable_last_modified = TRUE;
+    static_config.enable_directory_listing = UVHTTP_TRUE;
+    static_config.enable_etag = UVHTTP_TRUE;
+    static_config.enable_last_modified = UVHTTP_TRUE;
     static_config.max_cache_size = 10 * 1024 * 1024; /* 10MB 缓存 */
     static_config.cache_ttl = 3600; /* 1小时缓存 */
     

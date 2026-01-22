@@ -35,6 +35,8 @@ int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 }
 
 int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 避免未使用参数警告
+    
     const char* json = "{"
         "\"message\": \"这是快速启动演示\"," 
         "\"status\": \"success\"," 

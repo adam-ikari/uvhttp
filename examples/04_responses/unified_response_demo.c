@@ -21,6 +21,7 @@ static uvhttp_server_t* g_server = NULL;
 
 // 处理 GET /api/info - 返回服务器信息（使用统一响应处理）
 uvhttp_result_t info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 避免未使用参数警告
     // 创建 JSON 响应
     cJSON* info = cJSON_CreateObject();
     cJSON_AddStringToObject(info, "server", "UVHTTP");
@@ -51,6 +52,7 @@ uvhttp_result_t info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 // 主页处理器 - 返回主页（使用统一响应处理）
 uvhttp_result_t home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 避免未使用参数警告
     const char* html_content = 
         "<!DOCTYPE html>"
         "<html>"
@@ -95,7 +97,9 @@ uvhttp_result_t home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 // JSON 响应演示
 uvhttp_result_t demo_json_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    const char* json_demo = 
+    (void)req;  // 避免未使用参数警告
+    char json_buffer[512];
+    snprintf(json_buffer, sizeof(json_buffer),
         "{"
         "  \"message\": \"这是一个 JSON 响应演示\","
         "  \"timestamp\": %ld,"
@@ -105,10 +109,8 @@ uvhttp_result_t demo_json_handler(uvhttp_request_t* req, uvhttp_response_t* res)
         "    \"content_type\": \"application/json\""
         "  },"
         "  \"features\": [\"使用者控制\", \"统一处理\", \"类型安全\"]"
-        "}";
-    
-    char json_buffer[512];
-    snprintf(json_buffer, sizeof(json_buffer), json_demo, time(NULL));
+        "}",
+        time(NULL));
     
     // 设置 Content-Type 为 JSON
     uvhttp_response_set_header(res, "Content-Type", "application/json");
@@ -120,6 +122,7 @@ uvhttp_result_t demo_json_handler(uvhttp_request_t* req, uvhttp_response_t* res)
 
 // HTML 响应演示
 uvhttp_result_t demo_html_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 避免未使用参数警告
     const char* html_demo = 
         "<!DOCTYPE html>"
         "<html><head><title>HTML 演示</title></head>"
@@ -138,14 +141,15 @@ uvhttp_result_t demo_html_handler(uvhttp_request_t* req, uvhttp_response_t* res)
 
 // 文本响应演示
 uvhttp_result_t demo_text_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    const char* text_demo_template = 
+    (void)req;  // 避免未使用参数警告
+    
+    char text_demo[256];
+    snprintf(text_demo, sizeof(text_demo),
         "这是一个纯文本响应演示。\n"
         "Content-Type 由使用者设置为 text/plain。\n"
         "适用于日志文件、配置文件等纯文本内容。\n"
-        "时间戳: %ld";
-    
-    char text_demo[256];
-    snprintf(text_demo, sizeof(text_demo), text_demo_template, time(NULL));
+        "时间戳: %ld",
+        time(NULL));
     
     // 设置 Content-Type 为文本
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
@@ -157,6 +161,7 @@ uvhttp_result_t demo_text_handler(uvhttp_request_t* req, uvhttp_response_t* res)
 
 // 错误响应演示
 uvhttp_result_t demo_error_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 避免未使用参数警告
     // 使用统一的错误响应函数
     uvhttp_error_t result = uvhttp_send_error_response(res, 400, "演示错误", "这是一个演示错误响应");
     return (result == UVHTTP_OK) ? UVHTTP_OK : UVHTTP_ERROR_RESPONSE_SEND;
@@ -164,6 +169,7 @@ uvhttp_result_t demo_error_handler(uvhttp_request_t* req, uvhttp_response_t* res
 
 // 统一处理演示 - 根据请求内容返回不同类型的响应
 uvhttp_result_t demo_unified_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 避免未使用参数警告
     const char* body = uvhttp_request_get_body(req);
     
     if (!body || strlen(body) == 0) {
@@ -178,6 +184,7 @@ uvhttp_result_t demo_unified_handler(uvhttp_request_t* req, uvhttp_response_t* r
 
 // 便捷函数演示
 uvhttp_result_t demo_convenience_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 避免未使用参数警告
     const char* accept_header = uvhttp_request_get_header(req, "Accept");
     
     if (accept_header && strstr(accept_header, "application/json")) {

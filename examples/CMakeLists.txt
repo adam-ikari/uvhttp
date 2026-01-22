@@ -48,39 +48,20 @@ add_subdirectory(02_routing)
 # 响应处理示例
 add_subdirectory(04_responses)
 
+# RESTful API 示例
+add_subdirectory(03_api_examples)
+
 # 高级特性示例
 add_subdirectory(05_advanced)
 
-# 生产环境示例（待添加）
-# add_subdirectory(06_production)
+# 静态文件服务示例
+add_subdirectory(06_static_files)
 
-# WebSocket 连接管理测试示例（如果启用）
-if(BUILD_WITH_WEBSOCKET)
-    # WebSocket 连接管理测试
-    add_executable(test_ws_connection_management test_ws_connection_management.c)
-    target_link_libraries(test_ws_connection_management ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
-    add_dependencies(test_ws_connection_management uvhttp)
+# 配置管理示例
+add_subdirectory(07_config)
 
-    # WebSocket 认证示例
-    add_executable(websocket_auth_server websocket_auth_server.c)
-    target_link_libraries(websocket_auth_server ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
-    add_dependencies(websocket_auth_server uvhttp)
-endif()
+# 内存管理示例
+add_subdirectory(08_memory)
 
 # 性能测试示例
-add_executable(performance_static_server performance_static_server.c)
-target_link_libraries(performance_static_server ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
-add_dependencies(performance_static_server uvhttp)
-
-# RESTful API 示例
-add_executable(restful_blog_api restful_blog_api.c)
-target_link_libraries(restful_blog_api ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
-add_dependencies(restful_blog_api uvhttp)
-
-add_executable(restful_todo_api restful_todo_api.c)
-target_link_libraries(restful_todo_api ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
-add_dependencies(restful_todo_api uvhttp)
-
-add_executable(restful_user_api restful_user_api.c)
-target_link_libraries(restful_user_api ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
-add_dependencies(restful_user_api uvhttp)
+add_subdirectory(performance_only)

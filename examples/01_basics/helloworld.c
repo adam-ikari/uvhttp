@@ -18,6 +18,8 @@ typedef struct {
 
 // 创建应用上下文
 app_context_t* app_context_new(uv_loop_t* loop) {
+    (void)loop;  // 避免未使用参数警告
+    
     app_context_t* ctx = (app_context_t*)uvhttp_alloc(sizeof(app_context_t));
     if (!ctx) {
         return NULL;
@@ -70,8 +72,8 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         return -1;
     }
     
-    // 从循环获取应用上下文
-    uv_loop_t* loop = uvhttp_request_get_loop(request);
+    // 从客户端连接获取循环
+    uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)request->client);
     app_context_t* ctx = (app_context_t*)loop->data;
     
     if (!ctx) {
@@ -96,7 +98,7 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         "每连接最大请求数: %d\n"
         "当前活动连接数: %zu\n"
         "最大请求体大小: %zuMB\n"
-        "读取缓冲区大小: %zuKB\n"
+        "读取缓冲区大小: %uKB\n"
         "========================\n",
         config ? config->max_connections : 0,
         config ? config->max_requests_per_connection : 0,

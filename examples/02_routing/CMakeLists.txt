@@ -35,3 +35,25 @@ target_link_libraries(method_routing
     ${XXHASH_LIB}
     pthread m dl)
 add_dependencies(method_routing uvhttp)
+
+add_executable(api_demo api_demo.c)
+target_link_libraries(api_demo
+    ${UVHTTP_LIB}
+    ${LIBUV_LIB}
+    ${MBEDTLS_LIBS}
+    ${LLHTTP_LIB}
+    ${CJSON_LIB}
+    ${XXHASH_LIB}
+    pthread m dl)
+add_dependencies(api_demo uvhttp)
+
+add_executable(json_api_demo json_api_demo.c)
+target_link_libraries(json_api_demo
+    ${UVHTTP_LIB}
+    ${LIBUV_LIB}
+    ${MBEDTLS_LIBS}
+    ${LLHTTP_LIB}
+    ${CJSON_LIB}
+    ${XXHASH_LIB}
+    pthread m dl)
+add_dependencies(json_api_demo uvhttp)

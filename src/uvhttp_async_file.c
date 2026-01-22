@@ -353,19 +353,19 @@ static void on_file_stream_chunk(uv_fs_t* req) {
                                on_file_stream_chunk);
             if (ret != 0) {
                 /* 读取失败，停止流传输 */
-                stream_ctx->is_active = FALSE;
+                stream_ctx->is_active = UVHTTP_FALSE;
                 uv_fs_close(uv_default_loop(), &stream_ctx->fs_req, 
                           stream_ctx->file_handle, NULL);
             }
         } else {
             /* 文件传输完成 */
-            stream_ctx->is_active = FALSE;
+            stream_ctx->is_active = UVHTTP_FALSE;
             uv_fs_close(uv_default_loop(), &stream_ctx->fs_req, 
                       stream_ctx->file_handle, NULL);
         }
     } else {
         /* 读取失败或EOF */
-        stream_ctx->is_active = FALSE;
+        stream_ctx->is_active = UVHTTP_FALSE;
         uv_fs_close(uv_default_loop(), &stream_ctx->fs_req, 
                   stream_ctx->file_handle, NULL);
     }
@@ -395,7 +395,7 @@ int uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager,
     
     stream_ctx->chunk_size = chunk_size;
     stream_ctx->response = response;
-    stream_ctx->is_active = TRUE;
+    stream_ctx->is_active = UVHTTP_TRUE;
     
     /* 分配分块缓冲区 */
     stream_ctx->chunk_buffer = uvhttp_alloc(chunk_size);

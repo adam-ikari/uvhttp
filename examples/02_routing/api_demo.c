@@ -56,6 +56,8 @@ int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 }
 
 int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 避免未使用参数警告
+    
     const char* html = 
         "<!DOCTYPE html>"
         "<html>"

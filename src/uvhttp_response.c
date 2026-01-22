@@ -86,13 +86,13 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer, si
                        response->headers[i].name, response->headers[i].value);
         
         if (strcasecmp(response->headers[i].name, "Content-Type") == 0) {
-            has_content_type = TRUE;
+            has_content_type = UVHTTP_TRUE;
         }
         if (strcasecmp(response->headers[i].name, "Content-Length") == 0) {
-            has_content_length = TRUE;
+            has_content_length = UVHTTP_TRUE;
         }
         if (strcasecmp(response->headers[i].name, "Connection") == 0) {
-            has_connection = TRUE;
+            has_connection = UVHTTP_TRUE;
         }
     }
     
@@ -142,10 +142,10 @@ uvhttp_error_t uvhttp_response_init(uvhttp_response_t* response, void* client) {
     memset(response, 0, sizeof(uvhttp_response_t));
     
     // HTTP/1.1优化：设置默认值
-    response->keep_alive = TRUE;    // HTTP/1.1默认保持连接
+    response->keep_alive = UVHTTP_TRUE;    // HTTP/1.1默认保持连接
     response->status_code = UVHTTP_STATUS_OK;
-    response->sent = FALSE;          // 未发送
-    response->finished = FALSE;       // 未完成
+    response->sent = UVHTTP_FALSE;          // 未发送
+    response->finished = UVHTTP_FALSE;       // 未完成
     
     response->client = client;
     
@@ -539,7 +539,7 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
     }
 
     /* 标记响应已发送 */
-    response->sent = TRUE;
+    response->sent = UVHTTP_TRUE;
 
     /* 调用副作用函数发送数据 */
     err = uvhttp_response_send_raw(response_data, response_length,
@@ -549,7 +549,7 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
     uvhttp_free(response_data);
 
     if (err == UVHTTP_OK) {
-        response->finished = TRUE;
+        response->finished = UVHTTP_TRUE;
     }
 
     return err;
@@ -601,8 +601,8 @@ uvhttp_error_t uvhttp_response_send_mock(uvhttp_response_t* response) {
     }
     
     uvhttp_free(response_data);
-    response->sent = TRUE;
-    response->finished = TRUE;
+    response->sent = UVHTTP_TRUE;
+    response->finished = UVHTTP_TRUE;
     
     return UVHTTP_OK;
 }

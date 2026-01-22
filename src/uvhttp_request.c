@@ -145,7 +145,7 @@ static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
     
     /* 性能优化：只设置长度标记，避免清零整个缓冲区（256字节） */
     conn->current_header_field_len = 0;
-    conn->parsing_header_field = TRUE;
+    conn->parsing_header_field = UVHTTP_TRUE;
     
     /* 检查header字段名长度限制 */
     if (length >= UVHTTP_MAX_HEADER_NAME_SIZE) {
@@ -267,7 +267,7 @@ static int on_message_complete(llhttp_t* parser) {
     conn->request->method = (uvhttp_method_t)llhttp_get_method(parser);
     
     /* 标记解析完成 - 无需原子操作 */
-    conn->parsing_complete = TRUE;
+    conn->parsing_complete = UVHTTP_TRUE;
     
     /* 重置读缓冲区使用量，为下一个请求做准备 */
     conn->read_buffer_used = 0;
@@ -276,7 +276,7 @@ static int on_message_complete(llhttp_t* parser) {
     /* 限流检查 - 在中间件之前执行 */
     if (conn->server && conn->server->rate_limit_enabled) {
         /* 检查客户端IP是否在白名单中 */
-        int is_whitelisted = FALSE;
+        int is_whitelisted = UVHTTP_FALSE;
         if (conn->server->rate_limit_whitelist && conn->server->rate_limit_whitelist_count > 0) {
             /* 获取客户端IP地址 */
             struct sockaddr_in client_addr;
@@ -290,7 +290,7 @@ static int on_message_complete(llhttp_t* parser) {
                 struct whitelist_item *item;
                 HASH_FIND_STR(conn->server->rate_limit_whitelist_hash, client_ip, item);
                 if (item) {
-                    is_whitelisted = TRUE;
+                    is_whitelisted = UVHTTP_TRUE;
                 }
             }
         }
@@ -411,20 +411,20 @@ static int is_websocket_handshake(uvhttp_request_t* request) {
 
     // 检查必需的头部
     if (!upgrade || !connection || !ws_key) {
-        return FALSE;
+        return UVHTTP_FALSE;
     }
 
     // 检查Upgrade头部（不区分大小写）
     if (strcasecmp(upgrade, "websocket") != 0) {
-        return FALSE;
+        return UVHTTP_FALSE;
     }
 
     // 检查Connection头部（可能包含多个值）
     if (strstr(connection, "Upgrade") == NULL) {
-        return FALSE;
+        return UVHTTP_FALSE;
     }
 
-    return TRUE;
+    return UVHTTP_TRUE;
 }
 
 const char* uvhttp_request_get_method(uvhttp_request_t* request) {

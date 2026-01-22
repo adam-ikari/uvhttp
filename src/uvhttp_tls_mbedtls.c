@@ -92,7 +92,7 @@ uvhttp_tls_error_t uvhttp_tls_init(uvhttp_context_t* context) {
         return UVHTTP_TLS_ERROR_INIT;
     }
     
-    context->tls_initialized = TRUE;
+    context->tls_initialized = UVHTTP_TRUE;
     return UVHTTP_TLS_OK;
 }
 
@@ -105,7 +105,7 @@ void uvhttp_tls_cleanup(uvhttp_context_t* context) {
     mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
     mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
 
-    context->tls_initialized = FALSE;
+    context->tls_initialized = UVHTTP_FALSE;
 }
 
 // TLS上下文管理
@@ -142,8 +142,8 @@ uvhttp_tls_context_t* uvhttp_tls_context_new(void) {
     mbedtls_ssl_conf_rng(&ctx->conf, mbedtls_ctr_drbg_random, &ctx->ctr_drbg);
     // mbedtls_ssl_conf_session_cache(&ctx->conf, &ctx->cache, mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);  // 暂时禁用
     
-    ctx->is_server = TRUE;
-    ctx->initialized = TRUE;
+    ctx->is_server = UVHTTP_TRUE;
+    ctx->initialized = UVHTTP_TRUE;
     
     return ctx;
 }

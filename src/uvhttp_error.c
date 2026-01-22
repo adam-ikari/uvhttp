@@ -79,7 +79,7 @@ static int is_retryable_error(uvhttp_error_t error) {
         /* 可重试的中间件错误 */
         case UVHTTP_ERROR_MIDDLEWARE_EXECUTE:
         case UVHTTP_ERROR_LOG_WRITE:
-            return TRUE;
+            return UVHTTP_TRUE;
         
         /* 不可重试的错误 */
         case UVHTTP_ERROR_INVALID_PARAM:
@@ -137,10 +137,10 @@ static int is_retryable_error(uvhttp_error_t error) {
         case UVHTTP_ERROR_LOG_INIT:
         case UVHTTP_ERROR_LOG_FILE_OPEN:
         case UVHTTP_ERROR_LOG_NOT_INITIALIZED:
-            return FALSE;
+            return UVHTTP_FALSE;
         
         default:
-            return FALSE;
+            return UVHTTP_FALSE;
     }
 }
 

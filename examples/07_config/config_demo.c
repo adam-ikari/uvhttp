@@ -66,7 +66,7 @@ int demo_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         "<li>当前活动连接数: %zu</li>"
         "<li>已处理请求数: %d</li>"
         "<li>最大请求体大小: %zuMB</li>"
-        "<li>读取缓冲区大小: %zuKB</li>"
+        "<li>读取缓冲区大小: %uKB</li>"
         "</ul>"
         "<p>请求时间: %s</p>"
         "</body></html>",
@@ -184,6 +184,8 @@ void on_config_change(const char* key, const void* old_value, const void* new_va
 
 // 动态配置调整定时器
 void config_adjustment_timer(uv_timer_t* handle) {
+    (void)handle;  // 避免未使用参数警告
+    
     static int adjustment_count = 0;
     adjustment_count++;
 
@@ -218,7 +220,7 @@ void print_config_info(const uvhttp_config_t* config) {
     printf("📝 每连接最大请求数: %d\n", config->max_requests_per_connection);
     printf("💾 最大请求体大小: %zuMB\n", config->max_body_size / (1024 * 1024));
     printf("📄 最大请求头大小: %zuKB\n", config->max_header_size / 1024);
-    printf("📖 读取缓冲区大小: %zuKB\n", config->read_buffer_size / 1024);
+    printf("📖 读取缓冲区大小: %uKB\n", config->read_buffer_size / 1024);
     printf("📋 监听队列大小: %d\n", config->backlog);
     printf("🗜️  启用压缩: %s\n", config->enable_compression ? "是" : "否");
     printf("🔒 启用TLS: %s\n", config->enable_tls ? "是" : "否");

@@ -78,58 +78,58 @@ TEST(UvhttpUtilsTest, IsValidStatusCode) {
     /* 测试状态码验证 */
     
     /* 有效状态码 */
-    EXPECT_EQ(uvhttp_is_valid_status_code(100), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_status_code(200), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_status_code(301), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_status_code(404), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_status_code(500), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_status_code(599), TRUE);
+    EXPECT_EQ(uvhttp_is_valid_status_code(100), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_status_code(200), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_status_code(301), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_status_code(404), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_status_code(500), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_status_code(599), UVHTTP_TRUE);
     
     /* 无效状态码 */
-    EXPECT_EQ(uvhttp_is_valid_status_code(99), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_status_code(600), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_status_code(0), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_status_code(-1), FALSE);
+    EXPECT_EQ(uvhttp_is_valid_status_code(99), UVHTTP_FALSE);
+    EXPECT_EQ(uvhttp_is_valid_status_code(600), UVHTTP_FALSE);
+    EXPECT_EQ(uvhttp_is_valid_status_code(0), UVHTTP_FALSE);
+    EXPECT_EQ(uvhttp_is_valid_status_code(-1), UVHTTP_FALSE);
     
     /* 边界值 */
-    EXPECT_EQ(uvhttp_is_valid_status_code(99), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_status_code(100), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_status_code(599), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_status_code(600), FALSE);
+    EXPECT_EQ(uvhttp_is_valid_status_code(99), UVHTTP_FALSE);
+    EXPECT_EQ(uvhttp_is_valid_status_code(100), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_status_code(599), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_status_code(600), UVHTTP_FALSE);
 }
 
 TEST(UvhttpUtilsTest, IsValidContentType) {
     /* 测试 Content-Type 验证 */
     
     /* 有效 Content-Type */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain"), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("application/json"), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("application/octet-stream"), TRUE);
+    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain"), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_content_type("application/json"), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_content_type("application/octet-stream"), UVHTTP_TRUE);
     
     /* 无效 Content-Type */
-    EXPECT_EQ(uvhttp_is_valid_content_type(nullptr), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_content_type(""), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("text"), FALSE);  /* 缺少 '/' */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/html; charset=utf-8"), FALSE);  /* 包含分号 */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain; charset=\"utf-8\""), FALSE);  /* 包含引号 */
+    EXPECT_EQ(uvhttp_is_valid_content_type(nullptr), UVHTTP_FALSE);
+    EXPECT_EQ(uvhttp_is_valid_content_type(""), UVHTTP_FALSE);
+    EXPECT_EQ(uvhttp_is_valid_content_type("text"), UVHTTP_FALSE);  /* 缺少 '/' */
+    EXPECT_EQ(uvhttp_is_valid_content_type("text/html; charset=utf-8"), UVHTTP_FALSE);  /* 包含分号 */
+    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain; charset=\"utf-8\""), UVHTTP_FALSE);  /* 包含引号 */
 }
 
 TEST(UvhttpUtilsTest, IsValidStringLength) {
     /* 测试字符串长度验证 */
     
     /* 有效字符串 */
-    EXPECT_EQ(uvhttp_is_valid_string_length("Hello", 10), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("Hello", 5), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("", 10), TRUE);
+    EXPECT_EQ(uvhttp_is_valid_string_length("Hello", 10), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_string_length("Hello", 5), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_string_length("", 10), UVHTTP_TRUE);
     
     /* 无效字符串 */
-    EXPECT_EQ(uvhttp_is_valid_string_length(nullptr, 10), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("Hello", 4), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("Hello World", 5), FALSE);
+    EXPECT_EQ(uvhttp_is_valid_string_length(nullptr, 10), UVHTTP_FALSE);
+    EXPECT_EQ(uvhttp_is_valid_string_length("Hello", 4), UVHTTP_FALSE);
+    EXPECT_EQ(uvhttp_is_valid_string_length("Hello World", 5), UVHTTP_FALSE);
     
     /* 边界值 */
-    EXPECT_EQ(uvhttp_is_valid_string_length("12345", 5), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("12345", 4), FALSE);
+    EXPECT_EQ(uvhttp_is_valid_string_length("12345", 5), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_string_length("12345", 4), UVHTTP_FALSE);
 }
 
 TEST(UvhttpUtilsTest, SendUnifiedResponse) {
@@ -409,38 +409,38 @@ TEST(UvhttpUtilsTest, ContentTypeValidation) {
     /* 测试 Content-Type 验证细节 */
     
     /* 基本类型 */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain"), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("application/json"), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("image/png"), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("video/mp4"), TRUE);
+    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain"), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_content_type("application/json"), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_content_type("image/png"), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_content_type("video/mp4"), UVHTTP_TRUE);
     
     /* 带参数的类型（无效，因为包含分号） */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain; charset=utf-8"), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("application/json; charset=utf-8"), FALSE);
+    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain; charset=utf-8"), UVHTTP_FALSE);
+    EXPECT_EQ(uvhttp_is_valid_content_type("application/json; charset=utf-8"), UVHTTP_FALSE);
     
     /* 包含分号的类型（无效） */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain; charset=utf-8; param=value"), FALSE);
+    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain; charset=utf-8; param=value"), UVHTTP_FALSE);
     
     /* 包含引号的类型（无效） */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain; charset=\"utf-8\""), FALSE);
+    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain; charset=\"utf-8\""), UVHTTP_FALSE);
     
     /* 包含其他非法字符的类型 */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain; param=value"), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain(param=value)"), FALSE);
+    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain; param=value"), UVHTTP_FALSE);
+    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain(param=value)"), UVHTTP_FALSE);
 }
 
 TEST(UvhttpUtilsTest, StringLengthValidation) {
     /* 测试字符串长度验证细节 */
     
     /* 边界值测试 */
-    EXPECT_EQ(uvhttp_is_valid_string_length("", 0), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("a", 1), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("ab", 2), TRUE);
+    EXPECT_EQ(uvhttp_is_valid_string_length("", 0), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_string_length("a", 1), UVHTTP_TRUE);
+    EXPECT_EQ(uvhttp_is_valid_string_length("ab", 2), UVHTTP_TRUE);
     
     /* 超出边界 */
-    EXPECT_EQ(uvhttp_is_valid_string_length("a", 0), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("ab", 1), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("abc", 2), FALSE);
+    EXPECT_EQ(uvhttp_is_valid_string_length("a", 0), UVHTTP_FALSE);
+    EXPECT_EQ(uvhttp_is_valid_string_length("ab", 1), UVHTTP_FALSE);
+    EXPECT_EQ(uvhttp_is_valid_string_length("abc", 2), UVHTTP_FALSE);
 }
 
 TEST(UvhttpUtilsTest, StatusCodeRange) {
@@ -448,27 +448,27 @@ TEST(UvhttpUtilsTest, StatusCodeRange) {
     
     /* 1xx 信息响应 */
     for (int i = 100; i <= 199; i++) {
-        EXPECT_EQ(uvhttp_is_valid_status_code(i), TRUE);
+        EXPECT_EQ(uvhttp_is_valid_status_code(i), UVHTTP_TRUE);
     }
     
     /* 2xx 成功 */
     for (int i = 200; i <= 299; i++) {
-        EXPECT_EQ(uvhttp_is_valid_status_code(i), TRUE);
+        EXPECT_EQ(uvhttp_is_valid_status_code(i), UVHTTP_TRUE);
     }
     
     /* 3xx 重定向 */
     for (int i = 300; i <= 399; i++) {
-        EXPECT_EQ(uvhttp_is_valid_status_code(i), TRUE);
+        EXPECT_EQ(uvhttp_is_valid_status_code(i), UVHTTP_TRUE);
     }
     
     /* 4xx 客户端错误 */
     for (int i = 400; i <= 499; i++) {
-        EXPECT_EQ(uvhttp_is_valid_status_code(i), TRUE);
+        EXPECT_EQ(uvhttp_is_valid_status_code(i), UVHTTP_TRUE);
     }
     
     /* 5xx 服务器错误 */
     for (int i = 500; i <= 599; i++) {
-        EXPECT_EQ(uvhttp_is_valid_status_code(i), TRUE);
+        EXPECT_EQ(uvhttp_is_valid_status_code(i), UVHTTP_TRUE);
     }
 }
 
@@ -476,27 +476,27 @@ TEST(UvhttpUtilsTest, CommonStatusCodes) {
     /* 测试常见状态码 */
     
     /* 1xx */
-    EXPECT_EQ(uvhttp_is_valid_status_code(100), TRUE);  /* Continue */
-    EXPECT_EQ(uvhttp_is_valid_status_code(101), TRUE);  /* Switching Protocols */
+    EXPECT_EQ(uvhttp_is_valid_status_code(100), UVHTTP_TRUE);  /* Continue */
+    EXPECT_EQ(uvhttp_is_valid_status_code(101), UVHTTP_TRUE);  /* Switching Protocols */
     
     /* 2xx */
-    EXPECT_EQ(uvhttp_is_valid_status_code(200), TRUE);  /* OK */
-    EXPECT_EQ(uvhttp_is_valid_status_code(201), TRUE);  /* Created */
-    EXPECT_EQ(uvhttp_is_valid_status_code(204), TRUE);  /* No Content */
+    EXPECT_EQ(uvhttp_is_valid_status_code(200), UVHTTP_TRUE);  /* OK */
+    EXPECT_EQ(uvhttp_is_valid_status_code(201), UVHTTP_TRUE);  /* Created */
+    EXPECT_EQ(uvhttp_is_valid_status_code(204), UVHTTP_TRUE);  /* No Content */
     
     /* 3xx */
-    EXPECT_EQ(uvhttp_is_valid_status_code(301), TRUE);  /* Moved Permanently */
-    EXPECT_EQ(uvhttp_is_valid_status_code(302), TRUE);  /* Found */
-    EXPECT_EQ(uvhttp_is_valid_status_code(304), TRUE);  /* Not Modified */
+    EXPECT_EQ(uvhttp_is_valid_status_code(301), UVHTTP_TRUE);  /* Moved Permanently */
+    EXPECT_EQ(uvhttp_is_valid_status_code(302), UVHTTP_TRUE);  /* Found */
+    EXPECT_EQ(uvhttp_is_valid_status_code(304), UVHTTP_TRUE);  /* Not Modified */
     
     /* 4xx */
-    EXPECT_EQ(uvhttp_is_valid_status_code(400), TRUE);  /* Bad Request */
-    EXPECT_EQ(uvhttp_is_valid_status_code(401), TRUE);  /* Unauthorized */
-    EXPECT_EQ(uvhttp_is_valid_status_code(403), TRUE);  /* Forbidden */
-    EXPECT_EQ(uvhttp_is_valid_status_code(404), TRUE);  /* Not Found */
+    EXPECT_EQ(uvhttp_is_valid_status_code(400), UVHTTP_TRUE);  /* Bad Request */
+    EXPECT_EQ(uvhttp_is_valid_status_code(401), UVHTTP_TRUE);  /* Unauthorized */
+    EXPECT_EQ(uvhttp_is_valid_status_code(403), UVHTTP_TRUE);  /* Forbidden */
+    EXPECT_EQ(uvhttp_is_valid_status_code(404), UVHTTP_TRUE);  /* Not Found */
     
     /* 5xx */
-    EXPECT_EQ(uvhttp_is_valid_status_code(500), TRUE);  /* Internal Server Error */
-    EXPECT_EQ(uvhttp_is_valid_status_code(502), TRUE);  /* Bad Gateway */
-    EXPECT_EQ(uvhttp_is_valid_status_code(503), TRUE);  /* Service Unavailable */
+    EXPECT_EQ(uvhttp_is_valid_status_code(500), UVHTTP_TRUE);  /* Internal Server Error */
+    EXPECT_EQ(uvhttp_is_valid_status_code(502), UVHTTP_TRUE);  /* Bad Gateway */
+    EXPECT_EQ(uvhttp_is_valid_status_code(503), UVHTTP_TRUE);  /* Service Unavailable */
 }

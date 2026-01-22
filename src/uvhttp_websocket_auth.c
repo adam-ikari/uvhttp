@@ -77,11 +77,11 @@ uvhttp_ws_auth_config_t* uvhttp_ws_auth_config_create(void) {
     strncpy(config->token_param_name, "token", sizeof(config->token_param_name) - 1);
     config->token_validator = NULL;
     config->token_validator_data = NULL;
-    config->enable_ip_whitelist = FALSE;
+    config->enable_ip_whitelist = UVHTTP_FALSE;
     config->ip_whitelist = NULL;
-    config->enable_ip_blacklist = FALSE;
+    config->enable_ip_blacklist = UVHTTP_FALSE;
     config->ip_blacklist = NULL;
-    config->send_auth_failed_response = TRUE;
+    config->send_auth_failed_response = UVHTTP_TRUE;
     strncpy(config->auth_failed_message, "Authentication failed",
             sizeof(config->auth_failed_message) - 1);
 
@@ -156,7 +156,7 @@ int uvhttp_ws_auth_add_ip_to_whitelist(
     new_entry->ip[sizeof(new_entry->ip) - 1] = '\0';
     new_entry->next = config->ip_whitelist;
     config->ip_whitelist = new_entry;
-    config->enable_ip_whitelist = TRUE;
+    config->enable_ip_whitelist = UVHTTP_TRUE;
 
     return 0;
 }
@@ -189,7 +189,7 @@ int uvhttp_ws_auth_add_ip_to_blacklist(
     new_entry->ip[sizeof(new_entry->ip) - 1] = '\0';
     new_entry->next = config->ip_blacklist;
     config->ip_blacklist = new_entry;
-    config->enable_ip_blacklist = TRUE;
+    config->enable_ip_blacklist = UVHTTP_TRUE;
 
     return 0;
 }
@@ -216,7 +216,7 @@ int uvhttp_ws_auth_remove_ip_from_whitelist(
 
     /* 检查是否为空 */
     if (!config->ip_whitelist) {
-        config->enable_ip_whitelist = FALSE;
+        config->enable_ip_whitelist = UVHTTP_FALSE;
     }
 
     return -1;  /* 未找到 */
@@ -244,7 +244,7 @@ int uvhttp_ws_auth_remove_ip_from_blacklist(
 
     /* 检查是否为空 */
     if (!config->ip_blacklist) {
-        config->enable_ip_blacklist = FALSE;
+        config->enable_ip_blacklist = UVHTTP_FALSE;
     }
 
     return -1;  /* 未找到 */

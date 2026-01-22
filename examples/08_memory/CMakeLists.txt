@@ -1,4 +1,4 @@
-# 高级特性示例
+# 内存管理示例
 
 # 从父 CMakeLists.txt 获取库路径
 set(LIBUV_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/libuv/build/libuv.a)
@@ -14,8 +14,8 @@ set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/xxhash/libxxhash.a)
 # 从父 CMakeLists.txt 获取 UVHTTP 库路径
 set(UVHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../build/dist/lib/libuvhttp.a)
 
-add_executable(libuv_data_pointer 01_libuv_data_pointer.c)
-target_link_libraries(libuv_data_pointer
+add_executable(mimalloc_demo mimalloc_demo.c)
+target_link_libraries(mimalloc_demo
     ${UVHTTP_LIB}
     ${LIBUV_LIB}
     ${MBEDTLS_LIBS}
@@ -23,10 +23,10 @@ target_link_libraries(libuv_data_pointer
     ${CJSON_LIB}
     ${XXHASH_LIB}
     pthread m dl)
-add_dependencies(libuv_data_pointer uvhttp)
+add_dependencies(mimalloc_demo uvhttp)
 
-add_executable(middleware_demo middleware_demo.c)
-target_link_libraries(middleware_demo
+add_executable(app_advanced_memory app_advanced_memory.c)
+target_link_libraries(app_advanced_memory
     ${UVHTTP_LIB}
     ${LIBUV_LIB}
     ${MBEDTLS_LIBS}
@@ -34,10 +34,10 @@ target_link_libraries(middleware_demo
     ${CJSON_LIB}
     ${XXHASH_LIB}
     pthread m dl)
-add_dependencies(middleware_demo uvhttp)
+add_dependencies(app_advanced_memory uvhttp)
 
-add_executable(cors_rate_limit_demo cors_rate_limit_demo.c)
-target_link_libraries(cors_rate_limit_demo
+add_executable(app_custom_pool app_custom_pool.c)
+target_link_libraries(app_custom_pool
     ${UVHTTP_LIB}
     ${LIBUV_LIB}
     ${MBEDTLS_LIBS}
@@ -45,4 +45,15 @@ target_link_libraries(cors_rate_limit_demo
     ${CJSON_LIB}
     ${XXHASH_LIB}
     pthread m dl)
-add_dependencies(cors_rate_limit_demo uvhttp)
+add_dependencies(app_custom_pool uvhttp)
+
+add_executable(hierarchical_allocator_example hierarchical_allocator_example.c)
+target_link_libraries(hierarchical_allocator_example
+    ${UVHTTP_LIB}
+    ${LIBUV_LIB}
+    ${MBEDTLS_LIBS}
+    ${LLHTTP_LIB}
+    ${CJSON_LIB}
+    ${XXHASH_LIB}
+    pthread m dl)
+add_dependencies(hierarchical_allocator_example uvhttp)

@@ -317,7 +317,7 @@ TEST(UvhttpValidationFullCoverageTest, ValidateQueryValid) {
     // 空字符串是有效的
     EXPECT_EQ(uvhttp_validate_query_string(""), 1);
     // 修复 bug 后，移除了 dangerous_query_chars 中的 '\0'
-    // 现在正常的查询字符串应该返回 1（TRUE）
+    // 现在正常的查询字符串应该返回 1（UVHTTP_TRUE）
     EXPECT_EQ(uvhttp_validate_query_string("key=value"), 1);
     EXPECT_EQ(uvhttp_validate_query_string("key1=value1&key2=value2"), 1);
     EXPECT_EQ(uvhttp_validate_query_string("?key=value"), 1);
@@ -335,7 +335,7 @@ TEST(UvhttpValidationFullCoverageTest, ValidateQueryInvalid) {
 TEST(UvhttpValidationFullCoverageTest, ValidateQueryStringSafety) {
     // 查询字符串中的 & 和 = 字符应该是安全的
     // 修复 bug 后，移除了 dangerous_query_chars 中的 '\0'
-    // 现在正常的查询字符串应该返回 1（TRUE）
+    // 现在正常的查询字符串应该返回 1（UVHTTP_TRUE）
     EXPECT_EQ(uvhttp_validate_query_string("key"), 1);
     EXPECT_EQ(uvhttp_validate_query_string("key=value"), 1);
 }

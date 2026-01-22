@@ -24,3 +24,58 @@ target_link_libraries(hello_world
     ${XXHASH_LIB}
     pthread m dl)
 add_dependencies(hello_world uvhttp)
+
+add_executable(helloworld helloworld.c)
+target_link_libraries(helloworld
+    ${UVHTTP_LIB}
+    ${LIBUV_LIB}
+    ${MBEDTLS_LIBS}
+    ${LLHTTP_LIB}
+    ${CJSON_LIB}
+    ${XXHASH_LIB}
+    pthread m dl)
+add_dependencies(helloworld uvhttp)
+
+add_executable(helloworld_complete helloworld_complete.c)
+target_link_libraries(helloworld_complete
+    ${UVHTTP_LIB}
+    ${LIBUV_LIB}
+    ${MBEDTLS_LIBS}
+    ${LLHTTP_LIB}
+    ${CJSON_LIB}
+    ${XXHASH_LIB}
+    pthread m dl)
+add_dependencies(helloworld_complete uvhttp)
+
+add_executable(simple_test simple_test.c)
+target_link_libraries(simple_test
+    ${UVHTTP_LIB}
+    ${LIBUV_LIB}
+    ${MBEDTLS_LIBS}
+    ${LLHTTP_LIB}
+    ${CJSON_LIB}
+    ${XXHASH_LIB}
+    pthread m dl)
+add_dependencies(simple_test uvhttp)
+
+add_executable(simple_api_demo simple_api_demo.c)
+target_link_libraries(simple_api_demo
+    ${UVHTTP_LIB}
+    ${LIBUV_LIB}
+    ${MBEDTLS_LIBS}
+    ${LLHTTP_LIB}
+    ${CJSON_LIB}
+    ${XXHASH_LIB}
+    pthread m dl)
+add_dependencies(simple_api_demo uvhttp)
+
+add_executable(quick_api_demo quick_api_demo.c)
+target_link_libraries(quick_api_demo
+    ${UVHTTP_LIB}
+    ${LIBUV_LIB}
+    ${MBEDTLS_LIBS}
+    ${LLHTTP_LIB}
+    ${CJSON_LIB}
+    ${XXHASH_LIB}
+    pthread m dl)
+add_dependencies(quick_api_demo uvhttp)

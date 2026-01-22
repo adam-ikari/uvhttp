@@ -62,7 +62,7 @@ static void init_sample_data() {
         strncpy(g_users[i].role, roles[i], sizeof(g_users[i].role) - 1);
         snprintf(g_users[i].password_hash, sizeof(g_users[i].password_hash),
                  "hash_%s", usernames[i]);
-        g_users[i].active = TRUE;
+        g_users[i].active = UVHTTP_TRUE;
         snprintf(g_users[i].created_at, sizeof(g_users[i].created_at),
                  "2025-01-%02dT08:00:00Z", i + 1);
         snprintf(g_users[i].updated_at, sizeof(g_users[i].updated_at),
@@ -419,7 +419,7 @@ int create_user_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         strcpy(new_user.role, "user");
     }
     
-    new_user.active = TRUE;
+    new_user.active = UVHTTP_TRUE;
     
     time_t now = time(NULL);
     struct tm* tm_info = localtime(&now);

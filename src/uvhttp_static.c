@@ -1014,9 +1014,9 @@ uvhttp_http_middleware_t* uvhttp_static_middleware_create(
     memset(&config, 0, sizeof(config));
     strncpy(config.root_directory, root_dir, sizeof(config.root_directory) - 1);
     strncpy(config.index_file, "index.html", sizeof(config.index_file) - 1);
-    config.enable_directory_listing = FALSE;
-    config.enable_etag = TRUE;
-    config.enable_last_modified = TRUE;
+    config.enable_directory_listing = UVHTTP_FALSE;
+    config.enable_etag = UVHTTP_TRUE;
+    config.enable_last_modified = UVHTTP_TRUE;
     config.max_cache_size = 10 * 1024 * 1024;  /* 10MB */
     config.cache_ttl = 3600;  /* 1小时 */
     config.max_cache_entries = 1000;
@@ -1283,7 +1283,7 @@ static void on_sendfile_timeout(uv_timer_t* timer) {
                     ctx->file_path, ctx->bytes_sent, ctx->file_size, ctx->timeout_ms);
     
     /* 标记为完成，防止重复处理 */
-    ctx->completed = TRUE;
+    ctx->completed = UVHTTP_TRUE;
     
     /* 停止定时器 */
     uv_timer_stop(timer);
@@ -1376,7 +1376,7 @@ static void on_sendfile_complete(uv_fs_t* req) {
         uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
         
         /* 标记完成 */
-        ctx->completed = TRUE;
+        ctx->completed = UVHTTP_TRUE;
         UVHTTP_LOG_INFO("sendfile completed: %s (%zu bytes)", ctx->file_path, ctx->bytes_sent);
     } else {
         /* 继续发送剩余数据 */

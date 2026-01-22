@@ -1,4 +1,4 @@
-# 响应处理示例
+# 配置管理示例
 
 # 从父 CMakeLists.txt 获取库路径
 set(LIBUV_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/libuv/build/libuv.a)
@@ -14,8 +14,8 @@ set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/xxhash/libxxhash.a)
 # 从父 CMakeLists.txt 获取 UVHTTP 库路径
 set(UVHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../build/dist/lib/libuvhttp.a)
 
-add_executable(unified_response_demo unified_response_demo.c)
-target_link_libraries(unified_response_demo
+add_executable(config_demo config_demo.c)
+target_link_libraries(config_demo
     ${UVHTTP_LIB}
     ${LIBUV_LIB}
     ${MBEDTLS_LIBS}
@@ -23,4 +23,15 @@ target_link_libraries(unified_response_demo
     ${CJSON_LIB}
     ${XXHASH_LIB}
     pthread m dl)
-add_dependencies(unified_response_demo uvhttp)
+add_dependencies(config_demo uvhttp)
+
+add_executable(simple_config simple_config.c)
+target_link_libraries(simple_config
+    ${UVHTTP_LIB}
+    ${LIBUV_LIB}
+    ${MBEDTLS_LIBS}
+    ${LLHTTP_LIB}
+    ${CJSON_LIB}
+    ${XXHASH_LIB}
+    pthread m dl)
+add_dependencies(simple_config uvhttp)

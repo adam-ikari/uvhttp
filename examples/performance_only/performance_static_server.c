@@ -259,9 +259,9 @@ int main(int argc, char* argv[]) {
     static_config.root_directory[sizeof(static_config.root_directory) - 1] = '\0';
     
     strncpy(static_config.index_file, "index.html", sizeof(static_config.index_file) - 1);
-    static_config.enable_directory_listing = TRUE;
-    static_config.enable_etag = TRUE;
-    static_config.enable_last_modified = TRUE;
+    static_config.enable_directory_listing = UVHTTP_TRUE;
+    static_config.enable_etag = UVHTTP_TRUE;
+    static_config.enable_last_modified = UVHTTP_TRUE;
     static_config.max_cache_size = 100 * 1024 * 1024;  /* 100MB缓存 - 增加缓存大小 */
     static_config.cache_ttl = 7200;                    /* 2小时TTL - 延长缓存时间 */
     printf("静态文件配置完成\n");
