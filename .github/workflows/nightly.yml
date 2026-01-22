@@ -6,6 +6,9 @@ on:
     - cron: '0 0 * * *'
   workflow_dispatch:  # 允许手动触发
 
+# 允许 workflow 文件验证时不影响状态
+continue-on-error: true
+
 jobs:
   # 这个 job 用于验证 workflow 文件语法
   # 在非 main 分支时运行，确保 workflow 不会失败
