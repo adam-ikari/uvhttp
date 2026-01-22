@@ -18,6 +18,7 @@
 #include "uvhttp_constants.h"
 #include "uvhttp_config.h"
 #include "uvhttp_features.h"
+#include "uvhttp_context.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -80,8 +81,9 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     if (server->config) {
         max_connections = server->config->max_connections;
     } else {
-        // 回退到全局配置
-        const uvhttp_config_t* global_config = uvhttp_config_get_current();
+        // 回退到全局配置（从 loop->data 获取）
+        uvhttp_context_t* context = (uvhttp_context_t*)server->loop->data;
+        const uvhttp_config_t* global_config = uvhttp_config_get_current(context);
         if (global_config) {
             max_connections = global_config->max_connections;
         }
@@ -186,11 +188,9 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     /* 初始化TLS模块（如果还没有初始化） */
     #if UVHTTP_FEATURE_TLS
         UVHTTP_LOG_DEBUG("Initializing TLS module...");
-        if (uvhttp_tls_init() != UVHTTP_TLS_OK) {
-            UVHTTP_LOG_ERROR("Failed to initialize TLS module");
-            return NULL;
-        }
-        UVHTTP_LOG_DEBUG("TLS module initialized successfully");
+        /* 暂时跳过 TLS 初始化，使用全局变量（向后兼容） */
+        /* TODO: 在后续版本中完全移除全局变量 */
+        UVHTTP_LOG_DEBUG("TLS module initialization skipped (using global variables for backward compatibility)");
     #endif
         UVHTTP_LOG_DEBUG("Allocating uvhttp_server_t, size=%zu", sizeof(uvhttp_server_t));
         uvhttp_server_t* server = uvhttp_alloc(sizeof(uvhttp_server_t));
@@ -374,8 +374,14 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
     uv_tcp_keepalive(&server->tcp_handle, enable, 60);
     
     /* 使用配置系统的backlog设置 */
-    const uvhttp_config_t* config = uvhttp_config_get_current();
-    int backlog = config ? config->backlog : UVHTTP_BACKLOG;
+    uvhttp_context_t* context = (uvhttp_context_t*)server->loop->data;
+    const uvhttp_config_t* config = NULL;
+    
+    if (context) {
+        config = uvhttp_config_get_current(context);
+    }
+    
+    int backlog = (config && config->backlog > 0) ? config->backlog : UVHTTP_BACKLOG;
     
     ret = uv_listen((uv_stream_t*)&server->tcp_handle, backlog, on_connection);
     if (ret != 0) {

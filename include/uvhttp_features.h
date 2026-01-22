@@ -275,8 +275,7 @@ extern "C" {
 #endif /* UVHTTP_TEST_MODE */
 
 /* ============ 编译时断言宏 ============ */
-#define UVHTTP_STATIC_ASSERT(condition, message) \
-    _Static_assert(condition, message)
+/* 注意：UVHTTP_STATIC_ASSERT 已在 uvhttp_common.h 中定义 */
 
 /* ============ 属性宏 ============ */
 /* 函数属性 */

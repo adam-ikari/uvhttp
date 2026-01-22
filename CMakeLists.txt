@@ -226,6 +226,7 @@ file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_loop_helper.cpp")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_time_mock.cpp")
+list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_mock_coverage.cpp")
 
 # 条件编译中间件相关测试
 if(NOT UVHTTP_FEATURE_MIDDLEWARE)
@@ -259,6 +260,19 @@ foreach(test_file ${GTEST_TEST_FILES})
     target_link_libraries(${test_name} ${LIBS} ${GTEST_LIBS})
     target_include_directories(${test_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
     add_test(NAME ${test_name} COMMAND ${test_name})
+    
+    # 设置测试超时时间和标签
+    if(${test_name} STREQUAL "test_server_full_coverage" OR 
+       ${test_name} STREQUAL "test_deps_full_coverage" OR
+       ${test_name} STREQUAL "test_server_rate_limit_coverage" OR
+       ${test_name} STREQUAL "test_server_simple_api_coverage" OR
+       ${test_name} STREQUAL "test_static_prewarm_coverage")
+        # 这些测试需要更长时间运行，设置为慢速测试，超时180秒
+        set_tests_properties(${test_name} PROPERTIES TIMEOUT 180 LABELS "slow")
+    else()
+        # 其他测试为快速测试，超时60秒
+        set_tests_properties(${test_name} PROPERTIES TIMEOUT 60 LABELS "fast")
+    endif()
 endforeach()
 
 # 添加 gtest 示例测试（使用 C++ 编译）
@@ -272,6 +286,13 @@ target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno
 target_link_libraries(uvhttp_unit_tests ${LIBS} ${GTEST_LIBS})
 target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
 add_test(NAME uvhttp_unit_tests COMMAND uvhttp_unit_tests)
+set_tests_properties(uvhttp_unit_tests PROPERTIES TIMEOUT 60 LABELS "fast")
+
+# ============================================================================
+# CMocka + GTest 集成测试
+# ============================================================================
+# 注意：CMocka 已移除，因为链接器 wrap 机制与项目现有代码不兼容
+# 如需 mock 功能，请考虑其他测试策略
 
 # 添加压力测试
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stress.c)

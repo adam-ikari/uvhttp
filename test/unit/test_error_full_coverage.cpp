@@ -736,7 +736,7 @@ TEST(UvhttpErrorTest, RetryOperationMaxRetries) {
 
 /* 测试记录错误 */
 TEST(UvhttpErrorTest, LogError) {
-    uvhttp_reset_error_stats();
+    uvhttp_reset_error_stats(NULL);
     
     uvhttp_log_error(UVHTTP_ERROR_INVALID_PARAM, "test context");
     
@@ -744,7 +744,7 @@ TEST(UvhttpErrorTest, LogError) {
     time_t last_time;
     const char* last_context;
     
-    uvhttp_get_error_stats(counts, &last_time, &last_context);
+    uvhttp_get_error_stats(NULL, counts, &last_time, &last_context);
     
     EXPECT_GT(counts[1], 0); /* UVHTTP_ERROR_INVALID_PARAM 的索引是 1 */
     EXPECT_GT(last_time, 0);
@@ -754,7 +754,7 @@ TEST(UvhttpErrorTest, LogError) {
 
 /* 测试记录错误 - 无上下文 */
 TEST(UvhttpErrorTest, LogErrorNoContext) {
-    uvhttp_reset_error_stats();
+    uvhttp_reset_error_stats(NULL);
     
     uvhttp_log_error(UVHTTP_ERROR_OUT_OF_MEMORY, nullptr);
     
@@ -762,7 +762,7 @@ TEST(UvhttpErrorTest, LogErrorNoContext) {
     time_t last_time;
     const char* last_context;
     
-    uvhttp_get_error_stats(counts, &last_time, &last_context);
+    uvhttp_get_error_stats(NULL, counts, &last_time, &last_context);
     
     EXPECT_GT(counts[2], 0); /* UVHTTP_ERROR_OUT_OF_MEMORY 的索引是 2 */
     EXPECT_GT(last_time, 0);
@@ -771,7 +771,7 @@ TEST(UvhttpErrorTest, LogErrorNoContext) {
 
 /* 测试获取错误统计 */
 TEST(UvhttpErrorTest, GetErrorStats) {
-    uvhttp_reset_error_stats();
+    uvhttp_reset_error_stats(NULL);
     
     uvhttp_log_error(UVHTTP_ERROR_INVALID_PARAM, "context 1");
     uvhttp_log_error(UVHTTP_ERROR_OUT_OF_MEMORY, "context 2");
@@ -781,7 +781,7 @@ TEST(UvhttpErrorTest, GetErrorStats) {
     time_t last_time;
     const char* last_context;
     
-    uvhttp_get_error_stats(counts, &last_time, &last_context);
+    uvhttp_get_error_stats(NULL, counts, &last_time, &last_context);
     
     EXPECT_EQ(counts[1], 2); /* UVHTTP_ERROR_INVALID_PARAM 出现了2次 */
     EXPECT_EQ(counts[2], 1); /* UVHTTP_ERROR_OUT_OF_MEMORY 出现了1次 */
@@ -792,23 +792,23 @@ TEST(UvhttpErrorTest, GetErrorStats) {
 
 /* 测试获取错误统计 - 部分参数 */
 TEST(UvhttpErrorTest, GetErrorStatsPartial) {
-    uvhttp_reset_error_stats();
+    uvhttp_reset_error_stats(NULL);
     
     uvhttp_log_error(UVHTTP_ERROR_INVALID_PARAM, "test");
     
     /* 只获取 counts */
     size_t counts[UVHTTP_ERROR_COUNT];
-    uvhttp_get_error_stats(counts, nullptr, nullptr);
+    uvhttp_get_error_stats(NULL, counts, nullptr, nullptr);
     EXPECT_GT(counts[1], 0);
     
     /* 只获取 last_time */
     time_t last_time;
-    uvhttp_get_error_stats(nullptr, &last_time, nullptr);
+    uvhttp_get_error_stats(NULL, nullptr, &last_time, nullptr);
     EXPECT_GT(last_time, 0);
     
     /* 只获取 last_context */
     const char* last_context;
-    uvhttp_get_error_stats(nullptr, nullptr, &last_context);
+    uvhttp_get_error_stats(NULL, nullptr, nullptr, &last_context);
     ASSERT_NE(last_context, nullptr);
 }
 
@@ -817,16 +817,16 @@ TEST(UvhttpErrorTest, ResetErrorStats) {
     uvhttp_log_error(UVHTTP_ERROR_INVALID_PARAM, "test");
     
     size_t counts_before[UVHTTP_ERROR_COUNT];
-    uvhttp_get_error_stats(counts_before, nullptr, nullptr);
+    uvhttp_get_error_stats(NULL, counts_before, nullptr, nullptr);
     EXPECT_GT(counts_before[1], 0);
     
-    uvhttp_reset_error_stats();
+    uvhttp_reset_error_stats(NULL);
     
     size_t counts_after[UVHTTP_ERROR_COUNT];
     time_t last_time;
     const char* last_context;
     
-    uvhttp_get_error_stats(counts_after, &last_time, &last_context);
+    uvhttp_get_error_stats(NULL, counts_after, &last_time, &last_context);
     
     EXPECT_EQ(counts_after[1], 0);
     EXPECT_EQ(last_time, 0);
@@ -835,28 +835,28 @@ TEST(UvhttpErrorTest, ResetErrorStats) {
 
 /* 测试获取最频繁的错误 */
 TEST(UvhttpErrorTest, GetMostFrequentError) {
-    uvhttp_reset_error_stats();
+    uvhttp_reset_error_stats(NULL);
     
     uvhttp_log_error(UVHTTP_ERROR_INVALID_PARAM, "test");
     uvhttp_log_error(UVHTTP_ERROR_OUT_OF_MEMORY, "test");
     uvhttp_log_error(UVHTTP_ERROR_INVALID_PARAM, "test");
     uvhttp_log_error(UVHTTP_ERROR_INVALID_PARAM, "test");
     
-    uvhttp_error_t most_frequent = uvhttp_get_most_frequent_error();
+    uvhttp_error_t most_frequent = uvhttp_get_most_frequent_error(NULL);
     EXPECT_EQ(most_frequent, UVHTTP_ERROR_INVALID_PARAM);
 }
 
 /* 测试获取最频繁的错误 - 无错误 */
 TEST(UvhttpErrorTest, GetMostFrequentErrorNoErrors) {
-    uvhttp_reset_error_stats();
+    uvhttp_reset_error_stats(NULL);
     
-    uvhttp_error_t most_frequent = uvhttp_get_most_frequent_error();
+    uvhttp_error_t most_frequent = uvhttp_get_most_frequent_error(NULL);
     EXPECT_EQ(most_frequent, UVHTTP_OK);
 }
 
 /* 测试错误统计 - 多个错误 */
 TEST(UvhttpErrorTest, ErrorStatsMultipleErrors) {
-    uvhttp_reset_error_stats();
+    uvhttp_reset_error_stats(NULL);
     
     /* 记录多个不同类型的错误（使用错误码绝对值小于 120 的错误码） */
     for (int i = 0; i < 5; i++) {
@@ -869,19 +869,19 @@ TEST(UvhttpErrorTest, ErrorStatsMultipleErrors) {
         uvhttp_log_error(UVHTTP_ERROR_NOT_FOUND, "test");
     }
     
-    uvhttp_error_t most_frequent = uvhttp_get_most_frequent_error();
+    uvhttp_error_t most_frequent = uvhttp_get_most_frequent_error(NULL);
     EXPECT_EQ(most_frequent, UVHTTP_ERROR_NOT_FOUND);
 }
 
 /* 测试错误统计 - 边界值 */
 TEST(UvhttpErrorTest, ErrorStatsBoundaryValues) {
-    uvhttp_reset_error_stats();
+    uvhttp_reset_error_stats(NULL);
     
     /* 测试 UVHTTP_OK 的索引处理 */
     uvhttp_log_error(UVHTTP_OK, "test");
     
     size_t counts[UVHTTP_ERROR_COUNT];
-    uvhttp_get_error_stats(counts, nullptr, nullptr);
+    uvhttp_get_error_stats(NULL, counts, nullptr, nullptr);
     
     /* UVHTTP_OK 的索引是 0，会增加 counts[0] */
     EXPECT_EQ(counts[0], 1);

@@ -25,7 +25,7 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
 #### 停止服务器
 
 ```c
-void uvhttp_server_close(uvhttp_server_t* server);
+void uvhttp_server_free(uvhttp_server_t* server);
 ```
 
 ### 路由 (uvhttp_router)
@@ -166,7 +166,7 @@ int main() {
     printf("Server running at http://localhost:8080\n");
     uv_run(loop, UV_RUN_DEFAULT);
 
-    uvhttp_server_close(server);
+    uvhttp_server_free(server);
     return 0;
 }
 ```

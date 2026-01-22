@@ -8,6 +8,10 @@
 extern "C" {
 #endif
 
+/* 前向声明 */
+struct uvhttp_context;
+typedef struct uvhttp_context uvhttp_context_t;
+
 /* UVHTTP error codes */
 typedef enum {
     UVHTTP_OK = 0,
@@ -141,10 +145,10 @@ uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*),
 
 /* Error logging and statistics */
 void uvhttp_log_error(uvhttp_error_t error, const char* context);
-void uvhttp_get_error_stats(size_t* error_counts, time_t* last_error_time, 
+void uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts, time_t* last_error_time, 
                            const char** last_error_context);
-void uvhttp_reset_error_stats(void);
-uvhttp_error_t uvhttp_get_most_frequent_error(void);
+void uvhttp_reset_error_stats(uvhttp_context_t* context);
+uvhttp_error_t uvhttp_get_most_frequent_error(uvhttp_context_t* context);
 
 /* Error code count for statistics array */
 #define UVHTTP_ERROR_COUNT 120

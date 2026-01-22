@@ -2,9 +2,17 @@
 #define UVHTTP_COMMON_H
 
 #include <stddef.h>
+#include <assert.h>
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+/* ========== 静态断言宏定义 ========== */
+#ifdef __cplusplus
+#define UVHTTP_STATIC_ASSERT(cond, msg) static_assert(cond, msg)
+#else
+#define UVHTTP_STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
 #endif
 
 // 增加缓冲区大小以防止溢出，符合HTTP规范

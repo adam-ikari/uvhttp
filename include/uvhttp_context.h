@@ -127,6 +127,28 @@ typedef struct uvhttp_context {
     uint64_t total_connections;
     uint64_t active_connections;
     
+    /* ===== 全局变量替代字段 ===== */
+    
+    /* TLS 模块状态 */
+    int tls_initialized;
+    void* tls_entropy;          /* mbedtls_entropy_context* */
+    void* tls_drbg;             /* mbedtls_ctr_drbg_context* */
+    
+    /* WebSocket 模块状态 */
+    int ws_drbg_initialized;
+    void* ws_entropy;           /* mbedtls_entropy_context* */
+    void* ws_drbg;              /* mbedtls_ctr_drbg_context* */
+    
+    /* 错误统计 */
+    void* error_stats;          /* uvhttp_error_stats_t* */
+    
+    /* 配置管理 */
+    void* current_config;       /* uvhttp_config_t* */
+    void* config_callback;      /* uvhttp_config_change_callback_t */
+    
+    /* 用户数据（用于存储应用特定的上下文） */
+    void* user_data;
+    
 } uvhttp_context_t;
 
 /* ============ 上下文管理函数 ============ */
@@ -139,6 +161,32 @@ void uvhttp_context_destroy(uvhttp_context_t* context);
 
 /* 初始化上下文（设置默认提供者） */
 int uvhttp_context_init(uvhttp_context_t* context);
+
+/* ===== 全局变量替代字段初始化函数 ===== */
+
+/* 初始化 TLS 模块状态 */
+int uvhttp_context_init_tls(uvhttp_context_t* context);
+
+/* 清理 TLS 模块状态 */
+void uvhttp_context_cleanup_tls(uvhttp_context_t* context);
+
+/* 初始化 WebSocket 模块状态 */
+int uvhttp_context_init_websocket(uvhttp_context_t* context);
+
+/* 清理 WebSocket 模块状态 */
+void uvhttp_context_cleanup_websocket(uvhttp_context_t* context);
+
+/* 初始化错误统计 */
+int uvhttp_context_init_error_stats(uvhttp_context_t* context);
+
+/* 清理错误统计 */
+void uvhttp_context_cleanup_error_stats(uvhttp_context_t* context);
+
+/* 初始化配置管理 */
+int uvhttp_context_init_config(uvhttp_context_t* context);
+
+/* 清理配置管理 */
+void uvhttp_context_cleanup_config(uvhttp_context_t* context);
 
 /* 设置各种提供者 */
 int uvhttp_context_set_connection_provider(uvhttp_context_t* context, 

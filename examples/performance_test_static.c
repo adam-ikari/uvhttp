@@ -6,6 +6,7 @@
 #include "../include/uvhttp.h"
 #include "../include/uvhttp_static.h"
 #include "../include/uvhttp_config.h"
+#include "../include/uvhttp_context.h"
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,6 +16,7 @@ static uvhttp_server_t* g_server = NULL;
 static uvhttp_router_t* g_router = NULL;
 static uv_loop_t* g_loop = NULL;
 static uvhttp_static_context_t* g_static_ctx = NULL;
+static uvhttp_context_t* g_context = NULL;
 
 // 信号处理器
 void signal_handler(int sig) {
@@ -155,8 +157,18 @@ int main() {
     
     // 应用配置
     g_server->config = config;
-    uvhttp_config_set_current(config);
-    
+
+    // 创建上下文
+    g_context = uvhttp_context_create(g_loop);
+    if (!g_context) {
+        printf("错误：无法创建上下文\n");
+        uvhttp_server_free(g_server);
+        uvhttp_config_free(config);
+        return 1;
+    }
+
+    uvhttp_config_set_current(g_context, config);
+
     // 配置静态文件服务
     uvhttp_static_config_t static_config = {
         .root_directory = "./test_static",
@@ -217,18 +229,23 @@ int main() {
     
     // 运行事件循环
     uv_run(g_loop, UV_RUN_DEFAULT);
-    
+
     // 清理
     if (g_static_ctx) {
         uvhttp_static_free(g_static_ctx);
         g_static_ctx = NULL;
     }
-    
+
+    if (g_context) {
+        uvhttp_context_destroy(g_context);
+        g_context = NULL;
+    }
+
     if (g_server) {
         uvhttp_server_free(g_server);
         g_server = NULL;
         g_router = NULL;
     }
-    
+
     return 0;
 }

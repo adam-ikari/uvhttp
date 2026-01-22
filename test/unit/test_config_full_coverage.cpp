@@ -6,13 +6,46 @@
 #include <gtest/gtest.h>
 #include <uvhttp_config.h>
 #include <uvhttp_error.h>
+#include <uvhttp_context.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "test_loop_helper.h"
+
+/* 测试夹具类 */
+class UvhttpConfigTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        /* 创建测试循环 */
+        loop_ = (uv_loop_t*)uvhttp_alloc(sizeof(uv_loop_t));
+        ASSERT_NE(loop_, nullptr);
+        ASSERT_EQ(uv_loop_init(loop_), 0);
+
+        /* 创建测试上下文 */
+        context_ = uvhttp_context_create(loop_);
+        ASSERT_NE(context_, nullptr);
+        ASSERT_EQ(uvhttp_context_init(context_), 0);
+    }
+
+    void TearDown() override {
+        if (context_) {
+            uvhttp_context_destroy(context_);
+            context_ = nullptr;
+        }
+        if (loop_) {
+            uv_loop_close(loop_);
+            uvhttp_free(loop_);
+            loop_ = nullptr;
+        }
+    }
+
+    uv_loop_t* loop_;
+    uvhttp_context_t* context_;
+};
 
 /* 测试配置创建 */
-TEST(UvhttpConfigTest, ConfigNew) {
+TEST_F(UvhttpConfigTest, ConfigNew) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
     EXPECT_EQ(config->max_connections, UVHTTP_DEFAULT_MAX_CONNECTIONS);
@@ -22,7 +55,7 @@ TEST(UvhttpConfigTest, ConfigNew) {
 }
 
 /* 测试配置创建失败（内存分配失败）- 通过限制内存来模拟 */
-TEST(UvhttpConfigTest, ConfigNewMemoryFail) {
+TEST_F(UvhttpConfigTest, ConfigNewMemoryFail) {
     /* 这个测试很难模拟，因为 uvhttp_alloc 可能会成功 */
     /* 我们只需要确保代码路径存在 */
     uvhttp_config_t* config = uvhttp_config_new();
@@ -31,13 +64,13 @@ TEST(UvhttpConfigTest, ConfigNewMemoryFail) {
 }
 
 /* 测试配置释放 NULL */
-TEST(UvhttpConfigTest, ConfigFreeNull) {
+TEST_F(UvhttpConfigTest, ConfigFreeNull) {
     uvhttp_config_free(NULL);
     /* 不应该崩溃 */
 }
 
 /* 测试设置默认配置 */
-TEST(UvhttpConfigTest, ConfigSetDefaults) {
+TEST_F(UvhttpConfigTest, ConfigSetDefaults) {
     uvhttp_config_t config;
     memset(&config, 0xFF, sizeof(config)); /* 填充垃圾数据 */
     
@@ -61,13 +94,13 @@ TEST(UvhttpConfigTest, ConfigSetDefaults) {
 }
 
 /* 测试设置默认配置 NULL */
-TEST(UvhttpConfigTest, ConfigSetDefaultsNull) {
+TEST_F(UvhttpConfigTest, ConfigSetDefaultsNull) {
     uvhttp_config_set_defaults(NULL);
     /* 不应该崩溃 */
 }
 
 /* 测试从文件加载配置 */
-TEST(UvhttpConfigTest, ConfigLoadFile) {
+TEST_F(UvhttpConfigTest, ConfigLoadFile) {
     /* 创建临时配置文件 */
     const char* test_file = "/tmp/test_uvhttp_config.conf";
     FILE* fp = fopen(test_file, "w");
@@ -95,14 +128,14 @@ TEST(UvhttpConfigTest, ConfigLoadFile) {
 }
 
 /* 测试从文件加载配置 NULL 配置 */
-TEST(UvhttpConfigTest, ConfigLoadFileNullConfig) {
+TEST_F(UvhttpConfigTest, ConfigLoadFileNullConfig) {
     const char* test_file = "/tmp/test_uvhttp_config.conf";
     int result = uvhttp_config_load_file(NULL, test_file);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
 
 /* 测试从文件加载配置 NULL 文件名 */
-TEST(UvhttpConfigTest, ConfigLoadFileNullFilename) {
+TEST_F(UvhttpConfigTest, ConfigLoadFileNullFilename) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
     
@@ -113,7 +146,7 @@ TEST(UvhttpConfigTest, ConfigLoadFileNullFilename) {
 }
 
 /* 测试从文件加载配置文件不存在 */
-TEST(UvhttpConfigTest, ConfigLoadFileNotFound) {
+TEST_F(UvhttpConfigTest, ConfigLoadFileNotFound) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
     
@@ -124,7 +157,7 @@ TEST(UvhttpConfigTest, ConfigLoadFileNotFound) {
 }
 
 /* 测试从文件加载配置无效的 max_connections */
-TEST(UvhttpConfigTest, ConfigLoadFileInvalidMaxConnections) {
+TEST_F(UvhttpConfigTest, ConfigLoadFileInvalidMaxConnections) {
     const char* test_file = "/tmp/test_uvhttp_config_invalid.conf";
     FILE* fp = fopen(test_file, "w");
     ASSERT_NE(fp, nullptr);
@@ -143,7 +176,7 @@ TEST(UvhttpConfigTest, ConfigLoadFileInvalidMaxConnections) {
 }
 
 /* 测试从文件加载配置 max_connections 超出范围 */
-TEST(UvhttpConfigTest, ConfigLoadFileMaxConnectionsOutOfRange) {
+TEST_F(UvhttpConfigTest, ConfigLoadFileMaxConnectionsOutOfRange) {
     const char* test_file = "/tmp/test_uvhttp_config_invalid.conf";
     FILE* fp = fopen(test_file, "w");
     ASSERT_NE(fp, nullptr);
@@ -162,7 +195,7 @@ TEST(UvhttpConfigTest, ConfigLoadFileMaxConnectionsOutOfRange) {
 }
 
 /* 测试从文件加载配置无效的 read_buffer_size */
-TEST(UvhttpConfigTest, ConfigLoadFileInvalidReadBufferSize) {
+TEST_F(UvhttpConfigTest, ConfigLoadFileInvalidReadBufferSize) {
     const char* test_file = "/tmp/test_uvhttp_config_invalid.conf";
     FILE* fp = fopen(test_file, "w");
     ASSERT_NE(fp, nullptr);
@@ -181,7 +214,7 @@ TEST(UvhttpConfigTest, ConfigLoadFileInvalidReadBufferSize) {
 }
 
 /* 测试从文件加载配置 read_buffer_size 超出范围 */
-TEST(UvhttpConfigTest, ConfigLoadFileReadBufferSizeOutOfRange) {
+TEST_F(UvhttpConfigTest, ConfigLoadFileReadBufferSizeOutOfRange) {
     const char* test_file = "/tmp/test_uvhttp_config_invalid.conf";
     FILE* fp = fopen(test_file, "w");
     ASSERT_NE(fp, nullptr);
@@ -200,7 +233,7 @@ TEST(UvhttpConfigTest, ConfigLoadFileReadBufferSizeOutOfRange) {
 }
 
 /* 测试从文件加载配置无效的 max_body_size */
-TEST(UvhttpConfigTest, ConfigLoadFileInvalidMaxBodySize) {
+TEST_F(UvhttpConfigTest, ConfigLoadFileInvalidMaxBodySize) {
     const char* test_file = "/tmp/test_uvhttp_config_invalid.conf";
     FILE* fp = fopen(test_file, "w");
     ASSERT_NE(fp, nullptr);
@@ -219,7 +252,7 @@ TEST(UvhttpConfigTest, ConfigLoadFileInvalidMaxBodySize) {
 }
 
 /* 测试从文件加载配置 max_body_size 超出范围 */
-TEST(UvhttpConfigTest, ConfigLoadFileMaxBodySizeOutOfRange) {
+TEST_F(UvhttpConfigTest, ConfigLoadFileMaxBodySizeOutOfRange) {
     const char* test_file = "/tmp/test_uvhttp_config_invalid.conf";
     FILE* fp = fopen(test_file, "w");
     ASSERT_NE(fp, nullptr);
@@ -238,7 +271,7 @@ TEST(UvhttpConfigTest, ConfigLoadFileMaxBodySizeOutOfRange) {
 }
 
 /* 测试从文件加载配置无效的 log_file_path（路径遍历） */
-TEST(UvhttpConfigTest, ConfigLoadFileInvalidLogFilePathTraversal) {
+TEST_F(UvhttpConfigTest, ConfigLoadFileInvalidLogFilePathTraversal) {
     const char* test_file = "/tmp/test_uvhttp_config_invalid.conf";
     FILE* fp = fopen(test_file, "w");
     ASSERT_NE(fp, nullptr);
@@ -257,7 +290,7 @@ TEST(UvhttpConfigTest, ConfigLoadFileInvalidLogFilePathTraversal) {
 }
 
 /* 测试从文件加载配置无效的 log_file_path（绝对路径） */
-TEST(UvhttpConfigTest, ConfigLoadFileInvalidLogFilePathAbsolute) {
+TEST_F(UvhttpConfigTest, ConfigLoadFileInvalidLogFilePathAbsolute) {
     const char* test_file = "/tmp/test_uvhttp_config_invalid.conf";
     FILE* fp = fopen(test_file, "w");
     ASSERT_NE(fp, nullptr);
@@ -276,7 +309,7 @@ TEST(UvhttpConfigTest, ConfigLoadFileInvalidLogFilePathAbsolute) {
 }
 
 /* 测试从文件加载配置无效的 log_file_path（太长） */
-TEST(UvhttpConfigTest, ConfigLoadFileInvalidLogFilePathTooLong) {
+TEST_F(UvhttpConfigTest, ConfigLoadFileInvalidLogFilePathTooLong) {
     const char* test_file = "/tmp/test_uvhttp_config_invalid.conf";
     FILE* fp = fopen(test_file, "w");
     ASSERT_NE(fp, nullptr);
@@ -299,7 +332,7 @@ TEST(UvhttpConfigTest, ConfigLoadFileInvalidLogFilePathTooLong) {
 }
 
 /* 测试从文件加载配置包含注释和空行 */
-TEST(UvhttpConfigTest, ConfigLoadFileWithComments) {
+TEST_F(UvhttpConfigTest, ConfigLoadFileWithComments) {
     const char* test_file = "/tmp/test_uvhttp_config.conf";
     FILE* fp = fopen(test_file, "w");
     ASSERT_NE(fp, nullptr);
@@ -324,7 +357,7 @@ TEST(UvhttpConfigTest, ConfigLoadFileWithComments) {
 }
 
 /* 测试保存配置到文件 */
-TEST(UvhttpConfigTest, ConfigSaveFile) {
+TEST_F(UvhttpConfigTest, ConfigSaveFile) {
     const char* test_file = "/tmp/test_uvhttp_config_save.conf";
     
     uvhttp_config_t* config = uvhttp_config_new();
@@ -347,14 +380,14 @@ TEST(UvhttpConfigTest, ConfigSaveFile) {
 }
 
 /* 测试保存配置到文件 NULL 配置 */
-TEST(UvhttpConfigTest, ConfigSaveFileNullConfig) {
+TEST_F(UvhttpConfigTest, ConfigSaveFileNullConfig) {
     const char* test_file = "/tmp/test_uvhttp_config_save.conf";
     int result = uvhttp_config_save_file(NULL, test_file);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
 
 /* 测试保存配置到文件 NULL 文件名 */
-TEST(UvhttpConfigTest, ConfigSaveFileNullFilename) {
+TEST_F(UvhttpConfigTest, ConfigSaveFileNullFilename) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
     
@@ -365,7 +398,7 @@ TEST(UvhttpConfigTest, ConfigSaveFileNullFilename) {
 }
 
 /* 测试保存配置到文件创建失败 */
-TEST(UvhttpConfigTest, ConfigSaveFileCreateFail) {
+TEST_F(UvhttpConfigTest, ConfigSaveFileCreateFail) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
     
@@ -377,7 +410,7 @@ TEST(UvhttpConfigTest, ConfigSaveFileCreateFail) {
 }
 
 /* 测试从环境变量加载配置 */
-TEST(UvhttpConfigTest, ConfigLoadEnv) {
+TEST_F(UvhttpConfigTest, ConfigLoadEnv) {
     /* 设置环境变量 */
     setenv("UVHTTP_MAX_CONNECTIONS", "8000", 1);
     setenv("UVHTTP_READ_BUFFER_SIZE", "32768", 1);
@@ -407,13 +440,13 @@ TEST(UvhttpConfigTest, ConfigLoadEnv) {
 }
 
 /* 测试从环境变量加载配置 NULL 配置 */
-TEST(UvhttpConfigTest, ConfigLoadEnvNullConfig) {
+TEST_F(UvhttpConfigTest, ConfigLoadEnvNullConfig) {
     int result = uvhttp_config_load_env(NULL);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
 
 /* 测试从环境变量加载配置无效的值 */
-TEST(UvhttpConfigTest, ConfigLoadEnvInvalidValues) {
+TEST_F(UvhttpConfigTest, ConfigLoadEnvInvalidValues) {
     setenv("UVHTTP_MAX_CONNECTIONS", "invalid", 1);
     setenv("UVHTTP_READ_BUFFER_SIZE", "invalid", 1);
     setenv("UVHTTP_MAX_BODY_SIZE", "invalid", 1);
@@ -434,7 +467,7 @@ TEST(UvhttpConfigTest, ConfigLoadEnvInvalidValues) {
 }
 
 /* 测试从环境变量加载配置超出的值 */
-TEST(UvhttpConfigTest, ConfigLoadEnvOutOfRangeValues) {
+TEST_F(UvhttpConfigTest, ConfigLoadEnvOutOfRangeValues) {
     setenv("UVHTTP_MAX_CONNECTIONS", "100000", 1);
     setenv("UVHTTP_READ_BUFFER_SIZE", "100", 1);
     setenv("UVHTTP_MAX_BODY_SIZE", "999999999999999999", 1);
@@ -455,7 +488,7 @@ TEST(UvhttpConfigTest, ConfigLoadEnvOutOfRangeValues) {
 }
 
 /* 测试从环境变量加载配置无效的 log_file_path */
-TEST(UvhttpConfigTest, ConfigLoadEnvInvalidLogFilePath) {
+TEST_F(UvhttpConfigTest, ConfigLoadEnvInvalidLogFilePath) {
     setenv("UVHTTP_LOG_FILE_PATH", "../etc/passwd", 1);
     
     uvhttp_config_t* config = uvhttp_config_new();
@@ -472,7 +505,7 @@ TEST(UvhttpConfigTest, ConfigLoadEnvInvalidLogFilePath) {
 }
 
 /* 测试配置验证 */
-TEST(UvhttpConfigTest, ConfigValidate) {
+TEST_F(UvhttpConfigTest, ConfigValidate) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
     
@@ -483,13 +516,13 @@ TEST(UvhttpConfigTest, ConfigValidate) {
 }
 
 /* 测试配置验证 NULL 配置 */
-TEST(UvhttpConfigTest, ConfigValidateNull) {
+TEST_F(UvhttpConfigTest, ConfigValidateNull) {
     int result = uvhttp_config_validate(NULL);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
 
 /* 测试配置验证 max_connections 太小 */
-TEST(UvhttpConfigTest, ConfigValidateMaxConnectionsTooSmall) {
+TEST_F(UvhttpConfigTest, ConfigValidateMaxConnectionsTooSmall) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
     
@@ -501,7 +534,7 @@ TEST(UvhttpConfigTest, ConfigValidateMaxConnectionsTooSmall) {
 }
 
 /* 测试配置验证 max_connections 太大 */
-TEST(UvhttpConfigTest, ConfigValidateMaxConnectionsTooLarge) {
+TEST_F(UvhttpConfigTest, ConfigValidateMaxConnectionsTooLarge) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
     
@@ -513,7 +546,7 @@ TEST(UvhttpConfigTest, ConfigValidateMaxConnectionsTooLarge) {
 }
 
 /* 测试配置验证 read_buffer_size 太小 */
-TEST(UvhttpConfigTest, ConfigValidateReadBufferSizeTooSmall) {
+TEST_F(UvhttpConfigTest, ConfigValidateReadBufferSizeTooSmall) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
     
@@ -525,7 +558,7 @@ TEST(UvhttpConfigTest, ConfigValidateReadBufferSizeTooSmall) {
 }
 
 /* 测试配置验证 read_buffer_size 太大 */
-TEST(UvhttpConfigTest, ConfigValidateReadBufferSizeTooLarge) {
+TEST_F(UvhttpConfigTest, ConfigValidateReadBufferSizeTooLarge) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
     
@@ -537,7 +570,7 @@ TEST(UvhttpConfigTest, ConfigValidateReadBufferSizeTooLarge) {
 }
 
 /* 测试配置验证 max_body_size 太小 */
-TEST(UvhttpConfigTest, ConfigValidateMaxBodySizeTooSmall) {
+TEST_F(UvhttpConfigTest, ConfigValidateMaxBodySizeTooSmall) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
     
@@ -549,7 +582,7 @@ TEST(UvhttpConfigTest, ConfigValidateMaxBodySizeTooSmall) {
 }
 
 /* 测试配置验证 max_body_size 太大 */
-TEST(UvhttpConfigTest, ConfigValidateMaxBodySizeTooLarge) {
+TEST_F(UvhttpConfigTest, ConfigValidateMaxBodySizeTooLarge) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
     
@@ -561,7 +594,7 @@ TEST(UvhttpConfigTest, ConfigValidateMaxBodySizeTooLarge) {
 }
 
 /* 测试打印配置 */
-TEST(UvhttpConfigTest, ConfigPrint) {
+TEST_F(UvhttpConfigTest, ConfigPrint) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
     
@@ -572,317 +605,316 @@ TEST(UvhttpConfigTest, ConfigPrint) {
 }
 
 /* 测试打印配置 NULL */
-TEST(UvhttpConfigTest, ConfigPrintNull) {
+TEST_F(UvhttpConfigTest, ConfigPrintNull) {
     /* 不应该崩溃 */
     uvhttp_config_print(NULL);
 }
 
 /* 测试获取当前配置 */
-TEST(UvhttpConfigTest, ConfigGetCurrent) {
+TEST_F(UvhttpConfigTest, ConfigGetCurrent) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
-    const uvhttp_config_t* current = uvhttp_config_get_current();
+
+    uvhttp_config_set_current(context_, config);
+
+    const uvhttp_config_t* current = uvhttp_config_get_current(context_);
     EXPECT_EQ(current, config);
-    
+
     uvhttp_config_free(config);
 }
 
 /* 测试获取当前配置未初始化 */
-TEST(UvhttpConfigTest, ConfigGetCurrentNotInitialized) {
+TEST_F(UvhttpConfigTest, ConfigGetCurrentNotInitialized) {
     /* 先清除全局配置 */
-    uvhttp_config_set_current(NULL);
-    
-    const uvhttp_config_t* current = uvhttp_config_get_current();
+    uvhttp_config_set_current(context_, NULL);
+
+    const uvhttp_config_t* current = uvhttp_config_get_current(context_);
     EXPECT_EQ(current, nullptr);
 }
 
 /* 测试设置全局配置 */
-TEST(UvhttpConfigTest, ConfigSetCurrent) {
+TEST_F(UvhttpConfigTest, ConfigSetCurrent) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
-    const uvhttp_config_t* current = uvhttp_config_get_current();
+
+    uvhttp_config_set_current(context_, config);
+
+    const uvhttp_config_t* current = uvhttp_config_get_current(context_);
     EXPECT_EQ(current, config);
-    
-    uvhttp_config_set_current(NULL);
-    
-    current = uvhttp_config_get_current();
+
+    uvhttp_config_set_current(context_, NULL);
+
+    current = uvhttp_config_get_current(context_);
     EXPECT_EQ(current, nullptr);
-    
+
     uvhttp_config_free(config);
 }
 
 /* 测试动态更新最大连接数 */
-TEST(UvhttpConfigTest, ConfigUpdateMaxConnections) {
+TEST_F(UvhttpConfigTest, ConfigUpdateMaxConnections) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
-    int result = uvhttp_config_update_max_connections(5000);
+
+    uvhttp_config_set_current(context_, config);
+
+    int result = uvhttp_config_update_max_connections(context_, 5000);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(config->max_connections, 5000);
-    
-    uvhttp_config_set_current(NULL);
+
+    uvhttp_config_set_current(context_, NULL);
     uvhttp_config_free(config);
 }
 
 /* 测试动态更新最大连接数未初始化 */
-TEST(UvhttpConfigTest, ConfigUpdateMaxConnectionsNotInitialized) {
-    int result = uvhttp_config_update_max_connections(5000);
+TEST_F(UvhttpConfigTest, ConfigUpdateMaxConnectionsNotInitialized) {
+    int result = uvhttp_config_update_max_connections(context_, 5000);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
 
 /* 测试动态更新最大连接数太小 */
-TEST(UvhttpConfigTest, ConfigUpdateMaxConnectionsTooSmall) {
+TEST_F(UvhttpConfigTest, ConfigUpdateMaxConnectionsTooSmall) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
-    int result = uvhttp_config_update_max_connections(0);
+
+    uvhttp_config_set_current(context_, config);
+
+    int result = uvhttp_config_update_max_connections(context_, 0);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-    
-    uvhttp_config_set_current(NULL);
+
+    uvhttp_config_set_current(context_, NULL);
     uvhttp_config_free(config);
 }
 
 /* 测试动态更新最大连接数太大 */
-TEST(UvhttpConfigTest, ConfigUpdateMaxConnectionsTooLarge) {
+TEST_F(UvhttpConfigTest, ConfigUpdateMaxConnectionsTooLarge) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
-    int result = uvhttp_config_update_max_connections(20000);
+
+    uvhttp_config_set_current(context_, config);
+
+    int result = uvhttp_config_update_max_connections(context_, 20000);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-    
-    uvhttp_config_set_current(NULL);
+
+    uvhttp_config_set_current(context_, NULL);
     uvhttp_config_free(config);
 }
 
 /* 测试动态更新缓冲区大小 */
-TEST(UvhttpConfigTest, ConfigUpdateBufferSize) {
+TEST_F(UvhttpConfigTest, ConfigUpdateBufferSize) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
-    int result = uvhttp_config_update_buffer_size(16384);
+
+    uvhttp_config_set_current(context_, config);
+
+    int result = uvhttp_config_update_read_buffer_size(context_, 16384);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(config->read_buffer_size, 16384);
-    
-    uvhttp_config_set_current(NULL);
+
+    uvhttp_config_set_current(context_, NULL);
     uvhttp_config_free(config);
 }
 
 /* 测试动态更新缓冲区大小未初始化 */
-TEST(UvhttpConfigTest, ConfigUpdateBufferSizeNotInitialized) {
-    int result = uvhttp_config_update_buffer_size(16384);
+TEST_F(UvhttpConfigTest, ConfigUpdateBufferSizeNotInitialized) {
+    int result = uvhttp_config_update_read_buffer_size(context_, 16384);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
 
 /* 测试动态更新缓冲区大小太小 */
-TEST(UvhttpConfigTest, ConfigUpdateBufferSizeTooSmall) {
+TEST_F(UvhttpConfigTest, ConfigUpdateBufferSizeTooSmall) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
-    int result = uvhttp_config_update_buffer_size(100);
+
+    uvhttp_config_set_current(context_, config);
+
+    int result = uvhttp_config_update_read_buffer_size(context_, 100);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-    
-    uvhttp_config_set_current(NULL);
+
+    uvhttp_config_set_current(context_, NULL);
     uvhttp_config_free(config);
 }
 
 /* 测试动态更新缓冲区大小太大 */
-TEST(UvhttpConfigTest, ConfigUpdateBufferSizeTooLarge) {
+TEST_F(UvhttpConfigTest, ConfigUpdateBufferSizeTooLarge) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
-    int result = uvhttp_config_update_buffer_size(2 * 1024 * 1024);
+
+    uvhttp_config_set_current(context_, config);
+
+    int result = uvhttp_config_update_read_buffer_size(context_, 2 * 1024 * 1024);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-    
-    uvhttp_config_set_current(NULL);
+
+    uvhttp_config_set_current(context_, NULL);
     uvhttp_config_free(config);
 }
 
 /* 测试动态更新限制参数 */
-TEST(UvhttpConfigTest, ConfigUpdateLimits) {
+TEST_F(UvhttpConfigTest, ConfigUpdateLimits) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
-    int result = uvhttp_config_update_limits(2097152, 16384);
+
+    uvhttp_config_set_current(context_, config);
+
+    int result = uvhttp_config_update_size_limits(context_, 2097152, 16384);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(config->max_body_size, 2097152);
     EXPECT_EQ(config->max_header_size, 16384);
-    
-    uvhttp_config_set_current(NULL);
+
+    uvhttp_config_set_current(context_, NULL);
     uvhttp_config_free(config);
 }
 
 /* 测试动态更新限制参数未初始化 */
-TEST(UvhttpConfigTest, ConfigUpdateLimitsNotInitialized) {
-    int result = uvhttp_config_update_limits(2097152, 16384);
+TEST_F(UvhttpConfigTest, ConfigUpdateLimitsNotInitialized) {
+    int result = uvhttp_config_update_size_limits(context_, 2097152, 16384);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
 
 /* 测试动态更新限制参数 max_body_size 太小 */
-TEST(UvhttpConfigTest, ConfigUpdateLimitsMaxBodySizeTooSmall) {
+TEST_F(UvhttpConfigTest, ConfigUpdateLimitsMaxBodySizeTooSmall) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
-    int result = uvhttp_config_update_limits(100, 16384);
+
+    uvhttp_config_set_current(context_, config);
+
+    int result = uvhttp_config_update_size_limits(context_, 100, 16384);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-    
-    uvhttp_config_set_current(NULL);
+
+    uvhttp_config_set_current(context_, NULL);
     uvhttp_config_free(config);
 }
 
 /* 测试动态更新限制参数 max_body_size 太大 */
-TEST(UvhttpConfigTest, ConfigUpdateLimitsMaxBodySizeTooLarge) {
+TEST_F(UvhttpConfigTest, ConfigUpdateLimitsMaxBodySizeTooLarge) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
-    int result = uvhttp_config_update_limits(200 * 1024 * 1024, 16384);
+
+    uvhttp_config_set_current(context_, config);
+
+    int result = uvhttp_config_update_size_limits(context_, 200 * 1024 * 1024, 16384);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-    
-    uvhttp_config_set_current(NULL);
+
+    uvhttp_config_set_current(context_, NULL);
     uvhttp_config_free(config);
 }
 
 /* 测试动态更新限制参数 max_header_size 太小 */
-TEST(UvhttpConfigTest, ConfigUpdateLimitsMaxHeaderSizeTooSmall) {
+TEST_F(UvhttpConfigTest, ConfigUpdateLimitsMaxHeaderSizeTooSmall) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
-    int result = uvhttp_config_update_limits(2097152, 100);
+
+    uvhttp_config_set_current(context_, config);
+
+    int result = uvhttp_config_update_size_limits(context_, 2097152, 100);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-    
-    uvhttp_config_set_current(NULL);
+
+    uvhttp_config_set_current(context_, NULL);
     uvhttp_config_free(config);
 }
 
 /* 测试动态更新限制参数 max_header_size 太大 */
-TEST(UvhttpConfigTest, ConfigUpdateLimitsMaxHeaderSizeTooLarge) {
+TEST_F(UvhttpConfigTest, ConfigUpdateLimitsMaxHeaderSizeTooLarge) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
-    int result = uvhttp_config_update_limits(2097152, 128 * 1024);
+
+    uvhttp_config_set_current(context_, config);
+
+    int result = uvhttp_config_update_size_limits(context_, 2097152, 128 * 1024);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-    
-    uvhttp_config_set_current(NULL);
+
+    uvhttp_config_set_current(context_, NULL);
     uvhttp_config_free(config);
 }
 
 /* 测试配置监控 */
-TEST(UvhttpConfigTest, ConfigMonitorChanges) {
+TEST_F(UvhttpConfigTest, ConfigMonitorChanges) {
     static int callback_called = 0;
     callback_called = 0;
-    
+
     auto callback = [](const char* key, const void* old_value, const void* new_value) {
         (void)key;
         (void)old_value;
         (void)new_value;
         callback_called++;
     };
-    
-    int result = uvhttp_config_monitor_changes(callback);
+
+    int result = uvhttp_config_monitor_changes(context_, callback);
     EXPECT_EQ(result, UVHTTP_OK);
 }
 
 /* 测试配置监控 NULL 回调 */
-TEST(UvhttpConfigTest, ConfigMonitorChangesNullCallback) {
-    int result = uvhttp_config_monitor_changes(NULL);
+TEST_F(UvhttpConfigTest, ConfigMonitorChangesNullCallback) {
+    int result = uvhttp_config_monitor_changes(context_, NULL);
     EXPECT_EQ(result, UVHTTP_OK);
 }
 
 /* 测试热重载配置 */
-TEST(UvhttpConfigTest, ConfigReload) {
+TEST_F(UvhttpConfigTest, ConfigReload) {
     /* 创建配置文件 */
     const char* test_file = "uvhttp.conf";
     FILE* fp = fopen(test_file, "w");
     ASSERT_NE(fp, nullptr);
-    
+
     fprintf(fp, "max_connections=5000\n");
     fprintf(fp, "read_buffer_size=16384\n");
     fclose(fp);
-    
+
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
-    int result = uvhttp_config_reload();
+
+    uvhttp_config_set_current(context_, config);
+
+    int result = uvhttp_config_reload(context_);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(config->max_connections, 5000);
     EXPECT_EQ(config->read_buffer_size, 16384);
-    
-    uvhttp_config_set_current(NULL);
+
+    uvhttp_config_set_current(context_, NULL);
     uvhttp_config_free(config);
     unlink(test_file);
 }
-
 /* 测试热重载配置未初始化 */
-TEST(UvhttpConfigTest, ConfigReloadNotInitialized) {
-    int result = uvhttp_config_reload();
+TEST_F(UvhttpConfigTest, ConfigReloadNotInitialized) {
+    int result = uvhttp_config_reload(context_);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
 
 /* 测试热重载配置文件不存在 */
-TEST(UvhttpConfigTest, ConfigReloadFileNotFound) {
+TEST_F(UvhttpConfigTest, ConfigReloadFileNotFound) {
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
+
+    uvhttp_config_set_current(context_, config);
+
     /* 删除配置文件（如果存在） */
     unlink("uvhttp.conf");
-    
-    int result = uvhttp_config_reload();
+
+    int result = uvhttp_config_reload(context_);
     EXPECT_EQ(result, UVHTTP_ERROR_NOT_FOUND);
-    
-    uvhttp_config_set_current(NULL);
+
+    uvhttp_config_set_current(context_, NULL);
     uvhttp_config_free(config);
 }
 
 /* 测试热重载配置验证失败 */
-TEST(UvhttpConfigTest, ConfigReloadValidationFail) {
+TEST_F(UvhttpConfigTest, ConfigReloadValidationFail) {
     /* 创建配置文件 */
     const char* test_file = "uvhttp.conf";
     FILE* fp = fopen(test_file, "w");
     ASSERT_NE(fp, nullptr);
-    
+
     fprintf(fp, "max_connections=100000\n");
     fclose(fp);
-    
+
     uvhttp_config_t* config = uvhttp_config_new();
     ASSERT_NE(config, nullptr);
-    
-    uvhttp_config_set_current(config);
-    
-    int result = uvhttp_config_reload();
+
+    uvhttp_config_set_current(context_, config);
+
+    int result = uvhttp_config_reload(context_);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-    
-    uvhttp_config_set_current(NULL);
+
+    uvhttp_config_set_current(context_, NULL);
     uvhttp_config_free(config);
     unlink(test_file);
 }

@@ -3,6 +3,7 @@
  */
 
 #include "uvhttp_tls.h"
+#include "uvhttp_context.h"
 #include "uvhttp_allocator.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,11 +12,10 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-// 全局熵和 DRBG 上下文
-static mbedtls_entropy_context g_entropy;
-static mbedtls_ctr_drbg_context g_ctr_drbg;
-
-// TLS上下文结构
+// 全局熵和 DRBG 上下文（已废弃，使用上下文替代）
+// static mbedtls_entropy_context g_entropy;
+// static mbedtls_ctr_drbg_context g_ctr_drbg;
+// static int g_tls_initialized = 0;
 struct uvhttp_tls_context {
     mbedtls_ssl_config conf;
     mbedtls_x509_crt srvcert;
@@ -30,8 +30,8 @@ struct uvhttp_tls_context {
     uvhttp_tls_stats_t stats;
 };
 
-// 全局初始化状态
-static int g_tls_initialized = 0;
+// 全局初始化状态（已废弃，使用上下文替代）
+// static int g_tls_initialized = 0;
 
 // 自定义网络回调函数
 static int mbedtls_net_send(void* ctx, const unsigned char* buf, size_t len) {
@@ -59,40 +59,57 @@ static int mbedtls_net_recv(void* ctx, unsigned char* buf, size_t len) {
 }
 
 // TLS模块管理
-uvhttp_tls_error_t uvhttp_tls_init(void) {
-    if (g_tls_initialized) {
+uvhttp_tls_error_t uvhttp_tls_init(uvhttp_context_t* context) {
+    /* v2.0.0: 强制要求上下文，不再支持 NULL */
+    if (!context) {
+        return UVHTTP_TLS_ERROR_INVALID_PARAM;
+    }
+
+    /* 如果 context 中的 TLS 资源未初始化，先初始化 */
+    if (!context->tls_initialized) {
+        if (uvhttp_context_init_tls(context) != 0) {
+            return UVHTTP_TLS_ERROR_INIT;
+        }
+    }
+
+    if (context->tls_initialized) {
         return UVHTTP_TLS_OK;
     }
+
+    /* 分配并初始化 entropy 上下文 */
+    mbedtls_entropy_init((mbedtls_entropy_context*)context->tls_entropy);
     
-    mbedtls_entropy_init(&g_entropy);
-    mbedtls_ctr_drbg_init(&g_ctr_drbg);
+    /* 分配并初始化 DRBG 上下文 */
+    mbedtls_ctr_drbg_init((mbedtls_ctr_drbg_context*)context->tls_drbg);
     
-    /* 使用自定义熵源以避免阻塞 */
-    int ret = mbedtls_ctr_drbg_seed(&g_ctr_drbg, mbedtls_entropy_func, &g_entropy,
+    /* 使用自定义熵源初始化 DRBG */
+    int ret = mbedtls_ctr_drbg_seed((mbedtls_ctr_drbg_context*)context->tls_drbg, mbedtls_entropy_func, (mbedtls_entropy_context*)context->tls_entropy,
                                      (const unsigned char*)"uvhttp_tls", 11);
     if (ret != 0) {
-        mbedtls_entropy_free(&g_entropy);
-        mbedtls_ctr_drbg_free(&g_ctr_drbg);
+        mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
+        mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
         return UVHTTP_TLS_ERROR_INIT;
     }
     
-    g_tls_initialized = 1;
+    context->tls_initialized = 1;
     return UVHTTP_TLS_OK;
 }
 
-void uvhttp_tls_cleanup(void) {
-    if (!g_tls_initialized) {
+void uvhttp_tls_cleanup(uvhttp_context_t* context) {
+    if (!context || !context->tls_initialized) {
         return;
     }
-    
-    mbedtls_entropy_free(&g_entropy);
-    mbedtls_ctr_drbg_free(&g_ctr_drbg);
-    g_tls_initialized = 0;
+
+    /* 释放 entropy 和 DRBG 上下文 */
+    mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
+    mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
+
+    context->tls_initialized = 0;
 }
 
 // TLS上下文管理
 uvhttp_tls_context_t* uvhttp_tls_context_new(void) {
-    uvhttp_tls_context_t* ctx = calloc(1, sizeof(uvhttp_tls_context_t));
+    uvhttp_tls_context_t* ctx = uvhttp_calloc(1, sizeof(uvhttp_tls_context_t));
     if (!ctx) {
         return NULL;
     }
@@ -281,7 +298,7 @@ mbedtls_ssl_context* uvhttp_tls_create_ssl(uvhttp_tls_context_t* ctx) {
         return NULL;
     }
     
-    mbedtls_ssl_context* ssl = calloc(1, sizeof(mbedtls_ssl_context));
+    mbedtls_ssl_context* ssl = uvhttp_calloc(1, sizeof(mbedtls_ssl_context));
     if (!ssl) {
         return NULL;
     }
@@ -628,7 +645,7 @@ uvhttp_tls_error_t uvhttp_tls_context_add_extra_chain_cert(uvhttp_tls_context_t*
     while (current->next != NULL) {
         current = current->next;
     }
-    current->next = calloc(1, sizeof(mbedtls_x509_crt));
+    current->next = uvhttp_calloc(1, sizeof(mbedtls_x509_crt));
     if (!current->next) {
         mbedtls_x509_crt_free(&extra_cert);
         return UVHTTP_TLS_ERROR_MEMORY;

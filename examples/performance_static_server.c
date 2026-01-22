@@ -1,13 +1,14 @@
 /**
  * @file performance_static_server_refactored.c
  * @brief UVHTTP 静态文件服务性能测试（使用 libuv data 指针模式）
- * 
+ *
  * 用于测试真实场景下的静态文件服务性能
  * 使用 libuv data 指针模式避免全局变量
  */
 
 #include "../include/uvhttp.h"
 #include "../include/uvhttp_static.h"
+#include "../include/uvhttp_context.h"
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,7 +16,7 @@
 
 /**
  * @brief 应用上下文结构
- * 
+ *
  * 使用 libuv data 指针模式避免全局变量
  */
 typedef struct {
@@ -23,6 +24,7 @@ typedef struct {
     uvhttp_router_t* router;
     uvhttp_static_context_t* static_ctx;
     uvhttp_config_t* config;
+    uvhttp_context_t* uvhttp_ctx;
     int request_count;
     time_t start_time;
 } app_context_t;
@@ -36,7 +38,12 @@ void signal_handler(int sig) {
         exit(0);
     }
     
-    app_context_t* ctx = (app_context_t*)loop->data;
+    uvhttp_context_t* uvhttp_ctx = (uvhttp_context_t*)loop->data;
+    if (!uvhttp_ctx || !uvhttp_ctx->user_data) {
+        exit(0);
+    }
+    
+    app_context_t* ctx = (app_context_t*)uvhttp_ctx->user_data;
     
     if (ctx->server) {
         uvhttp_server_stop(ctx->server);
@@ -70,7 +77,16 @@ int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
         return -1;
     }
     
-    app_context_t* ctx = (app_context_t*)loop->data;
+    uvhttp_context_t* uvhttp_ctx = (uvhttp_context_t*)loop->data;
+    if (!uvhttp_ctx || !uvhttp_ctx->user_data) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_header(response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(response, "Application context not initialized", 35);
+        uvhttp_response_send(response);
+        return -1;
+    }
+    
+    app_context_t* ctx = (app_context_t*)uvhttp_ctx->user_data;
     
     if (!ctx->static_ctx) {
         uvhttp_response_set_status(response, 500);
@@ -102,7 +118,16 @@ int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         return -1;
     }
     
-    app_context_t* ctx = (app_context_t*)loop->data;
+    uvhttp_context_t* uvhttp_ctx = (uvhttp_context_t*)loop->data;
+    if (!uvhttp_ctx || !uvhttp_ctx->user_data) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_header(response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(response, "Application context not initialized", 35);
+        uvhttp_response_send(response);
+        return -1;
+    }
+    
+    app_context_t* ctx = (app_context_t*)uvhttp_ctx->user_data;
     
     char html_body[2048];
     time_t uptime = time(NULL) - ctx->start_time;
@@ -185,9 +210,6 @@ int main(int argc, char* argv[]) {
     memset(ctx, 0, sizeof(app_context_t));
     ctx->start_time = time(NULL);
     
-    // 将上下文设置到事件循环的 data 指针
-    loop->data = ctx;
-    
     // 设置信号处理
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
@@ -205,10 +227,26 @@ int main(int argc, char* argv[]) {
     ctx->config = config;
     printf("配置创建成功\n");
     fflush(stdout);
+
+    // 创建 uvhttp 上下文
+    ctx->uvhttp_ctx = uvhttp_context_create(loop);
+    if (!ctx->uvhttp_ctx) {
+        printf("错误：无法创建 uvhttp 上下文\n");
+        fflush(stdout);
+        uvhttp_config_free(config);
+        uvhttp_free(ctx);
+        return 1;
+    }
+
+    /* 将 uvhttp_ctx 设置到 loop->data，以便服务器可以访问配置 */
+    loop->data = ctx->uvhttp_ctx;
     
-    uvhttp_config_set_current(config);
-    uvhttp_config_update_max_connections(5000);  /* 增加到5000连接 */
-    uvhttp_config_update_buffer_size(16384);     /* 增加缓冲区到16KB */
+    /* 将 app_context_t 存储到 uvhttp_ctx->user_data，以便处理器可以访问 */
+    ctx->uvhttp_ctx->user_data = ctx;
+
+    uvhttp_config_set_current(ctx->uvhttp_ctx, config);
+    uvhttp_config_update_max_connections(ctx->uvhttp_ctx, 5000);  /* 增加到5000连接 */
+    uvhttp_config_update_read_buffer_size(ctx->uvhttp_ctx, 16384);     /* 增加缓冲区到16KB */
     printf("配置更新成功\n");
     fflush(stdout);
     
@@ -335,7 +373,10 @@ int main(int argc, char* argv[]) {
     if (ctx->config) {
         uvhttp_config_free(ctx->config);
     }
+    if (ctx->uvhttp_ctx) {
+        uvhttp_context_destroy(ctx->uvhttp_ctx);
+    }
     uvhttp_free(ctx);
-    
+
     return 0;
 }

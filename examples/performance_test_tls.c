@@ -5,6 +5,7 @@
 
 #include "../include/uvhttp.h"
 #include "../include/uvhttp_config.h"
+#include "../include/uvhttp_context.h"
 #include "../include/uvhttp_tls.h"
 #include <signal.h>
 #include <stdlib.h>
@@ -14,6 +15,7 @@ static uvhttp_server_t* g_server = NULL;
 static uvhttp_router_t* g_router = NULL;
 static uv_loop_t* g_loop = NULL;
 static uvhttp_tls_context_t* g_tls_ctx = NULL;
+static uvhttp_context_t* g_context = NULL;
 
 // 信号处理器
 void signal_handler(int sig) {
@@ -93,8 +95,18 @@ int main() {
     
     // 应用配置
     g_server->config = config;
-    uvhttp_config_set_current(config);
-    
+
+    // 创建上下文
+    g_context = uvhttp_context_create(g_loop);
+    if (!g_context) {
+        printf("错误：无法创建上下文\n");
+        uvhttp_server_free(g_server);
+        uvhttp_config_free(config);
+        return 1;
+    }
+
+    uvhttp_config_set_current(g_context, config);
+
     // 创建TLS上下文
     g_tls_ctx = uvhttp_tls_context_new();
     if (!g_tls_ctx) {
@@ -171,11 +183,16 @@ int main() {
         g_tls_ctx = NULL;
     }
     
-    if (g_server) {
-        uvhttp_server_free(g_server);
-        g_server = NULL;
-        g_router = NULL;
-    }
+        if (g_context) {
+            uvhttp_context_destroy(g_context);
+            g_context = NULL;
+        }
     
-    return 0;
-}
+        if (g_server) {
+            uvhttp_server_free(g_server);
+            g_server = NULL;
+            g_router = NULL;
+        }
+    
+        return 0;
+    }

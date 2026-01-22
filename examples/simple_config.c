@@ -1,18 +1,20 @@
 /**
  * @file simple_config.c
  * @brief UVHTTP 简单配置示例
- * 
+ *
  * 演示如何使用 UVHTTP 配置系统设置并发连接数限制
  */
 
 #include "../include/uvhttp.h"
 #include "../include/uvhttp_config.h"
+#include "../include/uvhttp_context.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 
 static uvhttp_server_t* g_server = NULL;
 static uvhttp_router_t* g_router = NULL;
+static uvhttp_context_t* g_context = NULL;
 
 void signal_handler(int sig) {
     printf("\n收到信号 %d，正在关闭服务器...\n", sig);
@@ -25,7 +27,7 @@ void signal_handler(int sig) {
 }
 
 int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    const uvhttp_config_t* config = uvhttp_config_get_current();
+    const uvhttp_config_t* config = uvhttp_config_get_current(g_context);
     
     char body[512];
     snprintf(body, sizeof(body),
@@ -89,10 +91,19 @@ int main() {
     
     // 应用配置
     g_server->config = config;
-    
+
+    // 创建上下文
+    g_context = uvhttp_context_create(loop);
+    if (!g_context) {
+        fprintf(stderr, "上下文创建失败\n");
+        uvhttp_config_free(config);
+        uvhttp_server_free(g_server);
+        return 1;
+    }
+
     // 设置全局配置（重要：这会消除"Global configuration not initialized"警告）
-    uvhttp_config_set_current(config);
-    
+    uvhttp_config_set_current(g_context, config);
+
     // 创建路由
     g_router = uvhttp_router_new();
     uvhttp_router_add_route(g_router, "/", simple_handler);
@@ -111,8 +122,13 @@ int main() {
     
     printf("服务器运行在 http://localhost:8080\n");
     printf("按 Ctrl+C 停止服务器\n");
-    
+
     uv_run(loop, UV_RUN_DEFAULT);
-    
+
+    // 清理上下文
+    if (g_context) {
+        uvhttp_context_destroy(g_context);
+    }
+
     return 0;
 }

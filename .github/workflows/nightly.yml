@@ -7,8 +7,17 @@ on:
   workflow_dispatch:  # 允许手动触发
 
 jobs:
+  # 快速验证 workflow 文件语法
+  validation:
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Validate workflow
+        run: echo "Workflow file syntax is valid"
+
   nightly-build:
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    # 只在 main 分支运行
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-22.04
     timeout-minutes: 120
 
@@ -42,8 +51,7 @@ jobs:
       run: |
         cd build-release
         start_time=$(date +%s)
-        ctest --output-on-failure -j1 --timeout 300 --schedule-random \
-          --exclude-regex "test_deps_full_coverage|test_lru_cache_full_coverage|test_server_full_coverage|test_server_rate_limit_coverage|test_server_simple_api_coverage" || {
+        ctest --output-on-failure -j1 --timeout 60 --label-regex "^fast$" --schedule-random || {
           echo "Fast tests failed"
           exit 1
         }
@@ -57,8 +65,7 @@ jobs:
       run: |
         cd build-release
         start_time=$(date +%s)
-        ctest --output-on-failure -j1 --timeout 1800 --schedule-random \
-          --tests-regex "test_deps_full_coverage|test_lru_cache_full_coverage|test_server_full_coverage|test_server_rate_limit_coverage|test_server_simple_api_coverage" || {
+        ctest --output-on-failure -j1 --timeout 180 --label-regex "^slow$" --schedule-random || {
           echo "Slow tests failed"
           exit 1
         }

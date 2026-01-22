@@ -6,14 +6,12 @@
 #include "uvhttp_config.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_error_handler.h"
+#include "uvhttp_context.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <sys/resource.h>
-
-/* 全局配置实例 */
-static uvhttp_config_t* g_current_config = NULL;
 
 /* 创建新配置 */
 uvhttp_config_t* uvhttp_config_new(void) {
@@ -394,22 +392,29 @@ void uvhttp_config_print(const uvhttp_config_t* config) {
 }
 
 /* 获取当前配置 */
-const uvhttp_config_t* uvhttp_config_get_current(void) {
-    if (!g_current_config) {
-        UVHTTP_LOG_WARN("Global configuration not initialized");
+const uvhttp_config_t* uvhttp_config_get_current(uvhttp_context_t* context) {
+    if (!context) {
+        UVHTTP_LOG_WARN("Context is NULL");
+        return NULL;
     }
-    return g_current_config;
+    if (!context->current_config) {
+        UVHTTP_LOG_WARN("Configuration not initialized");
+    }
+    return context->current_config;
 }
 
 /* 动态更新最大连接数 */
-int uvhttp_config_update_max_connections(int max_connections) {
+int uvhttp_config_update_max_connections(uvhttp_context_t* context, int max_connections) {
+    if (!context) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
     if (max_connections < 1 || max_connections > 10000) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    if (g_current_config) {
-        int old_value = g_current_config->max_connections;
-        g_current_config->max_connections = max_connections;
+    if (context->current_config) {
+        int old_value = ((uvhttp_config_t*)context->current_config)->max_connections;
+        ((uvhttp_config_t*)context->current_config)->max_connections = max_connections;
 
         UVHTTP_LOG_INFO("Max connections updated: %d -> %d", old_value, max_connections);
         (void)old_value;
@@ -419,15 +424,18 @@ int uvhttp_config_update_max_connections(int max_connections) {
     return UVHTTP_ERROR_INVALID_PARAM;
 }
 
-/* 动态更新缓冲区大小 */
-int uvhttp_config_update_buffer_size(int buffer_size) {
-    if (buffer_size < 1024 || buffer_size > 1024 * 1024) {
+/* 动态更新读缓冲区大小 */
+int uvhttp_config_update_read_buffer_size(uvhttp_context_t* context, int buffer_size) {
+    if (!context) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    if (buffer_size < 1024 || buffer_size > 1048576) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    if (g_current_config) {
-        int old_value = g_current_config->read_buffer_size;
-        g_current_config->read_buffer_size = buffer_size;
+    if (context->current_config) {
+        int old_value = ((uvhttp_config_t*)context->current_config)->read_buffer_size;
+        ((uvhttp_config_t*)context->current_config)->read_buffer_size = buffer_size;
 
         UVHTTP_LOG_INFO("Read buffer size updated: %d -> %d", old_value, buffer_size);
         (void)old_value;
@@ -438,21 +446,23 @@ int uvhttp_config_update_buffer_size(int buffer_size) {
 }
 
 /* 动态更新限制参数 */
-int uvhttp_config_update_limits(size_t max_body_size, size_t max_header_size) {
+int uvhttp_config_update_size_limits(uvhttp_context_t* context, size_t max_body_size, size_t max_header_size) {
+    if (!context) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
     if (max_body_size < 1024 || max_body_size > 100 * 1024 * 1024) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     if (max_header_size < 512 || max_header_size > 64 * 1024) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
-    if (g_current_config) {
-        size_t old_body = g_current_config->max_body_size;
-        size_t old_header = g_current_config->max_header_size;
 
-        g_current_config->max_body_size = max_body_size;
-        g_current_config->max_header_size = max_header_size;
+    if (context->current_config) {
+            size_t old_body = ((uvhttp_config_t*)context->current_config)->max_body_size;
+            size_t old_header = ((uvhttp_config_t*)context->current_config)->max_header_size;
 
+            ((uvhttp_config_t*)context->current_config)->max_body_size = max_body_size;
+            ((uvhttp_config_t*)context->current_config)->max_header_size = max_header_size;
         UVHTTP_LOG_INFO("Limits updated - Body: %zu -> %zu, Header: %zu -> %zu",
                        old_body, max_body_size, old_header, max_header_size);
         (void)old_body;
@@ -466,40 +476,41 @@ int uvhttp_config_update_limits(size_t max_body_size, size_t max_header_size) {
 
 
 /* 配置变更回调 */
-static uvhttp_config_change_callback_t g_config_callback = NULL;
-
-int uvhttp_config_monitor_changes(uvhttp_config_change_callback_t callback) {
-    g_config_callback = callback;
+int uvhttp_config_monitor_changes(uvhttp_context_t* context, uvhttp_config_change_callback_t callback) {
+    if (!context) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    context->config_callback = callback;
     return UVHTTP_OK;
 }
 
 /* 热重载配置 */
-int uvhttp_config_reload(void) {
-    if (!g_current_config) {
+int uvhttp_config_reload(uvhttp_context_t* context) {
+    if (!context || !context->current_config) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     /* 保存当前配置作为备份 */
-    uvhttp_config_t backup = *g_current_config;
+    uvhttp_config_t backup = *(uvhttp_config_t*)context->current_config;
     
     /* 尝试重新加载配置文件 */
-    int result = uvhttp_config_load_file(g_current_config, "uvhttp.conf");
+    int result = uvhttp_config_load_file((uvhttp_config_t*)context->current_config, "uvhttp.conf");
     if (result != UVHTTP_OK) {
         /* 恢复备份 */
-        *g_current_config = backup;
+        *(uvhttp_config_t*)context->current_config = backup;
         return result;
     }
     
     /* 验证新配置 */
-    if (uvhttp_config_validate(g_current_config) != UVHTTP_OK) {
+    if (uvhttp_config_validate((uvhttp_config_t*)context->current_config) != UVHTTP_OK) {
         /* 恢复备份 */
-        *g_current_config = backup;
+        *(uvhttp_config_t*)context->current_config = backup;
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     /* 触发配置变更回调 */
-    if (g_config_callback) {
-        g_config_callback("config_reload", &backup, g_current_config);
+    if (context->config_callback) {
+        ((uvhttp_config_change_callback_t)context->config_callback)("config_reload", &backup, context->current_config);
     }
     
     UVHTTP_LOG_INFO("Configuration reloaded successfully");
@@ -507,6 +518,8 @@ int uvhttp_config_reload(void) {
 }
 
 /* 设置全局配置 */
-void uvhttp_config_set_current(uvhttp_config_t* config) {
-    g_current_config = config;
+void uvhttp_config_set_current(uvhttp_context_t* context, uvhttp_config_t* config) {
+    if (context) {
+        context->current_config = config;
+    }
 }

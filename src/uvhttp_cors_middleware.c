@@ -13,18 +13,6 @@
 #include <stdio.h>
 #include <strings.h>  /* for strcasecmp */
 
-/* 全局默认配置 */
-static uvhttp_cors_config_t g_default_cors_config = {
-    .allow_origin = "*",
-    .allow_methods = "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH",
-    .allow_headers = "Content-Type, Authorization, X-Requested-With",
-    .expose_headers = "",
-    .allow_credentials = "false",
-    .max_age = "86400",
-    .allow_all_origins = 1,
-    .allow_credentials_enabled = 0
-};
-
 /* 辅助函数：复制字符串 */
 static char* copy_string(const char* src) {
     if (!src) return NULL;
@@ -43,7 +31,34 @@ uvhttp_cors_config_t* uvhttp_cors_config_default(void) {
         return NULL;
     }
 
-    memcpy(config, &g_default_cors_config, sizeof(uvhttp_cors_config_t));
+    /* 初始化所有指针为 NULL */
+    memset(config, 0, sizeof(uvhttp_cors_config_t));
+    config->owns_strings = 1;  /* 标记拥有字符串 */
+
+    /* 复制字符串以确保安全 */
+    config->allow_origin = copy_string("*");
+    config->allow_methods = copy_string("GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH");
+    config->allow_headers = copy_string("Content-Type, Authorization, X-Requested-With");
+    config->expose_headers = copy_string("");
+    config->allow_credentials = copy_string("false");
+    config->max_age = copy_string("86400");
+    config->allow_all_origins = 1;
+    config->allow_credentials_enabled = 0;
+
+    /* 检查内存分配是否成功 */
+    if (!config->allow_origin || !config->allow_methods || !config->allow_headers ||
+        !config->expose_headers || !config->allow_credentials || !config->max_age) {
+        /* 清理已分配的内存 */
+        if (config->allow_origin) uvhttp_free(config->allow_origin);
+        if (config->allow_methods) uvhttp_free(config->allow_methods);
+        if (config->allow_headers) uvhttp_free(config->allow_headers);
+        if (config->expose_headers) uvhttp_free(config->expose_headers);
+        if (config->allow_credentials) uvhttp_free(config->allow_credentials);
+        if (config->max_age) uvhttp_free(config->max_age);
+        uvhttp_free(config);
+        return NULL;
+    }
+
     return config;
 }
 
@@ -218,10 +233,17 @@ int uvhttp_cors_middleware(
 
     /* 获取或使用默认配置 */
     uvhttp_cors_config_t* config = NULL;
+    int should_free_config = 0;  /* 标记是否需要释放配置 */
+
     if (ctx && ctx->data) {
         config = (uvhttp_cors_config_t*)ctx->data;
     } else {
-        config = &g_default_cors_config;
+        config = uvhttp_cors_config_default();
+        if (!config) {
+            /* 内存分配失败，记录错误并继续 */
+            return UVHTTP_MIDDLEWARE_CONTINUE;
+        }
+        should_free_config = 1;
     }
 
     /* 设置 CORS 响应头 */
@@ -231,20 +253,19 @@ int uvhttp_cors_middleware(
     if (uvhttp_cors_is_preflight_request(request)) {
         uvhttp_response_set_status(response, 200);
         uvhttp_response_send(response);
+        /* 预检请求应该停止中间件链，因为响应已经发送 */
+        if (should_free_config) {
+            uvhttp_cors_config_destroy(config);
+        }
         return UVHTTP_MIDDLEWARE_STOP;
     }
 
-    return UVHTTP_MIDDLEWARE_CONTINUE;
-}
+    /* 释放临时创建的配置 */
+    if (should_free_config) {
+        uvhttp_cors_config_destroy(config);
+    }
 
-/* CORS 中间件处理函数（用于宏中间件系统） */
-int uvhttp_cors_middleware_simple(
-    const uvhttp_request_t* request,
-    uvhttp_response_t* response,
-    uvhttp_middleware_context_t* ctx
-) {
-    /* 直接使用默认配置 */
-    return uvhttp_cors_middleware(request, response, ctx);
+    return UVHTTP_MIDDLEWARE_CONTINUE;
 }
 
 #endif /* UVHTTP_FEATURE_MIDDLEWARE */

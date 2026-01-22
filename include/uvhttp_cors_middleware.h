@@ -52,13 +52,6 @@ int uvhttp_cors_middleware(
     uvhttp_middleware_context_t* ctx
 );
 
-/* CORS 中间件处理函数（用于宏中间件系统） */
-int uvhttp_cors_middleware_simple(
-    const uvhttp_request_t* request,
-    uvhttp_response_t* response,
-    uvhttp_middleware_context_t* ctx
-);
-
 /* 设置 CORS 响应头 */
 void uvhttp_cors_set_headers(
     uvhttp_response_t* response,
