@@ -189,7 +189,6 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     #if UVHTTP_FEATURE_TLS
         UVHTTP_LOG_DEBUG("Initializing TLS module...");
         /* 暂时跳过 TLS 初始化，使用全局变量（向后兼容） */
-        /* TODO: 在后续版本中完全移除全局变量 */
         UVHTTP_LOG_DEBUG("TLS module initialization skipped (using global variables for backward compatibility)");
     #endif
         UVHTTP_LOG_DEBUG("Allocating uvhttp_server_t, size=%zu", sizeof(uvhttp_server_t));
@@ -938,7 +937,6 @@ uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(
     }
     
     // 验证IP地址格式（简单验证）
-    // TODO: 可以添加更严格的IP地址验证
     
     // 检查是否已经存在于哈希表中（避免重复添加）
     struct whitelist_item *existing_item;
