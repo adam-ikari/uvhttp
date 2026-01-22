@@ -7,18 +7,6 @@ on:
   workflow_dispatch:  # 允许手动触发
 
 jobs:
-  # 这个 job 用于验证 workflow 文件语法
-  # 在非 main 分支时运行，确保 workflow 不会失败
-  validate-workflow:
-    if: github.ref != 'refs/heads/main'
-    runs-on: ubuntu-latest
-    continue-on-error: true  # 允许失败不影响 workflow 状态
-    steps:
-      - name: Workflow validation
-        run: |
-          echo "Nightly build workflow validation passed"
-          echo "This workflow only runs on main branch or via schedule/workflow_dispatch"
-
   nightly-build:
     # 只在 main 分支运行
     if: github.ref == 'refs/heads/main'
