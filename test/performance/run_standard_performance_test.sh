@@ -141,7 +141,7 @@ run_test() {
 }
 EOF
 
-    echo -e "${GREEN}  QPS: $qps${NC}"
+    echo -e "${GREEN}  RPS: $qps${NC}"
     echo -e "${GREEN}  平均延迟: $avg_latency${NC}"
     echo -e "${GREEN}  P99 延迟: $p99_latency${NC}"
     echo ""

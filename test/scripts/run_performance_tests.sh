@@ -508,7 +508,7 @@ EOF
         echo "--- $test_name ---" >> $TEST_DIR/summary.txt
         grep "Requests/sec" $TEST_DIR/${test_name}_*.txt | \
             awk '{print $2}' | \
-            awk '{sum+=$1; count++} END {print "平均吞吐量: " sum/count " QPS"}' >> $TEST_DIR/summary.txt
+            awk '{sum+=$1; count++} END {print "平均吞吐量: " sum/count " RPS"}' >> $TEST_DIR/summary.txt
         echo "" >> $TEST_DIR/summary.txt
     done
     

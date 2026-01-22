@@ -76,7 +76,7 @@ check_test_result() {
     local avg_latency_max=${PERFORMANCE_BASELINES[$avg_latency_max_key]}
     local p99_latency_max=${PERFORMANCE_BASELINES[$p99_latency_max_key]}
 
-    # 检查 QPS
+    # 检查 RPS
     local rps_status="✅ 通过"
     local rps_color="$GREEN"
     if (( $(echo "$qps < $rps_min" | bc -l) )); then
@@ -108,7 +108,7 @@ check_test_result() {
     local file_desc="${TEST_FILE_DESCRIPTIONS[$test_name]}"
     echo "## $file_desc"
     echo ""
-    echo "  QPS: $qps (目标: $rps_target, 最小: $rps_min) - ${rps_color}${rps_status}${NC}"
+    echo "  RPS: $qps (目标: $rps_target, 最小: $rps_min) - ${rps_color}${rps_status}${NC}"
     echo "  平均延迟: $avg_latency_ms ms (最大: ${avg_latency_max}ms)"
     echo "  P99 延迟: $p99_latency_ms ms (最大: ${p99_latency_max}ms) - ${latency_color}${latency_status}${NC}"
     echo ""
