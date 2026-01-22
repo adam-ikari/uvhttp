@@ -173,12 +173,12 @@ static uvhttp_error_t add_to_hot_routes(cache_optimized_router_t* cr,
                                        const char* path,
                                        uvhttp_method_t method,
                                        uvhttp_request_handler_t handler) {
-    if (cr->hot_count >= 16) {
+    if (cr->hot_count >= UVHTTP_ROUTER_HOT_ROUTES_COUNT) {
         // 找到访问次数最少的替换
         size_t min_index = 0;
         unsigned int min_count = cr->access_count[0];
         
-        for (size_t index = 1; index < 16; index++) {
+        for (size_t index = 1; index < UVHTTP_ROUTER_HOT_ROUTES_COUNT; index++) {
             if (cr->access_count[index] < min_count) {
                 min_count = cr->access_count[index];
                 min_index = index;
@@ -227,7 +227,7 @@ uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
     }
     
     // 如果是前16个路由，加入热路径
-    if (cr->total_routes < 16) {
+    if (cr->total_routes < UVHTTP_ROUTER_HOT_ROUTES_COUNT) {
         add_to_hot_routes(cr, path, method, handler);
     }
     

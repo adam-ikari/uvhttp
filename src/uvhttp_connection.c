@@ -701,7 +701,7 @@ int uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, cons
     }
 
     /* 获取客户端 IP 地址 */
-    char client_ip[64] = {0};
+    char client_ip[UVHTTP_CLIENT_IP_SIZE] = {0};
     struct sockaddr_in addr;
     int addr_len = sizeof(addr);
     if (uv_tcp_getpeername(&conn->tcp_handle, (struct sockaddr*)&addr, &addr_len) == 0) {
@@ -709,7 +709,7 @@ int uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, cons
     }
 
     /* 从查询参数或头部获取 Token */
-    char token[256] = {0};
+    char token[UVHTTP_TOKEN_SIZE] = {0};
     if (conn->request) {
         /* 尝试从查询参数获取 */
         const char* query = conn->request->query;

@@ -706,7 +706,7 @@ static int default_handler(uvhttp_request_t* request, uvhttp_response_t* respons
     const char* method = uvhttp_request_get_method(request);
     const char* url = uvhttp_request_get_url(request);
     
-    char response_body[512];
+    char response_body[UVHTTP_RESPONSE_BODY_SIZE];
     snprintf(response_body, sizeof(response_body),
         "UVHTTP 统一API服务器\n\n"
         "请求信息:\n"
@@ -1160,11 +1160,13 @@ uvhttp_error_t uvhttp_server_ws_enable_connection_management(
     }
     
     /* 参数验证 */
-    if (timeout_seconds < 10 || timeout_seconds > 3600) {
+    if (timeout_seconds < UVHTTP_WEBSOCKET_MIN_TIMEOUT_SECONDS || 
+        timeout_seconds > UVHTTP_WEBSOCKET_MAX_TIMEOUT_SECONDS) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    if (heartbeat_interval < 5 || heartbeat_interval > 300) {
+    if (heartbeat_interval < UVHTTP_WEBSOCKET_MIN_HEARTBEAT_INTERVAL || 
+        heartbeat_interval > UVHTTP_WEBSOCKET_MAX_HEARTBEAT_INTERVAL) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
@@ -1187,7 +1189,7 @@ uvhttp_error_t uvhttp_server_ws_enable_connection_management(
     manager->connection_count = 0;
     manager->timeout_seconds = timeout_seconds;
     manager->heartbeat_interval = heartbeat_interval;
-    manager->ping_timeout_ms = 10000;  /* 默认10秒 Ping 超时 */
+    manager->ping_timeout_ms = UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT_MS;  /* 默认10秒 Ping 超时 */
     manager->enabled = UVHTTP_TRUE;
     
     /* 初始化超时检测定时器 */

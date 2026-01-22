@@ -23,7 +23,7 @@ static int ip_match(const char* pattern, const char* ip) {
 
     /* CIDR 匹配 */
     int prefix_len = atoi(slash + 1);
-    if (prefix_len < 0 || prefix_len > 32) {
+    if (prefix_len < 0 || prefix_len > UVHTTP_IPV4_MAX_PREFIX_LENGTH) {
         return 0;  /* 无效的前缀长度 */
     }
 
@@ -58,7 +58,7 @@ static int ip_match(const char* pattern, const char* ip) {
     target_ip = ntohl(target_addr.s_addr);
 
     /* 创建掩码 */
-    unsigned int mask = prefix_len == 0 ? 0 : (0xFFFFFFFF << (32 - prefix_len));
+    unsigned int mask = prefix_len == 0 ? 0 : (0xFFFFFFFF << (UVHTTP_IPV4_MAX_PREFIX_LENGTH - prefix_len));
 
     /* 比较网络部分 */
     return (pattern_ip & mask) == (target_ip & mask);

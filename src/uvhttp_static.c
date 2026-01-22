@@ -331,7 +331,7 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
     
     /* 收集目录条目信息 */
     typedef struct {
-        char name[256];
+        char name[UVHTTP_MAX_FILENAME_SIZE];
         size_t size;
         time_t mtime;
         int is_dir;
@@ -404,7 +404,7 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
         dir_entry_t* dir_entry = &entries[index];
 
         /* 格式化修改时间 */
-        char time_str[64];
+        char time_str[UVHTTP_TIME_STRING_SIZE];
         if (dir_entry->mtime > 0) {
             struct tm* tm_info = localtime(&dir_entry->mtime);
             strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", tm_info);
@@ -480,13 +480,13 @@ int uvhttp_static_set_response_headers(void* response,
     }
     
     /* 设置Content-Length */
-    char content_length[32];
+    char content_length[UVHTTP_CONTENT_LENGTH_SIZE];
     snprintf(content_length, sizeof(content_length), "%zu", file_size);
     uvhttp_response_set_header(response, "Content-Length", content_length);
     
     /* 设置Last-Modified */
     if (last_modified > 0) {
-        char time_str[64];
+        char time_str[UVHTTP_TIME_STRING_SIZE];
         strftime(time_str, sizeof(time_str), "%a, %d %b %Y %H:%M:%S GMT", 
                 gmtime(&last_modified));
         uvhttp_response_set_header(response, "Last-Modified", time_str);

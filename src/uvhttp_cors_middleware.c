@@ -182,7 +182,7 @@ void uvhttp_cors_set_headers(
                 /* 检查 Origin 是否已在 Vary 中 */
                 if (strstr(existing_vary, "Origin") == NULL) {
                     /* 追加 Origin 到现有 Vary 头 */
-                    char new_vary[512];
+                    char new_vary[UVHTTP_VARY_HEADER_SIZE];
                     snprintf(new_vary, sizeof(new_vary), "%s, Origin", existing_vary);
                     uvhttp_response_set_header(response, "Vary", new_vary);
                 }

@@ -58,8 +58,8 @@ struct uvhttp_ws_connection* uvhttp_ws_connection_create(int fd,
     /* 设置默认配置 */
     conn->config.max_frame_size = WS_DEFAULT_MAX_FRAME_SIZE;
     conn->config.max_message_size = WS_DEFAULT_MAX_MESSAGE_SIZE;
-    conn->config.ping_interval = 30;
-    conn->config.ping_timeout = 10;
+    conn->config.ping_interval = UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL;
+    conn->config.ping_timeout = UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT;
     conn->config.enable_compression = 0;
     
     /* 分配接收缓冲区 */
@@ -229,12 +229,12 @@ int uvhttp_ws_build_frame(uint8_t* buffer,
 
 /* 生成 Sec-WebSocket-Accept */
 int uvhttp_ws_generate_accept(const char* key, char* accept, size_t accept_len) {
-    if (!key || !accept || accept_len < 32) {
+    if (!key || !accept || accept_len < UVHTTP_WEBSOCKET_ACCEPT_KEY_SIZE) {
         return -1;
     }
     
     /* 构建 key + GUID */
-    char combined[256];
+    char combined[UVHTTP_WEBSOCKET_COMBINED_KEY_SIZE];
     snprintf(combined, sizeof(combined), "%s%s", key, WS_GUID);
     
     /* 计算 SHA-1 */
@@ -333,16 +333,16 @@ int uvhttp_ws_handshake_client(struct uvhttp_ws_connection* conn,
     }
     
     /* 生成随机 key */
-    unsigned char raw_key[16];
-    if (uvhttp_ws_random_bytes(NULL, raw_key, 16) != 0) {
+    unsigned char raw_key[UVHTTP_WEBSOCKET_MIN_KEY_LENGTH];
+    if (uvhttp_ws_random_bytes(NULL, raw_key, UVHTTP_WEBSOCKET_MIN_KEY_LENGTH) != 0) {
         return -1;
     }
     
     /* Base64 编码 key */
-    unsigned char base64_key[32];
+    unsigned char base64_key[UVHTTP_WEBSOCKET_MAX_KEY_LENGTH];
     size_t olen;
     mbedtls_base64_encode(base64_key, sizeof(base64_key), &olen,
-                         raw_key, 16);
+                         raw_key, UVHTTP_WEBSOCKET_MIN_KEY_LENGTH);
     base64_key[olen] = '\0';
 
     /* 保存 key 到连接（用于后续验证） */
@@ -417,7 +417,7 @@ int uvhttp_ws_verify_handshake_response(struct uvhttp_ws_connection* conn,
         char expected_accept[32];
         
         /* key + GUID */
-        char combined[128];
+        char combined[UVHTTP_WEBSOCKET_COMBINED_MAX_LENGTH];
         snprintf(combined, sizeof(combined), "%s%s", conn->client_key, WS_GUID);
         
         /* SHA1 哈希 */
@@ -531,8 +531,8 @@ int uvhttp_ws_close(struct uvhttp_ws_connection* conn,
     
     if (reason) {
         size_t reason_len = strlen(reason);
-        if (reason_len > 125) {
-            reason_len = 125;
+        if (reason_len > UVHTTP_WEBSOCKET_MAX_REASON_LENGTH) {
+            reason_len = UVHTTP_WEBSOCKET_MAX_REASON_LENGTH;
         }
         memcpy(payload + 2, reason, reason_len);
         

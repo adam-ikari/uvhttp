@@ -115,6 +115,16 @@
 /* 文件路径相关 */
 #define UVHTTP_MAX_FILE_PATH_SIZE        2048
 #define UVHTTP_DECODED_PATH_SIZE        1024
+#define UVHTTP_MAX_FILENAME_SIZE         256  /* 最大文件名长度 */
+
+/* 字符串缓冲区大小 */
+#define UVHTTP_TIME_STRING_SIZE          64   /* 时间字符串缓冲区 */
+#define UVHTTP_CONTENT_LENGTH_SIZE       32   /* 内容长度字符串缓冲区 */
+#define UVHTTP_RESPONSE_BODY_SIZE        512  /* 响应体缓冲区 */
+#define UVHTTP_LOG_ENTRY_SIZE            512  /* 日志条目缓冲区 */
+#define UVHTTP_VARY_HEADER_SIZE          512  /* Vary 头缓冲区 */
+#define UVHTTP_CLIENT_IP_SIZE            64   /* 客户端 IP 地址缓冲区 */
+#define UVHTTP_TOKEN_SIZE                256  /* Token 缓冲区 */
 
 /* 字符串处理 */
 #define UVHTTP_NULL_BYTE                 '\0'
@@ -189,6 +199,7 @@
 /* 网络相关常量 */
 #define UVHTTP_IPV6_MAX_STRING_LENGTH    46
 #define UVHTTP_IPV4_MAX_STRING_LENGTH    16
+#define UVHTTP_IPV4_MAX_PREFIX_LENGTH    32   /* IPv4 地址最大前缀长度 */
 #define UVHTTP_MAX_PORT_NUMBER           65535
 #define UVHTTP_MIN_PORT_NUMBER           1
 #define UVHTTP_DEFAULT_KEEP_ALIVE_TIMEOUT 5
@@ -206,6 +217,7 @@
 #define UVHTTP_WEBSOCKET_MAX_REASON_LENGTH 123
 #define UVHTTP_WEBSOCKET_SUBJECT_STR_SIZE 256
 #define UVHTTP_WEBSOCKET_ISSUER_STR_SIZE  256
+#define UVHTTP_WEBSOCKET_COMBINED_KEY_SIZE 256  /* Combined key + GUID 缓冲区大小 */
 
 /* 控制字符常量 */
 #define UVHTTP_CONTROL_CHAR_START        0
@@ -281,6 +293,13 @@
 
 /* ========== WebSocket配置 ========== */
 #define UVHTTP_WEBSOCKET_MIN_BUFFER_EXPANSION_SIZE 1024
+#define UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL     30  /* 默认Ping间隔（秒） */
+#define UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT      10  /* 默认Ping超时（秒） */
+#define UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT_MS   10000  /* 默认Ping超时（毫秒） */
+#define UVHTTP_WEBSOCKET_MIN_TIMEOUT_SECONDS        10  /* 最小超时时间（秒） */
+#define UVHTTP_WEBSOCKET_MAX_TIMEOUT_SECONDS        3600  /* 最大超时时间（秒） */
+#define UVHTTP_WEBSOCKET_MIN_HEARTBEAT_INTERVAL     5   /* 最小心跳间隔（秒） */
+#define UVHTTP_WEBSOCKET_MAX_HEARTBEAT_INTERVAL     300 /* 最大心跳间隔（秒） */
 
 /* ========== 错误恢复配置（如果未定义）========== */
 #ifndef UVHTTP_DEFAULT_BASE_DELAY_MS

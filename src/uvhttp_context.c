@@ -267,7 +267,7 @@ static void test_log(uvhttp_logger_provider_t* provider,
         case UVHTTP_LOG_LEVEL_FATAL: level_str = "FATAL"; break;
     }
 
-    char log_entry[512];
+    char log_entry[UVHTTP_LOG_ENTRY_SIZE];
     snprintf(log_entry, sizeof(log_entry), "[%s] %s:%d %s(): %s\n",
              level_str, file, line, func, message);
 

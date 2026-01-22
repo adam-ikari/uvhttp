@@ -5,6 +5,7 @@
 
 #include "uvhttp_error_handler.h"
 #include "uvhttp_allocator.h"
+#include "uvhttp_constants.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -194,7 +195,7 @@ void uvhttp_log(uvhttp_log_level_t level, const char* format, ...) {
     /* 获取时间戳 */
     time_t now = time(NULL);
     struct tm* tm_info = localtime(&now);
-    char timestamp[32];
+    char timestamp[UVHTTP_TIME_STRING_SIZE];
     strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", tm_info);
     
     /* 格式化日志消息 */

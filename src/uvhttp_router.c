@@ -119,7 +119,7 @@ static uvhttp_route_node_t* find_or_create_child(uvhttp_router_t* router,
     }
     
     // 创建新子节点
-    if (parent->child_count >= 16) {
+    if (parent->child_count >= UVHTTP_ROUTER_MAX_CHILD_COUNT) {
         return NULL;
     }
     
