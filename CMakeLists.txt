@@ -136,7 +136,7 @@ if(UVHTTP_FEATURE_MIDDLEWARE)
 endif()
 
 if(BUILD_WITH_WEBSOCKET)
-    list(APPEND SOURCES src/uvhttp_websocket_native.c src/uvhttp_websocket_auth.c)
+    list(APPEND SOURCES src/uvhttp_websocket_native.c)
 endif()
 
 # 头文件

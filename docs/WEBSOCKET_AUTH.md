@@ -2,38 +2,91 @@
 
 ## 概述
 
-UVHTTP 提供了完整的 WebSocket 连接认证功能，支持：
+WebSocket 认证功能已从 UVHTTP 核心库中剥离，完全由应用层实现。这种设计提供了更大的灵活性，允许开发者根据具体需求实现自定义的认证逻辑。
 
-- **Token 认证**：通过查询参数或 HTTP 头传递 Token
-- **IP 白名单**：只允许特定 IP 地址连接
-- **IP 黑名单**：拒绝特定 IP 地址连接
+## 为什么由应用层实现？
 
-## 认证机制
+1. **灵活性**：应用层可以根据业务需求实现任何认证逻辑
+2. **可定制性**：支持各种认证方式（JWT、OAuth、数据库验证等）
+3. **安全性**：认证逻辑完全由应用控制，避免核心库的安全隐患
+4. **轻量级**：核心库保持简洁，只负责 WebSocket 协议处理
 
-### 1. Token 认证
+## 应用层实现认证
 
-Token 认证允许您在 WebSocket 握手时验证客户端身份。
+### 1. 认证检查函数
 
-#### Token 传递方式
-
-客户端可以通过两种方式传递 Token：
-
-1. **查询参数**：`ws://localhost:8080/ws?token=secret123`
-2. **Authorization 头**：`Authorization: Bearer secret123`
-
-#### 启用 Token 认证
+在 WebSocket 连接建立时进行认证检查：
 
 ```c
 #include "uvhttp.h"
 #include "uvhttp_websocket_auth.h"
 
-/* Token 验证函数 */
+/* 简单的 Token 验证函数 */
 int validate_token(const char* token, void* user_data) {
     /* 验证逻辑 */
     if (strcmp(token, "secret123") == 0) {
         return 0;  /* 认证成功 */
     }
     return -1;  /* 认证失败 */
+}
+
+/* 认证配置 */
+static uvhttp_ws_auth_config_t* g_auth_config = NULL;
+
+/* 应用层认证检查函数 */
+int check_websocket_auth(const char* client_ip, const char* token) {
+    if (!g_auth_config) {
+        return 1;  /* 没有配置认证，允许连接 */
+    }
+
+    uvhttp_ws_auth_result_t result = uvhttp_ws_authenticate(g_auth_config, client_ip, token);
+    
+    if (result != UVHTTP_WS_AUTH_SUCCESS) {
+        printf("认证失败: %s (IP: %s)\n", 
+               uvhttp_ws_auth_result_string(result), client_ip);
+        return 0;  /* 认证失败 */
+    }
+
+    return 1;  /* 认证成功 */
+}
+```
+
+### 2. 创建认证配置
+
+```c
+/* 创建认证配置 */
+g_auth_config = uvhttp_ws_auth_config_create();
+if (!g_auth_config) {
+    fprintf(stderr, "无法创建认证配置\n");
+    return 1;
+}
+
+/* 启用 Token 认证 */
+g_auth_config->enable_token_auth = 1;
+uvhttp_ws_auth_set_token_validator(g_auth_config, validate_token, NULL);
+
+/* 添加 IP 白名单（可选） */
+uvhttp_ws_auth_add_ip_to_whitelist(g_auth_config, "127.0.0.1");
+uvhttp_ws_auth_add_ip_to_whitelist(g_auth_config, "192.168.1.0/24");
+
+/* 添加 IP 黑名单（可选） */
+uvhttp_ws_auth_add_ip_to_blacklist(g_auth_config, "192.168.1.100");
+```
+
+### 3. 注册 WebSocket 处理器
+
+```c
+/* WebSocket 消息回调 */
+int on_message(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len, int opcode) {
+    printf("收到消息: %.*s\n", (int)len, data);
+    uvhttp_server_ws_send(ws_conn, data, len);
+    return 0;
+}
+
+/* WebSocket 连接回调 */
+int on_connect(uvhttp_ws_connection_t* ws_conn) {
+    printf("新的 WebSocket 连接已建立\n");
+    return 0;
 }
 
 /* 创建服务器 */
@@ -48,13 +101,36 @@ uvhttp_ws_handler_t ws_handler = {
     .user_data = NULL
 };
 
-uvhttp_server_register_ws_handler(server, "/ws", &ws_handler);
+uvhttp_server_register_ws_handler(server->server, "/ws", &ws_handler);
+```
 
-/* 启用 Token 认证 */
-uvhttp_server_ws_enable_token_auth(server, "/ws", validate_token, NULL);
+### 4. 完整示例
 
-/* 启动服务器 */
-uvhttp_server_listen(server, "0.0.0.0", 8080);
+参见 `examples/05_advanced/websocket_auth_server.c`。
+
+## 认证功能说明
+
+### 1. Token 认证
+
+Token 认证允许您在 WebSocket 握手时验证客户端身份。
+
+#### Token 传递方式
+
+客户端可以通过两种方式传递 Token：
+
+1. **查询参数**：`ws://localhost:8080/ws?token=secret123`
+2. **Authorization 头**：`Authorization: Bearer secret123`
+
+#### Token 验证
+
+```c
+int validate_token(const char* token, void* user_data) {
+    /* 验证逻辑 */
+    if (strcmp(token, "secret123") == 0) {
+        return 0;  /* 认证成功 */
+    }
+    return -1;  /* 认证失败 */
+}
 ```
 
 ### 2. IP 白名单
@@ -63,8 +139,8 @@ IP 白名单只允许特定 IP 地址的客户端连接。
 
 ```c
 /* 添加 IP 到白名单 */
-uvhttp_server_ws_add_ip_to_whitelist(server, "/ws", "127.0.0.1");
-uvhttp_server_ws_add_ip_to_whitelist(server, "/ws", "192.168.1.0/24");
+uvhttp_ws_auth_add_ip_to_whitelist(g_auth_config, "127.0.0.1");
+uvhttp_ws_auth_add_ip_to_whitelist(g_auth_config, "192.168.1.0/24");
 ```
 
 ### 3. IP 黑名单
@@ -73,8 +149,8 @@ IP 黑名单拒绝特定 IP 地址的客户端连接。
 
 ```c
 /* 添加 IP 到黑名单 */
-uvhttp_server_ws_add_ip_to_blacklist(server, "/ws", "192.168.1.100");
-uvhttp_server_ws_add_ip_to_blacklist(server, "/ws", "10.0.0.0/8");
+uvhttp_ws_auth_add_ip_to_blacklist(g_auth_config, "192.168.1.100");
+uvhttp_ws_auth_add_ip_to_blacklist(g_auth_config, "10.0.0.0/8");
 ```
 
 ## API 参考
@@ -100,278 +176,121 @@ typedef struct {
 } uvhttp_ws_auth_config_t;
 ```
 
-### Token 验证回调
+### 认证函数
 
-#### `uvhttp_ws_token_validator_callback`
+#### `uvhttp_ws_auth_config_create()`
 
-Token 验证回调函数类型。
+创建认证配置。
 
 ```c
-typedef int (*uvhttp_ws_token_validator_callback)(const char* token, void* user_data);
+uvhttp_ws_auth_config_t* uvhttp_ws_auth_config_create(void);
 ```
 
-**参数**：
-- `token`：客户端提供的 Token
-- `user_data`：用户数据
+#### `uvhttp_ws_auth_config_destroy()`
 
-**返回值**：
-- `0`：认证成功
-- 非 0：认证失败
-
-### 服务器 API
-
-#### `uvhttp_server_ws_enable_token_auth`
-
-启用 Token 认证。
+销毁认证配置。
 
 ```c
-uvhttp_error_t uvhttp_server_ws_enable_token_auth(
-    uvhttp_server_t* server,
-    const char* path,
+void uvhttp_ws_auth_config_destroy(uvhttp_ws_auth_config_t* config);
+```
+
+#### `uvhttp_ws_auth_set_token_validator()`
+
+设置 Token 验证回调。
+
+```c
+void uvhttp_ws_auth_set_token_validator(
+    uvhttp_ws_auth_config_t* config,
     uvhttp_ws_token_validator_callback validator,
     void* user_data
 );
 ```
 
-**参数**：
-- `server`：服务器实例
-- `path`：WebSocket 路径
-- `validator`：Token 验证回调函数
-- `user_data`：用户数据
-
-**返回值**：
-- `UVHTTP_OK`：成功
-- 其他值：失败
-
-#### `uvhttp_server_ws_add_ip_to_whitelist`
+#### `uvhttp_ws_auth_add_ip_to_whitelist()`
 
 添加 IP 到白名单。
 
 ```c
-uvhttp_error_t uvhttp_server_ws_add_ip_to_whitelist(
-    uvhttp_server_t* server,
-    const char* path,
+int uvhttp_ws_auth_add_ip_to_whitelist(
+    uvhttp_ws_auth_config_t* config,
     const char* ip
 );
 ```
 
-**参数**：
-- `server`：服务器实例
-- `path`：WebSocket 路径
-- `ip`：IP 地址或 CIDR（如 "192.168.1.0/24"）
-
-**返回值**：
-- `UVHTTP_OK`：成功
-- 其他值：失败
-
-#### `uvhttp_server_ws_add_ip_to_blacklist`
+#### `uvhttp_ws_auth_add_ip_to_blacklist()`
 
 添加 IP 到黑名单。
 
 ```c
-uvhttp_error_t uvhttp_server_ws_add_ip_to_blacklist(
-    uvhttp_server_t* server,
-    const char* path,
+int uvhttp_ws_auth_add_ip_to_blacklist(
+    uvhttp_ws_auth_config_t* config,
     const char* ip
 );
 ```
 
-**参数**：
-- `server`：服务器实例
-- `path`：WebSocket 路径
-- `ip`：IP 地址或 CIDR（如 "10.0.0.0/8"）
+#### `uvhttp_ws_authenticate()`
 
-**返回值**：
-- `UVHTTP_OK`：成功
-- 其他值：失败
-
-#### `uvhttp_server_ws_set_auth_config`
-
-设置完整的认证配置。
+执行认证。
 
 ```c
-uvhttp_error_t uvhttp_server_ws_set_auth_config(
-    uvhttp_server_t* server,
-    const char* path,
-    uvhttp_ws_auth_config_t* config
+uvhttp_ws_auth_result_t uvhttp_ws_authenticate(
+    uvhttp_ws_auth_config_t* config,
+    const char* client_ip,
+    const char* token
 );
 ```
 
-**参数**：
-- `server`：服务器实例
-- `path`：WebSocket 路径
-- `config`：认证配置
+### 认证结果
 
-**返回值**：
-- `UVHTTP_OK`：成功
-- 其他值：失败
+#### `uvhttp_ws_auth_result_t`
 
-## 认证流程
+认证结果枚举。
 
-1. **客户端发起握手**
-   - 客户端发送 WebSocket 握手请求
-   - 可以在查询参数或 Authorization 头中包含 Token
+```c
+typedef enum {
+    UVHTTP_WS_AUTH_SUCCESS = 0,           /* 认证成功 */
+    UVHTTP_WS_AUTH_FAILED = -1,           /* 认证失败 */
+    UVHTTP_WS_AUTH_NO_TOKEN = -2,         /* 缺少 Token */
+    UVHTTP_WS_AUTH_INVALID_TOKEN = -3,    /* Token 无效 */
+    UVHTTP_WS_AUTH_EXPIRED_TOKEN = -4,    /* Token 已过期 */
+    UVHTTP_WS_AUTH_IP_BLOCKED = -5,       /* IP 被阻止 */
+    UVHTTP_WS_AUTH_IP_NOT_ALLOWED = -6,   /* IP 不在白名单中 */
+    UVHTTP_WS_AUTH_INTERNAL_ERROR = -7    /* 内部错误 */
+} uvhttp_ws_auth_result_t;
+```
 
-2. **服务器提取认证信息**
-   - 服务器从请求中提取客户端 IP
-   - 服务器从查询参数或 Authorization 头中提取 Token
+## 安全建议
 
-3. **执行认证检查**
-   - 检查 IP 黑名单（如果启用）
-   - 检查 IP 白名单（如果启用）
-   - 验证 Token（如果启用）
+1. **使用 HTTPS/WSS**：在生产环境中始终使用加密连接
+2. **Token 安全**：使用强随机生成的 Token，定期更换
+3. **IP 限制**：结合 IP 白名单增强安全性
+4. **日志记录**：记录所有认证尝试，便于审计
+5. **速率限制**：防止暴力破解攻击
 
-4. **认证结果**
-   - 认证成功：继续握手流程，创建 WebSocket 连接
-   - 认证失败：拒绝连接，关闭 TCP 连接
-
-## 认证结果
-
-认证可能返回以下结果：
-
-| 结果 | 说明 |
-|------|------|
-| `UVHTTP_WS_AUTH_SUCCESS` | 认证成功 |
-| `UVHTTP_WS_AUTH_FAILED` | 认证失败 |
-| `UVHTTP_WS_AUTH_NO_TOKEN` | 缺少 Token |
-| `UVHTTP_WS_AUTH_INVALID_TOKEN` | Token 无效 |
-| `UVHTTP_WS_AUTH_EXPIRED_TOKEN` | Token 已过期 |
-| `UVHTTP_WS_AUTH_IP_BLOCKED` | IP 被阻止 |
-| `UVHTTP_WS_AUTH_IP_NOT_ALLOWED` | IP 不在白名单中 |
-| `UVHTTP_WS_AUTH_INTERNAL_ERROR` | 内部错误 |
-
-## 示例
-
-### 完整示例
-
-参见 `examples/websocket_auth_server.c`。
+## 编译示例
 
 ```bash
-# 编译
 cd build
 make websocket_auth_server
-
-# 运行
 ./dist/bin/websocket_auth_server 8080
 ```
 
-### 客户端连接示例
-
-#### 使用查询参数
+## 客户端连接示例
 
 ```javascript
-// JavaScript
+// 使用 Token 连接
 const ws = new WebSocket('ws://localhost:8080/ws?token=secret123');
-```
 
-#### 使用 Authorization 头
-
-```javascript
-// JavaScript 需要使用支持自定义头的 WebSocket 库
-const ws = new WebSocket('ws://localhost:8080/ws', {
+// 或使用 Authorization 头
+const ws = new WebSocket('ws://localhost:8080/ws', [], {
     headers: {
         'Authorization': 'Bearer secret123'
     }
 });
 ```
 
-#### Python
+## 参考资料
 
-```python
-import websockets
-import asyncio
-
-async def connect():
-    # 使用查询参数
-    uri = "ws://localhost:8080/ws?token=secret123"
-    async with websockets.connect(uri) as websocket:
-        await websocket.send("Hello, Server!")
-        response = await websocket.recv()
-        print(response)
-
-asyncio.run(connect())
-```
-
-## 安全建议
-
-1. **使用 HTTPS/WSS**：在生产环境中，始终使用 WSS（WebSocket Secure）而不是 WS
-2. **Token 安全**：
-   - 使用强随机 Token
-   - 定期轮换 Token
-   - 为 Token 设置过期时间
-3. **IP 过滤**：
-   - 结合 IP 白名单和黑名单使用
-   - 定期审查 IP 列表
-4. **日志记录**：记录所有认证失败尝试，用于安全审计
-5. **速率限制**：对认证失败尝试实施速率限制，防止暴力破解
-
-## 常见问题
-
-### Q: 如何实现 Token 过期？
-
-A: 在 Token 验证函数中检查 Token 的过期时间：
-
-```c
-int validate_token(const char* token, void* user_data) {
-    /* 从数据库或缓存中查找 Token */
-    token_info_t* info = find_token(token);
-
-    if (!info) {
-        return -1;  /* Token 不存在 */
-    }
-
-    /* 检查过期时间 */
-    if (info->expires_at < time(NULL)) {
-        return -1;  /* Token 已过期 */
-    }
-
-    return 0;  /* 认证成功 */
-}
-```
-
-### Q: 如何支持多种认证方式？
-
-A: 在 Token 验证函数中实现多种验证逻辑：
-
-```c
-int validate_token(const char* token, void* user_data) {
-    /* 尝试 JWT 验证 */
-    if (validate_jwt(token) == 0) {
-        return 0;
-    }
-
-    /* 尝试数据库验证 */
-    if (validate_from_database(token) == 0) {
-        return 0;
-    }
-
-    /* 尝试 Redis 缓存验证 */
-    if (validate_from_redis(token) == 0) {
-        return 0;
-    }
-
-    return -1;  /* 所有验证方式都失败 */
-}
-```
-
-### Q: 如何动态更新 IP 白名单？
-
-A: 使用 `uvhttp_server_ws_set_auth_config` 更新配置：
-
-```c
-/* 创建新配置 */
-uvhttp_ws_auth_config_t* new_config = uvhttp_ws_auth_config_create();
-uvhttp_ws_auth_add_ip_to_whitelist(new_config, "192.168.1.100");
-
-/* 更新配置 */
-uvhttp_server_ws_set_auth_config(server, "/ws", new_config);
-
-/* 释放旧配置 */
-uvhttp_ws_auth_config_destroy(old_config);
-```
-
-## 参考资源
-
-- [WebSocket RFC 6455](https://tools.ietf.org/html/rfc6455)
-- [API 参考](API_REFERENCE.md)
-- [WebSocket 示例](../examples/websocket_auth_server.c)
+- [WebSocket 协议规范](https://tools.ietf.org/html/rfc6455)
+- [示例代码](../examples/05_advanced/websocket_auth_server.c)
+- [WebSocket 指南](../WEBSOCKET.md)

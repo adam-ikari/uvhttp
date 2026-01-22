@@ -46,3 +46,15 @@ target_link_libraries(cors_rate_limit_demo
     ${XXHASH_LIB}
     pthread m dl)
 add_dependencies(cors_rate_limit_demo uvhttp)
+
+# WebSocket 认证示例（应用层实现）
+add_executable(websocket_auth_server websocket_auth_server.c uvhttp_websocket_auth.c)
+target_link_libraries(websocket_auth_server
+    ${UVHTTP_LIB}
+    ${LIBUV_LIB}
+    ${MBEDTLS_LIBS}
+    ${LLHTTP_LIB}
+    ${CJSON_LIB}
+    ${XXHASH_LIB}
+    pthread m dl)
+add_dependencies(websocket_auth_server uvhttp)

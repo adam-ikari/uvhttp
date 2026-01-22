@@ -1,6 +1,8 @@
 /*
  * WebSocket 认证示例服务器
- * 演示如何使用 Token 认证和 IP 白名单/黑名单
+ * 演示如何在应用层实现 WebSocket 认证功能
+ * 
+ * 认证功能已从核心库中剥离，由应用层实现
  */
 
 #include "uvhttp.h"
@@ -19,6 +21,27 @@ int validate_token(const char* token, void* user_data) {
     }
 
     return -1;  /* 认证失败 */
+}
+
+/* 认证配置 */
+static uvhttp_ws_auth_config_t* g_auth_config = NULL;
+
+/* 应用层认证检查函数 */
+int check_websocket_auth(const char* client_ip, const char* token) {
+    if (!g_auth_config) {
+        return 1;  /* 没有配置认证，允许连接 */
+    }
+
+    uvhttp_ws_auth_result_t result = uvhttp_ws_authenticate(g_auth_config, client_ip, token);
+    
+    if (result != UVHTTP_WS_AUTH_SUCCESS) {
+        printf("认证失败: %s (IP: %s)\n", 
+               uvhttp_ws_auth_result_string(result), client_ip);
+        return 0;  /* 认证失败 */
+    }
+
+    printf("认证成功: IP=%s\n", client_ip);
+    return 1;  /* 认证成功 */
 }
 
 /* WebSocket 消息回调 */
@@ -66,10 +89,29 @@ int main(int argc, char* argv[]) {
     printf("启动 WebSocket 认证服务器...\n");
     printf("监听地址: %s:%d\n", host, port);
 
+    /* 创建认证配置 */
+    g_auth_config = uvhttp_ws_auth_config_create();
+    if (!g_auth_config) {
+        fprintf(stderr, "无法创建认证配置\n");
+        return 1;
+    }
+
+    /* 启用 Token 认证 */
+    g_auth_config->enable_token_auth = 1;
+    uvhttp_ws_auth_set_token_validator(g_auth_config, validate_token, NULL);
+
+    /* 添加 IP 白名单（可选） */
+    /* uvhttp_ws_auth_add_ip_to_whitelist(g_auth_config, "127.0.0.1"); */
+    /* uvhttp_ws_auth_add_ip_to_whitelist(g_auth_config, "192.168.1.0/24"); */
+
+    /* 添加 IP 黑名单（可选） */
+    /* uvhttp_ws_auth_add_ip_to_blacklist(g_auth_config, "192.168.1.100"); */
+
     /* 创建服务器 */
     uvhttp_server_builder_t* server = uvhttp_server_create(host, port);
     if (!server) {
         fprintf(stderr, "无法创建服务器\n");
+        uvhttp_ws_auth_config_destroy(g_auth_config);
         return 1;
     }
 
@@ -85,29 +127,9 @@ int main(int argc, char* argv[]) {
     uvhttp_error_t result = uvhttp_server_register_ws_handler(server->server, "/ws", &ws_handler);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "注册 WebSocket 处理器失败\n");
+        uvhttp_ws_auth_config_destroy(g_auth_config);
         return 1;
     }
-
-    /* 启用 Token 认证 */
-    result = uvhttp_server_ws_enable_token_auth(server->server, "/ws", validate_token, NULL);
-    if (result != UVHTTP_OK) {
-        fprintf(stderr, "启用 Token 认证失败\n");
-        return 1;
-    }
-
-    /* 添加 IP 白名单（可选） */
-    /* result = uvhttp_server_ws_add_ip_to_whitelist(server->server, "/ws", "127.0.0.1"); */
-    /* if (result != UVHTTP_OK) { */
-    /*     fprintf(stderr, "添加 IP 白名单失败\n"); */
-    /*     return 1; */
-    /* } */
-
-    /* 添加 IP 黑名单（可选） */
-    /* result = uvhttp_server_ws_add_ip_to_blacklist(server->server, "/ws", "192.168.1.100"); */
-    /* if (result != UVHTTP_OK) { */
-    /*     fprintf(stderr, "添加 IP 黑名单失败\n"); */
-    /*     return 1; */
-    /* } */
 
     printf("\n认证配置:\n");
     printf("  - Token 认证: 已启用\n");
@@ -122,6 +144,7 @@ int main(int argc, char* argv[]) {
     result = uvhttp_server_run(server);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "启动服务器失败\n");
+        uvhttp_ws_auth_config_destroy(g_auth_config);
         return 1;
     }
 
@@ -129,6 +152,7 @@ int main(int argc, char* argv[]) {
     uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 
     /* 清理 */
+    uvhttp_ws_auth_config_destroy(g_auth_config);
     uvhttp_server_simple_free(server);
 
     return 0;

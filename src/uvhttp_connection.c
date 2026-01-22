@@ -738,18 +738,6 @@ int uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, cons
         }
     }
 
-    /* 执行认证检查 */
-    uvhttp_ws_auth_result_t auth_result = UVHTTP_WS_AUTH_SUCCESS;
-    if (conn->server) {
-        auth_result = uvhttp_server_ws_authenticate(conn->server, path, client_ip, token);
-    }
-
-    if (auth_result != UVHTTP_WS_AUTH_SUCCESS) {
-        UVHTTP_LOG_WARN("WebSocket authentication failed for path %s: %s\n",
-                       path, uvhttp_ws_auth_result_string(auth_result));
-        return -1;
-    }
-
     /* 查找用户注册的WebSocket处理器 */
     uvhttp_ws_handler_t* user_handler = NULL;
     if (conn->server) {
