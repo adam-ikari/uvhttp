@@ -62,7 +62,7 @@ check_test_result() {
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
 
     # 提取结果
-    local rps=$(grep -o '"rps": [0-9.]*' "$json_file" | awk '{print $2}')
+    local qps=$(grep -o '"qps": [0-9.]*' "$json_file" | awk '{print $2}')
     local avg_latency=$(grep -o '"avg_latency": "[0-9.]*[a-z]*"' "$json_file" | sed 's/"avg_latency": "//; s/"//')
     local p99_latency=$(grep -o '"p99_latency": "[0-9.]*[a-z]*"' "$json_file" | sed 's/"p99_latency": "//; s/"//')
 
@@ -76,14 +76,14 @@ check_test_result() {
     local avg_latency_max=${PERFORMANCE_BASELINES[$avg_latency_max_key]}
     local p99_latency_max=${PERFORMANCE_BASELINES[$p99_latency_max_key]}
 
-    # 检查 RPS
+    # 检查 QPS
     local rps_status="✅ 通过"
     local rps_color="$GREEN"
-    if (( $(echo "$rps < $rps_min" | bc -l) )); then
+    if (( $(echo "$qps < $rps_min" | bc -l) )); then
         rps_status="❌ 失败"
         rps_color="$RED"
         FAILED_TESTS=$((FAILED_TESTS + 1))
-    elif (( $(echo "$rps < $rps_target" | bc -l) )); then
+    elif (( $(echo "$qps < $rps_target" | bc -l) )); then
         rps_status="⚠️  警告"
         rps_color="$YELLOW"
         WARNING_TESTS=$((WARNING_TESTS + 1))
@@ -108,7 +108,7 @@ check_test_result() {
     local file_desc="${TEST_FILE_DESCRIPTIONS[$test_name]}"
     echo "## $file_desc"
     echo ""
-    echo "  RPS: $rps (目标: $rps_target, 最小: $rps_min) - ${rps_color}${rps_status}${NC}"
+    echo "  QPS: $qps (目标: $rps_target, 最小: $rps_min) - ${rps_color}${rps_status}${NC}"
     echo "  平均延迟: $avg_latency_ms ms (最大: ${avg_latency_max}ms)"
     echo "  P99 延迟: $p99_latency_ms ms (最大: ${p99_latency_max}ms) - ${latency_color}${latency_status}${NC}"
     echo ""

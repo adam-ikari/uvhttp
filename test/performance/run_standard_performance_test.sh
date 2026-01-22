@@ -118,7 +118,7 @@ run_test() {
     wrk -t$threads -c$connections -d${duration}s --latency "$url" | tee "$output_file"
 
     # 提取性能指标
-    local rps=$(grep "Requests/sec:" "$output_file" | awk '{print $2}')
+    local qps=$(grep "Requests/sec:" "$output_file" | awk '{print $2}')
     local avg_latency=$(grep "Latency" "$output_file" | head -1 | awk '{print $2}')
     local p99_latency=$(grep "99%" "$output_file" | awk '{print $2}')
 
@@ -134,14 +134,14 @@ run_test() {
     "duration": $duration
   },
   "results": {
-    "rps": $rps,
+    "qps": $qps,
     "avg_latency": "$avg_latency",
     "p99_latency": "$p99_latency"
   }
 }
 EOF
 
-    echo -e "${GREEN}  RPS: $rps${NC}"
+    echo -e "${GREEN}  QPS: $qps${NC}"
     echo -e "${GREEN}  平均延迟: $avg_latency${NC}"
     echo -e "${GREEN}  P99 延迟: $p99_latency${NC}"
     echo ""

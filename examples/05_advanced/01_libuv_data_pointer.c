@@ -186,7 +186,7 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     }
 
     long uptime = time(NULL) - ctx->start_time;
-    double rps = uptime > 0 ? (double)ctx->request_count / uptime : 0.0;
+    double qps = uptime > 0 ? (double)ctx->request_count / uptime : 0.0;
 
     char response[512];
     snprintf(response, sizeof(response),
@@ -200,7 +200,7 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         ctx->server_name,
         ctx->request_count,
         uptime,
-        rps,
+        qps,
         ctx->server ? ctx->server->active_connections : 0);
     
     uvhttp_response_set_status(res, 200);
