@@ -32,8 +32,8 @@ static int contains_sensitive_info(const char* str) {
         *p = (char)tolower((unsigned char)*p);
     }
     
-    for (int i = 0; sensitive_keywords[i]; i++) {
-        if (strstr(lower_str, sensitive_keywords[i])) {
+    for (int index = 0; sensitive_keywords[index]; index++) {
+        if (strstr(lower_str, sensitive_keywords[index])) {
             return UVHTTP_TRUE;
         }
     }

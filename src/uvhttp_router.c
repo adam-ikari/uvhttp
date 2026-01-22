@@ -95,8 +95,8 @@ static uvhttp_route_node_t* create_route_node(uvhttp_router_t* router) {
         }
         
         // 初始化新增的节点
-        for (size_t i = router->node_pool_size; i < new_size; i++) {
-            memset(&new_pool[i], 0, sizeof(uvhttp_route_node_t));
+        for (size_t index = router->node_pool_size; index < new_size; index++) {
+            memset(&new_pool[index], 0, sizeof(uvhttp_route_node_t));
         }
         
         router->node_pool = new_pool;
@@ -112,9 +112,9 @@ static uvhttp_route_node_t* find_or_create_child(uvhttp_router_t* router,
                                                 const char* segment, 
                                                 int is_param) {
     // 查找现有子节点
-    for (size_t i = 0; i < parent->child_count; i++) {
-        if (strcmp(parent->children[i]->segment, segment) == 0) {
-            return parent->children[i];
+    for (size_t index = 0; index < parent->child_count; index++) {
+        if (strcmp(parent->children[index]->segment, segment) == 0) {
+            return parent->children[index];
         }
     }
     
@@ -257,8 +257,8 @@ static uvhttp_error_t add_array_route(uvhttp_router_t* router, const char* path,
 static uvhttp_request_handler_t find_array_route(const uvhttp_router_t* router, 
                                                 const char* path, 
                                                 uvhttp_method_t method) {
-    for (size_t i = 0; i < router->array_route_count; i++) {
-        array_route_t* route = &router->array_routes[i];
+    for (size_t index = 0; index < router->array_route_count; index++) {
+        array_route_t* route = &router->array_routes[index];
         if (route->method == method || route->method == UVHTTP_ANY) {
             if (strcmp(route->path, path) == 0) {
                 return route->handler;
@@ -279,8 +279,8 @@ static uvhttp_error_t migrate_to_trie(uvhttp_router_t* router) {
     size_t old_count = router->array_route_count;
     
     // 将所有数组路由迁移到Trie
-    for (size_t i = 0; i < old_count; i++) {
-        array_route_t* route = &old_routes[i];
+    for (size_t index = 0; index < old_count; index++) {
+        array_route_t* route = &old_routes[index];
         
         // 构建路由树
         uvhttp_route_node_t* current = router->root;
@@ -373,10 +373,10 @@ uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
                 token++;
                 // 保存参数名 - 优化：只计算一次strlen
                 size_t token_len = strlen(token);
-                for (size_t i = 0; i < token_len; i++) {
-                    if (token[i] == '/') {
-                        strncpy(current->param_name, token, i);
-                        current->param_name[i] = '\0';
+                for (size_t index = 0; index < token_len; index++) {
+                    if (token[index] == '/') {
+                        strncpy(current->param_name, token, index);
+                        current->param_name[index] = '\0';
                         break;
                     }
                 }
@@ -424,8 +424,8 @@ static int match_route_node(uvhttp_route_node_t* node,
     const char* segment = segments[segment_index];
     
     // 查找匹配的子节点
-    for (size_t i = 0; i < node->child_count; i++) {
-        uvhttp_route_node_t* child = node->children[i];
+    for (size_t index = 0; index < node->child_count; index++) {
+        uvhttp_route_node_t* child = node->children[index];
         
         if (child->is_param) {
             // 参数节点，匹配任意段

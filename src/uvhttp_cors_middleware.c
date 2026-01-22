@@ -171,9 +171,9 @@ void uvhttp_cors_set_headers(
             /* 添加 Vary: Origin 头以防止缓存问题 */
             /* 检查是否已有 Vary 头 */
             const char* existing_vary = NULL;
-            for (size_t i = 0; i < response->header_count; i++) {
-                if (strcasecmp(response->headers[i].name, "Vary") == 0) {
-                    existing_vary = response->headers[i].value;
+            for (size_t index = 0; index < response->header_count; index++) {
+                if (strcasecmp(response->headers[index].name, "Vary") == 0) {
+                    existing_vary = response->headers[index].value;
                     break;
                 }
             }

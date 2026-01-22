@@ -170,7 +170,7 @@ uvhttp_error_t uvhttp_error_attempt_recovery(const uvhttp_error_context_t* conte
 /* 计算重试延迟 */
 static int calculate_retry_delay(int attempt) {
     int delay = g_error_config.baseDelayMs;
-    for (int i = 0; i < attempt; i++) {
+    for (int index = 0; index < attempt; index++) {
         delay *= g_error_config.backoffMultiplier;
     }
     return (delay > g_error_config.maxDelayMs) ? 

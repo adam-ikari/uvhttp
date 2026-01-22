@@ -465,25 +465,25 @@ const char* uvhttp_request_get_header(uvhttp_request_t* request, const char* nam
     }
     
     /* 检查 header 名称是否包含非法字符 */
-    for (size_t i = 0; i < name_len; i++) {
-        char c = name[i];
+    for (size_t index = 0; index < name_len; index++) {
+        char char_value = name[index];
         /* HTTP header 名称只能包含特定字符 */
-        if (!((c >= 'A' && c <= 'Z') || 
-              (c >= 'a' && c <= 'z') || 
-              (c >= '0' && c <= '9') || 
-              c == '-' || c == '_')) {
+        if (!((char_value >= 'A' && char_value <= 'Z') || 
+              (char_value >= 'a' && char_value <= 'z') || 
+              (char_value >= '0' && char_value <= '9') || 
+              char_value == '-' || char_value == '_')) {
             return NULL;
         }
     }
     
     /* 查找 header（不区分大小写） */
-    for (size_t i = 0; i < request->header_count; i++) {
-        if (request->headers[i].name && 
-            strcasecmp(request->headers[i].name, name) == 0) {
+    for (size_t index = 0; index < request->header_count; index++) {
+        if (request->headers[index].name && 
+            strcasecmp(request->headers[index].name, name) == 0) {
             /* 验证 header 值 */
-            if (request->headers[i].value && 
-                strlen(request->headers[i].value) <= UVHTTP_MAX_HEADER_VALUE_LENGTH) {
-                return request->headers[i].value;
+            if (request->headers[index].value && 
+                strlen(request->headers[index].value) <= UVHTTP_MAX_HEADER_VALUE_LENGTH) {
+                return request->headers[index].value;
             }
         }
     }

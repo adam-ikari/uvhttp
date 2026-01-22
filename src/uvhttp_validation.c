@@ -34,8 +34,8 @@ int uvhttp_validate_string_length(const char* str, size_t min_len, size_t max_le
 int uvhttp_validate_http_method(const char* method) {
     if (!method) return UVHTTP_FALSE;
     
-    for (int i = 0; valid_methods[i]; i++) {
-        if (strcmp(method, valid_methods[i]) == 0) {
+    for (int index = 0; valid_methods[index]; index++) {
+        if (strcmp(method, valid_methods[index]) == 0) {
             return UVHTTP_TRUE;
         }
     }
@@ -51,8 +51,8 @@ int uvhttp_validate_url_path(const char* path) {
     }
     
     // 检查危险字符
-    for (size_t i = 0; i < sizeof(dangerous_path_chars); i++) {
-        if (strchr(path, dangerous_path_chars[i])) {
+    for (size_t index = 0; index < sizeof(dangerous_path_chars); index++) {
+        if (strchr(path, dangerous_path_chars[index])) {
             return UVHTTP_FALSE;
         }
     }
@@ -79,9 +79,9 @@ int uvhttp_validate_header_name(const char* name) {
     }
     
     // HTTP头部名称只能包含可打印ASCII字符，不能包含冒号
-    for (size_t i = 0; name[i]; i++) {
-        unsigned char c = (unsigned char)name[i];
-        if (!isprint(c) || c == ':') {
+    for (size_t index = 0; name[index]; index++) {
+        unsigned char char_value = (unsigned char)name[index];
+        if (!isprint(char_value) || char_value == ':') {
             return UVHTTP_FALSE;
         }
     }
@@ -98,12 +98,12 @@ int uvhttp_validate_header_value_safe(const char* value) {
     }
     
     // 检查控制字符（除了制表符）
-    for (size_t i = 0; value[i]; i++) {
-        unsigned char c = (unsigned char)value[i];
-        if (c < UVHTTP_SPACE_CHARACTER && c != UVHTTP_TAB_CHARACTER) {
+    for (size_t index = 0; value[index]; index++) {
+        unsigned char char_value = (unsigned char)value[index];
+        if (char_value < UVHTTP_SPACE_CHARACTER && char_value != UVHTTP_TAB_CHARACTER) {
             return UVHTTP_FALSE;
         }
-        if (c == UVHTTP_DELETE_CHARACTER) {
+        if (char_value == UVHTTP_DELETE_CHARACTER) {
             return UVHTTP_FALSE;
         }
     }
@@ -121,13 +121,13 @@ int uvhttp_validate_ipv4(const char* ip) {
     int octets = 0;
     int current = 0;
     
-    for (size_t i = 0; ip[i]; i++) {
-        if (ip[i] == '.') {
+    for (size_t index = 0; ip[index]; index++) {
+        if (ip[index] == '.') {
             octets++;
             if (current > 255 || current < 0) return UVHTTP_FALSE;
             current = 0;
-        } else if (isdigit(ip[i])) {
-            current = current * 10 + (ip[i] - '0');
+        } else if (isdigit(ip[index])) {
+            current = current * 10 + (ip[index] - '0');
         } else {
             return UVHTTP_FALSE;
         }
@@ -146,11 +146,11 @@ int uvhttp_validate_ipv6(const char* ip) {
     int colons = 0;
     int digits = 0;
     
-    for (size_t i = 0; ip[i]; i++) {
-        if (ip[i] == ':') {
+    for (size_t index = 0; ip[index]; index++) {
+        if (ip[index] == ':') {
             colons++;
             digits = 0;
-        } else if (isxdigit(ip[i])) {
+        } else if (isxdigit(ip[index])) {
             digits++;
             if (digits > 4) return UVHTTP_FALSE;
         } else {
@@ -175,9 +175,9 @@ int uvhttp_validate_websocket_key(const char* key, size_t key_len) {
     }
     
     // 检查是否为有效的base64字符
-    for (size_t i = 0; i < key_len; i++) {
-        char c = key[i];
-        if (!(isalnum(c) || c == '+' || c == '/' || c == '=')) {
+    for (size_t index = 0; index < key_len; index++) {
+        char char_value = key[index];
+        if (!(isalnum(char_value) || char_value == '+' || char_value == '/' || char_value == '=')) {
             return UVHTTP_FALSE;
         }
     }
@@ -215,8 +215,8 @@ int uvhttp_validate_query_string(const char* query) {
     }
     
     // 检查危险字符
-    for (size_t i = 0; i < sizeof(dangerous_query_chars); i++) {
-        if (strchr(query, dangerous_query_chars[i])) {
+    for (size_t index = 0; index < sizeof(dangerous_query_chars); index++) {
+        if (strchr(query, dangerous_query_chars[index])) {
             return UVHTTP_FALSE;
         }
     }
@@ -227,21 +227,21 @@ int uvhttp_validate_query_string(const char* query) {
 int uvhttp_validate_string_safety(const char* str, int allow_null_bytes, int allow_control_chars) {
     if (!str) return UVHTTP_FALSE;
     
-    for (size_t i = 0; str[i]; i++) {
-        unsigned char c = (unsigned char)str[i];
+    for (size_t index = 0; str[index]; index++) {
+        unsigned char char_value = (unsigned char)str[index];
         
         // 检查空字节
-        if (!allow_null_bytes && c == '\0') {
+        if (!allow_null_bytes && char_value == '\0') {
             return UVHTTP_FALSE;
         }
         
         // 检查控制字符
-        if (!allow_control_chars && c < UVHTTP_SPACE_CHARACTER && c != UVHTTP_TAB_CHARACTER) {
+        if (!allow_control_chars && char_value < UVHTTP_SPACE_CHARACTER && char_value != UVHTTP_TAB_CHARACTER) {
             return UVHTTP_FALSE;
         }
         
         // 检查删除字符
-        if (c == UVHTTP_DELETE_CHARACTER) {
+        if (char_value == UVHTTP_DELETE_CHARACTER) {
             return UVHTTP_FALSE;
         }
     }

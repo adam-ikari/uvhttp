@@ -120,8 +120,8 @@ void uvhttp_router_free(uvhttp_router_t* router) {
     cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
     
     // 释放哈希表
-    for (int i = 0; i < ROUTE_HASH_SIZE; i++) {
-        route_hash_entry_t* entry = cr->hash_table[i];
+    for (int index = 0; index < ROUTE_HASH_SIZE; index++) {
+        route_hash_entry_t* entry = cr->hash_table[index];
         while (entry) {
             route_hash_entry_t* next = entry->next;
             uvhttp_free((void*)entry->path);  // 释放路径字符串
@@ -178,10 +178,10 @@ static uvhttp_error_t add_to_hot_routes(cache_optimized_router_t* cr,
         size_t min_index = 0;
         unsigned int min_count = cr->access_count[0];
         
-        for (size_t i = 1; i < 16; i++) {
-            if (cr->access_count[i] < min_count) {
-                min_count = cr->access_count[i];
-                min_index = i;
+        for (size_t index = 1; index < 16; index++) {
+            if (cr->access_count[index] < min_count) {
+                min_count = cr->access_count[index];
+                min_index = index;
             }
         }
         
@@ -240,12 +240,12 @@ static inline uvhttp_request_handler_t find_in_hot_routes(cache_optimized_router
                                                         const char* path,
                                                         uvhttp_method_t method) {
     // 循环展开以减少分支预测失败
-    for (size_t i = 0; i < cr->hot_count; i += 4) {
+    for (size_t index = 0; index < cr->hot_count; index += 4) {
         // 批量比较4个路由
-        if ((cr->hot_routes[i].method == method || cr->hot_routes[i].method == UVHTTP_ANY) &&
-            strcmp(cr->hot_routes[i].path, path) == 0) {
-            cr->access_count[i]++;
-            return cr->hot_routes[i].handler;
+        if ((cr->hot_routes[index].method == method || cr->hot_routes[index].method == UVHTTP_ANY) &&
+            strcmp(cr->hot_routes[index].path, path) == 0) {
+            cr->access_count[index]++;
+            return cr->hot_routes[index].handler;
         }
         
         if (i + 1 < cr->hot_count &&
@@ -307,8 +307,8 @@ static uvhttp_request_handler_t find_handler_linear_only(
     /* 遍历所有路由进行线性查找 */
     /* 由于当前架构限制，通过遍历哈希表实现线性查找 */
     /* 在实际生产中，应该维护一个路由数组进行真正的线性查找 */
-    for (size_t i = 0; i < UVHTTP_ROUTER_HASH_SIZE; i++) {
-        route_hash_entry_t* entry = cr->hash_table[i];
+    for (size_t index = 0; index < UVHTTP_ROUTER_HASH_SIZE; index++) {
+        route_hash_entry_t* entry = cr->hash_table[index];
         while (entry) {
             if (strcmp(entry->path, path) == 0 && entry->method == method) {
                 return entry->handler;
@@ -382,10 +382,10 @@ static const struct {
 // 编译时优化的查找（使用二分查找）
 static uvhttp_request_handler_t find_static_route(const char* path, uvhttp_method_t method) {
     // 这里可以使用编译时生成的完美哈希或二分查找
-    for (size_t i = 0; i < sizeof(static_routes) / sizeof(static_routes[0]); i++) {
-        if (static_routes[i].method == method && 
-            strcmp(static_routes[i].path, path) == 0) {
-            return static_routes[i].handler;
+    for (size_t index = 0; index < sizeof(static_routes) / sizeof(static_routes[0]); index++) {
+        if (static_routes[index].method == method && 
+            strcmp(static_routes[index].path, path) == 0) {
+            return static_routes[index].handler;
         }
     }
     return NULL;

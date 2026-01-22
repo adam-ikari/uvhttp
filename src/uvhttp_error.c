@@ -43,7 +43,7 @@ void uvhttp_set_error_recovery_config(int max_retries, int base_delay_ms,
 /* 计算重试延迟（指数退避） */
 static int calculate_retry_delay(int attempt) {
     int delay = recovery_config.base_delay_ms;
-    for (int i = 0; i < attempt; i++) {
+    for (int index = 0; index < attempt; index++) {
         delay *= recovery_config.backoff_multiplier;
     }
     return delay > recovery_config.max_delay_ms ? recovery_config.max_delay_ms : delay;
@@ -262,10 +262,10 @@ uvhttp_error_t uvhttp_get_most_frequent_error(uvhttp_context_t* context) {
     size_t max_count = 0;
     int max_index = 0;
     
-    for (int i = 0; i < UVHTTP_ERROR_COUNT; i++) {
-        if (stats->error_counts[i] > max_count) {
-            max_count = stats->error_counts[i];
-            max_index = i;
+    for (int index = 0; index < UVHTTP_ERROR_COUNT; index++) {
+        if (stats->error_counts[index] > max_count) {
+            max_count = stats->error_counts[index];
+            max_index = index;
         }
     }
     

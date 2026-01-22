@@ -35,8 +35,8 @@ static int uvhttp_ws_random_bytes(uvhttp_context_t* context, unsigned char* buf,
     }
     
     /* 回退到伪随机数生成器（仅用于测试） */
-    for (size_t i = 0; i < len; i++) {
-        buf[i] = rand() & 0xFF;
+    for (size_t index = 0; index < len; index++) {
+        buf[index] = rand() & 0xFF;
     }
     return 0;
 }
@@ -149,8 +149,8 @@ void uvhttp_ws_apply_mask(uint8_t* data, size_t len, const uint8_t* masking_key)
         return;
     }
     
-    for (size_t i = 0; i < len; i++) {
-        data[i] ^= masking_key[i % 4];
+    for (size_t index = 0; index < len; index++) {
+        data[index] ^= masking_key[index % 4];
     }
 }
 
@@ -208,8 +208,8 @@ int uvhttp_ws_build_frame(uint8_t* buffer,
             uvhttp_free(buffer);
             return -1;
         }
-        for (int i = 0; i < 4; i++) {
-            buffer[header_size + i] = masking_key[i];
+        for (int index = 0; index < 4; index++) {
+            buffer[header_size + index] = masking_key[index];
         }
         
         /* 复制并掩码载荷 */

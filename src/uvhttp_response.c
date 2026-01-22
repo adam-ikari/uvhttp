@@ -43,17 +43,17 @@ static int contains_control_chars(const char* str) {
     if (!str) return 0;
     
     for (const char* p = str; *p; p++) {
-        unsigned char c = (unsigned char)*p;
+        unsigned char char_value = (unsigned char)*p;
         // 检查是否包含控制字符 (0-31) 但排除制表符 (9) 和空格 (32)
-        if (c < UVHTTP_SPACE_CHARACTER && c != UVHTTP_TAB_CHARACTER) {
+        if (char_value < UVHTTP_SPACE_CHARACTER && char_value != UVHTTP_TAB_CHARACTER) {
             return 1;  // 包含控制字符
         }
         // 明确检查回车符和换行符，防止HTTP响应拆分攻击
-        if (c == UVHTTP_CARRIAGE_RETURN || c == UVHTTP_LINE_FEED) {
+        if (char_value == UVHTTP_CARRIAGE_RETURN || char_value == UVHTTP_LINE_FEED) {
             return 1;  // HTTP响应拆分尝试
         }
         // 检查删除字符
-        if (c == UVHTTP_DELETE_CHARACTER) {
+        if (char_value == UVHTTP_DELETE_CHARACTER) {
             return 1;  // 包含删除字符
         }
     }
@@ -73,25 +73,25 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer, si
     int has_connection = 0;
     
     // 遍历现有headers
-    for (size_t i = 0; i < response->header_count; i++) {
+    for (size_t index = 0; index < response->header_count; index++) {
         // 安全检查：验证header值不包含控制字符，防止响应拆分
-        if (contains_control_chars(response->headers[i].value)) {
+        if (contains_control_chars(response->headers[index].value)) {
             // 如果header值包含控制字符，跳过该header
             UVHTTP_LOG_ERROR("Invalid header value detected: header '%s' contains control characters\n", 
-                           response->headers[i].name);
+                           response->headers[index].name);
             continue;
         }
         
         pos += snprintf(buffer + pos, *length - pos, "%s: %s\r\n",
-                       response->headers[i].name, response->headers[i].value);
+                       response->headers[index].name, response->headers[index].value);
         
-        if (strcasecmp(response->headers[i].name, "Content-Type") == 0) {
+        if (strcasecmp(response->headers[index].name, "Content-Type") == 0) {
             has_content_type = UVHTTP_TRUE;
         }
-        if (strcasecmp(response->headers[i].name, "Content-Length") == 0) {
+        if (strcasecmp(response->headers[index].name, "Content-Length") == 0) {
             has_content_length = UVHTTP_TRUE;
         }
-        if (strcasecmp(response->headers[i].name, "Connection") == 0) {
+        if (strcasecmp(response->headers[index].name, "Connection") == 0) {
             has_connection = UVHTTP_TRUE;
         }
     }
@@ -235,9 +235,9 @@ uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char*
     }
     
     // 验证body内容 - 检查无效字符
-    for (size_t i = 0; i < length; i++) {
+    for (size_t index = 0; index < length; index++) {
         // 允许所有二进制数据，但记录警告
-        if (i < length - 1 && body[i] == 0) {
+        if (index < length - 1 && body[index] == 0) {
             // NULL字节是有效的，不需要处理
         }
     }

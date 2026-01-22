@@ -348,10 +348,10 @@ static FILE* test_fopen(const char* filename, const char* mode, void* user_data)
     test_file_data_t* data = (test_file_data_t*)user_data;
     if (data->virtual_enabled) {
         /* 在虚拟文件系统中查找文件 */
-        for (size_t i = 0; i < data->virtual_count; i++) {
-            if (strcmp(data->virtual_files[i], filename) == 0) {
+        for (size_t index = 0; index < data->virtual_count; index++) {
+            if (strcmp(data->virtual_files[index], filename) == 0) {
                 /* 创建一个内存文件流 */
-                return fmemopen(data->virtual_content[i], data->virtual_sizes[i], mode);
+                return fmemopen(data->virtual_content[index], data->virtual_sizes[index], mode);
             }
         }
         return NULL; /* 文件不存在 */
@@ -363,8 +363,8 @@ static int test_access(const char* pathname, int mode, void* user_data) {
     test_file_data_t* data = (test_file_data_t*)user_data;
     if (data->virtual_enabled) {
         /* 在虚拟文件系统中检查文件存在性 */
-        for (size_t i = 0; i < data->virtual_count; i++) {
-            if (strcmp(data->virtual_files[i], pathname) == 0) {
+        for (size_t index = 0; index < data->virtual_count; index++) {
+            if (strcmp(data->virtual_files[index], pathname) == 0) {
                 return 0; /* 文件存在 */
             }
         }

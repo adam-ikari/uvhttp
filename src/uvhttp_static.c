@@ -171,10 +171,10 @@ int uvhttp_static_get_mime_type(const char* file_path,
     const char* extension = get_file_extension(file_path);
     
     /* 查找MIME类型 */
-    for (int i = 0; mime_types[i].extension; i++) {
-        if (strcasecmp(extension, mime_types[i].extension) == 0) {
-            if (uvhttp_safe_strncpy(mime_type, mime_types[i].mime_type, buffer_size) != 0) {
-                UVHTTP_LOG_ERROR("Failed to copy MIME type: %s", mime_types[i].mime_type);
+    for (int index = 0; mime_types[index].extension; index++) {
+        if (strcasecmp(extension, mime_types[index].extension) == 0) {
+            if (uvhttp_safe_strncpy(mime_type, mime_types[index].mime_type, buffer_size) != 0) {
+                UVHTTP_LOG_ERROR("Failed to copy MIME type: %s", mime_types[index].mime_type);
             }
             return 0;
         }
@@ -380,28 +380,28 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
     closedir(dir);
     
     /* 排序：目录在前，然后按名称排序 */
-    for (size_t i = 0; i < actual_count - 1; i++) {
-        for (size_t j = i + 1; j < actual_count; j++) {
+    for (size_t index = 0; index < actual_count - 1; index++) {
+        for (size_t inner_index = index + 1; inner_index < actual_count; inner_index++) {
             /* 目录优先 */
-            if (!entries[i].is_dir && entries[j].is_dir) {
-                dir_entry_t temp = entries[i];
-                entries[i] = entries[j];
-                entries[j] = temp;
+            if (!entries[index].is_dir && entries[inner_index].is_dir) {
+                dir_entry_t temp = entries[index];
+                entries[index] = entries[inner_index];
+                entries[inner_index] = temp;
             }
             /* 同类型按名称排序 */
-            else if (entries[i].is_dir == entries[j].is_dir) {
-                if (strcmp(entries[i].name, entries[j].name) > 0) {
-                    dir_entry_t temp = entries[i];
-                    entries[i] = entries[j];
-                    entries[j] = temp;
+            else if (entries[index].is_dir == entries[inner_index].is_dir) {
+                if (strcmp(entries[index].name, entries[inner_index].name) > 0) {
+                    dir_entry_t temp = entries[index];
+                    entries[index] = entries[inner_index];
+                    entries[inner_index] = temp;
                 }
             }
         }
     }
     
     /* 生成HTML表格行 */
-    for (size_t i = 0; i < actual_count; i++) {
-        dir_entry_t* dir_entry = &entries[i];
+    for (size_t index = 0; index < actual_count; index++) {
+        dir_entry_t* dir_entry = &entries[index];
 
         /* 格式化修改时间 */
         char time_str[64];

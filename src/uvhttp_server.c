@@ -271,7 +271,7 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
     
     /* 运行循环多次以处理关闭回调 */
     if (server->loop && !server->owns_loop) {
-        for (int i = 0; i < 10; i++) {
+        for (int index = 0; index < 10; index++) {
             uv_run(server->loop, UV_RUN_NOWAIT);
         }
     }
@@ -315,9 +315,9 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
 #if UVHTTP_FEATURE_RATE_LIMIT
     // 清理限流白名单
     if (server->rate_limit_whitelist) {
-        for (size_t i = 0; i < server->rate_limit_whitelist_count; i++) {
-            if (server->rate_limit_whitelist[i]) {
-                uvhttp_free(server->rate_limit_whitelist[i]);
+        for (size_t index = 0; index < server->rate_limit_whitelist_count; index++) {
+            if (server->rate_limit_whitelist[index]) {
+                uvhttp_free(server->rate_limit_whitelist[index]);
             }
         }
         uvhttp_free(server->rate_limit_whitelist);
