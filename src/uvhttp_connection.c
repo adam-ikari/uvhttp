@@ -83,8 +83,8 @@ static __attribute__((unused)) uvhttp_connection_t* uvhttp_connection_pool_acqui
     
     /* 重置连接状态 */
     conn->state = UVHTTP_CONN_STATE_NEW;
-    conn->parsing_complete = 0;
-    conn->keep_alive = 1;
+    conn->parsing_complete = FALSE;
+    conn->keep_alive = TRUE;
     
     return conn;
 }
@@ -265,14 +265,14 @@ int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     }
     
     /* 重置连接的HTTP/1.1状态标志 */
-    conn->parsing_complete = 0;
+    conn->parsing_complete = FALSE;
     conn->content_length = 0;
     conn->body_received = 0;
-    conn->keep_alive = 1;  /* 继续保持连接 */
-    conn->chunked_encoding = 0;  /* 重置分块传输编码标志 */
-    conn->current_header_is_important = 0;
-    conn->parsing_header_field = 0;
-    conn->need_restart_read = 0;
+    conn->keep_alive = TRUE;  /* 继续保持连接 */
+    conn->chunked_encoding = FALSE;  /* 重置分块传输编码标志 */
+    conn->current_header_is_important = FALSE;
+    conn->parsing_header_field = FALSE;
+    conn->need_restart_read = FALSE;
     
     /* 重置当前头部字段 */
     conn->current_header_field_len = 0;
@@ -342,18 +342,18 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     conn->idle_handle.data = conn;
     
     // HTTP/1.1优化：初始化默认值
-    conn->keep_alive = 1;           // HTTP/1.1默认保持连接
-    conn->chunked_encoding = 0;     // 默认不使用分块传输
+    conn->keep_alive = TRUE;           // HTTP/1.1默认保持连接
+    conn->chunked_encoding = FALSE;     // 默认不使用分块传输
     conn->content_length = 0;       // 默认无内容长度
     conn->body_received = 0;        // 已接收body长度
-    conn->parsing_complete = 0;     // 解析未完成
-    conn->current_header_is_important = 0; // 当前头部非关键字段
+    conn->parsing_complete = FALSE;     // 解析未完成
+    conn->current_header_is_important = FALSE; // 当前头部非关键字段
     conn->read_buffer_used = 0;     // 重置读缓冲区使用量
     
     // HTTP解析状态初始化
     memset(conn->current_header_field, 0, sizeof(conn->current_header_field));
     conn->current_header_field_len = 0;
-    conn->parsing_header_field = 0;
+    conn->parsing_header_field = FALSE;
     
     // TCP初始化 - 完整实现
     if (uv_tcp_init(server->loop, &conn->tcp_handle) != 0) {
@@ -864,7 +864,7 @@ void uvhttp_connection_websocket_close(uvhttp_connection_t* conn) {
         conn->ws_connection = NULL;
     }
 
-    conn->is_websocket = 0;
+    conn->is_websocket = FALSE;
 
     /* 关闭底层TCP连接 */
     uvhttp_connection_close(conn);

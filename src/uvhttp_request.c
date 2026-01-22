@@ -145,7 +145,7 @@ static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
     
     /* 性能优化：只设置长度标记，避免清零整个缓冲区（256字节） */
     conn->current_header_field_len = 0;
-    conn->parsing_header_field = 1;
+    conn->parsing_header_field = TRUE;
     
     /* 检查header字段名长度限制 */
     if (length >= UVHTTP_MAX_HEADER_NAME_SIZE) {
@@ -267,7 +267,7 @@ static int on_message_complete(llhttp_t* parser) {
     conn->request->method = (uvhttp_method_t)llhttp_get_method(parser);
     
     /* 标记解析完成 - 无需原子操作 */
-    conn->parsing_complete = 1;
+    conn->parsing_complete = TRUE;
     
     /* 重置读缓冲区使用量，为下一个请求做准备 */
     conn->read_buffer_used = 0;
@@ -276,7 +276,7 @@ static int on_message_complete(llhttp_t* parser) {
     /* 限流检查 - 在中间件之前执行 */
     if (conn->server && conn->server->rate_limit_enabled) {
         /* 检查客户端IP是否在白名单中 */
-        int is_whitelisted = 0;
+        int is_whitelisted = FALSE;
         if (conn->server->rate_limit_whitelist && conn->server->rate_limit_whitelist_count > 0) {
             /* 获取客户端IP地址 */
             struct sockaddr_in client_addr;
@@ -290,7 +290,7 @@ static int on_message_complete(llhttp_t* parser) {
                 struct whitelist_item *item;
                 HASH_FIND_STR(conn->server->rate_limit_whitelist_hash, client_ip, item);
                 if (item) {
-                    is_whitelisted = 1;
+                    is_whitelisted = TRUE;
                 }
             }
         }

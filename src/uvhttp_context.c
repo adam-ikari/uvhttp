@@ -470,7 +470,7 @@ int uvhttp_context_init(uvhttp_context_t* context) {
         }
     }
 
-    context->initialized = 1;
+    context->initialized = TRUE;
     
     /* 初始化全局变量替代字段 */
     uvhttp_context_init_tls(context);
@@ -526,7 +526,7 @@ int uvhttp_context_init_tls(uvhttp_context_t* context) {
         return -1;
     }
 
-    context->tls_initialized = 1;
+    context->tls_initialized = TRUE;
 
     return 0;
 }
@@ -550,7 +550,7 @@ void uvhttp_context_cleanup_tls(uvhttp_context_t* context) {
         context->tls_drbg = NULL;
     }
 
-    context->tls_initialized = 0;
+    context->tls_initialized = FALSE;
 }
 
 /* 初始化 WebSocket 模块状态 */
@@ -596,7 +596,7 @@ int uvhttp_context_init_websocket(uvhttp_context_t* context) {
         return -1;
     }
 
-    context->ws_drbg_initialized = 1;
+    context->ws_drbg_initialized = TRUE;
 
     return 0;
 }
@@ -620,7 +620,7 @@ void uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
         context->ws_drbg = NULL;
     }
 
-    context->ws_drbg_initialized = 0;
+    context->ws_drbg_initialized = FALSE;
 }
 
 /* 初始化错误统计 */
@@ -798,7 +798,7 @@ int uvhttp_test_context_init(uv_loop_t* loop) {
      * 使用 UVHTTP_FEATURE_MEMORY_TRACKING 和相关测试宏
      */
     
-    g_uvhttp_context->initialized = 1;
+    g_uvhttp_context->initialized = TRUE;
     
     return 0;
 }

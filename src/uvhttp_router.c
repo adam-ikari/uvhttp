@@ -310,7 +310,7 @@ static uvhttp_error_t migrate_to_trie(uvhttp_router_t* router) {
     }
     
     // 切换到Trie模式
-    router->use_trie = 1;
+    router->use_trie = TRUE;
     router->array_routes = NULL;
     router->array_route_count = 0;
     router->array_capacity = 0;
@@ -594,10 +594,10 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
     
     /* 优化2：快速路径 - 检查静态路由（无参数） */
     /* 对于没有参数的路径，使用快速查找 */
-    int has_params = 0;
+    int has_params = FALSE;
     for (const char* p = path; *p; p++) {
         if (*p == ':' || *p == '{') {
-            has_params = 1;
+            has_params = TRUE;
             break;
         }
     }

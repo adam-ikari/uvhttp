@@ -212,7 +212,7 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     
 #if UVHTTP_FEATURE_RATE_LIMIT
     // 初始化限流功能字段
-    server->rate_limit_enabled = 0;
+    server->rate_limit_enabled = FALSE;
     server->rate_limit_max_requests = 0;
     server->rate_limit_window_seconds = 0;
     server->rate_limit_request_count = 0;
@@ -224,7 +224,7 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     // 如果没有提供loop，内部创建新循环
     if (loop) {
         server->loop = loop;
-        server->owns_loop = 0;
+        server->owns_loop = FALSE;
     } else {
         server->loop = uvhttp_alloc(sizeof(uv_loop_t));
         if (!server->loop) {
@@ -234,7 +234,7 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
             uvhttp_free(server->loop);
                 uvhttp_free(server);            return NULL;
         }
-        server->owns_loop = 1;
+        server->owns_loop = TRUE;
     }
     
     if (uv_tcp_init(server->loop, &server->tcp_handle) != 0) {
@@ -248,7 +248,7 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     server->tcp_handle.data = server;
     server->active_connections = 0;
 #if UVHTTP_FEATURE_TLS
-    server->tls_enabled = 0;
+    server->tls_enabled = FALSE;
     server->tls_ctx = NULL;
 #endif
     
@@ -388,7 +388,7 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
         return UVHTTP_ERROR_SERVER_LISTEN;
     }
     
-    server->is_listening = 1;
+    server->is_listening = TRUE;
     return UVHTTP_OK;
 }
 
@@ -417,7 +417,7 @@ uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server) {
     
     if (server->is_listening) {
         uv_close((uv_handle_t*)&server->tcp_handle, NULL);
-        server->is_listening = 0;
+        server->is_listening = FALSE;
         return UVHTTP_OK;
     }
     
@@ -435,7 +435,7 @@ uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server, uvhttp_tls_cont
     }
     
     server->tls_ctx = tls_ctx;
-    server->tls_enabled = 1;
+    server->tls_enabled = TRUE;
     
     return UVHTTP_OK;
 }
@@ -450,13 +450,13 @@ uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server) {
         server->tls_ctx = NULL;
     }
     
-    server->tls_enabled = 0;
+    server->tls_enabled = FALSE;
     
     return UVHTTP_OK;
 }
 
 int uvhttp_server_is_tls_enabled(uvhttp_server_t* server) {
-    return server ? server->tls_enabled : 0;
+    return server ? server->tls_enabled : FALSE;
 }
 #else
 uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server, void* tls_ctx) {
@@ -518,7 +518,7 @@ static uvhttp_server_builder_t* create_simple_server_internal(const char* host, 
     uvhttp_config_set_defaults(simple->config);
     simple->server->config = simple->config;
     simple->server->router = simple->router;
-    simple->auto_cleanup = 1;
+    simple->auto_cleanup = TRUE;
     
     // 启动监听
     if (uvhttp_server_listen(simple->server, host, port) != UVHTTP_OK) {
@@ -877,7 +877,7 @@ uvhttp_error_t uvhttp_server_enable_rate_limit(
     }
     
     // 初始化限流状态
-    server->rate_limit_enabled = 1;
+    server->rate_limit_enabled = TRUE;
     server->rate_limit_max_requests = max_requests;
     server->rate_limit_window_seconds = window_seconds;
     server->rate_limit_request_count = 0;
@@ -892,7 +892,7 @@ uvhttp_error_t uvhttp_server_disable_rate_limit(uvhttp_server_t* server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    server->rate_limit_enabled = 0;
+    server->rate_limit_enabled = FALSE;
     server->rate_limit_request_count = 0;
     server->rate_limit_window_start_time = 0;
     
@@ -1125,7 +1125,7 @@ static void ws_heartbeat_timer_callback(uv_timer_t* handle) {
                 /* 发送 Ping 帧 */
                 if (uvhttp_ws_send_ping(current->ws_conn, NULL, 0) == 0) {
                     current->last_ping_sent = current_time;
-                    current->ping_pending = 1;
+                    current->ping_pending = TRUE;
                 }
             } else {
                 /* 检查 Ping 是否超时（未收到 Pong 响应） */
@@ -1188,7 +1188,7 @@ uvhttp_error_t uvhttp_server_ws_enable_connection_management(
     manager->timeout_seconds = timeout_seconds;
     manager->heartbeat_interval = heartbeat_interval;
     manager->ping_timeout_ms = 10000;  /* 默认10秒 Ping 超时 */
-    manager->enabled = 1;
+    manager->enabled = TRUE;
     
     /* 初始化超时检测定时器 */
     int ret = uv_timer_init(server->loop, &manager->timeout_timer);
@@ -1279,7 +1279,7 @@ uvhttp_error_t uvhttp_server_ws_disable_connection_management(
     
     manager->connections = NULL;
     manager->connection_count = 0;
-    manager->enabled = 0;
+    manager->enabled = FALSE;
     
     /* 释放管理器 */
     uvhttp_free(manager);
@@ -1458,7 +1458,7 @@ void uvhttp_server_ws_add_connection(
     node->path[sizeof(node->path) - 1] = '\0';
     node->last_activity = uv_hrtime() / 1000000;  /* 转换为毫秒 */
     node->last_ping_sent = 0;
-    node->ping_pending = 0;
+    node->ping_pending = FALSE;
     node->next = NULL;
     
     /* 添加到链表头部 */
@@ -1533,7 +1533,7 @@ void uvhttp_server_ws_update_activity(
     while (current) {
         if (current->ws_conn == ws_conn) {
             current->last_activity = uv_hrtime() / 1000000;  /* 转换为毫秒 */
-            current->ping_pending = 0;  /* 清除待处理的 Ping 标记 */
+            current->ping_pending = FALSE;  /* 清除待处理的 Ping 标记 */
             return;
         }
 
