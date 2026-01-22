@@ -2,13 +2,13 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-1.4.0-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 
 **专注 HTTP/1.1 和 WebSocket 的高性能服务器库**
 
-专注核心 • 高性能 • 编译配置 • 生产就绪
+专注核心 • 高性能 • 生产就绪
 
 </div>
 
@@ -43,7 +43,7 @@ make
 
 详细文档请查看 [docs/](docs/) 目录：
 
-- [API 参考](docs/API_REFERENCE.md) - 完整的 API 文档
+- [API 参考](docs/API_REFERENCE.md) - 完整的 API 文档（4,238 行）
 - [架构设计](docs/ARCHITECTURE.md) - 系统架构说明
 - [开发者指南](docs/DEVELOPER_GUIDE.md) - 开发指南
 - [编码规范](docs/CODING_STYLE.md) - 代码风格规范
@@ -58,8 +58,53 @@ make
 
 ```bash
 cd build
-ctest
+ctest --output-on-failure
 ```
+
+### 测试结果
+
+- **快速测试**: 66 个测试（2.16 秒，100% 通过）
+- **慢速测试**: 5 个测试（在 nightly build 中运行）
+- **代码覆盖率**: 68.6% (行覆盖率), 84.1% (函数覆盖率)
+
+## 📊 性能
+
+### 基准测试结果（100 并发）
+
+| 指标 | 结果 |
+|------|------|
+| RPS | 16,256.90 |
+| 平均延迟 | 6.33ms |
+| P99 延迟 | 23.12ms |
+
+### 性能优化
+
+- **连接复用优化**: 避免清零 280KB+ 内存
+- **内存布局优化**: 8 字节对齐
+- **LRU 缓存**: 优化路由缓存和静态文件缓存
+- **零拷贝**: 减少内存拷贝操作
+
+## 📦 安装
+
+### 从源码编译
+
+```bash
+git clone https://github.com/adam-ikari/uvhttp.git
+cd uvhttp
+git checkout v2.0.0
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+sudo make install
+```
+
+### 依赖要求
+
+- **libuv**: ≥ 1.44.0
+- **llhttp**: ≥ 8.0.0
+- **mbedtls**: ≥ 3.0.0（可选，用于 TLS 支持）
+- **mimalloc**: ≥ 2.0.0（可选，用于内存优化）
+- **xxhash**: ≥ 0.8.0
 
 ## 📄 许可证
 

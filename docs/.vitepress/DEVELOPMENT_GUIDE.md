@@ -23,11 +23,14 @@
 
 ```markdown
 # 一级标题（仅用于文档标题）
+
 ## 二级标题（主要章节）
+
 ### 三级标题（子章节）
 ```
 
 **注意事项:**
+
 - 每个文档只有一个一级标题
 - 标题使用简洁明了的中文
 - 避免使用空格和特殊字符
@@ -35,6 +38,7 @@
 #### 列表规范
 
 **无序列表:**
+
 ```markdown
 - 项目 1
 - 项目 2
@@ -43,6 +47,7 @@
 ```
 
 **有序列表:**
+
 ```markdown
 1. 第一步
 2. 第二步
@@ -50,6 +55,7 @@
 ```
 
 **注意事项:**
+
 - 列表项之间用空行分隔
 - 子列表缩进 2 个空格
 - 列表项末尾使用句号
@@ -65,12 +71,13 @@
 #include "uvhttp.h"
 
 int main() {
-    return 0;
+return 0;
 }
 \`\`\`
 ```
 
 **支持的语言:**
+
 - `c` - C 语言
 - `bash` - Shell 命令
 - `json` - JSON 数据
@@ -84,6 +91,7 @@ int main() {
 - **示例代码**: 必须有注释说明
 
 **示例:**
+
 ```c
 #include "uvhttp.h"
 
@@ -106,6 +114,7 @@ uvhttp_server_listen(server, "0.0.0.0", 8080);
 5. **错误处理**: 示例代码应包含基本的错误处理
 
 **错误处理示例:**
+
 ```c
 uvhttp_error_t result = uvhttp_server_listen(server, host, port);
 if (result != UVHTTP_OK) {
@@ -122,21 +131,27 @@ if (result != UVHTTP_OK) {
 # 文档标题
 
 ## 简介
+
 简要说明文档内容和目标读者
 
 ## 前置条件
+
 列出阅读本文档需要的先决条件
 
 ## 主要内容
+
 文档的核心内容
 
 ## 示例
+
 提供完整可运行的示例
 
 ## 注意事项
+
 重要提示和警告
 
 ## 相关链接
+
 相关文档和资源
 ```
 
@@ -191,6 +206,7 @@ description: 文档描述
 ```
 
 **注意事项:**
+
 - 图片放在 `docs/public/` 目录
 - 使用相对路径引用
 - 图片必须有描述文本
@@ -200,13 +216,14 @@ description: 文档描述
 #### 表格格式
 
 ```markdown
-| 列1 | 列2 | 列3 |
-|-----|-----|-----|
+| 列1   | 列2   | 列3   |
+| ----- | ----- | ----- |
 | 数据1 | 数据2 | 数据3 |
 | 数据4 | 数据5 | 数据6 |
 ```
 
 **注意事项:**
+
 - 表格必须有表头
 - 列对齐使用 `-` 符号
 - 避免过宽的表格
@@ -217,7 +234,7 @@ description: 文档描述
 
 ```markdown
 **粗体文本** - 强调重要内容
-*斜体文本* - 强调术语或变量
+_斜体文本_ - 强调术语或变量
 `代码文本` - 标识代码、命令、文件名
 ~~删除线~~ - 标识已删除或过时的内容
 ```
@@ -244,6 +261,7 @@ description: 文档描述
 :::
 
 ::: details 详情
+
 <summary>点击查看详情</summary>
 详细内容
 :::
@@ -263,6 +281,7 @@ description: 文档描述
 ```
 
 **注意事项:**
+
 - 不要过度使用 emoji
 - 在标题和列表中使用
 - 保持一致性
@@ -282,6 +301,7 @@ description: 文档描述
 ```
 
 **Type 类型:**
+
 - `docs`: 文档更新
 - `feat`: 新功能
 - `fix`: 修复 bug
@@ -291,6 +311,7 @@ description: 文档描述
 - `test`: 测试
 
 **Scope 范围:**
+
 - `guide`: 使用者文档
 - `dev`: 开发者文档
 - `api`: API 文档
@@ -298,6 +319,7 @@ description: 文档描述
 - `site`: 网站配置
 
 **示例:**
+
 ```
 docs(guide): 添加快速开始指南
 
@@ -328,6 +350,7 @@ Closes #123
 配置文件位置: `docs/.vitepress/config.ts`
 
 **配置要求:**
+
 - 使用 TypeScript 编写
 - 遵循项目现有配置风格
 - 更新配置后测试网站构建
@@ -337,6 +360,7 @@ Closes #123
 配置文件位置: `docs/.vitepress/sidebar.js`
 
 **配置要求:**
+
 - 使用 JavaScript 编写
 - 保持清晰的层级结构
 - 使用 emoji 图标分组
@@ -441,6 +465,7 @@ git push origin main
 ## 📞 联系方式
 
 如有问题或建议，请联系：
+
 - GitHub Issues: https://github.com/adam-ikari/uvhttp/issues
 - GitHub Discussions: https://github.com/adam-ikari/uvhttp/discussions
 

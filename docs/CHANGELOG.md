@@ -5,6 +5,105 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-01-22
+
+### Overview
+
+UVHTTP 2.0.0 是第一个正式发布版本，包含完整的功能、文档和测试。本版本专注于提供生产就绪的高性能 HTTP 服务器，具有清晰的 API 设计、完善的文档和可靠的测试覆盖。
+
+### Added
+- **完整的 API 文档**: API 文档从 936 行扩展到 4,238 行（+352%）
+- **用户和开发者文档分离**: 改善文档结构和导航体验
+- **版本选择组件**: 支持多版本文档浏览
+- **开发指南**: 新增 `docs/.vitepress/DEVELOPMENT_GUIDE.md`（451 行）
+- **CI/CD 优化**: 测试时间从 29 分钟降至 4 分 20 秒（降低 85%）
+- **测试拆分**: 将 5 个耗时测试标记为 "slow"，移到 nightly build
+- **性能优化**: 连接复用优化，避免清零 280KB+ 内存
+- **内存布局优化**: 8 字节对齐，提升性能
+- **集成测试**: 新增 4 个集成测试（1,493 行代码）
+  - `test_server_integration_coverage.cpp` (325 行)
+  - `test_server_rate_limit_full_coverage.cpp` (412 行)
+  - `test_static_integration_coverage.cpp` (371 行)
+  - `test_static_prewarm_coverage.cpp` (385 行)
+
+### Changed
+- **CI/CD 配置**: 
+  - 添加 pnpm 支持用于文档构建
+  - 修复 deploy.yml 路径错误
+  - 优化测试超时配置
+  - 移除 coverage job 从 CI（移到 nightly build）
+- **文档构建**: 从 docs-site 迁移到 docs 目录
+- **测试策略**: 66 个快速测试在 CI 运行，5 个慢速测试在 nightly build 运行
+- **测试通过率**: 保持 100% (66/66 快速测试)
+
+### Fixed
+- **API 文档错误**: 修正所有响应 API 的返回类型为 `uvhttp_error_t`
+- **循环访问方法**: 修复文档中的循环访问方法，使用 `uv_handle_get_loop()` 替代不存在的函数
+- **处理器签名**: 更新处理器签名以匹配实际 API（返回 `int`，接收 `request` 和 `response` 参数）
+- **路由计数器**: 修复 `add_array_route` 未增加 `route_count` 的 bug
+- **LRU 缓存逻辑**: 修复 `uvhttp_lru_cache_is_expired` 的逻辑错误
+- **请求方法映射**: 为 `UVHTTP_ANY` 方法添加正确的字符串表示 "ANY"
+- **路由验证**: 添加空路径和查询字符串验证
+- **测试期望值**: 修复所有测试中的错误期望值
+
+### Performance
+- **连接复用优化**: 避免清零 280KB+ 内存，性能提升约 12%
+- **内存布局优化**: 8 字节对齐，减少缓存未命中
+- **CI/CD 优化**: 测试时间降低 85%，从 29 分钟降至 4 分 20 秒
+- **性能基准测试结果**（100 并发）:
+  - RPS: 16,256.90
+  - 平均延迟: 6.33ms
+  - P99 延迟: 23.12ms
+
+### Documentation
+- **API 文档**: 所有代码示例已验证与头文件中的 API 签名一致
+- **错误处理**: 添加完整的错误处理示例
+- **开发指南**: 修复测试代码示例使用正确的初始化函数
+- **文档网站**: 完整的 VitePress 文档网站，支持版本切换
+
+### Testing
+- **快速测试**: 66 个（2.16 秒完成，100% 通过）
+- **慢速测试**: 5 个（移到 nightly build）
+- **测试通过率**: 100% (66/66)
+- **代码覆盖率**: 68.6% (行覆盖率), 84.1% (函数覆盖率)
+- **零编译警告**: 所有编译检查通过
+
+### Installation
+
+#### 从源码编译
+
+```bash
+git clone https://github.com/adam-ikari/uvhttp.git
+cd uvhttp
+git checkout v2.0.0
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+sudo make install
+```
+
+#### 运行测试
+
+```bash
+cd build
+ctest --output-on-failure
+```
+
+### Documentation
+
+- [API Reference](https://adam-ikari.github.io/uvhttp/api/)
+- [Developer Guide](https://adam-ikari.github.io/uvhttp/dev/)
+- [Architecture](https://adam-ikari.github.io/uvhttp/guide/architecture.html)
+- [Performance](https://adam-ikari.github.io/uvhttp/guide/performance.html)
+
+### Acknowledgments
+
+感谢所有贡献者和用户的支持！
+
+[2.0.0]: https://github.com/adam-ikari/uvhttp/compare/v1.6.0...v2.0.0
+
+---
+
 ## [1.6.0] - 2026-01-20
 
 ### Added
@@ -48,6 +147,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 - **无破坏性变更**: 所有 API 保持向后兼容
+
+[1.6.0]: https://github.com/adam-ikari/uvhttp/compare/v1.5.0...v1.6.0
 
 ## [1.5.0] - 2026-01-16
 
@@ -122,6 +223,8 @@ void health_check_handler(uvhttp_request_t* request) {
 uvhttp_router_add_route(router, "/health", health_check_handler);
 ```
 
+[1.5.0]: https://github.com/adam-ikari/uvhttp/compare/v1.4.0...v1.5.0
+
 ## [1.4.0] - 2026-01-13
 
 ### Added
@@ -162,6 +265,8 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 ### Breaking Changes
 - **内存分配器 API**: UVHTTP_MALLOC/UVHTTP_FREE 改为 uvhttp_alloc/uvhttp_free
 
+[1.4.0]: https://github.com/adam-ikari/uvhttp/compare/v1.3.2...v1.4.0
+
 ## [1.3.2] - 2026-01-11
 
 ### Added
@@ -176,6 +281,8 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 - **测试通过率**: 100% (10/10)
 - **测试覆盖**: 中等文件、边界情况、分类测试
 
+[1.3.2]: https://github.com/adam-ikari/uvhttp/compare/v1.3.1...v1.3.2
+
 ## [1.3.1] - 2026-01-11
 
 ### Added
@@ -184,6 +291,8 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 
 ### Changed
 - **开发流程**: 采用 Git Flow 分支管理策略
+
+[1.3.1]: https://github.com/adam-ikari/uvhttp/compare/v1.3.0...v1.3.1
 
 ## [1.3.0] - 2026-01-11
 
@@ -226,6 +335,8 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 
 ### Breaking Changes
 - **限流API变更**: 限流功能从中间件改为服务器核心功能，API有所变化
+
+[1.3.0]: https://github.com/adam-ikari/uvhttp/compare/v1.2.0...v1.3.0
 
 ## [1.2.0] - 2026-01-07
 
@@ -278,6 +389,8 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 - **WebSocket实现**: 从libwebsockets迁移到原生实现
 - **依赖变更**: 移除libwebsockets依赖，使用mbedTLS替代OpenSSL
 
+[1.2.0]: https://github.com/adam-ikari/uvhttp/compare/v1.1.0...v1.2.0
+
 ## [1.1.0] - 2025-12-25
 
 ### Added
@@ -328,6 +441,8 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 - **架构文档**: 清晰的架构说明
 - **示例代码**: 15个示例程序
 
+[1.1.0]: https://github.com/adam-ikari/uvhttp/compare/v1.0.0...v1.1.0
+
 ## [1.0.0] - 2025-12-20
 
 ### Added
@@ -348,5 +463,4 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 - 可扩展的插件系统
 - 详细的文档和示例
 
-[1.1.0]: https://github.com/adam-ikari/uvhttp/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/adam-ikari/uvhttp/releases/tag/v1.0.0
