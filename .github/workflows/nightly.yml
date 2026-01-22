@@ -2,472 +2,275 @@ name: Nightly Build
 
 on:
   schedule:
-    # 每天 UTC 时间 0:00 运行（北京时间 8:00）
     - cron: '0 0 * * *'
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:
+    inputs:
+      run-performance:
+        description: 'Run performance tests'
+        required: false
+        default: 'true'
+        type: boolean
+      run-coverage:
+        description: 'Run coverage tests'
+        required: false
+        default: 'true'
+        type: boolean
+
+concurrency:
+  group: nightly-build
+  cancel-in-progress: false
+
+env:
+  TIMEOUT_MINUTES: 60
+  CACHE_VERSION: v1
 
 jobs:
-  # 快速验证 workflow 文件语法
-  validation:
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Validate workflow
-        run: echo "Workflow file syntax is valid"
-
-  nightly-build:
-    # 只在 main 分支运行
-    if: github.ref == 'refs/heads/main'
+  # 完整测试套件 - 运行所有测试（fast + slow）
+  full-test-suite:
     runs-on: ubuntu-22.04
-    timeout-minutes: 120
+    timeout-minutes: ${{ env.TIMEOUT_MINUTES }}
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v4
       with:
         submodules: recursive
 
-    - name: Get current date
-      id: date
-      run: |
-        echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
-        echo "timestamp=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
-        echo "datetime=$(date +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
+    - name: Cache apt packages
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: cmake build-essential
+        version: ubuntu-22.04
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake build-essential lcov wrk valgrind
+    - name: Cache ccache
+      uses: actions/cache@v3
+      with:
+        path: ~/.ccache
+        key: ${{ runner.os }}-ccache-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-ccache-
 
-    - name: Configure CMake (Release)
-      run: |
-        cmake -B build-release -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
+    - name: Cache CMake build
+      uses: actions/cache@v3
+      with:
+        path: |
+          build
+          build-*
+        key: ${{ runner.os }}-cmake-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt', '**/*.c', '**/*.h') }}
+        restore-keys: |
+          ${{ runner.os }}-cmake-${{ env.CACHE_VERSION }}-
 
-    - name: Build (Release)
+    - name: Configure CMake
       run: |
-        cmake --build build-release --config Release -j$(nproc)
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
+
+    - name: Build
+      run: |
+        cmake --build build --config Release -j$(nproc)
 
     - name: Run fast tests
-      id: fast-tests
       run: |
-        cd build-release
+        cd build
         start_time=$(date +%s)
-        ctest --output-on-failure -j1 --timeout 60 --label-regex "^fast$" --schedule-random || {
+        ctest --output-on-failure -j$(nproc) --timeout 60 \
+          --label-regex "^fast$" --schedule-random || {
           echo "Fast tests failed"
           exit 1
         }
         end_time=$(date +%s)
         duration=$((end_time - start_time))
+        echo "Fast tests completed in ${duration} seconds"
         echo "duration=$duration" >> $GITHUB_OUTPUT
-        echo "result=success" >> $GITHUB_OUTPUT
 
     - name: Run slow tests
-      id: slow-tests
       run: |
-        cd build-release
+        cd build
         start_time=$(date +%s)
-        ctest --output-on-failure -j1 --timeout 180 --label-regex "^slow$" --schedule-random || {
+        ctest --output-on-failure -j$(nproc) --timeout 180 \
+          --label-regex "^slow$" --schedule-random || {
           echo "Slow tests failed"
           exit 1
         }
         end_time=$(date +%s)
         duration=$((end_time - start_time))
-        echo "duration=$duration" >> $GITHUB_OUTPUT
-        echo "result=success" >> $GITHUB_OUTPUT
-
-    - name: Configure CMake (Debug with Coverage)
-      run: |
-        cmake -B build-coverage -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
-
-    - name: Build (Debug with Coverage)
-      run: |
-        cmake --build build-coverage --config Debug -j$(nproc)
-
-    - name: Run all tests with coverage
-      id: coverage-tests
-      run: |
-        cd build-coverage
-        start_time=$(date +%s)
-        ctest --output-on-failure -j1 --timeout 1800 --schedule-random || {
-          echo "Some tests failed, continuing with coverage report"
-        }
-        end_time=$(date +%s)
-        duration=$((end_time - start_time))
+        echo "Slow tests completed in ${duration} seconds"
         echo "duration=$duration" >> $GITHUB_OUTPUT
 
-    - name: Generate coverage report
-      id: coverage
-      run: |
-        cd build-coverage
-        lcov --capture --directory . --output-file coverage.info 2>/dev/null || echo "No coverage data"
-        if [ -f coverage.info ]; then
-          lcov --remove coverage.info '/usr/*' --output-file coverage.info
-          lcov --remove coverage.info 'test/*' --output-file coverage.info
-          lcov --remove coverage.info 'examples/*' --output-file coverage.info
-          lcov --summary coverage.info > coverage-summary.txt
-          lcov --list coverage.info > coverage-details.txt
-          
-          # 提取覆盖率数据
-          lines_cov=$(grep "lines" coverage-summary.txt | awk '{print $2}' | tr -d '%')
-          funcs_cov=$(grep "functions" coverage-summary.txt | awk '{print $2}' | tr -d '%' || echo 0)
-          branches_cov=$(grep "branches" coverage-summary.txt | awk '{print $2}' | tr -d '%' || echo 0)
-          
-          echo "lines=$lines_cov" >> $GITHUB_OUTPUT
-          echo "functions=$funcs_cov" >> $GITHUB_OUTPUT
-          echo "branches=$branches_cov" >> $GITHUB_OUTPUT
-        fi
+  # 性能测试 - 运行性能基准测试
+  performance-test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    if: github.event.inputs.run-performance != 'false'
 
-    - name: Performance test
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Cache apt packages
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: cmake build-essential wrk
+        version: ubuntu-22.04
+
+    - name: Cache CMake build
+      uses: actions/cache@v3
+      with:
+        path: |
+          build
+          build-*
+        key: ${{ runner.os }}-cmake-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt', '**/*.c', '**/*.h') }}
+        restore-keys: |
+          ${{ runner.os }}-cmake-${{ env.CACHE_VERSION }}-
+
+    - name: Build project with examples
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
+        cmake --build build --config Release -j$(nproc)
+
+    - name: Run performance tests
       id: performance
       run: |
-        mkdir -p build-release/public
-        echo "<html><body><h1>Performance Test</h1></body></html>" > build-release/public/index.html
-        echo "Test file content" > build-release/public/test.txt
-        echo "Large test file" > build-release/public/large.txt
-        dd if=/dev/zero of=build-release/public/large.bin bs=1M count=10 2>/dev/null
-        
-        cd build-release
+        mkdir -p build/public
+        echo "<html><body><h1>Performance Test</h1></body></html>" > build/public/index.html
+        echo "Test file content" > build/public/test.txt
+        cd build
+
         if [ -f "./dist/bin/performance_static_server" ]; then
-          ./dist/bin/performance_static_server -d ./public -p 8080 > /tmp/server.log 2>&1 &
+          # 启动服务器
+          ./dist/bin/performance_static_server -d ./public -p 8080 &
           SERVER_PID=$!
-          
-          # 等待服务器启动
-          for i in {1..10}; do
+
+          # 等待服务器启动，最多等待 15 秒
+          TIMEOUT=15
+          COUNT=0
+          while [ $COUNT -lt $TIMEOUT ]; do
             if curl -s http://localhost:8080/ > /dev/null 2>&1; then
-              echo "Server started"
+              echo "Server started successfully"
               break
             fi
             sleep 1
+            COUNT=$((COUNT + 1))
           done
-          
-          # ========== 基准性能测试 ==========
-          echo "=== Baseline Performance Test ===" > /tmp/performance.log
-          echo "Test 1: Low concurrency (10 connections, 10 seconds)" >> /tmp/performance.log
-          wrk -t4 -c10 -d10s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
-          echo "" >> /tmp/performance.log
-          
-          echo "Test 2: Medium concurrency (50 connections, 10 seconds)" >> /tmp/performance.log
-          wrk -t4 -c50 -d10s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
-          echo "" >> /tmp/performance.log
-          
-          echo "Test 3: High concurrency (100 connections, 10 seconds)" >> /tmp/performance.log
-          wrk -t4 -c100 -d10s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
-          echo "" >> /tmp/performance.log
-          
-          # ========== 压力测试 ==========
-          echo "=== Stress Test ===" >> /tmp/performance.log
-          echo "Test 4: Extreme concurrency (500 connections, 30 seconds)" >> /tmp/performance.log
-          wrk -t8 -c500 -d30s --timeout 10s http://localhost:8080/ >> /tmp/performance.log 2>&1
-          echo "" >> /tmp/performance.log
-          
-          echo "Test 5: Very high concurrency (1000 connections, 30 seconds)" >> /tmp/performance.log
-          wrk -t8 -c1000 -d30s --timeout 10s http://localhost:8080/ >> /tmp/performance.log 2>&1
-          echo "" >> /tmp/performance.log
-          
-          # ========== 持续负载测试 ==========
-          echo "=== Sustained Load Test ===" >> /tmp/performance.log
-          echo "Test 6: Sustained load (100 connections, 60 seconds)" >> /tmp/performance.log
-          wrk -t4 -c100 -d60s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
-          echo "" >> /tmp/performance.log
-          
-          # ========== 文件下载测试 ==========
-          echo "=== File Download Test ===" >> /tmp/performance.log
-          echo "Test 7: Small file download (100 connections, 10 seconds)" >> /tmp/performance.log
-          wrk -t4 -c100 -d10s --timeout 5s http://localhost:8080/test.txt >> /tmp/performance.log 2>&1
-          echo "" >> /tmp/performance.log
-          
-          echo "Test 8: Large file download (50 connections, 10 seconds)" >> /tmp/performance.log
-          wrk -t4 -c50 -d10s --timeout 10s http://localhost:8080/large.bin >> /tmp/performance.log 2>&1
-          echo "" >> /tmp/performance.log
-          
-          # 提取基准性能指标（Test 3: 100 connections）
-          rps=$(grep -A 20 "Test 3" /tmp/performance.log | grep "Requests/sec" | tail -1 | awk '{print $2}')
-          latency_avg=$(grep -A 20 "Test 3" /tmp/performance.log | grep "Latency" | tail -1 | awk '{print $2}')
-          latency_p99=$(grep -A 20 "Test 3" /tmp/performance.log | grep "99%" | tail -1 | awk '{print $2}')
-          
-          # 提取压力测试指标（Test 5: 1000 connections）
-          stress_rps=$(grep -A 20 "Test 5" /tmp/performance.log | grep "Requests/sec" | tail -1 | awk '{print $2}')
-          stress_latency_avg=$(grep -A 20 "Test 5" /tmp/performance.log | grep "Latency" | tail -1 | awk '{print $2}')
-          stress_latency_p99=$(grep -A 20 "Test 5" /tmp/performance.log | grep "99%" | tail -1 | awk '{print $2}')
-          
-          echo "rps=$rps" >> $GITHUB_OUTPUT
-          echo "latency_avg=$latency_avg" >> $GITHUB_OUTPUT
-          echo "latency_p99=$latency_p99" >> $GITHUB_OUTPUT
-          echo "stress_rps=$stress_rps" >> $GITHUB_OUTPUT
-          echo "stress_latency_avg=$stress_latency_avg" >> $GITHUB_OUTPUT
-          echo "stress_latency_p99=$stress_latency_p99" >> $GITHUB_OUTPUT
-          
+
+          if [ $COUNT -eq $TIMEOUT ]; then
+            echo "Server failed to start within $TIMEOUT seconds"
+            kill $SERVER_PID 2>/dev/null || true
+            exit 1
+          fi
+
+          # 预热服务器
+          echo "Warming up server..."
+          wrk -t2 -c10 -d5s http://localhost:8080/ > /dev/null 2>&1 || true
+          sleep 2
+
+          # 运行性能测试
+          echo "Running performance test..."
+          wrk -t4 -c100 -d10s --timeout 5s http://localhost:8080/ > wrk_result.txt
+          WRK_EXIT=$?
+
+          # 提取性能指标
+          RPS=$(grep "Requests/sec:" wrk_result.txt | awk '{print $2}')
+          AVG_LATENCY=$(grep "Latency" wrk_result.txt | head -1 | awk '{print $2}')
+          P99_LATENCY=$(grep "99%" wrk_result.txt | awk '{print $2}')
+
+          echo "Performance Results:"
+          echo "  RPS: $RPS"
+          echo "  Avg Latency: $AVG_LATENCY"
+          echo "  P99 Latency: $P99_LATENCY"
+
+          echo "rps=$RPS" >> $GITHUB_OUTPUT
+          echo "avg_latency=$AVG_LATENCY" >> $GITHUB_OUTPUT
+          echo "p99_latency=$P99_LATENCY" >> $GITHUB_OUTPUT
+
+          # 清理
           kill $SERVER_PID 2>/dev/null || true
           wait $SERVER_PID 2>/dev/null || true
+
+          if [ $WRK_EXIT -ne 0 ]; then
+            echo "Performance test failed with exit code: $WRK_EXIT"
+            exit 1
+          fi
         else
           echo "performance_static_server not found, skipping performance test"
-          echo "rps=0" >> $GITHUB_OUTPUT
-          echo "latency_avg=0" >> $GITHUB_OUTPUT
-          echo "latency_p99=0" >> $GITHUB_OUTPUT
-          echo "stress_rps=0" >> $GITHUB_OUTPUT
-          echo "stress_latency_avg=0" >> $GITHUB_OUTPUT
-          echo "stress_latency_p99=0" >> $GITHUB_OUTPUT
         fi
+
+    - name: Check performance regression
+      run: |
+        # 定义基准值
+        BASELINE_RPS=15000
+        BASELINE_P99_MS=50
+
+        # 获取当前值
+        CURRENT_RPS=${{ steps.performance.outputs.rps }}
+        CURRENT_P99=${{ steps.performance.outputs.p99_latency }}
+
+        # 检查 RPS 是否低于基准的 90%
+        RPS_THRESHOLD=$(echo "$BASELINE_RPS * 0.9" | bc)
+        if (( $(echo "$CURRENT_RPS < $RPS_THRESHOLD" | bc -l) )); then
+          echo "❌ Performance regression detected in RPS!"
+          echo "Baseline: $BASELINE_RPS RPS, Threshold: $RPS_THRESHOLD RPS, Current: $CURRENT_RPS RPS"
+          exit 1
+        fi
+
+        # 检查 P99 延迟是否超过基准的 110%
+        P99_THRESHOLD=$(echo "$BASELINE_P99_MS * 1.1" | bc)
+        if (( $(echo "$CURRENT_P99 > $P99_THRESHOLD" | bc -l) )); then
+          echo "❌ Performance regression detected in P99 latency!"
+          echo "Baseline: ${BASELINE_P99_MS}ms, Threshold: ${P99_THRESHOLD}ms, Current: ${CURRENT_P99}ms"
+          exit 1
+        fi
+
+        echo "✅ Performance check passed!"
+        echo "RPS: $CURRENT_RPS (baseline: $BASELINE_RPS)"
+        echo "P99: $CURRENT_P99 (baseline: ${BASELINE_P99_MS}ms)"
+
+  # 内存泄漏检查
+  memory-leak-check:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Cache apt packages
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: cmake build-essential valgrind
+        version: ubuntu-22.04
+
+    - name: Cache CMake build
+      uses: actions/cache@v3
+      with:
+        path: |
+          build
+          build-*
+        key: ${{ runner.os }}-cmake-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt', '**/*.c', '**/*.h') }}
+        restore-keys: |
+          ${{ runner.os }}-cmake-${{ env.CACHE_VERSION }}-
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug
+
+    - name: Build
+      run: |
+        cmake --build build --config Debug -j$(nproc)
+
     - name: Memory leak check
-      id: memory
       run: |
-        cd build-release
+        cd build
         if [ -f "./dist/bin/test_connection_full_coverage" ]; then
-          valgrind --leak-check=full --error-exitcode=0 --log-file=valgrind.log \
-            ./dist/bin/test_connection_full_coverage || true
-          
-          # 检查内存泄漏
-          leaks=$(grep "definitely lost:" valgrind.log | awk '{print $4}')
-          echo "leaks=$leaks" >> $GITHUB_OUTPUT
+          valgrind --leak-check=full --error-exitcode=1 \
+            --suppressions=../.github/valgrind.supp \
+            ./dist/bin/test_connection_full_coverage || {
+            echo "Memory leak detected"
+            exit 1
+          }
+        else
+          echo "test_connection_full_coverage not found, skipping valgrind"
         fi
-
-    - name: Generate test report
-      run: |
-        cd build-release
-        ctest --verbose --no-compress-output -T Test > test-report.txt 2>&1 || true
-        
-        # 统计测试结果
-        total=$(grep -c "Test #" test-report.txt 2>/dev/null || echo 0)
-        passed=$(grep -c "Passed" test-report.txt 2>/dev/null || echo 0)
-        failed=$(grep -c "Failed" test-report.txt 2>/dev/null || echo 0)
-        
-        echo "total_tests=$total" >> $GITHUB_ENV
-        echo "passed_tests=$passed" >> $GITHUB_ENV
-        echo "failed_tests=$failed" >> $GITHUB_ENV
-
-    - name: Create nightly build archive
-      run: |
-        mkdir -p nightly-${{ steps.date.outputs.timestamp }}
-        cd nightly-${{ steps.date.outputs.timestamp }}
-        
-        # 复制库文件
-        mkdir -p lib include
-        cp ../build-release/dist/lib/*.a lib/ 2>/dev/null || true
-        cp -r ../include/*.h include/ 2>/dev/null || true
-        
-        # 复制示例程序
-        mkdir -p bin
-        cp ../build-release/dist/bin/* bin/ 2>/dev/null || true
-        
-        # 复制测试报告
-        cp ../build-release/test-report.txt . 2>/dev/null || true
-        cp ../build-coverage/coverage-summary.txt . 2>/dev/null || true
-        cp ../build-coverage/coverage-details.txt . 2>/dev/null || true
-        cp ../build-release/performance.log . 2>/dev/null || true
-        cp ../build-release/valgrind.log . 2>/dev/null || true
-        
-        # 创建 README
-        cat > README.md << EOF
-# UVHTTP Nightly Build
-
-**Build Date**: ${{ steps.date.outputs.datetime }}
-**Commit**: $(git rev-parse --short HEAD)
-**Branch**: main
-
-## Installation
-
-1. Extract the archive
-2. Copy headers to \`/usr/local/include/uvhttp/\`
-3. Copy library to \`/usr/local/lib/\`
-4. Run \`ldconfig\`
-
-## Test Results
-
-- **Total Tests**: ${{ env.total_tests }}
-- **Passed**: ${{ env.passed_tests }}
-- **Failed**: ${{ env.failed_tests }}
-
-## Coverage
-
-- **Lines**: ${{ steps.coverage.outputs.lines }}%
-- **Functions**: ${{ steps.coverage.outputs.functions }}%
-- **Branches**: ${{ steps.coverage.outputs.branches }}%
-
-## Performance
-
-### Baseline Performance (100 connections)
-- **RPS**: ${{ steps.performance.outputs.rps }}
-- **Avg Latency**: ${{ steps.performance.outputs.latency_avg }}
-- **P99 Latency**: ${{ steps.performance.outputs.latency_p99 }}
-
-### Stress Test (1000 connections)
-- **RPS**: ${{ steps.performance.outputs.stress_rps }}
-- **Avg Latency**: ${{ steps.performance.outputs.stress_latency_avg }}
-- **P99 Latency**: ${{ steps.performance.outputs.stress_latency_p99 }}
-
-### Test Scenarios
-- **Test 1**: Low concurrency (10 connections, 10s)
-- **Test 2**: Medium concurrency (50 connections, 10s)
-- **Test 3**: High concurrency (100 connections, 10s)
-- **Test 4**: Extreme concurrency (500 connections, 30s)
-- **Test 5**: Very high concurrency (1000 connections, 30s)
-- **Test 6**: Sustained load (100 connections, 60s)
-- **Test 7**: Small file download (100 connections, 10s)
-- **Test 8**: Large file download (50 connections, 10s)
-
-## Build Information
-
-- Build Type: Release
-- Examples: Enabled
-- Coverage: Enabled
-
-## Notes
-
-This is an automated nightly build and may contain unstable features.
-For production use, please use the latest stable release.
-EOF
-        
-        cd ..
-        tar -czf uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz nightly-${{ steps.date.outputs.timestamp }}
-
-    - name: Generate detailed report
-      run: |
-        cat > NIGHTLY_REPORT.md << EOF
-# Nightly Build Report - ${{ steps.date.outputs.date }}
-
-## Build Information
-
-- **Date**: ${{ steps.date.outputs.datetime }}
-- **Commit**: $(git rev-parse --short HEAD)
-- **Branch**: main
-- **Build Number**: ${{ github.run_number }}
-- **Run ID**: ${{ github.run_id }}
-
-## Test Results
-
-### Fast Tests
-- **Status**: ${{ steps.fast-tests.outputs.result }}
-- **Duration**: ${{ steps.fast-tests.outputs.duration }}s
-
-### Slow Tests
-- **Status**: ${{ steps.slow-tests.outputs.result }}
-- **Duration**: ${{ steps.slow-tests.outputs.duration }}s
-
-### Coverage Tests
-- **Duration**: ${{ steps.coverage-tests.outputs.duration }}s
-
-### Overall
-- **Total Tests**: ${{ env.total_tests }}
-- **Passed**: ${{ env.passed_tests }}
-- **Failed**: ${{ env.failed_tests }}
-- **Pass Rate**: $(python3 -c "print(f'{(${{ env.passed_tests }} / ${{ env.total_tests }} * 100):.2f}%' if ${{ env.total_tests }} > 0 else 'N/A')")
-
-## Code Coverage
-
-- **Lines**: ${{ steps.coverage.outputs.lines }}%
-- **Functions**: ${{ steps.coverage.outputs.functions }}%
-- **Branches**: ${{ steps.coverage.outputs.branches }}%
-
-## Performance Metrics
-
-### Baseline (100 connections)
-- **Requests/sec**: ${{ steps.performance.outputs.rps }}
-- **Average Latency**: ${{ steps.performance.outputs.latency_avg }}
-- **P99 Latency**: ${{ steps.performance.outputs.latency_p99 }}
-
-### Stress Test (1000 connections)
-- **Requests/sec**: ${{ steps.performance.outputs.stress_rps }}
-- **Average Latency**: ${{ steps.performance.outputs.stress_latency_avg }}
-- **P99 Latency**: ${{ steps.performance.outputs.stress_latency_p99 }}
-
-### Test Scenarios
-- Test 1: Low concurrency (10 connections, 10s)
-- Test 2: Medium concurrency (50 connections, 10s)
-- Test 3: High concurrency (100 connections, 10s)
-- Test 4: Extreme concurrency (500 connections, 30s)
-- Test 5: Very high concurrency (1000 connections, 30s)
-- Test 6: Sustained load (100 connections, 60s)
-- Test 7: Small file download (100 connections, 10s)
-- Test 8: Large file download (50 connections, 10s)
-
-## Memory Check
-
-- **Memory Leaks**: ${{ steps.memory.outputs.leaks }} bytes
-
-## Recent Commits
-
-\`\`\`
-$(git log --since="1 day ago" --pretty=format:"%h - %s (%an, %ar)" || echo "No commits in the last 24 hours")
-\`\`\`
-
-## Build Artifacts
-
-- **Archive**: [uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz](https://github.com/${{ github.repository }}/releases/download/nightly-${{ steps.date.outputs.timestamp }}/uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz)
-- **Size**: $(du -h uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz | cut -f1)
-
-## Notes
-
-This is an automated nightly build and may contain unstable features.
-For production use, please use the latest stable release.
-
----
-
-Generated by GitHub Actions
-EOF
-
-    - name: Upload nightly build artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: uvhttp-nightly-${{ steps.date.outputs.timestamp }}
-        path: uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz
-        retention-days: 7
-
-    - name: Upload report artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: nightly-report-${{ steps.date.outputs.timestamp }}
-        path: NIGHTLY_REPORT.md
-        retention-days: 7
-
-    - name: Create nightly build release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: nightly-${{ steps.date.outputs.timestamp }}
-        name: Nightly Build - ${{ steps.date.outputs.date }}
-        body_path: NIGHTLY_REPORT.md
-        draft: false
-        prerelease: true
-        files: |
-          uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz
-          NIGHTLY_REPORT.md
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Clean up old nightly releases
-      uses: dev-drprasad/delete-older-releases@v0.3.2
-      with:
-        keep_latest: 7
-        delete_tag_pattern: nightly-
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Create nightly build summary
-      run: |
-        echo "## 🚀 Nightly Build Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Build Date**: ${{ steps.date.outputs.datetime }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Commit**: $(git rev-parse --short HEAD)" >> $GITHUB_STEP_SUMMARY
-        echo "**Branch**: main" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📊 Test Results" >> $GITHUB_STEP_SUMMARY
-        echo "- **Total Tests**: ${{ env.total_tests }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Passed**: ${{ env.passed_tests }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Failed**: ${{ env.failed_tests }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Pass Rate**: $(python3 -c "print(f'{(${{ env.passed_tests }} / ${{ env.total_tests }} * 100):.2f}%' if ${{ env.total_tests }} > 0 else 'N/A')")" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📈 Coverage" >> $GITHUB_STEP_SUMMARY
-        echo "- **Lines**: ${{ steps.coverage.outputs.lines }}%" >> $GITHUB_STEP_SUMMARY
-        echo "- **Functions**: ${{ steps.coverage.outputs.functions }}%" >> $GITHUB_STEP_SUMMARY
-        echo "- **Branches**: ${{ steps.coverage.outputs.branches }}%" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### ⚡ Performance" >> $GITHUB_STEP_SUMMARY
-        echo "- **RPS**: ${{ steps.performance.outputs.rps }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Avg Latency**: ${{ steps.performance.outputs.latency_avg }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **P99 Latency**: ${{ steps.performance.outputs.latency_p99 }}" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📦 Download" >> $GITHUB_STEP_SUMMARY
-        echo "[uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz](https://github.com/${{ github.repository }}/releases/download/nightly-${{ steps.date.outputs.timestamp }}/uvhttp-nightly-${{ steps.date.outputs.timestamp }}.tar.gz)" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📝 Recent Commits" >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY
-        git log --since="1 day ago" --pretty=format:"%h - %s" || echo "No commits in the last 24 hours" >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY

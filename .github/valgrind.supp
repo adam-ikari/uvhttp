@@ -1,0 +1,139 @@
+# Valgrind suppression file for UVHTTP
+# This file suppresses known memory leaks from libuv and other dependencies
+
+{
+   libuv_init_leak
+   Memcheck:Leak
+   ...
+   fun:uv_loop_init
+   ...
+}
+
+{
+   libuv_default_loop_leak
+   Memcheck:Leak
+   ...
+   fun:uv_default_loop
+   ...
+}
+
+{
+   libuv_threadpool_leak
+   Memcheck:Leak
+   ...
+   fun:uv_thread_create
+   ...
+}
+
+{
+   libuv_async_leak
+   Memcheck:Leak
+   ...
+   fun:uv_async_init
+   ...
+}
+
+{
+   libuv_timer_leak
+   Memcheck:Leak
+   ...
+   fun:uv_timer_init
+   ...
+}
+
+{
+   libuv_signal_leak
+   Memcheck:Leak
+   ...
+   fun:uv_signal_init
+   ...
+}
+
+{
+   libuv_check_leak
+   Memcheck:Leak
+   ...
+   fun:uv_check_init
+   ...
+}
+
+{
+   libuv_idle_leak
+   Memcheck:Leak
+   ...
+   fun:uv_idle_init
+   ...
+}
+
+{
+   libuv_pipe_leak
+   Memcheck:Leak
+   ...
+   fun:uv_pipe_init
+   ...
+}
+
+{
+   libuv_tcp_leak
+   Memcheck:Leak
+   ...
+   fun:uv_tcp_init
+   ...
+}
+
+{
+   llhttp_init_leak
+   Memcheck:Leak
+   ...
+   fun:llhttp_init
+   ...
+}
+
+{
+   llhttp_execute_leak
+   Memcheck:Leak
+   ...
+   fun:llhttp_execute
+   ...
+}
+
+{
+   xxhash_init_leak
+   Memcheck:Leak
+   ...
+   fun:XXH*
+   ...
+}
+
+{
+   glibc_getaddrinfo_leak
+   Memcheck:Leak
+   ...
+   fun:getaddrinfo
+   ...
+}
+
+{
+   glibc_gethostbyname_leak
+   Memcheck:Leak
+   ...
+   fun:gethostbyname
+   ...
+}
+
+{
+   openssl_init_leak
+   Memcheck:Leak
+   ...
+   fun:SSL_CTX_new
+   fun:SSL_new
+   ...
+}
+
+{
+   openssl_thread_leak
+   Memcheck:Leak
+   ...
+   fun:CRYPTO_THREAD_lock_new
+   ...
+}

@@ -5,29 +5,61 @@ on:
     branches: [ main, develop, release/*, feature/* ]
   pull_request:
     branches: [ main, develop ]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  TIMEOUT_MINUTES: 15
+  CACHE_VERSION: v1
+
 jobs:
+  # 快速构建和测试 - 在所有分支和 PR 中运行
   build-and-test:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04]
+        compiler: [gcc]
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: ${{ env.TIMEOUT_MINUTES }}
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v4
       with:
         submodules: recursive
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake build-essential
+    - name: Cache apt packages
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: cmake build-essential
+        version: ubuntu-22.04
+
+    - name: Cache ccache
+      uses: actions/cache@v3
+      with:
+        path: ~/.ccache
+        key: ${{ runner.os }}-ccache-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-ccache-
+
+    - name: Cache CMake build
+      uses: actions/cache@v3
+      with:
+        path: |
+          build
+          build-*
+        key: ${{ runner.os }}-cmake-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt', '**/*.c', '**/*.h') }}
+        restore-keys: |
+          ${{ runner.os }}-cmake-${{ env.CACHE_VERSION }}-
 
     - name: Configure CMake
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=Release
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF
 
     - name: Build
       run: |
@@ -36,11 +68,8 @@ jobs:
     - name: Run fast tests
       run: |
         cd build
-        # 只运行快速测试，排除覆盖率测试
-        ctest --output-on-failure -j1 --timeout 60 --label-regex "^fast$" --schedule-random || {
-          echo "Fast tests failed or timed out"
-          exit 1
-        }
+        ctest --output-on-failure -j$(nproc) --timeout 60 \
+          --label-regex "^fast$" --schedule-random
 
     - name: Check for warnings
       run: |
@@ -49,97 +78,49 @@ jobs:
           exit 1
         fi
 
-  
-
-  # 性能测试在 main、develop、feature 分支和 PR 中运行
-  performance-test:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 15
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
-
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake build-essential wrk
-
-    - name: Build project with examples
-      run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
-        cmake --build build --config Release -j$(nproc)
-
-    - name: Run performance tests
-      run: |
-        mkdir -p build/public
-        echo "<html><body><h1>Performance Test</h1></body></html>" > build/public/index.html
-        echo "Test file content" > build/public/test.txt
-        cd build
-        if [ -f "./dist/bin/performance_static_server" ]; then
-          ./dist/bin/performance_static_server -d ./public -p 8080 &
-          SERVER_PID=$!
-          
-          # 等待服务器启动，最多等待 10 秒
-          TIMEOUT=10
-          COUNT=0
-          while [ $COUNT -lt $TIMEOUT ]; do
-            if curl -s http://localhost:8080/ > /dev/null 2>&1; then
-              echo "Server started successfully"
-              break
-            fi
-            sleep 1
-            COUNT=$((COUNT + 1))
-          done
-          
-          if [ $COUNT -eq $TIMEOUT ]; then
-            echo "Server failed to start within $TIMEOUT seconds"
-            kill $SERVER_PID 2>/dev/null || true
-            exit 1
-          fi
-          
-          # 运行性能测试
-          wrk -t4 -c100 -d10s --timeout 5s http://localhost:8080/
-          WRK_EXIT=$?
-          
-          # 清理
-          kill $SERVER_PID 2>/dev/null || true
-          wait $SERVER_PID 2>/dev/null || true
-          
-          if [ $WRK_EXIT -ne 0 ]; then
-            echo "Performance test failed with exit code: $WRK_EXIT"
-            exit 1
-          fi
-        else
-          echo "performance_static_server not found, skipping performance test"
-        fi
-
-  # 代码质量检查在 main、develop、feature 分支和 PR 中运行
+  # 代码质量检查 - 在 main/develop 和 PR 中运行
   code-quality:
     runs-on: ubuntu-22.04
     timeout-minutes: 20
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request'
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v4
       with:
         submodules: recursive
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake build-essential clang-tidy cppcheck lcov
+    - name: Cache apt packages
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: cmake build-essential cppcheck lcov
+        version: ubuntu-22.04
 
-    - name: Build project
+    - name: Cache CMake build
+      uses: actions/cache@v3
+      with:
+        path: |
+          build
+          build-*
+        key: ${{ runner.os }}-cmake-${{ env.CACHE_VERSION }}-${{ hashFiles('**/CMakeLists.txt', '**/*.c', '**/*.h') }}
+        restore-keys: |
+          ${{ runner.os }}-cmake-${{ env.CACHE_VERSION }}-
+
+    - name: Configure CMake
       run: |
         cmake -B build -DCMAKE_BUILD_TYPE=Debug
+
+    - name: Build
+      run: |
         cmake --build build --config Debug -j$(nproc)
 
     - name: Run cppcheck
       run: |
-        cppcheck --enable=warning,performance,portability --error-exitcode=0 --suppress=missingIncludeSystem --suppress=unusedFunction --suppress=constParameter --suppress=unusedStructMember \
+        cppcheck --enable=warning,performance,portability --error-exitcode=1 \
+          --suppress=missingIncludeSystem \
+          --suppress=unusedFunction \
+          --suppress=constParameter \
+          --suppress=unusedStructMember \
           -DUVHTTP_STRINGIFY\(x\)=\#x \
           -DUVHTTP_FEATURE_WEBSOCKET=1 \
           -DUVHTTP_FEATURE_STATIC_FILES=1 \
@@ -150,25 +131,17 @@ jobs:
           -DUVHTTP_FEATURE_ROUTER_CACHE=1 \
           -DUVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION=1 \
           -DUVHTTP_ROUTER_SEARCH_MODE=2 \
-          src/ || echo "cppcheck completed with warnings"
+          src/
 
-    - name: Memory leak check
-      run: |
-        cd build
-        if [ -f "./dist/bin/test_connection_full_coverage" ]; then
-          valgrind --leak-check=full --error-exitcode=0 ./dist/bin/test_connection_full_coverage || echo "Valgrind completed"
-        else
-          echo "test_connection_full_coverage not found, skipping valgrind"
-        fi
-
-  # 文档构建测试
+  # 文档构建测试 - 在所有分支和 PR 中运行
   docs-build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
       with:
         submodules: recursive
 
@@ -201,7 +174,6 @@ jobs:
           echo "Error: Build output directory not found"
           exit 1
         fi
-        # 检查是否有 index.html（可能在根目录或 uvhttp 子目录）
         if [ -f ".vitepress/dist/index.html" ]; then
           echo "Docs build verification passed (index.html in root)"
         elif [ -f ".vitepress/dist/uvhttp/index.html" ]; then

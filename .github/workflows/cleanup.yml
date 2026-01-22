@@ -7,6 +7,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: branch-cleanup
+  cancel-in-progress: false
+
 jobs:
   cleanup:
     runs-on: ubuntu-latest
@@ -15,16 +19,29 @@ jobs:
     - name: Delete merged branch
       run: |
         BRANCH_NAME="${{ github.head_ref }}"
-        echo "Deleting merged branch: $BRANCH_NAME"
-        
-        # 检查是否为 feature/* 或 fix/* 分支
+        echo "Checking merged branch: $BRANCH_NAME"
+
+        # 保护重要分支，防止误删
+        if [[ "$BRANCH_NAME" == "main" ]] || \
+           [[ "$BRANCH_NAME" == "develop" ]] || \
+           [[ "$BRANCH_NAME" == release/* ]]; then
+          echo "❌ Refusing to delete protected branch: $BRANCH_NAME"
+          exit 1
+        fi
+
+        # 只删除 feature/* 和 fix/* 分支
         if [[ "$BRANCH_NAME" == feature/* ]] || [[ "$BRANCH_NAME" == fix/* ]]; then
+          echo "✅ Deleting merged branch: $BRANCH_NAME"
+
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          
+
           # 删除已合并的分支
-          git push origin --delete "$BRANCH_NAME" || echo "Branch already deleted or doesn't exist"
-          echo "Successfully deleted branch: $BRANCH_NAME"
+          if git push origin --delete "$BRANCH_NAME"; then
+            echo "Successfully deleted branch: $BRANCH_NAME"
+          else
+            echo "Branch already deleted or doesn't exist"
+          fi
         else
-          echo "Skipping deletion for branch: $BRANCH_NAME (not a feature/* or fix/* branch)"
+          echo "⏭️ Skipping deletion for branch: $BRANCH_NAME (not a feature/* or fix/* branch)"
         fi

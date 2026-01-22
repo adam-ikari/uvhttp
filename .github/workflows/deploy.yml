@@ -5,7 +5,7 @@ on:
     branches: [main, release/*]
     paths:
       - 'docs/**'
-      - 'docs/.vitepress/**'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 permissions:
@@ -21,7 +21,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
       with:
         submodules: recursive
 
@@ -32,30 +33,42 @@ jobs:
         cache: 'npm'
         cache-dependency-path: docs/package-lock.json
 
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+
     - name: Install dependencies
       working-directory: ./docs
       run: |
         pnpm install
         pnpm audit --production=false || true
 
-    - name: Build
+    - name: Build docs
       working-directory: ./docs
       run: |
         pnpm build
-        ls -la docs/.vitepress/dist || echo "dist directory not found"
 
     - name: Verify build output
       working-directory: ./docs
       run: |
-        if [ ! -d "docs/.vitepress/dist" ]; then
+        if [ ! -d ".vitepress/dist" ]; then
           echo "Error: Build output directory not found"
           exit 1
         fi
-        if [ ! -f "docs/.vitepress/dist/index.html" ]; then
+        if [ ! -f ".vitepress/dist/index.html" ]; then
           echo "Error: index.html not found in build output"
           exit 1
         fi
         echo "Build verification passed"
+
+    - name: Check for broken links
+      working-directory: ./docs
+      run: |
+        pnpm build 2>&1 | grep -i "dead link\|broken link" && {
+          echo "Found broken links in documentation"
+          exit 1
+        } || echo "No broken links found"
 
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
