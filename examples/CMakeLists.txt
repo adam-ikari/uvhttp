@@ -71,3 +71,16 @@ endif()
 add_executable(performance_static_server performance_static_server.c)
 target_link_libraries(performance_static_server ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
 add_dependencies(performance_static_server uvhttp)
+
+# RESTful API 示例
+add_executable(restful_blog_api restful_blog_api.c)
+target_link_libraries(restful_blog_api ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
+add_dependencies(restful_blog_api uvhttp)
+
+add_executable(restful_todo_api restful_todo_api.c)
+target_link_libraries(restful_todo_api ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
+add_dependencies(restful_todo_api uvhttp)
+
+add_executable(restful_user_api restful_user_api.c)
+target_link_libraries(restful_user_api ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
+add_dependencies(restful_user_api uvhttp)
