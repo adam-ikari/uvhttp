@@ -343,6 +343,229 @@ cmake -DUSE_SYSTEM_ALLOCATOR=ON ..
 make
 ```
 
+### 库配置建议
+
+#### 1. 内存配置
+
+**基础内存占用**: < 10MB  
+**静态库大小**: 2.4MB  
+**每个连接占用**: 约 4-8KB
+
+**内存分配器选择**:
+
+```c
+// mimalloc（默认，推荐）
+#define UVHTTP_ALLOCATOR_TYPE 0  // 高性能，低碎片
+
+// 系统分配器
+#define UVHTTP_ALLOCATOR_TYPE 1  // 兼容性好
+```
+
+**配置建议**:
+
+| 场景 | 推荐配置 | 说明 |
+|------|----------|------|
+| **生产环境** | mimalloc | 性能最优，碎片少 |
+| **嵌入式系统** | 系统分配器 | 内存占用可控 |
+| **调试环境** | 系统分配器 | 便于内存分析 |
+
+**内存限制配置**:
+
+```c
+uvhttp_config_t* config = uvhttp_config_new();
+
+// 设置最大连接数（影响内存占用）
+// 2048 连接 ≈ 16MB 内存
+config->max_connections = 2048;
+
+// 设置最大请求体大小（防止内存耗尽攻击）
+// 默认: 1MB
+config->max_body_size = 10 * 1024 * 1024;  // 10MB
+
+// 设置最大 Header 大小
+// 默认: 8KB
+config->max_header_size = 16 * 1024;  // 16KB
+```
+
+**内存监控**:
+
+```c
+// 启用内存跟踪（调试模式）
+#define UVHTTP_FEATURE_MEMORY_TRACKING 1
+
+// 检查内存泄漏
+int leaks = uvhttp_check_memory_leaks();
+if (leaks > 0) {
+    printf("发现 %d 处内存泄漏\n", leaks);
+}
+```
+
+#### 2. 连接数配置
+
+**默认配置**: 2048 连接
+
+**配置建议**:
+
+| 场景 | 推荐连接数 | 内存占用 | 说明 |
+|------|-----------|---------|------|
+| **内部服务** | 500 | ~4MB | 低并发，内部调用 |
+| **Web 应用** | 2048 | ~16MB | 中等并发，标准配置 |
+| **API 网关** | 5000 | ~40MB | 高并发，流量入口 |
+| **微服务** | 10000 | ~80MB | 极高并发，需充足资源 |
+
+**配置示例**:
+
+```c
+// 低并发场景
+config->max_connections = 500;
+
+// 中等并发场景（默认）
+config->max_connections = 2048;
+
+// 高并发场景
+config->max_connections = 5000;
+
+// 极高并发场景（需要充足系统资源）
+config->max_connections = 10000;
+```
+
+**注意事项**:
+- 连接数过高可能导致系统资源耗尽
+- 建议监控系统资源使用情况
+- 使用 Keep-Alive 减少连接建立开销
+
+#### 3. 性能配置
+
+**编译优化**:
+
+```bash
+# Release 模式（推荐）
+cmake -DCMAKE_BUILD_TYPE=Release ..
+
+# 启用优化选项
+cmake -DCMAKE_C_FLAGS="-O3 -march=native -mtune=native" ..
+
+# 禁用调试符号
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-O3 -DNDEBUG" ..
+```
+
+**运行时配置**:
+
+```c
+// 启用 Keep-Alive（默认启用）
+config->enable_keepalive = 1;
+config->keepalive_timeout = 60;  // 60 秒超时
+
+// 启用 TCP_NODELAY（减少延迟）
+config->enable_tcp_nodelay = 1;
+
+// 启用 TCP_KEEPALIVE
+config->enable_tcp_keepalive = 1;
+config->tcp_keepalive_idle = 30;   // 30 秒空闲
+config->tcp_keepalive_interval = 10;  // 10 秒间隔
+config->tcp_keepalive_count = 3;    // 3 次重试
+```
+
+**性能优化建议**:
+
+1. **使用 mimalloc**: 性能提升 30-50%
+2. **启用 Keep-Alive**: 减少连接建立开销
+3. **启用 TCP_NODELAY**: 降低延迟
+4. **启用零拷贝**: 大文件传输性能提升 50%+
+
+#### 4. 安全配置
+
+**TLS 配置**:
+
+```c
+// 启用 TLS
+config->enable_tls = 1;
+config->tls_cert_file = "server.crt";
+config->tls_key_file = "server.key";
+
+// TLS 版本（推荐 TLS 1.2+）
+config->tls_min_version = 3;  // TLS 1.2
+
+// 验证客户端证书（双向认证）
+config->tls_verify_client = 1;
+config->tls_ca_file = "ca.crt";
+```
+
+**限流配置**:
+
+```c
+// 启用限流
+config->enable_rate_limit = 1;
+config->rate_limit_requests = 1000;  // 每秒 1000 请求
+config->rate_limit_window = 60;     // 60 秒窗口
+```
+
+**安全建议**:
+
+1. **启用 TLS**: 保护数据传输安全
+2. **设置请求大小限制**: 防止内存耗尽攻击
+3. **启用限流**: 防止 DDoS 攻击
+4. **定期更新依赖**: 保持安全补丁
+
+#### 5. 编译配置
+
+**CMake 选项**:
+
+```bash
+# 基本编译
+cmake -DCMAKE_BUILD_TYPE=Release ..
+
+# 启用 WebSocket 支持
+cmake -DBUILD_WITH_WEBSOCKET=ON ..
+
+# 启用 mimalloc
+cmake -DBUILD_WITH_MIMALLOC=ON ..
+
+# 启用 TLS 支持
+cmake -DBUILD_WITH_TLS=ON ..
+
+# 启用示例程序
+cmake -DBUILD_EXAMPLES=ON ..
+
+# 启用代码覆盖率
+cmake -DENABLE_COVERAGE=ON ..
+
+# Debug 模式
+cmake -DENABLE_DEBUG=ON ..
+```
+
+**编译器选项**:
+
+```bash
+# GCC 优化选项
+-O3              # 最高优化级别
+-march=native    # 针对本地 CPU 优化
+-mtune=native    # 优化指令调度
+-flto            # 链接时优化
+-funroll-loops   # 循环展开
+-finline-functions # 内联函数
+
+# 安全选项
+-fstack-protector-all    # 栈保护
+-D_FORTIFY_SOURCE=2       # 缓冲区溢出保护
+-Wformat -Wformat-security # 格式化字符串安全
+-Werror=format-security   # 格式化字符串错误视为错误
+```
+
+**完整编译命令**:
+
+```bash
+mkdir build && cd build
+cmake \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_WITH_WEBSOCKET=ON \
+  -DBUILD_WITH_MIMALLOC=ON \
+  -DBUILD_WITH_TLS=ON \
+  -DCMAKE_C_FLAGS="-O3 -march=native -mtune=native -flto -fstack-protector-all -D_FORTIFY_SOURCE=2" \
+  ..
+make -j$(nproc)
+```
+
 ### 性能调优建议
 
 1. **合理设置连接数**：根据系统内存调整 `max_connections`
