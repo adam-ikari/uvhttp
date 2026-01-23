@@ -47,6 +47,7 @@ core
 core.*
 !cmake/Dependencies.cmake
 test/results/
+test/performance/results/
 
 # VitePress
 docs/node_modules/
