@@ -1,0 +1,55 @@
+.TH "uvhttp_error_config_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_error_config_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_error_handler\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_log_level_t\fP \fBmin_logLevel\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_handler_t\fP \fBcustomHandler\fP"
+.br
+.ti -1c
+.RI "int \fBenableRecovery\fP"
+.br
+.ti -1c
+.RI "int \fBmaxRetries\fP"
+.br
+.ti -1c
+.RI "int \fBbaseDelayMs\fP"
+.br
+.ti -1c
+.RI "int \fBmaxDelayMs\fP"
+.br
+.ti -1c
+.RI "double \fBbackoffMultiplier\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "double uvhttp_error_config_t::backoffMultiplier"
+
+.SS "int uvhttp_error_config_t::baseDelayMs"
+
+.SS "\fBuvhttp_error_handler_t\fP uvhttp_error_config_t::customHandler"
+
+.SS "int uvhttp_error_config_t::enableRecovery"
+
+.SS "int uvhttp_error_config_t::maxDelayMs"
+
+.SS "int uvhttp_error_config_t::maxRetries"
+
+.SS "\fBuvhttp_log_level_t\fP uvhttp_error_config_t::min_logLevel"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

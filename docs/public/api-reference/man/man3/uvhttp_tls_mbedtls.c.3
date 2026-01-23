@@ -1,0 +1,275 @@
+.TH "src/uvhttp_tls_mbedtls.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_tls_mbedtls.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_tls\&.h'\fP
+.br
+\fC#include 'uvhttp_context\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_constants\&.h'\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <errno\&.h>\fP
+.br
+\fC#include <sys/socket\&.h>\fP
+.br
+\fC#include <unistd\&.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_tls_context\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static int \fBmbedtls_net_send\fP (void *ctx, const unsigned char *buf, size_t len)"
+.br
+.ti -1c
+.RI "static int \fBmbedtls_net_recv\fP (void *ctx, unsigned char *buf, size_t len)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_init\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_tls_cleanup\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_context_t\fP * \fBuvhttp_tls_context_new\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_tls_context_free\fP (\fBuvhttp_tls_context_t\fP *ctx)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_load_cert_chain\fP (\fBuvhttp_tls_context_t\fP *ctx, const char *cert_file)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_load_private_key\fP (\fBuvhttp_tls_context_t\fP *ctx, const char *key_file)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_load_ca_file\fP (\fBuvhttp_tls_context_t\fP *ctx, const char *ca_file)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_enable_client_auth\fP (\fBuvhttp_tls_context_t\fP *ctx, int require_cert)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_set_verify_depth\fP (\fBuvhttp_tls_context_t\fP *ctx, int depth)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_set_cipher_suites\fP (\fBuvhttp_tls_context_t\fP *ctx, const int *cipher_suites)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_enable_session_tickets\fP (\fBuvhttp_tls_context_t\fP *ctx, int enable)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_set_session_cache\fP (\fBuvhttp_tls_context_t\fP *ctx, int max_sessions)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_enable_ocsp_stapling\fP (\fBuvhttp_tls_context_t\fP *ctx, int enable)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_set_dh_parameters\fP (\fBuvhttp_tls_context_t\fP *ctx, const char *dh_file)"
+.br
+.ti -1c
+.RI "mbedtls_ssl_context * \fBuvhttp_tls_create_ssl\fP (\fBuvhttp_tls_context_t\fP *ctx)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_setup_ssl\fP (mbedtls_ssl_context *ssl, int fd)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_handshake\fP (mbedtls_ssl_context *ssl)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_read\fP (mbedtls_ssl_context *ssl, void *buf, size_t len)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_write\fP (mbedtls_ssl_context *ssl, const void *buf, size_t len)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_tls_verify_peer_cert\fP (mbedtls_ssl_context *ssl)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_tls_verify_hostname\fP (mbedtls_x509_crt *cert, const char *hostname)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_tls_check_cert_validity\fP (mbedtls_x509_crt *cert)"
+.br
+.ti -1c
+.RI "mbedtls_x509_crt * \fBuvhttp_tls_get_peer_cert\fP (mbedtls_ssl_context *ssl)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_tls_get_cert_subject\fP (mbedtls_x509_crt *cert, char *buf, size_t buf_size)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_tls_get_cert_issuer\fP (mbedtls_x509_crt *cert, char *buf, size_t buf_size)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_tls_get_cert_serial\fP (mbedtls_x509_crt *cert, char *buf, size_t buf_size)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_enable_crl_checking\fP (\fBuvhttp_tls_context_t\fP *ctx, int enable)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_load_crl_file\fP (\fBuvhttp_tls_context_t\fP *ctx, const char *crl_file)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_get_ocsp_response\fP (mbedtls_ssl_context *ssl, unsigned char **ocsp_response, size_t *response_len)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_verify_ocsp_response\fP (mbedtls_x509_crt *cert, const unsigned char *ocsp_response, size_t response_len)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_enable_tls13\fP (\fBuvhttp_tls_context_t\fP *ctx, int enable)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_set_tls13_cipher_suites\fP (\fBuvhttp_tls_context_t\fP *ctx, const char *cipher_suites)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_enable_early_data\fP (\fBuvhttp_tls_context_t\fP *ctx, int enable)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_set_ticket_key\fP (\fBuvhttp_tls_context_t\fP *ctx, const unsigned char *key, size_t key_len)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_rotate_ticket_key\fP (\fBuvhttp_tls_context_t\fP *ctx)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_set_ticket_lifetime\fP (\fBuvhttp_tls_context_t\fP *ctx, int lifetime_seconds)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_verify_cert_chain\fP (mbedtls_ssl_context *ssl)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_context_add_extra_chain_cert\fP (\fBuvhttp_tls_context_t\fP *ctx, const char *cert_file)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_get_cert_chain\fP (mbedtls_ssl_context *ssl, mbedtls_x509_crt **chain)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_get_stats\fP (\fBuvhttp_tls_context_t\fP *ctx, \fBuvhttp_tls_stats_t\fP *stats)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_reset_stats\fP (\fBuvhttp_tls_context_t\fP *ctx)"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_error_t\fP \fBuvhttp_tls_get_connection_info\fP (mbedtls_ssl_context *ssl, char *buf, size_t buf_size)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_tls_get_error_string\fP (int ret, char *buf, size_t buf_size)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_tls_print_error\fP (int ret)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "static int mbedtls_net_recv (void * ctx, unsigned char * buf, size_t len)\fC [static]\fP"
+
+.SS "static int mbedtls_net_send (void * ctx, const unsigned char * buf, size_t len)\fC [static]\fP"
+
+.SS "int uvhttp_tls_check_cert_validity (mbedtls_x509_crt * cert)"
+
+.SS "void uvhttp_tls_cleanup (\fBuvhttp_context_t\fP * context)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_add_extra_chain_cert (\fBuvhttp_tls_context_t\fP * ctx, const char * cert_file)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_enable_client_auth (\fBuvhttp_tls_context_t\fP * ctx, int require_cert)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_enable_crl_checking (\fBuvhttp_tls_context_t\fP * ctx, int enable)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_enable_early_data (\fBuvhttp_tls_context_t\fP * ctx, int enable)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_enable_ocsp_stapling (\fBuvhttp_tls_context_t\fP * ctx, int enable)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_enable_session_tickets (\fBuvhttp_tls_context_t\fP * ctx, int enable)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_enable_tls13 (\fBuvhttp_tls_context_t\fP * ctx, int enable)"
+
+.SS "void uvhttp_tls_context_free (\fBuvhttp_tls_context_t\fP * ctx)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_load_ca_file (\fBuvhttp_tls_context_t\fP * ctx, const char * ca_file)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_load_cert_chain (\fBuvhttp_tls_context_t\fP * ctx, const char * cert_file)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_load_private_key (\fBuvhttp_tls_context_t\fP * ctx, const char * key_file)"
+
+.SS "\fBuvhttp_tls_context_t\fP* uvhttp_tls_context_new (void)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_rotate_ticket_key (\fBuvhttp_tls_context_t\fP * ctx)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_set_cipher_suites (\fBuvhttp_tls_context_t\fP * ctx, const int * cipher_suites)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_set_dh_parameters (\fBuvhttp_tls_context_t\fP * ctx, const char * dh_file)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_set_session_cache (\fBuvhttp_tls_context_t\fP * ctx, int max_sessions)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_set_ticket_key (\fBuvhttp_tls_context_t\fP * ctx, const unsigned char * key, size_t key_len)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_set_ticket_lifetime (\fBuvhttp_tls_context_t\fP * ctx, int lifetime_seconds)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_set_tls13_cipher_suites (\fBuvhttp_tls_context_t\fP * ctx, const char * cipher_suites)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_context_set_verify_depth (\fBuvhttp_tls_context_t\fP * ctx, int depth)"
+
+.SS "mbedtls_ssl_context* uvhttp_tls_create_ssl (\fBuvhttp_tls_context_t\fP * ctx)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_get_cert_chain (mbedtls_ssl_context * ssl, mbedtls_x509_crt ** chain)"
+
+.SS "int uvhttp_tls_get_cert_issuer (mbedtls_x509_crt * cert, char * buf, size_t buf_size)"
+
+.SS "int uvhttp_tls_get_cert_serial (mbedtls_x509_crt * cert, char * buf, size_t buf_size)"
+
+.SS "int uvhttp_tls_get_cert_subject (mbedtls_x509_crt * cert, char * buf, size_t buf_size)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_get_connection_info (mbedtls_ssl_context * ssl, char * buf, size_t buf_size)"
+
+.SS "void uvhttp_tls_get_error_string (int ret, char * buf, size_t buf_size)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_get_ocsp_response (mbedtls_ssl_context * ssl, unsigned char ** ocsp_response, size_t * response_len)"
+
+.SS "mbedtls_x509_crt* uvhttp_tls_get_peer_cert (mbedtls_ssl_context * ssl)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_get_stats (\fBuvhttp_tls_context_t\fP * ctx, \fBuvhttp_tls_stats_t\fP * stats)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_handshake (mbedtls_ssl_context * ssl)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_init (\fBuvhttp_context_t\fP * context)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_load_crl_file (\fBuvhttp_tls_context_t\fP * ctx, const char * crl_file)"
+
+.SS "void uvhttp_tls_print_error (int ret)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_read (mbedtls_ssl_context * ssl, void * buf, size_t len)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_reset_stats (\fBuvhttp_tls_context_t\fP * ctx)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_setup_ssl (mbedtls_ssl_context * ssl, int fd)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_verify_cert_chain (mbedtls_ssl_context * ssl)"
+
+.SS "int uvhttp_tls_verify_hostname (mbedtls_x509_crt * cert, const char * hostname)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_verify_ocsp_response (mbedtls_x509_crt * cert, const unsigned char * ocsp_response, size_t response_len)"
+
+.SS "int uvhttp_tls_verify_peer_cert (mbedtls_ssl_context * ssl)"
+
+.SS "\fBuvhttp_tls_error_t\fP uvhttp_tls_write (mbedtls_ssl_context * ssl, const void * buf, size_t len)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

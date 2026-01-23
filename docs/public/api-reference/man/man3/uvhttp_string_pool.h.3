@@ -1,0 +1,119 @@
+.TH "include/uvhttp_string_pool.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_string_pool.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_hash\&.h'\fP
+.br
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <stdint\&.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_string_entry\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_string_pool_t\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_STRING_POOL_SIZE\fP   (1024 * 1024)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STRING_POOL_MAX_SIZE\fP   (16 * 1024 * 1024)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MIN_STRING_LENGTH\fP   8"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_STRING_LENGTH\fP   1024"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBuvhttp_string_entry\fP \fBuvhttp_string_entry_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_string_pool_init\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_string_pool_cleanup\fP (void)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_string_pool_intern\fP (const char *str, size_t length)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_string_pool_release\fP (const char *str)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_string_pool_get_stats\fP (size_t *total_strings, size_t *pool_hits, size_t *pool_misses, size_t *memory_saved)"
+.br
+.ti -1c
+.RI "static const char * \fBuvhttp_string_pool_strdup\fP (const char *str)"
+.br
+.ti -1c
+.RI "static uint32_t \fBuvhttp_string_hash\fP (const char *str, size_t length)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_string_pool_t\fP \fBg_string_pool\fP"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_MAX_STRING_LENGTH   1024"
+
+.SS "#define UVHTTP_MIN_STRING_LENGTH   8"
+
+.SS "#define UVHTTP_STRING_POOL_MAX_SIZE   (16 * 1024 * 1024)"
+
+.SS "#define UVHTTP_STRING_POOL_SIZE   (1024 * 1024)"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBuvhttp_string_entry\fP \fBuvhttp_string_entry_t\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "static uint32_t uvhttp_string_hash (const char * str, size_t length)\fC [inline]\fP, \fC [static]\fP"
+
+.SS "void uvhttp_string_pool_cleanup (void)"
+
+.SS "void uvhttp_string_pool_get_stats (size_t * total_strings, size_t * pool_hits, size_t * pool_misses, size_t * memory_saved)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_string_pool_init (void)"
+
+.SS "const char* uvhttp_string_pool_intern (const char * str, size_t length)"
+
+.SS "void uvhttp_string_pool_release (const char * str)"
+
+.SS "static const char* uvhttp_string_pool_strdup (const char * str)\fC [inline]\fP, \fC [static]\fP"
+
+.SH "Variable Documentation"
+.PP 
+.SS "\fBuvhttp_string_pool_t\fP g_string_pool\fC [extern]\fP"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

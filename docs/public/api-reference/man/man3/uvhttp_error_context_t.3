@@ -1,0 +1,55 @@
+.TH "uvhttp_error_context_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_error_context_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_error_handler\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBerror_code\fP"
+.br
+.ti -1c
+.RI "const char * \fBfunction\fP"
+.br
+.ti -1c
+.RI "const char * \fBfile\fP"
+.br
+.ti -1c
+.RI "int \fBline\fP"
+.br
+.ti -1c
+.RI "const char * \fBmessage\fP"
+.br
+.ti -1c
+.RI "time_t \fBtimestamp\fP"
+.br
+.ti -1c
+.RI "void * \fBuser_data\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "\fBuvhttp_error_t\fP uvhttp_error_context_t::error_code"
+
+.SS "const char* uvhttp_error_context_t::file"
+
+.SS "const char* uvhttp_error_context_t::function"
+
+.SS "int uvhttp_error_context_t::line"
+
+.SS "const char* uvhttp_error_context_t::message"
+
+.SS "time_t uvhttp_error_context_t::timestamp"
+
+.SS "void* uvhttp_error_context_t::user_data"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

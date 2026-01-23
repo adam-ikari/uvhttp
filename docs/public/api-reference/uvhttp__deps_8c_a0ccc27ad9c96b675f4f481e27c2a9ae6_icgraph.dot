@@ -1,0 +1,12 @@
+digraph "test_get_allocated_size"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="test_get_allocated_size",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="uvhttp_test_memory\l_provider_new",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__deps_8c.html#ae9af947a0b9eaf12568af5dcde705887",tooltip=" "];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="uvhttp_deps_create_test",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__deps_8h.html#ad5eebf46c166bcaf8d793e1f75795c80",tooltip=" "];
+}

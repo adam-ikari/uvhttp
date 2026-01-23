@@ -1,0 +1,69 @@
+.TH "src/uvhttp_cors_middleware.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_cors_middleware.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_features\&.h'\fP
+.br
+\fC#include 'uvhttp_cors_middleware\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_utils\&.h'\fP
+.br
+\fC#include 'uvhttp_constants\&.h'\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <strings\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static char * \fBcopy_string\fP (const char *src)"
+.br
+.ti -1c
+.RI "\fBuvhttp_cors_config_t\fP * \fBuvhttp_cors_config_default\fP (void)"
+.br
+.ti -1c
+.RI "\fBuvhttp_cors_config_t\fP * \fBuvhttp_cors_config_create\fP (const char *allow_origin, const char *allow_methods, const char *allow_headers)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_cors_config_destroy\fP (\fBuvhttp_cors_config_t\fP *config)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_cors_is_preflight_request\fP (const \fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_cors_set_headers\fP (\fBuvhttp_response_t\fP *response, const \fBuvhttp_cors_config_t\fP *config, const char *origin)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_cors_middleware\fP (const \fBuvhttp_request_t\fP *request, \fBuvhttp_response_t\fP *response, \fBuvhttp_middleware_context_t\fP *ctx)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "static char* copy_string (const char * src)\fC [static]\fP"
+
+.SS "\fBuvhttp_cors_config_t\fP* uvhttp_cors_config_create (const char * allow_origin, const char * allow_methods, const char * allow_headers)"
+
+.SS "\fBuvhttp_cors_config_t\fP* uvhttp_cors_config_default (void)"
+
+.SS "void uvhttp_cors_config_destroy (\fBuvhttp_cors_config_t\fP * config)"
+
+.SS "int uvhttp_cors_is_preflight_request (const \fBuvhttp_request_t\fP * request)"
+
+.SS "int uvhttp_cors_middleware (const \fBuvhttp_request_t\fP * request, \fBuvhttp_response_t\fP * response, \fBuvhttp_middleware_context_t\fP * ctx)"
+
+.SS "void uvhttp_cors_set_headers (\fBuvhttp_response_t\fP * response, const \fBuvhttp_cors_config_t\fP * config, const char * origin)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

@@ -1,0 +1,310 @@
+.TH "src/uvhttp_deps.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_deps.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_deps\&.h'\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <uv\&.h>\fP
+.br
+\fC#include <sys/socket\&.h>\fP
+.br
+\fC#include <unistd\&.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBtest_memory_data_t\fP"
+.br
+.ti -1c
+.RI "struct \fBtest_network_data_t\fP"
+.br
+.ti -1c
+.RI "struct \fBtest_file_data_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static uv_loop_t * \fBdefault_get_default_loop\fP (void *user_data)"
+.br
+.ti -1c
+.RI "static uv_loop_t * \fBtest_get_default_loop\fP (void *user_data)"
+.br
+.ti -1c
+.RI "static uv_loop_t * \fBdefault_create_loop\fP (void *user_data)"
+.br
+.ti -1c
+.RI "static int \fBdefault_run_loop\fP (uv_loop_t *loop, uv_run_mode mode, void *user_data)"
+.br
+.ti -1c
+.RI "static void \fBdefault_close_loop\fP (uv_loop_t *loop, void *user_data)"
+.br
+.ti -1c
+.RI "\fBuvhttp_loop_provider_t\fP * \fBuvhttp_default_loop_provider_new\fP (void)"
+.br
+.ti -1c
+.RI "static void * \fBdefault_malloc\fP (size_t size, void *user_data)"
+.br
+.ti -1c
+.RI "static void * \fBdefault_calloc\fP (size_t count, size_t size, void *user_data)"
+.br
+.ti -1c
+.RI "static void * \fBdefault_realloc\fP (void *ptr, size_t size, void *user_data)"
+.br
+.ti -1c
+.RI "static void \fBdefault_free\fP (void *ptr, void *user_data)"
+.br
+.ti -1c
+.RI "static size_t \fBdefault_get_allocated_size\fP (void *ptr, void *user_data)"
+.br
+.ti -1c
+.RI "\fBuvhttp_memory_provider_t\fP * \fBuvhttp_default_memory_provider_new\fP (void)"
+.br
+.ti -1c
+.RI "static int \fBdefault_create_socket\fP (int domain, int type, int protocol, void *user_data)"
+.br
+.ti -1c
+.RI "static int \fBdefault_bind_socket\fP (int sockfd, const struct sockaddr *addr, socklen_t addrlen, void *user_data)"
+.br
+.ti -1c
+.RI "static int \fBdefault_listen_socket\fP (int sockfd, int backlog, void *user_data)"
+.br
+.ti -1c
+.RI "static int \fBdefault_accept_socket\fP (int sockfd, struct sockaddr *addr, socklen_t *addrlen, void *user_data)"
+.br
+.ti -1c
+.RI "static ssize_t \fBdefault_send_data\fP (int sockfd, const void *buf, size_t len, int flags, void *user_data)"
+.br
+.ti -1c
+.RI "static ssize_t \fBdefault_recv_data\fP (int sockfd, void *buf, size_t len, int flags, void *user_data)"
+.br
+.ti -1c
+.RI "static void \fBdefault_close_socket\fP (int sockfd, void *user_data)"
+.br
+.ti -1c
+.RI "\fBuvhttp_network_provider_t\fP * \fBuvhttp_default_network_provider_new\fP (void)"
+.br
+.ti -1c
+.RI "static FILE * \fBdefault_fopen\fP (const char *filename, const char *mode, void *user_data)"
+.br
+.ti -1c
+.RI "static int \fBdefault_fclose\fP (FILE *stream, void *user_data)"
+.br
+.ti -1c
+.RI "static size_t \fBdefault_fread\fP (void *ptr, size_t size, size_t count, FILE *stream, void *user_data)"
+.br
+.ti -1c
+.RI "static size_t \fBdefault_fwrite\fP (const void *ptr, size_t size, size_t count, FILE *stream, void *user_data)"
+.br
+.ti -1c
+.RI "static int \fBdefault_fseek\fP (FILE *stream, long offset, int whence, void *user_data)"
+.br
+.ti -1c
+.RI "static long \fBdefault_ftell\fP (FILE *stream, void *user_data)"
+.br
+.ti -1c
+.RI "static int \fBdefault_access\fP (const char *pathname, int mode, void *user_data)"
+.br
+.ti -1c
+.RI "\fBuvhttp_file_provider_t\fP * \fBuvhttp_default_file_provider_new\fP (void)"
+.br
+.ti -1c
+.RI "static void * \fBtest_malloc\fP (size_t size, void *user_data)"
+.br
+.ti -1c
+.RI "static void * \fBtest_calloc\fP (size_t count, size_t size, void *user_data)"
+.br
+.ti -1c
+.RI "static void \fBtest_free\fP (void *ptr, void *user_data)"
+.br
+.ti -1c
+.RI "static size_t \fBtest_get_allocated_size\fP (void *ptr, void *user_data)"
+.br
+.ti -1c
+.RI "\fBuvhttp_memory_provider_t\fP * \fBuvhttp_test_memory_provider_new\fP (void)"
+.br
+.ti -1c
+.RI "static int \fBtest_create_socket\fP (int domain, int type, int protocol, void *user_data)"
+.br
+.ti -1c
+.RI "static ssize_t \fBtest_send_data\fP (int sockfd, const void *buf, size_t len, int flags, void *user_data)"
+.br
+.ti -1c
+.RI "static ssize_t \fBtest_recv_data\fP (int sockfd, void *buf, size_t len, int flags, void *user_data)"
+.br
+.ti -1c
+.RI "\fBuvhttp_network_provider_t\fP * \fBuvhttp_test_network_provider_new\fP (void)"
+.br
+.ti -1c
+.RI "static FILE * \fBtest_fopen\fP (const char *filename, const char *mode, void *user_data)"
+.br
+.ti -1c
+.RI "static int \fBtest_access\fP (const char *pathname, int mode, void *user_data)"
+.br
+.ti -1c
+.RI "\fBuvhttp_file_provider_t\fP * \fBuvhttp_test_file_provider_new\fP (void)"
+.br
+.ti -1c
+.RI "static void \fBdefault_cleanup\fP (\fBuvhttp_deps_t\fP *deps)"
+.br
+.ti -1c
+.RI "\fBuvhttp_deps_t\fP * \fBuvhttp_deps_new\fP (void)"
+.br
+.ti -1c
+.RI "\fBuvhttp_result_t\fP \fBuvhttp_deps_set_loop_provider\fP (\fBuvhttp_deps_t\fP *deps, \fBuvhttp_loop_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "\fBuvhttp_result_t\fP \fBuvhttp_deps_set_memory_provider\fP (\fBuvhttp_deps_t\fP *deps, \fBuvhttp_memory_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "\fBuvhttp_result_t\fP \fBuvhttp_deps_set_network_provider\fP (\fBuvhttp_deps_t\fP *deps, \fBuvhttp_network_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "\fBuvhttp_result_t\fP \fBuvhttp_deps_set_file_provider\fP (\fBuvhttp_deps_t\fP *deps, \fBuvhttp_file_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "\fBuvhttp_loop_provider_t\fP * \fBuvhttp_deps_get_loop_provider\fP (\fBuvhttp_deps_t\fP *deps)"
+.br
+.ti -1c
+.RI "\fBuvhttp_memory_provider_t\fP * \fBuvhttp_deps_get_memory_provider\fP (\fBuvhttp_deps_t\fP *deps)"
+.br
+.ti -1c
+.RI "\fBuvhttp_network_provider_t\fP * \fBuvhttp_deps_get_network_provider\fP (\fBuvhttp_deps_t\fP *deps)"
+.br
+.ti -1c
+.RI "\fBuvhttp_file_provider_t\fP * \fBuvhttp_deps_get_file_provider\fP (\fBuvhttp_deps_t\fP *deps)"
+.br
+.ti -1c
+.RI "\fBuvhttp_deps_t\fP * \fBuvhttp_deps_create_default\fP (void)"
+.br
+.ti -1c
+.RI "\fBuvhttp_deps_t\fP * \fBuvhttp_deps_create_test\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_deps_free\fP (\fBuvhttp_deps_t\fP *deps)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "static int default_accept_socket (int sockfd, struct sockaddr * addr, socklen_t * addrlen, void * user_data)\fC [static]\fP"
+
+.SS "static int default_access (const char * pathname, int mode, void * user_data)\fC [static]\fP"
+
+.SS "static int default_bind_socket (int sockfd, const struct sockaddr * addr, socklen_t addrlen, void * user_data)\fC [static]\fP"
+
+.SS "static void* default_calloc (size_t count, size_t size, void * user_data)\fC [static]\fP"
+
+.SS "static void default_cleanup (\fBuvhttp_deps_t\fP * deps)\fC [static]\fP"
+
+.SS "static void default_close_loop (uv_loop_t * loop, void * user_data)\fC [static]\fP"
+
+.SS "static void default_close_socket (int sockfd, void * user_data)\fC [static]\fP"
+
+.SS "static uv_loop_t* default_create_loop (void * user_data)\fC [static]\fP"
+
+.SS "static int default_create_socket (int domain, int type, int protocol, void * user_data)\fC [static]\fP"
+
+.SS "static int default_fclose (FILE * stream, void * user_data)\fC [static]\fP"
+
+.SS "static FILE* default_fopen (const char * filename, const char * mode, void * user_data)\fC [static]\fP"
+
+.SS "static size_t default_fread (void * ptr, size_t size, size_t count, FILE * stream, void * user_data)\fC [static]\fP"
+
+.SS "static void default_free (void * ptr, void * user_data)\fC [static]\fP"
+
+.SS "static int default_fseek (FILE * stream, long offset, int whence, void * user_data)\fC [static]\fP"
+
+.SS "static long default_ftell (FILE * stream, void * user_data)\fC [static]\fP"
+
+.SS "static size_t default_fwrite (const void * ptr, size_t size, size_t count, FILE * stream, void * user_data)\fC [static]\fP"
+
+.SS "static size_t default_get_allocated_size (void * ptr, void * user_data)\fC [static]\fP"
+
+.SS "static uv_loop_t* default_get_default_loop (void * user_data)\fC [static]\fP"
+
+.SS "static int default_listen_socket (int sockfd, int backlog, void * user_data)\fC [static]\fP"
+
+.SS "static void* default_malloc (size_t size, void * user_data)\fC [static]\fP"
+
+.SS "static void* default_realloc (void * ptr, size_t size, void * user_data)\fC [static]\fP"
+
+.SS "static ssize_t default_recv_data (int sockfd, void * buf, size_t len, int flags, void * user_data)\fC [static]\fP"
+
+.SS "static int default_run_loop (uv_loop_t * loop, uv_run_mode mode, void * user_data)\fC [static]\fP"
+
+.SS "static ssize_t default_send_data (int sockfd, const void * buf, size_t len, int flags, void * user_data)\fC [static]\fP"
+
+.SS "static int test_access (const char * pathname, int mode, void * user_data)\fC [static]\fP"
+
+.SS "static void* test_calloc (size_t count, size_t size, void * user_data)\fC [static]\fP"
+
+.SS "static int test_create_socket (int domain, int type, int protocol, void * user_data)\fC [static]\fP"
+
+.SS "static FILE* test_fopen (const char * filename, const char * mode, void * user_data)\fC [static]\fP"
+
+.SS "static void test_free (void * ptr, void * user_data)\fC [static]\fP"
+
+.SS "static size_t test_get_allocated_size (void * ptr, void * user_data)\fC [static]\fP"
+
+.SS "static uv_loop_t* test_get_default_loop (void * user_data)\fC [static]\fP"
+
+.SS "static void* test_malloc (size_t size, void * user_data)\fC [static]\fP"
+
+.SS "static ssize_t test_recv_data (int sockfd, void * buf, size_t len, int flags, void * user_data)\fC [static]\fP"
+
+.SS "static ssize_t test_send_data (int sockfd, const void * buf, size_t len, int flags, void * user_data)\fC [static]\fP"
+
+.SS "\fBuvhttp_file_provider_t\fP* uvhttp_default_file_provider_new (void)"
+
+.SS "\fBuvhttp_loop_provider_t\fP* uvhttp_default_loop_provider_new (void)"
+
+.SS "\fBuvhttp_memory_provider_t\fP* uvhttp_default_memory_provider_new (void)"
+
+.SS "\fBuvhttp_network_provider_t\fP* uvhttp_default_network_provider_new (void)"
+
+.SS "\fBuvhttp_deps_t\fP* uvhttp_deps_create_default (void)"
+
+.SS "\fBuvhttp_deps_t\fP* uvhttp_deps_create_test (void)"
+
+.SS "void uvhttp_deps_free (\fBuvhttp_deps_t\fP * deps)"
+
+.SS "\fBuvhttp_file_provider_t\fP* uvhttp_deps_get_file_provider (\fBuvhttp_deps_t\fP * deps)"
+
+.SS "\fBuvhttp_loop_provider_t\fP* uvhttp_deps_get_loop_provider (\fBuvhttp_deps_t\fP * deps)"
+
+.SS "\fBuvhttp_memory_provider_t\fP* uvhttp_deps_get_memory_provider (\fBuvhttp_deps_t\fP * deps)"
+
+.SS "\fBuvhttp_network_provider_t\fP* uvhttp_deps_get_network_provider (\fBuvhttp_deps_t\fP * deps)"
+
+.SS "\fBuvhttp_deps_t\fP* uvhttp_deps_new (void)"
+
+.SS "\fBuvhttp_result_t\fP uvhttp_deps_set_file_provider (\fBuvhttp_deps_t\fP * deps, \fBuvhttp_file_provider_t\fP * provider)"
+
+.SS "\fBuvhttp_result_t\fP uvhttp_deps_set_loop_provider (\fBuvhttp_deps_t\fP * deps, \fBuvhttp_loop_provider_t\fP * provider)"
+
+.SS "\fBuvhttp_result_t\fP uvhttp_deps_set_memory_provider (\fBuvhttp_deps_t\fP * deps, \fBuvhttp_memory_provider_t\fP * provider)"
+
+.SS "\fBuvhttp_result_t\fP uvhttp_deps_set_network_provider (\fBuvhttp_deps_t\fP * deps, \fBuvhttp_network_provider_t\fP * provider)"
+
+.SS "\fBuvhttp_file_provider_t\fP* uvhttp_test_file_provider_new (void)"
+
+.SS "\fBuvhttp_memory_provider_t\fP* uvhttp_test_memory_provider_new (void)"
+
+.SS "\fBuvhttp_network_provider_t\fP* uvhttp_test_network_provider_new (void)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

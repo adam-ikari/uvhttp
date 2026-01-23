@@ -1,0 +1,55 @@
+.TH "uvhttp_route_node" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_route_node
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_router\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "char \fBsegment\fP [64]"
+.br
+.ti -1c
+.RI "\fBuvhttp_method_t\fP \fBmethod\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_request_handler_t\fP \fBhandler\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_route_node\fP * \fBchildren\fP [16]"
+.br
+.ti -1c
+.RI "size_t \fBchild_count\fP"
+.br
+.ti -1c
+.RI "int \fBis_param\fP"
+.br
+.ti -1c
+.RI "char \fBparam_name\fP [64]"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "size_t uvhttp_route_node::child_count"
+
+.SS "struct \fBuvhttp_route_node\fP* uvhttp_route_node::children[16]"
+
+.SS "\fBuvhttp_request_handler_t\fP uvhttp_route_node::handler"
+
+.SS "int uvhttp_route_node::is_param"
+
+.SS "\fBuvhttp_method_t\fP uvhttp_route_node::method"
+
+.SS "char uvhttp_route_node::param_name[64]"
+
+.SS "char uvhttp_route_node::segment[64]"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

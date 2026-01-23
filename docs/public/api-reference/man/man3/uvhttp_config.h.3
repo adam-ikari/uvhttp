@@ -1,0 +1,217 @@
+.TH "include/uvhttp_config.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_config.h \- 配置管理系统  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_constants\&.h'\fP
+.br
+\fC#include <stddef\&.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_config_t\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_MAX_CONNECTIONS\fP   2048   /* 使用默认值，适合大多数应用 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_READ_BUFFER_SIZE\fP   8192"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_BACKLOG\fP   256"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_KEEPALIVE_TIMEOUT\fP   30"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_REQUEST_TIMEOUT\fP   60"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_MAX_BODY_SIZE\fP   (1024 * 1024)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_MAX_HEADER_SIZE\fP   8192"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_MAX_URL_SIZE\fP   2048"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_MAX_REQUESTS_PER_CONN\fP   100"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_RATE_LIMIT_WINDOW\fP   60"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_ENABLE_COMPRESSION\fP   1"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_ENABLE_TLS\fP   0"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_MEMORY_POOL_SIZE\fP   (16 * 1024 * 1024)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_ENABLE_MEMORY_DEBUG\fP   0"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_MEMORY_WARNING_THRESHOLD\fP   0\&.8"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_LOG_LEVEL\fP   2  /* INFO */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_ENABLE_ACCESS_LOG\fP   0"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBuvhttp_context\fP \fBuvhttp_context_t\fP"
+.br
+.ti -1c
+.RI "typedef void(* \fBuvhttp_config_change_callback_t\fP) (const char *key, const void *old_value, const void *new_value)"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_config_t\fP * \fBuvhttp_config_new\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_config_free\fP (\fBuvhttp_config_t\fP *config)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_config_set_defaults\fP (\fBuvhttp_config_t\fP *config)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_config_load_file\fP (\fBuvhttp_config_t\fP *config, const char *filename)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_config_save_file\fP (const \fBuvhttp_config_t\fP *config, const char *filename)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_config_load_env\fP (\fBuvhttp_config_t\fP *config)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_config_validate\fP (const \fBuvhttp_config_t\fP *config)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_config_print\fP (const \fBuvhttp_config_t\fP *config)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_config_update_max_connections\fP (\fBuvhttp_context_t\fP *context, int max_connections)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_config_update_read_buffer_size\fP (\fBuvhttp_context_t\fP *context, int buffer_size)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_config_update_size_limits\fP (\fBuvhttp_context_t\fP *context, size_t max_body_size, size_t max_header_size)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_config_monitor_changes\fP (\fBuvhttp_context_t\fP *context, \fBuvhttp_config_change_callback_t\fP callback)"
+.br
+.ti -1c
+.RI "const \fBuvhttp_config_t\fP * \fBuvhttp_config_get_current\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_config_set_current\fP (\fBuvhttp_context_t\fP *context, \fBuvhttp_config_t\fP *config)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_config_reload\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+配置管理系统 
+
+提供动态配置管理，支持运行时调整参数 
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_DEFAULT_BACKLOG   256"
+
+.SS "#define UVHTTP_DEFAULT_ENABLE_ACCESS_LOG   0"
+
+.SS "#define UVHTTP_DEFAULT_ENABLE_COMPRESSION   1"
+
+.SS "#define UVHTTP_DEFAULT_ENABLE_MEMORY_DEBUG   0"
+
+.SS "#define UVHTTP_DEFAULT_ENABLE_TLS   0"
+
+.SS "#define UVHTTP_DEFAULT_KEEPALIVE_TIMEOUT   30"
+
+.SS "#define UVHTTP_DEFAULT_LOG_LEVEL   2  /* INFO */"
+
+.SS "#define UVHTTP_DEFAULT_MAX_BODY_SIZE   (1024 * 1024)"
+
+.SS "#define UVHTTP_DEFAULT_MAX_CONNECTIONS   2048   /* 使用默认值，适合大多数应用 */"
+
+.SS "#define UVHTTP_DEFAULT_MAX_HEADER_SIZE   8192"
+
+.SS "#define UVHTTP_DEFAULT_MAX_REQUESTS_PER_CONN   100"
+
+.SS "#define UVHTTP_DEFAULT_MAX_URL_SIZE   2048"
+
+.SS "#define UVHTTP_DEFAULT_MEMORY_POOL_SIZE   (16 * 1024 * 1024)"
+
+.SS "#define UVHTTP_DEFAULT_MEMORY_WARNING_THRESHOLD   0\&.8"
+
+.SS "#define UVHTTP_DEFAULT_RATE_LIMIT_WINDOW   60"
+
+.SS "#define UVHTTP_DEFAULT_READ_BUFFER_SIZE   8192"
+
+.SS "#define UVHTTP_DEFAULT_REQUEST_TIMEOUT   60"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef void(* uvhttp_config_change_callback_t) (const char *key, const void *old_value, const void *new_value)"
+
+.SS "typedef struct \fBuvhttp_context\fP \fBuvhttp_context_t\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "void uvhttp_config_free (\fBuvhttp_config_t\fP * config)"
+
+.SS "const \fBuvhttp_config_t\fP* uvhttp_config_get_current (\fBuvhttp_context_t\fP * context)"
+
+.SS "int uvhttp_config_load_env (\fBuvhttp_config_t\fP * config)"
+
+.SS "int uvhttp_config_load_file (\fBuvhttp_config_t\fP * config, const char * filename)"
+
+.SS "int uvhttp_config_monitor_changes (\fBuvhttp_context_t\fP * context, \fBuvhttp_config_change_callback_t\fP callback)"
+
+.SS "\fBuvhttp_config_t\fP* uvhttp_config_new (void)"
+
+.SS "void uvhttp_config_print (const \fBuvhttp_config_t\fP * config)"
+
+.SS "int uvhttp_config_reload (\fBuvhttp_context_t\fP * context)"
+
+.SS "int uvhttp_config_save_file (const \fBuvhttp_config_t\fP * config, const char * filename)"
+
+.SS "void uvhttp_config_set_current (\fBuvhttp_context_t\fP * context, \fBuvhttp_config_t\fP * config)"
+
+.SS "void uvhttp_config_set_defaults (\fBuvhttp_config_t\fP * config)"
+
+.SS "int uvhttp_config_update_max_connections (\fBuvhttp_context_t\fP * context, int max_connections)"
+
+.SS "int uvhttp_config_update_read_buffer_size (\fBuvhttp_context_t\fP * context, int buffer_size)"
+
+.SS "int uvhttp_config_update_size_limits (\fBuvhttp_context_t\fP * context, size_t max_body_size, size_t max_header_size)"
+
+.SS "int uvhttp_config_validate (const \fBuvhttp_config_t\fP * config)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

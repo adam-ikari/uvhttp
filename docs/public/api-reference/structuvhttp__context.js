@@ -1,0 +1,25 @@
+var structuvhttp__context =
+[
+    [ "active_connections", "structuvhttp__context.html#a8a55471b77f3a5075c04224598c85c91", null ],
+    [ "config_callback", "structuvhttp__context.html#af520d3e9afd6909bfda7143fe6b37d7a", null ],
+    [ "config_provider", "structuvhttp__context.html#ad296917c1028501b1c5023e9836adbc6", null ],
+    [ "connection_provider", "structuvhttp__context.html#a23097004e0ca99f635cab18792d2cbe7", null ],
+    [ "created_at", "structuvhttp__context.html#ad041b2f96f1f12cf6ef377490ec2aeec", null ],
+    [ "current_config", "structuvhttp__context.html#a2716b36490a13847d39f31355644f65a", null ],
+    [ "error_stats", "structuvhttp__context.html#a2f38ac72c05ab2dd5fe8f6a6e78c9994", null ],
+    [ "initialized", "structuvhttp__context.html#a8d2bbaf291b78faaf6f6fe0b776b3a81", null ],
+    [ "logger_provider", "structuvhttp__context.html#a42455ed67a87a82bfd9cb0f26ba6a81a", null ],
+    [ "loop", "structuvhttp__context.html#a4d4df37b4f62c42eec0881afedf44192", null ],
+    [ "network_interface", "structuvhttp__context.html#a8720f9bdf69f6fcf8e9697df78cba98e", null ],
+    [ "router", "structuvhttp__context.html#a82b7a7cfec1736e729a218b7723fca29", null ],
+    [ "server", "structuvhttp__context.html#a9d716b0e4a6ad73ffe47ed15a7b3c59b", null ],
+    [ "tls_drbg", "structuvhttp__context.html#a5c9f283108fae9fbbc80caf5b60a313c", null ],
+    [ "tls_entropy", "structuvhttp__context.html#a5d7d299c82054dc0f95b0a8279913a13", null ],
+    [ "tls_initialized", "structuvhttp__context.html#ae2a44b3610635839cfc2a0b493907ba4", null ],
+    [ "total_connections", "structuvhttp__context.html#a0a6abd10d7f48838c19842f1ef20c624", null ],
+    [ "total_requests", "structuvhttp__context.html#ad4e4c6f193c9d0c723891563176143fb", null ],
+    [ "user_data", "structuvhttp__context.html#a82a4ee92b2571f0883b66c0f3c73cacc", null ],
+    [ "ws_drbg", "structuvhttp__context.html#a1fd37f52e5fe47b5b4522b2382023d26", null ],
+    [ "ws_drbg_initialized", "structuvhttp__context.html#a3b7ea81c295594ee2ecb6d0b822edbd7", null ],
+    [ "ws_entropy", "structuvhttp__context.html#a4b82c9d5e28368934db8b0df010d2b33", null ]
+];

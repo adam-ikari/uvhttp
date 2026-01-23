@@ -1,0 +1,135 @@
+.TH "src/uvhttp_response.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_response.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_response\&.h'\fP
+.br
+\fC#include 'uvhttp_common\&.h'\fP
+.br
+\fC#include 'uvhttp_constants\&.h'\fP
+.br
+\fC#include 'uvhttp_connection\&.h'\fP
+.br
+\fC#include 'uvhttp_error_handler\&.h'\fP
+.br
+\fC#include 'uvhttp_validation\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_features\&.h'\fP
+.br
+\fC#include 'uvhttp_network\&.h'\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <strings\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static void \fBuvhttp_free_write_data\fP (uv_write_t *req, int status)"
+.br
+.ti -1c
+.RI "static const char * \fBget_status_text\fP (int status_code)"
+.br
+.ti -1c
+.RI "static int \fBcontains_control_chars\fP (const char *str)"
+.br
+.ti -1c
+.RI "static void \fBbuild_response_headers\fP (\fBuvhttp_response_t\fP *response, char *buffer, size_t *length)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_init\fP (\fBuvhttp_response_t\fP *response, void *client)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_response_cleanup\fP (\fBuvhttp_response_t\fP *response)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_set_status\fP (\fBuvhttp_response_t\fP *response, int status_code)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_set_header\fP (\fBuvhttp_response_t\fP *response, const char *name, const char *value)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_set_body\fP (\fBuvhttp_response_t\fP *response, const char *body, size_t length)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_send_response_data\fP (\fBuvhttp_response_t\fP *response, const char *data, size_t length)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_build_data\fP (\fBuvhttp_response_t\fP *response, char **out_data, size_t *out_length)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_send_raw\fP (const char *data, size_t length, void *client, \fBuvhttp_response_t\fP *response)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_send\fP (\fBuvhttp_response_t\fP *response)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_build_for_test\fP (\fBuvhttp_response_t\fP *response, char **out_data, size_t *out_length)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_send_mock\fP (\fBuvhttp_response_t\fP *response)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_response_free\fP (\fBuvhttp_response_t\fP *response)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_network_interface_t\fP * \fBg_uvhttp_network_interface\fP"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "static void build_response_headers (\fBuvhttp_response_t\fP * response, char * buffer, size_t * length)\fC [static]\fP"
+
+.SS "static int contains_control_chars (const char * str)\fC [static]\fP"
+
+.SS "static const char* get_status_text (int status_code)\fC [static]\fP"
+
+.SS "static void uvhttp_free_write_data (uv_write_t * req, int status)\fC [static]\fP"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_response_build_data (\fBuvhttp_response_t\fP * response, char ** out_data, size_t * out_length)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_response_build_for_test (\fBuvhttp_response_t\fP * response, char ** out_data, size_t * out_length)"
+
+.SS "void uvhttp_response_cleanup (\fBuvhttp_response_t\fP * response)"
+
+.SS "void uvhttp_response_free (\fBuvhttp_response_t\fP * response)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_response_init (\fBuvhttp_response_t\fP * response, void * client)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_response_send (\fBuvhttp_response_t\fP * response)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_response_send_mock (\fBuvhttp_response_t\fP * response)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_response_send_raw (const char * data, size_t length, void * client, \fBuvhttp_response_t\fP * response)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_response_set_body (\fBuvhttp_response_t\fP * response, const char * body, size_t length)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_response_set_header (\fBuvhttp_response_t\fP * response, const char * name, const char * value)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_response_set_status (\fBuvhttp_response_t\fP * response, int status_code)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_send_response_data (\fBuvhttp_response_t\fP * response, const char * data, size_t length)"
+
+.SH "Variable Documentation"
+.PP 
+.SS "\fBuvhttp_network_interface_t\fP* g_uvhttp_network_interface\fC [extern]\fP"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

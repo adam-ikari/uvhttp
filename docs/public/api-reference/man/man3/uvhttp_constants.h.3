@@ -1,0 +1,1017 @@
+.TH "include/uvhttp_constants.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_constants.h
+.SH SYNOPSIS
+.br
+.PP
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_TRUE\fP   1"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_FALSE\fP   0"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STRINGIFY\fP(x)   #x"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_CONTINUE\fP   100"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_MIN_CONTINUE\fP   100"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_SWITCHING_PROTOCOLS\fP   101"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_OK\fP   200"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_CREATED\fP   201"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_ACCEPTED\fP   202"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_NO_CONTENT\fP   204"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_BAD_REQUEST\fP   400"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_UNAUTHORIZED\fP   401"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_FORBIDDEN\fP   403"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_NOT_FOUND\fP   404"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_METHOD_NOT_ALLOWED\fP   405"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_REQUEST_ENTITY_TOO_LARGE\fP   413"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_INTERNAL_ERROR\fP   500"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_NOT_IMPLEMENTED\fP   501"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_BAD_GATEWAY\fP   502"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_SERVICE_UNAVAILABLE\fP   503"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATUS_MAX\fP   599"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_VERSION_1_1\fP   'HTTP/1\&.1'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_VERSION_LENGTH\fP   8"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_INITIAL_BUFFER_SIZE\fP   8192  /* 增加到 8KB 减少重分配 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_BODY_SIZE\fP   (1024 * 1024)  /* 1MB */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ASYNC_FILE_BUFFER_SIZE\fP   65536  /* 64KB 文件读取缓冲区 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ASYNC_FILE_MAX_CONCURRENT\fP   64  /* 最大并发文件读取数 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ASYNC_FILE_MAX_SIZE\fP   (10 * 1024 * 1024)  /* 10MB 最大文件 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_HEADERS\fP   64"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_HEADER_NAME_SIZE\fP   256"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_HEADER_VALUE_SIZE\fP   1024"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_HEADER_NAME_LENGTH\fP   256"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_HEADER_VALUE_LENGTH\fP   1024"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_URL_SIZE\fP   2048"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_METHOD_SIZE\fP   16"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_PATH_SIZE\fP   1024"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_VERSION\fP   13"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_MAGIC_KEY\fP   '258EAFA5\-E914\-47DA\-95CA\-C5AB0DC85B11'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_MAGIC_KEY_LENGTH\fP   36"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_ACCEPT_KEY_SIZE\fP   40  /* Base64编码的SHA1哈希长度 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_MAX_FRAME_SIZE\fP   4096"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_FRAME_HEADER_SIZE\fP   10"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_CLOSE_CODE_SIZE\fP   4"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_OPCODE_TEXT\fP   0x1"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_OPCODE_BINARY\fP   0x2"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_OPCODE_CLOSE\fP   0x8"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_FIN\fP   0x80"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_PAYLOAD_LEN_126\fP   126"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_PAYLOAD_LEN_65536\fP   65536"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_CONNECTIONS_HARD\fP   65535  /* 硬限制，基于系统文件描述符 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_CONNECTIONS_DEFAULT\fP   2048   /* 默认值，适合大多数应用 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_CONNECTIONS_MAX\fP   10000  /* 最大推荐值，需要系统调优 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_READ_BUFFER_SIZE\fP   16384 /* 16KB缓冲区，提升吞吐量 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_RESPONSE_HEADER_SAFETY_MARGIN\fP   256  /* 响应头安全边距，防止缓冲区溢出 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DIR_LISTING_BUFFER_SIZE\fP   4096     /* 目录列表HTML缓冲区大小 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DIR_ENTRY_HTML_OVERHEAD\fP   200      /* 每个目录条目的HTML开销 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_HOST\fP   '0\&.0\&.0\&.0'           /* 默认监听地址 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_PORT\fP   8080                /* 默认端口 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_BACKLOG\fP   8192  /* 从2048增加到8192，支持更高并发 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TLS_VERIFY_DEPTH\fP   1"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TLS_DH_MIN_BITLEN\fP   2048"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TLS_MAX_SESSIONS\fP   1024"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TLS_ERROR_BUFFER_SIZE\fP   256"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TLS_CERT_BUFFER_SIZE\fP   256"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TLS_CN_BUFFER_SIZE\fP   256"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TLS_SAN_BUFFER_SIZE\fP   256"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TLS_PATH_MAX_SIZE\fP   256"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CORS_MAX_AGE_DEFAULT\fP   '86400'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_RATE_LIMIT_WINDOW\fP   60"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_RATE_LIMIT_MAX_AGE\fP   17"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATIC_MAX_CACHE_SIZE\fP   (1024 * 1024)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATIC_MAX_PATH_SIZE\fP   1024"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATIC_MAX_FILE_SIZE\fP   (10 * 1024 * 1024)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATIC_MAX_CONTENT_LENGTH\fP   32"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ERROR_MESSAGE_LENGTH\fP   256"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_FILE_PATH_SIZE\fP   2048"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DECODED_PATH_SIZE\fP   1024"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_FILENAME_SIZE\fP   256  /* 最大文件名长度 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TIME_STRING_SIZE\fP   64   /* 时间字符串缓冲区 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTENT_LENGTH_SIZE\fP   32   /* 内容长度字符串缓冲区 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_RESPONSE_BODY_SIZE\fP   512  /* 响应体缓冲区 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_LOG_ENTRY_SIZE\fP   512  /* 日志条目缓冲区 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_VARY_HEADER_SIZE\fP   512  /* Vary 头缓冲区 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CLIENT_IP_SIZE\fP   64   /* 客户端 IP 地址缓冲区 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TOKEN_SIZE\fP   256  /* Token 缓冲区 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_NULL_BYTE\fP   '\\0'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CARRIAGE_RETURN\fP   '\\r'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_LINE_FEED\fP   '\\n'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TAB\fP   '\\t'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_BACKSLASH\fP   '\\\\'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_QUOTE\fP   '''"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ESCAPE_SEQUENCE_LENGTH\fP   6"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_FIN_MASK\fP   0x80"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_OPCODE_MASK\fP   0x0F"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_PAYLOAD_MASK\fP   0x7F"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_UTF8_2BYTE_MASK\fP   0xE0"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_UTF8_3BYTE_MASK\fP   0xF0"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_UTF8_4BYTE_MASK\fP   0xF8"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_METHOD_GET\fP   'GET'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_METHOD_POST\fP   'POST'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_METHOD_PUT\fP   'PUT'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_METHOD_DELETE\fP   'DELETE'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_METHOD_HEAD\fP   'HEAD'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_METHOD_OPTIONS\fP   'OPTIONS'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_METHOD_PATCH\fP   'PATCH'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTENT_TYPE_TEXT\fP   'text/plain'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTENT_TYPE_HTML\fP   'text/html'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTENT_TYPE_CSS\fP   'text/css'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTENT_TYPE_JS\fP   'application/javascript'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTENT_TYPE_XML\fP   'application/xml'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTENT_TYPE_IMAGE_JPEG\fP   'image/jpeg'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTENT_TYPE_IMAGE_PNG\fP   'image/png'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTENT_TYPE_IMAGE_GIF\fP   'image/gif'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTENT_TYPE_IMAGE_SVG\fP   'image/svg+xml'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTENT_TYPE_IMAGE_ICO\fP   'image/x\-icon'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTENT_TYPE_PDF\fP   'application/pdf'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTENT_TYPE_ZIP\fP   'application/zip'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_HEADER_CONTENT_TYPE\fP   'Content\-Type'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_HEADER_CONTENT_LENGTH\fP   'Content\-Length'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_HEADER_CACHE_CONTROL\fP   'Cache\-Control'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_HEADER_CONNECTION\fP   'Connection'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_HEADER_UPGRADE\fP   'Upgrade'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_HEADER_WEBSOCKET_KEY\fP   'Sec\-WebSocket\-Key'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_HEADER_WEBSOCKET_ACCEPT\fP   'Sec\-WebSocket\-Accept'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MESSAGE_TOO_MANY_REQUESTS\fP   'Too many requests'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MESSAGE_FORBIDDEN\fP   'Forbidden'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MESSAGE_NOT_FOUND\fP   'File not found'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MESSAGE_FILE_TOO_LARGE\fP   'File too large'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MESSAGE_INTERNAL_ERROR\fP   'Internal server error'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MESSAGE_MEMORY_FAILED\fP   'Memory allocation failed'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MESSAGE_FILE_READ_ERROR\fP   'File read error'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MESSAGE_RESPONSE_ERROR\fP   'Response body error'"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_SECONDS_IN_DAY\fP   86400"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CACHE_MAX_AGE\fP   3600"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_PARSER_FIELD_COUNT\fP   8"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_PARSER_INTERNAL_SIZE\fP   sizeof(llhttp_t)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_IPV6_MAX_STRING_LENGTH\fP   46"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_IPV4_MAX_STRING_LENGTH\fP   16"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_IPV4_MAX_PREFIX_LENGTH\fP   32   /* IPv4 地址最大前缀长度 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_PORT_NUMBER\fP   65535"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MIN_PORT_NUMBER\fP   1"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_KEEP_ALIVE_TIMEOUT\fP   5"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_KEEP_ALIVE_MAX\fP   100"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_503_RESPONSE_CONTENT_LENGTH\fP   19"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_MIN_KEY_LENGTH\fP   16"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_MAX_KEY_LENGTH\fP   64"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_COMBINED_MAX_LENGTH\fP   128"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_SHA1_HASH_SIZE\fP   20"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_MIN_BUFFER_SIZE\fP   1024"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_CLOSE_CODE_MIN\fP   1000"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_CLOSE_CODE_MAX\fP   4999"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_MAX_REASON_LENGTH\fP   123"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_SUBJECT_STR_SIZE\fP   256"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_ISSUER_STR_SIZE\fP   256"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_COMBINED_KEY_SIZE\fP   256  /* Combined key + GUID 缓冲区大小 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTROL_CHAR_START\fP   0"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTROL_CHAR_END\fP   31"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TAB_CHARACTER\fP   9"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_SPACE_CHARACTER\fP   32"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DELETE_CHARACTER\fP   127"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_BASE64_INPUT_CHUNK_SIZE\fP   3"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_BASE64_OUTPUT_CHUNK_SIZE\fP   4"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_BASE64_MASK_18_BITS\fP   0x3F"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_BASE64_MASK_12_BITS\fP   0x3F"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_BASE64_MASK_6_BITS\fP   0x3F"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_BASE64_SHIFT_16_BITS\fP   16"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_BASE64_SHIFT_8_BITS\fP   8"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_BASE64_SHIFT_18_BITS\fP   18"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_BASE64_SHIFT_12_BITS\fP   12"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MILLISECONDS_PER_SECOND\fP   1000"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_NANOSECONDS_PER_MILLISECOND\fP   1000000"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_BASE_DELAY_MS\fP   100"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_MAX_DELAY_MS\fP   5000"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ERROR_CONTEXT_BUFFER_SIZE\fP   256"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ERROR_MESSAGE_BUFFER_SIZE\fP   512"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ERROR_TIMESTAMP_BUFFER_SIZE\fP   32"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ERROR_LOG_BUFFER_SIZE\fP   1024"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ROUTER_SEARCH_MODE\fP   2  /* 0=纯线性, 1=纯哈希, 2=混合策略(默认) */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION\fP   1"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ENABLE_ROUTER_CACHE_STATS\fP   0"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ENABLE_ROUTER_CACHE_DYNAMIC\fP   0"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ENABLE_ROUTER_CACHE_MONITORING\fP   0"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ROUTER_METHOD_MAP_SIZE\fP   256"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ROUTER_HASH_SIZE\fP   256"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ROUTER_HOT_PATH_SIZE\fP   64"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ROUTER_HOT_ROUTES_COUNT\fP   16"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ROUTER_ACCESS_COUNT_SIZE\fP   1024"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ROUTER_HYBRID_THRESHOLD\fP   100"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ROUTER_MAX_CHILD_COUNT\fP   16"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ROUTER_INITIAL_POOL_SIZE\fP   64"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFAULT_CONNECTION_POOL_SIZE\fP   100"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ROUTER_MAX_CHILDREN\fP   16"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_MIN_BUFFER_EXPANSION_SIZE\fP   1024"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL\fP   30  /* 默认Ping间隔（秒） */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT\fP   10  /* 默认Ping超时（秒） */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT_MS\fP   10000  /* 默认Ping超时（毫秒） */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_MIN_TIMEOUT_SECONDS\fP   10  /* 最小超时时间（秒） */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_MAX_TIMEOUT_SECONDS\fP   3600  /* 最大超时时间（秒） */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_MIN_HEARTBEAT_INTERVAL\fP   5   /* 最小心跳间隔（秒） */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_MAX_HEARTBEAT_INTERVAL\fP   300 /* 最大心跳间隔（秒） */"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_503_RESPONSE_CONTENT_LENGTH   19"
+
+.SS "#define UVHTTP_ASYNC_FILE_BUFFER_SIZE   65536  /* 64KB 文件读取缓冲区 */"
+
+.SS "#define UVHTTP_ASYNC_FILE_MAX_CONCURRENT   64  /* 最大并发文件读取数 */"
+
+.SS "#define UVHTTP_ASYNC_FILE_MAX_SIZE   (10 * 1024 * 1024)  /* 10MB 最大文件 */"
+
+.SS "#define UVHTTP_BACKLOG   8192  /* 从2048增加到8192，支持更高并发 */"
+
+.SS "#define UVHTTP_BACKSLASH   '\\\\'"
+
+.SS "#define UVHTTP_BASE64_INPUT_CHUNK_SIZE   3"
+
+.SS "#define UVHTTP_BASE64_MASK_12_BITS   0x3F"
+
+.SS "#define UVHTTP_BASE64_MASK_18_BITS   0x3F"
+
+.SS "#define UVHTTP_BASE64_MASK_6_BITS   0x3F"
+
+.SS "#define UVHTTP_BASE64_OUTPUT_CHUNK_SIZE   4"
+
+.SS "#define UVHTTP_BASE64_SHIFT_12_BITS   12"
+
+.SS "#define UVHTTP_BASE64_SHIFT_16_BITS   16"
+
+.SS "#define UVHTTP_BASE64_SHIFT_18_BITS   18"
+
+.SS "#define UVHTTP_BASE64_SHIFT_8_BITS   8"
+
+.SS "#define UVHTTP_CACHE_MAX_AGE   3600"
+
+.SS "#define UVHTTP_CARRIAGE_RETURN   '\\r'"
+
+.SS "#define UVHTTP_CLIENT_IP_SIZE   64   /* 客户端 IP 地址缓冲区 */"
+
+.SS "#define UVHTTP_CONTENT_LENGTH_SIZE   32   /* 内容长度字符串缓冲区 */"
+
+.SS "#define UVHTTP_CONTENT_TYPE_CSS   'text/css'"
+
+.SS "#define UVHTTP_CONTENT_TYPE_HTML   'text/html'"
+
+.SS "#define UVHTTP_CONTENT_TYPE_IMAGE_GIF   'image/gif'"
+
+.SS "#define UVHTTP_CONTENT_TYPE_IMAGE_ICO   'image/x\-icon'"
+
+.SS "#define UVHTTP_CONTENT_TYPE_IMAGE_JPEG   'image/jpeg'"
+
+.SS "#define UVHTTP_CONTENT_TYPE_IMAGE_PNG   'image/png'"
+
+.SS "#define UVHTTP_CONTENT_TYPE_IMAGE_SVG   'image/svg+xml'"
+
+.SS "#define UVHTTP_CONTENT_TYPE_JS   'application/javascript'"
+
+.SS "#define UVHTTP_CONTENT_TYPE_PDF   'application/pdf'"
+
+.SS "#define UVHTTP_CONTENT_TYPE_TEXT   'text/plain'"
+
+.SS "#define UVHTTP_CONTENT_TYPE_XML   'application/xml'"
+
+.SS "#define UVHTTP_CONTENT_TYPE_ZIP   'application/zip'"
+
+.SS "#define UVHTTP_CONTROL_CHAR_END   31"
+
+.SS "#define UVHTTP_CONTROL_CHAR_START   0"
+
+.SS "#define UVHTTP_CORS_MAX_AGE_DEFAULT   '86400'"
+
+.SS "#define UVHTTP_DECODED_PATH_SIZE   1024"
+
+.SS "#define UVHTTP_DEFAULT_BASE_DELAY_MS   100"
+
+.SS "#define UVHTTP_DEFAULT_CONNECTION_POOL_SIZE   100"
+
+.SS "#define UVHTTP_DEFAULT_HOST   '0\&.0\&.0\&.0'           /* 默认监听地址 */"
+
+.SS "#define UVHTTP_DEFAULT_KEEP_ALIVE_MAX   100"
+
+.SS "#define UVHTTP_DEFAULT_KEEP_ALIVE_TIMEOUT   5"
+
+.SS "#define UVHTTP_DEFAULT_MAX_DELAY_MS   5000"
+
+.SS "#define UVHTTP_DEFAULT_PORT   8080                /* 默认端口 */"
+
+.SS "#define UVHTTP_DELETE_CHARACTER   127"
+
+.SS "#define UVHTTP_DIR_ENTRY_HTML_OVERHEAD   200      /* 每个目录条目的HTML开销 */"
+
+.SS "#define UVHTTP_DIR_LISTING_BUFFER_SIZE   4096     /* 目录列表HTML缓冲区大小 */"
+
+.SS "#define UVHTTP_ENABLE_ROUTER_CACHE_DYNAMIC   0"
+
+.SS "#define UVHTTP_ENABLE_ROUTER_CACHE_MONITORING   0"
+
+.SS "#define UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION   1"
+
+.SS "#define UVHTTP_ENABLE_ROUTER_CACHE_STATS   0"
+
+.SS "#define UVHTTP_ERROR_CONTEXT_BUFFER_SIZE   256"
+
+.SS "#define UVHTTP_ERROR_LOG_BUFFER_SIZE   1024"
+
+.SS "#define UVHTTP_ERROR_MESSAGE_BUFFER_SIZE   512"
+
+.SS "#define UVHTTP_ERROR_MESSAGE_LENGTH   256"
+
+.SS "#define UVHTTP_ERROR_TIMESTAMP_BUFFER_SIZE   32"
+
+.SS "#define UVHTTP_ESCAPE_SEQUENCE_LENGTH   6"
+
+.SS "#define UVHTTP_FALSE   0"
+
+.SS "#define UVHTTP_HEADER_CACHE_CONTROL   'Cache\-Control'"
+
+.SS "#define UVHTTP_HEADER_CONNECTION   'Connection'"
+
+.SS "#define UVHTTP_HEADER_CONTENT_LENGTH   'Content\-Length'"
+
+.SS "#define UVHTTP_HEADER_CONTENT_TYPE   'Content\-Type'"
+
+.SS "#define UVHTTP_HEADER_UPGRADE   'Upgrade'"
+
+.SS "#define UVHTTP_HEADER_WEBSOCKET_ACCEPT   'Sec\-WebSocket\-Accept'"
+
+.SS "#define UVHTTP_HEADER_WEBSOCKET_KEY   'Sec\-WebSocket\-Key'"
+
+.SS "#define UVHTTP_INITIAL_BUFFER_SIZE   8192  /* 增加到 8KB 减少重分配 */"
+
+.SS "#define UVHTTP_IPV4_MAX_PREFIX_LENGTH   32   /* IPv4 地址最大前缀长度 */"
+
+.SS "#define UVHTTP_IPV4_MAX_STRING_LENGTH   16"
+
+.SS "#define UVHTTP_IPV6_MAX_STRING_LENGTH   46"
+
+.SS "#define UVHTTP_LINE_FEED   '\\n'"
+
+.SS "#define UVHTTP_LOG_ENTRY_SIZE   512  /* 日志条目缓冲区 */"
+
+.SS "#define UVHTTP_MAX_BODY_SIZE   (1024 * 1024)  /* 1MB */"
+
+.SS "#define UVHTTP_MAX_CONNECTIONS_DEFAULT   2048   /* 默认值，适合大多数应用 */"
+
+.SS "#define UVHTTP_MAX_CONNECTIONS_HARD   65535  /* 硬限制，基于系统文件描述符 */"
+
+.SS "#define UVHTTP_MAX_CONNECTIONS_MAX   10000  /* 最大推荐值，需要系统调优 */"
+
+.SS "#define UVHTTP_MAX_FILE_PATH_SIZE   2048"
+
+.SS "#define UVHTTP_MAX_FILENAME_SIZE   256  /* 最大文件名长度 */"
+
+.SS "#define UVHTTP_MAX_HEADER_NAME_LENGTH   256"
+
+.SS "#define UVHTTP_MAX_HEADER_NAME_SIZE   256"
+
+.SS "#define UVHTTP_MAX_HEADER_VALUE_LENGTH   1024"
+
+.SS "#define UVHTTP_MAX_HEADER_VALUE_SIZE   1024"
+
+.SS "#define UVHTTP_MAX_HEADERS   64"
+
+.SS "#define UVHTTP_MAX_METHOD_SIZE   16"
+
+.SS "#define UVHTTP_MAX_PATH_SIZE   1024"
+
+.SS "#define UVHTTP_MAX_PORT_NUMBER   65535"
+
+.SS "#define UVHTTP_MAX_URL_SIZE   2048"
+
+.SS "#define UVHTTP_MESSAGE_FILE_READ_ERROR   'File read error'"
+
+.SS "#define UVHTTP_MESSAGE_FILE_TOO_LARGE   'File too large'"
+
+.SS "#define UVHTTP_MESSAGE_FORBIDDEN   'Forbidden'"
+
+.SS "#define UVHTTP_MESSAGE_INTERNAL_ERROR   'Internal server error'"
+
+.SS "#define UVHTTP_MESSAGE_MEMORY_FAILED   'Memory allocation failed'"
+
+.SS "#define UVHTTP_MESSAGE_NOT_FOUND   'File not found'"
+
+.SS "#define UVHTTP_MESSAGE_RESPONSE_ERROR   'Response body error'"
+
+.SS "#define UVHTTP_MESSAGE_TOO_MANY_REQUESTS   'Too many requests'"
+
+.SS "#define UVHTTP_METHOD_DELETE   'DELETE'"
+
+.SS "#define UVHTTP_METHOD_GET   'GET'"
+
+.SS "#define UVHTTP_METHOD_HEAD   'HEAD'"
+
+.SS "#define UVHTTP_METHOD_OPTIONS   'OPTIONS'"
+
+.SS "#define UVHTTP_METHOD_PATCH   'PATCH'"
+
+.SS "#define UVHTTP_METHOD_POST   'POST'"
+
+.SS "#define UVHTTP_METHOD_PUT   'PUT'"
+
+.SS "#define UVHTTP_MILLISECONDS_PER_SECOND   1000"
+
+.SS "#define UVHTTP_MIN_PORT_NUMBER   1"
+
+.SS "#define UVHTTP_NANOSECONDS_PER_MILLISECOND   1000000"
+
+.SS "#define UVHTTP_NULL_BYTE   '\\0'"
+
+.SS "#define UVHTTP_PARSER_FIELD_COUNT   8"
+
+.SS "#define UVHTTP_PARSER_INTERNAL_SIZE   sizeof(llhttp_t)"
+
+.SS "#define UVHTTP_QUOTE   '''"
+
+.SS "#define UVHTTP_RATE_LIMIT_MAX_AGE   17"
+
+.SS "#define UVHTTP_RATE_LIMIT_WINDOW   60"
+
+.SS "#define UVHTTP_READ_BUFFER_SIZE   16384 /* 16KB缓冲区，提升吞吐量 */"
+
+.SS "#define UVHTTP_RESPONSE_BODY_SIZE   512  /* 响应体缓冲区 */"
+
+.SS "#define UVHTTP_RESPONSE_HEADER_SAFETY_MARGIN   256  /* 响应头安全边距，防止缓冲区溢出 */"
+
+.SS "#define UVHTTP_ROUTER_ACCESS_COUNT_SIZE   1024"
+
+.SS "#define UVHTTP_ROUTER_HASH_SIZE   256"
+
+.SS "#define UVHTTP_ROUTER_HOT_PATH_SIZE   64"
+
+.SS "#define UVHTTP_ROUTER_HOT_ROUTES_COUNT   16"
+
+.SS "#define UVHTTP_ROUTER_HYBRID_THRESHOLD   100"
+
+.SS "#define UVHTTP_ROUTER_INITIAL_POOL_SIZE   64"
+
+.SS "#define UVHTTP_ROUTER_MAX_CHILD_COUNT   16"
+
+.SS "#define UVHTTP_ROUTER_MAX_CHILDREN   16"
+
+.SS "#define UVHTTP_ROUTER_METHOD_MAP_SIZE   256"
+
+.SS "#define UVHTTP_ROUTER_SEARCH_MODE   2  /* 0=纯线性, 1=纯哈希, 2=混合策略(默认) */"
+
+.SS "#define UVHTTP_SECONDS_IN_DAY   86400"
+
+.SS "#define UVHTTP_SPACE_CHARACTER   32"
+
+.SS "#define UVHTTP_STATIC_MAX_CACHE_SIZE   (1024 * 1024)"
+
+.SS "#define UVHTTP_STATIC_MAX_CONTENT_LENGTH   32"
+
+.SS "#define UVHTTP_STATIC_MAX_FILE_SIZE   (10 * 1024 * 1024)"
+
+.SS "#define UVHTTP_STATIC_MAX_PATH_SIZE   1024"
+
+.SS "#define UVHTTP_STATUS_ACCEPTED   202"
+
+.SS "#define UVHTTP_STATUS_BAD_GATEWAY   502"
+
+.SS "#define UVHTTP_STATUS_BAD_REQUEST   400"
+
+.SS "#define UVHTTP_STATUS_CONTINUE   100"
+
+.SS "#define UVHTTP_STATUS_CREATED   201"
+
+.SS "#define UVHTTP_STATUS_FORBIDDEN   403"
+
+.SS "#define UVHTTP_STATUS_INTERNAL_ERROR   500"
+
+.SS "#define UVHTTP_STATUS_MAX   599"
+
+.SS "#define UVHTTP_STATUS_METHOD_NOT_ALLOWED   405"
+
+.SS "#define UVHTTP_STATUS_MIN_CONTINUE   100"
+
+.SS "#define UVHTTP_STATUS_NO_CONTENT   204"
+
+.SS "#define UVHTTP_STATUS_NOT_FOUND   404"
+
+.SS "#define UVHTTP_STATUS_NOT_IMPLEMENTED   501"
+
+.SS "#define UVHTTP_STATUS_OK   200"
+
+.SS "#define UVHTTP_STATUS_REQUEST_ENTITY_TOO_LARGE   413"
+
+.SS "#define UVHTTP_STATUS_SERVICE_UNAVAILABLE   503"
+
+.SS "#define UVHTTP_STATUS_SWITCHING_PROTOCOLS   101"
+
+.SS "#define UVHTTP_STATUS_UNAUTHORIZED   401"
+
+.SS "#define UVHTTP_STRINGIFY(x)   #x"
+
+.SS "#define UVHTTP_TAB   '\\t'"
+
+.SS "#define UVHTTP_TAB_CHARACTER   9"
+
+.SS "#define UVHTTP_TIME_STRING_SIZE   64   /* 时间字符串缓冲区 */"
+
+.SS "#define UVHTTP_TLS_CERT_BUFFER_SIZE   256"
+
+.SS "#define UVHTTP_TLS_CN_BUFFER_SIZE   256"
+
+.SS "#define UVHTTP_TLS_DH_MIN_BITLEN   2048"
+
+.SS "#define UVHTTP_TLS_ERROR_BUFFER_SIZE   256"
+
+.SS "#define UVHTTP_TLS_MAX_SESSIONS   1024"
+
+.SS "#define UVHTTP_TLS_PATH_MAX_SIZE   256"
+
+.SS "#define UVHTTP_TLS_SAN_BUFFER_SIZE   256"
+
+.SS "#define UVHTTP_TLS_VERIFY_DEPTH   1"
+
+.SS "#define UVHTTP_TOKEN_SIZE   256  /* Token 缓冲区 */"
+
+.SS "#define UVHTTP_TRUE   1"
+
+.SS "#define UVHTTP_UTF8_2BYTE_MASK   0xE0"
+
+.SS "#define UVHTTP_UTF8_3BYTE_MASK   0xF0"
+
+.SS "#define UVHTTP_UTF8_4BYTE_MASK   0xF8"
+
+.SS "#define UVHTTP_VARY_HEADER_SIZE   512  /* Vary 头缓冲区 */"
+
+.SS "#define UVHTTP_VERSION_1_1   'HTTP/1\&.1'"
+
+.SS "#define UVHTTP_VERSION_LENGTH   8"
+
+.SS "#define UVHTTP_WEBSOCKET_ACCEPT_KEY_SIZE   40  /* Base64编码的SHA1哈希长度 */"
+
+.SS "#define UVHTTP_WEBSOCKET_CLOSE_CODE_MAX   4999"
+
+.SS "#define UVHTTP_WEBSOCKET_CLOSE_CODE_MIN   1000"
+
+.SS "#define UVHTTP_WEBSOCKET_CLOSE_CODE_SIZE   4"
+
+.SS "#define UVHTTP_WEBSOCKET_COMBINED_KEY_SIZE   256  /* Combined key + GUID 缓冲区大小 */"
+
+.SS "#define UVHTTP_WEBSOCKET_COMBINED_MAX_LENGTH   128"
+
+.SS "#define UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL   30  /* 默认Ping间隔（秒） */"
+
+.SS "#define UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT   10  /* 默认Ping超时（秒） */"
+
+.SS "#define UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT_MS   10000  /* 默认Ping超时（毫秒） */"
+
+.SS "#define UVHTTP_WEBSOCKET_FIN   0x80"
+
+.SS "#define UVHTTP_WEBSOCKET_FIN_MASK   0x80"
+
+.SS "#define UVHTTP_WEBSOCKET_FRAME_HEADER_SIZE   10"
+
+.SS "#define UVHTTP_WEBSOCKET_ISSUER_STR_SIZE   256"
+
+.SS "#define UVHTTP_WEBSOCKET_MAGIC_KEY   '258EAFA5\-E914\-47DA\-95CA\-C5AB0DC85B11'"
+
+.SS "#define UVHTTP_WEBSOCKET_MAGIC_KEY_LENGTH   36"
+
+.SS "#define UVHTTP_WEBSOCKET_MAX_FRAME_SIZE   4096"
+
+.SS "#define UVHTTP_WEBSOCKET_MAX_HEARTBEAT_INTERVAL   300 /* 最大心跳间隔（秒） */"
+
+.SS "#define UVHTTP_WEBSOCKET_MAX_KEY_LENGTH   64"
+
+.SS "#define UVHTTP_WEBSOCKET_MAX_REASON_LENGTH   123"
+
+.SS "#define UVHTTP_WEBSOCKET_MAX_TIMEOUT_SECONDS   3600  /* 最大超时时间（秒） */"
+
+.SS "#define UVHTTP_WEBSOCKET_MIN_BUFFER_EXPANSION_SIZE   1024"
+
+.SS "#define UVHTTP_WEBSOCKET_MIN_BUFFER_SIZE   1024"
+
+.SS "#define UVHTTP_WEBSOCKET_MIN_HEARTBEAT_INTERVAL   5   /* 最小心跳间隔（秒） */"
+
+.SS "#define UVHTTP_WEBSOCKET_MIN_KEY_LENGTH   16"
+
+.SS "#define UVHTTP_WEBSOCKET_MIN_TIMEOUT_SECONDS   10  /* 最小超时时间（秒） */"
+
+.SS "#define UVHTTP_WEBSOCKET_OPCODE_BINARY   0x2"
+
+.SS "#define UVHTTP_WEBSOCKET_OPCODE_CLOSE   0x8"
+
+.SS "#define UVHTTP_WEBSOCKET_OPCODE_MASK   0x0F"
+
+.SS "#define UVHTTP_WEBSOCKET_OPCODE_TEXT   0x1"
+
+.SS "#define UVHTTP_WEBSOCKET_PAYLOAD_LEN_126   126"
+
+.SS "#define UVHTTP_WEBSOCKET_PAYLOAD_LEN_65536   65536"
+
+.SS "#define UVHTTP_WEBSOCKET_PAYLOAD_MASK   0x7F"
+
+.SS "#define UVHTTP_WEBSOCKET_SHA1_HASH_SIZE   20"
+
+.SS "#define UVHTTP_WEBSOCKET_SUBJECT_STR_SIZE   256"
+
+.SS "#define UVHTTP_WEBSOCKET_VERSION   13"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

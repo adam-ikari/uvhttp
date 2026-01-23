@@ -1,0 +1,81 @@
+.TH "include/uvhttp_common.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_common.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <assert\&.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_header_t\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_STATIC_ASSERT\fP(cond,  msg)   static_assert(cond, msg)"
+.br
+.ti -1c
+.RI "#define \fBMAX_HEADERS\fP   64"
+.br
+.ti -1c
+.RI "#define \fBMAX_HEADER_NAME_LEN\fP   255"
+.br
+.ti -1c
+.RI "#define \fBMAX_HEADER_VALUE_LEN\fP   4095"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBuvhttp_request\fP \fBuvhttp_request_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_response\fP \fBuvhttp_response_t\fP"
+.br
+.ti -1c
+.RI "typedef int(* \fBuvhttp_request_handler_t\fP) (\fBuvhttp_request_t\fP *request, \fBuvhttp_response_t\fP *response)"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBuvhttp_safe_strcpy\fP (char *dest, size_t dest_size, const char *src)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define MAX_HEADER_NAME_LEN   255"
+
+.SS "#define MAX_HEADER_VALUE_LEN   4095"
+
+.SS "#define MAX_HEADERS   64"
+
+.SS "#define UVHTTP_STATIC_ASSERT(cond, msg)   static_assert(cond, msg)"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef int(* uvhttp_request_handler_t) (\fBuvhttp_request_t\fP *request, \fBuvhttp_response_t\fP *response)"
+
+.SS "typedef struct \fBuvhttp_request\fP \fBuvhttp_request_t\fP"
+
+.SS "typedef struct \fBuvhttp_response\fP \fBuvhttp_response_t\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "int uvhttp_safe_strcpy (char * dest, size_t dest_size, const char * src)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

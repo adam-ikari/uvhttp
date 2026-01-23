@@ -1,0 +1,75 @@
+.TH "uvhttp_deps_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_deps_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_deps\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "uv_loop_t *(* \fBget_loop\fP )(void)"
+.br
+.ti -1c
+.RI "void *(* \fBmalloc\fP )(size_t size)"
+.br
+.ti -1c
+.RI "void(* \fBfree\fP )(void *ptr)"
+.br
+.ti -1c
+.RI "FILE *(* \fBfopen\fP )(const char *filename, const char *mode)"
+.br
+.ti -1c
+.RI "int(* \fBaccess\fP )(const char *pathname, int mode)"
+.br
+.ti -1c
+.RI "\fBuvhttp_loop_provider_t\fP * \fBloop_provider\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_memory_provider_t\fP * \fBmemory_provider\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_network_provider_t\fP * \fBnetwork_provider\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_file_provider_t\fP * \fBfile_provider\fP"
+.br
+.ti -1c
+.RI "bool \fBowns_providers\fP"
+.br
+.ti -1c
+.RI "void(* \fBcleanup\fP )(\fBuvhttp_deps_t\fP *deps)"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "int(* uvhttp_deps_t::access) (const char *pathname, int mode)"
+
+.SS "void(* uvhttp_deps_t::cleanup) (\fBuvhttp_deps_t\fP *deps)"
+
+.SS "\fBuvhttp_file_provider_t\fP* uvhttp_deps_t::file_provider"
+
+.SS "FILE*(* uvhttp_deps_t::fopen) (const char *filename, const char *mode)"
+
+.SS "void(* uvhttp_deps_t::free) (void *ptr)"
+
+.SS "uv_loop_t*(* uvhttp_deps_t::get_loop) (void)"
+
+.SS "\fBuvhttp_loop_provider_t\fP* uvhttp_deps_t::loop_provider"
+
+.SS "void*(* uvhttp_deps_t::malloc) (size_t size)"
+
+.SS "\fBuvhttp_memory_provider_t\fP* uvhttp_deps_t::memory_provider"
+
+.SS "\fBuvhttp_network_provider_t\fP* uvhttp_deps_t::network_provider"
+
+.SS "bool uvhttp_deps_t::owns_providers"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

@@ -1,0 +1,29 @@
+digraph "find_or_create_child"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="find_or_create_child",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="migrate_to_trie",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__router_8c.html#a77893bea4bccf1a851dfa819d0dbc17f",tooltip=" "];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="uvhttp_router_add_route\l_method",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__router_8h.html#a8e4668641257c1138f09a6f2024ea4ff",tooltip=" "];
+  Node3 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="add_route_internal",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__server_8c.html#a4a527e39d83ff7efdcef8bee44ef596f",tooltip=" "];
+  Node4 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="uvhttp_any",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__server_8h.html#a73c956695d910781f38cf63137013dfe",tooltip=" "];
+  Node5 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="uvhttp_serve",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__server_8h.html#ae53fe91282c51281ba26af2a6863637a",tooltip=" "];
+  Node4 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="uvhttp_delete",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__server_8h.html#a18686a6f92c37a36023b333d16a8d0e7",tooltip=" "];
+  Node4 -> Node8 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 [label="uvhttp_get",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__server_8h.html#ac8a0038f0c03ff1c97dff531d331eff7",tooltip=" "];
+  Node4 -> Node9 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node9 [label="uvhttp_post",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__server_8h.html#ad83d20f51700f143d01eeb0907ec05a5",tooltip=" "];
+  Node4 -> Node10 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node10 [label="uvhttp_put",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__server_8h.html#a1e91bcb67768baa9d144d7a7aff2531a",tooltip=" "];
+  Node3 -> Node11 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node11 [label="uvhttp_router_add_route",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__router_8h.html#a681ca18f7cee02039123ab01fec8689e",tooltip=" "];
+  Node1 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+}

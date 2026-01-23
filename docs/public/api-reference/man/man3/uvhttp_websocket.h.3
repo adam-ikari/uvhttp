@@ -1,0 +1,30 @@
+.TH "include/uvhttp_websocket.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_websocket.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_websocket_native\&.h'\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBuvhttp_websocket_send_text\fP(ws,  text)       \fBuvhttp_ws_send_frame\fP(ws, (const uint8_t*)(text), strlen(text), \fBUVHTTP_WS_OPCODE_TEXT\fP)"
+.br
+.ti -1c
+.RI "#define \fBuvhttp_websocket_send_binary\fP(ws,  data,  len)       \fBuvhttp_ws_send_frame\fP(ws, (const uint8_t*)(data), (len), \fBUVHTTP_WS_OPCODE_BINARY\fP)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define uvhttp_websocket_send_binary(ws, data, len)       \fBuvhttp_ws_send_frame\fP(ws, (const uint8_t*)(data), (len), \fBUVHTTP_WS_OPCODE_BINARY\fP)"
+
+.SS "#define uvhttp_websocket_send_text(ws, text)       \fBuvhttp_ws_send_frame\fP(ws, (const uint8_t*)(text), strlen(text), \fBUVHTTP_WS_OPCODE_TEXT\fP)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

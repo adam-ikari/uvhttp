@@ -1,0 +1,45 @@
+.TH "uvhttp_config_provider" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_config_provider
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_context\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "const char *(* \fBget_string\fP )(struct \fBuvhttp_config_provider\fP *provider, const char *key, const char *default_value)"
+.br
+.ti -1c
+.RI "int(* \fBget_int\fP )(struct \fBuvhttp_config_provider\fP *provider, const char *key, int default_value)"
+.br
+.ti -1c
+.RI "int(* \fBset_string\fP )(struct \fBuvhttp_config_provider\fP *provider, const char *key, const char *value)"
+.br
+.ti -1c
+.RI "int(* \fBset_int\fP )(struct \fBuvhttp_config_provider\fP *provider, const char *key, int value)"
+.br
+.ti -1c
+.RI "void * \fBcontext\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "void* uvhttp_config_provider::context"
+
+.SS "int(* uvhttp_config_provider::get_int) (struct \fBuvhttp_config_provider\fP *provider, const char *key, int default_value)"
+
+.SS "const char*(* uvhttp_config_provider::get_string) (struct \fBuvhttp_config_provider\fP *provider, const char *key, const char *default_value)"
+
+.SS "int(* uvhttp_config_provider::set_int) (struct \fBuvhttp_config_provider\fP *provider, const char *key, int value)"
+
+.SS "int(* uvhttp_config_provider::set_string) (struct \fBuvhttp_config_provider\fP *provider, const char *key, const char *value)"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

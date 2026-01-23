@@ -1,0 +1,18 @@
+digraph "default_fopen"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="default_fopen",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="test_fopen",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__deps_8c.html#ac9020f48ab7b2e9e41ad06cb2d450880",tooltip=" "];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="uvhttp_test_file_provider_new",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__deps_8c.html#a2e4d178848649c4254d87f630aff2334",tooltip=" "];
+  Node3 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="uvhttp_deps_create_test",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__deps_8h.html#ad5eebf46c166bcaf8d793e1f75795c80",tooltip=" "];
+  Node1 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="uvhttp_default_file\l_provider_new",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__deps_8c.html#ae3e4de8f437b088da8502180eae4041d",tooltip=" "];
+  Node5 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="uvhttp_deps_create\l_default",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__deps_8h.html#a72c0841d58b7354c4281ff7f11a0e8a6",tooltip=" "];
+}

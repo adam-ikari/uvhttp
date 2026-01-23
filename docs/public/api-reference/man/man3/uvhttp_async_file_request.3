@@ -1,0 +1,85 @@
+.TH "uvhttp_async_file_request" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_async_file_request
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_async_file\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "uv_fs_t \fBfs_req\fP"
+.br
+.ti -1c
+.RI "char \fBfile_path\fP [2048]"
+.br
+.ti -1c
+.RI "char * \fBbuffer\fP"
+.br
+.ti -1c
+.RI "size_t \fBbuffer_size\fP"
+.br
+.ti -1c
+.RI "size_t \fBfile_size\fP"
+.br
+.ti -1c
+.RI "time_t \fBlast_modified\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_async_file_state_t\fP \fBstate\fP"
+.br
+.ti -1c
+.RI "void * \fBrequest\fP"
+.br
+.ti -1c
+.RI "void * \fBresponse\fP"
+.br
+.ti -1c
+.RI "void * \fBstatic_context\fP"
+.br
+.ti -1c
+.RI "void(* \fBcompletion_cb\fP )(struct \fBuvhttp_async_file_request\fP *req, int status)"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_async_file_request\fP * \fBnext\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_async_file_manager\fP * \fBmanager\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "char* uvhttp_async_file_request::buffer"
+
+.SS "size_t uvhttp_async_file_request::buffer_size"
+
+.SS "void(* uvhttp_async_file_request::completion_cb) (struct \fBuvhttp_async_file_request\fP *req, int status)"
+
+.SS "char uvhttp_async_file_request::file_path[2048]"
+
+.SS "size_t uvhttp_async_file_request::file_size"
+
+.SS "uv_fs_t uvhttp_async_file_request::fs_req"
+
+.SS "time_t uvhttp_async_file_request::last_modified"
+
+.SS "struct \fBuvhttp_async_file_manager\fP* uvhttp_async_file_request::manager"
+
+.SS "struct \fBuvhttp_async_file_request\fP* uvhttp_async_file_request::next"
+
+.SS "void* uvhttp_async_file_request::request"
+
+.SS "void* uvhttp_async_file_request::response"
+
+.SS "\fBuvhttp_async_file_state_t\fP uvhttp_async_file_request::state"
+
+.SS "void* uvhttp_async_file_request::static_context"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

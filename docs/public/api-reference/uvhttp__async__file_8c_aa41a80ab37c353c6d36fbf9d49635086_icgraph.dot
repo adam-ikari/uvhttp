@@ -1,0 +1,20 @@
+digraph "remove_request_from_manager"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="remove_request_from\l_manager",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="on_file_read_complete",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__async__file_8c.html#a88cdc4b83d87b1e4212ee876ac63bdc6",tooltip=" "];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="on_file_stat_complete",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__async__file_8c.html#a0f900f1b355de6e7a6599157bba64e2e",tooltip=" "];
+  Node3 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="uvhttp_async_file_read",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__async__file_8h.html#af88896798e920f8707d21a2eb3f1a427",tooltip=" "];
+  Node1 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="uvhttp_async_file_cancel",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__async__file_8h.html#a846e8351566cffd15b3a26a91c5b4b7b",tooltip=" "];
+  Node5 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="uvhttp_async_file_manager_free",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__async__file_8h.html#acba27af706e0fc9ae9427b793301e122",tooltip=" "];
+  Node1 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+}

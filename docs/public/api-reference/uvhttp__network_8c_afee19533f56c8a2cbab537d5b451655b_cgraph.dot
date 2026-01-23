@@ -1,0 +1,24 @@
+digraph "uvhttp_benchmark_network_create"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="uvhttp_benchmark_network\l_create",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="benchmark_close_impl",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__network_8c.html#a56adc86348de733c6da47231717d56fa",tooltip=" "];
+  Node1 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="benchmark_read_start_impl",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__network_8c.html#a600086c01d5a8a9f572623eec008cd85",tooltip=" "];
+  Node1 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="benchmark_read_stop_impl",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__network_8c.html#a8f34a59533bc0c7de8811564d37f6855",tooltip=" "];
+  Node1 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="benchmark_write_impl",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__network_8c.html#a1dacd29ba35a73966f09cbee83ef613c",tooltip=" "];
+  Node1 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="libuv_get_stats_impl",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__network_8c.html#a112ea03eeeac54809389685c987d6170",tooltip=" "];
+  Node1 -> Node7 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="libuv_reset_stats_impl",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__network_8c.html#a55a36005ea8d685f19ec0ce50eaeb219",tooltip=" "];
+  Node1 -> Node8 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 [label="libuv_set_error_simulation_impl",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__network_8c.html#a4fe7139d3d8008ea6506b3e7ce3f51f7",tooltip=" "];
+  Node1 -> Node9 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node9 [label="uvhttp_alloc",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__allocator_8h.html#a661eb4c960ecfb1529019371a18becb6",tooltip=" "];
+}

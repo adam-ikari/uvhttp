@@ -1,0 +1,21 @@
+digraph "uvhttp_lru_cache_put"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="uvhttp_lru_cache_put",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="free_cache_entry",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__lru__cache_8c.html#a7bceecdec07e6bfa88c86f600b61654b",tooltip=" "];
+  Node2 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="uvhttp_free",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__allocator_8h.html#a956d07931818b449298b1649e830b3a5",tooltip=" "];
+  Node1 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="uvhttp_alloc",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__allocator_8h.html#a661eb4c960ecfb1529019371a18becb6",tooltip=" "];
+  Node1 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="uvhttp_handle_memory\l_failure",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__error__helpers_8h.html#ac05cdf011e3077cf48581341155c6b32",tooltip=" "];
+  Node1 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="uvhttp_lru_cache_move\l_to_head",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__lru__cache_8c.html#ad4584d6204ad9084a1d1e8ea911f56cc",tooltip=" "];
+  Node1 -> Node7 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="uvhttp_lru_cache_remove_tail",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__lru__cache_8c.html#addf86f32f2523ac053e91bb03376aba5",tooltip=" "];
+}

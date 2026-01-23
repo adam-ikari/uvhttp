@@ -1,0 +1,154 @@
+.TH "include/uvhttp_network.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_network.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_common\&.h'\fP
+.br
+\fC#include <uv\&.h>\fP
+.br
+\fC#include <stddef\&.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_network_interface\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_USE_NETWORK_INTERFACE\fP   0"
+.br
+.ti -1c
+.RI "#define \fBuvhttp_network_get_write_count\fP()   0"
+.br
+.ti -1c
+.RI "#define \fBuvhttp_network_get_bytes_sent\fP()   0"
+.br
+.ti -1c
+.RI "#define \fBuvhttp_network_get_error_count\fP()   0"
+.br
+.ti -1c
+.RI "#define \fBuvhttp_network_simulate_error\fP(error_code)   do {} while(0)"
+.br
+.ti -1c
+.RI "#define \fBuvhttp_network_reset_stats\fP()   do {} while(0)"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBuvhttp_network_interface\fP \fBuvhttp_network_interface_t\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBuvhttp_network_type_t\fP { \fBUVHTTP_NETWORK_LIBUV\fP, \fBUVHTTP_NETWORK_MOCK\fP, \fBUVHTTP_NETWORK_BENCHMARK\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_network_interface_t\fP * \fBuvhttp_network_interface_create\fP (\fBuvhttp_network_type_t\fP type, uv_loop_t *loop)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_network_interface_destroy\fP (\fBuvhttp_network_interface_t\fP *interface)"
+.br
+.ti -1c
+.RI "\fBuvhttp_network_interface_t\fP * \fBuvhttp_libuv_network_create\fP (uv_loop_t *loop)"
+.br
+.ti -1c
+.RI "\fBuvhttp_network_interface_t\fP * \fBuvhttp_mock_network_create\fP (uv_loop_t *loop)"
+.br
+.ti -1c
+.RI "\fBuvhttp_network_interface_t\fP * \fBuvhttp_benchmark_network_create\fP (uv_loop_t *loop)"
+.br
+.ti -1c
+.RI "static int \fBuvhttp_network_write\fP (uv_stream_t *stream, const uv_buf_t *bufs, unsigned int nbufs, uv_write_cb cb)"
+.br
+.ti -1c
+.RI "static int \fBuvhttp_network_read_start\fP (uv_stream_t *stream, uv_alloc_cb alloc_cb, uv_read_cb read_cb)"
+.br
+.ti -1c
+.RI "static int \fBuvhttp_network_read_stop\fP (uv_stream_t *stream)"
+.br
+.ti -1c
+.RI "static void \fBuvhttp_network_close\fP (uv_handle_t *handle, uv_close_cb close_cb)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_network_interface_t\fP * \fBg_uvhttp_network_interface\fP"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define uvhttp_network_get_bytes_sent()   0"
+
+.SS "#define uvhttp_network_get_error_count()   0"
+
+.SS "#define uvhttp_network_get_write_count()   0"
+
+.SS "#define uvhttp_network_reset_stats()   do {} while(0)"
+
+.SS "#define uvhttp_network_simulate_error(error_code)   do {} while(0)"
+
+.SS "#define UVHTTP_USE_NETWORK_INTERFACE   0"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBuvhttp_network_interface\fP \fBuvhttp_network_interface_t\fP"
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBuvhttp_network_type_t\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIUVHTTP_NETWORK_LIBUV \fP\fP
+.TP
+\fB\fIUVHTTP_NETWORK_MOCK \fP\fP
+.TP
+\fB\fIUVHTTP_NETWORK_BENCHMARK \fP\fP
+.SH "Function Documentation"
+.PP 
+.SS "\fBuvhttp_network_interface_t\fP* uvhttp_benchmark_network_create (uv_loop_t * loop)"
+
+.SS "\fBuvhttp_network_interface_t\fP* uvhttp_libuv_network_create (uv_loop_t * loop)"
+
+.SS "\fBuvhttp_network_interface_t\fP* uvhttp_mock_network_create (uv_loop_t * loop)"
+
+.SS "static void uvhttp_network_close (uv_handle_t * handle, uv_close_cb close_cb)\fC [inline]\fP, \fC [static]\fP"
+
+.SS "\fBuvhttp_network_interface_t\fP* uvhttp_network_interface_create (\fBuvhttp_network_type_t\fP type, uv_loop_t * loop)"
+
+.SS "void uvhttp_network_interface_destroy (\fBuvhttp_network_interface_t\fP * interface)"
+
+.SS "static int uvhttp_network_read_start (uv_stream_t * stream, uv_alloc_cb alloc_cb, uv_read_cb read_cb)\fC [inline]\fP, \fC [static]\fP"
+
+.SS "static int uvhttp_network_read_stop (uv_stream_t * stream)\fC [inline]\fP, \fC [static]\fP"
+
+.SS "static int uvhttp_network_write (uv_stream_t * stream, const uv_buf_t * bufs, unsigned int nbufs, uv_write_cb cb)\fC [inline]\fP, \fC [static]\fP"
+
+.SH "Variable Documentation"
+.PP 
+.SS "\fBuvhttp_network_interface_t\fP* g_uvhttp_network_interface\fC [extern]\fP"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

@@ -1,0 +1,14 @@
+digraph "uvhttp_retry_operation"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="uvhttp_retry_operation",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="calculate_retry_delay",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__error_8c.html#a013197b559510cc3061b77e4bd747673",tooltip=" "];
+  Node1 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="is_retryable_error",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__error_8c.html#a1f060230706d98bbdc9677474cf04b26",tooltip=" "];
+  Node1 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="retry_delay",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__error_8c.html#a859282c7556e724c2d791ea549644ca4",tooltip=" "];
+}

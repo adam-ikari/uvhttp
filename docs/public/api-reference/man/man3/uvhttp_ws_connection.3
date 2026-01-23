@@ -1,0 +1,135 @@
+.TH "uvhttp_ws_connection" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_ws_connection
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_websocket_native\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "int \fBfd\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_ws_state_t\fP \fBstate\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_ws_config_t\fP \fBconfig\fP"
+.br
+.ti -1c
+.RI "mbedtls_ssl_context * \fBssl\fP"
+.br
+.ti -1c
+.RI "int \fBis_server\fP"
+.br
+.ti -1c
+.RI "char \fBclient_key\fP [64]"
+.br
+.ti -1c
+.RI "uint8_t * \fBrecv_buffer\fP"
+.br
+.ti -1c
+.RI "size_t \fBrecv_buffer_size\fP"
+.br
+.ti -1c
+.RI "size_t \fBrecv_buffer_pos\fP"
+.br
+.ti -1c
+.RI "uint8_t * \fBsend_buffer\fP"
+.br
+.ti -1c
+.RI "size_t \fBsend_buffer_size\fP"
+.br
+.ti -1c
+.RI "uint8_t * \fBfragmented_message\fP"
+.br
+.ti -1c
+.RI "size_t \fBfragmented_size\fP"
+.br
+.ti -1c
+.RI "size_t \fBfragmented_capacity\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_ws_opcode_t\fP \fBfragmented_opcode\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_ws_on_message_callback\fP \fBon_message\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_ws_on_close_callback\fP \fBon_close\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_ws_on_error_callback\fP \fBon_error\fP"
+.br
+.ti -1c
+.RI "void * \fBuser_data\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBbytes_sent\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBbytes_received\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBframes_sent\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBframes_received\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "uint64_t uvhttp_ws_connection::bytes_received"
+
+.SS "uint64_t uvhttp_ws_connection::bytes_sent"
+
+.SS "char uvhttp_ws_connection::client_key[64]"
+
+.SS "\fBuvhttp_ws_config_t\fP uvhttp_ws_connection::config"
+
+.SS "int uvhttp_ws_connection::fd"
+
+.SS "size_t uvhttp_ws_connection::fragmented_capacity"
+
+.SS "uint8_t* uvhttp_ws_connection::fragmented_message"
+
+.SS "\fBuvhttp_ws_opcode_t\fP uvhttp_ws_connection::fragmented_opcode"
+
+.SS "size_t uvhttp_ws_connection::fragmented_size"
+
+.SS "uint64_t uvhttp_ws_connection::frames_received"
+
+.SS "uint64_t uvhttp_ws_connection::frames_sent"
+
+.SS "int uvhttp_ws_connection::is_server"
+
+.SS "\fBuvhttp_ws_on_close_callback\fP uvhttp_ws_connection::on_close"
+
+.SS "\fBuvhttp_ws_on_error_callback\fP uvhttp_ws_connection::on_error"
+
+.SS "\fBuvhttp_ws_on_message_callback\fP uvhttp_ws_connection::on_message"
+
+.SS "uint8_t* uvhttp_ws_connection::recv_buffer"
+
+.SS "size_t uvhttp_ws_connection::recv_buffer_pos"
+
+.SS "size_t uvhttp_ws_connection::recv_buffer_size"
+
+.SS "uint8_t* uvhttp_ws_connection::send_buffer"
+
+.SS "size_t uvhttp_ws_connection::send_buffer_size"
+
+.SS "mbedtls_ssl_context* uvhttp_ws_connection::ssl"
+
+.SS "\fBuvhttp_ws_state_t\fP uvhttp_ws_connection::state"
+
+.SS "void* uvhttp_ws_connection::user_data"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

@@ -1,0 +1,45 @@
+.TH "uvhttp_connection_provider" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_connection_provider
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_context\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_connection\fP *(* \fBacquire_connection\fP )(struct \fBuvhttp_connection_provider\fP *provider)"
+.br
+.ti -1c
+.RI "void(* \fBrelease_connection\fP )(struct \fBuvhttp_connection_provider\fP *provider, struct \fBuvhttp_connection\fP *conn)"
+.br
+.ti -1c
+.RI "size_t(* \fBget_pool_size\fP )(struct \fBuvhttp_connection_provider\fP *provider)"
+.br
+.ti -1c
+.RI "void(* \fBcleanup_expired\fP )(struct \fBuvhttp_connection_provider\fP *provider)"
+.br
+.ti -1c
+.RI "void * \fBcontext\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "struct \fBuvhttp_connection\fP*(* uvhttp_connection_provider::acquire_connection) (struct \fBuvhttp_connection_provider\fP *provider)"
+
+.SS "void(* uvhttp_connection_provider::cleanup_expired) (struct \fBuvhttp_connection_provider\fP *provider)"
+
+.SS "void* uvhttp_connection_provider::context"
+
+.SS "size_t(* uvhttp_connection_provider::get_pool_size) (struct \fBuvhttp_connection_provider\fP *provider)"
+
+.SS "void(* uvhttp_connection_provider::release_connection) (struct \fBuvhttp_connection_provider\fP *provider, struct \fBuvhttp_connection\fP *conn)"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

@@ -1,0 +1,28 @@
+var structuvhttp__server =
+[
+    [ "active_connections", "structuvhttp__server.html#ad6ad48f50ac3fdeb44dc3fa580eeadb5", null ],
+    [ "config", "structuvhttp__server.html#a1da045cbfc35e3e812993049a475e292", null ],
+    [ "connection_pool", "structuvhttp__server.html#a7e265fb13a683d87446afb8de11db027", null ],
+    [ "connection_pool_size", "structuvhttp__server.html#af4e4e32c40b9ba90b12e20534437e7f0", null ],
+    [ "handler", "structuvhttp__server.html#a5ae0a73e277e5a685eb2d7f5d17c1ba0", null ],
+    [ "is_listening", "structuvhttp__server.html#a443faa368f4798c62baab1e76378cfbe", null ],
+    [ "loop", "structuvhttp__server.html#a79a2b70d1a671c46fb4b3179b19f6d54", null ],
+    [ "max_connections", "structuvhttp__server.html#a63e47aff409258cf7c9424319b20c749", null ],
+    [ "max_message_size", "structuvhttp__server.html#a47bb74a9a3da05c2edb7a4b52e481310", null ],
+    [ "middleware_chain", "structuvhttp__server.html#afb2ca8dc9af4afcfdb429338803797d0", null ],
+    [ "owns_loop", "structuvhttp__server.html#aa0fd355f53d1c88f2c4b17ccce5b24b9", null ],
+    [ "rate_limit_enabled", "structuvhttp__server.html#a4845a009c4fc48ed39e98f06fc6adeeb", null ],
+    [ "rate_limit_max_requests", "structuvhttp__server.html#a67efed6d2a1a748f228c84d2c3098ae4", null ],
+    [ "rate_limit_request_count", "structuvhttp__server.html#a60ce8192ec057f98bba6df6ede7f05fd", null ],
+    [ "rate_limit_whitelist", "structuvhttp__server.html#a23b4f67b13e312e99ea7dcc24c716f48", null ],
+    [ "rate_limit_whitelist_count", "structuvhttp__server.html#ac47a63013a45f5b58b6b578e1d5d5997", null ],
+    [ "rate_limit_whitelist_hash", "structuvhttp__server.html#a5800999145c7486f8de904d04a42f61d", null ],
+    [ "rate_limit_window_seconds", "structuvhttp__server.html#a3aa1e23c61da6edb1874d66a938d9537", null ],
+    [ "rate_limit_window_start_time", "structuvhttp__server.html#a087f5d6800f79b307d41c87470dd19e5", null ],
+    [ "router", "structuvhttp__server.html#ac44ce96a05724961d5ab356d799cd257", null ],
+    [ "tcp_handle", "structuvhttp__server.html#aa85c16d2e2adc03b2a2fc3534f68eedb", null ],
+    [ "tls_ctx", "structuvhttp__server.html#ad61279ca8e8564cce66002c6dd146e70", null ],
+    [ "tls_enabled", "structuvhttp__server.html#a4a02ebf9419abb515f91f83db603e217", null ],
+    [ "ws_connection_manager", "structuvhttp__server.html#a6afb3723a138f274727222c1dd7649dc", null ],
+    [ "ws_routes", "structuvhttp__server.html#ae034f24243b64740e8d3ea9e4a313bb6", null ]
+];

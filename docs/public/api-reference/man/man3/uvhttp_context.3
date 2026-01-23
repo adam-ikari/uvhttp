@@ -1,0 +1,130 @@
+.TH "uvhttp_context" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_context
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_context\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "uv_loop_t * \fBloop\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_server\fP * \fBserver\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_router\fP * \fBrouter\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_connection_provider_t\fP * \fBconnection_provider\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_logger_provider_t\fP * \fBlogger_provider\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_config_provider_t\fP * \fBconfig_provider\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_network_interface_t\fP * \fBnetwork_interface\fP"
+.br
+.ti -1c
+.RI "int \fBinitialized\fP"
+.br
+.ti -1c
+.RI "time_t \fBcreated_at\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBtotal_requests\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBtotal_connections\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBactive_connections\fP"
+.br
+.ti -1c
+.RI "int \fBtls_initialized\fP"
+.br
+.ti -1c
+.RI "void * \fBtls_entropy\fP"
+.br
+.ti -1c
+.RI "void * \fBtls_drbg\fP"
+.br
+.ti -1c
+.RI "int \fBws_drbg_initialized\fP"
+.br
+.ti -1c
+.RI "void * \fBws_entropy\fP"
+.br
+.ti -1c
+.RI "void * \fBws_drbg\fP"
+.br
+.ti -1c
+.RI "void * \fBerror_stats\fP"
+.br
+.ti -1c
+.RI "void * \fBcurrent_config\fP"
+.br
+.ti -1c
+.RI "void * \fBconfig_callback\fP"
+.br
+.ti -1c
+.RI "void * \fBuser_data\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "uint64_t uvhttp_context::active_connections"
+
+.SS "void* uvhttp_context::config_callback"
+
+.SS "\fBuvhttp_config_provider_t\fP* uvhttp_context::config_provider"
+
+.SS "\fBuvhttp_connection_provider_t\fP* uvhttp_context::connection_provider"
+
+.SS "time_t uvhttp_context::created_at"
+
+.SS "void* uvhttp_context::current_config"
+
+.SS "void* uvhttp_context::error_stats"
+
+.SS "int uvhttp_context::initialized"
+
+.SS "\fBuvhttp_logger_provider_t\fP* uvhttp_context::logger_provider"
+
+.SS "uv_loop_t* uvhttp_context::loop"
+
+.SS "\fBuvhttp_network_interface_t\fP* uvhttp_context::network_interface"
+
+.SS "struct \fBuvhttp_router\fP* uvhttp_context::router"
+
+.SS "struct \fBuvhttp_server\fP* uvhttp_context::server"
+
+.SS "void* uvhttp_context::tls_drbg"
+
+.SS "void* uvhttp_context::tls_entropy"
+
+.SS "int uvhttp_context::tls_initialized"
+
+.SS "uint64_t uvhttp_context::total_connections"
+
+.SS "uint64_t uvhttp_context::total_requests"
+
+.SS "void* uvhttp_context::user_data"
+
+.SS "void* uvhttp_context::ws_drbg"
+
+.SS "int uvhttp_context::ws_drbg_initialized"
+
+.SS "void* uvhttp_context::ws_entropy"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

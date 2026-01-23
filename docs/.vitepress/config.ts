@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { resolve } from 'path'
 
 // https://vitepress.vuejs.org/config/app-configs
 export default defineConfig({
@@ -10,6 +11,9 @@ export default defineConfig({
   lang: 'zh-CN',
 
   ignoreDeadLinks: true,
+
+  // 配置静态资源目录
+  publicDir: resolve(__dirname, '../public'),
 
   head: [
     ['meta', { name: 'keywords', content: 'HTTP, WebSocket, libuv, C, 高性能, 服务器, 异步 I/O' }],
@@ -36,11 +40,12 @@ export default defineConfig({
       { text: '首页', link: '/' },
       { text: '指南', link: '/guide/getting-started' },
       { text: 'API', link: '/api/introduction' },
+      { text: 'API 参考', link: '/api-reference/index.html', target: '_blank' },
       { text: '性能', link: '/performance' },
       { text: '版本', link: '/versions' },
       { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' }
     ],
-    
+
     sidebar: {
       '/guide/': [
         {

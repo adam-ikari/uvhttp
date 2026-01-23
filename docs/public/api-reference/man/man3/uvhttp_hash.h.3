@@ -1,0 +1,60 @@
+.TH "include/uvhttp_hash.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_hash.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <stdint\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_HASH_DEFAULT_SEED\fP   0x1A2B3C4D5E6F7089ULL"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_HASH_VALIDATE_PTR\fP(ptr)   ((ptr) != NULL)"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "uint64_t \fBuvhttp_hash\fP (const void *data, size_t length, uint64_t seed)"
+.br
+.ti -1c
+.RI "uint64_t \fBuvhttp_hash_string\fP (const char *str)"
+.br
+.ti -1c
+.RI "static uint64_t \fBuvhttp_hash_default\fP (const void *data, size_t length)"
+.br
+.ti -1c
+.RI "static uint64_t \fBuvhttp_hash_string_default\fP (const char *str)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_HASH_DEFAULT_SEED   0x1A2B3C4D5E6F7089ULL"
+
+.SS "#define UVHTTP_HASH_VALIDATE_PTR(ptr)   ((ptr) != NULL)"
+
+.SH "Function Documentation"
+.PP 
+.SS "uint64_t uvhttp_hash (const void * data, size_t length, uint64_t seed)"
+
+.SS "static uint64_t uvhttp_hash_default (const void * data, size_t length)\fC [inline]\fP, \fC [static]\fP"
+
+.SS "uint64_t uvhttp_hash_string (const char * str)"
+
+.SS "static uint64_t uvhttp_hash_string_default (const char * str)\fC [inline]\fP, \fC [static]\fP"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

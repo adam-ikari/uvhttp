@@ -1,0 +1,60 @@
+.TH "ws_connection_manager_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ws_connection_manager_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_server\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBws_connection_node_t\fP * \fBconnections\fP"
+.br
+.ti -1c
+.RI "int \fBconnection_count\fP"
+.br
+.ti -1c
+.RI "uv_timer_t \fBtimeout_timer\fP"
+.br
+.ti -1c
+.RI "uv_timer_t \fBheartbeat_timer\fP"
+.br
+.ti -1c
+.RI "int \fBtimeout_seconds\fP"
+.br
+.ti -1c
+.RI "int \fBheartbeat_interval\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBping_timeout_ms\fP"
+.br
+.ti -1c
+.RI "int \fBenabled\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "int ws_connection_manager_t::connection_count"
+
+.SS "\fBws_connection_node_t\fP* ws_connection_manager_t::connections"
+
+.SS "int ws_connection_manager_t::enabled"
+
+.SS "int ws_connection_manager_t::heartbeat_interval"
+
+.SS "uv_timer_t ws_connection_manager_t::heartbeat_timer"
+
+.SS "uint64_t ws_connection_manager_t::ping_timeout_ms"
+
+.SS "int ws_connection_manager_t::timeout_seconds"
+
+.SS "uv_timer_t ws_connection_manager_t::timeout_timer"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

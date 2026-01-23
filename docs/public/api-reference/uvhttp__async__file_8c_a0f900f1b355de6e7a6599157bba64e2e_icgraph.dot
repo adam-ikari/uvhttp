@@ -1,0 +1,10 @@
+digraph "on_file_stat_complete"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="on_file_stat_complete",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="uvhttp_async_file_read",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__async__file_8h.html#af88896798e920f8707d21a2eb3f1a427",tooltip=" "];
+}

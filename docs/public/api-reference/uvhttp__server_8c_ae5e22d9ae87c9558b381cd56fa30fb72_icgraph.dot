@@ -1,0 +1,10 @@
+digraph "ws_heartbeat_timer_callback"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="ws_heartbeat_timer\l_callback",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="uvhttp_server_ws_enable\l_connection_management",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__server_8h.html#a91a10c71fbb417f2a8f8252c7fbd476b",tooltip=" "];
+}

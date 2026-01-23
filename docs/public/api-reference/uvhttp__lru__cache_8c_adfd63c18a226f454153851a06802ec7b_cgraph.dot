@@ -1,0 +1,18 @@
+digraph "uvhttp_lru_cache_find"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="uvhttp_lru_cache_find",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="uvhttp_lru_cache_is\l_expired",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__lru__cache_8c.html#a9b54c73d59ea02277303a4d8baf11031",tooltip=" "];
+  Node1 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="uvhttp_lru_cache_move\l_to_head",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__lru__cache_8c.html#ad4584d6204ad9084a1d1e8ea911f56cc",tooltip=" "];
+  Node1 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="uvhttp_lru_cache_remove",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__lru__cache_8c.html#a4b7e76f34e5da2c7c47907cd0af8d02d",tooltip=" "];
+  Node4 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="free_cache_entry",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__lru__cache_8c.html#a7bceecdec07e6bfa88c86f600b61654b",tooltip=" "];
+  Node5 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="uvhttp_free",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__allocator_8h.html#a956d07931818b449298b1649e830b3a5",tooltip=" "];
+}

@@ -1,0 +1,45 @@
+.TH "uvhttp_ws_middleware_callbacks_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_ws_middleware_callbacks_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_websocket_middleware\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "int(* \fBon_connect\fP )(\fBuvhttp_ws_connection_t\fP *ws_conn, void *\fBuser_data\fP)"
+.br
+.ti -1c
+.RI "int(* \fBon_message\fP )(\fBuvhttp_ws_connection_t\fP *ws_conn, const char *data, size_t len, int opcode, void *\fBuser_data\fP)"
+.br
+.ti -1c
+.RI "int(* \fBon_close\fP )(\fBuvhttp_ws_connection_t\fP *ws_conn, void *\fBuser_data\fP)"
+.br
+.ti -1c
+.RI "int(* \fBon_error\fP )(\fBuvhttp_ws_connection_t\fP *ws_conn, int error_code, void *\fBuser_data\fP)"
+.br
+.ti -1c
+.RI "void * \fBuser_data\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "int(* uvhttp_ws_middleware_callbacks_t::on_close) (\fBuvhttp_ws_connection_t\fP *ws_conn, void *\fBuser_data\fP)"
+
+.SS "int(* uvhttp_ws_middleware_callbacks_t::on_connect) (\fBuvhttp_ws_connection_t\fP *ws_conn, void *\fBuser_data\fP)"
+
+.SS "int(* uvhttp_ws_middleware_callbacks_t::on_error) (\fBuvhttp_ws_connection_t\fP *ws_conn, int error_code, void *\fBuser_data\fP)"
+
+.SS "int(* uvhttp_ws_middleware_callbacks_t::on_message) (\fBuvhttp_ws_connection_t\fP *ws_conn, const char *data, size_t len, int opcode, void *\fBuser_data\fP)"
+
+.SS "void* uvhttp_ws_middleware_callbacks_t::user_data"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

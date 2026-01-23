@@ -1,0 +1,16 @@
+digraph "uvhttp_deps_t"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="uvhttp_deps_t",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node2 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" file_provider" ,fontname="Helvetica"];
+  Node2 [label="uvhttp_file_provider_t",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structuvhttp__file__provider__t.html",tooltip=" "];
+  Node3 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" loop_provider" ,fontname="Helvetica"];
+  Node3 [label="uvhttp_loop_provider_t",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structuvhttp__loop__provider__t.html",tooltip=" "];
+  Node4 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" network_provider" ,fontname="Helvetica"];
+  Node4 [label="uvhttp_network_provider_t",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structuvhttp__network__provider__t.html",tooltip=" "];
+  Node5 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" memory_provider" ,fontname="Helvetica"];
+  Node5 [label="uvhttp_memory_provider_t",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structuvhttp__memory__provider__t.html",tooltip=" "];
+}

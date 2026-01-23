@@ -1,0 +1,329 @@
+.TH "include/uvhttp_features.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_features.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stddef\&.h>\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_FEATURE_HTTP\fP   1"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TEST_MODE\fP   0  /* 默认关闭测试模式 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_FEATURE_TESTING\fP   1           /* 测试支持 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_FEATURE_MEMORY_TRACKING\fP   1   /* 内存跟踪 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_FEATURE_NETWORK_MOCK\fP   1      /* 网络模拟 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_FEATURE_CONTEXT_INJECTION\fP   1 /* 依赖注入 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_FEATURE_STATISTICS\fP   1        /* 统计信息 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TEST_VERBOSE_LOGGING\fP   0      /* 详细日志 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TEST_MEMORY_LEAK_DETECTION\fP   1 /* 内存泄漏检测 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TEST_PERFORMANCE_PROFILING\fP   0 /* 性能分析 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_FEATURE_LOGGING\fP   0  /* 日志中间件 \- 已禁用以提高性能 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_FEATURE_ROUTER_CACHE\fP   0 /* 路由缓存支持 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_FEATURE_LRU_CACHE\fP   1 /* LRU缓存支持 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_FEATURE_CORS\fP   0       /* CORS 支持 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_FEATURE_COMPRESSION\fP   0 /* 压缩支持 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_FEATURE_METRICS\fP   0    /* 指标监控支持 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_FEATURE_CONFIG_FILE\fP   0 /* 配置文件支持 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_INLINE_OPTIMIZED\fP   0  /* 测试模式不内联，便于调试 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_USE_NETWORK_INTERFACE\fP   1  /* 测试模式使用网络接口 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_USE_CONTEXT\fP   1  /* 测试模式使用上下文 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_WEBSOCKET_ENABLED\fP"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TLS_ENABLED\fP"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MIDDLEWARE_ENABLED\fP"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_RATE_LIMIT_ENABLED\fP"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATIC_FILES_ENABLED\fP"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_LRU_CACHE_ENABLED\fP"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ALLOCATOR_ENABLED\fP"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TESTING_ENABLED\fP"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MEMORY_TRACKING_ENABLED\fP"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_NETWORK_MOCK_ENABLED\fP"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONTEXT_INJECTION_ENABLED\fP"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_STATISTICS_ENABLED\fP"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MEMORY_CHECK_START\fP()   \fBuvhttp_test_memory_check_start\fP()"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MEMORY_CHECK_END\fP()   \fBuvhttp_test_memory_check_end\fP()"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MEMORY_LEAKS\fP()   \fBuvhttp_test_memory_get_leak_count\fP()"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TEST_LOG\fP(fmt, \&.\&.\&.)   do {} while(0)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_TEST_ASSERT\fP(condition)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_PERF_START\fP(name)   do {} while(0)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_PERF_END\fP(name)   do {} while(0)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_INLINE\fP   __attribute__((always_inline)) static inline"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_NOINLINE\fP   __attribute__((noinline))"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_UNUSED\fP   __attribute__((unused))"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEPRECATED\fP   __attribute__((deprecated))"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ALIGNED\fP(n)   __attribute__((aligned(n)))"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_LIKELY\fP(x)   __builtin_expect(!!(x), 1)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_UNLIKELY\fP(x)   __builtin_expect(!!(x), 0)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEBUG_ONLY\fP(code)   code"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_RETURN_IF_ERROR\fP(expr)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_GOTO_IF_ERROR\fP(expr,  label)"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void * \fBuvhttp_test_malloc\fP (size_t size, const char *file, int line)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_test_free\fP (void *ptr, const char *file, int line)"
+.br
+.ti -1c
+.RI "void * \fBuvhttp_test_realloc\fP (void *ptr, size_t size, const char *file, int line)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_test_memory_check_start\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_test_memory_check_end\fP (void)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_test_memory_get_leak_count\fP (void)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_ALIGNED(n)   __attribute__((aligned(n)))"
+
+.SS "#define UVHTTP_ALLOCATOR_ENABLED"
+
+.SS "#define UVHTTP_CONTEXT_INJECTION_ENABLED"
+
+.SS "#define UVHTTP_DEBUG_ONLY(code)   code"
+
+.SS "#define UVHTTP_DEPRECATED   __attribute__((deprecated))"
+
+.SS "#define UVHTTP_FEATURE_COMPRESSION   0 /* 压缩支持 */"
+
+.SS "#define UVHTTP_FEATURE_CONFIG_FILE   0 /* 配置文件支持 */"
+
+.SS "#define UVHTTP_FEATURE_CONTEXT_INJECTION   1 /* 依赖注入 */"
+
+.SS "#define UVHTTP_FEATURE_CORS   0       /* CORS 支持 */"
+
+.SS "#define UVHTTP_FEATURE_HTTP   1"
+
+.SS "#define UVHTTP_FEATURE_LOGGING   0  /* 日志中间件 \- 已禁用以提高性能 */"
+
+.SS "#define UVHTTP_FEATURE_LRU_CACHE   1 /* LRU缓存支持 */"
+
+.SS "#define UVHTTP_FEATURE_MEMORY_TRACKING   1   /* 内存跟踪 */"
+
+.SS "#define UVHTTP_FEATURE_METRICS   0    /* 指标监控支持 */"
+
+.SS "#define UVHTTP_FEATURE_NETWORK_MOCK   1      /* 网络模拟 */"
+
+.SS "#define UVHTTP_FEATURE_ROUTER_CACHE   0 /* 路由缓存支持 */"
+
+.SS "#define UVHTTP_FEATURE_STATISTICS   1        /* 统计信息 */"
+
+.SS "#define UVHTTP_FEATURE_TESTING   1           /* 测试支持 */"
+
+.SS "#define UVHTTP_GOTO_IF_ERROR(expr, label)"
+\fBValue:\fP
+.PP
+.nf
+    do { \
+        int _err = (expr); \
+        if (UVHTTP_UNLIKELY(_err != 0)) { \
+            goto label; \
+        } \
+    } while(0)
+.fi
+.SS "#define UVHTTP_INLINE   __attribute__((always_inline)) static inline"
+
+.SS "#define UVHTTP_INLINE_OPTIMIZED   0  /* 测试模式不内联，便于调试 */"
+
+.SS "#define UVHTTP_LIKELY(x)   __builtin_expect(!!(x), 1)"
+
+.SS "#define UVHTTP_LRU_CACHE_ENABLED"
+
+.SS "#define UVHTTP_MEMORY_CHECK_END()   \fBuvhttp_test_memory_check_end\fP()"
+
+.SS "#define UVHTTP_MEMORY_CHECK_START()   \fBuvhttp_test_memory_check_start\fP()"
+
+.SS "#define UVHTTP_MEMORY_LEAKS()   \fBuvhttp_test_memory_get_leak_count\fP()"
+
+.SS "#define UVHTTP_MEMORY_TRACKING_ENABLED"
+
+.SS "#define UVHTTP_MIDDLEWARE_ENABLED"
+
+.SS "#define UVHTTP_NETWORK_MOCK_ENABLED"
+
+.SS "#define UVHTTP_NOINLINE   __attribute__((noinline))"
+
+.SS "#define UVHTTP_PERF_END(name)   do {} while(0)"
+
+.SS "#define UVHTTP_PERF_START(name)   do {} while(0)"
+
+.SS "#define UVHTTP_RATE_LIMIT_ENABLED"
+
+.SS "#define UVHTTP_RETURN_IF_ERROR(expr)"
+\fBValue:\fP
+.PP
+.nf
+    do { \
+        int _err = (expr); \
+        if (UVHTTP_UNLIKELY(_err != 0)) { \
+            return _err; \
+        } \
+    } while(0)
+.fi
+.SS "#define UVHTTP_STATIC_FILES_ENABLED"
+
+.SS "#define UVHTTP_STATISTICS_ENABLED"
+
+.SS "#define UVHTTP_TEST_ASSERT(condition)"
+\fBValue:\fP
+.PP
+.nf
+    do { \
+        if (!(condition)) { \
+            fprintf(stderr, "[TEST ASSERTION FAILED] %s:%d: %s\n", \
+                    __FILE__, __LINE__, #condition); \
+            abort(); \
+        } \
+    } while(0)
+.fi
+.SS "#define UVHTTP_TEST_LOG(fmt,  \&.\&.\&.)   do {} while(0)"
+
+.SS "#define UVHTTP_TEST_MEMORY_LEAK_DETECTION   1 /* 内存泄漏检测 */"
+
+.SS "#define UVHTTP_TEST_MODE   0  /* 默认关闭测试模式 */"
+
+.SS "#define UVHTTP_TEST_PERFORMANCE_PROFILING   0 /* 性能分析 */"
+
+.SS "#define UVHTTP_TEST_VERBOSE_LOGGING   0      /* 详细日志 */"
+
+.SS "#define UVHTTP_TESTING_ENABLED"
+
+.SS "#define UVHTTP_TLS_ENABLED"
+
+.SS "#define UVHTTP_UNLIKELY(x)   __builtin_expect(!!(x), 0)"
+
+.SS "#define UVHTTP_UNUSED   __attribute__((unused))"
+
+.SS "#define UVHTTP_USE_CONTEXT   1  /* 测试模式使用上下文 */"
+
+.SS "#define UVHTTP_USE_NETWORK_INTERFACE   1  /* 测试模式使用网络接口 */"
+
+.SS "#define UVHTTP_WEBSOCKET_ENABLED"
+
+.SH "Function Documentation"
+.PP 
+.SS "void uvhttp_test_free (void * ptr, const char * file, int line)"
+
+.SS "void* uvhttp_test_malloc (size_t size, const char * file, int line)"
+
+.SS "void uvhttp_test_memory_check_end (void)"
+
+.SS "void uvhttp_test_memory_check_start (void)"
+
+.SS "int uvhttp_test_memory_get_leak_count (void)"
+
+.SS "void* uvhttp_test_realloc (void * ptr, size_t size, const char * file, int line)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

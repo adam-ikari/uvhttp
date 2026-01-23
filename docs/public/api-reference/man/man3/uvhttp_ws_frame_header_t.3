@@ -1,0 +1,55 @@
+.TH "uvhttp_ws_frame_header_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_ws_frame_header_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_websocket_native\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "uint8_t \fBfin\fP: 1"
+.br
+.ti -1c
+.RI "uint8_t \fBrsv1\fP: 1"
+.br
+.ti -1c
+.RI "uint8_t \fBrsv2\fP: 1"
+.br
+.ti -1c
+.RI "uint8_t \fBrsv3\fP: 1"
+.br
+.ti -1c
+.RI "uint8_t \fBopcode\fP: 4"
+.br
+.ti -1c
+.RI "uint8_t \fBmask\fP: 1"
+.br
+.ti -1c
+.RI "uint8_t \fBpayload_len\fP: 7"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "uint8_t uvhttp_ws_frame_header_t::fin"
+
+.SS "uint8_t uvhttp_ws_frame_header_t::mask"
+
+.SS "uint8_t uvhttp_ws_frame_header_t::opcode"
+
+.SS "uint8_t uvhttp_ws_frame_header_t::payload_len"
+
+.SS "uint8_t uvhttp_ws_frame_header_t::rsv1"
+
+.SS "uint8_t uvhttp_ws_frame_header_t::rsv2"
+
+.SS "uint8_t uvhttp_ws_frame_header_t::rsv3"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

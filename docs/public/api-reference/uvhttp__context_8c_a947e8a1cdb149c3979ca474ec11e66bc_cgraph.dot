@@ -1,0 +1,21 @@
+digraph "default_release_connection"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="default_release_connection",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="uvhttp_connection_free",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__connection_8h.html#a87c332c7095a77e1d934e0034f7a1fac",tooltip=" "];
+  Node2 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="uvhttp_free",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__allocator_8h.html#a956d07931818b449298b1649e830b3a5",tooltip=" "];
+  Node2 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="uvhttp_mempool_destroy",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__mempool_8h.html#af9afcd5eb033da05b09ac93f2f9dba44",tooltip=" "];
+  Node4 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="uvhttp_request_cleanup",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__request_8h.html#aa4ca7b4cbc7ee29388eaa4e033065609",tooltip=" "];
+  Node5 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="uvhttp_response_cleanup",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__response_8h.html#a027444bec85d503a5508b98978766250",tooltip=" "];
+  Node6 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+}

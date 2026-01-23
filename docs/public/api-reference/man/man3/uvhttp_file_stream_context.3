@@ -1,0 +1,60 @@
+.TH "uvhttp_file_stream_context" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_file_stream_context
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_async_file\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "uv_fs_t \fBfs_req\fP"
+.br
+.ti -1c
+.RI "uv_file \fBfile_handle\fP"
+.br
+.ti -1c
+.RI "char * \fBchunk_buffer\fP"
+.br
+.ti -1c
+.RI "size_t \fBchunk_size\fP"
+.br
+.ti -1c
+.RI "size_t \fBfile_offset\fP"
+.br
+.ti -1c
+.RI "size_t \fBremaining_bytes\fP"
+.br
+.ti -1c
+.RI "void * \fBresponse\fP"
+.br
+.ti -1c
+.RI "int \fBis_active\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "char* uvhttp_file_stream_context::chunk_buffer"
+
+.SS "size_t uvhttp_file_stream_context::chunk_size"
+
+.SS "uv_file uvhttp_file_stream_context::file_handle"
+
+.SS "size_t uvhttp_file_stream_context::file_offset"
+
+.SS "uv_fs_t uvhttp_file_stream_context::fs_req"
+
+.SS "int uvhttp_file_stream_context::is_active"
+
+.SS "size_t uvhttp_file_stream_context::remaining_bytes"
+
+.SS "void* uvhttp_file_stream_context::response"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

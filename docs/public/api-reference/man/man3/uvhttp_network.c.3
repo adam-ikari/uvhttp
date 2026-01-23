@@ -1,0 +1,161 @@
+.TH "src/uvhttp_network.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_network.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_network\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_error\&.h'\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_mock_network_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static int \fBlibuv_write_impl\fP (\fBuvhttp_network_interface_t\fP *self, uv_stream_t *stream, const uv_buf_t *bufs, unsigned int nbufs, uv_write_cb cb)"
+.br
+.ti -1c
+.RI "static int \fBlibuv_read_start_impl\fP (\fBuvhttp_network_interface_t\fP *self, uv_stream_t *stream, uv_alloc_cb alloc_cb, uv_read_cb read_cb)"
+.br
+.ti -1c
+.RI "static int \fBlibuv_read_stop_impl\fP (\fBuvhttp_network_interface_t\fP *self, uv_stream_t *stream)"
+.br
+.ti -1c
+.RI "static int \fBlibuv_close_impl\fP (\fBuvhttp_network_interface_t\fP *self, uv_handle_t *handle, uv_close_cb close_cb)"
+.br
+.ti -1c
+.RI "static void * \fBlibuv_get_stats_impl\fP (\fBuvhttp_network_interface_t\fP *self)"
+.br
+.ti -1c
+.RI "static void \fBlibuv_reset_stats_impl\fP (\fBuvhttp_network_interface_t\fP *self)"
+.br
+.ti -1c
+.RI "static void \fBlibuv_set_error_simulation_impl\fP (\fBuvhttp_network_interface_t\fP *self, int error_code)"
+.br
+.ti -1c
+.RI "\fBuvhttp_network_interface_t\fP * \fBuvhttp_libuv_network_create\fP (uv_loop_t *loop)"
+.br
+.ti -1c
+.RI "static int \fBmock_write_impl\fP (\fBuvhttp_network_interface_t\fP *self, uv_stream_t *stream, const uv_buf_t *bufs, unsigned int nbufs, uv_write_cb cb)"
+.br
+.ti -1c
+.RI "static int \fBmock_read_start_impl\fP (\fBuvhttp_network_interface_t\fP *self, uv_stream_t *stream, uv_alloc_cb alloc_cb, uv_read_cb read_cb)"
+.br
+.ti -1c
+.RI "static int \fBmock_read_stop_impl\fP (\fBuvhttp_network_interface_t\fP *self, uv_stream_t *stream)"
+.br
+.ti -1c
+.RI "static int \fBmock_close_impl\fP (\fBuvhttp_network_interface_t\fP *self, uv_handle_t *handle, uv_close_cb close_cb)"
+.br
+.ti -1c
+.RI "static void * \fBmock_get_stats_impl\fP (\fBuvhttp_network_interface_t\fP *self)"
+.br
+.ti -1c
+.RI "static void \fBmock_reset_stats_impl\fP (\fBuvhttp_network_interface_t\fP *self)"
+.br
+.ti -1c
+.RI "static void \fBmock_set_error_simulation_impl\fP (\fBuvhttp_network_interface_t\fP *self, int error_code)"
+.br
+.ti -1c
+.RI "\fBuvhttp_network_interface_t\fP * \fBuvhttp_mock_network_create\fP (uv_loop_t *loop)"
+.br
+.ti -1c
+.RI "static int \fBbenchmark_write_impl\fP (\fBuvhttp_network_interface_t\fP *self, uv_stream_t *stream, const uv_buf_t *bufs, unsigned int nbufs, uv_write_cb cb)"
+.br
+.ti -1c
+.RI "static int \fBbenchmark_read_start_impl\fP (\fBuvhttp_network_interface_t\fP *self, uv_stream_t *stream, uv_alloc_cb alloc_cb, uv_read_cb read_cb)"
+.br
+.ti -1c
+.RI "static int \fBbenchmark_read_stop_impl\fP (\fBuvhttp_network_interface_t\fP *self, uv_stream_t *stream)"
+.br
+.ti -1c
+.RI "static int \fBbenchmark_close_impl\fP (\fBuvhttp_network_interface_t\fP *self, uv_handle_t *handle, uv_close_cb close_cb)"
+.br
+.ti -1c
+.RI "\fBuvhttp_network_interface_t\fP * \fBuvhttp_benchmark_network_create\fP (uv_loop_t *loop)"
+.br
+.ti -1c
+.RI "\fBuvhttp_network_interface_t\fP * \fBuvhttp_network_interface_create\fP (\fBuvhttp_network_type_t\fP type, uv_loop_t *loop)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_network_interface_destroy\fP (\fBuvhttp_network_interface_t\fP *interface)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_network_interface_t\fP * \fBg_uvhttp_network_interface\fP = NULL"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "static int benchmark_close_impl (\fBuvhttp_network_interface_t\fP * self, uv_handle_t * handle, uv_close_cb close_cb)\fC [static]\fP"
+
+.SS "static int benchmark_read_start_impl (\fBuvhttp_network_interface_t\fP * self, uv_stream_t * stream, uv_alloc_cb alloc_cb, uv_read_cb read_cb)\fC [static]\fP"
+
+.SS "static int benchmark_read_stop_impl (\fBuvhttp_network_interface_t\fP * self, uv_stream_t * stream)\fC [static]\fP"
+
+.SS "static int benchmark_write_impl (\fBuvhttp_network_interface_t\fP * self, uv_stream_t * stream, const uv_buf_t * bufs, unsigned int nbufs, uv_write_cb cb)\fC [static]\fP"
+
+.SS "static int libuv_close_impl (\fBuvhttp_network_interface_t\fP * self, uv_handle_t * handle, uv_close_cb close_cb)\fC [static]\fP"
+
+.SS "static void* libuv_get_stats_impl (\fBuvhttp_network_interface_t\fP * self)\fC [static]\fP"
+
+.SS "static int libuv_read_start_impl (\fBuvhttp_network_interface_t\fP * self, uv_stream_t * stream, uv_alloc_cb alloc_cb, uv_read_cb read_cb)\fC [static]\fP"
+
+.SS "static int libuv_read_stop_impl (\fBuvhttp_network_interface_t\fP * self, uv_stream_t * stream)\fC [static]\fP"
+
+.SS "static void libuv_reset_stats_impl (\fBuvhttp_network_interface_t\fP * self)\fC [static]\fP"
+
+.SS "static void libuv_set_error_simulation_impl (\fBuvhttp_network_interface_t\fP * self, int error_code)\fC [static]\fP"
+
+.SS "static int libuv_write_impl (\fBuvhttp_network_interface_t\fP * self, uv_stream_t * stream, const uv_buf_t * bufs, unsigned int nbufs, uv_write_cb cb)\fC [static]\fP"
+
+.SS "static int mock_close_impl (\fBuvhttp_network_interface_t\fP * self, uv_handle_t * handle, uv_close_cb close_cb)\fC [static]\fP"
+
+.SS "static void* mock_get_stats_impl (\fBuvhttp_network_interface_t\fP * self)\fC [static]\fP"
+
+.SS "static int mock_read_start_impl (\fBuvhttp_network_interface_t\fP * self, uv_stream_t * stream, uv_alloc_cb alloc_cb, uv_read_cb read_cb)\fC [static]\fP"
+
+.SS "static int mock_read_stop_impl (\fBuvhttp_network_interface_t\fP * self, uv_stream_t * stream)\fC [static]\fP"
+
+.SS "static void mock_reset_stats_impl (\fBuvhttp_network_interface_t\fP * self)\fC [static]\fP"
+
+.SS "static void mock_set_error_simulation_impl (\fBuvhttp_network_interface_t\fP * self, int error_code)\fC [static]\fP"
+
+.SS "static int mock_write_impl (\fBuvhttp_network_interface_t\fP * self, uv_stream_t * stream, const uv_buf_t * bufs, unsigned int nbufs, uv_write_cb cb)\fC [static]\fP"
+
+.SS "\fBuvhttp_network_interface_t\fP* uvhttp_benchmark_network_create (uv_loop_t * loop)"
+
+.SS "\fBuvhttp_network_interface_t\fP* uvhttp_libuv_network_create (uv_loop_t * loop)"
+
+.SS "\fBuvhttp_network_interface_t\fP* uvhttp_mock_network_create (uv_loop_t * loop)"
+
+.SS "\fBuvhttp_network_interface_t\fP* uvhttp_network_interface_create (\fBuvhttp_network_type_t\fP type, uv_loop_t * loop)"
+
+.SS "void uvhttp_network_interface_destroy (\fBuvhttp_network_interface_t\fP * interface)"
+
+.SH "Variable Documentation"
+.PP 
+.SS "\fBuvhttp_network_interface_t\fP* g_uvhttp_network_interface = NULL"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

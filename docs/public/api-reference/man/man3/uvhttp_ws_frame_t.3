@@ -1,0 +1,45 @@
+.TH "uvhttp_ws_frame_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_ws_frame_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_websocket_native\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_ws_frame_header_t\fP \fBheader\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBpayload_length\fP"
+.br
+.ti -1c
+.RI "uint8_t \fBmasking_key\fP [4]"
+.br
+.ti -1c
+.RI "uint8_t * \fBpayload\fP"
+.br
+.ti -1c
+.RI "size_t \fBpayload_size\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "\fBuvhttp_ws_frame_header_t\fP uvhttp_ws_frame_t::header"
+
+.SS "uint8_t uvhttp_ws_frame_t::masking_key[4]"
+
+.SS "uint8_t* uvhttp_ws_frame_t::payload"
+
+.SS "uint64_t uvhttp_ws_frame_t::payload_length"
+
+.SS "size_t uvhttp_ws_frame_t::payload_size"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

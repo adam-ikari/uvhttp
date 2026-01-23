@@ -1,0 +1,40 @@
+.TH "uvhttp_write_data_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_write_data_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_response\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "uv_write_t \fBwrite_req\fP"
+.br
+.ti -1c
+.RI "size_t \fBlength\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_response_t\fP * \fBresponse\fP"
+.br
+.ti -1c
+.RI "char \fBdata\fP [1]"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "char uvhttp_write_data_t::data[1]"
+
+.SS "size_t uvhttp_write_data_t::length"
+
+.SS "\fBuvhttp_response_t\fP* uvhttp_write_data_t::response"
+
+.SS "uv_write_t uvhttp_write_data_t::write_req"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

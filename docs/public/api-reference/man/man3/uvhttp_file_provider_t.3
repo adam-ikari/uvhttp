@@ -1,0 +1,60 @@
+.TH "uvhttp_file_provider_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_file_provider_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_deps\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "FILE *(* \fBfopen\fP )(const char *filename, const char *mode, void *\fBuser_data\fP)"
+.br
+.ti -1c
+.RI "int(* \fBfclose\fP )(FILE *stream, void *\fBuser_data\fP)"
+.br
+.ti -1c
+.RI "size_t(* \fBfread\fP )(void *ptr, size_t size, size_t nmemb, FILE *stream, void *\fBuser_data\fP)"
+.br
+.ti -1c
+.RI "size_t(* \fBfwrite\fP )(const void *ptr, size_t size, size_t nmemb, FILE *stream, void *\fBuser_data\fP)"
+.br
+.ti -1c
+.RI "int(* \fBfseek\fP )(FILE *stream, long offset, int origin, void *\fBuser_data\fP)"
+.br
+.ti -1c
+.RI "long(* \fBftell\fP )(FILE *stream, void *\fBuser_data\fP)"
+.br
+.ti -1c
+.RI "int(* \fBaccess\fP )(const char *pathname, int mode, void *\fBuser_data\fP)"
+.br
+.ti -1c
+.RI "void * \fBuser_data\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "int(* uvhttp_file_provider_t::access) (const char *pathname, int mode, void *\fBuser_data\fP)"
+
+.SS "int(* uvhttp_file_provider_t::fclose) (FILE *stream, void *\fBuser_data\fP)"
+
+.SS "FILE*(* uvhttp_file_provider_t::fopen) (const char *filename, const char *mode, void *\fBuser_data\fP)"
+
+.SS "size_t(* uvhttp_file_provider_t::fread) (void *ptr, size_t size, size_t nmemb, FILE *stream, void *\fBuser_data\fP)"
+
+.SS "int(* uvhttp_file_provider_t::fseek) (FILE *stream, long offset, int origin, void *\fBuser_data\fP)"
+
+.SS "long(* uvhttp_file_provider_t::ftell) (FILE *stream, void *\fBuser_data\fP)"
+
+.SS "size_t(* uvhttp_file_provider_t::fwrite) (const void *ptr, size_t size, size_t nmemb, FILE *stream, void *\fBuser_data\fP)"
+
+.SS "void* uvhttp_file_provider_t::user_data"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

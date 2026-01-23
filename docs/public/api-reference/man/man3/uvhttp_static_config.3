@@ -1,0 +1,85 @@
+.TH "uvhttp_static_config" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_static_config
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_static\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "size_t \fBmax_cache_size\fP"
+.br
+.ti -1c
+.RI "size_t \fBsendfile_chunk_size\fP"
+.br
+.ti -1c
+.RI "int \fBcache_ttl\fP"
+.br
+.ti -1c
+.RI "int \fBmax_cache_entries\fP"
+.br
+.ti -1c
+.RI "int \fBsendfile_timeout_ms\fP"
+.br
+.ti -1c
+.RI "int \fBsendfile_max_retry\fP"
+.br
+.ti -1c
+.RI "int \fBenable_directory_listing\fP"
+.br
+.ti -1c
+.RI "int \fBenable_etag\fP"
+.br
+.ti -1c
+.RI "int \fBenable_last_modified\fP"
+.br
+.ti -1c
+.RI "int \fBenable_sendfile\fP"
+.br
+.ti -1c
+.RI "char \fBroot_directory\fP [2048]"
+.br
+.ti -1c
+.RI "char \fBindex_file\fP [1024]"
+.br
+.ti -1c
+.RI "char \fBcustom_headers\fP [1024]"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "int uvhttp_static_config::cache_ttl"
+
+.SS "char uvhttp_static_config::custom_headers[1024]"
+
+.SS "int uvhttp_static_config::enable_directory_listing"
+
+.SS "int uvhttp_static_config::enable_etag"
+
+.SS "int uvhttp_static_config::enable_last_modified"
+
+.SS "int uvhttp_static_config::enable_sendfile"
+
+.SS "char uvhttp_static_config::index_file[1024]"
+
+.SS "int uvhttp_static_config::max_cache_entries"
+
+.SS "size_t uvhttp_static_config::max_cache_size"
+
+.SS "char uvhttp_static_config::root_directory[2048]"
+
+.SS "size_t uvhttp_static_config::sendfile_chunk_size"
+
+.SS "int uvhttp_static_config::sendfile_max_retry"
+
+.SS "int uvhttp_static_config::sendfile_timeout_ms"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

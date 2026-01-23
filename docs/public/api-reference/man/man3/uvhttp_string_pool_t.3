@@ -1,0 +1,80 @@
+.TH "uvhttp_string_pool_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_string_pool_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_string_pool\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "char * \fBpool_memory\fP"
+.br
+.ti -1c
+.RI "size_t \fBpool_size\fP"
+.br
+.ti -1c
+.RI "size_t \fBpool_used\fP"
+.br
+.ti -1c
+.RI "size_t \fBpool_capacity\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_string_entry_t\fP ** \fBhash_table\fP"
+.br
+.ti -1c
+.RI "size_t \fBhash_size\fP"
+.br
+.ti -1c
+.RI "size_t \fBentry_count\fP"
+.br
+.ti -1c
+.RI "size_t \fBtotal_strings\fP"
+.br
+.ti -1c
+.RI "size_t \fBpool_hits\fP"
+.br
+.ti -1c
+.RI "size_t \fBpool_misses\fP"
+.br
+.ti -1c
+.RI "size_t \fBmemory_saved\fP"
+.br
+.ti -1c
+.RI "int \fBinitialized\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "size_t uvhttp_string_pool_t::entry_count"
+
+.SS "size_t uvhttp_string_pool_t::hash_size"
+
+.SS "\fBuvhttp_string_entry_t\fP** uvhttp_string_pool_t::hash_table"
+
+.SS "int uvhttp_string_pool_t::initialized"
+
+.SS "size_t uvhttp_string_pool_t::memory_saved"
+
+.SS "size_t uvhttp_string_pool_t::pool_capacity"
+
+.SS "size_t uvhttp_string_pool_t::pool_hits"
+
+.SS "char* uvhttp_string_pool_t::pool_memory"
+
+.SS "size_t uvhttp_string_pool_t::pool_misses"
+
+.SS "size_t uvhttp_string_pool_t::pool_size"
+
+.SS "size_t uvhttp_string_pool_t::pool_used"
+
+.SS "size_t uvhttp_string_pool_t::total_strings"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

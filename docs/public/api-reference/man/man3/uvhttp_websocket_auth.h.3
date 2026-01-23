@@ -1,0 +1,164 @@
+.TH "include/uvhttp_websocket_auth.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_websocket_auth.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <stdint\&.h>\fP
+.br
+\fC#include 'uvhttp_websocket_native\&.h'\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBip_entry\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_ws_auth_config_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_ws_auth_context_t\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_WS_AUTH_DEFAULT_CONFIG\fP"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBip_entry\fP \fBip_entry_t\fP"
+.br
+.ti -1c
+.RI "typedef int(* \fBuvhttp_ws_token_validator_callback\fP) (const char *token, void *user_data)"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBuvhttp_ws_auth_result_t\fP { \fBUVHTTP_WS_AUTH_SUCCESS\fP = 0, \fBUVHTTP_WS_AUTH_FAILED\fP = -1, \fBUVHTTP_WS_AUTH_NO_TOKEN\fP = -2, \fBUVHTTP_WS_AUTH_INVALID_TOKEN\fP = -3, \fBUVHTTP_WS_AUTH_EXPIRED_TOKEN\fP = -4, \fBUVHTTP_WS_AUTH_IP_BLOCKED\fP = -5, \fBUVHTTP_WS_AUTH_IP_NOT_ALLOWED\fP = -6, \fBUVHTTP_WS_AUTH_INTERNAL_ERROR\fP = -7 }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_ws_auth_config_t\fP * \fBuvhttp_ws_auth_config_create\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_ws_auth_config_destroy\fP (\fBuvhttp_ws_auth_config_t\fP *config)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_ws_auth_set_token_validator\fP (\fBuvhttp_ws_auth_config_t\fP *config, \fBuvhttp_ws_token_validator_callback\fP validator, void *user_data)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_auth_add_ip_to_whitelist\fP (\fBuvhttp_ws_auth_config_t\fP *config, const char *ip)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_auth_add_ip_to_blacklist\fP (\fBuvhttp_ws_auth_config_t\fP *config, const char *ip)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_auth_remove_ip_from_whitelist\fP (\fBuvhttp_ws_auth_config_t\fP *config, const char *ip)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_auth_remove_ip_from_blacklist\fP (\fBuvhttp_ws_auth_config_t\fP *config, const char *ip)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_auth_is_ip_whitelisted\fP (\fBuvhttp_ws_auth_config_t\fP *config, const char *ip)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_auth_is_ip_blacklisted\fP (\fBuvhttp_ws_auth_config_t\fP *config, const char *ip)"
+.br
+.ti -1c
+.RI "\fBuvhttp_ws_auth_result_t\fP \fBuvhttp_ws_authenticate\fP (\fBuvhttp_ws_auth_config_t\fP *config, const char *client_ip, const char *token)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_ws_auth_result_string\fP (\fBuvhttp_ws_auth_result_t\fP result)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_WS_AUTH_DEFAULT_CONFIG"
+\fBValue:\fP
+.PP
+.nf
+    { \
+    \&.enable_token_auth = 0, \
+    \&.token_param_name = "token", \
+    \&.token_validator = NULL, \
+    \&.token_validator_data = NULL, \
+    \&.enable_ip_whitelist = 0, \
+    \&.ip_whitelist = NULL, \
+    \&.enable_ip_blacklist = 0, \
+    \&.ip_blacklist = NULL, \
+    \&.send_auth_failed_response = 1, \
+    \&.auth_failed_message = "Authentication failed" \
+}
+.fi
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBip_entry\fP \fBip_entry_t\fP"
+
+.SS "typedef int(* uvhttp_ws_token_validator_callback) (const char *token, void *user_data)"
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBuvhttp_ws_auth_result_t\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIUVHTTP_WS_AUTH_SUCCESS \fP\fP
+.TP
+\fB\fIUVHTTP_WS_AUTH_FAILED \fP\fP
+.TP
+\fB\fIUVHTTP_WS_AUTH_NO_TOKEN \fP\fP
+.TP
+\fB\fIUVHTTP_WS_AUTH_INVALID_TOKEN \fP\fP
+.TP
+\fB\fIUVHTTP_WS_AUTH_EXPIRED_TOKEN \fP\fP
+.TP
+\fB\fIUVHTTP_WS_AUTH_IP_BLOCKED \fP\fP
+.TP
+\fB\fIUVHTTP_WS_AUTH_IP_NOT_ALLOWED \fP\fP
+.TP
+\fB\fIUVHTTP_WS_AUTH_INTERNAL_ERROR \fP\fP
+.SH "Function Documentation"
+.PP 
+.SS "int uvhttp_ws_auth_add_ip_to_blacklist (\fBuvhttp_ws_auth_config_t\fP * config, const char * ip)"
+
+.SS "int uvhttp_ws_auth_add_ip_to_whitelist (\fBuvhttp_ws_auth_config_t\fP * config, const char * ip)"
+
+.SS "\fBuvhttp_ws_auth_config_t\fP* uvhttp_ws_auth_config_create (void)"
+
+.SS "void uvhttp_ws_auth_config_destroy (\fBuvhttp_ws_auth_config_t\fP * config)"
+
+.SS "int uvhttp_ws_auth_is_ip_blacklisted (\fBuvhttp_ws_auth_config_t\fP * config, const char * ip)"
+
+.SS "int uvhttp_ws_auth_is_ip_whitelisted (\fBuvhttp_ws_auth_config_t\fP * config, const char * ip)"
+
+.SS "int uvhttp_ws_auth_remove_ip_from_blacklist (\fBuvhttp_ws_auth_config_t\fP * config, const char * ip)"
+
+.SS "int uvhttp_ws_auth_remove_ip_from_whitelist (\fBuvhttp_ws_auth_config_t\fP * config, const char * ip)"
+
+.SS "const char* uvhttp_ws_auth_result_string (\fBuvhttp_ws_auth_result_t\fP result)"
+
+.SS "void uvhttp_ws_auth_set_token_validator (\fBuvhttp_ws_auth_config_t\fP * config, \fBuvhttp_ws_token_validator_callback\fP validator, void * user_data)"
+
+.SS "\fBuvhttp_ws_auth_result_t\fP uvhttp_ws_authenticate (\fBuvhttp_ws_auth_config_t\fP * config, const char * client_ip, const char * token)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

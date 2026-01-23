@@ -1,0 +1,156 @@
+.TH "include/uvhttp_router.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_router.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <assert\&.h>\fP
+.br
+\fC#include 'uvhttp_error\&.h'\fP
+.br
+\fC#include 'uvhttp_common\&.h'\fP
+.br
+\fC#include 'uvhttp_request\&.h'\fP
+.br
+\fC#include 'uvhttp_constants\&.h'\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_param_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_route_match_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_route_node\fP"
+.br
+.ti -1c
+.RI "struct \fBarray_route_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_router\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBMAX_ROUTES\fP   128"
+.br
+.ti -1c
+.RI "#define \fBMAX_ROUTE_PATH_LEN\fP   256"
+.br
+.ti -1c
+.RI "#define \fBMAX_PARAMS\fP   16"
+.br
+.ti -1c
+.RI "#define \fBMAX_PARAM_NAME_LEN\fP   64"
+.br
+.ti -1c
+.RI "#define \fBMAX_PARAM_VALUE_LEN\fP   256"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBuvhttp_response\fP \fBuvhttp_response_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_route_node\fP \fBuvhttp_route_node_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_router\fP \fBuvhttp_router_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_router_t\fP * \fBuvhttp_router_new\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_router_free\fP (\fBuvhttp_router_t\fP *router)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_router_add_route\fP (\fBuvhttp_router_t\fP *router, const char *path, \fBuvhttp_request_handler_t\fP handler)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_router_add_route_method\fP (\fBuvhttp_router_t\fP *router, const char *path, \fBuvhttp_method_t\fP method, \fBuvhttp_request_handler_t\fP handler)"
+.br
+.ti -1c
+.RI "\fBuvhttp_request_handler_t\fP \fBuvhttp_router_find_handler\fP (const \fBuvhttp_router_t\fP *router, const char *path, const char *method)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_router_match\fP (const \fBuvhttp_router_t\fP *router, const char *path, const char *method, \fBuvhttp_route_match_t\fP *match)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_parse_path_params\fP (const char *path, \fBuvhttp_param_t\fP *params, size_t *param_count)"
+.br
+.ti -1c
+.RI "\fBuvhttp_method_t\fP \fBuvhttp_method_from_string\fP (const char *method)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_method_to_string\fP (\fBuvhttp_method_t\fP method)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_router_add_static_route\fP (\fBuvhttp_router_t\fP *router, const char *prefix_path, void *static_context)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_router_add_fallback_route\fP (\fBuvhttp_router_t\fP *router, void *static_context)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define MAX_PARAM_NAME_LEN   64"
+
+.SS "#define MAX_PARAM_VALUE_LEN   256"
+
+.SS "#define MAX_PARAMS   16"
+
+.SS "#define MAX_ROUTE_PATH_LEN   256"
+
+.SS "#define MAX_ROUTES   128"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBuvhttp_response\fP \fBuvhttp_response_t\fP"
+
+.SS "typedef struct \fBuvhttp_route_node\fP \fBuvhttp_route_node_t\fP"
+
+.SS "typedef struct \fBuvhttp_router\fP \fBuvhttp_router_t\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "\fBuvhttp_method_t\fP uvhttp_method_from_string (const char * method)"
+
+.SS "const char* uvhttp_method_to_string (\fBuvhttp_method_t\fP method)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_parse_path_params (const char * path, \fBuvhttp_param_t\fP * params, size_t * param_count)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_router_add_fallback_route (\fBuvhttp_router_t\fP * router, void * static_context)"
+添加回退路由 
+.SS "\fBuvhttp_error_t\fP uvhttp_router_add_route (\fBuvhttp_router_t\fP * router, const char * path, \fBuvhttp_request_handler_t\fP handler)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_router_add_route_method (\fBuvhttp_router_t\fP * router, const char * path, \fBuvhttp_method_t\fP method, \fBuvhttp_request_handler_t\fP handler)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_router_add_static_route (\fBuvhttp_router_t\fP * router, const char * prefix_path, void * static_context)"
+添加静态文件路由 
+.SS "\fBuvhttp_request_handler_t\fP uvhttp_router_find_handler (const \fBuvhttp_router_t\fP * router, const char * path, const char * method)"
+
+.SS "void uvhttp_router_free (\fBuvhttp_router_t\fP * router)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_router_match (const \fBuvhttp_router_t\fP * router, const char * path, const char * method, \fBuvhttp_route_match_t\fP * match)"
+
+.SS "\fBuvhttp_router_t\fP* uvhttp_router_new (void)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

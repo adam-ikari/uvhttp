@@ -1,0 +1,170 @@
+.TH "src/uvhttp_router.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_router.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_router\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_utils\&.h'\fP
+.br
+\fC#include 'uvhttp_constants\&.h'\fP
+.br
+\fC#include 'uvhttp_static\&.h'\fP
+.br
+\fC#include 'uvhttp_connection\&.h'\fP
+.br
+\fC#include 'uvhttp_router_cache\&.h'\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <ctype\&.h>\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBHYBRID_THRESHOLD\fP   100  /* 切换到Trie的路由数量阈值 */"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_method_t\fP \fBuvhttp_method_from_string\fP (const char *method)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_method_to_string\fP (\fBuvhttp_method_t\fP method)"
+.br
+.ti -1c
+.RI "static \fBuvhttp_route_node_t\fP * \fBcreate_route_node\fP (\fBuvhttp_router_t\fP *router)"
+.br
+.ti -1c
+.RI "static \fBuvhttp_route_node_t\fP * \fBfind_or_create_child\fP (\fBuvhttp_router_t\fP *router, \fBuvhttp_route_node_t\fP *parent, const char *segment, int is_param)"
+.br
+.ti -1c
+.RI "static int \fBparse_path_params\fP (const char *path, \fBuvhttp_param_t\fP *params, size_t *param_count)"
+.br
+.ti -1c
+.RI "\fBuvhttp_router_t\fP * \fBuvhttp_router_new\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_router_free\fP (\fBuvhttp_router_t\fP *router)"
+.br
+.ti -1c
+.RI "static \fBuvhttp_error_t\fP \fBadd_array_route\fP (\fBuvhttp_router_t\fP *router, const char *path, \fBuvhttp_method_t\fP method, \fBuvhttp_request_handler_t\fP handler)"
+.br
+.ti -1c
+.RI "static \fBuvhttp_request_handler_t\fP \fBfind_array_route\fP (const \fBuvhttp_router_t\fP *router, const char *path, \fBuvhttp_method_t\fP method)"
+.br
+.ti -1c
+.RI "static \fBuvhttp_error_t\fP \fBmigrate_to_trie\fP (\fBuvhttp_router_t\fP *router)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_router_add_route\fP (\fBuvhttp_router_t\fP *router, const char *path, \fBuvhttp_request_handler_t\fP handler)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_router_add_route_method\fP (\fBuvhttp_router_t\fP *router, const char *path, \fBuvhttp_method_t\fP method, \fBuvhttp_request_handler_t\fP handler)"
+.br
+.ti -1c
+.RI "static int \fBmatch_route_node\fP (\fBuvhttp_route_node_t\fP *node, const char **segments, int segment_count, int segment_index, \fBuvhttp_method_t\fP method, \fBuvhttp_route_match_t\fP *match)"
+.br
+.ti -1c
+.RI "static int \fBstatic_file_handler_wrapper\fP (\fBuvhttp_request_t\fP *request, \fBuvhttp_response_t\fP *response)"
+.br
+.ti -1c
+.RI "\fBuvhttp_request_handler_t\fP \fBuvhttp_router_find_handler\fP (const \fBuvhttp_router_t\fP *router, const char *path, const char *method)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_router_match\fP (const \fBuvhttp_router_t\fP *router, const char *path, const char *method, \fBuvhttp_route_match_t\fP *match)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_parse_path_params\fP (const char *path, \fBuvhttp_param_t\fP *params, size_t *param_count)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_router_add_static_route\fP (\fBuvhttp_router_t\fP *router, const char *prefix_path, void *static_context)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_router_add_fallback_route\fP (\fBuvhttp_router_t\fP *router, void *static_context)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define HYBRID_THRESHOLD   100  /* 切换到Trie的路由数量阈值 */"
+路由系统混合模式阈值
+.PP
+当路由数量达到此阈值时，自动从数组模式切换到 Trie 模式以提高性能。
+.PP
+选择依据：
+.IP "\(bu" 2
+数组模式：O(n) 查找，适合少量路由（内存占用小，查找快）
+.IP "\(bu" 2
+Trie 模式：O(m) 查找（m为路径深度），适合大量路由（查找稳定）
+.IP "\(bu" 2
+阈值 100：基于性能测试，在此数量下两种模式的查找性能接近， 但 Trie 模式在路由数量继续增加时性能更稳定
+.PP
+.PP
+性能测试结果（1000 次查找）：
+.IP "\(bu" 2
+50 个路由：数组 0\&.02ms, Trie 0\&.03ms
+.IP "\(bu" 2
+100 个路由：数组 0\&.04ms, Trie 0\&.04ms
+.IP "\(bu" 2
+200 个路由：数组 0\&.08ms, Trie 0\&.05ms
+.IP "\(bu" 2
+500 个路由：数组 0\&.20ms, Trie 0\&.06ms
+.PP
+.PP
+注意：如果需要调整此值，请重新运行性能测试验证 
+.SH "Function Documentation"
+.PP 
+.SS "static \fBuvhttp_error_t\fP add_array_route (\fBuvhttp_router_t\fP * router, const char * path, \fBuvhttp_method_t\fP method, \fBuvhttp_request_handler_t\fP handler)\fC [static]\fP"
+
+.SS "static \fBuvhttp_route_node_t\fP* create_route_node (\fBuvhttp_router_t\fP * router)\fC [static]\fP"
+
+.SS "static \fBuvhttp_request_handler_t\fP find_array_route (const \fBuvhttp_router_t\fP * router, const char * path, \fBuvhttp_method_t\fP method)\fC [static]\fP"
+
+.SS "static \fBuvhttp_route_node_t\fP* find_or_create_child (\fBuvhttp_router_t\fP * router, \fBuvhttp_route_node_t\fP * parent, const char * segment, int is_param)\fC [static]\fP"
+
+.SS "static int match_route_node (\fBuvhttp_route_node_t\fP * node, const char ** segments, int segment_count, int segment_index, \fBuvhttp_method_t\fP method, \fBuvhttp_route_match_t\fP * match)\fC [static]\fP"
+
+.SS "static \fBuvhttp_error_t\fP migrate_to_trie (\fBuvhttp_router_t\fP * router)\fC [static]\fP"
+
+.SS "static int parse_path_params (const char * path, \fBuvhttp_param_t\fP * params, size_t * param_count)\fC [static]\fP"
+
+.SS "static int static_file_handler_wrapper (\fBuvhttp_request_t\fP * request, \fBuvhttp_response_t\fP * response)\fC [static]\fP"
+
+.SS "\fBuvhttp_method_t\fP uvhttp_method_from_string (const char * method)"
+
+.SS "const char* uvhttp_method_to_string (\fBuvhttp_method_t\fP method)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_parse_path_params (const char * path, \fBuvhttp_param_t\fP * params, size_t * param_count)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_router_add_fallback_route (\fBuvhttp_router_t\fP * router, void * static_context)"
+添加回退路由 
+.SS "\fBuvhttp_error_t\fP uvhttp_router_add_route (\fBuvhttp_router_t\fP * router, const char * path, \fBuvhttp_request_handler_t\fP handler)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_router_add_route_method (\fBuvhttp_router_t\fP * router, const char * path, \fBuvhttp_method_t\fP method, \fBuvhttp_request_handler_t\fP handler)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_router_add_static_route (\fBuvhttp_router_t\fP * router, const char * prefix_path, void * static_context)"
+添加静态文件路由 
+.SS "\fBuvhttp_request_handler_t\fP uvhttp_router_find_handler (const \fBuvhttp_router_t\fP * router, const char * path, const char * method)"
+
+.SS "void uvhttp_router_free (\fBuvhttp_router_t\fP * router)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_router_match (const \fBuvhttp_router_t\fP * router, const char * path, const char * method, \fBuvhttp_route_match_t\fP * match)"
+
+.SS "\fBuvhttp_router_t\fP* uvhttp_router_new (void)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

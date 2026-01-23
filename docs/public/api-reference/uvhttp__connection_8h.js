@@ -1,0 +1,36 @@
+var uvhttp__connection_8h =
+[
+    [ "uvhttp_connection", "structuvhttp__connection.html", "structuvhttp__connection" ],
+    [ "uvhttp_connection_t", "uvhttp__connection_8h.html#aa9c472ec5dc2c396dbe7890d98b2f8f5", null ],
+    [ "ws_route_entry_t", "uvhttp__connection_8h.html#a3982e527e370dd1d616049e3b1490378", null ],
+    [ "uvhttp_connection_state_t", "uvhttp__connection_8h.html#a6eeddb49cc3333308e3a712e766e51b6", [
+      [ "UVHTTP_CONN_STATE_NEW", "uvhttp__connection_8h.html#a6eeddb49cc3333308e3a712e766e51b6a42708a6d0d0bd21f6134cf0281b9afd4", null ],
+      [ "UVHTTP_CONN_STATE_TLS_HANDSHAKE", "uvhttp__connection_8h.html#a6eeddb49cc3333308e3a712e766e51b6a2f0a4db7d119e17f76c63a809b8335b4", null ],
+      [ "UVHTTP_CONN_STATE_HTTP_READING", "uvhttp__connection_8h.html#a6eeddb49cc3333308e3a712e766e51b6a402aff91f1f753f6bcc353e469006837", null ],
+      [ "UVHTTP_CONN_STATE_HTTP_PROCESSING", "uvhttp__connection_8h.html#a6eeddb49cc3333308e3a712e766e51b6a5bb6fb1d13d0f7ce3a01cb1f1c3b25c5", null ],
+      [ "UVHTTP_CONN_STATE_HTTP_WRITING", "uvhttp__connection_8h.html#a6eeddb49cc3333308e3a712e766e51b6a82d966dd4ea62fee61b453206eb90448", null ],
+      [ "UVHTTP_CONN_STATE_CLOSING", "uvhttp__connection_8h.html#a6eeddb49cc3333308e3a712e766e51b6a588be6b9006d38f52e775e63a67203cd", null ]
+    ] ],
+    [ "uvhttp_connection_close", "uvhttp__connection_8h.html#a6aa513565cd6a795768c04e676e125ab", null ],
+    [ "uvhttp_connection_free", "uvhttp__connection_8h.html#a87c332c7095a77e1d934e0034f7a1fac", null ],
+    [ "uvhttp_connection_get_state_string", "uvhttp__connection_8h.html#aed6846f43752458b7ad25d98a2f08d55", null ],
+    [ "uvhttp_connection_handle_websocket_handshake", "uvhttp__connection_8h.html#a9c4c8d1eadab862fc22c16ef49c583aa", null ],
+    [ "uvhttp_connection_new", "uvhttp__connection_8h.html#a20f672849fe5bc1814667ad781669c9a", null ],
+    [ "uvhttp_connection_pool_acquire", "uvhttp__connection_8h.html#a8e2f642d1de22eab5b94e52d9cac39c2", null ],
+    [ "uvhttp_connection_pool_cleanup", "uvhttp__connection_8h.html#a030464e79026f007518d429048b63a86", null ],
+    [ "uvhttp_connection_pool_release", "uvhttp__connection_8h.html#acc8b3332c21f7b8f63faa06c100196e0", null ],
+    [ "uvhttp_connection_restart_read", "uvhttp__connection_8h.html#a1453f010ce0797d3afeece6c68ca61df", null ],
+    [ "uvhttp_connection_schedule_restart_read", "uvhttp__connection_8h.html#af3c257cd16ab5ff18f969913f2e5abd0", null ],
+    [ "uvhttp_connection_set_state", "uvhttp__connection_8h.html#aefe5d5b5524f8fc6b3a474b53d48adf7", null ],
+    [ "uvhttp_connection_start", "uvhttp__connection_8h.html#a65c56f56bce5ad6fa70e93e0bcee09ae", null ],
+    [ "uvhttp_connection_start_tls_handshake", "uvhttp__connection_8h.html#a54c70e5bafc2063cef121a83c3752d12", null ],
+    [ "uvhttp_connection_switch_to_websocket", "uvhttp__connection_8h.html#a1146b3554069a435f63a86803ea428a4", null ],
+    [ "uvhttp_connection_tls_cleanup", "uvhttp__connection_8h.html#a3b2bc6c4bf7d9a856b88acbe84314ac2", null ],
+    [ "uvhttp_connection_tls_handshake_func", "uvhttp__connection_8h.html#add2fcbc4623889d20554c497f72f179e", null ],
+    [ "uvhttp_connection_tls_read", "uvhttp__connection_8h.html#a0c720f08d1178387fcfe1ade5b1d8d27", null ],
+    [ "uvhttp_connection_tls_write", "uvhttp__connection_8h.html#a2a19b6743038341576bf0a5591a548af", null ],
+    [ "uvhttp_connection_websocket_close", "uvhttp__connection_8h.html#abc2bc565cccd39b0d4211366708d04cf", null ],
+    [ "uvhttp_connection_websocket_read", "uvhttp__connection_8h.html#a764a7030ea9c6c4fab1c359e59fce359", null ],
+    [ "uvhttp_server_find_ws_handler", "uvhttp__connection_8h.html#a6cc739ebbf48d1410b6a52c8b7709571", null ],
+    [ "uvhttp_server_find_ws_route_entry", "uvhttp__connection_8h.html#ace76909601cc32d889ef54fdd095fc18", null ]
+];

@@ -1,0 +1,48 @@
+.TH "uvhttp_mock_network_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_mock_network_t
+.SH SYNOPSIS
+.br
+.PP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_network_interface_t\fP \fBbase\fP"
+.br
+.ti -1c
+.RI "uv_loop_t * \fBloop\fP"
+.br
+.ti -1c
+.RI "int \fBsimulate_error\fP"
+.br
+.ti -1c
+.RI "uint32_t \fBdelayed_writes\fP"
+.br
+.ti -1c
+.RI "char * \fBcaptured_data\fP"
+.br
+.ti -1c
+.RI "size_t \fBcaptured_length\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "\fBuvhttp_network_interface_t\fP uvhttp_mock_network_t::base"
+
+.SS "char* uvhttp_mock_network_t::captured_data"
+
+.SS "size_t uvhttp_mock_network_t::captured_length"
+
+.SS "uint32_t uvhttp_mock_network_t::delayed_writes"
+
+.SS "uv_loop_t* uvhttp_mock_network_t::loop"
+
+.SS "int uvhttp_mock_network_t::simulate_error"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

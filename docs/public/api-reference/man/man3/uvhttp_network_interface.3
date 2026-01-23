@@ -1,0 +1,90 @@
+.TH "uvhttp_network_interface" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_network_interface
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_network\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_network_type_t\fP \fBtype\fP"
+.br
+.ti -1c
+.RI "int(* \fBwrite\fP )(struct \fBuvhttp_network_interface\fP *self, uv_stream_t *stream, const uv_buf_t *bufs, unsigned int nbufs, uv_write_cb cb)"
+.br
+.ti -1c
+.RI "int(* \fBread_start\fP )(struct \fBuvhttp_network_interface\fP *self, uv_stream_t *stream, uv_alloc_cb alloc_cb, uv_read_cb read_cb)"
+.br
+.ti -1c
+.RI "int(* \fBread_stop\fP )(struct \fBuvhttp_network_interface\fP *self, uv_stream_t *stream)"
+.br
+.ti -1c
+.RI "int(* \fBclose\fP )(struct \fBuvhttp_network_interface\fP *self, uv_handle_t *\fBhandle\fP, uv_close_cb close_cb)"
+.br
+.ti -1c
+.RI "void *(* \fBget_stats\fP )(struct \fBuvhttp_network_interface\fP *self)"
+.br
+.ti -1c
+.RI "void(* \fBreset_stats\fP )(struct \fBuvhttp_network_interface\fP *self)"
+.br
+.ti -1c
+.RI "void(* \fBset_error_simulation\fP )(struct \fBuvhttp_network_interface\fP *self, int error_code)"
+.br
+.ti -1c
+.RI "void * \fBhandle\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBbytes_sent\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBbytes_received\fP"
+.br
+.ti -1c
+.RI "uint32_t \fBerror_count\fP"
+.br
+.ti -1c
+.RI "uint32_t \fBwrite_count\fP"
+.br
+.ti -1c
+.RI "uint32_t \fBread_count\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "uint64_t uvhttp_network_interface::bytes_received"
+
+.SS "uint64_t uvhttp_network_interface::bytes_sent"
+
+.SS "int(* uvhttp_network_interface::close) (struct \fBuvhttp_network_interface\fP *self, uv_handle_t *\fBhandle\fP, uv_close_cb close_cb)"
+
+.SS "uint32_t uvhttp_network_interface::error_count"
+
+.SS "void*(* uvhttp_network_interface::get_stats) (struct \fBuvhttp_network_interface\fP *self)"
+
+.SS "void* uvhttp_network_interface::handle"
+
+.SS "uint32_t uvhttp_network_interface::read_count"
+
+.SS "int(* uvhttp_network_interface::read_start) (struct \fBuvhttp_network_interface\fP *self, uv_stream_t *stream, uv_alloc_cb alloc_cb, uv_read_cb read_cb)"
+
+.SS "int(* uvhttp_network_interface::read_stop) (struct \fBuvhttp_network_interface\fP *self, uv_stream_t *stream)"
+
+.SS "void(* uvhttp_network_interface::reset_stats) (struct \fBuvhttp_network_interface\fP *self)"
+
+.SS "void(* uvhttp_network_interface::set_error_simulation) (struct \fBuvhttp_network_interface\fP *self, int error_code)"
+
+.SS "\fBuvhttp_network_type_t\fP uvhttp_network_interface::type"
+
+.SS "int(* uvhttp_network_interface::write) (struct \fBuvhttp_network_interface\fP *self, uv_stream_t *stream, const uv_buf_t *bufs, unsigned int nbufs, uv_write_cb cb)"
+
+.SS "uint32_t uvhttp_network_interface::write_count"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

@@ -1,0 +1,103 @@
+.TH "include/uvhttp_router_cache.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_router_cache.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_router\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <stdint\&.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_route_cache_entry_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_route_cache_t\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_ROUTER_CACHE_SIZE\fP   1024"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_ROUTE_LENGTH\fP   1024"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MAX_PARAMS\fP   16"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_route_cache_init\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_route_cache_cleanup\fP (void)"
+.br
+.ti -1c
+.RI "\fBuvhttp_route_cache_entry_t\fP * \fBuvhttp_route_cache_lookup\fP (const char *route, \fBuvhttp_method_t\fP method)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_route_cache_store\fP (const char *route, \fBuvhttp_method_t\fP method, \fBuvhttp_route_node_t\fP *handler, const \fBuvhttp_param_t\fP *params, size_t param_count)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_route_cache_get_stats\fP (size_t *hits, size_t *misses, double *hit_rate)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_route_cache_clear\fP (void)"
+.br
+.ti -1c
+.RI "static uint32_t \fBuvhttp_route_hash\fP (const char *route, \fBuvhttp_method_t\fP method)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_route_cache_t\fP \fBg_route_cache\fP"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_MAX_PARAMS   16"
+
+.SS "#define UVHTTP_MAX_ROUTE_LENGTH   1024"
+
+.SS "#define UVHTTP_ROUTER_CACHE_SIZE   1024"
+
+.SH "Function Documentation"
+.PP 
+.SS "void uvhttp_route_cache_cleanup (void)"
+
+.SS "void uvhttp_route_cache_clear (void)"
+
+.SS "void uvhttp_route_cache_get_stats (size_t * hits, size_t * misses, double * hit_rate)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_route_cache_init (void)"
+
+.SS "\fBuvhttp_route_cache_entry_t\fP* uvhttp_route_cache_lookup (const char * route, \fBuvhttp_method_t\fP method)"
+
+.SS "void uvhttp_route_cache_store (const char * route, \fBuvhttp_method_t\fP method, \fBuvhttp_route_node_t\fP * handler, const \fBuvhttp_param_t\fP * params, size_t param_count)"
+
+.SS "static uint32_t uvhttp_route_hash (const char * route, \fBuvhttp_method_t\fP method)\fC [inline]\fP, \fC [static]\fP"
+
+.SH "Variable Documentation"
+.PP 
+.SS "\fBuvhttp_route_cache_t\fP g_route_cache\fC [extern]\fP"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

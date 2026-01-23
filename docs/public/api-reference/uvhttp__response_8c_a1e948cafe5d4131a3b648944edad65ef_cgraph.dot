@@ -1,0 +1,20 @@
+digraph "uvhttp_response_build_for_test"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="uvhttp_response_build\l_for_test",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="uvhttp_response_build_data",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__response_8c.html#a47242f629b8ff84a21bf78593056c64f",tooltip=" "];
+  Node2 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="build_response_headers",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__response_8c.html#a6cd261704dc650f704550c609abef0f9",tooltip=" "];
+  Node3 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="contains_control_chars",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__response_8c.html#af5ca731836299273336a10b022c6f34d",tooltip=" "];
+  Node3 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="get_status_text",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__response_8c.html#ac0fb0ae67a6ed595c61b9c8bc7a0d220",tooltip=" "];
+  Node2 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="uvhttp_alloc",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__allocator_8h.html#a661eb4c960ecfb1529019371a18becb6",tooltip=" "];
+  Node2 -> Node7 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="uvhttp_free",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__allocator_8h.html#a956d07931818b449298b1649e830b3a5",tooltip=" "];
+}

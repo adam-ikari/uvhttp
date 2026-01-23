@@ -1,0 +1,213 @@
+.TH "src/uvhttp_connection.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_connection.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_connection\&.h'\fP
+.br
+\fC#include 'uvhttp_server\&.h'\fP
+.br
+\fC#include 'uvhttp_request\&.h'\fP
+.br
+\fC#include 'uvhttp_response\&.h'\fP
+.br
+\fC#include 'uvhttp_router\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_constants\&.h'\fP
+.br
+\fC#include 'uvhttp_error_helpers\&.h'\fP
+.br
+\fC#include 'uvhttp_error_handler\&.h'\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <uv\&.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_connection_pool_entry\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_ws_wrapper_t\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_STATIC_ASSERT\fP(cond,  msg)   static_assert(cond, msg)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONNECTION_POOL_SIZE\fP   100"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CONNECTION_POOL_TTL\fP   30"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBuvhttp_connection_pool_entry\fP \fBuvhttp_connection_pool_entry_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static void \fBon_close\fP (uv_handle_t *handle)"
+.br
+.ti -1c
+.RI "static void \fBon_idle_restart_read\fP (uv_idle_t *handle)"
+.br
+.ti -1c
+.RI "\fBuvhttp_connection_t\fP * \fBuvhttp_connection_pool_acquire\fP (\fBuvhttp_server_t\fP *server)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_pool_release\fP (\fBuvhttp_server_t\fP *server, \fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_pool_cleanup\fP (\fBuvhttp_server_t\fP *server)"
+.br
+.ti -1c
+.RI "static void \fBon_alloc_buffer\fP (uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)"
+.br
+.ti -1c
+.RI "static void \fBon_read\fP (uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_connection_restart_read\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "\fBuvhttp_connection_t\fP * \fBuvhttp_connection_new\fP (struct \fBuvhttp_server\fP *server)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_free\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_connection_start\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_close\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_set_state\fP (\fBuvhttp_connection_t\fP *conn, \fBuvhttp_connection_state_t\fP state)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_connection_tls_handshake_func\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_connection_tls_write\fP (\fBuvhttp_connection_t\fP *conn, const void *data, size_t len)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_connection_schedule_restart_read\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "static void \fBon_websocket_read\fP (uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)"
+.br
+.ti -1c
+.RI "static int \fBon_websocket_close\fP (\fBuvhttp_ws_connection_t\fP *ws_conn, int code, const char *reason)"
+.br
+.ti -1c
+.RI "static int \fBon_websocket_error\fP (\fBuvhttp_ws_connection_t\fP *ws_conn, int error_code, const char *error_msg)"
+.br
+.ti -1c
+.RI "static int \fBon_websocket_message\fP (\fBuvhttp_ws_connection_t\fP *ws_conn, const char *data, size_t len, int opcode)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_connection_handle_websocket_handshake\fP (\fBuvhttp_connection_t\fP *conn, const char *ws_key)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_switch_to_websocket\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_websocket_close\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_CONNECTION_POOL_SIZE   100"
+
+.SS "#define UVHTTP_CONNECTION_POOL_TTL   30"
+
+.SS "#define UVHTTP_STATIC_ASSERT(cond, msg)   static_assert(cond, msg)"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBuvhttp_connection_pool_entry\fP \fBuvhttp_connection_pool_entry_t\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "static void on_alloc_buffer (uv_handle_t * handle, size_t suggested_size, uv_buf_t * buf)\fC [static]\fP"
+
+.SS "static void on_close (uv_handle_t * handle)\fC [static]\fP"
+连接关闭回调（单线程事件驱动）
+.PP
+特点：
+.IP "\(bu" 2
+在libuv事件循环线程中被调用
+.IP "\(bu" 2
+所有连接操作都在同一线程中，无需锁机制
+.IP "\(bu" 2
+连接计数器递减是单线程安全的
+.IP "\(bu" 2
+尝试将连接放回连接池以供复用 
+.PP
+
+.SS "static void on_idle_restart_read (uv_idle_t * handle)\fC [static]\fP"
+
+.SS "static void on_read (uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf)\fC [static]\fP"
+
+.SS "static int on_websocket_close (\fBuvhttp_ws_connection_t\fP * ws_conn, int code, const char * reason)\fC [static]\fP"
+
+.SS "static int on_websocket_error (\fBuvhttp_ws_connection_t\fP * ws_conn, int error_code, const char * error_msg)\fC [static]\fP"
+
+.SS "static int on_websocket_message (\fBuvhttp_ws_connection_t\fP * ws_conn, const char * data, size_t len, int opcode)\fC [static]\fP"
+
+.SS "static void on_websocket_read (uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf)\fC [static]\fP"
+
+.SS "void uvhttp_connection_close (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "void uvhttp_connection_free (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "int uvhttp_connection_handle_websocket_handshake (\fBuvhttp_connection_t\fP * conn, const char * ws_key)"
+
+.SS "\fBuvhttp_connection_t\fP* uvhttp_connection_new (struct \fBuvhttp_server\fP * server)"
+
+.SS "\fBuvhttp_connection_t\fP* uvhttp_connection_pool_acquire (\fBuvhttp_server_t\fP * server)"
+
+.SS "void uvhttp_connection_pool_cleanup (\fBuvhttp_server_t\fP * server)"
+
+.SS "void uvhttp_connection_pool_release (\fBuvhttp_server_t\fP * server, \fBuvhttp_connection_t\fP * conn)"
+
+.SS "int uvhttp_connection_restart_read (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "int uvhttp_connection_schedule_restart_read (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "void uvhttp_connection_set_state (\fBuvhttp_connection_t\fP * conn, \fBuvhttp_connection_state_t\fP state)"
+
+.SS "int uvhttp_connection_start (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "void uvhttp_connection_switch_to_websocket (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "int uvhttp_connection_tls_handshake_func (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "int uvhttp_connection_tls_write (\fBuvhttp_connection_t\fP * conn, const void * data, size_t len)"
+
+.SS "void uvhttp_connection_websocket_close (\fBuvhttp_connection_t\fP * conn)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

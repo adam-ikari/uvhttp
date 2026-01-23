@@ -1,0 +1,151 @@
+.TH "include/uvhttp_request.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_request.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <uv\&.h>\fP
+.br
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <assert\&.h>\fP
+.br
+\fC#include 'llhttp\&.h'\fP
+.br
+\fC#include 'uvhttp_common\&.h'\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_request\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBMAX_URL_LEN\fP   2048"
+.br
+.ti -1c
+.RI "#define \fBMAX_BODY_LEN\fP   (1024 * 1024)"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBuvhttp_request\fP \fBuvhttp_request_t\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBuvhttp_method_t\fP { \fBUVHTTP_ANY\fP = 0, \fBUVHTTP_GET\fP, \fBUVHTTP_POST\fP, \fBUVHTTP_PUT\fP, \fBUVHTTP_DELETE\fP, \fBUVHTTP_HEAD\fP, \fBUVHTTP_OPTIONS\fP, \fBUVHTTP_PATCH\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_method\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_url\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_request_free\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_request_cleanup\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_path\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_query_string\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_query_param\fP (\fBuvhttp_request_t\fP *request, const char *name)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_client_ip\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_header\fP (\fBuvhttp_request_t\fP *request, const char *name)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_body\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "size_t \fBuvhttp_request_get_body_length\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define MAX_BODY_LEN   (1024 * 1024)"
+
+.SS "#define MAX_URL_LEN   2048"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBuvhttp_request\fP \fBuvhttp_request_t\fP"
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBuvhttp_method_t\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIUVHTTP_ANY \fP\fP
+.TP
+\fB\fIUVHTTP_GET \fP\fP
+.TP
+\fB\fIUVHTTP_POST \fP\fP
+.TP
+\fB\fIUVHTTP_PUT \fP\fP
+.TP
+\fB\fIUVHTTP_DELETE \fP\fP
+.TP
+\fB\fIUVHTTP_HEAD \fP\fP
+.TP
+\fB\fIUVHTTP_OPTIONS \fP\fP
+.TP
+\fB\fIUVHTTP_PATCH \fP\fP
+.SH "Function Documentation"
+.PP 
+.SS "void uvhttp_request_cleanup (\fBuvhttp_request_t\fP * request)"
+
+.SS "void uvhttp_request_free (\fBuvhttp_request_t\fP * request)"
+
+.SS "const char* uvhttp_request_get_body (\fBuvhttp_request_t\fP * request)"
+
+.SS "size_t uvhttp_request_get_body_length (\fBuvhttp_request_t\fP * request)"
+
+.SS "const char* uvhttp_request_get_client_ip (\fBuvhttp_request_t\fP * request)"
+
+.SS "const char* uvhttp_request_get_header (\fBuvhttp_request_t\fP * request, const char * name)"
+
+.SS "const char* uvhttp_request_get_method (\fBuvhttp_request_t\fP * request)"
+
+.SS "const char* uvhttp_request_get_path (\fBuvhttp_request_t\fP * request)"
+
+.SS "const char* uvhttp_request_get_query_param (\fBuvhttp_request_t\fP * request, const char * name)"
+
+.SS "const char* uvhttp_request_get_query_string (\fBuvhttp_request_t\fP * request)"
+
+.SS "const char* uvhttp_request_get_url (\fBuvhttp_request_t\fP * request)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

@@ -1,0 +1,50 @@
+.TH "uvhttp_async_file_manager" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_async_file_manager
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_async_file\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "uv_loop_t * \fBloop\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_async_file_request_t\fP * \fBactive_requests\fP"
+.br
+.ti -1c
+.RI "int \fBmax_concurrent_reads\fP"
+.br
+.ti -1c
+.RI "int \fBcurrent_reads\fP"
+.br
+.ti -1c
+.RI "size_t \fBread_buffer_size\fP"
+.br
+.ti -1c
+.RI "size_t \fBmax_file_size\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "\fBuvhttp_async_file_request_t\fP* uvhttp_async_file_manager::active_requests"
+
+.SS "int uvhttp_async_file_manager::current_reads"
+
+.SS "uv_loop_t* uvhttp_async_file_manager::loop"
+
+.SS "int uvhttp_async_file_manager::max_concurrent_reads"
+
+.SS "size_t uvhttp_async_file_manager::max_file_size"
+
+.SS "size_t uvhttp_async_file_manager::read_buffer_size"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

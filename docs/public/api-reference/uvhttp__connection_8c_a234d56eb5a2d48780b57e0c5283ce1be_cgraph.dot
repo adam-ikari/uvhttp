@@ -1,0 +1,38 @@
+digraph "on_read"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="on_read",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="uvhttp_connection_close",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__connection_8c.html#a6aa513565cd6a795768c04e676e125ab",tooltip=" "];
+  Node2 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="on_close",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__connection_8c.html#aed1682774c7cb8a415b8f8306ac6eac9",tooltip=" "];
+  Node3 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="uvhttp_connection_free",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__connection_8c.html#a87c332c7095a77e1d934e0034f7a1fac",tooltip=" "];
+  Node4 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="uvhttp_free",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__allocator_8h.html#a956d07931818b449298b1649e830b3a5",tooltip=" "];
+  Node4 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="uvhttp_mempool_destroy",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__mempool_8h.html#af9afcd5eb033da05b09ac93f2f9dba44",tooltip=" "];
+  Node6 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 -> Node7 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="uvhttp_request_cleanup",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__request_8h.html#aa4ca7b4cbc7ee29388eaa4e033065609",tooltip=" "];
+  Node7 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 -> Node8 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 [label="uvhttp_response_cleanup",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__response_8h.html#a027444bec85d503a5508b98978766250",tooltip=" "];
+  Node8 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 -> Node9 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node9 [label="uvhttp_connection_pool\l_release",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__connection_8c.html#af81a181e90a6e0827124f5d3f57a31ca",tooltip=" "];
+  Node9 -> Node10 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node10 [label="uvhttp_alloc",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__allocator_8h.html#a661eb4c960ecfb1529019371a18becb6",tooltip=" "];
+  Node9 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 -> Node11 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node11 [label="uvhttp_connection_set\l_state",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__connection_8c.html#aefe5d5b5524f8fc6b3a474b53d48adf7",tooltip=" "];
+  Node1 -> Node12 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node12 [label="uvhttp_log_safe_error",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__error__helpers_8h.html#aaeeef0c4811aceb615d3290454473004",tooltip=" "];
+  Node12 -> Node13 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node13 [label="uvhttp_sanitize_error\l_message",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__error__helpers_8c.html#ac7c44eb653f934330d8e6940c8960c44",tooltip=" "];
+  Node13 -> Node14 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node14 [label="contains_sensitive_info",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__error__helpers_8c.html#aedcf8452f190094f09ece9cd744f7742",tooltip=" "];
+}

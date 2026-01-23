@@ -1,0 +1,153 @@
+.TH "src/uvhttp_request.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_request.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_request\&.h'\fP
+.br
+\fC#include 'uvhttp_connection\&.h'\fP
+.br
+\fC#include 'uvhttp_router\&.h'\fP
+.br
+\fC#include 'uvhttp_middleware\&.h'\fP
+.br
+\fC#include 'uvhttp_utils\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_constants\&.h'\fP
+.br
+\fC#include 'uvhttp_validation\&.h'\fP
+.br
+\fC#include 'uvhttp_features\&.h'\fP
+.br
+\fC#include 'uvhttp_error_handler\&.h'\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include 'uthash\&.h'\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <strings\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <openssl/sha\&.h>\fP
+.br
+\fC#include <openssl/evp\&.h>\fP
+.br
+\fC#include <openssl/bio\&.h>\fP
+.br
+\fC#include <openssl/buffer\&.h>\fP
+.br
+\fC#include 'uvhttp_websocket_native\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static int \fBis_websocket_handshake\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "static int \fBon_message_begin\fP (llhttp_t *parser)"
+.br
+.ti -1c
+.RI "static int \fBon_url\fP (llhttp_t *parser, const char *at, size_t length)"
+.br
+.ti -1c
+.RI "static int \fBon_header_field\fP (llhttp_t *parser, const char *at, size_t length)"
+.br
+.ti -1c
+.RI "static int \fBon_header_value\fP (llhttp_t *parser, const char *at, size_t length)"
+.br
+.ti -1c
+.RI "static int \fBon_body\fP (llhttp_t *parser, const char *at, size_t length)"
+.br
+.ti -1c
+.RI "static int \fBon_message_complete\fP (llhttp_t *parser)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_request_init\fP (\fBuvhttp_request_t\fP *request, uv_tcp_t *client)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_request_cleanup\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_method\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_url\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_header\fP (\fBuvhttp_request_t\fP *request, const char *name)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_body\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "size_t \fBuvhttp_request_get_body_length\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_path\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_query_string\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_query_param\fP (\fBuvhttp_request_t\fP *request, const char *name)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_request_get_client_ip\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_request_free\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "static int is_websocket_handshake (\fBuvhttp_request_t\fP * request)\fC [static]\fP"
+
+.SS "static int on_body (llhttp_t * parser, const char * at, size_t length)\fC [static]\fP"
+
+.SS "static int on_header_field (llhttp_t * parser, const char * at, size_t length)\fC [static]\fP"
+
+.SS "static int on_header_value (llhttp_t * parser, const char * at, size_t length)\fC [static]\fP"
+
+.SS "static int on_message_begin (llhttp_t * parser)\fC [static]\fP"
+
+.SS "static int on_message_complete (llhttp_t * parser)\fC [static]\fP"
+
+.SS "static int on_url (llhttp_t * parser, const char * at, size_t length)\fC [static]\fP"
+
+.SS "void uvhttp_request_cleanup (\fBuvhttp_request_t\fP * request)"
+
+.SS "void uvhttp_request_free (\fBuvhttp_request_t\fP * request)"
+
+.SS "const char* uvhttp_request_get_body (\fBuvhttp_request_t\fP * request)"
+
+.SS "size_t uvhttp_request_get_body_length (\fBuvhttp_request_t\fP * request)"
+
+.SS "const char* uvhttp_request_get_client_ip (\fBuvhttp_request_t\fP * request)"
+
+.SS "const char* uvhttp_request_get_header (\fBuvhttp_request_t\fP * request, const char * name)"
+
+.SS "const char* uvhttp_request_get_method (\fBuvhttp_request_t\fP * request)"
+
+.SS "const char* uvhttp_request_get_path (\fBuvhttp_request_t\fP * request)"
+
+.SS "const char* uvhttp_request_get_query_param (\fBuvhttp_request_t\fP * request, const char * name)"
+
+.SS "const char* uvhttp_request_get_query_string (\fBuvhttp_request_t\fP * request)"
+
+.SS "const char* uvhttp_request_get_url (\fBuvhttp_request_t\fP * request)"
+
+.SS "int uvhttp_request_init (\fBuvhttp_request_t\fP * request, uv_tcp_t * client)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

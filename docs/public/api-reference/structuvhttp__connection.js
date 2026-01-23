@@ -1,0 +1,28 @@
+var structuvhttp__connection =
+[
+    [ "body_received", "structuvhttp__connection.html#ac27f2370dcceeb489d4c71cfbdc2dade", null ],
+    [ "chunked_encoding", "structuvhttp__connection.html#aef2d14ca11322774c72159056a259def", null ],
+    [ "content_length", "structuvhttp__connection.html#a8ed62d51bf9ce91469fa0d34676ee5d9", null ],
+    [ "current_header_field", "structuvhttp__connection.html#aaa987cc7ca4ee84e0e38770a6a4fc1a7", null ],
+    [ "current_header_field_len", "structuvhttp__connection.html#a3e562ee505d1f12c49a33012587f8f6c", null ],
+    [ "current_header_is_important", "structuvhttp__connection.html#a381dc6afebbd34b53d9cea5516b78c24", null ],
+    [ "idle_handle", "structuvhttp__connection.html#ac653cdf127f76f398cb2f50128780a8e", null ],
+    [ "is_websocket", "structuvhttp__connection.html#ad7acb570dcb669aefc95bd3f77725067", null ],
+    [ "keep_alive", "structuvhttp__connection.html#a5d3a9170adb100bd2c2ed28a0bddffd3", null ],
+    [ "last_error", "structuvhttp__connection.html#a217f16e74975830daed97706768855d0", null ],
+    [ "mempool", "structuvhttp__connection.html#a752a7c2789f82d4e387986f876accb17", null ],
+    [ "need_restart_read", "structuvhttp__connection.html#a9c821478d7fa14e131928c865db4dca3", null ],
+    [ "parsing_complete", "structuvhttp__connection.html#a3ea95f517f009537f907f14428f432ce", null ],
+    [ "parsing_header_field", "structuvhttp__connection.html#a75cb0155f0c174e0d2c488bbfb7b114f", null ],
+    [ "read_buffer", "structuvhttp__connection.html#a3420601b31a75f64a4bc2fceab82ad21", null ],
+    [ "read_buffer_size", "structuvhttp__connection.html#ac1ac4ef1aa8958266ff514265b8e54bd", null ],
+    [ "read_buffer_used", "structuvhttp__connection.html#a94b9ce02fc08d5bc05cb95999b993557", null ],
+    [ "request", "structuvhttp__connection.html#aac3c3a6a65968b22722ae3e52686ed9e", null ],
+    [ "response", "structuvhttp__connection.html#a535083e027450f73a175fa93ba60213d", null ],
+    [ "server", "structuvhttp__connection.html#a3aba7ba0fd384167d7674478eefb40a4", null ],
+    [ "ssl", "structuvhttp__connection.html#ace148f0898f07733b0ac82ef4e598d35", null ],
+    [ "state", "structuvhttp__connection.html#ad6115f7fa78cb0179d44761503d4a13c", null ],
+    [ "tcp_handle", "structuvhttp__connection.html#a17b1bc5faed8e0f88cbe7c558908c104", null ],
+    [ "tls_enabled", "structuvhttp__connection.html#ab56afa8aa692fd90dc2fe0c26760bb94", null ],
+    [ "ws_connection", "structuvhttp__connection.html#a11523eb477e91df789bf033857399456", null ]
+];

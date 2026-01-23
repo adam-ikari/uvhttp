@@ -1,0 +1,90 @@
+.TH "uvhttp_request" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_request
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_request\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_method_t\fP \fBmethod\fP"
+.br
+.ti -1c
+.RI "int \fBparsing_complete\fP"
+.br
+.ti -1c
+.RI "size_t \fBheader_count\fP"
+.br
+.ti -1c
+.RI "uv_tcp_t * \fBclient\fP"
+.br
+.ti -1c
+.RI "llhttp_t * \fBparser\fP"
+.br
+.ti -1c
+.RI "llhttp_settings_t * \fBparser_settings\fP"
+.br
+.ti -1c
+.RI "char * \fBpath\fP"
+.br
+.ti -1c
+.RI "char * \fBquery\fP"
+.br
+.ti -1c
+.RI "char * \fBbody\fP"
+.br
+.ti -1c
+.RI "void * \fBuser_data\fP"
+.br
+.ti -1c
+.RI "char \fBurl\fP [2048]"
+.br
+.ti -1c
+.RI "size_t \fBbody_length\fP"
+.br
+.ti -1c
+.RI "size_t \fBbody_capacity\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_header_t\fP \fBheaders\fP [64]"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "char* uvhttp_request::body"
+
+.SS "size_t uvhttp_request::body_capacity"
+
+.SS "size_t uvhttp_request::body_length"
+
+.SS "uv_tcp_t* uvhttp_request::client"
+
+.SS "size_t uvhttp_request::header_count"
+
+.SS "\fBuvhttp_header_t\fP uvhttp_request::headers[64]"
+
+.SS "\fBuvhttp_method_t\fP uvhttp_request::method"
+
+.SS "llhttp_t* uvhttp_request::parser"
+
+.SS "llhttp_settings_t* uvhttp_request::parser_settings"
+
+.SS "int uvhttp_request::parsing_complete"
+
+.SS "char* uvhttp_request::path"
+
+.SS "char* uvhttp_request::query"
+
+.SS "char uvhttp_request::url[2048]"
+
+.SS "void* uvhttp_request::user_data"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

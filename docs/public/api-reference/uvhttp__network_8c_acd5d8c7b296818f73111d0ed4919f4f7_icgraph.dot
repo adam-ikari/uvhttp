@@ -1,0 +1,16 @@
+digraph "mock_reset_stats_impl"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="mock_reset_stats_impl",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="uvhttp_mock_network\l_create",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__network_8h.html#abedfdc5d4c3cbf0eb25eb59a28e49658",tooltip=" "];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="uvhttp_network_interface\l_create",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__network_8h.html#a8efcc2e6336422c231d436334f1ac941",tooltip=" "];
+  Node3 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="uvhttp_context_init",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__context_8h.html#a44d8be5941090330f93d4125a99de0a1",tooltip=" "];
+  Node3 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="uvhttp_test_context_init",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__context_8h.html#aab7b26845e46cfc7e5391d8aaeabefdf",tooltip=" "];
+}

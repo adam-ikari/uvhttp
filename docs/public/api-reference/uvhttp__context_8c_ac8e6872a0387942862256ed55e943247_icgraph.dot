@@ -1,0 +1,20 @@
+digraph "test_log"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="test_log",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="uvhttp_context_destroy",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__context_8h.html#a1403e078ef9bfdc3cc6b3fa7dd6746ee",tooltip=" "];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="uvhttp_test_context\l_cleanup",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__context_8h.html#a05fa686850029adbb1232e6223c1c9a1",tooltip=" "];
+  Node3 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="uvhttp_test_context_init",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__context_8h.html#aab7b26845e46cfc7e5391d8aaeabefdf",tooltip=" "];
+  Node2 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="uvhttp_context_set\l_logger_provider",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__context_8h.html#a65a80298281fda0e6a64361ae5cab87e",tooltip=" "];
+  Node1 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="uvhttp_test_logger\l_provider_create",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__context_8h.html#a2fc8bc4fa7937358d510ccadfe46fdf3",tooltip=" "];
+  Node6 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+}

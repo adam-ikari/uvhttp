@@ -1,0 +1,28 @@
+var dir_68267d1309a1af8e8297ef4c3efbcdba =
+[
+    [ "uvhttp_allocator.c", "uvhttp__allocator_8c.html", "uvhttp__allocator_8c" ],
+    [ "uvhttp_async_file.c", "uvhttp__async__file_8c.html", "uvhttp__async__file_8c" ],
+    [ "uvhttp_config.c", "uvhttp__config_8c.html", "uvhttp__config_8c" ],
+    [ "uvhttp_connection.c", "uvhttp__connection_8c.html", "uvhttp__connection_8c" ],
+    [ "uvhttp_context.c", "uvhttp__context_8c.html", "uvhttp__context_8c" ],
+    [ "uvhttp_cors_middleware.c", "uvhttp__cors__middleware_8c.html", "uvhttp__cors__middleware_8c" ],
+    [ "uvhttp_deps.c", "uvhttp__deps_8c.html", "uvhttp__deps_8c" ],
+    [ "uvhttp_error.c", "uvhttp__error_8c.html", "uvhttp__error_8c" ],
+    [ "uvhttp_error_handler.c", "uvhttp__error__handler_8c.html", "uvhttp__error__handler_8c" ],
+    [ "uvhttp_error_helpers.c", "uvhttp__error__helpers_8c.html", "uvhttp__error__helpers_8c" ],
+    [ "uvhttp_hash.c", "uvhttp__hash_8c.html", "uvhttp__hash_8c" ],
+    [ "uvhttp_lru_cache.c", "uvhttp__lru__cache_8c.html", "uvhttp__lru__cache_8c" ],
+    [ "uvhttp_mempool.c", "uvhttp__mempool_8c.html", "uvhttp__mempool_8c" ],
+    [ "uvhttp_middleware.c", "uvhttp__middleware_8c.html", "uvhttp__middleware_8c" ],
+    [ "uvhttp_network.c", "uvhttp__network_8c.html", "uvhttp__network_8c" ],
+    [ "uvhttp_request.c", "uvhttp__request_8c.html", "uvhttp__request_8c" ],
+    [ "uvhttp_response.c", "uvhttp__response_8c.html", "uvhttp__response_8c" ],
+    [ "uvhttp_router.c", "uvhttp__router_8c.html", "uvhttp__router_8c" ],
+    [ "uvhttp_router_cache.c", "uvhttp__router__cache_8c.html", null ],
+    [ "uvhttp_server.c", "uvhttp__server_8c.html", "uvhttp__server_8c" ],
+    [ "uvhttp_static.c", "uvhttp__static_8c.html", "uvhttp__static_8c" ],
+    [ "uvhttp_tls_mbedtls.c", "uvhttp__tls__mbedtls_8c.html", "uvhttp__tls__mbedtls_8c" ],
+    [ "uvhttp_utils.c", "uvhttp__utils_8c.html", "uvhttp__utils_8c" ],
+    [ "uvhttp_validation.c", "uvhttp__validation_8c.html", "uvhttp__validation_8c" ],
+    [ "uvhttp_websocket_native.c", "uvhttp__websocket__native_8c.html", "uvhttp__websocket__native_8c" ]
+];

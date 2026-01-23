@@ -1,0 +1,19 @@
+var searchData=
+[
+  ['max_5fbody_5flen_2904',['MAX_BODY_LEN',['../uvhttp__request_8h.html#ab5d508eee849407d84f67ece294ac8b0',1,'uvhttp_request.h']]],
+  ['max_5fconnections_2905',['MAX_CONNECTIONS',['../uvhttp__server_8h.html#a053b7859476cc9867ec62c49e68d3fa1',1,'uvhttp_server.h']]],
+  ['max_5ferror_5fdetails_5flen_2906',['MAX_ERROR_DETAILS_LEN',['../uvhttp__utils_8c.html#a03be49c96076f86b62e0fafad512c8fb',1,'uvhttp_utils.c']]],
+  ['max_5ferror_5fmsg_5flen_2907',['MAX_ERROR_MSG_LEN',['../uvhttp__utils_8c.html#a37de40cecb9e99d4a298d67f780f5e31',1,'uvhttp_utils.c']]],
+  ['max_5fheader_5fname_5flen_2908',['MAX_HEADER_NAME_LEN',['../uvhttp__common_8h.html#a66e6d0b1b1b7abb575731edc76112cb4',1,'uvhttp_common.h']]],
+  ['max_5fheader_5fvalue_5flen_2909',['MAX_HEADER_VALUE_LEN',['../uvhttp__common_8h.html#a8f12fa4eb2130ccdab9cf370ca38b84a',1,'uvhttp_common.h']]],
+  ['max_5fheaders_2910',['MAX_HEADERS',['../uvhttp__common_8h.html#ab8949645fa8d90e1722d233c6bdfc815',1,'uvhttp_common.h']]],
+  ['max_5fparam_5fname_5flen_2911',['MAX_PARAM_NAME_LEN',['../uvhttp__router_8h.html#a7e79702ad31a8b882c45d876d0f31422',1,'uvhttp_router.h']]],
+  ['max_5fparam_5fvalue_5flen_2912',['MAX_PARAM_VALUE_LEN',['../uvhttp__router_8h.html#a3f22afde9104ab4d47e7b5475e53e5ea',1,'uvhttp_router.h']]],
+  ['max_5fparams_2913',['MAX_PARAMS',['../uvhttp__router_8h.html#a885a6481fc6d474d0be18bc0facf648d',1,'uvhttp_router.h']]],
+  ['max_5frate_5flimit_5frequests_2914',['MAX_RATE_LIMIT_REQUESTS',['../uvhttp__server_8c.html#ad541e243c8937a16036d56ef44f57c7e',1,'uvhttp_server.c']]],
+  ['max_5frate_5flimit_5fwindow_5fseconds_2915',['MAX_RATE_LIMIT_WINDOW_SECONDS',['../uvhttp__server_8c.html#a00be6b9295332604eb2999fc9359b5b6',1,'uvhttp_server.c']]],
+  ['max_5fresponse_5fbody_5flen_2916',['MAX_RESPONSE_BODY_LEN',['../uvhttp__response_8h.html#a74b52ec5b9a0b16d5b06ce430edd8bc7',1,'uvhttp_response.h']]],
+  ['max_5froute_5fpath_5flen_2917',['MAX_ROUTE_PATH_LEN',['../uvhttp__router_8h.html#a0c220f28877a9d3453deac4b94360206',1,'uvhttp_router.h']]],
+  ['max_5froutes_2918',['MAX_ROUTES',['../uvhttp__router_8h.html#af40843a876a06522a44e5e8a362b0e66',1,'uvhttp_router.h']]],
+  ['max_5furl_5flen_2919',['MAX_URL_LEN',['../uvhttp__request_8h.html#a19983ae2cb60fa8a4e81aa9cbb8b9f29',1,'uvhttp_request.h']]]
+];

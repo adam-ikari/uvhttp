@@ -1,0 +1,70 @@
+.TH "uvhttp_ws_auth_config_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_ws_auth_config_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_websocket_auth\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "int \fBenable_token_auth\fP"
+.br
+.ti -1c
+.RI "char \fBtoken_param_name\fP [64]"
+.br
+.ti -1c
+.RI "\fBuvhttp_ws_token_validator_callback\fP \fBtoken_validator\fP"
+.br
+.ti -1c
+.RI "void * \fBtoken_validator_data\fP"
+.br
+.ti -1c
+.RI "int \fBenable_ip_whitelist\fP"
+.br
+.ti -1c
+.RI "\fBip_entry_t\fP * \fBip_whitelist\fP"
+.br
+.ti -1c
+.RI "int \fBenable_ip_blacklist\fP"
+.br
+.ti -1c
+.RI "\fBip_entry_t\fP * \fBip_blacklist\fP"
+.br
+.ti -1c
+.RI "int \fBsend_auth_failed_response\fP"
+.br
+.ti -1c
+.RI "char \fBauth_failed_message\fP [256]"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "char uvhttp_ws_auth_config_t::auth_failed_message[256]"
+
+.SS "int uvhttp_ws_auth_config_t::enable_ip_blacklist"
+
+.SS "int uvhttp_ws_auth_config_t::enable_ip_whitelist"
+
+.SS "int uvhttp_ws_auth_config_t::enable_token_auth"
+
+.SS "\fBip_entry_t\fP* uvhttp_ws_auth_config_t::ip_blacklist"
+
+.SS "\fBip_entry_t\fP* uvhttp_ws_auth_config_t::ip_whitelist"
+
+.SS "int uvhttp_ws_auth_config_t::send_auth_failed_response"
+
+.SS "char uvhttp_ws_auth_config_t::token_param_name[64]"
+
+.SS "\fBuvhttp_ws_token_validator_callback\fP uvhttp_ws_auth_config_t::token_validator"
+
+.SS "void* uvhttp_ws_auth_config_t::token_validator_data"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

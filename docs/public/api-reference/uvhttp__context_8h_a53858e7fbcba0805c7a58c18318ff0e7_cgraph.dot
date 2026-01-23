@@ -1,0 +1,18 @@
+digraph "uvhttp_test_connection_provider_create"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="uvhttp_test_connection\l_provider_create",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="test_acquire_connection",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__context_8c.html#a270b6b4b5c4026b294b4a227ea41e499",tooltip=" "];
+  Node1 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="test_cleanup_expired",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__context_8c.html#a48e71ac2740ef3a87bfd47a21a788091",tooltip=" "];
+  Node1 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="test_get_pool_size",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__context_8c.html#aa3f6b02b97d41812f4d4410e678060dc",tooltip=" "];
+  Node1 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="test_release_connection",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__context_8c.html#ad4fabdd5bc67f454ab15410b94049d50",tooltip=" "];
+  Node1 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="uvhttp_alloc",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__allocator_8h.html#a661eb4c960ecfb1529019371a18becb6",tooltip=" "];
+}

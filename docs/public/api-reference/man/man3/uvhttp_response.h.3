@@ -1,0 +1,117 @@
+.TH "include/uvhttp_response.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_response.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <uv\&.h>\fP
+.br
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <assert\&.h>\fP
+.br
+\fC#include 'uvhttp_common\&.h'\fP
+.br
+\fC#include 'uvhttp_error\&.h'\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_write_data_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_tls_write_data_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_response\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBMAX_RESPONSE_BODY_LEN\fP   (1024 * 1024)"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBuvhttp_connection\fP \fBuvhttp_connection_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_response\fP \fBuvhttp_response_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_init\fP (\fBuvhttp_response_t\fP *response, void *client)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_set_status\fP (\fBuvhttp_response_t\fP *response, int status_code)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_set_header\fP (\fBuvhttp_response_t\fP *response, const char *name, const char *value)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_set_body\fP (\fBuvhttp_response_t\fP *response, const char *body, size_t length)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_build_data\fP (\fBuvhttp_response_t\fP *response, char **out_data, size_t *out_length)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_send_raw\fP (const char *data, size_t length, void *client, \fBuvhttp_response_t\fP *response)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_response_send\fP (\fBuvhttp_response_t\fP *response)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_response_cleanup\fP (\fBuvhttp_response_t\fP *response)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_response_free\fP (\fBuvhttp_response_t\fP *response)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define MAX_RESPONSE_BODY_LEN   (1024 * 1024)"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBuvhttp_connection\fP \fBuvhttp_connection_t\fP"
+
+.SS "typedef struct \fBuvhttp_response\fP \fBuvhttp_response_t\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "\fBuvhttp_error_t\fP uvhttp_response_build_data (\fBuvhttp_response_t\fP * response, char ** out_data, size_t * out_length)"
+
+.SS "void uvhttp_response_cleanup (\fBuvhttp_response_t\fP * response)"
+
+.SS "void uvhttp_response_free (\fBuvhttp_response_t\fP * response)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_response_init (\fBuvhttp_response_t\fP * response, void * client)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_response_send (\fBuvhttp_response_t\fP * response)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_response_send_raw (const char * data, size_t length, void * client, \fBuvhttp_response_t\fP * response)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_response_set_body (\fBuvhttp_response_t\fP * response, const char * body, size_t length)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_response_set_header (\fBuvhttp_response_t\fP * response, const char * name, const char * value)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_response_set_status (\fBuvhttp_response_t\fP * response, int status_code)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

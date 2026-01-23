@@ -1,0 +1,94 @@
+.TH "include/uvhttp_simple_middleware.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_simple_middleware.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_common\&.h'\fP
+.br
+\fC#include 'uvhttp_request\&.h'\fP
+.br
+\fC#include 'uvhttp_response\&.h'\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_MIDDLEWARE_CONTINUE\fP   0    /* 继续执行下一个中间件 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MIDDLEWARE_STOP\fP   1        /* 停止执行中间件链 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MIDDLEWARE\fP(req,  resp, \&.\&.\&.)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MIDDLEWARE_CHAIN\fP(name, \&.\&.\&.)"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef int(* \fBuvhttp_middleware_fn_t\fP) (const \fBuvhttp_request_t\fP *request, \fBuvhttp_response_t\fP *response)"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static int \fBuvhttp_middleware_logging\fP (const \fBuvhttp_request_t\fP *request, \fBuvhttp_response_t\fP *response)"
+.br
+.ti -1c
+.RI "static int \fBuvhttp_middleware_cors\fP (const \fBuvhttp_request_t\fP *request, \fBuvhttp_response_t\fP *response)"
+.br
+.ti -1c
+.RI "static int \fBuvhttp_middleware_preflight\fP (const \fBuvhttp_request_t\fP *request, \fBuvhttp_response_t\fP *response)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_MIDDLEWARE(req, resp,  \&.\&.\&.)"
+\fBValue:\fP
+.PP
+.nf
+    do { \
+        static const uvhttp_middleware_fn_t _mw_handlers[] = { __VA_ARGS__ }; \
+        const size_t _mw_count = sizeof(_mw_handlers) / sizeof(_mw_handlers[0]); \
+        for (size_t _mw_i = 0; _mw_i < _mw_count; _mw_i++) { \
+            if (_mw_handlers[_mw_i] && _mw_handlers[_mw_i](req, resp) != UVHTTP_MIDDLEWARE_CONTINUE) { \
+                goto _mw_end; \
+            } \
+        } \
+    } while(0); \
+    _mw_end: (void)0
+.fi
+.SS "#define UVHTTP_MIDDLEWARE_CHAIN(name,  \&.\&.\&.)"
+\fBValue:\fP
+.PP
+.nf
+    static const uvhttp_middleware_fn_t name##_chain[] = { __VA_ARGS__ }; \
+    static const size_t name##_count = sizeof(name##_chain) / sizeof(name##_chain[0])
+.fi
+.SS "#define UVHTTP_MIDDLEWARE_CONTINUE   0    /* 继续执行下一个中间件 */"
+
+.SS "#define UVHTTP_MIDDLEWARE_STOP   1        /* 停止执行中间件链 */"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef int(* uvhttp_middleware_fn_t) (const \fBuvhttp_request_t\fP *request, \fBuvhttp_response_t\fP *response)"
+
+.SH "Function Documentation"
+.PP 
+.SS "static int uvhttp_middleware_cors (const \fBuvhttp_request_t\fP * request, \fBuvhttp_response_t\fP * response)\fC [inline]\fP, \fC [static]\fP"
+
+.SS "static int uvhttp_middleware_logging (const \fBuvhttp_request_t\fP * request, \fBuvhttp_response_t\fP * response)\fC [inline]\fP, \fC [static]\fP"
+
+.SS "static int uvhttp_middleware_preflight (const \fBuvhttp_request_t\fP * request, \fBuvhttp_response_t\fP * response)\fC [inline]\fP, \fC [static]\fP"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

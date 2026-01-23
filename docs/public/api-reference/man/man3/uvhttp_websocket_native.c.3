@@ -1,0 +1,172 @@
+.TH "src/uvhttp_websocket_native.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_websocket_native.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_websocket_native\&.h'\fP
+.br
+\fC#include 'uvhttp_context\&.h'\fP
+.br
+\fC#include 'uvhttp_error\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <errno\&.h>\fP
+.br
+\fC#include <sys/socket\&.h>\fP
+.br
+\fC#include <unistd\&.h>\fP
+.br
+\fC#include <mbedtls/sha1\&.h>\fP
+.br
+\fC#include <mbedtls/base64\&.h>\fP
+.br
+\fC#include <mbedtls/ctr_drbg\&.h>\fP
+.br
+\fC#include <mbedtls/entropy\&.h>\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBWS_GUID\fP   '258EAFA5\-E914\-47DA\-95CA\-C5AB0DC85B11'"
+.br
+.ti -1c
+.RI "#define \fBWS_DEFAULT_MAX_FRAME_SIZE\fP   (16 * 1024 * 1024)"
+.br
+.ti -1c
+.RI "#define \fBWS_DEFAULT_MAX_MESSAGE_SIZE\fP   (64 * 1024 * 1024)"
+.br
+.ti -1c
+.RI "#define \fBWS_DEFAULT_RECV_BUFFER_SIZE\fP   (64 * 1024)"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static int \fBuvhttp_ws_random_bytes\fP (\fBuvhttp_context_t\fP *context, unsigned char *buf, size_t len)"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_ws_connection\fP * \fBuvhttp_ws_connection_create\fP (int fd, mbedtls_ssl_context *ssl, int is_server)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_ws_connection_free\fP (struct \fBuvhttp_ws_connection\fP *conn)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_parse_frame_header\fP (const uint8_t *data, size_t len, \fBuvhttp_ws_frame_header_t\fP *header, size_t *header_size)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_ws_apply_mask\fP (uint8_t *data, size_t len, const uint8_t *masking_key)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_build_frame\fP (uint8_t *buffer, size_t buffer_size, const uint8_t *payload, size_t payload_len, \fBuvhttp_ws_opcode_t\fP opcode, int mask, int fin)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_generate_accept\fP (const char *key, char *accept, size_t accept_len)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_verify_accept\fP (const char *key, const char *accept)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_handshake_server\fP (struct \fBuvhttp_ws_connection\fP *conn, const char *request, size_t request_len, char *response, size_t *response_len)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_handshake_client\fP (struct \fBuvhttp_ws_connection\fP *conn, const char *host, const char *path, char *request, size_t *request_len)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_verify_handshake_response\fP (struct \fBuvhttp_ws_connection\fP *conn, const char *response, size_t response_len)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_send_frame\fP (struct \fBuvhttp_ws_connection\fP *conn, const uint8_t *data, size_t len, \fBuvhttp_ws_opcode_t\fP opcode)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_send_text\fP (struct \fBuvhttp_ws_connection\fP *conn, const char *text, size_t len)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_send_binary\fP (struct \fBuvhttp_ws_connection\fP *conn, const uint8_t *data, size_t len)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_send_ping\fP (struct \fBuvhttp_ws_connection\fP *conn, const uint8_t *data, size_t len)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_send_pong\fP (struct \fBuvhttp_ws_connection\fP *conn, const uint8_t *data, size_t len)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_close\fP (struct \fBuvhttp_ws_connection\fP *conn, int code, const char *reason)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_recv_frame\fP (struct \fBuvhttp_ws_connection\fP *conn, \fBuvhttp_ws_frame_t\fP *frame)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_process_data\fP (struct \fBuvhttp_ws_connection\fP *conn, const uint8_t *data, size_t len)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_ws_set_callbacks\fP (struct \fBuvhttp_ws_connection\fP *conn, \fBuvhttp_ws_on_message_callback\fP on_message, \fBuvhttp_ws_on_close_callback\fP \fBon_close\fP, \fBuvhttp_ws_on_error_callback\fP on_error)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define WS_DEFAULT_MAX_FRAME_SIZE   (16 * 1024 * 1024)"
+
+.SS "#define WS_DEFAULT_MAX_MESSAGE_SIZE   (64 * 1024 * 1024)"
+
+.SS "#define WS_DEFAULT_RECV_BUFFER_SIZE   (64 * 1024)"
+
+.SS "#define WS_GUID   '258EAFA5\-E914\-47DA\-95CA\-C5AB0DC85B11'"
+
+.SH "Function Documentation"
+.PP 
+.SS "void uvhttp_ws_apply_mask (uint8_t * data, size_t len, const uint8_t * masking_key)"
+应用掩码 
+.SS "int uvhttp_ws_build_frame (uint8_t * buffer, size_t buffer_size, const uint8_t * payload, size_t payload_len, \fBuvhttp_ws_opcode_t\fP opcode, int mask, int fin)"
+构建帧 
+.SS "int uvhttp_ws_close (struct \fBuvhttp_ws_connection\fP * conn, int code, const char * reason)"
+关闭连接 
+.SS "struct \fBuvhttp_ws_connection\fP* uvhttp_ws_connection_create (int fd, mbedtls_ssl_context * ssl, int is_server)"
+创建 WebSocket 连接 
+.SS "void uvhttp_ws_connection_free (struct \fBuvhttp_ws_connection\fP * conn)"
+释放 WebSocket 连接 
+.SS "int uvhttp_ws_generate_accept (const char * key, char * accept, size_t accept_len)"
+生成 Sec-WebSocket-Accept 
+.SS "int uvhttp_ws_handshake_client (struct \fBuvhttp_ws_connection\fP * conn, const char * host, const char * path, char * request, size_t * request_len)"
+执行 WebSocket 握手 (客户端) 
+.SS "int uvhttp_ws_handshake_server (struct \fBuvhttp_ws_connection\fP * conn, const char * request, size_t request_len, char * response, size_t * response_len)"
+执行 WebSocket 握手 (服务器端) 
+.SS "int uvhttp_ws_parse_frame_header (const uint8_t * data, size_t len, \fBuvhttp_ws_frame_header_t\fP * header, size_t * header_size)"
+解析帧头 
+.SS "int uvhttp_ws_process_data (struct \fBuvhttp_ws_connection\fP * conn, const uint8_t * data, size_t len)"
+处理接收到的数据 
+.SS "static int uvhttp_ws_random_bytes (\fBuvhttp_context_t\fP * context, unsigned char * buf, size_t len)\fC [static]\fP"
+
+.SS "int uvhttp_ws_recv_frame (struct \fBuvhttp_ws_connection\fP * conn, \fBuvhttp_ws_frame_t\fP * frame)"
+接收 WebSocket 帧 
+.SS "int uvhttp_ws_send_binary (struct \fBuvhttp_ws_connection\fP * conn, const uint8_t * data, size_t len)"
+发送二进制消息 
+.SS "int uvhttp_ws_send_frame (struct \fBuvhttp_ws_connection\fP * conn, const uint8_t * data, size_t len, \fBuvhttp_ws_opcode_t\fP opcode)"
+发送 WebSocket 帧 
+.SS "int uvhttp_ws_send_ping (struct \fBuvhttp_ws_connection\fP * conn, const uint8_t * data, size_t len)"
+发送 Ping 
+.SS "int uvhttp_ws_send_pong (struct \fBuvhttp_ws_connection\fP * conn, const uint8_t * data, size_t len)"
+发送 Pong 
+.SS "int uvhttp_ws_send_text (struct \fBuvhttp_ws_connection\fP * conn, const char * text, size_t len)"
+发送文本消息 
+.SS "void uvhttp_ws_set_callbacks (struct \fBuvhttp_ws_connection\fP * conn, \fBuvhttp_ws_on_message_callback\fP on_message, \fBuvhttp_ws_on_close_callback\fP on_close, \fBuvhttp_ws_on_error_callback\fP on_error)"
+设置回调函数 
+.SS "int uvhttp_ws_verify_accept (const char * key, const char * accept)"
+验证 Sec-WebSocket-Accept 
+.SS "int uvhttp_ws_verify_handshake_response (struct \fBuvhttp_ws_connection\fP * conn, const char * response, size_t response_len)"
+验证握手响应 (客户端) 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

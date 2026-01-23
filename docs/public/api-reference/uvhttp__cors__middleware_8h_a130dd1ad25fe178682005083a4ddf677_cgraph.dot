@@ -1,0 +1,21 @@
+digraph "uvhttp_cors_set_headers"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="uvhttp_cors_set_headers",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="uvhttp_response_set\l_header",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__response_8h.html#a9e3bf3b072970db26cfff612aeff4f3c",tooltip=" "];
+  Node2 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="contains_control_chars",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__response_8c.html#af5ca731836299273336a10b022c6f34d",tooltip=" "];
+  Node2 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="uvhttp_safe_strcpy",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__common_8h.html#a4093a66016d7be0ddb284e1b5aebe0e9",tooltip=" "];
+  Node2 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="uvhttp_validate_header_name",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__validation_8h.html#a979c38aa1dc831d8f32293f066d6cf85",tooltip=" "];
+  Node5 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="uvhttp_validate_string\l_length",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__validation_8c.html#abd0eaa898b4bd5bf72088dfa8dbaceb3",tooltip=" "];
+  Node2 -> Node7 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="uvhttp_validate_header\l_value_safe",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__validation_8h.html#a594323ed0200c9a013f03a879fedf3ca",tooltip=" "];
+  Node7 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+}

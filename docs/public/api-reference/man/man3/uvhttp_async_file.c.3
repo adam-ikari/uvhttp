@@ -1,0 +1,104 @@
+.TH "src/uvhttp_async_file.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_async_file.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_async_file\&.h'\fP
+.br
+\fC#include 'uvhttp_static\&.h'\fP
+.br
+\fC#include 'uvhttp_request\&.h'\fP
+.br
+\fC#include 'uvhttp_response\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_error_helpers\&.h'\fP
+.br
+\fC#include 'uvhttp_utils\&.h'\fP
+.br
+\fC#include 'uvhttp_constants\&.h'\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <sys/stat\&.h>\fP
+.br
+\fC#include <errno\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static void \fBon_file_read_complete\fP (uv_fs_t *req)"
+.br
+.ti -1c
+.RI "static void \fBon_file_stat_complete\fP (uv_fs_t *req)"
+.br
+.ti -1c
+.RI "static void \fBon_file_stream_chunk\fP (uv_fs_t *req)"
+.br
+.ti -1c
+.RI "static void \fBcleanup_async_request\fP (\fBuvhttp_async_file_request_t\fP *req)"
+.br
+.ti -1c
+.RI "static void \fBremove_request_from_manager\fP (\fBuvhttp_async_file_manager_t\fP *manager, \fBuvhttp_async_file_request_t\fP *req)"
+.br
+.ti -1c
+.RI "\fBuvhttp_async_file_manager_t\fP * \fBuvhttp_async_file_manager_create\fP (uv_loop_t *loop, int max_concurrent, size_t buffer_size, size_t max_file_size)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_async_file_manager_free\fP (\fBuvhttp_async_file_manager_t\fP *manager)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_async_file_read\fP (\fBuvhttp_async_file_manager_t\fP *manager, const char *file_path, void *request, void *response, void *static_context, void(*completion_cb)(\fBuvhttp_async_file_request_t\fP *req, int status))"
+.br
+.ti -1c
+.RI "int \fBuvhttp_async_file_cancel\fP (\fBuvhttp_async_file_manager_t\fP *manager, \fBuvhttp_async_file_request_t\fP *req)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_async_file_stream\fP (\fBuvhttp_async_file_manager_t\fP *manager, const char *file_path, void *response, size_t chunk_size)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_async_file_stream_stop\fP (\fBuvhttp_file_stream_context_t\fP *stream_ctx)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_async_file_get_stats\fP (\fBuvhttp_async_file_manager_t\fP *manager, int *current_reads, int *max_concurrent)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "static void cleanup_async_request (\fBuvhttp_async_file_request_t\fP * req)\fC [static]\fP"
+清理异步请求 
+.SS "static void on_file_read_complete (uv_fs_t * req)\fC [static]\fP"
+文件读取完成回调 
+.SS "static void on_file_stat_complete (uv_fs_t * req)\fC [static]\fP"
+文件状态获取完成回调 
+.SS "static void on_file_stream_chunk (uv_fs_t * req)\fC [static]\fP"
+文件流传输分块读取回调 
+.SS "static void remove_request_from_manager (\fBuvhttp_async_file_manager_t\fP * manager, \fBuvhttp_async_file_request_t\fP * req)\fC [static]\fP"
+从管理器中移除请求 
+.SS "int uvhttp_async_file_cancel (\fBuvhttp_async_file_manager_t\fP * manager, \fBuvhttp_async_file_request_t\fP * req)"
+取消异步文件读取 
+.SS "int uvhttp_async_file_get_stats (\fBuvhttp_async_file_manager_t\fP * manager, int * current_reads, int * max_concurrent)"
+获取管理器统计信息 
+.SS "\fBuvhttp_async_file_manager_t\fP* uvhttp_async_file_manager_create (uv_loop_t * loop, int max_concurrent, size_t buffer_size, size_t max_file_size)"
+创建异步文件读取管理器 
+.SS "void uvhttp_async_file_manager_free (\fBuvhttp_async_file_manager_t\fP * manager)"
+释放异步文件读取管理器 
+.SS "int uvhttp_async_file_read (\fBuvhttp_async_file_manager_t\fP * manager, const char * file_path, void * request, void * response, void * static_context, void(*)(\fBuvhttp_async_file_request_t\fP *req, int status) completion_cb)"
+异步读取文件 
+.SS "int uvhttp_async_file_stream (\fBuvhttp_async_file_manager_t\fP * manager, const char * file_path, void * response, size_t chunk_size)"
+流式传输文件（适用于大文件） 
+.SS "int uvhttp_async_file_stream_stop (\fBuvhttp_file_stream_context_t\fP * stream_ctx)"
+停止文件流传输 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

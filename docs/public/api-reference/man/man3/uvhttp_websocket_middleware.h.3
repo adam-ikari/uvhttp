@@ -1,0 +1,96 @@
+.TH "include/uvhttp_websocket_middleware.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_websocket_middleware.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_middleware\&.h'\fP
+.br
+\fC#include 'uvhttp_websocket_native\&.h'\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_ws_middleware_config_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_ws_middleware_callbacks_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_ws_middleware_t\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_WS_MIDDLEWARE_DEFAULT_CONFIG\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_ws_middleware_t\fP * \fBuvhttp_ws_middleware_create\fP (const char *path, const \fBuvhttp_ws_middleware_config_t\fP *config)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_ws_middleware_destroy\fP (\fBuvhttp_ws_middleware_t\fP *middleware)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_ws_middleware_set_callbacks\fP (\fBuvhttp_ws_middleware_t\fP *middleware, const \fBuvhttp_ws_middleware_callbacks_t\fP *callbacks)"
+.br
+.ti -1c
+.RI "\fBuvhttp_http_middleware_t\fP * \fBuvhttp_ws_middleware_get_http_middleware\fP (\fBuvhttp_ws_middleware_t\fP *middleware)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_middleware_send\fP (\fBuvhttp_ws_middleware_t\fP *middleware, \fBuvhttp_ws_connection_t\fP *ws_conn, const char *data, size_t len)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_middleware_close\fP (\fBuvhttp_ws_middleware_t\fP *middleware, \fBuvhttp_ws_connection_t\fP *ws_conn, int code, const char *reason)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_middleware_get_connection_count\fP (\fBuvhttp_ws_middleware_t\fP *middleware)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_ws_middleware_broadcast\fP (\fBuvhttp_ws_middleware_t\fP *middleware, const char *data, size_t len)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_WS_MIDDLEWARE_DEFAULT_CONFIG"
+\fBValue:\fP
+.PP
+.nf
+    { \
+    \&.max_connections = 1000, \
+    \&.max_message_size = 1024 * 1024, \
+    \&.ping_interval = 30, \
+    \&.ping_timeout = 60, \
+    \&.enable_compression = 0 \
+}
+.fi
+.SH "Function Documentation"
+.PP 
+.SS "int uvhttp_ws_middleware_broadcast (\fBuvhttp_ws_middleware_t\fP * middleware, const char * data, size_t len)"
+
+.SS "int uvhttp_ws_middleware_close (\fBuvhttp_ws_middleware_t\fP * middleware, \fBuvhttp_ws_connection_t\fP * ws_conn, int code, const char * reason)"
+
+.SS "\fBuvhttp_ws_middleware_t\fP* uvhttp_ws_middleware_create (const char * path, const \fBuvhttp_ws_middleware_config_t\fP * config)"
+
+.SS "void uvhttp_ws_middleware_destroy (\fBuvhttp_ws_middleware_t\fP * middleware)"
+
+.SS "int uvhttp_ws_middleware_get_connection_count (\fBuvhttp_ws_middleware_t\fP * middleware)"
+
+.SS "\fBuvhttp_http_middleware_t\fP* uvhttp_ws_middleware_get_http_middleware (\fBuvhttp_ws_middleware_t\fP * middleware)"
+
+.SS "int uvhttp_ws_middleware_send (\fBuvhttp_ws_middleware_t\fP * middleware, \fBuvhttp_ws_connection_t\fP * ws_conn, const char * data, size_t len)"
+
+.SS "void uvhttp_ws_middleware_set_callbacks (\fBuvhttp_ws_middleware_t\fP * middleware, const \fBuvhttp_ws_middleware_callbacks_t\fP * callbacks)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

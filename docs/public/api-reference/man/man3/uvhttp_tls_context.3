@@ -1,0 +1,73 @@
+.TH "uvhttp_tls_context" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_tls_context
+.SH SYNOPSIS
+.br
+.PP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "mbedtls_ssl_config \fBconf\fP"
+.br
+.ti -1c
+.RI "mbedtls_x509_crt \fBsrvcert\fP"
+.br
+.ti -1c
+.RI "mbedtls_pk_context \fBpkey\fP"
+.br
+.ti -1c
+.RI "mbedtls_x509_crt \fBcacert\fP"
+.br
+.ti -1c
+.RI "mbedtls_x509_crl \fBcrl\fP"
+.br
+.ti -1c
+.RI "mbedtls_entropy_context \fBentropy\fP"
+.br
+.ti -1c
+.RI "mbedtls_ctr_drbg_context \fBctr_drbg\fP"
+.br
+.ti -1c
+.RI "mbedtls_ssl_cache_context \fBcache\fP"
+.br
+.ti -1c
+.RI "int \fBis_server\fP"
+.br
+.ti -1c
+.RI "int \fBinitialized\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_stats_t\fP \fBstats\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "mbedtls_x509_crt uvhttp_tls_context::cacert"
+
+.SS "mbedtls_ssl_cache_context uvhttp_tls_context::cache"
+
+.SS "mbedtls_ssl_config uvhttp_tls_context::conf"
+
+.SS "mbedtls_x509_crl uvhttp_tls_context::crl"
+
+.SS "mbedtls_ctr_drbg_context uvhttp_tls_context::ctr_drbg"
+
+.SS "mbedtls_entropy_context uvhttp_tls_context::entropy"
+
+.SS "int uvhttp_tls_context::initialized"
+
+.SS "int uvhttp_tls_context::is_server"
+
+.SS "mbedtls_pk_context uvhttp_tls_context::pkey"
+
+.SS "mbedtls_x509_crt uvhttp_tls_context::srvcert"
+
+.SS "\fBuvhttp_tls_stats_t\fP uvhttp_tls_context::stats"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

@@ -1,0 +1,139 @@
+.TH "src/uvhttp_error.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_error.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_error\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_constants\&.h'\fP
+.br
+\fC#include 'uvhttp_context\&.h'\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <time\&.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_error_recovery_config_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_error_stats_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBuvhttp_set_error_recovery_config\fP (int max_retries, int base_delay_ms, int max_delay_ms, double backoff_multiplier)"
+.br
+.ti -1c
+.RI "static int \fBcalculate_retry_delay\fP (int attempt)"
+.br
+.ti -1c
+.RI "static void \fBretry_delay\fP (int ms)"
+.br
+.ti -1c
+.RI "static int \fBis_retryable_error\fP (\fBuvhttp_error_t\fP error)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_retry_operation\fP (\fBuvhttp_error_t\fP(*operation)(void *), void *context, const char *operation_name)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_log_error\fP (\fBuvhttp_error_t\fP error, const char *context)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_get_error_stats\fP (\fBuvhttp_context_t\fP *context, size_t *\fBerror_counts\fP, time_t *\fBlast_error_time\fP, const char **\fBlast_error_context\fP)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_reset_error_stats\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_get_most_frequent_error\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_error_string\fP (\fBuvhttp_error_t\fP error)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_error_category_string\fP (\fBuvhttp_error_t\fP error)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_error_description\fP (\fBuvhttp_error_t\fP error)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_error_suggestion\fP (\fBuvhttp_error_t\fP error)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_error_is_recoverable\fP (\fBuvhttp_error_t\fP error)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "static \fBuvhttp_error_recovery_config_t\fP \fBrecovery_config\fP"
+.br
+.ti -1c
+.RI "static \fBuvhttp_error_stats_t\fP \fBerror_stats\fP = {0}"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "static int calculate_retry_delay (int attempt)\fC [static]\fP"
+
+.SS "static int is_retryable_error (\fBuvhttp_error_t\fP error)\fC [static]\fP"
+
+.SS "static void retry_delay (int ms)\fC [static]\fP"
+
+.SS "const char* uvhttp_error_category_string (\fBuvhttp_error_t\fP error)"
+
+.SS "const char* uvhttp_error_description (\fBuvhttp_error_t\fP error)"
+
+.SS "int uvhttp_error_is_recoverable (\fBuvhttp_error_t\fP error)"
+
+.SS "const char* uvhttp_error_string (\fBuvhttp_error_t\fP error)"
+
+.SS "const char* uvhttp_error_suggestion (\fBuvhttp_error_t\fP error)"
+
+.SS "void uvhttp_get_error_stats (\fBuvhttp_context_t\fP * context, size_t * error_counts, time_t * last_error_time, const char ** last_error_context)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_get_most_frequent_error (\fBuvhttp_context_t\fP * context)"
+
+.SS "void uvhttp_log_error (\fBuvhttp_error_t\fP error, const char * context)"
+
+.SS "void uvhttp_reset_error_stats (\fBuvhttp_context_t\fP * context)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_retry_operation (\fBuvhttp_error_t\fP(*)(void *) operation, void * context, const char * operation_name)"
+
+.SS "void uvhttp_set_error_recovery_config (int max_retries, int base_delay_ms, int max_delay_ms, double backoff_multiplier)"
+
+.SH "Variable Documentation"
+.PP 
+.SS "\fBuvhttp_error_stats_t\fP error_stats = {0}\fC [static]\fP"
+
+.SS "\fBuvhttp_error_recovery_config_t\fP recovery_config\fC [static]\fP"
+\fBInitial value:\fP
+.PP
+.nf
+= {
+    \&.max_retries = 3,
+    \&.base_delay_ms =  100 ,
+    \&.max_delay_ms =  5000 ,
+    \&.backoff_multiplier = 2\&.0
+}
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

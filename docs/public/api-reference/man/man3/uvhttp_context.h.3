@@ -1,0 +1,264 @@
+.TH "include/uvhttp_context.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_context.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_network\&.h'\fP
+.br
+\fC#include 'uvhttp_connection\&.h'\fP
+.br
+\fC#include 'uvhttp_config\&.h'\fP
+.br
+\fC#include 'uvhttp_error_handler\&.h'\fP
+.br
+\fC#include <uv\&.h>\fP
+.br
+\fC#include <time\&.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_connection_provider\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_logger_provider\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_config_provider\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_context\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_USE_CONTEXT\fP   1"
+.br
+.ti -1c
+.RI "#define \fBuvhttp_get_loop\fP()   (\fBg_uvhttp_context\fP ? \fBg_uvhttp_context\fP\->loop : NULL)"
+.br
+.ti -1c
+.RI "#define \fBuvhttp_get_connection_provider\fP()           (\fBg_uvhttp_context\fP ? \fBg_uvhttp_context\fP\->connection_provider : NULL)"
+.br
+.ti -1c
+.RI "#define \fBuvhttp_get_logger_provider\fP()           (\fBg_uvhttp_context\fP ? \fBg_uvhttp_context\fP\->logger_provider : NULL)"
+.br
+.ti -1c
+.RI "#define \fBuvhttp_get_config_provider\fP()           (\fBg_uvhttp_context\fP ? \fBg_uvhttp_context\fP\->config_provider : NULL)"
+.br
+.ti -1c
+.RI "#define \fBuvhttp_get_network_interface\fP()           (\fBg_uvhttp_context\fP ? \fBg_uvhttp_context\fP\->network_interface : NULL)"
+.br
+.ti -1c
+.RI "#define \fBuvhttp_context_log\fP(level,  message)"
+.br
+.ti -1c
+.RI "#define \fBuvhttp_context_config_get_string\fP(key,  default_value)"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBuvhttp_connection_provider\fP \fBuvhttp_connection_provider_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_logger_provider\fP \fBuvhttp_logger_provider_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_config_provider\fP \fBuvhttp_config_provider_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_context\fP \fBuvhttp_context_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_context_t\fP * \fBuvhttp_context_create\fP (uv_loop_t *loop)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_context_destroy\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_init\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_init_tls\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_context_cleanup_tls\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_init_websocket\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_context_cleanup_websocket\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_init_error_stats\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_context_cleanup_error_stats\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_init_config\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_context_cleanup_config\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_set_connection_provider\fP (\fBuvhttp_context_t\fP *context, \fBuvhttp_connection_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_set_logger_provider\fP (\fBuvhttp_context_t\fP *context, \fBuvhttp_logger_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_set_config_provider\fP (\fBuvhttp_context_t\fP *context, \fBuvhttp_config_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_set_network_interface\fP (\fBuvhttp_context_t\fP *context, \fBuvhttp_network_interface_t\fP *interface)"
+.br
+.ti -1c
+.RI "\fBuvhttp_connection_provider_t\fP * \fBuvhttp_default_connection_provider_create\fP (void)"
+.br
+.ti -1c
+.RI "\fBuvhttp_logger_provider_t\fP * \fBuvhttp_default_logger_provider_create\fP (\fBuvhttp_log_level_t\fP level)"
+.br
+.ti -1c
+.RI "\fBuvhttp_config_provider_t\fP * \fBuvhttp_default_config_provider_create\fP (void)"
+.br
+.ti -1c
+.RI "\fBuvhttp_connection_provider_t\fP * \fBuvhttp_test_connection_provider_create\fP (void)"
+.br
+.ti -1c
+.RI "\fBuvhttp_logger_provider_t\fP * \fBuvhttp_test_logger_provider_create\fP (void)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_test_context_init\fP (uv_loop_t *loop)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_test_context_cleanup\fP (void)"
+.br
+.ti -1c
+.RI "\fBuvhttp_context_t\fP * \fBuvhttp_test_get_context\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_test_context_reset_stats\fP (void)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_context_t\fP * \fBg_uvhttp_context\fP"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define uvhttp_context_config_get_string(key, default_value)"
+\fBValue:\fP
+.PP
+.nf
+        (g_uvhttp_context && g_uvhttp_context->config_provider ? \
+         g_uvhttp_context->config_provider->get_string(g_uvhttp_context->config_provider, key, default_value) : \
+         default_value)
+.fi
+.SS "#define uvhttp_context_log(level, message)"
+\fBValue:\fP
+.PP
+.nf
+        do { \
+            if (g_uvhttp_context && g_uvhttp_context->logger_provider) { \
+                g_uvhttp_context->logger_provider->log(g_uvhttp_context->logger_provider, \
+                                                       level, __FILE__, __LINE__, __func__, message); \
+            } \
+        } while(0)
+.fi
+.SS "#define uvhttp_get_config_provider()           (\fBg_uvhttp_context\fP ? \fBg_uvhttp_context\fP\->config_provider : NULL)"
+
+.SS "#define uvhttp_get_connection_provider()           (\fBg_uvhttp_context\fP ? \fBg_uvhttp_context\fP\->connection_provider : NULL)"
+
+.SS "#define uvhttp_get_logger_provider()           (\fBg_uvhttp_context\fP ? \fBg_uvhttp_context\fP\->logger_provider : NULL)"
+
+.SS "#define uvhttp_get_loop()   (\fBg_uvhttp_context\fP ? \fBg_uvhttp_context\fP\->loop : NULL)"
+
+.SS "#define uvhttp_get_network_interface()           (\fBg_uvhttp_context\fP ? \fBg_uvhttp_context\fP\->network_interface : NULL)"
+
+.SS "#define UVHTTP_USE_CONTEXT   1"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBuvhttp_config_provider\fP \fBuvhttp_config_provider_t\fP"
+
+.SS "typedef struct \fBuvhttp_connection_provider\fP \fBuvhttp_connection_provider_t\fP"
+
+.SS "typedef struct \fBuvhttp_context\fP \fBuvhttp_context_t\fP"
+
+.SS "typedef struct \fBuvhttp_logger_provider\fP \fBuvhttp_logger_provider_t\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "void uvhttp_context_cleanup_config (\fBuvhttp_context_t\fP * context)"
+
+.SS "void uvhttp_context_cleanup_error_stats (\fBuvhttp_context_t\fP * context)"
+
+.SS "void uvhttp_context_cleanup_tls (\fBuvhttp_context_t\fP * context)"
+
+.SS "void uvhttp_context_cleanup_websocket (\fBuvhttp_context_t\fP * context)"
+
+.SS "\fBuvhttp_context_t\fP* uvhttp_context_create (uv_loop_t * loop)"
+
+.SS "void uvhttp_context_destroy (\fBuvhttp_context_t\fP * context)"
+
+.SS "int uvhttp_context_init (\fBuvhttp_context_t\fP * context)"
+
+.SS "int uvhttp_context_init_config (\fBuvhttp_context_t\fP * context)"
+
+.SS "int uvhttp_context_init_error_stats (\fBuvhttp_context_t\fP * context)"
+
+.SS "int uvhttp_context_init_tls (\fBuvhttp_context_t\fP * context)"
+
+.SS "int uvhttp_context_init_websocket (\fBuvhttp_context_t\fP * context)"
+
+.SS "int uvhttp_context_set_config_provider (\fBuvhttp_context_t\fP * context, \fBuvhttp_config_provider_t\fP * provider)"
+
+.SS "int uvhttp_context_set_connection_provider (\fBuvhttp_context_t\fP * context, \fBuvhttp_connection_provider_t\fP * provider)"
+
+.SS "int uvhttp_context_set_logger_provider (\fBuvhttp_context_t\fP * context, \fBuvhttp_logger_provider_t\fP * provider)"
+
+.SS "int uvhttp_context_set_network_interface (\fBuvhttp_context_t\fP * context, \fBuvhttp_network_interface_t\fP * interface)"
+
+.SS "\fBuvhttp_config_provider_t\fP* uvhttp_default_config_provider_create (void)"
+
+.SS "\fBuvhttp_connection_provider_t\fP* uvhttp_default_connection_provider_create (void)"
+
+.SS "\fBuvhttp_logger_provider_t\fP* uvhttp_default_logger_provider_create (\fBuvhttp_log_level_t\fP level)"
+
+.SS "\fBuvhttp_connection_provider_t\fP* uvhttp_test_connection_provider_create (void)"
+
+.SS "void uvhttp_test_context_cleanup (void)"
+
+.SS "int uvhttp_test_context_init (uv_loop_t * loop)"
+
+.SS "void uvhttp_test_context_reset_stats (void)"
+
+.SS "\fBuvhttp_context_t\fP* uvhttp_test_get_context (void)"
+
+.SS "\fBuvhttp_logger_provider_t\fP* uvhttp_test_logger_provider_create (void)"
+
+.SH "Variable Documentation"
+.PP 
+.SS "\fBuvhttp_context_t\fP* g_uvhttp_context\fC [extern]\fP"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

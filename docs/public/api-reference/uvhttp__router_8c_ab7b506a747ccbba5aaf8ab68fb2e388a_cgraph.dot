@@ -1,0 +1,14 @@
+digraph "uvhttp_router_match"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="uvhttp_router_match",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="find_array_route",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__router_8c.html#a193bab86e855e0257d2941a94fc2e1f8",tooltip=" "];
+  Node1 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="match_route_node",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__router_8c.html#a9df2984b92e98d828796e0169192ee86",tooltip=" "];
+  Node1 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="uvhttp_method_from\l_string",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__router_8c.html#a6a5247b25683491d290699450513f774",tooltip=" "];
+}

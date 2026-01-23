@@ -1,0 +1,45 @@
+.TH "uvhttp_http_middleware" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_http_middleware
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_middleware\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "const char * \fBpath\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_http_middleware_handler_t\fP \fBhandler\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_middleware_priority_t\fP \fBpriority\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_middleware_context_t\fP \fBcontext\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_http_middleware\fP * \fBnext\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "\fBuvhttp_middleware_context_t\fP uvhttp_http_middleware::context"
+
+.SS "\fBuvhttp_http_middleware_handler_t\fP uvhttp_http_middleware::handler"
+
+.SS "struct \fBuvhttp_http_middleware\fP* uvhttp_http_middleware::next"
+
+.SS "const char* uvhttp_http_middleware::path"
+
+.SS "\fBuvhttp_middleware_priority_t\fP uvhttp_http_middleware::priority"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

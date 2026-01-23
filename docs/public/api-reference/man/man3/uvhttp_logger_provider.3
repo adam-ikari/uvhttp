@@ -1,0 +1,35 @@
+.TH "uvhttp_logger_provider" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_logger_provider
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_context\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "void(* \fBlog\fP )(struct \fBuvhttp_logger_provider\fP *provider, \fBuvhttp_log_level_t\fP level, const char *file, int line, const char *func, const char *message)"
+.br
+.ti -1c
+.RI "void(* \fBset_level\fP )(struct \fBuvhttp_logger_provider\fP *provider, \fBuvhttp_log_level_t\fP level)"
+.br
+.ti -1c
+.RI "void * \fBcontext\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "void* uvhttp_logger_provider::context"
+
+.SS "void(* uvhttp_logger_provider::log) (struct \fBuvhttp_logger_provider\fP *provider, \fBuvhttp_log_level_t\fP level, const char *file, int line, const char *func, const char *message)"
+
+.SS "void(* uvhttp_logger_provider::set_level) (struct \fBuvhttp_logger_provider\fP *provider, \fBuvhttp_log_level_t\fP level)"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

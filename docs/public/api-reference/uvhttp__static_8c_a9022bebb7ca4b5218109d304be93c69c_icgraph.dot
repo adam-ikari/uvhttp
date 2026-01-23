@@ -1,0 +1,12 @@
+digraph "static_middleware_handler"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="static_middleware_handler",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="uvhttp_static_middleware\l_create_with_config",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__static_8h.html#a9b5e4e2792692b49ebc474a448c6227d",tooltip=" "];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="uvhttp_static_middleware\l_create",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__static_8h.html#aaedfb9ef2cf93ac270624a6f1df62d74",tooltip=" "];
+}

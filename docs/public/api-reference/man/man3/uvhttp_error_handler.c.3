@@ -1,0 +1,131 @@
+.TH "src/uvhttp_error_handler.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_error_handler.c \- 统一错误处理框架实现  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_error_handler\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_constants\&.h'\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <stdarg\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <unistd\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static void \fBdefault_error_handler\fP (const \fBuvhttp_error_context_t\fP *context)"
+.br
+.ti -1c
+.RI "static int \fBcalculate_retry_delay\fP (int attempt)"
+.br
+.ti -1c
+.RI "static void \fBsleep_ms\fP (int ms)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_error_init\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_error_cleanup\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_error_set_config\fP (const \fBuvhttp_error_config_t\fP *config)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_error_attempt_recovery\fP (const \fBuvhttp_error_context_t\fP *context)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_log\fP (\fBuvhttp_log_level_t\fP level, const char *format,\&.\&.\&.)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_error_config_t\fP \fBg_error_config\fP"
+.br
+.ti -1c
+.RI "struct {"
+.br
+.ti -1c
+.RI "   size_t \fBerror_counts\fP [120]"
+.br
+.ti -1c
+.RI "   time_t \fBlast_error_time\fP"
+.br
+.ti -1c
+.RI "   char \fBlast_error_context\fP [256]"
+.br
+.ti -1c
+.RI "   size_t \fBtotal_errors\fP"
+.br
+.ti -1c
+.RI "} \fBg_error_stats\fP = {0}"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+统一错误处理框架实现 
+
+
+.SH "Function Documentation"
+.PP 
+.SS "static int calculate_retry_delay (int attempt)\fC [static]\fP"
+
+.SS "static void default_error_handler (const \fBuvhttp_error_context_t\fP * context)\fC [static]\fP"
+
+.SS "static void sleep_ms (int ms)\fC [static]\fP"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_error_attempt_recovery (const \fBuvhttp_error_context_t\fP * context)"
+
+.SS "void uvhttp_error_cleanup (void)"
+
+.SS "void uvhttp_error_init (void)"
+
+.SS "void uvhttp_error_set_config (const \fBuvhttp_error_config_t\fP * config)"
+
+.SS "void uvhttp_log (\fBuvhttp_log_level_t\fP level, const char * format,  \&.\&.\&.)"
+
+.SH "Variable Documentation"
+.PP 
+.SS "size_t error_counts[120]"
+
+.SS "\fBuvhttp_error_config_t\fP g_error_config"
+\fBInitial value:\fP
+.PP
+.nf
+= {
+    \&.min_logLevel = UVHTTP_LOG_LEVEL_INFO,
+    \&.customHandler = NULL,
+    \&.enableRecovery = 1,
+    \&.maxRetries = 3,
+    \&.baseDelayMs = 100,
+    \&.maxDelayMs = 5000,
+    \&.backoffMultiplier = 2\&.0
+}
+.fi
+.SS "struct { \&.\&.\&. }  g_error_stats\fC [static]\fP"
+
+.SS "char last_error_context[256]"
+
+.SS "time_t last_error_time"
+
+.SS "size_t total_errors"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

@@ -1,0 +1,58 @@
+.TH "include/uvhttp_allocator.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_allocator.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_ALLOCATOR_TYPE\fP   0  /* 0=系统, 1=mimalloc */"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static void * \fBuvhttp_alloc\fP (size_t size)"
+.br
+.ti -1c
+.RI "static void \fBuvhttp_free\fP (void *ptr)"
+.br
+.ti -1c
+.RI "static void * \fBuvhttp_realloc\fP (void *ptr, size_t size)"
+.br
+.ti -1c
+.RI "static void * \fBuvhttp_calloc\fP (size_t nmemb, size_t size)"
+.br
+.ti -1c
+.RI "static const char * \fBuvhttp_allocator_name\fP (void)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_ALLOCATOR_TYPE   0  /* 0=系统, 1=mimalloc */"
+
+.SH "Function Documentation"
+.PP 
+.SS "static void* uvhttp_alloc (size_t size)\fC [inline]\fP, \fC [static]\fP"
+
+.SS "static const char* uvhttp_allocator_name (void)\fC [inline]\fP, \fC [static]\fP"
+
+.SS "static void* uvhttp_calloc (size_t nmemb, size_t size)\fC [inline]\fP, \fC [static]\fP"
+
+.SS "static void uvhttp_free (void * ptr)\fC [inline]\fP, \fC [static]\fP"
+
+.SS "static void* uvhttp_realloc (void * ptr, size_t size)\fC [inline]\fP, \fC [static]\fP"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

@@ -1,0 +1,152 @@
+.TH "include/uvhttp_utils.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_utils.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include 'uvhttp_error\&.h'\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBuvhttp_response\fP \fBuvhttp_response_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBuvhttp_safe_strncpy\fP (char *dest, const char *src, size_t dest_size)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_send_unified_response\fP (\fBuvhttp_response_t\fP *response, const char *content, size_t length, int status_code)"
+.br
+.RI "统一的响应发送函数 - 由使用者设置 Content-Type "
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_send_error_response\fP (\fBuvhttp_response_t\fP *response, int error_code, const char *error_message, const char *details)"
+.br
+.RI "创建标准错误响应（JSON格式） "
+.ti -1c
+.RI "int \fBuvhttp_is_valid_status_code\fP (int status_code)"
+.br
+.RI "验证 HTTP 状态码是否有效 "
+.ti -1c
+.RI "int \fBuvhttp_is_valid_content_type\fP (const char *content_type)"
+.br
+.RI "验证 Content-Type 格式 "
+.ti -1c
+.RI "int \fBuvhttp_is_valid_string_length\fP (const char *str, size_t max_len)"
+.br
+.RI "验证字符串长度是否在有效范围内 "
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBuvhttp_response\fP \fBuvhttp_response_t\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "int uvhttp_is_valid_content_type (const char * content_type)"
+
+.PP
+验证 Content-Type 格式 
+.PP
+\fBParameters\fP
+.RS 4
+\fIcontent_type\fP Content-Type 字符串 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_TRUE 表示有效，UVHTTP_FALSE 表示无效 
+.RE
+.PP
+
+.SS "int uvhttp_is_valid_status_code (int status_code)"
+
+.PP
+验证 HTTP 状态码是否有效 
+.PP
+\fBParameters\fP
+.RS 4
+\fIstatus_code\fP HTTP 状态码 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_TRUE 表示有效，UVHTTP_FALSE 表示无效 
+.RE
+.PP
+
+.SS "int uvhttp_is_valid_string_length (const char * str, size_t max_len)"
+
+.PP
+验证字符串长度是否在有效范围内 
+.PP
+\fBParameters\fP
+.RS 4
+\fIstr\fP 字符串 
+.br
+\fImax_len\fP 最大长度 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_TRUE 表示有效，UVHTTP_FALSE 表示无效 
+.RE
+.PP
+
+.SS "int uvhttp_safe_strncpy (char * dest, const char * src, size_t dest_size)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_send_error_response (\fBuvhttp_response_t\fP * response, int error_code, const char * error_message, const char * details)"
+
+.PP
+创建标准错误响应（JSON格式） 
+.PP
+\fBParameters\fP
+.RS 4
+\fIresponse\fP 响应对象 
+.br
+\fIerror_code\fP 错误代码 
+.br
+\fIerror_message\fP 错误消息 
+.br
+\fIdetails\fP 详细信息（可选） 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK 成功，其他值表示错误 
+.RE
+.PP
+
+.SS "\fBuvhttp_error_t\fP uvhttp_send_unified_response (\fBuvhttp_response_t\fP * response, const char * content, size_t length, int status_code)"
+
+.PP
+统一的响应发送函数 - 由使用者设置 Content-Type 
+.PP
+\fBParameters\fP
+.RS 4
+\fIresponse\fP 响应对象 
+.br
+\fIcontent\fP 内容数据 
+.br
+\fIlength\fP 内容长度（如果为0则自动计算） 
+.br
+\fIstatus_code\fP HTTP状态码（如果为0则使用响应对象中已有的状态码） 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK 成功，其他值表示错误 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

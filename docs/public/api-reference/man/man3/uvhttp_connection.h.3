@@ -1,0 +1,195 @@
+.TH "include/uvhttp_connection.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_connection.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <assert\&.h>\fP
+.br
+\fC#include 'uvhttp_common\&.h'\fP
+.br
+\fC#include 'uvhttp_request\&.h'\fP
+.br
+\fC#include 'uvhttp_response\&.h'\fP
+.br
+\fC#include 'uvhttp_server\&.h'\fP
+.br
+\fC#include 'uvhttp_mempool\&.h'\fP
+.br
+\fC#include 'llhttp\&.h'\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_connection\fP"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBuvhttp_connection\fP \fBuvhttp_connection_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBws_route_entry\fP \fBws_route_entry_t\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBuvhttp_connection_state_t\fP { \fBUVHTTP_CONN_STATE_NEW\fP, \fBUVHTTP_CONN_STATE_TLS_HANDSHAKE\fP, \fBUVHTTP_CONN_STATE_HTTP_READING\fP, \fBUVHTTP_CONN_STATE_HTTP_PROCESSING\fP, \fBUVHTTP_CONN_STATE_HTTP_WRITING\fP, \fBUVHTTP_CONN_STATE_CLOSING\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_connection_t\fP * \fBuvhttp_connection_new\fP (struct \fBuvhttp_server\fP *server)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_free\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_connection_start\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_close\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_connection_restart_read\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_connection_schedule_restart_read\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_connection_start_tls_handshake\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_connection_tls_read\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_connection_tls_write\fP (\fBuvhttp_connection_t\fP *conn, const void *data, size_t len)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_connection_tls_handshake_func\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_tls_cleanup\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_set_state\fP (\fBuvhttp_connection_t\fP *conn, \fBuvhttp_connection_state_t\fP state)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_connection_get_state_string\fP (\fBuvhttp_connection_state_t\fP state)"
+.br
+.ti -1c
+.RI "\fBuvhttp_connection_t\fP * \fBuvhttp_connection_pool_acquire\fP (struct \fBuvhttp_server\fP *server)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_pool_release\fP (struct \fBuvhttp_server\fP *server, \fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_pool_cleanup\fP (struct \fBuvhttp_server\fP *server)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_connection_handle_websocket_handshake\fP (\fBuvhttp_connection_t\fP *conn, const char *ws_key)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_switch_to_websocket\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_websocket_read\fP (uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_connection_websocket_close\fP (\fBuvhttp_connection_t\fP *conn)"
+.br
+.ti -1c
+.RI "\fBuvhttp_ws_handler_t\fP * \fBuvhttp_server_find_ws_handler\fP (struct \fBuvhttp_server\fP *server, const char *path)"
+.br
+.ti -1c
+.RI "\fBws_route_entry_t\fP * \fBuvhttp_server_find_ws_route_entry\fP (struct \fBuvhttp_server\fP *server, const char *path)"
+.br
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBuvhttp_connection\fP \fBuvhttp_connection_t\fP"
+
+.SS "typedef struct \fBws_route_entry\fP \fBws_route_entry_t\fP"
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBuvhttp_connection_state_t\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIUVHTTP_CONN_STATE_NEW \fP\fP
+.TP
+\fB\fIUVHTTP_CONN_STATE_TLS_HANDSHAKE \fP\fP
+.TP
+\fB\fIUVHTTP_CONN_STATE_HTTP_READING \fP\fP
+.TP
+\fB\fIUVHTTP_CONN_STATE_HTTP_PROCESSING \fP\fP
+.TP
+\fB\fIUVHTTP_CONN_STATE_HTTP_WRITING \fP\fP
+.TP
+\fB\fIUVHTTP_CONN_STATE_CLOSING \fP\fP
+.SH "Function Documentation"
+.PP 
+.SS "void uvhttp_connection_close (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "void uvhttp_connection_free (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "const char* uvhttp_connection_get_state_string (\fBuvhttp_connection_state_t\fP state)"
+
+.SS "int uvhttp_connection_handle_websocket_handshake (\fBuvhttp_connection_t\fP * conn, const char * ws_key)"
+
+.SS "\fBuvhttp_connection_t\fP* uvhttp_connection_new (struct \fBuvhttp_server\fP * server)"
+
+.SS "\fBuvhttp_connection_t\fP* uvhttp_connection_pool_acquire (struct \fBuvhttp_server\fP * server)"
+
+.SS "void uvhttp_connection_pool_cleanup (struct \fBuvhttp_server\fP * server)"
+
+.SS "void uvhttp_connection_pool_release (struct \fBuvhttp_server\fP * server, \fBuvhttp_connection_t\fP * conn)"
+
+.SS "int uvhttp_connection_restart_read (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "int uvhttp_connection_schedule_restart_read (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "void uvhttp_connection_set_state (\fBuvhttp_connection_t\fP * conn, \fBuvhttp_connection_state_t\fP state)"
+
+.SS "int uvhttp_connection_start (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "int uvhttp_connection_start_tls_handshake (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "void uvhttp_connection_switch_to_websocket (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "void uvhttp_connection_tls_cleanup (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "int uvhttp_connection_tls_handshake_func (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "int uvhttp_connection_tls_read (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "int uvhttp_connection_tls_write (\fBuvhttp_connection_t\fP * conn, const void * data, size_t len)"
+
+.SS "void uvhttp_connection_websocket_close (\fBuvhttp_connection_t\fP * conn)"
+
+.SS "void uvhttp_connection_websocket_read (uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf)"
+
+.SS "\fBuvhttp_ws_handler_t\fP* uvhttp_server_find_ws_handler (struct \fBuvhttp_server\fP * server, const char * path)"
+
+.SS "\fBws_route_entry_t\fP* uvhttp_server_find_ws_route_entry (struct \fBuvhttp_server\fP * server, const char * path)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

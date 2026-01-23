@@ -1,0 +1,26 @@
+var structuvhttp__ws__connection =
+[
+    [ "bytes_received", "structuvhttp__ws__connection.html#a673a573ab99ebd06414a887e7531fc8b", null ],
+    [ "bytes_sent", "structuvhttp__ws__connection.html#a3fcc1ec51ec6a1305b2e8dd8201d7f9c", null ],
+    [ "client_key", "structuvhttp__ws__connection.html#a0b0b6050f2ffecbeb58c758cf44bb7dc", null ],
+    [ "config", "structuvhttp__ws__connection.html#a9b355eab6654cd71baa87c2c86c5be05", null ],
+    [ "fd", "structuvhttp__ws__connection.html#a98174c9c9618e1262efb95ba6e5ea865", null ],
+    [ "fragmented_capacity", "structuvhttp__ws__connection.html#ad3a0bbddfac6036c5f0378a1d419248d", null ],
+    [ "fragmented_message", "structuvhttp__ws__connection.html#af20dbf6c8ec262fe47294e1162942f4c", null ],
+    [ "fragmented_opcode", "structuvhttp__ws__connection.html#ad2026c46249788f3527a956f7207aaf5", null ],
+    [ "fragmented_size", "structuvhttp__ws__connection.html#a6a6ca681ff5ac2df8da35fe2c2429096", null ],
+    [ "frames_received", "structuvhttp__ws__connection.html#a87b548d76e04feaf4c3fba5ea1c45b99", null ],
+    [ "frames_sent", "structuvhttp__ws__connection.html#a0f26ea926a3f22ae9c258f9725a525af", null ],
+    [ "is_server", "structuvhttp__ws__connection.html#a5504ed4750aa940e9b9ba60a172df01a", null ],
+    [ "on_close", "structuvhttp__ws__connection.html#a6f073127b9c7895b91b3eae04b1bf0a5", null ],
+    [ "on_error", "structuvhttp__ws__connection.html#a373b7409f689cd82bbf53c1c0b10ca3d", null ],
+    [ "on_message", "structuvhttp__ws__connection.html#a4e16a09c4ff7260fed7bfe5cf30c9bf9", null ],
+    [ "recv_buffer", "structuvhttp__ws__connection.html#a291ad7dfa75d683c254f23d27aaec5b7", null ],
+    [ "recv_buffer_pos", "structuvhttp__ws__connection.html#a0fce5e77182cf13dab9d7a110e803e45", null ],
+    [ "recv_buffer_size", "structuvhttp__ws__connection.html#a916dd2980477b56ad2f786b2373eb63d", null ],
+    [ "send_buffer", "structuvhttp__ws__connection.html#a43c41cf88171f405d78ba56983305358", null ],
+    [ "send_buffer_size", "structuvhttp__ws__connection.html#a819a3f6dc69c6ff823e092b87e0380a6", null ],
+    [ "ssl", "structuvhttp__ws__connection.html#aebacdf04cace431d8226029defd5629d", null ],
+    [ "state", "structuvhttp__ws__connection.html#a4cdfc9ff0f6cccf077bfa2a25b38b16f", null ],
+    [ "user_data", "structuvhttp__ws__connection.html#a59b4e7f2171d834f44504a70772512d9", null ]
+];

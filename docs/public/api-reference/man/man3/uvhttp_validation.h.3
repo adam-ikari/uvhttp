@@ -1,0 +1,253 @@
+.TH "include/uvhttp_validation.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_validation.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include 'uvhttp_constants\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBuvhttp_validate_string_length\fP (const char *str, size_t min_len, size_t max_len)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_validate_http_method\fP (const char *method)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_validate_url_path\fP (const char *path)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_validate_header_name\fP (const char *name)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_validate_header_value_safe\fP (const char *value)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_validate_port\fP (int port)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_validate_ipv4\fP (const char *ip)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_validate_ipv6\fP (const char *ip)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_validate_content_length\fP (size_t length)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_validate_websocket_key\fP (const char *key, size_t key_len)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_validate_file_path\fP (const char *path)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_validate_query_string\fP (const char *query)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_validate_string_safety\fP (const char *str, int allow_null_bytes, int allow_control_chars)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "int uvhttp_validate_content_length (size_t length)"
+验证内容长度是否在合理范围内 
+.PP
+\fBParameters\fP
+.RS 4
+\fIlength\fP 内容长度 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+1有效，0无效 
+.RE
+.PP
+
+.SS "int uvhttp_validate_file_path (const char * path)"
+验证文件路径是否安全（防止路径遍历攻击） 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpath\fP 文件路径 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+1安全，0不安全 
+.RE
+.PP
+
+.SS "int uvhttp_validate_header_name (const char * name)"
+验证HTTP头部名称是否有效 
+.PP
+\fBParameters\fP
+.RS 4
+\fIname\fP 头部名称 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+1有效，0无效 
+.RE
+.PP
+
+.SS "int uvhttp_validate_header_value_safe (const char * value)"
+验证HTTP头部值是否安全 
+.PP
+\fBParameters\fP
+.RS 4
+\fIvalue\fP 头部值 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+1安全，0不安全 
+.RE
+.PP
+
+.SS "int uvhttp_validate_http_method (const char * method)"
+验证HTTP方法是否有效 
+.PP
+\fBParameters\fP
+.RS 4
+\fImethod\fP HTTP方法字符串 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+1有效，0无效 
+.RE
+.PP
+
+.SS "int uvhttp_validate_ipv4 (const char * ip)"
+验证IPv4地址格式 
+.PP
+\fBParameters\fP
+.RS 4
+\fIip\fP IP地址字符串 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+1有效，0无效 
+.RE
+.PP
+
+.SS "int uvhttp_validate_ipv6 (const char * ip)"
+验证IPv6地址格式 
+.PP
+\fBParameters\fP
+.RS 4
+\fIip\fP IP地址字符串 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+1有效，0无效 
+.RE
+.PP
+
+.SS "int uvhttp_validate_port (int port)"
+验证端口号是否在有效范围内 
+.PP
+\fBParameters\fP
+.RS 4
+\fIport\fP 端口号 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+1有效，0无效 
+.RE
+.PP
+
+.SS "int uvhttp_validate_query_string (const char * query)"
+验证查询字符串是否安全 
+.PP
+\fBParameters\fP
+.RS 4
+\fIquery\fP 查询字符串 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+1安全，0不安全 
+.RE
+.PP
+
+.SS "int uvhttp_validate_string_length (const char * str, size_t min_len, size_t max_len)"
+验证字符串长度是否在有效范围内 
+.PP
+\fBParameters\fP
+.RS 4
+\fIstr\fP 要验证的字符串 
+.br
+\fImin_len\fP 最小长度 
+.br
+\fImax_len\fP 最大长度 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+1有效，0无效 
+.RE
+.PP
+
+.SS "int uvhttp_validate_string_safety (const char * str, int allow_null_bytes, int allow_control_chars)"
+通用字符串安全检查 
+.PP
+\fBParameters\fP
+.RS 4
+\fIstr\fP 要检查的字符串 
+.br
+\fIallow_null_bytes\fP 是否允许空字节 
+.br
+\fIallow_control_chars\fP 是否允许控制字符 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+1安全，0不安全 
+.RE
+.PP
+
+.SS "int uvhttp_validate_url_path (const char * path)"
+验证URL路径是否安全 
+.PP
+\fBParameters\fP
+.RS 4
+\fIpath\fP URL路径 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+1安全，0不安全 
+.RE
+.PP
+
+.SS "int uvhttp_validate_websocket_key (const char * key, size_t key_len)"
+验证WebSocket密钥格式 
+.PP
+\fBParameters\fP
+.RS 4
+\fIkey\fP WebSocket密钥 
+.br
+\fIkey_len\fP 密钥长度 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+1有效，0无效 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

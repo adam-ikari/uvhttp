@@ -1,0 +1,14 @@
+digraph "copy_string"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="copy_string",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="uvhttp_cors_config\l_create",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__cors__middleware_8h.html#a2fd3dd0ab5b7a071f850845d93b6d715",tooltip=" "];
+  Node1 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="uvhttp_cors_config\l_default",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__cors__middleware_8h.html#a86b860a0c9e97fca8b598e65777acfcc",tooltip=" "];
+  Node3 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="uvhttp_cors_middleware",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__cors__middleware_8h.html#a6e74c9b7a32105cfffb4d96b212bd9b4",tooltip=" "];
+}

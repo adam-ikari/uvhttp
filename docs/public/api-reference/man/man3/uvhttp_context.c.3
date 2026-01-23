@@ -1,0 +1,271 @@
+.TH "src/uvhttp_context.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_context.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_context\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_connection\&.h'\fP
+.br
+\fC#include 'uvhttp_server\&.h'\fP
+.br
+\fC#include 'uvhttp_router\&.h'\fP
+.br
+\fC#include 'uvhttp_constants\&.h'\fP
+.br
+\fC#include 'uvhttp_error_handler\&.h'\fP
+.br
+\fC#include <mbedtls/entropy\&.h>\fP
+.br
+\fC#include <mbedtls/ctr_drbg\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <time\&.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_default_connection_provider_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_test_connection_provider_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_default_logger_provider_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_test_logger_provider_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_default_config_provider_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static struct \fBuvhttp_connection\fP * \fBdefault_acquire_connection\fP (\fBuvhttp_connection_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "static void \fBdefault_release_connection\fP (\fBuvhttp_connection_provider_t\fP *provider, struct \fBuvhttp_connection\fP *conn)"
+.br
+.ti -1c
+.RI "static size_t \fBdefault_get_pool_size\fP (\fBuvhttp_connection_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "static void \fBdefault_cleanup_expired\fP (\fBuvhttp_connection_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "\fBuvhttp_connection_provider_t\fP * \fBuvhttp_default_connection_provider_create\fP (void)"
+.br
+.ti -1c
+.RI "static struct \fBuvhttp_connection\fP * \fBtest_acquire_connection\fP (\fBuvhttp_connection_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "static void \fBtest_release_connection\fP (\fBuvhttp_connection_provider_t\fP *provider, struct \fBuvhttp_connection\fP *conn)"
+.br
+.ti -1c
+.RI "static size_t \fBtest_get_pool_size\fP (\fBuvhttp_connection_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "static void \fBtest_cleanup_expired\fP (\fBuvhttp_connection_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "\fBuvhttp_connection_provider_t\fP * \fBuvhttp_test_connection_provider_create\fP (void)"
+.br
+.ti -1c
+.RI "static void \fBdefault_log\fP (\fBuvhttp_logger_provider_t\fP *provider, \fBuvhttp_log_level_t\fP level, const char *file, int line, const char *func, const char *message)"
+.br
+.ti -1c
+.RI "static void \fBdefault_set_level\fP (\fBuvhttp_logger_provider_t\fP *provider, \fBuvhttp_log_level_t\fP level)"
+.br
+.ti -1c
+.RI "\fBuvhttp_logger_provider_t\fP * \fBuvhttp_default_logger_provider_create\fP (\fBuvhttp_log_level_t\fP level)"
+.br
+.ti -1c
+.RI "static void \fBtest_log\fP (\fBuvhttp_logger_provider_t\fP *provider, \fBuvhttp_log_level_t\fP level, const char *file, int line, const char *func, const char *message)"
+.br
+.ti -1c
+.RI "\fBuvhttp_logger_provider_t\fP * \fBuvhttp_test_logger_provider_create\fP (void)"
+.br
+.ti -1c
+.RI "static const char * \fBdefault_get_string\fP (\fBuvhttp_config_provider_t\fP *provider, const char *key, const char *default_value)"
+.br
+.ti -1c
+.RI "static int \fBdefault_get_int\fP (\fBuvhttp_config_provider_t\fP *provider, const char *key, int default_value)"
+.br
+.ti -1c
+.RI "static int \fBdefault_set_string\fP (\fBuvhttp_config_provider_t\fP *provider, const char *key, const char *value)"
+.br
+.ti -1c
+.RI "static int \fBdefault_set_int\fP (\fBuvhttp_config_provider_t\fP *provider, const char *key, int value)"
+.br
+.ti -1c
+.RI "\fBuvhttp_config_provider_t\fP * \fBuvhttp_default_config_provider_create\fP (void)"
+.br
+.ti -1c
+.RI "\fBuvhttp_context_t\fP * \fBuvhttp_context_create\fP (uv_loop_t *loop)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_context_destroy\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_init\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_init_tls\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_context_cleanup_tls\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_init_websocket\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_context_cleanup_websocket\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_init_error_stats\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_context_cleanup_error_stats\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_init_config\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_context_cleanup_config\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_set_connection_provider\fP (\fBuvhttp_context_t\fP *context, \fBuvhttp_connection_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_set_logger_provider\fP (\fBuvhttp_context_t\fP *context, \fBuvhttp_logger_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_set_config_provider\fP (\fBuvhttp_context_t\fP *context, \fBuvhttp_config_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_context_set_network_interface\fP (\fBuvhttp_context_t\fP *context, \fBuvhttp_network_interface_t\fP *interface)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_test_context_init\fP (uv_loop_t *loop)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_test_context_cleanup\fP (void)"
+.br
+.ti -1c
+.RI "\fBuvhttp_context_t\fP * \fBuvhttp_test_get_context\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_test_context_reset_stats\fP (void)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_context_t\fP * \fBg_uvhttp_context\fP = NULL"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "static struct \fBuvhttp_connection\fP* default_acquire_connection (\fBuvhttp_connection_provider_t\fP * provider)\fC [static]\fP"
+
+.SS "static void default_cleanup_expired (\fBuvhttp_connection_provider_t\fP * provider)\fC [static]\fP"
+
+.SS "static int default_get_int (\fBuvhttp_config_provider_t\fP * provider, const char * key, int default_value)\fC [static]\fP"
+
+.SS "static size_t default_get_pool_size (\fBuvhttp_connection_provider_t\fP * provider)\fC [static]\fP"
+
+.SS "static const char* default_get_string (\fBuvhttp_config_provider_t\fP * provider, const char * key, const char * default_value)\fC [static]\fP"
+
+.SS "static void default_log (\fBuvhttp_logger_provider_t\fP * provider, \fBuvhttp_log_level_t\fP level, const char * file, int line, const char * func, const char * message)\fC [static]\fP"
+
+.SS "static void default_release_connection (\fBuvhttp_connection_provider_t\fP * provider, struct \fBuvhttp_connection\fP * conn)\fC [static]\fP"
+
+.SS "static int default_set_int (\fBuvhttp_config_provider_t\fP * provider, const char * key, int value)\fC [static]\fP"
+
+.SS "static void default_set_level (\fBuvhttp_logger_provider_t\fP * provider, \fBuvhttp_log_level_t\fP level)\fC [static]\fP"
+
+.SS "static int default_set_string (\fBuvhttp_config_provider_t\fP * provider, const char * key, const char * value)\fC [static]\fP"
+
+.SS "static struct \fBuvhttp_connection\fP* test_acquire_connection (\fBuvhttp_connection_provider_t\fP * provider)\fC [static]\fP"
+
+.SS "static void test_cleanup_expired (\fBuvhttp_connection_provider_t\fP * provider)\fC [static]\fP"
+
+.SS "static size_t test_get_pool_size (\fBuvhttp_connection_provider_t\fP * provider)\fC [static]\fP"
+
+.SS "static void test_log (\fBuvhttp_logger_provider_t\fP * provider, \fBuvhttp_log_level_t\fP level, const char * file, int line, const char * func, const char * message)\fC [static]\fP"
+
+.SS "static void test_release_connection (\fBuvhttp_connection_provider_t\fP * provider, struct \fBuvhttp_connection\fP * conn)\fC [static]\fP"
+
+.SS "void uvhttp_context_cleanup_config (\fBuvhttp_context_t\fP * context)"
+
+.SS "void uvhttp_context_cleanup_error_stats (\fBuvhttp_context_t\fP * context)"
+
+.SS "void uvhttp_context_cleanup_tls (\fBuvhttp_context_t\fP * context)"
+
+.SS "void uvhttp_context_cleanup_websocket (\fBuvhttp_context_t\fP * context)"
+
+.SS "\fBuvhttp_context_t\fP* uvhttp_context_create (uv_loop_t * loop)"
+
+.SS "void uvhttp_context_destroy (\fBuvhttp_context_t\fP * context)"
+
+.SS "int uvhttp_context_init (\fBuvhttp_context_t\fP * context)"
+
+.SS "int uvhttp_context_init_config (\fBuvhttp_context_t\fP * context)"
+
+.SS "int uvhttp_context_init_error_stats (\fBuvhttp_context_t\fP * context)"
+
+.SS "int uvhttp_context_init_tls (\fBuvhttp_context_t\fP * context)"
+
+.SS "int uvhttp_context_init_websocket (\fBuvhttp_context_t\fP * context)"
+
+.SS "int uvhttp_context_set_config_provider (\fBuvhttp_context_t\fP * context, \fBuvhttp_config_provider_t\fP * provider)"
+
+.SS "int uvhttp_context_set_connection_provider (\fBuvhttp_context_t\fP * context, \fBuvhttp_connection_provider_t\fP * provider)"
+
+.SS "int uvhttp_context_set_logger_provider (\fBuvhttp_context_t\fP * context, \fBuvhttp_logger_provider_t\fP * provider)"
+
+.SS "int uvhttp_context_set_network_interface (\fBuvhttp_context_t\fP * context, \fBuvhttp_network_interface_t\fP * interface)"
+
+.SS "\fBuvhttp_config_provider_t\fP* uvhttp_default_config_provider_create (void)"
+
+.SS "\fBuvhttp_connection_provider_t\fP* uvhttp_default_connection_provider_create (void)"
+
+.SS "\fBuvhttp_logger_provider_t\fP* uvhttp_default_logger_provider_create (\fBuvhttp_log_level_t\fP level)"
+
+.SS "\fBuvhttp_connection_provider_t\fP* uvhttp_test_connection_provider_create (void)"
+
+.SS "void uvhttp_test_context_cleanup (void)"
+
+.SS "int uvhttp_test_context_init (uv_loop_t * loop)"
+
+.SS "void uvhttp_test_context_reset_stats (void)"
+
+.SS "\fBuvhttp_context_t\fP* uvhttp_test_get_context (void)"
+
+.SS "\fBuvhttp_logger_provider_t\fP* uvhttp_test_logger_provider_create (void)"
+
+.SH "Variable Documentation"
+.PP 
+.SS "\fBuvhttp_context_t\fP* g_uvhttp_context = NULL"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

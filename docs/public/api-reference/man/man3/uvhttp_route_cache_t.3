@@ -1,0 +1,55 @@
+.TH "uvhttp_route_cache_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_route_cache_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_router_cache\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_route_cache_entry_t\fP \fBentries\fP [1024]"
+.br
+.ti -1c
+.RI "size_t \fBentry_count\fP"
+.br
+.ti -1c
+.RI "size_t \fBcurrent_index\fP"
+.br
+.ti -1c
+.RI "size_t \fBcache_hits\fP"
+.br
+.ti -1c
+.RI "size_t \fBcache_misses\fP"
+.br
+.ti -1c
+.RI "size_t \fBtotal_lookups\fP"
+.br
+.ti -1c
+.RI "int \fBinitialized\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "size_t uvhttp_route_cache_t::cache_hits"
+
+.SS "size_t uvhttp_route_cache_t::cache_misses"
+
+.SS "size_t uvhttp_route_cache_t::current_index"
+
+.SS "\fBuvhttp_route_cache_entry_t\fP uvhttp_route_cache_t::entries[1024]"
+
+.SS "size_t uvhttp_route_cache_t::entry_count"
+
+.SS "int uvhttp_route_cache_t::initialized"
+
+.SS "size_t uvhttp_route_cache_t::total_lookups"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

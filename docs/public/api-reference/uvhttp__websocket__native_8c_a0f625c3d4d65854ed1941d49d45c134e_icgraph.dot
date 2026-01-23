@@ -1,0 +1,12 @@
+digraph "uvhttp_ws_send_ping"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="uvhttp_ws_send_ping",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="ws_heartbeat_timer\l_callback",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__server_8c.html#ae5e22d9ae87c9558b381cd56fa30fb72",tooltip=" "];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="uvhttp_server_ws_enable\l_connection_management",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__server_8h.html#a91a10c71fbb417f2a8f8252c7fbd476b",tooltip=" "];
+}

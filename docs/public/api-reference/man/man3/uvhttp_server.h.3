@@ -1,0 +1,660 @@
+.TH "include/uvhttp_server.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_server.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <uv\&.h>\fP
+.br
+\fC#include <assert\&.h>\fP
+.br
+\fC#include 'uvhttp_error\&.h'\fP
+.br
+\fC#include 'uvhttp_common\&.h'\fP
+.br
+\fC#include 'uvhttp_config\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uthash\&.h'\fP
+.br
+\fC#include 'uvhttp_features\&.h'\fP
+.br
+\fC#include 'uvhttp_middleware\&.h'\fP
+.br
+\fC#include 'uvhttp_websocket_native\&.h'\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBwhitelist_item\fP"
+.br
+.ti -1c
+.RI "struct \fBws_connection_node\fP"
+.br
+.ti -1c
+.RI "struct \fBws_connection_manager_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_server_builder_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_server\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_ws_handler_t\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBMAX_CONNECTIONS\fP   1000"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBuvhttp_request\fP \fBuvhttp_request_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_response\fP \fBuvhttp_response_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_router\fP \fBuvhttp_router_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_tls_context\fP \fBuvhttp_tls_context_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_ws_connection\fP \fBuvhttp_ws_connection_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBws_connection_node\fP \fBws_connection_node_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_server\fP \fBuvhttp_server_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_http_middleware\fP \fBuvhttp_http_middleware_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_server_t\fP * \fBuvhttp_server_new\fP (uv_loop_t *loop)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_listen\fP (\fBuvhttp_server_t\fP *server, const char *host, int port)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_stop\fP (\fBuvhttp_server_t\fP *server)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_enable_tls\fP (\fBuvhttp_server_t\fP *server, \fBuvhttp_tls_context_t\fP *tls_ctx)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_disable_tls\fP (\fBuvhttp_server_t\fP *server)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_free\fP (\fBuvhttp_server_t\fP *server)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_set_handler\fP (\fBuvhttp_server_t\fP *server, \fBuvhttp_request_handler_t\fP handler)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_set_router\fP (\fBuvhttp_server_t\fP *server, \fBuvhttp_router_t\fP *router)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_add_middleware\fP (\fBuvhttp_server_t\fP *server, \fBuvhttp_http_middleware_t\fP *middleware)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_remove_middleware\fP (\fBuvhttp_server_t\fP *server, const char *path)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_server_cleanup_middleware\fP (\fBuvhttp_server_t\fP *server)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_enable_rate_limit\fP (\fBuvhttp_server_t\fP *server, int max_requests, int window_seconds)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_disable_rate_limit\fP (\fBuvhttp_server_t\fP *server)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_check_rate_limit\fP (\fBuvhttp_server_t\fP *server)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_add_rate_limit_whitelist\fP (\fBuvhttp_server_t\fP *server, const char *client_ip)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_get_rate_limit_status\fP (\fBuvhttp_server_t\fP *server, const char *client_ip, int *remaining, uint64_t *reset_time)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_reset_rate_limit_client\fP (\fBuvhttp_server_t\fP *server, const char *client_ip)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_clear_rate_limit_all\fP (\fBuvhttp_server_t\fP *server)"
+.br
+.ti -1c
+.RI "\fBuvhttp_server_builder_t\fP * \fBuvhttp_server_create\fP (const char *host, int port)"
+.br
+.ti -1c
+.RI "\fBuvhttp_server_builder_t\fP * \fBuvhttp_get\fP (\fBuvhttp_server_builder_t\fP *server, const char *path, \fBuvhttp_request_handler_t\fP handler)"
+.br
+.ti -1c
+.RI "\fBuvhttp_server_builder_t\fP * \fBuvhttp_post\fP (\fBuvhttp_server_builder_t\fP *server, const char *path, \fBuvhttp_request_handler_t\fP handler)"
+.br
+.ti -1c
+.RI "\fBuvhttp_server_builder_t\fP * \fBuvhttp_put\fP (\fBuvhttp_server_builder_t\fP *server, const char *path, \fBuvhttp_request_handler_t\fP handler)"
+.br
+.ti -1c
+.RI "\fBuvhttp_server_builder_t\fP * \fBuvhttp_delete\fP (\fBuvhttp_server_builder_t\fP *server, const char *path, \fBuvhttp_request_handler_t\fP handler)"
+.br
+.ti -1c
+.RI "\fBuvhttp_server_builder_t\fP * \fBuvhttp_any\fP (\fBuvhttp_server_builder_t\fP *server, const char *path, \fBuvhttp_request_handler_t\fP handler)"
+.br
+.ti -1c
+.RI "\fBuvhttp_server_builder_t\fP * \fBuvhttp_set_max_connections\fP (\fBuvhttp_server_builder_t\fP *server, int max_conn)"
+.br
+.ti -1c
+.RI "\fBuvhttp_server_builder_t\fP * \fBuvhttp_set_timeout\fP (\fBuvhttp_server_builder_t\fP *server, int timeout)"
+.br
+.ti -1c
+.RI "\fBuvhttp_server_builder_t\fP * \fBuvhttp_set_max_body_size\fP (\fBuvhttp_server_builder_t\fP *server, size_t size)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_quick_response\fP (\fBuvhttp_response_t\fP *response, int status, const char *content_type, const char *body)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_html_response\fP (\fBuvhttp_response_t\fP *response, const char *html_body)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_file_response\fP (\fBuvhttp_response_t\fP *response, const char *file_path)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_get_param\fP (\fBuvhttp_request_t\fP *request, const char *name)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_get_header\fP (\fBuvhttp_request_t\fP *request, const char *name)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_get_body\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_server_run\fP (\fBuvhttp_server_builder_t\fP *server)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_server_stop_simple\fP (\fBuvhttp_server_builder_t\fP *server)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_server_simple_free\fP (\fBuvhttp_server_builder_t\fP *server)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_serve\fP (const char *host, int port)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_register_ws_handler\fP (\fBuvhttp_server_t\fP *server, const char *path, \fBuvhttp_ws_handler_t\fP *handler)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_ws_send\fP (\fBuvhttp_ws_connection_t\fP *ws_conn, const char *data, size_t len)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_ws_close\fP (\fBuvhttp_ws_connection_t\fP *ws_conn, int code, const char *reason)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_ws_enable_connection_management\fP (\fBuvhttp_server_t\fP *server, int timeout_seconds, int heartbeat_interval)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_ws_disable_connection_management\fP (\fBuvhttp_server_t\fP *server)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_server_ws_get_connection_count\fP (\fBuvhttp_server_t\fP *server)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_server_ws_get_connection_count_by_path\fP (\fBuvhttp_server_t\fP *server, const char *path)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_ws_broadcast\fP (\fBuvhttp_server_t\fP *server, const char *path, const char *data, size_t len)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_server_ws_close_all\fP (\fBuvhttp_server_t\fP *server, const char *path)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_server_ws_add_connection\fP (\fBuvhttp_server_t\fP *server, \fBuvhttp_ws_connection_t\fP *ws_conn, const char *path)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_server_ws_remove_connection\fP (\fBuvhttp_server_t\fP *server, \fBuvhttp_ws_connection_t\fP *ws_conn)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_server_ws_update_activity\fP (\fBuvhttp_server_t\fP *server, \fBuvhttp_ws_connection_t\fP *ws_conn)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_request_init\fP (\fBuvhttp_request_t\fP *request, uv_tcp_t *client)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_request_cleanup\fP (\fBuvhttp_request_t\fP *request)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define MAX_CONNECTIONS   1000"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBuvhttp_http_middleware\fP \fBuvhttp_http_middleware_t\fP"
+
+.SS "typedef struct \fBuvhttp_request\fP \fBuvhttp_request_t\fP"
+
+.SS "typedef struct \fBuvhttp_response\fP \fBuvhttp_response_t\fP"
+
+.SS "typedef struct \fBuvhttp_router\fP \fBuvhttp_router_t\fP"
+
+.SS "typedef struct \fBuvhttp_server\fP \fBuvhttp_server_t\fP"
+
+.SS "typedef struct \fBuvhttp_tls_context\fP \fBuvhttp_tls_context_t\fP"
+
+.SS "typedef struct \fBuvhttp_ws_connection\fP \fBuvhttp_ws_connection_t\fP"
+
+.SS "typedef struct \fBws_connection_node\fP \fBws_connection_node_t\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "\fBuvhttp_server_builder_t\fP* uvhttp_any (\fBuvhttp_server_builder_t\fP * server, const char * path, \fBuvhttp_request_handler_t\fP handler)"
+
+.SS "\fBuvhttp_server_builder_t\fP* uvhttp_delete (\fBuvhttp_server_builder_t\fP * server, const char * path, \fBuvhttp_request_handler_t\fP handler)"
+
+.SS "void uvhttp_file_response (\fBuvhttp_response_t\fP * response, const char * file_path)"
+
+.SS "\fBuvhttp_server_builder_t\fP* uvhttp_get (\fBuvhttp_server_builder_t\fP * server, const char * path, \fBuvhttp_request_handler_t\fP handler)"
+
+.SS "const char* uvhttp_get_body (\fBuvhttp_request_t\fP * request)"
+
+.SS "const char* uvhttp_get_header (\fBuvhttp_request_t\fP * request, const char * name)"
+
+.SS "const char* uvhttp_get_param (\fBuvhttp_request_t\fP * request, const char * name)"
+
+.SS "void uvhttp_html_response (\fBuvhttp_response_t\fP * response, const char * html_body)"
+
+.SS "\fBuvhttp_server_builder_t\fP* uvhttp_post (\fBuvhttp_server_builder_t\fP * server, const char * path, \fBuvhttp_request_handler_t\fP handler)"
+
+.SS "\fBuvhttp_server_builder_t\fP* uvhttp_put (\fBuvhttp_server_builder_t\fP * server, const char * path, \fBuvhttp_request_handler_t\fP handler)"
+
+.SS "void uvhttp_quick_response (\fBuvhttp_response_t\fP * response, int status, const char * content_type, const char * body)"
+
+.SS "void uvhttp_request_cleanup (\fBuvhttp_request_t\fP * request)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_request_init (\fBuvhttp_request_t\fP * request, uv_tcp_t * client)"
+
+.SS "int uvhttp_serve (const char * host, int port)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_add_middleware (\fBuvhttp_server_t\fP * server, \fBuvhttp_http_middleware_t\fP * middleware)"
+向服务器添加中间件
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器对象 
+.br
+\fImiddleware\fP 中间件对象 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK 成功，其他值失败
+.RE
+.PP
+插入策略：
+.IP "\(bu" 2
+按优先级插入（HIGH > NORMAL > LOW）
+.IP "\(bu" 2
+相同优先级：后添加的在后面
+.IP "\(bu" 2
+单线程安全，无需锁
+.PP
+.PP
+零开销设计：
+.IP "\(bu" 2
+O(n) 插入（n 为中间件数量，通常很小）
+.IP "\(bu" 2
+直接指针操作，无额外分配 
+.PP
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_add_rate_limit_whitelist (\fBuvhttp_server_t\fP * server, const char * client_ip)"
+添加限流白名单IP地址（不受限流限制）
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器实例 
+.br
+\fIclient_ip\fP 客户端IP地址（如 '127\&.0\&.0\&.1'） 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK 成功，其他值表示失败 
+.RE
+.PP
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_check_rate_limit (\fBuvhttp_server_t\fP * server)"
+检查限流状态（内部使用）
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器实例 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK 允许请求，UVHTTP_ERROR_RATE_LIMIT_EXCEEDED 超过限流 
+.RE
+.PP
+
+.SS "void uvhttp_server_cleanup_middleware (\fBuvhttp_server_t\fP * server)"
+清理服务器中间件链
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器对象
+.RE
+.PP
+设计考虑：
+.IP "\(bu" 2
+在服务器销毁时调用
+.IP "\(bu" 2
+清理所有中间件及其上下文
+.IP "\(bu" 2
+单线程安全，无需锁
+.PP
+.PP
+零开销设计：
+.IP "\(bu" 2
+O(n) 清理
+.IP "\(bu" 2
+直接指针操作 
+.PP
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_clear_rate_limit_all (\fBuvhttp_server_t\fP * server)"
+清空所有限流状态
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器实例 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK 成功，其他值表示失败 
+.RE
+.PP
+
+.SS "\fBuvhttp_server_builder_t\fP* uvhttp_server_create (const char * host, int port)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_disable_rate_limit (\fBuvhttp_server_t\fP * server)"
+禁用限流功能
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器实例 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK 成功，其他值表示失败 
+.RE
+.PP
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_disable_tls (\fBuvhttp_server_t\fP * server)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_enable_rate_limit (\fBuvhttp_server_t\fP * server, int max_requests, int window_seconds)"
+启用服务器级别的限流功能
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器实例 
+.br
+\fImax_requests\fP 时间窗口内允许的最大请求数（范围：1-1000000） 
+.br
+\fIwindow_seconds\fP 时间窗口（秒，范围：1-86400） 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK 成功，其他值表示失败
+.RE
+.PP
+注意：
+.IP "\(bu" 2
+限流功能对所有请求生效（服务器级别限流）
+.IP "\(bu" 2
+限流状态在服务器级别管理，所有客户端共享计数器
+.IP "\(bu" 2
+适用于防止 DDoS 攻击，不适用于按客户端限流
+.IP "\(bu" 2
+建议在调用 uvhttp_server_listen 之前调用
+.IP "\(bu" 2
+使用固定窗口算法实现 
+.PP
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_enable_tls (\fBuvhttp_server_t\fP * server, \fBuvhttp_tls_context_t\fP * tls_ctx)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_free (\fBuvhttp_server_t\fP * server)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_get_rate_limit_status (\fBuvhttp_server_t\fP * server, const char * client_ip, int * remaining, uint64_t * reset_time)"
+获取服务器的限流状态
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器实例 
+.br
+\fIclient_ip\fP 客户端IP地址（当前未使用，保留参数以备将来扩展） 
+.br
+\fIremaining\fP 剩余请求数（输出） 
+.br
+\fIreset_time\fP 重置时间戳（输出，毫秒） 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK 成功，其他值表示失败
+.RE
+.PP
+注意：
+.IP "\(bu" 2
+当前实现为服务器级别限流，client_ip 参数未使用
+.IP "\(bu" 2
+返回的是服务器的总体限流状态，不是特定客户端的状态 
+.PP
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_listen (\fBuvhttp_server_t\fP * server, const char * host, int port)"
+
+.SS "\fBuvhttp_server_t\fP* uvhttp_server_new (uv_loop_t * loop)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_register_ws_handler (\fBuvhttp_server_t\fP * server, const char * path, \fBuvhttp_ws_handler_t\fP * handler)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_remove_middleware (\fBuvhttp_server_t\fP * server, const char * path)"
+从服务器移除中间件
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器对象 
+.br
+\fIpath\fP 要移除的中间件路径 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK 成功，其他值失败
+.RE
+.PP
+移除策略：
+.IP "\(bu" 2
+按路径匹配移除
+.IP "\(bu" 2
+只移除第一个匹配的中间件
+.IP "\(bu" 2
+单线程安全，无需锁
+.PP
+.PP
+零开销设计：
+.IP "\(bu" 2
+O(n) 查找和移除
+.IP "\(bu" 2
+直接指针操作，无额外分配 
+.PP
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_reset_rate_limit_client (\fBuvhttp_server_t\fP * server, const char * client_ip)"
+重置服务器的限流状态
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器实例 
+.br
+\fIclient_ip\fP 客户端IP地址（当前未使用，保留参数以备将来扩展） 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK 成功，其他值表示失败
+.RE
+.PP
+注意：
+.IP "\(bu" 2
+当前实现为服务器级别限流，client_ip 参数未使用
+.IP "\(bu" 2
+重置的是服务器的总体限流计数器，不是特定客户端的计数器 
+.PP
+
+.SS "int uvhttp_server_run (\fBuvhttp_server_builder_t\fP * server)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_set_handler (\fBuvhttp_server_t\fP * server, \fBuvhttp_request_handler_t\fP handler)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_set_router (\fBuvhttp_server_t\fP * server, \fBuvhttp_router_t\fP * router)"
+
+.SS "void uvhttp_server_simple_free (\fBuvhttp_server_builder_t\fP * server)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_stop (\fBuvhttp_server_t\fP * server)"
+
+.SS "void uvhttp_server_stop_simple (\fBuvhttp_server_builder_t\fP * server)"
+
+.SS "void uvhttp_server_ws_add_connection (\fBuvhttp_server_t\fP * server, \fBuvhttp_ws_connection_t\fP * ws_conn, const char * path)"
+内部函数：添加 WebSocket 连接到管理器 
+.SS "\fBuvhttp_error_t\fP uvhttp_server_ws_broadcast (\fBuvhttp_server_t\fP * server, const char * path, const char * data, size_t len)"
+向指定路径的所有连接广播消息
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器实例 
+.br
+\fIpath\fP 路径（NULL 表示广播到所有连接） 
+.br
+\fIdata\fP 消息数据 
+.br
+\fIlen\fP 消息长度 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK 成功，其他值表示失败 
+.RE
+.PP
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_ws_close (\fBuvhttp_ws_connection_t\fP * ws_conn, int code, const char * reason)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_ws_close_all (\fBuvhttp_server_t\fP * server, const char * path)"
+关闭指定路径的所有连接
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器实例 
+.br
+\fIpath\fP 路径（NULL 表示关闭所有连接） 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK 成功，其他值表示失败 
+.RE
+.PP
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_ws_disable_connection_management (\fBuvhttp_server_t\fP * server)"
+禁用 WebSocket 连接管理
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器实例 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK 成功，其他值表示失败 
+.RE
+.PP
+
+.SS "\fBuvhttp_error_t\fP uvhttp_server_ws_enable_connection_management (\fBuvhttp_server_t\fP * server, int timeout_seconds, int heartbeat_interval)"
+启用 WebSocket 连接管理
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器实例 
+.br
+\fItimeout_seconds\fP 超时时间（秒），范围：10-3600 
+.br
+\fIheartbeat_interval\fP 心跳间隔（秒），范围：5-300 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK 成功，其他值表示失败 
+.RE
+.PP
+
+.SS "int uvhttp_server_ws_get_connection_count (\fBuvhttp_server_t\fP * server)"
+获取 WebSocket 连接总数
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器实例 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+连接数量 
+.RE
+.PP
+
+.SS "int uvhttp_server_ws_get_connection_count_by_path (\fBuvhttp_server_t\fP * server, const char * path)"
+获取指定路径的 WebSocket 连接数量
+.PP
+\fBParameters\fP
+.RS 4
+\fIserver\fP 服务器实例 
+.br
+\fIpath\fP 路径 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+连接数量 
+.RE
+.PP
+
+.SS "void uvhttp_server_ws_remove_connection (\fBuvhttp_server_t\fP * server, \fBuvhttp_ws_connection_t\fP * ws_conn)"
+内部函数：从管理器中移除 WebSocket 连接 
+.SS "\fBuvhttp_error_t\fP uvhttp_server_ws_send (\fBuvhttp_ws_connection_t\fP * ws_conn, const char * data, size_t len)"
+
+.SS "void uvhttp_server_ws_update_activity (\fBuvhttp_server_t\fP * server, \fBuvhttp_ws_connection_t\fP * ws_conn)"
+内部函数：更新 WebSocket 连接活动时间 
+.SS "\fBuvhttp_server_builder_t\fP* uvhttp_set_max_body_size (\fBuvhttp_server_builder_t\fP * server, size_t size)"
+
+.SS "\fBuvhttp_server_builder_t\fP* uvhttp_set_max_connections (\fBuvhttp_server_builder_t\fP * server, int max_conn)"
+
+.SS "\fBuvhttp_server_builder_t\fP* uvhttp_set_timeout (\fBuvhttp_server_builder_t\fP * server, int timeout)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

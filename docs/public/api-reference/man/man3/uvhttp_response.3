@@ -1,0 +1,85 @@
+.TH "uvhttp_response" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_response
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_response\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "int \fBstatus_code\fP"
+.br
+.ti -1c
+.RI "int \fBheaders_sent\fP"
+.br
+.ti -1c
+.RI "int \fBsent\fP"
+.br
+.ti -1c
+.RI "int \fBfinished\fP"
+.br
+.ti -1c
+.RI "int \fBkeep_alive\fP"
+.br
+.ti -1c
+.RI "int \fBcompress\fP"
+.br
+.ti -1c
+.RI "int \fBcache_ttl\fP"
+.br
+.ti -1c
+.RI "uv_tcp_t * \fBclient\fP"
+.br
+.ti -1c
+.RI "char * \fBbody\fP"
+.br
+.ti -1c
+.RI "size_t \fBheader_count\fP"
+.br
+.ti -1c
+.RI "size_t \fBbody_length\fP"
+.br
+.ti -1c
+.RI "time_t \fBcache_expires\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_header_t\fP \fBheaders\fP [64]"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "char* uvhttp_response::body"
+
+.SS "size_t uvhttp_response::body_length"
+
+.SS "time_t uvhttp_response::cache_expires"
+
+.SS "int uvhttp_response::cache_ttl"
+
+.SS "uv_tcp_t* uvhttp_response::client"
+
+.SS "int uvhttp_response::compress"
+
+.SS "int uvhttp_response::finished"
+
+.SS "size_t uvhttp_response::header_count"
+
+.SS "\fBuvhttp_header_t\fP uvhttp_response::headers[64]"
+
+.SS "int uvhttp_response::headers_sent"
+
+.SS "int uvhttp_response::keep_alive"
+
+.SS "int uvhttp_response::sent"
+
+.SS "int uvhttp_response::status_code"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

@@ -1,0 +1,145 @@
+.TH "uvhttp_connection" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_connection
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_connection\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_connection_state_t\fP \fBstate\fP"
+.br
+.ti -1c
+.RI "int \fBparsing_complete\fP"
+.br
+.ti -1c
+.RI "int \fBkeep_alive\fP"
+.br
+.ti -1c
+.RI "int \fBchunked_encoding\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_server\fP * \fBserver\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_request_t\fP * \fBrequest\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_response_t\fP * \fBresponse\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_mempool_t\fP * \fBmempool\fP"
+.br
+.ti -1c
+.RI "uv_tcp_t \fBtcp_handle\fP"
+.br
+.ti -1c
+.RI "uv_idle_t \fBidle_handle\fP"
+.br
+.ti -1c
+.RI "int \fBcurrent_header_is_important\fP"
+.br
+.ti -1c
+.RI "int \fBparsing_header_field\fP"
+.br
+.ti -1c
+.RI "int \fBneed_restart_read\fP"
+.br
+.ti -1c
+.RI "int \fBtls_enabled\fP"
+.br
+.ti -1c
+.RI "size_t \fBcontent_length\fP"
+.br
+.ti -1c
+.RI "size_t \fBbody_received\fP"
+.br
+.ti -1c
+.RI "size_t \fBread_buffer_size\fP"
+.br
+.ti -1c
+.RI "size_t \fBread_buffer_used\fP"
+.br
+.ti -1c
+.RI "size_t \fBcurrent_header_field_len\fP"
+.br
+.ti -1c
+.RI "void * \fBssl\fP"
+.br
+.ti -1c
+.RI "char * \fBread_buffer\fP"
+.br
+.ti -1c
+.RI "int \fBlast_error\fP"
+.br
+.ti -1c
+.RI "void * \fBws_connection\fP"
+.br
+.ti -1c
+.RI "int \fBis_websocket\fP"
+.br
+.ti -1c
+.RI "char \fBcurrent_header_field\fP [256]"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "size_t uvhttp_connection::body_received"
+
+.SS "int uvhttp_connection::chunked_encoding"
+
+.SS "size_t uvhttp_connection::content_length"
+
+.SS "char uvhttp_connection::current_header_field[256]"
+
+.SS "size_t uvhttp_connection::current_header_field_len"
+
+.SS "int uvhttp_connection::current_header_is_important"
+
+.SS "uv_idle_t uvhttp_connection::idle_handle"
+
+.SS "int uvhttp_connection::is_websocket"
+
+.SS "int uvhttp_connection::keep_alive"
+
+.SS "int uvhttp_connection::last_error"
+
+.SS "\fBuvhttp_mempool_t\fP* uvhttp_connection::mempool"
+
+.SS "int uvhttp_connection::need_restart_read"
+
+.SS "int uvhttp_connection::parsing_complete"
+
+.SS "int uvhttp_connection::parsing_header_field"
+
+.SS "char* uvhttp_connection::read_buffer"
+
+.SS "size_t uvhttp_connection::read_buffer_size"
+
+.SS "size_t uvhttp_connection::read_buffer_used"
+
+.SS "\fBuvhttp_request_t\fP* uvhttp_connection::request"
+
+.SS "\fBuvhttp_response_t\fP* uvhttp_connection::response"
+
+.SS "struct \fBuvhttp_server\fP* uvhttp_connection::server"
+
+.SS "void* uvhttp_connection::ssl"
+
+.SS "\fBuvhttp_connection_state_t\fP uvhttp_connection::state"
+
+.SS "uv_tcp_t uvhttp_connection::tcp_handle"
+
+.SS "int uvhttp_connection::tls_enabled"
+
+.SS "void* uvhttp_connection::ws_connection"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

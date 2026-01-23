@@ -1,0 +1,60 @@
+.TH "uvhttp_route_cache_entry_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_route_cache_entry_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_router_cache\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "char \fBroute\fP [1024]"
+.br
+.ti -1c
+.RI "\fBuvhttp_method_t\fP \fBmethod\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_route_node_t\fP * \fBhandler\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_param_t\fP \fBparams\fP [16]"
+.br
+.ti -1c
+.RI "size_t \fBparam_count\fP"
+.br
+.ti -1c
+.RI "uint32_t \fBaccess_time\fP"
+.br
+.ti -1c
+.RI "uint32_t \fBhash\fP"
+.br
+.ti -1c
+.RI "uint8_t \fBvalid\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "uint32_t uvhttp_route_cache_entry_t::access_time"
+
+.SS "\fBuvhttp_route_node_t\fP* uvhttp_route_cache_entry_t::handler"
+
+.SS "uint32_t uvhttp_route_cache_entry_t::hash"
+
+.SS "\fBuvhttp_method_t\fP uvhttp_route_cache_entry_t::method"
+
+.SS "size_t uvhttp_route_cache_entry_t::param_count"
+
+.SS "\fBuvhttp_param_t\fP uvhttp_route_cache_entry_t::params[16]"
+
+.SS "char uvhttp_route_cache_entry_t::route[1024]"
+
+.SS "uint8_t uvhttp_route_cache_entry_t::valid"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

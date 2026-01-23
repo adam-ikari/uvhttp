@@ -1,0 +1,270 @@
+.TH "include/uvhttp_error.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_error.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <time\&.h>\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_ERROR_COUNT\fP   120"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBuvhttp_context\fP \fBuvhttp_context_t\fP"
+.br
+.ti -1c
+.RI "typedef \fBuvhttp_error_t\fP \fBuvhttp_result_t\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBuvhttp_error_t\fP { \fBUVHTTP_OK\fP = 0, \fBUVHTTP_ERROR_INVALID_PARAM\fP = -1, \fBUVHTTP_ERROR_OUT_OF_MEMORY\fP = -2, \fBUVHTTP_ERROR_NOT_FOUND\fP = -3, \fBUVHTTP_ERROR_ALREADY_EXISTS\fP = -4, \fBUVHTTP_ERROR_NULL_POINTER\fP = -5, \fBUVHTTP_ERROR_BUFFER_TOO_SMALL\fP = -6, \fBUVHTTP_ERROR_TIMEOUT\fP = -7, \fBUVHTTP_ERROR_CANCELLED\fP = -8, \fBUVHTTP_ERROR_SERVER_INIT\fP = -100, \fBUVHTTP_ERROR_SERVER_LISTEN\fP = -101, \fBUVHTTP_ERROR_SERVER_STOP\fP = -102, \fBUVHTTP_ERROR_CONNECTION_LIMIT\fP = -103, \fBUVHTTP_ERROR_SERVER_ALREADY_RUNNING\fP = -104, \fBUVHTTP_ERROR_SERVER_NOT_RUNNING\fP = -105, \fBUVHTTP_ERROR_SERVER_INVALID_CONFIG\fP = -106, \fBUVHTTP_ERROR_CONNECTION_INIT\fP = -200, \fBUVHTTP_ERROR_CONNECTION_ACCEPT\fP = -201, \fBUVHTTP_ERROR_CONNECTION_START\fP = -202, \fBUVHTTP_ERROR_CONNECTION_CLOSE\fP = -203, \fBUVHTTP_ERROR_CONNECTION_RESET\fP = -204, \fBUVHTTP_ERROR_CONNECTION_TIMEOUT\fP = -205, \fBUVHTTP_ERROR_CONNECTION_REFUSED\fP = -206, \fBUVHTTP_ERROR_CONNECTION_BROKEN\fP = -207, \fBUVHTTP_ERROR_REQUEST_INIT\fP = -300, \fBUVHTTP_ERROR_RESPONSE_INIT\fP = -301, \fBUVHTTP_ERROR_RESPONSE_SEND\fP = -302, \fBUVHTTP_ERROR_INVALID_HTTP_METHOD\fP = -303, \fBUVHTTP_ERROR_INVALID_HTTP_VERSION\fP = -304, \fBUVHTTP_ERROR_HEADER_TOO_LARGE\fP = -305, \fBUVHTTP_ERROR_BODY_TOO_LARGE\fP = -306, \fBUVHTTP_ERROR_MALFORMED_REQUEST\fP = -307, \fBUVHTTP_ERROR_TLS_INIT\fP = -400, \fBUVHTTP_ERROR_TLS_CONTEXT\fP = -401, \fBUVHTTP_ERROR_TLS_HANDSHAKE\fP = -402, \fBUVHTTP_ERROR_TLS_CERT_LOAD\fP = -403, \fBUVHTTP_ERROR_TLS_KEY_LOAD\fP = -404, \fBUVHTTP_ERROR_TLS_VERIFY_FAILED\fP = -405, \fBUVHTTP_ERROR_TLS_EXPIRED\fP = -406, \fBUVHTTP_ERROR_TLS_NOT_YET_VALID\fP = -407, \fBUVHTTP_ERROR_ROUTER_INIT\fP = -500, \fBUVHTTP_ERROR_ROUTER_ADD\fP = -501, \fBUVHTTP_ERROR_ROUTE_NOT_FOUND\fP = -502, \fBUVHTTP_ERROR_ROUTE_ALREADY_EXISTS\fP = -503, \fBUVHTTP_ERROR_INVALID_ROUTE_PATTERN\fP = -504, \fBUVHTTP_ERROR_RATE_LIMIT_EXCEEDED\fP = -550, \fBUVHTTP_ERROR_ALLOCATOR_INIT\fP = -600, \fBUVHTTP_ERROR_ALLOCATOR_SET\fP = -601, \fBUVHTTP_ERROR_ALLOCATOR_NOT_INITIALIZED\fP = -602, \fBUVHTTP_ERROR_WEBSOCKET_INIT\fP = -700, \fBUVHTTP_ERROR_WEBSOCKET_HANDSHAKE\fP = -701, \fBUVHTTP_ERROR_WEBSOCKET_FRAME\fP = -702, \fBUVHTTP_ERROR_WEBSOCKET_TOO_LARGE\fP = -703, \fBUVHTTP_ERROR_WEBSOCKET_INVALID_OPCODE\fP = -704, \fBUVHTTP_ERROR_WEBSOCKET_NOT_CONNECTED\fP = -705, \fBUVHTTP_ERROR_WEBSOCKET_ALREADY_CONNECTED\fP = -706, \fBUVHTTP_ERROR_WEBSOCKET_CLOSED\fP = -707, \fBUVHTTP_ERROR_HTTP2_INIT\fP = -800, \fBUVHTTP_ERROR_HTTP2_STREAM\fP = -801, \fBUVHTTP_ERROR_HTTP2_SETTINGS\fP = -802, \fBUVHTTP_ERROR_HTTP2_FLOW_CONTROL\fP = -803, \fBUVHTTP_ERROR_HTTP2_HEADER_COMPRESS\fP = -804, \fBUVHTTP_ERROR_HTTP2_PRIORITY\fP = -805, \fBUVHTTP_ERROR_CONFIG_PARSE\fP = -900, \fBUVHTTP_ERROR_CONFIG_INVALID\fP = -901, \fBUVHTTP_ERROR_CONFIG_FILE_NOT_FOUND\fP = -902, \fBUVHTTP_ERROR_CONFIG_MISSING_REQUIRED\fP = -903, \fBUVHTTP_ERROR_MIDDLEWARE_INIT\fP = -1000, \fBUVHTTP_ERROR_MIDDLEWARE_REGISTER\fP = -1001, \fBUVHTTP_ERROR_MIDDLEWARE_EXECUTE\fP = -1002, \fBUVHTTP_ERROR_MIDDLEWARE_NOT_FOUND\fP = -1003, \fBUVHTTP_ERROR_LOG_INIT\fP = -1100, \fBUVHTTP_ERROR_LOG_WRITE\fP = -1101, \fBUVHTTP_ERROR_LOG_FILE_OPEN\fP = -1102, \fBUVHTTP_ERROR_LOG_NOT_INITIALIZED\fP = -1103, \fBUVHTTP_ERROR_MAX\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "const char * \fBuvhttp_error_string\fP (\fBuvhttp_error_t\fP error)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_error_category_string\fP (\fBuvhttp_error_t\fP error)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_error_description\fP (\fBuvhttp_error_t\fP error)"
+.br
+.ti -1c
+.RI "const char * \fBuvhttp_error_suggestion\fP (\fBuvhttp_error_t\fP error)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_error_is_recoverable\fP (\fBuvhttp_error_t\fP error)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_set_error_recovery_config\fP (int max_retries, int base_delay_ms, int max_delay_ms, double backoff_multiplier)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_retry_operation\fP (\fBuvhttp_error_t\fP(*operation)(void *), void *context, const char *operation_name)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_log_error\fP (\fBuvhttp_error_t\fP error, const char *context)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_get_error_stats\fP (\fBuvhttp_context_t\fP *context, size_t *\fBerror_counts\fP, time_t *\fBlast_error_time\fP, const char **\fBlast_error_context\fP)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_reset_error_stats\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_get_most_frequent_error\fP (\fBuvhttp_context_t\fP *context)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_ERROR_COUNT   120"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBuvhttp_context\fP \fBuvhttp_context_t\fP"
+
+.SS "typedef \fBuvhttp_error_t\fP \fBuvhttp_result_t\fP"
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBuvhttp_error_t\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIUVHTTP_OK \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_INVALID_PARAM \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_OUT_OF_MEMORY \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_NOT_FOUND \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_ALREADY_EXISTS \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_NULL_POINTER \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_BUFFER_TOO_SMALL \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_TIMEOUT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_CANCELLED \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_SERVER_INIT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_SERVER_LISTEN \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_SERVER_STOP \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_CONNECTION_LIMIT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_SERVER_ALREADY_RUNNING \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_SERVER_NOT_RUNNING \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_SERVER_INVALID_CONFIG \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_CONNECTION_INIT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_CONNECTION_ACCEPT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_CONNECTION_START \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_CONNECTION_CLOSE \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_CONNECTION_RESET \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_CONNECTION_TIMEOUT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_CONNECTION_REFUSED \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_CONNECTION_BROKEN \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_REQUEST_INIT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_RESPONSE_INIT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_RESPONSE_SEND \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_INVALID_HTTP_METHOD \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_INVALID_HTTP_VERSION \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_HEADER_TOO_LARGE \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_BODY_TOO_LARGE \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_MALFORMED_REQUEST \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_TLS_INIT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_TLS_CONTEXT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_TLS_HANDSHAKE \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_TLS_CERT_LOAD \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_TLS_KEY_LOAD \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_TLS_VERIFY_FAILED \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_TLS_EXPIRED \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_TLS_NOT_YET_VALID \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_ROUTER_INIT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_ROUTER_ADD \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_ROUTE_NOT_FOUND \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_ROUTE_ALREADY_EXISTS \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_INVALID_ROUTE_PATTERN \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_RATE_LIMIT_EXCEEDED \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_ALLOCATOR_INIT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_ALLOCATOR_SET \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_ALLOCATOR_NOT_INITIALIZED \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_WEBSOCKET_INIT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_WEBSOCKET_HANDSHAKE \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_WEBSOCKET_FRAME \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_WEBSOCKET_TOO_LARGE \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_WEBSOCKET_INVALID_OPCODE \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_WEBSOCKET_NOT_CONNECTED \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_WEBSOCKET_ALREADY_CONNECTED \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_WEBSOCKET_CLOSED \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_HTTP2_INIT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_HTTP2_STREAM \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_HTTP2_SETTINGS \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_HTTP2_FLOW_CONTROL \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_HTTP2_HEADER_COMPRESS \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_HTTP2_PRIORITY \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_CONFIG_PARSE \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_CONFIG_INVALID \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_CONFIG_FILE_NOT_FOUND \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_CONFIG_MISSING_REQUIRED \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_MIDDLEWARE_INIT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_MIDDLEWARE_REGISTER \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_MIDDLEWARE_EXECUTE \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_MIDDLEWARE_NOT_FOUND \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_LOG_INIT \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_LOG_WRITE \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_LOG_FILE_OPEN \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_LOG_NOT_INITIALIZED \fP\fP
+.TP
+\fB\fIUVHTTP_ERROR_MAX \fP\fP
+.SH "Function Documentation"
+.PP 
+.SS "const char* uvhttp_error_category_string (\fBuvhttp_error_t\fP error)"
+
+.SS "const char* uvhttp_error_description (\fBuvhttp_error_t\fP error)"
+
+.SS "int uvhttp_error_is_recoverable (\fBuvhttp_error_t\fP error)"
+
+.SS "const char* uvhttp_error_string (\fBuvhttp_error_t\fP error)"
+
+.SS "const char* uvhttp_error_suggestion (\fBuvhttp_error_t\fP error)"
+
+.SS "void uvhttp_get_error_stats (\fBuvhttp_context_t\fP * context, size_t * error_counts, time_t * last_error_time, const char ** last_error_context)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_get_most_frequent_error (\fBuvhttp_context_t\fP * context)"
+
+.SS "void uvhttp_log_error (\fBuvhttp_error_t\fP error, const char * context)"
+
+.SS "void uvhttp_reset_error_stats (\fBuvhttp_context_t\fP * context)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_retry_operation (\fBuvhttp_error_t\fP(*)(void *) operation, void * context, const char * operation_name)"
+
+.SS "void uvhttp_set_error_recovery_config (int max_retries, int base_delay_ms, int max_delay_ms, double backoff_multiplier)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

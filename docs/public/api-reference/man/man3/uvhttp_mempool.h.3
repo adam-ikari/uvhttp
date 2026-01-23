@@ -1,0 +1,79 @@
+.TH "include/uvhttp_mempool.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_mempool.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <stdint\&.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_mempool_block\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_mempool_t\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_MEMPOOL_BLOCK_SIZE\fP   4096"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBuvhttp_mempool_block\fP \fBuvhttp_mempool_block_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_mempool_t\fP * \fBuvhttp_mempool_create\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_mempool_destroy\fP (\fBuvhttp_mempool_t\fP *pool)"
+.br
+.ti -1c
+.RI "void * \fBuvhttp_mempool_alloc\fP (\fBuvhttp_mempool_t\fP *pool, size_t size)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_mempool_reset\fP (\fBuvhttp_mempool_t\fP *pool)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_mempool_stats\fP (\fBuvhttp_mempool_t\fP *pool, size_t *blocks, size_t *used)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_MEMPOOL_BLOCK_SIZE   4096"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBuvhttp_mempool_block\fP \fBuvhttp_mempool_block_t\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "void* uvhttp_mempool_alloc (\fBuvhttp_mempool_t\fP * pool, size_t size)"
+
+.SS "\fBuvhttp_mempool_t\fP* uvhttp_mempool_create (void)"
+
+.SS "void uvhttp_mempool_destroy (\fBuvhttp_mempool_t\fP * pool)"
+
+.SS "void uvhttp_mempool_reset (\fBuvhttp_mempool_t\fP * pool)"
+
+.SS "void uvhttp_mempool_stats (\fBuvhttp_mempool_t\fP * pool, size_t * blocks, size_t * used)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

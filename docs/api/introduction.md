@@ -171,14 +171,30 @@ int main() {
 }
 ```
 
-## 更多 API
+## 完整 API 参考
 
-完整的 API 文档正在完善中，目前包含以下核心模块：
+详细的 API 参考文档已使用 Doxygen 自动生成，包含所有公共 API 的完整说明：
+
+- **[查看完整 API 文档](/api-reference/)** - 包含所有模块、函数、数据结构的详细文档
+- **[模块索引](/api-reference/modules.html)** - 按功能模块浏览 API
+- **[函数索引](/api-reference/globals.html)** - 按字母顺序查找函数
+- **[数据结构](/api-reference/annotated.html)** - 所有结构体和类型定义
+
+### 核心模块
 
 - **服务器 (uvhttp_server)** - 服务器创建、启动、停止
 - **路由 (uvhttp_router)** - 路由管理、参数提取
 - **请求 (uvhttp_request)** - HTTP 请求处理
 - **响应 (uvhttp_response)** - HTTP 响应构建
 - **WebSocket (uvhttp_websocket)** - WebSocket 连接管理
-
-详细的 API 参考文档正在编写中，敬请期待。
+- **TLS (uvhttp_tls)** - TLS/SSL 支持
+- **静态文件 (uvhttp_static)** - 静态文件服务
+- **中间件 (uvhttp_middleware)** - 中间件系统
+- **限流 (uvhttp_rate_limit)** - 请求限流
+- **CORS (uvhttp_cors)** - 跨域资源共享
+- **日志 (uvhttp_log)** - 日志系统
+- **配置 (uvhttp_config)** - 配置管理
+- **缓存 (uvhttp_lru_cache)** - LRU 缓存
+- **内存池 (uvhttp_mempool)** - 内存池管理
+- **分配器 (uvhttp_allocator)** - 内存分配器
+- **错误处理 (uvhttp_error)** - 错误处理机制

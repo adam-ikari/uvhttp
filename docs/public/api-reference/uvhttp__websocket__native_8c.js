@@ -1,0 +1,27 @@
+var uvhttp__websocket__native_8c =
+[
+    [ "WS_DEFAULT_MAX_FRAME_SIZE", "uvhttp__websocket__native_8c.html#a2d6e748f6399ef07673275f4e70223aa", null ],
+    [ "WS_DEFAULT_MAX_MESSAGE_SIZE", "uvhttp__websocket__native_8c.html#ac7b59f979cfc777d215084ce16be2a9f", null ],
+    [ "WS_DEFAULT_RECV_BUFFER_SIZE", "uvhttp__websocket__native_8c.html#a098bee685bf9c1318db2b9d497617c2b", null ],
+    [ "WS_GUID", "uvhttp__websocket__native_8c.html#a19b2fa8561bcd550d68b56b81d783e98", null ],
+    [ "uvhttp_ws_apply_mask", "uvhttp__websocket__native_8c.html#a6a78a07a5bd90669f71e84710097c0a9", null ],
+    [ "uvhttp_ws_build_frame", "uvhttp__websocket__native_8c.html#a2e371565ba7fd80455afdff92cf8cdef", null ],
+    [ "uvhttp_ws_close", "uvhttp__websocket__native_8c.html#a3535da3b3c2cfa6e84f905026793376a", null ],
+    [ "uvhttp_ws_connection_create", "uvhttp__websocket__native_8c.html#af8f86962b427776c745620a7389f2bcc", null ],
+    [ "uvhttp_ws_connection_free", "uvhttp__websocket__native_8c.html#a83b7d1935df6c10cf89ee38f18b9f956", null ],
+    [ "uvhttp_ws_generate_accept", "uvhttp__websocket__native_8c.html#ad34259727fbd35991451fa1c9985f3f2", null ],
+    [ "uvhttp_ws_handshake_client", "uvhttp__websocket__native_8c.html#add90147d66a9a1c9d4731b77826b6f9c", null ],
+    [ "uvhttp_ws_handshake_server", "uvhttp__websocket__native_8c.html#abe7b76924fd51cffa35e0c51fa8b8655", null ],
+    [ "uvhttp_ws_parse_frame_header", "uvhttp__websocket__native_8c.html#aaeee718b2df6a3702c780592cec6e708", null ],
+    [ "uvhttp_ws_process_data", "uvhttp__websocket__native_8c.html#a235b7557bd6f8062930b67a98aa59242", null ],
+    [ "uvhttp_ws_random_bytes", "uvhttp__websocket__native_8c.html#a5ce7dad28d3f1f9651bcba6734064dfb", null ],
+    [ "uvhttp_ws_recv_frame", "uvhttp__websocket__native_8c.html#a81dae0085b4f14ae4a10393921da51af", null ],
+    [ "uvhttp_ws_send_binary", "uvhttp__websocket__native_8c.html#a114690f1d6cda8f620ab7a3e1363092a", null ],
+    [ "uvhttp_ws_send_frame", "uvhttp__websocket__native_8c.html#a21029ee13dd0daa2e96f4adf5c2b2897", null ],
+    [ "uvhttp_ws_send_ping", "uvhttp__websocket__native_8c.html#a0f625c3d4d65854ed1941d49d45c134e", null ],
+    [ "uvhttp_ws_send_pong", "uvhttp__websocket__native_8c.html#a49871a9f43f000964ab0d13d00edb7e8", null ],
+    [ "uvhttp_ws_send_text", "uvhttp__websocket__native_8c.html#a45f87d1ba4effcebf10b2a95e1f2be82", null ],
+    [ "uvhttp_ws_set_callbacks", "uvhttp__websocket__native_8c.html#ac7ce036e5846269ff9d65c8d5830fbd2", null ],
+    [ "uvhttp_ws_verify_accept", "uvhttp__websocket__native_8c.html#a20c9abeefc7079b5449bd0ddcc05a818", null ],
+    [ "uvhttp_ws_verify_handshake_response", "uvhttp__websocket__native_8c.html#add3cd8683992418a51846fdd32aea630", null ]
+];

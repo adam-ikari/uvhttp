@@ -1,0 +1,195 @@
+.TH "include/uvhttp_deps.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_deps.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_error\&.h'\fP
+.br
+\fC#include <uv\&.h>\fP
+.br
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <stdbool\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_loop_provider_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_memory_provider_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_network_provider_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_file_provider_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_deps_t\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_GET_LOOP\fP()   (\fBg_uvhttp_deps\fP ? \fBg_uvhttp_deps\fP\->get_loop() : uv_default_loop())"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_FOPEN\fP(filename,  mode)   (\fBg_uvhttp_deps\fP ? \fBg_uvhttp_deps\fP\->fopen(filename, mode) : fopen(filename, mode))"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ACCESS\fP(pathname,  mode)   (\fBg_uvhttp_deps\fP ? \fBg_uvhttp_deps\fP\->access(pathname, mode) : access(pathname, mode))"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEPS_MACROS_DEFINED\fP"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBuvhttp_deps_t\fP \fBuvhttp_deps_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_loop_provider_t\fP \fBuvhttp_loop_provider_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_memory_provider_t\fP \fBuvhttp_memory_provider_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_network_provider_t\fP \fBuvhttp_network_provider_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBuvhttp_file_provider_t\fP \fBuvhttp_file_provider_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBuvhttp_set_deps\fP (\fBuvhttp_deps_t\fP *deps)"
+.br
+.ti -1c
+.RI "\fBuvhttp_deps_t\fP * \fBuvhttp_get_default_deps\fP (void)"
+.br
+.ti -1c
+.RI "\fBuvhttp_deps_t\fP * \fBuvhttp_create_test_deps\fP (void)"
+.br
+.ti -1c
+.RI "\fBuvhttp_deps_t\fP * \fBuvhttp_deps_create_test\fP (void)"
+.br
+.ti -1c
+.RI "\fBuvhttp_deps_t\fP * \fBuvhttp_deps_create_default\fP (void)"
+.br
+.ti -1c
+.RI "\fBuvhttp_deps_t\fP * \fBuvhttp_deps_new\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_deps_free\fP (\fBuvhttp_deps_t\fP *deps)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_free_deps\fP (\fBuvhttp_deps_t\fP *deps)"
+.br
+.ti -1c
+.RI "\fBuvhttp_loop_provider_t\fP * \fBuvhttp_deps_get_loop_provider\fP (\fBuvhttp_deps_t\fP *deps)"
+.br
+.ti -1c
+.RI "\fBuvhttp_memory_provider_t\fP * \fBuvhttp_deps_get_memory_provider\fP (\fBuvhttp_deps_t\fP *deps)"
+.br
+.ti -1c
+.RI "\fBuvhttp_network_provider_t\fP * \fBuvhttp_deps_get_network_provider\fP (\fBuvhttp_deps_t\fP *deps)"
+.br
+.ti -1c
+.RI "\fBuvhttp_file_provider_t\fP * \fBuvhttp_deps_get_file_provider\fP (\fBuvhttp_deps_t\fP *deps)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_deps_set_loop_provider\fP (\fBuvhttp_deps_t\fP *deps, \fBuvhttp_loop_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_deps_set_memory_provider\fP (\fBuvhttp_deps_t\fP *deps, \fBuvhttp_memory_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_deps_set_network_provider\fP (\fBuvhttp_deps_t\fP *deps, \fBuvhttp_network_provider_t\fP *provider)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_deps_set_file_provider\fP (\fBuvhttp_deps_t\fP *deps, \fBuvhttp_file_provider_t\fP *provider)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_deps_t\fP * \fBg_uvhttp_deps\fP"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_ACCESS(pathname, mode)   (\fBg_uvhttp_deps\fP ? \fBg_uvhttp_deps\fP\->access(pathname, mode) : access(pathname, mode))"
+
+.SS "#define UVHTTP_DEPS_MACROS_DEFINED"
+
+.SS "#define UVHTTP_FOPEN(filename, mode)   (\fBg_uvhttp_deps\fP ? \fBg_uvhttp_deps\fP\->fopen(filename, mode) : fopen(filename, mode))"
+
+.SS "#define UVHTTP_GET_LOOP()   (\fBg_uvhttp_deps\fP ? \fBg_uvhttp_deps\fP\->get_loop() : uv_default_loop())"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBuvhttp_deps_t\fP \fBuvhttp_deps_t\fP"
+
+.SS "typedef struct \fBuvhttp_file_provider_t\fP \fBuvhttp_file_provider_t\fP"
+
+.SS "typedef struct \fBuvhttp_loop_provider_t\fP \fBuvhttp_loop_provider_t\fP"
+
+.SS "typedef struct \fBuvhttp_memory_provider_t\fP \fBuvhttp_memory_provider_t\fP"
+
+.SS "typedef struct \fBuvhttp_network_provider_t\fP \fBuvhttp_network_provider_t\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "\fBuvhttp_deps_t\fP* uvhttp_create_test_deps (void)"
+
+.SS "\fBuvhttp_deps_t\fP* uvhttp_deps_create_default (void)"
+
+.SS "\fBuvhttp_deps_t\fP* uvhttp_deps_create_test (void)"
+
+.SS "void uvhttp_deps_free (\fBuvhttp_deps_t\fP * deps)"
+
+.SS "\fBuvhttp_file_provider_t\fP* uvhttp_deps_get_file_provider (\fBuvhttp_deps_t\fP * deps)"
+
+.SS "\fBuvhttp_loop_provider_t\fP* uvhttp_deps_get_loop_provider (\fBuvhttp_deps_t\fP * deps)"
+
+.SS "\fBuvhttp_memory_provider_t\fP* uvhttp_deps_get_memory_provider (\fBuvhttp_deps_t\fP * deps)"
+
+.SS "\fBuvhttp_network_provider_t\fP* uvhttp_deps_get_network_provider (\fBuvhttp_deps_t\fP * deps)"
+
+.SS "\fBuvhttp_deps_t\fP* uvhttp_deps_new (void)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_deps_set_file_provider (\fBuvhttp_deps_t\fP * deps, \fBuvhttp_file_provider_t\fP * provider)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_deps_set_loop_provider (\fBuvhttp_deps_t\fP * deps, \fBuvhttp_loop_provider_t\fP * provider)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_deps_set_memory_provider (\fBuvhttp_deps_t\fP * deps, \fBuvhttp_memory_provider_t\fP * provider)"
+
+.SS "\fBuvhttp_error_t\fP uvhttp_deps_set_network_provider (\fBuvhttp_deps_t\fP * deps, \fBuvhttp_network_provider_t\fP * provider)"
+
+.SS "void uvhttp_free_deps (\fBuvhttp_deps_t\fP * deps)"
+
+.SS "\fBuvhttp_deps_t\fP* uvhttp_get_default_deps (void)"
+
+.SS "void uvhttp_set_deps (\fBuvhttp_deps_t\fP * deps)"
+
+.SH "Variable Documentation"
+.PP 
+.SS "\fBuvhttp_deps_t\fP* g_uvhttp_deps\fC [extern]\fP"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

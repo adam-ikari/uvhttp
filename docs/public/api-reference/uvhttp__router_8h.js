@@ -1,0 +1,27 @@
+var uvhttp__router_8h =
+[
+    [ "uvhttp_param_t", "structuvhttp__param__t.html", "structuvhttp__param__t" ],
+    [ "uvhttp_route_match_t", "structuvhttp__route__match__t.html", "structuvhttp__route__match__t" ],
+    [ "uvhttp_route_node", "structuvhttp__route__node.html", "structuvhttp__route__node" ],
+    [ "array_route_t", "structarray__route__t.html", "structarray__route__t" ],
+    [ "uvhttp_router", "structuvhttp__router.html", "structuvhttp__router" ],
+    [ "MAX_PARAM_NAME_LEN", "uvhttp__router_8h.html#a7e79702ad31a8b882c45d876d0f31422", null ],
+    [ "MAX_PARAM_VALUE_LEN", "uvhttp__router_8h.html#a3f22afde9104ab4d47e7b5475e53e5ea", null ],
+    [ "MAX_PARAMS", "uvhttp__router_8h.html#a885a6481fc6d474d0be18bc0facf648d", null ],
+    [ "MAX_ROUTE_PATH_LEN", "uvhttp__router_8h.html#a0c220f28877a9d3453deac4b94360206", null ],
+    [ "MAX_ROUTES", "uvhttp__router_8h.html#af40843a876a06522a44e5e8a362b0e66", null ],
+    [ "uvhttp_response_t", "uvhttp__router_8h.html#a11c87d93b4fc52a35b52a7fcbd561973", null ],
+    [ "uvhttp_route_node_t", "uvhttp__router_8h.html#acd399ec0418300a5f368a53b698b40f0", null ],
+    [ "uvhttp_router_t", "uvhttp__router_8h.html#a0a950b16aaf3fb3a8fe628f5c6cc3bfd", null ],
+    [ "uvhttp_method_from_string", "uvhttp__router_8h.html#a6a5247b25683491d290699450513f774", null ],
+    [ "uvhttp_method_to_string", "uvhttp__router_8h.html#a0d21cb4afb135ee52d9d6d849cd1c9b5", null ],
+    [ "uvhttp_parse_path_params", "uvhttp__router_8h.html#afd3d6c250ec866c92a35ad8656a95532", null ],
+    [ "uvhttp_router_add_fallback_route", "uvhttp__router_8h.html#aeadb945c9ee3d783e07f2d45c5b89062", null ],
+    [ "uvhttp_router_add_route", "uvhttp__router_8h.html#a681ca18f7cee02039123ab01fec8689e", null ],
+    [ "uvhttp_router_add_route_method", "uvhttp__router_8h.html#a8e4668641257c1138f09a6f2024ea4ff", null ],
+    [ "uvhttp_router_add_static_route", "uvhttp__router_8h.html#a982a2808b4c03e51a999f99a3ffef031", null ],
+    [ "uvhttp_router_find_handler", "uvhttp__router_8h.html#aafb21900c5bf170626dcba584b905d8d", null ],
+    [ "uvhttp_router_free", "uvhttp__router_8h.html#a8326d3c6434dd28d10cfd55374c62d33", null ],
+    [ "uvhttp_router_match", "uvhttp__router_8h.html#ab7b506a747ccbba5aaf8ab68fb2e388a", null ],
+    [ "uvhttp_router_new", "uvhttp__router_8h.html#a61d6ce2225fba4b396e35312dbcca3d0", null ]
+];

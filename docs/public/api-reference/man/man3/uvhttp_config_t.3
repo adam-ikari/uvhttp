@@ -1,0 +1,110 @@
+.TH "uvhttp_config_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_config_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_config\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "int \fBmax_connections\fP"
+.br
+.ti -1c
+.RI "int \fBread_buffer_size\fP"
+.br
+.ti -1c
+.RI "int \fBbacklog\fP"
+.br
+.ti -1c
+.RI "int \fBkeepalive_timeout\fP"
+.br
+.ti -1c
+.RI "int \fBrequest_timeout\fP"
+.br
+.ti -1c
+.RI "size_t \fBmax_body_size\fP"
+.br
+.ti -1c
+.RI "size_t \fBmax_header_size\fP"
+.br
+.ti -1c
+.RI "size_t \fBmax_url_size\fP"
+.br
+.ti -1c
+.RI "int \fBmax_requests_per_connection\fP"
+.br
+.ti -1c
+.RI "int \fBrate_limit_window\fP"
+.br
+.ti -1c
+.RI "int \fBenable_compression\fP"
+.br
+.ti -1c
+.RI "int \fBenable_tls\fP"
+.br
+.ti -1c
+.RI "size_t \fBmemory_pool_size\fP"
+.br
+.ti -1c
+.RI "int \fBenable_memory_debug\fP"
+.br
+.ti -1c
+.RI "double \fBmemory_warning_threshold\fP"
+.br
+.ti -1c
+.RI "int \fBlog_level\fP"
+.br
+.ti -1c
+.RI "int \fBenable_access_log\fP"
+.br
+.ti -1c
+.RI "char \fBlog_file_path\fP [256]"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "int uvhttp_config_t::backlog"
+
+.SS "int uvhttp_config_t::enable_access_log"
+
+.SS "int uvhttp_config_t::enable_compression"
+
+.SS "int uvhttp_config_t::enable_memory_debug"
+
+.SS "int uvhttp_config_t::enable_tls"
+
+.SS "int uvhttp_config_t::keepalive_timeout"
+
+.SS "char uvhttp_config_t::log_file_path[256]"
+
+.SS "int uvhttp_config_t::log_level"
+
+.SS "size_t uvhttp_config_t::max_body_size"
+
+.SS "int uvhttp_config_t::max_connections"
+
+.SS "size_t uvhttp_config_t::max_header_size"
+
+.SS "int uvhttp_config_t::max_requests_per_connection"
+
+.SS "size_t uvhttp_config_t::max_url_size"
+
+.SS "size_t uvhttp_config_t::memory_pool_size"
+
+.SS "double uvhttp_config_t::memory_warning_threshold"
+
+.SS "int uvhttp_config_t::rate_limit_window"
+
+.SS "int uvhttp_config_t::read_buffer_size"
+
+.SS "int uvhttp_config_t::request_timeout"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

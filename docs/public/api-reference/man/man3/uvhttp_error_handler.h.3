@@ -1,0 +1,207 @@
+.TH "include/uvhttp_error_handler.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_error_handler.h \- 统一错误处理框架  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_error\&.h'\fP
+.br
+\fC#include <time\&.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBuvhttp_error_context_t\fP"
+.br
+.ti -1c
+.RI "struct \fBuvhttp_error_config_t\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_ERROR_REPORT\fP(error_code,  message)       uvhttp_error_report_((error_code), (message), __func__, __FILE__, __LINE__, NULL)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_ERROR_REPORT_WITH_DATA\fP(error_code,  message,  data)       uvhttp_error_report_((error_code), (message), __func__, __FILE__, __LINE__, (data))"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_LOG_DEBUG\fP(fmt, \&.\&.\&.)   ((void)0)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_LOG_INFO\fP(fmt, \&.\&.\&.)   ((void)0)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_LOG_WARN\fP(fmt, \&.\&.\&.)   ((void)0)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_LOG_ERROR\fP(fmt, \&.\&.\&.)   ((void)0)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_LOG_FATAL\fP(fmt, \&.\&.\&.)   ((void)0)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CHECK\fP(condition,  error_code,  message)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CHECK_NULL\fP(ptr,  error_code)       \fBUVHTTP_CHECK\fP((ptr) != NULL, error_code, 'Null pointer: ' #ptr)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_CHECK_RESULT\fP(result)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_SAFE_MALLOC\fP(size,  ptr)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_SAFE_CALLOC\fP(nmemb,  size,  ptr)"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef void(* \fBuvhttp_error_handler_t\fP) (const \fBuvhttp_error_context_t\fP *context)"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBuvhttp_log_level_t\fP { \fBUVHTTP_LOG_LEVEL_DEBUG\fP = 0, \fBUVHTTP_LOG_LEVEL_INFO\fP, \fBUVHTTP_LOG_LEVEL_WARN\fP, \fBUVHTTP_LOG_LEVEL_ERROR\fP, \fBUVHTTP_LOG_LEVEL_FATAL\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBuvhttp_error_init\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_error_cleanup\fP (void)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_error_set_config\fP (const \fBuvhttp_error_config_t\fP *config)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_error_attempt_recovery\fP (const \fBuvhttp_error_context_t\fP *context)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_log\fP (\fBuvhttp_log_level_t\fP level, const char *format,\&.\&.\&.)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_error_config_t\fP \fBg_error_config\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+统一错误处理框架 
+
+提供统一的错误处理、日志记录和恢复机制 
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_CHECK(condition, error_code, message)"
+\fBValue:\fP
+.PP
+.nf
+    do { \
+        if (!(condition)) { \
+            UVHTTP_ERROR_REPORT(error_code, message); \
+            return error_code; \
+        } \
+    } while(0)
+.fi
+.SS "#define UVHTTP_CHECK_NULL(ptr, error_code)       \fBUVHTTP_CHECK\fP((ptr) != NULL, error_code, 'Null pointer: ' #ptr)"
+
+.SS "#define UVHTTP_CHECK_RESULT(result)"
+\fBValue:\fP
+.PP
+.nf
+    do { \
+        if ((result) != UVHTTP_OK) { \
+            UVHTTP_ERROR_REPORT(result, uvhttp_error_string(result)); \
+            return result; \
+        } \
+    } while(0)
+.fi
+.SS "#define UVHTTP_ERROR_REPORT(error_code, message)       uvhttp_error_report_((error_code), (message), __func__, __FILE__, __LINE__, NULL)"
+
+.SS "#define UVHTTP_ERROR_REPORT_WITH_DATA(error_code, message, data)       uvhttp_error_report_((error_code), (message), __func__, __FILE__, __LINE__, (data))"
+
+.SS "#define UVHTTP_LOG_DEBUG(fmt,  \&.\&.\&.)   ((void)0)"
+
+.SS "#define UVHTTP_LOG_ERROR(fmt,  \&.\&.\&.)   ((void)0)"
+
+.SS "#define UVHTTP_LOG_FATAL(fmt,  \&.\&.\&.)   ((void)0)"
+
+.SS "#define UVHTTP_LOG_INFO(fmt,  \&.\&.\&.)   ((void)0)"
+
+.SS "#define UVHTTP_LOG_WARN(fmt,  \&.\&.\&.)   ((void)0)"
+
+.SS "#define UVHTTP_SAFE_CALLOC(nmemb, size, ptr)"
+\fBValue:\fP
+.PP
+.nf
+    do { \
+        (ptr) = uvhttp_calloc(nmemb, size); \
+        UVHTTP_CHECK_NULL(ptr, UVHTTP_ERROR_OUT_OF_MEMORY); \
+    } while(0)
+.fi
+.SS "#define UVHTTP_SAFE_MALLOC(size, ptr)"
+\fBValue:\fP
+.PP
+.nf
+    do { \
+        (ptr) = uvhttp_malloc(size); \
+        UVHTTP_CHECK_NULL(ptr, UVHTTP_ERROR_OUT_OF_MEMORY); \
+    } while(0)
+.fi
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef void(* uvhttp_error_handler_t) (const \fBuvhttp_error_context_t\fP *context)"
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBuvhttp_log_level_t\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIUVHTTP_LOG_LEVEL_DEBUG \fP\fP
+.TP
+\fB\fIUVHTTP_LOG_LEVEL_INFO \fP\fP
+.TP
+\fB\fIUVHTTP_LOG_LEVEL_WARN \fP\fP
+.TP
+\fB\fIUVHTTP_LOG_LEVEL_ERROR \fP\fP
+.TP
+\fB\fIUVHTTP_LOG_LEVEL_FATAL \fP\fP
+.SH "Function Documentation"
+.PP 
+.SS "\fBuvhttp_error_t\fP uvhttp_error_attempt_recovery (const \fBuvhttp_error_context_t\fP * context)"
+
+.SS "void uvhttp_error_cleanup (void)"
+
+.SS "void uvhttp_error_init (void)"
+
+.SS "void uvhttp_error_set_config (const \fBuvhttp_error_config_t\fP * config)"
+
+.SS "void uvhttp_log (\fBuvhttp_log_level_t\fP level, const char * format,  \&.\&.\&.)"
+
+.SH "Variable Documentation"
+.PP 
+.SS "\fBuvhttp_error_config_t\fP g_error_config\fC [extern]\fP"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

@@ -1,0 +1,25 @@
+var uvhttp__config_8c =
+[
+    [ "UVHTTP_MAX_BODY_SIZE_CONFIG", "uvhttp__config_8c.html#a576f963a536ec9261a9a6846c4293d66", null ],
+    [ "UVHTTP_MAX_BODY_SIZE_CONFIG", "uvhttp__config_8c.html#a576f963a536ec9261a9a6846c4293d66", null ],
+    [ "UVHTTP_MAX_BUFFER_SIZE", "uvhttp__config_8c.html#afee2ac439c110b2b173c9cdaf41266a7", null ],
+    [ "UVHTTP_MAX_CONNECTIONS_HARD", "uvhttp__config_8c.html#af772c6e2ff11c97322ab2d7e748f283b", null ],
+    [ "UVHTTP_MIN_BODY_SIZE", "uvhttp__config_8c.html#a650334d1cac98c797ad5e54c40cfa275", null ],
+    [ "UVHTTP_MIN_BUFFER_SIZE", "uvhttp__config_8c.html#a1349803a3c9f4512058e2c29ac80bb5b", null ],
+    [ "UVHTTP_MIN_CONNECTIONS", "uvhttp__config_8c.html#a9787904e53e229e7f5f11e0ae901c878", null ],
+    [ "uvhttp_config_free", "uvhttp__config_8c.html#ac6a65d4da0e3e0237ec16357ba1dda3a", null ],
+    [ "uvhttp_config_get_current", "uvhttp__config_8c.html#a7db9419edbff134e2f03ce1df0a81465", null ],
+    [ "uvhttp_config_load_env", "uvhttp__config_8c.html#ad3adc59fc4501626f774099f56905236", null ],
+    [ "uvhttp_config_load_file", "uvhttp__config_8c.html#a240016556f50af6802ee2f067f927747", null ],
+    [ "uvhttp_config_monitor_changes", "uvhttp__config_8c.html#a0a4d1c98742ef82ebb8848d2e1d7e381", null ],
+    [ "uvhttp_config_new", "uvhttp__config_8c.html#a6fbca33d7e002b70ee345e33f4a76dc2", null ],
+    [ "uvhttp_config_print", "uvhttp__config_8c.html#ad34127e3fd907e8fc5d7a77daa5943ae", null ],
+    [ "uvhttp_config_reload", "uvhttp__config_8c.html#a74101f6d1c4e409ad9e030e6a811cf98", null ],
+    [ "uvhttp_config_save_file", "uvhttp__config_8c.html#acf6fd7073ea10b125f68e2c9cf27116a", null ],
+    [ "uvhttp_config_set_current", "uvhttp__config_8c.html#a710e41bbec7af3ac58ec2db346c9c602", null ],
+    [ "uvhttp_config_set_defaults", "uvhttp__config_8c.html#afca3cd6faf0956b39e170d6f998fc785", null ],
+    [ "uvhttp_config_update_max_connections", "uvhttp__config_8c.html#a81ba3a93c868d34eba2391ddbdfd2712", null ],
+    [ "uvhttp_config_update_read_buffer_size", "uvhttp__config_8c.html#a1cf506399dddfae25775b44cdd8c52cc", null ],
+    [ "uvhttp_config_update_size_limits", "uvhttp__config_8c.html#a984a7975ca91728e05710479d5fcd001", null ],
+    [ "uvhttp_config_validate", "uvhttp__config_8c.html#aa63058b849c590f9c7ae0a41ac5ac9c3", null ]
+];

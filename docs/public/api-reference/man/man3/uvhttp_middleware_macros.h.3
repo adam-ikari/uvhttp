@@ -1,0 +1,77 @@
+.TH "include/uvhttp_middleware_macros.h" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/uvhttp_middleware_macros.h
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_common\&.h'\fP
+.br
+\fC#include 'uvhttp_request\&.h'\fP
+.br
+\fC#include 'uvhttp_response\&.h'\fP
+.br
+\fC#include 'uvhttp_middleware\&.h'\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBUVHTTP_MIDDLEWARE_CONTINUE\fP   0    /* 继续执行下一个中间件 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_MIDDLEWARE_STOP\fP   1        /* 停止执行中间件链 */"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_EXECUTE_MIDDLEWARE\fP(req,  resp, \&.\&.\&.)"
+.br
+.ti -1c
+.RI "#define \fBUVHTTP_DEFINE_MIDDLEWARE_CHAIN\fP(name, \&.\&.\&.)"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef int(* \fBuvhttp_middleware_handler_t\fP) (const \fBuvhttp_request_t\fP *request, \fBuvhttp_response_t\fP *response, \fBuvhttp_middleware_context_t\fP *ctx)"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define UVHTTP_DEFINE_MIDDLEWARE_CHAIN(name,  \&.\&.\&.)"
+\fBValue:\fP
+.PP
+.nf
+    static const uvhttp_middleware_handler_t name##_handlers[] = { __VA_ARGS__ }; \
+    static const size_t name##_count = sizeof(name##_handlers)/sizeof(name##_handlers[0])
+.fi
+.SS "#define UVHTTP_EXECUTE_MIDDLEWARE(req, resp,  \&.\&.\&.)"
+\fBValue:\fP
+.PP
+.nf
+    do { \
+        static const uvhttp_middleware_handler_t handlers[] = { __VA_ARGS__ }; \
+        const size_t handler_count = sizeof(handlers)/sizeof(handlers[0]); \
+        uvhttp_middleware_context_t _mw_ctx = {0}; \
+        for (size_t i = 0; i < handler_count; i++) { \
+            if (handlers[i] && handlers[i](req, resp, &_mw_ctx) != UVHTTP_MIDDLEWARE_CONTINUE) { \
+                if (_mw_ctx\&.cleanup) _mw_ctx\&.cleanup(_mw_ctx\&.data); \
+                goto uvhttp_middleware_stop_execution; \
+            } \
+        } \
+    } while(0); \
+    uvhttp_middleware_stop_execution: (void)0
+.fi
+.SS "#define UVHTTP_MIDDLEWARE_CONTINUE   0    /* 继续执行下一个中间件 */"
+
+.SS "#define UVHTTP_MIDDLEWARE_STOP   1        /* 停止执行中间件链 */"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef int(* uvhttp_middleware_handler_t) (const \fBuvhttp_request_t\fP *request, \fBuvhttp_response_t\fP *response, \fBuvhttp_middleware_context_t\fP *ctx)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

@@ -1,0 +1,103 @@
+.TH "sendfile_context_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+sendfile_context_t
+.SH SYNOPSIS
+.br
+.PP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "uv_fs_t \fBopen_req\fP"
+.br
+.ti -1c
+.RI "uv_fs_t \fBsendfile_req\fP"
+.br
+.ti -1c
+.RI "uv_fs_t \fBclose_req\fP"
+.br
+.ti -1c
+.RI "uv_file \fBin_fd\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_response_t\fP * \fBresponse\fP"
+.br
+.ti -1c
+.RI "char * \fBfile_path\fP"
+.br
+.ti -1c
+.RI "size_t \fBfile_size\fP"
+.br
+.ti -1c
+.RI "size_t \fBbytes_sent\fP"
+.br
+.ti -1c
+.RI "int64_t \fBoffset\fP"
+.br
+.ti -1c
+.RI "int \fBcompleted\fP"
+.br
+.ti -1c
+.RI "uv_os_fd_t \fBout_fd\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBstart_time\fP"
+.br
+.ti -1c
+.RI "int \fBretry_count\fP"
+.br
+.ti -1c
+.RI "int \fBtimeout_ms\fP"
+.br
+.ti -1c
+.RI "int \fBmax_retry\fP"
+.br
+.ti -1c
+.RI "size_t \fBchunk_size\fP"
+.br
+.ti -1c
+.RI "uv_timer_t \fBtimeout_timer\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "size_t sendfile_context_t::bytes_sent"
+
+.SS "size_t sendfile_context_t::chunk_size"
+
+.SS "uv_fs_t sendfile_context_t::close_req"
+
+.SS "int sendfile_context_t::completed"
+
+.SS "char* sendfile_context_t::file_path"
+
+.SS "size_t sendfile_context_t::file_size"
+
+.SS "uv_file sendfile_context_t::in_fd"
+
+.SS "int sendfile_context_t::max_retry"
+
+.SS "int64_t sendfile_context_t::offset"
+
+.SS "uv_fs_t sendfile_context_t::open_req"
+
+.SS "uv_os_fd_t sendfile_context_t::out_fd"
+
+.SS "\fBuvhttp_response_t\fP* sendfile_context_t::response"
+
+.SS "int sendfile_context_t::retry_count"
+
+.SS "uv_fs_t sendfile_context_t::sendfile_req"
+
+.SS "uint64_t sendfile_context_t::start_time"
+
+.SS "int sendfile_context_t::timeout_ms"
+
+.SS "uv_timer_t sendfile_context_t::timeout_timer"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

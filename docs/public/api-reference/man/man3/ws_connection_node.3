@@ -1,0 +1,50 @@
+.TH "ws_connection_node" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ws_connection_node
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_server\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBuvhttp_ws_connection_t\fP * \fBws_conn\fP"
+.br
+.ti -1c
+.RI "char \fBpath\fP [4096]"
+.br
+.ti -1c
+.RI "uint64_t \fBlast_activity\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBlast_ping_sent\fP"
+.br
+.ti -1c
+.RI "int \fBping_pending\fP"
+.br
+.ti -1c
+.RI "struct \fBws_connection_node\fP * \fBnext\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "uint64_t ws_connection_node::last_activity"
+
+.SS "uint64_t ws_connection_node::last_ping_sent"
+
+.SS "struct \fBws_connection_node\fP* ws_connection_node::next"
+
+.SS "char ws_connection_node::path[4096]"
+
+.SS "int ws_connection_node::ping_pending"
+
+.SS "\fBuvhttp_ws_connection_t\fP* ws_connection_node::ws_conn"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

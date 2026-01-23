@@ -1,0 +1,12 @@
+digraph "uvhttp_lru_cache_get_stats"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="uvhttp_lru_cache_get\l_stats",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="uvhttp_static_get_cache\l_hit_rate",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__static_8h.html#a01ca2edfa4f3c64552981cea332acbfd",tooltip=" "];
+  Node1 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="uvhttp_static_get_cache\l_stats",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__static_8h.html#a1f02d62911adcd8e38bc92b71a0a48d9",tooltip=" "];
+}

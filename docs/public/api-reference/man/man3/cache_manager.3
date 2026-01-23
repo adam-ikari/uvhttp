@@ -1,0 +1,75 @@
+.TH "cache_manager" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+cache_manager
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_lru_cache\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBcache_entry_t\fP * \fBhash_table\fP"
+.br
+.ti -1c
+.RI "\fBcache_entry_t\fP * \fBlru_head\fP"
+.br
+.ti -1c
+.RI "\fBcache_entry_t\fP * \fBlru_tail\fP"
+.br
+.ti -1c
+.RI "size_t \fBtotal_memory_usage\fP"
+.br
+.ti -1c
+.RI "size_t \fBmax_memory_usage\fP"
+.br
+.ti -1c
+.RI "int \fBentry_count\fP"
+.br
+.ti -1c
+.RI "int \fBmax_entries\fP"
+.br
+.ti -1c
+.RI "int \fBcache_ttl\fP"
+.br
+.ti -1c
+.RI "int \fBhit_count\fP"
+.br
+.ti -1c
+.RI "int \fBmiss_count\fP"
+.br
+.ti -1c
+.RI "int \fBeviction_count\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "int cache_manager::cache_ttl"
+
+.SS "int cache_manager::entry_count"
+
+.SS "int cache_manager::eviction_count"
+
+.SS "\fBcache_entry_t\fP* cache_manager::hash_table"
+
+.SS "int cache_manager::hit_count"
+
+.SS "\fBcache_entry_t\fP* cache_manager::lru_head"
+
+.SS "\fBcache_entry_t\fP* cache_manager::lru_tail"
+
+.SS "int cache_manager::max_entries"
+
+.SS "size_t cache_manager::max_memory_usage"
+
+.SS "int cache_manager::miss_count"
+
+.SS "size_t cache_manager::total_memory_usage"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

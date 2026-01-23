@@ -1,0 +1,25 @@
+var searchData=
+[
+  ['accept_5fsocket_2',['accept_socket',['../structuvhttp__network__provider__t.html#a293ac534180e2707b6eaf697e20593c5',1,'uvhttp_network_provider_t']]],
+  ['access_3',['access',['../structuvhttp__file__provider__t.html#ac200d10763d7a9acae4cf0c294ba045a',1,'uvhttp_file_provider_t::access()'],['../structuvhttp__deps__t.html#a3646f61d3c90ea659bbd8fe20c0de62a',1,'uvhttp_deps_t::access()']]],
+  ['access_5ftime_4',['access_time',['../structcache__entry.html#a235ee026dee013740c958282d292237a',1,'cache_entry::access_time()'],['../structuvhttp__route__cache__entry__t.html#a91cb0f6d4d36271d009c31586ddf706a',1,'uvhttp_route_cache_entry_t::access_time()']]],
+  ['acquire_5fconnection_5',['acquire_connection',['../structuvhttp__connection__provider.html#a87c70221fc15bf914e1fbcc76aa55454',1,'uvhttp_connection_provider']]],
+  ['active_5fconnections_6',['active_connections',['../structuvhttp__context.html#a8a55471b77f3a5075c04224598c85c91',1,'uvhttp_context::active_connections()'],['../structuvhttp__server.html#ad6ad48f50ac3fdeb44dc3fa580eeadb5',1,'uvhttp_server::active_connections()']]],
+  ['active_5frequests_7',['active_requests',['../structuvhttp__async__file__manager.html#a88f0d064868cec8b72640a01fae00225',1,'uvhttp_async_file_manager']]],
+  ['add_5farray_5froute_8',['add_array_route',['../uvhttp__router_8c.html#a4a46138045db228a757cee60217a2eb8',1,'uvhttp_router.c']]],
+  ['add_5froute_5finternal_9',['add_route_internal',['../uvhttp__server_8c.html#a4a527e39d83ff7efdcef8bee44ef596f',1,'uvhttp_server.c']]],
+  ['allocation_5fcount_10',['allocation_count',['../structtest__memory__data__t.html#aceb096bf1b87893ae5558b14dd99c363',1,'test_memory_data_t']]],
+  ['allow_5fall_5forigins_11',['allow_all_origins',['../structuvhttp__cors__config.html#a191eb45c0847fd8dc27a6e61146c1593',1,'uvhttp_cors_config']]],
+  ['allow_5fcredentials_12',['allow_credentials',['../structuvhttp__cors__config.html#ab6071402f1a19675aa89fb9f5985686b',1,'uvhttp_cors_config']]],
+  ['allow_5fcredentials_5fenabled_13',['allow_credentials_enabled',['../structuvhttp__cors__config.html#a8208c741dec30e14dd97c584f58ebfef',1,'uvhttp_cors_config']]],
+  ['allow_5fheaders_14',['allow_headers',['../structuvhttp__cors__config.html#a154ba41a18c8bb92888338e9feec94ec',1,'uvhttp_cors_config']]],
+  ['allow_5fmethods_15',['allow_methods',['../structuvhttp__cors__config.html#a68d543079d93c5f257cc3f3c2d20775a',1,'uvhttp_cors_config']]],
+  ['allow_5forigin_16',['allow_origin',['../structuvhttp__cors__config.html#a78788c0f10311afec6e5653ab4beff64',1,'uvhttp_cors_config']]],
+  ['array_5fcapacity_17',['array_capacity',['../structuvhttp__router.html#a493ec701c60a9b4a549611bf01efeb32',1,'uvhttp_router']]],
+  ['array_5froute_5fcount_18',['array_route_count',['../structuvhttp__router.html#a31bad820085d93cab8e1a6e30753ca2b',1,'uvhttp_router']]],
+  ['array_5froute_5ft_19',['array_route_t',['../structarray__route__t.html',1,'']]],
+  ['array_5froutes_20',['array_routes',['../structuvhttp__router.html#a046fe3fbac7147a42ec8f30381213af4',1,'uvhttp_router']]],
+  ['auth_5ffailed_5fmessage_21',['auth_failed_message',['../structuvhttp__ws__auth__config__t.html#ae6a69e7f94ec7d6b5a8ab4f2946e0b95',1,'uvhttp_ws_auth_config_t']]],
+  ['auto_5fcleanup_22',['auto_cleanup',['../structuvhttp__server__builder__t.html#a9242dd76564f57a054099e25c138ef3c',1,'uvhttp_server_builder_t']]],
+  ['avg_5fhandshake_5ftime_5fms_23',['avg_handshake_time_ms',['../structuvhttp__tls__stats.html#a6f7e1045d20be21aa00a70e6438a3330',1,'uvhttp_tls_stats']]]
+];

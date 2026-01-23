@@ -1,0 +1,85 @@
+.TH "cache_entry" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+cache_entry
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_lru_cache\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "char \fBfile_path\fP [2048]"
+.br
+.ti -1c
+.RI "char * \fBcontent\fP"
+.br
+.ti -1c
+.RI "size_t \fBcontent_length\fP"
+.br
+.ti -1c
+.RI "char \fBmime_type\fP [1024]"
+.br
+.ti -1c
+.RI "time_t \fBlast_modified\fP"
+.br
+.ti -1c
+.RI "char \fBetag\fP [1024]"
+.br
+.ti -1c
+.RI "time_t \fBaccess_time\fP"
+.br
+.ti -1c
+.RI "time_t \fBcache_time\fP"
+.br
+.ti -1c
+.RI "size_t \fBmemory_usage\fP"
+.br
+.ti -1c
+.RI "int \fBis_compressed\fP"
+.br
+.ti -1c
+.RI "UT_hash_handle \fBhh\fP"
+.br
+.ti -1c
+.RI "struct \fBcache_entry\fP * \fBlru_prev\fP"
+.br
+.ti -1c
+.RI "struct \fBcache_entry\fP * \fBlru_next\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "time_t cache_entry::access_time"
+
+.SS "time_t cache_entry::cache_time"
+
+.SS "char* cache_entry::content"
+
+.SS "size_t cache_entry::content_length"
+
+.SS "char cache_entry::etag[1024]"
+
+.SS "char cache_entry::file_path[2048]"
+
+.SS "UT_hash_handle cache_entry::hh"
+
+.SS "int cache_entry::is_compressed"
+
+.SS "time_t cache_entry::last_modified"
+
+.SS "struct \fBcache_entry\fP* cache_entry::lru_next"
+
+.SS "struct \fBcache_entry\fP* cache_entry::lru_prev"
+
+.SS "size_t cache_entry::memory_usage"
+
+.SS "char cache_entry::mime_type[1024]"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

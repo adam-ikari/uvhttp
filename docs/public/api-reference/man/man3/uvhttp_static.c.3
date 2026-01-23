@@ -1,0 +1,310 @@
+.TH "src/uvhttp_static.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_static.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_static\&.h'\fP
+.br
+\fC#include 'uvhttp_middleware\&.h'\fP
+.br
+\fC#include 'uvhttp_lru_cache\&.h'\fP
+.br
+\fC#include 'uvhttp_request\&.h'\fP
+.br
+\fC#include 'uvhttp_response\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_validation\&.h'\fP
+.br
+\fC#include 'uvhttp_error_helpers\&.h'\fP
+.br
+\fC#include 'uvhttp_utils\&.h'\fP
+.br
+\fC#include 'uvhttp_constants\&.h'\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <sys/stat\&.h>\fP
+.br
+\fC#include <fcntl\&.h>\fP
+.br
+\fC#include <unistd\&.h>\fP
+.br
+\fC#include <dirent\&.h>\fP
+.br
+\fC#include <errno\&.h>\fP
+.br
+\fC#include <time\&.h>\fP
+.br
+\fC#include 'uvhttp_error_handler\&.h'\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBstatic_middleware_context_t\fP"
+.br
+.ti -1c
+.RI "struct \fBsendfile_context_t\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fB_XOPEN_SOURCE\fP   600 /* 启用 strptime, timegm */"
+.br
+.ti -1c
+.RI "#define \fB_DEFAULT_SOURCE\fP   /* 启用 strcasecmp */"
+.br
+.ti -1c
+.RI "#define \fBSENDFILE_DEFAULT_TIMEOUT_MS\fP   30000  /* 30秒超时，适应慢速网络环境 */"
+.br
+.ti -1c
+.RI "#define \fBSENDFILE_DEFAULT_MAX_RETRY\fP   2      /* 最大重试次数 */"
+.br
+.ti -1c
+.RI "#define \fBSENDFILE_DEFAULT_CHUNK_SIZE\fP   (64 * 1024)  /* 64KB 分块 */"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static const char * \fBget_file_extension\fP (const char *file_path)"
+.br
+.ti -1c
+.RI "static \fBuvhttp_result_t\fP \fBuvhttp_static_sendfile_with_config\fP (const char *file_path, void *response, const \fBuvhttp_static_config_t\fP *config)"
+.br
+.ti -1c
+.RI "static void \fBhtml_escape\fP (char *dest, const char *src, size_t dest_size)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_static_get_mime_type\fP (const char *file_path, char *mime_type, size_t buffer_size)"
+.br
+.ti -1c
+.RI "static char * \fBread_file_content\fP (const char *file_path, size_t *file_size)"
+.br
+.ti -1c
+.RI "static int \fBget_file_info\fP (const char *file_path, size_t *file_size, time_t *last_modified)"
+.br
+.ti -1c
+.RI "static char * \fBgenerate_directory_listing\fP (const char *dir_path, const char *request_path)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_static_generate_etag\fP (const char *file_path, time_t last_modified, size_t file_size, char *etag, size_t buffer_size)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_static_set_response_headers\fP (void *response, const char *file_path, size_t file_size, time_t last_modified, const char *etag)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_static_check_conditional_request\fP (void *request, const char *etag, time_t last_modified)"
+.br
+.ti -1c
+.RI "\fBuvhttp_static_context_t\fP * \fBuvhttp_static_create\fP (const \fBuvhttp_static_config_t\fP *config)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_static_free\fP (\fBuvhttp_static_context_t\fP *ctx)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_static_resolve_safe_path\fP (const char *root_dir, const char *file_path, char *resolved_path, size_t buffer_size)"
+.br
+.ti -1c
+.RI "\fBuvhttp_result_t\fP \fBuvhttp_static_handle_request\fP (\fBuvhttp_static_context_t\fP *ctx, void *request, void *response)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_static_clear_cache\fP (\fBuvhttp_static_context_t\fP *ctx)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_static_get_cache_stats\fP (\fBuvhttp_static_context_t\fP *ctx, size_t *total_memory_usage, int *entry_count, int *hit_count, int *miss_count, int *eviction_count)"
+.br
+.ti -1c
+.RI "double \fBuvhttp_static_get_cache_hit_rate\fP (\fBuvhttp_static_context_t\fP *ctx)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_static_cleanup_expired_cache\fP (\fBuvhttp_static_context_t\fP *ctx)"
+.br
+.ti -1c
+.RI "static void \fBstatic_middleware_cleanup\fP (void *data)"
+.br
+.ti -1c
+.RI "static int \fBstatic_middleware_handler\fP (\fBuvhttp_request_t\fP *request, \fBuvhttp_response_t\fP *response, \fBuvhttp_middleware_context_t\fP *ctx)"
+.br
+.ti -1c
+.RI "\fBuvhttp_http_middleware_t\fP * \fBuvhttp_static_middleware_create\fP (const char *path, const char *root_dir, \fBuvhttp_middleware_priority_t\fP priority)"
+.br
+.ti -1c
+.RI "\fBuvhttp_http_middleware_t\fP * \fBuvhttp_static_middleware_create_with_config\fP (const char *path, const \fBuvhttp_static_config_t\fP *config, \fBuvhttp_middleware_priority_t\fP priority)"
+.br
+.ti -1c
+.RI "\fBuvhttp_result_t\fP \fBuvhttp_static_prewarm_cache\fP (\fBuvhttp_static_context_t\fP *ctx, const char *file_path)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_static_prewarm_directory\fP (\fBuvhttp_static_context_t\fP *ctx, const char *dir_path, int max_files)"
+.br
+.ti -1c
+.RI "static void \fBon_file_close\fP (uv_fs_t *req)"
+.br
+.ti -1c
+.RI "static void \fBon_sendfile_timeout\fP (uv_timer_t *timer)"
+.br
+.ti -1c
+.RI "static void \fBon_sendfile_complete\fP (uv_fs_t *req)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_static_set_sendfile_config\fP (\fBuvhttp_static_context_t\fP *ctx, int timeout_ms, int max_retry, size_t chunk_size)"
+.br
+.ti -1c
+.RI "\fBuvhttp_result_t\fP \fBuvhttp_static_sendfile\fP (const char *file_path, void *response)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "static const \fBuvhttp_mime_mapping_t\fP \fBmime_types\fP []"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define _DEFAULT_SOURCE   /* 启用 strcasecmp */"
+
+.SS "#define _XOPEN_SOURCE   600 /* 启用 strptime, timegm */"
+
+.SS "#define SENDFILE_DEFAULT_CHUNK_SIZE   (64 * 1024)  /* 64KB 分块 */"
+
+.SS "#define SENDFILE_DEFAULT_MAX_RETRY   2      /* 最大重试次数 */"
+
+.SS "#define SENDFILE_DEFAULT_TIMEOUT_MS   30000  /* 30秒超时，适应慢速网络环境 */"
+
+.SH "Function Documentation"
+.PP 
+.SS "static char* generate_directory_listing (const char * dir_path, const char * request_path)\fC [static]\fP"
+生成目录列表HTML 
+.SS "static const char* get_file_extension (const char * file_path)\fC [static]\fP"
+获取文件扩展名 
+.SS "static int get_file_info (const char * file_path, size_t * file_size, time_t * last_modified)\fC [static]\fP"
+获取文件信息 
+.SS "static void html_escape (char * dest, const char * src, size_t dest_size)\fC [static]\fP"
+HTML转义函数 - 防止XSS攻击 
+.SS "static void on_file_close (uv_fs_t * req)\fC [static]\fP"
+
+.SS "static void on_sendfile_complete (uv_fs_t * req)\fC [static]\fP"
+
+.SS "static void on_sendfile_timeout (uv_timer_t * timer)\fC [static]\fP"
+
+.SS "static char* read_file_content (const char * file_path, size_t * file_size)\fC [static]\fP"
+读取文件内容 
+.SS "static void static_middleware_cleanup (void * data)\fC [static]\fP"
+
+.SS "static int static_middleware_handler (\fBuvhttp_request_t\fP * request, \fBuvhttp_response_t\fP * response, \fBuvhttp_middleware_context_t\fP * ctx)\fC [static]\fP"
+
+.SS "int uvhttp_static_check_conditional_request (void * request, const char * etag, time_t last_modified)"
+检查条件请求（If-None-Match, If-Modified-Since） 
+.SS "int uvhttp_static_cleanup_expired_cache (\fBuvhttp_static_context_t\fP * ctx)"
+清理过期缓存条目 
+.SS "void uvhttp_static_clear_cache (\fBuvhttp_static_context_t\fP * ctx)"
+清理文件缓存 
+.SS "\fBuvhttp_static_context_t\fP* uvhttp_static_create (const \fBuvhttp_static_config_t\fP * config)"
+创建静态文件服务上下文 
+.SS "void uvhttp_static_free (\fBuvhttp_static_context_t\fP * ctx)"
+释放静态文件服务上下文 
+.SS "int uvhttp_static_generate_etag (const char * file_path, time_t last_modified, size_t file_size, char * etag, size_t buffer_size)"
+生成ETag值 
+.SS "double uvhttp_static_get_cache_hit_rate (\fBuvhttp_static_context_t\fP * ctx)"
+获取缓存命中率 
+.SS "void uvhttp_static_get_cache_stats (\fBuvhttp_static_context_t\fP * ctx, size_t * total_memory_usage, int * entry_count, int * hit_count, int * miss_count, int * eviction_count)"
+获取缓存统计信息 
+.SS "int uvhttp_static_get_mime_type (const char * file_path, char * mime_type, size_t buffer_size)"
+根据文件扩展名获取MIME类型 
+.SS "\fBuvhttp_result_t\fP uvhttp_static_handle_request (\fBuvhttp_static_context_t\fP * ctx, void * request, void * response)"
+处理静态文件请求的主要函数 
+.SS "\fBuvhttp_http_middleware_t\fP* uvhttp_static_middleware_create (const char * path, const char * root_dir, \fBuvhttp_middleware_priority_t\fP priority)"
+创建静态文件中间件
+.PP
+\fBParameters\fP
+.RS 4
+\fIpath\fP 路径模式（如 '/static', '/assets'） 
+.br
+\fIroot_dir\fP 根目录路径 
+.br
+\fIpriority\fP 中间件优先级 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+中间件对象，失败返回NULL 
+.RE
+.PP
+
+.SS "\fBuvhttp_http_middleware_t\fP* uvhttp_static_middleware_create_with_config (const char * path, const \fBuvhttp_static_config_t\fP * config, \fBuvhttp_middleware_priority_t\fP priority)"
+创建带配置的静态文件中间件
+.PP
+\fBParameters\fP
+.RS 4
+\fIpath\fP 路径模式 
+.br
+\fIconfig\fP 静态文件配置 
+.br
+\fIpriority\fP 中间件优先级 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+中间件对象，失败返回NULL 
+.RE
+.PP
+
+.SS "\fBuvhttp_result_t\fP uvhttp_static_prewarm_cache (\fBuvhttp_static_context_t\fP * ctx, const char * file_path)"
+缓存预热：预加载指定的文件到缓存中 
+.SS "int uvhttp_static_prewarm_directory (\fBuvhttp_static_context_t\fP * ctx, const char * dir_path, int max_files)"
+缓存预热：预加载目录中的所有文件 
+.SS "int uvhttp_static_resolve_safe_path (const char * root_dir, const char * file_path, char * resolved_path, size_t buffer_size)"
+检查文件路径是否安全（防止路径遍历攻击） 
+.SS "\fBuvhttp_result_t\fP uvhttp_static_sendfile (const char * file_path, void * response)"
+Nginx 优化：使用 sendfile 零拷贝发送静态文件（混合策略）
+.PP
+根据文件大小自动选择最优策略：
+.IP "\(bu" 2
+小文件 (< 4KB): 使用传统方式（避免 sendfile 开销）
+.IP "\(bu" 2
+中等文件 (4KB - 10MB): 使用异步 sendfile
+.IP "\(bu" 2
+大文件 (> 10MB): 使用分块 sendfile
+.PP
+.PP
+\fBParameters\fP
+.RS 4
+\fIfile_path\fP 文件路径 
+.br
+\fIresponse\fP HTTP响应 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+UVHTTP_OK成功，其他值表示失败 
+.RE
+.PP
+
+.SS "static \fBuvhttp_result_t\fP uvhttp_static_sendfile_with_config (const char * file_path, void * response, const \fBuvhttp_static_config_t\fP * config)\fC [static]\fP"
+
+.SS "int uvhttp_static_set_response_headers (void * response, const char * file_path, size_t file_size, time_t last_modified, const char * etag)"
+设置静态文件相关的响应头 
+.SS "\fBuvhttp_error_t\fP uvhttp_static_set_sendfile_config (\fBuvhttp_static_context_t\fP * ctx, int timeout_ms, int max_retry, size_t chunk_size)"
+设置 sendfile 配置参数 
+.SH "Variable Documentation"
+.PP 
+.SS "const \fBuvhttp_mime_mapping_t\fP mime_types[]\fC [static]\fP"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

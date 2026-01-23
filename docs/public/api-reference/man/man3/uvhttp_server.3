@@ -1,0 +1,145 @@
+.TH "uvhttp_server" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_server
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_server\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "int \fBis_listening\fP"
+.br
+.ti -1c
+.RI "int \fBowns_loop\fP"
+.br
+.ti -1c
+.RI "size_t \fBactive_connections\fP"
+.br
+.ti -1c
+.RI "uv_loop_t * \fBloop\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_request_handler_t\fP \fBhandler\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_router_t\fP * \fBrouter\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_config_t\fP * \fBconfig\fP"
+.br
+.ti -1c
+.RI "uv_tcp_t \fBtcp_handle\fP"
+.br
+.ti -1c
+.RI "size_t \fBmax_connections\fP"
+.br
+.ti -1c
+.RI "size_t \fBmax_message_size\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_tls_context_t\fP * \fBtls_ctx\fP"
+.br
+.ti -1c
+.RI "int \fBtls_enabled\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_http_middleware_t\fP * \fBmiddleware_chain\fP"
+.br
+.ti -1c
+.RI "void * \fBws_routes\fP"
+.br
+.ti -1c
+.RI "\fBws_connection_manager_t\fP * \fBws_connection_manager\fP"
+.br
+.ti -1c
+.RI "int \fBrate_limit_enabled\fP"
+.br
+.ti -1c
+.RI "int \fBrate_limit_max_requests\fP"
+.br
+.ti -1c
+.RI "int \fBrate_limit_window_seconds\fP"
+.br
+.ti -1c
+.RI "int \fBrate_limit_request_count\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBrate_limit_window_start_time\fP"
+.br
+.ti -1c
+.RI "void ** \fBrate_limit_whitelist\fP"
+.br
+.ti -1c
+.RI "size_t \fBrate_limit_whitelist_count\fP"
+.br
+.ti -1c
+.RI "struct \fBwhitelist_item\fP * \fBrate_limit_whitelist_hash\fP"
+.br
+.ti -1c
+.RI "void * \fBconnection_pool\fP"
+.br
+.ti -1c
+.RI "size_t \fBconnection_pool_size\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "size_t uvhttp_server::active_connections"
+
+.SS "\fBuvhttp_config_t\fP* uvhttp_server::config"
+
+.SS "void* uvhttp_server::connection_pool"
+
+.SS "size_t uvhttp_server::connection_pool_size"
+
+.SS "\fBuvhttp_request_handler_t\fP uvhttp_server::handler"
+
+.SS "int uvhttp_server::is_listening"
+
+.SS "uv_loop_t* uvhttp_server::loop"
+
+.SS "size_t uvhttp_server::max_connections"
+
+.SS "size_t uvhttp_server::max_message_size"
+
+.SS "\fBuvhttp_http_middleware_t\fP* uvhttp_server::middleware_chain"
+
+.SS "int uvhttp_server::owns_loop"
+
+.SS "int uvhttp_server::rate_limit_enabled"
+
+.SS "int uvhttp_server::rate_limit_max_requests"
+
+.SS "int uvhttp_server::rate_limit_request_count"
+
+.SS "void** uvhttp_server::rate_limit_whitelist"
+
+.SS "size_t uvhttp_server::rate_limit_whitelist_count"
+
+.SS "struct \fBwhitelist_item\fP* uvhttp_server::rate_limit_whitelist_hash"
+
+.SS "int uvhttp_server::rate_limit_window_seconds"
+
+.SS "uint64_t uvhttp_server::rate_limit_window_start_time"
+
+.SS "\fBuvhttp_router_t\fP* uvhttp_server::router"
+
+.SS "uv_tcp_t uvhttp_server::tcp_handle"
+
+.SS "\fBuvhttp_tls_context_t\fP* uvhttp_server::tls_ctx"
+
+.SS "int uvhttp_server::tls_enabled"
+
+.SS "\fBws_connection_manager_t\fP* uvhttp_server::ws_connection_manager"
+
+.SS "void* uvhttp_server::ws_routes"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

@@ -1,0 +1,45 @@
+.TH "uvhttp_loop_provider_t" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_loop_provider_t
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_deps\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "uv_loop_t *(* \fBget_default_loop\fP )(void *\fBuser_data\fP)"
+.br
+.ti -1c
+.RI "uv_loop_t *(* \fBcreate_loop\fP )(void *\fBuser_data\fP)"
+.br
+.ti -1c
+.RI "int(* \fBrun_loop\fP )(uv_loop_t *loop, uv_run_mode mode, void *\fBuser_data\fP)"
+.br
+.ti -1c
+.RI "void(* \fBclose_loop\fP )(uv_loop_t *loop, void *\fBuser_data\fP)"
+.br
+.ti -1c
+.RI "void * \fBuser_data\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "void(* uvhttp_loop_provider_t::close_loop) (uv_loop_t *loop, void *\fBuser_data\fP)"
+
+.SS "uv_loop_t*(* uvhttp_loop_provider_t::create_loop) (void *\fBuser_data\fP)"
+
+.SS "uv_loop_t*(* uvhttp_loop_provider_t::get_default_loop) (void *\fBuser_data\fP)"
+
+.SS "int(* uvhttp_loop_provider_t::run_loop) (uv_loop_t *loop, uv_run_mode mode, void *\fBuser_data\fP)"
+
+.SS "void* uvhttp_loop_provider_t::user_data"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

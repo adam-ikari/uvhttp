@@ -1,0 +1,90 @@
+.TH "uvhttp_router" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+uvhttp_router
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <uvhttp_router\&.h>\fP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "int \fBuse_trie\fP"
+.br
+.ti -1c
+.RI "size_t \fBroute_count\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_route_node_t\fP * \fBroot\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_route_node_t\fP * \fBnode_pool\fP"
+.br
+.ti -1c
+.RI "size_t \fBnode_pool_size\fP"
+.br
+.ti -1c
+.RI "size_t \fBnode_pool_used\fP"
+.br
+.ti -1c
+.RI "\fBarray_route_t\fP * \fBarray_routes\fP"
+.br
+.ti -1c
+.RI "size_t \fBarray_route_count\fP"
+.br
+.ti -1c
+.RI "size_t \fBarray_capacity\fP"
+.br
+.ti -1c
+.RI "char * \fBstatic_prefix\fP"
+.br
+.ti -1c
+.RI "void * \fBstatic_context\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_request_handler_t\fP \fBstatic_handler\fP"
+.br
+.ti -1c
+.RI "void * \fBfallback_context\fP"
+.br
+.ti -1c
+.RI "\fBuvhttp_request_handler_t\fP \fBfallback_handler\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "size_t uvhttp_router::array_capacity"
+
+.SS "size_t uvhttp_router::array_route_count"
+
+.SS "\fBarray_route_t\fP* uvhttp_router::array_routes"
+
+.SS "void* uvhttp_router::fallback_context"
+
+.SS "\fBuvhttp_request_handler_t\fP uvhttp_router::fallback_handler"
+
+.SS "\fBuvhttp_route_node_t\fP* uvhttp_router::node_pool"
+
+.SS "size_t uvhttp_router::node_pool_size"
+
+.SS "size_t uvhttp_router::node_pool_used"
+
+.SS "\fBuvhttp_route_node_t\fP* uvhttp_router::root"
+
+.SS "size_t uvhttp_router::route_count"
+
+.SS "void* uvhttp_router::static_context"
+
+.SS "\fBuvhttp_request_handler_t\fP uvhttp_router::static_handler"
+
+.SS "char* uvhttp_router::static_prefix"
+
+.SS "int uvhttp_router::use_trie"
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

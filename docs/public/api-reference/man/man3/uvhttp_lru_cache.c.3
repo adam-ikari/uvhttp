@@ -1,0 +1,120 @@
+.TH "src/uvhttp_lru_cache.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_lru_cache.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_lru_cache\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_error_helpers\&.h'\fP
+.br
+\fC#include 'uvhttp_error_handler\&.h'\fP
+.br
+\fC#include 'uvhttp_error\&.h'\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <time\&.h>\fP
+.br
+\fC#include 'uthash\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBcache_manager_t\fP * \fBuvhttp_lru_cache_create\fP (size_t max_memory_usage, int max_entries, int cache_ttl)"
+.br
+.ti -1c
+.RI "static void \fBfree_cache_entry\fP (\fBcache_entry_t\fP *entry)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_lru_cache_free\fP (\fBcache_manager_t\fP *cache)"
+.br
+.ti -1c
+.RI "\fBcache_entry_t\fP * \fBuvhttp_lru_cache_find\fP (\fBcache_manager_t\fP *cache, const char *file_path)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_lru_cache_move_to_head\fP (\fBcache_manager_t\fP *cache, \fBcache_entry_t\fP *entry)"
+.br
+.ti -1c
+.RI "\fBcache_entry_t\fP * \fBuvhttp_lru_cache_remove_tail\fP (\fBcache_manager_t\fP *cache)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_lru_cache_is_expired\fP (\fBcache_entry_t\fP *entry, int cache_ttl)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_lru_cache_put\fP (\fBcache_manager_t\fP *cache, const char *file_path, char *content, size_t content_length, const char *mime_type, time_t last_modified, const char *etag)"
+.br
+.ti -1c
+.RI "\fBuvhttp_error_t\fP \fBuvhttp_lru_cache_remove\fP (\fBcache_manager_t\fP *cache, const char *file_path)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_lru_cache_clear\fP (\fBcache_manager_t\fP *cache)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_lru_cache_get_stats\fP (\fBcache_manager_t\fP *cache, size_t *total_memory_usage, int *entry_count, int *hit_count, int *miss_count, int *eviction_count)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_lru_cache_reset_stats\fP (\fBcache_manager_t\fP *cache)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_lru_cache_cleanup_expired\fP (\fBcache_manager_t\fP *cache)"
+.br
+.ti -1c
+.RI "double \fBuvhttp_lru_cache_get_hit_rate\fP (\fBcache_manager_t\fP *cache)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "static void free_cache_entry (\fBcache_entry_t\fP * entry)\fC [static]\fP"
+释放缓存条目 
+.SS "int uvhttp_lru_cache_cleanup_expired (\fBcache_manager_t\fP * cache)"
+清理过期条目 - 单线程版本 
+.SS "void uvhttp_lru_cache_clear (\fBcache_manager_t\fP * cache)"
+清空所有缓存 - 单线程版本 
+.SS "\fBcache_manager_t\fP* uvhttp_lru_cache_create (size_t max_memory_usage, int max_entries, int cache_ttl)"
+创建LRU缓存管理器 
+.SS "\fBcache_entry_t\fP* uvhttp_lru_cache_find (\fBcache_manager_t\fP * cache, const char * file_path)"
+查找缓存条目 - 单线程版本 
+.SS "void uvhttp_lru_cache_free (\fBcache_manager_t\fP * cache)"
+释放LRU缓存管理器 
+.SS "double uvhttp_lru_cache_get_hit_rate (\fBcache_manager_t\fP * cache)"
+计算缓存命中率 - 单线程版本 
+.SS "void uvhttp_lru_cache_get_stats (\fBcache_manager_t\fP * cache, size_t * total_memory_usage, int * entry_count, int * hit_count, int * miss_count, int * eviction_count)"
+获取缓存统计信息 - 单线程版本 
+.SS "int uvhttp_lru_cache_is_expired (\fBcache_entry_t\fP * entry, int cache_ttl)"
+检查缓存条目是否过期
+.PP
+\fBParameters\fP
+.RS 4
+\fIentry\fP 缓存条目 
+.br
+\fIcache_ttl\fP 缓存TTL 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+1过期，0未过期 
+.RE
+.PP
+
+.SS "void uvhttp_lru_cache_move_to_head (\fBcache_manager_t\fP * cache, \fBcache_entry_t\fP * entry)"
+移动条目到LRU链表头部 
+.SS "\fBuvhttp_error_t\fP uvhttp_lru_cache_put (\fBcache_manager_t\fP * cache, const char * file_path, char * content, size_t content_length, const char * mime_type, time_t last_modified, const char * etag)"
+添加或更新缓存条目 - 单线程版本 
+.SS "\fBuvhttp_error_t\fP uvhttp_lru_cache_remove (\fBcache_manager_t\fP * cache, const char * file_path)"
+删除缓存条目 - 单线程版本 
+.SS "\fBcache_entry_t\fP* uvhttp_lru_cache_remove_tail (\fBcache_manager_t\fP * cache)"
+从LRU链表尾部移除条目 
+.SS "void uvhttp_lru_cache_reset_stats (\fBcache_manager_t\fP * cache)"
+重置统计信息 - 单线程版本 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.

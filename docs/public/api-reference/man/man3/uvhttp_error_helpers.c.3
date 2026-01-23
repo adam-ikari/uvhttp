@@ -1,0 +1,157 @@
+.TH "src/uvhttp_error_helpers.c" 3 "Fri Jan 23 2026" "Version 2.0.0" "UVHTTP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/uvhttp_error_helpers.c
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'uvhttp_error_helpers\&.h'\fP
+.br
+\fC#include 'uvhttp_allocator\&.h'\fP
+.br
+\fC#include 'uvhttp_utils\&.h'\fP
+.br
+\fC#include 'uvhttp_config\&.h'\fP
+.br
+\fC#include 'uvhttp_error_handler\&.h'\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <ctype\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static int \fBcontains_sensitive_info\fP (const char *str)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_cleanup_connection\fP (uv_handle_t *handle, const char *error_message)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_handle_memory_failure\fP (const char *context, void(*cleanup_func)(void *), void *cleanup_data)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_handle_write_error\fP (uv_write_t *req, int status, const char *context)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_log_safe_error\fP (int error_code, const char *context, const char *user_msg)"
+.br
+.ti -1c
+.RI "int \fBuvhttp_sanitize_error_message\fP (const char *message, char *safe_buffer, size_t buffer_size)"
+.br
+.ti -1c
+.RI "void \fBuvhttp_safe_free\fP (void **ptr, void(*free_func)(void *))"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "static const char * \fBsensitive_keywords\fP []"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "static int contains_sensitive_info (const char * str)\fC [static]\fP"
+检查字符串是否包含敏感信息 
+.SS "void uvhttp_cleanup_connection (uv_handle_t * handle, const char * error_message)"
+通用的连接清理函数 
+.PP
+\fBParameters\fP
+.RS 4
+\fIhandle\fP 要清理的句柄 
+.br
+\fIerror_message\fP 错误消息（可为NULL） 
+.RE
+.PP
+
+.SS "void uvhttp_handle_memory_failure (const char * context, void(*)(void *) cleanup_func, void * cleanup_data)"
+通用的内存分配失败处理 
+.PP
+\fBParameters\fP
+.RS 4
+\fIcontext\fP 上下文描述 
+.br
+\fIcleanup_func\fP 清理函数指针（可为NULL） 
+.br
+\fIcleanup_data\fP 清理函数参数 
+.RE
+.PP
+
+.SS "void uvhttp_handle_write_error (uv_write_t * req, int status, const char * context)"
+通用的写操作错误处理 
+.PP
+\fBParameters\fP
+.RS 4
+\fIreq\fP 写请求 
+.br
+\fIstatus\fP 写操作状态 
+.br
+\fIcontext\fP 上下文描述 
+.RE
+.PP
+
+.SS "void uvhttp_log_safe_error (int error_code, const char * context, const char * user_msg)"
+安全的错误日志记录（避免敏感信息泄露） 
+.PP
+\fBParameters\fP
+.RS 4
+\fIerror_code\fP 错误码 
+.br
+\fIcontext\fP 上下文描述 
+.br
+\fIuser_msg\fP 用户提供的消息 
+.RE
+.PP
+
+.SS "void uvhttp_safe_free (void ** ptr, void(*)(void *) free_func)"
+通用的资源释放包装器 
+.PP
+\fBParameters\fP
+.RS 4
+\fIptr\fP 指向资源的指针 
+.br
+\fIfree_func\fP 释放函数 
+.RE
+.PP
+
+.SS "int uvhttp_sanitize_error_message (const char * message, char * safe_buffer, size_t buffer_size)"
+验证错误消息安全性（过滤敏感信息） 
+.PP
+\fBParameters\fP
+.RS 4
+\fImessage\fP 原始错误消息 
+.br
+\fIsafe_buffer\fP 安全输出缓冲区 
+.br
+\fIbuffer_size\fP 缓冲区大小 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+0成功，-1失败 
+.RE
+.PP
+
+.SH "Variable Documentation"
+.PP 
+.SS "const char* sensitive_keywords[]\fC [static]\fP"
+\fBInitial value:\fP
+.PP
+.nf
+= {
+    "password", "passwd", "secret", "key", "token", 
+    "auth", "credential", "private", "session",
+    NULL
+}
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for UVHTTP from the source code\&.
