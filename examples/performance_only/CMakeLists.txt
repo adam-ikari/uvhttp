@@ -38,9 +38,9 @@ target_link_libraries(performance_test
     ${UVHTTP_LIBRARY}
     ${LIBUV_LIB}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedtls.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedx509.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedcrypto.a
     m pthread dl)
 add_dependencies(performance_test uvhttp)
 
@@ -49,9 +49,9 @@ target_link_libraries(performance_test_static
     ${UVHTTP_LIBRARY}
     ${LIBUV_LIB}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedtls.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedx509.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedcrypto.a
     m pthread dl)
 add_dependencies(performance_test_static uvhttp)
 
@@ -60,9 +60,9 @@ target_link_libraries(performance_static_server
     ${UVHTTP_LIBRARY}
     ${LIBUV_LIB}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedtls.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedx509.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedcrypto.a
     m pthread dl)
 add_dependencies(performance_static_server uvhttp)
 
@@ -71,9 +71,9 @@ target_link_libraries(performance_static_server_broken
     ${UVHTTP_LIBRARY}
     ${LIBUV_LIB}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedtls.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedx509.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedcrypto.a
     m pthread dl)
 add_dependencies(performance_static_server_broken uvhttp)
 
@@ -82,9 +82,9 @@ target_link_libraries(performance_test_tls
     ${UVHTTP_LIBRARY}
     ${LIBUV_LIB}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedtls.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedx509.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedcrypto.a
     m pthread dl)
 add_dependencies(performance_test_tls uvhttp)
 
@@ -93,8 +93,8 @@ target_link_libraries(performance_test_websocket
     ${UVHTTP_LIBRARY}
     ${LIBUV_LIB}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedtls.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedx509.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedcrypto.a
     m pthread dl)
 add_dependencies(performance_test_websocket uvhttp)
