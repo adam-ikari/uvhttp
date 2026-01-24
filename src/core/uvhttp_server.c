@@ -385,7 +385,10 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
         config = uvhttp_config_get_current(context);
     }
     
-    int backlog = (config && config->backlog > 0) ? config->backlog : UVHTTP_BACKLOG;
+    int backlog = UVHTTP_BACKLOG;
+    if (config && config->backlog > 0) {
+        backlog = config->backlog;
+    }
     
     ret = uv_listen((uv_stream_t*)&server->tcp_handle, backlog, on_connection);
     if (ret != 0) {

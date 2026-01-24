@@ -319,6 +319,18 @@ int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     return result;
 }
 
+/* 延迟释放连接的 idle 回调 */
+static void on_idle_free_connection(uv_idle_t* handle) {
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
+    if (conn) {
+        /* 停止 idle 句柄 */
+        uv_idle_stop(handle);
+        
+        /* 释放连接资源 */
+        uvhttp_connection_free(conn);
+    }
+}
+
 /* 单线程安全的连接关闭回调
  * 在libuv事件循环线程中执行，确保资源安全释放
  * 无需锁机制，因为所有操作都在同一线程中
@@ -330,8 +342,13 @@ static void on_close(uv_handle_t* handle) {
         if (conn->server) {
             conn->server->active_connections--;
         }
-        /* 释放连接资源 - 在事件循环线程中安全执行 */
-        uvhttp_connection_free(conn);
+        
+        /* 延迟释放连接对象，避免 libuv 内部队列访问已释放的内存
+         * 使用 idle 句柄在下一个事件循环中释放连接
+         */
+        uv_idle_t* idle = &conn->idle_handle;
+        idle->data = conn;
+        uv_idle_start(idle, on_idle_free_connection);
     }
 }
 
@@ -518,12 +535,6 @@ void uvhttp_connection_close(uvhttp_connection_t* conn) {
     }
 
     uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_CLOSING);
-
-    /* 停止 idle handle（如果正在运行） */
-    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
-        uv_idle_stop(&conn->idle_handle);
-        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
-    }
 
     /* 关闭 TCP handle */
     if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
