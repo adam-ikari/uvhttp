@@ -67,6 +67,9 @@ if(BUILD_WITH_WEBSOCKET)
     add_dependencies(websocket_auth_server uvhttp)
 endif()
 
+# 内存管理示例
+# add_subdirectory(08_memory) # Temporarily disabled due to format warnings
+
 # 性能测试示例
 add_executable(performance_static_server performance_static_server.c)
 target_link_libraries(performance_static_server ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)

@@ -145,7 +145,6 @@ static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t
  * 单线程模型优势：无需锁，数据访问安全，执行流可预测
  */
 static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-    (void)buf; /* 避免未使用参数警告 */
     uvhttp_connection_t* conn = (uvhttp_connection_t*)stream->data;
     if (!conn || !conn->request) {
         return;
@@ -161,6 +160,21 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     }
     
     if (nread == 0) {
+        return;
+    }
+    
+    /* 检查缓冲区有效性 */
+    if (!buf || !buf->base) {
+        UVHTTP_LOG_ERROR("Invalid buffer in on_read\n");
+        uvhttp_connection_close(conn);
+        return;
+    }
+    
+    /* 检查缓冲区边界，防止溢出 */
+    if (conn->read_buffer_used + (size_t)nread > conn->read_buffer_size) {
+        UVHTTP_LOG_ERROR("Read buffer overflow: %zu + %zd > %zu\n",
+                        conn->read_buffer_used, nread, conn->read_buffer_size);
+        uvhttp_connection_close(conn);
         return;
     }
     

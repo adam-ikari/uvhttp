@@ -270,10 +270,13 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
         uv_close((uv_handle_t*)&server->tcp_handle, NULL);
     }
     
-    /* 运行循环多次以处理关闭回调 */
-    if (server->loop && !server->owns_loop) {
-        for (int i = 0; i < 10; i++) {
-            uv_run(server->loop, UV_RUN_NOWAIT);
+    /* 运行循环多次以处理关闭回调
+     * 修复：无论是否拥有循环，都需要运行循环处理关闭回调
+     * 使用 UV_RUN_ONCE 而不是 UV_RUN_NOWAIT，确保回调被执行
+     */
+    if (server->loop) {
+        for (int index = 0; index < 10; index++) {
+            uv_run(server->loop, UV_RUN_ONCE);
         }
     }
     
