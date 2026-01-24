@@ -341,6 +341,7 @@ int main() {
     uvhttp_router_add_route(g_router, "/medium", medium_handler);
     uvhttp_router_add_route(g_router, "/large", large_handler);
     uvhttp_router_add_route(g_router, "/api", api_handler);
+    uvhttp_router_add_route(g_router, "/api/test", api_handler);
     
     // 完整 HTTP 方法测试
     uvhttp_router_add_route(g_router, "/api/put", put_handler);
