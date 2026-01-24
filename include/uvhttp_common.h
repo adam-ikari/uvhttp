@@ -28,7 +28,9 @@ int uvhttp_safe_strcpy(char* dest, size_t dest_size, const char* src);
 // 请使用 #include "uvhttp_validation.h" 来访问验证函数
 
 // header最大数量限制
-#define MAX_HEADERS 64
+// 优化：从 64 减少到 32，实际应用中很少超过 20 个头部
+// 每个连接节省约 137KB 内存 (32 * 4352 = 139,264 字节)
+#define MAX_HEADERS 32
 #define MAX_HEADER_NAME_LEN 255
 #define MAX_HEADER_VALUE_LEN 4095
 

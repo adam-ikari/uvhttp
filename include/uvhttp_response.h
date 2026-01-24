@@ -54,7 +54,7 @@ struct uvhttp_response {
     time_t cache_expires;              /* 8 字节 - 缓存过期时间 */
     
     /* 头部数组（放在最后） */
-    uvhttp_header_t headers[MAX_HEADERS];  /* 64 * (256 + 4096) = 278,528 字节 */
+    uvhttp_header_t headers[MAX_HEADERS];  /* 32 * (256 + 4096) = 139,264 字节 */
 };
 
 /* ========== 内存布局验证静态断言 ========== */
