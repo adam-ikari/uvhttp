@@ -44,9 +44,33 @@ export default defineConfig({
     sidebar: {
       '/guide/': [
         {
-          text: '指南',
+          text: '入门指南',
           items: [
+            { text: '介绍', link: '/guide/introduction' },
             { text: '快速开始', link: '/guide/getting-started' }
+          ]
+        },
+        {
+          text: '核心概念',
+          items: [
+            { text: '教程', link: '/guide/TUTORIAL' },
+            { text: 'libuv 数据指针', link: '/guide/LIBUV_DATA_POINTER' },
+            { text: '中间件系统', link: '/guide/MIDDLEWARE_SYSTEM' },
+            { text: '统一响应指南', link: '/guide/UNIFIED_RESPONSE_GUIDE' }
+          ]
+        },
+        {
+          text: '功能模块',
+          items: [
+            { text: '限流 API', link: '/guide/RATE_LIMIT_API' },
+            { text: '静态文件服务', link: '/guide/STATIC_FILE_SERVER' },
+            { text: 'WebSocket 认证', link: '/guide/WEBSOCKET_AUTH' }
+          ]
+        },
+        {
+          text: '开发指南',
+          items: [
+            { text: '开发者指南', link: '/guide/DEVELOPER_GUIDE' }
           ]
         }
       ],
@@ -54,7 +78,43 @@ export default defineConfig({
         {
           text: 'API 文档',
           items: [
-            { text: 'API 介绍', link: '/api/introduction' }
+            { text: 'API 介绍', link: '/api/introduction' },
+            { text: 'API 参考', link: '/api/API_REFERENCE' }
+          ]
+        }
+      ],
+      '/dev/': [
+        {
+          text: '架构设计',
+          items: [
+            { text: '架构设计', link: '/dev/ARCHITECTURE' },
+            { text: '依赖说明', link: '/dev/DEPENDENCIES' },
+            { text: 'XXHash 集成', link: '/dev/XXHASH_INTEGRATION' }
+          ]
+        },
+        {
+          text: '开发计划',
+          items: [
+            { text: '开发计划', link: '/dev/DEVELOPMENT_PLAN' },
+            { text: '全局变量重构', link: '/dev/GLOBAL_VARIABLE_REFACTOR_PLAN' },
+            { text: '路线图', link: '/dev/ROADMAP' }
+          ]
+        },
+        {
+          text: '测试与质量',
+          items: [
+            { text: '可测试性指南', link: '/dev/TESTABILITY_GUIDE' },
+            { text: '测试标准', link: '/dev/TESTING_STANDARDS' },
+            { text: '性能测试标准', link: '/dev/PERFORMANCE_TESTING_STANDARD' },
+            { text: '性能基准', link: '/dev/PERFORMANCE_BENCHMARK' }
+          ]
+        },
+        {
+          text: '参考文档',
+          items: [
+            { text: '错误码参考', link: '/dev/ERROR_CODES' },
+            { text: '路由搜索模式', link: '/dev/ROUTER_SEARCH_MODES' },
+            { text: '安全指南', link: '/dev/SECURITY' }
           ]
         }
       ]
