@@ -85,7 +85,7 @@ static void teardown_stress_server() {
 
     if (g_stress_loop) {
         uv_loop_close(g_stress_loop);
-        UVHTTP_FREE(g_stress_loop);
+        uvhttp_free(g_stress_loop);
         g_stress_loop = nullptr;
     }
 }
@@ -114,26 +114,26 @@ TEST(StressTest, RapidConnectDisconnect) {
     for (int i = 0; i < num_connections; i++) {
         uv_loop_t* client_loop = uv_loop_new();
 
-        uv_tcp_t* tcp = (uv_tcp_t*)UVHTTP_MALLOC(sizeof(uv_tcp_t));
+        uv_tcp_t* tcp = (uv_tcp_t*)uvhttp_alloc(sizeof(uv_tcp_t));
         uv_tcp_init(client_loop, tcp);
 
         struct sockaddr_in addr;
         uv_ip4_addr(STRESS_TEST_HOST, g_stress_test_port, &addr);
 
-        uv_connect_t* connect = (uv_connect_t*)UVHTTP_MALLOC(sizeof(uv_connect_t));
+        uv_connect_t* connect = (uv_connect_t*)uvhttp_alloc(sizeof(uv_connect_t));
         uv_tcp_connect(connect, tcp, (const struct sockaddr*)&addr, [](uv_connect_t* req, int status) {
             if (status != 0) {
                 g_error_count++;
             } else {
                 g_request_count++;
             }
-            UVHTTP_FREE(req->handle);
-            UVHTTP_FREE(req);
+            uvhttp_free(req->handle);
+            uvhttp_free(req);
         });
 
         uv_run(client_loop, UV_RUN_DEFAULT);
         uv_loop_close(client_loop);
-        UVHTTP_FREE(client_loop);
+        uvhttp_free(client_loop);
     }
 
     // 等待服务器处理完所有请求
@@ -170,21 +170,21 @@ TEST(StressTest, LongRunningStability) {
     uv_loop_t* client_loop = uv_loop_new();
 
     while (std::chrono::steady_clock::now() < end_time) {
-        uv_tcp_t* tcp = (uv_tcp_t*)UVHTTP_MALLOC(sizeof(uv_tcp_t));
+        uv_tcp_t* tcp = (uv_tcp_t*)uvhttp_alloc(sizeof(uv_tcp_t));
         uv_tcp_init(client_loop, tcp);
 
         struct sockaddr_in addr;
         uv_ip4_addr(STRESS_TEST_HOST, g_stress_test_port, &addr);
 
-        uv_connect_t* connect = (uv_connect_t*)UVHTTP_MALLOC(sizeof(uv_connect_t));
+        uv_connect_t* connect = (uv_connect_t*)uvhttp_alloc(sizeof(uv_connect_t));
         uv_tcp_connect(connect, tcp, (const struct sockaddr*)&addr, [](uv_connect_t* req, int status) {
             if (status != 0) {
                 g_error_count++;
             } else {
                 g_request_count++;
             }
-            UVHTTP_FREE(req->handle);
-            UVHTTP_FREE(req);
+            uvhttp_free(req->handle);
+            uvhttp_free(req);
         });
 
         uv_run(client_loop, UV_RUN_ONCE);
@@ -192,7 +192,7 @@ TEST(StressTest, LongRunningStability) {
     }
 
     uv_loop_close(client_loop);
-    UVHTTP_FREE(client_loop);
+    uvhttp_free(client_loop);
 
     // 等待服务器处理完所有请求
     std::this_thread::sleep_for(std::chrono::seconds(1));

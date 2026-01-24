@@ -15,6 +15,7 @@
 #include "uvhttp_config.h"
 #include "uvhttp_error.h"
 #include "uvhttp_allocator.h"
+#include "uvhttp_context.h"
 
 /**
  * @brief 测试 NULL 服务器销毁（不崩溃，返回错误）
@@ -28,24 +29,30 @@ TEST(DeathTest, NullServerFree) {
  * @brief 测试 NULL 路由器销毁（不崩溃，返回错误）
  */
 TEST(DeathTest, NullRouterFree) {
-    uvhttp_error_t result = uvhttp_router_free(nullptr);
-    EXPECT_NE(result, UVHTTP_OK);
+    // uvhttp_router_free 是 void 函数，不能返回错误码
+    // 只验证函数存在且不会崩溃
+    uvhttp_router_free(nullptr);
+    SUCCEED();
 }
 
 /**
  * @brief 测试 NULL 配置销毁（不崩溃，返回错误）
  */
 TEST(DeathTest, NullConfigFree) {
-    uvhttp_error_t result = uvhttp_config_free(nullptr);
-    EXPECT_NE(result, UVHTTP_OK);
+    // uvhttp_config_free 是 void 函数，不能返回错误码
+    // 只验证函数存在且不会崩溃
+    uvhttp_config_free(nullptr);
+    SUCCEED();
 }
 
 /**
  * @brief 测试 NULL 上下文销毁（不崩溃，返回错误）
  */
 TEST(DeathTest, NullContextFree) {
-    uvhttp_error_t result = uvhttp_context_free(nullptr);
-    EXPECT_NE(result, UVHTTP_OK);
+    // uvhttp_context_destroy 是 void 函数，不能返回错误码
+    // 只验证函数存在且不会崩溃
+    uvhttp_context_destroy(nullptr);
+    SUCCEED();
 }
 
 /**
@@ -197,7 +204,7 @@ TEST(DeathTest, ErrorCodes) {
  */
 TEST(DeathTest, NullAllocatorFree) {
     // 测试释放 NULL 指针不会崩溃
-    UVHTTP_FREE(nullptr);
+    uvhttp_free(nullptr);
     SUCCEED();
 }
 
@@ -205,10 +212,10 @@ TEST(DeathTest, NullAllocatorFree) {
  * @brief 测试分配器零大小分配
  */
 TEST(DeathTest, ZeroSizeAllocation) {
-    void* ptr = UVHTTP_MALLOC(0);
+    void* ptr = uvhttp_alloc(0);
     // 零大小分配应该返回 NULL 或有效指针
     // 具体行为取决于分配器实现
-    UVHTTP_FREE(ptr);
+    uvhttp_free(ptr);
     SUCCEED();
 }
 

@@ -26,9 +26,9 @@ TEST(MemoryTest, BasicAllocation) {
     // 分配和释放内存
     for (int i = 0; i < MEMORY_TEST_ALLOCATIONS; i++) {
         size_t size = (i % 100) + 1;  // 1-100 字节
-        void* ptr = UVHTTP_MALLOC(size);
+        void* ptr = uvhttp_alloc(size);
         ASSERT_NE(ptr, nullptr);
-        UVHTTP_FREE(ptr);
+        uvhttp_free(ptr);
     }
 }
 
@@ -36,7 +36,7 @@ TEST(MemoryTest, BasicAllocation) {
  * @brief 测试大内存分配
  */
 TEST(MemoryTest, LargeAllocation) {
-    void* ptr = UVHTTP_MALLOC(MEMORY_TEST_LARGE_SIZE);
+    void* ptr = uvhttp_alloc(MEMORY_TEST_LARGE_SIZE);
     ASSERT_NE(ptr, nullptr);
 
     // 填充内存
@@ -48,7 +48,7 @@ TEST(MemoryTest, LargeAllocation) {
         EXPECT_EQ(data[i], (char)0xAA);
     }
 
-    UVHTTP_FREE(ptr);
+    uvhttp_free(ptr);
 }
 
 /**
@@ -97,7 +97,7 @@ TEST(MemoryTest, MultipleServerCreation) {
 
         uvhttp_router_free(router);
         uv_loop_close(loop);
-        UVHTTP_FREE(loop);
+        uvhttp_free(loop);
     }
 }
 
@@ -110,27 +110,27 @@ TEST(MemoryTest, MemoryFragmentation) {
 
     for (int i = 0; i < 100; i++) {
         size_t size = (i % 10 + 1) * 100;  // 100-1000 字节
-        void* ptr = UVHTTP_MALLOC(size);
+        void* ptr = uvhttp_alloc(size);
         ASSERT_NE(ptr, nullptr);
         allocations.push_back(ptr);
     }
 
     // 释放部分内存
     for (size_t i = 0; i < allocations.size(); i += 2) {
-        UVHTTP_FREE(allocations[i]);
+        uvhttp_free(allocations[i]);
     }
 
     // 再次分配内存
     for (size_t i = 0; i < allocations.size(); i += 2) {
         size_t size = (i % 10 + 1) * 100;
-        allocations[i] = UVHTTP_MALLOC(size);
+        allocations[i] = uvhttp_alloc(size);
         ASSERT_NE(allocations[i], nullptr);
     }
 
     // 释放所有内存
     for (void* ptr : allocations) {
         if (ptr) {
-            UVHTTP_FREE(ptr);
+            uvhttp_free(ptr);
         }
     }
 }
@@ -143,9 +143,9 @@ TEST(MemoryTest, MemoryLeakDetection) {
     static size_t free_count = 0;
 
     // 分配内存
-    void* ptr1 = UVHTTP_MALLOC(100);
-    void* ptr2 = UVHTTP_MALLOC(200);
-    void* ptr3 = UVHTTP_MALLOC(300);
+    void* ptr1 = uvhttp_alloc(100);
+    void* ptr2 = uvhttp_alloc(200);
+    void* ptr3 = uvhttp_alloc(300);
 
     ASSERT_NE(ptr1, nullptr);
     ASSERT_NE(ptr2, nullptr);
@@ -154,7 +154,7 @@ TEST(MemoryTest, MemoryLeakDetection) {
     allocation_count += 3;
 
     // 释放部分内存
-    UVHTTP_FREE(ptr2);
+    uvhttp_free(ptr2);
     free_count += 1;
 
     // 验证分配和释放计数
@@ -162,8 +162,8 @@ TEST(MemoryTest, MemoryLeakDetection) {
     EXPECT_EQ(free_count, 1);
 
     // 释放剩余内存
-    UVHTTP_FREE(ptr1);
-    UVHTTP_FREE(ptr3);
+    uvhttp_free(ptr1);
+    uvhttp_free(ptr3);
     free_count += 2;
 
     // 验证所有内存都已释放
@@ -176,7 +176,7 @@ TEST(MemoryTest, MemoryLeakDetection) {
  */
 TEST(MemoryTest, NullPointerFree) {
     // 释放 NULL 指针不应该崩溃
-    UVHTTP_FREE(nullptr);
+    uvhttp_free(nullptr);
     SUCCEED();
 }
 
@@ -184,10 +184,10 @@ TEST(MemoryTest, NullPointerFree) {
  * @brief 测试零大小分配
  */
 TEST(MemoryTest, ZeroSizeAllocation) {
-    void* ptr = UVHTTP_MALLOC(0);
+    void* ptr = uvhttp_alloc(0);
     // 零大小分配应该返回 NULL 或有效指针
     // 具体行为取决于分配器实现
-    UVHTTP_FREE(ptr);
+    uvhttp_free(ptr);
     SUCCEED();
 }
 
