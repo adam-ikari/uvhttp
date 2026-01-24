@@ -72,7 +72,7 @@ typedef struct {
     size_t total_routes;
 } cache_optimized_router_t;
 
-// 使用统一的hash函数
+// 使用统一的hash函数（热路径函数，提示编译器内联）
 static inline uint32_t route_hash(const char* str) {
     if (!str) return 0;
     
@@ -85,7 +85,7 @@ static inline uint32_t route_hash(const char* str) {
     return (uint32_t)XXH64(str, len, UVHTTP_HASH_DEFAULT_SEED);
 }
 
-// 快速方法解析（避免字符串比较）
+// 快速方法解析（热路径函数，提示编译器内联）
 static inline uvhttp_method_t fast_method_parse(const char* method) {
     if (!method) return UVHTTP_ANY;
     
@@ -234,10 +234,10 @@ uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
     return UVHTTP_OK;
 }
 
-// 热路径查找（缓存友好）
+// 热路径查找（缓存友好，提示编译器内联）
 static inline uvhttp_request_handler_t find_in_hot_routes(cache_optimized_router_t* cr,
-                                                        const char* path,
-                                                        uvhttp_method_t method) {
+                                                          const char* path,
+                                                          uvhttp_method_t method) {
     // 循环展开以减少分支预测失败
     for (size_t index = 0; index < cr->hot_count; index += 4) {
         // 批量比较4个路由
