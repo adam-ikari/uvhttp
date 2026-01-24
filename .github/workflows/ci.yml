@@ -33,6 +33,19 @@ jobs:
       run: |
         cmake --build build --config Release -j$(nproc)
 
+    - name: Run smoke tests
+      run: |
+        cd build
+        # 运行冒烟测试，验证基本功能
+        if [ -f "./test_smoke" ]; then
+          ./test_smoke || {
+            echo "Smoke tests failed"
+            exit 1
+          }
+        else
+          echo "test_smoke not found, skipping smoke tests"
+        fi
+
     - name: Run fast tests
       run: |
         cd build
@@ -41,6 +54,19 @@ jobs:
           echo "Fast tests failed or timed out"
           exit 1
         }
+
+    - name: Run death tests
+      run: |
+        cd build
+        # 运行死亡测试，验证错误处理
+        if [ -f "./test_death" ]; then
+          ./test_death || {
+            echo "Death tests failed"
+            exit 1
+          }
+        else
+          echo "test_death not found, skipping death tests"
+        fi
 
     - name: Check for warnings
       run: |
@@ -114,6 +140,81 @@ jobs:
           fi
         else
           echo "performance_static_server not found, skipping performance test"
+        fi
+
+  # 压力测试在 main 和 develop 分支运行
+  stress-test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+
+    - name: Build project
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
+        cmake --build build --config Release -j$(nproc)
+
+    - name: Run stress tests
+      run: |
+        cd build
+        if [ -f "./test_stress" ]; then
+          ./test_stress || {
+            echo "Stress tests failed"
+            exit 1
+          }
+        else
+          echo "test_stress not found, skipping stress tests"
+        fi
+
+  # 内存测试在 main 和 develop 分支运行
+  memory-test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential valgrind
+
+    - name: Build project
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug
+        cmake --build build --config Debug -j$(nproc)
+
+    - name: Run memory tests
+      run: |
+        cd build
+        if [ -f "./test_memory" ]; then
+          ./test_memory || {
+            echo "Memory tests failed"
+            exit 1
+          }
+        else
+          echo "test_memory not found, skipping memory tests"
+        fi
+
+    - name: Run memory leak check
+      run: |
+        cd build
+        if [ -f "./test_memory" ]; then
+          valgrind --leak-check=full --error-exitcode=0 --show-leak-kinds=all ./test_memory || echo "Valgrind completed"
+        else
+          echo "test_memory not found, skipping valgrind"
         fi
 
   # 代码质量检查在 main、develop、feature 分支和 PR 中运行

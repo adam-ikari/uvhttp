@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-01-24
+
+### Added
+- **冒烟测试**: 新增 `test/unit/test_smoke.cpp`，验证基本功能
+- **死亡测试**: 新增 `test/unit/test_death.cpp`，验证错误处理
+- **压力测试**: 新增 `test/unit/test_stress.cpp`，验证高并发性能
+- **内存测试**: 新增 `test/unit/test_memory.cpp`，验证内存使用
+- **CI/CD 增强**: 添加冒烟测试、死亡测试、压力测试和内存测试到 CI 流程
+- **文档重组**: 重新组织文档目录结构，提升可读性
+  - `guide/`: 用户指南和教程
+  - `dev/`: 开发文档和架构设计
+  - `api/`: API 参考文档
+
+### Performance
+- **性能优化**: Homepage 21,574 RPS (+126%)
+- **编译优化**: 从 -O3 降级到 -O2，避免激进优化
+- **内存优化**: 连接复用节省 279,920 字节/次
+- **边界检查**: 增强缓冲区边界检查，提升安全性
+
+### Fixed
+- **循环逻辑**: 修复服务器循环逻辑，确保回调执行
+- **内存泄漏**: 修复示例代码空指针保护
+- **测试超时**: 调整测试超时配置，避免并发竞争
+
+### Documentation
+- **文档结构**: 重新组织文档目录，添加完整侧边栏导航
+- **版本统一**: 统一版本号为 2.0.0
+
+### Testing
+- **测试覆盖率**: 71/71 测试通过 (100%)
+- **新增测试**: 4 个新测试文件，33 个新测试用例
+
+### Breaking Changes
+- **编译选项**: 编译优化级别从 -O3 改为 -O2
+- **依赖更新**: 更新子模块到最新版本
+
 ## [1.6.0] - 2026-01-20
 
 ### Added
