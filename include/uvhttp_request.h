@@ -52,8 +52,10 @@ struct uvhttp_request {
     size_t body_length;               /* 8 字节 */
     size_t body_capacity;             /* 8 字节 */
     
-    /* 头部数组（放在最后） */
-    uvhttp_header_t headers[MAX_HEADERS];  /* 64 * (256 + 4096) = 278,528 字节 */
+    /* Headers - 混合分配：32个内联 + 动态扩容 */
+    uvhttp_header_t headers[32];      /* 32 * 4352 = 139,264 字节 - 内联 */
+    uvhttp_header_t* headers_extra;   /* 8 字节 - 动态扩容 */
+    size_t headers_capacity;          /* 8 字节 - 总容量（内联+动态） */
 };
 
 /* ========== 内存布局验证静态断言 ========== */
@@ -96,6 +98,25 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request);
 const char* uvhttp_request_get_header(uvhttp_request_t* request, const char* name);
 const char* uvhttp_request_get_body(uvhttp_request_t* request);
 size_t uvhttp_request_get_body_length(uvhttp_request_t* request);
+
+/* ========== Headers 操作 API ========== */
+
+/* 获取 header 数量 */
+size_t uvhttp_request_get_header_count(uvhttp_request_t* request);
+
+/* 获取指定索引的 header（内部使用） */
+uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request, size_t index);
+
+/* 添加 header（内部使用，自动扩容） */
+int uvhttp_request_add_header(uvhttp_request_t* request, 
+                               const char* name, 
+                               const char* value);
+
+/* 遍历所有 headers */
+typedef void (*uvhttp_header_callback_t)(const char* name, const char* value, void* user_data);
+void uvhttp_request_foreach_header(uvhttp_request_t* request, 
+                                   uvhttp_header_callback_t callback, 
+                                   void* user_data);
 
 #ifdef __cplusplus
 }

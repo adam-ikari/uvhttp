@@ -247,34 +247,50 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
     
     /* 单线程版本：不需要加锁 */
     
-    /* 检查是否需要驱逐条目 */
+    /* 检查是否需要驱逐条目 - 批量驱逐优化 */
     int eviction_count = 0;
+    int batch_size = 10;  /* 批量驱逐大小 */
+    
     while ((cache->max_memory_usage > 0 && 
             cache->total_memory_usage + memory_usage > cache->max_memory_usage) ||
            (cache->max_entries > 0 && 
             cache->entry_count >= cache->max_entries)) {
         
-        cache_entry_t* evicted = uvhttp_lru_cache_remove_tail(cache);
-        if (!evicted) break;
+        /* 批量驱逐多个条目以减少循环次数 */
+        for (int i = 0; i < batch_size && 
+             ((cache->max_memory_usage > 0 && 
+              cache->total_memory_usage + memory_usage > cache->max_memory_usage) ||
+              (cache->max_entries > 0 && 
+               cache->entry_count >= cache->max_entries)); i++) {
+            
+            cache_entry_t* evicted = uvhttp_lru_cache_remove_tail(cache);
+            if (!evicted) break;
+            
+            UVHTTP_LOG_DEBUG("Evicting cache entry: %s (freeing memory: %zu)", 
+                             evicted->file_path, evicted->memory_usage);
+            
+            /* 从哈希表中移除 */
+            HASH_DEL(cache->hash_table, evicted);
+            
+            /* 更新统计 */
+            cache->total_memory_usage -= evicted->memory_usage;
+            cache->entry_count--;
+            cache->eviction_count++;
+            eviction_count++;
+            
+            /* 释放内存 */
+            free_cache_entry(evicted);
+        }
         
-        UVHTTP_LOG_DEBUG("Evicting cache entry: %s (freeing memory: %zu)", 
-                         evicted->file_path, evicted->memory_usage);
-        
-        /* 从哈希表中移除 */
-        HASH_DEL(cache->hash_table, evicted);
-        
-        /* 更新统计 */
-        cache->total_memory_usage -= evicted->memory_usage;
-        cache->entry_count--;
-        cache->eviction_count++;
-        eviction_count++;
-        
-        /* 释放内存 */
-        free_cache_entry(evicted);
+        /* 如果一次批量驱逐后仍有空间不足，继续下一批 */
+        if (eviction_count > 0 && eviction_count % batch_size == 0) {
+            UVHTTP_LOG_DEBUG("Batch eviction completed: %d entries evicted so far", eviction_count);
+        }
     }
     
     if (eviction_count > 0) {
-        UVHTTP_LOG_INFO("Evicted %d cache entries to make room for new entry", eviction_count);
+        UVHTTP_LOG_INFO("Evicted %d cache entries (batch size: %d) to make room for new entry", 
+                        eviction_count, batch_size);
     }
     
     /* 查找是否已存在 */

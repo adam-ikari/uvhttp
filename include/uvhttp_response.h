@@ -53,8 +53,10 @@ struct uvhttp_response {
     size_t body_length;                /* 8 字节 */
     time_t cache_expires;              /* 8 字节 - 缓存过期时间 */
     
-    /* 头部数组（放在最后） */
-    uvhttp_header_t headers[MAX_HEADERS];  /* 64 * (256 + 4096) = 278,528 字节 */
+    /* Headers - 混合分配：32个内联 + 动态扩容 */
+    uvhttp_header_t headers[32];      /* 32 * 4352 = 139,264 字节 - 内联 */
+    uvhttp_header_t* headers_extra;   /* 8 字节 - 动态扩容 */
+    size_t headers_capacity;          /* 8 字节 - 总容量（内联+动态） */
 };
 
 /* ========== 内存布局验证静态断言 ========== */
@@ -117,6 +119,20 @@ uvhttp_error_t uvhttp_response_send_mock(uvhttp_response_t* response);
 /* ============ 原有函数 ============ */
 void uvhttp_response_cleanup(uvhttp_response_t* response);
 void uvhttp_response_free(uvhttp_response_t* response);
+
+/* ========== Headers 操作 API ========== */
+
+/* 获取 header 数量 */
+size_t uvhttp_response_get_header_count(uvhttp_response_t* response);
+
+/* 获取指定索引的 header（内部使用） */
+uvhttp_header_t* uvhttp_response_get_header_at(uvhttp_response_t* response, size_t index);
+
+/* 遍历所有 headers */
+typedef void (*uvhttp_header_callback_t)(const char* name, const char* value, void* user_data);
+void uvhttp_response_foreach_header(uvhttp_response_t* response, 
+                                    uvhttp_header_callback_t callback, 
+                                    void* user_data);
 
 #ifdef __cplusplus
 }

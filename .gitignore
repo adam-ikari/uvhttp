@@ -46,8 +46,8 @@ CTestTestfile.cmake
 *.rej
 
 # Core dumps
-core
-core.*
+/core
+/core.*
 !cmake/Dependencies.cmake
 test/results/
 

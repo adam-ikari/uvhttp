@@ -170,9 +170,10 @@ void uvhttp_cors_set_headers(
             /* 添加 Vary: Origin 头以防止缓存问题 */
             /* 检查是否已有 Vary 头 */
             const char* existing_vary = NULL;
-            for (size_t i = 0; i < response->header_count; i++) {
-                if (strcasecmp(response->headers[i].name, "Vary") == 0) {
-                    existing_vary = response->headers[i].value;
+            for (size_t i = 0; i < uvhttp_response_get_header_count(response); i++) {
+                uvhttp_header_t* header = uvhttp_response_get_header_at(response, i);
+                if (header && strcasecmp(header->name, "Vary") == 0) {
+                    existing_vary = header->value;
                     break;
                 }
             }
@@ -182,8 +183,12 @@ void uvhttp_cors_set_headers(
                 if (strstr(existing_vary, "Origin") == NULL) {
                     /* 追加 Origin 到现有 Vary 头 */
                     char new_vary[512];
-                    snprintf(new_vary, sizeof(new_vary), "%s, Origin", existing_vary);
-                    uvhttp_response_set_header(response, "Vary", new_vary);
+                    size_t existing_len = strlen(existing_vary);
+                    /* 留出 ", Origin" 和 null 终止符的空间 */
+                    if (existing_len + 10 < sizeof(new_vary)) {
+                        snprintf(new_vary, sizeof(new_vary), "%s, Origin", existing_vary);
+                        uvhttp_response_set_header(response, "Vary", new_vary);
+                    }
                 }
             } else {
                 /* 没有现有 Vary 头，直接设置 */
