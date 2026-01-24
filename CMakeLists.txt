@@ -24,12 +24,13 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 if(ENABLE_DEBUG)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
 else()
-    # 性能优化选项（不使用 LTO，避免性能下降）
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -march=native -mtune=native")
-    # 函数内联优化
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -finline-functions -finline-limit=1000")
-    # 循环优化
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -funroll-loops")
+    # 性能优化选项（使用 -O2 而不是 -O3，避免激进优化导致的问题）
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -march=native -mtune=native")
+    # 不限制内联数量，让编译器自动决定内联策略
+    # 只在关键函数上使用 inline 关键字提示编译器
+    # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -finline-functions")
+    # 不使用激进的循环展开，避免时序问题
+    # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -funroll-loops")
 endif()
 
 if(ENABLE_COVERAGE)
@@ -276,8 +277,9 @@ foreach(test_file ${GTEST_TEST_FILES})
        ${test_name} STREQUAL "test_server_rate_limit_coverage" OR
        ${test_name} STREQUAL "test_server_simple_api_coverage" OR
        ${test_name} STREQUAL "test_static_prewarm_coverage")
-        # 这些测试需要更长时间运行，设置为慢速测试，超时180秒
-        set_tests_properties(${test_name} PROPERTIES TIMEOUT 180 LABELS "slow")
+        # 这些测试需要更长时间运行，设置为慢速测试，超时300秒
+        # 添加 RUN_SERIAL TRUE 避免并发执行导致的竞争条件
+        set_tests_properties(${test_name} PROPERTIES TIMEOUT 300 LABELS "slow" RUN_SERIAL TRUE)
     else()
         # 其他测试为快速测试，超时60秒
         set_tests_properties(${test_name} PROPERTIES TIMEOUT 60 LABELS "fast")

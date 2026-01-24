@@ -141,23 +141,6 @@ void uvhttp_http_middleware_set_context(
     middleware->context.cleanup = cleanup;
 }
 
-/**
- * 检查路径是否匹配中间件
- * 
- * @param middleware_path 中间件路径模式
- * @param request_path 请求路径
- * @return 1=匹配，0=不匹配
- * 
- * 匹配规则：
- * - NULL 路径匹配所有请求
- * - 精确匹配：路径完全相同
- * - 前缀匹配：请求路径以中间件路径开头
- * 
- * 零开销设计：
- * - 使用标准字符串函数
- * - 避免正则表达式开销
- * - 单次遍历
- */
 static inline int middleware_path_match(
     const char* middleware_path,
     const char* request_path
