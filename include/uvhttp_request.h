@@ -53,7 +53,7 @@ struct uvhttp_request {
     size_t body_capacity;             /* 8 字节 */
     
     /* 头部数组（放在最后） */
-    uvhttp_header_t headers[MAX_HEADERS];  /* 32 * (256 + 4096) = 139,264 字节 */
+    uvhttp_header_t headers[MAX_HEADERS];  /* 48 * (256 + 4096) = 208,896 字节 */
 };
 
 /* ========== 内存布局验证静态断言 ========== */
