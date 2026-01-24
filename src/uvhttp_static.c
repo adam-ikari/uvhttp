@@ -259,6 +259,130 @@ static int get_file_info(const char* file_path, size_t* file_size, time_t* last_
 }
 
 /**
+ * 计算目录列表所需的缓冲区大小
+ */
+static size_t calculate_dir_listing_buffer_size(const char* dir_path, size_t* entry_count) {
+    DIR* dir = opendir(dir_path);
+    if (!dir) {
+        return 0;
+    }
+    
+    size_t buffer_size = UVHTTP_DIR_LISTING_BUFFER_SIZE;
+    *entry_count = 0;
+    
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0) {
+            continue;
+        }
+        
+        buffer_size += strlen(entry->d_name) + UVHTTP_DIR_ENTRY_HTML_OVERHEAD;
+        (*entry_count)++;
+    }
+    
+    closedir(dir);
+    return buffer_size;
+}
+
+/**
+ * 目录条目结构
+ */
+typedef struct {
+    char name[256];
+    size_t size;
+    time_t mtime;
+    int is_dir;
+} dir_entry_t;
+
+/**
+ * 收集目录条目信息
+ */
+static dir_entry_t* collect_dir_entries(const char* dir_path, size_t* actual_count) {
+    DIR* dir = opendir(dir_path);
+    if (!dir) {
+        return NULL;
+    }
+    
+    /* 先计算条目数量 */
+    size_t entry_count = 0;
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0) {
+            continue;
+        }
+        entry_count++;
+    }
+    
+    /* 分配内存 */
+    dir_entry_t* entries = uvhttp_alloc(entry_count * sizeof(dir_entry_t));
+    if (!entries) {
+        closedir(dir);
+        return NULL;
+    }
+    
+    /* 收集条目信息 */
+    rewinddir(dir);
+    *actual_count = 0;
+    
+    while ((entry = readdir(dir)) != NULL && *actual_count < entry_count) {
+        if (strcmp(entry->d_name, ".") == 0) {
+            continue;
+        }
+        
+        dir_entry_t* dir_entry = &entries[*actual_count];
+        strncpy(dir_entry->name, entry->d_name, sizeof(dir_entry->name) - 1);
+        dir_entry->name[sizeof(dir_entry->name) - 1] = '\0';
+        
+        /* 获取文件信息 */
+        char full_path[UVHTTP_MAX_FILE_PATH_SIZE];
+        int written = snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, entry->d_name);
+        if (written < 0 || (size_t)written >= sizeof(full_path)) {
+            continue;
+        }
+        
+        struct stat st;
+        if (stat(full_path, &st) == 0) {
+            dir_entry->size = st.st_size;
+            dir_entry->mtime = st.st_mtime;
+            dir_entry->is_dir = S_ISDIR(st.st_mode);
+        } else {
+            dir_entry->size = 0;
+            dir_entry->mtime = 0;
+            dir_entry->is_dir = 0;
+        }
+        
+        (*actual_count)++;
+    }
+    
+    closedir(dir);
+    return entries;
+}
+
+/**
+ * 排序目录条目
+ */
+static void sort_dir_entries(dir_entry_t* entries, size_t count) {
+    for (size_t i = 0; i < count - 1; i++) {
+        for (size_t j = i + 1; j < count; j++) {
+            /* 目录优先 */
+            if (!entries[i].is_dir && entries[j].is_dir) {
+                dir_entry_t temp = entries[i];
+                entries[i] = entries[j];
+                entries[j] = temp;
+            }
+            /* 同类型按名称排序 */
+            else if (entries[i].is_dir == entries[j].is_dir) {
+                if (strcmp(entries[i].name, entries[j].name) > 0) {
+                    dir_entry_t temp = entries[i];
+                    entries[i] = entries[j];
+                    entries[j] = temp;
+                }
+            }
+        }
+    }
+}
+
+/**
  * 生成目录列表HTML
  */
 static char* generate_directory_listing(const char* dir_path, const char* request_path) {
@@ -266,31 +390,16 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
         return NULL;
     }
     
-    DIR* dir = opendir(dir_path);
-    if (!dir) {
-        UVHTTP_LOG_ERROR("Failed to open directory: %s", dir_path);
-        return NULL;
-    }
-    
-    /* 计算所需缓冲区大小 */
-    size_t buffer_size = UVHTTP_DIR_LISTING_BUFFER_SIZE; /* 基础HTML大小 */
+    /* 计算缓冲区大小 */
     size_t entry_count = 0;
-    struct dirent* entry;
-    
-    /* 第一次遍历：计算条目数量和所需缓冲区大小 */
-    while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(entry->d_name, ".") == 0) {
-            continue; /* 跳过当前目录 */
-        }
-        
-        buffer_size += strlen(entry->d_name) + UVHTTP_DIR_ENTRY_HTML_OVERHEAD; /* 每个条目的HTML开销 */
-        entry_count++;
+    size_t buffer_size = calculate_dir_listing_buffer_size(dir_path, &entry_count);
+    if (buffer_size == 0) {
+        return NULL;
     }
     
     /* 分配缓冲区 */
     char* html = uvhttp_alloc(buffer_size);
     if (!html) {
-        closedir(dir);
         return NULL;
     }
     
@@ -326,78 +435,16 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
             "<tr><td><a href=\"../\">../</a></td><td class=\"dir\">-</td><td>-</td></tr>\n");
     }
     
-    /* 重置目录位置 */
-    rewinddir(dir);
-    
-    /* 收集目录条目信息 */
-    typedef struct {
-        char name[256];
-        size_t size;
-        time_t mtime;
-        int is_dir;
-    } dir_entry_t;
-    
-    dir_entry_t* entries = uvhttp_alloc(entry_count * sizeof(dir_entry_t));
+    /* 收集目录条目 */
+    size_t actual_count = 0;
+    dir_entry_t* entries = collect_dir_entries(dir_path, &actual_count);
     if (!entries) {
         uvhttp_free(html);
-        closedir(dir);
         return NULL;
     }
     
-    size_t actual_count = 0;
-    
-    /* 第二次遍历：收集条目信息 */
-    while ((entry = readdir(dir)) != NULL && actual_count < entry_count) {
-        if (strcmp(entry->d_name, ".") == 0) {
-            continue;
-        }
-        
-        dir_entry_t* dir_entry = &entries[actual_count];
-        strncpy(dir_entry->name, entry->d_name, sizeof(dir_entry->name) - 1);
-        dir_entry->name[sizeof(dir_entry->name) - 1] = '\0';
-        
-        /* 获取文件信息 */
-        char full_path[UVHTTP_MAX_FILE_PATH_SIZE];
-        int written = snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, entry->d_name);
-        if (written < 0 || (size_t)written >= sizeof(full_path)) {
-            /* 路径过长，跳过此条目 */
-            continue;
-        }
-        
-        struct stat st;
-        if (stat(full_path, &st) == 0) {
-            dir_entry->size = st.st_size;
-            dir_entry->mtime = st.st_mtime;
-            dir_entry->is_dir = S_ISDIR(st.st_mode);
-        } else {
-            dir_entry->size = 0;
-            dir_entry->mtime = 0;
-            dir_entry->is_dir = 0;
-        }
-        
-        actual_count++;
-    }
-    closedir(dir);
-    
-    /* 排序：目录在前，然后按名称排序 */
-    for (size_t i = 0; i < actual_count - 1; i++) {
-        for (size_t j = i + 1; j < actual_count; j++) {
-            /* 目录优先 */
-            if (!entries[i].is_dir && entries[j].is_dir) {
-                dir_entry_t temp = entries[i];
-                entries[i] = entries[j];
-                entries[j] = temp;
-            }
-            /* 同类型按名称排序 */
-            else if (entries[i].is_dir == entries[j].is_dir) {
-                if (strcmp(entries[i].name, entries[j].name) > 0) {
-                    dir_entry_t temp = entries[i];
-                    entries[i] = entries[j];
-                    entries[j] = temp;
-                }
-            }
-        }
-    }
+    /* 排序条目 */
+    sort_dir_entries(entries, actual_count);
     
     /* 生成HTML表格行 */
     for (size_t i = 0; i < actual_count; i++) {
@@ -414,7 +461,7 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
         }
 
         /* HTML转义文件名 */
-        char escaped_name[UVHTTP_MAX_FILE_PATH_SIZE * 6];  /* 最多6倍膨胀 */
+        char escaped_name[UVHTTP_MAX_FILE_PATH_SIZE * 6];
         html_escape(escaped_name, dir_entry->name, sizeof(escaped_name));
 
         /* 生成表格行 */
