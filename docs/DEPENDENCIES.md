@@ -41,7 +41,7 @@
 - **状态**: ✅ 已锁定
 
 ### WebSocket 实现
-- **实现方式**: 原生实现（uvhttp_websocket_native.c）
+- **实现方式**: 原生实现（uvhttp_websocket.c）
 - **说明**: 不依赖第三方 WebSocket 库，完全自主实现
 - **优势**: 更轻量、更可控、无额外依赖
 

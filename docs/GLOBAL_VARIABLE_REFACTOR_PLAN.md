@@ -14,7 +14,7 @@ static int g_tls_initialized = 0;
 **影响**: TLS 连接创建
 **优先级**: 中
 
-### 2. `g_drbg_initialized` (uvhttp_websocket_native.c)
+### 2. `g_drbg_initialized` (uvhttp_websocket.c)
 ```c
 static int g_drbg_initialized = 0;
 ```
@@ -118,7 +118,7 @@ int uvhttp_config_reload(uvhttp_app_context_t* ctx);
 
 需要更新以下模块中的所有调用：
 - `uvhttp_server.c` - 服务器初始化和 TLS 初始化
-- `uvhttp_websocket_native.c` - WebSocket 连接创建
+- `uvhttp_websocket.c` - WebSocket 连接创建
 - `uvhttp_error.c` - 错误记录
 - `uvhttp_config.c` - 配置管理
 - `uvhttp_tls_mbedtls.c` - TLS 初始化

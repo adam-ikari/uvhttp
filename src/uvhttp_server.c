@@ -26,7 +26,7 @@
 #include <uv.h>
 
 #if UVHTTP_FEATURE_WEBSOCKET
-#include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket_impl.h"
 #endif
 
 

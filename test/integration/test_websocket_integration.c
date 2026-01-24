@@ -4,7 +4,7 @@
  */
 
 #include "uvhttp.h"
-#include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket_impl.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

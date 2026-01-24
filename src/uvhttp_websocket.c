@@ -3,7 +3,7 @@
  * 完全自主实现的 WebSocket 协议支持，基于 RFC 6455
  */
 
-#include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket_impl.h"
 #include "uvhttp_context.h"
 #include "uvhttp_error.h"
 #include "uvhttp_allocator.h"

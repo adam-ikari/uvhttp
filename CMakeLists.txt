@@ -145,7 +145,7 @@ if(UVHTTP_FEATURE_MIDDLEWARE)
 endif()
 
 if(BUILD_WITH_WEBSOCKET)
-    list(APPEND SOURCES src/uvhttp_websocket_native.c)
+    list(APPEND SOURCES src/uvhttp_websocket.c)
 endif()
 
 # 头文件
@@ -190,7 +190,7 @@ if(UVHTTP_FEATURE_MIDDLEWARE)
 endif()
 
 if(BUILD_WITH_WEBSOCKET)
-    list(APPEND HEADERS include/uvhttp_websocket_native.h)
+    list(APPEND HEADERS include/uvhttp_websocket_impl.h)
 endif()
 
 # ============================================================================

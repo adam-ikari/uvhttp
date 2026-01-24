@@ -3,7 +3,7 @@
 #if UVHTTP_FEATURE_WEBSOCKET
 
 #include <gtest/gtest.h>
-#include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket_impl.h"
 #include "uvhttp_error.h"
 #include <string.h>
 

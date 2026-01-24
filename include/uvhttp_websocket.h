@@ -4,7 +4,7 @@
 #define UVHTTP_WEBSOCKET_H
 
 /* 使用原生 WebSocket 实现 */
-#include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket_impl.h"
 
 #ifdef __cplusplus
 extern "C" {

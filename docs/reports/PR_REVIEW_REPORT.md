@@ -313,7 +313,7 @@ size_t headers_size = UVHTTP_INITIAL_BUFFER_SIZE * 2;  // 1024 bytes
 **Changes**:
 - Removed `libwebsockets` dependency
 - Added native WebSocket implementation (866 lines)
-- Added `uvhttp_websocket_native.h` header
+- Added `uvhttp_websocket_impl.h` header
 
 **Concerns**:
 1. **No integration tests** for native WebSocket implementation

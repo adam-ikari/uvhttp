@@ -216,7 +216,7 @@ uvhttp_free(ptr);
 
 **实际情况**:
 - libwebsockets 已废弃
-- 项目使用原生 WebSocket 实现（`uvhttp_websocket_native.c`）
+- 项目使用原生 WebSocket 实现（`uvhttp_websocket.c`）
 - 不再依赖 libwebsockets
 
 #### 修复建议
@@ -225,7 +225,7 @@ uvhttp_free(ptr);
 
 ```markdown
 ### WebSocket 实现
-- **实现方式**: 原生实现（uvhttp_websocket_native.c）
+- **实现方式**: 原生实现（uvhttp_websocket.c）
 - **说明**: 不依赖第三方 WebSocket 库
 ```
 
@@ -681,7 +681,7 @@ cmake -DUVHTTP_FEATURE_LOGGING=OFF ..
 - - **说明**: libwebsockets 预编译库使用 OpenSSL 作为 TLS 后端，但项目自身的 TLS 实现使用 mbedtls。
 
 + ### WebSocket 实现
-+ - **实现方式**: 原生实现（uvhttp_websocket_native.c）
++ - **实现方式**: 原生实现（uvhttp_websocket.c）
 + - **说明**: 不依赖第三方 WebSocket 库，完全自主实现
 + - **优势**: 更轻量、更可控、无额外依赖
 

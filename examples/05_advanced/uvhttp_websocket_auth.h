@@ -10,7 +10,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket_impl.h"
 
 #ifdef __cplusplus
 extern "C" {

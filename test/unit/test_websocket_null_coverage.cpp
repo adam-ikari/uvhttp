@@ -3,7 +3,7 @@
 #if UVHTTP_FEATURE_WEBSOCKET
 
 #include <gtest/gtest.h>
-#include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket_impl.h"
 
 /* 测试WebSocket连接创建NULL */
 TEST(UvhttpWebsocketNullCoverageTest, WsConnectionNewNull) {

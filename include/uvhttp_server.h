@@ -301,7 +301,7 @@ int uvhttp_serve(const char* host, int port);
 
 // WebSocket API
 #if UVHTTP_FEATURE_WEBSOCKET
-#include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket_impl.h"
 
 typedef struct {
     int (*on_connect)(uvhttp_ws_connection_t* ws_conn);

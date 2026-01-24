@@ -9,7 +9,7 @@
 #define UVHTTP_WEBSOCKET_MIDDLEWARE_H
 
 #include "uvhttp_middleware.h"
-#include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket_impl.h"
 
 #ifdef __cplusplus
 extern "C" {

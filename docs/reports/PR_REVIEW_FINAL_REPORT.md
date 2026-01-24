@@ -218,7 +218,7 @@ if (is_websocket_handshake(conn->request)) {
 
 **6. 编译警告 - 类型不匹配**
 
-**位置**: `src/uvhttp_websocket_native.c` 第774, 785, 844行
+**位置**: `src/uvhttp_websocket.c` 第774, 785, 844行
 
 ```
 warning: pointer targets in passing argument 2 of 'conn->on_message' differ in signedness
@@ -318,7 +318,7 @@ if (written < 0 || (size_t)written >= *response_len) {
 - 回调函数结构体定义
 - Base64编码实现
 - SHA-1哈希计算
-- 基础的WebSocket原生实现 (uvhttp_websocket_native.c)
+- 基础的WebSocket原生实现 (uvhttp_websocket.c)
 
 #### ❌ 未实现
 - WebSocket握手响应的实际使用
@@ -637,7 +637,7 @@ if (written < 0 || (size_t)written >= *response_len) {
 **修改文件**:
 - `include/uvhttp_connection.h` (+6行)
 - `include/uvhttp_server.h` (+20行)
-- `include/uvhttp_websocket_native.h` (+10行, -6行)
+- `include/uvhttp_websocket_impl.h` (+10行, -6行)
 - `src/uvhttp_request.c` (+34行)
 - `src/uvhttp_server.c` (+140行)
 
