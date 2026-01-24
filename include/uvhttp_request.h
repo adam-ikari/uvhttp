@@ -53,11 +53,7 @@ struct uvhttp_request {
     size_t body_capacity;             /* 8 字节 */
     
     /* 头部数组（放在最后） */
-    /* 常见场景：使用内嵌数组（栈分配），零开销 */
-    /* 罕见场景：动态分配，接受性能下降 */
-    uvhttp_header_t headers[MAX_HEADERS_INLINE];  /* 32 * (256 + 4096) = 139,264 字节 */
-    uvhttp_header_t* headers_extra;  /* 额外头部（动态分配） */
-    size_t headers_extra_count;  /* 额外头部数量 */
+    uvhttp_header_t headers[MAX_HEADERS];  /* 32 * (256 + 4096) = 139,264 字节 */
 };
 
 /* ========== 内存布局验证静态断言 ========== */
