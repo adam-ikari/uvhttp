@@ -37,7 +37,7 @@
 | uvhttp_websocket_wrapper.c | 5.1% | 80% | P0 |
 | uvhttp_server.c | 16.7% | 80% | P0 |
 | uvhttp_request.c | 28.3% | 80% | P1 |
-| uvhttp_tls_openssl.c | 28.1% | 80% | P1 |
+| uvhttp_tls_mbedtls.c | 28.1% | 80% | P1 |
 | uvhttp_connection.c | 0% | 80% | P0 |
 | uvhttp_static.c | 11.7% | 80% | P0 |
 
