@@ -60,20 +60,37 @@ static int mbedtls_net_recv(void* ctx, unsigned char* buf, size_t len) {
 
 // TLS模块管理
 uvhttp_tls_error_t uvhttp_tls_init(uvhttp_context_t* context) {
-    /* 如果没有提供上下文，暂时跳过初始化（向后兼容） */
+    /* v2.0.0: 强制要求上下文，不再支持 NULL */
     if (!context) {
-        return UVHTTP_TLS_OK;
+        return UVHTTP_TLS_ERROR_INVALID_PARAM;
+    }
+
+    /* 如果 context 中的 TLS 资源未初始化，先初始化 */
+    if (!context->tls_initialized) {
+        if (uvhttp_context_init_tls(context) != 0) {
+            return UVHTTP_TLS_ERROR_INIT;
+        }
     }
 
     if (context->tls_initialized) {
         return UVHTTP_TLS_OK;
     }
 
-    /* TODO: 实现实际的 TLS 初始化
-     * 需要分配 mbedtls_entropy_context 和 mbedtls_ctr_drbg_context
-     * 并存储到 context->tls_entropy 和 context->tls_drbg
-     */
-
+    /* 分配并初始化 entropy 上下文 */
+    mbedtls_entropy_init((mbedtls_entropy_context*)context->tls_entropy);
+    
+    /* 分配并初始化 DRBG 上下文 */
+    mbedtls_ctr_drbg_init((mbedtls_ctr_drbg_context*)context->tls_drbg);
+    
+    /* 使用自定义熵源初始化 DRBG */
+    int ret = mbedtls_ctr_drbg_seed((mbedtls_ctr_drbg_context*)context->tls_drbg, mbedtls_entropy_func, (mbedtls_entropy_context*)context->tls_entropy,
+                                     (const unsigned char*)"uvhttp_tls", 11);
+    if (ret != 0) {
+        mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
+        mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
+        return UVHTTP_TLS_ERROR_INIT;
+    }
+    
     context->tls_initialized = 1;
     return UVHTTP_TLS_OK;
 }
@@ -83,16 +100,16 @@ void uvhttp_tls_cleanup(uvhttp_context_t* context) {
         return;
     }
 
-    /* TODO: 实现实际的 TLS 清理
-     * 释放 context->tls_entropy 和 context->tls_drbg
-     */
+    /* 释放 entropy 和 DRBG 上下文 */
+    mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
+    mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
 
     context->tls_initialized = 0;
 }
 
 // TLS上下文管理
 uvhttp_tls_context_t* uvhttp_tls_context_new(void) {
-    uvhttp_tls_context_t* ctx = calloc(1, sizeof(uvhttp_tls_context_t));
+    uvhttp_tls_context_t* ctx = uvhttp_calloc(1, sizeof(uvhttp_tls_context_t));
     if (!ctx) {
         return NULL;
     }
@@ -281,7 +298,7 @@ mbedtls_ssl_context* uvhttp_tls_create_ssl(uvhttp_tls_context_t* ctx) {
         return NULL;
     }
     
-    mbedtls_ssl_context* ssl = calloc(1, sizeof(mbedtls_ssl_context));
+    mbedtls_ssl_context* ssl = uvhttp_calloc(1, sizeof(mbedtls_ssl_context));
     if (!ssl) {
         return NULL;
     }
@@ -628,7 +645,7 @@ uvhttp_tls_error_t uvhttp_tls_context_add_extra_chain_cert(uvhttp_tls_context_t*
     while (current->next != NULL) {
         current = current->next;
     }
-    current->next = calloc(1, sizeof(mbedtls_x509_crt));
+    current->next = uvhttp_calloc(1, sizeof(mbedtls_x509_crt));
     if (!current->next) {
         mbedtls_x509_crt_free(&extra_cert);
         return UVHTTP_TLS_ERROR_MEMORY;

@@ -2,6 +2,7 @@
 #define UVHTTP_SERVER_H
 
 #include <uv.h>
+#include <assert.h>
 #include "uvhttp_error.h"
 #include "uvhttp_common.h"
 #include "uvhttp_config.h"
@@ -79,44 +80,73 @@ typedef struct {
 } uvhttp_server_builder_t;
 
 struct uvhttp_server {
-    uv_loop_t* loop;
-    uv_tcp_t tcp_handle;
-    uvhttp_request_handler_t handler;
-    uvhttp_router_t* router;
-    int is_listening;
-#if UVHTTP_FEATURE_TLS
-    uvhttp_tls_context_t* tls_ctx;
-    int tls_enabled;
-#endif
-    size_t active_connections;
-    int owns_loop;  /* 是否拥有循环（内部创建的） */
-    uvhttp_config_t* config;  /* 服务器配置 */
-#if UVHTTP_FEATURE_WEBSOCKET
-    void* ws_routes;  /* WebSocket路由表（已废弃，使用中间件） */
-    ws_connection_manager_t* ws_connection_manager;  /* WebSocket连接管理器 */
-#endif
-#if UVHTTP_FEATURE_MIDDLEWARE
-    uvhttp_http_middleware_t* middleware_chain;  /* 中间件链 */
-#endif
-    size_t max_connections;  /* 最大连接数限制，默认10000 */
-    size_t max_message_size;  /* 最大消息大小（字节），默认1MB */
+    /* 热路径字段（频繁访问）- 优化内存局部性 */
+    int is_listening;                         /* 4 字节 - 是否正在监听 */
+    int owns_loop;                            /* 4 字节 - 是否拥有循环 */
+    size_t active_connections;                /* 8 字节 - 活跃连接数 */
     
+    /* 指针字段（8字节对齐） */
+    uv_loop_t* loop;                           /* 8 字节 */
+    uvhttp_request_handler_t handler;         /* 8 字节 */
+    uvhttp_router_t* router;                   /* 8 字节 */
+    uvhttp_config_t* config;                   /* 8 字节 */
+    
+    /* 网络连接（16字节对齐） */
+    uv_tcp_t tcp_handle;                       /* 8 字节 */
+    
+    /* HTTP/1.1优化字段 */
+    size_t max_connections;                     /* 8 字节 */
+    size_t max_message_size;                    /* 8 字节 */
+    
+    /* TLS相关 */
+#if UVHTTP_FEATURE_TLS
+    uvhttp_tls_context_t* tls_ctx;             /* 8 字节 */
+    int tls_enabled;                            /* 4 字节 */
+#endif
+    
+    /* 中间件链 */
+#if UVHTTP_FEATURE_MIDDLEWARE
+    uvhttp_http_middleware_t* middleware_chain; /* 8 字节 */
+#endif
+    
+    /* WebSocket相关 */
+#if UVHTTP_FEATURE_WEBSOCKET
+    void* ws_routes;                           /* 8 字节 - 已废弃 */
+    ws_connection_manager_t* ws_connection_manager; /* 8 字节 */
+#endif
+    
+    /* 限流功能 */
 #if UVHTTP_FEATURE_RATE_LIMIT
-    /* 限流功能（核心功能 - 固定窗口算法） */
-    int rate_limit_enabled;                          /* 是否启用限流 */
-    int rate_limit_max_requests;                       /* 最大请求数 */
-    int rate_limit_window_seconds;                     /* 时间窗口（秒） */
-    int rate_limit_request_count;                      /* 当前窗口内的请求数 */
-    uint64_t rate_limit_window_start_time;            /* 窗口开始时间（毫秒） */
-    void** rate_limit_whitelist;                       /* 限流白名单路径数组 */
-    size_t rate_limit_whitelist_count;                   /* 白名单路径数量 */
-    struct whitelist_item* rate_limit_whitelist_hash;  /* 白名单哈希表 */
+    int rate_limit_enabled;                      /* 4 字节 */
+    int rate_limit_max_requests;                   /* 4 字节 */
+    int rate_limit_window_seconds;                 /* 4 字节 */
+    int rate_limit_request_count;                  /* 4 字节 */
+    uint64_t rate_limit_window_start_time;        /* 8 字节 */
+    void** rate_limit_whitelist;                 /* 8 字节 */
+    size_t rate_limit_whitelist_count;             /* 8 字节 */
+    struct whitelist_item* rate_limit_whitelist_hash; /* 8 字节 */
 #endif
 
-    /* 连接池管理（避免全局变量，使用服务器级别的连接池） */
-    void* connection_pool;  /* 连接池头指针 */
-    size_t connection_pool_size;  /* 连接池大小 */
+    /* 连接池管理 */
+    void* connection_pool;                       /* 8 字节 */
+    size_t connection_pool_size;                   /* 8 字节 */
 };
+
+/* ========== 内存布局验证静态断言 ========== */
+
+/* 验证指针对齐（8字节对齐） */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, loop) % 8 == 0,
+                      "loop pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, router) % 8 == 0,
+                      "router pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, config) % 8 == 0,
+                      "config pointer not 8-byte aligned");
+
+/* 验证size_t对齐（8字节对齐） */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, active_connections) % 8 == 0,
+                      "active_connections not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, max_connections) % 8 == 0,
+                      "max_connections not 8-byte aligned");
 
 /* API函数 */
 uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop);  /* loop可为NULL，内部创建新循环 */

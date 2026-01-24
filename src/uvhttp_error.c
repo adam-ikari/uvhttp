@@ -201,34 +201,40 @@ void uvhttp_log_error(uvhttp_error_t error, const char* context) {
 /* 获取错误统计 */
 void uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts, time_t* last_error_time, 
                            const char** last_error_context) {
-    /* 如果没有提供上下文，使用全局变量（向后兼容） */
+    /* 向后兼容：当 context 为 NULL 时使用静态全局变量 */
     uvhttp_error_stats_t* stats = NULL;
+    
     if (context) {
         stats = (uvhttp_error_stats_t*)context->error_stats;
     } else {
+        /* v2.0.0: 向后兼容，context 为 NULL 时使用静态全局变量 */
         stats = &error_stats;
     }
     
-    if (stats) {
-        if (error_counts) {
-            memcpy(error_counts, stats->error_counts, sizeof(stats->error_counts));
-        }
-        if (last_error_time) {
-            *last_error_time = stats->last_error_time;
-        }
-        if (last_error_context) {
-            *last_error_context = stats->last_error_context;
-        }
+    if (!stats) {
+        return;
+    }
+    
+    if (error_counts) {
+        memcpy(error_counts, stats->error_counts, sizeof(stats->error_counts));
+    }
+    if (last_error_time) {
+        *last_error_time = stats->last_error_time;
+    }
+    if (last_error_context) {
+        *last_error_context = stats->last_error_context;
     }
 }
 
 /* 重置错误统计 */
 void uvhttp_reset_error_stats(uvhttp_context_t* context) {
-    /* 如果没有提供上下文，使用全局变量（向后兼容） */
+    /* 向后兼容：当 context 为 NULL 时使用静态全局变量 */
     uvhttp_error_stats_t* stats = NULL;
+    
     if (context) {
         stats = (uvhttp_error_stats_t*)context->error_stats;
     } else {
+        /* v2.0.0: 向后兼容，context 为 NULL 时使用静态全局变量 */
         stats = &error_stats;
     }
     
@@ -239,11 +245,13 @@ void uvhttp_reset_error_stats(uvhttp_context_t* context) {
 
 /* 获取最频繁的错误 */
 uvhttp_error_t uvhttp_get_most_frequent_error(uvhttp_context_t* context) {
-    /* 如果没有提供上下文，使用全局变量（向后兼容） */
+    /* 向后兼容：当 context 为 NULL 时使用静态全局变量 */
     uvhttp_error_stats_t* stats = NULL;
+    
     if (context) {
         stats = (uvhttp_error_stats_t*)context->error_stats;
     } else {
+        /* v2.0.0: 向后兼容，context 为 NULL 时使用静态全局变量 */
         stats = &error_stats;
     }
     

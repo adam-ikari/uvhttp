@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **测试通过率**: 从 91% 提升到 100% (67/67)
 - **代码质量**: 消除魔法数字，添加详细注释
-- **文档版本**: 更新到 1.6.0，文档日期更新到 2026-01-20
+- **文档版本**: 更新到 2.0.0，文档日期更新到 2026-01-21
 - **测试文件**: 暂时禁用 `test_connection_integration.cpp`（需要 libuv handle 管理重构）
 
 ### Performance

@@ -135,7 +135,9 @@ typedef struct uvhttp_context {
     void* tls_drbg;             /* mbedtls_ctr_drbg_context* */
     
     /* WebSocket 模块状态 */
-    int drbg_initialized;
+    int ws_drbg_initialized;
+    void* ws_entropy;           /* mbedtls_entropy_context* */
+    void* ws_drbg;              /* mbedtls_ctr_drbg_context* */
     
     /* 错误统计 */
     void* error_stats;          /* uvhttp_error_stats_t* */
@@ -143,6 +145,9 @@ typedef struct uvhttp_context {
     /* 配置管理 */
     void* current_config;       /* uvhttp_config_t* */
     void* config_callback;      /* uvhttp_config_change_callback_t */
+    
+    /* 用户数据（用于存储应用特定的上下文） */
+    void* user_data;
     
 } uvhttp_context_t;
 

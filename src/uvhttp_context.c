@@ -7,6 +7,8 @@
 #include "uvhttp_router.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_error_handler.h"
+#include <mbedtls/entropy.h>
+#include <mbedtls/ctr_drbg.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
@@ -492,9 +494,38 @@ int uvhttp_context_init_tls(uvhttp_context_t* context) {
         return 0;
     }
 
-    /* TODO: 实现 TLS 初始化
-     * 需要包含 mbedtls 头文件并实现实际初始化逻辑
-     */
+    /* 分配并初始化 entropy 上下文 */
+    context->tls_entropy = uvhttp_alloc(sizeof(mbedtls_entropy_context));
+    if (!context->tls_entropy) {
+        return -1;
+    }
+    mbedtls_entropy_init((mbedtls_entropy_context*)context->tls_entropy);
+    
+    /* 分配并初始化 DRBG 上下文 */
+    context->tls_drbg = uvhttp_alloc(sizeof(mbedtls_ctr_drbg_context));
+    if (!context->tls_drbg) {
+        mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
+        uvhttp_free(context->tls_entropy);
+        context->tls_entropy = NULL;
+        return -1;
+    }
+    mbedtls_ctr_drbg_init((mbedtls_ctr_drbg_context*)context->tls_drbg);
+    
+    /* 使用自定义熵源初始化 DRBG */
+    int ret = mbedtls_ctr_drbg_seed((mbedtls_ctr_drbg_context*)context->tls_drbg, 
+                                     mbedtls_entropy_func, 
+                                     (mbedtls_entropy_context*)context->tls_entropy,
+                                     (const unsigned char*)"uvhttp_tls", 11);
+    if (ret != 0) {
+        mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
+        mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
+        uvhttp_free(context->tls_entropy);
+        uvhttp_free(context->tls_drbg);
+        context->tls_entropy = NULL;
+        context->tls_drbg = NULL;
+        return -1;
+    }
+
     context->tls_initialized = 1;
 
     return 0;
@@ -506,13 +537,20 @@ void uvhttp_context_cleanup_tls(uvhttp_context_t* context) {
         return;
     }
 
-    /* TODO: 实现 TLS 清理
-     * 释放 mbedtls_entropy_context 和 mbedtls_ctr_drbg_context
-     */
+    /* 释放 mbedtls_entropy_context 和 mbedtls_ctr_drbg_context */
+    if (context->tls_entropy) {
+        mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
+        uvhttp_free(context->tls_entropy);
+        context->tls_entropy = NULL;
+    }
+    
+    if (context->tls_drbg) {
+        mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
+        uvhttp_free(context->tls_drbg);
+        context->tls_drbg = NULL;
+    }
 
     context->tls_initialized = 0;
-    context->tls_entropy = NULL;
-    context->tls_drbg = NULL;
 }
 
 /* 初始化 WebSocket 模块状态 */
@@ -522,27 +560,67 @@ int uvhttp_context_init_websocket(uvhttp_context_t* context) {
     }
 
     /* 如果已经初始化，直接返回成功（幂等） */
-    if (context->drbg_initialized) {
+    if (context->ws_drbg_initialized) {
         return 0;
     }
 
-    /* TODO: 实现 WebSocket DRBG 初始化
-     * 需要包含相关头文件并实现实际初始化逻辑
-     */
-    context->drbg_initialized = 1;
+    /* 分配并初始化 entropy 上下文 */
+    context->ws_entropy = uvhttp_alloc(sizeof(mbedtls_entropy_context));
+    if (!context->ws_entropy) {
+        return -1;
+    }
+    mbedtls_entropy_init((mbedtls_entropy_context*)context->ws_entropy);
+    
+    /* 分配并初始化 DRBG 上下文 */
+    context->ws_drbg = uvhttp_alloc(sizeof(mbedtls_ctr_drbg_context));
+    if (!context->ws_drbg) {
+        mbedtls_entropy_free((mbedtls_entropy_context*)context->ws_entropy);
+        uvhttp_free(context->ws_entropy);
+        context->ws_entropy = NULL;
+        return -1;
+    }
+    mbedtls_ctr_drbg_init((mbedtls_ctr_drbg_context*)context->ws_drbg);
+    
+    /* 初始化 DRBG */
+    int ret = mbedtls_ctr_drbg_seed((mbedtls_ctr_drbg_context*)context->ws_drbg, 
+                                     mbedtls_entropy_func, 
+                                     (mbedtls_entropy_context*)context->ws_entropy, 
+                                     NULL, 0);
+    if (ret != 0) {
+        mbedtls_entropy_free((mbedtls_entropy_context*)context->ws_entropy);
+        mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->ws_drbg);
+        uvhttp_free(context->ws_entropy);
+        uvhttp_free(context->ws_drbg);
+        context->ws_entropy = NULL;
+        context->ws_drbg = NULL;
+        return -1;
+    }
+
+    context->ws_drbg_initialized = 1;
 
     return 0;
 }
 
 /* 清理 WebSocket 模块状态 */
 void uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
-    if (!context || !context->drbg_initialized) {
+    if (!context || !context->ws_drbg_initialized) {
         return;
     }
 
-    /* TODO: 实现 WebSocket DRBG 清理 */
+    /* 释放 mbedtls_entropy_context 和 mbedtls_ctr_drbg_context */
+    if (context->ws_entropy) {
+        mbedtls_entropy_free((mbedtls_entropy_context*)context->ws_entropy);
+        uvhttp_free(context->ws_entropy);
+        context->ws_entropy = NULL;
+    }
+    
+    if (context->ws_drbg) {
+        mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->ws_drbg);
+        uvhttp_free(context->ws_drbg);
+        context->ws_drbg = NULL;
+    }
 
-    context->drbg_initialized = 0;
+    context->ws_drbg_initialized = 0;
 }
 
 /* 初始化错误统计 */

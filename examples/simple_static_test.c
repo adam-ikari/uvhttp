@@ -1,5 +1,6 @@
 #include "../include/uvhttp.h"
 #include "../include/uvhttp_static.h"
+#include "../include/uvhttp_context.h"
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +9,7 @@
 static uvhttp_server_t* g_server = NULL;
 static uvhttp_loop_t* g_loop = NULL;
 static uvhttp_static_context_t* g_static_ctx = NULL;
+static uvhttp_context_t* g_context = NULL;
 
 void signal_handler(int sig) {
     (void)sig;
@@ -38,7 +40,15 @@ int main(int argc, char* argv[]) {
         printf("错误：无法创建配置\n");
         return 1;
     }
-    uvhttp_config_set_current(config);
+
+    g_context = uvhttp_context_create(g_loop);
+    if (!g_context) {
+        printf("错误：无法创建上下文\n");
+        uvhttp_config_free(config);
+        return 1;
+    }
+
+    uvhttp_config_set_current(g_context, config);
     
     uvhttp_static_config_t static_config;
     memset(&static_config, 0, sizeof(static_config));
@@ -91,11 +101,15 @@ int main(int argc, char* argv[]) {
     printf("静态文件目录：%s\n", root_directory);
     
     uv_run(g_loop, UV_RUN_DEFAULT);
-    
+
+    if (g_context) {
+        uvhttp_context_destroy(g_context);
+    }
+
     uvhttp_router_free(router);
     uvhttp_static_free(g_static_ctx);
     uvhttp_config_free(config);
     uvhttp_server_free(g_server);
-    
+
     return 0;
 }

@@ -1,6 +1,7 @@
 #include "../include/uvhttp.h"
 #include "../include/uvhttp_allocator.h"
 #include "../include/uvhttp_config.h"
+#include "../include/uvhttp_context.h"
 #include "../include/uvhttp_constants.h"
 #include <stdio.h>
 #include <signal.h>
@@ -11,6 +12,7 @@ typedef struct {
     uvhttp_server_t* server;
     uvhttp_router_t* router;
     uvhttp_config_t* config;
+    uvhttp_context_t* uvhttp_ctx;
     int request_count;
 } app_context_t;
 
@@ -35,6 +37,10 @@ void app_context_free(app_context_t* ctx) {
         if (ctx->config) {
             uvhttp_config_free(ctx->config);
             ctx->config = NULL;
+        }
+        if (ctx->uvhttp_ctx) {
+            uvhttp_context_destroy(ctx->uvhttp_ctx);
+            ctx->uvhttp_ctx = NULL;
         }
         uvhttp_free(ctx);
     }
@@ -229,9 +235,17 @@ int main() {
     ctx->server->config = config;
     printf("Server created successfully: %p\n", (void*)ctx->server);
     printf("Applied configuration with max_connections=%d\n", config->max_connections);
-    
+
+    // 创建 uvhttp 上下文
+    ctx->uvhttp_ctx = uvhttp_context_create(loop);
+    if (!ctx->uvhttp_ctx) {
+        fprintf(stderr, "Failed to create uvhttp context\n");
+        app_context_free(ctx);
+        return 1;
+    }
+
     // 设置全局配置（重要：这会消除"Global configuration not initialized"警告）
-    uvhttp_config_set_current(config);
+    uvhttp_config_set_current(ctx->uvhttp_ctx, config);
     printf("Global configuration set\n");
     
     // 创建路由器

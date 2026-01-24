@@ -5,6 +5,7 @@
 
 #include "../include/uvhttp.h"
 #include "../include/uvhttp_config.h"
+#include "../include/uvhttp_context.h"
 #include "../include/uvhttp_websocket_middleware.h"
 #include <signal.h>
 #include <stdlib.h>
@@ -15,6 +16,7 @@ static uvhttp_server_t* g_server = NULL;
 static uvhttp_router_t* g_router = NULL;
 static uv_loop_t* g_loop = NULL;
 static uvhttp_ws_middleware_t* g_ws_middleware = NULL;
+static uvhttp_context_t* g_context = NULL;
 
 // 信号处理器
 void signal_handler(int sig) {
@@ -129,8 +131,17 @@ int main() {
     
     // 应用配置
     g_server->config = config;
-    uvhttp_config_set_current(config);
-    
+
+    // 创建上下文
+    g_context = uvhttp_context_create(g_loop);
+    if (!g_context) {
+        uvhttp_server_free(g_server);
+        uvhttp_config_free(config);
+        return 1;
+    }
+
+    uvhttp_config_set_current(g_context, config);
+
     // 创建 WebSocket 中间件
     uvhttp_ws_middleware_config_t ws_config = UVHTTP_WS_MIDDLEWARE_DEFAULT_CONFIG;
     g_ws_middleware = uvhttp_ws_middleware_create("/ws", &ws_config);
@@ -190,18 +201,23 @@ int main() {
     
     // 运行事件循环
     uv_run(g_loop, UV_RUN_DEFAULT);
-    
+
     // 清理
     if (g_ws_middleware) {
         uvhttp_ws_middleware_destroy(g_ws_middleware);
         g_ws_middleware = NULL;
     }
-    
+
+    if (g_context) {
+        uvhttp_context_destroy(g_context);
+        g_context = NULL;
+    }
+
     if (g_server) {
         uvhttp_server_free(g_server);
         g_server = NULL;
         g_router = NULL;
     }
-    
+
     return 0;
 }

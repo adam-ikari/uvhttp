@@ -2,7 +2,7 @@ BUILD_DIR ?= build
 BUILD_TYPE ?= Release
 CMAKE_ARGS = -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON -DBUILD_WITH_TLS=ON
 
-.PHONY: all clean test help cppcheck install coverage coverage-clean examples build build-deps rebuild
+.PHONY: all clean test help cppcheck install coverage coverage-clean examples build build-deps rebuild docs-site docs-site-build docs-site-clean docs-site-dev
 
 all: $(BUILD_DIR)/Makefile
 	@$(MAKE) -C $(BUILD_DIR)
@@ -118,7 +118,39 @@ help:
 	@echo "  make install            - 安装"
 	@echo "  make examples           - 构建示例"
 	@echo "  make cppcheck           - 代码检查"
+	@echo ""
+	@echo "文档网站:"
+	@echo "  make docs-site          - 构建文档网站"
+	@echo "  make docs-site-dev      - 启动开发服务器"
+	@echo "  make docs-site-clean    - 清理文档网站"
 	@echo "  BUILD_DIR=$(BUILD_DIR)  BUILD_TYPE=$(BUILD_TYPE)"
 
 rebuild: clean build
 	@echo "🔄 重新构建完成！"
+
+# ============================================================================
+# 文档网站
+# ============================================================================
+
+docs-site:
+	@echo "📚 构建文档网站..."
+	@cd docs-site && npm install
+	@cd docs-site && npm run build
+	@echo "✅ 文档网站构建完成！"
+	@echo "  静态文件位置: docs-site/docs/.vitepress/dist/"
+
+docs-site-build:
+	@echo "📚 构建文档网站（开发模式）..."
+	@cd docs-site && npm install
+	@cd docs-site && npm run build
+	@echo "✅ 文档网站构建完成！"
+
+docs-site-clean:
+	@echo "🧹 清理文档网站..."
+	@cd docs-site && rm -rf node_modules docs/.vitepress/dist
+	@echo "✅ 文档网站清理完成！"
+
+docs-site-dev:
+	@echo "🚀 启动文档网站开发服务器..."
+	@cd docs-site && npm install
+	@cd docs-site && npm run dev

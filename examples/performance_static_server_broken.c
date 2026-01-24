@@ -5,6 +5,7 @@
 
 #include "../include/uvhttp.h"
 #include "../include/uvhttp_static.h"
+#include "../include/uvhttp_context.h"
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +15,7 @@ static uvhttp_server_t* g_server = NULL;
 static uvhttp_router_t* g_router = NULL;
 static uv_loop_t* g_loop = NULL;
 static uvhttp_static_context_t* g_static_ctx = NULL;
+static uvhttp_context_t* g_context = NULL;
 
 // 信号处理器
 void signal_handler(int sig) {
@@ -181,13 +183,23 @@ void create_test_files() {
 
 int main() {
     printf("=== UVHTTP 静态文件服务性能测试（优化版）===\n");
-    
+
     // 创建测试文件
     (void)create_test_files();
-    
+
+    // 创建事件循环
+    g_loop = uv_default_loop();
+
+    // 创建上下文
+    g_context = uvhttp_context_create(g_loop);
+    if (!g_context) {
+        printf("错误：无法创建上下文\n");
+        return 1;
+    }
+
     // 优化配置：增加最大连接数和缓冲区大小
-    uvhttp_config_update_max_connections(5000);  /* 增加到5000连接 */
-    uvhttp_config_update_buffer_size(16384);     /* 增加缓冲区到16KB */
+    uvhttp_config_update_max_connections(g_context, 5000);  /* 增加到5000连接 */
+    uvhttp_config_update_read_buffer_size(g_context, 16384);     /* 增加缓冲区到16KB */
     
     // 配置静态文件服务（优化小文件性能）
     uvhttp_static_config_t static_config = {
@@ -207,10 +219,7 @@ int main() {
         printf("错误：无法创建静态文件服务上下文\n");
         return 1;
     }
-    
-    // 创建事件循环
-    g_loop = uv_default_loop();
-    
+
     // 创建HTTP服务器
     g_server = uvhttp_server_new(g_loop);
     if (!g_server) {
@@ -245,11 +254,15 @@ int main() {
     
     // 运行事件循环
     uv_run(g_loop, UV_RUN_DEFAULT);
-    
+
     // 清理资源
+    if (g_context) {
+        uvhttp_context_destroy(g_context);
+        g_context = NULL;
+    }
     uvhttp_static_free(g_static_ctx);
     uvhttp_server_free(g_server);
-    
+
     printf("\n服务器已停止\n");
     return 0;
 }

@@ -15,6 +15,10 @@
 extern "C" {
 #endif
 
+/* 前向声明 */
+struct uvhttp_context;
+typedef struct uvhttp_context uvhttp_context_t;
+
 /* 配置结构 */
 typedef struct {
     /* 服务器配置 */
@@ -80,22 +84,22 @@ int uvhttp_config_validate(const uvhttp_config_t* config);
 void uvhttp_config_print(const uvhttp_config_t* config);
 
 /* 动态配置调整 */
-int uvhttp_config_update_max_connections(int max_connections);
-int uvhttp_config_update_buffer_size(int buffer_size);
-int uvhttp_config_update_limits(size_t max_body_size, size_t max_header_size);
+int uvhttp_config_update_max_connections(uvhttp_context_t* context, int max_connections);
+int uvhttp_config_update_read_buffer_size(uvhttp_context_t* context, int buffer_size);
+int uvhttp_config_update_size_limits(uvhttp_context_t* context, size_t max_body_size, size_t max_header_size);
 
 /* 配置监控 */
 typedef void (*uvhttp_config_change_callback_t)(const char* key, const void* old_value, const void* new_value);
-int uvhttp_config_monitor_changes(uvhttp_config_change_callback_t callback);
+int uvhttp_config_monitor_changes(uvhttp_context_t* context, uvhttp_config_change_callback_t callback);
 
 /* 获取当前配置 */
-const uvhttp_config_t* uvhttp_config_get_current(void);
+const uvhttp_config_t* uvhttp_config_get_current(uvhttp_context_t* context);
 
 /* 设置全局配置 */
-void uvhttp_config_set_current(uvhttp_config_t* config);
+void uvhttp_config_set_current(uvhttp_context_t* context, uvhttp_config_t* config);
 
 /* 配置热重载 */
-int uvhttp_config_reload(void);
+int uvhttp_config_reload(uvhttp_context_t* context);
 
 #ifdef __cplusplus
 }

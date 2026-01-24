@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "uvhttp_common.h"
 #include "uvhttp_error.h"
 
@@ -34,25 +35,47 @@ typedef struct {
 } uvhttp_tls_write_data_t;
 
 struct uvhttp_response {
-    uv_tcp_t* client;
-    int status_code;
+    /* 热路径字段（频繁访问）- 优化内存局部性 */
+    int status_code;                  /* 4 字节 - 状态码 */
+    int headers_sent;                  /* 4 字节 - 头部是否已发送 */
+    int sent;                          /* 4 字节 - 响应是否已发送 */
+    int finished;                      /* 4 字节 - 响应是否完成 */
     
-    uvhttp_header_t headers[MAX_HEADERS];
-    size_t header_count;
+    /* HTTP/1.1优化字段 */
+    int keep_alive;                    /* 4 字节 - 是否保持连接 */
+    int compress;                      /* 4 字节 - 是否启用压缩 */
+    int cache_ttl;                     /* 4 字节 - 缓存TTL（秒） */
     
-    char* body;
-    size_t body_length;
+    /* 指针和计数器字段（8字节对齐） */
+    uv_tcp_t* client;                 /* 8 字节 */
+    char* body;                       /* 8 字节 */
+    size_t header_count;               /* 8 字节 */
+    size_t body_length;                /* 8 字节 */
+    time_t cache_expires;              /* 8 字节 - 缓存过期时间 */
     
-    int headers_sent;
-    
-    // HTTP/1.1优化字段
-    int keep_alive;                     // 是否保持连接
-    int sent;                            // 是否已发送响应
-    int finished;                        // 响应是否完成
-    int compress;           // 是否启用压缩
-    int cache_ttl;          // 缓存TTL（秒）
-    time_t cache_expires;   // 缓存过期时间
+    /* 头部数组（放在最后） */
+    uvhttp_header_t headers[MAX_HEADERS];  /* 64 * (256 + 4096) = 278,528 字节 */
 };
+
+/* ========== 内存布局验证静态断言 ========== */
+
+/* 验证指针对齐（8字节对齐） */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, client) % 8 == 0,
+                      "client pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, body) % 8 == 0,
+                      "body pointer not 8-byte aligned");
+
+/* 验证size_t对齐（8字节对齐） */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, header_count) % 8 == 0,
+                      "header_count not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, body_length) % 8 == 0,
+                      "body_length not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, cache_expires) % 8 == 0,
+                      "cache_expires not 8-byte aligned");
+
+/* 验证大型缓冲区在结构体末尾 */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, headers) >= 64,
+                      "headers array should be after first 64 bytes");
 
 /* ============ 核心 API 函数 ============ */
 uvhttp_error_t uvhttp_response_init(uvhttp_response_t* response, void* client);
