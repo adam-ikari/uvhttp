@@ -7,6 +7,7 @@ option(BUILD_WITH_MIMALLOC "Build with mimalloc allocator" ON)
 option(BUILD_WITH_TLS "Build with TLS support" ON)
 option(ENABLE_DEBUG "Enable debug build with -O0" OFF)
 option(ENABLE_COVERAGE "Enable code coverage" OFF)
+option(ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
 option(BUILD_EXAMPLES "Build example programs" ON)
 
 # 设置输出目录
@@ -34,6 +35,14 @@ endif()
 if(ENABLE_COVERAGE)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+endif()
+
+# AddressSanitizer 和 UndefinedBehaviorSanitizer 支持
+if(ENABLE_SANITIZERS)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -fsanitize=undefined")
+    message(STATUS "Sanitizers enabled: AddressSanitizer + UndefinedBehaviorSanitizer")
 endif()
 
 # 安全编译选项
