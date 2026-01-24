@@ -22,6 +22,7 @@
 #include "uvhttp_allocator.h"
 #include "uvhttp_error.h"
 #include "uvhttp_error_helpers.h"
+#include "uvhttp_utils.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -73,7 +74,7 @@ uvhttp_http_middleware_t* uvhttp_http_middleware_create(
             uvhttp_free(middleware);
             return NULL;
         }
-        strcpy((char*)middleware->path, path);
+        uvhttp_safe_strcpy((char*)middleware->path, UVHTTP_MAX_PATH_SIZE, path);
     }
     
     /* 设置字段 */

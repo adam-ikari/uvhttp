@@ -156,8 +156,7 @@ static uvhttp_error_t add_to_hash_table(cache_optimized_router_t* cr,
         uvhttp_free(entry);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
-    strncpy(path_copy, path, path_len);
-    path_copy[path_len] = '\0';
+    uvhttp_safe_strncpy(path_copy, path, path_len + 1);
     
     entry->path = path_copy;
     entry->method = method;

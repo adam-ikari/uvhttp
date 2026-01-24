@@ -353,8 +353,7 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
         }
         
         dir_entry_t* dir_entry = &entries[actual_count];
-        strncpy(dir_entry->name, entry->d_name, sizeof(dir_entry->name) - 1);
-        dir_entry->name[sizeof(dir_entry->name) - 1] = '\0';
+        uvhttp_safe_strncpy(dir_entry->name, entry->d_name, sizeof(dir_entry->name));
         
         /* 获取文件信息 */
         char full_path[UVHTTP_MAX_FILE_PATH_SIZE];
@@ -659,10 +658,9 @@ int uvhttp_static_resolve_safe_path(const char* root_dir,
     }
 
     /* 将规范化后的路径复制回输出缓冲区 */
-    if (strlen(resolved) >= buffer_size) {
+    if (uvhttp_safe_strcpy(resolved_path, buffer_size, resolved) != 0) {
         return 0;
     }
-    strcpy(resolved_path, resolved);
 
     return 1;
 }
@@ -699,8 +697,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     
     /* 处理根路径 */
     if (strcmp(clean_path, "/") == 0) {
-        strncpy(clean_path, ctx->config.index_file, sizeof(clean_path) - 1);
-        clean_path[sizeof(clean_path) - 1] = '\0';
+        uvhttp_safe_strncpy(clean_path, ctx->config.index_file, sizeof(clean_path));
     }
     
     /* 构建安全的文件路径 */
@@ -763,8 +760,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
             }
             
             if (get_file_info(index_path, &file_size, &last_modified) == 0) {
-                strncpy(safe_path, index_path, sizeof(safe_path) - 1);
-                safe_path[sizeof(safe_path) - 1] = '\0';
+                uvhttp_safe_strncpy(safe_path, index_path, sizeof(safe_path));
             } else {
                 uvhttp_response_set_status(response, 404); /* Not Found */
                 return -1;
@@ -1012,8 +1008,8 @@ uvhttp_http_middleware_t* uvhttp_static_middleware_create(
     /* 创建默认配置 */
     uvhttp_static_config_t config;
     memset(&config, 0, sizeof(config));
-    strncpy(config.root_directory, root_dir, sizeof(config.root_directory) - 1);
-    strncpy(config.index_file, "index.html", sizeof(config.index_file) - 1);
+    uvhttp_safe_strncpy(config.root_directory, root_dir, sizeof(config.root_directory));
+    uvhttp_safe_strncpy(config.index_file, "index.html", sizeof(config.index_file));
     config.enable_directory_listing = UVHTTP_FALSE;
     config.enable_etag = UVHTTP_TRUE;
     config.enable_last_modified = UVHTTP_TRUE;
@@ -1067,7 +1063,7 @@ uvhttp_http_middleware_t* uvhttp_static_middleware_create_with_config(
             uvhttp_static_free(static_ctx);
             return NULL;
         }
-        strcpy(mw_ctx->path_prefix, path);
+        uvhttp_safe_strcpy(mw_ctx->path_prefix, sizeof(mw_ctx->path_prefix), path);
     }
 
     /* 创建中间件 */

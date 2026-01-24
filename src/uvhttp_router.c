@@ -128,8 +128,7 @@ static uvhttp_route_node_t* find_or_create_child(uvhttp_router_t* router,
         return NULL;
     }
     
-    strncpy(child->segment, segment, sizeof(child->segment) - 1);
-    child->segment[sizeof(child->segment) - 1] = '\0';
+    uvhttp_safe_strncpy(child->segment, segment, sizeof(child->segment));
     child->is_param = is_param;
     
     parent->children[parent->child_count++] = child;
@@ -144,7 +143,7 @@ static int parse_path_params(const char* path, uvhttp_param_t* params, size_t* p
     
     *param_count = 0;
     char path_copy[MAX_ROUTE_PATH_LEN];
-    strncpy(path_copy, path, sizeof(path_copy) - 1);
+    uvhttp_safe_strncpy(path_copy, path, sizeof(path_copy));
     path_copy[sizeof(path_copy) - 1] = '\0';
     
     char* token = strtok(path_copy, "/");
@@ -154,8 +153,8 @@ static int parse_path_params(const char* path, uvhttp_param_t* params, size_t* p
             char* colon = strchr(token + 1, ':');
             if (colon) {
                 *colon = '\0';
-                strncpy(params[*param_count].name, token + 1, sizeof(params[*param_count].name) - 1);
-                strncpy(params[*param_count].value, colon + 1, sizeof(params[*param_count].value) - 1);
+                uvhttp_safe_strncpy(params[*param_count].name, token + 1, sizeof(params[*param_count].name));
+                uvhttp_safe_strncpy(params[*param_count].value, colon + 1, sizeof(params[*param_count].value));
                 params[*param_count].name[sizeof(params[*param_count].name) - 1] = '\0';
                 params[*param_count].value[sizeof(params[*param_count].value) - 1] = '\0';
                 (*param_count)++;
@@ -243,7 +242,7 @@ static uvhttp_error_t add_array_route(uvhttp_router_t* router, const char* path,
     }
 
     array_route_t* route = &router->array_routes[router->array_route_count];
-    strncpy(route->path, path, sizeof(route->path) - 1);
+    uvhttp_safe_strncpy(route->path, path, sizeof(route->path));
     route->path[sizeof(route->path) - 1] = '\0';
     route->method = method;
     route->handler = handler;
@@ -285,7 +284,7 @@ static uvhttp_error_t migrate_to_trie(uvhttp_router_t* router) {
         // 构建路由树
         uvhttp_route_node_t* current = router->root;
         char path_copy[MAX_ROUTE_PATH_LEN];
-        strncpy(path_copy, route->path, sizeof(path_copy) - 1);
+        uvhttp_safe_strncpy(path_copy, route->path, sizeof(path_copy));
         path_copy[sizeof(path_copy) - 1] = '\0';
         
         char* token = strtok(path_copy, "/");
@@ -363,7 +362,7 @@ uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
         // 添加到Trie
         uvhttp_route_node_t* current = router->root;
         char path_copy[MAX_ROUTE_PATH_LEN];
-        strncpy(path_copy, path, sizeof(path_copy) - 1);
+        uvhttp_safe_strncpy(path_copy, path, sizeof(path_copy));
         path_copy[sizeof(path_copy) - 1] = '\0';
         
         char* token = strtok(path_copy, "/");
@@ -375,8 +374,7 @@ uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
                 size_t token_len = strlen(token);
                 for (size_t index = 0; index < token_len; index++) {
                     if (token[index] == '/') {
-                        strncpy(current->param_name, token, index);
-                        current->param_name[index] = '\0';
+                        uvhttp_safe_strncpy(current->param_name, token, index + 1);
                         break;
                     }
                 }
@@ -529,7 +527,7 @@ uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* route
         
         // 解析路径段
         char path_copy[MAX_ROUTE_PATH_LEN];
-        strncpy(path_copy, path, sizeof(path_copy) - 1);
+        uvhttp_safe_strncpy(path_copy, path, sizeof(path_copy));
         path_copy[sizeof(path_copy) - 1] = '\0';
         
         const char* segments[MAX_ROUTE_PATH_LEN];
@@ -615,7 +613,7 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
     /* 优化3：Trie树匹配（支持参数） */
     /* 解析路径段 */
     char path_copy[MAX_ROUTE_PATH_LEN];
-    strncpy(path_copy, path, sizeof(path_copy) - 1);
+    uvhttp_safe_strncpy(path_copy, path, sizeof(path_copy));
     path_copy[sizeof(path_copy) - 1] = '\0';
     
     const char* segments[MAX_ROUTE_PATH_LEN];

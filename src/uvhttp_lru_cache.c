@@ -7,6 +7,7 @@
 #include "uvhttp_error_helpers.h"
 #include "uvhttp_error_handler.h"
 #include "uvhttp_error.h"
+#include "uvhttp_utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
@@ -307,7 +308,7 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
             return UVHTTP_ERROR_INVALID_PARAM;
         }
         
-        strncpy(entry->file_path, file_path, sizeof(entry->file_path) - 1);
+        uvhttp_safe_strncpy(entry->file_path, file_path, sizeof(entry->file_path));
         entry->file_path[sizeof(entry->file_path) - 1] = '\0';
         
         /* 初始化LRU链表指针 */
@@ -346,16 +347,16 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
     
     /* 设置MIME类型 */
     if (mime_type) {
-        strncpy(entry->mime_type, mime_type, sizeof(entry->mime_type) - 1);
+        uvhttp_safe_strncpy(entry->mime_type, mime_type, sizeof(entry->mime_type));
         entry->mime_type[sizeof(entry->mime_type) - 1] = '\0';
     } else {
-        strncpy(entry->mime_type, "application/octet-stream", sizeof(entry->mime_type) - 1);
+        uvhttp_safe_strncpy(entry->mime_type, "application/octet-stream", sizeof(entry->mime_type));
         entry->mime_type[sizeof(entry->mime_type) - 1] = '\0';
     }
     
     /* 设置ETag */
     if (etag) {
-        strncpy(entry->etag, etag, sizeof(entry->etag) - 1);
+        uvhttp_safe_strncpy(entry->etag, etag, sizeof(entry->etag));
         entry->etag[sizeof(entry->etag) - 1] = '\0';
     } else {
         entry->etag[0] = '\0';

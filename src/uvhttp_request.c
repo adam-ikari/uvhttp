@@ -370,8 +370,7 @@ static int on_message_complete(llhttp_t* parser) {
         // 额外检查request->url是否有效
         if (!conn->request->url[0]) {
             // 如果URL为空，设置为"/"
-            strncpy(conn->request->url, "/", sizeof(conn->request->url) - 1);
-            conn->request->url[sizeof(conn->request->url) - 1] = '\0';
+            uvhttp_safe_strncpy(conn->request->url, "/", sizeof(conn->request->url));
         }
         
         uvhttp_request_handler_t handler = uvhttp_router_find_handler(
@@ -515,8 +514,7 @@ const char* uvhttp_request_get_path(uvhttp_request_t* request) {
         if (path_len >= sizeof(path_buffer)) {
             path_len = sizeof(path_buffer) - 1;
         }
-        strncpy(path_buffer, url, path_len);
-        path_buffer[path_len] = '\0';
+        uvhttp_safe_strncpy(path_buffer, url, path_len + 1);
         
         // 验证路径安全性
         if (!uvhttp_validate_url_path(path_buffer)) {
@@ -577,8 +575,7 @@ const char* uvhttp_request_get_query_param(uvhttp_request_t* request, const char
                 value_len = sizeof(param_value) - 1;
             }
             
-            strncpy(param_value, value, value_len);
-            param_value[value_len] = '\0';
+            uvhttp_safe_strncpy(param_value, value, value_len + 1);
             
             return param_value;
         }
@@ -614,8 +611,7 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
             ip_len = sizeof(client_ip) - 1;
         }
         
-        strncpy(client_ip, forwarded_for, ip_len);
-        client_ip[ip_len] = '\0';
+        uvhttp_safe_strncpy(client_ip, forwarded_for, ip_len + 1);
         return client_ip;
     }
     

@@ -7,6 +7,7 @@
 #include "uvhttp_context.h"
 #include "uvhttp_error.h"
 #include "uvhttp_allocator.h"
+#include "uvhttp_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -346,8 +347,7 @@ int uvhttp_ws_handshake_client(struct uvhttp_ws_connection* conn,
     base64_key[olen] = '\0';
 
     /* 保存 key 到连接（用于后续验证） */
-    strncpy(conn->client_key, (char*)base64_key, sizeof(conn->client_key) - 1);
-    conn->client_key[sizeof(conn->client_key) - 1] = '\0';
+    uvhttp_safe_strncpy(conn->client_key, (char*)base64_key, sizeof(conn->client_key));
     
     /* 构建请求 */
     int len = snprintf(request, *request_len,

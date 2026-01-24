@@ -275,7 +275,7 @@ int uvhttp_async_file_read(uvhttp_async_file_manager_t* manager,
     memset(async_req, 0, sizeof(uvhttp_async_file_request_t));
     
     /* 设置请求参数 */
-    strncpy(async_req->file_path, file_path, sizeof(async_req->file_path) - 1);
+    uvhttp_safe_strncpy(async_req->file_path, file_path, sizeof(async_req->file_path));
     async_req->file_path[sizeof(async_req->file_path) - 1] = '\0';
     async_req->request = request;
     async_req->response = response;

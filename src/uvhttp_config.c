@@ -7,6 +7,7 @@
 #include "uvhttp_allocator.h"
 #include "uvhttp_error_handler.h"
 #include "uvhttp_context.h"
+#include "uvhttp_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,7 +58,7 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config) {
     
     config->log_level = UVHTTP_DEFAULT_LOG_LEVEL;
     config->enable_access_log = UVHTTP_DEFAULT_ENABLE_ACCESS_LOG;
-    strncpy(config->log_file_path, "", sizeof(config->log_file_path) - 1);
+    uvhttp_safe_strncpy(config->log_file_path, "", sizeof(config->log_file_path));
     config->log_file_path[sizeof(config->log_file_path) - 1] = '\0';
 }
 
@@ -159,7 +160,7 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
                 return UVHTTP_ERROR_INVALID_PARAM;
             }
             
-            strncpy(config->log_file_path, value, sizeof(config->log_file_path) - 1);
+            uvhttp_safe_strncpy(config->log_file_path, value, sizeof(config->log_file_path));
             config->log_file_path[sizeof(config->log_file_path) - 1] = '\0';
         }
     }
@@ -280,7 +281,7 @@ int uvhttp_config_load_env(uvhttp_config_t* config) {
                 strstr(env_val, "\\\\") != NULL) {
                 UVHTTP_LOG_WARN("UVHTTP_LOG_FILE_PATH contains invalid path sequences, using default");
             } else {
-                strncpy(config->log_file_path, env_val, sizeof(config->log_file_path) - 1);
+                uvhttp_safe_strncpy(config->log_file_path, env_val, sizeof(config->log_file_path));
                 config->log_file_path[sizeof(config->log_file_path) - 1] = '\0';
             }
         } else {

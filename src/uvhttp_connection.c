@@ -7,6 +7,7 @@
 #include "uvhttp_constants.h"
 #include "uvhttp_error_helpers.h"
 #include "uvhttp_error_handler.h"
+#include "uvhttp_utils.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -719,11 +720,10 @@ int uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, cons
             if (token_end) {
                 size_t token_len = token_end - token_start;
                 if (token_len < sizeof(token)) {
-                    strncpy(token, token_start, token_len);
-                    token[token_len] = '\0';
+                    uvhttp_safe_strncpy(token, token_start, token_len + 1);
                 }
             } else {
-                strncpy(token, token_start, sizeof(token) - 1);
+                uvhttp_safe_strncpy(token, token_start, sizeof(token));
                 token[sizeof(token) - 1] = '\0';
             }
         }
@@ -732,7 +732,7 @@ int uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, cons
         if (token[0] == '\0') {
             const char* auth_header = uvhttp_request_get_header(conn->request, "Authorization");
             if (auth_header && strncmp(auth_header, "Bearer ", 7) == 0) {
-                strncpy(token, auth_header + 7, sizeof(token) - 1);
+                uvhttp_safe_strncpy(token, auth_header + 7, sizeof(token));
                 token[sizeof(token) - 1] = '\0';
             }
         }
@@ -764,7 +764,7 @@ int uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, cons
     }
 
     /* 保存WebSocket Key（用于验证） */
-    strncpy(ws_conn->client_key, ws_key, sizeof(ws_conn->client_key) - 1);
+    uvhttp_safe_strncpy(ws_conn->client_key, ws_key, sizeof(ws_conn->client_key));
     ws_conn->client_key[sizeof(ws_conn->client_key) - 1] = '\0';
 
     /* 创建wrapper以保存连接对象和用户处理器 */

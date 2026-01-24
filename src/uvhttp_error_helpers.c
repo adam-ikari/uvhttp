@@ -24,7 +24,7 @@ static int contains_sensitive_info(const char* str) {
     if (!str) return UVHTTP_FALSE;
     
     char lower_str[UVHTTP_ERROR_MESSAGE_BUFFER_SIZE];
-    strncpy(lower_str, str, sizeof(lower_str) - 1);
+    uvhttp_safe_strncpy(lower_str, str, sizeof(lower_str));
     lower_str[sizeof(lower_str) - 1] = '\0';
     
     // 转换为小写进行比较
@@ -112,15 +112,12 @@ int uvhttp_sanitize_error_message(const char* message,
     
     // 处理小缓冲区（buffer_size < 4）
     if (buffer_size < 4) {
-        strncpy(safe_buffer, message, buffer_size - 1);
-        safe_buffer[buffer_size - 1] = '\0';
+        uvhttp_safe_strncpy(safe_buffer, message, buffer_size);
     } else if (msg_len >= buffer_size) {
-        strncpy(safe_buffer, message, buffer_size - 4);
-        safe_buffer[buffer_size - 4] = '\0';
+        uvhttp_safe_strncpy(safe_buffer, message, buffer_size - 3);
         strcat(safe_buffer, "...");
     } else {
-        strncpy(safe_buffer, message, buffer_size - 1);
-        safe_buffer[buffer_size - 1] = '\0';
+        uvhttp_safe_strncpy(safe_buffer, message, buffer_size);
     }
     
     return 0;
