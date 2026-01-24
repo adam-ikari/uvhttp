@@ -1,0 +1,23 @@
+# 全局代码所有者
+* @adam-ikari
+
+# 核心模块代码所有者
+/src/uvhttp_server.c @adam-ikari
+/src/uvhttp_connection.c @adam-ikari
+/src/uvhttp_request.c @adam-ikari
+/src/uvhttp_response.c @adam-ikari
+
+# WebSocket 模块
+/src/uvhttp_websocket*.c @adam-ikari
+
+# TLS 模块
+/src/uvhttp_tls*.c @adam-ikari
+
+# 文档所有者
+/docs/ @adam-ikari
+
+# 测试所有者
+/test/ @adam-ikari
+
+# CI/CD 配置
+.github/workflows/ @adam-ikari
