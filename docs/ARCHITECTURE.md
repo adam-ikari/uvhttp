@@ -570,38 +570,24 @@ typedef struct {
 
 #### 1.1 完整请求处理流程
 
-```
-客户端                          UVHTTP 服务器
-  │                                │
-  │  1. TCP 连接                   │
-  ├───────────────────────────────>│
-  │                                │
-  │                    2. uvhttp_on_connection()
-  │                    - 分配 connection 结构
-  │                    - 初始化 HTTP 解析器
-  │                    - 注册数据读取回调
-  │                                │
-  │  3. HTTP 请求                  │
-  ├───────────────────────────────>│
-  │                                │
-  │                    4. uvhttp_on_read()
-  │                    - llhttp 解析请求
-  │                    - 提取方法、URL、头部
-  │                                │
-  │                    5. 路由匹配
-  │                    - 查找路由处理器
-  │                    - 提取路径参数
-  │                                │
-  │                    6. 执行处理器
-  │                    - 调用用户 handler
-  │                    - 构建响应
-  │                                │
-  │  7. HTTP 响应                  │
-  │<───────────────────────────────┤
-  │                                │
-  │  8. Keep-Alive 或关闭          │
-  ├───────────────────────────────>│
-  │                                │
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant S as UVHTTP 服务器
+
+    C->>S: 1. TCP 连接
+    S->>S: 2. uvhttp_on_connection()<br/>- 分配 connection 结构<br/>- 初始化 HTTP 解析器<br/>- 注册数据读取回调
+    
+    C->>S: 3. HTTP 请求
+    S->>S: 4. uvhttp_on_read()<br/>- llhttp 解析请求<br/>- 提取方法、URL、头部
+    
+    S->>S: 5. 路由匹配<br/>- 查找路由处理器<br/>- 提取路径参数
+    
+    S->>S: 6. 执行处理器<br/>- 调用用户 handler<br/>- 构建响应
+    
+    S-->>C: 7. HTTP 响应
+    
+    C->>S: 8. Keep-Alive 或关闭
 ```
 
 #### 1.2 核心函数调用链
@@ -647,22 +633,15 @@ uvhttp_response_send()
 
 #### 2.1 头部分配策略
 
-```
-头部数量 < 32                    头部数量 >= 32
-     │                                │
-     ▼                                ▼
-┌─────────────┐              ┌─────────────┐
-│ 内联数组     │              │ 内联数组     │
-│ headers[32] │              │ headers[32] │
-│ (栈分配)    │              │ (栈分配)    │
-└─────────────┘              └─────────────┘
-                                    │
-                                    ▼
-                            ┌─────────────┐
-                            │ 动态分配     │
-                            │ headers_extra│
-                            │ (堆分配)    │
-                            └─────────────┘
+```mermaid
+flowchart TD
+    A[头部数量检测] --> B{头部数量}
+    B -->|< 32| C[内联数组<br/>headers[32]<br/>栈分配<br/>零开销]
+    B -->|>= 32| D[内联数组<br/>headers[32]<br/>栈分配]
+    D --> E[动态分配<br/>headers_extra<br/>堆分配<br/>一次分配]
+    
+    C --> F[99%+ 请求]
+    E --> G[< 1% 请求]
 ```
 
 #### 2.2 头部设置时序
@@ -712,23 +691,12 @@ struct uvhttp_request {
 
 #### 3.1 文件大小策略选择
 
-```
-文件大小检测
-     │
-     ├─ < 4KB ──────→ 小文件策略
-     │                  - open() + read() + close()
-     │                  - 一次性读取到内存
-     │                  - 零系统调用开销
-     │
-     ├─ 4KB - 10MB ───→ 中等文件策略
-     │                  - 分块异步 sendfile
-     │                  - 固定分块大小
-     │                  - 进度跟踪
-     │
-     └─ > 10MB ──────→ 大文件策略
-                       - sendfile 零拷贝
-                       - 先发送响应头
-                       - 流式传输
+```mermaid
+flowchart TD
+    A[文件大小检测] --> B{文件大小}
+    B -->|< 4KB| C[小文件策略<br/>open + read + close<br/>一次性读取到内存<br/>零系统调用开销]
+    B -->|4KB - 10MB| D[中等文件策略<br/>分块异步 sendfile<br/>固定分块大小<br/>进度跟踪]
+    B -->|> 10MB| E[大文件策略<br/>sendfile 零拷贝<br/>先发送响应头<br/>流式传输]
 ```
 
 #### 3.2 小文件处理时序
@@ -778,36 +746,22 @@ uvhttp_static_sendfile_with_config()
 
 #### 4.1 握手流程
 
-```
-客户端                          UVHTTP 服务器
-  │                                │
-  │  1. HTTP GET /ws               │
-  │     Upgrade: websocket         │
-  │     Connection: Upgrade        │
-  │     Sec-WebSocket-Key: ...     │
-  ├───────────────────────────────>│
-  │                                │
-  │                    2. 验证握手
-  │                    - 检查 Upgrade 头
-  │                    - 验证 WebSocket Version
-  │                    - 提取 Sec-WebSocket-Key
-  │                                │
-  │                    3. 计算 Accept Key
-  │                    - Key + "258EAFA5..."
-  │                    - SHA-1 哈希
-  │                    - Base64 编码
-  │                                │
-  │  4. HTTP 101 Switching         │
-  │     Upgrade: websocket         │
-  │     Connection: Upgrade        │
-  │     Sec-WebSocket-Accept: ...  │
-  │<───────────────────────────────┤
-  │                                │
-  │  5. WebSocket 连接建立         │
-  │                                │
-  │  6. 消息传输                   │
-  │<══════════════════════════════>│
-  │                                │
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant S as UVHTTP 服务器
+
+    C->>S: 1. HTTP GET /ws<br/>Upgrade: websocket<br/>Connection: Upgrade<br/>Sec-WebSocket-Key: ...
+    
+    S->>S: 2. 验证握手<br/>- 检查 Upgrade 头<br/>- 验证 WebSocket Version<br/>- 提取 Sec-WebSocket-Key
+    
+    S->>S: 3. 计算 Accept Key<br/>- Key + "258EAFA5..."<br/>- SHA-1 哈希<br/>- Base64 编码
+    
+    S-->>C: 4. HTTP 101 Switching<br/>Upgrade: websocket<br/>Connection: Upgrade<br/>Sec-WebSocket-Accept: ...
+    
+    C->>S: 5. WebSocket 连接建立
+    
+    C<->>S: 6. 消息传输
 ```
 
 #### 4.2 关键代码时序
@@ -877,19 +831,12 @@ uvhttp_ws_send_text()
 
 #### 5.1 错误传播链
 
-```
-底层错误
-    │
-    ▼
-uvhttp_error_t 错误码
-    │
-    ├─ 可恢复错误 ──────→ 重试/降级
-    │   - UVHTTP_ERROR_CONNECTION_TIMEOUT
-    │   - UVHTTP_ERROR_RATE_LIMIT
-    │
-    └─ 不可恢复错误 ────→ 返回错误/关闭
-        - UVHTTP_ERROR_INVALID_PARAM
-        - UVHTTP_ERROR_OUT_OF_MEMORY
+```mermaid
+flowchart TD
+    A[底层错误] --> B[uvhttp_error_t 错误码]
+    B --> C{错误类型}
+    C -->|可恢复错误| D[重试/降级<br/>UVHTTP_ERROR_CONNECTION_TIMEOUT<br/>UVHTTP_ERROR_RATE_LIMIT]
+    C -->|不可恢复错误| E[返回错误/关闭<br/>UVHTTP_ERROR_INVALID_PARAM<br/>UVHTTP_ERROR_OUT_OF_MEMORY]
 ```
 
 #### 5.2 错误处理时序
@@ -928,113 +875,109 @@ if (handler_result != UVHTTP_OK) {
 
 #### 6.1 缓存命中时序
 
-```
-请求到达
-    │
-    ▼
-路由缓存查找
-    │
-    ├─ 命中 ──────→ 直接返回处理器 (O(1))
-    │
-    └─ 未命中 ────→ 路由匹配 (O(k))
-                        │
-                        ▼
-                    更新缓存
+```mermaid
+flowchart TD
+    A[请求到达] --> B[路由缓存查找]
+    B --> C{缓存状态}
+    C -->|命中| D[直接返回处理器<br/>O(1)]
+    C -->|未命中| E[路由匹配<br/>O(k)]
+    E --> F[更新缓存]
 ```
 
 #### 6.2 连接复用时序
 
-```
-首次请求
-    │
-    ▼
-建立连接 ──────→ 处理请求 ──────→ 保持连接
-    │                                    │
-    │                                    ▼
-    │                              后续请求 (复用连接)
-    │                                    │
-    └────────────────────────────────────┘
-                    │
-                    ▼
-                超时关闭
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant S as UVHTTP 服务器
+
+    C->>S: 建立连接
+    S->>S: 处理请求
+    S-->>C: 保持连接
+    
+    C->>S: 后续请求 (复用连接)
+    S->>S: 处理请求
+    
+    Note over C,S: 可重复多次
+    
+    C->>S: 超时关闭
 ```
 
 #### 6.3 内存分配优化时序
 
-```
-请求处理
-    │
-    ▼
-内存分配
-    │
-    ├─ 热路径 ──────→ 使用内联数组 (零堆分配)
-    │   - 请求结构
-    │   - 响应结构
-    │   - 头部数组 (<32)
-    │
-    └─ 冷路径 ──────→ 使用堆分配 (mimalloc)
-        - 大文件缓冲区
-        - 额外头部 (≥32)
-        - WebSocket 上下文
+```mermaid
+flowchart TD
+    A[请求处理] --> B[内存分配]
+    B --> C{分配类型}
+    C -->|热路径| D[使用内联数组<br/>零堆分配<br/>- 请求结构<br/>- 响应结构<br/>- 头部数组 <32]
+    C -->|冷路径| E[使用堆分配<br/>mimalloc<br/>- 大文件缓冲区<br/>- 额外头部 ≥32<br/>- WebSocket 上下文]
 ```
 
 ### 7. 并发处理时序
 
 #### 7.1 多连接处理
 
-```
-事件循环 (单线程)
-    │
-    ├─ 连接 1 ──────→ 处理请求 1 ──────→ 发送响应 1
-    │
-    ├─ 连接 2 ──────→ 处理请求 2 ──────→ 发送响应 2
-    │
-    ├─ 连接 3 ──────→ 处理请求 3 ──────→ 发送响应 3
-    │
-    └─ 连接 N ──────→ 处理请求 N ──────→ 发送响应 N
+```mermaid
+sequenceDiagram
+    participant EL as 事件循环 (单线程)
+    participant C1 as 连接 1
+    participant C2 as 连接 2
+    participant C3 as 连接 3
+    participant CN as 连接 N
+
+    EL->>C1: 处理请求 1
+    C1-->>EL: 发送响应 1
+    
+    EL->>C2: 处理请求 2
+    C2-->>EL: 发送响应 2
+    
+    EL->>C3: 处理请求 3
+    C3-->>EL: 发送响应 3
+    
+    EL->>CN: 处理请求 N
+    CN-->>EL: 发送响应 N
 ```
 
 #### 7.2 线程安全时序
 
-```
-主线程                          libuv 线程池
-  │                                │
-  │  文件 I/O 请求                  │
-  ├───────────────────────────────>│
-  │                                │
-  │                    异步处理文件
-  │                    - 读取文件
-  │                    - 计算哈希
-  │                                │
-  │  完成回调                       │
-  │<───────────────────────────────┤
-  │                                │
-  │  继续处理                       │
-  │                                │
+```mermaid
+sequenceDiagram
+    participant MT as 主线程
+    participant TP as libuv 线程池
+
+    MT->>TP: 文件 I/O 请求
+    
+    TP->>TP: 异步处理文件<br/>- 读取文件<br/>- 计算哈希
+    
+    TP-->>MT: 完成回调
+    
+    MT->>MT: 继续处理
 ```
 
 ### 8. 资源管理时序
 
 #### 8.1 连接生命周期
 
-```
-建立连接
-    │
-    ▼
-分配资源
-    ├─ connection 结构
-    ├─ request 结构
-    ├─ response 结构
-    └─ 解析器上下文
-    │
-    ▼
-处理请求 (可能多次)
-    │
-    ▼
-释放资源
-    ├─ 关闭连接
-    ├─ 释放内存
-    └─ 回收连接池
+```mermaid
+flowchart TD
+    A[建立连接] --> B[分配资源]
+    B --> C[connection 结构]
+    B --> D[request 结构]
+    B --> E[response 结构]
+    B --> F[解析器上下文]
+    
+    C --> G[处理请求]
+    D --> G
+    E --> G
+    F --> G
+    
+    G --> H{更多请求?}
+    H -->|是| G
+    H -->|否| I[释放资源]
+    
+    I --> J[关闭连接]
+    I --> K[释放内存]
+    I --> L[回收连接池]
 ```
 
 #### 8.2 内存清理时序
