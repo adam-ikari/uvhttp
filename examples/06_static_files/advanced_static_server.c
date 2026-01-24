@@ -23,6 +23,7 @@ void signal_handler(int signal) {
 
 /* API 请求处理器 - 显示统计信息 */
 int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     if (!static_ctx) {
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_header(response, "Content-Type", "application/json");
@@ -48,6 +49,7 @@ int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
 
 /* 主页处理器 */
 int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     const char* html = 
         "<!DOCTYPE html>\n"
         "<html>\n"
@@ -113,7 +115,8 @@ int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
 /* 创建测试文件 */
 int create_test_files() {
     /* 创建测试目录 */
-    system("mkdir -p ./public/images");
+    int ret;
+    (void)(ret = system("mkdir -p ./public/images"));
     
     /* 创建测试文本文件 */
     FILE* f = fopen("./public/test.txt", "w");

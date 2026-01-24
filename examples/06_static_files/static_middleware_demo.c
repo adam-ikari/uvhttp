@@ -25,6 +25,7 @@ static int log_middleware_handler(
     uvhttp_response_t* response,
     uvhttp_middleware_context_t* ctx
 ) {
+    (void)response;
     log_middleware_data_t* data = (log_middleware_data_t*)ctx->data;
 
     const char* method = uvhttp_request_get_method(request);
@@ -48,6 +49,7 @@ static void log_middleware_cleanup(void* data) {
 
 /* 根路径处理器 */
 static int root_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/html");
 
@@ -72,6 +74,7 @@ static int root_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
 
 /* API 处理器 */
 static int api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "application/json");
 
@@ -82,6 +85,8 @@ static int api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
 }
 
 int main(int argc, char** argv) {
+    (void)argc;
+    (void)argv;
     printf("========================================\n");
     printf("UVHTTP Static File Middleware Demo\n");
     printf("========================================\n\n");

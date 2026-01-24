@@ -87,14 +87,3 @@ target_link_libraries(performance_test_tls
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedcrypto.a
     m pthread dl)
 add_dependencies(performance_test_tls uvhttp)
-
-add_executable(performance_test_websocket performance_test_websocket.c)
-target_link_libraries(performance_test_websocket
-    ${UVHTTP_LIBRARY}
-    ${LIBUV_LIB}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedtls.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedx509.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedcrypto.a
-    m pthread dl)
-add_dependencies(performance_test_websocket uvhttp)

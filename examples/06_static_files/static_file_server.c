@@ -45,7 +45,8 @@ int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
 /**
  * 主页处理器
  */
-void home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     const char* html_content = 
         "<!DOCTYPE html>\n"
         "<html>\n"
@@ -92,6 +93,7 @@ void home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     uvhttp_response_set_header(response, "Content-Type", "text/html; charset=utf-8");
     uvhttp_response_set_body(response, html_content, strlen(html_content));
     uvhttp_response_send(response);
+    return 0;
 }
 
 /**
@@ -163,8 +165,9 @@ void create_test_files() {
     }
     
     /* 创建图片目录 */
-    system("mkdir -p ./public/images");
-    system("mkdir -p ./public/docs");
+    int ret;
+    (void)(ret = system("mkdir -p ./public/images"));
+    (void)(ret = system("mkdir -p ./public/docs"));
     
     printf("测试文件已创建在 ./public/ 目录下\n");
 }

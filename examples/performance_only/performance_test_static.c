@@ -61,9 +61,10 @@ int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
 // 创建测试文件
 void create_test_files() {
     // 创建测试目录
-    (void)system("mkdir -p ./test_static/small");
-    (void)system("mkdir -p ./test_static/medium");
-    (void)system("mkdir -p ./test_static/large");
+    int ret;
+    (void)(ret = system("mkdir -p ./test_static/small"));
+    (void)(ret = system("mkdir -p ./test_static/medium"));
+    (void)(ret = system("mkdir -p ./test_static/large"));
     
     // 创建小文件（1KB）
     FILE* small_file = fopen("./test_static/small/test.txt", "w");

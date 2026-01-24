@@ -44,6 +44,7 @@ int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
  * 缓存统计处理器
  */
 int cache_stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     if (!g_static_ctx) {
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_body(response, "Service not initialized", 21);
@@ -131,6 +132,7 @@ int cache_stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
  * 清理过期缓存处理器
  */
 int clear_cache_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     if (!g_static_ctx) {
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_body(response, "Service not initialized", 21);
@@ -155,6 +157,7 @@ int clear_cache_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
  * 主页处理器
  */
 int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     const char* html_content = 
         "<!DOCTYPE html>\n"
         "<html>\n"

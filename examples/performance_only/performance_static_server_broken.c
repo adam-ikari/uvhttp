@@ -64,6 +64,7 @@ int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
 
 // 主页处理器
 int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     const char* html_content = 
         "<!DOCTYPE html>\n"
         "<html>\n"
@@ -108,7 +109,8 @@ int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
 // 创建测试文件
 void create_test_files() {
     // 创建测试目录
-    (void)system("mkdir -p ./public/static");
+    int ret;
+    (void)(ret = system("mkdir -p ./public/static"));
     
     // 创建小文件（1KB）
     FILE* small_file = fopen("./public/static/small.html", "w");

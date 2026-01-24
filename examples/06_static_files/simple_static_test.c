@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 
 static uvhttp_server_t* g_server = NULL;
-static uvhttp_loop_t* g_loop = NULL;
+static uv_loop_t* g_loop = NULL;
 static uvhttp_static_context_t* g_static_ctx = NULL;
 static uvhttp_context_t* g_context = NULL;
 

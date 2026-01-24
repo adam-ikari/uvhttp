@@ -27,6 +27,7 @@ void signal_handler(int sig) {
 }
 
 int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     const uvhttp_config_t* config = uvhttp_config_get_current(g_context);
     
     char body[512];

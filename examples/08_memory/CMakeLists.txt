@@ -46,14 +46,3 @@ target_link_libraries(app_custom_pool
     ${XXHASH_LIB}
     pthread m dl)
 add_dependencies(app_custom_pool uvhttp)
-
-add_executable(hierarchical_allocator_example hierarchical_allocator_example.c)
-target_link_libraries(hierarchical_allocator_example
-    ${UVHTTP_LIB}
-    ${LIBUV_LIB}
-    ${MBEDTLS_LIBS}
-    ${LLHTTP_LIB}
-    ${CJSON_LIB}
-    ${XXHASH_LIB}
-    pthread m dl)
-add_dependencies(hierarchical_allocator_example uvhttp)
