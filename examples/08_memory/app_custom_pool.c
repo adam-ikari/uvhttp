@@ -215,9 +215,9 @@ void test_basic_allocation(void) {
     strcpy((char*)ptr2, "World");
     strcpy((char*)ptr3, "Pool");
     
-    printf("  ptr1: %s\n", (char*)ptr1);
-    printf("  ptr2: %s\n", (char*)ptr2);
-    printf("  ptr3: %s\n", (char*)ptr3);
+    printf("  ptr1: %s\n", ptr1 ? (char*)ptr1 : "NULL");
+    printf("  ptr2: %s\n", ptr2 ? (char*)ptr2 : "NULL");
+    printf("  ptr3: %s\n", ptr3 ? (char*)ptr3 : "NULL");
     
     /* 释放内存 */
     app_pool_free(pool, ptr1);
