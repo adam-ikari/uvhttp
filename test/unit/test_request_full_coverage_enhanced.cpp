@@ -181,8 +181,8 @@ TEST(UvhttpRequestEnhancedTest, RequestHeadersArray) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
     
-    EXPECT_LT(request.header_count, MAX_HEADERS);
-    EXPECT_GT(MAX_HEADERS, 0);
+    EXPECT_LT(request.header_count, MAX_HEADERS_MAX);
+    EXPECT_GT(MAX_HEADERS_MAX, 0);
 }
 
 /* 测试所有请求方法 */

@@ -40,9 +40,9 @@ void uvhttp_connection_pool_cleanup(uvhttp_server_t* server);
 
 /* ========== 结构体大小验证 ========== */
 /* 验证关键结构体的大小，确保内存布局优化不会被意外破坏 */
-UVHTTP_STATIC_ASSERT(sizeof(uvhttp_request_t) == 141400,
+UVHTTP_STATIC_ASSERT(sizeof(uvhttp_request_t) == 141416,
                       "uvhttp_request_t size changed unexpectedly");
-UVHTTP_STATIC_ASSERT(sizeof(uvhttp_response_t) == 139336,
+UVHTTP_STATIC_ASSERT(sizeof(uvhttp_response_t) == 139352,
                       "uvhttp_response_t size changed unexpectedly");
 
 static void on_close(uv_handle_t* handle);

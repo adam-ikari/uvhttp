@@ -110,7 +110,7 @@ TEST(UvhttpResponseTest, ResponseSetHeaderMaxHeaders) {
     uvhttp_response_init(&response, &client);
     
     /* 添加最大数量的头部 */
-    for (int i = 0; i < MAX_HEADERS; i++) {
+    for (int i = 0; i < MAX_HEADERS_MAX; i++) {
         char name[32];
         char value[32];
         snprintf(name, sizeof(name), "Header-%d", i);
@@ -118,7 +118,7 @@ TEST(UvhttpResponseTest, ResponseSetHeaderMaxHeaders) {
         EXPECT_EQ(uvhttp_response_set_header(&response, name, value), UVHTTP_OK);
     }
     
-    EXPECT_EQ(response.header_count, MAX_HEADERS);
+    EXPECT_EQ(response.header_count, MAX_HEADERS_MAX);
     
     /* 尝试添加超过限制的头部 */
     EXPECT_EQ(uvhttp_response_set_header(&response, "Extra-Header", "Extra-Value"), UVHTTP_ERROR_OUT_OF_MEMORY);

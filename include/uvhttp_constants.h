@@ -42,7 +42,8 @@
 #define UVHTTP_ASYNC_FILE_BUFFER_SIZE     65536  /* 64KB 文件读取缓冲区 */
 #define UVHTTP_ASYNC_FILE_MAX_CONCURRENT  64  /* 最大并发文件读取数 */
 #define UVHTTP_ASYNC_FILE_MAX_SIZE        (10 * 1024 * 1024)  /* 10MB 最大文件 */
-#define UVHTTP_MAX_HEADERS                32
+#define UVHTTP_MAX_HEADERS_INLINE 32  // 内嵌数组大小（常见场景）
+#define UVHTTP_MAX_HEADERS_MAX 128    // 最大头部数量（罕见场景）
 #define UVHTTP_MAX_HEADER_NAME_SIZE       256
 #define UVHTTP_MAX_HEADER_VALUE_SIZE     1024
 #define UVHTTP_MAX_HEADER_NAME_LENGTH     256

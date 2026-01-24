@@ -74,24 +74,31 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer, si
     
     // 遍历现有headers
     for (size_t index = 0; index < response->header_count; index++) {
+        uvhttp_header_t* header;
+        if (index < MAX_HEADERS_INLINE) {
+            header = &response->headers[index];
+        } else {
+            header = &response->headers_extra[index - MAX_HEADERS_INLINE];
+        }
+        
         // 安全检查：验证header值不包含控制字符，防止响应拆分
-        if (contains_control_chars(response->headers[index].value)) {
+        if (contains_control_chars(header->value)) {
             // 如果header值包含控制字符，跳过该header
             UVHTTP_LOG_ERROR("Invalid header value detected: header '%s' contains control characters\n", 
-                           response->headers[index].name);
+                           header->name);
             continue;
         }
         
         pos += snprintf(buffer + pos, *length - pos, "%s: %s\r\n",
-                       response->headers[index].name, response->headers[index].value);
+                       header->name, header->value);
         
-        if (strcasecmp(response->headers[index].name, "Content-Type") == 0) {
+        if (strcasecmp(header->name, "Content-Type") == 0) {
             has_content_type = UVHTTP_TRUE;
         }
-        if (strcasecmp(response->headers[index].name, "Content-Length") == 0) {
+        if (strcasecmp(header->name, "Content-Length") == 0) {
             has_content_length = UVHTTP_TRUE;
         }
-        if (strcasecmp(response->headers[index].name, "Connection") == 0) {
+        if (strcasecmp(header->name, "Connection") == 0) {
             has_connection = UVHTTP_TRUE;
         }
     }
@@ -162,6 +169,12 @@ void uvhttp_response_cleanup(uvhttp_response_t* response) {
         response->body = NULL;
     }
     
+    if (response->headers_extra) {
+        uvhttp_free(response->headers_extra);
+        response->headers_extra = NULL;
+        response->headers_extra_count = 0;
+    }
+    
     response->body_length = 0;
 }
 
@@ -184,8 +197,21 @@ uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response, const cha
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    if (response->header_count >= MAX_HEADERS) {
+    if (response->header_count >= UVHTTP_MAX_HEADERS_MAX) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    
+    // 检查是否需要动态分配额外头部
+    if (response->header_count >= MAX_HEADERS_INLINE && !response->headers_extra) {
+        // 动态分配额外头部数组
+        size_t extra_capacity = UVHTTP_MAX_HEADERS_MAX - MAX_HEADERS_INLINE;
+        response->headers_extra = (uvhttp_header_t*)uvhttp_alloc(
+            extra_capacity * sizeof(uvhttp_header_t)
+        );
+        if (!response->headers_extra) {
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
+        }
+        response->headers_extra_count = 0;
     }
     
     // 验证header名称和值
@@ -199,7 +225,14 @@ uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response, const cha
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    uvhttp_header_t* header = &response->headers[response->header_count];
+    // 确定使用哪个头部数组
+    uvhttp_header_t* header;
+    if (response->header_count < MAX_HEADERS_INLINE) {
+        header = &response->headers[response->header_count];
+    } else {
+        header = &response->headers_extra[response->header_count - MAX_HEADERS_INLINE];
+        response->headers_extra_count++;
+    }
     
     // 使用安全的字符串复制函数
     if (uvhttp_safe_strcpy(header->name, UVHTTP_MAX_HEADER_NAME_SIZE, name) != 0) {

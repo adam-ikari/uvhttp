@@ -383,8 +383,8 @@ TEST(UvhttpRequestExtraCoverageTest, RequestHeaderCount) {
     request->header_count = 0;
     EXPECT_EQ(request->header_count, 0);
     
-    request->header_count = MAX_HEADERS;
-    EXPECT_EQ(request->header_count, MAX_HEADERS);
+    request->header_count = MAX_HEADERS_MAX;
+    EXPECT_EQ(request->header_count, MAX_HEADERS_MAX);
     
     uvhttp_free(request);
 }

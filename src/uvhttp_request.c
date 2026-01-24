@@ -94,6 +94,11 @@ void uvhttp_request_cleanup(uvhttp_request_t* request) {
     if (request->parser_settings) {
         uvhttp_free(request->parser_settings);
     }
+    if (request->headers_extra) {
+        uvhttp_free(request->headers_extra);
+        request->headers_extra = NULL;
+        request->headers_extra_count = 0;
+    }
 }
 
 // HTTP解析器回调函数实现
@@ -167,8 +172,21 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
     }
     
     // 检查是否还有空间存储header
-    if (conn->request->header_count >= UVHTTP_MAX_HEADERS) {
-        return -1;  // header数量达到限制
+    if (conn->request->header_count >= UVHTTP_MAX_HEADERS_MAX) {
+        return -1;  // header数量达到最大限制
+    }
+    
+    // 检查是否需要动态分配额外头部
+    if (conn->request->header_count >= MAX_HEADERS_INLINE && !conn->request->headers_extra) {
+        // 动态分配额外头部数组
+        size_t extra_capacity = UVHTTP_MAX_HEADERS_MAX - MAX_HEADERS_INLINE;
+        conn->request->headers_extra = (uvhttp_header_t*)uvhttp_alloc(
+            extra_capacity * sizeof(uvhttp_header_t)
+        );
+        if (!conn->request->headers_extra) {
+            return -1;  // 内存分配失败
+        }
+        conn->request->headers_extra_count = 0;
     }
     
     // 检查当前header字段名是否存在
@@ -176,8 +194,14 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
         return -1;  // 没有对应的header字段名
     }
     
-    // 存储header
-    uvhttp_header_t* header = &conn->request->headers[conn->request->header_count];
+    // 确定使用哪个头部数组
+    uvhttp_header_t* header;
+    if (conn->request->header_count < MAX_HEADERS_INLINE) {
+        header = &conn->request->headers[conn->request->header_count];
+    } else {
+        header = &conn->request->headers_extra[conn->request->header_count - MAX_HEADERS_INLINE];
+        conn->request->headers_extra_count++;
+    }
     
     // 复制header字段名
     size_t field_len = conn->current_header_field_len;
@@ -473,12 +497,19 @@ const char* uvhttp_request_get_header(uvhttp_request_t* request, const char* nam
     
     /* 查找 header（不区分大小写） */
     for (size_t index = 0; index < request->header_count; index++) {
-        if (request->headers[index].name && 
-            strcasecmp(request->headers[index].name, name) == 0) {
+        uvhttp_header_t* header;
+        if (index < MAX_HEADERS_INLINE) {
+            header = &request->headers[index];
+        } else {
+            header = &request->headers_extra[index - MAX_HEADERS_INLINE];
+        }
+        
+        if (header->name && 
+            strcasecmp(header->name, name) == 0) {
             /* 验证 header 值 */
-            if (request->headers[index].value && 
-                strlen(request->headers[index].value) <= UVHTTP_MAX_HEADER_VALUE_LENGTH) {
-                return request->headers[index].value;
+            if (header->value && 
+                strlen(header->value) <= UVHTTP_MAX_HEADER_VALUE_LENGTH) {
+                return header->value;
             }
         }
     }

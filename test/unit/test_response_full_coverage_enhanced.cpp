@@ -139,7 +139,7 @@ TEST(UvhttpResponseEnhancedTest, ResponseStructSize) {
 TEST(UvhttpResponseEnhancedTest, ResponseConstants) {
     EXPECT_GT(MAX_RESPONSE_BODY_LEN, 0);
     EXPECT_EQ(MAX_RESPONSE_BODY_LEN, 1024 * 1024);
-    EXPECT_GT(MAX_HEADERS, 0);
+    EXPECT_GT(MAX_HEADERS_MAX, 0);
 }
 
 /* 测试多次 NULL 调用 */
@@ -173,8 +173,8 @@ TEST(UvhttpResponseEnhancedTest, ResponseHeadersArray) {
     uvhttp_response_t response;
     memset(&response, 0, sizeof(response));
     
-    EXPECT_LT(response.header_count, MAX_HEADERS);
-    EXPECT_GT(MAX_HEADERS, 0);
+    EXPECT_LT(response.header_count, MAX_HEADERS_MAX);
+    EXPECT_GT(MAX_HEADERS_MAX, 0);
 }
 
 /* 测试设置状态码 - 各种状态码 */
@@ -270,14 +270,14 @@ TEST(UvhttpResponseEnhancedTest, SetHeadersTooMany) {
     memset(&response, 0, sizeof(response));
     
     // 添加超过限制的头
-    for (int i = 0; i < MAX_HEADERS + 10; i++) {
+    for (int i = 0; i < MAX_HEADERS_MAX + 10; i++) {
         char header_name[32];
         snprintf(header_name, sizeof(header_name), "X-Header-%d", i);
         uvhttp_response_set_header(&response, header_name, "value");
     }
     
     // 头数量应该被限制
-    EXPECT_LE(response.header_count, MAX_HEADERS);
+    EXPECT_LE(response.header_count, MAX_HEADERS_MAX);
 }
 
 /* 测试 HTTP/1.1 优化字段 */
