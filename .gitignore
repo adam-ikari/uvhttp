@@ -11,6 +11,9 @@ test_simple
 # Stress test results
 stress_test_results_*/
 
+# Performance test results
+test/performance/results/
+
 # Coverage reports
 coverage_html/
 *.gcov
