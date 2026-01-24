@@ -564,6 +564,497 @@ typedef struct {
 - 服务网格集成
 - 云原生部署
 
+## 关键时序解析
+
+### 1. HTTP 请求处理时序
+
+#### 1.1 完整请求处理流程
+
+```
+客户端                          UVHTTP 服务器
+  │                                │
+  │  1. TCP 连接                   │
+  ├───────────────────────────────>│
+  │                                │
+  │                    2. uvhttp_on_connection()
+  │                    - 分配 connection 结构
+  │                    - 初始化 HTTP 解析器
+  │                    - 注册数据读取回调
+  │                                │
+  │  3. HTTP 请求                  │
+  ├───────────────────────────────>│
+  │                                │
+  │                    4. uvhttp_on_read()
+  │                    - llhttp 解析请求
+  │                    - 提取方法、URL、头部
+  │                                │
+  │                    5. 路由匹配
+  │                    - 查找路由处理器
+  │                    - 提取路径参数
+  │                                │
+  │                    6. 执行处理器
+  │                    - 调用用户 handler
+  │                    - 构建响应
+  │                                │
+  │  7. HTTP 响应                  │
+  │<───────────────────────────────┤
+  │                                │
+  │  8. Keep-Alive 或关闭          │
+  ├───────────────────────────────>│
+  │                                │
+```
+
+#### 1.2 核心函数调用链
+
+```c
+// 连接建立
+uvhttp_on_connection()
+  → uvhttp_connection_pool_acquire()
+  → uvhttp_connection_init()
+  → uvhttp_request_init()
+  → uvhttp_parser_init()
+  → uv_read_start()
+
+// 数据读取
+uvhttp_on_read()
+  → llhttp_execute()
+  → on_message_complete()
+  → uvhttp_router_match()
+  → uvhttp_request_handler()
+  → uvhttp_response_send()
+
+// 响应发送
+uvhttp_response_send()
+  → uvhttp_response_build()
+  → uv_write()
+  → on_write_complete()
+```
+
+#### 1.3 性能关键路径
+
+**热路径优化：**
+1. **连接接受**: O(1) - 直接从连接池获取
+2. **路由匹配**: O(k) - k 为路径段数，使用前缀树
+3. **头部查找**: O(1) - 内联数组，直接索引
+4. **响应发送**: O(1) - 零拷贝缓冲区
+
+**内存访问模式：**
+- 连接结构体：热数据在前，冷数据在后
+- 头部数组：连续内存，缓存友好
+- 路由缓存：哈希表快速查找
+
+### 2. 动态头部分配时序
+
+#### 2.1 头部分配策略
+
+```
+头部数量 < 32                    头部数量 >= 32
+     │                                │
+     ▼                                ▼
+┌─────────────┐              ┌─────────────┐
+│ 内联数组     │              │ 内联数组     │
+│ headers[32] │              │ headers[32] │
+│ (栈分配)    │              │ (栈分配)    │
+└─────────────┘              └─────────────┘
+                                    │
+                                    ▼
+                            ┌─────────────┐
+                            │ 动态分配     │
+                            │ headers_extra│
+                            │ (堆分配)    │
+                            └─────────────┘
+```
+
+#### 2.2 头部设置时序
+
+```c
+// 设置第 N 个头部
+if (header_count < 32) {
+    // 快速路径：使用内联数组
+    header = &headers[header_count];
+    // 零堆分配，直接访问
+} else {
+    // 慢速路径：首次触发动态分配
+    if (!headers_extra) {
+        headers_extra = uvhttp_alloc(96 * sizeof(uvhttp_header_t));
+    }
+    header = &headers_extra[header_count - 32];
+    // 堆分配，但仅一次
+}
+header_count++;
+```
+
+#### 2.3 性能影响分析
+
+| 场景 | 分配方式 | 性能影响 | 使用频率 |
+|------|---------|---------|---------|
+| < 32 headers | 内联数组 | 零开销 | 99%+ |
+| ≥ 32 headers | 动态分配 | 一次堆分配 | < 1% |
+
+**内存布局：**
+```c
+struct uvhttp_request {
+    // 热数据（频繁访问）
+    uvhttp_method_t method;      // 4 字节
+    int parsing_complete;         // 4 字节
+    size_t header_count;          // 8 字节
+    
+    // 内联头部（常见场景）
+    uvhttp_header_t headers[32];  // 139,264 字节
+    
+    // 动态头部（罕见场景）
+    uvhttp_header_t* headers_extra;  // 8 字节
+    size_t headers_extra_count;      // 8 字节
+};
+```
+
+### 3. 静态文件服务时序
+
+#### 3.1 文件大小策略选择
+
+```
+文件大小检测
+     │
+     ├─ < 4KB ──────→ 小文件策略
+     │                  - open() + read() + close()
+     │                  - 一次性读取到内存
+     │                  - 零系统调用开销
+     │
+     ├─ 4KB - 10MB ───→ 中等文件策略
+     │                  - 分块异步 sendfile
+     │                  - 固定分块大小
+     │                  - 进度跟踪
+     │
+     └─ > 10MB ──────→ 大文件策略
+                       - sendfile 零拷贝
+                       - 先发送响应头
+                       - 流式传输
+```
+
+#### 3.2 小文件处理时序
+
+```c
+sendfile_small_file()
+  1. open(file_path, O_RDONLY)
+  2. fstat(fd, &st)           // 获取文件大小
+  3. uvhttp_alloc(file_size)   // 分配缓冲区
+  4. read(fd, buffer)          // 读取文件
+  5. close(fd)                 // 关闭文件
+  6. uvhttp_response_set_body(buffer, size)
+  7. uvhttp_response_send()
+  8. uvhttp_free(buffer)       // 释放缓冲区
+```
+
+#### 3.3 大文件处理时序
+
+```c
+uvhttp_static_sendfile_with_config()
+  1. stat(file_path)           // 获取文件大小
+  2. sendfile_create_context() // 创建上下文
+     - 分配 sendfile_context_t
+     - 打开输入文件
+     - 获取输出文件描述符
+     - 初始化超时定时器
+  3. sendfile_start_chunked()
+     - 设置响应头（大文件）
+     - 发送响应头
+     - 启动超时定时器
+     - 调用 uv_fs_sendfile()
+  4. on_sendfile_complete() [回调]
+     - 检查是否完成
+     - 继续发送剩余数据
+     - 或清理资源
+```
+
+#### 3.4 性能对比
+
+| 文件大小 | 策略 | 系统调用 | 内存使用 | 延迟 |
+|---------|------|---------|---------|------|
+| < 4KB | 一次性读取 | 3次 | 文件大小 | ~1ms |
+| 4KB-10MB | 分块发送 | N次 | 分块大小 | ~2ms |
+| > 10MB | sendfile | 2次 | 零拷贝 | ~3ms |
+
+### 4. WebSocket 握手时序
+
+#### 4.1 握手流程
+
+```
+客户端                          UVHTTP 服务器
+  │                                │
+  │  1. HTTP GET /ws               │
+  │     Upgrade: websocket         │
+  │     Connection: Upgrade        │
+  │     Sec-WebSocket-Key: ...     │
+  ├───────────────────────────────>│
+  │                                │
+  │                    2. 验证握手
+  │                    - 检查 Upgrade 头
+  │                    - 验证 WebSocket Version
+  │                    - 提取 Sec-WebSocket-Key
+  │                                │
+  │                    3. 计算 Accept Key
+  │                    - Key + "258EAFA5..."
+  │                    - SHA-1 哈希
+  │                    - Base64 编码
+  │                                │
+  │  4. HTTP 101 Switching         │
+  │     Upgrade: websocket         │
+  │     Connection: Upgrade        │
+  │     Sec-WebSocket-Accept: ...  │
+  │<───────────────────────────────┤
+  │                                │
+  │  5. WebSocket 连接建立         │
+  │                                │
+  │  6. 消息传输                   │
+  │<══════════════════════════════>│
+  │                                │
+```
+
+#### 4.2 关键代码时序
+
+```c
+// 1. 接收升级请求
+uvhttp_on_request()
+  → 检查 HTTP 方法 (GET)
+  → 检查 Upgrade 头 (websocket)
+  → 检查 Sec-WebSocket-Key
+
+// 2. 验证握手
+uvhttp_ws_validate_handshake()
+  → 验证 WebSocket Version (13)
+  → 验证 Sec-WebSocket-Key 格式
+  → 提取 Key 值
+
+// 3. 计算 Accept Key
+uvhttp_ws_compute_accept_key()
+  → 拼接 Key + GUID
+  → mbedtls_sha1()
+  → mbedtls_base64_encode()
+
+// 4. 发送 101 响应
+uvhttp_response_set_status(101)
+uvhttp_response_set_header("Upgrade", "websocket")
+uvhttp_response_set_header("Sec-WebSocket-Accept", accept_key)
+uvhttp_response_send()
+
+// 5. 切换到 WebSocket 模式
+uvhttp_ws_upgrade_connection()
+  → 切换协议处理器
+  → 设置消息回调
+  → 启动心跳定时器
+```
+
+#### 4.3 帧处理时序
+
+```c
+// 接收帧
+uvhttp_ws_on_read()
+  → 解析帧头
+  → 检查掩码
+  → 提取载荷长度
+  → 提取载荷数据
+
+// 处理帧
+on_ws_frame_received()
+  → 检查操作码
+  → 如果是 TEXT/BINARY
+    → 调用用户回调
+  → 如果是 PING
+    → 发送 PONG
+  → 如果是 CLOSE
+    → 发送 CLOSE
+    → 关闭连接
+
+// 发送帧
+uvhttp_ws_send_text()
+  → 构造帧头
+  → 计算载荷长度
+  → 分片发送（如果需要）
+  → uv_write()
+```
+
+### 5. 错误处理时序
+
+#### 5.1 错误传播链
+
+```
+底层错误
+    │
+    ▼
+uvhttp_error_t 错误码
+    │
+    ├─ 可恢复错误 ──────→ 重试/降级
+    │   - UVHTTP_ERROR_CONNECTION_TIMEOUT
+    │   - UVHTTP_ERROR_RATE_LIMIT
+    │
+    └─ 不可恢复错误 ────→ 返回错误/关闭
+        - UVHTTP_ERROR_INVALID_PARAM
+        - UVHTTP_ERROR_OUT_OF_MEMORY
+```
+
+#### 5.2 错误处理时序
+
+```c
+// 1. 检测错误
+uvhttp_server_listen()
+  → uv_tcp_bind()
+  → if (result != 0)
+      → 返回 UVHTTP_ERROR_SERVER_INIT
+
+// 2. 错误传播
+if (result != UVHTTP_OK) {
+    // 记录错误
+    UVHTTP_LOG_ERROR("Failed to listen: %s", uvhttp_error_string(result));
+    
+    // 检查是否可恢复
+    if (uvhttp_error_is_recoverable(result)) {
+        // 尝试恢复
+        return uvhttp_server_listen(server, "0.0.0.0", 8081);
+    } else {
+        // 返回错误
+        return result;
+    }
+}
+
+// 3. 错误响应
+if (handler_result != UVHTTP_OK) {
+    uvhttp_response_set_status(response, 500);
+    uvhttp_response_set_body(response, error_message, len);
+    uvhttp_response_send(response);
+}
+```
+
+### 6. 性能优化时序
+
+#### 6.1 缓存命中时序
+
+```
+请求到达
+    │
+    ▼
+路由缓存查找
+    │
+    ├─ 命中 ──────→ 直接返回处理器 (O(1))
+    │
+    └─ 未命中 ────→ 路由匹配 (O(k))
+                        │
+                        ▼
+                    更新缓存
+```
+
+#### 6.2 连接复用时序
+
+```
+首次请求
+    │
+    ▼
+建立连接 ──────→ 处理请求 ──────→ 保持连接
+    │                                    │
+    │                                    ▼
+    │                              后续请求 (复用连接)
+    │                                    │
+    └────────────────────────────────────┘
+                    │
+                    ▼
+                超时关闭
+```
+
+#### 6.3 内存分配优化时序
+
+```
+请求处理
+    │
+    ▼
+内存分配
+    │
+    ├─ 热路径 ──────→ 使用内联数组 (零堆分配)
+    │   - 请求结构
+    │   - 响应结构
+    │   - 头部数组 (<32)
+    │
+    └─ 冷路径 ──────→ 使用堆分配 (mimalloc)
+        - 大文件缓冲区
+        - 额外头部 (≥32)
+        - WebSocket 上下文
+```
+
+### 7. 并发处理时序
+
+#### 7.1 多连接处理
+
+```
+事件循环 (单线程)
+    │
+    ├─ 连接 1 ──────→ 处理请求 1 ──────→ 发送响应 1
+    │
+    ├─ 连接 2 ──────→ 处理请求 2 ──────→ 发送响应 2
+    │
+    ├─ 连接 3 ──────→ 处理请求 3 ──────→ 发送响应 3
+    │
+    └─ 连接 N ──────→ 处理请求 N ──────→ 发送响应 N
+```
+
+#### 7.2 线程安全时序
+
+```
+主线程                          libuv 线程池
+  │                                │
+  │  文件 I/O 请求                  │
+  ├───────────────────────────────>│
+  │                                │
+  │                    异步处理文件
+  │                    - 读取文件
+  │                    - 计算哈希
+  │                                │
+  │  完成回调                       │
+  │<───────────────────────────────┤
+  │                                │
+  │  继续处理                       │
+  │                                │
+```
+
+### 8. 资源管理时序
+
+#### 8.1 连接生命周期
+
+```
+建立连接
+    │
+    ▼
+分配资源
+    ├─ connection 结构
+    ├─ request 结构
+    ├─ response 结构
+    └─ 解析器上下文
+    │
+    ▼
+处理请求 (可能多次)
+    │
+    ▼
+释放资源
+    ├─ 关闭连接
+    ├─ 释放内存
+    └─ 回收连接池
+```
+
+#### 8.2 内存清理时序
+
+```c
+// 请求清理
+uvhttp_request_cleanup()
+  → if (body) uvhttp_free(body)
+  → if (headers_extra) uvhttp_free(headers_extra)
+  → if (parser) llhttp_free(parser)
+  → 重置计数器和标志
+
+// 连接清理
+uvhttp_connection_cleanup()
+  → uvhttp_request_cleanup()
+  → uvhttp_response_cleanup()
+  → uv_close((uv_handle_t*)tcp)
+  → uvhttp_connection_pool_release()
+```
+
 ---
 
 本文档持续更新中，欢迎贡献和反馈。
