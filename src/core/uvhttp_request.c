@@ -107,8 +107,13 @@ void uvhttp_request_cleanup(uvhttp_request_t* request) {
 
 // HTTP解析器回调函数实现
 static int on_message_begin(llhttp_t* parser) {
+    printf("on_message_begin: called\n");
+    fflush(stdout);
+    
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
+        printf("on_message_begin: conn or conn->request is NULL\n");
+        fflush(stdout);
         return -1;
     }
     
@@ -117,34 +122,62 @@ static int on_message_begin(llhttp_t* parser) {
     conn->content_length = 0;
     conn->body_received = 0;
     
+    printf("on_message_begin: success\n");
+    fflush(stdout);
+    
     return 0;
 }
 
 static int on_url(llhttp_t* parser, const char* at, size_t length) {
+    printf("on_url: called, length = %zu\n", length);
+    fflush(stdout);
+    
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
+        printf("on_url: conn or conn->request is NULL\n");
+        fflush(stdout);
         return -1;
     }
     
+    printf("on_url: at = %p\n", (void*)at);
+    printf("on_url: MAX_URL_LEN = %d\n", MAX_URL_LEN);
+    printf("on_url: sizeof(conn->request->url) = %zu\n", sizeof(conn->request->url));
+    fflush(stdout);
+    
     // 确保URL长度不超过限制
     if (length >= MAX_URL_LEN) {
+        printf("on_url: length >= MAX_URL_LEN\n");
+        fflush(stdout);
         return -1;
     }
     
     // 检查是否超出目标缓冲区大小，确保安全性
     if (length >= sizeof(conn->request->url)) {
+        printf("on_url: length >= sizeof(conn->request->url)\n");
+        fflush(stdout);
         return -1;
     }
     
+    printf("on_url: copying URL\n");
+    fflush(stdout);
+    
     memcpy(conn->request->url, at, length);
     conn->request->url[length] = '\0';
+    
+    printf("on_url: success, url = %s\n", conn->request->url);
+    fflush(stdout);
     
     return 0;
 }
 
 static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
+    printf("on_header_field: called, length = %zu\n", length);
+    fflush(stdout);
+    
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
+        printf("on_header_field: conn or conn->request is NULL\n");
+        fflush(stdout);
         return -1;
     }
     
@@ -165,18 +198,27 @@ static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
 }
 
 static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
+    printf("on_header_value: called, length = %zu\n", length);
+    fflush(stdout);
+    
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
+        printf("on_header_value: conn or conn->request is NULL\n");
+        fflush(stdout);
         return -1;
     }
     
     // 检查header值长度限制
     if (length >= UVHTTP_MAX_HEADER_VALUE_SIZE) {
+        printf("on_header_value: value too long, length = %zu, UVHTTP_MAX_HEADER_VALUE_SIZE = %d\n", length, UVHTTP_MAX_HEADER_VALUE_SIZE);
+        fflush(stdout);
         return -1;  // 值太长
     }
     
     // 检查当前header字段名是否存在
     if (conn->current_header_field_len == 0) {
+        printf("on_header_value: no header field name\n");
+        fflush(stdout);
         return -1;  // 没有对应的header字段名
     }
     
@@ -198,7 +240,12 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
     header_value[value_len] = '\0';
     
     // 使用新的 API 添加 header
+    printf("on_header_value: adding header: %s: %s\n", header_name, header_value);
+    fflush(stdout);
+    
     if (uvhttp_request_add_header(conn->request, header_name, header_value) != 0) {
+        printf("on_header_value: failed to add header\n");
+        fflush(stdout);
         return -1;  // 添加失败
     }
     
@@ -250,17 +297,30 @@ static int on_body(llhttp_t* parser, const char* at, size_t length) {
  * 单线程优势：无竞态条件，请求处理顺序可预测
  */
 static int on_message_complete(llhttp_t* parser) {
+    printf("on_message_complete: called\n");
+    fflush(stdout);
+    
     if (!parser) {
+        printf("on_message_complete: parser is NULL\n");
+        fflush(stdout);
         return -1;
     }
     
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request || !conn->response) {
+        printf("on_message_complete: conn or conn->request or conn->response is NULL\n");
+        fflush(stdout);
         return -1;
     }
     
+    /* 调试输出：显示请求处理开始 */
+    printf("on_message_complete: processing request\n");
+    printf("on_message_complete: URL = %s\n", conn->request->url);
+    fflush(stdout);
+    
     /* 防止重复处理：单线程中简单的状态检查就足够 */
     if (conn->parsing_complete) {
+        printf("on_message_complete: already processed, skipping\n");
         return 0;
     }
     
@@ -670,7 +730,7 @@ size_t uvhttp_request_get_header_count(uvhttp_request_t* request) {
 
 /* 获取指定索引的 header（内部使用） */
 uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request, size_t index) {
-    if (!request || index >= request->header_count) {
+    if (!request || index >= request->headers_capacity) {
         return NULL;
     }
     
@@ -688,15 +748,25 @@ uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request, size_t 
 }
 
 /* 添加 header（内部使用，自动扩容） */
-int uvhttp_request_add_header(uvhttp_request_t* request, 
+int uvhttp_request_add_header(uvhttp_request_t* request,
                                const char* name, 
                                const char* value) {
-    if (!request || !name || !value) {
-        return -1;
-    }
+    printf("uvhttp_request_add_header: called, name = %s, value = %s\n", name, value);
+    fflush(stdout);
     
+    if (!request || !name || !value) {
+        printf("uvhttp_request_add_header: request, name or value is NULL\n");
+        fflush(stdout);
+        return -1;
+    }    
     /* 检查是否需要扩容 */
+    printf("uvhttp_request_add_header: header_count = %zu, headers_capacity = %zu\n", request->header_count, request->headers_capacity);
+    fflush(stdout);
+    
     if (request->header_count >= request->headers_capacity) {
+        printf("uvhttp_request_add_header: need to expand capacity\n");
+        fflush(stdout);
+        
         /* 计算新容量（最多 MAX_HEADERS） */
         size_t new_capacity = request->headers_capacity * 2;
         if (new_capacity == 0) {
@@ -706,8 +776,13 @@ int uvhttp_request_add_header(uvhttp_request_t* request,
             new_capacity = MAX_HEADERS;
         }
         
+        printf("uvhttp_request_add_header: new_capacity = %zu\n", new_capacity);
+        fflush(stdout);
+        
         /* 如果新容量等于当前容量，说明已达到最大值 */
         if (new_capacity == request->headers_capacity) {
+            printf("uvhttp_request_add_header: headers full\n");
+            fflush(stdout);
             return -1;  /* 已满 */
         }
         

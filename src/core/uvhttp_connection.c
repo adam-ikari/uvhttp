@@ -146,9 +146,15 @@ static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t
  */
 static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)stream->data;
+    printf("on_read: stream->data = %p\n", (void*)stream->data);
+    printf("on_read: conn = %p\n", (void*)conn);
     if (!conn || !conn->request) {
+        printf("on_read: conn or conn->request is NULL\n");
         return;
     }
+    
+    printf("on_read: conn->request = %p\n", (void*)conn->request);
+    printf("on_read: conn->request->parser = %p\n", (void*)conn->request->parser);
 
     if (nread < 0) {
         if (nread != UV_EOF) {
@@ -178,10 +184,44 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
         return;
     }
     
+    /* 调试输出：显示接收到的数据 */
+    printf("on_read: received %zd bytes\n", nread);
+    printf("on_read: data = %.*s\n", (int)nread, buf->base);
+    fflush(stdout);
+    
+    printf("on_read: before llhttp_execute\n");
+    fflush(stdout);
+    
     /* 单线程HTTP解析 - 无需同步机制 */
     llhttp_t* parser = (llhttp_t*)conn->request->parser;
+    printf("on_read: parser = %p\n", (void*)parser);
+    fflush(stdout);
     if (parser) {
+        printf("on_read: calling llhttp_execute with %zd bytes\n", nread);
+        fflush(stdout);
+        
+        printf("on_read: buf->base = %p\n", (void*)buf->base);
+        printf("on_read: parser->data = %p\n", (void*)parser->data);
+        fflush(stdout);
+        
+        printf("on_read: about to call llhttp_execute\n");
+        fflush(stdout);
+        
         enum llhttp_errno err = llhttp_execute(parser, buf->base, nread);
+        fflush(stdout);
+        
+        printf("on_read: llhttp_execute returned\n");
+        fflush(stdout);
+        
+        printf("on_read: err = %d\n", (int)err);
+        fflush(stdout);
+        
+        const char* err_name = llhttp_errno_name(err);
+        printf("on_read: err_name = %s\n", err_name);
+        fflush(stdout);
+        
+        printf("on_read: llhttp_execute returned %d (%s)\n", (int)err, err_name);
+        fflush(stdout);
         
         if (err != HPE_OK) {
             uvhttp_log_safe_error(err, "http_parse", llhttp_errno_name(err));
@@ -189,6 +229,10 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
             uvhttp_connection_close(conn);
             return;
         }
+        
+        printf("on_read: llhttp_execute success, parsing_complete = %d\n", conn->parsing_complete);
+    } else {
+        printf("on_read: parser is NULL\n");
     }
     
     /* 更新已使用的缓冲区大小 */

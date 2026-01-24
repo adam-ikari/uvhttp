@@ -570,8 +570,13 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    /* 调试输出：显示响应发送开始 */
+    printf("uvhttp_response_send: sending response with status %d\n", response->status_code);
+    fflush(stdout);
+
     /* 单线程安全的重复发送检查 */
     if (response->sent) {
+        printf("uvhttp_response_send: already sent, skipping\n");
         return UVHTTP_OK;
     }
 
@@ -581,8 +586,12 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
     uvhttp_error_t err = uvhttp_response_build_data(response, &response_data, &response_length);
 
     if (err != UVHTTP_OK) {
+        printf("uvhttp_response_send: build_data failed with error %d\n", err);
         return err;
     }
+
+    printf("uvhttp_response_send: response_data length = %zu\n", response_length);
+    printf("uvhttp_response_send: response_data = %.*s\n", (int)response_length, response_data);
 
     /* 标记响应已发送 */
     response->sent = 1;
@@ -596,6 +605,9 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
 
     if (err == UVHTTP_OK) {
         response->finished = 1;
+        printf("uvhttp_response_send: send success\n");
+    } else {
+        printf("uvhttp_response_send: send failed with error %d\n", err);
     }
 
     return err;
