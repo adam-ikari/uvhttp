@@ -1008,8 +1008,10 @@ uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    // 验证IP地址格式（简单验证）
-    // TODO: 可以添加更严格的IP地址验证
+    // 验证IP地址格式
+    if (!uvhttp_is_valid_ip_address(client_ip)) {
+        return UVHTTP_ERROR_INVALID_PARAM;  // 无效的 IP 地址
+    }
     
     // 检查是否已经存在于哈希表中（避免重复添加）
     struct whitelist_item *existing_item;

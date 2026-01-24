@@ -607,9 +607,15 @@ int uvhttp_context_init_error_stats(uvhttp_context_t* context) {
         return 0;
     }
 
-    /* TODO: 分配错误统计结构
-     * error_stats = uvhttp_alloc(sizeof(uvhttp_error_stats_t));
-     */
+    /* 分配错误统计结构 */
+    uvhttp_error_stats_t* error_stats = uvhttp_alloc(sizeof(uvhttp_error_stats_t));
+    if (!error_stats) {
+        return -1;
+    }
+
+    /* 初始化错误统计 */
+    memset(error_stats, 0, sizeof(uvhttp_error_stats_t));
+    context->error_stats = error_stats;
 
     return 0;
 }
@@ -621,9 +627,8 @@ void uvhttp_context_cleanup_error_stats(uvhttp_context_t* context) {
     }
 
     if (context->error_stats) {
-        /* TODO: 释放错误统计结构
-         * uvhttp_free(context->error_stats);
-         */
+        /* 释放错误统计结构 */
+        uvhttp_free(context->error_stats);
         context->error_stats = NULL;
     }
 }
@@ -639,9 +644,13 @@ int uvhttp_context_init_config(uvhttp_context_t* context) {
         return 0;
     }
 
-    /* TODO: 初始化配置管理
-     * current_config = uvhttp_config_create();
-     */
+    /* 初始化配置管理 */
+    uvhttp_config_t* current_config = uvhttp_config_create();
+    if (!current_config) {
+        return -1;
+    }
+
+    context->current_config = current_config;
 
     return 0;
 }
@@ -653,13 +662,10 @@ void uvhttp_context_cleanup_config(uvhttp_context_t* context) {
     }
 
     if (context->current_config) {
-        /* TODO: 释放配置
-         * uvhttp_config_destroy(context->current_config);
-         */
+        /* 释放配置 */
+        uvhttp_config_free(context->current_config);
         context->current_config = NULL;
     }
-
-    context->config_callback = NULL;
 }
 
 int uvhttp_context_set_connection_provider(uvhttp_context_t* context,
