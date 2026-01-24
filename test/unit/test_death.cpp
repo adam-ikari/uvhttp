@@ -1,7 +1,7 @@
 /**
  * @file test_death.cpp
  * @brief UVHTTP 死亡测试（简化版）
- * 
+ *
  * 死亡测试用于验证系统在遇到非法输入或异常情况时的行为
  * 注意：由于项目限制，这里只测试 NULL 指针处理，不触发实际崩溃
  */
@@ -14,41 +14,38 @@
 #include "uvhttp_response.h"
 #include "uvhttp_config.h"
 #include "uvhttp_error.h"
+#include "uvhttp_allocator.h"
 
 /**
  * @brief 测试 NULL 服务器销毁（不崩溃，返回错误）
  */
 TEST(DeathTest, NullServerFree) {
-    // 不实际调用，因为会导致段错误
-    // 只验证函数存在
-    EXPECT_TRUE(true);
+    uvhttp_error_t result = uvhttp_server_free(nullptr);
+    EXPECT_NE(result, UVHTTP_OK);
 }
 
 /**
  * @brief 测试 NULL 路由器销毁（不崩溃，返回错误）
  */
 TEST(DeathTest, NullRouterFree) {
-    // 不实际调用，因为会导致段错误
-    // 只验证函数存在
-    EXPECT_TRUE(true);
+    uvhttp_error_t result = uvhttp_router_free(nullptr);
+    EXPECT_NE(result, UVHTTP_OK);
 }
 
 /**
  * @brief 测试 NULL 配置销毁（不崩溃，返回错误）
  */
 TEST(DeathTest, NullConfigFree) {
-    // 不实际调用，因为会导致段错误
-    // 只验证函数存在
-    EXPECT_TRUE(true);
+    uvhttp_error_t result = uvhttp_config_free(nullptr);
+    EXPECT_NE(result, UVHTTP_OK);
 }
 
 /**
  * @brief 测试 NULL 上下文销毁（不崩溃，返回错误）
  */
 TEST(DeathTest, NullContextFree) {
-    // 不实际调用，因为会导致段错误
-    // 只验证函数存在
-    EXPECT_TRUE(true);
+    uvhttp_error_t result = uvhttp_context_free(nullptr);
+    EXPECT_NE(result, UVHTTP_OK);
 }
 
 /**
@@ -69,7 +66,7 @@ TEST(DeathTest, NullRouterAddRoute) {
         uvhttp_response_set_status(res, 200);
         return uvhttp_response_send(res);
     };
-    
+
     uvhttp_error_t result = uvhttp_router_add_route(nullptr, "/test", handler);
     EXPECT_NE(result, UVHTTP_OK);
 }
@@ -83,7 +80,7 @@ TEST(DeathTest, NullPathAddRoute) {
         uvhttp_response_set_status(res, 200);
         return uvhttp_response_send(res);
     };
-    
+
     uvhttp_error_t result = uvhttp_router_add_route(router, nullptr, handler);
     EXPECT_NE(result, UVHTTP_OK);
     uvhttp_router_free(router);
@@ -103,32 +100,32 @@ TEST(DeathTest, NullHandlerAddRoute) {
  * @brief 测试 NULL 响应设置状态
  */
 TEST(DeathTest, NullResponseSetStatus) {
-    // 不实际调用，因为会导致段错误
-    EXPECT_TRUE(true);
+    uvhttp_error_t result = uvhttp_response_set_status(nullptr, 200);
+    EXPECT_NE(result, UVHTTP_OK);
 }
 
 /**
  * @brief 测试 NULL 响应设置头
  */
 TEST(DeathTest, NullResponseSetHeader) {
-    // 不实际调用，因为会导致段错误
-    EXPECT_TRUE(true);
+    uvhttp_error_t result = uvhttp_response_set_header(nullptr, "Content-Type", "text/plain");
+    EXPECT_NE(result, UVHTTP_OK);
 }
 
 /**
  * @brief 测试 NULL 响应设置体
  */
 TEST(DeathTest, NullResponseSetBody) {
-    // 不实际调用，因为会导致段错误
-    EXPECT_TRUE(true);
+    uvhttp_error_t result = uvhttp_response_set_body(nullptr, "OK", 2);
+    EXPECT_NE(result, UVHTTP_OK);
 }
 
 /**
  * @brief 测试 NULL 响应发送
  */
 TEST(DeathTest, NullResponseSend) {
-    // 不实际调用，因为会导致段错误
-    EXPECT_TRUE(true);
+    uvhttp_error_t result = uvhttp_response_send(nullptr);
+    EXPECT_NE(result, UVHTTP_OK);
 }
 
 /**
@@ -181,18 +178,38 @@ TEST(DeathTest, ExcessivePortListen) {
 TEST(DeathTest, ErrorCodes) {
     const char* error_str = uvhttp_error_string(UVHTTP_ERROR_INVALID_PARAM);
     EXPECT_STREQ(error_str, "UVHTTP_ERROR_INVALID_PARAM");
-    
+
     const char* category = uvhttp_error_category_string(UVHTTP_ERROR_INVALID_PARAM);
     EXPECT_NE(category, nullptr);
-    
+
     const char* description = uvhttp_error_description(UVHTTP_ERROR_INVALID_PARAM);
     EXPECT_NE(description, nullptr);
-    
+
     const char* suggestion = uvhttp_error_suggestion(UVHTTP_ERROR_INVALID_PARAM);
     EXPECT_NE(suggestion, nullptr);
-    
+
     int recoverable = uvhttp_error_is_recoverable(UVHTTP_ERROR_INVALID_PARAM);
     EXPECT_GE(recoverable, 0);
+}
+
+/**
+ * @brief 测试 NULL 分配器释放
+ */
+TEST(DeathTest, NullAllocatorFree) {
+    // 测试释放 NULL 指针不会崩溃
+    UVHTTP_FREE(nullptr);
+    SUCCEED();
+}
+
+/**
+ * @brief 测试分配器零大小分配
+ */
+TEST(DeathTest, ZeroSizeAllocation) {
+    void* ptr = UVHTTP_MALLOC(0);
+    // 零大小分配应该返回 NULL 或有效指针
+    // 具体行为取决于分配器实现
+    UVHTTP_FREE(ptr);
+    SUCCEED();
 }
 
 /**
