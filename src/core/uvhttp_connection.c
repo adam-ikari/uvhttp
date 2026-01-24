@@ -499,6 +499,8 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     }
     
     // 设置解析器的data指针为连接对象
+    // 注意：parser->data 是 llhttp 解析器的字段，用于在回调中传递连接对象
+    // 这与 loop->data 不同，loop->data 用于存储应用上下文
     llhttp_t* parser = (llhttp_t*)conn->request->parser;
     if (parser) {
         parser->data = conn;
