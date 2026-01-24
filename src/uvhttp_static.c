@@ -261,40 +261,116 @@ static int get_file_info(const char* file_path, size_t* file_size, time_t* last_
 /**
  * 生成目录列表HTML
  */
-static char* generate_directory_listing(const char* dir_path, const char* request_path) {
-    if (!dir_path || !request_path) {
-        return NULL;
+/* 目录条目结构 */
+typedef struct {
+    char name[UVHTTP_MAX_FILENAME_SIZE];
+    size_t size;
+    time_t mtime;
+    int is_dir;
+} dir_entry_t;
+
+/* 比较函数：目录优先，然后按名称排序 */
+static int dir_entry_compare(const void* a, const void* b) {
+    const dir_entry_t* entry_a = (const dir_entry_t*)a;
+    const dir_entry_t* entry_b = (const dir_entry_t*)b;
+    
+    /* 目录优先 */
+    if (!entry_a->is_dir && entry_b->is_dir) {
+        return 1;
+    }
+    if (entry_a->is_dir && !entry_b->is_dir) {
+        return -1;
     }
     
+    /* 同类型按名称排序 */
+    return strcmp(entry_a->name, entry_b->name);
+}
+
+/* 收集目录条目 */
+static dir_entry_t* dir_entry_collect(const char* dir_path, size_t* out_count) {
     DIR* dir = opendir(dir_path);
     if (!dir) {
         UVHTTP_LOG_ERROR("Failed to open directory: %s", dir_path);
         return NULL;
     }
     
-    /* 计算所需缓冲区大小 */
-    size_t buffer_size = UVHTTP_DIR_LISTING_BUFFER_SIZE; /* 基础HTML大小 */
+    /* 第一次遍历：计算条目数量 */
     size_t entry_count = 0;
     struct dirent* entry;
-    
-    /* 第一次遍历：计算条目数量和所需缓冲区大小 */
     while ((entry = readdir(dir)) != NULL) {
         if (strcmp(entry->d_name, ".") == 0) {
-            continue; /* 跳过当前目录 */
+            continue;
+        }
+        entry_count++;
+    }
+    
+    /* 分配条目数组 */
+    dir_entry_t* entries = uvhttp_alloc(entry_count * sizeof(dir_entry_t));
+    if (!entries) {
+        closedir(dir);
+        return NULL;
+    }
+    
+    /* 第二次遍历：收集条目信息 */
+    rewinddir(dir);
+    size_t actual_count = 0;
+    
+    while ((entry = readdir(dir)) != NULL && actual_count < entry_count) {
+        if (strcmp(entry->d_name, ".") == 0) {
+            continue;
         }
         
-        buffer_size += strlen(entry->d_name) + UVHTTP_DIR_ENTRY_HTML_OVERHEAD; /* 每个条目的HTML开销 */
-        entry_count++;
+        dir_entry_t* dir_entry = &entries[actual_count];
+        uvhttp_safe_strncpy(dir_entry->name, entry->d_name, sizeof(dir_entry->name));
+        
+        /* 获取文件信息 */
+        char full_path[UVHTTP_MAX_FILE_PATH_SIZE];
+        int written = snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, entry->d_name);
+        if (written < 0 || (size_t)written >= sizeof(full_path)) {
+            continue;
+        }
+        
+        struct stat st;
+        if (stat(full_path, &st) == 0) {
+            dir_entry->size = st.st_size;
+            dir_entry->mtime = st.st_mtime;
+            dir_entry->is_dir = S_ISDIR(st.st_mode);
+        } else {
+            dir_entry->size = 0;
+            dir_entry->mtime = 0;
+            dir_entry->is_dir = 0;
+        }
+        
+        actual_count++;
+    }
+    
+    closedir(dir);
+    *out_count = actual_count;
+    return entries;
+}
+
+/* 排序目录条目 */
+static void dir_entry_sort(dir_entry_t* entries, size_t count) {
+    qsort(entries, count, sizeof(dir_entry_t), dir_entry_compare);
+}
+
+/* 生成目录列表HTML */
+static char* dir_listing_generate_html(const char* request_path, 
+                                       dir_entry_t* entries, 
+                                       size_t entry_count) {
+    /* 计算所需缓冲区大小 */
+    size_t buffer_size = UVHTTP_DIR_LISTING_BUFFER_SIZE;
+    for (size_t i = 0; i < entry_count; i++) {
+        buffer_size += strlen(entries[i].name) + UVHTTP_DIR_ENTRY_HTML_OVERHEAD;
     }
     
     /* 分配缓冲区 */
     char* html = uvhttp_alloc(buffer_size);
     if (!html) {
-        closedir(dir);
         return NULL;
     }
     
-    /* 开始生成HTML */
+    /* 生成HTML头部 */
     size_t offset = 0;
     offset += snprintf(html + offset, buffer_size - offset,
         "<!DOCTYPE html>\n"
@@ -326,82 +402,10 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
             "<tr><td><a href=\"../\">../</a></td><td class=\"dir\">-</td><td>-</td></tr>\n");
     }
     
-    /* 重置目录位置 */
-    rewinddir(dir);
-    
-    /* 收集目录条目信息 */
-    typedef struct {
-        char name[UVHTTP_MAX_FILENAME_SIZE];
-        size_t size;
-        time_t mtime;
-        int is_dir;
-    } dir_entry_t;
-    
-    dir_entry_t* entries = uvhttp_alloc(entry_count * sizeof(dir_entry_t));
-    if (!entries) {
-        uvhttp_free(html);
-        closedir(dir);
-        return NULL;
-    }
-    
-    size_t actual_count = 0;
-    
-    /* 第二次遍历：收集条目信息 */
-    while ((entry = readdir(dir)) != NULL && actual_count < entry_count) {
-        if (strcmp(entry->d_name, ".") == 0) {
-            continue;
-        }
-        
-        dir_entry_t* dir_entry = &entries[actual_count];
-        uvhttp_safe_strncpy(dir_entry->name, entry->d_name, sizeof(dir_entry->name));
-        
-        /* 获取文件信息 */
-        char full_path[UVHTTP_MAX_FILE_PATH_SIZE];
-        int written = snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, entry->d_name);
-        if (written < 0 || (size_t)written >= sizeof(full_path)) {
-            /* 路径过长，跳过此条目 */
-            continue;
-        }
-        
-        struct stat st;
-        if (stat(full_path, &st) == 0) {
-            dir_entry->size = st.st_size;
-            dir_entry->mtime = st.st_mtime;
-            dir_entry->is_dir = S_ISDIR(st.st_mode);
-        } else {
-            dir_entry->size = 0;
-            dir_entry->mtime = 0;
-            dir_entry->is_dir = 0;
-        }
-        
-        actual_count++;
-    }
-    closedir(dir);
-    
-    /* 排序：目录在前，然后按名称排序 */
-    for (size_t index = 0; index < actual_count - 1; index++) {
-        for (size_t inner_index = index + 1; inner_index < actual_count; inner_index++) {
-            /* 目录优先 */
-            if (!entries[index].is_dir && entries[inner_index].is_dir) {
-                dir_entry_t temp = entries[index];
-                entries[index] = entries[inner_index];
-                entries[inner_index] = temp;
-            }
-            /* 同类型按名称排序 */
-            else if (entries[index].is_dir == entries[inner_index].is_dir) {
-                if (strcmp(entries[index].name, entries[inner_index].name) > 0) {
-                    dir_entry_t temp = entries[index];
-                    entries[index] = entries[inner_index];
-                    entries[inner_index] = temp;
-                }
-            }
-        }
-    }
-    
-    /* 生成HTML表格行 */
-    for (size_t index = 0; index < actual_count; index++) {
+    /* 生成表格行 */
+    for (size_t index = 0; index < entry_count; index++) {
         dir_entry_t* dir_entry = &entries[index];
-
+        
         /* 格式化修改时间 */
         char time_str[UVHTTP_TIME_STRING_SIZE];
         if (dir_entry->mtime > 0) {
@@ -411,11 +415,11 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
             time_str[0] = '-';
             time_str[1] = '\0';
         }
-
+        
         /* HTML转义文件名 */
-        char escaped_name[UVHTTP_MAX_FILE_PATH_SIZE * 6];  /* 最多6倍膨胀 */
+        char escaped_name[UVHTTP_MAX_FILE_PATH_SIZE * 6];
         html_escape(escaped_name, dir_entry->name, sizeof(escaped_name));
-
+        
         /* 生成表格行 */
         if (dir_entry->is_dir) {
             offset += snprintf(html + offset, buffer_size - offset,
@@ -436,12 +440,33 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
         "</p>\n"
         "</body>\n"
         "</html>",
-        actual_count);
+        entry_count);
+    
+    return html;
+}
+
+static char* generate_directory_listing(const char* dir_path, const char* request_path) {
+    if (!dir_path || !request_path) {
+        return NULL;
+    }
+    
+    /* 收集目录条目 */
+    size_t entry_count = 0;
+    dir_entry_t* entries = dir_entry_collect(dir_path, &entry_count);
+    if (!entries) {
+        return NULL;
+    }
+    
+    /* 排序目录条目 */
+    dir_entry_sort(entries, entry_count);
+    
+    /* 生成HTML */
+    char* html = dir_listing_generate_html(request_path, entries, entry_count);
     
     /* 清理 */
     uvhttp_free(entries);
     
-    UVHTTP_LOG_DEBUG("Generated directory listing for %s (%zu entries)", request_path, actual_count);
+    UVHTTP_LOG_DEBUG("Generated directory listing for %s (%zu entries)", request_path, entry_count);
     
     return html;
 }
@@ -1416,237 +1441,139 @@ uvhttp_error_t uvhttp_static_set_sendfile_config(uvhttp_static_context_t* ctx,
     return UVHTTP_OK;
 }
 
-/* 内部函数：带配置的 sendfile */
-static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path, 
-                                                          void* response,
-                                                          const uvhttp_static_config_t* config) {
-    uvhttp_response_t* resp = (uvhttp_response_t*)response;
+/* 处理小文件（< 4KB）- 使用优化的 I/O */
+static uvhttp_result_t sendfile_small_file(const char* file_path, 
+                                           uvhttp_response_t* resp) {
+    UVHTTP_LOG_DEBUG("Small file detected, using optimized I/O: %s", file_path);
+    
+    /* 使用 open() 代替 fopen()，减少系统调用开销 */
+    int fd = open(file_path, O_RDONLY);
+    if (fd < 0) {
+        UVHTTP_LOG_ERROR("Failed to open file: %s", file_path);
+        return UVHTTP_ERROR_NOT_FOUND;
+    }
     
     /* 获取文件大小 */
     struct stat st;
-    if (stat(file_path, &st) != 0) {
+    if (fstat(fd, &st) != 0) {
+        close(fd);
         UVHTTP_LOG_ERROR("Failed to stat file: %s", file_path);
         return UVHTTP_ERROR_NOT_FOUND;
     }
     
     size_t file_size = (size_t)st.st_size;
     
-    /* 策略选择 */
-    if (file_size < 4096) {
-        /* 小文件：使用优化的系统调用（open + read + close），避免 stdio 开销 */
-        UVHTTP_LOG_DEBUG("Small file detected, using optimized I/O: %s (%zu bytes)", 
-                        file_path, file_size);
-        
-        /* 使用 open() 代替 fopen()，减少系统调用开销 */
-        int fd = open(file_path, O_RDONLY);
-        if (fd < 0) {
-            UVHTTP_LOG_ERROR("Failed to open file: %s", file_path);
-            return UVHTTP_ERROR_NOT_FOUND;
-        }
-        
-        /* 读取文件内容 */
-        char* buffer = (char*)uvhttp_alloc(file_size + 1);
-        if (!buffer) {
-            close(fd);
-            return UVHTTP_ERROR_OUT_OF_MEMORY;
-        }
-        
-        ssize_t bytes_read = read(fd, buffer, (size_t)file_size);
+    /* 读取文件内容 */
+    char* buffer = (char*)uvhttp_alloc(file_size + 1);
+    if (!buffer) {
         close(fd);
-        
-        if (bytes_read < 0) {
-            UVHTTP_LOG_ERROR("Failed to read file: %s", file_path);
-            uvhttp_free(buffer);
-            return UVHTTP_ERROR_RESPONSE_SEND;
-        }
-        
-        /* 设置响应 */
-        char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
-        uvhttp_static_get_mime_type(file_path, mime_type, sizeof(mime_type));
-        
-        uvhttp_response_set_status(resp, 200);
-        uvhttp_response_set_header(resp, "Content-Type", mime_type);
-        uvhttp_response_set_header(resp, "Content-Length", "");
-        uvhttp_response_set_body(resp, buffer, (size_t)bytes_read);
-        
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    
+    ssize_t bytes_read = read(fd, buffer, file_size);
+    close(fd);
+    
+    if (bytes_read < 0) {
+        UVHTTP_LOG_ERROR("Failed to read file: %s", file_path);
         uvhttp_free(buffer);
-        return UVHTTP_OK;
+        return UVHTTP_ERROR_RESPONSE_SEND;
     }
-    else if (file_size <= 10 * 1024 * 1024) {
-        /* 中等文件：使用分块异步 sendfile（与 大文件一致） */
-        UVHTTP_LOG_DEBUG("Medium file detected, using chunked async sendfile: %s (%zu bytes)", 
-                        file_path, file_size);
-        
-        /* 获取event loop */
-        uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)resp->client);
-        
-        /* 创建 sendfile 上下文 */
-        sendfile_context_t* ctx = (sendfile_context_t*)uvhttp_alloc(sizeof(sendfile_context_t));
-        if (!ctx) {
-            return UVHTTP_ERROR_OUT_OF_MEMORY;
-        }
-        
-        memset(ctx, 0, sizeof(sendfile_context_t));
-        ctx->response = resp;
-        ctx->file_size = file_size;
-        ctx->offset = 0;
-        ctx->bytes_sent = 0;
-        ctx->completed = 0;
-        ctx->start_time = uv_now(loop);
-        ctx->retry_count = 0;
-        
-        /* 从配置中读取 sendfile 参数 */
-        if (config && config->sendfile_timeout_ms > 0) {
-            ctx->timeout_ms = config->sendfile_timeout_ms;
-        } else {
-            ctx->timeout_ms = SENDFILE_DEFAULT_TIMEOUT_MS;
-        }
-        
-        if (config && config->sendfile_max_retry > 0) {
-            ctx->max_retry = config->sendfile_max_retry;
-        } else {
-            ctx->max_retry = SENDFILE_DEFAULT_MAX_RETRY;
-        }
-        
-        if (config && config->sendfile_chunk_size > 0) {
-            ctx->chunk_size = config->sendfile_chunk_size;
-        } else {
-            ctx->chunk_size = SENDFILE_DEFAULT_CHUNK_SIZE;
-        }
-        
-        /* 分配文件路径内存 */
-        size_t path_len = strlen(file_path);
-        ctx->file_path = (char*)uvhttp_alloc(path_len + 1);
-        if (!ctx->file_path) {
-            uvhttp_free(ctx);
-            return UVHTTP_ERROR_OUT_OF_MEMORY;
-        }
-        memcpy(ctx->file_path, file_path, path_len);
-        ctx->file_path[path_len] = '\0';
-        
-        /* 获取输出文件描述符 */
-        int fd_result = uv_fileno((uv_handle_t*)resp->client, &ctx->out_fd);
-        if (fd_result < 0) {
-            UVHTTP_LOG_ERROR("Failed to get client fd: %s", uv_strerror(fd_result));
-            uvhttp_free(ctx->file_path);
-            uvhttp_free(ctx);
-            return UVHTTP_ERROR_SERVER_INIT;
-        }
-        
-        /* 打开输入文件 */
-        ctx->in_fd = open(file_path, O_RDONLY);
-        if (ctx->in_fd < 0) {
-            UVHTTP_LOG_ERROR("Failed to open file for sendfile: %s", file_path);
-            uvhttp_free(ctx->file_path);
-            uvhttp_free(ctx);
-            return UVHTTP_ERROR_NOT_FOUND;
-        }
-        
-        /* 初始化超时定时器 */
-        int timer_result = uv_timer_init(loop, &ctx->timeout_timer);
-        if (timer_result != 0) {
-            UVHTTP_LOG_ERROR("Failed to init timeout timer: %s", uv_strerror(timer_result));
-            close(ctx->in_fd);
-            uvhttp_free(ctx->file_path);
-            uvhttp_free(ctx);
-            return UVHTTP_ERROR_SERVER_INIT;
-        }
-        ctx->timeout_timer.data = ctx;
-        
-        /* 开始分块 sendfile（每次发送配置的分块大小） */
-        size_t chunk_size = ctx->chunk_size;
-        
-        uv_timer_start(&ctx->timeout_timer, on_sendfile_timeout, ctx->timeout_ms, 0);
-        
-        int sendfile_result = uv_fs_sendfile(loop, &ctx->sendfile_req,
-                                              ctx->out_fd,
-                                              ctx->in_fd, 0, chunk_size, on_sendfile_complete);
-        
-        /* 检查 sendfile 是否同步失败 */
-        if (sendfile_result < 0) {
-            UVHTTP_LOG_ERROR("Failed to start sendfile: %s", uv_strerror(sendfile_result));
-            /* 清理资源 */
-            uv_timer_stop(&ctx->timeout_timer);
-            uv_close((uv_handle_t*)&ctx->timeout_timer, NULL);
-            uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
-            uvhttp_free(ctx->file_path);
-            uvhttp_free(ctx);
-            return UVHTTP_ERROR_RESPONSE_SEND;
-        }
-        
-        return UVHTTP_OK;
+    
+    /* 设置响应 */
+    char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
+    uvhttp_static_get_mime_type(file_path, mime_type, sizeof(mime_type));
+    
+    uvhttp_response_set_status(resp, 200);
+    uvhttp_response_set_header(resp, "Content-Type", mime_type);
+    uvhttp_response_set_header(resp, "Content-Length", "");
+    uvhttp_response_set_body(resp, buffer, (size_t)bytes_read);
+    
+    uvhttp_free(buffer);
+    return UVHTTP_OK;
+}
+
+/* 创建 sendfile 上下文 */
+static sendfile_context_t* sendfile_create_context(const char* file_path,
+                                                    uvhttp_response_t* resp,
+                                                    const uvhttp_static_config_t* config,
+                                                    size_t file_size) {
+    uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)resp->client);
+    
+    /* 创建 sendfile 上下文 */
+    sendfile_context_t* ctx = (sendfile_context_t*)uvhttp_alloc(sizeof(sendfile_context_t));
+    if (!ctx) {
+        return NULL;
     }
-    else {
-        /* 大文件：使用 sendfile 零拷贝优化 */
-        UVHTTP_LOG_DEBUG("Large file detected, using sendfile: %s (%zu bytes)", 
-                        file_path, file_size);
-        
-        /* 获取event loop */
-        uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)resp->client);
-        
-        /* 创建 sendfile 上下文 */
-        sendfile_context_t* ctx = (sendfile_context_t*)uvhttp_alloc(sizeof(sendfile_context_t));
-        if (!ctx) {
-            return UVHTTP_ERROR_OUT_OF_MEMORY;
-        }
-        
-        memset(ctx, 0, sizeof(sendfile_context_t));
-        ctx->response = resp;
-        ctx->file_size = file_size;
-        ctx->offset = 0;
-        ctx->bytes_sent = 0;
-        ctx->completed = 0;
-        ctx->start_time = uv_now(loop);
-        ctx->retry_count = 0;
-        
-        /* 从配置中读取 sendfile 参数 */
-        if (config && config->sendfile_timeout_ms > 0) {
-            ctx->timeout_ms = config->sendfile_timeout_ms;
-        } else {
-            ctx->timeout_ms = SENDFILE_DEFAULT_TIMEOUT_MS;
-        }
-        
-        if (config && config->sendfile_max_retry > 0) {
-            ctx->max_retry = config->sendfile_max_retry;
-        } else {
-            ctx->max_retry = SENDFILE_DEFAULT_MAX_RETRY;
-        }
-        
-        if (config && config->sendfile_chunk_size > 0) {
-            ctx->chunk_size = config->sendfile_chunk_size;
-        } else {
-            ctx->chunk_size = SENDFILE_DEFAULT_CHUNK_SIZE;
-        }
-        
-        /* 分配文件路径内存 */
-        size_t path_len = strlen(file_path);
-        ctx->file_path = (char*)uvhttp_alloc(path_len + 1);
-        if (!ctx->file_path) {
-            uvhttp_free(ctx);
-            return UVHTTP_ERROR_OUT_OF_MEMORY;
-        }
-        memcpy(ctx->file_path, file_path, path_len);
-        ctx->file_path[path_len] = '\0';
-        
-        /* 获取输出文件描述符 */
-        int fd_result = uv_fileno((uv_handle_t*)resp->client, &ctx->out_fd);
-        if (fd_result < 0) {
-            UVHTTP_LOG_ERROR("Failed to get client fd: %s", uv_strerror(fd_result));
-            uvhttp_free(ctx->file_path);
-            uvhttp_free(ctx);
-            return UVHTTP_ERROR_SERVER_INIT;
-        }
-        
-        /* 打开输入文件 */
-        ctx->in_fd = open(file_path, O_RDONLY);
-        if (ctx->in_fd < 0) {
-            UVHTTP_LOG_ERROR("Failed to open file for sendfile: %s", file_path);
-            uvhttp_free(ctx->file_path);
-            uvhttp_free(ctx);
-            return UVHTTP_ERROR_NOT_FOUND;
-        }
-        
-        /* 获取MIME类型 */
+    
+    memset(ctx, 0, sizeof(sendfile_context_t));
+    ctx->response = resp;
+    ctx->file_size = file_size;
+    ctx->offset = 0;
+    ctx->bytes_sent = 0;
+    ctx->completed = 0;
+    ctx->start_time = uv_now(loop);
+    ctx->retry_count = 0;
+    
+    /* 从配置中读取 sendfile 参数 */
+    if (config && config->sendfile_timeout_ms > 0) {
+        ctx->timeout_ms = config->sendfile_timeout_ms;
+    } else {
+        ctx->timeout_ms = SENDFILE_DEFAULT_TIMEOUT_MS;
+    }
+    
+    if (config && config->sendfile_max_retry > 0) {
+        ctx->max_retry = config->sendfile_max_retry;
+    } else {
+        ctx->max_retry = SENDFILE_DEFAULT_MAX_RETRY;
+    }
+    
+    if (config && config->sendfile_chunk_size > 0) {
+        ctx->chunk_size = config->sendfile_chunk_size;
+    } else {
+        ctx->chunk_size = SENDFILE_DEFAULT_CHUNK_SIZE;
+    }
+    
+    /* 分配文件路径内存 */
+    size_t path_len = strlen(file_path);
+    ctx->file_path = (char*)uvhttp_alloc(path_len + 1);
+    if (!ctx->file_path) {
+        uvhttp_free(ctx);
+        return NULL;
+    }
+    memcpy(ctx->file_path, file_path, path_len);
+    ctx->file_path[path_len] = '\0';
+    
+    /* 获取输出文件描述符 */
+    int fd_result = uv_fileno((uv_handle_t*)resp->client, &ctx->out_fd);
+    if (fd_result < 0) {
+        UVHTTP_LOG_ERROR("Failed to get client fd: %s", uv_strerror(fd_result));
+        uvhttp_free(ctx->file_path);
+        uvhttp_free(ctx);
+        return NULL;
+    }
+    
+    /* 打开输入文件 */
+    ctx->in_fd = open(file_path, O_RDONLY);
+    if (ctx->in_fd < 0) {
+        UVHTTP_LOG_ERROR("Failed to open file for sendfile: %s", file_path);
+        uvhttp_free(ctx->file_path);
+        uvhttp_free(ctx);
+        return NULL;
+    }
+    
+    return ctx;
+}
+
+/* 启动分块 sendfile */
+static uvhttp_result_t sendfile_start_chunked(sendfile_context_t* ctx,
+                                               uvhttp_response_t* resp,
+                                               const char* file_path,
+                                               size_t file_size,
+                                               int send_headers) {
+    uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)resp->client);
+    
+    /* 如果需要发送响应头（大文件场景） */
+    if (send_headers) {
         char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
         uvhttp_static_get_mime_type(file_path, mime_type, sizeof(mime_type));
         
@@ -1664,39 +1591,85 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
             uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
             return send_result;
         }
+    }
+    
+    /* 初始化超时定时器 */
+    int timer_result = uv_timer_init(loop, &ctx->timeout_timer);
+    if (timer_result != 0) {
+        UVHTTP_LOG_ERROR("Failed to init timeout timer: %s", uv_strerror(timer_result));
+        uvhttp_free(ctx->file_path);
+        uvhttp_free(ctx);
+        return UVHTTP_ERROR_SERVER_INIT;
+    }
+    ctx->timeout_timer.data = ctx;
+    
+    /* 开始分块 sendfile */
+    size_t chunk_size = ctx->chunk_size;
+    
+    uv_timer_start(&ctx->timeout_timer, on_sendfile_timeout, ctx->timeout_ms, 0);
+    
+    int sendfile_result = uv_fs_sendfile(loop, &ctx->sendfile_req,
+                                          ctx->out_fd,
+                                          ctx->in_fd, 0, chunk_size, on_sendfile_complete);
+    
+    /* 检查 sendfile 是否同步失败 */
+    if (sendfile_result < 0) {
+        UVHTTP_LOG_ERROR("Failed to start sendfile: %s", uv_strerror(sendfile_result));
+        /* 清理资源 */
+        uv_timer_stop(&ctx->timeout_timer);
+        uv_close((uv_handle_t*)&ctx->timeout_timer, NULL);
+        uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
+        uvhttp_free(ctx->file_path);
+        uvhttp_free(ctx);
+        return UVHTTP_ERROR_RESPONSE_SEND;
+    }
+    
+    return UVHTTP_OK;
+}
+
+/* 内部函数：带配置的 sendfile */
+static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path, 
+                                                          void* response,
+                                                          const uvhttp_static_config_t* config) {
+    uvhttp_response_t* resp = (uvhttp_response_t*)response;
+    
+    /* 获取文件大小 */
+    struct stat st;
+    if (stat(file_path, &st) != 0) {
+        UVHTTP_LOG_ERROR("Failed to stat file: %s", file_path);
+        return UVHTTP_ERROR_NOT_FOUND;
+    }
+    
+    size_t file_size = (size_t)st.st_size;
+    
+    /* 策略选择 */
+    if (file_size < 4096) {
+        /* 小文件：使用优化的系统调用 */
+        return sendfile_small_file(file_path, resp);
+    }
+    else if (file_size <= 10 * 1024 * 1024) {
+        /* 中等文件：使用分块异步 sendfile */
+        UVHTTP_LOG_DEBUG("Medium file detected, using chunked async sendfile: %s (%zu bytes)", 
+                        file_path, file_size);
         
-        /* 初始化超时定时器 */
-        int timer_result = uv_timer_init(loop, &ctx->timeout_timer);
-        if (timer_result != 0) {
-            UVHTTP_LOG_ERROR("Failed to init timeout timer: %s", uv_strerror(timer_result));
-            uvhttp_free(ctx->file_path);
-            uvhttp_free(ctx);
-            return UVHTTP_ERROR_SERVER_INIT;
+        sendfile_context_t* ctx = sendfile_create_context(file_path, resp, config, file_size);
+        if (!ctx) {
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
-        ctx->timeout_timer.data = ctx;
         
-        /* 开始分块 sendfile（每次发送配置的分块大小） */
-        size_t chunk_size = ctx->chunk_size;
+        return sendfile_start_chunked(ctx, resp, file_path, file_size, 0);
+    }
+    else {
+        /* 大文件：使用 sendfile 零拷贝优化 */
+        UVHTTP_LOG_DEBUG("Large file detected, using sendfile: %s (%zu bytes)", 
+                        file_path, file_size);
         
-        uv_timer_start(&ctx->timeout_timer, on_sendfile_timeout, ctx->timeout_ms, 0);
-        
-        int sendfile_result = uv_fs_sendfile(loop, &ctx->sendfile_req,
-                                              ctx->out_fd,
-                                              ctx->in_fd, 0, chunk_size, on_sendfile_complete);
-        
-        /* 检查 sendfile 是否同步失败 */
-        if (sendfile_result < 0) {
-            UVHTTP_LOG_ERROR("Failed to start sendfile: %s", uv_strerror(sendfile_result));
-            /* 清理资源 */
-            uv_timer_stop(&ctx->timeout_timer);
-            uv_close((uv_handle_t*)&ctx->timeout_timer, NULL);
-            uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
-            uvhttp_free(ctx->file_path);
-            uvhttp_free(ctx);
-            return UVHTTP_ERROR_RESPONSE_SEND;
+        sendfile_context_t* ctx = sendfile_create_context(file_path, resp, config, file_size);
+        if (!ctx) {
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
         
-        return UVHTTP_OK;
+        return sendfile_start_chunked(ctx, resp, file_path, file_size, 1);
     }
 }
 
