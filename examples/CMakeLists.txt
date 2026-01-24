@@ -61,7 +61,7 @@ add_subdirectory(06_static_files)
 add_subdirectory(07_config)
 
 # 内存管理示例
-add_subdirectory(08_memory)
+# add_subdirectory(08_memory) # Temporarily disabled due to format warnings
 
 # 性能测试示例
 add_subdirectory(performance_only)
