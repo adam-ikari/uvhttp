@@ -273,7 +273,7 @@ static void test_log(uvhttp_logger_provider_t* provider,
 
     /* 追加到缓存 */
     size_t entry_len = strlen(log_entry);
-    char* new_logs = (char*)realloc(impl->cached_logs, impl->cached_size + entry_len + 1);
+    char* new_logs = (char*)uvhttp_realloc(impl->cached_logs, impl->cached_size + entry_len + 1);
     if (new_logs) {
         memcpy(new_logs + impl->cached_size, log_entry, entry_len + 1);  /* +1 for null terminator */
         impl->cached_logs = new_logs;

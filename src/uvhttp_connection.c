@@ -147,6 +147,7 @@ static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t
 static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)stream->data;
     if (!conn || !conn->request) {
+        UVHTTP_LOG_ERROR("on_read: conn or conn->request is NULL\n");
         return;
     }
 
@@ -189,6 +190,10 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
             uvhttp_connection_close(conn);
             return;
         }
+        
+        UVHTTP_LOG_DEBUG("on_read: llhttp_execute success, parsing_complete = %d\n", conn->parsing_complete);
+    } else {
+        UVHTTP_LOG_ERROR("on_read: parser is NULL\n");
     }
     
     /* 更新已使用的缓冲区大小 */

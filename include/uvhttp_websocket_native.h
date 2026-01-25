@@ -143,7 +143,8 @@ int uvhttp_ws_handshake_server(struct uvhttp_ws_connection* conn,
 /**
  * 执行 WebSocket 握手 (客户端)
  */
-int uvhttp_ws_handshake_client(struct uvhttp_ws_connection* conn, 
+int uvhttp_ws_handshake_client(uvhttp_context_t* context,
+                                struct uvhttp_ws_connection* conn, 
                                 const char* host, 
                                 const char* path,
                                 char* request, 
@@ -165,7 +166,8 @@ int uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
 /**
  * 发送 WebSocket 帧
  */
-int uvhttp_ws_send_frame(struct uvhttp_ws_connection* conn, 
+int uvhttp_ws_send_frame(uvhttp_context_t* context,
+                          struct uvhttp_ws_connection* conn, 
                           const uint8_t* data, 
                           size_t len, 
                           uvhttp_ws_opcode_t opcode);
@@ -173,35 +175,40 @@ int uvhttp_ws_send_frame(struct uvhttp_ws_connection* conn,
 /**
  * 发送文本消息
  */
-int uvhttp_ws_send_text(struct uvhttp_ws_connection* conn, 
+int uvhttp_ws_send_text(uvhttp_context_t* context,
+                         struct uvhttp_ws_connection* conn, 
                          const char* text, 
                          size_t len);
 
 /**
  * 发送二进制消息
  */
-int uvhttp_ws_send_binary(struct uvhttp_ws_connection* conn, 
+int uvhttp_ws_send_binary(uvhttp_context_t* context,
+                           struct uvhttp_ws_connection* conn, 
                            const uint8_t* data, 
                            size_t len);
 
 /**
  * 发送 Ping
  */
-int uvhttp_ws_send_ping(struct uvhttp_ws_connection* conn, 
+int uvhttp_ws_send_ping(uvhttp_context_t* context,
+                        struct uvhttp_ws_connection* conn, 
                         const uint8_t* data, 
                         size_t len);
 
 /**
  * 发送 Pong
  */
-int uvhttp_ws_send_pong(struct uvhttp_ws_connection* conn, 
+int uvhttp_ws_send_pong(uvhttp_context_t* context,
+                        struct uvhttp_ws_connection* conn, 
                         const uint8_t* data, 
                         size_t len);
 
 /**
  * 关闭连接
  */
-int uvhttp_ws_close(struct uvhttp_ws_connection* conn, 
+int uvhttp_ws_close(uvhttp_context_t* context,
+                    struct uvhttp_ws_connection* conn, 
                     int code, 
                     const char* reason);
 
@@ -233,7 +240,8 @@ int uvhttp_ws_parse_frame_header(const uint8_t* data,
 /**
  * 构建帧
  */
-int uvhttp_ws_build_frame(uint8_t* buffer, 
+int uvhttp_ws_build_frame(uvhttp_context_t* context,
+                          uint8_t* buffer, 
                           size_t buffer_size,
                           const uint8_t* payload, 
                           size_t payload_len,

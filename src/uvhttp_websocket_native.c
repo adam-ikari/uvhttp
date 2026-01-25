@@ -28,17 +28,14 @@
 
 /* 生成安全的随机数 */
 static int uvhttp_ws_random_bytes(uvhttp_context_t* context, unsigned char* buf, size_t len) {
-    /* v2.0.0: 优先使用 context 中的 DRBG，如果不可用则使用伪随机数 */
+    /* 使用上下文中的 DRBG */
     if (context && context->ws_drbg_initialized) {
-        /* 使用上下文中的 DRBG */
         return mbedtls_ctr_drbg_random((mbedtls_ctr_drbg_context*)context->ws_drbg, buf, len);
     }
     
-    /* 回退到伪随机数生成器（仅用于测试） */
-    for (size_t i = 0; i < len; i++) {
-        buf[i] = rand() & 0xFF;
-    }
-    return 0;
+    /* DRBG 未初始化，返回错误而不是使用不安全的伪随机数 */
+    UVHTTP_LOG_ERROR("WebSocket DRBG not initialized, cannot generate secure random bytes");
+    return -1;
 }
 
 /* 创建 WebSocket 连接 */
@@ -155,7 +152,8 @@ void uvhttp_ws_apply_mask(uint8_t* data, size_t len, const uint8_t* masking_key)
 }
 
 /* 构建 WebSocket 帧 */
-int uvhttp_ws_build_frame(uint8_t* buffer, 
+int uvhttp_ws_build_frame(uvhttp_context_t* context,
+                          uint8_t* buffer, 
                           size_t buffer_size,
                           const uint8_t* payload, 
                           size_t payload_len,
@@ -204,7 +202,7 @@ int uvhttp_ws_build_frame(uint8_t* buffer,
     /* 添加掩码密钥（如果是客户端） */
     if (mask) {
         uint8_t masking_key[4];
-        if (uvhttp_ws_random_bytes(NULL, masking_key, 4) != 0) {
+        if (uvhttp_ws_random_bytes(context, masking_key, 4) != 0) {
             uvhttp_free(buffer);
             return -1;
         }
@@ -323,7 +321,8 @@ int uvhttp_ws_handshake_server(struct uvhttp_ws_connection* conn,
 }
 
 /* 客户端握手 */
-int uvhttp_ws_handshake_client(struct uvhttp_ws_connection* conn, 
+int uvhttp_ws_handshake_client(uvhttp_context_t* context,
+                                struct uvhttp_ws_connection* conn, 
                                 const char* host, 
                                 const char* path,
                                 char* request, 
@@ -334,7 +333,7 @@ int uvhttp_ws_handshake_client(struct uvhttp_ws_connection* conn,
     
     /* 生成随机 key */
     unsigned char raw_key[16];
-    if (uvhttp_ws_random_bytes(NULL, raw_key, 16) != 0) {
+    if (uvhttp_ws_random_bytes(context, raw_key, 16) != 0) {
         return -1;
     }
     
@@ -442,7 +441,8 @@ int uvhttp_ws_verify_handshake_response(struct uvhttp_ws_connection* conn,
 }
 
 /* 发送 WebSocket 帧 */
-int uvhttp_ws_send_frame(struct uvhttp_ws_connection* conn, 
+int uvhttp_ws_send_frame(uvhttp_context_t* context,
+                          struct uvhttp_ws_connection* conn, 
                           const uint8_t* data, 
                           size_t len, 
                           uvhttp_ws_opcode_t opcode) {
@@ -458,7 +458,7 @@ int uvhttp_ws_send_frame(struct uvhttp_ws_connection* conn,
     }
     
     /* 构建帧（客户端需要掩码） */
-    int frame_len = uvhttp_ws_build_frame(buffer, buffer_size, data, len, 
+    int frame_len = uvhttp_ws_build_frame(context, buffer, buffer_size, data, len, 
                                           opcode, conn->is_server ? 0 : 1, 1);
     if (frame_len < 0) {
         uvhttp_free(buffer);
@@ -486,36 +486,41 @@ int uvhttp_ws_send_frame(struct uvhttp_ws_connection* conn,
 }
 
 /* 发送文本消息 */
-int uvhttp_ws_send_text(struct uvhttp_ws_connection* conn, 
+int uvhttp_ws_send_text(uvhttp_context_t* context,
+                         struct uvhttp_ws_connection* conn, 
                          const char* text, 
                          size_t len) {
-    return uvhttp_ws_send_frame(conn, (const uint8_t*)text, len, 
+    return uvhttp_ws_send_frame(context, conn, (const uint8_t*)text, len, 
                                   UVHTTP_WS_OPCODE_TEXT);
 }
 
 /* 发送二进制消息 */
-int uvhttp_ws_send_binary(struct uvhttp_ws_connection* conn, 
+int uvhttp_ws_send_binary(uvhttp_context_t* context,
+                           struct uvhttp_ws_connection* conn, 
                            const uint8_t* data, 
                            size_t len) {
-    return uvhttp_ws_send_frame(conn, data, len, UVHTTP_WS_OPCODE_BINARY);
+    return uvhttp_ws_send_frame(context, conn, data, len, UVHTTP_WS_OPCODE_BINARY);
 }
 
 /* 发送 Ping */
-int uvhttp_ws_send_ping(struct uvhttp_ws_connection* conn, 
+int uvhttp_ws_send_ping(uvhttp_context_t* context,
+                        struct uvhttp_ws_connection* conn, 
                         const uint8_t* data, 
                         size_t len) {
-    return uvhttp_ws_send_frame(conn, data, len, UVHTTP_WS_OPCODE_PING);
+    return uvhttp_ws_send_frame(context, conn, data, len, UVHTTP_WS_OPCODE_PING);
 }
 
 /* 发送 Pong */
-int uvhttp_ws_send_pong(struct uvhttp_ws_connection* conn, 
+int uvhttp_ws_send_pong(uvhttp_context_t* context,
+                        struct uvhttp_ws_connection* conn, 
                         const uint8_t* data, 
                         size_t len) {
-    return uvhttp_ws_send_frame(conn, data, len, UVHTTP_WS_OPCODE_PONG);
+    return uvhttp_ws_send_frame(context, conn, data, len, UVHTTP_WS_OPCODE_PONG);
 }
 
 /* 关闭连接 */
-int uvhttp_ws_close(struct uvhttp_ws_connection* conn, 
+int uvhttp_ws_close(uvhttp_context_t* context,
+                    struct uvhttp_ws_connection* conn, 
                     int code, 
                     const char* reason) {
     if (!conn) {
@@ -536,11 +541,11 @@ int uvhttp_ws_close(struct uvhttp_ws_connection* conn,
         }
         memcpy(payload + 2, reason, reason_len);
         
-        return uvhttp_ws_send_frame(conn, payload, 2 + reason_len, 
+        return uvhttp_ws_send_frame(context, conn, payload, 2 + reason_len, 
                                       UVHTTP_WS_OPCODE_CLOSE);
     }
     
-    return uvhttp_ws_send_frame(conn, payload, 2, UVHTTP_WS_OPCODE_CLOSE);
+    return uvhttp_ws_send_frame(context, conn, payload, 2, UVHTTP_WS_OPCODE_CLOSE);
 }
 
 /* 接收 WebSocket 帧 */
