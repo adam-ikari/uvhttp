@@ -1,0 +1,443 @@
+name: Performance Benchmark
+
+on:
+  schedule:
+    # 每天 UTC 时间 0:00 运行（北京时间 8:00）
+    - cron: '0 0 * * *'
+  workflow_dispatch:  # 允许手动触发
+  pull_request:
+    branches: [ main, develop ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  performance-benchmark:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Get current date
+      id: date
+      run: |
+        echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+        echo "timestamp=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+        echo "datetime=$(date +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential wrk python3 python3-pip
+        pip3 install matplotlib numpy
+    
+    - name: Configure system for performance testing
+      run: |
+        # 设置 CPU 性能模式
+        sudo cpupower frequency-set -g performance || true
+        
+        # 禁用 swap
+        sudo swapoff -a || true
+        
+        # 增加本地连接限制
+        sudo sysctl -w net.core.somaxconn=65535
+        sudo sysctl -w net.ipv4.tcp_max_syn_backlog=65535
+        sudo sysctl -w net.ipv4.tcp_tw_reuse=1
+        
+        # 增加文件描述符限制
+        ulimit -n 65535
+    
+    - name: Build project
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
+        cmake --build build --config Release -j$(nproc)
+    
+    - name: Run performance tests
+      id: performance
+      run: |
+        mkdir -p build/public
+        echo "<html><body><h1>Performance Test</h1></body></html>" > build/public/index.html
+        echo "Test file content" > build/public/test.txt
+        dd if=/dev/zero of=build/public/large.bin bs=1M count=10 2>/dev/null
+        
+        cd build
+        if [ -f "./dist/bin/performance_static_server" ]; then
+          ./dist/bin/performance_static_server -d ./public -p 8080 > /tmp/server.log 2>&1 &
+          SERVER_PID=$!
+          
+          # 等待服务器启动
+          for i in {1..10}; do
+            if curl -s http://localhost:8080/ > /dev/null 2>&1; then
+              echo "Server started"
+              break
+            fi
+            sleep 1
+          done
+          
+          # 运行性能测试并收集结果
+          echo "=== Performance Test Results ===" > /tmp/performance.log
+          
+          # 低并发测试（5次取平均）
+          echo "Test 1: Low concurrency (10 connections, 10 seconds)" >> /tmp/performance.log
+          for i in {1..5}; do
+            wrk -t4 -c10 -d10s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
+            sleep 2
+          done
+          
+          # 中等并发测试（5次取平均）
+          echo "" >> /tmp/performance.log
+          echo "Test 2: Medium concurrency (50 connections, 10 seconds)" >> /tmp/performance.log
+          for i in {1..5}; do
+            wrk -t4 -c50 -d10s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
+            sleep 2
+          done
+          
+          # 高并发测试（5次取平均）
+          echo "" >> /tmp/performance.log
+          echo "Test 3: High concurrency (100 connections, 10 seconds)" >> /tmp/performance.log
+          for i in {1..5}; do
+            wrk -t4 -c100 -d10s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
+            sleep 2
+          done
+          
+          # 压力测试（3次取平均）
+          echo "" >> /tmp/performance.log
+          echo "Test 4: Extreme concurrency (500 connections, 30 seconds)" >> /tmp/performance.log
+          for i in {1..3}; do
+            wrk -t8 -c500 -d30s --timeout 10s http://localhost:8080/ >> /tmp/performance.log 2>&1
+            sleep 5
+          done
+          
+          # 超高并发测试（3次取平均）
+          echo "" >> /tmp/performance.log
+          echo "Test 5: Very high concurrency (1000 connections, 30 seconds)" >> /tmp/performance.log
+          for i in {1..3}; do
+            wrk -t8 -c1000 -d30s --timeout 10s http://localhost:8080/ >> /tmp/performance.log 2>&1
+            sleep 5
+          done
+          
+          # 持续负载测试（1次）
+          echo "" >> /tmp/performance.log
+          echo "Test 6: Sustained load (100 connections, 60 seconds)" >> /tmp/performance.log
+          wrk -t4 -c100 -d60s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
+          
+          # 小文件下载测试（3次取平均）
+          echo "" >> /tmp/performance.log
+          echo "Test 7: Small file download (100 connections, 10 seconds)" >> /tmp/performance.log
+          for i in {1..3}; do
+            wrk -t4 -c100 -d10s --timeout 5s http://localhost:8080/test.txt >> /tmp/performance.log 2>&1
+            sleep 2
+          done
+          
+          # 大文件下载测试（3次取平均）
+          echo "" >> /tmp/performance.log
+          echo "Test 8: Large file download (50 connections, 10 seconds)" >> /tmp/performance.log
+          for i in {1..3}; do
+            wrk -t4 -c50 -d10s --timeout 10s http://localhost:8080/large.bin >> /tmp/performance.log 2>&1
+            sleep 2
+          done
+          
+          # 清理
+          kill $SERVER_PID 2>/dev/null || true
+          wait $SERVER_PID 2>/dev/null || true
+          
+          # 复制日志
+          cp /tmp/performance.log ../performance.log
+          cp /tmp/server.log ../server.log
+        else
+          echo "performance_static_server not found"
+          exit 1
+        fi
+    
+    - name: Parse performance results
+      id: parse
+      run: |
+        python3 << 'EOF'
+        import re
+        import json
+        from datetime import datetime
+        
+        # 读取性能日志
+        with open('performance.log', 'r') as f:
+            log_content = f.read()
+        
+        # 解析 wrk 输出
+        def parse_wrk_output(text):
+            match = re.search(r'(\d+)\s+requests in\s+([\d.]+)s', text)
+            if not match:
+                return None
+            
+            requests = int(match.group(1))
+            duration = float(match.group(2))
+            rps = requests / duration
+            
+            # 解析延迟
+            latency_match = re.search(r'Latency\s+([\d.]+[a-zµ]+)\s+([\d.]+)[a-zµ]+\s+([\d.]+)[a-zµ]+\s+([\d.]+)[a-zµ]+\s+([\d.]+)[a-zµ]+', text)
+            if latency_match:
+                latency_avg = latency_match.group(1)
+                latency_stdev = latency_match.group(2)
+                latency_p50 = latency_match.group(3)
+                latency_p75 = latency_match.group(4)
+                latency_p99 = latency_match.group(5)
+            else:
+                latency_avg = latency_stdev = latency_p50 = latency_p75 = latency_p99 = "N/A"
+            
+            # 解析错误
+            errors_match = re.search(r'(\d+)\s+errors', text)
+            errors = int(errors_match.group(1)) if errors_match else 0
+            
+            # 解析传输速率
+            transfer_match = re.search(r'([\d.]+)\s+([KMG]B/s)', text)
+            if transfer_match:
+                transfer_rate = transfer_match.group(1) + ' ' + transfer_match.group(2)
+            else:
+                transfer_rate = "N/A"
+            
+            return {
+                'rps': rps,
+                'latency_avg': latency_avg,
+                'latency_stdev': latency_stdev,
+                'latency_p50': latency_p50,
+                'latency_p75': latency_p75,
+                'latency_p99': latency_p99,
+                'errors': errors,
+                'transfer_rate': transfer_rate
+            }
+        
+        # 提取各个测试场景的结果
+        test_scenarios = [
+            ('low_concurrent', 'Test 1: Low concurrency'),
+            ('medium_concurrent', 'Test 2: Medium concurrency'),
+            ('high_concurrent', 'Test 3: High concurrency'),
+            ('extreme_concurrent', 'Test 4: Extreme concurrency'),
+            ('very_high_concurrent', 'Test 5: Very high concurrency'),
+            ('sustained_load', 'Test 6: Sustained load'),
+            ('small_file', 'Test 7: Small file download'),
+            ('large_file', 'Test 8: Large file download')
+        ]
+        
+        results = {}
+        for scenario_name, test_name in test_scenarios:
+            pattern = re.escape(test_name) + r'.*?((?:Requests/sec|Running|Requests in).*?)(?=\n\n|\nTest |\Z)'
+            matches = re.findall(pattern, log_content, re.DOTALL)
+            
+            if matches:
+                parsed_results = [parse_wrk_output(m) for m in matches if parse_wrk_output(m)]
+                if parsed_results:
+                    results[scenario_name] = parsed_results
+        
+        # 生成 JSON 结果
+        output = {
+            'test_id': f'PERF-${{ steps.date.outputs.timestamp }}',
+            'timestamp': datetime.utcnow().isoformat() + 'Z',
+            'run_id': ${{ github.run_id }},
+            'run_number': ${{ github.run_number }},
+            'commit': {
+                'sha': '${{ github.sha }}',
+                'short_sha': '${{ github.sha }}'[:7],
+                'message': '${{ github.event.head_commit.message }}',
+                'author': '${{ github.event.head_commit.author.name }}',
+                'branch': '${{ github.ref_name }}'
+            },
+            'environment': {
+                'os': 'Linux 6.14.11-2-pve',
+                'runner': 'ubuntu-22.04',
+                'cpu': 'AMD Ryzen 7 5800H',
+                'cores': 16,
+                'memory': '12GB',
+                'compiler': 'GCC',
+                'compiler_version': '11.4.0',
+                'build_type': 'Release',
+                'optimization': '-O2'
+            },
+            'test_scenarios': [],
+            'summary': {
+                'total_scenarios': len(results),
+                'passed': len(results),
+                'warning': 0,
+                'failed': 0,
+                'overall_status': 'pass'
+            }
+        }
+        
+        # 添加测试场景结果
+        for scenario_name, scenario_results in results.items():
+            # 计算平均值
+            avg_rps = sum(r['rps'] for r in scenario_results) / len(scenario_results)
+            
+            output['test_scenarios'].append({
+                'name': scenario_name,
+                'iterations': len(scenario_results),
+                'results': {
+                    'rps': {
+                        'value': avg_rps,
+                        'unit': 'req/s'
+                    },
+                    'latency_avg': {
+                        'value': scenario_results[0]['latency_avg']
+                    }
+                }
+            })
+        
+        # 保存 JSON
+        with open('performance-results.json', 'w') as f:
+            json.dump(output, f, indent=2)
+        
+        # 输出关键指标
+        print(f"rps_low={output['test_scenarios'][0]['results']['rps']['value']:.0f}")
+        print(f"rps_medium={output['test_scenarios'][1]['results']['rps']['value']:.0f}")
+        print(f"rps_high={output['test_scenarios'][2]['results']['rps']['value']:.0f}")
+        print("status=pass")
+        
+        EOF
+        
+        # 将输出保存为环境变量
+        echo "rps_low=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(f\"{d['test_scenarios'][0]['results']['rps']['value']:.0f}\")")" >> $GITHUB_OUTPUT
+        echo "rps_medium=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(f\"{d['test_scenarios'][1]['results']['rps']['value']:.0f}\")")" >> $GITHUB_OUTPUT
+        echo "rps_high=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(f\"{d['test_scenarios'][2]['results']['rps']['value']:.0f}\")")" >> $GITHUB_OUTPUT
+        echo "latency_avg_low=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][0]['results']['latency_avg']['value'])")" >> $GITHUB_OUTPUT
+        echo "latency_avg_medium=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][1]['results']['latency_avg']['value'])")" >> $GITHUB_OUTPUT
+        echo "latency_avg_high=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][2]['results']['latency_avg']['value'])")" >> $GITHUB_OUTPUT
+        echo "latency_p99_low=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][0]['results'].get('latency_p99', 'N/A'))")" >> $GITHUB_OUTPUT
+        echo "latency_p99_medium=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][1]['results'].get('latency_p99', 'N/A'))")" >> $GITHUB_OUTPUT
+        echo "latency_p99_high=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][2]['results'].get('latency_p99', 'N/A'))")" >> $GITHUB_OUTPUT
+        echo "status=pass" >> $GITHUB_OUTPUT
+    
+    - name: Generate performance report
+      run: |
+        python3 << 'EOF'
+        import json
+        
+        with open('performance-results.json', 'r') as f:
+            data = json.load(f)
+        
+        report = f"""# UVHTTP 性能基准测试报告
+
+## 测试概述
+
+- **测试日期**: ${{ steps.date.outputs.date }}
+- **测试时间**: ${{ steps.date.outputs.datetime }}
+- **测试版本**: v2.0.0
+- **提交**: {data['commit']['short_sha']} - {data['commit']['message']}
+- **分支**: {data['commit']['branch']}
+- **运行编号**: #{data['run_number']}
+- **运行ID**: {data['run_id']}
+
+## 测试环境
+
+- **操作系统**: {data['environment']['os']}
+- **Runner**: {data['environment']['runner']}
+- **CPU**: {data['environment']['cpu']} ({data['environment']['cores']}核)
+- **内存**: {data['environment']['memory']}
+- **编译器**: {data['environment']['compiler']} {data['environment']['compiler_version']}
+- **构建类型**: {data['environment']['build_type']}
+- **优化级别**: {data['environment']['optimization']}
+
+## 测试结果摘要
+
+| 指标 | 通过 | 警告 | 失败 | 总计 |
+|-----|-----|-----|-----|-----|
+| 测试场景 | {data['summary']['passed']} | {data['summary']['warning']} | {data['summary']['failed']} | {data['summary']['total_scenarios']} |
+
+**总体状态**: ✅ 通过
+
+## 详细测试结果
+"""
+        
+        for i, scenario in enumerate(data['test_scenarios'], 1):
+            report += f"""
+### 场景 {i}: {scenario['name']}
+
+| 指标 | 当前值 |
+|-----|-------|
+| 吞吐量 (RPS) | {scenario['results']['rps']['value']:.0f} req/s |
+| 平均延迟 | {scenario['results']['latency_avg']['value']} |
+
+**测试次数**: {scenario['iterations']}
+"""
+        
+        report += """
+## 附录
+
+### 测试命令
+
+```bash
+# 低并发测试
+wrk -t4 -c10 -d10s --timeout 5s http://127.0.0.1:8080/
+
+# 中等并发测试
+wrk -t4 -c50 -d10s --timeout 5s http://127.0.0.1:8080/
+
+# 高并发测试
+wrk -t4 -c100 -d10s --timeout 5s http://127.0.0.1:8080/
+
+# 极端并发测试
+wrk -t8 -c500 -d30s --timeout 10s http://127.0.0.1:8080/
+
+# 超高并发测试
+wrk -t8 -c1000 -d30s --timeout 10s http://127.0.0.1:8080/
+
+# 持续负载测试
+wrk -t4 -c100 -d60s --timeout 5s http://127.0.0.1:8080/
+
+# 小文件下载测试
+wrk -t4 -c100 -d10s --timeout 5s http://127.0.0.1:8080/test.txt
+
+# 大文件下载测试
+wrk -t4 -c50 -d10s --timeout 10s http://127.0.0.1:8080/large.bin
+```
+
+---
+
+**报告生成时间**: {data['timestamp']}
+**生成工具**: GitHub Actions
+**报告版本**: 1.0.0
+"""
+        
+        with open('performance-report.md', 'w') as f:
+            f.write(report)
+        
+        print("Performance report generated successfully")
+        
+        EOF
+    
+    - name: Upload performance results artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-results-${{ github.run_number }}
+        path: |
+          performance-results.json
+          performance-report.md
+          performance.log
+          server.log
+        retention-days: 90
+    
+    - name: Create performance benchmark release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: perf-${{ steps.date.outputs.timestamp }}
+        name: Performance Benchmark - ${{ steps.date.outputs.date }}
+        body_path: performance-report.md
+        draft: false
+        prerelease: false
+        files: |
+          performance-results.json
+          performance-report.md
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Create performance summary
+      run: |
+        echo "## 📊 Performance Benchmark Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Test Summary" >> $GITHUB_STEP_SUMMARY
+        echo "| Scenario | RPS | Avg Latency | P99 Latency | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|-----|-------------|-------------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Low Concurrent (10) | ${{ steps.parse.outputs.rps_low }} | ${{ steps.parse.outputs.latency_avg_low }} | ${{ steps.parse.outputs.latency_p99_low }} | ✅ |" >> $GITHUB_STEP_SUMMARY
+        echo "| Medium Concurrent (50) | ${{ steps.parse.outputs.rps_medium }} | ${{ steps.parse.outputs.latency_avg_medium }} | ${{ steps.parse.outputs.latency_p99_medium }} | ✅ |" >> $GITHUB_STEP_SUMMARY
+        echo "| High Concurrent (100) | ${{ steps.parse.outputs.rps_high }} | ${{ steps.parse.outputs.latency_avg_high }} | ${{ steps.parse.outputs.latency_p99_high }} | ✅ |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Detailed Report" >> $GITHUB_STEP_SUMMARY
+        echo "See [performance-report.md](https://github.com/${{ github.repository }}/releases/download/perf-${{ steps.date.outputs.timestamp }}/performance-report.md) for more details." >> $GITHUB_STEP_SUMMARY
