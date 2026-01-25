@@ -573,11 +573,12 @@ const char* uvhttp_request_get_path(uvhttp_request_t* request) {
         // 返回路径部分（不包含查询参数）
         static char path_buffer[UVHTTP_MAX_PATH_SIZE];
         size_t path_len = query_start - url;
-        if (path_len >= sizeof(path_buffer)) {
-            path_len = sizeof(path_buffer) - 1;
+        
+        // 使用安全的字符串拷贝函数
+        if (uvhttp_safe_strncpy(path_buffer, url, sizeof(path_buffer)) != 0) {
+            // 路径太长，返回根路径
+            return "/";
         }
-        strncpy(path_buffer, url, path_len);
-        path_buffer[path_len] = '\0';
         
         // 验证路径安全性
         if (!uvhttp_validate_url_path(path_buffer)) {

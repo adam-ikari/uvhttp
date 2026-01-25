@@ -330,8 +330,8 @@ static dir_entry_t* collect_dir_entries(const char* dir_path, size_t* actual_cou
         }
         
         dir_entry_t* dir_entry = &entries[*actual_count];
-        strncpy(dir_entry->name, entry->d_name, sizeof(dir_entry->name) - 1);
-        dir_entry->name[sizeof(dir_entry->name) - 1] = '\0';
+        /* 使用安全的字符串拷贝，文件名太长时自动截断 */
+        uvhttp_safe_strncpy(dir_entry->name, entry->d_name, sizeof(dir_entry->name));
         
         /* 获取文件信息 */
         char full_path[UVHTTP_MAX_FILE_PATH_SIZE];
@@ -746,8 +746,11 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     
     /* 处理根路径 */
     if (strcmp(clean_path, "/") == 0) {
-        strncpy(clean_path, ctx->config.index_file, sizeof(clean_path) - 1);
-        clean_path[sizeof(clean_path) - 1] = '\0';
+        if (uvhttp_safe_strncpy(clean_path, ctx->config.index_file, sizeof(clean_path)) != 0) {
+            /* index_file 太长，使用默认值 */
+            strncpy(clean_path, "index.html", sizeof(clean_path) - 1);
+            clean_path[sizeof(clean_path) - 1] = '\0';
+        }
     }
     
     /* 构建安全的文件路径 */
@@ -810,8 +813,8 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
             }
             
             if (get_file_info(index_path, &file_size, &last_modified) == 0) {
-                strncpy(safe_path, index_path, sizeof(safe_path) - 1);
-                safe_path[sizeof(safe_path) - 1] = '\0';
+                /* 使用安全的字符串拷贝，路径太长时自动截断 */
+                uvhttp_safe_strncpy(safe_path, index_path, sizeof(safe_path));
             } else {
                 uvhttp_response_set_status(response, 404); /* Not Found */
                 return -1;
