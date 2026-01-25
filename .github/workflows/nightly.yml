@@ -207,18 +207,61 @@ jobs:
           echo "stress_latency_avg=0" >> $GITHUB_OUTPUT
           echo "stress_latency_p99=0" >> $GITHUB_OUTPUT
         fi
-    - name: Memory leak check
+    - name: Memory leak check with Valgrind
       id: memory
       run: |
         cd build-release
-        if [ -f "./dist/bin/test_connection_full_coverage" ]; then
-          valgrind --leak-check=full --error-exitcode=0 --log-file=valgrind.log \
-            ./dist/bin/test_connection_full_coverage || true
-          
-          # 检查内存泄漏
-          leaks=$(grep "definitely lost:" valgrind.log | awk '{print $4}')
-          echo "leaks=$leaks" >> $GITHUB_OUTPUT
+        
+        # 运行关键测试的内存泄漏检查
+        TESTS=(
+          "test_connection_full_coverage"
+          "test_server_full_coverage"
+          "test_request_full_coverage"
+          "test_response_full_coverage"
+          "test_config_full_coverage"
+          "test_static_full_coverage"
+          "test_router_full_coverage"
+        )
+        
+        LEAKS_FOUND=0
+        TOTAL_LEAKS=0
+        
+        for test in "${TESTS[@]}"; do
+          if [ -f "./dist/bin/$test" ]; then
+            echo "Running Valgrind on $test..."
+            valgrind --leak-check=full --error-exitcode=0 --log-file=valgrind_${test}.log \
+              --show-leak-kinds=all --track-origins=yes ./dist/bin/$test || true
+            
+            # 检查内存泄漏
+            leaks=$(grep "definitely lost:" valgrind_${test}.log | awk '{print $4}')
+            if [ -n "$leaks" ] && [ "$leaks" != "0" ]; then
+              echo "❌ Memory leak detected in $test: $leaks bytes"
+              cat valgrind_${test}.log
+              LEAKS_FOUND=1
+              TOTAL_LEAKS=$((TOTAL_LEAKS + leaks))
+            else
+              echo "✅ No memory leaks in $test"
+            fi
+          else
+            echo "⚠️  $test not found, skipping"
+          fi
+        done
+        
+        echo "total_leaks=$TOTAL_LEAKS" >> $GITHUB_OUTPUT
+        echo "leaks_found=$LEAKS_FOUND" >> $GITHUB_OUTPUT
+        
+        if [ $LEAKS_FOUND -eq 1 ]; then
+          echo "Memory leaks detected in one or more tests"
+          exit 1
         fi
+
+    - name: Upload Valgrind logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: valgrind-logs-nightly
+        path: build-release/valgrind_*.log
+        retention-days: 7
 
     - name: Generate test report
       run: |

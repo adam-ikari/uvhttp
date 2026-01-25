@@ -178,7 +178,7 @@ jobs:
   # 内存测试在 main 和 develop 分支运行
   memory-test:
     runs-on: ubuntu-22.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
 
     steps:
@@ -191,14 +191,28 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y cmake build-essential valgrind
 
-    - name: Build project
+    - name: Build project with AddressSanitizer
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=Debug
-        cmake --build build --config Debug -j$(nproc)
+        cmake -B build-asan -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS="-fsanitize=address -fno-omit-frame-pointer -g" -DCMAKE_CXX_FLAGS="-fsanitize=address -fno-omit-frame-pointer -g"
+        cmake --build build-asan --config Debug -j$(nproc)
+
+    - name: Run tests with AddressSanitizer
+      run: |
+        cd build-asan
+        export ASAN_OPTIONS=detect_leaks=1:halt_on_error=0
+        ctest --output-on-failure -j1 --timeout 120 || {
+          echo "Tests with AddressSanitizer failed"
+          exit 1
+        }
+
+    - name: Build project for Valgrind
+      run: |
+        cmake -B build-vg -DCMAKE_BUILD_TYPE=Debug
+        cmake --build build-vg --config Debug -j$(nproc)
 
     - name: Run memory tests
       run: |
-        cd build
+        cd build-vg
         if [ -f "./test_memory" ]; then
           ./test_memory || {
             echo "Memory tests failed"
@@ -208,14 +222,58 @@ jobs:
           echo "test_memory not found, skipping memory tests"
         fi
 
-    - name: Run memory leak check
+    - name: Run Valgrind memory leak check on key tests
       run: |
-        cd build
-        if [ -f "./test_memory" ]; then
-          valgrind --leak-check=full --error-exitcode=0 --show-leak-kinds=all ./test_memory || echo "Valgrind completed"
-        else
-          echo "test_memory not found, skipping valgrind"
+        cd build-vg
+        # 运行关键测试的内存泄漏检查
+        TESTS=(
+          "test_connection_full_coverage"
+          "test_server_full_coverage"
+          "test_request_full_coverage"
+          "test_config_full_coverage"
+        )
+        
+        LEAKS_FOUND=0
+        for test in "${TESTS[@]}"; do
+          if [ -f "./dist/bin/$test" ]; then
+            echo "Running Valgrind on $test..."
+            valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all --track-origins=yes ./dist/bin/$test > /tmp/valgrind_${test}.log 2>&1
+            EXIT_CODE=$?
+            
+            if [ $EXIT_CODE -ne 0 ]; then
+              echo "❌ Memory leak detected in $test"
+              cat /tmp/valgrind_${test}.log
+              LEAKS_FOUND=1
+            else
+              echo "✅ No memory leaks in $test"
+            fi
+          else
+            echo "⚠️  $test not found, skipping"
+          fi
+        done
+        
+        if [ $LEAKS_FOUND -eq 1 ]; then
+          echo "Memory leaks detected in one or more tests"
+          exit 1
         fi
+
+    - name: Upload Valgrind logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: valgrind-logs
+        path: /tmp/valgrind_*.log
+        retention-days: 7
+
+    - name: Upload AddressSanitizer logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: asan-logs
+        path: |
+          build-asan/Testing/
+          build-asan/**/asan.log
+        retention-days: 7
 
   # 代码质量检查在 main、develop、feature 分支和 PR 中运行
   code-quality:
@@ -256,11 +314,27 @@ jobs:
     - name: Memory leak check
       run: |
         cd build
-        if [ -f "./dist/bin/test_connection_full_coverage" ]; then
-          valgrind --leak-check=full --error-exitcode=0 ./dist/bin/test_connection_full_coverage || echo "Valgrind completed"
-        else
-          echo "test_connection_full_coverage not found, skipping valgrind"
-        fi
+        # 运行关键测试的内存泄漏检查
+        TESTS=(
+          "test_connection_full_coverage"
+          "test_server_full_coverage"
+          "test_request_full_coverage"
+          "test_config_full_coverage"
+        )
+        
+        for test in "${TESTS[@]}"; do
+          if [ -f "./dist/bin/$test" ]; then
+            echo "Running Valgrind on $test..."
+            valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all --track-origins=yes ./dist/bin/$test > /tmp/valgrind_${test}.log 2>&1
+            if [ $? -ne 0 ]; then
+              echo "❌ Memory leak detected in $test"
+              cat /tmp/valgrind_${test}.log
+              exit 1
+            else
+              echo "✅ No memory leaks in $test"
+            fi
+          fi
+        done
 
   # 文档构建测试
   docs-build:
