@@ -572,7 +572,6 @@ const char* uvhttp_request_get_path(uvhttp_request_t* request) {
     if (query_start) {
         // 返回路径部分（不包含查询参数）
         static char path_buffer[UVHTTP_MAX_PATH_SIZE];
-        size_t path_len = query_start - url;
         
         // 使用安全的字符串拷贝函数
         if (uvhttp_safe_strncpy(path_buffer, url, sizeof(path_buffer)) != 0) {
