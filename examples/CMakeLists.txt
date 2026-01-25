@@ -74,3 +74,13 @@ endif()
 add_executable(performance_static_server performance_static_server.c)
 target_link_libraries(performance_static_server ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
 add_dependencies(performance_static_server uvhttp)
+
+# 性能基准测试专用服务器（无日志输出，最小化响应体）
+add_executable(performance_test performance_test.c)
+target_link_libraries(performance_test ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
+add_dependencies(performance_test uvhttp)
+
+# 完整版 Hello World 示例
+add_executable(helloworld_complete helloworld_complete.c)
+target_link_libraries(helloworld_complete ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
+add_dependencies(helloworld_complete uvhttp)

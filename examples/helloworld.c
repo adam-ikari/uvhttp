@@ -51,15 +51,7 @@ void signal_handler(int sig) {
     printf("\nReceived signal %d, shutting down gracefully...\n", sig);
     
     uv_loop_t* loop = uv_default_loop();
-    if (loop && loop->data) {
-        app_context_t* ctx = (app_context_t*)loop->data;
-        if (ctx) {
-            printf("Stopping server...\n");
-            uvhttp_server_stop(ctx->server);
-            app_context_free(ctx);
-            loop->data = NULL;
-        }
-    }
+    uv_stop(loop);
     
     printf("Cleanup completed. Exiting.\n");
     exit(0);
@@ -70,9 +62,25 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         return -1;
     }
     
-    // 从循环获取应用上下文
-    uv_loop_t* loop = uvhttp_request_get_loop(request);
-    app_context_t* ctx = (app_context_t*)loop->data;
+    // 从 request 获取 server，然后从 server 获取 app_context
+    if (!request->client || !request->client->data) {
+        fprintf(stderr, "Error: Connection not found\n");
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_body(response, "Internal Server Error", 21);
+        uvhttp_response_send(response);
+        return -1;
+    }
+    
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)request->client->data;
+    if (!conn || !conn->server) {
+        fprintf(stderr, "Error: Server not found\n");
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_body(response, "Internal Server Error", 21);
+        uvhttp_response_send(response);
+        return -1;
+    }
+    
+    app_context_t* ctx = (app_context_t*)conn->server->user_data;
     
     if (!ctx) {
         fprintf(stderr, "Error: Application context not found\n");
@@ -218,10 +226,6 @@ int main() {
     ctx->config = config;
     printf("Application context created successfully: %p\n", (void*)ctx);
     
-    // 注入到循环
-    loop->data = ctx;
-    printf("Context injected to loop\n");
-    
     // 创建服务器
     printf("Creating server...\n");
     ctx->server = uvhttp_server_new(loop);
@@ -233,6 +237,8 @@ int main() {
     
     // 应用配置到服务器
     ctx->server->config = config;
+    // 将 app_context 设置到 server->user_data
+    ctx->server->user_data = ctx;
     printf("Server created successfully: %p\n", (void*)ctx->server);
     printf("Applied configuration with max_connections=%d\n", config->max_connections);
 
@@ -247,6 +253,10 @@ int main() {
     // 设置全局配置（重要：这会消除"Global configuration not initialized"警告）
     uvhttp_config_set_current(ctx->uvhttp_ctx, config);
     printf("Global configuration set\n");
+    
+    // 将 uvhttp_ctx 设置到 server->context
+    uvhttp_server_set_context(ctx->server, ctx->uvhttp_ctx);
+    printf("uvhttp context set to server\n");
     
     // 创建路由器
     printf("Creating router...\n");
@@ -288,11 +298,8 @@ int main() {
     printf("Event loop finished\n");
     
     // 正常退出时的清理
-    if (loop && loop->data) {
-        printf("Performing final cleanup...\n");
-        app_context_free((app_context_t*)loop->data);
-        loop->data = NULL;
-    }
+    printf("Performing final cleanup...\n");
+    app_context_free(ctx);
     
     return 0;
 }

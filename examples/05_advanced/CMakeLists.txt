@@ -14,8 +14,8 @@ set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/xxhash/libxxhash.a)
 # 从父 CMakeLists.txt 获取 UVHTTP 库路径
 set(UVHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../build/dist/lib/libuvhttp.a)
 
-add_executable(libuv_data_pointer 01_libuv_data_pointer.c)
-target_link_libraries(libuv_data_pointer
+add_executable(context_injection context_injection.c)
+target_link_libraries(context_injection
     ${UVHTTP_LIB}
     ${LIBUV_LIB}
     ${MBEDTLS_LIBS}
@@ -23,7 +23,7 @@ target_link_libraries(libuv_data_pointer
     ${CJSON_LIB}
     ${XXHASH_LIB}
     pthread m dl)
-add_dependencies(libuv_data_pointer uvhttp)
+add_dependencies(context_injection uvhttp)
 
 add_executable(middleware_demo ../middleware_demo.c)
 target_link_libraries(middleware_demo

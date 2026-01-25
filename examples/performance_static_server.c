@@ -32,61 +32,29 @@ typedef struct {
 // 信号处理器
 void signal_handler(int sig) {
     (void)sig;
-    
-    uv_loop_t* loop = uv_default_loop();
-    if (!loop || !loop->data) {
-        exit(0);
-    }
-    
-    uvhttp_context_t* uvhttp_ctx = (uvhttp_context_t*)loop->data;
-    if (!uvhttp_ctx || !uvhttp_ctx->user_data) {
-        exit(0);
-    }
-    
-    app_context_t* ctx = (app_context_t*)uvhttp_ctx->user_data;
-    
-    if (ctx->server) {
-        uvhttp_server_stop(ctx->server);
-        uvhttp_server_free(ctx->server);
-        ctx->server = NULL;
-        ctx->router = NULL;
-    }
-    
-    if (ctx->static_ctx) {
-        uvhttp_static_free(ctx->static_ctx);
-        ctx->static_ctx = NULL;
-    }
-    
-    if (ctx->config) {
-        uvhttp_config_free(ctx->config);
-        ctx->config = NULL;
-    }
-    
     exit(0);
 }
 
 // 静态文件请求处理器
 int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    // 从请求中获取事件循环
-    uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)request->client);
-    if (!loop || !loop->data) {
+    // 从请求中获取服务器，然后获取应用上下文
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)request->client->data;
+    if (!conn || !conn->server) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_header(response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(response, "Server not found", 17);
+        uvhttp_response_send(response);
+        return -1;
+    }
+    
+    app_context_t* ctx = (app_context_t*)conn->server->user_data;
+    if (!ctx) {
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_header(response, "Content-Type", "text/plain");
         uvhttp_response_set_body(response, "Application context not initialized", 35);
         uvhttp_response_send(response);
         return -1;
     }
-    
-    uvhttp_context_t* uvhttp_ctx = (uvhttp_context_t*)loop->data;
-    if (!uvhttp_ctx || !uvhttp_ctx->user_data) {
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, "Application context not initialized", 35);
-        uvhttp_response_send(response);
-        return -1;
-    }
-    
-    app_context_t* ctx = (app_context_t*)uvhttp_ctx->user_data;
     
     if (!ctx->static_ctx) {
         uvhttp_response_set_status(response, 500);
@@ -108,26 +76,24 @@ int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
 
 // 主页请求处理器
 int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    // 从请求中获取事件循环
-    uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)request->client);
-    if (!loop || !loop->data) {
+    // 从请求中获取服务器，然后获取应用上下文
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)request->client->data;
+    if (!conn || !conn->server) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_header(response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(response, "Server not found", 17);
+        uvhttp_response_send(response);
+        return -1;
+    }
+    
+    app_context_t* ctx = (app_context_t*)conn->server->user_data;
+    if (!ctx) {
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_header(response, "Content-Type", "text/plain");
         uvhttp_response_set_body(response, "Application context not initialized", 35);
         uvhttp_response_send(response);
         return -1;
     }
-    
-    uvhttp_context_t* uvhttp_ctx = (uvhttp_context_t*)loop->data;
-    if (!uvhttp_ctx || !uvhttp_ctx->user_data) {
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, "Application context not initialized", 35);
-        uvhttp_response_send(response);
-        return -1;
-    }
-    
-    app_context_t* ctx = (app_context_t*)uvhttp_ctx->user_data;
     
     char html_body[2048];
     time_t uptime = time(NULL) - ctx->start_time;
@@ -238,12 +204,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    /* 将 uvhttp_ctx 设置到 loop->data，以便服务器可以访问配置 */
-    loop->data = ctx->uvhttp_ctx;
-    
-    /* 将 app_context_t 存储到 uvhttp_ctx->user_data，以便处理器可以访问 */
-    ctx->uvhttp_ctx->user_data = ctx;
-
     uvhttp_config_set_current(ctx->uvhttp_ctx, config);
     uvhttp_config_update_max_connections(ctx->uvhttp_ctx, 5000);  /* 增加到5000连接 */
     uvhttp_config_update_read_buffer_size(ctx->uvhttp_ctx, 16384);     /* 增加缓冲区到16KB */
@@ -329,6 +289,12 @@ int main(int argc, char* argv[]) {
     ctx->server->router = ctx->router;
     printf("路由器设置成功\n");
     fflush(stdout);
+    
+    // 设置应用上下文到服务器的 user_data
+    ctx->server->user_data = ctx;
+    
+    // 将 uvhttp 上下文设置到服务器
+    uvhttp_server_set_context(ctx->server, ctx->uvhttp_ctx);
     
     // 启动服务器
     int result = uvhttp_server_listen(ctx->server, "0.0.0.0", port);

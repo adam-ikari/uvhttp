@@ -82,10 +82,8 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     if (server->config) {
         max_connections = server->config->max_connections;
     } else {
-        // 回退到全局配置（从 loop->data 获取）
-        // 注意：loop->data 用于存储 uvhttp_context_t*，这是 libuv 循环注入模式的标准用法
-        // 应用特定的数据应该存储在 uvhttp_context->user_data 中，避免与 loop->data 冲突
-        uvhttp_context_t* context = (uvhttp_context_t*)server->loop->data;
+        // 回退到全局配置（使用 server->context）
+        uvhttp_context_t* context = server->context;
         const uvhttp_config_t* global_config = uvhttp_config_get_current(context);
         if (global_config) {
             max_connections = global_config->max_connections;
@@ -303,6 +301,12 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
         uvhttp_config_free(server->config);
     }
     
+    /* 清理上下文 */
+    if (server->context) {
+        uvhttp_context_destroy(server->context);
+        server->context = NULL;
+    }
+    
     // 释放WebSocket路由表
     #if UVHTTP_FEATURE_WEBSOCKET
     if (server->ws_routes) {
@@ -380,9 +384,8 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
     uv_tcp_keepalive(&server->tcp_handle, enable, 60);
     
     /* 使用配置系统的backlog设置 */
-    // 注意：loop->data 用于存储 uvhttp_context_t*，这是 libuv 循环注入模式的标准用法
-    // 应用特定的数据应该存储在 uvhttp_context->user_data 中，避免与 loop->data 冲突
-    uvhttp_context_t* context = (uvhttp_context_t*)server->loop->data;
+    // 使用 server->context 而非 loop->data，避免独占 loop->data
+    uvhttp_context_t* context = server->context;
     const uvhttp_config_t* config = NULL;
     
     if (context) {
@@ -419,6 +422,15 @@ uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server, uvhttp_router_t
     }
     
     server->router = router;
+    return UVHTTP_OK;
+}
+
+uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server, struct uvhttp_context* context) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    server->context = context;
     return UVHTTP_OK;
 }
 

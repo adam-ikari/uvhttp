@@ -17,6 +17,7 @@ typedef struct {
 
 // 创建应用上下文
 app_context_t* app_context_new(uv_loop_t* loop) {
+    (void)loop;  // 未使用的参数
     app_context_t* ctx = (app_context_t*)uvhttp_alloc(sizeof(app_context_t));
     if (!ctx) {
         return NULL;
@@ -47,18 +48,8 @@ void app_context_free(app_context_t* ctx) {
 
 // Signal handler for graceful shutdown
 void signal_handler(int sig) {
-    printf("\nReceived signal %d, shutting down gracefully...\n", sig);
-    
-    uv_loop_t* loop = uv_default_loop();
-    if (loop && loop->data) {
-        app_context_t* ctx = (app_context_t*)loop->data;
-        if (ctx) {
-            printf("Stopping server...\n");
-            uvhttp_server_stop(ctx->server);
-            app_context_free(ctx);
-            loop->data = NULL;
-        }
-    }
+    (void)sig;  // 未使用的参数
+    printf("\nReceived signal, shutting down gracefully...\n");
     
     printf("Cleanup completed. Exiting.\n");
     exit(0);
@@ -69,10 +60,17 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         return -1;
     }
     
-    // 从循环获取应用上下文
-    uv_loop_t* loop = uvhttp_request_get_loop(request);
-    app_context_t* ctx = (app_context_t*)loop->data;
+    // 从请求获取服务器，然后获取应用上下文
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)request->client->data;
+    if (!conn || !conn->server) {
+        fprintf(stderr, "Error: Server not found\n");
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_body(response, "Internal Server Error", 21);
+        uvhttp_response_send(response);
+        return -1;
+    }
     
+    app_context_t* ctx = (app_context_t*)conn->server->user_data;
     if (!ctx) {
         fprintf(stderr, "Error: Application context not found\n");
         uvhttp_response_set_status(response, 500);
@@ -83,18 +81,7 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     
     ctx->request_count++;
     
-    // 使用静态缓冲区避免动态分配
-    static const char* response_template = 
-        "Hello, World!\n\n"
-        "=== 服务器配置信息 ===\n"
-        "最大连接数: %d\n"
-        "每连接最大请求数: %d\n"
-        "当前活动连接数: %zu\n"
-        "最大请求体大小: %zuMB\n"
-        "读取缓冲区大小: %zuKB\n"
-        "========================\n";
-    
-    // 使用栈上的缓冲区而不是动态分配
+    // 使用栈上的缓冲区
     char response_body[512];
     int max_connections = 500;  // 默认值
     int max_requests = 100;     // 默认值
@@ -116,9 +103,16 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         active_connections = ctx->server->active_connections;
     }
     
-    // 使用snprintf的安全版本
+    // 使用snprintf
     int written = snprintf(response_body, sizeof(response_body),
-        response_template,
+        "Hello, World!\n\n"
+        "=== 服务器配置信息 ===\n"
+        "最大连接数: %d\n"
+        "每连接最大请求数: %d\n"
+        "当前活动连接数: %zu\n"
+        "最大请求体大小: %zuMB\n"
+        "读取缓冲区大小: %zuKB\n"
+        "========================\n",
         max_connections,
         max_requests,
         active_connections,
@@ -127,7 +121,7 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     );
     
     // 检查snprintf是否成功
-    if (written < 0 || written >= sizeof(response_body)) {
+    if (written < 0 || written >= (int)sizeof(response_body)) {
         // 如果失败，使用简单的响应
         const char* simple_response = "Hello, World!\n";
         uvhttp_response_set_status(response, 200);
@@ -221,10 +215,6 @@ int main() {
     ctx->config = config;
     printf("Application context created successfully: %p\n", (void*)ctx);
     
-    // 注入到循环
-    loop->data = ctx;
-    printf("Context injected to loop\n");
-    
     // 创建服务器
     printf("Creating server...\n");
     ctx->server = uvhttp_server_new(loop);
@@ -233,6 +223,9 @@ int main() {
         app_context_free(ctx);
         return 1;
     }
+    
+    // 设置应用上下文到服务器的 user_data
+    ctx->server->user_data = ctx;
     
     // 应用配置到服务器
     ctx->server->config = config;
@@ -250,6 +243,10 @@ int main() {
     // 设置全局配置（重要：这会消除"Global configuration not initialized"警告）
     uvhttp_config_set_current(ctx->uvhttp_ctx, config);
     printf("Global configuration set\n");
+    
+    // 将 uvhttp 上下文设置到服务器
+    uvhttp_server_set_context(ctx->server, ctx->uvhttp_ctx);
+    printf("UVHTTP context set to server\n");
     
     // 创建路由器
     printf("Creating router...\n");
@@ -291,23 +288,8 @@ int main() {
     printf("Event loop finished\n");
     
     // 正常退出时的清理
-    if (loop && loop->data) {
-        printf("Performing final cleanup...\n");
-        app_context_free((app_context_t*)loop->data);
-        loop->data = NULL;
-    }
-    
-    return 0;
-}
-        uvhttp_server_free(g_server);
-        g_server = NULL;
-        g_router = NULL;
-    }
-    
-    if (g_config) {
-        uvhttp_config_free(g_config);
-        g_config = NULL;
-    }
+    printf("Performing final cleanup...\n");
+    app_context_free(ctx);
     
     return 0;
 }

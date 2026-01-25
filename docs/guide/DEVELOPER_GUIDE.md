@@ -1007,6 +1007,73 @@ void test_server() {
 | **云原生** | 适合容器化和 Serverless 场景 |
 | **线程安全** | 避免全局变量导致的线程安全问题 |
 
+#### 重要原则：避免独占 loop->data
+
+**原则说明**：
+UVHTTP 不应独占 `loop->data`，因为其他应用可能也需要使用这个指针。为避免冲突，UVHTTP 应使用 `server->context` 和 `server->user_data` 来存储上下文信息。
+
+**✅ 正确做法 - 使用 server->context 和 server->user_data**:
+```c
+// 正确示例
+typedef struct {
+    uvhttp_router_t* router;
+    int request_count;
+    time_t start_time;
+    char server_name[64];
+} app_context_t;
+
+app_context_t* app_context_create(uv_loop_t* loop, const char* name) {
+    app_context_t* ctx = malloc(sizeof(app_context_t));
+    
+    // 创建服务器
+    uvhttp_server_t* server = uvhttp_server_new(loop);
+    
+    // 将 app_context_t 设置到 server->user_data
+    server->user_data = ctx;
+    
+    // 创建 uvhttp_context 并设置到 server->context
+    uvhttp_context_t* uvhttp_ctx = uvhttp_context_create(loop);
+    uvhttp_server_set_context(server, uvhttp_ctx);
+    
+    ctx->server = server;
+    ctx->router = uvhttp_router_new();
+    return ctx;
+}
+
+int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    // 从 server->user_data 获取应用上下文
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)req->client->data;
+    app_context_t* ctx = (app_context_t*)conn->server->user_data;
+    
+    ctx->request_count++;
+    uvhttp_response_send(res);
+}
+```
+
+**❌ 错误做法 - 独占 loop->data**:
+```c
+// 错误示例
+int main() {
+    uv_loop_t* loop = uv_default_loop();
+    
+    // 创建应用上下文
+    app_context_t* ctx = app_context_create(loop);
+    
+    // 独占 loop->data，其他应用无法使用
+    loop->data = ctx;  // 错误！这会阻止其他应用使用 loop->data
+    
+    // 如果其他应用也需要使用 loop->data，就会产生冲突
+    other_app_context_t* other_ctx = other_app_create();
+    loop->data = other_ctx;  // 覆盖了 ctx，导致 UVHTTP 无法工作
+}
+```
+
+**关键点**：
+- 使用 `server->context` 存储 UVHTTP 的上下文
+- 使用 `server->user_data` 存储应用特定的上下文
+- 不依赖 `loop->data`，允许其他应用自由使用
+- 通过 `request->client->data` 获取连接，再从连接获取服务器
+
 #### 最佳实践
 
 **创建上下文结构**:

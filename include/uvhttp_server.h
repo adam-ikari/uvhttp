@@ -91,6 +91,7 @@ struct uvhttp_server {
     uvhttp_request_handler_t handler;         /* 8 字节 */
     uvhttp_router_t* router;                   /* 8 字节 */
     uvhttp_config_t* config;                   /* 8 字节 */
+    struct uvhttp_context* context;            /* 8 字节 - 应用上下文（避免独占 loop->data） */
     
     /* 网络连接（16字节对齐） */
     uv_tcp_t tcp_handle;                       /* 8 字节 */
@@ -127,6 +128,9 @@ struct uvhttp_server {
     size_t rate_limit_whitelist_count;             /* 8 字节 */
     struct whitelist_item* rate_limit_whitelist_hash; /* 8 字节 */
 #endif
+
+    /* 应用数据（避免全局变量） */
+    void* user_data;                             /* 8 字节 - 应用特定的上下文数据 */
 };
 
 /* ========== 内存布局验证静态断言 ========== */
@@ -156,6 +160,7 @@ uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server, uvhttp_request_handler_t handler);
 uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server, uvhttp_router_t* router);
+uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server, struct uvhttp_context* context);
 
 #if UVHTTP_FEATURE_MIDDLEWARE
 // ========== 中间件 API ==========
