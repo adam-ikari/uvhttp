@@ -620,6 +620,8 @@ TEST_F(UvhttpConfigTest, ConfigGetCurrent) {
     const uvhttp_config_t* current = uvhttp_config_get_current(context_);
     EXPECT_EQ(current, config);
 
+    /* 清理：将 current_config 设置为 NULL，避免 TearDown() 中 double-free */
+    uvhttp_config_set_current(context_, NULL);
     uvhttp_config_free(config);
 }
 
@@ -719,6 +721,9 @@ TEST_F(UvhttpConfigTest, ConfigUpdateBufferSize) {
 
 /* 测试动态更新缓冲区大小未初始化 */
 TEST_F(UvhttpConfigTest, ConfigUpdateBufferSizeNotInitialized) {
+    /* 先清除全局配置，模拟未初始化状态 */
+    uvhttp_config_set_current(context_, NULL);
+
     int result = uvhttp_config_update_read_buffer_size(context_, 16384);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
@@ -769,6 +774,9 @@ TEST_F(UvhttpConfigTest, ConfigUpdateLimits) {
 
 /* 测试动态更新限制参数未初始化 */
 TEST_F(UvhttpConfigTest, ConfigUpdateLimitsNotInitialized) {
+    /* 先清除全局配置，模拟未初始化状态 */
+    uvhttp_config_set_current(context_, NULL);
+
     int result = uvhttp_config_update_size_limits(context_, 2097152, 16384);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
@@ -878,6 +886,9 @@ TEST_F(UvhttpConfigTest, ConfigReload) {
 }
 /* 测试热重载配置未初始化 */
 TEST_F(UvhttpConfigTest, ConfigReloadNotInitialized) {
+    /* 先清除全局配置，模拟未初始化状态 */
+    uvhttp_config_set_current(context_, NULL);
+
     int result = uvhttp_config_reload(context_);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
