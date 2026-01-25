@@ -77,11 +77,11 @@ jobs:
 
   
 
-  # 性能测试在 main、develop、feature 分支和 PR 中运行
+  # 性能测试在 main、develop、release、feature 分支和 PR 中运行
   performance-test:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
 
     steps:
     - uses: actions/checkout@v3
@@ -142,11 +142,11 @@ jobs:
           echo "performance_static_server not found, skipping performance test"
         fi
 
-  # 压力测试在 main 和 develop 分支运行
+  # 压力测试在 main、develop 和 release 分支运行
   stress-test:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/')
 
     steps:
     - uses: actions/checkout@v3
@@ -175,11 +175,11 @@ jobs:
           echo "test_stress not found, skipping stress tests"
         fi
 
-  # 内存测试在 main 和 develop 分支运行
+  # 内存测试在 main、develop 和 release 分支运行
   memory-test:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/')
 
     steps:
     - uses: actions/checkout@v3
@@ -275,11 +275,11 @@ jobs:
           build-asan/**/asan.log
         retention-days: 7
 
-  # 代码质量检查在 main、develop、feature 分支和 PR 中运行
+  # 代码质量检查在 main、develop、release、feature 分支和 PR 中运行
   code-quality:
     runs-on: ubuntu-22.04
     timeout-minutes: 20
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
 
     steps:
     - uses: actions/checkout@v3
@@ -340,7 +340,7 @@ jobs:
   docs-build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
 
     steps:
     - uses: actions/checkout@v4

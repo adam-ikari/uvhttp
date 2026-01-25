@@ -16,8 +16,8 @@ jobs:
         run: echo "Workflow file syntax is valid"
 
   nightly-build:
-    # 只在 main 分支运行
-    if: github.ref == 'refs/heads/main'
+    # 只在 main 分支运行，或者通过手动触发
+    if: (github.ref == 'refs/heads/main' && github.event_name == 'schedule') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04
     timeout-minutes: 120
 
