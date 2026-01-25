@@ -667,6 +667,9 @@ TEST_F(UvhttpConfigTest, ConfigUpdateMaxConnections) {
 
 /* 测试动态更新最大连接数未初始化 */
 TEST_F(UvhttpConfigTest, ConfigUpdateMaxConnectionsNotInitialized) {
+    /* 先清除全局配置 */
+    uvhttp_config_set_current(context_, NULL);
+
     int result = uvhttp_config_update_max_connections(context_, 5000);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
