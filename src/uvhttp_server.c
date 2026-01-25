@@ -598,64 +598,96 @@ uvhttp_server_builder_t* uvhttp_set_max_body_size(uvhttp_server_builder_t* serve
 }
 
 // 快速响应API
-void uvhttp_quick_response(uvhttp_response_t* response, int status, const char* content_type, const char* body) {
-    if (!response) return;
-    
-    uvhttp_response_set_status(response, status);
+uvhttp_error_t uvhttp_quick_response(uvhttp_response_t* response, int status, const char* content_type, const char* body) {
+    if (!response) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    uvhttp_error_t result = uvhttp_response_set_status(response, status);
+    if (result != UVHTTP_OK) {
+        return result;
+    }
+
     if (content_type) {
-        uvhttp_response_set_header(response, "Content-Type", content_type);
+        result = uvhttp_response_set_header(response, "Content-Type", content_type);
+        if (result != UVHTTP_OK) {
+            return result;
+        }
     }
+
     if (body) {
-        uvhttp_response_set_body(response, body, strlen(body));
+        result = uvhttp_response_set_body(response, body, strlen(body));
+        if (result != UVHTTP_OK) {
+            return result;
+        }
     }
-    uvhttp_response_send(response);
+
+    return uvhttp_response_send(response);
 }
 
 
 
-void uvhttp_html_response(uvhttp_response_t* response, const char* html_body) {
-    uvhttp_quick_response(response, 200, "text/html", html_body);
+uvhttp_error_t uvhttp_html_response(uvhttp_response_t* response, const char* html_body) {
+    return uvhttp_quick_response(response, 200, "text/html", html_body);
 }
 
-void uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
-    // 简单的文件响应实现
-    FILE* file = fopen(file_path, "r");
+uvhttp_error_t uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
+    if (!response || !file_path) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    /* 路径验证：防止路径遍历攻击 */
+    if (strstr(file_path, "..") != NULL) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    /* 简单的文件响应实现 */
+    FILE* file = fopen(file_path, "rb");
     if (!file) {
-        uvhttp_quick_response(response, 404, "text/plain", "File not found");
-        return;
+        return UVHTTP_ERROR_NOT_FOUND;
     }
-    
-    // 获取文件大小
+
+    /* 获取文件大小 */
     fseek(file, 0, SEEK_END);
     long file_size_long = ftell(file);
     fseek(file, 0, SEEK_SET);
-    
+
     if (file_size_long < 0) {
         fclose(file);
-        uvhttp_quick_response(response, 500, "text/plain", "File size error");
-        return;
+        return UVHTTP_ERROR_IO_ERROR;
     }
-    
+
+    /* 检查文件大小限制（防止DoS攻击） */
     size_t file_size = (size_t)file_size_long;
-    
-    // 读取文件内容
+    size_t max_file_size = UVHTTP_DEFAULT_MAX_FILE_SIZE;
+
+    if (file_size > max_file_size) {
+        fclose(file);
+        return UVHTTP_ERROR_FILE_TOO_LARGE;
+    }
+
+    /* 检查整数溢出风险 */
+    if (file_size == SIZE_MAX) {
+        fclose(file);
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    /* 读取文件内容 */
     char* content = uvhttp_alloc(file_size + 1);
     if (!content) {
         fclose(file);
-        uvhttp_quick_response(response, 500, "text/plain", "Internal server error");
-        return;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
-    
+
     if (fread(content, 1, file_size, file) != file_size) {
         uvhttp_free(content);
         fclose(file);
-        uvhttp_quick_response(response, 500, "text/plain", "File read error");
-        return;
+        return UVHTTP_ERROR_IO_ERROR;
     }
     content[file_size] = '\0';
     fclose(file);
-    
-    // 设置内容类型
+
+    /* 设置内容类型 */
     const char* content_type = "text/plain";
     if (strstr(file_path, ".html")) content_type = "text/html";
     else if (strstr(file_path, ".css")) content_type = "text/css";
@@ -663,9 +695,10 @@ void uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
     else if (strstr(file_path, ".json")) content_type = "application/json";
     else if (strstr(file_path, ".png")) content_type = "image/png";
     else if (strstr(file_path, ".jpg") || strstr(file_path, ".jpeg")) content_type = "image/jpeg";
-    
-    uvhttp_quick_response(response, 200, content_type, content);
+
+    uvhttp_error_t result = uvhttp_quick_response(response, 200, content_type, content);
     uvhttp_free(content);
+    return result;
 }
 
 // 便捷请求参数获取

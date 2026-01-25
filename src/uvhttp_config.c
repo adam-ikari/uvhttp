@@ -45,6 +45,7 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config) {
     config->max_body_size = UVHTTP_DEFAULT_MAX_BODY_SIZE;
     config->max_header_size = UVHTTP_DEFAULT_MAX_HEADER_SIZE;
     config->max_url_size = UVHTTP_DEFAULT_MAX_URL_SIZE;
+    config->max_file_size = UVHTTP_DEFAULT_MAX_FILE_SIZE;
     
     config->max_requests_per_connection = UVHTTP_DEFAULT_MAX_REQUESTS_PER_CONN;
     config->rate_limit_window = UVHTTP_DEFAULT_RATE_LIMIT_WINDOW;

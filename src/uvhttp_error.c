@@ -102,6 +102,8 @@ static int is_retryable_error(uvhttp_error_t error) {
         case UVHTTP_ERROR_HEADER_TOO_LARGE:
         case UVHTTP_ERROR_BODY_TOO_LARGE:
         case UVHTTP_ERROR_MALFORMED_REQUEST:
+        case UVHTTP_ERROR_FILE_TOO_LARGE:
+        case UVHTTP_ERROR_IO_ERROR:
         case UVHTTP_ERROR_TLS_INIT:
         case UVHTTP_ERROR_TLS_CONTEXT:
         case UVHTTP_ERROR_TLS_CERT_LOAD:
@@ -655,15 +657,23 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
                             return "HTTP headers are too large";
                 
                         case UVHTTP_ERROR_BODY_TOO_LARGE:
-                
+
                             return "Request body is too large";
-                
+
                         case UVHTTP_ERROR_MALFORMED_REQUEST:
-                
+
                             return "Malformed HTTP request";
-                
-                        
-                
+
+                        case UVHTTP_ERROR_FILE_TOO_LARGE:
+
+                            return "File is too large";
+
+                        case UVHTTP_ERROR_IO_ERROR:
+
+                            return "I/O error";
+
+
+
                         /* TLS errors */
                 
                         case UVHTTP_ERROR_TLS_INIT:
@@ -1017,15 +1027,23 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
                             return "Reduce header size or increase limit";
                 
                         case UVHTTP_ERROR_BODY_TOO_LARGE:
-                
+
                             return "Reduce body size or increase limit";
-                
+
                         case UVHTTP_ERROR_MALFORMED_REQUEST:
-                
+
                             return "Check request format and syntax";
-                
-                        
-                
+
+                        case UVHTTP_ERROR_FILE_TOO_LARGE:
+
+                            return "Use a smaller file or increase max_file_size limit";
+
+                        case UVHTTP_ERROR_IO_ERROR:
+
+                            return "Check file permissions and disk space";
+
+
+
                         /* TLS errors */
                 
                         case UVHTTP_ERROR_TLS_INIT:

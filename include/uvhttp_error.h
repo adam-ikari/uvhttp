@@ -54,6 +54,8 @@ typedef enum {
     UVHTTP_ERROR_HEADER_TOO_LARGE = -305,
     UVHTTP_ERROR_BODY_TOO_LARGE = -306,
     UVHTTP_ERROR_MALFORMED_REQUEST = -307,
+    UVHTTP_ERROR_FILE_TOO_LARGE = -308,
+    UVHTTP_ERROR_IO_ERROR = -309,
     
     /* TLS errors */
     UVHTTP_ERROR_TLS_INIT = -400,
@@ -142,6 +144,16 @@ void uvhttp_set_error_recovery_config(int max_retries, int base_delay_ms,
                                      int max_delay_ms, double backoff_multiplier);
 uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*), 
                                      void* context, const char* operation_name);
+
+/* Error code count for statistics array */
+#define UVHTTP_ERROR_COUNT 122
+
+/* Error statistics structure */
+typedef struct {
+    size_t error_counts[UVHTTP_ERROR_COUNT];
+    time_t last_error_time;
+    char last_error_context[256];
+} uvhttp_error_stats_t;
 
 /* Error logging and statistics */
 void uvhttp_log_error(uvhttp_error_t error, const char* context);
