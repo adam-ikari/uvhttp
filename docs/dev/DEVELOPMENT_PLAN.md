@@ -651,20 +651,26 @@ TEST(ServerTest, Routing) {
 
 #### 待办事项列表
 
-1. **HTTP/2 支持** (研究阶段)
-2. **gRPC 支持** (研究阶段)
-3. **WebSocket 压缩** (permessage-deflate)
-4. **请求限流增强** (滑动窗口)
-5. **连接复用优化**
+1. **HTTP/1.1 流式传输** (计划中)
+2. **WebSocket 压缩** (permessage-deflate)
+3. **请求限流增强** (滑动窗口)
+4. **连接复用优化**
+5. **Server-Sent Events (SSE)** (研究阶段)
 
 #### 实现方案
 
-1. **WebSocket 压缩**
+1. **HTTP/1.1 流式传输**
+   - 实现分块传输编码
+   - 流式上传 API
+   - 流式下载 API
+   - 进度回调
+
+2. **WebSocket 压缩**
    - 实现 permessage-deflate
    - 添加压缩级别配置
    - 性能测试
 
-2. **请求限流增强**
+3. **请求限流增强**
    - 实现滑动窗口算法
    - 支持分布式限流
    - 添加限流统计

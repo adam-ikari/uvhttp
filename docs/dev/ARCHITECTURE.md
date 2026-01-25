@@ -554,15 +554,20 @@ typedef struct {
 
 ### 短期目标
 
-- HTTP/2 支持
+- HTTP/1.1 流式传输支持
 - 更完善的中间件
 - 性能优化
 
 ### 长期目标
 
-- gRPC 支持
+- Server-Sent Events (SSE) 支持
 - 服务网格集成
 - 云原生部署
+
+### 不在支持范围
+
+- HTTP/2：项目专注于 HTTP/1.1 和 WebSocket，不计划支持 HTTP/2
+- gRPC：由于 gRPC 依赖 HTTP/2，不在支持范围内
 
 ---
 
