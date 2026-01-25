@@ -83,6 +83,8 @@ static void on_connection(uv_stream_t* server_handle, int status) {
         max_connections = server->config->max_connections;
     } else {
         // 回退到全局配置（从 loop->data 获取）
+        // 注意：loop->data 用于存储 uvhttp_context_t*，这是 libuv 循环注入模式的标准用法
+        // 应用特定的数据应该存储在 uvhttp_context->user_data 中，避免与 loop->data 冲突
         uvhttp_context_t* context = (uvhttp_context_t*)server->loop->data;
         const uvhttp_config_t* global_config = uvhttp_config_get_current(context);
         if (global_config) {
@@ -378,6 +380,8 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
     uv_tcp_keepalive(&server->tcp_handle, enable, 60);
     
     /* 使用配置系统的backlog设置 */
+    // 注意：loop->data 用于存储 uvhttp_context_t*，这是 libuv 循环注入模式的标准用法
+    // 应用特定的数据应该存储在 uvhttp_context->user_data 中，避免与 loop->data 冲突
     uvhttp_context_t* context = (uvhttp_context_t*)server->loop->data;
     const uvhttp_config_t* config = NULL;
     
