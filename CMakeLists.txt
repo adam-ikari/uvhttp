@@ -19,45 +19,89 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# 编译选项
-if(ENABLE_DEBUG)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
+# 平台检测
+if(WIN32)
+    set(PLATFORM_NAME "Windows")
+    set(IS_WINDOWS TRUE)
+elseif(APPLE)
+    set(PLATFORM_NAME "macOS")
+    set(IS_MACOS TRUE)
 else()
-    # 性能优化选项（使用 -O2 而不是 -O3，避免激进优化导致的问题）
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -march=native -mtune=native")
-    # 不限制内联数量，让编译器自动决定内联策略
-    # 只在关键函数上使用 inline 关键字提示编译器
-    # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -finline-functions")
-    # 不使用激进的循环展开，避免时序问题
-    # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -funroll-loops")
+    set(PLATFORM_NAME "Linux")
+    set(IS_LINUX TRUE)
+endif()
+
+message(STATUS "Detected platform: ${PLATFORM_NAME}")
+
+# 编译选项 - 根据平台设置
+if(ENABLE_DEBUG)
+    if(MSVC)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Od /Zi")
+    else()
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
+    endif()
+else()
+    if(MSVC)
+        # MSVC 优化选项
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O2 /GL")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG")
+    elseif(IS_MACOS)
+        # macOS 优化选项
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -march=native")
+    else()
+        # Linux 优化选项
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -march=native -mtune=native")
+    endif()
 endif()
 
 if(ENABLE_COVERAGE)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+    if(MSVC)
+        message(WARNING "Code coverage not supported on MSVC")
+    else()
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+    endif()
 endif()
 
-# 安全编译选项
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
-    -Wall \
-    -Wextra \
-    -Wformat=2 \
-    -Wformat-security \
-    -fstack-protector-strong \
-    -D_FORTIFY_SOURCE=2 \
-    -fno-omit-frame-pointer \
-    -fno-common \
-    -Werror \
-    -Werror=implicit-function-declaration \
-    -Werror=format-security \
-    -Werror=return-type \
-")
-
-# 链接器安全标志
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
-    -Wl,-z,relro \
-    -Wl,-z,now \
-")
+# 安全编译选项 - 根据平台设置
+if(MSVC)
+    # MSVC 安全选项
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
+        /W4 \
+        /WX \
+        /GS \
+        /sdl \
+    ")
+    # MSVC 链接器安全选项
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
+        /DYNAMICBASE \
+        /NXCOMPAT \
+    ")
+else()
+    # GCC/Clang 安全选项
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
+        -Wall \
+        -Wextra \
+        -Wformat=2 \
+        -Wformat-security \
+        -fstack-protector-strong \
+        -fno-omit-frame-pointer \
+        -fno-common \
+        -Werror \
+        -Werror=implicit-function-declaration \
+        -Werror=format-security \
+        -Werror=return-type \
+    ")
+    
+    # Linux 特定的安全选项
+    if(IS_LINUX)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FORTIFY_SOURCE=2")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
+            -Wl,-z,relro \
+            -Wl,-z,now \
+        ")
+    endif()
+endif()
 
 # 特性定义
 if(NOT DEFINED UVHTTP_FEATURE_MIDDLEWARE)
@@ -194,10 +238,18 @@ set(LIBS
     ${XXHASH_LIB}
     ${LLHTTP_LIB}
     ${CJSON_LIB}
-    pthread
-    m
-    dl
 )
+
+# 平台特定的库
+if(IS_WINDOWS)
+    # Windows 不需要额外的库
+elseif(IS_MACOS)
+    # macOS 需要 pthread
+    list(APPEND LIBS pthread)
+else()
+    # Linux 需要 pthread, m, dl
+    list(APPEND LIBS pthread m dl)
+endif()
 
 if(BUILD_WITH_MIMALLOC)
     list(APPEND LIBS ${MIMALLOC_LIB})
@@ -257,7 +309,11 @@ foreach(test_file ${GTEST_TEST_FILES})
         add_dependencies(${test_name} mimalloc)
     endif()
     # 对测试文件移除 -Werror，允许未使用变量警告
-    target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+    if(MSVC)
+        target_compile_options(${test_name} PRIVATE /wd4100 /wd4101 /wd4505)
+    else()
+        target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+    endif()
     # 为测试启用统计功能
     target_compile_definitions(${test_name} PRIVATE UVHTTP_FEATURE_STATISTICS=1)
     target_link_libraries(${test_name} ${LIBS} ${GTEST_LIBS})
@@ -286,7 +342,11 @@ add_dependencies(uvhttp_unit_tests libuv mbedtls xxhash gtest)
 if(BUILD_WITH_MIMALLOC)
     add_dependencies(uvhttp_unit_tests mimalloc)
 endif()
-target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+if(MSVC)
+    target_compile_options(uvhttp_unit_tests PRIVATE /wd4100 /wd4101 /wd4505)
+else()
+    target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+endif()
 target_link_libraries(uvhttp_unit_tests ${LIBS} ${GTEST_LIBS})
 target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
 add_test(NAME uvhttp_unit_tests COMMAND uvhttp_unit_tests)
@@ -304,6 +364,11 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stress.c)
     add_dependencies(test_stress libuv mbedtls xxhash)
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(test_stress mimalloc)
+    endif()
+    if(MSVC)
+        target_compile_options(test_stress PRIVATE /wd4100 /wd4101 /wd4505)
+    else()
+        target_compile_options(test_stress PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
     endif()
     target_link_libraries(test_stress ${LIBS})
 endif()
@@ -359,7 +424,11 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(${test_name} mimalloc)
     endif()
-    target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+    if(MSVC)
+        target_compile_options(${test_name} PRIVATE /wd4100 /wd4101 /wd4505)
+    else()
+        target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+    endif()
     target_link_libraries(${test_name} ${LIBS})
 endforeach()
 
@@ -374,6 +443,10 @@ foreach(test_file ${PERFORMANCE_TEST_FILES})
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(${test_name} mimalloc)
     endif()
-    target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+    if(MSVC)
+        target_compile_options(${test_name} PRIVATE /wd4100 /wd4101 /wd4505)
+    else()
+        target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+    endif()
     target_link_libraries(${test_name} ${LIBS})
 endforeach()

@@ -7,12 +7,11 @@
 #include "uvhttp_context.h"
 #include "uvhttp_error.h"
 #include "uvhttp_allocator.h"
+#include "uvhttp_platform.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/socket.h>
-#include <unistd.h>
 #include <mbedtls/sha1.h>
 #include <mbedtls/base64.h>
 #include <mbedtls/ctr_drbg.h>

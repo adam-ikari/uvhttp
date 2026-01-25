@@ -2,11 +2,10 @@
 
 #include "uvhttp_allocator.h"
 #include "uvhttp_deps.h"
+#include "uvhttp_platform.h"
 #include <stdlib.h>
 #include <string.h>
 #include <uv.h>
-#include <sys/socket.h>
-#include <unistd.h>
 
 /* ========== 默认循环提供者实现 ========== */
 

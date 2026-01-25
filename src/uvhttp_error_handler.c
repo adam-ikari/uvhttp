@@ -5,11 +5,11 @@
 
 #include "uvhttp_error_handler.h"
 #include "uvhttp_allocator.h"
+#include "uvhttp_platform.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 /* 全局错误处理配置 */
 uvhttp_error_config_t g_error_config = {
@@ -179,10 +179,7 @@ static int calculate_retry_delay(int attempt) {
 
 /* 毫秒级睡眠 */
 static void sleep_ms(int ms) {
-    struct timespec ts;
-    ts.tv_sec = ms / 1000;
-    ts.tv_nsec = (ms % 1000) * 1000000;
-    nanosleep(&ts, NULL);
+    uvhttp_sleep_ms(ms);
 }
 
 /* 日志函数 */

@@ -5,12 +5,11 @@
 #include "uvhttp_tls.h"
 #include "uvhttp_context.h"
 #include "uvhttp_allocator.h"
+#include "uvhttp_platform.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/socket.h>
-#include <unistd.h>
 
 // 全局熵和 DRBG 上下文（已废弃，使用上下文替代）
 // static mbedtls_entropy_context g_entropy;

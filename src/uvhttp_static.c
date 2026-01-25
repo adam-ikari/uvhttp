@@ -15,12 +15,12 @@
 #include "uvhttp_error_helpers.h"
 #include "uvhttp_utils.h"
 #include "uvhttp_constants.h"
+#include "uvhttp_platform.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <dirent.h>
 #include <errno.h>
 #include <time.h>
