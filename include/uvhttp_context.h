@@ -28,10 +28,6 @@ typedef struct uvhttp_connection_provider {
     void (*release_connection)(struct uvhttp_connection_provider* provider, 
                               struct uvhttp_connection* conn);
     
-    /* 连接池统计 */
-    size_t (*get_pool_size)(struct uvhttp_connection_provider* provider);
-    void (*cleanup_expired)(struct uvhttp_connection_provider* provider);
-    
     /* 私有数据 */
     void* context;
     

@@ -126,10 +126,6 @@ struct uvhttp_server {
     size_t rate_limit_whitelist_count;             /* 8 字节 */
     struct whitelist_item* rate_limit_whitelist_hash; /* 8 字节 */
 #endif
-
-    /* 连接池管理 */
-    void* connection_pool;                       /* 8 字节 */
-    size_t connection_pool_size;                   /* 8 字节 */
 };
 
 /* ========== 内存布局验证静态断言 ========== */

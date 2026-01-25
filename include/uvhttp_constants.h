@@ -280,8 +280,7 @@
 #define UVHTTP_ROUTER_INITIAL_POOL_SIZE  64
 #endif /* UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION */
 
-/* ========== 连接和池配置 ========== */
-#define UVHTTP_DEFAULT_CONNECTION_POOL_SIZE 100
+/* ========== 路由配置 ========== */
 #define UVHTTP_ROUTER_MAX_CHILDREN       16
 
 /* ========== WebSocket配置 ========== */

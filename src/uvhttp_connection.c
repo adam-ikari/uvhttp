@@ -20,23 +20,6 @@
 #define UVHTTP_STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
 #endif
 
-/* 连接池管理 - 优化连接复用 */
-#define UVHTTP_CONNECTION_POOL_SIZE  100
-#define UVHTTP_CONNECTION_POOL_TTL   30  // 连接池TTL（秒）
-
-typedef struct uvhttp_connection_pool_entry {
-    uvhttp_connection_t* connection;
-    time_t last_used;
-    struct uvhttp_connection_pool_entry* next;
-} uvhttp_connection_pool_entry_t;
-
-/* 连接池管理函数 - 使用服务器级别的连接池，避免全局变量 */
-static uvhttp_connection_t* uvhttp_connection_pool_acquire(uvhttp_server_t* server);
-static void uvhttp_connection_pool_release(uvhttp_server_t* server, uvhttp_connection_t* conn);
-
-/* 连接池清理函数 - 非静态，供 uvhttp_server_free 调用 */
-void uvhttp_connection_pool_cleanup(uvhttp_server_t* server);
-
 /* ========== 结构体大小验证 ========== */
 /* 验证关键结构体的大小，确保内存布局优化不会被意外破坏 */
 UVHTTP_STATIC_ASSERT(sizeof(uvhttp_request_t) == 280664,
@@ -45,86 +28,11 @@ UVHTTP_STATIC_ASSERT(sizeof(uvhttp_response_t) == 278600,
                       "uvhttp_response_t size changed unexpectedly");
 
 static void on_close(uv_handle_t* handle);
-static uvhttp_connection_t* uvhttp_connection_pool_acquire(uvhttp_server_t* server);
-static void uvhttp_connection_pool_release(uvhttp_server_t* server, uvhttp_connection_t* conn);
-
-/* 连接池清理函数 - 非静态，供 uvhttp_server_free 调用 */
-void uvhttp_connection_pool_cleanup(uvhttp_server_t* server);
-
-static void on_close(uv_handle_t* handle);
 
 // 用于安全连接重用的idle回调
 static void on_idle_restart_read(uv_idle_t* handle);
 
 /* 连接池获取函数实现 */
-static __attribute__((unused)) uvhttp_connection_t* uvhttp_connection_pool_acquire(uvhttp_server_t* server) {
-    if (!server || !server->connection_pool) {
-        return NULL;
-    }
-    
-    uvhttp_connection_pool_entry_t* entry = (uvhttp_connection_pool_entry_t*)server->connection_pool;
-    uvhttp_connection_t* conn = entry->connection;
-    
-    /* 检查连接是否仍然有效 */
-    time_t now = time(NULL);
-    if (now - entry->last_used > UVHTTP_CONNECTION_POOL_TTL) {
-        /* 连接过期，从池中移除并销毁 */
-        server->connection_pool = entry->next;
-        uvhttp_connection_free(conn);
-        uvhttp_free(entry);
-        server->connection_pool_size--;
-        return NULL;
-    }
-    
-    /* 从池中移除 */
-    server->connection_pool = entry->next;
-    uvhttp_free(entry);
-    server->connection_pool_size--;
-    
-    /* 重置连接状态 */
-    conn->state = UVHTTP_CONN_STATE_NEW;
-    conn->parsing_complete = 0;
-    conn->keep_alive = 1;
-    
-    return conn;
-}
-
-/* 连接池释放函数实现 */
-static __attribute__((unused)) void uvhttp_connection_pool_release(uvhttp_server_t* server, uvhttp_connection_t* conn) {
-    if (!server || !conn || server->connection_pool_size >= UVHTTP_CONNECTION_POOL_SIZE) {
-        uvhttp_connection_free(conn);
-        return;
-    }
-    
-    /* 创建池条目 */
-    uvhttp_connection_pool_entry_t* entry = uvhttp_alloc(sizeof(uvhttp_connection_pool_entry_t));
-    if (!entry) {
-        uvhttp_connection_free(conn);
-        return;
-    }
-    
-    entry->connection = conn;
-    entry->last_used = time(NULL);
-    entry->next = (uvhttp_connection_pool_entry_t*)server->connection_pool;
-    server->connection_pool = entry;
-    server->connection_pool_size++;
-}
-
-/* 连接池清理函数实现 */
-void uvhttp_connection_pool_cleanup(uvhttp_server_t* server) {
-    if (!server) {
-        return;
-    }
-    
-    while (server->connection_pool) {
-        uvhttp_connection_pool_entry_t* entry = (uvhttp_connection_pool_entry_t*)server->connection_pool;
-        server->connection_pool = entry->next;
-        uvhttp_connection_free(entry->connection);
-        uvhttp_free(entry);
-        server->connection_pool_size--;
-    }
-}
-
 static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
     (void)suggested_size;
     uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;

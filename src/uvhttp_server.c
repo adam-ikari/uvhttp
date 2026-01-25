@@ -253,10 +253,6 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     server->tls_ctx = NULL;
 #endif
     
-    /* 初始化连接池 */
-    server->connection_pool = NULL;
-    server->connection_pool_size = 0;
-    
     return server;
 }
 
@@ -279,9 +275,6 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
             uv_run(server->loop, UV_RUN_ONCE);
         }
     }
-    
-    /* 清理连接池 */
-    uvhttp_connection_pool_cleanup(server);
     
 #if UVHTTP_FEATURE_MIDDLEWARE
     /* 清理中间件链 - 零开销设计 */
