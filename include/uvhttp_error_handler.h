@@ -94,39 +94,6 @@ void uvhttp_log(uvhttp_log_level_t level, const char* format, ...);
 #define UVHTTP_LOG_FATAL(fmt, ...) ((void)0)
 #endif
 
-/* 错误检查宏 */
-#define UVHTTP_CHECK(condition, error_code, message) \
-    do { \
-        if (!(condition)) { \
-            UVHTTP_ERROR_REPORT(error_code, message); \
-            return error_code; \
-        } \
-    } while(0)
-
-#define UVHTTP_CHECK_NULL(ptr, error_code) \
-    UVHTTP_CHECK((ptr) != NULL, error_code, "Null pointer: " #ptr)
-
-#define UVHTTP_CHECK_RESULT(result) \
-    do { \
-        if ((result) != UVHTTP_OK) { \
-            UVHTTP_ERROR_REPORT(result, uvhttp_error_string(result)); \
-            return result; \
-        } \
-    } while(0)
-
-/* 安全函数包装 */
-#define UVHTTP_SAFE_MALLOC(size, ptr) \
-    do { \
-        (ptr) = uvhttp_malloc(size); \
-        UVHTTP_CHECK_NULL(ptr, UVHTTP_ERROR_OUT_OF_MEMORY); \
-    } while(0)
-
-#define UVHTTP_SAFE_CALLOC(nmemb, size, ptr) \
-    do { \
-        (ptr) = uvhttp_calloc(nmemb, size); \
-        UVHTTP_CHECK_NULL(ptr, UVHTTP_ERROR_OUT_OF_MEMORY); \
-    } while(0)
-
 #ifdef __cplusplus
 }
 #endif

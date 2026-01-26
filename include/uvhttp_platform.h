@@ -6,16 +6,9 @@
 /* 平台检测 */
 #ifdef _WIN32
     #define UVHTTP_PLATFORM_WINDOWS
-    #ifdef _WIN64
-        #define UVHTTP_PLATFORM_WINDOWS_64
-    #else
-        #define UVHTTP_PLATFORM_WINDOWS_32
-    #endif
 #elif defined(__APPLE__)
     #include <TargetConditionals.h>
-    #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
-        #define UVHTTP_PLATFORM_IOS
-    #elif defined(TARGET_OS_MAC) && TARGET_OS_MAC
+    #if defined(TARGET_OS_MAC) && TARGET_OS_MAC
         #define UVHTTP_PLATFORM_MACOS
     #endif
 #elif defined(__linux__)

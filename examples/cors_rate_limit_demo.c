@@ -5,7 +5,6 @@
 
 #include "uvhttp.h"
 #include "uvhttp_cors_middleware.h"
-#include "uvhttp_simple_middleware.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -47,11 +46,7 @@ static int root_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
 
 /* API 数据处理器 */
 static int api_data_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
-    /* 使用编译宏中间件系统 - CORS 中间件 */
-    UVHTTP_MIDDLEWARE(req, resp,
-        uvhttp_middleware_cors
-    );
-
+    (void)req;
     /* 返回 API 数据 */
     const char* json = "{\"message\":\"Hello from API\",\"data\":{\"id\":1,\"name\":\"example\"}}";
     uvhttp_response_set_status(resp, 200);
@@ -64,11 +59,7 @@ static int api_data_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
 
 /* 管理员处理器（严格限流） */
 static int api_admin_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
-    /* 使用编译宏中间件系统 - CORS 中间件 */
-    UVHTTP_MIDDLEWARE(req, resp,
-        uvhttp_middleware_cors
-    );
-
+    (void)req;
     /* 返回管理员数据 */
     const char* json = "{\"message\":\"Admin access\",\"users\":[{\"id\":1,\"role\":\"admin\"}]}";
     uvhttp_response_set_status(resp, 200);
@@ -81,11 +72,7 @@ static int api_admin_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
 
 /* 公开端点处理器（宽松限流） */
 static int api_public_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
-    /* 使用编译宏中间件系统 - CORS 中间件 */
-    UVHTTP_MIDDLEWARE(req, resp,
-        uvhttp_middleware_cors
-    );
-
+    (void)req;
     /* 返回公开数据 */
     const char* json = "{\"message\":\"Public access\",\"version\":\"1.0.0\"}";
     uvhttp_response_set_status(resp, 200);

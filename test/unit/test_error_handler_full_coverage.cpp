@@ -341,9 +341,12 @@ TEST(UvhttpErrorHandlerTest, CheckMacroSuccess) {
     /* 测试条件为真的情况 */
     int result = 0;
     
-    /* 使用 lambda 模拟函数内的 UVHTTP_CHECK */
+    /* 使用 lambda 模拟函数内的检查 */
     auto test_check = [&result]() -> uvhttp_error_t {
-        UVHTTP_CHECK(1 == 1, UVHTTP_ERROR_INVALID_PARAM, "Test check");
+        if (!(1 == 1)) {
+            uvhttp_error_report_(UVHTTP_ERROR_INVALID_PARAM, "Test check", __func__, __FILE__, __LINE__, NULL);
+            return UVHTTP_ERROR_INVALID_PARAM;
+        }
         result = 1;
         return UVHTTP_OK;
     };
@@ -351,22 +354,6 @@ TEST(UvhttpErrorHandlerTest, CheckMacroSuccess) {
     uvhttp_error_t err = test_check();
     EXPECT_EQ(err, UVHTTP_OK);
     EXPECT_EQ(result, 1);
-}
-
-/* 测试错误检查宏 - UVHTTP_CHECK 失败 */
-TEST(UvhttpErrorHandlerTest, CheckMacroFailure) {
-    uvhttp_error_init();
-    
-    /* 测试条件为假的情况 */
-    auto test_check = []() -> uvhttp_error_t {
-        UVHTTP_CHECK(1 == 0, UVHTTP_ERROR_INVALID_PARAM, "Test check failed");
-        return UVHTTP_OK;
-    };
-    
-    uvhttp_error_t err = test_check();
-    EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
-    
-    uvhttp_error_cleanup();
 }
 
 /* 测试错误报告多次调用 */

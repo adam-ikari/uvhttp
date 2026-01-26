@@ -4,7 +4,6 @@
 #include "uvhttp_constants.h"
 #include "uvhttp_static.h"
 #include "uvhttp_connection.h"
-#include "uvhttp_router_cache.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

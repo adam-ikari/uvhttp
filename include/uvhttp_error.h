@@ -92,14 +92,6 @@ typedef enum {
     UVHTTP_ERROR_WEBSOCKET_ALREADY_CONNECTED = -706,
     UVHTTP_ERROR_WEBSOCKET_CLOSED = -707,
     
-    /* HTTP/2 errors */
-    UVHTTP_ERROR_HTTP2_INIT = -800,
-    UVHTTP_ERROR_HTTP2_STREAM = -801,
-    UVHTTP_ERROR_HTTP2_SETTINGS = -802,
-    UVHTTP_ERROR_HTTP2_FLOW_CONTROL = -803,
-    UVHTTP_ERROR_HTTP2_HEADER_COMPRESS = -804,
-    UVHTTP_ERROR_HTTP2_PRIORITY = -805,
-    
     /* Configuration errors */
     UVHTTP_ERROR_CONFIG_PARSE = -900,
     UVHTTP_ERROR_CONFIG_INVALID = -901,
@@ -146,7 +138,7 @@ uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*),
                                      void* context, const char* operation_name);
 
 /* Error code count for statistics array */
-#define UVHTTP_ERROR_COUNT 122
+#define UVHTTP_ERROR_COUNT 116
 
 /* Error statistics structure */
 typedef struct {

@@ -120,12 +120,6 @@ static int is_retryable_error(uvhttp_error_t error) {
         case UVHTTP_ERROR_WEBSOCKET_NOT_CONNECTED:
         case UVHTTP_ERROR_WEBSOCKET_ALREADY_CONNECTED:
         case UVHTTP_ERROR_WEBSOCKET_CLOSED:
-        case UVHTTP_ERROR_HTTP2_INIT:
-        case UVHTTP_ERROR_HTTP2_STREAM:
-        case UVHTTP_ERROR_HTTP2_SETTINGS:
-        case UVHTTP_ERROR_HTTP2_FLOW_CONTROL:
-        case UVHTTP_ERROR_HTTP2_HEADER_COMPRESS:
-        case UVHTTP_ERROR_HTTP2_PRIORITY:
         case UVHTTP_ERROR_CONFIG_PARSE:
         case UVHTTP_ERROR_CONFIG_INVALID:
         case UVHTTP_ERROR_CONFIG_FILE_NOT_FOUND:
@@ -365,30 +359,15 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
         case UVHTTP_ERROR_ALLOCATOR_SET:
             return "Allocator set failed";
         
-        /* WebSocket errors */
-                case UVHTTP_ERROR_WEBSOCKET_INIT:
-                    return "WebSocket initialization failed";
-                case UVHTTP_ERROR_WEBSOCKET_HANDSHAKE:
-                    return "WebSocket handshake failed";
-                case UVHTTP_ERROR_WEBSOCKET_FRAME:
-                    return "WebSocket frame processing failed";
-                
-                /* HTTP/2 errors */
-                case UVHTTP_ERROR_HTTP2_INIT:
-                    return "HTTP/2 initialization failed";
-                case UVHTTP_ERROR_HTTP2_STREAM:
-                    return "HTTP/2 stream error";
-                case UVHTTP_ERROR_HTTP2_SETTINGS:
-                    return "HTTP/2 settings error";
-                case UVHTTP_ERROR_HTTP2_FLOW_CONTROL:
-                    return "HTTP/2 flow control error";
-                case UVHTTP_ERROR_HTTP2_HEADER_COMPRESS:
-                    return "HTTP/2 header compression error";
-                case UVHTTP_ERROR_HTTP2_PRIORITY:
-                    return "HTTP/2 priority error";
-                
-                /* Configuration errors */
-                case UVHTTP_ERROR_CONFIG_PARSE:
+                        /* WebSocket errors */
+                        case UVHTTP_ERROR_WEBSOCKET_INIT:
+                            return "WebSocket initialization failed";
+                        case UVHTTP_ERROR_WEBSOCKET_HANDSHAKE:
+                            return "WebSocket handshake failed";
+                        case UVHTTP_ERROR_WEBSOCKET_FRAME:
+                            return "WebSocket frame processing failed";
+                        
+                        /* Configuration errors */                case UVHTTP_ERROR_CONFIG_PARSE:
                     return "Configuration parse error";
                 case UVHTTP_ERROR_CONFIG_INVALID:
                     return "Invalid configuration";
@@ -810,41 +789,12 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
                         case UVHTTP_ERROR_WEBSOCKET_CLOSED:
                 
                             return "WebSocket connection is closed";
-                
-                        
-                
-                        /* HTTP/2 errors */
-                
-                        case UVHTTP_ERROR_HTTP2_INIT:
-                
-                            return "Failed to initialize HTTP/2";
-                
-                        case UVHTTP_ERROR_HTTP2_STREAM:
-                
-                            return "HTTP/2 stream error";
-                
-                        case UVHTTP_ERROR_HTTP2_SETTINGS:
-                
-                            return "HTTP/2 settings error";
-                
-                        case UVHTTP_ERROR_HTTP2_FLOW_CONTROL:
-                
-                            return "HTTP/2 flow control error";
-                
-                        case UVHTTP_ERROR_HTTP2_HEADER_COMPRESS:
-                
-                            return "HTTP/2 header compression error";
-                
-                        case UVHTTP_ERROR_HTTP2_PRIORITY:
-                
-                            return "HTTP/2 priority error";
-                
-                        
-                
-                        /* Configuration errors */
-                
-                        case UVHTTP_ERROR_CONFIG_PARSE:
-                
+                                            
+                                            
+                                            
+                                                    /* Configuration errors */
+                                            
+                                                    case UVHTTP_ERROR_CONFIG_PARSE:                
                             return "Failed to parse configuration";
                 
                         case UVHTTP_ERROR_CONFIG_INVALID:
@@ -1180,41 +1130,12 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
                         case UVHTTP_ERROR_WEBSOCKET_CLOSED:
                 
                             return "Re-establish WebSocket connection";
-                
-                        
-                
-                        /* HTTP/2 errors */
-                
-                        case UVHTTP_ERROR_HTTP2_INIT:
-                
-                            return "Check HTTP/2 configuration";
-                
-                        case UVHTTP_ERROR_HTTP2_STREAM:
-                
-                            return "Reset or recreate the stream";
-                
-                        case UVHTTP_ERROR_HTTP2_SETTINGS:
-                
-                            return "Review HTTP/2 settings";
-                
-                        case UVHTTP_ERROR_HTTP2_FLOW_CONTROL:
-                
-                            return "Adjust flow control parameters";
-                
-                        case UVHTTP_ERROR_HTTP2_HEADER_COMPRESS:
-                
-                            return "Check header compression settings";
-                
-                        case UVHTTP_ERROR_HTTP2_PRIORITY:
-                
-                            return "Review stream priority settings";
-                
-                        
-                
-                        /* Configuration errors */
-                
-                        case UVHTTP_ERROR_CONFIG_PARSE:
-                
+                                            
+                                            
+                                            
+                                                    /* Configuration errors */
+                                            
+                                                    case UVHTTP_ERROR_CONFIG_PARSE:                
                             return "Check configuration file syntax";
                 
                         case UVHTTP_ERROR_CONFIG_INVALID:

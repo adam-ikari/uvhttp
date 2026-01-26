@@ -121,16 +121,6 @@ TEST(UvhttpErrorTest, ErrorStringWebSocketErrors) {
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_WEBSOCKET_CLOSED), "Unknown error");
 }
 
-/* 测试HTTP/2错误码到字符串的转换 */
-TEST(UvhttpErrorTest, ErrorStringHTTP2Errors) {
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_HTTP2_INIT), "HTTP/2 initialization failed");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_HTTP2_STREAM), "HTTP/2 stream error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_HTTP2_SETTINGS), "HTTP/2 settings error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_HTTP2_FLOW_CONTROL), "HTTP/2 flow control error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_HTTP2_HEADER_COMPRESS), "HTTP/2 header compression error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_HTTP2_PRIORITY), "HTTP/2 priority error");
-}
-
 /* 测试配置错误码到字符串的转换 */
 TEST(UvhttpErrorTest, ErrorStringConfigErrors) {
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONFIG_PARSE), "Configuration parse error");
@@ -243,16 +233,6 @@ TEST(UvhttpErrorTest, ErrorCategoryWebSocket) {
     EXPECT_STREQ(uvhttp_error_category_string(UVHTTP_ERROR_WEBSOCKET_NOT_CONNECTED), "WebSocket Error");
     EXPECT_STREQ(uvhttp_error_category_string(UVHTTP_ERROR_WEBSOCKET_ALREADY_CONNECTED), "WebSocket Error");
     EXPECT_STREQ(uvhttp_error_category_string(UVHTTP_ERROR_WEBSOCKET_CLOSED), "WebSocket Error");
-}
-
-/* 测试错误分类 - HTTP/2错误 */
-TEST(UvhttpErrorTest, ErrorCategoryHTTP2) {
-    EXPECT_STREQ(uvhttp_error_category_string(UVHTTP_ERROR_HTTP2_INIT), "HTTP/2 Error");
-    EXPECT_STREQ(uvhttp_error_category_string(UVHTTP_ERROR_HTTP2_STREAM), "HTTP/2 Error");
-    EXPECT_STREQ(uvhttp_error_category_string(UVHTTP_ERROR_HTTP2_SETTINGS), "HTTP/2 Error");
-    EXPECT_STREQ(uvhttp_error_category_string(UVHTTP_ERROR_HTTP2_FLOW_CONTROL), "HTTP/2 Error");
-    EXPECT_STREQ(uvhttp_error_category_string(UVHTTP_ERROR_HTTP2_HEADER_COMPRESS), "HTTP/2 Error");
-    EXPECT_STREQ(uvhttp_error_category_string(UVHTTP_ERROR_HTTP2_PRIORITY), "HTTP/2 Error");
 }
 
 /* 测试错误分类 - 配置错误 */
@@ -380,16 +360,6 @@ TEST(UvhttpErrorTest, ErrorDescriptionWebSocket) {
     EXPECT_STREQ(uvhttp_error_description(UVHTTP_ERROR_WEBSOCKET_CLOSED), "WebSocket connection is closed");
 }
 
-/* 测试错误描述 - HTTP/2错误 */
-TEST(UvhttpErrorTest, ErrorDescriptionHTTP2) {
-    EXPECT_STREQ(uvhttp_error_description(UVHTTP_ERROR_HTTP2_INIT), "Failed to initialize HTTP/2");
-    EXPECT_STREQ(uvhttp_error_description(UVHTTP_ERROR_HTTP2_STREAM), "HTTP/2 stream error");
-    EXPECT_STREQ(uvhttp_error_description(UVHTTP_ERROR_HTTP2_SETTINGS), "HTTP/2 settings error");
-    EXPECT_STREQ(uvhttp_error_description(UVHTTP_ERROR_HTTP2_FLOW_CONTROL), "HTTP/2 flow control error");
-    EXPECT_STREQ(uvhttp_error_description(UVHTTP_ERROR_HTTP2_HEADER_COMPRESS), "HTTP/2 header compression error");
-    EXPECT_STREQ(uvhttp_error_description(UVHTTP_ERROR_HTTP2_PRIORITY), "HTTP/2 priority error");
-}
-
 /* 测试错误描述 - 配置错误 */
 TEST(UvhttpErrorTest, ErrorDescriptionConfig) {
     EXPECT_STREQ(uvhttp_error_description(UVHTTP_ERROR_CONFIG_PARSE), "Failed to parse configuration");
@@ -515,16 +485,6 @@ TEST(UvhttpErrorTest, ErrorSuggestionWebSocket) {
     EXPECT_STREQ(uvhttp_error_suggestion(UVHTTP_ERROR_WEBSOCKET_CLOSED), "Re-establish WebSocket connection");
 }
 
-/* 测试错误建议 - HTTP/2错误 */
-TEST(UvhttpErrorTest, ErrorSuggestionHTTP2) {
-    EXPECT_STREQ(uvhttp_error_suggestion(UVHTTP_ERROR_HTTP2_INIT), "Check HTTP/2 configuration");
-    EXPECT_STREQ(uvhttp_error_suggestion(UVHTTP_ERROR_HTTP2_STREAM), "Reset or recreate the stream");
-    EXPECT_STREQ(uvhttp_error_suggestion(UVHTTP_ERROR_HTTP2_SETTINGS), "Review HTTP/2 settings");
-    EXPECT_STREQ(uvhttp_error_suggestion(UVHTTP_ERROR_HTTP2_FLOW_CONTROL), "Adjust flow control parameters");
-    EXPECT_STREQ(uvhttp_error_suggestion(UVHTTP_ERROR_HTTP2_HEADER_COMPRESS), "Check header compression settings");
-    EXPECT_STREQ(uvhttp_error_suggestion(UVHTTP_ERROR_HTTP2_PRIORITY), "Review stream priority settings");
-}
-
 /* 测试错误建议 - 配置错误 */
 TEST(UvhttpErrorTest, ErrorSuggestionConfig) {
     EXPECT_STREQ(uvhttp_error_suggestion(UVHTTP_ERROR_CONFIG_PARSE), "Check configuration file syntax");
@@ -647,16 +607,6 @@ TEST(UvhttpErrorTest, ErrorIsRecoverableWebSocketRetryable) {
     EXPECT_EQ(uvhttp_error_is_recoverable(UVHTTP_ERROR_WEBSOCKET_NOT_CONNECTED), 0);
     EXPECT_EQ(uvhttp_error_is_recoverable(UVHTTP_ERROR_WEBSOCKET_ALREADY_CONNECTED), 0);
     EXPECT_EQ(uvhttp_error_is_recoverable(UVHTTP_ERROR_WEBSOCKET_CLOSED), 0);
-}
-
-/* 测试错误可恢复性 - 不可重试的HTTP/2错误 */
-TEST(UvhttpErrorTest, ErrorIsRecoverableHTTP2NonRetryable) {
-    EXPECT_EQ(uvhttp_error_is_recoverable(UVHTTP_ERROR_HTTP2_INIT), 0);
-    EXPECT_EQ(uvhttp_error_is_recoverable(UVHTTP_ERROR_HTTP2_STREAM), 0);
-    EXPECT_EQ(uvhttp_error_is_recoverable(UVHTTP_ERROR_HTTP2_SETTINGS), 0);
-    EXPECT_EQ(uvhttp_error_is_recoverable(UVHTTP_ERROR_HTTP2_FLOW_CONTROL), 0);
-    EXPECT_EQ(uvhttp_error_is_recoverable(UVHTTP_ERROR_HTTP2_HEADER_COMPRESS), 0);
-    EXPECT_EQ(uvhttp_error_is_recoverable(UVHTTP_ERROR_HTTP2_PRIORITY), 0);
 }
 
 /* 测试错误可恢复性 - 不可重试的配置错误 */
