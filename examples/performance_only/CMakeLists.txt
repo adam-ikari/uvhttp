@@ -37,7 +37,7 @@ add_executable(performance_test ../performance_test.c)
 target_link_libraries(performance_test
     ${UVHTTP_LIBRARY}
     ${LIBUV_LIB}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/build/libllhttp.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
@@ -48,7 +48,7 @@ add_executable(performance_test_static ../performance_test_static.c)
 target_link_libraries(performance_test_static
     ${UVHTTP_LIBRARY}
     ${LIBUV_LIB}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/build/libllhttp.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
@@ -59,7 +59,7 @@ add_executable(performance_static_server ../performance_static_server.c)
 target_link_libraries(performance_static_server
     ${UVHTTP_LIBRARY}
     ${LIBUV_LIB}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/build/libllhttp.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
@@ -67,7 +67,7 @@ target_link_libraries(performance_static_server
 add_dependencies(performance_static_server uvhttp)
 
 add_executable(test_static_middleware ../test_static_middleware.c)
-target_link_libraries(test_static_middleware ${UVHTTP_LIBRARY} ${LIBUV_LIB} ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a m pthread dl)
+target_link_libraries(test_static_middleware ${UVHTTP_LIBRARY} ${LIBUV_LIB} ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/build/libllhttp.a ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a m pthread dl)
 add_dependencies(test_static_middleware uvhttp)
 
 # 健康检查示例
@@ -76,7 +76,7 @@ target_compile_definitions(health_check_demo PRIVATE UVHTTP_TEST_MODE=0 UVHTTP_A
 target_link_libraries(health_check_demo
     ${UVHTTP_LIBRARY}
     ${LIBUV_LIB}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/build/libllhttp.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
@@ -91,7 +91,7 @@ if(BUILD_WITH_WEBSOCKET)
     target_link_libraries(websocket_echo_server
         ${UVHTTP_LIBRARY}
         ${LIBUV_LIB}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/build/libllhttp.a
         ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
         ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
         ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a
@@ -102,7 +102,7 @@ if(BUILD_WITH_WEBSOCKET)
     target_link_libraries(websocket_test_server
         ${UVHTTP_LIBRARY}
         ${LIBUV_LIB}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/build/libllhttp.a
         ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedtls.a
         ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedx509.a
         ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/library/libmbedcrypto.a

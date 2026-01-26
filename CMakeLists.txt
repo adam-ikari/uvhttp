@@ -19,89 +19,39 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# 平台检测
-if(WIN32)
-    set(PLATFORM_NAME "Windows")
-    set(IS_WINDOWS TRUE)
-elseif(APPLE)
-    set(PLATFORM_NAME "macOS")
-    set(IS_MACOS TRUE)
-else()
-    set(PLATFORM_NAME "Linux")
-    set(IS_LINUX TRUE)
-endif()
-
-message(STATUS "Detected platform: ${PLATFORM_NAME}")
-
-# 编译选项 - 根据平台设置
+# 编译选项
 if(ENABLE_DEBUG)
-    if(MSVC)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Od /Zi")
-    else()
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
-    endif()
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
 else()
-    if(MSVC)
-        # MSVC 优化选项
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O2 /GL")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG")
-    elseif(IS_MACOS)
-        # macOS 优化选项
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -march=native")
-    else()
-        # Linux 优化选项
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -march=native -mtune=native")
-    endif()
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -ffunction-sections -fdata-sections")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections")
 endif()
 
 if(ENABLE_COVERAGE)
-    if(MSVC)
-        message(WARNING "Code coverage not supported on MSVC")
-    else()
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
-    endif()
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 endif()
 
-# 安全编译选项 - 根据平台设置
-if(MSVC)
-    # MSVC 安全选项
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
-        /W4 \
-        /WX \
-        /GS \
-        /sdl \
-    ")
-    # MSVC 链接器安全选项
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
-        /DYNAMICBASE \
-        /NXCOMPAT \
-    ")
-else()
-    # GCC/Clang 安全选项
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
-        -Wall \
-        -Wextra \
-        -Wformat=2 \
-        -Wformat-security \
-        -fstack-protector-strong \
-        -fno-omit-frame-pointer \
-        -fno-common \
-        -Werror \
-        -Werror=implicit-function-declaration \
-        -Werror=format-security \
-        -Werror=return-type \
-    ")
-    
-    # Linux 特定的安全选项
-    if(IS_LINUX)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FORTIFY_SOURCE=2")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
-            -Wl,-z,relro \
-            -Wl,-z,now \
-        ")
-    endif()
-endif()
+# 安全编译选项
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
+    -Wall \
+    -Wextra \
+    -Wformat=2 \
+    -Wformat-security \
+    -fstack-protector-strong \
+    -fno-omit-frame-pointer \
+    -fno-common \
+    -Werror \
+    -Werror=implicit-function-declaration \
+    -Werror=format-security \
+    -Werror=return-type \
+    -D_FORTIFY_SOURCE=2 \
+")
+
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
+    -Wl,-z,relro \
+    -Wl,-z,now \
+")
 
 # 特性定义
 if(NOT DEFINED UVHTTP_FEATURE_MIDDLEWARE)
@@ -262,12 +212,45 @@ endif()
 # ============================================================================
 add_library(uvhttp STATIC ${SOURCES})
 
-# 添加依赖关系
-add_dependencies(uvhttp libuv mbedtls xxhash)
-# 不添加 mimalloc 依赖，因为它会构建测试程序导致失败
+# 设置静态库属性，减小大小
+set_target_properties(uvhttp PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib
+    POSITION_INDEPENDENT_CODE ON
+)
 
-# 链接库
-target_link_libraries(uvhttp ${LIBS})
+# 使用现代CMake的target_link_libraries规范方式
+# 使用声明库（IMPORTED targets）的方式链接
+# PRIVATE: 仅在uvhttp库内部使用，不传递给依赖uvhttp的目标
+target_link_libraries(uvhttp
+    PRIVATE
+        libuv
+        mbedtls
+        xxhash
+        llhttp
+)
+
+# 平台特定的库（PRIVATE）
+if(IS_WINDOWS)
+    # Windows 不需要额外的库
+elseif(IS_MACOS)
+    target_link_libraries(uvhttp PRIVATE pthread)
+else()
+    # Linux 需要 pthread, m, dl
+    target_link_libraries(uvhttp PRIVATE pthread m dl)
+endif()
+
+# mimalloc（PRIVATE）
+if(BUILD_WITH_MIMALLOC)
+    target_link_libraries(uvhttp PRIVATE mimalloc)
+    target_compile_definitions(uvhttp PRIVATE UVHTTP_ENABLE_MIMALLOC UVHTTP_FEATURE_ALLOCATOR=1)
+endif()
+
+# 设置包含目录（PUBLIC，传递给依赖uvhttp的目标）
+target_include_directories(uvhttp
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
 
 # ============================================================================
 # 启用测试
@@ -309,11 +292,7 @@ foreach(test_file ${GTEST_TEST_FILES})
         add_dependencies(${test_name} mimalloc)
     endif()
     # 对测试文件移除 -Werror，允许未使用变量警告
-    if(MSVC)
-        target_compile_options(${test_name} PRIVATE /wd4100 /wd4101 /wd4505)
-    else()
-        target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
-    endif()
+    target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
     # 为测试启用统计功能
     target_compile_definitions(${test_name} PRIVATE UVHTTP_FEATURE_STATISTICS=1)
     target_link_libraries(${test_name} ${LIBS} ${GTEST_LIBS})
@@ -342,11 +321,7 @@ add_dependencies(uvhttp_unit_tests libuv mbedtls xxhash gtest)
 if(BUILD_WITH_MIMALLOC)
     add_dependencies(uvhttp_unit_tests mimalloc)
 endif()
-if(MSVC)
-    target_compile_options(uvhttp_unit_tests PRIVATE /wd4100 /wd4101 /wd4505)
-else()
-    target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
-endif()
+target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
 target_link_libraries(uvhttp_unit_tests ${LIBS} ${GTEST_LIBS})
 target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
 add_test(NAME uvhttp_unit_tests COMMAND uvhttp_unit_tests)
@@ -365,11 +340,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stress.c)
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(test_stress mimalloc)
     endif()
-    if(MSVC)
-        target_compile_options(test_stress PRIVATE /wd4100 /wd4101 /wd4505)
-    else()
-        target_compile_options(test_stress PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
-    endif()
+    target_compile_options(test_stress PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
     target_link_libraries(test_stress ${LIBS})
 endif()
 
@@ -424,11 +395,7 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(${test_name} mimalloc)
     endif()
-    if(MSVC)
-        target_compile_options(${test_name} PRIVATE /wd4100 /wd4101 /wd4505)
-    else()
-        target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
-    endif()
+    target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
     target_link_libraries(${test_name} ${LIBS})
 endforeach()
 
@@ -443,10 +410,6 @@ foreach(test_file ${PERFORMANCE_TEST_FILES})
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(${test_name} mimalloc)
     endif()
-    if(MSVC)
-        target_compile_options(${test_name} PRIVATE /wd4100 /wd4101 /wd4505)
-    else()
-        target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
-    endif()
+    target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
     target_link_libraries(${test_name} ${LIBS})
 endforeach()

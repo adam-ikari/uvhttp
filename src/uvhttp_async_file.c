@@ -186,12 +186,7 @@ static void on_file_stat_complete(uv_fs_t* req) {
             /* 是常规文件 */
             if ((size_t)stat_buf->st_size <= manager->max_file_size) {
                 async_req->file_size = stat_buf->st_size;
-#ifdef __APPLE__
-                /* macOS 上 st_mtime 是宏，需要使用 st_mtimespec.tv_sec */
-                async_req->last_modified = stat_buf->st_mtimespec.tv_sec;
-#else
                 async_req->last_modified = stat_buf->st_mtime;
-#endif
                 
                 /* 分配缓冲区 */
                 async_req->buffer = uvhttp_alloc(async_req->file_size);

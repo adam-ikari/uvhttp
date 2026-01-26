@@ -10,8 +10,7 @@ if(NOT UVHTTP_INCLUDE_DIR)
     message(FATAL_ERROR "找不到 uvhttp.h，请先编译 UVHTTP")
 endif()
 
-include_directories(${UVHTTP_INCLUDE_DIR})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../deps/libuv/include)
+# 设置包含目录（将在每个target中单独配置）
 
 # 获取主项目中定义的库
 # 这些库应该在主 CMakeLists.txt 中定义
@@ -21,8 +20,7 @@ set(MBEDTLS_LIBS
     ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/build/library/libmbedx509.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/build/library/libmbedcrypto.a
 )
-set(LLHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/libllhttp.a)
-set(CJSON_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cjson/build/libcjson.a)
+set(LLHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/build/libllhttp.a)
 set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/xxhash/libxxhash.a)
 
 # UVHTTP 库路径
@@ -69,12 +67,12 @@ add_subdirectory(05_advanced)
 if(BUILD_WITH_WEBSOCKET)
     # WebSocket 连接管理测试
     add_executable(test_ws_connection_management test_ws_connection_management.c)
-    target_link_libraries(test_ws_connection_management ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
+    target_link_libraries(test_ws_connection_management ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${XXHASH_LIB} m pthread dl)
     add_dependencies(test_ws_connection_management uvhttp)
 
     # WebSocket 认证示例
     add_executable(websocket_auth_server websocket_auth_server.c)
-    target_link_libraries(websocket_auth_server ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
+    target_link_libraries(websocket_auth_server ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${XXHASH_LIB} m pthread dl)
     add_dependencies(websocket_auth_server uvhttp)
 endif()
 
@@ -83,15 +81,15 @@ endif()
 
 # 性能测试示例
 add_executable(performance_static_server performance_static_server.c)
-target_link_libraries(performance_static_server ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
+target_link_libraries(performance_static_server ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${XXHASH_LIB} m pthread dl)
 add_dependencies(performance_static_server uvhttp)
 
 # 性能基准测试专用服务器（无日志输出，最小化响应体）
 add_executable(performance_test performance_test.c)
-target_link_libraries(performance_test ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
+target_link_libraries(performance_test ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${XXHASH_LIB} m pthread dl)
 add_dependencies(performance_test uvhttp)
 
 # 完整版 Hello World 示例
 add_executable(helloworld_complete helloworld_complete.c)
-target_link_libraries(helloworld_complete ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${CJSON_LIB} ${XXHASH_LIB} m pthread dl)
+target_link_libraries(helloworld_complete ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${XXHASH_LIB} m pthread dl)
 add_dependencies(helloworld_complete uvhttp)

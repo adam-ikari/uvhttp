@@ -5,12 +5,41 @@ script: https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
 ---
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, nextTick, computed } from 'vue'
 
 // 性能数据
 const performanceData = ref(null)
 const loading = ref(true)
 const error = ref(null)
+
+// 计算属性：检查是否有数据
+const hasData = computed(() => {
+  return performanceData.value && performanceData.value.length > 0
+})
+
+// 计算属性：获取最新数据
+const latestData = computed(() => {
+  if (!performanceData.value || performanceData.value.length === 0) {
+    return null
+  }
+  return performanceData.value[performanceData.value.length - 1]
+})
+
+// 计算属性：获取历史数据（反转后）
+const historyData = computed(() => {
+  if (!performanceData.value || performanceData.value.length === 0) {
+    return []
+  }
+  return performanceData.value.slice().reverse()
+})
+
+// 计算属性：获取最近5个报告
+const recentReports = computed(() => {
+  if (!performanceData.value || performanceData.value.length === 0) {
+    return []
+  }
+  return performanceData.value.slice(-5).reverse()
+})
 
 // 获取性能数据
 const fetchPerformanceData = async () => {
@@ -40,7 +69,7 @@ const fetchPerformanceData = async () => {
           const dataResponse = await fetch(jsonAsset.browser_download_url)
           const data = await dataResponse.json()
           performanceResults.push({
-            date: release.published_at,
+            timestamp: release.published_at,
             tag: release.tag_name,
             ...data
           })
@@ -57,6 +86,159 @@ const fetchPerformanceData = async () => {
     loading.value = false
   }
 }
+
+// 渲染图表
+const renderCharts = () => {
+  if (!performanceData.value || performanceData.value.length === 0) {
+    return
+  }
+  
+  const data = performanceData.value || []
+  
+  // 准备图表数据
+  const labels = data.map(d => d.timestamp ? new Date(d.timestamp).toLocaleDateString('zh-CN') : '')
+  const lowRps = data.map(d => d.test_scenarios?.[0]?.results?.rps?.value || 0)
+  const mediumRps = data.map(d => d.test_scenarios?.[1]?.results?.rps?.value || 0)
+  const highRps = data.map(d => d.test_scenarios?.[2]?.results?.rps?.value || 0)
+  
+  const lowLatency = data.map(d => {
+    const val = d.test_scenarios?.[0]?.results?.latency_avg?.value || '0'
+    return val ? parseFloat(val.replace(/[^\d.]/g, '')) : 0
+  })
+  const mediumLatency = data.map(d => {
+    const val = d.test_scenarios?.[1]?.results?.latency_avg?.value || '0'
+    return val ? parseFloat(val.replace(/[^\d.]/g, '')) : 0
+  })
+  const highLatency = data.map(d => {
+    const val = d.test_scenarios?.[2]?.results?.latency_avg?.value || '0'
+    return val ? parseFloat(val.replace(/[^\d.]/g, '')) : 0
+  })
+  
+  // 渲染吞吐量趋势图
+  const throughputCtx = document.getElementById('throughputChart')
+  if (throughputCtx && window.Chart) {
+    new Chart(throughputCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: '低并发 (10 连接)',
+            data: lowRps,
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            tension: 0.4,
+            fill: true
+          },
+          {
+            label: '中等并发 (50 连接)',
+            data: mediumRps,
+            borderColor: '#2ecc71',
+            backgroundColor: 'rgba(46, 204, 113, 0.1)',
+            tension: 0.4,
+            fill: true
+          },
+          {
+            label: '高并发 (100 连接)',
+            data: highRps,
+            borderColor: '#e74c3c',
+            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+            tension: 0.4,
+            fill: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: false,
+            title: {
+              display: true,
+              text: 'RPS'
+            }
+          }
+        }
+      }
+    })
+  }
+  
+  // 渲染延迟趋势图
+  const latencyCtx = document.getElementById('latencyChart')
+  if (latencyCtx && window.Chart) {
+    new Chart(latencyCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: '低并发延迟',
+            data: lowLatency,
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            tension: 0.4,
+            fill: true
+          },
+          {
+            label: '中等并发延迟',
+            data: mediumLatency,
+            borderColor: '#2ecc71',
+            backgroundColor: 'rgba(46, 204, 113, 0.1)',
+            tension: 0.4,
+            fill: true
+          },
+          {
+            label: '高并发延迟',
+            data: highLatency,
+            borderColor: '#e74c3c',
+            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+            tension: 0.4,
+            fill: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: '延迟 (μs)'
+            }
+          }
+        }
+      }
+    })
+  }
+}
+
+// 监听数据变化
+watch(performanceData, () => {
+  nextTick(() => {
+    renderCharts()
+  })
+}, { deep: true })
 
 onMounted(() => {
   fetchPerformanceData()
@@ -75,7 +257,7 @@ onMounted(() => {
       <p>加载失败: {{ error }}</p>
     </div>
     
-    <div v-else-if="performanceData && performanceData.length > 0" class="dashboard-content">
+    <div v-else-if="hasData" class="dashboard-content">
       <!-- 最新性能指标 -->
       <section class="latest-metrics">
         <h2>最新性能指标</h2>
@@ -83,44 +265,44 @@ onMounted(() => {
           <div class="metric-card">
             <h3>低并发 (10 连接)</h3>
             <div class="metric-value">
-              {{ performanceData[performanceData.length - 1]?.test_scenarios?.[0]?.results?.rps?.value?.toFixed(0) || 'N/A' }}
+              {{ latestData?.test_scenarios?.[0]?.results?.rps?.value?.toFixed(0) || 'N/A' }}
             </div>
             <div class="metric-label">RPS</div>
             <div class="metric-sub">
-              延迟: {{ performanceData[performanceData.length - 1]?.test_scenarios?.[0]?.results?.latency_avg?.value || 'N/A' }}
+              延迟: {{ latestData?.test_scenarios?.[0]?.results?.latency_avg?.value || 'N/A' }}
             </div>
           </div>
           
           <div class="metric-card">
             <h3>中等并发 (50 连接)</h3>
             <div class="metric-value">
-              {{ performanceData[performanceData.length - 1]?.test_scenarios?.[1]?.results?.rps?.value?.toFixed(0) || 'N/A' }}
+              {{ latestData?.test_scenarios?.[1]?.results?.rps?.value?.toFixed(0) || 'N/A' }}
             </div>
             <div class="metric-label">RPS</div>
             <div class="metric-sub">
-              延迟: {{ performanceData[performanceData.length - 1]?.test_scenarios?.[1]?.results?.latency_avg?.value || 'N/A' }}
+              延迟: {{ latestData?.test_scenarios?.[1]?.results?.latency_avg?.value || 'N/A' }}
             </div>
           </div>
           
           <div class="metric-card">
             <h3>高并发 (100 连接)</h3>
             <div class="metric-value">
-              {{ performanceData[performanceData.length - 1]?.test_scenarios?.[2]?.results?.rps?.value?.toFixed(0) || 'N/A' }}
+              {{ latestData?.test_scenarios?.[2]?.results?.rps?.value?.toFixed(0) || 'N/A' }}
             </div>
             <div class="metric-label">RPS</div>
             <div class="metric-sub">
-              延迟: {{ performanceData[performanceData.length - 1]?.test_scenarios?.[2]?.results?.latency_avg?.value || 'N/A' }}
+              延迟: {{ latestData?.test_scenarios?.[2]?.results?.latency_avg?.value || 'N/A' }}
             </div>
           </div>
           
           <div class="metric-card">
             <h3>测试日期</h3>
             <div class="metric-value">
-              {{ new Date(performanceData[performanceData.length - 1]?.timestamp).toLocaleDateString('zh-CN') }}
+              {{ latestData?.timestamp ? new Date(latestData.timestamp).toLocaleDateString('zh-CN') : 'N/A' }}
             </div>
             <div class="metric-label">最后更新</div>
             <div class="metric-sub">
-              运行 #{{ performanceData[performanceData.length - 1]?.run_number }}
+              运行 #{{ latestData?.run_number || 'N/A' }}
             </div>
           </div>
         </div>
@@ -156,12 +338,12 @@ onMounted(() => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(data, index) in performanceData.slice().reverse()" :key="data.run_id">
-              <td>{{ new Date(data.timestamp).toLocaleDateString('zh-CN') }}</td>
-              <td>#{{ data.run_number }}</td>
-              <td>{{ data.test_scenarios?.[0]?.results?.rps?.value?.toFixed(0) || 'N/A' }}</td>
-              <td>{{ data.test_scenarios?.[1]?.results?.rps?.value?.toFixed(0) || 'N/A' }}</td>
-              <td>{{ data.test_scenarios?.[2]?.results?.rps?.value?.toFixed(0) || 'N/A' }}</td>
+            <tr v-for="(data, index) in historyData" :key="data?.run_id || index">
+              <td>{{ data?.timestamp ? new Date(data.timestamp).toLocaleDateString('zh-CN') : 'N/A' }}</td>
+              <td>#{{ data?.run_number || 'N/A' }}</td>
+              <td>{{ data?.test_scenarios?.[0]?.results?.rps?.value?.toFixed(0) || 'N/A' }}</td>
+              <td>{{ data?.test_scenarios?.[1]?.results?.rps?.value?.toFixed(0) || 'N/A' }}</td>
+              <td>{{ data?.test_scenarios?.[2]?.results?.rps?.value?.toFixed(0) || 'N/A' }}</td>
               <td>
                 <span class="status pass">✅ 通过</span>
               </td>
@@ -175,13 +357,13 @@ onMounted(() => {
         <h2>详细报告</h2>
         <div class="report-links">
           <a 
-            v-for="data in performanceData.slice(-5).reverse()" 
-            :key="data.run_id"
-            :href="`https://github.com/adam-ikari/uvhttp/releases/download/${data.tag}/performance-report.md`"
+            v-for="(data, index) in recentReports" 
+            :key="data?.run_id || index"
+            :href="data?.tag ? `https://github.com/adam-ikari/uvhttp/releases/download/${data.tag}/performance-report.md` : '#'"
             target="_blank"
             class="report-link"
           >
-            📊 {{ data.tag }} - {{ new Date(data.timestamp).toLocaleDateString('zh-CN') }}
+            📊 {{ data?.tag || 'N/A' }} - {{ data?.timestamp ? new Date(data.timestamp).toLocaleDateString('zh-CN') : 'N/A' }}
           </a>
         </div>
       </section>
@@ -346,175 +528,3 @@ onMounted(() => {
   }
 }
 </style>
-
-<script>
-// 渲染图表
-export default {
-  data() {
-    return {
-      performanceData: []
-    }
-  },
-  mounted() {
-    this.$nextTick(() => {
-      this.renderCharts()
-    })
-  },
-  watch: {
-    performanceData: {
-      handler() {
-        this.$nextTick(() => {
-          this.renderCharts()
-        })
-      },
-      deep: true
-    }
-  },
-  methods: {
-    renderCharts() {
-      if (!this.performanceData || this.performanceData.length === 0) {
-        return
-      }
-      
-      const data = this.performanceData
-      
-      // 准备图表数据
-      const labels = data.map(d => new Date(d.timestamp).toLocaleDateString('zh-CN'))
-      const lowRps = data.map(d => d.test_scenarios?.[0]?.results?.rps?.value || 0)
-      const mediumRps = data.map(d => d.test_scenarios?.[1]?.results?.rps?.value || 0)
-      const highRps = data.map(d => d.test_scenarios?.[2]?.results?.rps?.value || 0)
-      
-      const lowLatency = data.map(d => {
-        const val = d.test_scenarios?.[0]?.results?.latency_avg?.value || '0'
-        return parseFloat(val.replace(/[^\d.]/g, ''))
-      })
-      const mediumLatency = data.map(d => {
-        const val = d.test_scenarios?.[1]?.results?.latency_avg?.value || '0'
-        return parseFloat(val.replace(/[^\d.]/g, ''))
-      })
-      const highLatency = data.map(d => {
-        const val = d.test_scenarios?.[2]?.results?.latency_avg?.value || '0'
-        return parseFloat(val.replace(/[^\d.]/g, ''))
-      })
-      
-      // 渲染吞吐量趋势图
-      const throughputCtx = document.getElementById('throughputChart')
-      if (throughputCtx) {
-        new Chart(throughputCtx, {
-          type: 'line',
-          data: {
-            labels: labels,
-            datasets: [
-              {
-                label: '低并发 (10 连接)',
-                data: lowRps,
-                borderColor: '#3498db',
-                backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                tension: 0.4,
-                fill: true
-              },
-              {
-                label: '中等并发 (50 连接)',
-                data: mediumRps,
-                borderColor: '#2ecc71',
-                backgroundColor: 'rgba(46, 204, 113, 0.1)',
-                tension: 0.4,
-                fill: true
-              },
-              {
-                label: '高并发 (100 连接)',
-                data: highRps,
-                borderColor: '#e74c3c',
-                backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                tension: 0.4,
-                fill: true
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: 'top',
-              },
-              tooltip: {
-                mode: 'index',
-                intersect: false
-              }
-            },
-            scales: {
-              y: {
-                beginAtZero: false,
-                title: {
-                  display: true,
-                  text: 'RPS'
-                }
-              }
-            }
-          }
-        })
-      }
-      
-      // 渲染延迟趋势图
-      const latencyCtx = document.getElementById('latencyChart')
-      if (latencyCtx) {
-        new Chart(latencyCtx, {
-          type: 'line',
-          data: {
-            labels: labels,
-            datasets: [
-              {
-                label: '低并发延迟',
-                data: lowLatency,
-                borderColor: '#3498db',
-                backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                tension: 0.4,
-                fill: true
-              },
-              {
-                label: '中等并发延迟',
-                data: mediumLatency,
-                borderColor: '#2ecc71',
-                backgroundColor: 'rgba(46, 204, 113, 0.1)',
-                tension: 0.4,
-                fill: true
-              },
-              {
-                label: '高并发延迟',
-                data: highLatency,
-                borderColor: '#e74c3c',
-                backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                tension: 0.4,
-                fill: true
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: 'top',
-              },
-              tooltip: {
-                mode: 'index',
-                intersect: false
-              }
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: '延迟 (μs)'
-                }
-              }
-            }
-          }
-        })
-      }
-    }
-  }
-}
-</script>

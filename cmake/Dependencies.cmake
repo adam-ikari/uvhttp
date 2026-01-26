@@ -8,7 +8,6 @@ set(DEPS_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/include
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/xxhash
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp
-    ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/uthash/src
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
@@ -30,6 +29,9 @@ if(NOT EXISTS ${LIBUV_LIB})
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
             -DBUILD_TESTING=OFF
             -DLIBUV_BUILD_SHARED=OFF
+            -DLIBUV_BUILD_BENCH=OFF
+            -DLIBUV_BUILD_EXAMPLES=OFF
+            -DCMAKE_C_FLAGS="-O2 -ffunction-sections -fdata-sections"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv
         RESULT_VARIABLE LIBUV_CONFIG_RESULT
     )
@@ -53,6 +55,13 @@ else()
     message(STATUS "libuv already built: ${LIBUV_LIB}")
 endif()
 
+# 声明 libuv 为 IMPORTED 静态库
+add_library(libuv STATIC IMPORTED)
+set_target_properties(libuv PROPERTIES
+    IMPORTED_LOCATION ${LIBUV_LIB}
+    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
+)
+
 # ============================================================================
 # mbedtls
 # ============================================================================
@@ -73,6 +82,8 @@ if(NOT EXISTS ${MBEDTLS_BUILD_DIR}/library/libmbedtls.a)
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
             -DENABLE_TESTING=OFF
             -DENABLE_PROGRAMS=OFF
+            -DENABLE_DOCS=OFF
+            -DCMAKE_C_FLAGS="-O2 -ffunction-sections -fdata-sections"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls
         RESULT_VARIABLE MBEDTLS_CONFIG_RESULT
     )
@@ -95,6 +106,13 @@ if(NOT EXISTS ${MBEDTLS_BUILD_DIR}/library/libmbedtls.a)
 else()
     message(STATUS "mbedtls already built")
 endif()
+
+# 声明 mbedtls 为 IMPORTED 静态库（接口库，包含多个子库）
+add_library(mbedtls INTERFACE IMPORTED)
+set_target_properties(mbedtls PROPERTIES
+    INTERFACE_LINK_LIBRARIES "${MBEDTLS_LIBS}"
+    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/include
+)
 
 # ============================================================================
 # xxhash
@@ -122,122 +140,55 @@ else()
     message(STATUS "xxhash already built: ${XXHASH_LIB}")
 endif()
 
+# 声明 xxhash 为 IMPORTED 静态库
+add_library(xxhash STATIC IMPORTED)
+set_target_properties(xxhash PROPERTIES
+    IMPORTED_LOCATION ${XXHASH_LIB}
+    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/xxhash
+)
+
 # ============================================================================
 # llhttp
 # ============================================================================
 message(STATUS "Configuring llhttp...")
 
-set(LLHTTP_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp)
+set(LLHTTP_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp/build)
 set(LLHTTP_LIB ${LLHTTP_BUILD_DIR}/libllhttp.a)
 
-# 检查是否需要重新构建（跨平台）
-set(LLHTTP_NEED_REBUILD FALSE)
 if(NOT EXISTS ${LLHTTP_LIB})
-    set(LLHTTP_NEED_REBUILD TRUE)
-else()
-    # 检查库文件是否与当前平台匹配
-    if(APPLE)
-        # macOS 上检查是否是 Mach-O 格式
-        execute_process(
-            COMMAND file ${LLHTTP_LIB}
-            OUTPUT_VARIABLE LLHTTP_FILE_TYPE
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-        if(NOT LLHTTP_FILE_TYPE MATCHES "Mach-O")
-            message(STATUS "llhttp library not built for current platform, rebuilding...")
-            set(LLHTTP_NEED_REBUILD TRUE)
-        endif()
-    elseif(UNIX)
-        # Linux 上检查是否是 ELF 格式
-        execute_process(
-            COMMAND file ${LLHTTP_LIB}
-            OUTPUT_VARIABLE LLHTTP_FILE_TYPE
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-        if(NOT LLHTTP_FILE_TYPE MATCHES "ELF")
-            message(STATUS "llhttp library not built for current platform, rebuilding...")
-            set(LLHTTP_NEED_REBUILD TRUE)
-        endif()
-    endif()
-endif()
-
-if(LLHTTP_NEED_REBUILD)
     message(STATUS "Building llhttp...")
-    # 删除旧的库文件
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -E remove -f ${LLHTTP_LIB} ${LLHTTP_BUILD_DIR}/*.o
-        WORKING_DIRECTORY ${LLHTTP_BUILD_DIR}
+        COMMAND ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp -B ${LLHTTP_BUILD_DIR}
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp
+        RESULT_VARIABLE LLHTTP_CONFIG_RESULT
     )
-    # 编译源代码（分别编译每个文件）
-    execute_process(
-        COMMAND ${CMAKE_C_COMPILER} -c -fPIC llhttp.c -o llhttp.o
-        WORKING_DIRECTORY ${LLHTTP_BUILD_DIR}
-        RESULT_VARIABLE LLHTTP_COMPILE_RESULT1
-    )
-    if(LLHTTP_COMPILE_RESULT1)
-        message(FATAL_ERROR "Failed to compile llhttp.c")
+
+    if(LLHTTP_CONFIG_RESULT)
+        message(FATAL_ERROR "Failed to configure llhttp")
     endif()
+
     execute_process(
-        COMMAND ${CMAKE_C_COMPILER} -c -fPIC api.c -o api.o
-        WORKING_DIRECTORY ${LLHTTP_BUILD_DIR}
-        RESULT_VARIABLE LLHTTP_COMPILE_RESULT2
+        COMMAND ${CMAKE_COMMAND} --build ${LLHTTP_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp
+        RESULT_VARIABLE LLHTTP_BUILD_RESULT
     )
-    if(LLHTTP_COMPILE_RESULT2)
-        message(FATAL_ERROR "Failed to compile api.c")
+
+    if(LLHTTP_BUILD_RESULT)
+        message(FATAL_ERROR "Failed to build llhttp")
     endif()
-    # 创建静态库
-    execute_process(
-        COMMAND ${CMAKE_AR} rcs ${LLHTTP_LIB} llhttp.o api.o
-        WORKING_DIRECTORY ${LLHTTP_BUILD_DIR}
-        RESULT_VARIABLE LLHTTP_ARCHIVE_RESULT
-    )
-    if(LLHTTP_ARCHIVE_RESULT)
-        message(FATAL_ERROR "Failed to create llhttp archive")
-    endif()
+
     message(STATUS "llhttp built successfully")
 else()
     message(STATUS "llhttp already built: ${LLHTTP_LIB}")
 endif()
 
-# ============================================================================
-# cjson
-# ============================================================================
-message(STATUS "Configuring cjson...")
-
-set(CJSON_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson/build)
-set(CJSON_LIB ${CJSON_BUILD_DIR}/libcjson.a)
-
-if(NOT EXISTS ${CJSON_LIB})
-    message(STATUS "Building cjson...")
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson -B ${CJSON_BUILD_DIR}
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
-            -DENABLE_CJSON_TEST=OFF
-            -DBUILD_SHARED_AND_STATIC_LIBS=OFF
-            -DBUILD_SHARED_LIBS=OFF
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson
-        RESULT_VARIABLE CJSON_CONFIG_RESULT
-    )
-
-    if(CJSON_CONFIG_RESULT)
-        message(FATAL_ERROR "Failed to configure cjson")
-    endif()
-
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} --build ${CJSON_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson
-        RESULT_VARIABLE CJSON_BUILD_RESULT
-    )
-
-    if(CJSON_BUILD_RESULT)
-        message(FATAL_ERROR "Failed to build cjson")
-    endif()
-
-    message(STATUS "cjson built successfully")
-else()
-    message(STATUS "cjson already built: ${CJSON_LIB}")
-endif()
+# 声明 llhttp 为 IMPORTED 静态库
+add_library(llhttp STATIC IMPORTED)
+set_target_properties(llhttp PROPERTIES
+    IMPORTED_LOCATION ${LLHTTP_LIB}
+    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp
+)
 
 # ============================================================================
 # mimalloc
@@ -272,6 +223,10 @@ if(BUILD_WITH_MIMALLOC)
                 -DMI_BUILD_OBJECT=OFF
 
                 -DMI_INSTALL=OFF
+
+                -DMI_BUILD_OVERRIDE=OFF
+
+                -DCMAKE_C_FLAGS="-O2 -ffunction-sections -fdata-sections"
 
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc
 
@@ -316,42 +271,18 @@ if(BUILD_WITH_MIMALLOC)
         message(STATUS "mimalloc already built: ${MIMALLOC_LIB}")
 
     endif()
-endif()
 
-# ============================================================================
-# 创建自定义目标
-# ============================================================================
-add_custom_target(libuv
-    COMMAND ${CMAKE_COMMAND} --build ${LIBUV_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv
-)
-
-add_custom_target(mbedtls
-    COMMAND ${CMAKE_COMMAND} --build ${MBEDTLS_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls
-)
-
-add_custom_target(xxhash
-    COMMAND make libxxhash.a
-    WORKING_DIRECTORY ${XXHASH_BUILD_DIR}
-)
-
-add_custom_target(llhttp
-    COMMAND make libllhttp.a
-    WORKING_DIRECTORY ${LLHTTP_BUILD_DIR}
-)
-
-add_custom_target(cjson
-    COMMAND ${CMAKE_COMMAND} --build ${CJSON_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson
-)
-
-if(BUILD_WITH_MIMALLOC)
-    add_custom_target(mimalloc
-        COMMAND ${CMAKE_COMMAND} --build ${MIMALLOC_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc
+    # 声明 mimalloc 为 IMPORTED 静态库
+    add_library(mimalloc STATIC IMPORTED)
+    set_target_properties(mimalloc PROPERTIES
+        IMPORTED_LOCATION ${MIMALLOC_LIB}
+        INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/include
     )
 endif()
+
+# ============================================================================
+# 注意：已使用 IMPORTED targets 声明库，不再需要自定义目标
+# ============================================================================
 
 # ============================================================================
 # googletest
@@ -376,6 +307,9 @@ if(NOT EXISTS ${GTEST_BUILD_DIR}/lib/libgtest.a)
             -DINSTALL_GTEST=OFF
             -DBUILD_SHARED_LIBS=OFF
             -Dgtest_force_shared_crt=OFF
+            -Dgtest_build_samples=OFF
+            -Dgtest_build_tests=OFF
+            -DCMAKE_C_FLAGS="-O2 -ffunction-sections -fdata-sections"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest
         RESULT_VARIABLE GTEST_CONFIG_RESULT
     )
@@ -415,7 +349,6 @@ message(STATUS "libuv: ${LIBUV_LIB}")
 message(STATUS "mbedtls: ${MBEDTLS_LIBS}")
 message(STATUS "xxhash: ${XXHASH_LIB}")
 message(STATUS "llhttp: ${LLHTTP_LIB}")
-message(STATUS "cjson: ${CJSON_LIB}")
 if(BUILD_WITH_MIMALLOC)
     message(STATUS "mimalloc: ${MIMALLOC_LIB}")
 endif()
