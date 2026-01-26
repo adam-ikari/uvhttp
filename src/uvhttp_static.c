@@ -4,6 +4,7 @@
 
 #define _XOPEN_SOURCE 600 /* 启用 strptime, timegm */
 #define _DEFAULT_SOURCE /* 启用 strcasecmp */
+#define _BSD_SOURCE     /* 启用 DT_DIR */
 
 #include "uvhttp_static.h"
 #include "uvhttp_middleware.h"
@@ -19,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>  /* macOS 需要 strings.h */
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <dirent.h>
