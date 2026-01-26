@@ -8,7 +8,6 @@ set(MBEDTLS_LIBS
     ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedcrypto.a
 )
 set(LLHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/build/libllhttp.a)
-set(CJSON_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson/build/libcjson.a)
 set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/xxhash/libxxhash.a)
 
 # 从父 CMakeLists.txt 获取 UVHTTP 库路径
@@ -20,7 +19,6 @@ target_link_libraries(simple_routing
     ${LIBUV_LIB}
     ${MBEDTLS_LIBS}
     ${LLHTTP_LIB}
-    ${CJSON_LIB}
     ${XXHASH_LIB}
     pthread m dl)
 add_dependencies(simple_routing uvhttp)
@@ -31,7 +29,6 @@ target_link_libraries(method_routing
     ${LIBUV_LIB}
     ${MBEDTLS_LIBS}
     ${LLHTTP_LIB}
-    ${CJSON_LIB}
     ${XXHASH_LIB}
     pthread m dl)
 add_dependencies(method_routing uvhttp)
