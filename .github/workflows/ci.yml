@@ -17,58 +17,164 @@ env:
   IS_RELEASE: ${{ startsWith(github.ref, 'refs/heads/release/') }}
   IS_FEATURE: ${{ startsWith(github.ref, 'refs/heads/feature/') }}
   IS_PR: ${{ github.event_name == 'pull_request' }}
-  
-  # 组合条件
-  RUN_PERF: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/') }}
-  RUN_STRESS: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') }}
-  RUN_MEMORY: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') }}
 
 jobs:
   # ========== Ubuntu Build & Test ==========
   ubuntu-build:
-    uses: ./.github/workflows/reusable/build.yml
-    with:
-      os: ubuntu-latest
-      build-type: Release
-      cache-key: ${{ github.sha }}
-  
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup CMake
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential valgrind wrk lcov
+
+      - name: Configure CMake
+        run: |
+          cmake -B build-release -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          cmake --build build-release --config Release -j$(nproc)
+
+      - name: Check for warnings
+        run: |
+          if cmake --build build-release --config Release 2>&1 | grep -i "warning:"; then
+            echo "Found compiler warnings!"
+            exit 1
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-ubuntu-latest-Release
+          path: build-release/dist/
+          retention-days: 7
+
   ubuntu-test-fast:
     needs: ubuntu-build
-    uses: ./.github/workflows/reusable/test.yml
-    with:
-      os: ubuntu-latest
-      build-type: Release
-      test-type: fast
-      timeout: 60
-      parallel: 1
-  
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-ubuntu-latest-Release
+          path: build-release
+
+      - name: Run fast tests
+        run: |
+          cd build-release
+          ctest --output-on-failure -j1 --timeout 60 --schedule-random
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-ubuntu-fast
+          path: |
+            build-release/Testing/
+            build-release/**/*.log
+          retention-days: 7
+
   ubuntu-security:
-    uses: ./.github/workflows/reusable/security.yml
-    with:
-      scan-type: all
-  
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install cppcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck
+
+      - name: Run cppcheck
+        run: |
+          cppcheck --enable=warning,performance,portability \
+            --error-exitcode=0 \
+            --suppress=missingIncludeSystem \
+            --suppress=unusedFunction \
+            --suppress=constParameter \
+            --suppress=unusedStructMember \
+            --xml \
+            -DUVHTTP_STRINGIFY\(x\)=\#x \
+            -DUVHTTP_FEATURE_WEBSOCKET=1 \
+            -DUVHTTP_FEATURE_STATIC_FILES=1 \
+            -DUVHTTP_FEATURE_TLS=1 \
+            -DUVHTTP_FEATURE_RATE_LIMIT=1 \
+            -DUVHTTP_FEATURE_LOGGING=1 \
+            -DUVHTTP_FEATURE_LRU_CACHE=1 \
+            -DUVHTTP_FEATURE_ROUTER_CACHE=1 \
+            src/ 2> cppcheck.xml || true
+
+      - name: Upload cppcheck results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cppcheck-results
+          path: cppcheck.xml
+          retention-days: 7
+
   ubuntu-performance:
     needs: ubuntu-build
-    if: env.RUN_PERF == 'true'
-    uses: ./.github/workflows/reusable/build.yml
-    with:
-      os: ubuntu-latest
-      build-type: Release
-      enable-examples: true
-      cache-key: ${{ github.sha }}-examples
-  
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup CMake
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential
+
+      - name: Configure CMake with examples
+        run: |
+          cmake -B build-release -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
+
+      - name: Build with examples
+        run: |
+          cmake --build build-release --config Release -j$(nproc)
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-ubuntu-latest-Release
+          path: build-release/dist/
+          retention-days: 7
+
   ubuntu-performance-run:
     needs: ubuntu-performance
-    if: env.RUN_PERF == 'true'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: actions/download-artifact@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
         with:
           name: build-ubuntu-latest-Release
+
       - name: Run performance test
         run: |
           mkdir -p build-release/public
@@ -83,65 +189,160 @@ jobs:
             kill $SERVER_PID 2>/dev/null || true
             exit $WRK_EXIT
           fi
-  
+
   # ========== macOS Build & Test ==========
   macos-build:
-    uses: ./.github/workflows/reusable/build.yml
-    with:
-      os: macos-latest
-      build-type: Release
-      cache-key: ${{ github.sha }}
-  
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup CMake
+        run: |
+          brew install cmake wrk
+
+      - name: Configure CMake
+        run: |
+          cmake -B build-release -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          cmake --build build-release --config Release -j$(sysctl -n hw.ncpu)
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-macos-latest-Release
+          path: build-release/dist/
+          retention-days: 7
+
   macos-test-fast:
     needs: macos-build
-    uses: ./.github/workflows/reusable/test.yml
-    with:
-      os: macos-latest
-      build-type: Release
-      test-type: fast
-      timeout: 60
-  
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-macos-latest-Release
+          path: build-release
+
+      - name: Run fast tests
+        run: |
+          cd build-release
+          ctest --output-on-failure -j1 --timeout 60 --schedule-random
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-macos-fast
+          path: |
+            build-release/Testing/
+            build-release/**/*.log
+          retention-days: 7
+
   # ========== Windows Build & Test ==========
   windows-build:
-    uses: ./.github/workflows/reusable/build.yml
-    with:
-      os: windows-latest
-      build-type: Release
-      cache-key: ${{ github.sha }}
-  
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.20'
+
+      - name: Setup MSVC
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Configure CMake
+        run: |
+          cmake -B build-release -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          cmake --build build-release --config Release --parallel
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-windows-latest-Release
+          path: build-release/dist/
+          retention-days: 7
+
   windows-test-fast:
     needs: windows-build
-    uses: ./.github/workflows/reusable/test.yml
-    with:
-      os: windows-latest
-      build-type: Release
-      test-type: fast
-      timeout: 60
-  
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-windows-latest-Release
+          path: build-release
+
+      - name: Run fast tests
+        run: |
+          cd build-release
+          ctest --output-on-failure -j1 --timeout 60 --schedule-random
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-windows-fast
+          path: |
+            build-release/Testing/
+            build-release/**/*.log
+          retention-days: 7
+
   # ========== Docs Build ==========
   docs-build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: env.RUN_PERF == 'true'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           submodules: recursive
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: docs/package-lock.json
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
+
       - name: Build docs
         working-directory: ./docs
         run: |
           pnpm install
           pnpm build
+
       - name: Verify build output
         working-directory: ./docs
         run: |
