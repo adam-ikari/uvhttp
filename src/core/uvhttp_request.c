@@ -35,9 +35,9 @@ static int on_message_complete(llhttp_t* parser);
 
 
 
-int uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client) {
+uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client) {
     if (!request || !client) {
-        return -1;
+        return UVHTTP_ERROR_INVALID_ARGUMENT;
     }
     
     memset(request, 0, sizeof(uvhttp_request_t));
@@ -487,16 +487,14 @@ const char* uvhttp_request_get_header(uvhttp_request_t* request, const char* nam
     /* 查找 header（不区分大小写） */
     for (size_t i = 0; i < request->header_count; i++) {
         uvhttp_header_t* header = uvhttp_request_get_header_at(request, i);
-        if (header && header->name && 
-            strcasecmp(header->name, name) == 0) {
+        if (header && strcasecmp(header->name, name) == 0) {
             /* 验证 header 值 */
-            if (header->value && 
-                strlen(header->value) <= UVHTTP_MAX_HEADER_VALUE_LENGTH) {
+            if (strlen(header->value) <= UVHTTP_MAX_HEADER_VALUE_LENGTH) {
                 return header->value;
             }
         }
     }
-    
+
     return NULL;
 }
 
