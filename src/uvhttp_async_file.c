@@ -181,7 +181,7 @@ static void on_file_stat_complete(uv_fs_t* req) {
 
     if (req->result == 0) {
         /* stat成功 */
-        uv_stat_t* stat_buf = (uv_stat_t*)req->ptr;
+        struct stat* stat_buf = (struct stat*)req->ptr;
         if (stat_buf && S_ISREG(stat_buf->st_mode)) {
             /* 是常规文件 */
             if ((size_t)stat_buf->st_size <= manager->max_file_size) {
@@ -425,7 +425,7 @@ int uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager,
     /* 获取文件大小 */
     uv_fs_t stat_req;
     if (uv_fs_stat(manager->loop, &stat_req, file_path, NULL) == 0) {
-        uv_stat_t* stat_buf = (uv_stat_t*)stat_req.ptr;
+        struct stat* stat_buf = (struct stat*)stat_req.ptr;
         if (stat_buf) {
             stream_ctx->remaining_bytes = stat_buf->st_size;
         }
