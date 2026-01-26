@@ -350,6 +350,11 @@ onMounted(() => {
 <script>
 // 渲染图表
 export default {
+  data() {
+    return {
+      performanceData: []
+    }
+  },
   mounted() {
     this.$nextTick(() => {
       this.renderCharts()
