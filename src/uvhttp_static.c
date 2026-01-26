@@ -163,20 +163,20 @@ static void html_escape(char* dest, const char* src, size_t dest_size) {
 /**
  * 根据文件扩展名获取MIME类型
  */
-int uvhttp_static_get_mime_type(const char* file_path,
+uvhttp_result_t uvhttp_static_get_mime_type(const char* file_path,
                                char* mime_type,
                                size_t buffer_size) {
-    if (!file_path || !mime_type || buffer_size == 0) return -1;
-    
+    if (!file_path || !mime_type || buffer_size == 0) return UVHTTP_ERROR_INVALID_PARAM;
+
     const char* extension = get_file_extension(file_path);
-    
+
     /* 查找MIME类型 */
     for (int i = 0; mime_types[i].extension; i++) {
         if (strcasecmp(extension, mime_types[i].extension) == 0) {
             if (uvhttp_safe_strncpy(mime_type, mime_types[i].mime_type, buffer_size) != 0) {
                 UVHTTP_LOG_ERROR("Failed to copy MIME type: %s", mime_types[i].mime_type);
             }
-            return 0;
+            return UVHTTP_OK;
         }
     }
 
@@ -502,23 +502,23 @@ int uvhttp_static_generate_etag(const char* file_path,
                                size_t file_size,
                                char* etag,
                                size_t buffer_size) {
-    if (!file_path || !etag || buffer_size == 0) return -1;
-    
+    if (!file_path || !etag || buffer_size == 0) return UVHTTP_ERROR_INVALID_PARAM;
+
     /* 简单的ETag生成：文件大小-修改时间 */
     snprintf(etag, buffer_size, "\"%zu-%ld\"", file_size, (long)last_modified);
-    
-    return 0;
+
+    return UVHTTP_OK;
 }
 
 /**
  * 设置静态文件相关的响应头
  */
-int uvhttp_static_set_response_headers(void* response,
+uvhttp_result_t uvhttp_static_set_response_headers(void* response,
                                       const char* file_path,
                                       size_t file_size,
                                       time_t last_modified,
                                       const char* etag) {
-    if (!response) return -1;
+    if (!response) return UVHTTP_ERROR_INVALID_PARAM;
     
     /* 设置Content-Type */
     char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
@@ -546,8 +546,8 @@ int uvhttp_static_set_response_headers(void* response,
     
     /* 设置Cache-Control */
     uvhttp_response_set_header(response, "Cache-Control", "public, max-age=3600");
-    
-    return 0;
+
+    return UVHTTP_OK;
 }
 
 /**
@@ -724,15 +724,15 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                                              void* request,
                                              void* response) {
     if (!ctx || !request || !response) {
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
     const char* url = uvhttp_request_get_url(request);
     if (!url) {
         uvhttp_response_set_status(response, 400);
-        return -1;
+        return UVHTTP_ERROR_INVALID_REQUEST;
     }
-    
+
     /* 解析URL路径，移除查询参数 */
     char clean_path[UVHTTP_MAX_PATH_SIZE];
     const char* query_start = strchr(url, '?');
@@ -740,7 +740,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
 
     if (path_len >= sizeof(clean_path)) {
         uvhttp_response_set_status(response, 414); /* URI Too Long */
-        return -1;
+        return UVHTTP_ERROR_INVALID_REQUEST;
     }
 
     /* 使用安全的字符串复制 */
@@ -758,24 +758,24 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     
     /* 构建安全的文件路径 */
     char safe_path[UVHTTP_MAX_FILE_PATH_SIZE];
-    if (!uvhttp_static_resolve_safe_path(ctx->config.root_directory, 
-                                        clean_path, 
-                                        safe_path, 
+    if (!uvhttp_static_resolve_safe_path(ctx->config.root_directory,
+                                        clean_path,
+                                        safe_path,
                                         sizeof(safe_path))) {
         uvhttp_response_set_status(response, 403); /* Forbidden */
-        return -1;
+        return UVHTTP_ERROR_FORBIDDEN;
     }
     
     /* 检查缓存 */
     cache_entry_t* cache_entry = uvhttp_lru_cache_find(ctx->cache, safe_path);
-    
+
     if (cache_entry) {
         /* 从缓存发送响应 */
-        if (uvhttp_static_check_conditional_request(request, cache_entry->etag, 
+        if (uvhttp_static_check_conditional_request(request, cache_entry->etag,
                                                    cache_entry->last_modified)) {
             uvhttp_response_set_status(response, 304); /* Not Modified */
         } else {
-            uvhttp_static_set_response_headers(response, cache_entry->file_path, 
+            uvhttp_static_set_response_headers(response, cache_entry->file_path,
                                                   cache_entry->content_length,
                                                   cache_entry->last_modified,
                                                   cache_entry->etag);
@@ -784,13 +784,13 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
             uvhttp_response_set_status(response, 200);
         }
         uvhttp_response_send(response);
-        return 0;
+        return UVHTTP_OK;
     }
-    
+
     /* 缓存未命中，读取文件 */
     size_t file_size;
     time_t last_modified;
-    
+
     /* 获取文件信息 */
     if (get_file_info(safe_path, &file_size, &last_modified) != 0) {
         /* 检查是否为目录 */
@@ -804,7 +804,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                     uvhttp_response_set_header(response, "Content-Type", "text/html");
                     uvhttp_response_set_body(response, dir_html, strlen(dir_html));
                     uvhttp_free(dir_html);
-                    return 0;
+                    return UVHTTP_OK;
                 }
             }
             /* 尝试添加索引文件 */
@@ -812,26 +812,26 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
             int result = snprintf(index_path, sizeof(index_path), "%s/%s", safe_path, ctx->config.index_file);
             if (result >= (int)sizeof(index_path)) {
                 uvhttp_response_set_status(response, 414); /* URI Too Long */
-                return -1;
+                return UVHTTP_ERROR_INVALID_REQUEST;
             }
-            
+
             if (get_file_info(index_path, &file_size, &last_modified) == 0) {
                 /* 使用安全的字符串拷贝，路径太长时自动截断 */
                 uvhttp_safe_strncpy(safe_path, index_path, sizeof(safe_path));
             } else {
                 uvhttp_response_set_status(response, 404); /* Not Found */
-                return -1;
+                return UVHTTP_ERROR_NOT_FOUND;
             }
         } else {
             uvhttp_response_set_status(response, 404); /* Not Found */
-            return -1;
+            return UVHTTP_ERROR_NOT_FOUND;
         }
     }
-    
+
     /* 检查文件大小限制 */
     if (file_size > UVHTTP_STATIC_MAX_FILE_SIZE) {
         uvhttp_response_set_status(response, 413); /* Payload Too Large */
-        return -1;
+        return UVHTTP_ERROR_FILE_TOO_LARGE;
     }
     
     /* 对于大文件（> 1MB），使用sendfile零拷贝优化 */
@@ -858,31 +858,31 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
             /* 回退到传统方式 */
         } else {
             /* sendfile成功，返回 */
-            return 0;
+            return UVHTTP_OK;
         }
     }
-    
+
     /* 读取文件内容（小文件或sendfile失败时的回退） */
     char* file_content = read_file_content(safe_path, &file_size);
     if (!file_content) {
         uvhttp_response_set_status(response, 500); /* Internal Server Error */
-        return -1;
+        return UVHTTP_ERROR_IO;
     }
-    
+
     /* 获取MIME类型 */
     char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
     uvhttp_static_get_mime_type(safe_path, mime_type, sizeof(mime_type));
-    
+
     /* 生成ETag */
     char etag[UVHTTP_MAX_HEADER_VALUE_SIZE];
-    uvhttp_static_generate_etag(safe_path, last_modified, file_size, 
+    uvhttp_static_generate_etag(safe_path, last_modified, file_size,
                                etag, sizeof(etag));
-    
+
     /* 检查条件请求 */
     if (uvhttp_static_check_conditional_request(request, etag, last_modified)) {
         uvhttp_free(file_content);
         uvhttp_response_set_status(response, 304); /* Not Modified */
-        return 0;
+        return UVHTTP_OK;
     }
     
     /* 添加到缓存 */
