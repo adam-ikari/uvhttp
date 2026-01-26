@@ -168,14 +168,22 @@ if(LLHTTP_NEED_REBUILD)
         COMMAND ${CMAKE_COMMAND} -E remove -f ${LLHTTP_LIB} ${LLHTTP_BUILD_DIR}/*.o
         WORKING_DIRECTORY ${LLHTTP_BUILD_DIR}
     )
-    # 编译源代码
+    # 编译源代码（分别编译每个文件）
     execute_process(
-        COMMAND ${CMAKE_C_COMPILER} -c -fPIC llhttp.c api.c -o llhttp.o api.o
+        COMMAND ${CMAKE_C_COMPILER} -c -fPIC llhttp.c -o llhttp.o
         WORKING_DIRECTORY ${LLHTTP_BUILD_DIR}
-        RESULT_VARIABLE LLHTTP_COMPILE_RESULT
+        RESULT_VARIABLE LLHTTP_COMPILE_RESULT1
     )
-    if(LLHTTP_COMPILE_RESULT)
-        message(FATAL_ERROR "Failed to compile llhttp source files")
+    if(LLHTTP_COMPILE_RESULT1)
+        message(FATAL_ERROR "Failed to compile llhttp.c")
+    endif()
+    execute_process(
+        COMMAND ${CMAKE_C_COMPILER} -c -fPIC api.c -o api.o
+        WORKING_DIRECTORY ${LLHTTP_BUILD_DIR}
+        RESULT_VARIABLE LLHTTP_COMPILE_RESULT2
+    )
+    if(LLHTTP_COMPILE_RESULT2)
+        message(FATAL_ERROR "Failed to compile api.c")
     endif()
     # 创建静态库
     execute_process(
