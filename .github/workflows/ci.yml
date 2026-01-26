@@ -203,7 +203,7 @@ jobs:
       - name: Setup CMake
         run: |
           brew install cmake wrk python3
-          pip3 install --break-system-packages jsonschema
+          pip3 install --break-system-packages jsonschema jinja2
 
       - name: Configure CMake
         run: |
