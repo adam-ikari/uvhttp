@@ -202,7 +202,8 @@ jobs:
 
       - name: Setup CMake
         run: |
-          brew install cmake wrk
+          brew install cmake wrk python3
+          pip3 install jsonschema
 
       - name: Configure CMake
         run: |
@@ -270,7 +271,7 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -B build-release -DCMAKE_BUILD_TYPE=Release
+          cmake -B build-release -G "Visual Studio 17 2022" -A x64
 
       - name: Build
         run: |
@@ -340,7 +341,8 @@ jobs:
       - name: Build docs
         working-directory: ./docs
         run: |
-          pnpm install
+          rm -rf node_modules .vitepress/.temp
+          pnpm install --force
           pnpm build
 
       - name: Verify build output
