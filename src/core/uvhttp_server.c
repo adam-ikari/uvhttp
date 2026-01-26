@@ -1361,6 +1361,7 @@ uvhttp_error_t uvhttp_server_ws_close_all(
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
+    int closed_count = 0;
     ws_connection_node_t* current = server->ws_connection_manager->connections;
     ws_connection_node_t* prev = NULL;
     
