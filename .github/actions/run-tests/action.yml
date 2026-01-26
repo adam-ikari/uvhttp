@@ -1,0 +1,94 @@
+name: 'Run Tests'
+description: 'Run tests and collect results'
+
+inputs:
+  build-dir:
+    description: 'Build directory'
+    required: true
+  test-type:
+    description: 'Test type: fast, slow, all, coverage, stress, memory'
+    required: true
+    default: 'fast'
+  timeout:
+    description: 'Test timeout in seconds'
+    required: false
+    default: 60
+  parallel:
+    description: 'Number of parallel test jobs'
+    required: false
+    default: 1
+
+outputs:
+  status:
+    description: 'Test status'
+    value: ${{ steps.test.outputs.status }}
+  total:
+    description: 'Total test count'
+    value: ${{ steps.test.outputs.total }}
+  passed:
+    description: 'Passed test count'
+    value: ${{ steps.test.outputs.passed }}
+  failed:
+    description: 'Failed test count'
+    value: ${{ steps.test.outputs.failed }}
+  duration:
+    description: 'Test duration in seconds'
+    value: ${{ steps.test.outputs.duration }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run tests
+      id: test
+      shell: bash
+      run: |
+        cd ${{ inputs.build-dir }}
+        
+        START_TIME=$(date +%s)
+        
+        case "${{ inputs.test-type }}" in
+          fast)
+            ctest --output-on-failure -j${{ inputs.parallel }} --timeout ${{ inputs.timeout }} --label-regex "^fast$" --schedule-random
+            ;;
+          slow)
+            ctest --output-on-failure -j${{ inputs.parallel }} --timeout ${{ inputs.timeout }} --label-regex "^slow$" --schedule-random
+            ;;
+          all)
+            ctest --output-on-failure -j${{ inputs.parallel }} --timeout ${{ inputs.timeout }} --schedule-random
+            ;;
+          coverage)
+            if [ -f "coverage.info" ]; then
+              lcov --summary coverage.info
+            else
+              ctest --output-on-failure -j${{ inputs.parallel }} --timeout 1800 --schedule-random
+            fi
+            ;;
+          stress)
+            ctest --output-on-failure -j1 --timeout 1800 --label-regex "^stress$" --schedule-random
+            ;;
+          memory)
+            export ASAN_OPTIONS=detect_leaks=1:halt_on_error=0
+            ctest --output-on-failure -j1 --timeout 120 --schedule-random
+            ;;
+          *)
+            echo "Unknown test type: ${{ inputs.test-type }}"
+            exit 1
+            ;;
+        esac
+        
+        TEST_RESULT=$?
+        END_TIME=$(date +%s)
+        DURATION=$((END_TIME - START_TIME))
+        
+        # Extract test statistics
+        TOTAL=$(ctest -N 2>/dev/null | grep -c "Test #" || echo 0)
+        PASSED=$(ctest --print-labels 2>/dev/null | grep -c "Passed" || echo 0)
+        FAILED=$(ctest --print-labels 2>/dev/null | grep -c "Failed" || echo 0)
+        
+        echo "status=$([ $TEST_RESULT -eq 0 ] && echo 'success' || echo 'failed')" >> $GITHUB_OUTPUT
+        echo "total=$TOTAL" >> $GITHUB_OUTPUT
+        echo "passed=$PASSED" >> $GITHUB_OUTPUT
+        echo "failed=$FAILED" >> $GITHUB_OUTPUT
+        echo "duration=$DURATION" >> $GITHUB_OUTPUT
+        
+        exit $TEST_RESULT

@@ -1,0 +1,44 @@
+name: 'Cache Dependencies'
+description: 'Cache dependencies and build artifacts'
+
+inputs:
+  cache-key:
+    description: 'Cache key'
+    required: true
+    default: 'default'
+  build-type:
+    description: 'Build type'
+    required: false
+    default: 'Release'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Cache CMake build
+      uses: actions/cache@v4
+      with:
+        path: |
+          build/
+          deps/*/build/
+          deps/libuv/build/
+          deps/mbedtls/build/
+          deps/xxhash/
+          deps/cllhttp/
+          deps/cjson/build/
+          deps/mimalloc/build/
+          deps/googletest/build/
+        key: ${{ runner.os }}-cmake-${{ inputs.cache-key }}-${{ hashFiles('**/CMakeLists.txt', '**/*.c', '**/*.h') }}
+        restore-keys: |
+          ${{ runner.os }}-cmake-${{ inputs.cache-key }}-
+          ${{ runner.os }}-cmake-
+    
+    - name: Cache CMake configuration
+      uses: actions/cache@v4
+      with:
+        path: |
+          CMakeCache.txt
+          CMakeFiles/
+        key: ${{ runner.os }}-cmake-config-${{ inputs.build-type }}-${{ hashFiles('CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-cmake-config-${{ inputs.build-type }}-
+          ${{ runner.os }}-cmake-config-

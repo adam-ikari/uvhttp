@@ -1,0 +1,129 @@
+name: Reusable Security Workflow
+
+on:
+  workflow_call:
+    inputs:
+      scan-type:
+        required: true
+        type: string
+        description: 'Scan type: codeql, cppcheck, clang-tidy, all'
+    outputs:
+      scan-status:
+        description: 'Scan status'
+        value: ${{ jobs.security.outputs.status }}
+      issues-found:
+        description: 'Number of issues found'
+        value: ${{ jobs.security.outputs.issues }}
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      status: ${{ steps.scan.outputs.status }}
+      issues: ${{ steps.scan.outputs.issues }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: CodeQL Analysis
+        if: inputs.scan-type == 'codeql' || inputs.scan-type == 'all'
+        uses: github/codeql-action/init@v2
+        with:
+          languages: cpp
+          queries: security-extended,security-and-quality
+      
+      - name: Autobuild for CodeQL
+        if: inputs.scan-type == 'codeql' || inputs.scan-type == 'all'
+        uses: github/codeql-action/autobuild@v2
+      
+      - name: Perform CodeQL Analysis
+        if: inputs.scan-type == 'codeql' || inputs.scan-type == 'all'
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:cpp"
+      
+      - name: Install cppcheck
+        if: inputs.scan-type == 'cppcheck' || inputs.scan-type == 'all'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck
+      
+      - name: Run cppcheck
+        id: cppcheck
+        if: inputs.scan-type == 'cppcheck' || inputs.scan-type == 'all'
+        run: |
+          cppcheck --enable=warning,performance,portability \
+            --error-exitcode=0 \
+            --suppress=missingIncludeSystem \
+            --suppress=unusedFunction \
+            --suppress=constParameter \
+            --suppress=unusedStructMember \
+            --xml \
+            -DUVHTTP_STRINGIFY\(x\)=\#x \
+            -DUVHTTP_FEATURE_WEBSOCKET=1 \
+            -DUVHTTP_FEATURE_STATIC_FILES=1 \
+            -DUVHTTP_FEATURE_TLS=1 \
+            -DUVHTTP_FEATURE_RATE_LIMIT=1 \
+            -DUVHTTP_FEATURE_LOGGING=1 \
+            -DUVHTTP_FEATURE_LRU_CACHE=1 \
+            -DUVHTTP_FEATURE_ROUTER_CACHE=1 \
+            src/ 2> cppcheck.xml || true
+          
+          ISSUES=$(grep -c '<error' cppcheck.xml || echo 0)
+          echo "issues=$ISSUES" >> $GITHUB_OUTPUT
+          echo "status=completed" >> $GITHUB_OUTPUT
+      
+      - name: Upload cppcheck results
+        if: always() && (inputs.scan-type == 'cppcheck' || inputs.scan-type == 'all')
+        uses: actions/upload-artifact@v4
+        with:
+          name: cppcheck-results
+          path: cppcheck.xml
+          retention-days: 7
+      
+      - name: Install clang-tidy
+        if: inputs.scan-type == 'clang-tidy' || inputs.scan-type == 'all'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-tidy
+      
+      - name: Run clang-tidy
+        id: clang-tidy
+        if: inputs.scan-type == 'clang-tidy' || inputs.scan-type == 'all'
+        run: |
+          cmake -B build-tidy -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build-tidy --config Debug -j$(nproc)
+          
+          find src -name '*.c' -exec clang-tidy {} -p build-tidy \; 2> clang-tidy.log || true
+          
+          ISSUES=$(grep -c 'warning:\|error:' clang-tidy.log || echo 0)
+          echo "issues=$ISSUES" >> $GITHUB_OUTPUT
+          echo "status=completed" >> $GITHUB_OUTPUT
+      
+      - name: Upload clang-tidy results
+        if: always() && (inputs.scan-type == 'clang-tidy' || inputs.scan-type == 'all')
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-tidy-results
+          path: clang-tidy.log
+          retention-days: 7
+      
+      - name: Summary
+        id: scan
+        run: |
+          echo "status=completed" >> $GITHUB_OUTPUT
+          TOTAL_ISSUES=0
+          
+          if [ "${{ steps.cppcheck.outputs.issues }}" != "" ]; then
+            TOTAL_ISSUES=$((TOTAL_ISSUES + ${{ steps.cppcheck.outputs.issues }}))
+          fi
+          
+          if [ "${{ steps.clang-tidy.outputs.issues }}" != "" ]; then
+            TOTAL_ISSUES=$((TOTAL_ISSUES + ${{ steps.clang-tidy.outputs.issues }}))
+          fi
+          
+          echo "issues=$TOTAL_ISSUES" >> $GITHUB_OUTPUT

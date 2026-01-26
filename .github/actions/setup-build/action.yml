@@ -1,0 +1,34 @@
+name: 'Setup Build Environment'
+description: 'Setup build environment for uvhttp project'
+
+inputs:
+  os:
+    description: 'Operating system'
+    required: true
+    default: 'ubuntu-latest'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup CMake (Ubuntu)
+      if: inputs.os == 'ubuntu-latest'
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential valgrind wrk lcov
+    
+    - name: Setup CMake (macOS)
+      if: inputs.os == 'macos-latest'
+      shell: bash
+      run: |
+        brew install cmake wrk
+    
+    - name: Setup CMake (Windows)
+      if: inputs.os == 'windows-latest'
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.20'
+    
+    - name: Setup MSVC (Windows)
+      if: inputs.os == 'windows-latest'
+      uses: microsoft/setup-msbuild@v1
