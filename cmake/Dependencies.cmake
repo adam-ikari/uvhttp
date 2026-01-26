@@ -31,7 +31,6 @@ if(NOT EXISTS ${LIBUV_LIB})
             -DLIBUV_BUILD_SHARED=OFF
             -DLIBUV_BUILD_BENCH=OFF
             -DLIBUV_BUILD_EXAMPLES=OFF
-            -DCMAKE_C_FLAGS="-O2 -ffunction-sections -fdata-sections"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv
         RESULT_VARIABLE LIBUV_CONFIG_RESULT
     )
@@ -83,7 +82,6 @@ if(NOT EXISTS ${MBEDTLS_BUILD_DIR}/library/libmbedtls.a)
             -DENABLE_TESTING=OFF
             -DENABLE_PROGRAMS=OFF
             -DENABLE_DOCS=OFF
-            -DCMAKE_C_FLAGS="-O2 -ffunction-sections -fdata-sections"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls
         RESULT_VARIABLE MBEDTLS_CONFIG_RESULT
     )
@@ -226,8 +224,6 @@ if(BUILD_WITH_MIMALLOC)
 
                 -DMI_BUILD_OVERRIDE=OFF
 
-                -DCMAKE_C_FLAGS="-O2 -ffunction-sections -fdata-sections"
-
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc
 
             RESULT_VARIABLE MIMALLOC_CONFIG_RESULT
@@ -309,7 +305,6 @@ if(NOT EXISTS ${GTEST_BUILD_DIR}/lib/libgtest.a)
             -Dgtest_force_shared_crt=OFF
             -Dgtest_build_samples=OFF
             -Dgtest_build_tests=OFF
-            -DCMAKE_C_FLAGS="-O2 -ffunction-sections -fdata-sections"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest
         RESULT_VARIABLE GTEST_CONFIG_RESULT
     )
