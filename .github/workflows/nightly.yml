@@ -79,6 +79,12 @@ jobs:
           scan-type: all
       
       # Performance test
+      - name: Download build artifacts for performance test
+        uses: actions/download-artifact@v4
+        with:
+          name: build-ubuntu-latest-Release
+          path: build-release
+
       - name: Performance test
         run: |
           mkdir -p build-release/public

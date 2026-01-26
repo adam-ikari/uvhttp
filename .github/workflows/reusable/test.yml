@@ -63,32 +63,32 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-${{ inputs.os }}-${{ inputs.build-type }}
-          path: ${{ inputs.build_type == 'Release' && 'build-release' || 'build-debug' }}
-      
+          path: ${{ inputs.build-type == 'Release' && 'build-release' || 'build-debug' }}
+
       - name: Run tests
         id: run-test
         uses: ./.github/actions/run-tests
         with:
-          build-dir: ${{ inputs.build_type == 'Release' && 'build-release' || 'build-debug' }}
+          build-dir: ${{ inputs.build-type == 'Release' && 'build-release' || 'build-debug' }}
           test-type: ${{ inputs.test-type }}
           timeout: ${{ inputs.timeout }}
           parallel: ${{ inputs.parallel }}
-      
+
       - name: Upload test logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-logs-${{ inputs.os }}-${{ inputs.test-type }}
           path: |
-            ${{ inputs.build_type == 'Release' && 'build-release' || 'build-debug' }}/Testing/
-            ${{ inputs.build_type == 'Release' && 'build-release' || 'build-debug' }}/**/*.log
+            ${{ inputs.build-type == 'Release' && 'build-release' || 'build-debug' }}/Testing/
+            ${{ inputs.build-type == 'Release' && 'build-release' || 'build-debug' }}/**/*.log
           retention-days: 7
-      
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ inputs.os }}-${{ inputs.test-type }}
           path: |
-            ${{ inputs.build_type == 'Release' && 'build-release' || 'build-debug' }}/**/*.xml
+            ${{ inputs.build-type == 'Release' && 'build-release' || 'build-debug' }}/**/*.xml
           retention-days: 7
