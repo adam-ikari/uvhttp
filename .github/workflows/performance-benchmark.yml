@@ -153,11 +153,29 @@ jobs:
     
     - name: Parse performance results
       id: parse
+      env:
+        TIMESTAMP: ${{ steps.date.outputs.timestamp }}
+        RUN_ID: ${{ github.run_id }}
+        RUN_NUMBER: ${{ github.run_number }}
+        SHA: ${{ github.sha }}
+        REF_NAME: ${{ github.ref_name }}
+        COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        COMMIT_AUTHOR: ${{ github.event.head_commit.author.name }}
       run: |
         python3 << 'EOF'
+        import os
         import re
         import json
         from datetime import datetime
+        
+        # 从环境变量获取 GitHub Actions 上下文
+        timestamp = os.environ.get('TIMESTAMP', 'unknown')
+        run_id = int(os.environ.get('RUN_ID', 0))
+        run_number = int(os.environ.get('RUN_NUMBER', 0))
+        sha = os.environ.get('SHA', 'unknown')
+        ref_name = os.environ.get('REF_NAME', 'unknown')
+        commit_message = os.environ.get('COMMIT_MESSAGE', 'unknown')
+        commit_author = os.environ.get('COMMIT_AUTHOR', 'unknown')
         
         # 读取性能日志
         with open('performance.log', 'r') as f:
@@ -230,16 +248,16 @@ jobs:
         
         # 生成 JSON 结果
         output = {
-            'test_id': f'PERF-${{ steps.date.outputs.timestamp }}',
+            'test_id': f'PERF-{timestamp}',
             'timestamp': datetime.utcnow().isoformat() + 'Z',
-            'run_id': ${{ github.run_id }},
-            'run_number': ${{ github.run_number }},
+            'run_id': run_id,
+            'run_number': run_number,
             'commit': {
-                'sha': '${{ github.sha }}',
-                'short_sha': '${{ github.sha }}'[:7],
-                'message': '${{ github.event.head_commit.message }}',
-                'author': '${{ github.event.head_commit.author.name }}',
-                'branch': '${{ github.ref_name }}'
+                'sha': sha,
+                'short_sha': sha[:7] if len(sha) >= 7 else sha,
+                'message': commit_message,
+                'author': commit_author,
+                'branch': ref_name
             },
             'environment': {
                 'os': 'Linux 6.14.11-2-pve',
@@ -306,102 +324,90 @@ jobs:
         echo "status=pass" >> $GITHUB_OUTPUT
     
     - name: Generate performance report
+      env:
+        TEST_DATE: ${{ steps.date.outputs.date }}
+        TEST_DATETIME: ${{ steps.date.outputs.datetime }}
       run: |
-        python3 << 'EOF'
+        cat > /tmp/generate_report.py << 'SCRIPT_EOF'
+        import os
         import json
+        
+        # 从环境变量获取日期信息
+        test_date = os.environ.get('TEST_DATE', 'unknown')
+        test_datetime = os.environ.get('TEST_DATETIME', 'unknown')
         
         with open('performance-results.json', 'r') as f:
             data = json.load(f)
         
-        report = f"""# UVHTTP 性能基准测试报告
-
-## 测试概述
-
-- **测试日期**: ${{ steps.date.outputs.date }}
-- **测试时间**: ${{ steps.date.outputs.datetime }}
-- **测试版本**: v2.0.0
-- **提交**: {data['commit']['short_sha']} - {data['commit']['message']}
-- **分支**: {data['commit']['branch']}
-- **运行编号**: #{data['run_number']}
-- **运行ID**: {data['run_id']}
-
-## 测试环境
-
-- **操作系统**: {data['environment']['os']}
-- **Runner**: {data['environment']['runner']}
-- **CPU**: {data['environment']['cpu']} ({data['environment']['cores']}核)
-- **内存**: {data['environment']['memory']}
-- **编译器**: {data['environment']['compiler']} {data['environment']['compiler_version']}
-- **构建类型**: {data['environment']['build_type']}
-- **优化级别**: {data['environment']['optimization']}
-
-## 测试结果摘要
-
-| 指标 | 通过 | 警告 | 失败 | 总计 |
-|-----|-----|-----|-----|-----|
-| 测试场景 | {data['summary']['passed']} | {data['summary']['warning']} | {data['summary']['failed']} | {data['summary']['total_scenarios']} |
-
-**总体状态**: ✅ 通过
-
-## 详细测试结果
-"""
+        report = "# UVHTTP 性能基准测试报告\n\n"
+        report += "## 测试概述\n\n"
+        report += "- **测试日期**: " + test_date + "\n"
+        report += "- **测试时间**: " + test_datetime + "\n"
+        report += "- **测试版本**: v2.0.0\n"
+        report += "- **提交**: " + data['commit']['short_sha'] + " - " + data['commit']['message'] + "\n"
+        report += "- **分支**: " + data['commit']['branch'] + "\n"
+        report += "- **运行编号**: #" + str(data['run_number']) + "\n"
+        report += "- **运行ID**: " + str(data['run_id']) + "\n"
+        report += "\n"
+        report += "## 测试环境\n\n"
+        report += "- **操作系统**: " + data['environment']['os'] + "\n"
+        report += "- **Runner**: " + data['environment']['runner'] + "\n"
+        report += "- **CPU**: " + data['environment']['cpu'] + " (" + str(data['environment']['cores']) + "核)\n"
+        report += "- **内存**: " + data['environment']['memory'] + "\n"
+        report += "- **编译器**: " + data['environment']['compiler'] + " " + data['environment']['compiler_version'] + "\n"
+        report += "- **构建类型**: " + data['environment']['build_type'] + "\n"
+        report += "- **优化级别**: " + data['environment']['optimization'] + "\n"
+        report += "\n"
+        report += "## 测试结果摘要\n\n"
+        report += "| 指标 | 通过 | 警告 | 失败 | 总计 |\n"
+        report += "|-----|-----|-----|-----|-----|\n"
+        report += "| 测试场景 | " + str(data['summary']['passed']) + " | " + str(data['summary']['warning']) + " | " + str(data['summary']['failed']) + " | " + str(data['summary']['total_scenarios']) + " |\n"
+        report += "\n"
+        report += "**总体状态**: ✅ 通过\n"
+        report += "\n"
+        report += "## 详细测试结果\n\n"
         
         for i, scenario in enumerate(data['test_scenarios'], 1):
-            report += f"""
-### 场景 {i}: {scenario['name']}
-
-| 指标 | 当前值 |
-|-----|-------|
-| 吞吐量 (RPS) | {scenario['results']['rps']['value']:.0f} req/s |
-| 平均延迟 | {scenario['results']['latency_avg']['value']} |
-
-**测试次数**: {scenario['iterations']}
-"""
+            report += "### 场景 " + str(i) + ": " + scenario['name'] + "\n\n"
+            report += "| 指标 | 当前值 |\n"
+            report += "|-----|-------|\n"
+            report += "| 吞吐量 (RPS) | " + str(round(scenario['results']['rps']['value'])) + " req/s |\n"
+            report += "| 平均延迟 | " + scenario['results']['latency_avg']['value'] + " |\n"
+            report += "\n"
+            report += "**测试次数**: " + str(scenario['iterations']) + "\n\n"
         
-        report += """
-## 附录
-
-### 测试命令
-
-```bash
-# 低并发测试
-wrk -t4 -c10 -d10s --timeout 5s http://127.0.0.1:8080/
-
-# 中等并发测试
-wrk -t4 -c50 -d10s --timeout 5s http://127.0.0.1:8080/
-
-# 高并发测试
-wrk -t4 -c100 -d10s --timeout 5s http://127.0.0.1:8080/
-
-# 极端并发测试
-wrk -t8 -c500 -d30s --timeout 10s http://127.0.0.1:8080/
-
-# 超高并发测试
-wrk -t8 -c1000 -d30s --timeout 10s http://127.0.0.1:8080/
-
-# 持续负载测试
-wrk -t4 -c100 -d60s --timeout 5s http://127.0.0.1:8080/
-
-# 小文件下载测试
-wrk -t4 -c100 -d10s --timeout 5s http://127.0.0.1:8080/test.txt
-
-# 大文件下载测试
-wrk -t4 -c50 -d10s --timeout 10s http://127.0.0.1:8080/large.bin
-```
-
----
-
-**报告生成时间**: {data['timestamp']}
-**生成工具**: GitHub Actions
-**报告版本**: 1.0.0
-"""
+        report += "## 附录\n\n"
+        report += "### 测试命令\n\n"
+        report += "```bash\n"
+        report += "# 低并发测试\n"
+        report += "wrk -t4 -c10 -d10s --timeout 5s http://127.0.0.1:8080/\n\n"
+        report += "# 中等并发测试\n"
+        report += "wrk -t4 -c50 -d10s --timeout 5s http://127.0.0.1:8080/\n\n"
+        report += "# 高并发测试\n"
+        report += "wrk -t4 -c100 -d10s --timeout 5s http://127.0.0.1:8080/\n\n"
+        report += "# 极端并发测试\n"
+        report += "wrk -t8 -c500 -d30s --timeout 10s http://127.0.0.1:8080/\n\n"
+        report += "# 超高并发测试\n"
+        report += "wrk -t8 -c1000 -d30s --timeout 10s http://127.0.0.1:8080/\n\n"
+        report += "# 持续负载测试\n"
+        report += "wrk -t4 -c100 -d60s --timeout 5s http://127.0.0.1:8080/\n\n"
+        report += "# 小文件下载测试\n"
+        report += "wrk -t4 -c100 -d10s --timeout 5s http://127.0.0.1:8080/test.txt\n\n"
+        report += "# 大文件下载测试\n"
+        report += "wrk -t4 -c50 -d10s --timeout 10s http://127.0.0.1:8080/large.bin\n"
+        report += "```\n\n"
+        report += "---\n\n"
+        report += "**报告生成时间**: " + data['timestamp'] + "\n"
+        report += "**生成工具**: GitHub Actions\n"
+        report += "**报告版本**: 1.0.0\n"
         
         with open('performance-report.md', 'w') as f:
             f.write(report)
         
         print("Performance report generated successfully")
+        SCRIPT_EOF
         
-        EOF
+        python3 /tmp/generate_report.py
     
     - name: Upload performance results artifact
       uses: actions/upload-artifact@v4
