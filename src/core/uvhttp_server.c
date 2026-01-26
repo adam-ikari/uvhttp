@@ -1328,16 +1328,13 @@ uvhttp_error_t uvhttp_server_ws_broadcast(
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    int sent_count = 0;
     ws_connection_node_t* current = server->ws_connection_manager->connections;
     
     while (current) {
         /* 检查路径是否匹配（如果指定了路径） */
         if (!path || strcmp(current->path, path) == 0) {
             if (current->ws_conn && current->ws_conn->state == UVHTTP_WS_STATE_OPEN) {
-                if (uvhttp_ws_send_text(NULL, current->ws_conn, data, len) == 0) {
-                    sent_count++;
-                }
+                uvhttp_ws_send_text(NULL, current->ws_conn, data, len);
             }
         }
         
@@ -1364,7 +1361,6 @@ uvhttp_error_t uvhttp_server_ws_close_all(
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    int closed_count = 0;
     ws_connection_node_t* current = server->ws_connection_manager->connections;
     ws_connection_node_t* prev = NULL;
     
