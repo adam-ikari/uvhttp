@@ -26,26 +26,37 @@ set(CJSON_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cjson/build/libcjson.a)
 set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/xxhash/libxxhash.a)
 
 # UVHTTP 库路径
+# 使用 CMAKE_BINARY_DIR 来获取当前的构建目录
+# 注意：当 examples 作为子项目添加时，CMAKE_BINARY_DIR 指向主项目的构建目录
+# 当单独配置 examples 时，需要使用 PROJECT_SOURCE_DIR 的父目录
+
 # 获取主项目的根目录（包含 CMakeLists.txt 的目录）
 get_filename_component(UVHTTP_ROOT ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 
-# 尝试常见的构建目录名称
-set(UVHTTP_LIB "")
-foreach(BUILD_DIR build build-release build_test Debug Release)
-    set(TEST_PATH ${UVHTTP_ROOT}/${BUILD_DIR}/dist/lib/libuvhttp.a)
-    if(EXISTS ${TEST_PATH})
-        set(UVHTTP_LIB ${TEST_PATH})
-        break()
+# 尝试从 CMAKE_BINARY_DIR 获取库路径（当作为子项目配置时）
+if(EXISTS ${CMAKE_BINARY_DIR}/dist/lib/libuvhttp.a)
+    set(UVHTTP_LIB ${CMAKE_BINARY_DIR}/dist/lib/libuvhttp.a)
+else()
+    # 否则尝试常见的构建目录名称
+    set(UVHTTP_LIB "")
+    foreach(BUILD_DIR build build-release build_test Debug Release)
+        set(TEST_PATH ${UVHTTP_ROOT}/${BUILD_DIR}/dist/lib/libuvhttp.a)
+        if(EXISTS ${TEST_PATH})
+            set(UVHTTP_LIB ${TEST_PATH})
+            break()
+        endif()
+    endforeach()
+    
+    # 如果找不到，使用第一个尝试的路径作为默认值
+    if(NOT UVHTTP_LIB)
+        set(UVHTTP_LIB ${UVHTTP_ROOT}/build/dist/lib/libuvhttp.a)
     endif()
-endforeach()
-
-# 如果找不到，使用第一个尝试的路径作为默认值
-if(NOT UVHTTP_LIB)
-    set(UVHTTP_LIB ${UVHTTP_ROOT}/build/dist/lib/libuvhttp.a)
 endif()
 
 message(STATUS "UVHTTP 头文件: ${UVHTTP_INCLUDE_DIR}")
 message(STATUS "UVHTTP 库文件: ${UVHTTP_LIB}")
+message(STATUS "UVHTTP_ROOT: ${UVHTTP_ROOT}")
+message(STATUS "CMAKE_BINARY_DIR: ${CMAKE_BINARY_DIR}")
 
 # 基础示例
 
