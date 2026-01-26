@@ -4,7 +4,13 @@
 
 #define _XOPEN_SOURCE 600 /* 启用 strptime, timegm */
 #define _DEFAULT_SOURCE /* 启用 strcasecmp */
-#define _BSD_SOURCE     /* 启用 DT_DIR */
+
+#ifdef __APPLE__
+/* macOS 特定定义 */
+#ifndef DT_DIR
+#define DT_DIR 4
+#endif
+#endif
 
 #include "uvhttp_static.h"
 #include "uvhttp_middleware.h"
