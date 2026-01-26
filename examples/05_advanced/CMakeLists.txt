@@ -12,7 +12,7 @@ set(CJSON_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson/build/libcjson.a)
 set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/xxhash/libxxhash.a)
 
 # 从父 CMakeLists.txt 获取 UVHTTP 库路径
-set(UVHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../build/dist/lib/libuvhttp.a)
+set(UVHTTP_LIB ${CMAKE_BINARY_DIR}/dist/lib/libuvhttp.a)
 
 add_executable(context_injection context_injection.c)
 target_link_libraries(context_injection
