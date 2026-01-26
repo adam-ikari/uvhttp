@@ -191,15 +191,6 @@ else()
     message(STATUS "llhttp already built: ${LLHTTP_LIB}")
 endif()
 
-    if(LLHTTP_BUILD_RESULT)
-        message(FATAL_ERROR "Failed to build llhttp")
-    endif()
-
-    message(STATUS "llhttp built successfully")
-else()
-    message(STATUS "llhttp already built: ${LLHTTP_LIB}")
-endif()
-
 # ============================================================================
 # cjson
 # ============================================================================
