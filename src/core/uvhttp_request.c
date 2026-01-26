@@ -37,7 +37,7 @@ static int on_message_complete(llhttp_t* parser);
 
 uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client) {
     if (!request || !client) {
-        return UVHTTP_ERROR_INVALID_ARGUMENT;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     memset(request, 0, sizeof(uvhttp_request_t));
