@@ -254,10 +254,6 @@ uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
     server->tls_ctx = NULL;
 #endif
     
-    /* 初始化连接池 */
-    server->connection_pool = NULL;
-    server->connection_pool_size = 0;
-    
     return server;
 }
 
@@ -282,9 +278,7 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
     }
     
     /* 清理连接池 */
-    uvhttp_connection_pool_cleanup(server);
-    
-#if UVHTTP_FEATURE_MIDDLEWARE
+    #if UVHTTP_FEATURE_MIDDLEWARE
     /* 清理中间件链 - 零开销设计 */
     uvhttp_server_cleanup_middleware(server);
 #endif
@@ -618,31 +612,51 @@ uvhttp_server_builder_t* uvhttp_set_max_body_size(uvhttp_server_builder_t* serve
 }
 
 // 快速响应API
-void uvhttp_quick_response(uvhttp_response_t* response, int status, const char* content_type, const char* body) {
-    if (!response) return;
+
+uvhttp_error_t uvhttp_quick_response(uvhttp_response_t* response, int status, const char* content_type, const char* body) {
+
+    if (!response) return UVHTTP_ERROR_INVALID_PARAM;
+
     
+
     uvhttp_response_set_status(response, status);
+
     if (content_type) {
+
         uvhttp_response_set_header(response, "Content-Type", content_type);
+
     }
+
     if (body) {
+
         uvhttp_response_set_body(response, body, strlen(body));
+
     }
+
     uvhttp_response_send(response);
+
+    
+
+    return UVHTTP_OK;
+
 }
 
 
 
-void uvhttp_html_response(uvhttp_response_t* response, const char* html_body) {
-    uvhttp_quick_response(response, 200, "text/html", html_body);
+uvhttp_error_t uvhttp_html_response(uvhttp_response_t* response, const char* html_body) {
+
+    return uvhttp_quick_response(response, 200, "text/html", html_body);
+
 }
 
-void uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
+
+
+uvhttp_error_t uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
     // 简单的文件响应实现
     FILE* file = fopen(file_path, "r");
     if (!file) {
         uvhttp_quick_response(response, 404, "text/plain", "File not found");
-        return;
+        return UVHTTP_ERROR_ROUTE_NOT_FOUND;
     }
     
     // 获取文件大小
@@ -653,7 +667,7 @@ void uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
     if (file_size_long < 0) {
         fclose(file);
         uvhttp_quick_response(response, 500, "text/plain", "File size error");
-        return;
+        return UVHTTP_ERROR_IO_ERROR;
     }
     
     size_t file_size = (size_t)file_size_long;
@@ -663,14 +677,14 @@ void uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
     if (!content) {
         fclose(file);
         uvhttp_quick_response(response, 500, "text/plain", "Internal server error");
-        return;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
     if (fread(content, 1, file_size, file) != file_size) {
         uvhttp_free(content);
         fclose(file);
         uvhttp_quick_response(response, 500, "text/plain", "File read error");
-        return;
+        return UVHTTP_ERROR_IO_ERROR;
     }
     content[file_size] = '\0';
     fclose(file);
@@ -686,6 +700,8 @@ void uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
     
     uvhttp_quick_response(response, 200, content_type, content);
     uvhttp_free(content);
+    
+    return UVHTTP_OK;
 }
 
 // 便捷请求参数获取
@@ -847,8 +863,18 @@ uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn, const char
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    // 获取 context
+    uvhttp_context_t* context = NULL;
+    if (ws_conn->ssl) {
+        // TLS 连接
+        uvhttp_connection_t* conn = (uvhttp_connection_t*)ws_conn->user_data;
+        if (conn && conn->server && conn->server->loop) {
+            context = (uvhttp_context_t*)conn->server->loop->data;
+        }
+    }
+
     // 调用原生WebSocket API发送文本消息
-    int result = uvhttp_ws_send_text(ws_conn, data, len);
+    int result = uvhttp_ws_send_text(context, ws_conn, data, len);
     if (result != 0) {
         return UVHTTP_ERROR_WEBSOCKET_FRAME;
     }
@@ -862,8 +888,18 @@ uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    // 获取 context
+    uvhttp_context_t* context = NULL;
+    if (ws_conn->ssl) {
+        // TLS 连接
+        uvhttp_connection_t* conn = (uvhttp_connection_t*)ws_conn->user_data;
+        if (conn && conn->server && conn->server->loop) {
+            context = (uvhttp_context_t*)conn->server->loop->data;
+        }
+    }
+
     // 调用原生WebSocket API关闭连接
-    int result = uvhttp_ws_close(ws_conn, code, reason);
+    int result = uvhttp_ws_close(context, ws_conn, code, reason);
     if (result != 0) {
         return UVHTTP_ERROR_WEBSOCKET_FRAME;
     }
@@ -1110,7 +1146,7 @@ static void ws_timeout_timer_callback(uv_timer_t* handle) {
             
             /* 关闭超时连接 */
             if (current->ws_conn) {
-                uvhttp_ws_close(current->ws_conn, 1000, "Connection timeout");
+                uvhttp_ws_close(NULL, current->ws_conn, 1000, "Connection timeout");
             }
             
             /* 从链表中移除 */
@@ -1150,7 +1186,7 @@ static void ws_heartbeat_timer_callback(uv_timer_t* handle) {
             /* 检查是否需要发送 Ping */
             if (!current->ping_pending) {
                 /* 发送 Ping 帧 */
-                if (uvhttp_ws_send_ping(current->ws_conn, NULL, 0) == 0) {
+                if (uvhttp_ws_send_ping(NULL, current->ws_conn, NULL, 0) == 0) {
                     current->last_ping_sent = current_time;
                     current->ping_pending = 1;
                 }
@@ -1160,7 +1196,7 @@ static void ws_heartbeat_timer_callback(uv_timer_t* handle) {
                     UVHTTP_LOG_WARN("WebSocket ping timeout, closing connection...\n");
 
                     /* 关闭无响应的连接 */
-                    uvhttp_ws_close(current->ws_conn, 1000, "Ping timeout");
+                    uvhttp_ws_close(NULL, current->ws_conn, 1000, "Ping timeout");
                 }
             }
         }
@@ -1297,7 +1333,7 @@ uvhttp_error_t uvhttp_server_ws_disable_connection_management(
         ws_connection_node_t* next = current->next;
         
         if (current->ws_conn) {
-            uvhttp_ws_close(current->ws_conn, 1000, "Server shutdown");
+            uvhttp_ws_close(NULL, current->ws_conn, 1000, "Server shutdown");
         }
         
         uvhttp_free(current);
@@ -1389,7 +1425,7 @@ uvhttp_error_t uvhttp_server_ws_broadcast(
         /* 检查路径是否匹配（如果指定了路径） */
         if (!path || strcmp(current->path, path) == 0) {
             if (current->ws_conn && current->ws_conn->state == UVHTTP_WS_STATE_OPEN) {
-                if (uvhttp_ws_send_text(current->ws_conn, data, len) == 0) {
+                if (uvhttp_ws_send_text(NULL, current->ws_conn, data, len) == 0) {
                     sent_count++;
                 }
             }
@@ -1429,7 +1465,7 @@ uvhttp_error_t uvhttp_server_ws_close_all(
         if (!path || strcmp(current->path, path) == 0) {
             /* 关闭连接 */
             if (current->ws_conn) {
-                uvhttp_ws_close(current->ws_conn, 1000, "Server closed connection");
+                uvhttp_ws_close(NULL, current->ws_conn, 1000, "Server closed connection");
             }
             
             /* 从链表中移除 */
