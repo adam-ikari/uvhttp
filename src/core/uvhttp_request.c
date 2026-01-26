@@ -15,10 +15,6 @@
 #include <stdio.h>
 
 #if UVHTTP_FEATURE_WEBSOCKET
-#include <openssl/sha.h>
-#include <openssl/evp.h>
-#include <openssl/bio.h>
-#include <openssl/buffer.h>
 #include "uvhttp_websocket_native.h"
 #endif
 
