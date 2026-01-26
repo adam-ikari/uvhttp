@@ -245,12 +245,12 @@ jobs:
           exit 1
         fi
 
-    - name: Upload Valgrind logs
+    - name: Upload Leaks logs
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: valgrind-logs-macos
-        path: /tmp/valgrind_*.log
+        name: leaks-logs-macos
+        path: /tmp/leaks_*.log
         retention-days: 7
 
     - name: Upload AddressSanitizer logs
@@ -310,11 +310,11 @@ jobs:
         
         for test in "${TESTS[@]}"; do
           if [ -f "./dist/bin/$test" ]; then
-            echo "Running Valgrind on $test..."
-            valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all --track-origins=yes ./dist/bin/$test > /tmp/valgrind_${test}.log 2>&1
+            echo "Running Leaks on $test..."
+            MallocStackLogging=1 leaks --atExit -- ./dist/bin/$test > /tmp/leaks_${test}.log 2>&1
             if [ $? -ne 0 ]; then
               echo "❌ Memory leak detected in $test"
-              cat /tmp/valgrind_${test}.log
+              cat /tmp/leaks_${test}.log
               exit 1
             else
               echo "✅ No memory leaks in $test"
