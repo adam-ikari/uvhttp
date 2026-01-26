@@ -283,11 +283,6 @@ uvhttp_server_builder_t* uvhttp_set_max_connections(uvhttp_server_builder_t* ser
 uvhttp_server_builder_t* uvhttp_set_timeout(uvhttp_server_builder_t* server, int timeout);
 uvhttp_server_builder_t* uvhttp_set_max_body_size(uvhttp_server_builder_t* server, size_t size);
 
-// 快速响应API
-uvhttp_error_t uvhttp_quick_response(uvhttp_response_t* response, int status, const char* content_type, const char* body);
-uvhttp_error_t uvhttp_html_response(uvhttp_response_t* response, const char* html_body);
-uvhttp_error_t uvhttp_file_response(uvhttp_response_t* response, const char* file_path);
-
 // 便捷请求参数获取
 const char* uvhttp_get_param(uvhttp_request_t* request, const char* name);
 const char* uvhttp_get_header(uvhttp_request_t* request, const char* name);

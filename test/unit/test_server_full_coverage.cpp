@@ -142,18 +142,6 @@ TEST(UvhttpServerFullCoverageTest, RequestCleanupNull) {
     uvhttp_request_cleanup(NULL);
 }
 
-TEST(UvhttpServerFullCoverageTest, QuickResponseNull) {
-    uvhttp_quick_response(NULL, 200, "text/plain", "Hello");
-}
-
-TEST(UvhttpServerFullCoverageTest, HtmlResponseNull) {
-    uvhttp_html_response(NULL, "<html></html>");
-}
-
-TEST(UvhttpServerFullCoverageTest, FileResponseNull) {
-    uvhttp_file_response(NULL, "/path/to/file");
-}
-
 TEST(UvhttpServerFullCoverageTest, GetParamNull) {
     const char* result = uvhttp_get_param(NULL, "name");
     EXPECT_EQ(result, nullptr);
@@ -258,10 +246,6 @@ TEST(UvhttpServerFullCoverageTest, ServerMultipleNullOperations) {
         uvhttp_request_init(NULL, NULL);
         uvhttp_request_cleanup(NULL);
         
-        uvhttp_quick_response(NULL, 200, "text/plain", "Hello");
-        uvhttp_html_response(NULL, "<html></html>");
-        uvhttp_file_response(NULL, "/path/to/file");
-        
         uvhttp_get_param(NULL, "name");
         uvhttp_get_header(NULL, "Content-Type");
         uvhttp_get_body(NULL);
@@ -309,16 +293,7 @@ TEST(UvhttpServerFullCoverageTest, GetParamNullName) {
 }
 
 TEST(UvhttpServerFullCoverageTest, QuickResponseNullRequest) {
-    uvhttp_quick_response(NULL, 200, "text/plain", "Hello");
-}
-
-TEST(UvhttpServerFullCoverageTest, HtmlResponseNullRequest) {
-    uvhttp_html_response(NULL, "<html></html>");
-}
-
-TEST(UvhttpServerFullCoverageTest, FileResponseNullRequest) {
-    uvhttp_file_response(NULL, "/path/to/file");
-}
+    }
 
 TEST(UvhttpServerFullCoverageTest, ServerStructFieldValidation) {
     uvhttp_server_t server;
