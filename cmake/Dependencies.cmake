@@ -130,13 +130,66 @@ message(STATUS "Configuring llhttp...")
 set(LLHTTP_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp)
 set(LLHTTP_LIB ${LLHTTP_BUILD_DIR}/libllhttp.a)
 
+# 检查是否需要重新构建（跨平台）
+set(LLHTTP_NEED_REBUILD FALSE)
 if(NOT EXISTS ${LLHTTP_LIB})
+    set(LLHTTP_NEED_REBUILD TRUE)
+else()
+    # 检查库文件是否与当前平台匹配
+    if(APPLE)
+        # macOS 上检查是否是 Mach-O 格式
+        execute_process(
+            COMMAND file ${LLHTTP_LIB}
+            OUTPUT_VARIABLE LLHTTP_FILE_TYPE
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if(NOT LLHTTP_FILE_TYPE MATCHES "Mach-O")
+            message(STATUS "llhttp library not built for current platform, rebuilding...")
+            set(LLHTTP_NEED_REBUILD TRUE)
+        endif()
+    elseif(UNIX)
+        # Linux 上检查是否是 ELF 格式
+        execute_process(
+            COMMAND file ${LLHTTP_LIB}
+            OUTPUT_VARIABLE LLHTTP_FILE_TYPE
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if(NOT LLHTTP_FILE_TYPE MATCHES "ELF")
+            message(STATUS "llhttp library not built for current platform, rebuilding...")
+            set(LLHTTP_NEED_REBUILD TRUE)
+        endif()
+    endif()
+endif()
+
+if(LLHTTP_NEED_REBUILD)
     message(STATUS "Building llhttp...")
+    # 删除旧的库文件
     execute_process(
-        COMMAND make libllhttp.a
+        COMMAND ${CMAKE_COMMAND} -E remove -f ${LLHTTP_LIB} ${LLHTTP_BUILD_DIR}/*.o
         WORKING_DIRECTORY ${LLHTTP_BUILD_DIR}
-        RESULT_VARIABLE LLHTTP_BUILD_RESULT
     )
+    # 编译源代码
+    execute_process(
+        COMMAND ${CMAKE_C_COMPILER} -c -fPIC llhttp.c api.c -o llhttp.o api.o
+        WORKING_DIRECTORY ${LLHTTP_BUILD_DIR}
+        RESULT_VARIABLE LLHTTP_COMPILE_RESULT
+    )
+    if(LLHTTP_COMPILE_RESULT)
+        message(FATAL_ERROR "Failed to compile llhttp source files")
+    endif()
+    # 创建静态库
+    execute_process(
+        COMMAND ${CMAKE_AR} rcs ${LLHTTP_LIB} llhttp.o api.o
+        WORKING_DIRECTORY ${LLHTTP_BUILD_DIR}
+        RESULT_VARIABLE LLHTTP_ARCHIVE_RESULT
+    )
+    if(LLHTTP_ARCHIVE_RESULT)
+        message(FATAL_ERROR "Failed to create llhttp archive")
+    endif()
+    message(STATUS "llhttp built successfully")
+else()
+    message(STATUS "llhttp already built: ${LLHTTP_LIB}")
+endif()
 
     if(LLHTTP_BUILD_RESULT)
         message(FATAL_ERROR "Failed to build llhttp")
