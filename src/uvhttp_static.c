@@ -497,7 +497,7 @@ static char* generate_directory_listing(const char* dir_path, const char* reques
 /**
  * 生成ETag值
  */
-int uvhttp_static_generate_etag(const char* file_path,
+uvhttp_result_t uvhttp_static_generate_etag(const char* file_path,
                                time_t last_modified,
                                size_t file_size,
                                char* etag,
