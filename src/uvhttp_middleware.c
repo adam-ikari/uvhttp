@@ -67,13 +67,18 @@ uvhttp_http_middleware_t* uvhttp_http_middleware_create(
     /* 复制路径字符串（如果提供） */
     if (path) {
         size_t path_len = strlen(path);
-        middleware->path = (char*)uvhttp_alloc(path_len + 1);
+        middleware->path = uvhttp_alloc(path_len + 1);
         if (!middleware->path) {
             /* Failed to allocate path */
             uvhttp_free(middleware);
             return NULL;
         }
-        strcpy((char*)middleware->path, path);
+        /* 使用安全的字符串复制函数 */
+        if (uvhttp_safe_strcpy((char*)middleware->path, path_len + 1, path) != 0) {
+            uvhttp_free((void*)middleware->path);
+            uvhttp_free(middleware);
+            return NULL;
+        }
     }
     
     /* 设置字段 */

@@ -709,7 +709,10 @@ int uvhttp_static_resolve_safe_path(const char* root_dir,
     if (strlen(resolved) >= buffer_size) {
         return 0;
     }
-    strcpy(resolved_path, resolved);
+    /* 使用安全的字符串复制函数 */
+    if (uvhttp_safe_strcpy(resolved_path, buffer_size, resolved) != 0) {
+        return 0;
+    }
 
     return 1;
 }
@@ -1117,7 +1120,13 @@ uvhttp_http_middleware_t* uvhttp_static_middleware_create_with_config(
             uvhttp_static_free(static_ctx);
             return NULL;
         }
-        strcpy(mw_ctx->path_prefix, path);
+        /* 使用安全的字符串复制函数 */
+        if (uvhttp_safe_strcpy(mw_ctx->path_prefix, path_len + 1, path) != 0) {
+            uvhttp_free(mw_ctx->path_prefix);
+            uvhttp_free(mw_ctx);
+            uvhttp_static_free(static_ctx);
+            return NULL;
+        }
     }
 
     /* 创建中间件 */

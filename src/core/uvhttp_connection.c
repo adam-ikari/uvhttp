@@ -648,12 +648,18 @@ int uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, cons
             if (token_end) {
                 size_t token_len = token_end - token_start;
                 if (token_len < sizeof(token)) {
-                    strncpy(token, token_start, token_len);
-                    token[token_len] = '\0';
+                    /* 使用安全的字符串复制函数 */
+                    if (uvhttp_safe_strcpy(token, token_len + 1, token_start) != 0) {
+                        token[0] = '\0';
+                    } else {
+                        token[token_len] = '\0';
+                    }
                 }
             } else {
-                strncpy(token, token_start, sizeof(token) - 1);
-                token[sizeof(token) - 1] = '\0';
+                /* 使用安全的字符串复制函数 */
+                if (uvhttp_safe_strcpy(token, sizeof(token), token_start) != 0) {
+                    token[0] = '\0';
+                }
             }
         }
 
@@ -661,8 +667,10 @@ int uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, cons
         if (token[0] == '\0') {
             const char* auth_header = uvhttp_request_get_header(conn->request, "Authorization");
             if (auth_header && strncmp(auth_header, "Bearer ", 7) == 0) {
-                strncpy(token, auth_header + 7, sizeof(token) - 1);
-                token[sizeof(token) - 1] = '\0';
+                /* 使用安全的字符串复制函数 */
+                if (uvhttp_safe_strcpy(token, sizeof(token), auth_header + 7) != 0) {
+                    token[0] = '\0';
+                }
             }
         }
     }
