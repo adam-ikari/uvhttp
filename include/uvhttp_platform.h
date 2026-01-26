@@ -77,49 +77,6 @@
     #define UVHTTP_SOCKET_WOULD_BLOCK(e) (e == EAGAIN || e == EWOULDBLOCK)
 #endif
 
-/* 平台特定的线程支持 */
-#ifdef UVHTTP_PLATFORM_WINDOWS
-    #include <windows.h>
-    typedef HANDLE uvhttp_thread_t;
-    typedef DWORD uvhttp_thread_id_t;
-#else
-    #include <pthread.h>
-    typedef pthread_t uvhttp_thread_t;
-    typedef pthread_t uvhttp_thread_id_t;
-#endif
-
-/* 平台特定的互斥锁支持 */
-#ifdef UVHTTP_PLATFORM_WINDOWS
-    typedef CRITICAL_SECTION uvhttp_mutex_t;
-#else
-    typedef pthread_mutex_t uvhttp_mutex_t;
-#endif
-
-/* 平台特定的条件变量支持 */
-#ifdef UVHTTP_PLATFORM_WINDOWS
-    typedef CONDITION_VARIABLE uvhttp_cond_t;
-#else
-    typedef pthread_cond_t uvhttp_cond_t;
-#endif
-
-/* 平台特定的原子操作支持 */
-#ifdef UVHTTP_PLATFORM_WINDOWS
-    #include <windows.h>
-    #define uvhttp_atomic_fetch_add(ptr, val) InterlockedExchangeAdd((LONG volatile*)(ptr), (val))
-    #define uvhttp_atomic_compare_exchange(ptr, expected, desired) InterlockedCompareExchange((LONG volatile*)(ptr), (desired), *(expected))
-#else
-    #include <stdatomic.h>
-    #define uvhttp_atomic_fetch_add(ptr, val) atomic_fetch_add((atomic_int*)(ptr), (val))
-    #define uvhttp_atomic_compare_exchange(ptr, expected, desired) atomic_compare_exchange_strong((atomic_int*)(ptr), (expected), (desired))
-#endif
-
-/* 平台特定的内存屏障 */
-#ifdef UVHTTP_PLATFORM_WINDOWS
-    #define uvhttp_memory_barrier() MemoryBarrier()
-#else
-    #define uvhttp_memory_barrier() __sync_synchronize()
-#endif
-
 /* 平台特定的时间函数 */
 #ifdef UVHTTP_PLATFORM_WINDOWS
     #include <windows.h>
@@ -127,27 +84,6 @@
 #else
     #include <unistd.h>
     #define uvhttp_sleep_ms(ms) usleep((ms) * 1000)
-#endif
-
-/* 平台特定的文件路径处理 */
-#ifdef UVHTTP_PLATFORM_WINDOWS
-    #define UVHTTP_PATH_SEPARATOR "\\"
-    #define UVHTTP_PATH_SEPARATOR_CHAR '\\'
-#else
-    #define UVHTTP_PATH_SEPARATOR "/"
-    #define UVHTTP_PATH_SEPARATOR_CHAR '/'
-#endif
-
-/* 平台特定的动态库加载 */
-#ifdef UVHTTP_PLATFORM_WINDOWS
-    #define UVHTTP_DLOPEN(lib) LoadLibraryA(lib)
-    #define UVHTTP_DLSYM(handle, symbol) (void*)GetProcAddress(handle, symbol)
-    #define UVHTTP_DLCLOSE(handle) FreeLibrary(handle)
-#else
-    #include <dlfcn.h>
-    #define UVHTTP_DLOPEN(lib) dlopen(lib, RTLD_LAZY)
-    #define UVHTTP_DLSYM(handle, symbol) dlsym(handle, symbol)
-    #define UVHTTP_DLCLOSE(handle) dlclose(handle)
 #endif
 
 #endif /* UVHTTP_PLATFORM_H */
