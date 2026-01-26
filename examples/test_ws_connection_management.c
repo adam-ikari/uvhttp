@@ -34,10 +34,10 @@ static int on_ws_message(uvhttp_ws_connection_t* ws_conn,
 
     printf("Received message: %.*s\n", (int)len, data);
 
-    /* 回显消息 */
+    /* 回显消息（示例中可以使用 NULL context） */
     char response[256];
     snprintf(response, sizeof(response), "Echo: %.*s", (int)len, data);
-    uvhttp_ws_send_text(ws_conn, response, strlen(response));
+    uvhttp_ws_send_text(NULL, ws_conn, response, strlen(response));
 
     g_message_count++;
 

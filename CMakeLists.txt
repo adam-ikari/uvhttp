@@ -258,6 +258,8 @@ foreach(test_file ${GTEST_TEST_FILES})
     endif()
     # 对测试文件移除 -Werror，允许未使用变量警告
     target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+    # 为测试启用统计功能
+    target_compile_definitions(${test_name} PRIVATE UVHTTP_FEATURE_STATISTICS=1)
     target_link_libraries(${test_name} ${LIBS} ${GTEST_LIBS})
     target_include_directories(${test_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
     add_test(NAME ${test_name} COMMAND ${test_name})

@@ -65,10 +65,7 @@ TEST(UvhttpConnectionEnhancedTest, ConnectionTlsWriteNull) {
     EXPECT_EQ(uvhttp_connection_tls_write(nullptr, data, strlen(data)), -1);
 }
 
-/* 测试连接池清理功能 */
-TEST(UvhttpConnectionEnhancedTest, ConnectionPoolCleanup) {
-    uvhttp_connection_pool_cleanup(nullptr);
-}
+/* 连接池清理功能已移除 - 连接池功能已废弃 */
 
 /* 测试 WebSocket 握手功能 - NULL参数 */
 TEST(UvhttpConnectionEnhancedTest, WebsocketHandshakeNull) {

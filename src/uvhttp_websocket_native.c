@@ -796,7 +796,23 @@ int uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
             conn->state = UVHTTP_WS_STATE_CLOSED;
         } else if (header.opcode == UVHTTP_WS_OPCODE_PING) {
             /* 自动回复 Pong */
-            uvhttp_ws_send_pong(conn, payload, header.payload_len);
+            /* 从 conn->user_data 获取 wrapper，然后获取 conn，再获取 loop->data */
+            typedef struct {
+                void* conn;
+                void* user_handler;
+            } uvhttp_ws_wrapper_t;
+            
+            typedef struct {
+                uv_loop_t* loop;
+            } uvhttp_connection_t;
+            
+            uvhttp_ws_wrapper_t* wrapper = (uvhttp_ws_wrapper_t*)conn->user_data;
+            if (wrapper && wrapper->conn) {
+                uvhttp_connection_t* http_conn = (uvhttp_connection_t*)wrapper->conn;
+                if (http_conn && http_conn->loop && http_conn->loop->data) {
+                    uvhttp_ws_send_pong(http_conn->loop->data, conn, payload, header.payload_len);
+                }
+            }
         }
         /* PONG 帧通常不需要特殊处理 */
         

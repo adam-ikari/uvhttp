@@ -54,6 +54,7 @@ typedef struct {
     int heartbeat_interval;             /* 心跳间隔（秒） */
     uint64_t ping_timeout_ms;           /* Ping 超时时间（毫秒） */
     int enabled;                        /* 是否启用连接管理 */
+    struct uvhttp_server* server;       /* 所属服务器 */
 } ws_connection_manager_t;
 #endif
 

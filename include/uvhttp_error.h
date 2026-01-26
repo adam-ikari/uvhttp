@@ -157,13 +157,13 @@ typedef struct {
 
 /* Error logging and statistics */
 void uvhttp_log_error(uvhttp_error_t error, const char* context);
+
+#if UVHTTP_FEATURE_STATISTICS
 void uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts, time_t* last_error_time, 
                            const char** last_error_context);
 void uvhttp_reset_error_stats(uvhttp_context_t* context);
 uvhttp_error_t uvhttp_get_most_frequent_error(uvhttp_context_t* context);
-
-/* Error code count for statistics array */
-#define UVHTTP_ERROR_COUNT 120
+#endif
 
 #ifdef __cplusplus
 }

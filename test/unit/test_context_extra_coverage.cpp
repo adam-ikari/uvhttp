@@ -130,69 +130,7 @@ TEST(UvhttpContextExtraTest, TestReleaseConnectionNull) {
     uvhttp_free(provider);
 }
 
-/* 测试 test_get_pool_size */
-TEST(UvhttpContextExtraTest, TestGetPoolSize) {
-    /* 创建测试连接提供者 */
-    uvhttp_connection_provider_t* provider = uvhttp_test_connection_provider_create();
-    ASSERT_NE(provider, nullptr);
-    
-    /* 获取池大小 */
-    size_t pool_size = provider->get_pool_size(provider);
-    
-    /* 验证结果 */
-    EXPECT_EQ(pool_size, 1);
-    
-    /* 清理 */
-    uvhttp_free(provider);
-}
-
-/* 测试 test_cleanup_expired */
-TEST(UvhttpContextExtraTest, TestCleanupExpired) {
-    /* 创建测试连接提供者 */
-    uvhttp_connection_provider_t* provider = uvhttp_test_connection_provider_create();
-    ASSERT_NE(provider, nullptr);
-    
-    /* 调用 cleanup_expired */
-    provider->cleanup_expired(provider);
-    
-    /* 验证没有崩溃 */
-    EXPECT_TRUE(true);
-    
-    /* 清理 */
-    uvhttp_free(provider);
-}
-
-/* 测试 default_get_pool_size */
-TEST(UvhttpContextExtraTest, DefaultGetPoolSize) {
-    /* 创建默认连接提供者 */
-    uvhttp_connection_provider_t* provider = uvhttp_default_connection_provider_create();
-    ASSERT_NE(provider, nullptr);
-    
-    /* 获取池大小 */
-    size_t pool_size = provider->get_pool_size(provider);
-    
-    /* 验证结果 */
-    EXPECT_EQ(pool_size, 0);
-    
-    /* 清理 */
-    uvhttp_free(provider);
-}
-
-/* 测试 default_cleanup_expired */
-TEST(UvhttpContextExtraTest, DefaultCleanupExpired) {
-    /* 创建默认连接提供者 */
-    uvhttp_connection_provider_t* provider = uvhttp_default_connection_provider_create();
-    ASSERT_NE(provider, nullptr);
-    
-    /* 调用 cleanup_expired */
-    provider->cleanup_expired(provider);
-    
-    /* 验证没有崩溃 */
-    EXPECT_TRUE(true);
-    
-    /* 清理 */
-    uvhttp_free(provider);
-}
+/* 连接池相关测试已移除 - 连接池功能已废弃 */
 
 /* 测试上下文创建和销毁 */
 TEST(UvhttpContextExtraTest, ContextCreateDestroy) {
@@ -347,9 +285,6 @@ TEST(UvhttpContextExtraTest, ConnectionProviderConcurrentOperations) {
     for (int i = 0; i < 3; i++) {
         uvhttp_connection_t* conn = providers[i]->acquire_connection(providers[i]);
         EXPECT_EQ(conn, nullptr);
-        
-        size_t pool_size = providers[i]->get_pool_size(providers[i]);
-        EXPECT_EQ(pool_size, 0);
     }
     
     /* 清理所有提供者 */

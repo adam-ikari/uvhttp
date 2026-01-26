@@ -124,15 +124,6 @@ TEST(UvhttpContextFullCoverageTest, DefaultConnectionProviderCreate) {
     ASSERT_NE(provider, nullptr);
     EXPECT_NE(provider->acquire_connection, nullptr);
     EXPECT_NE(provider->release_connection, nullptr);
-    
-    if (provider->get_pool_size) {
-        size_t pool_size = provider->get_pool_size(provider);
-        EXPECT_GE(pool_size, 0);
-    }
-    
-    if (provider->cleanup_expired) {
-        provider->cleanup_expired(provider);
-    }
 }
 
 TEST(UvhttpContextFullCoverageTest, DefaultLoggerProviderCreate) {

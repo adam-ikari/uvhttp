@@ -853,8 +853,29 @@ uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn, const char
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    // 从 ws_conn->user_data 获取 wrapper，然后获取 conn
+    typedef struct {
+        void* conn;
+        void* user_handler;
+    } uvhttp_ws_wrapper_t;
+    
+    uvhttp_ws_wrapper_t* wrapper = (uvhttp_ws_wrapper_t*)ws_conn->user_data;
+    if (!wrapper || !wrapper->conn) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 从 conn 获取 loop，然后从 loop->data 获取 context
+    typedef struct {
+        uv_loop_t* loop;
+    } uvhttp_connection_t;
+    
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)wrapper->conn;
+    if (!conn || !conn->loop || !conn->loop->data) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
     // 调用原生WebSocket API发送文本消息
-    int result = uvhttp_ws_send_text(ws_conn, data, len);
+    int result = uvhttp_ws_send_text(conn->loop->data, ws_conn, data, len);
     if (result != 0) {
         return UVHTTP_ERROR_WEBSOCKET_FRAME;
     }
@@ -868,8 +889,29 @@ uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    // 从 ws_conn->user_data 获取 wrapper，然后获取 conn
+    typedef struct {
+        void* conn;
+        void* user_handler;
+    } uvhttp_ws_wrapper_t;
+    
+    uvhttp_ws_wrapper_t* wrapper = (uvhttp_ws_wrapper_t*)ws_conn->user_data;
+    if (!wrapper || !wrapper->conn) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    // 从 conn 获取 loop，然后从 loop->data 获取 context
+    typedef struct {
+        uv_loop_t* loop;
+    } uvhttp_connection_t;
+    
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)wrapper->conn;
+    if (!conn || !conn->loop || !conn->loop->data) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
     // 调用原生WebSocket API关闭连接
-    int result = uvhttp_ws_close(ws_conn, code, reason);
+    int result = uvhttp_ws_close(conn->loop->data, ws_conn, code, reason);
     if (result != 0) {
         return UVHTTP_ERROR_WEBSOCKET_FRAME;
     }
@@ -1114,7 +1156,7 @@ static void ws_timeout_timer_callback(uv_timer_t* handle) {
             
             /* 关闭超时连接 */
             if (current->ws_conn) {
-                uvhttp_ws_close(current->ws_conn, 1000, "Connection timeout");
+                uvhttp_ws_close(manager->server->loop->data, current->ws_conn, 1000, "Connection timeout");
             }
             
             /* 从链表中移除 */
@@ -1154,7 +1196,7 @@ static void ws_heartbeat_timer_callback(uv_timer_t* handle) {
             /* 检查是否需要发送 Ping */
             if (!current->ping_pending) {
                 /* 发送 Ping 帧 */
-                if (uvhttp_ws_send_ping(current->ws_conn, NULL, 0) == 0) {
+                if (uvhttp_ws_send_ping(manager->server->loop->data, current->ws_conn, NULL, 0) == 0) {
                     current->last_ping_sent = current_time;
                     current->ping_pending = 1;
                 }
@@ -1164,7 +1206,7 @@ static void ws_heartbeat_timer_callback(uv_timer_t* handle) {
                     UVHTTP_LOG_WARN("WebSocket ping timeout, closing connection...\n");
 
                     /* 关闭无响应的连接 */
-                    uvhttp_ws_close(current->ws_conn, 1000, "Ping timeout");
+                    uvhttp_ws_close(manager->server->loop->data, current->ws_conn, 1000, "Ping timeout");
                 }
             }
         }
@@ -1220,6 +1262,7 @@ uvhttp_error_t uvhttp_server_ws_enable_connection_management(
     manager->heartbeat_interval = heartbeat_interval;
     manager->ping_timeout_ms = 10000;  /* 默认10秒 Ping 超时 */
     manager->enabled = 1;
+    manager->server = server;
     
     /* 初始化超时检测定时器 */
     int ret = uv_timer_init(server->loop, &manager->timeout_timer);
@@ -1301,7 +1344,7 @@ uvhttp_error_t uvhttp_server_ws_disable_connection_management(
         ws_connection_node_t* next = current->next;
         
         if (current->ws_conn) {
-            uvhttp_ws_close(current->ws_conn, 1000, "Server shutdown");
+            uvhttp_ws_close(manager->server->loop->data, current->ws_conn, 1000, "Server shutdown");
         }
         
         uvhttp_free(current);
@@ -1393,7 +1436,7 @@ uvhttp_error_t uvhttp_server_ws_broadcast(
         /* 检查路径是否匹配（如果指定了路径） */
         if (!path || strcmp(current->path, path) == 0) {
             if (current->ws_conn && current->ws_conn->state == UVHTTP_WS_STATE_OPEN) {
-                if (uvhttp_ws_send_text(current->ws_conn, data, len) == 0) {
+                if (uvhttp_ws_send_text(server->loop->data, current->ws_conn, data, len) == 0) {
                     sent_count++;
                 }
             }
@@ -1433,7 +1476,7 @@ uvhttp_error_t uvhttp_server_ws_close_all(
         if (!path || strcmp(current->path, path) == 0) {
             /* 关闭连接 */
             if (current->ws_conn) {
-                uvhttp_ws_close(current->ws_conn, 1000, "Server closed connection");
+                uvhttp_ws_close(server->loop->data, current->ws_conn, 1000, "Server closed connection");
             }
             
             /* 从链表中移除 */

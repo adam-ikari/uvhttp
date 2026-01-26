@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 #include "uvhttp_websocket_native.h"
+#include "uvhttp_context.h"
 
 /* 测试WebSocket连接创建NULL */
 TEST(UvhttpWebsocketNullCoverageTest, WsConnectionNewNull) {
@@ -22,9 +23,12 @@ TEST(UvhttpWebsocketNullCoverageTest, WsConnectionFreeNull) {
 
 /* 测试WebSocket握手客户端NULL */
 TEST(UvhttpWebsocketNullCoverageTest, WsHandshakeClientNull) {
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
     char request[1024];
     size_t request_len = sizeof(request);
-    int result = uvhttp_ws_handshake_client(NULL, "ws://example.com", "/", request, &request_len);
+    int result = uvhttp_ws_handshake_client(&context, NULL, "localhost", "/", request, &request_len);
     EXPECT_NE(result, 0);
 }
 
@@ -51,31 +55,46 @@ TEST(UvhttpWebsocketNullCoverageTest, WsRecvFrameNull) {
 
 /* 测试WebSocket发送帧NULL */
 TEST(UvhttpWebsocketNullCoverageTest, WsSendFrameNull) {
-    int result = uvhttp_ws_send_frame(NULL, NULL, 0, UVHTTP_WS_OPCODE_TEXT);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_send_frame(&context, NULL, NULL, 0, UVHTTP_WS_OPCODE_TEXT);
     EXPECT_NE(result, 0);
 }
 
 /* 测试WebSocket发送文本NULL */
 TEST(UvhttpWebsocketNullCoverageTest, WsSendTextNull) {
-    int result = uvhttp_ws_send_text(NULL, NULL, 0);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_send_text(&context, NULL, NULL, 0);
     EXPECT_NE(result, 0);
 }
 
 /* 测试WebSocket发送二进制NULL */
 TEST(UvhttpWebsocketNullCoverageTest, WsSendBinaryNull) {
-    int result = uvhttp_ws_send_binary(NULL, NULL, 0);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_send_binary(&context, NULL, NULL, 0);
     EXPECT_NE(result, 0);
 }
 
 /* 测试WebSocket发送Ping NULL */
 TEST(UvhttpWebsocketNullCoverageTest, WsSendPingNull) {
-    int result = uvhttp_ws_send_ping(NULL, NULL, 0);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_send_ping(&context, NULL, NULL, 0);
     EXPECT_NE(result, 0);
 }
 
 /* 测试WebSocket发送Pong NULL */
 TEST(UvhttpWebsocketNullCoverageTest, WsSendPongNull) {
-    int result = uvhttp_ws_send_pong(NULL, NULL, 0);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_send_pong(&context, NULL, NULL, 0);
     EXPECT_NE(result, 0);
 }
 
@@ -87,7 +106,10 @@ TEST(UvhttpWebsocketNullCoverageTest, WsGetStateString) {
 
 /* 测试WebSocket关闭NULL */
 TEST(UvhttpWebsocketNullCoverageTest, WsCloseNull) {
-    int result = uvhttp_ws_close(NULL, 1000, "");
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_close(&context, NULL, 1000, "");
     EXPECT_NE(result, 0);
 }
 

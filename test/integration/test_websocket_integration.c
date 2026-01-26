@@ -5,6 +5,8 @@
 
 #include "uvhttp.h"
 #include "uvhttp_websocket_native.h"
+#include "uvhttp_connection.h"
+#include "uvhttp_context.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,10 +15,10 @@
 static int on_ws_message(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len, int opcode) {
     (void)opcode;
 
-    /* 回显消息 */
+    /* 回显消息（测试中可以使用 NULL context） */
     char response[256];
     snprintf(response, sizeof(response), "Echo: %.*s", (int)len, data);
-    uvhttp_ws_send_text(ws_conn, response, strlen(response));
+    uvhttp_ws_send_text(NULL, ws_conn, response, strlen(response));
 
     return 0;
 }

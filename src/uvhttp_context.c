@@ -50,17 +50,6 @@ static void default_release_connection(uvhttp_connection_provider_t* provider,
     }
 }
 
-static size_t default_get_pool_size(uvhttp_connection_provider_t* provider) {
-    uvhttp_default_connection_provider_t* impl = 
-        (uvhttp_default_connection_provider_t*)((char*)provider - offsetof(uvhttp_default_connection_provider_t, base));
-    return impl ? impl->pool_size : 0;
-}
-
-static void default_cleanup_expired(uvhttp_connection_provider_t* provider) {
-    (void)provider;
-    /* 清理过期连接 */
-}
-
 uvhttp_connection_provider_t* uvhttp_default_connection_provider_create(void) {
     uvhttp_default_connection_provider_t* provider = 
         (uvhttp_default_connection_provider_t*)uvhttp_alloc(sizeof(uvhttp_default_connection_provider_t));
@@ -72,11 +61,9 @@ uvhttp_connection_provider_t* uvhttp_default_connection_provider_create(void) {
     
     provider->base.acquire_connection = default_acquire_connection;
     provider->base.release_connection = default_release_connection;
-    provider->base.get_pool_size = default_get_pool_size;
-    provider->base.cleanup_expired = default_cleanup_expired;
     
     provider->pool_size = 0;
-    provider->max_pool_size = UVHTTP_DEFAULT_CONNECTION_POOL_SIZE; /* 默认最大连接池大小 */
+    provider->max_pool_size = UVHTTP_DEFAULT_MEMORY_POOL_SIZE; /* 默认最大内存池大小 */
     
     return &provider->base;
 }
@@ -107,18 +94,6 @@ static void test_release_connection(uvhttp_connection_provider_t* provider,
     /* 测试环境不实际释放连接 */
 }
 
-static size_t test_get_pool_size(uvhttp_connection_provider_t* provider) {
-    uvhttp_test_connection_provider_t* impl = 
-        (uvhttp_test_connection_provider_t*)((char*)provider - offsetof(uvhttp_test_connection_provider_t, base));
-    (void)impl;
-    return 1; /* 测试环境总是返回1 */
-}
-
-static void test_cleanup_expired(uvhttp_connection_provider_t* provider) {
-    (void)provider;
-    /* 测试环境无需清理 */
-}
-
 uvhttp_connection_provider_t* uvhttp_test_connection_provider_create(void) {
     uvhttp_test_connection_provider_t* provider = 
         (uvhttp_test_connection_provider_t*)uvhttp_alloc(sizeof(uvhttp_test_connection_provider_t));
@@ -130,8 +105,6 @@ uvhttp_connection_provider_t* uvhttp_test_connection_provider_create(void) {
     
     provider->base.acquire_connection = test_acquire_connection;
     provider->base.release_connection = test_release_connection;
-    provider->base.get_pool_size = test_get_pool_size;
-    provider->base.cleanup_expired = test_cleanup_expired;
     
     provider->test_connection = NULL;
     provider->simulate_connection_failure = 0;

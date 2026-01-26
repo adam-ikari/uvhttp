@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "uvhttp_error.h"
+#include "uvhttp_features.h"
 
 /* 静态函数用于测试重试操作 */
 static int g_call_count = 0;
@@ -734,6 +735,7 @@ TEST(UvhttpErrorTest, RetryOperationMaxRetries) {
     EXPECT_EQ(g_call_count, 3); /* 初始尝试 + 2次重试 */
 }
 
+#if UVHTTP_FEATURE_STATISTICS
 /* 测试记录错误 */
 TEST(UvhttpErrorTest, LogError) {
     uvhttp_reset_error_stats(NULL);
@@ -901,3 +903,4 @@ TEST(UvhttpErrorTest, RetryDelayCalculation) {
     EXPECT_EQ(result, UVHTTP_ERROR_CONNECTION_TIMEOUT);
     EXPECT_EQ(g_call_count, 4); /* 初始尝试 + 3次重试 */
 }
+#endif /* UVHTTP_FEATURE_STATISTICS */
