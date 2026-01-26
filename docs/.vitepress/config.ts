@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import DefaultTheme from 'vitepress/theme-without-fonts'
 
 // https://vitepress.vuejs.org/config/app-configs
 export default defineConfig({
@@ -98,6 +99,18 @@ export default defineConfig({
             { text: '开发计划', link: '/dev/DEVELOPMENT_PLAN' },
             { text: '全局变量重构', link: '/dev/GLOBAL_VARIABLE_REFACTOR_PLAN' },
             { text: '路线图', link: '/dev/ROADMAP' }
+          ]
+        },
+        {
+          text: 'CI/CD',
+          items: [
+            { text: 'CI/CD 工作流', link: '/dev/CI_CD' }
+          ]
+        },
+        {
+          text: '文档规范',
+          items: [
+            { text: 'Markdown 样式指南', link: '/dev/MARKDOWN_STYLE_GUIDE' }
           ]
         },
         {
