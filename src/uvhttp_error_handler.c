@@ -198,10 +198,14 @@ void uvhttp_log(uvhttp_log_level_t level, const char* format, ...) {
     char message[1024];
     va_list args;
     va_start(args, format);
+#if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-nonliteral"
+#endif
     vsnprintf(message, sizeof(message), format, args);
+#if defined(__clang__)
 #pragma clang diagnostic pop
+#endif
     va_end(args);
     
     /* 输出日志 - 直接输出避免递归 */
