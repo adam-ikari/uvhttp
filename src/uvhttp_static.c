@@ -730,7 +730,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     const char* url = uvhttp_request_get_url(request);
     if (!url) {
         uvhttp_response_set_status(response, 400);
-        return UVHTTP_ERROR_INVALID_REQUEST;
+        return UVHTTP_ERROR_MALFORMED_REQUEST;
     }
 
     /* 解析URL路径，移除查询参数 */
@@ -740,7 +740,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
 
     if (path_len >= sizeof(clean_path)) {
         uvhttp_response_set_status(response, 414); /* URI Too Long */
-        return UVHTTP_ERROR_INVALID_REQUEST;
+        return UVHTTP_ERROR_HEADER_TOO_LARGE;
     }
 
     /* 使用安全的字符串复制 */
@@ -763,7 +763,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                                         safe_path,
                                         sizeof(safe_path))) {
         uvhttp_response_set_status(response, 403); /* Forbidden */
-        return UVHTTP_ERROR_FORBIDDEN;
+        return UVHTTP_ERROR_NOT_FOUND;
     }
     
     /* 检查缓存 */
@@ -812,7 +812,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
             int result = snprintf(index_path, sizeof(index_path), "%s/%s", safe_path, ctx->config.index_file);
             if (result >= (int)sizeof(index_path)) {
                 uvhttp_response_set_status(response, 414); /* URI Too Long */
-                return UVHTTP_ERROR_INVALID_REQUEST;
+                return UVHTTP_ERROR_HEADER_TOO_LARGE;
             }
 
             if (get_file_info(index_path, &file_size, &last_modified) == 0) {
@@ -866,7 +866,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     char* file_content = read_file_content(safe_path, &file_size);
     if (!file_content) {
         uvhttp_response_set_status(response, 500); /* Internal Server Error */
-        return UVHTTP_ERROR_IO;
+        return UVHTTP_ERROR_IO_ERROR;
     }
 
     /* 获取MIME类型 */
