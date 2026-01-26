@@ -645,7 +645,7 @@ int uvhttp_context_init_config(uvhttp_context_t* context) {
     }
 
     /* 初始化配置管理 */
-    uvhttp_config_t* current_config = uvhttp_config_create();
+    uvhttp_config_t* current_config = uvhttp_config_new();
     if (!current_config) {
         return -1;
     }
