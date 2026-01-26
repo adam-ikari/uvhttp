@@ -1,4 +1,4 @@
-name: Deploy Docs
+name: CI/CD - Deploy Documentation
 
 on:
   push:

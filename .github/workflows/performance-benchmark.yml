@@ -1,4 +1,4 @@
-name: Performance Benchmark
+name: CI/CD - Performance Benchmark
 
 on:
   schedule:

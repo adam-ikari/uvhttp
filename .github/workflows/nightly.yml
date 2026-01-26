@@ -1,4 +1,4 @@
-name: Nightly Build
+name: CI/CD - Nightly Full Test
 
 on:
   schedule:
