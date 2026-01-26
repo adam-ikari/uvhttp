@@ -512,10 +512,7 @@ const char* uvhttp_request_get_path(uvhttp_request_t* request) {
     if (!request) {
         return NULL;
     }
-    if (!request->url) {
-        return "/";
-    }
-    
+
     const char* url = request->url;
     const char* query_start = strchr(url, '?');
     
@@ -541,13 +538,13 @@ const char* uvhttp_request_get_path(uvhttp_request_t* request) {
 }
 
 const char* uvhttp_request_get_query_string(uvhttp_request_t* request) {
-    if (!request || !request->url) {
+    if (!request) {
         return NULL;
     }
-    
+
     const char* query_start = strchr(request->url, '?');
     const char* query_string = query_start ? query_start + 1 : NULL;
-    
+
     // 验证查询字符串安全性
     if (query_string && !uvhttp_validate_query_string(query_string)) {
         return NULL;
