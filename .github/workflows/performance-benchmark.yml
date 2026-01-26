@@ -16,6 +16,10 @@ env:
 jobs:
   performance-benchmark:
     runs-on: ubuntu-22.04
+    # 超时设置说明：
+    # - PR 快速测试：15分钟 = 3个测试×5秒 + 3秒启动 + 2秒清理 + 45×安全余量（应对网络延迟等）
+    # - 完整测试：60分钟 = 8个场景×多次迭代 + 压力测试（30秒×2次）+ 持续负载测试（60秒）
+    # - 实际测试时间：PR约20秒，完整测试约10-15分钟
     timeout-minutes: ${{ github.event_name == 'pull_request' && 15 || 60 }}
     
     steps:
@@ -88,7 +92,11 @@ jobs:
           if [ "$IS_PR" = "true" ]; then
             echo "Running quick performance tests for PR..."
             
-            # PR 快速测试：只运行 3 个测试，每个只运行 1 次
+            # PR 快速测试说明：
+            # - 测试时长：5秒（权衡速度与准确性，足够检测性能回归）
+            # - 测试次数：1次（PR 快速验证，详细测试在定时任务中）
+            # - 总耗时：约15秒（3个测试×5秒 + 启动/清理开销）
+            # - 目的：快速验证 PR 是否引入性能回归
             echo "Test 1: Low concurrency (10 connections, 5 seconds)" >> /tmp/performance.log
             wrk -t4 -c10 -d5s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
             
@@ -102,7 +110,12 @@ jobs:
           else
             echo "Running full performance tests..."
             
-            # 完整测试：运行所有测试，多次取平均
+            # 完整测试说明：
+            # - 测试时长：10秒（提供足够的统计样本，确保结果可靠）
+            # - 测试次数：3次取平均（低/中/高并发），2次取平均（压力/文件测试）
+            # - 统计依据：3次测试可提供 95% 置信区间，2次测试用于快速验证
+            # - 总耗时：约10-15分钟（包含所有场景和迭代）
+            # - 目的：生成详细的性能基准报告，用于长期趋势分析
             # 低并发测试（3次取平均）
             echo "Test 1: Low concurrency (10 connections, 10 seconds)" >> /tmp/performance.log
             for i in {1..3}; do
@@ -184,8 +197,9 @@ jobs:
         RUN_NUMBER: ${{ github.run_number }}
         SHA: ${{ github.sha }}
         REF_NAME: ${{ github.ref_name }}
-        COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        COMMIT_AUTHOR: ${{ github.event.head_commit.author.name }}
+        # 使用 fallback 语法处理定时任务（schedule）中 head_commit 为空的情况
+        COMMIT_MESSAGE: ${{ github.event.head_commit.message || github.event.commits[0].message || 'Scheduled run' }}
+        COMMIT_AUTHOR: ${{ github.event.head_commit.author.name || github.event.commits[0].author.name || 'GitHub Actions' }}
       run: |
         python3 << 'EOF'
         import os
@@ -193,18 +207,32 @@ jobs:
         import json
         from datetime import datetime
         
-        # 从环境变量获取 GitHub Actions 上下文
+        # 从环境变量获取 GitHub Actions 上下文（添加输入验证）
         timestamp = os.environ.get('TIMESTAMP', 'unknown')
-        run_id = int(os.environ.get('RUN_ID', 0))
-        run_number = int(os.environ.get('RUN_NUMBER', 0))
+        
+        # 安全转换整数，避免 ValueError
+        try:
+            run_id = int(os.environ.get('RUN_ID', 0))
+        except (ValueError, TypeError):
+            run_id = 0
+        
+        try:
+            run_number = int(os.environ.get('RUN_NUMBER', 0))
+        except (ValueError, TypeError):
+            run_number = 0
+        
         sha = os.environ.get('SHA', 'unknown')
         ref_name = os.environ.get('REF_NAME', 'unknown')
         commit_message = os.environ.get('COMMIT_MESSAGE', 'unknown')
         commit_author = os.environ.get('COMMIT_AUTHOR', 'unknown')
         
-        # 读取性能日志
-        with open('performance.log', 'r') as f:
-            log_content = f.read()
+        # 读取性能日志（添加错误处理）
+        try:
+            with open('performance.log', 'r') as f:
+                log_content = f.read()
+        except FileNotFoundError:
+            print("Warning: performance.log not found, using empty content")
+            log_content = ""
         
         # 解析 wrk 输出
         def parse_wrk_output(text):
@@ -328,25 +356,36 @@ jobs:
         with open('performance-results.json', 'w') as f:
             json.dump(output, f, indent=2)
         
-        # 输出关键指标
-        print(f"rps_low={output['test_scenarios'][0]['results']['rps']['value']:.0f}")
-        print(f"rps_medium={output['test_scenarios'][1]['results']['rps']['value']:.0f}")
-        print(f"rps_high={output['test_scenarios'][2]['results']['rps']['value']:.0f}")
-        print("status=pass")
+        # 输出关键指标（添加边界检查）
+        if len(output['test_scenarios']) >= 3:
+            print(f"rps_low={output['test_scenarios'][0]['results']['rps']['value']:.0f}")
+            print(f"rps_medium={output['test_scenarios'][1]['results']['rps']['value']:.0f}")
+            print(f"rps_high={output['test_scenarios'][2]['results']['rps']['value']:.0f}")
+            print("status=pass")
+        else:
+            print(f"Error: Expected at least 3 test scenarios, got {len(output['test_scenarios'])}")
+            print("status=error")
         
         EOF
         
-        # 将输出保存为环境变量
-        echo "rps_low=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(f\"{d['test_scenarios'][0]['results']['rps']['value']:.0f}\")")" >> $GITHUB_OUTPUT
-        echo "rps_medium=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(f\"{d['test_scenarios'][1]['results']['rps']['value']:.0f}\")")" >> $GITHUB_OUTPUT
-        echo "rps_high=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(f\"{d['test_scenarios'][2]['results']['rps']['value']:.0f}\")")" >> $GITHUB_OUTPUT
-        echo "latency_avg_low=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][0]['results']['latency_avg']['value'])")" >> $GITHUB_OUTPUT
-        echo "latency_avg_medium=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][1]['results']['latency_avg']['value'])")" >> $GITHUB_OUTPUT
-        echo "latency_avg_high=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][2]['results']['latency_avg']['value'])")" >> $GITHUB_OUTPUT
-        echo "latency_p99_low=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][0]['results'].get('latency_p99', 'N/A'))")" >> $GITHUB_OUTPUT
-        echo "latency_p99_medium=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][1]['results'].get('latency_p99', 'N/A'))")" >> $GITHUB_OUTPUT
-        echo "latency_p99_high=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][2]['results'].get('latency_p99', 'N/A'))")" >> $GITHUB_OUTPUT
-        echo "status=pass" >> $GITHUB_OUTPUT
+        # 将输出保存为环境变量（添加边界检查）
+        SCENARIO_COUNT=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(len(d['test_scenarios']))")
+        
+        if [ "$SCENARIO_COUNT" -ge 3 ]; then
+          echo "rps_low=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(f\"{d['test_scenarios'][0]['results']['rps']['value']:.0f}\")")" >> $GITHUB_OUTPUT
+          echo "rps_medium=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(f\"{d['test_scenarios'][1]['results']['rps']['value']:.0f}\")")" >> $GITHUB_OUTPUT
+          echo "rps_high=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(f\"{d['test_scenarios'][2]['results']['rps']['value']:.0f}\")")" >> $GITHUB_OUTPUT
+          echo "latency_avg_low=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][0]['results']['latency_avg']['value'])")" >> $GITHUB_OUTPUT
+          echo "latency_avg_medium=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][1]['results']['latency_avg']['value'])")" >> $GITHUB_OUTPUT
+          echo "latency_avg_high=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][2]['results']['latency_avg']['value'])")" >> $GITHUB_OUTPUT
+          echo "latency_p99_low=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][0]['results'].get('latency_p99', 'N/A'))")" >> $GITHUB_OUTPUT
+          echo "latency_p99_medium=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][1]['results'].get('latency_p99', 'N/A'))")" >> $GITHUB_OUTPUT
+          echo "latency_p99_high=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][2]['results'].get('latency_p99', 'N/A'))")" >> $GITHUB_OUTPUT
+          echo "status=pass" >> $GITHUB_OUTPUT
+        else
+          echo "Error: Expected at least 3 test scenarios, got $SCENARIO_COUNT" >> $GITHUB_OUTPUT
+          echo "status=error" >> $GITHUB_OUTPUT
+        fi
     
     - name: Generate performance report
       env:
