@@ -664,7 +664,10 @@ static int default_handler(uvhttp_request_t* request, uvhttp_response_t* respons
         method, url, time(NULL)
     );
     
-    uvhttp_quick_response(response, 200, "text/plain", response_body);
+    uvhttp_response_set_status(response, 200);
+    uvhttp_response_set_header(response, "Content-Type", "text/plain");
+    uvhttp_response_set_body(response, response_body, strlen(response_body));
+    uvhttp_response_send(response);
     return 0;
 }
 
