@@ -177,7 +177,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        brew install cmake valgrind
+        brew install cmake
 
     - name: Build project with AddressSanitizer
       run: |
@@ -193,14 +193,14 @@ jobs:
           exit 1
         }
 
-    - name: Build project for Valgrind
+    - name: Build project for memory leak check
       run: |
-        cmake -B build-vg -DCMAKE_BUILD_TYPE=Debug
-        cmake --build build-vg --config Debug -j$(sysctl -n hw.ncpu)
+        cmake -B build-leak -DCMAKE_BUILD_TYPE=Debug
+        cmake --build build-leak --config Debug -j$(sysctl -n hw.ncpu)
 
     - name: Run memory tests
       run: |
-        cd build-vg
+        cd build-leak
         if [ -f "./dist/bin/test_memory" ]; then
           ./dist/bin/test_memory || {
             echo "Memory tests failed"
@@ -210,27 +210,27 @@ jobs:
           echo "test_memory not found, skipping memory tests"
         fi
 
-    - name: Run Valgrind memory leak check on key tests
+    - name: Run Leaks memory leak check on key tests
       run: |
-        cd build-vg
-        # 运行关键测试的内存泄漏检查
+        cd build-leak
+        # 运行关键测试的内存泄漏检查（使用 macOS Leaks 工具）
         TESTS=(
           "test_connection_full_coverage"
           "test_server_full_coverage"
           "test_request_full_coverage"
           "test_config_full_coverage"
         )
-        
+
         LEAKS_FOUND=0
         for test in "${TESTS[@]}"; do
           if [ -f "./dist/bin/$test" ]; then
-            echo "Running Valgrind on $test..."
-            valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all --track-origins=yes ./dist/bin/$test > /tmp/valgrind_${test}.log 2>&1
+            echo "Running Leaks on $test..."
+            MallocStackLogging=1 leaks --atExit -- ./dist/bin/$test > /tmp/leaks_${test}.log 2>&1
             EXIT_CODE=$?
-            
+
             if [ $EXIT_CODE -ne 0 ]; then
               echo "❌ Memory leak detected in $test"
-              cat /tmp/valgrind_${test}.log
+              cat /tmp/leaks_${test}.log
               LEAKS_FOUND=1
             else
               echo "✅ No memory leaks in $test"
@@ -239,7 +239,7 @@ jobs:
             echo "⚠️  $test not found, skipping"
           fi
         done
-        
+
         if [ $LEAKS_FOUND -eq 1 ]; then
           echo "Memory leaks detected in one or more tests"
           exit 1

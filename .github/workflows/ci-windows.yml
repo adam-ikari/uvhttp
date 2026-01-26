@@ -109,9 +109,44 @@ jobs:
             exit 1
           }
           
-          # 运行性能测试（使用 wrk 或简单的 HTTP 请求）
-          # Windows 上可能需要安装 wrk 或使用其他工具
+          # 运行性能测试（使用 PowerShell 进行简单的性能测试）
+          $RESULTS = @()
+          $REQUEST_COUNT = 100
+          $CONCURRENT_REQUESTS = 10
+          
+          echo "Running performance test with $REQUEST_COUNT requests..."
+          
+          $START_TIME = Get-Date
+          
+          for ($i = 0; $i -lt $REQUEST_COUNT; $i++) {
+            try {
+              $response = Invoke-WebRequest -Uri "http://localhost:8080/" -UseBasicParsing -TimeoutSec 5
+              if ($response.StatusCode -eq 200) {
+                $RESULTS += $true
+              } else {
+                $RESULTS += $false
+              }
+            } catch {
+              $RESULTS += $false
+            }
+          }
+          
+          $END_TIME = Get-Date
+          $DURATION = ($END_TIME - $START_TIME).TotalSeconds
+          $SUCCESS_COUNT = ($RESULTS | Where-Object { $_ -eq $true }).Count
+          $RPS = [math]::Round($SUCCESS_COUNT / $DURATION, 2)
+          
           echo "Performance test completed"
+          echo "Total requests: $REQUEST_COUNT"
+          echo "Successful requests: $SUCCESS_COUNT"
+          echo "Duration: $DURATION seconds"
+          echo "RPS: $RPS"
+          
+          if ($SUCCESS_COUNT -lt ($REQUEST_COUNT * 0.9)) {
+            echo "Performance test failed: Success rate below 90%"
+            Stop-Process -Id $SERVER_PID.Id -Force -ErrorAction SilentlyContinue
+            exit 1
+          }
           
           # 清理
           Stop-Process -Id $SERVER_PID.Id -Force -ErrorAction SilentlyContinue

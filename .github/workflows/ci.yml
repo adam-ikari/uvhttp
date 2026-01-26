@@ -25,6 +25,23 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y cmake build-essential
 
+    - name: Cache CMake build
+      uses: actions/cache@v3
+      with:
+        path: |
+          build/
+          deps/*/build/
+          deps/libuv/build/
+          deps/mbedtls/build/
+          deps/xxhash/
+          deps/cllhttp/
+          deps/cjson/build/
+          deps/mimalloc/build/
+          deps/googletest/build/
+        key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt', '**/*.c', '**/*.h') }}
+        restore-keys: |
+          ${{ runner.os }}-cmake-
+
     - name: Configure CMake
       run: |
         cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -335,6 +352,31 @@ jobs:
             fi
           fi
         done
+
+  # CodeQL 安全扫描
+  codeql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'pull_request'
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: cpp
+        queries: security-extended,security-and-quality
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v2
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      with:
+        category: "/language:cpp"
 
   # 文档构建测试
   docs-build:
