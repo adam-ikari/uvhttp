@@ -26,7 +26,7 @@ set(CJSON_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cjson/build/libcjson.a)
 set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/xxhash/libxxhash.a)
 
 # UVHTTP 库路径
-set(UVHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}//home/zhaodi-chen/project/uvhttp/build_test/dist/lib/libuvhttp.a)
+set(UVHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../build_test/dist/lib/libuvhttp.a)
 
 message(STATUS "UVHTTP 头文件: ${UVHTTP_INCLUDE_DIR}")
 message(STATUS "UVHTTP 库文件: ${UVHTTP_LIB}")
