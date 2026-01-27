@@ -306,7 +306,7 @@ jobs:
       - name: Check performance regression
         id: check
         run: |
-# 下载基线文件
+          # 下载基线文件
           BASELINE_URL="https://raw.githubusercontent.com/${{ github.repository }}/main/docs/performance/baseline.json"
           
           # 尝试下载基线文件
@@ -330,23 +330,18 @@ jobs:
           
           # 运行回归检测脚本
           if [ -f "scripts/performance_regression.py" ]; then
-            python3 scripts/performance_regression.py performance-pr.json baseline.json > performance-report.md 2>&1
+            python3 scripts/performance_regression.py performance-pr.json baseline.json --fail-on-regression > performance-report.md 2>&1
             REGRESSION_EXIT=$?
             
             # 解析脚本返回值
             if [ $REGRESSION_EXIT -eq 1 ]; then
-              # 性能回归
+              # 性能回归或错误
               echo "has-regression=true" >> $GITHUB_OUTPUT
               echo "has-improvement=false" >> $GITHUB_OUTPUT
               echo "report=$(cat performance-report.md)" >> $GITHUB_OUTPUT
               exit 1  # 阻止 workflow
-            elif [ $REGRESSION_EXIT -eq 2 ]; then
-              # 无变化
-              echo "has-regression=false" >> $GITHUB_OUTPUT
-              echo "has-improvement=false" >> $GITHUB_OUTPUT
-              echo "report=$(cat performance-report.md)" >> $GITHUB_OUTPUT
             else
-              # 性能改进
+              # 无回归（包括性能改进或无显著变化）
               echo "has-regression=false" >> $GITHUB_OUTPUT
               echo "has-improvement=true" >> $GITHUB_OUTPUT
               echo "report=$(cat performance-report.md)" >> $GITHUB_OUTPUT
