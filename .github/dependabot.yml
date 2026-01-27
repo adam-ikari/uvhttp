@@ -8,6 +8,7 @@ updates:
       day: "monday"
       time: "09:00"
     open-pull-requests-limit: 10
+    versioning-strategy: "increase"
     labels:
       - "dependencies"
       - "github-actions"
@@ -23,6 +24,7 @@ updates:
       day: "monday"
       time: "09:00"
     open-pull-requests-limit: 10
+    versioning-strategy: "increase"
     labels:
       - "dependencies"
       - "npm"
