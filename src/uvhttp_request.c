@@ -45,14 +45,14 @@ uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client) 
     // 初始化HTTP解析器
     request->parser_settings = uvhttp_alloc(sizeof(llhttp_settings_t));
     if (!request->parser_settings) {
-        return -1;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     llhttp_settings_init(request->parser_settings);
     
     request->parser = uvhttp_alloc(sizeof(llhttp_t));
     if (!request->parser) {
         uvhttp_free(request->parser_settings);
-        return -1;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
     // 设置回调函数
@@ -74,11 +74,11 @@ uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client) 
     if (!request->body) {
         uvhttp_free(request->parser);
         uvhttp_free(request->parser_settings);
-        return -1;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     request->body_length = 0;
     
-    return 0;
+    return UVHTTP_OK;
 }
 
 void uvhttp_request_cleanup(uvhttp_request_t* request) {
