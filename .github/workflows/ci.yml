@@ -176,6 +176,11 @@ jobs:
           name: build-ubuntu-latest-Release-performance
           path: build-release/dist
 
+      - name: Install wrk
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wrk
+
       - name: Run performance test
         run: |
           mkdir -p build-release/public
