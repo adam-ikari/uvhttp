@@ -190,8 +190,20 @@ jobs:
             ./dist/bin/performance_static_server -d ./public -p 8080 > /tmp/server.log 2>&1 &
             SERVER_PID=$!
             sleep 3
+            # 检查服务器是否启动成功
+            if ! kill -0 $SERVER_PID 2>/dev/null; then
+              echo "Error: Server failed to start"
+              echo "Server log:"
+              cat /tmp/server.log
+              exit 1
+            fi
             wrk -t4 -c100 -d10s --timeout 5s http://localhost:8080/
             WRK_EXIT=$?
+            if [ $WRK_EXIT -ne 0 ]; then
+              echo "Performance test failed with exit code: $WRK_EXIT"
+              echo "Server log:"
+              cat /tmp/server.log
+            fi
             kill $SERVER_PID 2>/dev/null || true
             exit $WRK_EXIT
           else
