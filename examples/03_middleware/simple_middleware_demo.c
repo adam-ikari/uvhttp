@@ -40,8 +40,45 @@ static int preflight_middleware(const uvhttp_request_t* request, uvhttp_response
     return UVHTTP_MIDDLEWARE_CONTINUE;
 }
 
+/* 日志中间件 */
+static int logging_middleware(const uvhttp_request_t* request, uvhttp_response_t* response, uvhttp_middleware_context_t* ctx) {
+    (void)ctx;
+    (void)response;
+    printf("[LOG] %s %s\n", 
+           request->method == UVHTTP_GET ? "GET" : 
+           request->method == UVHTTP_POST ? "POST" : 
+           request->method == UVHTTP_PUT ? "PUT" : 
+           request->method == UVHTTP_DELETE ? "DELETE" : "UNKNOWN",
+           request->url);
+    return UVHTTP_MIDDLEWARE_CONTINUE;
+}
+
+/* CORS 中间件 */
+static int cors_middleware(const uvhttp_request_t* request, uvhttp_response_t* response, uvhttp_middleware_context_t* ctx) {
+    (void)ctx;
+    const char* origin = uvhttp_request_get_header((uvhttp_request_t*)request, "Origin");
+    if (origin) {
+        uvhttp_response_set_header(response, "Access-Control-Allow-Origin", origin);
+        uvhttp_response_set_header(response, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        uvhttp_response_set_header(response, "Access-Control-Allow-Headers", "Content-Type, Authorization");
+    }
+    return UVHTTP_MIDDLEWARE_CONTINUE;
+}
+
+/* 预检请求中间件 */
+static int preflight_middleware(const uvhttp_request_t* request, uvhttp_response_t* response, uvhttp_middleware_context_t* ctx) {
+    (void)ctx;
+    if (request->method == UVHTTP_OPTIONS) {
+        uvhttp_response_set_status(response, 204);
+        uvhttp_response_send(response);
+        return UVHTTP_MIDDLEWARE_STOP;
+    }
+    return UVHTTP_MIDDLEWARE_CONTINUE;
+}
+
 /* 认证中间件 */
-static int auth_middleware(const uvhttp_request_t* request, uvhttp_response_t* response) {
+static int auth_middleware(const uvhttp_request_t* request, uvhttp_response_t* response, uvhttp_middleware_context_t* ctx) {
+    (void)ctx;  /* 未使用的上下文参数 */
     const char* token = uvhttp_request_get_header((uvhttp_request_t*)request, "Authorization");
     
     if (!token || strncmp(token, "Bearer ", 7) != 0) {
@@ -56,7 +93,8 @@ static int auth_middleware(const uvhttp_request_t* request, uvhttp_response_t* r
 }
 
 /* 内容类型验证中间件 */
-static int content_type_middleware(const uvhttp_request_t* request, uvhttp_response_t* response) {
+static int content_type_middleware(const uvhttp_request_t* request, uvhttp_response_t* response, uvhttp_middleware_context_t* ctx) {
+    (void)ctx;  /* 未使用的上下文参数 */
     if (request->method == UVHTTP_POST || request->method == UVHTTP_PUT) {
         const char* content_type = uvhttp_request_get_header((uvhttp_request_t*)request, "Content-Type");
         
