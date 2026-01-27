@@ -527,3 +527,28 @@ jobs:
         
         # 使用 jq 更新历史文件
         jq --argjson current "$(cat performance-results.json)" '. + [$current] | .[:30]' "$HISTORY_FILE" > "${HISTORY_FILE}.tmp" && mv "${HISTORY_FILE}.tmp" "$HISTORY_FILE"
+    
+    - name: Save baseline to project
+      if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/heads/release/')
+      run: |
+        # 将基准性能历史记录到工程文件（仅 release 分支）
+        HISTORY_FILE="docs/performance/baseline-history.json"
+        HISTORY_DIR=$(dirname "$HISTORY_FILE")
+        
+        # 创建目录
+        mkdir -p "$HISTORY_DIR"
+        
+        # 如果历史文件不存在，创建空数组
+        if [ ! -f "$HISTORY_FILE" ]; then
+          echo '[]' > "$HISTORY_FILE"
+        fi
+        
+        # 使用 jq 更新历史文件
+        jq --argjson current "$(cat performance-results.json)" '. + [$current] | .[:30]' "$HISTORY_FILE" > "${HISTORY_FILE}.tmp" && mv "${HISTORY_FILE}.tmp" "$HISTORY_FILE"
+        
+        # 提交历史文件更新
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add "$HISTORY_FILE"
+        git diff --staged --quiet || git commit -m "chore: 更新基准性能历史记录 [skip ci]"
+        git push origin release
