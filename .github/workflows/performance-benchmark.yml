@@ -512,3 +512,56 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Detailed Report" >> $GITHUB_STEP_SUMMARY
         echo "See [performance-report.md](https://github.com/${{ github.repository }}/releases/download/perf-${{ steps.date.outputs.timestamp }}/performance-report.md) for more details." >> $GITHUB_STEP_SUMMARY
+    
+    - name: Update baseline history
+      if: github.event_name != 'pull_request'
+      run: |
+        # 创建或更新基准性能历史文件
+        HISTORY_FILE="docs/performance/baseline-history.json"
+        HISTORY_DIR=$(dirname "$HISTORY_FILE")
+        
+        # 创建目录
+        mkdir -p "$HISTORY_DIR"
+        
+        # 如果历史文件不存在，创建空数组
+        if [ ! -f "$HISTORY_FILE" ]; then
+          echo '[]' > "$HISTORY_FILE"
+        fi
+        
+        # 读取当前结果
+        CURRENT_RESULT=$(cat performance-results.json)
+        
+        # 更新历史文件
+        python3 << 'EOF'
+import json
+import sys
+from datetime import datetime
+
+# 读取历史文件
+try:
+    with open('docs/performance/baseline-history.json', 'r') as f:
+        history = json.load(f)
+except:
+    history = []
+
+# 读取当前结果
+with open('performance-results.json', 'r') as f:
+    current = json.load(f)
+
+# 添加到历史（只保留最近 30 条）
+history.insert(0, current)
+history = history[:30]
+
+# 保存历史文件
+with open('docs/performance/baseline-history.json', 'w') as f:
+    json.dump(history, f, indent=2)
+
+print(f"Updated baseline history with {len(history)} entries")
+EOF
+        
+        # 提交历史文件更新
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add "$HISTORY_FILE"
+        git diff --staged --quiet || git commit -m "chore: 更新基准性能历史记录 [skip ci]"
+        git push origin develop
