@@ -220,10 +220,10 @@ int main() {
     printf("✅ JSON API 服务器运行在 http://localhost:8080\n");
     printf("  - http://localhost:8080/api\n");
     printf("  - http://localhost:8080/api/status\n");
-    printf("按 Ctrl+C 带止服务器\n");
+    printf("按 Ctrl+C 停止服务器\n");
     
     // 运行事件循环
-    uvhttp_run(loop, UV_RUN_DEFAULT);
+    uv_run(loop, UV_RUN_DEFAULT);
     
     // 清理资源
     if (g_server) {
@@ -369,7 +369,7 @@ int main() {
     printf("按 Ctrl+C 停止服务器\n");
     
     // 运行事件循环
-    uvhttp_run(loop, UV_RUN_DEFAULT);
+    uv_run(loop, UV_RUN_DEFAULT);
     
     // 清理资源
     if (g_server) {

@@ -112,7 +112,6 @@ TEST(UvhttpConnectionEnhancedTest, ConnectionFieldInitialization) {
     EXPECT_EQ(conn.current_header_field_len, 0);
     EXPECT_EQ(conn.parsing_header_field, 0);
     EXPECT_EQ(conn.need_restart_read, 0);
-    EXPECT_EQ(conn.mempool, nullptr);
     EXPECT_EQ(conn.last_error, 0);
 }
 
