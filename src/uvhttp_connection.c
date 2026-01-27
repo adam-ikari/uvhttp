@@ -813,10 +813,16 @@ int uvhttp_connection_start_timeout(uvhttp_connection_t* conn) {
         uv_timer_stop(&conn->timeout_timer);
     }
     
+    // 获取超时时间，如果 config 为 NULL 则使用默认值
+    int timeout_ms = UVHTTP_CONNECTION_TIMEOUT_DEFAULT * 1000;
+    if (conn->server->config) {
+        timeout_ms = conn->server->config->connection_timeout * 1000;
+    }
+    
     // 启动定时器
     if (uv_timer_start(&conn->timeout_timer, 
                        connection_timeout_cb, 
-                       conn->server->config->connection_timeout * 1000, 
+                       timeout_ms, 
                        0) != 0) {
         UVHTTP_LOG_ERROR("Failed to start connection timeout timer\n");
         return -1;
