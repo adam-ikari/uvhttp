@@ -768,3 +768,44 @@ void uvhttp_connection_websocket_close(uvhttp_connection_t* conn) {
 }
 
 #endif /* UVHTTP_FEATURE_WEBSOCKET */
+/* 连接超时回调函数 */
+static void connection_timeout_cb(uv_timer_t* handle) {
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
+    if (!conn) {
+        return;
+    }
+    
+    UVHTTP_LOG_WARN("Connection timeout, closing connection...\n");
+    uvhttp_connection_close(conn);
+}
+
+/* 启动连接超时定时器 */
+int uvhttp_connection_start_timeout(uvhttp_connection_t* conn) {
+    if (!conn || !conn->server) {
+        return -1;
+    }
+    
+    // 停止旧的定时器（如果有）
+    if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
+        uv_timer_stop(&conn->timeout_timer);
+        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
+    }
+    
+    // 初始化新的定时器
+    if (uv_timer_init(conn->server->loop, &conn->timeout_timer) != 0) {
+        UVHTTP_LOG_ERROR("Failed to initialize connection timeout timer\n");
+        return -1;
+    }
+    
+    conn->timeout_timer.data = conn;
+    if (uv_timer_start(&conn->timeout_timer, 
+                       connection_timeout_cb, 
+                       UVHTTP_CONNECTION_TIMEOUT_DEFAULT * 1000, 
+                       0) != 0) {
+        UVHTTP_LOG_ERROR("Failed to start connection timeout timer\n");
+        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
+        return -1;
+    }
+    
+    return 0;
+}

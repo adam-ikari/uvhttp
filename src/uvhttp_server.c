@@ -165,6 +165,9 @@ static void on_connection(uv_stream_t* server_handle, int status) {
      * 所有后续处理都通过libuv回调在事件循环中异步进行
      */
     int start_result = uvhttp_connection_start(conn);
+    if (start_result == 0) {
+        uvhttp_connection_start_timeout(conn);
+    }
     
     if (start_result != 0) {
         uvhttp_connection_close(conn);

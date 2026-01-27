@@ -41,6 +41,7 @@ struct uvhttp_connection {
     /* 网络连接（16字节对齐） */
     uv_tcp_t tcp_handle;                      /* 8 字节 */
     uv_idle_t idle_handle;                    /* 8 字节 */
+    uv_timer_t timeout_timer;                 /* 8 字节 - 连接超时定时器 */
     
     /* HTTP/1.1优化字段 */
     int current_header_is_important;         /* 4 字节 */
@@ -131,3 +132,4 @@ ws_route_entry_t* uvhttp_server_find_ws_route_entry(struct uvhttp_server* server
 #endif
 
 #endif
+int uvhttp_connection_start_timeout(uvhttp_connection_t* conn);

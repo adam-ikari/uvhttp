@@ -274,3 +274,7 @@
 #endif
 
 #endif /* UVHTTP_CONSTANTS_H */
+/* 连接超时相关常量 */
+#define UVHTTP_CONNECTION_TIMEOUT_DEFAULT 60  /* 默认连接超时时间（秒） */
+#define UVHTTP_CONNECTION_TIMEOUT_MIN     5   /* 最小连接超时时间（秒） */
+#define UVHTTP_CONNECTION_TIMEOUT_MAX     300 /* 最大连接超时时间（秒） */
