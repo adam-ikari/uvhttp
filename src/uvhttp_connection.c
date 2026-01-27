@@ -270,6 +270,13 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     }
     conn->idle_handle.data = conn;
     
+    // 初始化超时定时器
+    if (uv_timer_init(server->loop, &conn->timeout_timer) != 0) {
+        uvhttp_free(conn);
+        return NULL;
+    }
+    conn->timeout_timer.data = conn;
+    
     // HTTP/1.1优化：初始化默认值
     conn->keep_alive = 1;           // HTTP/1.1默认保持连接
     conn->chunked_encoding = 0;     // 默认不使用分块传输
@@ -407,6 +414,12 @@ void uvhttp_connection_close(uvhttp_connection_t* conn) {
     if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
         uv_idle_stop(&conn->idle_handle);
         uv_close((uv_handle_t*)&conn->idle_handle, NULL);
+    }
+
+    /* 停止超时定时器（如果正在运行） */
+    if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
+        uv_timer_stop(&conn->timeout_timer);
+        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
     }
 
     /* 关闭 TCP handle */
@@ -798,22 +811,14 @@ int uvhttp_connection_start_timeout(uvhttp_connection_t* conn) {
     // 停止旧的定时器（如果有）
     if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
         uv_timer_stop(&conn->timeout_timer);
-        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
     }
     
-    // 初始化新的定时器
-    if (uv_timer_init(conn->server->loop, &conn->timeout_timer) != 0) {
-        UVHTTP_LOG_ERROR("Failed to initialize connection timeout timer\n");
-        return -1;
-    }
-    
-    conn->timeout_timer.data = conn;
+    // 启动定时器
     if (uv_timer_start(&conn->timeout_timer, 
                        connection_timeout_cb, 
                        conn->server->config->connection_timeout * 1000, 
                        0) != 0) {
         UVHTTP_LOG_ERROR("Failed to start connection timeout timer\n");
-        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
         return -1;
     }
     
@@ -836,22 +841,14 @@ int uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn, int timeou
     // 停止旧的定时器（如果有）
     if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
         uv_timer_stop(&conn->timeout_timer);
-        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
     }
     
-    // 初始化新的定时器
-    if (uv_timer_init(conn->server->loop, &conn->timeout_timer) != 0) {
-        UVHTTP_LOG_ERROR("Failed to initialize connection timeout timer\n");
-        return -1;
-    }
-    
-    conn->timeout_timer.data = conn;
+    // 启动定时器
     if (uv_timer_start(&conn->timeout_timer, 
                        connection_timeout_cb, 
                        timeout_seconds * 1000, 
                        0) != 0) {
         UVHTTP_LOG_ERROR("Failed to start connection timeout timer\n");
-        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
         return -1;
     }
     

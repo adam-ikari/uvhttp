@@ -302,7 +302,6 @@ int main(int argc, char* argv[]) {
         printf("错误：无法启动服务器 (错误码: %d)\n", result);
         fflush(stdout);
         uvhttp_static_free(ctx->static_ctx);
-        uvhttp_config_free(config);
         uvhttp_server_free(ctx->server);
         uvhttp_free(ctx);
         return 1;
