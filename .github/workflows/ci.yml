@@ -174,7 +174,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-ubuntu-latest-Release-performance
-          path: build-release
+          path: build-release/dist
 
       - name: Run performance test
         run: |
