@@ -113,8 +113,8 @@ static int public_api_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     return 0;
 }
 
-/* 受保护端点处理器 - 方式1：直接使用宏 */
-static int protected_api_handler_v1(uvhttp_request_t* req, uvhttp_response_t* resp) {
+/* 受保护端点处理器 */
+static int protected_api_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     UVHTTP_EXECUTE_MIDDLEWARE(req, resp,
         logging_middleware,
         cors_middleware,
@@ -125,29 +125,6 @@ static int protected_api_handler_v1(uvhttp_request_t* req, uvhttp_response_t* re
     
     /* 处理请求 */
     const char* json = "{\"message\":\"Protected API\",\"data\":\"secret\"}";
-    uvhttp_response_set_status(resp, 200);
-    uvhttp_response_set_header(resp, "Content-Type", "application/json");
-    uvhttp_response_set_body(resp, json, strlen(json));
-    uvhttp_response_send(resp);
-    
-    return 0;
-}
-
-/* 受保护端点处理器 - 方式2：使用预定义的链 */
-static int protected_api_handler_v2(uvhttp_request_t* req, uvhttp_response_t* resp) {
-    /* 使用预定义的中间件链 */
-    uvhttp_middleware_context_t ctx = {0};
-    for (size_t i = 0; i < api_protected_chain_count; i++) {
-        if (api_protected_chain_handlers[i](req, resp, &ctx) != UVHTTP_MIDDLEWARE_CONTINUE) {
-            if (ctx.cleanup) {
-                ctx.cleanup(ctx.data);
-            }
-            return 0;
-        }
-    }
-    
-    /* 处理请求 */
-    const char* json = "{\"message\":\"Protected API v2\",\"data\":\"secret\"}";
     uvhttp_response_set_status(resp, 200);
     uvhttp_response_set_header(resp, "Content-Type", "application/json");
     uvhttp_response_set_body(resp, json, strlen(json));
@@ -198,7 +175,7 @@ int main(void) {
     /* 添加路由 */
     uvhttp_router_add_route(router, "/", simple_handler);
     uvhttp_router_add_route(router, "/api/public", public_api_handler);
-    uvhttp_router_add_route(router, "/api/protected", protected_api_handler_v1);
+    uvhttp_router_add_route(router, "/api/protected", protected_api_handler);
     
     /* 启动服务器 */
     uvhttp_server_listen(server, "0.0.0.0", 8080);
