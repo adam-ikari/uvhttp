@@ -89,6 +89,9 @@
 #define UVHTTP_DEFAULT_PORT 8080                /* 默认端口 */
 #define UVHTTP_BACKLOG                    8192  /* 从2048增加到8192，支持更高并发 */
 
+/* 服务器清理配置 */
+#define UVHTTP_SERVER_CLEANUP_LOOP_ITERATIONS 10  /* 服务器关闭时运行循环的迭代次数，确保所有关闭回调被执行 */
+
 
 
 /* TLS 相关 */

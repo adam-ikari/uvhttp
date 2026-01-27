@@ -271,7 +271,7 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
      * 使用 UV_RUN_ONCE 而不是 UV_RUN_NOWAIT，确保回调被执行
      */
     if (server->loop) {
-        for (int index = 0; index < 10; index++) {
+        for (int index = 0; index < UVHTTP_SERVER_CLEANUP_LOOP_ITERATIONS; index++) {
             uv_run(server->loop, UV_RUN_ONCE);
         }
     }
