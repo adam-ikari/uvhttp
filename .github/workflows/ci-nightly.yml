@@ -48,7 +48,7 @@ jobs:
           cmake --build build --config Debug -j$(nproc)
       
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-ubuntu-nightly-${{ github.run_number }}
           path: build/
@@ -84,7 +84,7 @@ jobs:
           find src/ include/ -name "*.c" -o -name "*.h" | xargs clang-format --dry-run --Werror || true
       
       - name: Upload quality results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: code-quality-results-nightly-${{ github.run_number }}
           path: |
@@ -113,7 +113,7 @@ jobs:
           echo "Checking dependencies..."
       
       - name: Upload security results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: security-results-nightly-${{ github.run_number }}
           path: |
@@ -154,7 +154,7 @@ jobs:
           genhtml coverage.info --output-directory coverage-report
       
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-report-nightly-${{ github.run_number }}
           path: build/coverage-report/
@@ -198,7 +198,7 @@ jobs:
       
       - name: Upload memory test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: memory-test-results-nightly-${{ github.run_number }}
           path: |
@@ -245,7 +245,7 @@ jobs:
           kill $SERVER_PID 2>/dev/null || true
       
       - name: Upload stress test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: stress-test-results-nightly-${{ github.run_number }}
           path: |
@@ -404,7 +404,7 @@ jobs:
           EOF
       
       - name: Upload performance artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: performance-full-nightly-${{ github.run_number }}
           path: |

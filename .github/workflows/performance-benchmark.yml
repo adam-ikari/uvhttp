@@ -474,7 +474,7 @@ jobs:
         python3 /tmp/generate_report.py
     
     - name: Upload performance results artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: performance-results-${{ github.run_number }}
         path: |

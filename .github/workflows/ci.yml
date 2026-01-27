@@ -50,7 +50,7 @@ jobs:
           fi
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-ubuntu-latest-Release
           path: build-release/dist/
@@ -79,7 +79,7 @@ jobs:
 
       - name: Upload test logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: test-logs-ubuntu-fast
           path: |
@@ -122,7 +122,7 @@ jobs:
 
       - name: Upload cppcheck results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: cppcheck-results
           path: cppcheck.xml
@@ -153,7 +153,7 @@ jobs:
           cmake --build build-release --config Release -j$(nproc)
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-ubuntu-latest-Release-performance
           path: build-release/dist/

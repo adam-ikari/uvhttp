@@ -66,7 +66,7 @@ jobs:
           fi
       
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-ubuntu-pr-${{ github.event.pull_request.number }}
           path: build-pr/dist/
@@ -124,7 +124,7 @@ jobs:
       
       - name: Upload code quality results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: code-quality-pr-${{ github.event.pull_request.number }}
           path: |
@@ -195,7 +195,7 @@ jobs:
       
       - name: Upload test logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: test-logs-pr-${{ github.event.pull_request.number }}
           path: |
@@ -357,7 +357,7 @@ jobs:
       
       - name: Upload performance results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: performance-comparison-pr-${{ github.event.pull_request.number }}
           path: |
