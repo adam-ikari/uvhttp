@@ -344,18 +344,6 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
         parser->data = conn;
     }
     
-    // 初始化内存池
-    conn->mempool = uvhttp_mempool_create();
-    if (!conn->mempool) {
-        uvhttp_request_cleanup(conn->request);
-        uvhttp_free(conn->request);
-        uvhttp_response_cleanup(conn->response);
-        uvhttp_free(conn->response);
-        uvhttp_free(conn->read_buffer);
-        uvhttp_free(conn);
-        return NULL;
-    }
-    
     return conn;
 }
 
@@ -377,11 +365,6 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
     
     if (conn->read_buffer) {
         uvhttp_free(conn->read_buffer);
-    }
-    
-    // 释放内存池
-    if (conn->mempool) {
-        uvhttp_mempool_destroy(conn->mempool);
     }
     
     // 释放连接内存

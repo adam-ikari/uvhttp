@@ -113,7 +113,6 @@ set(SOURCES
     src/uvhttp_error_handler.c
     src/uvhttp_error_helpers.c
     src/uvhttp_hash.c
-    src/uvhttp_mempool.c
     src/uvhttp_lru_cache.c
     src/uvhttp_router_cache.c
     src/uvhttp_static.c
@@ -149,7 +148,6 @@ set(HEADERS
     include/uvhttp_features.h
     include/uvhttp_hash.h
     include/uvhttp_lru_cache.h
-    include/uvhttp_mempool.h
     include/uvhttp_network.h
     include/uvhttp_request.h
     include/uvhttp_response.h

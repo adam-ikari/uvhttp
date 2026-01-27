@@ -44,11 +44,6 @@ TEST(UvhttpConnectionExtendedCoverageTest, ConnectionTlsHandshakeFunc) {
         uvhttp_free(conn->read_buffer);
     }
     
-    // 释放内存池
-    if (conn->mempool) {
-        uvhttp_mempool_destroy(conn->mempool);
-    }
-    
     // 释放连接内存
     uvhttp_free(conn);
     uvhttp_free(server);
@@ -96,11 +91,6 @@ TEST(UvhttpConnectionExtendedCoverageTest, ConnectionStateTransitions) {
     
     if (conn->read_buffer) {
         uvhttp_free(conn->read_buffer);
-    }
-    
-    // 释放内存池
-    if (conn->mempool) {
-        uvhttp_mempool_destroy(conn->mempool);
     }
     
     // 释放连接内存

@@ -139,7 +139,6 @@ TEST(UvhttpConnectionFullCoverageTest, ConnectionMemoryAllocation) {
                            sizeof(size_t) + /* current_header_field_len */
                            sizeof(int) +    /* parsing_header_field */
                            sizeof(int) +    /* need_restart_read */
-                           sizeof(uvhttp_mempool_t*) +
                            sizeof(int);     /* last_error */
     
     EXPECT_GE(sizeof(uvhttp_connection_t), expected_size);
