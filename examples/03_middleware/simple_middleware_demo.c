@@ -11,6 +11,35 @@
 
 /* ==================== 自定义中间件 ==================== */
 
+/* 日志中间件 */
+static int logging_middleware(const uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
+    (void)response;
+    printf("[LOG] Request: %s %s\n", 
+           uvhttp_method_to_string(request->method),
+           uvhttp_request_get_url(request));
+    return UVHTTP_MIDDLEWARE_CONTINUE;
+}
+
+/* CORS 中间件 */
+static int cors_middleware(const uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
+    uvhttp_response_set_header(response, "Access-Control-Allow-Origin", "*");
+    uvhttp_response_set_header(response, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    uvhttp_response_set_header(response, "Access-Control-Allow-Headers", "Content-Type, Authorization");
+    return UVHTTP_MIDDLEWARE_CONTINUE;
+}
+
+/* 预检请求处理中间件 */
+static int preflight_middleware(const uvhttp_request_t* request, uvhttp_response_t* response) {
+    if (request->method == UVHTTP_OPTIONS) {
+        uvhttp_response_set_status(response, 200);
+        uvhttp_response_send(response);
+        return UVHTTP_MIDDLEWARE_STOP;
+    }
+    return UVHTTP_MIDDLEWARE_CONTINUE;
+}
+
 /* 认证中间件 */
 static int auth_middleware(const uvhttp_request_t* request, uvhttp_response_t* response) {
     const char* token = uvhttp_request_get_header((uvhttp_request_t*)request, "Authorization");
@@ -45,18 +74,11 @@ static int content_type_middleware(const uvhttp_request_t* request, uvhttp_respo
 
 /* ==================== 中间件链定义 ==================== */
 
-/* API 公开端点中间件链 */
-UVHTTP_DEFINE_MIDDLEWARE_CHAIN(api_public_chain,
-    uvhttp_middleware_logging,
-    uvhttp_middleware_cors,
-    uvhttp_middleware_preflight
-);
-
 /* API 受保护端点中间件链 */
 UVHTTP_DEFINE_MIDDLEWARE_CHAIN(api_protected_chain,
-    uvhttp_middleware_logging,
-    uvhttp_middleware_cors,
-    uvhttp_middleware_preflight,
+    logging_middleware,
+    cors_middleware,
+    preflight_middleware,
     auth_middleware,
     content_type_middleware
 );
@@ -67,9 +89,9 @@ UVHTTP_DEFINE_MIDDLEWARE_CHAIN(api_protected_chain,
 static int public_api_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     /* 方式1：直接使用宏 */
     UVHTTP_MIDDLEWARE(req, resp,
-        uvhttp_middleware_logging,
-        uvhttp_middleware_cors,
-        uvhttp_middleware_preflight
+        logging_middleware,
+        cors_middleware,
+        preflight_middleware
     );
     
     /* 处理请求 */
@@ -85,9 +107,9 @@ static int public_api_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
 /* 受保护端点处理器 - 方式1：直接使用宏 */
 static int protected_api_handler_v1(uvhttp_request_t* req, uvhttp_response_t* resp) {
     UVHTTP_MIDDLEWARE(req, resp,
-        uvhttp_middleware_logging,
-        uvhttp_middleware_cors,
-        uvhttp_middleware_preflight,
+        logging_middleware,
+        cors_middleware,
+        preflight_middleware,
         auth_middleware,
         content_type_middleware
     );

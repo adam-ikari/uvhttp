@@ -262,9 +262,10 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
     conn->timeout_timer.data = conn;
     
     // HTTP/1.1优化：初始化默认值
-    conn->keep_alive = 1;           // HTTP/1.1默认保持连接
-    conn->chunked_encoding = 0;     // 默认不使用分块传输
-    conn->content_length = 0;       // 默认无内容长度
+conn->keep_alive = 1;           /* HTTP/1.1默认保持连接 */
+    conn->chunked_encoding = 0;     /* 默认不使用分块传输 */
+    conn->close_pending = 0;        /* 初始化待关闭的 handle 计数 */
+    conn->content_length = 0;       /* 默认无内容长度 */
     conn->body_received = 0;        // 已接收body长度
     conn->parsing_complete = 0;     // 解析未完成
     conn->current_header_is_important = 0; // 当前头部非关键字段
@@ -364,27 +365,27 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
 
 int uvhttp_connection_start(uvhttp_connection_t* conn) {
     if (!conn) {
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    // 开始HTTP读取 - 完整实现
+    /* 开始HTTP读取 - 完整实现 */
     if (uv_read_start((uv_stream_t*)&conn->tcp_handle, (uv_alloc_cb)on_alloc_buffer, (uv_read_cb)on_read) != 0) {
         UVHTTP_LOG_ERROR("Failed to start reading on connection\n");
         uvhttp_connection_close(conn);
-        return -1;
+        return UVHTTP_ERROR_CONNECTION_START;
     }
     uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_HTTP_READING);
     
-    // TLS处理
+    /* TLS处理 */
     if (conn->tls_enabled) {
         if (uvhttp_connection_tls_handshake_func(conn) != 0) {
             UVHTTP_LOG_ERROR("TLS handshake failed\n");
             uvhttp_connection_close(conn);
-            return -1;
+            return UVHTTP_ERROR_CONNECTION_START;
         }
     }
     
-    return 0;
+    return UVHTTP_OK;
 }
 
 /* Handle 关闭回调（通用） */
