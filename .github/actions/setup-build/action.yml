@@ -1,34 +1,32 @@
 name: 'Setup Build Environment'
-description: 'Setup build environment for uvhttp project'
+description: 'Setup build environment for different operating systems'
 
 inputs:
   os:
-    description: 'Operating system'
+    description: 'Operating system (ubuntu-latest, macos-latest, windows-latest)'
     required: true
-    default: 'ubuntu-latest'
 
 runs:
   using: 'composite'
   steps:
-    - name: Setup CMake (Ubuntu)
+    - name: Install dependencies (Ubuntu)
       if: inputs.os == 'ubuntu-latest'
       shell: bash
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake build-essential valgrind wrk lcov
-    
-    - name: Setup CMake (macOS)
+        sudo apt-get install -y cmake build-essential valgrind wrk lcov python3 python3-pip
+        pip3 install matplotlib numpy
+
+    - name: Install dependencies (macOS)
       if: inputs.os == 'macos-latest'
       shell: bash
       run: |
-        brew install cmake wrk
-    
-    - name: Setup CMake (Windows)
+        brew install cmake valgrind wrk lcov python3
+        pip3 install matplotlib numpy
+
+    - name: Install dependencies (Windows)
       if: inputs.os == 'windows-latest'
-      uses: jwlawson/actions-setup-cmake@v2
-      with:
-        cmake-version: '3.20'
-    
-    - name: Setup MSVC (Windows)
-      if: inputs.os == 'windows-latest'
-      uses: microsoft/setup-msbuild@v1
+      shell: pwsh
+      run: |
+        choco install cmake -y
+        choco install wrk -y
