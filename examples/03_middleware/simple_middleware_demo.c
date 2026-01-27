@@ -12,35 +12,6 @@
 /* ==================== 自定义中间件 ==================== */
 
 /* 日志中间件 */
-static int logging_middleware(const uvhttp_request_t* request, uvhttp_response_t* response) {
-    (void)request;
-    (void)response;
-    printf("[LOG] Request: %s %s\n", 
-           uvhttp_method_to_string(request->method),
-           uvhttp_request_get_url(request));
-    return UVHTTP_MIDDLEWARE_CONTINUE;
-}
-
-/* CORS 中间件 */
-static int cors_middleware(const uvhttp_request_t* request, uvhttp_response_t* response) {
-    (void)request;
-    uvhttp_response_set_header(response, "Access-Control-Allow-Origin", "*");
-    uvhttp_response_set_header(response, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    uvhttp_response_set_header(response, "Access-Control-Allow-Headers", "Content-Type, Authorization");
-    return UVHTTP_MIDDLEWARE_CONTINUE;
-}
-
-/* 预检请求处理中间件 */
-static int preflight_middleware(const uvhttp_request_t* request, uvhttp_response_t* response) {
-    if (request->method == UVHTTP_OPTIONS) {
-        uvhttp_response_set_status(response, 200);
-        uvhttp_response_send(response);
-        return UVHTTP_MIDDLEWARE_STOP;
-    }
-    return UVHTTP_MIDDLEWARE_CONTINUE;
-}
-
-/* 日志中间件 */
 static int logging_middleware(const uvhttp_request_t* request, uvhttp_response_t* response, uvhttp_middleware_context_t* ctx) {
     (void)ctx;
     (void)response;
@@ -126,7 +97,7 @@ UVHTTP_DEFINE_MIDDLEWARE_CHAIN(api_protected_chain,
 /* 公开端点处理器 */
 static int public_api_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     /* 方式1：直接使用宏 */
-    UVHTTP_MIDDLEWARE(req, resp,
+    UVHTTP_EXECUTE_MIDDLEWARE(req, resp,
         logging_middleware,
         cors_middleware,
         preflight_middleware
@@ -144,7 +115,7 @@ static int public_api_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
 
 /* 受保护端点处理器 - 方式1：直接使用宏 */
 static int protected_api_handler_v1(uvhttp_request_t* req, uvhttp_response_t* resp) {
-    UVHTTP_MIDDLEWARE(req, resp,
+    UVHTTP_EXECUTE_MIDDLEWARE(req, resp,
         logging_middleware,
         cors_middleware,
         preflight_middleware,
@@ -165,8 +136,12 @@ static int protected_api_handler_v1(uvhttp_request_t* req, uvhttp_response_t* re
 /* 受保护端点处理器 - 方式2：使用预定义的链 */
 static int protected_api_handler_v2(uvhttp_request_t* req, uvhttp_response_t* resp) {
     /* 使用预定义的中间件链 */
+    uvhttp_middleware_context_t ctx = {0};
     for (size_t i = 0; i < api_protected_chain_count; i++) {
-        if (api_protected_chain_handlers[i](req, resp) != UVHTTP_MIDDLEWARE_CONTINUE) {
+        if (api_protected_chain_handlers[i](req, resp, &ctx) != UVHTTP_MIDDLEWARE_CONTINUE) {
+            if (ctx.cleanup) {
+                ctx.cleanup(ctx.data);
+            }
             return 0;
         }
     }
@@ -183,6 +158,7 @@ static int protected_api_handler_v2(uvhttp_request_t* req, uvhttp_response_t* re
 
 /* 简单处理器 - 无中间件 */
 static int simple_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
+    (void)req;  /* 未使用的参数 */
     const char* html = 
         "<!DOCTYPE html>"
         "<html><head><title>简单中间件示例</title></head>"
