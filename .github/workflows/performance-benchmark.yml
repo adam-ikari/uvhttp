@@ -487,7 +487,7 @@ jobs:
     
     - name: Create performance benchmark release
       if: github.event_name != 'pull_request'
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: perf-${{ steps.date.outputs.timestamp }}
         name: Performance Benchmark - ${{ steps.date.outputs.date }}

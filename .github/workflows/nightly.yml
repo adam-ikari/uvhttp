@@ -117,7 +117,7 @@ jobs:
       
       # Create nightly release
       - name: Create nightly release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: nightly-${{ steps.date.outputs.timestamp }}
           name: Nightly Build - ${{ steps.date.outputs.date }}
