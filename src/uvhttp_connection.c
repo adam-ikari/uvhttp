@@ -799,12 +799,18 @@ static void connection_timeout_cb(uv_timer_t* handle) {
         return;
     }
     
-    // 触发应用层超时统计回调
+    /* 获取超时时间，如果 config 为 NULL 则使用默认值 */
+    int timeout_ms = UVHTTP_CONNECTION_TIMEOUT_DEFAULT * 1000;
+    if (conn->server->config) {
+        timeout_ms = conn->server->config->connection_timeout * 1000;
+    }
+    
+    /* 触发应用层超时统计回调 */
     if (conn->server->timeout_callback) {
         conn->server->timeout_callback(
             conn->server,
             conn,
-            conn->server->config->connection_timeout * 1000,
+            timeout_ms,
             conn->server->timeout_callback_user_data
         );
     }
@@ -816,58 +822,64 @@ static void connection_timeout_cb(uv_timer_t* handle) {
 /* 启动连接超时定时器 */
 int uvhttp_connection_start_timeout(uvhttp_connection_t* conn) {
     if (!conn || !conn->server) {
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    // 停止旧的定时器（如果有）
+    /* 停止旧的定时器（如果有） */
     if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
         uv_timer_stop(&conn->timeout_timer);
     }
     
-    // 获取超时时间，如果 config 为 NULL 则使用默认值
+    /* 获取超时时间，如果 config 为 NULL 则使用默认值 */
     int timeout_ms = UVHTTP_CONNECTION_TIMEOUT_DEFAULT * 1000;
     if (conn->server->config) {
         timeout_ms = conn->server->config->connection_timeout * 1000;
     }
     
-    // 启动定时器
+    /* 启动定时器 */
     if (uv_timer_start(&conn->timeout_timer, 
                        connection_timeout_cb, 
                        timeout_ms, 
                        0) != 0) {
         UVHTTP_LOG_ERROR("Failed to start connection timeout timer\n");
-        return -1;
+        return UVHTTP_ERROR_CONNECTION_TIMEOUT;
     }
     
-    return 0;
+    return UVHTTP_OK;
 }
 
 /* 启动连接超时定时器（自定义超时时间） */
 int uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn, int timeout_seconds) {
     if (!conn || !conn->server) {
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    // 验证超时时间范围
+    /* 验证超时时间范围 */
     if (timeout_seconds < UVHTTP_CONNECTION_TIMEOUT_MIN || 
         timeout_seconds > UVHTTP_CONNECTION_TIMEOUT_MAX) {
         UVHTTP_LOG_ERROR("Invalid timeout value: %d seconds\n", timeout_seconds);
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    // 停止旧的定时器（如果有）
+    /* 检查整数溢出 */
+    if (timeout_seconds > INT_MAX / 1000) {
+        UVHTTP_LOG_ERROR("Timeout value too large: %d seconds\n", timeout_seconds);
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    /* 停止旧的定时器（如果有） */
     if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
         uv_timer_stop(&conn->timeout_timer);
     }
     
-    // 启动定时器
+    /* 启动定时器 */
     if (uv_timer_start(&conn->timeout_timer, 
                        connection_timeout_cb, 
                        timeout_seconds * 1000, 
                        0) != 0) {
         UVHTTP_LOG_ERROR("Failed to start connection timeout timer\n");
-        return -1;
+        return UVHTTP_ERROR_CONNECTION_TIMEOUT;
     }
     
-    return 0;
+    return UVHTTP_OK;
 }

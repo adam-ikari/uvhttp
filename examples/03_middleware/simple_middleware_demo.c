@@ -46,14 +46,14 @@ static int content_type_middleware(const uvhttp_request_t* request, uvhttp_respo
 /* ==================== 中间件链定义 ==================== */
 
 /* API 公开端点中间件链 */
-UVHTTP_MIDDLEWARE_CHAIN(api_public_chain,
+UVHTTP_DEFINE_MIDDLEWARE_CHAIN(api_public_chain,
     uvhttp_middleware_logging,
     uvhttp_middleware_cors,
     uvhttp_middleware_preflight
 );
 
 /* API 受保护端点中间件链 */
-UVHTTP_MIDDLEWARE_CHAIN(api_protected_chain,
+UVHTTP_DEFINE_MIDDLEWARE_CHAIN(api_protected_chain,
     uvhttp_middleware_logging,
     uvhttp_middleware_cors,
     uvhttp_middleware_preflight,
@@ -106,7 +106,7 @@ static int protected_api_handler_v1(uvhttp_request_t* req, uvhttp_response_t* re
 static int protected_api_handler_v2(uvhttp_request_t* req, uvhttp_response_t* resp) {
     /* 使用预定义的中间件链 */
     for (size_t i = 0; i < api_protected_chain_count; i++) {
-        if (api_protected_chain[i](req, resp) != UVHTTP_MIDDLEWARE_CONTINUE) {
+        if (api_protected_chain_handlers[i](req, resp) != UVHTTP_MIDDLEWARE_CONTINUE) {
             return 0;
         }
     }

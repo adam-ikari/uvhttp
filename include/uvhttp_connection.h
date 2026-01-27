@@ -133,6 +133,35 @@ ws_route_entry_t* uvhttp_server_find_ws_route_entry(struct uvhttp_server* server
 #endif
 
 #endif
+
+/**
+ * @brief 启动连接超时定时器
+ * 
+ * 为连接启动超时定时器，使用配置中的默认超时时间。
+ * 如果连接在超时时间内没有活动，将自动关闭连接。
+ * 
+ * @param conn 连接对象
+ * @return int 成功返回 UVHTTP_OK，失败返回负数错误码
+ * 
+ * @note 超时时间从 conn->server->config->connection_timeout 读取，
+ *       如果 config 为 NULL，则使用 UVHTTP_CONNECTION_TIMEOUT_DEFAULT
+ * @note 此函数会停止并重启现有的定时器（如果有）
+ */
 int uvhttp_connection_start_timeout(uvhttp_connection_t* conn);
 
+/**
+ * @brief 启动连接超时定时器（自定义超时时间）
+ * 
+ * 为连接启动超时定时器，使用指定的超时时间。
+ * 如果连接在超时时间内没有活动，将自动关闭连接。
+ * 
+ * @param conn 连接对象
+ * @param timeout_seconds 超时时间（秒），范围：5-300
+ * @return int 成功返回 UVHTTP_OK，失败返回负数错误码
+ * 
+ * @note 超时时间必须在 UVHTTP_CONNECTION_TIMEOUT_MIN 和 
+ *       UVHTTP_CONNECTION_TIMEOUT_MAX 之间
+ * @note 此函数会停止并重启现有的定时器（如果有）
+ * @note 如果超时时间过大导致整数溢出，返回 UVHTTP_ERROR_INVALID_PARAM
+ */
 int uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn, int timeout_seconds);
