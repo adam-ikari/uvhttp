@@ -135,7 +135,7 @@ cppcheck:
 	@cppcheck --enable=warning --std=c11 src/ include/
 
 examples: all
-	@$(MAKE) -C $(BUILD_DIR) hello_world simple_routing method_routing
+	@$(MAKE) -C $(BUILD_DIR) hello_world simple_routing method_routing json_api_demo
 
 run-helloworld: examples
 	@cd $(BUILD_DIR) && ./dist/bin/hello_world
@@ -145,6 +145,9 @@ run-simple-routing: examples
 
 run-method-routing: examples
 	@cd $(BUILD_DIR) && ./dist/bin/method_routing
+
+run-json-api: examples
+	@cd $(BUILD_DIR) && ./dist/bin/json_api_demo
 
 help:
 	@echo "UVHTTP 构建系统"
@@ -178,6 +181,7 @@ help:
 	@echo "  make run-helloworld     - 运行Hello World示例"
 	@echo "  make run-simple-routing - 运行简单路由示例"
 	@echo "  make run-method-routing - 运行方法路由示例"
+	@echo "  make run-json-api       - 运行JSON API示例"
 	@echo ""
 	@echo "构建选项:"
 	@echo "  BUILD_DIR=$(BUILD_DIR)  BUILD_TYPE=$(BUILD_TYPE)"
