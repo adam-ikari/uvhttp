@@ -29,7 +29,7 @@ UVHTTP_STATIC_ASSERT(sizeof(uvhttp_request_t) == 141416,
 UVHTTP_STATIC_ASSERT(sizeof(uvhttp_response_t) == 139352,
                       "uvhttp_response_t size changed unexpectedly");
 
-static void on_close(uv_handle_t* handle);
+
 
 // 用于安全连接重用的idle回调
 static void on_idle_restart_read(uv_idle_t* handle);
@@ -220,22 +220,6 @@ int uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     return result;
 }
 
-/* 单线程安全的连接关闭回调
- * 在libuv事件循环线程中执行，确保资源安全释放
- * 无需锁机制，因为所有操作都在同一线程中
- */
-static void on_close(uv_handle_t* handle) {
-    uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
-    if (conn) {
-        /* 单线程安全的连接计数递减 */
-        if (conn->server) {
-            conn->server->active_connections--;
-        }
-        /* 释放连接资源 - 在事件循环线程中安全执行 */
-        uvhttp_connection_free(conn);
-    }
-}
-
 /* 创建新的HTTP连接对象（单线程事件驱动）
  * server: 所属的HTTP服务器
  * 返回: 连接对象，所有操作都在事件循环线程中处理
@@ -403,6 +387,27 @@ int uvhttp_connection_start(uvhttp_connection_t* conn) {
     return 0;
 }
 
+/* Handle 关闭回调（通用） */
+static void on_handle_close(uv_handle_t* handle) {
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
+    if (!conn) {
+        return;
+    }
+    
+    /* 减少待关闭的 handle 计数 */
+    conn->close_pending--;
+    
+    /* 当所有 handle 都关闭后，释放连接 */
+    if (conn->close_pending == 0) {
+        /* 单线程安全的连接计数递减 */
+        if (conn->server) {
+            conn->server->active_connections--;
+        }
+        /* 释放连接资源 - 在事件循环线程中安全执行 */
+        uvhttp_connection_free(conn);
+    }
+}
+
 void uvhttp_connection_close(uvhttp_connection_t* conn) {
     if (!conn) {
         return;
@@ -410,21 +415,27 @@ void uvhttp_connection_close(uvhttp_connection_t* conn) {
 
     uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_CLOSING);
 
+    /* 初始化待关闭的 handle 计数 */
+    conn->close_pending = 0;
+
     /* 停止 idle handle（如果正在运行） */
     if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
         uv_idle_stop(&conn->idle_handle);
-        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
+        uv_close((uv_handle_t*)&conn->idle_handle, on_handle_close);
+        conn->close_pending++;
     }
 
     /* 停止超时定时器（如果正在运行） */
     if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
         uv_timer_stop(&conn->timeout_timer);
-        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
+        uv_close((uv_handle_t*)&conn->timeout_timer, on_handle_close);
+        conn->close_pending++;
     }
 
     /* 关闭 TCP handle */
     if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
-        uv_close((uv_handle_t*)&conn->tcp_handle, on_close);
+        uv_close((uv_handle_t*)&conn->tcp_handle, on_handle_close);
+        conn->close_pending++;
     }
 }
 

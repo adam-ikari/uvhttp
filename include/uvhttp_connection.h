@@ -32,6 +32,7 @@ struct uvhttp_connection {
     int parsing_complete;                    /* 4 字节 - 解析是否完成 */
     int keep_alive;                         /* 4 字节 - 是否保持连接 */
     int chunked_encoding;                    /* 4 字节 - 是否使用分块传输 */
+    int close_pending;                       /* 4 字节 - 等待关闭的 handle 数量 */
     
     /* 指针字段（8字节对齐） */
     struct uvhttp_server* server;          /* 8 字节 */
