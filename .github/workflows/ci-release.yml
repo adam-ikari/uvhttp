@@ -368,9 +368,34 @@ jobs:
           # 更新当前基线
           cp docs/performance/baseline-$VERSION.json docs/performance/baseline.json
           
+          # 创建新分支用于基线更新
+          BRANCH_NAME="update-baseline-v${VERSION}"
+          git checkout -b $BRANCH_NAME
+          
           # 提交基线更新
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add docs/performance/
-          git diff --staged --quiet || git commit -m "chore: 更新性能基线到 v$VERSION [skip ci]"
-          git push origin main
+          git commit -m "chore: 更新性能基线到 v$VERSION"
+          
+          # 推送分支
+          git push origin $BRANCH_NAME
+          
+          # 创建 PR
+          gh pr create \
+            --title "Update performance baseline to v$VERSION" \
+            --body "Automated baseline update for release v$VERSION
+
+          ### Performance Metrics
+          - **RPS**: $RPS
+          - **Platform**: ubuntu-latest
+          - **Date**: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          This PR was automatically created by the ci-release workflow." \
+            --base main \
+            --head $BRANCH_NAME \
+            --label "automated" \
+            --label "performance" \
+            --label "skip-ci"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

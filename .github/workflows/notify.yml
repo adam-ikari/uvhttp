@@ -55,10 +55,12 @@ jobs:
           echo "run_id=$WORKFLOW_RUN_ID" >> $GITHUB_OUTPUT
           echo "run_number=$WORKFLOW_RUN_NUMBER" >> $GITHUB_OUTPUT
           
-          # 检查是否是 PR 触发
-          if [ "${{ github.event.workflow_run.event }}" = "pull_request" ]; then
+          # 检查是否是 PR 触发（修复：使用 GitHub API 获取 PR 信息）
+          PR_NUMBER=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }} --jq '.pull_requests[0].number' 2>/dev/null || echo "")
+          
+          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
             echo "is_pr=true" >> $GITHUB_OUTPUT
-            echo "pr_number=${{ github.event.workflow_run.pull_requests[0].number }}" >> $GITHUB_OUTPUT
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
           else
             echo "is_pr=false" >> $GITHUB_OUTPUT
           fi

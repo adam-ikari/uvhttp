@@ -23,7 +23,7 @@ jobs:
   # 任务 1: Ubuntu 构建
   ubuntu-build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     outputs:
       build-dir: ${{ steps.build.outputs.build-dir }}
       build-status: ${{ steps.build.outputs.status }}
@@ -207,7 +207,7 @@ jobs:
   performance-regression-check:
     needs: ubuntu-build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     outputs:
       has-regression: ${{ steps.check.outputs.has-regression }}
       has-improvement: ${{ steps.check.outputs.has-improvement }}
@@ -306,32 +306,59 @@ jobs:
       - name: Check performance regression
         id: check
         run: |
-          # 下载基线
+# 下载基线文件
           BASELINE_URL="https://raw.githubusercontent.com/${{ github.repository }}/main/docs/performance/baseline.json"
-          curl -s $BASELINE_URL -o baseline.json || echo "{}" > baseline.json
+          
+          # 尝试下载基线文件
+          if curl -f -s $BASELINE_URL -o baseline.json; then
+            echo "Baseline file downloaded successfully"
+          else
+            echo "Baseline file not found or download failed, skipping regression check"
+            echo "{}" > baseline.json
+          fi
+          
+          # 检查基线文件是否有效
+          if [ ! -s baseline.json ] || [ "$(cat baseline.json | wc -l)" -lt 2 ]; then
+            echo "Baseline file is empty or invalid, skipping regression check"
+            echo "has-regression=false" >> $GITHUB_OUTPUT
+            echo "has-improvement=false" >> $GITHUB_OUTPUT
+            echo "# Performance Report" > performance-report.md
+            echo "Baseline file not found or invalid, skipping regression check" >> performance-report.md
+            echo "report=$(cat performance-report.md)" >> $GITHUB_OUTPUT
+            exit 0
+          fi
           
           # 运行回归检测脚本
           if [ -f "scripts/performance_regression.py" ]; then
-            python3 scripts/performance_regression.py performance-pr.json baseline.json > performance-report.md 2>&1 || true
+            python3 scripts/performance_regression.py performance-pr.json baseline.json > performance-report.md 2>&1
+            REGRESSION_EXIT=$?
+            
+            # 解析脚本返回值
+            if [ $REGRESSION_EXIT -eq 1 ]; then
+              # 性能回归
+              echo "has-regression=true" >> $GITHUB_OUTPUT
+              echo "has-improvement=false" >> $GITHUB_OUTPUT
+              echo "report=$(cat performance-report.md)" >> $GITHUB_OUTPUT
+              exit 1  # 阻止 workflow
+            elif [ $REGRESSION_EXIT -eq 2 ]; then
+              # 无变化
+              echo "has-regression=false" >> $GITHUB_OUTPUT
+              echo "has-improvement=false" >> $GITHUB_OUTPUT
+              echo "report=$(cat performance-report.md)" >> $GITHUB_OUTPUT
+            else
+              # 性能改进
+              echo "has-regression=false" >> $GITHUB_OUTPUT
+              echo "has-improvement=true" >> $GITHUB_OUTPUT
+              echo "report=$(cat performance-report.md)" >> $GITHUB_OUTPUT
+            fi
           else
-            echo "# Performance Report" > performance-report.md
-            echo "Baseline file not found, skipping regression check" >> performance-report.md
-          fi
-          
-          # 检查是否有回归
-          if grep -q "Regressions Detected" performance-report.md; then
-            echo "has-regression=true" >> $GITHUB_OUTPUT
-          else
+            echo "Performance regression script not found"
             echo "has-regression=false" >> $GITHUB_OUTPUT
-          fi
-          
-          if grep -q "Improvements" performance-report.md; then
-            echo "has-improvement=true" >> $GITHUB_OUTPUT
-          else
             echo "has-improvement=false" >> $GITHUB_OUTPUT
+            echo "# Performance Report" > performance-report.md
+            echo "Performance regression script not found" >> performance-report.md
+            echo "report=$(cat performance-report.md)" >> $GITHUB_OUTPUT
           fi
-          
-          echo "report=$(cat performance-report.md)" >> $GITHUB_OUTPUT
       
       - name: Upload performance results
         if: always()

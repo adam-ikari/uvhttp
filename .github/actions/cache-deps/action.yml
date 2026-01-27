@@ -1,13 +1,12 @@
 name: 'Cache Dependencies'
-description: 'Cache dependencies and build artifacts'
+description: 'Cache CMake dependencies to speed up builds'
 
 inputs:
   cache-key:
-    description: 'Cache key'
+    description: 'Unique cache key for this build'
     required: true
-    default: 'default'
   build-type:
-    description: 'Build type'
+    description: 'Build type (Release, Debug)'
     required: false
     default: 'Release'
 
@@ -18,27 +17,9 @@ runs:
       uses: actions/cache@v4
       with:
         path: |
-          build/
-          deps/*/build/
-          deps/libuv/build/
-          deps/mbedtls/build/
-          deps/xxhash/
-          deps/cllhttp/
-          deps/cjson/build/
-          deps/mimalloc/build/
-          deps/googletest/build/
-        key: ${{ runner.os }}-cmake-${{ inputs.cache-key }}-${{ hashFiles('**/CMakeLists.txt', '**/*.c', '**/*.h') }}
+          build-${{ inputs.build-type }}
+          build-${{ inputs.build-type }}/CMakeFiles
+          build-${{ inputs.build-type }}/deps
+        key: ${{ inputs.cache-key }}-${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}
         restore-keys: |
-          ${{ runner.os }}-cmake-${{ inputs.cache-key }}-
-          ${{ runner.os }}-cmake-
-    
-    - name: Cache CMake configuration
-      uses: actions/cache@v4
-      with:
-        path: |
-          CMakeCache.txt
-          CMakeFiles/
-        key: ${{ runner.os }}-cmake-config-${{ inputs.build-type }}-${{ hashFiles('CMakeLists.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-cmake-config-${{ inputs.build-type }}-
-          ${{ runner.os }}-cmake-config-
+          ${{ inputs.cache-key }}-${{ runner.os }}-cmake-
