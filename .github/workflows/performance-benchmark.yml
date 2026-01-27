@@ -485,6 +485,7 @@ jobs:
         retention-days: 90
     
     - name: Create performance benchmark release
+      if: github.event_name != 'pull_request'
       uses: softprops/action-gh-release@v1
       with:
         tag_name: perf-${{ steps.date.outputs.timestamp }}
