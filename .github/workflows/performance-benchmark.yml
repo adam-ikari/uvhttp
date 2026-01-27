@@ -528,36 +528,8 @@ jobs:
           echo '[]' > "$HISTORY_FILE"
         fi
         
-        # 读取当前结果
-        CURRENT_RESULT=$(cat performance-results.json)
-        
-        # 更新历史文件
-        python3 << 'EOF'
-import json
-import sys
-from datetime import datetime
-
-# 读取历史文件
-try:
-    with open('docs/performance/baseline-history.json', 'r') as f:
-        history = json.load(f)
-except:
-    history = []
-
-# 读取当前结果
-with open('performance-results.json', 'r') as f:
-    current = json.load(f)
-
-# 添加到历史（只保留最近 30 条）
-history.insert(0, current)
-history = history[:30]
-
-# 保存历史文件
-with open('docs/performance/baseline-history.json', 'w') as f:
-    json.dump(history, f, indent=2)
-
-print(f"Updated baseline history with {len(history)} entries")
-EOF
+        # 使用 jq 更新历史文件
+        jq --argjson current "$(cat performance-results.json)" '. + [$current] | .[:30]' "$HISTORY_FILE" > "${HISTORY_FILE}.tmp" && mv "${HISTORY_FILE}.tmp" "$HISTORY_FILE"
         
         # 提交历史文件更新
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
