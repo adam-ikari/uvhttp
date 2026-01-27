@@ -200,7 +200,7 @@ jobs:
           submodules: recursive
       
       - name: Download all build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: build-*-release-*
           path: builds/
@@ -239,7 +239,7 @@ jobs:
           submodules: recursive
       
       - name: Download all build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: build-*-release-*
           path: packages/
@@ -325,7 +325,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Download release artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: build-ubuntu-release-${{ needs.ubuntu-release-build.outputs.version }}
           path: build/

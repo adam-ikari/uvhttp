@@ -175,7 +175,7 @@ jobs:
           submodules: recursive
       
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: build-ubuntu-pr-${{ github.event.pull_request.number }}
           path: build-pr
@@ -220,7 +220,7 @@ jobs:
           submodules: recursive
       
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: build-ubuntu-pr-${{ github.event.pull_request.number }}
           path: build-pr
