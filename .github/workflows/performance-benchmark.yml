@@ -482,6 +482,7 @@ jobs:
           performance-report.md
           performance.log
           server.log
+          baseline-history.json
         retention-days: 90
     
     - name: Create performance benchmark release
@@ -513,15 +514,11 @@ jobs:
         echo "### Detailed Report" >> $GITHUB_STEP_SUMMARY
         echo "See [performance-report.md](https://github.com/${{ github.repository }}/releases/download/perf-${{ steps.date.outputs.timestamp }}/performance-report.md) for more details." >> $GITHUB_STEP_SUMMARY
     
-    - name: Update baseline history
+    - name: Create baseline history
       if: github.event_name != 'pull_request'
       run: |
-        # 创建或更新基准性能历史文件
-        HISTORY_FILE="docs/performance/baseline-history.json"
-        HISTORY_DIR=$(dirname "$HISTORY_FILE")
-        
-        # 创建目录
-        mkdir -p "$HISTORY_DIR"
+        # 创建基准性能历史文件（仅用于产物）
+        HISTORY_FILE="baseline-history.json"
         
         # 如果历史文件不存在，创建空数组
         if [ ! -f "$HISTORY_FILE" ]; then
@@ -530,10 +527,3 @@ jobs:
         
         # 使用 jq 更新历史文件
         jq --argjson current "$(cat performance-results.json)" '. + [$current] | .[:30]' "$HISTORY_FILE" > "${HISTORY_FILE}.tmp" && mv "${HISTORY_FILE}.tmp" "$HISTORY_FILE"
-        
-        # 提交历史文件更新
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        git add "$HISTORY_FILE"
-        git diff --staged --quiet || git commit -m "chore: 更新基准性能历史记录 [skip ci]"
-        git push origin develop
