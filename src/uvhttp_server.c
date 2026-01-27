@@ -1515,3 +1515,17 @@ void uvhttp_server_ws_update_activity(
 /* ========== WebSocket 认证 API ========== */
 
 #endif /* UVHTTP_FEATURE_WEBSOCKET */
+uvhttp_error_t uvhttp_server_set_timeout_callback(
+    uvhttp_server_t* server,
+    uvhttp_timeout_callback_t callback,
+    void* user_data
+) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    server->timeout_callback = callback;
+    server->timeout_callback_user_data = user_data;
+    
+    return UVHTTP_OK;
+}

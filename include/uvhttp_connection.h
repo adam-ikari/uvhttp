@@ -133,3 +133,5 @@ ws_route_entry_t* uvhttp_server_find_ws_route_entry(struct uvhttp_server* server
 
 #endif
 int uvhttp_connection_start_timeout(uvhttp_connection_t* conn);
+
+int uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn, int timeout_seconds);

@@ -771,8 +771,18 @@ void uvhttp_connection_websocket_close(uvhttp_connection_t* conn) {
 /* 连接超时回调函数 */
 static void connection_timeout_cb(uv_timer_t* handle) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
-    if (!conn) {
+    if (!conn || !conn->server) {
         return;
+    }
+    
+    // 触发应用层超时统计回调
+    if (conn->server->timeout_callback) {
+        conn->server->timeout_callback(
+            conn->server,
+            conn,
+            conn->server->config->connection_timeout * 1000,
+            conn->server->timeout_callback_user_data
+        );
     }
     
     UVHTTP_LOG_WARN("Connection timeout, closing connection...\n");
@@ -800,7 +810,45 @@ int uvhttp_connection_start_timeout(uvhttp_connection_t* conn) {
     conn->timeout_timer.data = conn;
     if (uv_timer_start(&conn->timeout_timer, 
                        connection_timeout_cb, 
-                       UVHTTP_CONNECTION_TIMEOUT_DEFAULT * 1000, 
+                       conn->server->config->connection_timeout * 1000, 
+                       0) != 0) {
+        UVHTTP_LOG_ERROR("Failed to start connection timeout timer\n");
+        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
+        return -1;
+    }
+    
+    return 0;
+}
+
+/* 启动连接超时定时器（自定义超时时间） */
+int uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn, int timeout_seconds) {
+    if (!conn || !conn->server) {
+        return -1;
+    }
+    
+    // 验证超时时间范围
+    if (timeout_seconds < UVHTTP_CONNECTION_TIMEOUT_MIN || 
+        timeout_seconds > UVHTTP_CONNECTION_TIMEOUT_MAX) {
+        UVHTTP_LOG_ERROR("Invalid timeout value: %d seconds\n", timeout_seconds);
+        return -1;
+    }
+    
+    // 停止旧的定时器（如果有）
+    if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
+        uv_timer_stop(&conn->timeout_timer);
+        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
+    }
+    
+    // 初始化新的定时器
+    if (uv_timer_init(conn->server->loop, &conn->timeout_timer) != 0) {
+        UVHTTP_LOG_ERROR("Failed to initialize connection timeout timer\n");
+        return -1;
+    }
+    
+    conn->timeout_timer.data = conn;
+    if (uv_timer_start(&conn->timeout_timer, 
+                       connection_timeout_cb, 
+                       timeout_seconds * 1000, 
                        0) != 0) {
         UVHTTP_LOG_ERROR("Failed to start connection timeout timer\n");
         uv_close((uv_handle_t*)&conn->timeout_timer, NULL);

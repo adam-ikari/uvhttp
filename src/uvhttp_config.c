@@ -41,6 +41,7 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config) {
     config->backlog = UVHTTP_DEFAULT_BACKLOG;
     config->keepalive_timeout = UVHTTP_DEFAULT_KEEPALIVE_TIMEOUT;
     config->request_timeout = UVHTTP_DEFAULT_REQUEST_TIMEOUT;
+    config->connection_timeout = UVHTTP_CONNECTION_TIMEOUT_DEFAULT;
     
     config->max_body_size = UVHTTP_DEFAULT_MAX_BODY_SIZE;
     config->max_header_size = UVHTTP_DEFAULT_MAX_HEADER_SIZE;

@@ -79,6 +79,19 @@ typedef struct {
     uv_loop_t* loop;
     int auto_cleanup;
 } uvhttp_server_builder_t;
+/* ========== 超时统计回调 ========== */
+/**
+ * @brief 超时统计回调函数类型
+ * 
+ * 由应用层实现，用于统计和记录连接超时事件
+ */
+typedef void (*uvhttp_timeout_callback_t)(
+    uvhttp_server_t* server,
+    uvhttp_connection_t* conn,
+    uint64_t timeout_ms,
+    void* user_data
+);
+
 
 struct uvhttp_server {
     /* 热路径字段（频繁访问）- 优化内存局部性 */
@@ -131,6 +144,9 @@ struct uvhttp_server {
 
     /* 应用数据（避免全局变量） */
     void* user_data;                             /* 8 字节 - 应用特定的上下文数据 */
+    /* 超时统计回调 */
+    uvhttp_timeout_callback_t timeout_callback;  /* 8 字节 - 超时统计回调 */
+    void* timeout_callback_user_data;            /* 8 字节 - 回调用户数据 */
 };
 
 /* ========== 内存布局验证静态断言 ========== */
@@ -306,6 +322,9 @@ typedef struct {
     int (*on_close)(uvhttp_ws_connection_t* ws_conn);
     int (*on_error)(uvhttp_ws_connection_t* ws_conn, int error_code, const char* error_msg);
     void* user_data;
+    /* 超时统计回调 */
+    uvhttp_timeout_callback_t timeout_callback;  /* 8 字节 - 超时统计回调 */
+    void* timeout_callback_user_data;            /* 8 字节 - 回调用户数据 */
 } uvhttp_ws_handler_t;
 
 uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server, const char* path, uvhttp_ws_handler_t* handler);
@@ -373,3 +392,8 @@ void uvhttp_request_cleanup(uvhttp_request_t* request);
 #endif
 
 #endif
+uvhttp_error_t uvhttp_server_set_timeout_callback(
+    uvhttp_server_t* server,
+    uvhttp_timeout_callback_t callback,
+    void* user_data
+);

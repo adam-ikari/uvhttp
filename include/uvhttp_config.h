@@ -27,6 +27,7 @@ typedef struct {
     int backlog;
     int keepalive_timeout;
     int request_timeout;
+    int connection_timeout;  /* 连接超时时间（秒），默认60秒 */
     
     /* 性能配置 */
     size_t max_body_size;
