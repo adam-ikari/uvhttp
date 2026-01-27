@@ -232,39 +232,16 @@ uvhttp_logger_provider_t* uvhttp_test_logger_provider_create(void);
 /* ============ 编译时宏支持 ============ */
 
 #ifdef UVHTTP_TEST_MODE
-    /* 测试模式：使用上下文 */
+    /* 测试模式：使用上下文（通过参数传递，不使用全局变量） */
     #define UVHTTP_USE_CONTEXT 1
-    extern uvhttp_context_t* g_uvhttp_context;
-    
-    /* 便捷访问宏 */
-    #define uvhttp_get_loop() (g_uvhttp_context ? g_uvhttp_context->loop : NULL)
-    #define uvhttp_get_connection_provider() \
-        (g_uvhttp_context ? g_uvhttp_context->connection_provider : NULL)
-    #define uvhttp_get_logger_provider() \
-        (g_uvhttp_context ? g_uvhttp_context->logger_provider : NULL)
-    #define uvhttp_get_config_provider() \
-        (g_uvhttp_context ? g_uvhttp_context->config_provider : NULL)
-    #define uvhttp_get_network_interface() \
-        (g_uvhttp_context ? g_uvhttp_context->network_interface : NULL)
     
     /* 注意：内存分配器使用编译时宏，零开销抽象
      * 直接使用 UVHTTP_MALLOC/UVHTTP_FREE 等宏
      * 详见 uvhttp_allocator.h
      */
-        
-    #define uvhttp_context_log(level, message) \
-        do { \
-            if (g_uvhttp_context && g_uvhttp_context->logger_provider) { \
-                g_uvhttp_context->logger_provider->log(g_uvhttp_context->logger_provider, \
-                                                       level, __FILE__, __LINE__, __func__, message); \
-            } \
-        } while(0)
-        
-    #define uvhttp_context_config_get_string(key, default_value) \
-        (g_uvhttp_context && g_uvhttp_context->config_provider ? \
-         g_uvhttp_context->config_provider->get_string(g_uvhttp_context->config_provider, key, default_value) : \
-         default_value)
-         
+    
+    /* 日志和配置需要通过 context 参数传递 */
+    
 #else
     /* 生产模式：直接调用，零开销 */
     #define UVHTTP_USE_CONTEXT 0

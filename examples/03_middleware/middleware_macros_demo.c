@@ -17,10 +17,11 @@
 
 /* 日志中间件 - 演示上下文使用 */
 static int logging_middleware(const uvhttp_request_t* req, uvhttp_response_t* resp, uvhttp_middleware_context_t* ctx) {
+    (void)resp;  /* 未使用参数 */
     /* 使用上下文存储开始时间（使用栈分配，避免内存泄漏）*/
     uint64_t start_time = uv_hrtime();  // libuv 提供的高精度时间
-    ctx->data = (void*)(intptr_t)start_time;  // 存储为指针值
-    ctx->cleanup = NULL;  // 无需清理
+    ctx->data = (void*)(intptr_t)start_time;  /* 存储为指针值 */
+    ctx->cleanup = NULL;  /* 无需清理 */
     
     printf("[LOG] %s %s\n", uvhttp_method_to_string(req->method), req->url);
     return UVHTTP_MIDDLEWARE_CONTINUE;
@@ -28,6 +29,7 @@ static int logging_middleware(const uvhttp_request_t* req, uvhttp_response_t* re
 
 /* 认证中间件 - 演示上下文数据共享 */
 static int auth_middleware(const uvhttp_request_t* req, uvhttp_response_t* resp, uvhttp_middleware_context_t* ctx) {
+    (void)ctx;  /* 未使用参数 */
     const char* token = uvhttp_request_get_header((uvhttp_request_t*)req, "Authorization");
     if (!token || strncmp(token, "Bearer ", 7) != 0) {
         uvhttp_response_set_status(resp, 401);
@@ -38,17 +40,18 @@ static int auth_middleware(const uvhttp_request_t* req, uvhttp_response_t* resp,
     }
     
     /* 将用户信息存储在上下文中，供后续中间件使用 */
-    ctx->data = (void*)(intptr_t)12345;  // 模拟用户ID
+    /* ctx->data = (void*)(intptr_t)12345;  模拟用户ID  */
     return UVHTTP_MIDDLEWARE_CONTINUE;
 }
 
 /* CORS 中间件 */
 static int cors_middleware(const uvhttp_request_t* req, uvhttp_response_t* resp, uvhttp_middleware_context_t* ctx) {
+    (void)ctx;  /* 未使用参数 */
     uvhttp_response_set_header(resp, "Access-Control-Allow-Origin", "*");
     uvhttp_response_set_header(resp, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
     uvhttp_response_set_header(resp, "Access-Control-Allow-Headers", "Content-Type, Authorization");
     
-    if (req->method == UVHTTP_METHOD_OPTIONS) {
+    if (strcmp(uvhttp_request_get_method(req), "OPTIONS") == 0) {
         uvhttp_response_set_status(resp, 200);
         uvhttp_response_send(resp);
         return UVHTTP_MIDDLEWARE_STOP;
@@ -56,19 +59,9 @@ static int cors_middleware(const uvhttp_request_t* req, uvhttp_response_t* resp,
     return UVHTTP_MIDDLEWARE_CONTINUE;
 }
 
-/* 清理中间件 - 演示上下文清理 */
-static int cleanup_middleware(const uvhttp_request_t* req, uvhttp_response_t* resp, uvhttp_middleware_context_t* ctx) {
-    /* 执行上下文清理 */
-    if (ctx->cleanup) {
-        ctx->cleanup(ctx->data);
-        ctx->data = NULL;
-        ctx->cleanup = NULL;
-    }
-    return UVHTTP_MIDDLEWARE_CONTINUE;
-}
-
 /* 根路径处理函数 */
 static int root_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
+    (void)req;  /* 未使用参数 */
     const char* html = 
         "<!DOCTYPE html>"
         "<html><head><title>编译宏中间件示例</title></head>"

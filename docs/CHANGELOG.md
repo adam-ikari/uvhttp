@@ -161,7 +161,6 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 ## [1.4.0] - 2026-01-13
 
 ### Added
-- **WebSocket 认证功能**: Token 认证、IP 白名单/黑名单
 - **WebSocket 连接管理**: 连接池、超时检测、心跳检测、广播功能
 - **内存管理优化**: 使用内联函数替代宏定义
 - **改进的超时检测机制**: 使用 libuv 定时器实现主动超时检测
@@ -177,7 +176,6 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 
 ### Fixed
 - **内存泄漏**: 修复 WebSocket 连接管理中的内存泄漏
-- **认证逻辑**: 修复 IP 白名单/黑名单匹配逻辑
 - **中等文件传输超时**: 使用分块发送（1MB chunks）
 - **示例程序内存泄漏**: 修复所有示例程序的内存管理不一致问题
 - **超时检测不完整**: 确保网络完全阻塞时也能及时响应

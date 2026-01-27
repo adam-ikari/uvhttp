@@ -7,21 +7,44 @@
 ```
 examples/
 ├── 01_basics/          # 基础示例
-│   ├── 01_hello_world.c
-│   └── README.md
+│   ├── helloworld.c
+│   ├── helloworld_complete.c
+│   ├── simple_api_demo.c
+│   └── quick_api_demo.c
 ├── 02_routing/         # 路由系统
 │   ├── 01_simple_routing.c
-│   ├── 02_method_routing.c
-│   └── README.md
-├── 03_requests/        # 请求处理
-│   └── README.md
-├── 04_responses/       # 响应处理
-│   └── README.md
-├── 05_advanced/        # 高级特性
-│   ├── 01_libuv_data_pointer.c
-│   └── README.md
-└── 06_production/      # 生产环境
-    └── README.md
+│   └── 02_method_routing.c
+├── 03_middleware/      # 中间件系统
+│   ├── middleware_demo.c
+│   ├── simple_middleware_demo.c
+│   ├── middleware_macros_demo.c
+│   └── cors_rate_limit_demo.c
+├── 04_static_files/    # 静态文件服务
+│   ├── static_file_server.c
+│   ├── static_middleware_demo.c
+│   ├── simple_static_test.c
+│   ├── advanced_static_server.c
+│   └── cache_test_server.c
+├── 05_websocket/       # WebSocket 功能
+│   ├── websocket_echo_server.c
+│   ├── websocket_test_server.c
+│   ├── test_ws_connection_management.c
+│   └── performance_test_websocket.c
+├── 06_advanced/        # 高级特性
+│   ├── api_demo.c
+│   ├── json_api_demo.c
+│   ├── config_demo.c
+│   ├── simple_config.c
+│   ├── unified_response_demo.c
+│   ├── app_advanced_memory.c
+│   ├── app_custom_pool.c
+│   └── hierarchical_allocator_example.c
+└── 07_performance/     # 性能测试
+    ├── performance_test.c
+    ├── performance_static_server.c
+    ├── performance_test_static.c
+    ├── performance_test_tls.c
+    └── mimalloc_demo.c
 ```
 
 ## 学习路径
@@ -29,7 +52,10 @@ examples/
 ### 初学者路径
 
 1. **01_basics** - 学习基础概念
-   - Hello World - 最简单的 HTTP 服务器
+   - helloworld.c - 最简单的 HTTP 服务器
+   - helloworld_complete.c - 完整的 Hello World 示例
+   - simple_api_demo.c - 简单 API 演示
+   - quick_api_demo.c - 快速启动演示
    - 理解服务器创建和事件循环
 
 2. **02_routing** - 学习路由系统
@@ -38,15 +64,41 @@ examples/
 
 ### 进阶路径
 
-3. **03_requests** - 请求处理
-   - 获取请求参数
-   - 解析请求体
-   - 处理查询参数
+3. **03_middleware** - 中间件系统
+   - 中间件演示
+   - 简单中间件
+   - 中间件宏
+   - CORS 和限流
 
-4. **04_responses** - 响应处理
-   - JSON 响应
-   - HTML 响应
-   - 错误响应
+4. **04_static_files** - 静态文件服务
+   - 静态文件服务器
+   - 静态文件中间件
+   - 简单静态文件测试
+   - 高级静态文件服务器
+   - 缓存测试服务器
+
+5. **05_websocket** - WebSocket 功能
+   - WebSocket Echo 服务器
+   - WebSocket 测试服务器
+   - WebSocket 连接管理
+   - WebSocket 性能测试
+
+### 高级路径
+
+6. **06_advanced** - 高级特性
+   - API 演示
+   - JSON API 演示
+   - 配置管理
+   - 统一响应处理
+   - 高级内存管理
+   - 自定义内存池
+   - 分层分配器
+
+7. **07_performance** - 性能测试
+   - 性能基准测试
+   - 静态文件性能测试
+   - TLS 性能测试
+   - mimalloc 性能对比
 
 5. **05_advanced** - 高级特性
    - libuv 数据指针 - 避免全局变量

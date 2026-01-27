@@ -128,12 +128,6 @@ uvhttp_ws_handler_t* uvhttp_server_find_ws_handler(struct uvhttp_server* server,
 /* WebSocket认证相关内部函数 */
 typedef struct ws_route_entry ws_route_entry_t;
 ws_route_entry_t* uvhttp_server_find_ws_route_entry(struct uvhttp_server* server, const char* path);
-uvhttp_ws_auth_result_t uvhttp_server_ws_authenticate(
-    struct uvhttp_server* server,
-    const char* path,
-    const char* client_ip,
-    const char* token
-);
 #endif
 
 #ifdef __cplusplus

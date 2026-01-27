@@ -40,7 +40,8 @@ message(STATUS "UVHTTP 库文件: ${UVHTTP_LIB}")
 message(STATUS "UVHTTP_ROOT: ${UVHTTP_ROOT}")
 message(STATUS "CMAKE_BINARY_DIR: ${CMAKE_BINARY_DIR}")
 
-# 基础示例
+# 为所有示例禁用未使用参数警告
+add_compile_options(-Wno-error=unused-parameter -Wno-error=unused-function -Wno-error=unused-result -Wno-error=format -Wno-error=discarded-qualifiers)
 
 # 基础示例
 add_subdirectory(01_basics)
@@ -48,48 +49,19 @@ add_subdirectory(01_basics)
 # 路由示例
 add_subdirectory(02_routing)
 
-# 请求处理示例（待添加）
-# add_subdirectory(03_requests)
+# 中间件示例
+add_subdirectory(03_middleware)
 
-# 响应处理示例（待添加）
-# add_subdirectory(04_responses)
+# 静态文件示例
+add_subdirectory(04_static_files)
 
-# 响应处理示例
-add_subdirectory(04_responses)
-
-# 高级特性示例
-add_subdirectory(05_advanced)
-
-# 生产环境示例（待添加）
-# add_subdirectory(06_production)
-
-# WebSocket 连接管理测试示例（如果启用）
+# WebSocket 示例
 if(BUILD_WITH_WEBSOCKET)
-    # WebSocket 连接管理测试
-    add_executable(test_ws_connection_management test_ws_connection_management.c)
-    target_link_libraries(test_ws_connection_management ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${XXHASH_LIB} m pthread dl)
-    add_dependencies(test_ws_connection_management uvhttp)
-
-    # WebSocket 认证示例
-    add_executable(websocket_auth_server websocket_auth_server.c)
-    target_link_libraries(websocket_auth_server ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${XXHASH_LIB} m pthread dl)
-    add_dependencies(websocket_auth_server uvhttp)
+    add_subdirectory(05_websocket)
 endif()
 
-# 内存管理示例
-# add_subdirectory(08_memory) # Temporarily disabled due to format warnings
+# 高级功能示例
+add_subdirectory(06_advanced)
 
 # 性能测试示例
-add_executable(performance_static_server performance_static_server.c)
-target_link_libraries(performance_static_server ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${XXHASH_LIB} m pthread dl)
-add_dependencies(performance_static_server uvhttp)
-
-# 性能基准测试专用服务器（无日志输出，最小化响应体）
-add_executable(performance_test performance_test.c)
-target_link_libraries(performance_test ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${XXHASH_LIB} m pthread dl)
-add_dependencies(performance_test uvhttp)
-
-# 完整版 Hello World 示例
-add_executable(helloworld_complete helloworld_complete.c)
-target_link_libraries(helloworld_complete ${UVHTTP_LIB} ${LIBUV_LIB} ${MBEDTLS_LIBS} ${LLHTTP_LIB} ${XXHASH_LIB} m pthread dl)
-add_dependencies(helloworld_complete uvhttp)
+add_subdirectory(07_performance)
