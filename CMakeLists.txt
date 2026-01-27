@@ -99,11 +99,11 @@ include_directories(${DEPS_INCLUDE_DIRS})
 # 源文件
 set(SOURCES
     src/uvhttp_utils.c
-    src/core/uvhttp_request.c
-    src/core/uvhttp_response.c
+    src/uvhttp_request.c
+    src/uvhttp_response.c
     src/uvhttp_router.c
-    src/core/uvhttp_connection.c
-    src/core/uvhttp_server.c
+    src/uvhttp_connection.c
+    src/uvhttp_server.c
     src/uvhttp_tls_mbedtls.c
     src/uvhttp_config.c
     src/uvhttp_network.c
