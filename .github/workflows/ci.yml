@@ -187,6 +187,7 @@ jobs:
           echo "<html><body><h1>Performance Test</h1></body></html>" > build-release/public/index.html
           cd build-release
           if [ -f "./dist/bin/performance_static_server" ]; then
+            chmod +x ./dist/bin/performance_static_server
             ./dist/bin/performance_static_server -d ./public -p 8080 > /tmp/server.log 2>&1 &
             SERVER_PID=$!
             sleep 3
