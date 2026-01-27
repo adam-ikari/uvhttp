@@ -344,18 +344,6 @@ uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server) {
         parser->data = conn;
     }
     
-    // 初始化内存池
-    conn->mempool = uvhttp_mempool_create();
-    if (!conn->mempool) {
-        uvhttp_request_cleanup(conn->request);
-        uvhttp_free(conn->request);
-        uvhttp_response_cleanup(conn->response);
-        uvhttp_free(conn->response);
-        uvhttp_free(conn->read_buffer);
-        uvhttp_free(conn);
-        return NULL;
-    }
-    
     return conn;
 }
 
@@ -377,11 +365,6 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
     
     if (conn->read_buffer) {
         uvhttp_free(conn->read_buffer);
-    }
-    
-    // 释放内存池
-    if (conn->mempool) {
-        uvhttp_mempool_destroy(conn->mempool);
     }
     
     // 释放连接内存
@@ -662,29 +645,6 @@ int uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, cons
                 }
             }
         }
-
-        /* 如果查询参数中没有，尝试从头部获取 */
-        if (token[0] == '\0') {
-            const char* auth_header = uvhttp_request_get_header(conn->request, "Authorization");
-            if (auth_header && strncmp(auth_header, "Bearer ", 7) == 0) {
-                /* 使用安全的字符串复制函数 */
-                if (uvhttp_safe_strcpy(token, sizeof(token), auth_header + 7) != 0) {
-                    token[0] = '\0';
-                }
-            }
-        }
-    }
-
-    /* 执行认证检查 */
-    uvhttp_ws_auth_result_t auth_result = UVHTTP_WS_AUTH_SUCCESS;
-    if (conn->server) {
-        auth_result = uvhttp_server_ws_authenticate(conn->server, path, client_ip, token);
-    }
-
-    if (auth_result != UVHTTP_WS_AUTH_SUCCESS) {
-        UVHTTP_LOG_WARN("WebSocket authentication failed for path %s: %s\n",
-                       path, uvhttp_ws_auth_result_string(auth_result));
-        return -1;
     }
 
     /* 查找用户注册的WebSocket处理器 */

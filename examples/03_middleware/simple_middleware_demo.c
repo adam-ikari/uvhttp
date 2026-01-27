@@ -5,7 +5,7 @@
  */
 
 #include "uvhttp.h"
-#include "uvhttp_simple_middleware.h"
+#include "uvhttp_middleware_macros.h"
 #include <stdio.h>
 #include <string.h>
 

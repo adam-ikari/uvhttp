@@ -73,7 +73,6 @@ TEST(UvhttpConnectionFullCoverageTest, ConnectionFieldInitialization) {
     EXPECT_EQ(conn.current_header_field_len, 0);
     EXPECT_EQ(conn.parsing_header_field, 0);
     EXPECT_EQ(conn.need_restart_read, 0);
-    EXPECT_EQ(conn.mempool, nullptr);
     EXPECT_EQ(conn.last_error, 0);
 }
 
@@ -139,7 +138,6 @@ TEST(UvhttpConnectionFullCoverageTest, ConnectionMemoryAllocation) {
                            sizeof(size_t) + /* current_header_field_len */
                            sizeof(int) +    /* parsing_header_field */
                            sizeof(int) +    /* need_restart_read */
-                           sizeof(uvhttp_mempool_t*) +
                            sizeof(int);     /* last_error */
     
     EXPECT_GE(sizeof(uvhttp_connection_t), expected_size);
@@ -301,14 +299,6 @@ TEST(UvhttpConnectionFullCoverageTest, ConnectionCurrentHeaderIsImportant) {
     
     conn.current_header_is_important = 1;
     EXPECT_EQ(conn.current_header_is_important, 1);
-}
-
-TEST(UvhttpConnectionFullCoverageTest, ConnectionMempool) {
-    uvhttp_connection_t conn;
-    memset(&conn, 0, sizeof(conn));
-    
-    conn.mempool = nullptr;
-    EXPECT_EQ(conn.mempool, nullptr);
 }
 
 TEST(UvhttpConnectionFullCoverageTest, ConnectionTcpHandle) {

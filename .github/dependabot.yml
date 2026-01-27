@@ -7,7 +7,7 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "09:00"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
     versioning-strategy: "increase"
     labels:
       - "dependencies"
@@ -15,6 +15,14 @@ updates:
     commit-message:
       prefix: "deps"
       include: "scope"
+    groups:
+      github-actions:
+        patterns:
+          - "actions/*"
+          - "github/*"
+          - "softprops/*"
+          - "codecov/*"
+          - "dev-drprasad/*"
 
   # 文档网站的 npm 依赖更新
   - package-ecosystem: "npm"
@@ -23,7 +31,7 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "09:00"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 3
     versioning-strategy: "increase"
     labels:
       - "dependencies"
@@ -40,3 +48,6 @@ updates:
         patterns:
           - "@types/*"
           - "typescript*"
+      vue:
+        patterns:
+          - "vue*"

@@ -99,11 +99,11 @@ include_directories(${DEPS_INCLUDE_DIRS})
 # 源文件
 set(SOURCES
     src/uvhttp_utils.c
-    src/core/uvhttp_request.c
-    src/core/uvhttp_response.c
+    src/uvhttp_request.c
+    src/uvhttp_response.c
     src/uvhttp_router.c
-    src/core/uvhttp_connection.c
-    src/core/uvhttp_server.c
+    src/uvhttp_connection.c
+    src/uvhttp_server.c
     src/uvhttp_tls_mbedtls.c
     src/uvhttp_config.c
     src/uvhttp_network.c
@@ -113,7 +113,6 @@ set(SOURCES
     src/uvhttp_error_handler.c
     src/uvhttp_error_helpers.c
     src/uvhttp_hash.c
-    src/uvhttp_mempool.c
     src/uvhttp_lru_cache.c
     src/uvhttp_router_cache.c
     src/uvhttp_static.c
@@ -131,7 +130,7 @@ if(UVHTTP_FEATURE_MIDDLEWARE)
 endif()
 
 if(BUILD_WITH_WEBSOCKET)
-    list(APPEND SOURCES src/uvhttp_websocket_native.c src/uvhttp_websocket_auth.c)
+    list(APPEND SOURCES src/uvhttp_websocket_native.c)
 endif()
 
 # 头文件
@@ -149,7 +148,6 @@ set(HEADERS
     include/uvhttp_features.h
     include/uvhttp_hash.h
     include/uvhttp_lru_cache.h
-    include/uvhttp_mempool.h
     include/uvhttp_network.h
     include/uvhttp_request.h
     include/uvhttp_response.h

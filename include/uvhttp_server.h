@@ -299,7 +299,6 @@ int uvhttp_serve(const char* host, int port);
 // WebSocket API
 #if UVHTTP_FEATURE_WEBSOCKET
 #include "uvhttp_websocket_native.h"
-#include "uvhttp_websocket_auth.h"
 
 typedef struct {
     int (*on_connect)(uvhttp_ws_connection_t* ws_conn);
@@ -312,37 +311,6 @@ typedef struct {
 uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server, const char* path, uvhttp_ws_handler_t* handler);
 uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len);
 uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code, const char* reason);
-
-/* WebSocket 认证 API */
-uvhttp_error_t uvhttp_server_ws_set_auth_config(
-    uvhttp_server_t* server,
-    const char* path,
-    uvhttp_ws_auth_config_t* config
-);
-
-uvhttp_ws_auth_config_t* uvhttp_server_ws_get_auth_config(
-    uvhttp_server_t* server,
-    const char* path
-);
-
-uvhttp_error_t uvhttp_server_ws_enable_token_auth(
-    uvhttp_server_t* server,
-    const char* path,
-    uvhttp_ws_token_validator_callback validator,
-    void* user_data
-);
-
-uvhttp_error_t uvhttp_server_ws_add_ip_to_whitelist(
-    uvhttp_server_t* server,
-    const char* path,
-    const char* ip
-);
-
-uvhttp_error_t uvhttp_server_ws_add_ip_to_blacklist(
-    uvhttp_server_t* server,
-    const char* path,
-    const char* ip
-);
 
 /* 连接管理 API */
 uvhttp_error_t uvhttp_server_ws_enable_connection_management(

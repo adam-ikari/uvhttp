@@ -8,7 +8,6 @@
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_server.h"
-#include "uvhttp_mempool.h"
 #include "llhttp.h"
 
 #ifdef __cplusplus
@@ -38,7 +37,6 @@ struct uvhttp_connection {
     struct uvhttp_server* server;          /* 8 字节 */
     uvhttp_request_t* request;               /* 8 字节 */
     uvhttp_response_t* response;             /* 8 字节 */
-    uvhttp_mempool_t* mempool;              /* 8 字节 - 内存池 */
     
     /* 网络连接（16字节对齐） */
     uv_tcp_t tcp_handle;                      /* 8 字节 */
@@ -81,8 +79,6 @@ UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, request) % 8 == 0,
                       "request pointer not 8-byte aligned");
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, response) % 8 == 0,
                       "response pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, mempool) % 8 == 0,
-                      "mempool pointer not 8-byte aligned");
 
 /* 验证size_t对齐（8字节对齐） */
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, content_length) % 8 == 0,
@@ -128,12 +124,6 @@ uvhttp_ws_handler_t* uvhttp_server_find_ws_handler(struct uvhttp_server* server,
 /* WebSocket认证相关内部函数 */
 typedef struct ws_route_entry ws_route_entry_t;
 ws_route_entry_t* uvhttp_server_find_ws_route_entry(struct uvhttp_server* server, const char* path);
-uvhttp_ws_auth_result_t uvhttp_server_ws_authenticate(
-    struct uvhttp_server* server,
-    const char* path,
-    const char* client_ip,
-    const char* token
-);
 #endif
 
 #ifdef __cplusplus

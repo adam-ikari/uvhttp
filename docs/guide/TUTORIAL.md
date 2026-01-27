@@ -2795,7 +2795,6 @@ uvhttp_server_ws_close(ws_conn, 1000, "Normal closure");
 - [ ] 启用日志审计
 - [ ] 实施访问控制
 - [ ] 静态文件路径验证（防止目录遍历）
-- [ ] WebSocket 连接认证
 - [ ] WebSocket 消息大小限制
 - [ ] 文件上传大小限制
 - [ ] 文件类型白名单

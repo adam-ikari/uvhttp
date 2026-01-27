@@ -14,6 +14,21 @@ UVHTTP 是一个基于 libuv 的高性能、轻量级 HTTP/1.1 和 WebSocket 服
 - **模块化**: 支持静态文件服务、WebSocket、限流等功能模块，通过编译宏控制
 - **内存优化**: 默认使用 mimalloc 分配器，可选系统分配器
 
+### 设计原则
+
+UVHTTP 遵循以下核心设计原则：
+
+1. **专注核心**: 仅专注 HTTP/1.1 和 WebSocket 协议处理，不内置认证、数据库等业务功能
+2. **高性能优先**: 零开销抽象、事件驱动、零拷贝优化、智能缓存、内存优化
+3. **简洁 API**: 统一设计、命名规范、标准模式
+4. **安全第一**: 零编译警告、输入验证、内存安全、TLS 支持
+5. **生产就绪**: 完整错误处理、资源管理、可观测性、稳定性
+6. **灵活性与控制力**: 应用层主导、完全控制、不强制模式、可配置
+7. **可测试性**: 单元测试、集成测试、性能测试、代码覆盖率
+8. **跨平台支持**: C11 标准、多平台、云原生准备
+9. **极简工程**: 少即是多、自包含依赖、清晰文档
+10. **libuv 循环注入模式**: 避免全局变量、多实例支持、单元测试友好
+
 ### 技术栈
 
 - **语言**: C11
@@ -48,6 +63,11 @@ uvhttp/
 ├── examples/         # 示例程序
 │   ├── 01_basics/    # 基础示例
 │   ├── 02_routing/   # 路由示例
+│   ├── 03_middleware/  # 中间件示例
+│   ├── 04_static_files/  # 静态文件示例
+│   ├── 05_websocket/  # WebSocket 示例
+│   ├── 06_advanced/  # 高级功能示例
+│   └── 07_performance/  # 性能测试示例
 │   ├── 04_responses/ # 响应处理示例
 │   ├── 05_advanced/  # 高级功能示例
 │   └── performance_*.c  # 性能测试示例
@@ -421,6 +441,34 @@ app_context_t* ctx = (app_context_t*)loop->data;
 当前代码覆盖率目标: 80%
 
 使用 `./run_tests.sh` 运行测试并生成覆盖率报告。
+
+## 重要变更记录
+
+### 2026-01-27: 移除 WebSocket 认证功能并重构 examples 目录
+
+**原因**: 认证功能应该在应用层实现，而不是内置在框架核心中。这符合"专注核心"和"灵活性与控制力"的设计原则。
+
+**变更内容**:
+- 移除 WebSocket 认证模块（`src/uvhttp_websocket_auth.c` 和 `include/uvhttp_websocket_auth.h`）
+- 移除测试模式全局变量 `g_uvhttp_context`，改用参数传递
+- 重构 `examples/` 目录结构，按功能分类：
+  - `01_basics/`: 基础示例（helloworld, simple_api_demo, quick_api_demo）
+  - `02_routing/`: 路由示例（simple_routing, method_routing）
+  - `03_middleware/`: 中间件示例（middleware_demo, cors_rate_limit_demo）
+  - `04_static_files/`: 静态文件示例（static_file_server, cache_test_server）
+  - `05_websocket/`: WebSocket 示例（websocket_echo_server, websocket_test_server）
+  - `06_advanced/`: 高级功能示例（api_demo, json_api_demo, config_demo）
+  - `07_performance/`: 性能测试示例（performance_test, mimalloc_demo）
+- 删除过时和损坏的示例文件（`performance_static_server_broken.c` 等）
+- 更新文档移除 WebSocket 认证相关内容
+
+**影响**:
+- ✅ 核心库更简洁，符合设计原则
+- ✅ 应用层有完全控制权实现认证逻辑
+- ✅ 示例代码组织更清晰，易于学习
+- ⚠️ 需要更新使用认证功能的示例代码
+
+**提交**: `587f7c7` - "refactor: 移除 WebSocket 认证功能并重构 examples 目录"
 
 ## 常见任务
 

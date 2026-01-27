@@ -89,8 +89,8 @@ docs/
 ├── SECURITY.md               # 安全指南
 ├── STATIC_FILE_SERVER.md     # 静态文件服务
 ├── TUTORIAL.md               # 教程
-├── WEBSOCKET_AUTH.md         # WebSocket 认证
-└── XXHASH_INTEGRATION.md     # xxhash 集成
+├── XXHASH_INTEGRATION.md     # xxhash 集成
+└── LIBUV_DATA_POINTER.md     # libuv 数据指针模式
 ```
 
 ## 🎯 如何找到你需要的文档

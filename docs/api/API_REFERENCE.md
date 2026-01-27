@@ -2737,48 +2737,6 @@ int main() {
 
 ---
 
-### WebSocket 认证
-
-#### uvhttp_server_ws_set_auth_config
-```c
-uvhttp_error_t uvhttp_server_ws_set_auth_config(uvhttp_server_t* server,
-                                                const char* path,
-                                                uvhttp_ws_auth_config_t* config);
-```
-设置 WebSocket 认证配置。
-
-**参数:**
-- `server`: 服务器实例
-- `path`: WebSocket 路径
-- `config`: 认证配置
-
-**返回值:**
-- 成功: UVHTTP_OK
-- 失败: 其他 uvhttp_error_t 值
-
----
-
-#### uvhttp_server_ws_enable_token_auth
-```c
-uvhttp_error_t uvhttp_server_ws_enable_token_auth(uvhttp_server_t* server,
-                                                  const char* path,
-                                                  uvhttp_ws_token_validator_callback validator,
-                                                  void* user_data);
-```
-启用 Token 认证。
-
-**参数:**
-- `server`: 服务器实例
-- `path`: WebSocket 路径
-- `validator`: Token 验证回调
-- `user_data`: 用户数据
-
-**返回值:**
-- 成功: UVHTTP_OK
-- 失败: 其他 uvhttp_error_t 值
-
----
-
 ### 底层 WebSocket API
 
 #### uvhttp_ws_connection_create
