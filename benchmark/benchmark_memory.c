@@ -25,7 +25,8 @@ typedef struct {
     int deallocations;
 } memory_stats_t;
 
-// 使用 loop->data 传递统计结构
+/* 全局统计结构（POSIX 允许的例外） */
+static memory_stats_t g_mem_stats;
 
 /* 获取当前进程内存使用量（KB） */
 static size_t get_memory_usage_kb(void) {
@@ -37,15 +38,15 @@ static size_t get_memory_usage_kb(void) {
 /* 打印内存统计 */
 static void print_memory_stats(void) {
     printf("=== 内存统计 ===\n");
-    printf("峰值内存使用: %zu KB (%.2f MB)\n", 
-           stats->peak_memory, stats->peak_memory / 1024.0);
-    printf("当前内存使用: %zu KB (%.2f MB)\n", 
-           stats->current_memory, stats->current_memory / 1024.0);
-    printf("分配次数: %d\n", stats->allocations);
-    printf("释放次数: %d\n", stats->deallocations);
-    
-    if (stats->allocations > 0) {
-        int net_allocations = stats->allocations - stats->deallocations;
+    printf("峰值内存使用: %zu KB (%.2f MB)\n",
+           g_mem_stats.peak_memory, g_mem_stats.peak_memory / 1024.0);
+    printf("当前内存使用: %zu KB (%.2f MB)\n",
+           g_mem_stats.current_memory, g_mem_stats.current_memory / 1024.0);
+    printf("分配次数: %d\n", g_mem_stats.allocations);
+    printf("释放次数: %d\n", g_mem_stats.deallocations);
+
+    if (g_mem_stats.allocations > 0) {
+        int net_allocations = g_mem_stats.allocations - g_mem_stats.deallocations;
         printf("净分配次数: %d\n", net_allocations);
     }
     printf("\n");
