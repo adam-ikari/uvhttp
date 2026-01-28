@@ -56,6 +56,8 @@ static void print_rps_stats(void) {
 
 /* 简单的请求处理器 */
 static int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;  /* 避免未使用参数警告 */
+    
     if (!response) {
         g_rps_stats.failed_requests++;
         return -1;
@@ -116,7 +118,6 @@ static void run_rps_benchmark(const char* test_name) {
     result = uvhttp_server_listen(server, "127.0.0.1", PORT);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "无法启动服务器\n");
-        uvhttp_router_free(router);
         uvhttp_server_free(server);
         return;
     }

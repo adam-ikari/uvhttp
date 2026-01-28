@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <math.h>
+#include <inttypes.h>
 
 #define TEST_DURATION 10  /* 测试时长（秒） */
 #define PORT 18081
@@ -52,20 +53,19 @@ static void add_latency_sample(uint64_t latency_us) {
     }
 }
 
+/* 比较函数用于 qsort */
+static int compare_uint64(const void* a, const void* b) {
+    uint64_t val_a = *(const uint64_t*)a;
+    uint64_t val_b = *(const uint64_t*)b;
+    return (val_a > val_b) ? 1 : ((val_a < val_b) ? -1 : 0);
+}
+
 /* 计算百分位数 */
 static uint64_t calculate_percentile(double percentile) {
     if (g_stats.count == 0) return 0;
     
-    /* 排序样本 */
-    for (int i = 0; i < g_stats.count - 1; i++) {
-        for (int j = i + 1; j < g_stats.count; j++) {
-            if (g_stats.samples[i] > g_stats.samples[j]) {
-                uint64_t temp = g_stats.samples[i];
-                g_stats.samples[i] = g_stats.samples[j];
-                g_stats.samples[j] = temp;
-            }
-        }
-    }
+    /* 使用 qsort 进行高效排序 */
+    qsort(g_stats.samples, g_stats.count, sizeof(uint64_t), compare_uint64);
     
     int index = (int)(percentile * g_stats.count);
     if (index >= g_stats.count) index = g_stats.count - 1;
@@ -89,20 +89,21 @@ static void print_latency_stats(void) {
     printf("=== 延迟统计 ===\n");
     printf("样本数量: %d\n", g_stats.count);
     printf("平均延迟: %.2f μs (%.3f ms)\n", avg, avg / 1000.0);
-    printf("最小延迟: %lu μs (%.3f ms)\n", (unsigned long)g_stats.min, g_stats.min / 1000.0);
-    printf("最大延迟: %lu μs (%.3f ms)\n", (unsigned long)g_stats.max, g_stats.max / 1000.0);
-    printf("P50 延迟: %lu μs (%.3f ms)\n", (unsigned long)p50, p50 / 1000.0);
-    printf("P95 延迟: %lu μs (%.3f ms)\n", (unsigned long)p95, p95 / 1000.0);
-    printf("P99 延迟: %lu μs (%.3f ms)\n", (unsigned long)p99, p99 / 1000.0);
-    printf("P999 延迟: %lu μs (%.3f ms)\n", (unsigned long)p999, p999 / 1000.0);
+    printf("最小延迟: %" PRIu64 " μs (%.3f ms)\n", g_stats.min, g_stats.min / 1000.0);
+    printf("最大延迟: %" PRIu64 " μs (%.3f ms)\n", g_stats.max, g_stats.max / 1000.0);
+    printf("P50 延迟: %" PRIu64 " μs (%.3f ms)\n", p50, p50 / 1000.0);
+    printf("P95 延迟: %" PRIu64 " μs (%.3f ms)\n", p95, p95 / 1000.0);
+    printf("P99 延迟: %" PRIu64 " μs (%.3f ms)\n", p99, p99 / 1000.0);
+    printf("P999 延迟: %" PRIu64 " μs (%.3f ms)\n", p999, p999 / 1000.0);
     printf("\n");
 }
 
 /* 简单的请求处理器 */
-static int simple_handler(uvhttp_request_t* request) {
+static int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;  /* 避免未使用参数警告 */
+    
     uint64_t start = get_timestamp_us();
     
-    uvhttp_response_t* response = uvhttp_request_get_response(request);
     if (!response) {
         return -1;
     }
@@ -159,7 +160,6 @@ static void run_latency_benchmark(const char* test_name) {
     result = uvhttp_server_listen(server, "127.0.0.1", PORT);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "无法启动服务器\n");
-        uvhttp_router_free(router);
         uvhttp_server_free(server);
         return;
     }
@@ -180,7 +180,7 @@ static void run_latency_benchmark(const char* test_name) {
     uvhttp_server_free(server);
 }
 
-int main(int argc, char* argv[]) {
+int main(void) {
     printf("========================================\n");
     printf("  UVHTTP 延迟性能基准测试\n");
     printf("========================================\n\n");

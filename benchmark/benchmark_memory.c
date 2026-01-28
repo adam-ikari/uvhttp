@@ -27,13 +27,6 @@ typedef struct {
 
 static memory_stats_t g_mem_stats = {0};
 
-/* 获取当前时间（毫秒） */
-static uint64_t get_timestamp_ms(void) {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (uint64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
-}
-
 /* 获取当前进程内存使用量（KB） */
 static size_t get_memory_usage_kb(void) {
     struct rusage usage;
@@ -59,7 +52,9 @@ static void print_memory_stats(void) {
 }
 
 /* 简单的请求处理器 */
-static int simple_handler(uvhttp_request_t* request) {
+static int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;  /* 避免未使用参数警告 */
+    
     /* 更新内存统计 */
     size_t current_mem = get_memory_usage_kb();
     if (current_mem > g_mem_stats.peak_memory) {
@@ -68,7 +63,6 @@ static int simple_handler(uvhttp_request_t* request) {
     g_mem_stats.current_memory = current_mem;
     g_mem_stats.allocations++;
     
-    uvhttp_response_t* response = uvhttp_request_get_response(request);
     if (!response) {
         return -1;
     }
@@ -128,7 +122,6 @@ static void run_memory_benchmark(const char* test_name) {
     result = uvhttp_server_listen(server, "127.0.0.1", PORT);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "无法启动服务器\n");
-        uvhttp_router_free(router);
         uvhttp_server_free(server);
         return;
     }
@@ -149,7 +142,7 @@ static void run_memory_benchmark(const char* test_name) {
     uvhttp_server_free(server);
 }
 
-int main(int argc, char* argv[]) {
+int main(void) {
     printf("========================================\n");
     printf("  UVHTTP 内存使用性能基准测试\n");
     printf("========================================\n\n");

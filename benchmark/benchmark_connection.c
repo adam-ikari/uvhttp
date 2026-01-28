@@ -26,13 +26,6 @@ typedef struct {
 
 static connection_stats_t g_conn_stats = {0};
 
-/* 获取当前时间（毫秒） */
-static uint64_t get_timestamp_ms(void) {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (uint64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
-}
-
 /* 打印连接统计 */
 static void print_connection_stats(void) {
     printf("=== 连接统计 ===\n");
@@ -49,8 +42,9 @@ static void print_connection_stats(void) {
 }
 
 /* 简单的请求处理器 */
-static int simple_handler(uvhttp_request_t* request) {
-    uvhttp_response_t* response = uvhttp_request_get_response(request);
+static int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;  /* 避免未使用参数警告 */
+    
     if (!response) {
         g_conn_stats.failed_requests++;
         return -1;
@@ -110,7 +104,6 @@ static void run_connection_benchmark(const char* test_name) {
     result = uvhttp_server_listen(server, "127.0.0.1", PORT);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "无法启动服务器\n");
-        uvhttp_router_free(router);
         uvhttp_server_free(server);
         return;
     }
@@ -132,7 +125,7 @@ static void run_connection_benchmark(const char* test_name) {
     uvhttp_server_free(server);
 }
 
-int main(int argc, char* argv[]) {
+int main(void) {
     printf("========================================\n");
     printf("  UVHTTP 连接管理性能基准测试\n");
     printf("========================================\n\n");
