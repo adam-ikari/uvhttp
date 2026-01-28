@@ -6,6 +6,7 @@
 #include "uvhttp_error_handler.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_platform.h"
+#include "uvhttp_logging.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -180,57 +181,4 @@ static int calculate_retry_delay(int attempt) {
 /* 毫秒级睡眠 */
 static void sleep_ms(int ms) {
     uvhttp_sleep_ms(ms);
-}
-
-/* 日志函数 */
-void uvhttp_log(uvhttp_log_level_t level, const char* format, ...) {
-    if (level < g_error_config.min_logLevel) {
-        return;
-    }
-    
-    /* 获取时间戳 */
-    time_t now = time(NULL);
-    struct tm* tm_info = localtime(&now);
-    char timestamp[32];
-    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", tm_info);
-    
-    /* 格式化日志消息 */
-    char message[1024];
-    va_list args;
-    va_start(args, format);
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-nonliteral"
-#endif
-    vsnprintf(message, sizeof(message), format, args);
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
-    va_end(args);
-    
-    /* 输出日志 - 直接输出避免递归 */
-    const char* level_str;
-    switch (level) {
-        case UVHTTP_LOG_LEVEL_DEBUG:
-            level_str = "DEBUG";
-            break;
-        case UVHTTP_LOG_LEVEL_INFO:
-            level_str = "INFO";
-            break;
-        case UVHTTP_LOG_LEVEL_WARN:
-            level_str = "WARN";
-            break;
-        case UVHTTP_LOG_LEVEL_ERROR:
-            level_str = "ERROR";
-            break;
-        case UVHTTP_LOG_LEVEL_FATAL:
-            level_str = "FATAL";
-            break;
-        default:
-            level_str = "UNKNOWN";
-            break;
-    }
-    
-    fprintf(stderr, "[%s] %s %s", timestamp, level_str, message);
-    fflush(stderr);
 }

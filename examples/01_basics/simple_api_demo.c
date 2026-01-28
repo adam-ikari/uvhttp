@@ -48,21 +48,35 @@ int main() {
     uv_loop_t* loop = uv_default_loop();
     
     // 创建服务器
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t uvhttp_error_t server_result = uvhttp_server_new(loop, &server, &result);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
     if (!server) {
         fprintf(stderr, "❌ 服务器创建失败\n");
         return 1;
     }
     
     // 创建路由器
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
     uvhttp_server_set_router(server, router);
     
     // 添加默认路由
     uvhttp_router_add_route(router, "/*", simple_handler);
     
     // 启动服务器
-    int result = uvhttp_server_listen(server, UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
+    int listen_result = uvhttp_server_listen(server, UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "❌ 服务器启动失败: %d\n", result);
         return 1;

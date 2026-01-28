@@ -59,7 +59,12 @@ int main() {
     signal(SIGTERM, signal_handler);
     
     // 创建配置
-    uvhttp_config_t* config = uvhttp_config_new();
+    uvhttp_config_t* config = NULL;
+    uvhttp_error_t result = uvhttp_config_new(&config);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create configuration: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
     if (!config) {
         return 1;
     }
@@ -87,7 +92,11 @@ int main() {
     }
     
     // 创建服务器
-    g_server = uvhttp_server_new(g_loop);
+    uvhttp_error_t server_result = uvhttp_server_new(g_loop, &g_server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
     if (!g_server) {
         uvhttp_config_free(config);
         return 1;
@@ -97,8 +106,8 @@ int main() {
     g_server->config = config;
 
     // 创建上下文
-    g_context = uvhttp_context_create(g_loop);
-    if (!g_context) {
+    uvhttp_error_t result_g_context = uvhttp_context_create(g_loop, &g_context);
+    if (result_g_context != UVHTTP_OK) {
         printf("错误：无法创建上下文\n");
         uvhttp_server_free(g_server);
         uvhttp_config_free(config);
@@ -108,9 +117,9 @@ int main() {
     uvhttp_config_set_current(g_context, config);
 
     // 创建TLS上下文
-    g_tls_ctx = uvhttp_tls_context_new();
-    if (!g_tls_ctx) {
-        printf("错误：无法创建TLS上下文\n");
+    uvhttp_error_t tls_result = uvhttp_tls_context_new(&g_tls_ctx);
+    if (tls_result != UVHTTP_OK) {
+        printf("错误：无法创建TLS上下文: %s\n", uvhttp_error_string(tls_result));
         uvhttp_server_free(g_server);
         uvhttp_config_free(config);
         return 1;
@@ -143,8 +152,9 @@ int main() {
     }
     
     // 创建路由器
-    g_router = uvhttp_router_new();
-    if (!g_router) {
+    uvhttp_error_t router_result = uvhttp_router_new(&g_router);
+    if (router_result != UVHTTP_OK) {
+        printf("错误：无法创建路由器: %s\n", uvhttp_error_string(router_result));
         uvhttp_tls_context_free(g_tls_ctx);
         g_server = NULL;
         uvhttp_config_free(config);
@@ -158,9 +168,9 @@ int main() {
     g_server->router = g_router;
     
     // 启动服务器（HTTPS 端口 8443）
-    uvhttp_error_t result = uvhttp_server_listen(g_server, UVHTTP_DEFAULT_HOST, 8443);
-    if (result != UVHTTP_OK) {
-        printf("错误：无法启动 TLS 服务器 (错误码: %d)\n", result);
+    uvhttp_error_t listen_result = uvhttp_server_listen(g_server, UVHTTP_DEFAULT_HOST, 8443);
+    if (listen_result != UVHTTP_OK) {
+        printf("错误：无法启动 TLS 服务器 (错误码: %d)\n", listen_result);
         uvhttp_tls_context_free(g_tls_ctx);
         uvhttp_server_free(g_server);
         g_server = NULL;

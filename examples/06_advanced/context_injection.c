@@ -61,7 +61,11 @@ app_context_t* app_context_create(uv_loop_t* loop, const char* name) {
     ctx->server_name[sizeof(ctx->server_name) - 1] = '\0';
 
     // 创建服务器
-    ctx->server = uvhttp_server_new(loop);
+    ctx->uvhttp_error_t server_result = uvhttp_server_new(loop, &server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
     if (!ctx->server) {
         fprintf(stderr, "错误: 无法创建服务器\n");
         uvhttp_free(ctx);
@@ -85,7 +89,7 @@ app_context_t* app_context_create(uv_loop_t* loop, const char* name) {
 
     // 创建 uvhttp_context 并设置到服务器
     // 这是避免独占 loop->data 的关键！
-    uvhttp_context_t* uvhttp_ctx = uvhttp_context_create(loop);
+    uvhttp_context_t* uvhttp_error_t result_uvhttp_ctx = uvhttp_context_create(loop, &uvhttp_ctx);
     if (!uvhttp_ctx) {
         fprintf(stderr, "错误: 无法创建 uvhttp_context\n");
         uvhttp_router_free(ctx->router);

@@ -73,8 +73,7 @@ static int is_retryable_error(uvhttp_error_t error) {
         case UVHTTP_ERROR_WEBSOCKET_TOO_LARGE:
         case UVHTTP_ERROR_WEBSOCKET_INVALID_OPCODE:
         
-        /* 可重试的中间件错误 */
-        case UVHTTP_ERROR_MIDDLEWARE_EXECUTE:
+        /* 可重试的错误 */
         case UVHTTP_ERROR_LOG_WRITE:
             return TRUE;
         
@@ -124,9 +123,6 @@ static int is_retryable_error(uvhttp_error_t error) {
         case UVHTTP_ERROR_CONFIG_INVALID:
         case UVHTTP_ERROR_CONFIG_FILE_NOT_FOUND:
         case UVHTTP_ERROR_CONFIG_MISSING_REQUIRED:
-        case UVHTTP_ERROR_MIDDLEWARE_INIT:
-        case UVHTTP_ERROR_MIDDLEWARE_REGISTER:
-        case UVHTTP_ERROR_MIDDLEWARE_NOT_FOUND:
         case UVHTTP_ERROR_LOG_INIT:
         case UVHTTP_ERROR_LOG_FILE_OPEN:
         case UVHTTP_ERROR_LOG_NOT_INITIALIZED:
@@ -138,8 +134,9 @@ static int is_retryable_error(uvhttp_error_t error) {
 }
 
 /* 带重试的错误处理函数 */
-uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*), 
+uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*),
                                      void* context, const char* operation_name) {
+    (void)operation_name;  /* 预留参数，用于日志记录 */
     uvhttp_error_t last_error = UVHTTP_OK;
     
     for (int attempt = 0; attempt <= recovery_config.max_retries; attempt++) {
@@ -813,24 +810,6 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
                 
                         /* Middleware errors */
                 
-                        case UVHTTP_ERROR_MIDDLEWARE_INIT:
-                
-                            return "Failed to initialize middleware";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_REGISTER:
-                
-                            return "Failed to register middleware";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_EXECUTE:
-                
-                            return "Middleware execution failed";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_NOT_FOUND:
-                
-                            return "Middleware not found";
-                
-                        
-                
                         /* Logging errors */
                 
                         case UVHTTP_ERROR_LOG_INIT:
@@ -1153,24 +1132,6 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
                         
                 
                         /* Middleware errors */
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_INIT:
-                
-                            return "Check middleware configuration";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_REGISTER:
-                
-                            return "Verify middleware registration parameters";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_EXECUTE:
-                
-                            return "Retry operation or fix middleware logic";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_NOT_FOUND:
-                
-                            return "Register the middleware or check path";
-                
-                        
                 
                         /* Logging errors */
                 

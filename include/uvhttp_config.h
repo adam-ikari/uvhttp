@@ -9,6 +9,7 @@
 #define UVHTTP_CONFIG_H
 
 #include "uvhttp_constants.h"
+#include "uvhttp_error.h"
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -73,7 +74,14 @@ typedef struct {
 #define UVHTTP_DEFAULT_ENABLE_ACCESS_LOG     0
 
 /* 配置管理函数 */
-uvhttp_config_t* uvhttp_config_new(void);
+/**
+ * @brief 创建新的配置对象
+ * @param config 输出参数，用于接收配置对象指针
+ * @return UVHTTP_OK 成功，其他值表示失败
+ * @note 成功时，*config 被设置为有效的配置对象，必须使用 uvhttp_config_free 释放
+ * @note 失败时，*config 被设置为 NULL
+ */
+uvhttp_error_t uvhttp_config_new(uvhttp_config_t** config);
 void uvhttp_config_free(uvhttp_config_t* config);
 void uvhttp_config_set_defaults(uvhttp_config_t* config);
 

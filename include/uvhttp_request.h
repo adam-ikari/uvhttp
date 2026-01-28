@@ -8,6 +8,7 @@
 #include <assert.h>
 #include "llhttp.h"
 #include "uvhttp_common.h"
+#include "uvhttp_error.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -108,7 +109,7 @@ size_t uvhttp_request_get_header_count(uvhttp_request_t* request);
 uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request, size_t index);
 
 /* 添加 header（内部使用，自动扩容） */
-int uvhttp_request_add_header(uvhttp_request_t* request, 
+uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request, 
                                const char* name, 
                                const char* value);
 

@@ -13,7 +13,6 @@
 #include <signal.h>
 
 static uvhttp_server_t* g_server = NULL;
-static uvhttp_router_t* g_router = NULL;
 static uvhttp_context_t* g_context = NULL;
 
 void signal_handler(int sig) {
@@ -60,14 +59,23 @@ int main() {
     uv_loop_t* loop = uv_default_loop();
     
     // 创建服务器
-    g_server = uvhttp_server_new(loop);
+    uvhttp_error_t server_result = uvhttp_server_new(loop, &g_server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
     if (!g_server) {
         fprintf(stderr, "服务器创建失败\n");
         return 1;
     }
     
     // 创建配置
-    uvhttp_config_t* config = uvhttp_config_new();
+    uvhttp_config_t* config = NULL;
+    uvhttp_error_t result = uvhttp_config_new(&config);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create configuration: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
     if (!config) {
         fprintf(stderr, "配置创建失败\n");
         uvhttp_server_free(g_server);
@@ -93,8 +101,8 @@ int main() {
     g_server->config = config;
 
     // 创建上下文
-    g_context = uvhttp_context_create(loop);
-    if (!g_context) {
+    uvhttp_error_t result_g_context = uvhttp_context_create(loop, &g_context);
+    if (result_g_context != UVHTTP_OK) {
         fprintf(stderr, "上下文创建失败\n");
         uvhttp_config_free(config);
         uvhttp_server_free(g_server);
@@ -105,9 +113,15 @@ int main() {
     uvhttp_config_set_current(g_context, config);
 
     // 创建路由
-    g_router = uvhttp_router_new();
-    uvhttp_router_add_route(g_router, "/", simple_handler);
-    g_server->router = g_router;
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t router_result = uvhttp_router_new(&router);
+    if (router_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(router_result));
+        uvhttp_server_free(g_server);
+        return 1;
+    }
+    uvhttp_router_add_route(router, "/", simple_handler);
+    g_server->router = router;
     
     // 启动服务器
     printf("启动服务器 (端口 8080)...\n");

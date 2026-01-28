@@ -183,7 +183,12 @@ int main(int argc, char* argv[]) {
     // 应用 Nginx 优化配置
     printf("创建配置...\n");
     fflush(stdout);
-    uvhttp_config_t* config = uvhttp_config_new();
+    uvhttp_config_t* config = NULL;
+    uvhttp_error_t result = uvhttp_config_new(&config);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create configuration: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
     if (!config) {
         printf("错误：无法创建配置\n");
         fflush(stdout);
@@ -195,8 +200,8 @@ int main(int argc, char* argv[]) {
     fflush(stdout);
 
     // 创建 uvhttp 上下文
-    ctx->uvhttp_ctx = uvhttp_context_create(loop);
-    if (!ctx->uvhttp_ctx) {
+    uvhttp_error_t ctx_result = uvhttp_context_create(loop, &ctx->uvhttp_ctx);
+    if (ctx_result != UVHTTP_OK) {
         printf("错误：无法创建 uvhttp 上下文\n");
         fflush(stdout);
         uvhttp_config_free(config);
@@ -230,8 +235,8 @@ int main(int argc, char* argv[]) {
     // 创建静态文件服务上下文
     printf("创建静态文件服务上下文...\n");
     fflush(stdout);
-    ctx->static_ctx = uvhttp_static_create(&static_config);
-    if (!ctx->static_ctx) {
+    uvhttp_error_t static_result = uvhttp_static_create(&static_config, &ctx->static_ctx);
+    if (static_result != UVHTTP_OK || !ctx->static_ctx) {
         printf("错误：无法创建静态文件服务上下文\n");
         fflush(stdout);
         uvhttp_config_free(config);
@@ -244,22 +249,20 @@ int main(int argc, char* argv[]) {
     // 创建HTTP服务器
     printf("创建HTTP服务器...\n");
     fflush(stdout);
-    ctx->server = uvhttp_server_new(loop);
-    if (!ctx->server) {
-        printf("错误：无法创建HTTP服务器\n");
-        fflush(stdout);
-        uvhttp_static_free(ctx->static_ctx);
-        uvhttp_config_free(config);
-        uvhttp_free(ctx);
+    uvhttp_error_t server_result = uvhttp_server_new(loop, &ctx->server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
         return 1;
     }
+    printf("服务器创建成功\n");
+    fflush(stdout);
     printf("HTTP服务器创建成功\n");
     fflush(stdout);
     
     // 创建路由
-    ctx->router = uvhttp_router_new();
-    if (!ctx->router) {
-        printf("错误：无法创建路由器\n");
+    uvhttp_error_t router_result = uvhttp_router_new(&ctx->router);
+    if (router_result != UVHTTP_OK) {
+        printf("错误：无法创建路由器: %s\n", uvhttp_error_string(router_result));
         fflush(stdout);
         uvhttp_static_free(ctx->static_ctx);
         uvhttp_server_free(ctx->server);
@@ -297,9 +300,9 @@ int main(int argc, char* argv[]) {
     uvhttp_server_set_context(ctx->server, ctx->uvhttp_ctx);
     
     // 启动服务器
-    int result = uvhttp_server_listen(ctx->server, "0.0.0.0", port);
-    if (result != 0) {
-        printf("错误：无法启动服务器 (错误码: %d)\n", result);
+int listen_result = uvhttp_server_listen(ctx->server, "0.0.0.0", port);
+    if (listen_result != 0) {
+        printf("错误：无法启动服务器 (错误码: %d)\n", listen_result);
         fflush(stdout);
         uvhttp_static_free(ctx->static_ctx);
         uvhttp_server_free(ctx->server);

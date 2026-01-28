@@ -49,9 +49,9 @@ void uvhttp_log_safe_error(int error_code, const char* context, const char* user
  * @param message 原始错误消息
  * @param safe_buffer 安全输出缓冲区
  * @param buffer_size 缓冲区大小
- * @return 0成功，-1失败
+ * @return UVHTTP_OK成功，其他值表示失败
  */
-int uvhttp_sanitize_error_message(const char* message, 
+uvhttp_error_t uvhttp_sanitize_error_message(const char* message, 
                                  char* safe_buffer, 
                                  size_t buffer_size);
 

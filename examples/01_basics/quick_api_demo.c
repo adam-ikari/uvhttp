@@ -58,14 +58,27 @@ int main() {
     uv_loop_t* loop = uv_default_loop();
     
     // 创建服务器
-    g_server = uvhttp_server_new(loop);
+    uvhttp_error_t uvhttp_error_t server_result = uvhttp_server_new(loop, &g_server, &server_result);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
     if (!g_server) {
         fprintf(stderr, "❌ 服务器创建失败\n");
         return 1;
     }
     
     // 创建路由器
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
     uvhttp_server_set_router(g_server, router);
     
     // 添加路由
@@ -77,7 +90,7 @@ int main() {
     printf("⏹️  按 Ctrl+C 停止服务器\n");
     
     // 启动服务器
-    int result = uvhttp_server_listen(g_server, "0.0.0.0", 8080);
+    int listen_result = uvhttp_server_listen(g_server, "0.0.0.0", 8080);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "❌ 服务器启动失败: %d\n", result);
         return 1;

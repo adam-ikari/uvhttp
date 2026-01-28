@@ -1043,7 +1043,6 @@ bash <(curl -s https://codecov.io/bash)
 - `route_hash()` - 路由哈希计算
 - `fast_method_parse()` - 快速方法解析
 - `find_in_hot_routes()` - 热路径查找
-- `middleware_path_match()` - 中间件路径匹配
 
 ### 测试配置
 

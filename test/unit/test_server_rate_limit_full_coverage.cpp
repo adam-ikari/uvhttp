@@ -13,11 +13,12 @@ TEST(UvhttpServerRateLimitFullCoverageTest, EnableRateLimitNullServer) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, EnableRateLimitInvalidMaxRequests) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 测试 max_requests <= 0 */
-    uvhttp_error_t result = uvhttp_server_enable_rate_limit(server, 0, 60);
+    result = uvhttp_server_enable_rate_limit(server, 0, 60);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
     
     /* 测试 max_requests < 0 */
@@ -29,11 +30,12 @@ TEST(UvhttpServerRateLimitFullCoverageTest, EnableRateLimitInvalidMaxRequests) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, EnableRateLimitInvalidWindowSeconds) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 测试 window_seconds <= 0 */
-    uvhttp_error_t result = uvhttp_server_enable_rate_limit(server, 100, 0);
+    result = uvhttp_server_enable_rate_limit(server, 100, 0);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
     
     /* 测试 window_seconds < 0 */
@@ -45,10 +47,11 @@ TEST(UvhttpServerRateLimitFullCoverageTest, EnableRateLimitInvalidWindowSeconds)
 
 TEST(UvhttpServerRateLimitFullCoverageTest, EnableRateLimitNormal) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
-    uvhttp_error_t result = uvhttp_server_enable_rate_limit(server, 100, 60);
+    result = uvhttp_server_enable_rate_limit(server, 100, 60);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(server->rate_limit_enabled, 1);
     EXPECT_EQ(server->rate_limit_max_requests, 100);
@@ -60,11 +63,12 @@ TEST(UvhttpServerRateLimitFullCoverageTest, EnableRateLimitNormal) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, EnableRateLimitMultipleTimes) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 第一次启用 */
-    uvhttp_error_t result = uvhttp_server_enable_rate_limit(server, 100, 60);
+    result = uvhttp_server_enable_rate_limit(server, 100, 60);
     EXPECT_EQ(result, UVHTTP_OK);
     
     /* 第二次启用（应该覆盖之前的配置） */
@@ -83,11 +87,12 @@ TEST(UvhttpServerRateLimitFullCoverageTest, DisableRateLimitNullServer) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, DisableRateLimitNotEnabled) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 未启用限流，禁用应该成功 */
-    uvhttp_error_t result = uvhttp_server_disable_rate_limit(server);
+    result = uvhttp_server_disable_rate_limit(server);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(server->rate_limit_enabled, 0);
     
@@ -96,14 +101,15 @@ TEST(UvhttpServerRateLimitFullCoverageTest, DisableRateLimitNotEnabled) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, DisableRateLimitNormal) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 先启用限流 */
     uvhttp_server_enable_rate_limit(server, 100, 60);
     
     /* 禁用限流 */
-    uvhttp_error_t result = uvhttp_server_disable_rate_limit(server);
+    result = uvhttp_server_disable_rate_limit(server);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(server->rate_limit_enabled, 0);
     EXPECT_EQ(server->rate_limit_request_count, 0);
@@ -120,11 +126,12 @@ TEST(UvhttpServerRateLimitFullCoverageTest, CheckRateLimitNullServer) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, CheckRateLimitNotEnabled) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 未启用限流，应该允许请求 */
-    uvhttp_error_t result = uvhttp_server_check_rate_limit(server);
+    result = uvhttp_server_check_rate_limit(server);
     EXPECT_EQ(result, UVHTTP_OK);
     
     uvhttp_server_free(server);
@@ -132,7 +139,8 @@ TEST(UvhttpServerRateLimitFullCoverageTest, CheckRateLimitNotEnabled) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, CheckRateLimitWithinLimit) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 启用限流 */
@@ -140,12 +148,12 @@ TEST(UvhttpServerRateLimitFullCoverageTest, CheckRateLimitWithinLimit) {
     
     /* 发送 99 个请求 */
     for (int i = 0; i < 99; i++) {
-        uvhttp_error_t result = uvhttp_server_check_rate_limit(server);
+        result = uvhttp_server_check_rate_limit(server);
         EXPECT_EQ(result, UVHTTP_OK);
     }
     
     /* 第 100 个请求 */
-    uvhttp_error_t result = uvhttp_server_check_rate_limit(server);
+    result = uvhttp_server_check_rate_limit(server);
     EXPECT_EQ(result, UVHTTP_OK);
     
     uvhttp_server_free(server);
@@ -153,7 +161,8 @@ TEST(UvhttpServerRateLimitFullCoverageTest, CheckRateLimitWithinLimit) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, CheckRateLimitExceeded) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 启用限流 */
@@ -165,7 +174,7 @@ TEST(UvhttpServerRateLimitFullCoverageTest, CheckRateLimitExceeded) {
     }
     
     /* 第 11 个请求应该被拒绝 */
-    uvhttp_error_t result = uvhttp_server_check_rate_limit(server);
+    result = uvhttp_server_check_rate_limit(server);
     EXPECT_EQ(result, UVHTTP_ERROR_RATE_LIMIT_EXCEEDED);
     
     uvhttp_server_free(server);
@@ -173,7 +182,8 @@ TEST(UvhttpServerRateLimitFullCoverageTest, CheckRateLimitExceeded) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, CheckRateLimitSmallWindow) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 启用限流（小窗口） */
@@ -181,12 +191,12 @@ TEST(UvhttpServerRateLimitFullCoverageTest, CheckRateLimitSmallWindow) {
     
     /* 发送 5 个请求 */
     for (int i = 0; i < 5; i++) {
-        uvhttp_error_t result = uvhttp_server_check_rate_limit(server);
+        result = uvhttp_server_check_rate_limit(server);
         EXPECT_EQ(result, UVHTTP_OK);
     }
     
     /* 第 6 个请求应该被拒绝 */
-    uvhttp_error_t result = uvhttp_server_check_rate_limit(server);
+    result = uvhttp_server_check_rate_limit(server);
     EXPECT_EQ(result, UVHTTP_ERROR_RATE_LIMIT_EXCEEDED);
     
     uvhttp_server_free(server);
@@ -199,10 +209,11 @@ TEST(UvhttpServerRateLimitFullCoverageTest, AddRateLimitWhitelistNullServer) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, AddRateLimitWhitelistNullIp) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
-    uvhttp_error_t result = uvhttp_server_add_rate_limit_whitelist(server, nullptr);
+    result = uvhttp_server_add_rate_limit_whitelist(server, nullptr);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
     
     uvhttp_server_free(server);
@@ -210,10 +221,11 @@ TEST(UvhttpServerRateLimitFullCoverageTest, AddRateLimitWhitelistNullIp) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, AddRateLimitWhitelistNormal) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
-    uvhttp_error_t result = uvhttp_server_add_rate_limit_whitelist(server, "127.0.0.1");
+    result = uvhttp_server_add_rate_limit_whitelist(server, "127.0.0.1");
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_GT(server->rate_limit_whitelist_count, 0);
     
@@ -226,7 +238,8 @@ TEST(UvhttpServerRateLimitFullCoverageTest, AddRateLimitWhitelistNormal) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, AddRateLimitWhitelistMultiple) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 添加多个 IP */
@@ -248,12 +261,13 @@ TEST(UvhttpServerRateLimitFullCoverageTest, GetRateLimitStatusNullServer) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, GetRateLimitStatusNotEnabled) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     int remaining;
     uint64_t reset_time;
-    uvhttp_error_t result = uvhttp_server_get_rate_limit_status(server, "127.0.0.1", &remaining, &reset_time);
+    result = uvhttp_server_get_rate_limit_status(server, "127.0.0.1", &remaining, &reset_time);
     EXPECT_EQ(result, UVHTTP_OK);
     
     uvhttp_server_free(server);
@@ -261,7 +275,8 @@ TEST(UvhttpServerRateLimitFullCoverageTest, GetRateLimitStatusNotEnabled) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, GetRateLimitStatusNormal) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 启用限流 */
@@ -269,7 +284,7 @@ TEST(UvhttpServerRateLimitFullCoverageTest, GetRateLimitStatusNormal) {
     
     int remaining;
     uint64_t reset_time;
-    uvhttp_error_t result = uvhttp_server_get_rate_limit_status(server, "127.0.0.1", &remaining, &reset_time);
+    result = uvhttp_server_get_rate_limit_status(server, "127.0.0.1", &remaining, &reset_time);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_GE(remaining, 0);
     EXPECT_GT(reset_time, 0);
@@ -279,7 +294,8 @@ TEST(UvhttpServerRateLimitFullCoverageTest, GetRateLimitStatusNormal) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, GetRateLimitStatusAfterRequests) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 启用限流 */
@@ -293,7 +309,7 @@ TEST(UvhttpServerRateLimitFullCoverageTest, GetRateLimitStatusAfterRequests) {
     /* 检查状态 */
     int remaining;
     uint64_t reset_time;
-    uvhttp_error_t result = uvhttp_server_get_rate_limit_status(server, "127.0.0.1", &remaining, &reset_time);
+    result = uvhttp_server_get_rate_limit_status(server, "127.0.0.1", &remaining, &reset_time);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_LE(remaining, 50);
     
@@ -307,7 +323,8 @@ TEST(UvhttpServerRateLimitFullCoverageTest, ResetRateLimitClientNullServer) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, ResetRateLimitClientNormal) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 启用限流并消耗一些请求 */
@@ -317,7 +334,7 @@ TEST(UvhttpServerRateLimitFullCoverageTest, ResetRateLimitClientNormal) {
     }
     
     /* 重置 */
-    uvhttp_error_t result = uvhttp_server_reset_rate_limit_client(server, "127.0.0.1");
+    result = uvhttp_server_reset_rate_limit_client(server, "127.0.0.1");
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(server->rate_limit_request_count, 0);
     
@@ -331,7 +348,8 @@ TEST(UvhttpServerRateLimitFullCoverageTest, ClearRateLimitAllNullServer) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, ClearRateLimitAllNormal) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 启用限流并添加白名单 */
@@ -340,7 +358,7 @@ TEST(UvhttpServerRateLimitFullCoverageTest, ClearRateLimitAllNormal) {
     uvhttp_server_add_rate_limit_whitelist(server, "192.168.1.1");
     
     /* 清空 */
-    uvhttp_error_t result = uvhttp_server_clear_rate_limit_all(server);
+    result = uvhttp_server_clear_rate_limit_all(server);
     EXPECT_NE(result, UVHTTP_ERROR_INVALID_PARAM);
     
     uvhttp_server_free(server);
@@ -348,14 +366,15 @@ TEST(UvhttpServerRateLimitFullCoverageTest, ClearRateLimitAllNormal) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, ClearRateLimitAllWithoutWhitelist) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 启用限流但不添加白名单 */
     uvhttp_server_enable_rate_limit(server, 100, 60);
     
     /* 清空 */
-    uvhttp_error_t result = uvhttp_server_clear_rate_limit_all(server);
+    result = uvhttp_server_clear_rate_limit_all(server);
     EXPECT_NE(result, UVHTTP_ERROR_INVALID_PARAM);
     
     uvhttp_server_free(server);
@@ -363,7 +382,8 @@ TEST(UvhttpServerRateLimitFullCoverageTest, ClearRateLimitAllWithoutWhitelist) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, RateLimitEdgeCases) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 测试边界值：max_requests = 1 */
@@ -386,7 +406,8 @@ TEST(UvhttpServerRateLimitFullCoverageTest, RateLimitWithWhitelist) {
 
 TEST(UvhttpServerRateLimitFullCoverageTest, RateLimitDisableAndReenable) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_NE(server, nullptr);
     
     /* 启用限流 */

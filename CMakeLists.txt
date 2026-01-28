@@ -54,10 +54,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
 ")
 
 # 特性定义
-if(NOT DEFINED UVHTTP_FEATURE_MIDDLEWARE)
-    set(UVHTTP_FEATURE_MIDDLEWARE 1)
-endif()
-add_definitions(-DUVHTTP_FEATURE_MIDDLEWARE=${UVHTTP_FEATURE_MIDDLEWARE})
+add_definitions(-DUVHTTP_FEATURE_MIDDLEWARE=1)
 add_definitions(-DUVHTTP_FEATURE_STATIC_FILES=1)
 add_definitions(-DUVHTTP_FEATURE_TLS=1)
 add_definitions(-DUVHTTP_FEATURE_LRU_CACHE=1)
@@ -76,9 +73,19 @@ endif()
 option(ENABLE_DEV_MODE "Enable development mode with logging" OFF)
 if(ENABLE_DEV_MODE)
     add_definitions(-DUVHTTP_DEV_MODE)
+    add_definitions(-DUVHTTP_FEATURE_LOGGING=1)
     message(STATUS "Development mode: ENABLED (logging enabled)")
 else()
-    message(STATUS "Development mode: DISABLED (no logging)")
+    # 生产模式 - 禁用日志系统以提高性能
+    # 但在构建测试时自动启用日志功能
+    file(GLOB TEST_FILES test/unit/test_*.cpp)
+    if(TEST_FILES)
+        add_definitions(-DUVHTTP_FEATURE_LOGGING=1)
+        message(STATUS "Development mode: DISABLED (logging enabled for testing)")
+    else()
+        add_definitions(-DUVHTTP_FEATURE_LOGGING=0)
+        message(STATUS "Development mode: DISABLED (no logging, zero overhead)")
+    endif()
 endif()
 
 add_definitions(-DUVHTTP_ALLOCATOR_TYPE=${UVHTTP_ALLOCATOR_TYPE})
@@ -106,9 +113,7 @@ set(SOURCES
     src/uvhttp_server.c
     src/uvhttp_tls_mbedtls.c
     src/uvhttp_config.c
-    src/uvhttp_network.c
     src/uvhttp_context.c
-    src/uvhttp_deps.c
     src/uvhttp_error.c
     src/uvhttp_error_handler.c
     src/uvhttp_error_helpers.c
@@ -119,18 +124,13 @@ set(SOURCES
     src/uvhttp_async_file.c
     src/uvhttp_validation.c
     src/uvhttp_allocator.c
+    src/uvhttp_logging.c
 )
 
-# 条件编译中间件源文件
-if(UVHTTP_FEATURE_MIDDLEWARE)
-    list(APPEND SOURCES 
-        src/uvhttp_middleware.c
-        src/uvhttp_cors_middleware.c
-    )
-endif()
+# 条件编译 WebSocket 源文件
 
 if(BUILD_WITH_WEBSOCKET)
-    list(APPEND SOURCES src/uvhttp_websocket_native.c)
+    list(APPEND SOURCES src/uvhttp_websocket.c)
 endif()
 
 # 头文件
@@ -141,14 +141,12 @@ set(HEADERS
     include/uvhttp_constants.h
     include/uvhttp_connection.h
     include/uvhttp_context.h
-    include/uvhttp_deps.h
     include/uvhttp_error.h
     include/uvhttp_error_handler.h
     include/uvhttp_error_helpers.h
     include/uvhttp_features.h
     include/uvhttp_hash.h
     include/uvhttp_lru_cache.h
-    include/uvhttp_network.h
     include/uvhttp_request.h
     include/uvhttp_response.h
     include/uvhttp_router.h
@@ -162,19 +160,8 @@ set(HEADERS
     include/uvhttp_allocator.h
 )
 
-# 条件编译中间件相关头文件
-if(UVHTTP_FEATURE_MIDDLEWARE)
-    list(APPEND HEADERS
-        include/uvhttp_log_middleware.h
-        include/uvhttp_middleware.h
-        include/uvhttp_websocket_middleware.h
-        include/uvhttp_cors_middleware.h
-        include/uvhttp_simple_middleware.h
-    )
-endif()
-
 if(BUILD_WITH_WEBSOCKET)
-    list(APPEND HEADERS include/uvhttp_websocket_native.h)
+    list(APPEND HEADERS include/uvhttp_websocket.h)
 endif()
 
 # ============================================================================
@@ -227,20 +214,22 @@ target_link_libraries(uvhttp
         llhttp
 )
 
-# 平台特定的库（PRIVATE）
-if(IS_WINDOWS)
-    # Windows 不需要额外的库
-elseif(IS_MACOS)
-    target_link_libraries(uvhttp PRIVATE pthread)
-else()
-    # Linux 需要 pthread, m, dl
-    target_link_libraries(uvhttp PRIVATE pthread m dl)
-endif()
-
 # mimalloc（PRIVATE）
 if(BUILD_WITH_MIMALLOC)
     target_link_libraries(uvhttp PRIVATE mimalloc)
     target_compile_definitions(uvhttp PRIVATE UVHTTP_ENABLE_MIMALLOC UVHTTP_FEATURE_ALLOCATOR=1)
+endif()
+
+# 平台特定的库（PRIVATE）- 必须在 mimalloc 之后链接
+if(IS_WINDOWS)
+    # Windows 不需要额外的库
+    target_link_libraries(uvhttp PRIVATE )
+elseif(IS_MACOS)
+    # macOS 需要 pthread
+    target_link_libraries(uvhttp PRIVATE pthread)
+else()
+    # Linux 需要 pthread, m, dl
+    target_link_libraries(uvhttp PRIVATE pthread m dl)
 endif()
 
 # 设置包含目录（PUBLIC，传递给依赖uvhttp的目标）
@@ -262,12 +251,6 @@ list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_loop_helper.cpp")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_time_mock.cpp")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_mock_coverage.cpp")
 
-# 条件编译中间件相关测试
-if(NOT UVHTTP_FEATURE_MIDDLEWARE)
-    list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*middleware.*")
-    list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*cors.*")
-endif()
-
 # 添加测试辅助文件
 set(TEST_HELPER_FILES test/unit/test_time_mock.cpp test/unit/test_loop_helper.cpp)
 
@@ -286,6 +269,7 @@ foreach(test_file ${GTEST_TEST_FILES})
     set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
     
     add_dependencies(${test_name} libuv mbedtls xxhash gtest)
+    
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(${test_name} mimalloc)
     endif()
@@ -293,8 +277,12 @@ foreach(test_file ${GTEST_TEST_FILES})
     target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
     # 为测试启用统计功能
     target_compile_definitions(${test_name} PRIVATE UVHTTP_FEATURE_STATISTICS=1)
-    target_link_libraries(${test_name} ${LIBS} ${GTEST_LIBS})
-    target_include_directories(${test_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
+    target_link_libraries(${test_name} PRIVATE ${LIBS} ${GTEST_LIBS})
+    target_include_directories(${test_name} PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include 
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
+    )
     add_test(NAME ${test_name} COMMAND ${test_name})
     
     # 设置测试超时时间和标签
@@ -398,16 +386,8 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
 endforeach()
 
 # ============================================================================
-# 性能测试
+# 基准性能测试
 # ============================================================================
-file(GLOB PERFORMANCE_TEST_FILES test/performance/*.c)
-foreach(test_file ${PERFORMANCE_TEST_FILES})
-    get_filename_component(test_name ${test_file} NAME_WE)
-    add_executable(${test_name} ${test_file} ${SOURCES})
-    add_dependencies(${test_name} libuv mbedtls xxhash)
-    if(BUILD_WITH_MIMALLOC)
-        add_dependencies(${test_name} mimalloc)
-    endif()
-    target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
-    target_link_libraries(${test_name} ${LIBS})
-endforeach()
+if(EXISTS ${CMAKE_SOURCE_DIR}/benchmark/benchmark.cmake)
+    include(${CMAKE_SOURCE_DIR}/benchmark/benchmark.cmake)
+endif()

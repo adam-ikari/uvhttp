@@ -14,15 +14,19 @@
 #include <sys/resource.h>
 
 /* 创建新配置 */
-uvhttp_config_t* uvhttp_config_new(void) {
-    uvhttp_config_t* config = uvhttp_alloc(sizeof(uvhttp_config_t));
+uvhttp_error_t uvhttp_config_new(uvhttp_config_t** config) {
     if (!config) {
-        UVHTTP_ERROR_REPORT(UVHTTP_ERROR_OUT_OF_MEMORY, "Failed to allocate config");
-        return NULL;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    uvhttp_config_set_defaults(config);
-    return config;
+    *config = uvhttp_alloc(sizeof(uvhttp_config_t));
+    if (!*config) {
+        UVHTTP_ERROR_REPORT(UVHTTP_ERROR_OUT_OF_MEMORY, "Failed to allocate config");
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    
+    uvhttp_config_set_defaults(*config);
+    return UVHTTP_OK;
 }
 
 /* 释放配置 */
@@ -138,7 +142,7 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
                 return UVHTTP_ERROR_INVALID_PARAM;
             }
             if (val > UVHTTP_MAX_BODY_SIZE_CONFIG) {
-                UVHTTP_LOG_ERROR("Invalid max_body_size=%llu: exceeds limit %llu", val, UVHTTP_MAX_BODY_SIZE_CONFIG);
+                UVHTTP_LOG_ERROR("Invalid max_body_size=%zu: exceeds limit %zu", (size_t)val, (size_t)UVHTTP_MAX_BODY_SIZE_CONFIG);
                 fclose(file);
                 return UVHTTP_ERROR_INVALID_PARAM;
             }
@@ -339,9 +343,9 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
     
     if (config->max_body_size < UVHTTP_MIN_BODY_SIZE || 
         config->max_body_size > UVHTTP_MAX_BODY_SIZE_CONFIG) {
-        UVHTTP_LOG_ERROR("max_body_size=%zu exceeds valid range [%zu-%llu]",
+        UVHTTP_LOG_ERROR("max_body_size=%zu exceeds valid range [%zu-%zu]",
                          config->max_body_size, (size_t)UVHTTP_MIN_BODY_SIZE, 
-                         UVHTTP_MAX_BODY_SIZE_CONFIG);
+                         (size_t)UVHTTP_MAX_BODY_SIZE_CONFIG);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     

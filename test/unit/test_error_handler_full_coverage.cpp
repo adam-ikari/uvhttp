@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "uvhttp_error_handler.h"
 #include "uvhttp_allocator.h"
+#include "uvhttp_logging.h"
 #include <string.h>
 
 /* 测试错误处理初始化 */
@@ -223,9 +224,9 @@ TEST(UvhttpErrorHandlerTest, LogDebug) {
     };
     
     uvhttp_error_set_config(&config);
-    
-    /* 测试 DEBUG 日志 */
-    uvhttp_log(UVHTTP_LOG_LEVEL_DEBUG, "Debug message");
+
+    /* 测试日志函数 - DEBUG 级别 */
+    UVHTTP_LOG_DEBUG("Debug message");
 }
 
 /* 测试日志函数 - INFO 级别 */
@@ -241,9 +242,9 @@ TEST(UvhttpErrorHandlerTest, LogInfo) {
     };
     
     uvhttp_error_set_config(&config);
-    
-    /* 测试 INFO 日志 */
-    uvhttp_log(UVHTTP_LOG_LEVEL_INFO, "Info message");
+
+    /* 测试日志函数 - INFO 级别 */
+    UVHTTP_LOG_INFO("Info message");
 }
 
 /* 测试日志函数 - WARN 级别 */
@@ -259,9 +260,9 @@ TEST(UvhttpErrorHandlerTest, LogWarn) {
     };
     
     uvhttp_error_set_config(&config);
-    
-    /* 测试 WARN 日志 */
-    uvhttp_log(UVHTTP_LOG_LEVEL_WARN, "Warning message");
+
+    /* 测试日志函数 - WARN 级别 */
+    UVHTTP_LOG_WARN("Warning message");
 }
 
 /* 测试日志函数 - ERROR 级别 */
@@ -277,9 +278,9 @@ TEST(UvhttpErrorHandlerTest, LogError) {
     };
     
     uvhttp_error_set_config(&config);
-    
-    /* 测试 ERROR 日志 */
-    uvhttp_log(UVHTTP_LOG_LEVEL_ERROR, "Error message");
+
+    /* 测试日志函数 - ERROR 级别 */
+    UVHTTP_LOG_ERROR("Error message");
 }
 
 /* 测试日志函数 - FATAL 级别 */
@@ -295,9 +296,9 @@ TEST(UvhttpErrorHandlerTest, LogFatal) {
     };
     
     uvhttp_error_set_config(&config);
-    
-    /* 测试 FATAL 日志 */
-    uvhttp_log(UVHTTP_LOG_LEVEL_FATAL, "Fatal message");
+
+    /* 测试日志函数 - FATAL 级别 */
+    UVHTTP_LOG_FATAL("Fatal message");
 }
 
 /* 测试日志函数 - 低于最小级别 */
@@ -313,9 +314,9 @@ TEST(UvhttpErrorHandlerTest, LogBelowMinLevel) {
     };
     
     uvhttp_error_set_config(&config);
-    
-    /* DEBUG 日志应该被忽略 */
-    uvhttp_log(UVHTTP_LOG_LEVEL_DEBUG, "This should not be logged");
+
+    /* 测试日志函数 - 低于最小级别 */
+    UVHTTP_LOG_DEBUG("This should not be logged");
 }
 
 /* 测试日志函数 - 格式化字符串 */
@@ -331,9 +332,9 @@ TEST(UvhttpErrorHandlerTest, LogFormatString) {
     };
     
     uvhttp_error_set_config(&config);
-    
+
     /* 测试格式化字符串 */
-    uvhttp_log(UVHTTP_LOG_LEVEL_INFO, "Test message: %d, %s", 42, "hello");
+    UVHTTP_LOG_INFO("Test message: %d, %s", 42, "hello");
 }
 
 /* 测试错误检查宏 - UVHTTP_CHECK */

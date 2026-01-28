@@ -49,7 +49,7 @@ add_subdirectory(01_basics)
 # 路由示例
 add_subdirectory(02_routing)
 
-# 中间件示例
+# 中间件示例 - 编译期配置
 add_subdirectory(03_middleware)
 
 # 静态文件示例

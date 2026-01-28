@@ -123,7 +123,11 @@ int main(int argc, char* argv[]) {
     }
 
     /* 创建服务器 */
-    g_server = uvhttp_server_new(loop);
+    uvhttp_error_t server_result = uvhttp_server_new(loop, &g_server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
     if (!g_server) {
         fprintf(stderr, "Failed to create server\n");
         return 1;

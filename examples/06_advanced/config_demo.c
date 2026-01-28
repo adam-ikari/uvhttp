@@ -229,9 +229,10 @@ void print_config_info(const uvhttp_config_t* config) {
 uvhttp_config_t* load_config_demo() {
     printf("🔧 配置加载演示\n");
     
-    uvhttp_config_t* config = uvhttp_config_new();
-    if (!config) {
-        fprintf(stderr, "❌ 创建配置对象失败\n");
+    uvhttp_config_t* config = NULL;
+    uvhttp_error_t result = uvhttp_config_new(&config);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create configuration: %s\n", uvhttp_error_string(result));
         return NULL;
     }
     
@@ -327,7 +328,11 @@ int main(int argc, char* argv[]) {
     
     // 创建服务器
     printf("\n🌐 创建HTTP服务器...\n");
-    g_server = uvhttp_server_new(g_loop);
+    uvhttp_error_t server_result = uvhttp_server_new(g_loop, &g_server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
     if (!g_server) {
         fprintf(stderr, "❌ 服务器创建失败\n");
         uvhttp_config_free(config);
@@ -338,8 +343,8 @@ int main(int argc, char* argv[]) {
     g_server->config = config;
 
     // 创建上下文
-    g_context = uvhttp_context_create(g_loop);
-    if (!g_context) {
+    uvhttp_error_t result_g_context = uvhttp_context_create(g_loop, &g_context);
+    if (result_g_context != UVHTTP_OK) {
         fprintf(stderr, "❌ 上下文创建失败\n");
         uvhttp_server_free(g_server);
         return 1;
@@ -352,9 +357,9 @@ int main(int argc, char* argv[]) {
     
     // 创建路由器
     printf("\n🛣️  设置路由...\n");
-    g_router = uvhttp_router_new();
-    if (!g_router) {
-        fprintf(stderr, "❌ 路由器创建失败\n");
+    uvhttp_error_t router_result = uvhttp_router_new(&g_router);
+    if (router_result != UVHTTP_OK) {
+        fprintf(stderr, "❌ 路由器创建失败: %s\n", uvhttp_error_string(router_result));
         uvhttp_server_free(g_server);
         return 1;
     }

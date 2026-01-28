@@ -6,16 +6,10 @@
 #include "uvhttp_validation.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_features.h"
-#include "uvhttp_network.h"
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <stdio.h>
-
-/* 外部全局变量声明（仅在测试模式下使用） */
-#ifdef UVHTTP_TEST_MODE
-extern uvhttp_network_interface_t* g_uvhttp_network_interface;
-#endif
 
 // 函数声明
 static void uvhttp_free_write_data(uv_write_t* req, int status);
@@ -604,60 +598,6 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
 
     return err;
 }
-
-/* ============ 测试专用函数 ============ */
-#ifdef UVHTTP_TEST_MODE
-
-/* 测试用纯函数：验证响应数据构建
- * 这个函数只构建数据但不发送，便于测试验证
- */
-uvhttp_error_t uvhttp_response_build_for_test(uvhttp_response_t* response, 
-                                             char** out_data, 
-                                             size_t* out_length) {
-    return uvhttp_response_build_data(response, out_data, out_length);
-}
-
-/* 测试用函数：模拟发送但不实际网络I/O */
-uvhttp_error_t uvhttp_response_send_mock(uvhttp_response_t* response) {
-    if (!response) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    
-    if (response->sent) {
-        return UVHTTP_OK;
-    }
-    
-    /* 构建数据 */
-    char* response_data = NULL;
-    size_t response_length = 0;
-    uvhttp_error_t err = uvhttp_response_build_data(response, &response_data, &response_length);
-    if (err != UVHTTP_OK) {
-        return err;
-    }
-    
-    /* 模拟发送 - 只更新统计，不实际发送 */
-    UVHTTP_TEST_LOG("Mock sending response: %zu bytes", response_length);
-    
-    /* 更新网络接口统计（如果可用） */
-    uvhttp_network_reset_stats();
-    uvhttp_network_simulate_error(0); /* 确保没有错误模拟 */
-    
-    /* 模拟发送成功 */
-    if (g_uvhttp_network_interface) {
-        uv_buf_t buf = uv_buf_init(response_data, response_length);
-        g_uvhttp_network_interface->write(g_uvhttp_network_interface, 
-                                          (uv_stream_t*)response->client, 
-                                          &buf, 1, NULL);
-    }
-    
-    uvhttp_free(response_data);
-    response->sent = 1;
-    response->finished = 1;
-    
-    return UVHTTP_OK;
-}
-
-#endif /* UVHTTP_TEST_MODE */
 
 void uvhttp_response_free(uvhttp_response_t* response) {
     if (!response) {

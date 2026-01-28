@@ -55,19 +55,20 @@ int main() {
     loop->data = ctx;
     
     // 创建服务器
-    ctx->server = uvhttp_server_new(loop);
-    if (!ctx->server) {
-        fprintf(stderr, "Failed to create server\n");
-        uvhttp_free(ctx);
+    uvhttp_error_t result = uvhttp_server_new(loop, &ctx->server);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(result));
         return 1;
     }
     
     // 创建路由器
-    ctx->router = uvhttp_router_new();
-    if (!ctx->router) {
-        fprintf(stderr, "Failed to create router\n");
-        uvhttp_server_free(ctx->server);
-        uvhttp_free(ctx);
+    result = uvhttp_router_new(&ctx->router);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(result));
         return 1;
     }
     

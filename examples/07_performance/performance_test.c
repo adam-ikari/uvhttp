@@ -279,7 +279,12 @@ int main() {
     signal(SIGTERM, signal_handler);
     
     // 创建配置
-    uvhttp_config_t* config = uvhttp_config_new();
+    uvhttp_config_t* config = NULL;
+    uvhttp_error_t result = uvhttp_config_new(&config);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create configuration: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
     if (!config) {
         return 1;
     }
@@ -307,7 +312,11 @@ int main() {
     }
     
     // 创建服务器
-    g_server = uvhttp_server_new(g_loop);
+    uvhttp_error_t server_result = uvhttp_server_new(g_loop, &g_server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
     if (!g_server) {
         uvhttp_config_free(config);
         return 1;
@@ -317,8 +326,8 @@ int main() {
     g_server->config = config;
 
     // 创建上下文
-    g_context = uvhttp_context_create(g_loop);
-    if (!g_context) {
+    uvhttp_error_t result_g_context = uvhttp_context_create(g_loop, &g_context);
+    if (result_g_context != UVHTTP_OK) {
         uvhttp_server_free(g_server);
         g_server = NULL;
         return 1;
@@ -328,8 +337,9 @@ int main() {
     config = NULL;  // 防止后续误用
     
     // 创建路由器
-    g_router = uvhttp_router_new();
-    if (!g_router) {
+    uvhttp_error_t router_result = uvhttp_router_new(&g_router);
+    if (router_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(router_result));
         uvhttp_server_free(g_server);
         g_server = NULL;
         return 1;
@@ -359,8 +369,8 @@ int main() {
     g_server->router = g_router;
     
     // 启动服务器
-    uvhttp_error_t result = uvhttp_server_listen(g_server, UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
-    if (result != UVHTTP_OK) {
+    uvhttp_error_t listen_result = uvhttp_server_listen(g_server, UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
+    if (listen_result != UVHTTP_OK) {
         uvhttp_server_free(g_server);
         g_server = NULL;
         return 1;

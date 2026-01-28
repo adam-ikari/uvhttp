@@ -1,0 +1,15 @@
+{
+  "test_name": "medium_file",
+  "test_file": "/static/medium.html",
+  "timestamp": "20260123_142644",
+  "config": {
+    "threads": 4,
+    "connections": 100,
+    "duration": 30
+  },
+  "results": {
+    "rps": 11844.05,
+    "avg_latency": "8.52ms",
+    "p99_latency": "19.28ms"
+  }
+}

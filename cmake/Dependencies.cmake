@@ -2,6 +2,16 @@
 # 依赖库配置
 # ============================================================================
 
+# ============================================================================
+# 依赖管理配置
+# ============================================================================
+# 设计原则：
+# 1. 集中式管理：所有依赖都在此文件中配置
+# 2. 使用 IMPORTED targets：所有依赖库都声明为 IMPORTED targets
+# 3. 依赖分类：核心依赖、可选依赖、测试依赖
+# 4. 传递依赖：通过 CMake 的 target_link_libraries 自动处理
+# ============================================================================
+
 # 设置依赖包含目录
 set(DEPS_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
@@ -11,6 +21,7 @@ set(DEPS_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/uthash/src
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson
 )
 
 # ============================================================================
@@ -334,6 +345,53 @@ add_custom_target(gtest
 )
 
 # ============================================================================
+# cJSON
+# ============================================================================
+message(STATUS "Configuring cJSON...")
+
+set(CJSON_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson/build)
+set(CJSON_LIB ${CJSON_BUILD_DIR}/libcjson.a)
+
+if(NOT EXISTS ${CJSON_LIB})
+    message(STATUS "Building cJSON...")
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson -B ${CJSON_BUILD_DIR}
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DBUILD_SHARED_LIBS=OFF
+            -DENABLE_CJSON_TEST=OFF
+            -DENABLE_CJSON_UTILS=OFF
+            -DENABLE_FUZZING=OFF
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson
+        RESULT_VARIABLE CJSON_CONFIG_RESULT
+    )
+
+    if(CJSON_CONFIG_RESULT)
+        message(FATAL_ERROR "Failed to configure cJSON")
+    endif()
+
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} --build ${CJSON_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson
+        RESULT_VARIABLE CJSON_BUILD_RESULT
+    )
+
+    if(CJSON_BUILD_RESULT)
+        message(FATAL_ERROR "Failed to build cJSON")
+    endif()
+
+    message(STATUS "cJSON built successfully")
+else()
+    message(STATUS "cJSON already built: ${CJSON_LIB}")
+endif()
+
+# 声明 cJSON 为 IMPORTED 静态库
+add_library(cjson STATIC IMPORTED)
+set_target_properties(cjson PROPERTIES
+    IMPORTED_LOCATION ${CJSON_LIB}
+    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson
+)
+
+# ============================================================================
 # 打印依赖信息
 # ============================================================================
 message(STATUS "")
@@ -344,9 +402,51 @@ message(STATUS "libuv: ${LIBUV_LIB}")
 message(STATUS "mbedtls: ${MBEDTLS_LIBS}")
 message(STATUS "xxhash: ${XXHASH_LIB}")
 message(STATUS "llhttp: ${LLHTTP_LIB}")
+message(STATUS "cjson: ${CJSON_LIB}")
 if(BUILD_WITH_MIMALLOC)
     message(STATUS "mimalloc: ${MIMALLOC_LIB}")
 endif()
 message(STATUS "googletest: ${GTEST_LIBS}")
 message(STATUS "========================================")
+message(STATUS "")
+
+# ============================================================================
+# 依赖导出配置
+# ============================================================================
+# 为示例程序和测试提供便捷的依赖变量
+# ============================================================================
+
+# 核心依赖（uvhttp 库必需）
+set(UVHTTP_CORE_DEPS libuv mbedtls xxhash llhttp)
+
+# 可选依赖（示例程序可选使用）
+set(UVHTTP_OPTIONAL_DEPS cjson)
+
+# 测试依赖
+set(UVHTTP_TEST_DEPS gtest gmock)
+
+# 平台特定库
+if(IS_WINDOWS)
+    set(UVHTTP_PLATFORM_LIBS "")
+elseif(IS_MACOS)
+    set(UVHTTP_PLATFORM_LIBS pthread)
+else()
+    # Linux
+    set(UVHTTP_PLATFORM_LIBS pthread m dl)
+endif()
+
+# mimalloc（如果启用）
+if(BUILD_WITH_MIMALLOC)
+    list(APPEND UVHTTP_OPTIONAL_DEPS mimalloc)
+endif()
+
+# 导出给子项目使用
+set(UVHTTP_CORE_DEPS ${UVHTTP_CORE_DEPS} PARENT_SCOPE)
+set(UVHTTP_OPTIONAL_DEPS ${UVHTTP_OPTIONAL_DEPS} PARENT_SCOPE)
+set(UVHTTP_TEST_DEPS ${UVHTTP_TEST_DEPS} PARENT_SCOPE)
+set(UVHTTP_PLATFORM_LIBS ${UVHTTP_PLATFORM_LIBS} PARENT_SCOPE)
+
+message(STATUS "核心依赖: ${UVHTTP_CORE_DEPS}")
+message(STATUS "可选依赖: ${UVHTTP_OPTIONAL_DEPS}")
+message(STATUS "平台库: ${UVHTTP_PLATFORM_LIBS}")
 message(STATUS "")

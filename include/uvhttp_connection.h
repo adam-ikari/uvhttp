@@ -95,18 +95,26 @@ UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, current_header_field) >= 64,
                       "current_header_field should be after first 64 bytes");
 
 // 连接管理函数
-uvhttp_connection_t* uvhttp_connection_new(struct uvhttp_server* server);
+/**
+ * @brief 创建新的连接对象
+ * @param server 服务器对象
+ * @param conn 输出参数，用于接收连接指针
+ * @return UVHTTP_OK 成功，其他值表示失败
+ * @note 成功时，*conn 被设置为有效的连接对象，必须使用 uvhttp_connection_free 释放
+ * @note 失败时，*conn 被设置为 NULL
+ */
+uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server, uvhttp_connection_t** conn);
 void uvhttp_connection_free(uvhttp_connection_t* conn);
-int uvhttp_connection_start(uvhttp_connection_t* conn);
+uvhttp_error_t uvhttp_connection_start(uvhttp_connection_t* conn);
 void uvhttp_connection_close(uvhttp_connection_t* conn);
-int uvhttp_connection_restart_read(uvhttp_connection_t* conn);
-int uvhttp_connection_schedule_restart_read(uvhttp_connection_t* conn);
+uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn);
+uvhttp_error_t uvhttp_connection_schedule_restart_read(uvhttp_connection_t* conn);
 
 // TLS处理函数
-int uvhttp_connection_start_tls_handshake(uvhttp_connection_t* conn);
-int uvhttp_connection_tls_read(uvhttp_connection_t* conn);
-int uvhttp_connection_tls_write(uvhttp_connection_t* conn, const void* data, size_t len);
-int uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn);
+uvhttp_error_t uvhttp_connection_start_tls_handshake(uvhttp_connection_t* conn);
+uvhttp_error_t uvhttp_connection_tls_read(uvhttp_connection_t* conn);
+uvhttp_error_t uvhttp_connection_tls_write(uvhttp_connection_t* conn, const void* data, size_t len);
+uvhttp_error_t uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn);
 void uvhttp_connection_tls_cleanup(uvhttp_connection_t* conn);
 
 // 状态管理
@@ -115,7 +123,7 @@ const char* uvhttp_connection_get_state_string(uvhttp_connection_state_t state);
 
 // WebSocket处理函数（内部）
 #if UVHTTP_FEATURE_WEBSOCKET
-int uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, const char* ws_key);
+uvhttp_error_t uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, const char* ws_key);
 void uvhttp_connection_switch_to_websocket(uvhttp_connection_t* conn);
 void uvhttp_connection_websocket_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
 void uvhttp_connection_websocket_close(uvhttp_connection_t* conn);
@@ -147,7 +155,7 @@ ws_route_entry_t* uvhttp_server_find_ws_route_entry(struct uvhttp_server* server
  *       如果 config 为 NULL，则使用 UVHTTP_CONNECTION_TIMEOUT_DEFAULT
  * @note 此函数会停止并重启现有的定时器（如果有）
  */
-int uvhttp_connection_start_timeout(uvhttp_connection_t* conn);
+uvhttp_error_t uvhttp_connection_start_timeout(uvhttp_connection_t* conn);
 
 /**
  * @brief 启动连接超时定时器（自定义超时时间）
@@ -157,11 +165,11 @@ int uvhttp_connection_start_timeout(uvhttp_connection_t* conn);
  * 
  * @param conn 连接对象
  * @param timeout_seconds 超时时间（秒），范围：5-300
- * @return int 成功返回 UVHTTP_OK，失败返回负数错误码
+ * @return uvhttp_error_t 成功返回 UVHTTP_OK，失败返回负数错误码
  * 
  * @note 超时时间必须在 UVHTTP_CONNECTION_TIMEOUT_MIN 和 
  *       UVHTTP_CONNECTION_TIMEOUT_MAX 之间
  * @note 此函数会停止并重启现有的定时器（如果有）
  * @note 如果超时时间过大导致整数溢出，返回 UVHTTP_ERROR_INVALID_PARAM
  */
-int uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn, int timeout_seconds);
+uvhttp_error_t uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn, int timeout_seconds);

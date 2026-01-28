@@ -15,7 +15,7 @@
 #include <stdio.h>
 
 #if UVHTTP_FEATURE_WEBSOCKET
-#include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket.h"
 #endif
 
 // WebSocket握手检测函数
@@ -362,22 +362,6 @@ static int on_message_complete(llhttp_t* parser) {
         return 0;
     }
     
-    #if UVHTTP_FEATURE_MIDDLEWARE
-    /* 执行中间件链 - 零开销设计 */
-    if (conn->server && conn->server->middleware_chain) {
-        int middleware_result = uvhttp_http_middleware_execute(
-            conn->server->middleware_chain,
-            conn->request,
-            conn->response
-        );
-        
-        /* 如果中间件返回非零，停止执行（中间件已处理响应） */
-        if (middleware_result != 0) {
-            return 0;
-        }
-    }
-#endif
-    
     /* 单线程请求处理 - 无需锁机制 */
     if (conn->server && conn->server->router) {
         // 额外检查request->url是否有效
@@ -691,12 +675,12 @@ uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request, size_t 
 }
 
 /* 添加 header（内部使用，自动扩容） */
-int uvhttp_request_add_header(uvhttp_request_t* request,
+uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request,
                                const char* name, 
                                const char* value) {
     
     if (!request || !name || !value) {
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }    
     /* 检查是否需要扩容 */
     
@@ -714,7 +698,7 @@ int uvhttp_request_add_header(uvhttp_request_t* request,
         
         /* 如果新容量等于当前容量，说明已达到最大值 */
         if (new_capacity == request->headers_capacity) {
-            return -1;  /* 已满 */
+            return UVHTTP_ERROR_BUFFER_TOO_SMALL;  /* 已满 */
         }
         
         /* 分配或重新分配动态数组 */
@@ -724,7 +708,7 @@ int uvhttp_request_add_header(uvhttp_request_t* request,
         uvhttp_header_t* new_extra = uvhttp_realloc(request->headers_extra, 
                                                      extra_count * sizeof(uvhttp_header_t));
         if (!new_extra) {
-            return -1;  /* 内存分配失败 */
+            return UVHTTP_ERROR_OUT_OF_MEMORY;  /* 内存分配失败 */
         }
         
         /* 如果是首次分配，清零新分配的内存 */
@@ -739,7 +723,7 @@ int uvhttp_request_add_header(uvhttp_request_t* request,
     /* 获取 header 指针 */
     uvhttp_header_t* header = uvhttp_request_get_header_at(request, request->header_count);
     if (!header) {
-        return -1;
+        return UVHTTP_ERROR_IO_ERROR;
     }
     
     /* 复制 header 名称 */
@@ -761,7 +745,7 @@ int uvhttp_request_add_header(uvhttp_request_t* request,
     /* 增加计数 */
     request->header_count++;
     
-    return 0;
+    return UVHTTP_OK;
 }
 
 /* 遍历所有 headers */

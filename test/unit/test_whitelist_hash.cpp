@@ -21,7 +21,9 @@ TEST(UvhttpWhitelistHashTest, HashTableInitialization) {
     ASSERT_TRUE(loop.is_valid());
     
     // 创建服务器
-    uvhttp_server_t* server = uvhttp_server_new(loop.get());
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop.get(), &server);
+    ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(server, nullptr);
     
     // 验证哈希表初始化
@@ -37,11 +39,13 @@ TEST(UvhttpWhitelistHashTest, AddWhitelistIP) {
     ASSERT_TRUE(loop.is_valid());
     
     // 创建服务器
-    uvhttp_server_t* server = uvhttp_server_new(loop.get());
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop.get(), &server);
+    ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(server, nullptr);
     
     // 启用限流
-    uvhttp_error_t result = uvhttp_server_enable_rate_limit(server, 100, 60);
+    result = uvhttp_server_enable_rate_limit(server, 100, 60);
     EXPECT_EQ(result, UVHTTP_OK);
     
     // 添加白名单IP
@@ -70,11 +74,12 @@ TEST(UvhttpWhitelistHashTest, DuplicateAddition) {
     ASSERT_TRUE(loop.is_valid());
     
     // 创建服务器
-    uvhttp_server_t* server = uvhttp_server_new(loop.get());
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop.get(), &server);
     ASSERT_NE(server, nullptr);
     
     // 启用限流
-    uvhttp_error_t result = uvhttp_server_enable_rate_limit(server, 100, 60);
+    result = uvhttp_server_enable_rate_limit(server, 100, 60);
     EXPECT_EQ(result, UVHTTP_OK);
     
     // 添加IP
@@ -97,11 +102,12 @@ TEST(UvhttpWhitelistHashTest, HashTableLookup) {
     ASSERT_TRUE(loop.is_valid());
     
     // 创建服务器
-    uvhttp_server_t* server = uvhttp_server_new(loop.get());
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop.get(), &server);
     ASSERT_NE(server, nullptr);
     
     // 启用限流
-    uvhttp_error_t result = uvhttp_server_enable_rate_limit(server, 100, 60);
+    result = uvhttp_server_enable_rate_limit(server, 100, 60);
     EXPECT_EQ(result, UVHTTP_OK);
     
     // 添加IP
@@ -130,7 +136,8 @@ TEST(UvhttpWhitelistHashTest, NullParameterHandling) {
     ASSERT_TRUE(loop.is_valid());
     
     // 创建服务器
-    uvhttp_server_t* server = uvhttp_server_new(loop.get());
+    uvhttp_server_t* server = NULL;
+    result = uvhttp_server_new(loop.get(), &server);
     ASSERT_NE(server, nullptr);
     
     // 测试NULL IP参数
@@ -146,11 +153,12 @@ TEST(UvhttpWhitelistHashTest, MemoryCleanup) {
     ASSERT_TRUE(loop.is_valid());
     
     // 创建服务器
-    uvhttp_server_t* server = uvhttp_server_new(loop.get());
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop.get(), &server);
     ASSERT_NE(server, nullptr);
     
     // 启用限流
-    uvhttp_error_t result = uvhttp_server_enable_rate_limit(server, 100, 60);
+    result = uvhttp_server_enable_rate_limit(server, 100, 60);
     EXPECT_EQ(result, UVHTTP_OK);
     
     // 添加多个IP

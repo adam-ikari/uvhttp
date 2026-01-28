@@ -1,0 +1,83 @@
+==========================================
+UVHTTP 性能测试报告
+==========================================
+
+测试时间: Sat 24 Jan 2026 12:52:43 AM CST
+测试配置: 4 线程, 100 连接, 30 秒
+
+==========================================
+测试结果
+==========================================
+
+## 主页 (HTML)
+
+{
+  "test_name": "homepage",
+  "test_file": "/",
+  "timestamp": "20260124_005035",
+  "config": {
+    "threads": 4,
+    "connections": 100,
+    "duration": 30
+  },
+  "results": {
+    "qps": 14109.45,
+    "avg_latency": "7.30ms",
+    "p99_latency": "17.86ms"
+  }
+}
+
+## 小文件 (12B)
+
+{
+  "test_name": "small_file",
+  "test_file": "/static/index.html",
+  "timestamp": "20260124_005035",
+  "config": {
+    "threads": 4,
+    "connections": 100,
+    "duration": 30
+  },
+  "results": {
+    "qps": 9269.50,
+    "avg_latency": "11.00ms",
+    "p99_latency": "26.39ms"
+  }
+}
+
+## 中等文件 (10KB)
+
+{
+  "test_name": "medium_file",
+  "test_file": "/static/medium.html",
+  "timestamp": "20260124_005035",
+  "config": {
+    "threads": 4,
+    "connections": 100,
+    "duration": 30
+  },
+  "results": {
+    "qps": 10190.10,
+    "avg_latency": "10.11ms",
+    "p99_latency": "24.85ms"
+  }
+}
+
+## 大文件 (100KB)
+
+{
+  "test_name": "large_file",
+  "test_file": "/static/large.html",
+  "timestamp": "20260124_005035",
+  "config": {
+    "threads": 4,
+    "connections": 100,
+    "duration": 30
+  },
+  "results": {
+    "qps": 5727.58,
+    "avg_latency": "17.72ms",
+    "p99_latency": "41.05ms"
+  }
+}
+

@@ -166,46 +166,53 @@ static int parse_path_params(const char* path, uvhttp_param_t* params, size_t* p
     return 0;
 }
 
-uvhttp_router_t* uvhttp_router_new(void) {
-    uvhttp_router_t* router = uvhttp_alloc(sizeof(uvhttp_router_t));
-    
+uvhttp_error_t uvhttp_router_new(uvhttp_router_t** router) {
     if (!router) {
-        return NULL;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    memset(router, 0, sizeof(uvhttp_router_t));
+    *router = NULL;
+    
+    uvhttp_router_t* r = uvhttp_alloc(sizeof(uvhttp_router_t));
+    
+    if (!r) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    
+    memset(r, 0, sizeof(uvhttp_router_t));
     
     // 初始化数组路由
-    router->array_routes = uvhttp_calloc(HYBRID_THRESHOLD, sizeof(array_route_t));
+    r->array_routes = uvhttp_calloc(HYBRID_THRESHOLD, sizeof(array_route_t));
     
-    if (!router->array_routes) {
-        uvhttp_free(router);
-        return NULL;
+    if (!r->array_routes) {
+        uvhttp_free(r);
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
-    router->array_capacity = HYBRID_THRESHOLD;
+    r->array_capacity = HYBRID_THRESHOLD;
     
     // 初始化节点池（用于Trie）
-    router->node_pool_size = 64;
-    router->node_pool = uvhttp_calloc(router->node_pool_size, sizeof(uvhttp_route_node_t));
+    r->node_pool_size = 64;
+    r->node_pool = uvhttp_calloc(r->node_pool_size, sizeof(uvhttp_route_node_t));
     
-    if (!router->node_pool) {
-        uvhttp_free(router->array_routes);
-        uvhttp_free(router);
-        return NULL;
+    if (!r->node_pool) {
+        uvhttp_free(r->array_routes);
+        uvhttp_free(r);
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
-    router->root = create_route_node(router);
+    r->root = create_route_node(r);
     
-    if (!router->root) {
-        uvhttp_free(router->node_pool);
-        uvhttp_free(router->array_routes);
-        uvhttp_free(router);
-        return NULL;
+    if (!r->root) {
+        uvhttp_free(r->node_pool);
+        uvhttp_free(r->array_routes);
+        uvhttp_free(r);
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
-    router->use_trie = 0;  /* 默认使用数组路由 */
+    r->use_trie = 0;  /* 默认使用数组路由 */
     
-    return router;
+    *router = r;
+    return UVHTTP_OK;
 }
 
 void uvhttp_router_free(uvhttp_router_t* router) {

@@ -44,8 +44,8 @@ int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
         return -1;
     }
     
-    int result = uvhttp_static_handle_request(g_static_ctx, request, response);
-    if (result != 0) {
+    int static_result = uvhttp_static_handle_request(g_static_ctx, request, response);
+    if (static_result != 0) {
         // 错误处理：设置错误响应
         const char* error_body = "Error processing static file request";
         uvhttp_response_set_status(response, 500);
@@ -121,7 +121,12 @@ int main() {
     create_test_files();
     
     // 创建配置
-    uvhttp_config_t* config = uvhttp_config_new();
+    uvhttp_config_t* config = NULL;
+    uvhttp_error_t result = uvhttp_config_new(&config);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create configuration: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
     if (!config) {
         return 1;
     }
@@ -149,7 +154,11 @@ int main() {
     }
     
     // 创建服务器
-    g_server = uvhttp_server_new(g_loop);
+    uvhttp_error_t server_result = uvhttp_server_new(g_loop, &g_server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
     if (!g_server) {
         uvhttp_config_free(config);
         return 1;
@@ -159,8 +168,8 @@ int main() {
     g_server->config = config;
 
     // 创建上下文
-    g_context = uvhttp_context_create(g_loop);
-    if (!g_context) {
+    uvhttp_error_t result_g_context = uvhttp_context_create(g_loop, &g_context);
+    if (result_g_context != UVHTTP_OK) {
         printf("错误：无法创建上下文\n");
         uvhttp_server_free(g_server);
         uvhttp_config_free(config);
@@ -182,8 +191,8 @@ int main() {
     };
     
     // 创建静态文件服务上下文
-    g_static_ctx = uvhttp_static_create(&static_config);
-    if (!g_static_ctx) {
+    uvhttp_error_t static_result = uvhttp_static_create(&static_config, &g_static_ctx);
+    if (static_result != UVHTTP_OK || !g_static_ctx) {
         printf("错误：无法创建静态文件服务上下文\n");
         uvhttp_server_free(g_server);
         g_server = NULL;
@@ -192,8 +201,9 @@ int main() {
     }
     
     // 创建路由器
-    g_router = uvhttp_router_new();
-    if (!g_router) {
+    uvhttp_error_t router_result = uvhttp_router_new(&g_router);
+    if (router_result != UVHTTP_OK) {
+        printf("错误：无法创建路由器: %s\n", uvhttp_error_string(router_result));
         uvhttp_static_free(g_static_ctx);
         g_static_ctx = NULL;
         uvhttp_server_free(g_server);
@@ -212,9 +222,9 @@ int main() {
     g_server->router = g_router;
     
     // 启动服务器
-    uvhttp_error_t result = uvhttp_server_listen(g_server, UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
-    if (result != UVHTTP_OK) {
-        printf("错误：无法启动服务器 (错误码: %d)\n", result);
+    uvhttp_error_t listen_result = uvhttp_server_listen(g_server, UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
+    if (listen_result != UVHTTP_OK) {
+        printf("错误：无法启动服务器 (错误码: %d)\n", listen_result);
         uvhttp_static_free(g_static_ctx);
         g_static_ctx = NULL;
         uvhttp_server_free(g_server);

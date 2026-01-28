@@ -9,12 +9,6 @@ target_link_libraries(static_file_server PRIVATE ${UVHTTP_LIB} libuv mbedtls xxh
 target_include_directories(static_file_server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src)
 add_dependencies(static_file_server uvhttp)
 
-# 静态文件中间件演示
-add_executable(static_middleware_demo static_middleware_demo.c)
-target_link_libraries(static_middleware_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
-target_include_directories(static_middleware_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src)
-add_dependencies(static_middleware_demo uvhttp)
-
 # 简单静态文件测试
 add_executable(simple_static_test simple_static_test.c)
 target_link_libraries(simple_static_test PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)

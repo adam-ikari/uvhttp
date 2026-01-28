@@ -60,12 +60,12 @@ typedef struct uvhttp_mime_mapping {
 
 /**
  * 创建静态文件服务上下文
- * 
+ *
  * @param config 静态文件配置
- * @return 静态文件服务上下文，失败返回NULL
+ * @param context 输出参数，返回创建的上下文
+ * @return UVHTTP_OK 成功，其他值表示错误
  */
-uvhttp_static_context_t* uvhttp_static_create(const uvhttp_static_config_t* config);
-
+uvhttp_error_t uvhttp_static_create(const uvhttp_static_config_t* config, uvhttp_static_context_t** context);
 /**
  * 设置 sendfile 配置参数
  * 
@@ -267,41 +267,6 @@ uvhttp_result_t uvhttp_static_enable_cache(uvhttp_static_context_t* ctx,
 void uvhttp_static_disable_cache(uvhttp_static_context_t* ctx);
 
 /* ========== 静态文件中间件接口 ========== */
-
-#if UVHTTP_FEATURE_MIDDLEWARE
-/**
- * 创建静态文件中间件
- *
- * @param path 路径模式（如 "/static", "/assets"）
- * @param root_dir 根目录路径
- * @param priority 中间件优先级
- * @return 中间件对象，失败返回NULL
- *
- * 零开销设计：
- * - 使用中间件系统框架
- * - 复用静态文件服务核心功能
- * - 支持路径匹配和优先级
- */
-uvhttp_http_middleware_t* uvhttp_static_middleware_create(
-    const char* path,
-    const char* root_dir,
-    uvhttp_middleware_priority_t priority
-);
-
-/**
- * 创建带配置的静态文件中间件
- *
- * @param path 路径模式
- * @param config 静态文件配置
- * @param priority 中间件优先级
- * @return 中间件对象，失败返回NULL
- */
-uvhttp_http_middleware_t* uvhttp_static_middleware_create_with_config(
-    const char* path,
-    const uvhttp_static_config_t* config,
-    uvhttp_middleware_priority_t priority
-);
-#endif
 
 #ifdef __cplusplus
 }

@@ -107,43 +107,50 @@ void uvhttp_tls_cleanup(uvhttp_context_t* context) {
 }
 
 // TLS上下文管理
-uvhttp_tls_context_t* uvhttp_tls_context_new(void) {
-    uvhttp_tls_context_t* ctx = uvhttp_calloc(1, sizeof(uvhttp_tls_context_t));
+uvhttp_error_t uvhttp_tls_context_new(uvhttp_tls_context_t** ctx) {
     if (!ctx) {
-        return NULL;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    mbedtls_ssl_config_init(&ctx->conf);
-    mbedtls_x509_crt_init(&ctx->srvcert);
-    mbedtls_pk_init(&ctx->pkey);
-    mbedtls_x509_crt_init(&ctx->cacert);
-    mbedtls_ssl_cache_init(&ctx->cache);
+    *ctx = NULL;
     
-    mbedtls_entropy_init(&ctx->entropy);
-    mbedtls_ctr_drbg_init(&ctx->ctr_drbg);
+    uvhttp_tls_context_t* c = uvhttp_calloc(1, sizeof(uvhttp_tls_context_t));
+    if (!c) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
     
-    int ret = mbedtls_ctr_drbg_seed(&ctx->ctr_drbg, mbedtls_entropy_func, &ctx->entropy,
+    mbedtls_ssl_config_init(&c->conf);
+    mbedtls_x509_crt_init(&c->srvcert);
+    mbedtls_pk_init(&c->pkey);
+    mbedtls_x509_crt_init(&c->cacert);
+    mbedtls_ssl_cache_init(&c->cache);
+    
+    mbedtls_entropy_init(&c->entropy);
+    mbedtls_ctr_drbg_init(&c->ctr_drbg);
+    
+    int ret = mbedtls_ctr_drbg_seed(&c->ctr_drbg, mbedtls_entropy_func, &c->entropy,
                                      NULL, 0);
     if (ret != 0) {
-        uvhttp_tls_context_free(ctx);
-        return NULL;
+        uvhttp_tls_context_free(c);
+        return UVHTTP_ERROR_TLS_INIT;
     }
     
-    ret = mbedtls_ssl_config_defaults(&ctx->conf, MBEDTLS_SSL_IS_SERVER,
+    ret = mbedtls_ssl_config_defaults(&c->conf, MBEDTLS_SSL_IS_SERVER,
                                       MBEDTLS_SSL_TRANSPORT_STREAM,
                                       MBEDTLS_SSL_PRESET_DEFAULT);
     if (ret != 0) {
-        uvhttp_tls_context_free(ctx);
-        return NULL;
+        uvhttp_tls_context_free(c);
+        return UVHTTP_ERROR_TLS_CONTEXT;
     }
     
-    mbedtls_ssl_conf_rng(&ctx->conf, mbedtls_ctr_drbg_random, &ctx->ctr_drbg);
-    // mbedtls_ssl_conf_session_cache(&ctx->conf, &ctx->cache, mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);  // 暂时禁用
+    mbedtls_ssl_conf_rng(&c->conf, mbedtls_ctr_drbg_random, &c->ctr_drbg);
+    // mbedtls_ssl_conf_session_cache(&c->conf, &c->cache, mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);  // 暂时禁用
     
-    ctx->is_server = 1;
-    ctx->initialized = 1;
+    c->is_server = 1;
+    c->initialized = 1;
     
-    return ctx;
+    *ctx = c;
+    return UVHTTP_OK;
 }
 
 void uvhttp_tls_context_free(uvhttp_tls_context_t* ctx) {

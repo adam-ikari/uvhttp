@@ -18,14 +18,11 @@ struct whitelist_item {
 };
 #include "uvhttp_features.h"
 
-#if UVHTTP_FEATURE_MIDDLEWARE
-#include "uvhttp_middleware.h"
-#endif
-
 // Forward declarations
 typedef struct uvhttp_request uvhttp_request_t;
 typedef struct uvhttp_response uvhttp_response_t;
 typedef struct uvhttp_router uvhttp_router_t;
+typedef struct uvhttp_connection uvhttp_connection_t;
 
 #if UVHTTP_FEATURE_TLS
 typedef struct uvhttp_tls_context uvhttp_tls_context_t;
@@ -65,11 +62,6 @@ extern "C" {
 #define MAX_CONNECTIONS 1000
 
 typedef struct uvhttp_server uvhttp_server_t;
-
-
-
-/* 前向声明 */
-typedef struct uvhttp_http_middleware uvhttp_http_middleware_t;
 
 // 服务器构建器结构体（统一API）
 typedef struct {
@@ -119,11 +111,6 @@ struct uvhttp_server {
     int tls_enabled;                            /* 4 字节 */
 #endif
     
-    /* 中间件链 */
-#if UVHTTP_FEATURE_MIDDLEWARE
-    uvhttp_http_middleware_t* middleware_chain; /* 8 字节 */
-#endif
-    
     /* WebSocket相关 */
 #if UVHTTP_FEATURE_WEBSOCKET
     void* ws_routes;                           /* 8 字节 - 已废弃 */
@@ -166,7 +153,15 @@ UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, max_connections) % 8 == 0,
                       "max_connections not 8-byte aligned");
 
 /* API函数 */
-uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop);  /* loop可为NULL，内部创建新循环 */
+/**
+ * @brief 创建新的 HTTP 服务器
+ * @param loop 事件循环，可为 NULL（内部创建新循环）
+ * @param server 输出参数，用于接收服务器指针
+ * @return UVHTTP_OK 成功，其他值表示失败
+ * @note 成功时，*server 被设置为有效的服务器对象，必须使用 uvhttp_server_free 释放
+ * @note 失败时，*server 被设置为 NULL
+ */
+uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server);
 uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, int port);
 uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server);
 #if UVHTTP_FEATURE_TLS
@@ -177,13 +172,6 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server, uvhttp_request_handler_t handler);
 uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server, uvhttp_router_t* router);
 uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server, struct uvhttp_context* context);
-
-#if UVHTTP_FEATURE_MIDDLEWARE
-// ========== 中间件 API ==========
-uvhttp_error_t uvhttp_server_add_middleware(uvhttp_server_t* server, uvhttp_http_middleware_t* middleware);
-uvhttp_error_t uvhttp_server_remove_middleware(uvhttp_server_t* server, const char* path);
-void uvhttp_server_cleanup_middleware(uvhttp_server_t* server);
-#endif
 
 #if UVHTTP_FEATURE_RATE_LIMIT
 // ========== 限流 API（核心功能） ==========
@@ -285,7 +273,15 @@ uvhttp_error_t uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server);
 // ========== 统一API函数 ==========
 
 // 快速创建和启动服务器
-uvhttp_server_builder_t* uvhttp_server_create(const char* host, int port);
+/**
+ * 创建并启动简单服务器（链式API）
+ *
+ * @param host 监听地址
+ * @param port 监听端口
+ * @param server 输出参数，返回创建的服务器构建器
+ * @return UVHTTP_OK 成功，其他值表示错误
+ */
+uvhttp_error_t uvhttp_server_create(const char* host, int port, uvhttp_server_builder_t** server);
 
 // 链式路由API
 uvhttp_server_builder_t* uvhttp_get(uvhttp_server_builder_t* server, const char* path, uvhttp_request_handler_t handler);
@@ -314,7 +310,7 @@ int uvhttp_serve(const char* host, int port);
 
 // WebSocket API
 #if UVHTTP_FEATURE_WEBSOCKET
-#include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket.h"
 
 typedef struct {
     int (*on_connect)(uvhttp_ws_connection_t* ws_conn);

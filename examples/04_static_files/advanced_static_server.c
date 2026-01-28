@@ -164,7 +164,11 @@ int main() {
     }
     
     /* 创建 HTTP 服务器 */
-    server = uvhttp_server_new(loop);
+    uvhttp_error_t server_result = uvhttp_server_new(loop, &server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
     if (!server) {
         fprintf(stderr, "❌ 无法创建 HTTP 服务器\n");
         return 1;
@@ -181,8 +185,8 @@ int main() {
     static_config.cache_ttl = 3600; /* 1小时缓存 */
     
     /* 创建静态文件服务上下文 */
-    static_ctx = uvhttp_static_create(&static_config);
-    if (!static_ctx) {
+    uvhttp_error_t result = uvhttp_static_create(&static_config, &static_ctx);
+    if (result != UVHTTP_OK || !static_ctx) {
         fprintf(stderr, "❌ 无法创建静态文件服务上下文\n");
         uvhttp_server_free(server);
         return 1;
@@ -194,7 +198,12 @@ int main() {
     }
     
     /* 创建路由 */
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t router_result = uvhttp_router_new(&router);
+    if (router_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(router_result));
+        return 1;
+    }
     
     /* 添加路由 */
     uvhttp_router_add_route(router, "/", home_handler);

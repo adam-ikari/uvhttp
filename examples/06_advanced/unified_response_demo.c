@@ -108,7 +108,10 @@ uvhttp_result_t demo_json_handler(uvhttp_request_t* req, uvhttp_response_t* res)
         "}";
     
     char json_buffer[512];
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
     snprintf(json_buffer, sizeof(json_buffer), json_demo, time(NULL));
+#pragma GCC diagnostic pop
     
     // 设置 Content-Type 为 JSON
     uvhttp_response_set_header(res, "Content-Type", "application/json");
@@ -145,7 +148,10 @@ uvhttp_result_t demo_text_handler(uvhttp_request_t* req, uvhttp_response_t* res)
         "时间戳: %ld";
     
     char text_demo[256];
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
     snprintf(text_demo, sizeof(text_demo), text_demo_template, time(NULL));
+#pragma GCC diagnostic pop
     
     // 设置 Content-Type 为文本
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
@@ -228,14 +234,23 @@ int main() {
     
     // 创建服务器
     uv_loop_t* loop = uv_default_loop();
-    g_server = uvhttp_server_new(loop);
+    uvhttp_error_t server_result = uvhttp_server_new(loop, &g_server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
     if (!g_server) {
         fprintf(stderr, "❌ 服务器创建失败\n");
         return 1;
     }
     
     // 创建路由
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
     
     // 注册路由处理器
     uvhttp_router_add_route(router, "/", home_handler);
@@ -250,7 +265,8 @@ int main() {
     g_server->router = router;
     
     // 启动服务器
-    int result = uvhttp_server_listen(g_server, "0.0.0.0", 8081);
+    int listen_result = uvhttp_server_listen(g_server, "0.0.0.0", 8081);
+    (void)listen_result;
     if (result != 0) {
         fprintf(stderr, "❌ 服务器启动失败 (错误码: %d)\n", result);
         uvhttp_server_free(g_server);

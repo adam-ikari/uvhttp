@@ -45,7 +45,7 @@ int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
 /**
  * 主页处理器
  */
-void home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     const char* html_content = 
         "<!DOCTYPE html>\n"
         "<html>\n"
@@ -92,6 +92,7 @@ void home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     uvhttp_response_set_header(response, "Content-Type", "text/html; charset=utf-8");
     uvhttp_response_set_body(response, html_content, strlen(html_content));
     uvhttp_response_send(response);
+    return 0;
 }
 
 /**
@@ -163,8 +164,8 @@ void create_test_files() {
     }
     
     /* 创建图片目录 */
-    system("mkdir -p ./public/images");
-    system("mkdir -p ./public/docs");
+    (void)system("mkdir -p ./public/images");
+    (void)system("mkdir -p ./public/docs");
     
     printf("测试文件已创建在 ./public/ 目录下\n");
 }
@@ -188,8 +189,8 @@ int main() {
     };
     
     /* 创建静态文件服务上下文 */
-    g_static_ctx = uvhttp_static_create(&static_config);
-    if (!g_static_ctx) {
+    uvhttp_error_t result = uvhttp_static_create(&static_config, &g_static_ctx);
+    if (result != UVHTTP_OK || !g_static_ctx) {
         printf("错误：无法创建静态文件服务上下文\n");
         return 1;
     }
@@ -198,7 +199,12 @@ int main() {
     uv_loop_t* loop = uv_default_loop();
     
     /* 创建HTTP服务器 */
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t server_result = uvhttp_server_new(loop, &server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
     if (!server) {
         printf("错误：无法创建HTTP服务器\n");
         uvhttp_static_free(g_static_ctx);
@@ -206,7 +212,12 @@ int main() {
     }
     
     /* 创建路由 */
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t router_result = uvhttp_router_new(&router);
+    if (router_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(router_result));
+        return 1;
+    }
     
     /* 添加路由 */
     uvhttp_router_add_route(router, "/", home_handler);
@@ -217,9 +228,10 @@ int main() {
     server->router = router;
     
     /* 启动服务器 */
-    int result = uvhttp_server_listen(server, "0.0.0.0", 8080);
-    if (result != 0) {
-        printf("错误：无法启动服务器 (错误码: %d)\n", result);
+    int listen_result = uvhttp_server_listen(server, "0.0.0.0", 8080);
+    (void)listen_result;
+    if (listen_result != 0) {
+        printf("错误：无法启动服务器 (错误码: %d)\n", listen_result);
         uvhttp_static_free(g_static_ctx);
         uvhttp_server_free(server);
         return 1;

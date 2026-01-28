@@ -6,7 +6,9 @@
 
 /* 测试TLS初始化 */
 TEST(UvhttpTlsNullCoverageTest, TlsInit) {
-    uvhttp_context_t* context = uvhttp_context_create(uv_default_loop());
+    uvhttp_context_t* context = NULL;
+    uvhttp_error_t result = uvhttp_context_create(uv_default_loop(), &context);
+    ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(context, nullptr);
 
     uvhttp_tls_error_t err = uvhttp_tls_init(context);
@@ -17,9 +19,10 @@ TEST(UvhttpTlsNullCoverageTest, TlsInit) {
 
 /* 测试TLS上下文创建 */
 TEST(UvhttpTlsNullCoverageTest, TlsContextNew) {
-    uvhttp_tls_context_t* ctx = uvhttp_tls_context_new();
+    uvhttp_tls_context_t* ctx = NULL;
+    uvhttp_error_t result = uvhttp_tls_context_new(&ctx);
     /* 即使没有初始化，也可能返回NULL或创建失败 */
-    if (ctx) {
+    if (result == UVHTTP_OK && ctx) {
         uvhttp_tls_context_free(ctx);
     }
 }

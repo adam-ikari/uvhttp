@@ -1,7 +1,7 @@
 /**
  * @file uvhttp_error_handler.h
  * @brief 统一错误处理框架
- * 
+ *
  * 提供统一的错误处理、日志记录和恢复机制
  */
 
@@ -9,13 +9,17 @@
 #define UVHTTP_ERROR_HANDLER_H
 
 #include "uvhttp_error.h"
+#if UVHTTP_FEATURE_LOGGING
+#include "uvhttp_logging.h"
+#endif
 #include <time.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* 错误处理级别 */
+#if !UVHTTP_FEATURE_LOGGING
+/* 前向声明日志级别类型（当日志功能禁用时） */
 typedef enum {
     UVHTTP_LOG_LEVEL_DEBUG = 0,
     UVHTTP_LOG_LEVEL_INFO,
@@ -23,6 +27,7 @@ typedef enum {
     UVHTTP_LOG_LEVEL_ERROR,
     UVHTTP_LOG_LEVEL_FATAL
 } uvhttp_log_level_t;
+#endif
 
 /* 错误上下文 */
 typedef struct {
@@ -74,25 +79,6 @@ void uvhttp_error_report_(uvhttp_error_t error_code,
 
 /* 错误恢复函数 */
 uvhttp_error_t uvhttp_error_attempt_recovery(const uvhttp_error_context_t* context);
-
-/* 日志函数 - 开发环境日志接口 */
-/* 应用层可以自定义日志实现来记录错误信息 */
-void uvhttp_log(uvhttp_log_level_t level, const char* format, ...);
-
-/* 日志宏 - 生产环境为空操作，开发环境可启用 */
-#ifdef UVHTTP_DEV_MODE
-#define UVHTTP_LOG_DEBUG(fmt, ...) uvhttp_log(UVHTTP_LOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__)
-#define UVHTTP_LOG_INFO(fmt, ...)  uvhttp_log(UVHTTP_LOG_LEVEL_INFO, fmt, ##__VA_ARGS__)
-#define UVHTTP_LOG_WARN(fmt, ...)  uvhttp_log(UVHTTP_LOG_LEVEL_WARN, fmt, ##__VA_ARGS__)
-#define UVHTTP_LOG_ERROR(fmt, ...) uvhttp_log(UVHTTP_LOG_LEVEL_ERROR, fmt, ##__VA_ARGS__)
-#define UVHTTP_LOG_FATAL(fmt, ...) uvhttp_log(UVHTTP_LOG_LEVEL_FATAL, fmt, ##__VA_ARGS__)
-#else
-#define UVHTTP_LOG_DEBUG(fmt, ...) ((void)0)
-#define UVHTTP_LOG_INFO(fmt, ...)  ((void)0)
-#define UVHTTP_LOG_WARN(fmt, ...)  ((void)0)
-#define UVHTTP_LOG_ERROR(fmt, ...) ((void)0)
-#define UVHTTP_LOG_FATAL(fmt, ...) ((void)0)
-#endif
 
 #ifdef __cplusplus
 }

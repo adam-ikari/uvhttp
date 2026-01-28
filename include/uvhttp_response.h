@@ -103,19 +103,6 @@ uvhttp_error_t uvhttp_response_send_raw(const char* data,
 /* 响应发送函数 */
 uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
 
-/* ============ 测试专用函数 ============ */
-#ifdef UVHTTP_TEST_MODE
-
-/* 测试用纯函数：验证响应数据构建 */
-uvhttp_error_t uvhttp_response_build_for_test(uvhttp_response_t* response, 
-                                             char** out_data, 
-                                             size_t* out_length);
-
-/* 测试用函数：模拟发送但不实际网络I/O */
-uvhttp_error_t uvhttp_response_send_mock(uvhttp_response_t* response);
-
-#endif /* UVHTTP_TEST_MODE */
-
 /* ============ 原有函数 ============ */
 void uvhttp_response_cleanup(uvhttp_response_t* response);
 void uvhttp_response_free(uvhttp_response_t* response);

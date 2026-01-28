@@ -17,28 +17,35 @@
 /**
  * 创建LRU缓存管理器
  */
-cache_manager_t* uvhttp_lru_cache_create(size_t max_memory_usage, 
-                                         int max_entries, 
-                                         int cache_ttl) {
-    UVHTTP_LOG_DEBUG("Creating LRU cache: max_memory=%zu, max_entries=%d, ttl=%d", 
+uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage,
+                                       int max_entries,
+                                       int cache_ttl,
+                                       cache_manager_t** cache) {
+    UVHTTP_LOG_DEBUG("Creating LRU cache: max_memory=%zu, max_entries=%d, ttl=%d",
                      max_memory_usage, max_entries, cache_ttl);
-    
-    cache_manager_t* cache = uvhttp_alloc(sizeof(cache_manager_t));
+
     if (!cache) {
+        UVHTTP_LOG_ERROR("Failed to create LRU cache: invalid output parameter");
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    cache_manager_t* cache_ptr = uvhttp_alloc(sizeof(cache_manager_t));
+    if (!cache_ptr) {
         UVHTTP_LOG_ERROR("Failed to create LRU cache: memory allocation error");
         uvhttp_handle_memory_failure("cache_manager", NULL, NULL);
-        return NULL;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
-    
-    memset(cache, 0, sizeof(cache_manager_t));
-    cache->max_memory_usage = max_memory_usage;
-    cache->max_entries = max_entries;
-    cache->cache_ttl = cache_ttl;
-    
+
+    memset(cache_ptr, 0, sizeof(cache_manager_t));
+    cache_ptr->max_memory_usage = max_memory_usage;
+    cache_ptr->max_entries = max_entries;
+    cache_ptr->cache_ttl = cache_ttl;
+
     /* 单线程版本：不需要初始化锁 */
-    
+
     UVHTTP_LOG_INFO("LRU cache created successfully");
-    return cache;
+    *cache = cache_ptr;
+    return UVHTTP_OK;
 }
 
 /**
