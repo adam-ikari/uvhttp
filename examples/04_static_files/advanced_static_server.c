@@ -7,31 +7,32 @@
 #include <signal.h>
 #include <unistd.h>
 
-/* 应用上下文 */
+/* 应用上下文 - 使用 server->user_data 传递 */
 typedef struct {
     uvhttp_server_t* server;
     uvhttp_static_context_t* static_ctx;
     volatile sig_atomic_t keep_running;
 } app_context_t;
 
+/* 全局应用上下文 - 仅在 main 函数中设置和使用 */
+static app_context_t* g_app_context = NULL;
+
 /* 信号处理函数 */
 void signal_handler(int signal) {
     printf("\n收到信号 %d，正在关闭服务器...\n", signal);
-    uv_loop_t* loop = uv_default_loop();
-    if (loop && loop->data) {
-        app_context_t* ctx = (app_context_t*)loop->data;
-        if (ctx) {
-            ctx->keep_running = 0;
+    if (g_app_context) {
+        g_app_context->keep_running = 0;
+        if (g_app_context->server) {
+            /* 服务器关闭需要手动实现 */
         }
     }
 }
 
 /* API 请求处理器 - 显示统计信息 */
 int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    uv_loop_t* loop = uvhttp_request_get_loop(request);
-    app_context_t* ctx = loop ? (app_context_t*)loop->data : NULL;
+    (void)request;  /* 避免未使用参数警告 */
     
-    if (!ctx || !ctx->static_ctx) {
+    if (!g_app_context || !g_app_context->static_ctx) {
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_header(response, "Content-Type", "application/json");
         uvhttp_response_set_body(response, "{\"error\":\"Static context not initialized\"}", 46);
@@ -186,8 +187,8 @@ int main(int argc, char* argv[]) {
     memset(ctx, 0, sizeof(app_context_t));
     ctx->keep_running = 1;
     
-    /* 设置循环数据指针 */
-    loop->data = ctx;
+    /* 设置全局应用上下文 */
+    g_app_context = ctx;
     
     /* 设置信号处理 */
     signal(SIGINT, signal_handler);
@@ -241,17 +242,7 @@ int main(int argc, char* argv[]) {
     
     /* 配置服务器 */
     ctx->server->router = router;
-    
-    /* 启动服务器 */
-    if (uvhttp_server_listen(ctx->server, "0.0.0.0", 8080) != 0) {
-        fprintf(stderr, "❌ 无法启动服务器\n");
-        uvhttp_static_free(ctx->static_ctx);
-        free(ctx);
-        return 1;
-    }
-    
-    /* 配置服务器 */
-    ctx->server->router = router;
+    ctx->server->user_data = ctx;
     
     /* 启动服务器 */
     if (uvhttp_server_listen(ctx->server, "0.0.0.0", port) != 0) {
@@ -259,6 +250,7 @@ int main(int argc, char* argv[]) {
         uvhttp_static_free(ctx->static_ctx);
         uvhttp_server_free(ctx->server);
         free(ctx);
+        g_app_context = NULL;
         return 1;
     }
     
@@ -290,7 +282,7 @@ int main(int argc, char* argv[]) {
     }
     
     free(ctx);
-    loop->data = NULL;
+    g_app_context = NULL;
     
     printf("✅ 资源清理完成\n");
     return 0;

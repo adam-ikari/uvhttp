@@ -23,24 +23,23 @@
 
 #define DEFAULT_PORT 18081
 
-/* 应用上下文 */
+/* 应用上下文 - 使用 server->user_data 传递 */
 typedef struct {
     uvhttp_server_t* server;
     volatile sig_atomic_t running;
 } app_context_t;
 
+/* 全局应用上下文 - 仅在 main 函数中设置和使用 */
+static app_context_t* g_app_context = NULL;
+
 /* 信号处理函数 */
 static void signal_handler(int signum) {
     (void)signum;
     printf("\n收到停止信号，正在关闭服务器...\n");
-    uv_loop_t* loop = uv_default_loop();
-    if (loop && loop->data) {
-        app_context_t* ctx = (app_context_t*)loop->data;
-        if (ctx) {
-            ctx->running = 0;
-            if (ctx->server) {
-                uvhttp_server_stop(ctx->server);
-            }
+    if (g_app_context) {
+        g_app_context->running = 0;
+        if (g_app_context->server) {
+            uvhttp_server_stop(g_app_context->server);
         }
     }
 }
@@ -250,8 +249,8 @@ int main(int argc, char* argv[]) {
     memset(ctx, 0, sizeof(app_context_t));
     ctx->running = 1;
     
-    /* 设置循环数据指针 */
-    loop->data = ctx;
+    /* 设置全局应用上下文 */
+    g_app_context = ctx;
     
     /* 设置信号处理 */
     signal(SIGINT, signal_handler);
@@ -262,8 +261,12 @@ int main(int argc, char* argv[]) {
     if (result != UVHTTP_OK || !ctx->server) {
         fprintf(stderr, "无法创建服务器: %s\n", uvhttp_error_string(result));
         free(ctx);
+        g_app_context = NULL;
         return 1;
     }
+    
+    /* 设置服务器用户数据 */
+    ctx->server->user_data = ctx;
     
     /* 创建路由 */
     uvhttp_router_t* router = NULL;
@@ -272,6 +275,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "无法创建路由: %s\n", uvhttp_error_string(result));
         uvhttp_server_free(ctx->server);
         free(ctx);
+        g_app_context = NULL;
         return 1;
     }
     
@@ -292,6 +296,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "无法启动服务器: %s\n", uvhttp_error_string(result));
         uvhttp_server_free(ctx->server);
         free(ctx);
+        g_app_context = NULL;
         return 1;
     }
     
@@ -307,7 +312,7 @@ int main(int argc, char* argv[]) {
     printf("\n正在关闭服务器...\n");
     uvhttp_server_free(ctx->server);
     free(ctx);
-    loop->data = NULL;
+    g_app_context = NULL;
     printf("服务器已关闭\n");
     
     return 0;
