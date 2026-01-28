@@ -8,6 +8,7 @@
 
 #include <uv.h>
 #include <uvhttp.h>
+#include <uvhttp_logging.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
