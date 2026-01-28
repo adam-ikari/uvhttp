@@ -53,8 +53,8 @@ struct uvhttp_request {
     size_t body_length;               /* 8 字节 */
     size_t body_capacity;             /* 8 字节 */
     
-    /* Headers - 混合分配：32个内联 + 动态扩容 */
-    uvhttp_header_t headers[32];      /* 32 * 4352 = 139,264 字节 - 内联 */
+    /* Headers - 混合分配：8个内联 + 动态扩容（优化内存局部性） */
+    uvhttp_header_t headers[8];       /* 8 * 4352 = 34,816 字节 - 内联，减少75% */
     uvhttp_header_t* headers_extra;   /* 8 字节 - 动态扩容 */
     size_t headers_capacity;          /* 8 字节 - 总容量（内联+动态） */
 };

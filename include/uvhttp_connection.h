@@ -27,48 +27,48 @@ typedef enum {
 typedef struct uvhttp_connection uvhttp_connection_t;
 
 struct uvhttp_connection {
-    /* 热路径字段（频繁访问）- 优化内存局部性 */
+    /* 缓存行1：热路径字段（16字节）- 优化内存局部性 */
     uvhttp_connection_state_t state;        /* 4 字节 - 连接状态 */
     int parsing_complete;                    /* 4 字节 - 解析是否完成 */
     int keep_alive;                         /* 4 字节 - 是否保持连接 */
     int chunked_encoding;                    /* 4 字节 - 是否使用分块传输 */
-    int close_pending;                       /* 4 字节 - 等待关闭的 handle 数量 */
     
-    /* 指针字段（8字节对齐） */
+    /* 缓存行2-3：指针字段（136字节）- 集中存储 */
     struct uvhttp_server* server;          /* 8 字节 */
     uvhttp_request_t* request;               /* 8 字节 */
     uvhttp_response_t* response;             /* 8 字节 */
+    void* ssl;                               /* 8 字节 */
+    char* read_buffer;                        /* 8 字节 */
+#if UVHTTP_FEATURE_WEBSOCKET
+    void* ws_connection;                      /* 8 字节 */
+#endif
     
-    /* 网络连接（16字节对齐） */
+    /* 缓存行4：网络连接（24字节） */
     uv_tcp_t tcp_handle;                      /* 8 字节 */
     uv_idle_t idle_handle;                    /* 8 字节 */
     uv_timer_t timeout_timer;                 /* 8 字节 - 连接超时定时器 */
     
-    /* HTTP/1.1优化字段 */
-    int current_header_is_important;         /* 4 字节 */
-    int parsing_header_field;                 /* 4 字节 */
-    int need_restart_read;                    /* 4 字节 */
-    int tls_enabled;                          /* 4 字节 */
-    
-    /* 大块内存字段（8字节对齐） */
+    /* 缓存行5：计数器和状态（40字节） */
     size_t content_length;                   /* 8 字节 */
     size_t body_received;                    /* 8 字节 */
     size_t read_buffer_size;                  /* 8 字节 */
     size_t read_buffer_used;                  /* 8 字节 */
     size_t current_header_field_len;          /* 8 字节 */
     
-    /* 其他指针和状态 */
-    void* ssl;                               /* 8 字节 */
-    char* read_buffer;                        /* 8 字节 */
+    /* 缓存行6：标志位（32字节） */
+    int close_pending;                       /* 4 字节 */
+    int current_header_is_important;         /* 4 字节 */
+    int parsing_header_field;                 /* 4 字节 */
+    int need_restart_read;                    /* 4 字节 */
+    int tls_enabled;                          /* 4 字节 */
     int last_error;                           /* 4 字节 */
-    
-    /* WebSocket相关 */
 #if UVHTTP_FEATURE_WEBSOCKET
-    void* ws_connection;                      /* 8 字节 */
     int is_websocket;                         /* 4 字节 */
 #endif
+    /* 填充到32字节 */
+    int _reserved[3];
     
-    /* 缓冲区字段（放在最后） */
+    /* 缓存行7-8：缓冲区字段（放在最后） */
     char current_header_field[UVHTTP_MAX_HEADER_NAME_SIZE];  /* 大块内存 */
 };
 

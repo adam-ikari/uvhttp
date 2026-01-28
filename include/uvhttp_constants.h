@@ -47,11 +47,11 @@
 #define UVHTTP_ASYNC_FILE_BUFFER_SIZE     65536  /* 64KB 文件读取缓冲区 */
 #define UVHTTP_ASYNC_FILE_MAX_CONCURRENT  64  /* 最大并发文件读取数 */
 #define UVHTTP_ASYNC_FILE_MAX_SIZE        (10 * 1024 * 1024)  /* 10MB 最大文件 */
-#define UVHTTP_MAX_HEADERS                64
-#define UVHTTP_MAX_HEADER_NAME_SIZE       256
-#define UVHTTP_MAX_HEADER_VALUE_SIZE     1024
+#define UVHTTP_MAX_HEADERS                32  /* 基于真实网站分析（最大23个），提供1.39x安全边距 */
+#define UVHTTP_MAX_HEADER_NAME_SIZE       256  /* 足够，安全边距6.74x */
+#define UVHTTP_MAX_HEADER_VALUE_SIZE     4096  /* 支持GitHub CSP（3680字符），安全边距1.11x */
 #define UVHTTP_MAX_HEADER_NAME_LENGTH     256
-#define UVHTTP_MAX_HEADER_VALUE_LENGTH    1024
+#define UVHTTP_MAX_HEADER_VALUE_LENGTH    4096
 #define UVHTTP_MAX_URL_SIZE              2048
 #define UVHTTP_MAX_METHOD_SIZE           16
 #define UVHTTP_MAX_PATH_SIZE             1024
