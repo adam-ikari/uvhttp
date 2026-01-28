@@ -58,11 +58,11 @@ static int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response
     
     /* 更新内存统计 */
     size_t current_mem = get_memory_usage_kb();
-    if (current_mem > stats->peak_memory) {
-        stats->peak_memory = current_mem;
+    if (current_mem > g_mem_stats.peak_memory) {
+        g_mem_stats.peak_memory = current_mem;
     }
-    stats->current_memory = current_mem;
-    stats->allocations++;
+    g_mem_stats.current_memory = current_mem;
+    g_mem_stats.allocations++;
     
     if (!response) {
         return -1;
@@ -75,7 +75,7 @@ static int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response
     uvhttp_response_set_body(response, body, 13);
     uvhttp_response_send(response);
     
-    stats->deallocations++;
+    g_mem_stats.deallocations++;
     
     return 0;
 }
@@ -86,18 +86,18 @@ static void run_memory_benchmark(const char* test_name) {
     printf("测试时长: %d 秒\n", TEST_DURATION);
     printf("端口: %d\n", PORT);
     printf("\n");
-    
-    /* 重置统计 */
-    memset(loop->data, 0, sizeof(g_mem_stats));
-    stats->peak_memory = get_memory_usage_kb();
-    
+
     /* 创建事件循环 */
     uv_loop_t* loop = uv_default_loop();
     if (!loop) {
         fprintf(stderr, "无法创建事件循环\n");
         return;
     }
-    
+
+    /* 重置统计 */
+    memset(&g_mem_stats, 0, sizeof(g_mem_stats));
+    g_mem_stats.peak_memory = get_memory_usage_kb();
+
     /* 创建服务器 */
     uvhttp_server_t* server = NULL;
     uvhttp_error_t result = uvhttp_server_new(loop, &server);
