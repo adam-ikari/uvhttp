@@ -2,6 +2,9 @@
 build/
 dist/
 
+# Pre-built dependencies
+deps/cmocka/
+
 # Test executables (but not source files)
 test_memory_simple
 test_simple
