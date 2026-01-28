@@ -55,12 +55,12 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
       
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.2
         with:
           name: build-${{ inputs.os }}-${{ inputs.build-type }}
           path: ${{ inputs.build-type == 'Release' && 'build-release' || 'build-debug' }}
@@ -76,7 +76,7 @@ jobs:
 
       - name: Upload test logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: test-logs-${{ inputs.os }}-${{ inputs.test-type }}
           path: |
@@ -86,7 +86,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: test-results-${{ inputs.os }}-${{ inputs.test-type }}
           path: |

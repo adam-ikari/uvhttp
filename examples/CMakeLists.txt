@@ -62,6 +62,3 @@ endif()
 
 # 高级功能示例
 add_subdirectory(06_advanced)
-
-# 性能测试示例
-add_subdirectory(07_performance)

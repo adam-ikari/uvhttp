@@ -2,7 +2,7 @@ BUILD_DIR ?= build
 BUILD_TYPE ?= Release
 CMAKE_ARGS = -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON -DBUILD_WITH_TLS=ON
 
-.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck install coverage coverage-clean examples build build-deps rebuild docs-site docs-site-build docs-site-clean docs-site-dev
+.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild docs-site docs-site-build docs-site-clean docs-site-dev
 
 all: $(BUILD_DIR)/Makefile
 	@$(MAKE) -C $(BUILD_DIR)
@@ -123,9 +123,6 @@ coverage-clean:
 	@find $(BUILD_DIR) -name "coverage.info" -delete 2>/dev/null || true
 	@rm -rf $(BUILD_DIR)/coverage_html 2>/dev/null || true
 
-install: all
-	@$(MAKE) -C $(BUILD_DIR) install
-
 build-mimalloc:
 	@mkdir -p $(BUILD_DIR)
 	@cd $(BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DUVHTTP_ALLOCATOR=mimalloc ..
@@ -157,7 +154,6 @@ help:
 	@echo "  make build              - 构建项目（包括依赖）"
 	@echo "  make rebuild            - 完全重新构建"
 	@echo "  make build-deps         - 仅构建依赖"
-	@echo "  make install            - 安装"
 	@echo "  make examples           - 构建示例"
 	@echo ""
 	@echo "清理命令:"

@@ -13,13 +13,19 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Cache CMake build
+    - name: Cache dependencies
       uses: actions/cache@v4
       with:
+        # 只缓存依赖，不缓存构建产物
         path: |
-          build-${{ inputs.build-type }}
-          build-${{ inputs.build-type }}/CMakeFiles
-          build-${{ inputs.build-type }}/deps
-        key: ${{ inputs.cache-key }}-${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}
+          deps/libuv/build
+          deps/mbedtls/build
+          deps/xxhash/libxxhash.a
+          deps/cllhttp/build
+          deps/mimalloc/build
+          deps/googletest/build
+          deps/cjson/build
+        # 使用主 CMakeLists.txt 和关键配置文件的哈希作为缓存键
+        key: ${{ inputs.cache-key }}-${{ runner.os }}-deps-${{ hashFiles('CMakeLists.txt', 'cmake/Dependencies.cmake') }}
         restore-keys: |
-          ${{ inputs.cache-key }}-${{ runner.os }}-cmake-
+          ${{ inputs.cache-key }}-${{ runner.os }}-deps-

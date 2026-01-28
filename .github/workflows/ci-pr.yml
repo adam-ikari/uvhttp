@@ -30,7 +30,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
       
@@ -66,11 +66,11 @@ jobs:
           fi
       
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: build-ubuntu-pr-${{ github.event.pull_request.number }}
           path: build-pr/dist/
-          retention-days: 3
+          retention-days: 7
   
   # 任务 2: 代码质量检查
   code-quality-check:
@@ -82,7 +82,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
       
@@ -124,7 +124,7 @@ jobs:
       
       - name: Upload code quality results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: code-quality-pr-${{ github.event.pull_request.number }}
           path: |
@@ -141,7 +141,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
       
@@ -170,12 +170,12 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
       
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.2
         with:
           name: build-ubuntu-pr-${{ github.event.pull_request.number }}
           path: build-pr
@@ -195,13 +195,13 @@ jobs:
       
       - name: Upload test logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: test-logs-pr-${{ github.event.pull_request.number }}
           path: |
             build-pr/Testing/
             build-pr/**/*.log
-          retention-days: 3
+          retention-days: 7
   
   # 任务 5: 性能回归检测
   performance-regression-check:
@@ -215,12 +215,12 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
       
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.2
         with:
           name: build-ubuntu-pr-${{ github.event.pull_request.number }}
           path: build-pr
@@ -233,18 +233,15 @@ jobs:
       - name: Run quick performance test
         id: perf-test
         run: |
-          mkdir -p build-pr/public
-          echo "<html><body><h1>Performance Test</h1></body></html>" > build-pr/public/index.html
-          
           cd build-pr
-          ./dist/bin/performance_static_server -d ./public -p 8080 > /tmp/server.log 2>&1 &
+          ./dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
           SERVER_PID=$!
           sleep 3
           
           # 快速测试：3个场景，每个5秒
-          wrk -t4 -c10 -d5s --timeout 5s http://localhost:8080/ > /tmp/performance.log 2>&1
-          wrk -t4 -c50 -d5s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
-          wrk -t4 -c100 -d5s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
+          wrk -t2 -c10 -d5s --timeout 5s http://localhost:18081/ > /tmp/performance.log 2>&1
+          wrk -t4 -c50 -d5s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
+          wrk -t8 -c200 -d5s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
           
           kill $SERVER_PID 2>/dev/null || true
           
@@ -312,15 +309,21 @@ jobs:
           # 尝试下载基线文件
           if curl -f -s $BASELINE_URL -o baseline.json; then
             echo "Baseline file downloaded successfully"
+            HAS_BASELINE=true
           else
-            echo "Baseline file not found or download failed, skipping regression check"
-            echo "{}" > baseline.json
+            echo "Baseline file not found or download failed"
+            echo "This PR will establish a new baseline"
+            HAS_BASELINE=false
+            # 使用当前结果作为临时基线
+            cp performance-pr.json baseline.json
           fi
           
           # 检查基线文件是否有效
           if [ ! -s baseline.json ] || [ "$(cat baseline.json | wc -l)" -lt 2 ]; then
-            echo "Baseline file is empty or invalid, skipping regression check"
-            echo "has-regression=false" >> $GITHUB_OUTPUT
+            echo "Baseline file is empty or invalid"
+            echo "This PR will establish a new baseline"
+            HAS_BASELINE=false
+            cp performance-pr.json baseline.json
             echo "has-improvement=false" >> $GITHUB_OUTPUT
             echo "# Performance Report" > performance-report.md
             echo "Baseline file not found or invalid, skipping regression check" >> performance-report.md
@@ -357,7 +360,7 @@ jobs:
       
       - name: Upload performance results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: performance-comparison-pr-${{ github.event.pull_request.number }}
           path: |

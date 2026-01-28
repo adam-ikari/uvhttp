@@ -21,7 +21,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
       
@@ -46,29 +46,17 @@ jobs:
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_WITH_WEBSOCKET=ON \
-            -DBUILD_WITH_MIMALLOC=ON \
-            -DCMAKE_INSTALL_PREFIX=/opt/uvhttp
+            -DBUILD_WITH_MIMALLOC=ON
       
       - name: Build
         run: |
           cmake --build build --config Release -j$(nproc)
       
-      - name: Install
-        run: |
-          sudo cmake --install build
-      
-      - name: Create release package
-        run: |
-          cd /opt
-          tar czf uvhttp-${{ steps.get_version.outputs.version }}-linux-x86_64.tar.gz uvhttp/
-      
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: build-ubuntu-release-${{ steps.get_version.outputs.version }}
-          path: |
-            build/
-            /opt/uvhttp-${{ steps.get_version.outputs.version }}-linux-x86_64.tar.gz
+          path: build/
           retention-days: 30
   
   macos-release-build:
@@ -79,7 +67,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
       
@@ -104,29 +92,17 @@ jobs:
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_WITH_WEBSOCKET=ON \
-            -DBUILD_WITH_MIMALLOC=ON \
-            -DCMAKE_INSTALL_PREFIX=/opt/uvhttp
+            -DBUILD_WITH_MIMALLOC=ON
       
       - name: Build
         run: |
           cmake --build build --config Release -j$(sysctl -n hw.ncpu)
       
-      - name: Install
-        run: |
-          sudo cmake --install build
-      
-      - name: Create release package
-        run: |
-          cd /opt
-          tar czf uvhttp-${{ steps.get_version.outputs.version }}-macos-x86_64.tar.gz uvhttp/
-      
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: build-macos-release-${{ steps.get_version.outputs.version }}
-          path: |
-            build/
-            /opt/uvhttp-${{ steps.get_version.outputs.version }}-macos-x86_64.tar.gz
+          path: build/
           retention-days: 30
   
   windows-release-build:
@@ -137,7 +113,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
       
@@ -162,28 +138,17 @@ jobs:
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release `
             -DBUILD_WITH_WEBSOCKET=ON `
-            -DBUILD_WITH_MIMALLOC=ON `
-            -DCMAKE_INSTALL_PREFIX=C:/uvhttp
+            -DBUILD_WITH_MIMALLOC=ON
       
       - name: Build
         run: |
           cmake --build build --config Release -j
       
-      - name: Install
-        run: |
-          cmake --install build
-      
-      - name: Create release package
-        run: |
-          Compress-Archive -Path C:/uvhttp/* -DestinationPath uvhttp-${{ steps.get_version.outputs.version }}-windows-x86_64.zip
-      
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: build-windows-release-${{ steps.get_version.outputs.version }}
-          path: |
-            build/
-            uvhttp-${{ steps.get_version.outputs.version }}-windows-x86_64.zip
+          path: build/
           retention-days: 30
   
   # ========== 阶段 2: 发布测试 ==========
@@ -195,12 +160,12 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
       
       - name: Download all build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.2
         with:
           pattern: build-*-release-*
           path: builds/
@@ -217,7 +182,7 @@ jobs:
       
       - name: Upload test logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: release-test-logs-${{ needs.ubuntu-release-build.outputs.version }}
           path: builds/*/build/Testing/
@@ -234,12 +199,12 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
       
       - name: Download all build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.2
         with:
           pattern: build-*-release-*
           path: packages/
@@ -261,23 +226,33 @@ jobs:
           
           ### Linux
           ```bash
-          tar xzf uvhttp-$VERSION-linux-x86_64.tar.gz
+          # Build from source
+          git clone https://github.com/adam-ikari/uvhttp.git
           cd uvhttp
-          sudo cmake --install .
+          mkdir build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake --build . -j$(nproc)
           ```
           
           ### macOS
           ```bash
-          tar xzf uvhttp-$VERSION-macos-x86_64.tar.gz
+          # Build from source
+          git clone https://github.com/adam-ikari/uvhttp.git
           cd uvhttp
-          sudo cmake --install .
+          mkdir build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake --build . -j$(sysctl -n hw.ncpu)
           ```
           
           ### Windows
           ```powershell
-          Expand-Archive uvhttp-$VERSION-windows-x86_64.zip
+          # Build from source
+          git clone https://github.com/adam-ikari/uvhttp.git
           cd uvhttp
-          cmake --install .
+          mkdir build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake --build . --config Release
           ```
           
           ## Verification
@@ -319,28 +294,26 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
           token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Download release artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.2
         with:
           name: build-ubuntu-release-${{ needs.ubuntu-release-build.outputs.version }}
           path: build/
       
       - name: Run performance benchmark
         run: |
-          chmod +x build/dist/bin/performance_static_server
-          mkdir -p build/public
-          echo "<html><body><h1>Performance Test</h1></body></html>" > build/public/index.html
+          chmod +x build/dist/bin/benchmark_rps
           
-          build/dist/bin/performance_static_server -d build/public -p 8080 > /tmp/server.log 2>&1 &
+          build/dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
           SERVER_PID=$!
           sleep 3
           
-          wrk -t4 -c100 -d10s http://localhost:8080/ > performance.log
+          wrk -t4 -c100 -d10s http://localhost:18081/ > performance.log
           
           kill $SERVER_PID 2>/dev/null || true
       
@@ -376,13 +349,13 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add docs/performance/
-          git commit -m "chore: 更新性能基线到 v$VERSION"
+          git commit -m "chore: 更新性能基线到 v$VERSION [skip ci]"
           
           # 推送分支
           git push origin $BRANCH_NAME
           
-          # 创建 PR
-          gh pr create \
+          # 创建 PR（添加错误处理）
+          if gh pr create \
             --title "Update performance baseline to v$VERSION" \
             --body "Automated baseline update for release v$VERSION
 
@@ -396,6 +369,17 @@ jobs:
             --head $BRANCH_NAME \
             --label "automated" \
             --label "performance" \
-            --label "skip-ci"
+            --label "skip-ci"; then
+            echo "✅ PR created successfully"
+          else
+            # PR 可能已存在，检查并更新
+            if ! gh pr view $BRANCH_NAME --json title --jq '.title' > /dev/null 2>&1; then
+              echo "⚠️ Failed to create PR (may already exist or permission issue)"
+              echo "Branch $BRANCH_NAME was pushed, please create PR manually if needed"
+            else
+              echo "✅ PR already exists"
+            fi
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

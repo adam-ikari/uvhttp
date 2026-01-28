@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 120
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
       
@@ -80,21 +80,19 @@ jobs:
       
       # Performance test
       - name: Download build artifacts for performance test
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.2
         with:
           name: build-ubuntu-latest-Release
           path: build-release
 
       - name: Performance test
         run: |
-          mkdir -p build-release/public
-          echo "<html><body><h1>Performance Test</h1></body></html>" > build-release/public/index.html
           cd build-release
-          if [ -f "./dist/bin/performance_static_server" ]; then
-            ./dist/bin/performance_static_server -d ./public -p 8080 > /tmp/server.log 2>&1 &
+          if [ -f "./dist/bin/benchmark_rps" ]; then
+            ./dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
             SERVER_PID=$!
             sleep 3
-            wrk -t4 -c100 -d30s --timeout 5s http://localhost:8080/
+            wrk -t4 -c100 -d30s --timeout 5s http://localhost:18081/
             kill $SERVER_PID 2>/dev/null || true
           fi
       
