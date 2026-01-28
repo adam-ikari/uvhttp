@@ -43,7 +43,7 @@ typedef struct {
     uint64_t end_time;
 } comprehensive_stats_t;
 
-static comprehensive_stats_t g_stats = {0};
+// 使用 loop->data 传递统计结构
 
 /* 获取当前时间（微秒） */
 static uint64_t get_timestamp_us(void) {
@@ -61,16 +61,16 @@ static size_t get_memory_usage_kb(void) {
 
 /* 添加延迟样本 */
 static void add_latency_sample(uint64_t latency_us) {
-    if (g_stats.latency_count < MAX_SAMPLES) {
-        g_stats.latency_samples[g_stats.latency_count++] = latency_us;
-        g_stats.latency_sum += latency_us;
+    if (stats->latency_count < MAX_SAMPLES) {
+        stats->latency_samples[stats->latency_count++] = latency_us;
+        stats->latency_sum += latency_us;
         
-        if (g_stats.latency_count == 1) {
-            g_stats.min_latency = latency_us;
-            g_stats.max_latency = latency_us;
+        if (stats->latency_count == 1) {
+            stats->min_latency = latency_us;
+            stats->max_latency = latency_us;
         } else {
-            if (latency_us < g_stats.min_latency) g_stats.min_latency = latency_us;
-            if (latency_us > g_stats.max_latency) g_stats.max_latency = latency_us;
+            if (latency_us < stats->min_latency) stats->min_latency = latency_us;
+            if (latency_us > stats->max_latency) stats->max_latency = latency_us;
         }
     }
 }
@@ -84,15 +84,15 @@ static int compare_uint64(const void* a, const void* b) {
 
 /* 计算百分位数 */
 static uint64_t calculate_percentile(double percentile) {
-    if (g_stats.latency_count == 0) return 0;
+    if (stats->latency_count == 0) return 0;
     
     /* 使用 qsort 进行高效排序 */
-    qsort(g_stats.latency_samples, g_stats.latency_count, sizeof(uint64_t), compare_uint64);
+    qsort(stats->latency_samples, stats->latency_count, sizeof(uint64_t), compare_uint64);
     
-    int index = (int)(percentile * g_stats.latency_count);
-    if (index >= g_stats.latency_count) index = g_stats.latency_count - 1;
+    int index = (int)(percentile * stats->latency_count);
+    if (index >= stats->latency_count) index = stats->latency_count - 1;
     
-    return g_stats.latency_samples[index];
+    return stats->latency_samples[index];
 }
 
 /* 打印综合统计 */
@@ -103,35 +103,35 @@ static void print_comprehensive_stats(void) {
     
     /* RPS 统计 */
     printf("=== RPS 统计 ===\n");
-    printf("总请求数: %d\n", g_stats.total_requests);
-    printf("成功请求数: %d\n", g_stats.successful_requests);
-    printf("失败请求数: %d\n", g_stats.failed_requests);
+    printf("总请求数: %d\n", stats->total_requests);
+    printf("成功请求数: %d\n", stats->successful_requests);
+    printf("失败请求数: %d\n", stats->failed_requests);
     
-    if (g_stats.total_requests > 0) {
-        double success_rate = (double)g_stats.successful_requests / g_stats.total_requests * 100.0;
+    if (stats->total_requests > 0) {
+        double success_rate = (double)stats->successful_requests / stats->total_requests * 100.0;
         printf("成功率: %.2f%%\n", success_rate);
     }
     
-    uint64_t duration_sec = (g_stats.end_time - g_stats.start_time) / 1000000;
+    uint64_t duration_sec = (stats->end_time - stats->start_time) / 1000000;
     if (duration_sec > 0) {
-        double rps = (double)g_stats.successful_requests / duration_sec;
+        double rps = (double)stats->successful_requests / duration_sec;
         printf("RPS: %.2f\n", rps);
     }
     printf("\n");
     
     /* 延迟统计 */
     printf("=== 延迟统计 ===\n");
-    printf("样本数量: %d\n", g_stats.latency_count);
+    printf("样本数量: %d\n", stats->latency_count);
     
-    if (g_stats.latency_count > 0) {
-        double avg_latency = g_stats.latency_sum / g_stats.latency_count;
+    if (stats->latency_count > 0) {
+        double avg_latency = stats->latency_sum / stats->latency_count;
         uint64_t p50 = calculate_percentile(0.50);
         uint64_t p95 = calculate_percentile(0.95);
         uint64_t p99 = calculate_percentile(0.99);
         
         printf("平均延迟: %.2f μs (%.3f ms)\n", avg_latency, avg_latency / 1000.0);
-        printf("最小延迟: %" PRIu64 " μs (%.3f ms)\n", g_stats.min_latency, g_stats.min_latency / 1000.0);
-        printf("最大延迟: %" PRIu64 " μs (%.3f ms)\n", g_stats.max_latency, g_stats.max_latency / 1000.0);
+        printf("最小延迟: %" PRIu64 " μs (%.3f ms)\n", stats->min_latency, stats->min_latency / 1000.0);
+        printf("最大延迟: %" PRIu64 " μs (%.3f ms)\n", stats->max_latency, stats->max_latency / 1000.0);
         printf("P50 延迟: %" PRIu64 " μs (%.3f ms)\n", p50, p50 / 1000.0);
         printf("P95 延迟: %" PRIu64 " μs (%.3f ms)\n", p95, p95 / 1000.0);
         printf("P99 延迟: %" PRIu64 " μs (%.3f ms)\n", p99, p99 / 1000.0);
@@ -141,12 +141,12 @@ static void print_comprehensive_stats(void) {
     /* 内存统计 */
     printf("=== 内存统计 ===\n");
     printf("峰值内存使用: %zu KB (%.2f MB)\n", 
-           g_stats.peak_memory, g_stats.peak_memory / 1024.0);
+           stats->peak_memory, stats->peak_memory / 1024.0);
     printf("当前内存使用: %zu KB (%.2f MB)\n", 
-           g_stats.current_memory, g_stats.current_memory / 1024.0);
+           stats->current_memory, stats->current_memory / 1024.0);
     
-    if (g_stats.successful_requests > 0) {
-        double memory_per_request = (double)g_stats.peak_memory / g_stats.successful_requests;
+    if (stats->successful_requests > 0) {
+        double memory_per_request = (double)stats->peak_memory / stats->successful_requests;
         printf("每请求平均内存: %.2f KB\n", memory_per_request);
     }
     printf("\n");
@@ -154,7 +154,7 @@ static void print_comprehensive_stats(void) {
     /* 性能评估 */
     printf("=== 性能评估 ===\n");
     if (duration_sec > 0) {
-        double rps = (double)g_stats.successful_requests / duration_sec;
+        double rps = (double)stats->successful_requests / duration_sec;
         
         /* 低并发目标: 17,000+ RPS */
         if (rps >= 17000) {
@@ -166,8 +166,8 @@ static void print_comprehensive_stats(void) {
         }
         
         /* 延迟目标: < 15ms */
-        if (g_stats.latency_count > 0) {
-            double avg_latency_ms = g_stats.latency_sum / g_stats.latency_count / 1000.0;
+        if (stats->latency_count > 0) {
+            double avg_latency_ms = stats->latency_sum / stats->latency_count / 1000.0;
             if (avg_latency_ms < 15.0) {
                 printf("✅ 延迟性能: 优秀 (%.3f ms < 15 ms)\n", avg_latency_ms);
             } else if (avg_latency_ms < 30.0) {
@@ -178,8 +178,8 @@ static void print_comprehensive_stats(void) {
         }
         
         /* 错误率目标: < 0.1% */
-        if (g_stats.total_requests > 0) {
-            double error_rate = (double)g_stats.failed_requests / g_stats.total_requests * 100.0;
+        if (stats->total_requests > 0) {
+            double error_rate = (double)stats->failed_requests / stats->total_requests * 100.0;
             if (error_rate < 0.1) {
                 printf("✅ 错误率: 优秀 (%.2f%% < 0.1%%)\n", error_rate);
             } else if (error_rate < 1.0) {
@@ -200,15 +200,15 @@ static int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response
     
     /* 更新内存统计 */
     size_t current_mem = get_memory_usage_kb();
-    if (current_mem > g_stats.peak_memory) {
-        g_stats.peak_memory = current_mem;
+    if (current_mem > stats->peak_memory) {
+        stats->peak_memory = current_mem;
     }
-    g_stats.current_memory = current_mem;
+    stats->current_memory = current_mem;
     
-    g_stats.total_requests++;
+    stats->total_requests++;
     
     if (!response) {
-        g_stats.failed_requests++;
+        stats->failed_requests++;
         return -1;
     }
     
@@ -223,7 +223,7 @@ static int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response
     uint64_t end = get_timestamp_us();
     add_latency_sample(end - start);
     
-    g_stats.successful_requests++;
+    stats->successful_requests++;
     
     return 0;
 }
@@ -240,9 +240,9 @@ static void run_comprehensive_benchmark(const char* test_name) {
     printf("\n");
     
     /* 重置统计 */
-    memset(&g_stats, 0, sizeof(g_stats));
-    g_stats.peak_memory = get_memory_usage_kb();
-    g_stats.start_time = get_timestamp_us();
+    memset(loop->data, 0, sizeof(g_stats));
+    stats->peak_memory = get_memory_usage_kb();
+    stats->start_time = get_timestamp_us();
     
     /* 创建事件循环 */
     uv_loop_t* loop = uv_default_loop();
@@ -290,7 +290,7 @@ static void run_comprehensive_benchmark(const char* test_name) {
     /* 运行事件循环 */
     uv_run(loop, UV_RUN_DEFAULT);
     
-    g_stats.end_time = get_timestamp_us();
+    stats->end_time = get_timestamp_us();
     
     /* 打印综合统计 */
     print_comprehensive_stats();

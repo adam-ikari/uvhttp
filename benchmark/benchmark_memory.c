@@ -25,7 +25,7 @@ typedef struct {
     int deallocations;
 } memory_stats_t;
 
-static memory_stats_t g_mem_stats = {0};
+// 使用 loop->data 传递统计结构
 
 /* 获取当前进程内存使用量（KB） */
 static size_t get_memory_usage_kb(void) {
@@ -38,14 +38,14 @@ static size_t get_memory_usage_kb(void) {
 static void print_memory_stats(void) {
     printf("=== 内存统计 ===\n");
     printf("峰值内存使用: %zu KB (%.2f MB)\n", 
-           g_mem_stats.peak_memory, g_mem_stats.peak_memory / 1024.0);
+           stats->peak_memory, stats->peak_memory / 1024.0);
     printf("当前内存使用: %zu KB (%.2f MB)\n", 
-           g_mem_stats.current_memory, g_mem_stats.current_memory / 1024.0);
-    printf("分配次数: %d\n", g_mem_stats.allocations);
-    printf("释放次数: %d\n", g_mem_stats.deallocations);
+           stats->current_memory, stats->current_memory / 1024.0);
+    printf("分配次数: %d\n", stats->allocations);
+    printf("释放次数: %d\n", stats->deallocations);
     
-    if (g_mem_stats.allocations > 0) {
-        int net_allocations = g_mem_stats.allocations - g_mem_stats.deallocations;
+    if (stats->allocations > 0) {
+        int net_allocations = stats->allocations - stats->deallocations;
         printf("净分配次数: %d\n", net_allocations);
     }
     printf("\n");
@@ -57,11 +57,11 @@ static int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response
     
     /* 更新内存统计 */
     size_t current_mem = get_memory_usage_kb();
-    if (current_mem > g_mem_stats.peak_memory) {
-        g_mem_stats.peak_memory = current_mem;
+    if (current_mem > stats->peak_memory) {
+        stats->peak_memory = current_mem;
     }
-    g_mem_stats.current_memory = current_mem;
-    g_mem_stats.allocations++;
+    stats->current_memory = current_mem;
+    stats->allocations++;
     
     if (!response) {
         return -1;
@@ -74,7 +74,7 @@ static int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response
     uvhttp_response_set_body(response, body, 13);
     uvhttp_response_send(response);
     
-    g_mem_stats.deallocations++;
+    stats->deallocations++;
     
     return 0;
 }
@@ -87,8 +87,8 @@ static void run_memory_benchmark(const char* test_name) {
     printf("\n");
     
     /* 重置统计 */
-    memset(&g_mem_stats, 0, sizeof(g_mem_stats));
-    g_mem_stats.peak_memory = get_memory_usage_kb();
+    memset(loop->data, 0, sizeof(g_mem_stats));
+    stats->peak_memory = get_memory_usage_kb();
     
     /* 创建事件循环 */
     uv_loop_t* loop = uv_default_loop();
