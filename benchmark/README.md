@@ -2,6 +2,28 @@
 
 本目录包含 UVHTTP 的基准性能测试程序，用于测量和验证库的性能特性。
 
+## 快速开始
+
+### 自动化测试（推荐）
+
+一键运行所有基准测试：
+
+```bash
+./run_benchmarks.sh
+```
+
+### 手动测试
+
+```bash
+# 编译
+cd build
+make benchmark_rps benchmark_latency benchmark_connection benchmark_memory benchmark_comprehensive
+
+# 运行单个测试
+./dist/bin/benchmark_rps &
+wrk -t4 -c100 -d10s http://127.0.0.1:18081/
+```
+
 ## 测试程序
 
 ### 1. performance_allocator
@@ -67,7 +89,8 @@
 
 **运行方式**：
 ```bash
-./benchmark_rps
+./benchmark_rps &
+wrk -t4 -c100 -d10s http://127.0.0.1:18081/
 ```
 
 **预期结果**：
@@ -86,7 +109,8 @@
 
 **运行方式**：
 ```bash
-./benchmark_latency
+./benchmark_latency &
+wrk -t4 -c100 -d10s http://127.0.0.1:18081/
 ```
 
 **预期结果**：
@@ -105,7 +129,8 @@
 
 **运行方式**：
 ```bash
-./benchmark_connection
+./benchmark_connection &
+wrk -t4 -c100 -d10s -k http://127.0.0.1:18082/
 ```
 
 **预期结果**：
@@ -124,7 +149,8 @@
 
 **运行方式**：
 ```bash
-./benchmark_memory
+./benchmark_memory &
+wrk -t4 -c100 -d10s http://127.0.0.1:18083/
 ```
 
 **预期结果**：
@@ -144,7 +170,8 @@
 
 **运行方式**：
 ```bash
-./benchmark_comprehensive
+./benchmark_comprehensive &
+wrk -t4 -c100 -d10s http://127.0.0.1:18084/
 ```
 
 **预期结果**：
@@ -161,28 +188,51 @@ cmake ..
 make
 
 # 编译基准测试
-make performance_allocator
-make performance_allocator_compare
-make test_bitfield
-make benchmark_rps
-make benchmark_latency
-make benchmark_connection
-make benchmark_memory
-make benchmark_comprehensive
+make benchmark_rps benchmark_latency benchmark_connection benchmark_memory benchmark_comprehensive
 ```
 
 ## 运行所有基准测试
 
+### 自动化方式（推荐）
+
+```bash
+cd benchmark
+./run_benchmarks.sh
+```
+
+### 手动方式
+
 ```bash
 cd build/dist/bin
-./performance_allocator
-./performance_allocator_compare
-./test_bitfield
-./benchmark_rps
-./benchmark_latency
-./benchmark_connection
-./benchmark_memory
-./benchmark_comprehensive
+
+# 1. RPS 测试
+./benchmark_rps &
+wrk -t2 -c10 -d10s http://127.0.0.1:18081/
+wrk -t4 -c50 -d10s http://127.0.0.1:18081/
+wrk -t8 -c200 -d10s http://127.0.0.1:18081/
+
+# 2. 延迟测试
+./benchmark_latency &
+wrk -t4 -c100 -d10s http://127.0.0.1:18081/
+
+# 3. 连接测试
+./benchmark_connection &
+ab -n 100000 -c 100 -k http://127.0.0.1:18082/
+
+# 4. 内存测试
+./benchmark_memory &
+wrk -t4 -c100 -d10s http://127.0.0.1:18083/
+
+# 5. 综合测试
+./benchmark_comprehensive &
+wrk -t4 -c100 -d10s http://127.0.0.1:18084/
+```
+
+## 分析结果
+
+```bash
+cd benchmark
+python3 analyze_results.py
 ```
 
 ## 性能指标
@@ -215,9 +265,11 @@ cd build/dist/bin
 ## 结果文件
 
 基准测试结果保存在 `results/` 目录下，包含：
-- 历史性能数据
-- 性能趋势分析
-- 回归检测报告
+- `run_<timestamp>/summary_report.md` - 测试摘要报告
+- `run_<timestamp>/analysis_report.md` - 性能分析报告
+- `run_<timestamp>/*.txt` - 详细测试日志
+- `run_<timestamp>/*.csv` - RPS 数据
+- `run_<timestamp>/*.log` - 服务器日志
 
 ## 使用 wrk 进行性能测试
 
@@ -239,18 +291,26 @@ wrk -t16 -c500 -d10s http://127.0.0.1:18081/
 
 ```bash
 # 基本 HTTP 测试
-ab -n 100000 -c 100 -k http://127.0.0.1:18081/
+ab -n 100000 -c 100 http://127.0.0.1:18081/
 
 # Keep-Alive 测试
 ab -n 100000 -c 100 -k http://127.0.0.1:18081/
+
+# 长时间测试
+ab -n 1000000 -c 100 -k -t 60 http://127.0.0.1:18081/
 ```
+
+## 测试流程
+
+详细的测试流程说明请参考 [TESTING_GUIDE.md](TESTING_GUIDE.md)。
 
 ## 添加新的基准测试
 
 1. 在 `benchmark/` 目录下创建新的测试文件
 2. 在 `benchmark.cmake` 中添加编译规则
 3. 更新本 README.md 文件
-4. 运行测试并记录基准结果
+4. 在 `run_benchmarks.sh` 中添加测试调用
+5. 运行测试并记录基准结果
 
 ## 注意事项
 
@@ -270,6 +330,7 @@ ab -n 100000 -c 100 -k http://127.0.0.1:18081/
 
 ## 相关文档
 
-- [性能基准文档](../docs/dev/PERFORMANCE_BENCHMARK.md)
-- [性能测试标准](../docs/dev/PERFORMANCE_TESTING_STANDARD.md)
-- [性能优化指南](../docs/guide/performance.md)
+- [测试指南](TESTING_GUIDE.md) - 详细的测试流程说明
+- [性能基准文档](../docs/dev/PERFORMANCE_BENCHMARK.md) - 性能基准数据
+- [性能测试标准](../docs/dev/PERFORMANCE_TESTING_STANDARD.md) - 测试规范
+- [性能优化指南](../docs/guide/performance.md) - 优化建议
