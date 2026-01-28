@@ -24,27 +24,31 @@ typedef struct {
     int failed_requests;
 } connection_stats_t;
 
-// 使用 loop->data 传递统计结构
+/* 应用上下文 - 使用 server->user_data 传递 */
+typedef struct {
+    uvhttp_server_t* server;
+    connection_stats_t stats;
+} app_context_t;
+
+/* 全局应用上下文 - 仅在 main 函数中设置和使用 */
+static app_context_t* g_app_context = NULL;
 
 /* 打印连接统计 */
 static void print_connection_stats(void) {
-    uv_loop_t* loop = uv_default_loop();
-    connection_stats_t* stats = loop ? (connection_stats_t*)loop->data : NULL;
-    
-    if (!stats) {
+    if (!g_app_context) {
         printf("=== 连接统计 ===\n");
-        printf("统计结构不可用\n\n");
+        printf("应用上下文不可用\n\n");
         return;
     }
     
     printf("=== 连接统计 ===\n");
-    printf("总连接数: %d\n", stats->total_connections);
-    printf("活跃连接数: %d\n", stats->active_connections);
-    printf("成功请求数: %d\n", stats->successful_requests);
-    printf("失败请求数: %d\n", stats->failed_requests);
+    printf("总连接数: %d\n", g_app_context->stats.total_connections);
+    printf("活跃连接数: %d\n", g_app_context->stats.active_connections);
+    printf("成功请求数: %d\n", g_app_context->stats.successful_requests);
+    printf("失败请求数: %d\n", g_app_context->stats.failed_requests);
     
-    if (stats->total_connections > 0) {
-        double success_rate = (double)stats->successful_requests / stats->total_connections * 100.0;
+    if (g_app_context->stats.total_connections > 0) {
+        double success_rate = (double)g_app_context->stats.successful_requests / g_app_context->stats.total_connections * 100.0;
         printf("成功率: %.2f%%\n", success_rate);
     }
     printf("\n");
@@ -54,12 +58,13 @@ static void print_connection_stats(void) {
 static int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     (void)request;  /* 避免未使用参数警告 */
     
-    /* 从循环数据指针获取统计结构 */
-    uv_loop_t* loop = uvhttp_request_get_loop(request);
-    connection_stats_t* stats = loop ? (connection_stats_t*)loop->data : NULL;
+    /* 从全局应用上下文获取统计结构 */
+    if (!g_app_context) {
+        return -1;
+    }
     
     if (!response) {
-        if (stats) stats->failed_requests++;
+        g_app_context->stats.failed_requests++;
         return -1;
     }
     
@@ -71,7 +76,7 @@ static int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response
     uvhttp_response_set_body(response, body, 13);
     uvhttp_response_send(response);
     
-    if (stats) stats->successful_requests++;
+    g_app_context->stats.successful_requests++;
     return 0;
 }
 
@@ -82,53 +87,57 @@ static void run_connection_benchmark(const char* test_name) {
     printf("端口: %d\n", PORT);
     printf("\n");
     
+    /* 分配并初始化应用上下文 */
+    g_app_context = (app_context_t*)malloc(sizeof(app_context_t));
+    if (!g_app_context) {
+        fprintf(stderr, "无法分配应用上下文\n");
+        return;
+    }
+    memset(g_app_context, 0, sizeof(app_context_t));
+    
     /* 创建事件循环 */
     uv_loop_t* loop = uv_default_loop();
     if (!loop) {
         fprintf(stderr, "无法创建事件循环\n");
+        free(g_app_context);
+        g_app_context = NULL;
         return;
     }
-    
-    /* 分配并初始化统计结构 */
-    connection_stats_t* stats = (connection_stats_t*)malloc(sizeof(connection_stats_t));
-    if (!stats) {
-        fprintf(stderr, "无法分配统计结构\n");
-        return;
-    }
-    memset(stats, 0, sizeof(connection_stats_t));
-    
-    /* 设置循环数据指针 */
-    loop->data = stats;
 
     /* 创建服务器 */
-    uvhttp_server_t* server = NULL;
-    uvhttp_error_t result = uvhttp_server_new(loop, &server);
-    if (result != UVHTTP_OK || !server) {
+    uvhttp_error_t result = uvhttp_server_new(loop, &g_app_context->server);
+    if (result != UVHTTP_OK || !g_app_context->server) {
         fprintf(stderr, "无法创建服务器\n");
-        free(stats);
+        free(g_app_context);
+        g_app_context = NULL;
         return;
     }
+    
+    /* 设置服务器用户数据 */
+    g_app_context->server->user_data = g_app_context;
     
     /* 创建路由 */
     uvhttp_router_t* router = NULL;
     result = uvhttp_router_new(&router);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "无法创建路由\n");
-        uvhttp_server_free(server);
-        free(stats);
+        uvhttp_server_free(g_app_context->server);
+        free(g_app_context);
+        g_app_context = NULL;
         return;
     }
     
     /* 添加路由 */
     uvhttp_router_add_route(router, "/", simple_handler);
-    server->router = router;
+    g_app_context->server->router = router;
     
     /* 启动服务器 */
-    result = uvhttp_server_listen(server, "127.0.0.1", PORT);
+    result = uvhttp_server_listen(g_app_context->server, "127.0.0.1", PORT);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "无法启动服务器\n");
-        uvhttp_server_free(server);
-        free(stats);
+        uvhttp_server_free(g_app_context->server);
+        free(g_app_context);
+        g_app_context = NULL;
         return;
     }
     
@@ -146,9 +155,9 @@ static void run_connection_benchmark(const char* test_name) {
     print_connection_stats();
     
     /* 清理 */
-    uvhttp_server_free(server);
-    free(stats);
-    loop->data = NULL;
+    uvhttp_server_free(g_app_context->server);
+    free(g_app_context);
+    g_app_context = NULL;
 }
 
 int main(void) {
