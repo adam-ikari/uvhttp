@@ -1,7 +1,8 @@
 #!/bin/bash
-# UVHTTP 基准性能测试自动化脚本
+# UVHTTP HTTP 性能基准测试自动化脚本
 # 
-# 这个脚本自动化运行所有基准性能测试，收集结果并生成报告
+# 这个脚本使用标准的 HTTP 性能测试工具（wrk、ab）对 UVHTTP 服务器进行全面测试
+# 支持多种测试场景、并发级别和自动化报告生成
 
 set -e  # 遇到错误立即退出
 
@@ -22,9 +23,27 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 RUN_DIR="$RESULTS_DIR/run_$TIMESTAMP"
 
 # 测试配置
-TEST_DURATION=10  # 测试时长（秒）
-WRK_THREADS=(2 4 8 16)
-WRK_CONNECTIONS=(10 50 200 500)
+DEFAULT_PORT=18081
+TEST_DURATION=30  # 测试时长（秒）
+WARMUP_DURATION=5  # 预热时长（秒）
+
+# 并发级别配置
+CONCURRENCY_LEVELS=(
+    "2:10:低并发"      # 线程:连接:描述
+    "4:50:中等并发"
+    "8:200:高并发"
+    "16:500:极高并发"
+)
+
+# 测试端点配置
+TEST_ENDPOINTS=(
+    "/:简单文本:13"
+    "/json:JSON响应:50"
+    "/small:小响应:1023"
+    "/medium:中等响应:10239"
+    "/large:大响应:102399"
+    "/health:健康检查:22"
+)
 
 # 创建结果目录
 mkdir -p "$RUN_DIR"
@@ -57,22 +76,23 @@ check_dependencies() {
         missing_deps+=("wrk")
     fi
     
-    # 检查 ab
+    # 检查 ab（可选）
     if ! command -v ab &> /dev/null; then
-        missing_deps+=("ab")
+        log_warning "ab 未安装，将跳过 ab 测试"
     fi
     
     if [ ${#missing_deps[@]} -gt 0 ]; then
-        log_warning "缺少以下依赖: ${missing_deps[*]}"
-        log_info "某些测试将被跳过"
-    else
-        log_success "所有依赖已安装"
+        log_error "缺少必要的依赖: ${missing_deps[*]}"
+        log_info "请安装 wrk: sudo apt-get install wrk"
+        exit 1
     fi
+    
+    log_success "所有依赖已安装"
 }
 
 # 编译基准测试程序
-compile_benchmarks() {
-    log_info "编译基准测试程序..."
+compile_benchmark_server() {
+    log_info "编译基准测试服务器..."
     
     cd "$PROJECT_ROOT"
     
@@ -80,155 +100,313 @@ compile_benchmarks() {
         log_info "创建构建目录..."
         mkdir -p "$BUILD_DIR"
         cd "$BUILD_DIR"
-        cmake ..
+        cmake -DCMAKE_BUILD_TYPE=Release ..
     fi
     
     cd "$BUILD_DIR"
-    make -j$(nproc) benchmark_rps benchmark_latency benchmark_connection benchmark_memory benchmark_comprehensive
+    make -j$(nproc) benchmark_rps
     
-    log_success "基准测试程序编译完成"
+    if [ ! -f "$BENCHMARK_DIR/benchmark_rps" ]; then
+        log_error "benchmark_rps 编译失败"
+        exit 1
+    fi
+    
+    log_success "基准测试服务器编译完成"
 }
 
-# 运行单个基准测试
-run_benchmark() {
-    local name=$1
-    local port=$2
-    local output_file=$3
+# 启动测试服务器
+start_server() {
+    local port=$1
     
-    log_info "运行 $name..."
+    log_info "启动测试服务器 (端口: $port)..."
     
-    # 启动服务器（后台运行）
-    "$BENCHMARK_DIR/$name" > "$output_file.server.log" 2>&1 &
+    "$BENCHMARK_DIR/benchmark_rps" $port > "$RUN_DIR/server.log" 2>&1 &
     local server_pid=$!
     
     # 等待服务器启动
-    sleep 2
+    sleep 3
     
     # 检查服务器是否启动成功
     if ! kill -0 $server_pid 2>/dev/null; then
-        log_error "$name 启动失败"
-        cat "$output_file.server.log"
-        return 1
+        log_error "服务器启动失败"
+        cat "$RUN_DIR/server.log"
+        exit 1
     fi
     
-    log_success "$name 已启动 (PID: $server_pid, 端口: $port)"
-    
-    # 运行性能测试（如果安装了 wrk）
-    if command -v wrk &> /dev/null; then
-        log_info "使用 wrk 进行性能测试..."
-        
-        for threads in "${WRK_THREADS[@]}"; do
-            for connections in "${WRK_CONNECTIONS[@]}"; do
-                local test_name="${name}_${threads}t_${connections}c"
-                local wrk_output="$output_file.${test_name}.txt"
-                
-                log_info "  测试: $threads 线程 / $connections 连接"
-                wrk -t$threads -c$connections -d${TEST_DURATION}s "http://127.0.0.1:$port/" > "$wrk_output" 2>&1 || true
-                
-                # 提取 RPS
-                local rps=$(grep "Requests/sec" "$wrk_output" | awk '{print $2}')
-                if [ -n "$rps" ]; then
-                    echo "$test_name,$rps" >> "$output_file.rps.csv"
-                fi
-            done
-        done
+    # 测试服务器是否响应
+    if ! curl -s "http://127.0.0.1:$port/health" > /dev/null 2>&1; then
+        log_error "服务器无响应"
+        kill $server_pid 2>/dev/null || true
+        exit 1
     fi
     
-    # 等待测试完成
-    sleep 2
+    log_success "服务器已启动 (PID: $server_pid)"
+    echo $server_pid
+}
+
+# 停止测试服务器
+stop_server() {
+    local server_pid=$1
     
-    # 停止服务器
-    log_info "停止 $name..."
+    log_info "停止测试服务器..."
     kill $server_pid 2>/dev/null || true
     wait $server_pid 2>/dev/null || true
-    
-    log_success "$name 测试完成"
+    log_success "服务器已停止"
 }
 
-# 运行内存分配器测试
-run_allocator_tests() {
-    log_info "运行内存分配器测试..."
+# 运行 wrk 测试
+run_wrk_test() {
+    local endpoint=$1
+    local threads=$2
+    local connections=$3
+    local duration=$4
+    local port=$5
+    local output_file=$6
     
-    "$BENCHMARK_DIR/performance_allocator" > "$RUN_DIR/allocator.txt" 2>&1
-    "$BENCHMARK_DIR/performance_allocator_compare" > "$RUN_DIR/allocator_compare.txt" 2>&1
+    local url="http://127.0.0.1:$port$endpoint"
     
-    log_success "内存分配器测试完成"
+    log_info "  wrk 测试: $threads 线程 / $connections 连接 / $duration 秒"
+    
+    wrk -t$threads -c$connections -d${duration}s "$url" > "$output_file" 2>&1
+    
+    if [ $? -ne 0 ]; then
+        log_warning "  wrk 测试失败"
+        return 1
+    fi
 }
 
-# 运行位字段测试
-run_bitfield_test() {
-    log_info "运行位字段测试..."
+# 运行 ab 测试（可选）
+run_ab_test() {
+    local endpoint=$1
+    local connections=$2
+    local requests=$3
+    local port=$4
+    local output_file=$5
     
-    "$BENCHMARK_DIR/test_bitfield" > "$RUN_DIR/bitfield.txt" 2>&1
+    if ! command -v ab &> /dev/null; then
+        return 0
+    fi
     
-    log_success "位字段测试完成"
+    local url="http://127.0.0.1:$port$endpoint"
+    
+    log_info "  ab 测试: $connections 并发 / $requests 请求"
+    
+    ab -n $requests -c $connections -k "$url" > "$output_file" 2>&1
+    
+    if [ $? -ne 0 ]; then
+        log_warning "  ab 测试失败"
+        return 1
+    fi
+}
+
+# 提取 wrk 结果
+extract_wrk_results() {
+    local output_file=$1
+    
+    # 提取 RPS
+    local rps=$(grep "Requests/sec" "$output_file" | awk '{print $2}')
+    echo "$rps"
+}
+
+# 提取 ab 结果
+extract_ab_results() {
+    local output_file=$1
+    
+    # 提取 RPS
+    local rps=$(grep "Requests per second" "$output_file" | awk '{print $4}')
+    echo "$rps"
+}
+
+# 运行完整的性能测试
+run_performance_tests() {
+    local server_pid=$1
+    local port=$2
+    
+    log_info "开始性能测试..."
+    
+    # 创建 CSV 文件
+    local csv_file="$RUN_DIR/results.csv"
+    echo "Endpoint,Threads,Connections,RPS" > "$csv_file"
+    
+    # 预热
+    log_info "预热服务器 (${WARMUP_DURATION} 秒)..."
+    wrk -t4 -c50 -d${WARMUP_DURATION}s "http://127.0.0.1:$port/" > /dev/null 2>&1 || true
+    sleep 1
+    
+    # 对每个端点进行测试
+    for endpoint_info in "${TEST_ENDPOINTS[@]}"; do
+        IFS=':' read -r endpoint name size <<< "$endpoint_info"
+        
+        log_info "测试端点: $endpoint ($name, ${size} bytes)"
+        
+        # 对每个并发级别进行测试
+        for level_info in "${CONCURRENCY_LEVELS[@]}"; do
+            IFS=':' read -r threads connections desc <<< "$level_info"
+            
+            local test_dir="$RUN_DIR/${endpoint//\//_}/${desc}"
+            mkdir -p "$test_dir"
+            
+            # 运行 wrk 测试
+            local wrk_output="$test_dir/wrk.txt"
+            run_wrk_test "$endpoint" "$threads" "$connections" "$TEST_DURATION" "$port" "$wrk_output"
+            
+            # 提取结果
+            local rps=$(extract_wrk_results "$wrk_output")
+            if [ -n "$rps" ]; then
+                echo "$endpoint,$threads,$connections,$rps" >> "$csv_file"
+                log_success "  RPS: $rps"
+            fi
+            
+            # 运行 ab 测试（可选）
+            local requests=$((connections * 100))
+            local ab_output="$test_dir/ab.txt"
+            run_ab_test "$endpoint" "$connections" "$requests" "$port" "$ab_output"
+        done
+        
+        echo ""
+    done
+    
+    log_success "性能测试完成"
 }
 
 # 生成测试报告
 generate_report() {
     log_info "生成测试报告..."
     
-    local report_file="$RUN_DIR/summary_report.md"
+    local report_file="$RUN_DIR/report.md"
     
     cat > "$report_file" << EOF
-# UVHTTP 基准性能测试报告
+# UVHTTP HTTP 性能基准测试报告
 
 ## 测试信息
 
 - **测试时间**: $(date)
 - **测试时长**: ${TEST_DURATION} 秒
-- **测试目录**: $RUN_DIR
+- **预热时长**: ${WARMUP_DURATION} 秒
+- **服务器端口**: $DEFAULT_PORT
+- **结果目录**: $RUN_DIR
+
+## 测试端点
+
+| 端点 | 描述 | 响应大小 |
+|------|------|----------|
+EOF
+    
+    # 添加端点信息
+    for endpoint_info in "${TEST_ENDPOINTS[@]}"; do
+        IFS=':' read -r endpoint name size <<< "$endpoint_info"
+        echo "| $endpoint | $name | ${size} bytes |" >> "$report_file"
+    done
+    
+    cat >> "$report_file" << EOF
+
+## 并发级别
+
+| 级别 | 线程数 | 连接数 |
+|------|--------|--------|
+EOF
+    
+    # 添加并发级别信息
+    for level_info in "${CONCURRENCY_LEVELS[@]}"; do
+        IFS=':' read -r threads connections desc <<< "$level_info"
+        echo "| $desc | $threads | $connections |" >> "$report_file"
+    done
+    
+    cat >> "$report_file" << EOF
 
 ## 测试结果
 
-### 1. RPS 测试
+### RPS 性能
 
+| 端点 | 线程数 | 连接数 | RPS |
+|------|--------|--------|-----|
 EOF
     
-    # 提取 RPS 结果
-    if [ -f "$RUN_DIR/benchmark_rps.rps.csv" ]; then
-        cat >> "$report_file" << EOF
-| 测试场景 | RPS |
-|---------|-----|
-EOF
-        tail -n +2 "$RUN_DIR/benchmark_rps.rps.csv" | while IFS=, read -r name rps; do
-            echo "| $name | $rps |" >> "$report_file"
+    # 添加测试结果
+    if [ -f "$RUN_DIR/results.csv" ]; then
+        tail -n +2 "$RUN_DIR/results.csv" | while IFS=',' read -r endpoint threads connections rps; do
+            echo "| $endpoint | $threads | $connections | $rps |" >> "$report_file"
         done
-        echo "" >> "$report_file"
     fi
     
-    # 添加性能评估
     cat >> "$report_file" << EOF
-### 2. 性能评估
 
-根据性能基准文档的目标：
+## 性能评估
+
+根据 UVHTTP 性能基准目标：
 
 - **低并发（2 线程 / 10 连接）**: ≥ 17,000 RPS
 - **中等并发（4 线程 / 50 连接）**: ≥ 17,000 RPS
 - **高并发（8 线程 / 200 连接）**: ≥ 16,000 RPS
-- **平均延迟**: < 15ms
-- **错误率**: < 0.1%
+- **极高并发（16 线程 / 500 连接）**: ≥ 15,000 RPS
 
-### 3. 详细日志
+## 详细日志
 
-详细的测试日志保存在以下文件：
+详细的测试日志保存在以下目录：
 
 EOF
     
-    # 列出所有日志文件
-    for log_file in "$RUN_DIR"/*.log "$RUN_DIR"/*.txt; do
-        if [ -f "$log_file" ]; then
-            echo "- $(basename "$log_file")" >> "$report_file"
-        fi
+    # 列出所有测试目录
+    find "$RUN_DIR" -type d -name "*" ! -path "$RUN_DIR" | while read -r dir; do
+        echo "- $(basename "$dir")/" >> "$report_file"
     done
+    
+    cat >> "$report_file" << EOF
+
+## 服务器日志
+
+服务器运行日志: \`server.log\`
+
+## 使用说明
+
+### 运行单个测试
+
+\`\`\`bash
+# 启动服务器
+./build/dist/bin/benchmark_rps 18081
+
+# 使用 wrk 测试
+wrk -t4 -c100 -d30s http://127.0.0.1:18081/
+wrk -t4 -c100 -d30s http://127.0.0.1:18081/json
+wrk -t4 -c100 -d30s http://127.0.0.1:18081/small
+wrk -t4 -c100 -d30s http://127.0.0.1:18081/medium
+wrk -t4 -c100 -d30s http://127.0.0.1:18081/large
+
+# 使用 ab 测试
+ab -n 100000 -c 100 -k http://127.0.0.1:18081/
+\`\`\`
+
+### 运行完整测试
+
+\`\`\`bash
+cd benchmark
+./run_benchmarks.sh
+\`\`\`
+
+---
+
+**报告生成时间**: $(date)
+**UVHTTP 版本**: $(cd "$PROJECT_ROOT" && git describe --tags --always 2>/dev/null || echo "unknown")
+EOF
     
     log_success "测试报告已生成: $report_file"
 }
 
+# 清理函数
+cleanup() {
+    if [ -n "$server_pid" ] && kill -0 $server_pid 2>/dev/null; then
+        log_info "清理中..."
+        stop_server $server_pid
+    fi
+}
+
+# 设置清理陷阱
+trap cleanup EXIT INT TERM
+
 # 主函数
 main() {
     echo "========================================"
-    echo "  UVHTTP 基准性能测试"
+    echo "  UVHTTP HTTP 性能基准测试"
     echo "========================================"
     echo ""
     
@@ -236,39 +414,16 @@ main() {
     check_dependencies
     echo ""
     
-    # 编译基准测试
-    compile_benchmarks
+    # 编译基准测试服务器
+    compile_benchmark_server
     echo ""
     
-    # 运行基准测试
-    log_info "开始基准性能测试..."
-    
-    # RPS 测试
-    run_benchmark "benchmark_rps" 18081 "$RUN_DIR/benchmark_rps"
+    # 启动服务器
+    server_pid=$(start_server $DEFAULT_PORT)
     echo ""
     
-    # 延迟测试
-    run_benchmark "benchmark_latency" 18081 "$RUN_DIR/benchmark_latency"
-    echo ""
-    
-    # 连接测试
-    run_benchmark "benchmark_connection" 18082 "$RUN_DIR/benchmark_connection"
-    echo ""
-    
-    # 内存测试
-    run_benchmark "benchmark_memory" 18083 "$RUN_DIR/benchmark_memory"
-    echo ""
-    
-    # 综合测试
-    run_benchmark "benchmark_comprehensive" 18084 "$RUN_DIR/benchmark_comprehensive"
-    echo ""
-    
-    # 内存分配器测试
-    run_allocator_tests
-    echo ""
-    
-    # 位字段测试
-    run_bitfield_test
+    # 运行性能测试
+    run_performance_tests $server_pid $DEFAULT_PORT
     echo ""
     
     # 生成报告
@@ -280,7 +435,8 @@ main() {
     echo "========================================"
     echo ""
     echo "结果目录: $RUN_DIR"
-    echo "报告文件: $RUN_DIR/summary_report.md"
+    echo "报告文件: $RUN_DIR/report.md"
+    echo ""
 }
 
 # 运行主函数
