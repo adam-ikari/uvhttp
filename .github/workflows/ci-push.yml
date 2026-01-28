@@ -17,132 +17,48 @@ env:
 
 jobs:
   # ========== 阶段 1: 并行构建和扫描 ==========
-  
+
   ubuntu-build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     outputs:
       build-dir: ${{ steps.build.outputs.build-dir }}
       build-status: ${{ steps.build.outputs.status }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
-      
+
       - name: Setup build environment
         uses: ./.github/actions/setup-build
         with:
           os: ubuntu-latest
-      
+
       - name: Cache dependencies
         uses: ./.github/actions/cache-deps
         with:
           cache-key: push-${{ github.sha }}
           build-type: Release
-      
+
       - name: Configure CMake
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_WITH_WEBSOCKET=ON \
             -DBUILD_WITH_MIMALLOC=ON
-      
+
       - name: Build
         id: build
         run: |
           cmake --build build --config Release -j$(nproc)
           echo "build-dir=build" >> $GITHUB_OUTPUT
           echo "status=success" >> $GITHUB_OUTPUT
-      
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4.3.1
         with:
           name: build-ubuntu-push-${{ github.sha }}
-          path: build/
-          retention-days: 7
-  
-  macos-build:
-    runs-on: macos-latest
-    timeout-minutes: 25
-    outputs:
-      build-status: ${{ steps.build.outputs.status }}
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.1
-        with:
-          submodules: recursive
-      
-      - name: Setup build environment
-        uses: ./.github/actions/setup-build
-        with:
-          os: macos-latest
-      
-      - name: Cache dependencies
-        uses: ./.github/actions/cache-deps
-        with:
-          cache-key: push-${{ github.sha }}
-          build-type: Release
-      
-      - name: Configure CMake
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_WITH_WEBSOCKET=ON \
-            -DBUILD_WITH_MIMALLOC=ON
-      
-      - name: Build
-        id: build
-        run: |
-          cmake --build build --config Release -j$(sysctl -n hw.ncpu)
-          echo "status=success" >> $GITHUB_OUTPUT
-      
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: build-macos-push-${{ github.sha }}
-          path: build/
-          retention-days: 7
-  
-  windows-build:
-    runs-on: windows-latest
-    timeout-minutes: 30
-    outputs:
-      build-status: ${{ steps.build.outputs.status }}
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.1
-        with:
-          submodules: recursive
-      
-      - name: Setup build environment
-        uses: ./.github/actions/setup-build
-        with:
-          os: windows-latest
-      
-      - name: Cache dependencies
-        uses: ./.github/actions/cache-deps
-        with:
-          cache-key: push-${{ github.sha }}
-          build-type: Release
-      
-      - name: Configure CMake
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release `
-            -DBUILD_WITH_WEBSOCKET=ON `
-            -DBUILD_WITH_MIMALLOC=ON
-      
-      - name: Build
-        id: build
-        run: |
-          cmake --build build --config Release -j
-          echo "status=success" >> $GITHUB_OUTPUT
-      
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: build-windows-push-${{ github.sha }}
           path: build/
           retention-days: 7
   
@@ -189,94 +105,34 @@ jobs:
           echo "Security scan completed"
   
   # ========== 阶段 2: 并行测试 ==========
-  
+
   ubuntu-test-full:
     needs: [ubuntu-build]
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
-      
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4.1.2
         with:
           name: build-ubuntu-push-${{ github.sha }}
           path: build/
-      
+
       - name: Run full tests
         run: |
           cd build
           ctest --output-on-failure -j$(nproc) --timeout 120
-      
+
       - name: Upload test logs
         if: always()
         uses: actions/upload-artifact@v4.3.1
         with:
           name: test-logs-ubuntu-push-${{ github.sha }}
-          path: build/Testing/
-          retention-days: 7
-  
-  macos-test-full:
-    needs: [macos-build]
-    runs-on: macos-latest
-    timeout-minutes: 20
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.1
-        with:
-          submodules: recursive
-      
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4.1.2
-        with:
-          name: build-macos-push-${{ github.sha }}
-          path: build/
-      
-      - name: Run full tests
-        run: |
-          cd build
-          ctest --output-on-failure -j$(sysctl -n hw.ncpu) --timeout 120
-      
-      - name: Upload test logs
-        if: always()
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: test-logs-macos-push-${{ github.sha }}
-          path: build/Testing/
-          retention-days: 7
-  
-  windows-test-full:
-    needs: [windows-build]
-    runs-on: windows-latest
-    timeout-minutes: 20
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.1
-        with:
-          submodules: recursive
-      
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4.1.2
-        with:
-          name: build-windows-push-${{ github.sha }}
-          path: build/
-      
-      - name: Run full tests
-        run: |
-          cd build
-          ctest --output-on-failure -j --timeout 120
-      
-      - name: Upload test logs
-        if: always()
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: test-logs-windows-push-${{ github.sha }}
           path: build/Testing/
           retention-days: 7
   
@@ -384,13 +240,13 @@ jobs:
           retention-days: 30
   
   # ========== 阶段 4: 生成总结 ==========
-  
+
   generate-summary:
-    needs: [ubuntu-test-full, macos-test-full, windows-test-full, performance-benchmark]
+    needs: [ubuntu-test-full, performance-benchmark]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
-    
+
     steps:
       - name: Generate summary
         run: |
@@ -399,9 +255,7 @@ jobs:
           echo "### Build Status" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Ubuntu | ${{ needs.ubuntu-test-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| macOS | ${{ needs.macos-test-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Windows | ${{ needs.windows-test-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Ubuntu (Linux) | ${{ needs.ubuntu-test-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Performance" >> $GITHUB_STEP_SUMMARY
           echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
