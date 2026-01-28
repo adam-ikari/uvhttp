@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(uvhttp VERSION 2.0.0 LANGUAGES C CXX)
+project(uvhttp VERSION 2.2.0 LANGUAGES C CXX)
 
 # 构建选项
 option(BUILD_WITH_WEBSOCKET "Build with WebSocket support" ON)
