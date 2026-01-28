@@ -15,8 +15,11 @@
 #include <string.h>
 #include <signal.h>
 
-static uvhttp_server_t* g_server = NULL;
-static int g_message_count = 0;
+/* 应用上下文 */
+typedef struct {
+    uvhttp_server_t* server;
+    int message_count;
+} app_context_t;
 
 /* WebSocket 连接回调 */
 static int on_ws_connect(uvhttp_ws_connection_t* ws_conn) {
@@ -39,7 +42,14 @@ static int on_ws_message(uvhttp_ws_connection_t* ws_conn,
     snprintf(response, sizeof(response), "Echo: %.*s", (int)len, data);
     uvhttp_ws_send_text(NULL, ws_conn, response, strlen(response));
 
-    g_message_count++;
+    /* 更新消息计数（从循环数据指针获取上下文） */
+    uv_loop_t* loop = uvhttp_ws_get_loop(ws_conn);
+    if (loop && loop->data) {
+        app_context_t* ctx = (app_context_t*)loop->data;
+        if (ctx) {
+            ctx->message_count++;
+        }
+    }
 
     return 0;
 }
@@ -97,13 +107,17 @@ static void signal_handler(int signum) {
     (void)signum;
     printf("\nShutting down server...\n");
 
-    if (g_server) {
-        /* 关闭所有 WebSocket 连接 */
-        uvhttp_server_ws_close_all(g_server, NULL);
+    uv_loop_t* loop = uv_default_loop();
+    if (loop && loop->data) {
+        app_context_t* ctx = (app_context_t*)loop->data;
+        if (ctx && ctx->server) {
+            /* 关闭所有 WebSocket 连接 */
+            uvhttp_server_ws_close_all(ctx->server, NULL);
 
-        /* 停止服务器 */
-        uvhttp_server_stop(g_server);
-        uvhttp_server_free(g_server);
+            /* 停止服务器 */
+            uvhttp_server_stop(ctx->server);
+            uvhttp_server_free(ctx->server);
+        }
     }
 
     exit(0);
@@ -122,19 +136,32 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    /* 创建服务器 */
-    uvhttp_error_t server_result = uvhttp_server_new(loop, &g_server);
-    if (server_result != UVHTTP_OK) {
-        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+    /* 创建应用上下文 */
+    app_context_t* ctx = (app_context_t*)malloc(sizeof(app_context_t));
+    if (!ctx) {
+        fprintf(stderr, "Failed to allocate app context\n");
         return 1;
     }
-    if (!g_server) {
+    memset(ctx, 0, sizeof(app_context_t));
+
+    /* 设置循环数据指针 */
+    loop->data = ctx;
+
+    /* 创建服务器 */
+    uvhttp_error_t server_result = uvhttp_server_new(loop, &ctx->server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        free(ctx);
+        return 1;
+    }
+    if (!ctx->server) {
         fprintf(stderr, "Failed to create server\n");
+        free(ctx);
         return 1;
     }
 
     /* 设置 HTTP 处理器 */
-    uvhttp_server_set_handler(g_server, http_handler);
+    uvhttp_server_set_handler(ctx->server, http_handler);
 
     /* 注册 WebSocket 处理器 */
     uvhttp_ws_handler_t ws_handler = {
@@ -144,16 +171,17 @@ int main(int argc, char* argv[]) {
         .user_data = NULL
     };
 
-    uvhttp_error_t result = uvhttp_server_register_ws_handler(g_server, "/ws", &ws_handler);
+    uvhttp_error_t result = uvhttp_server_register_ws_handler(ctx->server, "/ws", &ws_handler);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to register WebSocket handler: %s\n",
                 uvhttp_error_string(result));
+        free(ctx);
         return 1;
     }
 
     /* 启用连接管理 */
     result = uvhttp_server_ws_enable_connection_management(
-        g_server,
+        ctx->server,
         60,   /* 超时时间：60秒 */
         30    /* 心跳间隔：30秒 */
     );
@@ -161,6 +189,7 @@ int main(int argc, char* argv[]) {
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to enable connection management: %s\n",
                 uvhttp_error_string(result));
+        free(ctx);
         return 1;
     }
 
@@ -169,9 +198,10 @@ int main(int argc, char* argv[]) {
     printf("  - Heartbeat interval: 30 seconds\n\n");
 
     /* 启动服务器 */
-    result = uvhttp_server_listen(g_server, "0.0.0.0", 8080);
+    result = uvhttp_server_listen(ctx->server, "0.0.0.0", 8080);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to start server: %s\n", uvhttp_error_string(result));
+        free(ctx);
         return 1;
     }
 
@@ -187,10 +217,13 @@ int main(int argc, char* argv[]) {
     uv_run(loop, UV_RUN_DEFAULT);
 
     /* 清理 */
-    uvhttp_server_ws_disable_connection_management(g_server);
-    uvhttp_server_free(g_server);
+    uvhttp_server_ws_disable_connection_management(ctx->server);
+    uvhttp_server_free(ctx->server);
 
-    printf("Server stopped. Total messages processed: %d\n", g_message_count);
+    printf("Server stopped. Total messages processed: %d\n", ctx->message_count);
+
+    free(ctx);
+    loop->data = NULL;
 
     return 0;
 }
