@@ -21,6 +21,9 @@ typedef struct {
     int message_count;
 } app_context_t;
 
+/* 全局应用上下文（信号处理需要） */
+static app_context_t* g_app_context = NULL;
+
 /* WebSocket 连接回调 */
 static int on_ws_connect(uvhttp_ws_connection_t* ws_conn) {
     (void)ws_conn;  // 未使用的参数
@@ -42,13 +45,9 @@ static int on_ws_message(uvhttp_ws_connection_t* ws_conn,
     snprintf(response, sizeof(response), "Echo: %.*s", (int)len, data);
     uvhttp_ws_send_text(NULL, ws_conn, response, strlen(response));
 
-    /* 更新消息计数（从循环数据指针获取上下文） */
-    uv_loop_t* loop = uvhttp_ws_get_loop(ws_conn);
-    if (loop && loop->data) {
-        app_context_t* ctx = (app_context_t*)loop->data;
-        if (ctx) {
-            ctx->message_count++;
-        }
+    /* 更新消息计数（从全局上下文获取） */
+    if (g_app_context) {
+        g_app_context->message_count++;
     }
 
     return 0;
@@ -60,8 +59,8 @@ static int on_ws_close(uvhttp_ws_connection_t* ws_conn) {
     printf("WebSocket client disconnected\n");
 
     /* 显示当前连接数 */
-    if (g_server) {
-        int count = uvhttp_server_ws_get_connection_count(g_server);
+    if (g_app_context && g_app_context->server) {
+        int count = uvhttp_server_ws_get_connection_count(g_app_context->server);
         printf("Current connections: %d\n", count);
     }
 
@@ -103,23 +102,14 @@ static int http_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
 }
 
 /* 信号处理函数 */
-static void signal_handler(int signum) {
-    (void)signum;
+static void signal_handler(int sig) {
+    (void)sig;
     printf("\nShutting down server...\n");
-
-    uv_loop_t* loop = uv_default_loop();
-    if (loop && loop->data) {
-        app_context_t* ctx = (app_context_t*)loop->data;
-        if (ctx && ctx->server) {
-            /* 关闭所有 WebSocket 连接 */
-            uvhttp_server_ws_close_all(ctx->server, NULL);
-
-            /* 停止服务器 */
-            uvhttp_server_stop(ctx->server);
-            uvhttp_server_free(ctx->server);
-        }
+    if (g_app_context && g_app_context->server) {
+        uvhttp_server_stop(g_app_context->server);
+        uvhttp_server_free(g_app_context->server);
+        g_app_context->server = NULL;
     }
-
     exit(0);
 }
 
@@ -144,8 +134,8 @@ int main(int argc, char* argv[]) {
     }
     memset(ctx, 0, sizeof(app_context_t));
 
-    /* 设置循环数据指针 */
-    loop->data = ctx;
+    /* 设置全局应用上下文 */
+    g_app_context = ctx;
 
     /* 创建服务器 */
     uvhttp_error_t server_result = uvhttp_server_new(loop, &ctx->server);
