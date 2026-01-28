@@ -28,7 +28,8 @@ typedef struct {
     double sum;
 } latency_stats_t;
 
-// 使用 loop->data 传递统计结构
+/* 全局统计结构（POSIX 允许的例外） */
+static latency_stats_t g_stats;
 
 /* 获取当前时间（微秒） */
 static uint64_t get_timestamp_us(void) {
@@ -39,16 +40,16 @@ static uint64_t get_timestamp_us(void) {
 
 /* 添加延迟样本 */
 static void add_latency_sample(uint64_t latency_us) {
-    if (stats->count < MAX_SAMPLES) {
-        stats->samples[stats->count++] = latency_us;
-        stats->sum += latency_us;
-        
-        if (stats->count == 1) {
-            stats->min = latency_us;
-            stats->max = latency_us;
+    if (g_stats.count < MAX_SAMPLES) {
+        g_stats.samples[g_stats.count++] = latency_us;
+        g_stats.sum += latency_us;
+
+        if (g_stats.count == 1) {
+            g_stats.min = latency_us;
+            g_stats.max = latency_us;
         } else {
-            if (latency_us < stats->min) stats->min = latency_us;
-            if (latency_us > stats->max) stats->max = latency_us;
+            if (latency_us < g_stats.min) g_stats.min = latency_us;
+            if (latency_us > g_stats.max) g_stats.max = latency_us;
         }
     }
 }
@@ -62,35 +63,35 @@ static int compare_uint64(const void* a, const void* b) {
 
 /* 计算百分位数 */
 static uint64_t calculate_percentile(double percentile) {
-    if (stats->count == 0) return 0;
-    
+    if (g_stats.count == 0) return 0;
+
     /* 使用 qsort 进行高效排序 */
-    qsort(stats->samples, stats->count, sizeof(uint64_t), compare_uint64);
-    
-    int index = (int)(percentile * stats->count);
-    if (index >= stats->count) index = stats->count - 1;
-    
-    return stats->samples[index];
+    qsort(g_stats.samples, g_stats.count, sizeof(uint64_t), compare_uint64);
+
+    int index = (int)(percentile * g_stats.count);
+    if (index >= g_stats.count) index = g_stats.count - 1;
+
+    return g_stats.samples[index];
 }
 
 /* 打印延迟统计 */
 static void print_latency_stats(void) {
-    if (stats->count == 0) {
+    if (g_stats.count == 0) {
         printf("没有延迟样本\n");
         return;
     }
-    
-    double avg = stats->sum / stats->count;
+
+    double avg = g_stats.sum / g_stats.count;
     uint64_t p50 = calculate_percentile(0.50);
     uint64_t p95 = calculate_percentile(0.95);
     uint64_t p99 = calculate_percentile(0.99);
     uint64_t p999 = calculate_percentile(0.999);
-    
+
     printf("=== 延迟统计 ===\n");
-    printf("样本数量: %d\n", stats->count);
+    printf("样本数量: %d\n", g_stats.count);
     printf("平均延迟: %.2f μs (%.3f ms)\n", avg, avg / 1000.0);
-    printf("最小延迟: %" PRIu64 " μs (%.3f ms)\n", stats->min, stats->min / 1000.0);
-    printf("最大延迟: %" PRIu64 " μs (%.3f ms)\n", stats->max, stats->max / 1000.0);
+    printf("最小延迟: %" PRIu64 " μs (%.3f ms)\n", g_stats.min, g_stats.min / 1000.0);
+    printf("最大延迟: %" PRIu64 " μs (%.3f ms)\n", g_stats.max, g_stats.max / 1000.0);
     printf("P50 延迟: %" PRIu64 " μs (%.3f ms)\n", p50, p50 / 1000.0);
     printf("P95 延迟: %" PRIu64 " μs (%.3f ms)\n", p95, p95 / 1000.0);
     printf("P99 延迟: %" PRIu64 " μs (%.3f ms)\n", p99, p99 / 1000.0);
@@ -127,7 +128,11 @@ static void run_latency_benchmark(const char* test_name) {
     printf("测试时长: %d 秒\n", TEST_DURATION);
     printf("端口: %d\n", PORT);
     printf("\n");
-    
+
+    /* 初始化统计结构 */
+    memset(&g_stats, 0, sizeof(g_stats));
+    g_stats.min = UINT64_MAX;
+
     /* 创建事件循环 */
     uv_loop_t* loop = uv_default_loop();
     if (!loop) {
