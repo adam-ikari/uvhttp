@@ -22,19 +22,26 @@
 #include <unistd.h>
 
 #define DEFAULT_PORT 18081
-#define KEEP_RUNNING 1
 
-/* 全局变量 */
-static uvhttp_server_t* g_server = NULL;
-static volatile sig_atomic_t g_running = KEEP_RUNNING;
+/* 应用上下文 */
+typedef struct {
+    uvhttp_server_t* server;
+    volatile sig_atomic_t running;
+} app_context_t;
 
 /* 信号处理函数 */
 static void signal_handler(int signum) {
     (void)signum;
     printf("\n收到停止信号，正在关闭服务器...\n");
-    g_running = 0;
-    if (g_server) {
-        uvhttp_server_stop(g_server);
+    uv_loop_t* loop = uv_default_loop();
+    if (loop && loop->data) {
+        app_context_t* ctx = (app_context_t*)loop->data;
+        if (ctx) {
+            ctx->running = 0;
+            if (ctx->server) {
+                uvhttp_server_stop(ctx->server);
+            }
+        }
     }
 }
 
@@ -227,10 +234,6 @@ int main(int argc, char* argv[]) {
         }
     }
     
-    /* 设置信号处理 */
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
-    
     /* 创建事件循环 */
     uv_loop_t* loop = uv_default_loop();
     if (!loop) {
@@ -238,10 +241,27 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
+    /* 创建应用上下文 */
+    app_context_t* ctx = (app_context_t*)malloc(sizeof(app_context_t));
+    if (!ctx) {
+        fprintf(stderr, "无法分配应用上下文\n");
+        return 1;
+    }
+    memset(ctx, 0, sizeof(app_context_t));
+    ctx->running = 1;
+    
+    /* 设置循环数据指针 */
+    loop->data = ctx;
+    
+    /* 设置信号处理 */
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+    
     /* 创建服务器 */
-    uvhttp_error_t result = uvhttp_server_new(loop, &g_server);
-    if (result != UVHTTP_OK || !g_server) {
+    uvhttp_error_t result = uvhttp_server_new(loop, &ctx->server);
+    if (result != UVHTTP_OK || !ctx->server) {
         fprintf(stderr, "无法创建服务器: %s\n", uvhttp_error_string(result));
+        free(ctx);
         return 1;
     }
     
@@ -250,7 +270,8 @@ int main(int argc, char* argv[]) {
     result = uvhttp_router_new(&router);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "无法创建路由: %s\n", uvhttp_error_string(result));
-        uvhttp_server_free(g_server);
+        uvhttp_server_free(ctx->server);
+        free(ctx);
         return 1;
     }
     
@@ -263,13 +284,14 @@ int main(int argc, char* argv[]) {
     uvhttp_router_add_route(router, "/large", large_handler);
     uvhttp_router_add_route(router, "/health", health_handler);
     
-    g_server->router = router;
+    ctx->server->router = router;
     
     /* 启动服务器 */
-    result = uvhttp_server_listen(g_server, "127.0.0.1", port);
+    result = uvhttp_server_listen(ctx->server, "127.0.0.1", port);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "无法启动服务器: %s\n", uvhttp_error_string(result));
-        uvhttp_server_free(g_server);
+        uvhttp_server_free(ctx->server);
+        free(ctx);
         return 1;
     }
     
@@ -277,13 +299,15 @@ int main(int argc, char* argv[]) {
     print_usage(argv[0], port);
     
     /* 运行事件循环 */
-    while (g_running) {
+    while (ctx->running) {
         uv_run(loop, UV_RUN_ONCE);
     }
     
     /* 清理 */
     printf("\n正在关闭服务器...\n");
-    uvhttp_server_free(g_server);
+    uvhttp_server_free(ctx->server);
+    free(ctx);
+    loop->data = NULL;
     printf("服务器已关闭\n");
     
     return 0;
