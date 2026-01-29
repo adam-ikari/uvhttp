@@ -269,36 +269,22 @@ static void on_file_stat_complete(uv_fs_t* req) {
 }
 
 /**
-
  * 异步读取文件
-
  */
-
 uvhttp_error_t uvhttp_async_file_read(
-    uvhttp_async_file_manager_t* manager,
-
-    const char* file_path,
-
-    void* request,
-
-    void* response,
-
-    void* static_context,
-
+    uvhttp_async_file_manager_t* manager, const char* file_path, void* request,
+    void* response, void* static_context,
     void (*completion_cb)(uvhttp_async_file_request_t* req, int status)) {
 
     if (!manager || !file_path || !request || !response || !completion_cb) {
-
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
     /* 检查并发限制 */
 
     if (manager->current_reads >= manager->max_concurrent_reads) {
-
         uvhttp_log_safe_error(0, "async_file_limit",
                               "Too many concurrent reads");
-
         return UVHTTP_ERROR_RATE_LIMIT_EXCEEDED;
     }
 
@@ -308,9 +294,7 @@ uvhttp_error_t uvhttp_async_file_read(
         uvhttp_alloc(sizeof(uvhttp_async_file_request_t));
 
     if (!async_req) {
-
         uvhttp_handle_memory_failure("async_file_request", NULL, NULL);
-
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
 
@@ -321,7 +305,6 @@ uvhttp_error_t uvhttp_async_file_read(
     strncpy(async_req->file_path, file_path, sizeof(async_req->file_path) - 1);
 
     async_req->file_path[sizeof(async_req->file_path) - 1] = '\0';
-
     async_req->request = request;
     async_req->response = response;
     async_req->static_context = static_context;
