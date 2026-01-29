@@ -12,7 +12,6 @@ set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/xxhash/libxxhash.a)
 
 # 从父 CMakeLists.txt 获取 UVHTTP 库路径
 set(UVHTTP_LIB ${CMAKE_BINARY_DIR}/dist/lib/libuvhttp.a)
-set(CJSON_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson/libcjson.a)
 
 add_executable(simple_routing 01_simple_routing.c)
 target_link_libraries(simple_routing
@@ -21,7 +20,7 @@ target_link_libraries(simple_routing
     ${MBEDTLS_LIBS}
     ${LLHTTP_LIB}
     ${XXHASH_LIB}
-    ${CJSON_LIB}
+    cjson
     pthread m dl)
 target_include_directories(simple_routing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson)
 add_dependencies(simple_routing uvhttp)
@@ -33,7 +32,7 @@ target_link_libraries(method_routing
     ${MBEDTLS_LIBS}
     ${LLHTTP_LIB}
     ${XXHASH_LIB}
-    ${CJSON_LIB}
+    cjson
     pthread m dl)
 target_include_directories(method_routing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson)
 add_dependencies(method_routing uvhttp)

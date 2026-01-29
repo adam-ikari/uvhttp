@@ -2,7 +2,7 @@
 
 # 从父 CMakeLists.txt 获取 UVHTTP 库路径
 set(UVHTTP_LIB ${CMAKE_BINARY_DIR}/dist/lib/libuvhttp.a)
-set(CJSON_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson/libcjson.a)
+set(CJSON_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson/build/libcjson.a)
 
 add_executable(hello_world 01_hello_world.c)
 
@@ -38,7 +38,7 @@ target_link_libraries(quick_api_demo
         mbedtls
         xxhash
         llhttp
-        ${CJSON_LIB}
+        cjson
         pthread
         m
         dl
