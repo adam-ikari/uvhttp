@@ -1,23 +1,25 @@
 #include "uvhttp_connection.h"
-#include "uvhttp_server.h"
+
+#include "uvhttp_allocator.h"
+#include "uvhttp_constants.h"
+#include "uvhttp_error_handler.h"
+#include "uvhttp_error_helpers.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_router.h"
-#include "uvhttp_allocator.h"
-#include "uvhttp_constants.h"
-#include "uvhttp_error_helpers.h"
-#include "uvhttp_error_handler.h"
+#include "uvhttp_server.h"
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include <uv.h>
 
 /* ========== 编译时验证 ========== */
 /* 验证结构体大小，确保内存布局优化不会被破坏 */
 #ifdef __cplusplus
-#define UVHTTP_STATIC_ASSERT(cond, msg) static_assert(cond, msg)
+#    define UVHTTP_STATIC_ASSERT(cond, msg) static_assert(cond, msg)
 #else
-#define UVHTTP_STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
+#    define UVHTTP_STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
 #endif
 
 /* ========== 结构体大小验证 ========== */
@@ -28,23 +30,21 @@
 
 UVHTTP_STATIC_ASSERT(sizeof(uvhttp_request_t) >= 65536,
 
-                      "uvhttp_request_t size too small");
+                     "uvhttp_request_t size too small");
 
-UVHTTP_STATIC_ASSERT(sizeof(uvhttp_request_t) < 2 * 1024 * 1024,
+UVHTTP_STATIC_ASSERT(
+    sizeof(uvhttp_request_t) < 2 * 1024 * 1024,
 
-                      "uvhttp_request_t size exceeds 2MB limit, consider reducing UVHTTP_INLINE_HEADERS_CAPACITY");
+    "uvhttp_request_t size exceeds 2MB limit, consider reducing UVHTTP_INLINE_HEADERS_CAPACITY");
 
 UVHTTP_STATIC_ASSERT(sizeof(uvhttp_response_t) >= 65536,
 
-                      "uvhttp_response_t size too small");
+                     "uvhttp_response_t size too small");
 
-UVHTTP_STATIC_ASSERT(sizeof(uvhttp_response_t) < 2 * 1024 * 1024,
+UVHTTP_STATIC_ASSERT(
+    sizeof(uvhttp_response_t) < 2 * 1024 * 1024,
 
-                      "uvhttp_response_t size exceeds 2MB limit, consider reducing UVHTTP_INLINE_HEADERS_CAPACITY");
-
-
-
-
+    "uvhttp_response_t size exceeds 2MB limit, consider reducing UVHTTP_INLINE_HEADERS_CAPACITY");
 
 // 用于安全连接重用的idle回调
 static void on_idle_restart_read(uv_idle_t* handle);
@@ -58,9 +58,9 @@ static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t
         buf->len = 0;
         return;
     }
-    
+
     size_t remaining = conn->read_buffer_size - conn->read_buffer_used;
-    
+
     buf->base = conn->read_buffer + conn->read_buffer_used;
     buf->len = remaining;
 }
@@ -84,80 +84,82 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
         uvhttp_connection_close(conn);
         return;
     }
-    
+
     if (nread == 0) {
         return;
     }
-    
+
     /* 检查缓冲区有效性 */
     if (!buf || !buf->base) {
         UVHTTP_LOG_ERROR("Invalid buffer in on_read\n");
         uvhttp_connection_close(conn);
         return;
     }
-    
+
     /* 检查缓冲区边界，防止溢出 */
     if (conn->read_buffer_used + (size_t)nread > conn->read_buffer_size) {
-        UVHTTP_LOG_ERROR("Read buffer overflow: %zu + %zd > %zu\n",
-                        conn->read_buffer_used, nread, conn->read_buffer_size);
+        UVHTTP_LOG_ERROR("Read buffer overflow: %zu + %zd > %zu\n", conn->read_buffer_used, nread,
+                         conn->read_buffer_size);
         uvhttp_connection_close(conn);
         return;
     }
-    
+
     /* 单线程HTTP解析 - 无需同步机制 */
     llhttp_t* parser = (llhttp_t*)conn->request->parser;
     if (parser) {
         enum llhttp_errno err = llhttp_execute(parser, buf->base, nread);
-        
+
         if (err != HPE_OK) {
             uvhttp_log_safe_error(err, "http_parse", llhttp_errno_name(err));
             /* 解析错误时异步关闭连接 */
             uvhttp_connection_close(conn);
             return;
         }
-        
-        UVHTTP_LOG_DEBUG("on_read: llhttp_execute success, parsing_complete = %d\n", conn->parsing_complete);
+
+        UVHTTP_LOG_DEBUG("on_read: llhttp_execute success, parsing_complete = %d\n",
+                         conn->parsing_complete);
     } else {
         UVHTTP_LOG_ERROR("on_read: parser is NULL\n");
     }
-    
+
     /* 更新已使用的缓冲区大小 */
     conn->read_buffer_used += nread;
 }
 
 /* 重新开始读取新请求 - 用于keep-alive连接 */
 uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
-    if (!conn || !conn->request || !conn->response || !conn->request->parser || !conn->request->parser_settings) {
+    if (!conn || !conn->request || !conn->response || !conn->request->parser ||
+        !conn->request->parser_settings) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
     /* 检查连接状态，确保连接没有在关闭过程中 */
     if (conn->state == UVHTTP_CONN_STATE_CLOSING) {
         return UVHTTP_ERROR_CONNECTION_CLOSE;
     }
-    
+
     /* 优化：先停止当前的读取（如果正在进行） */
     uv_read_stop((uv_stream_t*)&conn->tcp_handle);
-    
+
     /* 性能优化：只重置必要的字段，避免清零整个结构体（280KB）
-     * 
+     *
      * 优化原理：
      * - 原方案：memset(conn->request, 0, sizeof(uvhttp_request_t)) 清零 280KB
      * - 新方案：只重置 10 个字段，共约 80 字节
      * - 性能提升：每次连接复用节省 279,920 字节的内存操作
-     * 
+     *
      * 注意事项：
      * - 必须确保所有状态字段都被正确重置
      * - 指针字段需要特殊处理（保持不变或释放）
      * - 大块内存（headers 数组）不需要清零，因为 header_count 已重置
-     * 
+     *
      * 字段重置清单：
      * - 热路径字段：method, parsing_complete, header_count
      * - 指针字段：path, query, body, user_data（设置为 NULL）
      * - 缓冲区字段：url（清零第一个字节）
      * - 大块内存：headers 数组（通过 header_count 标记无效）
      */
-    
+
     /* 重置请求对象的热路径字段 */
     conn->request->method = UVHTTP_ANY;
     conn->request->parsing_complete = 0;
@@ -168,13 +170,13 @@ uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     conn->request->body_length = 0;
     conn->request->body_capacity = 0;
     conn->request->user_data = NULL;
-    
+
     /* 重置URL缓冲区 */
     conn->request->url[0] = '\0';
-    
+
     /* 重置headers数组（只重置已使用的部分） */
     /* 注意：不需要清零整个headers数组，因为header_count已经重置为0 */
-    
+
     /* 重置HTTP解析器 */
     llhttp_t* parser = (llhttp_t*)conn->request->parser;
     if (parser) {
@@ -183,13 +185,13 @@ uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     }
 
     /* 性能优化：只重置响应对象的热路径字段，避免清零整个结构体（278KB）
-     * 
+     *
      * 优化原理：
      * - 原方案：memset(conn->response, 0, sizeof(uvhttp_response_t)) 清零 278KB
      * - 新方案：只重置 10 个字段，共约 80 字节
      * - 性能提升：每次连接复用节省 277,920 字节的内存操作
      */
-    
+
     /* 重置响应对象的热路径字段 */
     conn->response->status_code = 0;
     conn->response->headers_sent = 0;
@@ -201,44 +203,43 @@ uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     conn->response->header_count = 0;
     conn->response->body_length = 0;
     conn->response->cache_expires = 0;
-    
+
     /* 重置响应body */
     if (conn->response->body) {
         uvhttp_free(conn->response->body);
         conn->response->body = NULL;
     }
-    
+
     /* 重置连接的HTTP/1.1状态标志 */
     conn->parsing_complete = 0;
     conn->content_length = 0;
     conn->body_received = 0;
-    conn->keep_alive = 1;  /* 继续保持连接 */
-    conn->chunked_encoding = 0;  /* 重置分块传输编码标志 */
+    conn->keep_alive = 1;       /* 继续保持连接 */
+    conn->chunked_encoding = 0; /* 重置分块传输编码标志 */
     conn->current_header_is_important = 0;
     conn->parsing_header_field = 0;
     conn->need_restart_read = 0;
-    
+
     /* 重置当前头部字段 */
     conn->current_header_field_len = 0;
-    
+
     /* 更新连接状态 */
     conn->state = UVHTTP_CONN_STATE_HTTP_READING;
-    
+
     /* 重新开始读取以接收新请求 */
-    int result = uv_read_start((uv_stream_t*)&conn->tcp_handle, 
-                      on_alloc_buffer, on_read);
-    
+    int result = uv_read_start((uv_stream_t*)&conn->tcp_handle, on_alloc_buffer, on_read);
+
     if (result != 0) {
         UVHTTP_LOG_ERROR("Failed to restart reading on connection: %s\n", uv_strerror(result));
     }
-    
+
     return result;
 }
 
 /* 创建新的HTTP连接对象（单线程事件驱动）
  * server: 所属的HTTP服务器
  * 返回: 连接对象，所有操作都在事件循环线程中处理
- * 
+ *
  * 单线程连接管理特点：
  * 1. 无需连接池锁机制
  * 2. 内存分配在单线程中进行，安全可靠
@@ -248,61 +249,61 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server, uvhttp_connec
     if (!server || !conn) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
     *conn = NULL;
-    
+
     /* 单线程安全的内存分配 */
     uvhttp_connection_t* c = uvhttp_alloc(sizeof(uvhttp_connection_t));
     if (!c) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
-    
+
     memset(c, 0, sizeof(uvhttp_connection_t));
-    
+
     c->server = server;
     c->state = UVHTTP_CONN_STATE_NEW;
-    c->tls_enabled = 0; // 简化版本暂时禁用TLS
-    c->need_restart_read = 0; // 初始化为0，不需要重启读取
-    
+    c->tls_enabled = 0;        // 简化版本暂时禁用TLS
+    c->need_restart_read = 0;  // 初始化为0，不需要重启读取
+
     // 初始化idle句柄用于安全的连接重用
     if (uv_idle_init(server->loop, &c->idle_handle) != 0) {
         uvhttp_free(c);
         return UVHTTP_ERROR_IO_ERROR;
     }
     c->idle_handle.data = c;
-    
+
     // 初始化超时定时器
     if (uv_timer_init(server->loop, &c->timeout_timer) != 0) {
         uvhttp_free(c);
         return UVHTTP_ERROR_IO_ERROR;
     }
     c->timeout_timer.data = c;
-    
+
     // HTTP/1.1优化：初始化默认值
-c->keep_alive = 1;           /* HTTP/1.1默认保持连接 */
-    c->chunked_encoding = 0;     /* 默认不使用分块传输 */
-    c->close_pending = 0;        /* 初始化待关闭的 handle 计数 */
-    c->content_length = 0;       /* 默认无内容长度 */
-    c->body_received = 0;        // 已接收body长度
-    c->parsing_complete = 0;     // 解析未完成
-    c->current_header_is_important = 0; // 当前头部非关键字段
-    c->read_buffer_used = 0;     // 重置读缓冲区使用量
-    
+    c->keep_alive = 1;                   /* HTTP/1.1默认保持连接 */
+    c->chunked_encoding = 0;             /* 默认不使用分块传输 */
+    c->close_pending = 0;                /* 初始化待关闭的 handle 计数 */
+    c->content_length = 0;               /* 默认无内容长度 */
+    c->body_received = 0;                // 已接收body长度
+    c->parsing_complete = 0;             // 解析未完成
+    c->current_header_is_important = 0;  // 当前头部非关键字段
+    c->read_buffer_used = 0;             // 重置读缓冲区使用量
+
     // HTTP解析状态初始化
     memset(c->current_header_field, 0, sizeof(c->current_header_field));
     c->current_header_field_len = 0;
     c->parsing_header_field = 0;
-    
+
     // TCP初始化 - 完整实现
     if (uv_tcp_init(server->loop, &c->tcp_handle) != 0) {
         uvhttp_free(c);
         return UVHTTP_ERROR_IO_ERROR;
     }
     c->tcp_handle.data = c;
-    
+
     // TCP 选项已在服务器级别统一设置（TCP_NODELAY 和 TCP_KEEPALIVE）
     // 避免重复设置以提高性能
-    
+
     // 分配读缓冲区
     c->read_buffer_size = UVHTTP_READ_BUFFER_SIZE;
     c->read_buffer = uvhttp_alloc(c->read_buffer_size);
@@ -311,7 +312,7 @@ c->keep_alive = 1;           /* HTTP/1.1默认保持连接 */
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     c->read_buffer_used = 0;
-    
+
     // 创建请求和响应对象
     c->request = uvhttp_alloc(sizeof(uvhttp_request_t));
     if (!c->request) {
@@ -319,7 +320,7 @@ c->keep_alive = 1;           /* HTTP/1.1默认保持连接 */
         uvhttp_free(c);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
-    
+
     // 正确初始化request对象（包含HTTP解析器）
     if (uvhttp_request_init(c->request, &c->tcp_handle) != 0) {
         uvhttp_free(c->request);
@@ -327,7 +328,7 @@ c->keep_alive = 1;           /* HTTP/1.1默认保持连接 */
         uvhttp_free(c);
         return UVHTTP_ERROR_IO_ERROR;
     }
-    
+
     c->response = uvhttp_alloc(sizeof(uvhttp_response_t));
     if (!c->response) {
         uvhttp_request_cleanup(c->request);
@@ -336,7 +337,7 @@ c->keep_alive = 1;           /* HTTP/1.1默认保持连接 */
         uvhttp_free(c);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
-    
+
     // 正确初始化response对象
     if (uvhttp_response_init(c->response, &c->tcp_handle) != 0) {
         uvhttp_request_cleanup(c->request);
@@ -346,13 +347,13 @@ c->keep_alive = 1;           /* HTTP/1.1默认保持连接 */
         uvhttp_free(c);
         return UVHTTP_ERROR_IO_ERROR;
     }
-    
+
     // 设置解析器的data指针为连接对象
     llhttp_t* parser = (llhttp_t*)c->request->parser;
     if (parser) {
         parser->data = c;
     }
-    
+
     *conn = c;
     return UVHTTP_OK;
 }
@@ -361,22 +362,22 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
     if (!conn) {
         return;
     }
-    
+
     // 清理请求和响应数据
     if (conn->request) {
         uvhttp_request_cleanup(conn->request);
         uvhttp_free(conn->request);
     }
-    
+
     if (conn->response) {
         uvhttp_response_cleanup(conn->response);
         uvhttp_free(conn->response);
     }
-    
+
     if (conn->read_buffer) {
         uvhttp_free(conn->read_buffer);
     }
-    
+
     // 释放连接内存
     uvhttp_free(conn);
 }
@@ -385,15 +386,16 @@ uvhttp_error_t uvhttp_connection_start(uvhttp_connection_t* conn) {
     if (!conn) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
     /* 开始HTTP读取 - 完整实现 */
-    if (uv_read_start((uv_stream_t*)&conn->tcp_handle, (uv_alloc_cb)on_alloc_buffer, (uv_read_cb)on_read) != 0) {
+    if (uv_read_start((uv_stream_t*)&conn->tcp_handle, (uv_alloc_cb)on_alloc_buffer,
+                      (uv_read_cb)on_read) != 0) {
         UVHTTP_LOG_ERROR("Failed to start reading on connection\n");
         uvhttp_connection_close(conn);
         return UVHTTP_ERROR_CONNECTION_START;
     }
     uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_HTTP_READING);
-    
+
     /* TLS处理 */
     if (conn->tls_enabled) {
         if (uvhttp_connection_tls_handshake_func(conn) != 0) {
@@ -402,7 +404,7 @@ uvhttp_error_t uvhttp_connection_start(uvhttp_connection_t* conn) {
             return UVHTTP_ERROR_CONNECTION_START;
         }
     }
-    
+
     return UVHTTP_OK;
 }
 
@@ -412,10 +414,10 @@ static void on_handle_close(uv_handle_t* handle) {
     if (!conn) {
         return;
     }
-    
+
     /* 减少待关闭的 handle 计数 */
     conn->close_pending--;
-    
+
     /* 当所有 handle 都关闭后，释放连接 */
     if (conn->close_pending == 0) {
         /* 单线程安全的连接计数递减 */
@@ -470,7 +472,8 @@ uvhttp_error_t uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn) {
     return UVHTTP_ERROR_NOT_SUPPORTED;
 }
 
-uvhttp_error_t uvhttp_connection_tls_write(uvhttp_connection_t* conn, const void* data, size_t len) {
+uvhttp_error_t uvhttp_connection_tls_write(uvhttp_connection_t* conn, const void* data,
+                                           size_t len) {
     // 简化版本不支持TLS
     (void)conn;
     (void)data;
@@ -486,15 +489,15 @@ static void on_idle_restart_read(uv_idle_t* handle) {
     if (!conn) {
         return;
     }
-    
+
     // 停止idle句柄
     uv_idle_stop(handle);
-    
+
     // 检查连接状态
     if (conn->state == UVHTTP_CONN_STATE_CLOSING) {
         return;
     }
-    
+
     // 执行连接重启
     if (uvhttp_connection_restart_read(conn) != 0) {
         // 重启失败，关闭连接
@@ -587,7 +590,8 @@ static int on_websocket_close(uvhttp_ws_connection_t* ws_conn, int code, const c
 }
 
 /* WebSocket错误回调 */
-static int on_websocket_error(uvhttp_ws_connection_t* ws_conn, int error_code, const char* error_msg) {
+static int on_websocket_error(uvhttp_ws_connection_t* ws_conn, int error_code,
+                              const char* error_msg) {
     if (!ws_conn) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -611,7 +615,8 @@ static int on_websocket_error(uvhttp_ws_connection_t* ws_conn, int error_code, c
 }
 
 /* WebSocket消息回调 */
-static int on_websocket_message(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len, int opcode) {
+static int on_websocket_message(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len,
+                                int opcode) {
     if (!ws_conn) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -643,7 +648,8 @@ static int on_websocket_message(uvhttp_ws_connection_t* ws_conn, const char* dat
 /* 处理WebSocket握手
  * 在握手响应发送后调用，创建WebSocket连接对象并设置回调
  */
-uvhttp_error_t uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn, const char* ws_key) {
+uvhttp_error_t uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn,
+                                                            const char* ws_key) {
     if (!conn || !ws_key) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -795,7 +801,7 @@ void uvhttp_connection_websocket_close(uvhttp_connection_t* conn) {
     /* 从连接管理器中移除 */
     if (conn->server && conn->ws_connection) {
         uvhttp_server_ws_remove_connection(conn->server,
-                                          (uvhttp_ws_connection_t*)conn->ws_connection);
+                                           (uvhttp_ws_connection_t*)conn->ws_connection);
     }
 
     /* 释放WebSocket连接对象 */
@@ -817,23 +823,19 @@ static void connection_timeout_cb(uv_timer_t* handle) {
     if (!conn || !conn->server) {
         return;
     }
-    
+
     /* 获取超时时间，如果 config 为 NULL 则使用默认值 */
     int timeout_ms = UVHTTP_CONNECTION_TIMEOUT_DEFAULT * 1000;
     if (conn->server->config) {
         timeout_ms = conn->server->config->connection_timeout * 1000;
     }
-    
+
     /* 触发应用层超时统计回调 */
     if (conn->server->timeout_callback) {
-        conn->server->timeout_callback(
-            conn->server,
-            conn,
-            timeout_ms,
-            conn->server->timeout_callback_user_data
-        );
+        conn->server->timeout_callback(conn->server, conn, timeout_ms,
+                                       conn->server->timeout_callback_user_data);
     }
-    
+
     UVHTTP_LOG_WARN("Connection timeout, closing connection...\n");
     uvhttp_connection_close(conn);
 }
@@ -843,62 +845,58 @@ uvhttp_error_t uvhttp_connection_start_timeout(uvhttp_connection_t* conn) {
     if (!conn || !conn->server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
     /* 停止旧的定时器（如果有） */
     if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
         uv_timer_stop(&conn->timeout_timer);
     }
-    
+
     /* 获取超时时间，如果 config 为 NULL 则使用默认值 */
     int timeout_ms = UVHTTP_CONNECTION_TIMEOUT_DEFAULT * 1000;
     if (conn->server->config) {
         timeout_ms = conn->server->config->connection_timeout * 1000;
     }
-    
+
     /* 启动定时器 */
-    if (uv_timer_start(&conn->timeout_timer, 
-                       connection_timeout_cb, 
-                       timeout_ms, 
-                       0) != 0) {
+    if (uv_timer_start(&conn->timeout_timer, connection_timeout_cb, timeout_ms, 0) != 0) {
         UVHTTP_LOG_ERROR("Failed to start connection timeout timer\n");
         return UVHTTP_ERROR_CONNECTION_TIMEOUT;
     }
-    
+
     return UVHTTP_OK;
 }
 
 /* 启动连接超时定时器（自定义超时时间） */
-uvhttp_error_t uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn, int timeout_seconds) {
+uvhttp_error_t uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn,
+                                                      int timeout_seconds) {
     if (!conn || !conn->server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
     /* 验证超时时间范围 */
-    if (timeout_seconds < UVHTTP_CONNECTION_TIMEOUT_MIN || 
+    if (timeout_seconds < UVHTTP_CONNECTION_TIMEOUT_MIN ||
         timeout_seconds > UVHTTP_CONNECTION_TIMEOUT_MAX) {
         UVHTTP_LOG_ERROR("Invalid timeout value: %d seconds\n", timeout_seconds);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
     /* 检查整数溢出 */
     if (timeout_seconds > INT_MAX / 1000) {
         UVHTTP_LOG_ERROR("Timeout value too large: %d seconds\n", timeout_seconds);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
     /* 停止旧的定时器（如果有） */
     if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
         uv_timer_stop(&conn->timeout_timer);
     }
-    
+
     /* 启动定时器 */
-    if (uv_timer_start(&conn->timeout_timer, 
-                       connection_timeout_cb, 
-                       timeout_seconds * 1000, 
-                       0) != 0) {
+    if (uv_timer_start(&conn->timeout_timer, connection_timeout_cb, timeout_seconds * 1000, 0) !=
+        0) {
         UVHTTP_LOG_ERROR("Failed to start connection timeout timer\n");
         return UVHTTP_ERROR_CONNECTION_TIMEOUT;
     }
-    
+
     return UVHTTP_OK;
 }

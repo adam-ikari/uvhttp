@@ -3,8 +3,9 @@
 #ifndef UVHTTP_VALIDATION_H
 #define UVHTTP_VALIDATION_H
 
-#include <stddef.h>
 #include "uvhttp_constants.h"
+
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {

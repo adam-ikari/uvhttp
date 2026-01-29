@@ -1,14 +1,16 @@
 #ifndef UVHTTP_REQUEST_H
 #define UVHTTP_REQUEST_H
 
-#include <uv.h>
+#include "uvhttp_common.h"
+#include "uvhttp_error.h"
+
+#include "llhttp.h"
+
+#include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
-#include "llhttp.h"
-#include "uvhttp_common.h"
-#include "uvhttp_error.h"
+#include <uv.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,63 +31,59 @@ typedef enum {
     UVHTTP_PATCH
 } uvhttp_method_t;
 
-
-
 typedef struct uvhttp_request uvhttp_request_t;
 
 struct uvhttp_request {
     /* 热路径字段（频繁访问）- 优化内存局部性 */
-    uvhttp_method_t method;          /* 4 字节 */
-    int parsing_complete;             /* 4 字节 */
-    size_t header_count;              /* 8 字节 */
-    
+    uvhttp_method_t method; /* 4 字节 */
+    int parsing_complete;   /* 4 字节 */
+    size_t header_count;    /* 8 字节 */
+
     /* 指针字段（8字节对齐） */
-    uv_tcp_t* client;                /* 8 字节 */
-    llhttp_t* parser;                 /* 8 字节 */
+    uv_tcp_t* client;                   /* 8 字节 */
+    llhttp_t* parser;                   /* 8 字节 */
     llhttp_settings_t* parser_settings; /* 8 字节 */
-    char* path;                       /* 8 字节 */
-    char* query;                      /* 8 字节 */
-    char* body;                       /* 8 字节 */
-    void* user_data;                  /* 8 字节 */
-    
+    char* path;                         /* 8 字节 */
+    char* query;                        /* 8 字节 */
+    char* body;                         /* 8 字节 */
+    void* user_data;                    /* 8 字节 */
+
     /* 缓冲区字段（大块内存，放在后面） */
-    char url[MAX_URL_LEN];            /* 2048 字节 */
-    size_t body_length;               /* 8 字节 */
-    size_t body_capacity;             /* 8 字节 */
-    
+    char url[MAX_URL_LEN]; /* 2048 字节 */
+    size_t body_length;    /* 8 字节 */
+    size_t body_capacity;  /* 8 字节 */
+
     /* Headers - 混合分配：内联 + 动态扩容（优化内存局部性） */
-    uvhttp_header_t headers[UVHTTP_INLINE_HEADERS_CAPACITY];  /* 内联，减少动态分配 */
-    uvhttp_header_t* headers_extra;   /* 8 字节 - 动态扩容 */
-    size_t headers_capacity;          /* 8 字节 - 总容量（内联+动态） */
+    uvhttp_header_t headers[UVHTTP_INLINE_HEADERS_CAPACITY]; /* 内联，减少动态分配 */
+    uvhttp_header_t* headers_extra;                          /* 8 字节 - 动态扩容 */
+    size_t headers_capacity; /* 8 字节 - 总容量（内联+动态） */
 };
 
 /* ========== 内存布局验证静态断言 ========== */
 
 /* 验证指针对齐（8字节对齐） */
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, client) % 8 == 0,
-                      "client pointer not 8-byte aligned");
+                     "client pointer not 8-byte aligned");
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, parser) % 8 == 0,
-                      "parser pointer not 8-byte aligned");
+                     "parser pointer not 8-byte aligned");
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, parser_settings) % 8 == 0,
-                      "parser_settings pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, path) % 8 == 0,
-                      "path pointer not 8-byte aligned");
+                     "parser_settings pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, path) % 8 == 0, "path pointer not 8-byte aligned");
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, query) % 8 == 0,
-                      "query pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, body) % 8 == 0,
-                      "body pointer not 8-byte aligned");
+                     "query pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, body) % 8 == 0, "body pointer not 8-byte aligned");
 
 /* 验证size_t对齐（8字节对齐） */
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, header_count) % 8 == 0,
-                      "header_count not 8-byte aligned");
+                     "header_count not 8-byte aligned");
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, body_length) % 8 == 0,
-                      "body_length not 8-byte aligned");
+                     "body_length not 8-byte aligned");
 
 /* 验证大型缓冲区在结构体末尾 */
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, url) >= 64,
-                      "url buffer should be after first 64 bytes");
+                     "url buffer should be after first 64 bytes");
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, headers) >= 64,
-                      "headers array should be after first 64 bytes");
+                     "headers array should be after first 64 bytes");
 
 /* API functions */
 const char* uvhttp_request_get_method(uvhttp_request_t* request);
@@ -109,14 +107,12 @@ size_t uvhttp_request_get_header_count(uvhttp_request_t* request);
 uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request, size_t index);
 
 /* 添加 header（内部使用，自动扩容） */
-uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request, 
-                               const char* name, 
-                               const char* value);
+uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request, const char* name,
+                                         const char* value);
 
 /* 遍历所有 headers */
 typedef void (*uvhttp_header_callback_t)(const char* name, const char* value, void* user_data);
-void uvhttp_request_foreach_header(uvhttp_request_t* request, 
-                                   uvhttp_header_callback_t callback, 
+void uvhttp_request_foreach_header(uvhttp_request_t* request, uvhttp_header_callback_t callback,
                                    void* user_data);
 
 #ifdef __cplusplus

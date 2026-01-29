@@ -7,11 +7,11 @@
 #define UVHTTP_PLATFORM_LINUX
 
 /* 头文件包含 */
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <netdb.h>
 
 /* 类型定义 */
 typedef socklen_t uvhttp_socklen_t;
@@ -31,6 +31,6 @@ typedef socklen_t uvhttp_socklen_t;
 
 /* 时间函数 */
 #include <unistd.h>
-#define uvhttp_sleep_ms(ms) usleep((ms) * 1000)
+#define uvhttp_sleep_ms(ms) usleep((ms)*1000)
 
 #endif /* UVHTTP_PLATFORM_H */

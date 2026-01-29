@@ -1,7 +1,6 @@
 ---
 BasedOnStyle: Google
 Language: Cpp
-Standard: c11
 IndentWidth: 4
 TabWidth: 4
 UseTab: Never
@@ -14,12 +13,21 @@ AllowShortBlocksOnASingleLine: false
 SortIncludes: true
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:           '^".*\.h"'
+  # 1. UVHTTP 项目头文件（本地头文件）
+  - Regex:           '^"uvhttp_.*\.h"'
     Priority:        1
-  - Regex:           '^<.*\.h>'
+  # 2. 项目内部头文件（其他本地头文件）
+  - Regex:           '^".*\.h"'
     Priority:        2
-  - Regex:           '^<.*>'
+  # 3. 标准库头文件（.h）
+  - Regex:           '^<[a-z_]'
     Priority:        3
+  # 4. 标准库头文件（c++.h）
+  - Regex:           '^<c\+\+.*\.h>'
+    Priority:        4
+  # 5. 第三方库头文件
+  - Regex:           '^<[A-Z]'
+    Priority:        5
 IndentPPDirectives: AfterHash
 PointerAlignment: Left
 DerivePointerAlignment: false
@@ -51,7 +59,7 @@ Cpp11BracedListStyle: true
 DerivePointerAlignment: false
 DisableFormat: false
 FixNamespaceComments: true
-IncludeBlocks: Preserve
+IncludeBlocks: Regroup
 IndentCaseLabels: false
 IndentPPDirectives: AfterHash
 IndentWrappedFunctionNames: false

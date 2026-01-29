@@ -15,7 +15,7 @@ typedef struct uvhttp_context uvhttp_context_t;
 /* UVHTTP error codes */
 typedef enum {
     UVHTTP_OK = 0,
-    
+
     /* General errors */
     UVHTTP_ERROR_INVALID_PARAM = -1,
     UVHTTP_ERROR_OUT_OF_MEMORY = -2,
@@ -26,7 +26,7 @@ typedef enum {
     UVHTTP_ERROR_TIMEOUT = -7,
     UVHTTP_ERROR_CANCELLED = -8,
     UVHTTP_ERROR_NOT_SUPPORTED = -9,
-    
+
     /* Server errors */
     UVHTTP_ERROR_SERVER_INIT = -100,
     UVHTTP_ERROR_SERVER_LISTEN = -101,
@@ -35,7 +35,7 @@ typedef enum {
     UVHTTP_ERROR_SERVER_ALREADY_RUNNING = -104,
     UVHTTP_ERROR_SERVER_NOT_RUNNING = -105,
     UVHTTP_ERROR_SERVER_INVALID_CONFIG = -106,
-    
+
     /* Connection errors */
     UVHTTP_ERROR_CONNECTION_INIT = -200,
     UVHTTP_ERROR_CONNECTION_ACCEPT = -201,
@@ -45,7 +45,7 @@ typedef enum {
     UVHTTP_ERROR_CONNECTION_TIMEOUT = -205,
     UVHTTP_ERROR_CONNECTION_REFUSED = -206,
     UVHTTP_ERROR_CONNECTION_BROKEN = -207,
-    
+
     /* Request/Response errors */
     UVHTTP_ERROR_REQUEST_INIT = -300,
     UVHTTP_ERROR_RESPONSE_INIT = -301,
@@ -57,7 +57,7 @@ typedef enum {
     UVHTTP_ERROR_MALFORMED_REQUEST = -307,
     UVHTTP_ERROR_FILE_TOO_LARGE = -308,
     UVHTTP_ERROR_IO_ERROR = -309,
-    
+
     /* TLS errors */
     UVHTTP_ERROR_TLS_INIT = -400,
     UVHTTP_ERROR_TLS_CONTEXT = -401,
@@ -67,22 +67,22 @@ typedef enum {
     UVHTTP_ERROR_TLS_VERIFY_FAILED = -405,
     UVHTTP_ERROR_TLS_EXPIRED = -406,
     UVHTTP_ERROR_TLS_NOT_YET_VALID = -407,
-    
+
     /* Router errors */
     UVHTTP_ERROR_ROUTER_INIT = -500,
     UVHTTP_ERROR_ROUTER_ADD = -501,
     UVHTTP_ERROR_ROUTE_NOT_FOUND = -502,
     UVHTTP_ERROR_ROUTE_ALREADY_EXISTS = -503,
     UVHTTP_ERROR_INVALID_ROUTE_PATTERN = -504,
-    
+
     /* Rate limit errors */
     UVHTTP_ERROR_RATE_LIMIT_EXCEEDED = -550,
-    
+
     /* Allocator errors */
     UVHTTP_ERROR_ALLOCATOR_INIT = -600,
     UVHTTP_ERROR_ALLOCATOR_SET = -601,
     UVHTTP_ERROR_ALLOCATOR_NOT_INITIALIZED = -602,
-    
+
     /* WebSocket errors */
     UVHTTP_ERROR_WEBSOCKET_INIT = -700,
     UVHTTP_ERROR_WEBSOCKET_HANDSHAKE = -701,
@@ -92,19 +92,19 @@ typedef enum {
     UVHTTP_ERROR_WEBSOCKET_NOT_CONNECTED = -705,
     UVHTTP_ERROR_WEBSOCKET_ALREADY_CONNECTED = -706,
     UVHTTP_ERROR_WEBSOCKET_CLOSED = -707,
-    
+
     /* Configuration errors */
     UVHTTP_ERROR_CONFIG_PARSE = -900,
     UVHTTP_ERROR_CONFIG_INVALID = -901,
     UVHTTP_ERROR_CONFIG_FILE_NOT_FOUND = -902,
     UVHTTP_ERROR_CONFIG_MISSING_REQUIRED = -903,
-    
+
     /* Logging errors */
     UVHTTP_ERROR_LOG_INIT = -1100,
     UVHTTP_ERROR_LOG_WRITE = -1101,
     UVHTTP_ERROR_LOG_FILE_OPEN = -1102,
     UVHTTP_ERROR_LOG_NOT_INITIALIZED = -1103,
-    
+
     UVHTTP_ERROR_MAX /* 动态计算最大值 */
 } uvhttp_error_t;
 
@@ -127,10 +127,10 @@ const char* uvhttp_error_suggestion(uvhttp_error_t error);
 int uvhttp_error_is_recoverable(uvhttp_error_t error);
 
 /* Error recovery and retry mechanism */
-void uvhttp_set_error_recovery_config(int max_retries, int base_delay_ms, 
-                                     int max_delay_ms, double backoff_multiplier);
-uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*), 
-                                     void* context, const char* operation_name);
+void uvhttp_set_error_recovery_config(int max_retries, int base_delay_ms, int max_delay_ms,
+                                      double backoff_multiplier);
+uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*), void* context,
+                                      const char* operation_name);
 
 /* Error code count for statistics array */
 #define UVHTTP_ERROR_COUNT 116
@@ -146,8 +146,8 @@ typedef struct {
 void uvhttp_log_error(uvhttp_error_t error, const char* context);
 
 #if UVHTTP_FEATURE_STATISTICS
-void uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts, time_t* last_error_time, 
-                           const char** last_error_context);
+void uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts,
+                            time_t* last_error_time, const char** last_error_context);
 void uvhttp_reset_error_stats(uvhttp_context_t* context);
 uvhttp_error_t uvhttp_get_most_frequent_error(uvhttp_context_t* context);
 #endif

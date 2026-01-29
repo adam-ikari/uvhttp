@@ -3,9 +3,10 @@
 #ifndef UVHTTP_ERROR_HELPERS_H
 #define UVHTTP_ERROR_HELPERS_H
 
-#include <uv.h>
-#include "uvhttp_error.h"
 #include "uvhttp_constants.h"
+#include "uvhttp_error.h"
+
+#include <uv.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,9 +25,8 @@ void uvhttp_cleanup_connection(uv_handle_t* handle, const char* error_message);
  * @param cleanup_func 清理函数指针（可为NULL）
  * @param cleanup_data 清理函数参数
  */
-void uvhttp_handle_memory_failure(const char* context, 
-                                 void (*cleanup_func)(void*), 
-                                 void* cleanup_data);
+void uvhttp_handle_memory_failure(const char* context, void (*cleanup_func)(void*),
+                                  void* cleanup_data);
 
 /**
  * 通用的写操作错误处理
@@ -51,9 +51,8 @@ void uvhttp_log_safe_error(int error_code, const char* context, const char* user
  * @param buffer_size 缓冲区大小
  * @return UVHTTP_OK成功，其他值表示失败
  */
-uvhttp_error_t uvhttp_sanitize_error_message(const char* message, 
-                                 char* safe_buffer, 
-                                 size_t buffer_size);
+uvhttp_error_t uvhttp_sanitize_error_message(const char* message, char* safe_buffer,
+                                             size_t buffer_size);
 
 /**
  * 通用的资源释放包装器
