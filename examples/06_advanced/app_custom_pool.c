@@ -211,9 +211,9 @@ void test_basic_allocation(void) {
     assert(ptr3 != NULL);
     
     /* 使用内存 */
-    strcpy((char*)ptr1, "Hello");
-    strcpy((char*)ptr2, "World");
-    strcpy((char*)ptr3, "Pool");
+    if (ptr1) strcpy((char*)ptr1, "Hello");
+    if (ptr2) strcpy((char*)ptr2, "World");
+    if (ptr3) strcpy((char*)ptr3, "Pool");
     
     printf("  ptr1: %s\n", ptr1 ? (char*)ptr1 : "NULL");
     printf("  ptr2: %s\n", ptr2 ? (char*)ptr2 : "NULL");
