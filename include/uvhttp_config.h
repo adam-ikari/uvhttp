@@ -9,6 +9,7 @@
 #define UVHTTP_CONFIG_H
 
 #include "uvhttp_constants.h"
+#include "uvhttp_error.h"
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -27,11 +28,13 @@ typedef struct {
     int backlog;
     int keepalive_timeout;
     int request_timeout;
+    int connection_timeout;  /* 连接超时时间（秒），默认60秒 */
     
     /* 性能配置 */
     size_t max_body_size;
     size_t max_header_size;
     size_t max_url_size;
+    size_t max_file_size;  /* 文件响应的最大文件大小 */
     
     /* 安全配置 */
     int max_requests_per_connection;
@@ -59,6 +62,7 @@ typedef struct {
 #define UVHTTP_DEFAULT_MAX_BODY_SIZE         (1024 * 1024)
 #define UVHTTP_DEFAULT_MAX_HEADER_SIZE       8192
 #define UVHTTP_DEFAULT_MAX_URL_SIZE          2048
+#define UVHTTP_DEFAULT_MAX_FILE_SIZE         (10 * 1024 * 1024)  /* 10MB */
 #define UVHTTP_DEFAULT_MAX_REQUESTS_PER_CONN 100
 #define UVHTTP_DEFAULT_RATE_LIMIT_WINDOW     60
 #define UVHTTP_DEFAULT_ENABLE_COMPRESSION     1
@@ -70,7 +74,14 @@ typedef struct {
 #define UVHTTP_DEFAULT_ENABLE_ACCESS_LOG     0
 
 /* 配置管理函数 */
-uvhttp_config_t* uvhttp_config_new(void);
+/**
+ * @brief 创建新的配置对象
+ * @param config 输出参数，用于接收配置对象指针
+ * @return UVHTTP_OK 成功，其他值表示失败
+ * @note 成功时，*config 被设置为有效的配置对象，必须使用 uvhttp_config_free 释放
+ * @note 失败时，*config 被设置为 NULL
+ */
+uvhttp_error_t uvhttp_config_new(uvhttp_config_t** config);
 void uvhttp_config_free(uvhttp_config_t* config);
 void uvhttp_config_set_defaults(uvhttp_config_t* config);
 

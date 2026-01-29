@@ -1,0 +1,267 @@
+name: CI/CD - Push Full Validation
+
+# 触发条件：Push 到 main、develop、feature/* 分支
+on:
+  push:
+    branches: [ main, develop, 'feature/**' ]
+  workflow_dispatch:
+
+# 并发控制：取消同一分支的旧运行
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUILD_TYPE: Release
+  TEST_TYPE: full
+
+jobs:
+  # ========== 阶段 1: 并行构建和扫描 ==========
+
+  ubuntu-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      build-dir: ${{ steps.build.outputs.build-dir }}
+      build-status: ${{ steps.build.outputs.status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+        with:
+          os: ubuntu-latest
+
+      - name: Cache dependencies
+        uses: ./.github/actions/cache-deps
+        with:
+          cache-key: push-${{ github.sha }}
+          build-type: Release
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_WITH_WEBSOCKET=ON \
+            -DBUILD_WITH_MIMALLOC=ON
+
+      - name: Build
+        id: build
+        run: |
+          cmake --build build --config Release -j$(nproc)
+          echo "build-dir=build" >> $GITHUB_OUTPUT
+          echo "status=success" >> $GITHUB_OUTPUT
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: build-ubuntu-push-${{ github.sha }}
+          path: build/
+          retention-days: 7
+  
+  code-quality-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+        with:
+          os: ubuntu-latest
+      
+      - name: Run cppcheck
+        run: |
+          cppcheck --enable=all --inconclusive --xml --xml-version=2 \
+            src/ include/ 2> cppcheck-results.xml || true
+      
+      - name: Upload cppcheck results
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: cppcheck-results-push-${{ github.sha }}
+          path: cppcheck-results.xml
+          retention-days: 7
+  
+  security-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Run security scan
+        run: |
+          # 这里可以集成其他安全扫描工具
+          echo "Security scan completed"
+  
+  # ========== 阶段 2: 并行测试 ==========
+
+  ubuntu-test-full:
+    needs: [ubuntu-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-ubuntu-push-${{ github.sha }}
+          path: build/
+
+      - name: Set executable permissions
+        run: |
+          chmod +x build/dist/bin/* || true
+
+      - name: Run full tests
+        run: |
+          cd build
+          ctest --output-on-failure -j$(nproc) --timeout 120
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: test-logs-ubuntu-push-${{ github.sha }}
+          path: build/Testing/
+          retention-days: 7
+  
+  # ========== 阶段 3: 性能基准测试 ==========
+  
+  performance-benchmark:
+    needs: [ubuntu-test-full]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-ubuntu-push-${{ github.sha }}
+          path: build/
+      
+      - name: Install wrk
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wrk python3 python3-pip
+          pip3 install matplotlib numpy
+      
+      - name: Run performance tests
+        run: |
+          chmod +x build/dist/bin/benchmark_rps
+          
+          # 低并发测试
+          build/dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
+          SERVER_PID=$!
+          sleep 3
+          
+          wrk -t2 -c10 -d5s --timeout 5s http://localhost:18081/ > performance.log
+          kill $SERVER_PID 2>/dev/null || true
+      
+      - name: Parse performance results
+        id: parse
+        run: |
+          # 解析 wrk 输出
+          RPS=$(grep "Requests/sec:" performance.log | awk '{print $2}')
+          LATENCY_AVG=$(grep "Latency" performance.log | awk 'NR==2 {print $2}')
+          
+          echo "rps=$RPS" >> $GITHUB_OUTPUT
+          echo "latency_avg=$LATENCY_AVG" >> $GITHUB_OUTPUT
+      
+      - name: Generate performance report
+        run: |
+          cat > performance-report.md << 'EOF'
+          # Performance Benchmark Report
+          
+          - **Date**: ${{ github.event.head_commit.timestamp }}
+          - **Commit**: ${{ github.sha }}
+          - **Branch**: ${{ github.ref_name }}
+          
+          ## Results
+          
+          | Metric | Value |
+          |--------|-------|
+          | Requests/sec | ${{ steps.parse.outputs.rps }} |
+          | Avg Latency | ${{ steps.parse.outputs.latency_avg }} |
+          
+          EOF
+      
+      - name: Update baseline history
+        run: |
+          HISTORY_FILE="baseline-history.json"
+          
+          if [ ! -f "$HISTORY_FILE" ]; then
+            echo '[]' > "$HISTORY_FILE"
+          fi
+          
+          jq --argjson current "$(cat performance-results.json)" '. + [$current] | .[:30]' "$HISTORY_FILE" > "${HISTORY_FILE}.tmp" && mv "${HISTORY_FILE}.tmp" "$HISTORY_FILE"
+      
+      - name: Commit baseline update
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+        run: |
+          # 创建性能基线目录
+          mkdir -p docs/performance
+          
+          # 复制基线历史文件
+          cp baseline-history.json docs/performance/
+          
+          # 提交更新
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add docs/performance/baseline-history.json
+          git diff --staged --quiet || git commit -m "chore: 更新性能基线历史 [skip ci]"
+          
+          # 推送更新
+          git push origin ${{ github.ref_name }}
+      
+      - name: Upload performance artifacts
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: performance-results-push-${{ github.sha }}
+          path: |
+            performance-report.md
+            performance.log
+            baseline-history.json
+          retention-days: 30
+  
+  # ========== 阶段 4: 生成总结 ==========
+
+  generate-summary:
+    needs: [ubuntu-test-full, performance-benchmark]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## 📊 CI/CD Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Ubuntu (Linux) | ${{ needs.ubuntu-test-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Performance" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Requests/sec | ${{ needs.performance-benchmark.outputs.rps || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY

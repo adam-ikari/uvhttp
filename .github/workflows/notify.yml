@@ -1,0 +1,235 @@
+name: CI/CD - Notification Service
+
+# 触发条件：在其他 workflow 完成后运行
+on:
+  workflow_run:
+    workflows:
+      - "CI/CD - PR Quick Validation"
+      - "CI/CD - Push Complete Validation"
+      - "CI/CD - Nightly Deep Testing"
+      - "CI/CD - Release Build"
+    types:
+      - completed
+
+env:
+  NOTIFICATION_ENABLED: true
+
+jobs:
+  notify:
+    if: ${{ github.event.workflow_run.conclusion != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+      issues: write
+      contents: read
+    
+    steps:
+      - name: Download workflow artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          pattern: performance-*
+          path: performance-artifacts/
+          merge-multiple: true
+        continue-on-error: true
+      
+      - name: Download test logs
+        uses: actions/download-artifact@v4.1.2
+        with:
+          pattern: test-logs-*
+          path: test-logs/
+          merge-multiple: true
+        continue-on-error: true
+      
+      - name: Parse workflow results
+        id: parse_results
+        run: |
+          # 获取 workflow 运行信息
+          WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
+          WORKFLOW_CONCLUSION="${{ github.event.workflow_run.conclusion }}"
+          WORKFLOW_RUN_ID="${{ github.event.workflow_run.id }}"
+          WORKFLOW_RUN_NUMBER="${{ github.event.workflow_run.run_number }}"
+          
+          echo "workflow_name=$WORKFLOW_NAME" >> $GITHUB_OUTPUT
+          echo "conclusion=$WORKFLOW_CONCLUSION" >> $GITHUB_OUTPUT
+          echo "run_id=$WORKFLOW_RUN_ID" >> $GITHUB_OUTPUT
+          echo "run_number=$WORKFLOW_RUN_NUMBER" >> $GITHUB_OUTPUT
+          
+          # 检查是否是 PR 触发（修复：使用 GitHub API 获取 PR 信息）
+          PR_NUMBER=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }} --jq '.pull_requests[0].number' 2>/dev/null || echo "")
+          
+          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+            echo "is_pr=true" >> $GITHUB_OUTPUT
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          else
+            echo "is_pr=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Generate PR comment for PR workflow
+        if: steps.parse_results.outputs.is_pr == 'true' && steps.parse_results.outputs.workflow_name == 'CI/CD - PR Quick Validation'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const workflowName = '${{ steps.parse_results.outputs.workflow_name }}';
+            const conclusion = '${{ steps.parse_results.outputs.conclusion }}';
+            const runId = '${{ steps.parse_results.outputs.run_id }}';
+            const runNumber = '${{ steps.parse_results.outputs.run_number }}';
+            const prNumber = '${{ steps.parse_results.outputs.pr_number }}';
+            
+            let comment = `## 🤖 CI/CD PR Validation Results\n\n`;
+            comment += `**Workflow**: ${workflowName}\n`;
+            comment += `**Run**: #${runNumber}\n`;
+            comment += `**Status**: ${conclusion === 'success' ? '✅ Passed' : '❌ Failed'}\n\n`;
+            
+            if (conclusion === 'success') {
+              comment += `### ✅ All Checks Passed\n\n`;
+              comment += `Your PR has passed all CI/CD checks:\n`;
+              comment += `- ✅ Build successful\n`;
+              comment += `- ✅ Tests passed\n`;
+              comment += `- ✅ Code quality checks passed\n`;
+              comment += `- ✅ No performance regression detected\n\n`;
+              comment += `Ready for review! 🎉`;
+            } else {
+              comment += `### ❌ CI/CD Checks Failed\n\n`;
+              comment += `Some checks failed. Please review the logs:\n`;
+              comment += `- [View Workflow Run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId})\n\n`;
+              comment += `Please fix the issues and push a new commit.`;
+            }
+            
+            // 查找或创建评论
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('CI/CD PR Validation Results')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+            }
+      
+      - name: Generate PR comment for performance regression
+        if: steps.parse_results.outputs.is_pr == 'true' && steps.parse_results.outputs.conclusion == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = '${{ steps.parse_results.outputs.pr_number }}';
+            const runId = '${{ steps.parse_results.outputs.run_id }}';
+            
+            // 检查是否有性能回归数据
+            let perfComment = `## ⚠️ Performance Regression Detected\n\n`;
+            perfComment += `Your PR shows performance regression compared to baseline.\n\n`;
+            perfComment += `### Performance Comparison\n\n`;
+            perfComment += `| Metric | Baseline | Current | Change |\n`;
+            perfComment += `|--------|----------|---------|--------|\n`;
+            perfComment += `| RPS | - | - | - |\n`;
+            perfComment += `| Latency | - | - | - |\n\n`;
+            perfComment += `Please review the performance impact:\n`;
+            perfComment += `- [View Performance Results](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId})\n\n`;
+            perfComment += `If this regression is expected, please document it in the PR description.`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: perfComment
+            });
+      
+      - name: Create issue for critical failures
+        if: steps.parse_results.outputs.conclusion == 'failure' && steps.parse_results.outputs.workflow_name == 'CI/CD - Push Complete Validation'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const workflowName = '${{ steps.parse_results.outputs.workflow_name }}';
+            const runId = '${{ steps.parse_results.outputs.run_id }}';
+            const runNumber = '${{ steps.parse_results.outputs.run_number }}';
+            const sha = '${{ github.event.workflow_run.head_sha }}';
+            
+            const issueTitle = `🚨 CI/CD Failure: ${workflowName} #${runNumber}`;
+            const issueBody = `
+            ## CI/CD Failure Detected
+            
+            **Workflow**: ${workflowName}
+            **Run**: #${runNumber}
+            **Commit**: ${sha}
+            **Branch**: ${{ github.event.workflow_run.head_branch }}
+            
+            ### Details
+            
+            The CI/CD pipeline has failed. Please investigate and fix the issue.
+            
+            ### Actions
+            
+            - [View Workflow Run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId})
+            - [View Commit](https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${sha})
+            
+            ### Next Steps
+            
+            1. Review the failure logs
+            2. Identify the root cause
+            3. Fix the issue
+            4. Push a fix commit
+            `;
+            
+            // 检查是否已有相同 issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['ci-failure']
+            });
+            
+            const existingIssue = issues.find(issue => 
+              issue.title.includes(`#${runNumber}`)
+            );
+            
+            if (!existingIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['ci-failure', 'priority-high']
+              });
+            }
+      
+      - name: Generate notification summary
+        run: |
+          echo "## 🔔 Notification Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Workflow Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Name**: ${{ steps.parse_results.outputs.workflow_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Conclusion**: ${{ steps.parse_results.outputs.conclusion }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run ID**: ${{ steps.parse_results.outputs.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run Number**: ${{ steps.parse_results.outputs.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Is PR**: ${{ steps.parse_results.outputs.is_pr }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Notifications Sent" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.parse_results.outputs.is_pr }}" = "true" ]; then
+            echo "- ✅ PR comment updated" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ steps.parse_results.outputs.conclusion }}" = "failure" ] && [ "${{ steps.parse_results.outputs.workflow_name }}" = "CI/CD - Push Complete Validation" ]; then
+            echo "- ✅ Issue created for critical failure" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ steps.parse_results.outputs.conclusion }}" = "failure" ] && [ "${{ steps.parse_results.outputs.is_pr }}" = "true" ]; then
+            echo "- ✅ Performance regression comment added" >> $GITHUB_STEP_SUMMARY
+          fi

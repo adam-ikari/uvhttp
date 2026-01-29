@@ -1,6 +1,7 @@
 #ifndef UVHTTP_TLS_H
 #define UVHTTP_TLS_H
 
+#include "uvhttp_error.h"
 #include <uv.h>
 #include <mbedtls/ssl.h>
 #include <mbedtls/entropy.h>
@@ -47,7 +48,14 @@ uvhttp_tls_error_t uvhttp_tls_init(uvhttp_context_t* context);
 void uvhttp_tls_cleanup(uvhttp_context_t* context);
 
 // TLS上下文管理
-uvhttp_tls_context_t* uvhttp_tls_context_new(void);
+/**
+ * @brief 创建新的 TLS 上下文
+ * @param ctx 输出参数，用于接收 TLS 上下文指针
+ * @return UVHTTP_OK 成功，其他值表示失败
+ * @note 成功时，*ctx 被设置为有效的 TLS 上下文对象，必须使用 uvhttp_tls_context_free 释放
+ * @note 失败时，*ctx 被设置为 NULL
+ */
+uvhttp_error_t uvhttp_tls_context_new(uvhttp_tls_context_t** ctx);
 void uvhttp_tls_context_free(uvhttp_tls_context_t* ctx);
 
 // 证书配置

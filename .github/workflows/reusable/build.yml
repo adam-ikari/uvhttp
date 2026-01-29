@@ -1,0 +1,128 @@
+name: Reusable Build Workflow
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+        description: 'Operating system: ubuntu-latest, macos-latest, windows-latest'
+      build-type:
+        required: false
+        type: string
+        default: 'Release'
+        description: 'CMAKE_BUILD_TYPE: Debug, Release, RelWithDebInfo'
+      enable-coverage:
+        required: false
+        type: boolean
+        default: false
+        description: 'Enable code coverage'
+      enable-examples:
+        required: false
+        type: boolean
+        default: false
+        description: 'Build example programs'
+      sanitizer:
+        required: false
+        type: string
+        default: ''
+        description: 'Sanitizer: address, thread, memory, leak'
+      cache-key:
+        required: false
+        type: string
+        default: 'default'
+        description: 'Cache key for build artifacts'
+    outputs:
+      build-dir:
+        description: 'Build directory path'
+        value: ${{ jobs.build.outputs.build-dir }}
+      build-status:
+        description: 'Build status'
+        value: ${{ jobs.build.outputs.status }}
+
+jobs:
+  build:
+    runs-on: ${{ inputs.os }}
+    timeout-minutes: 30
+    outputs:
+      build-dir: ${{ steps.build.outputs.build-dir }}
+      status: ${{ steps.build.outputs.status }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+        with:
+          os: ${{ inputs.os }}
+      
+      - name: Cache dependencies
+        uses: ./.github/actions/cache-deps
+        with:
+          cache-key: ${{ inputs.cache-key }}
+          build-type: ${{ inputs.build-type }}
+      
+      - name: Configure CMake
+        id: configure
+        run: |
+          BUILD_DIR="build-${{ inputs.build-type }}"
+          if [ "${{ inputs.sanitizer }}" != "" ]; then
+            BUILD_DIR="build-${{ inputs.sanitizer }}"
+          fi
+          
+          CMAKE_ARGS="-B $BUILD_DIR -DCMAKE_BUILD_TYPE=${{ inputs.build-type }}"
+          
+          if [ "${{ inputs.enable-coverage }}" == "true" ]; then
+            CMAKE_ARGS="$CMAKE_ARGS -DENABLE_COVERAGE=ON"
+          fi
+          
+          if [ "${{ inputs.enable-examples }}" == "true" ]; then
+            CMAKE_ARGS="$CMAKE_ARGS -DBUILD_EXAMPLES=ON"
+          fi
+          
+          if [ "${{ inputs.sanitizer }}" != "" ]; then
+            CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_C_FLAGS='-fsanitize=${{ inputs.sanitizer}} -fno-omit-frame-pointer -g'"
+            CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_CXX_FLAGS='-fsanitize=${{ inputs.sanitizer}} -fno-omit-frame-pointer -g'"
+          fi
+          
+          echo "cmake $CMAKE_ARGS"
+          cmake $CMAKE_ARGS
+          echo "build-dir=$BUILD_DIR" >> $GITHUB_OUTPUT
+        shell: bash
+      
+      - name: Build
+        id: build
+        run: |
+          BUILD_DIR="${{ steps.configure.outputs.build-dir }}"
+          PARALLEL_FLAG="-j$(nproc)"
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            PARALLEL_FLAG="--parallel"
+          elif [ "${{ runner.os }}" == "macOS" ]; then
+            PARALLEL_FLAG="-j$(sysctl -n hw.ncpu)"
+          fi
+          
+          cmake --build $BUILD_DIR --config ${{ inputs.build-type }} $PARALLEL_FLAG
+          echo "build-dir=$BUILD_DIR" >> $GITHUB_OUTPUT
+          echo "status=success" >> $GITHUB_OUTPUT
+        shell: bash
+      
+      - name: Check for warnings
+        if: inputs.build-type == 'Release'
+        run: |
+          BUILD_DIR="${{ steps.configure.outputs.build-dir }}"
+          if cmake --build $BUILD_DIR --config ${{ inputs.build-type }} 2>&1 | grep -i "warning:"; then
+            echo "Found compiler warnings!"
+            exit 1
+          fi
+        shell: bash
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4.3.1
+        if: inputs.enable-examples == 'true'
+        with:
+          name: build-${{ inputs.os }}-${{ inputs.build-type }}
+          path: ${{ steps.configure.outputs.build-dir }}/dist/
+          retention-days: 7

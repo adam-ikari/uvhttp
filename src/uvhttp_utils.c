@@ -213,3 +213,92 @@ int uvhttp_is_valid_string_length(const char* str, size_t max_len) {
     if (!str) return FALSE;
     return (strlen(str) <= max_len) ? TRUE : FALSE;
 }
+
+/**
+ * @brief 验证 IPv4 地址格式
+ * @param ip IP 地址字符串
+ * @return TRUE 表示有效，FALSE 表示无效
+ */
+int uvhttp_is_valid_ipv4(const char* ip) {
+    if (!ip || !*ip) return FALSE;
+    
+    int octet = 0;
+    int octet_count = 0;
+    int digit_count = 0;
+    
+    for (const char* p = ip; *p; p++) {
+        if (*p == '.') {
+            if (digit_count == 0) return FALSE;  // 连续的点
+            if (octet > 255) return FALSE;
+            octet = 0;
+            digit_count = 0;
+            octet_count++;
+        } else if (*p >= '0' && *p <= '9') {
+            octet = octet * 10 + (*p - '0');
+            digit_count++;
+            if (digit_count > 3) return FALSE;  // 超过3位数字
+        } else {
+            return FALSE;  // 非法字符
+        }
+    }
+    
+    // 检查最后一个八位组
+    if (digit_count == 0) return FALSE;
+    if (octet > 255) return FALSE;
+    octet_count++;
+    
+    return (octet_count == 4) ? TRUE : FALSE;
+}
+
+/**
+ * @brief 验证 IPv6 地址格式（简化版）
+ * @param ip IP 地址字符串
+ * @return TRUE 表示有效，FALSE 表示无效
+ */
+int uvhttp_is_valid_ipv6(const char* ip) {
+    if (!ip || !*ip) return FALSE;
+    
+    // 简化的 IPv6 验证
+    int colon_count = 0;
+    int digit_count = 0;
+    int has_double_colon = FALSE;
+    
+    for (const char* p = ip; *p; p++) {
+        if (*p == ':') {
+            if (p[1] == ':') {
+                if (has_double_colon) return FALSE;  // 只能有一个 ::
+                has_double_colon = TRUE;
+                p++;  // 跳过第二个冒号
+            }
+            colon_count++;
+            digit_count = 0;
+        } else if ((*p >= '0' && *p <= '9') || 
+                   (*p >= 'a' && *p <= 'f') || 
+                   (*p >= 'A' && *p <= 'F')) {
+            digit_count++;
+            if (digit_count > 4) return FALSE;
+        } else {
+            return FALSE;
+        }
+    }
+    
+    // IPv6 地址应该有 2-7 个冒号（取决于是否有 ::）
+    return (colon_count >= 2 && colon_count <= 7) ? TRUE : FALSE;
+}
+
+/**
+ * @brief 验证 IP 地址格式（IPv4 或 IPv6）
+ * @param ip IP 地址字符串
+ * @return TRUE 表示有效，FALSE 表示无效
+ */
+int uvhttp_is_valid_ip_address(const char* ip) {
+    if (!ip || !*ip) return FALSE;
+    
+    // 检查是否包含 : （IPv6）
+    if (strchr(ip, ':') != NULL) {
+        return uvhttp_is_valid_ipv6(ip);
+    }
+    
+    // 否则作为 IPv4 处理
+    return uvhttp_is_valid_ipv4(ip);
+}

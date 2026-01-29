@@ -78,8 +78,6 @@ docs/
 ├── DEPENDENCIES.md           # 依赖说明
 ├── DEVELOPER_GUIDE.md        # 开发者指南
 ├── DEVELOPMENT_PLAN.md       # 开发计划
-├── ERROR_CODES.md            # 错误码参考
-├── MIDDLEWARE_SYSTEM.md      # 中间件系统
 ├── PERFORMANCE_BENCHMARK.md  # 性能基准
 ├── PERFORMANCE_TESTING_STANDARD.md # 性能测试标准
 ├── RATE_LIMIT_API.md         # 限流 API
@@ -89,8 +87,8 @@ docs/
 ├── SECURITY.md               # 安全指南
 ├── STATIC_FILE_SERVER.md     # 静态文件服务
 ├── TUTORIAL.md               # 教程
-├── WEBSOCKET_AUTH.md         # WebSocket 认证
-└── XXHASH_INTEGRATION.md     # xxhash 集成
+├── XXHASH_INTEGRATION.md     # xxhash 集成
+└── LIBUV_DATA_POINTER.md     # libuv 数据指针模式
 ```
 
 ## 🎯 如何找到你需要的文档

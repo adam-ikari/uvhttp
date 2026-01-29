@@ -1,0 +1,15 @@
+{
+  "test_name": "homepage",
+  "test_file": "/",
+  "timestamp": "20260123_224637",
+  "config": {
+    "threads": 4,
+    "connections": 100,
+    "duration": 30
+  },
+  "results": {
+    "rps": 4157.35,
+    "avg_latency": "24.33ms",
+    "p99_latency": "53.59ms"
+  }
+}

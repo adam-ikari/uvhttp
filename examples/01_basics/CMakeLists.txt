@@ -1,26 +1,75 @@
 # 基础示例
 
-# 从父 CMakeLists.txt 获取库路径
-set(LIBUV_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/libuv/build/libuv.a)
-set(MBEDTLS_LIBS
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedtls.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedx509.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/mbedtls/build/library/libmbedcrypto.a
-)
-set(LLHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cllhttp/libllhttp.a)
-set(CJSON_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson/build/libcjson.a)
-set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/xxhash/libxxhash.a)
-
 # 从父 CMakeLists.txt 获取 UVHTTP 库路径
-set(UVHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../build/dist/lib/libuvhttp.a)
+set(UVHTTP_LIB ${CMAKE_BINARY_DIR}/dist/lib/libuvhttp.a)
 
 add_executable(hello_world 01_hello_world.c)
+
+# 使用声明库（IMPORTED targets）的方式链接
 target_link_libraries(hello_world
-    ${UVHTTP_LIB}
-    ${LIBUV_LIB}
-    ${MBEDTLS_LIBS}
-    ${LLHTTP_LIB}
-    ${CJSON_LIB}
-    ${XXHASH_LIB}
-    pthread m dl)
+    PRIVATE
+        ${UVHTTP_LIB}
+        libuv
+        mbedtls
+        xxhash
+        llhttp
+        m
+        dl
+)
+
+# 设置包含目录（UVHTTP头文件会自动包含依赖库的头文件）
+target_include_directories(hello_world
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src
+)
+
 add_dependencies(hello_world uvhttp)
+
+add_executable(quick_api_demo quick_api_demo.c)
+
+# 使用声明库（IMPORTED targets）的方式链接
+target_link_libraries(quick_api_demo
+    PRIVATE
+        ${UVHTTP_LIB}
+        libuv
+        mbedtls
+        xxhash
+        llhttp
+        cjson
+        m
+        dl
+)
+
+# 设置包含目录（UVHTTP头文件会自动包含依赖库的头文件）
+target_include_directories(quick_api_demo
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson
+)
+
+add_dependencies(quick_api_demo uvhttp)
+
+add_executable(signal_handling_demo signal_handling_demo.c)
+
+# 使用声明库（IMPORTED targets）的方式链接
+target_link_libraries(signal_handling_demo
+    PRIVATE
+        ${UVHTTP_LIB}
+        libuv
+        mbedtls
+        xxhash
+        llhttp
+        m
+        dl
+)
+
+# 设置包含目录（UVHTTP头文件会自动包含依赖库的头文件）
+target_include_directories(signal_handling_demo
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src
+)
+
+add_dependencies(signal_handling_demo uvhttp)

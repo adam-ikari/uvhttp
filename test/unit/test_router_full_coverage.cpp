@@ -7,7 +7,10 @@
 #include "uvhttp_constants.h"
 
 TEST(UvhttpRouterFullCoverageTest, RouterNew) {
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(router, nullptr);
     if (router != NULL) {
         ASSERT_NE(router, nullptr);
         uvhttp_router_free(router);
@@ -17,7 +20,10 @@ TEST(UvhttpRouterFullCoverageTest, RouterNew) {
 TEST(UvhttpRouterFullCoverageTest, RouterFree) {
     uvhttp_router_free(NULL);
     
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(router, nullptr);
     if (router != NULL) {
         uvhttp_router_free(router);
     }
@@ -51,7 +57,10 @@ TEST(UvhttpRouterFullCoverageTest, MethodToString) {
 }
 
 TEST(UvhttpRouterFullCoverageTest, RouterAddRoute) {
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(router, nullptr);
     if (router != NULL) {
         uvhttp_error_t result = uvhttp_router_add_route(router, "/api", NULL);
         
@@ -64,7 +73,10 @@ TEST(UvhttpRouterFullCoverageTest, RouterAddRoute) {
 }
 
 TEST(UvhttpRouterFullCoverageTest, RouterAddRouteMethod) {
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(router, nullptr);
     if (router != NULL) {
         uvhttp_error_t result = uvhttp_router_add_route_method(router, "/api", UVHTTP_GET, NULL);
         
@@ -77,7 +89,10 @@ TEST(UvhttpRouterFullCoverageTest, RouterAddRouteMethod) {
 }
 
 TEST(UvhttpRouterFullCoverageTest, RouterFindHandler) {
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(router, nullptr);
     if (router != NULL) {
         uvhttp_router_add_route(router, "/api", NULL);
         uvhttp_router_add_route(router, "/api/users", NULL);
@@ -91,7 +106,10 @@ TEST(UvhttpRouterFullCoverageTest, RouterFindHandler) {
 }
 
 TEST(UvhttpRouterFullCoverageTest, RouterMatch) {
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(router, nullptr);
     if (router != NULL) {
         uvhttp_router_add_route(router, "/api", NULL);
         
@@ -121,7 +139,10 @@ TEST(UvhttpRouterFullCoverageTest, RouterNullParams) {
 
 TEST(UvhttpRouterFullCoverageTest, RouterMultipleCycles) {
     for (int i = 0; i < 5; i++) {
-        uvhttp_router_t* router = uvhttp_router_new();
+        uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(router, nullptr);
         if (router != NULL) {
             uvhttp_router_add_route(router, "/api", NULL);
             uvhttp_router_free(router);
@@ -130,7 +151,10 @@ TEST(UvhttpRouterFullCoverageTest, RouterMultipleCycles) {
 }
 
 TEST(UvhttpRouterFullCoverageTest, RouterCount) {
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(router, nullptr);
     if (router != NULL) {
         uvhttp_router_add_route(router, "/api", NULL);
         uvhttp_router_add_route(router, "/api/users", NULL);
@@ -142,7 +166,10 @@ TEST(UvhttpRouterFullCoverageTest, RouterCount) {
 }
 
 TEST(UvhttpRouterFullCoverageTest, RouterDifferentMethods) {
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(router, nullptr);
     if (router != NULL) {
         uvhttp_router_add_route_method(router, "/api", UVHTTP_GET, NULL);
         uvhttp_router_add_route_method(router, "/api", UVHTTP_POST, NULL);
@@ -157,7 +184,10 @@ TEST(UvhttpRouterFullCoverageTest, RouterDifferentMethods) {
 }
 
 TEST(UvhttpRouterFullCoverageTest, RouterComplexPaths) {
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(router, nullptr);
     if (router != NULL) {
         uvhttp_router_add_route(router, "/api/v1/users", NULL);
         uvhttp_router_add_route(router, "/api/v1/posts", NULL);

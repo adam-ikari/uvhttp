@@ -1,4 +1,4 @@
-name: Deploy Docs
+name: CI/CD - Deploy Documentation
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4.1.1
       with:
         submodules: recursive
 
@@ -42,16 +42,16 @@ jobs:
       working-directory: ./docs
       run: |
         pnpm build
-        ls -la docs/.vitepress/dist || echo "dist directory not found"
+        ls -la .vitepress/dist || echo "dist directory not found"
 
     - name: Verify build output
       working-directory: ./docs
       run: |
-        if [ ! -d "docs/.vitepress/dist" ]; then
+        if [ ! -d ".vitepress/dist" ]; then
           echo "Error: Build output directory not found"
           exit 1
         fi
-        if [ ! -f "docs/.vitepress/dist/index.html" ]; then
+        if [ ! -f ".vitepress/dist/index.html" ]; then
           echo "Error: index.html not found in build output"
           exit 1
         fi

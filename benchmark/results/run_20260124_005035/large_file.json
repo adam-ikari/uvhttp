@@ -1,0 +1,15 @@
+{
+  "test_name": "large_file",
+  "test_file": "/static/large.html",
+  "timestamp": "20260124_005035",
+  "config": {
+    "threads": 4,
+    "connections": 100,
+    "duration": 30
+  },
+  "results": {
+    "qps": 5727.58,
+    "avg_latency": "17.72ms",
+    "p99_latency": "41.05ms"
+  }
+}

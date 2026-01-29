@@ -59,8 +59,11 @@ TEST(DeathTest, NullContextFree) {
  * @brief 测试 NULL 服务器设置路由
  */
 TEST(DeathTest, NullServerSetRouter) {
-    uvhttp_router_t* router = uvhttp_router_new();
-    uvhttp_error_t result = uvhttp_server_set_router(nullptr, router);
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(router, nullptr);
+    result = uvhttp_server_set_router(nullptr, router);
     EXPECT_NE(result, UVHTTP_OK);
     uvhttp_router_free(router);
 }
@@ -82,13 +85,16 @@ TEST(DeathTest, NullRouterAddRoute) {
  * @brief 测试 NULL 路径添加路由
  */
 TEST(DeathTest, NullPathAddRoute) {
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(router, nullptr);
     uvhttp_request_handler_t handler = [](uvhttp_request_t* req, uvhttp_response_t* res) -> int {
         uvhttp_response_set_status(res, 200);
         return uvhttp_response_send(res);
     };
 
-    uvhttp_error_t result = uvhttp_router_add_route(router, nullptr, handler);
+    result = uvhttp_router_add_route(router, nullptr, handler);
     EXPECT_NE(result, UVHTTP_OK);
     uvhttp_router_free(router);
 }
@@ -97,8 +103,11 @@ TEST(DeathTest, NullPathAddRoute) {
  * @brief 测试 NULL 处理器添加路由
  */
 TEST(DeathTest, NullHandlerAddRoute) {
-    uvhttp_router_t* router = uvhttp_router_new();
-    uvhttp_error_t result = uvhttp_router_add_route(router, "/test", nullptr);
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(router, nullptr);
+    result = uvhttp_router_add_route(router, "/test", nullptr);
     EXPECT_NE(result, UVHTTP_OK);
     uvhttp_router_free(router);
 }
@@ -148,8 +157,11 @@ TEST(DeathTest, NullServerListen) {
  */
 TEST(DeathTest, NullHostListen) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_error_t result = uvhttp_server_listen(server, nullptr, 8080);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(server, nullptr);
+    result = uvhttp_server_listen(server, nullptr, 8080);
     EXPECT_NE(result, UVHTTP_OK);
     uvhttp_server_free(server);
     uv_loop_close(loop);
@@ -161,8 +173,11 @@ TEST(DeathTest, NullHostListen) {
  */
 TEST(DeathTest, InvalidPortListen) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_error_t result = uvhttp_server_listen(server, "127.0.0.1", -1);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(server, nullptr);
+    result = uvhttp_server_listen(server, "127.0.0.1", -1);
     // libuv 可能会接受 -1，所以我们只测试函数不会崩溃
     if (result == UVHTTP_OK) {
         // 如果 libuv 接受了 -1，这是一个已知行为
@@ -184,8 +199,11 @@ TEST(DeathTest, InvalidPortListen) {
  */
 TEST(DeathTest, ExcessivePortListen) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_error_t result = uvhttp_server_listen(server, "127.0.0.1", 65536);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(server, nullptr);
+    result = uvhttp_server_listen(server, "127.0.0.1", 65536);
     // libuv 可能会接受 65536，所以我们只测试函数不会崩溃
     if (result == UVHTTP_OK) {
         // 如果 libuv 接受了 65536，这是一个已知行为

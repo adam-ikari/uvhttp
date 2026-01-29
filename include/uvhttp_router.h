@@ -107,7 +107,14 @@ UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, node_pool_size) % 8 == 0,
                       "node_pool_size not 8-byte aligned");
 
 // 路由API函数
-uvhttp_router_t* uvhttp_router_new(void);
+/**
+ * @brief 创建新的路由器
+ * @param router 输出参数，用于接收路由器指针
+ * @return UVHTTP_OK 成功，其他值表示失败
+ * @note 成功时，*router 被设置为有效的路由器对象，必须使用 uvhttp_router_free 释放
+ * @note 失败时，*router 被设置为 NULL
+ */
+uvhttp_error_t uvhttp_router_new(uvhttp_router_t** router);
 void uvhttp_router_free(uvhttp_router_t* router);
 
 // 路由添加（支持HTTP方法）
