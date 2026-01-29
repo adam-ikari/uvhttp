@@ -7,13 +7,13 @@ set(CJSON_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson/libcjson.a)
 # API 演示
 add_executable(api_demo api_demo.c)
 target_link_libraries(api_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp ${CJSON_LIB} pthread m dl)
-target_include_directories(api_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src)
+target_include_directories(api_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson)
 add_dependencies(api_demo uvhttp)
 
 # JSON API 演示
 add_executable(json_api_demo json_api_demo.c)
 target_link_libraries(json_api_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp ${CJSON_LIB} pthread m dl)
-target_include_directories(json_api_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src)
+target_include_directories(json_api_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson)
 add_dependencies(json_api_demo uvhttp)
 
 # 配置演示 - 暂时禁用，需要重构
@@ -31,7 +31,7 @@ add_dependencies(simple_config uvhttp)
 # 统一响应演示
 add_executable(unified_response_demo unified_response_demo.c)
 target_link_libraries(unified_response_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp ${CJSON_LIB} pthread m dl)
-target_include_directories(unified_response_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src)
+target_include_directories(unified_response_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson)
 add_dependencies(unified_response_demo uvhttp)
 
 # 高级内存应用

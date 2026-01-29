@@ -1,7 +1,7 @@
 /* UVHTTP 静态文件服务示例 - 演示集成文件读取功能 */
 
 #include "uvhttp.h"
-#include "../../deps/cjson/cJSON.h"
+#include <cJSON.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,6 +31,7 @@ void signal_handler(int signal) {
 
 /* API 请求处理器 - 显示统计信息 */
 int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;  // 未使用参数
     (void)request;  /* 避免未使用参数警告 */
 
     if (!g_app_context || !g_app_context->static_ctx) {
@@ -80,6 +81,7 @@ int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
 
 /* 主页处理器 */
 int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;  // 未使用参数
     const char* html = 
         "<!DOCTYPE html>\n"
         "<html>\n"

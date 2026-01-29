@@ -9,7 +9,7 @@
 
 #include "uvhttp.h"
 #include "uvhttp_middleware.h"
-#include "../../deps/cjson/cJSON.h"
+#include <cJSON.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -74,6 +74,7 @@ static int rate_limiter_try_consume(rate_limiter_t* limiter) {
 /* 限流中间件 */
 static int rate_limit_middleware(uvhttp_request_t* req, uvhttp_response_t* resp, uvhttp_middleware_context_t* ctx) {
     (void)ctx;
+    (void)req;  // 未使用参数
 
     if (!g_rate_limiter) {
         return UVHTTP_MIDDLEWARE_CONTINUE;

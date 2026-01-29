@@ -9,7 +9,7 @@
 
 #include "uvhttp.h"
 #include "uvhttp_middleware.h"
-#include "../../deps/cjson/cJSON.h"
+#include <cJSON.h>
 #include <stdio.h>
 #include <string.h>
 

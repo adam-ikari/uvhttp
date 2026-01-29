@@ -1337,7 +1337,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
     size_t file_size = (size_t)st.st_size;
     
     /* 策略选择 */
-    if (file_size < 4096) {
+    if (file_size < UVHTTP_STATIC_SMALL_FILE_THRESHOLD) {
         /* 小文件：使用优化的系统调用（open + read + close），避免 stdio 开销 */
         UVHTTP_LOG_DEBUG("Small file detected, using optimized I/O: %s (%zu bytes)", 
                         file_path, file_size);

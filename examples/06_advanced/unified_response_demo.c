@@ -11,7 +11,7 @@
 
 #include "../include/uvhttp.h"
 #include "../include/uvhttp_utils.h"
-#include "../../deps/cjson/cJSON.h"
+#include <cJSON.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

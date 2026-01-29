@@ -49,6 +49,7 @@ target_include_directories(quick_api_demo
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../../include
         ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson
 )
 
 add_dependencies(quick_api_demo uvhttp)

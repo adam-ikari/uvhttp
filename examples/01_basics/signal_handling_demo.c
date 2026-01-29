@@ -57,6 +57,7 @@ void on_sigterm(uv_signal_t* handle, int signum) {
 
 // 简单的请求处理器
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // 未使用参数
     const char* html = 
         "<!DOCTYPE html>"
         "<html>"

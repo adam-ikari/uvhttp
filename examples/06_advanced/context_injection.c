@@ -12,7 +12,7 @@
 #include "../../include/uvhttp.h"
 #include "../../include/uvhttp_allocator.h"
 #include "../../include/uvhttp_context.h"
-#include "../../deps/cjson/cJSON.h"
+#include <cJSON.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

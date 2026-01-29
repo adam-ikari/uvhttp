@@ -1,35 +1,51 @@
 /**
  * @file quick_api_demo.c
- * @brief UVHTTP 快速启动演示 - 使用核心API
+ * @brief UVHTTP 快速启动演示 - 使用核心API和libuv信号处理
  */
 
 #include "../include/uvhttp.h"
-#include "../../deps/cjson/cJSON.h"
+#include <cJSON.h>
 #include <stdio.h>
-#include <signal.h>
+#include <stdlib.h>
 
 // 应用上下文结构
 typedef struct {
     uvhttp_server_t* server;
+    uv_loop_t* loop;
+    uv_signal_t sigint;
+    uv_signal_t sigterm;
 } app_context_t;
 
-void signal_handler(int sig) {
-    printf("\n收到信号 %d，正在关闭服务器...\n", sig);
+// SIGINT 信号处理器
+void on_sigint(uv_signal_t* handle, int signum) {
+    printf("\n收到信号 %d (SIGINT)，正在优雅关闭服务器...\n", signum);
     
-    // 从 loop 中获取上下文
-    uv_loop_t* loop = uv_default_loop();
-    if (loop && loop->data) {
-        app_context_t* ctx = (app_context_t*)loop->data;
-        if (ctx && ctx->server) {
-            uvhttp_server_stop(ctx->server);
-            uvhttp_server_free(ctx->server);
-            ctx->server = NULL;
-        }
-        free(ctx);
-        loop->data = NULL;
+    app_context_t* ctx = (app_context_t*)handle->data;
+    if (ctx && ctx->server) {
+        uvhttp_server_stop(ctx->server);
+        uvhttp_server_free(ctx->server);
+        ctx->server = NULL;
     }
     
-    exit(0);
+    if (ctx && ctx->loop) {
+        uv_stop(ctx->loop);
+    }
+}
+
+// SIGTERM 信号处理器
+void on_sigterm(uv_signal_t* handle, int signum) {
+    printf("\n收到信号 %d (SIGTERM)，正在优雅关闭服务器...\n", signum);
+    
+    app_context_t* ctx = (app_context_t*)handle->data;
+    if (ctx && ctx->server) {
+        uvhttp_server_stop(ctx->server);
+        uvhttp_server_free(ctx->server);
+        ctx->server = NULL;
+    }
+    
+    if (ctx && ctx->loop) {
+        uv_stop(ctx->loop);
+    }
 }
 
 // 简单处理器
@@ -89,9 +105,6 @@ int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 int main() {
     printf("🚀 UVHTTP 快速启动演示\n");
-    
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
 
     // 创建事件循环
     uv_loop_t* loop = uv_default_loop();
@@ -103,6 +116,7 @@ int main() {
         return 1;
     }
     memset(ctx, 0, sizeof(app_context_t));
+    ctx->loop = loop;
 
     // 创建服务器
     uvhttp_error_t server_result = uvhttp_server_new(loop, &ctx->server);
@@ -116,9 +130,6 @@ int main() {
         free(ctx);
         return 1;
     }
-
-    // 将上下文设置到 loop->data
-    loop->data = ctx;
 
     // 创建路由器
     uvhttp_router_t* router = NULL;
@@ -134,28 +145,44 @@ int main() {
     uvhttp_router_add_route(router, "/", hello_handler);
     uvhttp_router_add_route(router, "/api", api_handler);
 
+    // 初始化 SIGINT 信号处理器
+    ctx->sigint.data = ctx;
+    uv_signal_init(loop, &ctx->sigint);
+    uv_signal_start(&ctx->sigint, on_sigint, SIGINT);
+
+    // 初始化 SIGTERM 信号处理器
+    ctx->sigterm.data = ctx;
+    uv_signal_init(loop, &ctx->sigterm);
+    uv_signal_start(&ctx->sigterm, on_sigterm, SIGTERM);
+
     printf("✅ 服务器配置完成!\n");
     printf("🌐 访问 http://localhost:8080 查看演示\n");
     printf("⏹️  按 Ctrl+C 停止服务器\n");
 
     // 启动服务器
-    int listen_result = uvhttp_server_listen(ctx->server, "0.0.0.0", 8080);
-    if (listen_result != 0) {
-        fprintf(stderr, "❌ 服务器启动失败: %d\n", listen_result);
+    uvhttp_error_t listen_result = uvhttp_server_listen(ctx->server, "0.0.0.0", 8080);
+    if (listen_result != UVHTTP_OK) {
+        fprintf(stderr, "❌ 服务器启动失败: %s\n", uvhttp_error_string(listen_result));
+        uv_signal_stop(&ctx->sigint);
+        uv_signal_stop(&ctx->sigterm);
+        uvhttp_server_free(ctx->server);
+        free(ctx);
         return 1;
     }
 
     // 运行事件循环
     uv_run(loop, UV_RUN_DEFAULT);
 
-    // 清理（正常退出时）
+    // 清理资源
+    uv_signal_stop(&ctx->sigint);
+    uv_signal_stop(&ctx->sigterm);
+
     if (ctx && ctx->server) {
         uvhttp_server_free(ctx->server);
     }
     if (ctx) {
         free(ctx);
     }
-    loop->data = NULL;
     
     return 0;
 }

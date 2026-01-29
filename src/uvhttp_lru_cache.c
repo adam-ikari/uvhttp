@@ -256,7 +256,7 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
     
     /* 检查是否需要驱逐条目 - 批量驱逐优化 */
     int eviction_count = 0;
-    int batch_size = 10;  /* 批量驱逐大小 */
+    int batch_size = UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE;  /* 批量驱逐大小 */
     
     while ((cache->max_memory_usage > 0 && 
             cache->total_memory_usage + memory_usage > cache->max_memory_usage) ||

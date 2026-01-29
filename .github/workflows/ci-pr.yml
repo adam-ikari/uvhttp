@@ -251,53 +251,19 @@ jobs:
       - name: Parse performance results
         id: parse
         run: |
+          # 使用新的解析脚本
+          python3 scripts/parse_wrk_output.py performance-pr.log performance-pr.json
+          
+          # 输出 RPS 值
           python3 << 'EOF'
           import json
-          import re
+          with open('performance-pr.json', 'r') as f:
+              data = json.load(f)
           
-          # 读取性能日志
-          with open('performance-pr.log', 'r') as f:
-              log_content = f.read()
-          
-          # 解析 wrk 输出
-          def parse_wrk_output(text):
-              match = re.search(r'(\d+)\s+requests in\s+([\d.]+)s', text)
-              if not match:
-                  return None
-              
-              requests = int(match.group(1))
-              duration = float(match.group(2))
-              rps = requests / duration
-              
-              return {'rps': rps}
-          
-          # 提取结果
-          results = []
-          for i in range(3):
-              pattern = r'(\d+)\s+requests in\s+([\d.]+)s'
-              matches = re.findall(pattern, log_content)
-              if matches:
-                  for match in matches:
-                      requests = int(match[0])
-                      duration = float(match[1])
-                      rps = requests / duration
-                      results.append({'rps': rps})
-          
-          # 生成 JSON
-          output = {
-              'test_scenarios': [
-                  {'name': 'low_concurrent', 'results': {'rps': {'value': results[0]['rps'] if len(results) > 0 else 0}}},
-                  {'name': 'medium_concurrent', 'results': {'rps': {'value': results[1]['rps'] if len(results) > 1 else 0}}},
-                  {'name': 'high_concurrent', 'results': {'rps': {'value': results[2]['rps'] if len(results) > 2 else 0}}}
-              ]
-          }
-          
-          with open('performance-pr.json', 'w') as f:
-              json.dump(output, f, indent=2)
-          
-          print(f"rps_low={output['test_scenarios'][0]['results']['rps']['value']:.0f}")
-          print(f"rps_medium={output['test_scenarios'][1]['results']['rps']['value']:.0f}")
-          print(f"rps_high={output['test_scenarios'][2]['results']['rps']['value']:.0f}")
+          scenarios = data.get('scenarios', {})
+          print(f"rps_low={scenarios.get('low_concurrent', {}).get('rps', 0)}")
+          print(f"rps_medium={scenarios.get('medium_concurrent', {}).get('rps', 0)}")
+          print(f"rps_high={scenarios.get('high_concurrent', {}).get('rps', 0)}")
           EOF
       
       - name: Check performance regression

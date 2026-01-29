@@ -8,6 +8,7 @@
 #include "uvhttp_validation.h"
 #include "uvhttp_features.h"
 #include "uvhttp_error_handler.h"
+#include "uvhttp_logging.h"
 #include <stdlib.h>
 #include "uthash.h"
 #include <string.h>
@@ -662,18 +663,18 @@ size_t uvhttp_request_get_header_count(uvhttp_request_t* request) {
 
 /* 获取指定索引的 header（内部使用） */
 uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request, size_t index) {
-    if (!request || index >= request->headers_capacity) {
+    if (!request || index >= request->header_count) {
         return NULL;
     }
     
     /* 检查是否在内联数组中 */
-    if (index < 32) {
+    if (index < UVHTTP_INLINE_HEADERS_CAPACITY) {
         return &request->headers[index];
     }
     
     /* 在动态扩容数组中 */
     if (request->headers_extra) {
-        return &request->headers_extra[index - 32];
+        return &request->headers_extra[index - UVHTTP_INLINE_HEADERS_CAPACITY];
     }
     
     return NULL;
@@ -694,7 +695,7 @@ uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request,
         /* 计算新容量（最多 MAX_HEADERS） */
         size_t new_capacity = request->headers_capacity * 2;
         if (new_capacity == 0) {
-            new_capacity = 32;  /* 初始容量 */
+            new_capacity = UVHTTP_INLINE_HEADERS_CAPACITY;  /* 初始容量 */
         }
         if (new_capacity > MAX_HEADERS) {
             new_capacity = MAX_HEADERS;
@@ -707,7 +708,7 @@ uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request,
         }
         
         /* 分配或重新分配动态数组 */
-        size_t extra_count = new_capacity - 32;
+        size_t extra_count = new_capacity - UVHTTP_INLINE_HEADERS_CAPACITY;
         int is_first_alloc = (request->headers_extra == NULL);
         
         uvhttp_header_t* new_extra = uvhttp_realloc(request->headers_extra, 

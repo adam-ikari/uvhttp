@@ -9,6 +9,7 @@
 #include "uvhttp_error.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_platform.h"
+#include "uvhttp_constants.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,11 +21,6 @@
 
 /* WebSocket GUID (RFC 6455) */
 #define WS_GUID "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-
-/* 默认配置 */
-#define WS_DEFAULT_MAX_FRAME_SIZE  (16 * 1024 * 1024)  // 16MB
-#define WS_DEFAULT_MAX_MESSAGE_SIZE (64 * 1024 * 1024) // 64MB
-#define WS_DEFAULT_RECV_BUFFER_SIZE (64 * 1024)        // 64KB
 
 /* 生成安全的随机数 */
 static int uvhttp_ws_random_bytes(uvhttp_context_t* context, unsigned char* buf, size_t len) {
@@ -53,14 +49,14 @@ struct uvhttp_ws_connection* uvhttp_ws_connection_create(int fd,
     conn->state = UVHTTP_WS_STATE_CONNECTING;
     
     /* 设置默认配置 */
-    conn->config.max_frame_size = WS_DEFAULT_MAX_FRAME_SIZE;
-    conn->config.max_message_size = WS_DEFAULT_MAX_MESSAGE_SIZE;
-    conn->config.ping_interval = 30;
-    conn->config.ping_timeout = 10;
+    conn->config.max_frame_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE;
+    conn->config.max_message_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE;
+    conn->config.ping_interval = UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL;
+    conn->config.ping_timeout = UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT;
     conn->config.enable_compression = 0;
     
     /* 分配接收缓冲区 */
-    conn->recv_buffer_size = WS_DEFAULT_RECV_BUFFER_SIZE;
+    conn->recv_buffer_size = UVHTTP_WEBSOCKET_DEFAULT_RECV_BUFFER_SIZE;
     conn->recv_buffer = uvhttp_alloc(conn->recv_buffer_size);
     if (!conn->recv_buffer) {
         uvhttp_free(conn);

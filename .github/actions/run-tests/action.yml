@@ -48,10 +48,12 @@ runs:
         
         case "${{ inputs.test-type }}" in
           fast)
-            ctest --output-on-failure -j${{ inputs.parallel }} --timeout ${{ inputs.timeout }} --label-regex "^fast$" --schedule-random
+            # 运行快速测试（排除慢速、压力和内存测试）
+            ctest --output-on-failure -j${{ inputs.parallel }} --timeout ${{ inputs.timeout }} --schedule-random -E "slow|stress|memory"
             ;;
           slow)
-            ctest --output-on-failure -j${{ inputs.parallel }} --timeout ${{ inputs.timeout }} --label-regex "^slow$" --schedule-random
+            # 只运行慢速测试
+            ctest --output-on-failure -j${{ inputs.parallel }} --timeout ${{ inputs.timeout }} --schedule-random -R "slow"
             ;;
           all)
             ctest --output-on-failure -j${{ inputs.parallel }} --timeout ${{ inputs.timeout }} --schedule-random
@@ -64,7 +66,7 @@ runs:
             fi
             ;;
           stress)
-            ctest --output-on-failure -j1 --timeout 1800 --label-regex "^stress$" --schedule-random
+            ctest --output-on-failure -j1 --timeout 1800 --schedule-random -R "stress"
             ;;
           memory)
             export ASAN_OPTIONS=detect_leaks=1:halt_on_error=0

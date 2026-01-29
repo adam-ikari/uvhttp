@@ -10,7 +10,7 @@
 #include "../include/uvhttp_config.h"
 #include "../include/uvhttp_context.h"
 #include "../include/uvhttp_allocator.h"
-#include "../../deps/cjson/cJSON.h"
+#include <cJSON.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

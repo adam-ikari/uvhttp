@@ -21,7 +21,7 @@
  */
 
 #include "../../include/uvhttp.h"
-#include "../../deps/cjson/cJSON.h"
+#include <cJSON.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>

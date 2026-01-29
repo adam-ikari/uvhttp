@@ -211,8 +211,8 @@ uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
     memset(s, 0, sizeof(uvhttp_server_t));
     
     // 初始化连接限制默认值
-    s->max_connections = 10000;  // 默认最大连接数
-    s->max_message_size = 1024 * 1024;  // 默认最大消息大小1MB
+    s->max_connections = UVHTTP_MAX_CONNECTIONS_MAX;  // 默认最大连接数
+    s->max_message_size = UVHTTP_MAX_BODY_SIZE;  // 默认最大消息大小1MB
     
     // 初始化WebSocket路由表
     #if UVHTTP_FEATURE_WEBSOCKET
@@ -381,7 +381,7 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
     uv_tcp_nodelay(&server->tcp_handle, enable);
     
     /* 设置keepalive */
-    uv_tcp_keepalive(&server->tcp_handle, enable, 60);
+    uv_tcp_keepalive(&server->tcp_handle, enable, UVHTTP_TCP_KEEPALIVE_TIMEOUT);
     
     /* 使用配置系统的backlog设置 */
     // 使用 server->context 而非 loop->data，避免独占 loop->data

@@ -53,8 +53,8 @@ struct uvhttp_response {
     size_t body_length;                /* 8 字节 */
     time_t cache_expires;              /* 8 字节 - 缓存过期时间 */
     
-    /* Headers - 混合分配：8个内联 + 动态扩容（优化内存局部性） */
-    uvhttp_header_t headers[8];       /* 8 * 4352 = 34,816 字节 - 内联，减少75% */
+    /* Headers - 混合分配：内联 + 动态扩容（优化内存局部性） */
+    uvhttp_header_t headers[UVHTTP_INLINE_HEADERS_CAPACITY];  /* 内联，减少动态分配 */
     uvhttp_header_t* headers_extra;   /* 8 字节 - 动态扩容 */
     size_t headers_capacity;          /* 8 字节 - 总容量（内联+动态） */
 };
