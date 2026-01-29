@@ -155,6 +155,86 @@ jobs:
           # 暂时输出占位符
           echo "vulnerabilities=0" >> $GITHUB_OUTPUT
   
+  # 任务 4: 32位系统快速构建和测试
+  ubuntu-32bit-build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      build-status: ${{ steps.build.outputs.status }}
+      test-status: ${{ steps.test.outputs.status }}
+      test-total: ${{ steps.test.outputs.total }}
+      test-passed: ${{ steps.test.outputs.passed }}
+      test-failed: ${{ steps.test.outputs.failed }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+        with:
+          os: ubuntu-latest
+      
+      - name: Install 32-bit toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib
+      
+      - name: Cache 32-bit dependencies
+        uses: ./.github/actions/cache-deps
+        with:
+          cache-key: pr-32bit-${{ github.event.pull_request.number }}
+          build-type: Release
+      
+      - name: Configure CMake for 32-bit
+        run: |
+          cmake -B build-32bit-pr \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_FLAGS="-m32" \
+            -DCMAKE_CXX_FLAGS="-m32" \
+            -DBUILD_WITH_WEBSOCKET=ON \
+            -DBUILD_WITH_MIMALLOC=ON \
+            -DBUILD_EXAMPLES=OFF
+      
+      - name: Build 32-bit version
+        id: build
+        run: |
+          cmake --build build-32bit-pr --config Release -j$(nproc)
+          echo "build-dir=build-32bit-pr" >> $GITHUB_OUTPUT
+          echo "status=success" >> $GITHUB_OUTPUT
+      
+      - name: Verify 32-bit binary
+        run: |
+          echo "Checking library architecture:"
+          file build-32bit-pr/dist/lib/libuvhttp.a
+          
+          # 验证确实是32位
+          if file build-32bit-pr/dist/lib/libuvhttp.a | grep -q "32-bit"; then
+            echo "✅ 32-bit library verified"
+          else
+            echo "❌ Not a 32-bit library!"
+            exit 1
+          fi
+      
+      - name: Run 32-bit fast tests
+        id: test
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build-32bit-pr
+          test-type: fast
+          timeout: 120
+          parallel: 1
+      
+      - name: Upload 32-bit test logs
+        if: always()
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: test-logs-32bit-pr-${{ github.event.pull_request.number }}
+          path: build-32bit-pr/Testing/
+          retention-days: 7
+  
   # ========== 依赖任务组 ==========
   
   # 任务 4: 快速测试
@@ -182,16 +262,12 @@ jobs:
       
       - name: Run fast tests
         id: test
-        run: |
-          cd build-pr
-          ctest --output-on-failure -j1 --timeout 60 --schedule-random
-          
-          # 获取测试结果
-          TOTAL=$(ctest -N | grep "Total Tests:" | awk '{print $3}' || echo "0")
-          echo "status=success" >> $GITHUB_OUTPUT
-          echo "total=$TOTAL" >> $GITHUB_OUTPUT
-          echo "passed=$TOTAL" >> $GITHUB_OUTPUT
-          echo "failed=0" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build-pr
+          test-type: fast
+          timeout: 60
+          parallel: 1
       
       - name: Upload test logs
         if: always()
@@ -340,7 +416,7 @@ jobs:
   
   # 任务 6: 生成 PR 摘要
   generate-pr-summary:
-    needs: [ubuntu-build, code-quality-check, dependency-scan, ubuntu-test-fast, performance-regression-check]
+    needs: [ubuntu-build, code-quality-check, dependency-scan, ubuntu-test-fast, ubuntu-32bit-build-test, performance-regression-check]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     if: always()
@@ -351,12 +427,14 @@ jobs:
           echo "## 📊 PR CI/CD Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Build Status" >> $GITHUB_STEP_SUMMARY
-          echo "- Ubuntu Build: ${{ needs.ubuntu-build.outputs.build-status == 'success' && '✅ Success' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Ubuntu 64-bit Build: ${{ needs.ubuntu-build.outputs.build-status == 'success' && '✅ Success' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Ubuntu 32-bit Build: ${{ needs.ubuntu-32bit-build-test.outputs.build-status == 'success' && '✅ Success' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "- Total: ${{ needs.ubuntu-test-fast.outputs.test-total }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Passed: ${{ needs.ubuntu-test-fast.outputs.test-passed }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Failed: ${{ needs.ubuntu-test-fast.outputs.test-failed }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Total | Passed | Failed |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 64-bit | ${{ needs.ubuntu-test-fast.outputs.test-total }} | ${{ needs.ubuntu-test-fast.outputs.test-passed }} | ${{ needs.ubuntu-test-fast.outputs.test-failed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 32-bit | ${{ needs.ubuntu-32bit-build-test.outputs.test-total }} | ${{ needs.ubuntu-32bit-build-test.outputs.test-passed }} | ${{ needs.ubuntu-32bit-build-test.outputs.test-failed }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Code Quality" >> $GITHUB_STEP_SUMMARY
           echo "- cppcheck issues: ${{ needs.code-quality-check.outputs.cppcheck-issues }}" >> $GITHUB_STEP_SUMMARY
@@ -377,12 +455,14 @@ jobs:
             const summary = `## 📊 PR CI/CD Summary
             
             ### Build Status
-            - Ubuntu Build: ${{ needs.ubuntu-build.outputs.build-status == 'success' && '✅ Success' || '❌ Failed' }}
+            - Ubuntu 64-bit Build: ${{ needs.ubuntu-build.outputs.build-status == 'success' && '✅ Success' || '❌ Failed' }}
+            - Ubuntu 32-bit Build: ${{ needs.ubuntu-32bit-build-test.outputs.build-status == 'success' && '✅ Success' || '❌ Failed' }}
             
             ### Test Results
-            - Total: ${{ needs.ubuntu-test-fast.outputs.test-total }}
-            - Passed: ${{ needs.ubuntu-test-fast.outputs.test-passed }}
-            - Failed: ${{ needs.ubuntu-test-fast.outputs.test-failed }}
+            | Platform | Total | Passed | Failed |
+            |----------|-------|--------|--------|
+            | 64-bit | ${{ needs.ubuntu-test-fast.outputs.test-total }} | ${{ needs.ubuntu-test-fast.outputs.test-passed }} | ${{ needs.ubuntu-test-fast.outputs.test-failed }} |
+            | 32-bit | ${{ needs.ubuntu-32bit-build-test.outputs.test-total }} | ${{ needs.ubuntu-32bit-build-test.outputs.test-passed }} | ${{ needs.ubuntu-32bit-build-test.outputs.test-failed }} |
             
             ### Code Quality
             - cppcheck issues: ${{ needs.code-quality-check.outputs.cppcheck-issues }}

@@ -1,8 +1,9 @@
 #ifndef UVHTTP_UTILS_H
 #define UVHTTP_UTILS_H
 
-#include <stddef.h>
 #include "uvhttp_error.h"
+
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,16 +21,15 @@ int uvhttp_safe_strncpy(char* dest, const char* src, size_t dest_size);
 /* ============ 统一响应处理函数 ============ */
 
 // 统一响应发送 - 由使用者设置 Content-Type
-uvhttp_error_t uvhttp_send_unified_response(uvhttp_response_t* response, 
-                                          const char* content, 
-                                          size_t length, 
-                                          int status_code);
+uvhttp_error_t uvhttp_send_unified_response(uvhttp_response_t* response,
+                                            const char* content, size_t length,
+                                            int status_code);
 
 // 错误响应 - 统一处理，返回 JSON 格式错误
-uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response, 
-                                         int error_code, 
-                                         const char* error_message, 
-                                         const char* details);
+uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response,
+                                          int error_code,
+                                          const char* error_message,
+                                          const char* details);
 
 /* ============ 验证函数 ============ */
 

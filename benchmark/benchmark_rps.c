@@ -241,7 +241,7 @@ int main(int argc, char* argv[]) {
     }
     
     /* 创建应用上下文 */
-    app_context_t* ctx = (app_context_t*)malloc(sizeof(app_context_t));
+    app_context_t* ctx = (app_context_t*)uvhttp_alloc(sizeof(app_context_t));
     if (!ctx) {
         fprintf(stderr, "无法分配应用上下文\n");
         return 1;
@@ -258,7 +258,7 @@ int main(int argc, char* argv[]) {
     uvhttp_error_t result = uvhttp_server_new(loop, &server);
     if (result != UVHTTP_OK || !server) {
         fprintf(stderr, "无法创建服务器: %s\n", uvhttp_error_string(result));
-        free(ctx);
+        uvhttp_free(ctx);
         return 1;
     }
     
@@ -272,7 +272,7 @@ int main(int argc, char* argv[]) {
     if (result != UVHTTP_OK) {
         fprintf(stderr, "无法创建路由: %s\n", uvhttp_error_string(result));
         uvhttp_server_free(server);
-        free(ctx);
+        uvhttp_free(ctx);
         g_signal_server = NULL;
         return 1;
     }
@@ -293,7 +293,7 @@ int main(int argc, char* argv[]) {
     if (result != UVHTTP_OK) {
         fprintf(stderr, "无法启动服务器: %s\n", uvhttp_error_string(result));
         uvhttp_server_free(server);
-        free(ctx);
+        uvhttp_free(ctx);
         g_signal_server = NULL;
         return 1;
     }
@@ -309,7 +309,7 @@ int main(int argc, char* argv[]) {
     /* 清理 */
     printf("\n正在关闭服务器...\n");
     uvhttp_server_free(server);
-    free(ctx);
+    uvhttp_free(ctx);
     g_signal_server = NULL;
     printf("服务器已关闭\n");
     

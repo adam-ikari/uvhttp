@@ -3,7 +3,8 @@
  * @brief 错误恢复机制
  *
  * 提供自定义错误处理和恢复机制
- * 注意：错误统计功能由 uvhttp_error.h 提供，日志记录功能由 uvhttp_logging.h 提供
+ * 注意：错误统计功能由 uvhttp_error.h 提供，日志记录功能由 uvhttp_logging.h
+ * 提供
  */
 
 #ifndef UVHTTP_ERROR_HANDLER_H
@@ -11,6 +12,7 @@
 
 #include "uvhttp_error.h"
 #include "uvhttp_logging.h"
+
 #include <time.h>
 
 #ifdef __cplusplus
@@ -59,15 +61,17 @@ void uvhttp_error_cleanup(void);
 /**
  * 设置错误恢复配置
  */
-void uvhttp_error_set_recovery_config(const uvhttp_error_recovery_config_t* config);
+void uvhttp_error_set_recovery_config(
+    const uvhttp_error_recovery_config_t* config);
 
 /**
  * 尝试从错误中恢复
- * 
+ *
  * @param context 错误上下文
  * @return 错误码，UVHTTP_OK 表示恢复成功
  */
-uvhttp_error_t uvhttp_error_attempt_recovery(const uvhttp_error_context_t* context);
+uvhttp_error_t uvhttp_error_attempt_recovery(
+    const uvhttp_error_context_t* context);
 
 /* ========== 错误报告宏 ========== */
 
@@ -75,29 +79,28 @@ uvhttp_error_t uvhttp_error_attempt_recovery(const uvhttp_error_context_t* conte
  * 报告错误（使用日志系统记录）
  * 注意：实际日志记录由 UVHTTP_LOG_* 宏处理
  */
-#define UVHTTP_ERROR_REPORT(error_code, message) \
-    do { \
-        uvhttp_error_report_((error_code), (message), __func__, __FILE__, __LINE__, NULL); \
+#define UVHTTP_ERROR_REPORT(error_code, message)                              \
+    do {                                                                      \
+        uvhttp_error_report_((error_code), (message), __func__, __FILE__,     \
+                             __LINE__, NULL);                                 \
         UVHTTP_LOG_ERROR("%s: %s", uvhttp_error_string(error_code), message); \
-    } while(0)
+    } while (0)
 
-#define UVHTTP_ERROR_REPORT_WITH_DATA(error_code, message, data) \
-    do { \
-        uvhttp_error_report_((error_code), (message), __func__, __FILE__, __LINE__, (data)); \
+#define UVHTTP_ERROR_REPORT_WITH_DATA(error_code, message, data)              \
+    do {                                                                      \
+        uvhttp_error_report_((error_code), (message), __func__, __FILE__,     \
+                             __LINE__, (data));                               \
         UVHTTP_LOG_ERROR("%s: %s", uvhttp_error_string(error_code), message); \
-    } while(0)
+    } while (0)
 
 /* ========== 内部函数 ========== */
 
 /**
  * 内部错误报告函数（仅用于统计）
  */
-void uvhttp_error_report_(uvhttp_error_t error_code, 
-                         const char* message,
-                         const char* function,
-                         const char* file,
-                         int line,
-                         void* user_data);
+void uvhttp_error_report_(uvhttp_error_t error_code, const char* message,
+                          const char* function, const char* file, int line,
+                          void* user_data);
 
 #ifdef __cplusplus
 }

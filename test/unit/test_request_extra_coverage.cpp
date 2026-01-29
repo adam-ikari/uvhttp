@@ -171,6 +171,7 @@ TEST(UvhttpRequestExtraCoverageTest, RequestGetHeader) {
     ASSERT_NE(request, nullptr);
     memset(request, 0, sizeof(uvhttp_request_t));
     
+    request->headers_capacity = UVHTTP_INLINE_HEADERS_CAPACITY;
     strcpy(request->headers[0].name, "Content-Type");
     strcpy(request->headers[0].value, "application/json");
     request->header_count = 1;
@@ -261,6 +262,7 @@ TEST(UvhttpRequestExtraCoverageTest, RequestMultipleHeaders) {
     ASSERT_NE(request, nullptr);
     memset(request, 0, sizeof(uvhttp_request_t));
     
+    request->headers_capacity = UVHTTP_INLINE_HEADERS_CAPACITY;
     strcpy(request->headers[0].name, "Content-Type");
     strcpy(request->headers[0].value, "application/json");
     

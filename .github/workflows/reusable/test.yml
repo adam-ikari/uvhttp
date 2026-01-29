@@ -6,10 +6,12 @@ on:
       os:
         required: true
         type: string
+        description: 'Operating system: ubuntu-latest'
       build-type:
         required: false
         type: string
         default: 'Release'
+        description: 'CMAKE_BUILD_TYPE: Debug, Release, RelWithDebInfo'
       test-type:
         required: false
         type: string

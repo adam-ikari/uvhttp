@@ -1,18 +1,20 @@
 /* UVHTTP 依赖注入和上下文管理实现 */
 
 #include "uvhttp_context.h"
+
 #include "uvhttp_allocator.h"
 #include "uvhttp_connection.h"
-#include "uvhttp_server.h"
-#include "uvhttp_router.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_error_handler.h"
-#include <mbedtls/entropy.h>
+#include "uvhttp_router.h"
+#include "uvhttp_server.h"
+
 #include <mbedtls/ctr_drbg.h>
-#include <stdlib.h>
+#include <mbedtls/entropy.h>
 #include <stddef.h>
-#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 /* ============ 内存分配器说明 ============ */
@@ -37,12 +39,14 @@
 
 /* ============ 上下文管理实现 ============ */
 
-uvhttp_error_t uvhttp_context_create(uv_loop_t* loop, uvhttp_context_t** context) {
+uvhttp_error_t uvhttp_context_create(uv_loop_t* loop,
+                                     uvhttp_context_t** context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    uvhttp_context_t* ctx = (uvhttp_context_t*)uvhttp_alloc(sizeof(uvhttp_context_t));
+    uvhttp_context_t* ctx =
+        (uvhttp_context_t*)uvhttp_alloc(sizeof(uvhttp_context_t));
     if (!ctx) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
@@ -116,7 +120,7 @@ uvhttp_error_t uvhttp_context_init_tls(uvhttp_context_t* context) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     mbedtls_entropy_init((mbedtls_entropy_context*)context->tls_entropy);
-    
+
     /* 分配并初始化 DRBG 上下文 */
     context->tls_drbg = uvhttp_alloc(sizeof(mbedtls_ctr_drbg_context));
     if (!context->tls_drbg) {
@@ -126,12 +130,12 @@ uvhttp_error_t uvhttp_context_init_tls(uvhttp_context_t* context) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     mbedtls_ctr_drbg_init((mbedtls_ctr_drbg_context*)context->tls_drbg);
-    
+
     /* 使用自定义熵源初始化 DRBG */
-    int ret = mbedtls_ctr_drbg_seed((mbedtls_ctr_drbg_context*)context->tls_drbg, 
-                                     mbedtls_entropy_func, 
-                                     (mbedtls_entropy_context*)context->tls_entropy,
-                                     (const unsigned char*)"uvhttp_tls", 11);
+    int ret = mbedtls_ctr_drbg_seed(
+        (mbedtls_ctr_drbg_context*)context->tls_drbg, mbedtls_entropy_func,
+        (mbedtls_entropy_context*)context->tls_entropy,
+        (const unsigned char*)"uvhttp_tls", 11);
     if (ret != 0) {
         mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
         mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
@@ -159,7 +163,7 @@ void uvhttp_context_cleanup_tls(uvhttp_context_t* context) {
         uvhttp_free(context->tls_entropy);
         context->tls_entropy = NULL;
     }
-    
+
     if (context->tls_drbg) {
         mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
         uvhttp_free(context->tls_drbg);
@@ -186,7 +190,7 @@ uvhttp_error_t uvhttp_context_init_websocket(uvhttp_context_t* context) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     mbedtls_entropy_init((mbedtls_entropy_context*)context->ws_entropy);
-    
+
     /* 分配并初始化 DRBG 上下文 */
     context->ws_drbg = uvhttp_alloc(sizeof(mbedtls_ctr_drbg_context));
     if (!context->ws_drbg) {
@@ -196,12 +200,11 @@ uvhttp_error_t uvhttp_context_init_websocket(uvhttp_context_t* context) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     mbedtls_ctr_drbg_init((mbedtls_ctr_drbg_context*)context->ws_drbg);
-    
+
     /* 初始化 DRBG */
-    int ret = mbedtls_ctr_drbg_seed((mbedtls_ctr_drbg_context*)context->ws_drbg, 
-                                     mbedtls_entropy_func, 
-                                     (mbedtls_entropy_context*)context->ws_entropy, 
-                                     NULL, 0);
+    int ret = mbedtls_ctr_drbg_seed(
+        (mbedtls_ctr_drbg_context*)context->ws_drbg, mbedtls_entropy_func,
+        (mbedtls_entropy_context*)context->ws_entropy, NULL, 0);
     if (ret != 0) {
         mbedtls_entropy_free((mbedtls_entropy_context*)context->ws_entropy);
         mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->ws_drbg);
@@ -229,7 +232,7 @@ void uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
         uvhttp_free(context->ws_entropy);
         context->ws_entropy = NULL;
     }
-    
+
     if (context->ws_drbg) {
         mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->ws_drbg);
         uvhttp_free(context->ws_drbg);
@@ -251,7 +254,8 @@ uvhttp_error_t uvhttp_context_init_error_stats(uvhttp_context_t* context) {
     }
 
     /* 分配错误统计结构 */
-    uvhttp_error_stats_t* error_stats = uvhttp_alloc(sizeof(uvhttp_error_stats_t));
+    uvhttp_error_stats_t* error_stats =
+        uvhttp_alloc(sizeof(uvhttp_error_stats_t));
     if (!error_stats) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }

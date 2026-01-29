@@ -5,17 +5,19 @@
 
 #if UVHTTP_FEATURE_WEBSOCKET
 
-#ifndef UVHTTP_WEBSOCKET_H
-#define UVHTTP_WEBSOCKET_H
+#    ifndef UVHTTP_WEBSOCKET_H
+#        define UVHTTP_WEBSOCKET_H
 
-#include <stddef.h>
-#include <stdint.h>
-#include "uvhttp_tls.h"
-#include "uvhttp_error.h"
+#        include "uvhttp_connection.h"
+#        include "uvhttp_error.h"
+#        include "uvhttp_tls.h"
 
-#ifdef __cplusplus
+#        include <stddef.h>
+#        include <stdint.h>
+
+#        ifdef __cplusplus
 extern "C" {
-#endif
+#        endif
 
 /* WebSocket 操作码 (RFC 6455) */
 typedef enum {
@@ -69,15 +71,13 @@ struct uvhttp_ws_connection;
 
 /* 回调函数类型 */
 typedef int (*uvhttp_ws_on_message_callback)(struct uvhttp_ws_connection* conn,
-                                               const char* data,
-                                               size_t len,
-                                               int opcode);
+                                             const char* data, size_t len,
+                                             int opcode);
 typedef int (*uvhttp_ws_on_close_callback)(struct uvhttp_ws_connection* conn,
-                                              int code,
-                                              const char* reason);
+                                           int code, const char* reason);
 typedef int (*uvhttp_ws_on_error_callback)(struct uvhttp_ws_connection* conn,
-                                              int error_code,
-                                              const char* error_msg);
+                                           int error_code,
+                                           const char* error_msg);
 
 /* WebSocket 连接 */
 typedef struct uvhttp_ws_connection {
@@ -123,9 +123,8 @@ typedef struct uvhttp_ws_connection {
 /**
  * 创建 WebSocket 连接
  */
-struct uvhttp_ws_connection* uvhttp_ws_connection_create(int fd,
-                                                     mbedtls_ssl_context* ssl,
-                                                     int is_server);
+struct uvhttp_ws_connection* uvhttp_ws_connection_create(
+    int fd, mbedtls_ssl_context* ssl, int is_server);
 
 /**
  * 释放 WebSocket 连接
@@ -136,150 +135,133 @@ void uvhttp_ws_connection_free(struct uvhttp_ws_connection* conn);
  * 执行 WebSocket 握手 (服务器端)
  */
 uvhttp_error_t uvhttp_ws_handshake_server(struct uvhttp_ws_connection* conn,
-                                const char* request,
-                                size_t request_len,
-                                char* response,
-                                size_t* response_len);
+                                          const char* request,
+                                          size_t request_len, char* response,
+                                          size_t* response_len);
 
 /**
  * 执行 WebSocket 握手 (客户端)
  */
 uvhttp_error_t uvhttp_ws_handshake_client(uvhttp_context_t* context,
-                                struct uvhttp_ws_connection* conn,
-                                const char* host,
-                                const char* path,
-                                char* request,
-                                size_t* request_len);
+                                          struct uvhttp_ws_connection* conn,
+                                          const char* host, const char* path,
+                                          char* request, size_t* request_len);
 
 /**
  * 验证握手响应 (客户端)
  */
-uvhttp_error_t uvhttp_ws_verify_handshake_response(struct uvhttp_ws_connection* conn,
-                                         const char* response,
-                                         size_t response_len);
+uvhttp_error_t uvhttp_ws_verify_handshake_response(
+    struct uvhttp_ws_connection* conn, const char* response,
+    size_t response_len);
 
 /**
  * 接收 WebSocket 帧
  */
 uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
-                          uvhttp_ws_frame_t* frame);
+                                    uvhttp_ws_frame_t* frame);
 
 /**
  * 发送 WebSocket 帧
  */
 uvhttp_error_t uvhttp_ws_send_frame(uvhttp_context_t* context,
-                          struct uvhttp_ws_connection* conn,
-                          const uint8_t* data,
-                          size_t len,
-                          uvhttp_ws_opcode_t opcode);
+                                    struct uvhttp_ws_connection* conn,
+                                    const uint8_t* data, size_t len,
+                                    uvhttp_ws_opcode_t opcode);
 
 /**
  * 发送文本消息
  */
 uvhttp_error_t uvhttp_ws_send_text(uvhttp_context_t* context,
-                         struct uvhttp_ws_connection* conn,
-                         const char* text,
-                         size_t len);
+                                   struct uvhttp_ws_connection* conn,
+                                   const char* text, size_t len);
 
 /**
  * 发送二进制消息
  */
 uvhttp_error_t uvhttp_ws_send_binary(uvhttp_context_t* context,
-                           struct uvhttp_ws_connection* conn,
-                           const uint8_t* data,
-                           size_t len);
+                                     struct uvhttp_ws_connection* conn,
+                                     const uint8_t* data, size_t len);
 
 /**
  * 发送 Ping
  */
 uvhttp_error_t uvhttp_ws_send_ping(uvhttp_context_t* context,
-                        struct uvhttp_ws_connection* conn,
-                        const uint8_t* data,
-                        size_t len);
+                                   struct uvhttp_ws_connection* conn,
+                                   const uint8_t* data, size_t len);
 
 /**
  * 发送 Pong
  */
 uvhttp_error_t uvhttp_ws_send_pong(uvhttp_context_t* context,
-                        struct uvhttp_ws_connection* conn,
-                        const uint8_t* data,
-                        size_t len);
+                                   struct uvhttp_ws_connection* conn,
+                                   const uint8_t* data, size_t len);
 
 /**
  * 关闭连接
  */
 uvhttp_error_t uvhttp_ws_close(uvhttp_context_t* context,
-                    struct uvhttp_ws_connection* conn,
-                    int code,
-                    const char* reason);
+                               struct uvhttp_ws_connection* conn, int code,
+                               const char* reason);
 
 /**
  * 处理接收到的数据
  */
 uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
-                            const uint8_t* data,
-                            size_t len);
+                                      const uint8_t* data, size_t len);
 
 /**
  * 设置回调函数
  */
 void uvhttp_ws_set_callbacks(struct uvhttp_ws_connection* conn,
-                              uvhttp_ws_on_message_callback on_message,
-                              uvhttp_ws_on_close_callback on_close,
-                              uvhttp_ws_on_error_callback on_error);
+                             uvhttp_ws_on_message_callback on_message,
+                             uvhttp_ws_on_close_callback on_close,
+                             uvhttp_ws_on_error_callback on_error);
 
 /* 帧处理函数 */
 
 /**
  * 解析帧头
  */
-uvhttp_error_t uvhttp_ws_parse_frame_header(const uint8_t* data,
-                                  size_t len,
-                                  uvhttp_ws_frame_header_t* header,
-                                  size_t* header_size);
+uvhttp_error_t uvhttp_ws_parse_frame_header(const uint8_t* data, size_t len,
+                                            uvhttp_ws_frame_header_t* header,
+                                            size_t* header_size);
 
 /**
  * 构建帧
  */
-uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context,
-                          uint8_t* buffer,
-                          size_t buffer_size,
-                          const uint8_t* payload,
-                          size_t payload_len,
-                          uvhttp_ws_opcode_t opcode,
-                          int mask,
-                          int fin);
+uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
+                                     size_t buffer_size, const uint8_t* payload,
+                                     size_t payload_len,
+                                     uvhttp_ws_opcode_t opcode, int mask,
+                                     int fin);
 
 /**
  * 应用掩码
  */
-void uvhttp_ws_apply_mask(uint8_t* data,
-                          size_t len,
+void uvhttp_ws_apply_mask(uint8_t* data, size_t len,
                           const uint8_t* masking_key);
 
 /**
  * 生成 Sec-WebSocket-Accept
  */
-uvhttp_error_t uvhttp_ws_generate_accept(const char* key,
-                              char* accept,
-                              size_t accept_len);
+uvhttp_error_t uvhttp_ws_generate_accept(const char* key, char* accept,
+                                         size_t accept_len);
 
 /**
  * 验证 Sec-WebSocket-Accept
  */
-uvhttp_error_t uvhttp_ws_verify_accept(const char* key,
-                            const char* accept);
+uvhttp_error_t uvhttp_ws_verify_accept(const char* key, const char* accept);
 
 /* 便捷宏 */
-#define uvhttp_websocket_send_text(ctx, ws, text) \
-    uvhttp_ws_send_text(ctx, ws, text, strlen(text))
+#        define uvhttp_websocket_send_text(ctx, ws, text) \
+            uvhttp_ws_send_text(ctx, ws, text, strlen(text))
 
-#define uvhttp_websocket_send_binary(ctx, ws, data, len) \
-    uvhttp_ws_send_binary(ctx, ws, data, len)
+#        define uvhttp_websocket_send_binary(ctx, ws, data, len) \
+            uvhttp_ws_send_binary(ctx, ws, data, len)
 
-#ifdef __cplusplus
+#        ifdef __cplusplus
 }
-#endif
+#        endif
 
-#endif /* UVHTTP_WEBSOCKET_H */
-#endif /* UVHTTP_FEATURE_WEBSOCKET */
+#    endif /* UVHTTP_WEBSOCKET_H */
+#endif     /* UVHTTP_FEATURE_WEBSOCKET */
