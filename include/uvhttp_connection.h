@@ -135,18 +135,10 @@ void uvhttp_connection_websocket_read(uv_stream_t* stream, ssize_t nread,
                                       const uv_buf_t* buf);
 void uvhttp_connection_websocket_close(uvhttp_connection_t* conn);
 
-/* WebSocket处理器查找函数 - 前向声明 */
-uvhttp_ws_handler_t* uvhttp_server_find_ws_handler(struct uvhttp_server* server,
-                                                   const char* path);
-
-/* WebSocket认证相关内部函数 */
-typedef struct ws_route_entry ws_route_entry_t;
-ws_route_entry_t* uvhttp_server_find_ws_route_entry(
-    struct uvhttp_server* server, const char* path);
-#    endif
-
-#    ifdef __cplusplus
+#    if UVHTTP_FEATURE_WEBSOCKET
+#        ifdef __cplusplus
 }
+#        endif
 #    endif
 
 #endif
@@ -183,3 +175,9 @@ uvhttp_error_t uvhttp_connection_start_timeout(uvhttp_connection_t* conn);
  */
 uvhttp_error_t uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn,
                                                       int timeout_seconds);
+
+#    ifdef __cplusplus
+}
+#    endif
+
+#endif

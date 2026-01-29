@@ -3,6 +3,7 @@
 #include "uvhttp_allocator.h"
 #include "uvhttp_connection.h"
 #include "uvhttp_constants.h"
+#include "uvhttp_server.h"
 #include "uvhttp_static.h"
 #include "uvhttp_utils.h"
 

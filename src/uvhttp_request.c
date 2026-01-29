@@ -8,6 +8,7 @@
 #include "uvhttp_logging.h"
 #include "uvhttp_middleware.h"
 #include "uvhttp_router.h"
+#include "uvhttp_server.h"
 #include "uvhttp_utils.h"
 #include "uvhttp_validation.h"
 

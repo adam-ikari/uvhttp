@@ -341,6 +341,10 @@ uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn,
 uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code,
                                       const char* reason);
 
+/* 内部函数 */
+uvhttp_ws_handler_t* uvhttp_server_find_ws_handler(uvhttp_server_t* server,
+                                                   const char* path);
+
 /* 连接管理 API */
 uvhttp_error_t uvhttp_server_ws_enable_connection_management(
     uvhttp_server_t* server, int timeout_seconds, int heartbeat_interval);

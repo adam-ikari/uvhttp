@@ -8,6 +8,7 @@
 #    ifndef UVHTTP_WEBSOCKET_H
 #        define UVHTTP_WEBSOCKET_H
 
+#        include "uvhttp_connection.h"
 #        include "uvhttp_error.h"
 #        include "uvhttp_tls.h"
 
