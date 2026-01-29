@@ -31,8 +31,12 @@
 #define HTTP_HEADER_SEC_WEBSOCKET_KEY "Sec-WebSocket-Key"
 #define HTTP_HEADER_SEC_WEBSOCKET_ACCEPT "Sec-WebSocket-Accept"
 #define HTTP_HEADER_RETRY_AFTER "Retry-After"
+#define HTTP_HEADER_X_FORWARDED_FOR "X-Forwarded-For"
+#define HTTP_HEADER_X_REAL_IP "X-Real-IP"
 #define HTTP_VALUE_WEBSOCKET "websocket"
 #define HTTP_VALUE_ROOT_PATH "/"
+#define HTTP_VALUE_RETRY_AFTER_SECONDS "60"
+#define HTTP_VALUE_DEFAULT_IP "127.0.0.1"
 #define HTTP_RESPONSE_OK "OK"
 #define HTTP_RESPONSE_NOT_FOUND "Not Found"
 #define HTTP_RESPONSE_TOO_MANY_REQUESTS "Too Many Requests"
@@ -319,7 +323,7 @@ static int check_rate_limit_whitelist(uvhttp_connection_t* conn) {
         uvhttp_response_set_header(conn->response, HTTP_HEADER_CONTENT_TYPE,
                                    HTTP_CONTENT_TYPE_TEXT_PLAIN);
         uvhttp_response_set_header(conn->response, HTTP_HEADER_RETRY_AFTER,
-                                   "60");
+                                   HTTP_VALUE_RETRY_AFTER_SECONDS);
         uvhttp_response_set_body(conn->response,
                                  HTTP_RESPONSE_TOO_MANY_REQUESTS,
                                  strlen(HTTP_RESPONSE_TOO_MANY_REQUESTS));
@@ -467,42 +471,17 @@ static int is_websocket_handshake(uvhttp_request_t* request) {
         return FALSE;
     }
 
-    // 检查Upgrade头部（不区分大小写）
-    if (strcasecmp(upgrade, "websocket") != 0) {
+    /* 检查Upgrade头部（不区分大小写） */
+    if (strcasecmp(upgrade, HTTP_VALUE_WEBSOCKET) != 0) {
         return FALSE;
     }
 
-    // 检查Connection头部（可能包含多个值）
-    if (strstr(connection, "Upgrade") == NULL) {
+    /* 检查Connection头部（可能包含多个值） */
+    if (strstr(connection, HTTP_HEADER_UPGRADE) == NULL) {
         return FALSE;
     }
 
     return TRUE;
-}
-
-const char* uvhttp_request_get_method(uvhttp_request_t* request) {
-    if (!request)
-        return NULL;
-    switch (request->method) {
-    case UVHTTP_GET:
-        return "GET";
-    case UVHTTP_POST:
-        return "POST";
-    case UVHTTP_PUT:
-        return "PUT";
-    case UVHTTP_DELETE:
-        return "DELETE";
-    case UVHTTP_HEAD:
-        return "HEAD";
-    case UVHTTP_OPTIONS:
-        return "OPTIONS";
-    case UVHTTP_PATCH:
-        return "PATCH";
-    case UVHTTP_ANY:
-        return "ANY";
-    default:
-        return "UNKNOWN";
-    }
 }
 
 const char* uvhttp_request_get_url(uvhttp_request_t* request) {
@@ -665,7 +644,7 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
 
     // 尝试从X-Forwarded-For头部获取（代理/负载均衡器）
     const char* forwarded_for =
-        uvhttp_request_get_header(request, "X-Forwarded-For");
+        uvhttp_request_get_header(request, HTTP_HEADER_X_FORWARDED_FOR);
     if (forwarded_for) {
         // X-Forwarded-For可能包含多个IP，取第一个
         static char client_ip[UVHTTP_IPV6_MAX_STRING_LENGTH];
@@ -688,7 +667,7 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
     }
 
     // 尝试从X-Real-IP头部获取
-    const char* real_ip = uvhttp_request_get_header(request, "X-Real-IP");
+    const char* real_ip = uvhttp_request_get_header(request, HTTP_HEADER_X_REAL_IP);
     if (real_ip) {
         return real_ip;
     }
@@ -714,7 +693,7 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
         }
     }
 
-    return "127.0.0.1";  // 默认值
+    return HTTP_VALUE_DEFAULT_IP;
 }
 
 void uvhttp_request_free(uvhttp_request_t* request) {
