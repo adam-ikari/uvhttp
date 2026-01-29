@@ -1,20 +1,20 @@
 #ifndef UVHTTP_CONNECTION_H
-#    define UVHTTP_CONNECTION_H
+#define UVHTTP_CONNECTION_H
 
-#    include "uvhttp_common.h"
-#    include "uvhttp_platform.h"
-#    include "uvhttp_request.h"
-#    include "uvhttp_response.h"
+#include "uvhttp_common.h"
+#include "uvhttp_platform.h"
+#include "uvhttp_request.h"
+#include "uvhttp_response.h"
 
-#    include "llhttp.h"
+#include "llhttp.h"
 
-#    include <assert.h>
-#    include <stddef.h>
-#    include <stdlib.h>
+#include <assert.h>
+#include <stddef.h>
+#include <stdlib.h>
 
-#    ifdef __cplusplus
+#ifdef __cplusplus
 extern "C" {
-#    endif
+#endif
 
 // 前向声明（避免循环引用）
 typedef struct uvhttp_connection uvhttp_connection_t;
@@ -42,9 +42,9 @@ struct uvhttp_connection {
     uvhttp_response_t* response;  /* 8 字节 */
     void* ssl;                    /* 8 字节 */
     char* read_buffer;            /* 8 字节 */
-#    if UVHTTP_FEATURE_WEBSOCKET
+#if UVHTTP_FEATURE_WEBSOCKET
     void* ws_connection; /* 8 字节 */
-#    endif
+#endif
 
     /* 缓存行4：网络连接（24字节） */
     uv_tcp_t tcp_handle;      /* 8 字节 */
@@ -65,9 +65,9 @@ struct uvhttp_connection {
     int need_restart_read;           /* 4 字节 */
     int tls_enabled;                 /* 4 字节 */
     int last_error;                  /* 4 字节 */
-#    if UVHTTP_FEATURE_WEBSOCKET
+#if UVHTTP_FEATURE_WEBSOCKET
     int is_websocket; /* 4 字节 */
-#    endif
+#endif
     /* 填充到32字节 */
     int _reserved[3];
 
@@ -127,7 +127,7 @@ void uvhttp_connection_set_state(uvhttp_connection_t* conn,
 const char* uvhttp_connection_get_state_string(uvhttp_connection_state_t state);
 
 // WebSocket处理函数（内部）
-#    if UVHTTP_FEATURE_WEBSOCKET
+#if UVHTTP_FEATURE_WEBSOCKET
 uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
     uvhttp_connection_t* conn, const char* ws_key);
 void uvhttp_connection_switch_to_websocket(uvhttp_connection_t* conn);
@@ -176,8 +176,8 @@ uvhttp_error_t uvhttp_connection_start_timeout(uvhttp_connection_t* conn);
 uvhttp_error_t uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn,
                                                       int timeout_seconds);
 
-#    ifdef __cplusplus
+#ifdef __cplusplus
 }
-#    endif
+#endif
 
 #endif

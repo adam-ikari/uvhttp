@@ -157,29 +157,19 @@ format-check:
 		echo "  sudo apt-get install clang-format"; \
 		exit 1; \
 	fi
-	@clang-format --dry-run --Werror src/*.c include/*.h || \
+	@clang-format --dry-run --Werror ./src/*.c ./include/*.h || \
 		(echo "❌ 代码格式检查失败！请运行 'make format-fix' 修复格式问题。"; exit 1)
 	@echo "✅ 代码格式检查通过！"
 
-format-fix:
+format-all:
 	@echo "🔧 修复代码格式..."
 	@if ! command -v clang-format >/dev/null 2>&1; then \
 		echo "错误: clang-format 未安装。请运行以下命令安装:"; \
 		echo "  sudo apt-get install clang-format"; \
 		exit 1; \
 	fi
-	@clang-format -i src/*.c include/*.h
+	@clang-format -i ./src/*.c ./include/*.h
 	@echo "✅ 代码格式已修复！"
-
-format-all:
-	@echo "🔧 格式化所有代码文件..."
-	@if ! command -v clang-format >/dev/null 2>&1; then \
-		echo "错误: clang-format 未安装。请运行以下命令安装:"; \
-		echo "  sudo apt-get install clang-format"; \
-		exit 1; \
-	fi
-	@find src include -name "*.c" -o -name "*.h" | xargs clang-format -i
-	@echo "✅ 所有代码文件已格式化！"
 
 format-diff:
 	@echo "📊 显示格式化差异..."
@@ -188,7 +178,7 @@ format-diff:
 		echo "  sudo apt-get install clang-format"; \
 		exit 1; \
 	fi
-	@clang-format --dry-run --Werror src/*.c include/*.h || \
+	@clang-format --dry-run --Werror ./src/*.c ./include/*.h || \
 		(echo "❌ 代码格式检查失败！请运行 'make format-fix' 修复格式问题。"; exit 1)
 	@echo "✅ 代码格式检查通过！"
 
