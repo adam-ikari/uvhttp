@@ -16,7 +16,8 @@
 #include <sys/resource.h>
 
 /* 创建新配置 */
-uvhttp_error_t uvhttp_config_new(uvhttp_config_t** config) {
+uvhttp_error_t
+uvhttp_config_new(uvhttp_config_t** config) {
     if (!config) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -33,14 +34,16 @@ uvhttp_error_t uvhttp_config_new(uvhttp_config_t** config) {
 }
 
 /* 释放配置 */
-void uvhttp_config_free(uvhttp_config_t* config) {
+void
+uvhttp_config_free(uvhttp_config_t* config) {
     if (config) {
         uvhttp_free(config);
     }
 }
 
 /* 设置默认配置 */
-void uvhttp_config_set_defaults(uvhttp_config_t* config) {
+void
+uvhttp_config_set_defaults(uvhttp_config_t* config) {
     if (!config)
         return;
 
@@ -72,7 +75,8 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config) {
 }
 
 /* 从文件加载配置 */
-int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
+int
+uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
     if (!config || !filename) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -196,8 +200,8 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
 }
 
 /* 保存配置到文件 */
-int uvhttp_config_save_file(const uvhttp_config_t* config,
-                            const char* filename) {
+int
+uvhttp_config_save_file(const uvhttp_config_t* config, const char* filename) {
     if (!config || !filename) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -249,7 +253,8 @@ int uvhttp_config_save_file(const uvhttp_config_t* config,
 }
 
 /* 从环境变量加载配置 */
-int uvhttp_config_load_env(uvhttp_config_t* config) {
+int
+uvhttp_config_load_env(uvhttp_config_t* config) {
     if (!config) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -332,7 +337,8 @@ int uvhttp_config_load_env(uvhttp_config_t* config) {
 }
 
 /* 验证配置 */
-int uvhttp_config_validate(const uvhttp_config_t* config) {
+int
+uvhttp_config_validate(const uvhttp_config_t* config) {
     if (!config) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -401,7 +407,8 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
 }
 
 /* 打印配置 */
-void uvhttp_config_print(const uvhttp_config_t* config) {
+void
+uvhttp_config_print(const uvhttp_config_t* config) {
     if (!config)
         return;
 
@@ -441,7 +448,8 @@ void uvhttp_config_print(const uvhttp_config_t* config) {
 }
 
 /* 获取当前配置 */
-const uvhttp_config_t* uvhttp_config_get_current(uvhttp_context_t* context) {
+const uvhttp_config_t*
+uvhttp_config_get_current(uvhttp_context_t* context) {
     if (!context) {
         UVHTTP_LOG_WARN("Context is NULL");
         return NULL;
@@ -453,8 +461,9 @@ const uvhttp_config_t* uvhttp_config_get_current(uvhttp_context_t* context) {
 }
 
 /* 动态更新最大连接数 */
-int uvhttp_config_update_max_connections(uvhttp_context_t* context,
-                                         int max_connections) {
+int
+uvhttp_config_update_max_connections(uvhttp_context_t* context,
+                                     int max_connections) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -478,8 +487,9 @@ int uvhttp_config_update_max_connections(uvhttp_context_t* context,
 }
 
 /* 动态更新读缓冲区大小 */
-int uvhttp_config_update_read_buffer_size(uvhttp_context_t* context,
-                                          int buffer_size) {
+int
+uvhttp_config_update_read_buffer_size(uvhttp_context_t* context,
+                                      int buffer_size) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -503,9 +513,9 @@ int uvhttp_config_update_read_buffer_size(uvhttp_context_t* context,
 }
 
 /* 动态更新限制参数 */
-int uvhttp_config_update_size_limits(uvhttp_context_t* context,
-                                     size_t max_body_size,
-                                     size_t max_header_size) {
+int
+uvhttp_config_update_size_limits(uvhttp_context_t* context,
+                                 size_t max_body_size, size_t max_header_size) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -537,8 +547,9 @@ int uvhttp_config_update_size_limits(uvhttp_context_t* context,
 }
 
 /* 配置变更回调 */
-int uvhttp_config_monitor_changes(uvhttp_context_t* context,
-                                  uvhttp_config_change_callback_t callback) {
+int
+uvhttp_config_monitor_changes(uvhttp_context_t* context,
+                              uvhttp_config_change_callback_t callback) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -547,7 +558,8 @@ int uvhttp_config_monitor_changes(uvhttp_context_t* context,
 }
 
 /* 热重载配置 */
-int uvhttp_config_reload(uvhttp_context_t* context) {
+int
+uvhttp_config_reload(uvhttp_context_t* context) {
     if (!context || !context->current_config) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -583,8 +595,8 @@ int uvhttp_config_reload(uvhttp_context_t* context) {
 }
 
 /* 设置全局配置 */
-void uvhttp_config_set_current(uvhttp_context_t* context,
-                               uvhttp_config_t* config) {
+void
+uvhttp_config_set_current(uvhttp_context_t* context, uvhttp_config_t* config) {
     if (context) {
         context->current_config = config;
     }

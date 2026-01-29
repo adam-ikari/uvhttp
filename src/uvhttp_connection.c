@@ -50,8 +50,8 @@ UVHTTP_STATIC_ASSERT(sizeof(uvhttp_response_t) < 2 * 1024 * 1024,
 static void on_idle_restart_read(uv_idle_t* handle);
 
 /* 连接池获取函数实现 */
-static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size,
-                            uv_buf_t* buf) {
+static void
+on_alloc_buffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
     (void)suggested_size;
     uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
     if (!conn || !conn->read_buffer) {
@@ -70,7 +70,8 @@ static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size,
  * 这个函数在libuv事件循环线程中被调用，处理所有传入数据
  * 单线程模型优势：无需锁，数据访问安全，执行流可预测
  */
-static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
+static void
+on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)stream->data;
     if (!conn || !conn->request) {
         UVHTTP_LOG_ERROR("on_read: conn or conn->request is NULL\n");
@@ -129,7 +130,8 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 }
 
 /* 重新开始读取新请求 - 用于keep-alive连接 */
-uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
+uvhttp_error_t
+uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     if (!conn || !conn->request || !conn->response || !conn->request->parser ||
         !conn->request->parser_settings) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -249,8 +251,9 @@ uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
  * 2. 内存分配在单线程中进行，安全可靠
  * 3. 所有状态变更都在事件循环中串行化
  */
-uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
-                                     uvhttp_connection_t** conn) {
+uvhttp_error_t
+uvhttp_connection_new(struct uvhttp_server* server,
+                      uvhttp_connection_t** conn) {
     if (!server || !conn) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -363,7 +366,8 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
     return UVHTTP_OK;
 }
 
-void uvhttp_connection_free(uvhttp_connection_t* conn) {
+void
+uvhttp_connection_free(uvhttp_connection_t* conn) {
     if (!conn) {
         return;
     }
@@ -387,7 +391,8 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
     uvhttp_free(conn);
 }
 
-uvhttp_error_t uvhttp_connection_start(uvhttp_connection_t* conn) {
+uvhttp_error_t
+uvhttp_connection_start(uvhttp_connection_t* conn) {
     if (!conn) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -414,7 +419,8 @@ uvhttp_error_t uvhttp_connection_start(uvhttp_connection_t* conn) {
 }
 
 /* Handle 关闭回调（通用） */
-static void on_handle_close(uv_handle_t* handle) {
+static void
+on_handle_close(uv_handle_t* handle) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
     if (!conn) {
         return;
@@ -434,7 +440,8 @@ static void on_handle_close(uv_handle_t* handle) {
     }
 }
 
-void uvhttp_connection_close(uvhttp_connection_t* conn) {
+void
+uvhttp_connection_close(uvhttp_connection_t* conn) {
     if (!conn) {
         return;
     }
@@ -465,21 +472,24 @@ void uvhttp_connection_close(uvhttp_connection_t* conn) {
     }
 }
 
-void uvhttp_connection_set_state(uvhttp_connection_t* conn,
-                                 uvhttp_connection_state_t state) {
+void
+uvhttp_connection_set_state(uvhttp_connection_t* conn,
+                            uvhttp_connection_state_t state) {
     if (conn) {
         conn->state = state;
     }
 }
 
-uvhttp_error_t uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn) {
+uvhttp_error_t
+uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn) {
     // 简化版本不支持TLS
     (void)conn;
     return UVHTTP_ERROR_NOT_SUPPORTED;
 }
 
-uvhttp_error_t uvhttp_connection_tls_write(uvhttp_connection_t* conn,
-                                           const void* data, size_t len) {
+uvhttp_error_t
+uvhttp_connection_tls_write(uvhttp_connection_t* conn, const void* data,
+                            size_t len) {
     // 简化版本不支持TLS
     (void)conn;
     (void)data;
@@ -490,7 +500,8 @@ uvhttp_error_t uvhttp_connection_tls_write(uvhttp_connection_t* conn,
 /* 用于安全重启读取的idle回调函数
  * 在下一个事件循环中执行，避免在写入完成回调中直接操作状态
  */
-static void on_idle_restart_read(uv_idle_t* handle) {
+static void
+on_idle_restart_read(uv_idle_t* handle) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
     if (!conn) {
         return;
@@ -512,8 +523,8 @@ static void on_idle_restart_read(uv_idle_t* handle) {
 }
 
 // 启动安全的连接重用
-uvhttp_error_t uvhttp_connection_schedule_restart_read(
-    uvhttp_connection_t* conn) {
+uvhttp_error_t
+uvhttp_connection_schedule_restart_read(uvhttp_connection_t* conn) {
     if (!conn) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -535,8 +546,8 @@ uvhttp_error_t uvhttp_connection_schedule_restart_read(
 /* WebSocket数据读取回调
  * 在WebSocket握手成功后，使用此回调处理WebSocket帧数据
  */
-static void on_websocket_read(uv_stream_t* stream, ssize_t nread,
-                              const uv_buf_t* buf) {
+static void
+on_websocket_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)stream->data;
     if (!conn || !conn->ws_connection) {
         return;
@@ -572,8 +583,9 @@ typedef struct {
 } uvhttp_ws_wrapper_t;
 
 /* WebSocket连接关闭回调 */
-static int on_websocket_close(uvhttp_ws_connection_t* ws_conn, int code,
-                              const char* reason) {
+static int
+on_websocket_close(uvhttp_ws_connection_t* ws_conn, int code,
+                   const char* reason) {
     if (!ws_conn) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -602,8 +614,9 @@ static int on_websocket_close(uvhttp_ws_connection_t* ws_conn, int code,
 }
 
 /* WebSocket错误回调 */
-static int on_websocket_error(uvhttp_ws_connection_t* ws_conn, int error_code,
-                              const char* error_msg) {
+static int
+on_websocket_error(uvhttp_ws_connection_t* ws_conn, int error_code,
+                   const char* error_msg) {
     if (!ws_conn) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -628,8 +641,9 @@ static int on_websocket_error(uvhttp_ws_connection_t* ws_conn, int error_code,
 }
 
 /* WebSocket消息回调 */
-static int on_websocket_message(uvhttp_ws_connection_t* ws_conn,
-                                const char* data, size_t len, int opcode) {
+static int
+on_websocket_message(uvhttp_ws_connection_t* ws_conn, const char* data,
+                     size_t len, int opcode) {
     if (!ws_conn) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -662,8 +676,9 @@ static int on_websocket_message(uvhttp_ws_connection_t* ws_conn,
 /* 处理WebSocket握手
  * 在握手响应发送后调用，创建WebSocket连接对象并设置回调
  */
-uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
-    uvhttp_connection_t* conn, const char* ws_key) {
+uvhttp_error_t
+uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn,
+                                             const char* ws_key) {
     if (!conn || !ws_key) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -791,7 +806,8 @@ uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
 /* 切换到WebSocket数据处理模式
  * 停止HTTP读取，启动WebSocket帧读取
  */
-void uvhttp_connection_switch_to_websocket(uvhttp_connection_t* conn) {
+void
+uvhttp_connection_switch_to_websocket(uvhttp_connection_t* conn) {
     if (!conn) {
         return;
     }
@@ -814,7 +830,8 @@ void uvhttp_connection_switch_to_websocket(uvhttp_connection_t* conn) {
 }
 
 /* 关闭WebSocket连接 */
-void uvhttp_connection_websocket_close(uvhttp_connection_t* conn) {
+void
+uvhttp_connection_websocket_close(uvhttp_connection_t* conn) {
     if (!conn) {
         return;
     }
@@ -839,7 +856,8 @@ void uvhttp_connection_websocket_close(uvhttp_connection_t* conn) {
 
 #endif /* UVHTTP_FEATURE_WEBSOCKET */
 /* 连接超时回调函数 */
-static void connection_timeout_cb(uv_timer_t* handle) {
+static void
+connection_timeout_cb(uv_timer_t* handle) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
     if (!conn || !conn->server) {
         return;
@@ -863,7 +881,8 @@ static void connection_timeout_cb(uv_timer_t* handle) {
 }
 
 /* 启动连接超时定时器 */
-uvhttp_error_t uvhttp_connection_start_timeout(uvhttp_connection_t* conn) {
+uvhttp_error_t
+uvhttp_connection_start_timeout(uvhttp_connection_t* conn) {
     if (!conn || !conn->server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -890,8 +909,9 @@ uvhttp_error_t uvhttp_connection_start_timeout(uvhttp_connection_t* conn) {
 }
 
 /* 启动连接超时定时器（自定义超时时间） */
-uvhttp_error_t uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn,
-                                                      int timeout_seconds) {
+uvhttp_error_t
+uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn,
+                                       int timeout_seconds) {
     if (!conn || !conn->server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }

@@ -69,9 +69,11 @@ UVHTTP_CHECK_ALIGNMENT(uvhttp_response_t, client, UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_response_t, body, UVHTTP_POINTER_ALIGNMENT);
 
 /* 验证size_t对齐（平台自适应） */
-UVHTTP_CHECK_ALIGNMENT(uvhttp_response_t, header_count, UVHTTP_SIZE_T_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_response_t, header_count,
+                       UVHTTP_SIZE_T_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_response_t, body_length, UVHTTP_SIZE_T_ALIGNMENT);
-UVHTTP_CHECK_ALIGNMENT(uvhttp_response_t, cache_expires, UVHTTP_SIZE_T_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_response_t, cache_expires,
+                       UVHTTP_SIZE_T_ALIGNMENT);
 
 /* 验证大型缓冲区在结构体末尾 */
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, headers) >= 64,

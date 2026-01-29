@@ -73,9 +73,10 @@ typedef struct uvhttp_file_stream_context {
  * @param max_file_size 最大文件大小
  * @return 管理器指针，失败返回NULL
  */
-uvhttp_error_t uvhttp_async_file_manager_create(
-    uv_loop_t* loop, int max_concurrent, size_t buffer_size,
-    size_t max_file_size, uvhttp_async_file_manager_t** manager);
+uvhttp_error_t
+uvhttp_async_file_manager_create(uv_loop_t* loop, int max_concurrent,
+                                 size_t buffer_size, size_t max_file_size,
+                                 uvhttp_async_file_manager_t** manager);
 
 /**
  * 释放异步文件读取管理器
@@ -129,8 +130,8 @@ uvhttp_error_t uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager,
  * @param stream_ctx 流传输上下文
  * @return UVHTTP_OK 成功，其他值表示错误
  */
-uvhttp_error_t uvhttp_async_file_stream_stop(
-    uvhttp_file_stream_context_t* stream_ctx);
+uvhttp_error_t
+uvhttp_async_file_stream_stop(uvhttp_file_stream_context_t* stream_ctx);
 
 /**
  * 获取管理器统计信息

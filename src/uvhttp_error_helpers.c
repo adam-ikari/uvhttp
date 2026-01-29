@@ -20,7 +20,8 @@ static const char* sensitive_keywords[] = {
 /**
  * 检查字符串是否包含敏感信息
  */
-static int contains_sensitive_info(const char* str) {
+static int
+contains_sensitive_info(const char* str) {
     if (!str)
         return FALSE;
 
@@ -41,7 +42,8 @@ static int contains_sensitive_info(const char* str) {
     return FALSE;
 }
 
-void uvhttp_cleanup_connection(uv_handle_t* handle, const char* error_message) {
+void
+uvhttp_cleanup_connection(uv_handle_t* handle, const char* error_message) {
     if (!handle)
         return;
 
@@ -54,9 +56,9 @@ void uvhttp_cleanup_connection(uv_handle_t* handle, const char* error_message) {
     }
 }
 
-void uvhttp_handle_memory_failure(const char* context,
-                                  void (*cleanup_func)(void*),
-                                  void* cleanup_data) {
+void
+uvhttp_handle_memory_failure(const char* context, void (*cleanup_func)(void*),
+                             void* cleanup_data) {
     if (context) {
         UVHTTP_LOG_ERROR("Memory allocation failed in %s\n", context);
     }
@@ -66,8 +68,8 @@ void uvhttp_handle_memory_failure(const char* context,
     }
 }
 
-void uvhttp_handle_write_error(uv_write_t* req, int status,
-                               const char* context) {
+void
+uvhttp_handle_write_error(uv_write_t* req, int status, const char* context) {
     if (!req)
         return;
 
@@ -85,8 +87,9 @@ void uvhttp_handle_write_error(uv_write_t* req, int status,
     uvhttp_free(req);
 }
 
-void uvhttp_log_safe_error(int error_code, const char* context,
-                           const char* user_msg) {
+void
+uvhttp_log_safe_error(int error_code, const char* context,
+                      const char* user_msg) {
     char safe_buffer[UVHTTP_ERROR_LOG_BUFFER_SIZE];
     const char* error_desc = error_code ? uv_strerror(error_code) : user_msg;
 
@@ -102,9 +105,9 @@ void uvhttp_log_safe_error(int error_code, const char* context,
     (void)context;
 }
 
-uvhttp_error_t uvhttp_sanitize_error_message(const char* message,
-                                             char* safe_buffer,
-                                             size_t buffer_size) {
+uvhttp_error_t
+uvhttp_sanitize_error_message(const char* message, char* safe_buffer,
+                              size_t buffer_size) {
     if (!message || !safe_buffer || buffer_size == 0) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -133,7 +136,8 @@ uvhttp_error_t uvhttp_sanitize_error_message(const char* message,
 
     return UVHTTP_OK;
 }
-void uvhttp_safe_free(void** ptr, void (*free_func)(void*)) {
+void
+uvhttp_safe_free(void** ptr, void (*free_func)(void*)) {
     if (!ptr || !*ptr)
         return;
 

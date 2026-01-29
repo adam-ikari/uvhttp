@@ -23,8 +23,8 @@ static const char dangerous_path_chars[] = {'<', '>', ':',  '"', '|',
 /* 危险的查询字符 */
 static const char dangerous_query_chars[] = {'<', '>', '"', '\'', '\n', '\r'};
 
-int uvhttp_validate_string_length(const char* str, size_t min_len,
-                                  size_t max_len) {
+int
+uvhttp_validate_string_length(const char* str, size_t min_len, size_t max_len) {
     if (!str)
         return FALSE;
 
@@ -32,7 +32,8 @@ int uvhttp_validate_string_length(const char* str, size_t min_len,
     return (len >= min_len && len <= max_len) ? TRUE : FALSE;
 }
 
-int uvhttp_validate_http_method(const char* method) {
+int
+uvhttp_validate_http_method(const char* method) {
     if (!method)
         return FALSE;
 
@@ -44,7 +45,8 @@ int uvhttp_validate_http_method(const char* method) {
     return FALSE;
 }
 
-int uvhttp_validate_url_path(const char* path) {
+int
+uvhttp_validate_url_path(const char* path) {
     if (!path)
         return FALSE;
 
@@ -73,7 +75,8 @@ int uvhttp_validate_url_path(const char* path) {
     return TRUE;
 }
 
-int uvhttp_validate_header_name(const char* name) {
+int
+uvhttp_validate_header_name(const char* name) {
     if (!name)
         return FALSE;
 
@@ -93,7 +96,8 @@ int uvhttp_validate_header_name(const char* name) {
     return TRUE;
 }
 
-int uvhttp_validate_header_value_safe(const char* value) {
+int
+uvhttp_validate_header_value_safe(const char* value) {
     if (!value)
         return FALSE;
 
@@ -117,11 +121,13 @@ int uvhttp_validate_header_value_safe(const char* value) {
     return TRUE;
 }
 
-int uvhttp_validate_port(int port) {
+int
+uvhttp_validate_port(int port) {
     return (port >= UVHTTP_MIN_PORT_NUMBER && port <= UVHTTP_MAX_PORT_NUMBER);
 }
 
-int uvhttp_validate_ipv4(const char* ip) {
+int
+uvhttp_validate_ipv4(const char* ip) {
     if (!ip)
         return FALSE;
 
@@ -148,7 +154,8 @@ int uvhttp_validate_ipv4(const char* ip) {
     return (octets == 3);
 }
 
-int uvhttp_validate_ipv6(const char* ip) {
+int
+uvhttp_validate_ipv6(const char* ip) {
     if (!ip)
         return FALSE;
 
@@ -172,11 +179,13 @@ int uvhttp_validate_ipv6(const char* ip) {
     return (colons >= 2 && colons <= 7);
 }
 
-int uvhttp_validate_content_length(size_t length) {
+int
+uvhttp_validate_content_length(size_t length) {
     return (length <= UVHTTP_MAX_BODY_SIZE);
 }
 
-int uvhttp_validate_websocket_key(const char* key, size_t key_len) {
+int
+uvhttp_validate_websocket_key(const char* key, size_t key_len) {
     if (!key)
         return FALSE;
 
@@ -197,7 +206,8 @@ int uvhttp_validate_websocket_key(const char* key, size_t key_len) {
     return TRUE;
 }
 
-int uvhttp_validate_file_path(const char* path) {
+int
+uvhttp_validate_file_path(const char* path) {
     if (!path)
         return FALSE;
 
@@ -219,7 +229,8 @@ int uvhttp_validate_file_path(const char* path) {
     return TRUE;
 }
 
-int uvhttp_validate_query_string(const char* query) {
+int
+uvhttp_validate_query_string(const char* query) {
     if (!query)
         return TRUE;  // 空查询字符串是有效的
 
@@ -238,8 +249,9 @@ int uvhttp_validate_query_string(const char* query) {
     return TRUE;
 }
 
-int uvhttp_validate_string_safety(const char* str, int allow_null_bytes,
-                                  int allow_control_chars) {
+int
+uvhttp_validate_string_safety(const char* str, int allow_null_bytes,
+                              int allow_control_chars) {
     if (!str)
         return FALSE;
 

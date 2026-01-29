@@ -48,7 +48,8 @@ typedef struct ws_route_entry {
  * @param req 写请求对象
  * @param status 写操作状态
  */
-static void write_503_response_cb(uv_write_t* req, int status) {
+static void
+write_503_response_cb(uv_write_t* req, int status) {
     uvhttp_handle_write_error(req, status, "503_response");
 }
 
@@ -61,7 +62,8 @@ static void write_503_response_cb(uv_write_t* req, int status) {
  * @param server_handle 服务器句柄
  * @param status 连接状态
  */
-static void on_connection(uv_stream_t* server_handle, int status) {
+static void
+on_connection(uv_stream_t* server_handle, int status) {
     if (status < 0) {
         uvhttp_log_safe_error(status, "connection_accept", NULL);
         return;
@@ -192,7 +194,8 @@ static void on_connection(uv_stream_t* server_handle, int status) {
  * 3. 性能可预测，避免线程切换开销
  * 4. 调试简单，执行流清晰
  */
-uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
+uvhttp_error_t
+uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -275,7 +278,8 @@ uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
+uvhttp_error_t
+uvhttp_server_free(uvhttp_server_t* server) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -365,8 +369,8 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
-                                    int port) {
+uvhttp_error_t
+uvhttp_server_listen(uvhttp_server_t* server, const char* host, int port) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -417,8 +421,9 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server,
-                                         uvhttp_request_handler_t handler) {
+uvhttp_error_t
+uvhttp_server_set_handler(uvhttp_server_t* server,
+                          uvhttp_request_handler_t handler) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -427,8 +432,8 @@ uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server,
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server,
-                                        uvhttp_router_t* router) {
+uvhttp_error_t
+uvhttp_server_set_router(uvhttp_server_t* server, uvhttp_router_t* router) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -437,8 +442,9 @@ uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server,
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server,
-                                         struct uvhttp_context* context) {
+uvhttp_error_t
+uvhttp_server_set_context(uvhttp_server_t* server,
+                          struct uvhttp_context* context) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -447,7 +453,8 @@ uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server,
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server) {
+uvhttp_error_t
+uvhttp_server_stop(uvhttp_server_t* server) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -462,8 +469,9 @@ uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server) {
 }
 
 #if UVHTTP_FEATURE_TLS
-uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server,
-                                        uvhttp_tls_context_t* tls_ctx) {
+uvhttp_error_t
+uvhttp_server_enable_tls(uvhttp_server_t* server,
+                         uvhttp_tls_context_t* tls_ctx) {
     if (!server || !tls_ctx) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -478,7 +486,8 @@ uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server,
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server) {
+uvhttp_error_t
+uvhttp_server_disable_tls(uvhttp_server_t* server) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -493,23 +502,26 @@ uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server) {
     return UVHTTP_OK;
 }
 
-int uvhttp_server_is_tls_enabled(uvhttp_server_t* server) {
+int
+uvhttp_server_is_tls_enabled(uvhttp_server_t* server) {
     return server ? server->tls_enabled : 0;
 }
 #else
-uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server,
-                                        void* tls_ctx) {
+uvhttp_error_t
+uvhttp_server_enable_tls(uvhttp_server_t* server, void* tls_ctx) {
     (void)server;
     (void)tls_ctx;
     return UVHTTP_ERROR_INVALID_PARAM;
 }
 
-uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server) {
+uvhttp_error_t
+uvhttp_server_disable_tls(uvhttp_server_t* server) {
     (void)server;
     return UVHTTP_ERROR_INVALID_PARAM;
 }
 
-int uvhttp_server_is_tls_enabled(uvhttp_server_t* server) {
+int
+uvhttp_server_is_tls_enabled(uvhttp_server_t* server) {
     (void)server;
     return 0;
 }
@@ -518,8 +530,9 @@ int uvhttp_server_is_tls_enabled(uvhttp_server_t* server) {
 // ========== 统一API实现 ==========
 
 // 内部辅助函数
-static uvhttp_error_t create_simple_server_internal(
-    const char* host, int port, uvhttp_server_builder_t** server) {
+static uvhttp_error_t
+create_simple_server_internal(const char* host, int port,
+                              uvhttp_server_builder_t** server) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -583,15 +596,16 @@ static uvhttp_error_t create_simple_server_internal(
 }
 
 // 快速创建和启动服务器
-uvhttp_error_t uvhttp_server_create(const char* host, int port,
-                                    uvhttp_server_builder_t** server) {
+uvhttp_error_t
+uvhttp_server_create(const char* host, int port,
+                     uvhttp_server_builder_t** server) {
     return create_simple_server_internal(host, port, server);
 }
 
 // 路由添加辅助函数
-static uvhttp_server_builder_t* add_route_internal(
-    uvhttp_server_builder_t* server, const char* path, uvhttp_method_t method,
-    uvhttp_request_handler_t handler) {
+static uvhttp_server_builder_t*
+add_route_internal(uvhttp_server_builder_t* server, const char* path,
+                   uvhttp_method_t method, uvhttp_request_handler_t handler) {
     if (!server || !path || !handler)
         return server;
 
@@ -600,47 +614,47 @@ static uvhttp_server_builder_t* add_route_internal(
 }
 
 // 链式路由API
-uvhttp_server_builder_t* uvhttp_get(uvhttp_server_builder_t* server,
-                                    const char* path,
-                                    uvhttp_request_handler_t handler) {
+uvhttp_server_builder_t*
+uvhttp_get(uvhttp_server_builder_t* server, const char* path,
+           uvhttp_request_handler_t handler) {
     return add_route_internal(server, path, UVHTTP_GET, handler);
 }
 
-uvhttp_server_builder_t* uvhttp_post(uvhttp_server_builder_t* server,
-                                     const char* path,
-                                     uvhttp_request_handler_t handler) {
+uvhttp_server_builder_t*
+uvhttp_post(uvhttp_server_builder_t* server, const char* path,
+            uvhttp_request_handler_t handler) {
     return add_route_internal(server, path, UVHTTP_POST, handler);
 }
 
-uvhttp_server_builder_t* uvhttp_put(uvhttp_server_builder_t* server,
-                                    const char* path,
-                                    uvhttp_request_handler_t handler) {
+uvhttp_server_builder_t*
+uvhttp_put(uvhttp_server_builder_t* server, const char* path,
+           uvhttp_request_handler_t handler) {
     return add_route_internal(server, path, UVHTTP_PUT, handler);
 }
 
-uvhttp_server_builder_t* uvhttp_delete(uvhttp_server_builder_t* server,
-                                       const char* path,
-                                       uvhttp_request_handler_t handler) {
+uvhttp_server_builder_t*
+uvhttp_delete(uvhttp_server_builder_t* server, const char* path,
+              uvhttp_request_handler_t handler) {
     return add_route_internal(server, path, UVHTTP_DELETE, handler);
 }
 
-uvhttp_server_builder_t* uvhttp_any(uvhttp_server_builder_t* server,
-                                    const char* path,
-                                    uvhttp_request_handler_t handler) {
+uvhttp_server_builder_t*
+uvhttp_any(uvhttp_server_builder_t* server, const char* path,
+           uvhttp_request_handler_t handler) {
     return add_route_internal(server, path, UVHTTP_ANY, handler);
 }
 
 // 简化配置API
-uvhttp_server_builder_t* uvhttp_set_max_connections(
-    uvhttp_server_builder_t* server, int max_conn) {
+uvhttp_server_builder_t*
+uvhttp_set_max_connections(uvhttp_server_builder_t* server, int max_conn) {
     if (server && server->config) {
         server->config->max_connections = max_conn;
     }
     return server;
 }
 
-uvhttp_server_builder_t* uvhttp_set_timeout(uvhttp_server_builder_t* server,
-                                            int timeout) {
+uvhttp_server_builder_t*
+uvhttp_set_timeout(uvhttp_server_builder_t* server, int timeout) {
     if (server && server->config) {
         server->config->request_timeout = timeout;
         server->config->keepalive_timeout = timeout;
@@ -648,8 +662,8 @@ uvhttp_server_builder_t* uvhttp_set_timeout(uvhttp_server_builder_t* server,
     return server;
 }
 
-uvhttp_server_builder_t* uvhttp_set_max_body_size(
-    uvhttp_server_builder_t* server, size_t size) {
+uvhttp_server_builder_t*
+uvhttp_set_max_body_size(uvhttp_server_builder_t* server, size_t size) {
     if (server && server->config) {
         server->config->max_body_size = size;
     }
@@ -657,32 +671,38 @@ uvhttp_server_builder_t* uvhttp_set_max_body_size(
 }
 
 // 便捷请求参数获取
-const char* uvhttp_get_param(uvhttp_request_t* request, const char* name) {
+const char*
+uvhttp_get_param(uvhttp_request_t* request, const char* name) {
     return uvhttp_request_get_query_param(request, name);
 }
 
-const char* uvhttp_get_header(uvhttp_request_t* request, const char* name) {
+const char*
+uvhttp_get_header(uvhttp_request_t* request, const char* name) {
     return uvhttp_request_get_header(request, name);
 }
 
-const char* uvhttp_get_body(uvhttp_request_t* request) {
+const char*
+uvhttp_get_body(uvhttp_request_t* request) {
     return uvhttp_request_get_body(request);
 }
 
 // 服务器运行和清理
-int uvhttp_server_run(uvhttp_server_builder_t* server) {
+int
+uvhttp_server_run(uvhttp_server_builder_t* server) {
     if (!server || !server->loop)
         return -1;
     return uv_run(server->loop, UV_RUN_DEFAULT);
 }
 
-void uvhttp_server_stop_simple(uvhttp_server_builder_t* server) {
+void
+uvhttp_server_stop_simple(uvhttp_server_builder_t* server) {
     if (server && server->server) {
         uvhttp_server_stop(server->server);
     }
 }
 
-void uvhttp_server_simple_free(uvhttp_server_builder_t* server) {
+void
+uvhttp_server_simple_free(uvhttp_server_builder_t* server) {
     if (!server)
         return;
 
@@ -696,8 +716,8 @@ void uvhttp_server_simple_free(uvhttp_server_builder_t* server) {
 }
 
 // 默认处理器（用于一键启动）
-static int default_handler(uvhttp_request_t* request,
-                           uvhttp_response_t* response) {
+static int
+default_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     const char* method = uvhttp_request_get_method(request);
     const char* url = uvhttp_request_get_url(request);
 
@@ -719,7 +739,8 @@ static int default_handler(uvhttp_request_t* request,
 }
 
 // 一键启动函数（最简API）
-int uvhttp_serve(const char* host, int port) {
+int
+uvhttp_serve(const char* host, int port) {
     // 参数验证
     if (port < 1 || port > 65535) {
         fprintf(stderr, "错误: 端口号必须在 1-65535 范围内\n");
@@ -753,9 +774,9 @@ int uvhttp_serve(const char* host, int port) {
 
 // WebSocket握手验证（单线程安全）
 // 注册WebSocket处理器（添加到服务器的路由表中）
-uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server,
-                                                 const char* path,
-                                                 uvhttp_ws_handler_t* handler) {
+uvhttp_error_t
+uvhttp_server_register_ws_handler(uvhttp_server_t* server, const char* path,
+                                  uvhttp_ws_handler_t* handler) {
     if (!server || !path || !handler) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -795,8 +816,8 @@ uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server,
 }
 
 // 查找WebSocket处理器（根据路径）
-uvhttp_ws_handler_t* uvhttp_server_find_ws_handler(uvhttp_server_t* server,
-                                                   const char* path) {
+uvhttp_ws_handler_t*
+uvhttp_server_find_ws_handler(uvhttp_server_t* server, const char* path) {
     if (!server || !path) {
         return NULL;
     }
@@ -816,8 +837,9 @@ uvhttp_ws_handler_t* uvhttp_server_find_ws_handler(uvhttp_server_t* server,
 }
 
 // 发送WebSocket消息
-uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn,
-                                     const char* data, size_t len) {
+uvhttp_error_t
+uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn, const char* data,
+                      size_t len) {
     if (!ws_conn || !data) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -846,8 +868,9 @@ uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn,
 }
 
 // 关闭WebSocket连接
-uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code,
-                                      const char* reason) {
+uvhttp_error_t
+uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code,
+                       const char* reason) {
     if (!ws_conn) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -883,9 +906,9 @@ uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code,
 #    define MAX_RATE_LIMIT_WINDOW_SECONDS 86400  // 最大时间窗口：24小时
 
 // 启用限流功能
-uvhttp_error_t uvhttp_server_enable_rate_limit(uvhttp_server_t* server,
-                                               int max_requests,
-                                               int window_seconds) {
+uvhttp_error_t
+uvhttp_server_enable_rate_limit(uvhttp_server_t* server, int max_requests,
+                                int window_seconds) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -909,7 +932,8 @@ uvhttp_error_t uvhttp_server_enable_rate_limit(uvhttp_server_t* server,
 }
 
 // 禁用限流功能
-uvhttp_error_t uvhttp_server_disable_rate_limit(uvhttp_server_t* server) {
+uvhttp_error_t
+uvhttp_server_disable_rate_limit(uvhttp_server_t* server) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -922,7 +946,8 @@ uvhttp_error_t uvhttp_server_disable_rate_limit(uvhttp_server_t* server) {
 }
 
 // 检查限流状态
-uvhttp_error_t uvhttp_server_check_rate_limit(uvhttp_server_t* server) {
+uvhttp_error_t
+uvhttp_server_check_rate_limit(uvhttp_server_t* server) {
     if (!server || !server->rate_limit_enabled) {
         return UVHTTP_OK;  // 限流未启用，允许请求
     }
@@ -951,8 +976,9 @@ uvhttp_error_t uvhttp_server_check_rate_limit(uvhttp_server_t* server) {
 }
 
 // 添加限流白名单IP地址
-uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(uvhttp_server_t* server,
-                                                      const char* client_ip) {
+uvhttp_error_t
+uvhttp_server_add_rate_limit_whitelist(uvhttp_server_t* server,
+                                       const char* client_ip) {
     if (!server || !client_ip) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -1018,10 +1044,10 @@ uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(uvhttp_server_t* server,
 }
 
 // 获取客户端限流状态
-uvhttp_error_t uvhttp_server_get_rate_limit_status(uvhttp_server_t* server,
-                                                   const char* client_ip,
-                                                   int* remaining,
-                                                   uint64_t* reset_time) {
+uvhttp_error_t
+uvhttp_server_get_rate_limit_status(uvhttp_server_t* server,
+                                    const char* client_ip, int* remaining,
+                                    uint64_t* reset_time) {
     if (!server || !client_ip || !remaining) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -1043,7 +1069,8 @@ uvhttp_error_t uvhttp_server_get_rate_limit_status(uvhttp_server_t* server,
 }
 
 // 清空所有限流状态
-uvhttp_error_t uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server) {
+uvhttp_error_t
+uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -1055,8 +1082,9 @@ uvhttp_error_t uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server) {
 }
 
 // 重置客户端限流状态
-uvhttp_error_t uvhttp_server_reset_rate_limit_client(uvhttp_server_t* server,
-                                                     const char* client_ip) {
+uvhttp_error_t
+uvhttp_server_reset_rate_limit_client(uvhttp_server_t* server,
+                                      const char* client_ip) {
     if (!server || !client_ip) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -1071,7 +1099,8 @@ uvhttp_error_t uvhttp_server_reset_rate_limit_client(uvhttp_server_t* server,
 
 #if !UVHTTP_FEATURE_TLS
 // 空的 TLS 函数定义，用于禁用 TLS 时的链接
-void uvhttp_tls_context_free(void* ctx) {
+void
+uvhttp_tls_context_free(void* ctx) {
     (void)ctx;
 }
 #endif
@@ -1084,7 +1113,8 @@ void uvhttp_tls_context_free(void* ctx) {
  * 超时检测定时器回调
  * 检查所有连接的活动时间，关闭超时连接
  */
-static void ws_timeout_timer_callback(uv_timer_t* handle) {
+static void
+ws_timeout_timer_callback(uv_timer_t* handle) {
     if (!handle || !handle->data) {
         return;
     }
@@ -1131,7 +1161,8 @@ static void ws_timeout_timer_callback(uv_timer_t* handle) {
  * 心跳检测定时器回调
  * 定期发送 Ping 帧以检测连接活跃状态
  */
-static void ws_heartbeat_timer_callback(uv_timer_t* handle) {
+static void
+ws_heartbeat_timer_callback(uv_timer_t* handle) {
     if (!handle || !handle->data) {
         return;
     }
@@ -1177,8 +1208,10 @@ static void ws_heartbeat_timer_callback(uv_timer_t* handle) {
  * @param heartbeat_interval 心跳间隔（秒），范围：5-300
  * @return UVHTTP_OK 成功，其他值表示失败
  */
-uvhttp_error_t uvhttp_server_ws_enable_connection_management(
-    uvhttp_server_t* server, int timeout_seconds, int heartbeat_interval) {
+uvhttp_error_t
+uvhttp_server_ws_enable_connection_management(uvhttp_server_t* server,
+                                              int timeout_seconds,
+                                              int heartbeat_interval) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -1268,8 +1301,8 @@ uvhttp_error_t uvhttp_server_ws_enable_connection_management(
  * @param server 服务器实例
  * @return UVHTTP_OK 成功，其他值表示失败
  */
-uvhttp_error_t uvhttp_server_ws_disable_connection_management(
-    uvhttp_server_t* server) {
+uvhttp_error_t
+uvhttp_server_ws_disable_connection_management(uvhttp_server_t* server) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -1322,7 +1355,8 @@ uvhttp_error_t uvhttp_server_ws_disable_connection_management(
  * @param server 服务器实例
  * @return 连接数量
  */
-int uvhttp_server_ws_get_connection_count(uvhttp_server_t* server) {
+int
+uvhttp_server_ws_get_connection_count(uvhttp_server_t* server) {
     if (!server || !server->ws_connection_manager) {
         return 0;
     }
@@ -1337,8 +1371,9 @@ int uvhttp_server_ws_get_connection_count(uvhttp_server_t* server) {
  * @param path 路径
  * @return 连接数量
  */
-int uvhttp_server_ws_get_connection_count_by_path(uvhttp_server_t* server,
-                                                  const char* path) {
+int
+uvhttp_server_ws_get_connection_count_by_path(uvhttp_server_t* server,
+                                              const char* path) {
     if (!server || !server->ws_connection_manager || !path) {
         return 0;
     }
@@ -1365,9 +1400,9 @@ int uvhttp_server_ws_get_connection_count_by_path(uvhttp_server_t* server,
  * @param len 消息长度
  * @return UVHTTP_OK 成功，其他值表示失败
  */
-uvhttp_error_t uvhttp_server_ws_broadcast(uvhttp_server_t* server,
-                                          const char* path, const char* data,
-                                          size_t len) {
+uvhttp_error_t
+uvhttp_server_ws_broadcast(uvhttp_server_t* server, const char* path,
+                           const char* data, size_t len) {
     if (!server || !server->ws_connection_manager) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -1405,8 +1440,8 @@ uvhttp_error_t uvhttp_server_ws_broadcast(uvhttp_server_t* server,
  * @param path 路径（NULL 表示关闭所有连接）
  * @return UVHTTP_OK 成功，其他值表示失败
  */
-uvhttp_error_t uvhttp_server_ws_close_all(uvhttp_server_t* server,
-                                          const char* path) {
+uvhttp_error_t
+uvhttp_server_ws_close_all(uvhttp_server_t* server, const char* path) {
     if (!server || !server->ws_connection_manager) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -1453,9 +1488,10 @@ uvhttp_error_t uvhttp_server_ws_close_all(uvhttp_server_t* server,
 /**
  * 内部函数：添加 WebSocket 连接到管理器
  */
-void uvhttp_server_ws_add_connection(uvhttp_server_t* server,
-                                     uvhttp_ws_connection_t* ws_conn,
-                                     const char* path) {
+void
+uvhttp_server_ws_add_connection(uvhttp_server_t* server,
+                                uvhttp_ws_connection_t* ws_conn,
+                                const char* path) {
     if (!server || !ws_conn || !path) {
         return;
     }
@@ -1493,8 +1529,9 @@ void uvhttp_server_ws_add_connection(uvhttp_server_t* server,
 /**
  * 内部函数：从管理器中移除 WebSocket 连接
  */
-void uvhttp_server_ws_remove_connection(uvhttp_server_t* server,
-                                        uvhttp_ws_connection_t* ws_conn) {
+void
+uvhttp_server_ws_remove_connection(uvhttp_server_t* server,
+                                   uvhttp_ws_connection_t* ws_conn) {
     if (!server || !ws_conn) {
         return;
     }
@@ -1533,8 +1570,9 @@ void uvhttp_server_ws_remove_connection(uvhttp_server_t* server,
 /**
  * 内部函数：更新 WebSocket 连接活动时间
  */
-void uvhttp_server_ws_update_activity(uvhttp_server_t* server,
-                                      uvhttp_ws_connection_t* ws_conn) {
+void
+uvhttp_server_ws_update_activity(uvhttp_server_t* server,
+                                 uvhttp_ws_connection_t* ws_conn) {
     if (!server || !ws_conn) {
         return;
     }
@@ -1560,9 +1598,10 @@ void uvhttp_server_ws_update_activity(uvhttp_server_t* server,
 /* ========== WebSocket 认证 API ========== */
 
 #endif /* UVHTTP_FEATURE_WEBSOCKET */
-uvhttp_error_t uvhttp_server_set_timeout_callback(
-    uvhttp_server_t* server, uvhttp_timeout_callback_t callback,
-    void* user_data) {
+uvhttp_error_t
+uvhttp_server_set_timeout_callback(uvhttp_server_t* server,
+                                   uvhttp_timeout_callback_t callback,
+                                   void* user_data) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }

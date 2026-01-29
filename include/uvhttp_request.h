@@ -66,7 +66,8 @@ struct uvhttp_request {
 /* 验证指针对齐（平台自适应） */
 UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, client, UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, parser, UVHTTP_POINTER_ALIGNMENT);
-UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, parser_settings, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, parser_settings,
+                       UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, path, UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, query, UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, body, UVHTTP_POINTER_ALIGNMENT);

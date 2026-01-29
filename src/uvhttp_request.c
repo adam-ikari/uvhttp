@@ -33,8 +33,8 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length);
 static int on_body(llhttp_t* parser, const char* at, size_t length);
 static int on_message_complete(llhttp_t* parser);
 
-uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request,
-                                   uv_tcp_t* client) {
+uvhttp_error_t
+uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client) {
     if (!request || !client) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -84,7 +84,8 @@ uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request,
     return UVHTTP_OK;
 }
 
-void uvhttp_request_cleanup(uvhttp_request_t* request) {
+void
+uvhttp_request_cleanup(uvhttp_request_t* request) {
     if (!request) {
         return;
     }
@@ -105,7 +106,8 @@ void uvhttp_request_cleanup(uvhttp_request_t* request) {
 }
 
 // HTTP解析器回调函数实现
-static int on_message_begin(llhttp_t* parser) {
+static int
+on_message_begin(llhttp_t* parser) {
 
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
@@ -120,7 +122,8 @@ static int on_message_begin(llhttp_t* parser) {
     return 0;
 }
 
-static int on_url(llhttp_t* parser, const char* at, size_t length) {
+static int
+on_url(llhttp_t* parser, const char* at, size_t length) {
 
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
@@ -143,7 +146,8 @@ static int on_url(llhttp_t* parser, const char* at, size_t length) {
     return 0;
 }
 
-static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
+static int
+on_header_field(llhttp_t* parser, const char* at, size_t length) {
 
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
@@ -166,7 +170,8 @@ static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
     return 0;
 }
 
-static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
+static int
+on_header_value(llhttp_t* parser, const char* at, size_t length) {
 
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
@@ -214,7 +219,8 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
     return 0;
 }
 
-static int on_body(llhttp_t* parser, const char* at, size_t length) {
+static int
+on_body(llhttp_t* parser, const char* at, size_t length) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
         return -1;
@@ -254,7 +260,8 @@ static int on_body(llhttp_t* parser, const char* at, size_t length) {
  * 在libuv事件循环线程中执行，处理完整的HTTP请求
  * 单线程优势：无竞态条件，请求处理顺序可预测
  */
-static int on_message_complete(llhttp_t* parser) {
+static int
+on_message_complete(llhttp_t* parser) {
 
     if (!parser) {
         return -1;
@@ -414,7 +421,8 @@ static int on_message_complete(llhttp_t* parser) {
 }
 
 // 检查是否为WebSocket握手请求
-static int is_websocket_handshake(uvhttp_request_t* request) {
+static int
+is_websocket_handshake(uvhttp_request_t* request) {
     const char* upgrade = uvhttp_request_get_header(request, "Upgrade");
     const char* connection = uvhttp_request_get_header(request, "Connection");
     const char* ws_key =
@@ -438,7 +446,8 @@ static int is_websocket_handshake(uvhttp_request_t* request) {
     return TRUE;
 }
 
-const char* uvhttp_request_get_method(uvhttp_request_t* request) {
+const char*
+uvhttp_request_get_method(uvhttp_request_t* request) {
     if (!request)
         return NULL;
     switch (request->method) {
@@ -463,14 +472,15 @@ const char* uvhttp_request_get_method(uvhttp_request_t* request) {
     }
 }
 
-const char* uvhttp_request_get_url(uvhttp_request_t* request) {
+const char*
+uvhttp_request_get_url(uvhttp_request_t* request) {
     if (!request)
         return NULL;
     return request->url;
 }
 
-const char* uvhttp_request_get_header(uvhttp_request_t* request,
-                                      const char* name) {
+const char*
+uvhttp_request_get_header(uvhttp_request_t* request, const char* name) {
     /* 输入验证 */
     if (!request || !name) {
         return NULL;
@@ -506,19 +516,22 @@ const char* uvhttp_request_get_header(uvhttp_request_t* request,
     return NULL;
 }
 
-const char* uvhttp_request_get_body(uvhttp_request_t* request) {
+const char*
+uvhttp_request_get_body(uvhttp_request_t* request) {
     if (!request)
         return NULL;
     return request->body;
 }
 
-size_t uvhttp_request_get_body_length(uvhttp_request_t* request) {
+size_t
+uvhttp_request_get_body_length(uvhttp_request_t* request) {
     if (!request)
         return 0;
     return request->body_length;
 }
 
-const char* uvhttp_request_get_path(uvhttp_request_t* request) {
+const char*
+uvhttp_request_get_path(uvhttp_request_t* request) {
     if (!request) {
         return NULL;
     }
@@ -552,7 +565,8 @@ const char* uvhttp_request_get_path(uvhttp_request_t* request) {
     return url;
 }
 
-const char* uvhttp_request_get_query_string(uvhttp_request_t* request) {
+const char*
+uvhttp_request_get_query_string(uvhttp_request_t* request) {
     if (!request) {
         return NULL;
     }
@@ -568,8 +582,8 @@ const char* uvhttp_request_get_query_string(uvhttp_request_t* request) {
     return query_string;
 }
 
-const char* uvhttp_request_get_query_param(uvhttp_request_t* request,
-                                           const char* name) {
+const char*
+uvhttp_request_get_query_param(uvhttp_request_t* request, const char* name) {
     if (!request || !name) {
         return NULL;
     }
@@ -616,7 +630,8 @@ const char* uvhttp_request_get_query_param(uvhttp_request_t* request,
     return NULL;
 }
 
-const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
+const char*
+uvhttp_request_get_client_ip(uvhttp_request_t* request) {
     if (!request) {
         return NULL;
     }
@@ -675,7 +690,8 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
     return "127.0.0.1";  // 默认值
 }
 
-void uvhttp_request_free(uvhttp_request_t* request) {
+void
+uvhttp_request_free(uvhttp_request_t* request) {
     if (!request) {
         return;
     }
@@ -687,7 +703,8 @@ void uvhttp_request_free(uvhttp_request_t* request) {
 /* ========== Headers 操作 API 实现 ========== */
 
 /* 获取 header 数量 */
-size_t uvhttp_request_get_header_count(uvhttp_request_t* request) {
+size_t
+uvhttp_request_get_header_count(uvhttp_request_t* request) {
     if (!request) {
         return 0;
     }
@@ -695,8 +712,8 @@ size_t uvhttp_request_get_header_count(uvhttp_request_t* request) {
 }
 
 /* 获取指定索引的 header（内部使用） */
-uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request,
-                                              size_t index) {
+uvhttp_header_t*
+uvhttp_request_get_header_at(uvhttp_request_t* request, size_t index) {
     if (!request || index >= request->header_count) {
         return NULL;
     }
@@ -715,8 +732,9 @@ uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request,
 }
 
 /* 添加 header（内部使用，自动扩容） */
-uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request,
-                                         const char* name, const char* value) {
+uvhttp_error_t
+uvhttp_request_add_header(uvhttp_request_t* request, const char* name,
+                          const char* value) {
 
     if (!request || !name || !value) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -788,9 +806,10 @@ uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request,
 }
 
 /* 遍历所有 headers */
-void uvhttp_request_foreach_header(uvhttp_request_t* request,
-                                   uvhttp_header_callback_t callback,
-                                   void* user_data) {
+void
+uvhttp_request_foreach_header(uvhttp_request_t* request,
+                              uvhttp_header_callback_t callback,
+                              void* user_data) {
     if (!request || !callback) {
         return;
     }

@@ -143,8 +143,10 @@ UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, router, UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, config, UVHTTP_POINTER_ALIGNMENT);
 
 /* 验证size_t对齐（平台自适应） */
-UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, active_connections, UVHTTP_SIZE_T_ALIGNMENT);
-UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, max_connections, UVHTTP_SIZE_T_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, active_connections,
+                       UVHTTP_SIZE_T_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, max_connections,
+                       UVHTTP_SIZE_T_ALIGNMENT);
 
 /* API函数 */
 /**
@@ -294,12 +296,12 @@ uvhttp_server_builder_t* uvhttp_any(uvhttp_server_builder_t* server,
                                     uvhttp_request_handler_t handler);
 
 // 简化配置API
-uvhttp_server_builder_t* uvhttp_set_max_connections(
-    uvhttp_server_builder_t* server, int max_conn);
+uvhttp_server_builder_t*
+uvhttp_set_max_connections(uvhttp_server_builder_t* server, int max_conn);
 uvhttp_server_builder_t* uvhttp_set_timeout(uvhttp_server_builder_t* server,
                                             int timeout);
-uvhttp_server_builder_t* uvhttp_set_max_body_size(
-    uvhttp_server_builder_t* server, size_t size);
+uvhttp_server_builder_t*
+uvhttp_set_max_body_size(uvhttp_server_builder_t* server, size_t size);
 
 // 便捷请求参数获取
 const char* uvhttp_get_param(uvhttp_request_t* request, const char* name);
@@ -343,8 +345,8 @@ uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code,
 uvhttp_error_t uvhttp_server_ws_enable_connection_management(
     uvhttp_server_t* server, int timeout_seconds, int heartbeat_interval);
 
-uvhttp_error_t uvhttp_server_ws_disable_connection_management(
-    uvhttp_server_t* server);
+uvhttp_error_t
+uvhttp_server_ws_disable_connection_management(uvhttp_server_t* server);
 
 int uvhttp_server_ws_get_connection_count(uvhttp_server_t* server);
 
@@ -383,6 +385,7 @@ void uvhttp_request_cleanup(uvhttp_request_t* request);
 #    endif
 
 #endif
-uvhttp_error_t uvhttp_server_set_timeout_callback(
-    uvhttp_server_t* server, uvhttp_timeout_callback_t callback,
-    void* user_data);
+uvhttp_error_t
+uvhttp_server_set_timeout_callback(uvhttp_server_t* server,
+                                   uvhttp_timeout_callback_t callback,
+                                   void* user_data);

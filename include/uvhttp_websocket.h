@@ -122,8 +122,8 @@ typedef struct uvhttp_ws_connection {
 /**
  * 创建 WebSocket 连接
  */
-struct uvhttp_ws_connection* uvhttp_ws_connection_create(
-    int fd, mbedtls_ssl_context* ssl, int is_server);
+struct uvhttp_ws_connection*
+uvhttp_ws_connection_create(int fd, mbedtls_ssl_context* ssl, int is_server);
 
 /**
  * 释放 WebSocket 连接
@@ -149,9 +149,9 @@ uvhttp_error_t uvhttp_ws_handshake_client(uvhttp_context_t* context,
 /**
  * 验证握手响应 (客户端)
  */
-uvhttp_error_t uvhttp_ws_verify_handshake_response(
-    struct uvhttp_ws_connection* conn, const char* response,
-    size_t response_len);
+uvhttp_error_t
+uvhttp_ws_verify_handshake_response(struct uvhttp_ws_connection* conn,
+                                    const char* response, size_t response_len);
 
 /**
  * 接收 WebSocket 帧

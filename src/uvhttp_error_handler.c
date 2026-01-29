@@ -32,23 +32,27 @@ static void sleep_ms(int ms);
 
 /* ========== 错误统计函数 ========== */
 
-const uvhttp_error_stats_t* uvhttp_error_get_stats(void) {
+const uvhttp_error_stats_t*
+uvhttp_error_get_stats(void) {
     return &g_error_stats;
 }
 
-void uvhttp_error_reset_stats(void) {
+void
+uvhttp_error_reset_stats(void) {
     memset(&g_error_stats, 0, sizeof(g_error_stats));
     UVHTTP_LOG_INFO("Error statistics reset");
 }
 
 /* ========== 错误恢复函数 ========== */
 
-void uvhttp_error_recovery_init(void) {
+void
+uvhttp_error_recovery_init(void) {
     memset(&g_error_stats, 0, sizeof(g_error_stats));
     UVHTTP_LOG_INFO("Error recovery system initialized");
 }
 
-void uvhttp_error_cleanup(void) {
+void
+uvhttp_error_cleanup(void) {
     UVHTTP_LOG_INFO("Error recovery system cleanup");
     /* 计算总错误数 */
     size_t total = 0;
@@ -58,8 +62,8 @@ void uvhttp_error_cleanup(void) {
     UVHTTP_LOG_INFO("Total errors handled: %zu", total);
 }
 
-void uvhttp_error_set_recovery_config(
-    const uvhttp_error_recovery_config_t* config) {
+void
+uvhttp_error_set_recovery_config(const uvhttp_error_recovery_config_t* config) {
     if (config) {
         g_error_recovery_config = *config;
         UVHTTP_LOG_INFO("Error recovery configuration updated");
@@ -68,9 +72,10 @@ void uvhttp_error_set_recovery_config(
 
 /* ========== 内部错误报告函数 ========== */
 
-void uvhttp_error_report_(uvhttp_error_t error_code, const char* message,
-                          const char* function, const char* file, int line,
-                          void* user_data) {
+void
+uvhttp_error_report_(uvhttp_error_t error_code, const char* message,
+                     const char* function, const char* file, int line,
+                     void* user_data) {
     /* 更新统计 */
     int index = (error_code < 0) ? -error_code : 0;
     if (index >= 0 && index < UVHTTP_ERROR_COUNT) {
@@ -105,8 +110,8 @@ void uvhttp_error_report_(uvhttp_error_t error_code, const char* message,
 }
 
 /* 错误恢复尝试 */
-uvhttp_error_t uvhttp_error_attempt_recovery(
-    const uvhttp_error_context_t* context) {
+uvhttp_error_t
+uvhttp_error_attempt_recovery(const uvhttp_error_context_t* context) {
     if (!g_error_recovery_config.enable_recovery) {
         return context->error_code;
     }
@@ -153,7 +158,8 @@ uvhttp_error_t uvhttp_error_attempt_recovery(
 }
 
 /* 计算重试延迟 */
-static int calculate_retry_delay(int attempt) {
+static int
+calculate_retry_delay(int attempt) {
     int delay = g_error_recovery_config.base_delay_ms;
     for (int i = 0; i < attempt; i++) {
         delay *= g_error_recovery_config.backoff_multiplier;
@@ -164,6 +170,7 @@ static int calculate_retry_delay(int attempt) {
 }
 
 /* 毫秒级睡眠 */
-static void sleep_ms(int ms) {
+static void
+sleep_ms(int ms) {
     uvhttp_sleep_ms(ms);
 }

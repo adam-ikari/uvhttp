@@ -91,12 +91,15 @@ typedef struct uvhttp_router uvhttp_router_t;
 UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, root, UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, node_pool, UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, array_routes, UVHTTP_POINTER_ALIGNMENT);
-UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, static_prefix, UVHTTP_POINTER_ALIGNMENT);
-UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, static_context, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, static_prefix,
+                       UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, static_context,
+                       UVHTTP_POINTER_ALIGNMENT);
 
 /* 验证size_t对齐（平台自适应） */
 UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, route_count, UVHTTP_SIZE_T_ALIGNMENT);
-UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, node_pool_size, UVHTTP_SIZE_T_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, node_pool_size,
+                       UVHTTP_SIZE_T_ALIGNMENT);
 
 // 路由API函数
 /**
@@ -120,8 +123,9 @@ uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
                                               uvhttp_request_handler_t handler);
 
 // 路由查找
-uvhttp_request_handler_t uvhttp_router_find_handler(
-    const uvhttp_router_t* router, const char* path, const char* method);
+uvhttp_request_handler_t
+uvhttp_router_find_handler(const uvhttp_router_t* router, const char* path,
+                           const char* method);
 
 // 路由匹配（获取参数）
 uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,

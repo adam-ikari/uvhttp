@@ -24,11 +24,13 @@ uint64_t uvhttp_hash(const void* data, size_t length, uint64_t seed);
 uint64_t uvhttp_hash_string(const char* str);
 
 /* 便捷函数 */
-static inline uint64_t uvhttp_hash_default(const void* data, size_t length) {
+static inline uint64_t
+uvhttp_hash_default(const void* data, size_t length) {
     return uvhttp_hash(data, length, UVHTTP_HASH_DEFAULT_SEED);
 }
 
-static inline uint64_t uvhttp_hash_string_default(const char* str) {
+static inline uint64_t
+uvhttp_hash_string_default(const char* str) {
     return uvhttp_hash_string(str);
 }
 
