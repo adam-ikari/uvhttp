@@ -110,6 +110,11 @@ jobs:
     needs: [ubuntu-build]
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      test-status: ${{ steps.test.outputs.status }}
+      test-total: ${{ steps.test.outputs.total }}
+      test-passed: ${{ steps.test.outputs.passed }}
+      test-failed: ${{ steps.test.outputs.failed }}
 
     steps:
       - name: Checkout code
@@ -128,9 +133,13 @@ jobs:
           chmod +x build/dist/bin/* || true
 
       - name: Run full tests
-        run: |
-          cd build
-          ctest --output-on-failure -j$(nproc) --timeout 120
+        id: test
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build
+          test-type: all
+          timeout: 120
+          parallel: $(nproc)
 
       - name: Upload test logs
         if: always()

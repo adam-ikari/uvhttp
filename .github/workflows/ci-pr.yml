@@ -182,16 +182,12 @@ jobs:
       
       - name: Run fast tests
         id: test
-        run: |
-          cd build-pr
-          ctest --output-on-failure -j1 --timeout 60 --schedule-random
-          
-          # 获取测试结果
-          TOTAL=$(ctest -N | grep "Total Tests:" | awk '{print $3}' || echo "0")
-          echo "status=success" >> $GITHUB_OUTPUT
-          echo "total=$TOTAL" >> $GITHUB_OUTPUT
-          echo "passed=$TOTAL" >> $GITHUB_OUTPUT
-          echo "failed=0" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build-pr
+          test-type: fast
+          timeout: 60
+          parallel: 1
       
       - name: Upload test logs
         if: always()

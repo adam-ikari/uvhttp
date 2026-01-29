@@ -141,9 +141,12 @@ jobs:
           path: build/
       
       - name: Run tests with coverage
-        run: |
-          cd build
-          ctest --output-on-failure -j$(nproc) --timeout 120
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build
+          test-type: coverage
+          timeout: 120
+          parallel: $(nproc)
       
       - name: Generate coverage report
         run: |
@@ -192,9 +195,12 @@ jobs:
           cmake --build build-asan -j$(nproc)
       
       - name: Run tests with AddressSanitizer
-        run: |
-          cd build-asan
-          ASAN_OPTIONS=detect_leaks=1:halt_on_error=0 ctest --output-on-failure -j1
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build-asan
+          test-type: memory
+          timeout: 120
+          parallel: 1
       
       - name: Upload memory test results
         if: always()
