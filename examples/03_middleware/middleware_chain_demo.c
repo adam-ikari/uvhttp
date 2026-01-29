@@ -1,15 +1,16 @@
 /*
  * UVHTTP 中间件链复用示例
- * 
+ *
  * 演示如何使用 UVHTTP_DEFINE_MIDDLEWARE_CHAIN 和 UVHTTP_EXECUTE_MIDDLEWARE_CHAIN
  * 在多个处理器中复用中间件链
- * 
+ *
  * 注意：此示例使用全局变量以简化代码。
  * 在生产环境中，建议使用 libuv 数据指针模式或依赖注入来管理应用状态。
  */
 
 #include "uvhttp.h"
 #include "uvhttp_middleware.h"
+#include "../../deps/cjson/cJSON.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -29,21 +30,48 @@ static int logging_middleware(uvhttp_request_t* req, uvhttp_response_t* resp, uv
 
 static int auth_middleware(uvhttp_request_t* req, uvhttp_response_t* resp, uvhttp_middleware_context_t* ctx) {
     (void)ctx;
-    
+
     const char* auth = uvhttp_request_get_header(req, "Authorization");
-    
+
     if (!auth || strcmp(auth, "Bearer secret-token") != 0) {
-        const char* error = "{\"error\":\"未授权\",\"message\":\"无效的认证令牌\"}";
-        
+        // 使用 cJSON 创建 JSON 错误响应
+        cJSON* error_obj = cJSON_CreateObject();
+        if (!error_obj) {
+            uvhttp_response_set_status(resp, 401);
+            uvhttp_response_set_header(resp, "Content-Type", "application/json; charset=utf-8");
+            uvhttp_response_set_header(resp, "WWW-Authenticate", "Bearer");
+            const char* error = "{\"error\":\"未授权\"}";
+            uvhttp_response_set_body(resp, error, strlen(error));
+            uvhttp_response_send(resp);
+            return UVHTTP_MIDDLEWARE_STOP;
+        }
+
+        cJSON_AddStringToObject(error_obj, "error", "未授权");
+        cJSON_AddStringToObject(error_obj, "message", "无效的认证令牌");
+
+        char* error_string = cJSON_PrintUnformatted(error_obj);
+        cJSON_Delete(error_obj);
+
+        if (!error_string) {
+            uvhttp_response_set_status(resp, 401);
+            uvhttp_response_set_header(resp, "Content-Type", "application/json; charset=utf-8");
+            uvhttp_response_set_header(resp, "WWW-Authenticate", "Bearer");
+            const char* error = "{\"error\":\"未授权\"}";
+            uvhttp_response_set_body(resp, error, strlen(error));
+            uvhttp_response_send(resp);
+            return UVHTTP_MIDDLEWARE_STOP;
+        }
+
         uvhttp_response_set_status(resp, 401);
         uvhttp_response_set_header(resp, "Content-Type", "application/json; charset=utf-8");
         uvhttp_response_set_header(resp, "WWW-Authenticate", "Bearer");
-        uvhttp_response_set_body(resp, error, strlen(error));
-        
+        uvhttp_response_set_body(resp, error_string, strlen(error_string));
+
         uvhttp_response_send(resp);
+        free(error_string);
         return UVHTTP_MIDDLEWARE_STOP;
     }
-    
+
     return UVHTTP_MIDDLEWARE_CONTINUE;
 }
 
@@ -79,42 +107,114 @@ UVHTTP_DEFINE_MIDDLEWARE_CHAIN(public_chain,
 static int user_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     /* 执行预定义的中间件链 */
     UVHTTP_EXECUTE_MIDDLEWARE_CHAIN(req, resp, api_chain);
-    
-    const char* json = "{\"message\":\"用户数据\"}";
-    
+
+    // 使用 cJSON 创建 JSON 响应
+    cJSON* json_obj = cJSON_CreateObject();
+    if (!json_obj) {
+        uvhttp_response_set_status(resp, 500);
+        uvhttp_response_set_header(resp, "Content-Type", "application/json; charset=utf-8");
+        const char* error = "{\"error\":\"Failed to create JSON\"}";
+        uvhttp_response_set_body(resp, error, strlen(error));
+        return uvhttp_response_send(resp);
+    }
+
+    cJSON_AddStringToObject(json_obj, "message", "用户数据");
+
+    char* json_string = cJSON_PrintUnformatted(json_obj);
+    cJSON_Delete(json_obj);
+
+    if (!json_string) {
+        uvhttp_response_set_status(resp, 500);
+        uvhttp_response_set_header(resp, "Content-Type", "application/json; charset=utf-8");
+        const char* error = "{\"error\":\"Failed to generate JSON\"}";
+        uvhttp_response_set_body(resp, error, strlen(error));
+        return uvhttp_response_send(resp);
+    }
+
     uvhttp_response_set_status(resp, 200);
     uvhttp_response_set_header(resp, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(resp, json, strlen(json));
-    
-    return uvhttp_response_send(resp);
+    uvhttp_response_set_body(resp, json_string, strlen(json_string));
+
+    int result = uvhttp_response_send(resp);
+    free(json_string);
+
+    return result;
 }
 
 /* 管理员 API - 使用 api_chain */
 static int admin_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     /* 执行预定义的中间件链 */
     UVHTTP_EXECUTE_MIDDLEWARE_CHAIN(req, resp, api_chain);
-    
-    const char* json = "{\"message\":\"管理员数据\"}";
-    
+
+    // 使用 cJSON 创建 JSON 响应
+    cJSON* json_obj = cJSON_CreateObject();
+    if (!json_obj) {
+        uvhttp_response_set_status(resp, 500);
+        uvhttp_response_set_header(resp, "Content-Type", "application/json; charset=utf-8");
+        const char* error = "{\"error\":\"Failed to create JSON\"}";
+        uvhttp_response_set_body(resp, error, strlen(error));
+        return uvhttp_response_send(resp);
+    }
+
+    cJSON_AddStringToObject(json_obj, "message", "管理员数据");
+
+    char* json_string = cJSON_PrintUnformatted(json_obj);
+    cJSON_Delete(json_obj);
+
+    if (!json_string) {
+        uvhttp_response_set_status(resp, 500);
+        uvhttp_response_set_header(resp, "Content-Type", "application/json; charset=utf-8");
+        const char* error = "{\"error\":\"Failed to generate JSON\"}";
+        uvhttp_response_set_body(resp, error, strlen(error));
+        return uvhttp_response_send(resp);
+    }
+
     uvhttp_response_set_status(resp, 200);
     uvhttp_response_set_header(resp, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(resp, json, strlen(json));
-    
-    return uvhttp_response_send(resp);
+    uvhttp_response_set_body(resp, json_string, strlen(json_string));
+
+    int result = uvhttp_response_send(resp);
+    free(json_string);
+
+    return result;
 }
 
 /* 健康检查 - 使用 public_chain */
 static int health_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     /* 执行预定义的中间件链 */
     UVHTTP_EXECUTE_MIDDLEWARE_CHAIN(req, resp, public_chain);
-    
-    const char* json = "{\"status\":\"ok\"}";
-    
+
+    // 使用 cJSON 创建 JSON 响应
+    cJSON* json_obj = cJSON_CreateObject();
+    if (!json_obj) {
+        uvhttp_response_set_status(resp, 500);
+        uvhttp_response_set_header(resp, "Content-Type", "application/json; charset=utf-8");
+        const char* error = "{\"error\":\"Failed to create JSON\"}";
+        uvhttp_response_set_body(resp, error, strlen(error));
+        return uvhttp_response_send(resp);
+    }
+
+    cJSON_AddStringToObject(json_obj, "status", "ok");
+
+    char* json_string = cJSON_PrintUnformatted(json_obj);
+    cJSON_Delete(json_obj);
+
+    if (!json_string) {
+        uvhttp_response_set_status(resp, 500);
+        uvhttp_response_set_header(resp, "Content-Type", "application/json; charset=utf-8");
+        const char* error = "{\"error\":\"Failed to generate JSON\"}";
+        uvhttp_response_set_body(resp, error, strlen(error));
+        return uvhttp_response_send(resp);
+    }
+
     uvhttp_response_set_status(resp, 200);
     uvhttp_response_set_header(resp, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(resp, json, strlen(json));
-    
-    return uvhttp_response_send(resp);
+    uvhttp_response_set_body(resp, json_string, strlen(json_string));
+
+    int result = uvhttp_response_send(resp);
+    free(json_string);
+
+    return result;
 }
 
 /* ============ 主函数 ============ */

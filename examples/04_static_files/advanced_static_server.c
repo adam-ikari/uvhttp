@@ -1,6 +1,7 @@
 /* UVHTTP 静态文件服务示例 - 演示集成文件读取功能 */
 
 #include "uvhttp.h"
+#include "../../deps/cjson/cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,7 +32,7 @@ void signal_handler(int signal) {
 /* API 请求处理器 - 显示统计信息 */
 int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     (void)request;  /* 避免未使用参数警告 */
-    
+
     if (!g_app_context || !g_app_context->static_ctx) {
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_header(response, "Content-Type", "application/json");
@@ -39,20 +40,42 @@ int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         uvhttp_response_send(response);
         return -1;
     }
-    
-    /* 简单的统计响应 */
-    const char* json = "{\n"
-        "  \"status\": \"ok\",\n"
-        "  \"message\": \"UVHTTP static file server is running\",\n"
-        "  \"version\": \"v2\"\n"
-        "}";
-    
+
+    /* 使用 cJSON 创建 JSON 响应 */
+    cJSON* json_obj = cJSON_CreateObject();
+    if (!json_obj) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_header(response, "Content-Type", "application/json");
+        const char* error = "{\"error\":\"Failed to create JSON\"}";
+        uvhttp_response_set_body(response, error, strlen(error));
+        uvhttp_response_send(response);
+        return -1;
+    }
+
+    cJSON_AddStringToObject(json_obj, "status", "ok");
+    cJSON_AddStringToObject(json_obj, "message", "UVHTTP static file server is running");
+    cJSON_AddStringToObject(json_obj, "version", "v2");
+
+    char* json_string = cJSON_PrintUnformatted(json_obj);
+    cJSON_Delete(json_obj);
+
+    if (!json_string) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_header(response, "Content-Type", "application/json");
+        const char* error = "{\"error\":\"Failed to generate JSON\"}";
+        uvhttp_response_set_body(response, error, strlen(error));
+        uvhttp_response_send(response);
+        return -1;
+    }
+
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_body(response, json, strlen(json));
-    
-    uvhttp_response_send(response);
-    return 0;
+    uvhttp_response_set_body(response, json_string, strlen(json_string));
+
+    int result = uvhttp_response_send(response);
+    free(json_string);
+
+    return result;
 }
 
 /* 主页处理器 */

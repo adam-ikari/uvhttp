@@ -21,6 +21,7 @@
  */
 
 #include "../../include/uvhttp.h"
+#include "../../deps/cjson/cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -139,24 +140,51 @@ int about_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
  */
 int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     (void)req;  // 未使用的参数
-    const char* json = "{\n"
-        "  \"name\": \"UVHTTP\",\n"
-        "  \"version\": \"1.0.0\",\n"
-        "  \"description\": \"高性能 HTTP 服务器库\",\n"
-        "  \"features\": [\n"
-        "    \"事件驱动\",\n"
-        "    \"轻量级\",\n"
-        "    \"高性能\",\n"
-        "    \"易于使用\"\n"
-        "  ],\n"
-        "  \"status\": \"running\"\n"
-        "}\n";
+
+    // 使用 cJSON 创建 JSON 对象
+    cJSON* json_obj = cJSON_CreateObject();
+    if (!json_obj) {
+        uvhttp_response_set_status(res, 500);
+        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
+        const char* error = "{\"error\":\"Failed to create JSON\"}";
+        uvhttp_response_set_body(res, error, strlen(error));
+        return uvhttp_response_send(res);
+    }
+
+    cJSON_AddStringToObject(json_obj, "name", "UVHTTP");
+    cJSON_AddStringToObject(json_obj, "version", "1.0.0");
+    cJSON_AddStringToObject(json_obj, "description", "高性能 HTTP 服务器库");
+
+    // 创建 features 数组
+    cJSON* features = cJSON_CreateArray();
+    cJSON_AddItemToArray(features, cJSON_CreateString("事件驱动"));
+    cJSON_AddItemToArray(features, cJSON_CreateString("轻量级"));
+    cJSON_AddItemToArray(features, cJSON_CreateString("高性能"));
+    cJSON_AddItemToArray(features, cJSON_CreateString("易于使用"));
+    cJSON_AddItemToObject(json_obj, "features", features);
+
+    cJSON_AddStringToObject(json_obj, "status", "running");
+
+    // 生成 JSON 字符串
+    char* json_string = cJSON_PrintUnformatted(json_obj);
+    cJSON_Delete(json_obj);
+
+    if (!json_string) {
+        uvhttp_response_set_status(res, 500);
+        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
+        const char* error = "{\"error\":\"Failed to generate JSON\"}";
+        uvhttp_response_set_body(res, error, strlen(error));
+        return uvhttp_response_send(res);
+    }
 
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
-    
-    return uvhttp_response_send(res);
+    uvhttp_response_set_body(res, json_string, strlen(json_string));
+
+    int result = uvhttp_response_send(res);
+    free(json_string);
+
+    return result;
 }
 
 /**
@@ -167,26 +195,46 @@ int status_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* method = uvhttp_request_get_method(req);
     const char* url = uvhttp_request_get_url(req);
 
-    // 健康检查响应
-    char json[512];
-    snprintf(json, sizeof(json),
-        "{\n"
-        "  \"status\": \"healthy\",\n"
-        "  \"uptime\": 3600,\n"
-        "  \"active_connections\": 10,\n"
-        "  \"request\": {\n"
-        "    \"method\": \"%s\",\n"
-        "    \"url\": \"%s\"\n"
-        "  }\n"
-        "}\n",
-        method ? method : "unknown",
-        url ? url : "unknown");
+    // 使用 cJSON 创建 JSON 对象
+    cJSON* json_obj = cJSON_CreateObject();
+    if (!json_obj) {
+        uvhttp_response_set_status(res, 500);
+        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
+        const char* error = "{\"error\":\"Failed to create JSON\"}";
+        uvhttp_response_set_body(res, error, strlen(error));
+        return uvhttp_response_send(res);
+    }
+
+    cJSON_AddStringToObject(json_obj, "status", "healthy");
+    cJSON_AddNumberToObject(json_obj, "uptime", 3600);
+    cJSON_AddNumberToObject(json_obj, "active_connections", 10);
+
+    // 创建嵌套的 request 对象
+    cJSON* request_obj = cJSON_CreateObject();
+    cJSON_AddStringToObject(request_obj, "method", method ? method : "unknown");
+    cJSON_AddStringToObject(request_obj, "url", url ? url : "unknown");
+    cJSON_AddItemToObject(json_obj, "request", request_obj);
+
+    // 生成 JSON 字符串
+    char* json_string = cJSON_PrintUnformatted(json_obj);
+    cJSON_Delete(json_obj);
+
+    if (!json_string) {
+        uvhttp_response_set_status(res, 500);
+        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
+        const char* error = "{\"error\":\"Failed to generate JSON\"}";
+        uvhttp_response_set_body(res, error, strlen(error));
+        return uvhttp_response_send(res);
+    }
 
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
+    uvhttp_response_set_body(res, json_string, strlen(json_string));
 
-    return uvhttp_response_send(res);
+    int result = uvhttp_response_send(res);
+    free(json_string);
+
+    return result;
 }
 
 int main() {

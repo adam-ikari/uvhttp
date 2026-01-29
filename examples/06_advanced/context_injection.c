@@ -12,6 +12,7 @@
 #include "../../include/uvhttp.h"
 #include "../../include/uvhttp_allocator.h"
 #include "../../include/uvhttp_context.h"
+#include "../../deps/cjson/cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -312,23 +313,40 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         return uvhttp_response_send(res);
     }
 
-    char response[512];
-    snprintf(response, sizeof(response),
-        "{\n"
-        "  \"description\": \"使用 server->context 而非 loop->data\",\n"
-        "  \"active_connections\": %zu,\n"
-        "  \"is_listening\": %d,\n"
-        "  \"owns_loop\": %d\n"
-        "}",
-        server->active_connections,
-        server->is_listening,
-        server->owns_loop);
-    
+    // 使用 cJSON 创建 JSON 响应
+    cJSON* json_obj = cJSON_CreateObject();
+    if (!json_obj) {
+        uvhttp_response_set_status(res, 500);
+        uvhttp_response_set_header(res, "Content-Type", "application/json");
+        const char* error = "{\"error\":\"Failed to create JSON\"}";
+        uvhttp_response_set_body(res, error, strlen(error));
+        return uvhttp_response_send(res);
+    }
+
+    cJSON_AddStringToObject(json_obj, "description", "使用 server->context 而非 loop->data");
+    cJSON_AddNumberToObject(json_obj, "active_connections", server->active_connections);
+    cJSON_AddNumberToObject(json_obj, "is_listening", server->is_listening);
+    cJSON_AddNumberToObject(json_obj, "owns_loop", server->owns_loop);
+
+    char* json_string = cJSON_PrintUnformatted(json_obj);
+    cJSON_Delete(json_obj);
+
+    if (!json_string) {
+        uvhttp_response_set_status(res, 500);
+        uvhttp_response_set_header(res, "Content-Type", "application/json");
+        const char* error = "{\"error\":\"Failed to generate JSON\"}";
+        uvhttp_response_set_body(res, error, strlen(error));
+        return uvhttp_response_send(res);
+    }
+
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, response, strlen(response));
-    
-    return uvhttp_response_send(res);
+    uvhttp_response_set_body(res, json_string, strlen(json_string));
+
+    int result = uvhttp_response_send(res);
+    free(json_string);
+
+    return result;
 }
 
 /**
@@ -336,21 +354,41 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
  */
 int info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     (void)req;  // 未使用的参数
-    
-    char response[1024];
-    snprintf(response, sizeof(response),
-        "{\n"
-        "  \"example\": \"shared_loop_data\",\n"
-        "  \"description\": \"演示如何避免独占 loop->data\",\n"
-        "  \"solution\": \"使用 uvhttp_server_set_context() 设置服务器上下文\",\n"
-        "  \"scenario\": \"当其他应用也在使用 loop->data 时\"\n"
-        "}");
-    
+
+    // 使用 cJSON 创建 JSON 响应
+    cJSON* json_obj = cJSON_CreateObject();
+    if (!json_obj) {
+        uvhttp_response_set_status(res, 500);
+        uvhttp_response_set_header(res, "Content-Type", "application/json");
+        const char* error = "{\"error\":\"Failed to create JSON\"}";
+        uvhttp_response_set_body(res, error, strlen(error));
+        return uvhttp_response_send(res);
+    }
+
+    cJSON_AddStringToObject(json_obj, "example", "shared_loop_data");
+    cJSON_AddStringToObject(json_obj, "description", "演示如何避免独占 loop->data");
+    cJSON_AddStringToObject(json_obj, "solution", "使用 uvhttp_server_set_context() 设置服务器上下文");
+    cJSON_AddStringToObject(json_obj, "scenario", "当其他应用也在使用 loop->data 时");
+
+    char* json_string = cJSON_PrintUnformatted(json_obj);
+    cJSON_Delete(json_obj);
+
+    if (!json_string) {
+        uvhttp_response_set_status(res, 500);
+        uvhttp_response_set_header(res, "Content-Type", "application/json");
+        const char* error = "{\"error\":\"Failed to generate JSON\"}";
+        uvhttp_response_set_body(res, error, strlen(error));
+        return uvhttp_response_send(res);
+    }
+
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, response, strlen(response));
-    
-    return uvhttp_response_send(res);
+    uvhttp_response_set_body(res, json_string, strlen(json_string));
+
+    int result = uvhttp_response_send(res);
+    free(json_string);
+
+    return result;
 }
 
 /**

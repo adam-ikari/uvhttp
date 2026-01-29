@@ -10,6 +10,7 @@
 #include "../include/uvhttp_config.h"
 #include "../include/uvhttp_context.h"
 #include "../include/uvhttp_allocator.h"
+#include "../../deps/cjson/cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -125,59 +126,136 @@ int config_api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         int new_max_conn = atoi(max_conn_str);
 
         int result = uvhttp_config_update_max_connections(g_context, new_max_conn);
-        
-        char response_body[512];
-        if (result == UVHTTP_OK) {
-            snprintf(response_body, sizeof(response_body),
-                "{\"status\":\"success\",\"message\":\"最大连接数已更新为 %d\",\"new_value\":%d}",
-                new_max_conn, new_max_conn);
-        } else {
-            snprintf(response_body, sizeof(response_body),
-                "{\"status\":\"error\",\"message\":\"更新失败，错误码: %d\",\"error_code\":%d}",
-                result, result);
+
+        // 使用 cJSON 创建 JSON 响应
+        cJSON* json_obj = cJSON_CreateObject();
+        if (!json_obj) {
+            uvhttp_response_set_status(response, 500);
+            uvhttp_response_set_header(response, "Content-Type", "application/json");
+            const char* error = "{\"error\":\"Failed to create JSON\"}";
+            uvhttp_response_set_body(response, error, strlen(error));
+            uvhttp_response_send(response);
+            return 0;
         }
-        
+
+        if (result == UVHTTP_OK) {
+            cJSON_AddStringToObject(json_obj, "status", "success");
+            char message[256];
+            snprintf(message, sizeof(message), "最大连接数已更新为 %d", new_max_conn);
+            cJSON_AddStringToObject(json_obj, "message", message);
+            cJSON_AddNumberToObject(json_obj, "new_value", new_max_conn);
+        } else {
+            cJSON_AddStringToObject(json_obj, "status", "error");
+            char message[256];
+            snprintf(message, sizeof(message), "更新失败，错误码: %d", result);
+            cJSON_AddStringToObject(json_obj, "message", message);
+            cJSON_AddNumberToObject(json_obj, "error_code", result);
+        }
+
+        char* json_string = cJSON_PrintUnformatted(json_obj);
+        cJSON_Delete(json_obj);
+
+        if (!json_string) {
+            uvhttp_response_set_status(response, 500);
+            uvhttp_response_set_header(response, "Content-Type", "application/json");
+            const char* error = "{\"error\":\"Failed to generate JSON\"}";
+            uvhttp_response_set_body(response, error, strlen(error));
+            uvhttp_response_send(response);
+            return 0;
+        }
+
         uvhttp_response_set_status(response, 200);
         uvhttp_response_set_header(response, "Content-Type", "application/json");
-        uvhttp_response_set_body(response, response_body, strlen(response_body));
+        uvhttp_response_set_body(response, json_string, strlen(json_string));
         uvhttp_response_send(response);
-        
+        free(json_string);
+
         return 0;
     }
     
     // 返回当前配置信息
-    char config_json[1024];
-    snprintf(config_json, sizeof(config_json),
-        "{"
-        "\"max_connections\":%d,"
-        "\"max_requests_per_connection\":%d,"
-        "\"max_body_size\":%zu,"
-        "\"max_header_size\":%zu,"
-        "\"read_buffer_size\":%d,"
-        "\"backlog\":%d,"
-        "\"enable_compression\":%d,"
-        "\"enable_tls\":%d,"
-        "\"current_active_connections\":%zu,"
-        "\"total_requests_handled\":%d"
-        "}",
-        config->max_connections,
-        config->max_requests_per_connection,
-        config->max_body_size,
-        config->max_header_size,
-        config->read_buffer_size,
-        config->backlog,
-        config->enable_compression,
-        config->enable_tls,
-        g_server ? g_server->active_connections : 0,
-        g_request_count
-    );
     
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_body(response, config_json, strlen(config_json));
-    uvhttp_response_send(response);
+        // 使用 cJSON 创建 JSON 响应
     
-    return 0;
+        cJSON* json_obj = cJSON_CreateObject();
+    
+        if (!json_obj) {
+    
+            uvhttp_response_set_status(response, 500);
+    
+            uvhttp_response_set_header(response, "Content-Type", "application/json");
+    
+            const char* error = "{\"error\":\"Failed to create JSON\"}";
+    
+            uvhttp_response_set_body(response, error, strlen(error));
+    
+            uvhttp_response_send(response);
+    
+            return 0;
+    
+        }
+    
+    
+    
+        cJSON_AddNumberToObject(json_obj, "max_connections", config->max_connections);
+    
+        cJSON_AddNumberToObject(json_obj, "max_requests_per_connection", config->max_requests_per_connection);
+    
+        cJSON_AddNumberToObject(json_obj, "max_body_size", config->max_body_size);
+    
+        cJSON_AddNumberToObject(json_obj, "max_header_size", config->max_header_size);
+    
+        cJSON_AddNumberToObject(json_obj, "read_buffer_size", config->read_buffer_size);
+    
+        cJSON_AddNumberToObject(json_obj, "backlog", config->backlog);
+    
+        cJSON_AddNumberToObject(json_obj, "enable_compression", config->enable_compression);
+    
+        cJSON_AddNumberToObject(json_obj, "enable_tls", config->enable_tls);
+    
+        cJSON_AddNumberToObject(json_obj, "current_active_connections", g_server ? g_server->active_connections : 0);
+    
+        cJSON_AddNumberToObject(json_obj, "total_requests_handled", g_request_count);
+    
+    
+    
+        char* json_string = cJSON_PrintUnformatted(json_obj);
+    
+        cJSON_Delete(json_obj);
+    
+    
+    
+        if (!json_string) {
+    
+            uvhttp_response_set_status(response, 500);
+    
+            uvhttp_response_set_header(response, "Content-Type", "application/json");
+    
+            const char* error = "{\"error\":\"Failed to generate JSON\"}";
+    
+            uvhttp_response_set_body(response, error, strlen(error));
+    
+            uvhttp_response_send(response);
+    
+            return 0;
+    
+        }
+    
+    
+    
+        uvhttp_response_set_status(response, 200);
+    
+        uvhttp_response_set_header(response, "Content-Type", "application/json");
+    
+        uvhttp_response_set_body(response, json_string, strlen(json_string));
+    
+        uvhttp_response_send(response);
+    
+        free(json_string);
+    
+    
+    
+        return 0;
 }
 
 // 配置变化监控回调

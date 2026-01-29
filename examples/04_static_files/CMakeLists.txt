@@ -2,6 +2,7 @@
 
 # 从父 CMakeLists.txt 获取 UVHTTP 库路径
 set(UVHTTP_LIB ${CMAKE_BINARY_DIR}/dist/lib/libuvhttp.a)
+set(CJSON_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson/libcjson.a)
 
 # 静态文件服务器
 add_executable(static_file_server static_file_server.c)
@@ -17,7 +18,7 @@ add_dependencies(simple_static_test uvhttp)
 
 # 高级静态文件服务器
 add_executable(advanced_static_server advanced_static_server.c)
-target_link_libraries(advanced_static_server PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
+target_link_libraries(advanced_static_server PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp ${CJSON_LIB} pthread m dl)
 target_include_directories(advanced_static_server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src)
 add_dependencies(advanced_static_server uvhttp)
 

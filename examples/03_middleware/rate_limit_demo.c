@@ -1,14 +1,15 @@
 /*
  * UVHTTP 限流中间件示例
- * 
+ *
  * 演示如何由应用层实现限流功能
- * 
+ *
  * 注意：此示例使用全局变量以简化代码。
  * 在生产环境中，建议使用 libuv 数据指针模式或依赖注入来管理应用状态。
  */
 
 #include "uvhttp.h"
 #include "uvhttp_middleware.h"
+#include "../../deps/cjson/cJSON.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -73,24 +74,51 @@ static int rate_limiter_try_consume(rate_limiter_t* limiter) {
 /* 限流中间件 */
 static int rate_limit_middleware(uvhttp_request_t* req, uvhttp_response_t* resp, uvhttp_middleware_context_t* ctx) {
     (void)ctx;
-    
+
     if (!g_rate_limiter) {
         return UVHTTP_MIDDLEWARE_CONTINUE;
     }
-    
+
     /* 检查限流 */
     if (!rate_limiter_try_consume(g_rate_limiter)) {
-        const char* error = "{\"error\":\"请求过于频繁\",\"message\":\"请稍后再试\"}";
-        
+        // 使用 cJSON 创建 JSON 错误响应
+        cJSON* error_obj = cJSON_CreateObject();
+        if (!error_obj) {
+            uvhttp_response_set_status(resp, 429);
+            uvhttp_response_set_header(resp, "Content-Type", "application/json; charset=utf-8");
+            uvhttp_response_set_header(resp, "Retry-After", "1");
+            const char* error = "{\"error\":\"请求过于频繁\"}";
+            uvhttp_response_set_body(resp, error, strlen(error));
+            uvhttp_response_send(resp);
+            return UVHTTP_MIDDLEWARE_STOP;
+        }
+
+        cJSON_AddStringToObject(error_obj, "error", "请求过于频繁");
+        cJSON_AddStringToObject(error_obj, "message", "请稍后再试");
+
+        char* error_string = cJSON_PrintUnformatted(error_obj);
+        cJSON_Delete(error_obj);
+
+        if (!error_string) {
+            uvhttp_response_set_status(resp, 429);
+            uvhttp_response_set_header(resp, "Content-Type", "application/json; charset=utf-8");
+            uvhttp_response_set_header(resp, "Retry-After", "1");
+            const char* error = "{\"error\":\"请求过于频繁\"}";
+            uvhttp_response_set_body(resp, error, strlen(error));
+            uvhttp_response_send(resp);
+            return UVHTTP_MIDDLEWARE_STOP;
+        }
+
         uvhttp_response_set_status(resp, 429);
         uvhttp_response_set_header(resp, "Content-Type", "application/json; charset=utf-8");
         uvhttp_response_set_header(resp, "Retry-After", "1");
-        uvhttp_response_set_body(resp, error, strlen(error));
-        
+        uvhttp_response_set_body(resp, error_string, strlen(error_string));
+
         uvhttp_response_send(resp);
+        free(error_string);
         return UVHTTP_MIDDLEWARE_STOP;
     }
-    
+
     return UVHTTP_MIDDLEWARE_CONTINUE;
 }
 
