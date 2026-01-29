@@ -2,23 +2,37 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-1.4.0-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.2.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
+![Tests](https://img.shields.io/badge/tests-280%20passing-brightgreen.svg)
 
 **专注 HTTP/1.1 和 WebSocket 的高性能服务器库**
 
-专注核心 • 高性能 • 编译配置 • 生产就绪
+专注核心 • 高性能 • 可配置 • 生产就绪
 
 </div>
 
 ## ✨ 特性
 
-- ⚡ **高性能**: 基于 libuv 事件驱动架构，集成 xxHash 极快哈希算法
+- ⚡ **高性能**: 基于 libuv 事件驱动架构，集成 xxHash 极快哈希算法，峰值吞吐量达 23,226 RPS
 - 🔒 **安全**: 缓冲区溢出保护、输入验证、TLS 1.3 支持
 - 🛡️ **生产就绪**: 零编译警告、完整错误处理、性能监控
 - 🔧 **易于使用**: 简洁的 API、丰富的示例、完善的文档
 - 🔄 **连接管理**: 连接池、超时检测、心跳检测、广播功能
+- ⚙️ **可配置**: 36 个编译时配置选项，支持不同场景优化
+- 💾 **智能缓存**: LRU 缓存 + 缓存预热，零拷贝大文件传输
+
+## 📊 性能指标
+
+- **峰值吞吐量**: 23,226 RPS（低并发场景）
+- **静态文件**: 12,510 RPS（中等并发）
+- **API 路由**: 13,950 RPS
+- **平均延迟**: 2.92ms - 43.59ms
+- **错误率**: < 0.1%
+- **内存优化**: 使用 mimalloc 分配器，内存占用减少 88%
+
+详细的性能基准测试请查看 [性能测试报告](docs/dev/PERFORMANCE_BENCHMARK.md)
 
 ## 🚀 快速开始
 
@@ -29,6 +43,23 @@ mkdir build && cd build
 cmake ..
 make
 ```
+
+### 自定义配置
+
+UVHTTP 支持通过 CMake 自定义配置，例如：
+
+```bash
+# 高并发场景：增加最大连接数和 headers 容量
+cmake -DUVHTTP_MAX_CONNECTIONS_MAX=10000 -DUVHTTP_INLINE_HEADERS_CAPACITY=64 ..
+
+# 大文件传输：增加 body 大小限制
+cmake -DUVHTTP_MAX_BODY_SIZE=10485760 ..
+
+# 内存受限场景：减少缓冲区大小
+cmake -DUVHTTP_INITIAL_BUFFER_SIZE=4096 -DUVHTTP_READ_BUFFER_SIZE=8192 ..
+```
+
+详细的配置说明请查看 [CMake 配置指南](docs/guide/CMAKE_CONFIGURATION.md)
 
 ### 运行示例
 
@@ -43,6 +74,7 @@ make
 详细文档请查看 [docs/](docs/) 目录：
 
 ### 核心文档
+- [CMake 配置指南](docs/guide/CMAKE_CONFIGURATION.md) - 编译时配置选项详解
 - [API 参考](docs/API_REFERENCE.md) - 完整的 API 文档
 - [架构设计](docs/ARCHITECTURE.md) - 系统架构说明
 - [开发者指南](docs/DEVELOPER_GUIDE.md) - 开发指南
@@ -72,6 +104,22 @@ make
 ```bash
 cd build
 ctest
+```
+
+### 测试覆盖
+- **单元测试**: 34 个测试
+- **响应测试**: 34 个测试
+- **请求测试**: 59 个测试
+- **哈希测试**: 65 个测试
+- **验证测试**: 53 个测试
+- **TLS 测试**: 33 个测试
+- **集成测试**: 2 个测试
+- **总计**: 280 个测试全部通过
+
+### 代码覆盖率
+运行详细覆盖率测试：
+```bash
+./run_tests.sh --detailed
 ```
 
 ## 📄 许可证
