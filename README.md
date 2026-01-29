@@ -42,15 +42,29 @@ make
 
 详细文档请查看 [docs/](docs/) 目录：
 
+### 核心文档
 - [API 参考](docs/API_REFERENCE.md) - 完整的 API 文档
 - [架构设计](docs/ARCHITECTURE.md) - 系统架构说明
 - [开发者指南](docs/DEVELOPER_GUIDE.md) - 开发指南
-- [编码规范](docs/CODING_STYLE.md) - 代码风格规范
-- [依赖说明](docs/DEPENDENCIES.md) - 第三方依赖
-- [变更日志](docs/CHANGELOG.md) - 版本变更历史
+- [教程](docs/guide/TUTORIAL.md) - 从基础到高级的渐进式教程
+
+### 功能指南
+- [WebSocket 指南](docs/guide/websocket.md) - WebSocket 使用指南
+- [静态文件服务](docs/guide/STATIC_FILE_SERVER.md) - 静态文件服务指南
+- [限流 API](docs/guide/RATE_LIMIT_API.md) - 限流功能 API
+- [统一响应处理](docs/guide/UNIFIED_RESPONSE_GUIDE.md) - 响应处理最佳实践
+- [libuv 数据指针](docs/guide/LIBUV_DATA_POINTER.md) - 避免全局变量的最佳实践
+
+### 示例程序
+- [示例程序总览](examples/README.md) - 所有示例程序的完整列表和说明
+- [基础示例](examples/01_basics/) - Hello World 和快速入门
+- [路由示例](examples/02_routing/) - URL 路由和 HTTP 方法处理
+- [中间件示例](examples/03_middleware/) - 中间件系统使用
+- [静态文件示例](examples/04_static_files/) - 静态文件服务
+- [WebSocket 示例](examples/05_websocket/) - 实时通信
+- [高级示例](examples/06_advanced/) - 高级功能和最佳实践
 
 ### 项目网站
-
 完整的项目文档和示例请访问：https://adam-ikari.github.io/uvhttp/
 
 ## 🧪 测试
