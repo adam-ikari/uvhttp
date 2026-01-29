@@ -91,9 +91,18 @@ extern "C" {
 /* ========== 缓冲区和大小限制默认值 ========== */
 
 /**
- * 读取缓冲区大小（字节）
+ * 读取缓冲区大小（字节）- 性能优化
+ *
+ * 配置建议：
+ * - 小文件为主：16KB（默认）
+ * - 大文件为主：32KB
+ * - 超大文件：64KB
+ *
+ * 优化说明：增大缓冲区可以减少系统调用次数，提升性能
  */
-#define UVHTTP_DEFAULT_READ_BUFFER_SIZE 8192
+#ifndef UVHTTP_DEFAULT_READ_BUFFER_SIZE
+#    define UVHTTP_DEFAULT_READ_BUFFER_SIZE 16384 /* 16KB - 优化：从 8KB 增加到 16KB */
+#endif
 
 /**
  * 请求体最大大小（字节）
@@ -120,15 +129,17 @@ extern "C" {
 #define UVHTTP_DEFAULT_MAX_FILE_SIZE (10 * 1024 * 1024) /* 10MB */
 
 /**
- * 异步文件 I/O 缓冲区大小（字节）
+ * 异步文件 I/O 缓冲区大小（字节）- 性能优化
  *
  * 配置建议：
- * - 小文件为主：32KB
- * - 大文件为主：64KB（默认）
- * - 超大文件：128KB
+ * - 小文件为主：64KB
+ * - 大文件为主：128KB（默认）
+ * - 超大文件：256KB
+ *
+ * 优化说明：增大缓冲区可以减少 I/O 操作次数，提升大文件传输性能
  */
 #ifndef UVHTTP_ASYNC_FILE_BUFFER_SIZE
-#    define UVHTTP_ASYNC_FILE_BUFFER_SIZE 65536 /* 64KB */
+#    define UVHTTP_ASYNC_FILE_BUFFER_SIZE 131072 /* 128KB - 优化：从 64KB 增加到 128KB */
 #endif
 
 /* ========== 安全配置默认值 ========== */

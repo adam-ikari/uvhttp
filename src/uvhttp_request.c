@@ -512,6 +512,8 @@ const char* uvhttp_request_get_method(uvhttp_request_t* request) {
     case UVHTTP_PATCH:
         method = HTTP_PATCH;
         break;
+    case UVHTTP_ANY:
+        return "ANY";
     default:
         return "UNKNOWN";
     }
