@@ -14,7 +14,14 @@
 #include <string.h>
 #include <strings.h>
 
+/* HTTP 响应头字符串常量 */
+#define HTTP_HEADER_CONNECTION_KEEPALIVE "Connection: keep-alive\r\n"
+#define HTTP_HEADER_CONNECTION_CLOSE "Connection: close\r\n"
 // 函数声明
+static void uvhttp_free_write_data(uv_write_t* req, int status);
+
+// 函数声明
+static void uvhttp_free_write_data(uv_write_t* req, int status);
 static void uvhttp_free_write_data(uv_write_t* req, int status);
 
 static const char* get_status_text(int status_code) {
@@ -138,14 +145,14 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer,
     if (!has_connection) {
         if (response->keepalive) {
             pos += snprintf(buffer + pos, *length - pos,
-                            "Connection: keep-alive\r\n");
+                            HTTP_HEADER_CONNECTION_KEEPALIVE);
             pos += snprintf(buffer + pos, *length - pos,
                             "Keep-Alive: timeout=%d, max=%d\r\n",
                             UVHTTP_DEFAULT_KEEP_ALIVE_TIMEOUT,
                             UVHTTP_DEFAULT_KEEP_ALIVE_MAX);
         } else {
             pos +=
-                snprintf(buffer + pos, *length - pos, "Connection: close\r\n");
+                snprintf(buffer + pos, *length - pos, HTTP_HEADER_CONNECTION_CLOSE);
         }
     }
 
