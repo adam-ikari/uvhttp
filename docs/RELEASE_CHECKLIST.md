@@ -34,9 +34,8 @@
 - [ ] 更新文档站点
 
 ## 发布流程
-1. develop → release (合并)
-2. release → pre-release (PR，运行完整 CI/CD)
-3. pre-release → main (PR，合并到主线)
-4. main → 创建 v2.0.0 标签
-5. main → develop (合并回开发分支)
-6. release → develop (同步回开发分支)
+1. develop → main (PR，运行完整 CI/CD)
+2. main → pre-release (合并)
+3. pre-release → release (合并)
+4. release → 创建 v2.0.0 标签
+5. release → develop (合并回开发分支)
