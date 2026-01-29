@@ -21,7 +21,7 @@ runs:
       if: inputs.os == 'macos-latest'
       shell: bash
       run: |
-        brew install cmake valgrind wrk lcov python3
+        brew install cmake wrk lcov python3
         pip3 install matplotlib numpy
 
     - name: Install dependencies (Windows)
