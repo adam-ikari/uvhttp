@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <uvhttp_websocket_native.h>
+#include <uvhttp_websocket.h>
 #include <uvhttp_allocator.h>
 #include <string.h>
 

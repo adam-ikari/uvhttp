@@ -10,6 +10,7 @@
 #include "../include/uvhttp_config.h"
 #include "../include/uvhttp_context.h"
 #include "../include/uvhttp_allocator.h"
+#include <cJSON.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,26 +18,34 @@
 #include <unistd.h>
 #include <time.h>
 
-// 全局变量
-static uvhttp_server_t* g_server = NULL;
-static uvhttp_router_t* g_router = NULL;
-static uv_loop_t* g_loop = NULL;
-static uv_timer_t* g_config_timer = NULL;
-static int g_request_count = 0;
-static uvhttp_context_t* g_context = NULL;
+// 应用上下文
+typedef struct {
+    uvhttp_server_t* server;
+    uvhttp_router_t* router;
+    uv_loop_t* loop;
+    uv_timer_t* config_timer;
+    int request_count;
+    uvhttp_context_t* context;
+} app_context_t;
 
 // 信号处理器
 void signal_handler(int sig) {
     printf("\n收到信号 %d，正在优雅关闭服务器...\n", sig);
     
-if (g_config_timer) {
-        uvhttp_free(g_config_timer);
-        g_config_timer = NULL;
-    }
-    
-    if (g_server) {
-        uvhttp_server_free(g_server);
-        g_server = NULL;
+    uv_loop_t* loop = uv_default_loop();
+    if (loop && loop->data) {
+        app_context_t* ctx = (app_context_t*)loop->data;
+        if (ctx) {
+            if (ctx->config_timer) {
+                uvhttp_free(ctx->config_timer);
+                ctx->config_timer = NULL;
+            }
+            
+            if (ctx->server) {
+                uvhttp_server_free(ctx->server);
+                ctx->server = NULL;
+            }
+        }
     }
     
     printf("清理完成，退出。\n");
@@ -49,10 +58,20 @@ int demo_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         return -1;
     }
     
-    g_request_count++;
+    uv_loop_t* loop = uvhttp_request_get_loop(request);
+    app_context_t* ctx = loop ? (app_context_t*)loop->data : NULL;
+    
+    if (!ctx) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_body(response, "Internal error", 14);
+        uvhttp_response_send(response);
+        return -1;
+    }
+    
+    ctx->request_count++;
 
     // 获取当前配置
-    const uvhttp_config_t* config = uvhttp_config_get_current(g_context);
+    const uvhttp_config_t* config = uvhttp_config_get_current(ctx->context);
     
     // 创建响应内容
     char response_body[1024];
@@ -72,8 +91,8 @@ int demo_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         "</body></html>",
         config->max_connections,
         config->max_requests_per_connection,
-        g_server ? g_server->active_connections : 0,
-        g_request_count,
+        ctx->server ? ctx->server->active_connections : 0,
+        ctx->request_count,
         config->max_body_size / (1024 * 1024),
         config->read_buffer_size / 1024,
         ctime(&(time_t){time(NULL)})
@@ -107,59 +126,136 @@ int config_api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         int new_max_conn = atoi(max_conn_str);
 
         int result = uvhttp_config_update_max_connections(g_context, new_max_conn);
-        
-        char response_body[512];
-        if (result == UVHTTP_OK) {
-            snprintf(response_body, sizeof(response_body),
-                "{\"status\":\"success\",\"message\":\"最大连接数已更新为 %d\",\"new_value\":%d}",
-                new_max_conn, new_max_conn);
-        } else {
-            snprintf(response_body, sizeof(response_body),
-                "{\"status\":\"error\",\"message\":\"更新失败，错误码: %d\",\"error_code\":%d}",
-                result, result);
+
+        // 使用 cJSON 创建 JSON 响应
+        cJSON* json_obj = cJSON_CreateObject();
+        if (!json_obj) {
+            uvhttp_response_set_status(response, 500);
+            uvhttp_response_set_header(response, "Content-Type", "application/json");
+            const char* error = "{\"error\":\"Failed to create JSON\"}";
+            uvhttp_response_set_body(response, error, strlen(error));
+            uvhttp_response_send(response);
+            return 0;
         }
-        
+
+        if (result == UVHTTP_OK) {
+            cJSON_AddStringToObject(json_obj, "status", "success");
+            char message[256];
+            snprintf(message, sizeof(message), "最大连接数已更新为 %d", new_max_conn);
+            cJSON_AddStringToObject(json_obj, "message", message);
+            cJSON_AddNumberToObject(json_obj, "new_value", new_max_conn);
+        } else {
+            cJSON_AddStringToObject(json_obj, "status", "error");
+            char message[256];
+            snprintf(message, sizeof(message), "更新失败，错误码: %d", result);
+            cJSON_AddStringToObject(json_obj, "message", message);
+            cJSON_AddNumberToObject(json_obj, "error_code", result);
+        }
+
+        char* json_string = cJSON_PrintUnformatted(json_obj);
+        cJSON_Delete(json_obj);
+
+        if (!json_string) {
+            uvhttp_response_set_status(response, 500);
+            uvhttp_response_set_header(response, "Content-Type", "application/json");
+            const char* error = "{\"error\":\"Failed to generate JSON\"}";
+            uvhttp_response_set_body(response, error, strlen(error));
+            uvhttp_response_send(response);
+            return 0;
+        }
+
         uvhttp_response_set_status(response, 200);
         uvhttp_response_set_header(response, "Content-Type", "application/json");
-        uvhttp_response_set_body(response, response_body, strlen(response_body));
+        uvhttp_response_set_body(response, json_string, strlen(json_string));
         uvhttp_response_send(response);
-        
+        free(json_string);
+
         return 0;
     }
     
     // 返回当前配置信息
-    char config_json[1024];
-    snprintf(config_json, sizeof(config_json),
-        "{"
-        "\"max_connections\":%d,"
-        "\"max_requests_per_connection\":%d,"
-        "\"max_body_size\":%zu,"
-        "\"max_header_size\":%zu,"
-        "\"read_buffer_size\":%d,"
-        "\"backlog\":%d,"
-        "\"enable_compression\":%d,"
-        "\"enable_tls\":%d,"
-        "\"current_active_connections\":%zu,"
-        "\"total_requests_handled\":%d"
-        "}",
-        config->max_connections,
-        config->max_requests_per_connection,
-        config->max_body_size,
-        config->max_header_size,
-        config->read_buffer_size,
-        config->backlog,
-        config->enable_compression,
-        config->enable_tls,
-        g_server ? g_server->active_connections : 0,
-        g_request_count
-    );
     
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_body(response, config_json, strlen(config_json));
-    uvhttp_response_send(response);
+        // 使用 cJSON 创建 JSON 响应
     
-    return 0;
+        cJSON* json_obj = cJSON_CreateObject();
+    
+        if (!json_obj) {
+    
+            uvhttp_response_set_status(response, 500);
+    
+            uvhttp_response_set_header(response, "Content-Type", "application/json");
+    
+            const char* error = "{\"error\":\"Failed to create JSON\"}";
+    
+            uvhttp_response_set_body(response, error, strlen(error));
+    
+            uvhttp_response_send(response);
+    
+            return 0;
+    
+        }
+    
+    
+    
+        cJSON_AddNumberToObject(json_obj, "max_connections", config->max_connections);
+    
+        cJSON_AddNumberToObject(json_obj, "max_requests_per_connection", config->max_requests_per_connection);
+    
+        cJSON_AddNumberToObject(json_obj, "max_body_size", config->max_body_size);
+    
+        cJSON_AddNumberToObject(json_obj, "max_header_size", config->max_header_size);
+    
+        cJSON_AddNumberToObject(json_obj, "read_buffer_size", config->read_buffer_size);
+    
+        cJSON_AddNumberToObject(json_obj, "backlog", config->backlog);
+    
+        cJSON_AddNumberToObject(json_obj, "enable_compression", config->enable_compression);
+    
+        cJSON_AddNumberToObject(json_obj, "enable_tls", config->enable_tls);
+    
+        cJSON_AddNumberToObject(json_obj, "current_active_connections", g_server ? g_server->active_connections : 0);
+    
+        cJSON_AddNumberToObject(json_obj, "total_requests_handled", g_request_count);
+    
+    
+    
+        char* json_string = cJSON_PrintUnformatted(json_obj);
+    
+        cJSON_Delete(json_obj);
+    
+    
+    
+        if (!json_string) {
+    
+            uvhttp_response_set_status(response, 500);
+    
+            uvhttp_response_set_header(response, "Content-Type", "application/json");
+    
+            const char* error = "{\"error\":\"Failed to generate JSON\"}";
+    
+            uvhttp_response_set_body(response, error, strlen(error));
+    
+            uvhttp_response_send(response);
+    
+            return 0;
+    
+        }
+    
+    
+    
+        uvhttp_response_set_status(response, 200);
+    
+        uvhttp_response_set_header(response, "Content-Type", "application/json");
+    
+        uvhttp_response_set_body(response, json_string, strlen(json_string));
+    
+        uvhttp_response_send(response);
+    
+        free(json_string);
+    
+    
+    
+        return 0;
 }
 
 // 配置变化监控回调
@@ -229,9 +325,10 @@ void print_config_info(const uvhttp_config_t* config) {
 uvhttp_config_t* load_config_demo() {
     printf("🔧 配置加载演示\n");
     
-    uvhttp_config_t* config = uvhttp_config_new();
-    if (!config) {
-        fprintf(stderr, "❌ 创建配置对象失败\n");
+    uvhttp_config_t* config = NULL;
+    uvhttp_error_t result = uvhttp_config_new(&config);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create configuration: %s\n", uvhttp_error_string(result));
         return NULL;
     }
     
@@ -303,21 +400,34 @@ uvhttp_config_t* load_config_demo() {
 int main(int argc, char* argv[]) {
     printf("🚀 UVHTTP 配置管理演示服务器启动中...\n\n");
     
-    // 注册信号处理器
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
-    
     // 获取事件循环
-    g_loop = uv_default_loop();
-    if (!g_loop) {
+    uv_loop_t* loop = uv_default_loop();
+    if (!loop) {
         fprintf(stderr, "❌ 获取事件循环失败\n");
         return 1;
     }
+    
+    // 创建应用上下文
+    app_context_t* ctx = (app_context_t*)malloc(sizeof(app_context_t));
+    if (!ctx) {
+        fprintf(stderr, "❌ 无法分配应用上下文\n");
+        return 1;
+    }
+    memset(ctx, 0, sizeof(app_context_t));
+    ctx->loop = loop;
+    
+    // 设置循环数据指针
+    loop->data = ctx;
+    
+    // 注册信号处理器
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
     
     // 演示配置加载
     uvhttp_config_t* config = load_config_demo();
     if (!config) {
         fprintf(stderr, "❌ 配置加载失败\n");
+        free(ctx);
         return 1;
     }
     
@@ -327,54 +437,66 @@ int main(int argc, char* argv[]) {
     
     // 创建服务器
     printf("\n🌐 创建HTTP服务器...\n");
-    g_server = uvhttp_server_new(g_loop);
-    if (!g_server) {
+    uvhttp_error_t server_result = uvhttp_server_new(loop, &ctx->server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        uvhttp_config_free(config);
+        free(ctx);
+        return 1;
+    }
+    if (!ctx->server) {
         fprintf(stderr, "❌ 服务器创建失败\n");
         uvhttp_config_free(config);
+        free(ctx);
         return 1;
     }
     
     // 应用配置
-    g_server->config = config;
+    ctx->server->config = config;
 
     // 创建上下文
-    g_context = uvhttp_context_create(g_loop);
-    if (!g_context) {
+    uvhttp_error_t result_context = uvhttp_context_create(loop, &ctx->context);
+    if (result_context != UVHTTP_OK) {
         fprintf(stderr, "❌ 上下文创建失败\n");
-        uvhttp_server_free(g_server);
+        uvhttp_server_free(ctx->server);
+        uvhttp_config_free(config);
+        free(ctx);
         return 1;
     }
 
     // 设置全局配置（重要：这会消除"Global configuration not initialized"警告）
-    uvhttp_config_set_current(g_context, config);
+    uvhttp_config_set_current(ctx->context, config);
 
     printf("✅ 服务器创建成功\n");
     
     // 创建路由器
     printf("\n🛣️  设置路由...\n");
-    g_router = uvhttp_router_new();
-    if (!g_router) {
-        fprintf(stderr, "❌ 路由器创建失败\n");
-        uvhttp_server_free(g_server);
+    uvhttp_error_t router_result = uvhttp_router_new(&ctx->router);
+    if (router_result != UVHTTP_OK) {
+        fprintf(stderr, "❌ 路由器创建失败: %s\n", uvhttp_error_string(router_result));
+        uvhttp_server_free(ctx->server);
+        uvhttp_context_destroy(ctx->context);
+        uvhttp_config_free(config);
+        free(ctx);
         return 1;
     }
     
     // 添加路由
-    uvhttp_router_add_route(g_router, "/", demo_handler);
-    uvhttp_router_add_route(g_router, "/config", config_api_handler);
-    g_server->router = g_router;
+    uvhttp_router_add_route(ctx->router, "/", demo_handler);
+    uvhttp_router_add_route(ctx->router, "/config", config_api_handler);
+    ctx->server->router = ctx->router;
     printf("✅ 路由设置完成\n");
     
     // 启用配置变化监控
     printf("\n👂 启用配置变化监控...\n");
-    uvhttp_config_monitor_changes(g_context, on_config_change);
+    uvhttp_config_monitor_changes(ctx->context, on_config_change);
     printf("✅ 配置监控已启用\n");
     
     // 启动配置动态调整定时器
     printf("\n⏰ 启动动态配置调整定时器...\n");
-    g_config_timer = (uv_timer_t*)uvhttp_alloc(sizeof(uv_timer_t));
-    uv_timer_init(g_loop, g_config_timer);
-    uv_timer_start(g_config_timer, config_adjustment_timer, 10000, 10000); // 10秒后开始，每10秒执行一次
+    ctx->config_timer = (uv_timer_t*)uvhttp_alloc(sizeof(uv_timer_t));
+    uv_timer_init(loop, ctx->config_timer);
+    uv_timer_start(ctx->config_timer, config_adjustment_timer, 10000, 10000); // 10秒后开始，每10秒执行一次
     printf("✅ 定时器已启动（每10秒检查一次）\n");
     
     // 启动服务器监听
@@ -387,10 +509,13 @@ int main(int argc, char* argv[]) {
         }
     }
     
-    uvhttp_error_t result = uvhttp_server_listen(g_server, "0.0.0.0", port);
+    uvhttp_error_t result = uvhttp_server_listen(ctx->server, "0.0.0.0", port);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "❌ 服务器启动失败，错误码: %d\n", result);
-        uvhttp_server_free(g_server);
+        uvhttp_server_free(ctx->server);
+        uvhttp_context_destroy(ctx->context);
+        uvhttp_config_free(config);
+        free(ctx);
         return 1;
     }
     
@@ -401,17 +526,20 @@ int main(int argc, char* argv[]) {
     printf("\n按 Ctrl+C 停止服务器\n\n");
     
     // 启动事件循环
-    uv_run(g_loop, UV_RUN_DEFAULT);
+    uv_run(loop, UV_RUN_DEFAULT);
     
     // 清理资源（正常退出时）
-    if (g_config_timer) {
-        uv_timer_stop(g_config_timer);
-        uvhttp_free(g_config_timer);
+    if (ctx->config_timer) {
+        uv_timer_stop(ctx->config_timer);
+        uvhttp_free(ctx->config_timer);
     }
 
-    if (g_context) {
-        uvhttp_context_destroy(g_context);
+    if (ctx->context) {
+        uvhttp_context_destroy(ctx->context);
     }
+    
+    free(ctx);
+    loop->data = NULL;
 
     printf("👋 服务器已停止\n");
     return 0;

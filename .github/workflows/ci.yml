@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
 
@@ -50,7 +50,7 @@ jobs:
           fi
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: build-ubuntu-latest-Release
           path: build-release/dist/
@@ -62,12 +62,12 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.2
         with:
           name: build-ubuntu-latest-Release
           path: build-release
@@ -79,7 +79,7 @@ jobs:
 
       - name: Upload test logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: test-logs-ubuntu-fast
           path: |
@@ -92,7 +92,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
 
@@ -104,7 +104,9 @@ jobs:
       - name: Run cppcheck
         run: |
           cppcheck --enable=warning,performance,portability \
-            --error-exitcode=0 \
+            --error-exitcode=1 \
+            --max-configs=1 \
+            --inconclusive \
             --suppress=missingIncludeSystem \
             --suppress=unusedFunction \
             --suppress=constParameter \
@@ -118,99 +120,27 @@ jobs:
             -DUVHTTP_FEATURE_LOGGING=1 \
             -DUVHTTP_FEATURE_LRU_CACHE=1 \
             -DUVHTTP_FEATURE_ROUTER_CACHE=1 \
-            src/ 2> cppcheck.xml || true
+            src/ 2> cppcheck.xml || {
+              # 检查错误数量
+              ERROR_COUNT=$(grep -c '<error' cppcheck.xml 2>/dev/null || echo "0")
+              echo "Found $ERROR_COUNT cppcheck errors"
+              
+              # 设置阈值：任何错误都失败
+              if [ "$ERROR_COUNT" -gt 0 ]; then
+                echo "Found $ERROR_COUNT cppcheck errors, failing build"
+                exit 1
+              else
+                echo "No cppcheck errors found"
+                exit 0
+              fi
+            }
 
       - name: Upload cppcheck results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.3.1
         with:
           name: cppcheck-results
           path: cppcheck.xml
           retention-days: 7
 
-  ubuntu-performance:
-    needs: ubuntu-build
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Setup CMake
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake build-essential
-
-      - name: Configure CMake with examples
-        run: |
-          cmake -B build-release -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
-
-      - name: Build with examples
-        run: |
-          cmake --build build-release --config Release -j$(nproc)
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-ubuntu-latest-Release-performance
-          path: build-release/dist/
-          retention-days: 7
-
-  ubuntu-performance-run:
-    needs: ubuntu-performance
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/feature/')
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-ubuntu-latest-Release-performance
-          path: build-release/dist
-
-      - name: Install wrk
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wrk
-
-      - name: Run performance test
-        run: |
-          mkdir -p build-release/public
-          echo "<html><body><h1>Performance Test</h1></body></html>" > build-release/public/index.html
-          cd build-release
-          if [ -f "./dist/bin/performance_static_server" ]; then
-            chmod +x ./dist/bin/performance_static_server
-            ./dist/bin/performance_static_server -d ./public -p 8080 > /tmp/server.log 2>&1 &
-            SERVER_PID=$!
-            sleep 3
-            # 检查服务器是否启动成功
-            if ! kill -0 $SERVER_PID 2>/dev/null; then
-              echo "Error: Server failed to start"
-              echo "Server log:"
-              cat /tmp/server.log
-              exit 1
-            fi
-            wrk -t4 -c100 -d10s --timeout 5s http://localhost:8080/
-            WRK_EXIT=$?
-            if [ $WRK_EXIT -ne 0 ]; then
-              echo "Performance test failed with exit code: $WRK_EXIT"
-              echo "Server log:"
-              cat /tmp/server.log
-            fi
-            kill $SERVER_PID 2>/dev/null || true
-            exit $WRK_EXIT
-          else
-            echo "Error: performance_static_server not found"
-            echo "Looking for file in:"
-            find . -name "performance_static_server" -type f 2>/dev/null || true
-            ls -la dist/bin/ 2>/dev/null || true
-            exit 1
-          fi
+  

@@ -9,6 +9,7 @@
 #include <stddef.h>
 #include <time.h>
 #include "uvhttp_constants.h"
+#include "uvhttp_error.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -70,10 +71,11 @@ typedef struct uvhttp_file_stream_context {
  * @param max_file_size 最大文件大小
  * @return 管理器指针，失败返回NULL
  */
-uvhttp_async_file_manager_t* uvhttp_async_file_manager_create(uv_loop_t* loop,
-                                                             int max_concurrent,
-                                                             size_t buffer_size,
-                                                             size_t max_file_size);
+uvhttp_error_t uvhttp_async_file_manager_create(uv_loop_t* loop,
+                                                   int max_concurrent,
+                                                   size_t buffer_size,
+                                                   size_t max_file_size,
+                                                   uvhttp_async_file_manager_t** manager);
 
 /**
  * 释放异步文件读取管理器
@@ -91,24 +93,24 @@ void uvhttp_async_file_manager_free(uvhttp_async_file_manager_t* manager);
  * @param response HTTP响应对象
  * @param static_context 静态文件上下文
  * @param completion_cb 完成回调
- * @return 0成功，-1失败
+ * @return UVHTTP_OK 成功，其他值表示错误
  */
-int uvhttp_async_file_read(uvhttp_async_file_manager_t* manager,
-                          const char* file_path,
-                          void* request,
-                          void* response,
-                          void* static_context,
-                          void (*completion_cb)(uvhttp_async_file_request_t* req, int status));
+uvhttp_error_t uvhttp_async_file_read(uvhttp_async_file_manager_t* manager,
+                                      const char* file_path,
+                                      void* request,
+                                      void* response,
+                                      void* static_context,
+                                      void (*completion_cb)(uvhttp_async_file_request_t* req, int status));
 
 /**
  * 取消异步文件读取
  * 
  * @param manager 管理器
  * @param req 读取请求
- * @return 0成功，-1失败
+ * @return UVHTTP_OK 成功，其他值表示错误
  */
-int uvhttp_async_file_cancel(uvhttp_async_file_manager_t* manager,
-                            uvhttp_async_file_request_t* req);
+uvhttp_error_t uvhttp_async_file_cancel(uvhttp_async_file_manager_t* manager,
+                                       uvhttp_async_file_request_t* req);
 
 /**
  * 流式传输文件（适用于大文件）
@@ -117,20 +119,20 @@ int uvhttp_async_file_cancel(uvhttp_async_file_manager_t* manager,
  * @param file_path 文件路径
  * @param response HTTP响应对象
  * @param chunk_size 分块大小
- * @return 0成功，-1失败
+ * @return UVHTTP_OK 成功，其他值表示错误
  */
-int uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager,
-                            const char* file_path,
-                            void* response,
-                            size_t chunk_size);
+uvhttp_error_t uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager,
+                                       const char* file_path,
+                                       void* response,
+                                       size_t chunk_size);
 
 /**
  * 停止文件流传输
  * 
  * @param stream_ctx 流传输上下文
- * @return 0成功，-1失败
+ * @return UVHTTP_OK 成功，其他值表示错误
  */
-int uvhttp_async_file_stream_stop(uvhttp_file_stream_context_t* stream_ctx);
+uvhttp_error_t uvhttp_async_file_stream_stop(uvhttp_file_stream_context_t* stream_ctx);
 
 /**
  * 获取管理器统计信息
@@ -138,11 +140,11 @@ int uvhttp_async_file_stream_stop(uvhttp_file_stream_context_t* stream_ctx);
  * @param manager 管理器
  * @param current_reads 输出当前读取数
  * @param max_concurrent 输出最大并发数
- * @return 0成功，-1失败
+ * @return UVHTTP_OK 成功，其他值表示错误
  */
-int uvhttp_async_file_get_stats(uvhttp_async_file_manager_t* manager,
-                               int* current_reads,
-                               int* max_concurrent);
+uvhttp_error_t uvhttp_async_file_get_stats(uvhttp_async_file_manager_t* manager,
+                                         int* current_reads,
+                                         int* max_concurrent);
 
 #ifdef __cplusplus
 }

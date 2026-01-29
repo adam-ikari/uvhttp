@@ -582,33 +582,43 @@ int uvhttp_static_check_conditional_request(void* request,
 /**
  * 创建静态文件服务上下文
  */
-uvhttp_static_context_t* uvhttp_static_create(const uvhttp_static_config_t* config) {
-    if (!config) return NULL;
-    
+uvhttp_error_t uvhttp_static_create(const uvhttp_static_config_t* config, uvhttp_static_context_t** context) {
+    if (!config || !context) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
     uvhttp_static_context_t* ctx = uvhttp_alloc(sizeof(uvhttp_static_context_t));
     if (!ctx) {
         uvhttp_handle_memory_failure("static_context", NULL, NULL);
-        return NULL;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
-    
+
     memset(ctx, 0, sizeof(uvhttp_static_context_t));
-    
+
     /* 复制配置 */
     memcpy(&ctx->config, config, sizeof(uvhttp_static_config_t));
-    
+
     /* 创建LRU缓存 */
-    ctx->cache = uvhttp_lru_cache_create(
+    uvhttp_error_t result = uvhttp_lru_cache_create(
         config->max_cache_size,    /* 最大内存使用量 */
         1000,                     /* 最大条目数 */
-        config->cache_ttl         /* 缓存TTL */
+        config->cache_ttl,        /* 缓存TTL */
+        &ctx->cache               /* 输出参数 */
     );
-    
+
+    if (result != UVHTTP_OK) {
+        UVHTTP_LOG_ERROR("Failed to create LRU cache: %s", uvhttp_error_string(result));
+        uvhttp_free(ctx);
+        return result;
+    }
+
     if (!ctx->cache) {
         uvhttp_free(ctx);
-        return NULL;
+        return UVHTTP_ERROR_IO_ERROR;
     }
-    
-    return ctx;
+
+    *context = ctx;
+    return UVHTTP_OK;
 }
 
 /**
@@ -969,204 +979,36 @@ int uvhttp_static_cleanup_expired_cache(uvhttp_static_context_t* ctx) {
 
 /* ========== 静态文件中间件实现 ========== */
 
-#if UVHTTP_FEATURE_MIDDLEWARE
-
-/* 静态文件中间件上下文 */
-typedef struct {
-    uvhttp_static_context_t* static_ctx;  /* 静态文件服务上下文 */
-    char* path_prefix;                    /* 路径前缀 */
-} static_middleware_context_t;
-/* 静态文件中间件清理函数 */
-static void static_middleware_cleanup(void* data) {
-    if (!data) {
-        return;
-    }
-
-    static_middleware_context_t* ctx = (static_middleware_context_t*)data;
-
-    /* 释放静态文件服务上下文 */
-    if (ctx->static_ctx) {
-        uvhttp_static_free(ctx->static_ctx);
-    }
-
-    /* 释放路径前缀 */
-    if (ctx->path_prefix) {
-        uvhttp_free(ctx->path_prefix);
-    }
-
-    /* 释放中间件上下文 */
-    uvhttp_free(ctx);
-}
-
-/* 静态文件中间件处理函数 */
-static int static_middleware_handler(
-    uvhttp_request_t* request,
-    uvhttp_response_t* response,
-    uvhttp_middleware_context_t* ctx
-) {
-    if (!request || !response || !ctx || !ctx->data) {
-        return UVHTTP_MIDDLEWARE_CONTINUE;
-    }
-
-    static_middleware_context_t* mw_ctx = (static_middleware_context_t*)ctx->data;
-
-    /* 获取请求路径 */
-    const char* request_path = uvhttp_request_get_path(request);
-    if (!request_path) {
-        return UVHTTP_MIDDLEWARE_CONTINUE;
-    }
-
-    /* 检查路径是否匹配 */
-    if (mw_ctx->path_prefix) {
-        size_t prefix_len = strlen(mw_ctx->path_prefix);
-        if (strncmp(request_path, mw_ctx->path_prefix, prefix_len) != 0) {
-            /* 路径不匹配，继续执行下一个中间件 */
-            return UVHTTP_MIDDLEWARE_CONTINUE;
-        }
-    }
-
-    /* 调用静态文件服务处理请求 */
-    uvhttp_result_t result = uvhttp_static_handle_request(
-        mw_ctx->static_ctx,
-        request,
-        response
-    );
-
-    if (result == UVHTTP_OK) {
-        /* 静态文件服务已处理请求，停止中间件链 */
-        return UVHTTP_MIDDLEWARE_STOP;
-    }
-
-    /* 静态文件服务未处理（如文件不存在），继续执行 */
-    return UVHTTP_MIDDLEWARE_CONTINUE;
-}
-
-#endif /* UVHTTP_FEATURE_MIDDLEWARE */
-
-#if UVHTTP_FEATURE_MIDDLEWARE
 /**
- * 创建静态文件中间件
- *
- * @param path 路径模式（如 "/static", "/assets"）
- * @param root_dir 根目录路径
- * @param priority 中间件优先级
- * @return 中间件对象，失败返回NULL
- */
-uvhttp_http_middleware_t* uvhttp_static_middleware_create(
-    const char* path,
-    const char* root_dir,
-    uvhttp_middleware_priority_t priority
-) {
-    /* 参数验证 */
-    if (!root_dir) {
-        return NULL;
-    }
 
-    /* 创建默认配置 */
-    uvhttp_static_config_t config;
-    memset(&config, 0, sizeof(config));
-    strncpy(config.root_directory, root_dir, sizeof(config.root_directory) - 1);
-    strncpy(config.index_file, "index.html", sizeof(config.index_file) - 1);
-    config.enable_directory_listing = 0;
-    config.enable_etag = 1;
-    config.enable_last_modified = 1;
-    config.max_cache_size = 10 * 1024 * 1024;  /* 10MB */
-    config.cache_ttl = 3600;  /* 1小时 */
-    config.max_cache_entries = 1000;
-
-    return uvhttp_static_middleware_create_with_config(path, &config, priority);
-}
-
-/**
- * 创建带配置的静态文件中间件
- *
- * @param path 路径模式
- * @param config 静态文件配置
- * @param priority 中间件优先级
- * @return 中间件对象，失败返回NULL
- */
-uvhttp_http_middleware_t* uvhttp_static_middleware_create_with_config(
-    const char* path,
-    const uvhttp_static_config_t* config,
-    uvhttp_middleware_priority_t priority
-) {
-    /* 参数验证 */
-    if (!config) {
-        return NULL;
-    }
-
-    /* 创建静态文件服务上下文 */
-    uvhttp_static_context_t* static_ctx = uvhttp_static_create(config);
-    if (!static_ctx) {
-        return NULL;
-    }
-
-    /* 创建中间件上下文 */
-    static_middleware_context_t* mw_ctx = (static_middleware_context_t*)uvhttp_alloc(sizeof(static_middleware_context_t));
-    if (!mw_ctx) {
-        uvhttp_static_free(static_ctx);
-        return NULL;
-    }
-
-    memset(mw_ctx, 0, sizeof(static_middleware_context_t));
-    mw_ctx->static_ctx = static_ctx;
-
-    /* 复制路径前缀 */
-    if (path) {
-        size_t path_len = strlen(path);
-        mw_ctx->path_prefix = (char*)uvhttp_alloc(path_len + 1);
-        if (!mw_ctx->path_prefix) {
-            uvhttp_free(mw_ctx);
-            uvhttp_static_free(static_ctx);
-            return NULL;
-        }
-        /* 使用安全的字符串复制函数 */
-        if (uvhttp_safe_strcpy(mw_ctx->path_prefix, path_len + 1, path) != 0) {
-            uvhttp_free(mw_ctx->path_prefix);
-            uvhttp_free(mw_ctx);
-            uvhttp_static_free(static_ctx);
-            return NULL;
-        }
-    }
-
-    /* 创建中间件 */
-    uvhttp_http_middleware_t* middleware = uvhttp_http_middleware_create(
-        path,
-        static_middleware_handler,
-        priority
-    );
-
-    if (!middleware) {
-        if (mw_ctx->path_prefix) {
-            uvhttp_free(mw_ctx->path_prefix);
-        }
-        uvhttp_free(mw_ctx);
-        uvhttp_static_free(static_ctx);
-        return NULL;
-    }
-
-    /* 设置中间件上下文 */
-    uvhttp_http_middleware_set_context(middleware, mw_ctx, static_middleware_cleanup);
-
-    return middleware;
-}
-#endif
-
-/**
  * 缓存预热：预加载指定的文件到缓存中
+
  */
+
 uvhttp_result_t uvhttp_static_prewarm_cache(uvhttp_static_context_t* ctx,
+
                                             const char* file_path) {
+
     if (!ctx || !file_path) {
+
         return UVHTTP_ERROR_INVALID_PARAM;
+
     }
+
     
+
     /* 构建完整文件路径 */
+
     char full_path[UVHTTP_MAX_FILE_PATH_SIZE];
+
     int result = snprintf(full_path, sizeof(full_path), "%s/%s", 
+
                          ctx->config.root_directory, file_path);
+
     if (result >= (int)sizeof(full_path)) {
+
         return UVHTTP_ERROR_INVALID_PARAM;
+
     }
     
     /* 检查文件是否存在 */
@@ -1495,7 +1337,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(const char* file_path,
     size_t file_size = (size_t)st.st_size;
     
     /* 策略选择 */
-    if (file_size < 4096) {
+    if (file_size < UVHTTP_STATIC_SMALL_FILE_THRESHOLD) {
         /* 小文件：使用优化的系统调用（open + read + close），避免 stdio 开销 */
         UVHTTP_LOG_DEBUG("Small file detected, using optimized I/O: %s (%zu bytes)", 
                         file_path, file_size);

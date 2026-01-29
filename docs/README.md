@@ -78,8 +78,6 @@ docs/
 ├── DEPENDENCIES.md           # 依赖说明
 ├── DEVELOPER_GUIDE.md        # 开发者指南
 ├── DEVELOPMENT_PLAN.md       # 开发计划
-├── ERROR_CODES.md            # 错误码参考
-├── MIDDLEWARE_SYSTEM.md      # 中间件系统
 ├── PERFORMANCE_BENCHMARK.md  # 性能基准
 ├── PERFORMANCE_TESTING_STANDARD.md # 性能测试标准
 ├── RATE_LIMIT_API.md         # 限流 API

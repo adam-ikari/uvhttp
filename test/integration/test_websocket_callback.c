@@ -93,9 +93,10 @@ int main(int argc, char** argv) {
     uv_loop_t* loop = uv_default_loop();
 
     /* 创建服务器 */
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    if (!server) {
-        fprintf(stderr, "无法创建服务器\n");
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "无法创建服务器: %s\n", uvhttp_error_string(result));
         return 1;
     }
 
@@ -107,7 +108,7 @@ int main(int argc, char** argv) {
         .user_data = NULL
     };
 
-    uvhttp_error_t result = uvhttp_server_register_ws_handler(server, "/ws", &ws_handler);
+    result = uvhttp_server_register_ws_handler(server, "/ws", &ws_handler);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "无法注册 WebSocket 处理器: %s\n", uvhttp_error_string(result));
         return 1;

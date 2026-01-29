@@ -4,7 +4,7 @@
  */
 
 #include "uvhttp.h"
-#include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket.h"
 #include "uvhttp_connection.h"
 #include "uvhttp_context.h"
 #include <stdio.h>
@@ -63,7 +63,8 @@ int main(int argc, char** argv) {
 
 
     /* 创建服务器 */
-    uvhttp_server_builder_t* server = uvhttp_server_create(host, port);
+    uvhttp_server_builder_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_create(host, port, &server);
     if (!server) {
         fprintf(stderr, "无法创建服务器\n");
         return 1;
@@ -80,7 +81,7 @@ int main(int argc, char** argv) {
         .user_data = NULL
     };
 
-    uvhttp_error_t result = uvhttp_server_register_ws_handler(server->server, "/ws", &ws_handler);
+    result = uvhttp_server_register_ws_handler(server->server, "/ws", &ws_handler);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "无法注册 WebSocket 处理器: %d\n", result);
         uvhttp_server_simple_free(server);

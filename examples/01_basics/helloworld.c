@@ -137,17 +137,15 @@ int main() {
     
     // 创建和加载配置
     printf("Loading configuration...\n");
-    uvhttp_config_t* config = uvhttp_config_new();
-    if (!config) {
-        fprintf(stderr, "Failed to create configuration\n");
+    uvhttp_config_t* config = NULL;
+    uvhttp_error_t result = uvhttp_config_new(&config);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create configuration: %s\n", uvhttp_error_string(result));
         return 1;
     }
     
     /* 确保在错误路径中清理配置 */
     int cleanup_needed = 1;
-    
-    // 设置默认配置
-    uvhttp_config_set_defaults(config);
     
     // 直接设置默认值
     config->max_connections = 500;
@@ -228,7 +226,11 @@ int main() {
     
     // 创建服务器
     printf("Creating server...\n");
-    ctx->server = uvhttp_server_new(loop);
+    ctx->uvhttp_error_t server_result = uvhttp_server_new(loop, &server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
     if (!ctx->server) {
         fprintf(stderr, "Failed to create server\n");
         app_context_free(ctx);
@@ -243,7 +245,7 @@ int main() {
     printf("Applied configuration with max_connections=%d\n", config->max_connections);
 
     // 创建 uvhttp 上下文
-    ctx->uvhttp_ctx = uvhttp_context_create(loop);
+    ctx->uvhttp_error_t result_uvhttp_ctx = uvhttp_context_create(loop, &uvhttp_ctx);
     if (!ctx->uvhttp_ctx) {
         fprintf(stderr, "Failed to create uvhttp context\n");
         app_context_free(ctx);

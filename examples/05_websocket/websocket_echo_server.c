@@ -46,8 +46,8 @@ int main(int argc, char* argv[]) {
     printf("启动WebSocket Echo服务器，端口: %d\n", port);
 
     // 使用统一API创建服务器
-    uvhttp_server_builder_t* server = uvhttp_server_create("0.0.0.0", port);
-    if (!server) {
+    uvhttp_server_builder_t* server = NULL;
+    if (!uvhttp_server_create("0.0.0.0", port, &server)) {
         fprintf(stderr, "服务器创建失败\n");
         return 1;
     }
@@ -64,10 +64,10 @@ int main(int argc, char* argv[]) {
     printf("WebSocket URL: ws://localhost:%d/ws\n", port);
     
     // 运行服务器
-    int result = uvhttp_server_run(server);
+    int run_result = uvhttp_server_run(server);
     
     // 清理
     uvhttp_server_simple_free(server);
     
-    return result;
+    return run_result;
 }

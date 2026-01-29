@@ -5,6 +5,104 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-01-28
+
+### Breaking Changes
+
+⚠️ **重要**: 本版本包含重大架构重构，多个 API 发生破坏性变更
+
+1. **所有初始化函数返回值变更**
+   - **影响**: 所有使用 `uvhttp_config_new()`, `uvhttp_context_create()` 等函数的代码
+   - **变更**: 返回值从指针类型改为 `uvhttp_error_t`，通过输出参数返回对象
+   ```c
+   // 旧代码（已移除）
+   uvhttp_config_t* config = uvhttp_config_new();
+   if (!config) { /* 处理错误 */ }
+   
+   // 新代码
+   uvhttp_config_t* config = NULL;
+   uvhttp_error_t result = uvhttp_config_new(&config);
+   if (result != UVHTTP_OK) { /* 处理错误 */ }
+   ```
+
+2. **依赖注入系统已移除**
+   - **影响**: 使用 `uvhttp_deps.h` 和相关 provider 抽象的代码
+   - **变更**: 移除 `uvhttp_deps.h`, `uvhttp_connection_provider_t`, `uvhttp_logger_provider_t`, `uvhttp_config_provider_t`
+   - **迁移**: 直接使用 libuv 和标准库函数
+   ```c
+   // 旧代码（已移除）
+   uvhttp_deps_t* deps = uvhttp_deps_new();
+   uvhttp_deps_set_loop_provider(deps, provider);
+   
+   // 新代码（直接使用 libuv）
+   uv_loop_t* loop = uv_default_loop();
+   ```
+
+3. **日志系统重构**
+   - **影响**: 使用 `uvhttp_logger_provider_t` 的代码
+   - **变更**: 改为编译期宏实现，Release 模式下零开销
+   ```c
+   // 旧代码（已移除）
+   uvhttp_logger_provider_t* logger = uvhttp_default_logger_provider_create(level);
+   logger->log(logger, UVHTTP_LOG_LEVEL_INFO, "message");
+   
+   // 新代码（编译期宏）
+   UVHTTP_LOG_INFO("message");
+   ```
+
+4. **中间件架构变更**
+   - **影响**: 使用动态中间件链的代码
+   - **变更**: 改为编译期宏定义中间件链
+   - **迁移**: 使用 `UVHTTP_DEFINE_MIDDLEWARE_CHAIN` 宏
+
+5. **WebSocket 实现重命名**
+   - **影响**: 包含 `uvhttp_websocket_native.h` 的代码
+   - **变更**: 统一为 `uvhttp_websocket.h`
+   ```c
+   // 旧代码（已移除）
+   #include "uvhttp_websocket_native.h"
+   
+   // 新代码
+   #include "uvhttp_websocket.h"
+   ```
+
+### Removed
+- **抽象层**: 移除所有运行时抽象层
+  - `uvhttp_deps.h` (125 行)
+  - `uvhttp_connection_provider_t` 接口
+  - `uvhttp_logger_provider_t` 接口
+  - `uvhttp_config_provider_t` 接口
+  - `uvhttp_network_interface_t` 接口
+- **测试文件**: 删除 38 个已禁用的测试文件
+- **示例文件**: 删除 5 个过时的中间件示例
+
+### Added
+- **Benchmark 目录**: 新增基准性能测试目录
+  - `benchmark/performance_allocator.c`
+  - `benchmark/performance_allocator_compare.c`
+  - `benchmark/test_bitfield.c`
+  - `benchmark/README.md`
+- **日志系统**: 新增编译期宏日志系统
+  - `include/uvhttp_logging.h`
+  - `src/uvhttp_logging.c`
+
+### Performance
+- **零开销抽象**: 编译期宏实现，Release 模式下完全零开销
+- **内存分配器**: 性能与系统分配器相当
+- **RPS 性能测试**:
+  - 4线程100连接：22,307 RPS
+  - 2线程50连接：23,070 RPS
+  - 8线程200连接：21,707 RPS
+
+### Code Reduction
+- **总代码减少**: 23,805 行代码（减少 88%）
+- **简化架构**: 移除所有不必要的抽象层
+- **提高可维护性**: 代码更简洁，易于理解和维护
+
+### Migration Guide
+
+详细的迁移指南请参考 `MIGRATION_GUIDE.md`
+
 ## [2.1.0] - 2026-01-27
 
 ### Added
@@ -15,7 +113,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Examples 重构**: 按功能分类重组示例代码
   - `01_basics/`: 基础示例
   - `02_routing/`: 路由示例
-  - `03_middleware/`: 中间件示例
   - `04_static_files/`: 静态文件示例
   - `05_websocket/`: WebSocket 示例
   - `06_advanced/`: 高级功能示例
@@ -26,8 +123,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 理由：文件数量少（24 个），不需要子文件夹
 
 ### Performance
-- **RPS 性能提升**: 峰值 RPS 从 17,798 提升到 23,226 (+30.5%)
-- **延迟降低**: 平均延迟降低 48.7%
+- **RPS 性能提升**: 峰值 RPS 从 17,798 提升到 24,439 (+37.3%)
+- **延迟降低**: 平均延迟降低 30.1%
 - **内存优化**: 移除自定义内存池，使用 mimalloc
   - 大对象分配性能提升 50%
   - 减少内存碎片

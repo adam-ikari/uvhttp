@@ -124,7 +124,7 @@ int uvhttp_validate_ipv4(const char* ip) {
     for (size_t i = 0; ip[i]; i++) {
         if (ip[i] == '.') {
             octets++;
-            if (current > 255 || current < 0) return FALSE;
+            if (current > UVHTTP_IP_OCTET_MAX_VALUE || current < 0) return FALSE;
             current = 0;
         } else if (isdigit(ip[i])) {
             current = current * 10 + (ip[i] - '0');
@@ -134,7 +134,7 @@ int uvhttp_validate_ipv4(const char* ip) {
     }
     
     // 检查最后一个八位组
-    if (current > 255 || current < 0) return FALSE;
+    if (current > UVHTTP_IP_OCTET_MAX_VALUE || current < 0) return FALSE;
     
     return (octets == 3);
 }

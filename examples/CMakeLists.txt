@@ -49,7 +49,7 @@ add_subdirectory(01_basics)
 # 路由示例
 add_subdirectory(02_routing)
 
-# 中间件示例
+# 中间件示例 - 编译期配置
 add_subdirectory(03_middleware)
 
 # 静态文件示例
@@ -62,6 +62,3 @@ endif()
 
 # 高级功能示例
 add_subdirectory(06_advanced)
-
-# 性能测试示例
-add_subdirectory(07_performance)

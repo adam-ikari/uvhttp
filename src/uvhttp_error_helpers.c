@@ -94,17 +94,17 @@ void uvhttp_log_safe_error(int error_code, const char* context, const char* user
     (void)context;
 }
 
-int uvhttp_sanitize_error_message(const char* message,
+uvhttp_error_t uvhttp_sanitize_error_message(const char* message,
                                  char* safe_buffer,
                                  size_t buffer_size) {
     if (!message || !safe_buffer || buffer_size == 0) {
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     // 检查是否包含敏感信息
     if (contains_sensitive_info(message)) {
         snprintf(safe_buffer, buffer_size, "Sensitive information hidden");
-        return 0;
+        return UVHTTP_OK;
     }
     
     // 复制消息，但限制长度
@@ -123,7 +123,7 @@ int uvhttp_sanitize_error_message(const char* message,
         safe_buffer[buffer_size - 1] = '\0';
     }
     
-    return 0;
+    return UVHTTP_OK;
 }
 void uvhttp_safe_free(void** ptr, void (*free_func)(void*)) {
     if (!ptr || !*ptr) return;

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(uvhttp VERSION 2.0.0 LANGUAGES C CXX)
+project(uvhttp VERSION 2.2.0 LANGUAGES C CXX)
 
 # 构建选项
 option(BUILD_WITH_WEBSOCKET "Build with WebSocket support" ON)
@@ -54,13 +54,86 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
 ")
 
 # 特性定义
-if(NOT DEFINED UVHTTP_FEATURE_MIDDLEWARE)
-    set(UVHTTP_FEATURE_MIDDLEWARE 1)
-endif()
-add_definitions(-DUVHTTP_FEATURE_MIDDLEWARE=${UVHTTP_FEATURE_MIDDLEWARE})
+add_definitions(-DUVHTTP_FEATURE_MIDDLEWARE=1)
 add_definitions(-DUVHTTP_FEATURE_STATIC_FILES=1)
 add_definitions(-DUVHTTP_FEATURE_TLS=1)
 add_definitions(-DUVHTTP_FEATURE_LRU_CACHE=1)
+
+# ========== 可配置常量选项 ==========
+set(UVHTTP_MAX_HEADER_NAME_SIZE 256 CACHE STRING "Max HTTP header name size")
+set(UVHTTP_MAX_HEADER_VALUE_SIZE 4096 CACHE STRING "Max HTTP header value size")
+set(UVHTTP_MAX_HEADERS 64 CACHE STRING "Max number of HTTP headers")
+set(UVHTTP_INLINE_HEADERS_CAPACITY 32 CACHE STRING "Inline headers capacity")
+set(UVHTTP_MAX_URL_SIZE 2048 CACHE STRING "Max URL size")
+set(UVHTTP_MAX_PATH_SIZE 1024 CACHE STRING "Max path size")
+set(UVHTTP_MAX_METHOD_SIZE 16 CACHE STRING "Max method size")
+set(UVHTTP_MAX_CONNECTIONS_DEFAULT 2048 CACHE STRING "Default max connections")
+set(UVHTTP_MAX_CONNECTIONS_MAX 10000 CACHE STRING "Max recommended connections")
+set(UVHTTP_BACKLOG 8192 CACHE STRING "TCP backlog size")
+set(UVHTTP_CONNECTION_TIMEOUT_DEFAULT 60 CACHE STRING "Connection timeout (seconds)")
+set(UVHTTP_INITIAL_BUFFER_SIZE 8192 CACHE STRING "Initial buffer size")
+set(UVHTTP_MAX_BODY_SIZE 1048576 CACHE STRING "Max request body size")
+set(UVHTTP_READ_BUFFER_SIZE 16384 CACHE STRING "Read buffer size")
+set(UVHTTP_ASYNC_FILE_BUFFER_SIZE 65536 CACHE STRING "Async file buffer size")
+set(UVHTTP_ASYNC_FILE_MAX_CONCURRENT 64 CACHE STRING "Max concurrent file reads")
+set(UVHTTP_ASYNC_FILE_MAX_SIZE 10485760 CACHE STRING "Max file size")
+set(UVHTTP_STATIC_MAX_CACHE_SIZE 1048576 CACHE STRING "Static file cache size")
+set(UVHTTP_STATIC_MAX_PATH_SIZE 1024 CACHE STRING "Static file max path size")
+set(UVHTTP_STATIC_MAX_CONTENT_LENGTH 32 CACHE STRING "Static file max content length")
+set(UVHTTP_STATIC_MAX_FILE_SIZE 10485760 CACHE STRING "Static file max file size")
+set(UVHTTP_STATIC_SMALL_FILE_THRESHOLD 4096 CACHE STRING "Static file small file threshold")
+set(UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE 16777216 CACHE STRING "WebSocket default max frame size")
+set(UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE 67108864 CACHE STRING "WebSocket default max message size")
+set(UVHTTP_WEBSOCKET_DEFAULT_RECV_BUFFER_SIZE 65536 CACHE STRING "WebSocket default receive buffer size")
+set(UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL 30 CACHE STRING "WebSocket default ping interval")
+set(UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT 10 CACHE STRING "WebSocket default ping timeout")
+set(UVHTTP_TCP_KEEPALIVE_TIMEOUT 60 CACHE STRING "TCP keepalive timeout")
+set(UVHTTP_CLIENT_IP_BUFFER_SIZE 64 CACHE STRING "Client IP buffer size")
+set(UVHTTP_SENDFILE_TIMEOUT_MS 30000 CACHE STRING "Sendfile timeout (ms)")
+set(UVHTTP_SENDFILE_CHUNK_SIZE 65536 CACHE STRING "Sendfile chunk size")
+set(UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE 10 CACHE STRING "LRU cache batch eviction size")
+set(UVHTTP_IP_OCTET_MAX_VALUE 255 CACHE STRING "IP octet max value")
+set(UVHTTP_RATE_LIMIT_MAX_REQUESTS 1000000 CACHE STRING "Rate limit max requests")
+set(UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS 86400 CACHE STRING "Rate limit max window seconds")
+set(UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS 10 CACHE STRING "Rate limit min timeout seconds")
+
+# 将选项定义为编译宏
+add_definitions(-DUVHTTP_MAX_HEADER_NAME_SIZE=${UVHTTP_MAX_HEADER_NAME_SIZE})
+add_definitions(-DUVHTTP_MAX_HEADER_VALUE_SIZE=${UVHTTP_MAX_HEADER_VALUE_SIZE})
+add_definitions(-DUVHTTP_MAX_HEADERS=${UVHTTP_MAX_HEADERS})
+add_definitions(-DUVHTTP_INLINE_HEADERS_CAPACITY=${UVHTTP_INLINE_HEADERS_CAPACITY})
+add_definitions(-DUVHTTP_MAX_URL_SIZE=${UVHTTP_MAX_URL_SIZE})
+add_definitions(-DUVHTTP_MAX_PATH_SIZE=${UVHTTP_MAX_PATH_SIZE})
+add_definitions(-DUVHTTP_MAX_METHOD_SIZE=${UVHTTP_MAX_METHOD_SIZE})
+add_definitions(-DUVHTTP_MAX_CONNECTIONS_DEFAULT=${UVHTTP_MAX_CONNECTIONS_DEFAULT})
+add_definitions(-DUVHTTP_MAX_CONNECTIONS_MAX=${UVHTTP_MAX_CONNECTIONS_MAX})
+add_definitions(-DUVHTTP_BACKLOG=${UVHTTP_BACKLOG})
+add_definitions(-DUVHTTP_CONNECTION_TIMEOUT_DEFAULT=${UVHTTP_CONNECTION_TIMEOUT_DEFAULT})
+add_definitions(-DUVHTTP_INITIAL_BUFFER_SIZE=${UVHTTP_INITIAL_BUFFER_SIZE})
+add_definitions(-DUVHTTP_MAX_BODY_SIZE=${UVHTTP_MAX_BODY_SIZE})
+add_definitions(-DUVHTTP_READ_BUFFER_SIZE=${UVHTTP_READ_BUFFER_SIZE})
+add_definitions(-DUVHTTP_ASYNC_FILE_BUFFER_SIZE=${UVHTTP_ASYNC_FILE_BUFFER_SIZE})
+add_definitions(-DUVHTTP_ASYNC_FILE_MAX_CONCURRENT=${UVHTTP_ASYNC_FILE_MAX_CONCURRENT})
+add_definitions(-DUVHTTP_ASYNC_FILE_MAX_SIZE=${UVHTTP_ASYNC_FILE_MAX_SIZE})
+add_definitions(-DUVHTTP_STATIC_MAX_CACHE_SIZE=${UVHTTP_STATIC_MAX_CACHE_SIZE})
+add_definitions(-DUVHTTP_STATIC_MAX_PATH_SIZE=${UVHTTP_STATIC_MAX_PATH_SIZE})
+add_definitions(-DUVHTTP_STATIC_MAX_CONTENT_LENGTH=${UVHTTP_STATIC_MAX_CONTENT_LENGTH})
+add_definitions(-DUVHTTP_STATIC_MAX_FILE_SIZE=${UVHTTP_STATIC_MAX_FILE_SIZE})
+add_definitions(-DUVHTTP_STATIC_SMALL_FILE_THRESHOLD=${UVHTTP_STATIC_SMALL_FILE_THRESHOLD})
+add_definitions(-DUVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE=${UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE})
+add_definitions(-DUVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE=${UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE})
+add_definitions(-DUVHTTP_WEBSOCKET_DEFAULT_RECV_BUFFER_SIZE=${UVHTTP_WEBSOCKET_DEFAULT_RECV_BUFFER_SIZE})
+add_definitions(-DUVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL=${UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL})
+add_definitions(-DUVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT=${UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT})
+add_definitions(-DUVHTTP_TCP_KEEPALIVE_TIMEOUT=${UVHTTP_TCP_KEEPALIVE_TIMEOUT})
+add_definitions(-DUVHTTP_CLIENT_IP_BUFFER_SIZE=${UVHTTP_CLIENT_IP_BUFFER_SIZE})
+add_definitions(-DUVHTTP_SENDFILE_TIMEOUT_MS=${UVHTTP_SENDFILE_TIMEOUT_MS})
+add_definitions(-DUVHTTP_SENDFILE_CHUNK_SIZE=${UVHTTP_SENDFILE_CHUNK_SIZE})
+add_definitions(-DUVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE=${UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE})
+add_definitions(-DUVHTTP_IP_OCTET_MAX_VALUE=${UVHTTP_IP_OCTET_MAX_VALUE})
+add_definitions(-DUVHTTP_RATE_LIMIT_MAX_REQUESTS=${UVHTTP_RATE_LIMIT_MAX_REQUESTS})
+add_definitions(-DUVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS=${UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS})
+add_definitions(-DUVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS=${UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS})
 
 # 内存分配器类型
 if(NOT DEFINED UVHTTP_ALLOCATOR_TYPE)
@@ -76,9 +149,19 @@ endif()
 option(ENABLE_DEV_MODE "Enable development mode with logging" OFF)
 if(ENABLE_DEV_MODE)
     add_definitions(-DUVHTTP_DEV_MODE)
+    add_definitions(-DUVHTTP_FEATURE_LOGGING=1)
     message(STATUS "Development mode: ENABLED (logging enabled)")
 else()
-    message(STATUS "Development mode: DISABLED (no logging)")
+    # 生产模式 - 禁用日志系统以提高性能
+    # 但在构建测试时自动启用日志功能
+    file(GLOB TEST_FILES test/unit/test_*.cpp)
+    if(TEST_FILES)
+        add_definitions(-DUVHTTP_FEATURE_LOGGING=1)
+        message(STATUS "Development mode: DISABLED (logging enabled for testing)")
+    else()
+        add_definitions(-DUVHTTP_FEATURE_LOGGING=0)
+        message(STATUS "Development mode: DISABLED (no logging, zero overhead)")
+    endif()
 endif()
 
 add_definitions(-DUVHTTP_ALLOCATOR_TYPE=${UVHTTP_ALLOCATOR_TYPE})
@@ -104,11 +187,9 @@ set(SOURCES
     src/uvhttp_router.c
     src/uvhttp_connection.c
     src/uvhttp_server.c
-    src/uvhttp_tls_mbedtls.c
+    src/uvhttp_tls.c
     src/uvhttp_config.c
-    src/uvhttp_network.c
     src/uvhttp_context.c
-    src/uvhttp_deps.c
     src/uvhttp_error.c
     src/uvhttp_error_handler.c
     src/uvhttp_error_helpers.c
@@ -118,19 +199,13 @@ set(SOURCES
     src/uvhttp_static.c
     src/uvhttp_async_file.c
     src/uvhttp_validation.c
-    src/uvhttp_allocator.c
+    src/uvhttp_logging.c
 )
 
-# 条件编译中间件源文件
-if(UVHTTP_FEATURE_MIDDLEWARE)
-    list(APPEND SOURCES 
-        src/uvhttp_middleware.c
-        src/uvhttp_cors_middleware.c
-    )
-endif()
+# 条件编译 WebSocket 源文件
 
 if(BUILD_WITH_WEBSOCKET)
-    list(APPEND SOURCES src/uvhttp_websocket_native.c)
+    list(APPEND SOURCES src/uvhttp_websocket.c)
 endif()
 
 # 头文件
@@ -141,14 +216,12 @@ set(HEADERS
     include/uvhttp_constants.h
     include/uvhttp_connection.h
     include/uvhttp_context.h
-    include/uvhttp_deps.h
     include/uvhttp_error.h
     include/uvhttp_error_handler.h
     include/uvhttp_error_helpers.h
     include/uvhttp_features.h
     include/uvhttp_hash.h
     include/uvhttp_lru_cache.h
-    include/uvhttp_network.h
     include/uvhttp_request.h
     include/uvhttp_response.h
     include/uvhttp_router.h
@@ -162,19 +235,8 @@ set(HEADERS
     include/uvhttp_allocator.h
 )
 
-# 条件编译中间件相关头文件
-if(UVHTTP_FEATURE_MIDDLEWARE)
-    list(APPEND HEADERS
-        include/uvhttp_log_middleware.h
-        include/uvhttp_middleware.h
-        include/uvhttp_websocket_middleware.h
-        include/uvhttp_cors_middleware.h
-        include/uvhttp_simple_middleware.h
-    )
-endif()
-
 if(BUILD_WITH_WEBSOCKET)
-    list(APPEND HEADERS include/uvhttp_websocket_native.h)
+    list(APPEND HEADERS include/uvhttp_websocket.h)
 endif()
 
 # ============================================================================
@@ -227,20 +289,22 @@ target_link_libraries(uvhttp
         llhttp
 )
 
-# 平台特定的库（PRIVATE）
-if(IS_WINDOWS)
-    # Windows 不需要额外的库
-elseif(IS_MACOS)
-    target_link_libraries(uvhttp PRIVATE pthread)
-else()
-    # Linux 需要 pthread, m, dl
-    target_link_libraries(uvhttp PRIVATE pthread m dl)
-endif()
-
 # mimalloc（PRIVATE）
 if(BUILD_WITH_MIMALLOC)
     target_link_libraries(uvhttp PRIVATE mimalloc)
     target_compile_definitions(uvhttp PRIVATE UVHTTP_ENABLE_MIMALLOC UVHTTP_FEATURE_ALLOCATOR=1)
+endif()
+
+# 平台特定的库（PRIVATE）- 必须在 mimalloc 之后链接
+if(IS_WINDOWS)
+    # Windows 不需要额外的库
+    target_link_libraries(uvhttp PRIVATE )
+elseif(IS_MACOS)
+    # macOS 需要 pthread
+    target_link_libraries(uvhttp PRIVATE pthread)
+else()
+    # Linux 需要 pthread, m, dl
+    target_link_libraries(uvhttp PRIVATE pthread m dl)
 endif()
 
 # 设置包含目录（PUBLIC，传递给依赖uvhttp的目标）
@@ -262,12 +326,6 @@ list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_loop_helper.cpp")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_time_mock.cpp")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_mock_coverage.cpp")
 
-# 条件编译中间件相关测试
-if(NOT UVHTTP_FEATURE_MIDDLEWARE)
-    list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*middleware.*")
-    list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*cors.*")
-endif()
-
 # 添加测试辅助文件
 set(TEST_HELPER_FILES test/unit/test_time_mock.cpp test/unit/test_loop_helper.cpp)
 
@@ -286,6 +344,7 @@ foreach(test_file ${GTEST_TEST_FILES})
     set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
     
     add_dependencies(${test_name} libuv mbedtls xxhash gtest)
+    
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(${test_name} mimalloc)
     endif()
@@ -293,8 +352,12 @@ foreach(test_file ${GTEST_TEST_FILES})
     target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
     # 为测试启用统计功能
     target_compile_definitions(${test_name} PRIVATE UVHTTP_FEATURE_STATISTICS=1)
-    target_link_libraries(${test_name} ${LIBS} ${GTEST_LIBS})
-    target_include_directories(${test_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
+    target_link_libraries(${test_name} PRIVATE ${LIBS} ${GTEST_LIBS})
+    target_include_directories(${test_name} PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include 
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
+    )
     add_test(NAME ${test_name} COMMAND ${test_name})
     
     # 设置测试超时时间和标签
@@ -350,18 +413,6 @@ if(BUILD_EXAMPLES)
 endif()
 
 # ============================================================================
-# 安装规则
-# ============================================================================
-install(TARGETS uvhttp
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib
-)
-
-install(DIRECTORY include/
-    DESTINATION include
-    FILES_MATCHING PATTERN "*.h"
-)
-
 # ============================================================================
 # 打印配置信息
 # ============================================================================
@@ -398,16 +449,8 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
 endforeach()
 
 # ============================================================================
-# 性能测试
+# 基准性能测试
 # ============================================================================
-file(GLOB PERFORMANCE_TEST_FILES test/performance/*.c)
-foreach(test_file ${PERFORMANCE_TEST_FILES})
-    get_filename_component(test_name ${test_file} NAME_WE)
-    add_executable(${test_name} ${test_file} ${SOURCES})
-    add_dependencies(${test_name} libuv mbedtls xxhash)
-    if(BUILD_WITH_MIMALLOC)
-        add_dependencies(${test_name} mimalloc)
-    endif()
-    target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
-    target_link_libraries(${test_name} ${LIBS})
-endforeach()
+if(EXISTS ${CMAKE_SOURCE_DIR}/benchmark/benchmark.cmake)
+    include(${CMAKE_SOURCE_DIR}/benchmark/benchmark.cmake)
+endif()

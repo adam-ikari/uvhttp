@@ -98,27 +98,27 @@ int main() {
     
     // 步骤 2: 创建服务器
     printf("步骤 2: 创建 HTTP 服务器...\n");
-    ctx.server = uvhttp_server_new(ctx.loop);
-    if (!ctx.server) {
-        fprintf(stderr, "错误: 无法创建服务器\n");
+    uvhttp_error_t server_result = uvhttp_server_new(ctx.loop, &ctx.server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "错误: 无法创建服务器: %s\n", uvhttp_error_string(server_result));
         return 1;
     }
     printf("✓ 服务器创建成功\n\n");
     
     // 步骤 3: 创建路由器
     printf("步骤 3: 创建路由器...\n");
-    uvhttp_router_t* router = uvhttp_router_new();
-    if (!router) {
-        fprintf(stderr, "错误: 无法创建路由器\n");
-        uvhttp_server_free(ctx.server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(result));
         return 1;
     }
     printf("✓ 路由器创建成功\n\n");
     
     // 步骤 4: 添加路由
     printf("步骤 4: 添加路由...\n");
-    int result = uvhttp_router_add_route(router, "/", hello_handler);
-    if (result != UVHTTP_OK) {
+    int route_result = uvhttp_router_add_route(router, "/", hello_handler);
+    if (route_result != UVHTTP_OK) {
         fprintf(stderr, "错误: 无法添加路由\n");
         uvhttp_server_free(ctx.server);
         return 1;

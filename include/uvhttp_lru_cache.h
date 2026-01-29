@@ -61,15 +61,17 @@ struct cache_manager {
 
 /**
  * 创建LRU缓存管理器
- * 
+ *
  * @param max_memory_usage 最大内存使用量（字节）
  * @param max_entries 最大缓存条目数
  * @param cache_ttl 缓存TTL（秒），0表示永不过期
- * @return 缓存管理器指针，失败返回NULL
+ * @param cache 输出参数，返回创建的缓存管理器指针
+ * @return UVHTTP_OK 成功，其他值表示错误
  */
-cache_manager_t* uvhttp_lru_cache_create(size_t max_memory_usage, 
-                                         int max_entries, 
-                                         int cache_ttl);
+uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage,
+                                       int max_entries,
+                                       int cache_ttl,
+                                       cache_manager_t** cache);
 
 /**
  * 释放LRU缓存管理器

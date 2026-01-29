@@ -20,7 +20,16 @@ int main() {
         return 1;
     }
     
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t uvhttp_error_t server_result = uvhttp_server_new(loop, &server, &result);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
     if (!server) {
         printf("Failed to create server\n");
         return 1;

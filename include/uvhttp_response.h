@@ -53,8 +53,8 @@ struct uvhttp_response {
     size_t body_length;                /* 8 字节 */
     time_t cache_expires;              /* 8 字节 - 缓存过期时间 */
     
-    /* Headers - 混合分配：32个内联 + 动态扩容 */
-    uvhttp_header_t headers[32];      /* 32 * 4352 = 139,264 字节 - 内联 */
+    /* Headers - 混合分配：内联 + 动态扩容（优化内存局部性） */
+    uvhttp_header_t headers[UVHTTP_INLINE_HEADERS_CAPACITY];  /* 内联，减少动态分配 */
     uvhttp_header_t* headers_extra;   /* 8 字节 - 动态扩容 */
     size_t headers_capacity;          /* 8 字节 - 总容量（内联+动态） */
 };
@@ -102,19 +102,6 @@ uvhttp_error_t uvhttp_response_send_raw(const char* data,
 
 /* 响应发送函数 */
 uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
-
-/* ============ 测试专用函数 ============ */
-#ifdef UVHTTP_TEST_MODE
-
-/* 测试用纯函数：验证响应数据构建 */
-uvhttp_error_t uvhttp_response_build_for_test(uvhttp_response_t* response, 
-                                             char** out_data, 
-                                             size_t* out_length);
-
-/* 测试用函数：模拟发送但不实际网络I/O */
-uvhttp_error_t uvhttp_response_send_mock(uvhttp_response_t* response);
-
-#endif /* UVHTTP_TEST_MODE */
 
 /* ============ 原有函数 ============ */
 void uvhttp_response_cleanup(uvhttp_response_t* response);

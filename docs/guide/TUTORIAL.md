@@ -574,31 +574,15 @@ int main() {
 
 #### 4.1 中间件模式
 
-创建 `middleware.c`：
+创建 `auth.c`：
 
 ```c
 #include "uvhttp.h"
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 
-// 日志中间件
-int logging_middleware(uvhttp_request_t* req, uvhttp_response_t* res) {
-    time_t now = time(NULL);
-    char time_str[64];
-    strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", localtime(&now));
-    
-    const char* method = uvhttp_request_get_method(req);
-    const char* url = uvhttp_request_get_url(req);
-    
-    printf("[%s] %s %s\n", time_str, method, url);
-    
-    // 继续处理请求（这里需要实际的路由分发）
-    return 0;
-}
-
-// 认证中间件
-int auth_middleware(uvhttp_request_t* req, uvhttp_response_t* res) {
+// 认证检查函数
+int check_auth(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* auth = uvhttp_request_get_header(req, "Authorization");
     
     if (!auth || strcmp(auth, "Bearer secret-token") != 0) {
@@ -618,8 +602,8 @@ int auth_middleware(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 // 受保护的处理器
 int protected_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    // 先通过认证中间件
-    if (auth_middleware(req, res) != 0) {
+    // 先通过认证检查
+    if (check_auth(req, res) != 0) {
         return 0; // 认证失败，已发送响应
     }
     
@@ -634,9 +618,6 @@ int protected_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 // 公开处理器
 int public_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    // 先通过日志中间件
-    logging_middleware(req, res);
-    
     const char* json = "{\"message\":\"公开访问\"}";
     
     uvhttp_response_set_status(res, 200);
@@ -1131,182 +1112,6 @@ curl http://localhost:8080/
 curl http://localhost:8080/static/index.html
 ```
 
-#### 6.2 WebSocket 中间件
-
-创建 `websocket_server.c`：
-
-```c
-#include "uvhttp.h"
-#include "uvhttp_websocket_middleware.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-// WebSocket 中间件实例
-static uvhttp_ws_middleware_t* g_ws_middleware = NULL;
-
-/**
- * @brief WebSocket 消息处理回调
- */
-int ws_message_handler(uvhttp_ws_connection_t* ws_conn, 
-                        const char* data, 
-                        size_t len, 
-                        int opcode,
-                        void* user_data) {
-    printf("收到 WebSocket 消息: %.*s\n", (int)len, data);
-    
-    // 回显消息
-    uvhttp_ws_middleware_send(g_ws_middleware, ws_conn, data, len);
-    
-    return 0;
-}
-
-/**
- * @brief WebSocket 连接建立回调
- */
-int ws_connect_handler(uvhttp_ws_connection_t* ws_conn, void* user_data) {
-    printf("WebSocket 连接建立\n");
-    return 0;
-}
-
-/**
- * @brief WebSocket 连接关闭回调
- */
-int ws_close_handler(uvhttp_ws_connection_t* ws_conn, void* user_data) {
-    printf("WebSocket 连接关闭\n");
-    return 0;
-}
-
-/**
- * @brief 主页处理器
- */
-int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    const char* html = 
-        "<!DOCTYPE html>"
-        "<html>"
-        "<head>"
-        "<title>UVHTTP WebSocket 示例</title>"
-        "<meta charset='utf-8'>"
-        "<style>"
-        "body { font-family: Arial, sans-serif; margin: 40px; }"
-        "#messages { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; }"
-        "input { padding: 10px; width: 300px; }"
-        "button { padding: 10px 20px; }"
-        "</style>"
-        "</head>"
-        "<body>"
-        "<h1>🚀 UVHTTP WebSocket 示例</h1>"
-        "<div id='messages'></div>"
-        "<br>"
-        "<input type='text' id='message' placeholder='输入消息'>"
-        "<button onclick='sendMessage()'>发送</button>"
-        "<button onclick='disconnect()'>断开连接</button>"
-        "<script>"
-        "let ws = null;"
-        "function connect() {"
-        "  ws = new WebSocket('ws://localhost:8080/ws');"
-        "  ws.onopen = function() {"
-        "    addMessage('已连接到服务器');"
-        "  };"
-        "  ws.onmessage = function(event) {"
-        "    addMessage('服务器: ' + event.data);"
-        "  };"
-        "  ws.onclose = function() {"
-        "    addMessage('连接已关闭');"
-        "  };"
-        "}"
-        "function sendMessage() {"
-        "  const input = document.getElementById('message');"
-        "  if (ws && ws.readyState === WebSocket.OPEN) {"
-        "    ws.send(input.value);"
-        "    addMessage('你: ' + input.value);"
-        "    input.value = '';"
-        "  }"
-        "}"
-        "function disconnect() {"
-        "  if (ws) {"
-        "    ws.close();"
-        "  }"
-        "}"
-        "function addMessage(msg) {"
-        "  const div = document.getElementById('messages');"
-        "  div.innerHTML += '<p>' + msg + '</p>';"
-        "  div.scrollTop = div.scrollHeight;"
-        "}"
-        "connect();"
-        "</script>"
-        "</body>"
-        "</html>";
-    
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(res, html, strlen(html));
-    
-    return uvhttp_response_send(res);
-}
-
-int main() {
-    printf("启动 WebSocket 服务器...\n");
-    
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
-    
-    // 注册 WebSocket 处理器
-    uvhttp_ws_handler_t ws_handler;
-    ws_handler.on_connect = ws_connect_handler;
-    ws_handler.on_message = ws_message_handler;
-    ws_handler.on_close = ws_close_handler;
-    ws_handler.user_data = NULL;
-    
-    uvhttp_error_t result = uvhttp_server_register_ws_handler(server, "/ws", &ws_handler);
-    if (result != UVHTTP_OK) {
-        fprintf(stderr, "错误: 无法注册 WebSocket 处理器 (错误码: %d)\n", result);
-        return 1;
-    }
-    
-    printf("✓ WebSocket 处理器已注册\n");
-    printf("  WebSocket 路径: /ws\n");
-    
-    // 添加 HTTP 路由
-    uvhttp_router_add_route(router, "/", home_handler);
-    
-    uvhttp_server_set_router(server, router);
-    uvhttp_server_listen(server, "0.0.0.0", 8080);
-    
-    printf("\n========================================\n");
-    printf("  服务器运行在 http://localhost:8080\n");
-    printf("========================================\n\n");
-    
-    printf("测试:\n");
-    printf("  1. 在浏览器中打开 http://localhost:8080\n");
-    printf("  2. 输入消息并点击发送\n");
-    printf("  3. 查看服务器回显的消息\n\n");
-    
-    printf("WebSocket URL: ws://localhost:8080/ws\n\n");
-    
-    printf("按 Ctrl+C 停止服务器\n\n");
-    
-    uv_run(loop, UV_RUN_DEFAULT);
-    uvhttp_server_free(server);
-    
-    return 0;
-}
-```
-
-**编译和运行**：
-```bash
-cd build
-cmake ..
-make websocket_server
-./examples/websocket_server
-
-# 在浏览器中打开 http://localhost:8080
-# 或使用 wscat 测试
-# wscat -c ws://localhost:8080/ws
-```
-
-#### 6.3 统一响应处理
 
 创建 `unified_response.c`：
 

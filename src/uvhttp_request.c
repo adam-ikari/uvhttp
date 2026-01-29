@@ -8,6 +8,7 @@
 #include "uvhttp_validation.h"
 #include "uvhttp_features.h"
 #include "uvhttp_error_handler.h"
+#include "uvhttp_logging.h"
 #include <stdlib.h>
 #include "uthash.h"
 #include <string.h>
@@ -15,7 +16,7 @@
 #include <stdio.h>
 
 #if UVHTTP_FEATURE_WEBSOCKET
-#include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket.h"
 #endif
 
 // WebSocket握手检测函数
@@ -45,14 +46,14 @@ uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client) 
     // 初始化HTTP解析器
     request->parser_settings = uvhttp_alloc(sizeof(llhttp_settings_t));
     if (!request->parser_settings) {
-        return -1;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     llhttp_settings_init(request->parser_settings);
     
     request->parser = uvhttp_alloc(sizeof(llhttp_t));
     if (!request->parser) {
         uvhttp_free(request->parser_settings);
-        return -1;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     
     // 设置回调函数
@@ -74,11 +75,11 @@ uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client) 
     if (!request->body) {
         uvhttp_free(request->parser);
         uvhttp_free(request->parser_settings);
-        return -1;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     request->body_length = 0;
     
-    return 0;
+    return UVHTTP_OK;
 }
 
 void uvhttp_request_cleanup(uvhttp_request_t* request) {
@@ -362,22 +363,6 @@ static int on_message_complete(llhttp_t* parser) {
         return 0;
     }
     
-    #if UVHTTP_FEATURE_MIDDLEWARE
-    /* 执行中间件链 - 零开销设计 */
-    if (conn->server && conn->server->middleware_chain) {
-        int middleware_result = uvhttp_http_middleware_execute(
-            conn->server->middleware_chain,
-            conn->request,
-            conn->response
-        );
-        
-        /* 如果中间件返回非零，停止执行（中间件已处理响应） */
-        if (middleware_result != 0) {
-            return 0;
-        }
-    }
-#endif
-    
     /* 单线程请求处理 - 无需锁机制 */
     if (conn->server && conn->server->router) {
         // 额外检查request->url是否有效
@@ -515,12 +500,17 @@ const char* uvhttp_request_get_path(uvhttp_request_t* request) {
     if (query_start) {
         // 返回路径部分（不包含查询参数）
         static char path_buffer[UVHTTP_MAX_PATH_SIZE];
+        size_t path_length = query_start - url;
         
-        // 使用安全的字符串拷贝函数
-        if (uvhttp_safe_strncpy(path_buffer, url, sizeof(path_buffer)) != 0) {
+        // 确保路径长度不超过缓冲区大小
+        if (path_length >= sizeof(path_buffer)) {
             // 路径太长，返回根路径
             return "/";
         }
+        
+        // 复制路径部分（不包含查询参数）
+        memcpy(path_buffer, url, path_length);
+        path_buffer[path_length] = '\0';
         
         // 验证路径安全性
         if (!uvhttp_validate_url_path(path_buffer)) {
@@ -673,30 +663,30 @@ size_t uvhttp_request_get_header_count(uvhttp_request_t* request) {
 
 /* 获取指定索引的 header（内部使用） */
 uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request, size_t index) {
-    if (!request || index >= request->headers_capacity) {
+    if (!request || index >= request->header_count) {
         return NULL;
     }
     
     /* 检查是否在内联数组中 */
-    if (index < 32) {
+    if (index < UVHTTP_INLINE_HEADERS_CAPACITY) {
         return &request->headers[index];
     }
     
     /* 在动态扩容数组中 */
     if (request->headers_extra) {
-        return &request->headers_extra[index - 32];
+        return &request->headers_extra[index - UVHTTP_INLINE_HEADERS_CAPACITY];
     }
     
     return NULL;
 }
 
 /* 添加 header（内部使用，自动扩容） */
-int uvhttp_request_add_header(uvhttp_request_t* request,
+uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request,
                                const char* name, 
                                const char* value) {
     
     if (!request || !name || !value) {
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }    
     /* 检查是否需要扩容 */
     
@@ -705,7 +695,7 @@ int uvhttp_request_add_header(uvhttp_request_t* request,
         /* 计算新容量（最多 MAX_HEADERS） */
         size_t new_capacity = request->headers_capacity * 2;
         if (new_capacity == 0) {
-            new_capacity = 32;  /* 初始容量 */
+            new_capacity = UVHTTP_INLINE_HEADERS_CAPACITY;  /* 初始容量 */
         }
         if (new_capacity > MAX_HEADERS) {
             new_capacity = MAX_HEADERS;
@@ -714,17 +704,17 @@ int uvhttp_request_add_header(uvhttp_request_t* request,
         
         /* 如果新容量等于当前容量，说明已达到最大值 */
         if (new_capacity == request->headers_capacity) {
-            return -1;  /* 已满 */
+            return UVHTTP_ERROR_BUFFER_TOO_SMALL;  /* 已满 */
         }
         
         /* 分配或重新分配动态数组 */
-        size_t extra_count = new_capacity - 32;
+        size_t extra_count = new_capacity - UVHTTP_INLINE_HEADERS_CAPACITY;
         int is_first_alloc = (request->headers_extra == NULL);
         
         uvhttp_header_t* new_extra = uvhttp_realloc(request->headers_extra, 
                                                      extra_count * sizeof(uvhttp_header_t));
         if (!new_extra) {
-            return -1;  /* 内存分配失败 */
+            return UVHTTP_ERROR_OUT_OF_MEMORY;  /* 内存分配失败 */
         }
         
         /* 如果是首次分配，清零新分配的内存 */
@@ -739,7 +729,7 @@ int uvhttp_request_add_header(uvhttp_request_t* request,
     /* 获取 header 指针 */
     uvhttp_header_t* header = uvhttp_request_get_header_at(request, request->header_count);
     if (!header) {
-        return -1;
+        return UVHTTP_ERROR_IO_ERROR;
     }
     
     /* 复制 header 名称 */
@@ -761,7 +751,7 @@ int uvhttp_request_add_header(uvhttp_request_t* request,
     /* 增加计数 */
     request->header_count++;
     
-    return 0;
+    return UVHTTP_OK;
 }
 
 /* 遍历所有 headers */

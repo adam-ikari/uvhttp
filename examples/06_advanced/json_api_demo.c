@@ -11,7 +11,7 @@
 
 #include "../include/uvhttp.h"
 #include "../include/uvhttp_utils.h"
-#include "../../deps/cjson/cJSON.h"
+#include <cJSON.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -343,14 +343,23 @@ int main() {
     
     // 创建服务器
     uv_loop_t* loop = uv_default_loop();
-    g_server = uvhttp_server_new(loop);
+    uvhttp_error_t server_result = uvhttp_server_new(loop, &g_server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        return 1;
+    }
     if (!g_server) {
         fprintf(stderr, "❌ 服务器创建失败\n");
         return 1;
     }
     
     // 创建路由
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
     
     // 注册路由处理器
     uvhttp_router_add_route(router, "/", home_handler);
@@ -364,7 +373,8 @@ int main() {
     g_server->router = router;
     
     // 启动服务器
-    int result = uvhttp_server_listen(g_server, "0.0.0.0", 8080);
+    int listen_result = uvhttp_server_listen(g_server, "0.0.0.0", 8080);
+    (void)listen_result;
     if (result != 0) {
         fprintf(stderr, "❌ 服务器启动失败 (错误码: %d)\n", result);
         uvhttp_server_free(g_server);

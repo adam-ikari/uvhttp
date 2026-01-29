@@ -13,7 +13,6 @@ target_link_libraries(hello_world
         mbedtls
         xxhash
         llhttp
-        pthread
         m
         dl
 )
@@ -26,3 +25,51 @@ target_include_directories(hello_world
 )
 
 add_dependencies(hello_world uvhttp)
+
+add_executable(quick_api_demo quick_api_demo.c)
+
+# 使用声明库（IMPORTED targets）的方式链接
+target_link_libraries(quick_api_demo
+    PRIVATE
+        ${UVHTTP_LIB}
+        libuv
+        mbedtls
+        xxhash
+        llhttp
+        cjson
+        m
+        dl
+)
+
+# 设置包含目录（UVHTTP头文件会自动包含依赖库的头文件）
+target_include_directories(quick_api_demo
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson
+)
+
+add_dependencies(quick_api_demo uvhttp)
+
+add_executable(signal_handling_demo signal_handling_demo.c)
+
+# 使用声明库（IMPORTED targets）的方式链接
+target_link_libraries(signal_handling_demo
+    PRIVATE
+        ${UVHTTP_LIB}
+        libuv
+        mbedtls
+        xxhash
+        llhttp
+        m
+        dl
+)
+
+# 设置包含目录（UVHTTP头文件会自动包含依赖库的头文件）
+target_include_directories(signal_handling_demo
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src
+)
+
+add_dependencies(signal_handling_demo uvhttp)

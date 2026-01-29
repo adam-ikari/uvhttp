@@ -8,6 +8,7 @@
 #include <assert.h>
 #include "llhttp.h"
 #include "uvhttp_common.h"
+#include "uvhttp_error.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,8 +53,8 @@ struct uvhttp_request {
     size_t body_length;               /* 8 字节 */
     size_t body_capacity;             /* 8 字节 */
     
-    /* Headers - 混合分配：32个内联 + 动态扩容 */
-    uvhttp_header_t headers[32];      /* 32 * 4352 = 139,264 字节 - 内联 */
+    /* Headers - 混合分配：内联 + 动态扩容（优化内存局部性） */
+    uvhttp_header_t headers[UVHTTP_INLINE_HEADERS_CAPACITY];  /* 内联，减少动态分配 */
     uvhttp_header_t* headers_extra;   /* 8 字节 - 动态扩容 */
     size_t headers_capacity;          /* 8 字节 - 总容量（内联+动态） */
 };
@@ -108,7 +109,7 @@ size_t uvhttp_request_get_header_count(uvhttp_request_t* request);
 uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request, size_t index);
 
 /* 添加 header（内部使用，自动扩容） */
-int uvhttp_request_add_header(uvhttp_request_t* request, 
+uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request, 
                                const char* name, 
                                const char* value);
 

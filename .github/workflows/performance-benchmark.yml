@@ -17,14 +17,14 @@ jobs:
   performance-benchmark:
     runs-on: ubuntu-22.04
     # 超时设置说明：
-    # - PR 快速测试：15分钟 = 3个测试×5秒 + 3秒启动 + 2秒清理 + 45×安全余量（应对网络延迟等）
-    # - 完整测试：60分钟 = 8个场景×多次迭代 + 压力测试（30秒×2次）+ 持续负载测试（60秒）
-    # - 实际测试时间：PR约20秒，完整测试约10-15分钟
-    timeout-minutes: ${{ github.event_name == 'pull_request' && 15 || 60 }}
+    # - PR 快速测试：5分钟 = 3个测试×5秒 + 3秒启动 + 2秒清理 + 安全余量
+    # - 完整测试：30分钟 = 3个场景×多次迭代 + 分析和报告生成
+    # - 实际测试时间：PR约20秒，完整测试约5-10分钟
+    timeout-minutes: ${{ github.event_name == 'pull_request' && 5 || 30 }}
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4.1.1
       with:
         submodules: recursive
     
@@ -67,19 +67,15 @@ jobs:
       env:
         IS_PR: ${{ github.event_name == 'pull_request' }}
       run: |
-        mkdir -p build/public
-        echo "<html><body><h1>Performance Test</h1></body></html>" > build/public/index.html
-        echo "Test file content" > build/public/test.txt
-        dd if=/dev/zero of=build/public/large.bin bs=1M count=10 2>/dev/null
-        
         cd build
-        if [ -f "./dist/bin/performance_static_server" ]; then
-          ./dist/bin/performance_static_server -d ./public -p 8080 > /tmp/server.log 2>&1 &
+        if [ -f "./dist/bin/benchmark_rps" ]; then
+          chmod +x ./dist/bin/benchmark_rps
+          ./dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
           SERVER_PID=$!
           
           # 等待服务器启动
           for i in {1..10}; do
-            if curl -s http://localhost:8080/ > /dev/null 2>&1; then
+            if curl -s http://localhost:18081/ > /dev/null 2>&1; then
               echo "Server started"
               break
             fi
@@ -98,15 +94,15 @@ jobs:
             # - 总耗时：约15秒（3个测试×5秒 + 启动/清理开销）
             # - 目的：快速验证 PR 是否引入性能回归
             echo "Test 1: Low concurrency (10 connections, 5 seconds)" >> /tmp/performance.log
-            wrk -t4 -c10 -d5s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
+            wrk -t2 -c10 -d5s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
             
             echo "" >> /tmp/performance.log
             echo "Test 2: Medium concurrency (50 connections, 5 seconds)" >> /tmp/performance.log
-            wrk -t4 -c50 -d5s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
+            wrk -t4 -c50 -d5s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
             
             echo "" >> /tmp/performance.log
-            echo "Test 3: High concurrency (100 connections, 5 seconds)" >> /tmp/performance.log
-            wrk -t4 -c100 -d5s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
+            echo "Test 3: High concurrency (200 connections, 5 seconds)" >> /tmp/performance.log
+            wrk -t8 -c200 -d5s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
           else
             echo "Running full performance tests..."
             
@@ -119,7 +115,7 @@ jobs:
             # 低并发测试（3次取平均）
             echo "Test 1: Low concurrency (10 connections, 10 seconds)" >> /tmp/performance.log
             for i in {1..3}; do
-              wrk -t4 -c10 -d10s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
+              wrk -t2 -c10 -d10s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
               sleep 2
             done
             
@@ -127,52 +123,15 @@ jobs:
             echo "" >> /tmp/performance.log
             echo "Test 2: Medium concurrency (50 connections, 10 seconds)" >> /tmp/performance.log
             for i in {1..3}; do
-              wrk -t4 -c50 -d10s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
+              wrk -t4 -c50 -d10s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
               sleep 2
             done
             
             # 高并发测试（3次取平均）
             echo "" >> /tmp/performance.log
-            echo "Test 3: High concurrency (100 connections, 10 seconds)" >> /tmp/performance.log
+            echo "Test 3: High concurrency (200 connections, 10 seconds)" >> /tmp/performance.log
             for i in {1..3}; do
-              wrk -t4 -c100 -d10s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
-              sleep 2
-            done
-            
-            # 压力测试（2次取平均）
-            echo "" >> /tmp/performance.log
-            echo "Test 4: Extreme concurrency (500 connections, 30 seconds)" >> /tmp/performance.log
-            for i in {1..2}; do
-              wrk -t8 -c500 -d30s --timeout 10s http://localhost:8080/ >> /tmp/performance.log 2>&1
-              sleep 5
-            done
-            
-            # 超高并发测试（2次取平均）
-            echo "" >> /tmp/performance.log
-            echo "Test 5: Very high concurrency (1000 connections, 30 seconds)" >> /tmp/performance.log
-            for i in {1..2}; do
-              wrk -t8 -c1000 -d30s --timeout 10s http://localhost:8080/ >> /tmp/performance.log 2>&1
-              sleep 5
-            done
-            
-            # 持续负载测试（1次）
-            echo "" >> /tmp/performance.log
-            echo "Test 6: Sustained load (100 connections, 60 seconds)" >> /tmp/performance.log
-            wrk -t4 -c100 -d60s --timeout 5s http://localhost:8080/ >> /tmp/performance.log 2>&1
-            
-            # 小文件下载测试（2次取平均）
-            echo "" >> /tmp/performance.log
-            echo "Test 7: Small file download (100 connections, 10 seconds)" >> /tmp/performance.log
-            for i in {1..2}; do
-              wrk -t4 -c100 -d10s --timeout 5s http://localhost:8080/test.txt >> /tmp/performance.log 2>&1
-              sleep 2
-            done
-            
-            # 大文件下载测试（2次取平均）
-            echo "" >> /tmp/performance.log
-            echo "Test 8: Large file download (50 connections, 10 seconds)" >> /tmp/performance.log
-            for i in {1..2}; do
-              wrk -t4 -c50 -d10s --timeout 10s http://localhost:8080/large.bin >> /tmp/performance.log 2>&1
+              wrk -t8 -c200 -d10s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
               sleep 2
             done
           fi
@@ -185,7 +144,7 @@ jobs:
           cp /tmp/performance.log ../performance.log
           cp /tmp/server.log ../server.log
         else
-          echo "performance_static_server not found"
+          echo "benchmark_rps not found"
           exit 1
         fi
     
@@ -281,12 +240,7 @@ jobs:
         test_scenarios = [
             ('low_concurrent', 'Test 1: Low concurrency'),
             ('medium_concurrent', 'Test 2: Medium concurrency'),
-            ('high_concurrent', 'Test 3: High concurrency'),
-            ('extreme_concurrent', 'Test 4: Extreme concurrency'),
-            ('very_high_concurrent', 'Test 5: Very high concurrency'),
-            ('sustained_load', 'Test 6: Sustained load'),
-            ('small_file', 'Test 7: Small file download'),
-            ('large_file', 'Test 8: Large file download')
+            ('high_concurrent', 'Test 3: High concurrency')
         ]
         
         results = {}
@@ -444,21 +398,21 @@ jobs:
         report += "### 测试命令\n\n"
         report += "```bash\n"
         report += "# 低并发测试\n"
-        report += "wrk -t4 -c10 -d10s --timeout 5s http://127.0.0.1:8080/\n\n"
+        report += "wrk -t2 -c10 -d10s --timeout 5s http://127.0.0.1:18081/\n\n"
         report += "# 中等并发测试\n"
-        report += "wrk -t4 -c50 -d10s --timeout 5s http://127.0.0.1:8080/\n\n"
+        report += "wrk -t4 -c50 -d10s --timeout 5s http://127.0.0.1:18081/\n\n"
         report += "# 高并发测试\n"
-        report += "wrk -t4 -c100 -d10s --timeout 5s http://127.0.0.1:8080/\n\n"
-        report += "# 极端并发测试\n"
-        report += "wrk -t8 -c500 -d30s --timeout 10s http://127.0.0.1:8080/\n\n"
-        report += "# 超高并发测试\n"
-        report += "wrk -t8 -c1000 -d30s --timeout 10s http://127.0.0.1:8080/\n\n"
-        report += "# 持续负载测试\n"
-        report += "wrk -t4 -c100 -d60s --timeout 5s http://127.0.0.1:8080/\n\n"
-        report += "# 小文件下载测试\n"
-        report += "wrk -t4 -c100 -d10s --timeout 5s http://127.0.0.1:8080/test.txt\n\n"
-        report += "# 大文件下载测试\n"
-        report += "wrk -t4 -c50 -d10s --timeout 10s http://127.0.0.1:8080/large.bin\n"
+        report += "wrk -t8 -c200 -d10s --timeout 5s http://127.0.0.1:18081/\n\n"
+        report += "# 极端并发测试（nightly）\n"
+        report += "wrk -t8 -c500 -d30s --timeout 10s http://127.0.0.1:18081/\n\n"
+        report += "# 超高并发测试（nightly）\n"
+        report += "wrk -t8 -c1000 -d30s --timeout 10s http://127.0.0.1:18081/\n\n"
+        report += "# 持续负载测试（nightly）\n"
+        report += "wrk -t4 -c100 -d60s --timeout 5s http://127.0.0.1:18081/\n\n"
+        report += "# 小文件传输测试（nightly）\n"
+        report += "wrk -t4 -c100 -d10s --timeout 5s http://127.0.0.1:18081/\n\n"
+        report += "# 大文件传输测试（nightly）\n"
+        report += "wrk -t4 -c50 -d10s --timeout 10s http://127.0.0.1:18081/\n"
         report += "```\n\n"
         report += "---\n\n"
         report += "**报告生成时间**: " + data['timestamp'] + "\n"
@@ -474,7 +428,7 @@ jobs:
         python3 /tmp/generate_report.py
     
     - name: Upload performance results artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v4.3.1
       with:
         name: performance-results-${{ github.run_number }}
         path: |
@@ -483,7 +437,7 @@ jobs:
           performance.log
           server.log
           baseline-history.json
-        retention-days: 90
+        retention-days: 30
     
     - name: Create performance benchmark release
       if: github.event_name != 'pull_request'

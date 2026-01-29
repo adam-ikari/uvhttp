@@ -59,10 +59,13 @@ static void setup_stress_server() {
     g_stress_loop = uv_loop_new();
     ASSERT_NE(g_stress_loop, nullptr);
 
-    g_stress_server = uvhttp_server_new(g_stress_loop);
+    uvhttp_error_t server_result = uvhttp_server_new(g_stress_loop, &g_stress_server);
+    ASSERT_EQ(server_result, UVHTTP_OK);
     ASSERT_NE(g_stress_server, nullptr);
 
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
 
     // 添加路由
@@ -70,7 +73,7 @@ static void setup_stress_server() {
 
     uvhttp_server_set_router(g_stress_server, router);
 
-    uvhttp_error_t result = uvhttp_server_listen(g_stress_server, STRESS_TEST_HOST, g_stress_test_port);
+    result = uvhttp_server_listen(g_stress_server, STRESS_TEST_HOST, g_stress_test_port);
     ASSERT_EQ(result, UVHTTP_OK);
 }
 

@@ -3,25 +3,14 @@
 #include "uvhttp_constants.h"
 #include "uvhttp_context.h"
 #include "uvhttp_features.h"
+#include "uvhttp_error_handler.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
 
-/* 错误恢复配置 */
-typedef struct {
-    int max_retries;
-    int base_delay_ms;
-    int max_delay_ms;
-    double backoff_multiplier;
-} uvhttp_error_recovery_config_t;
-
-static uvhttp_error_recovery_config_t recovery_config = {
-    .max_retries = 3,
-    .base_delay_ms = UVHTTP_DEFAULT_BASE_DELAY_MS,
-    .max_delay_ms = UVHTTP_DEFAULT_MAX_DELAY_MS,
-    .backoff_multiplier = 2.0
-};
+/* 错误恢复配置 - 使用全局配置 */
+extern uvhttp_error_recovery_config_t g_error_recovery_config;
 
 /* 错误统计 - 仅在启用统计功能时定义 */
 #if UVHTTP_FEATURE_STATISTICS
@@ -31,19 +20,20 @@ static uvhttp_error_stats_t error_stats = {0};
 /* 设置错误恢复配置 */
 void uvhttp_set_error_recovery_config(int max_retries, int base_delay_ms, 
                                      int max_delay_ms, double backoff_multiplier) {
-    recovery_config.max_retries = max_retries > 0 ? max_retries : 3;
-    recovery_config.base_delay_ms = base_delay_ms > 0 ? base_delay_ms : UVHTTP_DEFAULT_BASE_DELAY_MS;
-    recovery_config.max_delay_ms = max_delay_ms > 0 ? max_delay_ms : UVHTTP_DEFAULT_MAX_DELAY_MS;
-    recovery_config.backoff_multiplier = backoff_multiplier > 1.0 ? backoff_multiplier : 2.0;
+    g_error_recovery_config.max_retries = max_retries > 0 ? max_retries : 3;
+    g_error_recovery_config.base_delay_ms = base_delay_ms > 0 ? base_delay_ms : UVHTTP_DEFAULT_BASE_DELAY_MS;
+    g_error_recovery_config.max_delay_ms = max_delay_ms > 0 ? max_delay_ms : UVHTTP_DEFAULT_MAX_DELAY_MS;
+    g_error_recovery_config.backoff_multiplier = backoff_multiplier > 1.0 ? backoff_multiplier : 2.0;
 }
 
 /* 计算重试延迟（指数退避） */
 static int calculate_retry_delay(int attempt) {
-    int delay = recovery_config.base_delay_ms;
+    int delay = g_error_recovery_config.base_delay_ms;
     for (int i = 0; i < attempt; i++) {
-        delay *= recovery_config.backoff_multiplier;
+        delay *= g_error_recovery_config.backoff_multiplier;
     }
-    return delay > recovery_config.max_delay_ms ? recovery_config.max_delay_ms : delay;
+    return (delay > g_error_recovery_config.max_delay_ms) ? 
+           g_error_recovery_config.max_delay_ms : delay;
 }
 
 /* 执行重试延迟 */
@@ -73,8 +63,7 @@ static int is_retryable_error(uvhttp_error_t error) {
         case UVHTTP_ERROR_WEBSOCKET_TOO_LARGE:
         case UVHTTP_ERROR_WEBSOCKET_INVALID_OPCODE:
         
-        /* 可重试的中间件错误 */
-        case UVHTTP_ERROR_MIDDLEWARE_EXECUTE:
+        /* 可重试的错误 */
         case UVHTTP_ERROR_LOG_WRITE:
             return TRUE;
         
@@ -124,9 +113,6 @@ static int is_retryable_error(uvhttp_error_t error) {
         case UVHTTP_ERROR_CONFIG_INVALID:
         case UVHTTP_ERROR_CONFIG_FILE_NOT_FOUND:
         case UVHTTP_ERROR_CONFIG_MISSING_REQUIRED:
-        case UVHTTP_ERROR_MIDDLEWARE_INIT:
-        case UVHTTP_ERROR_MIDDLEWARE_REGISTER:
-        case UVHTTP_ERROR_MIDDLEWARE_NOT_FOUND:
         case UVHTTP_ERROR_LOG_INIT:
         case UVHTTP_ERROR_LOG_FILE_OPEN:
         case UVHTTP_ERROR_LOG_NOT_INITIALIZED:
@@ -138,11 +124,12 @@ static int is_retryable_error(uvhttp_error_t error) {
 }
 
 /* 带重试的错误处理函数 */
-uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*), 
+uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*),
                                      void* context, const char* operation_name) {
+    (void)operation_name;  /* 预留参数，用于日志记录 */
     uvhttp_error_t last_error = UVHTTP_OK;
     
-    for (int attempt = 0; attempt <= recovery_config.max_retries; attempt++) {
+    for (int attempt = 0; attempt <= g_error_recovery_config.max_retries; attempt++) {
         last_error = operation(context);
         
         if (last_error == UVHTTP_OK) {
@@ -162,7 +149,7 @@ uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*),
 #endif
         
         /* 如果是最后一次尝试或错误不可重试，返回错误 */
-        if (attempt == recovery_config.max_retries || !is_retryable_error(last_error)) {
+        if (attempt == g_error_recovery_config.max_retries || !is_retryable_error(last_error)) {
             break;
         }
         
@@ -813,24 +800,6 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
                 
                         /* Middleware errors */
                 
-                        case UVHTTP_ERROR_MIDDLEWARE_INIT:
-                
-                            return "Failed to initialize middleware";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_REGISTER:
-                
-                            return "Failed to register middleware";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_EXECUTE:
-                
-                            return "Middleware execution failed";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_NOT_FOUND:
-                
-                            return "Middleware not found";
-                
-                        
-                
                         /* Logging errors */
                 
                         case UVHTTP_ERROR_LOG_INIT:
@@ -1153,24 +1122,6 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
                         
                 
                         /* Middleware errors */
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_INIT:
-                
-                            return "Check middleware configuration";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_REGISTER:
-                
-                            return "Verify middleware registration parameters";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_EXECUTE:
-                
-                            return "Retry operation or fix middleware logic";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_NOT_FOUND:
-                
-                            return "Register the middleware or check path";
-                
-                        
                 
                         /* Logging errors */
                 

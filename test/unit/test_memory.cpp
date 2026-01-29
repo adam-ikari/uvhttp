@@ -58,10 +58,16 @@ TEST(MemoryTest, ServerMemoryUsage) {
     uv_loop_t* loop = uv_default_loop();
     ASSERT_NE(loop, nullptr);
 
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(server, nullptr);
     ASSERT_NE(server, nullptr);
 
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(router, nullptr);
     ASSERT_NE(router, nullptr);
 
     uvhttp_server_set_router(server, router);
@@ -81,15 +87,21 @@ TEST(MemoryTest, MultipleServerCreation) {
         uv_loop_t* loop = uv_loop_new();
         ASSERT_NE(loop, nullptr);
 
-        uvhttp_server_t* server = uvhttp_server_new(loop);
+        uvhttp_server_t* server = NULL;
+        uvhttp_error_t result = uvhttp_server_new(loop, &server);
+        ASSERT_EQ(result, UVHTTP_OK);
+        ASSERT_NE(server, nullptr);
         ASSERT_NE(server, nullptr);
 
-        uvhttp_router_t* router = uvhttp_router_new();
+        uvhttp_router_t* router = NULL;
+        result = uvhttp_router_new(&router);
+        ASSERT_EQ(result, UVHTTP_OK);
+        ASSERT_NE(router, nullptr);
         ASSERT_NE(router, nullptr);
 
         uvhttp_server_set_router(server, router);
 
-        uvhttp_error_t result = uvhttp_server_listen(server, "127.0.0.1", 0);
+        result = uvhttp_server_listen(server, "127.0.0.1", 0);
         ASSERT_EQ(result, UVHTTP_OK);
 
         uvhttp_server_free(server);
