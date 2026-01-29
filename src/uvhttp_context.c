@@ -7,7 +7,6 @@
 #include "uvhttp_router.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_error_handler.h"
-#include "uvhttp_internal.h"
 #include <mbedtls/entropy.h>
 #include <mbedtls/ctr_drbg.h>
 #include <stdlib.h>
