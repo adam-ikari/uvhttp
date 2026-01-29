@@ -2,7 +2,7 @@ BUILD_DIR ?= build
 BUILD_TYPE ?= Release
 CMAKE_ARGS = -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON -DBUILD_WITH_TLS=ON
 
-.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild docs-site docs-site-build docs-site-clean docs-site-dev
+.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild docs-site docs-site-build docs-site-clean docs-site-dev format format-check format-fix format-all format-diff
 
 all: $(BUILD_DIR)/Makefile
 	@$(MAKE) -C $(BUILD_DIR)
@@ -146,6 +146,54 @@ run-method-routing: examples
 run-json-api: examples
 	@cd $(BUILD_DIR) && ./dist/bin/json_api_demo
 
+# ============================================================================
+# 代码格式化
+# ============================================================================
+
+format-check:
+	@echo "🔍 检查代码格式..."
+	@if ! command -v clang-format >/dev/null 2>&1; then \
+		echo "错误: clang-format 未安装。请运行以下命令安装:"; \
+		echo "  sudo apt-get install clang-format"; \
+		exit 1; \
+	fi
+	@clang-format --dry-run --Werror src/*.c include/*.h || \
+		(echo "❌ 代码格式检查失败！请运行 'make format-fix' 修复格式问题。"; exit 1)
+	@echo "✅ 代码格式检查通过！"
+
+format-fix:
+	@echo "🔧 修复代码格式..."
+	@if ! command -v clang-format >/dev/null 2>&1; then \
+		echo "错误: clang-format 未安装。请运行以下命令安装:"; \
+		echo "  sudo apt-get install clang-format"; \
+		exit 1; \
+	fi
+	@clang-format -i src/*.c include/*.h
+	@echo "✅ 代码格式已修复！"
+
+format-all:
+	@echo "🔧 格式化所有代码文件..."
+	@if ! command -v clang-format >/dev/null 2>&1; then \
+		echo "错误: clang-format 未安装。请运行以下命令安装:"; \
+		echo "  sudo apt-get install clang-format"; \
+		exit 1; \
+	fi
+	@find src include -name "*.c" -o -name "*.h" | xargs clang-format -i
+	@echo "✅ 所有代码文件已格式化！"
+
+format-diff:
+	@echo "📊 显示格式化差异..."
+	@if ! command -v clang-format >/dev/null 2>&1; then \
+		echo "错误: clang-format 未安装。请运行以下命令安装:"; \
+		echo "  sudo apt-get install clang-format"; \
+		exit 1; \
+	fi
+	@clang-format --dry-run --Werror src/*.c include/*.h || \
+		(echo "❌ 代码格式检查失败！请运行 'make format-fix' 修复格式问题。"; exit 1)
+	@echo "✅ 代码格式检查通过！"
+
+format: format-check
+
 help:
 	@echo "UVHTTP 构建系统"
 	@echo ""
@@ -172,6 +220,13 @@ help:
 	@echo ""
 	@echo "代码检查:"
 	@echo "  make cppcheck           - 代码静态检查"
+	@echo ""
+	@echo "代码格式化:"
+	@echo "  make format             - 检查代码格式（同 format-check）"
+	@echo "  make format-check       - 检查代码格式"
+	@echo "  make format-fix         - 修复代码格式（仅 src/*.c include/*.h）"
+	@echo "  make format-all         - 格式化所有代码文件"
+	@echo "  make format-diff        - 显示格式化差异"
 	@echo ""
 	@echo "运行示例:"
 	@echo "  make run-helloworld     - 运行Hello World示例"
