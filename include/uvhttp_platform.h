@@ -6,6 +6,9 @@
 /* 平台检测 - 只支持 Linux */
 #define UVHTTP_PLATFORM_LINUX
 
+/* 必须先包含 stdint.h 才能使用 UINTPTR_MAX */
+#include <stdint.h>
+
 /* 指针大小检测 */
 #if UINTPTR_MAX == 0xFFFFFFFF
 #    define UVHTTP_32BIT 1
