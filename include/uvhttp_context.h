@@ -4,7 +4,6 @@
 #define UVHTTP_CONTEXT_H
 
 #include "uvhttp_config.h"
-#include "uvhttp_connection.h"
 #include "uvhttp_error_handler.h"
 #if UVHTTP_FEATURE_LOGGING
 #    include "uvhttp_logging.h"

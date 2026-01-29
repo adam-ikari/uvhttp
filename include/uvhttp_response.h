@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-// 前向声明（避免循环引用）
+// 前向声明
 typedef struct uvhttp_connection uvhttp_connection_t;
 typedef struct uvhttp_response uvhttp_response_t;
 
@@ -39,78 +39,92 @@ struct uvhttp_response {
     /* 热路径字段（频繁访问）- 优化内存局部性 */
     int status_code;  /* 4 字节 - 状态码 */
     int headers_sent; /* 4 字节 - 头部是否已发送 */
-    int body_sent;    /* 4 字节 - 主体是否已发送 */
-    int is_chunked;   /* 4 字节 - 是否使用分块传输 */
+    int sent;         /* 4 字节 - 响应是否已发送 */
+    int finished;     /* 4 字节 - 响应是否完成 */
 
-    /* 缓存行2：指针字段（32字节）- 集中存储 */
-    uvhttp_connection_t* connection; /* 8 字节 */
-    char* body;                        /* 8 字节 */
-    size_t body_length;                /* 8 字节 */
-    size_t body_sent_length;           /* 8 字节 */
+    /* HTTP/1.1优化字段 */
+    int keep_alive; /* 4 字节 - 是否保持连接 */
+    int compress;   /* 4 字节 - 是否启用压缩 */
+    int cache_ttl;  /* 4 字节 - 缓存TTL（秒） */
 
-    /* 缓存行3：计数器和状态（32字节） */
-    int header_count;  /* 4 字节 */
-    int body_chunk;   /* 4 字节 */
-    int is_sending;   /* 4 字节 */
-    int _reserved[1];
+    /* 指针和计数器字段（8字节对齐） */
+    uv_tcp_t* client;     /* 8 字节 */
+    char* body;           /* 8 字节 */
+    size_t header_count;  /* 8 字节 */
+    size_t body_length;   /* 8 字节 */
+    time_t cache_expires; /* 8 字节 - 缓存过期时间 */
 
-    /* 缓存行4-5：内联headers（256字节）- 优化内存分配 */
-    char headers[UVHTTP_INLINE_HEADERS_CAPACITY]
-        [UVHTTP_MAX_HEADER_NAME_SIZE + UVHTTP_MAX_HEADER_VALUE_SIZE]; /* 128字节 */
-    char header_values[UVHTTP_INLINE_HEADERS_CAPACITY]
-        [UVHTTP_MAX_HEADER_VALUE_SIZE]; /* 128字节 */
-    size_t header_lengths[UVHTTP_INLINE_HEADERS_CAPACITY]; /* 32字节 */
-
-    /* 缓存行6：动态headers（指针）- 仅在内联headers不足时使用 */
-    char** dynamic_header_names;    /* 8 字节 */
-    char** dynamic_header_values;   /* 8 字节 */
-    size_t* dynamic_header_lengths; /* 8 字节 */
-    int dynamic_header_count;        /* 4 字节 */
-    int _reserved2[4];
-
-    /* 缓存行7-8：TLS写数据（指针）- 仅在TLS时使用 */
-    uvhttp_tls_write_data_t* tls_write_data; /* 8 字节 */
-    int _reserved3[7];
+    /* Headers - 混合分配：内联 + 动态扩容（优化内存局部性） */
+    uvhttp_header_t
+        headers[UVHTTP_INLINE_HEADERS_CAPACITY]; /* 内联，减少动态分配 */
+    uvhttp_header_t* headers_extra;              /* 8 字节 - 动态扩容 */
+    size_t headers_capacity; /* 8 字节 - 总容量（内联+动态） */
 };
 
 /* ========== 内存布局验证静态断言 ========== */
 
 /* 验证指针对齐（8字节对齐） */
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, connection) % 8 == 0,
-                     "connection pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, client) % 8 == 0,
+                     "client pointer not 8-byte aligned");
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, body) % 8 == 0,
                      "body pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, body_length) % 8 == 0,
-                     "body_length not 8-byte aligned");
 
 /* 验证size_t对齐（8字节对齐） */
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, body_sent_length) % 8 == 0,
-                     "body_sent_length not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, header_count) % 8 == 0,
+                     "header_count not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, body_length) % 8 == 0,
+                     "body_length not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, cache_expires) % 8 == 0,
+                     "cache_expires not 8-byte aligned");
 
-/* 验证内联headers在结构体前部 */
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, headers) >= 32,
-                     "headers should be after first 32 bytes");
+/* 验证大型缓冲区在结构体末尾 */
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, headers) >= 64,
+                     "headers array should be after first 64 bytes");
 
-// 响应管理函数
-uvhttp_error_t uvhttp_response_new(uvhttp_response_t** response);
-void uvhttp_response_free(uvhttp_response_t* response);
+/* ============ 核心 API 函数 ============ */
+uvhttp_error_t uvhttp_response_init(uvhttp_response_t* response, void* client);
 uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response,
                                           int status_code);
 uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response,
-                                            const char* name,
-                                            const char* value);
+                                          const char* name, const char* value);
 uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response,
-                                        const char* body,
-                                        size_t body_length);
-uvhttp_error_t uvhttp_response_set_body_string(uvhttp_response_t* response,
-                                                 const char* body);
+                                        const char* body, size_t length);
+
+/* ============ 重构后的函数：分离纯函数和副作用 ============ */
+
+/* 纯函数：构建HTTP响应数据，无副作用，易于测试
+ * 调用者负责释放返回的 *out_data 内存
+ */
+uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
+                                          char** out_data, size_t* out_length);
+
+/* 副作用函数：发送原始数据，包含网络I/O */
+uvhttp_error_t uvhttp_response_send_raw(const char* data, size_t length,
+                                        void* client,
+                                        uvhttp_response_t* response);
+
+/* 响应发送函数 */
 uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
-const char* uvhttp_response_get_header(uvhttp_response_t* response,
-                                       const char* name);
-int uvhttp_response_get_status(uvhttp_response_t* response);
-const char* uvhttp_response_get_body(uvhttp_response_t* response,
-                                      size_t* body_length);
-void uvhttp_response_reset(uvhttp_response_t* response);
+
+/* ============ 原有函数 ============ */
+void uvhttp_response_cleanup(uvhttp_response_t* response);
+void uvhttp_response_free(uvhttp_response_t* response);
+
+/* ========== Headers 操作 API ========== */
+
+/* 获取 header 数量 */
+size_t uvhttp_response_get_header_count(uvhttp_response_t* response);
+
+/* 获取指定索引的 header（内部使用） */
+uvhttp_header_t* uvhttp_response_get_header_at(uvhttp_response_t* response,
+                                               size_t index);
+
+/* 遍历所有 headers */
+typedef void (*uvhttp_header_callback_t)(const char* name, const char* value,
+                                         void* user_data);
+void uvhttp_response_foreach_header(uvhttp_response_t* response,
+                                    uvhttp_header_callback_t callback,
+                                    void* user_data);
 
 #ifdef __cplusplus
 }
