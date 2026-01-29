@@ -110,6 +110,7 @@ static int on_message_begin(llhttp_t* parser) {
 
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
+        UVHTTP_LOG_ERROR("on_message_begin: conn or request is NULL\n");
         return -1;
     }
 
@@ -125,16 +126,19 @@ static int on_url(llhttp_t* parser, const char* at, size_t length) {
 
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
+        UVHTTP_LOG_ERROR("on_url: conn or request is NULL\n");
         return -1;
     }
 
     // 确保URL长度不超过限制
     if (length >= MAX_URL_LEN) {
+        UVHTTP_LOG_ERROR("on_url: URL too long: %zu\n", length);
         return -1;
     }
 
     // 检查是否超出目标缓冲区大小，确保安全性
     if (length >= sizeof(conn->request->url)) {
+        UVHTTP_LOG_ERROR("on_url: URL exceeds buffer size: %zu\n", length);
         return -1;
     }
 
@@ -148,6 +152,7 @@ static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
 
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
+        UVHTTP_LOG_ERROR("on_header_field: conn or request is NULL\n");
         return -1;
     }
 
@@ -157,6 +162,7 @@ static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
 
     /* 检查header字段名长度限制 */
     if (length >= UVHTTP_MAX_HEADER_NAME_SIZE) {
+        UVHTTP_LOG_ERROR("on_header_field: header name too long: %zu\n", length);
         return -1; /* 字段名太长 */
     }
 
@@ -698,7 +704,7 @@ size_t uvhttp_request_get_header_count(uvhttp_request_t* request) {
 /* 获取指定索引的 header（内部使用） */
 uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request,
                                               size_t index) {
-    if (!request || index >= request->header_count) {
+    if (!request || index >= request->headers_capacity) {
         return NULL;
     }
 

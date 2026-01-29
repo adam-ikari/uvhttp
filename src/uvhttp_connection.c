@@ -108,10 +108,15 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     /* 单线程HTTP解析 - 无需同步机制 */
     llhttp_t* parser = (llhttp_t*)conn->request->parser;
     if (parser) {
+        UVHTTP_LOG_DEBUG("on_read: Parsing %zd bytes\n", nread);
+        UVHTTP_LOG_DEBUG("on_read: parser->data = %p, conn = %p\n", parser->data, conn);
         enum llhttp_errno err = llhttp_execute(parser, buf->base, nread);
 
         if (err != HPE_OK) {
-            uvhttp_log_safe_error(err, "http_parse", llhttp_errno_name(err));
+            const char* err_name = llhttp_errno_name(err);
+            UVHTTP_LOG_ERROR("HTTP parse error: %d (%s)\n", err, err_name ? err_name : "unknown");
+            UVHTTP_LOG_ERROR("HTTP parse error reason: %s\n", llhttp_get_error_reason(parser));
+            uvhttp_log_safe_error(err, "http_parse", err_name);
             /* 解析错误时异步关闭连接 */
             uvhttp_connection_close(conn);
             return;
@@ -301,6 +306,9 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
 
     // TCP初始化 - 完整实现
     if (uv_tcp_init(server->loop, &c->tcp_handle) != 0) {
+        /* 注意：uv_close 是异步的，不能在这里使用
+         * 对于初始化失败的情况，直接释放内存即可
+         * 因为这些 handle 还没有被添加到事件循环中 */
         uvhttp_free(c);
         return UVHTTP_ERROR_IO_ERROR;
     }
