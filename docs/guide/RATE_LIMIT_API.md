@@ -344,4 +344,3 @@ UVHTTP_ERROR_RATE_LIMIT_EXCEEDED = -550  // 超过限流
 - [API 参考](API_REFERENCE.md)
 - [架构设计](ARCHITECTURE.md)
 - [错误码参考](ERROR_CODES.md)
-- [功能模块系统](MIDDLEWARE_SYSTEM.md)

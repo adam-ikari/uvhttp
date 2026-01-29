@@ -3,7 +3,8 @@
 #if UVHTTP_FEATURE_WEBSOCKET
 
 #include <gtest/gtest.h>
-#include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket.h"
+#include "uvhttp_context.h"
 #include "uvhttp_error.h"
 #include <string.h>
 
@@ -138,7 +139,10 @@ TEST(UvhttpWebsocketFullCoverageTest, WsBuildFrameSimple) {
     const char* payload = "Hello";
     uvhttp_ws_opcode_t opcode = UVHTTP_WS_OPCODE_TEXT;
     
-    int result = uvhttp_ws_build_frame(buffer, sizeof(buffer), 
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
                                        (const uint8_t*)payload, strlen(payload),
                                        opcode, 0, 1);
     EXPECT_GE(result, 0);
@@ -157,7 +161,11 @@ TEST(UvhttpWebsocketFullCoverageTest, WsBuildFrameMasked) {
     const char* payload = "Hello";
     uvhttp_ws_opcode_t opcode = UVHTTP_WS_OPCODE_TEXT;
     
-    int result = uvhttp_ws_build_frame(buffer, sizeof(buffer), 
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    uvhttp_context_init_websocket(&context);
+    
+    int result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
                                        (const uint8_t*)payload, strlen(payload),
                                        opcode, 1, 1);
     EXPECT_GE(result, 0);
@@ -165,6 +173,8 @@ TEST(UvhttpWebsocketFullCoverageTest, WsBuildFrameMasked) {
     /* 验证帧头 */
     EXPECT_EQ((buffer[0] & 0x0F), opcode);
     EXPECT_NE((buffer[1] & 0x80), 0); /* MASK=1 */
+    
+    uvhttp_context_cleanup_websocket(&context);
 }
 
 /* 测试构建帧 - 二进制帧 */
@@ -173,7 +183,10 @@ TEST(UvhttpWebsocketFullCoverageTest, WsBuildFrameBinary) {
     uint8_t payload[] = {0x00, 0x01, 0x02, 0x03, 0x04};
     uvhttp_ws_opcode_t opcode = UVHTTP_WS_OPCODE_BINARY;
     
-    int result = uvhttp_ws_build_frame(buffer, sizeof(buffer), 
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
                                        payload, sizeof(payload),
                                        opcode, 0, 1);
     EXPECT_GE(result, 0);
@@ -188,7 +201,10 @@ TEST(UvhttpWebsocketFullCoverageTest, WsBuildFramePing) {
     uint8_t buffer[256];
     uvhttp_ws_opcode_t opcode = UVHTTP_WS_OPCODE_PING;
     
-    int result = uvhttp_ws_build_frame(buffer, sizeof(buffer), 
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
                                        NULL, 0,
                                        opcode, 0, 1);
     EXPECT_GE(result, 0);
@@ -203,7 +219,10 @@ TEST(UvhttpWebsocketFullCoverageTest, WsBuildFramePong) {
     uint8_t buffer[256];
     uvhttp_ws_opcode_t opcode = UVHTTP_WS_OPCODE_PONG;
     
-    int result = uvhttp_ws_build_frame(buffer, sizeof(buffer), 
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
                                        NULL, 0,
                                        opcode, 0, 1);
     EXPECT_GE(result, 0);
@@ -218,7 +237,10 @@ TEST(UvhttpWebsocketFullCoverageTest, WsBuildFrameClose) {
     uint8_t buffer[256];
     uvhttp_ws_opcode_t opcode = UVHTTP_WS_OPCODE_CLOSE;
     
-    int result = uvhttp_ws_build_frame(buffer, sizeof(buffer), 
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
                                        NULL, 0,
                                        opcode, 0, 1);
     EXPECT_GE(result, 0);
@@ -234,7 +256,10 @@ TEST(UvhttpWebsocketFullCoverageTest, WsBuildFrameFragmented) {
     const char* payload = "Hello";
     uvhttp_ws_opcode_t opcode = UVHTTP_WS_OPCODE_TEXT;
     
-    int result = uvhttp_ws_build_frame(buffer, sizeof(buffer), 
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
                                        (const uint8_t*)payload, strlen(payload),
                                        opcode, 0, 0); /* FIN=0 */
     EXPECT_GE(result, 0);
@@ -247,16 +272,19 @@ TEST(UvhttpWebsocketFullCoverageTest, WsBuildFrameFragmented) {
 TEST(UvhttpWebsocketFullCoverageTest, WsBuildFrameNull) {
     uint8_t buffer[256];
     
-    int result = uvhttp_ws_build_frame(NULL, sizeof(buffer), NULL, 0, 
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_build_frame(&context, NULL, sizeof(buffer), NULL, 0,
                                        UVHTTP_WS_OPCODE_TEXT, 0, 1);
     EXPECT_LT(result, 0);
     
-    result = uvhttp_ws_build_frame(buffer, 0, NULL, 0, 
+    result = uvhttp_ws_build_frame(&context, buffer, 0, NULL, 0,
                                    UVHTTP_WS_OPCODE_TEXT, 0, 1);
     EXPECT_LT(result, 0);
     
     /* 缓冲区不足 */
-    result = uvhttp_ws_build_frame(buffer, 1, (const uint8_t*)"Hello", 5, 
+    result = uvhttp_ws_build_frame(&context, buffer, 1, (const uint8_t*)"Hello", 5,
                                    UVHTTP_WS_OPCODE_TEXT, 0, 1);
     EXPECT_LT(result, 0);
 }

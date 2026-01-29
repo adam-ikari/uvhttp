@@ -21,7 +21,7 @@
 [submodule "deps/uthash"]
 	path = deps/uthash
 	url = https://github.com/troydhanson/uthash.git
-	branch = v1.9.8
+	branch = v1.9.9.1
 [submodule "deps/xxhash"]
 	path = deps/xxhash
 	url = https://github.com/Cyan4973/xxHash.git

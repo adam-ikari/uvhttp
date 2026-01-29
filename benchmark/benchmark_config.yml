@@ -1,0 +1,124 @@
+# UVHTTP 性能基准测试配置
+# 
+# 这个配置文件定义了性能基准测试的标准参数和目标
+
+# 服务器配置
+server:
+  host: "127.0.0.1"
+  port: 18081
+  startup_timeout: 5  # 服务器启动超时（秒）
+
+# 测试配置
+test:
+  duration: 30  # 测试时长（秒）
+  warmup: 5     # 预热时长（秒）
+  cooldown: 2   # 冷却时长（秒）
+
+# 并发级别配置
+concurrency_levels:
+  - name: "低并发"
+    threads: 2
+    connections: 10
+    target_rps: 17000  # 目标 RPS
+  - name: "中等并发"
+    threads: 4
+    connections: 50
+    target_rps: 17000
+  - name: "高并发"
+    threads: 8
+    connections: 200
+    target_rps: 16000
+  - name: "极高并发"
+    threads: 16
+    connections: 500
+    target_rps: 15000
+
+# 测试端点配置
+endpoints:
+  - path: "/"
+    name: "简单文本"
+    description: "简单的文本响应"
+    response_size: 13  # bytes
+    method: "GET"
+  - path: "/json"
+    name: "JSON响应"
+    description: "JSON 格式的响应"
+    response_size: 50
+    method: "GET"
+  - path: "/api"
+    name: "POST请求"
+    description: "POST 请求处理"
+    response_size: 23
+    method: "POST"
+  - path: "/small"
+    name: "小响应"
+    description: "1KB 大小的响应"
+    response_size: 1023
+    method: "GET"
+  - path: "/medium"
+    name: "中等响应"
+    description: "10KB 大小的响应"
+    response_size: 10239
+    method: "GET"
+  - path: "/large"
+    name: "大响应"
+    description: "100KB 大小的响应"
+    response_size: 102399
+    method: "GET"
+  - path: "/health"
+    name: "健康检查"
+    description: "健康检查端点"
+    response_size: 22
+    method: "GET"
+
+# 性能目标
+performance_targets:
+  rps:
+    low: 17000      # 低并发目标
+    medium: 17000   # 中等并发目标
+    high: 16000     # 高并发目标
+    extreme: 15000  # 极高并发目标
+  
+  latency:
+    p50: 10         # 50% 百分位数延迟（毫秒）
+    p95: 20         # 95% 百分位数延迟（毫秒）
+    p99: 30         # 99% 百分位数延迟（毫秒）
+    avg: 15         # 平均延迟（毫秒）
+  
+  error_rate:
+    max: 0.001      # 最大错误率（0.1%）
+
+# 测试工具配置
+tools:
+  wrk:
+    enabled: true
+    timeout: 30     # 超时时间（秒）
+    max_threads: 16
+    max_connections: 1000
+  
+  ab:
+    enabled: true
+    timeout: 30
+    max_requests: 1000000
+    max_connections: 1000
+
+# 结果配置
+results:
+  output_dir: "results"
+  format: ["markdown", "json", "csv"]
+  keep_logs: true
+  archive: true
+
+# 报告配置
+report:
+  include_charts: true
+  include_raw_data: true
+  include_comparison: true
+  baseline_file: "baseline.json"
+
+# 通知配置（可选）
+notifications:
+  enabled: false
+  on_failure: true
+  on_regression: true
+  channels: []

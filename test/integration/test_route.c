@@ -3,22 +3,21 @@
 #include <signal.h>
 #include <string.h>
 
-// 应用上下文结构 - 使用循环注入模式
+// 应用上下文结构 - 使用 server->user_data
 typedef struct {
     uvhttp_server_t* server;
     uvhttp_router_t* router;
 } app_context_t;
 
+// 全局应用上下文 - 仅在 main 函数中设置和使用
+static app_context_t* g_app_context = NULL;
+
 void signal_handler(int sig) {
     (void)sig;  // Suppress unused parameter warning
-    uv_loop_t* loop = uv_default_loop();
-    if (loop && loop->data) {
-        app_context_t* ctx = (app_context_t*)loop->data;
-        if (ctx && ctx->server) {
-            uvhttp_server_stop(ctx->server);
-            uvhttp_server_free(ctx->server);
-            ctx->server = NULL;
-        }
+    if (g_app_context && g_app_context->server) {
+        uvhttp_server_stop(g_app_context->server);
+        uvhttp_server_free(g_app_context->server);
+        g_app_context->server = NULL;
     }
     exit(0);
 }
@@ -48,23 +47,26 @@ int main() {
     }
     memset(ctx, 0, sizeof(app_context_t));
     
-    // 注入到循环
-    loop->data = ctx;
+    // 设置全局应用上下文
+    g_app_context = ctx;
     
     // 创建服务器
-    ctx->server = uvhttp_server_new(loop);
-    if (!ctx->server) {
-        fprintf(stderr, "Failed to create server\n");
-        uvhttp_free(ctx);
+    uvhttp_error_t result = uvhttp_server_new(loop, &ctx->server);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(result));
         return 1;
     }
     
+    // 设置服务器用户数据
+    ctx->server->user_data = ctx;
+    
     // 创建路由器
-    ctx->router = uvhttp_router_new();
-    if (!ctx->router) {
+    uvhttp_error_t router_result = uvhttp_router_new(&ctx->router);
+    if (router_result != UVHTTP_OK) {
         fprintf(stderr, "Failed to create router\n");
         uvhttp_server_free(ctx->server);
         uvhttp_free(ctx);
+        g_app_context = NULL;
         return 1;
     }
     
@@ -84,7 +86,7 @@ int main() {
             ctx->server = NULL;
         }
         uvhttp_free(ctx);
-        loop->data = NULL;
+        g_app_context = NULL;
     }
     
     return 0;

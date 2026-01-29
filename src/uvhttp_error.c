@@ -2,51 +2,38 @@
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_context.h"
+#include "uvhttp_features.h"
+#include "uvhttp_error_handler.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
 
-/* 错误恢复配置 */
-typedef struct {
-    int max_retries;
-    int base_delay_ms;
-    int max_delay_ms;
-    double backoff_multiplier;
-} uvhttp_error_recovery_config_t;
+/* 错误恢复配置 - 使用全局配置 */
+extern uvhttp_error_recovery_config_t g_error_recovery_config;
 
-static uvhttp_error_recovery_config_t recovery_config = {
-    .max_retries = 3,
-    .base_delay_ms = UVHTTP_DEFAULT_BASE_DELAY_MS,
-    .max_delay_ms = UVHTTP_DEFAULT_MAX_DELAY_MS,
-    .backoff_multiplier = 2.0
-};
-
-/* 错误统计 */
-typedef struct {
-    size_t error_counts[UVHTTP_ERROR_COUNT];
-    time_t last_error_time;
-    char last_error_context[256];
-} uvhttp_error_stats_t;
-
+/* 错误统计 - 仅在启用统计功能时定义 */
+#if UVHTTP_FEATURE_STATISTICS
 static uvhttp_error_stats_t error_stats = {0};
+#endif
 
 /* 设置错误恢复配置 */
 void uvhttp_set_error_recovery_config(int max_retries, int base_delay_ms, 
                                      int max_delay_ms, double backoff_multiplier) {
-    recovery_config.max_retries = max_retries > 0 ? max_retries : 3;
-    recovery_config.base_delay_ms = base_delay_ms > 0 ? base_delay_ms : UVHTTP_DEFAULT_BASE_DELAY_MS;
-    recovery_config.max_delay_ms = max_delay_ms > 0 ? max_delay_ms : UVHTTP_DEFAULT_MAX_DELAY_MS;
-    recovery_config.backoff_multiplier = backoff_multiplier > 1.0 ? backoff_multiplier : 2.0;
+    g_error_recovery_config.max_retries = max_retries > 0 ? max_retries : 3;
+    g_error_recovery_config.base_delay_ms = base_delay_ms > 0 ? base_delay_ms : UVHTTP_DEFAULT_BASE_DELAY_MS;
+    g_error_recovery_config.max_delay_ms = max_delay_ms > 0 ? max_delay_ms : UVHTTP_DEFAULT_MAX_DELAY_MS;
+    g_error_recovery_config.backoff_multiplier = backoff_multiplier > 1.0 ? backoff_multiplier : 2.0;
 }
 
 /* 计算重试延迟（指数退避） */
 static int calculate_retry_delay(int attempt) {
-    int delay = recovery_config.base_delay_ms;
+    int delay = g_error_recovery_config.base_delay_ms;
     for (int i = 0; i < attempt; i++) {
-        delay *= recovery_config.backoff_multiplier;
+        delay *= g_error_recovery_config.backoff_multiplier;
     }
-    return delay > recovery_config.max_delay_ms ? recovery_config.max_delay_ms : delay;
+    return (delay > g_error_recovery_config.max_delay_ms) ? 
+           g_error_recovery_config.max_delay_ms : delay;
 }
 
 /* 执行重试延迟 */
@@ -76,8 +63,7 @@ static int is_retryable_error(uvhttp_error_t error) {
         case UVHTTP_ERROR_WEBSOCKET_TOO_LARGE:
         case UVHTTP_ERROR_WEBSOCKET_INVALID_OPCODE:
         
-        /* 可重试的中间件错误 */
-        case UVHTTP_ERROR_MIDDLEWARE_EXECUTE:
+        /* 可重试的错误 */
         case UVHTTP_ERROR_LOG_WRITE:
             return TRUE;
         
@@ -102,6 +88,8 @@ static int is_retryable_error(uvhttp_error_t error) {
         case UVHTTP_ERROR_HEADER_TOO_LARGE:
         case UVHTTP_ERROR_BODY_TOO_LARGE:
         case UVHTTP_ERROR_MALFORMED_REQUEST:
+        case UVHTTP_ERROR_FILE_TOO_LARGE:
+        case UVHTTP_ERROR_IO_ERROR:
         case UVHTTP_ERROR_TLS_INIT:
         case UVHTTP_ERROR_TLS_CONTEXT:
         case UVHTTP_ERROR_TLS_CERT_LOAD:
@@ -121,19 +109,10 @@ static int is_retryable_error(uvhttp_error_t error) {
         case UVHTTP_ERROR_WEBSOCKET_NOT_CONNECTED:
         case UVHTTP_ERROR_WEBSOCKET_ALREADY_CONNECTED:
         case UVHTTP_ERROR_WEBSOCKET_CLOSED:
-        case UVHTTP_ERROR_HTTP2_INIT:
-        case UVHTTP_ERROR_HTTP2_STREAM:
-        case UVHTTP_ERROR_HTTP2_SETTINGS:
-        case UVHTTP_ERROR_HTTP2_FLOW_CONTROL:
-        case UVHTTP_ERROR_HTTP2_HEADER_COMPRESS:
-        case UVHTTP_ERROR_HTTP2_PRIORITY:
         case UVHTTP_ERROR_CONFIG_PARSE:
         case UVHTTP_ERROR_CONFIG_INVALID:
         case UVHTTP_ERROR_CONFIG_FILE_NOT_FOUND:
         case UVHTTP_ERROR_CONFIG_MISSING_REQUIRED:
-        case UVHTTP_ERROR_MIDDLEWARE_INIT:
-        case UVHTTP_ERROR_MIDDLEWARE_REGISTER:
-        case UVHTTP_ERROR_MIDDLEWARE_NOT_FOUND:
         case UVHTTP_ERROR_LOG_INIT:
         case UVHTTP_ERROR_LOG_FILE_OPEN:
         case UVHTTP_ERROR_LOG_NOT_INITIALIZED:
@@ -145,11 +124,12 @@ static int is_retryable_error(uvhttp_error_t error) {
 }
 
 /* 带重试的错误处理函数 */
-uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*), 
+uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*),
                                      void* context, const char* operation_name) {
+    (void)operation_name;  /* 预留参数，用于日志记录 */
     uvhttp_error_t last_error = UVHTTP_OK;
     
-    for (int attempt = 0; attempt <= recovery_config.max_retries; attempt++) {
+    for (int attempt = 0; attempt <= g_error_recovery_config.max_retries; attempt++) {
         last_error = operation(context);
         
         if (last_error == UVHTTP_OK) {
@@ -157,6 +137,7 @@ uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*),
             return UVHTTP_OK;
         }
         
+#if UVHTTP_FEATURE_STATISTICS
         /* 记录错误统计 */
         int index = (last_error < 0) ? -last_error : 0;
         if (index >= 0 && index < UVHTTP_ERROR_COUNT) {
@@ -165,9 +146,10 @@ uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*),
         error_stats.last_error_time = time(NULL);
         snprintf(error_stats.last_error_context, sizeof(error_stats.last_error_context),
                 "%s (attempt %d)", operation_name, attempt + 1);
+#endif
         
         /* 如果是最后一次尝试或错误不可重试，返回错误 */
-        if (attempt == recovery_config.max_retries || !is_retryable_error(last_error)) {
+        if (attempt == g_error_recovery_config.max_retries || !is_retryable_error(last_error)) {
             break;
         }
         
@@ -181,6 +163,7 @@ uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*),
 
 /* 记录错误 */
 void uvhttp_log_error(uvhttp_error_t error, const char* context) {
+#if UVHTTP_FEATURE_STATISTICS
     /* 转换负数错误码为正数索引 */
     int index = (error < 0) ? -error : 0;
     
@@ -196,9 +179,14 @@ void uvhttp_log_error(uvhttp_error_t error, const char* context) {
         snprintf(error_stats.last_error_context, sizeof(error_stats.last_error_context),
                 "%s", uvhttp_error_string(error));
     }
+#else
+    (void)error;
+    (void)context;
+#endif
 }
 
 /* 获取错误统计 */
+#if UVHTTP_FEATURE_STATISTICS
 void uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts, time_t* last_error_time, 
                            const char** last_error_context) {
     /* 向后兼容：当 context 为 NULL 时使用静态全局变量 */
@@ -225,8 +213,18 @@ void uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts, tim
         *last_error_context = stats->last_error_context;
     }
 }
+#else
+void uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts, time_t* last_error_time, 
+                           const char** last_error_context) {
+    (void)context;
+    (void)error_counts;
+    (void)last_error_time;
+    (void)last_error_context;
+}
+#endif
 
 /* 重置错误统计 */
+#if UVHTTP_FEATURE_STATISTICS
 void uvhttp_reset_error_stats(uvhttp_context_t* context) {
     /* 向后兼容：当 context 为 NULL 时使用静态全局变量 */
     uvhttp_error_stats_t* stats = NULL;
@@ -242,8 +240,14 @@ void uvhttp_reset_error_stats(uvhttp_context_t* context) {
         memset(stats, 0, sizeof(*stats));
     }
 }
+#else
+void uvhttp_reset_error_stats(uvhttp_context_t* context) {
+    (void)context;
+}
+#endif
 
 /* 获取最频繁的错误 */
+#if UVHTTP_FEATURE_STATISTICS
 uvhttp_error_t uvhttp_get_most_frequent_error(uvhttp_context_t* context) {
     /* 向后兼容：当 context 为 NULL 时使用静态全局变量 */
     uvhttp_error_stats_t* stats = NULL;
@@ -272,6 +276,12 @@ uvhttp_error_t uvhttp_get_most_frequent_error(uvhttp_context_t* context) {
     /* 返回负数错误码 */
     return -max_index;
 }
+#else
+uvhttp_error_t uvhttp_get_most_frequent_error(uvhttp_context_t* context) {
+    (void)context;
+    return UVHTTP_OK;
+}
+#endif
 
 const char* uvhttp_error_string(uvhttp_error_t error) {
     switch (error) {
@@ -336,30 +346,15 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
         case UVHTTP_ERROR_ALLOCATOR_SET:
             return "Allocator set failed";
         
-        /* WebSocket errors */
-                case UVHTTP_ERROR_WEBSOCKET_INIT:
-                    return "WebSocket initialization failed";
-                case UVHTTP_ERROR_WEBSOCKET_HANDSHAKE:
-                    return "WebSocket handshake failed";
-                case UVHTTP_ERROR_WEBSOCKET_FRAME:
-                    return "WebSocket frame processing failed";
-                
-                /* HTTP/2 errors */
-                case UVHTTP_ERROR_HTTP2_INIT:
-                    return "HTTP/2 initialization failed";
-                case UVHTTP_ERROR_HTTP2_STREAM:
-                    return "HTTP/2 stream error";
-                case UVHTTP_ERROR_HTTP2_SETTINGS:
-                    return "HTTP/2 settings error";
-                case UVHTTP_ERROR_HTTP2_FLOW_CONTROL:
-                    return "HTTP/2 flow control error";
-                case UVHTTP_ERROR_HTTP2_HEADER_COMPRESS:
-                    return "HTTP/2 header compression error";
-                case UVHTTP_ERROR_HTTP2_PRIORITY:
-                    return "HTTP/2 priority error";
-                
-                /* Configuration errors */
-                case UVHTTP_ERROR_CONFIG_PARSE:
+                        /* WebSocket errors */
+                        case UVHTTP_ERROR_WEBSOCKET_INIT:
+                            return "WebSocket initialization failed";
+                        case UVHTTP_ERROR_WEBSOCKET_HANDSHAKE:
+                            return "WebSocket handshake failed";
+                        case UVHTTP_ERROR_WEBSOCKET_FRAME:
+                            return "WebSocket frame processing failed";
+                        
+                        /* Configuration errors */                case UVHTTP_ERROR_CONFIG_PARSE:
                     return "Configuration parse error";
                 case UVHTTP_ERROR_CONFIG_INVALID:
                     return "Invalid configuration";
@@ -655,15 +650,23 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
                             return "HTTP headers are too large";
                 
                         case UVHTTP_ERROR_BODY_TOO_LARGE:
-                
+
                             return "Request body is too large";
-                
+
                         case UVHTTP_ERROR_MALFORMED_REQUEST:
-                
+
                             return "Malformed HTTP request";
-                
-                        
-                
+
+                        case UVHTTP_ERROR_FILE_TOO_LARGE:
+
+                            return "File is too large";
+
+                        case UVHTTP_ERROR_IO_ERROR:
+
+                            return "I/O error";
+
+
+
                         /* TLS errors */
                 
                         case UVHTTP_ERROR_TLS_INIT:
@@ -773,41 +776,12 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
                         case UVHTTP_ERROR_WEBSOCKET_CLOSED:
                 
                             return "WebSocket connection is closed";
-                
-                        
-                
-                        /* HTTP/2 errors */
-                
-                        case UVHTTP_ERROR_HTTP2_INIT:
-                
-                            return "Failed to initialize HTTP/2";
-                
-                        case UVHTTP_ERROR_HTTP2_STREAM:
-                
-                            return "HTTP/2 stream error";
-                
-                        case UVHTTP_ERROR_HTTP2_SETTINGS:
-                
-                            return "HTTP/2 settings error";
-                
-                        case UVHTTP_ERROR_HTTP2_FLOW_CONTROL:
-                
-                            return "HTTP/2 flow control error";
-                
-                        case UVHTTP_ERROR_HTTP2_HEADER_COMPRESS:
-                
-                            return "HTTP/2 header compression error";
-                
-                        case UVHTTP_ERROR_HTTP2_PRIORITY:
-                
-                            return "HTTP/2 priority error";
-                
-                        
-                
-                        /* Configuration errors */
-                
-                        case UVHTTP_ERROR_CONFIG_PARSE:
-                
+                                            
+                                            
+                                            
+                                                    /* Configuration errors */
+                                            
+                                                    case UVHTTP_ERROR_CONFIG_PARSE:                
                             return "Failed to parse configuration";
                 
                         case UVHTTP_ERROR_CONFIG_INVALID:
@@ -825,24 +799,6 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
                         
                 
                         /* Middleware errors */
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_INIT:
-                
-                            return "Failed to initialize middleware";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_REGISTER:
-                
-                            return "Failed to register middleware";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_EXECUTE:
-                
-                            return "Middleware execution failed";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_NOT_FOUND:
-                
-                            return "Middleware not found";
-                
-                        
                 
                         /* Logging errors */
                 
@@ -1017,15 +973,23 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
                             return "Reduce header size or increase limit";
                 
                         case UVHTTP_ERROR_BODY_TOO_LARGE:
-                
+
                             return "Reduce body size or increase limit";
-                
+
                         case UVHTTP_ERROR_MALFORMED_REQUEST:
-                
+
                             return "Check request format and syntax";
-                
-                        
-                
+
+                        case UVHTTP_ERROR_FILE_TOO_LARGE:
+
+                            return "Use a smaller file or increase max_file_size limit";
+
+                        case UVHTTP_ERROR_IO_ERROR:
+
+                            return "Check file permissions and disk space";
+
+
+
                         /* TLS errors */
                 
                         case UVHTTP_ERROR_TLS_INIT:
@@ -1135,41 +1099,12 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
                         case UVHTTP_ERROR_WEBSOCKET_CLOSED:
                 
                             return "Re-establish WebSocket connection";
-                
-                        
-                
-                        /* HTTP/2 errors */
-                
-                        case UVHTTP_ERROR_HTTP2_INIT:
-                
-                            return "Check HTTP/2 configuration";
-                
-                        case UVHTTP_ERROR_HTTP2_STREAM:
-                
-                            return "Reset or recreate the stream";
-                
-                        case UVHTTP_ERROR_HTTP2_SETTINGS:
-                
-                            return "Review HTTP/2 settings";
-                
-                        case UVHTTP_ERROR_HTTP2_FLOW_CONTROL:
-                
-                            return "Adjust flow control parameters";
-                
-                        case UVHTTP_ERROR_HTTP2_HEADER_COMPRESS:
-                
-                            return "Check header compression settings";
-                
-                        case UVHTTP_ERROR_HTTP2_PRIORITY:
-                
-                            return "Review stream priority settings";
-                
-                        
-                
-                        /* Configuration errors */
-                
-                        case UVHTTP_ERROR_CONFIG_PARSE:
-                
+                                            
+                                            
+                                            
+                                                    /* Configuration errors */
+                                            
+                                                    case UVHTTP_ERROR_CONFIG_PARSE:                
                             return "Check configuration file syntax";
                 
                         case UVHTTP_ERROR_CONFIG_INVALID:
@@ -1187,24 +1122,6 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
                         
                 
                         /* Middleware errors */
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_INIT:
-                
-                            return "Check middleware configuration";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_REGISTER:
-                
-                            return "Verify middleware registration parameters";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_EXECUTE:
-                
-                            return "Retry operation or fix middleware logic";
-                
-                        case UVHTTP_ERROR_MIDDLEWARE_NOT_FOUND:
-                
-                            return "Register the middleware or check path";
-                
-                        
                 
                         /* Logging errors */
                 

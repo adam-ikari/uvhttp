@@ -5,6 +5,206 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-01-28
+
+### Breaking Changes
+
+⚠️ **重要**: 本版本包含重大架构重构，多个 API 发生破坏性变更
+
+1. **所有初始化函数返回值变更**
+   - **影响**: 所有使用 `uvhttp_config_new()`, `uvhttp_context_create()` 等函数的代码
+   - **变更**: 返回值从指针类型改为 `uvhttp_error_t`，通过输出参数返回对象
+   ```c
+   // 旧代码（已移除）
+   uvhttp_config_t* config = uvhttp_config_new();
+   if (!config) { /* 处理错误 */ }
+   
+   // 新代码
+   uvhttp_config_t* config = NULL;
+   uvhttp_error_t result = uvhttp_config_new(&config);
+   if (result != UVHTTP_OK) { /* 处理错误 */ }
+   ```
+
+2. **依赖注入系统已移除**
+   - **影响**: 使用 `uvhttp_deps.h` 和相关 provider 抽象的代码
+   - **变更**: 移除 `uvhttp_deps.h`, `uvhttp_connection_provider_t`, `uvhttp_logger_provider_t`, `uvhttp_config_provider_t`
+   - **迁移**: 直接使用 libuv 和标准库函数
+   ```c
+   // 旧代码（已移除）
+   uvhttp_deps_t* deps = uvhttp_deps_new();
+   uvhttp_deps_set_loop_provider(deps, provider);
+   
+   // 新代码（直接使用 libuv）
+   uv_loop_t* loop = uv_default_loop();
+   ```
+
+3. **日志系统重构**
+   - **影响**: 使用 `uvhttp_logger_provider_t` 的代码
+   - **变更**: 改为编译期宏实现，Release 模式下零开销
+   ```c
+   // 旧代码（已移除）
+   uvhttp_logger_provider_t* logger = uvhttp_default_logger_provider_create(level);
+   logger->log(logger, UVHTTP_LOG_LEVEL_INFO, "message");
+   
+   // 新代码（编译期宏）
+   UVHTTP_LOG_INFO("message");
+   ```
+
+4. **中间件架构变更**
+   - **影响**: 使用动态中间件链的代码
+   - **变更**: 改为编译期宏定义中间件链
+   - **迁移**: 使用 `UVHTTP_DEFINE_MIDDLEWARE_CHAIN` 宏
+
+5. **WebSocket 实现重命名**
+   - **影响**: 包含 `uvhttp_websocket_native.h` 的代码
+   - **变更**: 统一为 `uvhttp_websocket.h`
+   ```c
+   // 旧代码（已移除）
+   #include "uvhttp_websocket_native.h"
+   
+   // 新代码
+   #include "uvhttp_websocket.h"
+   ```
+
+### Removed
+- **抽象层**: 移除所有运行时抽象层
+  - `uvhttp_deps.h` (125 行)
+  - `uvhttp_connection_provider_t` 接口
+  - `uvhttp_logger_provider_t` 接口
+  - `uvhttp_config_provider_t` 接口
+  - `uvhttp_network_interface_t` 接口
+- **测试文件**: 删除 38 个已禁用的测试文件
+- **示例文件**: 删除 5 个过时的中间件示例
+
+### Added
+- **Benchmark 目录**: 新增基准性能测试目录
+  - `benchmark/performance_allocator.c`
+  - `benchmark/performance_allocator_compare.c`
+  - `benchmark/test_bitfield.c`
+  - `benchmark/README.md`
+- **日志系统**: 新增编译期宏日志系统
+  - `include/uvhttp_logging.h`
+  - `src/uvhttp_logging.c`
+
+### Performance
+- **零开销抽象**: 编译期宏实现，Release 模式下完全零开销
+- **内存分配器**: 性能与系统分配器相当
+- **RPS 性能测试**:
+  - 4线程100连接：22,307 RPS
+  - 2线程50连接：23,070 RPS
+  - 8线程200连接：21,707 RPS
+
+### Code Reduction
+- **总代码减少**: 23,805 行代码（减少 88%）
+- **简化架构**: 移除所有不必要的抽象层
+- **提高可维护性**: 代码更简洁，易于理解和维护
+
+### Migration Guide
+
+详细的迁移指南请参考 `MIGRATION_GUIDE.md`
+
+## [2.1.0] - 2026-01-27
+
+### Added
+- **使用者教程**: 新增完整的使用者文档
+  - `docs/guide/installation.md`: 详细安装指南（Linux/macOS/Windows）
+  - `docs/guide/first-server.md`: 第一个服务器教程（3 个完整示例）
+  - `docs/guide/websocket.md`: WebSocket 使用指南（含应用层认证示例）
+- **Examples 重构**: 按功能分类重组示例代码
+  - `01_basics/`: 基础示例
+  - `02_routing/`: 路由示例
+  - `04_static_files/`: 静态文件示例
+  - `05_websocket/`: WebSocket 示例
+  - `06_advanced/`: 高级功能示例
+  - `07_performance/`: 性能测试示例
+
+### Changed
+- **项目结构**: 移除 `src/core` 目录，将核心文件移至 `src/` 根目录
+  - 理由：文件数量少（24 个），不需要子文件夹
+
+### Performance
+- **RPS 性能提升**: 峰值 RPS 从 17,798 提升到 24,439 (+37.3%)
+- **延迟降低**: 平均延迟降低 30.1%
+- **内存优化**: 移除自定义内存池，使用 mimalloc
+  - 大对象分配性能提升 50%
+  - 减少内存碎片
+
+### Removed
+- **WebSocket 认证功能**: 移除内置的 WebSocket 认证模块
+  - 删除 `src/uvhttp_websocket_auth.c` (368 行)
+  - 删除 `include/uvhttp_websocket_auth.h` (147 行)
+  - 删除 `test/unit/test_websocket_auth_full_coverage.cpp` (542 行)
+  - 删除 `docs/guide/WEBSOCKET_AUTH.md` (377 行)
+- **自定义内存池**: 移除 `uvhttp_mempool` 模块
+  - 删除 `src/uvhttp_mempool.c` (97 行)
+  - 删除 `include/uvhttp_mempool.h` (47 行)
+  - 删除 `test/unit/test_mempool_full_coverage.cpp` (459 行)
+- **全局变量**: 移除 `g_uvhttp_context` 全局变量
+  - 改用 libuv loop 注入模式
+  - 提高可测试性和多实例支持
+
+### Fixed
+- **测试代码**: 修复移除内存池后的测试问题
+- **文档错误**: 修复教程中的 API 错误（uvhttp_run -> uv_run）
+
+### Documentation
+- **设计原则**: 在 IFLOW.md 中添加 10 条设计原则
+- **变更记录**: 记录所有重大架构变更
+
+### Breaking Changes
+
+⚠️ **重要**: 本版本包含破坏性变更，需要升级指南
+
+1. **WebSocket 认证 API 已移除**
+   - **影响**: 所有使用 `uvhttp_server_ws_set_auth_config` 等认证 API 的代码
+   - **迁移**: 认证功能应在应用层实现
+   - **示例**: 参考 `docs/guide/websocket.md` 中的应用层认证示例
+   ```c
+   // 旧代码（已移除）
+   uvhttp_server_ws_set_auth_config(server, auth_config);
+   
+   // 新代码（应用层认证）
+   int on_connect(uvhttp_ws_connection_t* ws_conn, void* user_data) {
+       const char* auth_header = uvhttp_ws_get_request_header(ws_conn, "Authorization");
+       if (!auth_header || !validate_token(auth_header + 7)) {
+           return -1;  // 拒绝连接
+       }
+       return 0;
+   }
+   ```
+
+2. **内存池 API 已移除**
+   - **影响**: 使用 `uvhttp_mempool_*` 函数的代码
+   - **迁移**: 直接使用 `UVHTTP_MALLOC` / `UVHTTP_FREE` 宏
+   ```c
+   // 旧代码（已移除）
+   uvhttp_mempool_alloc(pool, size);
+   
+   // 新代码
+   UVHTTP_MALLOC(size);
+   ```
+
+3. **全局变量 g_uvhttp_context 已移除**
+   - **影响**: 使用全局变量访问上下文的代码
+   - **迁移**: 改用 libuv loop 注入模式
+   ```c
+   // 旧代码（已移除）
+   uvhttp_context_t* ctx = g_uvhttp_context;
+   
+   // 新代码
+   uvhttp_context_t* ctx = (uvhttp_context_t*)loop->data;
+   ```
+
+### Migration Guide
+
+详细的迁移指南请参考：
+- WebSocket 认证迁移: `docs/guide/websocket.md`
+- libuv 数据指针模式: `docs/LIBUV_DATA_POINTER.md`
+
+### Testing
+- **测试通过**: 所有测试通过（34/34）
+- **性能测试**: RPS 基准测试通过（峰值 23,226 RPS）
+
 ## [2.0.0] - 2026-01-24
 
 ### Added
@@ -161,7 +361,6 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 ## [1.4.0] - 2026-01-13
 
 ### Added
-- **WebSocket 认证功能**: Token 认证、IP 白名单/黑名单
 - **WebSocket 连接管理**: 连接池、超时检测、心跳检测、广播功能
 - **内存管理优化**: 使用内联函数替代宏定义
 - **改进的超时检测机制**: 使用 libuv 定时器实现主动超时检测
@@ -177,7 +376,6 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 
 ### Fixed
 - **内存泄漏**: 修复 WebSocket 连接管理中的内存泄漏
-- **认证逻辑**: 修复 IP 白名单/黑名单匹配逻辑
 - **中等文件传输超时**: 使用分块发送（1MB chunks）
 - **示例程序内存泄漏**: 修复所有示例程序的内存管理不一致问题
 - **超时检测不完整**: 确保网络完全阻塞时也能及时响应

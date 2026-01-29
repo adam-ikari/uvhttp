@@ -1,0 +1,15 @@
+{
+  "test_name": "large_file",
+  "test_file": "/static/large.html",
+  "timestamp": "20260123_141603",
+  "config": {
+    "threads": 4,
+    "connections": 100,
+    "duration": 30
+  },
+  "results": {
+    "rps": 6502.13,
+    "avg_latency": "15.64ms",
+    "p99_latency": "35.75ms"
+  }
+}

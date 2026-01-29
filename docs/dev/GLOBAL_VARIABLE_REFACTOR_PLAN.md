@@ -6,7 +6,7 @@ UVHTTP 项目中存在 4 个静态全局变量，违反了项目的"避免全局
 
 ## 当前全局变量
 
-### 1. `g_tls_initialized` (uvhttp_tls_mbedtls.c)
+### 1. `g_tls_initialized` (uvhttp_tls.c)
 ```c
 static int g_tls_initialized = 0;
 ```
@@ -121,7 +121,7 @@ int uvhttp_config_reload(uvhttp_app_context_t* ctx);
 - `uvhttp_websocket_native.c` - WebSocket 连接创建
 - `uvhttp_error.c` - 错误记录
 - `uvhttp_config.c` - 配置管理
-- `uvhttp_tls_mbedtls.c` - TLS 初始化
+- `uvhttp_tls.c` - TLS 初始化
 
 ### 阶段 4: 更新测试
 

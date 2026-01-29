@@ -1,0 +1,94 @@
+name: Reusable Test Workflow
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      build-type:
+        required: false
+        type: string
+        default: 'Release'
+      test-type:
+        required: false
+        type: string
+        default: 'fast'
+        description: 'Test type: fast, slow, all, coverage, stress, memory'
+      timeout:
+        required: false
+        type: number
+        default: 60
+        description: 'Test timeout in seconds'
+      parallel:
+        required: false
+        type: number
+        default: 1
+        description: 'Number of parallel test jobs'
+    outputs:
+      test-status:
+        description: 'Test status'
+        value: ${{ jobs.test.outputs.status }}
+      test-count:
+        description: 'Total test count'
+        value: ${{ jobs.test.outputs.total }}
+      test-passed:
+        description: 'Passed test count'
+        value: ${{ jobs.test.outputs.passed }}
+      test-failed:
+        description: 'Failed test count'
+        value: ${{ jobs.test.outputs.failed }}
+      test-duration:
+        description: 'Test duration in seconds'
+        value: ${{ jobs.test.outputs.duration }}
+
+jobs:
+  test:
+    runs-on: ${{ inputs.os }}
+    timeout-minutes: ${{ inputs.timeout > 0 && inputs.timeout / 60 || 15 }}
+    outputs:
+      status: ${{ steps.run-test.outputs.status }}
+      total: ${{ steps.run-test.outputs.total }}
+      passed: ${{ steps.run-test.outputs.passed }}
+      failed: ${{ steps.run-test.outputs.failed }}
+      duration: ${{ steps.run-test.outputs.duration }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-${{ inputs.os }}-${{ inputs.build-type }}
+          path: ${{ inputs.build-type == 'Release' && 'build-release' || 'build-debug' }}
+
+      - name: Run tests
+        id: run-test
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: ${{ inputs.build-type == 'Release' && 'build-release' || 'build-debug' }}
+          test-type: ${{ inputs.test-type }}
+          timeout: ${{ inputs.timeout }}
+          parallel: ${{ inputs.parallel }}
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: test-logs-${{ inputs.os }}-${{ inputs.test-type }}
+          path: |
+            ${{ inputs.build-type == 'Release' && 'build-release' || 'build-debug' }}/Testing/
+            ${{ inputs.build-type == 'Release' && 'build-release' || 'build-debug' }}/**/*.log
+          retention-days: 7
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: test-results-${{ inputs.os }}-${{ inputs.test-type }}
+          path: |
+            ${{ inputs.build-type == 'Release' && 'build-release' || 'build-debug' }}/**/*.xml
+          retention-days: 7

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
-#include <uvhttp_websocket_native.h>
+#include <uvhttp_websocket.h>
 #include <uvhttp_allocator.h>
+#include <uvhttp_context.h>
 #include <string.h>
 
 /* 测试 WebSocket 连接创建 NULL fd */
@@ -186,7 +187,10 @@ TEST(UvhttpWebSocketNativeTest, ParseFrameHeaderClose) {
 /* 测试构建帧 NULL 缓冲区 */
 TEST(UvhttpWebSocketNativeTest, BuildFrameNullBuffer) {
     uint8_t payload[] = "test";
-    int result = uvhttp_ws_build_frame(NULL, 0, payload, strlen((char*)payload), UVHTTP_WS_OPCODE_TEXT, 0, 1);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_build_frame(&context, NULL, 0, payload, strlen((char*)payload), UVHTTP_WS_OPCODE_TEXT, 0, 1);
     EXPECT_EQ(result, -1);
 }
 
@@ -194,14 +198,20 @@ TEST(UvhttpWebSocketNativeTest, BuildFrameNullBuffer) {
 TEST(UvhttpWebSocketNativeTest, BuildFrameBufferTooSmall) {
     uint8_t buffer[1];
     uint8_t payload[] = "test";
-    int result = uvhttp_ws_build_frame(buffer, 1, payload, strlen((char*)payload), UVHTTP_WS_OPCODE_TEXT, 0, 1);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_build_frame(&context, buffer, 1, payload, strlen((char*)payload), UVHTTP_WS_OPCODE_TEXT, 0, 1);
     EXPECT_EQ(result, -1);
 }
 
 /* 测试构建帧 NULL 负载 */
 TEST(UvhttpWebSocketNativeTest, BuildFrameNullPayload) {
     uint8_t buffer[10];
-    int result = uvhttp_ws_build_frame(buffer, 10, NULL, 0, UVHTTP_WS_OPCODE_TEXT, 0, 1);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_build_frame(&context, buffer, 10, NULL, 0, UVHTTP_WS_OPCODE_TEXT, 0, 1);
     EXPECT_EQ(result, 2); /* 只有帧头 */
 }
 
@@ -209,7 +219,10 @@ TEST(UvhttpWebSocketNativeTest, BuildFrameNullPayload) {
 TEST(UvhttpWebSocketNativeTest, BuildFrameSmallPayload) {
     uint8_t buffer[10];
     uint8_t payload[] = "test";
-    int result = uvhttp_ws_build_frame(buffer, 10, payload, strlen((char*)payload), UVHTTP_WS_OPCODE_TEXT, 0, 1);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_build_frame(&context, buffer, 10, payload, strlen((char*)payload), UVHTTP_WS_OPCODE_TEXT, 0, 1);
     EXPECT_EQ(result, 6); /* 帧头 + 负载 */
     EXPECT_EQ(buffer[0], 0x81); /* FIN=1, opcode=TEXT */
     EXPECT_EQ(buffer[1], 0x04); /* 长度=4 */
@@ -222,7 +235,10 @@ TEST(UvhttpWebSocketNativeTest, BuildFrame126Bytes) {
     uint8_t payload[126];
     memset(payload, 'A', 126);
     
-    int result = uvhttp_ws_build_frame(buffer, 130, payload, 126, UVHTTP_WS_OPCODE_BINARY, 0, 1);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_build_frame(&context, buffer, 130, payload, 126, UVHTTP_WS_OPCODE_BINARY, 0, 1);
     EXPECT_EQ(result, 128); /* 帧头 + 负载 */
     EXPECT_EQ(buffer[0], 0x82); /* FIN=1, opcode=BINARY */
     EXPECT_EQ(buffer[1], 0x7E); /* 扩展长度 */
@@ -236,7 +252,10 @@ TEST(UvhttpWebSocketNativeTest, BuildFrame127Bytes) {
     uint8_t payload[127];
     memset(payload, 'A', 127);
     
-    int result = uvhttp_ws_build_frame(buffer, 140, payload, 127, UVHTTP_WS_OPCODE_TEXT, 0, 1);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_build_frame(&context, buffer, 140, payload, 127, UVHTTP_WS_OPCODE_TEXT, 0, 1);
     EXPECT_EQ(result, 129); /* 帧头 + 扩展长度 + 负载 */
     EXPECT_EQ(buffer[0], 0x81); /* FIN=1, opcode=TEXT */
     EXPECT_EQ(buffer[1], 0x7E); /* 扩展长度 */
@@ -246,17 +265,28 @@ TEST(UvhttpWebSocketNativeTest, BuildFrame127Bytes) {
 TEST(UvhttpWebSocketNativeTest, BuildFrameWithMask) {
     uint8_t buffer[10];
     uint8_t payload[] = "test";
-    int result = uvhttp_ws_build_frame(buffer, 10, payload, strlen((char*)payload), UVHTTP_WS_OPCODE_TEXT, 1, 1);
+    
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    uvhttp_context_init_websocket(&context);
+    
+    int result = uvhttp_ws_build_frame(&context, buffer, 10, payload, strlen((char*)payload), UVHTTP_WS_OPCODE_TEXT, 1, 1);
     EXPECT_EQ(result, 10); /* 帧头 + 掩码 + 负载 */
     EXPECT_EQ(buffer[0], 0x81); /* FIN=1, opcode=TEXT */
     EXPECT_EQ(buffer[1] & 0x80, 0x80); /* mask=1 */
+    
+    uvhttp_context_cleanup_websocket(&context);
 }
 
 /* 测试构建帧 FIN=0 */
 TEST(UvhttpWebSocketNativeTest, BuildFrameFinZero) {
     uint8_t buffer[10];
     uint8_t payload[] = "test";
-    int result = uvhttp_ws_build_frame(buffer, 10, payload, strlen((char*)payload), UVHTTP_WS_OPCODE_TEXT, 0, 0);
+    
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_build_frame(&context, buffer, 10, payload, strlen((char*)payload), UVHTTP_WS_OPCODE_TEXT, 0, 0);
     EXPECT_EQ(result, 6);
     EXPECT_EQ(buffer[0], 0x01); /* FIN=0, opcode=TEXT */
 }
@@ -390,10 +420,16 @@ TEST(UvhttpWebSocketNativeTest, HandshakeServer) {
 
 /* 测试握手客户端 NULL 连接 */
 TEST(UvhttpWebSocketNativeTest, HandshakeClientNullConn) {
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    uvhttp_context_init_websocket(&context);
+    
     char request[256];
     size_t request_len = sizeof(request);
-    int result = uvhttp_ws_handshake_client(NULL, "localhost", "/", request, &request_len);
+    int result = uvhttp_ws_handshake_client(&context, NULL, "localhost", "/", request, &request_len);
     EXPECT_EQ(result, -1);
+    
+    uvhttp_context_cleanup_websocket(&context);
 }
 
 /* 测试握手客户端 NULL 主机 */
@@ -401,12 +437,17 @@ TEST(UvhttpWebSocketNativeTest, HandshakeClientNullHost) {
     struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0);
     ASSERT_NE(conn, nullptr);
     
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    uvhttp_context_init_websocket(&context);
+    
     char request[256];
     size_t request_len = sizeof(request);
-    int result = uvhttp_ws_handshake_client(conn, NULL, "/", request, &request_len);
+    int result = uvhttp_ws_handshake_client(&context, conn, NULL, "/", request, &request_len);
     EXPECT_EQ(result, -1);
     
     uvhttp_ws_connection_free(conn);
+    uvhttp_context_cleanup_websocket(&context);
 }
 
 /* 测试握手客户端 NULL 路径 */
@@ -414,12 +455,17 @@ TEST(UvhttpWebSocketNativeTest, HandshakeClientNullPath) {
     struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0);
     ASSERT_NE(conn, nullptr);
     
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    uvhttp_context_init_websocket(&context);
+    
     char request[256];
     size_t request_len = sizeof(request);
-    int result = uvhttp_ws_handshake_client(conn, "localhost", NULL, request, &request_len);
+    int result = uvhttp_ws_handshake_client(&context, conn, "localhost", NULL, request, &request_len);
     EXPECT_EQ(result, -1);
     
     uvhttp_ws_connection_free(conn);
+    uvhttp_context_cleanup_websocket(&context);
 }
 
 /* 测试握手客户端 NULL 请求 */
@@ -427,10 +473,15 @@ TEST(UvhttpWebSocketNativeTest, HandshakeClientNullRequest) {
     struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0);
     ASSERT_NE(conn, nullptr);
     
-    int result = uvhttp_ws_handshake_client(conn, "localhost", "/", NULL, NULL);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    uvhttp_context_init_websocket(&context);
+    
+    int result = uvhttp_ws_handshake_client(&context, conn, "localhost", "/", NULL, NULL);
     EXPECT_EQ(result, -1);
     
     uvhttp_ws_connection_free(conn);
+    uvhttp_context_cleanup_websocket(&context);
 }
 
 /* 测试握手客户端 */
@@ -438,13 +489,18 @@ TEST(UvhttpWebSocketNativeTest, HandshakeClient) {
     struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0);
     ASSERT_NE(conn, nullptr);
     
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    uvhttp_context_init_websocket(&context);
+    
     char request[256];
     size_t request_len = sizeof(request);
-    int result = uvhttp_ws_handshake_client(conn, "localhost", "/", request, &request_len);
+    int result = uvhttp_ws_handshake_client(&context, conn, "localhost", "/", request, &request_len);
     EXPECT_EQ(result, 0);
     EXPECT_GT(request_len, 0);
     
     uvhttp_ws_connection_free(conn);
+    uvhttp_context_cleanup_websocket(&context);
 }
 
 /* 测试验证握手响应 NULL 连接 */
@@ -500,7 +556,9 @@ TEST(UvhttpWebSocketNativeTest, SetCallbacks) {
 /* 测试发送帧 NULL 连接 */
 TEST(UvhttpWebSocketNativeTest, SendFrameNullConn) {
     uint8_t data[] = "test";
-    int result = uvhttp_ws_send_frame(NULL, data, strlen((char*)data), UVHTTP_WS_OPCODE_TEXT);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    int result = uvhttp_ws_send_frame(&context, NULL, data, strlen((char*)data), UVHTTP_WS_OPCODE_TEXT);
     EXPECT_EQ(result, -1);
 }
 
@@ -509,7 +567,9 @@ TEST(UvhttpWebSocketNativeTest, SendFrameNullData) {
     struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
     ASSERT_NE(conn, nullptr);
     
-    int result = uvhttp_ws_send_frame(conn, NULL, 10, UVHTTP_WS_OPCODE_TEXT);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    int result = uvhttp_ws_send_frame(&context, conn, NULL, 10, UVHTTP_WS_OPCODE_TEXT);
     EXPECT_EQ(result, -1);
     
     uvhttp_ws_connection_free(conn);
@@ -518,7 +578,9 @@ TEST(UvhttpWebSocketNativeTest, SendFrameNullData) {
 /* 测试发送文本 NULL 连接 */
 TEST(UvhttpWebSocketNativeTest, SendTextNullConn) {
     const char* text = "test";
-    int result = uvhttp_ws_send_text(NULL, text, strlen(text));
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    int result = uvhttp_ws_send_text(&context, NULL, text, strlen(text));
     EXPECT_EQ(result, -1);
 }
 
@@ -527,7 +589,9 @@ TEST(UvhttpWebSocketNativeTest, SendTextNullText) {
     struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
     ASSERT_NE(conn, nullptr);
     
-    int result = uvhttp_ws_send_text(conn, NULL, 10);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    int result = uvhttp_ws_send_text(&context, conn, NULL, 10);
     EXPECT_EQ(result, -1);
     
     uvhttp_ws_connection_free(conn);
@@ -536,7 +600,9 @@ TEST(UvhttpWebSocketNativeTest, SendTextNullText) {
 /* 测试发送二进制 NULL 连接 */
 TEST(UvhttpWebSocketNativeTest, SendBinaryNullConn) {
     uint8_t data[] = "test";
-    int result = uvhttp_ws_send_binary(NULL, data, strlen((char*)data));
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    int result = uvhttp_ws_send_binary(&context, NULL, data, strlen((char*)data));
     EXPECT_EQ(result, -1);
 }
 
@@ -545,7 +611,9 @@ TEST(UvhttpWebSocketNativeTest, SendBinaryNullData) {
     struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
     ASSERT_NE(conn, nullptr);
     
-    int result = uvhttp_ws_send_binary(conn, NULL, 10);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    int result = uvhttp_ws_send_binary(&context, conn, NULL, 10);
     EXPECT_EQ(result, -1);
     
     uvhttp_ws_connection_free(conn);
@@ -554,7 +622,9 @@ TEST(UvhttpWebSocketNativeTest, SendBinaryNullData) {
 /* 测试发送 Ping NULL 连接 */
 TEST(UvhttpWebSocketNativeTest, SendPingNullConn) {
     uint8_t data[] = "test";
-    int result = uvhttp_ws_send_ping(NULL, data, strlen((char*)data));
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    int result = uvhttp_ws_send_ping(&context, NULL, data, strlen((char*)data));
     EXPECT_EQ(result, -1);
 }
 
@@ -563,7 +633,9 @@ TEST(UvhttpWebSocketNativeTest, SendPingNullData) {
     struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
     ASSERT_NE(conn, nullptr);
     
-    int result = uvhttp_ws_send_ping(conn, NULL, 10);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    int result = uvhttp_ws_send_ping(&context, conn, NULL, 10);
     EXPECT_EQ(result, -1);
     
     uvhttp_ws_connection_free(conn);
@@ -572,7 +644,9 @@ TEST(UvhttpWebSocketNativeTest, SendPingNullData) {
 /* 测试发送 Pong NULL 连接 */
 TEST(UvhttpWebSocketNativeTest, SendPongNullConn) {
     uint8_t data[] = "test";
-    int result = uvhttp_ws_send_pong(NULL, data, strlen((char*)data));
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    int result = uvhttp_ws_send_pong(&context, NULL, data, strlen((char*)data));
     EXPECT_EQ(result, -1);
 }
 
@@ -581,7 +655,9 @@ TEST(UvhttpWebSocketNativeTest, SendPongNullData) {
     struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
     ASSERT_NE(conn, nullptr);
     
-    int result = uvhttp_ws_send_pong(conn, NULL, 10);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    int result = uvhttp_ws_send_pong(&context, conn, NULL, 10);
     EXPECT_EQ(result, -1);
     
     uvhttp_ws_connection_free(conn);
@@ -589,7 +665,9 @@ TEST(UvhttpWebSocketNativeTest, SendPongNullData) {
 
 /* 测试关闭 NULL 连接 */
 TEST(UvhttpWebSocketNativeTest, CloseNullConn) {
-    int result = uvhttp_ws_close(NULL, 1000, "Normal closure");
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    int result = uvhttp_ws_close(&context, NULL, 1000, "Normal closure");
     EXPECT_EQ(result, -1);
 }
 
@@ -598,7 +676,9 @@ TEST(UvhttpWebSocketNativeTest, CloseNullReason) {
     struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
     ASSERT_NE(conn, nullptr);
     
-    int result = uvhttp_ws_close(conn, 1000, NULL);
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    int result = uvhttp_ws_close(&context, conn, 1000, NULL);
     EXPECT_EQ(result, -1);
     
     uvhttp_ws_connection_free(conn);
@@ -609,7 +689,10 @@ TEST(UvhttpWebSocketNativeTest, Close) {
     struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
     ASSERT_NE(conn, nullptr);
     
-    int result = uvhttp_ws_close(conn, 1000, "Normal closure");
+    uvhttp_context_t context;
+    memset(&context, 0, sizeof(context));
+    
+    int result = uvhttp_ws_close(&context, conn, 1000, "Normal closure");
     EXPECT_EQ(result, -1); /* fd 无效，无法发送 */
     
     uvhttp_ws_connection_free(conn);

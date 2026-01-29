@@ -18,14 +18,11 @@ struct whitelist_item {
 };
 #include "uvhttp_features.h"
 
-#if UVHTTP_FEATURE_MIDDLEWARE
-#include "uvhttp_middleware.h"
-#endif
-
 // Forward declarations
 typedef struct uvhttp_request uvhttp_request_t;
 typedef struct uvhttp_response uvhttp_response_t;
 typedef struct uvhttp_router uvhttp_router_t;
+typedef struct uvhttp_connection uvhttp_connection_t;
 
 #if UVHTTP_FEATURE_TLS
 typedef struct uvhttp_tls_context uvhttp_tls_context_t;
@@ -54,6 +51,7 @@ typedef struct {
     int heartbeat_interval;             /* 心跳间隔（秒） */
     uint64_t ping_timeout_ms;           /* Ping 超时时间（毫秒） */
     int enabled;                        /* 是否启用连接管理 */
+    struct uvhttp_server* server;       /* 所属服务器 */
 } ws_connection_manager_t;
 #endif
 
@@ -65,11 +63,6 @@ extern "C" {
 
 typedef struct uvhttp_server uvhttp_server_t;
 
-
-
-/* 前向声明 */
-typedef struct uvhttp_http_middleware uvhttp_http_middleware_t;
-
 // 服务器构建器结构体（统一API）
 typedef struct {
     uvhttp_server_t* server;
@@ -78,6 +71,19 @@ typedef struct {
     uv_loop_t* loop;
     int auto_cleanup;
 } uvhttp_server_builder_t;
+/* ========== 超时统计回调 ========== */
+/**
+ * @brief 超时统计回调函数类型
+ * 
+ * 由应用层实现，用于统计和记录连接超时事件
+ */
+typedef void (*uvhttp_timeout_callback_t)(
+    uvhttp_server_t* server,
+    uvhttp_connection_t* conn,
+    uint64_t timeout_ms,
+    void* user_data
+);
+
 
 struct uvhttp_server {
     /* 热路径字段（频繁访问）- 优化内存局部性 */
@@ -90,6 +96,7 @@ struct uvhttp_server {
     uvhttp_request_handler_t handler;         /* 8 字节 */
     uvhttp_router_t* router;                   /* 8 字节 */
     uvhttp_config_t* config;                   /* 8 字节 */
+    struct uvhttp_context* context;            /* 8 字节 - 应用上下文（避免独占 loop->data） */
     
     /* 网络连接（16字节对齐） */
     uv_tcp_t tcp_handle;                       /* 8 字节 */
@@ -102,11 +109,6 @@ struct uvhttp_server {
 #if UVHTTP_FEATURE_TLS
     uvhttp_tls_context_t* tls_ctx;             /* 8 字节 */
     int tls_enabled;                            /* 4 字节 */
-#endif
-    
-    /* 中间件链 */
-#if UVHTTP_FEATURE_MIDDLEWARE
-    uvhttp_http_middleware_t* middleware_chain; /* 8 字节 */
 #endif
     
     /* WebSocket相关 */
@@ -127,9 +129,11 @@ struct uvhttp_server {
     struct whitelist_item* rate_limit_whitelist_hash; /* 8 字节 */
 #endif
 
-    /* 连接池管理 */
-    void* connection_pool;                       /* 8 字节 */
-    size_t connection_pool_size;                   /* 8 字节 */
+    /* 应用数据（避免全局变量） */
+    void* user_data;                             /* 8 字节 - 应用特定的上下文数据 */
+    /* 超时统计回调 */
+    uvhttp_timeout_callback_t timeout_callback;  /* 8 字节 - 超时统计回调 */
+    void* timeout_callback_user_data;            /* 8 字节 - 回调用户数据 */
 };
 
 /* ========== 内存布局验证静态断言 ========== */
@@ -149,7 +153,15 @@ UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, max_connections) % 8 == 0,
                       "max_connections not 8-byte aligned");
 
 /* API函数 */
-uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop);  /* loop可为NULL，内部创建新循环 */
+/**
+ * @brief 创建新的 HTTP 服务器
+ * @param loop 事件循环，可为 NULL（内部创建新循环）
+ * @param server 输出参数，用于接收服务器指针
+ * @return UVHTTP_OK 成功，其他值表示失败
+ * @note 成功时，*server 被设置为有效的服务器对象，必须使用 uvhttp_server_free 释放
+ * @note 失败时，*server 被设置为 NULL
+ */
+uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server);
 uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, int port);
 uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server);
 #if UVHTTP_FEATURE_TLS
@@ -159,13 +171,7 @@ uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server, uvhttp_request_handler_t handler);
 uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server, uvhttp_router_t* router);
-
-#if UVHTTP_FEATURE_MIDDLEWARE
-// ========== 中间件 API ==========
-uvhttp_error_t uvhttp_server_add_middleware(uvhttp_server_t* server, uvhttp_http_middleware_t* middleware);
-uvhttp_error_t uvhttp_server_remove_middleware(uvhttp_server_t* server, const char* path);
-void uvhttp_server_cleanup_middleware(uvhttp_server_t* server);
-#endif
+uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server, struct uvhttp_context* context);
 
 #if UVHTTP_FEATURE_RATE_LIMIT
 // ========== 限流 API（核心功能） ==========
@@ -267,7 +273,15 @@ uvhttp_error_t uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server);
 // ========== 统一API函数 ==========
 
 // 快速创建和启动服务器
-uvhttp_server_builder_t* uvhttp_server_create(const char* host, int port);
+/**
+ * 创建并启动简单服务器（链式API）
+ *
+ * @param host 监听地址
+ * @param port 监听端口
+ * @param server 输出参数，返回创建的服务器构建器
+ * @return UVHTTP_OK 成功，其他值表示错误
+ */
+uvhttp_error_t uvhttp_server_create(const char* host, int port, uvhttp_server_builder_t** server);
 
 // 链式路由API
 uvhttp_server_builder_t* uvhttp_get(uvhttp_server_builder_t* server, const char* path, uvhttp_request_handler_t handler);
@@ -280,11 +294,6 @@ uvhttp_server_builder_t* uvhttp_any(uvhttp_server_builder_t* server, const char*
 uvhttp_server_builder_t* uvhttp_set_max_connections(uvhttp_server_builder_t* server, int max_conn);
 uvhttp_server_builder_t* uvhttp_set_timeout(uvhttp_server_builder_t* server, int timeout);
 uvhttp_server_builder_t* uvhttp_set_max_body_size(uvhttp_server_builder_t* server, size_t size);
-
-// 快速响应API
-void uvhttp_quick_response(uvhttp_response_t* response, int status, const char* content_type, const char* body);
-void uvhttp_html_response(uvhttp_response_t* response, const char* html_body);
-void uvhttp_file_response(uvhttp_response_t* response, const char* file_path);
 
 // 便捷请求参数获取
 const char* uvhttp_get_param(uvhttp_request_t* request, const char* name);
@@ -301,8 +310,7 @@ int uvhttp_serve(const char* host, int port);
 
 // WebSocket API
 #if UVHTTP_FEATURE_WEBSOCKET
-#include "uvhttp_websocket_native.h"
-#include "uvhttp_websocket_auth.h"
+#include "uvhttp_websocket.h"
 
 typedef struct {
     int (*on_connect)(uvhttp_ws_connection_t* ws_conn);
@@ -310,42 +318,14 @@ typedef struct {
     int (*on_close)(uvhttp_ws_connection_t* ws_conn);
     int (*on_error)(uvhttp_ws_connection_t* ws_conn, int error_code, const char* error_msg);
     void* user_data;
+    /* 超时统计回调 */
+    uvhttp_timeout_callback_t timeout_callback;  /* 8 字节 - 超时统计回调 */
+    void* timeout_callback_user_data;            /* 8 字节 - 回调用户数据 */
 } uvhttp_ws_handler_t;
 
 uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server, const char* path, uvhttp_ws_handler_t* handler);
 uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len);
 uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code, const char* reason);
-
-/* WebSocket 认证 API */
-uvhttp_error_t uvhttp_server_ws_set_auth_config(
-    uvhttp_server_t* server,
-    const char* path,
-    uvhttp_ws_auth_config_t* config
-);
-
-uvhttp_ws_auth_config_t* uvhttp_server_ws_get_auth_config(
-    uvhttp_server_t* server,
-    const char* path
-);
-
-uvhttp_error_t uvhttp_server_ws_enable_token_auth(
-    uvhttp_server_t* server,
-    const char* path,
-    uvhttp_ws_token_validator_callback validator,
-    void* user_data
-);
-
-uvhttp_error_t uvhttp_server_ws_add_ip_to_whitelist(
-    uvhttp_server_t* server,
-    const char* path,
-    const char* ip
-);
-
-uvhttp_error_t uvhttp_server_ws_add_ip_to_blacklist(
-    uvhttp_server_t* server,
-    const char* path,
-    const char* ip
-);
 
 /* 连接管理 API */
 uvhttp_error_t uvhttp_server_ws_enable_connection_management(
@@ -408,3 +388,8 @@ void uvhttp_request_cleanup(uvhttp_request_t* request);
 #endif
 
 #endif
+uvhttp_error_t uvhttp_server_set_timeout_callback(
+    uvhttp_server_t* server,
+    uvhttp_timeout_callback_t callback,
+    void* user_data
+);

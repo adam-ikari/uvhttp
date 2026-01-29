@@ -2,7 +2,7 @@ BUILD_DIR ?= build
 BUILD_TYPE ?= Release
 CMAKE_ARGS = -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON -DBUILD_WITH_TLS=ON
 
-.PHONY: all clean test help cppcheck install coverage coverage-clean examples build build-deps rebuild docs-site docs-site-build docs-site-clean docs-site-dev
+.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild docs-site docs-site-build docs-site-clean docs-site-dev
 
 all: $(BUILD_DIR)/Makefile
 	@$(MAKE) -C $(BUILD_DIR)
@@ -49,6 +49,46 @@ $(BUILD_DIR)/Makefile:
 clean:
 	@rm -rf $(BUILD_DIR)
 
+clean-all:
+	@echo "🧹 清理所有构建产物..."
+	@./clean.sh --all
+
+clean-build:
+	@echo "🧹 清理构建目录..."
+	@./clean.sh --build
+
+clean-deps:
+	@echo "🧹 清理依赖库构建产物..."
+	@./clean.sh --deps
+
+clean-temp:
+	@echo "🧹 清理临时文件..."
+	@find . -name "*.tmp" -delete 2>/dev/null || true
+	@find . -name "*.temp" -delete 2>/dev/null || true
+	@find . -name "*.log" -delete 2>/dev/null || true
+	@find . -name "*.orig" -delete 2>/dev/null || true
+	@find . -name "*.rej" -delete 2>/dev/null || true
+	@find . -name "*.swp" -delete 2>/dev/null || true
+	@find . -name "*.swo" -delete 2>/dev/null || true
+	@find . -name "*~" -delete 2>/dev/null || true
+	@find . -name ".DS_Store" -delete 2>/dev/null || true
+	@echo "✅ 临时文件清理完成！"
+
+clean-coverage:
+	@echo "🧹 清理覆盖率文件..."
+	@find . -name "*.gcov" -delete 2>/dev/null || true
+	@find . -name "*.gcda" -delete 2>/dev/null || true
+	@find . -name "*.gcno" -delete 2>/dev/null || true
+	@find . -name "coverage.info" -delete 2>/dev/null || true
+	@rm -rf coverage_html 2>/dev/null || true
+	@echo "✅ 覆盖率文件清理完成！"
+
+clean-performance:
+	@echo "🧹 清理性能测试结果..."
+	@rm -rf test/performance/results/* 2>/dev/null || true
+	@find . -name "stress_test_results_*" -type d -exec rm -rf {} + 2>/dev/null || true
+	@echo "✅ 性能测试结果清理完成！"
+
 test: all
 	@echo "🧪 运行测试..."
 	@cd $(BUILD_DIR) && ctest --output-on-failure
@@ -83,9 +123,6 @@ coverage-clean:
 	@find $(BUILD_DIR) -name "coverage.info" -delete 2>/dev/null || true
 	@rm -rf $(BUILD_DIR)/coverage_html 2>/dev/null || true
 
-install: all
-	@$(MAKE) -C $(BUILD_DIR) install
-
 build-mimalloc:
 	@mkdir -p $(BUILD_DIR)
 	@cd $(BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DUVHTTP_ALLOCATOR=mimalloc ..
@@ -95,7 +132,7 @@ cppcheck:
 	@cppcheck --enable=warning --std=c11 src/ include/
 
 examples: all
-	@$(MAKE) -C $(BUILD_DIR) hello_world simple_routing method_routing cors_rate_limit_demo middleware_demo libuv_data_pointer
+	@$(MAKE) -C $(BUILD_DIR) hello_world simple_routing method_routing json_api_demo
 
 run-helloworld: examples
 	@cd $(BUILD_DIR) && ./dist/bin/hello_world
@@ -106,23 +143,43 @@ run-simple-routing: examples
 run-method-routing: examples
 	@cd $(BUILD_DIR) && ./dist/bin/method_routing
 
+run-json-api: examples
+	@cd $(BUILD_DIR) && ./dist/bin/json_api_demo
+
 help:
 	@echo "UVHTTP 构建系统"
+	@echo ""
+	@echo "构建命令:"
 	@echo "  make                    - 构建项目"
 	@echo "  make build              - 构建项目（包括依赖）"
 	@echo "  make rebuild            - 完全重新构建"
-	@echo "  make clean              - 清理构建"
+	@echo "  make build-deps         - 仅构建依赖"
+	@echo "  make examples           - 构建示例"
+	@echo ""
+	@echo "清理命令:"
+	@echo "  make clean              - 清理构建目录 ($(BUILD_DIR))"
+	@echo "  make clean-all          - 清理所有构建产物"
+	@echo "  make clean-build        - 清理构建目录"
+	@echo "  make clean-deps         - 清理依赖库构建产物"
+	@echo "  make clean-temp         - 清理临时文件"
+	@echo "  make clean-coverage     - 清理覆盖率文件"
+	@echo "  make clean-performance  - 清理性能测试结果"
+	@echo ""
+	@echo "测试命令:"
 	@echo "  make test               - 运行测试"
 	@echo "  make coverage           - 生成覆盖率报告"
 	@echo "  make coverage-clean     - 清理覆盖率数据"
-	@echo "  make install            - 安装"
-	@echo "  make examples           - 构建示例"
-	@echo "  make cppcheck           - 代码检查"
 	@echo ""
-	@echo "文档网站:"
-	@echo "  make docs-site          - 构建文档网站"
-	@echo "  make docs-site-dev      - 启动开发服务器"
-	@echo "  make docs-site-clean    - 清理文档网站"
+	@echo "代码检查:"
+	@echo "  make cppcheck           - 代码静态检查"
+	@echo ""
+	@echo "运行示例:"
+	@echo "  make run-helloworld     - 运行Hello World示例"
+	@echo "  make run-simple-routing - 运行简单路由示例"
+	@echo "  make run-method-routing - 运行方法路由示例"
+	@echo "  make run-json-api       - 运行JSON API示例"
+	@echo ""
+	@echo "构建选项:"
 	@echo "  BUILD_DIR=$(BUILD_DIR)  BUILD_TYPE=$(BUILD_TYPE)"
 
 rebuild: clean build

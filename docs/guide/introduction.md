@@ -16,10 +16,8 @@
 - [响应处理](./responses.md) - 发送 HTTP 响应
 
 ### 高级功能
-- [中间件系统](../MIDDLEWARE_SYSTEM.md) - 使用中间件增强功能
 - [静态文件服务](../STATIC_FILE_SERVER.md) - 提供静态文件服务
 - [WebSocket](./websocket.md) - 实现实时双向通信
-- [WebSocket 认证](../WEBSOCKET_AUTH.md) - 保护 WebSocket 连接
 - [限流功能](../RATE_LIMIT_API.md) - 防止滥用和 DDoS 攻击
 
 ### API 参考
@@ -52,8 +50,7 @@
 如果你有 HTTP 服务器开发经验，可以直接查看：
 1. [API 参考](../API_REFERENCE.md)
 2. [统一 API](./unified-api.md)
-3. [中间件系统](../MIDDLEWARE_SYSTEM.md)
-4. [性能优化指南](./performance.md)
+3. [性能优化指南](./performance.md)
 
 ### 高级用户
 如果你需要高级功能或性能优化：
@@ -75,8 +72,7 @@
 1. [安装指南](./installation.md)
 2. [快速开始](./getting-started.md)
 3. [WebSocket](./websocket.md)
-4. [WebSocket 认证](../WEBSOCKET_AUTH.md)
-5. [最佳实践](./best-practices.md)
+4. [最佳实践](./best-practices.md)
 
 ### 路径 3：构建高性能服务器
 1. [快速开始](./getting-started.md)

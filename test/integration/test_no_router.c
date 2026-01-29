@@ -36,8 +36,9 @@ int main() {
     g_loop = uv_default_loop();
     
     fflush(stdout);
-    g_server = uvhttp_server_new(g_loop);
-    if (!g_server) {
+    uvhttp_error_t result = uvhttp_server_new(g_loop, &g_server);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(result));
         return 1;
     }
     fflush(stdout);
@@ -45,8 +46,8 @@ int main() {
     uvhttp_server_set_handler(g_server, handler);
     
     fflush(stdout);
-    int result = uvhttp_server_listen(g_server, "0.0.0.0", 8888);
-    if (result != 0) {
+    int listen_result = uvhttp_server_listen(g_server, "0.0.0.0", 8888);
+    if (listen_result != 0) {
         uvhttp_server_free(g_server);
         return 1;
     }

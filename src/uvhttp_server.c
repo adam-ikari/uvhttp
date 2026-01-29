@@ -19,13 +19,14 @@
 #include "uvhttp_config.h"
 #include "uvhttp_features.h"
 #include "uvhttp_context.h"
+#include "uvhttp_utils.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <uv.h>
 
 #if UVHTTP_FEATURE_WEBSOCKET
-#include "uvhttp_websocket_native.h"
+#include "uvhttp_websocket.h"
 #endif
 
 
@@ -35,7 +36,6 @@
 typedef struct ws_route_entry {
     char* path;
     uvhttp_ws_handler_t handler;
-    uvhttp_ws_auth_config_t* auth_config;  /* 认证配置 */
     struct ws_route_entry* next;
 } ws_route_entry_t;
 #endif
@@ -81,8 +81,8 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     if (server->config) {
         max_connections = server->config->max_connections;
     } else {
-        // 回退到全局配置（从 loop->data 获取）
-        uvhttp_context_t* context = (uvhttp_context_t*)server->loop->data;
+        // 回退到全局配置（使用 server->context）
+        uvhttp_context_t* context = server->context;
         const uvhttp_config_t* global_config = uvhttp_config_get_current(context);
         if (global_config) {
             max_connections = global_config->max_connections;
@@ -90,9 +90,8 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     }
     
     if (server->active_connections >= max_connections) {
-        UVHTTP_LOG_WARN("Connection limit reached: %zu/%d\n", 
-                server->active_connections, max_connections);
-        
+        UVHTTP_LOG_WARN("Connection limit reached: %zu/%zu\n",
+                         server->active_connections, (size_t)max_connections);        
         /* 创建临时连接以发送503响应 */
         uv_tcp_t* temp_client = uvhttp_alloc(sizeof(uv_tcp_t));
         if (!temp_client) {
@@ -143,8 +142,9 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     }
     
     /* 创建新的连接对象 - 单线程分配，无需同步 */
-    uvhttp_connection_t* conn = uvhttp_connection_new(server);
-    if (!conn) {
+    uvhttp_connection_t* conn = NULL;
+    uvhttp_error_t conn_result = uvhttp_connection_new(server, &conn);
+    if (conn_result != UVHTTP_OK) {
         return;
     }
     
@@ -165,6 +165,9 @@ static void on_connection(uv_stream_t* server_handle, int status) {
      * 所有后续处理都通过libuv回调在事件循环中异步进行
      */
     int start_result = uvhttp_connection_start(conn);
+    if (start_result == 0) {
+        uvhttp_connection_start_timeout(conn);
+    }
     
     if (start_result != 0) {
         uvhttp_connection_close(conn);
@@ -184,80 +187,85 @@ static void on_connection(uv_stream_t* server_handle, int status) {
  * 3. 性能可预测，避免线程切换开销
  * 4. 调试简单，执行流清晰
  */
-uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop) {
+uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    *server = NULL;
+    
     /* 初始化TLS模块（如果还没有初始化） */
     #if UVHTTP_FEATURE_TLS
         UVHTTP_LOG_DEBUG("Initializing TLS module...");
-        /* 暂时跳过 TLS 初始化，使用全局变量（向后兼容） */
-        /* TODO: 在后续版本中完全移除全局变量 */
+        /* 使用全局变量以保持向后兼容性 */
+        /* 新项目应使用 uvhttp_context 进行 TLS 配置 */
         UVHTTP_LOG_DEBUG("TLS module initialization skipped (using global variables for backward compatibility)");
     #endif
         UVHTTP_LOG_DEBUG("Allocating uvhttp_server_t, size=%zu", sizeof(uvhttp_server_t));
-        uvhttp_server_t* server = uvhttp_alloc(sizeof(uvhttp_server_t));
-        if (!server) {
+        uvhttp_server_t* s = uvhttp_alloc(sizeof(uvhttp_server_t));
+        if (!s) {
             UVHTTP_LOG_ERROR("Failed to allocate uvhttp_server_t");
-            return NULL;
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
-        UVHTTP_LOG_DEBUG("uvhttp_alloc success, server=%p", (void*)server);
-    memset(server, 0, sizeof(uvhttp_server_t));
+        UVHTTP_LOG_DEBUG("uvhttp_alloc success, server=%p", (void*)s);
+    memset(s, 0, sizeof(uvhttp_server_t));
     
     // 初始化连接限制默认值
-    server->max_connections = 10000;  // 默认最大连接数
-    server->max_message_size = 1024 * 1024;  // 默认最大消息大小1MB
+    s->max_connections = UVHTTP_MAX_CONNECTIONS_MAX;  // 默认最大连接数
+    s->max_message_size = UVHTTP_MAX_BODY_SIZE;  // 默认最大消息大小1MB
     
     // 初始化WebSocket路由表
     #if UVHTTP_FEATURE_WEBSOCKET
-    server->ws_routes = NULL;
-    server->ws_connection_manager = NULL;
+    s->ws_routes = NULL;
+    s->ws_connection_manager = NULL;
     #endif
     
 #if UVHTTP_FEATURE_RATE_LIMIT
     // 初始化限流功能字段
-    server->rate_limit_enabled = 0;
-    server->rate_limit_max_requests = 0;
-    server->rate_limit_window_seconds = 0;
-    server->rate_limit_request_count = 0;
-    server->rate_limit_window_start_time = 0;
-    server->rate_limit_whitelist = NULL;
-    server->rate_limit_whitelist_count = 0;
+    s->rate_limit_enabled = 0;
+    s->rate_limit_max_requests = 0;
+    s->rate_limit_window_seconds = 0;
+    s->rate_limit_request_count = 0;
+    s->rate_limit_window_start_time = 0;
+    s->rate_limit_whitelist = NULL;
+    s->rate_limit_whitelist_count = 0;
 #endif
     
     // 如果没有提供loop，内部创建新循环
     if (loop) {
-        server->loop = loop;
-        server->owns_loop = 0;
+        s->loop = loop;
+        s->owns_loop = 0;
     } else {
-        server->loop = uvhttp_alloc(sizeof(uv_loop_t));
-        if (!server->loop) {
-                    uvhttp_free(server);
-                    return NULL;        }
-        if (uv_loop_init(server->loop) != 0) {
-            uvhttp_free(server->loop);
-                uvhttp_free(server);            return NULL;
+        s->loop = uvhttp_alloc(sizeof(uv_loop_t));
+        if (!s->loop) {
+            uvhttp_free(s);
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
-        server->owns_loop = 1;
+        if (uv_loop_init(s->loop) != 0) {
+            uvhttp_free(s->loop);
+            uvhttp_free(s);
+            return UVHTTP_ERROR_IO_ERROR;
+        }
+        s->owns_loop = 1;
     }
     
-    if (uv_tcp_init(server->loop, &server->tcp_handle) != 0) {
-        if (server->owns_loop) {
-            uv_loop_close(server->loop);
-            uvhttp_free(server->loop);
+    if (uv_tcp_init(s->loop, &s->tcp_handle) != 0) {
+        if (s->owns_loop) {
+            uv_loop_close(s->loop);
+            uvhttp_free(s->loop);
         }
-        uvhttp_free(server);
-        return NULL;
+        uvhttp_free(s);
+        return UVHTTP_ERROR_IO_ERROR;
     }
-    server->tcp_handle.data = server;
-    server->active_connections = 0;
+    s->tcp_handle.data = s;
+    s->active_connections = 0;
 #if UVHTTP_FEATURE_TLS
-    server->tls_enabled = 0;
-    server->tls_ctx = NULL;
+    s->tls_enabled = 0;
+    s->tls_ctx = NULL;
 #endif
     
-    /* 初始化连接池 */
-    server->connection_pool = NULL;
-    server->connection_pool_size = 0;
-    
-    return server;
+    *server = s;
+    return UVHTTP_OK;
 }
 
 uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
@@ -275,19 +283,12 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
      * 使用 UV_RUN_ONCE 而不是 UV_RUN_NOWAIT，确保回调被执行
      */
     if (server->loop) {
-        for (int index = 0; index < 10; index++) {
+        for (int index = 0; index < UVHTTP_SERVER_CLEANUP_LOOP_ITERATIONS; index++) {
             uv_run(server->loop, UV_RUN_ONCE);
         }
     }
     
     /* 清理连接池 */
-    uvhttp_connection_pool_cleanup(server);
-    
-#if UVHTTP_FEATURE_MIDDLEWARE
-    /* 清理中间件链 - 零开销设计 */
-    uvhttp_server_cleanup_middleware(server);
-#endif
-    
     if (server->router) {
         uvhttp_router_free(server->router);
     }
@@ -298,6 +299,12 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
 #endif
     if (server->config) {
         uvhttp_config_free(server->config);
+    }
+    
+    /* 清理上下文 */
+    if (server->context) {
+        uvhttp_context_destroy(server->context);
+        server->context = NULL;
     }
     
     // 释放WebSocket路由表
@@ -374,17 +381,21 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
     uv_tcp_nodelay(&server->tcp_handle, enable);
     
     /* 设置keepalive */
-    uv_tcp_keepalive(&server->tcp_handle, enable, 60);
+    uv_tcp_keepalive(&server->tcp_handle, enable, UVHTTP_TCP_KEEPALIVE_TIMEOUT);
     
     /* 使用配置系统的backlog设置 */
-    uvhttp_context_t* context = (uvhttp_context_t*)server->loop->data;
+    // 使用 server->context 而非 loop->data，避免独占 loop->data
+    uvhttp_context_t* context = server->context;
     const uvhttp_config_t* config = NULL;
     
     if (context) {
         config = uvhttp_config_get_current(context);
     }
     
-    int backlog = (config && config->backlog > 0) ? config->backlog : UVHTTP_BACKLOG;
+    int backlog = UVHTTP_BACKLOG;
+    if (config && config->backlog > 0) {
+        backlog = config->backlog;
+    }
     
     ret = uv_listen((uv_stream_t*)&server->tcp_handle, backlog, on_connection);
     if (ret != 0) {
@@ -411,6 +422,15 @@ uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server, uvhttp_router_t
     }
     
     server->router = router;
+    return UVHTTP_OK;
+}
+
+uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server, struct uvhttp_context* context) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    server->context = context;
     return UVHTTP_OK;
 }
 
@@ -482,48 +502,53 @@ int uvhttp_server_is_tls_enabled(uvhttp_server_t* server) {
 // ========== 统一API实现 ==========
 
 // 内部辅助函数
-static uvhttp_server_builder_t* create_simple_server_internal(const char* host, int port) {
+static uvhttp_error_t create_simple_server_internal(const char* host, int port, uvhttp_server_builder_t** server) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
     uvhttp_server_builder_t* simple = uvhttp_alloc(sizeof(uvhttp_server_builder_t));
-    if (!simple) return NULL;
+    if (!simple) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
 
     memset(simple, 0, sizeof(uvhttp_server_builder_t));
-    
+
     // 获取或创建事件循环
     simple->loop = uv_default_loop();
     if (!simple->loop) {
         uvhttp_free(simple);
-        return NULL;
+        return UVHTTP_ERROR_IO_ERROR;
     }
-    
+
     // 创建服务器
-    simple->server = uvhttp_server_new(simple->loop);
-    if (!simple->server) {
+    uvhttp_error_t server_result = uvhttp_server_new(simple->loop, &simple->server);
+    if (server_result != UVHTTP_OK) {
         uvhttp_free(simple);
-        return NULL;
+        return server_result;
     }
-    
+
     // 创建路由器
-    simple->router = uvhttp_router_new();
-    if (!simple->router) {
+    uvhttp_error_t router_result = uvhttp_router_new(&simple->router);
+    if (router_result != UVHTTP_OK) {
         uvhttp_server_free(simple->server);
         uvhttp_free(simple);
-        return NULL;
+        return router_result;
     }
-    
+
     // 创建并设置默认配置
-    simple->config = uvhttp_config_new();
-    if (!simple->config) {
+    uvhttp_error_t result = uvhttp_config_new(&simple->config);
+    if (result != UVHTTP_OK) {
         uvhttp_router_free(simple->router);
         uvhttp_server_free(simple->server);
         uvhttp_free(simple);
-        return NULL;
+        return result;
     }
-    
-    uvhttp_config_set_defaults(simple->config);
+
     simple->server->config = simple->config;
     simple->server->router = simple->router;
     simple->auto_cleanup = 1;
-    
+
     // 启动监听
     if (uvhttp_server_listen(simple->server, host, port) != UVHTTP_OK) {
         UVHTTP_LOG_ERROR("Failed to start server on %s:%d\n", host, port);
@@ -531,15 +556,16 @@ static uvhttp_server_builder_t* create_simple_server_internal(const char* host, 
         uvhttp_router_free(simple->router);
         uvhttp_server_free(simple->server);
         uvhttp_free(simple);
-        return NULL;
+        return UVHTTP_ERROR_SERVER_LISTEN;
     }
-    
-    return simple;
+
+    *server = simple;
+    return UVHTTP_OK;
 }
 
 // 快速创建和启动服务器
-uvhttp_server_builder_t* uvhttp_server_create(const char* host, int port) {
-    return create_simple_server_internal(host, port);
+uvhttp_error_t uvhttp_server_create(const char* host, int port, uvhttp_server_builder_t** server) {
+    return create_simple_server_internal(host, port, server);
 }
 
 // 路由添加辅助函数
@@ -597,77 +623,6 @@ uvhttp_server_builder_t* uvhttp_set_max_body_size(uvhttp_server_builder_t* serve
     return server;
 }
 
-// 快速响应API
-void uvhttp_quick_response(uvhttp_response_t* response, int status, const char* content_type, const char* body) {
-    if (!response) return;
-    
-    uvhttp_response_set_status(response, status);
-    if (content_type) {
-        uvhttp_response_set_header(response, "Content-Type", content_type);
-    }
-    if (body) {
-        uvhttp_response_set_body(response, body, strlen(body));
-    }
-    uvhttp_response_send(response);
-}
-
-
-
-void uvhttp_html_response(uvhttp_response_t* response, const char* html_body) {
-    uvhttp_quick_response(response, 200, "text/html", html_body);
-}
-
-void uvhttp_file_response(uvhttp_response_t* response, const char* file_path) {
-    // 简单的文件响应实现
-    FILE* file = fopen(file_path, "r");
-    if (!file) {
-        uvhttp_quick_response(response, 404, "text/plain", "File not found");
-        return;
-    }
-    
-    // 获取文件大小
-    fseek(file, 0, SEEK_END);
-    long file_size_long = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    
-    if (file_size_long < 0) {
-        fclose(file);
-        uvhttp_quick_response(response, 500, "text/plain", "File size error");
-        return;
-    }
-    
-    size_t file_size = (size_t)file_size_long;
-    
-    // 读取文件内容
-    char* content = uvhttp_alloc(file_size + 1);
-    if (!content) {
-        fclose(file);
-        uvhttp_quick_response(response, 500, "text/plain", "Internal server error");
-        return;
-    }
-    
-    if (fread(content, 1, file_size, file) != file_size) {
-        uvhttp_free(content);
-        fclose(file);
-        uvhttp_quick_response(response, 500, "text/plain", "File read error");
-        return;
-    }
-    content[file_size] = '\0';
-    fclose(file);
-    
-    // 设置内容类型
-    const char* content_type = "text/plain";
-    if (strstr(file_path, ".html")) content_type = "text/html";
-    else if (strstr(file_path, ".css")) content_type = "text/css";
-    else if (strstr(file_path, ".js")) content_type = "application/javascript";
-    else if (strstr(file_path, ".json")) content_type = "application/json";
-    else if (strstr(file_path, ".png")) content_type = "image/png";
-    else if (strstr(file_path, ".jpg") || strstr(file_path, ".jpeg")) content_type = "image/jpeg";
-    
-    uvhttp_quick_response(response, 200, content_type, content);
-    uvhttp_free(content);
-}
-
 // 便捷请求参数获取
 const char* uvhttp_get_param(uvhttp_request_t* request, const char* name) {
     return uvhttp_request_get_query_param(request, name);
@@ -721,7 +676,10 @@ static int default_handler(uvhttp_request_t* request, uvhttp_response_t* respons
         method, url, time(NULL)
     );
     
-    uvhttp_quick_response(response, 200, "text/plain", response_body);
+    uvhttp_response_set_status(response, 200);
+    uvhttp_response_set_header(response, "Content-Type", "text/plain");
+    uvhttp_response_set_body(response, response_body, strlen(response_body));
+    uvhttp_response_send(response);
     return 0;
 }
 
@@ -730,26 +688,27 @@ int uvhttp_serve(const char* host, int port) {
     // 参数验证
     if (port < 1 || port > 65535) {
         fprintf(stderr, "错误: 端口号必须在 1-65535 范围内\n");
-        return -1;
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
     
     if (!host) {
         fprintf(stderr, "警告: host 参数为 NULL，使用默认值 0.0.0.0\n");
     }
     
-    uvhttp_server_builder_t* server = uvhttp_server_create(host, port);
-    if (!server) return -1;
-    
+    uvhttp_server_builder_t* server = NULL;
+    uvhttp_error_t create_result = uvhttp_server_create(host, port, &server);
+    if (create_result != UVHTTP_OK) return create_result;
+
     // 添加默认路由
     uvhttp_any(server, "/", default_handler);
-    
+
     printf("UVHTTP 服务器运行在 http://%s:%d\n", host ? host : "0.0.0.0", port);
     printf("按 Ctrl+C 停止服务器\n");
-    
-    int result = uvhttp_server_run(server);
+
+    int run_result = uvhttp_server_run(server);
     uvhttp_server_simple_free(server);
-    
-    return result;
+
+    return run_result;
 }
 
 // ========== WebSocket 实现 ==========
@@ -780,7 +739,6 @@ uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server, const 
 
     // 复制handler
     memcpy(&entry->handler, handler, sizeof(uvhttp_ws_handler_t));
-    entry->auth_config = NULL;  /* 初始化认证配置为 NULL */
     entry->next = NULL;
 
     // 添加到服务器的WebSocket路由表（单线程安全）
@@ -827,8 +785,18 @@ uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn, const char
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    // 获取 context
+    uvhttp_context_t* context = NULL;
+    if (ws_conn->ssl) {
+        // TLS 连接
+        uvhttp_connection_t* conn = (uvhttp_connection_t*)ws_conn->user_data;
+        if (conn && conn->server && conn->server->context) {
+            context = conn->server->context;
+        }
+    }
+
     // 调用原生WebSocket API发送文本消息
-    int result = uvhttp_ws_send_text(ws_conn, data, len);
+    int result = uvhttp_ws_send_text(context, ws_conn, data, len);
     if (result != 0) {
         return UVHTTP_ERROR_WEBSOCKET_FRAME;
     }
@@ -842,8 +810,18 @@ uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    // 获取 context
+    uvhttp_context_t* context = NULL;
+    if (ws_conn->ssl) {
+        // TLS 连接
+        uvhttp_connection_t* conn = (uvhttp_connection_t*)ws_conn->user_data;
+        if (conn && conn->server && conn->server->context) {
+            context = conn->server->context;
+        }
+    }
+
     // 调用原生WebSocket API关闭连接
-    int result = uvhttp_ws_close(ws_conn, code, reason);
+    int result = uvhttp_ws_close(context, ws_conn, code, reason);
     if (result != 0) {
         return UVHTTP_ERROR_WEBSOCKET_FRAME;
     }
@@ -940,8 +918,10 @@ uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    // 验证IP地址格式（简单验证）
-    // TODO: 可以添加更严格的IP地址验证
+    // 验证IP地址格式
+    if (!uvhttp_is_valid_ip_address(client_ip)) {
+        return UVHTTP_ERROR_INVALID_PARAM;  // 无效的 IP 地址
+    }
     
     // 检查是否已经存在于哈希表中（避免重复添加）
     struct whitelist_item *existing_item;
@@ -1088,7 +1068,7 @@ static void ws_timeout_timer_callback(uv_timer_t* handle) {
             
             /* 关闭超时连接 */
             if (current->ws_conn) {
-                uvhttp_ws_close(current->ws_conn, 1000, "Connection timeout");
+                uvhttp_ws_close(NULL, current->ws_conn, 1000, "Connection timeout");
             }
             
             /* 从链表中移除 */
@@ -1128,7 +1108,7 @@ static void ws_heartbeat_timer_callback(uv_timer_t* handle) {
             /* 检查是否需要发送 Ping */
             if (!current->ping_pending) {
                 /* 发送 Ping 帧 */
-                if (uvhttp_ws_send_ping(current->ws_conn, NULL, 0) == 0) {
+                if (uvhttp_ws_send_ping(NULL, current->ws_conn, NULL, 0) == 0) {
                     current->last_ping_sent = current_time;
                     current->ping_pending = 1;
                 }
@@ -1138,7 +1118,7 @@ static void ws_heartbeat_timer_callback(uv_timer_t* handle) {
                     UVHTTP_LOG_WARN("WebSocket ping timeout, closing connection...\n");
 
                     /* 关闭无响应的连接 */
-                    uvhttp_ws_close(current->ws_conn, 1000, "Ping timeout");
+                    uvhttp_ws_close(NULL, current->ws_conn, 1000, "Ping timeout");
                 }
             }
         }
@@ -1275,7 +1255,7 @@ uvhttp_error_t uvhttp_server_ws_disable_connection_management(
         ws_connection_node_t* next = current->next;
         
         if (current->ws_conn) {
-            uvhttp_ws_close(current->ws_conn, 1000, "Server shutdown");
+            uvhttp_ws_close(NULL, current->ws_conn, 1000, "Server shutdown");
         }
         
         uvhttp_free(current);
@@ -1360,16 +1340,15 @@ uvhttp_error_t uvhttp_server_ws_broadcast(
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     
-    int sent_count = 0;
     ws_connection_node_t* current = server->ws_connection_manager->connections;
+    int sent_count = 0;
     
     while (current) {
         /* 检查路径是否匹配（如果指定了路径） */
         if (!path || strcmp(current->path, path) == 0) {
             if (current->ws_conn && current->ws_conn->state == UVHTTP_WS_STATE_OPEN) {
-                if (uvhttp_ws_send_text(current->ws_conn, data, len) == 0) {
-                    sent_count++;
-                }
+                uvhttp_ws_send_text(NULL, current->ws_conn, data, len);
+                sent_count++;
             }
         }
         
@@ -1407,7 +1386,7 @@ uvhttp_error_t uvhttp_server_ws_close_all(
         if (!path || strcmp(current->path, path) == 0) {
             /* 关闭连接 */
             if (current->ws_conn) {
-                uvhttp_ws_close(current->ws_conn, 1000, "Server closed connection");
+                uvhttp_ws_close(NULL, current->ws_conn, 1000, "Server closed connection");
             }
             
             /* 从链表中移除 */
@@ -1548,242 +1527,18 @@ void uvhttp_server_ws_update_activity(
 
 /* ========== WebSocket 认证 API ========== */
 
-/**
- * 设置 WebSocket 路由的认证配置
- */
-uvhttp_error_t uvhttp_server_ws_set_auth_config(
+#endif /* UVHTTP_FEATURE_WEBSOCKET */
+uvhttp_error_t uvhttp_server_set_timeout_callback(
     uvhttp_server_t* server,
-    const char* path,
-    uvhttp_ws_auth_config_t* config
-) {
-    if (!server || !path || !config) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    /* 查找对应的路由条目 */
-    ws_route_entry_t* entry = (ws_route_entry_t*)server->ws_routes;
-    while (entry) {
-        if (strcmp(entry->path, path) == 0) {
-            /* 释放旧的认证配置 */
-            if (entry->auth_config) {
-                uvhttp_ws_auth_config_destroy(entry->auth_config);
-            }
-
-            /* 复制新的认证配置 */
-            entry->auth_config = uvhttp_ws_auth_config_create();
-            if (!entry->auth_config) {
-                return UVHTTP_ERROR_OUT_OF_MEMORY;
-            }
-
-            memcpy(entry->auth_config, config, sizeof(uvhttp_ws_auth_config_t));
-
-            /* 复制 IP 白名单 */
-            ip_entry_t* whitelist = config->ip_whitelist;
-            while (whitelist) {
-                uvhttp_ws_auth_add_ip_to_whitelist(entry->auth_config, whitelist->ip);
-                whitelist = whitelist->next;
-            }
-
-            /* 复制 IP 黑名单 */
-            ip_entry_t* blacklist = config->ip_blacklist;
-            while (blacklist) {
-                uvhttp_ws_auth_add_ip_to_blacklist(entry->auth_config, blacklist->ip);
-                blacklist = blacklist->next;
-            }
-
-            return UVHTTP_OK;
-        }
-        entry = entry->next;
-    }
-
-    return UVHTTP_ERROR_NOT_FOUND;
-}
-
-/**
- * 获取 WebSocket 路由的认证配置
- */
-uvhttp_ws_auth_config_t* uvhttp_server_ws_get_auth_config(
-    uvhttp_server_t* server,
-    const char* path
-) {
-    if (!server || !path) {
-        return NULL;
-    }
-
-    /* 查找对应的路由条目 */
-    ws_route_entry_t* entry = (ws_route_entry_t*)server->ws_routes;
-    while (entry) {
-        if (strcmp(entry->path, path) == 0) {
-            return entry->auth_config;
-        }
-        entry = entry->next;
-    }
-
-    return NULL;
-}
-
-/**
- * 启用 Token 认证
- */
-uvhttp_error_t uvhttp_server_ws_enable_token_auth(
-    uvhttp_server_t* server,
-    const char* path,
-    uvhttp_ws_token_validator_callback validator,
+    uvhttp_timeout_callback_t callback,
     void* user_data
 ) {
-    if (!server || !path || !validator) {
+    if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-
-    /* 获取或创建认证配置 */
-    ws_route_entry_t* entry = (ws_route_entry_t*)server->ws_routes;
-    while (entry) {
-        if (strcmp(entry->path, path) == 0) {
-            /* 创建认证配置（如果不存在） */
-            if (!entry->auth_config) {
-                entry->auth_config = uvhttp_ws_auth_config_create();
-                if (!entry->auth_config) {
-                    return UVHTTP_ERROR_OUT_OF_MEMORY;
-                }
-            }
-
-            /* 设置 Token 验证器 */
-            uvhttp_ws_auth_set_token_validator(
-                entry->auth_config,
-                validator,
-                user_data
-            );
-
-            return UVHTTP_OK;
-        }
-        entry = entry->next;
-    }
-
-    return UVHTTP_ERROR_NOT_FOUND;
+    
+    server->timeout_callback = callback;
+    server->timeout_callback_user_data = user_data;
+    
+    return UVHTTP_OK;
 }
-
-/**
- * 添加 IP 到白名单
- */
-uvhttp_error_t uvhttp_server_ws_add_ip_to_whitelist(
-    uvhttp_server_t* server,
-    const char* path,
-    const char* ip
-) {
-    if (!server || !path || !ip) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    /* 获取或创建认证配置 */
-    ws_route_entry_t* entry = (ws_route_entry_t*)server->ws_routes;
-    while (entry) {
-        if (strcmp(entry->path, path) == 0) {
-            /* 创建认证配置（如果不存在） */
-            if (!entry->auth_config) {
-                entry->auth_config = uvhttp_ws_auth_config_create();
-                if (!entry->auth_config) {
-                    return UVHTTP_ERROR_OUT_OF_MEMORY;
-                }
-            }
-
-            /* 添加 IP 到白名单 */
-            if (uvhttp_ws_auth_add_ip_to_whitelist(entry->auth_config, ip) != 0) {
-                return UVHTTP_ERROR_WEBSOCKET_HANDSHAKE;
-            }
-
-            return UVHTTP_OK;
-        }
-        entry = entry->next;
-    }
-
-    return UVHTTP_ERROR_NOT_FOUND;
-}
-
-/**
- * 添加 IP 到黑名单
- */
-uvhttp_error_t uvhttp_server_ws_add_ip_to_blacklist(
-    uvhttp_server_t* server,
-    const char* path,
-    const char* ip
-) {
-    if (!server || !path || !ip) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    /* 获取或创建认证配置 */
-    ws_route_entry_t* entry = (ws_route_entry_t*)server->ws_routes;
-    while (entry) {
-        if (strcmp(entry->path, path) == 0) {
-            /* 创建认证配置（如果不存在） */
-            if (!entry->auth_config) {
-                entry->auth_config = uvhttp_ws_auth_config_create();
-                if (!entry->auth_config) {
-                    return UVHTTP_ERROR_OUT_OF_MEMORY;
-                }
-            }
-
-            /* 添加 IP 到黑名单 */
-            if (uvhttp_ws_auth_add_ip_to_blacklist(entry->auth_config, ip) != 0) {
-                return UVHTTP_ERROR_WEBSOCKET_HANDSHAKE;
-            }
-
-            return UVHTTP_OK;
-        }
-        entry = entry->next;
-    }
-
-    return UVHTTP_ERROR_NOT_FOUND;
-}
-
-/**
- * 内部函数：查找 WebSocket 路由条目
- */
-ws_route_entry_t* uvhttp_server_find_ws_route_entry(
-    uvhttp_server_t* server,
-    const char* path
-) {
-    if (!server || !path) {
-        return NULL;
-    }
-
-    ws_route_entry_t* entry = (ws_route_entry_t*)server->ws_routes;
-    while (entry) {
-        if (strcmp(entry->path, path) == 0) {
-            return entry;
-        }
-        entry = entry->next;
-    }
-
-    return NULL;
-}
-
-/**
- * 内部函数：执行 WebSocket 认证
- */
-uvhttp_ws_auth_result_t uvhttp_server_ws_authenticate(
-    uvhttp_server_t* server,
-    const char* path,
-    const char* client_ip,
-    const char* token
-) {
-    if (!server || !path) {
-        return UVHTTP_WS_AUTH_INTERNAL_ERROR;
-    }
-
-    /* 查找路由条目 */
-    ws_route_entry_t* entry = uvhttp_server_find_ws_route_entry(server, path);
-    if (!entry) {
-        return UVHTTP_WS_AUTH_SUCCESS;  /* 没有认证配置，允许连接 */
-    }
-
-    /* 如果没有认证配置，允许连接 */
-    if (!entry->auth_config) {
-        return UVHTTP_WS_AUTH_SUCCESS;
-    }
-
-    /* 执行认证 */
-    return uvhttp_ws_authenticate(entry->auth_config, client_ip, token);
-}
-
-#endif /* UVHTTP_FEATURE_WEBSOCKET */

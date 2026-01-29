@@ -64,7 +64,7 @@ const char* uvhttp_request_get_method(uvhttp_request_t* request) {
 ### 1.2 TLS Type Error Fix ✅
 **Status**: VERIFIED
 
-Fixed type mismatch in `uvhttp_tls_mbedtls.c`:
+Fixed type mismatch in `uvhttp_tls.c`:
 - Changed `mbedtls_ssl_get_ciphersuite()` return type handling
 - Properly handled `const char*` vs `int` type confusion
 
