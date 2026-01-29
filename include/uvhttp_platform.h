@@ -54,7 +54,7 @@ typedef socklen_t uvhttp_socklen_t;
 /* 需要确保结构体对齐正确，避免性能下降 */
 #    define UVHTTP_POINTER_ALIGNMENT 4
 #    define UVHTTP_SIZE_T_ALIGNMENT 4
-#    define UVHTTP_UINT64_ALIGNMENT 4 /* 32位系统上uint64_t也是4字节对齐 */
+#    define UVHTTP_UINT64_ALIGNMENT 4 /* 32位系统上uint64_t自然对齐为4字节（但大小仍为8字节） */
 #else
 /* 64位系统 */
 #    define UVHTTP_POINTER_ALIGNMENT 8

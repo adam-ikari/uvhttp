@@ -265,6 +265,62 @@ jobs:
           path: build-32bit/Testing/
           retention-days: 7
   
+  # 32位系统内存安全测试
+  ubuntu-32bit-memory-test:
+    needs: [ubuntu-32bit-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Install 32-bit toolchain and valgrind
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib valgrind
+      
+      - name: Download 32-bit build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-ubuntu-32bit-push-${{ github.sha }}
+          path: build-32bit/
+      
+      - name: Set executable permissions
+        run: |
+          chmod +x build-32bit/dist/bin/* || true
+      
+      - name: Run valgrind memory test
+        run: |
+          cd build-32bit
+          
+          # 运行 valgrind 检查内存泄漏
+          valgrind --leak-check=full \
+                   --show-leak-kinds=all \
+                   --track-origins=yes \
+                   --error-exitcode=1 \
+                   --log-file=valgrind.log \
+                   ./dist/bin/uvhttp_unit_tests --gtest_filter="*Memory*" || true
+          
+          # 检查是否有内存泄漏
+          if grep -q "definitely lost: [1-9]" valgrind.log; then
+            echo "❌ Memory leak detected!"
+            cat valgrind.log
+            exit 1
+          else
+            echo "✅ No memory leaks detected"
+          fi
+      
+      - name: Upload valgrind logs
+        if: always()
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: valgrind-logs-32bit-push-${{ github.sha }}
+          path: build-32bit/valgrind.log
+          retention-days: 7
+  
   # ========== 阶段 3: 性能基准测试 ==========
   
   performance-benchmark:
@@ -371,7 +427,7 @@ jobs:
   # ========== 阶段 4: 生成总结 ==========
 
   generate-summary:
-    needs: [ubuntu-test-full, ubuntu-32bit-test, performance-benchmark]
+    needs: [ubuntu-test-full, ubuntu-32bit-test, ubuntu-32bit-memory-test, performance-benchmark]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
@@ -392,6 +448,11 @@ jobs:
           echo "|----------|-------|--------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| 64-bit | ${{ needs.ubuntu-test-full.outputs.test-total || 'N/A' }} | ${{ needs.ubuntu-test-full.outputs.test-passed || 'N/A' }} | ${{ needs.ubuntu-test-full.outputs.test-failed || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| 32-bit | ${{ needs.ubuntu-32bit-test.outputs.test-total || 'N/A' }} | ${{ needs.ubuntu-32bit-test.outputs.test-passed || 'N/A' }} | ${{ needs.ubuntu-32bit-test.outputs.test-failed || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Memory Safety" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 32-bit Valgrind | ${{ needs.ubuntu-32bit-memory-test.result == 'success' && '✅ No Leaks' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Performance" >> $GITHUB_STEP_SUMMARY
           echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY

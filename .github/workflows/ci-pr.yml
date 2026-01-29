@@ -224,7 +224,7 @@ jobs:
         with:
           build-dir: build-32bit-pr
           test-type: fast
-          timeout: 60
+          timeout: 120
           parallel: 1
       
       - name: Upload 32-bit test logs

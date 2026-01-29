@@ -76,11 +76,11 @@ C 标准库头文件，按字母顺序排列。
 
 ```c
 #if UVHTTP_FEATURE_WEBSOCKET
-#    include "uvhttp_websocket.h"
+#include "uvhttp_websocket.h"
 #endif
 
 #ifdef UVHTTP_FEATURE_TLS
-#    include "uvhttp_tls.h"
+#include "uvhttp_tls.h"
 #endif
 ```
 
@@ -123,7 +123,7 @@ C 标准库头文件，按字母顺序排列。
 
 // 条件编译包含
 #if UVHTTP_FEATURE_WEBSOCKET
-#    include "uvhttp_websocket.h"
+#include "uvhttp_websocket.h"
 #endif
 ```
 
@@ -134,22 +134,22 @@ C 标准库头文件，按字母顺序排列。
 #    define UVHTTP_SERVER_H
 
 // UVHTTP 项目头文件
-#    include "uvhttp_allocator.h"
-#    include "uvhttp_common.h"
-#    include "uvhttp_config.h"
-#    include "uvhttp_error.h"
+#include "uvhttp_allocator.h"
+#include "uvhttp_common.h"
+#include "uvhttp_config.h"
+#include "uvhttp_error.h"
 
 // 标准库头文件
-#    include <assert.h>
+#include <assert.h>
 
 // 第三方库头文件
-#    include <uv.h>
+#include <uv.h>
 
 // 项目内部其他头文件
-#    include "uthash.h"
+#include "uthash.h"
 
 // UVHTTP 项目头文件（依赖）
-#    include "uvhttp_features.h"
+#include "uvhttp_features.h"
 
 // 条件编译包含
 #    if UVHTTP_FEATURE_TLS
@@ -258,7 +258,7 @@ make format-all
 ```c
 #include "uvhttp_server.h"
 #if UVHTTP_FEATURE_WEBSOCKET
-#    include "uvhttp_websocket.h"
+#include "uvhttp_websocket.h"
 #endif
 #include "uvhttp_config.h"
 ```
@@ -269,7 +269,7 @@ make format-all
 #include "uvhttp_server.h"
 #include "uvhttp_config.h"
 #if UVHTTP_FEATURE_WEBSOCKET
-#    include "uvhttp_websocket.h"
+#include "uvhttp_websocket.h"
 #endif
 ```
 
