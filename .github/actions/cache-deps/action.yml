@@ -26,6 +26,7 @@ runs:
           deps/googletest/build
           deps/cjson/build
         # 使用主 CMakeLists.txt 和关键配置文件的哈希作为缓存键
-        key: ${{ inputs.cache-key }}-${{ runner.os }}-deps-${{ hashFiles('CMakeLists.txt', 'cmake/Dependencies.cmake') }}
+        # 移除 inputs.cache-key 中的 github.sha，以便缓存可以被恢复
+        key: deps-${{ runner.os }}-${{ inputs.build-type }}-${{ hashFiles('CMakeLists.txt', 'cmake/Dependencies.cmake') }}
         restore-keys: |
-          ${{ inputs.cache-key }}-${{ runner.os }}-deps-
+          deps-${{ runner.os }}-${{ inputs.build-type }}-
