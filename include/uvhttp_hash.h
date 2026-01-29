@@ -3,10 +3,11 @@
 #ifndef UVHTTP_HASH_H
 #define UVHTTP_HASH_H
 
+#include "uvhttp_defaults.h"
+
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include "uvhttp_defaults.h"
 
 #ifdef __cplusplus
 extern "C" {

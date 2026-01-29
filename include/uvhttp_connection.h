@@ -168,9 +168,9 @@ uvhttp_error_t uvhttp_connection_start_timeout(uvhttp_connection_t* conn);
 uvhttp_error_t uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn,
                                                       int timeout_seconds);
 
-#ifdef __cplusplus
+#    ifdef __cplusplus
 }
-#endif
+#    endif
 
 #endif /* UVHTTP_CONNECTION_H */
 

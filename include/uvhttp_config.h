@@ -9,8 +9,8 @@
 #define UVHTTP_CONFIG_H
 
 #include "uvhttp_constants.h"
-#include "uvhttp_error.h"
 #include "uvhttp_defaults.h"
+#include "uvhttp_error.h"
 
 #include <stddef.h>
 

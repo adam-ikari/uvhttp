@@ -27,7 +27,7 @@ extern "C" {
  * cmake -DUVHTTP_MAX_CONNECTIONS_DEFAULT=4096 ..
  */
 #ifndef UVHTTP_MAX_CONNECTIONS_DEFAULT
-#define UVHTTP_MAX_CONNECTIONS_DEFAULT 2048
+#    define UVHTTP_MAX_CONNECTIONS_DEFAULT 2048
 #endif
 
 /**
@@ -42,7 +42,7 @@ extern "C" {
  * cmake -DUVHTTP_BACKLOG_DEFAULT=4096 ..
  */
 #ifndef UVHTTP_BACKLOG_DEFAULT
-#define UVHTTP_BACKLOG_DEFAULT 256
+#    define UVHTTP_BACKLOG_DEFAULT 256
 #endif
 
 /**
@@ -59,7 +59,7 @@ extern "C" {
  * - 高并发场景可以增加 UVHTTP_DEFAULT_KEEP_ALIVE_MAX
  */
 #define UVHTTP_DEFAULT_KEEP_ALIVE_TIMEOUT 30 /* 秒 */
-#define UVHTTP_DEFAULT_KEEP_ALIVE_MAX 100   /* 每个连接最大请求数 */
+#define UVHTTP_DEFAULT_KEEP_ALIVE_MAX 100    /* 每个连接最大请求数 */
 
 /* ========== 超时配置默认值 ========== */
 
@@ -72,15 +72,15 @@ extern "C" {
  * - 长时间处理应用：120-300秒
  */
 #ifndef UVHTTP_CONNECTION_TIMEOUT_DEFAULT
-#define UVHTTP_CONNECTION_TIMEOUT_DEFAULT 60
+#    define UVHTTP_CONNECTION_TIMEOUT_DEFAULT 60
 #endif
 
 #ifndef UVHTTP_CONNECTION_TIMEOUT_MIN
-#define UVHTTP_CONNECTION_TIMEOUT_MIN 5
+#    define UVHTTP_CONNECTION_TIMEOUT_MIN 5
 #endif
 
 #ifndef UVHTTP_CONNECTION_TIMEOUT_MAX
-#define UVHTTP_CONNECTION_TIMEOUT_MAX 300
+#    define UVHTTP_CONNECTION_TIMEOUT_MAX 300
 #endif
 
 /**
@@ -128,7 +128,7 @@ extern "C" {
  * - 超大文件：128KB
  */
 #ifndef UVHTTP_ASYNC_FILE_BUFFER_SIZE
-#define UVHTTP_ASYNC_FILE_BUFFER_SIZE 65536 /* 64KB */
+#    define UVHTTP_ASYNC_FILE_BUFFER_SIZE 65536 /* 64KB */
 #endif
 
 /* ========== 安全配置默认值 ========== */
@@ -154,7 +154,8 @@ extern "C" {
  * - 大消息应用：32MB+
  */
 #ifndef UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE
-#define UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE (16 * 1024 * 1024) /* 16MB */
+#    define UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE \
+        (16 * 1024 * 1024) /* 16MB */
 #endif
 
 /**
@@ -166,28 +167,29 @@ extern "C" {
  * - 大消息应用：128MB+
  */
 #ifndef UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE
-#define UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE (64 * 1024 * 1024) /* 64MB */
+#    define UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE \
+        (64 * 1024 * 1024) /* 64MB */
 #endif
 
 /**
  * WebSocket 接收缓冲区大小（字节）
  */
 #ifndef UVHTTP_WEBSOCKET_DEFAULT_RECV_BUFFER_SIZE
-#define UVHTTP_WEBSOCKET_DEFAULT_RECV_BUFFER_SIZE (64 * 1024) /* 64KB */
+#    define UVHTTP_WEBSOCKET_DEFAULT_RECV_BUFFER_SIZE (64 * 1024) /* 64KB */
 #endif
 
 /**
  * WebSocket Ping 间隔（秒）
  */
 #ifndef UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL
-#define UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL 30
+#    define UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL 30
 #endif
 
 /**
  * WebSocket Ping 超时（秒）
  */
 #ifndef UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT
-#define UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT 10
+#    define UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT 10
 #endif
 
 /* ========== 内存配置默认值 ========== */
