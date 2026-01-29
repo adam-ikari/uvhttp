@@ -11,7 +11,7 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  # ========== 阶段 1: 多平台 Release 构建 ==========
+  # ========== 阶段 1: Linux Release 构建 ==========
   
   ubuntu-release-build:
     runs-on: ubuntu-latest
@@ -59,102 +59,10 @@ jobs:
           path: build/
           retention-days: 30
   
-  macos-release-build:
-    runs-on: macos-latest
-    timeout-minutes: 30
-    outputs:
-      version: ${{ steps.get_version.outputs.version }}
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.1
-        with:
-          submodules: recursive
-      
-      - name: Get version from tag
-        id: get_version
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-      
-      - name: Setup build environment
-        uses: ./.github/actions/setup-build
-        with:
-          os: macos-latest
-      
-      - name: Cache dependencies
-        uses: ./.github/actions/cache-deps
-        with:
-          cache-key: release-${{ steps.get_version.outputs.version }}
-          build-type: Release
-      
-      - name: Configure CMake
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_WITH_WEBSOCKET=ON \
-            -DBUILD_WITH_MIMALLOC=ON
-      
-      - name: Build
-        run: |
-          cmake --build build --config Release -j$(sysctl -n hw.ncpu)
-      
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: build-macos-release-${{ steps.get_version.outputs.version }}
-          path: build/
-          retention-days: 30
-  
-  windows-release-build:
-    runs-on: windows-latest
-    timeout-minutes: 35
-    outputs:
-      version: ${{ steps.get_version.outputs.version }}
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.1
-        with:
-          submodules: recursive
-      
-      - name: Get version from tag
-        id: get_version
-        run: |
-          $VERSION = $env:GITHUB_REF -replace 'refs/tags/v', ''
-          echo "version=$VERSION" >> $env:GITHUB_OUTPUT
-      
-      - name: Setup build environment
-        uses: ./.github/actions/setup-build
-        with:
-          os: windows-latest
-      
-      - name: Cache dependencies
-        uses: ./.github/actions/cache-deps
-        with:
-          cache-key: release-${{ steps.get_version.outputs.version }}
-          build-type: Release
-      
-      - name: Configure CMake
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release `
-            -DBUILD_WITH_WEBSOCKET=ON `
-            -DBUILD_WITH_MIMALLOC=ON
-      
-      - name: Build
-        run: |
-          cmake --build build --config Release -j
-      
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: build-windows-release-${{ steps.get_version.outputs.version }}
-          path: build/
-          retention-days: 30
-  
   # ========== 阶段 2: 发布测试 ==========
   
   release-test:
-    needs: [ubuntu-release-build, macos-release-build, windows-release-build]
+    needs: [ubuntu-release-build]
     runs-on: ubuntu-latest
     timeout-minutes: 25
     
@@ -164,28 +72,23 @@ jobs:
         with:
           submodules: recursive
       
-      - name: Download all build artifacts
+      - name: Download build artifacts
         uses: actions/download-artifact@v4.1.2
         with:
-          pattern: build-*-release-*
-          path: builds/
-          merge-multiple: false
+          name: build-ubuntu-release-${{ needs.ubuntu-release-build.outputs.version }}
+          path: build/
       
       - name: Run release tests
         run: |
-          for build_dir in builds/*/; do
-            echo "Testing $build_dir"
-            cd "$build_dir/build"
-            ctest --output-on-failure -j$(nproc) --timeout 120
-            cd -
-          done
+          cd build
+          ctest --output-on-failure -j$(nproc) --timeout 120
       
       - name: Upload test logs
         if: always()
         uses: actions/upload-artifact@v4.3.1
         with:
           name: release-test-logs-${{ needs.ubuntu-release-build.outputs.version }}
-          path: builds/*/build/Testing/
+          path: build/Testing/
           retention-days: 30
   
   # ========== 阶段 3: 创建 Release ==========
@@ -203,12 +106,11 @@ jobs:
         with:
           submodules: recursive
       
-      - name: Download all build artifacts
+      - name: Download build artifacts
         uses: actions/download-artifact@v4.1.2
         with:
-          pattern: build-*-release-*
+          name: build-ubuntu-release-${{ needs.ubuntu-release-build.outputs.version }}
           path: packages/
-          merge-multiple: false
       
       - name: Generate release notes
         id: release_notes
@@ -234,30 +136,9 @@ jobs:
           cmake --build . -j$(nproc)
           ```
           
-          ### macOS
-          ```bash
-          # Build from source
-          git clone https://github.com/adam-ikari/uvhttp.git
-          cd uvhttp
-          mkdir build && cd build
-          cmake -DCMAKE_BUILD_TYPE=Release ..
-          cmake --build . -j$(sysctl -n hw.ncpu)
-          ```
-          
-          ### Windows
-          ```powershell
-          # Build from source
-          git clone https://github.com/adam-ikari/uvhttp.git
-          cd uvhttp
-          mkdir build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Release ..
-          cmake --build . --config Release
-          ```
-          
           ## Verification
           
-          All platforms have been tested and verified.
+          Linux platform has been tested and verified.
           
           ## Performance
           
@@ -278,10 +159,6 @@ jobs:
           body_path: ${{ steps.release_notes.outputs.notes_path }}
           draft: false
           prerelease: false
-          files: |
-            packages/build-ubuntu-release-${{ needs.ubuntu-release-build.outputs.version }}/opt/uvhttp-${{ needs.ubuntu-release-build.outputs.version }}-linux-x86_64.tar.gz
-            packages/build-macos-release-${{ needs.macos-release-build.outputs.version }}/opt/uvhttp-${{ needs.macos-release-build.outputs.version }}-macos-x86_64.tar.gz
-            packages/build-windows-release-${{ needs.windows-release-build.outputs.version }}/uvhttp-${{ needs.windows-release-build.outputs.version }}-windows-x86_64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
