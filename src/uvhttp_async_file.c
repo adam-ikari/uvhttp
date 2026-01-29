@@ -39,23 +39,23 @@ uvhttp_error_t uvhttp_async_file_manager_create(
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    uvhttp_async_file_manager_t* mgr =
+    uvhttp_async_file_manager_t* new_manager =
         uvhttp_alloc(sizeof(uvhttp_async_file_manager_t));
-    if (!mgr) {
+    if (!new_manager) {
         uvhttp_handle_memory_failure("async_file_manager", NULL, NULL);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
 
-    memset(mgr, 0, sizeof(uvhttp_async_file_manager_t));
+    memset(new_manager, 0, sizeof(uvhttp_async_file_manager_t));
 
-    mgr->loop = loop;
-    mgr->max_concurrent_reads = max_concurrent;
-    mgr->current_reads = 0;
-    mgr->read_buffer_size = buffer_size;
-    mgr->max_file_size = max_file_size;
-    mgr->active_requests = NULL;
+    new_manager->loop = loop;
+    new_manager->max_concurrent_reads = max_concurrent;
+    new_manager->current_reads = 0;
+    new_manager->read_buffer_size = buffer_size;
+    new_manager->max_file_size = max_file_size;
+    new_manager->active_requests = NULL;
 
-    *manager = mgr;
+    *manager = new_manager;
     return UVHTTP_OK;
 }
 
