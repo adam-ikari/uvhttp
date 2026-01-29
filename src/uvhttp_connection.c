@@ -21,17 +21,28 @@
 #endif
 
 /* ========== 结构体大小验证 ========== */
-/* 验证关键结构体的大小，确保内存布局优化不会被意外破坏 */
-/* uvhttp_request_t: 141,416 字节 (32个内联headers) */
-/* uvhttp_response_t: 139,352 字节 (32个内联headers) */
-/* uvhttp_connection_t: 424 字节 (优化布局后) */
-/* uvhttp_header_t: 4,352 字节 (256 + 4096) */
-UVHTTP_STATIC_ASSERT(sizeof(uvhttp_request_t) == 141416,
-                      "uvhttp_request_t size changed unexpectedly");
-UVHTTP_STATIC_ASSERT(sizeof(uvhttp_response_t) == 139352,
-                      "uvhttp_response_t size changed unexpectedly");
-UVHTTP_STATIC_ASSERT(sizeof(uvhttp_header_t) == 4352,
-                      "uvhttp_header_t size changed unexpectedly");
+
+/* 验证结构体大小在合理范围内（允许用户自定义配置） */
+
+/* 注意：结构体大小取决于 UVHTTP_INLINE_HEADERS_CAPACITY 等可配置常量 */
+
+UVHTTP_STATIC_ASSERT(sizeof(uvhttp_request_t) >= 65536,
+
+                      "uvhttp_request_t size too small");
+
+UVHTTP_STATIC_ASSERT(sizeof(uvhttp_request_t) < 2 * 1024 * 1024,
+
+                      "uvhttp_request_t size exceeds 2MB limit, consider reducing UVHTTP_INLINE_HEADERS_CAPACITY");
+
+UVHTTP_STATIC_ASSERT(sizeof(uvhttp_response_t) >= 65536,
+
+                      "uvhttp_response_t size too small");
+
+UVHTTP_STATIC_ASSERT(sizeof(uvhttp_response_t) < 2 * 1024 * 1024,
+
+                      "uvhttp_response_t size exceeds 2MB limit, consider reducing UVHTTP_INLINE_HEADERS_CAPACITY");
+
+
 
 
 
