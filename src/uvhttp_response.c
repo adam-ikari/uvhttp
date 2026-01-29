@@ -136,7 +136,7 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer,
 
     // HTTP/1.1优化：根据keep-alive设置Connection头
     if (!has_connection) {
-        if (response->keep_alive) {
+        if (response->keepalive) {
             pos += snprintf(buffer + pos, *length - pos,
                             "Connection: keep-alive\r\n");
             pos += snprintf(buffer + pos, *length - pos,
@@ -167,7 +167,7 @@ uvhttp_error_t uvhttp_response_init(uvhttp_response_t* response, void* client) {
     memset(response, 0, sizeof(uvhttp_response_t));
 
     // HTTP/1.1优化：设置默认值
-    response->keep_alive = 1;  // HTTP/1.1默认保持连接
+    response->keepalive = 1;  // HTTP/1.1默认保持连接
     response->status_code = UVHTTP_STATUS_OK;
     response->sent = 0;      // 未发送
     response->finished = 0;  // 未完成
@@ -419,7 +419,7 @@ static void uvhttp_free_write_data(uv_write_t* req, int status) {
             if (client) {
                 uvhttp_connection_t* conn = (uvhttp_connection_t*)client->data;
                 if (conn) {
-                    if (!write_data->response->keep_alive) {
+                    if (!write_data->response->keepalive) {
                         /* 关闭连接 */
                         uvhttp_connection_close(conn);
                     } else {
@@ -582,14 +582,14 @@ uvhttp_error_t uvhttp_response_send_raw(const char* data, size_t length,
     }
 
     /* 如果响应设置了 Connection: close，需要在发送完成后关闭连接 */
-    if (response && !response->keep_alive) {
+    if (response && !response->keepalive) {
 
         /* 获取连接对象并关闭连接 */
         uv_tcp_t* client_tcp = (uv_tcp_t*)response->client;
         if (client_tcp) {
             uvhttp_connection_t* conn = (uvhttp_connection_t*)client_tcp->data;
             if (conn) {
-                conn->keep_alive = 0;
+                conn->keepalive = 0;
             }
         }
     }

@@ -33,7 +33,7 @@ struct uvhttp_connection {
     /* 缓存行1：热路径字段（16字节）- 优化内存局部性 */
     uvhttp_connection_state_t state; /* 4 字节 - 连接状态 */
     int parsing_complete;            /* 4 字节 - 解析是否完成 */
-    int keep_alive;                  /* 4 字节 - 是否保持连接 */
+    int keepalive;                   /* 4 字节 - 是否保持连接 */
     int chunked_encoding;            /* 4 字节 - 是否使用分块传输 */
 
     /* 缓存行2-3：指针字段（136字节）- 集中存储 */

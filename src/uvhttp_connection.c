@@ -207,7 +207,7 @@ uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     conn->response->headers_sent = 0;
     conn->response->sent = 0;
     conn->response->finished = 0;
-    conn->response->keep_alive = 0;
+    conn->response->keepalive = 0;
     conn->response->compress = 0;
     conn->response->cache_ttl = 0;
     conn->response->header_count = 0;
@@ -224,7 +224,7 @@ uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     conn->parsing_complete = 0;
     conn->content_length = 0;
     conn->body_received = 0;
-    conn->keep_alive = 1;       /* 继续保持连接 */
+    conn->keepalive = 1;         /* 继续保持连接 */
     conn->chunked_encoding = 0; /* 重置分块传输编码标志 */
     conn->current_header_is_important = 0;
     conn->parsing_header_field = 0;
@@ -293,7 +293,7 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
     c->timeout_timer.data = c;
 
     // HTTP/1.1优化：初始化默认值
-    c->keep_alive = 1;        /* HTTP/1.1默认保持连接 */
+    c->keepalive = 1;         /* HTTP/1.1默认保持连接 */
     c->chunked_encoding = 0;  /* 默认不使用分块传输 */
     c->close_pending = 0;     /* 初始化待关闭的 handle 计数 */
     c->content_length = 0;    /* 默认无内容长度 */

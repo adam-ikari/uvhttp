@@ -44,7 +44,7 @@ struct uvhttp_response {
     int finished;     /* 4 字节 - 响应是否完成 */
 
     /* HTTP/1.1优化字段 */
-    int keep_alive; /* 4 字节 - 是否保持连接 */
+    int keepalive;  /* 4 字节 - 是否保持连接 */
     int compress;   /* 4 字节 - 是否启用压缩 */
     int cache_ttl;  /* 4 字节 - 缓存TTL（秒） */
 

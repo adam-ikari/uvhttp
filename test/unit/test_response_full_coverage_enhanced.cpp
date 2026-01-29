@@ -120,7 +120,7 @@ TEST(UvhttpResponseEnhancedTest, ResponseFieldInitialization) {
     EXPECT_EQ(response.body, nullptr);
     EXPECT_EQ(response.body_length, 0);
     EXPECT_EQ(response.headers_sent, 0);
-    EXPECT_EQ(response.keep_alive, 0);
+    EXPECT_EQ(response.keepalive, 0);
     EXPECT_EQ(response.sent, 0);
     EXPECT_EQ(response.finished, 0);
     EXPECT_EQ(response.compress, 0);
@@ -285,9 +285,9 @@ TEST(UvhttpResponseEnhancedTest, Http11OptimizationFields) {
     uvhttp_response_t response;
     memset(&response, 0, sizeof(response));
     
-    // 测试 keep_alive 字段
-    response.keep_alive = 1;
-    EXPECT_EQ(response.keep_alive, 1);
+    // 测试 keepalive 字段
+    response.keepalive = 1;
+    EXPECT_EQ(response.keepalive, 1);
     
     // 测试 sent 字段
     response.sent = 1;
