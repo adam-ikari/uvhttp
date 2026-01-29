@@ -109,13 +109,16 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     llhttp_t* parser = (llhttp_t*)conn->request->parser;
     if (parser) {
         UVHTTP_LOG_DEBUG("on_read: Parsing %zd bytes\n", nread);
-        UVHTTP_LOG_DEBUG("on_read: parser->data = %p, conn = %p\n", parser->data, conn);
+        UVHTTP_LOG_DEBUG("on_read: parser->data = %p, conn = %p\n",
+                         parser->data, conn);
         enum llhttp_errno err = llhttp_execute(parser, buf->base, nread);
 
         if (err != HPE_OK) {
             const char* err_name = llhttp_errno_name(err);
-            UVHTTP_LOG_ERROR("HTTP parse error: %d (%s)\n", err, err_name ? err_name : "unknown");
-            UVHTTP_LOG_ERROR("HTTP parse error reason: %s\n", llhttp_get_error_reason(parser));
+            UVHTTP_LOG_ERROR("HTTP parse error: %d (%s)\n", err,
+                             err_name ? err_name : "unknown");
+            UVHTTP_LOG_ERROR("HTTP parse error reason: %s\n",
+                             llhttp_get_error_reason(parser));
             uvhttp_log_safe_error(err, "http_parse", err_name);
             /* 解析错误时异步关闭连接 */
             uvhttp_connection_close(conn);

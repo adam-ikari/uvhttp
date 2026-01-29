@@ -162,7 +162,8 @@ static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
 
     /* 检查header字段名长度限制 */
     if (length >= UVHTTP_MAX_HEADER_NAME_SIZE) {
-        UVHTTP_LOG_ERROR("on_header_field: header name too long: %zu\n", length);
+        UVHTTP_LOG_ERROR("on_header_field: header name too long: %zu\n",
+                         length);
         return -1; /* 字段名太长 */
     }
 
