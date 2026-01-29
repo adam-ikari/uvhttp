@@ -20,9 +20,9 @@ static uvhttp_error_stats_t error_stats = {0};
 #endif
 
 /* 设置错误恢复配置 */
-void
-uvhttp_set_error_recovery_config(int max_retries, int base_delay_ms,
-                                 int max_delay_ms, double backoff_multiplier) {
+void uvhttp_set_error_recovery_config(int max_retries, int base_delay_ms,
+                                      int max_delay_ms,
+                                      double backoff_multiplier) {
     g_error_recovery_config.max_retries = max_retries > 0 ? max_retries : 3;
     g_error_recovery_config.base_delay_ms =
         base_delay_ms > 0 ? base_delay_ms : UVHTTP_DEFAULT_BASE_DELAY_MS;
@@ -33,8 +33,7 @@ uvhttp_set_error_recovery_config(int max_retries, int base_delay_ms,
 }
 
 /* 计算重试延迟（指数退避） */
-static int
-calculate_retry_delay(int attempt) {
+static int calculate_retry_delay(int attempt) {
     int delay = g_error_recovery_config.base_delay_ms;
     for (int i = 0; i < attempt; i++) {
         delay *= g_error_recovery_config.backoff_multiplier;
@@ -45,8 +44,7 @@ calculate_retry_delay(int attempt) {
 }
 
 /* 执行重试延迟 */
-static void
-retry_delay(int ms) {
+static void retry_delay(int ms) {
     struct timespec ts;
     ts.tv_sec = ms / 1000;
     ts.tv_nsec = (ms % 1000) * 1000000;
@@ -54,8 +52,7 @@ retry_delay(int ms) {
 }
 
 /* 判断错误是否可重试 */
-static int
-is_retryable_error(uvhttp_error_t error) {
+static int is_retryable_error(uvhttp_error_t error) {
     switch (error) {
     /* 可重试的连接错误 */
     case UVHTTP_ERROR_CONNECTION_ACCEPT:
@@ -134,9 +131,9 @@ is_retryable_error(uvhttp_error_t error) {
 }
 
 /* 带重试的错误处理函数 */
-uvhttp_error_t
-uvhttp_retry_operation(uvhttp_error_t (*operation)(void*), void* context,
-                       const char* operation_name) {
+uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*),
+                                      void* context,
+                                      const char* operation_name) {
     (void)operation_name; /* 预留参数，用于日志记录 */
     uvhttp_error_t last_error = UVHTTP_OK;
 
@@ -176,8 +173,7 @@ uvhttp_retry_operation(uvhttp_error_t (*operation)(void*), void* context,
 }
 
 /* 记录错误 */
-void
-uvhttp_log_error(uvhttp_error_t error, const char* context) {
+void uvhttp_log_error(uvhttp_error_t error, const char* context) {
 #if UVHTTP_FEATURE_STATISTICS
     /* 转换负数错误码为正数索引 */
     int index = (error < 0) ? -error : 0;
@@ -204,10 +200,9 @@ uvhttp_log_error(uvhttp_error_t error, const char* context) {
 
 /* 获取错误统计 */
 #if UVHTTP_FEATURE_STATISTICS
-void
-uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts,
-                       time_t* last_error_time,
-                       const char** last_error_context) {
+void uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts,
+                            time_t* last_error_time,
+                            const char** last_error_context) {
     /* 向后兼容：当 context 为 NULL 时使用静态全局变量 */
     uvhttp_error_stats_t* stats = NULL;
 
@@ -233,10 +228,9 @@ uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts,
     }
 }
 #else
-void
-uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts,
-                       time_t* last_error_time,
-                       const char** last_error_context) {
+void uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts,
+                            time_t* last_error_time,
+                            const char** last_error_context) {
     (void)context;
     (void)error_counts;
     (void)last_error_time;
@@ -246,8 +240,7 @@ uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts,
 
 /* 重置错误统计 */
 #if UVHTTP_FEATURE_STATISTICS
-void
-uvhttp_reset_error_stats(uvhttp_context_t* context) {
+void uvhttp_reset_error_stats(uvhttp_context_t* context) {
     /* 向后兼容：当 context 为 NULL 时使用静态全局变量 */
     uvhttp_error_stats_t* stats = NULL;
 
@@ -263,16 +256,14 @@ uvhttp_reset_error_stats(uvhttp_context_t* context) {
     }
 }
 #else
-void
-uvhttp_reset_error_stats(uvhttp_context_t* context) {
+void uvhttp_reset_error_stats(uvhttp_context_t* context) {
     (void)context;
 }
 #endif
 
 /* 获取最频繁的错误 */
 #if UVHTTP_FEATURE_STATISTICS
-uvhttp_error_t
-uvhttp_get_most_frequent_error(uvhttp_context_t* context) {
+uvhttp_error_t uvhttp_get_most_frequent_error(uvhttp_context_t* context) {
     /* 向后兼容：当 context 为 NULL 时使用静态全局变量 */
     uvhttp_error_stats_t* stats = NULL;
 
@@ -301,15 +292,13 @@ uvhttp_get_most_frequent_error(uvhttp_context_t* context) {
     return -max_index;
 }
 #else
-uvhttp_error_t
-uvhttp_get_most_frequent_error(uvhttp_context_t* context) {
+uvhttp_error_t uvhttp_get_most_frequent_error(uvhttp_context_t* context) {
     (void)context;
     return UVHTTP_OK;
 }
 #endif
 
-const char*
-uvhttp_error_string(uvhttp_error_t error) {
+const char* uvhttp_error_string(uvhttp_error_t error) {
     switch (error) {
     case UVHTTP_OK:
         return "Success";
@@ -393,8 +382,7 @@ uvhttp_error_string(uvhttp_error_t error) {
 
 /* 获取错误分类字符串 */
 
-const char*
-uvhttp_error_category_string(uvhttp_error_t error) {
+const char* uvhttp_error_category_string(uvhttp_error_t error) {
 
     if (error == UVHTTP_OK) {
 
@@ -490,8 +478,7 @@ uvhttp_error_category_string(uvhttp_error_t error) {
 
 /* 获取错误描述 */
 
-const char*
-uvhttp_error_description(uvhttp_error_t error) {
+const char* uvhttp_error_description(uvhttp_error_t error) {
 
     switch (error) {
 
@@ -788,8 +775,7 @@ uvhttp_error_description(uvhttp_error_t error) {
 
 /* 获取错误修复建议 */
 
-const char*
-uvhttp_error_suggestion(uvhttp_error_t error) {
+const char* uvhttp_error_suggestion(uvhttp_error_t error) {
 
     switch (error) {
 
@@ -1086,8 +1072,7 @@ uvhttp_error_suggestion(uvhttp_error_t error) {
 
 /* 检查错误是否可恢复 */
 
-int
-uvhttp_error_is_recoverable(uvhttp_error_t error) {
+int uvhttp_error_is_recoverable(uvhttp_error_t error) {
 
     return is_retryable_error(error);
 }

@@ -17,8 +17,7 @@
 // 函数声明
 static void uvhttp_free_write_data(uv_write_t* req, int status);
 
-static const char*
-get_status_text(int status_code) {
+static const char* get_status_text(int status_code) {
     switch (status_code) {
     case UVHTTP_STATUS_OK:
         return "OK";
@@ -50,8 +49,7 @@ get_status_text(int status_code) {
 }
 
 // 辅助函数：检查字符串中是否包含控制字符（包括换行符）
-static int
-contains_control_chars(const char* str) {
+static int contains_control_chars(const char* str) {
     if (!str)
         return 0;
 
@@ -73,9 +71,8 @@ contains_control_chars(const char* str) {
     return 0;
 }
 
-static void
-build_response_headers(uvhttp_response_t* response, char* buffer,
-                       size_t* length) {
+static void build_response_headers(uvhttp_response_t* response, char* buffer,
+                                   size_t* length) {
     size_t pos = 0;
 
     // 状态行
@@ -158,8 +155,7 @@ build_response_headers(uvhttp_response_t* response, char* buffer,
     *length = pos;
 }
 
-uvhttp_error_t
-uvhttp_response_init(uvhttp_response_t* response, void* client) {
+uvhttp_error_t uvhttp_response_init(uvhttp_response_t* response, void* client) {
     if (!response) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -183,8 +179,7 @@ uvhttp_response_init(uvhttp_response_t* response, void* client) {
     return UVHTTP_OK;
 }
 
-void
-uvhttp_response_cleanup(uvhttp_response_t* response) {
+void uvhttp_response_cleanup(uvhttp_response_t* response) {
     if (!response) {
         return;
     }
@@ -202,8 +197,8 @@ uvhttp_response_cleanup(uvhttp_response_t* response) {
     response->body_length = 0;
 }
 
-uvhttp_error_t
-uvhttp_response_set_status(uvhttp_response_t* response, int status_code) {
+uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response,
+                                          int status_code) {
     if (!response) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -218,9 +213,8 @@ uvhttp_response_set_status(uvhttp_response_t* response, int status_code) {
     return UVHTTP_OK;
 }
 
-uvhttp_error_t
-uvhttp_response_set_header(uvhttp_response_t* response, const char* name,
-                           const char* value) {
+uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response,
+                                          const char* name, const char* value) {
     if (!response || !name || !value) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -314,9 +308,8 @@ uvhttp_response_set_header(uvhttp_response_t* response, const char* name,
     return UVHTTP_OK;
 }
 
-uvhttp_error_t
-uvhttp_response_set_body(uvhttp_response_t* response, const char* body,
-                         size_t length) {
+uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response,
+                                        const char* body, size_t length) {
     if (!response) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -359,9 +352,8 @@ uvhttp_response_set_body(uvhttp_response_t* response, const char* body,
     return UVHTTP_OK;
 }
 
-uvhttp_error_t
-uvhttp_send_response_data(uvhttp_response_t* response, const char* data,
-                          size_t length) {
+uvhttp_error_t uvhttp_send_response_data(uvhttp_response_t* response,
+                                         const char* data, size_t length) {
     if (!response || !data || length == 0) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -417,8 +409,7 @@ uvhttp_send_response_data(uvhttp_response_t* response, const char* data,
  * 在libuv事件循环线程中执行，安全释放写入相关资源
  * 单线程优势：无需锁，资源释放顺序可预测
  */
-static void
-uvhttp_free_write_data(uv_write_t* req, int status) {
+static void uvhttp_free_write_data(uv_write_t* req, int status) {
     (void)status;  // 避免未使用参数警告
     uvhttp_write_data_t* write_data = (uvhttp_write_data_t*)req->data;
     if (write_data) {
@@ -453,9 +444,8 @@ uvhttp_free_write_data(uv_write_t* req, int status) {
  *
  * 注意：调用者负责释放返回的 *out_data 内存
  */
-uvhttp_error_t
-uvhttp_response_build_data(uvhttp_response_t* response, char** out_data,
-                           size_t* out_length) {
+uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
+                                          char** out_data, size_t* out_length) {
     if (!response || !out_data || !out_length) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -535,9 +525,9 @@ uvhttp_response_build_data(uvhttp_response_t* response, char** out_data,
  * response: 响应对象（用于回调处理）
  * 返回: UVHTTP_OK 成功，其他值表示错误
  */
-uvhttp_error_t
-uvhttp_response_send_raw(const char* data, size_t length, void* client,
-                         uvhttp_response_t* response) {
+uvhttp_error_t uvhttp_response_send_raw(const char* data, size_t length,
+                                        void* client,
+                                        uvhttp_response_t* response) {
     if (!data || length == 0 || !client) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -613,8 +603,7 @@ uvhttp_response_send_raw(const char* data, size_t length, void* client,
  *
  * 这个函数组合了数据构建和实际发送
  */
-uvhttp_error_t
-uvhttp_response_send(uvhttp_response_t* response) {
+uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
     if (!response) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -654,8 +643,7 @@ uvhttp_response_send(uvhttp_response_t* response) {
     return err;
 }
 
-void
-uvhttp_response_free(uvhttp_response_t* response) {
+void uvhttp_response_free(uvhttp_response_t* response) {
     if (!response) {
         return;
     }
@@ -667,8 +655,7 @@ uvhttp_response_free(uvhttp_response_t* response) {
 /* ========== Headers 操作 API 实现 ========== */
 
 /* 获取 header 数量 */
-size_t
-uvhttp_response_get_header_count(uvhttp_response_t* response) {
+size_t uvhttp_response_get_header_count(uvhttp_response_t* response) {
     if (!response) {
         return 0;
     }
@@ -676,8 +663,8 @@ uvhttp_response_get_header_count(uvhttp_response_t* response) {
 }
 
 /* 获取指定索引的 header（内部使用） */
-uvhttp_header_t*
-uvhttp_response_get_header_at(uvhttp_response_t* response, size_t index) {
+uvhttp_header_t* uvhttp_response_get_header_at(uvhttp_response_t* response,
+                                               size_t index) {
     if (!response || index >= response->header_count) {
         return NULL;
     }
@@ -696,10 +683,9 @@ uvhttp_response_get_header_at(uvhttp_response_t* response, size_t index) {
 }
 
 /* 遍历所有 headers */
-void
-uvhttp_response_foreach_header(uvhttp_response_t* response,
-                               uvhttp_header_callback_t callback,
-                               void* user_data) {
+void uvhttp_response_foreach_header(uvhttp_response_t* response,
+                                    uvhttp_header_callback_t callback,
+                                    void* user_data) {
     if (!response || !callback) {
         return;
     }

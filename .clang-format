@@ -1,5 +1,5 @@
 ---
-BasedOnStyle: Gnu
+BasedOnStyle: google
 Language: Cpp
 IndentWidth: 4
 TabWidth: 4

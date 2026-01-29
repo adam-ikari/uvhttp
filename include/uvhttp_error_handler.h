@@ -61,8 +61,8 @@ void uvhttp_error_cleanup(void);
 /**
  * 设置错误恢复配置
  */
-void
-uvhttp_error_set_recovery_config(const uvhttp_error_recovery_config_t* config);
+void uvhttp_error_set_recovery_config(
+    const uvhttp_error_recovery_config_t* config);
 
 /**
  * 尝试从错误中恢复
@@ -70,8 +70,8 @@ uvhttp_error_set_recovery_config(const uvhttp_error_recovery_config_t* config);
  * @param context 错误上下文
  * @return 错误码，UVHTTP_OK 表示恢复成功
  */
-uvhttp_error_t
-uvhttp_error_attempt_recovery(const uvhttp_error_context_t* context);
+uvhttp_error_t uvhttp_error_attempt_recovery(
+    const uvhttp_error_context_t* context);
 
 /* ========== 错误报告宏 ========== */
 

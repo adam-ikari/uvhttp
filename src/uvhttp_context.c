@@ -39,8 +39,8 @@
 
 /* ============ 上下文管理实现 ============ */
 
-uvhttp_error_t
-uvhttp_context_create(uv_loop_t* loop, uvhttp_context_t** context) {
+uvhttp_error_t uvhttp_context_create(uv_loop_t* loop,
+                                     uvhttp_context_t** context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -60,8 +60,7 @@ uvhttp_context_create(uv_loop_t* loop, uvhttp_context_t** context) {
     return UVHTTP_OK;
 }
 
-void
-uvhttp_context_destroy(uvhttp_context_t* context) {
+void uvhttp_context_destroy(uvhttp_context_t* context) {
     if (!context) {
         return;
     }
@@ -77,8 +76,7 @@ uvhttp_context_destroy(uvhttp_context_t* context) {
     uvhttp_free(context);
 }
 
-uvhttp_error_t
-uvhttp_context_init(uvhttp_context_t* context) {
+uvhttp_error_t uvhttp_context_init(uvhttp_context_t* context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -106,8 +104,7 @@ uvhttp_context_init(uvhttp_context_t* context) {
 /* ===== 全局变量替代字段初始化函数 ===== */
 
 /* 初始化 TLS 模块状态 */
-uvhttp_error_t
-uvhttp_context_init_tls(uvhttp_context_t* context) {
+uvhttp_error_t uvhttp_context_init_tls(uvhttp_context_t* context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -155,8 +152,7 @@ uvhttp_context_init_tls(uvhttp_context_t* context) {
 }
 
 /* 清理 TLS 模块状态 */
-void
-uvhttp_context_cleanup_tls(uvhttp_context_t* context) {
+void uvhttp_context_cleanup_tls(uvhttp_context_t* context) {
     if (!context || !context->tls_initialized) {
         return;
     }
@@ -178,8 +174,7 @@ uvhttp_context_cleanup_tls(uvhttp_context_t* context) {
 }
 
 /* 初始化 WebSocket 模块状态 */
-uvhttp_error_t
-uvhttp_context_init_websocket(uvhttp_context_t* context) {
+uvhttp_error_t uvhttp_context_init_websocket(uvhttp_context_t* context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -226,8 +221,7 @@ uvhttp_context_init_websocket(uvhttp_context_t* context) {
 }
 
 /* 清理 WebSocket 模块状态 */
-void
-uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
+void uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
     if (!context || !context->ws_drbg_initialized) {
         return;
     }
@@ -249,8 +243,7 @@ uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
 }
 
 /* 初始化错误统计 */
-uvhttp_error_t
-uvhttp_context_init_error_stats(uvhttp_context_t* context) {
+uvhttp_error_t uvhttp_context_init_error_stats(uvhttp_context_t* context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -275,8 +268,7 @@ uvhttp_context_init_error_stats(uvhttp_context_t* context) {
 }
 
 /* 清理错误统计 */
-void
-uvhttp_context_cleanup_error_stats(uvhttp_context_t* context) {
+void uvhttp_context_cleanup_error_stats(uvhttp_context_t* context) {
     if (!context) {
         return;
     }
@@ -289,8 +281,7 @@ uvhttp_context_cleanup_error_stats(uvhttp_context_t* context) {
 }
 
 /* 初始化配置管理 */
-uvhttp_error_t
-uvhttp_context_init_config(uvhttp_context_t* context) {
+uvhttp_error_t uvhttp_context_init_config(uvhttp_context_t* context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -313,8 +304,7 @@ uvhttp_context_init_config(uvhttp_context_t* context) {
 }
 
 /* 清理配置管理 */
-void
-uvhttp_context_cleanup_config(uvhttp_context_t* context) {
+void uvhttp_context_cleanup_config(uvhttp_context_t* context) {
     if (!context) {
         return;
     }

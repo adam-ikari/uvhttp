@@ -21,66 +21,53 @@ extern "C" {
 #    ifdef UVHTTP_ENABLE_MIMALLOC
 #        include "mimalloc.h"
 /* mimalloc 模式 - 直接使用 mimalloc API */
-static inline void*
-uvhttp_alloc(size_t size) {
+static inline void* uvhttp_alloc(size_t size) {
     return mi_malloc(size);
 }
-static inline void
-uvhttp_free(void* ptr) {
+static inline void uvhttp_free(void* ptr) {
     mi_free(ptr);
 }
-static inline void*
-uvhttp_realloc(void* ptr, size_t size) {
+static inline void* uvhttp_realloc(void* ptr, size_t size) {
     return mi_realloc(ptr, size);
 }
-static inline void*
-uvhttp_calloc(size_t nmemb, size_t size) {
+static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
     return mi_calloc(nmemb, size);
 }
 #    else
 /* mimalloc 不可用，回退到系统分配器 */
-static inline void*
-uvhttp_alloc(size_t size) {
+static inline void* uvhttp_alloc(size_t size) {
     return malloc(size);
 }
-static inline void
-uvhttp_free(void* ptr) {
+static inline void uvhttp_free(void* ptr) {
     free(ptr);
 }
-static inline void*
-uvhttp_realloc(void* ptr, size_t size) {
+static inline void* uvhttp_realloc(void* ptr, size_t size) {
     return realloc(ptr, size);
 }
-static inline void*
-uvhttp_calloc(size_t nmemb, size_t size) {
+static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
     return calloc(nmemb, size);
 }
 #    endif
 
 #else /* 系统分配器（默认） */
 /* 系统分配器模式 - 使用内联函数确保可以用作函数指针 */
-static inline void*
-uvhttp_alloc(size_t size) {
+static inline void* uvhttp_alloc(size_t size) {
     return malloc(size);
 }
-static inline void
-uvhttp_free(void* ptr) {
+static inline void uvhttp_free(void* ptr) {
     free(ptr);
 }
-static inline void*
-uvhttp_realloc(void* ptr, size_t size) {
+static inline void* uvhttp_realloc(void* ptr, size_t size) {
     return realloc(ptr, size);
 }
-static inline void*
-uvhttp_calloc(size_t nmemb, size_t size) {
+static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
     return calloc(nmemb, size);
 }
 #endif
 
 /* ========== 分配器信息 ========== */
 
-static inline const char*
-uvhttp_allocator_name(void) {
+static inline const char* uvhttp_allocator_name(void) {
 #if UVHTTP_ALLOCATOR_TYPE == 1
 #    ifdef UVHTTP_ENABLE_MIMALLOC
     return "mimalloc";

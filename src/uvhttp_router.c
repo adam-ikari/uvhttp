@@ -33,8 +33,7 @@
 #define HYBRID_THRESHOLD 100 /* 切换到Trie的路由数量阈值 */
 
 /* 优化：快速方法解析（使用前缀匹配） */
-uvhttp_method_t
-uvhttp_method_from_string(const char* method) {
+uvhttp_method_t uvhttp_method_from_string(const char* method) {
     if (!method || !method[0]) {
         return UVHTTP_ANY;
     }
@@ -82,8 +81,7 @@ uvhttp_method_from_string(const char* method) {
 }
 
 /* 优化：方法到字符串转换（使用直接索引） */
-const char*
-uvhttp_method_to_string(uvhttp_method_t method) {
+const char* uvhttp_method_to_string(uvhttp_method_t method) {
     /* 使用静态常量数组，避免重复字符串比较 */
     static const char* method_strings[] = {
         [UVHTTP_GET] = UVHTTP_METHOD_GET,
@@ -103,8 +101,7 @@ uvhttp_method_to_string(uvhttp_method_t method) {
 }
 
 // 创建新的路由节点
-static uvhttp_route_node_t*
-create_route_node(uvhttp_router_t* router) {
+static uvhttp_route_node_t* create_route_node(uvhttp_router_t* router) {
     if (router->node_pool_used >= router->node_pool_size) {
         // 扩展节点池
         size_t new_size = router->node_pool_size * 2;
@@ -127,9 +124,10 @@ create_route_node(uvhttp_router_t* router) {
 }
 
 // 查找或创建子节点
-static uvhttp_route_node_t*
-find_or_create_child(uvhttp_router_t* router, uvhttp_route_node_t* parent,
-                     const char* segment, int is_param) {
+static uvhttp_route_node_t* find_or_create_child(uvhttp_router_t* router,
+                                                 uvhttp_route_node_t* parent,
+                                                 const char* segment,
+                                                 int is_param) {
     // 查找现有子节点
     for (size_t i = 0; i < parent->child_count; i++) {
         if (strcmp(parent->children[i]->segment, segment) == 0) {
@@ -156,9 +154,8 @@ find_or_create_child(uvhttp_router_t* router, uvhttp_route_node_t* parent,
 }
 
 // 解析路径参数
-static int
-parse_path_params(const char* path, uvhttp_param_t* params,
-                  size_t* param_count) {
+static int parse_path_params(const char* path, uvhttp_param_t* params,
+                             size_t* param_count) {
     if (!path || !params || !param_count) {
         return -1;
     }
@@ -192,8 +189,7 @@ parse_path_params(const char* path, uvhttp_param_t* params,
     return 0;
 }
 
-uvhttp_error_t
-uvhttp_router_new(uvhttp_router_t** router) {
+uvhttp_error_t uvhttp_router_new(uvhttp_router_t** router) {
     if (!router) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -243,8 +239,7 @@ uvhttp_router_new(uvhttp_router_t** router) {
     return UVHTTP_OK;
 }
 
-void
-uvhttp_router_free(uvhttp_router_t* router) {
+void uvhttp_router_free(uvhttp_router_t* router) {
     if (router) {
         if (router->node_pool) {
             uvhttp_free(router->node_pool);
@@ -263,9 +258,9 @@ uvhttp_router_free(uvhttp_router_t* router) {
 }
 
 // 数组路由添加
-static uvhttp_error_t
-add_array_route(uvhttp_router_t* router, const char* path,
-                uvhttp_method_t method, uvhttp_request_handler_t handler) {
+static uvhttp_error_t add_array_route(uvhttp_router_t* router, const char* path,
+                                      uvhttp_method_t method,
+                                      uvhttp_request_handler_t handler) {
     if (router->array_route_count >= router->array_capacity) {
         // 扩展数组容量
         size_t new_capacity = router->array_capacity * 2;
@@ -290,9 +285,9 @@ add_array_route(uvhttp_router_t* router, const char* path,
 }
 
 // 数组路由查找
-static uvhttp_request_handler_t
-find_array_route(const uvhttp_router_t* router, const char* path,
-                 uvhttp_method_t method) {
+static uvhttp_request_handler_t find_array_route(const uvhttp_router_t* router,
+                                                 const char* path,
+                                                 uvhttp_method_t method) {
     for (size_t i = 0; i < router->array_route_count; i++) {
         array_route_t* route = &router->array_routes[i];
         if (route->method == method || route->method == UVHTTP_ANY) {
@@ -305,8 +300,7 @@ find_array_route(const uvhttp_router_t* router, const char* path,
 }
 
 // 迁移数组路由到Trie
-static uvhttp_error_t
-migrate_to_trie(uvhttp_router_t* router) {
+static uvhttp_error_t migrate_to_trie(uvhttp_router_t* router) {
     if (router->use_trie) {
         return UVHTTP_OK;  // 已经是Trie模式
     }
@@ -358,16 +352,15 @@ migrate_to_trie(uvhttp_router_t* router) {
     return UVHTTP_OK;
 }
 
-uvhttp_error_t
-uvhttp_router_add_route(uvhttp_router_t* router, const char* path,
-                        uvhttp_request_handler_t handler) {
+uvhttp_error_t uvhttp_router_add_route(uvhttp_router_t* router,
+                                       const char* path,
+                                       uvhttp_request_handler_t handler) {
     return uvhttp_router_add_route_method(router, path, UVHTTP_ANY, handler);
 }
 
-uvhttp_error_t
-uvhttp_router_add_route_method(uvhttp_router_t* router, const char* path,
-                               uvhttp_method_t method,
-                               uvhttp_request_handler_t handler) {
+uvhttp_error_t uvhttp_router_add_route_method(
+    uvhttp_router_t* router, const char* path, uvhttp_method_t method,
+    uvhttp_request_handler_t handler) {
     if (!router || !path || !handler) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -438,10 +431,10 @@ uvhttp_router_add_route_method(uvhttp_router_t* router, const char* path,
     return UVHTTP_OK;
 }
 
-static int
-match_route_node(uvhttp_route_node_t* node, const char** segments,
-                 int segment_count, int segment_index, uvhttp_method_t method,
-                 uvhttp_route_match_t* match) {
+static int match_route_node(uvhttp_route_node_t* node, const char** segments,
+                            int segment_count, int segment_index,
+                            uvhttp_method_t method,
+                            uvhttp_route_match_t* match) {
     if (!node || !segments || !match) {
         return -1;
     }
@@ -507,9 +500,8 @@ match_route_node(uvhttp_route_node_t* node, const char** segments,
 }
 
 /* 静态文件请求处理器包装函数 */
-static int
-static_file_handler_wrapper(uvhttp_request_t* request,
-                            uvhttp_response_t* response) {
+static int static_file_handler_wrapper(uvhttp_request_t* request,
+                                       uvhttp_response_t* response) {
     /* 获取连接 */
     uv_tcp_t* client = request->client;
     if (!client) {
@@ -553,9 +545,8 @@ static_file_handler_wrapper(uvhttp_request_t* request,
     return -1;
 }
 
-uvhttp_request_handler_t
-uvhttp_router_find_handler(const uvhttp_router_t* router, const char* path,
-                           const char* method) {
+uvhttp_request_handler_t uvhttp_router_find_handler(
+    const uvhttp_router_t* router, const char* path, const char* method) {
     if (!router || !path || !method) {
         return NULL;
     }
@@ -613,9 +604,9 @@ uvhttp_router_find_handler(const uvhttp_router_t* router, const char* path,
     return NULL;
 }
 
-uvhttp_error_t
-uvhttp_router_match(const uvhttp_router_t* router, const char* path,
-                    const char* method, uvhttp_route_match_t* match) {
+uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
+                                   const char* path, const char* method,
+                                   uvhttp_route_match_t* match) {
     if (!router || !path || !method || !match) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -677,18 +668,18 @@ uvhttp_router_match(const uvhttp_router_t* router, const char* path,
                : UVHTTP_ERROR_NOT_FOUND;
 }
 
-uvhttp_error_t
-uvhttp_parse_path_params(const char* path, uvhttp_param_t* params,
-                         size_t* param_count) {
+uvhttp_error_t uvhttp_parse_path_params(const char* path,
+                                        uvhttp_param_t* params,
+                                        size_t* param_count) {
     return parse_path_params(path, params, param_count);
 }
 
 /**
  * 添加静态文件路由
  */
-uvhttp_error_t
-uvhttp_router_add_static_route(uvhttp_router_t* router, const char* prefix_path,
-                               void* static_context) {
+uvhttp_error_t uvhttp_router_add_static_route(uvhttp_router_t* router,
+                                              const char* prefix_path,
+                                              void* static_context) {
     if (!router || !prefix_path || !static_context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -715,9 +706,8 @@ uvhttp_router_add_static_route(uvhttp_router_t* router, const char* prefix_path,
 /**
  * 添加回退路由
  */
-uvhttp_error_t
-uvhttp_router_add_fallback_route(uvhttp_router_t* router,
-                                 void* static_context) {
+uvhttp_error_t uvhttp_router_add_fallback_route(uvhttp_router_t* router,
+                                                void* static_context) {
     if (!router || !static_context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }

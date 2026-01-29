@@ -13,8 +13,7 @@
 #include <time.h>
 
 // 安全的字符串复制函数 - 匹配头文件声明
-int
-uvhttp_safe_strcpy(char* dest, size_t dest_size, const char* src) {
+int uvhttp_safe_strcpy(char* dest, size_t dest_size, const char* src) {
     if (!dest || !src || dest_size == 0)
         return -1;
 
@@ -31,8 +30,7 @@ uvhttp_safe_strcpy(char* dest, size_t dest_size, const char* src) {
 /* ============ 核心工具函数 ============ */
 
 // 安全字符串复制函数
-int
-uvhttp_safe_strncpy(char* dest, const char* src, size_t dest_size) {
+int uvhttp_safe_strncpy(char* dest, const char* src, size_t dest_size) {
     if (!dest || !src || dest_size == 0)
         return -1;
 
@@ -49,14 +47,12 @@ uvhttp_safe_strncpy(char* dest, const char* src, size_t dest_size) {
 /* ============ 内部辅助函数 ============ */
 
 // 内部辅助函数：验证状态码有效性
-static int
-is_valid_status_code(int code) {
+static int is_valid_status_code(int code) {
     return (code >= 100 && code <= 599) ? TRUE : FALSE;
 }
 
 // 内部辅助函数：验证字符串长度
-static int
-is_valid_string_length(const char* str, size_t max_len) {
+static int is_valid_string_length(const char* str, size_t max_len) {
     if (!str)
         return FALSE;
     return (strlen(str) <= max_len) ? TRUE : FALSE;
@@ -72,9 +68,9 @@ is_valid_string_length(const char* str, size_t max_len) {
  * @param status_code HTTP状态码（如果为0则使用响应对象中已有的状态码）
  * @return UVHTTP_OK 成功，其他值表示错误
  */
-uvhttp_error_t
-uvhttp_send_unified_response(uvhttp_response_t* response, const char* content,
-                             size_t length, int status_code) {
+uvhttp_error_t uvhttp_send_unified_response(uvhttp_response_t* response,
+                                            const char* content, size_t length,
+                                            int status_code) {
     // 参数验证
     if (!response || !content) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -118,9 +114,10 @@ uvhttp_send_unified_response(uvhttp_response_t* response, const char* content,
  * @param details 详细信息（可选）
  * @return UVHTTP_OK 成功，其他值表示错误
  */
-uvhttp_error_t
-uvhttp_send_error_response(uvhttp_response_t* response, int error_code,
-                           const char* error_message, const char* details) {
+uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response,
+                                          int error_code,
+                                          const char* error_message,
+                                          const char* details) {
     // 参数验证
     if (!response || !error_message) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -177,8 +174,7 @@ uvhttp_send_error_response(uvhttp_response_t* response, int error_code,
  * @param status_code HTTP 状态码
  * @return TRUE 表示有效，FALSE 表示无效
  */
-int
-uvhttp_is_valid_status_code(int status_code) {
+int uvhttp_is_valid_status_code(int status_code) {
     return (status_code >= 100 && status_code <= 599) ? TRUE : FALSE;
 }
 
@@ -187,8 +183,7 @@ uvhttp_is_valid_status_code(int status_code) {
  * @param content_type Content-Type 字符串
  * @return TRUE 表示有效，FALSE 表示无效
  */
-int
-uvhttp_is_valid_content_type(const char* content_type) {
+int uvhttp_is_valid_content_type(const char* content_type) {
     if (!content_type || strlen(content_type) == 0) {
         return FALSE;
     }
@@ -216,8 +211,7 @@ uvhttp_is_valid_content_type(const char* content_type) {
  * @param max_len 最大长度
  * @return TRUE 表示有效，FALSE 表示无效
  */
-int
-uvhttp_is_valid_string_length(const char* str, size_t max_len) {
+int uvhttp_is_valid_string_length(const char* str, size_t max_len) {
     if (!str)
         return FALSE;
     return (strlen(str) <= max_len) ? TRUE : FALSE;
@@ -228,8 +222,7 @@ uvhttp_is_valid_string_length(const char* str, size_t max_len) {
  * @param ip IP 地址字符串
  * @return TRUE 表示有效，FALSE 表示无效
  */
-int
-uvhttp_is_valid_ipv4(const char* ip) {
+int uvhttp_is_valid_ipv4(const char* ip) {
     if (!ip || !*ip)
         return FALSE;
 
@@ -271,8 +264,7 @@ uvhttp_is_valid_ipv4(const char* ip) {
  * @param ip IP 地址字符串
  * @return TRUE 表示有效，FALSE 表示无效
  */
-int
-uvhttp_is_valid_ipv6(const char* ip) {
+int uvhttp_is_valid_ipv6(const char* ip) {
     if (!ip || !*ip)
         return FALSE;
 
@@ -310,8 +302,7 @@ uvhttp_is_valid_ipv6(const char* ip) {
  * @param ip IP 地址字符串
  * @return TRUE 表示有效，FALSE 表示无效
  */
-int
-uvhttp_is_valid_ip_address(const char* ip) {
+int uvhttp_is_valid_ip_address(const char* ip) {
     if (!ip || !*ip)
         return FALSE;
 

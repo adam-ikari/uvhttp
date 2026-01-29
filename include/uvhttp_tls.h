@@ -63,34 +63,28 @@ void uvhttp_tls_context_free(uvhttp_tls_context_t* ctx);
 // 证书配置
 uvhttp_tls_error_t uvhttp_tls_context_load_cert_chain(uvhttp_tls_context_t* ctx,
                                                       const char* cert_file);
-uvhttp_tls_error_t
-uvhttp_tls_context_load_private_key(uvhttp_tls_context_t* ctx,
-                                    const char* key_file);
+uvhttp_tls_error_t uvhttp_tls_context_load_private_key(
+    uvhttp_tls_context_t* ctx, const char* key_file);
 uvhttp_tls_error_t uvhttp_tls_context_load_ca_file(uvhttp_tls_context_t* ctx,
                                                    const char* ca_file);
 
 // mTLS配置
-uvhttp_tls_error_t
-uvhttp_tls_context_enable_client_auth(uvhttp_tls_context_t* ctx,
-                                      int require_cert);
-uvhttp_tls_error_t
-uvhttp_tls_context_set_verify_depth(uvhttp_tls_context_t* ctx, int depth);
+uvhttp_tls_error_t uvhttp_tls_context_enable_client_auth(
+    uvhttp_tls_context_t* ctx, int require_cert);
+uvhttp_tls_error_t uvhttp_tls_context_set_verify_depth(
+    uvhttp_tls_context_t* ctx, int depth);
 
 // TLS安全配置
-uvhttp_tls_error_t
-uvhttp_tls_context_set_cipher_suites(uvhttp_tls_context_t* ctx,
-                                     const int* cipher_suites);
-uvhttp_tls_error_t
-uvhttp_tls_context_enable_session_tickets(uvhttp_tls_context_t* ctx,
-                                          int enable);
-uvhttp_tls_error_t
-uvhttp_tls_context_set_session_cache(uvhttp_tls_context_t* ctx,
-                                     int max_sessions);
-uvhttp_tls_error_t
-uvhttp_tls_context_enable_ocsp_stapling(uvhttp_tls_context_t* ctx, int enable);
-uvhttp_tls_error_t
-uvhttp_tls_context_set_dh_parameters(uvhttp_tls_context_t* ctx,
-                                     const char* dh_file);
+uvhttp_tls_error_t uvhttp_tls_context_set_cipher_suites(
+    uvhttp_tls_context_t* ctx, const int* cipher_suites);
+uvhttp_tls_error_t uvhttp_tls_context_enable_session_tickets(
+    uvhttp_tls_context_t* ctx, int enable);
+uvhttp_tls_error_t uvhttp_tls_context_set_session_cache(
+    uvhttp_tls_context_t* ctx, int max_sessions);
+uvhttp_tls_error_t uvhttp_tls_context_enable_ocsp_stapling(
+    uvhttp_tls_context_t* ctx, int enable);
+uvhttp_tls_error_t uvhttp_tls_context_set_dh_parameters(
+    uvhttp_tls_context_t* ctx, const char* dh_file);
 
 // TLS连接管理
 mbedtls_ssl_context* uvhttp_tls_create_ssl(uvhttp_tls_context_t* ctx);
@@ -114,8 +108,8 @@ int uvhttp_tls_get_cert_serial(mbedtls_x509_crt* cert, char* buf,
                                size_t buf_size);
 
 // 证书吊销检查
-uvhttp_tls_error_t
-uvhttp_tls_context_enable_crl_checking(uvhttp_tls_context_t* ctx, int enable);
+uvhttp_tls_error_t uvhttp_tls_context_enable_crl_checking(
+    uvhttp_tls_context_t* ctx, int enable);
 uvhttp_tls_error_t uvhttp_tls_load_crl_file(uvhttp_tls_context_t* ctx,
                                             const char* crl_file);
 
@@ -123,35 +117,31 @@ uvhttp_tls_error_t uvhttp_tls_load_crl_file(uvhttp_tls_context_t* ctx,
 uvhttp_tls_error_t uvhttp_tls_get_ocsp_response(mbedtls_ssl_context* ssl,
                                                 unsigned char** ocsp_response,
                                                 size_t* response_len);
-uvhttp_tls_error_t
-uvhttp_tls_verify_ocsp_response(mbedtls_x509_crt* cert,
-                                const unsigned char* ocsp_response,
-                                size_t response_len);
+uvhttp_tls_error_t uvhttp_tls_verify_ocsp_response(
+    mbedtls_x509_crt* cert, const unsigned char* ocsp_response,
+    size_t response_len);
 
 // TLS 1.3支持
 uvhttp_tls_error_t uvhttp_tls_context_enable_tls13(uvhttp_tls_context_t* ctx,
                                                    int enable);
-uvhttp_tls_error_t
-uvhttp_tls_context_set_tls13_cipher_suites(uvhttp_tls_context_t* ctx,
-                                           const char* cipher_suites);
-uvhttp_tls_error_t
-uvhttp_tls_context_enable_early_data(uvhttp_tls_context_t* ctx, int enable);
+uvhttp_tls_error_t uvhttp_tls_context_set_tls13_cipher_suites(
+    uvhttp_tls_context_t* ctx, const char* cipher_suites);
+uvhttp_tls_error_t uvhttp_tls_context_enable_early_data(
+    uvhttp_tls_context_t* ctx, int enable);
 
 // 会话票证优化
 uvhttp_tls_error_t uvhttp_tls_context_set_ticket_key(uvhttp_tls_context_t* ctx,
                                                      const unsigned char* key,
                                                      size_t key_len);
-uvhttp_tls_error_t
-uvhttp_tls_context_rotate_ticket_key(uvhttp_tls_context_t* ctx);
-uvhttp_tls_error_t
-uvhttp_tls_context_set_ticket_lifetime(uvhttp_tls_context_t* ctx,
-                                       int lifetime_seconds);
+uvhttp_tls_error_t uvhttp_tls_context_rotate_ticket_key(
+    uvhttp_tls_context_t* ctx);
+uvhttp_tls_error_t uvhttp_tls_context_set_ticket_lifetime(
+    uvhttp_tls_context_t* ctx, int lifetime_seconds);
 
 // 证书链验证
 uvhttp_tls_error_t uvhttp_tls_verify_cert_chain(mbedtls_ssl_context* ssl);
-uvhttp_tls_error_t
-uvhttp_tls_context_add_extra_chain_cert(uvhttp_tls_context_t* ctx,
-                                        const char* cert_file);
+uvhttp_tls_error_t uvhttp_tls_context_add_extra_chain_cert(
+    uvhttp_tls_context_t* ctx, const char* cert_file);
 uvhttp_tls_error_t uvhttp_tls_get_cert_chain(mbedtls_ssl_context* ssl,
                                              mbedtls_x509_crt** chain);
 

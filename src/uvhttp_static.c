@@ -81,8 +81,7 @@ static const uvhttp_mime_mapping_t mime_types[] = {
 /**
  * 获取文件扩展名
  */
-static const char*
-get_file_extension(const char* file_path) {
+static const char* get_file_extension(const char* file_path) {
     if (!file_path)
         return NULL;
 
@@ -91,15 +90,14 @@ get_file_extension(const char* file_path) {
 }
 
 /* 前向声明 */
-static uvhttp_result_t
-uvhttp_static_sendfile_with_config(const char* file_path, void* response,
-                                   const uvhttp_static_config_t* config);
+static uvhttp_result_t uvhttp_static_sendfile_with_config(
+    const char* file_path, void* response,
+    const uvhttp_static_config_t* config);
 
 /**
  * HTML转义函数 - 防止XSS攻击
  */
-static void
-html_escape(char* dest, const char* src, size_t dest_size) {
+static void html_escape(char* dest, const char* src, size_t dest_size) {
     if (!dest || !src || dest_size == 0) {
         return;
     }
@@ -166,9 +164,9 @@ html_escape(char* dest, const char* src, size_t dest_size) {
 /**
  * 根据文件扩展名获取MIME类型
  */
-uvhttp_result_t
-uvhttp_static_get_mime_type(const char* file_path, char* mime_type,
-                            size_t buffer_size) {
+uvhttp_result_t uvhttp_static_get_mime_type(const char* file_path,
+                                            char* mime_type,
+                                            size_t buffer_size) {
     if (!file_path || !mime_type || buffer_size == 0)
         return UVHTTP_ERROR_INVALID_PARAM;
 
@@ -198,8 +196,7 @@ uvhttp_static_get_mime_type(const char* file_path, char* mime_type,
 /**
  * 读取文件内容
  */
-static char*
-read_file_content(const char* file_path, size_t* file_size) {
+static char* read_file_content(const char* file_path, size_t* file_size) {
     if (!file_path || !file_size)
         return NULL;
 
@@ -249,8 +246,8 @@ read_file_content(const char* file_path, size_t* file_size) {
 /**
  * 获取文件信息
  */
-static int
-get_file_info(const char* file_path, size_t* file_size, time_t* last_modified) {
+static int get_file_info(const char* file_path, size_t* file_size,
+                         time_t* last_modified) {
     if (!file_path)
         return -1;
 
@@ -274,8 +271,8 @@ get_file_info(const char* file_path, size_t* file_size, time_t* last_modified) {
 /**
  * 计算目录列表所需的缓冲区大小
  */
-static size_t
-calculate_dir_listing_buffer_size(const char* dir_path, size_t* entry_count) {
+static size_t calculate_dir_listing_buffer_size(const char* dir_path,
+                                                size_t* entry_count) {
     DIR* dir = opendir(dir_path);
     if (!dir) {
         return 0;
@@ -311,8 +308,8 @@ typedef struct {
 /**
  * 收集目录条目信息
  */
-static dir_entry_t*
-collect_dir_entries(const char* dir_path, size_t* actual_count) {
+static dir_entry_t* collect_dir_entries(const char* dir_path,
+                                        size_t* actual_count) {
     DIR* dir = opendir(dir_path);
     if (!dir) {
         return NULL;
@@ -378,8 +375,7 @@ collect_dir_entries(const char* dir_path, size_t* actual_count) {
 /**
  * 排序目录条目
  */
-static void
-sort_dir_entries(dir_entry_t* entries, size_t count) {
+static void sort_dir_entries(dir_entry_t* entries, size_t count) {
     for (size_t i = 0; i < count - 1; i++) {
         for (size_t j = i + 1; j < count; j++) {
             /* 目录优先 */
@@ -403,8 +399,8 @@ sort_dir_entries(dir_entry_t* entries, size_t count) {
 /**
  * 生成目录列表HTML
  */
-static char*
-generate_directory_listing(const char* dir_path, const char* request_path) {
+static char* generate_directory_listing(const char* dir_path,
+                                        const char* request_path) {
     if (!dir_path || !request_path) {
         return NULL;
     }
@@ -525,9 +521,10 @@ generate_directory_listing(const char* dir_path, const char* request_path) {
 /**
  * 生成ETag值
  */
-uvhttp_result_t
-uvhttp_static_generate_etag(const char* file_path, time_t last_modified,
-                            size_t file_size, char* etag, size_t buffer_size) {
+uvhttp_result_t uvhttp_static_generate_etag(const char* file_path,
+                                            time_t last_modified,
+                                            size_t file_size, char* etag,
+                                            size_t buffer_size) {
     if (!file_path || !etag || buffer_size == 0)
         return UVHTTP_ERROR_INVALID_PARAM;
 
@@ -540,10 +537,11 @@ uvhttp_static_generate_etag(const char* file_path, time_t last_modified,
 /**
  * 设置静态文件相关的响应头
  */
-uvhttp_result_t
-uvhttp_static_set_response_headers(void* response, const char* file_path,
-                                   size_t file_size, time_t last_modified,
-                                   const char* etag) {
+uvhttp_result_t uvhttp_static_set_response_headers(void* response,
+                                                   const char* file_path,
+                                                   size_t file_size,
+                                                   time_t last_modified,
+                                                   const char* etag) {
     if (!response)
         return UVHTTP_ERROR_INVALID_PARAM;
 
@@ -582,9 +580,8 @@ uvhttp_static_set_response_headers(void* response, const char* file_path,
 /**
  * 检查条件请求（If-None-Match, If-Modified-Since）
  */
-int
-uvhttp_static_check_conditional_request(void* request, const char* etag,
-                                        time_t last_modified) {
+int uvhttp_static_check_conditional_request(void* request, const char* etag,
+                                            time_t last_modified) {
     if (!request)
         return 0;
 
@@ -614,9 +611,8 @@ uvhttp_static_check_conditional_request(void* request, const char* etag,
 /**
  * 创建静态文件服务上下文
  */
-uvhttp_error_t
-uvhttp_static_create(const uvhttp_static_config_t* config,
-                     uvhttp_static_context_t** context) {
+uvhttp_error_t uvhttp_static_create(const uvhttp_static_config_t* config,
+                                    uvhttp_static_context_t** context) {
     if (!config || !context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -660,8 +656,7 @@ uvhttp_static_create(const uvhttp_static_config_t* config,
 /**
  * 释放静态文件服务上下文
  */
-void
-uvhttp_static_free(uvhttp_static_context_t* ctx) {
+void uvhttp_static_free(uvhttp_static_context_t* ctx) {
     if (!ctx)
         return;
 
@@ -675,9 +670,8 @@ uvhttp_static_free(uvhttp_static_context_t* ctx) {
 /**
  * 检查文件路径是否安全（防止路径遍历攻击）
  */
-int
-uvhttp_static_resolve_safe_path(const char* root_dir, const char* file_path,
-                                char* resolved_path, size_t buffer_size) {
+int uvhttp_static_resolve_safe_path(const char* root_dir, const char* file_path,
+                                    char* resolved_path, size_t buffer_size) {
     if (!root_dir || !file_path || !resolved_path || buffer_size == 0) {
         return 0;
     }
@@ -768,9 +762,8 @@ uvhttp_static_resolve_safe_path(const char* root_dir, const char* file_path,
 /**
  * 处理静态文件请求的主要函数
  */
-uvhttp_result_t
-uvhttp_static_handle_request(uvhttp_static_context_t* ctx, void* request,
-                             void* response) {
+uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
+                                             void* request, void* response) {
     if (!ctx || !request || !response) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -960,8 +953,7 @@ uvhttp_static_handle_request(uvhttp_static_context_t* ctx, void* request,
 /**
  * 清理文件缓存
  */
-void
-uvhttp_static_clear_cache(uvhttp_static_context_t* ctx) {
+void uvhttp_static_clear_cache(uvhttp_static_context_t* ctx) {
     if (!ctx || !ctx->cache)
         return;
 
@@ -971,11 +963,10 @@ uvhttp_static_clear_cache(uvhttp_static_context_t* ctx) {
 /**
  * 获取缓存统计信息
  */
-void
-uvhttp_static_get_cache_stats(uvhttp_static_context_t* ctx,
-                              size_t* total_memory_usage, int* entry_count,
-                              int* hit_count, int* miss_count,
-                              int* eviction_count) {
+void uvhttp_static_get_cache_stats(uvhttp_static_context_t* ctx,
+                                   size_t* total_memory_usage, int* entry_count,
+                                   int* hit_count, int* miss_count,
+                                   int* eviction_count) {
     if (!ctx || !ctx->cache) {
         if (total_memory_usage)
             *total_memory_usage = 0;
@@ -997,8 +988,7 @@ uvhttp_static_get_cache_stats(uvhttp_static_context_t* ctx,
 /**
  * 获取缓存命中率
  */
-double
-uvhttp_static_get_cache_hit_rate(uvhttp_static_context_t* ctx) {
+double uvhttp_static_get_cache_hit_rate(uvhttp_static_context_t* ctx) {
     if (!ctx || !ctx->cache) {
         return 0.0;
     }
@@ -1019,8 +1009,7 @@ uvhttp_static_get_cache_hit_rate(uvhttp_static_context_t* ctx) {
 /**
  * 清理过期缓存条目
  */
-int
-uvhttp_static_cleanup_expired_cache(uvhttp_static_context_t* ctx) {
+int uvhttp_static_cleanup_expired_cache(uvhttp_static_context_t* ctx) {
     if (!ctx || !ctx->cache) {
         return 0;
     }
@@ -1036,10 +1025,9 @@ uvhttp_static_cleanup_expired_cache(uvhttp_static_context_t* ctx) {
 
  */
 
-uvhttp_result_t
-uvhttp_static_prewarm_cache(uvhttp_static_context_t* ctx,
+uvhttp_result_t uvhttp_static_prewarm_cache(uvhttp_static_context_t* ctx,
 
-                            const char* file_path) {
+                                            const char* file_path) {
 
     if (!ctx || !file_path) {
 
@@ -1109,9 +1097,8 @@ uvhttp_static_prewarm_cache(uvhttp_static_context_t* ctx,
 /**
  * 缓存预热：预加载目录中的所有文件
  */
-int
-uvhttp_static_prewarm_directory(uvhttp_static_context_t* ctx,
-                                const char* dir_path, int max_files) {
+int uvhttp_static_prewarm_directory(uvhttp_static_context_t* ctx,
+                                    const char* dir_path, int max_files) {
     if (!ctx || !dir_path) {
         UVHTTP_LOG_ERROR("Invalid parameters for directory prewarming");
         return -1;
@@ -1226,8 +1213,7 @@ typedef struct {
 static void on_file_close(uv_fs_t* req);
 
 /* 超时回调函数 */
-static void
-on_sendfile_timeout(uv_timer_t* timer) {
+static void on_sendfile_timeout(uv_timer_t* timer) {
     sendfile_context_t* ctx = (sendfile_context_t*)timer->data;
 
     if (!ctx || ctx->completed) {
@@ -1252,8 +1238,7 @@ on_sendfile_timeout(uv_timer_t* timer) {
 
 /* sendfile 回调函数 */
 /* 文件关闭回调 */
-static void
-on_file_close(uv_fs_t* req) {
+static void on_file_close(uv_fs_t* req) {
     sendfile_context_t* ctx = (sendfile_context_t*)req->data;
 
     if (req->result < 0) {
@@ -1273,8 +1258,7 @@ on_file_close(uv_fs_t* req) {
 }
 
 /* sendfile 回调函数 */
-static void
-on_sendfile_complete(uv_fs_t* req) {
+static void on_sendfile_complete(uv_fs_t* req) {
     sendfile_context_t* ctx = (sendfile_context_t*)req->data;
 
     if (!ctx || ctx->completed) {
@@ -1358,9 +1342,9 @@ on_sendfile_complete(uv_fs_t* req) {
 /**
  * 设置 sendfile 配置参数
  */
-uvhttp_error_t
-uvhttp_static_set_sendfile_config(uvhttp_static_context_t* ctx, int timeout_ms,
-                                  int max_retry, size_t chunk_size) {
+uvhttp_error_t uvhttp_static_set_sendfile_config(uvhttp_static_context_t* ctx,
+                                                 int timeout_ms, int max_retry,
+                                                 size_t chunk_size) {
     if (!ctx) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -1380,9 +1364,9 @@ uvhttp_static_set_sendfile_config(uvhttp_static_context_t* ctx, int timeout_ms,
 }
 
 /* 内部函数：带配置的 sendfile */
-static uvhttp_result_t
-uvhttp_static_sendfile_with_config(const char* file_path, void* response,
-                                   const uvhttp_static_config_t* config) {
+static uvhttp_result_t uvhttp_static_sendfile_with_config(
+    const char* file_path, void* response,
+    const uvhttp_static_config_t* config) {
     uvhttp_response_t* resp = (uvhttp_response_t*)response;
 
     /* 获取文件大小 */
@@ -1675,8 +1659,7 @@ uvhttp_static_sendfile_with_config(const char* file_path, void* response,
 }
 
 /* 零拷贝发送静态文件（混合策略）- 使用默认配置 */
-uvhttp_result_t
-uvhttp_static_sendfile(const char* file_path, void* response) {
+uvhttp_result_t uvhttp_static_sendfile(const char* file_path, void* response) {
     /* 调用内部函数，使用 NULL 配置（使用默认值） */
     return uvhttp_static_sendfile_with_config(file_path, response, NULL);
 }

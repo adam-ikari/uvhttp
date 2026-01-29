@@ -25,9 +25,8 @@
 #define WS_GUID "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
 /* 生成安全的随机数 */
-static int
-uvhttp_ws_random_bytes(uvhttp_context_t* context, unsigned char* buf,
-                       size_t len) {
+static int uvhttp_ws_random_bytes(uvhttp_context_t* context, unsigned char* buf,
+                                  size_t len) {
     /* 使用上下文中的 DRBG */
     if (context && context->ws_drbg_initialized) {
         return mbedtls_ctr_drbg_random(
@@ -41,8 +40,8 @@ uvhttp_ws_random_bytes(uvhttp_context_t* context, unsigned char* buf,
 }
 
 /* 创建 WebSocket 连接 */
-struct uvhttp_ws_connection*
-uvhttp_ws_connection_create(int fd, mbedtls_ssl_context* ssl, int is_server) {
+struct uvhttp_ws_connection* uvhttp_ws_connection_create(
+    int fd, mbedtls_ssl_context* ssl, int is_server) {
     struct uvhttp_ws_connection* conn =
         uvhttp_calloc(1, sizeof(uvhttp_ws_connection_t));
     if (!conn) {
@@ -73,8 +72,7 @@ uvhttp_ws_connection_create(int fd, mbedtls_ssl_context* ssl, int is_server) {
 }
 
 /* 释放 WebSocket 连接 */
-void
-uvhttp_ws_connection_free(struct uvhttp_ws_connection* conn) {
+void uvhttp_ws_connection_free(struct uvhttp_ws_connection* conn) {
     if (!conn) {
         return;
     }
@@ -95,10 +93,9 @@ uvhttp_ws_connection_free(struct uvhttp_ws_connection* conn) {
 }
 
 /* 解析帧头 */
-uvhttp_error_t
-uvhttp_ws_parse_frame_header(const uint8_t* data, size_t len,
-                             uvhttp_ws_frame_header_t* header,
-                             size_t* header_size) {
+uvhttp_error_t uvhttp_ws_parse_frame_header(const uint8_t* data, size_t len,
+                                            uvhttp_ws_frame_header_t* header,
+                                            size_t* header_size) {
     if (!data || !header || !header_size || len < 2) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -141,8 +138,8 @@ uvhttp_ws_parse_frame_header(const uint8_t* data, size_t len,
 }
 
 /* 应用掩码 */
-void
-uvhttp_ws_apply_mask(uint8_t* data, size_t len, const uint8_t* masking_key) {
+void uvhttp_ws_apply_mask(uint8_t* data, size_t len,
+                          const uint8_t* masking_key) {
     if (!data || !masking_key) {
         return;
     }
@@ -153,11 +150,11 @@ uvhttp_ws_apply_mask(uint8_t* data, size_t len, const uint8_t* masking_key) {
 }
 
 /* 构建 WebSocket 帧 */
-uvhttp_error_t
-uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
-                      size_t buffer_size, const uint8_t* payload,
-                      size_t payload_len, uvhttp_ws_opcode_t opcode, int mask,
-                      int fin) {
+uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
+                                     size_t buffer_size, const uint8_t* payload,
+                                     size_t payload_len,
+                                     uvhttp_ws_opcode_t opcode, int mask,
+                                     int fin) {
     if (!buffer) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -225,8 +222,8 @@ uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
 }
 
 /* 生成 Sec-WebSocket-Accept */
-uvhttp_error_t
-uvhttp_ws_generate_accept(const char* key, char* accept, size_t accept_len) {
+uvhttp_error_t uvhttp_ws_generate_accept(const char* key, char* accept,
+                                         size_t accept_len) {
     if (!key || !accept || accept_len < 32) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -247,8 +244,7 @@ uvhttp_ws_generate_accept(const char* key, char* accept, size_t accept_len) {
 }
 
 /* 验证 Sec-WebSocket-Accept */
-uvhttp_error_t
-uvhttp_ws_verify_accept(const char* key, const char* accept) {
+uvhttp_error_t uvhttp_ws_verify_accept(const char* key, const char* accept) {
     if (!key || !accept) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -262,10 +258,10 @@ uvhttp_ws_verify_accept(const char* key, const char* accept) {
 }
 
 /* 服务器端握手 */
-uvhttp_error_t
-uvhttp_ws_handshake_server(struct uvhttp_ws_connection* conn,
-                           const char* request, size_t request_len,
-                           char* response, size_t* response_len) {
+uvhttp_error_t uvhttp_ws_handshake_server(struct uvhttp_ws_connection* conn,
+                                          const char* request,
+                                          size_t request_len, char* response,
+                                          size_t* response_len) {
     if (!conn || !request || !response || !response_len) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -321,11 +317,10 @@ uvhttp_ws_handshake_server(struct uvhttp_ws_connection* conn,
 }
 
 /* 客户端握手 */
-uvhttp_error_t
-uvhttp_ws_handshake_client(uvhttp_context_t* context,
-                           struct uvhttp_ws_connection* conn, const char* host,
-                           const char* path, char* request,
-                           size_t* request_len) {
+uvhttp_error_t uvhttp_ws_handshake_client(uvhttp_context_t* context,
+                                          struct uvhttp_ws_connection* conn,
+                                          const char* host, const char* path,
+                                          char* request, size_t* request_len) {
     if (!conn || !host || !path || !request || !request_len) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -367,9 +362,9 @@ uvhttp_ws_handshake_client(uvhttp_context_t* context,
 }
 
 /* 验证握手响应 */
-uvhttp_error_t
-uvhttp_ws_verify_handshake_response(struct uvhttp_ws_connection* conn,
-                                    const char* response, size_t response_len) {
+uvhttp_error_t uvhttp_ws_verify_handshake_response(
+    struct uvhttp_ws_connection* conn, const char* response,
+    size_t response_len) {
     if (!conn || !response || !response_len) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -441,10 +436,10 @@ uvhttp_ws_verify_handshake_response(struct uvhttp_ws_connection* conn,
 }
 
 /* 发送 WebSocket 帧 */
-uvhttp_error_t
-uvhttp_ws_send_frame(uvhttp_context_t* context,
-                     struct uvhttp_ws_connection* conn, const uint8_t* data,
-                     size_t len, uvhttp_ws_opcode_t opcode) {
+uvhttp_error_t uvhttp_ws_send_frame(uvhttp_context_t* context,
+                                    struct uvhttp_ws_connection* conn,
+                                    const uint8_t* data, size_t len,
+                                    uvhttp_ws_opcode_t opcode) {
     if (!conn || conn->state != UVHTTP_WS_STATE_OPEN) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -486,45 +481,41 @@ uvhttp_ws_send_frame(uvhttp_context_t* context,
 }
 
 /* 发送文本消息 */
-uvhttp_error_t
-uvhttp_ws_send_text(uvhttp_context_t* context,
-                    struct uvhttp_ws_connection* conn, const char* text,
-                    size_t len) {
+uvhttp_error_t uvhttp_ws_send_text(uvhttp_context_t* context,
+                                   struct uvhttp_ws_connection* conn,
+                                   const char* text, size_t len) {
     return uvhttp_ws_send_frame(context, conn, (const uint8_t*)text, len,
                                 UVHTTP_WS_OPCODE_TEXT);
 }
 
 /* 发送二进制消息 */
-uvhttp_error_t
-uvhttp_ws_send_binary(uvhttp_context_t* context,
-                      struct uvhttp_ws_connection* conn, const uint8_t* data,
-                      size_t len) {
+uvhttp_error_t uvhttp_ws_send_binary(uvhttp_context_t* context,
+                                     struct uvhttp_ws_connection* conn,
+                                     const uint8_t* data, size_t len) {
     return uvhttp_ws_send_frame(context, conn, data, len,
                                 UVHTTP_WS_OPCODE_BINARY);
 }
 
 /* 发送 Ping */
-uvhttp_error_t
-uvhttp_ws_send_ping(uvhttp_context_t* context,
-                    struct uvhttp_ws_connection* conn, const uint8_t* data,
-                    size_t len) {
+uvhttp_error_t uvhttp_ws_send_ping(uvhttp_context_t* context,
+                                   struct uvhttp_ws_connection* conn,
+                                   const uint8_t* data, size_t len) {
     return uvhttp_ws_send_frame(context, conn, data, len,
                                 UVHTTP_WS_OPCODE_PING);
 }
 
 /* 发送 Pong */
-uvhttp_error_t
-uvhttp_ws_send_pong(uvhttp_context_t* context,
-                    struct uvhttp_ws_connection* conn, const uint8_t* data,
-                    size_t len) {
+uvhttp_error_t uvhttp_ws_send_pong(uvhttp_context_t* context,
+                                   struct uvhttp_ws_connection* conn,
+                                   const uint8_t* data, size_t len) {
     return uvhttp_ws_send_frame(context, conn, data, len,
                                 UVHTTP_WS_OPCODE_PONG);
 }
 
 /* 关闭连接 */
-uvhttp_error_t
-uvhttp_ws_close(uvhttp_context_t* context, struct uvhttp_ws_connection* conn,
-                int code, const char* reason) {
+uvhttp_error_t uvhttp_ws_close(uvhttp_context_t* context,
+                               struct uvhttp_ws_connection* conn, int code,
+                               const char* reason) {
     if (!conn) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -552,9 +543,8 @@ uvhttp_ws_close(uvhttp_context_t* context, struct uvhttp_ws_connection* conn,
 }
 
 /* 接收 WebSocket 帧 */
-uvhttp_error_t
-uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
-                     uvhttp_ws_frame_t* frame) {
+uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
+                                    uvhttp_ws_frame_t* frame) {
     if (!conn || !frame) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -648,9 +638,8 @@ uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
 }
 
 /* 处理接收到的数据 */
-uvhttp_error_t
-uvhttp_ws_process_data(struct uvhttp_ws_connection* conn, const uint8_t* data,
-                       size_t len) {
+uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
+                                      const uint8_t* data, size_t len) {
     if (!conn || !data) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -843,11 +832,10 @@ uvhttp_ws_process_data(struct uvhttp_ws_connection* conn, const uint8_t* data,
 }
 
 /* 设置回调函数 */
-void
-uvhttp_ws_set_callbacks(struct uvhttp_ws_connection* conn,
-                        uvhttp_ws_on_message_callback on_message,
-                        uvhttp_ws_on_close_callback on_close,
-                        uvhttp_ws_on_error_callback on_error) {
+void uvhttp_ws_set_callbacks(struct uvhttp_ws_connection* conn,
+                             uvhttp_ws_on_message_callback on_message,
+                             uvhttp_ws_on_close_callback on_close,
+                             uvhttp_ws_on_error_callback on_error) {
     if (!conn) {
         return;
     }
@@ -858,28 +846,25 @@ uvhttp_ws_set_callbacks(struct uvhttp_ws_connection* conn,
 }
 
 /* 触发消息回调 */
-__attribute__((unused)) static void
-uvhttp_ws_trigger_message_callback(struct uvhttp_ws_connection* conn,
-                                   const uint8_t* data, size_t len,
-                                   uvhttp_ws_opcode_t opcode) {
+__attribute__((unused)) static void uvhttp_ws_trigger_message_callback(
+    struct uvhttp_ws_connection* conn, const uint8_t* data, size_t len,
+    uvhttp_ws_opcode_t opcode) {
     if (conn && conn->on_message) {
         conn->on_message(conn, (const char*)data, len, opcode);
     }
 }
 
 /* 触发关闭回调 */
-__attribute__((unused)) static void
-uvhttp_ws_trigger_close_callback(struct uvhttp_ws_connection* conn, int code,
-                                 const char* reason) {
+__attribute__((unused)) static void uvhttp_ws_trigger_close_callback(
+    struct uvhttp_ws_connection* conn, int code, const char* reason) {
     if (conn && conn->on_close) {
         conn->on_close(conn, code, reason);
     }
 }
 
 /* 触发错误回调 */
-__attribute__((unused)) static void
-uvhttp_ws_trigger_error_callback(struct uvhttp_ws_connection* conn,
-                                 int error_code, const char* error_msg) {
+__attribute__((unused)) static void uvhttp_ws_trigger_error_callback(
+    struct uvhttp_ws_connection* conn, int error_code, const char* error_msg) {
     if (conn && conn->on_error) {
         conn->on_error(conn, error_code, error_msg);
     }
