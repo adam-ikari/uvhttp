@@ -3,6 +3,7 @@
 
 #include "uvhttp_common.h"
 #include "uvhttp_error.h"
+#include "uvhttp_platform.h"
 
 #include "llhttp.h"
 
@@ -62,25 +63,17 @@ struct uvhttp_request {
 
 /* ========== 内存布局验证静态断言 ========== */
 
-/* 验证指针对齐（8字节对齐） */
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, client) % 8 == 0,
-                     "client pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, parser) % 8 == 0,
-                     "parser pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, parser_settings) % 8 == 0,
-                     "parser_settings pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, path) % 8 == 0,
-                     "path pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, query) % 8 == 0,
-                     "query pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, body) % 8 == 0,
-                     "body pointer not 8-byte aligned");
+/* 验证指针对齐（平台自适应） */
+UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, client, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, parser, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, parser_settings, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, path, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, query, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, body, UVHTTP_POINTER_ALIGNMENT);
 
-/* 验证size_t对齐（8字节对齐） */
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, header_count) % 8 == 0,
-                     "header_count not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, body_length) % 8 == 0,
-                     "body_length not 8-byte aligned");
+/* 验证size_t对齐（平台自适应） */
+UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, header_count, UVHTTP_SIZE_T_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, body_length, UVHTTP_SIZE_T_ALIGNMENT);
 
 /* 验证大型缓冲区在结构体末尾 */
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, url) >= 64,

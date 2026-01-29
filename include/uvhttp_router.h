@@ -4,6 +4,7 @@
 #include "uvhttp_common.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_error.h"
+#include "uvhttp_platform.h"
 #include "uvhttp_request.h"
 
 #include <assert.h>
@@ -86,23 +87,16 @@ typedef struct uvhttp_router uvhttp_router_t;
 
 /* ========== 内存布局验证静态断言 ========== */
 
-/* 验证指针对齐（8字节对齐） */
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, root) % 8 == 0,
-                     "root pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, node_pool) % 8 == 0,
-                     "node_pool pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, array_routes) % 8 == 0,
-                     "array_routes pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, static_prefix) % 8 == 0,
-                     "static_prefix pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, static_context) % 8 == 0,
-                     "static_context pointer not 8-byte aligned");
+/* 验证指针对齐（平台自适应） */
+UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, root, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, node_pool, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, array_routes, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, static_prefix, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, static_context, UVHTTP_POINTER_ALIGNMENT);
 
-/* 验证size_t对齐（8字节对齐） */
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, route_count) % 8 == 0,
-                     "route_count not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, node_pool_size) % 8 == 0,
-                     "node_pool_size not 8-byte aligned");
+/* 验证size_t对齐（平台自适应） */
+UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, route_count, UVHTTP_SIZE_T_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, node_pool_size, UVHTTP_SIZE_T_ALIGNMENT);
 
 // 路由API函数
 /**

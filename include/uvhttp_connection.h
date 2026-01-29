@@ -2,6 +2,7 @@
 #    define UVHTTP_CONNECTION_H
 
 #    include "uvhttp_common.h"
+#    include "uvhttp_platform.h"
 #    include "uvhttp_request.h"
 #    include "uvhttp_response.h"
 
@@ -76,21 +77,15 @@ struct uvhttp_connection {
 
 /* ========== 内存布局验证静态断言 ========== */
 
-/* 验证指针对齐（8字节对齐） */
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, server) % 8 == 0,
-                     "server pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, request) % 8 == 0,
-                     "request pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, response) % 8 == 0,
-                     "response pointer not 8-byte aligned");
+/* 验证指针对齐（平台自适应） */
+UVHTTP_CHECK_ALIGNMENT(uvhttp_connection_t, server, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_connection_t, request, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_connection_t, response, UVHTTP_POINTER_ALIGNMENT);
 
-/* 验证size_t对齐（8字节对齐） */
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, content_length) % 8 == 0,
-                     "content_length not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, body_received) % 8 == 0,
-                     "body_received not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, read_buffer_size) % 8 == 0,
-                     "read_buffer_size not 8-byte aligned");
+/* 验证size_t对齐（平台自适应） */
+UVHTTP_CHECK_ALIGNMENT(uvhttp_connection_t, content_length, UVHTTP_SIZE_T_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_connection_t, body_received, UVHTTP_SIZE_T_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_connection_t, read_buffer_size, UVHTTP_SIZE_T_ALIGNMENT);
 
 /* 验证大型缓冲区在结构体末尾 */
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, current_header_field) >= 64,

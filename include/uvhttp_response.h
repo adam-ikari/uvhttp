@@ -3,6 +3,7 @@
 
 #include "uvhttp_common.h"
 #include "uvhttp_error.h"
+#include "uvhttp_platform.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -63,19 +64,14 @@ struct uvhttp_response {
 
 /* ========== 内存布局验证静态断言 ========== */
 
-/* 验证指针对齐（8字节对齐） */
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, client) % 8 == 0,
-                     "client pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, body) % 8 == 0,
-                     "body pointer not 8-byte aligned");
+/* 验证指针对齐（平台自适应） */
+UVHTTP_CHECK_ALIGNMENT(uvhttp_response_t, client, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_response_t, body, UVHTTP_POINTER_ALIGNMENT);
 
-/* 验证size_t对齐（8字节对齐） */
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, header_count) % 8 == 0,
-                     "header_count not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, body_length) % 8 == 0,
-                     "body_length not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, cache_expires) % 8 == 0,
-                     "cache_expires not 8-byte aligned");
+/* 验证size_t对齐（平台自适应） */
+UVHTTP_CHECK_ALIGNMENT(uvhttp_response_t, header_count, UVHTTP_SIZE_T_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_response_t, body_length, UVHTTP_SIZE_T_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_response_t, cache_expires, UVHTTP_SIZE_T_ALIGNMENT);
 
 /* 验证大型缓冲区在结构体末尾 */
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, headers) >= 64,

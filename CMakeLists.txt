@@ -9,6 +9,19 @@ option(ENABLE_DEBUG "Enable debug build with -O0" OFF)
 option(ENABLE_COVERAGE "Enable code coverage" OFF)
 option(BUILD_EXAMPLES "Build example programs" ON)
 
+# 检测32位系统
+include(CheckTypeSize)
+check_type_size("void*" SIZEOF_VOID_PTR)
+if(SIZEOF_VOID_PTR EQUAL 4)
+    message(STATUS "Building for 32-bit system")
+    add_definitions(-DUVHTTP_32BIT)
+elseif(SIZEOF_VOID_PTR EQUAL 8)
+    message(STATUS "Building for 64-bit system")
+    add_definitions(-DUVHTTP_64BIT)
+else()
+    message(FATAL_ERROR "Unsupported pointer size: ${SIZEOF_VOID_PTR}")
+endif()
+
 # 设置输出目录
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib)

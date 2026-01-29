@@ -5,6 +5,7 @@
 #    include "uvhttp_common.h"
 #    include "uvhttp_config.h"
 #    include "uvhttp_error.h"
+#    include "uvhttp_platform.h"
 
 #    include <assert.h>
 #    include <uv.h>
@@ -136,19 +137,14 @@ struct uvhttp_server {
 
 /* ========== 内存布局验证静态断言 ========== */
 
-/* 验证指针对齐（8字节对齐） */
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, loop) % 8 == 0,
-                     "loop pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, router) % 8 == 0,
-                     "router pointer not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, config) % 8 == 0,
-                     "config pointer not 8-byte aligned");
+/* 验证指针对齐（平台自适应） */
+UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, loop, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, router, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, config, UVHTTP_POINTER_ALIGNMENT);
 
-/* 验证size_t对齐（8字节对齐） */
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, active_connections) % 8 == 0,
-                     "active_connections not 8-byte aligned");
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, max_connections) % 8 == 0,
-                     "max_connections not 8-byte aligned");
+/* 验证size_t对齐（平台自适应） */
+UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, active_connections, UVHTTP_SIZE_T_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, max_connections, UVHTTP_SIZE_T_ALIGNMENT);
 
 /* API函数 */
 /**
