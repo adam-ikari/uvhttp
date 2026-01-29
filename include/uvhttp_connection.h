@@ -4,7 +4,6 @@
 #    include "uvhttp_common.h"
 #    include "uvhttp_request.h"
 #    include "uvhttp_response.h"
-#    include "uvhttp_server.h"
 
 #    include "llhttp.h"
 
@@ -16,6 +15,10 @@
 extern "C" {
 #    endif
 
+// 前向声明（避免循环引用）
+typedef struct uvhttp_connection uvhttp_connection_t;
+typedef struct uvhttp_server uvhttp_server_t;
+
 typedef enum {
     UVHTTP_CONN_STATE_NEW,
     UVHTTP_CONN_STATE_TLS_HANDSHAKE,
@@ -24,9 +27,6 @@ typedef enum {
     UVHTTP_CONN_STATE_HTTP_WRITING,
     UVHTTP_CONN_STATE_CLOSING
 } uvhttp_connection_state_t;
-
-// 前向声明
-typedef struct uvhttp_connection uvhttp_connection_t;
 
 struct uvhttp_connection {
     /* 缓存行1：热路径字段（16字节）- 优化内存局部性 */
