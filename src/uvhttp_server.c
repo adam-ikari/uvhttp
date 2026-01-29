@@ -9,6 +9,9 @@
 
 #include "uvhttp_allocator.h"
 #include "uvhttp_config.h"
+
+#include <netinet/tcp.h>
+#include <sys/socket.h>
 #include "uvhttp_connection.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_context.h"
@@ -392,6 +395,22 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
 
     /* 设置keepalive */
     uv_tcp_keepalive(&server->tcp_handle, enable, UVHTTP_TCP_KEEPALIVE_TIMEOUT);
+
+    /* 性能优化：设置 TCP 缓冲区大小 */
+    int sockfd;
+    if (uv_fileno((uv_handle_t*)&server->tcp_handle, &sockfd) == 0) {
+        /* 设置发送缓冲区大小 */
+        int send_buf_size = UVHTTP_SOCKET_SEND_BUF_SIZE;
+        setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, &send_buf_size, sizeof(send_buf_size));
+        
+        /* 设置接收缓冲区大小 */
+        int recv_buf_size = UVHTTP_SOCKET_RECV_BUF_SIZE;
+        setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recv_buf_size, sizeof(recv_buf_size));
+        
+        /* 设置 TCP_CORK（延迟发送以优化小包）- 仅用于发送大文件时 */
+        int cork = 0;  /* 默认禁用，在发送大文件时启用 */
+        setsockopt(sockfd, IPPROTO_TCP, TCP_CORK, &cork, sizeof(cork));
+    }
 
     /* 使用配置系统的backlog设置 */
     // 使用 server->context 而非 loop->data，避免独占 loop->data

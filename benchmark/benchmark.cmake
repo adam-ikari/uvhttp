@@ -59,18 +59,49 @@ target_link_libraries(benchmark_memory
 )
 
 add_executable(benchmark_comprehensive
+
     ${CMAKE_SOURCE_DIR}/benchmark/benchmark_comprehensive.c
+
 )
+
 target_link_libraries(benchmark_comprehensive
+
     uvhttp
+
     ${UVHTTP_CORE_DEPS}
+
 )
+
+
+
+# 文件传输性能测试
+
+add_executable(benchmark_file_transfer
+
+    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_file_transfer.c
+
+)
+
+target_link_libraries(benchmark_file_transfer
+
+    uvhttp
+
+    ${UVHTTP_CORE_DEPS}
+
+)
+
+
 
 # 安装性能测试可执行文件
+
 install(TARGETS performance_allocator performance_allocator_compare test_bitfield
+
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/benchmark
+
 )
 
-install(TARGETS benchmark_rps benchmark_latency benchmark_connection benchmark_memory benchmark_comprehensive
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/benchmark
-)
+
+
+install(TARGETS benchmark_rps benchmark_latency benchmark_connection benchmark_memory benchmark_comprehensive benchmark_file_transfer
+
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/benchmark)

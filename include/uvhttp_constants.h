@@ -431,6 +431,112 @@
 #    define UVHTTP_STATIC_SMALL_FILE_THRESHOLD 4096 /* 4KB */
 #endif
 
+/**
+ * Sendfile 配置
+ *
+ * CMake 配置：
+ * - 通过 CMakeLists.txt 或命令行参数配置
+ * - 示例：cmake -DUVHTTP_SENDFILE_CHUNK_SIZE=524288 ..
+ */
+#ifndef UVHTTP_SENDFILE_DEFAULT_CHUNK_SIZE
+#    define UVHTTP_SENDFILE_DEFAULT_CHUNK_SIZE UVHTTP_SENDFILE_CHUNK_SIZE
+#endif
+
+#ifndef UVHTTP_SENDFILE_MIN_FILE_SIZE
+#    define UVHTTP_SENDFILE_MIN_FILE_SIZE UVHTTP_SENDFILE_MIN_FILE_SIZE
+#endif
+
+#ifndef UVHTTP_SENDFILE_DEFAULT_TIMEOUT_MS
+#    define UVHTTP_SENDFILE_DEFAULT_TIMEOUT_MS UVHTTP_SENDFILE_TIMEOUT_MS
+#endif
+
+#ifndef UVHTTP_SENDFILE_DEFAULT_MAX_RETRY
+#    define UVHTTP_SENDFILE_DEFAULT_MAX_RETRY UVHTTP_SENDFILE_MAX_RETRY
+#endif
+
+/**
+ * 文件大小阈值（用于动态分块大小调整）
+ *
+ * CMake 配置：
+ * - 通过 CMakeLists.txt 或命令行参数配置
+ * - 示例：cmake -DUVHTTP_FILE_SIZE_MEDIUM=20971520 ..
+ */
+#ifndef UVHTTP_FILE_SIZE_SMALL
+#    define UVHTTP_FILE_SIZE_SMALL UVHTTP_FILE_SIZE_SMALL
+#endif
+
+#ifndef UVHTTP_FILE_SIZE_MEDIUM
+#    define UVHTTP_FILE_SIZE_MEDIUM UVHTTP_FILE_SIZE_MEDIUM
+#endif
+
+#ifndef UVHTTP_FILE_SIZE_LARGE
+#    define UVHTTP_FILE_SIZE_LARGE UVHTTP_FILE_SIZE_LARGE
+#endif
+
+/**
+ * 分块大小（用于动态分块大小调整）
+ *
+ * CMake 配置：
+ * - 通过 CMakeLists.txt 或命令行参数配置
+ * - 示例：cmake -DUVHTTP_CHUNK_SIZE_MEDIUM=524288 ..
+ */
+#ifndef UVHTTP_CHUNK_SIZE_SMALL
+#    define UVHTTP_CHUNK_SIZE_SMALL UVHTTP_CHUNK_SIZE_SMALL
+#endif
+
+#ifndef UVHTTP_CHUNK_SIZE_MEDIUM
+#    define UVHTTP_CHUNK_SIZE_MEDIUM UVHTTP_CHUNK_SIZE_MEDIUM
+#endif
+
+#ifndef UVHTTP_CHUNK_SIZE_LARGE
+#    define UVHTTP_CHUNK_SIZE_LARGE UVHTTP_CHUNK_SIZE_LARGE
+#endif
+
+/**
+ * 缓存相关常量
+ *
+ * CMake 配置：
+ * - 通过 CMakeLists.txt 或命令行参数配置
+ * - 示例：cmake -DUVHTTP_CACHE_DEFAULT_TTL=7200 ..
+ */
+#ifndef UVHTTP_CACHE_DEFAULT_MAX_ENTRIES
+#    define UVHTTP_CACHE_DEFAULT_MAX_ENTRIES UVHTTP_CACHE_DEFAULT_MAX_ENTRIES
+#endif
+
+#ifndef UVHTTP_CACHE_DEFAULT_TTL
+#    define UVHTTP_CACHE_DEFAULT_TTL UVHTTP_CACHE_DEFAULT_TTL
+#endif
+
+/**
+ * Socket 缓冲区大小
+ *
+ * CMake 配置：
+ * - 通过 CMakeLists.txt 或命令行参数配置
+ * - 示例：cmake -DUVHTTP_SOCKET_SEND_BUF_SIZE=524288 ..
+ */
+#ifndef UVHTTP_SOCKET_SEND_BUF_SIZE
+#    define UVHTTP_SOCKET_SEND_BUF_SIZE UVHTTP_SOCKET_SEND_BUF_SIZE
+#endif
+
+#ifndef UVHTTP_SOCKET_RECV_BUF_SIZE
+#    define UVHTTP_SOCKET_RECV_BUF_SIZE UVHTTP_SOCKET_RECV_BUF_SIZE
+#endif
+
+/**
+ * 内存页面对齐
+ *
+ * CMake 配置：
+ * - 通过 CMakeLists.txt 或命令行参数配置
+ * - 示例：cmake -DUVHTTP_PAGE_SIZE=8192 ..
+ */
+#ifndef UVHTTP_PAGE_SIZE
+#    define UVHTTP_PAGE_SIZE UVHTTP_PAGE_SIZE
+#endif
+
+#ifndef UVHTTP_PAGE_ALIGNMENT_MASK
+#    define UVHTTP_PAGE_ALIGNMENT_MASK (UVHTTP_PAGE_SIZE - 1)
+#endif
+
 /* ========== WebSocket 配置 ========== */
 
 /**
