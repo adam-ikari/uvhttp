@@ -6,13 +6,11 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include "uvhttp_defaults.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* 默认种子 */
-#define UVHTTP_HASH_DEFAULT_SEED 0x1A2B3C4D5E6F7089ULL
 
 /* 前向声明 */
 struct uvhttp_allocator;

@@ -67,6 +67,9 @@
 #ifndef UVHTTP_CONSTANTS_H
 #define UVHTTP_CONSTANTS_H
 
+/* 包含默认配置值 */
+#include "uvhttp_defaults.h"
+
 /* ========== 基础宏定义 ========== */
 
 /* 布尔值宏 */
@@ -334,9 +337,9 @@
  * 配置建议：
  * - 默认值适合大多数应用
  * - 高并发场景可以增加 UVHTTP_DEFAULT_KEEP_ALIVE_MAX
+ *
+ * 默认值定义在 uvhttp_defaults.h 中
  */
-#define UVHTTP_DEFAULT_KEEP_ALIVE_TIMEOUT 5 /* 秒 */
-#define UVHTTP_DEFAULT_KEEP_ALIVE_MAX 100   /* 每个连接最大请求数 */
 
 /**
  * 连接超时配置
@@ -346,21 +349,8 @@
  * - 普通应用：60秒（默认）
  * - 长时间处理应用：120-300秒
  *
- * CMake 配置：
- * - 通过 CMakeLists.txt 或命令行参数配置
- * - 示例：cmake -DUVHTTP_CONNECTION_TIMEOUT_DEFAULT=120 ..
+ * 默认值定义在 uvhttp_defaults.h 中
  */
-#ifndef UVHTTP_CONNECTION_TIMEOUT_DEFAULT
-#    define UVHTTP_CONNECTION_TIMEOUT_DEFAULT 60 /* 默认连接超时时间（秒） */
-#endif
-
-#ifndef UVHTTP_CONNECTION_TIMEOUT_MIN
-#    define UVHTTP_CONNECTION_TIMEOUT_MIN 5 /* 最小连接超时时间（秒） */
-#endif
-
-#ifndef UVHTTP_CONNECTION_TIMEOUT_MAX
-#    define UVHTTP_CONNECTION_TIMEOUT_MAX 300 /* 最大连接超时时间（秒） */
-#endif
 
 /* ========== 静态文件服务配置 ========== */
 
@@ -372,13 +362,8 @@
  * - 大文件为主：64KB（默认）
  * - 超大文件：128KB
  *
- * CMake 配置：
- * - 通过 CMakeLists.txt 或命令行参数配置
- * - 示例：cmake -DUVHTTP_ASYNC_FILE_BUFFER_SIZE=131072 ..
+ * 默认值定义在 uvhttp_defaults.h 中
  */
-#ifndef UVHTTP_ASYNC_FILE_BUFFER_SIZE
-#    define UVHTTP_ASYNC_FILE_BUFFER_SIZE 65536 /* 64KB */
-#endif
 
 /**
  * 最大并发文件读取数
@@ -470,37 +455,14 @@
 #define UVHTTP_WEBSOCKET_MIN_BUFFER_EXPANSION_SIZE 1024
 
 /**
- * WebSocket 默认运行时配置
+ * WebSocket 默认配置
  *
  * 配置建议：
  * - 默认值适合大多数应用
  * - 大消息应用可以增加这些值
  *
- * CMake 配置：
- * - 通过 CMakeLists.txt 或命令行参数配置
- * - 示例：cmake -DUVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE=33554432 ..
+ * 默认值定义在 uvhttp_defaults.h 中
  */
-#ifndef UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE
-#    define UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE \
-        (16 * 1024 * 1024) /* 16MB */
-#endif
-
-#ifndef UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE
-#    define UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE \
-        (64 * 1024 * 1024) /* 64MB */
-#endif
-
-#ifndef UVHTTP_WEBSOCKET_DEFAULT_RECV_BUFFER_SIZE
-#    define UVHTTP_WEBSOCKET_DEFAULT_RECV_BUFFER_SIZE (64 * 1024) /* 64KB */
-#endif
-
-#ifndef UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL
-#    define UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL 30 /* 秒 */
-#endif
-
-#ifndef UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT
-#    define UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT 10 /* 秒 */
-#endif
 
 #ifndef UVHTTP_WEBSOCKET_MIN_FRAME_HEADER_SIZE
 #    define UVHTTP_WEBSOCKET_MIN_FRAME_HEADER_SIZE 2
@@ -659,9 +621,9 @@
 
 /**
  * 默认网络配置
+ *
+ * 默认值定义在 uvhttp_defaults.h 中
  */
-#define UVHTTP_DEFAULT_HOST "0.0.0.0"
-#define UVHTTP_DEFAULT_PORT 8080
 
 /* ========== 时间相关常量 ========== */
 

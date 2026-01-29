@@ -135,14 +135,6 @@ void uvhttp_connection_websocket_read(uv_stream_t* stream, ssize_t nread,
                                       const uv_buf_t* buf);
 void uvhttp_connection_websocket_close(uvhttp_connection_t* conn);
 
-#    if UVHTTP_FEATURE_WEBSOCKET
-#        ifdef __cplusplus
-}
-#        endif
-#    endif
-
-#endif
-
 /**
  * @brief 启动连接超时定时器
  *
@@ -179,5 +171,7 @@ uvhttp_error_t uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn,
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* UVHTTP_CONNECTION_H */
 
 #endif

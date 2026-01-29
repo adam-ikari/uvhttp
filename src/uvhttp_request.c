@@ -484,6 +484,41 @@ static int is_websocket_handshake(uvhttp_request_t* request) {
     return TRUE;
 }
 
+const char* uvhttp_request_get_method(uvhttp_request_t* request) {
+    if (!request)
+        return NULL;
+
+    /* 将 uvhttp_method_t 映射到 llhttp_method_t */
+    llhttp_method_t method;
+    switch (request->method) {
+        case UVHTTP_GET:
+            method = HTTP_GET;
+            break;
+        case UVHTTP_POST:
+            method = HTTP_POST;
+            break;
+        case UVHTTP_PUT:
+            method = HTTP_PUT;
+            break;
+        case UVHTTP_DELETE:
+            method = HTTP_DELETE;
+            break;
+        case UVHTTP_HEAD:
+            method = HTTP_HEAD;
+            break;
+        case UVHTTP_OPTIONS:
+            method = HTTP_OPTIONS;
+            break;
+        case UVHTTP_PATCH:
+            method = HTTP_PATCH;
+            break;
+        default:
+            return "UNKNOWN";
+    }
+
+    return llhttp_method_name(method);
+}
+
 const char* uvhttp_request_get_url(uvhttp_request_t* request) {
     if (!request)
         return NULL;

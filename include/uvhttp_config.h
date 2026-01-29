@@ -10,6 +10,7 @@
 
 #include "uvhttp_constants.h"
 #include "uvhttp_error.h"
+#include "uvhttp_defaults.h"
 
 #include <stddef.h>
 
@@ -53,26 +54,6 @@ typedef struct {
     int enable_access_log;
     char log_file_path[256];
 } uvhttp_config_t;
-
-/* 默认配置值 */
-#define UVHTTP_DEFAULT_MAX_CONNECTIONS 2048 /* 使用默认值，适合大多数应用 */
-#define UVHTTP_DEFAULT_READ_BUFFER_SIZE 8192
-#define UVHTTP_DEFAULT_BACKLOG 256
-#define UVHTTP_DEFAULT_KEEPALIVE_TIMEOUT 30
-#define UVHTTP_DEFAULT_REQUEST_TIMEOUT 60
-#define UVHTTP_DEFAULT_MAX_BODY_SIZE (1024 * 1024)
-#define UVHTTP_DEFAULT_MAX_HEADER_SIZE 8192
-#define UVHTTP_DEFAULT_MAX_URL_SIZE 2048
-#define UVHTTP_DEFAULT_MAX_FILE_SIZE (10 * 1024 * 1024) /* 10MB */
-#define UVHTTP_DEFAULT_MAX_REQUESTS_PER_CONN 100
-#define UVHTTP_DEFAULT_RATE_LIMIT_WINDOW 60
-#define UVHTTP_DEFAULT_ENABLE_COMPRESSION 1
-#define UVHTTP_DEFAULT_ENABLE_TLS 0
-#define UVHTTP_DEFAULT_MEMORY_POOL_SIZE (16 * 1024 * 1024)
-#define UVHTTP_DEFAULT_ENABLE_MEMORY_DEBUG 0
-#define UVHTTP_DEFAULT_MEMORY_WARNING_THRESHOLD 0.8
-#define UVHTTP_DEFAULT_LOG_LEVEL 2 /* INFO */
-#define UVHTTP_DEFAULT_ENABLE_ACCESS_LOG 0
 
 /* 配置管理函数 */
 /**
