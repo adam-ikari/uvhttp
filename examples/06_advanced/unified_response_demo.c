@@ -17,7 +17,12 @@
 #include <string.h>
 #include <time.h>
 
-static uvhttp_server_t* g_server = NULL;
+// 应用上下文结构
+typedef struct {
+    uvhttp_server_t* server;
+} app_context_t;
+
+static app_context_t* g_app_context = NULL;
 
 // 处理 GET /api/info - 返回服务器信息（使用统一响应处理）
 uvhttp_result_t info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
@@ -217,10 +222,14 @@ uvhttp_result_t demo_convenience_handler(uvhttp_request_t* req, uvhttp_response_
 
 void signal_handler(int sig) {
     printf("\n收到信号 %d，正在关闭服务器...\n", sig);
-    if (g_server) {
-        uvhttp_server_stop(g_server);
-        uvhttp_server_free(g_server);
-        g_server = NULL;
+    if (g_app_context && g_app_context->server) {
+        uvhttp_server_stop(g_app_context->server);
+        uvhttp_server_free(g_app_context->server);
+        g_app_context->server = NULL;
+    }
+    if (g_app_context) {
+        free(g_app_context);
+        g_app_context = NULL;
     }
     exit(0);
 }
@@ -232,15 +241,25 @@ int main() {
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
     
-    // 创建服务器
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_error_t server_result = uvhttp_server_new(loop, &g_server);
-    if (server_result != UVHTTP_OK) {
-        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+    // 创建应用上下文
+    g_app_context = (app_context_t*)malloc(sizeof(app_context_t));
+    if (!g_app_context) {
+        fprintf(stderr, "无法分配应用上下文\n");
         return 1;
     }
-    if (!g_server) {
+    memset(g_app_context, 0, sizeof(app_context_t));
+    
+    // 创建服务器
+    uv_loop_t* loop = uv_default_loop();
+    uvhttp_error_t server_result = uvhttp_server_new(loop, &g_app_context->server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        free(g_app_context);
+        return 1;
+    }
+    if (!g_app_context->server) {
         fprintf(stderr, "❌ 服务器创建失败\n");
+        free(g_app_context);
         return 1;
     }
     
@@ -249,6 +268,8 @@ int main() {
     uvhttp_error_t result = uvhttp_router_new(&router);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(result));
+        uvhttp_server_free(g_app_context->server);
+        free(g_app_context);
         return 1;
     }
     
@@ -262,14 +283,15 @@ int main() {
     uvhttp_router_add_route(router, "/api/demo/unified", demo_unified_handler);
     uvhttp_router_add_route(router, "/api/demo/convenience", demo_convenience_handler);
     
-    g_server->router = router;
+    g_app_context->server->router = router;
     
     // 启动服务器
-    int listen_result = uvhttp_server_listen(g_server, "0.0.0.0", 8081);
+    int listen_result = uvhttp_server_listen(g_app_context->server, "0.0.0.0", 8081);
     (void)listen_result;
     if (result != 0) {
         fprintf(stderr, "❌ 服务器启动失败 (错误码: %d)\n", result);
-        uvhttp_server_free(g_server);
+        uvhttp_server_free(g_app_context->server);
+        free(g_app_context);
         return 1;
     }
     
@@ -283,8 +305,11 @@ int main() {
     uv_run(loop, UV_RUN_DEFAULT);
     
     // 清理资源
-    if (g_server) {
-        uvhttp_server_free(g_server);
+    if (g_app_context && g_app_context->server) {
+        uvhttp_server_free(g_app_context->server);
+    }
+    if (g_app_context) {
+        free(g_app_context);
     }
     
     return 0;
