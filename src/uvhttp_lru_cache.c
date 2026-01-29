@@ -19,13 +19,15 @@
 /**
  * 创建LRU缓存管理器
  */
-uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries, int cache_ttl,
-                                       cache_manager_t** cache) {
-    UVHTTP_LOG_DEBUG("Creating LRU cache: max_memory=%zu, max_entries=%d, ttl=%d", max_memory_usage,
-                     max_entries, cache_ttl);
+uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
+                                       int cache_ttl, cache_manager_t** cache) {
+    UVHTTP_LOG_DEBUG(
+        "Creating LRU cache: max_memory=%zu, max_entries=%d, ttl=%d",
+        max_memory_usage, max_entries, cache_ttl);
 
     if (!cache) {
-        UVHTTP_LOG_ERROR("Failed to create LRU cache: invalid output parameter");
+        UVHTTP_LOG_ERROR(
+            "Failed to create LRU cache: invalid output parameter");
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
@@ -68,8 +70,8 @@ void uvhttp_lru_cache_free(cache_manager_t* cache) {
     if (!cache)
         return;
 
-    UVHTTP_LOG_DEBUG("Freeing LRU cache: current entries=%d, memory usage=%zu", cache->entry_count,
-                     cache->total_memory_usage);
+    UVHTTP_LOG_DEBUG("Freeing LRU cache: current entries=%d, memory usage=%zu",
+                     cache->entry_count, cache->total_memory_usage);
 
     uvhttp_lru_cache_clear(cache);
 
@@ -82,10 +84,12 @@ void uvhttp_lru_cache_free(cache_manager_t* cache) {
 /**
  * 查找缓存条目 - 单线程版本
  */
-cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache, const char* file_path) {
+cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache,
+                                     const char* file_path) {
     if (!cache || !file_path) {
-        UVHTTP_LOG_WARN("Invalid cache lookup parameters: cache=%p, file_path=%p", cache,
-                        file_path);
+        UVHTTP_LOG_WARN(
+            "Invalid cache lookup parameters: cache=%p, file_path=%p", cache,
+            file_path);
         return NULL;
     }
 
@@ -111,7 +115,8 @@ cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache, const char* file_pa
         entry->access_time = time(NULL);
         uvhttp_lru_cache_move_to_head(cache, entry);
         cache->hit_count++;
-        UVHTTP_LOG_DEBUG("Cache hit: %s (size: %zu)", file_path, entry->content_length);
+        UVHTTP_LOG_DEBUG("Cache hit: %s (size: %zu)", file_path,
+                         entry->content_length);
         return entry;
     }
 
@@ -123,7 +128,8 @@ cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache, const char* file_pa
 /**
  * 移动条目到LRU链表头部
  */
-void uvhttp_lru_cache_move_to_head(cache_manager_t* cache, cache_entry_t* entry) {
+void uvhttp_lru_cache_move_to_head(cache_manager_t* cache,
+                                   cache_entry_t* entry) {
     if (!cache || !entry)
         return;
 
@@ -229,31 +235,36 @@ int uvhttp_lru_cache_is_expired(cache_entry_t* entry, int cache_ttl) {
 /**
  * 添加或更新缓存条目 - 单线程版本
  */
-uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache, const char* file_path, char* content,
-                                    size_t content_length, const char* mime_type,
-                                    time_t last_modified, const char* etag) {
+uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
+                                    const char* file_path, char* content,
+                                    size_t content_length,
+                                    const char* mime_type, time_t last_modified,
+                                    const char* etag) {
     if (!cache || !file_path || !content) {
-        UVHTTP_LOG_WARN("Invalid cache add parameters: cache=%p, file_path=%p, content=%p", cache,
-                        file_path, content);
+        UVHTTP_LOG_WARN(
+            "Invalid cache add parameters: cache=%p, file_path=%p, content=%p",
+            cache, file_path, content);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
     /* 检查文件大小是否超过限制 */
     if (content_length > UVHTTP_STATIC_MAX_FILE_SIZE) {
-        UVHTTP_LOG_WARN("File size exceeds limit: %s (size: %zu, limit: %d)", file_path,
-                        content_length, UVHTTP_STATIC_MAX_FILE_SIZE);
+        UVHTTP_LOG_WARN("File size exceeds limit: %s (size: %zu, limit: %d)",
+                        file_path, content_length, UVHTTP_STATIC_MAX_FILE_SIZE);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
     /* 计算内存使用量，检查整数溢出 */
     if (content_length > SIZE_MAX - sizeof(cache_entry_t)) {
-        UVHTTP_LOG_ERROR("Content length too large: %zu (causes integer overflow)", content_length);
+        UVHTTP_LOG_ERROR(
+            "Content length too large: %zu (causes integer overflow)",
+            content_length);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
     size_t memory_usage = sizeof(cache_entry_t) + content_length;
 
-    UVHTTP_LOG_DEBUG("Adding cache entry: %s (size: %zu, type: %s)", file_path, content_length,
-                     mime_type ? mime_type : "unknown");
+    UVHTTP_LOG_DEBUG("Adding cache entry: %s (size: %zu, type: %s)", file_path,
+                     content_length, mime_type ? mime_type : "unknown");
 
     /* 单线程版本：不需要加锁 */
 
@@ -261,23 +272,26 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache, const char* file_pat
     int eviction_count = 0;
     int batch_size = UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE; /* 批量驱逐大小 */
 
-    while ((cache->max_memory_usage > 0 &&
-            cache->total_memory_usage + memory_usage > cache->max_memory_usage) ||
-           (cache->max_entries > 0 && cache->entry_count >= cache->max_entries)) {
+    while (
+        (cache->max_memory_usage > 0 &&
+         cache->total_memory_usage + memory_usage > cache->max_memory_usage) ||
+        (cache->max_entries > 0 && cache->entry_count >= cache->max_entries)) {
 
         /* 批量驱逐多个条目以减少循环次数 */
-        for (int i = 0; i < batch_size &&
-                        ((cache->max_memory_usage > 0 &&
-                          cache->total_memory_usage + memory_usage > cache->max_memory_usage) ||
-                         (cache->max_entries > 0 && cache->entry_count >= cache->max_entries));
+        for (int i = 0;
+             i < batch_size && ((cache->max_memory_usage > 0 &&
+                                 cache->total_memory_usage + memory_usage >
+                                     cache->max_memory_usage) ||
+                                (cache->max_entries > 0 &&
+                                 cache->entry_count >= cache->max_entries));
              i++) {
 
             cache_entry_t* evicted = uvhttp_lru_cache_remove_tail(cache);
             if (!evicted)
                 break;
 
-            UVHTTP_LOG_DEBUG("Evicting cache entry: %s (freeing memory: %zu)", evicted->file_path,
-                             evicted->memory_usage);
+            UVHTTP_LOG_DEBUG("Evicting cache entry: %s (freeing memory: %zu)",
+                             evicted->file_path, evicted->memory_usage);
 
             /* 从哈希表中移除 */
             HASH_DEL(cache->hash_table, evicted);
@@ -294,12 +308,15 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache, const char* file_pat
 
         /* 如果一次批量驱逐后仍有空间不足，继续下一批 */
         if (eviction_count > 0 && eviction_count % batch_size == 0) {
-            UVHTTP_LOG_DEBUG("Batch eviction completed: %d entries evicted so far", eviction_count);
+            UVHTTP_LOG_DEBUG(
+                "Batch eviction completed: %d entries evicted so far",
+                eviction_count);
         }
     }
 
     if (eviction_count > 0) {
-        UVHTTP_LOG_INFO("Evicted %d cache entries (batch size: %d) to make room for new entry",
+        UVHTTP_LOG_INFO("Evicted %d cache entries (batch size: %d) to make "
+                        "room for new entry",
                         eviction_count, batch_size);
     }
 
@@ -309,8 +326,9 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache, const char* file_pat
 
     if (entry) {
         /* 更新现有条目 */
-        UVHTTP_LOG_DEBUG("Updating existing cache entry: %s (old size: %zu, new size: %zu)",
-                         file_path, entry->content_length, content_length);
+        UVHTTP_LOG_DEBUG(
+            "Updating existing cache entry: %s (old size: %zu, new size: %zu)",
+            file_path, entry->content_length, content_length);
         uvhttp_free(entry->content);
 
         /* 更新内存使用量 */
@@ -319,7 +337,8 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache, const char* file_pat
         /* 创建新条目 */
         entry = uvhttp_alloc(sizeof(cache_entry_t));
         if (!entry) {
-            UVHTTP_LOG_ERROR("Failed to create cache entry: memory allocation error");
+            UVHTTP_LOG_ERROR(
+                "Failed to create cache entry: memory allocation error");
             uvhttp_handle_memory_failure("cache_entry", NULL, NULL);
             return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
@@ -351,7 +370,8 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache, const char* file_pat
     /* 分配并复制内容 */
     entry->content = (char*)uvhttp_alloc(content_length + 1);
     if (!entry->content) {
-        UVHTTP_LOG_ERROR("Failed to allocate content buffer: size=%zu", content_length);
+        UVHTTP_LOG_ERROR("Failed to allocate content buffer: size=%zu",
+                         content_length);
         if (!entry->file_path[0]) {
             /* 新条目，需要从哈希表中移除并释放 */
             HASH_DEL(cache->hash_table, entry);
@@ -376,7 +396,8 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache, const char* file_pat
         strncpy(entry->mime_type, mime_type, sizeof(entry->mime_type) - 1);
         entry->mime_type[sizeof(entry->mime_type) - 1] = '\0';
     } else {
-        strncpy(entry->mime_type, "application/octet-stream", sizeof(entry->mime_type) - 1);
+        strncpy(entry->mime_type, "application/octet-stream",
+                sizeof(entry->mime_type) - 1);
         entry->mime_type[sizeof(entry->mime_type) - 1] = '\0';
     }
 
@@ -394,8 +415,9 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache, const char* file_pat
     /* 移动到LRU头部 */
     uvhttp_lru_cache_move_to_head(cache, entry);
 
-    UVHTTP_LOG_DEBUG("Cache entry added successfully: %s (total memory: %zu, entries: %d)",
-                     file_path, cache->total_memory_usage, cache->entry_count);
+    UVHTTP_LOG_DEBUG(
+        "Cache entry added successfully: %s (total memory: %zu, entries: %d)",
+        file_path, cache->total_memory_usage, cache->entry_count);
 
     return UVHTTP_OK;
 }
@@ -403,10 +425,12 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache, const char* file_pat
 /**
  * 删除缓存条目 - 单线程版本
  */
-uvhttp_error_t uvhttp_lru_cache_remove(cache_manager_t* cache, const char* file_path) {
+uvhttp_error_t uvhttp_lru_cache_remove(cache_manager_t* cache,
+                                       const char* file_path) {
     if (!cache || !file_path) {
-        UVHTTP_LOG_WARN("Invalid cache remove parameters: cache=%p, file_path=%p", cache,
-                        file_path);
+        UVHTTP_LOG_WARN(
+            "Invalid cache remove parameters: cache=%p, file_path=%p", cache,
+            file_path);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
@@ -418,7 +442,8 @@ uvhttp_error_t uvhttp_lru_cache_remove(cache_manager_t* cache, const char* file_
     HASH_FIND_STR(cache->hash_table, file_path, entry);
 
     if (!entry) {
-        UVHTTP_LOG_WARN("Attempting to remove non-existent cache entry: %s", file_path);
+        UVHTTP_LOG_WARN("Attempting to remove non-existent cache entry: %s",
+                        file_path);
         return UVHTTP_ERROR_NOT_FOUND;
     }
 
@@ -442,8 +467,8 @@ uvhttp_error_t uvhttp_lru_cache_remove(cache_manager_t* cache, const char* file_
     cache->total_memory_usage -= entry->memory_usage;
     cache->entry_count--;
 
-    UVHTTP_LOG_DEBUG("Cache entry removed successfully: %s (freed memory: %zu)", file_path,
-                     entry->memory_usage);
+    UVHTTP_LOG_DEBUG("Cache entry removed successfully: %s (freed memory: %zu)",
+                     file_path, entry->memory_usage);
 
     /* 释放内存 */
     free_cache_entry(entry);
@@ -458,8 +483,9 @@ void uvhttp_lru_cache_clear(cache_manager_t* cache) {
     if (!cache)
         return;
 
-    UVHTTP_LOG_INFO("Clearing all cache entries: current entries=%d, total memory=%zu",
-                    cache->entry_count, cache->total_memory_usage);
+    UVHTTP_LOG_INFO(
+        "Clearing all cache entries: current entries=%d, total memory=%zu",
+        cache->entry_count, cache->total_memory_usage);
 
     /* 单线程版本：不需要加锁 */
 
@@ -480,15 +506,16 @@ void uvhttp_lru_cache_clear(cache_manager_t* cache) {
     cache->total_memory_usage = 0;
     cache->entry_count = 0;
 
-    UVHTTP_LOG_INFO("Cache cleared: removed %d entries, freed %zu bytes", cleared_count,
-                    freed_memory);
+    UVHTTP_LOG_INFO("Cache cleared: removed %d entries, freed %zu bytes",
+                    cleared_count, freed_memory);
 }
 
 /**
  * 获取缓存统计信息 - 单线程版本
  */
-void uvhttp_lru_cache_get_stats(cache_manager_t* cache, size_t* total_memory_usage,
-                                int* entry_count, int* hit_count, int* miss_count,
+void uvhttp_lru_cache_get_stats(cache_manager_t* cache,
+                                size_t* total_memory_usage, int* entry_count,
+                                int* hit_count, int* miss_count,
                                 int* eviction_count) {
     if (!cache)
         return;
@@ -528,8 +555,9 @@ int uvhttp_lru_cache_cleanup_expired(cache_manager_t* cache) {
     if (!cache || cache->cache_ttl <= 0)
         return 0;
 
-    UVHTTP_LOG_DEBUG("Starting cleanup of expired cache entries (TTL: %d seconds)",
-                     cache->cache_ttl);
+    UVHTTP_LOG_DEBUG(
+        "Starting cleanup of expired cache entries (TTL: %d seconds)",
+        cache->cache_ttl);
 
     /* 单线程版本：不需要加锁 */
 
@@ -542,8 +570,9 @@ int uvhttp_lru_cache_cleanup_expired(cache_manager_t* cache) {
         cache_entry_t* next = entry->lru_prev;
 
         if ((now - entry->cache_time) > cache->cache_ttl) {
-            UVHTTP_LOG_DEBUG("Cleaning up expired entry: %s (expired %ld seconds ago)",
-                             entry->file_path, now - entry->cache_time);
+            UVHTTP_LOG_DEBUG(
+                "Cleaning up expired entry: %s (expired %ld seconds ago)",
+                entry->file_path, now - entry->cache_time);
 
             /* 从哈希表中移除 */
             HASH_DEL(cache->hash_table, entry);
@@ -575,7 +604,8 @@ int uvhttp_lru_cache_cleanup_expired(cache_manager_t* cache) {
     }
 
     if (cleaned_count > 0) {
-        UVHTTP_LOG_INFO("Expired cache cleanup completed: removed %d entries, freed %zu bytes",
+        UVHTTP_LOG_INFO("Expired cache cleanup completed: removed %d entries, "
+                        "freed %zu bytes",
                         cleaned_count, freed_memory);
     } else {
         UVHTTP_LOG_DEBUG("No expired cache entries found");
@@ -595,10 +625,11 @@ double uvhttp_lru_cache_get_hit_rate(cache_manager_t* cache) {
 
     /* 单线程版本：不需要加锁 */
 
-    double hit_rate = (double)cache->hit_count / (cache->hit_count + cache->miss_count);
+    double hit_rate =
+        (double)cache->hit_count / (cache->hit_count + cache->miss_count);
 
-    UVHTTP_LOG_DEBUG("Cache hit rate: %.2f%% (hits: %d, misses: %d)", hit_rate * 100.0,
-                     cache->hit_count, cache->miss_count);
+    UVHTTP_LOG_DEBUG("Cache hit rate: %.2f%% (hits: %d, misses: %d)",
+                     hit_rate * 100.0, cache->hit_count, cache->miss_count);
 
     return hit_rate;
 }

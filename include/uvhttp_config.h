@@ -79,7 +79,8 @@ typedef struct {
  * @brief 创建新的配置对象
  * @param config 输出参数，用于接收配置对象指针
  * @return UVHTTP_OK 成功，其他值表示失败
- * @note 成功时，*config 被设置为有效的配置对象，必须使用 uvhttp_config_free 释放
+ * @note 成功时，*config 被设置为有效的配置对象，必须使用 uvhttp_config_free
+ * 释放
  * @note 失败时，*config 被设置为 NULL
  */
 uvhttp_error_t uvhttp_config_new(uvhttp_config_t** config);
@@ -88,7 +89,8 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config);
 
 /* 配置加载和保存 */
 int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename);
-int uvhttp_config_save_file(const uvhttp_config_t* config, const char* filename);
+int uvhttp_config_save_file(const uvhttp_config_t* config,
+                            const char* filename);
 int uvhttp_config_load_env(uvhttp_config_t* config);
 
 /* 配置验证 */
@@ -96,13 +98,17 @@ int uvhttp_config_validate(const uvhttp_config_t* config);
 void uvhttp_config_print(const uvhttp_config_t* config);
 
 /* 动态配置调整 */
-int uvhttp_config_update_max_connections(uvhttp_context_t* context, int max_connections);
-int uvhttp_config_update_read_buffer_size(uvhttp_context_t* context, int buffer_size);
-int uvhttp_config_update_size_limits(uvhttp_context_t* context, size_t max_body_size,
+int uvhttp_config_update_max_connections(uvhttp_context_t* context,
+                                         int max_connections);
+int uvhttp_config_update_read_buffer_size(uvhttp_context_t* context,
+                                          int buffer_size);
+int uvhttp_config_update_size_limits(uvhttp_context_t* context,
+                                     size_t max_body_size,
                                      size_t max_header_size);
 
 /* 配置监控 */
-typedef void (*uvhttp_config_change_callback_t)(const char* key, const void* old_value,
+typedef void (*uvhttp_config_change_callback_t)(const char* key,
+                                                const void* old_value,
                                                 const void* new_value);
 int uvhttp_config_monitor_changes(uvhttp_context_t* context,
                                   uvhttp_config_change_callback_t callback);
@@ -111,7 +117,8 @@ int uvhttp_config_monitor_changes(uvhttp_context_t* context,
 const uvhttp_config_t* uvhttp_config_get_current(uvhttp_context_t* context);
 
 /* 设置全局配置 */
-void uvhttp_config_set_current(uvhttp_context_t* context, uvhttp_config_t* config);
+void uvhttp_config_set_current(uvhttp_context_t* context,
+                               uvhttp_config_t* config);
 
 /* 配置热重载 */
 int uvhttp_config_reload(uvhttp_context_t* context);

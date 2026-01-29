@@ -39,12 +39,14 @@
 
 /* ============ 上下文管理实现 ============ */
 
-uvhttp_error_t uvhttp_context_create(uv_loop_t* loop, uvhttp_context_t** context) {
+uvhttp_error_t uvhttp_context_create(uv_loop_t* loop,
+                                     uvhttp_context_t** context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    uvhttp_context_t* ctx = (uvhttp_context_t*)uvhttp_alloc(sizeof(uvhttp_context_t));
+    uvhttp_context_t* ctx =
+        (uvhttp_context_t*)uvhttp_alloc(sizeof(uvhttp_context_t));
     if (!ctx) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
@@ -132,7 +134,8 @@ uvhttp_error_t uvhttp_context_init_tls(uvhttp_context_t* context) {
     /* 使用自定义熵源初始化 DRBG */
     int ret = mbedtls_ctr_drbg_seed(
         (mbedtls_ctr_drbg_context*)context->tls_drbg, mbedtls_entropy_func,
-        (mbedtls_entropy_context*)context->tls_entropy, (const unsigned char*)"uvhttp_tls", 11);
+        (mbedtls_entropy_context*)context->tls_entropy,
+        (const unsigned char*)"uvhttp_tls", 11);
     if (ret != 0) {
         mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
         mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
@@ -199,9 +202,9 @@ uvhttp_error_t uvhttp_context_init_websocket(uvhttp_context_t* context) {
     mbedtls_ctr_drbg_init((mbedtls_ctr_drbg_context*)context->ws_drbg);
 
     /* 初始化 DRBG */
-    int ret =
-        mbedtls_ctr_drbg_seed((mbedtls_ctr_drbg_context*)context->ws_drbg, mbedtls_entropy_func,
-                              (mbedtls_entropy_context*)context->ws_entropy, NULL, 0);
+    int ret = mbedtls_ctr_drbg_seed(
+        (mbedtls_ctr_drbg_context*)context->ws_drbg, mbedtls_entropy_func,
+        (mbedtls_entropy_context*)context->ws_entropy, NULL, 0);
     if (ret != 0) {
         mbedtls_entropy_free((mbedtls_entropy_context*)context->ws_entropy);
         mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->ws_drbg);
@@ -251,7 +254,8 @@ uvhttp_error_t uvhttp_context_init_error_stats(uvhttp_context_t* context) {
     }
 
     /* 分配错误统计结构 */
-    uvhttp_error_stats_t* error_stats = uvhttp_alloc(sizeof(uvhttp_error_stats_t));
+    uvhttp_error_stats_t* error_stats =
+        uvhttp_alloc(sizeof(uvhttp_error_stats_t));
     if (!error_stats) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }

@@ -54,7 +54,8 @@ typedef struct uvhttp_request uvhttp_request_t;
 typedef struct uvhttp_response uvhttp_response_t;
 
 // 请求处理器类型
-typedef int (*uvhttp_request_handler_t)(uvhttp_request_t* request, uvhttp_response_t* response);
+typedef int (*uvhttp_request_handler_t)(uvhttp_request_t* request,
+                                        uvhttp_response_t* response);
 
 #ifdef __cplusplus
 }

@@ -25,7 +25,8 @@ void uvhttp_cleanup_connection(uv_handle_t* handle, const char* error_message);
  * @param cleanup_func 清理函数指针（可为NULL）
  * @param cleanup_data 清理函数参数
  */
-void uvhttp_handle_memory_failure(const char* context, void (*cleanup_func)(void*),
+void uvhttp_handle_memory_failure(const char* context,
+                                  void (*cleanup_func)(void*),
                                   void* cleanup_data);
 
 /**
@@ -34,7 +35,8 @@ void uvhttp_handle_memory_failure(const char* context, void (*cleanup_func)(void
  * @param status 写操作状态
  * @param context 上下文描述
  */
-void uvhttp_handle_write_error(uv_write_t* req, int status, const char* context);
+void uvhttp_handle_write_error(uv_write_t* req, int status,
+                               const char* context);
 
 /**
  * 安全的错误日志记录（避免敏感信息泄露）
@@ -42,7 +44,8 @@ void uvhttp_handle_write_error(uv_write_t* req, int status, const char* context)
  * @param context 上下文描述
  * @param user_msg 用户提供的消息
  */
-void uvhttp_log_safe_error(int error_code, const char* context, const char* user_msg);
+void uvhttp_log_safe_error(int error_code, const char* context,
+                           const char* user_msg);
 
 /**
  * 验证错误消息安全性（过滤敏感信息）
@@ -51,7 +54,8 @@ void uvhttp_log_safe_error(int error_code, const char* context, const char* user
  * @param buffer_size 缓冲区大小
  * @return UVHTTP_OK成功，其他值表示失败
  */
-uvhttp_error_t uvhttp_sanitize_error_message(const char* message, char* safe_buffer,
+uvhttp_error_t uvhttp_sanitize_error_message(const char* message,
+                                             char* safe_buffer,
                                              size_t buffer_size);
 
 /**

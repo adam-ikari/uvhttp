@@ -45,48 +45,55 @@ typedef struct uvhttp_middleware_context {
 } uvhttp_middleware_context_t;
 
 /* 中间件处理函数类型 */
-typedef int (*uvhttp_middleware_handler_t)(uvhttp_request_t* request, uvhttp_response_t* response,
+typedef int (*uvhttp_middleware_handler_t)(uvhttp_request_t* request,
+                                           uvhttp_response_t* response,
                                            uvhttp_middleware_context_t* ctx);
 
 /* 执行中间件链 */
-#define UVHTTP_EXECUTE_MIDDLEWARE(req, resp, ...)                                         \
-    do {                                                                                  \
-        static const uvhttp_middleware_handler_t _uvhttp_mw_handlers[] = {__VA_ARGS__};   \
-        uvhttp_middleware_context_t _uvhttp_mw_ctx = {0};                                 \
-        for (size_t _uvhttp_mw_i = 0;                                                     \
-             _uvhttp_mw_i < sizeof(_uvhttp_mw_handlers) / sizeof(_uvhttp_mw_handlers[0]); \
-             _uvhttp_mw_i++) {                                                            \
-            if (_uvhttp_mw_handlers[_uvhttp_mw_i] &&                                      \
-                _uvhttp_mw_handlers[_uvhttp_mw_i](req, resp, &_uvhttp_mw_ctx) !=          \
-                    UVHTTP_MIDDLEWARE_CONTINUE) {                                         \
-                if (_uvhttp_mw_ctx.cleanup)                                               \
-                    _uvhttp_mw_ctx.cleanup(_uvhttp_mw_ctx.data);                          \
-                goto _uvhttp_mw_stop;                                                     \
-            }                                                                             \
-        }                                                                                 \
-    } while (0);                                                                          \
-_uvhttp_mw_stop:                                                                          \
+#define UVHTTP_EXECUTE_MIDDLEWARE(req, resp, ...)                          \
+    do {                                                                   \
+        static const uvhttp_middleware_handler_t _uvhttp_mw_handlers[] = { \
+            __VA_ARGS__};                                                  \
+        uvhttp_middleware_context_t _uvhttp_mw_ctx = {0};                  \
+        for (size_t _uvhttp_mw_i = 0;                                      \
+             _uvhttp_mw_i <                                                \
+             sizeof(_uvhttp_mw_handlers) / sizeof(_uvhttp_mw_handlers[0]); \
+             _uvhttp_mw_i++) {                                             \
+            if (_uvhttp_mw_handlers[_uvhttp_mw_i] &&                       \
+                _uvhttp_mw_handlers[_uvhttp_mw_i](req, resp,               \
+                                                  &_uvhttp_mw_ctx) !=      \
+                    UVHTTP_MIDDLEWARE_CONTINUE) {                          \
+                if (_uvhttp_mw_ctx.cleanup)                                \
+                    _uvhttp_mw_ctx.cleanup(_uvhttp_mw_ctx.data);           \
+                goto _uvhttp_mw_stop;                                      \
+            }                                                              \
+        }                                                                  \
+    } while (0);                                                           \
+_uvhttp_mw_stop:                                                           \
     (void)0
 
 /* 定义中间件链（供复用） */
-#define UVHTTP_DEFINE_MIDDLEWARE_CHAIN(name, ...)                               \
-    static const uvhttp_middleware_handler_t name##_handlers[] = {__VA_ARGS__}; \
-    static const size_t name##_count = sizeof(name##_handlers) / sizeof(name##_handlers[0])
+#define UVHTTP_DEFINE_MIDDLEWARE_CHAIN(name, ...)                  \
+    static const uvhttp_middleware_handler_t name##_handlers[] = { \
+        __VA_ARGS__};                                              \
+    static const size_t name##_count =                             \
+        sizeof(name##_handlers) / sizeof(name##_handlers[0])
 
 /* 执行预定义的中间件链 */
-#define UVHTTP_EXECUTE_MIDDLEWARE_CHAIN(req, resp, name)                             \
-    do {                                                                             \
-        uvhttp_middleware_context_t _uvhttp_mw_ctx = {0};                            \
-        for (size_t _uvhttp_mw_i = 0; _uvhttp_mw_i < name##_count; _uvhttp_mw_i++) { \
-            if (name##_handlers[_uvhttp_mw_i] &&                                     \
-                name##_handlers[_uvhttp_mw_i](req, resp, &_uvhttp_mw_ctx) !=         \
-                    UVHTTP_MIDDLEWARE_CONTINUE) {                                    \
-                if (_uvhttp_mw_ctx.cleanup)                                          \
-                    _uvhttp_mw_ctx.cleanup(_uvhttp_mw_ctx.data);                     \
-                goto _uvhttp_mw_stop_##name;                                         \
-            }                                                                        \
-        }                                                                            \
-    } while (0);                                                                     \
+#define UVHTTP_EXECUTE_MIDDLEWARE_CHAIN(req, resp, name)                     \
+    do {                                                                     \
+        uvhttp_middleware_context_t _uvhttp_mw_ctx = {0};                    \
+        for (size_t _uvhttp_mw_i = 0; _uvhttp_mw_i < name##_count;           \
+             _uvhttp_mw_i++) {                                               \
+            if (name##_handlers[_uvhttp_mw_i] &&                             \
+                name##_handlers[_uvhttp_mw_i](req, resp, &_uvhttp_mw_ctx) != \
+                    UVHTTP_MIDDLEWARE_CONTINUE) {                            \
+                if (_uvhttp_mw_ctx.cleanup)                                  \
+                    _uvhttp_mw_ctx.cleanup(_uvhttp_mw_ctx.data);             \
+                goto _uvhttp_mw_stop_##name;                                 \
+            }                                                                \
+        }                                                                    \
+    } while (0);                                                             \
     _uvhttp_mw_stop_##name : (void)0
 
 #ifdef __cplusplus

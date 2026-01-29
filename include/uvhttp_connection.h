@@ -102,41 +102,49 @@ UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, current_header_field) >= 64,
  * @param server 服务器对象
  * @param conn 输出参数，用于接收连接指针
  * @return UVHTTP_OK 成功，其他值表示失败
- * @note 成功时，*conn 被设置为有效的连接对象，必须使用 uvhttp_connection_free 释放
+ * @note 成功时，*conn 被设置为有效的连接对象，必须使用 uvhttp_connection_free
+ * 释放
  * @note 失败时，*conn 被设置为 NULL
  */
-uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server, uvhttp_connection_t** conn);
+uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
+                                     uvhttp_connection_t** conn);
 void uvhttp_connection_free(uvhttp_connection_t* conn);
 uvhttp_error_t uvhttp_connection_start(uvhttp_connection_t* conn);
 void uvhttp_connection_close(uvhttp_connection_t* conn);
 uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn);
-uvhttp_error_t uvhttp_connection_schedule_restart_read(uvhttp_connection_t* conn);
+uvhttp_error_t uvhttp_connection_schedule_restart_read(
+    uvhttp_connection_t* conn);
 
 // TLS处理函数
 uvhttp_error_t uvhttp_connection_start_tls_handshake(uvhttp_connection_t* conn);
 uvhttp_error_t uvhttp_connection_tls_read(uvhttp_connection_t* conn);
-uvhttp_error_t uvhttp_connection_tls_write(uvhttp_connection_t* conn, const void* data, size_t len);
+uvhttp_error_t uvhttp_connection_tls_write(uvhttp_connection_t* conn,
+                                           const void* data, size_t len);
 uvhttp_error_t uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn);
 void uvhttp_connection_tls_cleanup(uvhttp_connection_t* conn);
 
 // 状态管理
-void uvhttp_connection_set_state(uvhttp_connection_t* conn, uvhttp_connection_state_t state);
+void uvhttp_connection_set_state(uvhttp_connection_t* conn,
+                                 uvhttp_connection_state_t state);
 const char* uvhttp_connection_get_state_string(uvhttp_connection_state_t state);
 
 // WebSocket处理函数（内部）
 #    if UVHTTP_FEATURE_WEBSOCKET
-uvhttp_error_t uvhttp_connection_handle_websocket_handshake(uvhttp_connection_t* conn,
-                                                            const char* ws_key);
+uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
+    uvhttp_connection_t* conn, const char* ws_key);
 void uvhttp_connection_switch_to_websocket(uvhttp_connection_t* conn);
-void uvhttp_connection_websocket_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
+void uvhttp_connection_websocket_read(uv_stream_t* stream, ssize_t nread,
+                                      const uv_buf_t* buf);
 void uvhttp_connection_websocket_close(uvhttp_connection_t* conn);
 
 /* WebSocket处理器查找函数 - 前向声明 */
-uvhttp_ws_handler_t* uvhttp_server_find_ws_handler(struct uvhttp_server* server, const char* path);
+uvhttp_ws_handler_t* uvhttp_server_find_ws_handler(struct uvhttp_server* server,
+                                                   const char* path);
 
 /* WebSocket认证相关内部函数 */
 typedef struct ws_route_entry ws_route_entry_t;
-ws_route_entry_t* uvhttp_server_find_ws_route_entry(struct uvhttp_server* server, const char* path);
+ws_route_entry_t* uvhttp_server_find_ws_route_entry(
+    struct uvhttp_server* server, const char* path);
 #    endif
 
 #    ifdef __cplusplus

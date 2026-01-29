@@ -77,8 +77,9 @@ uvhttp_error_t uvhttp_static_create(const uvhttp_static_config_t* config,
  * @param chunk_size 分块大小（字节），0 表示使用默认值
  * @return UVHTTP_OK 成功，其他值表示失败
  */
-uvhttp_error_t uvhttp_static_set_sendfile_config(uvhttp_static_context_t* ctx, int timeout_ms,
-                                                 int max_retry, size_t chunk_size);
+uvhttp_error_t uvhttp_static_set_sendfile_config(uvhttp_static_context_t* ctx,
+                                                 int timeout_ms, int max_retry,
+                                                 size_t chunk_size);
 
 /**
  * 释放静态文件服务上下文
@@ -95,8 +96,8 @@ void uvhttp_static_free(uvhttp_static_context_t* ctx);
  * @param response HTTP响应
  * @return UVHTTP_OK成功，其他值表示失败
  */
-uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx, void* request,
-                                             void* response);
+uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
+                                             void* request, void* response);
 
 /**
  * Nginx 优化：使用 sendfile 零拷贝发送静态文件（混合策略）
@@ -120,7 +121,8 @@ uvhttp_result_t uvhttp_static_sendfile(const char* file_path, void* response);
  * @param buffer_size 缓冲区大小
  * @return UVHTTP_OK成功，其他值表示失败
  */
-uvhttp_result_t uvhttp_static_get_mime_type(const char* file_path, char* mime_type,
+uvhttp_result_t uvhttp_static_get_mime_type(const char* file_path,
+                                            char* mime_type,
                                             size_t buffer_size);
 
 /**
@@ -137,7 +139,8 @@ void uvhttp_static_clear_cache(uvhttp_static_context_t* ctx);
  * @param file_path 文件路径（相对于根目录）
  * @return UVHTTP_OK成功，其他值表示失败
  */
-uvhttp_result_t uvhttp_static_prewarm_cache(uvhttp_static_context_t* ctx, const char* file_path);
+uvhttp_result_t uvhttp_static_prewarm_cache(uvhttp_static_context_t* ctx,
+                                            const char* file_path);
 
 /**
  * 缓存预热：预加载目录中的所有文件
@@ -147,8 +150,8 @@ uvhttp_result_t uvhttp_static_prewarm_cache(uvhttp_static_context_t* ctx, const 
  * @param max_files 最大文件数（0表示无限制）
  * @return 预热的文件数量，-1表示失败
  */
-int uvhttp_static_prewarm_directory(uvhttp_static_context_t* ctx, const char* dir_path,
-                                    int max_files);
+int uvhttp_static_prewarm_directory(uvhttp_static_context_t* ctx,
+                                    const char* dir_path, int max_files);
 
 /**
  * 检查文件路径是否安全（防止路径遍历攻击）
@@ -172,8 +175,10 @@ int uvhttp_static_resolve_safe_path(const char* root_dir, const char* file_path,
  * @param buffer_size 缓冲区大小
  * @return UVHTTP_OK成功，其他值表示失败
  */
-uvhttp_result_t uvhttp_static_generate_etag(const char* file_path, time_t last_modified,
-                                            size_t file_size, char* etag, size_t buffer_size);
+uvhttp_result_t uvhttp_static_generate_etag(const char* file_path,
+                                            time_t last_modified,
+                                            size_t file_size, char* etag,
+                                            size_t buffer_size);
 
 /**
  * 检查条件请求（If-None-Match, If-Modified-Since）
@@ -183,7 +188,8 @@ uvhttp_result_t uvhttp_static_generate_etag(const char* file_path, time_t last_m
  * @param last_modified 最后修改时间
  * @return 1需要返回304，0需要返回完整内容
  */
-int uvhttp_static_check_conditional_request(void* request, const char* etag, time_t last_modified);
+int uvhttp_static_check_conditional_request(void* request, const char* etag,
+                                            time_t last_modified);
 
 /**
  * 设置静态文件相关的响应头
@@ -195,8 +201,10 @@ int uvhttp_static_check_conditional_request(void* request, const char* etag, tim
  * @param etag ETag值
  * @return UVHTTP_OK成功，其他值表示失败
  */
-uvhttp_result_t uvhttp_static_set_response_headers(void* response, const char* file_path,
-                                                   size_t file_size, time_t last_modified,
+uvhttp_result_t uvhttp_static_set_response_headers(void* response,
+                                                   const char* file_path,
+                                                   size_t file_size,
+                                                   time_t last_modified,
                                                    const char* etag);
 
 /**
@@ -209,8 +217,9 @@ uvhttp_result_t uvhttp_static_set_response_headers(void* response, const char* f
  * @param miss_count 输出未命中次数
  * @param eviction_count 输出驱逐次数
  */
-void uvhttp_static_get_cache_stats(uvhttp_static_context_t* ctx, size_t* total_memory_usage,
-                                   int* entry_count, int* hit_count, int* miss_count,
+void uvhttp_static_get_cache_stats(uvhttp_static_context_t* ctx,
+                                   size_t* total_memory_usage, int* entry_count,
+                                   int* hit_count, int* miss_count,
                                    int* eviction_count);
 
 /**
@@ -238,8 +247,9 @@ int uvhttp_static_cleanup_expired_cache(uvhttp_static_context_t* ctx);
  * @param ttl 缓存TTL（秒）
  * @return UVHTTP_OK成功，其他值表示失败
  */
-uvhttp_result_t uvhttp_static_enable_cache(uvhttp_static_context_t* ctx, size_t max_memory,
-                                           int max_entries, int ttl);
+uvhttp_result_t uvhttp_static_enable_cache(uvhttp_static_context_t* ctx,
+                                           size_t max_memory, int max_entries,
+                                           int ttl);
 
 /**
  * 禁用缓存

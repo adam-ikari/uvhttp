@@ -87,7 +87,8 @@ typedef struct uvhttp_router uvhttp_router_t;
 /* ========== 内存布局验证静态断言 ========== */
 
 /* 验证指针对齐（8字节对齐） */
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, root) % 8 == 0, "root pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, root) % 8 == 0,
+                     "root pointer not 8-byte aligned");
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, node_pool) % 8 == 0,
                      "node_pool pointer not 8-byte aligned");
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, array_routes) % 8 == 0,
@@ -108,29 +109,34 @@ UVHTTP_STATIC_ASSERT(offsetof(uvhttp_router_t, node_pool_size) % 8 == 0,
  * @brief 创建新的路由器
  * @param router 输出参数，用于接收路由器指针
  * @return UVHTTP_OK 成功，其他值表示失败
- * @note 成功时，*router 被设置为有效的路由器对象，必须使用 uvhttp_router_free 释放
+ * @note 成功时，*router 被设置为有效的路由器对象，必须使用 uvhttp_router_free
+ * 释放
  * @note 失败时，*router 被设置为 NULL
  */
 uvhttp_error_t uvhttp_router_new(uvhttp_router_t** router);
 void uvhttp_router_free(uvhttp_router_t* router);
 
 // 路由添加（支持HTTP方法）
-uvhttp_error_t uvhttp_router_add_route(uvhttp_router_t* router, const char* path,
+uvhttp_error_t uvhttp_router_add_route(uvhttp_router_t* router,
+                                       const char* path,
                                        uvhttp_request_handler_t handler);
-uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router, const char* path,
+uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
+                                              const char* path,
                                               uvhttp_method_t method,
                                               uvhttp_request_handler_t handler);
 
 // 路由查找
-uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* router, const char* path,
-                                                    const char* method);
+uvhttp_request_handler_t uvhttp_router_find_handler(
+    const uvhttp_router_t* router, const char* path, const char* method);
 
 // 路由匹配（获取参数）
-uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router, const char* path,
-                                   const char* method, uvhttp_route_match_t* match);
+uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
+                                   const char* path, const char* method,
+                                   uvhttp_route_match_t* match);
 
 // 参数解析
-uvhttp_error_t uvhttp_parse_path_params(const char* path, uvhttp_param_t* params,
+uvhttp_error_t uvhttp_parse_path_params(const char* path,
+                                        uvhttp_param_t* params,
                                         size_t* param_count);
 
 // 方法字符串转换
@@ -138,11 +144,13 @@ uvhttp_method_t uvhttp_method_from_string(const char* method);
 const char* uvhttp_method_to_string(uvhttp_method_t method);
 
 // 静态文件路由支持
-uvhttp_error_t uvhttp_router_add_static_route(uvhttp_router_t* router, const char* prefix_path,
+uvhttp_error_t uvhttp_router_add_static_route(uvhttp_router_t* router,
+                                              const char* prefix_path,
                                               void* static_context);
 
 // 回退路由支持
-uvhttp_error_t uvhttp_router_add_fallback_route(uvhttp_router_t* router, void* static_context);
+uvhttp_error_t uvhttp_router_add_fallback_route(uvhttp_router_t* router,
+                                                void* static_context);
 
 #ifdef __cplusplus
 }

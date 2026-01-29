@@ -18,7 +18,8 @@ extern "C" {
  * @param max_len 最大长度
  * @return 1有效，0无效
  */
-int uvhttp_validate_string_length(const char* str, size_t min_len, size_t max_len);
+int uvhttp_validate_string_length(const char* str, size_t min_len,
+                                  size_t max_len);
 
 /**
  * 验证HTTP方法是否有效
@@ -105,7 +106,8 @@ int uvhttp_validate_query_string(const char* query);
  * @param allow_control_chars 是否允许控制字符
  * @return 1安全，0不安全
  */
-int uvhttp_validate_string_safety(const char* str, int allow_null_bytes, int allow_control_chars);
+int uvhttp_validate_string_safety(const char* str, int allow_null_bytes,
+                                  int allow_control_chars);
 
 #ifdef __cplusplus
 }

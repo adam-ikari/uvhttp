@@ -13,8 +13,9 @@
 #include <string.h>
 
 /* 敏感信息关键词列表 */
-static const char* sensitive_keywords[] = {"password", "passwd",     "secret",  "key",     "token",
-                                           "auth",     "credential", "private", "session", NULL};
+static const char* sensitive_keywords[] = {
+    "password", "passwd",     "secret",  "key",     "token",
+    "auth",     "credential", "private", "session", NULL};
 
 /**
  * 检查字符串是否包含敏感信息
@@ -53,7 +54,8 @@ void uvhttp_cleanup_connection(uv_handle_t* handle, const char* error_message) {
     }
 }
 
-void uvhttp_handle_memory_failure(const char* context, void (*cleanup_func)(void*),
+void uvhttp_handle_memory_failure(const char* context,
+                                  void (*cleanup_func)(void*),
                                   void* cleanup_data) {
     if (context) {
         UVHTTP_LOG_ERROR("Memory allocation failed in %s\n", context);
@@ -64,14 +66,16 @@ void uvhttp_handle_memory_failure(const char* context, void (*cleanup_func)(void
     }
 }
 
-void uvhttp_handle_write_error(uv_write_t* req, int status, const char* context) {
+void uvhttp_handle_write_error(uv_write_t* req, int status,
+                               const char* context) {
     if (!req)
         return;
 
     char safe_msg[UVHTTP_ERROR_CONTEXT_BUFFER_SIZE];
     const char* error_desc = uv_strerror(status);
 
-    if (uvhttp_sanitize_error_message(error_desc, safe_msg, sizeof(safe_msg)) == 0) {
+    if (uvhttp_sanitize_error_message(error_desc, safe_msg, sizeof(safe_msg)) ==
+        0) {
         UVHTTP_LOG_ERROR("Write error in %s: %s\n", context, safe_msg);
     } else {
         UVHTTP_LOG_ERROR("Write error in %s: (error %d)\n", context, status);
@@ -81,21 +85,25 @@ void uvhttp_handle_write_error(uv_write_t* req, int status, const char* context)
     uvhttp_free(req);
 }
 
-void uvhttp_log_safe_error(int error_code, const char* context, const char* user_msg) {
+void uvhttp_log_safe_error(int error_code, const char* context,
+                           const char* user_msg) {
     char safe_buffer[UVHTTP_ERROR_LOG_BUFFER_SIZE];
     const char* error_desc = error_code ? uv_strerror(error_code) : user_msg;
 
-    if (uvhttp_sanitize_error_message(error_desc, safe_buffer, sizeof(safe_buffer)) == 0) {
-        UVHTTP_LOG_ERROR("[%s] %s\n", context ? context : "unknown", safe_buffer);
+    if (uvhttp_sanitize_error_message(error_desc, safe_buffer,
+                                      sizeof(safe_buffer)) == 0) {
+        UVHTTP_LOG_ERROR("[%s] %s\n", context ? context : "unknown",
+                         safe_buffer);
     } else {
-        UVHTTP_LOG_ERROR("[%s] Error occurred (code: %d)\n", context ? context : "unknown",
-                         error_code);
+        UVHTTP_LOG_ERROR("[%s] Error occurred (code: %d)\n",
+                         context ? context : "unknown", error_code);
     }
 
     (void)context;
 }
 
-uvhttp_error_t uvhttp_sanitize_error_message(const char* message, char* safe_buffer,
+uvhttp_error_t uvhttp_sanitize_error_message(const char* message,
+                                             char* safe_buffer,
                                              size_t buffer_size) {
     if (!message || !safe_buffer || buffer_size == 0) {
         return UVHTTP_ERROR_INVALID_PARAM;

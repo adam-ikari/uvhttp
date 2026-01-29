@@ -78,7 +78,8 @@ typedef struct {
  *
  * 由应用层实现，用于统计和记录连接超时事件
  */
-typedef void (*uvhttp_timeout_callback_t)(uvhttp_server_t* server, uvhttp_connection_t* conn,
+typedef void (*uvhttp_timeout_callback_t)(uvhttp_server_t* server,
+                                          uvhttp_connection_t* conn,
                                           uint64_t timeout_ms, void* user_data);
 
 struct uvhttp_server {
@@ -92,7 +93,8 @@ struct uvhttp_server {
     uvhttp_request_handler_t handler; /* 8 字节 */
     uvhttp_router_t* router;          /* 8 字节 */
     uvhttp_config_t* config;          /* 8 字节 */
-    struct uvhttp_context* context;   /* 8 字节 - 应用上下文（避免独占 loop->data） */
+    struct uvhttp_context*
+        context; /* 8 字节 - 应用上下文（避免独占 loop->data） */
 
     /* 网络连接（16字节对齐） */
     uv_tcp_t tcp_handle; /* 8 字节 */
@@ -129,13 +131,14 @@ struct uvhttp_server {
     void* user_data; /* 8 字节 - 应用特定的上下文数据 */
     /* 超时统计回调 */
     uvhttp_timeout_callback_t timeout_callback; /* 8 字节 - 超时统计回调 */
-    void* timeout_callback_user_data;           /* 8 字节 - 回调用户数据 */
+    void* timeout_callback_user_data; /* 8 字节 - 回调用户数据 */
 };
 
 /* ========== 内存布局验证静态断言 ========== */
 
 /* 验证指针对齐（8字节对齐） */
-UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, loop) % 8 == 0, "loop pointer not 8-byte aligned");
+UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, loop) % 8 == 0,
+                     "loop pointer not 8-byte aligned");
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, router) % 8 == 0,
                      "router pointer not 8-byte aligned");
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, config) % 8 == 0,
@@ -153,20 +156,26 @@ UVHTTP_STATIC_ASSERT(offsetof(uvhttp_server_t, max_connections) % 8 == 0,
  * @param loop 事件循环，可为 NULL（内部创建新循环）
  * @param server 输出参数，用于接收服务器指针
  * @return UVHTTP_OK 成功，其他值表示失败
- * @note 成功时，*server 被设置为有效的服务器对象，必须使用 uvhttp_server_free 释放
+ * @note 成功时，*server 被设置为有效的服务器对象，必须使用 uvhttp_server_free
+ * 释放
  * @note 失败时，*server 被设置为 NULL
  */
 uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server);
-uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, int port);
+uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
+                                    int port);
 uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server);
 #    if UVHTTP_FEATURE_TLS
-uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server, uvhttp_tls_context_t* tls_ctx);
+uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server,
+                                        uvhttp_tls_context_t* tls_ctx);
 uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server);
 #    endif
 uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
-uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server, uvhttp_request_handler_t handler);
-uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server, uvhttp_router_t* router);
-uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server, struct uvhttp_context* context);
+uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server,
+                                         uvhttp_request_handler_t handler);
+uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server,
+                                        uvhttp_router_t* router);
+uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server,
+                                         struct uvhttp_context* context);
 
 #    if UVHTTP_FEATURE_RATE_LIMIT
 // ========== 限流 API（核心功能） ==========
@@ -186,7 +195,8 @@ uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server, struct uvhttp_
  * - 建议在调用 uvhttp_server_listen 之前调用
  * - 使用固定窗口算法实现
  */
-uvhttp_error_t uvhttp_server_enable_rate_limit(uvhttp_server_t* server, int max_requests,
+uvhttp_error_t uvhttp_server_enable_rate_limit(uvhttp_server_t* server,
+                                               int max_requests,
                                                int window_seconds);
 
 /**
@@ -228,8 +238,10 @@ uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(uvhttp_server_t* server,
  * - 当前实现为服务器级别限流，client_ip 参数未使用
  * - 返回的是服务器的总体限流状态，不是特定客户端的状态
  */
-uvhttp_error_t uvhttp_server_get_rate_limit_status(uvhttp_server_t* server, const char* client_ip,
-                                                   int* remaining, uint64_t* reset_time);
+uvhttp_error_t uvhttp_server_get_rate_limit_status(uvhttp_server_t* server,
+                                                   const char* client_ip,
+                                                   int* remaining,
+                                                   uint64_t* reset_time);
 
 /**
  * 重置服务器的限流状态
@@ -265,24 +277,33 @@ uvhttp_error_t uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server);
  * @param server 输出参数，返回创建的服务器构建器
  * @return UVHTTP_OK 成功，其他值表示错误
  */
-uvhttp_error_t uvhttp_server_create(const char* host, int port, uvhttp_server_builder_t** server);
+uvhttp_error_t uvhttp_server_create(const char* host, int port,
+                                    uvhttp_server_builder_t** server);
 
 // 链式路由API
-uvhttp_server_builder_t* uvhttp_get(uvhttp_server_builder_t* server, const char* path,
+uvhttp_server_builder_t* uvhttp_get(uvhttp_server_builder_t* server,
+                                    const char* path,
                                     uvhttp_request_handler_t handler);
-uvhttp_server_builder_t* uvhttp_post(uvhttp_server_builder_t* server, const char* path,
+uvhttp_server_builder_t* uvhttp_post(uvhttp_server_builder_t* server,
+                                     const char* path,
                                      uvhttp_request_handler_t handler);
-uvhttp_server_builder_t* uvhttp_put(uvhttp_server_builder_t* server, const char* path,
+uvhttp_server_builder_t* uvhttp_put(uvhttp_server_builder_t* server,
+                                    const char* path,
                                     uvhttp_request_handler_t handler);
-uvhttp_server_builder_t* uvhttp_delete(uvhttp_server_builder_t* server, const char* path,
+uvhttp_server_builder_t* uvhttp_delete(uvhttp_server_builder_t* server,
+                                       const char* path,
                                        uvhttp_request_handler_t handler);
-uvhttp_server_builder_t* uvhttp_any(uvhttp_server_builder_t* server, const char* path,
+uvhttp_server_builder_t* uvhttp_any(uvhttp_server_builder_t* server,
+                                    const char* path,
                                     uvhttp_request_handler_t handler);
 
 // 简化配置API
-uvhttp_server_builder_t* uvhttp_set_max_connections(uvhttp_server_builder_t* server, int max_conn);
-uvhttp_server_builder_t* uvhttp_set_timeout(uvhttp_server_builder_t* server, int timeout);
-uvhttp_server_builder_t* uvhttp_set_max_body_size(uvhttp_server_builder_t* server, size_t size);
+uvhttp_server_builder_t* uvhttp_set_max_connections(
+    uvhttp_server_builder_t* server, int max_conn);
+uvhttp_server_builder_t* uvhttp_set_timeout(uvhttp_server_builder_t* server,
+                                            int timeout);
+uvhttp_server_builder_t* uvhttp_set_max_body_size(
+    uvhttp_server_builder_t* server, size_t size);
 
 // 便捷请求参数获取
 const char* uvhttp_get_param(uvhttp_request_t* request, const char* name);
@@ -303,44 +324,54 @@ int uvhttp_serve(const char* host, int port);
 
 typedef struct {
     int (*on_connect)(uvhttp_ws_connection_t* ws_conn);
-    int (*on_message)(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len, int opcode);
+    int (*on_message)(uvhttp_ws_connection_t* ws_conn, const char* data,
+                      size_t len, int opcode);
     int (*on_close)(uvhttp_ws_connection_t* ws_conn);
-    int (*on_error)(uvhttp_ws_connection_t* ws_conn, int error_code, const char* error_msg);
+    int (*on_error)(uvhttp_ws_connection_t* ws_conn, int error_code,
+                    const char* error_msg);
     void* user_data;
     /* 超时统计回调 */
     uvhttp_timeout_callback_t timeout_callback; /* 8 字节 - 超时统计回调 */
-    void* timeout_callback_user_data;           /* 8 字节 - 回调用户数据 */
+    void* timeout_callback_user_data; /* 8 字节 - 回调用户数据 */
 } uvhttp_ws_handler_t;
 
-uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server, const char* path,
+uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server,
+                                                 const char* path,
                                                  uvhttp_ws_handler_t* handler);
-uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn, const char* data, size_t len);
+uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn,
+                                     const char* data, size_t len);
 uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code,
                                       const char* reason);
 
 /* 连接管理 API */
-uvhttp_error_t uvhttp_server_ws_enable_connection_management(uvhttp_server_t* server,
-                                                             int timeout_seconds,
-                                                             int heartbeat_interval);
+uvhttp_error_t uvhttp_server_ws_enable_connection_management(
+    uvhttp_server_t* server, int timeout_seconds, int heartbeat_interval);
 
-uvhttp_error_t uvhttp_server_ws_disable_connection_management(uvhttp_server_t* server);
+uvhttp_error_t uvhttp_server_ws_disable_connection_management(
+    uvhttp_server_t* server);
 
 int uvhttp_server_ws_get_connection_count(uvhttp_server_t* server);
 
-int uvhttp_server_ws_get_connection_count_by_path(uvhttp_server_t* server, const char* path);
+int uvhttp_server_ws_get_connection_count_by_path(uvhttp_server_t* server,
+                                                  const char* path);
 
-uvhttp_error_t uvhttp_server_ws_broadcast(uvhttp_server_t* server, const char* path,
-                                          const char* data, size_t len);
+uvhttp_error_t uvhttp_server_ws_broadcast(uvhttp_server_t* server,
+                                          const char* path, const char* data,
+                                          size_t len);
 
-uvhttp_error_t uvhttp_server_ws_close_all(uvhttp_server_t* server, const char* path);
+uvhttp_error_t uvhttp_server_ws_close_all(uvhttp_server_t* server,
+                                          const char* path);
 
 /* 内部函数（由 uvhttp_connection 调用） */
-void uvhttp_server_ws_add_connection(uvhttp_server_t* server, uvhttp_ws_connection_t* ws_conn,
+void uvhttp_server_ws_add_connection(uvhttp_server_t* server,
+                                     uvhttp_ws_connection_t* ws_conn,
                                      const char* path);
 
-void uvhttp_server_ws_remove_connection(uvhttp_server_t* server, uvhttp_ws_connection_t* ws_conn);
+void uvhttp_server_ws_remove_connection(uvhttp_server_t* server,
+                                        uvhttp_ws_connection_t* ws_conn);
 
-void uvhttp_server_ws_update_activity(uvhttp_server_t* server, uvhttp_ws_connection_t* ws_conn);
+void uvhttp_server_ws_update_activity(uvhttp_server_t* server,
+                                      uvhttp_ws_connection_t* ws_conn);
 #    endif
 
 // 内部函数声明
@@ -356,6 +387,6 @@ void uvhttp_request_cleanup(uvhttp_request_t* request);
 #    endif
 
 #endif
-uvhttp_error_t uvhttp_server_set_timeout_callback(uvhttp_server_t* server,
-                                                  uvhttp_timeout_callback_t callback,
-                                                  void* user_data);
+uvhttp_error_t uvhttp_server_set_timeout_callback(
+    uvhttp_server_t* server, uvhttp_timeout_callback_t callback,
+    void* user_data);

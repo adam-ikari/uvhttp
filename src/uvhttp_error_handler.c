@@ -15,12 +15,13 @@
 #include <string.h>
 
 /* 全局错误恢复配置 */
-uvhttp_error_recovery_config_t g_error_recovery_config = {.custom_handler = NULL,
-                                                          .enable_recovery = 1,
-                                                          .max_retries = 3,
-                                                          .base_delay_ms = 100,
-                                                          .max_delay_ms = 5000,
-                                                          .backoff_multiplier = 2.0};
+uvhttp_error_recovery_config_t g_error_recovery_config = {
+    .custom_handler = NULL,
+    .enable_recovery = 1,
+    .max_retries = 3,
+    .base_delay_ms = 100,
+    .max_delay_ms = 5000,
+    .backoff_multiplier = 2.0};
 
 /* 错误统计 */
 static uvhttp_error_stats_t g_error_stats = {0};
@@ -57,7 +58,8 @@ void uvhttp_error_cleanup(void) {
     UVHTTP_LOG_INFO("Total errors handled: %zu", total);
 }
 
-void uvhttp_error_set_recovery_config(const uvhttp_error_recovery_config_t* config) {
+void uvhttp_error_set_recovery_config(
+    const uvhttp_error_recovery_config_t* config) {
     if (config) {
         g_error_recovery_config = *config;
         UVHTTP_LOG_INFO("Error recovery configuration updated");
@@ -66,8 +68,9 @@ void uvhttp_error_set_recovery_config(const uvhttp_error_recovery_config_t* conf
 
 /* ========== 内部错误报告函数 ========== */
 
-void uvhttp_error_report_(uvhttp_error_t error_code, const char* message, const char* function,
-                          const char* file, int line, void* user_data) {
+void uvhttp_error_report_(uvhttp_error_t error_code, const char* message,
+                          const char* function, const char* file, int line,
+                          void* user_data) {
     /* 更新统计 */
     int index = (error_code < 0) ? -error_code : 0;
     if (index >= 0 && index < UVHTTP_ERROR_COUNT) {
@@ -77,8 +80,8 @@ void uvhttp_error_report_(uvhttp_error_t error_code, const char* message, const 
 
     /* 格式化错误上下文 */
     char context_msg[512];
-    snprintf(context_msg, sizeof(context_msg), "%s:%d in %s() - %s (%s)", file, line, function,
-             message, uvhttp_error_string(error_code));
+    snprintf(context_msg, sizeof(context_msg), "%s:%d in %s() - %s (%s)", file,
+             line, function, message, uvhttp_error_string(error_code));
 
     /* 确保不超过目标缓冲区大小 */
     size_t copy_len = strlen(context_msg);
@@ -102,12 +105,14 @@ void uvhttp_error_report_(uvhttp_error_t error_code, const char* message, const 
 }
 
 /* 错误恢复尝试 */
-uvhttp_error_t uvhttp_error_attempt_recovery(const uvhttp_error_context_t* context) {
+uvhttp_error_t uvhttp_error_attempt_recovery(
+    const uvhttp_error_context_t* context) {
     if (!g_error_recovery_config.enable_recovery) {
         return context->error_code;
     }
 
-    UVHTTP_LOG_INFO("Attempting error recovery for %s", uvhttp_error_string(context->error_code));
+    UVHTTP_LOG_INFO("Attempting error recovery for %s",
+                    uvhttp_error_string(context->error_code));
 
     /* 根据错误类型进行恢复 */
     switch (context->error_code) {
@@ -115,7 +120,8 @@ uvhttp_error_t uvhttp_error_attempt_recovery(const uvhttp_error_context_t* conte
     case UVHTTP_ERROR_CONNECTION_START:
     case UVHTTP_ERROR_RESPONSE_SEND:
         /* 网络相关错误，可以重试 */
-        for (int attempt = 0; attempt < g_error_recovery_config.max_retries; attempt++) {
+        for (int attempt = 0; attempt < g_error_recovery_config.max_retries;
+             attempt++) {
             int delay = calculate_retry_delay(attempt);
             UVHTTP_LOG_INFO("Retry attempt %d after %d ms", attempt + 1, delay);
             sleep_ms(delay);
@@ -152,8 +158,9 @@ static int calculate_retry_delay(int attempt) {
     for (int i = 0; i < attempt; i++) {
         delay *= g_error_recovery_config.backoff_multiplier;
     }
-    return (delay > g_error_recovery_config.max_delay_ms) ? g_error_recovery_config.max_delay_ms
-                                                          : delay;
+    return (delay > g_error_recovery_config.max_delay_ms)
+               ? g_error_recovery_config.max_delay_ms
+               : delay;
 }
 
 /* 毫秒级睡眠 */

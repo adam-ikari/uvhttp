@@ -11,16 +11,20 @@
 
 /* 支持的HTTP方法列表 */
 static const char* valid_methods[] = {
-    UVHTTP_METHOD_GET,  UVHTTP_METHOD_POST,    UVHTTP_METHOD_PUT,   UVHTTP_METHOD_DELETE,
-    UVHTTP_METHOD_HEAD, UVHTTP_METHOD_OPTIONS, UVHTTP_METHOD_PATCH, NULL};
+    UVHTTP_METHOD_GET,   UVHTTP_METHOD_POST,
+    UVHTTP_METHOD_PUT,   UVHTTP_METHOD_DELETE,
+    UVHTTP_METHOD_HEAD,  UVHTTP_METHOD_OPTIONS,
+    UVHTTP_METHOD_PATCH, NULL};
 
 /* 危险的路径字符 */
-static const char dangerous_path_chars[] = {'<', '>', ':', '"', '|', '?', '*', '\n', '\r'};
+static const char dangerous_path_chars[] = {'<', '>', ':',  '"', '|',
+                                            '?', '*', '\n', '\r'};
 
 /* 危险的查询字符 */
 static const char dangerous_query_chars[] = {'<', '>', '"', '\'', '\n', '\r'};
 
-int uvhttp_validate_string_length(const char* str, size_t min_len, size_t max_len) {
+int uvhttp_validate_string_length(const char* str, size_t min_len,
+                                  size_t max_len) {
     if (!str)
         return FALSE;
 
@@ -94,7 +98,8 @@ int uvhttp_validate_header_value_safe(const char* value) {
         return FALSE;
 
     // 检查长度
-    if (!uvhttp_validate_string_length(value, 0, UVHTTP_MAX_HEADER_VALUE_SIZE)) {
+    if (!uvhttp_validate_string_length(value, 0,
+                                       UVHTTP_MAX_HEADER_VALUE_SIZE)) {
         return FALSE;
     }
 
@@ -176,7 +181,8 @@ int uvhttp_validate_websocket_key(const char* key, size_t key_len) {
         return FALSE;
 
     // 检查长度范围
-    if (key_len < UVHTTP_WEBSOCKET_MIN_KEY_LENGTH || key_len > UVHTTP_WEBSOCKET_MAX_KEY_LENGTH) {
+    if (key_len < UVHTTP_WEBSOCKET_MIN_KEY_LENGTH ||
+        key_len > UVHTTP_WEBSOCKET_MAX_KEY_LENGTH) {
         return FALSE;
     }
 
@@ -232,7 +238,8 @@ int uvhttp_validate_query_string(const char* query) {
     return TRUE;
 }
 
-int uvhttp_validate_string_safety(const char* str, int allow_null_bytes, int allow_control_chars) {
+int uvhttp_validate_string_safety(const char* str, int allow_null_bytes,
+                                  int allow_control_chars) {
     if (!str)
         return FALSE;
 
@@ -245,7 +252,8 @@ int uvhttp_validate_string_safety(const char* str, int allow_null_bytes, int all
         }
 
         // 检查控制字符
-        if (!allow_control_chars && c < UVHTTP_SPACE_CHARACTER && c != UVHTTP_TAB_CHARACTER) {
+        if (!allow_control_chars && c < UVHTTP_SPACE_CHARACTER &&
+            c != UVHTTP_TAB_CHARACTER) {
             return FALSE;
         }
 

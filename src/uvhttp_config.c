@@ -23,7 +23,8 @@ uvhttp_error_t uvhttp_config_new(uvhttp_config_t** config) {
 
     *config = uvhttp_alloc(sizeof(uvhttp_config_t));
     if (!*config) {
-        UVHTTP_ERROR_REPORT(UVHTTP_ERROR_OUT_OF_MEMORY, "Failed to allocate config");
+        UVHTTP_ERROR_REPORT(UVHTTP_ERROR_OUT_OF_MEMORY,
+                            "Failed to allocate config");
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
 
@@ -77,7 +78,8 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
     }
 
     /* 配置解析时的限制 */
-#define UVHTTP_MAX_BODY_SIZE_CONFIG (100 * 1024 * 1024) /* 避免与头文件中的宏冲突 */
+#define UVHTTP_MAX_BODY_SIZE_CONFIG \
+    (100 * 1024 * 1024) /* 避免与头文件中的宏冲突 */
 
     FILE* file = fopen(filename, "r");
     if (!file) {
@@ -120,15 +122,18 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
             UVHTTP_LOG_DEBUG("Parsing max_connections, value='%s'", value);
             char* endptr;
             long val = strtol(value, &endptr, 10);
-            UVHTTP_LOG_DEBUG("strtol result: val=%ld, endptr='%s' (char=%d)", val, endptr, *endptr);
+            UVHTTP_LOG_DEBUG("strtol result: val=%ld, endptr='%s' (char=%d)",
+                             val, endptr, *endptr);
             if (*endptr != '\0') {
-                UVHTTP_LOG_ERROR("Invalid max_connections=%s: contains non-numeric characters",
+                UVHTTP_LOG_ERROR("Invalid max_connections=%s: contains "
+                                 "non-numeric characters",
                                  value);
                 fclose(file);
                 return UVHTTP_ERROR_INVALID_PARAM;
             }
             if (val < 1 || val > 65535) {
-                UVHTTP_LOG_ERROR("Invalid max_connections=%ld: out of range [1-65535]", val);
+                UVHTTP_LOG_ERROR(
+                    "Invalid max_connections=%ld: out of range [1-65535]", val);
                 fclose(file);
                 return UVHTTP_ERROR_INVALID_PARAM;
             }
@@ -137,7 +142,8 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
             char* endptr;
             long val = strtol(value, &endptr, 10);
             if (*endptr != '\0' || val < 1024 || val > 1024 * 1024) {
-                UVHTTP_LOG_ERROR("Invalid read_buffer_size=%s in config file", value);
+                UVHTTP_LOG_ERROR("Invalid read_buffer_size=%s in config file",
+                                 value);
                 fclose(file);
                 return UVHTTP_ERROR_INVALID_PARAM;
             }
@@ -146,12 +152,14 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
             char* endptr;
             unsigned long long val = strtoull(value, &endptr, 10);
             if (*endptr != '\0') {
-                UVHTTP_LOG_ERROR("Invalid max_body_size=%s: non-numeric characters", value);
+                UVHTTP_LOG_ERROR(
+                    "Invalid max_body_size=%s: non-numeric characters", value);
                 fclose(file);
                 return UVHTTP_ERROR_INVALID_PARAM;
             }
             if (val > UVHTTP_MAX_BODY_SIZE_CONFIG) {
-                UVHTTP_LOG_ERROR("Invalid max_body_size=%zu: exceeds limit %zu", (size_t)val,
+                UVHTTP_LOG_ERROR("Invalid max_body_size=%zu: exceeds limit %zu",
+                                 (size_t)val,
                                  (size_t)UVHTTP_MAX_BODY_SIZE_CONFIG);
                 fclose(file);
                 return UVHTTP_ERROR_INVALID_PARAM;
@@ -160,8 +168,9 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
         } else if (strcmp(key, "log_file_path") == 0) {
             /* 安全处理 log_file_path - 防止缓冲区溢出和路径遍历攻击 */
             if (strlen(value) >= sizeof(config->log_file_path)) {
-                UVHTTP_LOG_ERROR("log_file_path too long: max %zu characters allowed",
-                                 sizeof(config->log_file_path) - 1);
+                UVHTTP_LOG_ERROR(
+                    "log_file_path too long: max %zu characters allowed",
+                    sizeof(config->log_file_path) - 1);
                 fclose(file);
                 return UVHTTP_ERROR_INVALID_PARAM;
             }
@@ -170,12 +179,14 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
             if (strstr(value, "..") != NULL || strstr(value, "/") == value ||
                 strstr(value, "\\") == value || strstr(value, "//") != NULL ||
                 strstr(value, "\\\\") != NULL) {
-                UVHTTP_LOG_ERROR("log_file_path contains invalid path sequences: %s", value);
+                UVHTTP_LOG_ERROR(
+                    "log_file_path contains invalid path sequences: %s", value);
                 fclose(file);
                 return UVHTTP_ERROR_INVALID_PARAM;
             }
 
-            strncpy(config->log_file_path, value, sizeof(config->log_file_path) - 1);
+            strncpy(config->log_file_path, value,
+                    sizeof(config->log_file_path) - 1);
             config->log_file_path[sizeof(config->log_file_path) - 1] = '\0';
         }
     }
@@ -185,14 +196,16 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
 }
 
 /* 保存配置到文件 */
-int uvhttp_config_save_file(const uvhttp_config_t* config, const char* filename) {
+int uvhttp_config_save_file(const uvhttp_config_t* config,
+                            const char* filename) {
     if (!config || !filename) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
     FILE* file = fopen(filename, "w");
     if (!file) {
-        UVHTTP_ERROR_REPORT(UVHTTP_ERROR_NOT_FOUND, "Failed to create config file");
+        UVHTTP_ERROR_REPORT(UVHTTP_ERROR_NOT_FOUND,
+                            "Failed to create config file");
         return UVHTTP_ERROR_NOT_FOUND;
     }
 
@@ -213,7 +226,8 @@ int uvhttp_config_save_file(const uvhttp_config_t* config, const char* filename)
     fprintf(file, "max_url_size=%zu\n", config->max_url_size);
 
     fprintf(file, "\n# Security Configuration\n");
-    fprintf(file, "max_requests_per_connection=%d\n", config->max_requests_per_connection);
+    fprintf(file, "max_requests_per_connection=%d\n",
+            config->max_requests_per_connection);
     fprintf(file, "rate_limit_window=%d\n", config->rate_limit_window);
     fprintf(file, "enable_compression=%d\n", config->enable_compression);
     fprintf(file, "enable_tls=%d\n", config->enable_tls);
@@ -221,7 +235,8 @@ int uvhttp_config_save_file(const uvhttp_config_t* config, const char* filename)
     fprintf(file, "\n# Memory Configuration\n");
     fprintf(file, "memory_pool_size=%zu\n", config->memory_pool_size);
     fprintf(file, "enable_memory_debug=%d\n", config->enable_memory_debug);
-    fprintf(file, "memory_warning_threshold=%.2f\n", config->memory_warning_threshold);
+    fprintf(file, "memory_warning_threshold=%.2f\n",
+            config->memory_warning_threshold);
 
     fprintf(file, "\n# Logging Configuration\n");
     fprintf(file, "log_level=%d\n", config->log_level);
@@ -248,7 +263,8 @@ int uvhttp_config_load_env(uvhttp_config_t* config) {
         if (*endptr == '\0' && val >= 1 && val <= 65535) {
             config->max_connections = (int)val;
         } else {
-            UVHTTP_LOG_WARN("Invalid UVHTTP_MAX_CONNECTIONS=%s, using default", env_val);
+            UVHTTP_LOG_WARN("Invalid UVHTTP_MAX_CONNECTIONS=%s, using default",
+                            env_val);
         }
     }
     if ((env_val = getenv("UVHTTP_READ_BUFFER_SIZE"))) {
@@ -257,7 +273,8 @@ int uvhttp_config_load_env(uvhttp_config_t* config) {
         if (*endptr == '\0' && val >= 1024 && val <= 1024 * 1024) {
             config->read_buffer_size = (int)val;
         } else {
-            UVHTTP_LOG_WARN("Invalid UVHTTP_READ_BUFFER_SIZE=%s, using default", env_val);
+            UVHTTP_LOG_WARN("Invalid UVHTTP_READ_BUFFER_SIZE=%s, using default",
+                            env_val);
         }
     }
     if ((env_val = getenv("UVHTTP_MAX_BODY_SIZE"))) {
@@ -266,7 +283,8 @@ int uvhttp_config_load_env(uvhttp_config_t* config) {
         if (*endptr == '\0' && val <= UVHTTP_MAX_BODY_SIZE_CONFIG) {
             config->max_body_size = (size_t)val;
         } else {
-            UVHTTP_LOG_WARN("Invalid UVHTTP_MAX_BODY_SIZE=%s, using default", env_val);
+            UVHTTP_LOG_WARN("Invalid UVHTTP_MAX_BODY_SIZE=%s, using default",
+                            env_val);
         }
     }
     if ((env_val = getenv("UVHTTP_ENABLE_TLS"))) {
@@ -275,7 +293,8 @@ int uvhttp_config_load_env(uvhttp_config_t* config) {
         if (*endptr == '\0' && (val == 0 || val == 1)) {
             config->enable_tls = (int)val;
         } else {
-            UVHTTP_LOG_WARN("Invalid UVHTTP_ENABLE_TLS=%s, using default", env_val);
+            UVHTTP_LOG_WARN("Invalid UVHTTP_ENABLE_TLS=%s, using default",
+                            env_val);
         }
     }
     if ((env_val = getenv("UVHTTP_LOG_LEVEL"))) {
@@ -284,20 +303,24 @@ int uvhttp_config_load_env(uvhttp_config_t* config) {
         if (*endptr == '\0' && val >= 0 && val <= 5) {
             config->log_level = (int)val;
         } else {
-            UVHTTP_LOG_WARN("Invalid UVHTTP_LOG_LEVEL=%s, using default", env_val);
+            UVHTTP_LOG_WARN("Invalid UVHTTP_LOG_LEVEL=%s, using default",
+                            env_val);
         }
     }
     if ((env_val = getenv("UVHTTP_LOG_FILE_PATH"))) {
         /* 安全处理环境变量中的 log_file_path */
         if (strlen(env_val) < sizeof(config->log_file_path)) {
             /* 路径遍历攻击检查 */
-            if (strstr(env_val, "..") != NULL || strstr(env_val, "/") == env_val ||
-                strstr(env_val, "\\") == env_val || strstr(env_val, "//") != NULL ||
+            if (strstr(env_val, "..") != NULL ||
+                strstr(env_val, "/") == env_val ||
+                strstr(env_val, "\\") == env_val ||
+                strstr(env_val, "//") != NULL ||
                 strstr(env_val, "\\\\") != NULL) {
-                UVHTTP_LOG_WARN(
-                    "UVHTTP_LOG_FILE_PATH contains invalid path sequences, using default");
+                UVHTTP_LOG_WARN("UVHTTP_LOG_FILE_PATH contains invalid path "
+                                "sequences, using default");
             } else {
-                strncpy(config->log_file_path, env_val, sizeof(config->log_file_path) - 1);
+                strncpy(config->log_file_path, env_val,
+                        sizeof(config->log_file_path) - 1);
                 config->log_file_path[sizeof(config->log_file_path) - 1] = '\0';
             }
         } else {
@@ -333,27 +356,31 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
 #define UVHTTP_MIN_BUFFER_SIZE 1024
 #define UVHTTP_MAX_BUFFER_SIZE (1024 * 1024)
 #define UVHTTP_MIN_BODY_SIZE 1024
-#define UVHTTP_MAX_BODY_SIZE_CONFIG (100 * 1024 * 1024) /* 避免与头文件中的宏冲突 */
+#define UVHTTP_MAX_BODY_SIZE_CONFIG \
+    (100 * 1024 * 1024) /* 避免与头文件中的宏冲突 */
 
     /* 核心验证：连接数和缓冲区大小 */
     if (config->max_connections < UVHTTP_MIN_CONNECTIONS ||
         config->max_connections > UVHTTP_MAX_CONNECTIONS_HARD) {
-        UVHTTP_LOG_ERROR("max_connections=%d exceeds valid range [%d-%d]", config->max_connections,
-                         UVHTTP_MIN_CONNECTIONS, UVHTTP_MAX_CONNECTIONS_HARD);
+        UVHTTP_LOG_ERROR("max_connections=%d exceeds valid range [%d-%d]",
+                         config->max_connections, UVHTTP_MIN_CONNECTIONS,
+                         UVHTTP_MAX_CONNECTIONS_HARD);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
     if (config->read_buffer_size < UVHTTP_MIN_BUFFER_SIZE ||
         config->read_buffer_size > UVHTTP_MAX_BUFFER_SIZE) {
         UVHTTP_LOG_ERROR("read_buffer_size=%d exceeds valid range [%d-%d]",
-                         config->read_buffer_size, UVHTTP_MIN_BUFFER_SIZE, UVHTTP_MAX_BUFFER_SIZE);
+                         config->read_buffer_size, UVHTTP_MIN_BUFFER_SIZE,
+                         UVHTTP_MAX_BUFFER_SIZE);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
     if (config->max_body_size < UVHTTP_MIN_BODY_SIZE ||
         config->max_body_size > UVHTTP_MAX_BODY_SIZE_CONFIG) {
-        UVHTTP_LOG_ERROR("max_body_size=%zu exceeds valid range [%zu-%zu]", config->max_body_size,
-                         (size_t)UVHTTP_MIN_BODY_SIZE, (size_t)UVHTTP_MAX_BODY_SIZE_CONFIG);
+        UVHTTP_LOG_ERROR("max_body_size=%zu exceeds valid range [%zu-%zu]",
+                         config->max_body_size, (size_t)UVHTTP_MIN_BODY_SIZE,
+                         (size_t)UVHTTP_MAX_BODY_SIZE_CONFIG);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
@@ -362,9 +389,11 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
     if (getrlimit(RLIMIT_NOFILE, &rl) == 0) {
         /* 为系统保留一些文件描述符 */
         int reserved_fds = 10;
-        if ((size_t)config->max_connections > (size_t)rl.rlim_cur - (size_t)reserved_fds) {
-            UVHTTP_LOG_WARN("max_connections=%d may exceed file descriptor limit=%zu",
-                            config->max_connections, (size_t)rl.rlim_cur - reserved_fds);
+        if ((size_t)config->max_connections >
+            (size_t)rl.rlim_cur - (size_t)reserved_fds) {
+            UVHTTP_LOG_WARN(
+                "max_connections=%d may exceed file descriptor limit=%zu",
+                config->max_connections, (size_t)rl.rlim_cur - reserved_fds);
         }
     }
 
@@ -389,19 +418,24 @@ void uvhttp_config_print(const uvhttp_config_t* config) {
     printf("  Max Header Size: %zu bytes\n", config->max_header_size);
     printf("  Max URL Size: %zu bytes\n", config->max_url_size);
     printf("\nSecurity:\n");
-    printf("  Max Requests per Connection: %d\n", config->max_requests_per_connection);
+    printf("  Max Requests per Connection: %d\n",
+           config->max_requests_per_connection);
     printf("  Rate Limit Window: %d seconds\n", config->rate_limit_window);
-    printf("  Enable Compression: %s\n", config->enable_compression ? "Yes" : "No");
+    printf("  Enable Compression: %s\n",
+           config->enable_compression ? "Yes" : "No");
     printf("  Enable TLS: %s\n", config->enable_tls ? "Yes" : "No");
 
     printf("\nMemory:\n");
     printf("  Memory Pool Size: %zu bytes\n", config->memory_pool_size);
-    printf("  Enable Memory Debug: %s\n", config->enable_memory_debug ? "Yes" : "No");
-    printf("  Memory Warning Threshold: %.2f\n", config->memory_warning_threshold);
+    printf("  Enable Memory Debug: %s\n",
+           config->enable_memory_debug ? "Yes" : "No");
+    printf("  Memory Warning Threshold: %.2f\n",
+           config->memory_warning_threshold);
 
     printf("\nLogging:\n");
     printf("  Log Level: %d\n", config->log_level);
-    printf("  Enable Access Log: %s\n", config->enable_access_log ? "Yes" : "No");
+    printf("  Enable Access Log: %s\n",
+           config->enable_access_log ? "Yes" : "No");
     printf("  Log File Path: %s\n", config->log_file_path);
     printf("==============================\n\n");
 }
@@ -419,7 +453,8 @@ const uvhttp_config_t* uvhttp_config_get_current(uvhttp_context_t* context) {
 }
 
 /* 动态更新最大连接数 */
-int uvhttp_config_update_max_connections(uvhttp_context_t* context, int max_connections) {
+int uvhttp_config_update_max_connections(uvhttp_context_t* context,
+                                         int max_connections) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -428,10 +463,13 @@ int uvhttp_config_update_max_connections(uvhttp_context_t* context, int max_conn
     }
 
     if (context->current_config) {
-        int old_value = ((uvhttp_config_t*)context->current_config)->max_connections;
-        ((uvhttp_config_t*)context->current_config)->max_connections = max_connections;
+        int old_value =
+            ((uvhttp_config_t*)context->current_config)->max_connections;
+        ((uvhttp_config_t*)context->current_config)->max_connections =
+            max_connections;
 
-        UVHTTP_LOG_INFO("Max connections updated: %d -> %d", old_value, max_connections);
+        UVHTTP_LOG_INFO("Max connections updated: %d -> %d", old_value,
+                        max_connections);
         (void)old_value;
         return UVHTTP_OK;
     }
@@ -440,7 +478,8 @@ int uvhttp_config_update_max_connections(uvhttp_context_t* context, int max_conn
 }
 
 /* 动态更新读缓冲区大小 */
-int uvhttp_config_update_read_buffer_size(uvhttp_context_t* context, int buffer_size) {
+int uvhttp_config_update_read_buffer_size(uvhttp_context_t* context,
+                                          int buffer_size) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -449,10 +488,13 @@ int uvhttp_config_update_read_buffer_size(uvhttp_context_t* context, int buffer_
     }
 
     if (context->current_config) {
-        int old_value = ((uvhttp_config_t*)context->current_config)->read_buffer_size;
-        ((uvhttp_config_t*)context->current_config)->read_buffer_size = buffer_size;
+        int old_value =
+            ((uvhttp_config_t*)context->current_config)->read_buffer_size;
+        ((uvhttp_config_t*)context->current_config)->read_buffer_size =
+            buffer_size;
 
-        UVHTTP_LOG_INFO("Read buffer size updated: %d -> %d", old_value, buffer_size);
+        UVHTTP_LOG_INFO("Read buffer size updated: %d -> %d", old_value,
+                        buffer_size);
         (void)old_value;
         return UVHTTP_OK;
     }
@@ -461,7 +503,8 @@ int uvhttp_config_update_read_buffer_size(uvhttp_context_t* context, int buffer_
 }
 
 /* 动态更新限制参数 */
-int uvhttp_config_update_size_limits(uvhttp_context_t* context, size_t max_body_size,
+int uvhttp_config_update_size_limits(uvhttp_context_t* context,
+                                     size_t max_body_size,
                                      size_t max_header_size) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -474,13 +517,17 @@ int uvhttp_config_update_size_limits(uvhttp_context_t* context, size_t max_body_
     }
 
     if (context->current_config) {
-        size_t old_body = ((uvhttp_config_t*)context->current_config)->max_body_size;
-        size_t old_header = ((uvhttp_config_t*)context->current_config)->max_header_size;
+        size_t old_body =
+            ((uvhttp_config_t*)context->current_config)->max_body_size;
+        size_t old_header =
+            ((uvhttp_config_t*)context->current_config)->max_header_size;
 
-        ((uvhttp_config_t*)context->current_config)->max_body_size = max_body_size;
-        ((uvhttp_config_t*)context->current_config)->max_header_size = max_header_size;
-        UVHTTP_LOG_INFO("Limits updated - Body: %zu -> %zu, Header: %zu -> %zu", old_body,
-                        max_body_size, old_header, max_header_size);
+        ((uvhttp_config_t*)context->current_config)->max_body_size =
+            max_body_size;
+        ((uvhttp_config_t*)context->current_config)->max_header_size =
+            max_header_size;
+        UVHTTP_LOG_INFO("Limits updated - Body: %zu -> %zu, Header: %zu -> %zu",
+                        old_body, max_body_size, old_header, max_header_size);
         (void)old_body;
         (void)old_header;
         return UVHTTP_OK;
@@ -509,7 +556,8 @@ int uvhttp_config_reload(uvhttp_context_t* context) {
     uvhttp_config_t backup = *(uvhttp_config_t*)context->current_config;
 
     /* 尝试重新加载配置文件 */
-    int result = uvhttp_config_load_file((uvhttp_config_t*)context->current_config, "uvhttp.conf");
+    int result = uvhttp_config_load_file(
+        (uvhttp_config_t*)context->current_config, "uvhttp.conf");
     if (result != UVHTTP_OK) {
         /* 恢复备份 */
         *(uvhttp_config_t*)context->current_config = backup;
@@ -517,7 +565,8 @@ int uvhttp_config_reload(uvhttp_context_t* context) {
     }
 
     /* 验证新配置 */
-    if (uvhttp_config_validate((uvhttp_config_t*)context->current_config) != UVHTTP_OK) {
+    if (uvhttp_config_validate((uvhttp_config_t*)context->current_config) !=
+        UVHTTP_OK) {
         /* 恢复备份 */
         *(uvhttp_config_t*)context->current_config = backup;
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -525,8 +574,8 @@ int uvhttp_config_reload(uvhttp_context_t* context) {
 
     /* 触发配置变更回调 */
     if (context->config_callback) {
-        ((uvhttp_config_change_callback_t)context->config_callback)("config_reload", &backup,
-                                                                    context->current_config);
+        ((uvhttp_config_change_callback_t)context->config_callback)(
+            "config_reload", &backup, context->current_config);
     }
 
     UVHTTP_LOG_INFO("Configuration reloaded successfully");
@@ -534,7 +583,8 @@ int uvhttp_config_reload(uvhttp_context_t* context) {
 }
 
 /* 设置全局配置 */
-void uvhttp_config_set_current(uvhttp_context_t* context, uvhttp_config_t* config) {
+void uvhttp_config_set_current(uvhttp_context_t* context,
+                               uvhttp_config_t* config) {
     if (context) {
         context->current_config = config;
     }

@@ -86,7 +86,8 @@ uvhttp_tls_error_t uvhttp_tls_init(uvhttp_context_t* context) {
     /* 使用自定义熵源初始化 DRBG */
     int ret = mbedtls_ctr_drbg_seed(
         (mbedtls_ctr_drbg_context*)context->tls_drbg, mbedtls_entropy_func,
-        (mbedtls_entropy_context*)context->tls_entropy, (const unsigned char*)"uvhttp_tls", 11);
+        (mbedtls_entropy_context*)context->tls_entropy,
+        (const unsigned char*)"uvhttp_tls", 11);
     if (ret != 0) {
         mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
         mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
@@ -131,13 +132,15 @@ uvhttp_error_t uvhttp_tls_context_new(uvhttp_tls_context_t** ctx) {
     mbedtls_entropy_init(&c->entropy);
     mbedtls_ctr_drbg_init(&c->ctr_drbg);
 
-    int ret = mbedtls_ctr_drbg_seed(&c->ctr_drbg, mbedtls_entropy_func, &c->entropy, NULL, 0);
+    int ret = mbedtls_ctr_drbg_seed(&c->ctr_drbg, mbedtls_entropy_func,
+                                    &c->entropy, NULL, 0);
     if (ret != 0) {
         uvhttp_tls_context_free(c);
         return UVHTTP_ERROR_TLS_INIT;
     }
 
-    ret = mbedtls_ssl_config_defaults(&c->conf, MBEDTLS_SSL_IS_SERVER, MBEDTLS_SSL_TRANSPORT_STREAM,
+    ret = mbedtls_ssl_config_defaults(&c->conf, MBEDTLS_SSL_IS_SERVER,
+                                      MBEDTLS_SSL_TRANSPORT_STREAM,
                                       MBEDTLS_SSL_PRESET_DEFAULT);
     if (ret != 0) {
         uvhttp_tls_context_free(c);
@@ -145,8 +148,8 @@ uvhttp_error_t uvhttp_tls_context_new(uvhttp_tls_context_t** ctx) {
     }
 
     mbedtls_ssl_conf_rng(&c->conf, mbedtls_ctr_drbg_random, &c->ctr_drbg);
-    // mbedtls_ssl_conf_session_cache(&c->conf, &c->cache, mbedtls_ssl_cache_get,
-    // mbedtls_ssl_cache_set);  // 暂时禁用
+    // mbedtls_ssl_conf_session_cache(&c->conf, &c->cache,
+    // mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);  // 暂时禁用
 
     c->is_server = 1;
     c->initialized = 1;
@@ -192,14 +195,14 @@ uvhttp_tls_error_t uvhttp_tls_context_load_cert_chain(uvhttp_tls_context_t* ctx,
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_context_load_private_key(uvhttp_tls_context_t* ctx,
-                                                       const char* key_file) {
+uvhttp_tls_error_t uvhttp_tls_context_load_private_key(
+    uvhttp_tls_context_t* ctx, const char* key_file) {
     if (!ctx || !key_file) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
 
-    int ret = mbedtls_pk_parse_keyfile(&ctx->pkey, key_file, NULL, mbedtls_ctr_drbg_random,
-                                       &ctx->ctr_drbg);
+    int ret = mbedtls_pk_parse_keyfile(&ctx->pkey, key_file, NULL,
+                                       mbedtls_ctr_drbg_random, &ctx->ctr_drbg);
     if (ret != 0) {
         return UVHTTP_TLS_ERROR_KEY;
     }
@@ -207,7 +210,8 @@ uvhttp_tls_error_t uvhttp_tls_context_load_private_key(uvhttp_tls_context_t* ctx
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_context_load_ca_file(uvhttp_tls_context_t* ctx, const char* ca_file) {
+uvhttp_tls_error_t uvhttp_tls_context_load_ca_file(uvhttp_tls_context_t* ctx,
+                                                   const char* ca_file) {
     if (!ctx || !ca_file) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -223,8 +227,8 @@ uvhttp_tls_error_t uvhttp_tls_context_load_ca_file(uvhttp_tls_context_t* ctx, co
 }
 
 // mTLS配置
-uvhttp_tls_error_t uvhttp_tls_context_enable_client_auth(uvhttp_tls_context_t* ctx,
-                                                         int require_cert) {
+uvhttp_tls_error_t uvhttp_tls_context_enable_client_auth(
+    uvhttp_tls_context_t* ctx, int require_cert) {
     if (!ctx) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -238,7 +242,8 @@ uvhttp_tls_error_t uvhttp_tls_context_enable_client_auth(uvhttp_tls_context_t* c
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_context_set_verify_depth(uvhttp_tls_context_t* ctx, int depth) {
+uvhttp_tls_error_t uvhttp_tls_context_set_verify_depth(
+    uvhttp_tls_context_t* ctx, int depth) {
     if (!ctx) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -248,8 +253,8 @@ uvhttp_tls_error_t uvhttp_tls_context_set_verify_depth(uvhttp_tls_context_t* ctx
 }
 
 // TLS安全配置
-uvhttp_tls_error_t uvhttp_tls_context_set_cipher_suites(uvhttp_tls_context_t* ctx,
-                                                        const int* cipher_suites) {
+uvhttp_tls_error_t uvhttp_tls_context_set_cipher_suites(
+    uvhttp_tls_context_t* ctx, const int* cipher_suites) {
     if (!ctx) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -259,25 +264,25 @@ uvhttp_tls_error_t uvhttp_tls_context_set_cipher_suites(uvhttp_tls_context_t* ct
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_context_enable_session_tickets(uvhttp_tls_context_t* ctx,
-                                                             int enable) {
+uvhttp_tls_error_t uvhttp_tls_context_enable_session_tickets(
+    uvhttp_tls_context_t* ctx, int enable) {
     if (!ctx) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
 
     if (enable) {
-        // mbedtls_ssl_conf_session_tickets(&ctx->conf, MBEDTLS_SSL_SESSION_TICKETS_ENABLED);  //
-        // 暂时禁用
+        // mbedtls_ssl_conf_session_tickets(&ctx->conf,
+        // MBEDTLS_SSL_SESSION_TICKETS_ENABLED);  // 暂时禁用
     } else {
-        // mbedtls_ssl_conf_session_tickets(&ctx->conf, MBEDTLS_SSL_SESSION_TICKETS_DISABLED);  //
-        // 暂时禁用
+        // mbedtls_ssl_conf_session_tickets(&ctx->conf,
+        // MBEDTLS_SSL_SESSION_TICKETS_DISABLED);  // 暂时禁用
     }
 
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_context_set_session_cache(uvhttp_tls_context_t* ctx,
-                                                        int max_sessions) {
+uvhttp_tls_error_t uvhttp_tls_context_set_session_cache(
+    uvhttp_tls_context_t* ctx, int max_sessions) {
     if (!ctx) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -287,14 +292,15 @@ uvhttp_tls_error_t uvhttp_tls_context_set_session_cache(uvhttp_tls_context_t* ct
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_context_enable_ocsp_stapling(uvhttp_tls_context_t* ctx, int enable) {
+uvhttp_tls_error_t uvhttp_tls_context_enable_ocsp_stapling(
+    uvhttp_tls_context_t* ctx, int enable) {
     (void)ctx;
     (void)enable;
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_context_set_dh_parameters(uvhttp_tls_context_t* ctx,
-                                                        const char* dh_file) {
+uvhttp_tls_error_t uvhttp_tls_context_set_dh_parameters(
+    uvhttp_tls_context_t* ctx, const char* dh_file) {
     if (!ctx || !dh_file) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -360,7 +366,8 @@ uvhttp_tls_error_t uvhttp_tls_handshake(mbedtls_ssl_context* ssl) {
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_read(mbedtls_ssl_context* ssl, void* buf, size_t len) {
+uvhttp_tls_error_t uvhttp_tls_read(mbedtls_ssl_context* ssl, void* buf,
+                                   size_t len) {
     if (!ssl || !buf) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -377,7 +384,8 @@ uvhttp_tls_error_t uvhttp_tls_read(mbedtls_ssl_context* ssl, void* buf, size_t l
     return ret;
 }
 
-uvhttp_tls_error_t uvhttp_tls_write(mbedtls_ssl_context* ssl, const void* buf, size_t len) {
+uvhttp_tls_error_t uvhttp_tls_write(mbedtls_ssl_context* ssl, const void* buf,
+                                    size_t len) {
     if (!ssl || !buf) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -423,7 +431,8 @@ int uvhttp_tls_verify_hostname(mbedtls_x509_crt* cert, const char* hostname) {
             size_t cn_len = name->val.len;
 
             // 简单的精确匹配（生产环境应支持通配符）
-            if (strlen(hostname) == cn_len && strncasecmp(cn, hostname, cn_len) == 0) {
+            if (strlen(hostname) == cn_len &&
+                strncasecmp(cn, hostname, cn_len) == 0) {
                 return 1;
             }
         }
@@ -475,7 +484,8 @@ mbedtls_x509_crt* uvhttp_tls_get_peer_cert(mbedtls_ssl_context* ssl) {
     return (mbedtls_x509_crt*)cert;
 }
 
-int uvhttp_tls_get_cert_subject(mbedtls_x509_crt* cert, char* buf, size_t buf_size) {
+int uvhttp_tls_get_cert_subject(mbedtls_x509_crt* cert, char* buf,
+                                size_t buf_size) {
     if (!cert || !buf) {
         return 0;
     }
@@ -484,7 +494,8 @@ int uvhttp_tls_get_cert_subject(mbedtls_x509_crt* cert, char* buf, size_t buf_si
     return strlen(buf);
 }
 
-int uvhttp_tls_get_cert_issuer(mbedtls_x509_crt* cert, char* buf, size_t buf_size) {
+int uvhttp_tls_get_cert_issuer(mbedtls_x509_crt* cert, char* buf,
+                               size_t buf_size) {
     if (!cert || !buf) {
         return 0;
     }
@@ -493,7 +504,8 @@ int uvhttp_tls_get_cert_issuer(mbedtls_x509_crt* cert, char* buf, size_t buf_siz
     return strlen(buf);
 }
 
-int uvhttp_tls_get_cert_serial(mbedtls_x509_crt* cert, char* buf, size_t buf_size) {
+int uvhttp_tls_get_cert_serial(mbedtls_x509_crt* cert, char* buf,
+                               size_t buf_size) {
     if (!cert || !buf) {
         return 0;
     }
@@ -503,7 +515,8 @@ int uvhttp_tls_get_cert_serial(mbedtls_x509_crt* cert, char* buf, size_t buf_siz
 }
 
 // 证书吊销检查
-uvhttp_tls_error_t uvhttp_tls_context_enable_crl_checking(uvhttp_tls_context_t* ctx, int enable) {
+uvhttp_tls_error_t uvhttp_tls_context_enable_crl_checking(
+    uvhttp_tls_context_t* ctx, int enable) {
     if (!ctx) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -519,7 +532,8 @@ uvhttp_tls_error_t uvhttp_tls_context_enable_crl_checking(uvhttp_tls_context_t* 
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_load_crl_file(uvhttp_tls_context_t* ctx, const char* crl_file) {
+uvhttp_tls_error_t uvhttp_tls_load_crl_file(uvhttp_tls_context_t* ctx,
+                                            const char* crl_file) {
     if (!ctx || !crl_file) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -550,9 +564,9 @@ uvhttp_tls_error_t uvhttp_tls_get_ocsp_response(mbedtls_ssl_context* ssl,
     return UVHTTP_TLS_ERROR_NOT_IMPLEMENTED;
 }
 
-uvhttp_tls_error_t uvhttp_tls_verify_ocsp_response(mbedtls_x509_crt* cert,
-                                                   const unsigned char* ocsp_response,
-                                                   size_t response_len) {
+uvhttp_tls_error_t uvhttp_tls_verify_ocsp_response(
+    mbedtls_x509_crt* cert, const unsigned char* ocsp_response,
+    size_t response_len) {
     if (!cert || !ocsp_response || response_len == 0) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -564,7 +578,8 @@ uvhttp_tls_error_t uvhttp_tls_verify_ocsp_response(mbedtls_x509_crt* cert,
 }
 
 // TLS 1.3支持
-uvhttp_tls_error_t uvhttp_tls_context_enable_tls13(uvhttp_tls_context_t* ctx, int enable) {
+uvhttp_tls_error_t uvhttp_tls_context_enable_tls13(uvhttp_tls_context_t* ctx,
+                                                   int enable) {
     if (!ctx) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -580,14 +595,15 @@ uvhttp_tls_error_t uvhttp_tls_context_enable_tls13(uvhttp_tls_context_t* ctx, in
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_context_set_tls13_cipher_suites(uvhttp_tls_context_t* ctx,
-                                                              const char* cipher_suites) {
+uvhttp_tls_error_t uvhttp_tls_context_set_tls13_cipher_suites(
+    uvhttp_tls_context_t* ctx, const char* cipher_suites) {
     (void)ctx;
     (void)cipher_suites;
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_context_enable_early_data(uvhttp_tls_context_t* ctx, int enable) {
+uvhttp_tls_error_t uvhttp_tls_context_enable_early_data(
+    uvhttp_tls_context_t* ctx, int enable) {
     if (!ctx) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -602,7 +618,8 @@ uvhttp_tls_error_t uvhttp_tls_context_enable_early_data(uvhttp_tls_context_t* ct
 
 // 会话票证优化
 uvhttp_tls_error_t uvhttp_tls_context_set_ticket_key(uvhttp_tls_context_t* ctx,
-                                                     const unsigned char* key, size_t key_len) {
+                                                     const unsigned char* key,
+                                                     size_t key_len) {
     if (!ctx || !key || key_len == 0) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -614,7 +631,8 @@ uvhttp_tls_error_t uvhttp_tls_context_set_ticket_key(uvhttp_tls_context_t* ctx,
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_context_rotate_ticket_key(uvhttp_tls_context_t* ctx) {
+uvhttp_tls_error_t uvhttp_tls_context_rotate_ticket_key(
+    uvhttp_tls_context_t* ctx) {
     if (!ctx) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -625,8 +643,8 @@ uvhttp_tls_error_t uvhttp_tls_context_rotate_ticket_key(uvhttp_tls_context_t* ct
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_context_set_ticket_lifetime(uvhttp_tls_context_t* ctx,
-                                                          int lifetime_seconds) {
+uvhttp_tls_error_t uvhttp_tls_context_set_ticket_lifetime(
+    uvhttp_tls_context_t* ctx, int lifetime_seconds) {
     if (!ctx || lifetime_seconds <= 0) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -651,8 +669,8 @@ uvhttp_tls_error_t uvhttp_tls_verify_cert_chain(mbedtls_ssl_context* ssl) {
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_context_add_extra_chain_cert(uvhttp_tls_context_t* ctx,
-                                                           const char* cert_file) {
+uvhttp_tls_error_t uvhttp_tls_context_add_extra_chain_cert(
+    uvhttp_tls_context_t* ctx, const char* cert_file) {
     if (!ctx || !cert_file) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -683,7 +701,8 @@ uvhttp_tls_error_t uvhttp_tls_context_add_extra_chain_cert(uvhttp_tls_context_t*
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_get_cert_chain(mbedtls_ssl_context* ssl, mbedtls_x509_crt** chain) {
+uvhttp_tls_error_t uvhttp_tls_get_cert_chain(mbedtls_ssl_context* ssl,
+                                             mbedtls_x509_crt** chain) {
     if (!ssl || !chain) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -700,7 +719,8 @@ uvhttp_tls_error_t uvhttp_tls_get_cert_chain(mbedtls_ssl_context* ssl, mbedtls_x
 }
 
 // TLS性能监控
-uvhttp_tls_error_t uvhttp_tls_get_stats(uvhttp_tls_context_t* ctx, uvhttp_tls_stats_t* stats) {
+uvhttp_tls_error_t uvhttp_tls_get_stats(uvhttp_tls_context_t* ctx,
+                                        uvhttp_tls_stats_t* stats) {
     if (!ctx || !stats) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -718,8 +738,8 @@ uvhttp_tls_error_t uvhttp_tls_reset_stats(uvhttp_tls_context_t* ctx) {
     return UVHTTP_TLS_OK;
 }
 
-uvhttp_tls_error_t uvhttp_tls_get_connection_info(mbedtls_ssl_context* ssl, char* buf,
-                                                  size_t buf_size) {
+uvhttp_tls_error_t uvhttp_tls_get_connection_info(mbedtls_ssl_context* ssl,
+                                                  char* buf, size_t buf_size) {
     if (!ssl || !buf) {
         return UVHTTP_TLS_ERROR_INVALID_PARAM;
     }
@@ -728,7 +748,8 @@ uvhttp_tls_error_t uvhttp_tls_get_connection_info(mbedtls_ssl_context* ssl, char
     const char* version = mbedtls_ssl_get_version(ssl);
 
     if (ciphersuite) {
-        snprintf(buf, buf_size, "Version: %s, Cipher: %s", version, ciphersuite);
+        snprintf(buf, buf_size, "Version: %s, Cipher: %s", version,
+                 ciphersuite);
     } else {
         snprintf(buf, buf_size, "Version: %s, Cipher: unknown", version);
     }

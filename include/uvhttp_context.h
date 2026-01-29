@@ -86,7 +86,8 @@ typedef struct uvhttp_context {
 /* ============ 上下文管理函数 ============ */
 
 /* 创建新的上下文 */
-uvhttp_error_t uvhttp_context_create(uv_loop_t* loop, uvhttp_context_t** context);
+uvhttp_error_t uvhttp_context_create(uv_loop_t* loop,
+                                     uvhttp_context_t** context);
 
 /* 销毁上下文 */
 void uvhttp_context_destroy(uvhttp_context_t* context);

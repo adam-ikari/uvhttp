@@ -33,7 +33,8 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length);
 static int on_body(llhttp_t* parser, const char* at, size_t length);
 static int on_message_complete(llhttp_t* parser);
 
-uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client) {
+uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request,
+                                   uv_tcp_t* client) {
     if (!request || !client) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -201,7 +202,8 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
 
     // 使用新的 API 添加 header
 
-    if (uvhttp_request_add_header(conn->request, header_name, header_value) != 0) {
+    if (uvhttp_request_add_header(conn->request, header_name, header_value) !=
+        0) {
         return -1;  // 添加失败
     }
 
@@ -284,19 +286,23 @@ static int on_message_complete(llhttp_t* parser) {
     if (conn->server && conn->server->rate_limit_enabled) {
         /* 检查客户端IP是否在白名单中 */
         int is_whitelisted = 0;
-        if (conn->server->rate_limit_whitelist && conn->server->rate_limit_whitelist_count > 0) {
+        if (conn->server->rate_limit_whitelist &&
+            conn->server->rate_limit_whitelist_count > 0) {
             /* 获取客户端IP地址 */
             struct sockaddr_in client_addr;
             int addr_len = sizeof(client_addr);
-            if (uv_tcp_getpeername(&conn->tcp_handle, (struct sockaddr*)&client_addr, &addr_len) ==
-                0) {
+            if (uv_tcp_getpeername(&conn->tcp_handle,
+                                   (struct sockaddr*)&client_addr,
+                                   &addr_len) == 0) {
                 char client_ip[INET_ADDRSTRLEN];
-                uv_inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, sizeof(client_ip));
+                uv_inet_ntop(AF_INET, &client_addr.sin_addr, client_ip,
+                             sizeof(client_ip));
 
                 /* 检查是否在白名单中 */
                 /* 使用哈希表优化白名单查找（O(1) 复杂度） */
                 struct whitelist_item* item;
-                HASH_FIND_STR(conn->server->rate_limit_whitelist_hash, client_ip, item);
+                HASH_FIND_STR(conn->server->rate_limit_whitelist_hash,
+                              client_ip, item);
                 if (item) {
                     is_whitelisted = 1;
                 }
@@ -304,10 +310,12 @@ static int on_message_complete(llhttp_t* parser) {
         }
 
         /* 如果不在白名单中，进行限流检查 */
-        if (!is_whitelisted && uvhttp_server_check_rate_limit(conn->server) != UVHTTP_OK) {
+        if (!is_whitelisted &&
+            uvhttp_server_check_rate_limit(conn->server) != UVHTTP_OK) {
             /* 超过限流，返回429 Too Many Requests */
             uvhttp_response_set_status(conn->response, 429);
-            uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
+            uvhttp_response_set_header(conn->response, "Content-Type",
+                                       "text/plain");
             uvhttp_response_set_header(conn->response, "Retry-After", "60");
             uvhttp_response_set_body(conn->response, "Too Many Requests", 18);
             uvhttp_response_send(conn->response);
@@ -320,12 +328,15 @@ static int on_message_complete(llhttp_t* parser) {
     if (is_websocket_handshake(conn->request)) {
         // WebSocket握手需要特殊处理
         // 获取WebSocket Key
-        const char* ws_key = uvhttp_request_get_header(conn->request, "Sec-WebSocket-Key");
+        const char* ws_key =
+            uvhttp_request_get_header(conn->request, "Sec-WebSocket-Key");
         if (!ws_key) {
             // 没有WebSocket Key，返回错误响应
             uvhttp_response_set_status(conn->response, 400);
-            uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
-            uvhttp_response_set_body(conn->response, "Missing Sec-WebSocket-Key header", 32);
+            uvhttp_response_set_header(conn->response, "Content-Type",
+                                       "text/plain");
+            uvhttp_response_set_body(conn->response,
+                                     "Missing Sec-WebSocket-Key header", 32);
             uvhttp_response_send(conn->response);
             return 0;
         }
@@ -340,20 +351,25 @@ static int on_message_complete(llhttp_t* parser) {
         if (uvhttp_ws_generate_accept(ws_key, accept, sizeof(accept)) != 0) {
             // 如果生成失败，返回错误响应
             uvhttp_response_set_status(conn->response, 500);
-            uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
-            uvhttp_response_set_body(conn->response, "WebSocket handshake failed", 24);
+            uvhttp_response_set_header(conn->response, "Content-Type",
+                                       "text/plain");
+            uvhttp_response_set_body(conn->response,
+                                     "WebSocket handshake failed", 24);
             uvhttp_response_send(conn->response);
             return 0;
         }
-        uvhttp_response_set_header(conn->response, "Sec-WebSocket-Accept", accept);
+        uvhttp_response_set_header(conn->response, "Sec-WebSocket-Accept",
+                                   accept);
 
         // 发送握手响应
         uvhttp_response_send(conn->response);
 
         // 握手成功后，处理WebSocket连接
-        int ws_result = uvhttp_connection_handle_websocket_handshake(conn, ws_key);
+        int ws_result =
+            uvhttp_connection_handle_websocket_handshake(conn, ws_key);
         if (ws_result != 0) {
-            UVHTTP_LOG_ERROR("Failed to handle WebSocket handshake: %d\n", ws_result);
+            UVHTTP_LOG_ERROR("Failed to handle WebSocket handshake: %d\n",
+                             ws_result);
             uvhttp_connection_close(conn);
             return 0;
         }
@@ -370,9 +386,9 @@ static int on_message_complete(llhttp_t* parser) {
             conn->request->url[sizeof(conn->request->url) - 1] = '\0';
         }
 
-        uvhttp_request_handler_t handler =
-            uvhttp_router_find_handler(conn->server->router, conn->request->url,
-                                       uvhttp_method_to_string(conn->request->method));
+        uvhttp_request_handler_t handler = uvhttp_router_find_handler(
+            conn->server->router, conn->request->url,
+            uvhttp_method_to_string(conn->request->method));
 
         if (handler) {
             /* 同步执行用户处理器 - 在事件循环线程中 */
@@ -380,14 +396,16 @@ static int on_message_complete(llhttp_t* parser) {
         } else {
             /* 未找到路由，发送404响应 */
             uvhttp_response_set_status(conn->response, 404);
-            uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
+            uvhttp_response_set_header(conn->response, "Content-Type",
+                                       "text/plain");
             uvhttp_response_set_body(conn->response, "Not Found", 9);
             uvhttp_response_send(conn->response);
         }
     } else {
         /* 没有路由器，发送默认响应 */
         uvhttp_response_set_status(conn->response, 200);
-        uvhttp_response_set_header(conn->response, "Content-Type", "text/plain");
+        uvhttp_response_set_header(conn->response, "Content-Type",
+                                   "text/plain");
         uvhttp_response_set_body(conn->response, "OK", 2);
         uvhttp_response_send(conn->response);
     }
@@ -399,7 +417,8 @@ static int on_message_complete(llhttp_t* parser) {
 static int is_websocket_handshake(uvhttp_request_t* request) {
     const char* upgrade = uvhttp_request_get_header(request, "Upgrade");
     const char* connection = uvhttp_request_get_header(request, "Connection");
-    const char* ws_key = uvhttp_request_get_header(request, "Sec-WebSocket-Key");
+    const char* ws_key =
+        uvhttp_request_get_header(request, "Sec-WebSocket-Key");
 
     // 检查必需的头部
     if (!upgrade || !connection || !ws_key) {
@@ -450,7 +469,8 @@ const char* uvhttp_request_get_url(uvhttp_request_t* request) {
     return request->url;
 }
 
-const char* uvhttp_request_get_header(uvhttp_request_t* request, const char* name) {
+const char* uvhttp_request_get_header(uvhttp_request_t* request,
+                                      const char* name) {
     /* 输入验证 */
     if (!request || !name) {
         return NULL;
@@ -466,8 +486,8 @@ const char* uvhttp_request_get_header(uvhttp_request_t* request, const char* nam
     for (size_t i = 0; i < name_len; i++) {
         char c = name[i];
         /* HTTP header 名称只能包含特定字符 */
-        if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
-              c == '-' || c == '_')) {
+        if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+              (c >= '0' && c <= '9') || c == '-' || c == '_')) {
             return NULL;
         }
     }
@@ -548,7 +568,8 @@ const char* uvhttp_request_get_query_string(uvhttp_request_t* request) {
     return query_string;
 }
 
-const char* uvhttp_request_get_query_param(uvhttp_request_t* request, const char* name) {
+const char* uvhttp_request_get_query_param(uvhttp_request_t* request,
+                                           const char* name) {
     if (!request || !name) {
         return NULL;
     }
@@ -601,7 +622,8 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
     }
 
     // 尝试从X-Forwarded-For头部获取（代理/负载均衡器）
-    const char* forwarded_for = uvhttp_request_get_header(request, "X-Forwarded-For");
+    const char* forwarded_for =
+        uvhttp_request_get_header(request, "X-Forwarded-For");
     if (forwarded_for) {
         // X-Forwarded-For可能包含多个IP，取第一个
         static char client_ip[UVHTTP_IPV6_MAX_STRING_LENGTH];
@@ -634,7 +656,8 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
         struct sockaddr_storage addr;
         int addr_len = sizeof(addr);
 
-        if (uv_tcp_getpeername(request->client, (struct sockaddr*)&addr, &addr_len) == 0) {
+        if (uv_tcp_getpeername(request->client, (struct sockaddr*)&addr,
+                               &addr_len) == 0) {
             static char ip_string[UVHTTP_IPV6_MAX_STRING_LENGTH];
 
             if (addr.ss_family == AF_INET) {
@@ -672,7 +695,8 @@ size_t uvhttp_request_get_header_count(uvhttp_request_t* request) {
 }
 
 /* 获取指定索引的 header（内部使用） */
-uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request, size_t index) {
+uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request,
+                                              size_t index) {
     if (!request || index >= request->header_count) {
         return NULL;
     }
@@ -691,8 +715,8 @@ uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request, size_t 
 }
 
 /* 添加 header（内部使用，自动扩容） */
-uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request, const char* name,
-                                         const char* value) {
+uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request,
+                                         const char* name, const char* value) {
 
     if (!request || !name || !value) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -719,8 +743,8 @@ uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request, const char* 
         size_t extra_count = new_capacity - UVHTTP_INLINE_HEADERS_CAPACITY;
         int is_first_alloc = (request->headers_extra == NULL);
 
-        uvhttp_header_t* new_extra =
-            uvhttp_realloc(request->headers_extra, extra_count * sizeof(uvhttp_header_t));
+        uvhttp_header_t* new_extra = uvhttp_realloc(
+            request->headers_extra, extra_count * sizeof(uvhttp_header_t));
         if (!new_extra) {
             return UVHTTP_ERROR_OUT_OF_MEMORY; /* 内存分配失败 */
         }
@@ -735,7 +759,8 @@ uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request, const char* 
     }
 
     /* 获取 header 指针 */
-    uvhttp_header_t* header = uvhttp_request_get_header_at(request, request->header_count);
+    uvhttp_header_t* header =
+        uvhttp_request_get_header_at(request, request->header_count);
     if (!header) {
         return UVHTTP_ERROR_IO_ERROR;
     }
@@ -763,7 +788,8 @@ uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request, const char* 
 }
 
 /* 遍历所有 headers */
-void uvhttp_request_foreach_header(uvhttp_request_t* request, uvhttp_header_callback_t callback,
+void uvhttp_request_foreach_header(uvhttp_request_t* request,
+                                   uvhttp_header_callback_t callback,
                                    void* user_data) {
     if (!request || !callback) {
         return;

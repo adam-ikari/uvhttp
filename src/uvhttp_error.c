@@ -20,7 +20,8 @@ static uvhttp_error_stats_t error_stats = {0};
 #endif
 
 /* 设置错误恢复配置 */
-void uvhttp_set_error_recovery_config(int max_retries, int base_delay_ms, int max_delay_ms,
+void uvhttp_set_error_recovery_config(int max_retries, int base_delay_ms,
+                                      int max_delay_ms,
                                       double backoff_multiplier) {
     g_error_recovery_config.max_retries = max_retries > 0 ? max_retries : 3;
     g_error_recovery_config.base_delay_ms =
@@ -37,8 +38,9 @@ static int calculate_retry_delay(int attempt) {
     for (int i = 0; i < attempt; i++) {
         delay *= g_error_recovery_config.backoff_multiplier;
     }
-    return (delay > g_error_recovery_config.max_delay_ms) ? g_error_recovery_config.max_delay_ms
-                                                          : delay;
+    return (delay > g_error_recovery_config.max_delay_ms)
+               ? g_error_recovery_config.max_delay_ms
+               : delay;
 }
 
 /* 执行重试延迟 */
@@ -129,12 +131,14 @@ static int is_retryable_error(uvhttp_error_t error) {
 }
 
 /* 带重试的错误处理函数 */
-uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*), void* context,
+uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*),
+                                      void* context,
                                       const char* operation_name) {
     (void)operation_name; /* 预留参数，用于日志记录 */
     uvhttp_error_t last_error = UVHTTP_OK;
 
-    for (int attempt = 0; attempt <= g_error_recovery_config.max_retries; attempt++) {
+    for (int attempt = 0; attempt <= g_error_recovery_config.max_retries;
+         attempt++) {
         last_error = operation(context);
 
         if (last_error == UVHTTP_OK) {
@@ -149,12 +153,14 @@ uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*), void* 
             error_stats.error_counts[index]++;
         }
         error_stats.last_error_time = time(NULL);
-        snprintf(error_stats.last_error_context, sizeof(error_stats.last_error_context),
-                 "%s (attempt %d)", operation_name, attempt + 1);
+        snprintf(error_stats.last_error_context,
+                 sizeof(error_stats.last_error_context), "%s (attempt %d)",
+                 operation_name, attempt + 1);
 #endif
 
         /* 如果是最后一次尝试或错误不可重试，返回错误 */
-        if (attempt == g_error_recovery_config.max_retries || !is_retryable_error(last_error)) {
+        if (attempt == g_error_recovery_config.max_retries ||
+            !is_retryable_error(last_error)) {
             break;
         }
 
@@ -178,10 +184,12 @@ void uvhttp_log_error(uvhttp_error_t error, const char* context) {
     error_stats.last_error_time = time(NULL);
 
     if (context) {
-        snprintf(error_stats.last_error_context, sizeof(error_stats.last_error_context), "%s: %s",
-                 context, uvhttp_error_string(error));
+        snprintf(error_stats.last_error_context,
+                 sizeof(error_stats.last_error_context), "%s: %s", context,
+                 uvhttp_error_string(error));
     } else {
-        snprintf(error_stats.last_error_context, sizeof(error_stats.last_error_context), "%s",
+        snprintf(error_stats.last_error_context,
+                 sizeof(error_stats.last_error_context), "%s",
                  uvhttp_error_string(error));
     }
 #else
@@ -193,7 +201,8 @@ void uvhttp_log_error(uvhttp_error_t error, const char* context) {
 /* 获取错误统计 */
 #if UVHTTP_FEATURE_STATISTICS
 void uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts,
-                            time_t* last_error_time, const char** last_error_context) {
+                            time_t* last_error_time,
+                            const char** last_error_context) {
     /* 向后兼容：当 context 为 NULL 时使用静态全局变量 */
     uvhttp_error_stats_t* stats = NULL;
 
@@ -220,7 +229,8 @@ void uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts,
 }
 #else
 void uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts,
-                            time_t* last_error_time, const char** last_error_context) {
+                            time_t* last_error_time,
+                            const char** last_error_context) {
     (void)context;
     (void)error_counts;
     (void)last_error_time;

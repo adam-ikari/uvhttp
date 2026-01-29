@@ -127,9 +127,11 @@ const char* uvhttp_error_suggestion(uvhttp_error_t error);
 int uvhttp_error_is_recoverable(uvhttp_error_t error);
 
 /* Error recovery and retry mechanism */
-void uvhttp_set_error_recovery_config(int max_retries, int base_delay_ms, int max_delay_ms,
+void uvhttp_set_error_recovery_config(int max_retries, int base_delay_ms,
+                                      int max_delay_ms,
                                       double backoff_multiplier);
-uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*), void* context,
+uvhttp_error_t uvhttp_retry_operation(uvhttp_error_t (*operation)(void*),
+                                      void* context,
                                       const char* operation_name);
 
 /* Error code count for statistics array */
@@ -147,7 +149,8 @@ void uvhttp_log_error(uvhttp_error_t error, const char* context);
 
 #if UVHTTP_FEATURE_STATISTICS
 void uvhttp_get_error_stats(uvhttp_context_t* context, size_t* error_counts,
-                            time_t* last_error_time, const char** last_error_context);
+                            time_t* last_error_time,
+                            const char** last_error_context);
 void uvhttp_reset_error_stats(uvhttp_context_t* context);
 uvhttp_error_t uvhttp_get_most_frequent_error(uvhttp_context_t* context);
 #endif

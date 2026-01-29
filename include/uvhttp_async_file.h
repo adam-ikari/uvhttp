@@ -36,9 +36,10 @@ typedef struct uvhttp_async_file_request {
     void* request;                             /* HTTP请求对象 */
     void* response;                            /* HTTP响应对象 */
     void* static_context;                      /* 静态文件上下文 */
-    void (*completion_cb)(struct uvhttp_async_file_request* req, int status); /* 完成回调 */
-    struct uvhttp_async_file_request* next;                                   /* 链表指针 */
-    struct uvhttp_async_file_manager* manager;                                /* 管理器指针 */
+    void (*completion_cb)(struct uvhttp_async_file_request* req,
+                          int status);         /* 完成回调 */
+    struct uvhttp_async_file_request* next;    /* 链表指针 */
+    struct uvhttp_async_file_manager* manager; /* 管理器指针 */
 } uvhttp_async_file_request_t;
 
 /* 异步文件读取管理器 */
@@ -72,9 +73,9 @@ typedef struct uvhttp_file_stream_context {
  * @param max_file_size 最大文件大小
  * @return 管理器指针，失败返回NULL
  */
-uvhttp_error_t uvhttp_async_file_manager_create(uv_loop_t* loop, int max_concurrent,
-                                                size_t buffer_size, size_t max_file_size,
-                                                uvhttp_async_file_manager_t** manager);
+uvhttp_error_t uvhttp_async_file_manager_create(
+    uv_loop_t* loop, int max_concurrent, size_t buffer_size,
+    size_t max_file_size, uvhttp_async_file_manager_t** manager);
 
 /**
  * 释放异步文件读取管理器
@@ -94,10 +95,10 @@ void uvhttp_async_file_manager_free(uvhttp_async_file_manager_t* manager);
  * @param completion_cb 完成回调
  * @return UVHTTP_OK 成功，其他值表示错误
  */
-uvhttp_error_t uvhttp_async_file_read(uvhttp_async_file_manager_t* manager, const char* file_path,
-                                      void* request, void* response, void* static_context,
-                                      void (*completion_cb)(uvhttp_async_file_request_t* req,
-                                                            int status));
+uvhttp_error_t uvhttp_async_file_read(
+    uvhttp_async_file_manager_t* manager, const char* file_path, void* request,
+    void* response, void* static_context,
+    void (*completion_cb)(uvhttp_async_file_request_t* req, int status));
 
 /**
  * 取消异步文件读取
@@ -118,8 +119,9 @@ uvhttp_error_t uvhttp_async_file_cancel(uvhttp_async_file_manager_t* manager,
  * @param chunk_size 分块大小
  * @return UVHTTP_OK 成功，其他值表示错误
  */
-uvhttp_error_t uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager, const char* file_path,
-                                        void* response, size_t chunk_size);
+uvhttp_error_t uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager,
+                                        const char* file_path, void* response,
+                                        size_t chunk_size);
 
 /**
  * 停止文件流传输
@@ -127,7 +129,8 @@ uvhttp_error_t uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager, co
  * @param stream_ctx 流传输上下文
  * @return UVHTTP_OK 成功，其他值表示错误
  */
-uvhttp_error_t uvhttp_async_file_stream_stop(uvhttp_file_stream_context_t* stream_ctx);
+uvhttp_error_t uvhttp_async_file_stream_stop(
+    uvhttp_file_stream_context_t* stream_ctx);
 
 /**
  * 获取管理器统计信息
@@ -137,7 +140,8 @@ uvhttp_error_t uvhttp_async_file_stream_stop(uvhttp_file_stream_context_t* strea
  * @param max_concurrent 输出最大并发数
  * @return UVHTTP_OK 成功，其他值表示错误
  */
-uvhttp_error_t uvhttp_async_file_get_stats(uvhttp_async_file_manager_t* manager, int* current_reads,
+uvhttp_error_t uvhttp_async_file_get_stats(uvhttp_async_file_manager_t* manager,
+                                           int* current_reads,
                                            int* max_concurrent);
 
 #    ifdef __cplusplus

@@ -28,9 +28,9 @@ static void remove_request_from_manager(uvhttp_async_file_manager_t* manager,
 /**
  * 创建异步文件读取管理器
  */
-uvhttp_error_t uvhttp_async_file_manager_create(uv_loop_t* loop, int max_concurrent,
-                                                size_t buffer_size, size_t max_file_size,
-                                                uvhttp_async_file_manager_t** manager) {
+uvhttp_error_t uvhttp_async_file_manager_create(
+    uv_loop_t* loop, int max_concurrent, size_t buffer_size,
+    size_t max_file_size, uvhttp_async_file_manager_t** manager) {
     if (!manager) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -39,7 +39,8 @@ uvhttp_error_t uvhttp_async_file_manager_create(uv_loop_t* loop, int max_concurr
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    uvhttp_async_file_manager_t* mgr = uvhttp_alloc(sizeof(uvhttp_async_file_manager_t));
+    uvhttp_async_file_manager_t* mgr =
+        uvhttp_alloc(sizeof(uvhttp_async_file_manager_t));
     if (!mgr) {
         uvhttp_handle_memory_failure("async_file_manager", NULL, NULL);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
@@ -123,7 +124,8 @@ static void cleanup_async_request(uvhttp_async_file_request_t* req) {
  * 文件读取完成回调
  */
 static void on_file_read_complete(uv_fs_t* req) {
-    uvhttp_async_file_request_t* async_req = (uvhttp_async_file_request_t*)req->data;
+    uvhttp_async_file_request_t* async_req =
+        (uvhttp_async_file_request_t*)req->data;
     if (!async_req) {
         uv_fs_req_cleanup(req);
         return;
@@ -151,7 +153,8 @@ static void on_file_read_complete(uv_fs_t* req) {
     } else {
         /* 读取失败 */
         async_req->state = UVHTTP_ASYNC_FILE_STATE_ERROR;
-        uvhttp_log_safe_error(req->result, "async_file_read", async_req->file_path);
+        uvhttp_log_safe_error(req->result, "async_file_read",
+                              async_req->file_path);
     }
 
     /* 关闭文件句柄 */
@@ -175,7 +178,8 @@ static void on_file_read_complete(uv_fs_t* req) {
  * 文件状态获取完成回调
  */
 static void on_file_stat_complete(uv_fs_t* req) {
-    uvhttp_async_file_request_t* async_req = (uvhttp_async_file_request_t*)req->data;
+    uvhttp_async_file_request_t* async_req =
+        (uvhttp_async_file_request_t*)req->data;
     if (!async_req) {
         uv_fs_req_cleanup(req);
         return;
@@ -205,14 +209,17 @@ static void on_file_stat_complete(uv_fs_t* req) {
 
                     /* 需要重新打开文件进行读取 */
                     uv_fs_t open_req;
-                    int ret = uv_fs_open(manager->loop, &open_req, async_req->file_path, O_RDONLY,
-                                         0, NULL);
+                    int ret =
+                        uv_fs_open(manager->loop, &open_req,
+                                   async_req->file_path, O_RDONLY, 0, NULL);
                     if (ret >= 0) {
                         uv_file file_fd = ret;
                         uv_fs_req_cleanup(&open_req);
 
-                        uv_buf_t buf = uv_buf_init(async_req->buffer, async_req->file_size);
-                        ret = uv_fs_read(manager->loop, &async_req->fs_req, file_fd, &buf, 1, 0,
+                        uv_buf_t buf = uv_buf_init(async_req->buffer,
+                                                   async_req->file_size);
+                        ret = uv_fs_read(manager->loop, &async_req->fs_req,
+                                         file_fd, &buf, 1, 0,
                                          on_file_read_complete);
                         if (ret == 0) {
                             /* 保存文件描述符以便后续关闭 */
@@ -221,26 +228,32 @@ static void on_file_stat_complete(uv_fs_t* req) {
                         } else {
                             uvhttp_log_safe_error(ret, "async_file_read_start",
                                                   async_req->file_path);
-                            uv_fs_close(manager->loop, &open_req, file_fd, NULL);
+                            uv_fs_close(manager->loop, &open_req, file_fd,
+                                        NULL);
                         }
                     } else {
-                        uvhttp_log_safe_error(ret, "async_file_open", async_req->file_path);
+                        uvhttp_log_safe_error(ret, "async_file_open",
+                                              async_req->file_path);
                         uv_fs_req_cleanup(&open_req);
                     }
                 } else {
-                    uvhttp_handle_memory_failure("async_file_buffer", NULL, NULL);
+                    uvhttp_handle_memory_failure("async_file_buffer", NULL,
+                                                 NULL);
                 }
             } else {
                 /* 文件过大 */
-                uvhttp_log_safe_error(0, "async_file_too_large", async_req->file_path);
+                uvhttp_log_safe_error(0, "async_file_too_large",
+                                      async_req->file_path);
             }
         } else {
             /* 不是常规文件 */
-            uvhttp_log_safe_error(0, "async_file_not_regular", async_req->file_path);
+            uvhttp_log_safe_error(0, "async_file_not_regular",
+                                  async_req->file_path);
         }
     } else {
         /* stat失败 */
-        uvhttp_log_safe_error(req->result, "async_file_stat", async_req->file_path);
+        uvhttp_log_safe_error(req->result, "async_file_stat",
+                              async_req->file_path);
     }
 
     /* 出错处理 */
@@ -261,18 +274,18 @@ static void on_file_stat_complete(uv_fs_t* req) {
 
  */
 
-uvhttp_error_t uvhttp_async_file_read(uvhttp_async_file_manager_t* manager,
+uvhttp_error_t uvhttp_async_file_read(
+    uvhttp_async_file_manager_t* manager,
 
-                                      const char* file_path,
+    const char* file_path,
 
-                                      void* request,
+    void* request,
 
-                                      void* response,
+    void* response,
 
-                                      void* static_context,
+    void* static_context,
 
-                                      void (*completion_cb)(uvhttp_async_file_request_t* req,
-                                                            int status)) {
+    void (*completion_cb)(uvhttp_async_file_request_t* req, int status)) {
 
     if (!manager || !file_path || !request || !response || !completion_cb) {
 
@@ -283,14 +296,16 @@ uvhttp_error_t uvhttp_async_file_read(uvhttp_async_file_manager_t* manager,
 
     if (manager->current_reads >= manager->max_concurrent_reads) {
 
-        uvhttp_log_safe_error(0, "async_file_limit", "Too many concurrent reads");
+        uvhttp_log_safe_error(0, "async_file_limit",
+                              "Too many concurrent reads");
 
         return UVHTTP_ERROR_RATE_LIMIT_EXCEEDED;
     }
 
     /* 创建异步请求 */
 
-    uvhttp_async_file_request_t* async_req = uvhttp_alloc(sizeof(uvhttp_async_file_request_t));
+    uvhttp_async_file_request_t* async_req =
+        uvhttp_alloc(sizeof(uvhttp_async_file_request_t));
 
     if (!async_req) {
 
@@ -321,7 +336,8 @@ uvhttp_error_t uvhttp_async_file_read(uvhttp_async_file_manager_t* manager,
     manager->current_reads++;
 
     /* 开始异步stat操作 */
-    int ret = uv_fs_stat(manager->loop, &async_req->fs_req, file_path, on_file_stat_complete);
+    int ret = uv_fs_stat(manager->loop, &async_req->fs_req, file_path,
+                         on_file_stat_complete);
     if (ret != 0) {
         /* 失败处理 */
         remove_request_from_manager(manager, async_req);
@@ -360,7 +376,8 @@ uvhttp_error_t uvhttp_async_file_cancel(uvhttp_async_file_manager_t* manager,
  * 文件流传输分块读取回调
  */
 static void on_file_stream_chunk(uv_fs_t* req) {
-    uvhttp_file_stream_context_t* stream_ctx = (uvhttp_file_stream_context_t*)req->data;
+    uvhttp_file_stream_context_t* stream_ctx =
+        (uvhttp_file_stream_context_t*)req->data;
     if (!stream_ctx || !stream_ctx->is_active) {
         uv_fs_req_cleanup(req);
         return;
@@ -369,7 +386,8 @@ static void on_file_stream_chunk(uv_fs_t* req) {
     if (req->result > 0) {
         /* 读取成功，发送数据块 */
         /* 这里应该调用HTTP响应发送函数 */
-        /* uvhttp_response_send_chunk(stream_ctx->response, stream_ctx->chunk_buffer, req->result);
+        /* uvhttp_response_send_chunk(stream_ctx->response,
+         * stream_ctx->chunk_buffer, req->result);
          */
 
         /* 更新偏移 */
@@ -378,23 +396,28 @@ static void on_file_stream_chunk(uv_fs_t* req) {
 
         /* 继续读取下一块 */
         if (stream_ctx->remaining_bytes > 0) {
-            uv_buf_t buf = uv_buf_init(stream_ctx->chunk_buffer, stream_ctx->chunk_size);
-            int ret = uv_fs_read(uv_default_loop(), &stream_ctx->fs_req, stream_ctx->file_handle,
-                                 &buf, 1, stream_ctx->file_offset, on_file_stream_chunk);
+            uv_buf_t buf =
+                uv_buf_init(stream_ctx->chunk_buffer, stream_ctx->chunk_size);
+            int ret = uv_fs_read(uv_default_loop(), &stream_ctx->fs_req,
+                                 stream_ctx->file_handle, &buf, 1,
+                                 stream_ctx->file_offset, on_file_stream_chunk);
             if (ret != 0) {
                 /* 读取失败，停止流传输 */
                 stream_ctx->is_active = 0;
-                uv_fs_close(uv_default_loop(), &stream_ctx->fs_req, stream_ctx->file_handle, NULL);
+                uv_fs_close(uv_default_loop(), &stream_ctx->fs_req,
+                            stream_ctx->file_handle, NULL);
             }
         } else {
             /* 文件传输完成 */
             stream_ctx->is_active = 0;
-            uv_fs_close(uv_default_loop(), &stream_ctx->fs_req, stream_ctx->file_handle, NULL);
+            uv_fs_close(uv_default_loop(), &stream_ctx->fs_req,
+                        stream_ctx->file_handle, NULL);
         }
     } else {
         /* 读取失败或EOF */
         stream_ctx->is_active = 0;
-        uv_fs_close(uv_default_loop(), &stream_ctx->fs_req, stream_ctx->file_handle, NULL);
+        uv_fs_close(uv_default_loop(), &stream_ctx->fs_req,
+                    stream_ctx->file_handle, NULL);
     }
 
     uv_fs_req_cleanup(req);
@@ -403,14 +426,16 @@ static void on_file_stream_chunk(uv_fs_t* req) {
 /**
  * 流式传输文件（适用于大文件）
  */
-uvhttp_error_t uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager, const char* file_path,
-                                        void* response, size_t chunk_size) {
+uvhttp_error_t uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager,
+                                        const char* file_path, void* response,
+                                        size_t chunk_size) {
     if (!manager || !file_path || !response || chunk_size == 0) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
     /* 创建流传输上下文 */
-    uvhttp_file_stream_context_t* stream_ctx = uvhttp_alloc(sizeof(uvhttp_file_stream_context_t));
+    uvhttp_file_stream_context_t* stream_ctx =
+        uvhttp_alloc(sizeof(uvhttp_file_stream_context_t));
     if (!stream_ctx) {
         uvhttp_handle_memory_failure("file_stream_context", NULL, NULL);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
@@ -431,7 +456,8 @@ uvhttp_error_t uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager, co
     }
 
     /* 打开文件 */
-    int ret = uv_fs_open(manager->loop, &stream_ctx->fs_req, file_path, O_RDONLY, 0, NULL);
+    int ret = uv_fs_open(manager->loop, &stream_ctx->fs_req, file_path,
+                         O_RDONLY, 0, NULL);
     if (ret < 0) {
         uvhttp_free(stream_ctx->chunk_buffer);
         uvhttp_free(stream_ctx);
@@ -453,11 +479,14 @@ uvhttp_error_t uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager, co
     uv_fs_req_cleanup(&stat_req);
 
     /* 开始读取第一块 */
-    uv_buf_t buf = uv_buf_init(stream_ctx->chunk_buffer, stream_ctx->chunk_size);
-    ret = uv_fs_read(manager->loop, &stream_ctx->fs_req, stream_ctx->file_handle, &buf, 1,
-                     stream_ctx->file_offset, on_file_stream_chunk);
+    uv_buf_t buf =
+        uv_buf_init(stream_ctx->chunk_buffer, stream_ctx->chunk_size);
+    ret =
+        uv_fs_read(manager->loop, &stream_ctx->fs_req, stream_ctx->file_handle,
+                   &buf, 1, stream_ctx->file_offset, on_file_stream_chunk);
     if (ret != 0) {
-        uv_fs_close(manager->loop, &stream_ctx->fs_req, stream_ctx->file_handle, NULL);
+        uv_fs_close(manager->loop, &stream_ctx->fs_req, stream_ctx->file_handle,
+                    NULL);
         uvhttp_free(stream_ctx->chunk_buffer);
         uvhttp_free(stream_ctx);
         uvhttp_log_safe_error(ret, "file_stream_read_start", file_path);
@@ -470,7 +499,8 @@ uvhttp_error_t uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager, co
 /**
  * 停止文件流传输
  */
-uvhttp_error_t uvhttp_async_file_stream_stop(uvhttp_file_stream_context_t* stream_ctx) {
+uvhttp_error_t uvhttp_async_file_stream_stop(
+    uvhttp_file_stream_context_t* stream_ctx) {
     if (!stream_ctx) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -484,7 +514,8 @@ uvhttp_error_t uvhttp_async_file_stream_stop(uvhttp_file_stream_context_t* strea
 
     /* 关闭文件句柄 */
     if (stream_ctx->file_handle >= 0) {
-        uv_fs_close(uv_default_loop(), &stream_ctx->fs_req, stream_ctx->file_handle, NULL);
+        uv_fs_close(uv_default_loop(), &stream_ctx->fs_req,
+                    stream_ctx->file_handle, NULL);
     }
 
     /* 清理资源 */
@@ -500,7 +531,8 @@ uvhttp_error_t uvhttp_async_file_stream_stop(uvhttp_file_stream_context_t* strea
 /**
  * 获取管理器统计信息
  */
-uvhttp_error_t uvhttp_async_file_get_stats(uvhttp_async_file_manager_t* manager, int* current_reads,
+uvhttp_error_t uvhttp_async_file_get_stats(uvhttp_async_file_manager_t* manager,
+                                           int* current_reads,
                                            int* max_concurrent) {
     if (!manager) {
         return UVHTTP_ERROR_INVALID_PARAM;

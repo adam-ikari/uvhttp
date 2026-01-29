@@ -69,8 +69,8 @@ struct cache_manager {
  * @param cache 输出参数，返回创建的缓存管理器指针
  * @return UVHTTP_OK 成功，其他值表示错误
  */
-uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries, int cache_ttl,
-                                       cache_manager_t** cache);
+uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
+                                       int cache_ttl, cache_manager_t** cache);
 
 /**
  * 释放LRU缓存管理器
@@ -86,7 +86,8 @@ void uvhttp_lru_cache_free(cache_manager_t* cache);
  * @param file_path 文件路径
  * @return 缓存条目指针，未找到返回NULL
  */
-cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache, const char* file_path);
+cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache,
+                                     const char* file_path);
 
 /**
  * 添加或更新缓存条目
@@ -100,9 +101,11 @@ cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache, const char* file_pa
  * @param etag ETag值
  * @return UVHTTP_OK成功，其他值表示失败
  */
-uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache, const char* file_path, char* content,
-                                    size_t content_length, const char* mime_type,
-                                    time_t last_modified, const char* etag);
+uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
+                                    const char* file_path, char* content,
+                                    size_t content_length,
+                                    const char* mime_type, time_t last_modified,
+                                    const char* etag);
 
 /**
  * 删除缓存条目
@@ -111,7 +114,8 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache, const char* file_pat
  * @param file_path 文件路径
  * @return UVHTTP_OK成功，其他值表示失败
  */
-uvhttp_error_t uvhttp_lru_cache_remove(cache_manager_t* cache, const char* file_path);
+uvhttp_error_t uvhttp_lru_cache_remove(cache_manager_t* cache,
+                                       const char* file_path);
 
 /**
  * 清空所有缓存
@@ -130,8 +134,9 @@ void uvhttp_lru_cache_clear(cache_manager_t* cache);
  * @param miss_count 输出未命中次数
  * @param eviction_count 输出驱逐次数
  */
-void uvhttp_lru_cache_get_stats(cache_manager_t* cache, size_t* total_memory_usage,
-                                int* entry_count, int* hit_count, int* miss_count,
+void uvhttp_lru_cache_get_stats(cache_manager_t* cache,
+                                size_t* total_memory_usage, int* entry_count,
+                                int* hit_count, int* miss_count,
                                 int* eviction_count);
 
 /**
@@ -164,7 +169,8 @@ int uvhttp_lru_cache_is_expired(cache_entry_t* entry, int cache_ttl);
  * @param cache 缓存管理器
  * @param entry 缓存条目
  */
-void uvhttp_lru_cache_move_to_head(cache_manager_t* cache, cache_entry_t* entry);
+void uvhttp_lru_cache_move_to_head(cache_manager_t* cache,
+                                   cache_entry_t* entry);
 
 /**
  * 从LRU链表尾部移除条目

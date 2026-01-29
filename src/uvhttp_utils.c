@@ -68,8 +68,9 @@ static int is_valid_string_length(const char* str, size_t max_len) {
  * @param status_code HTTP状态码（如果为0则使用响应对象中已有的状态码）
  * @return UVHTTP_OK 成功，其他值表示错误
  */
-uvhttp_error_t uvhttp_send_unified_response(uvhttp_response_t* response, const char* content,
-                                            size_t length, int status_code) {
+uvhttp_error_t uvhttp_send_unified_response(uvhttp_response_t* response,
+                                            const char* content, size_t length,
+                                            int status_code) {
     // 参数验证
     if (!response || !content) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -113,8 +114,10 @@ uvhttp_error_t uvhttp_send_unified_response(uvhttp_response_t* response, const c
  * @param details 详细信息（可选）
  * @return UVHTTP_OK 成功，其他值表示错误
  */
-uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response, int error_code,
-                                          const char* error_message, const char* details) {
+uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response,
+                                          int error_code,
+                                          const char* error_message,
+                                          const char* details) {
     // 参数验证
     if (!response || !error_message) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -143,12 +146,13 @@ uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response, int error
 
     if (details && strlen(details) > 0) {
         json_len = snprintf(error_json, sizeof(error_json),
-                            "{\"error\":\"%s\",\"details\":\"%s\",\"code\":%d,\"timestamp\":%ld}",
+                            "{\"error\":\"%s\",\"details\":\"%s\",\"code\":%d,"
+                            "\"timestamp\":%ld}",
                             error_message, details, error_code, time(NULL));
     } else {
         json_len = snprintf(error_json, sizeof(error_json),
-                            "{\"error\":\"%s\",\"code\":%d,\"timestamp\":%ld}", error_message,
-                            error_code, time(NULL));
+                            "{\"error\":\"%s\",\"code\":%d,\"timestamp\":%ld}",
+                            error_message, error_code, time(NULL));
     }
 
     // 验证 snprintf 是否成功
@@ -157,7 +161,8 @@ uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response, int error
     }
 
     uvhttp_response_set_status(response, error_code);
-    uvhttp_response_set_header(response, "Content-Type", "application/json; charset=utf-8");
+    uvhttp_response_set_header(response, "Content-Type",
+                               "application/json; charset=utf-8");
     uvhttp_response_set_body(response, error_json, strlen(error_json));
     return uvhttp_response_send(response);
 }
