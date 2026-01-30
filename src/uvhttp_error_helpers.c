@@ -5,6 +5,7 @@
 #include "uvhttp_allocator.h"
 #include "uvhttp_config.h"
 #include "uvhttp_error_handler.h"
+#include "uvhttp_logging.h"
 #include "uvhttp_utils.h"
 
 #include <ctype.h>

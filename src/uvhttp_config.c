@@ -8,6 +8,7 @@
 #include "uvhttp_allocator.h"
 #include "uvhttp_context.h"
 #include "uvhttp_error_handler.h"
+#include "uvhttp_logging.h"
 
 #include <ctype.h>
 #include <stdio.h>

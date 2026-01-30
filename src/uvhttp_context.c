@@ -68,7 +68,6 @@ void uvhttp_context_destroy(uvhttp_context_t* context) {
     /* 清理全局变量替代字段 */
     uvhttp_context_cleanup_tls(context);
     uvhttp_context_cleanup_websocket(context);
-    uvhttp_context_cleanup_error_stats(context);
     uvhttp_context_cleanup_config(context);
 
     /* 注意：内存分配器使用编译时宏，无需运行时清理 */
@@ -95,7 +94,6 @@ uvhttp_error_t uvhttp_context_init(uvhttp_context_t* context) {
     /* 初始化全局变量替代字段 */
     uvhttp_context_init_tls(context);
     uvhttp_context_init_websocket(context);
-    uvhttp_context_init_error_stats(context);
     uvhttp_context_init_config(context);
 
     return UVHTTP_OK;
@@ -240,44 +238,6 @@ void uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
     }
 
     context->ws_drbg_initialized = 0;
-}
-
-/* 初始化错误统计 */
-uvhttp_error_t uvhttp_context_init_error_stats(uvhttp_context_t* context) {
-    if (!context) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    /* 如果已经初始化，直接返回成功（幂等） */
-    if (context->error_stats) {
-        return UVHTTP_OK;
-    }
-
-    /* 分配错误统计结构 */
-    uvhttp_error_stats_t* error_stats =
-        uvhttp_alloc(sizeof(uvhttp_error_stats_t));
-    if (!error_stats) {
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
-    }
-
-    /* 初始化错误统计 */
-    memset(error_stats, 0, sizeof(uvhttp_error_stats_t));
-    context->error_stats = error_stats;
-
-    return UVHTTP_OK;
-}
-
-/* 清理错误统计 */
-void uvhttp_context_cleanup_error_stats(uvhttp_context_t* context) {
-    if (!context) {
-        return;
-    }
-
-    if (context->error_stats) {
-        /* 释放错误统计结构 */
-        uvhttp_free(context->error_stats);
-        context->error_stats = NULL;
-    }
 }
 
 /* 初始化配置管理 */

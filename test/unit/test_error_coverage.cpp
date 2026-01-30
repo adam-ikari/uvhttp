@@ -19,10 +19,4 @@ TEST(UvhttpErrorCoverageTest, ErrorString) {
     EXPECT_NE(str, nullptr);
 }
 
-TEST(UvhttpErrorCoverageTest, SetErrorRecoveryConfig) {
-    uvhttp_set_error_recovery_config(3, 100, 5000, 2.0);
-}
-
-TEST(UvhttpErrorCoverageTest, ResetErrorStats) {
-    uvhttp_reset_error_stats(NULL);
-}
+/* 错误恢复和统计功能已删除，符合极简工程原则 */

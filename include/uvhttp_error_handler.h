@@ -1,8 +1,6 @@
 /**
  * @file uvhttp_error_handler.h
- * @brief 错误统计机制
- *
- * 提供错误统计功能
+ * @brief 错误处理
  */
 
 #ifndef UVHTTP_ERROR_HANDLER_H
@@ -10,25 +8,9 @@
 
 #include "uvhttp_error.h"
 
-#include <time.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* ========== 错误统计函数 ========== */
-
-/**
- * 获取错误统计信息
- *
- * @return 错误统计指针
- */
-const uvhttp_error_stats_t* uvhttp_error_get_stats(void);
-
-/**
- * 重置错误统计信息
- */
-void uvhttp_error_reset_stats(void);
 
 /* ========== 错误报告宏 ========== */
 
@@ -52,7 +34,7 @@ void uvhttp_error_reset_stats(void);
 /* ========== 内部函数 ========== */
 
 /**
- * 内部错误报告函数（仅用于统计）
+ * 内部错误报告函数（仅用于日志记录）
  */
 void uvhttp_error_report_(uvhttp_error_t error_code, const char* message,
                           const char* function, const char* file, int line,

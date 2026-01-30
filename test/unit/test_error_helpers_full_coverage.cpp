@@ -16,59 +16,7 @@ static void custom_free_func_test(void* data) {
     uvhttp_free(data);
 }
 
-/* 测试清理连接 - 正常情况 */
-TEST(UvhttpErrorHelpersTest, CleanupConnectionNormal) {
-    TestLoop loop;
-    ASSERT_TRUE(loop.is_valid());
-    
-    uv_tcp_t handle;
-    uv_tcp_init(loop.get(), &handle);
-    
-    /* 测试清理连接 */
-    uvhttp_cleanup_connection((uv_handle_t*)&handle, "Test cleanup");
-    
-    /* 等待关闭完成 */
-    uv_run(loop.get(), UV_RUN_NOWAIT);
-    
-    EXPECT_EQ(uv_is_closing((uv_handle_t*)&handle), 1);
-}
-
-/* 测试清理连接 - NULL 句柄 */
-TEST(UvhttpErrorHelpersTest, CleanupConnectionNullHandle) {
-    /* 测试 NULL 句柄不会崩溃 */
-    uvhttp_cleanup_connection(nullptr, "Test cleanup");
-}
-
-/* 测试清理连接 - 空错误消息 */
-TEST(UvhttpErrorHelpersTest, CleanupConnectionNoErrorMessage) {
-    TestLoop loop;
-    ASSERT_TRUE(loop.is_valid());
-    
-    uv_tcp_t handle;
-    uv_tcp_init(loop.get(), &handle);
-    
-    /* 测试清理连接，不带错误消息 */
-    uvhttp_cleanup_connection((uv_handle_t*)&handle, nullptr);
-    
-    /* 等待关闭完成 */
-    uv_run(loop.get(), UV_RUN_NOWAIT);
-    
-    EXPECT_EQ(uv_is_closing((uv_handle_t*)&handle), 1);
-}
-
-/* 测试清理连接 - 已关闭的句柄 */
-TEST(UvhttpErrorHelpersTest, CleanupConnectionAlreadyClosed) {
-    TestLoop loop;
-    ASSERT_TRUE(loop.is_valid());
-    
-    uv_tcp_t handle;
-    uv_tcp_init(loop.get(), &handle);
-    uv_close((uv_handle_t*)&handle, nullptr);
-    uv_run(loop.get(), UV_RUN_NOWAIT);
-    
-    /* 测试清理已关闭的句柄不会崩溃 */
-    uvhttp_cleanup_connection((uv_handle_t*)&handle, "Test cleanup");
-}
+/* uvhttp_cleanup_connection 函数已删除，符合极简工程原则 */
 
 /* 测试处理内存分配失败 - 正常情况 */
 TEST(UvhttpErrorHelpersTest, HandleMemoryFailureNormal) {

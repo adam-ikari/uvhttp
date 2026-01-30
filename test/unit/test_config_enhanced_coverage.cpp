@@ -199,28 +199,7 @@ TEST(UvhttpConfigEnhancedCoverageTest, DynamicUpdate) {
     uvhttp_config_free(config);
 }
 
-/* 测试配置监控 */
-TEST(UvhttpConfigEnhancedCoverageTest, MonitorChanges) {
-    /* 测试NULL参数 */
-    int result = uvhttp_config_monitor_changes(NULL, NULL);
-    EXPECT_NE(result, 0);
-}
-
-/* 测试获取和设置当前配置 */
-TEST(UvhttpConfigEnhancedCoverageTest, GetAndSetCurrent) {
-    /* 测试NULL参数 */
-    const uvhttp_config_t* config = uvhttp_config_get_current(NULL);
-    EXPECT_EQ(config, nullptr);
-    
-    uvhttp_config_set_current(NULL, NULL);
-}
-
-/* 测试配置热重载 */
-TEST(UvhttpConfigEnhancedCoverageTest, Reload) {
-    /* 测试NULL参数 */
-    int result = uvhttp_config_reload(NULL);
-    EXPECT_NE(result, 0);
-}
+/* 配置监控、热重载等功能已删除，符合极简工程原则 */
 
 /* 测试配置边界值 */
 TEST(UvhttpConfigEnhancedCoverageTest, BoundaryValues) {

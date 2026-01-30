@@ -9,6 +9,7 @@
 #include "uvhttp_constants.h"
 #include "uvhttp_context.h"
 #include "uvhttp_error.h"
+#include "uvhttp_logging.h"
 #include "uvhttp_platform.h"
 #include "uvhttp_server.h"
 

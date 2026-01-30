@@ -16,6 +16,7 @@
 #include "uvhttp_error_handler.h"
 #include "uvhttp_error_helpers.h"
 #include "uvhttp_features.h"
+#include "uvhttp_logging.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_router.h"

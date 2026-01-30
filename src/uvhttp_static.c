@@ -12,6 +12,7 @@
 #    include "uvhttp_error_handler.h"
 #    include "uvhttp_error_helpers.h"
 #    include "uvhttp_lru_cache.h"
+#    include "uvhttp_logging.h"
 #    include "uvhttp_middleware.h"
 #    include "uvhttp_platform.h"
 #    include "uvhttp_request.h"

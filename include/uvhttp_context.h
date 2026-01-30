@@ -70,9 +70,6 @@ typedef struct uvhttp_context {
     void* ws_entropy; /* mbedtls_entropy_context* */
     void* ws_drbg;    /* mbedtls_ctr_drbg_context* */
 
-    /* 错误统计 */
-    void* error_stats; /* uvhttp_error_stats_t* */
-
     /* 配置管理 */
     void* current_config;  /* uvhttp_config_t* */
     void* config_callback; /* uvhttp_config_change_callback_t */
@@ -107,12 +104,6 @@ uvhttp_error_t uvhttp_context_init_websocket(uvhttp_context_t* context);
 
 /* 清理 WebSocket 模块状态 */
 void uvhttp_context_cleanup_websocket(uvhttp_context_t* context);
-
-/* 初始化错误统计 */
-uvhttp_error_t uvhttp_context_init_error_stats(uvhttp_context_t* context);
-
-/* 清理错误统计 */
-void uvhttp_context_cleanup_error_stats(uvhttp_context_t* context);
 
 /* 初始化配置管理 */
 uvhttp_error_t uvhttp_context_init_config(uvhttp_context_t* context);
