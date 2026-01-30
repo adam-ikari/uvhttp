@@ -62,6 +62,5 @@ docs/.vitepress/cache/
 # Doxygen generated documentation
 docs/api/html/
 docs/api/latex/
-docs/api/markdown/
 docs/api/markdown_from_xml/
 docs/api/xml/
