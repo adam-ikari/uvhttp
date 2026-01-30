@@ -340,7 +340,7 @@ else()
 endif()
 
 add_custom_target(gtest
-    COMMAND ${CMAKE_COMMAND} --build ${GTEST_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
+    COMMAND ${CMAKE_COMMAND} --build ${GTEST_BUILD_DIR} -j
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest
 )
 

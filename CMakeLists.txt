@@ -52,7 +52,6 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
     -Wformat=2 \
     -Wformat-security \
     -fstack-protector-strong \
-    -fno-omit-frame-pointer \
     -fno-common \
     -Werror \
     -Werror=implicit-function-declaration \
