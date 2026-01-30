@@ -15,19 +15,19 @@
 #include <string.h>
 #include <uv.h>
 
-/* ========== 编译时验证 ========== */
-/* 验证结构体大小，确保内存布局优化不会被破坏 */
+/* ========== Compile-time validation ========== */
+/* Validate structure size to ensure memory layout optimization is not broken */
 #ifdef __cplusplus
 #    define UVHTTP_STATIC_ASSERT(cond, msg) static_assert(cond, msg)
 #else
 #    define UVHTTP_STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
 #endif
 
-/* ========== 结构体大小验证 ========== */
+/* ========== Structure size validation ========== */
 
-/* 验证结构体大小在合理范围内（允许用户自定义配置） */
+/* Validate structure size is within reasonable range (allows user custom configuration) */
 
-/* 注意：结构体大小取决于 UVHTTP_INLINE_HEADERS_CAPACITY 等可配置常量 */
+/* Note: Structure size depends on UVHTTP_INLINE_HEADERS_CAPACITY and other configurable constants */
 
 UVHTTP_STATIC_ASSERT(sizeof(uvhttp_request_t) >= 65536,
 
@@ -47,7 +47,7 @@ UVHTTP_STATIC_ASSERT(sizeof(uvhttp_response_t) < 2 * 1024 * 1024,
                      "uvhttp_response_t size exceeds 2MB limit, consider "
                      "reducing UVHTTP_INLINE_HEADERS_CAPACITY");
 
-// 用于安全连接重用的idle回调
+// Idle callback for safe connection reuse
 static void on_idle_restart_read(uv_idle_t* handle);
 
 /* 连接池获取函数实现 */
