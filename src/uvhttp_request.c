@@ -24,7 +24,7 @@
 #    include "uvhttp_websocket.h"
 #endif
 
-/* HTTP 响应相关字符串常量 */
+/* HTTP response related string constants */
 #define HTTP_CONTENT_TYPE_TEXT_PLAIN "text/plain"
 #define HTTP_HEADER_CONTENT_TYPE "Content-Type"
 #define HTTP_HEADER_UPGRADE "Upgrade"
@@ -44,10 +44,10 @@
 #define HTTP_RESPONSE_WS_HANDSHAKE_FAILED "WebSocket handshake failed"
 #define HTTP_RESPONSE_WS_KEY_MISSING "Missing Sec-WebSocket-Key header"
 
-/* WebSocket握手检测函数 */
+/* WebSocket handshake detection function */
 static int is_websocket_handshake(uvhttp_request_t* request);
 
-// HTTP解析器回调函数声明
+// HTTP parser callback function declarations
 static int on_message_begin(llhttp_t* parser);
 static int on_url(llhttp_t* parser, const char* at, size_t length);
 static int on_header_field(llhttp_t* parser, const char* at, size_t length);
