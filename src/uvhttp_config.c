@@ -103,14 +103,14 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
 
     char line[512];
     while (fgets(line, sizeof(line), file)) {
-        /* 跳过注释和空行 */
+        /* Skip comments and blank lines */
         char* ptr = line;
         while (isspace(*ptr))
             ptr++;
         if (*ptr == '\0' || *ptr == '#')
             continue;
 
-        /* 简单解析 key=value */
+        /* Simple key=value parsing */
         char* eq = strchr(ptr, '=');
         if (!eq)
             continue;
@@ -119,20 +119,20 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
         char* key = ptr;
         char* value = eq + 1;
 
-        /* 去除空格和换行符 */
+        /* Remove spaces and newlines */
         while (isspace(*key))
             key++;
         while (isspace(*value))
             value++;
 
-        /* 去除value末尾的换行符和空格 */
+        /* Remove trailing newlines and spaces from value */
         char* end = value + strlen(value) - 1;
         while (end >= value && isspace(*end)) {
             *end = '\0';
             end--;
         }
 
-        /* 设置核心配置 - 使用安全的strtol()进行验证 */
+        /* Set core configuration - use safe strtol() for validation */
         if (strcmp(key, "max_connections") == 0) {
             UVHTTP_LOG_DEBUG("Parsing max_connections, value='%s'", value);
             char* endptr;
@@ -187,7 +187,7 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
     return UVHTTP_OK;
 }
 
-/* 保存配置到文件 */
+/* Save configuration to file */
 int uvhttp_config_save_file(const uvhttp_config_t* config,
                             const char* filename) {
     if (!config || !filename) {
@@ -204,7 +204,7 @@ int uvhttp_config_save_file(const uvhttp_config_t* config,
     fprintf(file, "# UVHTTP Configuration File\n");
     fprintf(file, "# Generated automatically\n\n");
 
-    /* 写入配置项 */
+    /* Write configuration items */
     fprintf(file, "# Server Configuration\n");
     fprintf(file, "max_connections=%d\n", config->max_connections);
     fprintf(file, "read_buffer_size=%d\n", config->read_buffer_size);
@@ -227,13 +227,13 @@ int uvhttp_config_save_file(const uvhttp_config_t* config,
     return UVHTTP_OK;
 }
 
-/* 从环境变量加载配置 */
+/* Load configuration from environment variables */
 int uvhttp_config_load_env(uvhttp_config_t* config) {
     if (!config) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 检查环境变量并更新配置 - 使用安全验证 */
+    /* Check environment variables and update configuration - use safe validation */
     const char* env_val;
 
     if ((env_val = getenv("UVHTTP_MAX_CONNECTIONS"))) {
@@ -270,35 +270,35 @@ int uvhttp_config_load_env(uvhttp_config_t* config) {
     return UVHTTP_OK;
 }
 
-/* 验证配置 */
+/* Validate configuration */
 int uvhttp_config_validate(const uvhttp_config_t* config) {
     if (!config) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
     /*
-     * 配置范围定义 - 基于性能测试和系统限制
+     * Configuration range definitions - based on performance testing and system limits
      *
-     * UVHTTP_MIN_CONNECTIONS: 最小连接数，确保服务器基本功能
-     * UVHTTP_MAX_CONNECTIONS_HARD: 硬限制，基于系统文件描述符限制
-     * UVHTTP_MIN_BUFFER_SIZE: 最小缓冲区，确保基本HTTP处理能力
-     * UVHTTP_MAX_BUFFER_SIZE: 最大缓冲区，平衡内存使用和性能
-     * UVHTTP_MAX_BODY_SIZE_CONFIG: 最大请求体，防止内存耗尽攻击
+     * UVHTTP_MIN_CONNECTIONS: Minimum connections, ensure basic server functionality
+     * UVHTTP_MAX_CONNECTIONS_HARD: Hard limit, based on system file descriptor limit
+     * UVHTTP_MIN_BUFFER_SIZE: Minimum buffer, ensure basic HTTP processing capability
+     * UVHTTP_MAX_BUFFER_SIZE: Maximum buffer, balance memory usage and performance
+     * UVHTTP_MAX_BODY_SIZE_CONFIG: Maximum request body, prevent memory exhaustion attack
      *
-     * 性能考虑:
-     * - 每个连接约消耗4KB内存（缓冲区+结构体）
-     * - 65535连接约消耗256MB内存
-     * - 建议生产环境根据服务器内存调整max_connections
+     * Performance considerations:
+     * - Each connection consumes about 4KB memory (buffer + struct)
+     * - 65535 connections consume about 256MB memory
+     * - Recommended: adjust max_connections based on server memory in production
      */
 #define UVHTTP_MIN_CONNECTIONS 1
-#define UVHTTP_MAX_CONNECTIONS_HARD 65535 /* 基于系统限制 */
+#define UVHTTP_MAX_CONNECTIONS_HARD 65535 /* Based on system limits */
 #define UVHTTP_MIN_BUFFER_SIZE 1024
 #define UVHTTP_MAX_BUFFER_SIZE (1024 * 1024)
 #define UVHTTP_MIN_BODY_SIZE 1024
 #define UVHTTP_MAX_BODY_SIZE_CONFIG \
-    (100 * 1024 * 1024) /* 避免与头文件中的宏冲突 */
+    (100 * 1024 * 1024) /* Avoid conflict with macros in header file */
 
-    /* 核心验证：连接数和缓冲区大小 */
+    /* Core validation: connection count and buffer size */
     if (config->max_connections < UVHTTP_MIN_CONNECTIONS ||
         config->max_connections > UVHTTP_MAX_CONNECTIONS_HARD) {
         UVHTTP_LOG_ERROR("max_connections=%d exceeds valid range [%d-%d]",
@@ -323,7 +323,7 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 验证新增的运行时配置 */
+    /* Validate new runtime configuration */
     if (config->websocket_max_frame_size <
             UVHTTP_WEBSOCKET_CONFIG_MIN_FRAME_SIZE ||
         config->websocket_max_frame_size >
@@ -499,7 +499,7 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 配置依赖关系验证 */
+    /* Configuration dependency validation */
     if (config->websocket_max_message_size < config->websocket_max_frame_size) {
         UVHTTP_LOG_ERROR("websocket_max_message_size=%d < "
                          "websocket_max_frame_size=%d, invalid configuration",
@@ -514,10 +514,10 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
                         config->backlog, config->max_connections);
     }
 
-    /* 检查文件描述符限制 */
+    /* Check file descriptor limits */
     struct rlimit rl;
     if (getrlimit(RLIMIT_NOFILE, &rl) == 0) {
-        /* 为系统保留一些文件描述符 */
+        /* Reserve some file descriptors for system */
         int reserved_fds = 10;
         if ((size_t)config->max_connections >
             (size_t)rl.rlim_cur - (size_t)reserved_fds) {
@@ -530,7 +530,7 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
     return UVHTTP_OK;
 }
 
-/* 打印配置 */
+/* Print configuration */
 void uvhttp_config_print(const uvhttp_config_t* config) {
     if (!config)
         return;
@@ -554,7 +554,7 @@ void uvhttp_config_print(const uvhttp_config_t* config) {
     printf("==============================\n\n");
 }
 
-/* 获取当前配置 */
+/* Get current configuration */
 const uvhttp_config_t* uvhttp_config_get_current(uvhttp_context_t* context) {
     if (!context) {
         UVHTTP_LOG_WARN("Context is NULL");
@@ -566,7 +566,7 @@ const uvhttp_config_t* uvhttp_config_get_current(uvhttp_context_t* context) {
     return context->current_config;
 }
 
-/* 动态更新最大连接数 */
+/* Dynamically update max connections */
 int uvhttp_config_update_max_connections(uvhttp_context_t* context,
                                          int max_connections) {
     if (!context) {
@@ -591,7 +591,7 @@ int uvhttp_config_update_max_connections(uvhttp_context_t* context,
     return UVHTTP_ERROR_INVALID_PARAM;
 }
 
-/* 动态更新读缓冲区大小 */
+/* Dynamically update read buffer size */
 int uvhttp_config_update_read_buffer_size(uvhttp_context_t* context,
                                           int buffer_size) {
     if (!context) {
@@ -616,7 +616,7 @@ int uvhttp_config_update_read_buffer_size(uvhttp_context_t* context,
     return UVHTTP_ERROR_INVALID_PARAM;
 }
 
-/* 动态更新限制参数 */
+/* Dynamically update size limits */
 int uvhttp_config_update_size_limits(uvhttp_context_t* context,
                                      size_t max_body_size,
                                      size_t max_header_size) {
@@ -650,7 +650,7 @@ int uvhttp_config_update_size_limits(uvhttp_context_t* context,
     return UVHTTP_ERROR_INVALID_PARAM;
 }
 
-/* 设置全局配置 */
+/* Set global configuration */
 void uvhttp_config_set_current(uvhttp_context_t* context,
                                uvhttp_config_t* config) {
     if (context) {
