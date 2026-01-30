@@ -1,4 +1,4 @@
-name: CI/CD - Push Full Validation
+name: CI/CD - 32-bit Build and Test
 
 # 触发条件：Push 到 main、develop、feature/* 分支
 on:
@@ -12,9 +12,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ========== 阶段 1: 并行构建和扫描 ==========
+  # ========== 阶段 1: 32位构建 ==========
 
-  ubuntu-build:
+  ubuntu-32bit-build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     outputs:
@@ -156,52 +156,8 @@ jobs:
           path: build-32bit/
           retention-days: 7
   
-  # ========== 阶段 2: 并行测试 ==========
+  # ========== 阶段 2: 32位测试 ==========
 
-  ubuntu-test-full:
-    needs: [ubuntu-build]
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    outputs:
-      test-status: ${{ steps.test.outputs.status }}
-      test-total: ${{ steps.test.outputs.total }}
-      test-passed: ${{ steps.test.outputs.passed }}
-      test-failed: ${{ steps.test.outputs.failed }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.1
-        with:
-          submodules: recursive
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4.1.2
-        with:
-          name: build-ubuntu-push-${{ github.sha }}
-          path: build/
-
-      - name: Set executable permissions
-        run: |
-          chmod +x build/dist/bin/* || true
-
-      - name: Run full tests
-        id: test
-        uses: ./.github/actions/run-tests
-        with:
-          build-dir: build
-          test-type: all
-          timeout: 120
-          parallel: $(nproc)
-
-      - name: Upload test logs
-        if: always()
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: test-logs-ubuntu-push-${{ github.sha }}
-          path: build/Testing/
-          retention-days: 7
-  
-  # 32位系统测试
   ubuntu-32bit-test:
     needs: [ubuntu-32bit-build]
     runs-on: ubuntu-latest
@@ -306,113 +262,10 @@ jobs:
           path: build-32bit/valgrind.log
           retention-days: 7
   
-  # ========== 阶段 3: 性能基准测试 ==========
-  
-  performance-benchmark:
-    needs: [ubuntu-test-full]
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.1
-        with:
-          submodules: recursive
-      
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4.1.2
-        with:
-          name: build-ubuntu-push-${{ github.sha }}
-          path: build/
-      
-      - name: Install wrk
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wrk python3 python3-pip
-          pip3 install matplotlib numpy
-      
-      - name: Run performance tests
-        run: |
-          chmod +x build/dist/bin/benchmark_rps
-          
-          # 低并发测试
-          build/dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
-          SERVER_PID=$!
-          sleep 3
-          
-          wrk -t2 -c10 -d5s --timeout 5s http://localhost:18081/ > performance.log
-          kill $SERVER_PID 2>/dev/null || true
-      
-      - name: Parse performance results
-        id: parse
-        run: |
-          # 解析 wrk 输出
-          RPS=$(grep "Requests/sec:" performance.log | awk '{print $2}')
-          LATENCY_AVG=$(grep "Latency" performance.log | awk 'NR==2 {print $2}')
-          
-          echo "rps=$RPS" >> $GITHUB_OUTPUT
-          echo "latency_avg=$LATENCY_AVG" >> $GITHUB_OUTPUT
-      
-      - name: Generate performance report
-        run: |
-          cat > performance-report.md << 'EOF'
-          # Performance Benchmark Report
-          
-          - **Date**: ${{ github.event.head_commit.timestamp }}
-          - **Commit**: ${{ github.sha }}
-          - **Branch**: ${{ github.ref_name }}
-          
-          ## Results
-          
-          | Metric | Value |
-          |--------|-------|
-          | Requests/sec | ${{ steps.parse.outputs.rps }} |
-          | Avg Latency | ${{ steps.parse.outputs.latency_avg }} |
-          
-          EOF
-      
-      - name: Update baseline history
-        run: |
-          HISTORY_FILE="baseline-history.json"
-          
-          if [ ! -f "$HISTORY_FILE" ]; then
-            echo '[]' > "$HISTORY_FILE"
-          fi
-          
-          jq --argjson current "$(cat performance-results.json)" '. + [$current] | .[:30]' "$HISTORY_FILE" > "${HISTORY_FILE}.tmp" && mv "${HISTORY_FILE}.tmp" "$HISTORY_FILE"
-      
-      - name: Commit baseline update
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
-        run: |
-          # 创建性能基线目录
-          mkdir -p docs/performance
-          
-          # 复制基线历史文件
-          cp baseline-history.json docs/performance/
-          
-          # 提交更新
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add docs/performance/baseline-history.json
-          git diff --staged --quiet || git commit -m "chore: 更新性能基线历史 [skip ci]"
-          
-          # 推送更新
-          git push origin ${{ github.ref_name }}
-      
-      - name: Upload performance artifacts
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: performance-results-push-${{ github.sha }}
-          path: |
-            performance-report.md
-            performance.log
-            baseline-history.json
-          retention-days: 30
-  
   # ========== 阶段 4: 生成总结 ==========
 
   generate-summary:
-    needs: [ubuntu-test-full, ubuntu-32bit-test, ubuntu-32bit-memory-test, performance-benchmark]
+    needs: [ubuntu-32bit-test, ubuntu-32bit-memory-test]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
@@ -420,26 +273,19 @@ jobs:
     steps:
       - name: Generate summary
         run: |
-          echo "## 📊 CI/CD Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 32-bit CI/CD Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Build Status" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Ubuntu 64-bit (Linux) | ${{ needs.ubuntu-test-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Ubuntu 32-bit (Linux) | ${{ needs.ubuntu-32bit-test.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Test Results" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Total | Passed | Failed |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|-------|--------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| 64-bit | ${{ needs.ubuntu-test-full.outputs.test-total || 'N/A' }} | ${{ needs.ubuntu-test-full.outputs.test-passed || 'N/A' }} | ${{ needs.ubuntu-test-full.outputs.test-failed || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| 32-bit | ${{ needs.ubuntu-32bit-test.outputs.test-total || 'N/A' }} | ${{ needs.ubuntu-32bit-test.outputs.test-passed || 'N/A' }} | ${{ needs.ubuntu-32bit-test.outputs.test-failed || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Memory Safety" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| 32-bit Valgrind | ${{ needs.ubuntu-32bit-memory-test.result == 'success' && '✅ No Leaks' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Performance" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Requests/sec | ${{ needs.performance-benchmark.outputs.rps || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
