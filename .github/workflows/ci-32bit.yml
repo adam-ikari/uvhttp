@@ -37,10 +37,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc-multilib g++-multilib
       
-      - name: Clean previous 64-bit builds
+      - name: Clean previous builds and caches
         run: |
           rm -rf deps/*/build
           rm -rf deps/*/build-32bit
+          rm -rf deps/*/CMakeCache.txt
+          rm -rf deps/*/CMakeFiles
+          find deps -name "*.a" -delete 2>/dev/null || true
+          find deps -name "*.o" -delete 2>/dev/null || true
       
       - name: Build 32-bit version
         id: build
