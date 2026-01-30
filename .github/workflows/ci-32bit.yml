@@ -73,12 +73,23 @@ jobs:
           echo "Checking library architecture:"
           file build-32bit/dist/lib/libuvhttp.a
           
-          # 验证确实是32位
-          if file build-32bit/dist/lib/libuvhttp.a | grep -q "32-bit"; then
-            echo "✅ 32-bit library verified"
-          else
-            echo "❌ Not a 32-bit library!"
+          # 验证确实是32位（检查是否不包含64位）
+          if file build-32bit/dist/lib/libuvhttp.a | grep -q "64-bit"; then
+            echo "❌ Found 64-bit library!"
             exit 1
+          else
+            echo "✅ 32-bit library verified (no 64-bit found)"
+          fi
+          
+          # 验证可执行文件
+          echo "Checking executable architecture:"
+          file build-32bit/dist/bin/uvhttp_unit_tests
+          
+          if file build-32bit/dist/bin/uvhttp_unit_tests | grep -q "64-bit"; then
+            echo "❌ Found 64-bit executable!"
+            exit 1
+          else
+            echo "✅ 32-bit executable verified (no 64-bit found)"
           fi
       
       - name: Upload 32-bit build artifacts
