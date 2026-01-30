@@ -219,7 +219,7 @@ help:
 	@echo "  make format-diff        - 显示格式化差异"
 	@echo ""
 	@echo "文档生成:"
-	@echo "  make docs               - 生成 Doxygen 文档"
+	@echo "  make docs               - 生成 Doxygen 文档（HTML、LaTeX、XML）"
 	@echo "  make docs-clean         - 清理 Doxygen 文档"
 	@echo "  make docs-dev           - 生成 Doxygen 文档（开发模式）"
 	@echo "  make docs-markdown      - 生成 Markdown 格式文档"
@@ -259,6 +259,7 @@ docs:
 	@echo "✅ Doxygen 文档已生成！"
 	@echo "  HTML 文档位置: docs/api/html/index.html"
 	@echo "  LaTeX 文档位置: docs/api/latex/refman.pdf"
+	@echo "  XML 文档位置: docs/api/xml/index.xml"
 
 docs-clean:
 	@echo "🧹 清理 Doxygen 文档..."
@@ -277,6 +278,7 @@ docs-dev:
 	@echo "✅ Doxygen 文档已生成！"
 	@echo "  HTML 文档位置: docs/api/html/index.html"
 	@echo "  LaTeX 文档位置: docs/api/latex/refman.pdf"
+	@echo "  XML 文档位置: docs/api/xml/index.xml"
 
 docs-markdown: docs
 	@echo "📝 转换 Doxygen 文档为 Markdown 格式..."
