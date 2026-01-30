@@ -135,4 +135,4 @@ void uvhttp_response_foreach_header(uvhttp_response_t* response,
 }
 #endif
 
-#endif
+#endif /* UVHTTP_RESPONSE_H */

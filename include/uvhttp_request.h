@@ -128,4 +128,4 @@ void uvhttp_request_foreach_header(uvhttp_request_t* request,
 }
 #endif
 
-#endif
+#endif /* UVHTTP_REQUEST_H */

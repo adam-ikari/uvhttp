@@ -102,7 +102,7 @@ UVHTTP_CHECK_ALIGNMENT(uvhttp_connection_t, read_buffer_size,
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_connection_t, current_header_field) >= 64,
                      "current_header_field should be after first 64 bytes");
 
-// 连接管理函数
+/* 连接管理函数 */
 /**
  * @brief 创建新的连接对象
  * @param server 服务器对象
@@ -121,7 +121,7 @@ uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn);
 uvhttp_error_t uvhttp_connection_schedule_restart_read(
     uvhttp_connection_t* conn);
 
-// TLS处理函数
+/* TLS处理函数 */
 uvhttp_error_t uvhttp_connection_start_tls_handshake(uvhttp_connection_t* conn);
 uvhttp_error_t uvhttp_connection_tls_read(uvhttp_connection_t* conn);
 uvhttp_error_t uvhttp_connection_tls_write(uvhttp_connection_t* conn,
@@ -129,12 +129,12 @@ uvhttp_error_t uvhttp_connection_tls_write(uvhttp_connection_t* conn,
 uvhttp_error_t uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn);
 void uvhttp_connection_tls_cleanup(uvhttp_connection_t* conn);
 
-// 状态管理
+/* 状态管理 */
 void uvhttp_connection_set_state(uvhttp_connection_t* conn,
                                  uvhttp_connection_state_t state);
 const char* uvhttp_connection_get_state_string(uvhttp_connection_state_t state);
 
-// WebSocket处理函数（内部）
+/* WebSocket处理函数（内部） */
 #if UVHTTP_FEATURE_WEBSOCKET
 uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
     uvhttp_connection_t* conn, const char* ws_key);
@@ -176,10 +176,10 @@ uvhttp_error_t uvhttp_connection_start_timeout(uvhttp_connection_t* conn);
 uvhttp_error_t uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn,
                                                       int timeout_seconds);
 
-#    ifdef __cplusplus
+#endif /* UVHTTP_FEATURE_WEBSOCKET */
+
+#ifdef __cplusplus
 }
-#    endif
+#endif
 
 #endif /* UVHTTP_CONNECTION_H */
-
-#endif

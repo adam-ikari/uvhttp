@@ -1,24 +1,24 @@
 #ifndef UVHTTP_SERVER_H
-#    define UVHTTP_SERVER_H
+#define UVHTTP_SERVER_H
 
-#    include "uvhttp_allocator.h"
-#    include "uvhttp_common.h"
-#    include "uvhttp_config.h"
-#    include "uvhttp_error.h"
-#    include "uvhttp_platform.h"
+#include "uvhttp_allocator.h"
+#include "uvhttp_common.h"
+#include "uvhttp_config.h"
+#include "uvhttp_error.h"
+#include "uvhttp_platform.h"
 
-#    include <assert.h>
-#    include <uv.h>
+#include <assert.h>
+#include <uv.h>
 
 /* 包含 uthash 头文件用于哈希表实现 */
-#    include "uthash.h"
+#include "uthash.h"
 
 /* 白名单哈希表项 */
 struct whitelist_item {
     char ip[INET_ADDRSTRLEN];
     UT_hash_handle hh;
 };
-#    include "uvhttp_features.h"
+#include "uvhttp_features.h"
 
 // Forward declarations
 typedef struct uvhttp_request uvhttp_request_t;
@@ -26,11 +26,11 @@ typedef struct uvhttp_response uvhttp_response_t;
 typedef struct uvhttp_router uvhttp_router_t;
 typedef struct uvhttp_connection uvhttp_connection_t;
 
-#    if UVHTTP_FEATURE_TLS
+#if UVHTTP_FEATURE_TLS
 typedef struct uvhttp_tls_context uvhttp_tls_context_t;
-#    endif
+#endif
 
-#    if UVHTTP_FEATURE_WEBSOCKET
+#if UVHTTP_FEATURE_WEBSOCKET
 typedef struct uvhttp_ws_connection uvhttp_ws_connection_t;
 
 /* WebSocket 连接节点 */
@@ -55,17 +55,17 @@ typedef struct {
     int enabled;                       /* 是否启用连接管理 */
     struct uvhttp_server* server;      /* 所属服务器 */
 } ws_connection_manager_t;
-#    endif
+#endif
 
-#    ifdef __cplusplus
+#ifdef __cplusplus
 extern "C" {
-#    endif
+#endif
 
-#    define MAX_CONNECTIONS 1000
+#define MAX_CONNECTIONS 1000
 
 typedef struct uvhttp_server uvhttp_server_t;
 
-// 服务器构建器结构体（统一API）
+/* 服务器构建器结构体（统一API） */
 typedef struct {
     uvhttp_server_t* server;
     uvhttp_router_t* router;
@@ -104,13 +104,13 @@ struct uvhttp_server {
     uvhttp_config_t* config;        /* 8 字节 - 配置 */
     struct uvhttp_context* context; /* 8 字节 - 应用上下文 */
     void* user_data;                /* 8 字节 - 应用数据 */
-#    if UVHTTP_FEATURE_TLS
+#if UVHTTP_FEATURE_TLS
     uvhttp_tls_context_t* tls_ctx; /* 8 字节 - TLS 上下文 */
     int tls_enabled;               /* 4 字节 - TLS 是否启用 */
     int _padding2[3];              /* 12字节 - 填充到16字节 */
-#    else
+#else
     int _padding2[4];  /* 16字节 - 填充到64字节 */
-#    endif
+#endif
     /* 缓存行2总计：约64字节（取决于 TLS 是否启用） */
 
     /* ========== 缓存行3（128-191字节）：libuv 句柄 ========== */
@@ -120,18 +120,18 @@ struct uvhttp_server {
     /* 缓存行3总计：约64字节 */
 
     /* ========== 缓存行4（192-255字节）：WebSocket 相关 ========== */
-#    if UVHTTP_FEATURE_WEBSOCKET
+#if UVHTTP_FEATURE_WEBSOCKET
     void* ws_routes; /* 8 字节 - WebSocket 路由表（已废弃） */
     ws_connection_manager_t*
         ws_connection_manager; /* 8 字节 - WebSocket 连接管理器 */
     int _padding4[12];         /* 48字节 - 填充到64字节 */
-#    else
+#else
     int _padding4[16]; /* 64字节 - 填充到64字节 */
-#    endif
+#endif
     /* 缓存行4总计：64字节 */
 
     /* ========== 缓存行5-6（256-383字节）：限流功能 ========== */
-#    if UVHTTP_FEATURE_RATE_LIMIT
+#if UVHTTP_FEATURE_RATE_LIMIT
     int rate_limit_enabled;        /* 4 字节 - 限流是否启用 */
     int rate_limit_max_requests;   /* 4 字节 - 最大请求数 */
     int rate_limit_window_seconds; /* 4 字节 - 时间窗口（秒） */
@@ -142,9 +142,9 @@ struct uvhttp_server {
     struct whitelist_item*
         rate_limit_whitelist_hash; /* 8 字节 - 白名单哈希表 */
     int _padding5[8];              /* 32字节 - 填充到64字节 */
-#    else
+#else
     int _padding5[16]; /* 64字节 - 填充到64字节 */
-#    endif
+#endif
     /* 缓存行5总计：64字节 */
 };
 
@@ -175,11 +175,11 @@ uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server);
 uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
                                     int port);
 uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server);
-#    if UVHTTP_FEATURE_TLS
+#if UVHTTP_FEATURE_TLS
 uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server,
                                         uvhttp_tls_context_t* tls_ctx);
 uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server);
-#    endif
+#endif
 uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server,
                                          uvhttp_request_handler_t handler);
@@ -188,8 +188,8 @@ uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server,
 uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server,
                                          struct uvhttp_context* context);
 
-#    if UVHTTP_FEATURE_RATE_LIMIT
-// ========== 限流 API（核心功能） ==========
+#if UVHTTP_FEATURE_RATE_LIMIT
+/* ========== 限流 API（核心功能） ========== */
 
 /**
  * 启用服务器级别的限流功能
@@ -275,11 +275,11 @@ uvhttp_error_t uvhttp_server_reset_rate_limit_client(uvhttp_server_t* server,
  * @return UVHTTP_OK 成功，其他值表示失败
  */
 uvhttp_error_t uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server);
-#    endif /* UVHTTP_FEATURE_RATE_LIMIT */
+#endif /* UVHTTP_FEATURE_RATE_LIMIT */
 
-// ========== 统一API函数 ==========
+/* ========== 统一API函数 ========== */
 
-// 快速创建和启动服务器
+/* 快速创建和启动服务器 */
 /**
  * 创建并启动简单服务器（链式API）
  *
@@ -291,7 +291,7 @@ uvhttp_error_t uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_create(const char* host, int port,
                                     uvhttp_server_builder_t** server);
 
-// 链式路由API
+/* 链式路由API */
 uvhttp_server_builder_t* uvhttp_get(uvhttp_server_builder_t* server,
                                     const char* path,
                                     uvhttp_request_handler_t handler);
@@ -308,7 +308,7 @@ uvhttp_server_builder_t* uvhttp_any(uvhttp_server_builder_t* server,
                                     const char* path,
                                     uvhttp_request_handler_t handler);
 
-// 简化配置API
+/* 简化配置API */
 uvhttp_server_builder_t* uvhttp_set_max_connections(
     uvhttp_server_builder_t* server, int max_conn);
 uvhttp_server_builder_t* uvhttp_set_timeout(uvhttp_server_builder_t* server,
@@ -316,22 +316,22 @@ uvhttp_server_builder_t* uvhttp_set_timeout(uvhttp_server_builder_t* server,
 uvhttp_server_builder_t* uvhttp_set_max_body_size(
     uvhttp_server_builder_t* server, size_t size);
 
-// 便捷请求参数获取
+/* 便捷请求参数获取 */
 const char* uvhttp_get_param(uvhttp_request_t* request, const char* name);
 const char* uvhttp_get_header(uvhttp_request_t* request, const char* name);
 const char* uvhttp_get_body(uvhttp_request_t* request);
 
-// 服务器运行和清理
+/* 服务器运行和清理 */
 int uvhttp_server_run(uvhttp_server_builder_t* server);
 void uvhttp_server_stop_simple(uvhttp_server_builder_t* server);
 void uvhttp_server_simple_free(uvhttp_server_builder_t* server);
 
-// 一键启动函数（最简API）
+/* 一键启动函数（最简API） */
 int uvhttp_serve(const char* host, int port);
 
-// WebSocket API
-#    if UVHTTP_FEATURE_WEBSOCKET
-#        include "uvhttp_websocket.h"
+/* WebSocket API */
+#if UVHTTP_FEATURE_WEBSOCKET
+#    include "uvhttp_websocket.h"
 
 typedef struct {
     int (*on_connect)(uvhttp_ws_connection_t* ws_conn);
@@ -387,21 +387,18 @@ void uvhttp_server_ws_remove_connection(uvhttp_server_t* server,
 
 void uvhttp_server_ws_update_activity(uvhttp_server_t* server,
                                       uvhttp_ws_connection_t* ws_conn);
-#    endif
+#endif
 
-// 内部函数声明
+/* 内部函数声明 */
 uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client);
 void uvhttp_request_cleanup(uvhttp_request_t* request);
 
-// TLS函数声明 (暂时禁用)
-// uvhttp_error_t uvhttp_tls_init(void);
-// void uvhttp_tls_context_free(uvhttp_tls_context_t* ctx);
+/* TLS函数声明 (暂时禁用) */
+/* uvhttp_error_t uvhttp_tls_init(void); */
+/* void uvhttp_tls_context_free(uvhttp_tls_context_t* ctx); */
 
-#    ifdef __cplusplus
+#ifdef __cplusplus
 }
-#    endif
-
 #endif
-uvhttp_error_t uvhttp_server_set_timeout_callback(
-    uvhttp_server_t* server, uvhttp_timeout_callback_t callback,
-    void* user_data);
+
+#endif /* UVHTTP_SERVER_H */

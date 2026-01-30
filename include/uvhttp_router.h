@@ -101,7 +101,7 @@ UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, route_count, UVHTTP_SIZE_T_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, node_pool_size,
                        UVHTTP_SIZE_T_ALIGNMENT);
 
-// 路由API函数
+/* 路由API函数 */
 /**
  * @brief 创建新的路由器
  * @param router 输出参数，用于接收路由器指针
@@ -113,7 +113,7 @@ UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, node_pool_size,
 uvhttp_error_t uvhttp_router_new(uvhttp_router_t** router);
 void uvhttp_router_free(uvhttp_router_t* router);
 
-// 路由添加（支持HTTP方法）
+/* 路由添加（支持HTTP方法） */
 uvhttp_error_t uvhttp_router_add_route(uvhttp_router_t* router,
                                        const char* path,
                                        uvhttp_request_handler_t handler);
@@ -122,30 +122,30 @@ uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
                                               uvhttp_method_t method,
                                               uvhttp_request_handler_t handler);
 
-// 路由查找
+/* 路由查找 */
 uvhttp_request_handler_t uvhttp_router_find_handler(
     const uvhttp_router_t* router, const char* path, const char* method);
 
-// 路由匹配（获取参数）
+/* 路由匹配（获取参数） */
 uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
                                    const char* path, const char* method,
                                    uvhttp_route_match_t* match);
 
-// 参数解析
+/* 参数解析 */
 uvhttp_error_t uvhttp_parse_path_params(const char* path,
                                         uvhttp_param_t* params,
                                         size_t* param_count);
 
-// 方法字符串转换
+/* 方法字符串转换 */
 uvhttp_method_t uvhttp_method_from_string(const char* method);
 const char* uvhttp_method_to_string(uvhttp_method_t method);
 
-// 静态文件路由支持
+/* 静态文件路由支持 */
 uvhttp_error_t uvhttp_router_add_static_route(uvhttp_router_t* router,
                                               const char* prefix_path,
                                               void* static_context);
 
-// 回退路由支持
+/* 回退路由支持 */
 uvhttp_error_t uvhttp_router_add_fallback_route(uvhttp_router_t* router,
                                                 void* static_context);
 
