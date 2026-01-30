@@ -2,7 +2,7 @@ BUILD_DIR ?= build
 BUILD_TYPE ?= Release
 CMAKE_ARGS = -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON -DBUILD_WITH_TLS=ON
 
-.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild docs-site docs-site-build docs-site-clean docs-site-dev format format-check format-fix format-all format-diff docs docs-clean docs-dev docs-xml-markdown docs-xml-markdown-clean
+.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild docs-site docs-site-build docs-site-clean docs-site-dev format format-check format-fix format-all format-diff docs docs-clean
 
 all: $(BUILD_DIR)/Makefile
 	@$(MAKE) -C $(BUILD_DIR)
@@ -219,11 +219,8 @@ help:
 	@echo "  make format-diff        - 显示格式化差异"
 	@echo ""
 	@echo "文档生成:"
-	@echo "  make docs                  - 生成 Doxygen 文档（HTML、LaTeX、XML）"
-	@echo "  make docs-clean            - 清理 Doxygen 文档"
-	@echo "  make docs-dev              - 生成 Doxygen 文档（开发模式）"
-	@echo "  make docs-xml-markdown     - 生成 Markdown 格式文档（从 XML）"
-	@echo "  make docs-xml-markdown-clean- 清理 XML 生成的 Markdown 文档"
+	@echo "  make docs         - 生成所有文档（HTML、LaTeX、XML、Markdown）"
+	@echo "  make docs-clean   - 清理所有文档"
 	@echo ""
 	@echo "文档网站:"
 	@echo "  make docs-site          - 构建文档网站"
@@ -260,36 +257,16 @@ docs:
 	@echo "  HTML 文档位置: docs/api/html/index.html"
 	@echo "  LaTeX 文档位置: docs/api/latex/refman.pdf"
 	@echo "  XML 文档位置: docs/api/xml/index.xml"
-
-docs-clean:
-	@echo "🧹 清理 Doxygen 文档..."
-	@rm -rf docs/api/html docs/api/latex
-	@echo "✅ Doxygen 文档清理完成！"
-
-docs-dev:
-	@echo "📚 生成 Doxygen 文档（开发模式）..."
-	@if ! command -v doxygen >/dev/null 2>&1; then \
-		echo "错误: doxygen 未安装。请运行以下命令安装:"; \
-		echo "  sudo apt-get install doxygen graphviz"; \
-		exit 1; \
-	fi
-	@mkdir -p docs/api
-	@doxygen Doxyfile
-	@echo "✅ Doxygen 文档已生成！"
-	@echo "  HTML 文档位置: docs/api/html/index.html"
-	@echo "  LaTeX 文档位置: docs/api/latex/refman.pdf"
-	@echo "  XML 文档位置: docs/api/xml/index.xml"
-
-docs-xml-markdown: docs
+	@echo ""
 	@echo "📝 从 XML 生成 Markdown 文档..."
 	@python3 scripts/convert_xml_to_markdown.py docs/api/xml docs/api/markdown_from_xml
 	@echo "✅ Markdown 文档已生成！"
 	@echo "  Markdown 文档位置: docs/api/markdown_from_xml/index.md"
 
-docs-xml-markdown-clean:
-	@echo "🧹 清理 XML 生成的 Markdown 文档..."
-	@rm -rf docs/api/markdown_from_xml
-	@echo "✅ Markdown 文档清理完成！"
+docs-clean:
+	@echo "🧹 清理 Doxygen 文档..."
+	@rm -rf docs/api/html docs/api/latex docs/api/xml docs/api/markdown_from_xml
+	@echo "✅ Doxygen 文档清理完成！"
 
 # ============================================================================
 # 文档网站
