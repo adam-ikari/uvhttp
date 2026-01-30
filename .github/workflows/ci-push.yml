@@ -11,10 +11,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  BUILD_TYPE: Release
-  TEST_TYPE: full
-
 jobs:
   # ========== 阶段 1: 并行构建和扫描 ==========
 
@@ -42,16 +38,10 @@ jobs:
           cache-key: push-${{ github.sha }}
           build-type: Release
 
-      - name: Configure CMake
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_WITH_WEBSOCKET=ON \
-            -DBUILD_WITH_MIMALLOC=ON
-
-      - name: Build
+      - name: Build project
         id: build
         run: |
-          cmake --build build --config Release -j$(nproc)
+          make build
           echo "build-dir=build" >> $GITHUB_OUTPUT
           echo "status=success" >> $GITHUB_OUTPUT
 
@@ -79,8 +69,7 @@ jobs:
       
       - name: Run cppcheck
         run: |
-          cppcheck --enable=all --inconclusive --xml --xml-version=2 \
-            src/ include/ 2> cppcheck-results.xml || true
+          make cppcheck
       
       - name: Upload cppcheck results
         uses: actions/upload-artifact@v4.3.1
@@ -101,7 +90,6 @@ jobs:
       
       - name: Run security scan
         run: |
-          # 这里可以集成其他安全扫描工具
           echo "Security scan completed"
   
   # 32位系统构建和测试
@@ -134,7 +122,8 @@ jobs:
           cache-key: push-32bit-${{ github.sha }}
           build-type: Release
       
-      - name: Configure CMake for 32-bit
+      - name: Build 32-bit version
+        id: build
         run: |
           cmake -B build-32bit \
             -DCMAKE_BUILD_TYPE=Release \
@@ -143,10 +132,6 @@ jobs:
             -DBUILD_WITH_WEBSOCKET=ON \
             -DBUILD_WITH_MIMALLOC=ON \
             -DBUILD_EXAMPLES=OFF
-      
-      - name: Build 32-bit version
-        id: build
-        run: |
           cmake --build build-32bit --config Release -j$(nproc)
           echo "build-dir=build-32bit" >> $GITHUB_OUTPUT
           echo "status=success" >> $GITHUB_OUTPUT
