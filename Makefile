@@ -2,7 +2,7 @@ BUILD_DIR ?= build
 BUILD_TYPE ?= Release
 CMAKE_ARGS = -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON -DBUILD_WITH_TLS=ON
 
-.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild format format-check format-fix format-all format-diff docs docs-clean
+.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild format format-check format-all format-diff docs docs-clean
 
 all: $(BUILD_DIR)/Makefile
 	@$(MAKE) -C $(BUILD_DIR)
@@ -13,34 +13,13 @@ build: build-deps all
 
 build-deps:
 	@echo "🔨 检查并编译依赖..."
-	@echo "  - 编译 libuv..."
-	@if [ ! -f "deps/libuv/build/libuv.a" ]; then \
-		cd deps/libuv && mkdir -p build && cd build && cmake .. -DBUILD_TESTING=OFF && make -j$$(nproc); \
-	fi
-	@echo "  - 编译 mbedtls..."
-	@if [ ! -f "deps/mbedtls/build/library/libmbedtls.a" ]; then \
-		cd deps/mbedtls && mkdir -p build && cd build && cmake .. && make -j$$(nproc); \
-	fi
-	@echo "  - 编译 llhttp..."
-	@if [ ! -f "deps/cllhttp/libllhttp.a" ]; then \
-		cd deps/cllhttp && gcc -c llhttp.c -o llhttp.o && ar rcs libllhttp.a llhttp.o; \
-	fi
-	@echo "  - 编译 xxhash..."
-	@if [ ! -f "deps/xxhash/libxxhash.a" ]; then \
-		cd deps/xxhash && make -j$$(nproc); \
-	fi
-	@echo "  - 编译 cjson..."
-	@if [ ! -f "deps/cjson/build/libcjson.a" ]; then \
-		cd deps/cjson && mkdir -p build && cd build && cmake .. && make -j$$(nproc); \
-	fi
-	@echo "  - 编译 mimalloc..."
-	@if [ ! -f "deps/mimalloc/build/libmimalloc.a" ]; then \
-		cd deps/mimalloc && mkdir -p build && cd build && cmake .. && make -j$$(nproc); \
-	fi
-	@echo "  - 编译 googletest..."
-	@if [ ! -f "deps/googletest/build/lib/libgtest.a" ]; then \
-		cd deps/googletest && mkdir -p build && cd build && cmake .. && make -j$$(nproc); \
-	fi
+	@$(MAKE) -C deps/libuv -j$$(nproc) 2>/dev/null || true
+	@$(MAKE) -C deps/mbedtls -j$$(nproc) 2>/dev/null || true
+	@cd deps/cllhttp && gcc -c llhttp.c -o llhttp.o && ar rcs libllhttp.a llhttp.o 2>/dev/null || true
+	@$(MAKE) -C deps/xxhash -j$$(nproc) 2>/dev/null || true
+	@cd deps/cjson && mkdir -p build && cd build && cmake .. && $(MAKE) -j$$(nproc) 2>/dev/null || true
+	@$(MAKE) -C deps/mimalloc -j$$(nproc) 2>/dev/null || true
+	@$(MAKE) -C deps/googletest/build -j$$(nproc) 2>/dev/null || true
 	@echo "✅ 依赖编译完成！"
 
 $(BUILD_DIR)/Makefile:
@@ -63,23 +42,12 @@ clean-deps:
 
 clean-temp:
 	@echo "🧹 清理临时文件..."
-	@find . -name "*.tmp" -delete 2>/dev/null || true
-	@find . -name "*.temp" -delete 2>/dev/null || true
-	@find . -name "*.log" -delete 2>/dev/null || true
-	@find . -name "*.orig" -delete 2>/dev/null || true
-	@find . -name "*.rej" -delete 2>/dev/null || true
-	@find . -name "*.swp" -delete 2>/dev/null || true
-	@find . -name "*.swo" -delete 2>/dev/null || true
-	@find . -name "*~" -delete 2>/dev/null || true
-	@find . -name ".DS_Store" -delete 2>/dev/null || true
+	@find . -name "*.tmp" -o -name "*.temp" -o -name "*.log" -o -name "*.orig" -o -name "*.rej" -o -name "*.swp" -o -name "*.swo" -o -name "*~" -o -name ".DS_Store" -delete 2>/dev/null || true
 	@echo "✅ 临时文件清理完成！"
 
 clean-coverage:
 	@echo "🧹 清理覆盖率文件..."
-	@find . -name "*.gcov" -delete 2>/dev/null || true
-	@find . -name "*.gcda" -delete 2>/dev/null || true
-	@find . -name "*.gcno" -delete 2>/dev/null || true
-	@find . -name "coverage.info" -delete 2>/dev/null || true
+	@find . -name "*.gcov" -o -name "*.gcda" -o -name "*.gcno" -o -name "coverage.info" -delete 2>/dev/null || true
 	@rm -rf coverage_html 2>/dev/null || true
 	@echo "✅ 覆盖率文件清理完成！"
 
@@ -93,7 +61,7 @@ test: all
 	@echo "🧪 运行测试..."
 	@cd $(BUILD_DIR) && ctest --output-on-failure
 
-coverage: $(BUILD_DIR)/Makefile
+coverage:
 	@if ! command -v lcov >/dev/null 2>&1; then \
 		echo "错误: lcov 未安装。请运行以下命令安装:"; \
 		echo "  sudo apt-get install lcov"; \
@@ -118,15 +86,8 @@ coverage: $(BUILD_DIR)/Makefile
 	@echo "✅ 覆盖率报告已生成: $(BUILD_DIR)/coverage_html/index.html"
 
 coverage-clean:
-	@find $(BUILD_DIR) -name "*.gcda" -delete 2>/dev/null || true
-	@find $(BUILD_DIR) -name "*.gcno" -delete 2>/dev/null || true
-	@find $(BUILD_DIR) -name "coverage.info" -delete 2>/dev/null || true
+	@find $(BUILD_DIR) -name "*.gcda" -o -name "*.gcno" -o -name "coverage.info" -delete 2>/dev/null || true
 	@rm -rf $(BUILD_DIR)/coverage_html 2>/dev/null || true
-
-build-mimalloc:
-	@mkdir -p $(BUILD_DIR)
-	@cd $(BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DUVHTTP_ALLOCATOR=mimalloc ..
-	@$(MAKE) -C $(BUILD_DIR)
 
 cppcheck:
 	@cppcheck --enable=warning --std=c11 src/ include/
@@ -158,7 +119,7 @@ format-check:
 		exit 1; \
 	fi
 	@clang-format --dry-run --Werror ./src/*.c ./include/*.h || \
-		(echo "❌ 代码格式检查失败！请运行 'make format-fix' 修复格式问题。"; exit 1)
+		(echo "❌ 代码格式检查失败！请运行 'make format-all' 修复格式问题。"; exit 1)
 	@echo "✅ 代码格式检查通过！"
 
 format-all:
@@ -179,7 +140,7 @@ format-diff:
 		exit 1; \
 	fi
 	@clang-format --dry-run --Werror ./src/*.c ./include/*.h || \
-		(echo "❌ 代码格式检查失败！请运行 'make format-fix' 修复格式问题。"; exit 1)
+		(echo "❌ 代码格式检查失败！请运行 'make format-all' 修复格式问题。"; exit 1)
 	@echo "✅ 代码格式检查通过！"
 
 format: format-check
@@ -212,21 +173,20 @@ help:
 	@echo "  make cppcheck           - 代码静态检查"
 	@echo ""
 	@echo "代码格式化:"
-	@echo "  make format             - 检查代码格式（同 format-check）"
+	@echo "  make format             - 检查代码格式"
 	@echo "  make format-check       - 检查代码格式"
-	@echo "  make format-fix         - 修复代码格式（仅 src/*.c include/*.h）"
-	@echo "  make format-all         - 格式化所有代码文件"
+	@echo "  make format-all         - 修复所有代码格式"
 	@echo "  make format-diff        - 显示格式化差异"
 	@echo ""
 	@echo "文档生成:"
-	@echo "  make docs         - 生成所有文档（HTML、LaTeX、XML、Markdown、网站）"
-	@echo "  make docs-clean   - 清理所有文档"
+	@echo "  make docs               - 生成所有文档（HTML、LaTeX、XML、Markdown、网站）"
+	@echo "  make docs-clean         - 清理所有文档"
 	@echo ""
 	@echo "运行示例:"
-	@echo "  make run-helloworld     - 运行Hello World示例"
+	@echo "  make run-helloworld     - 运行 Hello World 示例"
 	@echo "  make run-simple-routing - 运行简单路由示例"
 	@echo "  make run-method-routing - 运行方法路由示例"
-	@echo "  make run-json-api       - 运行JSON API示例"
+	@echo "  make run-json-api       - 运行 JSON API 示例"
 	@echo ""
 	@echo "构建选项:"
 	@echo "  BUILD_DIR=$(BUILD_DIR)  BUILD_TYPE=$(BUILD_TYPE)"
@@ -235,11 +195,11 @@ rebuild: clean build
 	@echo "🔄 重新构建完成！"
 
 # ============================================================================
-# Doxygen 文档生成
+# 文档生成
 # ============================================================================
 
 docs:
-	@echo "📚 生成 Doxygen 文档..."
+	@echo "📚 生成所有文档..."
 	@if ! command -v doxygen >/dev/null 2>&1; then \
 		echo "错误: doxygen 未安装。请运行以下命令安装:"; \
 		echo "  sudo apt-get install doxygen graphviz"; \
@@ -247,31 +207,18 @@ docs:
 	fi
 	@mkdir -p docs/api
 	@doxygen Doxyfile
-	@echo "✅ Doxygen 文档已生成！"
-	@echo "  HTML 文档位置: docs/api/html/index.html"
-	@echo "  LaTeX 文档位置: docs/api/latex/refman.pdf"
-	@echo "  XML 文档位置: docs/api/xml/index.xml"
-	@echo ""
-	@echo "📝 从 XML 生成 Markdown 文档..."
 	@python3 scripts/convert_xml_to_markdown.py docs/api/xml docs/api/markdown_from_xml
-	@echo "✅ Markdown 文档已生成！"
-	@echo ""
-	@echo "🔄 更新 API 侧边栏..."
 	@python3 scripts/update_api_sidebar.py
-	@echo "✅ API 侧边栏更新完成！"
-	@echo "  Markdown 文档位置: docs/api/markdown_from_xml/index.md"
-	@echo ""
-	@echo "🌐 构建文档网站..."
-	@cd docs && npm install
-	@cd docs && npm run build
-	@echo "✅ 文档网站构建完成！"
-	@echo "  静态文件位置: docs/.vitepress/dist/"
+	@cd docs && npm install && npm run build
+	@echo "✅ 所有文档生成完成！"
+	@echo "  HTML: docs/api/html/index.html"
+	@echo "  LaTeX: docs/api/latex/refman.pdf"
+	@echo "  XML: docs/api/xml/index.xml"
+	@echo "  Markdown: docs/api/markdown_from_xml/index.md"
+	@echo "  网站: docs/.vitepress/dist/"
 
 docs-clean:
-	@echo "🧹 清理 Doxygen 文档..."
+	@echo "🧹 清理所有文档..."
 	@rm -rf docs/api/html docs/api/latex docs/api/xml docs/api/markdown_from_xml
-	@echo "✅ Doxygen 文档清理完成！"
-	@echo ""
-	@echo "🧹 清理文档网站..."
 	@cd docs && rm -rf node_modules .vitepress/dist
-	@echo "✅ 文档网站清理完成！"
+	@echo "✅ 文档清理完成！"
