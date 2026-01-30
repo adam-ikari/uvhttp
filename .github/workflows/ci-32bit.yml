@@ -49,6 +49,9 @@ jobs:
       - name: Build 32-bit version
         id: build
         run: |
+          export CFLAGS="-m32 -march=i686"
+          export CXXFLAGS="-m32 -march=i686"
+          export LDFLAGS="-m32"
           cmake -B build-32bit \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_FLAGS="-m32 -march=i686" \
