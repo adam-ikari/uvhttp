@@ -8,7 +8,7 @@
 
 /* 测试WebSocket连接创建NULL */
 TEST(UvhttpWebsocketNullCoverageTest, WsConnectionNewNull) {
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 0);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 0, NULL);
     /* 即使fd无效，也可能返回非NULL（内部会处理） */
     /* 所以这里只测试不会崩溃 */
     if (conn) {

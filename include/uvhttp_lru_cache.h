@@ -7,6 +7,7 @@
 
 #    include "uvhttp_constants.h"
 #    include "uvhttp_error.h"
+#    include "uvhttp_config.h"
 
 #    include <stddef.h>
 #    include <time.h>
@@ -53,6 +54,7 @@ struct cache_manager {
     int entry_count;           /* 缓存条目数 */
     int max_entries;           /* 最大条目数 */
     int cache_ttl;             /* 缓存TTL（秒） */
+    const uvhttp_config_t* server_config; /* 服务器配置引用 */
 
     /* 统计信息 */
     int hit_count;      /* 命中次数 */

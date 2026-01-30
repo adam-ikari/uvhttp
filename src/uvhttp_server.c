@@ -394,7 +394,9 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
     uv_tcp_nodelay(&server->tcp_handle, enable);
 
     /* 设置keepalive */
-    uv_tcp_keepalive(&server->tcp_handle, enable, UVHTTP_TCP_KEEPALIVE_TIMEOUT);
+    unsigned int keepalive_timeout = server->config ?
+        server->config->tcp_keepalive_timeout : UVHTTP_TCP_KEEPALIVE_TIMEOUT;
+    uv_tcp_keepalive(&server->tcp_handle, enable, keepalive_timeout);
 
     /* 性能优化：设置 TCP 缓冲区大小 */
     int sockfd;

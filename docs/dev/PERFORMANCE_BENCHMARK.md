@@ -526,3 +526,130 @@ cd ..
 **文档版本**: 2.0
 **最后更新**: 2026-01-28
 **维护者**: UVHTTP Team
+
+## 跑分程序编译配置规范
+
+### 生产环境编译配置
+
+为了获得准确、可重复的性能基准数据，跑分程序必须使用以下生产环境编译配置：
+
+#### CMake 配置
+
+```bash
+cmake -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DENABLE_DEBUG=OFF \
+  -DENABLE_COVERAGE=OFF
+```
+
+#### 编译选项
+
+```cmake
+# CMakeLists.txt 中的配置
+if(ENABLE_DEBUG)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
+else()
+    # 生产环境配置
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -DNDEBUG -ffunction-sections -fdata-sections")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections -s")
+endif()
+```
+
+#### 编译选项说明
+
+| 选项 | 说明 | 作用 |
+|------|------|------|
+| `-O2` | 二级优化 | 平衡性能和代码大小，避免 O3 的激进优化 |
+| `-DNDEBUG` | 禁用断言 | 移除所有 assert() 调用，提升性能 |
+| `-ffunction-sections` | 函数分段 | 每个函数放入独立段，便于链接器优化 |
+| `-fdata-sections` | 数据分段 | 每个数据项放入独立段，便于链接器优化 |
+| `-Wl,--gc-sections` | 链接时垃圾回收 | 移除未使用的段，减小二进制大小 |
+| `-s` | 删除符号信息 | 移除所有符号表和调试信息，减小二进制大小 |
+
+#### 安全编译选项
+
+```cmake
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
+    -Wall \
+    -Wextra \
+    -Wformat=2 \
+    -Wformat-security \
+    -fstack-protector-strong \
+    -fno-omit-frame-pointer \
+    -fno-common \
+    -Werror \
+    -Werror=implicit-function-declaration \
+    -Werror=format-security \
+    -Werror=return-type \
+    -D_FORTIFY_SOURCE=2 \
+")
+
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
+    -Wl,-z,relro \
+    -Wl,-z,now \
+")
+```
+
+### 禁用的配置
+
+以下配置**必须禁用**以获得准确性能数据：
+
+| 配置 | 禁用原因 | 影响 |
+|------|---------|------|
+| `ENABLE_DEBUG=ON` | 启用 -O0 优化和调试符号 | 性能下降 90%+ |
+| `ENABLE_COVERAGE=ON` | 插入代码覆盖率记录代码 | 性能下降 35-69% |
+| `-O3` 优化 | 激进优化可能导致不稳定 | 可能引入性能抖动 |
+
+### 编译和测试步骤
+
+```bash
+# 1. 使用生产环境配置构建
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_DEBUG=OFF -DENABLE_COVERAGE=OFF
+
+# 2. 编译跑分程序
+make -j$(nproc)
+
+# 3. 启动跑分服务器
+./build/dist/bin/benchmark_rps &
+
+# 4. 运行性能测试
+wrk -t2 -c10 -d10s http://127.0.0.1:18081/
+wrk -t4 -c50 -d10s http://127.0.0.1:18081/
+wrk -t8 -c200 -d10s http://127.0.0.1:18081/
+
+# 5. 停止服务器
+pkill -9 benchmark_rps
+```
+
+### 性能基准（生产环境配置）
+
+使用上述配置编译的跑分程序应达到以下性能指标：
+
+| 测试场景 | 目标 RPS | 实际 RPS | 状态 |
+|---------|---------|---------|------|
+| 低并发（2线程/10连接/10秒） | ≥ 22,000 | 22,615 | ✅ |
+| 中等并发（4线程/50连接/10秒） | ≥ 22,000 | 22,189 | ✅ |
+| 高并发（8线程/200连接/10秒） | ≥ 21,000 | 21,667 | ✅ |
+
+### 验证编译配置
+
+可以使用以下命令验证编译配置是否正确：
+
+```bash
+# 检查二进制文件大小（生产环境应较小）
+ls -lh build/dist/bin/benchmark_rps
+
+# 检查符号表（生产环境应无符号）
+nm build/dist/bin/benchmark_rps 2>&1 | head -5
+
+# 检查优化级别（应显示 -O2）
+objdump -g build/dist/bin/benchmark_rps 2>&1 | grep -i "optimization"
+```
+
+### 注意事项
+
+1. **一致性**：所有性能测试必须使用相同的编译配置
+2. **可重复性**：记录编译配置，确保测试结果可重复
+3. **生产环境**：跑分程序的编译配置应与生产环境一致
+4. **文档记录**：每次性能测试都应记录编译配置信息
+5. **版本控制**：将编译配置纳入版本控制，确保团队一致性

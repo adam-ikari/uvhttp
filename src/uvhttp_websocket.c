@@ -41,7 +41,8 @@ static int uvhttp_ws_random_bytes(uvhttp_context_t* context, unsigned char* buf,
 
 /* 创建 WebSocket 连接 */
 struct uvhttp_ws_connection* uvhttp_ws_connection_create(
-    int fd, mbedtls_ssl_context* ssl, int is_server) {
+    int fd, mbedtls_ssl_context* ssl, int is_server,
+    const uvhttp_config_t* config) {
     struct uvhttp_ws_connection* conn =
         uvhttp_calloc(1, sizeof(uvhttp_ws_connection_t));
     if (!conn) {
@@ -53,12 +54,19 @@ struct uvhttp_ws_connection* uvhttp_ws_connection_create(
     conn->is_server = is_server;
     conn->state = UVHTTP_WS_STATE_CONNECTING;
 
-    /* 设置默认配置 */
-    conn->config.max_frame_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE;
-    conn->config.max_message_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE;
-    conn->config.ping_interval = UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL;
-    conn->config.ping_timeout = UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT;
-    conn->config.enable_compression = 0;
+    /* 设置配置 */
+    if (config) {
+        conn->config.max_frame_size = config->websocket_max_frame_size;
+        conn->config.max_message_size = config->websocket_max_message_size;
+        conn->config.ping_interval = config->websocket_ping_interval;
+        conn->config.ping_timeout = config->websocket_ping_timeout;
+    } else {
+        /* 使用默认配置 */
+        conn->config.max_frame_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE;
+        conn->config.max_message_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE;
+        conn->config.ping_interval = UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL;
+        conn->config.ping_timeout = UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT;
+    }
 
     /* 分配接收缓冲区 */
     conn->recv_buffer_size = UVHTTP_WEBSOCKET_DEFAULT_RECV_BUFFER_SIZE;

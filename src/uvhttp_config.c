@@ -58,17 +58,27 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config) {
 
     config->max_requests_per_connection = UVHTTP_DEFAULT_MAX_REQUESTS_PER_CONN;
     config->rate_limit_window = UVHTTP_DEFAULT_RATE_LIMIT_WINDOW;
-    config->enable_compression = UVHTTP_DEFAULT_ENABLE_COMPRESSION;
-    config->enable_tls = UVHTTP_DEFAULT_ENABLE_TLS;
 
-    config->memory_pool_size = UVHTTP_DEFAULT_MEMORY_POOL_SIZE;
-    config->enable_memory_debug = UVHTTP_DEFAULT_ENABLE_MEMORY_DEBUG;
-    config->memory_warning_threshold = UVHTTP_DEFAULT_MEMORY_WARNING_THRESHOLD;
+    /* WebSocket 配置 */
+    config->websocket_max_frame_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE;
+    config->websocket_max_message_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE;
+    config->websocket_ping_interval = UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL;
+    config->websocket_ping_timeout = UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT;
 
-    config->log_level = UVHTTP_DEFAULT_LOG_LEVEL;
-    config->enable_access_log = UVHTTP_DEFAULT_ENABLE_ACCESS_LOG;
-    strncpy(config->log_file_path, "", sizeof(config->log_file_path) - 1);
-    config->log_file_path[sizeof(config->log_file_path) - 1] = '\0';
+    /* 网络配置 */
+    config->tcp_keepalive_timeout = UVHTTP_TCP_KEEPALIVE_TIMEOUT;
+    config->sendfile_timeout_ms = UVHTTP_SENDFILE_TIMEOUT_MS;
+    config->sendfile_max_retry = UVHTTP_SENDFILE_DEFAULT_MAX_RETRY;
+
+    /* 缓存配置 */
+    config->cache_default_max_entries = UVHTTP_CACHE_DEFAULT_MAX_ENTRIES;
+    config->cache_default_ttl = UVHTTP_CACHE_DEFAULT_TTL;
+    config->lru_cache_batch_eviction_size = UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE;
+
+    /* 限流配置 */
+    config->rate_limit_max_requests = UVHTTP_RATE_LIMIT_MAX_REQUESTS;
+    config->rate_limit_max_window_seconds = UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS;
+    config->rate_limit_min_timeout_seconds = UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS;
 }
 
 /* 从文件加载配置 */
@@ -165,29 +175,6 @@ int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename) {
                 return UVHTTP_ERROR_INVALID_PARAM;
             }
             config->max_body_size = (size_t)val;
-        } else if (strcmp(key, "log_file_path") == 0) {
-            /* 安全处理 log_file_path - 防止缓冲区溢出和路径遍历攻击 */
-            if (strlen(value) >= sizeof(config->log_file_path)) {
-                UVHTTP_LOG_ERROR(
-                    "log_file_path too long: max %zu characters allowed",
-                    sizeof(config->log_file_path) - 1);
-                fclose(file);
-                return UVHTTP_ERROR_INVALID_PARAM;
-            }
-
-            /* 路径遍历攻击检查 */
-            if (strstr(value, "..") != NULL || strstr(value, "/") == value ||
-                strstr(value, "\\") == value || strstr(value, "//") != NULL ||
-                strstr(value, "\\\\") != NULL) {
-                UVHTTP_LOG_ERROR(
-                    "log_file_path contains invalid path sequences: %s", value);
-                fclose(file);
-                return UVHTTP_ERROR_INVALID_PARAM;
-            }
-
-            strncpy(config->log_file_path, value,
-                    sizeof(config->log_file_path) - 1);
-            config->log_file_path[sizeof(config->log_file_path) - 1] = '\0';
         }
     }
 
@@ -229,19 +216,6 @@ int uvhttp_config_save_file(const uvhttp_config_t* config,
     fprintf(file, "max_requests_per_connection=%d\n",
             config->max_requests_per_connection);
     fprintf(file, "rate_limit_window=%d\n", config->rate_limit_window);
-    fprintf(file, "enable_compression=%d\n", config->enable_compression);
-    fprintf(file, "enable_tls=%d\n", config->enable_tls);
-
-    fprintf(file, "\n# Memory Configuration\n");
-    fprintf(file, "memory_pool_size=%zu\n", config->memory_pool_size);
-    fprintf(file, "enable_memory_debug=%d\n", config->enable_memory_debug);
-    fprintf(file, "memory_warning_threshold=%.2f\n",
-            config->memory_warning_threshold);
-
-    fprintf(file, "\n# Logging Configuration\n");
-    fprintf(file, "log_level=%d\n", config->log_level);
-    fprintf(file, "enable_access_log=%d\n", config->enable_access_log);
-    fprintf(file, "log_file_path=%s\n", config->log_file_path);
 
     fclose(file);
     UVHTTP_LOG_INFO("Configuration saved to %s", filename);
@@ -285,46 +259,6 @@ int uvhttp_config_load_env(uvhttp_config_t* config) {
         } else {
             UVHTTP_LOG_WARN("Invalid UVHTTP_MAX_BODY_SIZE=%s, using default",
                             env_val);
-        }
-    }
-    if ((env_val = getenv("UVHTTP_ENABLE_TLS"))) {
-        char* endptr;
-        long val = strtol(env_val, &endptr, 10);
-        if (*endptr == '\0' && (val == 0 || val == 1)) {
-            config->enable_tls = (int)val;
-        } else {
-            UVHTTP_LOG_WARN("Invalid UVHTTP_ENABLE_TLS=%s, using default",
-                            env_val);
-        }
-    }
-    if ((env_val = getenv("UVHTTP_LOG_LEVEL"))) {
-        char* endptr;
-        long val = strtol(env_val, &endptr, 10);
-        if (*endptr == '\0' && val >= 0 && val <= 5) {
-            config->log_level = (int)val;
-        } else {
-            UVHTTP_LOG_WARN("Invalid UVHTTP_LOG_LEVEL=%s, using default",
-                            env_val);
-        }
-    }
-    if ((env_val = getenv("UVHTTP_LOG_FILE_PATH"))) {
-        /* 安全处理环境变量中的 log_file_path */
-        if (strlen(env_val) < sizeof(config->log_file_path)) {
-            /* 路径遍历攻击检查 */
-            if (strstr(env_val, "..") != NULL ||
-                strstr(env_val, "/") == env_val ||
-                strstr(env_val, "\\") == env_val ||
-                strstr(env_val, "//") != NULL ||
-                strstr(env_val, "\\\\") != NULL) {
-                UVHTTP_LOG_WARN("UVHTTP_LOG_FILE_PATH contains invalid path "
-                                "sequences, using default");
-            } else {
-                strncpy(config->log_file_path, env_val,
-                        sizeof(config->log_file_path) - 1);
-                config->log_file_path[sizeof(config->log_file_path) - 1] = '\0';
-            }
-        } else {
-            UVHTTP_LOG_WARN("UVHTTP_LOG_FILE_PATH too long, using default");
         }
     }
 
@@ -384,6 +318,232 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    /* 验证新增的运行时配置 */
+
+        if (config->websocket_max_frame_size < UVHTTP_WEBSOCKET_CONFIG_MIN_FRAME_SIZE ||
+
+            config->websocket_max_frame_size > UVHTTP_WEBSOCKET_CONFIG_MAX_FRAME_SIZE) {
+
+            UVHTTP_LOG_ERROR("websocket_max_frame_size=%d exceeds valid range [%d-%d]",
+
+                             config->websocket_max_frame_size, UVHTTP_WEBSOCKET_CONFIG_MIN_FRAME_SIZE,
+
+                             UVHTTP_WEBSOCKET_CONFIG_MAX_FRAME_SIZE);
+
+            return UVHTTP_ERROR_INVALID_PARAM;
+
+        }
+
+    
+
+        if (config->websocket_max_message_size < UVHTTP_WEBSOCKET_CONFIG_MIN_MESSAGE_SIZE ||
+
+            config->websocket_max_message_size > UVHTTP_WEBSOCKET_CONFIG_MAX_MESSAGE_SIZE) {
+
+            UVHTTP_LOG_ERROR("websocket_max_message_size=%d exceeds valid range [%d-%d]",
+
+                             config->websocket_max_message_size, UVHTTP_WEBSOCKET_CONFIG_MIN_MESSAGE_SIZE,
+
+                             UVHTTP_WEBSOCKET_CONFIG_MAX_MESSAGE_SIZE);
+
+            return UVHTTP_ERROR_INVALID_PARAM;
+
+        }
+
+    
+
+        if (config->websocket_ping_interval < UVHTTP_WEBSOCKET_CONFIG_MIN_PING_INTERVAL ||
+
+            config->websocket_ping_interval > UVHTTP_WEBSOCKET_CONFIG_MAX_PING_INTERVAL) {
+
+            UVHTTP_LOG_ERROR("websocket_ping_interval=%d exceeds valid range [%d-%d]",
+
+                             config->websocket_ping_interval, UVHTTP_WEBSOCKET_CONFIG_MIN_PING_INTERVAL,
+
+                             UVHTTP_WEBSOCKET_CONFIG_MAX_PING_INTERVAL);
+
+            return UVHTTP_ERROR_INVALID_PARAM;
+
+        }
+
+    
+
+        if (config->websocket_ping_timeout < UVHTTP_WEBSOCKET_CONFIG_MIN_PING_TIMEOUT ||
+
+            config->websocket_ping_timeout > UVHTTP_WEBSOCKET_CONFIG_MAX_PING_TIMEOUT) {
+
+            UVHTTP_LOG_ERROR("websocket_ping_timeout=%d exceeds valid range [%d-%d]",
+
+                             config->websocket_ping_timeout, UVHTTP_WEBSOCKET_CONFIG_MIN_PING_TIMEOUT,
+
+                             UVHTTP_WEBSOCKET_CONFIG_MAX_PING_TIMEOUT);
+
+            return UVHTTP_ERROR_INVALID_PARAM;
+
+        }
+
+    
+
+        if (config->tcp_keepalive_timeout < UVHTTP_TCP_KEEPALIVE_MIN_TIMEOUT ||
+
+            config->tcp_keepalive_timeout > UVHTTP_TCP_KEEPALIVE_MAX_TIMEOUT) {
+
+            UVHTTP_LOG_ERROR("tcp_keepalive_timeout=%d exceeds valid range [%d-%d]",
+
+                             config->tcp_keepalive_timeout, UVHTTP_TCP_KEEPALIVE_MIN_TIMEOUT,
+
+                             UVHTTP_TCP_KEEPALIVE_MAX_TIMEOUT);
+
+            return UVHTTP_ERROR_INVALID_PARAM;
+
+        }
+
+    
+
+        if (config->sendfile_timeout_ms < UVHTTP_SENDFILE_MIN_TIMEOUT_MS ||
+
+            config->sendfile_timeout_ms > UVHTTP_SENDFILE_MAX_TIMEOUT_MS) {
+
+            UVHTTP_LOG_ERROR("sendfile_timeout_ms=%d exceeds valid range [%d-%d]",
+
+                             config->sendfile_timeout_ms, UVHTTP_SENDFILE_MIN_TIMEOUT_MS,
+
+                             UVHTTP_SENDFILE_MAX_TIMEOUT_MS);
+
+            return UVHTTP_ERROR_INVALID_PARAM;
+
+        }
+
+    
+
+        if (config->sendfile_max_retry < UVHTTP_SENDFILE_MIN_RETRY ||
+
+            config->sendfile_max_retry > UVHTTP_SENDFILE_MAX_RETRY) {
+
+            UVHTTP_LOG_ERROR("sendfile_max_retry=%d exceeds valid range [%d-%d]",
+
+                             config->sendfile_max_retry, UVHTTP_SENDFILE_MIN_RETRY,
+
+                             UVHTTP_SENDFILE_MAX_RETRY);
+
+            return UVHTTP_ERROR_INVALID_PARAM;
+
+        }
+
+    
+
+        if (config->cache_default_max_entries < UVHTTP_CACHE_MIN_MAX_ENTRIES ||
+
+            config->cache_default_max_entries > UVHTTP_CACHE_MAX_MAX_ENTRIES) {
+
+            UVHTTP_LOG_ERROR("cache_default_max_entries=%d exceeds valid range [%d-%d]",
+
+                             config->cache_default_max_entries, UVHTTP_CACHE_MIN_MAX_ENTRIES,
+
+                             UVHTTP_CACHE_MAX_MAX_ENTRIES);
+
+            return UVHTTP_ERROR_INVALID_PARAM;
+
+        }
+
+    
+
+        if (config->cache_default_ttl < UVHTTP_CACHE_MIN_TTL ||
+
+            config->cache_default_ttl > UVHTTP_CACHE_MAX_TTL) {
+
+            UVHTTP_LOG_ERROR("cache_default_ttl=%d exceeds valid range [%d-%d]",
+
+                             config->cache_default_ttl, UVHTTP_CACHE_MIN_TTL,
+
+                             UVHTTP_CACHE_MAX_TTL);
+
+            return UVHTTP_ERROR_INVALID_PARAM;
+
+        }
+
+    
+
+        if (config->lru_cache_batch_eviction_size < UVHTTP_LRU_CACHE_MIN_BATCH_EVICTION_SIZE ||
+
+            config->lru_cache_batch_eviction_size > UVHTTP_LRU_CACHE_MAX_BATCH_EVICTION_SIZE) {
+
+            UVHTTP_LOG_ERROR("lru_cache_batch_eviction_size=%d exceeds valid range [%d-%d]",
+
+                             config->lru_cache_batch_eviction_size,
+
+                             UVHTTP_LRU_CACHE_MIN_BATCH_EVICTION_SIZE,
+
+                             UVHTTP_LRU_CACHE_MAX_BATCH_EVICTION_SIZE);
+
+            return UVHTTP_ERROR_INVALID_PARAM;
+
+        }
+
+    
+
+        if (config->rate_limit_max_requests < UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS ||
+
+            config->rate_limit_max_requests > UVHTTP_RATE_LIMIT_MAX_MAX_REQUESTS) {
+
+            UVHTTP_LOG_ERROR("rate_limit_max_requests=%d exceeds valid range [%d-%d]",
+
+                             config->rate_limit_max_requests, UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS,
+
+                             UVHTTP_RATE_LIMIT_MAX_MAX_REQUESTS);
+
+            return UVHTTP_ERROR_INVALID_PARAM;
+
+        }
+
+    
+
+        if (config->rate_limit_max_window_seconds < UVHTTP_RATE_LIMIT_MIN_WINDOW_SECONDS ||
+
+            config->rate_limit_max_window_seconds > UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS) {
+
+            UVHTTP_LOG_ERROR("rate_limit_max_window_seconds=%d exceeds valid range [%d-%d]",
+
+                             config->rate_limit_max_window_seconds,
+
+                             UVHTTP_RATE_LIMIT_MIN_WINDOW_SECONDS,
+
+                             UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS);
+
+            return UVHTTP_ERROR_INVALID_PARAM;
+
+        }
+
+    
+
+        if (config->rate_limit_min_timeout_seconds < UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS ||
+
+            config->rate_limit_min_timeout_seconds > UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS) {
+
+            UVHTTP_LOG_ERROR("rate_limit_min_timeout_seconds=%d exceeds valid range [%d-%d]",
+
+                             config->rate_limit_min_timeout_seconds,
+
+                             UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS,
+
+                             UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS);
+
+            return UVHTTP_ERROR_INVALID_PARAM;
+
+        }
+
+    /* 配置依赖关系验证 */
+    if (config->websocket_max_message_size < config->websocket_max_frame_size) {
+        UVHTTP_LOG_ERROR("websocket_max_message_size=%d < websocket_max_frame_size=%d, invalid configuration",
+                         config->websocket_max_message_size, config->websocket_max_frame_size);
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    if (config->backlog > config->max_connections) {
+        UVHTTP_LOG_WARN("backlog=%d > max_connections=%d, this may cause connection rejection",
+                        config->backlog, config->max_connections);
+    }
+
     /* 检查文件描述符限制 */
     struct rlimit rl;
     if (getrlimit(RLIMIT_NOFILE, &rl) == 0) {
@@ -421,22 +581,6 @@ void uvhttp_config_print(const uvhttp_config_t* config) {
     printf("  Max Requests per Connection: %d\n",
            config->max_requests_per_connection);
     printf("  Rate Limit Window: %d seconds\n", config->rate_limit_window);
-    printf("  Enable Compression: %s\n",
-           config->enable_compression ? "Yes" : "No");
-    printf("  Enable TLS: %s\n", config->enable_tls ? "Yes" : "No");
-
-    printf("\nMemory:\n");
-    printf("  Memory Pool Size: %zu bytes\n", config->memory_pool_size);
-    printf("  Enable Memory Debug: %s\n",
-           config->enable_memory_debug ? "Yes" : "No");
-    printf("  Memory Warning Threshold: %.2f\n",
-           config->memory_warning_threshold);
-
-    printf("\nLogging:\n");
-    printf("  Log Level: %d\n", config->log_level);
-    printf("  Enable Access Log: %s\n",
-           config->enable_access_log ? "Yes" : "No");
-    printf("  Log File Path: %s\n", config->log_file_path);
     printf("==============================\n\n");
 }
 

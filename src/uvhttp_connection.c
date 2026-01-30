@@ -744,8 +744,8 @@ uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
         return UVHTTP_ERROR_IO_ERROR;
     }
 
-    /* 创建WebSocket连接对象 */
-    uvhttp_ws_connection_t* ws_conn = uvhttp_ws_connection_create(fd, NULL, 1);
+/* 创建WebSocket连接对象 */
+    uvhttp_ws_connection_t* ws_conn = uvhttp_ws_connection_create(fd, NULL, 1, conn->server->config);
     if (!ws_conn) {
         UVHTTP_LOG_ERROR("Failed to create WebSocket connection object\n");
         return UVHTTP_ERROR_IO_ERROR;

@@ -50,6 +50,8 @@ int main(int argc, char* argv[]) {
     }
 
     uvhttp_config_set_current(g_context, config);
+
+    uvhttp_config_set_current(g_context, config);
     
     uvhttp_static_config_t static_config;
     memset(&static_config, 0, sizeof(static_config));
@@ -65,7 +67,6 @@ int main(int argc, char* argv[]) {
     uvhttp_error_t static_result = uvhttp_static_create(&static_config, &g_static_ctx);
     if (static_result != UVHTTP_OK || !g_static_ctx) {
         printf("错误：无法创建静态文件服务上下文\n");
-        uvhttp_config_free(config);
         return 1;
     }
     
@@ -102,7 +103,6 @@ int main(int argc, char* argv[]) {
         printf("错误：无法启动服务器 (错误码: %d)\n", listen_result);
         uvhttp_router_free(router);
         uvhttp_static_free(g_static_ctx);
-        uvhttp_config_free(config);
         uvhttp_server_free(g_server);
         return 1;
     }
@@ -118,7 +118,6 @@ int main(int argc, char* argv[]) {
 
     uvhttp_router_free(router);
     uvhttp_static_free(g_static_ctx);
-    uvhttp_config_free(config);
     uvhttp_server_free(g_server);
 
     return 0;

@@ -35,30 +35,36 @@ typedef enum {
 typedef struct uvhttp_request uvhttp_request_t;
 
 struct uvhttp_request {
-    /* 热路径字段（频繁访问）- 优化内存局部性 */
-    uvhttp_method_t method; /* 4 字节 */
-    int parsing_complete;   /* 4 字节 */
-    size_t header_count;    /* 8 字节 */
+    /* ========== 缓存行1（0-63字节）：热路径字段 - 最频繁访问 ========== */
+    /* 在 HTTP 解析、路由匹配中频繁访问 */
+    uvhttp_method_t method;             /* 4 字节 - HTTP 方法 */
+    int parsing_complete;               /* 4 字节 - 解析是否完成 */
+    int _padding1[2];                   /* 8 字节 - 填充到16字节 */
+    size_t header_count;                /* 8 字节 - header 数量 */
+    size_t body_length;                 /* 8 字节 - body 长度 */
+    size_t body_capacity;               /* 8 字节 - body 容量 */
+    uv_tcp_t* client;                   /* 8 字节 - TCP 客户端句柄 */
+    llhttp_t* parser;                   /* 8 字节 - HTTP 解析器 */
+    /* 缓存行1总计：56字节（剩余8字节填充） */
 
-    /* 指针字段（8字节对齐） */
-    uv_tcp_t* client;                   /* 8 字节 */
-    llhttp_t* parser;                   /* 8 字节 */
-    llhttp_settings_t* parser_settings; /* 8 字节 */
-    char* path;                         /* 8 字节 */
-    char* query;                        /* 8 字节 */
-    char* body;                         /* 8 字节 */
-    void* user_data;                    /* 8 字节 */
+    /* ========== 缓存行2（64-127字节）：指针字段 - 次频繁访问 ========== */
+    /* 在请求处理、响应构建中频繁访问 */
+    llhttp_settings_t* parser_settings; /* 8 字节 - 解析器设置 */
+    char* path;                         /* 8 字节 - 请求路径 */
+    char* query;                        /* 8 字节 - 查询字符串 */
+    char* body;                         /* 8 字节 - 请求体 */
+    void* user_data;                    /* 8 字节 - 用户数据 */
+    uvhttp_header_t* headers_extra;     /* 8 字节 - 额外 headers（动态扩容） */
+    size_t headers_capacity;            /* 8 字节 - headers 总容量 */
+    int _padding2[2];                   /* 8 字节 - 填充到64字节 */
+    /* 缓存行2总计：64字节 */
 
-    /* 缓冲区字段（大块内存，放在后面） */
-    char url[MAX_URL_LEN]; /* 2048 字节 */
-    size_t body_length;    /* 8 字节 */
-    size_t body_capacity;  /* 8 字节 */
+    /* ========== 缓存行3+（128+字节）：大块缓冲区 ========== */
+    /* 放在最后，避免影响热路径字段的缓存局部性 */
+    char url[MAX_URL_LEN];              /* 2048 字节 - URL 缓冲区 */
 
     /* Headers - 混合分配：内联 + 动态扩容（优化内存局部性） */
-    uvhttp_header_t
-        headers[UVHTTP_INLINE_HEADERS_CAPACITY]; /* 内联，减少动态分配 */
-    uvhttp_header_t* headers_extra;              /* 8 字节 - 动态扩容 */
-    size_t headers_capacity; /* 8 字节 - 总容量（内联+动态） */
+    uvhttp_header_t headers[UVHTTP_INLINE_HEADERS_CAPACITY]; /* 内联，减少动态分配 */
 };
 
 /* ========== 内存布局验证静态断言 ========== */
