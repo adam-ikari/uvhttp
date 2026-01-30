@@ -58,3 +58,7 @@ test/results/
 docs/node_modules/
 docs/.vitepress/dist/
 docs/.vitepress/cache/
+
+# Doxygen generated documentation
+docs/api/html/
+docs/api/latex/
