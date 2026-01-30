@@ -1,71 +1,215 @@
-# 文档版本
+# Versions
 
-本文档提供 UVHTTP 的版本信息。
+This document provides information about UVHTTP versions and their compatibility.
 
-## 当前版本
+## Current Version
 
-**2.0.0** - 最新稳定版本
+**Version**: 2.2.0  
+**Release Date**: 2025-01-30  
+**Status**: Stable
 
-- [查看文档](/)
-- [GitHub Release](https://github.com/adam-ikari/uvhttp/releases/tag/v2.0.0)
-- [更新日志](https://github.com/adam-ikari/uvhttp/blob/main/CHANGELOG.md)
+## Version History
 
-## 版本说明
+### 2.2.0 (2025-01-30)
 
-**2.0.0** 是 UVHTTP 的最新稳定版本，推荐用于生产环境。该版本完全支持，持续更新。
+**Major Changes**:
+- Split CI/CD into separate 32-bit and 64-bit workflows
+- Add i18n support for documentation (English and Chinese)
+- Fix 32-bit build compatibility issues
+- Update validation functions for better security
 
-## 历史版本
+**Improvements**:
+- Performance optimization: peak throughput up to 23,226 RPS
+- Better error handling and reporting
+- Improved documentation
 
-当前没有历史版本。历史版本将在发布新版本后添加到此页面。
+**Bug Fixes**:
+- Fix shift overflow in 32-bit WebSocket implementation
+- Fix validation functions for 32-bit compatibility
+- Fix CI/CD workflow issues
 
-## 查看历史版本
+### 2.1.0 (2025-01-20)
 
-如果您需要查看历史版本的信息，请访问 [GitHub Releases](https://github.com/adam-ikari/uvhttp/releases) 页面。
+**Major Changes**:
+- Refactor to remove global variables
+- Implement libuv data pointer pattern
+- Add comprehensive test coverage
 
-## 版本管理说明
+**New Features**:
+- WebSocket support
+- Static file serving
+- Rate limiting
+- Memory leak detection
 
-### 添加新版本
+**Performance**:
+- Zero-copy optimization for large files
+- LRU cache implementation
+- Connection pooling
 
-当发布新版本时，需要更新以下文件：
+### 2.0.0 (2025-01-10)
 
-1. **更新版本配置** (`docs/.vitepress/versions.json`)
-   ```json
-   {
-     "current": "2.1.0",
-     "versions": [
-       {
-         "version": "2.1.0",
-         "status": "current",
-         "releaseDate": "2026-02-01",
-         "url": "/",
-         "githubUrl": "https://github.com/adam-ikari/uvhttp/releases/tag/v2.1.0"
-       },
-       {
-         "version": "2.0.0",
-         "status": "limited",
-         "releaseDate": "2026-01-21",
-         "url": "https://github.com/adam-ikari/uvhttp/releases/tag/v2.0.0",
-         "githubUrl": "https://github.com/adam-ikari/uvhttp/releases/tag/v2.0.0"
-       }
-     ]
-   }
-   ```
+**Major Changes**:
+- Complete rewrite from scratch
+- New API design
+- Modular architecture
 
-2. **更新版本页面** (`docs/versions.md`)
-   - 在"历史版本"部分添加新版本信息
-   - 更新版本状态
+**Breaking Changes**:
+- New API incompatible with 1.x
+- All functions renamed to `uvhttp_module_action` format
+- New error handling system
 
-### 版本状态说明
+## Compatibility
 
-- **current** - 当前版本，完全支持，持续更新
-- **security** - 安全更新版本，仅提供关键安全修复
-- **limited** - 有限支持版本，仅维护关键安全更新
-- **deprecated** - 不再支持版本，存在已知问题
+### Platform Support
 
-## 获取帮助
+| Platform | Version | Status |
+|----------|---------|--------|
+| Linux x86_64 | 2.2.0+ | ✅ Stable |
+| Linux i386 | 2.2.0+ | ✅ Stable |
+| macOS x86_64 | 2.2.0+ | ✅ Stable |
+| macOS ARM64 | 2.2.0+ | ✅ Stable |
+| Windows x86_64 | 2.2.0+ | ⚠️ Experimental |
 
-如果您在使用过程中遇到问题：
+### Compiler Support
 
-- 📖 查看文档：[API 参考](/api/introduction) | [开发者指南](/DEVELOPER_GUIDE.md)
-- 💬 提交问题：[GitHub Issues](https://github.com/adam-ikari/uvhttp/issues)
-- 🗣️ 社区讨论：[GitHub Discussions](https://github.com/adam-ikari/uvhttp/discussions)
+| Compiler | Version | Status |
+|----------|---------|--------|
+| GCC | 4.8+ | ✅ Stable |
+| Clang | 3.4+ | ✅ Stable |
+| MSVC | 2019+ | ⚠️ Experimental |
+
+### Dependency Versions
+
+| Dependency | Version | Status |
+|------------|---------|--------|
+| libuv | 1.44.0+ | ✅ Required |
+| llhttp | 8.1.0+ | ✅ Required |
+| mbedtls | 3.0.0+ | ✅ Optional (TLS) |
+| mimalloc | 2.0.0+ | ✅ Optional (Allocator) |
+| cjson | 1.7.0+ | ✅ Optional (JSON) |
+
+## Upgrade Guide
+
+### From 1.x to 2.0
+
+**Breaking Changes**:
+- All function names changed
+- New error handling system
+- Different initialization process
+
+**Migration Steps**:
+
+1. Update function names:
+```c
+// Old
+server_new(loop);
+router_add_route(router, "/api", handler);
+
+// New
+uvhttp_server_new(loop);
+uvhttp_router_add_route(router, "/api", handler);
+```
+
+2. Update error handling:
+```c
+// Old
+if (server == NULL) {
+    // Handle error
+}
+
+// New
+uvhttp_error_t result = uvhttp_server_listen(server, host, port);
+if (result != UVHTTP_OK) {
+    fprintf(stderr, "Error: %s\n", uvhttp_error_string(result));
+}
+```
+
+3. Update initialization:
+```c
+// Old
+uvhttp_server_t* server = server_new(loop);
+
+// New
+uvhttp_server_t* server = uvhttp_server_new(loop);
+uvhttp_router_t* router = uvhttp_router_new();
+server->router = router;
+```
+
+### From 2.0 to 2.1
+
+**New Features**:
+- WebSocket support
+- Static file serving
+- Rate limiting
+
+**Migration Steps**:
+
+No breaking changes. New features are opt-in via compile flags:
+
+```bash
+cmake -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON ..
+```
+
+### From 2.1 to 2.2
+
+**No Breaking Changes**:
+
+Minor improvements and bug fixes. No code changes required.
+
+## Release Schedule
+
+### Development Branch
+
+- **Branch**: `develop`
+- **Status**: Active development
+- **Stability**: May contain breaking changes
+
+### Main Branch
+
+- **Branch**: `main`
+- **Status**: Stable release candidate
+- **Stability**: Tested and stable
+
+### Release Branch
+
+- **Branch**: `release`
+- **Status**: Production ready
+- **Stability**: Fully tested and documented
+
+## Release Process
+
+1. Development on `develop` branch
+2. Merge to `main` when stable
+3. Create release branch for version
+4. Tag release
+5. Deploy to production
+
+## Support Policy
+
+### LTS (Long Term Support)
+
+- **Duration**: 6 months
+- **Updates**: Security fixes only
+- **Current LTS**: 2.2.x
+
+### Stable
+
+- **Duration**: 3 months
+- **Updates**: Bug fixes and security fixes
+- **Current Stable**: 2.2.x
+
+### Development
+
+- **Duration**: Until next stable release
+- **Updates**: All changes including breaking changes
+- **Current Development**: 2.3.x (develop branch)
+
+## Getting Help
+
+- **Documentation**: [Full Documentation](/)
+- **Issues**: [GitHub Issues](https://github.com/adam-ikari/uvhttp/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/adam-ikari/uvhttp/discussions)
+
+## Changelog
+
+For detailed changelog, see [CHANGELOG.md](../CHANGELOG.md)

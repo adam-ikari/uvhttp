@@ -1,93 +1,71 @@
-# UVHTTP 使用者文档
+# UVHTTP User Documentation
 
-欢迎使用 UVHTTP 使用者文档！本文档面向使用 UVHTTP 构建应用的开发者。
+Welcome to the UVHTTP user documentation! This documentation is for developers building applications with UVHTTP.
 
-## 📚 文档导航
+## 📚 Documentation Navigation
 
-### 快速开始
-- [安装指南](./installation.md) - 如何安装 UVHTTP
-- [快速开始](./getting-started.md) - 5 分钟快速上手
-- [第一个服务器](./first-server.md) - 创建你的第一个 HTTP 服务器
+### Getting Started
+- [Quick Start](getting-started.md) - Get up and running in 5 minutes
+- [Installation](installation.md) - Installation instructions
+- [First Server](first-server.md) - Create your first HTTP server
 
-### 基础教程
-- [完整教程](../TUTORIAL.md) - 从基础到高级的完整教程
-- [路由系统](./routing.md) - 学习如何配置路由
-- [请求处理](./requests.md) - 处理 HTTP 请求
-- [响应处理](./responses.md) - 发送 HTTP 响应
+### Core Concepts
+- [Tutorial](TUTORIAL.md) - Progressive tutorial from basics to advanced
+- [libuv Data Pointer](LIBUV_DATA_POINTER.md) - Understanding libuv data pointer pattern
+- [Middleware System](MIDDLEWARE_SYSTEM.md) - Middleware system architecture
+- [Unified Response Guide](UNIFIED_RESPONSE_GUIDE.md) - Standard response handling
 
-### 高级功能
-- [静态文件服务](../STATIC_FILE_SERVER.md) - 提供静态文件服务
-- [WebSocket](./websocket.md) - 实现实时双向通信
-- [限流功能](../RATE_LIMIT_API.md) - 防止滥用和 DDoS 攻击
+### Features
+- [Rate Limit API](RATE_LIMIT_API.md) - Rate limiting functionality
+- [Static File Server](STATIC_FILE_SERVER.md) - Static file serving
+- [WebSocket](websocket.md) - WebSocket support
 
-### API 参考
-- [API 介绍](../api/introduction.md) - API 概览
-- [API 参考](../API_REFERENCE.md) - 完整的 API 文档（推荐！）
-- [统一 API](./unified-api.md) - 简化的 API 接口
-- [错误码](../ERROR_CODES.md) - 错误码参考
+### Development
+- [Developer Guide](DEVELOPER_GUIDE.md) - Development guide and best practices
+- [CMake Configuration](CMAKE_CONFIGURATION.md) - Build configuration
 
-### 性能优化
-- [性能基准](../PERFORMANCE_BENCHMARK.md) - 性能测试结果
-- [性能优化指南](./performance.md) - 优化你的应用性能
+## 🚀 Quick Start
 
-### 安全
-- [安全指南](../SECURITY.md) - 安全最佳实践
+```c
+#include <uvhttp.h>
+#include <uv_loop.h>
 
-### 其他
-- [常见问题](./faq.md) - 常见问题解答
-- [最佳实践](./best-practices.md) - 开发建议和技巧
+int main() {
+    uv_loop_t* loop = uv_default_loop();
+    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_router_t* router = uvhttp_router_new();
+    
+    server->router = router;
+    
+    // Add a simple route
+    uvhttp_router_add_route(router, "/api", [](uvhttp_request_t* req) {
+        uvhttp_response_t* res = uvhttp_response_new(req);
+        uvhttp_response_set_status(res, 200);
+        uvhttp_response_set_header(res, "Content-Type", "application/json");
+        uvhttp_response_set_body(res, "{\"message\":\"Hello World\"}");
+        uvhttp_response_send(res);
+    });
+    
+    // Start server
+    uvhttp_server_listen(server, "0.0.0.0", 8080);
+    
+    // Run event loop
+    uv_run(loop, UV_RUN_DEFAULT);
+    
+    return 0;
+}
+```
 
-## 🎯 你是哪种用户？
+## 📖 More Information
 
-### 初学者
-如果你是第一次使用 UVHTTP，建议按以下顺序阅读：
-1. [安装指南](./installation.md)
-2. [快速开始](./getting-started.md)
-3. [第一个服务器](./first-server.md)
-4. [基础教程](../TUTORIAL.md)
+- **[API Reference](../api/API_REFERENCE.md)**: Complete API documentation
+- **[Architecture Design](../dev/ARCHITECTURE.md)**: System architecture
+- **[Performance Benchmark](../dev/PERFORMANCE_BENCHMARK.md)**: Performance metrics
 
-### 应用开发者
-如果你有 HTTP 服务器开发经验，可以直接查看：
-1. [API 参考](../API_REFERENCE.md)
-2. [统一 API](./unified-api.md)
-3. [性能优化指南](./performance.md)
+## 🤝 Contributing
 
-### 高级用户
-如果你需要高级功能或性能优化：
-1. [WebSocket](./websocket.md)
-2. [性能优化指南](./performance.md)
-3. [最佳实践](./best-practices.md)
-4. [API 参考](../API_REFERENCE.md)
+Contributions are welcome! Please read [CONTRIBUTING.md](../../CONTRIBUTING.md) for details.
 
-## 💡 推荐阅读路径
+## 📄 License
 
-### 路径 1：快速构建 REST API
-1. [安装指南](./installation.md)
-2. [快速开始](./getting-started.md)
-3. [路由系统](./routing.md)
-4. [统一 API](./unified-api.md)
-5. [错误码](../ERROR_CODES.md)
-
-### 路径 2：构建 WebSocket 应用
-1. [安装指南](./installation.md)
-2. [快速开始](./getting-started.md)
-3. [WebSocket](./websocket.md)
-4. [最佳实践](./best-practices.md)
-
-### 路径 3：构建高性能服务器
-1. [快速开始](./getting-started.md)
-2. [性能基准](../PERFORMANCE_BENCHMARK.md)
-3. [性能优化指南](./performance.md)
-4. [最佳实践](./best-practices.md)
-5. [API 参考](../API_REFERENCE.md)
-
-## 📞 获取帮助
-
-如果你在使用过程中遇到问题：
-- 查看 [常见问题](./faq.md)
-- 查看 [错误码](../ERROR_CODES.md) 了解错误信息
-- 在 GitHub 上提交 [Issue](https://github.com/adam-ikari/uvhttp/issues)
-
-## 🚀 开始使用
-
-准备开始了吗？从 [安装指南](./installation.md) 开始吧！
+This project is licensed under the MIT License.
