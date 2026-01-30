@@ -1,8 +1,9 @@
 /*
- * UVHTTP 服务器模块
+ * UVHTTP server module
  *
- * 提供HTTP服务器的核心功能，包括连接管理、请求路由和响应处理
- * 基于libuv事件驱动架构实现高性能异步I/O
+ * Provides core HTTP server functionality including connection management,
+ * request routing, and response processing
+ * Implements high-performance asynchronous I/O based on libuv event-driven architecture
  */
 
 #include "uvhttp_server.h"
@@ -34,7 +35,7 @@
 #    include "uvhttp_websocket.h"
 #endif
 
-// WebSocket路由条目前向声明
+// WebSocket route entry forward declaration
 #if UVHTTP_FEATURE_WEBSOCKET
 typedef struct ws_route_entry {
     char* path;
@@ -44,9 +45,9 @@ typedef struct ws_route_entry {
 #endif
 
 /**
- * 503响应写完成回调函数
+ * 503 response write completion callback function
  *
- * 处理503 Service Unavailable响应发送完成后的清理工作
+ * Handle cleanup after sending 503 Service Unavailable response
  *
  * @param req 写请求对象
  * @param status 写操作状态
