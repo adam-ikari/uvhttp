@@ -1,6 +1,6 @@
 /*
  * uvhttp WebSocket Native Implementation
- * 完全自主实现的 WebSocket 协议支持，基于 RFC 6455
+ * Fully self-implemented WebSocket protocol support based on RFC 6455
  */
 
 #include "uvhttp_websocket.h"
@@ -25,22 +25,22 @@
 /* WebSocket GUID (RFC 6455) */
 #define WS_GUID "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
-/* 生成安全的随机数 */
+/* Generate secure random bytes */
 static int uvhttp_ws_random_bytes(uvhttp_context_t* context, unsigned char* buf,
                                   size_t len) {
-    /* 使用上下文中的 DRBG */
+    /* Use DRBG from context */
     if (context && context->ws_drbg_initialized) {
         return mbedtls_ctr_drbg_random(
             (mbedtls_ctr_drbg_context*)context->ws_drbg, buf, len);
     }
 
-    /* DRBG 未初始化，返回错误而不是使用不安全的伪随机数 */
+    /* DRBG not initialized, return error instead of using insecure pseudo-random */
     UVHTTP_LOG_ERROR(
         "WebSocket DRBG not initialized, cannot generate secure random bytes");
     return UVHTTP_ERROR_INVALID_PARAM;
 }
 
-/* 创建 WebSocket 连接 */
+/* Create WebSocket connection */
 struct uvhttp_ws_connection* uvhttp_ws_connection_create(
     int fd, mbedtls_ssl_context* ssl, int is_server,
     const uvhttp_config_t* config) {
