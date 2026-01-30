@@ -49,15 +49,13 @@ jobs:
       - name: Build 32-bit version
         id: build
         run: |
-          export CC="gcc -m32"
-          export CXX="g++ -m32"
           export CFLAGS="-m32 -march=i686"
           export CXXFLAGS="-m32 -march=i686"
           export LDFLAGS="-m32"
           cmake -B build-32bit \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_COMPILER="gcc -m32" \
-            -DCMAKE_CXX_COMPILER="g++ -m32" \
+            -DCMAKE_C_COMPILER=/usr/bin/gcc \
+            -DCMAKE_CXX_COMPILER=/usr/bin/g++ \
             -DCMAKE_C_FLAGS="-m32 -march=i686" \
             -DCMAKE_CXX_FLAGS="-m32 -march=i686" \
             -DCMAKE_EXE_LINKER_FLAGS="-m32" \
