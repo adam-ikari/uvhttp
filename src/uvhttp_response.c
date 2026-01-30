@@ -14,13 +14,13 @@
 #include <string.h>
 #include <strings.h>
 
-/* HTTP 响应头字符串常量 */
+/* HTTP response header string constants */
 #define HTTP_HEADER_CONNECTION_KEEPALIVE "Connection: keep-alive\r\n"
 #define HTTP_HEADER_CONNECTION_CLOSE "Connection: close\r\n"
-// 函数声明
+// Function declaration
 static void uvhttp_free_write_data(uv_write_t* req, int status);
 
-// 函数声明
+// Function declaration
 static void uvhttp_free_write_data(uv_write_t* req, int status);
 static void uvhttp_free_write_data(uv_write_t* req, int status);
 
