@@ -1,9 +1,9 @@
-/* UVHTTP 静态文件服务模块实现 - V2版本，集成LRU缓存 */
+/* UVHTTP static file service module implementation - V2, integrated with LRU cache */
 
 #if UVHTTP_FEATURE_STATIC_FILES
 
-#    define _XOPEN_SOURCE 600 /* 启用 strptime, timegm */
-#    define _DEFAULT_SOURCE   /* 启用 strcasecmp */
+#    define _XOPEN_SOURCE 600 /* Enable strptime, timegm */
+#    define _DEFAULT_SOURCE   /* Enable strcasecmp */
 
 #    include "uvhttp_static.h"
 
@@ -29,9 +29,9 @@
 #    include <sys/stat.h>
 #    include <time.h>
 
-/* MIME类型映射表 */
+/* MIME type mapping table */
 static const uvhttp_mime_mapping_t mime_types[] = {
-    /* 文本类型 */
+    /* Text types */
     {".html", "text/html"},
     {".htm", "text/html"},
     {".css", "text/css"},
@@ -42,7 +42,7 @@ static const uvhttp_mime_mapping_t mime_types[] = {
     {".md", "text/markdown"},
     {".csv", "text/csv"},
 
-    /* 图片类型 */
+    /* Image types */
     {".png", "image/png"},
     {".jpg", "image/jpeg"},
     {".jpeg", "image/jpeg"},
