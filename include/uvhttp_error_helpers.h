@@ -13,13 +13,6 @@ extern "C" {
 #endif
 
 /**
- * 通用的连接清理函数
- * @param handle 要清理的句柄
- * @param error_message 错误消息（可为NULL）
- */
-void uvhttp_cleanup_connection(uv_handle_t* handle, const char* error_message);
-
-/**
  * 通用的内存分配失败处理
  * @param context 上下文描述
  * @param cleanup_func 清理函数指针（可为NULL）

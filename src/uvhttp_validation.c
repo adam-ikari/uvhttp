@@ -121,144 +121,22 @@ int uvhttp_validate_port(int port) {
     return (port >= UVHTTP_MIN_PORT_NUMBER && port <= UVHTTP_MAX_PORT_NUMBER);
 }
 
-int uvhttp_validate_ipv4(const char* ip) {
-    if (!ip)
-        return FALSE;
-
-    int octets = 0;
-    int current = 0;
-
-    for (size_t i = 0; ip[i]; i++) {
-        if (ip[i] == '.') {
-            octets++;
-            if (current > UVHTTP_IP_OCTET_MAX_VALUE || current < 0)
-                return FALSE;
-            current = 0;
-        } else if (isdigit(ip[i])) {
-            current = current * 10 + (ip[i] - '0');
-        } else {
-            return FALSE;
-        }
-    }
-
-    // 检查最后一个八位组
-    if (current > UVHTTP_IP_OCTET_MAX_VALUE || current < 0)
-        return FALSE;
-
-    return (octets == 3);
-}
-
-int uvhttp_validate_ipv6(const char* ip) {
-    if (!ip)
-        return FALSE;
-
-    // 简化的IPv6验证 - 检查基本格式
-    int colons = 0;
-    int digits = 0;
-
-    for (size_t i = 0; ip[i]; i++) {
-        if (ip[i] == ':') {
-            colons++;
-            digits = 0;
-        } else if (isxdigit(ip[i])) {
-            digits++;
-            if (digits > 4)
-                return FALSE;
-        } else {
-            return FALSE;
-        }
-    }
-
-    return (colons >= 2 && colons <= 7);
-}
-
 int uvhttp_validate_content_length(size_t length) {
     return (length <= UVHTTP_MAX_BODY_SIZE);
 }
 
-int uvhttp_validate_websocket_key(const char* key, size_t key_len) {
-    if (!key)
-        return FALSE;
-
-    // 检查长度范围
-    if (key_len < UVHTTP_WEBSOCKET_MIN_KEY_LENGTH ||
-        key_len > UVHTTP_WEBSOCKET_MAX_KEY_LENGTH) {
-        return FALSE;
-    }
-
-    // 检查是否为有效的base64字符
-    for (size_t i = 0; i < key_len; i++) {
-        char c = key[i];
-        if (!(isalnum(c) || c == '+' || c == '/' || c == '=')) {
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
-int uvhttp_validate_file_path(const char* path) {
-    if (!path)
-        return FALSE;
-
-    // 检查长度
-    if (!uvhttp_validate_string_length(path, 1, UVHTTP_MAX_FILE_PATH_SIZE)) {
-        return FALSE;
-    }
-
-    // 检查路径遍历攻击
-    if (strstr(path, "..") || strstr(path, "//")) {
-        return FALSE;
-    }
-
-    // 检查绝对路径（在某些情况下可能不安全）
-    if (path[0] == '/') {
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
 int uvhttp_validate_query_string(const char* query) {
     if (!query)
-        return TRUE;  // 空查询字符串是有效的
+        return TRUE;  /* 空查询字符串是有效的 */
 
-    // 检查长度
+    /* 检查长度 */
     if (!uvhttp_validate_string_length(query, 0, UVHTTP_MAX_URL_SIZE)) {
         return FALSE;
     }
 
-    // 检查危险字符
+    /* 检查危险字符 */
     for (size_t i = 0; i < sizeof(dangerous_query_chars); i++) {
         if (strchr(query, dangerous_query_chars[i])) {
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
-int uvhttp_validate_string_safety(const char* str, int allow_null_bytes,
-                                  int allow_control_chars) {
-    if (!str)
-        return FALSE;
-
-    for (size_t i = 0; str[i]; i++) {
-        unsigned char c = (unsigned char)str[i];
-
-        // 检查空字节
-        if (!allow_null_bytes && c == '\0') {
-            return FALSE;
-        }
-
-        // 检查控制字符
-        if (!allow_control_chars && c < UVHTTP_SPACE_CHARACTER &&
-            c != UVHTTP_TAB_CHARACTER) {
-            return FALSE;
-        }
-
-        // 检查删除字符
-        if (c == UVHTTP_DELETE_CHARACTER) {
             return FALSE;
         }
     }

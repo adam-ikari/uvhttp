@@ -234,11 +234,8 @@ set(SOURCES
     src/uvhttp_error_helpers.c
     src/uvhttp_hash.c
     src/uvhttp_lru_cache.c
-    src/uvhttp_router_cache.c
     src/uvhttp_static.c
-    src/uvhttp_async_file.c
     src/uvhttp_validation.c
-    src/uvhttp_logging.c
 )
 
 # 条件编译 WebSocket 源文件

@@ -9,18 +9,6 @@
 /* 必须先包含 stdint.h 才能使用 UINTPTR_MAX */
 #include <stdint.h>
 
-/* io_uring 支持检测 */
-#ifdef __has_include
-#    if __has_include(<liburing.h>)
-#        define UVHTTP_HAS_IO_URING 1
-#        include <liburing.h>
-#    else
-#        define UVHTTP_HAS_IO_URING 0
-#    endif
-#else
-#    define UVHTTP_HAS_IO_URING 0
-#endif
-
 /* 指针大小检测 */
 #if UINTPTR_MAX == 0xFFFFFFFF
 #    define UVHTTP_32BIT 1
@@ -111,24 +99,5 @@ typedef socklen_t uvhttp_socklen_t;
 #define UVHTTP_ASSERT_CACHE_LINE_OFFSET(type, member)                          \
     UVHTTP_STATIC_ASSERT(offsetof(type, member) % UVHTTP_CACHE_LINE_SIZE == 0, \
                          #type "." #member " not cache line aligned")
-
-/* ========== io_uring 配置 ========== */
-
-#if UVHTTP_HAS_IO_URING
-/* io_uring 队列大小 */
-#    ifndef UVHTTP_IOURING_QUEUE_SIZE
-#        define UVHTTP_IOURING_QUEUE_SIZE 256
-#    endif
-
-/* io_uring 缓冲区数量 */
-#    ifndef UVHTTP_IOURING_BUFFER_COUNT
-#        define UVHTTP_IOURING_BUFFER_COUNT 128
-#    endif
-
-/* io_uring 缓冲区大小 */
-#    ifndef UVHTTP_IOURING_BUFFER_SIZE
-#        define UVHTTP_IOURING_BUFFER_SIZE (64 * 1024) /* 64KB */
-#    endif
-#endif
 
 #endif /* UVHTTP_PLATFORM_H */

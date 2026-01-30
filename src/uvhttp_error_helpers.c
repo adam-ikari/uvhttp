@@ -41,19 +41,6 @@ static int contains_sensitive_info(const char* str) {
     return FALSE;
 }
 
-void uvhttp_cleanup_connection(uv_handle_t* handle, const char* error_message) {
-    if (!handle)
-        return;
-
-    if (error_message) {
-        uvhttp_log_safe_error(0, "connection_cleanup", error_message);
-    }
-
-    if (!uv_is_closing(handle)) {
-        uv_close(handle, NULL);
-    }
-}
-
 void uvhttp_handle_memory_failure(const char* context,
                                   void (*cleanup_func)(void*),
                                   void* cleanup_data) {

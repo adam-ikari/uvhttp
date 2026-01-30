@@ -649,52 +649,6 @@ int uvhttp_config_update_size_limits(uvhttp_context_t* context,
     return UVHTTP_ERROR_INVALID_PARAM;
 }
 
-/* 配置变更回调 */
-int uvhttp_config_monitor_changes(uvhttp_context_t* context,
-                                  uvhttp_config_change_callback_t callback) {
-    if (!context) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    context->config_callback = callback;
-    return UVHTTP_OK;
-}
-
-/* 热重载配置 */
-int uvhttp_config_reload(uvhttp_context_t* context) {
-    if (!context || !context->current_config) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    /* 保存当前配置作为备份 */
-    uvhttp_config_t backup = *(uvhttp_config_t*)context->current_config;
-
-    /* 尝试重新加载配置文件 */
-    int result = uvhttp_config_load_file(
-        (uvhttp_config_t*)context->current_config, "uvhttp.conf");
-    if (result != UVHTTP_OK) {
-        /* 恢复备份 */
-        *(uvhttp_config_t*)context->current_config = backup;
-        return result;
-    }
-
-    /* 验证新配置 */
-    if (uvhttp_config_validate((uvhttp_config_t*)context->current_config) !=
-        UVHTTP_OK) {
-        /* 恢复备份 */
-        *(uvhttp_config_t*)context->current_config = backup;
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    /* 触发配置变更回调 */
-    if (context->config_callback) {
-        ((uvhttp_config_change_callback_t)context->config_callback)(
-            "config_reload", &backup, context->current_config);
-    }
-
-    UVHTTP_LOG_INFO("Configuration reloaded successfully");
-    return UVHTTP_OK;
-}
-
 /* 设置全局配置 */
 void uvhttp_config_set_current(uvhttp_context_t* context,
                                uvhttp_config_t* config) {

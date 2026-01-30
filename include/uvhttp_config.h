@@ -105,22 +105,12 @@ int uvhttp_config_update_size_limits(uvhttp_context_t* context,
                                      size_t max_body_size,
                                      size_t max_header_size);
 
-/* 配置监控 */
-typedef void (*uvhttp_config_change_callback_t)(const char* key,
-                                                const void* old_value,
-                                                const void* new_value);
-int uvhttp_config_monitor_changes(uvhttp_context_t* context,
-                                  uvhttp_config_change_callback_t callback);
-
 /* 获取当前配置 */
 const uvhttp_config_t* uvhttp_config_get_current(uvhttp_context_t* context);
 
 /* 设置全局配置 */
 void uvhttp_config_set_current(uvhttp_context_t* context,
                                uvhttp_config_t* config);
-
-/* 配置热重载 */
-int uvhttp_config_reload(uvhttp_context_t* context);
 
 #ifdef __cplusplus
 }
