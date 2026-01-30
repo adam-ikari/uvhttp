@@ -51,12 +51,7 @@ uvhttp_error_t uvhttp_sanitize_error_message(const char* message,
                                              char* safe_buffer,
                                              size_t buffer_size);
 
-/**
- * 通用的资源释放包装器
- * @param ptr 指向资源的指针
- * @param free_func 释放函数
- */
-void uvhttp_safe_free(void** ptr, void (*free_func)(void*));
+/* uvhttp_safe_free 已删除 - 完全未使用，直接使用 uvhttp_free */
 
 #ifdef __cplusplus
 }

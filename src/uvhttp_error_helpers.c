@@ -121,15 +121,5 @@ uvhttp_error_t uvhttp_sanitize_error_message(const char* message,
 
     return UVHTTP_OK;
 }
-void uvhttp_safe_free(void** ptr, void (*free_func)(void*)) {
-    if (!ptr || !*ptr)
-        return;
 
-    if (free_func) {
-        free_func(*ptr);
-    } else {
-        uvhttp_free(*ptr);
-    }
-
-    *ptr = NULL;
-}
+/* uvhttp_safe_free 已删除 - 完全未使用，直接使用 uvhttp_free */

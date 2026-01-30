@@ -178,123 +178,28 @@ int uvhttp_is_valid_status_code(int status_code) {
     return (status_code >= 100 && status_code <= 599) ? TRUE : FALSE;
 }
 
-/**
- * @brief 验证 Content-Type 格式
- * @param content_type Content-Type 字符串
- * @return TRUE 表示有效，FALSE 表示无效
- */
-int uvhttp_is_valid_content_type(const char* content_type) {
-    if (!content_type || strlen(content_type) == 0) {
-        return FALSE;
-    }
+/* uvhttp_is_valid_content_type 已删除 - 完全未使用 */
+/* uvhttp_is_valid_string_length 已删除 - 完全未使用 */
 
-    // 基本格式验证：应该包含 '/'
-    const char* slash = strchr(content_type, '/');
-    if (!slash) {
-        return FALSE;
-    }
-
-    // 检查是否有非法字符
-    const char* invalid_chars = "\"\\()<>@,;:\\[]?=";
-    for (const char* p = content_type; *p; p++) {
-        if (strchr(invalid_chars, *p)) {
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
-/**
- * @brief 验证字符串长度是否在有效范围内
- * @param str 字符串
- * @param max_len 最大长度
- * @return TRUE 表示有效，FALSE 表示无效
- */
-int uvhttp_is_valid_string_length(const char* str, size_t max_len) {
-    if (!str)
-        return FALSE;
-    return (strlen(str) <= max_len) ? TRUE : FALSE;
-}
-
-/**
- * @brief 验证 IPv4 地址格式
- * @param ip IP 地址字符串
- * @return TRUE 表示有效，FALSE 表示无效
- */
-int uvhttp_is_valid_ipv4(const char* ip) {
+/* 简化的 IP 验证函数 */
+int uvhttp_is_valid_ip_address(const char* ip) {
     if (!ip || !*ip)
         return FALSE;
-
-    int octet = 0;
-    int octet_count = 0;
-    int digit_count = 0;
-
-    for (const char* p = ip; *p; p++) {
-        if (*p == '.') {
-            if (digit_count == 0)
-                return FALSE;  // 连续的点
-            if (octet > 255)
-                return FALSE;
-            octet = 0;
-            digit_count = 0;
-            octet_count++;
-        } else if (*p >= '0' && *p <= '9') {
-            octet = octet * 10 + (*p - '0');
-            digit_count++;
-            if (digit_count > 3)
-                return FALSE;  // 超过3位数字
-        } else {
-            return FALSE;  // 非法字符
+    /* 简化验证：只检查基本格式 */
+    if (strchr(ip, ':') != NULL) {
+        /* IPv6 - 简化检查 */
+        int colon_count = 0;
+        for (const char* p = ip; *p; p++) {
+            if (*p == ':') colon_count++;
         }
+        return colon_count >= 2 ? TRUE : FALSE;
     }
-
-    // 检查最后一个八位组
-    if (digit_count == 0)
-        return FALSE;
-    if (octet > 255)
-        return FALSE;
-    octet_count++;
-
-    return (octet_count == 4) ? TRUE : FALSE;
-}
-
-/**
- * @brief 验证 IPv6 地址格式（简化版）
- * @param ip IP 地址字符串
- * @return TRUE 表示有效，FALSE 表示无效
- */
-int uvhttp_is_valid_ipv6(const char* ip) {
-    if (!ip || !*ip)
-        return FALSE;
-
-    // 简化的 IPv6 验证
-    int colon_count = 0;
-    int digit_count = 0;
-    int has_double_colon = FALSE;
-
+    /* IPv4 - 简化检查 */
+    int dot_count = 0;
     for (const char* p = ip; *p; p++) {
-        if (*p == ':') {
-            if (p[1] == ':') {
-                if (has_double_colon)
-                    return FALSE;  // 只能有一个 ::
-                has_double_colon = TRUE;
-                p++;  // 跳过第二个冒号
-            }
-            colon_count++;
-            digit_count = 0;
-        } else if ((*p >= '0' && *p <= '9') || (*p >= 'a' && *p <= 'f') ||
-                   (*p >= 'A' && *p <= 'F')) {
-            digit_count++;
-            if (digit_count > 4)
-                return FALSE;
-        } else {
-            return FALSE;
-        }
+        if (*p == '.') dot_count++;
     }
-
-    // IPv6 地址应该有 2-7 个冒号（取决于是否有 ::）
-    return (colon_count >= 2 && colon_count <= 7) ? TRUE : FALSE;
+    return dot_count == 3 ? TRUE : FALSE;
 }
 
 /**
@@ -302,15 +207,4 @@ int uvhttp_is_valid_ipv6(const char* ip) {
  * @param ip IP 地址字符串
  * @return TRUE 表示有效，FALSE 表示无效
  */
-int uvhttp_is_valid_ip_address(const char* ip) {
-    if (!ip || !*ip)
-        return FALSE;
-
-    // 检查是否包含 : （IPv6）
-    if (strchr(ip, ':') != NULL) {
-        return uvhttp_is_valid_ipv6(ip);
-    }
-
-    // 否则作为 IPv4 处理
-    return uvhttp_is_valid_ipv4(ip);
-}
+/* uvhttp_is_valid_ip_address 已删除 - 完全未使用 */

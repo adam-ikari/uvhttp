@@ -21,12 +21,7 @@ extern "C" {
 int uvhttp_validate_string_length(const char* str, size_t min_len,
                                   size_t max_len);
 
-/**
- * 验证HTTP方法是否有效
- * @param method HTTP方法字符串
- * @return 1有效，0无效
- */
-int uvhttp_validate_http_method(const char* method);
+/* uvhttp_validate_http_method 已删除 - 使用 uvhttp_method_from_string 替代 */
 
 /**
  * 验证URL路径是否安全
@@ -49,19 +44,8 @@ int uvhttp_validate_header_name(const char* name);
  */
 int uvhttp_validate_header_value_safe(const char* value);
 
-/**
- * 验证端口号是否在有效范围内
- * @param port 端口号
- * @return 1有效，0无效
- */
-int uvhttp_validate_port(int port);
-
-/**
- * 验证内容长度是否在合理范围内
- * @param length 内容长度
- * @return 1有效，0无效
- */
-int uvhttp_validate_content_length(size_t length);
+/* uvhttp_validate_port 已删除 - 完全未使用 */
+/* uvhttp_validate_content_length 已删除 - 完全未使用 */
 
 /**
  * 验证查询字符串是否安全

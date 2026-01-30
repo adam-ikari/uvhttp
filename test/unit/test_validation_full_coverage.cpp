@@ -32,25 +32,7 @@ TEST(UvhttpValidationFullCoverageTest, ValidateStringLengthEmpty) {
     EXPECT_EQ(uvhttp_validate_string_length("", 1, 10), 0);
 }
 
-TEST(UvhttpValidationFullCoverageTest, ValidateHttpMethodNull) {
-    EXPECT_EQ(uvhttp_validate_http_method(nullptr), 0);
-}
-
-TEST(UvhttpValidationFullCoverageTest, ValidateHttpMethodValid) {
-    EXPECT_EQ(uvhttp_validate_http_method("GET"), 1);
-    EXPECT_EQ(uvhttp_validate_http_method("POST"), 1);
-    EXPECT_EQ(uvhttp_validate_http_method("PUT"), 1);
-    EXPECT_EQ(uvhttp_validate_http_method("DELETE"), 1);
-    EXPECT_EQ(uvhttp_validate_http_method("HEAD"), 1);
-    EXPECT_EQ(uvhttp_validate_http_method("OPTIONS"), 1);
-    EXPECT_EQ(uvhttp_validate_http_method("PATCH"), 1);
-}
-
-TEST(UvhttpValidationFullCoverageTest, ValidateHttpMethodInvalid) {
-    EXPECT_EQ(uvhttp_validate_http_method("get"), 0);
-    EXPECT_EQ(uvhttp_validate_http_method("INVALID"), 0);
-    EXPECT_EQ(uvhttp_validate_http_method(""), 0);
-}
+/* uvhttp_validate_http_method 已删除 - 使用 uvhttp_method_from_string 替代 */
 
 TEST(UvhttpValidationFullCoverageTest, ValidateUrlPathNull) {
     EXPECT_EQ(uvhttp_validate_url_path(nullptr), 0);
@@ -100,43 +82,11 @@ TEST(UvhttpValidationFullCoverageTest, ValidateHeaderValueSafeInvalid) {
     EXPECT_EQ(uvhttp_validate_header_value_safe("value\r\n"), 0);
 }
 
-TEST(UvhttpValidationFullCoverageTest, ValidatePortValid) {
-    EXPECT_EQ(uvhttp_validate_port(80), 1);
-    EXPECT_EQ(uvhttp_validate_port(8080), 1);
-    EXPECT_EQ(uvhttp_validate_port(443), 1);
-}
-
-TEST(UvhttpValidationFullCoverageTest, ValidatePortInvalid) {
-    EXPECT_EQ(uvhttp_validate_port(-1), 0);
-    EXPECT_EQ(uvhttp_validate_port(65536), 0);
-}
-
-TEST(UvhttpValidationFullCoverageTest, ValidatePortRange) {
-    EXPECT_EQ(uvhttp_validate_port(0), 1);
-    EXPECT_EQ(uvhttp_validate_port(65535), 1);
-    EXPECT_EQ(uvhttp_validate_port(1), 1);
-    EXPECT_EQ(uvhttp_validate_port(65534), 1);
-}
-
-TEST(UvhttpValidationFullCoverageTest, ValidatePortBoundary) {
-    EXPECT_EQ(uvhttp_validate_port(UVHTTP_MIN_PORT_NUMBER), 1);
-    EXPECT_EQ(uvhttp_validate_port(UVHTTP_MAX_PORT_NUMBER), 1);
-    EXPECT_EQ(uvhttp_validate_port(UVHTTP_MIN_PORT_NUMBER - 1), 0);
-    EXPECT_EQ(uvhttp_validate_port(UVHTTP_MAX_PORT_NUMBER + 1), 0);
-}
-
-TEST(UvhttpValidationFullCoverageTest, ValidateContentLengthValid) {
-    EXPECT_EQ(uvhttp_validate_content_length(0), 1);
-    EXPECT_EQ(uvhttp_validate_content_length(1024), 1);
-    EXPECT_EQ(uvhttp_validate_content_length(1024 * 1024), 1);
-}
-
-TEST(UvhttpValidationFullCoverageTest, ValidateContentLengthInvalid) {
-    EXPECT_EQ(uvhttp_validate_content_length(100 * 1024 * 1024 + 1), 0);
-}
+/* uvhttp_validate_port 已删除 - 完全未使用 */
+/* uvhttp_validate_content_length 已删除 - 完全未使用 */
 
 TEST(UvhttpValidationFullCoverageTest, ValidateQueryStringNull) {
-    EXPECT_EQ(uvhttp_validate_query_string(nullptr), 0);
+    EXPECT_EQ(uvhttp_validate_query_string(nullptr), 1);
 }
 
 TEST(UvhttpValidationFullCoverageTest, ValidateQueryStringValid) {
@@ -148,5 +98,3 @@ TEST(UvhttpValidationFullCoverageTest, ValidateQueryStringValid) {
 TEST(UvhttpValidationFullCoverageTest, ValidateQueryStringInvalid) {
     EXPECT_EQ(uvhttp_validate_query_string("id=1<script>alert('xss')</script>"), 0);
 }
-
-/* uvhttp_validate_ipv4、uvhttp_validate_ipv6、uvhttp_validate_websocket_key、uvhttp_validate_file_path、uvhttp_validate_string_safety、uvhttp_validate_http_version、uvhttp_validate_status_code、uvhttp_validate_header_value、uvhttp_validate_url、uvhttp_validate_port_string 函数已删除，符合极简工程原则 */

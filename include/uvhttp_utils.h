@@ -36,19 +36,12 @@ uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response,
 // 验证 HTTP 状态码有效性
 int uvhttp_is_valid_status_code(int status_code);
 
-// 验证 Content-Type 格式
-int uvhttp_is_valid_content_type(const char* content_type);
+/* uvhttp_is_valid_content_type 已删除 - 完全未使用 */
+/* uvhttp_is_valid_string_length 已删除 - 完全未使用 */
+/* uvhttp_is_valid_ipv4 已删除 - 完全未使用 */
+/* uvhttp_is_valid_ipv6 已删除 - 完全未使用 */
 
-// 验证字符串长度
-int uvhttp_is_valid_string_length(const char* str, size_t max_len);
-
-// 验证 IPv4 地址格式
-int uvhttp_is_valid_ipv4(const char* ip);
-
-// 验证 IPv6 地址格式
-int uvhttp_is_valid_ipv6(const char* ip);
-
-// 验证 IP 地址格式（IPv4 或 IPv6）
+// 验证 IP 地址格式（IPv4 或 IPv6）- 简化版本
 int uvhttp_is_valid_ip_address(const char* ip);
 
 #ifdef __cplusplus
