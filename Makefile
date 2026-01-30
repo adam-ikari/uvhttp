@@ -2,7 +2,7 @@ BUILD_DIR ?= build
 BUILD_TYPE ?= Release
 CMAKE_ARGS = -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON -DBUILD_WITH_TLS=ON
 
-.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild docs-site docs-site-build docs-site-clean docs-site-dev format format-check format-fix format-all format-diff docs docs-clean
+.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild format format-check format-fix format-all format-diff docs docs-clean
 
 all: $(BUILD_DIR)/Makefile
 	@$(MAKE) -C $(BUILD_DIR)
@@ -219,14 +219,8 @@ help:
 	@echo "  make format-diff        - 显示格式化差异"
 	@echo ""
 	@echo "文档生成:"
-	@echo "  make docs         - 生成所有文档（HTML、LaTeX、XML、Markdown）"
+	@echo "  make docs         - 生成所有文档（HTML、LaTeX、XML、Markdown、网站）"
 	@echo "  make docs-clean   - 清理所有文档"
-	@echo ""
-	@echo "文档网站:"
-	@echo "  make docs-site          - 构建文档网站"
-	@echo "  make docs-site-build    - 构建文档网站（开发模式）"
-	@echo "  make docs-site-clean    - 清理文档网站"
-	@echo "  make docs-site-dev      - 启动文档网站开发服务器"
 	@echo ""
 	@echo "运行示例:"
 	@echo "  make run-helloworld     - 运行Hello World示例"
@@ -262,35 +256,18 @@ docs:
 	@python3 scripts/convert_xml_to_markdown.py docs/api/xml docs/api/markdown_from_xml
 	@echo "✅ Markdown 文档已生成！"
 	@echo "  Markdown 文档位置: docs/api/markdown_from_xml/index.md"
+	@echo ""
+	@echo "🌐 构建文档网站..."
+	@cd docs && npm install
+	@cd docs && npm run build
+	@echo "✅ 文档网站构建完成！"
+	@echo "  静态文件位置: docs/.vitepress/dist/"
 
 docs-clean:
 	@echo "🧹 清理 Doxygen 文档..."
 	@rm -rf docs/api/html docs/api/latex docs/api/xml docs/api/markdown_from_xml
 	@echo "✅ Doxygen 文档清理完成！"
-
-# ============================================================================
-# 文档网站
-# ============================================================================
-
-docs-site:
-	@echo "📚 构建文档网站..."
-	@cd docs-site && npm install
-	@cd docs-site && npm run build
-	@echo "✅ 文档网站构建完成！"
-	@echo "  静态文件位置: docs-site/docs/.vitepress/dist/"
-
-docs-site-build:
-	@echo "📚 构建文档网站（开发模式）..."
-	@cd docs-site && npm install
-	@cd docs-site && npm run build
-	@echo "✅ 文档网站构建完成！"
-
-docs-site-clean:
+	@echo ""
 	@echo "🧹 清理文档网站..."
-	@cd docs-site && rm -rf node_modules docs/.vitepress/dist
+	@cd docs && rm -rf node_modules .vitepress/dist
 	@echo "✅ 文档网站清理完成！"
-
-docs-site-dev:
-	@echo "🚀 启动文档网站开发服务器..."
-	@cd docs-site && npm install
-	@cd docs-site && npm run dev
