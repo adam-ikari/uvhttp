@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// 全局熵和 DRBG 上下文（已废弃，使用上下文替代）
+// Global entropy and DRBG context (deprecated, use context instead)
 // static mbedtls_entropy_context g_entropy;
 // static mbedtls_ctr_drbg_context g_ctr_drbg;
 // static int g_tls_initialized = 0;
@@ -31,10 +31,10 @@ struct uvhttp_tls_context {
     uvhttp_tls_stats_t stats;
 };
 
-// 全局初始化状态（已废弃，使用上下文替代）
+// Global initialization state (deprecated, use context instead)
 // static int g_tls_initialized = 0;
 
-// 自定义网络回调函数
+// Custom network callback function
 static int mbedtls_net_send(void* ctx, const unsigned char* buf, size_t len) {
     int fd = *(int*)ctx;
     int ret = send(fd, buf, len, 0);
