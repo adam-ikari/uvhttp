@@ -2,7 +2,7 @@ BUILD_DIR ?= build
 BUILD_TYPE ?= Release
 CMAKE_ARGS = -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON -DBUILD_WITH_TLS=ON
 
-.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild docs-site docs-site-build docs-site-clean docs-site-dev format format-check format-fix format-all format-diff docs docs-clean docs-dev
+.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild docs-site docs-site-build docs-site-clean docs-site-dev format format-check format-fix format-all format-diff docs docs-clean docs-dev docs-markdown docs-markdown-clean
 
 all: $(BUILD_DIR)/Makefile
 	@$(MAKE) -C $(BUILD_DIR)
@@ -222,6 +222,8 @@ help:
 	@echo "  make docs               - 生成 Doxygen 文档"
 	@echo "  make docs-clean         - 清理 Doxygen 文档"
 	@echo "  make docs-dev           - 生成 Doxygen 文档（开发模式）"
+	@echo "  make docs-markdown      - 生成 Markdown 格式文档"
+	@echo "  make docs-markdown-clean- 清理 Markdown 文档"
 	@echo ""
 	@echo "文档网站:"
 	@echo "  make docs-site          - 构建文档网站"
@@ -275,6 +277,22 @@ docs-dev:
 	@echo "✅ Doxygen 文档已生成！"
 	@echo "  HTML 文档位置: docs/api/html/index.html"
 	@echo "  LaTeX 文档位置: docs/api/latex/refman.pdf"
+
+docs-markdown: docs
+	@echo "📝 转换 Doxygen 文档为 Markdown 格式..."
+	@if ! command -v pandoc >/dev/null 2>&1; then \
+		echo "错误: pandoc 未安装。请运行以下命令安装:"; \
+		echo "  sudo apt-get install pandoc"; \
+		exit 1; \
+	fi
+	@./scripts/convert_to_markdown.sh
+	@echo "✅ Markdown 文档已生成！"
+	@echo "  Markdown 文档位置: docs/api/markdown/index.md"
+
+docs-markdown-clean:
+	@echo "🧹 清理 Markdown 文档..."
+	@rm -rf docs/api/markdown
+	@echo "✅ Markdown 文档清理完成！"
 
 # ============================================================================
 # 文档网站
