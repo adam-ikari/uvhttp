@@ -117,21 +117,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc-multilib g++-multilib
       
-      - name: Cache 32-bit dependencies
-        uses: ./.github/actions/cache-deps
-        with:
-          cache-key: push-32bit-${{ github.sha }}
-          build-type: Release
+      - name: Clean previous 64-bit builds
+        run: |
+          rm -rf deps/*/build
+          rm -rf deps/*/build-32bit
       
       - name: Build 32-bit version
         id: build
         run: |
           cmake -B build-32bit \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_FLAGS="-m32" \
-            -DCMAKE_CXX_FLAGS="-m32" \
+            -DCMAKE_C_FLAGS="-m32 -march=i686" \
+            -DCMAKE_CXX_FLAGS="-m32 -march=i686" \
+            -DCMAKE_LD_FLAGS="-m32" \
             -DBUILD_WITH_WEBSOCKET=ON \
-            -DBUILD_WITH_MIMALLOC=ON \
+            -DBUILD_WITH_MIMALLOC=OFF \
             -DBUILD_EXAMPLES=OFF
           cmake --build build-32bit --config Release -j$(nproc)
           echo "build-dir=build-32bit" >> $GITHUB_OUTPUT
