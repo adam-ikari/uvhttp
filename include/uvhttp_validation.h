@@ -24,8 +24,8 @@ extern "C" {
 #endif
 
 /* 危险字符常量 */
-static const char dangerous_path_chars[] = {'<', '>', ':',  '"', '|',
-                                            '?', '*', '\n', '\r'};
+static const char dangerous_path_chars[] = {'<', '>', ':', '"', '|',
+                                            '*', '\n', '\r'};
 static const char dangerous_query_chars[] = {'<', '>', '"', '\'', '\n', '\r'};
 static const char dangerous_header_chars[] = {'\n', '\r'};
 
@@ -56,9 +56,10 @@ static inline int uvhttp_validate_string_length(const char* str, size_t min_len,
  * @param path URL path to validate
  * @return int TRUE if path is safe, FALSE otherwise
  *
- * @note Checks for dangerous characters: < > : " | ? * \n \r
+ * @note Checks for dangerous characters: < > : " | * \n \r
  * @note Path length must be between 1 and UVHTTP_MAX_PATH_SIZE
  * @note NULL path returns FALSE
+ * @note Does NOT check for '?' as it's valid in query strings
  */
 static inline int uvhttp_validate_url_path(const char* path) {
     if (!path)
@@ -104,11 +105,13 @@ static inline int uvhttp_validate_header_name(const char* name) {
  * @note Checks for dangerous characters: \n \r (header injection)
  * @note Value length must be between 0 and UVHTTP_MAX_HEADER_VALUE_SIZE
  * @note NULL value returns FALSE
+ * @note Empty string ("") is considered safe
  */
 static inline int uvhttp_validate_header_value_safe(const char* value) {
     if (!value)
         return FALSE;
-    if (!uvhttp_validate_string_length(value, 0, UVHTTP_MAX_HEADER_VALUE_SIZE))
+    size_t len = strlen(value);
+    if (len > UVHTTP_MAX_HEADER_VALUE_SIZE)
         return FALSE;
     for (size_t i = 0; i < sizeof(dangerous_header_chars); i++) {
         if (strchr(value, dangerous_header_chars[i]))
