@@ -71,8 +71,7 @@ jobs:
       
       - name: Run release tests
         run: |
-          cd build
-          ctest --output-on-failure -j$(nproc) --timeout 120
+          ./test_runner.sh
       
       - name: Upload test logs
         if: always()

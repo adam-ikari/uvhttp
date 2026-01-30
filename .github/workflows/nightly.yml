@@ -35,11 +35,7 @@ jobs:
       # Run all tests
       - name: Run fast tests
         run: |
-          cd build && ctest --output-on-failure -j$(nproc) --timeout 60
-      
-      - name: Run slow tests
-        run: |
-          cd build && ctest --output-on-failure -j$(nproc) --timeout 180 -L slow
+          ./test_runner.sh
       
       # Build with coverage
       - name: Build with coverage
@@ -48,7 +44,7 @@ jobs:
       
       - name: Run coverage tests
         run: |
-          cd build && ctest --output-on-failure -j$(nproc) --timeout 1800
+          ./test_runner.sh
       
       - name: Generate coverage report
         run: |
@@ -88,5 +84,4 @@ jobs:
       
       - name: Run memory leak tests
         run: |
-          cd build
-          ctest --output-on-failure -j$(nproc) --timeout 300
+          ./test_runner.sh

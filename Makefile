@@ -59,7 +59,7 @@ clean-performance:
 
 test: all
 	@echo "🧪 运行测试..."
-	@cd $(BUILD_DIR) && ctest --output-on-failure
+	@./test_runner.sh
 
 coverage:
 	@if ! command -v lcov >/dev/null 2>&1; then \
