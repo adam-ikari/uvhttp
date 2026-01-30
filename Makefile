@@ -90,7 +90,7 @@ coverage-clean:
 	@rm -rf $(BUILD_DIR)/coverage_html 2>/dev/null || true
 
 cppcheck:
-	@cppcheck --enable=warning --std=c11 src/ include/
+	@cppcheck --enable=warning --std=c11 --xml-version=2 --xml src/ include/ 2> cppcheck-results.xml || true
 
 examples: all
 	@$(MAKE) -C $(BUILD_DIR) hello_world simple_routing method_routing json_api_demo
