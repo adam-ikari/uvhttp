@@ -63,4 +63,5 @@ docs/.vitepress/cache/
 docs/api/html/
 docs/api/latex/
 docs/api/markdown/
+docs/api/markdown_from_xml/
 docs/api/xml/
