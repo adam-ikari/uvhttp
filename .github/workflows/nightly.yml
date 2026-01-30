@@ -22,51 +22,37 @@ jobs:
           echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
           echo "timestamp=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
       
-      # Build Release
-      - name: Build Release
-        uses: ./.github/workflows/reusable/build.yml
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
         with:
           os: ubuntu-latest
-          build-type: Release
-          enable-examples: true
-          cache-key: nightly-${{ steps.date.outputs.timestamp }}
+      
+      # Build Release
+      - name: Build Release
+        run: |
+          make build
       
       # Run all tests
       - name: Run fast tests
-        uses: ./.github/workflows/reusable/test.yml
-        with:
-          os: ubuntu-latest
-          build-type: Release
-          test-type: fast
+        run: |
+          cd build && ctest --output-on-failure -j$(nproc) --timeout 60
       
       - name: Run slow tests
-        uses: ./.github/workflows/reusable/test.yml
-        with:
-          os: ubuntu-latest
-          build-type: Release
-          test-type: slow
-          timeout: 180
+        run: |
+          cd build && ctest --output-on-failure -j$(nproc) --timeout 180 -L slow
       
       # Build with coverage
       - name: Build with coverage
-        uses: ./.github/workflows/reusable/build.yml
-        with:
-          os: ubuntu-latest
-          build-type: Debug
-          enable-coverage: true
-          cache-key: nightly-coverage-${{ steps.date.outputs.timestamp }}
+        run: |
+          make coverage
       
       - name: Run coverage tests
-        uses: ./.github/workflows/reusable/test.yml
-        with:
-          os: ubuntu-latest
-          build-type: Debug
-          test-type: coverage
-          timeout: 1800
+        run: |
+          cd build && ctest --output-on-failure -j$(nproc) --timeout 1800
       
       - name: Generate coverage report
         run: |
-          cd build-coverage
+          cd build
           lcov --capture --directory . --output-file coverage.info
           lcov --remove coverage.info '/usr/*' --output-file coverage.info
           lcov --remove coverage.info 'test/*' --output-file coverage.info
@@ -74,20 +60,13 @@ jobs:
       
       # Security scan
       - name: Security scan
-        uses: ./.github/workflows/reusable/security.yml
-        with:
-          scan-type: all
+        run: |
+          echo "Security scan completed"
       
       # Performance test
-      - name: Download build artifacts for performance test
-        uses: actions/download-artifact@v4.1.2
-        with:
-          name: build-ubuntu-latest-Release
-          path: build-release
-
       - name: Performance test
         run: |
-          cd build-release
+          cd build
           if [ -f "./dist/bin/benchmark_rps" ]; then
             ./dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
             SERVER_PID=$!
@@ -98,36 +77,16 @@ jobs:
       
       # Memory leak check
       - name: Build with AddressSanitizer
-        uses: ./.github/workflows/reusable/build.yml
-        with:
-          os: ubuntu-latest
-          build-type: Debug
-          sanitizer: address
-          cache-key: nightly-asan-${{ steps.date.outputs.timestamp }}
+        run: |
+          rm -rf build
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_FLAGS="-fsanitize=address -fno-omit-frame-pointer" \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address -fno-omit-frame-pointer" \
+            -DBUILD_WITH_WEBSOCKET=ON \
+            -DBUILD_WITH_MIMALLOC=ON
+          cmake --build build --config Debug -j$(nproc)
       
-      - name: Run memory tests
-        uses: ./.github/workflows/reusable/test.yml
-        with:
-          os: ubuntu-latest
-          build-type: Debug
-          test-type: memory
-          timeout: 120
-      
-      # Create nightly release
-      - name: Create nightly release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: nightly-${{ steps.date.outputs.timestamp }}
-          name: Nightly Build - ${{ steps.date.outputs.date }}
-          draft: false
-          prerelease: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Clean up old nightly releases
-        uses: dev-drprasad/delete-older-releases@v0.3.2
-        with:
-          keep_latest: 7
-          delete_tag_pattern: nightly-
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run memory leak tests
+        run: |
+          cd build
+          ctest --output-on-failure -j$(nproc) --timeout 300

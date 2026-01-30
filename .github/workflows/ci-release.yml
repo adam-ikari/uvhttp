@@ -7,9 +7,6 @@ on:
       - 'v*'
   workflow_dispatch:
 
-env:
-  BUILD_TYPE: Release
-
 jobs:
   # ========== 阶段 1: Linux Release 构建 ==========
   
@@ -42,15 +39,9 @@ jobs:
           cache-key: release-${{ steps.get_version.outputs.version }}
           build-type: Release
       
-      - name: Configure CMake
+      - name: Build project
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_WITH_WEBSOCKET=ON \
-            -DBUILD_WITH_MIMALLOC=ON
-      
-      - name: Build
-        run: |
-          cmake --build build --config Release -j$(nproc)
+          make build
       
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4.3.1
@@ -110,153 +101,28 @@ jobs:
         uses: actions/download-artifact@v4.1.2
         with:
           name: build-ubuntu-release-${{ needs.ubuntu-release-build.outputs.version }}
-          path: packages/
+          path: build/
       
-      - name: Generate release notes
-        id: release_notes
+      - name: Create release archive
         run: |
           VERSION=${{ needs.ubuntu-release-build.outputs.version }}
+          mkdir -p release
           
-          cat > release-notes.md << 'EOF'
-          # UVHTTP $VERSION Release
+          # 复制库文件
+          cp -r build/dist/lib release/
           
-          ## Changes
+          # 复制头文件
+          cp -r include release/
           
-          See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for detailed changes.
-          
-          ## Installation
-          
-          ### Linux
-          ```bash
-          # Build from source
-          git clone https://github.com/adam-ikari/uvhttp.git
-          cd uvhttp
-          mkdir build && cd build
-          cmake -DCMAKE_BUILD_TYPE=Release ..
-          cmake --build . -j$(nproc)
-          ```
-          
-          ## Verification
-          
-          Linux platform has been tested and verified.
-          
-          ## Performance
-          
-          Performance benchmarks are available in the artifacts.
-          
-          ## Documentation
-          
-          Documentation is available at https://adam-ikari.github.io/uvhttp/
-          EOF
-          
-          echo "notes_path=release-notes.md" >> $GITHUB_OUTPUT
+          # 创建归档
+          tar -czf uvhttp-${VERSION}-linux-x86_64.tar.gz -C release .
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref_name }}
-          name: UVHTTP ${{ needs.ubuntu-release-build.outputs.version }}
-          body_path: ${{ steps.release_notes.outputs.notes_path }}
+          files: uvhttp-${{ needs.ubuntu-release-build.outputs.version }}-linux-x86_64.tar.gz
+          generate_release_notes: true
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
-  # ========== 阶段 4: 更新性能基线 ==========
-  
-  update-baseline:
-    needs: [create-release]
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.1
-        with:
-          submodules: recursive
-          token: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Download release artifacts
-        uses: actions/download-artifact@v4.1.2
-        with:
-          name: build-ubuntu-release-${{ needs.ubuntu-release-build.outputs.version }}
-          path: build/
-      
-      - name: Run performance benchmark
-        run: |
-          chmod +x build/dist/bin/benchmark_rps
-          
-          build/dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
-          SERVER_PID=$!
-          sleep 3
-          
-          wrk -t4 -c100 -d10s http://localhost:18081/ > performance.log
-          
-          kill $SERVER_PID 2>/dev/null || true
-      
-      - name: Update baseline in codebase
-        run: |
-          VERSION=${{ needs.ubuntu-release-build.outputs.version }}
-          
-          # 解析性能结果
-          RPS=$(grep "Requests/sec:" performance.log | awk '{print $2}')
-          
-          # 创建基线文件
-          mkdir -p docs/performance
-          cat > docs/performance/baseline-$VERSION.json << EOF
-          {
-            "version": "$VERSION",
-            "date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "commit": "${{ github.sha }}",
-            "baseline": {
-              "rps": $RPS,
-              "platform": "ubuntu-latest"
-            }
-          }
-          EOF
-          
-          # 更新当前基线
-          cp docs/performance/baseline-$VERSION.json docs/performance/baseline.json
-          
-          # 创建新分支用于基线更新
-          BRANCH_NAME="update-baseline-v${VERSION}"
-          git checkout -b $BRANCH_NAME
-          
-          # 提交基线更新
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add docs/performance/
-          git commit -m "chore: 更新性能基线到 v$VERSION [skip ci]"
-          
-          # 推送分支
-          git push origin $BRANCH_NAME
-          
-          # 创建 PR（添加错误处理）
-          if gh pr create \
-            --title "Update performance baseline to v$VERSION" \
-            --body "Automated baseline update for release v$VERSION
-
-          ### Performance Metrics
-          - **RPS**: $RPS
-          - **Platform**: ubuntu-latest
-          - **Date**: $(date -u +%Y-%m-%dT%H:%M:%SZ)
-
-          This PR was automatically created by the ci-release workflow." \
-            --base main \
-            --head $BRANCH_NAME \
-            --label "automated" \
-            --label "performance" \
-            --label "skip-ci"; then
-            echo "✅ PR created successfully"
-          else
-            # PR 可能已存在，检查并更新
-            if ! gh pr view $BRANCH_NAME --json title --jq '.title' > /dev/null 2>&1; then
-              echo "⚠️ Failed to create PR (may already exist or permission issue)"
-              echo "Branch $BRANCH_NAME was pushed, please create PR manually if needed"
-            else
-              echo "✅ PR already exists"
-            fi
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

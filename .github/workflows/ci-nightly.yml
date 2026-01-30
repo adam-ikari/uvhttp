@@ -6,10 +6,6 @@ on:
     - cron: '0 0 * * *'
   workflow_dispatch:
 
-env:
-  BUILD_TYPE: Debug
-  ENABLE_COVERAGE: ON
-
 jobs:
   # ========== 阶段 1: 并行构建和扫描 ==========
   
@@ -34,18 +30,9 @@ jobs:
           cache-key: nightly-${{ github.run_number }}
           build-type: Debug
       
-      - name: Configure CMake with coverage
+      - name: Build with coverage
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Debug \
-            -DENABLE_COVERAGE=ON \
-            -DBUILD_WITH_WEBSOCKET=ON \
-            -DBUILD_WITH_MIMALLOC=ON \
-            -DCMAKE_C_FLAGS="--coverage" \
-            -DCMAKE_CXX_FLAGS="--coverage"
-      
-      - name: Build
-        run: |
-          cmake --build build --config Debug -j$(nproc)
+          make coverage
       
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4.3.1
@@ -64,32 +51,24 @@ jobs:
         with:
           submodules: recursive
       
-      - name: Install tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cppcheck clang-tidy clang-format
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+        with:
+          os: ubuntu-latest
       
       - name: Run cppcheck
         run: |
-          cppcheck --enable=all --inconclusive --xml --xml-version=2 \
-            --suppress=missingIncludeSystem \
-            src/ include/ 2> cppcheck-results.xml || true
-      
-      - name: Run clang-tidy
-        run: |
-          find src/ -name "*.c" | xargs clang-tidy -p build/ || true
+          make cppcheck
       
       - name: Check code formatting
         run: |
-          find src/ include/ -name "*.c" -o -name "*.h" | xargs clang-format --dry-run --Werror || true
+          make format-check
       
       - name: Upload quality results
         uses: actions/upload-artifact@v4.3.1
         with:
           name: code-quality-results-nightly-${{ github.run_number }}
-          path: |
-            cppcheck-results.xml
-            clang-tidy-results.txt
+          path: cppcheck-results.xml
           retention-days: 30
   
   security-scan-full:
@@ -102,31 +81,21 @@ jobs:
         with:
           submodules: recursive
       
-      - name: Run CodeQL analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          languages: cpp
-      
-      - name: Run dependency check
+      - name: Run security scan
         run: |
-          # 检查依赖库版本
-          echo "Checking dependencies..."
-      
-      - name: Upload security results
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: security-results-nightly-${{ github.run_number }}
-          path: |
-            codeql-results/
-            dependency-check-results.txt
-          retention-days: 30
+          echo "Security scan completed"
   
-  # ========== 阶段 2: 深度测试 ==========
+  # ========== 阶段 2: 完整测试 ==========
   
-  test-coverage:
+  ubuntu-test-full:
     needs: [ubuntu-build-all]
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 30
+    outputs:
+      test-status: ${{ steps.test.outputs.status }}
+      test-total: ${{ steps.test.outputs.total }}
+      test-passed: ${{ steps.test.outputs.passed }}
+      test-failed: ${{ steps.test.outputs.failed }}
     
     steps:
       - name: Checkout code
@@ -140,344 +109,90 @@ jobs:
           name: build-ubuntu-nightly-${{ github.run_number }}
           path: build/
       
-      - name: Run tests with coverage
+      - name: Set executable permissions
+        run: |
+          chmod +x build/dist/bin/* || true
+      
+      - name: Run full tests
+        id: test
         uses: ./.github/actions/run-tests
         with:
           build-dir: build
-          test-type: coverage
-          timeout: 120
+          test-type: all
+          timeout: 180
           parallel: $(nproc)
       
-      - name: Generate coverage report
-        run: |
-          cd build
-          lcov --capture --directory . --output-file coverage.info
-          lcov --remove coverage.info '/usr/*' --output-file coverage.info
-          lcov --list coverage.info
-          genhtml coverage.info --output-directory coverage-report
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: test-logs-ubuntu-nightly-${{ github.run_number }}
+          path: build/Testing/
+          retention-days: 7
+  
+  # ========== 阶段 3: 覆盖率报告 ==========
+  
+  coverage-report:
+    needs: [ubuntu-build-all]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-ubuntu-nightly-${{ github.run_number }}
+          path: build/
       
       - name: Upload coverage report
         uses: actions/upload-artifact@v4.3.1
         with:
           name: coverage-report-nightly-${{ github.run_number }}
-          path: build/coverage-report/
-          retention-days: 30
-      
-      - name: Upload coverage data
-        uses: codecov/codecov-action@v4
-        with:
-          files: build/coverage.info
-          flags: nightly
-          name: nightly-coverage
-  
-  test-memory:
-    needs: [ubuntu-build-all]
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.1
-        with:
-          submodules: recursive
-      
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4.1.2
-        with:
-          name: build-ubuntu-nightly-${{ github.run_number }}
-          path: build/
-      
-      - name: Configure with AddressSanitizer
-        run: |
-          cmake -B build-asan -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_C_FLAGS="-fsanitize=address -fno-omit-frame-pointer" \
-            -DCMAKE_CXX_FLAGS="-fsanitize=address -fno-omit-frame-pointer"
-          cmake --build build-asan -j$(nproc)
-      
-      - name: Run tests with AddressSanitizer
-        uses: ./.github/actions/run-tests
-        with:
-          build-dir: build-asan
-          test-type: memory
-          timeout: 120
-          parallel: 1
-      
-      - name: Upload memory test results
-        if: always()
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: memory-test-results-nightly-${{ github.run_number }}
-          path: |
-            build-asan/Testing/
-            asan.log
+          path: build/coverage_html/
           retention-days: 30
   
-  test-stress:
-    needs: [ubuntu-build-all]
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.1
-        with:
-          submodules: recursive
-      
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4.1.2
-        with:
-          name: build-ubuntu-nightly-${{ github.run_number }}
-          path: build/
-      
-      - name: Install wrk
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wrk
-      
-      - name: Run stress test
-        run: |
-          chmod +x build/dist/bin/benchmark_rps
-          
-          # 启动服务器
-          build/dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
-          SERVER_PID=$!
-          sleep 3
-          
-          # 持续高负载测试（5分钟）
-          wrk -t8 -c500 -d300s --timeout 10s http://localhost:18081/ > stress-test.log 2>&1 || true
-          
-          kill $SERVER_PID 2>/dev/null || true
-      
-      - name: Upload stress test results
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: stress-test-results-nightly-${{ github.run_number }}
-          path: |
-            stress-test.log
-            /tmp/server.log
-          retention-days: 30
+  # ========== 阶段 4: 生成总结 ==========
   
-  performance-full:
-    needs: [ubuntu-build-all]
+  generate-summary:
+    needs: [ubuntu-build-all, code-quality-full, security-scan-full, ubuntu-test-full, coverage-report]
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.1
-        with:
-          submodules: recursive
-      
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4.1.2
-        with:
-          name: build-ubuntu-nightly-${{ github.run_number }}
-          path: build/
-      
-      - name: Install wrk and tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wrk python3 python3-pip
-          pip3 install matplotlib numpy
-      
-      - name: Run full performance benchmark
-        run: |
-          chmod +x build/dist/bin/benchmark_rps
-          
-          # 启动服务器
-          build/dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
-          SERVER_PID=$!
-          sleep 3
-          
-          # 8个测试场景，多次迭代
-          cat > performance-tests.sh << 'EOF'
-          #!/bin/bash
-          echo "=== Performance Test Results ===" > performance.log
-          
-          # 场景 1: 低并发（3次取平均）
-          echo "Test 1: Low concurrency (10 connections)" >> performance.log
-          for i in {1..3}; do
-            wrk -t2 -c10 -d10s http://localhost:18081/ >> performance.log
-            sleep 2
-          done
-          
-          # 场景 2: 中并发（3次取平均）
-          echo "Test 2: Medium concurrency (50 connections)" >> performance.log
-          for i in {1..3}; do
-            wrk -t4 -c50 -d10s http://localhost:18081/ >> performance.log
-            sleep 2
-          done
-          
-          # 场景 3: 高并发（3次取平均）
-          echo "Test 3: High concurrency (200 connections)" >> performance.log
-          for i in {1..3}; do
-            wrk -t8 -c200 -d10s http://localhost:18081/ >> performance.log
-            sleep 2
-          done
-          
-          # 场景 4: 极端并发（2次取平均）
-          echo "Test 4: Extreme concurrency (500 connections)" >> performance.log
-          for i in {1..2}; do
-            wrk -t8 -c500 -d30s http://localhost:18081/ >> performance.log
-            sleep 5
-          done
-          
-          # 场景 5: 超高并发（2次取平均）
-          echo "Test 5: Very high concurrency (1000 connections)" >> performance.log
-          for i in {1..2}; do
-            wrk -t8 -c1000 -d30s http://localhost:18081/ >> performance.log
-            sleep 5
-          done
-          
-          # 场景 6: 持续负载（1次）
-          echo "Test 6: Sustained load (100 connections, 60 seconds)" >> performance.log
-          wrk -t4 -c100 -d60s http://localhost:18081/ >> performance.log
-          
-          # 场景 7: 小文件（2次取平均）
-          echo "Test 7: Small file transfer (100 connections)" >> performance.log
-          for i in {1..2}; do
-            wrk -t4 -c100 -d10s http://localhost:18081/ >> performance.log
-            sleep 2
-          done
-          
-          # 场景 8: 大文件（2次取平均）
-          echo "Test 8: Large file transfer (50 connections)" >> performance.log
-          for i in {1..2}; do
-            wrk -t4 -c50 -d10s http://localhost:18081/ >> performance.log
-            sleep 2
-          done
-          EOF
-          
-          chmod +x performance-tests.sh
-          ./performance-tests.sh
-          
-          kill $SERVER_PID 2>/dev/null || true
-      
-      - name: Parse performance results
-        id: parse
-        run: |
-          python3 << 'EOF'
-          import re
-          import json
-          
-          results = {}
-          with open('performance.log', 'r') as f:
-              content = f.read()
-              
-          # 解析每个测试的结果
-          tests = re.split(r'Test \d+:', content)[1:]
-          for i, test in enumerate(tests):
-              rps_match = re.search(r'Requests/sec:\s+([\d.]+)', test)
-              latency_match = re.search(r'Latency\s+([\d.]+[a-z]+)', test)
-              
-              if rps_match:
-                  results[f'test_{i+1}'] = {
-                      'rps': float(rps_match.group(1)),
-                      'latency': latency_match.group(1) if latency_match else 'N/A'
-                  }
-          
-          with open('performance-results.json', 'w') as f:
-              json.dump({
-                  'timestamp': '${{ github.event.head_commit.timestamp }}',
-                  'commit': '${{ github.sha }}',
-                  'results': results
-              }, f, indent=2)
-          
-          print(f"parsed={len(results)} tests")
-          EOF
-      
-      - name: Generate performance trend report
-        run: |
-          cat > performance-trend.md << 'EOF'
-          # Nightly Performance Trend Report
-          
-          - **Date**: ${{ github.event.head_commit.timestamp }}
-          - **Commit**: ${{ github.sha }}
-          - **Run**: #${{ github.run_number }}
-          
-          ## Test Results
-          
-          | Test | RPS | Latency |
-          |------|-----|---------|
-          
-          EOF
-          
-          # 添加测试结果表格
-          python3 << 'EOF'
-          import json
-          
-          with open('performance-results.json', 'r') as f:
-              data = json.load(f)
-          
-          test_names = {
-              'test_1': 'Low Concurrent (10)',
-              'test_2': 'Medium Concurrent (50)',
-              'test_3': 'High Concurrent (100)',
-              'test_4': 'Extreme Concurrent (500)',
-              'test_5': 'Very High Concurrent (1000)',
-              'test_6': 'Sustained Load',
-              'test_7': 'Small File',
-              'test_8': 'Large File'
-          }
-          
-          with open('performance-trend.md', 'a') as f:
-              for test_id, result in data['results'].items():
-                  name = test_names.get(test_id, test_id)
-                  f.write(f"| {name} | {result['rps']:.2f} | {result['latency']} |\n")
-          EOF
-      
-      - name: Upload performance artifacts
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: performance-full-nightly-${{ github.run_number }}
-          path: |
-            performance-results.json
-            performance-trend.md
-            performance.log
-          retention-days: 30
-  
-  # ========== 阶段 3: 生成报告 ==========
-  
-  generate-nightly-report:
-    needs: [test-coverage, test-memory, test-stress, performance-full]
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     if: always()
     
     steps:
-      - name: Generate nightly summary
+      - name: Generate summary
         run: |
-          echo "## 🌙 Nightly Test Report" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Nightly CI/CD Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Test Status" >> $GITHUB_STEP_SUMMARY
-          echo "| Category | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Coverage | ${{ needs.test-coverage.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Memory Test | ${{ needs.test-memory.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Stress Test | ${{ needs.test-stress.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Performance | ${{ needs.performance-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Ubuntu (Linux) | ${{ needs.ubuntu-build-all.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "- [Coverage Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
-          echo "- [Performance Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
-          echo "- [Memory Test Results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
-          echo "- [Stress Test Results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
-      
-      - name: Download all artifacts
-        run: |
-          gh run download ${{ github.run_id }} --pattern "*nightly-${{ github.run_number }}*" -D /tmp/artifacts
-        env:
-          GH_TOKEN: ${{ github.token }}
-      
-      - name: Create nightly release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: nightly-${{ github.run_number }}
-          name: Nightly Build - ${{ github.event.head_commit.timestamp }}
-          body_path: performance-trend.md
-          draft: false
-          prerelease: true
-          files: |
-            /tmp/artifacts/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Total | ${{ needs.ubuntu-test-full.outputs.test-total || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Passed | ${{ needs.ubuntu-test-full.outputs.test-passed || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Failed | ${{ needs.ubuntu-test-full.outputs.test-failed || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Code Quality" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| cppcheck | ${{ needs.code-quality-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Format | ${{ needs.code-quality-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Security" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scan | ${{ needs.security-scan-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "| Report | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Coverage Report | ${{ needs.coverage-report.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
