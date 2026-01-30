@@ -90,9 +90,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **零开销抽象**: 编译期宏实现，Release 模式下完全零开销
 - **内存分配器**: 性能与系统分配器相当
 - **RPS 性能测试**:
-  - 4线程100连接：22,307 RPS
-  - 2线程50连接：23,070 RPS
-  - 8线程200连接：21,707 RPS
+  - 4线程10连接：20,432 RPS（峰值）
+  - 4线程50连接：19,840 RPS
+  - 4线程100连接：19,776 RPS
+  - 4线程500连接：19,850 RPS
 
 ### Code Reduction
 - **总代码减少**: 23,805 行代码（减少 88%）
@@ -203,7 +204,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Testing
 - **测试通过**: 所有测试通过（34/34）
-- **性能测试**: RPS 基准测试通过（峰值 23,226 RPS）
+- **性能测试**: RPS 基准测试通过（峰值 20,432 RPS）
 
 ## [2.0.0] - 2026-01-24
 

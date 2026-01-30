@@ -442,12 +442,14 @@ static int on_message_complete(llhttp_t* parser) {
             uvhttp_result_t result = uvhttp_static_handle_request(
                 (uvhttp_static_context_t*)conn->server->router->static_context,
                 conn->request, conn->response);
-            
+
             if (result != UVHTTP_OK) {
                 uvhttp_response_set_status(conn->response, 404);
-                uvhttp_response_set_header(conn->response, HTTP_HEADER_CONTENT_TYPE,
+                uvhttp_response_set_header(conn->response,
+                                           HTTP_HEADER_CONTENT_TYPE,
                                            HTTP_CONTENT_TYPE_TEXT_PLAIN);
-                uvhttp_response_set_body(conn->response, HTTP_RESPONSE_NOT_FOUND,
+                uvhttp_response_set_body(conn->response,
+                                         HTTP_RESPONSE_NOT_FOUND,
                                          strlen(HTTP_RESPONSE_NOT_FOUND));
                 uvhttp_response_send(conn->response);
             }

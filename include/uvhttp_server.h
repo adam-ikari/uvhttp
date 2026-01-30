@@ -86,63 +86,65 @@ typedef void (*uvhttp_timeout_callback_t)(uvhttp_server_t* server,
 struct uvhttp_server {
     /* ========== 缓存行1（0-63字节）：热路径字段 - 最频繁访问 ========== */
     /* 在 on_connection、连接管理中频繁访问 */
-    int is_listening;                   /* 4 字节 - 是否正在监听 */
-    int owns_loop;                      /* 4 字节 - 是否拥有循环 */
-    int _padding1[2];                   /* 8 字节 - 填充到16字节 */
-    size_t active_connections;          /* 8 字节 - 活跃连接数 */
-    size_t max_connections;             /* 8 字节 - 最大连接数 */
-    size_t max_message_size;            /* 8 字节 - 最大消息大小 */
-    uvhttp_request_handler_t handler;   /* 8 字节 - 请求处理器 */
+    int is_listening;                 /* 4 字节 - 是否正在监听 */
+    int owns_loop;                    /* 4 字节 - 是否拥有循环 */
+    int _padding1[2];                 /* 8 字节 - 填充到16字节 */
+    size_t active_connections;        /* 8 字节 - 活跃连接数 */
+    size_t max_connections;           /* 8 字节 - 最大连接数 */
+    size_t max_message_size;          /* 8 字节 - 最大消息大小 */
+    uvhttp_request_handler_t handler; /* 8 字节 - 请求处理器 */
     uvhttp_timeout_callback_t timeout_callback; /* 8 字节 - 超时统计回调 */
-    void* timeout_callback_user_data;   /* 8 字节 - 回调用户数据 */
+    void* timeout_callback_user_data; /* 8 字节 - 回调用户数据 */
     /* 缓存行1总计：64字节 */
 
     /* ========== 缓存行2（64-127字节）：核心指针字段 - 次频繁访问 ========== */
     /* 在服务器初始化、请求路由中频繁访问 */
-    uv_loop_t* loop;                    /* 8 字节 - 事件循环 */
-    uvhttp_router_t* router;            /* 8 字节 - 路由器 */
-    uvhttp_config_t* config;            /* 8 字节 - 配置 */
-    struct uvhttp_context* context;     /* 8 字节 - 应用上下文 */
-    void* user_data;                    /* 8 字节 - 应用数据 */
-#if UVHTTP_FEATURE_TLS
-    uvhttp_tls_context_t* tls_ctx;      /* 8 字节 - TLS 上下文 */
-    int tls_enabled;                    /* 4 字节 - TLS 是否启用 */
-    int _padding2[3];                   /* 12字节 - 填充到16字节 */
-#else
-    int _padding2[4];                   /* 16字节 - 填充到64字节 */
-#endif
+    uv_loop_t* loop;                /* 8 字节 - 事件循环 */
+    uvhttp_router_t* router;        /* 8 字节 - 路由器 */
+    uvhttp_config_t* config;        /* 8 字节 - 配置 */
+    struct uvhttp_context* context; /* 8 字节 - 应用上下文 */
+    void* user_data;                /* 8 字节 - 应用数据 */
+#    if UVHTTP_FEATURE_TLS
+    uvhttp_tls_context_t* tls_ctx; /* 8 字节 - TLS 上下文 */
+    int tls_enabled;               /* 4 字节 - TLS 是否启用 */
+    int _padding2[3];              /* 12字节 - 填充到16字节 */
+#    else
+    int _padding2[4];  /* 16字节 - 填充到64字节 */
+#    endif
     /* 缓存行2总计：约64字节（取决于 TLS 是否启用） */
 
     /* ========== 缓存行3（128-191字节）：libuv 句柄 ========== */
     /* libuv 内部结构体，大小固定 */
-    uv_tcp_t tcp_handle;                 /* 约40-48字节 */
-    int _padding3[3];                   /* 12字节 - 填充到64字节 */
+    uv_tcp_t tcp_handle; /* 约40-48字节 */
+    int _padding3[3];    /* 12字节 - 填充到64字节 */
     /* 缓存行3总计：约64字节 */
 
     /* ========== 缓存行4（192-255字节）：WebSocket 相关 ========== */
-#if UVHTTP_FEATURE_WEBSOCKET
-    void* ws_routes;                    /* 8 字节 - WebSocket 路由表（已废弃） */
-    ws_connection_manager_t* ws_connection_manager; /* 8 字节 - WebSocket 连接管理器 */
-    int _padding4[12];                  /* 48字节 - 填充到64字节 */
-#else
-    int _padding4[16];                  /* 64字节 - 填充到64字节 */
-#endif
+#    if UVHTTP_FEATURE_WEBSOCKET
+    void* ws_routes; /* 8 字节 - WebSocket 路由表（已废弃） */
+    ws_connection_manager_t*
+        ws_connection_manager; /* 8 字节 - WebSocket 连接管理器 */
+    int _padding4[12];         /* 48字节 - 填充到64字节 */
+#    else
+    int _padding4[16]; /* 64字节 - 填充到64字节 */
+#    endif
     /* 缓存行4总计：64字节 */
 
     /* ========== 缓存行5-6（256-383字节）：限流功能 ========== */
-#if UVHTTP_FEATURE_RATE_LIMIT
-    int rate_limit_enabled;             /* 4 字节 - 限流是否启用 */
-    int rate_limit_max_requests;        /* 4 字节 - 最大请求数 */
-    int rate_limit_window_seconds;      /* 4 字节 - 时间窗口（秒） */
-    int rate_limit_request_count;       /* 4 字节 - 当前请求数 */
+#    if UVHTTP_FEATURE_RATE_LIMIT
+    int rate_limit_enabled;        /* 4 字节 - 限流是否启用 */
+    int rate_limit_max_requests;   /* 4 字节 - 最大请求数 */
+    int rate_limit_window_seconds; /* 4 字节 - 时间窗口（秒） */
+    int rate_limit_request_count;  /* 4 字节 - 当前请求数 */
     uint64_t rate_limit_window_start_time; /* 8 字节 - 窗口开始时间 */
-    void** rate_limit_whitelist;        /* 8 字节 - 白名单数组 */
-    size_t rate_limit_whitelist_count;  /* 8 字节 - 白名单数量 */
-    struct whitelist_item* rate_limit_whitelist_hash; /* 8 字节 - 白名单哈希表 */
-    int _padding5[8];                   /* 32字节 - 填充到64字节 */
-#else
-    int _padding5[16];                  /* 64字节 - 填充到64字节 */
-#endif
+    void** rate_limit_whitelist;           /* 8 字节 - 白名单数组 */
+    size_t rate_limit_whitelist_count;     /* 8 字节 - 白名单数量 */
+    struct whitelist_item*
+        rate_limit_whitelist_hash; /* 8 字节 - 白名单哈希表 */
+    int _padding5[8];              /* 32字节 - 填充到64字节 */
+#    else
+    int _padding5[16]; /* 64字节 - 填充到64字节 */
+#    endif
     /* 缓存行5总计：64字节 */
 };
 

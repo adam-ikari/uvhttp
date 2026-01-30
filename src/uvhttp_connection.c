@@ -224,7 +224,7 @@ uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     conn->parsing_complete = 0;
     conn->content_length = 0;
     conn->body_received = 0;
-    conn->keepalive = 1;         /* 继续保持连接 */
+    conn->keepalive = 1;        /* 继续保持连接 */
     conn->chunked_encoding = 0; /* 重置分块传输编码标志 */
     conn->current_header_is_important = 0;
     conn->parsing_header_field = 0;
@@ -744,8 +744,9 @@ uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
         return UVHTTP_ERROR_IO_ERROR;
     }
 
-/* 创建WebSocket连接对象 */
-    uvhttp_ws_connection_t* ws_conn = uvhttp_ws_connection_create(fd, NULL, 1, conn->server->config);
+    /* 创建WebSocket连接对象 */
+    uvhttp_ws_connection_t* ws_conn =
+        uvhttp_ws_connection_create(fd, NULL, 1, conn->server->config);
     if (!ws_conn) {
         UVHTTP_LOG_ERROR("Failed to create WebSocket connection object\n");
         return UVHTTP_ERROR_IO_ERROR;

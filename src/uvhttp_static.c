@@ -571,8 +571,9 @@ uvhttp_result_t uvhttp_static_set_response_headers(void* response,
     }
 
     /* 设置Cache-Control */
-    uvhttp_response_set_header(response, "Cache-Control",
-                               "public, max-age=" UVHTTP_STRINGIFY(UVHTTP_CACHE_DEFAULT_TTL));
+    uvhttp_response_set_header(
+        response, "Cache-Control",
+        "public, max-age=" UVHTTP_STRINGIFY(UVHTTP_CACHE_DEFAULT_TTL));
 
     return UVHTTP_OK;
 }
@@ -630,12 +631,12 @@ uvhttp_error_t uvhttp_static_create(const uvhttp_static_config_t* config,
     memcpy(&ctx->config, config, sizeof(uvhttp_static_config_t));
 
     /* 创建LRU缓存 */
-    uvhttp_error_t result =
-        uvhttp_lru_cache_create(config->max_cache_size, /* 最大内存使用量 */
-                                UVHTTP_CACHE_DEFAULT_MAX_ENTRIES, /* 最大条目数 */
-                                config->cache_ttl,      /* 缓存TTL */
-                                &ctx->cache             /* 输出参数 */
-        );
+    uvhttp_error_t result = uvhttp_lru_cache_create(
+        config->max_cache_size,           /* 最大内存使用量 */
+        UVHTTP_CACHE_DEFAULT_MAX_ENTRIES, /* 最大条目数 */
+        config->cache_ttl,                /* 缓存TTL */
+        &ctx->cache                       /* 输出参数 */
+    );
 
     if (result != UVHTTP_OK) {
         UVHTTP_LOG_ERROR("Failed to create LRU cache: %s",
@@ -1362,14 +1363,14 @@ static void on_sendfile_complete(uv_fs_t* req) {
 
         /* 标记完成 */
         ctx->completed = 1;
-        
+
         /* 性能优化：禁用 TCP_CORK 以发送缓冲的数据 */
         if (ctx->cork_enabled) {
             int cork = 0;
             setsockopt(ctx->out_fd, IPPROTO_TCP, TCP_CORK, &cork, sizeof(cork));
             ctx->cork_enabled = 0;
         }
-        
+
         UVHTTP_LOG_INFO("sendfile completed: %s (%zu bytes)", ctx->file_path,
                         ctx->bytes_sent);
     } else {
@@ -1494,8 +1495,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         ctx->completed = 0;
         ctx->start_time = uv_now(loop);
         ctx->retry_count = 0;
-        ctx->sendfile_req.data = ctx;  /* 设置回调数据 */
-        ctx->cork_enabled = 0;  /* 初始化为禁用 */
+        ctx->sendfile_req.data = ctx; /* 设置回调数据 */
+        ctx->cork_enabled = 0;        /* 初始化为禁用 */
 
         /* 初始化配置参数 */
         init_sendfile_config(ctx, file_size, config);
@@ -1543,7 +1544,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         /* 构建响应头数据 */
         char* header_data = NULL;
         size_t header_length = 0;
-        uvhttp_error_t build_result = uvhttp_response_build_data(resp, &header_data, &header_length);
+        uvhttp_error_t build_result =
+            uvhttp_response_build_data(resp, &header_data, &header_length);
         if (build_result != UVHTTP_OK) {
             UVHTTP_LOG_ERROR("Failed to build response headers: %s",
                              uvhttp_error_string(build_result));
@@ -1552,9 +1554,9 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         }
 
         /* 发送响应头（使用 send_raw，不标记响应为已完成） */
-        uvhttp_error_t send_result = uvhttp_response_send_raw(header_data, header_length,
-                                                              resp->client, resp);
-        uvhttp_free(header_data);  /* 释放构建的响应头数据 */
+        uvhttp_error_t send_result = uvhttp_response_send_raw(
+            header_data, header_length, resp->client, resp);
+        uvhttp_free(header_data); /* 释放构建的响应头数据 */
 
         if (send_result != UVHTTP_OK) {
             UVHTTP_LOG_ERROR("Failed to send response headers: %s",
@@ -1586,8 +1588,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
                        ctx->timeout_ms, 0);
 
         int sendfile_result =
-            uv_fs_sendfile(loop, &ctx->sendfile_req, ctx->out_fd, ctx->in_fd, ctx->offset,
-                           chunk_size, on_sendfile_complete);
+            uv_fs_sendfile(loop, &ctx->sendfile_req, ctx->out_fd, ctx->in_fd,
+                           ctx->offset, chunk_size, on_sendfile_complete);
 
         /* 检查 sendfile 是否同步失败或无数据 */
         if (sendfile_result < 0) {
@@ -1626,8 +1628,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         ctx->completed = 0;
         ctx->start_time = uv_now(loop);
         ctx->retry_count = 0;
-        ctx->cork_enabled = 0;  /* 初始化为禁用 */
-        ctx->sendfile_req.data = ctx;  /* 设置回调数据 */
+        ctx->cork_enabled = 0;        /* 初始化为禁用 */
+        ctx->sendfile_req.data = ctx; /* 设置回调数据 */
 
         /* 初始化配置参数 */
         init_sendfile_config(ctx, file_size, config);
@@ -1675,7 +1677,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         /* 构建响应头数据 */
         char* header_data = NULL;
         size_t header_length = 0;
-        uvhttp_error_t build_result = uvhttp_response_build_data(resp, &header_data, &header_length);
+        uvhttp_error_t build_result =
+            uvhttp_response_build_data(resp, &header_data, &header_length);
         if (build_result != UVHTTP_OK) {
             UVHTTP_LOG_ERROR("Failed to build response headers: %s",
                              uvhttp_error_string(build_result));
@@ -1684,9 +1687,9 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         }
 
         /* 发送响应头（使用 send_raw，不标记响应为已完成） */
-        uvhttp_error_t send_result = uvhttp_response_send_raw(header_data, header_length,
-                                                              resp->client, resp);
-        uvhttp_free(header_data);  /* 释放构建的响应头数据 */
+        uvhttp_error_t send_result = uvhttp_response_send_raw(
+            header_data, header_length, resp->client, resp);
+        uvhttp_free(header_data); /* 释放构建的响应头数据 */
 
         if (send_result != UVHTTP_OK) {
             UVHTTP_LOG_ERROR("Failed to send response headers: %s",

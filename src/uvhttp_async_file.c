@@ -12,11 +12,11 @@
 #    include "uvhttp_utils.h"
 
 #    include <errno.h>
+#    include <fcntl.h>
 #    include <stdio.h>
 #    include <stdlib.h>
 #    include <string.h>
 #    include <sys/stat.h>
-#    include <fcntl.h>
 
 /* 前向声明 */
 static void on_file_read_complete(uv_fs_t* req);
@@ -53,11 +53,13 @@ uvhttp_error_t uvhttp_async_file_manager_create(
     new_manager->loop = loop;
     new_manager->max_concurrent_reads = max_concurrent;
     new_manager->current_reads = 0;
-    
+
     /* 性能优化：确保缓冲区大小至少是页面大小的倍数 */
-    size_t aligned_buffer_size = ((buffer_size + UVHTTP_PAGE_ALIGNMENT_MASK) / UVHTTP_PAGE_SIZE) * UVHTTP_PAGE_SIZE;
+    size_t aligned_buffer_size =
+        ((buffer_size + UVHTTP_PAGE_ALIGNMENT_MASK) / UVHTTP_PAGE_SIZE) *
+        UVHTTP_PAGE_SIZE;
     new_manager->read_buffer_size = aligned_buffer_size;
-    
+
     new_manager->max_file_size = max_file_size;
     new_manager->active_requests = NULL;
 
@@ -158,7 +160,7 @@ static void on_file_read_complete(uv_fs_t* req) {
         /* 注意：这里需要导入静态文件模块的缓存函数
          * 为了避免循环依赖，实际使用时需要在回调中处理缓存
          */
-        
+
         /* 性能优化：预读文件元数据以加速后续访问 */
         /* 文件大小已经在 stat 阶段获取，这里可以直接使用 */
     } else {
@@ -432,7 +434,9 @@ uvhttp_error_t uvhttp_async_file_stream(uvhttp_async_file_manager_t* manager,
     }
 
     /* 性能优化：确保 chunk_size 是页面大小的倍数 */
-    size_t aligned_chunk_size = ((chunk_size + UVHTTP_PAGE_ALIGNMENT_MASK) / UVHTTP_PAGE_SIZE) * UVHTTP_PAGE_SIZE;
+    size_t aligned_chunk_size =
+        ((chunk_size + UVHTTP_PAGE_ALIGNMENT_MASK) / UVHTTP_PAGE_SIZE) *
+        UVHTTP_PAGE_SIZE;
 
     /* 创建流传输上下文 */
     uvhttp_file_stream_context_t* stream_ctx =

@@ -151,8 +151,8 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer,
                             UVHTTP_DEFAULT_KEEP_ALIVE_TIMEOUT,
                             UVHTTP_DEFAULT_KEEP_ALIVE_MAX);
         } else {
-            pos +=
-                snprintf(buffer + pos, *length - pos, HTTP_HEADER_CONNECTION_CLOSE);
+            pos += snprintf(buffer + pos, *length - pos,
+                            HTTP_HEADER_CONNECTION_CLOSE);
         }
     }
 

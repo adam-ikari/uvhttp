@@ -242,7 +242,6 @@ set(SOURCES
 )
 
 # 条件编译 WebSocket 源文件
-
 if(BUILD_WITH_WEBSOCKET)
     list(APPEND SOURCES src/uvhttp_websocket.c)
 endif()

@@ -42,7 +42,7 @@ uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
     cache_ptr->max_memory_usage = max_memory_usage;
     cache_ptr->max_entries = max_entries;
     cache_ptr->cache_ttl = cache_ttl;
-    cache_ptr->server_config = NULL;  /* 初始化为 NULL，由调用者设置 */
+    cache_ptr->server_config = NULL; /* 初始化为 NULL，由调用者设置 */
 
     /* 单线程版本：不需要初始化锁 */
 
@@ -271,8 +271,9 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
 
     /* 检查是否需要驱逐条目 - 批量驱逐优化 */
     int eviction_count = 0;
-    int batch_size = cache->server_config ? cache->server_config->lru_cache_batch_eviction_size 
-                                           : UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE;
+    int batch_size = cache->server_config
+                         ? cache->server_config->lru_cache_batch_eviction_size
+                         : UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE;
 
     while (
         (cache->max_memory_usage > 0 &&

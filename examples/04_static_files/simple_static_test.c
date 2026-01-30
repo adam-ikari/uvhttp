@@ -50,8 +50,6 @@ int main(int argc, char* argv[]) {
     }
 
     uvhttp_config_set_current(g_context, config);
-
-    uvhttp_config_set_current(g_context, config);
     
     uvhttp_static_config_t static_config;
     memset(&static_config, 0, sizeof(static_config));

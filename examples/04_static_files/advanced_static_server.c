@@ -38,6 +38,11 @@ int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     app_context_t* ctx = (app_context_t*)request->client->loop->data;
     if (!ctx || !ctx->static_ctx) {
         uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_header(response, "Content-Type", "application/json");
+        const char* error = "{\"error\":\"Static context not initialized\"}";
+        uvhttp_response_set_body(response, error, strlen(error));
+        uvhttp_response_send(response);
+        return -1;
     }
 
     /* 使用 cJSON 创建 JSON 响应 */

@@ -9,9 +9,6 @@
 
 #include "uvhttp_allocator.h"
 #include "uvhttp_config.h"
-
-#include <netinet/tcp.h>
-#include <sys/socket.h>
 #include "uvhttp_connection.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_context.h"
@@ -25,9 +22,11 @@
 #include "uvhttp_tls.h"
 #include "uvhttp_utils.h"
 
+#include <netinet/tcp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <uv.h>
 
 #if UVHTTP_FEATURE_WEBSOCKET
@@ -394,8 +393,9 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
     uv_tcp_nodelay(&server->tcp_handle, enable);
 
     /* 设置keepalive */
-    unsigned int keepalive_timeout = server->config ?
-        server->config->tcp_keepalive_timeout : UVHTTP_TCP_KEEPALIVE_TIMEOUT;
+    unsigned int keepalive_timeout = server->config
+                                         ? server->config->tcp_keepalive_timeout
+                                         : UVHTTP_TCP_KEEPALIVE_TIMEOUT;
     uv_tcp_keepalive(&server->tcp_handle, enable, keepalive_timeout);
 
     /* 性能优化：设置 TCP 缓冲区大小 */
@@ -403,14 +403,16 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
     if (uv_fileno((uv_handle_t*)&server->tcp_handle, &sockfd) == 0) {
         /* 设置发送缓冲区大小 */
         int send_buf_size = UVHTTP_SOCKET_SEND_BUF_SIZE;
-        setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, &send_buf_size, sizeof(send_buf_size));
-        
+        setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, &send_buf_size,
+                   sizeof(send_buf_size));
+
         /* 设置接收缓冲区大小 */
         int recv_buf_size = UVHTTP_SOCKET_RECV_BUF_SIZE;
-        setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recv_buf_size, sizeof(recv_buf_size));
-        
+        setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recv_buf_size,
+                   sizeof(recv_buf_size));
+
         /* 设置 TCP_CORK（延迟发送以优化小包）- 仅用于发送大文件时 */
-        int cork = 0;  /* 默认禁用，在发送大文件时启用 */
+        int cork = 0; /* 默认禁用，在发送大文件时启用 */
         setsockopt(sockfd, IPPROTO_TCP, TCP_CORK, &cork, sizeof(cork));
     }
 

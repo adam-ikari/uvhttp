@@ -63,7 +63,8 @@ struct uvhttp_ws_connection* uvhttp_ws_connection_create(
     } else {
         /* 使用默认配置 */
         conn->config.max_frame_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE;
-        conn->config.max_message_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE;
+        conn->config.max_message_size =
+            UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE;
         conn->config.ping_interval = UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL;
         conn->config.ping_timeout = UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT;
     }

@@ -39,32 +39,34 @@ typedef struct {
 struct uvhttp_response {
     /* ========== 缓存行1（0-63字节）：热路径字段 - 最频繁访问 ========== */
     /* 在响应构建、发送过程中频繁访问 */
-    int status_code;                   /* 4 字节 - HTTP 状态码 */
-    int headers_sent;                  /* 4 字节 - 头部是否已发送 */
-    int sent;                          /* 4 字节 - 响应是否已发送 */
-    int finished;                      /* 4 字节 - 响应是否完成 */
-    int keepalive;                     /* 4 字节 - 是否保持连接 */
-    int compress;                      /* 4 字节 - 是否启用压缩 */
-    int cache_ttl;                     /* 4 字节 - 缓存 TTL（秒） */
-    int _padding1;                     /* 4 字节 - 填充到32字节 */
-    size_t header_count;               /* 8 字节 - header 数量 */
-    size_t body_length;                /* 8 字节 - body 长度 */
-    uv_tcp_t* client;                  /* 8 字节 - TCP 客户端句柄 */
-    char* body;                        /* 8 字节 - 响应体 */
+    int status_code;     /* 4 字节 - HTTP 状态码 */
+    int headers_sent;    /* 4 字节 - 头部是否已发送 */
+    int sent;            /* 4 字节 - 响应是否已发送 */
+    int finished;        /* 4 字节 - 响应是否完成 */
+    int keepalive;       /* 4 字节 - 是否保持连接 */
+    int compress;        /* 4 字节 - 是否启用压缩 */
+    int cache_ttl;       /* 4 字节 - 缓存 TTL（秒） */
+    int _padding1;       /* 4 字节 - 填充到32字节 */
+    size_t header_count; /* 8 字节 - header 数量 */
+    size_t body_length;  /* 8 字节 - body 长度 */
+    uv_tcp_t* client;    /* 8 字节 - TCP 客户端句柄 */
+    char* body;          /* 8 字节 - 响应体 */
     /* 缓存行1总计：64字节 */
 
-    /* ========== 缓存行2（64-127字节）：指针和计数器字段 - 次频繁访问 ========== */
+    /* ========== 缓存行2（64-127字节）：指针和计数器字段 - 次频繁访问
+     * ========== */
     /* 在响应构建、缓存管理中频繁访问 */
-    time_t cache_expires;              /* 8 字节 - 缓存过期时间 */
-    uvhttp_header_t* headers_extra;    /* 8 字节 - 额外 headers（动态扩容） */
-    size_t headers_capacity;           /* 8 字节 - headers 总容量 */
-    int _padding2[10];                 /* 40字节 - 填充到64字节 */
+    time_t cache_expires;           /* 8 字节 - 缓存过期时间 */
+    uvhttp_header_t* headers_extra; /* 8 字节 - 额外 headers（动态扩容） */
+    size_t headers_capacity;        /* 8 字节 - headers 总容量 */
+    int _padding2[10];              /* 40字节 - 填充到64字节 */
     /* 缓存行2总计：64字节 */
 
     /* ========== 缓存行3+（128+字节）：Headers 数组 ========== */
     /* 放在最后，避免影响热路径字段的缓存局部性 */
     /* Headers - 混合分配：内联 + 动态扩容（优化内存局部性） */
-    uvhttp_header_t headers[UVHTTP_INLINE_HEADERS_CAPACITY]; /* 内联，减少动态分配 */
+    uvhttp_header_t
+        headers[UVHTTP_INLINE_HEADERS_CAPACITY]; /* 内联，减少动态分配 */
 };
 
 /* ========== 内存布局验证静态断言 ========== */

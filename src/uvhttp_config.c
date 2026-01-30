@@ -61,7 +61,8 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config) {
 
     /* WebSocket 配置 */
     config->websocket_max_frame_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE;
-    config->websocket_max_message_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE;
+    config->websocket_max_message_size =
+        UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE;
     config->websocket_ping_interval = UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL;
     config->websocket_ping_timeout = UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT;
 
@@ -73,12 +74,15 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config) {
     /* 缓存配置 */
     config->cache_default_max_entries = UVHTTP_CACHE_DEFAULT_MAX_ENTRIES;
     config->cache_default_ttl = UVHTTP_CACHE_DEFAULT_TTL;
-    config->lru_cache_batch_eviction_size = UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE;
+    config->lru_cache_batch_eviction_size =
+        UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE;
 
     /* 限流配置 */
     config->rate_limit_max_requests = UVHTTP_RATE_LIMIT_MAX_REQUESTS;
-    config->rate_limit_max_window_seconds = UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS;
-    config->rate_limit_min_timeout_seconds = UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS;
+    config->rate_limit_max_window_seconds =
+        UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS;
+    config->rate_limit_min_timeout_seconds =
+        UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS;
 }
 
 /* 从文件加载配置 */
@@ -319,228 +323,193 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
     }
 
     /* 验证新增的运行时配置 */
+    if (config->websocket_max_frame_size <
+            UVHTTP_WEBSOCKET_CONFIG_MIN_FRAME_SIZE ||
+        config->websocket_max_frame_size >
+            UVHTTP_WEBSOCKET_CONFIG_MAX_FRAME_SIZE) {
+        UVHTTP_LOG_ERROR(
+            "websocket_max_frame_size=%d exceeds valid range [%d-%d]",
+            config->websocket_max_frame_size,
+            UVHTTP_WEBSOCKET_CONFIG_MIN_FRAME_SIZE,
+            UVHTTP_WEBSOCKET_CONFIG_MAX_FRAME_SIZE);
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
 
-        if (config->websocket_max_frame_size < UVHTTP_WEBSOCKET_CONFIG_MIN_FRAME_SIZE ||
+    if (config->websocket_max_message_size <
+            UVHTTP_WEBSOCKET_CONFIG_MIN_MESSAGE_SIZE ||
+        config->websocket_max_message_size >
+            UVHTTP_WEBSOCKET_CONFIG_MAX_MESSAGE_SIZE) {
+        UVHTTP_LOG_ERROR(
+            "websocket_max_message_size=%d exceeds valid range [%d-%d]",
+            config->websocket_max_message_size,
+            UVHTTP_WEBSOCKET_CONFIG_MIN_MESSAGE_SIZE,
+            UVHTTP_WEBSOCKET_CONFIG_MAX_MESSAGE_SIZE);
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
 
-            config->websocket_max_frame_size > UVHTTP_WEBSOCKET_CONFIG_MAX_FRAME_SIZE) {
+    if (config->websocket_ping_interval <
+            UVHTTP_WEBSOCKET_CONFIG_MIN_PING_INTERVAL ||
+        config->websocket_ping_interval >
+            UVHTTP_WEBSOCKET_CONFIG_MAX_PING_INTERVAL) {
+        UVHTTP_LOG_ERROR(
+            "websocket_ping_interval=%d exceeds valid range [%d-%d]",
+            config->websocket_ping_interval,
+            UVHTTP_WEBSOCKET_CONFIG_MIN_PING_INTERVAL,
+            UVHTTP_WEBSOCKET_CONFIG_MAX_PING_INTERVAL);
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
 
-            UVHTTP_LOG_ERROR("websocket_max_frame_size=%d exceeds valid range [%d-%d]",
+    if (config->websocket_ping_timeout <
+            UVHTTP_WEBSOCKET_CONFIG_MIN_PING_TIMEOUT ||
 
-                             config->websocket_max_frame_size, UVHTTP_WEBSOCKET_CONFIG_MIN_FRAME_SIZE,
+        config->websocket_ping_timeout >
+            UVHTTP_WEBSOCKET_CONFIG_MAX_PING_TIMEOUT) {
 
-                             UVHTTP_WEBSOCKET_CONFIG_MAX_FRAME_SIZE);
+        UVHTTP_LOG_ERROR(
+            "websocket_ping_timeout=%d exceeds valid range [%d-%d]",
 
-            return UVHTTP_ERROR_INVALID_PARAM;
+            config->websocket_ping_timeout,
+            UVHTTP_WEBSOCKET_CONFIG_MIN_PING_TIMEOUT,
 
-        }
+            UVHTTP_WEBSOCKET_CONFIG_MAX_PING_TIMEOUT);
 
-    
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
 
-        if (config->websocket_max_message_size < UVHTTP_WEBSOCKET_CONFIG_MIN_MESSAGE_SIZE ||
+    if (config->tcp_keepalive_timeout < UVHTTP_TCP_KEEPALIVE_MIN_TIMEOUT ||
 
-            config->websocket_max_message_size > UVHTTP_WEBSOCKET_CONFIG_MAX_MESSAGE_SIZE) {
+        config->tcp_keepalive_timeout > UVHTTP_TCP_KEEPALIVE_MAX_TIMEOUT) {
 
-            UVHTTP_LOG_ERROR("websocket_max_message_size=%d exceeds valid range [%d-%d]",
+        UVHTTP_LOG_ERROR("tcp_keepalive_timeout=%d exceeds valid range [%d-%d]",
 
-                             config->websocket_max_message_size, UVHTTP_WEBSOCKET_CONFIG_MIN_MESSAGE_SIZE,
+                         config->tcp_keepalive_timeout,
+                         UVHTTP_TCP_KEEPALIVE_MIN_TIMEOUT,
 
-                             UVHTTP_WEBSOCKET_CONFIG_MAX_MESSAGE_SIZE);
+                         UVHTTP_TCP_KEEPALIVE_MAX_TIMEOUT);
 
-            return UVHTTP_ERROR_INVALID_PARAM;
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
 
-        }
+    if (config->sendfile_timeout_ms < UVHTTP_SENDFILE_MIN_TIMEOUT_MS ||
 
-    
+        config->sendfile_timeout_ms > UVHTTP_SENDFILE_MAX_TIMEOUT_MS) {
 
-        if (config->websocket_ping_interval < UVHTTP_WEBSOCKET_CONFIG_MIN_PING_INTERVAL ||
+        UVHTTP_LOG_ERROR("sendfile_timeout_ms=%d exceeds valid range [%d-%d]",
 
-            config->websocket_ping_interval > UVHTTP_WEBSOCKET_CONFIG_MAX_PING_INTERVAL) {
+                         config->sendfile_timeout_ms,
+                         UVHTTP_SENDFILE_MIN_TIMEOUT_MS,
 
-            UVHTTP_LOG_ERROR("websocket_ping_interval=%d exceeds valid range [%d-%d]",
+                         UVHTTP_SENDFILE_MAX_TIMEOUT_MS);
 
-                             config->websocket_ping_interval, UVHTTP_WEBSOCKET_CONFIG_MIN_PING_INTERVAL,
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
 
-                             UVHTTP_WEBSOCKET_CONFIG_MAX_PING_INTERVAL);
+    if (config->cache_default_max_entries < UVHTTP_CACHE_MIN_MAX_ENTRIES ||
+        config->cache_default_max_entries > UVHTTP_CACHE_MAX_MAX_ENTRIES) {
 
-            return UVHTTP_ERROR_INVALID_PARAM;
+        UVHTTP_LOG_ERROR(
+            "cache_default_max_entries=%d exceeds valid range [%d-%d]",
 
-        }
+            config->cache_default_max_entries, UVHTTP_CACHE_MIN_MAX_ENTRIES,
 
-    
+            UVHTTP_CACHE_MAX_MAX_ENTRIES);
 
-        if (config->websocket_ping_timeout < UVHTTP_WEBSOCKET_CONFIG_MIN_PING_TIMEOUT ||
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
 
-            config->websocket_ping_timeout > UVHTTP_WEBSOCKET_CONFIG_MAX_PING_TIMEOUT) {
+    if (config->cache_default_ttl < UVHTTP_CACHE_MIN_TTL ||
 
-            UVHTTP_LOG_ERROR("websocket_ping_timeout=%d exceeds valid range [%d-%d]",
+        config->cache_default_ttl > UVHTTP_CACHE_MAX_TTL) {
 
-                             config->websocket_ping_timeout, UVHTTP_WEBSOCKET_CONFIG_MIN_PING_TIMEOUT,
+        UVHTTP_LOG_ERROR("cache_default_ttl=%d exceeds valid range [%d-%d]",
 
-                             UVHTTP_WEBSOCKET_CONFIG_MAX_PING_TIMEOUT);
+                         config->cache_default_ttl, UVHTTP_CACHE_MIN_TTL,
 
-            return UVHTTP_ERROR_INVALID_PARAM;
+                         UVHTTP_CACHE_MAX_TTL);
 
-        }
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
 
-    
+    if (config->lru_cache_batch_eviction_size <
+            UVHTTP_LRU_CACHE_MIN_BATCH_EVICTION_SIZE ||
 
-        if (config->tcp_keepalive_timeout < UVHTTP_TCP_KEEPALIVE_MIN_TIMEOUT ||
+        config->lru_cache_batch_eviction_size >
+            UVHTTP_LRU_CACHE_MAX_BATCH_EVICTION_SIZE) {
 
-            config->tcp_keepalive_timeout > UVHTTP_TCP_KEEPALIVE_MAX_TIMEOUT) {
+        UVHTTP_LOG_ERROR(
+            "lru_cache_batch_eviction_size=%d exceeds valid range [%d-%d]",
 
-            UVHTTP_LOG_ERROR("tcp_keepalive_timeout=%d exceeds valid range [%d-%d]",
+            config->lru_cache_batch_eviction_size,
 
-                             config->tcp_keepalive_timeout, UVHTTP_TCP_KEEPALIVE_MIN_TIMEOUT,
+            UVHTTP_LRU_CACHE_MIN_BATCH_EVICTION_SIZE,
 
-                             UVHTTP_TCP_KEEPALIVE_MAX_TIMEOUT);
+            UVHTTP_LRU_CACHE_MAX_BATCH_EVICTION_SIZE);
 
-            return UVHTTP_ERROR_INVALID_PARAM;
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
 
-        }
+    if (config->rate_limit_max_requests < UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS ||
 
-    
+        config->rate_limit_max_requests > UVHTTP_RATE_LIMIT_MAX_MAX_REQUESTS) {
 
-        if (config->sendfile_timeout_ms < UVHTTP_SENDFILE_MIN_TIMEOUT_MS ||
+        UVHTTP_LOG_ERROR(
+            "rate_limit_max_requests=%d exceeds valid range [%d-%d]",
 
-            config->sendfile_timeout_ms > UVHTTP_SENDFILE_MAX_TIMEOUT_MS) {
+            config->rate_limit_max_requests, UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS,
 
-            UVHTTP_LOG_ERROR("sendfile_timeout_ms=%d exceeds valid range [%d-%d]",
+            UVHTTP_RATE_LIMIT_MAX_MAX_REQUESTS);
 
-                             config->sendfile_timeout_ms, UVHTTP_SENDFILE_MIN_TIMEOUT_MS,
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
 
-                             UVHTTP_SENDFILE_MAX_TIMEOUT_MS);
+    if (config->rate_limit_max_window_seconds <
+            UVHTTP_RATE_LIMIT_MIN_WINDOW_SECONDS ||
 
-            return UVHTTP_ERROR_INVALID_PARAM;
+        config->rate_limit_max_window_seconds >
+            UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS) {
 
-        }
+        UVHTTP_LOG_ERROR(
+            "rate_limit_max_window_seconds=%d exceeds valid range [%d-%d]",
 
-    
+            config->rate_limit_max_window_seconds,
 
-        if (config->sendfile_max_retry < UVHTTP_SENDFILE_MIN_RETRY ||
+            UVHTTP_RATE_LIMIT_MIN_WINDOW_SECONDS,
 
-            config->sendfile_max_retry > UVHTTP_SENDFILE_MAX_RETRY) {
+            UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS);
 
-            UVHTTP_LOG_ERROR("sendfile_max_retry=%d exceeds valid range [%d-%d]",
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
 
-                             config->sendfile_max_retry, UVHTTP_SENDFILE_MIN_RETRY,
+    if (config->rate_limit_min_timeout_seconds <
+            UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS ||
 
-                             UVHTTP_SENDFILE_MAX_RETRY);
+        config->rate_limit_min_timeout_seconds >
+            UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS) {
 
-            return UVHTTP_ERROR_INVALID_PARAM;
+        UVHTTP_LOG_ERROR(
+            "rate_limit_min_timeout_seconds=%d exceeds valid range [%d-%d]",
 
-        }
+            config->rate_limit_min_timeout_seconds,
 
-    
+            UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS,
 
-        if (config->cache_default_max_entries < UVHTTP_CACHE_MIN_MAX_ENTRIES ||
+            UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS);
 
-            config->cache_default_max_entries > UVHTTP_CACHE_MAX_MAX_ENTRIES) {
-
-            UVHTTP_LOG_ERROR("cache_default_max_entries=%d exceeds valid range [%d-%d]",
-
-                             config->cache_default_max_entries, UVHTTP_CACHE_MIN_MAX_ENTRIES,
-
-                             UVHTTP_CACHE_MAX_MAX_ENTRIES);
-
-            return UVHTTP_ERROR_INVALID_PARAM;
-
-        }
-
-    
-
-        if (config->cache_default_ttl < UVHTTP_CACHE_MIN_TTL ||
-
-            config->cache_default_ttl > UVHTTP_CACHE_MAX_TTL) {
-
-            UVHTTP_LOG_ERROR("cache_default_ttl=%d exceeds valid range [%d-%d]",
-
-                             config->cache_default_ttl, UVHTTP_CACHE_MIN_TTL,
-
-                             UVHTTP_CACHE_MAX_TTL);
-
-            return UVHTTP_ERROR_INVALID_PARAM;
-
-        }
-
-    
-
-        if (config->lru_cache_batch_eviction_size < UVHTTP_LRU_CACHE_MIN_BATCH_EVICTION_SIZE ||
-
-            config->lru_cache_batch_eviction_size > UVHTTP_LRU_CACHE_MAX_BATCH_EVICTION_SIZE) {
-
-            UVHTTP_LOG_ERROR("lru_cache_batch_eviction_size=%d exceeds valid range [%d-%d]",
-
-                             config->lru_cache_batch_eviction_size,
-
-                             UVHTTP_LRU_CACHE_MIN_BATCH_EVICTION_SIZE,
-
-                             UVHTTP_LRU_CACHE_MAX_BATCH_EVICTION_SIZE);
-
-            return UVHTTP_ERROR_INVALID_PARAM;
-
-        }
-
-    
-
-        if (config->rate_limit_max_requests < UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS ||
-
-            config->rate_limit_max_requests > UVHTTP_RATE_LIMIT_MAX_MAX_REQUESTS) {
-
-            UVHTTP_LOG_ERROR("rate_limit_max_requests=%d exceeds valid range [%d-%d]",
-
-                             config->rate_limit_max_requests, UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS,
-
-                             UVHTTP_RATE_LIMIT_MAX_MAX_REQUESTS);
-
-            return UVHTTP_ERROR_INVALID_PARAM;
-
-        }
-
-    
-
-        if (config->rate_limit_max_window_seconds < UVHTTP_RATE_LIMIT_MIN_WINDOW_SECONDS ||
-
-            config->rate_limit_max_window_seconds > UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS) {
-
-            UVHTTP_LOG_ERROR("rate_limit_max_window_seconds=%d exceeds valid range [%d-%d]",
-
-                             config->rate_limit_max_window_seconds,
-
-                             UVHTTP_RATE_LIMIT_MIN_WINDOW_SECONDS,
-
-                             UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS);
-
-            return UVHTTP_ERROR_INVALID_PARAM;
-
-        }
-
-    
-
-        if (config->rate_limit_min_timeout_seconds < UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS ||
-
-            config->rate_limit_min_timeout_seconds > UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS) {
-
-            UVHTTP_LOG_ERROR("rate_limit_min_timeout_seconds=%d exceeds valid range [%d-%d]",
-
-                             config->rate_limit_min_timeout_seconds,
-
-                             UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS,
-
-                             UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS);
-
-            return UVHTTP_ERROR_INVALID_PARAM;
-
-        }
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
 
     /* 配置依赖关系验证 */
     if (config->websocket_max_message_size < config->websocket_max_frame_size) {
-        UVHTTP_LOG_ERROR("websocket_max_message_size=%d < websocket_max_frame_size=%d, invalid configuration",
-                         config->websocket_max_message_size, config->websocket_max_frame_size);
+        UVHTTP_LOG_ERROR("websocket_max_message_size=%d < "
+                         "websocket_max_frame_size=%d, invalid configuration",
+                         config->websocket_max_message_size,
+                         config->websocket_max_frame_size);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
     if (config->backlog > config->max_connections) {
-        UVHTTP_LOG_WARN("backlog=%d > max_connections=%d, this may cause connection rejection",
+        UVHTTP_LOG_WARN("backlog=%d > max_connections=%d, this may cause "
+                        "connection rejection",
                         config->backlog, config->max_connections);
     }
 
