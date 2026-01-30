@@ -11,12 +11,12 @@
 #include <string.h>
 #include <time.h>
 
-/* 记录错误 */
+/* Log error */
 void uvhttp_log_error(uvhttp_error_t error, const char* context) {
     (void)error;
     (void)context;
-    /* 使用日志系统记录错误 */
-    /* 注意：统计功能已移除，仅保留日志记录 */
+    /* Use logging system to record errors */
+    /* Note: statistics feature removed, only logging remains */
 }
 
 const char* uvhttp_error_string(uvhttp_error_t error) {
@@ -101,7 +101,7 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
     }
 }
 
-/* 获取错误分类字符串 */
+/* Get error category string */
 
 const char* uvhttp_error_category_string(uvhttp_error_t error) {
 
@@ -110,84 +110,84 @@ const char* uvhttp_error_category_string(uvhttp_error_t error) {
         return "Success";
     }
 
-    /* 通用错误 */
+    /* General errors */
 
     if (error >= -8 && error <= -1) {
 
         return "General Error";
     }
 
-    /* 服务器错误 */
+    /* Server errors */
 
     if (error >= -106 && error <= -100) {
 
         return "Server Error";
     }
 
-    /* 连接错误 */
+    /* Connection errors */
 
     if (error >= -207 && error <= -200) {
 
         return "Connection Error";
     }
 
-    /* 请求/响应错误 */
+    /* Request/Response errors */
 
     if (error >= -307 && error <= -300) {
 
         return "Request/Response Error";
     }
 
-    /* TLS 错误 */
+    /* TLS errors */
 
     if (error >= -407 && error <= -400) {
 
         return "TLS Error";
     }
 
-    /* 路由错误 */
+    /* Routing errors */
 
     if (error >= -504 && error <= -500) {
 
         return "Router Error";
     }
 
-    /* 分配器错误 */
+    /* Allocator errors */
 
     if (error >= -602 && error <= -600) {
 
         return "Allocator Error";
     }
 
-    /* WebSocket 错误 */
+    /* WebSocket errors */
 
     if (error >= -707 && error <= -700) {
 
         return "WebSocket Error";
     }
 
-    /* HTTP/2 错误 */
+    /* HTTP/2 errors */
 
     if (error >= -805 && error <= -800) {
 
         return "HTTP/2 Error";
     }
 
-    /* 配置错误 */
+    /* Configuration errors */
 
     if (error >= -903 && error <= -900) {
 
         return "Configuration Error";
     }
 
-    /* 中间件错误 */
+    /* Middleware errors */
 
     if (error >= -1003 && error <= -1000) {
 
         return "Middleware Error";
     }
 
-    /* 日志错误 */
+    /* Logging errors */
 
     if (error >= -1103 && error <= -1100) {
 
@@ -197,7 +197,7 @@ const char* uvhttp_error_category_string(uvhttp_error_t error) {
     return "Unknown Error";
 }
 
-/* 获取错误描述 */
+/* Get error description */
 
 const char* uvhttp_error_description(uvhttp_error_t error) {
 
@@ -791,10 +791,10 @@ const char* uvhttp_error_suggestion(uvhttp_error_t error) {
     }
 }
 
-/* 检查错误是否可恢复 */
+/* Check if error is recoverable */
 int uvhttp_error_is_recoverable(uvhttp_error_t error) {
     switch (error) {
-    /* 可重试的连接错误 */
+    /* Retriable connection errors */
     case UVHTTP_ERROR_CONNECTION_ACCEPT:
     case UVHTTP_ERROR_CONNECTION_START:
     case UVHTTP_ERROR_CONNECTION_RESET:
@@ -802,7 +802,7 @@ int uvhttp_error_is_recoverable(uvhttp_error_t error) {
     case UVHTTP_ERROR_CONNECTION_REFUSED:
     case UVHTTP_ERROR_CONNECTION_BROKEN:
 
-    /* 可重试的协议错误 */
+    /* Retriable protocol errors */
     case UVHTTP_ERROR_RESPONSE_SEND:
     case UVHTTP_ERROR_TLS_HANDSHAKE:
     case UVHTTP_ERROR_WEBSOCKET_HANDSHAKE:
@@ -810,11 +810,11 @@ int uvhttp_error_is_recoverable(uvhttp_error_t error) {
     case UVHTTP_ERROR_WEBSOCKET_TOO_LARGE:
     case UVHTTP_ERROR_WEBSOCKET_INVALID_OPCODE:
 
-    /* 可重试的错误 */
+    /* Retriable errors */
     case UVHTTP_ERROR_LOG_WRITE:
         return TRUE;
 
-    /* 不可重试的错误 */
+    /* Non-retriable errors */
     case UVHTTP_ERROR_INVALID_PARAM:
     case UVHTTP_ERROR_OUT_OF_MEMORY:
     case UVHTTP_ERROR_NOT_FOUND:
