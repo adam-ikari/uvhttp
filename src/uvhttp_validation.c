@@ -1,6 +1,7 @@
 /* UVHTTP 输入验证模块实现 */
 
 #include "uvhttp_validation.h"
+
 #include "uvhttp_utils.h"
 
 #include <ctype.h>
@@ -72,7 +73,8 @@ int uvhttp_validate_header_value_safe(const char* value) {
         return FALSE;
 
     /* 检查长度 */
-    if (!uvhttp_validate_string_length(value, 0, UVHTTP_MAX_HEADER_VALUE_SIZE)) {
+    if (!uvhttp_validate_string_length(value, 0,
+                                       UVHTTP_MAX_HEADER_VALUE_SIZE)) {
         return FALSE;
     }
 
@@ -91,7 +93,7 @@ int uvhttp_validate_header_value_safe(const char* value) {
 
 int uvhttp_validate_query_string(const char* query) {
     if (!query)
-        return TRUE;  /* 空查询字符串是有效的 */
+        return TRUE; /* 空查询字符串是有效的 */
 
     /* 检查长度 */
     if (!uvhttp_validate_string_length(query, 0, UVHTTP_MAX_URL_SIZE)) {

@@ -190,14 +190,16 @@ int uvhttp_is_valid_ip_address(const char* ip) {
         /* IPv6 - 简化检查 */
         int colon_count = 0;
         for (const char* p = ip; *p; p++) {
-            if (*p == ':') colon_count++;
+            if (*p == ':')
+                colon_count++;
         }
         return colon_count >= 2 ? TRUE : FALSE;
     }
     /* IPv4 - 简化检查 */
     int dot_count = 0;
     for (const char* p = ip; *p; p++) {
-        if (*p == '.') dot_count++;
+        if (*p == '.')
+            dot_count++;
     }
     return dot_count == 3 ? TRUE : FALSE;
 }
