@@ -42,7 +42,7 @@ export default defineConfig({
       { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' }
     ],
     
-    sidebar: {
+    sidebar: { auto: false,
       '/guide/': [
         {
           text: '入门指南',
@@ -75,15 +75,7 @@ export default defineConfig({
           ]
         }
       ],
-      '/api/': [
-        {
-          text: 'API 文档',
-          items: [
-            { text: 'API 介绍', link: '/api/introduction' },
-            { text: 'API 参考', link: '/api/API_REFERENCE' }
-          ]
-        }
-      ],
+  '/api/': (await import('./api/sidebar.js')).default,
       '/dev/': [
         {
           text: '架构设计',

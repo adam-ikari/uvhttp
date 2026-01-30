@@ -255,6 +255,10 @@ docs:
 	@echo "📝 从 XML 生成 Markdown 文档..."
 	@python3 scripts/convert_xml_to_markdown.py docs/api/xml docs/api/markdown_from_xml
 	@echo "✅ Markdown 文档已生成！"
+	@echo ""
+	@echo "🔄 更新 API 侧边栏..."
+	@python3 scripts/update_api_sidebar.py
+	@echo "✅ API 侧边栏更新完成！"
 	@echo "  Markdown 文档位置: docs/api/markdown_from_xml/index.md"
 	@echo ""
 	@echo "🌐 构建文档网站..."
