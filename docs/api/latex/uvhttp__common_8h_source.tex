@@ -1,0 +1,70 @@
+\hypertarget{uvhttp__common_8h_source}{}\doxysection{uvhttp\+\_\+common.\+h}
+\label{uvhttp__common_8h_source}\index{include/uvhttp\_common.h@{include/uvhttp\_common.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{preprocessor}{\#ifndef UVHTTP\_COMMON\_H}}
+\DoxyCodeLine{2 \textcolor{preprocessor}{\#define UVHTTP\_COMMON\_H}}
+\DoxyCodeLine{3 }
+\DoxyCodeLine{4 \textcolor{preprocessor}{\#include <assert.h>}}
+\DoxyCodeLine{5 \textcolor{preprocessor}{\#include <stddef.h>}}
+\DoxyCodeLine{6 }
+\DoxyCodeLine{7 \textcolor{comment}{/* 包含常量定义 */}}
+\DoxyCodeLine{8 \textcolor{preprocessor}{\#include "{}\mbox{\hyperlink{uvhttp__constants_8h}{uvhttp\_constants.h}}"{}}}
+\DoxyCodeLine{9 }
+\DoxyCodeLine{10 \textcolor{comment}{/* ========== 静态断言宏定义 ========== */}}
+\DoxyCodeLine{11 \textcolor{preprocessor}{\#ifdef \_\_cplusplus}}
+\DoxyCodeLine{12 \textcolor{preprocessor}{\#    define UVHTTP\_STATIC\_ASSERT(cond, msg) static\_assert(cond, msg)}}
+\DoxyCodeLine{13 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{14 \textcolor{preprocessor}{\#    define UVHTTP\_STATIC\_ASSERT(cond, msg) \_Static\_assert(cond, msg)}}
+\DoxyCodeLine{15 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{16 }
+\DoxyCodeLine{17 \textcolor{comment}{/* ========== HTTP 头部常量 ========== */}}
+\DoxyCodeLine{18 \textcolor{comment}{/* Header 名称和值的缓冲区大小（包括空终止符） */}}
+\DoxyCodeLine{19 \textcolor{comment}{/* 注意：这些常量已移至 uvhttp\_constants.h 中定义 */}}
+\DoxyCodeLine{20 \textcolor{preprocessor}{\#ifndef UVHTTP\_HEADER\_NAME\_BUFFER\_SIZE}}
+\DoxyCodeLine{21 \textcolor{preprocessor}{\#    define UVHTTP\_HEADER\_NAME\_BUFFER\_SIZE 256}}
+\DoxyCodeLine{22 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{23 }
+\DoxyCodeLine{24 \textcolor{preprocessor}{\#ifndef UVHTTP\_HEADER\_VALUE\_BUFFER\_SIZE}}
+\DoxyCodeLine{25 \textcolor{preprocessor}{\#    define UVHTTP\_HEADER\_VALUE\_BUFFER\_SIZE 4096}}
+\DoxyCodeLine{26 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{27 }
+\DoxyCodeLine{28 \textcolor{comment}{/* Header 最大数量限制 */}}
+\DoxyCodeLine{29 \textcolor{preprocessor}{\#ifndef MAX\_HEADERS}}
+\DoxyCodeLine{30 \textcolor{preprocessor}{\#    define MAX\_HEADERS UVHTTP\_MAX\_HEADERS}}
+\DoxyCodeLine{31 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{32 }
+\DoxyCodeLine{33 \textcolor{preprocessor}{\#define MAX\_HEADER\_NAME\_LEN (UVHTTP\_HEADER\_NAME\_BUFFER\_SIZE -\/ 1)}}
+\DoxyCodeLine{34 \textcolor{preprocessor}{\#define MAX\_HEADER\_VALUE\_LEN (UVHTTP\_HEADER\_VALUE\_BUFFER\_SIZE -\/ 1)}}
+\DoxyCodeLine{35 }
+\DoxyCodeLine{36 \textcolor{preprocessor}{\#ifdef \_\_cplusplus}}
+\DoxyCodeLine{37 \textcolor{keyword}{extern} \textcolor{stringliteral}{"{}C"{}} \{}
+\DoxyCodeLine{38 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{39 }
+\DoxyCodeLine{40 \textcolor{comment}{/* 增加缓冲区大小以防止溢出，符合HTTP规范 */}}
+\DoxyCodeLine{41 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{42     \textcolor{keywordtype}{char} name[UVHTTP\_HEADER\_NAME\_BUFFER\_SIZE];}
+\DoxyCodeLine{43     \textcolor{keywordtype}{char} value[UVHTTP\_HEADER\_VALUE\_BUFFER\_SIZE];}
+\DoxyCodeLine{44 \} \mbox{\hyperlink{structuvhttp__header__t}{uvhttp\_header\_t}};}
+\DoxyCodeLine{45 }
+\DoxyCodeLine{46 \textcolor{comment}{/* 安全的字符串复制函数 */}}
+\DoxyCodeLine{47 \textcolor{keywordtype}{int} uvhttp\_safe\_strcpy(\textcolor{keywordtype}{char}* dest, \textcolor{keywordtype}{size\_t} dest\_size, \textcolor{keyword}{const} \textcolor{keywordtype}{char}* src);}
+\DoxyCodeLine{48 }
+\DoxyCodeLine{49 \textcolor{comment}{/* 注意：验证函数已移动到 uvhttp\_validation.h */}}
+\DoxyCodeLine{50 \textcolor{comment}{/* 请使用 \#include "{}uvhttp\_validation.h"{} 来访问验证函数 */}}
+\DoxyCodeLine{51 }
+\DoxyCodeLine{52 \textcolor{comment}{/* 前向声明 */}}
+\DoxyCodeLine{53 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__request}{uvhttp\_request}} \mbox{\hyperlink{structuvhttp__request}{uvhttp\_request\_t}};}
+\DoxyCodeLine{54 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__response}{uvhttp\_response}} \mbox{\hyperlink{structuvhttp__response}{uvhttp\_response\_t}};}
+\DoxyCodeLine{55 }
+\DoxyCodeLine{56 \textcolor{comment}{/* 请求处理器类型 */}}
+\DoxyCodeLine{57 \textcolor{keyword}{typedef} int (*uvhttp\_request\_handler\_t)(\mbox{\hyperlink{structuvhttp__request}{uvhttp\_request\_t}}* request,}
+\DoxyCodeLine{58                                         \mbox{\hyperlink{structuvhttp__response}{uvhttp\_response\_t}}* response);}
+\DoxyCodeLine{59 }
+\DoxyCodeLine{60 \textcolor{preprocessor}{\#ifdef \_\_cplusplus}}
+\DoxyCodeLine{61 \}}
+\DoxyCodeLine{62 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{63 }
+\DoxyCodeLine{64 \textcolor{preprocessor}{\#endif }\textcolor{comment}{/* UVHTTP\_COMMON\_H */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

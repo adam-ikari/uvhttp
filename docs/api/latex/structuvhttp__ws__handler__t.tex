@@ -1,0 +1,35 @@
+\hypertarget{structuvhttp__ws__handler__t}{}\doxysection{uvhttp\+\_\+ws\+\_\+handler\+\_\+t Struct Reference}
+\label{structuvhttp__ws__handler__t}\index{uvhttp\_ws\_handler\_t@{uvhttp\_ws\_handler\_t}}
+
+
+Collaboration diagram for uvhttp\+\_\+ws\+\_\+handler\+\_\+t\+:
+% FIG 0
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{structuvhttp__ws__handler__t_a4da1d5128f0025ef0abdd1f631ea54b3}\label{structuvhttp__ws__handler__t_a4da1d5128f0025ef0abdd1f631ea54b3}} 
+int($\ast$ {\bfseries on\+\_\+connect} )(uvhttp\+\_\+ws\+\_\+connection\+\_\+t $\ast$ws\+\_\+conn)
+\item 
+\mbox{\Hypertarget{structuvhttp__ws__handler__t_a03d532502ff2a8a63acd010ba20511bc}\label{structuvhttp__ws__handler__t_a03d532502ff2a8a63acd010ba20511bc}} 
+int($\ast$ {\bfseries on\+\_\+message} )(uvhttp\+\_\+ws\+\_\+connection\+\_\+t $\ast$ws\+\_\+conn, const char $\ast$data, size\+\_\+t len, int opcode)
+\item 
+\mbox{\Hypertarget{structuvhttp__ws__handler__t_a5831ac2746d6eda64f4d40937329a3a7}\label{structuvhttp__ws__handler__t_a5831ac2746d6eda64f4d40937329a3a7}} 
+int($\ast$ {\bfseries on\+\_\+close} )(uvhttp\+\_\+ws\+\_\+connection\+\_\+t $\ast$ws\+\_\+conn)
+\item 
+\mbox{\Hypertarget{structuvhttp__ws__handler__t_a7792490982abf3208825798554aeb212}\label{structuvhttp__ws__handler__t_a7792490982abf3208825798554aeb212}} 
+int($\ast$ {\bfseries on\+\_\+error} )(uvhttp\+\_\+ws\+\_\+connection\+\_\+t $\ast$ws\+\_\+conn, int error\+\_\+code, const char $\ast$error\+\_\+msg)
+\item 
+\mbox{\Hypertarget{structuvhttp__ws__handler__t_a36cfdc6dc425e9a3e162892c07adf93b}\label{structuvhttp__ws__handler__t_a36cfdc6dc425e9a3e162892c07adf93b}} 
+void $\ast$ {\bfseries user\+\_\+data}
+\item 
+\mbox{\Hypertarget{structuvhttp__ws__handler__t_ae47548bf65781b7829f8e4b4fffab888}\label{structuvhttp__ws__handler__t_ae47548bf65781b7829f8e4b4fffab888}} 
+uvhttp\+\_\+timeout\+\_\+callback\+\_\+t {\bfseries timeout\+\_\+callback}
+\item 
+\mbox{\Hypertarget{structuvhttp__ws__handler__t_a67f2a0a8353d2341fd797e04e054ea05}\label{structuvhttp__ws__handler__t_a67f2a0a8353d2341fd797e04e054ea05}} 
+void $\ast$ {\bfseries timeout\+\_\+callback\+\_\+user\+\_\+data}
+\end{DoxyCompactItemize}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/uvhttp\+\_\+server.\+h\end{DoxyCompactItemize}

@@ -1,0 +1,154 @@
+\hypertarget{uvhttp__connection_8h_source}{}\doxysection{uvhttp\+\_\+connection.\+h}
+\label{uvhttp__connection_8h_source}\index{include/uvhttp\_connection.h@{include/uvhttp\_connection.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{preprocessor}{\#ifndef UVHTTP\_CONNECTION\_H}}
+\DoxyCodeLine{2 \textcolor{preprocessor}{\#define UVHTTP\_CONNECTION\_H}}
+\DoxyCodeLine{3 }
+\DoxyCodeLine{4 \textcolor{preprocessor}{\#include "{}uvhttp\_common.h"{}}}
+\DoxyCodeLine{5 \textcolor{preprocessor}{\#include "{}uvhttp\_platform.h"{}}}
+\DoxyCodeLine{6 \textcolor{preprocessor}{\#include "{}uvhttp\_request.h"{}}}
+\DoxyCodeLine{7 \textcolor{preprocessor}{\#include "{}uvhttp\_response.h"{}}}
+\DoxyCodeLine{8 }
+\DoxyCodeLine{9 \textcolor{preprocessor}{\#include "{}llhttp.h"{}}}
+\DoxyCodeLine{10 }
+\DoxyCodeLine{11 \textcolor{preprocessor}{\#include <assert.h>}}
+\DoxyCodeLine{12 \textcolor{preprocessor}{\#include <stddef.h>}}
+\DoxyCodeLine{13 \textcolor{preprocessor}{\#include <stdlib.h>}}
+\DoxyCodeLine{14 }
+\DoxyCodeLine{15 \textcolor{preprocessor}{\#ifdef \_\_cplusplus}}
+\DoxyCodeLine{16 \textcolor{keyword}{extern} \textcolor{stringliteral}{"{}C"{}} \{}
+\DoxyCodeLine{17 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{18 }
+\DoxyCodeLine{19 \textcolor{comment}{// 前向声明（避免循环引用）}}
+\DoxyCodeLine{20 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection}} \mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}};}
+\DoxyCodeLine{21 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__server}{uvhttp\_server}} \mbox{\hyperlink{structuvhttp__server}{uvhttp\_server\_t}};}
+\DoxyCodeLine{22 }
+\DoxyCodeLine{23 \textcolor{keyword}{typedef} \textcolor{keyword}{enum} \{}
+\DoxyCodeLine{24     UVHTTP\_CONN\_STATE\_NEW,}
+\DoxyCodeLine{25     UVHTTP\_CONN\_STATE\_TLS\_HANDSHAKE,}
+\DoxyCodeLine{26     UVHTTP\_CONN\_STATE\_HTTP\_READING,}
+\DoxyCodeLine{27     UVHTTP\_CONN\_STATE\_HTTP\_PROCESSING,}
+\DoxyCodeLine{28     UVHTTP\_CONN\_STATE\_HTTP\_WRITING,}
+\DoxyCodeLine{29     UVHTTP\_CONN\_STATE\_CLOSING}
+\DoxyCodeLine{30 \} uvhttp\_connection\_state\_t;}
+\DoxyCodeLine{31 }
+\DoxyCodeLine{32 \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection}} \{}
+\DoxyCodeLine{33     \textcolor{comment}{/* ========== 缓存行1（0-\/63字节）：热路径字段 -\/ 最频繁访问 ========== */}}
+\DoxyCodeLine{34     \textcolor{comment}{/* 在 on\_read、on\_write、连接管理中频繁访问 */}}
+\DoxyCodeLine{35     uvhttp\_connection\_state\_t state; \textcolor{comment}{/* 4 字节 -\/ 连接状态 */}}
+\DoxyCodeLine{36     \textcolor{keywordtype}{int} parsing\_complete;            \textcolor{comment}{/* 4 字节 -\/ 解析是否完成 */}}
+\DoxyCodeLine{37     \textcolor{keywordtype}{int} keepalive;                   \textcolor{comment}{/* 4 字节 -\/ 是否保持连接 */}}
+\DoxyCodeLine{38     \textcolor{keywordtype}{int} chunked\_encoding;            \textcolor{comment}{/* 4 字节 -\/ 是否使用分块传输 */}}
+\DoxyCodeLine{39     \textcolor{keywordtype}{int} close\_pending;               \textcolor{comment}{/* 4 字节 -\/ 待关闭的 handle 计数 */}}
+\DoxyCodeLine{40     \textcolor{keywordtype}{int} need\_restart\_read;           \textcolor{comment}{/* 4 字节 -\/ 是否需要重启读取 */}}
+\DoxyCodeLine{41     \textcolor{keywordtype}{int} tls\_enabled;                 \textcolor{comment}{/* 4 字节 -\/ TLS 是否启用 */}}
+\DoxyCodeLine{42     \textcolor{keywordtype}{int} \_padding1;                   \textcolor{comment}{/* 4 字节 -\/ 填充到32字节 */}}
+\DoxyCodeLine{43     \textcolor{keywordtype}{size\_t} body\_received;            \textcolor{comment}{/* 8 字节 -\/ 已接收的 body 长度 */}}
+\DoxyCodeLine{44     \textcolor{keywordtype}{size\_t} content\_length;           \textcolor{comment}{/* 8 字节 -\/ Content-\/Length */}}
+\DoxyCodeLine{45     \textcolor{keywordtype}{size\_t} read\_buffer\_used;         \textcolor{comment}{/* 8 字节 -\/ 读缓冲区已使用 */}}
+\DoxyCodeLine{46     \textcolor{keywordtype}{size\_t} read\_buffer\_size;         \textcolor{comment}{/* 8 字节 -\/ 读缓冲区大小 */}}
+\DoxyCodeLine{47     \textcolor{comment}{/* 缓存行1总计：56字节（剩余8字节填充） */}}
+\DoxyCodeLine{48 }
+\DoxyCodeLine{49     \textcolor{comment}{/* ========== 缓存行2（64-\/127字节）：指针字段 -\/ 次频繁访问 ========== */}}
+\DoxyCodeLine{50     \textcolor{comment}{/* 在连接创建、销毁、请求处理中频繁访问 */}}
+\DoxyCodeLine{51     \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__server}{uvhttp\_server}}* server; \textcolor{comment}{/* 8 字节 -\/ 所属服务器 */}}
+\DoxyCodeLine{52     \mbox{\hyperlink{structuvhttp__request}{uvhttp\_request\_t}}* request;    \textcolor{comment}{/* 8 字节 -\/ 请求对象 */}}
+\DoxyCodeLine{53     \mbox{\hyperlink{structuvhttp__response}{uvhttp\_response\_t}}* response;  \textcolor{comment}{/* 8 字节 -\/ 响应对象 */}}
+\DoxyCodeLine{54     \textcolor{keywordtype}{void}* ssl;                    \textcolor{comment}{/* 8 字节 -\/ SSL/TLS 上下文 */}}
+\DoxyCodeLine{55     \textcolor{keywordtype}{char}* read\_buffer;            \textcolor{comment}{/* 8 字节 -\/ 读缓冲区指针 */}}
+\DoxyCodeLine{56 \textcolor{preprocessor}{\#if UVHTTP\_FEATURE\_WEBSOCKET}}
+\DoxyCodeLine{57     \textcolor{keywordtype}{void}* ws\_connection; \textcolor{comment}{/* 8 字节 -\/ WebSocket 连接 */}}
+\DoxyCodeLine{58 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{59     \textcolor{keywordtype}{int} current\_header\_is\_important; \textcolor{comment}{/* 4 字节 -\/ 当前头部是否重要 */}}
+\DoxyCodeLine{60     \textcolor{keywordtype}{int} parsing\_header\_field; \textcolor{comment}{/* 4 字节 -\/ 是否正在解析头部字段 */}}
+\DoxyCodeLine{61     \textcolor{keywordtype}{int} last\_error;           \textcolor{comment}{/* 4 字节 -\/ 最后的错误码 */}}
+\DoxyCodeLine{62 \textcolor{preprocessor}{\#if UVHTTP\_FEATURE\_WEBSOCKET}}
+\DoxyCodeLine{63     \textcolor{keywordtype}{int} is\_websocket; \textcolor{comment}{/* 4 字节 -\/ 是否为 WebSocket 连接 */}}
+\DoxyCodeLine{64 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{65     \textcolor{keywordtype}{int} \_padding2; \textcolor{comment}{/* 4 字节 -\/ 填充到64字节 */}}
+\DoxyCodeLine{66     \textcolor{comment}{/* 缓存行2总计：约64字节（取决于 WebSocket 是否启用） */}}
+\DoxyCodeLine{67 }
+\DoxyCodeLine{68     \textcolor{comment}{/* ========== 缓存行3（128-\/191字节）：libuv 句柄 ========== */}}
+\DoxyCodeLine{69     \textcolor{comment}{/* libuv 内部结构体，大小固定 */}}
+\DoxyCodeLine{70     uv\_tcp\_t tcp\_handle;      \textcolor{comment}{/* 约40-\/48字节 */}}
+\DoxyCodeLine{71     uv\_idle\_t idle\_handle;    \textcolor{comment}{/* 约24-\/32字节 */}}
+\DoxyCodeLine{72     uv\_timer\_t timeout\_timer; \textcolor{comment}{/* 约24-\/32字节 */}}
+\DoxyCodeLine{73     \textcolor{comment}{/* 缓存行3总计：约88-\/112字节 */}}
+\DoxyCodeLine{74 }
+\DoxyCodeLine{75     \textcolor{comment}{/* ========== 缓存行4（192-\/255字节）：HTTP 解析状态 ========== */}}
+\DoxyCodeLine{76     \textcolor{comment}{/* 在 HTTP 解析过程中频繁访问 */}}
+\DoxyCodeLine{77     \textcolor{keywordtype}{size\_t} current\_header\_field\_len; \textcolor{comment}{/* 8 字节 -\/ 当前头部字段长度 */}}
+\DoxyCodeLine{78     \textcolor{keywordtype}{int} \_padding3[14];               \textcolor{comment}{/* 56字节 -\/ 填充到64字节 */}}
+\DoxyCodeLine{79     \textcolor{comment}{/* 缓存行4总计：64字节 */}}
+\DoxyCodeLine{80 }
+\DoxyCodeLine{81     \textcolor{comment}{/* ========== 缓存行5+（256+字节）：大块缓冲区 ========== */}}
+\DoxyCodeLine{82     \textcolor{comment}{/* 放在最后，避免影响热路径字段的缓存局部性 */}}
+\DoxyCodeLine{83     \textcolor{keywordtype}{char} current\_header\_field[\mbox{\hyperlink{uvhttp__constants_8h_a33307a1eb0edd0b816b2d4e7d0fb3200}{UVHTTP\_MAX\_HEADER\_NAME\_SIZE}}]; \textcolor{comment}{/* 大块内存 */}}
+\DoxyCodeLine{84 \};}
+\DoxyCodeLine{85 }
+\DoxyCodeLine{86 \textcolor{comment}{/* ========== 内存布局验证静态断言 ========== */}}
+\DoxyCodeLine{87 }
+\DoxyCodeLine{88 \textcolor{comment}{/* 验证指针对齐（平台自适应） */}}
+\DoxyCodeLine{89 UVHTTP\_CHECK\_ALIGNMENT(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}, server, UVHTTP\_POINTER\_ALIGNMENT);}
+\DoxyCodeLine{90 UVHTTP\_CHECK\_ALIGNMENT(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}, request, UVHTTP\_POINTER\_ALIGNMENT);}
+\DoxyCodeLine{91 UVHTTP\_CHECK\_ALIGNMENT(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}, response, UVHTTP\_POINTER\_ALIGNMENT);}
+\DoxyCodeLine{92 }
+\DoxyCodeLine{93 \textcolor{comment}{/* 验证size\_t对齐（平台自适应） */}}
+\DoxyCodeLine{94 UVHTTP\_CHECK\_ALIGNMENT(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}, content\_length,}
+\DoxyCodeLine{95                        UVHTTP\_SIZE\_T\_ALIGNMENT);}
+\DoxyCodeLine{96 UVHTTP\_CHECK\_ALIGNMENT(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}, body\_received,}
+\DoxyCodeLine{97                        UVHTTP\_SIZE\_T\_ALIGNMENT);}
+\DoxyCodeLine{98 UVHTTP\_CHECK\_ALIGNMENT(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}, read\_buffer\_size,}
+\DoxyCodeLine{99                        UVHTTP\_SIZE\_T\_ALIGNMENT);}
+\DoxyCodeLine{100 }
+\DoxyCodeLine{101 \textcolor{comment}{/* 验证大型缓冲区在结构体末尾 */}}
+\DoxyCodeLine{102 UVHTTP\_STATIC\_ASSERT(offsetof(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}, current\_header\_field) >= 64,}
+\DoxyCodeLine{103                      \textcolor{stringliteral}{"{}current\_header\_field should be after first 64 bytes"{}});}
+\DoxyCodeLine{104 }
+\DoxyCodeLine{105 \textcolor{comment}{/* 连接管理函数 */}}
+\DoxyCodeLine{115 uvhttp\_error\_t uvhttp\_connection\_new(\textcolor{keyword}{struct} \mbox{\hyperlink{structuvhttp__server}{uvhttp\_server}}* server,}
+\DoxyCodeLine{116                                      \mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}** conn);}
+\DoxyCodeLine{117 \textcolor{keywordtype}{void} uvhttp\_connection\_free(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn);}
+\DoxyCodeLine{118 uvhttp\_error\_t uvhttp\_connection\_start(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn);}
+\DoxyCodeLine{119 \textcolor{keywordtype}{void} uvhttp\_connection\_close(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn);}
+\DoxyCodeLine{120 uvhttp\_error\_t uvhttp\_connection\_restart\_read(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn);}
+\DoxyCodeLine{121 uvhttp\_error\_t uvhttp\_connection\_schedule\_restart\_read(}
+\DoxyCodeLine{122     \mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn);}
+\DoxyCodeLine{123 }
+\DoxyCodeLine{124 \textcolor{comment}{/* TLS处理函数 */}}
+\DoxyCodeLine{125 uvhttp\_error\_t uvhttp\_connection\_start\_tls\_handshake(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn);}
+\DoxyCodeLine{126 uvhttp\_error\_t uvhttp\_connection\_tls\_read(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn);}
+\DoxyCodeLine{127 uvhttp\_error\_t uvhttp\_connection\_tls\_write(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn,}
+\DoxyCodeLine{128                                            \textcolor{keyword}{const} \textcolor{keywordtype}{void}* data, \textcolor{keywordtype}{size\_t} len);}
+\DoxyCodeLine{129 uvhttp\_error\_t uvhttp\_connection\_tls\_handshake\_func(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn);}
+\DoxyCodeLine{130 \textcolor{keywordtype}{void} uvhttp\_connection\_tls\_cleanup(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn);}
+\DoxyCodeLine{131 }
+\DoxyCodeLine{132 \textcolor{comment}{/* 状态管理 */}}
+\DoxyCodeLine{133 \textcolor{keywordtype}{void} uvhttp\_connection\_set\_state(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn,}
+\DoxyCodeLine{134                                  uvhttp\_connection\_state\_t state);}
+\DoxyCodeLine{135 \textcolor{keyword}{const} \textcolor{keywordtype}{char}* uvhttp\_connection\_get\_state\_string(uvhttp\_connection\_state\_t state);}
+\DoxyCodeLine{136 }
+\DoxyCodeLine{137 \textcolor{comment}{/* WebSocket处理函数（内部） */}}
+\DoxyCodeLine{138 \textcolor{preprocessor}{\#if UVHTTP\_FEATURE\_WEBSOCKET}}
+\DoxyCodeLine{139 uvhttp\_error\_t uvhttp\_connection\_handle\_websocket\_handshake(}
+\DoxyCodeLine{140     \mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn, \textcolor{keyword}{const} \textcolor{keywordtype}{char}* ws\_key);}
+\DoxyCodeLine{141 \textcolor{keywordtype}{void} uvhttp\_connection\_switch\_to\_websocket(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn);}
+\DoxyCodeLine{142 \textcolor{keywordtype}{void} uvhttp\_connection\_websocket\_read(uv\_stream\_t* stream, ssize\_t nread,}
+\DoxyCodeLine{143                                       \textcolor{keyword}{const} uv\_buf\_t* buf);}
+\DoxyCodeLine{144 \textcolor{keywordtype}{void} uvhttp\_connection\_websocket\_close(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn);}
+\DoxyCodeLine{145 }
+\DoxyCodeLine{159 uvhttp\_error\_t uvhttp\_connection\_start\_timeout(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn);}
+\DoxyCodeLine{160 }
+\DoxyCodeLine{176 uvhttp\_error\_t uvhttp\_connection\_start\_timeout\_custom(\mbox{\hyperlink{structuvhttp__connection}{uvhttp\_connection\_t}}* conn,}
+\DoxyCodeLine{177                                                       \textcolor{keywordtype}{int} timeout\_seconds);}
+\DoxyCodeLine{178 }
+\DoxyCodeLine{179 \textcolor{preprocessor}{\#endif }\textcolor{comment}{/* UVHTTP\_FEATURE\_WEBSOCKET */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{180 }
+\DoxyCodeLine{181 \textcolor{preprocessor}{\#ifdef \_\_cplusplus}}
+\DoxyCodeLine{182 \}}
+\DoxyCodeLine{183 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{184 }
+\DoxyCodeLine{185 \textcolor{preprocessor}{\#endif }\textcolor{comment}{/* UVHTTP\_CONNECTION\_H */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

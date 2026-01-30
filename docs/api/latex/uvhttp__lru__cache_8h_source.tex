@@ -1,0 +1,114 @@
+\hypertarget{uvhttp__lru__cache_8h_source}{}\doxysection{uvhttp\+\_\+lru\+\_\+cache.\+h}
+\label{uvhttp__lru__cache_8h_source}\index{include/uvhttp\_lru\_cache.h@{include/uvhttp\_lru\_cache.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{comment}{/* UVHTTP LRU缓存模块 -\/ 基于uthash实现 */}}
+\DoxyCodeLine{2 }
+\DoxyCodeLine{3 \textcolor{preprocessor}{\#ifndef UVHTTP\_LRU\_CACHE\_H}}
+\DoxyCodeLine{4 \textcolor{preprocessor}{\#define UVHTTP\_LRU\_CACHE\_H}}
+\DoxyCodeLine{5 }
+\DoxyCodeLine{6 \textcolor{preprocessor}{\#if UVHTTP\_FEATURE\_STATIC\_FILES}}
+\DoxyCodeLine{7 }
+\DoxyCodeLine{8 \textcolor{preprocessor}{\#    include "{}\mbox{\hyperlink{uvhttp__config_8h}{uvhttp\_config.h}}"{}}}
+\DoxyCodeLine{9 \textcolor{preprocessor}{\#    include "{}\mbox{\hyperlink{uvhttp__constants_8h}{uvhttp\_constants.h}}"{}}}
+\DoxyCodeLine{10 \textcolor{preprocessor}{\#    include "{}uvhttp\_error.h"{}}}
+\DoxyCodeLine{11 }
+\DoxyCodeLine{12 \textcolor{preprocessor}{\#    include <stddef.h>}}
+\DoxyCodeLine{13 \textcolor{preprocessor}{\#    include <time.h>}}
+\DoxyCodeLine{14 }
+\DoxyCodeLine{15 \textcolor{comment}{/* 包含uthash头文件 */}}
+\DoxyCodeLine{16 \textcolor{preprocessor}{\#    include "{}uthash.h"{}}}
+\DoxyCodeLine{17 }
+\DoxyCodeLine{18 \textcolor{preprocessor}{\#    ifdef \_\_cplusplus}}
+\DoxyCodeLine{19 \textcolor{keyword}{extern} \textcolor{stringliteral}{"{}C"{}} \{}
+\DoxyCodeLine{20 \textcolor{preprocessor}{\#    endif}}
+\DoxyCodeLine{21 }
+\DoxyCodeLine{22 \textcolor{comment}{/* 前向声明 */}}
+\DoxyCodeLine{23 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }cache\_entry cache\_entry\_t;}
+\DoxyCodeLine{24 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }cache\_manager cache\_manager\_t;}
+\DoxyCodeLine{25 }
+\DoxyCodeLine{26 \textcolor{comment}{/* LRU缓存条目结构 */}}
+\DoxyCodeLine{27 \textcolor{keyword}{struct }cache\_entry \{}
+\DoxyCodeLine{28     \textcolor{keywordtype}{char} file\_path[\mbox{\hyperlink{uvhttp__constants_8h_aa8bbae5e9797276818c20d6fff47168b}{UVHTTP\_MAX\_FILE\_PATH\_SIZE}}];    \textcolor{comment}{/* 文件路径 */}}
+\DoxyCodeLine{29     \textcolor{keywordtype}{char}* content;                                \textcolor{comment}{/* 文件内容 */}}
+\DoxyCodeLine{30     \textcolor{keywordtype}{size\_t} content\_length;                        \textcolor{comment}{/* 内容长度 */}}
+\DoxyCodeLine{31     \textcolor{keywordtype}{char} mime\_type[UVHTTP\_MAX\_HEADER\_VALUE\_SIZE]; \textcolor{comment}{/* MIME类型 */}}
+\DoxyCodeLine{32     time\_t last\_modified;                         \textcolor{comment}{/* 最后修改时间 */}}
+\DoxyCodeLine{33     \textcolor{keywordtype}{char} etag[UVHTTP\_MAX\_HEADER\_VALUE\_SIZE];      \textcolor{comment}{/* ETag值 */}}
+\DoxyCodeLine{34     time\_t access\_time;                           \textcolor{comment}{/* 最后访问时间 */}}
+\DoxyCodeLine{35     time\_t cache\_time;                            \textcolor{comment}{/* 缓存时间 */}}
+\DoxyCodeLine{36     \textcolor{keywordtype}{size\_t} memory\_usage;                          \textcolor{comment}{/* 内存使用量 */}}
+\DoxyCodeLine{37     \textcolor{keywordtype}{int} is\_compressed;                            \textcolor{comment}{/* 是否压缩 */}}
+\DoxyCodeLine{38 }
+\DoxyCodeLine{39     \textcolor{comment}{/* uthash哈希句柄 */}}
+\DoxyCodeLine{40     UT\_hash\_handle hh;}
+\DoxyCodeLine{41 }
+\DoxyCodeLine{42     \textcolor{comment}{/* LRU链表句柄 */}}
+\DoxyCodeLine{43     \textcolor{keyword}{struct }cache\_entry* lru\_prev;}
+\DoxyCodeLine{44     \textcolor{keyword}{struct }cache\_entry* lru\_next;}
+\DoxyCodeLine{45 \};}
+\DoxyCodeLine{46 }
+\DoxyCodeLine{47 \textcolor{comment}{/* LRU缓存管理器 */}}
+\DoxyCodeLine{48 \textcolor{keyword}{struct }cache\_manager \{}
+\DoxyCodeLine{49     cache\_entry\_t* hash\_table;            \textcolor{comment}{/* 哈希表头 */}}
+\DoxyCodeLine{50     cache\_entry\_t* lru\_head;              \textcolor{comment}{/* LRU链表头 */}}
+\DoxyCodeLine{51     cache\_entry\_t* lru\_tail;              \textcolor{comment}{/* LRU链表尾 */}}
+\DoxyCodeLine{52     \textcolor{keywordtype}{size\_t} total\_memory\_usage;            \textcolor{comment}{/* 总内存使用 */}}
+\DoxyCodeLine{53     \textcolor{keywordtype}{size\_t} max\_memory\_usage;              \textcolor{comment}{/* 最大内存限制 */}}
+\DoxyCodeLine{54     \textcolor{keywordtype}{int} entry\_count;                      \textcolor{comment}{/* 缓存条目数 */}}
+\DoxyCodeLine{55     \textcolor{keywordtype}{int} max\_entries;                      \textcolor{comment}{/* 最大条目数 */}}
+\DoxyCodeLine{56     \textcolor{keywordtype}{int} cache\_ttl;                        \textcolor{comment}{/* 缓存TTL（秒） */}}
+\DoxyCodeLine{57     \textcolor{keyword}{const} \mbox{\hyperlink{structuvhttp__config__t}{uvhttp\_config\_t}}* server\_config; \textcolor{comment}{/* 服务器配置引用 */}}
+\DoxyCodeLine{58 }
+\DoxyCodeLine{59     \textcolor{comment}{/* 统计信息 */}}
+\DoxyCodeLine{60     \textcolor{keywordtype}{int} hit\_count;      \textcolor{comment}{/* 命中次数 */}}
+\DoxyCodeLine{61     \textcolor{keywordtype}{int} miss\_count;     \textcolor{comment}{/* 未命中次数 */}}
+\DoxyCodeLine{62     \textcolor{keywordtype}{int} eviction\_count; \textcolor{comment}{/* 驱逐次数 */}}
+\DoxyCodeLine{63 \};}
+\DoxyCodeLine{64 }
+\DoxyCodeLine{74 uvhttp\_error\_t uvhttp\_lru\_cache\_create(\textcolor{keywordtype}{size\_t} max\_memory\_usage, \textcolor{keywordtype}{int} max\_entries,}
+\DoxyCodeLine{75                                        \textcolor{keywordtype}{int} cache\_ttl, cache\_manager\_t** cache);}
+\DoxyCodeLine{76 }
+\DoxyCodeLine{82 \textcolor{keywordtype}{void} uvhttp\_lru\_cache\_free(cache\_manager\_t* cache);}
+\DoxyCodeLine{83 }
+\DoxyCodeLine{91 cache\_entry\_t* uvhttp\_lru\_cache\_find(cache\_manager\_t* cache,}
+\DoxyCodeLine{92                                      \textcolor{keyword}{const} \textcolor{keywordtype}{char}* file\_path);}
+\DoxyCodeLine{93 }
+\DoxyCodeLine{106 uvhttp\_error\_t uvhttp\_lru\_cache\_put(cache\_manager\_t* cache,}
+\DoxyCodeLine{107                                     \textcolor{keyword}{const} \textcolor{keywordtype}{char}* file\_path, \textcolor{keywordtype}{char}* content,}
+\DoxyCodeLine{108                                     \textcolor{keywordtype}{size\_t} content\_length,}
+\DoxyCodeLine{109                                     \textcolor{keyword}{const} \textcolor{keywordtype}{char}* mime\_type, time\_t last\_modified,}
+\DoxyCodeLine{110                                     \textcolor{keyword}{const} \textcolor{keywordtype}{char}* etag);}
+\DoxyCodeLine{111 }
+\DoxyCodeLine{119 uvhttp\_error\_t uvhttp\_lru\_cache\_remove(cache\_manager\_t* cache,}
+\DoxyCodeLine{120                                        \textcolor{keyword}{const} \textcolor{keywordtype}{char}* file\_path);}
+\DoxyCodeLine{121 }
+\DoxyCodeLine{127 \textcolor{keywordtype}{void} uvhttp\_lru\_cache\_clear(cache\_manager\_t* cache);}
+\DoxyCodeLine{128 }
+\DoxyCodeLine{139 \textcolor{keywordtype}{void} uvhttp\_lru\_cache\_get\_stats(cache\_manager\_t* cache,}
+\DoxyCodeLine{140                                 \textcolor{keywordtype}{size\_t}* total\_memory\_usage, \textcolor{keywordtype}{int}* entry\_count,}
+\DoxyCodeLine{141                                 \textcolor{keywordtype}{int}* hit\_count, \textcolor{keywordtype}{int}* miss\_count,}
+\DoxyCodeLine{142                                 \textcolor{keywordtype}{int}* eviction\_count);}
+\DoxyCodeLine{143 }
+\DoxyCodeLine{149 \textcolor{keywordtype}{void} uvhttp\_lru\_cache\_reset\_stats(cache\_manager\_t* cache);}
+\DoxyCodeLine{150 }
+\DoxyCodeLine{157 \textcolor{keywordtype}{int} uvhttp\_lru\_cache\_cleanup\_expired(cache\_manager\_t* cache);}
+\DoxyCodeLine{158 }
+\DoxyCodeLine{166 \textcolor{keywordtype}{int} uvhttp\_lru\_cache\_is\_expired(cache\_entry\_t* entry, \textcolor{keywordtype}{int} cache\_ttl);}
+\DoxyCodeLine{167 }
+\DoxyCodeLine{174 \textcolor{keywordtype}{void} uvhttp\_lru\_cache\_move\_to\_head(cache\_manager\_t* cache,}
+\DoxyCodeLine{175                                    cache\_entry\_t* entry);}
+\DoxyCodeLine{176 }
+\DoxyCodeLine{183 cache\_entry\_t* uvhttp\_lru\_cache\_remove\_tail(cache\_manager\_t* cache);}
+\DoxyCodeLine{184 }
+\DoxyCodeLine{191 \textcolor{keywordtype}{double} uvhttp\_lru\_cache\_get\_hit\_rate(cache\_manager\_t* cache);}
+\DoxyCodeLine{192 }
+\DoxyCodeLine{193 \textcolor{preprocessor}{\#    ifdef \_\_cplusplus}}
+\DoxyCodeLine{194 \}}
+\DoxyCodeLine{195 \textcolor{preprocessor}{\#    endif}}
+\DoxyCodeLine{196 }
+\DoxyCodeLine{197 \textcolor{preprocessor}{\#endif }\textcolor{comment}{/* UVHTTP\_FEATURE\_STATIC\_FILES */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{198 }
+\DoxyCodeLine{199 \textcolor{preprocessor}{\#endif }\textcolor{comment}{/* UVHTTP\_LRU\_CACHE\_H */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

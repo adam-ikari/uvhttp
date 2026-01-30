@@ -1,0 +1,95 @@
+\hypertarget{structuvhttp__connection}{}\doxysection{uvhttp\+\_\+connection Struct Reference}
+\label{structuvhttp__connection}\index{uvhttp\_connection@{uvhttp\_connection}}
+
+
+Collaboration diagram for uvhttp\+\_\+connection\+:
+% FIG 0
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_ad6115f7fa78cb0179d44761503d4a13c}\label{structuvhttp__connection_ad6115f7fa78cb0179d44761503d4a13c}} 
+uvhttp\+\_\+connection\+\_\+state\+\_\+t {\bfseries state}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a3ea95f517f009537f907f14428f432ce}\label{structuvhttp__connection_a3ea95f517f009537f907f14428f432ce}} 
+int {\bfseries parsing\+\_\+complete}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a1b6bc9c61865e6580ce10c725f0c511c}\label{structuvhttp__connection_a1b6bc9c61865e6580ce10c725f0c511c}} 
+int {\bfseries keepalive}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_aef2d14ca11322774c72159056a259def}\label{structuvhttp__connection_aef2d14ca11322774c72159056a259def}} 
+int {\bfseries chunked\+\_\+encoding}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a8c3a5d58b5fd044bacb5811a53d3c7c5}\label{structuvhttp__connection_a8c3a5d58b5fd044bacb5811a53d3c7c5}} 
+int {\bfseries close\+\_\+pending}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a9c821478d7fa14e131928c865db4dca3}\label{structuvhttp__connection_a9c821478d7fa14e131928c865db4dca3}} 
+int {\bfseries need\+\_\+restart\+\_\+read}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_ab56afa8aa692fd90dc2fe0c26760bb94}\label{structuvhttp__connection_ab56afa8aa692fd90dc2fe0c26760bb94}} 
+int {\bfseries tls\+\_\+enabled}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_abb7f2a489b2aae07a26eb9d8c0066325}\label{structuvhttp__connection_abb7f2a489b2aae07a26eb9d8c0066325}} 
+int {\bfseries \+\_\+padding1}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_ac27f2370dcceeb489d4c71cfbdc2dade}\label{structuvhttp__connection_ac27f2370dcceeb489d4c71cfbdc2dade}} 
+size\+\_\+t {\bfseries body\+\_\+received}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a8ed62d51bf9ce91469fa0d34676ee5d9}\label{structuvhttp__connection_a8ed62d51bf9ce91469fa0d34676ee5d9}} 
+size\+\_\+t {\bfseries content\+\_\+length}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a94b9ce02fc08d5bc05cb95999b993557}\label{structuvhttp__connection_a94b9ce02fc08d5bc05cb95999b993557}} 
+size\+\_\+t {\bfseries read\+\_\+buffer\+\_\+used}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_ac1ac4ef1aa8958266ff514265b8e54bd}\label{structuvhttp__connection_ac1ac4ef1aa8958266ff514265b8e54bd}} 
+size\+\_\+t {\bfseries read\+\_\+buffer\+\_\+size}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a3aba7ba0fd384167d7674478eefb40a4}\label{structuvhttp__connection_a3aba7ba0fd384167d7674478eefb40a4}} 
+struct \mbox{\hyperlink{structuvhttp__server}{uvhttp\+\_\+server}} $\ast$ {\bfseries server}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_aac3c3a6a65968b22722ae3e52686ed9e}\label{structuvhttp__connection_aac3c3a6a65968b22722ae3e52686ed9e}} 
+\mbox{\hyperlink{structuvhttp__request}{uvhttp\+\_\+request\+\_\+t}} $\ast$ {\bfseries request}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a535083e027450f73a175fa93ba60213d}\label{structuvhttp__connection_a535083e027450f73a175fa93ba60213d}} 
+\mbox{\hyperlink{structuvhttp__response}{uvhttp\+\_\+response\+\_\+t}} $\ast$ {\bfseries response}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_ace148f0898f07733b0ac82ef4e598d35}\label{structuvhttp__connection_ace148f0898f07733b0ac82ef4e598d35}} 
+void $\ast$ {\bfseries ssl}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a3420601b31a75f64a4bc2fceab82ad21}\label{structuvhttp__connection_a3420601b31a75f64a4bc2fceab82ad21}} 
+char $\ast$ {\bfseries read\+\_\+buffer}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a381dc6afebbd34b53d9cea5516b78c24}\label{structuvhttp__connection_a381dc6afebbd34b53d9cea5516b78c24}} 
+int {\bfseries current\+\_\+header\+\_\+is\+\_\+important}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a75cb0155f0c174e0d2c488bbfb7b114f}\label{structuvhttp__connection_a75cb0155f0c174e0d2c488bbfb7b114f}} 
+int {\bfseries parsing\+\_\+header\+\_\+field}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a217f16e74975830daed97706768855d0}\label{structuvhttp__connection_a217f16e74975830daed97706768855d0}} 
+int {\bfseries last\+\_\+error}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_aabecb2c145f69bfb6700c43741ccd10a}\label{structuvhttp__connection_aabecb2c145f69bfb6700c43741ccd10a}} 
+int {\bfseries \+\_\+padding2}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a17b1bc5faed8e0f88cbe7c558908c104}\label{structuvhttp__connection_a17b1bc5faed8e0f88cbe7c558908c104}} 
+uv\+\_\+tcp\+\_\+t {\bfseries tcp\+\_\+handle}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_ac653cdf127f76f398cb2f50128780a8e}\label{structuvhttp__connection_ac653cdf127f76f398cb2f50128780a8e}} 
+uv\+\_\+idle\+\_\+t {\bfseries idle\+\_\+handle}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a7ef3f0297671e5097720ceb823bf96df}\label{structuvhttp__connection_a7ef3f0297671e5097720ceb823bf96df}} 
+uv\+\_\+timer\+\_\+t {\bfseries timeout\+\_\+timer}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a3e562ee505d1f12c49a33012587f8f6c}\label{structuvhttp__connection_a3e562ee505d1f12c49a33012587f8f6c}} 
+size\+\_\+t {\bfseries current\+\_\+header\+\_\+field\+\_\+len}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_af0dd46dd81d447c2b6e35bc205bd36b3}\label{structuvhttp__connection_af0dd46dd81d447c2b6e35bc205bd36b3}} 
+int {\bfseries \+\_\+padding3} \mbox{[}14\mbox{]}
+\item 
+\mbox{\Hypertarget{structuvhttp__connection_a6e036d07114b3d519254c90e183d163d}\label{structuvhttp__connection_a6e036d07114b3d519254c90e183d163d}} 
+char {\bfseries current\+\_\+header\+\_\+field} \mbox{[}\mbox{\hyperlink{uvhttp__constants_8h_a33307a1eb0edd0b816b2d4e7d0fb3200}{UVHTTP\+\_\+\+MAX\+\_\+\+HEADER\+\_\+\+NAME\+\_\+\+SIZE}}\mbox{]}
+\end{DoxyCompactItemize}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/uvhttp\+\_\+connection.\+h\end{DoxyCompactItemize}

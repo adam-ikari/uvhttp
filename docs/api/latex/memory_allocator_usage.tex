@@ -1,0 +1,34 @@
+\hypertarget{memory_allocator_usage_allocator_selection}{}\doxysection{Allocator Selection}\label{memory_allocator_usage_allocator_selection}
+Choose allocator type at compile time\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{cmake -\/DUVHTTP\_ALLOCATOR\_TYPE=0 ..  \# System allocator (\textcolor{keywordflow}{default})}
+\DoxyCodeLine{cmake -\/DUVHTTP\_ALLOCATOR\_TYPE=1 ..  \# mimalloc allocator}
+
+\end{DoxyCode}
+\hypertarget{memory_allocator_usage_allocator_usage}{}\doxysection{Usage}\label{memory_allocator_usage_allocator_usage}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{void}* ptr = uvhttp\_alloc(size);     \textcolor{comment}{// Allocate memory}}
+\DoxyCodeLine{ptr = uvhttp\_realloc(ptr, new\_size); \textcolor{comment}{// Reallocate}}
+\DoxyCodeLine{uvhttp\_free(ptr);                    \textcolor{comment}{// Free memory}}
+\DoxyCodeLine{ptr = uvhttp\_calloc(count, size);   \textcolor{comment}{// Allocate and initialize}}
+
+\end{DoxyCode}
+\hypertarget{memory_allocator_usage_allocator_performance}{}\doxysection{Performance Characteristics}\label{memory_allocator_usage_allocator_performance}
+
+\begin{DoxyItemize}
+\item System allocator\+: Stable and reliable, no extra dependencies
+\item mimalloc\+: High performance, optimized for multi-\/threading, built-\/in small object optimization
+\end{DoxyItemize}\hypertarget{memory_allocator_usage_allocator_optimization}{}\doxysection{Compile-\/time Optimization}\label{memory_allocator_usage_allocator_optimization}
+
+\begin{DoxyItemize}
+\item All functions are inline
+\item Zero runtime overhead
+\item Compiler can fully optimize
+\end{DoxyItemize}\hypertarget{memory_allocator_usage_allocator_notes}{}\doxysection{Notes}\label{memory_allocator_usage_allocator_notes}
+
+\begin{DoxyItemize}
+\item mimalloc already optimizes small object allocation, no extra memory pool layer needed
+\item If application needs memory pool, implement at application layer based on specific requirements
+\item Choose appropriate allocator type for best performance 
+\end{DoxyItemize}

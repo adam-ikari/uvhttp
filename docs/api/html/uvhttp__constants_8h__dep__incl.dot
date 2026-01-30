@@ -1,0 +1,45 @@
+digraph "include/uvhttp_constants.h"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="include/uvhttp_constants.h",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="UVHTTP 可配置常量定义"];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="include/uvhttp.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp_8h_source.html",tooltip=" "];
+  Node1 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="include/uvhttp_common.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__common_8h_source.html",tooltip=" "];
+  Node3 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="include/uvhttp_connection.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__connection_8h_source.html",tooltip=" "];
+  Node3 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="include/uvhttp_middleware.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__middleware_8h_source.html",tooltip=" "];
+  Node3 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="include/uvhttp_request.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__request_8h_source.html",tooltip=" "];
+  Node6 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="include/uvhttp_router.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__router_8h_source.html",tooltip=" "];
+  Node7 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 -> Node8 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 [label="include/uvhttp_response.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__response_8h_source.html",tooltip=" "];
+  Node8 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 -> Node9 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node9 [label="include/uvhttp_server.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__server_8h_source.html",tooltip=" "];
+  Node9 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node10 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node10 [label="include/uvhttp_config.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__config_8h.html",tooltip="配置管理系统"];
+  Node10 -> Node11 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node11 [label="include/uvhttp_context.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__context_8h_source.html",tooltip=" "];
+  Node11 -> Node12 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node12 [label="src/uvhttp_config.c",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__config_8c.html",tooltip="配置管理系统实现"];
+  Node10 -> Node9 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node10 -> Node12 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node13 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node13 [label="include/uvhttp_error\l_helpers.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__error__helpers_8h.html",tooltip="Error handling helper functions."];
+  Node1 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node14 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node14 [label="include/uvhttp_validation.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uvhttp__validation_8h.html",tooltip="Input validation module."];
+}

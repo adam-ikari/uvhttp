@@ -1,0 +1,68 @@
+\hypertarget{uvhttp_8h_source}{}\doxysection{uvhttp.\+h}
+\label{uvhttp_8h_source}\index{include/uvhttp.h@{include/uvhttp.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{comment}{/* UVHTTP -\/ 超轻量级HTTP服务器库 -\/ API版本 */}}
+\DoxyCodeLine{2 }
+\DoxyCodeLine{3 \textcolor{preprocessor}{\#ifndef UVHTTP\_H}}
+\DoxyCodeLine{4 \textcolor{preprocessor}{\#define UVHTTP\_H}}
+\DoxyCodeLine{5 }
+\DoxyCodeLine{6 \textcolor{preprocessor}{\#include "{}uvhttp\_features.h"{}}}
+\DoxyCodeLine{7 }
+\DoxyCodeLine{8 \textcolor{comment}{/* 核心模块 */}}
+\DoxyCodeLine{9 \textcolor{preprocessor}{\#include "{}\mbox{\hyperlink{uvhttp__constants_8h}{uvhttp\_constants.h}}"{}}}
+\DoxyCodeLine{10 \textcolor{preprocessor}{\#include "{}uvhttp\_error.h"{}}}
+\DoxyCodeLine{11 \textcolor{preprocessor}{\#include "{}uvhttp\_request.h"{}}}
+\DoxyCodeLine{12 \textcolor{preprocessor}{\#include "{}uvhttp\_response.h"{}}}
+\DoxyCodeLine{13 \textcolor{preprocessor}{\#include "{}uvhttp\_router.h"{}}}
+\DoxyCodeLine{14 \textcolor{preprocessor}{\#include "{}uvhttp\_server.h"{}}}
+\DoxyCodeLine{15 \textcolor{preprocessor}{\#include "{}\mbox{\hyperlink{uvhttp__utils_8h}{uvhttp\_utils.h}}"{}}}
+\DoxyCodeLine{16 }
+\DoxyCodeLine{17 \textcolor{comment}{/* 可选功能的条件包含 */}}
+\DoxyCodeLine{18 }
+\DoxyCodeLine{19 \textcolor{preprocessor}{\#if UVHTTP\_FEATURE\_WEBSOCKET}}
+\DoxyCodeLine{20 \textcolor{preprocessor}{\#    include "{}uvhttp\_websocket.h"{}}}
+\DoxyCodeLine{21 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{22 }
+\DoxyCodeLine{23 \textcolor{preprocessor}{\#if UVHTTP\_FEATURE\_TLS}}
+\DoxyCodeLine{24 \textcolor{preprocessor}{\#    include "{}uvhttp\_tls.h"{}}}
+\DoxyCodeLine{25 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{26 }
+\DoxyCodeLine{27 \textcolor{preprocessor}{\#if UVHTTP\_FEATURE\_STATIC\_FILES}}
+\DoxyCodeLine{28 \textcolor{preprocessor}{\#    include "{}uvhttp\_static.h"{}}}
+\DoxyCodeLine{29 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{30 }
+\DoxyCodeLine{31 \textcolor{comment}{/* 可选功能 */}}
+\DoxyCodeLine{32 \textcolor{preprocessor}{\#if UVHTTP\_FEATURE\_ALLOCATOR}}
+\DoxyCodeLine{33 \textcolor{preprocessor}{\#    include "{}\mbox{\hyperlink{uvhttp__allocator_8h}{uvhttp\_allocator.h}}"{}}}
+\DoxyCodeLine{34 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{35 }
+\DoxyCodeLine{36 \textcolor{preprocessor}{\#ifdef \_\_cplusplus}}
+\DoxyCodeLine{37 \textcolor{keyword}{extern} \textcolor{stringliteral}{"{}C"{}} \{}
+\DoxyCodeLine{38 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{39 }
+\DoxyCodeLine{40 \textcolor{comment}{/* 版本信息 */}}
+\DoxyCodeLine{41 \textcolor{preprocessor}{\#define UVHTTP\_VERSION\_MAJOR 2}}
+\DoxyCodeLine{42 \textcolor{preprocessor}{\#define UVHTTP\_VERSION\_MINOR 2}}
+\DoxyCodeLine{43 \textcolor{preprocessor}{\#define UVHTTP\_VERSION\_PATCH 0}}
+\DoxyCodeLine{44 \textcolor{preprocessor}{\#define UVHTTP\_VERSION\_STRING "{}2.2.0"{}}}
+\DoxyCodeLine{45 }
+\DoxyCodeLine{46 \textcolor{comment}{/* API使用说明：}}
+\DoxyCodeLine{47 \textcolor{comment}{ *}}
+\DoxyCodeLine{48 \textcolor{comment}{ * 核心API：}}
+\DoxyCodeLine{49 \textcolor{comment}{ *   uvhttp\_server\_t* server = uvhttp\_server\_new(loop);}}
+\DoxyCodeLine{50 \textcolor{comment}{ *   uvhttp\_router\_t* router = uvhttp\_router\_new();}}
+\DoxyCodeLine{51 \textcolor{comment}{ *   uvhttp\_router\_add\_route(router, "{}/"{}, handler);}}
+\DoxyCodeLine{52 \textcolor{comment}{ *}}
+\DoxyCodeLine{53 \textcolor{comment}{ * 启动服务器：}}
+\DoxyCodeLine{54 \textcolor{comment}{ *   uvhttp\_server\_listen(server, "{}0.0.0.0"{}, 8080);}}
+\DoxyCodeLine{55 \textcolor{comment}{ *   uv\_run(loop, UV\_RUN\_DEFAULT);}}
+\DoxyCodeLine{56 \textcolor{comment}{ */}}
+\DoxyCodeLine{57 }
+\DoxyCodeLine{58 \textcolor{preprocessor}{\#ifdef \_\_cplusplus}}
+\DoxyCodeLine{59 \}}
+\DoxyCodeLine{60 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{61 }
+\DoxyCodeLine{62 \textcolor{preprocessor}{\#endif }\textcolor{comment}{/* UVHTTP\_H */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}
