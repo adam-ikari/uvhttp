@@ -1,4 +1,4 @@
-/* UVHTTP 错误处理辅助函数实现 */
+/* UVHTTP Error Handling Helper Functions Implementation */
 
 #include "uvhttp_error_helpers.h"
 
@@ -13,13 +13,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* 敏感信息关键词列表 */
+/* Sensitive information keyword list */
 static const char* sensitive_keywords[] = {
     "password", "passwd",     "secret",  "key",     "token",
     "auth",     "credential", "private", "session", NULL};
 
 /**
- * 检查字符串是否包含敏感信息
+ * Check if string contains sensitive information
  */
 static int contains_sensitive_info(const char* str) {
     if (!str)
@@ -29,7 +29,7 @@ static int contains_sensitive_info(const char* str) {
     strncpy(lower_str, str, sizeof(lower_str) - 1);
     lower_str[sizeof(lower_str) - 1] = '\0';
 
-    // 转换为小写进行比较
+    // Convert to lowercase for comparison
     for (char* p = lower_str; *p; p++) {
         *p = (char)tolower((unsigned char)*p);
     }
@@ -97,16 +97,16 @@ uvhttp_error_t uvhttp_sanitize_error_message(const char* message,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    // 检查是否包含敏感信息
+    // Check if contains sensitive information
     if (contains_sensitive_info(message)) {
         snprintf(safe_buffer, buffer_size, "Sensitive information hidden");
         return UVHTTP_OK;
     }
 
-    // 复制消息，但限制长度
+    // Copy message, but limit length
     size_t msg_len = strlen(message);
 
-    // 处理小缓冲区（buffer_size < 4）
+    // Handle small buffer (buffer_size < 4)
     if (buffer_size < 4) {
         strncpy(safe_buffer, message, buffer_size - 1);
         safe_buffer[buffer_size - 1] = '\0';
@@ -122,4 +122,4 @@ uvhttp_error_t uvhttp_sanitize_error_message(const char* message,
     return UVHTTP_OK;
 }
 
-/* uvhttp_safe_free 已删除 - 完全未使用，直接使用 uvhttp_free */
+/* uvhttp_safe_free deleted - completely unused, use uvhttp_free directly */
