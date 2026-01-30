@@ -192,15 +192,17 @@ uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
         buffer[3] = payload_len & 0xFF;
         header_size = 4;
     } else {
+        /* 使用 uint64_t 避免 32 位系统上的位移警告 */
+        uint64_t len = (uint64_t)payload_len;
         buffer[1] = (mask ? 0x80 : 0x00) | 127;
-        buffer[2] = (payload_len >> 56) & 0xFF;
-        buffer[3] = (payload_len >> 48) & 0xFF;
-        buffer[4] = (payload_len >> 40) & 0xFF;
-        buffer[5] = (payload_len >> 32) & 0xFF;
-        buffer[6] = (payload_len >> 24) & 0xFF;
-        buffer[7] = (payload_len >> 16) & 0xFF;
-        buffer[8] = (payload_len >> 8) & 0xFF;
-        buffer[9] = payload_len & 0xFF;
+        buffer[2] = (len >> 56) & 0xFF;
+        buffer[3] = (len >> 48) & 0xFF;
+        buffer[4] = (len >> 40) & 0xFF;
+        buffer[5] = (len >> 32) & 0xFF;
+        buffer[6] = (len >> 24) & 0xFF;
+        buffer[7] = (len >> 16) & 0xFF;
+        buffer[8] = (len >> 8) & 0xFF;
+        buffer[9] = len & 0xFF;
         header_size = 10;
     }
 
