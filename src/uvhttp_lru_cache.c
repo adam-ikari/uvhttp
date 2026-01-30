@@ -1,4 +1,4 @@
-/* UVHTTP LRU缓存模块实现 - 基于uthash，单线程版本 */
+/* UVHTTP LRU cache module implementation - based on uthash, single-threaded version */
 
 #if UVHTTP_FEATURE_STATIC_FILES
 
@@ -14,11 +14,11 @@
 #    include <string.h>
 #    include <time.h>
 
-/* 包含uthash头文件 */
+/* Include uthash header file */
 #    include "uthash.h"
 
 /**
- * 创建LRU缓存管理器
+ * Create LRU cache manager
  */
 uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
                                        int cache_ttl, cache_manager_t** cache) {
@@ -43,9 +43,9 @@ uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
     cache_ptr->max_memory_usage = max_memory_usage;
     cache_ptr->max_entries = max_entries;
     cache_ptr->cache_ttl = cache_ttl;
-    cache_ptr->server_config = NULL; /* 初始化为 NULL，由调用者设置 */
+    cache_ptr->server_config = NULL; /* Initialize to NULL, set by caller */
 
-    /* 单线程版本：不需要初始化锁 */
+    /* Single-threaded version: no need to initialize lock */
 
     UVHTTP_LOG_INFO("LRU cache created successfully");
     *cache = cache_ptr;
@@ -53,7 +53,7 @@ uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
 }
 
 /**
- * 释放缓存条目
+ * Free cache entry
  */
 static void free_cache_entry(cache_entry_t* entry) {
     if (!entry)
@@ -66,7 +66,7 @@ static void free_cache_entry(cache_entry_t* entry) {
 }
 
 /**
- * 释放LRU缓存管理器
+ * Free LRU cache manager
  */
 void uvhttp_lru_cache_free(cache_manager_t* cache) {
     if (!cache)
@@ -77,14 +77,14 @@ void uvhttp_lru_cache_free(cache_manager_t* cache) {
 
     uvhttp_lru_cache_clear(cache);
 
-    /* 单线程版本：不需要销毁锁 */
+    /* Single-threaded version: no need to destroy lock */
 
     uvhttp_free(cache);
     UVHTTP_LOG_DEBUG("LRU cache freed");
 }
 
 /**
- * 查找缓存条目 - 单线程版本
+ * Find cache entry - single-threaded version
  */
 cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache,
                                      const char* file_path) {
