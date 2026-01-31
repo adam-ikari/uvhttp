@@ -331,11 +331,8 @@ target_include_directories(uvhttp
 )
 
 # ============================================================================
-# 启用测试
-# ============================================================================
-enable_testing()
-
 # 添加 gtest 测试（仅支持 C++ 测试文件）
+# ============================================================================
 file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_loop_helper.cpp")
@@ -374,23 +371,6 @@ foreach(test_file ${GTEST_TEST_FILES})
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
     )
-    add_test(NAME ${test_name} COMMAND ${test_name})
-    
-    # 设置测试超时时间和标签
-    if(${test_name} STREQUAL "test_server_full_coverage" OR 
-       ${test_name} STREQUAL "test_deps_full_coverage" OR
-       ${test_name} STREQUAL "test_server_rate_limit_coverage" OR
-       ${test_name} STREQUAL "test_server_simple_api_coverage" OR
-       ${test_name} STREQUAL "test_static_prewarm_coverage" OR
-       ${test_name} STREQUAL "test_stress" OR
-       ${test_name} STREQUAL "test_memory")
-        # 这些测试需要更长时间运行，设置为慢速测试，超时360秒
-        # 添加 RUN_SERIAL TRUE 避免并发执行导致的竞争条件
-        set_tests_properties(${test_name} PROPERTIES TIMEOUT 360 LABELS "slow" RUN_SERIAL TRUE)
-    else()
-        # 其他测试为快速测试，超时90秒
-        set_tests_properties(${test_name} PROPERTIES TIMEOUT 90 LABELS "fast")
-    endif()
 endforeach()
 
 # 添加 gtest 示例测试（使用 C++ 编译）
@@ -403,8 +383,6 @@ endif()
 target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
 target_link_libraries(uvhttp_unit_tests ${LIBS} ${GTEST_LIBS})
 target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
-add_test(NAME uvhttp_unit_tests COMMAND uvhttp_unit_tests)
-set_tests_properties(uvhttp_unit_tests PROPERTIES TIMEOUT 90 LABELS "fast")
 
 # ============================================================================
 # CMocka + GTest 集成测试

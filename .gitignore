@@ -2,8 +2,14 @@
 build/
 dist/
 
-# Pre-built dependencies
+# Pre-built dependencies and build artifacts
 deps/cmocka/
+deps/*/build/
+deps/*/*.a
+deps/*/*.o
+deps/*/*.so
+deps/*/*.dylib
+deps/*/*.dll
 
 # Test executables (but not source files)
 test_memory_simple
