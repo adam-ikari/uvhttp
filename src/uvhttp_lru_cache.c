@@ -32,6 +32,18 @@ uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    if (max_memory_usage == 0) {
+        UVHTTP_LOG_ERROR(
+            "Failed to create LRU cache: max_memory_usage cannot be zero");
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    if (max_entries <= 0) {
+        UVHTTP_LOG_ERROR(
+            "Failed to create LRU cache: max_entries must be positive");
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
     cache_manager_t* cache_ptr = uvhttp_alloc(sizeof(cache_manager_t));
     if (!cache_ptr) {
         UVHTTP_LOG_ERROR("Failed to create LRU cache: memory allocation error");
@@ -280,6 +292,13 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
         (cache->max_memory_usage > 0 &&
          cache->total_memory_usage + memory_usage > cache->max_memory_usage) ||
         (cache->max_entries > 0 && cache->entry_count >= cache->max_entries)) {
+
+        /* 如果缓存为空但仍然需要驱逐，说明无法满足条件，返回错误 */
+        if (!cache->lru_tail) {
+            UVHTTP_LOG_ERROR(
+                "Cannot evict more entries: cache is empty but still needs space");
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
+        }
 
         /* 批量驱逐多个条目以减少循环次数 */
         for (int i = 0;

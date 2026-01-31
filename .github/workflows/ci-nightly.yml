@@ -74,16 +74,31 @@ jobs:
   security-scan-full:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
-      
-      - name: Run security scan
+
+      - name: Run CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          languages: cpp
+
+      - name: Run dependency check
         run: |
-          echo "Security scan completed"
+          # 检查依赖库版本
+          echo "Checking dependencies..."
+
+      - name: Upload security results
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: security-results-nightly-${{ github.run_number }}
+          path: |
+            codeql-results/
+            dependency-check-results.txt
+          retention-days: 30
   
   # ========== 阶段 2: 完整测试 ==========
   
@@ -96,23 +111,23 @@ jobs:
       test-total: ${{ steps.test.outputs.total }}
       test-passed: ${{ steps.test.outputs.passed }}
       test-failed: ${{ steps.test.outputs.failed }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
-      
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4.1.2
         with:
           name: build-ubuntu-nightly-${{ github.run_number }}
           path: build/
-      
+
       - name: Set executable permissions
         run: |
           chmod +x build/dist/bin/* || true
-      
+
       - name: Run full tests
         id: test
         uses: ./.github/actions/run-tests
@@ -121,7 +136,7 @@ jobs:
           test-type: all
           timeout: 180
           parallel: $(nproc)
-      
+
       - name: Upload test logs
         if: always()
         uses: actions/upload-artifact@v4.3.1
@@ -129,70 +144,365 @@ jobs:
           name: test-logs-ubuntu-nightly-${{ github.run_number }}
           path: build/Testing/
           retention-days: 7
-  
+
   # ========== 阶段 3: 覆盖率报告 ==========
-  
-  coverage-report:
+
+  test-coverage:
     needs: [ubuntu-build-all]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    
+    timeout-minutes: 35
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.1.1
         with:
           submodules: recursive
-      
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4.1.2
         with:
           name: build-ubuntu-nightly-${{ github.run_number }}
           path: build/
-      
+
+      - name: Run tests with coverage
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build
+          test-type: coverage
+          timeout: 120
+          parallel: $(nproc)
+
+      - name: Generate coverage report
+        run: |
+          cd build
+          lcov --capture --directory . --output-file coverage.info
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info
+          lcov --list coverage.info
+          genhtml coverage.info --output-directory coverage-report
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: coverage-report-nightly-${{ github.run_number }}
+          path: build/coverage-report/
+          retention-days: 30
+
+      - name: Upload coverage data
+        uses: codecov/codecov-action@v4
+        with:
+          files: build/coverage.info
+          flags: nightly
+          name: nightly-coverage
+
+  # ========== 阶段 4: 深度测试 ==========
+
+  coverage-report:
+    needs: [ubuntu-build-all]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-ubuntu-nightly-${{ github.run_number }}
+          path: build/
+
       - name: Upload coverage report
         uses: actions/upload-artifact@v4.3.1
         with:
           name: coverage-report-nightly-${{ github.run_number }}
           path: build/coverage_html/
           retention-days: 30
+
+  test-stress:
+    needs: [ubuntu-build-all]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-ubuntu-nightly-${{ github.run_number }}
+          path: build/
+
+      - name: Install wrk
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wrk
+
+      - name: Run stress test
+        run: |
+          chmod +x build/dist/bin/benchmark_rps
+
+          # 启动服务器
+          build/dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
+          SERVER_PID=$!
+          sleep 3
+
+          # 持续高负载测试（5分钟）
+          wrk -t8 -c500 -d300s --timeout 10s http://localhost:18081/ > stress-test.log 2>&1 || true
+
+          kill $SERVER_PID 2>/dev/null || true
+
+      - name: Upload stress test results
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: stress-test-results-nightly-${{ github.run_number }}
+          path: |
+            stress-test.log
+            /tmp/server.log
+          retention-days: 30
+
+  performance-full:
+    needs: [ubuntu-build-all]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-ubuntu-nightly-${{ github.run_number }}
+          path: build/
+
+      - name: Install wrk and tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wrk python3 python3-pip
+          pip3 install matplotlib numpy
+
+      - name: Run full performance benchmark
+        run: |
+          chmod +x build/dist/bin/benchmark_rps
+
+          # 启动服务器
+          build/dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
+          SERVER_PID=$!
+          sleep 3
+
+          # 运行多种性能测试场景
+          echo "Running performance tests..." > performance.log
+
+          for test_id in 1 2 3 4 5 6 7 8; do
+            case $test_id in
+              1)
+                echo "Test 1: Low Concurrent (10 connections, 30s)" >> performance.log
+                wrk -t2 -c10 -d30s --timeout 10s http://localhost:18081/ >> performance.log 2>&1
+                ;;
+              2)
+                echo "Test 2: Medium Concurrent (50 connections, 30s)" >> performance.log
+                wrk -t4 -c50 -d30s --timeout 10s http://localhost:18081/ >> performance.log 2>&1
+                ;;
+              3)
+                echo "Test 3: High Concurrent (100 connections, 30s)" >> performance.log
+                wrk -t4 -c100 -d30s --timeout 10s http://localhost:18081/ >> performance.log 2>&1
+                ;;
+              4)
+                echo "Test 4: Extreme Concurrent (500 connections, 30s)" >> performance.log
+                wrk -t8 -c500 -d30s --timeout 10s http://localhost:18081/ >> performance.log 2>&1
+                ;;
+              5)
+                echo "Test 5: Very High Concurrent (1000 connections, 30s)" >> performance.log
+                wrk -t8 -c1000 -d30s --timeout 10s http://localhost:18081/ >> performance.log 2>&1
+                ;;
+              6)
+                echo "Test 6: Sustained Load (100 connections, 60s)" >> performance.log
+                wrk -t4 -c100 -d60s --timeout 10s http://localhost:18081/ >> performance.log 2>&1
+                ;;
+              7)
+                echo "Test 7: Small File Transfer" >> performance.log
+                wrk -t4 -c50 -d30s --timeout 10s http://localhost:18081/small.txt >> performance.log 2>&1
+                ;;
+              8)
+                echo "Test 8: Large File Transfer" >> performance.log
+                wrk -t4 -c50 -d30s --timeout 10s http://localhost:18081/large.bin >> performance.log 2>&1
+                ;;
+            esac
+            sleep 5
+          done
+
+          kill $SERVER_PID 2>/dev/null || true
+
+      - name: Parse performance results
+        run: |
+          python3 << 'EOF'
+          import re
+          import json
+
+          results = {}
+          current_test = None
+
+          with open('performance.log', 'r') as f:
+            for line in f:
+              if 'Test ' in line and ':' in line:
+                match = re.search(r'Test (\d+):', line)
+                if match:
+                  current_test = f'test_{match.group(1)}'
+                  results[current_test] = {'rps': 0, 'latency': 'N/A'}
+              elif 'Requests/sec:' in line and current_test:
+                match = re.search(r'Requests/sec:\s+([\d.]+)', line)
+                if match:
+                  results[current_test]['rps'] = float(match.group(1))
+              elif 'Latency' in line and 's' in line and current_test:
+                match = re.search(r'Latency\s+([\d.]+[a-z]+)', line)
+                if match:
+                  results[current_test]['latency'] = match.group(1)
+
+          with open('performance-results.json', 'w') as f:
+            json.dump({'results': results}, f, indent=2)
+
+          print(f"parsed={len(results)} tests")
+          EOF
+
+      - name: Generate performance trend report
+        run: |
+          cat > performance-trend.md << 'EOF'
+          # Nightly Performance Trend Report
+
+          - **Date**: ${{ github.event.head_commit.timestamp }}
+          - **Commit**: ${{ github.sha }}
+          - **Run**: #${{ github.run_number }}
+
+          ## Test Results
+
+          | Test | RPS | Latency |
+          |------|-----|---------|
+
+          EOF
+
+          # 添加测试结果表格
+          python3 << 'EOF'
+          import json
+
+          with open('performance-results.json', 'r') as f:
+              data = json.load(f)
+
+          test_names = {
+              'test_1': 'Low Concurrent (10)',
+              'test_2': 'Medium Concurrent (50)',
+              'test_3': 'High Concurrent (100)',
+              'test_4': 'Extreme Concurrent (500)',
+              'test_5': 'Very High Concurrent (1000)',
+              'test_6': 'Sustained Load',
+              'test_7': 'Small File',
+              'test_8': 'Large File'
+          }
+
+          with open('performance-trend.md', 'a') as f:
+              for test_id, result in data['results'].items():
+                  name = test_names.get(test_id, test_id)
+                  f.write(f"| {name} | {result['rps']:.2f} | {result['latency']} |\n")
+          EOF
+
+      - name: Upload performance artifacts
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: performance-full-nightly-${{ github.run_number }}
+          path: |
+            performance-results.json
+            performance-trend.md
+            performance.log
+          retention-days: 30
+
+  test-memory:
+    needs: [ubuntu-build-all]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-ubuntu-nightly-${{ github.run_number }}
+          path: build/
+
+      - name: Configure with AddressSanitizer
+        run: |
+          cmake -B build-asan -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_FLAGS="-fsanitize=address -fno-omit-frame-pointer" \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address -fno-omit-frame-pointer"
+          cmake --build build-asan -j$(nproc)
+
+      - name: Run tests with AddressSanitizer
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build-asan
+          test-type: memory
+          timeout: 120
+          parallel: 1
+
+      - name: Upload memory test results
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: memory-test-results-nightly-${{ github.run_number }}
+          path: |
+            build-asan/Testing/
+          retention-days: 30
   
   # ========== 阶段 4: 生成总结 ==========
   
   generate-summary:
-    needs: [ubuntu-build-all, code-quality-full, security-scan-full, ubuntu-test-full, coverage-report]
+    needs: [test-coverage, test-memory, test-stress, performance-full]
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     if: always()
-    
+
     steps:
-      - name: Generate summary
+      - name: Generate nightly summary
         run: |
-          echo "## 📊 Nightly CI/CD Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 🌙 Nightly Test Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Build Status" >> $GITHUB_STEP_SUMMARY
-          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Category | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Ubuntu (Linux) | ${{ needs.ubuntu-build-all.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Coverage | ${{ needs.test-coverage.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Memory Test | ${{ needs.test-memory.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Stress Test | ${{ needs.test-stress.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Performance | ${{ needs.performance-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Total | ${{ needs.ubuntu-test-full.outputs.test-total || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Passed | ${{ needs.ubuntu-test-full.outputs.test-passed || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Failed | ${{ needs.ubuntu-test-full.outputs.test-failed || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Code Quality" >> $GITHUB_STEP_SUMMARY
-          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| cppcheck | ${{ needs.code-quality-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Format | ${{ needs.code-quality-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Security" >> $GITHUB_STEP_SUMMARY
-          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Security Scan | ${{ needs.security-scan-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Coverage" >> $GITHUB_STEP_SUMMARY
-          echo "| Report | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Coverage Report | ${{ needs.coverage-report.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- [Coverage Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Performance Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Memory Test Results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Stress Test Results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+
+      - name: Download all artifacts
+        run: |
+          gh run download ${{ github.run_id }} --pattern "*nightly-${{ github.run_number }}*" -D /tmp/artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Create nightly release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: nightly-${{ github.run_number }}
+          name: Nightly Build - ${{ github.event.head_commit.timestamp }}
+          body_path: performance-trend.md
+          draft: false
+          prerelease: true
+          files: |
+            /tmp/artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

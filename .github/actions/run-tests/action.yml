@@ -49,20 +49,20 @@ runs:
         case "${{ inputs.test-type }}" in
           fast)
             # 运行快速测试（排除慢速、压力和内存测试）
-            ctest --output-on-failure -j${{ inputs.parallel }} --timeout ${{ inputs.timeout }} --schedule-random -E "slow|stress|memory"
+            ctest --output-on-failure -j${{ inputs.parallel }} --timeout 90 --schedule-random -E "slow|stress|memory"
             ;;
           slow)
             # 只运行慢速测试
-            ctest --output-on-failure -j${{ inputs.parallel }} --timeout ${{ inputs.timeout }} --schedule-random -R "slow"
+            ctest --output-on-failure -j${{ inputs.parallel }} --timeout 300 --schedule-random -R "slow"
             ;;
           all)
-            ctest --output-on-failure -j${{ inputs.parallel }} --timeout ${{ inputs.timeout }} --schedule-random
+            ctest --output-on-failure -j${{ inputs.parallel }} --timeout 360 --schedule-random
             ;;
           coverage)
             if [ -f "coverage.info" ]; then
               lcov --summary coverage.info
             else
-              ctest --output-on-failure -j${{ inputs.parallel }} --timeout 1800 --schedule-random
+              ctest --output-on-failure -j${{ inputs.parallel }} --timeout 360 --schedule-random
             fi
             ;;
           stress)

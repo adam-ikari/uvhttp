@@ -2,7 +2,7 @@ BUILD_DIR ?= build
 BUILD_TYPE ?= Release
 CMAKE_ARGS = -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON -DBUILD_WITH_TLS=ON
 
-.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild format format-check format-all format-diff docs docs-clean
+.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test run-unit-tests run-fast-tests run-slow-tests run-all-tests run-coverage-tests run-stress-tests run-memory-tests help cppcheck coverage coverage-clean examples build build-deps rebuild format format-check format-all format-diff docs docs-clean
 
 all: $(BUILD_DIR)/Makefile
 	@$(MAKE) -C $(BUILD_DIR)
@@ -60,6 +60,34 @@ clean-performance:
 test: all
 	@echo "🧪 运行测试..."
 	@./test_runner.sh
+
+run-unit-tests: all
+	@echo "🧪 运行单元测试..."
+	@cd $(BUILD_DIR) && ctest --output-on-failure -j$$(nproc)
+
+run-fast-tests: all
+	@echo "🧪 运行快速测试..."
+	@cd $(BUILD_DIR) && ctest --output-on-failure -j$$(nproc) --timeout 90 -E "slow|stress|memory"
+
+run-slow-tests: all
+	@echo "🧪 运行慢速测试..."
+	@cd $(BUILD_DIR) && ctest --output-on-failure -j$$(nproc) --timeout 300 -R "slow"
+
+run-all-tests: all
+	@echo "🧪 运行所有测试..."
+	@cd $(BUILD_DIR) && ctest --output-on-failure -j$$(nproc) --timeout 360
+
+run-coverage-tests: all
+	@echo "🧪 运行覆盖率测试..."
+	@cd $(BUILD_DIR) && ctest --output-on-failure -j$$(nproc) --timeout 360
+
+run-stress-tests: all
+	@echo "🧪 运行压力测试..."
+	@cd $(BUILD_DIR) && ctest --output-on-failure -j1 --timeout 1800 -R "stress"
+
+run-memory-tests: all
+	@echo "🧪 运行内存测试..."
+	@cd $(BUILD_DIR) && ctest --output-on-failure -j1 --timeout 120 -R "memory"
 
 coverage:
 	@if ! command -v lcov >/dev/null 2>&1; then \
@@ -166,6 +194,13 @@ help:
 	@echo ""
 	@echo "测试命令:"
 	@echo "  make test               - 运行测试"
+	@echo "  make run-unit-tests     - 运行单元测试（使用 CTest）"
+	@echo "  make run-fast-tests     - 运行快速测试（排除慢速、压力、内存测试）"
+	@echo "  make run-slow-tests     - 运行慢速测试"
+	@echo "  make run-all-tests      - 运行所有测试"
+	@echo "  make run-coverage-tests - 运行覆盖率测试"
+	@echo "  make run-stress-tests   - 运行压力测试"
+	@echo "  make run-memory-tests   - 运行内存测试"
 	@echo "  make coverage           - 生成覆盖率报告"
 	@echo "  make coverage-clean     - 清理覆盖率数据"
 	@echo ""

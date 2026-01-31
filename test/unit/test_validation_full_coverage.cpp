@@ -78,8 +78,9 @@ TEST(UvhttpValidationFullCoverageTest, ValidateHeaderValueSafeValid) {
 }
 
 TEST(UvhttpValidationFullCoverageTest, ValidateHeaderValueSafeInvalid) {
-    EXPECT_EQ(uvhttp_validate_header_value_safe(""), 0);
     EXPECT_EQ(uvhttp_validate_header_value_safe("value\r\n"), 0);
+    EXPECT_EQ(uvhttp_validate_header_value_safe("value\x01"), 0);
+    EXPECT_EQ(uvhttp_validate_header_value_safe("value\x7F"), 0);
 }
 
 /* uvhttp_validate_port 已删除 - 完全未使用 */

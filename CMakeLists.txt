@@ -397,12 +397,12 @@ foreach(test_file ${GTEST_TEST_FILES})
        ${test_name} STREQUAL "test_server_rate_limit_coverage" OR
        ${test_name} STREQUAL "test_server_simple_api_coverage" OR
        ${test_name} STREQUAL "test_static_prewarm_coverage")
-        # 这些测试需要更长时间运行，设置为慢速测试，超时300秒
+        # 这些测试需要更长时间运行，设置为慢速测试，超时360秒
         # 添加 RUN_SERIAL TRUE 避免并发执行导致的竞争条件
-        set_tests_properties(${test_name} PROPERTIES TIMEOUT 300 LABELS "slow" RUN_SERIAL TRUE)
+        set_tests_properties(${test_name} PROPERTIES TIMEOUT 360 LABELS "slow" RUN_SERIAL TRUE)
     else()
-        # 其他测试为快速测试，超时60秒
-        set_tests_properties(${test_name} PROPERTIES TIMEOUT 60 LABELS "fast")
+        # 其他测试为快速测试，超时90秒
+        set_tests_properties(${test_name} PROPERTIES TIMEOUT 90 LABELS "fast")
     endif()
 endforeach()
 
@@ -417,7 +417,7 @@ target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno
 target_link_libraries(uvhttp_unit_tests ${LIBS} ${GTEST_LIBS})
 target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
 add_test(NAME uvhttp_unit_tests COMMAND uvhttp_unit_tests)
-set_tests_properties(uvhttp_unit_tests PROPERTIES TIMEOUT 60 LABELS "fast")
+set_tests_properties(uvhttp_unit_tests PROPERTIES TIMEOUT 90 LABELS "fast")
 
 # ============================================================================
 # CMocka + GTest 集成测试

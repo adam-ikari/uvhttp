@@ -66,6 +66,12 @@ static inline int uvhttp_validate_url_path(const char* path) {
         return FALSE;
     if (!uvhttp_validate_string_length(path, 1, UVHTTP_MAX_PATH_SIZE))
         return FALSE;
+    // Path must start with /
+    if (path[0] != '/')
+        return FALSE;
+    // Check for path traversal attacks (../)
+    if (strstr(path, "../"))
+        return FALSE;
     for (size_t i = 0; i < sizeof(dangerous_path_chars); i++) {
         if (strchr(path, dangerous_path_chars[i]))
             return FALSE;
@@ -113,8 +119,10 @@ static inline int uvhttp_validate_header_value_safe(const char* value) {
     size_t len = strlen(value);
     if (len > UVHTTP_MAX_HEADER_VALUE_SIZE)
         return FALSE;
-    for (size_t i = 0; i < sizeof(dangerous_header_chars); i++) {
-        if (strchr(value, dangerous_header_chars[i]))
+    // Check for control characters (0x00-0x1F and 0x7F)
+    for (size_t i = 0; i < len; i++) {
+        unsigned char c = (unsigned char)value[i];
+        if (c < 0x20 || c == 0x7F)
             return FALSE;
     }
     return TRUE;
