@@ -396,7 +396,9 @@ foreach(test_file ${GTEST_TEST_FILES})
        ${test_name} STREQUAL "test_deps_full_coverage" OR
        ${test_name} STREQUAL "test_server_rate_limit_coverage" OR
        ${test_name} STREQUAL "test_server_simple_api_coverage" OR
-       ${test_name} STREQUAL "test_static_prewarm_coverage")
+       ${test_name} STREQUAL "test_static_prewarm_coverage" OR
+       ${test_name} STREQUAL "test_stress" OR
+       ${test_name} STREQUAL "test_memory")
         # 这些测试需要更长时间运行，设置为慢速测试，超时360秒
         # 添加 RUN_SERIAL TRUE 避免并发执行导致的竞争条件
         set_tests_properties(${test_name} PROPERTIES TIMEOUT 360 LABELS "slow" RUN_SERIAL TRUE)

@@ -87,7 +87,11 @@ runs:
         PASSED=$(ctest --print-labels 2>/dev/null | grep -c "Passed" || echo 0)
         FAILED=$(ctest --print-labels 2>/dev/null | grep -c "Failed" || echo 0)
         
-        echo "status=$([ $TEST_RESULT -eq 0 ] && echo 'success' || echo 'failed')" >> $GITHUB_OUTPUT
+        if [ $TEST_RESULT -eq 0 ]; then
+          echo "status=success" >> $GITHUB_OUTPUT
+        else
+          echo "status=failed" >> $GITHUB_OUTPUT
+        fi
         echo "total=$TOTAL" >> $GITHUB_OUTPUT
         echo "passed=$PASSED" >> $GITHUB_OUTPUT
         echo "failed=$FAILED" >> $GITHUB_OUTPUT
