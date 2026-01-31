@@ -561,6 +561,7 @@ static uvhttp_error_t create_simple_server_internal(
     simple->loop = uv_default_loop();
     if (!simple->loop) {
         uvhttp_free(simple);
+        *server = NULL;  // 设置为 NULL 避免双重释放
         return UVHTTP_ERROR_IO_ERROR;
     }
 
@@ -569,6 +570,7 @@ static uvhttp_error_t create_simple_server_internal(
         uvhttp_server_new(simple->loop, &simple->server);
     if (server_result != UVHTTP_OK) {
         uvhttp_free(simple);
+        *server = NULL;  // 设置为 NULL 避免双重释放
         return server_result;
     }
 
@@ -577,6 +579,7 @@ static uvhttp_error_t create_simple_server_internal(
     if (router_result != UVHTTP_OK) {
         uvhttp_server_free(simple->server);
         uvhttp_free(simple);
+        *server = NULL;  // 设置为 NULL 避免双重释放
         return router_result;
     }
 
@@ -586,6 +589,7 @@ static uvhttp_error_t create_simple_server_internal(
         uvhttp_router_free(simple->router);
         uvhttp_server_free(simple->server);
         uvhttp_free(simple);
+        *server = NULL;  // 设置为 NULL 避免双重释放
         return result;
     }
 
