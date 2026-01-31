@@ -718,8 +718,17 @@ app_context_t* ctx = (app_context_t*)loop->data;
 ### 代码覆盖率
 
 当前代码覆盖率目标: 80%
+当前代码覆盖率: 约 0.4%（单元测试仅覆盖基础功能）
 
-使用 `./run_tests.sh` 运行测试并生成覆盖率报告。
+**低覆盖率模块**（需要添加更多测试）：
+- `uvhttp_server.c` - 服务器核心逻辑
+- `uvhttp_static.c` - 静态文件服务
+- `uvhttp_connection.c` - 连接管理
+- `uvhttp_websocket.c` - WebSocket 支持
+- `uvhttp_request.c` - 请求处理
+- `uvhttp_response.c` - 响应处理
+
+使用 `./run_tests.sh --detailed` 运行测试并生成覆盖率报告。
 
 ## 重要变更记录
 
