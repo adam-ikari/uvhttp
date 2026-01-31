@@ -4,7 +4,7 @@ This guide covers different ways to install and build UVHTTP.
 
 ## System Requirements
 
-- **Operating System**: Linux (x86_64, x86, ARM64, ARM32)
+- **Operating System**: Linux
   - **Future Plans**: macOS, Windows, FreeBSD, WebAssembly (WASM), and other Unix-like systems
 - **Compiler**: GCC 4.8+ or Clang 3.4+
 - **CMake**: 3.10 or higher

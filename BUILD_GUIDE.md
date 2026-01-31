@@ -2,7 +2,7 @@
 
 ## 📌 平台支持
 
-**当前支持**: Linux (x86_64, x86, ARM64, ARM32)
+**当前支持**: Linux
 
 **未来计划**: macOS, Windows, FreeBSD, WebAssembly (WASM) 和其他 Unix-like 系统
 

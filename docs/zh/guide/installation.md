@@ -4,7 +4,7 @@
 
 ## 📌 平台支持
 
-**当前支持**: Linux (x86_64, x86, ARM64, ARM32)
+**当前支持**: Linux
 
 **未来计划**: macOS, Windows, FreeBSD, WebAssembly (WASM) 和其他 Unix-like 系统
 
@@ -17,7 +17,7 @@ UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中
 - **C 编译器**: 
   - GCC 4.9+ (Linux)
   - Clang 3.5+ (Linux)
-- **操作系统**: Linux (x86_64, x86, ARM64, ARM32)
+- **操作系统**: Linux
 
 ### 推荐要求
 - **CMake**: 3.15 或更高版本

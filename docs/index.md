@@ -36,7 +36,7 @@ features:
 
 ## 📌 Platform Support
 
-**Current Support**: Linux (x86_64, x86, ARM64, ARM32)
+**Current Support**: Linux
 
 **Future Plans**: macOS, Windows, FreeBSD, WebAssembly (WASM), and other Unix-like systems
 
