@@ -33,3 +33,11 @@ features:
     details: Clean API design, comprehensive documentation, rich examples, quick to get started
   - title: 🧪 Production Ready
     details: Complete error handling, resource management, observability, stability guarantees
+
+## 📌 Platform Support
+
+**Current Support**: Linux (x86_64, x86, ARM64)
+
+**Future Plans**: macOS, Windows, FreeBSD, and other Unix-like systems
+
+UVHTTP is currently optimized for Linux platforms. We plan to expand support to other operating systems and platforms in future releases.

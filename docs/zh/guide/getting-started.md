@@ -1,9 +1,17 @@
 # 快速开始
 
+## 📌 平台支持
+
+**当前支持**: Linux (x86_64, x86, ARM64)
+
+**未来计划**: macOS, Windows, FreeBSD 和其他 Unix-like 系统
+
+UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中扩展对其他操作系统和平台的支持。
+
 ## 环境要求
 
 - CMake 3.10+
-- C11 编译器（GCC 4.9+, Clang 3.5+, MSVC 2015+）
+- C11 编译器（GCC 4.9+, Clang 3.5+）
 - libuv 1.x
 - llhttp
 
@@ -38,13 +46,13 @@ sudo apt-get update
 sudo apt-get install -y cmake build-essential libuv1-dev
 ```
 
-#### macOS
+#### macOS（未来支持）
 
 ```bash
 brew install cmake libuv
 ```
 
-#### Windows
+#### Windows（未来支持）
 
 使用 vcpkg 安装依赖：
 

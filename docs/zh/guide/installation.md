@@ -1,6 +1,14 @@
 # 安装指南
 
-本指南介绍如何在不同平台上安装 UVHTTP。
+本指南介绍如何安装和构建 UVHTTP。
+
+## 📌 平台支持
+
+**当前支持**: Linux (x86_64, x86, ARM64)
+
+**未来计划**: macOS, Windows, FreeBSD 和其他 Unix-like 系统
+
+UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中扩展对其他操作系统和平台的支持。
 
 ## 系统要求
 
@@ -8,16 +16,14 @@
 - **CMake**: 3.10 或更高版本
 - **C 编译器**: 
   - GCC 4.9+ (Linux)
-  - Clang 3.5+ (macOS, Linux)
-  - MSVC 2015+ (Windows)
-- **操作系统**: Linux, macOS, Windows
+  - Clang 3.5+ (Linux)
+- **操作系统**: Linux (x86_64, x86, ARM64)
 
 ### 推荐要求
 - **CMake**: 3.15 或更高版本
 - **C 编译器**: 
   - GCC 7+ (Linux)
-  - Clang 10+ (macOS, Linux)
-  - MSVC 2019+ (Windows)
+  - Clang 10+ (Linux)
 
 ## 从源码编译
 

@@ -6,12 +6,21 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Tests](https://img.shields.io/badge/tests-280%20passing-brightgreen.svg)
+![Platform](https://img.shields.io/badge/platform-linux-orange.svg)
 
 **专注 HTTP/1.1 和 WebSocket 的高性能服务器库**
 
 专注核心 • 高性能 • 可配置 • 生产就绪
 
 </div>
+
+## 📌 平台支持
+
+**当前支持**: Linux (x86_64, x86, ARM64)
+
+**未来计划**: macOS, Windows, FreeBSD 和其他 Unix-like 系统
+
+UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中扩展对其他操作系统和平台的支持。
 
 ## ✨ 特性
 

@@ -4,11 +4,14 @@ This guide covers different ways to install and build UVHTTP.
 
 ## System Requirements
 
-- **Operating System**: Linux, macOS, or Windows
+- **Operating System**: Linux (x86_64, x86, ARM64)
+  - **Future Plans**: macOS, Windows, FreeBSD, and other Unix-like systems
 - **Compiler**: GCC 4.8+ or Clang 3.4+
 - **CMake**: 3.10 or higher
 - **Memory**: At least 1GB RAM
 - **Disk Space**: At least 500MB
+
+> **Note**: UVHTTP currently supports Linux platforms only. We plan to expand support to other operating systems in future releases.
 
 ## Building from Source
 

@@ -1,5 +1,13 @@
 # UVHTTP 构建指南
 
+## 📌 平台支持
+
+**当前支持**: Linux (x86_64, x86, ARM64)
+
+**未来计划**: macOS, Windows, FreeBSD 和其他 Unix-like 系统
+
+UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中扩展对其他操作系统和平台的支持。
+
 ## 快速开始
 
 ### 一键构建

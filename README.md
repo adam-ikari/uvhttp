@@ -6,12 +6,21 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Tests](https://img.shields.io/badge/tests-280%20passing-brightgreen.svg)
+![Platform](https://img.shields.io/badge/platform-linux-orange.svg)
 
 **High-performance HTTP/1.1 and WebSocket server library**
 
 Focus on Core • High Performance • Configurable • Production Ready
 
 </div>
+
+## 📌 Platform Support
+
+**Current Support**: Linux (x86_64, x86, ARM64)
+
+**Future Plans**: macOS, Windows, FreeBSD, and other Unix-like systems
+
+UVHTTP is currently optimized for Linux platforms. We plan to expand support to other operating systems and platforms in future releases. Contributions for cross-platform compatibility are welcome!
 
 ## ✨ Features
 
