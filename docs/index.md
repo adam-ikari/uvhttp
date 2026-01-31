@@ -38,6 +38,6 @@ features:
 
 **Current Support**: Linux (x86_64, x86, ARM64, ARM32)
 
-**Future Plans**: macOS, Windows, FreeBSD, and other Unix-like systems
+**Future Plans**: macOS, Windows, FreeBSD, WebAssembly (WASM), and other Unix-like systems
 
 UVHTTP is currently optimized for Linux platforms. We plan to expand support to other operating systems and platforms in future releases.

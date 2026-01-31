@@ -5,7 +5,7 @@ This guide will help you get started with UVHTTP in just a few minutes.
 ## Prerequisites
 
 - **Operating System**: Linux (x86_64, x86, ARM64, ARM32)
-  - **Future Plans**: macOS, Windows, FreeBSD, and other Unix-like systems
+  - **Future Plans**: macOS, Windows, FreeBSD, WebAssembly (WASM), and other Unix-like systems
 - C compiler (GCC or Clang)
 - CMake 3.10 or higher
 - libuv (will be downloaded automatically)
