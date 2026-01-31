@@ -260,10 +260,8 @@ set(HEADERS
     include/uvhttp_request.h
     include/uvhttp_response.h
     include/uvhttp_router.h
-    include/uvhttp_router_cache.h
     include/uvhttp_server.h
     include/uvhttp_static.h
-    include/uvhttp_string_pool.h
     include/uvhttp_tls.h
     include/uvhttp_utils.h
     include/uvhttp_validation.h
@@ -283,18 +281,10 @@ set(LIBS
     ${XXHASH_LIB}
     ${LLHTTP_LIB}
     ${CJSON_LIB}
+    pthread
+    m
+    dl
 )
-
-# 平台特定的库
-if(IS_WINDOWS)
-    # Windows 不需要额外的库
-elseif(IS_MACOS)
-    # macOS 需要 pthread
-    list(APPEND LIBS pthread)
-else()
-    # Linux 需要 pthread, m, dl
-    list(APPEND LIBS pthread m dl)
-endif()
 
 if(BUILD_WITH_MIMALLOC)
     list(APPEND LIBS ${MIMALLOC_LIB})
@@ -330,17 +320,8 @@ if(BUILD_WITH_MIMALLOC)
     target_compile_definitions(uvhttp PRIVATE UVHTTP_ENABLE_MIMALLOC UVHTTP_FEATURE_ALLOCATOR=1)
 endif()
 
-# 平台特定的库（PRIVATE）- 必须在 mimalloc 之后链接
-if(IS_WINDOWS)
-    # Windows 不需要额外的库
-    target_link_libraries(uvhttp PRIVATE )
-elseif(IS_MACOS)
-    # macOS 需要 pthread
-    target_link_libraries(uvhttp PRIVATE pthread)
-else()
-    # Linux 需要 pthread, m, dl
-    target_link_libraries(uvhttp PRIVATE pthread m dl)
-endif()
+# Linux 平台特定的库（PRIVATE）
+target_link_libraries(uvhttp PRIVATE pthread m dl)
 
 # 设置包含目录（PUBLIC，传递给依赖uvhttp的目标）
 target_include_directories(uvhttp
