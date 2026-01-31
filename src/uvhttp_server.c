@@ -600,6 +600,7 @@ static uvhttp_error_t create_simple_server_internal(
         uvhttp_router_free(simple->router);
         uvhttp_server_free(simple->server);
         uvhttp_free(simple);
+        *server = NULL;  // 设置为 NULL 避免双重释放
         return UVHTTP_ERROR_SERVER_LISTEN;
     }
 
