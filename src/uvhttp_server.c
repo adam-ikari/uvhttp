@@ -767,7 +767,11 @@ int uvhttp_serve(const char* host, int port) {
     printf("按 Ctrl+C 停止服务器\n");
 
     int run_result = uvhttp_server_run(server);
-    uvhttp_server_simple_free(server);
+
+    // 只在成功创建服务器后才释放
+    if (server) {
+        uvhttp_server_simple_free(server);
+    }
 
     return run_result;
 }
