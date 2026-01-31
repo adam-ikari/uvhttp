@@ -577,6 +577,8 @@ static uvhttp_error_t create_simple_server_internal(
     // 创建路由器
     uvhttp_error_t router_result = uvhttp_router_new(&simple->router);
     if (router_result != UVHTTP_OK) {
+        // 在调用 uvhttp_server_free 之前，将 config 设置为 NULL
+        simple->server->config = NULL;
         uvhttp_server_free(simple->server);
         uvhttp_free(simple);
         *server = NULL;  // 设置为 NULL 避免双重释放
@@ -586,6 +588,9 @@ static uvhttp_error_t create_simple_server_internal(
     // 创建并设置默认配置
     uvhttp_error_t result = uvhttp_config_new(&simple->config);
     if (result != UVHTTP_OK) {
+        // 在调用 uvhttp_server_free 之前，将 config 和 router 设置为 NULL
+        simple->server->config = NULL;
+        simple->server->router = NULL;
         uvhttp_router_free(simple->router);
         uvhttp_server_free(simple->server);
         uvhttp_free(simple);
@@ -600,8 +605,10 @@ static uvhttp_error_t create_simple_server_internal(
     // 启动监听
     if (uvhttp_server_listen(simple->server, host, port) != UVHTTP_OK) {
         UVHTTP_LOG_ERROR("Failed to start server on %s:%d\n", host, port);
-        uvhttp_config_free(simple->config);
-        uvhttp_router_free(simple->router);
+        // 在调用 uvhttp_server_free 之前，将 config 和 router 设置为 NULL
+        // 因为它们会在 uvhttp_server_free 中被释放
+        simple->server->config = NULL;
+        simple->server->router = NULL;
         uvhttp_server_free(simple->server);
         uvhttp_free(simple);
         *server = NULL;  // 设置为 NULL 避免双重释放
