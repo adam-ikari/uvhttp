@@ -258,7 +258,6 @@ TEST(UvhttpConfigEnhancedCoverageTest, MemoryAllocation) {
     uvhttp_config_free(config1);
     uvhttp_config_free(config2);
     
-    /* 测试重复释放 */
-    uvhttp_config_free(config1);
-    uvhttp_config_free(config2);
+    /* 注意：不测试重复释放，因为 uvhttp_config_free 应该能够安全地处理 NULL 指针
+     * 但是重复释放非 NULL 指针会导致双重释放错误 */
 }
