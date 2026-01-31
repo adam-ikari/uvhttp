@@ -41,8 +41,8 @@ else()
 endif()
 
 # 明确设置 Release 模式编译选项（覆盖 CMake 默认的 -O3）
-set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "" FORCE)
 
 if(ENABLE_COVERAGE)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
