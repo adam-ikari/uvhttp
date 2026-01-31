@@ -6,7 +6,7 @@ UVHTTP 提供了一套简洁的 C API，用于构建高性能的 HTTP/1.1 和 We
 
 ## 📌 平台支持
 
-**当前支持**: Linux (x86_64, x86, ARM64)
+**当前支持**: Linux (x86_64, x86, ARM64, ARM32)
 
 **未来计划**: macOS, Windows, FreeBSD 和其他 Unix-like 系统
 

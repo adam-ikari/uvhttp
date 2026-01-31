@@ -4,7 +4,7 @@ Welcome to the UVHTTP user documentation! This documentation is for developers b
 
 ## 📌 Platform Support
 
-**Current Support**: Linux (x86_64, x86, ARM64)
+**Current Support**: Linux (x86_64, x86, ARM64, ARM32)
 
 **Future Plans**: macOS, Windows, FreeBSD, and other Unix-like systems
 
