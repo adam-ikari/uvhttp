@@ -8,6 +8,7 @@ deps/cmocka/
 # Test executables (but not source files)
 test_memory_simple
 test_simple
+memory_layout_test
 # Ignore test executables in root directory, but not in test/unit/
 /test_*
 
@@ -16,6 +17,7 @@ stress_test_results_*/
 
 # Performance test results
 test/performance/results/
+benchmark/results/run_*
 
 # Coverage reports
 coverage_html/
