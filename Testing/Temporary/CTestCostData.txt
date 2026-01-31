@@ -1,0 +1,50 @@
+test_allocator 1 0.00377727
+test_config_enhanced_coverage 1 0.00322233
+test_connection_comprehensive_coverage 1 0.00484928
+test_connection_enhanced_coverage 1 0.0029683
+test_connection_full_coverage 1 0.00361704
+test_context_simple 1 0.00267319
+test_death 1 0.00319593
+test_error_comprehensive_coverage 1 0.00252211
+test_error_coverage 1 0.00255396
+test_error_enhanced_coverage 1 0.00265203
+test_error_handler_full_coverage 1 0.00268339
+test_error_helpers_full_coverage 1 0.00312022
+test_hash_full_coverage 1 0.00333241
+test_lru_cache_full_coverage 1 2.00313
+test_memory 0 0
+test_query_validation 1 0.00324161
+test_request_comprehensive_coverage 1 0.00279612
+test_request_extra_coverage 1 0.00393806
+test_request_full_coverage 1 0.00370484
+test_request_full_coverage_enhanced 1 0.00278153
+test_request_null_coverage 1 0.00273654
+test_response_full_coverage 1 0.00424378
+test_response_full_coverage_enhanced 1 0.00363778
+test_router_enhanced_coverage 1 0.0031946
+test_router_full_coverage 1 0.00293715
+test_sendfile_timeout 1 0.0357651
+test_server_error_coverage 0 0
+test_server_rate_limit_full_coverage 1 0.00339325
+test_server_simple_api_coverage 1 0.00301509
+test_server_simple_handlers_coverage 1 0.00287861
+test_simple_main 1 0.00264665
+test_static_comprehensive_coverage 0 0
+test_static_coverage 1 0.00274646
+test_static_enhanced_coverage 1 0.0028988
+test_static_more_coverage 1 0.00276532
+test_stress 1 0.00255878
+test_tls_null_coverage 1 0.00319956
+test_utils_full_coverage 1 0.0027934
+test_validation_full_coverage 1 0.00271734
+test_websocket_enhanced_full_coverage 1 0.00271552
+test_websocket_full_coverage 1 0.00290446
+test_websocket_native_full_coverage 1 0.00354181
+test_websocket_native_simple 1 0.00250423
+test_websocket_null_coverage 1 0.00260076
+test_whitelist_hash 1 0.00322073
+uvhttp_unit_tests 1 0.00329155
+---
+test_memory
+test_server_error_coverage
+test_static_comprehensive_coverage
