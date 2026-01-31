@@ -440,8 +440,6 @@ if(BUILD_WITH_MIMALLOC)
     list(APPEND UVHTTP_OPTIONAL_DEPS mimalloc)
 endif()
 
-endif()
-
 # 设置为全局变量（因为此文件被直接包含在主 CMakeLists.txt 中）
 set(UVHTTP_CORE_DEPS ${UVHTTP_CORE_DEPS} CACHE INTERNAL "")
 set(UVHTTP_OPTIONAL_DEPS ${UVHTTP_OPTIONAL_DEPS} CACHE INTERNAL "")
