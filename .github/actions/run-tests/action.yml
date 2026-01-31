@@ -83,9 +83,14 @@ runs:
         DURATION=$((END_TIME - START_TIME))
         
         # Extract test statistics
-        TOTAL=$(ctest -N 2>/dev/null | grep -c "Test #" || echo 0)
-        PASSED=$(ctest --print-labels 2>/dev/null | grep -c "Passed" || echo 0)
-        FAILED=$(ctest --print-labels 2>/dev/null | grep -c "Failed" || echo 0)
+        TOTAL_COUNT=$(ctest -N 2>/dev/null | grep -c "Test #" || true)
+        PASSED_COUNT=$(ctest --print-labels 2>/dev/null | grep -c "Passed" || true)
+        FAILED_COUNT=$(ctest --print-labels 2>/dev/null | grep -c "Failed" || true)
+        
+        # 确保变量不为空
+        TOTAL=${TOTAL_COUNT:-0}
+        PASSED=${PASSED_COUNT:-0}
+        FAILED=${FAILED_COUNT:-0}
         
         if [ $TEST_RESULT -eq 0 ]; then
           echo "status=success" >> $GITHUB_OUTPUT
