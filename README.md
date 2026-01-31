@@ -5,7 +5,6 @@
 ![uvhttp](https://img.shields.io/badge/uvhttp-2.2.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
-![Tests](https://img.shields.io/badge/tests-280%20passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux-orange.svg)
 
 **High-performance HTTP/1.1 and WebSocket server library**
@@ -85,9 +84,9 @@ int main() {
 ## 📚 Documentation
 
 - **[API Reference](docs/api/API_REFERENCE.md)**: Complete API documentation
-- **[Developer Guide](docs/guide/DEVELOPER_GUIDE.md)**: Development guide and best practices
-- **[Tutorial](docs/guide/TUTORIAL.md)**: Progressive tutorial from basics to advanced
-- **[Architecture Design](docs/dev/ARCHITECTURE.md)**: System architecture documentation
+- **[Build Guide](docs/guide/build.md)**: Build configuration and options
+- **[Getting Started](docs/guide/getting-started.md)**: Quick start guide
+- **[Dependencies](docs/DEPENDENCIES.md)**: Third-party dependencies and version locking
 
 ## 🏗️ Architecture
 
@@ -104,14 +103,16 @@ uvhttp/
 ## 🧪 Testing
 
 ```bash
-# Run all tests
-./run_tests.sh
-
-# Run with coverage
-./run_tests.sh --detailed
+# Build with coverage
+cmake -DENABLE_COVERAGE=ON ..
+make -j$(nproc)
 
 # Run specific test
-./build/dist/bin/test_allocator
+./dist/bin/test_request_comprehensive_coverage
+
+# Generate coverage report
+lcov --capture --directory . --output-file coverage.info
+lcov --summary coverage.info
 ```
 
 ## 🤝 Contributing
