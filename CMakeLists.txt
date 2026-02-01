@@ -227,6 +227,7 @@ set(SOURCES
     src/uvhttp_request.c
     src/uvhttp_response.c
     src/uvhttp_router.c
+    src/uvhttp_router_cache.c
     src/uvhttp_connection.c
     src/uvhttp_server.c
     src/uvhttp_tls.c
