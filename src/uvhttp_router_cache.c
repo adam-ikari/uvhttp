@@ -156,7 +156,7 @@ static uvhttp_error_t add_to_hash_table(cache_optimized_router_t* cr,
     }
 
     memset(new_entry, 0, sizeof(route_hash_entry_t));
-    uvhttp_safe_strncpy(new_entry->path, UVHTTP_MAX_ROUTE_PATH_LEN, path);
+    uvhttp_safe_strncpy(new_entry->path, path, UVHTTP_MAX_ROUTE_PATH_LEN);
     new_entry->method = method;
     new_entry->handler = handler;
     new_entry->access_count = 0;
@@ -192,7 +192,7 @@ static uvhttp_error_t add_to_hot_routes(cache_optimized_router_t* cr,
     /* 如果热路径未满，直接添加 */
     if (cr->hot_count < UVHTTP_ROUTER_HOT_ROUTES_COUNT) {
         uvhttp_safe_strncpy(cr->hot_routes[cr->hot_count].path,
-                           UVHTTP_MAX_ROUTE_PATH_LEN, path);
+                           path, UVHTTP_MAX_ROUTE_PATH_LEN);
         cr->hot_routes[cr->hot_count].method = method;
         cr->hot_routes[cr->hot_count].handler = handler;
         cr->hot_routes[cr->hot_count].access_count = 0;
@@ -213,7 +213,7 @@ static uvhttp_error_t add_to_hot_routes(cache_optimized_router_t* cr,
 
     /* 替换 */
     uvhttp_safe_strncpy(cr->hot_routes[min_index].path,
-                       UVHTTP_MAX_ROUTE_PATH_LEN, path);
+                       path, UVHTTP_MAX_ROUTE_PATH_LEN);
     cr->hot_routes[min_index].method = method;
     cr->hot_routes[min_index].handler = handler;
     cr->hot_routes[min_index].access_count = 0;

@@ -207,6 +207,10 @@ int uvhttp_is_valid_ip_address(const char* ip) {
                     double_colon_count++;
                     /* Skip the second colon */
                     p++;
+                    /* Check for third colon (invalid) */
+                    if (p[1] == ':') {
+                        return FALSE;
+                    }
                 }
             }
         }
@@ -235,16 +239,24 @@ int uvhttp_is_valid_ip_address(const char* ip) {
     
     for (const char* p = ip; *p; p++) {
         if (*p == '.') {
-            /* Check segment value */
-            if (segment_value > 255) {
+            /* Check segment value and digit count */
+            if (segment_value > 255 || digit_count == 0) {
                 return FALSE;
             }
             dot_count++;
             digit_count = 0;
             segment_value = 0;
         } else if (*p >= '0' && *p <= '9') {
+            /* Check for integer overflow */
+            if (segment_value > (255 - (*p - '0')) / 10) {
+                return FALSE;
+            }
             segment_value = segment_value * 10 + (*p - '0');
             digit_count++;
+            /* Limit each segment to max 3 digits */
+            if (digit_count > 3) {
+                return FALSE;
+            }
         } else {
             /* Invalid character */
             return FALSE;
@@ -252,7 +264,7 @@ int uvhttp_is_valid_ip_address(const char* ip) {
     }
     
     /* Check last segment */
-    if (segment_value > 255) {
+    if (segment_value > 255 || digit_count == 0) {
         return FALSE;
     }
     
