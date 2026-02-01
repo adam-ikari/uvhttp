@@ -607,9 +607,18 @@ int uvhttp_error_is_recoverable(uvhttp_error_t error);
 
 ## 测试规范
 
-### 测试类型
+### 测试框架
 
-#### 单元测试
+#### 测试工具
+
+- **单元测试框架**：Google Test
+- **Mock 框架**：libuv_mock（链接时符号替换）
+- **覆盖率工具**：lcov + genhtml
+- **内存检测**：Valgrind、ASan（AddressSanitizer）
+
+#### 测试类型
+
+##### 单元测试
 
 - **目的**：测试单个函数和模块
 - **工具**：Google Test
@@ -630,29 +639,98 @@ TEST(RouterTest, AddRoute) {
 }
 ```
 
-#### 集成测试
+##### 集成测试
 
 - **目的**：测试模块间交互
 - **工具**：Google Test + libuv
 - **位置**：`test/integration/`
 - **命名**：`test_<feature>_integration.c`
 
-#### 性能测试
+##### 性能测试
 
 - **目的**：验证性能指标
 - **工具**：wrk, ab, benchmark/
 - **位置**：`benchmark/`
 - **命名**：`benchmark_<metric>.c`
 
+### Mock 框架使用
+
+#### libuv Mock 框架
+
+UVHTTP 提供完整的 libuv Mock 框架，通过链接时符号替换实现零开销的测试隔离。
+
+##### 启用 Mock
+
+在 CMakeLists.txt 中添加链接器 wrap 选项：
+
+```cmake
+target_link_options(test_module_name PRIVATE
+    -Wl,--wrap=uv_loop_init
+    -Wl,--wrap=uv_loop_close
+    -Wl,--wrap=uv_tcp_init
+    -Wl,--wrap=uv_tcp_bind
+    -Wl,--wrap=uv_listen
+    -Wl,--wrap=uv_read_start
+    -Wl,--wrap=uv_read_stop
+    -Wl,--wrap=uv_write
+    -Wl,--wrap=uv_close
+)
+```
+
+##### Mock 使用示例
+
+```cpp
+#include "test/mock/libuv_mock.h"
+
+TEST(ConnectionTest, WithMock) {
+    // 启用 mock
+    libuv_mock_set_enabled(true);
+    libuv_mock_set_record_calls(true);
+    
+    // 设置返回值
+    libuv_mock_set_uv_tcp_init_result(0);
+    libuv_mock_set_uv_listen_result(0);
+    
+    // 执行测试...
+    
+    // 验证调用
+    size_t call_count = 0;
+    libuv_mock_get_call_count("uv_listen", &call_count);
+    EXPECT_EQ(call_count, 1);
+    
+    // 清理
+    libuv_mock_reset();
+}
+```
+
+详细使用方法请参考 [测试指南](guide/TESTING_GUIDE.md)。
+
 ### 覆盖率目标
 
-- **目标覆盖率**：80%
-- **当前覆盖率**：42.7%（需提升）
-- **低覆盖率模块**：
-  - uvhttp_websocket_wrapper.c (5.1%)
-  - uvhttp_server.c (16.7%)
-  - uvhttp_request.c (28.3%)
-  - uvhttp_tls_openssl.c (28.1%)
+#### 目标覆盖率
+
+- **整体目标**：80%
+- **当前覆盖率**：31.9%（需大幅提升）
+- **函数覆盖率**：52.2%
+
+#### 覆盖率优先级
+
+| 模块 | 当前覆盖率 | 目标覆盖率 | 优先级 |
+|------|-----------|-----------|--------|
+| uvhttp_connection.c | 21.9% | 50% | 高 |
+| uvhttp_server.c | 10.3% | 50% | 高 |
+| uvhttp_static.c | 0% | 50% | 高 |
+| uvhttp_websocket.c | 0% | 50% | 高 |
+| uvhttp_router.c | 31.1% | 60% | 中 |
+| uvhttp_request.c | 12.3% | 60% | 中 |
+| uvhttp_response.c | 5.7% | 60% | 中 |
+
+#### 覆盖率提升策略
+
+1. **分析未覆盖代码**：使用 lcov 生成覆盖率报告
+2. **识别测试场景**：错误处理、边界条件、状态转换
+3. **编写测试用例**：为每个场景编写测试
+4. **验证覆盖率提升**：运行测试并检查覆盖率
 
 ### 测试命名约定
 
@@ -662,19 +740,111 @@ TEST(RouterTest, AddRoute) {
 test_<module>_<functionality>.cpp
 test_<module>_<functionality>_coverage.cpp
 test_<module>_simple_api_coverage.cpp
+test_<module>_full_api_coverage.cpp
 ```
 
 #### 测试用例
 
 ```cpp
 /* Google Test 风格 */
-TEST(TestCaseName, TestName) {
+TEST(ModuleNameTest, TestCaseName) {
     /* 测试代码 */
 }
 
 /* 参数化测试 */
-TEST_P(TestCaseName, TestName) {
+TEST_P(ModuleNameTest, TestCaseName) {
     /* 测试代码 */
+}
+```
+
+### 测试类型要求
+
+#### 1. API 覆盖率测试
+
+测试所有公开 API 的基本功能：
+
+```cpp
+TEST(ConnectionApiTest, NewSuccess) {
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
+    
+    EXPECT_EQ(result, UVHTTP_OK);
+    EXPECT_NE(conn, nullptr);
+    EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_NEW);
+    
+    uvhttp_connection_free(conn);
+}
+
+TEST(ConnectionApiTest, NewNullServer) {
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(NULL, &conn);
+    
+    EXPECT_NE(result, UVHTTP_OK);
+    EXPECT_EQ(conn, nullptr);
+}
+```
+
+#### 2. 错误处理测试
+
+测试 NULL 参数、边界条件、错误场景：
+
+```cpp
+TEST(ConnectionErrorTest, NewNullServer) {
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(NULL, &conn);
+    
+    EXPECT_NE(result, UVHTTP_OK);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST(ConnectionErrorTest, CloseNullConnection) {
+    /* 不应该崩溃 */
+    uvhttp_connection_close(NULL);
+    SUCCEED();
+}
+```
+
+#### 3. 状态管理测试
+
+测试状态转换和字段访问：
+
+```cpp
+TEST(ConnectionStateTest, SetState) {
+    uvhttp_connection_t* conn = create_connection();
+    
+    uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_NEW);
+    EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_NEW);
+    
+    uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_HTTP_READING);
+    EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_HTTP_READING);
+    
+    uvhttp_connection_free(conn);
+}
+```
+
+#### 4. 集成测试
+
+测试模块间的交互：
+
+```cpp
+TEST(HttpIntegrationTest, FullRequestResponse) {
+    // 创建服务器
+    uvhttp_server_t* server = create_server();
+    uvhttp_router_add_route(server->router, "/api", api_handler);
+    uvhttp_server_listen(server, "0.0.0.0", 8080);
+    
+    // 发送请求
+    uvhttp_connection_t* conn = create_connection(server);
+    const char* request = "GET /api HTTP/1.1\r\n\r\n";
+    libuv_mock_set_read_data(request, strlen(request));
+    libuv_mock_trigger_read_cb(&conn->tcp_handle, strlen(request), &buf);
+    
+    // 验证响应
+    EXPECT_EQ(conn->response->status_code, 200);
+    
+    // 清理
+    uvhttp_connection_free(conn);
+    uvhttp_server_free(server);
 }
 ```
 
@@ -709,22 +879,144 @@ set_tests_properties(${test_name} PROPERTIES
 
 ### 运行测试
 
-#### 完整测试
+#### 使用 Makefile
 
 ```bash
-./run_tests.sh
+make build          # 构建项目
+make test           # 运行单元测试
+make coverage       # 生成覆盖率报告
+make clean          # 清理构建文件
 ```
 
-#### 快速测试
+#### 使用 CMake
 
 ```bash
-./run_tests.sh --fast
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+ctest
 ```
 
-#### 详细覆盖率报告
+#### 覆盖率报告
 
 ```bash
-./run_tests.sh --detailed
+# 生成覆盖率报告
+make coverage
+
+# 查看覆盖率报告
+open build/coverage_html/index.html
+
+# 查看特定模块覆盖率
+lcov --list coverage.info | grep uvhttp_connection
+```
+
+### 测试质量要求
+
+#### 测试独立性
+
+每个测试必须独立运行，不依赖其他测试：
+
+```cpp
+// ✅ 好的实践：每个测试独立设置和清理
+TEST(ConnectionTest, CreateConnection) {
+    uv_loop_t* loop = uv_loop_new();
+    uvhttp_server_t* server = create_server(loop);
+    uvhttp_connection_t* conn = create_connection(server);
+    
+    EXPECT_NE(conn, nullptr);
+    
+    uvhttp_connection_free(conn);
+    uvhttp_server_free(server);
+    uv_loop_close(loop);
+    uvhttp_free(loop);
+}
+
+// ❌ 不好的实践：依赖全局状态
+static uvhttp_connection_t* g_conn;
+
+TEST(ConnectionTest, Setup) {
+    g_conn = create_connection();
+}
+
+TEST(ConnectionTest, Test) {
+    EXPECT_NE(g_conn, nullptr);  // 依赖其他测试
+}
+```
+
+#### 测试可读性
+
+使用清晰的测试名称和注释：
+
+```cpp
+// ✅ 好的实践：清晰的测试名称
+TEST(ConnectionTest, CloseConnectionWithPendingWrites) {
+    // 测试连接在有待写入数据时的关闭行为
+}
+
+// ❌ 不好的实践：模糊的测试名称
+TEST(ConnectionTest, Test1) {
+    // 测试连接关闭
+}
+```
+
+#### 测试完整性
+
+测试正常流程和异常流程：
+
+```cpp
+// ✅ 好的实践：测试正常和异常流程
+TEST(ConnectionTest, StartSuccess) {
+    uvhttp_connection_t* conn = create_connection();
+    uvhttp_error_t result = uvhttp_connection_start(conn);
+    EXPECT_EQ(result, UVHTTP_OK);
+    uvhttp_connection_free(conn);
+}
+
+TEST(ConnectionTest, StartNullConnection) {
+    uvhttp_error_t result = uvhttp_connection_start(NULL);
+    EXPECT_NE(result, UVHTTP_OK);
+}
+
+// ❌ 不好的实践：只测试正常流程
+TEST(ConnectionTest, Start) {
+    uvhttp_connection_t* conn = create_connection();
+    uvhttp_error_t result = uvhttp_connection_start(conn);
+    EXPECT_EQ(result, UVHTTP_OK);
+    uvhttp_connection_free(conn);
+}
+```
+
+#### 资源管理
+
+确保所有资源都被正确释放：
+
+```cpp
+// ✅ 好的实践：使用辅助函数管理资源
+static void cleanup_resources(uv_loop_t* loop, uvhttp_server_t* server, uvhttp_connection_t* conn) {
+    if (conn) uvhttp_connection_free(conn);
+    if (server) uvhttp_server_free(server);
+    if (loop) {
+        uv_loop_close(loop);
+        uvhttp_free(loop);
+    }
+}
+
+TEST(ConnectionTest, CreateConnection) {
+    uv_loop_t* loop = uv_loop_new();
+    uvhttp_server_t* server = create_server(loop);
+    uvhttp_connection_t* conn = create_connection(server);
+    
+    EXPECT_NE(conn, nullptr);
+    
+    cleanup_resources(loop, server, conn);
+}
+
+// ❌ 不好的实践：资源泄漏
+TEST(ConnectionTest, CreateConnection) {
+    uvhttp_connection_t* conn = create_connection();
+    EXPECT_NE(conn, nullptr);
+    // 忘记释放 conn
+}
 ```
 
 ### 测试最佳实践
@@ -735,6 +1027,20 @@ set_tests_properties(${test_name} PROPERTIES
 4. **测试命名清晰易懂**
 5. **使用断言验证预期行为**
 6. **避免测试之间的依赖**
+7. **使用 Mock 框架隔离外部依赖**
+8. **测试正常流程和异常流程**
+9. **确保资源正确释放**
+10. **定期运行覆盖率检查**
+
+### 测试文档
+
+详细的测试编写指南请参考 [测试指南](guide/TESTING_GUIDE.md)，包括：
+- Google Test 框架使用
+- libuv Mock 框架使用
+- 测试组织结构
+- 测试编写规范
+- 覆盖率提升策略
+- 常见问题解答
 
 ---
 

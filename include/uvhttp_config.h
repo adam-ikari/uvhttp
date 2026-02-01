@@ -86,12 +86,6 @@ uvhttp_error_t uvhttp_config_new(uvhttp_config_t** config);
 void uvhttp_config_free(uvhttp_config_t* config);
 void uvhttp_config_set_defaults(uvhttp_config_t* config);
 
-/* 配置加载和保存 */
-int uvhttp_config_load_file(uvhttp_config_t* config, const char* filename);
-int uvhttp_config_save_file(const uvhttp_config_t* config,
-                            const char* filename);
-int uvhttp_config_load_env(uvhttp_config_t* config);
-
 /* 配置验证 */
 int uvhttp_config_validate(const uvhttp_config_t* config);
 void uvhttp_config_print(const uvhttp_config_t* config);

@@ -336,50 +336,9 @@ uvhttp_config_t* load_config_demo() {
     printf("1️⃣ 设置默认配置...\n");
     uvhttp_config_set_defaults(config);
     printf("   默认最大连接数: %d\n", config->max_connections);
-    
-    // 2. 尝试从配置文件加载
-    printf("2️⃣ 尝试从配置文件加载...\n");
-    if (uvhttp_config_load_file(config, "uvhttp_demo.conf") == UVHTTP_OK) {
-        printf("   ✅ 配置文件加载成功\n");
-        printf("   文件配置最大连接数: %d\n", config->max_connections);
-    } else {
-        printf("   ⚠️  配置文件加载失败，将创建示例配置文件\n");
-        
-        // 创建示例配置文件
-        FILE* conf_file = fopen("uvhttp_demo.conf", "w");
-        if (conf_file) {
-            fprintf(conf_file, "# UVHTTP 配置演示文件\n");
-            fprintf(conf_file, "# 服务器配置\n");
-            fprintf(conf_file, "max_connections=2500\n");
-            fprintf(conf_file, "max_requests_per_connection=150\n");
-            fprintf(conf_file, "backlog=1024\n\n");
-            fprintf(conf_file, "# 性能配置\n");
-            fprintf(conf_file, "max_body_size=2097152\n");
-            fprintf(conf_file, "max_header_size=16384\n");
-            fprintf(conf_file, "read_buffer_size=16384\n\n");
-            fprintf(conf_file, "# 安全配置\n");
-            fprintf(conf_file, "rate_limit_window=60\n");
-            fprintf(conf_file, "enable_compression=1\n");
-            fprintf(conf_file, "enable_tls=0\n");
-            fclose(conf_file);
-            printf("   📝 已创建示例配置文件: uvhttp_demo.conf\n");
-            
-            // 重新加载配置文件
-            uvhttp_config_load_file(config, "uvhttp_demo.conf");
-        }
-    }
-    
-    // 3. 从环境变量加载（会覆盖文件配置）
-    printf("3️⃣ 从环境变量加载配置...\n");
-    if (uvhttp_config_load_env(config) == UVHTTP_OK) {
-        printf("   ✅ 环境变量加载成功\n");
-        printf("   环境变量配置最大连接数: %d\n", config->max_connections);
-    } else {
-        printf("   ℹ️  未设置相关环境变量\n");
-    }
-    
-    // 4. 代码中直接覆盖某些配置
-    printf("4️⃣ 代码中自定义配置...\n");
+
+    // 2. 代码中直接覆盖某些配置
+    printf("2️⃣ 代码中自定义配置...\n");
     config->max_connections = 3000;  // 演示用，实际中应该基于需求设置
     config->max_requests_per_connection = 200;
     printf("   代码设置最大连接数: %d\n", config->max_connections);

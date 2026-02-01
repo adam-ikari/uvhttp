@@ -1,3 +1,5 @@
+#if !UVHTTP_FEATURE_ROUTER_CACHE
+
 #include "uvhttp_router.h"
 
 #include "uvhttp_allocator.h"
@@ -719,3 +721,5 @@ uvhttp_error_t uvhttp_router_add_fallback_route(uvhttp_router_t* router,
 
     return UVHTTP_OK;
 }
+
+#endif /* !UVHTTP_FEATURE_ROUTER_CACHE */

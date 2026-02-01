@@ -725,6 +725,24 @@
 #define UVHTTP_WEBSOCKET_OPCODE_MASK 0x0F
 #define UVHTTP_WEBSOCKET_PAYLOAD_MASK 0x7F
 
+/* ========== 路由配置 ========== */
+
+/**
+ * 路由路径最大长度
+ *
+ * 配置建议：
+ * - 默认值：256 字节
+ * - 大多数应用：256 字节足够
+ * - 复杂应用：可以增加到 512 或 1024
+ *
+ * CMake 配置：
+ * - 通过 CMakeLists.txt 或命令行参数配置
+ * - 示例：cmake -DUVHTTP_MAX_ROUTE_PATH_LEN=512 ..
+ */
+#ifndef UVHTTP_MAX_ROUTE_PATH_LEN
+#    define UVHTTP_MAX_ROUTE_PATH_LEN 256
+#endif
+
 /* ========== 路由缓存配置（性能优化） ========== */
 
 /**
@@ -759,7 +777,7 @@
 #    define UVHTTP_ROUTER_SEARCH_MODE 2
 #endif
 
-#if UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION
+#if UVHTTP_FEATURE_ROUTER_CACHE
 /* 路由缓存大小配置 */
 #    define UVHTTP_ROUTER_METHOD_MAP_SIZE 256
 #    define UVHTTP_ROUTER_HASH_SIZE 256
@@ -769,6 +787,11 @@
 #    define UVHTTP_ROUTER_HYBRID_THRESHOLD 100
 #    define UVHTTP_ROUTER_MAX_CHILD_COUNT 16
 #    define UVHTTP_ROUTER_INITIAL_POOL_SIZE 64
+#endif
+
+/* 路由缓存优化功能 */
+#ifndef UVHTTP_FEATURE_ROUTER_CACHE
+#    define UVHTTP_FEATURE_ROUTER_CACHE 1 /* 默认启用 */
 #endif
 
 #define UVHTTP_ROUTER_MAX_CHILDREN 16

@@ -119,59 +119,10 @@ TEST(UvhttpConfigEnhancedCoverageTest, FileLoadAndSave) {
     ASSERT_EQ(result, UVHTTP_OK);
     
     uvhttp_config_set_defaults(config);
-    
-    /* 测试保存配置 */
-    int save_result = uvhttp_config_save_file(config, test_file);
-    /* 可能成功或失败，取决于文件系统权限 */
-    
-    /* 测试加载配置 */
-    if (save_result == 0) {
-        int load_result = uvhttp_config_load_file(config, test_file);
-        /* 可能成功或失败 */
-        
-        /* 清理测试文件 */
-        unlink(test_file);
-    }
-    
-    /* 测试NULL参数 */
-    save_result = uvhttp_config_save_file(NULL, test_file);
-    EXPECT_NE(save_result, 0);
-    
-    save_result = uvhttp_config_save_file(config, NULL);
-    EXPECT_NE(save_result, 0);
-    
-    {
-        int load_result = uvhttp_config_load_file(NULL, test_file);
-        EXPECT_NE(load_result, 0);
-    }
-    
-    {
-        int load_result = uvhttp_config_load_file(config, NULL);
-        EXPECT_NE(load_result, 0);
-    }
-    
-    uvhttp_config_free(config);
-}
 
-/* 测试环境变量加载 */
-TEST(UvhttpConfigEnhancedCoverageTest, LoadEnv) {
-    uvhttp_config_t* config = NULL;
-    uvhttp_error_t result;
-    
-    result = uvhttp_config_new(&config);
-    ASSERT_EQ(result, UVHTTP_OK);
-    
-    uvhttp_config_set_defaults(config);
-    
-    /* 测试加载环境变量 */
-    int load_result = uvhttp_config_load_env(config);
-    /* 可能成功或失败，取决于环境变量 */
-    
+    /* 配置文件和环境变量加载功能已移除，符合极简工程原则 */
+
     uvhttp_config_free(config);
-    
-    /* 测试NULL参数 */
-    load_result = uvhttp_config_load_env(NULL);
-    EXPECT_NE(load_result, 0);
 }
 
 /* 测试动态配置更新 */

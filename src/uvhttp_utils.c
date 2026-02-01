@@ -181,27 +181,95 @@ int uvhttp_is_valid_status_code(int status_code) {
 /* uvhttp_is_valid_content_type deleted - completely unused */
 /* uvhttp_is_valid_string_length deleted - completely unused */
 
-/* Simplified IP validation function */
+/* IP validation function - manual implementation for best performance */
 int uvhttp_is_valid_ip_address(const char* ip) {
     if (!ip || !*ip)
         return FALSE;
-    /* Simplified validation: only check basic format */
+    
+    /* Check if IPv6 (contains colon) */
     if (strchr(ip, ':') != NULL) {
         /* IPv6 - simplified check */
         int colon_count = 0;
+        int double_colon_count = 0;
+        
+        /* Check for invalid characters */
         for (const char* p = ip; *p; p++) {
-            if (*p == ':')
+            char c = *p;
+            /* IPv6 only allows: 0-9, a-f, A-F, : */
+            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') ||
+                  (c >= 'A' && c <= 'F') || c == ':')) {
+                return FALSE;
+            }
+            
+            if (*p == ':') {
                 colon_count++;
+                if (p[1] == ':') {
+                    double_colon_count++;
+                    /* Skip the second colon */
+                    p++;
+                    /* Check for third colon (invalid) */
+                    if (p[1] == ':') {
+                        return FALSE;
+                    }
+                }
+            }
         }
-        return colon_count >= 2 ? TRUE : FALSE;
+        
+        /* IPv6 validation rules:
+         * - If double colon (compressed format), colon count should be 2-7
+         * - If no double colon (full format), colon count must be 7
+         * - Double colon can only appear once
+         */
+        if (double_colon_count == 1) {
+            /* Compressed format: colon count 2-7 */
+            return (colon_count >= 2 && colon_count <= 7) ? TRUE : FALSE;
+        } else if (double_colon_count == 0) {
+            /* Full format: colon count must be 7 */
+            return (colon_count == 7) ? TRUE : FALSE;
+        } else {
+            /* Double colon appeared multiple times, invalid */
+            return FALSE;
+        }
     }
+    
     /* IPv4 - simplified check */
     int dot_count = 0;
+    int digit_count = 0;
+    int segment_value = 0;
+    
     for (const char* p = ip; *p; p++) {
-        if (*p == '.')
+        if (*p == '.') {
+            /* Check segment value and digit count */
+            if (segment_value > 255 || digit_count == 0) {
+                return FALSE;
+            }
             dot_count++;
+            digit_count = 0;
+            segment_value = 0;
+        } else if (*p >= '0' && *p <= '9') {
+            /* Check for integer overflow */
+            if (segment_value > (255 - (*p - '0')) / 10) {
+                return FALSE;
+            }
+            segment_value = segment_value * 10 + (*p - '0');
+            digit_count++;
+            /* Limit each segment to max 3 digits */
+            if (digit_count > 3) {
+                return FALSE;
+            }
+        } else {
+            /* Invalid character */
+            return FALSE;
+        }
     }
-    return dot_count == 3 ? TRUE : FALSE;
+    
+    /* Check last segment */
+    if (segment_value > 255 || digit_count == 0) {
+        return FALSE;
+    }
+    
+    /* Must have 3 dots and at least 4 digits total */
+    return (dot_count == 3 && digit_count >= 4) ? TRUE : FALSE;
 }
 
 /**
