@@ -42,6 +42,11 @@ gmon.out
 *~
 .DS_Store
 
+# IDE files
+compile_commands.json
+.clangd/
+.idea/
+
 # CMake generated files
 CMakeCache.txt
 CMakeFiles/
