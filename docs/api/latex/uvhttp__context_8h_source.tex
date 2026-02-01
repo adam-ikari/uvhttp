@@ -1,0 +1,131 @@
+\hypertarget{uvhttp__context_8h_source}{}\doxysection{uvhttp\+\_\+context.\+h}
+\label{uvhttp__context_8h_source}\index{include/uvhttp\_context.h@{include/uvhttp\_context.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{comment}{/* UVHTTP 依赖注入和上下文管理 */}}
+\DoxyCodeLine{2 }
+\DoxyCodeLine{3 \textcolor{preprocessor}{\#ifndef UVHTTP\_CONTEXT\_H}}
+\DoxyCodeLine{4 \textcolor{preprocessor}{\#define UVHTTP\_CONTEXT\_H}}
+\DoxyCodeLine{5 }
+\DoxyCodeLine{6 \textcolor{preprocessor}{\#include "{}\mbox{\hyperlink{uvhttp__config_8h}{uvhttp\_config.h}}"{}}}
+\DoxyCodeLine{7 \textcolor{preprocessor}{\#include "{}\mbox{\hyperlink{uvhttp__error__handler_8h}{uvhttp\_error\_handler.h}}"{}}}
+\DoxyCodeLine{8 \textcolor{preprocessor}{\#if UVHTTP\_FEATURE\_LOGGING}}
+\DoxyCodeLine{9 \textcolor{preprocessor}{\#    include "{}uvhttp\_logging.h"{}}}
+\DoxyCodeLine{10 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{11 \textcolor{preprocessor}{\#include <time.h>}}
+\DoxyCodeLine{12 \textcolor{preprocessor}{\#include <uv.h>}}
+\DoxyCodeLine{13 }
+\DoxyCodeLine{14 \textcolor{preprocessor}{\#ifdef \_\_cplusplus}}
+\DoxyCodeLine{15 \textcolor{keyword}{extern} \textcolor{stringliteral}{"{}C"{}} \{}
+\DoxyCodeLine{16 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{17 }
+\DoxyCodeLine{18 \textcolor{comment}{/* 前向声明 */}}
+\DoxyCodeLine{19 \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__server}{uvhttp\_server}};}
+\DoxyCodeLine{20 \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__router}{uvhttp\_router}};}
+\DoxyCodeLine{21 }
+\DoxyCodeLine{22 \textcolor{comment}{/* ============ 内存分配器说明 ============ */}}
+\DoxyCodeLine{23 \textcolor{comment}{/*}}
+\DoxyCodeLine{24 \textcolor{comment}{ * UVHTTP 内存分配器采用编译时宏设计，零开销抽象}}
+\DoxyCodeLine{25 \textcolor{comment}{ *}}
+\DoxyCodeLine{26 \textcolor{comment}{ * 不使用运行时分配器提供者接口，原因：}}
+\DoxyCodeLine{27 \textcolor{comment}{ * 1. 性能优先：避免函数指针调用开销}}
+\DoxyCodeLine{28 \textcolor{comment}{ * 2. 编译时优化：编译器可以内联和优化分配调用}}
+\DoxyCodeLine{29 \textcolor{comment}{ * 3. 简单直接：减少复杂性，提高可维护性}}
+\DoxyCodeLine{30 \textcolor{comment}{ *}}
+\DoxyCodeLine{31 \textcolor{comment}{ * 内存分配器类型通过 UVHTTP\_ALLOCATOR\_TYPE 编译宏选择：}}
+\DoxyCodeLine{32 \textcolor{comment}{ * -\/ 0: 系统默认分配器 (malloc/free)}}
+\DoxyCodeLine{33 \textcolor{comment}{ * -\/ 1: mimalloc 高性能分配器}}
+\DoxyCodeLine{34 \textcolor{comment}{ * -\/ 2: 自定义分配器 (外部链接)}}
+\DoxyCodeLine{35 \textcolor{comment}{ *}}
+\DoxyCodeLine{36 \textcolor{comment}{ * 使用方式：}}
+\DoxyCodeLine{37 \textcolor{comment}{ *   \#include "{}uvhttp\_allocator.h"{}}}
+\DoxyCodeLine{38 \textcolor{comment}{ *   void* ptr = UVHTTP\_MALLOC(size);}}
+\DoxyCodeLine{39 \textcolor{comment}{ *   UVHTTP\_FREE(ptr);}}
+\DoxyCodeLine{40 \textcolor{comment}{ *}}
+\DoxyCodeLine{41 \textcolor{comment}{ * 详见 uvhttp\_allocator.h 中的详细说明}}
+\DoxyCodeLine{42 \textcolor{comment}{ */}}
+\DoxyCodeLine{43 }
+\DoxyCodeLine{44 \textcolor{comment}{/* ============ 主上下文结构 ============ */}}
+\DoxyCodeLine{45 }
+\DoxyCodeLine{46 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context}} \{}
+\DoxyCodeLine{47     \textcolor{comment}{/* 核心组件 */}}
+\DoxyCodeLine{48     uv\_loop\_t* loop;}
+\DoxyCodeLine{49     \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__server}{uvhttp\_server}}* server;}
+\DoxyCodeLine{50     \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__router}{uvhttp\_router}}* router;}
+\DoxyCodeLine{51 }
+\DoxyCodeLine{52     \textcolor{comment}{/* 上下文状态 */}}
+\DoxyCodeLine{53     \textcolor{keywordtype}{int} initialized;}
+\DoxyCodeLine{54     time\_t created\_at;}
+\DoxyCodeLine{55 }
+\DoxyCodeLine{56     \textcolor{comment}{/* 统计信息 */}}
+\DoxyCodeLine{57     uint64\_t total\_requests;}
+\DoxyCodeLine{58     uint64\_t total\_connections;}
+\DoxyCodeLine{59     uint64\_t active\_connections;}
+\DoxyCodeLine{60 }
+\DoxyCodeLine{61     \textcolor{comment}{/* ===== 全局变量替代字段 ===== */}}
+\DoxyCodeLine{62 }
+\DoxyCodeLine{63     \textcolor{comment}{/* TLS 模块状态 */}}
+\DoxyCodeLine{64     \textcolor{keywordtype}{int} tls\_initialized;}
+\DoxyCodeLine{65     \textcolor{keywordtype}{void}* tls\_entropy; \textcolor{comment}{/* mbedtls\_entropy\_context* */}}
+\DoxyCodeLine{66     \textcolor{keywordtype}{void}* tls\_drbg;    \textcolor{comment}{/* mbedtls\_ctr\_drbg\_context* */}}
+\DoxyCodeLine{67 }
+\DoxyCodeLine{68     \textcolor{comment}{/* WebSocket 模块状态 */}}
+\DoxyCodeLine{69     \textcolor{keywordtype}{int} ws\_drbg\_initialized;}
+\DoxyCodeLine{70     \textcolor{keywordtype}{void}* ws\_entropy; \textcolor{comment}{/* mbedtls\_entropy\_context* */}}
+\DoxyCodeLine{71     \textcolor{keywordtype}{void}* ws\_drbg;    \textcolor{comment}{/* mbedtls\_ctr\_drbg\_context* */}}
+\DoxyCodeLine{72 }
+\DoxyCodeLine{73     \textcolor{comment}{/* 配置管理 */}}
+\DoxyCodeLine{74     \textcolor{keywordtype}{void}* current\_config;  \textcolor{comment}{/* uvhttp\_config\_t* */}}
+\DoxyCodeLine{75     \textcolor{keywordtype}{void}* config\_callback; \textcolor{comment}{/* uvhttp\_config\_change\_callback\_t */}}
+\DoxyCodeLine{76 }
+\DoxyCodeLine{77     \textcolor{comment}{/* 用户数据（用于存储应用特定的上下文） */}}
+\DoxyCodeLine{78     \textcolor{keywordtype}{void}* user\_data;}
+\DoxyCodeLine{79 }
+\DoxyCodeLine{80 \} \mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}};}
+\DoxyCodeLine{81 }
+\DoxyCodeLine{82 \textcolor{comment}{/* ============ 上下文管理函数 ============ */}}
+\DoxyCodeLine{83 }
+\DoxyCodeLine{84 \textcolor{comment}{/* 创建新的上下文 */}}
+\DoxyCodeLine{85 uvhttp\_error\_t uvhttp\_context\_create(uv\_loop\_t* loop,}
+\DoxyCodeLine{86                                      \mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}** context);}
+\DoxyCodeLine{87 }
+\DoxyCodeLine{88 \textcolor{comment}{/* 销毁上下文 */}}
+\DoxyCodeLine{89 \textcolor{keywordtype}{void} uvhttp\_context\_destroy(\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}* context);}
+\DoxyCodeLine{90 }
+\DoxyCodeLine{91 \textcolor{comment}{/* 初始化上下文（设置默认提供者） */}}
+\DoxyCodeLine{92 uvhttp\_error\_t uvhttp\_context\_init(\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}* context);}
+\DoxyCodeLine{93 }
+\DoxyCodeLine{94 \textcolor{comment}{/* ===== 全局变量替代字段初始化函数 ===== */}}
+\DoxyCodeLine{95 }
+\DoxyCodeLine{96 \textcolor{comment}{/* 初始化 TLS 模块状态 */}}
+\DoxyCodeLine{97 uvhttp\_error\_t uvhttp\_context\_init\_tls(\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}* context);}
+\DoxyCodeLine{98 }
+\DoxyCodeLine{99 \textcolor{comment}{/* 清理 TLS 模块状态 */}}
+\DoxyCodeLine{100 \textcolor{keywordtype}{void} uvhttp\_context\_cleanup\_tls(\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}* context);}
+\DoxyCodeLine{101 }
+\DoxyCodeLine{102 \textcolor{comment}{/* 初始化 WebSocket 模块状态 */}}
+\DoxyCodeLine{103 uvhttp\_error\_t uvhttp\_context\_init\_websocket(\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}* context);}
+\DoxyCodeLine{104 }
+\DoxyCodeLine{105 \textcolor{comment}{/* 清理 WebSocket 模块状态 */}}
+\DoxyCodeLine{106 \textcolor{keywordtype}{void} uvhttp\_context\_cleanup\_websocket(\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}* context);}
+\DoxyCodeLine{107 }
+\DoxyCodeLine{108 \textcolor{comment}{/* 初始化配置管理 */}}
+\DoxyCodeLine{109 uvhttp\_error\_t uvhttp\_context\_init\_config(\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}* context);}
+\DoxyCodeLine{110 }
+\DoxyCodeLine{111 \textcolor{comment}{/* 清理配置管理 */}}
+\DoxyCodeLine{112 \textcolor{keywordtype}{void} uvhttp\_context\_cleanup\_config(\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}* context);}
+\DoxyCodeLine{113 }
+\DoxyCodeLine{114 \textcolor{comment}{/* ============ 默认提供者实现 ============ */}}
+\DoxyCodeLine{115 \textcolor{comment}{/* 注意：内存分配器使用编译时宏，无需创建提供者}}
+\DoxyCodeLine{116 \textcolor{comment}{ * 系统默认分配器：直接使用 malloc/free}}
+\DoxyCodeLine{117 \textcolor{comment}{ * mimalloc分配器：编译时链接 mimalloc 库}}
+\DoxyCodeLine{118 \textcolor{comment}{ * 自定义分配器：编译时链接用户实现}}
+\DoxyCodeLine{119 \textcolor{comment}{ */}}
+\DoxyCodeLine{120 }
+\DoxyCodeLine{121 \textcolor{preprocessor}{\#ifdef \_\_cplusplus}}
+\DoxyCodeLine{122 \}}
+\DoxyCodeLine{123 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{124 }
+\DoxyCodeLine{125 \textcolor{preprocessor}{\#endif }\textcolor{comment}{/* UVHTTP\_CONTEXT\_H */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

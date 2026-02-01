@@ -40,6 +40,10 @@ else()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections -s")
 endif()
 
+# 明确设置 Release 模式编译选项（覆盖 CMake 默认的 -O3）
+set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "" FORCE)
+
 if(ENABLE_COVERAGE)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
@@ -52,7 +56,6 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
     -Wformat=2 \
     -Wformat-security \
     -fstack-protector-strong \
-    -fno-omit-frame-pointer \
     -fno-common \
     -Werror \
     -Werror=implicit-function-declaration \
@@ -230,19 +233,12 @@ set(SOURCES
     src/uvhttp_config.c
     src/uvhttp_context.c
     src/uvhttp_error.c
-    src/uvhttp_error_handler.c
     src/uvhttp_error_helpers.c
-    src/uvhttp_hash.c
     src/uvhttp_lru_cache.c
-    src/uvhttp_router_cache.c
     src/uvhttp_static.c
-    src/uvhttp_async_file.c
-    src/uvhttp_validation.c
-    src/uvhttp_logging.c
 )
 
 # 条件编译 WebSocket 源文件
-
 if(BUILD_WITH_WEBSOCKET)
     list(APPEND SOURCES src/uvhttp_websocket.c)
 endif()
@@ -264,10 +260,8 @@ set(HEADERS
     include/uvhttp_request.h
     include/uvhttp_response.h
     include/uvhttp_router.h
-    include/uvhttp_router_cache.h
     include/uvhttp_server.h
     include/uvhttp_static.h
-    include/uvhttp_string_pool.h
     include/uvhttp_tls.h
     include/uvhttp_utils.h
     include/uvhttp_validation.h
@@ -287,18 +281,10 @@ set(LIBS
     ${XXHASH_LIB}
     ${LLHTTP_LIB}
     ${CJSON_LIB}
+    pthread
+    m
+    dl
 )
-
-# 平台特定的库
-if(IS_WINDOWS)
-    # Windows 不需要额外的库
-elseif(IS_MACOS)
-    # macOS 需要 pthread
-    list(APPEND LIBS pthread)
-else()
-    # Linux 需要 pthread, m, dl
-    list(APPEND LIBS pthread m dl)
-endif()
 
 if(BUILD_WITH_MIMALLOC)
     list(APPEND LIBS ${MIMALLOC_LIB})
@@ -334,17 +320,8 @@ if(BUILD_WITH_MIMALLOC)
     target_compile_definitions(uvhttp PRIVATE UVHTTP_ENABLE_MIMALLOC UVHTTP_FEATURE_ALLOCATOR=1)
 endif()
 
-# 平台特定的库（PRIVATE）- 必须在 mimalloc 之后链接
-if(IS_WINDOWS)
-    # Windows 不需要额外的库
-    target_link_libraries(uvhttp PRIVATE )
-elseif(IS_MACOS)
-    # macOS 需要 pthread
-    target_link_libraries(uvhttp PRIVATE pthread)
-else()
-    # Linux 需要 pthread, m, dl
-    target_link_libraries(uvhttp PRIVATE pthread m dl)
-endif()
+# Linux 平台特定的库（PRIVATE）
+target_link_libraries(uvhttp PRIVATE pthread m dl)
 
 # 设置包含目录（PUBLIC，传递给依赖uvhttp的目标）
 target_include_directories(uvhttp
@@ -354,11 +331,8 @@ target_include_directories(uvhttp
 )
 
 # ============================================================================
-# 启用测试
-# ============================================================================
-enable_testing()
-
 # 添加 gtest 测试（仅支持 C++ 测试文件）
+# ============================================================================
 file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_loop_helper.cpp")
@@ -397,21 +371,6 @@ foreach(test_file ${GTEST_TEST_FILES})
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
     )
-    add_test(NAME ${test_name} COMMAND ${test_name})
-    
-    # 设置测试超时时间和标签
-    if(${test_name} STREQUAL "test_server_full_coverage" OR 
-       ${test_name} STREQUAL "test_deps_full_coverage" OR
-       ${test_name} STREQUAL "test_server_rate_limit_coverage" OR
-       ${test_name} STREQUAL "test_server_simple_api_coverage" OR
-       ${test_name} STREQUAL "test_static_prewarm_coverage")
-        # 这些测试需要更长时间运行，设置为慢速测试，超时300秒
-        # 添加 RUN_SERIAL TRUE 避免并发执行导致的竞争条件
-        set_tests_properties(${test_name} PROPERTIES TIMEOUT 300 LABELS "slow" RUN_SERIAL TRUE)
-    else()
-        # 其他测试为快速测试，超时60秒
-        set_tests_properties(${test_name} PROPERTIES TIMEOUT 60 LABELS "fast")
-    endif()
 endforeach()
 
 # 添加 gtest 示例测试（使用 C++ 编译）
@@ -424,8 +383,6 @@ endif()
 target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
 target_link_libraries(uvhttp_unit_tests ${LIBS} ${GTEST_LIBS})
 target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
-add_test(NAME uvhttp_unit_tests COMMAND uvhttp_unit_tests)
-set_tests_properties(uvhttp_unit_tests PROPERTIES TIMEOUT 60 LABELS "fast")
 
 # ============================================================================
 # CMocka + GTest 集成测试

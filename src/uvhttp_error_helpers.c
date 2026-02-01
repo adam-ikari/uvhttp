@@ -1,10 +1,11 @@
-/* UVHTTP 错误处理辅助函数实现 */
+/* UVHTTP Error Handling Helper Functions Implementation */
 
 #include "uvhttp_error_helpers.h"
 
 #include "uvhttp_allocator.h"
 #include "uvhttp_config.h"
 #include "uvhttp_error_handler.h"
+#include "uvhttp_logging.h"
 #include "uvhttp_utils.h"
 
 #include <ctype.h>
@@ -12,13 +13,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* 敏感信息关键词列表 */
+/* Sensitive information keyword list */
 static const char* sensitive_keywords[] = {
     "password", "passwd",     "secret",  "key",     "token",
     "auth",     "credential", "private", "session", NULL};
 
 /**
- * 检查字符串是否包含敏感信息
+ * Check if string contains sensitive information
  */
 static int contains_sensitive_info(const char* str) {
     if (!str)
@@ -28,7 +29,7 @@ static int contains_sensitive_info(const char* str) {
     strncpy(lower_str, str, sizeof(lower_str) - 1);
     lower_str[sizeof(lower_str) - 1] = '\0';
 
-    // 转换为小写进行比较
+    // Convert to lowercase for comparison
     for (char* p = lower_str; *p; p++) {
         *p = (char)tolower((unsigned char)*p);
     }
@@ -39,19 +40,6 @@ static int contains_sensitive_info(const char* str) {
         }
     }
     return FALSE;
-}
-
-void uvhttp_cleanup_connection(uv_handle_t* handle, const char* error_message) {
-    if (!handle)
-        return;
-
-    if (error_message) {
-        uvhttp_log_safe_error(0, "connection_cleanup", error_message);
-    }
-
-    if (!uv_is_closing(handle)) {
-        uv_close(handle, NULL);
-    }
 }
 
 void uvhttp_handle_memory_failure(const char* context,
@@ -109,16 +97,16 @@ uvhttp_error_t uvhttp_sanitize_error_message(const char* message,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    // 检查是否包含敏感信息
+    // Check if contains sensitive information
     if (contains_sensitive_info(message)) {
         snprintf(safe_buffer, buffer_size, "Sensitive information hidden");
         return UVHTTP_OK;
     }
 
-    // 复制消息，但限制长度
+    // Copy message, but limit length
     size_t msg_len = strlen(message);
 
-    // 处理小缓冲区（buffer_size < 4）
+    // Handle small buffer (buffer_size < 4)
     if (buffer_size < 4) {
         strncpy(safe_buffer, message, buffer_size - 1);
         safe_buffer[buffer_size - 1] = '\0';
@@ -133,15 +121,5 @@ uvhttp_error_t uvhttp_sanitize_error_message(const char* message,
 
     return UVHTTP_OK;
 }
-void uvhttp_safe_free(void** ptr, void (*free_func)(void*)) {
-    if (!ptr || !*ptr)
-        return;
 
-    if (free_func) {
-        free_func(*ptr);
-    } else {
-        uvhttp_free(*ptr);
-    }
-
-    *ptr = NULL;
-}
+/* uvhttp_safe_free deleted - completely unused, use uvhttp_free directly */

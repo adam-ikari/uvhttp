@@ -1,0 +1,234 @@
+name: CI/CD - 32-bit Build and Test
+
+# 触发条件：Push 到 main、develop、feature/* 分支
+on:
+  push:
+    branches: [ main, develop, 'feature/**' ]
+  workflow_dispatch:
+
+# 并发控制：取消同一分支的旧运行
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ========== 阶段 1: 32位构建 ==========
+
+  ubuntu-32bit-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      build-dir: ${{ steps.build.outputs.build-dir }}
+      build-status: ${{ steps.build.outputs.status }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+        with:
+          os: ubuntu-latest
+      
+      - name: Install 32-bit toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib
+      
+      - name: Clean previous builds and caches
+        run: |
+          rm -rf deps/*/build
+          rm -rf deps/*/build-32bit
+          rm -rf deps/*/CMakeCache.txt
+          rm -rf deps/*/CMakeFiles
+          find deps -name "*.a" -delete 2>/dev/null || true
+          find deps -name "*.o" -delete 2>/dev/null || true
+      
+      - name: Build 32-bit version
+        id: build
+        run: |
+          export CFLAGS="-m32 -march=i686"
+          export CXXFLAGS="-m32 -march=i686"
+          export LDFLAGS="-m32"
+          cmake -B build-32bit \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=/usr/bin/gcc \
+            -DCMAKE_CXX_COMPILER=/usr/bin/g++ \
+            -DCMAKE_C_FLAGS="-m32 -march=i686" \
+            -DCMAKE_CXX_FLAGS="-m32 -march=i686" \
+            -DCMAKE_EXE_LINKER_FLAGS="-m32" \
+            -DCMAKE_SHARED_LINKER_FLAGS="-m32" \
+            -DCMAKE_MODULE_LINKER_FLAGS="-m32" \
+            -DBUILD_WITH_WEBSOCKET=ON \
+            -DBUILD_WITH_MIMALLOC=OFF \
+            -DBUILD_EXAMPLES=OFF
+          cmake --build build-32bit --config Release -j$(nproc)
+          echo "build-dir=build-32bit" >> $GITHUB_OUTPUT
+          echo "status=success" >> $GITHUB_OUTPUT
+      
+      - name: Verify 32-bit binary
+        run: |
+          echo "Checking library architecture:"
+          file build-32bit/dist/lib/libuvhttp.a
+          
+          # 验证确实是32位（检查是否不包含64位）
+          if file build-32bit/dist/lib/libuvhttp.a | grep -q "64-bit"; then
+            echo "❌ Found 64-bit library!"
+            exit 1
+          else
+            echo "✅ 32-bit library verified (no 64-bit found)"
+          fi
+          
+          # 验证可执行文件
+          echo "Checking executable architecture:"
+          file build-32bit/dist/bin/uvhttp_unit_tests
+          
+          if file build-32bit/dist/bin/uvhttp_unit_tests | grep -q "64-bit"; then
+            echo "❌ Found 64-bit executable!"
+            exit 1
+          else
+            echo "✅ 32-bit executable verified (no 64-bit found)"
+          fi
+      
+      - name: Upload 32-bit build artifacts
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: build-ubuntu-32bit-push-${{ github.sha }}
+          path: build-32bit/
+          retention-days: 7
+  
+  # ========== 阶段 2: 32位测试 ==========
+
+  ubuntu-32bit-test:
+    needs: [ubuntu-32bit-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      test-status: ${{ steps.test.outputs.status }}
+      test-total: ${{ steps.test.outputs.total }}
+      test-passed: ${{ steps.test.outputs.passed }}
+      test-failed: ${{ steps.test.outputs.failed }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Install 32-bit toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib
+      
+      - name: Download 32-bit build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-ubuntu-32bit-push-${{ github.sha }}
+          path: build-32bit/
+      
+      - name: Set executable permissions
+        run: |
+          chmod +x build-32bit/dist/bin/* || true
+      
+      - name: Run 32-bit tests
+        id: test
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build-32bit
+          test-type: fast
+          timeout: 120
+          parallel: $(nproc)
+      
+      - name: Upload 32-bit test logs
+        if: always()
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: test-logs-ubuntu-32bit-push-${{ github.sha }}
+          path: build-32bit/Testing/
+          retention-days: 7
+  
+  # 32位系统内存安全测试
+  ubuntu-32bit-memory-test:
+    needs: [ubuntu-32bit-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Install 32-bit toolchain and valgrind
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib valgrind
+      
+      - name: Download 32-bit build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-ubuntu-32bit-push-${{ github.sha }}
+          path: build-32bit/
+      
+      - name: Set executable permissions
+        run: |
+          chmod +x build-32bit/dist/bin/* || true
+      
+      - name: Run valgrind memory test
+        run: |
+          cd build-32bit
+          
+          # 运行 valgrind 检查内存泄漏
+          valgrind --leak-check=full \
+                   --show-leak-kinds=all \
+                   --track-origins=yes \
+                   --error-exitcode=1 \
+                   --log-file=valgrind.log \
+                   ./dist/bin/uvhttp_unit_tests --gtest_filter="*Memory*" || true
+          
+          # 检查是否有内存泄漏
+          if grep -q "definitely lost: [1-9]" valgrind.log; then
+            echo "❌ Memory leak detected!"
+            cat valgrind.log
+            exit 1
+          else
+            echo "✅ No memory leaks detected"
+          fi
+      
+      - name: Upload valgrind logs
+        if: always()
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: valgrind-logs-32bit-push-${{ github.sha }}
+          path: build-32bit/valgrind.log
+          retention-days: 7
+  
+  # ========== 阶段 4: 生成总结 ==========
+
+  generate-summary:
+    needs: [ubuntu-32bit-test, ubuntu-32bit-memory-test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## 📊 32-bit CI/CD Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Ubuntu 32-bit (Linux) | ${{ needs.ubuntu-32bit-test.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Total | Passed | Failed |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 32-bit | ${{ needs.ubuntu-32bit-test.outputs.test-total || 'N/A' }} | ${{ needs.ubuntu-32bit-test.outputs.test-passed || 'N/A' }} | ${{ needs.ubuntu-32bit-test.outputs.test-failed || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Memory Safety" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 32-bit Valgrind | ${{ needs.ubuntu-32bit-memory-test.result == 'success' && '✅ No Leaks' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,111 @@
+\hypertarget{uvhttp__config_8h_source}{}\doxysection{uvhttp\+\_\+config.\+h}
+\label{uvhttp__config_8h_source}\index{include/uvhttp\_config.h@{include/uvhttp\_config.h}}
+\mbox{\hyperlink{uvhttp__config_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 }
+\DoxyCodeLine{8 \textcolor{preprocessor}{\#ifndef UVHTTP\_CONFIG\_H}}
+\DoxyCodeLine{9 \textcolor{preprocessor}{\#define UVHTTP\_CONFIG\_H}}
+\DoxyCodeLine{10 }
+\DoxyCodeLine{11 \textcolor{preprocessor}{\#include "{}\mbox{\hyperlink{uvhttp__constants_8h}{uvhttp\_constants.h}}"{}}}
+\DoxyCodeLine{12 \textcolor{preprocessor}{\#include "{}\mbox{\hyperlink{uvhttp__defaults_8h}{uvhttp\_defaults.h}}"{}}}
+\DoxyCodeLine{13 \textcolor{preprocessor}{\#include "{}uvhttp\_error.h"{}}}
+\DoxyCodeLine{14 }
+\DoxyCodeLine{15 \textcolor{preprocessor}{\#include <stddef.h>}}
+\DoxyCodeLine{16 }
+\DoxyCodeLine{17 \textcolor{preprocessor}{\#ifdef \_\_cplusplus}}
+\DoxyCodeLine{18 \textcolor{keyword}{extern} \textcolor{stringliteral}{"{}C"{}} \{}
+\DoxyCodeLine{19 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{20 }
+\DoxyCodeLine{21 \textcolor{comment}{/* 前向声明 */}}
+\DoxyCodeLine{22 \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context}};}
+\DoxyCodeLine{23 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context}} \mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}};}
+\DoxyCodeLine{24 }
+\DoxyCodeLine{25 \textcolor{comment}{/* 配置结构 */}}
+\DoxyCodeLine{26 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\{}
+\DoxyCodeLine{27     \textcolor{comment}{/* 服务器配置 */}}
+\DoxyCodeLine{28     \textcolor{keywordtype}{int} max\_connections; \textcolor{comment}{/* 最大连接数，默认1000，基于系统资源限制 */}}
+\DoxyCodeLine{29     \textcolor{keywordtype}{int} read\_buffer\_size; \textcolor{comment}{/* 读取缓冲区大小，默认8KB，平衡内存和性能 */}}
+\DoxyCodeLine{30     \textcolor{keywordtype}{int} backlog; \textcolor{comment}{/* 监听队列长度，默认128，Linux内核默认值 */}}
+\DoxyCodeLine{31     \textcolor{keywordtype}{int} keepalive\_timeout; \textcolor{comment}{/* Keep-\/Alive超时，默认30秒，平衡连接复用和资源释放}}
+\DoxyCodeLine{32 \textcolor{comment}{                            */}}
+\DoxyCodeLine{33     \textcolor{keywordtype}{int} request\_timeout; \textcolor{comment}{/* 请求超时，默认30秒，基于Web应用常见需求 */}}
+\DoxyCodeLine{34     \textcolor{keywordtype}{int} connection\_timeout; \textcolor{comment}{/* 连接超时时间（秒），默认60秒，防止慢连接攻击 */}}
+\DoxyCodeLine{35 }
+\DoxyCodeLine{36     \textcolor{comment}{/* 性能配置 */}}
+\DoxyCodeLine{37     \textcolor{keywordtype}{size\_t} max\_body\_size; \textcolor{comment}{/* 最大请求体大小，默认10MB，防止DoS攻击 */}}
+\DoxyCodeLine{38     \textcolor{keywordtype}{size\_t} max\_header\_size; \textcolor{comment}{/* 最大请求头大小，默认8KB，HTTP/1.1推荐值 */}}
+\DoxyCodeLine{39     \textcolor{keywordtype}{size\_t} max\_url\_size; \textcolor{comment}{/* 最大URL长度，默认2KB，浏览器限制 */}}
+\DoxyCodeLine{40     \textcolor{keywordtype}{size\_t}}
+\DoxyCodeLine{41         max\_file\_size; \textcolor{comment}{/* 文件响应的最大文件大小，默认100MB，平衡内存和带宽 */}}
+\DoxyCodeLine{42 }
+\DoxyCodeLine{43     \textcolor{comment}{/* 安全配置 */}}
+\DoxyCodeLine{44     \textcolor{keywordtype}{int} max\_requests\_per\_connection; \textcolor{comment}{/* 每个连接最大请求数，默认100，防止长连接滥用}}
+\DoxyCodeLine{45 \textcolor{comment}{                                      */}}
+\DoxyCodeLine{46     \textcolor{keywordtype}{int} rate\_limit\_window; \textcolor{comment}{/* 限流时间窗口，默认60秒，平衡精确性和性能 */}}
+\DoxyCodeLine{47 }
+\DoxyCodeLine{48     \textcolor{comment}{/* WebSocket 配置 */}}
+\DoxyCodeLine{49     \textcolor{keywordtype}{int} websocket\_max\_frame\_size; \textcolor{comment}{/* 最大帧大小，默认16MB，RFC 6455建议值 */}}
+\DoxyCodeLine{50     \textcolor{keywordtype}{int} websocket\_max\_message\_size; \textcolor{comment}{/* 最大消息大小，默认64MB，基于实际应用场景}}
+\DoxyCodeLine{51 \textcolor{comment}{                                     */}}
+\DoxyCodeLine{52     \textcolor{keywordtype}{int} websocket\_ping\_interval; \textcolor{comment}{/* Ping间隔，默认30秒，平衡连接检测和开销 */}}
+\DoxyCodeLine{53     \textcolor{keywordtype}{int} websocket\_ping\_timeout; \textcolor{comment}{/* Ping超时，默认10秒，3倍RTT估算值 */}}
+\DoxyCodeLine{54 }
+\DoxyCodeLine{55     \textcolor{comment}{/* 网络配置 */}}
+\DoxyCodeLine{56     \textcolor{keywordtype}{int} tcp\_keepalive\_timeout; \textcolor{comment}{/* TCP Keep-\/Alive超时，默认60秒，标准值 */}}
+\DoxyCodeLine{57     \textcolor{keywordtype}{int} sendfile\_timeout\_ms; \textcolor{comment}{/* sendfile超时，默认5000ms，平衡性能和可靠性 */}}
+\DoxyCodeLine{58     \textcolor{keywordtype}{int} sendfile\_max\_retry; \textcolor{comment}{/* sendfile最大重试次数，默认3次，经验值 */}}
+\DoxyCodeLine{59 }
+\DoxyCodeLine{60     \textcolor{comment}{/* 缓存配置 */}}
+\DoxyCodeLine{61     \textcolor{keywordtype}{int} cache\_default\_max\_entries; \textcolor{comment}{/* 缓存默认最大条目数，默认1000，基于内存和性能平衡}}
+\DoxyCodeLine{62 \textcolor{comment}{                                    */}}
+\DoxyCodeLine{63     \textcolor{keywordtype}{int} cache\_default\_ttl; \textcolor{comment}{/* 缓存默认TTL，默认3600秒（1小时），常见Web缓存策略}}
+\DoxyCodeLine{64 \textcolor{comment}{                            */}}
+\DoxyCodeLine{65     \textcolor{keywordtype}{int} lru\_cache\_batch\_eviction\_size; \textcolor{comment}{/* LRU缓存批量驱逐大小，默认10，性能优化}}
+\DoxyCodeLine{66 \textcolor{comment}{                                        */}}
+\DoxyCodeLine{67 }
+\DoxyCodeLine{68     \textcolor{comment}{/* 限流配置 */}}
+\DoxyCodeLine{69     \textcolor{keywordtype}{int} rate\_limit\_max\_requests; \textcolor{comment}{/* 限流最大请求数，默认100，防止突发流量 */}}
+\DoxyCodeLine{70     \textcolor{keywordtype}{int} rate\_limit\_max\_window\_seconds; \textcolor{comment}{/* 限流最大时间窗口，默认60秒，与rate\_limit\_window一致}}
+\DoxyCodeLine{71 \textcolor{comment}{                                        */}}
+\DoxyCodeLine{72     \textcolor{keywordtype}{int} rate\_limit\_min\_timeout\_seconds; \textcolor{comment}{/* 限流最小超时时间，默认1秒，防止过于频繁的请求}}
+\DoxyCodeLine{73 \textcolor{comment}{                                         */}}
+\DoxyCodeLine{74 \} \mbox{\hyperlink{structuvhttp__config__t}{uvhttp\_config\_t}};}
+\DoxyCodeLine{75 }
+\DoxyCodeLine{76 \textcolor{comment}{/* 配置管理函数 */}}
+\DoxyCodeLine{85 uvhttp\_error\_t \mbox{\hyperlink{uvhttp__config_8h_a67ab031597a7588f15bf60a426108903}{uvhttp\_config\_new}}(\mbox{\hyperlink{structuvhttp__config__t}{uvhttp\_config\_t}}** config);}
+\DoxyCodeLine{86 \textcolor{keywordtype}{void} uvhttp\_config\_free(\mbox{\hyperlink{structuvhttp__config__t}{uvhttp\_config\_t}}* config);}
+\DoxyCodeLine{87 \textcolor{keywordtype}{void} uvhttp\_config\_set\_defaults(\mbox{\hyperlink{structuvhttp__config__t}{uvhttp\_config\_t}}* config);}
+\DoxyCodeLine{88 }
+\DoxyCodeLine{89 \textcolor{comment}{/* 配置加载和保存 */}}
+\DoxyCodeLine{90 \textcolor{keywordtype}{int} uvhttp\_config\_load\_file(\mbox{\hyperlink{structuvhttp__config__t}{uvhttp\_config\_t}}* config, \textcolor{keyword}{const} \textcolor{keywordtype}{char}* filename);}
+\DoxyCodeLine{91 \textcolor{keywordtype}{int} uvhttp\_config\_save\_file(\textcolor{keyword}{const} \mbox{\hyperlink{structuvhttp__config__t}{uvhttp\_config\_t}}* config,}
+\DoxyCodeLine{92                             \textcolor{keyword}{const} \textcolor{keywordtype}{char}* filename);}
+\DoxyCodeLine{93 \textcolor{keywordtype}{int} uvhttp\_config\_load\_env(\mbox{\hyperlink{structuvhttp__config__t}{uvhttp\_config\_t}}* config);}
+\DoxyCodeLine{94 }
+\DoxyCodeLine{95 \textcolor{comment}{/* 配置验证 */}}
+\DoxyCodeLine{96 \textcolor{keywordtype}{int} uvhttp\_config\_validate(\textcolor{keyword}{const} \mbox{\hyperlink{structuvhttp__config__t}{uvhttp\_config\_t}}* config);}
+\DoxyCodeLine{97 \textcolor{keywordtype}{void} uvhttp\_config\_print(\textcolor{keyword}{const} \mbox{\hyperlink{structuvhttp__config__t}{uvhttp\_config\_t}}* config);}
+\DoxyCodeLine{98 }
+\DoxyCodeLine{99 \textcolor{comment}{/* 动态配置调整 */}}
+\DoxyCodeLine{100 \textcolor{keywordtype}{int} uvhttp\_config\_update\_max\_connections(\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}* context,}
+\DoxyCodeLine{101                                          \textcolor{keywordtype}{int} max\_connections);}
+\DoxyCodeLine{102 \textcolor{keywordtype}{int} uvhttp\_config\_update\_read\_buffer\_size(\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}* context,}
+\DoxyCodeLine{103                                           \textcolor{keywordtype}{int} buffer\_size);}
+\DoxyCodeLine{104 \textcolor{keywordtype}{int} uvhttp\_config\_update\_size\_limits(\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}* context,}
+\DoxyCodeLine{105                                      \textcolor{keywordtype}{size\_t} max\_body\_size,}
+\DoxyCodeLine{106                                      \textcolor{keywordtype}{size\_t} max\_header\_size);}
+\DoxyCodeLine{107 }
+\DoxyCodeLine{108 \textcolor{comment}{/* 获取当前配置 */}}
+\DoxyCodeLine{109 \textcolor{keyword}{const} \mbox{\hyperlink{structuvhttp__config__t}{uvhttp\_config\_t}}* uvhttp\_config\_get\_current(\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}* context);}
+\DoxyCodeLine{110 }
+\DoxyCodeLine{111 \textcolor{comment}{/* 设置全局配置 */}}
+\DoxyCodeLine{112 \textcolor{keywordtype}{void} uvhttp\_config\_set\_current(\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}* context,}
+\DoxyCodeLine{113                                \mbox{\hyperlink{structuvhttp__config__t}{uvhttp\_config\_t}}* config);}
+\DoxyCodeLine{114 }
+\DoxyCodeLine{115 \textcolor{preprocessor}{\#ifdef \_\_cplusplus}}
+\DoxyCodeLine{116 \}}
+\DoxyCodeLine{117 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{118 }
+\DoxyCodeLine{119 \textcolor{preprocessor}{\#endif }\textcolor{comment}{/* UVHTTP\_CONFIG\_H */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

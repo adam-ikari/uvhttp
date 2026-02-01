@@ -9,6 +9,7 @@
 #include "uvhttp_middleware.h"
 #include "uvhttp_router.h"
 #include "uvhttp_server.h"
+#include "uvhttp_static.h"
 #include "uvhttp_utils.h"
 #include "uvhttp_validation.h"
 
@@ -23,7 +24,7 @@
 #    include "uvhttp_websocket.h"
 #endif
 
-/* HTTP 响应相关字符串常量 */
+/* HTTP response related string constants */
 #define HTTP_CONTENT_TYPE_TEXT_PLAIN "text/plain"
 #define HTTP_HEADER_CONTENT_TYPE "Content-Type"
 #define HTTP_HEADER_UPGRADE "Upgrade"
@@ -43,10 +44,10 @@
 #define HTTP_RESPONSE_WS_HANDSHAKE_FAILED "WebSocket handshake failed"
 #define HTTP_RESPONSE_WS_KEY_MISSING "Missing Sec-WebSocket-Key header"
 
-/* WebSocket握手检测函数 */
+/* WebSocket handshake detection function */
 static int is_websocket_handshake(uvhttp_request_t* request);
 
-// HTTP解析器回调函数声明
+// HTTP parser callback function declarations
 static int on_message_begin(llhttp_t* parser);
 static int on_url(llhttp_t* parser, const char* at, size_t length);
 static int on_header_field(llhttp_t* parser, const char* at, size_t length);
@@ -436,6 +437,22 @@ static int on_message_complete(llhttp_t* parser) {
 
         if (handler) {
             handler(conn->request, conn->response);
+        } else if (conn->server->router->static_context) {
+            /* 如果没有找到 handler 但有静态文件上下文，尝试静态文件处理 */
+            uvhttp_result_t result = uvhttp_static_handle_request(
+                (uvhttp_static_context_t*)conn->server->router->static_context,
+                conn->request, conn->response);
+
+            if (result != UVHTTP_OK) {
+                uvhttp_response_set_status(conn->response, 404);
+                uvhttp_response_set_header(conn->response,
+                                           HTTP_HEADER_CONTENT_TYPE,
+                                           HTTP_CONTENT_TYPE_TEXT_PLAIN);
+                uvhttp_response_set_body(conn->response,
+                                         HTTP_RESPONSE_NOT_FOUND,
+                                         strlen(HTTP_RESPONSE_NOT_FOUND));
+                uvhttp_response_send(conn->response);
+            }
         } else {
             uvhttp_response_set_status(conn->response, 404);
             uvhttp_response_set_header(conn->response, HTTP_HEADER_CONTENT_TYPE,

@@ -101,7 +101,8 @@ extern "C" {
  * 优化说明：增大缓冲区可以减少系统调用次数，提升性能
  */
 #ifndef UVHTTP_DEFAULT_READ_BUFFER_SIZE
-#    define UVHTTP_DEFAULT_READ_BUFFER_SIZE 16384 /* 16KB - 优化：从 8KB 增加到 16KB */
+#    define UVHTTP_DEFAULT_READ_BUFFER_SIZE \
+        16384 /* 16KB - 优化：从 8KB 增加到 16KB */
 #endif
 
 /**
@@ -139,7 +140,8 @@ extern "C" {
  * 优化说明：增大缓冲区可以减少 I/O 操作次数，提升大文件传输性能
  */
 #ifndef UVHTTP_ASYNC_FILE_BUFFER_SIZE
-#    define UVHTTP_ASYNC_FILE_BUFFER_SIZE 131072 /* 128KB - 优化：从 64KB 增加到 128KB */
+#    define UVHTTP_ASYNC_FILE_BUFFER_SIZE \
+        131072 /* 128KB - 优化：从 64KB 增加到 128KB */
 #endif
 
 /* ========== 安全配置默认值 ========== */
@@ -217,20 +219,9 @@ extern "C" {
 
 /* ========== 功能开关默认值 ========== */
 
-/**
- * 压缩功能
- */
-#define UVHTTP_DEFAULT_ENABLE_COMPRESSION 1
-
-/**
- * TLS 功能
- */
-#define UVHTTP_DEFAULT_ENABLE_TLS 0
-
-/**
- * 内存调试功能
- */
-#define UVHTTP_DEFAULT_ENABLE_MEMORY_DEBUG 0
+/* UVHTTP_DEFAULT_ENABLE_COMPRESSION 已删除 - 未使用 */
+/* UVHTTP_DEFAULT_ENABLE_TLS 已删除 - 未使用 */
+/* UVHTTP_DEFAULT_ENABLE_MEMORY_DEBUG 已删除 - 未使用 */
 
 /**
  * 日志级别
@@ -244,10 +235,7 @@ extern "C" {
  */
 #define UVHTTP_DEFAULT_LOG_LEVEL 2 /* INFO */
 
-/**
- * 访问日志
- */
-#define UVHTTP_DEFAULT_ENABLE_ACCESS_LOG 0
+/* UVHTTP_DEFAULT_ENABLE_ACCESS_LOG 已删除 - 未使用 */
 
 /* ========== CORS 配置默认值 ========== */
 

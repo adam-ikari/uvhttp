@@ -1,0 +1,596 @@
+\hypertarget{uvhttp__constants_8h_source}{}\doxysection{uvhttp\+\_\+constants.\+h}
+\label{uvhttp__constants_8h_source}\index{include/uvhttp\_constants.h@{include/uvhttp\_constants.h}}
+\mbox{\hyperlink{uvhttp__constants_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 }
+\DoxyCodeLine{67 \textcolor{preprocessor}{\#ifndef UVHTTP\_CONSTANTS\_H}}
+\DoxyCodeLine{68 \textcolor{preprocessor}{\#define UVHTTP\_CONSTANTS\_H}}
+\DoxyCodeLine{69 }
+\DoxyCodeLine{70 \textcolor{comment}{/* 包含默认配置值 */}}
+\DoxyCodeLine{71 \textcolor{preprocessor}{\#include "{}\mbox{\hyperlink{uvhttp__defaults_8h}{uvhttp\_defaults.h}}"{}}}
+\DoxyCodeLine{72 }
+\DoxyCodeLine{73 \textcolor{comment}{/* ========== 基础宏定义 ========== */}}
+\DoxyCodeLine{74 }
+\DoxyCodeLine{75 \textcolor{comment}{/* 布尔值宏 */}}
+\DoxyCodeLine{76 \textcolor{preprocessor}{\#ifndef TRUE}}
+\DoxyCodeLine{77 \textcolor{preprocessor}{\#    define TRUE 1}}
+\DoxyCodeLine{78 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{79 }
+\DoxyCodeLine{80 \textcolor{preprocessor}{\#ifndef FALSE}}
+\DoxyCodeLine{81 \textcolor{preprocessor}{\#    define FALSE 0}}
+\DoxyCodeLine{82 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{83 }
+\DoxyCodeLine{84 \textcolor{comment}{/* 字符串化宏 */}}
+\DoxyCodeLine{85 \textcolor{preprocessor}{\#define UVHTTP\_STRINGIFY(x) \#x}}
+\DoxyCodeLine{86 }
+\DoxyCodeLine{87 \textcolor{comment}{/* ========== HTTP 协议相关 ========== */}}
+\DoxyCodeLine{88 }
+\DoxyCodeLine{89 \textcolor{comment}{/* HTTP 状态码 */}}
+\DoxyCodeLine{90 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_CONTINUE 100}}
+\DoxyCodeLine{91 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_MIN\_CONTINUE 100}}
+\DoxyCodeLine{92 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_SWITCHING\_PROTOCOLS 101}}
+\DoxyCodeLine{93 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_OK 200}}
+\DoxyCodeLine{94 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_CREATED 201}}
+\DoxyCodeLine{95 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_ACCEPTED 202}}
+\DoxyCodeLine{96 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_NO\_CONTENT 204}}
+\DoxyCodeLine{97 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_BAD\_REQUEST 400}}
+\DoxyCodeLine{98 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_UNAUTHORIZED 401}}
+\DoxyCodeLine{99 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_FORBIDDEN 403}}
+\DoxyCodeLine{100 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_NOT\_FOUND 404}}
+\DoxyCodeLine{101 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_METHOD\_NOT\_ALLOWED 405}}
+\DoxyCodeLine{102 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_REQUEST\_ENTITY\_TOO\_LARGE 413}}
+\DoxyCodeLine{103 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_INTERNAL\_ERROR 500}}
+\DoxyCodeLine{104 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_NOT\_IMPLEMENTED 501}}
+\DoxyCodeLine{105 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_BAD\_GATEWAY 502}}
+\DoxyCodeLine{106 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_SERVICE\_UNAVAILABLE 503}}
+\DoxyCodeLine{107 \textcolor{preprocessor}{\#define UVHTTP\_STATUS\_MAX 599}}
+\DoxyCodeLine{108 }
+\DoxyCodeLine{109 \textcolor{comment}{/* HTTP 版本 */}}
+\DoxyCodeLine{110 \textcolor{preprocessor}{\#define UVHTTP\_VERSION\_1\_1 "{}HTTP/1.1"{}}}
+\DoxyCodeLine{111 \textcolor{preprocessor}{\#define UVHTTP\_VERSION\_LENGTH 8}}
+\DoxyCodeLine{112 }
+\DoxyCodeLine{113 \textcolor{comment}{/* HTTP 方法 */}}
+\DoxyCodeLine{114 \textcolor{preprocessor}{\#define UVHTTP\_METHOD\_GET "{}GET"{}}}
+\DoxyCodeLine{115 \textcolor{preprocessor}{\#define UVHTTP\_METHOD\_POST "{}POST"{}}}
+\DoxyCodeLine{116 \textcolor{preprocessor}{\#define UVHTTP\_METHOD\_PUT "{}PUT"{}}}
+\DoxyCodeLine{117 \textcolor{preprocessor}{\#define UVHTTP\_METHOD\_DELETE "{}DELETE"{}}}
+\DoxyCodeLine{118 \textcolor{preprocessor}{\#define UVHTTP\_METHOD\_HEAD "{}HEAD"{}}}
+\DoxyCodeLine{119 \textcolor{preprocessor}{\#define UVHTTP\_METHOD\_OPTIONS "{}OPTIONS"{}}}
+\DoxyCodeLine{120 \textcolor{preprocessor}{\#define UVHTTP\_METHOD\_PATCH "{}PATCH"{}}}
+\DoxyCodeLine{121 }
+\DoxyCodeLine{122 \textcolor{comment}{/* 内容类型 */}}
+\DoxyCodeLine{123 \textcolor{preprocessor}{\#define UVHTTP\_CONTENT\_TYPE\_TEXT "{}text/plain"{}}}
+\DoxyCodeLine{124 \textcolor{preprocessor}{\#define UVHTTP\_CONTENT\_TYPE\_HTML "{}text/html"{}}}
+\DoxyCodeLine{125 \textcolor{preprocessor}{\#define UVHTTP\_CONTENT\_TYPE\_CSS "{}text/css"{}}}
+\DoxyCodeLine{126 \textcolor{preprocessor}{\#define UVHTTP\_CONTENT\_TYPE\_JS "{}application/javascript"{}}}
+\DoxyCodeLine{127 \textcolor{preprocessor}{\#define UVHTTP\_CONTENT\_TYPE\_XML "{}application/xml"{}}}
+\DoxyCodeLine{128 \textcolor{preprocessor}{\#define UVHTTP\_CONTENT\_TYPE\_IMAGE\_JPEG "{}image/jpeg"{}}}
+\DoxyCodeLine{129 \textcolor{preprocessor}{\#define UVHTTP\_CONTENT\_TYPE\_IMAGE\_PNG "{}image/png"{}}}
+\DoxyCodeLine{130 \textcolor{preprocessor}{\#define UVHTTP\_CONTENT\_TYPE\_IMAGE\_GIF "{}image/gif"{}}}
+\DoxyCodeLine{131 \textcolor{preprocessor}{\#define UVHTTP\_CONTENT\_TYPE\_IMAGE\_SVG "{}image/svg+xml"{}}}
+\DoxyCodeLine{132 \textcolor{preprocessor}{\#define UVHTTP\_CONTENT\_TYPE\_IMAGE\_ICO "{}image/x-\/icon"{}}}
+\DoxyCodeLine{133 \textcolor{preprocessor}{\#define UVHTTP\_CONTENT\_TYPE\_PDF "{}application/pdf"{}}}
+\DoxyCodeLine{134 \textcolor{preprocessor}{\#define UVHTTP\_CONTENT\_TYPE\_ZIP "{}application/zip"{}}}
+\DoxyCodeLine{135 }
+\DoxyCodeLine{136 \textcolor{comment}{/* ========== 缓冲区大小配置（性能关键） ========== */}}
+\DoxyCodeLine{137 }
+\DoxyCodeLine{154 \textcolor{preprocessor}{\#ifndef UVHTTP\_INITIAL\_BUFFER\_SIZE}}
+\DoxyCodeLine{155 \textcolor{preprocessor}{\#    define UVHTTP\_INITIAL\_BUFFER\_SIZE 8192}}
+\DoxyCodeLine{156 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{157 }
+\DoxyCodeLine{174 \textcolor{preprocessor}{\#ifndef UVHTTP\_MAX\_BODY\_SIZE}}
+\DoxyCodeLine{175 \textcolor{preprocessor}{\#    define UVHTTP\_MAX\_BODY\_SIZE (1024 * 1024) }\textcolor{comment}{/* 1MB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{176 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{177 }
+\DoxyCodeLine{194 \textcolor{preprocessor}{\#ifndef UVHTTP\_READ\_BUFFER\_SIZE}}
+\DoxyCodeLine{195 \textcolor{preprocessor}{\#    define UVHTTP\_READ\_BUFFER\_SIZE 16384}}
+\DoxyCodeLine{196 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{197 }
+\DoxyCodeLine{198 \textcolor{comment}{/* ========== HTTP 头部配置 ========== */}}
+\DoxyCodeLine{199 }
+\DoxyCodeLine{215 \textcolor{preprocessor}{\#ifndef UVHTTP\_MAX\_HEADER\_NAME\_SIZE}}
+\DoxyCodeLine{216 \textcolor{preprocessor}{\#    define UVHTTP\_MAX\_HEADER\_NAME\_SIZE 256}}
+\DoxyCodeLine{217 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{218 }
+\DoxyCodeLine{219 \textcolor{preprocessor}{\#ifndef UVHTTP\_MAX\_HEADER\_VALUE\_SIZE}}
+\DoxyCodeLine{220 \textcolor{preprocessor}{\#    define UVHTTP\_MAX\_HEADER\_VALUE\_SIZE 4096}}
+\DoxyCodeLine{221 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{222 }
+\DoxyCodeLine{223 \textcolor{preprocessor}{\#define UVHTTP\_MAX\_HEADER\_NAME\_LENGTH (UVHTTP\_MAX\_HEADER\_NAME\_SIZE -\/ 1)}}
+\DoxyCodeLine{224 \textcolor{preprocessor}{\#define UVHTTP\_MAX\_HEADER\_VALUE\_LENGTH (UVHTTP\_MAX\_HEADER\_VALUE\_SIZE -\/ 1)}}
+\DoxyCodeLine{225 }
+\DoxyCodeLine{238 \textcolor{preprocessor}{\#ifndef UVHTTP\_MAX\_HEADERS}}
+\DoxyCodeLine{239 \textcolor{preprocessor}{\#    define UVHTTP\_MAX\_HEADERS 64}}
+\DoxyCodeLine{240 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{241 }
+\DoxyCodeLine{254 \textcolor{preprocessor}{\#ifndef UVHTTP\_INLINE\_HEADERS\_CAPACITY}}
+\DoxyCodeLine{255 \textcolor{preprocessor}{\#    define UVHTTP\_INLINE\_HEADERS\_CAPACITY 32}}
+\DoxyCodeLine{256 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{257 }
+\DoxyCodeLine{269 \textcolor{preprocessor}{\#ifndef UVHTTP\_MAX\_URL\_SIZE}}
+\DoxyCodeLine{270 \textcolor{preprocessor}{\#    define UVHTTP\_MAX\_URL\_SIZE 2048}}
+\DoxyCodeLine{271 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{272 }
+\DoxyCodeLine{273 \textcolor{preprocessor}{\#ifndef UVHTTP\_MAX\_PATH\_SIZE}}
+\DoxyCodeLine{274 \textcolor{preprocessor}{\#    define UVHTTP\_MAX\_PATH\_SIZE 1024}}
+\DoxyCodeLine{275 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{276 }
+\DoxyCodeLine{277 \textcolor{preprocessor}{\#ifndef UVHTTP\_MAX\_METHOD\_SIZE}}
+\DoxyCodeLine{278 \textcolor{preprocessor}{\#    define UVHTTP\_MAX\_METHOD\_SIZE 16}}
+\DoxyCodeLine{279 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{280 }
+\DoxyCodeLine{281 \textcolor{comment}{/* ========== 连接管理配置 ========== */}}
+\DoxyCodeLine{282 }
+\DoxyCodeLine{303 \textcolor{preprocessor}{\#define UVHTTP\_MAX\_CONNECTIONS\_HARD 65535 }\textcolor{comment}{/* 硬限制 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{304 }
+\DoxyCodeLine{305 \textcolor{preprocessor}{\#ifndef UVHTTP\_MAX\_CONNECTIONS\_DEFAULT}}
+\DoxyCodeLine{306 \textcolor{preprocessor}{\#    define UVHTTP\_MAX\_CONNECTIONS\_DEFAULT 2048 }\textcolor{comment}{/* 默认值 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{307 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{308 }
+\DoxyCodeLine{309 \textcolor{preprocessor}{\#ifndef UVHTTP\_MAX\_CONNECTIONS\_MAX}}
+\DoxyCodeLine{310 \textcolor{preprocessor}{\#    define UVHTTP\_MAX\_CONNECTIONS\_MAX 10000 }\textcolor{comment}{/* 最大推荐值 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{311 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{312 }
+\DoxyCodeLine{330 \textcolor{preprocessor}{\#ifndef UVHTTP\_BACKLOG}}
+\DoxyCodeLine{331 \textcolor{preprocessor}{\#    define UVHTTP\_BACKLOG 8192}}
+\DoxyCodeLine{332 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{333 }
+\DoxyCodeLine{355 \textcolor{comment}{/* ========== 静态文件服务配置 ========== */}}
+\DoxyCodeLine{356 }
+\DoxyCodeLine{380 \textcolor{preprocessor}{\#ifndef UVHTTP\_ASYNC\_FILE\_MAX\_CONCURRENT}}
+\DoxyCodeLine{381 \textcolor{preprocessor}{\#    define UVHTTP\_ASYNC\_FILE\_MAX\_CONCURRENT 64}}
+\DoxyCodeLine{382 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{383 }
+\DoxyCodeLine{396 \textcolor{preprocessor}{\#ifndef UVHTTP\_ASYNC\_FILE\_MAX\_SIZE}}
+\DoxyCodeLine{397 \textcolor{preprocessor}{\#    define UVHTTP\_ASYNC\_FILE\_MAX\_SIZE (10 * 1024 * 1024) }\textcolor{comment}{/* 10MB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{398 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{399 }
+\DoxyCodeLine{407 \textcolor{preprocessor}{\#ifndef UVHTTP\_STATIC\_MAX\_CACHE\_SIZE}}
+\DoxyCodeLine{408 \textcolor{preprocessor}{\#    define UVHTTP\_STATIC\_MAX\_CACHE\_SIZE (1024 * 1024) }\textcolor{comment}{/* 1MB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{409 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{410 }
+\DoxyCodeLine{411 \textcolor{preprocessor}{\#ifndef UVHTTP\_STATIC\_MAX\_PATH\_SIZE}}
+\DoxyCodeLine{412 \textcolor{preprocessor}{\#    define UVHTTP\_STATIC\_MAX\_PATH\_SIZE 1024}}
+\DoxyCodeLine{413 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{414 }
+\DoxyCodeLine{415 \textcolor{preprocessor}{\#ifndef UVHTTP\_STATIC\_MAX\_CONTENT\_LENGTH}}
+\DoxyCodeLine{416 \textcolor{preprocessor}{\#    define UVHTTP\_STATIC\_MAX\_CONTENT\_LENGTH 32}}
+\DoxyCodeLine{417 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{418 }
+\DoxyCodeLine{419 \textcolor{preprocessor}{\#ifndef UVHTTP\_STATIC\_MAX\_FILE\_SIZE}}
+\DoxyCodeLine{420 \textcolor{preprocessor}{\#    define UVHTTP\_STATIC\_MAX\_FILE\_SIZE (10 * 1024 * 1024) }\textcolor{comment}{/* 10MB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{421 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{422 }
+\DoxyCodeLine{430 \textcolor{preprocessor}{\#ifndef UVHTTP\_STATIC\_SMALL\_FILE\_THRESHOLD}}
+\DoxyCodeLine{431 \textcolor{preprocessor}{\#    define UVHTTP\_STATIC\_SMALL\_FILE\_THRESHOLD 4096 }\textcolor{comment}{/* 4KB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{432 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{433 }
+\DoxyCodeLine{441 \textcolor{preprocessor}{\#ifndef UVHTTP\_SENDFILE\_DEFAULT\_CHUNK\_SIZE}}
+\DoxyCodeLine{442 \textcolor{preprocessor}{\#    define UVHTTP\_SENDFILE\_DEFAULT\_CHUNK\_SIZE (256 * 1024) }\textcolor{comment}{/* 256KB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{443 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{444 }
+\DoxyCodeLine{445 \textcolor{preprocessor}{\#ifndef UVHTTP\_SENDFILE\_MIN\_FILE\_SIZE}}
+\DoxyCodeLine{446 \textcolor{preprocessor}{\#    define UVHTTP\_SENDFILE\_MIN\_FILE\_SIZE (64 * 1024) }\textcolor{comment}{/* 64KB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{447 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{448 }
+\DoxyCodeLine{449 \textcolor{preprocessor}{\#ifndef UVHTTP\_SENDFILE\_DEFAULT\_TIMEOUT\_MS}}
+\DoxyCodeLine{450 \textcolor{preprocessor}{\#    define UVHTTP\_SENDFILE\_DEFAULT\_TIMEOUT\_MS 30000 }\textcolor{comment}{/* 30 秒 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{451 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{452 }
+\DoxyCodeLine{453 \textcolor{preprocessor}{\#ifndef UVHTTP\_SENDFILE\_DEFAULT\_MAX\_RETRY}}
+\DoxyCodeLine{454 \textcolor{preprocessor}{\#    define UVHTTP\_SENDFILE\_DEFAULT\_MAX\_RETRY 2}}
+\DoxyCodeLine{455 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{456 }
+\DoxyCodeLine{464 \textcolor{preprocessor}{\#ifndef UVHTTP\_FILE\_SIZE\_SMALL}}
+\DoxyCodeLine{465 \textcolor{preprocessor}{\#    define UVHTTP\_FILE\_SIZE\_SMALL (1024 * 1024) }\textcolor{comment}{/* 1MB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{466 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{467 }
+\DoxyCodeLine{468 \textcolor{preprocessor}{\#ifndef UVHTTP\_FILE\_SIZE\_MEDIUM}}
+\DoxyCodeLine{469 \textcolor{preprocessor}{\#    define UVHTTP\_FILE\_SIZE\_MEDIUM (10 * 1024 * 1024) }\textcolor{comment}{/* 10MB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{470 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{471 }
+\DoxyCodeLine{472 \textcolor{preprocessor}{\#ifndef UVHTTP\_FILE\_SIZE\_LARGE}}
+\DoxyCodeLine{473 \textcolor{preprocessor}{\#    define UVHTTP\_FILE\_SIZE\_LARGE (100 * 1024 * 1024) }\textcolor{comment}{/* 100MB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{474 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{475 }
+\DoxyCodeLine{483 \textcolor{preprocessor}{\#ifndef UVHTTP\_CHUNK\_SIZE\_SMALL}}
+\DoxyCodeLine{484 \textcolor{preprocessor}{\#    define UVHTTP\_CHUNK\_SIZE\_SMALL (64 * 1024) }\textcolor{comment}{/* 64KB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{485 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{486 }
+\DoxyCodeLine{487 \textcolor{preprocessor}{\#ifndef UVHTTP\_CHUNK\_SIZE\_MEDIUM}}
+\DoxyCodeLine{488 \textcolor{preprocessor}{\#    define UVHTTP\_CHUNK\_SIZE\_MEDIUM (256 * 1024) }\textcolor{comment}{/* 256KB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{489 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{490 }
+\DoxyCodeLine{491 \textcolor{preprocessor}{\#ifndef UVHTTP\_CHUNK\_SIZE\_LARGE}}
+\DoxyCodeLine{492 \textcolor{preprocessor}{\#    define UVHTTP\_CHUNK\_SIZE\_LARGE (1024 * 1024) }\textcolor{comment}{/* 1MB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{493 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{494 }
+\DoxyCodeLine{498 \textcolor{preprocessor}{\#ifndef UVHTTP\_WEBSOCKET\_CONFIG\_MIN\_FRAME\_SIZE}}
+\DoxyCodeLine{499 \textcolor{preprocessor}{\#    define UVHTTP\_WEBSOCKET\_CONFIG\_MIN\_FRAME\_SIZE 1024 }\textcolor{comment}{/* 1KB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{500 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{501 }
+\DoxyCodeLine{502 \textcolor{preprocessor}{\#ifndef UVHTTP\_WEBSOCKET\_CONFIG\_MAX\_FRAME\_SIZE}}
+\DoxyCodeLine{503 \textcolor{preprocessor}{\#    define UVHTTP\_WEBSOCKET\_CONFIG\_MAX\_FRAME\_SIZE \(\backslash\)}}
+\DoxyCodeLine{504 \textcolor{preprocessor}{        (256 * 1024 * 1024) }\textcolor{comment}{/* 256MB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{505 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{506 }
+\DoxyCodeLine{507 \textcolor{preprocessor}{\#ifndef UVHTTP\_WEBSOCKET\_CONFIG\_MIN\_MESSAGE\_SIZE}}
+\DoxyCodeLine{508 \textcolor{preprocessor}{\#    define UVHTTP\_WEBSOCKET\_CONFIG\_MIN\_MESSAGE\_SIZE 1024 }\textcolor{comment}{/* 1KB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{509 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{510 }
+\DoxyCodeLine{511 \textcolor{preprocessor}{\#ifndef UVHTTP\_WEBSOCKET\_CONFIG\_MAX\_MESSAGE\_SIZE}}
+\DoxyCodeLine{512 \textcolor{preprocessor}{\#    define UVHTTP\_WEBSOCKET\_CONFIG\_MAX\_MESSAGE\_SIZE \(\backslash\)}}
+\DoxyCodeLine{513 \textcolor{preprocessor}{        (1024 * 1024 * 1024) }\textcolor{comment}{/* 1GB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{514 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{515 }
+\DoxyCodeLine{516 \textcolor{preprocessor}{\#ifndef UVHTTP\_WEBSOCKET\_CONFIG\_MIN\_PING\_INTERVAL}}
+\DoxyCodeLine{517 \textcolor{preprocessor}{\#    define UVHTTP\_WEBSOCKET\_CONFIG\_MIN\_PING\_INTERVAL 1 }\textcolor{comment}{/* 1秒 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{518 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{519 }
+\DoxyCodeLine{520 \textcolor{preprocessor}{\#ifndef UVHTTP\_WEBSOCKET\_CONFIG\_MAX\_PING\_INTERVAL}}
+\DoxyCodeLine{521 \textcolor{preprocessor}{\#    define UVHTTP\_WEBSOCKET\_CONFIG\_MAX\_PING\_INTERVAL 3600 }\textcolor{comment}{/* 1小时 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{522 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{523 }
+\DoxyCodeLine{524 \textcolor{preprocessor}{\#ifndef UVHTTP\_WEBSOCKET\_CONFIG\_MIN\_PING\_TIMEOUT}}
+\DoxyCodeLine{525 \textcolor{preprocessor}{\#    define UVHTTP\_WEBSOCKET\_CONFIG\_MIN\_PING\_TIMEOUT 1 }\textcolor{comment}{/* 1秒 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{526 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{527 }
+\DoxyCodeLine{528 \textcolor{preprocessor}{\#ifndef UVHTTP\_WEBSOCKET\_CONFIG\_MAX\_PING\_TIMEOUT}}
+\DoxyCodeLine{529 \textcolor{preprocessor}{\#    define UVHTTP\_WEBSOCKET\_CONFIG\_MAX\_PING\_TIMEOUT 3600 }\textcolor{comment}{/* 1小时 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{530 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{531 }
+\DoxyCodeLine{535 \textcolor{preprocessor}{\#ifndef UVHTTP\_TCP\_KEEPALIVE\_MIN\_TIMEOUT}}
+\DoxyCodeLine{536 \textcolor{preprocessor}{\#    define UVHTTP\_TCP\_KEEPALIVE\_MIN\_TIMEOUT 1 }\textcolor{comment}{/* 1秒 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{537 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{538 }
+\DoxyCodeLine{539 \textcolor{preprocessor}{\#ifndef UVHTTP\_TCP\_KEEPALIVE\_MAX\_TIMEOUT}}
+\DoxyCodeLine{540 \textcolor{preprocessor}{\#    define UVHTTP\_TCP\_KEEPALIVE\_MAX\_TIMEOUT 7200 }\textcolor{comment}{/* 2小时 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{541 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{542 }
+\DoxyCodeLine{543 \textcolor{preprocessor}{\#ifndef UVHTTP\_SENDFILE\_MIN\_TIMEOUT\_MS}}
+\DoxyCodeLine{544 \textcolor{preprocessor}{\#    define UVHTTP\_SENDFILE\_MIN\_TIMEOUT\_MS 1000 }\textcolor{comment}{/* 1秒 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{545 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{546 }
+\DoxyCodeLine{547 \textcolor{preprocessor}{\#ifndef UVHTTP\_SENDFILE\_MAX\_TIMEOUT\_MS}}
+\DoxyCodeLine{548 \textcolor{preprocessor}{\#    define UVHTTP\_SENDFILE\_MAX\_TIMEOUT\_MS 300000 }\textcolor{comment}{/* 5分钟 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{549 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{550 }
+\DoxyCodeLine{551 \textcolor{preprocessor}{\#ifndef UVHTTP\_SENDFILE\_MIN\_RETRY}}
+\DoxyCodeLine{552 \textcolor{preprocessor}{\#    define UVHTTP\_SENDFILE\_MIN\_RETRY 0}}
+\DoxyCodeLine{553 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{554 }
+\DoxyCodeLine{555 \textcolor{preprocessor}{\#ifndef UVHTTP\_SENDFILE\_MAX\_RETRY}}
+\DoxyCodeLine{556 \textcolor{preprocessor}{\#    define UVHTTP\_SENDFILE\_MAX\_RETRY 10}}
+\DoxyCodeLine{557 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{558 }
+\DoxyCodeLine{566 \textcolor{preprocessor}{\#ifndef UVHTTP\_CACHE\_DEFAULT\_MAX\_ENTRIES}}
+\DoxyCodeLine{567 \textcolor{preprocessor}{\#    define UVHTTP\_CACHE\_DEFAULT\_MAX\_ENTRIES 1000}}
+\DoxyCodeLine{568 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{569 }
+\DoxyCodeLine{570 \textcolor{preprocessor}{\#ifndef UVHTTP\_CACHE\_DEFAULT\_TTL}}
+\DoxyCodeLine{571 \textcolor{preprocessor}{\#    define UVHTTP\_CACHE\_DEFAULT\_TTL 3600 }\textcolor{comment}{/* 1 小时 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{572 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{573 }
+\DoxyCodeLine{574 \textcolor{preprocessor}{\#ifndef UVHTTP\_CACHE\_MIN\_MAX\_ENTRIES}}
+\DoxyCodeLine{575 \textcolor{preprocessor}{\#    define UVHTTP\_CACHE\_MIN\_MAX\_ENTRIES 0}}
+\DoxyCodeLine{576 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{577 }
+\DoxyCodeLine{578 \textcolor{preprocessor}{\#ifndef UVHTTP\_CACHE\_MAX\_MAX\_ENTRIES}}
+\DoxyCodeLine{579 \textcolor{preprocessor}{\#    define UVHTTP\_CACHE\_MAX\_MAX\_ENTRIES 100000}}
+\DoxyCodeLine{580 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{581 }
+\DoxyCodeLine{582 \textcolor{preprocessor}{\#ifndef UVHTTP\_CACHE\_MIN\_TTL}}
+\DoxyCodeLine{583 \textcolor{preprocessor}{\#    define UVHTTP\_CACHE\_MIN\_TTL 0}}
+\DoxyCodeLine{584 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{585 }
+\DoxyCodeLine{586 \textcolor{preprocessor}{\#ifndef UVHTTP\_CACHE\_MAX\_TTL}}
+\DoxyCodeLine{587 \textcolor{preprocessor}{\#    define UVHTTP\_CACHE\_MAX\_TTL 86400 }\textcolor{comment}{/* 24小时 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{588 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{589 }
+\DoxyCodeLine{590 \textcolor{preprocessor}{\#ifndef UVHTTP\_LRU\_CACHE\_MIN\_BATCH\_EVICTION\_SIZE}}
+\DoxyCodeLine{591 \textcolor{preprocessor}{\#    define UVHTTP\_LRU\_CACHE\_MIN\_BATCH\_EVICTION\_SIZE 1}}
+\DoxyCodeLine{592 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{593 }
+\DoxyCodeLine{594 \textcolor{preprocessor}{\#ifndef UVHTTP\_LRU\_CACHE\_MAX\_BATCH\_EVICTION\_SIZE}}
+\DoxyCodeLine{595 \textcolor{preprocessor}{\#    define UVHTTP\_LRU\_CACHE\_MAX\_BATCH\_EVICTION\_SIZE 1000}}
+\DoxyCodeLine{596 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{597 }
+\DoxyCodeLine{601 \textcolor{preprocessor}{\#ifndef UVHTTP\_RATE\_LIMIT\_MIN\_MAX\_REQUESTS}}
+\DoxyCodeLine{602 \textcolor{preprocessor}{\#    define UVHTTP\_RATE\_LIMIT\_MIN\_MAX\_REQUESTS 1}}
+\DoxyCodeLine{603 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{604 }
+\DoxyCodeLine{605 \textcolor{preprocessor}{\#ifndef UVHTTP\_RATE\_LIMIT\_MAX\_MAX\_REQUESTS}}
+\DoxyCodeLine{606 \textcolor{preprocessor}{\#    define UVHTTP\_RATE\_LIMIT\_MAX\_MAX\_REQUESTS 10000000}}
+\DoxyCodeLine{607 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{608 }
+\DoxyCodeLine{609 \textcolor{preprocessor}{\#ifndef UVHTTP\_RATE\_LIMIT\_MIN\_WINDOW\_SECONDS}}
+\DoxyCodeLine{610 \textcolor{preprocessor}{\#    define UVHTTP\_RATE\_LIMIT\_MIN\_WINDOW\_SECONDS 1}}
+\DoxyCodeLine{611 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{612 }
+\DoxyCodeLine{613 \textcolor{preprocessor}{\#ifndef UVHTTP\_RATE\_LIMIT\_MAX\_WINDOW\_SECONDS}}
+\DoxyCodeLine{614 \textcolor{preprocessor}{\#    define UVHTTP\_RATE\_LIMIT\_MAX\_WINDOW\_SECONDS 86400 }\textcolor{comment}{/* 24小时 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{615 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{616 }
+\DoxyCodeLine{617 \textcolor{preprocessor}{\#ifndef UVHTTP\_RATE\_LIMIT\_MIN\_TIMEOUT\_SECONDS}}
+\DoxyCodeLine{618 \textcolor{preprocessor}{\#    define UVHTTP\_RATE\_LIMIT\_MIN\_TIMEOUT\_SECONDS 1}}
+\DoxyCodeLine{619 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{620 }
+\DoxyCodeLine{621 \textcolor{preprocessor}{\#ifndef UVHTTP\_RATE\_LIMIT\_MAX\_TIMEOUT\_SECONDS}}
+\DoxyCodeLine{622 \textcolor{preprocessor}{\#    define UVHTTP\_RATE\_LIMIT\_MAX\_TIMEOUT\_SECONDS 3600 }\textcolor{comment}{/* 1小时 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{623 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{624 }
+\DoxyCodeLine{632 \textcolor{preprocessor}{\#ifndef UVHTTP\_SOCKET\_SEND\_BUF\_SIZE}}
+\DoxyCodeLine{633 \textcolor{preprocessor}{\#    define UVHTTP\_SOCKET\_SEND\_BUF\_SIZE (256 * 1024) }\textcolor{comment}{/* 256KB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{634 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{635 }
+\DoxyCodeLine{636 \textcolor{preprocessor}{\#ifndef UVHTTP\_SOCKET\_RECV\_BUF\_SIZE}}
+\DoxyCodeLine{637 \textcolor{preprocessor}{\#    define UVHTTP\_SOCKET\_RECV\_BUF\_SIZE (256 * 1024) }\textcolor{comment}{/* 256KB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{638 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{639 }
+\DoxyCodeLine{647 \textcolor{preprocessor}{\#ifndef UVHTTP\_PAGE\_SIZE}}
+\DoxyCodeLine{648 \textcolor{preprocessor}{\#    define UVHTTP\_PAGE\_SIZE 4096}}
+\DoxyCodeLine{649 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{650 }
+\DoxyCodeLine{651 \textcolor{preprocessor}{\#ifndef UVHTTP\_PAGE\_ALIGNMENT\_MASK}}
+\DoxyCodeLine{652 \textcolor{preprocessor}{\#    define UVHTTP\_PAGE\_ALIGNMENT\_MASK (UVHTTP\_PAGE\_SIZE -\/ 1)}}
+\DoxyCodeLine{653 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{654 }
+\DoxyCodeLine{655 \textcolor{comment}{/* ========== WebSocket 配置 ========== */}}
+\DoxyCodeLine{656 }
+\DoxyCodeLine{660 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_VERSION 13}}
+\DoxyCodeLine{661 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_MAGIC\_KEY "{}258EAFA5-\/E914-\/47DA-\/95CA-\/C5AB0DC85B11"{}}}
+\DoxyCodeLine{662 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_MAGIC\_KEY\_LENGTH 36}}
+\DoxyCodeLine{663 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_ACCEPT\_KEY\_SIZE 40}}
+\DoxyCodeLine{664 }
+\DoxyCodeLine{672 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_MAX\_FRAME\_SIZE 4096}}
+\DoxyCodeLine{673 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_FRAME\_HEADER\_SIZE 10}}
+\DoxyCodeLine{674 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_CLOSE\_CODE\_SIZE 4}}
+\DoxyCodeLine{675 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_MIN\_BUFFER\_SIZE 1024}}
+\DoxyCodeLine{676 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_MIN\_BUFFER\_EXPANSION\_SIZE 1024}}
+\DoxyCodeLine{677 }
+\DoxyCodeLine{688 \textcolor{preprocessor}{\#ifndef UVHTTP\_WEBSOCKET\_MIN\_FRAME\_HEADER\_SIZE}}
+\DoxyCodeLine{689 \textcolor{preprocessor}{\#    define UVHTTP\_WEBSOCKET\_MIN\_FRAME\_HEADER\_SIZE 2}}
+\DoxyCodeLine{690 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{691 }
+\DoxyCodeLine{692 \textcolor{preprocessor}{\#ifndef UVHTTP\_WEBSOCKET\_EXTENDED\_FRAME\_HEADER\_SIZE}}
+\DoxyCodeLine{693 \textcolor{preprocessor}{\#    define UVHTTP\_WEBSOCKET\_EXTENDED\_FRAME\_HEADER\_SIZE 10}}
+\DoxyCodeLine{694 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{695 }
+\DoxyCodeLine{699 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_OPCODE\_TEXT 0x1}}
+\DoxyCodeLine{700 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_OPCODE\_BINARY 0x2}}
+\DoxyCodeLine{701 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_OPCODE\_CLOSE 0x8}}
+\DoxyCodeLine{702 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_FIN 0x80}}
+\DoxyCodeLine{703 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_PAYLOAD\_LEN\_126 126}}
+\DoxyCodeLine{704 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_PAYLOAD\_LEN\_65536 65536}}
+\DoxyCodeLine{705 }
+\DoxyCodeLine{709 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_CLOSE\_CODE\_MIN 1000}}
+\DoxyCodeLine{710 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_CLOSE\_CODE\_MAX 4999}}
+\DoxyCodeLine{711 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_MAX\_REASON\_LENGTH 123}}
+\DoxyCodeLine{712 }
+\DoxyCodeLine{716 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_MIN\_KEY\_LENGTH 16}}
+\DoxyCodeLine{717 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_MAX\_KEY\_LENGTH 64}}
+\DoxyCodeLine{718 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_COMBINED\_MAX\_LENGTH 128}}
+\DoxyCodeLine{719 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_SHA1\_HASH\_SIZE 20}}
+\DoxyCodeLine{720 }
+\DoxyCodeLine{724 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_FIN\_MASK 0x80}}
+\DoxyCodeLine{725 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_OPCODE\_MASK 0x0F}}
+\DoxyCodeLine{726 \textcolor{preprocessor}{\#define UVHTTP\_WEBSOCKET\_PAYLOAD\_MASK 0x7F}}
+\DoxyCodeLine{727 }
+\DoxyCodeLine{728 \textcolor{comment}{/* ========== 路由缓存配置（性能优化） ========== */}}
+\DoxyCodeLine{729 }
+\DoxyCodeLine{742 \textcolor{preprocessor}{\#ifndef UVHTTP\_ENABLE\_ROUTER\_CACHE\_OPTIMIZATION}}
+\DoxyCodeLine{743 \textcolor{preprocessor}{\#    define UVHTTP\_ENABLE\_ROUTER\_CACHE\_OPTIMIZATION 1 }\textcolor{comment}{/* 默认启用 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{744 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{745 }
+\DoxyCodeLine{746 \textcolor{comment}{/* UVHTTP\_ENABLE\_ROUTER\_CACHE\_STATS 已删除 -\/ 未使用 */}}
+\DoxyCodeLine{747 \textcolor{comment}{/* UVHTTP\_ENABLE\_ROUTER\_CACHE\_DYNAMIC 已删除 -\/ 未使用 */}}
+\DoxyCodeLine{748 \textcolor{comment}{/* UVHTTP\_ENABLE\_ROUTER\_CACHE\_MONITORING 已删除 -\/ 未使用 */}}
+\DoxyCodeLine{749 }
+\DoxyCodeLine{758 \textcolor{preprocessor}{\#ifndef UVHTTP\_ROUTER\_SEARCH\_MODE}}
+\DoxyCodeLine{759 \textcolor{preprocessor}{\#    define UVHTTP\_ROUTER\_SEARCH\_MODE 2}}
+\DoxyCodeLine{760 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{761 }
+\DoxyCodeLine{762 \textcolor{preprocessor}{\#if UVHTTP\_ENABLE\_ROUTER\_CACHE\_OPTIMIZATION}}
+\DoxyCodeLine{763 \textcolor{comment}{/* 路由缓存大小配置 */}}
+\DoxyCodeLine{764 \textcolor{preprocessor}{\#    define UVHTTP\_ROUTER\_METHOD\_MAP\_SIZE 256}}
+\DoxyCodeLine{765 \textcolor{preprocessor}{\#    define UVHTTP\_ROUTER\_HASH\_SIZE 256}}
+\DoxyCodeLine{766 \textcolor{preprocessor}{\#    define UVHTTP\_ROUTER\_HOT\_PATH\_SIZE 64}}
+\DoxyCodeLine{767 \textcolor{preprocessor}{\#    define UVHTTP\_ROUTER\_HOT\_ROUTES\_COUNT 16}}
+\DoxyCodeLine{768 \textcolor{preprocessor}{\#    define UVHTTP\_ROUTER\_ACCESS\_COUNT\_SIZE 1024}}
+\DoxyCodeLine{769 \textcolor{preprocessor}{\#    define UVHTTP\_ROUTER\_HYBRID\_THRESHOLD 100}}
+\DoxyCodeLine{770 \textcolor{preprocessor}{\#    define UVHTTP\_ROUTER\_MAX\_CHILD\_COUNT 16}}
+\DoxyCodeLine{771 \textcolor{preprocessor}{\#    define UVHTTP\_ROUTER\_INITIAL\_POOL\_SIZE 64}}
+\DoxyCodeLine{772 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{773 }
+\DoxyCodeLine{774 \textcolor{preprocessor}{\#define UVHTTP\_ROUTER\_MAX\_CHILDREN 16}}
+\DoxyCodeLine{775 }
+\DoxyCodeLine{776 \textcolor{comment}{/* ========== TLS/SSL 配置 ========== */}}
+\DoxyCodeLine{777 }
+\DoxyCodeLine{781 \textcolor{preprocessor}{\#define UVHTTP\_TLS\_VERIFY\_DEPTH 1}}
+\DoxyCodeLine{782 \textcolor{preprocessor}{\#define UVHTTP\_TLS\_DH\_MIN\_BITLEN 2048}}
+\DoxyCodeLine{783 \textcolor{preprocessor}{\#define UVHTTP\_TLS\_MAX\_SESSIONS 1024}}
+\DoxyCodeLine{784 }
+\DoxyCodeLine{788 \textcolor{preprocessor}{\#define UVHTTP\_TLS\_ERROR\_BUFFER\_SIZE 256}}
+\DoxyCodeLine{789 \textcolor{preprocessor}{\#define UVHTTP\_TLS\_CERT\_BUFFER\_SIZE 256}}
+\DoxyCodeLine{790 \textcolor{preprocessor}{\#define UVHTTP\_TLS\_CN\_BUFFER\_SIZE 256}}
+\DoxyCodeLine{791 \textcolor{preprocessor}{\#define UVHTTP\_TLS\_SAN\_BUFFER\_SIZE 256}}
+\DoxyCodeLine{792 \textcolor{preprocessor}{\#define UVHTTP\_TLS\_PATH\_MAX\_SIZE 256}}
+\DoxyCodeLine{793 }
+\DoxyCodeLine{794 \textcolor{comment}{/* ========== 中间件配置 ========== */}}
+\DoxyCodeLine{795 }
+\DoxyCodeLine{799 \textcolor{preprocessor}{\#define UVHTTP\_CORS\_MAX\_AGE\_DEFAULT "{}86400"{}}}
+\DoxyCodeLine{800 }
+\DoxyCodeLine{804 \textcolor{preprocessor}{\#define UVHTTP\_RATE\_LIMIT\_WINDOW 60 }\textcolor{comment}{/* 秒 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{805 \textcolor{preprocessor}{\#define UVHTTP\_RATE\_LIMIT\_MAX\_AGE 17}}
+\DoxyCodeLine{806 }
+\DoxyCodeLine{807 \textcolor{comment}{/* ========== 错误处理配置 ========== */}}
+\DoxyCodeLine{808 }
+\DoxyCodeLine{812 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_MESSAGE\_LENGTH 256}}
+\DoxyCodeLine{813 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_CONTEXT\_BUFFER\_SIZE 256}}
+\DoxyCodeLine{814 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_MESSAGE\_BUFFER\_SIZE 512}}
+\DoxyCodeLine{815 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_LOG\_BUFFER\_SIZE 1024}}
+\DoxyCodeLine{816 }
+\DoxyCodeLine{817 \textcolor{comment}{/* ========== 文件路径配置 ========== */}}
+\DoxyCodeLine{818 }
+\DoxyCodeLine{822 \textcolor{preprocessor}{\#define UVHTTP\_MAX\_FILE\_PATH\_SIZE 2048}}
+\DoxyCodeLine{823 \textcolor{preprocessor}{\#define UVHTTP\_DECODED\_PATH\_SIZE 1024}}
+\DoxyCodeLine{824 }
+\DoxyCodeLine{825 \textcolor{comment}{/* ========== 网络相关常量 ========== */}}
+\DoxyCodeLine{826 }
+\DoxyCodeLine{830 \textcolor{preprocessor}{\#define UVHTTP\_IPV6\_MAX\_STRING\_LENGTH 46}}
+\DoxyCodeLine{831 \textcolor{preprocessor}{\#define UVHTTP\_IPV4\_MAX\_STRING\_LENGTH 16}}
+\DoxyCodeLine{832 \textcolor{preprocessor}{\#define UVHTTP\_MAX\_PORT\_NUMBER 65535}}
+\DoxyCodeLine{833 \textcolor{preprocessor}{\#define UVHTTP\_MIN\_PORT\_NUMBER 1}}
+\DoxyCodeLine{834 }
+\DoxyCodeLine{841 \textcolor{comment}{/* ========== 时间相关常量 ========== */}}
+\DoxyCodeLine{842 }
+\DoxyCodeLine{846 \textcolor{preprocessor}{\#define UVHTTP\_SECONDS\_IN\_DAY 86400}}
+\DoxyCodeLine{847 \textcolor{preprocessor}{\#define UVHTTP\_MILLISECONDS\_PER\_SECOND 1000}}
+\DoxyCodeLine{848 \textcolor{preprocessor}{\#define UVHTTP\_NANOSECONDS\_PER\_MILLISECOND 1000000}}
+\DoxyCodeLine{849 }
+\DoxyCodeLine{853 \textcolor{preprocessor}{\#define UVHTTP\_CACHE\_MAX\_AGE 3600 }\textcolor{comment}{/* 秒 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{854 }
+\DoxyCodeLine{858 \textcolor{preprocessor}{\#ifndef UVHTTP\_DEFAULT\_BASE\_DELAY\_MS}}
+\DoxyCodeLine{859 \textcolor{preprocessor}{\#    define UVHTTP\_DEFAULT\_BASE\_DELAY\_MS 100}}
+\DoxyCodeLine{860 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{861 }
+\DoxyCodeLine{862 \textcolor{preprocessor}{\#ifndef UVHTTP\_DEFAULT\_MAX\_DELAY\_MS}}
+\DoxyCodeLine{863 \textcolor{preprocessor}{\#    define UVHTTP\_DEFAULT\_MAX\_DELAY\_MS 5000}}
+\DoxyCodeLine{864 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{865 }
+\DoxyCodeLine{866 \textcolor{comment}{/* ========== 网络和连接配置 ========== */}}
+\DoxyCodeLine{867 }
+\DoxyCodeLine{882 \textcolor{preprocessor}{\#ifndef UVHTTP\_TCP\_KEEPALIVE\_TIMEOUT}}
+\DoxyCodeLine{883 }
+\DoxyCodeLine{884 \textcolor{preprocessor}{\#    define UVHTTP\_TCP\_KEEPALIVE\_TIMEOUT 60 }\textcolor{comment}{/* 秒 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{885 }
+\DoxyCodeLine{886 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{887 }
+\DoxyCodeLine{902 \textcolor{preprocessor}{\#ifndef UVHTTP\_CLIENT\_IP\_BUFFER\_SIZE}}
+\DoxyCodeLine{903 }
+\DoxyCodeLine{904 \textcolor{preprocessor}{\#    define UVHTTP\_CLIENT\_IP\_BUFFER\_SIZE 64}}
+\DoxyCodeLine{905 }
+\DoxyCodeLine{906 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{907 }
+\DoxyCodeLine{908 \textcolor{comment}{/* ========== Sendfile 配置 ========== */}}
+\DoxyCodeLine{909 }
+\DoxyCodeLine{962 \textcolor{preprocessor}{\#ifndef UVHTTP\_SENDFILE\_TIMEOUT\_MS}}
+\DoxyCodeLine{963 }
+\DoxyCodeLine{964 \textcolor{preprocessor}{\#    define UVHTTP\_SENDFILE\_TIMEOUT\_MS 30000 }\textcolor{comment}{/* 30 秒 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{965 }
+\DoxyCodeLine{966 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{967 }
+\DoxyCodeLine{968 \textcolor{preprocessor}{\#ifndef UVHTTP\_SENDFILE\_CHUNK\_SIZE}}
+\DoxyCodeLine{969 }
+\DoxyCodeLine{970 \textcolor{preprocessor}{\#    define UVHTTP\_SENDFILE\_CHUNK\_SIZE (64 * 1024) }\textcolor{comment}{/* 64KB */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{971 }
+\DoxyCodeLine{972 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{973 }
+\DoxyCodeLine{974 \textcolor{comment}{/* ========== LRU 缓存配置 ========== */}}
+\DoxyCodeLine{975 }
+\DoxyCodeLine{1012 \textcolor{preprocessor}{\#ifndef UVHTTP\_LRU\_CACHE\_BATCH\_EVICTION\_SIZE}}
+\DoxyCodeLine{1013 }
+\DoxyCodeLine{1014 \textcolor{preprocessor}{\#    define UVHTTP\_LRU\_CACHE\_BATCH\_EVICTION\_SIZE 10}}
+\DoxyCodeLine{1015 }
+\DoxyCodeLine{1016 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{1017 }
+\DoxyCodeLine{1018 \textcolor{comment}{/* ========== 验证配置 ========== */}}
+\DoxyCodeLine{1019 }
+\DoxyCodeLine{1034 \textcolor{preprocessor}{\#ifndef UVHTTP\_IP\_OCTET\_MAX\_VALUE}}
+\DoxyCodeLine{1035 }
+\DoxyCodeLine{1036 \textcolor{preprocessor}{\#    define UVHTTP\_IP\_OCTET\_MAX\_VALUE 255}}
+\DoxyCodeLine{1037 }
+\DoxyCodeLine{1038 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{1039 }
+\DoxyCodeLine{1040 \textcolor{comment}{/* ========== 限流配置 ========== */}}
+\DoxyCodeLine{1041 }
+\DoxyCodeLine{1078 \textcolor{preprocessor}{\#ifndef UVHTTP\_RATE\_LIMIT\_MAX\_REQUESTS}}
+\DoxyCodeLine{1079 }
+\DoxyCodeLine{1080 \textcolor{preprocessor}{\#    define UVHTTP\_RATE\_LIMIT\_MAX\_REQUESTS 1000000}}
+\DoxyCodeLine{1081 }
+\DoxyCodeLine{1082 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{1083 }
+\DoxyCodeLine{1084 \textcolor{preprocessor}{\#ifndef UVHTTP\_RATE\_LIMIT\_MAX\_WINDOW\_SECONDS}}
+\DoxyCodeLine{1085 }
+\DoxyCodeLine{1086 \textcolor{preprocessor}{\#    define UVHTTP\_RATE\_LIMIT\_MAX\_WINDOW\_SECONDS 86400}}
+\DoxyCodeLine{1087 }
+\DoxyCodeLine{1088 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{1089 }
+\DoxyCodeLine{1090 \textcolor{preprocessor}{\#ifndef UVHTTP\_RATE\_LIMIT\_MIN\_TIMEOUT\_SECONDS}}
+\DoxyCodeLine{1091 }
+\DoxyCodeLine{1092 \textcolor{preprocessor}{\#    define UVHTTP\_RATE\_LIMIT\_MIN\_TIMEOUT\_SECONDS 10}}
+\DoxyCodeLine{1093 }
+\DoxyCodeLine{1094 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{1095 }
+\DoxyCodeLine{1096 \textcolor{comment}{/* ========== 错误码范围 ========== */}}
+\DoxyCodeLine{1097 }
+\DoxyCodeLine{1101 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_SERVER\_MIN -\/106}}
+\DoxyCodeLine{1102 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_SERVER\_MAX -\/100}}
+\DoxyCodeLine{1103 }
+\DoxyCodeLine{1107 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_CONNECTION\_MIN -\/207}}
+\DoxyCodeLine{1108 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_CONNECTION\_MAX -\/200}}
+\DoxyCodeLine{1109 }
+\DoxyCodeLine{1113 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_REQUEST\_MIN -\/307}}
+\DoxyCodeLine{1114 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_REQUEST\_MAX -\/300}}
+\DoxyCodeLine{1115 }
+\DoxyCodeLine{1119 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_TLS\_MIN -\/407}}
+\DoxyCodeLine{1120 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_TLS\_MAX -\/400}}
+\DoxyCodeLine{1121 }
+\DoxyCodeLine{1125 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_ROUTER\_MIN -\/504}}
+\DoxyCodeLine{1126 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_ROUTER\_MAX -\/500}}
+\DoxyCodeLine{1127 }
+\DoxyCodeLine{1131 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_ALLOCATOR\_MIN -\/602}}
+\DoxyCodeLine{1132 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_ALLOCATOR\_MAX -\/600}}
+\DoxyCodeLine{1133 }
+\DoxyCodeLine{1137 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_WEBSOCKET\_MIN -\/707}}
+\DoxyCodeLine{1138 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_WEBSOCKET\_MAX -\/700}}
+\DoxyCodeLine{1139 }
+\DoxyCodeLine{1143 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_CONFIG\_MIN -\/903}}
+\DoxyCodeLine{1144 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_CONFIG\_MAX -\/900}}
+\DoxyCodeLine{1145 }
+\DoxyCodeLine{1149 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_LOG\_MIN -\/1103}}
+\DoxyCodeLine{1150 \textcolor{preprocessor}{\#define UVHTTP\_ERROR\_LOG\_MAX -\/1100}}
+\DoxyCodeLine{1151 }
+\DoxyCodeLine{1152 \textcolor{comment}{/* ========== 字符串处理常量 ========== */}}
+\DoxyCodeLine{1153 }
+\DoxyCodeLine{1157 \textcolor{preprocessor}{\#define UVHTTP\_NULL\_BYTE '\(\backslash\)0'}}
+\DoxyCodeLine{1158 \textcolor{preprocessor}{\#define UVHTTP\_CARRIAGE\_RETURN '\(\backslash\)r'}}
+\DoxyCodeLine{1159 \textcolor{preprocessor}{\#define UVHTTP\_LINE\_FEED '\(\backslash\)n'}}
+\DoxyCodeLine{1160 \textcolor{preprocessor}{\#define UVHTTP\_TAB '\(\backslash\)t'}}
+\DoxyCodeLine{1161 \textcolor{preprocessor}{\#define UVHTTP\_BACKSLASH '\(\backslash\)\(\backslash\)'}}
+\DoxyCodeLine{1162 \textcolor{preprocessor}{\#define UVHTTP\_QUOTE '"{}'}}
+\DoxyCodeLine{1163 \textcolor{preprocessor}{\#define UVHTTP\_ESCAPE\_SEQUENCE\_LENGTH 6}}
+\DoxyCodeLine{1164 \textcolor{preprocessor}{\#define UVHTTP\_TAB\_CHARACTER 9}}
+\DoxyCodeLine{1165 \textcolor{preprocessor}{\#define UVHTTP\_SPACE\_CHARACTER 32}}
+\DoxyCodeLine{1166 \textcolor{preprocessor}{\#define UVHTTP\_DELETE\_CHARACTER 127}}
+\DoxyCodeLine{1167 \textcolor{preprocessor}{}}
+\DoxyCodeLine{1168 \textcolor{preprocessor}{/* ========== 响应头和消息 ========== */}}
+\DoxyCodeLine{1169 \textcolor{preprocessor}{}}
+\DoxyCodeLine{1173 \textcolor{preprocessor}{\#define UVHTTP\_HEADER\_CONTENT\_TYPE "{}}Content-\/Type"{}}
+\DoxyCodeLine{1174 \#define UVHTTP\_HEADER\_CONTENT\_LENGTH "{}Content-\/Length"{}}
+\DoxyCodeLine{1175 \#define UVHTTP\_HEADER\_CACHE\_CONTROL "{}Cache-\/Control"{}}
+\DoxyCodeLine{1176 \#define UVHTTP\_HEADER\_CONNECTION "{}Connection"{}}
+\DoxyCodeLine{1177 \#define UVHTTP\_HEADER\_UPGRADE "{}Upgrade"{}}
+\DoxyCodeLine{1178 \#define UVHTTP\_HEADER\_WEBSOCKET\_KEY "{}Sec-\/WebSocket-\/Key"{}}
+\DoxyCodeLine{1179 \#define UVHTTP\_HEADER\_WEBSOCKET\_ACCEPT "{}Sec-\/WebSocket-\/Accept"{}}
+\DoxyCodeLine{1180 }
+\DoxyCodeLine{1184 \#define UVHTTP\_MESSAGE\_TOO\_MANY\_REQUESTS "{}Too many requests"{}}
+\DoxyCodeLine{1185 \#define UVHTTP\_MESSAGE\_FORBIDDEN "{}Forbidden"{}}
+\DoxyCodeLine{1186 \#define UVHTTP\_MESSAGE\_NOT\_FOUND "{}File not found"{}}
+\DoxyCodeLine{1187 \#define UVHTTP\_MESSAGE\_FILE\_TOO\_LARGE "{}File too large"{}}
+\DoxyCodeLine{1188 \#define UVHTTP\_MESSAGE\_INTERNAL\_ERROR "{}Internal server error"{}}
+\DoxyCodeLine{1189 \#define UVHTTP\_MESSAGE\_MEMORY\_FAILED "{}Memory allocation failed"{}}
+\DoxyCodeLine{1190 \#define UVHTTP\_MESSAGE\_FILE\_READ\_ERROR "{}File read error"{}}
+\DoxyCodeLine{1191 \#define UVHTTP\_MESSAGE\_RESPONSE\_ERROR "{}Response body error"{}}
+\DoxyCodeLine{1192 }
+\DoxyCodeLine{1193 /* ========== 服务器清理配置 ========== */}
+\DoxyCodeLine{1194 }
+\DoxyCodeLine{1198 \#define UVHTTP\_SERVER\_CLEANUP\_LOOP\_ITERATIONS 10}
+\DoxyCodeLine{1199 \#define UVHTTP\_RESPONSE\_HEADER\_SAFETY\_MARGIN 256}
+\DoxyCodeLine{1200 \#define UVHTTP\_DIR\_LISTING\_BUFFER\_SIZE 4096}
+\DoxyCodeLine{1201 \#define UVHTTP\_DIR\_ENTRY\_HTML\_OVERHEAD 200}
+\DoxyCodeLine{1202 \#define UVHTTP\_503\_RESPONSE\_CONTENT\_LENGTH 19}
+\DoxyCodeLine{1203 }
+\DoxyCodeLine{1204 \#endif /* UVHTTP\_CONSTANTS\_H */}
+
+\end{DoxyCode}

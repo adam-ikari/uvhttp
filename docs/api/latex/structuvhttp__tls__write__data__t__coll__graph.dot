@@ -1,0 +1,50 @@
+digraph "uvhttp_tls_write_data_t"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="uvhttp_tls_write_data_t",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node2 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" response" ];
+  Node2 [label="uvhttp_response",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$structuvhttp__response.html",tooltip=" "];
+  Node3 -> Node2 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" headers\nheaders_extra" ];
+  Node3 [label="uvhttp_header_t",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$structuvhttp__header__t.html",tooltip=" "];
+  Node4 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" connection" ];
+  Node4 [label="uvhttp_connection",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$structuvhttp__connection.html",tooltip=" "];
+  Node5 -> Node4 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" server" ];
+  Node5 [label="uvhttp_server",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$structuvhttp__server.html",tooltip=" "];
+  Node6 -> Node5 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" handler" ];
+  Node6 [label="uvhttp_request",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$structuvhttp__request.html",tooltip=" "];
+  Node3 -> Node6 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" headers\nheaders_extra" ];
+  Node5 -> Node5 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" timeout_callback" ];
+  Node7 -> Node5 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" router" ];
+  Node7 [label="uvhttp_router",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$structuvhttp__router.html",tooltip=" "];
+  Node8 -> Node7 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" node_pool\nroot" ];
+  Node8 [label="uvhttp_route_node",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$structuvhttp__route__node.html",tooltip=" "];
+  Node6 -> Node8 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" handler" ];
+  Node8 -> Node8 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" children" ];
+  Node9 -> Node7 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" array_routes" ];
+  Node9 [label="array_route_t",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$structarray__route__t.html",tooltip=" "];
+  Node6 -> Node9 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" handler" ];
+  Node6 -> Node7 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" fallback_handler\nstatic_handler" ];
+  Node10 -> Node5 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" config" ];
+  Node10 [label="uvhttp_config_t",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$structuvhttp__config__t.html",tooltip=" "];
+  Node11 -> Node5 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" context" ];
+  Node11 [label="uvhttp_context",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$structuvhttp__context.html",tooltip=" "];
+  Node5 -> Node11 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" server" ];
+  Node7 -> Node11 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" router" ];
+  Node12 -> Node5 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" tls_ctx" ];
+  Node12 [label="uvhttp_tls_context",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$structuvhttp__tls__context.html",tooltip=" "];
+  Node13 -> Node12 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" stats" ];
+  Node13 [label="uvhttp_tls_stats",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$structuvhttp__tls__stats.html",tooltip=" "];
+  Node14 -> Node5 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" ws_connection_manager" ];
+  Node14 [label="ws_connection_manager_t",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$structws__connection__manager__t.html",tooltip=" "];
+  Node15 -> Node14 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" connections" ];
+  Node15 [label="ws_connection_node",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$structws__connection__node.html",tooltip=" "];
+  Node15 -> Node15 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" next" ];
+  Node5 -> Node14 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" server" ];
+  Node16 -> Node5 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" rate_limit_whitelist_hash" ];
+  Node16 [label="whitelist_item",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled",URL="$structwhitelist__item.html",tooltip=" "];
+  Node6 -> Node4 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" request" ];
+  Node2 -> Node4 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" response" ];
+}

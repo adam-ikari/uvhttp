@@ -1,17 +1,15 @@
 /*
- * UVHTTP 服务器模块
+ * UVHTTP server module
  *
- * 提供HTTP服务器的核心功能，包括连接管理、请求路由和响应处理
- * 基于libuv事件驱动架构实现高性能异步I/O
+ * Provides core HTTP server functionality including connection management,
+ * request routing, and response processing
+ * Implements high-performance asynchronous I/O based on libuv event-driven architecture
  */
 
 #include "uvhttp_server.h"
 
 #include "uvhttp_allocator.h"
 #include "uvhttp_config.h"
-
-#include <netinet/tcp.h>
-#include <sys/socket.h>
 #include "uvhttp_connection.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_context.h"
@@ -19,22 +17,25 @@
 #include "uvhttp_error_handler.h"
 #include "uvhttp_error_helpers.h"
 #include "uvhttp_features.h"
+#include "uvhttp_logging.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_router.h"
 #include "uvhttp_tls.h"
 #include "uvhttp_utils.h"
 
+#include <netinet/tcp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <uv.h>
 
 #if UVHTTP_FEATURE_WEBSOCKET
 #    include "uvhttp_websocket.h"
 #endif
 
-// WebSocket路由条目前向声明
+// WebSocket route entry forward declaration
 #if UVHTTP_FEATURE_WEBSOCKET
 typedef struct ws_route_entry {
     char* path;
@@ -44,9 +45,9 @@ typedef struct ws_route_entry {
 #endif
 
 /**
- * 503响应写完成回调函数
+ * 503 response write completion callback function
  *
- * 处理503 Service Unavailable响应发送完成后的清理工作
+ * Handle cleanup after sending 503 Service Unavailable response
  *
  * @param req 写请求对象
  * @param status 写操作状态
@@ -394,21 +395,26 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
     uv_tcp_nodelay(&server->tcp_handle, enable);
 
     /* 设置keepalive */
-    uv_tcp_keepalive(&server->tcp_handle, enable, UVHTTP_TCP_KEEPALIVE_TIMEOUT);
+    unsigned int keepalive_timeout = server->config
+                                         ? server->config->tcp_keepalive_timeout
+                                         : UVHTTP_TCP_KEEPALIVE_TIMEOUT;
+    uv_tcp_keepalive(&server->tcp_handle, enable, keepalive_timeout);
 
     /* 性能优化：设置 TCP 缓冲区大小 */
     int sockfd;
     if (uv_fileno((uv_handle_t*)&server->tcp_handle, &sockfd) == 0) {
         /* 设置发送缓冲区大小 */
         int send_buf_size = UVHTTP_SOCKET_SEND_BUF_SIZE;
-        setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, &send_buf_size, sizeof(send_buf_size));
-        
+        setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, &send_buf_size,
+                   sizeof(send_buf_size));
+
         /* 设置接收缓冲区大小 */
         int recv_buf_size = UVHTTP_SOCKET_RECV_BUF_SIZE;
-        setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recv_buf_size, sizeof(recv_buf_size));
-        
+        setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recv_buf_size,
+                   sizeof(recv_buf_size));
+
         /* 设置 TCP_CORK（延迟发送以优化小包）- 仅用于发送大文件时 */
-        int cork = 0;  /* 默认禁用，在发送大文件时启用 */
+        int cork = 0; /* 默认禁用，在发送大文件时启用 */
         setsockopt(sockfd, IPPROTO_TCP, TCP_CORK, &cork, sizeof(cork));
     }
 
@@ -555,6 +561,7 @@ static uvhttp_error_t create_simple_server_internal(
     simple->loop = uv_default_loop();
     if (!simple->loop) {
         uvhttp_free(simple);
+        *server = NULL;  // 设置为 NULL 避免双重释放
         return UVHTTP_ERROR_IO_ERROR;
     }
 
@@ -563,23 +570,31 @@ static uvhttp_error_t create_simple_server_internal(
         uvhttp_server_new(simple->loop, &simple->server);
     if (server_result != UVHTTP_OK) {
         uvhttp_free(simple);
+        *server = NULL;  // 设置为 NULL 避免双重释放
         return server_result;
     }
 
     // 创建路由器
     uvhttp_error_t router_result = uvhttp_router_new(&simple->router);
     if (router_result != UVHTTP_OK) {
+        // 在调用 uvhttp_server_free 之前，将 config 设置为 NULL
+        simple->server->config = NULL;
         uvhttp_server_free(simple->server);
         uvhttp_free(simple);
+        *server = NULL;  // 设置为 NULL 避免双重释放
         return router_result;
     }
 
     // 创建并设置默认配置
     uvhttp_error_t result = uvhttp_config_new(&simple->config);
     if (result != UVHTTP_OK) {
+        // 在调用 uvhttp_server_free 之前，将 config 和 router 设置为 NULL
+        simple->server->config = NULL;
+        simple->server->router = NULL;
         uvhttp_router_free(simple->router);
         uvhttp_server_free(simple->server);
         uvhttp_free(simple);
+        *server = NULL;  // 设置为 NULL 避免双重释放
         return result;
     }
 
@@ -590,10 +605,13 @@ static uvhttp_error_t create_simple_server_internal(
     // 启动监听
     if (uvhttp_server_listen(simple->server, host, port) != UVHTTP_OK) {
         UVHTTP_LOG_ERROR("Failed to start server on %s:%d\n", host, port);
-        uvhttp_config_free(simple->config);
-        uvhttp_router_free(simple->router);
+        // 在调用 uvhttp_server_free 之前，将 config 和 router 设置为 NULL
+        // 因为它们会在 uvhttp_server_free 中被释放
+        simple->server->config = NULL;
+        simple->server->router = NULL;
         uvhttp_server_free(simple->server);
         uvhttp_free(simple);
+        *server = NULL;  // 设置为 NULL 避免双重释放
         return UVHTTP_ERROR_SERVER_LISTEN;
     }
 
@@ -761,7 +779,11 @@ int uvhttp_serve(const char* host, int port) {
     printf("按 Ctrl+C 停止服务器\n");
 
     int run_result = uvhttp_server_run(server);
-    uvhttp_server_simple_free(server);
+
+    // 只在成功创建服务器后才释放
+    if (server) {
+        uvhttp_server_simple_free(server);
+    }
 
     return run_result;
 }

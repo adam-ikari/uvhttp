@@ -72,4 +72,32 @@ typedef socklen_t uvhttp_socklen_t;
                          #type "." #member " not " #expected_alignment     \
                                "-byte aligned")
 
+/* ========== 缓存行填充宏定义 ========== */
+
+/* 缓存行大小（现代 CPU 通常是 64 字节） */
+#ifndef UVHTTP_CACHE_LINE_SIZE
+#    define UVHTTP_CACHE_LINE_SIZE 64
+#endif
+
+/* 缓存行对齐宏 - 用于结构体字段对齐 */
+#define UVHTTP_CACHE_LINE_ALIGNED \
+    __attribute__((aligned(UVHTTP_CACHE_LINE_SIZE)))
+
+/* 缓存行填充宏 - 防止伪共享（False Sharing） */
+#if defined(__GNUC__) || defined(__clang__)
+#    define UVHTTP_CACHE_LINE_PAD char _pad[UVHTTP_CACHE_LINE_SIZE]
+#else
+#    define UVHTTP_CACHE_LINE_PAD char _pad[UVHTTP_CACHE_LINE_SIZE]
+#endif
+
+/* 缓存行填充验证宏 - 确保结构体大小是缓存行的整数倍 */
+#define UVHTTP_ASSERT_CACHE_LINE_ALIGNED(type)                       \
+    UVHTTP_STATIC_ASSERT(sizeof(type) % UVHTTP_CACHE_LINE_SIZE == 0, \
+                         #type " size is not cache line aligned")
+
+/* 缓存行偏移验证宏 - 确保字段在缓存行边界 */
+#define UVHTTP_ASSERT_CACHE_LINE_OFFSET(type, member)                          \
+    UVHTTP_STATIC_ASSERT(offsetof(type, member) % UVHTTP_CACHE_LINE_SIZE == 0, \
+                         #type "." #member " not cache line aligned")
+
 #endif /* UVHTTP_PLATFORM_H */

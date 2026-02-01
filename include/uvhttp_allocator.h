@@ -1,4 +1,14 @@
-/* UVHTTP 统一内存分配器 - 编译期优化 */
+/**
+ * @file uvhttp_allocator.h
+ * @brief Unified memory allocator with compile-time optimization
+ *
+ * This module provides a unified memory allocation interface that can be
+ * configured at compile time to use either system allocator or mimalloc.
+ * All functions are inline-optimized for zero runtime overhead.
+ *
+ * @note Allocator type is selected at compile time via UVHTTP_ALLOCATOR_TYPE
+ * @note All functions are inline for zero runtime overhead
+ */
 
 #ifndef UVHTTP_ALLOCATOR_H
 #define UVHTTP_ALLOCATOR_H
@@ -12,7 +22,7 @@ extern "C" {
 
 /* 编译期选择分配器类型 */
 #ifndef UVHTTP_ALLOCATOR_TYPE
-#    define UVHTTP_ALLOCATOR_TYPE 0 /* 0=系统, 1=mimalloc */
+#    define UVHTTP_ALLOCATOR_TYPE 0 /* 0=system, 1=mimalloc */
 #endif
 
 /* ========== 编译期分配器选择 ========== */
@@ -20,16 +30,56 @@ extern "C" {
 #if UVHTTP_ALLOCATOR_TYPE == 1 /* mimalloc */
 #    ifdef UVHTTP_ENABLE_MIMALLOC
 #        include "mimalloc.h"
-/* mimalloc 模式 - 直接使用 mimalloc API */
+
+/**
+ * @brief Allocate memory using mimalloc
+ *
+ * @param size Number of bytes to allocate
+ * @return void* Pointer to allocated memory, or NULL on failure
+ *
+ * @note Uses mimalloc's mi_malloc() for high-performance allocation
+ * @note This function is inline-optimized
+ */
 static inline void* uvhttp_alloc(size_t size) {
     return mi_malloc(size);
 }
+
+/**
+ * @brief Free memory allocated with uvhttp_alloc
+ *
+ * @param ptr Pointer to memory to free (can be NULL)
+ *
+ * @note Uses mimalloc's mi_free()
+ * @note This function is inline-optimized
+ */
 static inline void uvhttp_free(void* ptr) {
     mi_free(ptr);
 }
+
+/**
+ * @brief Reallocate memory
+ *
+ * @param ptr Pointer to previously allocated memory (can be NULL)
+ * @param size New size in bytes
+ * @return void* Pointer to reallocated memory, or NULL on failure
+ *
+ * @note Uses mimalloc's mi_realloc()
+ * @note This function is inline-optimized
+ */
 static inline void* uvhttp_realloc(void* ptr, size_t size) {
     return mi_realloc(ptr, size);
 }
+
+/**
+ * @brief Allocate and zero-initialize memory
+ *
+ * @param nmemb Number of elements
+ * @param size Size of each element in bytes
+ * @return void* Pointer to allocated and zeroed memory, or NULL on failure
+ *
+ * @note Uses mimalloc's mi_calloc()
+ * @note This function is inline-optimized
+ */
 static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
     return mi_calloc(nmemb, size);
 }
@@ -51,15 +101,56 @@ static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
 
 #else /* 系统分配器（默认） */
 /* 系统分配器模式 - 使用内联函数确保可以用作函数指针 */
+
+/**
+ * @brief Allocate memory using system allocator
+ *
+ * @param size Number of bytes to allocate
+ * @return void* Pointer to allocated memory, or NULL on failure
+ *
+ * @note Uses standard malloc()
+ * @note This function is inline-optimized
+ */
 static inline void* uvhttp_alloc(size_t size) {
     return malloc(size);
 }
+
+/**
+ * @brief Free memory allocated with uvhttp_alloc
+ *
+ * @param ptr Pointer to memory to free (can be NULL)
+ *
+ * @note Uses standard free()
+ * @note This function is inline-optimized
+ */
 static inline void uvhttp_free(void* ptr) {
     free(ptr);
 }
+
+/**
+ * @brief Reallocate memory
+ *
+ * @param ptr Pointer to previously allocated memory (can be NULL)
+ * @param size New size in bytes
+ * @return void* Pointer to reallocated memory, or NULL on failure
+ *
+ * @note Uses standard realloc()
+ * @note This function is inline-optimized
+ */
 static inline void* uvhttp_realloc(void* ptr, size_t size) {
     return realloc(ptr, size);
 }
+
+/**
+ * @brief Allocate and zero-initialize memory
+ *
+ * @param nmemb Number of elements
+ * @param size Size of each element in bytes
+ * @return void* Pointer to allocated and zeroed memory, or NULL on failure
+ *
+ * @note Uses standard calloc()
+ * @note This function is inline-optimized
+ */
 static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
     return calloc(nmemb, size);
 }
@@ -67,6 +158,14 @@ static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
 
 /* ========== 分配器信息 ========== */
 
+/**
+ * @brief Get the name of the current allocator
+ *
+ * @return const char* Name of the allocator ("mimalloc" or "system")
+ *
+ * @note Returns "system (mimalloc not available)" if mimalloc was requested but
+ * not available
+ */
 static inline const char* uvhttp_allocator_name(void) {
 #if UVHTTP_ALLOCATOR_TYPE == 1
 #    ifdef UVHTTP_ENABLE_MIMALLOC
@@ -81,32 +180,45 @@ static inline const char* uvhttp_allocator_name(void) {
 
 /* ========== 使用说明 ========== */
 
-/*
- * UVHTTP 内存分配器使用说明
+/**
+ * @page memory_allocator_usage Memory Allocator Usage Guide
  *
- * 编译时选择分配器类型：
- *   cmake -DUVHTTP_ALLOCATOR_TYPE=0 ..  # 系统分配器（默认）
- *   cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..  # mimalloc 分配器
+ * @section allocator_selection Allocator Selection
  *
- * 代码中使用：
- *   void* ptr = uvhttp_alloc(size);     // 分配内存
- *   ptr = uvhttp_realloc(ptr, new_size); // 重新分配
- *   uvhttp_free(ptr);                    // 释放内存
- *   ptr = uvhttp_calloc(count, size);   // 分配并初始化
+ * Choose allocator type at compile time:
+ * @code
+ * cmake -DUVHTTP_ALLOCATOR_TYPE=0 ..  # System allocator (default)
+ * cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..  # mimalloc allocator
+ * @endcode
  *
- * 性能特点：
- * - 系统分配器：稳定可靠，无额外依赖
- * - mimalloc：高性能，适合多线程场景，内置小对象优化
+ * @section allocator_usage Usage
  *
- * 编译期优化：
- * - 所有函数都是内联函数
- * - 零运行时开销
- * - 编译器可以完全优化
+ * @code
+ * void* ptr = uvhttp_alloc(size);     // Allocate memory
+ * ptr = uvhttp_realloc(ptr, new_size); // Reallocate
+ * uvhttp_free(ptr);                    // Free memory
+ * ptr = uvhttp_calloc(count, size);   // Allocate and initialize
+ * @endcode
  *
- * 注意：
- * - mimalloc 本身已经优化了小对象分配，无需额外内存池层
- * - 如果应用需要内存池，应在应用层根据具体需求实现
- * - 选择合适的分配器类型可以获得最佳性能
+ * @section allocator_performance Performance Characteristics
+ *
+ * - System allocator: Stable and reliable, no extra dependencies
+ * - mimalloc: High performance, optimized for multi-threading, built-in small
+ * object optimization
+ *
+ * @section allocator_optimization Compile-time Optimization
+ *
+ * - All functions are inline
+ * - Zero runtime overhead
+ * - Compiler can fully optimize
+ *
+ * @section allocator_notes Notes
+ *
+ * - mimalloc already optimizes small object allocation, no extra memory pool
+ * layer needed
+ * - If application needs memory pool, implement at application layer based on
+ * specific requirements
+ * - Choose appropriate allocator type for best performance
  */
 
 #ifdef __cplusplus

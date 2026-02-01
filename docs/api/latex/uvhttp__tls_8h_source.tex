@@ -1,0 +1,171 @@
+\hypertarget{uvhttp__tls_8h_source}{}\doxysection{uvhttp\+\_\+tls.\+h}
+\label{uvhttp__tls_8h_source}\index{include/uvhttp\_tls.h@{include/uvhttp\_tls.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{preprocessor}{\#ifndef UVHTTP\_TLS\_H}}
+\DoxyCodeLine{2 \textcolor{preprocessor}{\#define UVHTTP\_TLS\_H}}
+\DoxyCodeLine{3 }
+\DoxyCodeLine{4 \textcolor{preprocessor}{\#include "{}uvhttp\_error.h"{}}}
+\DoxyCodeLine{5 }
+\DoxyCodeLine{6 \textcolor{preprocessor}{\#include <mbedtls/ctr\_drbg.h>}}
+\DoxyCodeLine{7 \textcolor{preprocessor}{\#include <mbedtls/debug.h>}}
+\DoxyCodeLine{8 \textcolor{preprocessor}{\#include <mbedtls/entropy.h>}}
+\DoxyCodeLine{9 \textcolor{preprocessor}{\#include <mbedtls/error.h>}}
+\DoxyCodeLine{10 \textcolor{preprocessor}{\#include <mbedtls/ssl.h>}}
+\DoxyCodeLine{11 \textcolor{preprocessor}{\#include <mbedtls/ssl\_cache.h>}}
+\DoxyCodeLine{12 \textcolor{preprocessor}{\#include <mbedtls/timing.h>}}
+\DoxyCodeLine{13 \textcolor{preprocessor}{\#include <mbedtls/x509.h>}}
+\DoxyCodeLine{14 \textcolor{preprocessor}{\#include <mbedtls/x509\_crt.h>}}
+\DoxyCodeLine{15 \textcolor{preprocessor}{\#include <uv.h>}}
+\DoxyCodeLine{16 }
+\DoxyCodeLine{17 \textcolor{comment}{/* 前向声明 */}}
+\DoxyCodeLine{18 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context}} \mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}};}
+\DoxyCodeLine{19 }
+\DoxyCodeLine{20 \textcolor{preprocessor}{\#ifdef \_\_cplusplus}}
+\DoxyCodeLine{21 \textcolor{keyword}{extern} \textcolor{stringliteral}{"{}C"{}} \{}
+\DoxyCodeLine{22 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{23 }
+\DoxyCodeLine{24 \textcolor{comment}{/* TLS上下文类型定义 */}}
+\DoxyCodeLine{25 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context}} \mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}};}
+\DoxyCodeLine{26 }
+\DoxyCodeLine{27 \textcolor{comment}{/* TLS错误码定义 */}}
+\DoxyCodeLine{28 \textcolor{keyword}{typedef} \textcolor{keyword}{enum} \{}
+\DoxyCodeLine{29     UVHTTP\_TLS\_OK = 0,}
+\DoxyCodeLine{30     UVHTTP\_TLS\_ERROR\_INIT = -\/1,}
+\DoxyCodeLine{31     UVHTTP\_TLS\_ERROR\_CERT = -\/2,}
+\DoxyCodeLine{32     UVHTTP\_TLS\_ERROR\_KEY = -\/3,}
+\DoxyCodeLine{33     UVHTTP\_TLS\_ERROR\_CA = -\/4,}
+\DoxyCodeLine{34     UVHTTP\_TLS\_ERROR\_VERIFY = -\/5,}
+\DoxyCodeLine{35     UVHTTP\_TLS\_ERROR\_HANDSHAKE = -\/6,}
+\DoxyCodeLine{36     UVHTTP\_TLS\_ERROR\_READ = -\/7,}
+\DoxyCodeLine{37     UVHTTP\_TLS\_ERROR\_WRITE = -\/8,}
+\DoxyCodeLine{38     UVHTTP\_TLS\_ERROR\_INVALID\_PARAM = -\/9,}
+\DoxyCodeLine{39     UVHTTP\_TLS\_ERROR\_MEMORY = -\/10,}
+\DoxyCodeLine{40     UVHTTP\_TLS\_ERROR\_NOT\_IMPLEMENTED = -\/11,}
+\DoxyCodeLine{41     UVHTTP\_TLS\_ERROR\_PARSE = -\/12,}
+\DoxyCodeLine{42     UVHTTP\_TLS\_ERROR\_NO\_CERT = -\/13,}
+\DoxyCodeLine{43     UVHTTP\_TLS\_ERROR\_WANT\_READ = 1,}
+\DoxyCodeLine{44     UVHTTP\_TLS\_ERROR\_WANT\_WRITE = 2}
+\DoxyCodeLine{45 \} uvhttp\_tls\_error\_t;}
+\DoxyCodeLine{46 }
+\DoxyCodeLine{47 \textcolor{comment}{/* TLS模块管理 */}}
+\DoxyCodeLine{48 uvhttp\_tls\_error\_t uvhttp\_tls\_init(\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}* context);}
+\DoxyCodeLine{49 \textcolor{keywordtype}{void} uvhttp\_tls\_cleanup(\mbox{\hyperlink{structuvhttp__context}{uvhttp\_context\_t}}* context);}
+\DoxyCodeLine{50 }
+\DoxyCodeLine{51 \textcolor{comment}{/* TLS上下文管理 */}}
+\DoxyCodeLine{60 uvhttp\_error\_t uvhttp\_tls\_context\_new(\mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}** ctx);}
+\DoxyCodeLine{61 \textcolor{keywordtype}{void} uvhttp\_tls\_context\_free(\mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx);}
+\DoxyCodeLine{62 }
+\DoxyCodeLine{63 \textcolor{comment}{/* 证书配置 */}}
+\DoxyCodeLine{64 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_load\_cert\_chain(\mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx,}
+\DoxyCodeLine{65                                                       \textcolor{keyword}{const} \textcolor{keywordtype}{char}* cert\_file);}
+\DoxyCodeLine{66 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_load\_private\_key(}
+\DoxyCodeLine{67     \mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx, \textcolor{keyword}{const} \textcolor{keywordtype}{char}* key\_file);}
+\DoxyCodeLine{68 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_load\_ca\_file(\mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx,}
+\DoxyCodeLine{69                                                    \textcolor{keyword}{const} \textcolor{keywordtype}{char}* ca\_file);}
+\DoxyCodeLine{70 }
+\DoxyCodeLine{71 \textcolor{comment}{/* mTLS配置 */}}
+\DoxyCodeLine{72 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_enable\_client\_auth(}
+\DoxyCodeLine{73     \mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx, \textcolor{keywordtype}{int} require\_cert);}
+\DoxyCodeLine{74 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_set\_verify\_depth(}
+\DoxyCodeLine{75     \mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx, \textcolor{keywordtype}{int} depth);}
+\DoxyCodeLine{76 }
+\DoxyCodeLine{77 \textcolor{comment}{/* TLS安全配置 */}}
+\DoxyCodeLine{78 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_set\_cipher\_suites(}
+\DoxyCodeLine{79     \mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx, \textcolor{keyword}{const} \textcolor{keywordtype}{int}* cipher\_suites);}
+\DoxyCodeLine{80 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_enable\_session\_tickets(}
+\DoxyCodeLine{81     \mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx, \textcolor{keywordtype}{int} enable);}
+\DoxyCodeLine{82 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_set\_session\_cache(}
+\DoxyCodeLine{83     \mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx, \textcolor{keywordtype}{int} max\_sessions);}
+\DoxyCodeLine{84 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_enable\_ocsp\_stapling(}
+\DoxyCodeLine{85     \mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx, \textcolor{keywordtype}{int} enable);}
+\DoxyCodeLine{86 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_set\_dh\_parameters(}
+\DoxyCodeLine{87     \mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx, \textcolor{keyword}{const} \textcolor{keywordtype}{char}* dh\_file);}
+\DoxyCodeLine{88 }
+\DoxyCodeLine{89 \textcolor{comment}{/* TLS连接管理 */}}
+\DoxyCodeLine{90 mbedtls\_ssl\_context* uvhttp\_tls\_create\_ssl(\mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx);}
+\DoxyCodeLine{91 uvhttp\_tls\_error\_t uvhttp\_tls\_setup\_ssl(mbedtls\_ssl\_context* ssl, \textcolor{keywordtype}{int} fd);}
+\DoxyCodeLine{92 uvhttp\_tls\_error\_t uvhttp\_tls\_handshake(mbedtls\_ssl\_context* ssl);}
+\DoxyCodeLine{93 uvhttp\_tls\_error\_t uvhttp\_tls\_read(mbedtls\_ssl\_context* ssl, \textcolor{keywordtype}{void}* buf,}
+\DoxyCodeLine{94                                    \textcolor{keywordtype}{size\_t} len);}
+\DoxyCodeLine{95 uvhttp\_tls\_error\_t uvhttp\_tls\_write(mbedtls\_ssl\_context* ssl, \textcolor{keyword}{const} \textcolor{keywordtype}{void}* buf,}
+\DoxyCodeLine{96                                     \textcolor{keywordtype}{size\_t} len);}
+\DoxyCodeLine{97 }
+\DoxyCodeLine{98 \textcolor{comment}{/* 证书验证 */}}
+\DoxyCodeLine{99 \textcolor{keywordtype}{int} uvhttp\_tls\_verify\_peer\_cert(mbedtls\_ssl\_context* ssl);}
+\DoxyCodeLine{100 \textcolor{keywordtype}{int} uvhttp\_tls\_verify\_hostname(mbedtls\_x509\_crt* cert, \textcolor{keyword}{const} \textcolor{keywordtype}{char}* hostname);}
+\DoxyCodeLine{101 \textcolor{keywordtype}{int} uvhttp\_tls\_check\_cert\_validity(mbedtls\_x509\_crt* cert);}
+\DoxyCodeLine{102 mbedtls\_x509\_crt* uvhttp\_tls\_get\_peer\_cert(mbedtls\_ssl\_context* ssl);}
+\DoxyCodeLine{103 \textcolor{keywordtype}{int} uvhttp\_tls\_get\_cert\_subject(mbedtls\_x509\_crt* cert, \textcolor{keywordtype}{char}* buf,}
+\DoxyCodeLine{104                                 \textcolor{keywordtype}{size\_t} buf\_size);}
+\DoxyCodeLine{105 \textcolor{keywordtype}{int} uvhttp\_tls\_get\_cert\_issuer(mbedtls\_x509\_crt* cert, \textcolor{keywordtype}{char}* buf,}
+\DoxyCodeLine{106                                \textcolor{keywordtype}{size\_t} buf\_size);}
+\DoxyCodeLine{107 \textcolor{keywordtype}{int} uvhttp\_tls\_get\_cert\_serial(mbedtls\_x509\_crt* cert, \textcolor{keywordtype}{char}* buf,}
+\DoxyCodeLine{108                                \textcolor{keywordtype}{size\_t} buf\_size);}
+\DoxyCodeLine{109 }
+\DoxyCodeLine{110 \textcolor{comment}{/* 证书吊销检查 */}}
+\DoxyCodeLine{111 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_enable\_crl\_checking(}
+\DoxyCodeLine{112     \mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx, \textcolor{keywordtype}{int} enable);}
+\DoxyCodeLine{113 uvhttp\_tls\_error\_t uvhttp\_tls\_load\_crl\_file(\mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx,}
+\DoxyCodeLine{114                                             \textcolor{keyword}{const} \textcolor{keywordtype}{char}* crl\_file);}
+\DoxyCodeLine{115 }
+\DoxyCodeLine{116 \textcolor{comment}{/* OCSP装订 */}}
+\DoxyCodeLine{117 uvhttp\_tls\_error\_t uvhttp\_tls\_get\_ocsp\_response(mbedtls\_ssl\_context* ssl,}
+\DoxyCodeLine{118                                                 \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char}** ocsp\_response,}
+\DoxyCodeLine{119                                                 \textcolor{keywordtype}{size\_t}* response\_len);}
+\DoxyCodeLine{120 uvhttp\_tls\_error\_t uvhttp\_tls\_verify\_ocsp\_response(}
+\DoxyCodeLine{121     mbedtls\_x509\_crt* cert, \textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char}* ocsp\_response,}
+\DoxyCodeLine{122     \textcolor{keywordtype}{size\_t} response\_len);}
+\DoxyCodeLine{123 }
+\DoxyCodeLine{124 \textcolor{comment}{/* TLS 1.3支持 */}}
+\DoxyCodeLine{125 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_enable\_tls13(\mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx,}
+\DoxyCodeLine{126                                                    \textcolor{keywordtype}{int} enable);}
+\DoxyCodeLine{127 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_set\_tls13\_cipher\_suites(}
+\DoxyCodeLine{128     \mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx, \textcolor{keyword}{const} \textcolor{keywordtype}{char}* cipher\_suites);}
+\DoxyCodeLine{129 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_enable\_early\_data(}
+\DoxyCodeLine{130     \mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx, \textcolor{keywordtype}{int} enable);}
+\DoxyCodeLine{131 }
+\DoxyCodeLine{132 \textcolor{comment}{/* 会话票证优化 */}}
+\DoxyCodeLine{133 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_set\_ticket\_key(\mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx,}
+\DoxyCodeLine{134                                                      \textcolor{keyword}{const} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char}* key,}
+\DoxyCodeLine{135                                                      \textcolor{keywordtype}{size\_t} key\_len);}
+\DoxyCodeLine{136 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_rotate\_ticket\_key(}
+\DoxyCodeLine{137     \mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx);}
+\DoxyCodeLine{138 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_set\_ticket\_lifetime(}
+\DoxyCodeLine{139     \mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx, \textcolor{keywordtype}{int} lifetime\_seconds);}
+\DoxyCodeLine{140 }
+\DoxyCodeLine{141 \textcolor{comment}{/* 证书链验证 */}}
+\DoxyCodeLine{142 uvhttp\_tls\_error\_t uvhttp\_tls\_verify\_cert\_chain(mbedtls\_ssl\_context* ssl);}
+\DoxyCodeLine{143 uvhttp\_tls\_error\_t uvhttp\_tls\_context\_add\_extra\_chain\_cert(}
+\DoxyCodeLine{144     \mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx, \textcolor{keyword}{const} \textcolor{keywordtype}{char}* cert\_file);}
+\DoxyCodeLine{145 uvhttp\_tls\_error\_t uvhttp\_tls\_get\_cert\_chain(mbedtls\_ssl\_context* ssl,}
+\DoxyCodeLine{146                                              mbedtls\_x509\_crt** chain);}
+\DoxyCodeLine{147 }
+\DoxyCodeLine{148 \textcolor{comment}{/* TLS性能监控 */}}
+\DoxyCodeLine{149 \textcolor{keyword}{typedef} \textcolor{keyword}{struct }\mbox{\hyperlink{structuvhttp__tls__stats}{uvhttp\_tls\_stats}} \{}
+\DoxyCodeLine{150     \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{long} \textcolor{keywordtype}{long} handshake\_count;}
+\DoxyCodeLine{151     \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{long} \textcolor{keywordtype}{long} handshake\_errors;}
+\DoxyCodeLine{152     \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{long} \textcolor{keywordtype}{long} bytes\_sent;}
+\DoxyCodeLine{153     \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{long} \textcolor{keywordtype}{long} bytes\_received;}
+\DoxyCodeLine{154     \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{long} \textcolor{keywordtype}{long} session\_hits;}
+\DoxyCodeLine{155     \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{long} \textcolor{keywordtype}{long} session\_misses;}
+\DoxyCodeLine{156     \textcolor{keywordtype}{double} avg\_handshake\_time\_ms;}
+\DoxyCodeLine{157 \} \mbox{\hyperlink{structuvhttp__tls__stats}{uvhttp\_tls\_stats\_t}};}
+\DoxyCodeLine{158 }
+\DoxyCodeLine{159 uvhttp\_tls\_error\_t uvhttp\_tls\_get\_stats(\mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx,}
+\DoxyCodeLine{160                                         \mbox{\hyperlink{structuvhttp__tls__stats}{uvhttp\_tls\_stats\_t}}* stats);}
+\DoxyCodeLine{161 uvhttp\_tls\_error\_t uvhttp\_tls\_reset\_stats(\mbox{\hyperlink{structuvhttp__tls__context}{uvhttp\_tls\_context\_t}}* ctx);}
+\DoxyCodeLine{162 uvhttp\_tls\_error\_t uvhttp\_tls\_get\_connection\_info(mbedtls\_ssl\_context* ssl,}
+\DoxyCodeLine{163                                                   \textcolor{keywordtype}{char}* buf, \textcolor{keywordtype}{size\_t} buf\_size);}
+\DoxyCodeLine{164 }
+\DoxyCodeLine{165 \textcolor{comment}{/* 错误处理 */}}
+\DoxyCodeLine{166 \textcolor{keywordtype}{void} uvhttp\_tls\_get\_error\_string(\textcolor{keywordtype}{int} ret, \textcolor{keywordtype}{char}* buf, \textcolor{keywordtype}{size\_t} buf\_size);}
+\DoxyCodeLine{167 \textcolor{keywordtype}{void} uvhttp\_tls\_print\_error(\textcolor{keywordtype}{int} ret);}
+\DoxyCodeLine{168 }
+\DoxyCodeLine{169 \textcolor{preprocessor}{\#ifdef \_\_cplusplus}}
+\DoxyCodeLine{170 \}}
+\DoxyCodeLine{171 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{172 }
+\DoxyCodeLine{173 \textcolor{preprocessor}{\#endif }\textcolor{comment}{/* UVHTTP\_TLS\_H */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

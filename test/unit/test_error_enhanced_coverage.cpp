@@ -232,31 +232,7 @@ TEST(UvhttpErrorEnhancedCoverageTest, ErrorRecoverability) {
     EXPECT_EQ(recoverable, 0);
 }
 
-/* 测试错误日志记录 */
-TEST(UvhttpErrorEnhancedCoverageTest, ErrorLogging) {
-    /* 测试不同错误的日志记录 */
-    uvhttp_log_error(UVHTTP_OK, "Test context");
-    uvhttp_log_error(UVHTTP_ERROR_INVALID_PARAM, "Invalid parameter test");
-    uvhttp_log_error(UVHTTP_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
-    uvhttp_log_error(UVHTTP_ERROR_TIMEOUT, "Operation timeout");
-    uvhttp_log_error(UVHTTP_ERROR_CONNECTION_TIMEOUT, "Connection timeout");
-    uvhttp_log_error(UVHTTP_ERROR_SERVER_INIT, "Server initialization failed");
-    
-    /* 测试NULL上下文 */
-    uvhttp_log_error(UVHTTP_ERROR_INVALID_PARAM, NULL);
-}
-
-/* 测试错误恢复配置 */
-TEST(UvhttpErrorEnhancedCoverageTest, ErrorRecoveryConfig) {
-    /* 测试设置错误恢复配置 */
-    uvhttp_set_error_recovery_config(3, 100, 5000, 2.0);
-    uvhttp_set_error_recovery_config(5, 50, 10000, 1.5);
-    uvhttp_set_error_recovery_config(1, 10, 100, 1.0);
-    
-    /* 测试边界值 */
-    uvhttp_set_error_recovery_config(0, 0, 0, 0.0);
-    uvhttp_set_error_recovery_config(100, 10000, 60000, 10.0);
-}
+/* 错误日志记录和错误恢复功能已删除，符合极简工程原则 */
 
 /* 测试错误重试操作 */
 TEST(UvhttpErrorEnhancedCoverageTest, ErrorRetryOperation) {

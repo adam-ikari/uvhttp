@@ -6,7 +6,7 @@
 
 /* 测试 WebSocket 连接创建 NULL fd */
 TEST(UvhttpWebSocketNativeTest, ConnectionCreateNullFd) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(-1, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(-1, NULL, 1, NULL);
     /* 即使 fd 为 -1，也应该创建连接 */
     if (conn) {
         uvhttp_ws_connection_free(conn);
@@ -15,7 +15,7 @@ TEST(UvhttpWebSocketNativeTest, ConnectionCreateNullFd) {
 
 /* 测试 WebSocket 连接创建服务器 */
 TEST(UvhttpWebSocketNativeTest, ConnectionCreateServer) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     EXPECT_EQ(conn->is_server, 1);
     EXPECT_EQ(conn->state, UVHTTP_WS_STATE_CONNECTING);
@@ -28,7 +28,7 @@ TEST(UvhttpWebSocketNativeTest, ConnectionCreateServer) {
 
 /* 测试 WebSocket 连接创建客户端 */
 TEST(UvhttpWebSocketNativeTest, ConnectionCreateClient) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0, NULL);
     ASSERT_NE(conn, nullptr);
     EXPECT_EQ(conn->is_server, 0);
     EXPECT_EQ(conn->state, UVHTTP_WS_STATE_CONNECTING);
@@ -44,7 +44,7 @@ TEST(UvhttpWebSocketNativeTest, ConnectionFreeNull) {
 
 /* 测试 WebSocket 连接释放 */
 TEST(UvhttpWebSocketNativeTest, ConnectionFree) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     uvhttp_ws_connection_free(conn);
@@ -380,7 +380,7 @@ TEST(UvhttpWebSocketNativeTest, HandshakeServerNullConn) {
 
 /* 测试握手服务器 NULL 请求 */
 TEST(UvhttpWebSocketNativeTest, HandshakeServerNullRequest) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     char response[256];
@@ -393,7 +393,7 @@ TEST(UvhttpWebSocketNativeTest, HandshakeServerNullRequest) {
 
 /* 测试握手服务器 NULL 响应 */
 TEST(UvhttpWebSocketNativeTest, HandshakeServerNullResponse) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     const char* request = "GET / HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n";
@@ -405,7 +405,7 @@ TEST(UvhttpWebSocketNativeTest, HandshakeServerNullResponse) {
 
 /* 测试握手服务器 */
 TEST(UvhttpWebSocketNativeTest, HandshakeServer) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     const char* request = "GET / HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n";
@@ -434,7 +434,7 @@ TEST(UvhttpWebSocketNativeTest, HandshakeClientNullConn) {
 
 /* 测试握手客户端 NULL 主机 */
 TEST(UvhttpWebSocketNativeTest, HandshakeClientNullHost) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0, NULL);
     ASSERT_NE(conn, nullptr);
     
     uvhttp_context_t context;
@@ -452,7 +452,7 @@ TEST(UvhttpWebSocketNativeTest, HandshakeClientNullHost) {
 
 /* 测试握手客户端 NULL 路径 */
 TEST(UvhttpWebSocketNativeTest, HandshakeClientNullPath) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0, NULL);
     ASSERT_NE(conn, nullptr);
     
     uvhttp_context_t context;
@@ -470,7 +470,7 @@ TEST(UvhttpWebSocketNativeTest, HandshakeClientNullPath) {
 
 /* 测试握手客户端 NULL 请求 */
 TEST(UvhttpWebSocketNativeTest, HandshakeClientNullRequest) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0, NULL);
     ASSERT_NE(conn, nullptr);
     
     uvhttp_context_t context;
@@ -486,7 +486,7 @@ TEST(UvhttpWebSocketNativeTest, HandshakeClientNullRequest) {
 
 /* 测试握手客户端 */
 TEST(UvhttpWebSocketNativeTest, HandshakeClient) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0, NULL);
     ASSERT_NE(conn, nullptr);
     
     uvhttp_context_t context;
@@ -512,7 +512,7 @@ TEST(UvhttpWebSocketNativeTest, VerifyHandshakeResponseNullConn) {
 
 /* 测试验证握手响应 NULL 响应 */
 TEST(UvhttpWebSocketNativeTest, VerifyHandshakeResponseNullResponse) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0, NULL);
     ASSERT_NE(conn, nullptr);
     
     int result = uvhttp_ws_verify_handshake_response(conn, NULL, 0);
@@ -523,7 +523,7 @@ TEST(UvhttpWebSocketNativeTest, VerifyHandshakeResponseNullResponse) {
 
 /* 测试验证握手响应 */
 TEST(UvhttpWebSocketNativeTest, VerifyHandshakeResponse) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 0, NULL);
     ASSERT_NE(conn, nullptr);
     
     /* 设置 client_key */
@@ -544,7 +544,7 @@ TEST(UvhttpWebSocketNativeTest, SetCallbacksNullConn) {
 
 /* 测试设置回调 */
 TEST(UvhttpWebSocketNativeTest, SetCallbacks) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     uvhttp_ws_set_callbacks(conn, NULL, NULL, NULL);
@@ -564,7 +564,7 @@ TEST(UvhttpWebSocketNativeTest, SendFrameNullConn) {
 
 /* 测试发送帧 NULL 数据 */
 TEST(UvhttpWebSocketNativeTest, SendFrameNullData) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     uvhttp_context_t context;
@@ -586,7 +586,7 @@ TEST(UvhttpWebSocketNativeTest, SendTextNullConn) {
 
 /* 测试发送文本 NULL 文本 */
 TEST(UvhttpWebSocketNativeTest, SendTextNullText) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     uvhttp_context_t context;
@@ -608,7 +608,7 @@ TEST(UvhttpWebSocketNativeTest, SendBinaryNullConn) {
 
 /* 测试发送二进制 NULL 数据 */
 TEST(UvhttpWebSocketNativeTest, SendBinaryNullData) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     uvhttp_context_t context;
@@ -630,7 +630,7 @@ TEST(UvhttpWebSocketNativeTest, SendPingNullConn) {
 
 /* 测试发送 Ping NULL 数据 */
 TEST(UvhttpWebSocketNativeTest, SendPingNullData) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     uvhttp_context_t context;
@@ -652,7 +652,7 @@ TEST(UvhttpWebSocketNativeTest, SendPongNullConn) {
 
 /* 测试发送 Pong NULL 数据 */
 TEST(UvhttpWebSocketNativeTest, SendPongNullData) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     uvhttp_context_t context;
@@ -673,7 +673,7 @@ TEST(UvhttpWebSocketNativeTest, CloseNullConn) {
 
 /* 测试关闭 NULL 原因 */
 TEST(UvhttpWebSocketNativeTest, CloseNullReason) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     uvhttp_context_t context;
@@ -686,7 +686,7 @@ TEST(UvhttpWebSocketNativeTest, CloseNullReason) {
 
 /* 测试关闭 */
 TEST(UvhttpWebSocketNativeTest, Close) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     uvhttp_context_t context;
@@ -707,7 +707,7 @@ TEST(UvhttpWebSocketNativeTest, RecvFrameNullConn) {
 
 /* 测试接收帧 NULL 帧 */
 TEST(UvhttpWebSocketNativeTest, RecvFrameNullFrame) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     int result = uvhttp_ws_recv_frame(conn, NULL);
@@ -725,7 +725,7 @@ TEST(UvhttpWebSocketNativeTest, ProcessDataNullConn) {
 
 /* 测试处理数据 NULL 数据 */
 TEST(UvhttpWebSocketNativeTest, ProcessDataNullData) {
-    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1);
+    struct uvhttp_ws_connection* conn = uvhttp_ws_connection_create(0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     int result = uvhttp_ws_process_data(conn, NULL, 10);

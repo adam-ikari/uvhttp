@@ -718,8 +718,42 @@ app_context_t* ctx = (app_context_t*)loop->data;
 ### 代码覆盖率
 
 当前代码覆盖率目标: 80%
+当前代码覆盖率: 42.9% (1904/4435 lines, 69.5% functions)
 
-使用 `./run_tests.sh` 运行测试并生成覆盖率报告。
+**低覆盖率模块**（需要添加更多测试）：
+- `uvhttp_static.c` - 17.2% (727 lines) - **最低**
+- `uvhttp_router.c` - 32.3% (328 lines)
+- `uvhttp_connection.c` - 32.2% (379 lines)
+- `uvhttp_error.c` - 22.5% (347 lines)
+- `uvhttp_request.c` - 40.5% (358 lines)
+- `uvhttp_server.c` - 38.4% (654 lines)
+- `uvhttp_tls.c` - 38.3% (282 lines)
+
+**高覆盖率模块**（已达标）：
+- `benchmark/test_bitfield.c` - 100% (8 lines)
+- `include/uvhttp_allocator.h` - 100% (9 lines)
+- `include/uvhttp_validation.h` - 100% (29 lines)
+- `src/uvhttp_error_helpers.c` - 100% (46 lines)
+- `src/uvhttp_utils.c` - 93.3% (60 lines)
+- `src/uvhttp_lru_cache.c` - 83.6% (256 lines)
+- `src/uvhttp_config.c` - 71.4% (227 lines)
+- `src/uvhttp_response.c` - 73.0% (270 lines)
+- `src/uvhttp_context.c` - 63.9% (108 lines)
+- `src/uvhttp_websocket.c` - 51.6% (347 lines)
+
+**新增测试文件**：
+- `test_static_comprehensive_coverage.cpp` - 静态文件综合测试
+- `test_router_enhanced_coverage.cpp` - 路由器增强测试
+- `test_connection_comprehensive_coverage.cpp` - 连接综合测试
+- `test_server_error_coverage.cpp` - 服务器错误处理测试
+
+**覆盖率提升策略**：
+1. **libuv Mock 测试**：项目已有 libuv mock 框架（`test/mock/libuv_mock.c`），但链接器 wrap 机制未启用
+2. **错误处理测试**：通过测试 NULL 参数和错误情况提升覆盖率
+3. **集成测试**：需要更多端到端测试来覆盖实际 HTTP 请求/响应流程
+4. **压力测试**：`test_stress` 已禁用，需要修复以提升覆盖率
+
+使用 `./run_tests.sh --detailed` 运行测试并生成覆盖率报告。
 
 ## 重要变更记录
 

@@ -1,0 +1,93 @@
+\hypertarget{uvhttp__logging_8h_source}{}\doxysection{uvhttp\+\_\+logging.\+h}
+\label{uvhttp__logging_8h_source}\index{include/uvhttp\_logging.h@{include/uvhttp\_logging.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{comment}{/*}}
+\DoxyCodeLine{2 \textcolor{comment}{ * UVHTTP 日志宏}}
+\DoxyCodeLine{3 \textcolor{comment}{ * 简单的日志输出，仅在 Debug 模式下启用}}
+\DoxyCodeLine{4 \textcolor{comment}{ */}}
+\DoxyCodeLine{5 }
+\DoxyCodeLine{6 \textcolor{preprocessor}{\#ifndef UVHTTP\_LOGGING\_H}}
+\DoxyCodeLine{7 \textcolor{preprocessor}{\#define UVHTTP\_LOGGING\_H}}
+\DoxyCodeLine{8 }
+\DoxyCodeLine{9 \textcolor{preprocessor}{\#include <stdio.h>}}
+\DoxyCodeLine{10 }
+\DoxyCodeLine{11 \textcolor{preprocessor}{\#ifdef \_\_cplusplus}}
+\DoxyCodeLine{12 \textcolor{keyword}{extern} \textcolor{stringliteral}{"{}C"{}} \{}
+\DoxyCodeLine{13 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{14 }
+\DoxyCodeLine{15 \textcolor{comment}{/* 日志级别 */}}
+\DoxyCodeLine{16 \textcolor{keyword}{typedef} \textcolor{keyword}{enum} \{}
+\DoxyCodeLine{17     UVHTTP\_LOG\_LEVEL\_TRACE = 0,}
+\DoxyCodeLine{18     UVHTTP\_LOG\_LEVEL\_DEBUG = 1,}
+\DoxyCodeLine{19     UVHTTP\_LOG\_LEVEL\_INFO = 2,}
+\DoxyCodeLine{20     UVHTTP\_LOG\_LEVEL\_WARN = 3,}
+\DoxyCodeLine{21     UVHTTP\_LOG\_LEVEL\_ERROR = 4,}
+\DoxyCodeLine{22     UVHTTP\_LOG\_LEVEL\_FATAL = 5}
+\DoxyCodeLine{23 \} uvhttp\_log\_level\_t;}
+\DoxyCodeLine{24 }
+\DoxyCodeLine{25 \textcolor{comment}{/* Debug 模式下启用日志 */}}
+\DoxyCodeLine{26 \textcolor{preprocessor}{\#if defined(NDEBUG) || !UVHTTP\_FEATURE\_LOGGING}}
+\DoxyCodeLine{27 }
+\DoxyCodeLine{28 \textcolor{comment}{/* Release 模式或日志功能禁用时，日志宏为空操作 */}}
+\DoxyCodeLine{29 \textcolor{preprocessor}{\#    define UVHTTP\_LOG(level, ...) ((void)0)}}
+\DoxyCodeLine{30 \textcolor{preprocessor}{\#    define UVHTTP\_LOG\_TRACE(...) ((void)0)}}
+\DoxyCodeLine{31 \textcolor{preprocessor}{\#    define UVHTTP\_LOG\_DEBUG(...) ((void)0)}}
+\DoxyCodeLine{32 \textcolor{preprocessor}{\#    define UVHTTP\_LOG\_INFO(...) ((void)0)}}
+\DoxyCodeLine{33 \textcolor{preprocessor}{\#    define UVHTTP\_LOG\_WARN(...) ((void)0)}}
+\DoxyCodeLine{34 \textcolor{preprocessor}{\#    define UVHTTP\_LOG\_ERROR(...) ((void)0)}}
+\DoxyCodeLine{35 \textcolor{preprocessor}{\#    define UVHTTP\_LOG\_FATAL(...) ((void)0)}}
+\DoxyCodeLine{36 }
+\DoxyCodeLine{37 \textcolor{preprocessor}{\#else }\textcolor{comment}{/* Debug 模式且日志功能启用 */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{38 }
+\DoxyCodeLine{39 \textcolor{comment}{/* Debug 模式下，日志输出到 stderr */}}
+\DoxyCodeLine{40 \textcolor{preprocessor}{\#    define UVHTTP\_LOG(level, ...)                                    \(\backslash\)}}
+\DoxyCodeLine{41 \textcolor{preprocessor}{        do \{                                                          \(\backslash\)}}
+\DoxyCodeLine{42 \textcolor{preprocessor}{            const char* level\_str = "{}UNKNOWN"{}};                        \(\backslash\)}
+\DoxyCodeLine{43             switch (level) \{                                          \(\backslash\)}
+\DoxyCodeLine{44             case UVHTTP\_LOG\_LEVEL\_TRACE:                              \(\backslash\)}
+\DoxyCodeLine{45                 level\_str = "{}TRACE"{};                                  \(\backslash\)}
+\DoxyCodeLine{46                 break;                                                \(\backslash\)}
+\DoxyCodeLine{47             case UVHTTP\_LOG\_LEVEL\_DEBUG:                              \(\backslash\)}
+\DoxyCodeLine{48                 level\_str = "{}DEBUG"{};                                  \(\backslash\)}
+\DoxyCodeLine{49                 break;                                                \(\backslash\)}
+\DoxyCodeLine{50             case UVHTTP\_LOG\_LEVEL\_INFO:                               \(\backslash\)}
+\DoxyCodeLine{51                 level\_str = "{}INFO"{};                                   \(\backslash\)}
+\DoxyCodeLine{52                 break;                                                \(\backslash\)}
+\DoxyCodeLine{53             case UVHTTP\_LOG\_LEVEL\_WARN:                               \(\backslash\)}
+\DoxyCodeLine{54                 level\_str = "{}WARN"{};                                   \(\backslash\)}
+\DoxyCodeLine{55                 break;                                                \(\backslash\)}
+\DoxyCodeLine{56             case UVHTTP\_LOG\_LEVEL\_ERROR:                              \(\backslash\)}
+\DoxyCodeLine{57                 level\_str = "{}ERROR"{};                                  \(\backslash\)}
+\DoxyCodeLine{58                 break;                                                \(\backslash\)}
+\DoxyCodeLine{59             case UVHTTP\_LOG\_LEVEL\_FATAL:                              \(\backslash\)}
+\DoxyCodeLine{60                 level\_str = "{}FATAL"{};                                  \(\backslash\)}
+\DoxyCodeLine{61                 break;                                                \(\backslash\)}
+\DoxyCodeLine{62             \}                                                         \(\backslash\)}
+\DoxyCodeLine{63             fprintf(stderr, "{}[\%s] \%s:\%d \%s(): "{}, level\_str, \_\_FILE\_\_, \(\backslash\)}
+\DoxyCodeLine{64                     \_\_LINE\_\_, \_\_func\_\_);                              \(\backslash\)}
+\DoxyCodeLine{65             fprintf(stderr, \_\_VA\_ARGS\_\_);                             \(\backslash\)}
+\DoxyCodeLine{66             fprintf(stderr, "{}\(\backslash\)n"{});                                    \(\backslash\)}
+\DoxyCodeLine{67             fflush(stderr);                                           \(\backslash\)}
+\DoxyCodeLine{68         \} while (0)}
+\DoxyCodeLine{69 }
+\DoxyCodeLine{70 \textcolor{preprocessor}{\#    define UVHTTP\_LOG\_TRACE(...) \(\backslash\)}}
+\DoxyCodeLine{71 \textcolor{preprocessor}{        UVHTTP\_LOG(UVHTTP\_LOG\_LEVEL\_TRACE, \_\_VA\_ARGS\_\_)}}
+\DoxyCodeLine{72 \textcolor{preprocessor}{\#    define UVHTTP\_LOG\_DEBUG(...) \(\backslash\)}}
+\DoxyCodeLine{73 \textcolor{preprocessor}{        UVHTTP\_LOG(UVHTTP\_LOG\_LEVEL\_DEBUG, \_\_VA\_ARGS\_\_)}}
+\DoxyCodeLine{74 \textcolor{preprocessor}{\#    define UVHTTP\_LOG\_INFO(...) UVHTTP\_LOG(UVHTTP\_LOG\_LEVEL\_INFO, \_\_VA\_ARGS\_\_)}}
+\DoxyCodeLine{75 \textcolor{preprocessor}{\#    define UVHTTP\_LOG\_WARN(...) UVHTTP\_LOG(UVHTTP\_LOG\_LEVEL\_WARN, \_\_VA\_ARGS\_\_)}}
+\DoxyCodeLine{76 \textcolor{preprocessor}{\#    define UVHTTP\_LOG\_ERROR(...) \(\backslash\)}}
+\DoxyCodeLine{77 \textcolor{preprocessor}{        UVHTTP\_LOG(UVHTTP\_LOG\_LEVEL\_ERROR, \_\_VA\_ARGS\_\_)}}
+\DoxyCodeLine{78 \textcolor{preprocessor}{\#    define UVHTTP\_LOG\_FATAL(...) \(\backslash\)}}
+\DoxyCodeLine{79 \textcolor{preprocessor}{        UVHTTP\_LOG(UVHTTP\_LOG\_LEVEL\_FATAL, \_\_VA\_ARGS\_\_)}}
+\DoxyCodeLine{80 }
+\DoxyCodeLine{81 \textcolor{preprocessor}{\#endif }\textcolor{comment}{/* NDEBUG || !UVHTTP\_FEATURE\_LOGGING */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{82 }
+\DoxyCodeLine{83 \textcolor{preprocessor}{\#ifdef \_\_cplusplus}}
+\DoxyCodeLine{84 \}}
+\DoxyCodeLine{85 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{86 }
+\DoxyCodeLine{87 \textcolor{preprocessor}{\#endif }\textcolor{comment}{/* UVHTTP\_LOGGING\_H */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

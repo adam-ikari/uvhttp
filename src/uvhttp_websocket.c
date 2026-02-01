@@ -1,6 +1,6 @@
 /*
  * uvhttp WebSocket Native Implementation
- * 完全自主实现的 WebSocket 协议支持，基于 RFC 6455
+ * Fully self-implemented WebSocket protocol support based on RFC 6455
  */
 
 #include "uvhttp_websocket.h"
@@ -9,6 +9,7 @@
 #include "uvhttp_constants.h"
 #include "uvhttp_context.h"
 #include "uvhttp_error.h"
+#include "uvhttp_logging.h"
 #include "uvhttp_platform.h"
 #include "uvhttp_server.h"
 
@@ -24,24 +25,25 @@
 /* WebSocket GUID (RFC 6455) */
 #define WS_GUID "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
-/* 生成安全的随机数 */
+/* Generate secure random bytes */
 static int uvhttp_ws_random_bytes(uvhttp_context_t* context, unsigned char* buf,
                                   size_t len) {
-    /* 使用上下文中的 DRBG */
+    /* Use DRBG from context */
     if (context && context->ws_drbg_initialized) {
         return mbedtls_ctr_drbg_random(
             (mbedtls_ctr_drbg_context*)context->ws_drbg, buf, len);
     }
 
-    /* DRBG 未初始化，返回错误而不是使用不安全的伪随机数 */
+    /* DRBG not initialized, return error instead of using insecure pseudo-random */
     UVHTTP_LOG_ERROR(
         "WebSocket DRBG not initialized, cannot generate secure random bytes");
     return UVHTTP_ERROR_INVALID_PARAM;
 }
 
-/* 创建 WebSocket 连接 */
+/* Create WebSocket connection */
 struct uvhttp_ws_connection* uvhttp_ws_connection_create(
-    int fd, mbedtls_ssl_context* ssl, int is_server) {
+    int fd, mbedtls_ssl_context* ssl, int is_server,
+    const uvhttp_config_t* config) {
     struct uvhttp_ws_connection* conn =
         uvhttp_calloc(1, sizeof(uvhttp_ws_connection_t));
     if (!conn) {
@@ -53,12 +55,20 @@ struct uvhttp_ws_connection* uvhttp_ws_connection_create(
     conn->is_server = is_server;
     conn->state = UVHTTP_WS_STATE_CONNECTING;
 
-    /* 设置默认配置 */
-    conn->config.max_frame_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE;
-    conn->config.max_message_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE;
-    conn->config.ping_interval = UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL;
-    conn->config.ping_timeout = UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT;
-    conn->config.enable_compression = 0;
+    /* 设置配置 */
+    if (config) {
+        conn->config.max_frame_size = config->websocket_max_frame_size;
+        conn->config.max_message_size = config->websocket_max_message_size;
+        conn->config.ping_interval = config->websocket_ping_interval;
+        conn->config.ping_timeout = config->websocket_ping_timeout;
+    } else {
+        /* 使用默认配置 */
+        conn->config.max_frame_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE;
+        conn->config.max_message_size =
+            UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE;
+        conn->config.ping_interval = UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL;
+        conn->config.ping_timeout = UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT;
+    }
 
     /* 分配接收缓冲区 */
     conn->recv_buffer_size = UVHTTP_WEBSOCKET_DEFAULT_RECV_BUFFER_SIZE;
@@ -182,15 +192,17 @@ uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
         buffer[3] = payload_len & 0xFF;
         header_size = 4;
     } else {
+        /* 使用 uint64_t 避免 32 位系统上的位移警告 */
+        uint64_t len = (uint64_t)payload_len;
         buffer[1] = (mask ? 0x80 : 0x00) | 127;
-        buffer[2] = (payload_len >> 56) & 0xFF;
-        buffer[3] = (payload_len >> 48) & 0xFF;
-        buffer[4] = (payload_len >> 40) & 0xFF;
-        buffer[5] = (payload_len >> 32) & 0xFF;
-        buffer[6] = (payload_len >> 24) & 0xFF;
-        buffer[7] = (payload_len >> 16) & 0xFF;
-        buffer[8] = (payload_len >> 8) & 0xFF;
-        buffer[9] = payload_len & 0xFF;
+        buffer[2] = (len >> 56) & 0xFF;
+        buffer[3] = (len >> 48) & 0xFF;
+        buffer[4] = (len >> 40) & 0xFF;
+        buffer[5] = (len >> 32) & 0xFF;
+        buffer[6] = (len >> 24) & 0xFF;
+        buffer[7] = (len >> 16) & 0xFF;
+        buffer[8] = (len >> 8) & 0xFF;
+        buffer[9] = len & 0xFF;
         header_size = 10;
     }
 

@@ -1,0 +1,23 @@
+\hypertarget{uvhttp__validation_8h}{}\doxysection{include/uvhttp\+\_\+validation.h File Reference}
+\label{uvhttp__validation_8h}\index{include/uvhttp\_validation.h@{include/uvhttp\_validation.h}}
+
+
+Input validation module.  
+
+
+{\ttfamily \#include \char`\"{}uvhttp\+\_\+constants.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$ctype.\+h$>$}\newline
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+Include dependency graph for uvhttp\+\_\+validation.\+h\+:
+% FIG 0
+
+
+\doxysubsection{Detailed Description}
+Input validation module. 
+
+This module provides validation functions for HTTP input data including URL paths, headers, and query strings. All functions are inline-\/optimized for zero runtime overhead.
+
+\begin{DoxyNote}{Note}
+These functions validate input against security best practices to prevent injection attacks and buffer overflows. 
+\end{DoxyNote}

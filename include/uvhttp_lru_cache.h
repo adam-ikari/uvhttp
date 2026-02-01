@@ -5,6 +5,7 @@
 
 #if UVHTTP_FEATURE_STATIC_FILES
 
+#    include "uvhttp_config.h"
 #    include "uvhttp_constants.h"
 #    include "uvhttp_error.h"
 
@@ -45,14 +46,15 @@ struct cache_entry {
 
 /* LRU缓存管理器 */
 struct cache_manager {
-    cache_entry_t* hash_table; /* 哈希表头 */
-    cache_entry_t* lru_head;   /* LRU链表头 */
-    cache_entry_t* lru_tail;   /* LRU链表尾 */
-    size_t total_memory_usage; /* 总内存使用 */
-    size_t max_memory_usage;   /* 最大内存限制 */
-    int entry_count;           /* 缓存条目数 */
-    int max_entries;           /* 最大条目数 */
-    int cache_ttl;             /* 缓存TTL（秒） */
+    cache_entry_t* hash_table;            /* 哈希表头 */
+    cache_entry_t* lru_head;              /* LRU链表头 */
+    cache_entry_t* lru_tail;              /* LRU链表尾 */
+    size_t total_memory_usage;            /* 总内存使用 */
+    size_t max_memory_usage;              /* 最大内存限制 */
+    int entry_count;                      /* 缓存条目数 */
+    int max_entries;                      /* 最大条目数 */
+    int cache_ttl;                        /* 缓存TTL（秒） */
+    const uvhttp_config_t* server_config; /* 服务器配置引用 */
 
     /* 统计信息 */
     int hit_count;      /* 命中次数 */

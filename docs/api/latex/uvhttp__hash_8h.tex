@@ -1,0 +1,53 @@
+\hypertarget{uvhttp__hash_8h}{}\doxysection{include/uvhttp\+\_\+hash.h File Reference}
+\label{uvhttp__hash_8h}\index{include/uvhttp\_hash.h@{include/uvhttp\_hash.h}}
+
+
+Hash algorithm interface based on xx\+Hash.  
+
+
+{\ttfamily \#include \char`\"{}uvhttp\+\_\+defaults.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}xxhash.\+h\char`\"{}}\newline
+Include dependency graph for uvhttp\+\_\+hash.\+h\+:
+% FIG 0
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{uvhttp__hash_8h_a93a4ca67dc11ae1968df25e29999b51a}{UVHTTP\+\_\+\+HASH\+\_\+\+VALIDATE\+\_\+\+PTR}}(ptr)~((ptr) != NULL)
+\begin{DoxyCompactList}\small\item\em Validate pointer is not NULL. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Hash algorithm interface based on xx\+Hash. 
+
+This module provides high-\/performance hash functions using xx\+Hash algorithm. All functions are inline-\/optimized for zero runtime overhead.
+
+\begin{DoxyNote}{Note}
+These functions are static inline and defined in the header file to allow compiler optimization and eliminate function call overhead. 
+\end{DoxyNote}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{uvhttp__hash_8h_a93a4ca67dc11ae1968df25e29999b51a}\label{uvhttp__hash_8h_a93a4ca67dc11ae1968df25e29999b51a}} 
+\index{uvhttp\_hash.h@{uvhttp\_hash.h}!UVHTTP\_HASH\_VALIDATE\_PTR@{UVHTTP\_HASH\_VALIDATE\_PTR}}
+\index{UVHTTP\_HASH\_VALIDATE\_PTR@{UVHTTP\_HASH\_VALIDATE\_PTR}!uvhttp\_hash.h@{uvhttp\_hash.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_HASH\_VALIDATE\_PTR}{UVHTTP\_HASH\_VALIDATE\_PTR}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+HASH\+\_\+\+VALIDATE\+\_\+\+PTR(\begin{DoxyParamCaption}\item[{}]{ptr }\end{DoxyParamCaption})~((ptr) != NULL)}
+
+
+
+Validate pointer is not NULL. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em ptr} & Pointer to validate \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+int TRUE if pointer is not NULL, FALSE otherwise
+\end{DoxyReturn}
+\begin{DoxyNote}{Note}
+This is a macro for compile-\/time optimization 
+\end{DoxyNote}

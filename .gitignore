@@ -2,12 +2,19 @@
 build/
 dist/
 
-# Pre-built dependencies
+# Pre-built dependencies and build artifacts
 deps/cmocka/
+deps/*/build/
+deps/*/*.a
+deps/*/*.o
+deps/*/*.so
+deps/*/*.dylib
+deps/*/*.dll
 
 # Test executables (but not source files)
 test_memory_simple
 test_simple
+memory_layout_test
 # Ignore test executables in root directory, but not in test/unit/
 /test_*
 
@@ -16,6 +23,7 @@ stress_test_results_*/
 
 # Performance test results
 test/performance/results/
+benchmark/results/run_*
 
 # Coverage reports
 coverage_html/
@@ -33,6 +41,11 @@ gmon.out
 *.swo
 *~
 .DS_Store
+
+# IDE files
+compile_commands.json
+.clangd/
+.idea/
 
 # CMake generated files
 CMakeCache.txt
@@ -58,3 +71,9 @@ test/results/
 docs/node_modules/
 docs/.vitepress/dist/
 docs/.vitepress/cache/
+
+# Doxygen generated documentation
+docs/api/html/
+docs/api/latex/
+docs/api/markdown_from_xml/
+docs/api/xml/

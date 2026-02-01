@@ -220,27 +220,25 @@ TEST(UvhttpLruCacheFullCoverageTest, CacheCleanupExpired) {
 /* 测试LRU缓存内存限制 */
 TEST(UvhttpLruCacheFullCoverageTest, CacheMemoryLimit) {
     cache_manager_t* cache = NULL;
-    uvhttp_error_t result = uvhttp_lru_cache_create(1024, 10, 3600, &cache);
+    /* 创建足够大的缓存以容纳2-3个条目，但不足以容纳5个 */
+    uvhttp_error_t result = uvhttp_lru_cache_create(32 * 1024, 10, 3600, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
-    
-    /* 添加大文件，触发驱逐 */
+
+    /* 添加多个条目，触发驱逐 */
     char content[512];
     memset(content, 'A', sizeof(content));
-    
+
     for (int i = 0; i < 5; i++) {
         char path[64];
         snprintf(path, sizeof(path), "/test%d.txt", i);
         result = uvhttp_lru_cache_put(cache, path, content, sizeof(content),
                                        "text/plain", time(NULL), "\"123456\"");
-        if (result != UVHTTP_OK) {
-            /* 可能因为内存限制而失败 */
-            break;
-        }
+        EXPECT_EQ(result, UVHTTP_OK);
     }
-    
-    /* 验证驱逐次数 */
+
+    /* 验证驱逐次数大于0（因为添加了5个条目但缓存只能容纳2-3个） */
     EXPECT_GT(cache->eviction_count, 0);
-    
+
     /* 清理 */
     uvhttp_lru_cache_free(cache);
 }

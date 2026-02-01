@@ -1,142 +1,109 @@
-# 快速开始
+# Quick Start
 
-## 环境要求
+This guide will help you get started with UVHTTP in just a few minutes.
 
-- CMake 3.10+
-- C11 编译器（GCC 4.9+, Clang 3.5+, MSVC 2015+）
-- libuv 1.x
-- llhttp
+## Prerequisites
 
-## 安装
+- **Operating System**: Linux
+  - **Future Plans**: macOS, Windows, FreeBSD, WebAssembly (WASM), and other Unix-like systems
+- C compiler (GCC or Clang)
+- CMake 3.10 or higher
+- libuv (will be downloaded automatically)
 
-### 从源码编译
+> **Note**: UVHTTP currently supports Linux platforms only. We plan to expand support to other operating systems in future releases.
+
+## Installation
+
+### Clone the Repository
 
 ```bash
-# 克隆仓库
 git clone https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
+```
 
-# 创建构建目录
+### Build the Library
+
+```bash
 mkdir build && cd build
-
-# 配置项目
 cmake ..
-
-# 编译
 make -j$(nproc)
-
-# 运行测试（可选）
-make test
 ```
 
-### 安装依赖
-
-#### Ubuntu/Debian
+### Run Tests
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y cmake build-essential libuv1-dev
+./run_tests.sh
 ```
 
-#### macOS
+## Your First Server
 
-```bash
-brew install cmake libuv
-```
-
-#### Windows
-
-使用 vcpkg 安装依赖：
-
-```bash
-vcpkg install libuv
-```
-
-## 第一个程序
-
-创建 `hello.c`：
+Create a file `hello.c`:
 
 ```c
 #include <uvhttp.h>
-#include <stdio.h>
-#include <string.h>
-
-int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, "Hello, World!", strlen("Hello, World!"));
-    uvhttp_response_send(response);
-    return UVHTTP_OK;
-}
+#include <uv_loop.h>
 
 int main() {
+    // Create event loop
     uv_loop_t* loop = uv_default_loop();
+    
+    // Create server
     uvhttp_server_t* server = uvhttp_server_new(loop);
+    
+    // Create router
     uvhttp_router_t* router = uvhttp_router_new();
     server->router = router;
-
-    // 添加路由
-    uvhttp_router_add_route(router, "/", hello_handler);
-
-    // 启动服务器
+    
+    // Add a route handler
+    uvhttp_router_add_route(router, "/hello", [](uvhttp_request_t* req) {
+        uvhttp_response_t* res = uvhttp_response_new(req);
+        
+        // Set status code
+        uvhttp_response_set_status(res, 200);
+        
+        // Set headers
+        uvhttp_response_set_header(res, "Content-Type", "text/plain");
+        
+        // Set body
+        uvhttp_response_set_body(res, "Hello, World!");
+        
+        // Send response
+        uvhttp_response_send(res);
+    });
+    
+    // Start server
     uvhttp_error_t result = uvhttp_server_listen(server, "0.0.0.0", 8080);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to start server: %s\n", uvhttp_error_string(result));
         return 1;
     }
-
-    printf("Server running at http://localhost:8080\n");
+    
+    printf("Server running on http://0.0.0.0:8080\n");
+    
+    // Run event loop
     uv_run(loop, UV_RUN_DEFAULT);
-
+    
     return 0;
 }
 ```
 
-### 编译
+### Compile and Run
 
 ```bash
-gcc -o hello hello.c -I./include -L./build/dist/lib -luvhttp -luv -lpthread
-```
-
-### 运行
-
-```bash
+gcc hello.c -Iinclude -Lbuild/dist/lib -luvhttp -lpthread -luv -o hello
 ./hello
 ```
 
-访问 `http://localhost:8080` 查看 "Hello, World!"。
+Visit `http://localhost:8080/hello` in your browser!
 
-## 项目结构
+## Next Steps
 
-```
-uvhttp/
-├── include/           # 公共头文件
-├── src/              # 源代码实现
-├── docs/             # 文档
-├── examples/         # 示例程序
-├── test/             # 测试
-└── build/            # 构建输出目录
-```
+- Learn about [routing](../guide/TUTORIAL.md)
+- Explore [WebSocket support](../guide/websocket.md)
+- Check out [API reference](../api/API_REFERENCE.md)
 
-## 配置选项
+## Need Help?
 
-```bash
-# 启用 WebSocket 支持
-cmake -DBUILD_WITH_WEBSOCKET=ON ..
-
-# 启用 mimalloc 分配器
-cmake -DBUILD_WITH_MIMALLOC=ON ..
-
-# Debug 模式
-cmake -DENABLE_DEBUG=ON ..
-
-# 启用代码覆盖率
-cmake -DENABLE_COVERAGE=ON ..
-
-# 启用示例程序编译
-cmake -DBUILD_EXAMPLES=ON ..
-```
-
-## 下一步
-
-- [API 文档](/api/introduction) - 学习完整的 API
+- Check the [documentation](../)
+- Open an [issue](https://github.com/adam-ikari/uvhttp/issues)
+- Join the discussions on GitHub

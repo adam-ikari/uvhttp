@@ -1,4 +1,4 @@
-/* UVHTTP LRU缓存模块实现 - 基于uthash，单线程版本 */
+/* UVHTTP LRU cache module implementation - based on uthash, single-threaded version */
 
 #if UVHTTP_FEATURE_STATIC_FILES
 
@@ -8,16 +8,17 @@
 #    include "uvhttp_error.h"
 #    include "uvhttp_error_handler.h"
 #    include "uvhttp_error_helpers.h"
+#    include "uvhttp_logging.h"
 
 #    include <stdlib.h>
 #    include <string.h>
 #    include <time.h>
 
-/* 包含uthash头文件 */
+/* Include uthash header file */
 #    include "uthash.h"
 
 /**
- * 创建LRU缓存管理器
+ * Create LRU cache manager
  */
 uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
                                        int cache_ttl, cache_manager_t** cache) {
@@ -28,6 +29,18 @@ uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
     if (!cache) {
         UVHTTP_LOG_ERROR(
             "Failed to create LRU cache: invalid output parameter");
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    if (max_memory_usage == 0) {
+        UVHTTP_LOG_ERROR(
+            "Failed to create LRU cache: max_memory_usage cannot be zero");
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    if (max_entries <= 0) {
+        UVHTTP_LOG_ERROR(
+            "Failed to create LRU cache: max_entries must be positive");
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
@@ -42,8 +55,9 @@ uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
     cache_ptr->max_memory_usage = max_memory_usage;
     cache_ptr->max_entries = max_entries;
     cache_ptr->cache_ttl = cache_ttl;
+    cache_ptr->server_config = NULL; /* Initialize to NULL, set by caller */
 
-    /* 单线程版本：不需要初始化锁 */
+    /* Single-threaded version: no need to initialize lock */
 
     UVHTTP_LOG_INFO("LRU cache created successfully");
     *cache = cache_ptr;
@@ -51,7 +65,7 @@ uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
 }
 
 /**
- * 释放缓存条目
+ * Free cache entry
  */
 static void free_cache_entry(cache_entry_t* entry) {
     if (!entry)
@@ -64,7 +78,7 @@ static void free_cache_entry(cache_entry_t* entry) {
 }
 
 /**
- * 释放LRU缓存管理器
+ * Free LRU cache manager
  */
 void uvhttp_lru_cache_free(cache_manager_t* cache) {
     if (!cache)
@@ -75,14 +89,14 @@ void uvhttp_lru_cache_free(cache_manager_t* cache) {
 
     uvhttp_lru_cache_clear(cache);
 
-    /* 单线程版本：不需要销毁锁 */
+    /* Single-threaded version: no need to destroy lock */
 
     uvhttp_free(cache);
     UVHTTP_LOG_DEBUG("LRU cache freed");
 }
 
 /**
- * 查找缓存条目 - 单线程版本
+ * Find cache entry - single-threaded version
  */
 cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache,
                                      const char* file_path) {
@@ -270,12 +284,21 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
 
     /* 检查是否需要驱逐条目 - 批量驱逐优化 */
     int eviction_count = 0;
-    int batch_size = UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE; /* 批量驱逐大小 */
+    int batch_size = cache->server_config
+                         ? cache->server_config->lru_cache_batch_eviction_size
+                         : UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE;
 
     while (
         (cache->max_memory_usage > 0 &&
          cache->total_memory_usage + memory_usage > cache->max_memory_usage) ||
         (cache->max_entries > 0 && cache->entry_count >= cache->max_entries)) {
+
+        /* 如果缓存为空但仍然需要驱逐，说明无法满足条件，返回错误 */
+        if (!cache->lru_tail) {
+            UVHTTP_LOG_ERROR(
+                "Cannot evict more entries: cache is empty but still needs space");
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
+        }
 
         /* 批量驱逐多个条目以减少循环次数 */
         for (int i = 0;

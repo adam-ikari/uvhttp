@@ -35,10 +35,15 @@ jobs:
         echo "timestamp=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
         echo "datetime=$(date +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
     
+    - name: Setup build environment
+      uses: ./.github/actions/setup-build
+      with:
+        os: ubuntu-latest
+    
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake build-essential wrk python3 python3-pip
+        sudo apt-get install -y wrk python3 python3-pip
         pip3 install matplotlib numpy
     
     - name: Configure system for performance testing
@@ -59,8 +64,7 @@ jobs:
     
     - name: Build project
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
-        cmake --build build --config Release -j$(nproc)
+        make build
     
     - name: Run performance tests
       id: performance
@@ -101,408 +105,88 @@ jobs:
             wrk -t4 -c50 -d5s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
             
             echo "" >> /tmp/performance.log
-            echo "Test 3: High concurrency (200 connections, 5 seconds)" >> /tmp/performance.log
-            wrk -t8 -c200 -d5s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
+            echo "Test 3: High concurrency (100 connections, 5 seconds)" >> /tmp/performance.log
+            wrk -t4 -c100 -d5s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
           else
-            echo "Running full performance tests..."
+            echo "Running full performance benchmark..."
             
-            # 完整测试说明：
-            # - 测试时长：10秒（提供足够的统计样本，确保结果可靠）
-            # - 测试次数：3次取平均（低/中/高并发），2次取平均（压力/文件测试）
-            # - 统计依据：3次测试可提供 95% 置信区间，2次测试用于快速验证
-            # - 总耗时：约10-15分钟（包含所有场景和迭代）
-            # - 目的：生成详细的性能基准报告，用于长期趋势分析
-            # 低并发测试（3次取平均）
-            echo "Test 1: Low concurrency (10 connections, 10 seconds)" >> /tmp/performance.log
-            for i in {1..3}; do
-              wrk -t2 -c10 -d10s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
-              sleep 2
-            done
+            # 完整性能测试说明：
+            # - 测试时长：30秒（更准确的性能测量）
+            # - 测试次数：3次（取平均值，减少误差）
+            # - 测试场景：低/中/高并发
+            # - 总耗时：约5-10分钟
+            # - 目的：生成详细的性能报告和趋势分析
             
-            # 中等并发测试（3次取平均）
-            echo "" >> /tmp/performance.log
-            echo "Test 2: Medium concurrency (50 connections, 10 seconds)" >> /tmp/performance.log
-            for i in {1..3}; do
-              wrk -t4 -c50 -d10s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
-              sleep 2
-            done
-            
-            # 高并发测试（3次取平均）
-            echo "" >> /tmp/performance.log
-            echo "Test 3: High concurrency (200 connections, 10 seconds)" >> /tmp/performance.log
-            for i in {1..3}; do
-              wrk -t8 -c200 -d10s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
-              sleep 2
+            for run in 1 2 3; do
+              echo "" >> /tmp/performance.log
+              echo "=== Run $run ===" >> /tmp/performance.log
+              
+              echo "Test 1: Low concurrency (10 connections, 30 seconds)" >> /tmp/performance.log
+              wrk -t2 -c10 -d30s --timeout 10s http://localhost:18081/ >> /tmp/performance.log 2>&1
+              
+              echo "" >> /tmp/performance.log
+              echo "Test 2: Medium concurrency (50 connections, 30 seconds)" >> /tmp/performance.log
+              wrk -t4 -c50 -d30s --timeout 10s http://localhost:18081/ >> /tmp/performance.log 2>&1
+              
+              echo "" >> /tmp/performance.log
+              echo "Test 3: High concurrency (100 connections, 30 seconds)" >> /tmp/performance.log
+              wrk -t4 -c100 -d30s --timeout 10s http://localhost:18081/ >> /tmp/performance.log 2>&1
+              
+              sleep 5  # 让系统冷却
             done
           fi
           
-          # 清理
+          # 停止服务器
           kill $SERVER_PID 2>/dev/null || true
-          wait $SERVER_PID 2>/dev/null || true
+          sleep 2
           
-          # 复制日志
-          cp /tmp/performance.log ../performance.log
-          cp /tmp/server.log ../server.log
+          cat /tmp/performance.log
         else
-          echo "benchmark_rps not found"
+          echo "Error: benchmark_rps not found"
           exit 1
         fi
     
     - name: Parse performance results
       id: parse
-      env:
-        TIMESTAMP: ${{ steps.date.outputs.timestamp }}
-        RUN_ID: ${{ github.run_id }}
-        RUN_NUMBER: ${{ github.run_number }}
-        SHA: ${{ github.sha }}
-        REF_NAME: ${{ github.ref_name }}
-        # 使用 fallback 语法处理定时任务（schedule）中 head_commit 为空的情况
-        COMMIT_MESSAGE: ${{ github.event.head_commit.message || github.event.commits[0].message || 'Scheduled run' }}
-        COMMIT_AUTHOR: ${{ github.event.head_commit.author.name || github.event.commits[0].author.name || 'GitHub Actions' }}
       run: |
-        python3 << 'EOF'
-        import os
-        import re
-        import json
-        from datetime import datetime
-        
-        # 从环境变量获取 GitHub Actions 上下文（添加输入验证）
-        timestamp = os.environ.get('TIMESTAMP', 'unknown')
-        
-        # 安全转换整数，避免 ValueError
-        try:
-            run_id = int(os.environ.get('RUN_ID', 0))
-        except (ValueError, TypeError):
-            run_id = 0
-        
-        try:
-            run_number = int(os.environ.get('RUN_NUMBER', 0))
-        except (ValueError, TypeError):
-            run_number = 0
-        
-        sha = os.environ.get('SHA', 'unknown')
-        ref_name = os.environ.get('REF_NAME', 'unknown')
-        commit_message = os.environ.get('COMMIT_MESSAGE', 'unknown')
-        commit_author = os.environ.get('COMMIT_AUTHOR', 'unknown')
-        
-        # 读取性能日志（添加错误处理）
-        try:
-            with open('performance.log', 'r') as f:
-                log_content = f.read()
-        except FileNotFoundError:
-            print("Warning: performance.log not found, using empty content")
-            log_content = ""
-        
         # 解析 wrk 输出
-        def parse_wrk_output(text):
-            match = re.search(r'(\d+)\s+requests in\s+([\d.]+)s', text)
-            if not match:
-                return None
-            
-            requests = int(match.group(1))
-            duration = float(match.group(2))
-            rps = requests / duration
-            
-            # 解析延迟
-            latency_match = re.search(r'Latency\s+([\d.]+[a-zµ]+)\s+([\d.]+)[a-zµ]+\s+([\d.]+)[a-zµ]+\s+([\d.]+)[a-zµ]+\s+([\d.]+)[a-zµ]+', text)
-            if latency_match:
-                latency_avg = latency_match.group(1)
-                latency_stdev = latency_match.group(2)
-                latency_p50 = latency_match.group(3)
-                latency_p75 = latency_match.group(4)
-                latency_p99 = latency_match.group(5)
-            else:
-                latency_avg = latency_stdev = latency_p50 = latency_p75 = latency_p99 = "N/A"
-            
-            # 解析错误
-            errors_match = re.search(r'(\d+)\s+errors', text)
-            errors = int(errors_match.group(1)) if errors_match else 0
-            
-            # 解析传输速率
-            transfer_match = re.search(r'([\d.]+)\s+([KMG]B/s)', text)
-            if transfer_match:
-                transfer_rate = transfer_match.group(1) + ' ' + transfer_match.group(2)
-            else:
-                transfer_rate = "N/A"
-            
-            return {
-                'rps': rps,
-                'latency_avg': latency_avg,
-                'latency_stdev': latency_stdev,
-                'latency_p50': latency_p50,
-                'latency_p75': latency_p75,
-                'latency_p99': latency_p99,
-                'errors': errors,
-                'transfer_rate': transfer_rate
-            }
-        
-        # 提取各个测试场景的结果
-        test_scenarios = [
-            ('low_concurrent', 'Test 1: Low concurrency'),
-            ('medium_concurrent', 'Test 2: Medium concurrency'),
-            ('high_concurrent', 'Test 3: High concurrency')
-        ]
-        
-        results = {}
-        for scenario_name, test_name in test_scenarios:
-            pattern = re.escape(test_name) + r'.*?((?:Requests/sec|Running|Requests in).*?)(?=\n\n|\nTest |\Z)'
-            matches = re.findall(pattern, log_content, re.DOTALL)
-            
-            if matches:
-                parsed_results = [parse_wrk_output(m) for m in matches if parse_wrk_output(m)]
-                if parsed_results:
-                    results[scenario_name] = parsed_results
-        
-        # 生成 JSON 结果
-        output = {
-            'test_id': f'PERF-{timestamp}',
-            'timestamp': datetime.utcnow().isoformat() + 'Z',
-            'run_id': run_id,
-            'run_number': run_number,
-            'commit': {
-                'sha': sha,
-                'short_sha': sha[:7] if len(sha) >= 7 else sha,
-                'message': commit_message,
-                'author': commit_author,
-                'branch': ref_name
-            },
-            'environment': {
-                'os': 'Linux 6.14.11-2-pve',
-                'runner': 'ubuntu-22.04',
-                'cpu': 'AMD Ryzen 7 5800H',
-                'cores': 16,
-                'memory': '12GB',
-                'compiler': 'GCC',
-                'compiler_version': '11.4.0',
-                'build_type': 'Release',
-                'optimization': '-O2'
-            },
-            'test_scenarios': [],
-            'summary': {
-                'total_scenarios': len(results),
-                'passed': len(results),
-                'warning': 0,
-                'failed': 0,
-                'overall_status': 'pass'
-            }
-        }
-        
-        # 添加测试场景结果
-        for scenario_name, scenario_results in results.items():
-            # 计算平均值
-            avg_rps = sum(r['rps'] for r in scenario_results) / len(scenario_results)
-            
-            output['test_scenarios'].append({
-                'name': scenario_name,
-                'iterations': len(scenario_results),
-                'results': {
-                    'rps': {
-                        'value': avg_rps,
-                        'unit': 'req/s'
-                    },
-                    'latency_avg': {
-                        'value': scenario_results[0]['latency_avg']
-                    }
-                }
-            })
-        
-        # 保存 JSON
-        with open('performance-results.json', 'w') as f:
-            json.dump(output, f, indent=2)
-        
-        # 输出关键指标（添加边界检查）
-        if len(output['test_scenarios']) >= 3:
-            print(f"rps_low={output['test_scenarios'][0]['results']['rps']['value']:.0f}")
-            print(f"rps_medium={output['test_scenarios'][1]['results']['rps']['value']:.0f}")
-            print(f"rps_high={output['test_scenarios'][2]['results']['rps']['value']:.0f}")
-            print("status=pass")
-        else:
-            print(f"Error: Expected at least 3 test scenarios, got {len(output['test_scenarios'])}")
-            print("status=error")
-        
-        EOF
-        
-        # 将输出保存为环境变量（添加边界检查）
-        SCENARIO_COUNT=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(len(d['test_scenarios']))")
-        
-        if [ "$SCENARIO_COUNT" -ge 3 ]; then
-          echo "rps_low=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(f\"{d['test_scenarios'][0]['results']['rps']['value']:.0f}\")")" >> $GITHUB_OUTPUT
-          echo "rps_medium=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(f\"{d['test_scenarios'][1]['results']['rps']['value']:.0f}\")")" >> $GITHUB_OUTPUT
-          echo "rps_high=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(f\"{d['test_scenarios'][2]['results']['rps']['value']:.0f}\")")" >> $GITHUB_OUTPUT
-          echo "latency_avg_low=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][0]['results']['latency_avg']['value'])")" >> $GITHUB_OUTPUT
-          echo "latency_avg_medium=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][1]['results']['latency_avg']['value'])")" >> $GITHUB_OUTPUT
-          echo "latency_avg_high=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][2]['results']['latency_avg']['value'])")" >> $GITHUB_OUTPUT
-          echo "latency_p99_low=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][0]['results'].get('latency_p99', 'N/A'))")" >> $GITHUB_OUTPUT
-          echo "latency_p99_medium=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][1]['results'].get('latency_p99', 'N/A'))")" >> $GITHUB_OUTPUT
-          echo "latency_p99_high=$(python3 -c "import json; d=json.load(open('performance-results.json')); print(d['test_scenarios'][2]['results'].get('latency_p99', 'N/A'))")" >> $GITHUB_OUTPUT
-          echo "status=pass" >> $GITHUB_OUTPUT
+        if [ "$IS_PR" = "true" ]; then
+          # PR 测试：解析最后一次测试结果
+          RPS=$(grep "Requests/sec:" /tmp/performance.log | tail -1 | awk '{print $2}')
+          LATENCY_AVG=$(grep "Latency" /tmp/performance.log | tail -2 | head -1 | awk '{print $2}')
         else
-          echo "Error: Expected at least 3 test scenarios, got $SCENARIO_COUNT" >> $GITHUB_OUTPUT
-          echo "status=error" >> $GITHUB_OUTPUT
+          # 完整测试：计算平均值
+          RPS_AVG=$(grep "Requests/sec:" /tmp/performance.log | awk '{sum+=$2; count++} END {print sum/count}')
+          RPS=$(echo "$RPS_AVG" | awk '{printf "%.2f", $1}')
+          LATENCY_AVG=$(grep "Latency" /tmp/performance.log | awk 'NR%4==2 {sum+=$2; count++} END {print sum/count}')
         fi
+        
+        echo "rps=$RPS" >> $GITHUB_OUTPUT
+        echo "latency_avg=$LATENCY_AVG" >> $GITHUB_OUTPUT
     
-    - name: Generate performance report
-      env:
-        TEST_DATE: ${{ steps.date.outputs.date }}
-        TEST_DATETIME: ${{ steps.date.outputs.datetime }}
-      run: |
-        cat > /tmp/generate_report.py << 'SCRIPT_EOF'
-        import os
-        import json
-        
-        # 从环境变量获取日期信息
-        test_date = os.environ.get('TEST_DATE', 'unknown')
-        test_datetime = os.environ.get('TEST_DATETIME', 'unknown')
-        
-        with open('performance-results.json', 'r') as f:
-            data = json.load(f)
-        
-        report = "# UVHTTP 性能基准测试报告\n\n"
-        report += "## 测试概述\n\n"
-        report += "- **测试日期**: " + test_date + "\n"
-        report += "- **测试时间**: " + test_datetime + "\n"
-        report += "- **测试版本**: v2.0.0\n"
-        report += "- **提交**: " + data['commit']['short_sha'] + " - " + data['commit']['message'] + "\n"
-        report += "- **分支**: " + data['commit']['branch'] + "\n"
-        report += "- **运行编号**: #" + str(data['run_number']) + "\n"
-        report += "- **运行ID**: " + str(data['run_id']) + "\n"
-        report += "\n"
-        report += "## 测试环境\n\n"
-        report += "- **操作系统**: " + data['environment']['os'] + "\n"
-        report += "- **Runner**: " + data['environment']['runner'] + "\n"
-        report += "- **CPU**: " + data['environment']['cpu'] + " (" + str(data['environment']['cores']) + "核)\n"
-        report += "- **内存**: " + data['environment']['memory'] + "\n"
-        report += "- **编译器**: " + data['environment']['compiler'] + " " + data['environment']['compiler_version'] + "\n"
-        report += "- **构建类型**: " + data['environment']['build_type'] + "\n"
-        report += "- **优化级别**: " + data['environment']['optimization'] + "\n"
-        report += "\n"
-        report += "## 测试结果摘要\n\n"
-        report += "| 指标 | 通过 | 警告 | 失败 | 总计 |\n"
-        report += "|-----|-----|-----|-----|-----|\n"
-        report += "| 测试场景 | " + str(data['summary']['passed']) + " | " + str(data['summary']['warning']) + " | " + str(data['summary']['failed']) + " | " + str(data['summary']['total_scenarios']) + " |\n"
-        report += "\n"
-        report += "**总体状态**: ✅ 通过\n"
-        report += "\n"
-        report += "## 详细测试结果\n\n"
-        
-        for i, scenario in enumerate(data['test_scenarios'], 1):
-            report += "### 场景 " + str(i) + ": " + scenario['name'] + "\n\n"
-            report += "| 指标 | 当前值 |\n"
-            report += "|-----|-------|\n"
-            report += "| 吞吐量 (RPS) | " + str(round(scenario['results']['rps']['value'])) + " req/s |\n"
-            report += "| 平均延迟 | " + scenario['results']['latency_avg']['value'] + " |\n"
-            report += "\n"
-            report += "**测试次数**: " + str(scenario['iterations']) + "\n\n"
-        
-        report += "## 附录\n\n"
-        report += "### 测试命令\n\n"
-        report += "```bash\n"
-        report += "# 低并发测试\n"
-        report += "wrk -t2 -c10 -d10s --timeout 5s http://127.0.0.1:18081/\n\n"
-        report += "# 中等并发测试\n"
-        report += "wrk -t4 -c50 -d10s --timeout 5s http://127.0.0.1:18081/\n\n"
-        report += "# 高并发测试\n"
-        report += "wrk -t8 -c200 -d10s --timeout 5s http://127.0.0.1:18081/\n\n"
-        report += "# 极端并发测试（nightly）\n"
-        report += "wrk -t8 -c500 -d30s --timeout 10s http://127.0.0.1:18081/\n\n"
-        report += "# 超高并发测试（nightly）\n"
-        report += "wrk -t8 -c1000 -d30s --timeout 10s http://127.0.0.1:18081/\n\n"
-        report += "# 持续负载测试（nightly）\n"
-        report += "wrk -t4 -c100 -d60s --timeout 5s http://127.0.0.1:18081/\n\n"
-        report += "# 小文件传输测试（nightly）\n"
-        report += "wrk -t4 -c100 -d10s --timeout 5s http://127.0.0.1:18081/\n\n"
-        report += "# 大文件传输测试（nightly）\n"
-        report += "wrk -t4 -c50 -d10s --timeout 10s http://127.0.0.1:18081/\n"
-        report += "```\n\n"
-        report += "---\n\n"
-        report += "**报告生成时间**: " + data['timestamp'] + "\n"
-        report += "**生成工具**: GitHub Actions\n"
-        report += "**报告版本**: 1.0.0\n"
-        
-        with open('performance-report.md', 'w') as f:
-            f.write(report)
-        
-        print("Performance report generated successfully")
-        SCRIPT_EOF
-        
-        python3 /tmp/generate_report.py
-    
-    - name: Upload performance results artifact
+    - name: Upload performance artifacts
       uses: actions/upload-artifact@v4.3.1
       with:
-        name: performance-results-${{ github.run_number }}
+        name: performance-results-${{ steps.date.outputs.timestamp }}
         path: |
-          performance-results.json
-          performance-report.md
-          performance.log
-          server.log
-          baseline-history.json
+          /tmp/performance.log
+          /tmp/server.log
         retention-days: 30
     
-    - name: Create performance benchmark release
-      if: github.event_name != 'pull_request'
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: perf-${{ steps.date.outputs.timestamp }}
-        name: Performance Benchmark - ${{ steps.date.outputs.date }}
-        body_path: performance-report.md
-        draft: false
-        prerelease: false
-        files: |
-          performance-results.json
-          performance-report.md
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Create performance summary
+    - name: Generate performance summary
       run: |
         echo "## 📊 Performance Benchmark Results" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Test Summary" >> $GITHUB_STEP_SUMMARY
-        echo "| Scenario | RPS | Avg Latency | P99 Latency | Status |" >> $GITHUB_STEP_SUMMARY
-        echo "|----------|-----|-------------|-------------|--------|" >> $GITHUB_STEP_SUMMARY
-        echo "| Low Concurrent (10) | ${{ steps.parse.outputs.rps_low }} | ${{ steps.parse.outputs.latency_avg_low }} | ${{ steps.parse.outputs.latency_p99_low }} | ✅ |" >> $GITHUB_STEP_SUMMARY
-        echo "| Medium Concurrent (50) | ${{ steps.parse.outputs.rps_medium }} | ${{ steps.parse.outputs.latency_avg_medium }} | ${{ steps.parse.outputs.latency_p99_medium }} | ✅ |" >> $GITHUB_STEP_SUMMARY
-        echo "| High Concurrent (100) | ${{ steps.parse.outputs.rps_high }} | ${{ steps.parse.outputs.latency_avg_high }} | ${{ steps.parse.outputs.latency_p99_high }} | ✅ |" >> $GITHUB_STEP_SUMMARY
+        echo "### Test Information" >> $GITHUB_STEP_SUMMARY
+        echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Date | ${{ steps.date.outputs.datetime }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Commit | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Branch | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Test Type | ${{ github.event_name == 'pull_request' && 'Quick (PR)' || 'Full (Scheduled)' }} |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Detailed Report" >> $GITHUB_STEP_SUMMARY
-        echo "See [performance-report.md](https://github.com/${{ github.repository }}/releases/download/perf-${{ steps.date.outputs.timestamp }}/performance-report.md) for more details." >> $GITHUB_STEP_SUMMARY
-    
-    - name: Create baseline history
-      if: github.event_name != 'pull_request'
-      run: |
-        # 创建基准性能历史文件（仅用于产物）
-        HISTORY_FILE="baseline-history.json"
-        
-        # 如果历史文件不存在，创建空数组
-        if [ ! -f "$HISTORY_FILE" ]; then
-          echo '[]' > "$HISTORY_FILE"
-        fi
-        
-        # 使用 jq 更新历史文件
-        jq --argjson current "$(cat performance-results.json)" '. + [$current] | .[:30]' "$HISTORY_FILE" > "${HISTORY_FILE}.tmp" && mv "${HISTORY_FILE}.tmp" "$HISTORY_FILE"
-    
-    - name: Save baseline to project
-      if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/heads/release/')
-      run: |
-        # 将基准性能历史记录到工程文件（仅 release 分支）
-        HISTORY_FILE="docs/performance/baseline-history.json"
-        HISTORY_DIR=$(dirname "$HISTORY_FILE")
-        
-        # 创建目录
-        mkdir -p "$HISTORY_DIR"
-        
-        # 如果历史文件不存在，创建空数组
-        if [ ! -f "$HISTORY_FILE" ]; then
-          echo '[]' > "$HISTORY_FILE"
-        fi
-        
-        # 使用 jq 更新历史文件
-        jq --argjson current "$(cat performance-results.json)" '. + [$current] | .[:30]' "$HISTORY_FILE" > "${HISTORY_FILE}.tmp" && mv "${HISTORY_FILE}.tmp" "$HISTORY_FILE"
-        
-        # 提交历史文件更新
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        git add "$HISTORY_FILE"
-        git diff --staged --quiet || git commit -m "chore: 更新基准性能历史记录 [skip ci]"
-        git push origin release
+        echo "### Performance Metrics" >> $GITHUB_STEP_SUMMARY
+        echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Requests/sec | ${{ steps.parse.outputs.rps }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Avg Latency | ${{ steps.parse.outputs.latency_avg }} |" >> $GITHUB_STEP_SUMMARY

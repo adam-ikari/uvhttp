@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2026-01-31
+
+### Breaking Changes
+
+⚠️ **重要**: TLS 错误类型已整合到统一错误体系
+
+1. **TLS 错误类型整合**
+   - **影响**: 所有使用 `uvhttp_tls_error_t` 的代码
+   - **变更**: 删除 `uvhttp_tls_error_t`，所有 TLS API 函数返回类型改为 `uvhttp_error_t`
+   - **迁移**: 更新所有 TLS 相关函数调用
+   ```c
+   // 旧代码（已移除）
+   uvhttp_tls_error_t result = uvhttp_tls_context_new(&ctx);
+   if (result != UVHTTP_TLS_OK) { /* 处理错误 */ }
+   
+   // 新代码
+   uvhttp_error_t result = uvhttp_tls_context_new(&ctx);
+   if (result != UVHTTP_OK) { /* 处理错误 */ }
+   ```
+
+2. **TLS 错误码扩展**
+   - **新增**: `UVHTTP_ERROR_TLS_CERT` (-408) 到 `UVHTTP_ERROR_TLS_NO_CERT` (-418)
+   - **新增**: `UVHTTP_ERROR_TLS_WANT_READ` (1) 和 `UVHTTP_ERROR_TLS_WANT_WRITE` (2)
+   - **用途**: 支持更细粒度的 TLS 错误处理和非阻塞 I/O
+
+### Added
+
+- 新增 WebSocket API 测试（52个测试用例）
+- 新增服务器 API 测试
+- 更新 TLS NULL 参数测试
+
+### Changed
+
+- 统一错误处理体系，简化 API 使用
+- 改善类型安全性，减少类型转换错误
+
 ## [2.2.0] - 2026-01-28
 
 ### Breaking Changes
@@ -90,9 +126,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **零开销抽象**: 编译期宏实现，Release 模式下完全零开销
 - **内存分配器**: 性能与系统分配器相当
 - **RPS 性能测试**:
-  - 4线程100连接：22,307 RPS
-  - 2线程50连接：23,070 RPS
-  - 8线程200连接：21,707 RPS
+  - 4线程10连接：20,432 RPS（峰值）
+  - 4线程50连接：19,840 RPS
+  - 4线程100连接：19,776 RPS
+  - 4线程500连接：19,850 RPS
 
 ### Code Reduction
 - **总代码减少**: 23,805 行代码（减少 88%）
@@ -203,7 +240,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Testing
 - **测试通过**: 所有测试通过（34/34）
-- **性能测试**: RPS 基准测试通过（峰值 23,226 RPS）
+- **性能测试**: RPS 基准测试通过（峰值 20,432 RPS）
 
 ## [2.0.0] - 2026-01-24
 

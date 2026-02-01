@@ -13,27 +13,28 @@
 #include <string.h>
 
 /**
- * 路由系统混合模式阈值
+ * Router system hybrid mode threshold
  *
- * 当路由数量达到此阈值时，自动从数组模式切换到 Trie 模式以提高性能。
+ * When route count reaches this threshold, automatically switch from array mode
+ * to Trie mode for better performance.
  *
- * 选择依据：
- * - 数组模式：O(n) 查找，适合少量路由（内存占用小，查找快）
- * - Trie 模式：O(m) 查找（m为路径深度），适合大量路由（查找稳定）
- * - 阈值 100：基于性能测试，在此数量下两种模式的查找性能接近，
- *            但 Trie 模式在路由数量继续增加时性能更稳定
+ * Selection criteria:
+ * - Array mode: O(n) lookup, suitable for few routes (low memory, fast lookup)
+ * - Trie mode: O(m) lookup (m is path depth), suitable for many routes (stable lookup)
+ * - Threshold 100: Based on performance testing, at this count both modes have
+ *                  similar performance, but Trie mode remains stable as routes increase
  *
- * 性能测试结果（1000 次查找）：
- * - 50 个路由：数组 0.02ms, Trie 0.03ms
- * - 100 个路由：数组 0.04ms, Trie 0.04ms
- * - 200 个路由：数组 0.08ms, Trie 0.05ms
- * - 500 个路由：数组 0.20ms, Trie 0.06ms
+ * Performance test results (1000 lookups):
+ * - 50 routes: array 0.02ms, Trie 0.03ms
+ * - 100 routes: array 0.04ms, Trie 0.04ms
+ * - 200 routes: array 0.08ms, Trie 0.05ms
+ * - 500 routes: array 0.20ms, Trie 0.06ms
  *
- * 注意：如果需要调整此值，请重新运行性能测试验证
+ * Note: If you need to adjust this value, please re-run performance tests to verify
  */
-#define HYBRID_THRESHOLD 100 /* 切换到Trie的路由数量阈值 */
+#define HYBRID_THRESHOLD 100 /* Route count threshold to switch to Trie */
 
-/* 优化：快速方法解析（使用前缀匹配） */
+/* Optimization: fast method parsing (using prefix matching) */
 uvhttp_method_t uvhttp_method_from_string(const char* method) {
     if (!method || !method[0]) {
         return UVHTTP_ANY;

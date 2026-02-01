@@ -111,20 +111,20 @@ TEST(UvhttpWebSocketEnhancedCoverageTest, WebSocketConfig) {
 /* 测试WebSocket连接创建 */
 TEST(UvhttpWebSocketEnhancedCoverageTest, WebSocketConnectionCreate) {
     /* 测试有效连接创建 */
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0, NULL);
     /* 即使参数不完整，也可能返回非NULL */
     if (conn) {
         uvhttp_ws_connection_free(conn);
     }
     
     /* 测试无效fd */
-    conn = uvhttp_ws_connection_create(-1, NULL, 0);
+    conn = uvhttp_ws_connection_create(-1, NULL, 0, NULL);
     if (conn) {
         uvhttp_ws_connection_free(conn);
     }
     
     /* 测试NULL上下文 */
-    conn = uvhttp_ws_connection_create(10, NULL, 0);
+    conn = uvhttp_ws_connection_create(10, NULL, 0, NULL);
     if (conn) {
         uvhttp_ws_connection_free(conn);
     }
@@ -136,7 +136,7 @@ TEST(UvhttpWebSocketEnhancedCoverageTest, WebSocketConnectionFree) {
     uvhttp_ws_connection_free(NULL);
     
     /* 测试释放有效连接 */
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0, NULL);
     if (conn) {
         uvhttp_ws_connection_free(conn);
     }
@@ -196,7 +196,7 @@ TEST(UvhttpWebSocketEnhancedCoverageTest, WebSocketVerifyHandshake) {
     EXPECT_NE(result, 0);
     
     /* 测试NULL响应 */
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0, NULL);
     if (conn) {
         result = uvhttp_ws_verify_handshake_response(conn, NULL, 0);
         EXPECT_NE(result, 0);
@@ -218,7 +218,7 @@ TEST(UvhttpWebSocketEnhancedCoverageTest, WebSocketRecvFrame) {
     EXPECT_NE(result, UVHTTP_OK);
     
     /* 测试NULL帧指针 */
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0, NULL);
     if (conn) {
         result = uvhttp_ws_recv_frame(conn, NULL);
         EXPECT_NE(result, UVHTTP_OK);
@@ -241,7 +241,7 @@ TEST(UvhttpWebSocketEnhancedCoverageTest, WebSocketSendText) {
     EXPECT_NE(result, UVHTTP_OK);
     
     /* 测试NULL数据 */
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0, NULL);
     if (conn) {
         result = uvhttp_ws_send_text(&context, conn, NULL, 0);
         EXPECT_NE(result, UVHTTP_OK);
@@ -268,7 +268,7 @@ TEST(UvhttpWebSocketEnhancedCoverageTest, WebSocketSendBinary) {
     EXPECT_NE(result, UVHTTP_OK);
     
     /* 测试NULL数据 */
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0, NULL);
     if (conn) {
         result = uvhttp_ws_send_binary(&context, conn, NULL, 0);
         EXPECT_NE(result, UVHTTP_OK);
@@ -295,7 +295,7 @@ TEST(UvhttpWebSocketEnhancedCoverageTest, WebSocketSendPing) {
     EXPECT_NE(result, UVHTTP_OK);
     
     /* 测试NULL数据 */
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0, NULL);
     if (conn) {
         result = uvhttp_ws_send_ping(&context, conn, NULL, 0);
         EXPECT_NE(result, UVHTTP_OK);
@@ -322,7 +322,7 @@ TEST(UvhttpWebSocketEnhancedCoverageTest, WebSocketSendPong) {
     EXPECT_NE(result, UVHTTP_OK);
     
     /* 测试NULL数据 */
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0, NULL);
     if (conn) {
         result = uvhttp_ws_send_pong(&context, conn, NULL, 0);
         EXPECT_NE(result, UVHTTP_OK);
@@ -349,7 +349,7 @@ TEST(UvhttpWebSocketEnhancedCoverageTest, WebSocketClose) {
     EXPECT_NE(result, UVHTTP_OK);
     
     /* 测试NULL原因 */
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(10, NULL, 0, NULL);
     if (conn) {
         result = uvhttp_ws_close(&context, conn, 1000, NULL);
         /* NULL原因可能成功 */

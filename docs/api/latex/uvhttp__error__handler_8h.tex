@@ -1,0 +1,98 @@
+\hypertarget{uvhttp__error__handler_8h}{}\doxysection{include/uvhttp\+\_\+error\+\_\+handler.h File Reference}
+\label{uvhttp__error__handler_8h}\index{include/uvhttp\_error\_handler.h@{include/uvhttp\_error\_handler.h}}
+
+
+Error handling interface.  
+
+
+{\ttfamily \#include \char`\"{}uvhttp\+\_\+error.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}uvhttp\+\_\+logging.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+Include dependency graph for uvhttp\+\_\+error\+\_\+handler.\+h\+:
+% FIG 0
+This graph shows which files directly or indirectly include this file\+:
+% FIG 1
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{uvhttp__error__handler_8h_a003110c8ea8a3741c2b10511957fb3ae}{UVHTTP\+\_\+\+ERROR\+\_\+\+REPORT}}(error\+\_\+code,  message)
+\begin{DoxyCompactList}\small\item\em Error reporting macro. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{uvhttp__error__handler_8h_a81696f687314b129167b36f975b68732}{UVHTTP\+\_\+\+ERROR\+\_\+\+REPORT\+\_\+\+WITH\+\_\+\+DATA}}(error\+\_\+code,  message,  user\+\_\+data)
+\begin{DoxyCompactList}\small\item\em Error reporting macro with user data. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Error handling interface. 
+
+This module provides error reporting utilities for logging and handling errors throughout the UVHTTP library.
+
+\begin{DoxyNote}{Note}
+Error reporting functions are inline-\/optimized for zero overhead 
+\end{DoxyNote}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{uvhttp__error__handler_8h_a003110c8ea8a3741c2b10511957fb3ae}\label{uvhttp__error__handler_8h_a003110c8ea8a3741c2b10511957fb3ae}} 
+\index{uvhttp\_error\_handler.h@{uvhttp\_error\_handler.h}!UVHTTP\_ERROR\_REPORT@{UVHTTP\_ERROR\_REPORT}}
+\index{UVHTTP\_ERROR\_REPORT@{UVHTTP\_ERROR\_REPORT}!uvhttp\_error\_handler.h@{uvhttp\_error\_handler.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ERROR\_REPORT}{UVHTTP\_ERROR\_REPORT}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ERROR\+\_\+\+REPORT(\begin{DoxyParamCaption}\item[{}]{error\+\_\+code,  }\item[{}]{message }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    \textcolor{keywordflow}{do} \{                                                                      \(\backslash\)}
+\DoxyCodeLine{        uvhttp\_error\_report\_((error\_code), (message), \_\_func\_\_, \_\_FILE\_\_,     \(\backslash\)}
+\DoxyCodeLine{                             \_\_LINE\_\_, NULL);                                 \(\backslash\)}
+\DoxyCodeLine{        UVHTTP\_LOG\_ERROR(\textcolor{stringliteral}{"{}\%s: \%s"{}}, uvhttp\_error\_string(error\_code), message); \(\backslash\)}
+\DoxyCodeLine{    \} \textcolor{keywordflow}{while} (0)}
+
+\end{DoxyCode}
+
+
+Error reporting macro. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em error\+\_\+code} & Error code to report \\
+\hline
+{\em message} & Error message to log\\
+\hline
+\end{DoxyParams}
+\begin{DoxyNote}{Note}
+Automatically captures function name, file, and line number 
+
+Uses do-\/while(0) for safe macro expansion 
+\end{DoxyNote}
+\mbox{\Hypertarget{uvhttp__error__handler_8h_a81696f687314b129167b36f975b68732}\label{uvhttp__error__handler_8h_a81696f687314b129167b36f975b68732}} 
+\index{uvhttp\_error\_handler.h@{uvhttp\_error\_handler.h}!UVHTTP\_ERROR\_REPORT\_WITH\_DATA@{UVHTTP\_ERROR\_REPORT\_WITH\_DATA}}
+\index{UVHTTP\_ERROR\_REPORT\_WITH\_DATA@{UVHTTP\_ERROR\_REPORT\_WITH\_DATA}!uvhttp\_error\_handler.h@{uvhttp\_error\_handler.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ERROR\_REPORT\_WITH\_DATA}{UVHTTP\_ERROR\_REPORT\_WITH\_DATA}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ERROR\+\_\+\+REPORT\+\_\+\+WITH\+\_\+\+DATA(\begin{DoxyParamCaption}\item[{}]{error\+\_\+code,  }\item[{}]{message,  }\item[{}]{user\+\_\+data }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{    \textcolor{keywordflow}{do} \{                                                                      \(\backslash\)}
+\DoxyCodeLine{        uvhttp\_error\_report\_((error\_code), (message), \_\_func\_\_, \_\_FILE\_\_,     \(\backslash\)}
+\DoxyCodeLine{                             \_\_LINE\_\_, (user\_data));                          \(\backslash\)}
+\DoxyCodeLine{        UVHTTP\_LOG\_ERROR(\textcolor{stringliteral}{"{}\%s: \%s"{}}, uvhttp\_error\_string(error\_code), message); \(\backslash\)}
+\DoxyCodeLine{    \} \textcolor{keywordflow}{while} (0)}
+
+\end{DoxyCode}
+
+
+Error reporting macro with user data. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em error\+\_\+code} & Error code to report \\
+\hline
+{\em message} & Error message to log \\
+\hline
+{\em user\+\_\+data} & User-\/provided data to pass to error handler\\
+\hline
+\end{DoxyParams}
+\begin{DoxyNote}{Note}
+Automatically captures function name, file, and line number 
+
+Uses do-\/while(0) for safe macro expansion 
+\end{DoxyNote}

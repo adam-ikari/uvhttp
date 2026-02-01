@@ -1,11 +1,13 @@
 name: CI/CD - Deploy Documentation
 
-# 触发条件：Push 到 main 或 release/* 分支，且 docs/** 路径有变化
+# 触发条件：Push 到 main 或 release/* 分支，且 docs/** 或 Doxyfile 路径有变化
 on:
   push:
     branches: [ main, 'release/**' ]
     paths:
       - 'docs/**'
+      - 'Doxyfile'
+      - 'scripts/convert_xml_to_markdown.py'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
@@ -15,7 +17,7 @@ env:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     permissions:
       contents: read
       pages: write
@@ -27,6 +29,11 @@ jobs:
         with:
           submodules: recursive
       
+      - name: Install Doxygen
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen graphviz
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -37,15 +44,9 @@ jobs:
         with:
           version: 8
       
-      - name: Install dependencies
-        working-directory: ./docs
+      - name: Generate all documentation
         run: |
-          pnpm install --frozen-lockfile
-      
-      - name: Build documentation
-        working-directory: ./docs
-        run: |
-          npm run build
+          make docs
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -69,7 +70,14 @@ jobs:
           echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Generated Documentation" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ HTML: docs/api/html/" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ LaTeX: docs/api/latex/" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ XML: docs/api/xml/" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Markdown: docs/api/markdown_from_xml/" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ VitePress Site: docs/.vitepress/dist/" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Changed Files" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^docs/' || echo "No docs changes detected" >> $GITHUB_STEP_SUMMARY
+          git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E '^(docs/|Doxyfile|scripts/)' || echo "No docs changes detected" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY

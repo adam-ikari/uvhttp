@@ -199,28 +199,7 @@ TEST(UvhttpConfigEnhancedCoverageTest, DynamicUpdate) {
     uvhttp_config_free(config);
 }
 
-/* 测试配置监控 */
-TEST(UvhttpConfigEnhancedCoverageTest, MonitorChanges) {
-    /* 测试NULL参数 */
-    int result = uvhttp_config_monitor_changes(NULL, NULL);
-    EXPECT_NE(result, 0);
-}
-
-/* 测试获取和设置当前配置 */
-TEST(UvhttpConfigEnhancedCoverageTest, GetAndSetCurrent) {
-    /* 测试NULL参数 */
-    const uvhttp_config_t* config = uvhttp_config_get_current(NULL);
-    EXPECT_EQ(config, nullptr);
-    
-    uvhttp_config_set_current(NULL, NULL);
-}
-
-/* 测试配置热重载 */
-TEST(UvhttpConfigEnhancedCoverageTest, Reload) {
-    /* 测试NULL参数 */
-    int result = uvhttp_config_reload(NULL);
-    EXPECT_NE(result, 0);
-}
+/* 配置监控、热重载等功能已删除，符合极简工程原则 */
 
 /* 测试配置边界值 */
 TEST(UvhttpConfigEnhancedCoverageTest, BoundaryValues) {
@@ -279,7 +258,6 @@ TEST(UvhttpConfigEnhancedCoverageTest, MemoryAllocation) {
     uvhttp_config_free(config1);
     uvhttp_config_free(config2);
     
-    /* 测试重复释放 */
-    uvhttp_config_free(config1);
-    uvhttp_config_free(config2);
+    /* 注意：不测试重复释放，因为 uvhttp_config_free 应该能够安全地处理 NULL 指针
+     * 但是重复释放非 NULL 指针会导致双重释放错误 */
 }

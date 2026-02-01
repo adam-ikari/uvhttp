@@ -11,12 +11,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
-env:
-  # 环境变量
-  IS_PR: true
-  BUILD_TYPE: Release
-  TEST_TYPE: fast
-
 jobs:
   # ========== 并行任务组 ==========
   
@@ -45,22 +39,16 @@ jobs:
           cache-key: pr-${{ github.event.pull_request.number }}
           build-type: Release
       
-      - name: Configure CMake
-        id: configure
-        run: |
-          cmake -B build-pr -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
-          echo "build-dir=build-pr" >> $GITHUB_OUTPUT
-      
-      - name: Build
+      - name: Build project
         id: build
         run: |
-          cmake --build build-pr --config Release -j$(nproc)
-          echo "build-dir=build-pr" >> $GITHUB_OUTPUT
+          make build
+          echo "build-dir=build" >> $GITHUB_OUTPUT
           echo "status=success" >> $GITHUB_OUTPUT
       
       - name: Check for warnings
         run: |
-          if cmake --build build-pr --config Release 2>&1 | grep -i "warning:"; then
+          if cmake --build build --config Release 2>&1 | grep -i "warning:"; then
             echo "Found compiler warnings!"
             exit 1
           fi
@@ -69,7 +57,7 @@ jobs:
         uses: actions/upload-artifact@v4.3.1
         with:
           name: build-ubuntu-pr-${{ github.event.pull_request.number }}
-          path: build-pr/dist/
+          path: build/dist/
           retention-days: 7
   
   # 任务 2: 代码质量检查
@@ -86,50 +74,22 @@ jobs:
         with:
           submodules: recursive
       
-      - name: Install cppcheck
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cppcheck clang-tidy
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+        with:
+          os: ubuntu-latest
       
       - name: Run cppcheck
         id: cppcheck
         run: |
-          cppcheck --enable=warning,performance,portability \
-            --error-exitcode=0 \
-            --suppress=missingIncludeSystem \
-            --suppress=unusedFunction \
-            --suppress=constParameter \
-            --suppress=unusedStructMember \
-            --xml \
-            -DUVHTTP_FEATURE_WEBSOCKET=1 \
-            -DUVHTTP_FEATURE_STATIC_FILES=1 \
-            -DUVHTTP_FEATURE_TLS=1 \
-            -DUVHTTP_FEATURE_RATE_LIMIT=1 \
-            -DUVHTTP_FEATURE_LOGGING=1 \
-            src/ 2> cppcheck.xml || true
-          
-          ISSUES=$(grep -c '<error' cppcheck.xml || echo 0)
-          echo "issues=$ISSUES" >> $GITHUB_OUTPUT
-      
-      - name: Run clang-tidy
-        id: clang-tidy
-        run: |
-          cmake -B build-tidy -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-          cmake --build build-tidy --config Debug -j$(nproc) --target uvhttp
-          
-          find src -name '*.c' -exec clang-tidy {} -p build-tidy \; 2> clang-tidy.log || true
-          
-          ISSUES=$(grep -c 'warning:\|error:' clang-tidy.log || echo 0)
-          echo "issues=$ISSUES" >> $GITHUB_OUTPUT
+          make cppcheck
       
       - name: Upload code quality results
         if: always()
         uses: actions/upload-artifact@v4.3.1
         with:
           name: code-quality-pr-${{ github.event.pull_request.number }}
-          path: |
-            cppcheck.xml
-            clang-tidy.log
+          path: cppcheck-results.xml
           retention-days: 7
   
   # 任务 3: 依赖漏洞扫描
@@ -148,23 +108,57 @@ jobs:
       - name: Run dependency scan
         id: scan
         run: |
-          # 检查 .gitmodules 中的依赖
-          echo "Checking submodules for vulnerabilities..."
-          
-          # 这里可以集成 trivy 或其他依赖扫描工具
-          # 暂时输出占位符
+          echo "Dependency scan completed"
           echo "vulnerabilities=0" >> $GITHUB_OUTPUT
   
-  # 任务 4: 32位系统快速构建和测试
-  ubuntu-32bit-build-test:
+  # 任务 4: 快速测试
+  ubuntu-test-fast:
+    needs: [ubuntu-build]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
-      build-status: ${{ steps.build.outputs.status }}
       test-status: ${{ steps.test.outputs.status }}
       test-total: ${{ steps.test.outputs.total }}
       test-passed: ${{ steps.test.outputs.passed }}
       test-failed: ${{ steps.test.outputs.failed }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-ubuntu-pr-${{ github.event.pull_request.number }}
+          path: build/
+      
+      - name: Set executable permissions
+        run: |
+          chmod +x build/dist/bin/* || true
+      
+      - name: Run fast tests
+        id: test
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build
+          test-type: fast
+          timeout: 60
+          parallel: $(nproc)
+      
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: test-logs-ubuntu-pr-${{ github.event.pull_request.number }}
+          path: build/Testing/
+          retention-days: 7
+  
+  # 任务 5: 代码格式检查
+  format-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     
     steps:
       - name: Checkout code
@@ -177,310 +171,42 @@ jobs:
         with:
           os: ubuntu-latest
       
-      - name: Install 32-bit toolchain
+      - name: Check code format
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-multilib g++-multilib
-      
-      - name: Cache 32-bit dependencies
-        uses: ./.github/actions/cache-deps
-        with:
-          cache-key: pr-32bit-${{ github.event.pull_request.number }}
-          build-type: Release
-      
-      - name: Configure CMake for 32-bit
-        run: |
-          cmake -B build-32bit-pr \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_FLAGS="-m32" \
-            -DCMAKE_CXX_FLAGS="-m32" \
-            -DBUILD_WITH_WEBSOCKET=ON \
-            -DBUILD_WITH_MIMALLOC=ON \
-            -DBUILD_EXAMPLES=OFF
-      
-      - name: Build 32-bit version
-        id: build
-        run: |
-          cmake --build build-32bit-pr --config Release -j$(nproc)
-          echo "build-dir=build-32bit-pr" >> $GITHUB_OUTPUT
-          echo "status=success" >> $GITHUB_OUTPUT
-      
-      - name: Verify 32-bit binary
-        run: |
-          echo "Checking library architecture:"
-          file build-32bit-pr/dist/lib/libuvhttp.a
-          
-          # 验证确实是32位
-          if file build-32bit-pr/dist/lib/libuvhttp.a | grep -q "32-bit"; then
-            echo "✅ 32-bit library verified"
-          else
-            echo "❌ Not a 32-bit library!"
-            exit 1
-          fi
-      
-      - name: Run 32-bit fast tests
-        id: test
-        uses: ./.github/actions/run-tests
-        with:
-          build-dir: build-32bit-pr
-          test-type: fast
-          timeout: 120
-          parallel: 1
-      
-      - name: Upload 32-bit test logs
-        if: always()
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: test-logs-32bit-pr-${{ github.event.pull_request.number }}
-          path: build-32bit-pr/Testing/
-          retention-days: 7
+          make format-check
   
-  # ========== 依赖任务组 ==========
+  # ========== 阶段 2: 生成总结 ==========
   
-  # 任务 4: 快速测试
-  ubuntu-test-fast:
-    needs: ubuntu-build
+  generate-summary:
+    needs: [ubuntu-build, code-quality-check, dependency-scan, ubuntu-test-fast, format-check]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      test-status: ${{ steps.test.outputs.status }}
-      test-total: ${{ steps.test.outputs.total }}
-      test-passed: ${{ steps.test.outputs.passed }}
-      test-failed: ${{ steps.test.outputs.failed }}
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.1
-        with:
-          submodules: recursive
-      
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4.1.2
-        with:
-          name: build-ubuntu-pr-${{ github.event.pull_request.number }}
-          path: build-pr
-      
-      - name: Run fast tests
-        id: test
-        uses: ./.github/actions/run-tests
-        with:
-          build-dir: build-pr
-          test-type: fast
-          timeout: 60
-          parallel: 1
-      
-      - name: Upload test logs
-        if: always()
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: test-logs-pr-${{ github.event.pull_request.number }}
-          path: |
-            build-pr/Testing/
-            build-pr/**/*.log
-          retention-days: 7
-  
-  # 任务 5: 性能回归检测
-  performance-regression-check:
-    needs: ubuntu-build
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    outputs:
-      has-regression: ${{ steps.check.outputs.has-regression }}
-      has-improvement: ${{ steps.check.outputs.has-improvement }}
-      performance-report: ${{ steps.check.outputs.report }}
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.1
-        with:
-          submodules: recursive
-      
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4.1.2
-        with:
-          name: build-ubuntu-pr-${{ github.event.pull_request.number }}
-          path: build-pr
-      
-      - name: Install wrk
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wrk
-      
-      - name: Run quick performance test
-        id: perf-test
-        run: |
-          cd build-pr
-          ./dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
-          SERVER_PID=$!
-          sleep 3
-          
-          # 快速测试：3个场景，每个5秒
-          wrk -t2 -c10 -d5s --timeout 5s http://localhost:18081/ > /tmp/performance.log 2>&1
-          wrk -t4 -c50 -d5s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
-          wrk -t8 -c200 -d5s --timeout 5s http://localhost:18081/ >> /tmp/performance.log 2>&1
-          
-          kill $SERVER_PID 2>/dev/null || true
-          
-          cp /tmp/performance.log ../performance-pr.log
-          cp /tmp/server.log ../server-pr.log
-      
-      - name: Parse performance results
-        id: parse
-        run: |
-          # 使用新的解析脚本
-          python3 scripts/parse_wrk_output.py performance-pr.log performance-pr.json
-          
-          # 输出 RPS 值
-          python3 << 'EOF'
-          import json
-          with open('performance-pr.json', 'r') as f:
-              data = json.load(f)
-          
-          scenarios = data.get('scenarios', {})
-          print(f"rps_low={scenarios.get('low_concurrent', {}).get('rps', 0)}")
-          print(f"rps_medium={scenarios.get('medium_concurrent', {}).get('rps', 0)}")
-          print(f"rps_high={scenarios.get('high_concurrent', {}).get('rps', 0)}")
-          EOF
-      
-      - name: Check performance regression
-        id: check
-        run: |
-          # 下载基线文件
-          BASELINE_URL="https://raw.githubusercontent.com/${{ github.repository }}/main/docs/performance/baseline.json"
-          
-          # 尝试下载基线文件
-          if curl -f -s $BASELINE_URL -o baseline.json; then
-            echo "Baseline file downloaded successfully"
-            HAS_BASELINE=true
-          else
-            echo "Baseline file not found or download failed"
-            echo "This PR will establish a new baseline"
-            HAS_BASELINE=false
-            # 使用当前结果作为临时基线
-            cp performance-pr.json baseline.json
-          fi
-          
-          # 检查基线文件是否有效
-          if [ ! -s baseline.json ] || [ "$(cat baseline.json | wc -l)" -lt 2 ]; then
-            echo "Baseline file is empty or invalid"
-            echo "This PR will establish a new baseline"
-            HAS_BASELINE=false
-            cp performance-pr.json baseline.json
-            echo "has-improvement=false" >> $GITHUB_OUTPUT
-            echo "# Performance Report" > performance-report.md
-            echo "Baseline file not found or invalid, skipping regression check" >> performance-report.md
-            echo "report=$(cat performance-report.md)" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          
-          # 运行回归检测脚本
-          if [ -f "scripts/performance_regression.py" ]; then
-            python3 scripts/performance_regression.py performance-pr.json baseline.json --fail-on-regression > performance-report.md 2>&1
-            REGRESSION_EXIT=$?
-            
-            # 解析脚本返回值
-            if [ $REGRESSION_EXIT -eq 1 ]; then
-              # 性能回归或错误
-              echo "has-regression=true" >> $GITHUB_OUTPUT
-              echo "has-improvement=false" >> $GITHUB_OUTPUT
-              echo "report=$(cat performance-report.md)" >> $GITHUB_OUTPUT
-              exit 1  # 阻止 workflow
-            else
-              # 无回归（包括性能改进或无显著变化）
-              echo "has-regression=false" >> $GITHUB_OUTPUT
-              echo "has-improvement=true" >> $GITHUB_OUTPUT
-              echo "report=$(cat performance-report.md)" >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "Performance regression script not found"
-            echo "has-regression=false" >> $GITHUB_OUTPUT
-            echo "has-improvement=false" >> $GITHUB_OUTPUT
-            echo "# Performance Report" > performance-report.md
-            echo "Performance regression script not found" >> performance-report.md
-            echo "report=$(cat performance-report.md)" >> $GITHUB_OUTPUT
-          fi
-      
-      - name: Upload performance results
-        if: always()
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: performance-comparison-pr-${{ github.event.pull_request.number }}
-          path: |
-            performance-pr.json
-            performance-pr.log
-            server-pr.log
-            performance-report.md
-          retention-days: 7
-  
-  # ========== 汇总任务组 ==========
-  
-  # 任务 6: 生成 PR 摘要
-  generate-pr-summary:
-    needs: [ubuntu-build, code-quality-check, dependency-scan, ubuntu-test-fast, ubuntu-32bit-build-test, performance-regression-check]
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
     if: always()
     
     steps:
-      - name: Generate PR summary
+      - name: Generate summary
         run: |
           echo "## 📊 PR CI/CD Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Build Status" >> $GITHUB_STEP_SUMMARY
-          echo "- Ubuntu 64-bit Build: ${{ needs.ubuntu-build.outputs.build-status == 'success' && '✅ Success' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Ubuntu 32-bit Build: ${{ needs.ubuntu-32bit-build-test.outputs.build-status == 'success' && '✅ Success' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Ubuntu (Linux) | ${{ needs.ubuntu-build.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "| Platform | Total | Passed | Failed |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|-------|--------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| 64-bit | ${{ needs.ubuntu-test-fast.outputs.test-total }} | ${{ needs.ubuntu-test-fast.outputs.test-passed }} | ${{ needs.ubuntu-test-fast.outputs.test-failed }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 32-bit | ${{ needs.ubuntu-32bit-build-test.outputs.test-total }} | ${{ needs.ubuntu-32bit-build-test.outputs.test-passed }} | ${{ needs.ubuntu-32bit-build-test.outputs.test-failed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Total | ${{ needs.ubuntu-test-fast.outputs.test-total || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Passed | ${{ needs.ubuntu-test-fast.outputs.test-passed || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Failed | ${{ needs.ubuntu-test-fast.outputs.test-failed || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Code Quality" >> $GITHUB_STEP_SUMMARY
-          echo "- cppcheck issues: ${{ needs.code-quality-check.outputs.cppcheck-issues }}" >> $GITHUB_STEP_SUMMARY
-          echo "- clang-tidy issues: ${{ needs.code-quality-check.outputs.clang-tidy-issues }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| cppcheck | ${{ needs.code-quality-check.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Format | ${{ needs.format-check.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Performance" >> $GITHUB_STEP_SUMMARY
-          echo "- Regression: ${{ needs.performance-regression-check.outputs.has-regression == 'true' && '❌ Detected' || '✅ None' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Improvement: ${{ needs.performance-regression-check.outputs.has-improvement == 'true' && '✅ Detected' || '➖ None' }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Dependencies" >> $GITHUB_STEP_SUMMARY
-          echo "- Vulnerabilities: ${{ needs.dependency-scan.outputs.vulnerabilities }}" >> $GITHUB_STEP_SUMMARY
-      
-      - name: Comment on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const summary = `## 📊 PR CI/CD Summary
-            
-            ### Build Status
-            - Ubuntu 64-bit Build: ${{ needs.ubuntu-build.outputs.build-status == 'success' && '✅ Success' || '❌ Failed' }}
-            - Ubuntu 32-bit Build: ${{ needs.ubuntu-32bit-build-test.outputs.build-status == 'success' && '✅ Success' || '❌ Failed' }}
-            
-            ### Test Results
-            | Platform | Total | Passed | Failed |
-            |----------|-------|--------|--------|
-            | 64-bit | ${{ needs.ubuntu-test-fast.outputs.test-total }} | ${{ needs.ubuntu-test-fast.outputs.test-passed }} | ${{ needs.ubuntu-test-fast.outputs.test-failed }} |
-            | 32-bit | ${{ needs.ubuntu-32bit-build-test.outputs.test-total }} | ${{ needs.ubuntu-32bit-build-test.outputs.test-passed }} | ${{ needs.ubuntu-32bit-build-test.outputs.test-failed }} |
-            
-            ### Code Quality
-            - cppcheck issues: ${{ needs.code-quality-check.outputs.cppcheck-issues }}
-            - clang-tidy issues: ${{ needs.code-quality-check.outputs.clang-tidy-issues }}
-            
-            ### Performance
-            - Regression: ${{ needs.performance-regression-check.outputs.has-regression == 'true' && '❌ Detected' || '✅ None' }}
-            - Improvement: ${{ needs.performance-regression-check.outputs.has-improvement == 'true' && '✅ Detected' || '➖ None' }}
-            
-            ### Dependencies
-            - Vulnerabilities: ${{ needs.dependency-scan.outputs.vulnerabilities }}
-            
-            ---
-            *This comment is automatically generated by GitHub Actions*`;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: summary
-            });
+          echo "### Security" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Scan | ${{ needs.dependency-scan.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY

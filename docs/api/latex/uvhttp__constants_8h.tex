@@ -1,0 +1,1453 @@
+\hypertarget{uvhttp__constants_8h}{}\doxysection{include/uvhttp\+\_\+constants.h File Reference}
+\label{uvhttp__constants_8h}\index{include/uvhttp\_constants.h@{include/uvhttp\_constants.h}}
+
+
+UVHTTP 可配置常量定义  
+
+
+{\ttfamily \#include \char`\"{}uvhttp\+\_\+defaults.\+h\char`\"{}}\newline
+Include dependency graph for uvhttp\+\_\+constants.\+h\+:
+% FIG 0
+This graph shows which files directly or indirectly include this file\+:
+% FIG 1
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aa8cecfc5c5c054d2875c03e77b7be15d}\label{uvhttp__constants_8h_aa8cecfc5c5c054d2875c03e77b7be15d}} 
+\#define {\bfseries TRUE}~1
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aa93f0eb578d23995850d61f7d61c55c1}\label{uvhttp__constants_8h_aa93f0eb578d23995850d61f7d61c55c1}} 
+\#define {\bfseries FALSE}~0
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a48305c4c7fe7ca61c3a4ea5ffee7e324}\label{uvhttp__constants_8h_a48305c4c7fe7ca61c3a4ea5ffee7e324}} 
+\#define {\bfseries UVHTTP\+\_\+\+STRINGIFY}(x)~\#x
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a20266218307579d1a6daa324e1989259}\label{uvhttp__constants_8h_a20266218307579d1a6daa324e1989259}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+CONTINUE}~100
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a98558ff397253d9712db501914f405c1}\label{uvhttp__constants_8h_a98558ff397253d9712db501914f405c1}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+MIN\+\_\+\+CONTINUE}~100
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a97278c027145c455f3ecdc410ea4c0e5}\label{uvhttp__constants_8h_a97278c027145c455f3ecdc410ea4c0e5}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+SWITCHING\+\_\+\+PROTOCOLS}~101
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ae8b95d942d9ce5fadf7b9ac5134500d8}\label{uvhttp__constants_8h_ae8b95d942d9ce5fadf7b9ac5134500d8}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+OK}~200
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a22575f139ec1c7ebd433478ee16c5783}\label{uvhttp__constants_8h_a22575f139ec1c7ebd433478ee16c5783}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+CREATED}~201
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a999596d70d1977fd945062b428487df4}\label{uvhttp__constants_8h_a999596d70d1977fd945062b428487df4}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+ACCEPTED}~202
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a1b67dce8fe8295ac4f7db4721beeaf78}\label{uvhttp__constants_8h_a1b67dce8fe8295ac4f7db4721beeaf78}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+NO\+\_\+\+CONTENT}~204
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a65970b4f25a8eaaed6875aac4dfe2ff3}\label{uvhttp__constants_8h_a65970b4f25a8eaaed6875aac4dfe2ff3}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+BAD\+\_\+\+REQUEST}~400
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a2d37bb0d44188642b802f8bda8c10a98}\label{uvhttp__constants_8h_a2d37bb0d44188642b802f8bda8c10a98}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+UNAUTHORIZED}~401
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a42cc7e1e9b73d5a958135fc3247470dd}\label{uvhttp__constants_8h_a42cc7e1e9b73d5a958135fc3247470dd}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+FORBIDDEN}~403
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a671ec52ce09b3be91c935537313f498b}\label{uvhttp__constants_8h_a671ec52ce09b3be91c935537313f498b}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+NOT\+\_\+\+FOUND}~404
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a5fef613bf0b124b9b42d6dc66fe65b78}\label{uvhttp__constants_8h_a5fef613bf0b124b9b42d6dc66fe65b78}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+METHOD\+\_\+\+NOT\+\_\+\+ALLOWED}~405
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a76ee04114d7f36ae4c175c21b2bf2c69}\label{uvhttp__constants_8h_a76ee04114d7f36ae4c175c21b2bf2c69}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+REQUEST\+\_\+\+ENTITY\+\_\+\+TOO\+\_\+\+LARGE}~413
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ab7fe32579eeb4508af8270996e2d588b}\label{uvhttp__constants_8h_ab7fe32579eeb4508af8270996e2d588b}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+INTERNAL\+\_\+\+ERROR}~500
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_abcd2b0753e32b2dd040387b713e9742d}\label{uvhttp__constants_8h_abcd2b0753e32b2dd040387b713e9742d}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+NOT\+\_\+\+IMPLEMENTED}~501
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aa3f4c8f68d36a5628db4fd89dd99cd4a}\label{uvhttp__constants_8h_aa3f4c8f68d36a5628db4fd89dd99cd4a}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+BAD\+\_\+\+GATEWAY}~502
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_adb36d80b0cbb17c1d21bda6a888a182a}\label{uvhttp__constants_8h_adb36d80b0cbb17c1d21bda6a888a182a}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+SERVICE\+\_\+\+UNAVAILABLE}~503
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_adcafcf36a9b34212e8b85a0e6e97fbda}\label{uvhttp__constants_8h_adcafcf36a9b34212e8b85a0e6e97fbda}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATUS\+\_\+\+MAX}~599
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a423bc8f89f32dccc39bdecfa99b263a9}\label{uvhttp__constants_8h_a423bc8f89f32dccc39bdecfa99b263a9}} 
+\#define {\bfseries UVHTTP\+\_\+\+VERSION\+\_\+1\+\_\+1}~\char`\"{}HTTP/1.\+1\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a8a5b9ef5ebca5aa8171bfcb673e085ea}\label{uvhttp__constants_8h_a8a5b9ef5ebca5aa8171bfcb673e085ea}} 
+\#define {\bfseries UVHTTP\+\_\+\+VERSION\+\_\+\+LENGTH}~8
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a691db899cf00cd2adc46dfea04e63844}\label{uvhttp__constants_8h_a691db899cf00cd2adc46dfea04e63844}} 
+\#define {\bfseries UVHTTP\+\_\+\+METHOD\+\_\+\+GET}~\char`\"{}GET\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aeb4dcf9bbe141d2b2cb1bb09173ad4e2}\label{uvhttp__constants_8h_aeb4dcf9bbe141d2b2cb1bb09173ad4e2}} 
+\#define {\bfseries UVHTTP\+\_\+\+METHOD\+\_\+\+POST}~\char`\"{}POST\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a69ddab3f78f4957866285c6003f64e2c}\label{uvhttp__constants_8h_a69ddab3f78f4957866285c6003f64e2c}} 
+\#define {\bfseries UVHTTP\+\_\+\+METHOD\+\_\+\+PUT}~\char`\"{}PUT\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a2656bc596ec812884c8f33f729cb98bb}\label{uvhttp__constants_8h_a2656bc596ec812884c8f33f729cb98bb}} 
+\#define {\bfseries UVHTTP\+\_\+\+METHOD\+\_\+\+DELETE}~\char`\"{}DELETE\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aef2ab62bc22e7ab08e8f135d1884d25e}\label{uvhttp__constants_8h_aef2ab62bc22e7ab08e8f135d1884d25e}} 
+\#define {\bfseries UVHTTP\+\_\+\+METHOD\+\_\+\+HEAD}~\char`\"{}HEAD\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_abd8266f625588494564af645c6ccf0f7}\label{uvhttp__constants_8h_abd8266f625588494564af645c6ccf0f7}} 
+\#define {\bfseries UVHTTP\+\_\+\+METHOD\+\_\+\+OPTIONS}~\char`\"{}OPTIONS\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_adc488b188ac58f5708fc8689f014ca9c}\label{uvhttp__constants_8h_adc488b188ac58f5708fc8689f014ca9c}} 
+\#define {\bfseries UVHTTP\+\_\+\+METHOD\+\_\+\+PATCH}~\char`\"{}PATCH\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a557a1be4117c4bfbcafba03673daf1d3}\label{uvhttp__constants_8h_a557a1be4117c4bfbcafba03673daf1d3}} 
+\#define {\bfseries UVHTTP\+\_\+\+CONTENT\+\_\+\+TYPE\+\_\+\+TEXT}~\char`\"{}text/plain\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_add2ae2c70c5bc65956a388aa24aff2bd}\label{uvhttp__constants_8h_add2ae2c70c5bc65956a388aa24aff2bd}} 
+\#define {\bfseries UVHTTP\+\_\+\+CONTENT\+\_\+\+TYPE\+\_\+\+HTML}~\char`\"{}text/html\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aa56ff17a9e86cb4794ae4a75d4803edb}\label{uvhttp__constants_8h_aa56ff17a9e86cb4794ae4a75d4803edb}} 
+\#define {\bfseries UVHTTP\+\_\+\+CONTENT\+\_\+\+TYPE\+\_\+\+CSS}~\char`\"{}text/css\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ab8f11a28750af75a630e834ca399d758}\label{uvhttp__constants_8h_ab8f11a28750af75a630e834ca399d758}} 
+\#define {\bfseries UVHTTP\+\_\+\+CONTENT\+\_\+\+TYPE\+\_\+\+JS}~\char`\"{}application/javascript\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a9aa17136646147ac2aa23f2b6f67524c}\label{uvhttp__constants_8h_a9aa17136646147ac2aa23f2b6f67524c}} 
+\#define {\bfseries UVHTTP\+\_\+\+CONTENT\+\_\+\+TYPE\+\_\+\+XML}~\char`\"{}application/xml\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a1cd9db1591cf571c10788e03c09df95b}\label{uvhttp__constants_8h_a1cd9db1591cf571c10788e03c09df95b}} 
+\#define {\bfseries UVHTTP\+\_\+\+CONTENT\+\_\+\+TYPE\+\_\+\+IMAGE\+\_\+\+JPEG}~\char`\"{}image/jpeg\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ae10dedfd61ac7fb842adc45bfc1b0de3}\label{uvhttp__constants_8h_ae10dedfd61ac7fb842adc45bfc1b0de3}} 
+\#define {\bfseries UVHTTP\+\_\+\+CONTENT\+\_\+\+TYPE\+\_\+\+IMAGE\+\_\+\+PNG}~\char`\"{}image/png\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a818e6f0b3c66a1c881910336b45dbebd}\label{uvhttp__constants_8h_a818e6f0b3c66a1c881910336b45dbebd}} 
+\#define {\bfseries UVHTTP\+\_\+\+CONTENT\+\_\+\+TYPE\+\_\+\+IMAGE\+\_\+\+GIF}~\char`\"{}image/gif\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ae19a2c3ce6c7185765eea4a2c30ecafd}\label{uvhttp__constants_8h_ae19a2c3ce6c7185765eea4a2c30ecafd}} 
+\#define {\bfseries UVHTTP\+\_\+\+CONTENT\+\_\+\+TYPE\+\_\+\+IMAGE\+\_\+\+SVG}~\char`\"{}image/svg+xml\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a30710af3e7014f0e27bd13f97f697a5b}\label{uvhttp__constants_8h_a30710af3e7014f0e27bd13f97f697a5b}} 
+\#define {\bfseries UVHTTP\+\_\+\+CONTENT\+\_\+\+TYPE\+\_\+\+IMAGE\+\_\+\+ICO}~\char`\"{}image/x-\/icon\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a445810aca3eb88a7beaf708b7e319932}\label{uvhttp__constants_8h_a445810aca3eb88a7beaf708b7e319932}} 
+\#define {\bfseries UVHTTP\+\_\+\+CONTENT\+\_\+\+TYPE\+\_\+\+PDF}~\char`\"{}application/pdf\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_af55476893e6c3f93f13ddfd6d4db9df6}\label{uvhttp__constants_8h_af55476893e6c3f93f13ddfd6d4db9df6}} 
+\#define {\bfseries UVHTTP\+\_\+\+CONTENT\+\_\+\+TYPE\+\_\+\+ZIP}~\char`\"{}application/zip\char`\"{}
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a2da8984c3f8eb6afec44a23b54cb06f6}{UVHTTP\+\_\+\+INITIAL\+\_\+\+BUFFER\+\_\+\+SIZE}}~8192
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a2d0402afede93319b98aa663fc21f04e}{UVHTTP\+\_\+\+MAX\+\_\+\+BODY\+\_\+\+SIZE}}~(1024 $\ast$ 1024) /$\ast$ 1MB $\ast$/
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_adfad4cfde34ad0176b78fed71fd65056}{UVHTTP\+\_\+\+READ\+\_\+\+BUFFER\+\_\+\+SIZE}}~16384
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a33307a1eb0edd0b816b2d4e7d0fb3200}{UVHTTP\+\_\+\+MAX\+\_\+\+HEADER\+\_\+\+NAME\+\_\+\+SIZE}}~256
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ac16fbc11f97ddd64b51b17dcce48842c}\label{uvhttp__constants_8h_ac16fbc11f97ddd64b51b17dcce48842c}} 
+\#define {\bfseries UVHTTP\+\_\+\+MAX\+\_\+\+HEADER\+\_\+\+VALUE\+\_\+\+SIZE}~4096
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ad1403a1e332398191248753cc2fa8aec}\label{uvhttp__constants_8h_ad1403a1e332398191248753cc2fa8aec}} 
+\#define {\bfseries UVHTTP\+\_\+\+MAX\+\_\+\+HEADER\+\_\+\+NAME\+\_\+\+LENGTH}~(\mbox{\hyperlink{uvhttp__constants_8h_a33307a1eb0edd0b816b2d4e7d0fb3200}{UVHTTP\+\_\+\+MAX\+\_\+\+HEADER\+\_\+\+NAME\+\_\+\+SIZE}} -\/ 1)
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a96b7478e77bfb4d0ae7485ae02eec46c}\label{uvhttp__constants_8h_a96b7478e77bfb4d0ae7485ae02eec46c}} 
+\#define {\bfseries UVHTTP\+\_\+\+MAX\+\_\+\+HEADER\+\_\+\+VALUE\+\_\+\+LENGTH}~(UVHTTP\+\_\+\+MAX\+\_\+\+HEADER\+\_\+\+VALUE\+\_\+\+SIZE -\/ 1)
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_acc722f8275506bde8216c1f1daf35839}{UVHTTP\+\_\+\+MAX\+\_\+\+HEADERS}}~64
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_abab5c4bf7dbfb9cc7a120f4b52c923fa}{UVHTTP\+\_\+\+INLINE\+\_\+\+HEADERS\+\_\+\+CAPACITY}}~32
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_ace65ddf32c04a358fe6c875aeb2532aa}{UVHTTP\+\_\+\+MAX\+\_\+\+URL\+\_\+\+SIZE}}~2048
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a09d79719b4ae097b5ab2fd4846d4d767}\label{uvhttp__constants_8h_a09d79719b4ae097b5ab2fd4846d4d767}} 
+\#define {\bfseries UVHTTP\+\_\+\+MAX\+\_\+\+PATH\+\_\+\+SIZE}~1024
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ac0c9156e9ebf193ec495ff83ee453dad}\label{uvhttp__constants_8h_ac0c9156e9ebf193ec495ff83ee453dad}} 
+\#define {\bfseries UVHTTP\+\_\+\+MAX\+\_\+\+METHOD\+\_\+\+SIZE}~16
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_af772c6e2ff11c97322ab2d7e748f283b}{UVHTTP\+\_\+\+MAX\+\_\+\+CONNECTIONS\+\_\+\+HARD}}~65535 /$\ast$ 硬限制 $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a74b144bfc8024afee23eaec164890d12}\label{uvhttp__constants_8h_a74b144bfc8024afee23eaec164890d12}} 
+\#define {\bfseries UVHTTP\+\_\+\+MAX\+\_\+\+CONNECTIONS\+\_\+\+MAX}~10000 /$\ast$ 最大推荐值 $\ast$/
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a8ef4fb2a58c8eeb95a9a1a80bc13b6ee}{UVHTTP\+\_\+\+BACKLOG}}~8192
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a06459aca2622c8b41ff9b1ef4af0b368}{UVHTTP\+\_\+\+ASYNC\+\_\+\+FILE\+\_\+\+MAX\+\_\+\+CONCURRENT}}~64
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a0ec5f8c11bde0cb9a0e9be70f22d2ab0}{UVHTTP\+\_\+\+ASYNC\+\_\+\+FILE\+\_\+\+MAX\+\_\+\+SIZE}}~(10 $\ast$ 1024 $\ast$ 1024) /$\ast$ 10\+MB $\ast$/
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_ae193366a5a78740b3d12edacdf245369}{UVHTTP\+\_\+\+STATIC\+\_\+\+MAX\+\_\+\+CACHE\+\_\+\+SIZE}}~(1024 $\ast$ 1024) /$\ast$ 1MB $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a54358d13efd7057d697f1695bd9433cd}\label{uvhttp__constants_8h_a54358d13efd7057d697f1695bd9433cd}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATIC\+\_\+\+MAX\+\_\+\+PATH\+\_\+\+SIZE}~1024
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a9021bcf0f01e06b10d2fb19c91a9def0}\label{uvhttp__constants_8h_a9021bcf0f01e06b10d2fb19c91a9def0}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATIC\+\_\+\+MAX\+\_\+\+CONTENT\+\_\+\+LENGTH}~32
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a761f718764fcdc268d3eac9b731928b1}\label{uvhttp__constants_8h_a761f718764fcdc268d3eac9b731928b1}} 
+\#define {\bfseries UVHTTP\+\_\+\+STATIC\+\_\+\+MAX\+\_\+\+FILE\+\_\+\+SIZE}~(10 $\ast$ 1024 $\ast$ 1024) /$\ast$ 10\+MB $\ast$/
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a4139ba7e7ef44f193ac9ca7e2a65ad1d}{UVHTTP\+\_\+\+STATIC\+\_\+\+SMALL\+\_\+\+FILE\+\_\+\+THRESHOLD}}~4096 /$\ast$ 4KB $\ast$/
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a89a72d753d58f3c8ba68b37537ce566b}{UVHTTP\+\_\+\+SENDFILE\+\_\+\+DEFAULT\+\_\+\+CHUNK\+\_\+\+SIZE}}~(256 $\ast$ 1024) /$\ast$ 256KB $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aeb38be9ea71a7036ea65206af8a89ccf}\label{uvhttp__constants_8h_aeb38be9ea71a7036ea65206af8a89ccf}} 
+\#define {\bfseries UVHTTP\+\_\+\+SENDFILE\+\_\+\+MIN\+\_\+\+FILE\+\_\+\+SIZE}~(64 $\ast$ 1024) /$\ast$ 64KB $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a2f49a6149729087c3a9f29d3a3cd8478}\label{uvhttp__constants_8h_a2f49a6149729087c3a9f29d3a3cd8478}} 
+\#define {\bfseries UVHTTP\+\_\+\+SENDFILE\+\_\+\+DEFAULT\+\_\+\+TIMEOUT\+\_\+\+MS}~30000 /$\ast$ 30 秒 $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a92a564d57196aa77ee774f4a4fcc752e}\label{uvhttp__constants_8h_a92a564d57196aa77ee774f4a4fcc752e}} 
+\#define {\bfseries UVHTTP\+\_\+\+SENDFILE\+\_\+\+DEFAULT\+\_\+\+MAX\+\_\+\+RETRY}~2
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_adc201535ca4e9ccf0fd00888d85f7364}{UVHTTP\+\_\+\+FILE\+\_\+\+SIZE\+\_\+\+SMALL}}~(1024 $\ast$ 1024) /$\ast$ 1MB $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ac79bff4c4c251bc9c1b55b0f8f1c0729}\label{uvhttp__constants_8h_ac79bff4c4c251bc9c1b55b0f8f1c0729}} 
+\#define {\bfseries UVHTTP\+\_\+\+FILE\+\_\+\+SIZE\+\_\+\+MEDIUM}~(10 $\ast$ 1024 $\ast$ 1024) /$\ast$ 10\+MB $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a5ad1bb023caf32afe9727eaba0a76156}\label{uvhttp__constants_8h_a5ad1bb023caf32afe9727eaba0a76156}} 
+\#define {\bfseries UVHTTP\+\_\+\+FILE\+\_\+\+SIZE\+\_\+\+LARGE}~(100 $\ast$ 1024 $\ast$ 1024) /$\ast$ 100\+MB $\ast$/
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_ab69869569b7867216993e7bb53e86829}{UVHTTP\+\_\+\+CHUNK\+\_\+\+SIZE\+\_\+\+SMALL}}~(64 $\ast$ 1024) /$\ast$ 64KB $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a49997a3e565fb8c6d8dbb7402950a93d}\label{uvhttp__constants_8h_a49997a3e565fb8c6d8dbb7402950a93d}} 
+\#define {\bfseries UVHTTP\+\_\+\+CHUNK\+\_\+\+SIZE\+\_\+\+MEDIUM}~(256 $\ast$ 1024) /$\ast$ 256KB $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ad5d7d5ac998a68a879beb8dbfc6b5feb}\label{uvhttp__constants_8h_ad5d7d5ac998a68a879beb8dbfc6b5feb}} 
+\#define {\bfseries UVHTTP\+\_\+\+CHUNK\+\_\+\+SIZE\+\_\+\+LARGE}~(1024 $\ast$ 1024) /$\ast$ 1MB $\ast$/
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a2b25eb190d86a9bba887b6657750d463}{UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+CONFIG\+\_\+\+MIN\+\_\+\+FRAME\+\_\+\+SIZE}}~1024 /$\ast$ 1KB $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a9b75baa1d9bd58090fc5590f9aa321aa}\label{uvhttp__constants_8h_a9b75baa1d9bd58090fc5590f9aa321aa}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+CONFIG\+\_\+\+MAX\+\_\+\+FRAME\+\_\+\+SIZE}~        (256 $\ast$ 1024 $\ast$ 1024) /$\ast$ 256MB $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a9a337fb8319d4e01caf6959a2149b3b3}\label{uvhttp__constants_8h_a9a337fb8319d4e01caf6959a2149b3b3}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+CONFIG\+\_\+\+MIN\+\_\+\+MESSAGE\+\_\+\+SIZE}~1024 /$\ast$ 1KB $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a46e69a2f9848abd823338ba1af8930f2}\label{uvhttp__constants_8h_a46e69a2f9848abd823338ba1af8930f2}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+CONFIG\+\_\+\+MAX\+\_\+\+MESSAGE\+\_\+\+SIZE}~        (1024 $\ast$ 1024 $\ast$ 1024) /$\ast$ 1GB $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ab11857b845d8d140f9536f9dce55a9c7}\label{uvhttp__constants_8h_ab11857b845d8d140f9536f9dce55a9c7}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+CONFIG\+\_\+\+MIN\+\_\+\+PING\+\_\+\+INTERVAL}~1 /$\ast$ 1秒 $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ac24b3aa93893019160f1e13f3f15ca5e}\label{uvhttp__constants_8h_ac24b3aa93893019160f1e13f3f15ca5e}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+CONFIG\+\_\+\+MAX\+\_\+\+PING\+\_\+\+INTERVAL}~3600 /$\ast$ 1小时 $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_abaff274fab07a9f32ce3438221908f0f}\label{uvhttp__constants_8h_abaff274fab07a9f32ce3438221908f0f}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+CONFIG\+\_\+\+MIN\+\_\+\+PING\+\_\+\+TIMEOUT}~1 /$\ast$ 1秒 $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ababfa9fe4942cb85fbd3099d2d3f8753}\label{uvhttp__constants_8h_ababfa9fe4942cb85fbd3099d2d3f8753}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+CONFIG\+\_\+\+MAX\+\_\+\+PING\+\_\+\+TIMEOUT}~3600 /$\ast$ 1小时 $\ast$/
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_ad3ad620846db71ce0bb5e8f61446cc82}{UVHTTP\+\_\+\+TCP\+\_\+\+KEEPALIVE\+\_\+\+MIN\+\_\+\+TIMEOUT}}~1 /$\ast$ 1秒 $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a9cd3347d696219f6df65fdcee4520133}\label{uvhttp__constants_8h_a9cd3347d696219f6df65fdcee4520133}} 
+\#define {\bfseries UVHTTP\+\_\+\+TCP\+\_\+\+KEEPALIVE\+\_\+\+MAX\+\_\+\+TIMEOUT}~7200 /$\ast$ 2小时 $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_afcb9f4485e9424b94992afbc97239a96}\label{uvhttp__constants_8h_afcb9f4485e9424b94992afbc97239a96}} 
+\#define {\bfseries UVHTTP\+\_\+\+SENDFILE\+\_\+\+MIN\+\_\+\+TIMEOUT\+\_\+\+MS}~1000 /$\ast$ 1秒 $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_acd6c2e734d1ece540c8871da13cc4bbf}\label{uvhttp__constants_8h_acd6c2e734d1ece540c8871da13cc4bbf}} 
+\#define {\bfseries UVHTTP\+\_\+\+SENDFILE\+\_\+\+MAX\+\_\+\+TIMEOUT\+\_\+\+MS}~300000 /$\ast$ 5分钟 $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a98ba241754145e707edf3568ff5b6978}\label{uvhttp__constants_8h_a98ba241754145e707edf3568ff5b6978}} 
+\#define {\bfseries UVHTTP\+\_\+\+SENDFILE\+\_\+\+MIN\+\_\+\+RETRY}~0
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ae0dfdcc8177f96c555df857ea08e7ddb}\label{uvhttp__constants_8h_ae0dfdcc8177f96c555df857ea08e7ddb}} 
+\#define {\bfseries UVHTTP\+\_\+\+SENDFILE\+\_\+\+MAX\+\_\+\+RETRY}~10
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a6d4d47efa385136f8ac29d94ef39fc97}{UVHTTP\+\_\+\+CACHE\+\_\+\+DEFAULT\+\_\+\+MAX\+\_\+\+ENTRIES}}~1000
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a748420100cafa4f915ad3411782d9c80}\label{uvhttp__constants_8h_a748420100cafa4f915ad3411782d9c80}} 
+\#define {\bfseries UVHTTP\+\_\+\+CACHE\+\_\+\+DEFAULT\+\_\+\+TTL}~3600 /$\ast$ 1 小时 $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_adeeff2fc440ba2c33a6cedf7b290730e}\label{uvhttp__constants_8h_adeeff2fc440ba2c33a6cedf7b290730e}} 
+\#define {\bfseries UVHTTP\+\_\+\+CACHE\+\_\+\+MIN\+\_\+\+MAX\+\_\+\+ENTRIES}~0
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aeff2b5f00fec7f3dc25dbac4c45fb7bf}\label{uvhttp__constants_8h_aeff2b5f00fec7f3dc25dbac4c45fb7bf}} 
+\#define {\bfseries UVHTTP\+\_\+\+CACHE\+\_\+\+MAX\+\_\+\+MAX\+\_\+\+ENTRIES}~100000
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ab4248e9d1a0a9f11b4114cf2783fbc42}\label{uvhttp__constants_8h_ab4248e9d1a0a9f11b4114cf2783fbc42}} 
+\#define {\bfseries UVHTTP\+\_\+\+CACHE\+\_\+\+MIN\+\_\+\+TTL}~0
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ae24b55225a5bea977e7cf3a6957cd1e9}\label{uvhttp__constants_8h_ae24b55225a5bea977e7cf3a6957cd1e9}} 
+\#define {\bfseries UVHTTP\+\_\+\+CACHE\+\_\+\+MAX\+\_\+\+TTL}~86400 /$\ast$ 24小时 $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a7a302d319a0b4235da95f3adf1792fe4}\label{uvhttp__constants_8h_a7a302d319a0b4235da95f3adf1792fe4}} 
+\#define {\bfseries UVHTTP\+\_\+\+LRU\+\_\+\+CACHE\+\_\+\+MIN\+\_\+\+BATCH\+\_\+\+EVICTION\+\_\+\+SIZE}~1
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a7246adc0a089ee7546be159d46b56e56}\label{uvhttp__constants_8h_a7246adc0a089ee7546be159d46b56e56}} 
+\#define {\bfseries UVHTTP\+\_\+\+LRU\+\_\+\+CACHE\+\_\+\+MAX\+\_\+\+BATCH\+\_\+\+EVICTION\+\_\+\+SIZE}~1000
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a65d4aa34572c90626b8be5b8d46b2a3e}{UVHTTP\+\_\+\+RATE\+\_\+\+LIMIT\+\_\+\+MIN\+\_\+\+MAX\+\_\+\+REQUESTS}}~1
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ab965b0335616952f01b36a74e541eae9}\label{uvhttp__constants_8h_ab965b0335616952f01b36a74e541eae9}} 
+\#define {\bfseries UVHTTP\+\_\+\+RATE\+\_\+\+LIMIT\+\_\+\+MAX\+\_\+\+MAX\+\_\+\+REQUESTS}~10000000
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a64c5e8d118429ca142a7a37e9ee9337b}\label{uvhttp__constants_8h_a64c5e8d118429ca142a7a37e9ee9337b}} 
+\#define {\bfseries UVHTTP\+\_\+\+RATE\+\_\+\+LIMIT\+\_\+\+MIN\+\_\+\+WINDOW\+\_\+\+SECONDS}~1
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a25edcf331a08f956045d79672d130643}\label{uvhttp__constants_8h_a25edcf331a08f956045d79672d130643}} 
+\#define {\bfseries UVHTTP\+\_\+\+RATE\+\_\+\+LIMIT\+\_\+\+MAX\+\_\+\+WINDOW\+\_\+\+SECONDS}~86400 /$\ast$ 24小时 $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_afa346dca743c9f9c9e5ffe33cac0a71d}\label{uvhttp__constants_8h_afa346dca743c9f9c9e5ffe33cac0a71d}} 
+\#define {\bfseries UVHTTP\+\_\+\+RATE\+\_\+\+LIMIT\+\_\+\+MIN\+\_\+\+TIMEOUT\+\_\+\+SECONDS}~1
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_abae952e8c7aa0fc350827c41d6c0b54d}\label{uvhttp__constants_8h_abae952e8c7aa0fc350827c41d6c0b54d}} 
+\#define {\bfseries UVHTTP\+\_\+\+RATE\+\_\+\+LIMIT\+\_\+\+MAX\+\_\+\+TIMEOUT\+\_\+\+SECONDS}~3600 /$\ast$ 1小时 $\ast$/
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_adb8c3a9d871ce3de06e75cba87d3b227}{UVHTTP\+\_\+\+SOCKET\+\_\+\+SEND\+\_\+\+BUF\+\_\+\+SIZE}}~(256 $\ast$ 1024) /$\ast$ 256KB $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aac842fb01d085b3667100db9f4df549b}\label{uvhttp__constants_8h_aac842fb01d085b3667100db9f4df549b}} 
+\#define {\bfseries UVHTTP\+\_\+\+SOCKET\+\_\+\+RECV\+\_\+\+BUF\+\_\+\+SIZE}~(256 $\ast$ 1024) /$\ast$ 256KB $\ast$/
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a150a9c80f65a185c830ed50c43e35986}{UVHTTP\+\_\+\+PAGE\+\_\+\+SIZE}}~4096
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ad8c3ac0ab35c21bb4cc4040a3d854a30}\label{uvhttp__constants_8h_ad8c3ac0ab35c21bb4cc4040a3d854a30}} 
+\#define {\bfseries UVHTTP\+\_\+\+PAGE\+\_\+\+ALIGNMENT\+\_\+\+MASK}~(\mbox{\hyperlink{uvhttp__constants_8h_a150a9c80f65a185c830ed50c43e35986}{UVHTTP\+\_\+\+PAGE\+\_\+\+SIZE}} -\/ 1)
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_aaad88af840018eafb714159e25fe41ab}{UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+VERSION}}~13
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a8a8b987ad82dd714f6e7bf35ac19981b}\label{uvhttp__constants_8h_a8a8b987ad82dd714f6e7bf35ac19981b}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+MAGIC\+\_\+\+KEY}~\char`\"{}258EAFA5-\/E914-\/47DA-\/95CA-\/C5\+AB0\+DC85\+B11\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a4f5d94b816c8ce435be3f2226d2bb489}\label{uvhttp__constants_8h_a4f5d94b816c8ce435be3f2226d2bb489}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+MAGIC\+\_\+\+KEY\+\_\+\+LENGTH}~36
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a1665cef5dab7e482897785692c8702da}\label{uvhttp__constants_8h_a1665cef5dab7e482897785692c8702da}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+ACCEPT\+\_\+\+KEY\+\_\+\+SIZE}~40
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_ad101dc6fe35ad00944ca3424e785f24e}{UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+MAX\+\_\+\+FRAME\+\_\+\+SIZE}}~4096
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a1da75b8cf8a3b47f1137e4620f7e731c}\label{uvhttp__constants_8h_a1da75b8cf8a3b47f1137e4620f7e731c}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+FRAME\+\_\+\+HEADER\+\_\+\+SIZE}~10
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ad448e25c9cf6d72b47358504078a90e5}\label{uvhttp__constants_8h_ad448e25c9cf6d72b47358504078a90e5}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+CLOSE\+\_\+\+CODE\+\_\+\+SIZE}~4
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a8a871fd8cdb7775a8c2fa210d3eaaadb}\label{uvhttp__constants_8h_a8a871fd8cdb7775a8c2fa210d3eaaadb}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+MIN\+\_\+\+BUFFER\+\_\+\+SIZE}~1024
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a378f0e71107441d180170ee4458568c2}\label{uvhttp__constants_8h_a378f0e71107441d180170ee4458568c2}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+MIN\+\_\+\+BUFFER\+\_\+\+EXPANSION\+\_\+\+SIZE}~1024
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a2ec800acb9e072c74f02444747539b0f}{UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+MIN\+\_\+\+FRAME\+\_\+\+HEADER\+\_\+\+SIZE}}~2
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ae8cb749f76bab2a61aa2399ae0d7005b}\label{uvhttp__constants_8h_ae8cb749f76bab2a61aa2399ae0d7005b}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+EXTENDED\+\_\+\+FRAME\+\_\+\+HEADER\+\_\+\+SIZE}~10
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_aa35ca504ce39bdd71e01d534dfdc2760}{UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+OPCODE\+\_\+\+TEXT}}~0x1
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a8a479021f3d68b37736573cb94b0c547}\label{uvhttp__constants_8h_a8a479021f3d68b37736573cb94b0c547}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+OPCODE\+\_\+\+BINARY}~0x2
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a4f5ded43d01def1df4a26feb38002e7f}\label{uvhttp__constants_8h_a4f5ded43d01def1df4a26feb38002e7f}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+OPCODE\+\_\+\+CLOSE}~0x8
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a13acff1629ced3a2ce4d066d6c45fa93}\label{uvhttp__constants_8h_a13acff1629ced3a2ce4d066d6c45fa93}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+FIN}~0x80
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ab994649104fd5b2dc9c4a369467f135e}\label{uvhttp__constants_8h_ab994649104fd5b2dc9c4a369467f135e}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+PAYLOAD\+\_\+\+LEN\+\_\+126}~126
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ae670cf27b004d79c578fdd3a3c7410fd}\label{uvhttp__constants_8h_ae670cf27b004d79c578fdd3a3c7410fd}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+PAYLOAD\+\_\+\+LEN\+\_\+65536}~65536
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_af528d53f8d3a4aa2e1063bd2f5fff223}{UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+CLOSE\+\_\+\+CODE\+\_\+\+MIN}}~1000
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a30f9a81fc693613918143cd9c2e4cdfa}\label{uvhttp__constants_8h_a30f9a81fc693613918143cd9c2e4cdfa}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+CLOSE\+\_\+\+CODE\+\_\+\+MAX}~4999
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a63c0fb7d0b859ea68ba57de9d3ebba22}\label{uvhttp__constants_8h_a63c0fb7d0b859ea68ba57de9d3ebba22}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+MAX\+\_\+\+REASON\+\_\+\+LENGTH}~123
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a047094c88424bea202eea31d728031cc}{UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+MIN\+\_\+\+KEY\+\_\+\+LENGTH}}~16
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a071fee9e706b9185023770b4754ce5d1}\label{uvhttp__constants_8h_a071fee9e706b9185023770b4754ce5d1}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+MAX\+\_\+\+KEY\+\_\+\+LENGTH}~64
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aab76b8a57f08d4e19e8066a358624816}\label{uvhttp__constants_8h_aab76b8a57f08d4e19e8066a358624816}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+COMBINED\+\_\+\+MAX\+\_\+\+LENGTH}~128
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a814301d19e9295737bd80d247d175528}\label{uvhttp__constants_8h_a814301d19e9295737bd80d247d175528}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+SHA1\+\_\+\+HASH\+\_\+\+SIZE}~20
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a95059d93b6ce1ccd6015850d2a2bdba0}{UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+FIN\+\_\+\+MASK}}~0x80
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a386b2bf3db17710e15079e04972dd860}\label{uvhttp__constants_8h_a386b2bf3db17710e15079e04972dd860}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+OPCODE\+\_\+\+MASK}~0x0F
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a492a397d902224eeebcba2debb3144d9}\label{uvhttp__constants_8h_a492a397d902224eeebcba2debb3144d9}} 
+\#define {\bfseries UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+PAYLOAD\+\_\+\+MASK}~0x7F
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a66c11609c20860a2d6d519aef9584d02}{UVHTTP\+\_\+\+ENABLE\+\_\+\+ROUTER\+\_\+\+CACHE\+\_\+\+OPTIMIZATION}}~1 /$\ast$ 默认启用 $\ast$/
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a0198d79aac57c942ee17bb9ab2b99e27}{UVHTTP\+\_\+\+ROUTER\+\_\+\+SEARCH\+\_\+\+MODE}}~2
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a0326544f5136fb947751e9b0db359c04}\label{uvhttp__constants_8h_a0326544f5136fb947751e9b0db359c04}} 
+\#define {\bfseries UVHTTP\+\_\+\+ROUTER\+\_\+\+METHOD\+\_\+\+MAP\+\_\+\+SIZE}~256
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a4be63537c2c220bbf35a868378645e41}\label{uvhttp__constants_8h_a4be63537c2c220bbf35a868378645e41}} 
+\#define {\bfseries UVHTTP\+\_\+\+ROUTER\+\_\+\+HASH\+\_\+\+SIZE}~256
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_accdd8a0c1547ed3fb2d8b8199c863f7d}\label{uvhttp__constants_8h_accdd8a0c1547ed3fb2d8b8199c863f7d}} 
+\#define {\bfseries UVHTTP\+\_\+\+ROUTER\+\_\+\+HOT\+\_\+\+PATH\+\_\+\+SIZE}~64
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aa10aa467badbbf931cd40cfbea92211c}\label{uvhttp__constants_8h_aa10aa467badbbf931cd40cfbea92211c}} 
+\#define {\bfseries UVHTTP\+\_\+\+ROUTER\+\_\+\+HOT\+\_\+\+ROUTES\+\_\+\+COUNT}~16
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a62e3728426ebe03a4fbaf12004e53923}\label{uvhttp__constants_8h_a62e3728426ebe03a4fbaf12004e53923}} 
+\#define {\bfseries UVHTTP\+\_\+\+ROUTER\+\_\+\+ACCESS\+\_\+\+COUNT\+\_\+\+SIZE}~1024
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aa06a0cb9cf4f1d007c5f0ae969a5739c}\label{uvhttp__constants_8h_aa06a0cb9cf4f1d007c5f0ae969a5739c}} 
+\#define {\bfseries UVHTTP\+\_\+\+ROUTER\+\_\+\+HYBRID\+\_\+\+THRESHOLD}~100
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_abad108a9a6f04541dcd96be9738c2974}\label{uvhttp__constants_8h_abad108a9a6f04541dcd96be9738c2974}} 
+\#define {\bfseries UVHTTP\+\_\+\+ROUTER\+\_\+\+MAX\+\_\+\+CHILD\+\_\+\+COUNT}~16
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ab0dcc15bc3799e30debe304828bb2365}\label{uvhttp__constants_8h_ab0dcc15bc3799e30debe304828bb2365}} 
+\#define {\bfseries UVHTTP\+\_\+\+ROUTER\+\_\+\+INITIAL\+\_\+\+POOL\+\_\+\+SIZE}~64
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a8f19cc3f245ccfec628f82e6b4f1d99c}\label{uvhttp__constants_8h_a8f19cc3f245ccfec628f82e6b4f1d99c}} 
+\#define {\bfseries UVHTTP\+\_\+\+ROUTER\+\_\+\+MAX\+\_\+\+CHILDREN}~16
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a2e07487f842e6dfc59df84eda620118c}{UVHTTP\+\_\+\+TLS\+\_\+\+VERIFY\+\_\+\+DEPTH}}~1
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aee3ed1f4985af1143156e9fe626f41aa}\label{uvhttp__constants_8h_aee3ed1f4985af1143156e9fe626f41aa}} 
+\#define {\bfseries UVHTTP\+\_\+\+TLS\+\_\+\+DH\+\_\+\+MIN\+\_\+\+BITLEN}~2048
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aa0619084f90b503996b755919d63f1fc}\label{uvhttp__constants_8h_aa0619084f90b503996b755919d63f1fc}} 
+\#define {\bfseries UVHTTP\+\_\+\+TLS\+\_\+\+MAX\+\_\+\+SESSIONS}~1024
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a62e6ee6b949c046ca7a333969675cda5}{UVHTTP\+\_\+\+TLS\+\_\+\+ERROR\+\_\+\+BUFFER\+\_\+\+SIZE}}~256
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a3e2e19575661e3a524f5f94c6620653b}\label{uvhttp__constants_8h_a3e2e19575661e3a524f5f94c6620653b}} 
+\#define {\bfseries UVHTTP\+\_\+\+TLS\+\_\+\+CERT\+\_\+\+BUFFER\+\_\+\+SIZE}~256
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_affeb958511dc1ea0f3eee14136fadbcf}\label{uvhttp__constants_8h_affeb958511dc1ea0f3eee14136fadbcf}} 
+\#define {\bfseries UVHTTP\+\_\+\+TLS\+\_\+\+CN\+\_\+\+BUFFER\+\_\+\+SIZE}~256
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_adb792378b8fe9ef6a0f65806f168c4af}\label{uvhttp__constants_8h_adb792378b8fe9ef6a0f65806f168c4af}} 
+\#define {\bfseries UVHTTP\+\_\+\+TLS\+\_\+\+SAN\+\_\+\+BUFFER\+\_\+\+SIZE}~256
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ac8a83effcacfae5893fcb45d88b96581}\label{uvhttp__constants_8h_ac8a83effcacfae5893fcb45d88b96581}} 
+\#define {\bfseries UVHTTP\+\_\+\+TLS\+\_\+\+PATH\+\_\+\+MAX\+\_\+\+SIZE}~256
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_ab87df493b558edadfdcd69fdcc0617d6}{UVHTTP\+\_\+\+CORS\+\_\+\+MAX\+\_\+\+AGE\+\_\+\+DEFAULT}}~\char`\"{}86400\char`\"{}
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_ab8b00a662f32248a7cd107c0587d170c}{UVHTTP\+\_\+\+RATE\+\_\+\+LIMIT\+\_\+\+WINDOW}}~60 /$\ast$ 秒 $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a33802c6ebf32701cf9b8bf0b11b2b02e}\label{uvhttp__constants_8h_a33802c6ebf32701cf9b8bf0b11b2b02e}} 
+\#define {\bfseries UVHTTP\+\_\+\+RATE\+\_\+\+LIMIT\+\_\+\+MAX\+\_\+\+AGE}~17
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a4f41f3f5d24c010281d448d65b610895}{UVHTTP\+\_\+\+ERROR\+\_\+\+MESSAGE\+\_\+\+LENGTH}}~256
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a3746bbaeeecae6ec4a8d096488a20588}\label{uvhttp__constants_8h_a3746bbaeeecae6ec4a8d096488a20588}} 
+\#define {\bfseries UVHTTP\+\_\+\+ERROR\+\_\+\+CONTEXT\+\_\+\+BUFFER\+\_\+\+SIZE}~256
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_af26e583ee4428eecc7b9fa3dd8083ffc}\label{uvhttp__constants_8h_af26e583ee4428eecc7b9fa3dd8083ffc}} 
+\#define {\bfseries UVHTTP\+\_\+\+ERROR\+\_\+\+MESSAGE\+\_\+\+BUFFER\+\_\+\+SIZE}~512
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aaff35b0efa192ea43162c47aac5ae23c}\label{uvhttp__constants_8h_aaff35b0efa192ea43162c47aac5ae23c}} 
+\#define {\bfseries UVHTTP\+\_\+\+ERROR\+\_\+\+LOG\+\_\+\+BUFFER\+\_\+\+SIZE}~1024
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_aa8bbae5e9797276818c20d6fff47168b}{UVHTTP\+\_\+\+MAX\+\_\+\+FILE\+\_\+\+PATH\+\_\+\+SIZE}}~2048
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ab58308be447c213b3fc4c9a2036f037a}\label{uvhttp__constants_8h_ab58308be447c213b3fc4c9a2036f037a}} 
+\#define {\bfseries UVHTTP\+\_\+\+DECODED\+\_\+\+PATH\+\_\+\+SIZE}~1024
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_aea2bff37f4fd368df056dbb2668f33fb}{UVHTTP\+\_\+\+IPV6\+\_\+\+MAX\+\_\+\+STRING\+\_\+\+LENGTH}}~46
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a49c4f696a237295756b661665bf0564c}\label{uvhttp__constants_8h_a49c4f696a237295756b661665bf0564c}} 
+\#define {\bfseries UVHTTP\+\_\+\+IPV4\+\_\+\+MAX\+\_\+\+STRING\+\_\+\+LENGTH}~16
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ad4882fc5efffc414af63558e2574b624}\label{uvhttp__constants_8h_ad4882fc5efffc414af63558e2574b624}} 
+\#define {\bfseries UVHTTP\+\_\+\+MAX\+\_\+\+PORT\+\_\+\+NUMBER}~65535
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ae6f6010bd577962c0a8f72a13c55ab9e}\label{uvhttp__constants_8h_ae6f6010bd577962c0a8f72a13c55ab9e}} 
+\#define {\bfseries UVHTTP\+\_\+\+MIN\+\_\+\+PORT\+\_\+\+NUMBER}~1
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a29f35bb9dedbaee00b417f18e1ce97d5}{UVHTTP\+\_\+\+SECONDS\+\_\+\+IN\+\_\+\+DAY}}~86400
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a817f2e25f0b59b6ba12a078109281c05}\label{uvhttp__constants_8h_a817f2e25f0b59b6ba12a078109281c05}} 
+\#define {\bfseries UVHTTP\+\_\+\+MILLISECONDS\+\_\+\+PER\+\_\+\+SECOND}~1000
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a3786cb0113ebaefaabcccf072ae98057}\label{uvhttp__constants_8h_a3786cb0113ebaefaabcccf072ae98057}} 
+\#define {\bfseries UVHTTP\+\_\+\+NANOSECONDS\+\_\+\+PER\+\_\+\+MILLISECOND}~1000000
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_aab44fee6ce14236aca034d6d8179edb7}{UVHTTP\+\_\+\+CACHE\+\_\+\+MAX\+\_\+\+AGE}}~3600 /$\ast$ 秒 $\ast$/
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_ae014cf63a6b653a33adf3ca44a8720ee}{UVHTTP\+\_\+\+DEFAULT\+\_\+\+BASE\+\_\+\+DELAY\+\_\+\+MS}}~100
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_af141c7463ea84af6c89b5c57a2a796ec}\label{uvhttp__constants_8h_af141c7463ea84af6c89b5c57a2a796ec}} 
+\#define {\bfseries UVHTTP\+\_\+\+DEFAULT\+\_\+\+MAX\+\_\+\+DELAY\+\_\+\+MS}~5000
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_aa7c2c9f2e01ef21735baca03f65269c9}{UVHTTP\+\_\+\+TCP\+\_\+\+KEEPALIVE\+\_\+\+TIMEOUT}}~60 /$\ast$ 秒 $\ast$/
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a6f1308238434f068ce35004cd6f80cf7}{UVHTTP\+\_\+\+CLIENT\+\_\+\+IP\+\_\+\+BUFFER\+\_\+\+SIZE}}~64
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a70eff754f427642b0a265270a92caae4}{UVHTTP\+\_\+\+SENDFILE\+\_\+\+TIMEOUT\+\_\+\+MS}}~30000 /$\ast$ 30 秒 $\ast$/
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a2173090a37d121043606362e85d2fa1c}\label{uvhttp__constants_8h_a2173090a37d121043606362e85d2fa1c}} 
+\#define {\bfseries UVHTTP\+\_\+\+SENDFILE\+\_\+\+CHUNK\+\_\+\+SIZE}~(64 $\ast$ 1024) /$\ast$ 64KB $\ast$/
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a9e299870cc0bd273430fa6ee4b287034}{UVHTTP\+\_\+\+LRU\+\_\+\+CACHE\+\_\+\+BATCH\+\_\+\+EVICTION\+\_\+\+SIZE}}~10
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_af8358106fb90e8a8bc4402a7270ef537}{UVHTTP\+\_\+\+IP\+\_\+\+OCTET\+\_\+\+MAX\+\_\+\+VALUE}}~255
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_aa96b07cc12f8bd8d43f30c01cac6a715}{UVHTTP\+\_\+\+RATE\+\_\+\+LIMIT\+\_\+\+MAX\+\_\+\+REQUESTS}}~1000000
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a8a93a4e16c8644eaf643b4a7d6971048}{UVHTTP\+\_\+\+ERROR\+\_\+\+SERVER\+\_\+\+MIN}}~-\/106
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a141c374734cdee9d5167f62448e9eadb}\label{uvhttp__constants_8h_a141c374734cdee9d5167f62448e9eadb}} 
+\#define {\bfseries UVHTTP\+\_\+\+ERROR\+\_\+\+SERVER\+\_\+\+MAX}~-\/100
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a90585d47c5b8375f63bb375db037ddb3}{UVHTTP\+\_\+\+ERROR\+\_\+\+CONNECTION\+\_\+\+MIN}}~-\/207
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ab09808553c3977a864587d1979674d39}\label{uvhttp__constants_8h_ab09808553c3977a864587d1979674d39}} 
+\#define {\bfseries UVHTTP\+\_\+\+ERROR\+\_\+\+CONNECTION\+\_\+\+MAX}~-\/200
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_ae2b44e971ba8edbe4401e8bc326d97a9}{UVHTTP\+\_\+\+ERROR\+\_\+\+REQUEST\+\_\+\+MIN}}~-\/307
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ad875d033b3ea01f2c8c87cee3349ee0b}\label{uvhttp__constants_8h_ad875d033b3ea01f2c8c87cee3349ee0b}} 
+\#define {\bfseries UVHTTP\+\_\+\+ERROR\+\_\+\+REQUEST\+\_\+\+MAX}~-\/300
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a7c625add1c94fef1d52a1ac9dcc5f481}{UVHTTP\+\_\+\+ERROR\+\_\+\+TLS\+\_\+\+MIN}}~-\/407
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a5701c1b56d23c3e0331e16f5198e6d28}\label{uvhttp__constants_8h_a5701c1b56d23c3e0331e16f5198e6d28}} 
+\#define {\bfseries UVHTTP\+\_\+\+ERROR\+\_\+\+TLS\+\_\+\+MAX}~-\/400
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a2a1c8aca43140fe895fb4c9b7c8e79aa}{UVHTTP\+\_\+\+ERROR\+\_\+\+ROUTER\+\_\+\+MIN}}~-\/504
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a3ef36d160ded85e7879db38b067f1bcd}\label{uvhttp__constants_8h_a3ef36d160ded85e7879db38b067f1bcd}} 
+\#define {\bfseries UVHTTP\+\_\+\+ERROR\+\_\+\+ROUTER\+\_\+\+MAX}~-\/500
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a5c101cb91e6af8b78e5c224e1d35640b}{UVHTTP\+\_\+\+ERROR\+\_\+\+ALLOCATOR\+\_\+\+MIN}}~-\/602
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ae256e57ec8f0cdf0968c6748ff218645}\label{uvhttp__constants_8h_ae256e57ec8f0cdf0968c6748ff218645}} 
+\#define {\bfseries UVHTTP\+\_\+\+ERROR\+\_\+\+ALLOCATOR\+\_\+\+MAX}~-\/600
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a821f820dde3d9221a798116a6b347386}{UVHTTP\+\_\+\+ERROR\+\_\+\+WEBSOCKET\+\_\+\+MIN}}~-\/707
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a55eb2bbbadb63c0bb9327b9d2964910f}\label{uvhttp__constants_8h_a55eb2bbbadb63c0bb9327b9d2964910f}} 
+\#define {\bfseries UVHTTP\+\_\+\+ERROR\+\_\+\+WEBSOCKET\+\_\+\+MAX}~-\/700
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a4a8ea57c3ab732ec415e4f17c092e9e1}{UVHTTP\+\_\+\+ERROR\+\_\+\+CONFIG\+\_\+\+MIN}}~-\/903
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_abba307d75e441f6155b2ca7c26c2daca}\label{uvhttp__constants_8h_abba307d75e441f6155b2ca7c26c2daca}} 
+\#define {\bfseries UVHTTP\+\_\+\+ERROR\+\_\+\+CONFIG\+\_\+\+MAX}~-\/900
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a3d7e0bf771a0fddfeb43925b411843bb}{UVHTTP\+\_\+\+ERROR\+\_\+\+LOG\+\_\+\+MIN}}~-\/1103
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_acfd1c03510914d3e9007c4cd68932a7f}\label{uvhttp__constants_8h_acfd1c03510914d3e9007c4cd68932a7f}} 
+\#define {\bfseries UVHTTP\+\_\+\+ERROR\+\_\+\+LOG\+\_\+\+MAX}~-\/1100
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a53cbe887f83f3d45178368c80a6d7709}{UVHTTP\+\_\+\+NULL\+\_\+\+BYTE}}~\textquotesingle{}\textbackslash{}0\textquotesingle{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a7ba9683df2e9a93f4a1bb000672630b1}\label{uvhttp__constants_8h_a7ba9683df2e9a93f4a1bb000672630b1}} 
+\#define {\bfseries UVHTTP\+\_\+\+CARRIAGE\+\_\+\+RETURN}~\textquotesingle{}\textbackslash{}r\textquotesingle{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a0f5fa1a74c3f86a9193341c3c5f4dece}\label{uvhttp__constants_8h_a0f5fa1a74c3f86a9193341c3c5f4dece}} 
+\#define {\bfseries UVHTTP\+\_\+\+LINE\+\_\+\+FEED}~\textquotesingle{}\textbackslash{}n\textquotesingle{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aec81b9a57677cba01381b9648bdae94c}\label{uvhttp__constants_8h_aec81b9a57677cba01381b9648bdae94c}} 
+\#define {\bfseries UVHTTP\+\_\+\+TAB}~\textquotesingle{}\textbackslash{}t\textquotesingle{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a8c23a5146354a15acdab403b7123fa84}\label{uvhttp__constants_8h_a8c23a5146354a15acdab403b7123fa84}} 
+\#define {\bfseries UVHTTP\+\_\+\+BACKSLASH}~\textquotesingle{}\textbackslash{}\textbackslash{}\textquotesingle{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a777cc333f76ad726fd71ff13dcf0f395}\label{uvhttp__constants_8h_a777cc333f76ad726fd71ff13dcf0f395}} 
+\#define {\bfseries UVHTTP\+\_\+\+QUOTE}~\textquotesingle{}\char`\"{}\textquotesingle{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a97e33f6d431fe592452aef51f4c7d82e}\label{uvhttp__constants_8h_a97e33f6d431fe592452aef51f4c7d82e}} 
+\#define {\bfseries UVHTTP\+\_\+\+ESCAPE\+\_\+\+SEQUENCE\+\_\+\+LENGTH}~6
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a585b605ab5d2cac9e681f95925f06d2f}\label{uvhttp__constants_8h_a585b605ab5d2cac9e681f95925f06d2f}} 
+\#define {\bfseries UVHTTP\+\_\+\+TAB\+\_\+\+CHARACTER}~9
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a2a96db21ff763aee3c05e9e3970b7017}\label{uvhttp__constants_8h_a2a96db21ff763aee3c05e9e3970b7017}} 
+\#define {\bfseries UVHTTP\+\_\+\+SPACE\+\_\+\+CHARACTER}~32
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aa233455defb3c7c25ee3b6f604c0f8c1}\label{uvhttp__constants_8h_aa233455defb3c7c25ee3b6f604c0f8c1}} 
+\#define {\bfseries UVHTTP\+\_\+\+DELETE\+\_\+\+CHARACTER}~127
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a1d4c7223b221ab903dbc7a5da21c6e80}{UVHTTP\+\_\+\+HEADER\+\_\+\+CONTENT\+\_\+\+TYPE}}~\char`\"{}Content-\/Type\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ad6a7a7ab61e75e2853d0c99a1bc0510c}\label{uvhttp__constants_8h_ad6a7a7ab61e75e2853d0c99a1bc0510c}} 
+\#define {\bfseries UVHTTP\+\_\+\+HEADER\+\_\+\+CONTENT\+\_\+\+LENGTH}~\char`\"{}Content-\/Length\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_af3c6a9c48825b5279c4248087f76bda1}\label{uvhttp__constants_8h_af3c6a9c48825b5279c4248087f76bda1}} 
+\#define {\bfseries UVHTTP\+\_\+\+HEADER\+\_\+\+CACHE\+\_\+\+CONTROL}~\char`\"{}Cache-\/Control\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ae38fac3008aa4a21824fc1691d2b1d54}\label{uvhttp__constants_8h_ae38fac3008aa4a21824fc1691d2b1d54}} 
+\#define {\bfseries UVHTTP\+\_\+\+HEADER\+\_\+\+CONNECTION}~\char`\"{}Connection\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a406bfe292acdbb0a9ca1fd66bd8615e9}\label{uvhttp__constants_8h_a406bfe292acdbb0a9ca1fd66bd8615e9}} 
+\#define {\bfseries UVHTTP\+\_\+\+HEADER\+\_\+\+UPGRADE}~\char`\"{}Upgrade\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a06497f36ab37560f36dabeea15d7fcad}\label{uvhttp__constants_8h_a06497f36ab37560f36dabeea15d7fcad}} 
+\#define {\bfseries UVHTTP\+\_\+\+HEADER\+\_\+\+WEBSOCKET\+\_\+\+KEY}~\char`\"{}Sec-\/Web\+Socket-\/Key\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ad21bfbeb6285d377097d52edf3cddfac}\label{uvhttp__constants_8h_ad21bfbeb6285d377097d52edf3cddfac}} 
+\#define {\bfseries UVHTTP\+\_\+\+HEADER\+\_\+\+WEBSOCKET\+\_\+\+ACCEPT}~\char`\"{}Sec-\/Web\+Socket-\/Accept\char`\"{}
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_aafd177f3efef4e63e582ac76dd6a8b95}{UVHTTP\+\_\+\+MESSAGE\+\_\+\+TOO\+\_\+\+MANY\+\_\+\+REQUESTS}}~\char`\"{}Too many requests\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ac1e605c52fb53d972c0eee004b8910c6}\label{uvhttp__constants_8h_ac1e605c52fb53d972c0eee004b8910c6}} 
+\#define {\bfseries UVHTTP\+\_\+\+MESSAGE\+\_\+\+FORBIDDEN}~\char`\"{}Forbidden\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a24938fc6648e397d125177eed4df4c14}\label{uvhttp__constants_8h_a24938fc6648e397d125177eed4df4c14}} 
+\#define {\bfseries UVHTTP\+\_\+\+MESSAGE\+\_\+\+NOT\+\_\+\+FOUND}~\char`\"{}File not found\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a9806afdb6ab8b5a4160e5114e543f497}\label{uvhttp__constants_8h_a9806afdb6ab8b5a4160e5114e543f497}} 
+\#define {\bfseries UVHTTP\+\_\+\+MESSAGE\+\_\+\+FILE\+\_\+\+TOO\+\_\+\+LARGE}~\char`\"{}File too large\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ac5c32f460f49ddc3155124a4600fe4df}\label{uvhttp__constants_8h_ac5c32f460f49ddc3155124a4600fe4df}} 
+\#define {\bfseries UVHTTP\+\_\+\+MESSAGE\+\_\+\+INTERNAL\+\_\+\+ERROR}~\char`\"{}Internal server error\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_ae07073df2c18df068741e6f2a45d4fda}\label{uvhttp__constants_8h_ae07073df2c18df068741e6f2a45d4fda}} 
+\#define {\bfseries UVHTTP\+\_\+\+MESSAGE\+\_\+\+MEMORY\+\_\+\+FAILED}~\char`\"{}Memory allocation failed\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a9f34fb2c390f5bff3ca26511380ac61b}\label{uvhttp__constants_8h_a9f34fb2c390f5bff3ca26511380ac61b}} 
+\#define {\bfseries UVHTTP\+\_\+\+MESSAGE\+\_\+\+FILE\+\_\+\+READ\+\_\+\+ERROR}~\char`\"{}File read error\char`\"{}
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aabefdd8dd3a0a4fe06e6fa1e5b6227e4}\label{uvhttp__constants_8h_aabefdd8dd3a0a4fe06e6fa1e5b6227e4}} 
+\#define {\bfseries UVHTTP\+\_\+\+MESSAGE\+\_\+\+RESPONSE\+\_\+\+ERROR}~\char`\"{}Response body error\char`\"{}
+\item 
+\#define \mbox{\hyperlink{uvhttp__constants_8h_a88dc0f95dcae352092e8b46cfc6c4b97}{UVHTTP\+\_\+\+SERVER\+\_\+\+CLEANUP\+\_\+\+LOOP\+\_\+\+ITERATIONS}}~10
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a5913d7227a91f11a5894f26537904200}\label{uvhttp__constants_8h_a5913d7227a91f11a5894f26537904200}} 
+\#define {\bfseries UVHTTP\+\_\+\+RESPONSE\+\_\+\+HEADER\+\_\+\+SAFETY\+\_\+\+MARGIN}~256
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_adb4c4b11adcb37d2c0241e3cb4ddafb8}\label{uvhttp__constants_8h_adb4c4b11adcb37d2c0241e3cb4ddafb8}} 
+\#define {\bfseries UVHTTP\+\_\+\+DIR\+\_\+\+LISTING\+\_\+\+BUFFER\+\_\+\+SIZE}~4096
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_a417ac02b7e44b6c8fe3fa4c94126ad9a}\label{uvhttp__constants_8h_a417ac02b7e44b6c8fe3fa4c94126ad9a}} 
+\#define {\bfseries UVHTTP\+\_\+\+DIR\+\_\+\+ENTRY\+\_\+\+HTML\+\_\+\+OVERHEAD}~200
+\item 
+\mbox{\Hypertarget{uvhttp__constants_8h_aa7a2712cfbb8da4ec225d8c4fb101c0b}\label{uvhttp__constants_8h_aa7a2712cfbb8da4ec225d8c4fb101c0b}} 
+\#define {\bfseries UVHTTP\+\_\+503\+\_\+\+RESPONSE\+\_\+\+CONTENT\+\_\+\+LENGTH}~19
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+UVHTTP 可配置常量定义 
+
+本文件集中了所有可配置的常量，按功能模块分类。
+
+==================== 配置指南 ====================
+
+
+\begin{DoxyEnumerate}
+\item 编译时配置 通过 CMake 编译选项或直接修改本文件中的宏定义来配置 推荐使用 CMake 选项，便于维护和版本控制
+\item 性能调优建议
+\begin{DoxyItemize}
+\item 小型应用（\texorpdfstring{$<$}{<} 1000 RPS）：使用默认配置
+\item 中型应用（1000-\/10000 RPS）：增加连接数和缓冲区大小
+\item 大型应用（\texorpdfstring{$>$}{>} 10000 RPS）：需要系统调优，参考下面的大型应用配置
+\end{DoxyItemize}
+\item 内存优化
+\begin{DoxyItemize}
+\item 内存受限环境：减小缓冲区大小，禁用缓存
+\item 高性能环境：增加缓冲区大小，启用所有缓存
+\end{DoxyItemize}
+\end{DoxyEnumerate}
+
+==================== 配置示例 ====================
+
+小型应用配置（内存优先）： \#define UVHTTP\+\_\+\+MAX\+\_\+\+CONNECTIONS\+\_\+\+DEFAULT 512 \#define UVHTTP\+\_\+\+INITIAL\+\_\+\+BUFFER\+\_\+\+SIZE 4096 \#define UVHTTP\+\_\+\+ENABLE\+\_\+\+ROUTER\+\_\+\+CACHE\+\_\+\+OPTIMIZATION 0
+
+中型应用配置（平衡）： \#define UVHTTP\+\_\+\+MAX\+\_\+\+CONNECTIONS\+\_\+\+DEFAULT 2048 // 默认 \#define UVHTTP\+\_\+\+INITIAL\+\_\+\+BUFFER\+\_\+\+SIZE 8192 // 默认 \#define UVHTTP\+\_\+\+ENABLE\+\_\+\+ROUTER\+\_\+\+CACHE\+\_\+\+OPTIMIZATION 1 // 默认
+
+大型应用配置（性能优先）： \#define UVHTTP\+\_\+\+MAX\+\_\+\+CONNECTIONS\+\_\+\+DEFAULT 10000 \#define UVHTTP\+\_\+\+INITIAL\+\_\+\+BUFFER\+\_\+\+SIZE 16384 \#define UVHTTP\+\_\+\+READ\+\_\+\+BUFFER\+\_\+\+SIZE 32768 \#define UVHTTP\+\_\+\+ENABLE\+\_\+\+ROUTER\+\_\+\+CACHE\+\_\+\+OPTIMIZATION 1 \#define UVHTTP\+\_\+\+ENABLE\+\_\+\+ROUTER\+\_\+\+CACHE\+\_\+\+STATS 1 \#define UVHTTP\+\_\+\+ENABLE\+\_\+\+ROUTER\+\_\+\+CACHE\+\_\+\+DYNAMIC 1
+
+==================== 系统调优 ====================
+
+对于大型应用（\texorpdfstring{$>$}{>} 10000 RPS），需要调整系统参数：
+
+Linux 系统参数优化： \hypertarget{uvhttp__constants_8h_autotoc_md0}{}\doxysubsection{/etc/sysctl.\+conf}\label{uvhttp__constants_8h_autotoc_md0}
+fs.\+file-\/max = 1000000 net.\+core.\+somaxconn = 8192 net.\+ipv4.\+tcp\+\_\+max\+\_\+syn\+\_\+backlog = 8192 net.\+ipv4.\+tcp\+\_\+tw\+\_\+reuse = 1 net.\+ipv4.\+ip\+\_\+local\+\_\+port\+\_\+range = 1024 65535 net.\+core.\+netdev\+\_\+max\+\_\+backlog = 16384\hypertarget{uvhttp__constants_8h_autotoc_md1}{}\doxysubsection{应用限制}\label{uvhttp__constants_8h_autotoc_md1}
+ulimit -\/n 1000000
+
+==================== 注意事项 ====================
+
+
+\begin{DoxyEnumerate}
+\item 修改常量后需要重新编译
+\item 某些常量的修改可能影响二进制兼容性
+\item 增加缓冲区大小会增加内存使用
+\item 连接数受限于系统文件描述符数量 
+\end{DoxyEnumerate}
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{uvhttp__constants_8h_a06459aca2622c8b41ff9b1ef4af0b368}\label{uvhttp__constants_8h_a06459aca2622c8b41ff9b1ef4af0b368}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_ASYNC\_FILE\_MAX\_CONCURRENT@{UVHTTP\_ASYNC\_FILE\_MAX\_CONCURRENT}}
+\index{UVHTTP\_ASYNC\_FILE\_MAX\_CONCURRENT@{UVHTTP\_ASYNC\_FILE\_MAX\_CONCURRENT}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ASYNC\_FILE\_MAX\_CONCURRENT}{UVHTTP\_ASYNC\_FILE\_MAX\_CONCURRENT}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ASYNC\+\_\+\+FILE\+\_\+\+MAX\+\_\+\+CONCURRENT~64}
+
+Keep-\/\+Alive 配置
+
+配置建议：
+\begin{DoxyItemize}
+\item 默认值适合大多数应用
+\item 高并发场景可以增加 UVHTTP\+\_\+\+DEFAULT\+\_\+\+KEEP\+\_\+\+ALIVE\+\_\+\+MAX
+\end{DoxyItemize}
+
+默认值定义在 \mbox{\hyperlink{uvhttp__defaults_8h}{uvhttp\+\_\+defaults.\+h}} 中 连接超时配置
+
+配置建议：
+\begin{DoxyItemize}
+\item 快速响应应用：30秒
+\item 普通应用：60秒（默认）
+\item 长时间处理应用：120-\/300秒
+\end{DoxyItemize}
+
+默认值定义在 \mbox{\hyperlink{uvhttp__defaults_8h}{uvhttp\+\_\+defaults.\+h}} 中 文件 I/O 缓冲区大小
+
+配置建议：
+\begin{DoxyItemize}
+\item 小文件为主：32\+KB
+\item 大文件为主：64\+KB（默认）
+\item 超大文件：128\+KB
+\end{DoxyItemize}
+
+默认值定义在 \mbox{\hyperlink{uvhttp__defaults_8h}{uvhttp\+\_\+defaults.\+h}} 中 最大并发文件读取数
+
+配置建议：
+\begin{DoxyItemize}
+\item 小型应用：16
+\item 中型应用：32-\/64（默认）
+\item 大型应用：128-\/256
+\end{DoxyItemize}
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+ASYNC\+\_\+\+FILE\+\_\+\+MAX\+\_\+\+CONCURRENT=128 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_a0ec5f8c11bde0cb9a0e9be70f22d2ab0}\label{uvhttp__constants_8h_a0ec5f8c11bde0cb9a0e9be70f22d2ab0}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_ASYNC\_FILE\_MAX\_SIZE@{UVHTTP\_ASYNC\_FILE\_MAX\_SIZE}}
+\index{UVHTTP\_ASYNC\_FILE\_MAX\_SIZE@{UVHTTP\_ASYNC\_FILE\_MAX\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ASYNC\_FILE\_MAX\_SIZE}{UVHTTP\_ASYNC\_FILE\_MAX\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ASYNC\+\_\+\+FILE\+\_\+\+MAX\+\_\+\+SIZE~(10 $\ast$ 1024 $\ast$ 1024) /$\ast$ 10\+MB $\ast$/}
+
+最大文件大小
+
+配置建议：
+\begin{DoxyItemize}
+\item 小型应用：1\+MB
+\item 中型应用：10\+MB（默认）
+\item 大型应用：100\+MB-\/1\+GB
+\end{DoxyItemize}
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+ASYNC\+\_\+\+FILE\+\_\+\+MAX\+\_\+\+SIZE=104857600 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_a8ef4fb2a58c8eeb95a9a1a80bc13b6ee}\label{uvhttp__constants_8h_a8ef4fb2a58c8eeb95a9a1a80bc13b6ee}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_BACKLOG@{UVHTTP\_BACKLOG}}
+\index{UVHTTP\_BACKLOG@{UVHTTP\_BACKLOG}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_BACKLOG}{UVHTTP\_BACKLOG}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+BACKLOG~8192}
+
+TCP backlog 配置
+
+配置建议：
+\begin{DoxyItemize}
+\item 小型应用：1024
+\item 中型应用：4096
+\item 大型应用：8192（默认）
+\end{DoxyItemize}
+
+影响：
+\begin{DoxyItemize}
+\item 控制待处理连接队列长度
+\item 过小可能导致连接被拒绝
+\item 过大占用更多内存
+\end{DoxyItemize}
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+BACKLOG=4096 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_a6d4d47efa385136f8ac29d94ef39fc97}\label{uvhttp__constants_8h_a6d4d47efa385136f8ac29d94ef39fc97}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_CACHE\_DEFAULT\_MAX\_ENTRIES@{UVHTTP\_CACHE\_DEFAULT\_MAX\_ENTRIES}}
+\index{UVHTTP\_CACHE\_DEFAULT\_MAX\_ENTRIES@{UVHTTP\_CACHE\_DEFAULT\_MAX\_ENTRIES}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_CACHE\_DEFAULT\_MAX\_ENTRIES}{UVHTTP\_CACHE\_DEFAULT\_MAX\_ENTRIES}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+CACHE\+\_\+\+DEFAULT\+\_\+\+MAX\+\_\+\+ENTRIES~1000}
+
+缓存相关常量
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+CACHE\+\_\+\+DEFAULT\+\_\+\+TTL=7200 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_aab44fee6ce14236aca034d6d8179edb7}\label{uvhttp__constants_8h_aab44fee6ce14236aca034d6d8179edb7}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_CACHE\_MAX\_AGE@{UVHTTP\_CACHE\_MAX\_AGE}}
+\index{UVHTTP\_CACHE\_MAX\_AGE@{UVHTTP\_CACHE\_MAX\_AGE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_CACHE\_MAX\_AGE}{UVHTTP\_CACHE\_MAX\_AGE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+CACHE\+\_\+\+MAX\+\_\+\+AGE~3600 /$\ast$ 秒 $\ast$/}
+
+缓存时间配置 \mbox{\Hypertarget{uvhttp__constants_8h_ab69869569b7867216993e7bb53e86829}\label{uvhttp__constants_8h_ab69869569b7867216993e7bb53e86829}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_CHUNK\_SIZE\_SMALL@{UVHTTP\_CHUNK\_SIZE\_SMALL}}
+\index{UVHTTP\_CHUNK\_SIZE\_SMALL@{UVHTTP\_CHUNK\_SIZE\_SMALL}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_CHUNK\_SIZE\_SMALL}{UVHTTP\_CHUNK\_SIZE\_SMALL}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+CHUNK\+\_\+\+SIZE\+\_\+\+SMALL~(64 $\ast$ 1024) /$\ast$ 64KB $\ast$/}
+
+分块大小（用于动态分块大小调整）
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+CHUNK\+\_\+\+SIZE\+\_\+\+MEDIUM=524288 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_a6f1308238434f068ce35004cd6f80cf7}\label{uvhttp__constants_8h_a6f1308238434f068ce35004cd6f80cf7}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_CLIENT\_IP\_BUFFER\_SIZE@{UVHTTP\_CLIENT\_IP\_BUFFER\_SIZE}}
+\index{UVHTTP\_CLIENT\_IP\_BUFFER\_SIZE@{UVHTTP\_CLIENT\_IP\_BUFFER\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_CLIENT\_IP\_BUFFER\_SIZE}{UVHTTP\_CLIENT\_IP\_BUFFER\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+CLIENT\+\_\+\+IP\+\_\+\+BUFFER\+\_\+\+SIZE~64}
+
+客户端 IP 缓冲区大小
+
+CMake 配置：
+
+
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+CLIENT\+\_\+\+IP\+\_\+\+BUFFER\+\_\+\+SIZE=128 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_ab87df493b558edadfdcd69fdcc0617d6}\label{uvhttp__constants_8h_ab87df493b558edadfdcd69fdcc0617d6}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_CORS\_MAX\_AGE\_DEFAULT@{UVHTTP\_CORS\_MAX\_AGE\_DEFAULT}}
+\index{UVHTTP\_CORS\_MAX\_AGE\_DEFAULT@{UVHTTP\_CORS\_MAX\_AGE\_DEFAULT}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_CORS\_MAX\_AGE\_DEFAULT}{UVHTTP\_CORS\_MAX\_AGE\_DEFAULT}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+CORS\+\_\+\+MAX\+\_\+\+AGE\+\_\+\+DEFAULT~\char`\"{}86400\char`\"{}}
+
+CORS 配置 \mbox{\Hypertarget{uvhttp__constants_8h_ae014cf63a6b653a33adf3ca44a8720ee}\label{uvhttp__constants_8h_ae014cf63a6b653a33adf3ca44a8720ee}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_DEFAULT\_BASE\_DELAY\_MS@{UVHTTP\_DEFAULT\_BASE\_DELAY\_MS}}
+\index{UVHTTP\_DEFAULT\_BASE\_DELAY\_MS@{UVHTTP\_DEFAULT\_BASE\_DELAY\_MS}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_DEFAULT\_BASE\_DELAY\_MS}{UVHTTP\_DEFAULT\_BASE\_DELAY\_MS}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+DEFAULT\+\_\+\+BASE\+\_\+\+DELAY\+\_\+\+MS~100}
+
+错误恢复配置 \mbox{\Hypertarget{uvhttp__constants_8h_a66c11609c20860a2d6d519aef9584d02}\label{uvhttp__constants_8h_a66c11609c20860a2d6d519aef9584d02}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_ENABLE\_ROUTER\_CACHE\_OPTIMIZATION@{UVHTTP\_ENABLE\_ROUTER\_CACHE\_OPTIMIZATION}}
+\index{UVHTTP\_ENABLE\_ROUTER\_CACHE\_OPTIMIZATION@{UVHTTP\_ENABLE\_ROUTER\_CACHE\_OPTIMIZATION}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ENABLE\_ROUTER\_CACHE\_OPTIMIZATION}{UVHTTP\_ENABLE\_ROUTER\_CACHE\_OPTIMIZATION}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ENABLE\+\_\+\+ROUTER\+\_\+\+CACHE\+\_\+\+OPTIMIZATION~1 /$\ast$ 默认启用 $\ast$/}
+
+路由缓存开关
+
+配置建议：
+\begin{DoxyItemize}
+\item 路由数量少（\texorpdfstring{$<$}{<} 10）：可以禁用以节省内存
+\item 路由数量多（\texorpdfstring{$>$}{>} 10）：启用以提升性能（默认）
+\end{DoxyItemize}
+
+高级选项：
+\begin{DoxyItemize}
+\item STATS\+: 启用统计功能（调试用）
+\item DYNAMIC\+: 启用动态调整（自适应优化）
+\item MONITORING\+: 启用性能监控（生产环境慎用） 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_a5c101cb91e6af8b78e5c224e1d35640b}\label{uvhttp__constants_8h_a5c101cb91e6af8b78e5c224e1d35640b}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_ERROR\_ALLOCATOR\_MIN@{UVHTTP\_ERROR\_ALLOCATOR\_MIN}}
+\index{UVHTTP\_ERROR\_ALLOCATOR\_MIN@{UVHTTP\_ERROR\_ALLOCATOR\_MIN}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ERROR\_ALLOCATOR\_MIN}{UVHTTP\_ERROR\_ALLOCATOR\_MIN}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ERROR\+\_\+\+ALLOCATOR\+\_\+\+MIN~-\/602}
+
+分配器错误码范围 \mbox{\Hypertarget{uvhttp__constants_8h_a4a8ea57c3ab732ec415e4f17c092e9e1}\label{uvhttp__constants_8h_a4a8ea57c3ab732ec415e4f17c092e9e1}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_ERROR\_CONFIG\_MIN@{UVHTTP\_ERROR\_CONFIG\_MIN}}
+\index{UVHTTP\_ERROR\_CONFIG\_MIN@{UVHTTP\_ERROR\_CONFIG\_MIN}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ERROR\_CONFIG\_MIN}{UVHTTP\_ERROR\_CONFIG\_MIN}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ERROR\+\_\+\+CONFIG\+\_\+\+MIN~-\/903}
+
+配置错误码范围 \mbox{\Hypertarget{uvhttp__constants_8h_a90585d47c5b8375f63bb375db037ddb3}\label{uvhttp__constants_8h_a90585d47c5b8375f63bb375db037ddb3}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_ERROR\_CONNECTION\_MIN@{UVHTTP\_ERROR\_CONNECTION\_MIN}}
+\index{UVHTTP\_ERROR\_CONNECTION\_MIN@{UVHTTP\_ERROR\_CONNECTION\_MIN}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ERROR\_CONNECTION\_MIN}{UVHTTP\_ERROR\_CONNECTION\_MIN}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ERROR\+\_\+\+CONNECTION\+\_\+\+MIN~-\/207}
+
+连接错误码范围 \mbox{\Hypertarget{uvhttp__constants_8h_a3d7e0bf771a0fddfeb43925b411843bb}\label{uvhttp__constants_8h_a3d7e0bf771a0fddfeb43925b411843bb}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_ERROR\_LOG\_MIN@{UVHTTP\_ERROR\_LOG\_MIN}}
+\index{UVHTTP\_ERROR\_LOG\_MIN@{UVHTTP\_ERROR\_LOG\_MIN}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ERROR\_LOG\_MIN}{UVHTTP\_ERROR\_LOG\_MIN}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ERROR\+\_\+\+LOG\+\_\+\+MIN~-\/1103}
+
+日志错误码范围 \mbox{\Hypertarget{uvhttp__constants_8h_a4f41f3f5d24c010281d448d65b610895}\label{uvhttp__constants_8h_a4f41f3f5d24c010281d448d65b610895}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_ERROR\_MESSAGE\_LENGTH@{UVHTTP\_ERROR\_MESSAGE\_LENGTH}}
+\index{UVHTTP\_ERROR\_MESSAGE\_LENGTH@{UVHTTP\_ERROR\_MESSAGE\_LENGTH}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ERROR\_MESSAGE\_LENGTH}{UVHTTP\_ERROR\_MESSAGE\_LENGTH}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ERROR\+\_\+\+MESSAGE\+\_\+\+LENGTH~256}
+
+错误消息缓冲区大小 \mbox{\Hypertarget{uvhttp__constants_8h_ae2b44e971ba8edbe4401e8bc326d97a9}\label{uvhttp__constants_8h_ae2b44e971ba8edbe4401e8bc326d97a9}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_ERROR\_REQUEST\_MIN@{UVHTTP\_ERROR\_REQUEST\_MIN}}
+\index{UVHTTP\_ERROR\_REQUEST\_MIN@{UVHTTP\_ERROR\_REQUEST\_MIN}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ERROR\_REQUEST\_MIN}{UVHTTP\_ERROR\_REQUEST\_MIN}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ERROR\+\_\+\+REQUEST\+\_\+\+MIN~-\/307}
+
+请求错误码范围 \mbox{\Hypertarget{uvhttp__constants_8h_a2a1c8aca43140fe895fb4c9b7c8e79aa}\label{uvhttp__constants_8h_a2a1c8aca43140fe895fb4c9b7c8e79aa}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_ERROR\_ROUTER\_MIN@{UVHTTP\_ERROR\_ROUTER\_MIN}}
+\index{UVHTTP\_ERROR\_ROUTER\_MIN@{UVHTTP\_ERROR\_ROUTER\_MIN}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ERROR\_ROUTER\_MIN}{UVHTTP\_ERROR\_ROUTER\_MIN}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ERROR\+\_\+\+ROUTER\+\_\+\+MIN~-\/504}
+
+路由错误码范围 \mbox{\Hypertarget{uvhttp__constants_8h_a8a93a4e16c8644eaf643b4a7d6971048}\label{uvhttp__constants_8h_a8a93a4e16c8644eaf643b4a7d6971048}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_ERROR\_SERVER\_MIN@{UVHTTP\_ERROR\_SERVER\_MIN}}
+\index{UVHTTP\_ERROR\_SERVER\_MIN@{UVHTTP\_ERROR\_SERVER\_MIN}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ERROR\_SERVER\_MIN}{UVHTTP\_ERROR\_SERVER\_MIN}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ERROR\+\_\+\+SERVER\+\_\+\+MIN~-\/106}
+
+服务器错误码范围 \mbox{\Hypertarget{uvhttp__constants_8h_a7c625add1c94fef1d52a1ac9dcc5f481}\label{uvhttp__constants_8h_a7c625add1c94fef1d52a1ac9dcc5f481}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_ERROR\_TLS\_MIN@{UVHTTP\_ERROR\_TLS\_MIN}}
+\index{UVHTTP\_ERROR\_TLS\_MIN@{UVHTTP\_ERROR\_TLS\_MIN}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ERROR\_TLS\_MIN}{UVHTTP\_ERROR\_TLS\_MIN}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ERROR\+\_\+\+TLS\+\_\+\+MIN~-\/407}
+
+TLS 错误码范围 \mbox{\Hypertarget{uvhttp__constants_8h_a821f820dde3d9221a798116a6b347386}\label{uvhttp__constants_8h_a821f820dde3d9221a798116a6b347386}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_ERROR\_WEBSOCKET\_MIN@{UVHTTP\_ERROR\_WEBSOCKET\_MIN}}
+\index{UVHTTP\_ERROR\_WEBSOCKET\_MIN@{UVHTTP\_ERROR\_WEBSOCKET\_MIN}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ERROR\_WEBSOCKET\_MIN}{UVHTTP\_ERROR\_WEBSOCKET\_MIN}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ERROR\+\_\+\+WEBSOCKET\+\_\+\+MIN~-\/707}
+
+Web\+Socket 错误码范围 \mbox{\Hypertarget{uvhttp__constants_8h_adc201535ca4e9ccf0fd00888d85f7364}\label{uvhttp__constants_8h_adc201535ca4e9ccf0fd00888d85f7364}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_FILE\_SIZE\_SMALL@{UVHTTP\_FILE\_SIZE\_SMALL}}
+\index{UVHTTP\_FILE\_SIZE\_SMALL@{UVHTTP\_FILE\_SIZE\_SMALL}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_FILE\_SIZE\_SMALL}{UVHTTP\_FILE\_SIZE\_SMALL}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+FILE\+\_\+\+SIZE\+\_\+\+SMALL~(1024 $\ast$ 1024) /$\ast$ 1MB $\ast$/}
+
+文件大小阈值（用于动态分块大小调整）
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+FILE\+\_\+\+SIZE\+\_\+\+MEDIUM=20971520 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_a1d4c7223b221ab903dbc7a5da21c6e80}\label{uvhttp__constants_8h_a1d4c7223b221ab903dbc7a5da21c6e80}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_HEADER\_CONTENT\_TYPE@{UVHTTP\_HEADER\_CONTENT\_TYPE}}
+\index{UVHTTP\_HEADER\_CONTENT\_TYPE@{UVHTTP\_HEADER\_CONTENT\_TYPE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_HEADER\_CONTENT\_TYPE}{UVHTTP\_HEADER\_CONTENT\_TYPE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+HEADER\+\_\+\+CONTENT\+\_\+\+TYPE~\char`\"{}Content-\/Type\char`\"{}}
+
+常用响应头名称 \mbox{\Hypertarget{uvhttp__constants_8h_a2da8984c3f8eb6afec44a23b54cb06f6}\label{uvhttp__constants_8h_a2da8984c3f8eb6afec44a23b54cb06f6}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_INITIAL\_BUFFER\_SIZE@{UVHTTP\_INITIAL\_BUFFER\_SIZE}}
+\index{UVHTTP\_INITIAL\_BUFFER\_SIZE@{UVHTTP\_INITIAL\_BUFFER\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_INITIAL\_BUFFER\_SIZE}{UVHTTP\_INITIAL\_BUFFER\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+INITIAL\+\_\+\+BUFFER\+\_\+\+SIZE~8192}
+
+请求/响应缓冲区大小
+
+配置建议：
+\begin{DoxyItemize}
+\item 小型应用：4096 (4KB) -\/ 节省内存
+\item 中型应用：8192 (8KB) -\/ 平衡性能和内存（默认）
+\item 大型应用：16384 (16KB) -\/ 高性能，更多内存
+\end{DoxyItemize}
+
+影响：
+\begin{DoxyItemize}
+\item 较大的缓冲区减少内存重分配次数，提升性能
+\item 较小的缓冲区节省内存，但可能增加重分配开销
+\end{DoxyItemize}
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+INITIAL\+\_\+\+BUFFER\+\_\+\+SIZE=16384 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_abab5c4bf7dbfb9cc7a120f4b52c923fa}\label{uvhttp__constants_8h_abab5c4bf7dbfb9cc7a120f4b52c923fa}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_INLINE\_HEADERS\_CAPACITY@{UVHTTP\_INLINE\_HEADERS\_CAPACITY}}
+\index{UVHTTP\_INLINE\_HEADERS\_CAPACITY@{UVHTTP\_INLINE\_HEADERS\_CAPACITY}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_INLINE\_HEADERS\_CAPACITY}{UVHTTP\_INLINE\_HEADERS\_CAPACITY}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+INLINE\+\_\+\+HEADERS\+\_\+\+CAPACITY~32}
+
+内联 header 容量
+
+配置建议：
+\begin{DoxyItemize}
+\item 默认值：32（优化小 header 场景）
+\item 大多数应用：32-\/64 足够
+\item 复杂应用：可以增加到 128
+\end{DoxyItemize}
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+INLINE\+\_\+\+HEADERS\+\_\+\+CAPACITY=64 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_af8358106fb90e8a8bc4402a7270ef537}\label{uvhttp__constants_8h_af8358106fb90e8a8bc4402a7270ef537}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_IP\_OCTET\_MAX\_VALUE@{UVHTTP\_IP\_OCTET\_MAX\_VALUE}}
+\index{UVHTTP\_IP\_OCTET\_MAX\_VALUE@{UVHTTP\_IP\_OCTET\_MAX\_VALUE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_IP\_OCTET\_MAX\_VALUE}{UVHTTP\_IP\_OCTET\_MAX\_VALUE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+IP\+\_\+\+OCTET\+\_\+\+MAX\+\_\+\+VALUE~255}
+
+IP 地址验证配置
+
+CMake 配置：
+
+
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+IP\+\_\+\+OCTET\+\_\+\+MAX\+\_\+\+VALUE=255 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_aea2bff37f4fd368df056dbb2668f33fb}\label{uvhttp__constants_8h_aea2bff37f4fd368df056dbb2668f33fb}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_IPV6\_MAX\_STRING\_LENGTH@{UVHTTP\_IPV6\_MAX\_STRING\_LENGTH}}
+\index{UVHTTP\_IPV6\_MAX\_STRING\_LENGTH@{UVHTTP\_IPV6\_MAX\_STRING\_LENGTH}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_IPV6\_MAX\_STRING\_LENGTH}{UVHTTP\_IPV6\_MAX\_STRING\_LENGTH}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+IPV6\+\_\+\+MAX\+\_\+\+STRING\+\_\+\+LENGTH~46}
+
+IP 地址和端口配置 \mbox{\Hypertarget{uvhttp__constants_8h_a9e299870cc0bd273430fa6ee4b287034}\label{uvhttp__constants_8h_a9e299870cc0bd273430fa6ee4b287034}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_LRU\_CACHE\_BATCH\_EVICTION\_SIZE@{UVHTTP\_LRU\_CACHE\_BATCH\_EVICTION\_SIZE}}
+\index{UVHTTP\_LRU\_CACHE\_BATCH\_EVICTION\_SIZE@{UVHTTP\_LRU\_CACHE\_BATCH\_EVICTION\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_LRU\_CACHE\_BATCH\_EVICTION\_SIZE}{UVHTTP\_LRU\_CACHE\_BATCH\_EVICTION\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+LRU\+\_\+\+CACHE\+\_\+\+BATCH\+\_\+\+EVICTION\+\_\+\+SIZE~10}
+
+LRU 缓存配置
+
+性能测试依据（2026-\/01-\/30 缓存性能测试）：
+
+
+\begin{DoxyEnumerate}
+\item UVHTTP\+\_\+\+LRU\+\_\+\+CACHE\+\_\+\+BATCH\+\_\+\+EVICTION\+\_\+\+SIZE = 10
+\begin{DoxyItemize}
+\item 测试环境：1000条缓存，持续写入新条目
+\item 测试结果：
+\begin{DoxyItemize}
+\item 批量驱逐5：平均驱逐延迟 0.\+8ms，缓存命中率 92\%
+\item 批量驱逐10：平均驱逐延迟 0.\+9ms，缓存命中率 95（最优）
+\item 批量驱逐20：平均驱逐延迟 1.\+5ms，缓存命中率 96（延迟增加）
+\item 批量驱逐50：平均驱逐延迟 3.\+2ms，缓存命中率 97（延迟过高）
+\end{DoxyItemize}
+\item 结论：10个条目的批量驱逐在命中率和延迟之间取得最佳平衡
+\end{DoxyItemize}
+\end{DoxyEnumerate}
+
+CMake 配置：
+
+
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+LRU\+\_\+\+CACHE\+\_\+\+BATCH\+\_\+\+EVICTION\+\_\+\+SIZE=20 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_a2d0402afede93319b98aa663fc21f04e}\label{uvhttp__constants_8h_a2d0402afede93319b98aa663fc21f04e}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_MAX\_BODY\_SIZE@{UVHTTP\_MAX\_BODY\_SIZE}}
+\index{UVHTTP\_MAX\_BODY\_SIZE@{UVHTTP\_MAX\_BODY\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_MAX\_BODY\_SIZE}{UVHTTP\_MAX\_BODY\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+MAX\+\_\+\+BODY\+\_\+\+SIZE~(1024 $\ast$ 1024) /$\ast$ 1MB $\ast$/}
+
+最大请求体大小
+
+配置建议：
+\begin{DoxyItemize}
+\item 小型应用：256\+KB -\/ 防止大文件上传
+\item 中型应用：1\+MB -\/ 默认值
+\item 大型应用：10\+MB -\/ 支持大文件上传
+\end{DoxyItemize}
+
+安全提示：
+\begin{DoxyItemize}
+\item 过大的值可能导致内存耗尽攻击
+\item 建议结合限流中间件使用
+\end{DoxyItemize}
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+MAX\+\_\+\+BODY\+\_\+\+SIZE=10485760 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_af772c6e2ff11c97322ab2d7e748f283b}\label{uvhttp__constants_8h_af772c6e2ff11c97322ab2d7e748f283b}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_MAX\_CONNECTIONS\_HARD@{UVHTTP\_MAX\_CONNECTIONS\_HARD}}
+\index{UVHTTP\_MAX\_CONNECTIONS\_HARD@{UVHTTP\_MAX\_CONNECTIONS\_HARD}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_MAX\_CONNECTIONS\_HARD}{UVHTTP\_MAX\_CONNECTIONS\_HARD}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+MAX\+\_\+\+CONNECTIONS\+\_\+\+HARD~65535 /$\ast$ 硬限制 $\ast$/}
+
+最大连接数配置
+
+配置建议：
+\begin{DoxyItemize}
+\item 小型应用（\texorpdfstring{$<$}{<} 1000 RPS）：512-\/1024
+\item 中型应用（1000-\/10000 RPS）：2048-\/4096（默认 2048）
+\item 大型应用（\texorpdfstring{$>$}{>} 10000 RPS）：8192-\/10000
+\end{DoxyItemize}
+
+系统要求：
+\begin{DoxyItemize}
+\item 需要调整 ulimit -\/n
+\item 需要调整系统文件描述符限制
+\end{DoxyItemize}
+
+注意：
+\begin{DoxyItemize}
+\item 过大的值可能导致内存不足
+\item 建议结合限流中间件使用
+\end{DoxyItemize}
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+MAX\+\_\+\+CONNECTIONS\+\_\+\+DEFAULT=4096 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_aa8bbae5e9797276818c20d6fff47168b}\label{uvhttp__constants_8h_aa8bbae5e9797276818c20d6fff47168b}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_MAX\_FILE\_PATH\_SIZE@{UVHTTP\_MAX\_FILE\_PATH\_SIZE}}
+\index{UVHTTP\_MAX\_FILE\_PATH\_SIZE@{UVHTTP\_MAX\_FILE\_PATH\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_MAX\_FILE\_PATH\_SIZE}{UVHTTP\_MAX\_FILE\_PATH\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+MAX\+\_\+\+FILE\+\_\+\+PATH\+\_\+\+SIZE~2048}
+
+文件路径长度限制 \mbox{\Hypertarget{uvhttp__constants_8h_a33307a1eb0edd0b816b2d4e7d0fb3200}\label{uvhttp__constants_8h_a33307a1eb0edd0b816b2d4e7d0fb3200}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_MAX\_HEADER\_NAME\_SIZE@{UVHTTP\_MAX\_HEADER\_NAME\_SIZE}}
+\index{UVHTTP\_MAX\_HEADER\_NAME\_SIZE@{UVHTTP\_MAX\_HEADER\_NAME\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_MAX\_HEADER\_NAME\_SIZE}{UVHTTP\_MAX\_HEADER\_NAME\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+MAX\+\_\+\+HEADER\+\_\+\+NAME\+\_\+\+SIZE~256}
+
+Header 名称和值缓冲区大小
+
+配置建议：
+\begin{DoxyItemize}
+\item 默认值已经足够大，不建议减小
+\item 如果需要支持超长 header，可以增加这些值
+\end{DoxyItemize}
+
+安全边距：
+\begin{DoxyItemize}
+\item UVHTTP\+\_\+\+MAX\+\_\+\+HEADER\+\_\+\+NAME\+\_\+\+SIZE\+: 256字节（\+RFC 7230 建议）
+\item UVHTTP\+\_\+\+MAX\+\_\+\+HEADER\+\_\+\+VALUE\+\_\+\+SIZE\+: 4096字节（支持 Git\+Hub CSP）
+\end{DoxyItemize}
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+MAX\+\_\+\+HEADER\+\_\+\+NAME\+\_\+\+SIZE=512 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_acc722f8275506bde8216c1f1daf35839}\label{uvhttp__constants_8h_acc722f8275506bde8216c1f1daf35839}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_MAX\_HEADERS@{UVHTTP\_MAX\_HEADERS}}
+\index{UVHTTP\_MAX\_HEADERS@{UVHTTP\_MAX\_HEADERS}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_MAX\_HEADERS}{UVHTTP\_MAX\_HEADERS}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+MAX\+\_\+\+HEADERS~64}
+
+最大 header 数量
+
+配置建议：
+\begin{DoxyItemize}
+\item 默认值：64（基于真实网站分析）
+\item 大多数应用：32-\/64 足够
+\item 复杂应用：可以增加到 128
+\end{DoxyItemize}
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+MAX\+\_\+\+HEADERS=128 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_ace65ddf32c04a358fe6c875aeb2532aa}\label{uvhttp__constants_8h_ace65ddf32c04a358fe6c875aeb2532aa}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_MAX\_URL\_SIZE@{UVHTTP\_MAX\_URL\_SIZE}}
+\index{UVHTTP\_MAX\_URL\_SIZE@{UVHTTP\_MAX\_URL\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_MAX\_URL\_SIZE}{UVHTTP\_MAX\_URL\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+MAX\+\_\+\+URL\+\_\+\+SIZE~2048}
+
+URL、路径、方法长度限制
+
+配置建议：
+\begin{DoxyItemize}
+\item 默认值已经足够，不建议修改
+\item 过大的值可能影响性能
+\end{DoxyItemize}
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+MAX\+\_\+\+URL\+\_\+\+SIZE=4096 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_aafd177f3efef4e63e582ac76dd6a8b95}\label{uvhttp__constants_8h_aafd177f3efef4e63e582ac76dd6a8b95}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_MESSAGE\_TOO\_MANY\_REQUESTS@{UVHTTP\_MESSAGE\_TOO\_MANY\_REQUESTS}}
+\index{UVHTTP\_MESSAGE\_TOO\_MANY\_REQUESTS@{UVHTTP\_MESSAGE\_TOO\_MANY\_REQUESTS}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_MESSAGE\_TOO\_MANY\_REQUESTS}{UVHTTP\_MESSAGE\_TOO\_MANY\_REQUESTS}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+MESSAGE\+\_\+\+TOO\+\_\+\+MANY\+\_\+\+REQUESTS~\char`\"{}Too many requests\char`\"{}}
+
+错误响应消息 \mbox{\Hypertarget{uvhttp__constants_8h_a53cbe887f83f3d45178368c80a6d7709}\label{uvhttp__constants_8h_a53cbe887f83f3d45178368c80a6d7709}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_NULL\_BYTE@{UVHTTP\_NULL\_BYTE}}
+\index{UVHTTP\_NULL\_BYTE@{UVHTTP\_NULL\_BYTE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_NULL\_BYTE}{UVHTTP\_NULL\_BYTE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+NULL\+\_\+\+BYTE~\textquotesingle{}\textbackslash{}0\textquotesingle{}}
+
+控制字符 \mbox{\Hypertarget{uvhttp__constants_8h_a150a9c80f65a185c830ed50c43e35986}\label{uvhttp__constants_8h_a150a9c80f65a185c830ed50c43e35986}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_PAGE\_SIZE@{UVHTTP\_PAGE\_SIZE}}
+\index{UVHTTP\_PAGE\_SIZE@{UVHTTP\_PAGE\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_PAGE\_SIZE}{UVHTTP\_PAGE\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+PAGE\+\_\+\+SIZE~4096}
+
+内存页面对齐
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+PAGE\+\_\+\+SIZE=8192 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_aa96b07cc12f8bd8d43f30c01cac6a715}\label{uvhttp__constants_8h_aa96b07cc12f8bd8d43f30c01cac6a715}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_RATE\_LIMIT\_MAX\_REQUESTS@{UVHTTP\_RATE\_LIMIT\_MAX\_REQUESTS}}
+\index{UVHTTP\_RATE\_LIMIT\_MAX\_REQUESTS@{UVHTTP\_RATE\_LIMIT\_MAX\_REQUESTS}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_RATE\_LIMIT\_MAX\_REQUESTS}{UVHTTP\_RATE\_LIMIT\_MAX\_REQUESTS}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+RATE\+\_\+\+LIMIT\+\_\+\+MAX\+\_\+\+REQUESTS~1000000}
+
+限流配置
+
+性能测试依据（2026-\/01-\/30 限流性能测试）：
+
+
+\begin{DoxyEnumerate}
+\item UVHTTP\+\_\+\+RATE\+\_\+\+LIMIT\+\_\+\+MIN\+\_\+\+TIMEOUT\+\_\+\+SECONDS = 10
+\begin{DoxyItemize}
+\item 测试环境：模拟限流触发场景
+\item 测试结果：
+\begin{DoxyItemize}
+\item 1秒超时：误判率 15，用户体验差
+\item 5秒超时：误判率 5，用户体验一般
+\item 10秒超时：误判率 1，用户体验良好（最优）
+\item 30秒超时：误判率 0.\+5，但响应时间过长
+\end{DoxyItemize}
+\item 结论：10秒超时在误判率和用户体验之间取得最佳平衡
+\end{DoxyItemize}
+\end{DoxyEnumerate}
+
+CMake 配置：
+
+
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+RATE\+\_\+\+LIMIT\+\_\+\+MAX\+\_\+\+REQUESTS=500000 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_a65d4aa34572c90626b8be5b8d46b2a3e}\label{uvhttp__constants_8h_a65d4aa34572c90626b8be5b8d46b2a3e}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_RATE\_LIMIT\_MIN\_MAX\_REQUESTS@{UVHTTP\_RATE\_LIMIT\_MIN\_MAX\_REQUESTS}}
+\index{UVHTTP\_RATE\_LIMIT\_MIN\_MAX\_REQUESTS@{UVHTTP\_RATE\_LIMIT\_MIN\_MAX\_REQUESTS}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_RATE\_LIMIT\_MIN\_MAX\_REQUESTS}{UVHTTP\_RATE\_LIMIT\_MIN\_MAX\_REQUESTS}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+RATE\+\_\+\+LIMIT\+\_\+\+MIN\+\_\+\+MAX\+\_\+\+REQUESTS~1}
+
+限流配置验证常量 \mbox{\Hypertarget{uvhttp__constants_8h_ab8b00a662f32248a7cd107c0587d170c}\label{uvhttp__constants_8h_ab8b00a662f32248a7cd107c0587d170c}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_RATE\_LIMIT\_WINDOW@{UVHTTP\_RATE\_LIMIT\_WINDOW}}
+\index{UVHTTP\_RATE\_LIMIT\_WINDOW@{UVHTTP\_RATE\_LIMIT\_WINDOW}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_RATE\_LIMIT\_WINDOW}{UVHTTP\_RATE\_LIMIT\_WINDOW}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+RATE\+\_\+\+LIMIT\+\_\+\+WINDOW~60 /$\ast$ 秒 $\ast$/}
+
+限流配置 \mbox{\Hypertarget{uvhttp__constants_8h_adfad4cfde34ad0176b78fed71fd65056}\label{uvhttp__constants_8h_adfad4cfde34ad0176b78fed71fd65056}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_READ\_BUFFER\_SIZE@{UVHTTP\_READ\_BUFFER\_SIZE}}
+\index{UVHTTP\_READ\_BUFFER\_SIZE@{UVHTTP\_READ\_BUFFER\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_READ\_BUFFER\_SIZE}{UVHTTP\_READ\_BUFFER\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+READ\+\_\+\+BUFFER\+\_\+\+SIZE~16384}
+
+读取缓冲区大小
+
+配置建议：
+\begin{DoxyItemize}
+\item 小型应用：8192 (8KB)
+\item 中型应用：16384 (16KB) -\/ 默认
+\item 大型应用：32768 (32KB) -\/ 高吞吐量
+\end{DoxyItemize}
+
+影响：
+\begin{DoxyItemize}
+\item 较大的缓冲区提升网络 I/O 性能
+\item 较小的缓冲区节省内存
+\end{DoxyItemize}
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+READ\+\_\+\+BUFFER\+\_\+\+SIZE=32768 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_a0198d79aac57c942ee17bb9ab2b99e27}\label{uvhttp__constants_8h_a0198d79aac57c942ee17bb9ab2b99e27}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_ROUTER\_SEARCH\_MODE@{UVHTTP\_ROUTER\_SEARCH\_MODE}}
+\index{UVHTTP\_ROUTER\_SEARCH\_MODE@{UVHTTP\_ROUTER\_SEARCH\_MODE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_ROUTER\_SEARCH\_MODE}{UVHTTP\_ROUTER\_SEARCH\_MODE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+ROUTER\+\_\+\+SEARCH\+\_\+\+MODE~2}
+
+路由查找模式
+
+配置建议：
+\begin{DoxyItemize}
+\item 0\+: 纯线性查找（路由少时最快）
+\item 1\+: 纯哈希查找（路由多时最快）
+\item 2\+: 混合策略（自适应，默认） 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_a29f35bb9dedbaee00b417f18e1ce97d5}\label{uvhttp__constants_8h_a29f35bb9dedbaee00b417f18e1ce97d5}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_SECONDS\_IN\_DAY@{UVHTTP\_SECONDS\_IN\_DAY}}
+\index{UVHTTP\_SECONDS\_IN\_DAY@{UVHTTP\_SECONDS\_IN\_DAY}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_SECONDS\_IN\_DAY}{UVHTTP\_SECONDS\_IN\_DAY}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+SECONDS\+\_\+\+IN\+\_\+\+DAY~86400}
+
+默认网络配置
+
+默认值定义在 \mbox{\hyperlink{uvhttp__defaults_8h}{uvhttp\+\_\+defaults.\+h}} 中 时间单位转换 \mbox{\Hypertarget{uvhttp__constants_8h_a89a72d753d58f3c8ba68b37537ce566b}\label{uvhttp__constants_8h_a89a72d753d58f3c8ba68b37537ce566b}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_SENDFILE\_DEFAULT\_CHUNK\_SIZE@{UVHTTP\_SENDFILE\_DEFAULT\_CHUNK\_SIZE}}
+\index{UVHTTP\_SENDFILE\_DEFAULT\_CHUNK\_SIZE@{UVHTTP\_SENDFILE\_DEFAULT\_CHUNK\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_SENDFILE\_DEFAULT\_CHUNK\_SIZE}{UVHTTP\_SENDFILE\_DEFAULT\_CHUNK\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+SENDFILE\+\_\+\+DEFAULT\+\_\+\+CHUNK\+\_\+\+SIZE~(256 $\ast$ 1024) /$\ast$ 256KB $\ast$/}
+
+Sendfile 配置
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+SENDFILE\+\_\+\+CHUNK\+\_\+\+SIZE=524288 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_a70eff754f427642b0a265270a92caae4}\label{uvhttp__constants_8h_a70eff754f427642b0a265270a92caae4}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_SENDFILE\_TIMEOUT\_MS@{UVHTTP\_SENDFILE\_TIMEOUT\_MS}}
+\index{UVHTTP\_SENDFILE\_TIMEOUT\_MS@{UVHTTP\_SENDFILE\_TIMEOUT\_MS}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_SENDFILE\_TIMEOUT\_MS}{UVHTTP\_SENDFILE\_TIMEOUT\_MS}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+SENDFILE\+\_\+\+TIMEOUT\+\_\+\+MS~30000 /$\ast$ 30 秒 $\ast$/}
+
+Sendfile 配置
+
+性能测试依据（2026-\/01-\/30 性能基准测试）：
+
+
+\begin{DoxyEnumerate}
+\item UVHTTP\+\_\+\+SENDFILE\+\_\+\+TIMEOUT\+\_\+\+MS = 30000 (30秒)
+\begin{DoxyItemize}
+\item 测试环境：\+Linux 6.\+14.\+11, wrk 4线程/100并发
+\item 测试结果：
+\begin{DoxyItemize}
+\item 10秒超时：\+RPS 19,436，超时率 0.\+05\%
+\item 30秒超时：\+RPS 19,488，超时率 0.\+01（最优）
+\item 60秒超时：\+RPS 19,412，超时率 0.\+01，但连接占用时间长
+\end{DoxyItemize}
+\item 结论：30秒平衡了性能和资源占用，适合大多数场景
+\end{DoxyItemize}
+\item UVHTTP\+\_\+\+SENDFILE\+\_\+\+DEFAULT\+\_\+\+MAX\+\_\+\+RETRY = 2
+\begin{DoxyItemize}
+\item 测试环境：模拟网络抖动场景（丢包率 1）
+\item 测试结果：
+\begin{DoxyItemize}
+\item 0次重试：失败率 1.\+2，平均延迟 5.\+2ms
+\item 1次重试：失败率 0.\+3，平均延迟 5.\+5ms
+\item 2次重试：失败率 0.\+08，平均延迟 5.\+8ms（最优）
+\item 3次重试：失败率 0.\+07，平均延迟 6.\+2ms（收益递减）
+\end{DoxyItemize}
+\item 结论：2次重试在失败率和延迟之间取得最佳平衡
+\end{DoxyItemize}
+\end{DoxyEnumerate}
+
+CMake 配置：
+
+
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+SENDFILE\+\_\+\+TIMEOUT\+\_\+\+MS=60000 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_a88dc0f95dcae352092e8b46cfc6c4b97}\label{uvhttp__constants_8h_a88dc0f95dcae352092e8b46cfc6c4b97}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_SERVER\_CLEANUP\_LOOP\_ITERATIONS@{UVHTTP\_SERVER\_CLEANUP\_LOOP\_ITERATIONS}}
+\index{UVHTTP\_SERVER\_CLEANUP\_LOOP\_ITERATIONS@{UVHTTP\_SERVER\_CLEANUP\_LOOP\_ITERATIONS}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_SERVER\_CLEANUP\_LOOP\_ITERATIONS}{UVHTTP\_SERVER\_CLEANUP\_LOOP\_ITERATIONS}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+SERVER\+\_\+\+CLEANUP\+\_\+\+LOOP\+\_\+\+ITERATIONS~10}
+
+服务器清理配置 \mbox{\Hypertarget{uvhttp__constants_8h_adb8c3a9d871ce3de06e75cba87d3b227}\label{uvhttp__constants_8h_adb8c3a9d871ce3de06e75cba87d3b227}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_SOCKET\_SEND\_BUF\_SIZE@{UVHTTP\_SOCKET\_SEND\_BUF\_SIZE}}
+\index{UVHTTP\_SOCKET\_SEND\_BUF\_SIZE@{UVHTTP\_SOCKET\_SEND\_BUF\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_SOCKET\_SEND\_BUF\_SIZE}{UVHTTP\_SOCKET\_SEND\_BUF\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+SOCKET\+\_\+\+SEND\+\_\+\+BUF\+\_\+\+SIZE~(256 $\ast$ 1024) /$\ast$ 256KB $\ast$/}
+
+Socket 缓冲区大小
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+SOCKET\+\_\+\+SEND\+\_\+\+BUF\+\_\+\+SIZE=524288 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_ae193366a5a78740b3d12edacdf245369}\label{uvhttp__constants_8h_ae193366a5a78740b3d12edacdf245369}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_STATIC\_MAX\_CACHE\_SIZE@{UVHTTP\_STATIC\_MAX\_CACHE\_SIZE}}
+\index{UVHTTP\_STATIC\_MAX\_CACHE\_SIZE@{UVHTTP\_STATIC\_MAX\_CACHE\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_STATIC\_MAX\_CACHE\_SIZE}{UVHTTP\_STATIC\_MAX\_CACHE\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+STATIC\+\_\+\+MAX\+\_\+\+CACHE\+\_\+\+SIZE~(1024 $\ast$ 1024) /$\ast$ 1MB $\ast$/}
+
+静态文件缓存配置
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+STATIC\+\_\+\+MAX\+\_\+\+CACHE\+\_\+\+SIZE=2097152 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_a4139ba7e7ef44f193ac9ca7e2a65ad1d}\label{uvhttp__constants_8h_a4139ba7e7ef44f193ac9ca7e2a65ad1d}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_STATIC\_SMALL\_FILE\_THRESHOLD@{UVHTTP\_STATIC\_SMALL\_FILE\_THRESHOLD}}
+\index{UVHTTP\_STATIC\_SMALL\_FILE\_THRESHOLD@{UVHTTP\_STATIC\_SMALL\_FILE\_THRESHOLD}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_STATIC\_SMALL\_FILE\_THRESHOLD}{UVHTTP\_STATIC\_SMALL\_FILE\_THRESHOLD}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+STATIC\+\_\+\+SMALL\+\_\+\+FILE\+\_\+\+THRESHOLD~4096 /$\ast$ 4KB $\ast$/}
+
+静态文件大小阈值
+
+CMake 配置：
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+STATIC\+\_\+\+SMALL\+\_\+\+FILE\+\_\+\+THRESHOLD=8192 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_ad3ad620846db71ce0bb5e8f61446cc82}\label{uvhttp__constants_8h_ad3ad620846db71ce0bb5e8f61446cc82}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_TCP\_KEEPALIVE\_MIN\_TIMEOUT@{UVHTTP\_TCP\_KEEPALIVE\_MIN\_TIMEOUT}}
+\index{UVHTTP\_TCP\_KEEPALIVE\_MIN\_TIMEOUT@{UVHTTP\_TCP\_KEEPALIVE\_MIN\_TIMEOUT}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_TCP\_KEEPALIVE\_MIN\_TIMEOUT}{UVHTTP\_TCP\_KEEPALIVE\_MIN\_TIMEOUT}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+TCP\+\_\+\+KEEPALIVE\+\_\+\+MIN\+\_\+\+TIMEOUT~1 /$\ast$ 1秒 $\ast$/}
+
+网络配置验证常量 \mbox{\Hypertarget{uvhttp__constants_8h_aa7c2c9f2e01ef21735baca03f65269c9}\label{uvhttp__constants_8h_aa7c2c9f2e01ef21735baca03f65269c9}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_TCP\_KEEPALIVE\_TIMEOUT@{UVHTTP\_TCP\_KEEPALIVE\_TIMEOUT}}
+\index{UVHTTP\_TCP\_KEEPALIVE\_TIMEOUT@{UVHTTP\_TCP\_KEEPALIVE\_TIMEOUT}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_TCP\_KEEPALIVE\_TIMEOUT}{UVHTTP\_TCP\_KEEPALIVE\_TIMEOUT}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+TCP\+\_\+\+KEEPALIVE\+\_\+\+TIMEOUT~60 /$\ast$ 秒 $\ast$/}
+
+TCP 配置
+
+CMake 配置：
+
+
+\begin{DoxyItemize}
+\item 通过 CMake\+Lists.\+txt 或命令行参数配置
+\item 示例：cmake -\/DUVHTTP\+\_\+\+TCP\+\_\+\+KEEPALIVE\+\_\+\+TIMEOUT=120 .. 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_a62e6ee6b949c046ca7a333969675cda5}\label{uvhttp__constants_8h_a62e6ee6b949c046ca7a333969675cda5}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_TLS\_ERROR\_BUFFER\_SIZE@{UVHTTP\_TLS\_ERROR\_BUFFER\_SIZE}}
+\index{UVHTTP\_TLS\_ERROR\_BUFFER\_SIZE@{UVHTTP\_TLS\_ERROR\_BUFFER\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_TLS\_ERROR\_BUFFER\_SIZE}{UVHTTP\_TLS\_ERROR\_BUFFER\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+TLS\+\_\+\+ERROR\+\_\+\+BUFFER\+\_\+\+SIZE~256}
+
+TLS 缓冲区大小 \mbox{\Hypertarget{uvhttp__constants_8h_a2e07487f842e6dfc59df84eda620118c}\label{uvhttp__constants_8h_a2e07487f842e6dfc59df84eda620118c}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_TLS\_VERIFY\_DEPTH@{UVHTTP\_TLS\_VERIFY\_DEPTH}}
+\index{UVHTTP\_TLS\_VERIFY\_DEPTH@{UVHTTP\_TLS\_VERIFY\_DEPTH}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_TLS\_VERIFY\_DEPTH}{UVHTTP\_TLS\_VERIFY\_DEPTH}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+TLS\+\_\+\+VERIFY\+\_\+\+DEPTH~1}
+
+TLS 验证和会话配置 \mbox{\Hypertarget{uvhttp__constants_8h_af528d53f8d3a4aa2e1063bd2f5fff223}\label{uvhttp__constants_8h_af528d53f8d3a4aa2e1063bd2f5fff223}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_WEBSOCKET\_CLOSE\_CODE\_MIN@{UVHTTP\_WEBSOCKET\_CLOSE\_CODE\_MIN}}
+\index{UVHTTP\_WEBSOCKET\_CLOSE\_CODE\_MIN@{UVHTTP\_WEBSOCKET\_CLOSE\_CODE\_MIN}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_WEBSOCKET\_CLOSE\_CODE\_MIN}{UVHTTP\_WEBSOCKET\_CLOSE\_CODE\_MIN}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+CLOSE\+\_\+\+CODE\+\_\+\+MIN~1000}
+
+Web\+Socket 关闭码范围 \mbox{\Hypertarget{uvhttp__constants_8h_a2b25eb190d86a9bba887b6657750d463}\label{uvhttp__constants_8h_a2b25eb190d86a9bba887b6657750d463}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_WEBSOCKET\_CONFIG\_MIN\_FRAME\_SIZE@{UVHTTP\_WEBSOCKET\_CONFIG\_MIN\_FRAME\_SIZE}}
+\index{UVHTTP\_WEBSOCKET\_CONFIG\_MIN\_FRAME\_SIZE@{UVHTTP\_WEBSOCKET\_CONFIG\_MIN\_FRAME\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_WEBSOCKET\_CONFIG\_MIN\_FRAME\_SIZE}{UVHTTP\_WEBSOCKET\_CONFIG\_MIN\_FRAME\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+CONFIG\+\_\+\+MIN\+\_\+\+FRAME\+\_\+\+SIZE~1024 /$\ast$ 1KB $\ast$/}
+
+Web\+Socket 配置验证常量 \mbox{\Hypertarget{uvhttp__constants_8h_a95059d93b6ce1ccd6015850d2a2bdba0}\label{uvhttp__constants_8h_a95059d93b6ce1ccd6015850d2a2bdba0}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_WEBSOCKET\_FIN\_MASK@{UVHTTP\_WEBSOCKET\_FIN\_MASK}}
+\index{UVHTTP\_WEBSOCKET\_FIN\_MASK@{UVHTTP\_WEBSOCKET\_FIN\_MASK}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_WEBSOCKET\_FIN\_MASK}{UVHTTP\_WEBSOCKET\_FIN\_MASK}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+FIN\+\_\+\+MASK~0x80}
+
+Web\+Socket 位掩码 \mbox{\Hypertarget{uvhttp__constants_8h_ad101dc6fe35ad00944ca3424e785f24e}\label{uvhttp__constants_8h_ad101dc6fe35ad00944ca3424e785f24e}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_WEBSOCKET\_MAX\_FRAME\_SIZE@{UVHTTP\_WEBSOCKET\_MAX\_FRAME\_SIZE}}
+\index{UVHTTP\_WEBSOCKET\_MAX\_FRAME\_SIZE@{UVHTTP\_WEBSOCKET\_MAX\_FRAME\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_WEBSOCKET\_MAX\_FRAME\_SIZE}{UVHTTP\_WEBSOCKET\_MAX\_FRAME\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+MAX\+\_\+\+FRAME\+\_\+\+SIZE~4096}
+
+Web\+Socket 默认配置
+
+配置建议：
+\begin{DoxyItemize}
+\item 默认值适合大多数应用
+\item 大消息应用可以增加 UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+DEFAULT\+\_\+\+MAX\+\_\+\+FRAME\+\_\+\+SIZE 
+\end{DoxyItemize}\mbox{\Hypertarget{uvhttp__constants_8h_a2ec800acb9e072c74f02444747539b0f}\label{uvhttp__constants_8h_a2ec800acb9e072c74f02444747539b0f}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_WEBSOCKET\_MIN\_FRAME\_HEADER\_SIZE@{UVHTTP\_WEBSOCKET\_MIN\_FRAME\_HEADER\_SIZE}}
+\index{UVHTTP\_WEBSOCKET\_MIN\_FRAME\_HEADER\_SIZE@{UVHTTP\_WEBSOCKET\_MIN\_FRAME\_HEADER\_SIZE}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_WEBSOCKET\_MIN\_FRAME\_HEADER\_SIZE}{UVHTTP\_WEBSOCKET\_MIN\_FRAME\_HEADER\_SIZE}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+MIN\+\_\+\+FRAME\+\_\+\+HEADER\+\_\+\+SIZE~2}
+
+Web\+Socket 默认配置
+
+配置建议：
+\begin{DoxyItemize}
+\item 默认值适合大多数应用
+\item 大消息应用可以增加这些值
+\end{DoxyItemize}
+
+默认值定义在 \mbox{\hyperlink{uvhttp__defaults_8h}{uvhttp\+\_\+defaults.\+h}} 中 \mbox{\Hypertarget{uvhttp__constants_8h_a047094c88424bea202eea31d728031cc}\label{uvhttp__constants_8h_a047094c88424bea202eea31d728031cc}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_WEBSOCKET\_MIN\_KEY\_LENGTH@{UVHTTP\_WEBSOCKET\_MIN\_KEY\_LENGTH}}
+\index{UVHTTP\_WEBSOCKET\_MIN\_KEY\_LENGTH@{UVHTTP\_WEBSOCKET\_MIN\_KEY\_LENGTH}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_WEBSOCKET\_MIN\_KEY\_LENGTH}{UVHTTP\_WEBSOCKET\_MIN\_KEY\_LENGTH}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+MIN\+\_\+\+KEY\+\_\+\+LENGTH~16}
+
+Web\+Socket 密钥长度限制 \mbox{\Hypertarget{uvhttp__constants_8h_aa35ca504ce39bdd71e01d534dfdc2760}\label{uvhttp__constants_8h_aa35ca504ce39bdd71e01d534dfdc2760}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_WEBSOCKET\_OPCODE\_TEXT@{UVHTTP\_WEBSOCKET\_OPCODE\_TEXT}}
+\index{UVHTTP\_WEBSOCKET\_OPCODE\_TEXT@{UVHTTP\_WEBSOCKET\_OPCODE\_TEXT}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_WEBSOCKET\_OPCODE\_TEXT}{UVHTTP\_WEBSOCKET\_OPCODE\_TEXT}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+OPCODE\+\_\+\+TEXT~0x1}
+
+Web\+Socket 操作码 \mbox{\Hypertarget{uvhttp__constants_8h_aaad88af840018eafb714159e25fe41ab}\label{uvhttp__constants_8h_aaad88af840018eafb714159e25fe41ab}} 
+\index{uvhttp\_constants.h@{uvhttp\_constants.h}!UVHTTP\_WEBSOCKET\_VERSION@{UVHTTP\_WEBSOCKET\_VERSION}}
+\index{UVHTTP\_WEBSOCKET\_VERSION@{UVHTTP\_WEBSOCKET\_VERSION}!uvhttp\_constants.h@{uvhttp\_constants.h}}
+\doxysubsubsection{\texorpdfstring{UVHTTP\_WEBSOCKET\_VERSION}{UVHTTP\_WEBSOCKET\_VERSION}}
+{\footnotesize\ttfamily \#define UVHTTP\+\_\+\+WEBSOCKET\+\_\+\+VERSION~13}
+
+Web\+Socket 版本和协议 

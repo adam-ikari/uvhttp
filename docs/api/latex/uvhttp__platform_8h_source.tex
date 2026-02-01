@@ -1,0 +1,109 @@
+\hypertarget{uvhttp__platform_8h_source}{}\doxysection{uvhttp\+\_\+platform.\+h}
+\label{uvhttp__platform_8h_source}\index{include/uvhttp\_platform.h@{include/uvhttp\_platform.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{comment}{/* UVHTTP -\/ 平台兼容性头文件 */}}
+\DoxyCodeLine{2 }
+\DoxyCodeLine{3 \textcolor{preprocessor}{\#ifndef UVHTTP\_PLATFORM\_H}}
+\DoxyCodeLine{4 \textcolor{preprocessor}{\#define UVHTTP\_PLATFORM\_H}}
+\DoxyCodeLine{5 }
+\DoxyCodeLine{6 \textcolor{comment}{/* 平台检测 -\/ 只支持 Linux */}}
+\DoxyCodeLine{7 \textcolor{preprocessor}{\#define UVHTTP\_PLATFORM\_LINUX}}
+\DoxyCodeLine{8 }
+\DoxyCodeLine{9 \textcolor{comment}{/* 必须先包含 stdint.h 才能使用 UINTPTR\_MAX */}}
+\DoxyCodeLine{10 \textcolor{preprocessor}{\#include <stdint.h>}}
+\DoxyCodeLine{11 }
+\DoxyCodeLine{12 \textcolor{comment}{/* 指针大小检测 */}}
+\DoxyCodeLine{13 \textcolor{preprocessor}{\#if UINTPTR\_MAX == 0xFFFFFFFF}}
+\DoxyCodeLine{14 \textcolor{preprocessor}{\#    define UVHTTP\_32BIT 1}}
+\DoxyCodeLine{15 \textcolor{preprocessor}{\#    define UVHTTP\_POINTER\_SIZE 4}}
+\DoxyCodeLine{16 \textcolor{preprocessor}{\#    define UVHTTP\_SIZE\_T\_SIZE 4}}
+\DoxyCodeLine{17 \textcolor{preprocessor}{\#    define UVHTTP\_ALIGNMENT 4}}
+\DoxyCodeLine{18 \textcolor{preprocessor}{\#elif UINTPTR\_MAX == 0xFFFFFFFFFFFFFFFF}}
+\DoxyCodeLine{19 \textcolor{preprocessor}{\#    define UVHTTP\_64BIT 1}}
+\DoxyCodeLine{20 \textcolor{preprocessor}{\#    define UVHTTP\_POINTER\_SIZE 8}}
+\DoxyCodeLine{21 \textcolor{preprocessor}{\#    define UVHTTP\_SIZE\_T\_SIZE 8}}
+\DoxyCodeLine{22 \textcolor{preprocessor}{\#    define UVHTTP\_ALIGNMENT 8}}
+\DoxyCodeLine{23 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{24 \textcolor{preprocessor}{\#    error "{}Unsupported pointer size"{}}}
+\DoxyCodeLine{25 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{26 }
+\DoxyCodeLine{27 \textcolor{comment}{/* 头文件包含 */}}
+\DoxyCodeLine{28 \textcolor{preprocessor}{\#include <arpa/inet.h>}}
+\DoxyCodeLine{29 \textcolor{preprocessor}{\#include <netdb.h>}}
+\DoxyCodeLine{30 \textcolor{preprocessor}{\#include <netinet/in.h>}}
+\DoxyCodeLine{31 \textcolor{preprocessor}{\#include <sys/socket.h>}}
+\DoxyCodeLine{32 \textcolor{preprocessor}{\#include <unistd.h>}}
+\DoxyCodeLine{33 }
+\DoxyCodeLine{34 \textcolor{comment}{/* 类型定义 */}}
+\DoxyCodeLine{35 \textcolor{keyword}{typedef} socklen\_t uvhttp\_socklen\_t;}
+\DoxyCodeLine{36 }
+\DoxyCodeLine{37 \textcolor{comment}{/* 宏定义 */}}
+\DoxyCodeLine{38 \textcolor{preprocessor}{\#define UVHTTP\_EXPORT \_\_attribute\_\_((visibility("{}default"{}})))}
+\DoxyCodeLine{39 \textcolor{preprocessor}{\#define UVHTTP\_IMPORT}}
+\DoxyCodeLine{40 \textcolor{preprocessor}{\#define UVHTTP\_API \_\_attribute\_\_((visibility("{}default"{}})))}
+\DoxyCodeLine{41 }
+\DoxyCodeLine{42 \textcolor{comment}{/* 函数宏 */}}
+\DoxyCodeLine{43 \textcolor{preprocessor}{\#define uvhttp\_close\_socket close}}
+\DoxyCodeLine{44 }
+\DoxyCodeLine{45 \textcolor{comment}{/* 错误处理 */}}
+\DoxyCodeLine{46 \textcolor{preprocessor}{\#define UVHTTP\_SOCKET\_ERROR(e) (e < 0)}}
+\DoxyCodeLine{47 \textcolor{preprocessor}{\#define UVHTTP\_SOCKET\_LAST\_ERROR() errno}}
+\DoxyCodeLine{48 \textcolor{preprocessor}{\#define UVHTTP\_SOCKET\_WOULD\_BLOCK(e) (e == EAGAIN || e == EWOULDBLOCK)}}
+\DoxyCodeLine{49 }
+\DoxyCodeLine{50 \textcolor{comment}{/* 时间函数 */}}
+\DoxyCodeLine{51 \textcolor{preprocessor}{\#include <unistd.h>}}
+\DoxyCodeLine{52 \textcolor{preprocessor}{\#define uvhttp\_sleep\_ms(ms) usleep((ms)*1000)}}
+\DoxyCodeLine{53 }
+\DoxyCodeLine{54 \textcolor{comment}{/* 32位系统兼容性宏 */}}
+\DoxyCodeLine{55 \textcolor{preprocessor}{\#ifdef UVHTTP\_32BIT}}
+\DoxyCodeLine{56 \textcolor{comment}{/* 在32位系统上，size\_t是4字节，但uint64\_t仍然是8字节 */}}
+\DoxyCodeLine{57 \textcolor{comment}{/* 需要确保结构体对齐正确，避免性能下降 */}}
+\DoxyCodeLine{58 \textcolor{preprocessor}{\#    define UVHTTP\_POINTER\_ALIGNMENT 4}}
+\DoxyCodeLine{59 \textcolor{preprocessor}{\#    define UVHTTP\_SIZE\_T\_ALIGNMENT 4}}
+\DoxyCodeLine{60 \textcolor{preprocessor}{\#    define UVHTTP\_UINT64\_ALIGNMENT \(\backslash\)}}
+\DoxyCodeLine{61 \textcolor{preprocessor}{        4 }\textcolor{comment}{/* 32位系统上uint64\_t自然对齐为4字节（但大小仍为8字节） */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{62 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{63 \textcolor{comment}{/* 64位系统 */}}
+\DoxyCodeLine{64 \textcolor{preprocessor}{\#    define UVHTTP\_POINTER\_ALIGNMENT 8}}
+\DoxyCodeLine{65 \textcolor{preprocessor}{\#    define UVHTTP\_SIZE\_T\_ALIGNMENT 8}}
+\DoxyCodeLine{66 \textcolor{preprocessor}{\#    define UVHTTP\_UINT64\_ALIGNMENT 8}}
+\DoxyCodeLine{67 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{68 }
+\DoxyCodeLine{69 \textcolor{comment}{/* 对齐验证宏 -\/ 根据平台自适应 */}}
+\DoxyCodeLine{70 \textcolor{preprocessor}{\#define UVHTTP\_CHECK\_ALIGNMENT(type, member, expected\_alignment)           \(\backslash\)}}
+\DoxyCodeLine{71 \textcolor{preprocessor}{    UVHTTP\_STATIC\_ASSERT(offsetof(type, member) \% expected\_alignment == 0, \(\backslash\)}}
+\DoxyCodeLine{72 \textcolor{preprocessor}{                         \#type "{}."{}} \#member "{} not "{} \#expected\_alignment     \(\backslash\)}
+\DoxyCodeLine{73                                "{}-\/byte aligned"{})}
+\DoxyCodeLine{74 }
+\DoxyCodeLine{75 \textcolor{comment}{/* ========== 缓存行填充宏定义 ========== */}}
+\DoxyCodeLine{76 }
+\DoxyCodeLine{77 \textcolor{comment}{/* 缓存行大小（现代 CPU 通常是 64 字节） */}}
+\DoxyCodeLine{78 \textcolor{preprocessor}{\#ifndef UVHTTP\_CACHE\_LINE\_SIZE}}
+\DoxyCodeLine{79 \textcolor{preprocessor}{\#    define UVHTTP\_CACHE\_LINE\_SIZE 64}}
+\DoxyCodeLine{80 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{81 }
+\DoxyCodeLine{82 \textcolor{comment}{/* 缓存行对齐宏 -\/ 用于结构体字段对齐 */}}
+\DoxyCodeLine{83 \textcolor{preprocessor}{\#define UVHTTP\_CACHE\_LINE\_ALIGNED \(\backslash\)}}
+\DoxyCodeLine{84 \textcolor{preprocessor}{    \_\_attribute\_\_((aligned(UVHTTP\_CACHE\_LINE\_SIZE)))}}
+\DoxyCodeLine{85 }
+\DoxyCodeLine{86 \textcolor{comment}{/* 缓存行填充宏 -\/ 防止伪共享（False Sharing） */}}
+\DoxyCodeLine{87 \textcolor{preprocessor}{\#if defined(\_\_GNUC\_\_) || defined(\_\_clang\_\_)}}
+\DoxyCodeLine{88 \textcolor{preprocessor}{\#    define UVHTTP\_CACHE\_LINE\_PAD char \_pad[UVHTTP\_CACHE\_LINE\_SIZE]}}
+\DoxyCodeLine{89 \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{90 \textcolor{preprocessor}{\#    define UVHTTP\_CACHE\_LINE\_PAD char \_pad[UVHTTP\_CACHE\_LINE\_SIZE]}}
+\DoxyCodeLine{91 \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{92 }
+\DoxyCodeLine{93 \textcolor{comment}{/* 缓存行填充验证宏 -\/ 确保结构体大小是缓存行的整数倍 */}}
+\DoxyCodeLine{94 \textcolor{preprocessor}{\#define UVHTTP\_ASSERT\_CACHE\_LINE\_ALIGNED(type)                       \(\backslash\)}}
+\DoxyCodeLine{95 \textcolor{preprocessor}{    UVHTTP\_STATIC\_ASSERT(sizeof(type) \% UVHTTP\_CACHE\_LINE\_SIZE == 0, \(\backslash\)}}
+\DoxyCodeLine{96 \textcolor{preprocessor}{                         \#type "{} size is not cache line aligned"{}})}
+\DoxyCodeLine{97 }
+\DoxyCodeLine{98 \textcolor{comment}{/* 缓存行偏移验证宏 -\/ 确保字段在缓存行边界 */}}
+\DoxyCodeLine{99 \textcolor{preprocessor}{\#define UVHTTP\_ASSERT\_CACHE\_LINE\_OFFSET(type, member)                          \(\backslash\)}}
+\DoxyCodeLine{100 \textcolor{preprocessor}{    UVHTTP\_STATIC\_ASSERT(offsetof(type, member) \% UVHTTP\_CACHE\_LINE\_SIZE == 0, \(\backslash\)}}
+\DoxyCodeLine{101 \textcolor{preprocessor}{                         \#type "{}."{}} \#member "{} not cache line aligned"{})}
+\DoxyCodeLine{102 }
+\DoxyCodeLine{103 \textcolor{preprocessor}{\#endif }\textcolor{comment}{/* UVHTTP\_PLATFORM\_H */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

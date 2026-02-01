@@ -8,6 +8,7 @@
 #    ifndef UVHTTP_WEBSOCKET_H
 #        define UVHTTP_WEBSOCKET_H
 
+#        include "uvhttp_config.h"
 #        include "uvhttp_connection.h"
 #        include "uvhttp_error.h"
 #        include "uvhttp_tls.h"
@@ -124,7 +125,8 @@ typedef struct uvhttp_ws_connection {
  * 创建 WebSocket 连接
  */
 struct uvhttp_ws_connection* uvhttp_ws_connection_create(
-    int fd, mbedtls_ssl_context* ssl, int is_server);
+    int fd, mbedtls_ssl_context* ssl, int is_server,
+    const uvhttp_config_t* config);
 
 /**
  * 释放 WebSocket 连接

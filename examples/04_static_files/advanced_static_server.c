@@ -16,14 +16,18 @@ typedef struct {
 } app_context_t;
 
 /* 全局应用上下文 - 仅在 main 函数中设置和使用 */
-static app_context_t* g_app_context = NULL;
+
 
 /* 信号处理函数 */
 void signal_handler(int signal) {
+    app_context_t* ctx = (app_context_t*)uv_default_loop()->data;
+    if (!ctx) return;
+
+
     printf("\n收到信号 %d，正在关闭服务器...\n", signal);
-    if (g_app_context) {
-        g_app_context->keep_running = 0;
-        if (g_app_context->server) {
+    if (ctx) {
+        ctx->keep_running = 0;
+        if (ctx->server) {
             /* 服务器关闭需要手动实现 */
         }
     }
@@ -31,13 +35,12 @@ void signal_handler(int signal) {
 
 /* API 请求处理器 - 显示统计信息 */
 int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    (void)request;  // 未使用参数
-    (void)request;  /* 避免未使用参数警告 */
-
-    if (!g_app_context || !g_app_context->static_ctx) {
+    app_context_t* ctx = (app_context_t*)request->client->loop->data;
+    if (!ctx || !ctx->static_ctx) {
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_header(response, "Content-Type", "application/json");
-        uvhttp_response_set_body(response, "{\"error\":\"Static context not initialized\"}", 46);
+        const char* error = "{\"error\":\"Static context not initialized\"}";
+        uvhttp_response_set_body(response, error, strlen(error));
         uvhttp_response_send(response);
         return -1;
     }
@@ -74,7 +77,7 @@ int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     uvhttp_response_set_body(response, json_string, strlen(json_string));
 
     int result = uvhttp_response_send(response);
-    free(json_string);
+    uvhttp_free(json_string);
 
     return result;
 }
@@ -204,7 +207,7 @@ int main(int argc, char* argv[]) {
     }
     
     /* 创建应用上下文 */
-    app_context_t* ctx = (app_context_t*)malloc(sizeof(app_context_t));
+    app_context_t* ctx = (app_context_t*)uvhttp_alloc(sizeof(app_context_t));
     if (!ctx) {
         fprintf(stderr, "❌ 无法分配应用上下文\n");
         return 1;
@@ -213,7 +216,7 @@ int main(int argc, char* argv[]) {
     ctx->keep_running = 1;
     
     /* 设置全局应用上下文 */
-    g_app_context = ctx;
+    loop->data = ctx;
     
     /* 设置信号处理 */
     signal(SIGINT, signal_handler);
@@ -234,10 +237,19 @@ int main(int argc, char* argv[]) {
     
     /* 创建静态文件上下文 */
     ctx->static_ctx = NULL;
+    /* 创建HTTP服务器 */
+    uvhttp_error_t server_result = uvhttp_server_new(loop, &ctx->server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
+        uvhttp_free(ctx);
+        return 1;
+    }
+    
+
     uvhttp_error_t result = uvhttp_static_create(&static_config, &ctx->static_ctx);
     if (result != UVHTTP_OK || !ctx->static_ctx) {
         fprintf(stderr, "❌ 无法创建静态文件服务上下文\n");
-        free(ctx);
+        uvhttp_free(ctx);
         return 1;
     }
     
@@ -251,7 +263,7 @@ int main(int argc, char* argv[]) {
     uvhttp_error_t router_result = uvhttp_router_new(&router);
     if (router_result != UVHTTP_OK) {
         fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(router_result));
-        free(ctx);
+        uvhttp_free(ctx);
         return 1;
     }
     
@@ -274,8 +286,8 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "❌ 无法启动服务器\n");
         uvhttp_static_free(ctx->static_ctx);
         uvhttp_server_free(ctx->server);
-        free(ctx);
-        g_app_context = NULL;
+        uvhttp_free(ctx);
+        
         return 1;
     }
     
@@ -306,8 +318,8 @@ int main(int argc, char* argv[]) {
         uvhttp_server_free(ctx->server);
     }
     
-    free(ctx);
-    g_app_context = NULL;
+    uvhttp_free(ctx);
+    
     
     printf("✅ 资源清理完成\n");
     return 0;
