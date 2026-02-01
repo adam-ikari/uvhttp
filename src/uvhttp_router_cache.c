@@ -21,7 +21,19 @@ typedef struct route_hash_entry {
     struct route_hash_entry* next;
 } route_hash_entry_t;
 
-/* 缓存优化的路由器结构 - 采用分层缓存策略提高性能 */
+/* 缓存优化的路由器结构 - 采用分层缓存策略提高性能
+ * 
+ * 线程安全说明：
+ * 本实现专为单线程事件循环架构设计（基于 libuv）：
+ * - 路由器必须在单个事件循环线程中使用
+ * - 不支持多线程并发访问
+ * - 如果需要在多线程环境中使用，请为每个线程创建独立的服务器实例和路由器
+ * 
+ * 性能优化：
+ * - 采用分层缓存策略（热路径 + 哈希表）
+ * - 热路径缓存利用 CPU 缓存局部性
+ * - 无锁设计，避免互斥锁开销
+ */
 typedef struct {
     /* 热路径缓存：存储最常用的16个路由，利用CPU缓存局部性 */
     struct {
@@ -38,9 +50,6 @@ typedef struct {
 
     /* 路由统计 */
     size_t total_routes;
-    
-    /* 线程安全保护 */
-    uv_mutex_t mutex;
 } cache_optimized_router_t;
 
 /* 使用统一的hash函数（内联函数） */
@@ -271,13 +280,6 @@ uvhttp_error_t uvhttp_router_new(uvhttp_router_t** router) {
 
     memset(cr, 0, sizeof(cache_optimized_router_t));
 
-    /* 初始化互斥锁 */
-    if (uv_mutex_init(&cr->mutex) != 0) {
-        uvhttp_free(cr);
-        *router = NULL;
-        return UVHTTP_ERROR_IO_ERROR;
-    }
-
     *router = (uvhttp_router_t*)cr;
     return UVHTTP_OK;
 }
@@ -299,9 +301,6 @@ void uvhttp_router_free(uvhttp_router_t* router) {
         }
         cr->hash_table[i] = NULL;
     }
-
-    /* 销毁互斥锁 */
-    uv_mutex_destroy(&cr->mutex);
 
     uvhttp_free(cr);
 }
@@ -326,16 +325,12 @@ uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
 
     cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
 
-    uv_mutex_lock(&cr->mutex);
-
     /* 添加到哈希表 */
     uvhttp_error_t err = add_to_hash_table(cr, path, method, handler);
     if (err == UVHTTP_OK) {
         /* 添加到热路径 */
         add_to_hot_routes(cr, path, method, handler);
     }
-
-    uv_mutex_unlock(&cr->mutex);
 
     return err;
 }
@@ -349,8 +344,6 @@ uvhttp_request_handler_t uvhttp_router_find_handler(
     cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
     uvhttp_method_t method_enum = fast_method_parse(method);
 
-    uv_mutex_lock(&cr->mutex);
-
     /* 先在热路径中查找 */
     uvhttp_request_handler_t handler = find_in_hot_routes(cr, path, method_enum);
 
@@ -358,8 +351,6 @@ uvhttp_request_handler_t uvhttp_router_find_handler(
     if (!handler) {
         handler = find_in_hash_table(cr, path, method_enum);
     }
-
-    uv_mutex_unlock(&cr->mutex);
 
     return handler;
 }
@@ -374,8 +365,6 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
     cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
     uvhttp_method_t method_enum = fast_method_parse(method);
 
-    uv_mutex_lock(&cr->mutex);
-
     /* 先在热路径中查找 */
     uvhttp_request_handler_t handler = find_in_hot_routes(cr, path, method_enum);
 
@@ -383,8 +372,6 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
     if (!handler) {
         handler = find_in_hash_table(cr, path, method_enum);
     }
-
-    uv_mutex_unlock(&cr->mutex);
 
     if (!handler) {
         return UVHTTP_ERROR_NOT_FOUND;

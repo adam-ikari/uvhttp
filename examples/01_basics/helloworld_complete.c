@@ -171,31 +171,21 @@ int main() {
     config->read_buffer_size = 8192;
     config->keepalive_timeout = 30;
     config->request_timeout = 60;
-    
-    // 尝试从配置文件加载（会覆盖默认值）
-    if (uvhttp_config_load_file(config, "helloworld.conf") != UVHTTP_OK) {
-        printf("Config file not found, using default values...\n");
-    } else {
-        printf("Configuration loaded from file\n");
-    }
-    
-    // 从环境变量加载配置（可选，会覆盖文件配置）
-    uvhttp_config_load_env(config);
-    
+
     // 验证配置
     if (uvhttp_config_validate(config) != UVHTTP_OK) {
         fprintf(stderr, "Configuration validation failed\n");
         uvhttp_config_free(config);
         return 1;
     }
-    
+
     // 打印配置信息
     printf("Configuration loaded successfully:\n");
     printf("  Max connections: %d\n", config->max_connections);
     printf("  Max requests per connection: %d\n", config->max_requests_per_connection);
     printf("  Max body size: %zu bytes\n", config->max_body_size);
     printf("  Read buffer size: %d bytes\n", config->read_buffer_size);
-    
+
     // 获取默认循环
     uv_loop_t* loop = uv_default_loop();
     if (!loop) {

@@ -451,3 +451,112 @@ endforeach()
 if(EXISTS ${CMAKE_SOURCE_DIR}/benchmark/benchmark.cmake)
     include(${CMAKE_SOURCE_DIR}/benchmark/benchmark.cmake)
 endif()
+
+# ============================================================================
+# 测试和覆盖率目标
+# ============================================================================
+if(ENABLE_COVERAGE)
+    # 收集所有测试可执行文件
+    file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
+    list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
+    list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_loop_helper.cpp")
+    list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_time_mock.cpp")
+    list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_mock_coverage.cpp")
+    
+    set(ALL_TEST_EXECUTABLES)
+    foreach(test_file ${GTEST_TEST_FILES})
+        get_filename_component(test_name ${test_file} NAME_WE)
+        list(APPEND ALL_TEST_EXECUTABLES ${test_name})
+    endforeach()
+    
+    # 创建运行所有测试的脚本
+    file(WRITE ${CMAKE_BINARY_DIR}/run_all_tests.sh "#!/bin/bash\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "export LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/dist/lib:$LD_LIBRARY_PATH\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"Running all unit tests...\"\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"\"\n")
+    
+    # 初始化计数器
+    list(LENGTH ALL_TEST_EXECUTABLES TOTAL_TESTS_COUNT)
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "TEST_COUNT=0\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "TEST_PASSED=0\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "TEST_FAILED=0\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "TOTAL_TESTS=${TOTAL_TESTS_COUNT}\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"\"\n")
+    
+    foreach(test_name ${ALL_TEST_EXECUTABLES})
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "TEST_COUNT=$((TEST_COUNT + 1))\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"[$TEST_COUNT/$TOTAL_TESTS] Running ${test_name}...\"\n")
+        
+        # 根据测试类型设置不同的超时时间
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "case \"${test_name}\" in\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    *stress*|*performance*)\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "        TIMEOUT=60\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "        ;;\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    *)\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "        TIMEOUT=30\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "        ;;\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "esac\n")
+        
+        # 运行测试并记录结果
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "if ${CMAKE_BINARY_DIR}/dist/bin/${test_name}; then\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    TEST_PASSED=$((TEST_PASSED + 1))\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    echo \"✅ PASSED\"\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "else\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    TEST_FAILED=$((TEST_FAILED + 1))\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    echo \"❌ FAILED\"\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "fi\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"\"\n")
+    endforeach()
+    
+    # 添加测试结果汇总
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"=========================================\"\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"Test Summary\"\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"=========================================\"\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"Total tests: \$TEST_COUNT\"\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"Passed: \$TEST_PASSED\"\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"Failed: \$TEST_FAILED\"\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"=========================================\"\n")
+    
+    # 如果有测试失败，返回错误码
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "if [ \$TEST_FAILED -gt 0 ]; then\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    echo \"❌ Some tests failed\"\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    exit 1\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "else\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    echo \"✅ All tests passed\"\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    exit 0\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "fi\n")
+    
+    # 添加测试目标
+    add_custom_target(run_tests
+        COMMAND chmod +x ${CMAKE_BINARY_DIR}/run_all_tests.sh
+        COMMAND ${CMAKE_BINARY_DIR}/run_all_tests.sh
+        DEPENDS ${ALL_TEST_EXECUTABLES}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Running all unit tests"
+    )
+
+    # 添加覆盖率目标
+    add_custom_target(coverage
+        COMMAND ${CMAKE_COMMAND} -E rm -rf coverage.info coverage_html
+        COMMAND lcov --capture --directory . --output-file coverage.info
+        COMMAND lcov --remove coverage.info '/usr/*' '*/deps/*' '*/test/*' '*/build/*' --output-file coverage.info
+        COMMAND lcov --list coverage.info
+        COMMAND genhtml coverage.info --output-directory coverage_html
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Generating coverage report"
+    )
+
+    # 添加运行测试并生成覆盖率的目标
+    add_custom_target(test_and_coverage
+        COMMAND chmod +x ${CMAKE_BINARY_DIR}/run_all_tests.sh
+        COMMAND ${CMAKE_BINARY_DIR}/run_all_tests.sh
+        COMMAND ${CMAKE_COMMAND} -E rm -rf coverage.info coverage_html
+        COMMAND lcov --capture --directory . --output-file coverage.info
+        COMMAND lcov --remove coverage.info '/usr/*' '*/deps/*' '*/test/*' '*/build/*' --output-file coverage.info
+        COMMAND lcov --list coverage.info
+        COMMAND genhtml coverage.info --output-directory coverage_html
+        DEPENDS ${ALL_TEST_EXECUTABLES}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Running tests and generating coverage report"
+    )
+endif()

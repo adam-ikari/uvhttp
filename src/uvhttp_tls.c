@@ -255,7 +255,7 @@ uvhttp_error_t uvhttp_tls_context_set_verify_depth(
 // TLS安全配置
 uvhttp_error_t uvhttp_tls_context_set_cipher_suites(
     uvhttp_tls_context_t* ctx, const int* cipher_suites) {
-    if (!ctx) {
+    if (!ctx || !cipher_suites) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
 
@@ -294,7 +294,10 @@ uvhttp_error_t uvhttp_tls_context_set_session_cache(
 
 uvhttp_error_t uvhttp_tls_context_enable_ocsp_stapling(
     uvhttp_tls_context_t* ctx, int enable) {
-    (void)ctx;
+    if (!ctx) {
+        return UVHTTP_ERROR_TLS_INVALID_PARAM;
+    }
+    
     (void)enable;
     return UVHTTP_OK;
 }

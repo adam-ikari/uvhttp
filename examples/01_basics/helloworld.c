@@ -155,51 +155,24 @@ int main() {
     config->read_buffer_size = 8192;
     config->keepalive_timeout = 30;
     config->request_timeout = 60;
-    
-    // 尝试从配置文件加载（会覆盖默认值）
-    if (uvhttp_config_load_file(config, "helloworld.conf") != UVHTTP_OK) {
-        printf("Config file not found, using default values...\n");
-        
-        // 创建默认配置文件供参考
-        FILE* conf_file = fopen("helloworld.conf", "w");
-        if (conf_file) {
-            fprintf(conf_file, "# Hello World Server Configuration\n");
-            fprintf(conf_file, "# Connection limits\n");
-            fprintf(conf_file, "max_connections=500\n");
-            fprintf(conf_file, "max_requests_per_connection=100\n");
-            fprintf(conf_file, "backlog=128\n\n");
-            fprintf(conf_file, "# Performance settings\n");
-            fprintf(conf_file, "max_body_size=1048576\n");
-            fprintf(conf_file, "read_buffer_size=8192\n");
-            fprintf(conf_file, "keepalive_timeout=30\n");
-            fprintf(conf_file, "request_timeout=60\n");
-            fclose(conf_file);
-            printf("Default config file created: helloworld.conf\n");
-        }
-    } else {
-        printf("Configuration loaded from file\n");
-    }
-    
-    // 从环境变量加载配置（可选，会覆盖文件配置）
-    uvhttp_config_load_env(config);
-    
+
     // 验证配置
     if (uvhttp_config_validate(config) != UVHTTP_OK) {
         fprintf(stderr, "Configuration validation failed\n");
         uvhttp_config_free(config);
         return 1;
     }
-    
+
     /* 配置验证成功，将由服务器负责清理 */
     cleanup_needed = 0;
-    
+
     // 打印配置信息
     printf("Configuration loaded successfully:\n");
     printf("  Max connections: %d\n", config->max_connections);
     printf("  Max requests per connection: %d\n", config->max_requests_per_connection);
     printf("  Max body size: %zu bytes\n", config->max_body_size);
     printf("  Read buffer size: %d bytes\n", config->read_buffer_size);
-    
+
     // 获取默认循环
     uv_loop_t* loop = uv_default_loop();
     if (!loop) {

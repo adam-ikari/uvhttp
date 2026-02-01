@@ -6,16 +6,44 @@
 #include "uvhttp_error.h"
 #include <string.h>
 
+/* 辅助函数：创建服务器和循环 */
+static void create_server_and_loop(uv_loop_t** loop, uvhttp_server_t** server) {
+    *loop = uv_loop_new();
+    ASSERT_NE(*loop, nullptr);
+    
+    uvhttp_error_t result = uvhttp_server_new(*loop, server);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(*server, nullptr);
+}
+
+/* 辅助函数：销毁服务器和循环 */
+static void destroy_server_and_loop(uvhttp_server_t* server, uv_loop_t* loop) {
+    uvhttp_server_free(server);
+    uv_loop_close(loop);
+    uvhttp_free(loop);
+}
+
+/* 辅助函数：运行事件循环并关闭 */
+static void run_and_close(uvhttp_server_t* server, uvhttp_connection_t* conn, uv_loop_t* loop) {
+    if (conn) {
+        uvhttp_connection_close(conn);
+        uvhttp_connection_free(conn);
+    }
+    uvhttp_server_free(server);
+    uv_run(loop, UV_RUN_NOWAIT);
+    uv_loop_close(loop);
+    uvhttp_free(loop);
+}
+
 /* ========== 测试连接创建和释放 ========== */
 
 TEST(UvhttpConnectionLifecycleTest, CreateAndDestroy) {
+    uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
-    uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(server, nullptr);
+    create_server_and_loop(&loop, &server);
     
     uvhttp_connection_t* conn = nullptr;
-    result = uvhttp_connection_new(server, &conn);
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
     
@@ -30,19 +58,18 @@ TEST(UvhttpConnectionLifecycleTest, CreateAndDestroy) {
     EXPECT_EQ(conn->content_length, 0);
     
     uvhttp_connection_free(conn);
-    uvhttp_server_free(server);
+    destroy_server_and_loop(server, loop);
 }
 
 /* ========== 测试连接状态转换 ========== */
 
 TEST(UvhttpConnectionLifecycleTest, StateTransitions) {
+    uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
-    uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(server, nullptr);
+    create_server_and_loop(&loop, &server);
     
     uvhttp_connection_t* conn = nullptr;
-    result = uvhttp_connection_new(server, &conn);
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
     
@@ -62,7 +89,7 @@ TEST(UvhttpConnectionLifecycleTest, StateTransitions) {
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_CLOSING);
     
     uvhttp_connection_free(conn);
-    uvhttp_server_free(server);
+    destroy_server_and_loop(server, loop);
 }
 
 /* ========== 测试连接标志位 ========== */

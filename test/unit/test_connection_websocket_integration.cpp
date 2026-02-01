@@ -9,6 +9,23 @@
 #include "uvhttp_error.h"
 #include <string.h>
 
+/* 辅助函数：创建服务器和循环 */
+static void create_server_and_loop(uv_loop_t** loop, uvhttp_server_t** server) {
+    *loop = uv_loop_new();
+    ASSERT_NE(*loop, nullptr);
+    
+    uvhttp_error_t result = uvhttp_server_new(*loop, server);
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(*server, nullptr);
+}
+
+/* 辅助函数：销毁服务器和循环 */
+static void destroy_server_and_loop(uvhttp_server_t* server, uv_loop_t* loop) {
+    uvhttp_server_free(server);
+    uv_loop_close(loop);
+    uvhttp_free(loop);
+}
+
 /* ========== 测试 WebSocket 握手 ========== */
 
 TEST(UvhttpConnectionWebsocketIntegrationTest, HandleWebsocketHandshakeNullConn) {
@@ -17,13 +34,12 @@ TEST(UvhttpConnectionWebsocketIntegrationTest, HandleWebsocketHandshakeNullConn)
 }
 
 TEST(UvhttpConnectionWebsocketIntegrationTest, HandleWebsocketHandshakeNullKey) {
+    uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
-    uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(server, nullptr);
+    create_server_and_loop(&loop, &server);
     
     uvhttp_connection_t* conn = nullptr;
-    result = uvhttp_connection_new(server, &conn);
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
     
@@ -31,17 +47,16 @@ TEST(UvhttpConnectionWebsocketIntegrationTest, HandleWebsocketHandshakeNullKey) 
     EXPECT_NE(result, UVHTTP_OK);
     
     uvhttp_connection_free(conn);
-    uvhttp_server_free(server);
+    destroy_server_and_loop(server, loop);
 }
 
 TEST(UvhttpConnectionWebsocketIntegrationTest, HandleWebsocketHandshakeValidKey) {
+    uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
-    uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(server, nullptr);
+    create_server_and_loop(&loop, &server);
     
     uvhttp_connection_t* conn = nullptr;
-    result = uvhttp_connection_new(server, &conn);
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
     
@@ -50,7 +65,7 @@ TEST(UvhttpConnectionWebsocketIntegrationTest, HandleWebsocketHandshakeValidKey)
     /* 结果取决于内部状态 */
     
     uvhttp_connection_free(conn);
-    uvhttp_server_free(server);
+    destroy_server_and_loop(server, loop);
 }
 
 TEST(UvhttpConnectionWebsocketIntegrationTest, HandleWebsocketHandshakeEmptyKey) {
