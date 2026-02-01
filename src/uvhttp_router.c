@@ -1,4 +1,4 @@
-#if !UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION
+#if !UVHTTP_FEATURE_ROUTER_CACHE
 
 #include "uvhttp_router.h"
 
@@ -722,4 +722,4 @@ uvhttp_error_t uvhttp_router_add_fallback_route(uvhttp_router_t* router,
     return UVHTTP_OK;
 }
 
-#endif /* !UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION */
+#endif /* !UVHTTP_FEATURE_ROUTER_CACHE */
