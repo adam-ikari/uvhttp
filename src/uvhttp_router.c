@@ -1,6 +1,5 @@
 #if !UVHTTP_FEATURE_ROUTER_CACHE
-
-#    include "uvhttp_router.h"
+#include "uvhttp_router.h"
 
 #    include "uvhttp_allocator.h"
 #    include "uvhttp_connection.h"
