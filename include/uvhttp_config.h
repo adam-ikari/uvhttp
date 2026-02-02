@@ -1,6 +1,6 @@
 /**
  * @file uvhttp_config.h
- * @brief Configuration managementSystem
+ * @brief Configuration management system
  *
  * Provides dynamic runtime adjustment
  */
@@ -86,22 +86,21 @@ typedef struct {
                                         */
 
     /* Rate limiting configuration */
-    int rate_limit_max_requests; /* Rate limitRequest, default 100, prevent */
-    int rate_limit_max_window_seconds;  /* Rate limitwhenwindow, default 60
-                                           seconds, withrate_limit_windowone */
-    int rate_limit_min_timeout_seconds; /* Rate limitTimeoutwhen,
-                                         * Default1seconds, preventRequest
+    int rate_limit_max_requests; /* Rate limit max requests, default 100, prevent abuse */
+    int rate_limit_max_window_seconds;  /* Rate limit window, default 60
+                                           seconds, same as rate_limit_window */
+    int rate_limit_min_timeout_seconds; /* Rate limit timeout when limit exceeded,
+                                         * Default 1 seconds, prevent request spam
                                          */
 } uvhttp_config_t;
 
 /* Configuration management functions */
 /**
- * @brief createnewobject
- * @param config outputParameter, Used forreceiveobject
- * @return UVHTTP_OK Success, othervaluerepresentsFailure
- * @note Successwhen, *config issettovalidobject, mustUse uvhttp_config_free
- * release
- * @note Failurewhen, *config issetto NULL
+ * @brief Create new configuration object
+ * @param config Output parameter, used to receive the created object
+ * @return UVHTTP_OK on success, other values represent failure
+ * @note On success, *config is set to a valid object, must use uvhttp_config_free to release
+ * @note On failure, *config is set to NULL
  */
 uvhttp_error_t uvhttp_config_new(uvhttp_config_t** config);
 void uvhttp_config_free(uvhttp_config_t* config);

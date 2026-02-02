@@ -1,17 +1,17 @@
 #if !UVHTTP_FEATURE_ROUTER_CACHE
 #include "uvhttp_router.h"
 
-#    include "uvhttp_allocator.h"
-#    include "uvhttp_connection.h"
-#    include "uvhttp_constants.h"
-#    include "uvhttp_server.h"
-#    include "uvhttp_static.h"
-#    include "uvhttp_utils.h"
+#include "uvhttp_allocator.h"
+#include "uvhttp_connection.h"
+#include "uvhttp_constants.h"
+#include "uvhttp_server.h"
+#include "uvhttp_static.h"
+#include "uvhttp_utils.h"
 
-#    include <ctype.h>
-#    include <stdio.h>
-#    include <stdlib.h>
-#    include <string.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /**
  * Router system hybrid mode threshold
@@ -446,12 +446,16 @@ static int match_route_node(uvhttp_route_node_t* node, const char** segments,
         return -1;
     }
 
+    // Prevent stack overflow from infinite recursion
+    if (segment_index > MAX_ROUTE_PATH_LEN) {
+        return -1;
+    }
+
     // if is leaf node
     if (segment_index >= segment_count) {
         if (node->handler &&
             (node->method == UVHTTP_ANY || node->method == method)) {
             match->handler = node->handler;
-            match->param_count = 0;
             return 0;
         }
         return -1;

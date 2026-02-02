@@ -263,7 +263,7 @@
  * URL, path, method length limits
  *
  * Configuration recommendations:
- * - Default valuealreadyenough, modify
+ * - Default value is already enough, no need to modify
  * - Too large values may affect performance
  *
  * CMake configuration:
@@ -285,26 +285,26 @@
 /* ========== Connection Management Configuration ========== */
 
 /**
- * Connection
+ * Maximum connections
  *
  * Configuration recommendations:
- * - Small applications(< 1000 RPS): 512-1024
- * - Medium applications(1000-10000 RPS): 2048-4096(Default 2048)
- * - Large applications(> 10000 RPS): 8192-10000
+ * - Small applications (< 1000 RPS): 512-1024
+ * - Medium applications (1000-10000 RPS): 2048-4096 (Default 2048)
+ * - Large applications (> 10000 RPS): 8192-10000
  *
- * System:
- * - needadjust ulimit -n
- * - needadjustSystemdescription
+ * System requirements:
+ * - Need to adjust ulimit -n
+ * - Need to adjust system description
  *
  * Note:
- * - valuecausememory
- * - Rate limitMiddlewareUse
+ * - Too large values may cause memory issues
+ * - Use with rate limiting middleware
  *
  * CMake configuration:
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_MAX_CONNECTIONS_DEFAULT=4096 ..
  */
-#define UVHTTP_MAX_CONNECTIONS_HARD 65535 /*  */
+#define UVHTTP_MAX_CONNECTIONS_HARD 65535 /* Maximum TCP port number (2^16 - 1) */
 
 #ifndef UVHTTP_MAX_CONNECTIONS_DEFAULT
 #    define UVHTTP_MAX_CONNECTIONS_DEFAULT 2048 /* Default value */
@@ -320,12 +320,12 @@
  * Configuration recommendations:
  * - Small applications: 1024
  * - Medium applications: 4096
- * - Large applications: 8192(Default)
+ * - Large applications: 8192 (Default)
  *
  * Impact:
- * - pendinghandleConnectionqueuelength
- * - causeConnectionis
- * - memory
+ * - Pending connection queue length
+ * - May cause connection rejection when full
+ * - Affects memory usage
  *
  * CMake configuration:
  * - Configure through CMakeLists.txt or command line parameters
@@ -339,42 +339,42 @@
  * Keep-Alive
  *
  * Configuration recommendations:
- * - Default valueMost applications
- * - Concurrencyincrease UVHTTP_DEFAULT_KEEP_ALIVE_MAX
+ * - Default value is suitable for most applications
+ * - High concurrency can increase UVHTTP_DEFAULT_KEEP_ALIVE_MAX
  *
- * Default valuedefine uvhttp_defaults.h
+ * Default value defined in uvhttp_defaults.h
  */
 
 /**
- * ConnectionTimeout
+ * Connection timeout
  *
  * Configuration recommendations:
- * - Response: 30seconds
- * - : 60seconds(Default)
- * - whenhandle: 120-300seconds
+ * - Fast response: 30 seconds
+ * - Normal: 60 seconds (Default)
+ * - Slow handling: 120-300 seconds
  *
- * Default valuedefine uvhttp_defaults.h
+ * Default value defined in uvhttp_defaults.h
  */
 
 /* ========== Static File Service Configuration ========== */
 
 /**
- *  I/O Buffersize
+ * I/O buffer size
  *
  * Configuration recommendations:
- * - to: 32KB
- * - to: 64KB(Default)
- * - : 128KB
+ * - Small: 32KB
+ * - Medium: 64KB (Default)
+ * - Large: 128KB
  *
- * Default valuedefine uvhttp_defaults.h
+ * Default value defined in uvhttp_defaults.h
  */
 
 /**
- * Concurrencyread
+ * Concurrent read limit
  *
  * Configuration recommendations:
  * - Small applications: 16
- * - Medium applications: 32-64(Default)
+ * - Medium applications: 32-64 (Default)
  * - Large applications: 128-256
  *
  * CMake configuration:
@@ -386,11 +386,11 @@
 #endif
 
 /**
- * File size
+ * Maximum file size
  *
  * Configuration recommendations:
  * - Small applications: 1MB
- * - Medium applications: 10MB(Default)
+ * - Medium applications: 10MB (Default)
  * - Large applications: 100MB-1GB
  *
  * CMake configuration:
@@ -402,7 +402,7 @@
 #endif
 
 /**
- * Static fileCache
+ * Static file cache size
  *
  * CMake configuration:
  * - Configure through CMakeLists.txt or command line parameters
@@ -425,7 +425,7 @@
 #endif
 
 /**
- * Static filesizevalue
+ * Static file small file threshold
  *
  * CMake configuration:
  * - Configure through CMakeLists.txt or command line parameters
@@ -436,7 +436,7 @@
 #endif
 
 /**
- * Sendfile
+ * Sendfile chunk size
  *
  * CMake configuration:
  * - Configure through CMakeLists.txt or command line parameters
@@ -459,7 +459,7 @@
 #endif
 
 /**
- * File sizevalue(Used forchunkedsizeadjust)
+ * File size thresholds (Used for chunked size adjustment)
  *
  * CMake configuration:
  * - Configure through CMakeLists.txt or command line parameters
@@ -478,7 +478,7 @@
 #endif
 
 /**
- * chunkedsize(Used forchunkedsizeadjust)
+ * Chunked size thresholds (Used for chunked size adjustment)
  *
  * CMake configuration:
  * - Configure through CMakeLists.txt or command line parameters
@@ -497,7 +497,7 @@
 #endif
 
 /**
- * WebSocket Configuration validationConstant
+ * WebSocket configuration validation constants
  */
 #ifndef UVHTTP_WEBSOCKET_CONFIG_MIN_FRAME_SIZE
 #    define UVHTTP_WEBSOCKET_CONFIG_MIN_FRAME_SIZE 1024 /* 1KB */
@@ -518,38 +518,38 @@
 #endif
 
 #ifndef UVHTTP_WEBSOCKET_CONFIG_MIN_PING_INTERVAL
-#    define UVHTTP_WEBSOCKET_CONFIG_MIN_PING_INTERVAL 1 /* 1seconds */
+#    define UVHTTP_WEBSOCKET_CONFIG_MIN_PING_INTERVAL 1 /* 1 second */
 #endif
 
 #ifndef UVHTTP_WEBSOCKET_CONFIG_MAX_PING_INTERVAL
-#    define UVHTTP_WEBSOCKET_CONFIG_MAX_PING_INTERVAL 3600 /* 1hours */
+#    define UVHTTP_WEBSOCKET_CONFIG_MAX_PING_INTERVAL 3600 /* 1 hour */
 #endif
 
 #ifndef UVHTTP_WEBSOCKET_CONFIG_MIN_PING_TIMEOUT
-#    define UVHTTP_WEBSOCKET_CONFIG_MIN_PING_TIMEOUT 1 /* 1seconds */
+#    define UVHTTP_WEBSOCKET_CONFIG_MIN_PING_TIMEOUT 1 /* 1 second */
 #endif
 
 #ifndef UVHTTP_WEBSOCKET_CONFIG_MAX_PING_TIMEOUT
-#    define UVHTTP_WEBSOCKET_CONFIG_MAX_PING_TIMEOUT 3600 /* 1hours */
+#    define UVHTTP_WEBSOCKET_CONFIG_MAX_PING_TIMEOUT 3600 /* 1 hour */
 #endif
 
 /**
- * Configuration validationConstant
+ * Configuration validation constants
  */
 #ifndef UVHTTP_TCP_KEEPALIVE_MIN_TIMEOUT
-#    define UVHTTP_TCP_KEEPALIVE_MIN_TIMEOUT 1 /* 1seconds */
+#    define UVHTTP_TCP_KEEPALIVE_MIN_TIMEOUT 1 /* 1 second */
 #endif
 
 #ifndef UVHTTP_TCP_KEEPALIVE_MAX_TIMEOUT
-#    define UVHTTP_TCP_KEEPALIVE_MAX_TIMEOUT 7200 /* 2hours */
+#    define UVHTTP_TCP_KEEPALIVE_MAX_TIMEOUT 7200 /* 2 hours */
 #endif
 
 #ifndef UVHTTP_SENDFILE_MIN_TIMEOUT_MS
-#    define UVHTTP_SENDFILE_MIN_TIMEOUT_MS 1000 /* 1seconds */
+#    define UVHTTP_SENDFILE_MIN_TIMEOUT_MS 1000 /* 1 second */
 #endif
 
 #ifndef UVHTTP_SENDFILE_MAX_TIMEOUT_MS
-#    define UVHTTP_SENDFILE_MAX_TIMEOUT_MS 300000 /* 5minutes */
+#    define UVHTTP_SENDFILE_MAX_TIMEOUT_MS 300000 /* 5 minutes */
 #endif
 
 #ifndef UVHTTP_SENDFILE_MIN_RETRY
@@ -561,7 +561,7 @@
 #endif
 
 /**
- * CacheConstant
+ * Cache constants
  *
  * CMake configuration:
  * - Configure through CMakeLists.txt or command line parameters
@@ -572,7 +572,7 @@
 #endif
 
 #ifndef UVHTTP_CACHE_DEFAULT_TTL
-#    define UVHTTP_CACHE_DEFAULT_TTL 3600 /* 1 hours */
+#    define UVHTTP_CACHE_DEFAULT_TTL 3600 /* 1 hour */
 #endif
 
 #ifndef UVHTTP_CACHE_MIN_MAX_ENTRIES
@@ -588,7 +588,7 @@
 #endif
 
 #ifndef UVHTTP_CACHE_MAX_TTL
-#    define UVHTTP_CACHE_MAX_TTL 86400 /* 24hours */
+#    define UVHTTP_CACHE_MAX_TTL 86400 /* 24 hours */
 #endif
 
 #ifndef UVHTTP_LRU_CACHE_MIN_BATCH_EVICTION_SIZE
@@ -600,7 +600,7 @@
 #endif
 
 /**
- * Rate limitConfiguration validationConstant
+ * Rate limit configuration validation constants
  */
 #ifndef UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS
 #    define UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS 1
@@ -615,7 +615,7 @@
 #endif
 
 #ifndef UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS
-#    define UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS 86400 /* 24hours */
+#    define UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS 86400 /* 24 hours */
 #endif
 
 #ifndef UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS
@@ -623,11 +623,11 @@
 #endif
 
 #ifndef UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS
-#    define UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS 3600 /* 1hours */
+#    define UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS 3600 /* 1 hour */
 #endif
 
 /**
- * Socket Buffersize
+ * Socket buffer size
  *
  * CMake configuration:
  * - Configure through CMakeLists.txt or command line parameters
@@ -642,7 +642,7 @@
 #endif
 
 /**
- * memorypair
+ * Memory page size and alignment
  *
  * CMake configuration:
  * - Configure through CMakeLists.txt or command line parameters
@@ -659,7 +659,7 @@
 /* ========== WebSocket Configuration ========== */
 
 /**
- * WebSocket andprotocol
+ * WebSocket version and protocol
  */
 #define UVHTTP_WEBSOCKET_VERSION 13
 #define UVHTTP_WEBSOCKET_MAGIC_KEY "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
@@ -667,11 +667,11 @@
 #define UVHTTP_WEBSOCKET_ACCEPT_KEY_SIZE 40
 
 /**
- * WebSocket Default
+ * WebSocket default configuration
  *
  * Configuration recommendations:
- * - Default valueMost applications
- * - messageincrease UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE
+ * - Default value is suitable for most applications
+ * - For large message size, increase UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE
  */
 #define UVHTTP_WEBSOCKET_MAX_FRAME_SIZE 4096
 #define UVHTTP_WEBSOCKET_FRAME_HEADER_SIZE 10
@@ -680,13 +680,13 @@
 #define UVHTTP_WEBSOCKET_MIN_BUFFER_EXPANSION_SIZE 1024
 
 /**
- * WebSocket Default
+ * WebSocket default configuration
  *
  * Configuration recommendations:
- * - Default valueMost applications
- * - messageincreasevalue
+ * - Default value is suitable for most applications
+ * - For large message size, increase the value
  *
- * Default valuedefine uvhttp_defaults.h
+ * Default value defined in uvhttp_defaults.h
  */
 
 #ifndef UVHTTP_WEBSOCKET_MIN_FRAME_HEADER_SIZE
@@ -698,7 +698,7 @@
 #endif
 
 /**
- * WebSocket
+ * WebSocket opcodes and flags
  */
 #define UVHTTP_WEBSOCKET_OPCODE_TEXT 0x1
 #define UVHTTP_WEBSOCKET_OPCODE_BINARY 0x2
@@ -708,14 +708,14 @@
 #define UVHTTP_WEBSOCKET_PAYLOAD_LEN_65536 65536
 
 /**
- * WebSocket closescope
+ * WebSocket close code range
  */
 #define UVHTTP_WEBSOCKET_CLOSE_CODE_MIN 1000
 #define UVHTTP_WEBSOCKET_CLOSE_CODE_MAX 4999
 #define UVHTTP_WEBSOCKET_MAX_REASON_LENGTH 123
 
 /**
- * WebSocket length
+ * WebSocket key length limits
  */
 #define UVHTTP_WEBSOCKET_MIN_KEY_LENGTH 16
 #define UVHTTP_WEBSOCKET_MAX_KEY_LENGTH 64
@@ -723,7 +723,7 @@
 #define UVHTTP_WEBSOCKET_SHA1_HASH_SIZE 20
 
 /**
- * WebSocket bits
+ * WebSocket bit masks
  */
 #define UVHTTP_WEBSOCKET_FIN_MASK 0x80
 #define UVHTTP_WEBSOCKET_OPCODE_MASK 0x0F
@@ -732,11 +732,11 @@
 /* ========== Routing Configuration ========== */
 
 /**
- * RouterPathlength
+ * Router path length
  *
  * Configuration recommendations:
- * - Default value:256 bytes
- * - Most applications: 256 bytesenough
+ * - Default value: 256 bytes
+ * - Most applications: 256 bytes is enough
  * - Complex applications: can increase to 512 or 1024
  *
  * CMake configuration:
@@ -751,19 +751,19 @@
  */
 
 /**
- * RouterCache
+ * Router cache optimization
  *
  * Configuration recommendations:
- * - Routerquantity(< 10): Disablesave memory
- * - Routerquantity(> 10): Enableimprove(Default)
+ * - Route count (< 10): Disable to save memory
+ * - Route count (> 10): Enable to improve performance (Default)
  *
- * option:
- * - STATS: Enablestatisticsfunction(debug)
- * - DYNAMIC: Enableadjust(optimization)
- * - MONITORING: Enable(Production environment)
+ * Options:
+ * - STATS: Enable statistics function (debug mode)
+ * - DYNAMIC: Enable dynamic adjustment (optimization)
+ * - MONITORING: Enable monitoring (Production environment)
  */
 #ifndef UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION
-#    define UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION 1 /* DefaultEnable */
+#    define UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION 1 /* Default enabled */
 #endif
 
 /* UVHTTP_ENABLE_ROUTER_CACHE_STATS deleted - unused */
@@ -771,12 +771,12 @@
 /* UVHTTP_ENABLE_ROUTER_CACHE_MONITORING deleted - unused */
 
 /**
- * Routermode
+ * Router search mode
  *
  * Configuration recommendations:
- * - 0: (Routerwhen)
- * - 1: hash(Routerwhen)
- * - 2: strategy(, Default)
+ * - 0: Array mode (when route count is small)
+ * - 1: Hash mode (when route count is medium)
+ * - 2: Hybrid strategy (Default, best performance)
  */
 #ifndef UVHTTP_ROUTER_SEARCH_MODE
 #    define UVHTTP_ROUTER_SEARCH_MODE 2
@@ -796,7 +796,7 @@
 
 /* Routing cache optimization features */
 #ifndef UVHTTP_FEATURE_ROUTER_CACHE
-#    define UVHTTP_FEATURE_ROUTER_CACHE 1 /* DefaultEnable */
+#    define UVHTTP_FEATURE_ROUTER_CACHE 1 /* Default enabled */
 #endif
 
 #define UVHTTP_ROUTER_MAX_CHILDREN 16
@@ -804,14 +804,14 @@
 /* ========== TLS/SSL Configuration ========== */
 
 /**
- * TLS validateandSession
+ * TLS validation and session configuration
  */
 #define UVHTTP_TLS_VERIFY_DEPTH 1
 #define UVHTTP_TLS_DH_MIN_BITLEN 2048
 #define UVHTTP_TLS_MAX_SESSIONS 1024
 
 /**
- * TLS Buffersize
+ * TLS buffer sizes
  */
 #define UVHTTP_TLS_ERROR_BUFFER_SIZE 256
 #define UVHTTP_TLS_CERT_BUFFER_SIZE 256
@@ -822,12 +822,12 @@
 /* ========== Middleware Configuration ========== */
 
 /**
- * CORS
+ * CORS max age
  */
 #define UVHTTP_CORS_MAX_AGE_DEFAULT "86400"
 
 /**
- * Rate limit
+ * Rate limit window
  */
 #define UVHTTP_RATE_LIMIT_WINDOW 60 /* seconds */
 #define UVHTTP_RATE_LIMIT_MAX_AGE 17
@@ -835,7 +835,7 @@
 /* ========== Error Handling Configuration ========== */
 
 /**
- * ErrormessageBuffersize
+ * Error message buffer sizes
  */
 #define UVHTTP_ERROR_MESSAGE_LENGTH 256
 #define UVHTTP_ERROR_CONTEXT_BUFFER_SIZE 256
@@ -845,7 +845,7 @@
 /* ========== File Path Configuration ========== */
 
 /**
- * File pathlength
+ * File path length limits
  */
 #define UVHTTP_MAX_FILE_PATH_SIZE 2048
 #define UVHTTP_DECODED_PATH_SIZE 1024
@@ -853,7 +853,7 @@
 /* ========== Network Related Constants ========== */
 
 /**
- * IP addressand
+ * IP address string length limits
  */
 #define UVHTTP_IPV6_MAX_STRING_LENGTH 46
 #define UVHTTP_IPV4_MAX_STRING_LENGTH 16
@@ -861,27 +861,27 @@
 #define UVHTTP_MIN_PORT_NUMBER 1
 
 /**
- * Default
+ * Default configuration values
  *
- * Default valuedefine uvhttp_defaults.h
+ * Default values defined in uvhttp_defaults.h
  */
 
 /* ========== Time Related Constants ========== */
 
 /**
- * whenbits
+ * Time conversion constants
  */
 #define UVHTTP_SECONDS_IN_DAY 86400
 #define UVHTTP_MILLISECONDS_PER_SECOND 1000
 #define UVHTTP_NANOSECONDS_PER_MILLISECOND 1000000
 
 /**
- * Cachewhen
+ * Cache time constants
  */
 #define UVHTTP_CACHE_MAX_AGE 3600 /* seconds */
 
 /**
- * Error recovery
+ * Error recovery delay constants
  */
 #ifndef UVHTTP_DEFAULT_BASE_DELAY_MS
 #    define UVHTTP_DEFAULT_BASE_DELAY_MS 100
@@ -894,97 +894,56 @@
 /* ========== Network and Connection Configuration ========== */
 
 /**
-
- * TCP
-
+ * TCP keep-alive timeout
  *
-
  * CMake configuration:
-
  * - Configure through CMakeLists.txt or command line parameters
-
  * - Example: cmake -DUVHTTP_TCP_KEEPALIVE_TIMEOUT=120 ..
-
  */
 
 #ifndef UVHTTP_TCP_KEEPALIVE_TIMEOUT
-
 #    define UVHTTP_TCP_KEEPALIVE_TIMEOUT 60 /* seconds */
-
 #endif
 
 /**
-
- * Client IP Buffersize
-
+ * Client IP buffer size
  *
-
  * CMake configuration:
-
  * - Configure through CMakeLists.txt or command line parameters
-
  * - Example: cmake -DUVHTTP_CLIENT_IP_BUFFER_SIZE=128 ..
-
  */
 
 #ifndef UVHTTP_CLIENT_IP_BUFFER_SIZE
-
 #    define UVHTTP_CLIENT_IP_BUFFER_SIZE 64
-
 #endif
 
 /* ========== Sendfile Configuration ========== */
 
 /**
-
- * Sendfile
-
+ * Sendfile configuration
  *
-
- * Performance test(2026-01-30 ):
-
+ * Performance test (2026-01-30):
  *
-
- * 1. UVHTTP_SENDFILE_TIMEOUT_MS = 30000 (30seconds)
-
- *    - Test environment: Linux 6.14.11, wrk 4Thread/100Concurrency
-
- *    - :
-
- *      * 10secondsTimeout: RPS 19,436, Timeoutrate 0.05%
-
- *      * 30secondsTimeout: RPS 19,488, Timeoutrate 0.01%()
-
- *      * 60secondsTimeout: RPS 19,412, Timeoutrate 0.01%, Connectionwhen
-
- *    - : 30secondsbalanceand,
-
+ * 1. UVHTTP_SENDFILE_TIMEOUT_MS = 30000 (30 seconds)
+ *    - Test environment: Linux 6.14.11, wrk 4 Thread/100 Concurrency
+ *    - Results:
+ *      * 10 seconds timeout: RPS 19,436, Timeout rate 0.05%
+ *      * 30 seconds timeout: RPS 19,488, Timeout rate 0.01% (Recommended)
+ *      * 60 seconds timeout: RPS 19,412, Timeout rate 0.01%, Connection wait time increases
+ *    - Conclusion: 30 seconds timeout balances performance and reliability
  *
-
  * 2. UVHTTP_SENDFILE_DEFAULT_MAX_RETRY = 2
-
- *    - Test environment: (rate 1%)
-
- *    - :
-
- *      * 0timesRetry: Failurerate 1.2%, Latency 5.2ms
-
- *      * 1timesRetry: Failurerate 0.3%, Latency 5.5ms
-
- *      * 2timesRetry: Failurerate 0.08%, Latency 5.8ms()
-
- *      * 3timesRetry: Failurerate 0.07%, Latency 6.2ms()
-
- *    - : 2timesRetryFailurerateandLatencybalance
-
+ *    - Test environment: Network failure rate 1%
+ *    - Results:
+ *      * 0 times retry: Failure rate 1.2%, Latency 5.2ms
+ *      * 1 times retry: Failure rate 0.3%, Latency 5.5ms
+ *      * 2 times retry: Failure rate 0.08%, Latency 5.8ms (Recommended)
+ *      * 3 times retry: Failure rate 0.07%, Latency 6.2ms (Diminishing returns)
+ *    - Conclusion: 2 times retry balances failure rate and latency
  *
-
  * CMake configuration:
-
  * - Configure through CMakeLists.txt or command line parameters
-
  * - Example: cmake -DUVHTTP_SENDFILE_TIMEOUT_MS=60000 ..
-
  */
 
 #ifndef UVHTTP_SENDFILE_TIMEOUT_MS
@@ -1002,39 +961,22 @@
 /* ========== LRU Cache ========== */
 
 /**
-
- * LRU Cache
-
+ * LRU Cache configuration
  *
-
- * Performance test(2026-01-30 CachePerformance test):
-
+ * Performance test (2026-01-30 Cache Performance test):
  *
-
  * 1. UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE = 10
-
- *    - Test environment: 1000Cache, entry
-
- *    - :
-
- *      * evict5: evictLatency 0.8ms, Cacherate 92%
-
- *      * evict10: evictLatency 0.9ms, Cacherate 95%()
-
- *      * evict20: evictLatency 1.5ms, Cacherate 96%(Latencyincrease)
-
- *      * evict50: evictLatency 3.2ms, Cacherate 97%(Latency)
-
- *    - : 10entryevictrateandLatencybalance
-
+ *    - Test environment: 1000 cache entries
+ *    - Results:
+ *      * evict 5: Eviction latency 0.8ms, Cache hit rate 92%
+ *      * evict 10: Eviction latency 0.9ms, Cache hit rate 95% (Recommended)
+ *      * evict 20: Eviction latency 1.5ms, Cache hit rate 96% (Latency increases)
+ *      * evict 50: Eviction latency 3.2ms, Cache hit rate 97% (High latency)
+ *    - Conclusion: 10 entries eviction balances eviction rate and latency
  *
-
  * CMake configuration:
-
  * - Configure through CMakeLists.txt or command line parameters
-
  * - Example: cmake -DUVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE=20 ..
-
  */
 
 #ifndef UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE
@@ -1043,64 +985,39 @@
 
 #endif
 
-/* ========== validate ========== */
+/* ========== Validation ========== */
 
 /**
-
- * IP addressvalidate
-
+ * IP address validation
  *
-
  * CMake configuration:
-
  * - Configure through CMakeLists.txt or command line parameters
-
  * - Example: cmake -DUVHTTP_IP_OCTET_MAX_VALUE=255 ..
-
  */
 
 #ifndef UVHTTP_IP_OCTET_MAX_VALUE
-
 #    define UVHTTP_IP_OCTET_MAX_VALUE 255
-
 #endif
 
-/* ========== Rate limit ========== */
+/* ========== Rate Limit ========== */
 
 /**
-
- * Rate limit
-
+ * Rate limit configuration
  *
-
- * Performance test(2026-01-30 Rate limitPerformance test):
-
+ * Performance test (2026-01-30 Rate limit Performance test):
  *
-
  * 1. UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS = 10
-
- *    - Test environment: Rate limit
-
- *    - :
-
- *      * 1secondsTimeout: rate 15%, User
-
- *      * 5secondsTimeout: rate 5%, Userone
-
- *      * 10secondsTimeout: rate 1%, User()
-
- *      * 30secondsTimeout: rate 0.5%, Responsewhen
-
- *    - : 10secondsTimeoutrateandUserbalance
-
+ *    - Test environment: Rate limit stress test
+ *    - Results:
+ *      * 1 second timeout: Rejection rate 15%, User experience poor
+ *      * 5 seconds timeout: Rejection rate 5%, User experience acceptable
+ *      * 10 seconds timeout: Rejection rate 1%, User experience good (Recommended)
+ *      * 30 seconds timeout: Rejection rate 0.5%, Response time increases
+ *    - Conclusion: 10 seconds timeout balances rejection rate and user experience
  *
-
  * CMake configuration:
-
  * - Configure through CMakeLists.txt or command line parameters
-
  * - Example: cmake -DUVHTTP_RATE_LIMIT_MAX_REQUESTS=500000 ..
-
  */
 
 #ifndef UVHTTP_RATE_LIMIT_MAX_REQUESTS
@@ -1121,66 +1038,66 @@
 
 #endif
 
-/* ========== Error codescope ========== */
+/* ========== Error Code Range ========== */
 
 /**
- * ServerError codescope
+ * Server error code range
  */
 #define UVHTTP_ERROR_SERVER_MIN -106
 #define UVHTTP_ERROR_SERVER_MAX -100
 
 /**
- * ConnectionError codescope
+ * Connection error code range
  */
 #define UVHTTP_ERROR_CONNECTION_MIN -207
 #define UVHTTP_ERROR_CONNECTION_MAX -200
 
 /**
- * RequestError codescope
+ * Request error code range
  */
 #define UVHTTP_ERROR_REQUEST_MIN -307
 #define UVHTTP_ERROR_REQUEST_MAX -300
 
 /**
- * TLS Error codescope
+ * TLS error code range
  */
 #define UVHTTP_ERROR_TLS_MIN -407
 #define UVHTTP_ERROR_TLS_MAX -400
 
 /**
- * RouterError codescope
+ * Router error code range
  */
 #define UVHTTP_ERROR_ROUTER_MIN -504
 #define UVHTTP_ERROR_ROUTER_MAX -500
 
 /**
- * Error codescope
+ * Allocator error code range
  */
 #define UVHTTP_ERROR_ALLOCATOR_MIN -602
 #define UVHTTP_ERROR_ALLOCATOR_MAX -600
 
 /**
- * WebSocket Error codescope
+ * WebSocket error code range
  */
 #define UVHTTP_ERROR_WEBSOCKET_MIN -707
 #define UVHTTP_ERROR_WEBSOCKET_MAX -700
 
 /**
- * Error codescope
+ * Config error code range
  */
 #define UVHTTP_ERROR_CONFIG_MIN -903
 #define UVHTTP_ERROR_CONFIG_MAX -900
 
 /**
- * logError codescope
+ * Log error code range
  */
 #define UVHTTP_ERROR_LOG_MIN -1103
 #define UVHTTP_ERROR_LOG_MAX -1100
 
-/* ========== stringhandleConstant ========== */
+/* ========== String Handling Constants ========== */
 
 /**
- *
+ * String handling constants
  */
 #define UVHTTP_NULL_BYTE '\0'
 #define UVHTTP_CARRIAGE_RETURN '\r'
