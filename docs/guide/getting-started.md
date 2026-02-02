@@ -98,7 +98,7 @@ Visit `http://localhost:8080/hello` in your browser!
 
 ## Next Steps
 
-- Learn about [routing](../guide/TUTORIAL.md)
+- Learn about [routing (Chinese)](../zh/guide/TUTORIAL.md)
 - Explore [WebSocket support](../guide/websocket.md)
 - Check out [API reference](../api/API_REFERENCE.md)
 

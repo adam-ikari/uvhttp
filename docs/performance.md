@@ -4,15 +4,24 @@ UVHTTP is designed for high performance and low latency. This document provides 
 
 ## Performance Metrics
 
-### Benchmark Results
+### Benchmark Results (Updated: 2026-02-02)
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| **Peak Throughput** | 23,226 RPS | Low concurrency (10 connections) |
-| **High Concurrency** | 13,950 RPS | Medium concurrency (100 connections) |
-| **Static Files** | 12,510 RPS | Medium concurrency (100 connections) |
-| **Minimum Latency** | 352 μs | Low concurrency |
-| **Average Latency** | 2.92 ms - 43.59 ms | Varies by concurrency |
+| **Peak Throughput** | 21,991 RPS | High concurrency (100 connections, 4 threads) |
+| **High Concurrency** | 21,757 RPS | Very high concurrency (200 connections, 8 threads) |
+| **Medium Concurrency** | 17,500 RPS | Medium concurrency (50 connections, 4 threads) |
+| **Low Concurrency** | 16,605 RPS | Low concurrency (10 connections, 2 threads) |
+| **Minimum Latency** | 551 μs | Low concurrency |
+| **Average Latency** | 0.55ms - 9.22ms | Varies by concurrency |
+| **Performance Goal Achievement** | 95.3% | Target: 23,070 RPS |
+
+**Test Environment**:
+- OS: Linux 6.14.11-2-pve
+- Tool: wrk 4.2.0
+- Test Duration: 10 seconds
+- Memory Allocator: mimalloc
+- Router Cache Optimization: Enabled
 
 ### Stability
 
@@ -201,6 +210,7 @@ sysctl -w net.core.somaxconn=4096
 
 ## Next Steps
 
-- [Performance Benchmark](../dev/PERFORMANCE_BENCHMARK.md) - Detailed benchmark results
-- [Performance Testing Standard](../dev/PERFORMANCE_TESTING_STANDARD.md) - Testing methodology
+- [Performance Benchmark (Chinese)](../zh/dev/PERFORMANCE_BENCHMARK.md) - Detailed benchmark results
+- [Performance Testing Standard (Chinese)](../zh/dev/PERFORMANCE_TESTING_STANDARD.md) - Testing methodology
 - [API Reference](../api/API_REFERENCE.md) - Complete API documentation
+- [Security Policy](../SECURITY.md) - Security guidelines
