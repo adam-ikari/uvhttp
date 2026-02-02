@@ -17,11 +17,8 @@
 /* HTTP response header string constants */
 #define HTTP_HEADER_CONNECTION_KEEPALIVE "Connection: keep-alive\r\n"
 #define HTTP_HEADER_CONNECTION_CLOSE "Connection: close\r\n"
-// Function declaration
-static void uvhttp_free_write_data(uv_write_t* req, int status);
 
-// Function declaration
-static void uvhttp_free_write_data(uv_write_t* req, int status);
+/* Function declaration */
 static void uvhttp_free_write_data(uv_write_t* req, int status);
 
 static const char* get_status_text(int status_code) {

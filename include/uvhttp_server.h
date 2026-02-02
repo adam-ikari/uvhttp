@@ -7,7 +7,6 @@
 #include "uvhttp_error.h"
 #include "uvhttp_platform.h"
 
-#include <assert.h>
 #include <uv.h>
 
 /* Include uthash header for hash table implementation */

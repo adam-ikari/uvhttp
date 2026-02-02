@@ -669,6 +669,10 @@ const char* uvhttp_request_get_query_param(uvhttp_request_t* request,
             const char* value = p + name_len + 1;
             const char* end = strchr(value, '&');
 
+            /* Static buffer is safe in single-threaded event loop architecture.
+             * UVHTTP uses single-threaded design, so this buffer is only accessed
+             * by one thread at a time. The returned pointer is only valid until
+             * the next call to this function. */
             static char param_value[UVHTTP_MAX_URL_SIZE];
             size_t value_len;
 
