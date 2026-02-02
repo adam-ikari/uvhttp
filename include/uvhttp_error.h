@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-/* 前向声明 */
+/* Forward declarations */
 struct uvhttp_context;
 typedef struct uvhttp_context uvhttp_context_t;
 
@@ -78,7 +78,7 @@ typedef enum {
     UVHTTP_ERROR_TLS_NOT_IMPLEMENTED = -416,
     UVHTTP_ERROR_TLS_PARSE = -417,
     UVHTTP_ERROR_TLS_NO_CERT = -418,
-    /* TLS 非阻塞状态（正数） */
+    /* TLS non-blocking states (positive values) */
     UVHTTP_ERROR_TLS_WANT_READ = 1,
     UVHTTP_ERROR_TLS_WANT_WRITE = 2,
 
@@ -119,10 +119,10 @@ typedef enum {
     UVHTTP_ERROR_LOG_FILE_OPEN = -1102,
     UVHTTP_ERROR_LOG_NOT_INITIALIZED = -1103,
 
-    UVHTTP_ERROR_MAX /* 动态计算最大值 */
+    UVHTTP_ERROR_MAX /* calculateMaximum value */
 } uvhttp_error_t;
 
-/* 统一的返回类型别名，用于所有API函数 */
+/* Unified return type alias for all API functions */
 typedef uvhttp_error_t uvhttp_result_t;
 
 /* Error code to string */

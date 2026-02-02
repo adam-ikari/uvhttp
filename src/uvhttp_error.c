@@ -494,7 +494,7 @@ const char* uvhttp_error_description(uvhttp_error_t error) {
     }
 }
 
-/* 获取错误修复建议 */
+/* get error fix suggestion */
 
 const char* uvhttp_error_suggestion(uvhttp_error_t error) {
 

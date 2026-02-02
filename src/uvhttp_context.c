@@ -19,11 +19,13 @@
 
 /* ============ Memory Allocator Description ============ */
 /*
- * UVHTTP memory allocator uses compile-time macro design, zero-overhead abstraction
+ * UVHTTP memory allocator uses compile-time macro design, zero-overhead
+ * abstraction
  *
  * No runtime allocator provider implemented, reasons:
  * 1. Performance first: avoid function pointer call overhead
- * 2. Compile-time optimization: compiler can inline and optimize allocation calls
+ * 2. Compile-time optimization: compiler can inline and optimize allocation
+ * calls
  * 3. Simple and direct: reduce complexity, improve maintainability
  *
  * Memory allocator type selected via UVHTTP_ALLOCATOR_TYPE compile macro:
@@ -70,7 +72,8 @@ void uvhttp_context_destroy(uvhttp_context_t* context) {
     uvhttp_context_cleanup_websocket(context);
     uvhttp_context_cleanup_config(context);
 
-    /* Note: memory allocator uses compile-time macros, no runtime cleanup needed */
+    /* Note: memory allocator uses compile-time macros, no runtime cleanup
+     * needed */
 
     uvhttp_free(context);
 }

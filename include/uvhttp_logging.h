@@ -1,6 +1,6 @@
 /*
- * UVHTTP 日志宏
- * 简单的日志输出，仅在 Debug 模式下启用
+ * UVHTTP log
+ * simpleLog output,  Debug modeEnable
  */
 
 #ifndef UVHTTP_LOGGING_H
@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-/* 日志级别 */
+/* Log levels */
 typedef enum {
     UVHTTP_LOG_LEVEL_TRACE = 0,
     UVHTTP_LOG_LEVEL_DEBUG = 1,
@@ -22,10 +22,10 @@ typedef enum {
     UVHTTP_LOG_LEVEL_FATAL = 5
 } uvhttp_log_level_t;
 
-/* Debug 模式下启用日志 */
+/* Enable logging in Debug mode */
 #if defined(NDEBUG) || !UVHTTP_FEATURE_LOGGING
 
-/* Release 模式或日志功能禁用时，日志宏为空操作 */
+/* In Release mode or when logging is disabled, log macros are no-ops */
 #    define UVHTTP_LOG(level, ...) ((void)0)
 #    define UVHTTP_LOG_TRACE(...) ((void)0)
 #    define UVHTTP_LOG_DEBUG(...) ((void)0)
@@ -34,9 +34,9 @@ typedef enum {
 #    define UVHTTP_LOG_ERROR(...) ((void)0)
 #    define UVHTTP_LOG_FATAL(...) ((void)0)
 
-#else /* Debug 模式且日志功能启用 */
+#else /* Debug modelogfunctionEnable */
 
-/* Debug 模式下，日志输出到 stderr */
+/* In Debug mode, log output goes to stderr */
 #    define UVHTTP_LOG(level, ...)                                    \
         do {                                                          \
             const char* level_str = "UNKNOWN";                        \

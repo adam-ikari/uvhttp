@@ -207,18 +207,17 @@ docs:
 	fi
 	@mkdir -p docs/api
 	@doxygen Doxyfile
-	@python3 scripts/convert_xml_to_markdown.py docs/api/xml docs/api/markdown_from_xml
-	@python3 scripts/update_api_sidebar.py
+	@npx -y node scripts/doxy2md.js
+	@npx -y node scripts/update_api_sidebar.js
 	@cd docs && npm install && npm run build
 	@echo "✅ 所有文档生成完成！"
-	@echo "  HTML: docs/api/html/index.html"
-	@echo "  LaTeX: docs/api/latex/refman.pdf"
 	@echo "  XML: docs/api/xml/index.xml"
-	@echo "  Markdown: docs/api/markdown_from_xml/index.md"
+	@echo "  Markdown: docs/api/api.md"
+	@echo "  结构体: docs/api/structs/"
 	@echo "  网站: docs/.vitepress/dist/"
 
 docs-clean:
 	@echo "🧹 清理所有文档..."
-	@rm -rf docs/api/html docs/api/latex docs/api/xml docs/api/markdown_from_xml
+	@rm -rf docs/api/xml docs/api/markdown_from_xml docs/api/.doxygen docs/api/structs
 	@cd docs && rm -rf node_modules .vitepress/dist
 	@echo "✅ 文档清理完成！"

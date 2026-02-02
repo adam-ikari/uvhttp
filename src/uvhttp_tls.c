@@ -59,14 +59,14 @@ static int mbedtls_net_recv(void* ctx, unsigned char* buf, size_t len) {
     return ret;
 }
 
-// TLS模块管理
+// TLS module lock management
 uvhttp_error_t uvhttp_tls_init(uvhttp_context_t* context) {
-    /* v2.0.0: 强制要求上下文，不再支持 NULL */
+    /* v2.0.0: force require context, no longer support NULL */
     if (!context) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
 
-    /* 如果 context 中的 TLS 资源未初始化，先初始化 */
+    /* if TLS resources in context not initialized, initialize first */
     if (!context->tls_initialized) {
         if (uvhttp_context_init_tls(context) != 0) {
             return UVHTTP_ERROR_TLS_INIT;
@@ -77,13 +77,13 @@ uvhttp_error_t uvhttp_tls_init(uvhttp_context_t* context) {
         return UVHTTP_OK;
     }
 
-    /* 分配并初始化 entropy 上下文 */
+    /* allocate and initialize entropy context */
     mbedtls_entropy_init((mbedtls_entropy_context*)context->tls_entropy);
 
-    /* 分配并初始化 DRBG 上下文 */
+    /* allocate and initialize DRBG context */
     mbedtls_ctr_drbg_init((mbedtls_ctr_drbg_context*)context->tls_drbg);
 
-    /* 使用自定义熵源初始化 DRBG */
+    /* use custom entropy source to initialize DRBG */
     int ret = mbedtls_ctr_drbg_seed(
         (mbedtls_ctr_drbg_context*)context->tls_drbg, mbedtls_entropy_func,
         (mbedtls_entropy_context*)context->tls_entropy,
@@ -103,14 +103,14 @@ void uvhttp_tls_cleanup(uvhttp_context_t* context) {
         return;
     }
 
-    /* 释放 entropy 和 DRBG 上下文 */
+    /* release entropy and DRBG context */
     mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
     mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
 
     context->tls_initialized = 0;
 }
 
-// TLS上下文管理
+// TLScontextmanage
 uvhttp_error_t uvhttp_tls_context_new(uvhttp_tls_context_t** ctx) {
     if (!ctx) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -149,7 +149,7 @@ uvhttp_error_t uvhttp_tls_context_new(uvhttp_tls_context_t** ctx) {
 
     mbedtls_ssl_conf_rng(&c->conf, mbedtls_ctr_drbg_random, &c->ctr_drbg);
     // mbedtls_ssl_conf_session_cache(&c->conf, &c->cache,
-    // mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);  // 暂时禁用
+    // mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);  // temporarily disabled
 
     c->is_server = 1;
     c->initialized = 1;
@@ -175,9 +175,9 @@ void uvhttp_tls_context_free(uvhttp_tls_context_t* ctx) {
     uvhttp_free(ctx);
 }
 
-// 证书配置
+// certificateconfig
 uvhttp_error_t uvhttp_tls_context_load_cert_chain(uvhttp_tls_context_t* ctx,
-                                                      const char* cert_file) {
+                                                  const char* cert_file) {
     if (!ctx || !cert_file) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
@@ -195,8 +195,8 @@ uvhttp_error_t uvhttp_tls_context_load_cert_chain(uvhttp_tls_context_t* ctx,
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_tls_context_load_private_key(
-    uvhttp_tls_context_t* ctx, const char* key_file) {
+uvhttp_error_t uvhttp_tls_context_load_private_key(uvhttp_tls_context_t* ctx,
+                                                   const char* key_file) {
     if (!ctx || !key_file) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
@@ -211,7 +211,7 @@ uvhttp_error_t uvhttp_tls_context_load_private_key(
 }
 
 uvhttp_error_t uvhttp_tls_context_load_ca_file(uvhttp_tls_context_t* ctx,
-                                                   const char* ca_file) {
+                                               const char* ca_file) {
     if (!ctx || !ca_file) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
@@ -226,9 +226,9 @@ uvhttp_error_t uvhttp_tls_context_load_ca_file(uvhttp_tls_context_t* ctx,
     return UVHTTP_OK;
 }
 
-// mTLS配置
-uvhttp_error_t uvhttp_tls_context_enable_client_auth(
-    uvhttp_tls_context_t* ctx, int require_cert) {
+// mTLSconfig
+uvhttp_error_t uvhttp_tls_context_enable_client_auth(uvhttp_tls_context_t* ctx,
+                                                     int require_cert) {
     if (!ctx) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
@@ -242,8 +242,8 @@ uvhttp_error_t uvhttp_tls_context_enable_client_auth(
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_tls_context_set_verify_depth(
-    uvhttp_tls_context_t* ctx, int depth) {
+uvhttp_error_t uvhttp_tls_context_set_verify_depth(uvhttp_tls_context_t* ctx,
+                                                   int depth) {
     if (!ctx) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
@@ -252,9 +252,9 @@ uvhttp_error_t uvhttp_tls_context_set_verify_depth(
     return UVHTTP_OK;
 }
 
-// TLS安全配置
-uvhttp_error_t uvhttp_tls_context_set_cipher_suites(
-    uvhttp_tls_context_t* ctx, const int* cipher_suites) {
+// TLSsafeconfig
+uvhttp_error_t uvhttp_tls_context_set_cipher_suites(uvhttp_tls_context_t* ctx,
+                                                    const int* cipher_suites) {
     if (!ctx || !cipher_suites) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
@@ -272,17 +272,17 @@ uvhttp_error_t uvhttp_tls_context_enable_session_tickets(
 
     if (enable) {
         // mbedtls_ssl_conf_session_tickets(&ctx->conf,
-        // MBEDTLS_SSL_SESSION_TICKETS_ENABLED);  // 暂时禁用
+        // MBEDTLS_SSL_SESSION_TICKETS_ENABLED);  // temporarily disabled
     } else {
         // mbedtls_ssl_conf_session_tickets(&ctx->conf,
-        // MBEDTLS_SSL_SESSION_TICKETS_DISABLED);  // 暂时禁用
+        // MBEDTLS_SSL_SESSION_TICKETS_DISABLED);  // temporarily disabled
     }
 
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_tls_context_set_session_cache(
-    uvhttp_tls_context_t* ctx, int max_sessions) {
+uvhttp_error_t uvhttp_tls_context_set_session_cache(uvhttp_tls_context_t* ctx,
+                                                    int max_sessions) {
     if (!ctx) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
@@ -297,29 +297,29 @@ uvhttp_error_t uvhttp_tls_context_enable_ocsp_stapling(
     if (!ctx) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
-    
+
     (void)enable;
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_tls_context_set_dh_parameters(
-    uvhttp_tls_context_t* ctx, const char* dh_file) {
+uvhttp_error_t uvhttp_tls_context_set_dh_parameters(uvhttp_tls_context_t* ctx,
+                                                    const char* dh_file) {
     if (!ctx || !dh_file) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
 
-    // mbedTLS 3.x 中 DH 参数通过 ECDH 配置
-    // 默认使用 ECDHE-ECDSA 和 ECDHE-RSA 密码套件
-    // 如需自定义 DH 参数，需要配置 ECDH 组
+    // mbedTLS 3.x DH parameters via ECDH config
+    // default use ECDHE-ECDSA and ECDHE-RSA cipher suites
+    // if need custom DH parameters, need to configure ECDH groups
 
-    // 当前版本使用默认 ECDH 组（推荐）
-    // 如需自定义 DH 参数，可以添加以下配置：
+    // current version uses default ECDH groups (recommended)
+    // if need custom DH parameters, can add following config:
     // mbedtls_ssl_conf_dh_min(ctx, MBEDTLS_DH_GROUP_SIZE);
 
     return UVHTTP_OK;
 }
 
-// TLS连接管理
+// TLSconnectionmanage
 mbedtls_ssl_context* uvhttp_tls_create_ssl(uvhttp_tls_context_t* ctx) {
     if (!ctx) {
         return NULL;
@@ -370,7 +370,7 @@ uvhttp_error_t uvhttp_tls_handshake(mbedtls_ssl_context* ssl) {
 }
 
 uvhttp_error_t uvhttp_tls_read(mbedtls_ssl_context* ssl, void* buf,
-                                   size_t len) {
+                               size_t len) {
     if (!ssl || !buf) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
@@ -388,7 +388,7 @@ uvhttp_error_t uvhttp_tls_read(mbedtls_ssl_context* ssl, void* buf,
 }
 
 uvhttp_error_t uvhttp_tls_write(mbedtls_ssl_context* ssl, const void* buf,
-                                    size_t len) {
+                                size_t len) {
     if (!ssl || !buf) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
@@ -405,7 +405,7 @@ uvhttp_error_t uvhttp_tls_write(mbedtls_ssl_context* ssl, const void* buf,
     return ret;
 }
 
-// 证书验证
+// certificateverify
 int uvhttp_tls_verify_peer_cert(mbedtls_ssl_context* ssl) {
     if (!ssl) {
         return 0;
@@ -420,20 +420,21 @@ int uvhttp_tls_verify_hostname(mbedtls_x509_crt* cert, const char* hostname) {
         return 0;
     }
 
-    // 使用 mbedtls 提供的主机名验证函数
+    // use hostname verification function provided by mbedtls
     const mbedtls_x509_crt* peer_cert = cert;
     const mbedtls_x509_name* name = &peer_cert->subject;
 
-    // CN 的 OID (2.5.4.3)
+    // CN OID (2.5.4.3)
     const unsigned char cn_oid[] = {0x55, 0x04, 0x03};
 
-    // 检查 Common Name (CN)
+    // check Common Name (CN)
     while (name != NULL) {
         if (name->oid.len == 3 && memcmp(name->oid.p, cn_oid, 3) == 0) {
             const char* cn = (const char*)name->val.p;
             size_t cn_len = name->val.len;
 
-            // 简单的精确匹配（生产环境应支持通配符）
+            // simple exact match (production environment should support
+            // wildcards)
             if (strlen(hostname) == cn_len &&
                 strncasecmp(cn, hostname, cn_len) == 0) {
                 return 1;
@@ -442,12 +443,12 @@ int uvhttp_tls_verify_hostname(mbedtls_x509_crt* cert, const char* hostname) {
         name = name->next;
     }
 
-    // 检查 Subject Alternative Names (SAN)
+    // check Subject Alternative Names (SAN)
     const mbedtls_x509_sequence* san = &peer_cert->subject_alt_names;
     while (san != NULL) {
         const mbedtls_x509_buf* san_buf = &san->buf;
 
-        // DNS 名称
+        // DNS name
         if (san_buf->len > 0 && san_buf->p != NULL) {
             const char* san_str = (const char*)san_buf->p;
             if (strcasecmp(san_str, hostname) == 0) {
@@ -465,12 +466,12 @@ int uvhttp_tls_check_cert_validity(mbedtls_x509_crt* cert) {
         return 0;
     }
 
-    // 检查证书是否尚未生效
+    // check if certificate is not yet valid
     if (mbedtls_x509_time_is_future(&cert->valid_from)) {
         return 0;
     }
 
-    // 检查证书是否已过期
+    // check if certificate has expired
     if (mbedtls_x509_time_is_past(&cert->valid_to)) {
         return 0;
     }
@@ -517,14 +518,14 @@ int uvhttp_tls_get_cert_serial(mbedtls_x509_crt* cert, char* buf,
     return strlen(buf);
 }
 
-// 证书吊销检查
-uvhttp_error_t uvhttp_tls_context_enable_crl_checking(
-    uvhttp_tls_context_t* ctx, int enable) {
+// certificate revocation check
+uvhttp_error_t uvhttp_tls_context_enable_crl_checking(uvhttp_tls_context_t* ctx,
+                                                      int enable) {
     if (!ctx) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
 
-    // mbedTLS 3.x 版本中启用 CRL 检查
+    // enable CRL check in mbedTLS 3.x version
     if (enable) {
         mbedtls_x509_crl_init(&ctx->crl);
         mbedtls_ssl_conf_authmode(&ctx->conf, MBEDTLS_SSL_VERIFY_REQUIRED);
@@ -536,7 +537,7 @@ uvhttp_error_t uvhttp_tls_context_enable_crl_checking(
 }
 
 uvhttp_error_t uvhttp_tls_load_crl_file(uvhttp_tls_context_t* ctx,
-                                            const char* crl_file) {
+                                        const char* crl_file) {
     if (!ctx || !crl_file) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
@@ -546,22 +547,23 @@ uvhttp_error_t uvhttp_tls_load_crl_file(uvhttp_tls_context_t* ctx,
         return UVHTTP_ERROR_TLS_PARSE;
     }
 
-    // 将 CRL 添加到验证配置
+    // add CRL to verify config
     mbedtls_ssl_conf_ca_chain(&ctx->conf, &ctx->cacert, &ctx->crl);
 
     return UVHTTP_OK;
 }
 
-// OCSP装订
+// OCSP stapling
 uvhttp_error_t uvhttp_tls_get_ocsp_response(mbedtls_ssl_context* ssl,
-                                                unsigned char** ocsp_response,
-                                                size_t* response_len) {
+                                            unsigned char** ocsp_response,
+                                            size_t* response_len) {
     if (!ssl || !ocsp_response || !response_len) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
 
-    // mbedTLS 3.x 中 OCSP 响应获取需要额外配置
-    // 当前版本返回未实现，建议使用 CRL 检查作为替代
+    // OCSP response get in mbedTLS 3.x needs additional config
+    // current version returns not implemented, recommend using CRL check as
+    // alternative
     *ocsp_response = NULL;
     *response_len = 0;
     return UVHTTP_ERROR_TLS_NOT_IMPLEMENTED;
@@ -574,15 +576,16 @@ uvhttp_error_t uvhttp_tls_verify_ocsp_response(
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
 
-    // mbedTLS 3.x 中验证 OCSP 响应
-    // 注意：这需要额外的 OCSP 状态请求配置
-    // 当前版本返回未实现，建议使用 CRL 检查作为替代
+    // verify OCSP response in mbedTLS 3.x
+    // note: this requires additional OCSP state request config
+    // current version returns not implemented, recommend using CRL check as
+    // alternative
     return UVHTTP_ERROR_TLS_NOT_IMPLEMENTED;
 }
 
-// TLS 1.3支持
+// TLS 1.3support
 uvhttp_error_t uvhttp_tls_context_enable_tls13(uvhttp_tls_context_t* ctx,
-                                                   int enable) {
+                                               int enable) {
     if (!ctx) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
@@ -605,60 +608,59 @@ uvhttp_error_t uvhttp_tls_context_set_tls13_cipher_suites(
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_tls_context_enable_early_data(
-    uvhttp_tls_context_t* ctx, int enable) {
+uvhttp_error_t uvhttp_tls_context_enable_early_data(uvhttp_tls_context_t* ctx,
+                                                    int enable) {
     if (!ctx) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
 
-    // mbedTLS 3.x 中早期数据（0-RTT）支持
-    // 注意：早期数据可能带来重放攻击风险
-    // 当前版本禁用早期数据以确保安全性
+    // early data (0-RTT) support in mbedTLS 3.x
+    // note: early data may bring replay attack risk
+    // current version disables early data to ensure safety
     (void)enable;
 
     return UVHTTP_OK;
 }
 
-// 会话票证优化
+// session ticket optimization
 uvhttp_error_t uvhttp_tls_context_set_ticket_key(uvhttp_tls_context_t* ctx,
-                                                     const unsigned char* key,
-                                                     size_t key_len) {
+                                                 const unsigned char* key,
+                                                 size_t key_len) {
     if (!ctx || !key || key_len == 0) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
 
-    // mbedTLS 3.x 中会话恢复通过会话缓存实现
-    // 会话票证密钥由内部管理，无需手动设置
-    // 使用 mbedtls_ssl_cache_context 进行会话缓存
+    // session resume in mbedTLS 3.x implemented via session cache
+    // session ticket key managed internally, no need to manually set
+    // use mbedtls_ssl_cache_context for session cache
 
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_tls_context_rotate_ticket_key(
-    uvhttp_tls_context_t* ctx) {
+uvhttp_error_t uvhttp_tls_context_rotate_ticket_key(uvhttp_tls_context_t* ctx) {
     if (!ctx) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
 
-    // mbedTLS 3.x 中会话票证密钥轮换由内部管理
-    // 会话缓存会自动处理密钥轮换
+    // session ticket key rotation in mbedTLS 3.x managed internally
+    // session cache will automatically process key rotation
 
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_tls_context_set_ticket_lifetime(
-    uvhttp_tls_context_t* ctx, int lifetime_seconds) {
+uvhttp_error_t uvhttp_tls_context_set_ticket_lifetime(uvhttp_tls_context_t* ctx,
+                                                      int lifetime_seconds) {
     if (!ctx || lifetime_seconds <= 0) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
 
-    // 设置会话缓存超时时间
+    // set session cache timeout time
     mbedtls_ssl_cache_set_timeout(&ctx->cache, lifetime_seconds);
 
     return UVHTTP_OK;
 }
 
-// 证书链验证
+// certificate chain verification
 uvhttp_error_t uvhttp_tls_verify_cert_chain(mbedtls_ssl_context* ssl) {
     if (!ssl) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
@@ -678,7 +680,7 @@ uvhttp_error_t uvhttp_tls_context_add_extra_chain_cert(
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
 
-    // 解析额外证书文件
+    // parse additional certificate file
     mbedtls_x509_crt extra_cert;
     mbedtls_x509_crt_init(&extra_cert);
 
@@ -688,7 +690,7 @@ uvhttp_error_t uvhttp_tls_context_add_extra_chain_cert(
         return UVHTTP_ERROR_TLS_PARSE;
     }
 
-    // 将证书添加到证书链
+    // add certificate to certificate chain
     mbedtls_x509_crt* current = &ctx->srvcert;
     while (current->next != NULL) {
         current = current->next;
@@ -705,12 +707,12 @@ uvhttp_error_t uvhttp_tls_context_add_extra_chain_cert(
 }
 
 uvhttp_error_t uvhttp_tls_get_cert_chain(mbedtls_ssl_context* ssl,
-                                             mbedtls_x509_crt** chain) {
+                                         mbedtls_x509_crt** chain) {
     if (!ssl || !chain) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
 
-    // 从 SSL 上下文中获取对等证书链
+    // get peer certificate chain from SSL context
     const mbedtls_x509_crt* peer_cert = mbedtls_ssl_get_peer_cert(ssl);
     if (!peer_cert) {
         return UVHTTP_ERROR_TLS_NO_CERT;
@@ -721,9 +723,9 @@ uvhttp_error_t uvhttp_tls_get_cert_chain(mbedtls_ssl_context* ssl,
     return UVHTTP_OK;
 }
 
-// TLS性能监控
+// TLSperformancemonitor
 uvhttp_error_t uvhttp_tls_get_stats(uvhttp_tls_context_t* ctx,
-                                        uvhttp_tls_stats_t* stats) {
+                                    uvhttp_tls_stats_t* stats) {
     if (!ctx || !stats) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
@@ -742,7 +744,7 @@ uvhttp_error_t uvhttp_tls_reset_stats(uvhttp_tls_context_t* ctx) {
 }
 
 uvhttp_error_t uvhttp_tls_get_connection_info(mbedtls_ssl_context* ssl,
-                                                  char* buf, size_t buf_size) {
+                                              char* buf, size_t buf_size) {
     if (!ssl || !buf) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
@@ -760,7 +762,7 @@ uvhttp_error_t uvhttp_tls_get_connection_info(mbedtls_ssl_context* ssl,
     return UVHTTP_OK;
 }
 
-// 错误处理
+// errorprocess
 void uvhttp_tls_get_error_string(int ret, char* buf, size_t buf_size) {
     if (!buf || buf_size == 0) {
         return;

@@ -166,9 +166,9 @@
 **超时时间**：20分钟
 
 **产物**：
-- `build-ubuntu-pr-${{ github.event.number }}` (保留3天)
-- `test-logs-pr-${{ github.event.number }}` (保留3天)
-- `performance-comparison-pr-${{ github.event.number }}` (保留7天)
+- `build-ubuntu-pr-{PR_NUMBER}` (保留3天)
+- `test-logs-pr-{PR_NUMBER}` (保留3天)
+- `performance-comparison-pr-{PR_NUMBER}` (保留7天)
 
 **关键特性**：
 - 使用快速测试集（跳过慢速测试）
@@ -206,11 +206,11 @@
 **超时时间**：45分钟
 
 **产物**：
-- `build-${{ matrix.os }}-push-${{ github.sha }}` (保留7天)
-- `test-logs-${{ matrix.os }}-push-${{ github.sha }}` (保留7天)
-- `security-scan-results-${{ github.sha }}` (保留7天)
-- `performance-benchmark-${{ github.sha }}` (保留30天)
-- `baseline-update-${{ github.sha }}` (保留30天)
+- `build-{MATRIX_OS}-push-{GITHUB_SHA}` (保留7天)
+- `test-logs-{MATRIX_OS}-push-{GITHUB_SHA}` (保留7天)
+- `security-scan-results-{GITHUB_SHA}` (保留7天)
+- `performance-benchmark-{GITHUB_SHA}` (保留30天)
+- `baseline-update-{GITHUB_SHA}` (保留30天)
 
 **关键特性**：
 - 多平台构建和测试
@@ -248,11 +248,11 @@
 **超时时间**：120分钟
 
 **产物**：
-- `coverage-report-${{ github.run_number }}` (保留30天)
-- `memory-test-results-${{ github.run_number }}` (保留30天)
-- `stress-test-results-${{ github.run_number }}` (保留30天)
-- `performance-full-${{ github.run_number }}` (保留90天)
-- `nightly-report-${{ github.run_number }}` (保留90天)
+- `coverage-report-{RUN_NUMBER}` (保留30天)
+- `memory-test-results-{RUN_NUMBER}` (保留30天)
+- `stress-test-results-{RUN_NUMBER}` (保留30天)
+- `performance-full-{RUN_NUMBER}` (保留90天)
+- `nightly-report-{RUN_NUMBER}` (保留90天)
 
 **关键特性**：
 - 代码覆盖率测试
@@ -288,10 +288,10 @@
 **超时时间**：60分钟
 
 **产物**：
-- `uvhttp-${{ github.ref_name }}-linux-x86_64.tar.gz` (永久)
-- `uvhttp-${{ github.ref_name }}-macos-x86_64.tar.gz` (永久)
-- `uvhttp-${{ github.ref_name }}-windows-x86_64.zip` (永久)
-- `release-report-${{ github.ref_name }}.md` (永久)
+- `uvhttp-{REF_NAME}-linux-x86_64.tar.gz` (永久)
+- `uvhttp-{REF_NAME}-macos-x86_64.tar.gz` (永久)
+- `uvhttp-{REF_NAME}-windows-x86_64.zip` (永久)
+- `release-report-{REF_NAME}.md` (永久)
 
 **关键特性**：
 - 多平台 Release 构建
@@ -981,30 +981,30 @@ inputs:
 outputs:
   status:
     description: 'Test status'
-    value: ${{ steps.test.outputs.status }}
+    value: {TEST_OUTPUT}
   total:
     description: 'Total tests'
-    value: ${{ steps.test.outputs.total }}
+    value: {TEST_OUTPUT}
   passed:
     description: 'Passed tests'
-    value: ${{ steps.test.outputs.passed }}
+    value: {TEST_OUTPUT}
   failed:
     description: 'Failed tests'
-    value: ${{ steps.test.outputs.failed }}
+    value: {TEST_OUTPUT}
   duration:
     description: 'Test duration'
-    value: ${{ steps.test.outputs.duration }}
+    value: {TEST_OUTPUT}
 runs:
   using: 'composite'
   steps:
     - name: Run tests
       id: test
       shell: bash
-      working-directory: ${{ inputs.build-dir }}
+      working-directory: {INPUT}
       run: |
-        TEST_ARGS="--output-on-failure -j${{ inputs.parallel }} --timeout ${{ inputs.timeout }}"
+        TEST_ARGS="--output-on-failure -j{INPUT} --timeout {INPUT}"
         
-        case "${{ inputs.test-type }}" in
+        case "{INPUT}" in
           fast)
             TEST_ARGS="$TEST_ARGS --schedule-random"
             ;;
@@ -1057,13 +1057,13 @@ inputs:
 outputs:
   has-regression:
     description: 'Has regression'
-    value: ${{ steps.check.outputs.has-regression }}
+    value: {CHECK_OUTPUT}
   has-improvement:
     description: 'Has improvement'
-    value: ${{ steps.check.outputs.has-improvement }}
+    value: {CHECK_OUTPUT}
   report:
     description: 'Regression report'
-    value: ${{ steps.check.outputs.report }}
+    value: {CHECK_OUTPUT}
 runs:
   using: 'composite'
   steps:
@@ -1076,15 +1076,15 @@ runs:
         import sys
         
         # Load current results
-        with open('${{ inputs.current-results }}', 'r') as f:
+        with open('{INPUT}', 'r') as f:
             current = json.load(f)
         
         # Load baseline
-        with open('${{ inputs.baseline-file }}', 'r') as f:
+        with open('{INPUT}', 'r') as f:
             baseline = json.load(f)
         
         # Load thresholds
-        thresholds = json.loads('${{ inputs.thresholds }}')
+        thresholds = json.loads('{INPUT}')
         
         # Detect regression
         regressions = []

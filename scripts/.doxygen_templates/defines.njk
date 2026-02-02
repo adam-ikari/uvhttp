@@ -1,0 +1,19 @@
+# {{ defineFile.name }} Defines
+
+{% if defineFile.location %}**Defined at:** `{{ defineFile.location }}`
+{% endif %}{% if defineFile.defines.length > 0 %}
+
+## Macros
+
+{% for define in defineFile.defines %}### `{{ define.name }}`
+
+{% if define.value %}**Value:** `{{ define.value }}`
+{% endif %}{% if define.brief %}**Brief:**
+{{ define.brief | linkTypes(structNames) }}
+{% endif %}{% if define.detailed %}**Details:**
+{{ define.detailed | linkTypes(structNames) }}
+{% endif %}{% if not define.brief and not define.detailed %}**Description:** TBD
+{% endif %}
+
+---
+{% endfor %}{% endif %}

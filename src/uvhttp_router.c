@@ -1,18 +1,18 @@
 #if !UVHTTP_FEATURE_ROUTER_CACHE
 
-#include "uvhttp_router.h"
+#    include "uvhttp_router.h"
 
-#include "uvhttp_allocator.h"
-#include "uvhttp_connection.h"
-#include "uvhttp_constants.h"
-#include "uvhttp_server.h"
-#include "uvhttp_static.h"
-#include "uvhttp_utils.h"
+#    include "uvhttp_allocator.h"
+#    include "uvhttp_connection.h"
+#    include "uvhttp_constants.h"
+#    include "uvhttp_server.h"
+#    include "uvhttp_static.h"
+#    include "uvhttp_utils.h"
 
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#    include <ctype.h>
+#    include <stdio.h>
+#    include <stdlib.h>
+#    include <string.h>
 
 /**
  * Router system hybrid mode threshold
@@ -22,9 +22,11 @@
  *
  * Selection criteria:
  * - Array mode: O(n) lookup, suitable for few routes (low memory, fast lookup)
- * - Trie mode: O(m) lookup (m is path depth), suitable for many routes (stable lookup)
+ * - Trie mode: O(m) lookup (m is path depth), suitable for many routes (stable
+ * lookup)
  * - Threshold 100: Based on performance testing, at this count both modes have
- *                  similar performance, but Trie mode remains stable as routes increase
+ *                  similar performance, but Trie mode remains stable as routes
+ * increase
  *
  * Performance test results (1000 lookups):
  * - 50 routes: array 0.02ms, Trie 0.03ms
@@ -32,9 +34,10 @@
  * - 200 routes: array 0.08ms, Trie 0.05ms
  * - 500 routes: array 0.20ms, Trie 0.06ms
  *
- * Note: If you need to adjust this value, please re-run performance tests to verify
+ * Note: If you need to adjust this value, please re-run performance tests to
+ * verify
  */
-#define HYBRID_THRESHOLD 100 /* Route count threshold to switch to Trie */
+#    define HYBRID_THRESHOLD 100 /* Route count threshold to switch to Trie */
 
 /* Optimization: fast method parsing (using prefix matching) */
 uvhttp_method_t uvhttp_method_from_string(const char* method) {
@@ -42,7 +45,7 @@ uvhttp_method_t uvhttp_method_from_string(const char* method) {
         return UVHTTP_ANY;
     }
 
-    /* 快速前缀匹配 */
+    /* fast prefix match */
     switch (method[0]) {
     case 'G':
         return (method[1] == 'E' && method[2] == 'T' && method[3] == '\0')
@@ -84,9 +87,9 @@ uvhttp_method_t uvhttp_method_from_string(const char* method) {
     }
 }
 
-/* 优化：方法到字符串转换（使用直接索引） */
+/* optimization: method to string conversion (using direct index) */
 const char* uvhttp_method_to_string(uvhttp_method_t method) {
-    /* 使用静态常量数组，避免重复字符串比较 */
+    /* use static constant array, avoid repeated string comparison */
     static const char* method_strings[] = {
         [UVHTTP_GET] = UVHTTP_METHOD_GET,
         [UVHTTP_POST] = UVHTTP_METHOD_POST,
@@ -104,10 +107,10 @@ const char* uvhttp_method_to_string(uvhttp_method_t method) {
     return "UNKNOWN";
 }
 
-// 创建新的路由节点
+// create new router node
 static uvhttp_route_node_t* create_route_node(uvhttp_router_t* router) {
     if (router->node_pool_used >= router->node_pool_size) {
-        // 扩展节点池
+        // expand node pool
         size_t new_size = router->node_pool_size * 2;
         uvhttp_route_node_t* new_pool = uvhttp_realloc(
             router->node_pool, new_size * sizeof(uvhttp_route_node_t));
@@ -115,7 +118,7 @@ static uvhttp_route_node_t* create_route_node(uvhttp_router_t* router) {
             return NULL;
         }
 
-        // 初始化新增的节点
+        // initialize newly added nodes
         for (size_t i = router->node_pool_size; i < new_size; i++) {
             memset(&new_pool[i], 0, sizeof(uvhttp_route_node_t));
         }
@@ -127,19 +130,19 @@ static uvhttp_route_node_t* create_route_node(uvhttp_router_t* router) {
     return &router->node_pool[router->node_pool_used++];
 }
 
-// 查找或创建子节点
+// find or create child node
 static uvhttp_route_node_t* find_or_create_child(uvhttp_router_t* router,
                                                  uvhttp_route_node_t* parent,
                                                  const char* segment,
                                                  int is_param) {
-    // 查找现有子节点
+    // find existing child node
     for (size_t i = 0; i < parent->child_count; i++) {
         if (strcmp(parent->children[i]->segment, segment) == 0) {
             return parent->children[i];
         }
     }
 
-    // 创建新子节点
+    // create new child node
     if (parent->child_count >= 16) {
         return NULL;
     }
@@ -157,7 +160,7 @@ static uvhttp_route_node_t* find_or_create_child(uvhttp_router_t* router,
     return child;
 }
 
-// 解析路径参数
+// parsepathparameter
 static int parse_path_params(const char* path, uvhttp_param_t* params,
                              size_t* param_count) {
     if (!path || !params || !param_count) {
@@ -171,7 +174,7 @@ static int parse_path_params(const char* path, uvhttp_param_t* params,
 
     char* token = strtok(path_copy, "/");
     while (token && *param_count < MAX_PARAMS) {
-        // 检查是否是参数（以:开头）
+        // check if parameter (starts with :)
         if (token[0] == ':') {
             char* colon = strchr(token + 1, ':');
             if (colon) {
@@ -208,7 +211,7 @@ uvhttp_error_t uvhttp_router_new(uvhttp_router_t** router) {
 
     memset(r, 0, sizeof(uvhttp_router_t));
 
-    // 初始化数组路由
+    // initializearrayrouter
     r->array_routes = uvhttp_calloc(HYBRID_THRESHOLD, sizeof(array_route_t));
 
     if (!r->array_routes) {
@@ -217,7 +220,7 @@ uvhttp_error_t uvhttp_router_new(uvhttp_router_t** router) {
     }
     r->array_capacity = HYBRID_THRESHOLD;
 
-    // 初始化节点池（用于Trie）
+    // initialize node pool (for Trie)
     r->node_pool_size = 64;
     r->node_pool =
         uvhttp_calloc(r->node_pool_size, sizeof(uvhttp_route_node_t));
@@ -237,7 +240,7 @@ uvhttp_error_t uvhttp_router_new(uvhttp_router_t** router) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
 
-    r->use_trie = 0; /* 默认使用数组路由 */
+    r->use_trie = 0; /* default use array router */
 
     *router = r;
     return UVHTTP_OK;
@@ -261,12 +264,12 @@ void uvhttp_router_free(uvhttp_router_t* router) {
     }
 }
 
-// 数组路由添加
+// arrayrouteradd
 static uvhttp_error_t add_array_route(uvhttp_router_t* router, const char* path,
                                       uvhttp_method_t method,
                                       uvhttp_request_handler_t handler) {
     if (router->array_route_count >= router->array_capacity) {
-        // 扩展数组容量
+        // expand array capacity
         size_t new_capacity = router->array_capacity * 2;
         array_route_t* new_routes = uvhttp_realloc(
             router->array_routes, new_capacity * sizeof(array_route_t));
@@ -288,7 +291,7 @@ static uvhttp_error_t add_array_route(uvhttp_router_t* router, const char* path,
     return UVHTTP_OK;
 }
 
-// 数组路由查找
+// arrayrouterfind
 static uvhttp_request_handler_t find_array_route(const uvhttp_router_t* router,
                                                  const char* path,
                                                  uvhttp_method_t method) {
@@ -303,21 +306,21 @@ static uvhttp_request_handler_t find_array_route(const uvhttp_router_t* router,
     return NULL;
 }
 
-// 迁移数组路由到Trie
+// migrate array router to Trie
 static uvhttp_error_t migrate_to_trie(uvhttp_router_t* router) {
     if (router->use_trie) {
-        return UVHTTP_OK;  // 已经是Trie模式
+        return UVHTTP_OK;  // already Trie pattern
     }
 
-    // 保存数组路由指针，稍后释放
+    // save array router pointer, release later
     array_route_t* old_routes = router->array_routes;
     size_t old_count = router->array_route_count;
 
-    // 将所有数组路由迁移到Trie
+    // migrate all array routers to Trie
     for (size_t i = 0; i < old_count; i++) {
         array_route_t* route = &old_routes[i];
 
-        // 构建路由树
+        // build router tree
         uvhttp_route_node_t* current = router->root;
         char path_copy[MAX_ROUTE_PATH_LEN];
         strncpy(path_copy, route->path, sizeof(path_copy) - 1);
@@ -332,25 +335,25 @@ static uvhttp_error_t migrate_to_trie(uvhttp_router_t* router) {
 
             current = find_or_create_child(router, current, token, is_param);
             if (!current) {
-                uvhttp_free(old_routes);  // 清理已分配的内存
+                uvhttp_free(old_routes);  // clean allocated memory
                 return UVHTTP_ERROR_OUT_OF_MEMORY;
             }
 
             token = strtok(NULL, "/");
         }
 
-        // 设置处理器
+        // sethandler
         current->method = route->method;
         current->handler = route->handler;
     }
 
-    // 切换到Trie模式
+    // switch to Trie pattern
     router->use_trie = 1;
     router->array_routes = NULL;
     router->array_route_count = 0;
     router->array_capacity = 0;
 
-    // 释放旧的数组路由内存
+    // release old array router memory
     uvhttp_free(old_routes);
 
     return UVHTTP_OK;
@@ -377,15 +380,15 @@ uvhttp_error_t uvhttp_router_add_route_method(
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    // 检查路径是否包含查询字符串（不允许）
+    // check if path contains query string (not allowed)
     if (strchr(path, '?') != NULL) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    // 检查是否包含路径参数
+    // check if contains path parameter
     int has_params = (strchr(path, ':') != NULL);
 
-    // 如果有参数或路由数量超过阈值，使用Trie
+    // if has parameter or router count exceeds threshold, use Trie
     if (has_params || router->array_route_count >= HYBRID_THRESHOLD) {
         if (!router->use_trie) {
             uvhttp_error_t err = migrate_to_trie(router);
@@ -394,7 +397,7 @@ uvhttp_error_t uvhttp_router_add_route_method(
             }
         }
 
-        // 添加到Trie
+        // add to Trie
         uvhttp_route_node_t* current = router->root;
         char path_copy[MAX_ROUTE_PATH_LEN];
         strncpy(path_copy, path, sizeof(path_copy) - 1);
@@ -405,7 +408,8 @@ uvhttp_error_t uvhttp_router_add_route_method(
             int is_param = (token[0] == ':');
             if (is_param) {
                 token++;
-                // 保存参数名 - 优化：只计算一次strlen
+                // save parameter name - optimization: only calculate strlen
+                // once
                 size_t token_len = strlen(token);
                 for (size_t i = 0; i < token_len; i++) {
                     if (token[i] == '/') {
@@ -428,7 +432,7 @@ uvhttp_error_t uvhttp_router_add_route_method(
         current->handler = handler;
         router->route_count++;
     } else {
-        // 添加到数组
+        // add to array
         return add_array_route(router, path, method, handler);
     }
 
@@ -443,7 +447,7 @@ static int match_route_node(uvhttp_route_node_t* node, const char** segments,
         return -1;
     }
 
-    // 如果是叶子节点
+    // if is leaf node
     if (segment_index >= segment_count) {
         if (node->handler &&
             (node->method == UVHTTP_ANY || node->method == method)) {
@@ -456,12 +460,12 @@ static int match_route_node(uvhttp_route_node_t* node, const char** segments,
 
     const char* segment = segments[segment_index];
 
-    // 查找匹配的子节点
+    // find matching child node
     for (size_t i = 0; i < node->child_count; i++) {
         uvhttp_route_node_t* child = node->children[i];
 
         if (child->is_param) {
-            // 参数节点，匹配任意段
+            // parameter node, match any segment
             size_t name_len = strlen(child->param_name);
             size_t name_copy_len =
                 name_len < sizeof(match->params[match->param_count].name) - 1
@@ -487,9 +491,9 @@ static int match_route_node(uvhttp_route_node_t* node, const char** segments,
             if (result == 0) {
                 return 0;
             }
-            match->param_count--;  // 回溯
+            match->param_count--;  // backtrack
         } else {
-            // 精确匹配
+            // exact match
             if (strcmp(child->segment, segment) == 0) {
                 int result = match_route_node(child, segments, segment_count,
                                               segment_index + 1, method, match);
@@ -503,10 +507,10 @@ static int match_route_node(uvhttp_route_node_t* node, const char** segments,
     return -1;
 }
 
-/* 静态文件请求处理器包装函数 */
+/* static file request handler wrapper function */
 static int static_file_handler_wrapper(uvhttp_request_t* request,
                                        uvhttp_response_t* response) {
-    /* 获取连接 */
+    /* getconnection */
     uv_tcp_t* client = request->client;
     if (!client) {
         uvhttp_response_set_status(response, 500);
@@ -516,7 +520,7 @@ static int static_file_handler_wrapper(uvhttp_request_t* request,
         return -1;
     }
 
-    /* 从 client 获取 connection */
+    /* get connection from client */
     uvhttp_connection_t* conn =
         (uvhttp_connection_t*)uv_handle_get_data((uv_handle_t*)client);
     if (!conn || !conn->server || !conn->server->router) {
@@ -527,10 +531,10 @@ static int static_file_handler_wrapper(uvhttp_request_t* request,
         return -1;
     }
 
-    /* 获取路由器 */
+    /* get router */
     uvhttp_router_t* router = conn->server->router;
 
-    /* 调用静态文件处理函数 */
+    /* call static file processing function */
     if (router->static_context) {
         uvhttp_result_t result = uvhttp_static_handle_request(
             (uvhttp_static_context_t*)router->static_context, request,
@@ -541,7 +545,7 @@ static int static_file_handler_wrapper(uvhttp_request_t* request,
         }
     }
 
-    /* 静态文件服务失败，返回 404 */
+    /* static file service failed, return 404 */
     uvhttp_response_set_status(response, 404);
     uvhttp_response_set_header(response, "Content-Type", "text/plain");
     uvhttp_response_set_body(response, "Not Found", 9);
@@ -557,13 +561,13 @@ uvhttp_request_handler_t uvhttp_router_find_handler(
 
     uvhttp_method_t method_enum = uvhttp_method_from_string(method);
 
-    // 根据当前模式选择查找方式
+    // choose find method based on current pattern
     if (router->use_trie) {
-        // Trie查找
+        // Triefind
         uvhttp_route_match_t match;
         memset(&match, 0, sizeof(match));
 
-        // 解析路径段
+        // parse path segments
         char path_copy[MAX_ROUTE_PATH_LEN];
         strncpy(path_copy, path, sizeof(path_copy) - 1);
         path_copy[sizeof(path_copy) - 1] = '\0';
@@ -577,22 +581,22 @@ uvhttp_request_handler_t uvhttp_router_find_handler(
             token = strtok(NULL, "/");
         }
 
-        // 首先检查静态路由
+        // first check static router
         if (router->static_prefix && router->static_context) {
             size_t prefix_len = strlen(router->static_prefix);
             if (strncmp(path, router->static_prefix, prefix_len) == 0) {
-                // 匹配静态路由，返回静态文件处理器
+                // match static router, return static file handler
                 return static_file_handler_wrapper;
             }
         }
 
-        // 匹配路由
+        // matchrouter
         if (match_route_node(router->root, segments, segment_count, 0,
                              method_enum, &match) == 0) {
             return match.handler;
         }
     } else {
-        // 数组查找
+        // arrayfind
         uvhttp_request_handler_t handler =
             find_array_route(router, path, method_enum);
         if (handler) {
@@ -600,7 +604,7 @@ uvhttp_request_handler_t uvhttp_router_find_handler(
         }
     }
 
-    // 如果没有匹配的路由，检查回退路由
+    // if no matching router, check fallback router
     if (router->fallback_context) {
         return static_file_handler_wrapper;
     }
@@ -619,7 +623,8 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
 
     uvhttp_method_t method_enum = uvhttp_method_from_string(method);
 
-    /* 优化1：快速路径 - 检查数组路由（适用于少量路由） */
+    /* optimization 1: fast path - check array router (suitable for few routers)
+     */
     if (!router->use_trie) {
         uvhttp_request_handler_t handler =
             find_array_route(router, path, method_enum);
@@ -630,8 +635,8 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
         return UVHTTP_ERROR_NOT_FOUND;
     }
 
-    /* 优化2：快速路径 - 检查静态路由（无参数） */
-    /* 对于没有参数的路径，使用快速查找 */
+    /* optimization 2: fast path - check static router (no parameters) */
+    /* for paths without parameters, use fast find */
     int has_params = 0;
     for (const char* p = path; *p; p++) {
         if (*p == ':' || *p == '{') {
@@ -641,8 +646,8 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
     }
 
     if (!has_params && router->array_routes && router->array_route_count > 0) {
-        /* 无参数路径，使用数组路由快速查找 */
-        /* 但需要检查 array_routes 是否仍然有效 */
+        /* no parameter path, use array router fast find */
+        /* but need to check if array_routes is still valid */
         uvhttp_request_handler_t handler =
             find_array_route(router, path, method_enum);
         if (handler) {
@@ -651,8 +656,8 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
         }
     }
 
-    /* 优化3：Trie树匹配（支持参数） */
-    /* 解析路径段 */
+    /* optimization 3: Trie tree match (supports parameters) */
+    /* parse path segments */
     char path_copy[MAX_ROUTE_PATH_LEN];
     strncpy(path_copy, path, sizeof(path_copy) - 1);
     path_copy[sizeof(path_copy) - 1] = '\0';
@@ -679,7 +684,7 @@ uvhttp_error_t uvhttp_parse_path_params(const char* path,
 }
 
 /**
- * 添加静态文件路由
+ * add static file router
  */
 uvhttp_error_t uvhttp_router_add_static_route(uvhttp_router_t* router,
                                               const char* prefix_path,
@@ -688,12 +693,12 @@ uvhttp_error_t uvhttp_router_add_static_route(uvhttp_router_t* router,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    // 释放之前的前缀
+    // release previous prefix
     if (router->static_prefix) {
         uvhttp_free(router->static_prefix);
     }
 
-    // 复制新的前缀（使用 uvhttp_alloc 避免混用分配器）
+    // copy new prefix (use uvhttp_alloc to avoid mixing allocators)
     size_t prefix_len = strlen(prefix_path);
     router->static_prefix = (char*)uvhttp_alloc(prefix_len + 1);
     if (!router->static_prefix) {
@@ -702,13 +707,13 @@ uvhttp_error_t uvhttp_router_add_static_route(uvhttp_router_t* router,
     memcpy(router->static_prefix, prefix_path, prefix_len + 1);
 
     router->static_context = static_context;
-    router->static_handler = NULL;  // 将使用静态文件处理逻辑
+    router->static_handler = NULL;  // will use static file processing logic
 
     return UVHTTP_OK;
 }
 
 /**
- * 添加回退路由
+ * add fallback router
  */
 uvhttp_error_t uvhttp_router_add_fallback_route(uvhttp_router_t* router,
                                                 void* static_context) {
@@ -717,7 +722,7 @@ uvhttp_error_t uvhttp_router_add_fallback_route(uvhttp_router_t* router,
     }
 
     router->fallback_context = static_context;
-    router->fallback_handler = NULL;  // 将使用静态文件处理逻辑
+    router->fallback_handler = NULL;  // will use static file processing logic
 
     return UVHTTP_OK;
 }

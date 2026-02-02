@@ -47,8 +47,8 @@ TEST(UvhttpServerSimpleAPITest, StopSimpleNull) {
 
 /* 测试 uvhttp_serve 函数 */
 TEST(UvhttpServerSimpleAPITest, ServeNullServer) {
-    /* 测试 NULL 主机 */
-    int result = uvhttp_serve(NULL, 8080);
+    /* 测试 NULL loop */
+    int result = uvhttp_serve(NULL, NULL, 8080);
     /* 应该返回错误 */
     EXPECT_NE(result, 0);
 }

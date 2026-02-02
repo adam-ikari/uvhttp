@@ -1,15 +1,15 @@
-/* UVHTTP - 平台兼容性头文件 */
+/* UVHTTP - Platform Compatibility Header */
 
 #ifndef UVHTTP_PLATFORM_H
 #define UVHTTP_PLATFORM_H
 
-/* 平台检测 - 只支持 Linux */
+/* Platform detection - Only Linux supported */
 #define UVHTTP_PLATFORM_LINUX
 
-/* 必须先包含 stdint.h 才能使用 UINTPTR_MAX */
+/* Must include stdint.h before using UINTPTR_MAX */
 #include <stdint.h>
 
-/* 指针大小检测 */
+/* Pointer size detection */
 #if UINTPTR_MAX == 0xFFFFFFFF
 #    define UVHTTP_32BIT 1
 #    define UVHTTP_POINTER_SIZE 4
@@ -24,78 +24,78 @@
 #    error "Unsupported pointer size"
 #endif
 
-/* 头文件包含 */
+/* Header includes */
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
-/* 类型定义 */
+/* classdefine */
 typedef socklen_t uvhttp_socklen_t;
 
-/* 宏定义 */
+/* Macro definition */
 #define UVHTTP_EXPORT __attribute__((visibility("default")))
 #define UVHTTP_IMPORT
 #define UVHTTP_API __attribute__((visibility("default")))
 
-/* 函数宏 */
+/* Function */
 #define uvhttp_close_socket close
 
-/* 错误处理 */
+/* Error handling */
 #define UVHTTP_SOCKET_ERROR(e) (e < 0)
 #define UVHTTP_SOCKET_LAST_ERROR() errno
 #define UVHTTP_SOCKET_WOULD_BLOCK(e) (e == EAGAIN || e == EWOULDBLOCK)
 
-/* 时间函数 */
+/* whenFunction */
 #include <unistd.h>
 #define uvhttp_sleep_ms(ms) usleep((ms)*1000)
 
-/* 32位系统兼容性宏 */
+/* 32bitsSystem */
 #ifdef UVHTTP_32BIT
-/* 在32位系统上，size_t是4字节，但uint64_t仍然是8字节 */
-/* 需要确保结构体对齐正确，避免性能下降 */
+/* 32bitsSystem, size_t4bytes, uint64_t8bytes */
+/* needStructurepair,  */
 #    define UVHTTP_POINTER_ALIGNMENT 4
 #    define UVHTTP_SIZE_T_ALIGNMENT 4
 #    define UVHTTP_UINT64_ALIGNMENT \
-        4 /* 32位系统上uint64_t自然对齐为4字节（但大小仍为8字节） */
+        4 /* 32bitsSystemuint64_tpairto4bytes(sizeto8bytes) */
 #else
-/* 64位系统 */
+/* 64bitsSystem */
 #    define UVHTTP_POINTER_ALIGNMENT 8
 #    define UVHTTP_SIZE_T_ALIGNMENT 8
 #    define UVHTTP_UINT64_ALIGNMENT 8
 #endif
 
-/* 对齐验证宏 - 根据平台自适应 */
+/* pairvalidate - rootPlatform */
 #define UVHTTP_CHECK_ALIGNMENT(type, member, expected_alignment)           \
     UVHTTP_STATIC_ASSERT(offsetof(type, member) % expected_alignment == 0, \
                          #type "." #member " not " #expected_alignment     \
                                "-byte aligned")
 
-/* ========== 缓存行填充宏定义 ========== */
+/* ========== CacheMacro definition ========== */
 
-/* 缓存行大小（现代 CPU 通常是 64 字节） */
+/* Cachesize( CPU  64 bytes) */
 #ifndef UVHTTP_CACHE_LINE_SIZE
 #    define UVHTTP_CACHE_LINE_SIZE 64
 #endif
 
-/* 缓存行对齐宏 - 用于结构体字段对齐 */
+/* Cachepair - Used forStructureFieldpair */
 #define UVHTTP_CACHE_LINE_ALIGNED \
     __attribute__((aligned(UVHTTP_CACHE_LINE_SIZE)))
 
-/* 缓存行填充宏 - 防止伪共享（False Sharing） */
+/* Cache - prevent(False Sharing) */
 #if defined(__GNUC__) || defined(__clang__)
 #    define UVHTTP_CACHE_LINE_PAD char _pad[UVHTTP_CACHE_LINE_SIZE]
 #else
 #    define UVHTTP_CACHE_LINE_PAD char _pad[UVHTTP_CACHE_LINE_SIZE]
 #endif
 
-/* 缓存行填充验证宏 - 确保结构体大小是缓存行的整数倍 */
+/* Cachevalidate - StructuresizeCache */
 #define UVHTTP_ASSERT_CACHE_LINE_ALIGNED(type)                       \
     UVHTTP_STATIC_ASSERT(sizeof(type) % UVHTTP_CACHE_LINE_SIZE == 0, \
                          #type " size is not cache line aligned")
 
-/* 缓存行偏移验证宏 - 确保字段在缓存行边界 */
+/* Cacheoffsetvalidate - FieldCacheedge */
 #define UVHTTP_ASSERT_CACHE_LINE_OFFSET(type, member)                          \
     UVHTTP_STATIC_ASSERT(offsetof(type, member) % UVHTTP_CACHE_LINE_SIZE == 0, \
                          #type "." #member " not cache line aligned")

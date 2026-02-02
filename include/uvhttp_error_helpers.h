@@ -73,7 +73,7 @@ uvhttp_error_t uvhttp_sanitize_error_message(const char* message,
                                              char* safe_buffer,
                                              size_t buffer_size);
 
-/* uvhttp_safe_free 已删除 - 完全未使用，直接使用 uvhttp_free */
+/* uvhttp_safe_free deleted - completely unused, use uvhttp_free directly */
 
 #ifdef __cplusplus
 }

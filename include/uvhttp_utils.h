@@ -17,10 +17,10 @@
 extern "C" {
 #endif
 
-/* 前向声明 */
+/* Forward declarations */
 typedef struct uvhttp_response uvhttp_response_t;
 
-/* 安全的字符串操作 */
+/* Safe string operations */
 
 /**
  * @brief Safe string copy with size checking
@@ -35,10 +35,10 @@ typedef struct uvhttp_response uvhttp_response_t;
  */
 int uvhttp_safe_strncpy(char* dest, const char* src, size_t dest_size);
 
-/* 注意：输入验证函数已移动到 uvhttp_validation.h */
-/* 请使用 #include "uvhttp_validation.h" 来访问验证函数 */
+/* Note: Input validation functions have been moved to uvhttp_validation.h */
+/* Please use #include "uvhttp_validation.h" to access validation functions */
 
-/* ============ 统一响应处理函数 ============ */
+/* ============ Unified Response Handling Functions ============ */
 
 /**
  * @brief Send unified response with custom content
@@ -75,7 +75,7 @@ uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response,
                                           const char* error_message,
                                           const char* details);
 
-/* ============ 验证函数 ============ */
+/* ============ Validation Functions ============ */
 
 /**
  * @brief Validate HTTP status code
@@ -88,10 +88,10 @@ uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response,
  */
 int uvhttp_is_valid_status_code(int status_code);
 
-/* uvhttp_is_valid_content_type 已删除 - 完全未使用 */
-/* uvhttp_is_valid_string_length 已删除 - 完全未使用 */
-/* uvhttp_is_valid_ipv4 已删除 - 完全未使用 */
-/* uvhttp_is_valid_ipv6 已删除 - 完全未使用 */
+/* uvhttp_is_valid_content_type deleted - completely unused */
+/* uvhttp_is_valid_string_length deleted - completely unused */
+/* uvhttp_is_valid_ipv4 deleted - completely unused */
+/* uvhttp_is_valid_ipv6 deleted - completely unused */
 
 /**
  * @brief Validate IP address format (IPv4 or IPv6)

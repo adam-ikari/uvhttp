@@ -20,7 +20,7 @@ extern "C" {
 #define MAX_URL_LEN 2048
 #define MAX_BODY_LEN (1024 * 1024)  // 1MB
 
-// HTTP方法枚举
+// HTTP method enumeration
 typedef enum {
     UVHTTP_ANY = 0,
     UVHTTP_GET,
@@ -35,42 +35,47 @@ typedef enum {
 typedef struct uvhttp_request uvhttp_request_t;
 
 struct uvhttp_request {
-    /* ========== 缓存行1（0-63字节）：热路径字段 - 最频繁访问 ========== */
-    /* 在 HTTP 解析、路由匹配中频繁访问 */
-    uvhttp_method_t method; /* 4 字节 - HTTP 方法 */
-    int parsing_complete;   /* 4 字节 - 解析是否完成 */
-    int _padding1[2];       /* 8 字节 - 填充到16字节 */
-    size_t header_count;    /* 8 字节 - header 数量 */
-    size_t body_length;     /* 8 字节 - body 长度 */
-    size_t body_capacity;   /* 8 字节 - body 容量 */
-    uv_tcp_t* client;       /* 8 字节 - TCP 客户端句柄 */
-    llhttp_t* parser;       /* 8 字节 - HTTP 解析器 */
-    /* 缓存行1总计：56字节（剩余8字节填充） */
+    /* ========== Cache line 1 (0-63 bytes): Hot path fields - Most frequently
+     * accessed ========== */
+    /* Frequently accessed during HTTP parsing and route matching */
+    uvhttp_method_t method; /* 4 bytes - HTTP method */
+    int parsing_complete;   /* 4 bytes - parsing complete */
+    int _padding1[2];       /* 8 bytes - padding to 16 bytes */
+    size_t header_count;    /* 8 bytes - header count */
+    size_t body_length;     /* 8 bytes - body length */
+    size_t body_capacity;   /* 8 bytes - body capacity */
+    uv_tcp_t* client;       /* 8 bytes - TCP client handle */
+    llhttp_t* parser;       /* 8 bytes - HTTP parser */
+    /* Cache line 1 total: 56 bytes (remaining 8 bytes padding) */
 
-    /* ========== 缓存行2（64-127字节）：指针字段 - 次频繁访问 ========== */
-    /* 在请求处理、响应构建中频繁访问 */
-    llhttp_settings_t* parser_settings; /* 8 字节 - 解析器设置 */
-    char* path;                         /* 8 字节 - 请求路径 */
-    char* query;                        /* 8 字节 - 查询字符串 */
-    char* body;                         /* 8 字节 - 请求体 */
-    void* user_data;                    /* 8 字节 - 用户数据 */
-    uvhttp_header_t* headers_extra; /* 8 字节 - 额外 headers（动态扩容） */
-    size_t headers_capacity;        /* 8 字节 - headers 总容量 */
-    int _padding2[2];               /* 8 字节 - 填充到64字节 */
-    /* 缓存行2总计：64字节 */
+    /* ========== Cache line 2 (64-127 bytes): Pointer fields - Secondary
+     * frequent access ========== */
+    /* Frequently accessed during request processing and response building */
+    llhttp_settings_t* parser_settings; /* 8 bytes - parser settings */
+    char* path;                         /* 8 bytes - request path */
+    char* query;                        /* 8 bytes - query string */
+    char* body;                         /* 8 bytes - request body */
+    void* user_data;                    /* 8 bytes - user data */
+    uvhttp_header_t*
+        headers_extra;       /* 8 bytes - extra headers (dynamic expansion) */
+    size_t headers_capacity; /* 8 bytes - headers total capacity */
+    int _padding2[2];        /* 8 bytes - padding to 64 bytes */
+    /* Cache line 2 total: 64 bytes */
 
-    /* ========== 缓存行3+（128+字节）：大块缓冲区 ========== */
-    /* 放在最后，避免影响热路径字段的缓存局部性 */
-    char url[MAX_URL_LEN]; /* 2048 字节 - URL 缓冲区 */
+    /* ========== Cache line 3+ (128+ bytes): Large buffers ========== */
+    /* Placed at the end to avoid affecting cache locality of hot path fields */
+    char url[MAX_URL_LEN]; /* 2048 bytes - URL buffer */
 
-    /* Headers - 混合分配：内联 + 动态扩容（优化内存局部性） */
+    /* Headers - Hybrid allocation: inline + dynamic expansion (optimized for
+     * cache locality) */
     uvhttp_header_t
-        headers[UVHTTP_INLINE_HEADERS_CAPACITY]; /* 内联，减少动态分配 */
+        headers[UVHTTP_INLINE_HEADERS_CAPACITY]; /* inline, reduce dynamic
+                                                    allocation */
 };
 
-/* ========== 内存布局验证静态断言 ========== */
+/* ========== Memory layout verification static assertions ========== */
 
-/* 验证指针对齐（平台自适应） */
+/* Verify pointer alignment (platform adaptive) */
 UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, client, UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, parser, UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, parser_settings,
@@ -79,11 +84,11 @@ UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, path, UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, query, UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, body, UVHTTP_POINTER_ALIGNMENT);
 
-/* 验证size_t对齐（平台自适应） */
+/* Verify size_t alignment (platform adaptive) */
 UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, header_count, UVHTTP_SIZE_T_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_request_t, body_length, UVHTTP_SIZE_T_ALIGNMENT);
 
-/* 验证大型缓冲区在结构体末尾 */
+/* Verify large buffers at end of structure */
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, url) >= 64,
                      "url buffer should be after first 64 bytes");
 UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, headers) >= 64,
@@ -104,20 +109,20 @@ const char* uvhttp_request_get_header(uvhttp_request_t* request,
 const char* uvhttp_request_get_body(uvhttp_request_t* request);
 size_t uvhttp_request_get_body_length(uvhttp_request_t* request);
 
-/* ========== Headers 操作 API ========== */
+/* ========== Headers Operation API ========== */
 
-/* 获取 header 数量 */
+/* get header quantity */
 size_t uvhttp_request_get_header_count(uvhttp_request_t* request);
 
-/* 获取指定索引的 header（内部使用） */
+/* getspecifiedindex header(internalUse) */
 uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request,
                                               size_t index);
 
-/* 添加 header（内部使用，自动扩容） */
+/* add header(internalUse, Automaticexpand) */
 uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request,
                                          const char* name, const char* value);
 
-/* 遍历所有 headers */
+/* traverseof headers */
 typedef void (*uvhttp_header_callback_t)(const char* name, const char* value,
                                          void* user_data);
 void uvhttp_request_foreach_header(uvhttp_request_t* request,

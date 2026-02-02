@@ -20,12 +20,12 @@
 extern "C" {
 #endif
 
-/* 编译期选择分配器类型 */
+/* Compile-time allocator type selection */
 #ifndef UVHTTP_ALLOCATOR_TYPE
 #    define UVHTTP_ALLOCATOR_TYPE 0 /* 0=system, 1=mimalloc */
 #endif
 
-/* ========== 编译期分配器选择 ========== */
+/* ========== Compile-time Allocator Selection ========== */
 
 #if UVHTTP_ALLOCATOR_TYPE == 1 /* mimalloc */
 #    ifdef UVHTTP_ENABLE_MIMALLOC
@@ -84,7 +84,7 @@ static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
     return mi_calloc(nmemb, size);
 }
 #    else
-/* mimalloc 不可用，回退到系统分配器 */
+/* mimalloc unavailable, fallback to system allocator */
 static inline void* uvhttp_alloc(size_t size) {
     return malloc(size);
 }
@@ -99,8 +99,9 @@ static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
 }
 #    endif
 
-#else /* 系统分配器（默认） */
-/* 系统分配器模式 - 使用内联函数确保可以用作函数指针 */
+#else /* System(Default) */
+/* System allocator mode - use inline functions to ensure they can be used as
+ * function pointers */
 
 /**
  * @brief Allocate memory using system allocator
@@ -156,7 +157,7 @@ static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
 }
 #endif
 
-/* ========== 分配器信息 ========== */
+/* ========== Allocator Information ========== */
 
 /**
  * @brief Get the name of the current allocator
@@ -178,7 +179,7 @@ static inline const char* uvhttp_allocator_name(void) {
 #endif
 }
 
-/* ========== 使用说明 ========== */
+/* ========== Usage Instructions ========== */
 
 /**
  * @page memory_allocator_usage Memory Allocator Usage Guide

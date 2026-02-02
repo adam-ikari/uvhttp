@@ -18,17 +18,17 @@
 #include <stdint.h>
 #include <string.h>
 
-/* xxHash 头文件 */
+/* xxHash header */
 #include "xxhash.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* 前向声明 */
+/* Forward declarations */
 struct uvhttp_allocator;
 
-/* ========== 主要API ========== */
+/* ========== Main API ========== */
 
 /**
  * @brief Compute hash value for arbitrary data
@@ -63,7 +63,7 @@ static inline uint64_t uvhttp_hash_string(const char* str) {
     return XXH64(str, strlen(str), UVHTTP_HASH_DEFAULT_SEED);
 }
 
-/* 便捷函数 */
+/* Convenience functions */
 
 /**
  * @brief Compute hash value using default seed
@@ -90,7 +90,7 @@ static inline uint64_t uvhttp_hash_string_default(const char* str) {
     return uvhttp_hash_string(str);
 }
 
-/* 错误处理宏 */
+/* Error handling macros */
 
 /**
  * @brief Validate pointer is not NULL

@@ -34,7 +34,8 @@ static int uvhttp_ws_random_bytes(uvhttp_context_t* context, unsigned char* buf,
             (mbedtls_ctr_drbg_context*)context->ws_drbg, buf, len);
     }
 
-    /* DRBG not initialized, return error instead of using insecure pseudo-random */
+    /* DRBG not initialized, return error instead of using insecure
+     * pseudo-random */
     UVHTTP_LOG_ERROR(
         "WebSocket DRBG not initialized, cannot generate secure random bytes");
     return UVHTTP_ERROR_INVALID_PARAM;
@@ -55,14 +56,14 @@ struct uvhttp_ws_connection* uvhttp_ws_connection_create(
     conn->is_server = is_server;
     conn->state = UVHTTP_WS_STATE_CONNECTING;
 
-    /* 设置配置 */
+    /* setconfig */
     if (config) {
         conn->config.max_frame_size = config->websocket_max_frame_size;
         conn->config.max_message_size = config->websocket_max_message_size;
         conn->config.ping_interval = config->websocket_ping_interval;
         conn->config.ping_timeout = config->websocket_ping_timeout;
     } else {
-        /* 使用默认配置 */
+        /* use default config */
         conn->config.max_frame_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE;
         conn->config.max_message_size =
             UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE;
@@ -70,7 +71,7 @@ struct uvhttp_ws_connection* uvhttp_ws_connection_create(
         conn->config.ping_timeout = UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT;
     }
 
-    /* 分配接收缓冲区 */
+    /* allocatereceivebuffer */
     conn->recv_buffer_size = UVHTTP_WEBSOCKET_DEFAULT_RECV_BUFFER_SIZE;
     conn->recv_buffer = uvhttp_alloc(conn->recv_buffer_size);
     if (!conn->recv_buffer) {
@@ -81,7 +82,7 @@ struct uvhttp_ws_connection* uvhttp_ws_connection_create(
     return conn;
 }
 
-/* 释放 WebSocket 连接 */
+/* release WebSocket connection */
 void uvhttp_ws_connection_free(struct uvhttp_ws_connection* conn) {
     if (!conn) {
         return;
@@ -102,7 +103,7 @@ void uvhttp_ws_connection_free(struct uvhttp_ws_connection* conn) {
     uvhttp_free(conn);
 }
 
-/* 解析帧头 */
+/* parse frame header */
 uvhttp_error_t uvhttp_ws_parse_frame_header(const uint8_t* data, size_t len,
                                             uvhttp_ws_frame_header_t* header,
                                             size_t* header_size) {
@@ -112,20 +113,20 @@ uvhttp_error_t uvhttp_ws_parse_frame_header(const uint8_t* data, size_t len,
 
     memset(header, 0, sizeof(uvhttp_ws_frame_header_t));
 
-    /* 解析第一个字节 */
+    /* parse first byte */
     header->fin = (data[0] & 0x80) != 0;
     header->rsv1 = (data[0] & 0x40) != 0;
     header->rsv2 = (data[0] & 0x20) != 0;
     header->rsv3 = (data[0] & 0x10) != 0;
     header->opcode = data[0] & 0x0F;
 
-    /* 解析第二个字节 */
+    /* parse second byte */
     header->mask = (data[1] & 0x80) != 0;
     header->payload_len = data[1] & 0x7F;
 
     *header_size = 2;
 
-    /* 解析扩展载荷长度 */
+    /* parse extended payload length */
     if (header->payload_len == 126) {
         if (len < 4) {
             return UVHTTP_ERROR_INVALID_PARAM;
@@ -147,7 +148,7 @@ uvhttp_error_t uvhttp_ws_parse_frame_header(const uint8_t* data, size_t len,
     return UVHTTP_OK;
 }
 
-/* 应用掩码 */
+/* application masking */
 void uvhttp_ws_apply_mask(uint8_t* data, size_t len,
                           const uint8_t* masking_key) {
     if (!data || !masking_key) {
@@ -159,7 +160,7 @@ void uvhttp_ws_apply_mask(uint8_t* data, size_t len,
     }
 }
 
-/* 构建 WebSocket 帧 */
+/* build WebSocket frame */
 uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
                                      size_t buffer_size, const uint8_t* payload,
                                      size_t payload_len,
@@ -180,10 +181,10 @@ uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 构建第一个字节 */
+    /* build first byte */
     buffer[0] = (fin ? 0x80 : 0x00) | (opcode & 0x0F);
 
-    /* 构建第二个字节和扩展载荷长度 */
+    /* build second byte and extended payload length */
     if (payload_len < 126) {
         buffer[1] = (mask ? 0x80 : 0x00) | payload_len;
     } else if (payload_len < 65536) {
@@ -192,7 +193,7 @@ uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
         buffer[3] = payload_len & 0xFF;
         header_size = 4;
     } else {
-        /* 使用 uint64_t 避免 32 位系统上的位移警告 */
+        /* use uint64_t to avoid shift warning on 32-bit systems */
         uint64_t len = (uint64_t)payload_len;
         buffer[1] = (mask ? 0x80 : 0x00) | 127;
         buffer[2] = (len >> 56) & 0xFF;
@@ -206,7 +207,7 @@ uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
         header_size = 10;
     }
 
-    /* 添加掩码密钥（如果是客户端） */
+    /* add masking key (if client) */
     if (mask) {
         uint8_t masking_key[4];
         if (uvhttp_ws_random_bytes(context, masking_key, 4) != 0) {
@@ -217,14 +218,14 @@ uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
             buffer[header_size + i] = masking_key[i];
         }
 
-        /* 复制并掩码载荷 */
+        /* copy and mask payload */
         if (payload && payload_len > 0) {
             memcpy(buffer + header_size + 4, payload, payload_len);
             uvhttp_ws_apply_mask(buffer + header_size + 4, payload_len,
                                  masking_key);
         }
     } else {
-        /* 复制载荷（无需掩码） */
+        /* copy payload (no masking needed) */
         if (payload && payload_len > 0) {
             memcpy(buffer + header_size, payload, payload_len);
         }
@@ -233,29 +234,29 @@ uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
     return total_size;
 }
 
-/* 生成 Sec-WebSocket-Accept */
+/* generate Sec-WebSocket-Accept */
 uvhttp_error_t uvhttp_ws_generate_accept(const char* key, char* accept,
                                          size_t accept_len) {
     if (!key || !accept || accept_len < 32) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 构建 key + GUID */
+    /* build key + GUID */
     char combined[256];
     snprintf(combined, sizeof(combined), "%s%s", key, WS_GUID);
 
-    /* 计算 SHA-1 */
+    /* calculate SHA-1 */
     unsigned char sha1[20];
     mbedtls_sha1((const unsigned char*)combined, strlen(combined), sha1);
 
-    /* Base64 编码 */
+    /* Base64 encoding */
     size_t olen;
     mbedtls_base64_encode((unsigned char*)accept, accept_len, &olen, sha1, 20);
 
     return UVHTTP_OK;
 }
 
-/* 验证 Sec-WebSocket-Accept */
+/* verify Sec-WebSocket-Accept */
 uvhttp_error_t uvhttp_ws_verify_accept(const char* key, const char* accept) {
     if (!key || !accept) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -269,7 +270,7 @@ uvhttp_error_t uvhttp_ws_verify_accept(const char* key, const char* accept) {
     return strcmp(expected, accept) == 0 ? 0 : -1;
 }
 
-/* 服务器端握手 */
+/* server-side handshake */
 uvhttp_error_t uvhttp_ws_handshake_server(struct uvhttp_ws_connection* conn,
                                           const char* request,
                                           size_t request_len, char* response,
@@ -278,22 +279,22 @@ uvhttp_error_t uvhttp_ws_handshake_server(struct uvhttp_ws_connection* conn,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    (void)request_len; /* 参数未使用（通过 strlen 计算） */
+    (void)request_len; /* parameter not used (calculated via strlen) */
 
-    /* 解析请求，获取 Sec-WebSocket-Key */
+    /* parserequest, get Sec-WebSocket-Key */
     const char* key_start = strstr(request, "Sec-WebSocket-Key:");
     if (!key_start) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    key_start += 19; /* 跳过 "Sec-WebSocket-Key:" */
+    key_start += 19; /* skip "Sec-WebSocket-Key:" */
 
-    /* 跳过空白字符 */
+    /* skip null whitespace */
     while (*key_start == ' ') {
         key_start++;
     }
 
-    /* 提取 key */
+    /* extract key */
     char key[64];
     size_t key_len = 0;
     while (key_start[key_len] != '\r' && key_start[key_len] != '\n' &&
@@ -303,13 +304,13 @@ uvhttp_error_t uvhttp_ws_handshake_server(struct uvhttp_ws_connection* conn,
     }
     key[key_len] = '\0';
 
-    /* 生成 accept */
+    /* generate accept */
     char accept[64];
     if (uvhttp_ws_generate_accept(key, accept, sizeof(accept)) != 0) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 构建响应 */
+    /* buildresponse */
     int len = snprintf(response, *response_len,
                        "HTTP/1.1 101 Switching Protocols\r\n"
                        "Upgrade: websocket\r\n"
@@ -328,7 +329,7 @@ uvhttp_error_t uvhttp_ws_handshake_server(struct uvhttp_ws_connection* conn,
     return UVHTTP_OK;
 }
 
-/* 客户端握手 */
+/* clienthandshake */
 uvhttp_error_t uvhttp_ws_handshake_client(uvhttp_context_t* context,
                                           struct uvhttp_ws_connection* conn,
                                           const char* host, const char* path,
@@ -337,23 +338,23 @@ uvhttp_error_t uvhttp_ws_handshake_client(uvhttp_context_t* context,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 生成随机 key */
+    /* generate random key */
     unsigned char raw_key[16];
     if (uvhttp_ws_random_bytes(context, raw_key, 16) != 0) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* Base64 编码 key */
+    /* Base64 encoding key */
     unsigned char base64_key[32];
     size_t olen;
     mbedtls_base64_encode(base64_key, sizeof(base64_key), &olen, raw_key, 16);
     base64_key[olen] = '\0';
 
-    /* 保存 key 到连接（用于后续验证） */
+    /* save key to connection (for subsequent verification) */
     strncpy(conn->client_key, (char*)base64_key, sizeof(conn->client_key) - 1);
     conn->client_key[sizeof(conn->client_key) - 1] = '\0';
 
-    /* 构建请求 */
+    /* buildrequest */
     int len = snprintf(request, *request_len,
                        "GET %s HTTP/1.1\r\n"
                        "Host: %s\r\n"
@@ -373,7 +374,7 @@ uvhttp_error_t uvhttp_ws_handshake_client(uvhttp_context_t* context,
     return UVHTTP_OK;
 }
 
-/* 验证握手响应 */
+/* verifyhandshakeresponse */
 uvhttp_error_t uvhttp_ws_verify_handshake_response(
     struct uvhttp_ws_connection* conn, const char* response,
     size_t response_len) {
@@ -381,30 +382,30 @@ uvhttp_error_t uvhttp_ws_verify_handshake_response(
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 检查是否是 101 响应 */
+    /* check if is 101 response */
     if (strncmp(response, "HTTP/1.1 101", 12) != 0) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 检查 Upgrade 头 */
+    /* check Upgrade header */
     if (strstr(response, "Upgrade: websocket") == NULL) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 验证 Sec-WebSocket-Accept */
+    /* verify Sec-WebSocket-Accept */
     const char* accept_start = strstr(response, "Sec-WebSocket-Accept:");
     if (!accept_start) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    accept_start += 22; /* 跳过 "Sec-WebSocket-Accept:" */
+    accept_start += 22; /* skip "Sec-WebSocket-Accept:" */
 
-    /* 跳过空白字符 */
+    /* skip null whitespace */
     while (*accept_start == ' ') {
         accept_start++;
     }
 
-    /* 提取 accept */
+    /* extract accept */
     char accept[64];
     size_t accept_len = 0;
     while (
@@ -415,9 +416,9 @@ uvhttp_error_t uvhttp_ws_verify_handshake_response(
     }
     accept[accept_len] = '\0';
 
-    /* 验证 accept */
+    /* verify accept */
     if (conn->client_key[0] != '\0') {
-        /* 计算期望的 accept 值 */
+        /* calculate expected accept value */
         unsigned char hash[20];
         char expected_accept[32];
 
@@ -425,19 +426,19 @@ uvhttp_error_t uvhttp_ws_verify_handshake_response(
         char combined[128];
         snprintf(combined, sizeof(combined), "%s%s", conn->client_key, WS_GUID);
 
-        /* SHA1 哈希 */
+        /* SHA1 hash */
         mbedtls_sha1((unsigned char*)combined, strlen(combined), hash);
 
-        /* Base64 编码 */
+        /* Base64 encoding */
         size_t olen;
         mbedtls_base64_encode((unsigned char*)expected_accept,
                               sizeof(expected_accept), &olen, hash,
                               sizeof(hash));
         expected_accept[olen] = '\0';
 
-        /* 比较 */
+        /* compare */
         if (strcmp(accept, expected_accept) != 0) {
-            /* Accept 验证失败 */
+            /* Accept verifyfailure */
             return UVHTTP_ERROR_INVALID_PARAM;
         }
     }
@@ -447,7 +448,7 @@ uvhttp_error_t uvhttp_ws_verify_handshake_response(
     return UVHTTP_OK;
 }
 
-/* 发送 WebSocket 帧 */
+/* send WebSocket frame */
 uvhttp_error_t uvhttp_ws_send_frame(uvhttp_context_t* context,
                                     struct uvhttp_ws_connection* conn,
                                     const uint8_t* data, size_t len,
@@ -456,14 +457,15 @@ uvhttp_error_t uvhttp_ws_send_frame(uvhttp_context_t* context,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 分配发送缓冲区 */
-    size_t buffer_size = 10 + len + 4; /* 最大帧头 + 载荷 + 掩码 */
+    /* allocatesendbuffer */
+    size_t buffer_size =
+        10 + len + 4; /* maximum frame header + payload + masking */
     uint8_t* buffer = uvhttp_alloc(buffer_size);
     if (!buffer) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 构建帧（客户端需要掩码） */
+    /* build frame (client needs masking) */
     int frame_len =
         uvhttp_ws_build_frame(context, buffer, buffer_size, data, len, opcode,
                               conn->is_server ? 0 : 1, 1);
@@ -472,7 +474,7 @@ uvhttp_error_t uvhttp_ws_send_frame(uvhttp_context_t* context,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 发送数据 */
+    /* senddata */
     int ret;
     if (conn->ssl) {
         ret = mbedtls_ssl_write(conn->ssl, buffer, frame_len);
@@ -492,7 +494,7 @@ uvhttp_error_t uvhttp_ws_send_frame(uvhttp_context_t* context,
     return UVHTTP_OK;
 }
 
-/* 发送文本消息 */
+/* sendtextmessage */
 uvhttp_error_t uvhttp_ws_send_text(uvhttp_context_t* context,
                                    struct uvhttp_ws_connection* conn,
                                    const char* text, size_t len) {
@@ -500,7 +502,7 @@ uvhttp_error_t uvhttp_ws_send_text(uvhttp_context_t* context,
                                 UVHTTP_WS_OPCODE_TEXT);
 }
 
-/* 发送二进制消息 */
+/* sendbinarymessage */
 uvhttp_error_t uvhttp_ws_send_binary(uvhttp_context_t* context,
                                      struct uvhttp_ws_connection* conn,
                                      const uint8_t* data, size_t len) {
@@ -508,7 +510,7 @@ uvhttp_error_t uvhttp_ws_send_binary(uvhttp_context_t* context,
                                 UVHTTP_WS_OPCODE_BINARY);
 }
 
-/* 发送 Ping */
+/* send Ping */
 uvhttp_error_t uvhttp_ws_send_ping(uvhttp_context_t* context,
                                    struct uvhttp_ws_connection* conn,
                                    const uint8_t* data, size_t len) {
@@ -516,7 +518,7 @@ uvhttp_error_t uvhttp_ws_send_ping(uvhttp_context_t* context,
                                 UVHTTP_WS_OPCODE_PING);
 }
 
-/* 发送 Pong */
+/* send Pong */
 uvhttp_error_t uvhttp_ws_send_pong(uvhttp_context_t* context,
                                    struct uvhttp_ws_connection* conn,
                                    const uint8_t* data, size_t len) {
@@ -524,7 +526,7 @@ uvhttp_error_t uvhttp_ws_send_pong(uvhttp_context_t* context,
                                 UVHTTP_WS_OPCODE_PONG);
 }
 
-/* 关闭连接 */
+/* closeconnection */
 uvhttp_error_t uvhttp_ws_close(uvhttp_context_t* context,
                                struct uvhttp_ws_connection* conn, int code,
                                const char* reason) {
@@ -534,7 +536,7 @@ uvhttp_error_t uvhttp_ws_close(uvhttp_context_t* context,
 
     conn->state = UVHTTP_WS_STATE_CLOSING;
 
-    /* 构建关闭帧 */
+    /* buildcloseframe */
     uint8_t payload[128];
     payload[0] = (code >> 8) & 0xFF;
     payload[1] = code & 0xFF;
@@ -554,7 +556,7 @@ uvhttp_error_t uvhttp_ws_close(uvhttp_context_t* context,
                                 UVHTTP_WS_OPCODE_CLOSE);
 }
 
-/* 接收 WebSocket 帧 */
+/* receive WebSocket frame */
 uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
                                     uvhttp_ws_frame_t* frame) {
     if (!conn || !frame) {
@@ -563,7 +565,7 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
 
     memset(frame, 0, sizeof(uvhttp_ws_frame_t));
 
-    /* 读取帧头 */
+    /* read frame header */
     uint8_t header[10];
     int ret;
 
@@ -577,14 +579,14 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 解析帧头 */
+    /* parse frame header */
     size_t header_size;
     if (uvhttp_ws_parse_frame_header(header, ret, &frame->header,
                                      &header_size) != 0) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 读取扩展载荷长度（如果有） */
+    /* read extended payload length (if any) */
     if (header_size > 2) {
         if (conn->ssl) {
             ret = mbedtls_ssl_read(conn->ssl, header + 2, header_size - 2);
@@ -597,7 +599,7 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
         }
     }
 
-    /* 读取掩码密钥（如果有） */
+    /* read masking key (if any) */
     if (frame->header.mask) {
         if (conn->ssl) {
             ret = mbedtls_ssl_read(conn->ssl, frame->masking_key, 4);
@@ -610,7 +612,7 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
         }
     }
 
-    /* 读取载荷 */
+    /* read payload */
     if (frame->header.payload_len > 0) {
         if (frame->header.payload_len > conn->config.max_frame_size) {
             return UVHTTP_ERROR_INVALID_PARAM;
@@ -636,7 +638,7 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
             return UVHTTP_ERROR_INVALID_PARAM;
         }
 
-        /* 应用掩码（如果有） */
+        /* application masking (if any) */
         if (frame->header.mask) {
             uvhttp_ws_apply_mask(frame->payload, frame->header.payload_len,
                                  frame->masking_key);
@@ -649,38 +651,38 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
     return UVHTTP_OK;
 }
 
-/* 处理接收到的数据 */
+/* process received data */
 uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                                       const uint8_t* data, size_t len) {
     if (!conn || !data) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 将数据添加到接收缓冲区 */
+    /* add data to receive buffer */
     if (conn->recv_buffer_pos + len > conn->recv_buffer_size) {
-        /* 缓冲区不足，需要扩展 */
+        /* buffer insufficient, need to expand */
         size_t new_size = conn->recv_buffer_size;
 
-        /* 检查是否超过最大限制 */
+        /* check if exceeds maximum limit */
         if (new_size > SIZE_MAX / 2) {
-            return UVHTTP_ERROR_INVALID_PARAM; /* 溢出保护 */
+            return UVHTTP_ERROR_INVALID_PARAM; /* overflow protection */
         }
 
         new_size *= 2;
 
-        /* 检查是否满足需求 */
+        /* check if meets requirement */
         while (conn->recv_buffer_pos + len > new_size) {
             if (new_size > SIZE_MAX / 2) {
-                return UVHTTP_ERROR_INVALID_PARAM; /* 溢出保护 */
+                return UVHTTP_ERROR_INVALID_PARAM; /* overflow protection */
             }
             new_size *= 2;
         }
 
-        /* 检查是否超过配置的最大大小 */
+        /* check if exceeds config's maximum size */
         if (new_size > (size_t)conn->config.max_frame_size) {
             new_size = (size_t)conn->config.max_frame_size;
             if (conn->recv_buffer_pos + len > new_size) {
-                return UVHTTP_ERROR_INVALID_PARAM; /* 超过最大限制 */
+                return UVHTTP_ERROR_INVALID_PARAM; /* exceeds maximum limit */
             }
         }
 
@@ -696,7 +698,7 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
     memcpy(conn->recv_buffer + conn->recv_buffer_pos, data, len);
     conn->recv_buffer_pos += len;
 
-    /* 处理完整的帧 */
+    /* process complete frame */
     while (conn->recv_buffer_pos >= 2) {
         uvhttp_ws_frame_header_t header;
         size_t header_size;
@@ -707,7 +709,7 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
             break;
         }
 
-        /* 检查是否有足够的数据 */
+        /* check if has enough data */
         size_t total_frame_size = header_size + header.payload_len;
         if (header.mask) {
             total_frame_size += 4;
@@ -717,7 +719,7 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
             break;
         }
 
-        /* 提取载荷 */
+        /* extract payload */
         uint8_t* payload = NULL;
 
         if (header.payload_len > 0) {
@@ -731,14 +733,14 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
             }
         }
 
-        /* 处理帧 */
+        /* processframe */
         if (header.opcode == UVHTTP_WS_OPCODE_TEXT ||
             header.opcode == UVHTTP_WS_OPCODE_BINARY) {
-            /* 处理分片消息 */
+            /* process fragmented message */
             if (!header.fin) {
-                /* 分片开始或继续 */
+                /* fragment start or continue */
                 if (conn->fragmented_message == NULL) {
-                    /* 新的分片消息 */
+                    /* new fragmented message */
                     conn->fragmented_opcode = header.opcode;
                     conn->fragmented_capacity = header.payload_len * 2;
                     conn->fragmented_message =
@@ -746,7 +748,7 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                     conn->fragmented_size = 0;
                 }
 
-                /* 扩展缓冲区（如果需要） */
+                /* expand buffer (if needed) */
                 while (conn->fragmented_size + header.payload_len >
                        conn->fragmented_capacity) {
                     conn->fragmented_capacity *= 2;
@@ -758,9 +760,9 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                        payload, header.payload_len);
                 conn->fragmented_size += header.payload_len;
             } else {
-                /* 最后一个分片或完整消息 */
+                /* last fragment or complete message */
                 if (conn->fragmented_message != NULL) {
-                    /* 完成分片消息 */
+                    /* complete fragmented message */
                     while (conn->fragmented_size + header.payload_len >
                            conn->fragmented_capacity) {
                         conn->fragmented_capacity *= 2;
@@ -784,7 +786,7 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                     conn->fragmented_size = 0;
                     conn->fragmented_capacity = 0;
                 } else {
-                    /* 完整消息 */
+                    /* complete message */
                     if (conn->on_message) {
                         conn->on_message(conn, (const char*)payload,
                                          header.payload_len, header.opcode);
@@ -792,7 +794,7 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                 }
             }
         } else if (header.opcode == UVHTTP_WS_OPCODE_CLOSE) {
-            /* 关闭帧 */
+            /* closeframe */
             if (conn->on_close) {
                 int code = 1000;
                 const char* reason = "";
@@ -809,9 +811,9 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
 
             conn->state = UVHTTP_WS_STATE_CLOSED;
         } else if (header.opcode == UVHTTP_WS_OPCODE_PING) {
-            /* 自动回复 Pong */
-            /* 从 conn->user_data 获取 wrapper，然后获取 conn，再获取
-             * server->context */
+            /* automatically reply Pong */
+            /* get wrapper from conn->user_data, then get conn, then get */
+            /* server->context */
             typedef struct {
                 void* conn;
                 void* user_handler;
@@ -829,9 +831,9 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                 }
             }
         }
-        /* PONG 帧通常不需要特殊处理 */
+        /* PONG frame usually does not need special processing */
 
-        /* 从缓冲区移除已处理的帧 */
+        /* remove processed frame from buffer */
         size_t remaining = conn->recv_buffer_pos - total_frame_size;
         if (remaining > 0) {
             memmove(conn->recv_buffer, conn->recv_buffer + total_frame_size,
@@ -843,7 +845,7 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
     return UVHTTP_OK;
 }
 
-/* 设置回调函数 */
+/* setcallbackfunction */
 void uvhttp_ws_set_callbacks(struct uvhttp_ws_connection* conn,
                              uvhttp_ws_on_message_callback on_message,
                              uvhttp_ws_on_close_callback on_close,
@@ -857,7 +859,7 @@ void uvhttp_ws_set_callbacks(struct uvhttp_ws_connection* conn,
     conn->on_error = on_error;
 }
 
-/* 触发消息回调 */
+/* triggermessagecallback */
 __attribute__((unused)) static void uvhttp_ws_trigger_message_callback(
     struct uvhttp_ws_connection* conn, const uint8_t* data, size_t len,
     uvhttp_ws_opcode_t opcode) {
@@ -866,7 +868,7 @@ __attribute__((unused)) static void uvhttp_ws_trigger_message_callback(
     }
 }
 
-/* 触发关闭回调 */
+/* triggerclosecallback */
 __attribute__((unused)) static void uvhttp_ws_trigger_close_callback(
     struct uvhttp_ws_connection* conn, int code, const char* reason) {
     if (conn && conn->on_close) {
@@ -874,7 +876,7 @@ __attribute__((unused)) static void uvhttp_ws_trigger_close_callback(
     }
 }
 
-/* 触发错误回调 */
+/* triggererrorcallback */
 __attribute__((unused)) static void uvhttp_ws_trigger_error_callback(
     struct uvhttp_ws_connection* conn, int error_code, const char* error_msg) {
     if (conn && conn->on_error) {

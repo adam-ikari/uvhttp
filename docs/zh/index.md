@@ -31,13 +31,15 @@ features:
     details: 最小依赖，易于嵌入，完美适配云原生和微服务架构
   - title: 🔧 易于使用
     details: 清晰的 API 设计，完善的文档，丰富的示例，快速上手
-  - title: 🧪 生产就绪
+  - title: 生产就绪
     details: 完整的错误处理、资源管理、可观测性、稳定性保证
 
-## 📌 平台支持
+---
 
-**当前支持**: Linux
+## 平台支持
 
-**未来计划**: macOS, Windows, FreeBSD, WebAssembly (WASM) 和其他 Unix-like 系统
+当前支持: Linux
+
+未来计划: macOS, Windows, FreeBSD, WebAssembly (WASM) 和其他 Unix-like 系统
 
 UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中扩展对其他操作系统和平台的支持。

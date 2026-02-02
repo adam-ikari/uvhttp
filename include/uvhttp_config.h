@@ -1,8 +1,8 @@
 /**
  * @file uvhttp_config.h
- * @brief 配置管理系统
+ * @brief Configuration managementSystem
  *
- * 提供动态配置管理，支持运行时调整参数
+ * Provides dynamic runtime adjustment
  */
 
 #ifndef UVHTTP_CONFIG_H
@@ -18,79 +18,100 @@
 extern "C" {
 #endif
 
-/* 前向声明 */
+/* Forward declarations */
 struct uvhttp_context;
 typedef struct uvhttp_context uvhttp_context_t;
 
-/* 配置结构 */
+/* Configuration structure */
 typedef struct {
-    /* 服务器配置 */
-    int max_connections; /* 最大连接数，默认1000，基于系统资源限制 */
-    int read_buffer_size; /* 读取缓冲区大小，默认8KB，平衡内存和性能 */
-    int backlog; /* 监听队列长度，默认128，Linux内核默认值 */
-    int keepalive_timeout; /* Keep-Alive超时，默认30秒，平衡连接复用和资源释放
+    /* Server configuration */
+    int max_connections;  /* Maximum connections, default 1000, based on system
+                             resource limits */
+    int read_buffer_size; /* Read buffer size, default 8KB, balance memory and
+                             performance */
+    int backlog; /* Listen queue length, default 128, Linux kernel default */
+    int keepalive_timeout; /* Keep-Alive timeout, default 30 seconds, balance
+                            * connection reuse and resource release
                             */
-    int request_timeout; /* 请求超时，默认30秒，基于Web应用常见需求 */
-    int connection_timeout; /* 连接超时时间（秒），默认60秒，防止慢连接攻击 */
+    int request_timeout; /* Request timeout, default 30 seconds, based on common
+                            web application requirements */
+    int connection_timeout; /* Connection timeout (seconds), default 60 seconds,
+                               prevent slow connection attacks */
 
-    /* 性能配置 */
-    size_t max_body_size; /* 最大请求体大小，默认10MB，防止DoS攻击 */
-    size_t max_header_size; /* 最大请求头大小，默认8KB，HTTP/1.1推荐值 */
-    size_t max_url_size; /* 最大URL长度，默认2KB，浏览器限制 */
-    size_t
-        max_file_size; /* 文件响应的最大文件大小，默认100MB，平衡内存和带宽 */
+    /* Performance configuration */
+    size_t max_body_size;   /* Maximum request body size, default 10MB, prevent
+                               DoS attacks */
+    size_t max_header_size; /* Maximum request header size, default 8KB,
+                               HTTP/1.1 recommended value */
+    size_t max_url_size;    /* Maximum URL length, default 2KB, browser limit */
+    size_t max_file_size; /* Maximum file size for file response, default 100MB,
+                             balance memory and bandwidth */
 
-    /* 安全配置 */
-    int max_requests_per_connection; /* 每个连接最大请求数，默认100，防止长连接滥用
+    /* Security configuration */
+    int max_requests_per_connection; /* Maximum requests per connection, default
+                                      * 100, prevent long connection abuse
                                       */
-    int rate_limit_window; /* 限流时间窗口，默认60秒，平衡精确性和性能 */
+    int rate_limit_window; /* Rate limiting time window, default 60 seconds,
+                              balance accuracy and performance */
 
-    /* WebSocket 配置 */
-    int websocket_max_frame_size; /* 最大帧大小，默认16MB，RFC 6455建议值 */
-    int websocket_max_message_size; /* 最大消息大小，默认64MB，基于实际应用场景
+    /* WebSocket configuration */
+    int websocket_max_frame_size; /* Maximum frame size, default 16MB, RFC 6455
+                                     recommended value */
+    int websocket_max_message_size; /* Maximum message size, default 64MB, based
+                                     * on actual application scenarios
                                      */
-    int websocket_ping_interval; /* Ping间隔，默认30秒，平衡连接检测和开销 */
-    int websocket_ping_timeout; /* Ping超时，默认10秒，3倍RTT估算值 */
+    int websocket_ping_interval; /* Ping interval, default 30 seconds, balance
+                                    connection detection and overhead */
+    int websocket_ping_timeout;  /* Ping timeout, default 10 seconds, 3x RTT
+                                    estimated value */
 
-    /* 网络配置 */
-    int tcp_keepalive_timeout; /* TCP Keep-Alive超时，默认60秒，标准值 */
-    int sendfile_timeout_ms; /* sendfile超时，默认5000ms，平衡性能和可靠性 */
-    int sendfile_max_retry; /* sendfile最大重试次数，默认3次，经验值 */
+    /* Network configuration */
+    int tcp_keepalive_timeout; /* TCP Keep-Alive timeout, default 60 seconds,
+                                  standard value */
+    int sendfile_timeout_ms;   /* sendfile timeout, default 5000ms, balance
+                                  performance and reliability */
+    int sendfile_max_retry;    /* sendfile maximum retry count, default 3 times,
+                                  empirical value */
 
-    /* 缓存配置 */
-    int cache_default_max_entries; /* 缓存默认最大条目数，默认1000，基于内存和性能平衡
+    /* Cache configuration */
+    int cache_default_max_entries; /* Cache default maximum entries, default
+                                    * 1000, based on memory and performance
+                                    * balance
                                     */
-    int cache_default_ttl; /* 缓存默认TTL，默认3600秒（1小时），常见Web缓存策略
+    int cache_default_ttl; /* Cache default TTL, default 3600 seconds (1 hour),
+                            * common web cache strategy
                             */
-    int lru_cache_batch_eviction_size; /* LRU缓存批量驱逐大小，默认10，性能优化
+    int lru_cache_batch_eviction_size; /* LRU cache batch eviction size, default
+                                        * 10, performance optimization
                                         */
 
-    /* 限流配置 */
-    int rate_limit_max_requests; /* 限流最大请求数，默认100，防止突发流量 */
-    int rate_limit_max_window_seconds; /* 限流最大时间窗口，默认60秒，与rate_limit_window一致
-                                        */
-    int rate_limit_min_timeout_seconds; /* 限流最小超时时间，默认1秒，防止过于频繁的请求
+    /* Rate limiting configuration */
+    int rate_limit_max_requests; /* Rate limitRequest, default 100, prevent */
+    int rate_limit_max_window_seconds;  /* Rate limitwhenwindow, default 60
+                                           seconds, withrate_limit_windowone */
+    int rate_limit_min_timeout_seconds; /* Rate limitTimeoutwhen,
+                                         * Default1seconds, preventRequest
                                          */
 } uvhttp_config_t;
 
-/* 配置管理函数 */
+/* Configuration management functions */
 /**
- * @brief 创建新的配置对象
- * @param config 输出参数，用于接收配置对象指针
- * @return UVHTTP_OK 成功，其他值表示失败
- * @note 成功时，*config 被设置为有效的配置对象，必须使用 uvhttp_config_free
- * 释放
- * @note 失败时，*config 被设置为 NULL
+ * @brief createnewobject
+ * @param config outputParameter, Used forreceiveobject
+ * @return UVHTTP_OK Success, othervaluerepresentsFailure
+ * @note Successwhen, *config issettovalidobject, mustUse uvhttp_config_free
+ * release
+ * @note Failurewhen, *config issetto NULL
  */
 uvhttp_error_t uvhttp_config_new(uvhttp_config_t** config);
 void uvhttp_config_free(uvhttp_config_t* config);
 void uvhttp_config_set_defaults(uvhttp_config_t* config);
 
-/* 配置验证 */
+/* Configuration validation */
 int uvhttp_config_validate(const uvhttp_config_t* config);
 void uvhttp_config_print(const uvhttp_config_t* config);
 
-/* 动态配置调整 */
+/* Dynamic configuration adjustment */
 int uvhttp_config_update_max_connections(uvhttp_context_t* context,
                                          int max_connections);
 int uvhttp_config_update_read_buffer_size(uvhttp_context_t* context,
@@ -99,10 +120,10 @@ int uvhttp_config_update_size_limits(uvhttp_context_t* context,
                                      size_t max_body_size,
                                      size_t max_header_size);
 
-/* 获取当前配置 */
+/* Get current configuration */
 const uvhttp_config_t* uvhttp_config_get_current(uvhttp_context_t* context);
 
-/* 设置全局配置 */
+/* Set global configuration */
 void uvhttp_config_set_current(uvhttp_context_t* context,
                                uvhttp_config_t* config);
 

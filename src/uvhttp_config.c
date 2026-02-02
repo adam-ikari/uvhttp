@@ -1,6 +1,6 @@
 /**
  * @file uvhttp_config.c
- * @brief 配置管理系统实现
+ * @brief configmanagesystemimplement
  */
 
 #include "uvhttp_config.h"
@@ -16,7 +16,7 @@
 #include <string.h>
 #include <sys/resource.h>
 
-/* 创建新配置 */
+/* create new config */
 uvhttp_error_t uvhttp_config_new(uvhttp_config_t** config) {
     if (!config) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -33,14 +33,14 @@ uvhttp_error_t uvhttp_config_new(uvhttp_config_t** config) {
     return UVHTTP_OK;
 }
 
-/* 释放配置 */
+/* releaseconfig */
 void uvhttp_config_free(uvhttp_config_t* config) {
     if (config) {
         uvhttp_free(config);
     }
 }
 
-/* 设置默认配置 */
+/* setdefaultconfig */
 void uvhttp_config_set_defaults(uvhttp_config_t* config) {
     if (!config)
         return;
@@ -60,25 +60,25 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config) {
     config->max_requests_per_connection = UVHTTP_DEFAULT_MAX_REQUESTS_PER_CONN;
     config->rate_limit_window = UVHTTP_DEFAULT_RATE_LIMIT_WINDOW;
 
-    /* WebSocket 配置 */
+    /* WebSocket config */
     config->websocket_max_frame_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE;
     config->websocket_max_message_size =
         UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE;
     config->websocket_ping_interval = UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL;
     config->websocket_ping_timeout = UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT;
 
-    /* 网络配置 */
+    /* networkconfig */
     config->tcp_keepalive_timeout = UVHTTP_TCP_KEEPALIVE_TIMEOUT;
     config->sendfile_timeout_ms = UVHTTP_SENDFILE_TIMEOUT_MS;
     config->sendfile_max_retry = UVHTTP_SENDFILE_DEFAULT_MAX_RETRY;
 
-    /* 缓存配置 */
+    /* cacheconfig */
     config->cache_default_max_entries = UVHTTP_CACHE_DEFAULT_MAX_ENTRIES;
     config->cache_default_ttl = UVHTTP_CACHE_DEFAULT_TTL;
     config->lru_cache_batch_eviction_size =
         UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE;
 
-    /* 限流配置 */
+    /* limit stream config */
     config->rate_limit_max_requests = UVHTTP_RATE_LIMIT_MAX_REQUESTS;
     config->rate_limit_max_window_seconds =
         UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS;
@@ -93,18 +93,21 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
     }
 
     /*
-     * Configuration range definitions - based on performance testing and system limits
+     * Configuration range definitions - based on performance testing and system
+     * limits
      *
-     * UVHTTP_MIN_CONNECTIONS: Minimum connections, ensure basic server functionality
-     * UVHTTP_MAX_CONNECTIONS_HARD: Hard limit, based on system file descriptor limit
-     * UVHTTP_MIN_BUFFER_SIZE: Minimum buffer, ensure basic HTTP processing capability
-     * UVHTTP_MAX_BUFFER_SIZE: Maximum buffer, balance memory usage and performance
-     * UVHTTP_MAX_BODY_SIZE_CONFIG: Maximum request body, prevent memory exhaustion attack
+     * UVHTTP_MIN_CONNECTIONS: Minimum connections, ensure basic server
+     * functionality UVHTTP_MAX_CONNECTIONS_HARD: Hard limit, based on system
+     * file descriptor limit UVHTTP_MIN_BUFFER_SIZE: Minimum buffer, ensure
+     * basic HTTP processing capability UVHTTP_MAX_BUFFER_SIZE: Maximum buffer,
+     * balance memory usage and performance UVHTTP_MAX_BODY_SIZE_CONFIG: Maximum
+     * request body, prevent memory exhaustion attack
      *
      * Performance considerations:
      * - Each connection consumes about 4KB memory (buffer + struct)
      * - 65535 connections consume about 256MB memory
-     * - Recommended: adjust max_connections based on server memory in production
+     * - Recommended: adjust max_connections based on server memory in
+     * production
      */
 #define UVHTTP_MIN_CONNECTIONS 1
 #define UVHTTP_MAX_CONNECTIONS_HARD 65535 /* Based on system limits */
