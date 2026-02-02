@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.2.0-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.2.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux-orange.svg)
@@ -23,19 +23,21 @@ UVHTTP is currently optimized for Linux platforms. We plan to expand support to 
 
 ## ✨ Features
 
-- ⚡ **High Performance**: Built on libuv event-driven architecture with integrated xxHash ultra-fast hashing, peak throughput up to 23,226 RPS
+- ⚡ **High Performance**: Built on libuv event-driven architecture with integrated xxHash ultra-fast hashing, peak throughput up to 21,991 RPS
 - 🔒 **Secure**: Buffer overflow protection, input validation, TLS 1.3 support
 - 🛡️ **Production Ready**: Zero compilation warnings, complete error handling, performance monitoring
 - 🔧 **Easy to Use**: Clean API, rich examples, comprehensive documentation
 - 🔄 **Connection Management**: Connection pool, timeout detection, heartbeat detection, broadcast functionality
 - ⚙️ **Configurable**: 36 compile-time configuration options for different scenarios
 - 💾 **Smart Caching**: LRU cache + cache preheating, zero-copy large file transmission
+- 🚀 **Router Cache Optimization**: Advanced caching for route matching with O(1) lookup
 
 ## 📊 Performance Metrics
 
-- **Peak Throughput**: 23,226 RPS (low concurrency scenario)
-- **High Concurrency Stability**: 10-500 concurrent, RPS fluctuation only 5%
-- **Minimum Latency**: 352 μs (low concurrency)
+- **Peak Throughput**: 21,991 RPS (high concurrency scenario)
+- **High Concurrency Stability**: 10-200 concurrent, RPS fluctuation only 30%
+- **Minimum Latency**: 551 μs (low concurrency)
+- **Performance Goal Achievement**: 95.3% (target 23,070 RPS)
 
 ## 🚀 Quick Start
 

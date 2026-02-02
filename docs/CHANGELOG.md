@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2] - 2026-02-02
+
+### Fixed
+
+- **路由器关键 bug 修复**
+  - 修复路径参数丢失问题（移除错误的 `param_count` 重置）
+  - 添加递归深度限制，防止栈溢出崩溃
+  - 影响范围：所有参数化路由（如 `/api/users/:id`）
+
+- **文档翻译错误修复**
+  - 修复 `include/uvhttp_config.h` 中的拼写错误和速率限制注释
+  - 修复 `include/uvhttp_constants.h` 中 50+ 处损坏的英文翻译
+  - 提升代码可读性和可维护性
+
+- **代码格式统一**
+  - 统一头文件包含的缩进风格（4 空格）
+  - 符合项目 C11 代码规范
+
+### Performance
+
+- **性能提升**
+  - 峰值 RPS 从 20,432 提升到 21,991（+7.6%）
+  - 性能目标达成率：95.3%（目标 23,070 RPS）
+  - 高并发稳定性：10-200 并发，RPS 波动仅 30%
+
+- **性能测试结果**
+  - 简单文本：21,991 RPS，4.56ms 延迟
+  - JSON 响应：21,095 RPS，4.74ms 延迟
+  - 小响应：21,395 RPS，4.67ms 延迟，23.02MB/s 吞吐
+
+### Testing
+
+- **测试覆盖率**
+  - 路由器测试：51 个测试全部通过
+  - 核心模块测试：246 个测试全部通过
+  - 包括连接、服务器、响应、WebSocket、缓存等模块
+
+### Changed
+
+- 合并 `feature/enable-router-cache-optimization` 分支
+- 路由缓存优化功能已启用
+- 更新性能基准测试文档（2026-02-02）
+
 ## [2.2.1] - 2026-01-31
 
 ### Breaking Changes
