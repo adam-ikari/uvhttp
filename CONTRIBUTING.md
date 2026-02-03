@@ -127,6 +127,109 @@ Closes #123
 - [ ] 内存管理正确（使用 UVHTTP_MALLOC/UVHTTP_FREE）
 - [ ] 错误处理完整
 
+## 文档规范
+
+### 文档双语要求
+
+UVHTTP 项目要求所有非代码生成的文档必须提供中英双语版本，以支持全球贡献者和用户。
+
+**详细的文档双语规范请参考**：[docs/zh/DOCUMENTATION_STANDARDS.md](docs/zh/DOCUMENTATION_STANDARDS.md)
+
+### 文档分类
+
+#### 1. 代码生成文档（无需双语）
+
+**位置**: `docs/api/`
+
+这些文档从代码注释自动生成，使用 Doxygen 工具，不需要人工翻译。
+
+**示例**:
+- `docs/api/defines/uvhttp_*.h.md`
+- `docs/api/functions/uvhttp_*.h.md`
+
+#### 2. 核心文档（必须双语）
+
+这些文档是项目的重要组成部分，必须提供中英双语版本。
+
+**根目录文档**：
+- `docs/CHANGELOG.md` ↔ `docs/zh/CHANGELOG.md` ✅
+- `docs/FAQ.md` ↔ `docs/zh/FAQ.md` ✅
+- `docs/SECURITY.md` ↔ `docs/zh/SECURITY.md` ✅
+- `docs/versions.md` ↔ `docs/zh/versions.md` ✅
+- `docs/index.md` ↔ `docs/zh/index.md` ✅
+- `docs/performance.md` ↔ `docs/zh/performance.md` ✅
+
+**使用者文档（`/guide/`）**：
+- `docs/guide/getting-started.md` ↔ `docs/zh/guide/getting-started.md` ✅
+- 其他 guide 文档需要补充双语版本
+
+**贡献者文档（`/dev/`）**：
+- `docs/dev/ARCHITECTURE.md` ↔ `docs/zh/dev/ARCHITECTURE.md` ✅
+- `docs/dev/BUILD_MODES.md` ↔ `docs/zh/dev/BUILD_MODES.md` ✅
+- `docs/dev/DEVELOPER_GUIDE.md` ↔ `docs/zh/guide/DEVELOPER_GUIDE.md` ✅
+
+### 术语规范
+
+| 英文术语 | 中文术语 |
+|---------|---------|
+| Application Developer | 应用开发者 |
+| Library Developer | 库开发者 |
+| Contributor | 贡献者 |
+| Maintainer | 维护者 |
+| Build Mode | 构建模式 |
+| Release Mode | Release 模式 |
+| Debug Mode | Debug 模式 |
+| Coverage Mode | Coverage 模式 |
+| Performance Benchmark | 性能基准测试 |
+| Unit Test | 单元测试 |
+| Integration Test | 集成测试 |
+| API Reference | API 参考 |
+| Getting Started | 快速开始 |
+| Architecture | 架构 |
+| Middleware | 中间件 |
+
+### 翻译原则
+
+1. **准确性**: 确保技术术语翻译准确
+2. **一致性**: 相同术语在不同文档中翻译一致
+3. **可读性**: 翻译后的文档应符合目标语言的表达习惯
+4. **完整性**: 确保所有内容都被翻译，包括代码注释
+
+### 文件命名
+
+- 英文文档：`docs/xxx/yyy.md`
+- 中文文档：`docs/zh/xxx/yyy.md`
+
+### 文档工作流程
+
+#### 创建新文档
+
+1. 创建英文文档：`docs/xxx/yyy.md`
+2. 立即创建中文文档：`docs/zh/xxx/yyy.md`
+3. 确保两个文档内容同步更新
+
+#### 更新现有文档
+
+1. 同时更新英文和中文文档
+2. 使用 Git 提交时确保两个文件一起提交
+3. 提交信息格式：`docs: 更新文档标题（双语）`
+
+#### 代码注释
+
+代码注释应使用英文，以便通过 Doxygen 生成英文 API 文档。
+
+### 文档审查清单
+
+在提交文档 PR 前，请确保：
+
+- [ ] 英文文档和中文文档同时存在
+- [ ] 两个文档的内容同步
+- [ ] 术语翻译一致
+- [ ] 格式正确
+- [ ] 代码示例保持不变
+- [ ] 链接地址正确
+- [ ] 提交信息包含双语说明
+
 ## 测试要求
 
 ### 运行测试
