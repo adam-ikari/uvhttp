@@ -68,6 +68,8 @@ static void write_503_response_cb(uv_write_t* req, int status) {
  * @param status connection state
  */
 static void on_connection(uv_stream_t* server_handle, int status) {
+    UVHTTP_LOG_DEBUG("on_connection called with status: %d\n", status);
+
     if (status < 0) {
         uvhttp_log_safe_error(status, "connection_accept", NULL);
         return;
@@ -79,6 +81,7 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     }
 
     uvhttp_server_t* server = (uvhttp_server_t*)server_handle->data;
+    UVHTTP_LOG_DEBUG("Server TLS enabled: %d\n", server->tls_enabled);
 
     /* Single-threaded connection count check - use server specific config */
     size_t max_connections = UVHTTP_MAX_CONNECTIONS_DEFAULT;  // defaultvalue
@@ -168,9 +171,12 @@ static void on_connection(uv_stream_t* server_handle, int status) {
         uv_accept(server_handle, (uv_stream_t*)&conn->tcp_handle);
 
     if (accept_result != 0) {
+        UVHTTP_LOG_ERROR("Failed to accept connection: %d\n", accept_result);
         uvhttp_connection_free(conn);
         return;
     }
+
+    UVHTTP_LOG_DEBUG("Connection accepted, TLS enabled: %d\n", conn->tls_enabled);
 
     /* Request and response objects have been initialized when connection was
      * created */
@@ -181,7 +187,9 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     /* Start connection process (TLS handshake or HTTP read)
      * All subsequent processes are done asynchronously through libuv callback
      * in event loop */
+    UVHTTP_LOG_DEBUG("Starting connection...\n");
     int start_result = uvhttp_connection_start(conn);
+    UVHTTP_LOG_DEBUG("Connection start result: %d\n", start_result);
     if (start_result == 0) {
         uvhttp_connection_start_timeout(conn);
     }
@@ -375,6 +383,7 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
     int ret =
         uv_tcp_bind(&server->tcp_handle, (const struct sockaddr*)&addr, 0);
     if (ret != 0) {
+        UVHTTP_LOG_DEBUG("uv_tcp_bind failed with code: %d (%s)\n", ret, uv_strerror(ret));
         UVHTTP_LOG_ERROR("uv_tcp_bind failed: %s\n", uv_strerror(ret));
         return UVHTTP_ERROR_SERVER_LISTEN;
     }
@@ -424,6 +433,7 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
 
     ret = uv_listen((uv_stream_t*)&server->tcp_handle, backlog, on_connection);
     if (ret != 0) {
+        UVHTTP_LOG_DEBUG("uv_listen failed with code: %d (%s)\n", ret, uv_strerror(ret));
         UVHTTP_LOG_ERROR("uv_listen failed: %s\n", uv_strerror(ret));
         return UVHTTP_ERROR_SERVER_LISTEN;
     }

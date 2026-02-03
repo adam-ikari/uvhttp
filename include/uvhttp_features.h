@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 #ifndef UVHTTP_FEATURE_LOGGING
-#    define UVHTTP_FEATURE_LOGGING 0 /* logMiddleware - Disableraise */
+#    define UVHTTP_FEATURE_LOGGING 1 /* logMiddleware - Enable */
 #endif
 
 #ifndef UVHTTP_FEATURE_TLS

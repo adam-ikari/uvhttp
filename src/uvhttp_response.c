@@ -591,7 +591,22 @@ uvhttp_error_t uvhttp_response_send_raw(const char* data, size_t length,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* directly call libuv, use same method as test/bench_server.c */
+    /* For TLS connections, encrypt data before sending */
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)stream->data;
+    if (conn && conn->tls_enabled && conn->ssl) {
+        /* Encrypt data using TLS write */
+        uvhttp_error_t tls_result = uvhttp_connection_tls_write(conn, data, length);
+        if (tls_result != UVHTTP_OK) {
+            UVHTTP_LOG_ERROR("TLS write failed: %d\n", tls_result);
+            uvhttp_free(write_data);
+            return tls_result;
+        }
+        /* TLS write succeeded, data was sent through mbedtls_bio_send callback */
+        uvhttp_free(write_data);
+        return UVHTTP_OK;
+    }
+
+    /* For non-TLS connections, send data directly */
     int result = uv_write((uv_write_t*)write_data, stream, &buf, 1,
                           (uv_write_cb)uvhttp_free_write_data);
 
