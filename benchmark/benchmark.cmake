@@ -1,7 +1,7 @@
 # UVHTTP 基准性能测试 CMake 配置
 #
 # 注意：所有性能测试程序必须使用 Release 模式编译，以确保准确的性能数据
-# 参考：BUILD_MODES.md
+# 参考：docs/zh/dev/BUILD_MODES.md
 
 # 性能测试可执行文件
 add_executable(performance_allocator

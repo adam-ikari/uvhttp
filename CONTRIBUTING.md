@@ -16,7 +16,7 @@ UVHTTP 项目定义了三种构建模式，开发时请根据场景选择合适�
 
 **重要提示**：
 - ⚠️ **性能测试必须使用 Release 模式**，否则数据不准确（Debug 模式性能可能低 10-100 倍）
-- ✅ 详细的构建模式规范请参考 [BUILD_MODES.md](BUILD_MODES.md)
+- ✅ 详细的构建模式规范请参考 [docs/zh/dev/BUILD_MODES.md](docs/zh/dev/BUILD_MODES.md)
 
 ### 分支策略
 
