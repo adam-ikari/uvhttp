@@ -101,9 +101,17 @@ typedef struct {
 /**
  * @brief Register protocol upgrade handler
  *
+ * Protocol detection order: Newly registered protocols are checked first
+ * (inserted at head of list). If multiple protocols match, the first one
+ * in the detection order will be used.
+ *
+ * Fast matching: If upgrade_header is provided, the framework will perform
+ * a fast string comparison before calling the detector function, improving
+ * performance for common protocols.
+ *
  * @param server Server object
- * @param protocol_name Protocol name (e.g., "ipps", "grpc-web")
- * @param upgrade_header Upgrade header value (optional, for fast matching)
+ * @param protocol_name Protocol name (e.g., "ipps", "grpc-web"), will be normalized to lowercase
+ * @param upgrade_header Upgrade header value (optional, for fast matching), will be normalized to lowercase
  * @param detector Protocol detector function
  * @param handler Protocol upgrade handler function
  * @param user_data User data, will be passed to handler

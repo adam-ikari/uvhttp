@@ -380,6 +380,13 @@ static int on_message_complete(llhttp_t* parser) {
             /* Iterate through registered protocols */
             for (uvhttp_protocol_info_t* proto = registry->protocols;
                  proto != NULL; proto = proto->next) {
+                /* Fast matching: if upgrade_header is set, compare directly */
+                if (proto->upgrade_header[0] != '\0') {
+                    if (strcasecmp(upgrade_header, proto->upgrade_header) != 0) {
+                        continue;  /* Skip non-matching protocol */
+                    }
+                }
+
                 /* Call protocol detector */
                 if (proto->detector(conn->request, protocol_name,
                                     sizeof(protocol_name))) {
