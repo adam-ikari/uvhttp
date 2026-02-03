@@ -1413,7 +1413,7 @@ int main() {
 
 ## 文档
 - [API 参考](docs/api/API_REFERENCE.md)
-- [开发者指南](docs/guide/DEVELOPER_GUIDE.md)
+- [贡献者指南](docs/guide/DEVELOPER_GUIDE.md)
 - [教程](docs/guide/TUTORIAL.md)
 ```
 

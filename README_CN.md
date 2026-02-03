@@ -53,7 +53,7 @@ make
 
 - [API 参考](docs/API_REFERENCE.md) - 完整的 API 文档
 - [架构设计](docs/ARCHITECTURE.md) - 系统架构说明
-- [开发者指南](docs/DEVELOPER_GUIDE.md) - 开发指南
+- [贡献者指南](docs/DEVELOPER_GUIDE.md) - 贡献指南和开发规范
 - [教程](docs/guide/TUTORIAL.md) - 从基础到高级的渐进式教程
 - [示例程序](examples/README.md) - 所有示例程序的完整列表
 

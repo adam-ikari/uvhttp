@@ -665,7 +665,7 @@ int main(void) {
 ## 参考资料
 
 - [架构设计文档](../dev/ARCHITECTURE.md)
-- [开发者指南 (中文)](../zh/guide/DEVELOPER_GUIDE.md)
+- [贡献者指南 (中文)](../zh/guide/DEVELOPER_GUIDE.md)
 - [教程 (中文)](../zh/guide/TUTORIAL.md)
 - [安全策略](../SECURITY.md)
 - [libuv 文档](https://docs.libuv.org/)

@@ -511,7 +511,7 @@ make
 ## 相关文档
 
 - [API 参考](api/API_REFERENCE.md)
-- [开发者指南](guide/DEVELOPER_GUIDE.md)
+- [贡献者指南](guide/DEVELOPER_GUIDE.md)
 - [教程](guide/TUTORIAL.md)
 
 ---

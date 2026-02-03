@@ -180,5 +180,5 @@ A: 使用 `git branch -a` 查看所有分支，`git status` 查看当前状态�
 ## 相关文档
 
 - [CI/CD 架构设计](./CI_CD_REDESIGN.md)
-- [开发者指南](./dev/DEVELOPER_GUIDE.md)
+- [贡献者指南](./dev/DEVELOPER_GUIDE.md)
 - [发布流程](./LIFECYCLE_DESIGN.md)

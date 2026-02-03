@@ -183,4 +183,4 @@ make VERBOSE=1 2>&1 | grep UVHTTP_MAX_HEADER_NAME_SIZE
 
 - [API 参考](../api/API_REFERENCE.md)
 - [性能基准](../dev/PERFORMANCE_BENCHMARK.md)
-- [开发者指南](DEVELOPER_GUIDE.md)
+- [贡献者指南](DEVELOPER_GUIDE.md)

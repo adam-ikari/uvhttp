@@ -413,5 +413,5 @@ cat build/CMakeCache.txt | grep CMAKE_BUILD_TYPE
 
 - [CMake 构建模式文档](https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html)
 - [GCC 优化选项](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html)
-- [开发者指南](../guide/DEVELOPER_GUIDE.md)
+- [贡献者指南](../guide/DEVELOPER_GUIDE.md)
 - [性能测试标准](PERFORMANCE_TESTING_STANDARD.md)
