@@ -304,7 +304,8 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_MAX_CONNECTIONS_DEFAULT=4096 ..
  */
-#define UVHTTP_MAX_CONNECTIONS_HARD 65535 /* Maximum TCP port number (2^16 - 1) */
+#define UVHTTP_MAX_CONNECTIONS_HARD \
+    65535 /* Maximum TCP port number (2^16 - 1) */
 
 #ifndef UVHTTP_MAX_CONNECTIONS_DEFAULT
 #    define UVHTTP_MAX_CONNECTIONS_DEFAULT 2048 /* Default value */
@@ -929,7 +930,8 @@
  *    - Results:
  *      * 10 seconds timeout: RPS 19,436, Timeout rate 0.05%
  *      * 30 seconds timeout: RPS 19,488, Timeout rate 0.01% (Recommended)
- *      * 60 seconds timeout: RPS 19,412, Timeout rate 0.01%, Connection wait time increases
+ *      * 60 seconds timeout: RPS 19,412, Timeout rate 0.01%, Connection wait
+ * time increases
  *    - Conclusion: 30 seconds timeout balances performance and reliability
  *
  * 2. UVHTTP_SENDFILE_DEFAULT_MAX_RETRY = 2
@@ -970,7 +972,8 @@
  *    - Results:
  *      * evict 5: Eviction latency 0.8ms, Cache hit rate 92%
  *      * evict 10: Eviction latency 0.9ms, Cache hit rate 95% (Recommended)
- *      * evict 20: Eviction latency 1.5ms, Cache hit rate 96% (Latency increases)
+ *      * evict 20: Eviction latency 1.5ms, Cache hit rate 96% (Latency
+ * increases)
  *      * evict 50: Eviction latency 3.2ms, Cache hit rate 97% (High latency)
  *    - Conclusion: 10 entries eviction balances eviction rate and latency
  *
@@ -1011,9 +1014,11 @@
  *    - Results:
  *      * 1 second timeout: Rejection rate 15%, User experience poor
  *      * 5 seconds timeout: Rejection rate 5%, User experience acceptable
- *      * 10 seconds timeout: Rejection rate 1%, User experience good (Recommended)
+ *      * 10 seconds timeout: Rejection rate 1%, User experience good
+ * (Recommended)
  *      * 30 seconds timeout: Rejection rate 0.5%, Response time increases
- *    - Conclusion: 10 seconds timeout balances rejection rate and user experience
+ *    - Conclusion: 10 seconds timeout balances rejection rate and user
+ * experience
  *
  * CMake configuration:
  * - Configure through CMakeLists.txt or command line parameters

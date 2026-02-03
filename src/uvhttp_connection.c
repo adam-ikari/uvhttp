@@ -17,10 +17,10 @@
 #include <uv.h>
 
 #if UVHTTP_FEATURE_TLS
-#include <mbedtls/ssl.h>
-#include <mbedtls/ssl_ciphersuites.h>
-#include <mbedtls/error.h>
-#include <mbedtls/net_sockets.h>
+#    include <mbedtls/error.h>
+#    include <mbedtls/net_sockets.h>
+#    include <mbedtls/ssl.h>
+#    include <mbedtls/ssl_ciphersuites.h>
 #endif
 
 /* ========== Compile-time validation ========== */
@@ -100,7 +100,8 @@ static int mbedtls_bio_recv(void* ctx, unsigned char* buf, size_t len) {
     }
 
     /* Copy data from read buffer to SSL buffer */
-    size_t copy_len = (len < conn->read_buffer_used) ? len : conn->read_buffer_used;
+    size_t copy_len =
+        (len < conn->read_buffer_used) ? len : conn->read_buffer_used;
     memcpy(buf, conn->read_buffer, copy_len);
 
     /* Shift remaining data in buffer */
@@ -186,7 +187,8 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
         if (conn->state == UVHTTP_CONN_STATE_TLS_HANDSHAKE) {
             /* Continue TLS handshake */
             int ret = mbedtls_ssl_handshake((mbedtls_ssl_context*)conn->ssl);
-            if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+            if (ret == MBEDTLS_ERR_SSL_WANT_READ ||
+                ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
                 /* Handshake in progress, wait for more data */
                 return;
             } else if (ret != 0) {
@@ -203,10 +205,11 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 
         /* Decrypt data from TLS */
         int ret = mbedtls_ssl_read((mbedtls_ssl_context*)conn->ssl,
-                                    (unsigned char*)conn->read_buffer,
-                                    conn->read_buffer_size);
+                                   (unsigned char*)conn->read_buffer,
+                                   conn->read_buffer_size);
 
-        if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+        if (ret == MBEDTLS_ERR_SSL_WANT_READ ||
+            ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
             /* Need more data, wait for next read callback */
             return;
         } else if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
@@ -227,11 +230,12 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     /* single-threaded HTTP parse - no synchronization needed */
     llhttp_t* parser = (llhttp_t*)conn->request->parser;
     if (parser) {
-        UVHTTP_LOG_DEBUG("on_read: Parsing %zu bytes\n", conn->read_buffer_used);
+        UVHTTP_LOG_DEBUG("on_read: Parsing %zu bytes\n",
+                         conn->read_buffer_used);
         UVHTTP_LOG_DEBUG("on_read: parser->data = %p, conn = %p\n",
                          parser->data, conn);
-        enum llhttp_errno err = llhttp_execute(parser, conn->read_buffer,
-                                                conn->read_buffer_used);
+        enum llhttp_errno err =
+            llhttp_execute(parser, conn->read_buffer, conn->read_buffer_used);
 
         if (err != HPE_OK) {
             const char* err_name = llhttp_errno_name(err);
@@ -547,7 +551,8 @@ uvhttp_error_t uvhttp_connection_start(uvhttp_connection_t* conn) {
     if (conn->tls_enabled) {
         uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_TLS_HANDSHAKE);
         uvhttp_error_t result = uvhttp_connection_tls_handshake_func(conn);
-        if (result == UVHTTP_ERROR_TLS_WANT_READ || result == UVHTTP_ERROR_TLS_WANT_WRITE) {
+        if (result == UVHTTP_ERROR_TLS_WANT_READ ||
+            result == UVHTTP_ERROR_TLS_WANT_WRITE) {
             /* TLS handshake in progress, wait for more data */
             UVHTTP_LOG_DEBUG("TLS handshake in progress, waiting for data\n");
             return UVHTTP_OK;
@@ -640,7 +645,8 @@ uvhttp_error_t uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn) {
         }
 
         /* Setup SSL with custom BIO callbacks */
-        mbedtls_ssl_set_bio(ssl, conn, mbedtls_bio_send, mbedtls_bio_recv, NULL);
+        mbedtls_ssl_set_bio(ssl, conn, mbedtls_bio_send, mbedtls_bio_recv,
+                            NULL);
 
         conn->ssl = ssl;
     }
@@ -666,8 +672,8 @@ uvhttp_error_t uvhttp_connection_tls_read(uvhttp_connection_t* conn) {
 
     /* Read decrypted data from TLS */
     int ret = mbedtls_ssl_read((mbedtls_ssl_context*)conn->ssl,
-                                (unsigned char*)conn->read_buffer,
-                                conn->read_buffer_size);
+                               (unsigned char*)conn->read_buffer,
+                               conn->read_buffer_size);
     if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
         return UVHTTP_ERROR_TLS_WANT_READ;
     } else if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
@@ -696,7 +702,8 @@ void uvhttp_connection_tls_cleanup(uvhttp_connection_t* conn) {
     }
 }
 
-uvhttp_error_t uvhttp_connection_start_tls_handshake(uvhttp_connection_t* conn) {
+uvhttp_error_t uvhttp_connection_start_tls_handshake(
+    uvhttp_connection_t* conn) {
     return uvhttp_connection_tls_handshake_func(conn);
 }
 

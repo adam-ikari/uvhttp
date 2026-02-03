@@ -176,7 +176,8 @@ static void on_connection(uv_stream_t* server_handle, int status) {
         return;
     }
 
-    UVHTTP_LOG_DEBUG("Connection accepted, TLS enabled: %d\n", conn->tls_enabled);
+    UVHTTP_LOG_DEBUG("Connection accepted, TLS enabled: %d\n",
+                     conn->tls_enabled);
 
     /* Request and response objects have been initialized when connection was
      * created */
@@ -383,7 +384,8 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
     int ret =
         uv_tcp_bind(&server->tcp_handle, (const struct sockaddr*)&addr, 0);
     if (ret != 0) {
-        UVHTTP_LOG_DEBUG("uv_tcp_bind failed with code: %d (%s)\n", ret, uv_strerror(ret));
+        UVHTTP_LOG_DEBUG("uv_tcp_bind failed with code: %d (%s)\n", ret,
+                         uv_strerror(ret));
         UVHTTP_LOG_ERROR("uv_tcp_bind failed: %s\n", uv_strerror(ret));
         return UVHTTP_ERROR_SERVER_LISTEN;
     }
@@ -433,7 +435,8 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
 
     ret = uv_listen((uv_stream_t*)&server->tcp_handle, backlog, on_connection);
     if (ret != 0) {
-        UVHTTP_LOG_DEBUG("uv_listen failed with code: %d (%s)\n", ret, uv_strerror(ret));
+        UVHTTP_LOG_DEBUG("uv_listen failed with code: %d (%s)\n", ret,
+                         uv_strerror(ret));
         UVHTTP_LOG_ERROR("uv_listen failed: %s\n", uv_strerror(ret));
         return UVHTTP_ERROR_SERVER_LISTEN;
     }

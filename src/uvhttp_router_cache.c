@@ -1,16 +1,16 @@
 #if UVHTTP_FEATURE_ROUTER_CACHE
 
-#include "uvhttp_allocator.h"
-#include "uvhttp_constants.h"
-#include "uvhttp_hash.h"
-#include "uvhttp_router.h"
-#include "uvhttp_utils.h"
+#    include "uvhttp_allocator.h"
+#    include "uvhttp_constants.h"
+#    include "uvhttp_hash.h"
+#    include "uvhttp_router.h"
+#    include "uvhttp_utils.h"
 
-#include <ctype.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#    include <ctype.h>
+#    include <stdint.h>
+#    include <stdio.h>
+#    include <stdlib.h>
+#    include <string.h>
 
 /* Hash bucket structure */
 typedef struct route_hash_entry {
@@ -21,13 +21,16 @@ typedef struct route_hash_entry {
     struct route_hash_entry* next;
 } route_hash_entry_t;
 
-/* Cache-optimized router structure - uses hierarchical caching strategy for improved performance
+/* Cache-optimized router structure - uses hierarchical caching strategy for
+ * improved performance
  *
  * Thread safety note:
- * This implementation is designed for single-threaded event loop architecture (based on libuv):
+ * This implementation is designed for single-threaded event loop architecture
+ * (based on libuv):
  * - The router must be used in a single event loop thread
  * - Does not support multi-threaded concurrent access
- * - If you need to use it in a multi-threaded environment, create independent server instances and routers for each thread
+ * - If you need to use it in a multi-threaded environment, create independent
+ * server instances and routers for each thread
  *
  * Performance optimization:
  * - Uses hierarchical caching strategy (hot path + hash table)
@@ -35,7 +38,8 @@ typedef struct route_hash_entry {
  * - Lock-free design, avoids mutex overhead
  */
 typedef struct {
-    /* Hot path cache: stores the 16 most frequently used routes, utilizing CPU cache locality */
+    /* Hot path cache: stores the 16 most frequently used routes, utilizing CPU
+     * cache locality */
     struct {
         char path[UVHTTP_MAX_ROUTE_PATH_LEN];
         uvhttp_method_t method;
@@ -43,7 +47,7 @@ typedef struct {
         size_t access_count;
     } hot_routes[UVHTTP_ROUTER_HOT_ROUTES_COUNT];
     size_t hot_count;
-    size_t hot_index;  /* Index for circular replacement */
+    size_t hot_index; /* Index for circular replacement */
 
     /* Hash table: for fast lookup of all routes (including cold paths) */
     route_hash_entry_t* hash_table[UVHTTP_ROUTER_HASH_SIZE];
@@ -82,9 +86,8 @@ static inline uvhttp_method_t fast_method_parse(const char* method) {
                        ? UVHTTP_POST
                        : UVHTTP_ANY;
         } else if (method[1] == 'U') {
-            return (method[2] == 'T' && method[3] == '\0')
-                       ? UVHTTP_PUT
-                       : UVHTTP_ANY;
+            return (method[2] == 'T' && method[3] == '\0') ? UVHTTP_PUT
+                                                           : UVHTTP_ANY;
         }
         break;
     case 'D':
@@ -125,9 +128,9 @@ static inline uvhttp_method_t fast_method_parse(const char* method) {
 
 /* Add to hash table */
 static uvhttp_error_t add_to_hash_table(cache_optimized_router_t* cr,
-                                         const char* path,
-                                         uvhttp_method_t method,
-                                         uvhttp_request_handler_t handler) {
+                                        const char* path,
+                                        uvhttp_method_t method,
+                                        uvhttp_request_handler_t handler) {
     if (!cr || !path || !handler) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -191,8 +194,8 @@ static uvhttp_error_t add_to_hot_routes(cache_optimized_router_t* cr,
 
     /* If hot path is not full, add directly */
     if (cr->hot_count < UVHTTP_ROUTER_HOT_ROUTES_COUNT) {
-        uvhttp_safe_strncpy(cr->hot_routes[cr->hot_count].path,
-                           path, UVHTTP_MAX_ROUTE_PATH_LEN);
+        uvhttp_safe_strncpy(cr->hot_routes[cr->hot_count].path, path,
+                            UVHTTP_MAX_ROUTE_PATH_LEN);
         cr->hot_routes[cr->hot_count].method = method;
         cr->hot_routes[cr->hot_count].handler = handler;
         cr->hot_routes[cr->hot_count].access_count = 0;
@@ -200,7 +203,8 @@ static uvhttp_error_t add_to_hot_routes(cache_optimized_router_t* cr,
         return UVHTTP_OK;
     }
 
-    /* Hot path is full, replace the one with least access count (circular replacement strategy) */
+    /* Hot path is full, replace the one with least access count (circular
+     * replacement strategy) */
     size_t min_index = cr->hot_index;
     size_t min_count = cr->hot_routes[min_index].access_count;
 
@@ -212,8 +216,8 @@ static uvhttp_error_t add_to_hot_routes(cache_optimized_router_t* cr,
     }
 
     /* Replace */
-    uvhttp_safe_strncpy(cr->hot_routes[min_index].path,
-                       path, UVHTTP_MAX_ROUTE_PATH_LEN);
+    uvhttp_safe_strncpy(cr->hot_routes[min_index].path, path,
+                        UVHTTP_MAX_ROUTE_PATH_LEN);
     cr->hot_routes[min_index].method = method;
     cr->hot_routes[min_index].handler = handler;
     cr->hot_routes[min_index].access_count = 0;
@@ -225,8 +229,9 @@ static uvhttp_error_t add_to_hot_routes(cache_optimized_router_t* cr,
 }
 
 /* Find in hash table */
-static uvhttp_request_handler_t find_in_hash_table(
-    cache_optimized_router_t* cr, const char* path, uvhttp_method_t method) {
+static uvhttp_request_handler_t find_in_hash_table(cache_optimized_router_t* cr,
+                                                   const char* path,
+                                                   uvhttp_method_t method) {
     if (!cr || !path) {
         return NULL;
     }
@@ -247,8 +252,9 @@ static uvhttp_request_handler_t find_in_hash_table(
 }
 
 /* Find in hot path */
-static uvhttp_request_handler_t find_in_hot_routes(
-    cache_optimized_router_t* cr, const char* path, uvhttp_method_t method) {
+static uvhttp_request_handler_t find_in_hot_routes(cache_optimized_router_t* cr,
+                                                   const char* path,
+                                                   uvhttp_method_t method) {
     if (!cr || !path) {
         return NULL;
     }
@@ -315,10 +321,9 @@ uvhttp_error_t uvhttp_router_add_route(uvhttp_router_t* router,
     return uvhttp_router_add_route_method(router, path, UVHTTP_ANY, handler);
 }
 
-uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
-                                              const char* path,
-                                              uvhttp_method_t method,
-                                              uvhttp_request_handler_t handler) {
+uvhttp_error_t uvhttp_router_add_route_method(
+    uvhttp_router_t* router, const char* path, uvhttp_method_t method,
+    uvhttp_request_handler_t handler) {
     if (!router || !path || !handler) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -345,7 +350,8 @@ uvhttp_request_handler_t uvhttp_router_find_handler(
     uvhttp_method_t method_enum = fast_method_parse(method);
 
     /* First search in hot path */
-    uvhttp_request_handler_t handler = find_in_hot_routes(cr, path, method_enum);
+    uvhttp_request_handler_t handler =
+        find_in_hot_routes(cr, path, method_enum);
 
     /* If not found in hot path, search in hash table */
     if (!handler) {
@@ -366,7 +372,8 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
     uvhttp_method_t method_enum = fast_method_parse(method);
 
     /* First search in hot path */
-    uvhttp_request_handler_t handler = find_in_hot_routes(cr, path, method_enum);
+    uvhttp_request_handler_t handler =
+        find_in_hot_routes(cr, path, method_enum);
 
     /* If not found in hot path, search in hash table */
     if (!handler) {
