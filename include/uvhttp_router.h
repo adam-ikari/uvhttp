@@ -41,18 +41,18 @@ typedef struct {
 // Route node - optimized for CPU cache (128 bytes = 2 cache lines)
 typedef struct uvhttp_route_node {
     /* Cache line 1: Hot path fields (64 bytes) */
-    uvhttp_method_t method;                    /* 4 bytes - HTTP method */
-    uvhttp_request_handler_t handler;          /* 8 bytes - Request handler */
-    size_t child_count;                        /* 8 bytes - Number of children */
-    int is_param;                              /* 4 bytes - Is parameter node */
-    uint8_t segment_len;                       /* 1 byte - Segment length */
-    uint8_t param_name_len;                    /* 1 byte - Parameter name length */
-    uint16_t _padding1;                        /* 2 bytes - Padding to 32 bytes */
-    uint32_t child_indices[12];                /* 48 bytes - Compact child storage */
+    uvhttp_method_t method;           /* 4 bytes - HTTP method */
+    uvhttp_request_handler_t handler; /* 8 bytes - Request handler */
+    size_t child_count;               /* 8 bytes - Number of children */
+    int is_param;                     /* 4 bytes - Is parameter node */
+    uint8_t segment_len;              /* 1 byte - Segment length */
+    uint8_t param_name_len;           /* 1 byte - Parameter name length */
+    uint16_t _padding1;               /* 2 bytes - Padding to 32 bytes */
+    uint32_t child_indices[12];       /* 48 bytes - Compact child storage */
 
     /* Cache line 2: Variable length data (64 bytes) */
-    char segment_data[32];                     /* 32 bytes - Path segment */
-    char param_name_data[32];                  /* 32 bytes - Parameter name */
+    char segment_data[32];    /* 32 bytes - Path segment */
+    char param_name_data[32]; /* 32 bytes - Parameter name */
 } uvhttp_route_node_t;
 
 // Array routing structure

@@ -45,6 +45,8 @@ HTTP 性能基准测试服务器，支持多种测试场景：
 
 **默认端口：** 18081
 
+**路由数量：** 7 个路由（数组模式）
+
 **可用端点：**
 - `GET  /` - 简单文本响应（13 bytes）
 - `GET  /json` - JSON 响应（50 bytes）
@@ -53,6 +55,38 @@ HTTP 性能基准测试服务器，支持多种测试场景：
 - `GET  /medium` - 中等响应（10KB）
 - `GET  /large` - 大响应（100KB）
 - `GET  /health` - 健康检查（22 bytes）
+
+### benchmark_rps_150_routes
+
+HTTP 性能基准测试服务器，支持 150 路由场景（Trie 模式）：
+
+**启动服务器：**
+```bash
+./build/dist/bin/benchmark_rps_150_routes [端口]
+```
+
+**默认端口：** 18095
+
+**路由数量：** 150 个路由（超过 HYBRID_THRESHOLD = 100，自动切换到 Trie 模式）
+
+**可用端点：**
+- `GET  /api/resource1` 到 `/api/resource150` - 150 个路由端点
+
+**用途：**
+- 测试 Trie 模式下的路由性能
+- 验证大量路由场景下的性能表现
+- 对比数组模式和 Trie 模式的性能差异
+
+**性能测试：**
+```bash
+# 启动服务器
+./build/dist/bin/benchmark_rps_150_routes 18095
+
+# 在另一个终端运行性能测试
+wrk -t4 -c100 -d30s http://127.0.0.1:18095/api/resource1
+wrk -t4 -c100 -d30s http://127.0.0.1:18095/api/resource50
+wrk -t4 -c100 -d30s http://127.0.0.1:18095/api/resource100
+```
 
 ### run_benchmarks.sh
 
@@ -89,7 +123,38 @@ wrk -t8 -c200 -d30s http://127.0.0.1:18081/
 wrk -t16 -c500 -d30s http://127.0.0.1:18081/
 ```
 
-### 2. 不同响应大小测试
+### 2. 路由模式性能测试
+
+UVHTTP 支持两种路由模式：
+
+- **数组模式**：路由数量 < 100 时使用，O(n) 查找
+- **Trie 模式**：路由数量 ≥ 100 时自动切换，O(m) 查找（m 为路径深度）
+
+**benchmark_rps（7 路由，数组模式）：**
+```bash
+./build/dist/bin/benchmark_rps 18081
+wrk -t4 -c100 -d30s http://127.0.0.1:18081/
+```
+
+**benchmark_rps_150_routes（150 路由，Trie 模式）：**
+```bash
+./build/dist/bin/benchmark_rps_150_routes 18095
+wrk -t4 -c100 -d30s http://127.0.0.1:18095/api/resource1
+wrk -t4 -c100 -d30s http://127.0.0.1:18095/api/resource50
+wrk -t4 -c100 -d30s http://127.0.0.1:18095/api/resource100
+```
+
+**性能对比：**
+- 7 路由（数组模式）：约 20,845 RPS
+- 150 路由（Trie 模式）：约 20,376 RPS
+- 性能变化：-1.42%（在测试误差范围内）
+
+**优化效果：**
+- 节点大小从 272 字节减少到 128 字节（-53%）
+- 缓存行使用从 5 行减少到 2 行（-60%）
+- 内存占用减少，缓存局部性提升
+
+### 3. 不同响应大小测试
 
 测试服务器处理不同大小响应的能力：
 

@@ -50,6 +50,30 @@ set_target_properties(benchmark_rps PROPERTIES
     COMPILE_FLAGS "-O2 -DNDEBUG"
 )
 
+# RPS 性能测试服务器 - 大量路由场景（>100 路由）
+add_executable(benchmark_rps_many_routes
+    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_rps_many_routes.c
+)
+target_link_libraries(benchmark_rps_many_routes
+    uvhttp
+    ${UVHTTP_CORE_DEPS}
+)
+set_target_properties(benchmark_rps_many_routes PROPERTIES
+    COMPILE_FLAGS "-O2 -DNDEBUG"
+)
+
+# RPS 性能测试服务器 - 150 路由场景
+add_executable(benchmark_rps_150_routes
+    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_rps_150_routes.c
+)
+target_link_libraries(benchmark_rps_150_routes
+    uvhttp
+    ${UVHTTP_CORE_DEPS}
+)
+set_target_properties(benchmark_rps_150_routes PROPERTIES
+    COMPILE_FLAGS "-O2 -DNDEBUG"
+)
+
 # 延迟测试
 add_executable(benchmark_latency
     ${CMAKE_SOURCE_DIR}/benchmark/benchmark_latency.c
