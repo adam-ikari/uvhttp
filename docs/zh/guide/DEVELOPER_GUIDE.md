@@ -40,11 +40,43 @@ brew install cmake libuv mbedtls
 
 ## 编译项目
 
+### 构建模式规范
+
+UVHTTP 项目定义了三种构建模式，每种模式适用于不同的场景：
+
+| 构建模式 | 用途 | 编译选项 | 适用程序 |
+|----------|------|----------|----------|
+| **Release** | 生产环境、性能测试 | `-O2 -DNDEBUG` | 所有 benchmark 程序、示例程序 |
+| **Debug** | 开发调试、单元测试 | `-O0 -g` | 单元测试、测试程序 |
+| **Coverage** | 代码覆盖率分析 | `-O0 --coverage` | 覆盖率测试 |
+
+**重要提示**：
+- ⚠️ **性能测试必须使用 Release 模式**，否则数据不准确（Debug 模式性能可能低 10-100 倍）
+- ✅ 详细的构建模式规范请参考 [构建模式文档](../dev/BUILD_MODES.md)
+
 ### 基本编译
+
+#### Release 模式（推荐用于性能测试）
 
 ```bash
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
+make -j$(nproc)
+```
+
+#### Debug 模式（用于开发调试）
+
+```bash
+mkdir build && cd build
+cmake -DENABLE_DEBUG=ON ..
+make -j$(nproc)
+```
+
+#### Coverage 模式（用于覆盖率分析）
+
+```bash
+mkdir build && cd build
+cmake -DENABLE_COVERAGE=ON ..
 make -j$(nproc)
 ```
 
