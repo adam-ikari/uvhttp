@@ -19,11 +19,9 @@ Focus on Core • High Performance • Configurable • Production Ready
 
 **Future Plans**: macOS, Windows, FreeBSD, WebAssembly (WASM), and other Unix-like systems
 
-UVHTTP is currently optimized for Linux platforms. We plan to expand support to other operating systems and platforms in future releases. Contributions for cross-platform compatibility are welcome!
-
 ## ✨ Features
 
-- ⚡ **High Performance**: Built on libuv event-driven architecture with integrated xxHash ultra-fast hashing, peak throughput up to 21,991 RPS
+- ⚡ **High Performance**: Built on libuv event-driven architecture with integrated xxHash ultra-fast hashing
 - 🔒 **Secure**: Buffer overflow protection, input validation, TLS 1.3 support
 - 🛡️ **Production Ready**: Zero compilation warnings, complete error handling, performance monitoring
 - 🔧 **Easy to Use**: Clean API, rich examples, comprehensive documentation
@@ -31,13 +29,6 @@ UVHTTP is currently optimized for Linux platforms. We plan to expand support to 
 - ⚙️ **Configurable**: 36 compile-time configuration options for different scenarios
 - 💾 **Smart Caching**: LRU cache + cache preheating, zero-copy large file transmission
 - 🚀 **Router Cache Optimization**: Advanced caching for route matching with O(1) lookup
-
-## 📊 Performance Metrics
-
-- **Peak Throughput**: 21,991 RPS (high concurrency scenario)
-- **High Concurrency Stability**: 10-200 concurrent, RPS fluctuation only 30%
-- **Minimum Latency**: 551 μs (low concurrency)
-- **Performance Goal Achievement**: 95.3% (target 23,070 RPS)
 
 ## 🚀 Quick Start
 
@@ -88,9 +79,10 @@ int main() {
 - **[API Reference](docs/api/API_REFERENCE.md)**: Complete API documentation
 - **[Build Guide](docs/guide/build.md)**: Build configuration and options
 - **[Getting Started](docs/guide/getting-started.md)**: Quick start guide
-- **[Dependencies](docs/DEPENDENCIES.md)**: Third-party dependencies and version locking
+- **[Performance](docs/performance/)**: Performance benchmarks and testing
+- **[Dependencies](docs/DEPENDENCIES.md)**: Third-party dependencies
 
-## 🏗️ Architecture
+## 🏗️ Project Structure
 
 ```
 uvhttp/
@@ -104,18 +96,7 @@ uvhttp/
 
 ## 🧪 Testing
 
-```bash
-# Build with coverage
-cmake -DENABLE_COVERAGE=ON ..
-make -j$(nproc)
-
-# Run specific test
-./dist/bin/test_request_comprehensive_coverage
-
-# Generate coverage report
-lcov --capture --directory . --output-file coverage.info
-lcov --summary coverage.info
-```
+See [docs/zh/dev/TESTING_STANDARDS.md](docs/zh/dev/TESTING_STANDARDS.md) for testing guidelines.
 
 ## 🤝 Contributing
 

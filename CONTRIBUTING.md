@@ -4,19 +4,11 @@
 
 ## 开发流程
 
-### 构建模式规范
+### 构建模式
 
-UVHTTP 项目定义了三种构建模式，开发时请根据场景选择合适的模式：
+UVHTTP 项目定义了三种构建模式（Release、Debug、Coverage），详细的构建模式规范请参考 [docs/zh/dev/BUILD_MODES.md](docs/zh/dev/BUILD_MODES.md)。
 
-| 构建模式 | 用途 | 编译选项 | 适用程序 |
-|----------|------|----------|----------|
-| **Release** | 生产环境、性能测试 | `-O2 -DNDEBUG` | 所有 benchmark 程序、示例程序 |
-| **Debug** | 开发调试、单元测试 | `-O0 -g` | 单元测试、测试程序 |
-| **Coverage** | 代码覆盖率分析 | `-O0 --coverage` | 覆盖率测试 |
-
-**重要提示**：
-- ⚠️ **性能测试必须使用 Release 模式**，否则数据不准确（Debug 模式性能可能低 10-100 倍）
-- ✅ 详细的构建模式规范请参考 [docs/zh/dev/BUILD_MODES.md](docs/zh/dev/BUILD_MODES.md)
+**重要提示**：性能测试必须使用 Release 模式，否则数据不准确。
 
 ### 分支策略
 
