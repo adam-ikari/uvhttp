@@ -4,6 +4,62 @@
 
 UVHTTP 项目要求所有非代码生成的文档必须提供中英双语版本，以支持全球开发者和用户。
 
+## 路径规范
+
+### 路径结构
+
+UVHTTP 使用明确的路径结构来区分中英文文档：
+
+```
+docs/
+├── zh/                    # 中文文档目录
+│   ├── CHANGELOG.md       # 中文文档
+│   ├── FAQ.md
+│   └── ...
+├── CHANGELOG.md           # 英文文档
+├── FAQ.md
+└── ...
+```
+
+### 路径规则
+
+| 语言 | 路径模式 | 示例 |
+|------|----------|------|
+| **英文** | `docs/xxx/yyy.md` | `docs/CHANGELOG.md` |
+| **中文** | `docs/zh/xxx/yyy.md` | `docs/zh/CHANGELOG.md` |
+
+**关键规则**：
+- ✅ 英文文档路径**不包含** `/zh/` 目录
+- ✅ 中文文档路径**必须包含** `/zh/` 目录
+- ✅ 英文和中文文档的相对路径（除 `/zh/` 外）保持一致
+
+### 特殊目录
+
+| 目录 | 说明 | 是否需要双语 |
+|------|------|-------------|
+| `docs/api/` | 代码生成文档（Doxygen） | ❌ 无需双语 |
+| `docs/archive/` | 归档文档 | ⚠️ 可选双语 |
+| `docs/zh/` | 中文文档根目录 | ✅ 仅中文 |
+| 其他目录 | 核心文档 | ✅ 必须双语 |
+
+### 路径示例
+
+**正确的路径配对**：
+```
+docs/CHANGELOG.md              ↔ docs/zh/CHANGELOG.md
+docs/FAQ.md                    ↔ docs/zh/FAQ.md
+docs/SECURITY.md               ↔ docs/zh/SECURITY.md
+docs/guide/getting-started.md  ↔ docs/zh/guide/getting-started.md
+docs/dev/ARCHITECTURE.md       ↔ docs/zh/dev/ARCHITECTURE.md
+```
+
+**无需双语的路径**：
+```
+docs/api/introduction.md       # 代码生成，无需双语
+docs/api/functions/*.md        # 代码生成，无需双语
+docs/archive/*.md             # 归档文档，可选双语
+```
+
 ## 文档分类
 
 ### 1. 代码生成文档（无需双语）
@@ -27,8 +83,8 @@ UVHTTP 项目要求所有非代码生成的文档必须提供中英双语版本�
 |---------|---------|------|
 | `docs/CHANGELOG.md` | `docs/zh/CHANGELOG.md` | 变更日志 ✅ |
 | `docs/FAQ.md` | `docs/zh/FAQ.md` | 常见问题 ✅ |
-| `docs/SECURITY.md` | `docs/zh/SECURITY.md` | 安全指南 ⚠️ 缺少英文 |
-| `docs/versions.md` | `docs/zh/versions.md` | 版本说明 ⚠️ 缺少英文 |
+| `docs/SECURITY.md` | `docs/zh/SECURITY.md` | 安全指南 ✅ |
+| `docs/versions.md` | `docs/zh/versions.md` | 版本说明 ✅ |
 | `docs/index.md` | `docs/zh/index.md` | 文档首页 ✅ |
 | `docs/performance.md` | `docs/zh/performance.md` | 性能文档 ✅ |
 
@@ -40,13 +96,13 @@ UVHTTP 项目要求所有非代码生成的文档必须提供中英双语版本�
 | `docs/guide/getting-started.md` | `docs/zh/guide/getting-started.md` | 快速开始 ✅ |
 | `docs/guide/build.md` | `docs/zh/guide/build.md` | 构建指南 ⚠️ 缺少中文 |
 | `docs/guide/TESTING_GUIDE.md` | `docs/zh/guide/TESTING_GUIDE.md` | 测试指南 ⚠️ 缺少中文 |
-| `docs/guide/TUTORIAL.md` | `docs/zh/guide/TUTORIAL.md` | 教程 ⚠️ 缺少英文 |
-| `docs/guide/websocket.md` | `docs/zh/guide/websocket.md` | WebSocket ⚠️ 缺少英文 |
-| `docs/guide/RATE_LIMIT_API.md` | `docs/zh/guide/RATE_LIMIT_API.md` | 限流 API ⚠️ 缺少英文 |
-| `docs/guide/STATIC_FILE_SERVER.md` | `docs/zh/guide/STATIC_FILE_SERVER.md` | 静态文件 ⚠️ 缺少英文 |
-| `docs/guide/LIBUV_DATA_POINTER.md` | `docs/zh/guide/LIBUV_DATA_POINTER.md` | libvu 指针 ⚠️ 缺少英文 |
-| `docs/guide/installation.md` | `docs/zh/guide/installation.md` | 安装指南 ⚠️ 缺少英文 |
-| `docs/guide/first-server.md` | `docs/zh/guide/first-server.md` | 第一个服务器 ⚠️ 缺少英文 |
+| `docs/zh/guide/TUTORIAL.md` | `docs/guide/TUTORIAL.md` | 教程 ⚠️ 缺少英文 |
+| `docs/zh/guide/websocket.md` | `docs/guide/websocket.md` | WebSocket ⚠️ 缺少英文 |
+| `docs/zh/guide/RATE_LIMIT_API.md` | `docs/guide/RATE_LIMIT_API.md` | 限流 API ⚠️ 缺少英文 |
+| `docs/zh/guide/STATIC_FILE_SERVER.md` | `docs/guide/STATIC_FILE_SERVER.md` | 静态文件 ⚠️ 缺少英文 |
+| `docs/zh/guide/LIBUV_DATA_POINTER.md` | `docs/guide/LIBUV_DATA_POINTER.md` | libuv 指针 ⚠️ 缺少英文 |
+| `docs/zh/guide/installation.md` | `docs/guide/installation.md` | 安装指南 ⚠️ 缺少英文 |
+| `docs/zh/guide/first-server.md` | `docs/guide/first-server.md` | 第一个服务器 ⚠️ 缺少英文 |
 
 #### 贡献者文档（`/dev/`）
 
@@ -88,11 +144,13 @@ UVHTTP 项目要求所有非代码生成的文档必须提供中英双语版本�
 - 英文文档：`docs/xxx/yyy.md`
 - 中文文档：`docs/zh/xxx/yyy.md`
 
+**重要**：英文和中文文档的相对路径（除 `/zh/` 外）必须完全一致。
+
 ### 翻译原则
 
 1. **准确性**: 确保技术术语翻译准确
 2. **一致性**: 相同术语在不同文档中翻译一致
-3. **可读性**: 翻译后的文档应符合中文表达习惯
+3. **可读性**: 翻译后的文档应符合目标语言的表达习惯
 4. **完整性**: 确保所有内容都被翻译，包括代码注释
 
 ### 术语对照表
