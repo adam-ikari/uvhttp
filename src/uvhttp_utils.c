@@ -178,7 +178,6 @@ int uvhttp_is_valid_status_code(int status_code) {
     return (status_code >= 100 && status_code <= 599) ? TRUE : FALSE;
 }
 
-
 /* IP validation function - manual implementation for best performance */
 int uvhttp_is_valid_ip_address(const char* ip) {
     if (!ip || !*ip)

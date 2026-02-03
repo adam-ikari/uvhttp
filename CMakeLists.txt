@@ -75,6 +75,10 @@ add_definitions(-DUVHTTP_FEATURE_STATIC_FILES=1)
 add_definitions(-DUVHTTP_FEATURE_TLS=1)
 add_definitions(-DUVHTTP_FEATURE_LRU_CACHE=1)
 
+# Protocol upgrade support
+set(UVHTTP_FEATURE_PROTOCOL_UPGRADE ON CACHE BOOL "Enable protocol upgrade support")
+add_definitions(-DUVHTTP_FEATURE_PROTOCOL_UPGRADE=1)
+
 # ========== 可配置常量选项 ==========
 set(UVHTTP_MAX_HEADER_NAME_SIZE 256 CACHE STRING "Max HTTP header name size")
 set(UVHTTP_MAX_HEADER_VALUE_SIZE 4096 CACHE STRING "Max HTTP header value size")
@@ -210,6 +214,11 @@ add_definitions(-DUVHTTP_ALLOCATOR_TYPE=${UVHTTP_ALLOCATOR_TYPE})
 
 if(BUILD_WITH_WEBSOCKET)
     add_definitions(-DUVHTTP_FEATURE_WEBSOCKET=1)
+    # WebSocket protocol upgrade requires protocol upgrade framework
+    if(NOT UVHTTP_FEATURE_PROTOCOL_UPGRADE)
+        message(FATAL_ERROR "WebSocket protocol upgrade requires UVHTTP_FEATURE_PROTOCOL_UPGRADE=ON. "
+                           "Please enable protocol upgrade support or disable WebSocket.")
+    endif()
 endif()
 
 # ============================================================================

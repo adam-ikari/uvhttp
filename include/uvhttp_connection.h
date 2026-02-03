@@ -2,6 +2,7 @@
 #define UVHTTP_CONNECTION_H
 
 #include "uvhttp_common.h"
+#include "uvhttp_features.h"
 #include "uvhttp_platform.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
@@ -87,7 +88,7 @@ struct uvhttp_connection {
     /* Protocol upgrade related fields */
     char protocol_name[32]; /* 32 bytes - Upgraded protocol name */
     void* lifecycle;        /* 8 bytes - Lifecycle callbacks */
-    int _padding4[6];      /* 24bytes - paddingto64bytes */
+    int _padding4[6];       /* 24bytes - paddingto64bytes */
     /* Cache line 5 total: 64 bytes */
 
     /* ========== Cache line 6+ (320+ bytes): large buffers ========== */

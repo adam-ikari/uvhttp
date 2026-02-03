@@ -278,7 +278,7 @@ uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
 #endif
 
     /* Register WebSocket protocol upgrade */
-#if UVHTTP_FEATURE_WEBSOCKET
+#if UVHTTP_FEATURE_WEBSOCKET && UVHTTP_FEATURE_PROTOCOL_UPGRADE
     uvhttp_error_t result = uvhttp_server_register_websocket_upgrade(s);
     if (result != UVHTTP_OK) {
         UVHTTP_LOG_WARN("Failed to register WebSocket protocol upgrade: %s",
@@ -374,11 +374,13 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
     // Rate limit state has been embedded in struct, no need for extra cleanup
 #endif
 
+#if UVHTTP_FEATURE_PROTOCOL_UPGRADE
     // Clean protocol registry
     if (server->protocol_registry) {
-        uvhttp_protocol_registry_t* registry = (uvhttp_protocol_registry_t*)server->protocol_registry;
+        uvhttp_protocol_registry_t* registry =
+            (uvhttp_protocol_registry_t*)server->protocol_registry;
         uvhttp_protocol_info_t* current = registry->protocols;
-        
+
         while (current) {
             uvhttp_protocol_info_t* next = current->next;
             uvhttp_free(current);
@@ -387,6 +389,7 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
         uvhttp_free(registry);
         server->protocol_registry = NULL;
     }
+#endif
 
     uvhttp_free(server);
     return UVHTTP_OK;

@@ -52,6 +52,10 @@ extern "C" {
            */
 #endif
 
+#ifndef UVHTTP_FEATURE_PROTOCOL_UPGRADE
+#    define UVHTTP_FEATURE_PROTOCOL_UPGRADE 1 /* Protocol upgrade support */
+#endif
+
 #ifndef UVHTTP_FEATURE_ALLOCATOR
 #    define UVHTTP_FEATURE_ALLOCATOR 0 /* customSupport */
 #endif
@@ -97,6 +101,10 @@ extern "C" {
 
 #if UVHTTP_FEATURE_ALLOCATOR
 #    define UVHTTP_ALLOCATOR_ENABLED
+#endif
+
+#if UVHTTP_FEATURE_PROTOCOL_UPGRADE
+#    define UVHTTP_PROTOCOL_UPGRADE_ENABLED
 #endif
 
 /* ============ Compile-time Assertion Macros ============ */

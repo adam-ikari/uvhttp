@@ -254,16 +254,19 @@ uvhttp_error_t uvhttp_ws_generate_accept(const char* key, char* accept,
  */
 uvhttp_error_t uvhttp_ws_verify_accept(const char* key, const char* accept);
 
+#if UVHTTP_FEATURE_PROTOCOL_UPGRADE
 /**
  * @brief Register WebSocket protocol upgrade
- * 
+ *
  * This function should be called after server creation to enable
  * WebSocket protocol upgrade support
- * 
+ *
  * @param server Server object
  * @return uvhttp_error_t UVHTTP_OK for success
  */
-uvhttp_error_t uvhttp_server_register_websocket_upgrade(uvhttp_server_t* server);
+uvhttp_error_t uvhttp_server_register_websocket_upgrade(
+    uvhttp_server_t* server);
+#endif
 
 /* Convenience macros */
 #        define uvhttp_websocket_send_text(ctx, ws, text) \

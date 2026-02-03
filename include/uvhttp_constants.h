@@ -69,73 +69,73 @@
  */
 
 #ifndef UVHTTP_CONSTANTS_H
-#define UVHTTP_CONSTANTS_H
+#    define UVHTTP_CONSTANTS_H
 
 /* Contains default configuration values */
-#include "uvhttp_defaults.h"
+#    include "uvhttp_defaults.h"
 
 /* ========== Basic Macro Definitions ========== */
 
 /* Boolean macros */
-#ifndef TRUE
-#    define TRUE 1
-#endif
+#    ifndef TRUE
+#        define TRUE 1
+#    endif
 
-#ifndef FALSE
-#    define FALSE 0
-#endif
+#    ifndef FALSE
+#        define FALSE 0
+#    endif
 
 /* Stringification macro */
-#define UVHTTP_STRINGIFY(x) #x
+#    define UVHTTP_STRINGIFY(x) #    x
 
 /* ========== HTTP Protocol Related ========== */
 
 /* HTTP status codes */
-#define UVHTTP_STATUS_CONTINUE 100
-#define UVHTTP_STATUS_MIN_CONTINUE 100
-#define UVHTTP_STATUS_SWITCHING_PROTOCOLS 101
-#define UVHTTP_STATUS_OK 200
-#define UVHTTP_STATUS_CREATED 201
-#define UVHTTP_STATUS_ACCEPTED 202
-#define UVHTTP_STATUS_NO_CONTENT 204
-#define UVHTTP_STATUS_BAD_REQUEST 400
-#define UVHTTP_STATUS_UNAUTHORIZED 401
-#define UVHTTP_STATUS_FORBIDDEN 403
-#define UVHTTP_STATUS_NOT_FOUND 404
-#define UVHTTP_STATUS_METHOD_NOT_ALLOWED 405
-#define UVHTTP_STATUS_REQUEST_ENTITY_TOO_LARGE 413
-#define UVHTTP_STATUS_INTERNAL_ERROR 500
-#define UVHTTP_STATUS_NOT_IMPLEMENTED 501
-#define UVHTTP_STATUS_BAD_GATEWAY 502
-#define UVHTTP_STATUS_SERVICE_UNAVAILABLE 503
-#define UVHTTP_STATUS_MAX 599
+#    define UVHTTP_STATUS_CONTINUE 100
+#    define UVHTTP_STATUS_MIN_CONTINUE 100
+#    define UVHTTP_STATUS_SWITCHING_PROTOCOLS 101
+#    define UVHTTP_STATUS_OK 200
+#    define UVHTTP_STATUS_CREATED 201
+#    define UVHTTP_STATUS_ACCEPTED 202
+#    define UVHTTP_STATUS_NO_CONTENT 204
+#    define UVHTTP_STATUS_BAD_REQUEST 400
+#    define UVHTTP_STATUS_UNAUTHORIZED 401
+#    define UVHTTP_STATUS_FORBIDDEN 403
+#    define UVHTTP_STATUS_NOT_FOUND 404
+#    define UVHTTP_STATUS_METHOD_NOT_ALLOWED 405
+#    define UVHTTP_STATUS_REQUEST_ENTITY_TOO_LARGE 413
+#    define UVHTTP_STATUS_INTERNAL_ERROR 500
+#    define UVHTTP_STATUS_NOT_IMPLEMENTED 501
+#    define UVHTTP_STATUS_BAD_GATEWAY 502
+#    define UVHTTP_STATUS_SERVICE_UNAVAILABLE 503
+#    define UVHTTP_STATUS_MAX 599
 
 /* HTTP version */
-#define UVHTTP_VERSION_1_1 "HTTP/1.1"
-#define UVHTTP_VERSION_LENGTH 8
+#    define UVHTTP_VERSION_1_1 "HTTP/1.1"
+#    define UVHTTP_VERSION_LENGTH 8
 
 /* HTTP methods */
-#define UVHTTP_METHOD_GET "GET"
-#define UVHTTP_METHOD_POST "POST"
-#define UVHTTP_METHOD_PUT "PUT"
-#define UVHTTP_METHOD_DELETE "DELETE"
-#define UVHTTP_METHOD_HEAD "HEAD"
-#define UVHTTP_METHOD_OPTIONS "OPTIONS"
-#define UVHTTP_METHOD_PATCH "PATCH"
+#    define UVHTTP_METHOD_GET "GET"
+#    define UVHTTP_METHOD_POST "POST"
+#    define UVHTTP_METHOD_PUT "PUT"
+#    define UVHTTP_METHOD_DELETE "DELETE"
+#    define UVHTTP_METHOD_HEAD "HEAD"
+#    define UVHTTP_METHOD_OPTIONS "OPTIONS"
+#    define UVHTTP_METHOD_PATCH "PATCH"
 
 /* Content types */
-#define UVHTTP_CONTENT_TYPE_TEXT "text/plain"
-#define UVHTTP_CONTENT_TYPE_HTML "text/html"
-#define UVHTTP_CONTENT_TYPE_CSS "text/css"
-#define UVHTTP_CONTENT_TYPE_JS "application/javascript"
-#define UVHTTP_CONTENT_TYPE_XML "application/xml"
-#define UVHTTP_CONTENT_TYPE_IMAGE_JPEG "image/jpeg"
-#define UVHTTP_CONTENT_TYPE_IMAGE_PNG "image/png"
-#define UVHTTP_CONTENT_TYPE_IMAGE_GIF "image/gif"
-#define UVHTTP_CONTENT_TYPE_IMAGE_SVG "image/svg+xml"
-#define UVHTTP_CONTENT_TYPE_IMAGE_ICO "image/x-icon"
-#define UVHTTP_CONTENT_TYPE_PDF "application/pdf"
-#define UVHTTP_CONTENT_TYPE_ZIP "application/zip"
+#    define UVHTTP_CONTENT_TYPE_TEXT "text/plain"
+#    define UVHTTP_CONTENT_TYPE_HTML "text/html"
+#    define UVHTTP_CONTENT_TYPE_CSS "text/css"
+#    define UVHTTP_CONTENT_TYPE_JS "application/javascript"
+#    define UVHTTP_CONTENT_TYPE_XML "application/xml"
+#    define UVHTTP_CONTENT_TYPE_IMAGE_JPEG "image/jpeg"
+#    define UVHTTP_CONTENT_TYPE_IMAGE_PNG "image/png"
+#    define UVHTTP_CONTENT_TYPE_IMAGE_GIF "image/gif"
+#    define UVHTTP_CONTENT_TYPE_IMAGE_SVG "image/svg+xml"
+#    define UVHTTP_CONTENT_TYPE_IMAGE_ICO "image/x-icon"
+#    define UVHTTP_CONTENT_TYPE_PDF "application/pdf"
+#    define UVHTTP_CONTENT_TYPE_ZIP "application/zip"
 
 /* ========== Buffer Size Configuration (Performance Critical) ========== */
 
@@ -155,9 +155,9 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_INITIAL_BUFFER_SIZE=16384 ..
  */
-#ifndef UVHTTP_INITIAL_BUFFER_SIZE
-#    define UVHTTP_INITIAL_BUFFER_SIZE 8192
-#endif
+#    ifndef UVHTTP_INITIAL_BUFFER_SIZE
+#        define UVHTTP_INITIAL_BUFFER_SIZE 8192
+#    endif
 
 /**
  * Maximum request body size
@@ -175,9 +175,9 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_MAX_BODY_SIZE=10485760 ..
  */
-#ifndef UVHTTP_MAX_BODY_SIZE
-#    define UVHTTP_MAX_BODY_SIZE (1024 * 1024) /* 1MB */
-#endif
+#    ifndef UVHTTP_MAX_BODY_SIZE
+#        define UVHTTP_MAX_BODY_SIZE (1024 * 1024) /* 1MB */
+#    endif
 
 /**
  * Read buffer size
@@ -195,9 +195,9 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_READ_BUFFER_SIZE=32768 ..
  */
-#ifndef UVHTTP_READ_BUFFER_SIZE
-#    define UVHTTP_READ_BUFFER_SIZE 16384
-#endif
+#    ifndef UVHTTP_READ_BUFFER_SIZE
+#        define UVHTTP_READ_BUFFER_SIZE 16384
+#    endif
 
 /* ========== HTTP Header Configuration ========== */
 
@@ -216,16 +216,16 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_MAX_HEADER_NAME_SIZE=512 ..
  */
-#ifndef UVHTTP_MAX_HEADER_NAME_SIZE
-#    define UVHTTP_MAX_HEADER_NAME_SIZE 256
-#endif
+#    ifndef UVHTTP_MAX_HEADER_NAME_SIZE
+#        define UVHTTP_MAX_HEADER_NAME_SIZE 256
+#    endif
 
-#ifndef UVHTTP_MAX_HEADER_VALUE_SIZE
-#    define UVHTTP_MAX_HEADER_VALUE_SIZE 4096
-#endif
+#    ifndef UVHTTP_MAX_HEADER_VALUE_SIZE
+#        define UVHTTP_MAX_HEADER_VALUE_SIZE 4096
+#    endif
 
-#define UVHTTP_MAX_HEADER_NAME_LENGTH (UVHTTP_MAX_HEADER_NAME_SIZE - 1)
-#define UVHTTP_MAX_HEADER_VALUE_LENGTH (UVHTTP_MAX_HEADER_VALUE_SIZE - 1)
+#    define UVHTTP_MAX_HEADER_NAME_LENGTH (UVHTTP_MAX_HEADER_NAME_SIZE - 1)
+#    define UVHTTP_MAX_HEADER_VALUE_LENGTH (UVHTTP_MAX_HEADER_VALUE_SIZE - 1)
 
 /**
  * Maximum header count
@@ -239,9 +239,9 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_MAX_HEADERS=128 ..
  */
-#ifndef UVHTTP_MAX_HEADERS
-#    define UVHTTP_MAX_HEADERS 64
-#endif
+#    ifndef UVHTTP_MAX_HEADERS
+#        define UVHTTP_MAX_HEADERS 64
+#    endif
 
 /**
  * Inline header capacity
@@ -255,9 +255,9 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_INLINE_HEADERS_CAPACITY=64 ..
  */
-#ifndef UVHTTP_INLINE_HEADERS_CAPACITY
-#    define UVHTTP_INLINE_HEADERS_CAPACITY 32
-#endif
+#    ifndef UVHTTP_INLINE_HEADERS_CAPACITY
+#        define UVHTTP_INLINE_HEADERS_CAPACITY 32
+#    endif
 
 /**
  * URL, path, method length limits
@@ -270,17 +270,17 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_MAX_URL_SIZE=4096 ..
  */
-#ifndef UVHTTP_MAX_URL_SIZE
-#    define UVHTTP_MAX_URL_SIZE 2048
-#endif
+#    ifndef UVHTTP_MAX_URL_SIZE
+#        define UVHTTP_MAX_URL_SIZE 2048
+#    endif
 
-#ifndef UVHTTP_MAX_PATH_SIZE
-#    define UVHTTP_MAX_PATH_SIZE 1024
-#endif
+#    ifndef UVHTTP_MAX_PATH_SIZE
+#        define UVHTTP_MAX_PATH_SIZE 1024
+#    endif
 
-#ifndef UVHTTP_MAX_METHOD_SIZE
-#    define UVHTTP_MAX_METHOD_SIZE 16
-#endif
+#    ifndef UVHTTP_MAX_METHOD_SIZE
+#        define UVHTTP_MAX_METHOD_SIZE 16
+#    endif
 
 /* ========== Connection Management Configuration ========== */
 
@@ -304,16 +304,16 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_MAX_CONNECTIONS_DEFAULT=4096 ..
  */
-#define UVHTTP_MAX_CONNECTIONS_HARD \
-    65535 /* Maximum TCP port number (2^16 - 1) */
+#    define UVHTTP_MAX_CONNECTIONS_HARD \
+        65535 /* Maximum TCP port number (2^16 - 1) */
 
-#ifndef UVHTTP_MAX_CONNECTIONS_DEFAULT
-#    define UVHTTP_MAX_CONNECTIONS_DEFAULT 2048 /* Default value */
-#endif
+#    ifndef UVHTTP_MAX_CONNECTIONS_DEFAULT
+#        define UVHTTP_MAX_CONNECTIONS_DEFAULT 2048 /* Default value */
+#    endif
 
-#ifndef UVHTTP_MAX_CONNECTIONS_MAX
-#    define UVHTTP_MAX_CONNECTIONS_MAX 10000 /* Recommended value */
-#endif
+#    ifndef UVHTTP_MAX_CONNECTIONS_MAX
+#        define UVHTTP_MAX_CONNECTIONS_MAX 10000 /* Recommended value */
+#    endif
 
 /**
  * TCP backlog
@@ -332,9 +332,9 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_BACKLOG=4096 ..
  */
-#ifndef UVHTTP_BACKLOG
-#    define UVHTTP_BACKLOG 8192
-#endif
+#    ifndef UVHTTP_BACKLOG
+#        define UVHTTP_BACKLOG 8192
+#    endif
 
 /**
  * Keep-Alive
@@ -382,9 +382,9 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_ASYNC_FILE_MAX_CONCURRENT=128 ..
  */
-#ifndef UVHTTP_ASYNC_FILE_MAX_CONCURRENT
-#    define UVHTTP_ASYNC_FILE_MAX_CONCURRENT 64
-#endif
+#    ifndef UVHTTP_ASYNC_FILE_MAX_CONCURRENT
+#        define UVHTTP_ASYNC_FILE_MAX_CONCURRENT 64
+#    endif
 
 /**
  * Maximum file size
@@ -398,9 +398,9 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_ASYNC_FILE_MAX_SIZE=104857600 ..
  */
-#ifndef UVHTTP_ASYNC_FILE_MAX_SIZE
-#    define UVHTTP_ASYNC_FILE_MAX_SIZE (10 * 1024 * 1024) /* 10MB */
-#endif
+#    ifndef UVHTTP_ASYNC_FILE_MAX_SIZE
+#        define UVHTTP_ASYNC_FILE_MAX_SIZE (10 * 1024 * 1024) /* 10MB */
+#    endif
 
 /**
  * Static file cache size
@@ -409,21 +409,21 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_STATIC_MAX_CACHE_SIZE=2097152 ..
  */
-#ifndef UVHTTP_STATIC_MAX_CACHE_SIZE
-#    define UVHTTP_STATIC_MAX_CACHE_SIZE (1024 * 1024) /* 1MB */
-#endif
+#    ifndef UVHTTP_STATIC_MAX_CACHE_SIZE
+#        define UVHTTP_STATIC_MAX_CACHE_SIZE (1024 * 1024) /* 1MB */
+#    endif
 
-#ifndef UVHTTP_STATIC_MAX_PATH_SIZE
-#    define UVHTTP_STATIC_MAX_PATH_SIZE 1024
-#endif
+#    ifndef UVHTTP_STATIC_MAX_PATH_SIZE
+#        define UVHTTP_STATIC_MAX_PATH_SIZE 1024
+#    endif
 
-#ifndef UVHTTP_STATIC_MAX_CONTENT_LENGTH
-#    define UVHTTP_STATIC_MAX_CONTENT_LENGTH 32
-#endif
+#    ifndef UVHTTP_STATIC_MAX_CONTENT_LENGTH
+#        define UVHTTP_STATIC_MAX_CONTENT_LENGTH 32
+#    endif
 
-#ifndef UVHTTP_STATIC_MAX_FILE_SIZE
-#    define UVHTTP_STATIC_MAX_FILE_SIZE (10 * 1024 * 1024) /* 10MB */
-#endif
+#    ifndef UVHTTP_STATIC_MAX_FILE_SIZE
+#        define UVHTTP_STATIC_MAX_FILE_SIZE (10 * 1024 * 1024) /* 10MB */
+#    endif
 
 /**
  * Static file small file threshold
@@ -432,9 +432,9 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_STATIC_SMALL_FILE_THRESHOLD=8192 ..
  */
-#ifndef UVHTTP_STATIC_SMALL_FILE_THRESHOLD
-#    define UVHTTP_STATIC_SMALL_FILE_THRESHOLD 4096 /* 4KB */
-#endif
+#    ifndef UVHTTP_STATIC_SMALL_FILE_THRESHOLD
+#        define UVHTTP_STATIC_SMALL_FILE_THRESHOLD 4096 /* 4KB */
+#    endif
 
 /**
  * Sendfile chunk size
@@ -443,21 +443,21 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_SENDFILE_CHUNK_SIZE=524288 ..
  */
-#ifndef UVHTTP_SENDFILE_DEFAULT_CHUNK_SIZE
-#    define UVHTTP_SENDFILE_DEFAULT_CHUNK_SIZE (256 * 1024) /* 256KB */
-#endif
+#    ifndef UVHTTP_SENDFILE_DEFAULT_CHUNK_SIZE
+#        define UVHTTP_SENDFILE_DEFAULT_CHUNK_SIZE (256 * 1024) /* 256KB */
+#    endif
 
-#ifndef UVHTTP_SENDFILE_MIN_FILE_SIZE
-#    define UVHTTP_SENDFILE_MIN_FILE_SIZE (64 * 1024) /* 64KB */
-#endif
+#    ifndef UVHTTP_SENDFILE_MIN_FILE_SIZE
+#        define UVHTTP_SENDFILE_MIN_FILE_SIZE (64 * 1024) /* 64KB */
+#    endif
 
-#ifndef UVHTTP_SENDFILE_DEFAULT_TIMEOUT_MS
-#    define UVHTTP_SENDFILE_DEFAULT_TIMEOUT_MS 30000 /* 30 seconds */
-#endif
+#    ifndef UVHTTP_SENDFILE_DEFAULT_TIMEOUT_MS
+#        define UVHTTP_SENDFILE_DEFAULT_TIMEOUT_MS 30000 /* 30 seconds */
+#    endif
 
-#ifndef UVHTTP_SENDFILE_DEFAULT_MAX_RETRY
-#    define UVHTTP_SENDFILE_DEFAULT_MAX_RETRY 2
-#endif
+#    ifndef UVHTTP_SENDFILE_DEFAULT_MAX_RETRY
+#        define UVHTTP_SENDFILE_DEFAULT_MAX_RETRY 2
+#    endif
 
 /**
  * File size thresholds (Used for chunked size adjustment)
@@ -466,17 +466,17 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_FILE_SIZE_MEDIUM=20971520 ..
  */
-#ifndef UVHTTP_FILE_SIZE_SMALL
-#    define UVHTTP_FILE_SIZE_SMALL (1024 * 1024) /* 1MB */
-#endif
+#    ifndef UVHTTP_FILE_SIZE_SMALL
+#        define UVHTTP_FILE_SIZE_SMALL (1024 * 1024) /* 1MB */
+#    endif
 
-#ifndef UVHTTP_FILE_SIZE_MEDIUM
-#    define UVHTTP_FILE_SIZE_MEDIUM (10 * 1024 * 1024) /* 10MB */
-#endif
+#    ifndef UVHTTP_FILE_SIZE_MEDIUM
+#        define UVHTTP_FILE_SIZE_MEDIUM (10 * 1024 * 1024) /* 10MB */
+#    endif
 
-#ifndef UVHTTP_FILE_SIZE_LARGE
-#    define UVHTTP_FILE_SIZE_LARGE (100 * 1024 * 1024) /* 100MB */
-#endif
+#    ifndef UVHTTP_FILE_SIZE_LARGE
+#        define UVHTTP_FILE_SIZE_LARGE (100 * 1024 * 1024) /* 100MB */
+#    endif
 
 /**
  * Chunked size thresholds (Used for chunked size adjustment)
@@ -485,81 +485,81 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_CHUNK_SIZE_MEDIUM=524288 ..
  */
-#ifndef UVHTTP_CHUNK_SIZE_SMALL
-#    define UVHTTP_CHUNK_SIZE_SMALL (64 * 1024) /* 64KB */
-#endif
+#    ifndef UVHTTP_CHUNK_SIZE_SMALL
+#        define UVHTTP_CHUNK_SIZE_SMALL (64 * 1024) /* 64KB */
+#    endif
 
-#ifndef UVHTTP_CHUNK_SIZE_MEDIUM
-#    define UVHTTP_CHUNK_SIZE_MEDIUM (256 * 1024) /* 256KB */
-#endif
+#    ifndef UVHTTP_CHUNK_SIZE_MEDIUM
+#        define UVHTTP_CHUNK_SIZE_MEDIUM (256 * 1024) /* 256KB */
+#    endif
 
-#ifndef UVHTTP_CHUNK_SIZE_LARGE
-#    define UVHTTP_CHUNK_SIZE_LARGE (1024 * 1024) /* 1MB */
-#endif
+#    ifndef UVHTTP_CHUNK_SIZE_LARGE
+#        define UVHTTP_CHUNK_SIZE_LARGE (1024 * 1024) /* 1MB */
+#    endif
 
 /**
  * WebSocket configuration validation constants
  */
-#ifndef UVHTTP_WEBSOCKET_CONFIG_MIN_FRAME_SIZE
-#    define UVHTTP_WEBSOCKET_CONFIG_MIN_FRAME_SIZE 1024 /* 1KB */
-#endif
+#    ifndef UVHTTP_WEBSOCKET_CONFIG_MIN_FRAME_SIZE
+#        define UVHTTP_WEBSOCKET_CONFIG_MIN_FRAME_SIZE 1024 /* 1KB */
+#    endif
 
-#ifndef UVHTTP_WEBSOCKET_CONFIG_MAX_FRAME_SIZE
-#    define UVHTTP_WEBSOCKET_CONFIG_MAX_FRAME_SIZE \
-        (256 * 1024 * 1024) /* 256MB */
-#endif
+#    ifndef UVHTTP_WEBSOCKET_CONFIG_MAX_FRAME_SIZE
+#        define UVHTTP_WEBSOCKET_CONFIG_MAX_FRAME_SIZE \
+            (256 * 1024 * 1024) /* 256MB */
+#    endif
 
-#ifndef UVHTTP_WEBSOCKET_CONFIG_MIN_MESSAGE_SIZE
-#    define UVHTTP_WEBSOCKET_CONFIG_MIN_MESSAGE_SIZE 1024 /* 1KB */
-#endif
+#    ifndef UVHTTP_WEBSOCKET_CONFIG_MIN_MESSAGE_SIZE
+#        define UVHTTP_WEBSOCKET_CONFIG_MIN_MESSAGE_SIZE 1024 /* 1KB */
+#    endif
 
-#ifndef UVHTTP_WEBSOCKET_CONFIG_MAX_MESSAGE_SIZE
-#    define UVHTTP_WEBSOCKET_CONFIG_MAX_MESSAGE_SIZE \
-        (1024 * 1024 * 1024) /* 1GB */
-#endif
+#    ifndef UVHTTP_WEBSOCKET_CONFIG_MAX_MESSAGE_SIZE
+#        define UVHTTP_WEBSOCKET_CONFIG_MAX_MESSAGE_SIZE \
+            (1024 * 1024 * 1024) /* 1GB */
+#    endif
 
-#ifndef UVHTTP_WEBSOCKET_CONFIG_MIN_PING_INTERVAL
-#    define UVHTTP_WEBSOCKET_CONFIG_MIN_PING_INTERVAL 1 /* 1 second */
-#endif
+#    ifndef UVHTTP_WEBSOCKET_CONFIG_MIN_PING_INTERVAL
+#        define UVHTTP_WEBSOCKET_CONFIG_MIN_PING_INTERVAL 1 /* 1 second */
+#    endif
 
-#ifndef UVHTTP_WEBSOCKET_CONFIG_MAX_PING_INTERVAL
-#    define UVHTTP_WEBSOCKET_CONFIG_MAX_PING_INTERVAL 3600 /* 1 hour */
-#endif
+#    ifndef UVHTTP_WEBSOCKET_CONFIG_MAX_PING_INTERVAL
+#        define UVHTTP_WEBSOCKET_CONFIG_MAX_PING_INTERVAL 3600 /* 1 hour */
+#    endif
 
-#ifndef UVHTTP_WEBSOCKET_CONFIG_MIN_PING_TIMEOUT
-#    define UVHTTP_WEBSOCKET_CONFIG_MIN_PING_TIMEOUT 1 /* 1 second */
-#endif
+#    ifndef UVHTTP_WEBSOCKET_CONFIG_MIN_PING_TIMEOUT
+#        define UVHTTP_WEBSOCKET_CONFIG_MIN_PING_TIMEOUT 1 /* 1 second */
+#    endif
 
-#ifndef UVHTTP_WEBSOCKET_CONFIG_MAX_PING_TIMEOUT
-#    define UVHTTP_WEBSOCKET_CONFIG_MAX_PING_TIMEOUT 3600 /* 1 hour */
-#endif
+#    ifndef UVHTTP_WEBSOCKET_CONFIG_MAX_PING_TIMEOUT
+#        define UVHTTP_WEBSOCKET_CONFIG_MAX_PING_TIMEOUT 3600 /* 1 hour */
+#    endif
 
 /**
  * Configuration validation constants
  */
-#ifndef UVHTTP_TCP_KEEPALIVE_MIN_TIMEOUT
-#    define UVHTTP_TCP_KEEPALIVE_MIN_TIMEOUT 1 /* 1 second */
-#endif
+#    ifndef UVHTTP_TCP_KEEPALIVE_MIN_TIMEOUT
+#        define UVHTTP_TCP_KEEPALIVE_MIN_TIMEOUT 1 /* 1 second */
+#    endif
 
-#ifndef UVHTTP_TCP_KEEPALIVE_MAX_TIMEOUT
-#    define UVHTTP_TCP_KEEPALIVE_MAX_TIMEOUT 7200 /* 2 hours */
-#endif
+#    ifndef UVHTTP_TCP_KEEPALIVE_MAX_TIMEOUT
+#        define UVHTTP_TCP_KEEPALIVE_MAX_TIMEOUT 7200 /* 2 hours */
+#    endif
 
-#ifndef UVHTTP_SENDFILE_MIN_TIMEOUT_MS
-#    define UVHTTP_SENDFILE_MIN_TIMEOUT_MS 1000 /* 1 second */
-#endif
+#    ifndef UVHTTP_SENDFILE_MIN_TIMEOUT_MS
+#        define UVHTTP_SENDFILE_MIN_TIMEOUT_MS 1000 /* 1 second */
+#    endif
 
-#ifndef UVHTTP_SENDFILE_MAX_TIMEOUT_MS
-#    define UVHTTP_SENDFILE_MAX_TIMEOUT_MS 300000 /* 5 minutes */
-#endif
+#    ifndef UVHTTP_SENDFILE_MAX_TIMEOUT_MS
+#        define UVHTTP_SENDFILE_MAX_TIMEOUT_MS 300000 /* 5 minutes */
+#    endif
 
-#ifndef UVHTTP_SENDFILE_MIN_RETRY
-#    define UVHTTP_SENDFILE_MIN_RETRY 0
-#endif
+#    ifndef UVHTTP_SENDFILE_MIN_RETRY
+#        define UVHTTP_SENDFILE_MIN_RETRY 0
+#    endif
 
-#ifndef UVHTTP_SENDFILE_MAX_RETRY
-#    define UVHTTP_SENDFILE_MAX_RETRY 10
-#endif
+#    ifndef UVHTTP_SENDFILE_MAX_RETRY
+#        define UVHTTP_SENDFILE_MAX_RETRY 10
+#    endif
 
 /**
  * Cache constants
@@ -568,64 +568,64 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_CACHE_DEFAULT_TTL=7200 ..
  */
-#ifndef UVHTTP_CACHE_DEFAULT_MAX_ENTRIES
-#    define UVHTTP_CACHE_DEFAULT_MAX_ENTRIES 1000
-#endif
+#    ifndef UVHTTP_CACHE_DEFAULT_MAX_ENTRIES
+#        define UVHTTP_CACHE_DEFAULT_MAX_ENTRIES 1000
+#    endif
 
-#ifndef UVHTTP_CACHE_DEFAULT_TTL
-#    define UVHTTP_CACHE_DEFAULT_TTL 3600 /* 1 hour */
-#endif
+#    ifndef UVHTTP_CACHE_DEFAULT_TTL
+#        define UVHTTP_CACHE_DEFAULT_TTL 3600 /* 1 hour */
+#    endif
 
-#ifndef UVHTTP_CACHE_MIN_MAX_ENTRIES
-#    define UVHTTP_CACHE_MIN_MAX_ENTRIES 0
-#endif
+#    ifndef UVHTTP_CACHE_MIN_MAX_ENTRIES
+#        define UVHTTP_CACHE_MIN_MAX_ENTRIES 0
+#    endif
 
-#ifndef UVHTTP_CACHE_MAX_MAX_ENTRIES
-#    define UVHTTP_CACHE_MAX_MAX_ENTRIES 100000
-#endif
+#    ifndef UVHTTP_CACHE_MAX_MAX_ENTRIES
+#        define UVHTTP_CACHE_MAX_MAX_ENTRIES 100000
+#    endif
 
-#ifndef UVHTTP_CACHE_MIN_TTL
-#    define UVHTTP_CACHE_MIN_TTL 0
-#endif
+#    ifndef UVHTTP_CACHE_MIN_TTL
+#        define UVHTTP_CACHE_MIN_TTL 0
+#    endif
 
-#ifndef UVHTTP_CACHE_MAX_TTL
-#    define UVHTTP_CACHE_MAX_TTL 86400 /* 24 hours */
-#endif
+#    ifndef UVHTTP_CACHE_MAX_TTL
+#        define UVHTTP_CACHE_MAX_TTL 86400 /* 24 hours */
+#    endif
 
-#ifndef UVHTTP_LRU_CACHE_MIN_BATCH_EVICTION_SIZE
-#    define UVHTTP_LRU_CACHE_MIN_BATCH_EVICTION_SIZE 1
-#endif
+#    ifndef UVHTTP_LRU_CACHE_MIN_BATCH_EVICTION_SIZE
+#        define UVHTTP_LRU_CACHE_MIN_BATCH_EVICTION_SIZE 1
+#    endif
 
-#ifndef UVHTTP_LRU_CACHE_MAX_BATCH_EVICTION_SIZE
-#    define UVHTTP_LRU_CACHE_MAX_BATCH_EVICTION_SIZE 1000
-#endif
+#    ifndef UVHTTP_LRU_CACHE_MAX_BATCH_EVICTION_SIZE
+#        define UVHTTP_LRU_CACHE_MAX_BATCH_EVICTION_SIZE 1000
+#    endif
 
 /**
  * Rate limit configuration validation constants
  */
-#ifndef UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS
-#    define UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS 1
-#endif
+#    ifndef UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS
+#        define UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS 1
+#    endif
 
-#ifndef UVHTTP_RATE_LIMIT_MAX_MAX_REQUESTS
-#    define UVHTTP_RATE_LIMIT_MAX_MAX_REQUESTS 10000000
-#endif
+#    ifndef UVHTTP_RATE_LIMIT_MAX_MAX_REQUESTS
+#        define UVHTTP_RATE_LIMIT_MAX_MAX_REQUESTS 10000000
+#    endif
 
-#ifndef UVHTTP_RATE_LIMIT_MIN_WINDOW_SECONDS
-#    define UVHTTP_RATE_LIMIT_MIN_WINDOW_SECONDS 1
-#endif
+#    ifndef UVHTTP_RATE_LIMIT_MIN_WINDOW_SECONDS
+#        define UVHTTP_RATE_LIMIT_MIN_WINDOW_SECONDS 1
+#    endif
 
-#ifndef UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS
-#    define UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS 86400 /* 24 hours */
-#endif
+#    ifndef UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS
+#        define UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS 86400 /* 24 hours */
+#    endif
 
-#ifndef UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS
-#    define UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS 1
-#endif
+#    ifndef UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS
+#        define UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS 1
+#    endif
 
-#ifndef UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS
-#    define UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS 3600 /* 1 hour */
-#endif
+#    ifndef UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS
+#        define UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS 3600 /* 1 hour */
+#    endif
 
 /**
  * Socket buffer size
@@ -634,13 +634,13 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_SOCKET_SEND_BUF_SIZE=524288 ..
  */
-#ifndef UVHTTP_SOCKET_SEND_BUF_SIZE
-#    define UVHTTP_SOCKET_SEND_BUF_SIZE (256 * 1024) /* 256KB */
-#endif
+#    ifndef UVHTTP_SOCKET_SEND_BUF_SIZE
+#        define UVHTTP_SOCKET_SEND_BUF_SIZE (256 * 1024) /* 256KB */
+#    endif
 
-#ifndef UVHTTP_SOCKET_RECV_BUF_SIZE
-#    define UVHTTP_SOCKET_RECV_BUF_SIZE (256 * 1024) /* 256KB */
-#endif
+#    ifndef UVHTTP_SOCKET_RECV_BUF_SIZE
+#        define UVHTTP_SOCKET_RECV_BUF_SIZE (256 * 1024) /* 256KB */
+#    endif
 
 /**
  * Memory page size and alignment
@@ -649,23 +649,23 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_PAGE_SIZE=8192 ..
  */
-#ifndef UVHTTP_PAGE_SIZE
-#    define UVHTTP_PAGE_SIZE 4096
-#endif
+#    ifndef UVHTTP_PAGE_SIZE
+#        define UVHTTP_PAGE_SIZE 4096
+#    endif
 
-#ifndef UVHTTP_PAGE_ALIGNMENT_MASK
-#    define UVHTTP_PAGE_ALIGNMENT_MASK (UVHTTP_PAGE_SIZE - 1)
-#endif
+#    ifndef UVHTTP_PAGE_ALIGNMENT_MASK
+#        define UVHTTP_PAGE_ALIGNMENT_MASK (UVHTTP_PAGE_SIZE - 1)
+#    endif
 
 /* ========== WebSocket Configuration ========== */
 
 /**
  * WebSocket version and protocol
  */
-#define UVHTTP_WEBSOCKET_VERSION 13
-#define UVHTTP_WEBSOCKET_MAGIC_KEY "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-#define UVHTTP_WEBSOCKET_MAGIC_KEY_LENGTH 36
-#define UVHTTP_WEBSOCKET_ACCEPT_KEY_SIZE 40
+#    define UVHTTP_WEBSOCKET_VERSION 13
+#    define UVHTTP_WEBSOCKET_MAGIC_KEY "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+#    define UVHTTP_WEBSOCKET_MAGIC_KEY_LENGTH 36
+#    define UVHTTP_WEBSOCKET_ACCEPT_KEY_SIZE 40
 
 /**
  * WebSocket default configuration
@@ -674,11 +674,11 @@
  * - Default value is suitable for most applications
  * - For large message size, increase UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE
  */
-#define UVHTTP_WEBSOCKET_MAX_FRAME_SIZE 4096
-#define UVHTTP_WEBSOCKET_FRAME_HEADER_SIZE 10
-#define UVHTTP_WEBSOCKET_CLOSE_CODE_SIZE 4
-#define UVHTTP_WEBSOCKET_MIN_BUFFER_SIZE 1024
-#define UVHTTP_WEBSOCKET_MIN_BUFFER_EXPANSION_SIZE 1024
+#    define UVHTTP_WEBSOCKET_MAX_FRAME_SIZE 4096
+#    define UVHTTP_WEBSOCKET_FRAME_HEADER_SIZE 10
+#    define UVHTTP_WEBSOCKET_CLOSE_CODE_SIZE 4
+#    define UVHTTP_WEBSOCKET_MIN_BUFFER_SIZE 1024
+#    define UVHTTP_WEBSOCKET_MIN_BUFFER_EXPANSION_SIZE 1024
 
 /**
  * WebSocket default configuration
@@ -690,45 +690,45 @@
  * Default value defined in uvhttp_defaults.h
  */
 
-#ifndef UVHTTP_WEBSOCKET_MIN_FRAME_HEADER_SIZE
-#    define UVHTTP_WEBSOCKET_MIN_FRAME_HEADER_SIZE 2
-#endif
+#    ifndef UVHTTP_WEBSOCKET_MIN_FRAME_HEADER_SIZE
+#        define UVHTTP_WEBSOCKET_MIN_FRAME_HEADER_SIZE 2
+#    endif
 
-#ifndef UVHTTP_WEBSOCKET_EXTENDED_FRAME_HEADER_SIZE
-#    define UVHTTP_WEBSOCKET_EXTENDED_FRAME_HEADER_SIZE 10
-#endif
+#    ifndef UVHTTP_WEBSOCKET_EXTENDED_FRAME_HEADER_SIZE
+#        define UVHTTP_WEBSOCKET_EXTENDED_FRAME_HEADER_SIZE 10
+#    endif
 
 /**
  * WebSocket opcodes and flags
  */
-#define UVHTTP_WEBSOCKET_OPCODE_TEXT 0x1
-#define UVHTTP_WEBSOCKET_OPCODE_BINARY 0x2
-#define UVHTTP_WEBSOCKET_OPCODE_CLOSE 0x8
-#define UVHTTP_WEBSOCKET_FIN 0x80
-#define UVHTTP_WEBSOCKET_PAYLOAD_LEN_126 126
-#define UVHTTP_WEBSOCKET_PAYLOAD_LEN_65536 65536
+#    define UVHTTP_WEBSOCKET_OPCODE_TEXT 0x1
+#    define UVHTTP_WEBSOCKET_OPCODE_BINARY 0x2
+#    define UVHTTP_WEBSOCKET_OPCODE_CLOSE 0x8
+#    define UVHTTP_WEBSOCKET_FIN 0x80
+#    define UVHTTP_WEBSOCKET_PAYLOAD_LEN_126 126
+#    define UVHTTP_WEBSOCKET_PAYLOAD_LEN_65536 65536
 
 /**
  * WebSocket close code range
  */
-#define UVHTTP_WEBSOCKET_CLOSE_CODE_MIN 1000
-#define UVHTTP_WEBSOCKET_CLOSE_CODE_MAX 4999
-#define UVHTTP_WEBSOCKET_MAX_REASON_LENGTH 123
+#    define UVHTTP_WEBSOCKET_CLOSE_CODE_MIN 1000
+#    define UVHTTP_WEBSOCKET_CLOSE_CODE_MAX 4999
+#    define UVHTTP_WEBSOCKET_MAX_REASON_LENGTH 123
 
 /**
  * WebSocket key length limits
  */
-#define UVHTTP_WEBSOCKET_MIN_KEY_LENGTH 16
-#define UVHTTP_WEBSOCKET_MAX_KEY_LENGTH 64
-#define UVHTTP_WEBSOCKET_COMBINED_MAX_LENGTH 128
-#define UVHTTP_WEBSOCKET_SHA1_HASH_SIZE 20
+#    define UVHTTP_WEBSOCKET_MIN_KEY_LENGTH 16
+#    define UVHTTP_WEBSOCKET_MAX_KEY_LENGTH 64
+#    define UVHTTP_WEBSOCKET_COMBINED_MAX_LENGTH 128
+#    define UVHTTP_WEBSOCKET_SHA1_HASH_SIZE 20
 
 /**
  * WebSocket bit masks
  */
-#define UVHTTP_WEBSOCKET_FIN_MASK 0x80
-#define UVHTTP_WEBSOCKET_OPCODE_MASK 0x0F
-#define UVHTTP_WEBSOCKET_PAYLOAD_MASK 0x7F
+#    define UVHTTP_WEBSOCKET_FIN_MASK 0x80
+#    define UVHTTP_WEBSOCKET_OPCODE_MASK 0x0F
+#    define UVHTTP_WEBSOCKET_PAYLOAD_MASK 0x7F
 
 /* ========== Routing Configuration ========== */
 
@@ -744,9 +744,9 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_MAX_ROUTE_PATH_LEN=512 ..
  */
-#ifndef UVHTTP_MAX_ROUTE_PATH_LEN
-#    define UVHTTP_MAX_ROUTE_PATH_LEN 256
-#endif
+#    ifndef UVHTTP_MAX_ROUTE_PATH_LEN
+#        define UVHTTP_MAX_ROUTE_PATH_LEN 256
+#    endif
 
 /* ========== Routing Cache Configuration (Performance Optimization) ==========
  */
@@ -763,9 +763,10 @@
  * - DYNAMIC: Enable dynamic adjustment (optimization)
  * - MONITORING: Enable monitoring (Production environment)
  */
-#ifndef UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION
-#    define UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION 1 /* Default enabled */
-#endif
+#    ifndef UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION
+#        define UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION 1 /* Default enabled \
+                                                           */
+#    endif
 
 /* UVHTTP_ENABLE_ROUTER_CACHE_STATS deleted - unused */
 /* UVHTTP_ENABLE_ROUTER_CACHE_DYNAMIC deleted - unused */
@@ -779,87 +780,87 @@
  * - 1: Hash mode (when route count is medium)
  * - 2: Hybrid strategy (Default, best performance)
  */
-#ifndef UVHTTP_ROUTER_SEARCH_MODE
-#    define UVHTTP_ROUTER_SEARCH_MODE 2
-#endif
+#    ifndef UVHTTP_ROUTER_SEARCH_MODE
+#        define UVHTTP_ROUTER_SEARCH_MODE 2
+#    endif
 
-#if UVHTTP_FEATURE_ROUTER_CACHE
+#    if UVHTTP_FEATURE_ROUTER_CACHE
 /* Routing cache size configuration */
-#    define UVHTTP_ROUTER_METHOD_MAP_SIZE 256
-#    define UVHTTP_ROUTER_HASH_SIZE 256
-#    define UVHTTP_ROUTER_HOT_PATH_SIZE 64
-#    define UVHTTP_ROUTER_HOT_ROUTES_COUNT 16
-#    define UVHTTP_ROUTER_ACCESS_COUNT_SIZE 1024
-#    define UVHTTP_ROUTER_HYBRID_THRESHOLD 100
-#    define UVHTTP_ROUTER_MAX_CHILD_COUNT 16
-#    define UVHTTP_ROUTER_INITIAL_POOL_SIZE 64
-#endif
+#        define UVHTTP_ROUTER_METHOD_MAP_SIZE 256
+#        define UVHTTP_ROUTER_HASH_SIZE 256
+#        define UVHTTP_ROUTER_HOT_PATH_SIZE 64
+#        define UVHTTP_ROUTER_HOT_ROUTES_COUNT 16
+#        define UVHTTP_ROUTER_ACCESS_COUNT_SIZE 1024
+#        define UVHTTP_ROUTER_HYBRID_THRESHOLD 100
+#        define UVHTTP_ROUTER_MAX_CHILD_COUNT 16
+#        define UVHTTP_ROUTER_INITIAL_POOL_SIZE 64
+#    endif
 
 /* Routing cache optimization features */
-#ifndef UVHTTP_FEATURE_ROUTER_CACHE
-#    define UVHTTP_FEATURE_ROUTER_CACHE 1 /* Default enabled */
-#endif
+#    ifndef UVHTTP_FEATURE_ROUTER_CACHE
+#        define UVHTTP_FEATURE_ROUTER_CACHE 1 /* Default enabled */
+#    endif
 
-#define UVHTTP_ROUTER_MAX_CHILDREN 12
+#    define UVHTTP_ROUTER_MAX_CHILDREN 12
 
 /* ========== TLS/SSL Configuration ========== */
 
 /**
  * TLS validation and session configuration
  */
-#define UVHTTP_TLS_VERIFY_DEPTH 1
-#define UVHTTP_TLS_DH_MIN_BITLEN 2048
-#define UVHTTP_TLS_MAX_SESSIONS 1024
+#    define UVHTTP_TLS_VERIFY_DEPTH 1
+#    define UVHTTP_TLS_DH_MIN_BITLEN 2048
+#    define UVHTTP_TLS_MAX_SESSIONS 1024
 
 /**
  * TLS buffer sizes
  */
-#define UVHTTP_TLS_ERROR_BUFFER_SIZE 256
-#define UVHTTP_TLS_CERT_BUFFER_SIZE 256
-#define UVHTTP_TLS_CN_BUFFER_SIZE 256
-#define UVHTTP_TLS_SAN_BUFFER_SIZE 256
-#define UVHTTP_TLS_PATH_MAX_SIZE 256
+#    define UVHTTP_TLS_ERROR_BUFFER_SIZE 256
+#    define UVHTTP_TLS_CERT_BUFFER_SIZE 256
+#    define UVHTTP_TLS_CN_BUFFER_SIZE 256
+#    define UVHTTP_TLS_SAN_BUFFER_SIZE 256
+#    define UVHTTP_TLS_PATH_MAX_SIZE 256
 
 /* ========== Middleware Configuration ========== */
 
 /**
  * CORS max age
  */
-#define UVHTTP_CORS_MAX_AGE_DEFAULT "86400"
+#    define UVHTTP_CORS_MAX_AGE_DEFAULT "86400"
 
 /**
  * Rate limit window
  */
-#define UVHTTP_RATE_LIMIT_WINDOW 60 /* seconds */
-#define UVHTTP_RATE_LIMIT_MAX_AGE 17
+#    define UVHTTP_RATE_LIMIT_WINDOW 60 /* seconds */
+#    define UVHTTP_RATE_LIMIT_MAX_AGE 17
 
 /* ========== Error Handling Configuration ========== */
 
 /**
  * Error message buffer sizes
  */
-#define UVHTTP_ERROR_MESSAGE_LENGTH 256
-#define UVHTTP_ERROR_CONTEXT_BUFFER_SIZE 256
-#define UVHTTP_ERROR_MESSAGE_BUFFER_SIZE 512
-#define UVHTTP_ERROR_LOG_BUFFER_SIZE 1024
+#    define UVHTTP_ERROR_MESSAGE_LENGTH 256
+#    define UVHTTP_ERROR_CONTEXT_BUFFER_SIZE 256
+#    define UVHTTP_ERROR_MESSAGE_BUFFER_SIZE 512
+#    define UVHTTP_ERROR_LOG_BUFFER_SIZE 1024
 
 /* ========== File Path Configuration ========== */
 
 /**
  * File path length limits
  */
-#define UVHTTP_MAX_FILE_PATH_SIZE 2048
-#define UVHTTP_DECODED_PATH_SIZE 1024
+#    define UVHTTP_MAX_FILE_PATH_SIZE 2048
+#    define UVHTTP_DECODED_PATH_SIZE 1024
 
 /* ========== Network Related Constants ========== */
 
 /**
  * IP address string length limits
  */
-#define UVHTTP_IPV6_MAX_STRING_LENGTH 46
-#define UVHTTP_IPV4_MAX_STRING_LENGTH 16
-#define UVHTTP_MAX_PORT_NUMBER 65535
-#define UVHTTP_MIN_PORT_NUMBER 1
+#    define UVHTTP_IPV6_MAX_STRING_LENGTH 46
+#    define UVHTTP_IPV4_MAX_STRING_LENGTH 16
+#    define UVHTTP_MAX_PORT_NUMBER 65535
+#    define UVHTTP_MIN_PORT_NUMBER 1
 
 /**
  * Default configuration values
@@ -872,25 +873,25 @@
 /**
  * Time conversion constants
  */
-#define UVHTTP_SECONDS_IN_DAY 86400
-#define UVHTTP_MILLISECONDS_PER_SECOND 1000
-#define UVHTTP_NANOSECONDS_PER_MILLISECOND 1000000
+#    define UVHTTP_SECONDS_IN_DAY 86400
+#    define UVHTTP_MILLISECONDS_PER_SECOND 1000
+#    define UVHTTP_NANOSECONDS_PER_MILLISECOND 1000000
 
 /**
  * Cache time constants
  */
-#define UVHTTP_CACHE_MAX_AGE 3600 /* seconds */
+#    define UVHTTP_CACHE_MAX_AGE 3600 /* seconds */
 
 /**
  * Error recovery delay constants
  */
-#ifndef UVHTTP_DEFAULT_BASE_DELAY_MS
-#    define UVHTTP_DEFAULT_BASE_DELAY_MS 100
-#endif
+#    ifndef UVHTTP_DEFAULT_BASE_DELAY_MS
+#        define UVHTTP_DEFAULT_BASE_DELAY_MS 100
+#    endif
 
-#ifndef UVHTTP_DEFAULT_MAX_DELAY_MS
-#    define UVHTTP_DEFAULT_MAX_DELAY_MS 5000
-#endif
+#    ifndef UVHTTP_DEFAULT_MAX_DELAY_MS
+#        define UVHTTP_DEFAULT_MAX_DELAY_MS 5000
+#    endif
 
 /* ========== Network and Connection Configuration ========== */
 
@@ -902,9 +903,9 @@
  * - Example: cmake -DUVHTTP_TCP_KEEPALIVE_TIMEOUT=120 ..
  */
 
-#ifndef UVHTTP_TCP_KEEPALIVE_TIMEOUT
-#    define UVHTTP_TCP_KEEPALIVE_TIMEOUT 60 /* seconds */
-#endif
+#    ifndef UVHTTP_TCP_KEEPALIVE_TIMEOUT
+#        define UVHTTP_TCP_KEEPALIVE_TIMEOUT 60 /* seconds */
+#    endif
 
 /**
  * Client IP buffer size
@@ -914,9 +915,9 @@
  * - Example: cmake -DUVHTTP_CLIENT_IP_BUFFER_SIZE=128 ..
  */
 
-#ifndef UVHTTP_CLIENT_IP_BUFFER_SIZE
-#    define UVHTTP_CLIENT_IP_BUFFER_SIZE 64
-#endif
+#    ifndef UVHTTP_CLIENT_IP_BUFFER_SIZE
+#        define UVHTTP_CLIENT_IP_BUFFER_SIZE 64
+#    endif
 
 /* ========== Sendfile Configuration ========== */
 
@@ -948,17 +949,17 @@
  * - Example: cmake -DUVHTTP_SENDFILE_TIMEOUT_MS=60000 ..
  */
 
-#ifndef UVHTTP_SENDFILE_TIMEOUT_MS
+#    ifndef UVHTTP_SENDFILE_TIMEOUT_MS
 
-#    define UVHTTP_SENDFILE_TIMEOUT_MS 30000 /* 30 seconds */
+#        define UVHTTP_SENDFILE_TIMEOUT_MS 30000 /* 30 seconds */
 
-#endif
+#    endif
 
-#ifndef UVHTTP_SENDFILE_CHUNK_SIZE
+#    ifndef UVHTTP_SENDFILE_CHUNK_SIZE
 
-#    define UVHTTP_SENDFILE_CHUNK_SIZE (64 * 1024) /* 64KB */
+#        define UVHTTP_SENDFILE_CHUNK_SIZE (64 * 1024) /* 64KB */
 
-#endif
+#    endif
 
 /* ========== LRU Cache ========== */
 
@@ -982,11 +983,11 @@
  * - Example: cmake -DUVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE=20 ..
  */
 
-#ifndef UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE
+#    ifndef UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE
 
-#    define UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE 10
+#        define UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE 10
 
-#endif
+#    endif
 
 /* ========== Validation ========== */
 
@@ -998,9 +999,9 @@
  * - Example: cmake -DUVHTTP_IP_OCTET_MAX_VALUE=255 ..
  */
 
-#ifndef UVHTTP_IP_OCTET_MAX_VALUE
-#    define UVHTTP_IP_OCTET_MAX_VALUE 255
-#endif
+#    ifndef UVHTTP_IP_OCTET_MAX_VALUE
+#        define UVHTTP_IP_OCTET_MAX_VALUE 255
+#    endif
 
 /* ========== Rate Limit ========== */
 
@@ -1025,131 +1026,131 @@
  * - Example: cmake -DUVHTTP_RATE_LIMIT_MAX_REQUESTS=500000 ..
  */
 
-#ifndef UVHTTP_RATE_LIMIT_MAX_REQUESTS
+#    ifndef UVHTTP_RATE_LIMIT_MAX_REQUESTS
 
-#    define UVHTTP_RATE_LIMIT_MAX_REQUESTS 1000000
+#        define UVHTTP_RATE_LIMIT_MAX_REQUESTS 1000000
 
-#endif
+#    endif
 
-#ifndef UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS
+#    ifndef UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS
 
-#    define UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS 86400
+#        define UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS 86400
 
-#endif
+#    endif
 
-#ifndef UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS
+#    ifndef UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS
 
-#    define UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS 10
+#        define UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS 10
 
-#endif
+#    endif
 
 /* ========== Error Code Range ========== */
 
 /**
  * Server error code range
  */
-#define UVHTTP_ERROR_SERVER_MIN -106
-#define UVHTTP_ERROR_SERVER_MAX -100
+#    define UVHTTP_ERROR_SERVER_MIN -106
+#    define UVHTTP_ERROR_SERVER_MAX -100
 
 /**
  * Connection error code range
  */
-#define UVHTTP_ERROR_CONNECTION_MIN -207
-#define UVHTTP_ERROR_CONNECTION_MAX -200
+#    define UVHTTP_ERROR_CONNECTION_MIN -207
+#    define UVHTTP_ERROR_CONNECTION_MAX -200
 
 /**
  * Request error code range
  */
-#define UVHTTP_ERROR_REQUEST_MIN -307
-#define UVHTTP_ERROR_REQUEST_MAX -300
+#    define UVHTTP_ERROR_REQUEST_MIN -307
+#    define UVHTTP_ERROR_REQUEST_MAX -300
 
 /**
  * TLS error code range
  */
-#define UVHTTP_ERROR_TLS_MIN -407
-#define UVHTTP_ERROR_TLS_MAX -400
+#    define UVHTTP_ERROR_TLS_MIN -407
+#    define UVHTTP_ERROR_TLS_MAX -400
 
 /**
  * Router error code range
  */
-#define UVHTTP_ERROR_ROUTER_MIN -504
-#define UVHTTP_ERROR_ROUTER_MAX -500
+#    define UVHTTP_ERROR_ROUTER_MIN -504
+#    define UVHTTP_ERROR_ROUTER_MAX -500
 
 /**
  * Allocator error code range
  */
-#define UVHTTP_ERROR_ALLOCATOR_MIN -602
-#define UVHTTP_ERROR_ALLOCATOR_MAX -600
+#    define UVHTTP_ERROR_ALLOCATOR_MIN -602
+#    define UVHTTP_ERROR_ALLOCATOR_MAX -600
 
 /**
  * WebSocket error code range
  */
-#define UVHTTP_ERROR_WEBSOCKET_MIN -707
-#define UVHTTP_ERROR_WEBSOCKET_MAX -700
+#    define UVHTTP_ERROR_WEBSOCKET_MIN -707
+#    define UVHTTP_ERROR_WEBSOCKET_MAX -700
 
 /**
  * Config error code range
  */
-#define UVHTTP_ERROR_CONFIG_MIN -903
-#define UVHTTP_ERROR_CONFIG_MAX -900
+#    define UVHTTP_ERROR_CONFIG_MIN -903
+#    define UVHTTP_ERROR_CONFIG_MAX -900
 
 /**
  * Log error code range
  */
-#define UVHTTP_ERROR_LOG_MIN -1103
-#define UVHTTP_ERROR_LOG_MAX -1100
+#    define UVHTTP_ERROR_LOG_MIN -1103
+#    define UVHTTP_ERROR_LOG_MAX -1100
 
 /* ========== String Handling Constants ========== */
 
 /**
  * String handling constants
  */
-#define UVHTTP_NULL_BYTE '\0'
-#define UVHTTP_CARRIAGE_RETURN '\r'
-#define UVHTTP_LINE_FEED '\n'
-#define UVHTTP_TAB '\t'
-#define UVHTTP_BACKSLASH '\\'
-#define UVHTTP_QUOTE '"'
-#define UVHTTP_ESCAPE_SEQUENCE_LENGTH 6
-#define UVHTTP_TAB_CHARACTER 9
-#define UVHTTP_SPACE_CHARACTER 32
-#define UVHTTP_DELETE_CHARACTER 127
+#    define UVHTTP_NULL_BYTE '\0'
+#    define UVHTTP_CARRIAGE_RETURN '\r'
+#    define UVHTTP_LINE_FEED '\n'
+#    define UVHTTP_TAB '\t'
+#    define UVHTTP_BACKSLASH '\\'
+#    define UVHTTP_QUOTE '"'
+#    define UVHTTP_ESCAPE_SEQUENCE_LENGTH 6
+#    define UVHTTP_TAB_CHARACTER 9
+#    define UVHTTP_SPACE_CHARACTER 32
+#    define UVHTTP_DELETE_CHARACTER 127
 
 /* ========== Responseandmessage ========== */
 
 /**
  * Response
  */
-#define UVHTTP_HEADER_CONTENT_TYPE "Content-Type"
-#define UVHTTP_HEADER_CONTENT_LENGTH "Content-Length"
-#define UVHTTP_HEADER_CACHE_CONTROL "Cache-Control"
-#define UVHTTP_HEADER_CONNECTION "Connection"
-#define UVHTTP_HEADER_UPGRADE "Upgrade"
-#define UVHTTP_HEADER_WEBSOCKET_KEY "Sec-WebSocket-Key"
-#define UVHTTP_HEADER_WEBSOCKET_ACCEPT "Sec-WebSocket-Accept"
+#    define UVHTTP_HEADER_CONTENT_TYPE "Content-Type"
+#    define UVHTTP_HEADER_CONTENT_LENGTH "Content-Length"
+#    define UVHTTP_HEADER_CACHE_CONTROL "Cache-Control"
+#    define UVHTTP_HEADER_CONNECTION "Connection"
+#    define UVHTTP_HEADER_UPGRADE "Upgrade"
+#    define UVHTTP_HEADER_WEBSOCKET_KEY "Sec-WebSocket-Key"
+#    define UVHTTP_HEADER_WEBSOCKET_ACCEPT "Sec-WebSocket-Accept"
 
 /**
  * ErrorResponsemessage
  */
-#define UVHTTP_MESSAGE_TOO_MANY_REQUESTS "Too many requests"
-#define UVHTTP_MESSAGE_FORBIDDEN "Forbidden"
-#define UVHTTP_MESSAGE_NOT_FOUND "File not found"
-#define UVHTTP_MESSAGE_FILE_TOO_LARGE "File too large"
-#define UVHTTP_MESSAGE_INTERNAL_ERROR "Internal server error"
-#define UVHTTP_MESSAGE_MEMORY_FAILED "Memory allocation failed"
-#define UVHTTP_MESSAGE_FILE_READ_ERROR "File read error"
-#define UVHTTP_MESSAGE_RESPONSE_ERROR "Response body error"
+#    define UVHTTP_MESSAGE_TOO_MANY_REQUESTS "Too many requests"
+#    define UVHTTP_MESSAGE_FORBIDDEN "Forbidden"
+#    define UVHTTP_MESSAGE_NOT_FOUND "File not found"
+#    define UVHTTP_MESSAGE_FILE_TOO_LARGE "File too large"
+#    define UVHTTP_MESSAGE_INTERNAL_ERROR "Internal server error"
+#    define UVHTTP_MESSAGE_MEMORY_FAILED "Memory allocation failed"
+#    define UVHTTP_MESSAGE_FILE_READ_ERROR "File read error"
+#    define UVHTTP_MESSAGE_RESPONSE_ERROR "Response body error"
 
 /* ========== Server ========== */
 
 /**
  * Server
  */
-#define UVHTTP_SERVER_CLEANUP_LOOP_ITERATIONS 10
-#define UVHTTP_RESPONSE_HEADER_SAFETY_MARGIN 256
-#define UVHTTP_DIR_LISTING_BUFFER_SIZE 4096
-#define UVHTTP_DIR_ENTRY_HTML_OVERHEAD 200
-#define UVHTTP_503_RESPONSE_CONTENT_LENGTH 19
+#    define UVHTTP_SERVER_CLEANUP_LOOP_ITERATIONS 10
+#    define UVHTTP_RESPONSE_HEADER_SAFETY_MARGIN 256
+#    define UVHTTP_DIR_LISTING_BUFFER_SIZE 4096
+#    define UVHTTP_DIR_ENTRY_HTML_OVERHEAD 200
+#    define UVHTTP_503_RESPONSE_CONTENT_LENGTH 19
 
 #endif /* UVHTTP_CONSTANTS_H */
 
@@ -1172,4 +1173,3 @@
 #define UVHTTP_MESSAGE_OK "OK"
 #define UVHTTP_MESSAGE_WS_HANDSHAKE_FAILED "WebSocket handshake failed"
 #define UVHTTP_MESSAGE_WS_KEY_MISSING "Missing Sec-WebSocket-Key header"
-

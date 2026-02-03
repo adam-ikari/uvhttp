@@ -121,4 +121,3 @@ uvhttp_error_t uvhttp_sanitize_error_message(const char* message,
 
     return UVHTTP_OK;
 }
-
