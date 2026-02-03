@@ -54,7 +54,12 @@ typedef struct {
  */
 static int ipps_protocol_detector(uvhttp_request_t* request,
                                   char* protocol_name,
-                                  size_t protocol_name_len) {
+                                  size_t protocol_name_len,
+                                  const char* upgrade_header,
+                                  const char* connection_header) {
+    (void)upgrade_header;    /* Pre-fetched value, not used by IPPS */
+    (void)connection_header; /* Pre-fetched value, not used by IPPS */
+
     /* Check for IPPS-specific headers */
     const char* printer_id = uvhttp_request_get_header(request, "X-Printer-ID");
     if (printer_id) {
@@ -169,7 +174,12 @@ typedef struct {
  */
 static int grpc_protocol_detector(uvhttp_request_t* request,
                                   char* protocol_name,
-                                  size_t protocol_name_len) {
+                                  size_t protocol_name_len,
+                                  const char* upgrade_header,
+                                  const char* connection_header) {
+    (void)upgrade_header;    /* Pre-fetched value, not used by gRPC-Web */
+    (void)connection_header; /* Pre-fetched value, not used by gRPC-Web */
+
     /* Check for gRPC-Web specific headers */
     const char* content_type = uvhttp_request_get_header(request, "Content-Type");
     if (content_type && strstr(content_type, "application/grpc-web") != NULL) {

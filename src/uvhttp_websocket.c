@@ -895,26 +895,29 @@ __attribute__((unused)) static void uvhttp_ws_trigger_error_callback(
  */
 static int websocket_protocol_detector(uvhttp_request_t* request,
                                        char* protocol_name,
-                                       size_t protocol_name_len) {
-    const char* upgrade =
-        uvhttp_request_get_header(request, UVHTTP_HEADER_UPGRADE);
-    const char* connection =
-        uvhttp_request_get_header(request, UVHTTP_HEADER_CONNECTION);
-    const char* ws_key =
-        uvhttp_request_get_header(request, UVHTTP_HEADER_WEBSOCKET_KEY);
+                                       size_t protocol_name_len,
+                                       const char* upgrade_header,
+                                       const char* connection_header) {
+    (void)upgrade_header;  /* Use pre-fetched value below */
 
     /* Check required headers */
-    if (!upgrade || !connection || !ws_key) {
+    if (!upgrade_header || !connection_header) {
+        return 0;
+    }
+
+    const char* ws_key =
+        uvhttp_request_get_header(request, UVHTTP_HEADER_WEBSOCKET_KEY);
+    if (!ws_key) {
         return 0;
     }
 
     /* Check Upgrade header (case-insensitive) */
-    if (strcasecmp(upgrade, UVHTTP_VALUE_WEBSOCKET) != 0) {
+    if (strcasecmp(upgrade_header, UVHTTP_VALUE_WEBSOCKET) != 0) {
         return 0;
     }
 
     /* Check Connection header (may contain multiple values) */
-    if (strstr(connection, UVHTTP_HEADER_UPGRADE) == NULL) {
+    if (strstr(connection_header, UVHTTP_HEADER_UPGRADE) == NULL) {
         return 0;
     }
 

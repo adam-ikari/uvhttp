@@ -27,16 +27,21 @@ extern "C" {
  * @brief Protocol detector function type
  *
  * This function is used to detect if an HTTP request matches a specific
- * protocol.
+ * protocol. The framework pre-fetches common headers to avoid repeated
+ * lookups in the detector function.
  *
  * @param request HTTP request object
  * @param protocol_name Output parameter, detected protocol name
  * @param protocol_name_len Protocol name buffer size
+ * @param upgrade_header Pre-fetched Upgrade header value (may be NULL)
+ * @param connection_header Pre-fetched Connection header value (may be NULL)
  * @return int 1 if protocol detected, 0 if not detected
  */
 typedef int (*uvhttp_protocol_detector_t)(uvhttp_request_t* request,
                                           char* protocol_name,
-                                          size_t protocol_name_len);
+                                          size_t protocol_name_len,
+                                          const char* upgrade_header,
+                                          const char* connection_header);
 
 /**
  * @brief Protocol upgrade handler function type

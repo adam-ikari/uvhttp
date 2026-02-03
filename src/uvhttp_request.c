@@ -374,6 +374,10 @@ static int on_message_complete(llhttp_t* parser) {
         if (conn->server && conn->server->protocol_registry) {
             char protocol_name[32];
 
+            /* Pre-fetch Connection header for detector functions */
+            const char* connection_header =
+                uvhttp_request_get_header(conn->request, UVHTTP_HEADER_CONNECTION);
+
             uvhttp_protocol_registry_t* registry =
                 (uvhttp_protocol_registry_t*)conn->server->protocol_registry;
 
@@ -386,7 +390,8 @@ static int on_message_complete(llhttp_t* parser) {
                         if (strcasecmp(upgrade_header, proto->upgrade_header) != 0) {
                             /* Upgrade header doesn't match, skip this protocol */
                         } else if (proto->detector(conn->request, protocol_name,
-                                                  sizeof(protocol_name))) {
+                                                  sizeof(protocol_name),
+                                                  upgrade_header, connection_header)) {
                             uvhttp_error_t result =
                                 proto->handler(conn, protocol_name, proto->user_data);
 
@@ -407,7 +412,8 @@ static int on_message_complete(llhttp_t* parser) {
                             }
                         }
                     } else if (proto->detector(conn->request, protocol_name,
-                                              sizeof(protocol_name))) {
+                                              sizeof(protocol_name),
+                                              upgrade_header, connection_header)) {
                         /* No upgrade_header specified, call detector directly */
                         uvhttp_error_t result =
                             proto->handler(conn, protocol_name, proto->user_data);
@@ -440,7 +446,8 @@ static int on_message_complete(llhttp_t* parser) {
                     }
 
                     if (proto->detector(conn->request, protocol_name,
-                                        sizeof(protocol_name))) {
+                                        sizeof(protocol_name),
+                                        upgrade_header, connection_header)) {
                         uvhttp_error_t result =
                             proto->handler(conn, protocol_name, proto->user_data);
 
