@@ -377,39 +377,88 @@ static int on_message_complete(llhttp_t* parser) {
             uvhttp_protocol_registry_t* registry =
                 (uvhttp_protocol_registry_t*)conn->server->protocol_registry;
 
-            /* Iterate through registered protocols */
-            for (uvhttp_protocol_info_t* proto = registry->protocols;
-                 proto != NULL; proto = proto->next) {
-                /* Fast matching: only use when multiple protocols are registered */
-                if (registry->protocol_count > 1 && proto->upgrade_header[0] != '\0') {
-                    if (strcasecmp(upgrade_header, proto->upgrade_header) != 0) {
-                        continue;  /* Skip non-matching protocol */
+            /* Single protocol optimization: direct call without loop overhead */
+            if (registry->protocol_count == 1) {
+                uvhttp_protocol_info_t* proto = registry->protocols;
+                if (proto) {
+                    /* Fast check: if upgrade_header doesn't match, skip detector call */
+                    if (proto->upgrade_header[0] != '\0') {
+                        if (strcasecmp(upgrade_header, proto->upgrade_header) != 0) {
+                            /* Upgrade header doesn't match, skip this protocol */
+                        } else if (proto->detector(conn->request, protocol_name,
+                                                  sizeof(protocol_name))) {
+                            uvhttp_error_t result =
+                                proto->handler(conn, protocol_name, proto->user_data);
+
+                            if (result == UVHTTP_OK) {
+                                return 0;
+                            } else {
+                                UVHTTP_LOG_ERROR("Protocol upgrade failed: %s",
+                                                 uvhttp_error_string(result));
+                                uvhttp_response_set_status(conn->response, 400);
+                                uvhttp_response_set_header(conn->response,
+                                                           UVHTTP_HEADER_CONTENT_TYPE,
+                                                           UVHTTP_CONTENT_TYPE_TEXT);
+                                uvhttp_response_set_body(conn->response,
+                                                         "Protocol upgrade failed",
+                                                         strlen("Protocol upgrade failed"));
+                                uvhttp_response_send(conn->response);
+                                return 0;
+                            }
+                        }
+                    } else if (proto->detector(conn->request, protocol_name,
+                                              sizeof(protocol_name))) {
+                        /* No upgrade_header specified, call detector directly */
+                        uvhttp_error_t result =
+                            proto->handler(conn, protocol_name, proto->user_data);
+
+                        if (result == UVHTTP_OK) {
+                            return 0;
+                        } else {
+                            UVHTTP_LOG_ERROR("Protocol upgrade failed: %s",
+                                             uvhttp_error_string(result));
+                            uvhttp_response_set_status(conn->response, 400);
+                            uvhttp_response_set_header(conn->response,
+                                                       UVHTTP_HEADER_CONTENT_TYPE,
+                                                       UVHTTP_CONTENT_TYPE_TEXT);
+                            uvhttp_response_set_body(conn->response,
+                                                     "Protocol upgrade failed",
+                                                     strlen("Protocol upgrade failed"));
+                            uvhttp_response_send(conn->response);
+                            return 0;
+                        }
                     }
                 }
+            } else {
+                /* Multiple protocols: iterate with fast matching */
+                for (uvhttp_protocol_info_t* proto = registry->protocols;
+                     proto != NULL; proto = proto->next) {
+                    if (proto->upgrade_header[0] != '\0') {
+                        if (strcasecmp(upgrade_header, proto->upgrade_header) != 0) {
+                            continue;
+                        }
+                    }
 
-                /* Call protocol detector */
-                if (proto->detector(conn->request, protocol_name,
-                                    sizeof(protocol_name))) {
-                    /* Call upgrade handler */
-                    uvhttp_error_t result =
-                        proto->handler(conn, protocol_name, proto->user_data);
+                    if (proto->detector(conn->request, protocol_name,
+                                        sizeof(protocol_name))) {
+                        uvhttp_error_t result =
+                            proto->handler(conn, protocol_name, proto->user_data);
 
-                    if (result == UVHTTP_OK) {
-                        /* Upgrade successful, stop HTTP processing */
-                        return 0;
-                    } else {
-                        /* Upgrade failed, return error response */
-                        UVHTTP_LOG_ERROR("Protocol upgrade failed: %s",
-                                         uvhttp_error_string(result));
-                        uvhttp_response_set_status(conn->response, 400);
-                        uvhttp_response_set_header(conn->response,
-                                                   UVHTTP_HEADER_CONTENT_TYPE,
-                                                   UVHTTP_CONTENT_TYPE_TEXT);
-                        uvhttp_response_set_body(conn->response,
-                                                 "Protocol upgrade failed",
-                                                 strlen("Protocol upgrade failed"));
-                        uvhttp_response_send(conn->response);
-                        return 0;
+                        if (result == UVHTTP_OK) {
+                            return 0;
+                        } else {
+                            UVHTTP_LOG_ERROR("Protocol upgrade failed: %s",
+                                             uvhttp_error_string(result));
+                            uvhttp_response_set_status(conn->response, 400);
+                            uvhttp_response_set_header(conn->response,
+                                                       UVHTTP_HEADER_CONTENT_TYPE,
+                                                       UVHTTP_CONTENT_TYPE_TEXT);
+                            uvhttp_response_set_body(conn->response,
+                                                     "Protocol upgrade failed",
+                                                     strlen("Protocol upgrade failed"));
+                            uvhttp_response_send(conn->response);
+                            return 0;
+                        }
                     }
                 }
             }
