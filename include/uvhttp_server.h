@@ -150,6 +150,11 @@ struct uvhttp_server {
     int _padding5[16]; /* 64bytes - paddingto64bytes */
 #endif
     /* Cache line 5 total: 64 bytes */
+
+    /* ========== Cache line 6 (320-383 bytes): protocol upgrade ========== */
+    void* protocol_registry; /* 8 bytes - Protocol upgrade registry */
+    int _padding6[14];       /* 56bytes - paddingto64bytes */
+    /* Cache line 6 total: 64 bytes */
 };
 
 /* ========== Memory Layout Verification Static Assertions ========== */

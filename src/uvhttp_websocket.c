@@ -11,6 +11,7 @@
 #include "uvhttp_error.h"
 #include "uvhttp_logging.h"
 #include "uvhttp_platform.h"
+#include "uvhttp_protocol_upgrade.h"
 #include "uvhttp_server.h"
 
 #include <errno.h>
@@ -882,4 +883,122 @@ __attribute__((unused)) static void uvhttp_ws_trigger_error_callback(
     if (conn && conn->on_error) {
         conn->on_error(conn, error_code, error_msg);
     }
+}
+
+/* ========== Protocol upgrade framework integration ========== */
+
+/* HTTP constant definitions (consistent with uvhttp_request.c) */
+#define HTTP_HEADER_UPGRADE UVHTTP_HEADER_UPGRADE
+#define HTTP_HEADER_CONNECTION UVHTTP_HEADER_CONNECTION
+#define HTTP_HEADER_SEC_WEBSOCKET_KEY UVHTTP_HEADER_WEBSOCKET_KEY
+#define HTTP_HEADER_SEC_WEBSOCKET_ACCEPT UVHTTP_HEADER_WEBSOCKET_ACCEPT
+#define HTTP_HEADER_CONTENT_TYPE UVHTTP_HEADER_CONTENT_TYPE
+#define HTTP_VALUE_WEBSOCKET "websocket"
+#define HTTP_CONTENT_TYPE_TEXT_PLAIN UVHTTP_CONTENT_TYPE_TEXT
+#define HTTP_RESPONSE_WS_KEY_MISSING "Missing Sec-WebSocket-Key header"
+#define HTTP_RESPONSE_WS_HANDSHAKE_FAILED "WebSocket handshake failed"
+
+/**
+ * @brief WebSocket protocol detector
+ */
+static int websocket_protocol_detector(uvhttp_request_t* request,
+                                      char* protocol_name,
+                                      size_t protocol_name_len) {
+    const char* upgrade = uvhttp_request_get_header(request, HTTP_HEADER_UPGRADE);
+    const char* connection = uvhttp_request_get_header(request, HTTP_HEADER_CONNECTION);
+    const char* ws_key = uvhttp_request_get_header(request, HTTP_HEADER_SEC_WEBSOCKET_KEY);
+
+    /* Check required headers */
+    if (!upgrade || !connection || !ws_key) {
+        return 0;
+    }
+
+    /* Check Upgrade header (case-insensitive) */
+    if (strcasecmp(upgrade, HTTP_VALUE_WEBSOCKET) != 0) {
+        return 0;
+    }
+
+    /* Check Connection header (may contain multiple values) */
+    if (strstr(connection, HTTP_HEADER_UPGRADE) == NULL) {
+        return 0;
+    }
+
+    /* WebSocket protocol detected */
+    strncpy(protocol_name, "websocket", protocol_name_len);
+    return 1;
+}
+
+/**
+ * @brief WebSocket upgrade handler
+ */
+static uvhttp_error_t websocket_upgrade_handler(uvhttp_connection_t* conn,
+                                                  const char* protocol_name,
+                                                  void* user_data) {
+    (void)protocol_name;  /* Unused parameter */
+    (void)user_data;       /* Unused parameter */
+
+    const char* ws_key = uvhttp_request_get_header(conn->request, HTTP_HEADER_SEC_WEBSOCKET_KEY);
+    if (!ws_key) {
+        uvhttp_response_set_status(conn->response, 400);
+        uvhttp_response_set_header(conn->response, HTTP_HEADER_CONTENT_TYPE,
+                                   HTTP_CONTENT_TYPE_TEXT_PLAIN);
+        uvhttp_response_set_body(conn->response, HTTP_RESPONSE_WS_KEY_MISSING,
+                                 strlen(HTTP_RESPONSE_WS_KEY_MISSING));
+        uvhttp_response_send(conn->response);
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    /* Send 101 Switching Protocols response */
+    uvhttp_response_set_status(conn->response, 101);
+    uvhttp_response_set_header(conn->response, HTTP_HEADER_UPGRADE,
+                               HTTP_VALUE_WEBSOCKET);
+    uvhttp_response_set_header(conn->response, HTTP_HEADER_CONNECTION,
+                               HTTP_HEADER_UPGRADE);
+
+    /* Generate and set Sec-WebSocket-Accept header */
+    char accept[64];
+    if (uvhttp_ws_generate_accept(ws_key, accept, sizeof(accept)) != 0) {
+        uvhttp_response_set_status(conn->response, 500);
+        uvhttp_response_set_header(conn->response, HTTP_HEADER_CONTENT_TYPE,
+                                   HTTP_CONTENT_TYPE_TEXT_PLAIN);
+        uvhttp_response_set_body(conn->response,
+                                 HTTP_RESPONSE_WS_HANDSHAKE_FAILED,
+                                 strlen(HTTP_RESPONSE_WS_HANDSHAKE_FAILED));
+        uvhttp_response_send(conn->response);
+        return UVHTTP_ERROR_IO_ERROR;
+    }
+
+    uvhttp_response_set_header(conn->response, HTTP_HEADER_SEC_WEBSOCKET_ACCEPT,
+                               accept);
+    uvhttp_response_send(conn->response);
+
+    /* Call WebSocket handshake handling */
+    int ws_result = uvhttp_connection_handle_websocket_handshake(conn, ws_key);
+    if (ws_result != 0) {
+        UVHTTP_LOG_ERROR("Failed to handle WebSocket handshake: %d\n", ws_result);
+        uvhttp_connection_close(conn);
+        return UVHTTP_ERROR_CONNECTION_INIT;
+    }
+
+    return UVHTTP_OK;
+}
+
+/**
+ * @brief Register WebSocket protocol upgrade
+ *
+ * This function should be called after server creation to enable
+ * WebSocket protocol upgrade support
+ */uvhttp_error_t uvhttp_server_register_websocket_upgrade(uvhttp_server_t* server) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    return uvhttp_server_register_protocol_upgrade(
+        server,
+        "websocket",
+        HTTP_VALUE_WEBSOCKET,
+        websocket_protocol_detector,
+        websocket_upgrade_handler,
+        NULL
+    );
 }

@@ -237,6 +237,7 @@ set(SOURCES
     src/uvhttp_error_helpers.c
     src/uvhttp_lru_cache.c
     src/uvhttp_static.c
+    src/uvhttp_protocol_upgrade.c
 )
 
 # 条件编译 WebSocket 源文件
@@ -258,6 +259,8 @@ set(HEADERS
     include/uvhttp_features.h
     include/uvhttp_hash.h
     include/uvhttp_lru_cache.h
+    include/uvhttp_middleware.h
+    include/uvhttp_protocol_upgrade.h
     include/uvhttp_request.h
     include/uvhttp_response.h
     include/uvhttp_router.h

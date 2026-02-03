@@ -26,6 +26,7 @@ typedef enum {
     UVHTTP_CONN_STATE_HTTP_READING,
     UVHTTP_CONN_STATE_HTTP_PROCESSING,
     UVHTTP_CONN_STATE_HTTP_WRITING,
+    UVHTTP_CONN_STATE_PROTOCOL_UPGRADED,
     UVHTTP_CONN_STATE_CLOSING
 } uvhttp_connection_state_t;
 
@@ -82,7 +83,14 @@ struct uvhttp_connection {
     int _padding3[14];               /* 56bytes - paddingto64bytes */
     /* Cache line 4 total: 64 bytes */
 
-    /* ========== Cache line 5+ (256+ bytes): large buffers ========== */
+    /* ========== Cache line 5 (256-319 bytes): protocol upgrade ========== */
+    /* Protocol upgrade related fields */
+    char protocol_name[32]; /* 32 bytes - Upgraded protocol name */
+    void* lifecycle;        /* 8 bytes - Lifecycle callbacks */
+    int _padding4[6];      /* 24bytes - paddingto64bytes */
+    /* Cache line 5 total: 64 bytes */
+
+    /* ========== Cache line 6+ (320+ bytes): large buffers ========== */
     /* Placed at the end to avoid affecting cache locality of hot path fields */
     char current_header_field[UVHTTP_MAX_HEADER_NAME_SIZE]; /* blockmemory */
 };

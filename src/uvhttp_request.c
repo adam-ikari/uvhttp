@@ -7,6 +7,7 @@
 #include "uvhttp_features.h"
 #include "uvhttp_logging.h"
 #include "uvhttp_middleware.h"
+#include "uvhttp_protocol_upgrade.h"
 #include "uvhttp_router.h"
 #include "uvhttp_server.h"
 #include "uvhttp_static.h"
@@ -44,9 +45,6 @@
 #define HTTP_RESPONSE_WS_HANDSHAKE_FAILED "WebSocket handshake failed"
 #define HTTP_RESPONSE_WS_KEY_MISSING "Missing Sec-WebSocket-Key header"
 
-/* WebSocket handshake detection function */
-static int is_websocket_handshake(uvhttp_request_t* request);
-
 // HTTP parser callback function declarations
 static int on_message_begin(llhttp_t* parser);
 static int on_url(llhttp_t* parser, const char* at, size_t length);
@@ -59,7 +57,6 @@ static int on_message_complete(llhttp_t* parser);
 static int check_rate_limit_whitelist(uvhttp_connection_t* conn);
 static int is_client_whitelisted(uvhttp_connection_t* conn);
 #endif
-static int handle_websocket_handshake_request(uvhttp_connection_t* conn);
 static void ensure_valid_url(uvhttp_request_t* request);
 
 uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request,
@@ -341,50 +338,7 @@ static int check_rate_limit_whitelist(uvhttp_connection_t* conn) {
 #endif
 
 /* process WebSocket handshakerequest */
-static int handle_websocket_handshake_request(uvhttp_connection_t* conn) {
-    const char* ws_key =
-        uvhttp_request_get_header(conn->request, HTTP_HEADER_SEC_WEBSOCKET_KEY);
-    if (!ws_key) {
-        uvhttp_response_set_status(conn->response, 400);
-        uvhttp_response_set_header(conn->response, HTTP_HEADER_CONTENT_TYPE,
-                                   HTTP_CONTENT_TYPE_TEXT_PLAIN);
-        uvhttp_response_set_body(conn->response, HTTP_RESPONSE_WS_KEY_MISSING,
-                                 strlen(HTTP_RESPONSE_WS_KEY_MISSING));
-        uvhttp_response_send(conn->response);
-        return 0;
-    }
 
-    uvhttp_response_set_status(conn->response, 101);
-    uvhttp_response_set_header(conn->response, HTTP_HEADER_UPGRADE,
-                               HTTP_VALUE_WEBSOCKET);
-    uvhttp_response_set_header(conn->response, HTTP_HEADER_CONNECTION,
-                               HTTP_HEADER_UPGRADE);
-
-    char accept[64];
-    if (uvhttp_ws_generate_accept(ws_key, accept, sizeof(accept)) != 0) {
-        uvhttp_response_set_status(conn->response, 500);
-        uvhttp_response_set_header(conn->response, HTTP_HEADER_CONTENT_TYPE,
-                                   HTTP_CONTENT_TYPE_TEXT_PLAIN);
-        uvhttp_response_set_body(conn->response,
-                                 HTTP_RESPONSE_WS_HANDSHAKE_FAILED,
-                                 strlen(HTTP_RESPONSE_WS_HANDSHAKE_FAILED));
-        uvhttp_response_send(conn->response);
-        return 0;
-    }
-
-    uvhttp_response_set_header(conn->response, HTTP_HEADER_SEC_WEBSOCKET_ACCEPT,
-                               accept);
-    uvhttp_response_send(conn->response);
-
-    int ws_result = uvhttp_connection_handle_websocket_handshake(conn, ws_key);
-    if (ws_result != 0) {
-        UVHTTP_LOG_ERROR("Failed to handle WebSocket handshake: %d\n",
-                         ws_result);
-        uvhttp_connection_close(conn);
-    }
-
-    return ws_result;
-}
 
 /* ensure URL is valid, if null then set to "/" */
 static void ensure_valid_url(uvhttp_request_t* request) {
@@ -427,9 +381,35 @@ static int on_message_complete(llhttp_t* parser) {
     }
 #endif
 
-    /* WebSocket handshake */
-    if (is_websocket_handshake(conn->request)) {
-        return handle_websocket_handshake_request(conn);
+    /* Protocol upgrade detection */
+    if (conn->server && conn->server->protocol_registry) {
+        char protocol_name[32];
+        
+        uvhttp_protocol_registry_t* registry = (uvhttp_protocol_registry_t*)conn->server->protocol_registry;
+        
+        /* Iterate through registered protocols */
+        for (uvhttp_protocol_info_t* proto = registry->protocols; proto != NULL; proto = proto->next) {
+            /* Call protocol detector */
+            if (proto->detector(conn->request, protocol_name, sizeof(protocol_name))) {
+                /* Call upgrade handler */
+                uvhttp_error_t result = proto->handler(conn, protocol_name, proto->user_data);
+                
+                if (result == UVHTTP_OK) {
+                    /* Upgrade successful, stop HTTP processing */
+                    return 0;
+                } else {
+                    /* Upgrade failed, return error response */
+                    UVHTTP_LOG_ERROR("Protocol upgrade failed: %s", uvhttp_error_string(result));
+                    uvhttp_response_set_status(conn->response, 400);
+                    uvhttp_response_set_header(conn->response, HTTP_HEADER_CONTENT_TYPE,
+                                               HTTP_CONTENT_TYPE_TEXT_PLAIN);
+                    uvhttp_response_set_body(conn->response, "Protocol upgrade failed",
+                                             strlen("Protocol upgrade failed"));
+                    uvhttp_response_send(conn->response);
+                    return 0;
+                }
+            }
+        }
     }
 
     /* routerprocess */
@@ -478,33 +458,6 @@ static int on_message_complete(llhttp_t* parser) {
     }
 
     return 0;
-}
-
-// check if WebSocket handshake request
-static int is_websocket_handshake(uvhttp_request_t* request) {
-    const char* upgrade =
-        uvhttp_request_get_header(request, HTTP_HEADER_UPGRADE);
-    const char* connection =
-        uvhttp_request_get_header(request, HTTP_HEADER_CONNECTION);
-    const char* ws_key =
-        uvhttp_request_get_header(request, HTTP_HEADER_SEC_WEBSOCKET_KEY);
-
-    // check required headers
-    if (!upgrade || !connection || !ws_key) {
-        return FALSE;
-    }
-
-    /* check Upgrade header (case-insensitive) */
-    if (strcasecmp(upgrade, HTTP_VALUE_WEBSOCKET) != 0) {
-        return FALSE;
-    }
-
-    /* check Connection header (may contain multiple values) */
-    if (strstr(connection, HTTP_HEADER_UPGRADE) == NULL) {
-        return FALSE;
-    }
-
-    return TRUE;
 }
 
 const char* uvhttp_request_get_method(uvhttp_request_t* request) {

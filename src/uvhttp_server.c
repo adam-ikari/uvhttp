@@ -19,6 +19,7 @@
 #include "uvhttp_error_helpers.h"
 #include "uvhttp_features.h"
 #include "uvhttp_logging.h"
+#include "uvhttp_protocol_upgrade.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_router.h"
@@ -276,6 +277,16 @@ uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
     s->tls_ctx = NULL;
 #endif
 
+    /* Register WebSocket protocol upgrade */
+#if UVHTTP_FEATURE_WEBSOCKET
+    uvhttp_error_t result = uvhttp_server_register_websocket_upgrade(s);
+    if (result != UVHTTP_OK) {
+        UVHTTP_LOG_WARN("Failed to register WebSocket protocol upgrade: %s",
+                        uvhttp_error_string(result));
+        /* Continue execution, WebSocket upgrade will not be available */
+    }
+#endif
+
     *server = s;
     return UVHTTP_OK;
 }
@@ -362,6 +373,20 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
 
     // Rate limit state has been embedded in struct, no need for extra cleanup
 #endif
+
+    // Clean protocol registry
+    if (server->protocol_registry) {
+        uvhttp_protocol_registry_t* registry = (uvhttp_protocol_registry_t*)server->protocol_registry;
+        uvhttp_protocol_info_t* current = registry->protocols;
+        
+        while (current) {
+            uvhttp_protocol_info_t* next = current->next;
+            uvhttp_free(current);
+            current = next;
+        }
+        uvhttp_free(registry);
+        server->protocol_registry = NULL;
+    }
 
     uvhttp_free(server);
     return UVHTTP_OK;
