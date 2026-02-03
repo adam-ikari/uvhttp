@@ -93,6 +93,33 @@ target_link_libraries(benchmark_router_simple
     ${UVHTTP_CORE_DEPS}
 )
 
+# 路由优化对比测试
+add_executable(benchmark_router_comparison
+    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_router_comparison.c
+)
+target_link_libraries(benchmark_router_comparison
+    uvhttp
+    ${UVHTTP_CORE_DEPS}
+)
+
+# 简化版路由优化对比测试
+add_executable(benchmark_router_simple_comparison
+    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_router_simple_comparison.c
+)
+target_link_libraries(benchmark_router_simple_comparison
+    uvhttp
+    ${UVHTTP_CORE_DEPS}
+)
+
+# 最小化路由性能测试
+add_executable(benchmark_router_minimal
+    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_router_minimal.c
+)
+target_link_libraries(benchmark_router_minimal
+    uvhttp
+    ${UVHTTP_CORE_DEPS}
+)
+
 # 安装性能测试可执行文件
 
 install(TARGETS performance_allocator performance_allocator_compare test_bitfield
