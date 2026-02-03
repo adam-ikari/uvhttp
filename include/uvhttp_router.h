@@ -38,16 +38,21 @@ typedef struct {
     size_t param_count;
 } uvhttp_route_match_t;
 
-// Route node
+// Route node - optimized for CPU cache (128 bytes = 2 cache lines)
 typedef struct uvhttp_route_node {
-    char segment[64];  // Path segment
-    uvhttp_method_t method;
-    uvhttp_request_handler_t handler;
-    struct uvhttp_route_node*
-        children[UVHTTP_ROUTER_MAX_CHILDREN];  // Child nodes
-    size_t child_count;
-    int is_param;                         // Whether it is a parameter node
-    char param_name[MAX_PARAM_NAME_LEN];  // Parameter name
+    /* Cache line 1: Hot path fields (64 bytes) */
+    uvhttp_method_t method;                    /* 4 bytes - HTTP method */
+    uvhttp_request_handler_t handler;          /* 8 bytes - Request handler */
+    size_t child_count;                        /* 8 bytes - Number of children */
+    int is_param;                              /* 4 bytes - Is parameter node */
+    uint8_t segment_len;                       /* 1 byte - Segment length */
+    uint8_t param_name_len;                    /* 1 byte - Parameter name length */
+    uint16_t _padding1;                        /* 2 bytes - Padding to 32 bytes */
+    uint32_t child_indices[12];                /* 48 bytes - Compact child storage */
+
+    /* Cache line 2: Variable length data (64 bytes) */
+    char segment_data[32];                     /* 32 bytes - Path segment */
+    char param_name_data[32];                  /* 32 bytes - Parameter name */
 } uvhttp_route_node_t;
 
 // Array routing structure
@@ -63,11 +68,12 @@ struct uvhttp_router {
     int use_trie;       /* 4 bytes - whether to use Trie */
     size_t route_count; /* 8 bytes - total route count */
 
-    /* Trie routing related (8-byte aligned) */
-    uvhttp_route_node_t* root;      /* 8 bytes */
-    uvhttp_route_node_t* node_pool; /* 8 bytes */
-    size_t node_pool_size;          /* 8 bytes */
-    size_t node_pool_used;          /* 8 bytes */
+    /* Trie routing related (8-byte aligned) - compact node pool */
+    uvhttp_route_node_t* node_pool; /* 8 bytes - Compact node pool */
+    uint32_t root_index;            /* 4 bytes - Root node index */
+    uint32_t node_pool_size;        /* 4 bytes - Pool capacity */
+    uint32_t node_pool_used;        /* 4 bytes - Pool usage */
+    uint32_t _padding1;             /* 4 bytes - Padding */
 
     /* Array routing related (8-byte aligned) */
     array_route_t* array_routes; /* 8 bytes */
@@ -89,7 +95,6 @@ typedef struct uvhttp_router uvhttp_router_t;
 /* ========== Memory Layout Verification Static Assertions ========== */
 
 /* Verify pointer alignment (platform adaptive) */
-UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, root, UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, node_pool, UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, array_routes, UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, static_prefix,
@@ -99,8 +104,6 @@ UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, static_context,
 
 /* Verify size_t alignment (platform adaptive) */
 UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, route_count, UVHTTP_SIZE_T_ALIGNMENT);
-UVHTTP_CHECK_ALIGNMENT(uvhttp_router_t, node_pool_size,
-                       UVHTTP_SIZE_T_ALIGNMENT);
 
 /* Routing API functions */
 /**

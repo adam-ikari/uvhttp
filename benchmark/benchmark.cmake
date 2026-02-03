@@ -75,7 +75,23 @@ target_link_libraries(benchmark_file_transfer
     ${UVHTTP_CORE_DEPS}
 )
 
+# 路由性能测试
+add_executable(benchmark_router
+    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_router.c
+)
+target_link_libraries(benchmark_router
+    uvhttp
+    ${UVHTTP_CORE_DEPS}
+)
 
+# 简化版路由性能测试
+add_executable(benchmark_router_simple
+    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_router_simple.c
+)
+target_link_libraries(benchmark_router_simple
+    uvhttp
+    ${UVHTTP_CORE_DEPS}
+)
 
 # 安装性能测试可执行文件
 
@@ -85,8 +101,6 @@ install(TARGETS performance_allocator performance_allocator_compare test_bitfiel
 
 )
 
-
-
-install(TARGETS benchmark_rps benchmark_latency benchmark_connection benchmark_memory benchmark_comprehensive benchmark_file_transfer
+install(TARGETS benchmark_rps benchmark_latency benchmark_connection benchmark_memory benchmark_comprehensive benchmark_file_transfer benchmark_router
 
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/benchmark)

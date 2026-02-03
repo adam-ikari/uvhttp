@@ -106,19 +106,19 @@ const char* uvhttp_method_to_string(uvhttp_method_t method) {
     return "UNKNOWN";
 }
 
-// create new router node
-static uvhttp_route_node_t* create_route_node(uvhttp_router_t* router) {
+// create new router node - returns index into node pool
+static uint32_t create_route_node(uvhttp_router_t* router) {
     if (router->node_pool_used >= router->node_pool_size) {
         // expand node pool
-        size_t new_size = router->node_pool_size * 2;
+        uint32_t new_size = router->node_pool_size * 2;
         uvhttp_route_node_t* new_pool = uvhttp_realloc(
             router->node_pool, new_size * sizeof(uvhttp_route_node_t));
         if (!new_pool) {
-            return NULL;
+            return UINT32_MAX;
         }
 
         // initialize newly added nodes
-        for (size_t i = router->node_pool_size; i < new_size; i++) {
+        for (uint32_t i = router->node_pool_size; i < new_size; i++) {
             memset(&new_pool[i], 0, sizeof(uvhttp_route_node_t));
         }
 
@@ -126,37 +126,44 @@ static uvhttp_route_node_t* create_route_node(uvhttp_router_t* router) {
         router->node_pool_size = new_size;
     }
 
-    return &router->node_pool[router->node_pool_used++];
+    return router->node_pool_used++;
 }
 
-// find or create child node
-static uvhttp_route_node_t* find_or_create_child(uvhttp_router_t* router,
-                                                 uvhttp_route_node_t* parent,
-                                                 const char* segment,
-                                                 int is_param) {
+// find or create child node - returns index into node pool
+static uint32_t find_or_create_child(uvhttp_router_t* router,
+                                     uint32_t parent_index,
+                                     const char* segment,
+                                     int is_param) {
+    uvhttp_route_node_t* parent = &router->node_pool[parent_index];
+
     // find existing child node
     for (size_t i = 0; i < parent->child_count; i++) {
-        if (strcmp(parent->children[i]->segment, segment) == 0) {
-            return parent->children[i];
+        uint32_t child_index = parent->child_indices[i];
+        uvhttp_route_node_t* child = &router->node_pool[child_index];
+        if (strncmp(child->segment_data, segment, child->segment_len) == 0 &&
+            strlen(segment) == child->segment_len) {
+            return child_index;
         }
     }
 
     // create new child node
-    if (parent->child_count >= 16) {
-        return NULL;
+    if (parent->child_count >= 12) {
+        return UINT32_MAX;
     }
 
-    uvhttp_route_node_t* child = create_route_node(router);
-    if (!child) {
-        return NULL;
+    uint32_t child_index = create_route_node(router);
+    if (child_index == UINT32_MAX) {
+        return UINT32_MAX;
     }
 
-    strncpy(child->segment, segment, sizeof(child->segment) - 1);
-    child->segment[sizeof(child->segment) - 1] = '\0';
+    uvhttp_route_node_t* child = &router->node_pool[child_index];
+    size_t seg_len = strlen(segment);
+    child->segment_len = (uint8_t)(seg_len < 32 ? seg_len : 31);
+    memcpy(child->segment_data, segment, child->segment_len);
     child->is_param = is_param;
 
-    parent->children[parent->child_count++] = child;
-    return child;
+    parent->child_indices[parent->child_count++] = child_index;
+    return child_index;
 }
 
 // parsepathparameter
@@ -221,6 +228,7 @@ uvhttp_error_t uvhttp_router_new(uvhttp_router_t** router) {
 
     // initialize node pool (for Trie)
     r->node_pool_size = 64;
+    r->node_pool_used = 0;
     r->node_pool =
         uvhttp_calloc(r->node_pool_size, sizeof(uvhttp_route_node_t));
 
@@ -230,9 +238,9 @@ uvhttp_error_t uvhttp_router_new(uvhttp_router_t** router) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
 
-    r->root = create_route_node(r);
-
-    if (!r->root) {
+    // create root node
+    r->root_index = create_route_node(r);
+    if (r->root_index == UINT32_MAX) {
         uvhttp_free(r->node_pool);
         uvhttp_free(r->array_routes);
         uvhttp_free(r);
@@ -320,7 +328,7 @@ static uvhttp_error_t migrate_to_trie(uvhttp_router_t* router) {
         array_route_t* route = &old_routes[i];
 
         // build router tree
-        uvhttp_route_node_t* current = router->root;
+        uint32_t current_index = router->root_index;
         char path_copy[MAX_ROUTE_PATH_LEN];
         strncpy(path_copy, route->path, sizeof(path_copy) - 1);
         path_copy[sizeof(path_copy) - 1] = '\0';
@@ -332,8 +340,8 @@ static uvhttp_error_t migrate_to_trie(uvhttp_router_t* router) {
                 token++;
             }
 
-            current = find_or_create_child(router, current, token, is_param);
-            if (!current) {
+            current_index = find_or_create_child(router, current_index, token, is_param);
+            if (current_index == UINT32_MAX) {
                 uvhttp_free(old_routes);  // clean allocated memory
                 return UVHTTP_ERROR_OUT_OF_MEMORY;
             }
@@ -342,6 +350,7 @@ static uvhttp_error_t migrate_to_trie(uvhttp_router_t* router) {
         }
 
         // sethandler
+        uvhttp_route_node_t* current = &router->node_pool[current_index];
         current->method = route->method;
         current->handler = route->handler;
     }
@@ -397,7 +406,7 @@ uvhttp_error_t uvhttp_router_add_route_method(
         }
 
         // add to Trie
-        uvhttp_route_node_t* current = router->root;
+        uint32_t current_index = router->root_index;
         char path_copy[MAX_ROUTE_PATH_LEN];
         strncpy(path_copy, path, sizeof(path_copy) - 1);
         path_copy[sizeof(path_copy) - 1] = '\0';
@@ -412,21 +421,26 @@ uvhttp_error_t uvhttp_router_add_route_method(
                 size_t token_len = strlen(token);
                 for (size_t i = 0; i < token_len; i++) {
                     if (token[i] == '/') {
-                        strncpy(current->param_name, token, i);
-                        current->param_name[i] = '\0';
+                        uvhttp_route_node_t* current = &router->node_pool[current_index];
+                        size_t name_len = i < 32 ? i : 31;
+                        memcpy(current->param_name_data, token, name_len);
+                        current->param_name_data[name_len] = '\0';
+                        current->param_name_len = (uint8_t)name_len;
                         break;
                     }
                 }
             }
 
-            current = find_or_create_child(router, current, token, is_param);
-            if (!current) {
+            current_index = find_or_create_child(router, current_index, token, is_param);
+            if (current_index == UINT32_MAX) {
                 return UVHTTP_ERROR_OUT_OF_MEMORY;
             }
 
             token = strtok(NULL, "/");
         }
 
+        // sethandler
+        uvhttp_route_node_t* current = &router->node_pool[current_index];
         current->method = method;
         current->handler = handler;
         router->route_count++;
@@ -438,18 +452,16 @@ uvhttp_error_t uvhttp_router_add_route_method(
     return UVHTTP_OK;
 }
 
-static int match_route_node(uvhttp_route_node_t* node, const char** segments,
-                            int segment_count, int segment_index,
-                            uvhttp_method_t method,
+// match route node recursively - using indices for cache optimization
+static int match_route_node(const uvhttp_router_t* router, uint32_t node_index,
+                            const char** segments, size_t segment_count,
+                            size_t segment_index, uvhttp_method_t method,
                             uvhttp_route_match_t* match) {
-    if (!node || !segments || !match) {
+    if (node_index == UINT32_MAX || !router || !segments || !match) {
         return -1;
     }
 
-    // Prevent stack overflow from infinite recursion
-    if (segment_index > MAX_ROUTE_PATH_LEN) {
-        return -1;
-    }
+    const uvhttp_route_node_t* node = &router->node_pool[node_index];
 
     // if is leaf node
     if (segment_index >= segment_count) {
@@ -463,18 +475,19 @@ static int match_route_node(uvhttp_route_node_t* node, const char** segments,
 
     const char* segment = segments[segment_index];
 
-    // find matching child node
+    // find matching child node - use indices for better cache locality
     for (size_t i = 0; i < node->child_count; i++) {
-        uvhttp_route_node_t* child = node->children[i];
+        uint32_t child_index = node->child_indices[i];
+        const uvhttp_route_node_t* child = &router->node_pool[child_index];
 
         if (child->is_param) {
             // parameter node, match any segment
-            size_t name_len = strlen(child->param_name);
+            size_t name_len = child->param_name_len;
             size_t name_copy_len =
                 name_len < sizeof(match->params[match->param_count].name) - 1
                     ? name_len
                     : sizeof(match->params[match->param_count].name) - 1;
-            memcpy(match->params[match->param_count].name, child->param_name,
+            memcpy(match->params[match->param_count].name, child->param_name_data,
                    name_copy_len);
             match->params[match->param_count].name[name_copy_len] = '\0';
 
@@ -489,17 +502,21 @@ static int match_route_node(uvhttp_route_node_t* node, const char** segments,
 
             match->param_count++;
 
-            int result = match_route_node(child, segments, segment_count,
-                                          segment_index + 1, method, match);
+            int result = match_route_node(router, child_index, segments,
+                                          segment_count, segment_index + 1,
+                                          method, match);
             if (result == 0) {
                 return 0;
             }
             match->param_count--;  // backtrack
         } else {
-            // exact match
-            if (strcmp(child->segment, segment) == 0) {
-                int result = match_route_node(child, segments, segment_count,
-                                              segment_index + 1, method, match);
+            // exact match - use segment_len for faster comparison
+            size_t seg_len = strlen(segment);
+            if (seg_len == child->segment_len &&
+                strncmp(child->segment_data, segment, seg_len) == 0) {
+                int result = match_route_node(router, child_index, segments,
+                                              segment_count, segment_index + 1,
+                                              method, match);
                 if (result == 0) {
                     return 0;
                 }
@@ -593,9 +610,9 @@ uvhttp_request_handler_t uvhttp_router_find_handler(
             }
         }
 
-        // matchrouter
-        if (match_route_node(router->root, segments, segment_count, 0,
-                             method_enum, &match) == 0) {
+        // matchrouter - use root index
+        if (match_route_node(router, router->root_index, segments,
+                             segment_count, 0, method_enum, &match) == 0) {
             return match.handler;
         }
     } else {
@@ -674,7 +691,7 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
         token = strtok(NULL, "/");
     }
 
-    return match_route_node(router->root, segments, segment_count, 0,
+    return match_route_node(router, router->root_index, segments, segment_count, 0,
                             method_enum, match) == 0
                ? UVHTTP_OK
                : UVHTTP_ERROR_NOT_FOUND;
