@@ -26,24 +26,6 @@
 #endif
 
 /* HTTP response related string constants */
-#define HTTP_CONTENT_TYPE_TEXT_PLAIN "text/plain"
-#define HTTP_HEADER_CONTENT_TYPE "Content-Type"
-#define HTTP_HEADER_UPGRADE "Upgrade"
-#define HTTP_HEADER_CONNECTION "Connection"
-#define HTTP_HEADER_SEC_WEBSOCKET_KEY "Sec-WebSocket-Key"
-#define HTTP_HEADER_SEC_WEBSOCKET_ACCEPT "Sec-WebSocket-Accept"
-#define HTTP_HEADER_RETRY_AFTER "Retry-After"
-#define HTTP_HEADER_X_FORWARDED_FOR "X-Forwarded-For"
-#define HTTP_HEADER_X_REAL_IP "X-Real-IP"
-#define HTTP_VALUE_WEBSOCKET "websocket"
-#define HTTP_VALUE_ROOT_PATH "/"
-#define HTTP_VALUE_RETRY_AFTER_SECONDS "60"
-#define HTTP_VALUE_DEFAULT_IP "127.0.0.1"
-#define HTTP_RESPONSE_OK "OK"
-#define HTTP_RESPONSE_NOT_FOUND "Not Found"
-#define HTTP_RESPONSE_TOO_MANY_REQUESTS "Too Many Requests"
-#define HTTP_RESPONSE_WS_HANDSHAKE_FAILED "WebSocket handshake failed"
-#define HTTP_RESPONSE_WS_KEY_MISSING "Missing Sec-WebSocket-Key header"
 
 // HTTP parser callback function declarations
 static int on_message_begin(llhttp_t* parser);
@@ -322,13 +304,13 @@ static int check_rate_limit_whitelist(uvhttp_connection_t* conn) {
 
     if (uvhttp_server_check_rate_limit(conn->server) != UVHTTP_OK) {
         uvhttp_response_set_status(conn->response, 429);
-        uvhttp_response_set_header(conn->response, HTTP_HEADER_CONTENT_TYPE,
-                                   HTTP_CONTENT_TYPE_TEXT_PLAIN);
-        uvhttp_response_set_header(conn->response, HTTP_HEADER_RETRY_AFTER,
-                                   HTTP_VALUE_RETRY_AFTER_SECONDS);
+        uvhttp_response_set_header(conn->response, UVHTTP_HEADER_CONTENT_TYPE,
+                                   UVHTTP_CONTENT_TYPE_TEXT);
+        uvhttp_response_set_header(conn->response, UVHTTP_HEADER_RETRY_AFTER,
+                                   UVHTTP_VALUE_RETRY_AFTER_SECONDS);
         uvhttp_response_set_body(conn->response,
-                                 HTTP_RESPONSE_TOO_MANY_REQUESTS,
-                                 strlen(HTTP_RESPONSE_TOO_MANY_REQUESTS));
+                                 UVHTTP_MESSAGE_TOO_MANY_REQUESTS,
+                                 strlen(UVHTTP_MESSAGE_TOO_MANY_REQUESTS));
         uvhttp_response_send(conn->response);
         return -1;
     }
@@ -343,7 +325,7 @@ static int check_rate_limit_whitelist(uvhttp_connection_t* conn) {
 /* ensure URL is valid, if null then set to "/" */
 static void ensure_valid_url(uvhttp_request_t* request) {
     if (!request->url[0]) {
-        strncpy(request->url, HTTP_VALUE_ROOT_PATH, sizeof(request->url) - 1);
+        strncpy(request->url, UVHTTP_VALUE_ROOT_PATH, sizeof(request->url) - 1);
         request->url[sizeof(request->url) - 1] = '\0';
     }
 }
@@ -401,8 +383,8 @@ static int on_message_complete(llhttp_t* parser) {
                     /* Upgrade failed, return error response */
                     UVHTTP_LOG_ERROR("Protocol upgrade failed: %s", uvhttp_error_string(result));
                     uvhttp_response_set_status(conn->response, 400);
-                    uvhttp_response_set_header(conn->response, HTTP_HEADER_CONTENT_TYPE,
-                                               HTTP_CONTENT_TYPE_TEXT_PLAIN);
+                    uvhttp_response_set_header(conn->response, UVHTTP_HEADER_CONTENT_TYPE,
+                                               UVHTTP_CONTENT_TYPE_TEXT);
                     uvhttp_response_set_body(conn->response, "Protocol upgrade failed",
                                              strlen("Protocol upgrade failed"));
                     uvhttp_response_send(conn->response);
@@ -432,28 +414,28 @@ static int on_message_complete(llhttp_t* parser) {
             if (result != UVHTTP_OK) {
                 uvhttp_response_set_status(conn->response, 404);
                 uvhttp_response_set_header(conn->response,
-                                           HTTP_HEADER_CONTENT_TYPE,
-                                           HTTP_CONTENT_TYPE_TEXT_PLAIN);
+                                           UVHTTP_HEADER_CONTENT_TYPE,
+                                           UVHTTP_CONTENT_TYPE_TEXT);
                 uvhttp_response_set_body(conn->response,
-                                         HTTP_RESPONSE_NOT_FOUND,
-                                         strlen(HTTP_RESPONSE_NOT_FOUND));
+                                         UVHTTP_MESSAGE_NOT_FOUND,
+                                         strlen(UVHTTP_MESSAGE_NOT_FOUND));
                 uvhttp_response_send(conn->response);
             }
         } else {
             uvhttp_response_set_status(conn->response, 404);
-            uvhttp_response_set_header(conn->response, HTTP_HEADER_CONTENT_TYPE,
-                                       HTTP_CONTENT_TYPE_TEXT_PLAIN);
-            uvhttp_response_set_body(conn->response, HTTP_RESPONSE_NOT_FOUND,
-                                     strlen(HTTP_RESPONSE_NOT_FOUND));
+            uvhttp_response_set_header(conn->response, UVHTTP_HEADER_CONTENT_TYPE,
+                                       UVHTTP_CONTENT_TYPE_TEXT);
+            uvhttp_response_set_body(conn->response, UVHTTP_MESSAGE_NOT_FOUND,
+                                     strlen(UVHTTP_MESSAGE_NOT_FOUND));
             uvhttp_response_send(conn->response);
         }
     } else {
         /* no router, send default response */
         uvhttp_response_set_status(conn->response, 200);
-        uvhttp_response_set_header(conn->response, HTTP_HEADER_CONTENT_TYPE,
-                                   HTTP_CONTENT_TYPE_TEXT_PLAIN);
-        uvhttp_response_set_body(conn->response, HTTP_RESPONSE_OK,
-                                 strlen(HTTP_RESPONSE_OK));
+        uvhttp_response_set_header(conn->response, UVHTTP_HEADER_CONTENT_TYPE,
+                                   UVHTTP_CONTENT_TYPE_TEXT);
+        uvhttp_response_set_body(conn->response, UVHTTP_MESSAGE_OK,
+                                 strlen(UVHTTP_MESSAGE_OK));
         uvhttp_response_send(conn->response);
     }
 
@@ -661,7 +643,7 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
 
     // attempt to get from X-Forwarded-For header (proxy/load balancer)
     const char* forwarded_for =
-        uvhttp_request_get_header(request, HTTP_HEADER_X_FORWARDED_FOR);
+        uvhttp_request_get_header(request, UVHTTP_HEADER_X_FORWARDED_FOR);
     if (forwarded_for) {
         // X-Forwarded-For may contain multiple IPs, take the first one
         static char client_ip[UVHTTP_IPV6_MAX_STRING_LENGTH];
@@ -685,7 +667,7 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
 
     // attempt to get from X-Real-IP header
     const char* real_ip =
-        uvhttp_request_get_header(request, HTTP_HEADER_X_REAL_IP);
+        uvhttp_request_get_header(request, UVHTTP_HEADER_X_REAL_IP);
     if (real_ip) {
         return real_ip;
     }
@@ -711,7 +693,7 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
         }
     }
 
-    return HTTP_VALUE_DEFAULT_IP;
+    return UVHTTP_VALUE_DEFAULT_IP;
 }
 
 void uvhttp_request_free(uvhttp_request_t* request) {

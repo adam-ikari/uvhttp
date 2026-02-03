@@ -888,15 +888,6 @@ __attribute__((unused)) static void uvhttp_ws_trigger_error_callback(
 /* ========== Protocol upgrade framework integration ========== */
 
 /* HTTP constant definitions (consistent with uvhttp_request.c) */
-#define HTTP_HEADER_UPGRADE UVHTTP_HEADER_UPGRADE
-#define HTTP_HEADER_CONNECTION UVHTTP_HEADER_CONNECTION
-#define HTTP_HEADER_SEC_WEBSOCKET_KEY UVHTTP_HEADER_WEBSOCKET_KEY
-#define HTTP_HEADER_SEC_WEBSOCKET_ACCEPT UVHTTP_HEADER_WEBSOCKET_ACCEPT
-#define HTTP_HEADER_CONTENT_TYPE UVHTTP_HEADER_CONTENT_TYPE
-#define HTTP_VALUE_WEBSOCKET "websocket"
-#define HTTP_CONTENT_TYPE_TEXT_PLAIN UVHTTP_CONTENT_TYPE_TEXT
-#define HTTP_RESPONSE_WS_KEY_MISSING "Missing Sec-WebSocket-Key header"
-#define HTTP_RESPONSE_WS_HANDSHAKE_FAILED "WebSocket handshake failed"
 
 /**
  * @brief WebSocket protocol detector
@@ -904,9 +895,9 @@ __attribute__((unused)) static void uvhttp_ws_trigger_error_callback(
 static int websocket_protocol_detector(uvhttp_request_t* request,
                                       char* protocol_name,
                                       size_t protocol_name_len) {
-    const char* upgrade = uvhttp_request_get_header(request, HTTP_HEADER_UPGRADE);
-    const char* connection = uvhttp_request_get_header(request, HTTP_HEADER_CONNECTION);
-    const char* ws_key = uvhttp_request_get_header(request, HTTP_HEADER_SEC_WEBSOCKET_KEY);
+    const char* upgrade = uvhttp_request_get_header(request, UVHTTP_HEADER_UPGRADE);
+    const char* connection = uvhttp_request_get_header(request, UVHTTP_HEADER_CONNECTION);
+    const char* ws_key = uvhttp_request_get_header(request, UVHTTP_HEADER_WEBSOCKET_KEY);
 
     /* Check required headers */
     if (!upgrade || !connection || !ws_key) {
@@ -914,12 +905,12 @@ static int websocket_protocol_detector(uvhttp_request_t* request,
     }
 
     /* Check Upgrade header (case-insensitive) */
-    if (strcasecmp(upgrade, HTTP_VALUE_WEBSOCKET) != 0) {
+    if (strcasecmp(upgrade, UVHTTP_VALUE_WEBSOCKET) != 0) {
         return 0;
     }
 
     /* Check Connection header (may contain multiple values) */
-    if (strstr(connection, HTTP_HEADER_UPGRADE) == NULL) {
+    if (strstr(connection, UVHTTP_HEADER_UPGRADE) == NULL) {
         return 0;
     }
 
@@ -937,38 +928,38 @@ static uvhttp_error_t websocket_upgrade_handler(uvhttp_connection_t* conn,
     (void)protocol_name;  /* Unused parameter */
     (void)user_data;       /* Unused parameter */
 
-    const char* ws_key = uvhttp_request_get_header(conn->request, HTTP_HEADER_SEC_WEBSOCKET_KEY);
+    const char* ws_key = uvhttp_request_get_header(conn->request, UVHTTP_HEADER_WEBSOCKET_KEY);
     if (!ws_key) {
         uvhttp_response_set_status(conn->response, 400);
-        uvhttp_response_set_header(conn->response, HTTP_HEADER_CONTENT_TYPE,
-                                   HTTP_CONTENT_TYPE_TEXT_PLAIN);
-        uvhttp_response_set_body(conn->response, HTTP_RESPONSE_WS_KEY_MISSING,
-                                 strlen(HTTP_RESPONSE_WS_KEY_MISSING));
+        uvhttp_response_set_header(conn->response, UVHTTP_HEADER_CONTENT_TYPE,
+                                   UVHTTP_CONTENT_TYPE_TEXT);
+        uvhttp_response_set_body(conn->response, UVHTTP_MESSAGE_WS_KEY_MISSING,
+                                 strlen(UVHTTP_MESSAGE_WS_KEY_MISSING));
         uvhttp_response_send(conn->response);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
     /* Send 101 Switching Protocols response */
     uvhttp_response_set_status(conn->response, 101);
-    uvhttp_response_set_header(conn->response, HTTP_HEADER_UPGRADE,
-                               HTTP_VALUE_WEBSOCKET);
-    uvhttp_response_set_header(conn->response, HTTP_HEADER_CONNECTION,
-                               HTTP_HEADER_UPGRADE);
+    uvhttp_response_set_header(conn->response, UVHTTP_HEADER_UPGRADE,
+                               UVHTTP_VALUE_WEBSOCKET);
+    uvhttp_response_set_header(conn->response, UVHTTP_HEADER_CONNECTION,
+                               UVHTTP_HEADER_UPGRADE);
 
     /* Generate and set Sec-WebSocket-Accept header */
     char accept[64];
     if (uvhttp_ws_generate_accept(ws_key, accept, sizeof(accept)) != 0) {
         uvhttp_response_set_status(conn->response, 500);
-        uvhttp_response_set_header(conn->response, HTTP_HEADER_CONTENT_TYPE,
-                                   HTTP_CONTENT_TYPE_TEXT_PLAIN);
+        uvhttp_response_set_header(conn->response, UVHTTP_HEADER_CONTENT_TYPE,
+                                   UVHTTP_CONTENT_TYPE_TEXT);
         uvhttp_response_set_body(conn->response,
-                                 HTTP_RESPONSE_WS_HANDSHAKE_FAILED,
-                                 strlen(HTTP_RESPONSE_WS_HANDSHAKE_FAILED));
+                                 UVHTTP_MESSAGE_WS_HANDSHAKE_FAILED,
+                                 strlen(UVHTTP_MESSAGE_WS_HANDSHAKE_FAILED));
         uvhttp_response_send(conn->response);
         return UVHTTP_ERROR_IO_ERROR;
     }
 
-    uvhttp_response_set_header(conn->response, HTTP_HEADER_SEC_WEBSOCKET_ACCEPT,
+    uvhttp_response_set_header(conn->response, UVHTTP_HEADER_WEBSOCKET_ACCEPT,
                                accept);
     uvhttp_response_send(conn->response);
 
@@ -996,7 +987,7 @@ static uvhttp_error_t websocket_upgrade_handler(uvhttp_connection_t* conn,
     return uvhttp_server_register_protocol_upgrade(
         server,
         "websocket",
-        HTTP_VALUE_WEBSOCKET,
+        UVHTTP_VALUE_WEBSOCKET,
         websocket_protocol_detector,
         websocket_upgrade_handler,
         NULL

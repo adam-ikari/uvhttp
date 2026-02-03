@@ -1152,3 +1152,24 @@
 #define UVHTTP_503_RESPONSE_CONTENT_LENGTH 19
 
 #endif /* UVHTTP_CONSTANTS_H */
+
+/* ========== HTTP Protocol Upgrade ========== */
+
+/**
+ * HTTP protocol upgrade constants
+ */
+#define UVHTTP_HEADER_RETRY_AFTER "Retry-After"
+#define UVHTTP_HEADER_X_FORWARDED_FOR "X-Forwarded-For"
+#define UVHTTP_HEADER_X_REAL_IP "X-Real-IP"
+#define UVHTTP_VALUE_WEBSOCKET "websocket"
+#define UVHTTP_VALUE_ROOT_PATH "/"
+#define UVHTTP_VALUE_RETRY_AFTER_SECONDS "60"
+#define UVHTTP_VALUE_DEFAULT_IP "127.0.0.1"
+
+/**
+ * HTTP response messages
+ */
+#define UVHTTP_MESSAGE_OK "OK"
+#define UVHTTP_MESSAGE_WS_HANDSHAKE_FAILED "WebSocket handshake failed"
+#define UVHTTP_MESSAGE_WS_KEY_MISSING "Missing Sec-WebSocket-Key header"
+
