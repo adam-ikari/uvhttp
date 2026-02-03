@@ -887,7 +887,6 @@ __attribute__((unused)) static void uvhttp_ws_trigger_error_callback(
 
 /* ========== Protocol upgrade framework integration ========== */
 
-/* HTTP constant definitions (consistent with uvhttp_request.c) */
 
 /**
  * @brief WebSocket protocol detector
