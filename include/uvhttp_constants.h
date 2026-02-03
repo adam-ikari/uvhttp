@@ -800,7 +800,7 @@
 #    define UVHTTP_FEATURE_ROUTER_CACHE 1 /* Default enabled */
 #endif
 
-#define UVHTTP_ROUTER_MAX_CHILDREN 16
+#define UVHTTP_ROUTER_MAX_CHILDREN 12
 
 /* ========== TLS/SSL Configuration ========== */
 

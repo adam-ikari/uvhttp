@@ -135,13 +135,14 @@ static uint32_t find_or_create_child(uvhttp_router_t* router,
                                      const char* segment,
                                      int is_param) {
     uvhttp_route_node_t* parent = &router->node_pool[parent_index];
+    size_t seg_len = strlen(segment);
 
-    // find existing child node
+    /* Find existing child */
     for (size_t i = 0; i < parent->child_count; i++) {
         uint32_t child_index = parent->child_indices[i];
         uvhttp_route_node_t* child = &router->node_pool[child_index];
         if (strncmp(child->segment_data, segment, child->segment_len) == 0 &&
-            strlen(segment) == child->segment_len) {
+            seg_len == child->segment_len) {
             return child_index;
         }
     }
@@ -157,7 +158,6 @@ static uint32_t find_or_create_child(uvhttp_router_t* router,
     }
 
     uvhttp_route_node_t* child = &router->node_pool[child_index];
-    size_t seg_len = strlen(segment);
     child->segment_len = (uint8_t)(seg_len < 32 ? seg_len : 31);
     memcpy(child->segment_data, segment, child->segment_len);
     child->is_param = is_param;
@@ -510,7 +510,7 @@ static int match_route_node(const uvhttp_router_t* router, uint32_t node_index,
             }
             match->param_count--;  // backtrack
         } else {
-            // exact match - use segment_len for faster comparison
+            /* Exact match - use segment_len for faster comparison */
             size_t seg_len = strlen(segment);
             if (seg_len == child->segment_len &&
                 strncmp(child->segment_data, segment, seg_len) == 0) {
