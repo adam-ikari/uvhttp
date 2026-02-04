@@ -2,7 +2,7 @@ BUILD_DIR ?= build
 BUILD_TYPE ?= Release
 CMAKE_ARGS = -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON -DBUILD_WITH_TLS=ON
 
-.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild format format-check format-all format-diff docs docs-clean
+.PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild format format-check format-all format-diff docs docs-clean test-build-matrix test-all-configs
 
 all: $(BUILD_DIR)/Makefile
 	@$(MAKE) -C $(BUILD_DIR)
@@ -222,3 +222,176 @@ docs-clean:
 	@rm -rf docs/api/html docs/api/latex docs/api/xml docs/api/markdown_from_xml
 	@cd docs && rm -rf node_modules .vitepress/dist
 	@echo "✅ 文档清理完成！"
+
+# ========== 编译选项矩阵测试 ==========
+
+test-build-matrix:
+	@echo "🧪 测试编译选项矩阵..."
+	@echo "========================================"
+	@echo "测试配置："
+	@echo "  1. 最小配置（无可选特性）"
+	@echo "  2. 全功能配置"
+	@echo "  3. WebSocket 单独测试"
+	@echo "  4. TLS 单独测试"
+	@echo "  5. mimalloc 单独测试"
+	@echo "  6. Debug 模式"
+	@echo "  7. Coverage 模式"
+	@echo "========================================"
+	@echo ""
+	
+	@# 测试 1: 最小配置
+	@echo "📦 测试 1: 最小配置..."
+	@rm -rf build_test_minimal
+	@mkdir -p build_test_minimal
+	@cd build_test_minimal && \
+		cmake -DBUILD_WITH_WEBSOCKET=OFF \
+		      -DBUILD_WITH_MIMALLOC=OFF \
+		      -DBUILD_WITH_TLS=OFF \
+		      -DENABLE_DEBUG=OFF \
+		      -DENABLE_COVERAGE=OFF \
+		      -DBUILD_EXAMPLES=OFF .. && \
+		make -j$$(nproc) && \
+		ctest --output-on-failure -j$$(nproc)
+	@if [ $$? -eq 0 ]; then \
+		echo "✅ 最小配置测试通过"; \
+	else \
+		echo "❌ 最小配置测试失败"; \
+		exit 1; \
+	fi
+	@echo ""
+	
+	@# 测试 2: 全功能配置
+	@echo "📦 测试 2: 全功能配置..."
+	@rm -rf build_test_full
+	@mkdir -p build_test_full
+	@cd build_test_full && \
+		cmake -DBUILD_WITH_WEBSOCKET=ON \
+		      -DBUILD_WITH_MIMALLOC=ON \
+		      -DBUILD_WITH_TLS=ON \
+		      -DENABLE_DEBUG=OFF \
+		      -DENABLE_COVERAGE=OFF \
+		      -DBUILD_EXAMPLES=OFF .. && \
+		make -j$$(nproc) && \
+		ctest --output-on-failure -j$$(nproc)
+	@if [ $$? -eq 0 ]; then \
+		echo "✅ 全功能配置测试通过"; \
+	else \
+		echo "❌ 全功能配置测试失败"; \
+		exit 1; \
+	fi
+	@echo ""
+	
+	@# 测试 3: WebSocket 单独测试
+	@echo "📦 测试 3: WebSocket 单独测试..."
+	@rm -rf build_test_websocket
+	@mkdir -p build_test_websocket
+	@cd build_test_websocket && \
+		cmake -DBUILD_WITH_WEBSOCKET=ON \
+		      -DBUILD_WITH_MIMALLOC=OFF \
+		      -DBUILD_WITH_TLS=OFF \
+		      -DENABLE_DEBUG=OFF \
+		      -DENABLE_COVERAGE=OFF \
+		      -DBUILD_EXAMPLES=OFF .. && \
+		make -j$$(nproc) && \
+		ctest --output-on-failure -j$$(nproc)
+	@if [ $$? -eq 0 ]; then \
+		echo "✅ WebSocket 单独测试通过"; \
+	else \
+		echo "❌ WebSocket 单独测试失败"; \
+		exit 1; \
+	fi
+	@echo ""
+	
+	@# 测试 4: TLS 单独测试
+	@echo "📦 测试 4: TLS 单独测试..."
+	@rm -rf build_test_tls
+	@mkdir -p build_test_tls
+	@cd build_test_tls && \
+		cmake -DBUILD_WITH_WEBSOCKET=OFF \
+		      -DBUILD_WITH_MIMALLOC=OFF \
+		      -DBUILD_WITH_TLS=ON \
+		      -DENABLE_DEBUG=OFF \
+		      -DENABLE_COVERAGE=OFF \
+		      -DBUILD_EXAMPLES=OFF .. && \
+		make -j$$(nproc) && \
+		ctest --output-on-failure -j$$(nproc)
+	@if [ $$? -eq 0 ]; then \
+		echo "✅ TLS 单独测试通过"; \
+	else \
+		echo "❌ TLS 单独测试失败"; \
+		exit 1; \
+	fi
+	@echo ""
+	
+	@# 测试 5: mimalloc 单独测试
+	@echo "📦 测试 5: mimalloc 单独测试..."
+	@rm -rf build_test_mimalloc
+	@mkdir -p build_test_mimalloc
+	@cd build_test_mimalloc && \
+		cmake -DBUILD_WITH_WEBSOCKET=OFF \
+		      -DBUILD_WITH_MIMALLOC=ON \
+		      -DBUILD_WITH_TLS=OFF \
+		      -DENABLE_DEBUG=OFF \
+		      -DENABLE_COVERAGE=OFF \
+		      -DBUILD_EXAMPLES=OFF .. && \
+		make -j$$(nproc) && \
+		ctest --output-on-failure -j$$(nproc)
+	@if [ $$? -eq 0 ]; then \
+		echo "✅ mimalloc 单独测试通过"; \
+	else \
+		echo "❌ mimalloc 单独测试失败"; \
+		exit 1; \
+	fi
+	@echo ""
+	
+	@# 测试 6: Debug 模式
+	@echo "📦 测试 6: Debug 模式..."
+	@rm -rf build_test_debug
+	@mkdir -p build_test_debug
+	@cd build_test_debug && \
+		cmake -DBUILD_WITH_WEBSOCKET=ON \
+		      -DBUILD_WITH_MIMALLOC=ON \
+		      -DBUILD_WITH_TLS=ON \
+		      -DENABLE_DEBUG=ON \
+		      -DENABLE_COVERAGE=OFF \
+		      -DBUILD_EXAMPLES=OFF .. && \
+		make -j$$(nproc) && \
+		ctest --output-on-failure -j$$(nproc)
+	@if [ $$? -eq 0 ]; then \
+		echo "✅ Debug 模式测试通过"; \
+	else \
+		echo "❌ Debug 模式测试失败"; \
+		exit 1; \
+	fi
+	@echo ""
+	
+	@# 测试 7: Coverage 模式
+	@echo "📦 测试 7: Coverage 模式..."
+	@rm -rf build_test_coverage
+	@mkdir -p build_test_coverage
+	@cd build_test_coverage && \
+		cmake -DBUILD_WITH_WEBSOCKET=ON \
+		      -DBUILD_WITH_MIMALLOC=ON \
+		      -DBUILD_WITH_TLS=ON \
+		      -DENABLE_DEBUG=OFF \
+		      -DENABLE_COVERAGE=ON \
+		      -DBUILD_EXAMPLES=OFF .. && \
+		make -j$$(nproc) && \
+		ctest --output-on-failure -j$$(nproc)
+	@if [ $$? -eq 0 ]; then \
+		echo "✅ Coverage 模式测试通过"; \
+	else \
+		echo "❌ Coverage 模式测试失败"; \
+		exit 1; \
+	fi
+	@echo ""
+	
+	@# 清理测试构建目录
+	@rm -rf build_test_minimal build_test_full build_test_websocket build_test_tls build_test_mimalloc build_test_debug build_test_coverage
+	
+	@echo "========================================"
+	@echo "✅ 所有编译选项矩阵测试通过！"
+	@echo "========================================"
+
+test-all-configs: test-build-matrix
+	@echo "✅ 所有配置测试完成！"
