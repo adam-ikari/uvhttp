@@ -106,6 +106,7 @@ jobs:
               cd build
               # 禁用 TLS 以加快编译速度
               cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_TLS=OFF ..
+              # 更新依赖子模块并编译
               make -j\$(nproc) benchmark_rps benchmark_comprehensive
               
               # 运行性能测试
@@ -327,12 +328,15 @@ jobs:
             -w /workspace \
             ubuntu:22.04 \
             bash -c "
-              apt-get update -qq && apt-get install -y -qq build-essential cmake wrk cpupower
+              apt-get update -qq && apt-get install -y -qq build-essential cmake wrk linux-tools-common git
               swapoff -a 2>/dev/null || true
-              cpupower frequency-set -g performance 2>/dev/null || true
+              
+              # 初始化子模块
+              git config --global --add safe.directory /workspace
+              git submodule update --init --recursive || true
               
               mkdir -p build && cd build
-              cmake -DCMAKE_BUILD_TYPE=Release ..
+              cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_TLS=OFF ..
               make -j\$(nproc) benchmark_database_simulation
               
               # 启动数据库模拟服务器
@@ -369,12 +373,15 @@ jobs:
             -w /workspace \
             ubuntu:22.04 \
             bash -c "
-              apt-get update -qq && apt-get install -y -qq build-essential cmake curl cpupower
+              apt-get update -qq && apt-get install -y -qq build-essential cmake curl linux-tools-common git
               swapoff -a 2>/dev/null || true
-              cpupower frequency-set -g performance 2>/dev/null || true
+              
+              # 初始化子模块
+              git config --global --add safe.directory /workspace
+              git submodule update --init --recursive || true
               
               mkdir -p build && cd build
-              cmake -DCMAKE_BUILD_TYPE=Release ..
+              cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_TLS=OFF ..
               make -j\$(nproc) benchmark_file_upload
               
               # 启动文件上传服务器
