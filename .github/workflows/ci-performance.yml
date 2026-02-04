@@ -97,6 +97,7 @@ jobs:
               
               # 初始化子模块
               echo '=== 初始化子模块 ==='
+              git config --global --add safe.directory /workspace
               git submodule update --init --recursive || true
               
               # 编译项目
