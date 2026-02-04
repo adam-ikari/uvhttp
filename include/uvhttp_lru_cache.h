@@ -35,6 +35,7 @@ struct cache_entry {
     time_t cache_time;                            /* Cachewhen */
     size_t memory_usage;                          /* memoryUse */
     int is_compressed;                            /* whethercompress */
+    int priority;                                 /* Cache priority (0-255, higher = more important) */
 
     /* uthash hash handle */
     UT_hash_handle hh;
@@ -56,6 +57,14 @@ struct cache_manager {
     int max_entries;           /* maximum entries */
     int cache_ttl;             /* CacheTTL(seconds) */
     int batch_eviction_size;   /* Number of entries to evict per batch */
+
+    /* Eviction callback */
+    void (*eviction_callback)(cache_entry_t* entry, void* user_data);
+    void* eviction_callback_data;
+
+    /* Cache policy */
+    int enable_priority_eviction; /* Enable priority-based eviction */
+    int min_priority_threshold;   /* Minimum priority to protect from eviction */
 
     /* Statistics */
     int hit_count;      /* times */
@@ -233,6 +242,111 @@ cache_entry_t* uvhttp_lru_cache_remove_tail(cache_manager_t* cache);
  * @return rate(0.0-1.0)
  */
 double uvhttp_lru_cache_get_hit_rate(cache_manager_t* cache);
+
+/**
+ * set eviction callback
+ * Called when a cache entry is evicted
+ *
+ * @param cache Cache manager
+ * @param callback Callback function
+ * @param user_data User data passed to callback
+ */
+void uvhttp_lru_cache_set_eviction_callback(
+    cache_manager_t* cache,
+    void (*callback)(cache_entry_t* entry, void* user_data),
+    void* user_data);
+
+/**
+ * enable priority-based eviction
+ * When enabled, lower priority entries are evicted first
+ *
+ * @param cache Cache manager
+ * @param enable 1 to enable, 0 to disable
+ */
+void uvhttp_lru_cache_enable_priority_eviction(cache_manager_t* cache,
+                                               int enable);
+
+/**
+ * set minimum priority threshold
+ * Entries with priority >= threshold are protected from eviction
+ *
+ * @param cache Cache manager
+ * @param threshold Minimum priority (0-255)
+ */
+void uvhttp_lru_cache_set_min_priority_threshold(cache_manager_t* cache,
+                                                  int threshold);
+
+/**
+ * set entry priority
+ * Set priority for a specific cache entry
+ *
+ * @param cache Cache manager
+ * @param file_path File path
+ * @param priority Priority (0-255, higher = more important)
+ * @return UVHTTP_OK on success, error code otherwise
+ */
+uvhttp_error_t uvhttp_lru_cache_set_entry_priority(cache_manager_t* cache,
+                                                  const char* file_path,
+                                                  int priority);
+
+/**
+ * get entry priority
+ * Get priority for a specific cache entry
+ *
+ * @param cache Cache manager
+ * @param file_path File path
+ * @return Priority (0-255), or -1 if entry not found
+ */
+int uvhttp_lru_cache_get_entry_priority(cache_manager_t* cache,
+                                       const char* file_path);
+
+/**
+ * prewarm cache
+ * Preload a file into cache with specified priority
+ *
+ * @param cache Cache manager
+ * @param file_path File path
+ * @param content Content to cache
+ * @param content_length Content length
+ * @param mime_type MIME type
+ * @param last_modified Last modified time
+ * @param etag ETag
+ * @param priority Priority (0-255, higher = more important)
+ * @return UVHTTP_OK on success, error code otherwise
+ */
+uvhttp_error_t uvhttp_lru_cache_prewarm(
+    cache_manager_t* cache, const char* file_path, char* content,
+    size_t content_length, const char* mime_type, time_t last_modified,
+    const char* etag, int priority);
+
+/**
+ * get cache configuration
+ * Get current cache configuration
+ *
+ * @param cache Cache manager
+ * @param max_memory_usage Output: max memory usage
+ * @param max_entries Output: max entries
+ * @param cache_ttl Output: cache TTL
+ * @param batch_eviction_size Output: batch eviction size
+ * @param enable_priority_eviction Output: priority eviction enabled
+ * @param min_priority_threshold Output: min priority threshold
+ */
+void uvhttp_lru_cache_get_config(cache_manager_t* cache,
+                                 size_t* max_memory_usage, int* max_entries,
+                                 int* cache_ttl, int* batch_eviction_size,
+                                 int* enable_priority_eviction,
+                                 int* min_priority_threshold);
+
+/**
+ * force eviction
+ * Force eviction of entries regardless of cache state
+ * Useful for manual cache management
+ *
+ * @param cache Cache manager
+ * @param count Number of entries to evict
+ * @return Number of entries actually evicted
+ */
+int uvhttp_lru_cache_force_eviction(cache_manager_t* cache, int count);
 
 #    ifdef __cplusplus
 }
