@@ -608,7 +608,7 @@ uint64_t uvhttp_hash_string(const char* str);
 ```cmake
 BUILD_WITH_WEBSOCKET=ON          # 启用 WebSocket 支持
 BUILD_WITH_MIMALLOC=ON           # 启用 mimalloc 分配器
-BUILD_WITH_TLS=ON                # 启用 TLS 支持
+BUILD_WITH_HTTPS=ON                # 启用 TLS 支持
 ENABLE_DEBUG=OFF                 # 调试模式
 ENABLE_COVERAGE=OFF              # 代码覆盖率
 BUILD_EXAMPLES=ON               # 构建示例程序

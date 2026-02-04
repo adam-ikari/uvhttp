@@ -73,10 +73,10 @@ int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "</head>"
         "<body>"
         "<div class='container'>"
-        "<h1>🚀 UVHTTP 信号处理演示</h1>"
+        "<h1> UVHTTP 信号处理演示</h1>"
         "<p>本示例演示如何使用 libuv 的 uv_signal_t 来处理信号。</p>"
         "<div class='info'>"
-        "<h3>📝 信号处理方式</h3>"
+        "<h3> 信号处理方式</h3>"
         "<ul>"
         "<li><strong>SIGINT (Ctrl+C)</strong>: 优雅关闭服务器</li>"
         "<li><strong>SIGTERM</strong>: 优雅关闭服务器</li>"
@@ -95,7 +95,7 @@ int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 }
 
 int main() {
-    printf("🚀 UVHTTP 信号处理演示 (使用 libuv uv_signal_t)\n\n");
+    printf(" UVHTTP 信号处理演示 (使用 libuv uv_signal_t)\n\n");
     
     // 创建事件循环
     uv_loop_t* loop = uv_default_loop();
@@ -103,7 +103,7 @@ int main() {
     // 创建应用上下文
     app_context_t* ctx = (app_context_t*)malloc(sizeof(app_context_t));
     if (!ctx) {
-        fprintf(stderr, "❌ 无法分配应用上下文\n");
+        fprintf(stderr, " 无法分配应用上下文\n");
         return 1;
     }
     memset(ctx, 0, sizeof(app_context_t));
@@ -112,12 +112,12 @@ int main() {
     // 创建服务器
     uvhttp_error_t server_result = uvhttp_server_new(loop, &ctx->server);
     if (server_result != UVHTTP_OK) {
-        fprintf(stderr, "❌ 服务器创建失败: %s\n", uvhttp_error_string(server_result));
+        fprintf(stderr, " 服务器创建失败: %s\n", uvhttp_error_string(server_result));
         free(ctx);
         return 1;
     }
     if (!ctx->server) {
-        fprintf(stderr, "❌ 服务器创建失败\n");
+        fprintf(stderr, " 服务器创建失败\n");
         free(ctx);
         return 1;
     }
@@ -126,7 +126,7 @@ int main() {
     uvhttp_router_t* router = NULL;
     uvhttp_error_t result = uvhttp_router_new(&router);
     if (result != UVHTTP_OK) {
-        fprintf(stderr, "❌ 路由器创建失败: %s\n", uvhttp_error_string(result));
+        fprintf(stderr, " 路由器创建失败: %s\n", uvhttp_error_string(result));
         uvhttp_server_free(ctx->server);
         free(ctx);
         return 1;
@@ -140,19 +140,19 @@ int main() {
     ctx->sigint.data = ctx;
     uv_signal_init(loop, &ctx->sigint);
     uv_signal_start(&ctx->sigint, on_sigint, SIGINT);
-    printf("✅ SIGINT 信号处理器已注册\n");
+    printf(" SIGINT 信号处理器已注册\n");
     
     // 初始化 SIGTERM 信号处理器
     ctx->sigterm.data = ctx;
     uv_signal_init(loop, &ctx->sigterm);
     uv_signal_start(&ctx->sigterm, on_sigterm, SIGTERM);
-    printf("✅ SIGTERM 信号处理器已注册\n");
+    printf(" SIGTERM 信号处理器已注册\n");
     
     // 启动服务器
     printf("\n🌐 启动服务器...\n");
     int listen_result = uvhttp_server_listen(ctx->server, "0.0.0.0", 8082);
     if (listen_result != 0) {
-        fprintf(stderr, "❌ 服务器启动失败: %d\n", listen_result);
+        fprintf(stderr, " 服务器启动失败: %d\n", listen_result);
         uv_signal_stop(&ctx->sigint);
         uv_signal_stop(&ctx->sigterm);
         uvhttp_server_free(ctx->server);
@@ -160,7 +160,7 @@ int main() {
         return 1;
     }
     
-    printf("✅ 服务器启动成功！\n");
+    printf(" 服务器启动成功！\n");
     printf("📍 访问地址: http://localhost:8082\n");
     printf("⏹️  按 Ctrl+C 或发送 SIGTERM 信号停止服务器\n\n");
     
@@ -173,17 +173,17 @@ int main() {
     // 停止信号处理器
     uv_signal_stop(&ctx->sigint);
     uv_signal_stop(&ctx->sigterm);
-    printf("✅ 信号处理器已停止\n");
+    printf(" 信号处理器已停止\n");
     
     // 清理服务器
     if (ctx->server) {
         uvhttp_server_free(ctx->server);
     }
-    printf("✅ 服务器已释放\n");
+    printf(" 服务器已释放\n");
     
     // 清理上下文
     free(ctx);
-    printf("✅ 上下文已释放\n");
+    printf(" 上下文已释放\n");
     
     printf("\n👋 服务器已停止\n");
     return 0;

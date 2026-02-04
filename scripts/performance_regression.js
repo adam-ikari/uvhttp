@@ -269,7 +269,7 @@ class ReportGenerator {
 
     // Add regressions
     if (report.regressions.length > 0) {
-      md += '## ❌ Regressions Detected\n\n';
+      md += '##  Regressions Detected\n\n';
       md += '| Scenario | Metric | Baseline | Current | Change |\n';
       md += '|----------|--------|----------|---------|--------|\n';
       for (const reg of report.regressions) {
@@ -283,7 +283,7 @@ class ReportGenerator {
 
     // Add warnings
     if (report.warnings.length > 0) {
-      md += '## ⚠️ Warnings\n\n';
+      md += '##  Warnings\n\n';
       md += '| Scenario | Metric | Baseline | Current | Change |\n';
       md += '|----------|--------|----------|---------|--------|\n';
       for (const warn of report.warnings) {
@@ -296,7 +296,7 @@ class ReportGenerator {
 
     // Add improvements
     if (report.improvements.length > 0) {
-      md += '## ✅ Improvements\n\n';
+      md += '##  Improvements\n\n';
       md += '| Scenario | Metric | Baseline | Current | Change |\n';
       md += '|----------|--------|----------|---------|--------|\n';
       for (const imp of report.improvements) {
@@ -315,13 +315,13 @@ class ReportGenerator {
 
     // Add overall status
     if (report.hasFailure()) {
-      md += '\n**Overall Status**: ❌ FAILED - Performance regression detected\n';
+      md += '\n**Overall Status**:  FAILED - Performance regression detected\n';
     } else if (report.hasWarning()) {
-      md += '\n**Overall Status**: ⚠️ WARNING - Performance degradation detected\n';
+      md += '\n**Overall Status**:  WARNING - Performance degradation detected\n';
     } else if (report.hasImprovement()) {
-      md += '\n**Overall Status**: ✅ PASSED - Performance improvements detected\n';
+      md += '\n**Overall Status**:  PASSED - Performance improvements detected\n';
     } else {
-      md += '\n**Overall Status**: ✅ PASSED - No significant changes\n';
+      md += '\n**Overall Status**:  PASSED - No significant changes\n';
     }
 
     return md;

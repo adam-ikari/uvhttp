@@ -299,22 +299,22 @@ static void print_query_stats(query_stats_t* stats) {
 
         /* 平均延迟目标: < 50ms */
         if (avg_latency_ms < 50.0) {
-            printf("✅ 平均延迟: 优秀 (%.3f ms < 50 ms)\n", avg_latency_ms);
+            printf(" 平均延迟: 优秀 (%.3f ms < 50 ms)\n", avg_latency_ms);
         } else if (avg_latency_ms < 100.0) {
-            printf("⚠️  平均延迟: 良好 (%.3f ms < 100 ms)\n", avg_latency_ms);
+            printf("  平均延迟: 良好 (%.3f ms < 100 ms)\n", avg_latency_ms);
         } else {
-            printf("❌ 平均延迟: 需要改进 (%.3f ms >= 100 ms)\n", avg_latency_ms);
+            printf(" 平均延迟: 需要改进 (%.3f ms >= 100 ms)\n", avg_latency_ms);
         }
 
         /* 错误率目标: < 0.1% */
         if (stats->total_queries > 0) {
             double error_rate = (double)stats->failed_queries / stats->total_queries * 100.0;
             if (error_rate < 0.1) {
-                printf("✅ 错误率: 优秀 (%.2f%% < 0.1%%)\n", error_rate);
+                printf(" 错误率: 优秀 (%.2f%% < 0.1%%)\n", error_rate);
             } else if (error_rate < 1.0) {
-                printf("⚠️  错误率: 良好 (%.2f%% < 1%%)\n", error_rate);
+                printf("  错误率: 良好 (%.2f%% < 1%%)\n", error_rate);
             } else {
-                printf("❌ 错误率: 需要改进 (%.2f%% >= 1%%)\n", error_rate);
+                printf(" 错误率: 需要改进 (%.2f%% >= 1%%)\n", error_rate);
             }
         }
     }

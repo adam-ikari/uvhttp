@@ -1154,13 +1154,6 @@ uvhttp_error_t uvhttp_server_reset_rate_limit_client(uvhttp_server_t* server,
 }
 #endif /* UVHTTP_FEATURE_RATE_LIMIT */
 
-#if !UVHTTP_FEATURE_TLS
-// null TLS function definition, used when TLS is disabled for linking
-void uvhttp_tls_context_free(void* ctx) {
-    (void)ctx;
-}
-#endif
-
 // ========== WebSocket connectionmanageimplement ==========
 
 #if UVHTTP_FEATURE_WEBSOCKET

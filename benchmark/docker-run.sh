@@ -116,13 +116,13 @@ if [ "$REGRESSION_ONLY" = true ]; then
                 --fail-on-regression || EXIT_CODE=\$?
             
             if [ \"\${EXIT_CODE:-0}\" = \"1\" ]; then
-                echo '❌ 检测到性能回归！'
+                echo ' 检测到性能回归！'
                 exit 1
             elif [ \"\${EXIT_CODE:-0}\" = \"2\" ]; then
-                echo '⚠️  检测到性能警告'
+                echo '  检测到性能警告'
                 exit 0
             else
-                echo '✅ 性能检测通过'
+                echo ' 性能检测通过'
             fi
         else
             echo '错误: 没有找到测试结果文件 /tmp/results.csv'

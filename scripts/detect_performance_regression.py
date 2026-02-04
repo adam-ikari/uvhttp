@@ -309,7 +309,7 @@ class PerformanceRegressionDetector:
 
         # 打印回归
         if report['summary']['total_regressions'] > 0:
-            print("❌ 性能回归 (需要修复):")
+            print(" 性能回归 (需要修复):")
             print("-" * 80)
             for regression in report['regressions']:
                 direction = "下降" if regression['higher_is_better'] else "增加"
@@ -320,11 +320,11 @@ class PerformanceRegressionDetector:
                 print(f"  阈值: {regression['threshold']:.2f}%")
                 print()
         else:
-            print("✅ 未检测到性能回归")
+            print(" 未检测到性能回归")
 
         # 打印警告
         if report['summary']['total_warnings'] > 0:
-            print("\n⚠️  性能警告 (需要关注):")
+            print("\n  性能警告 (需要关注):")
             print("-" * 80)
             for warning in report['warnings']:
                 direction = "下降" if warning['higher_is_better'] else "增加"
@@ -362,13 +362,13 @@ class PerformanceRegressionDetector:
         summary = self._generate_summary()
 
         if summary['has_regression']:
-            print("\n❌ 检测到性能回归，退出码: 1")
+            print("\n 检测到性能回归，退出码: 1")
             sys.exit(1)
         elif summary['has_warning']:
-            print("\n⚠️  检测到性能警告，退出码: 2")
+            print("\n  检测到性能警告，退出码: 2")
             sys.exit(2)
         else:
-            print("\n✅ 性能检测通过，退出码: 0")
+            print("\n 性能检测通过，退出码: 0")
             sys.exit(0)
 
 

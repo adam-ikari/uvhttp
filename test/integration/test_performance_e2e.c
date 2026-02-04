@@ -192,7 +192,7 @@ static int index_handler(uvhttp_request_t* request, uvhttp_response_t* response)
         "</style>"
         "</head>"
         "<body>"
-        "<h1>⚡ Performance End-to-End Test Server</h1>"
+        "<h1> Performance End-to-End Test Server</h1>"
         "<p>测试服务器在高并发场景下的性能表现</p>"
         ""
         "<h2>测试端点：</h2>"

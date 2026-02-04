@@ -121,7 +121,7 @@ async function updateBaselineFile(baselineFile, newBaseline, backup = true) {
     // Write new baseline
     await fs.writeFile(baselineFile, JSON.stringify(newBaseline, null, 2), 'utf-8');
     
-    console.log(`✅ Baseline updated: ${baselineFile}`);
+    console.log(` Baseline updated: ${baselineFile}`);
     console.log(`   Version: ${newBaseline.version}`);
     console.log(`   Date: ${newBaseline.date}`);
     
@@ -160,7 +160,7 @@ async function updateHistoryFile(historyFile, newBaseline, maxEntries = 30) {
     // Write history file
     await fs.writeFile(historyFile, JSON.stringify(history, null, 2), 'utf-8');
     
-    console.log(`✅ History updated: ${historyFile} (${history.length} entries)`);
+    console.log(` History updated: ${historyFile} (${history.length} entries)`);
     
     return true;
   } catch (error) {
@@ -346,7 +346,7 @@ async function main() {
     await updateHistoryFile(options.history, newBaseline, options.maxHistory);
   }
   
-  console.log('\n✅ Baseline update completed successfully');
+  console.log('\n Baseline update completed successfully');
 }
 
 main().catch(error => {

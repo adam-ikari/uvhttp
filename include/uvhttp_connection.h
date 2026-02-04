@@ -147,15 +147,6 @@ void uvhttp_connection_set_state(uvhttp_connection_t* conn,
                                  uvhttp_connection_state_t state);
 const char* uvhttp_connection_get_state_string(uvhttp_connection_state_t state);
 
-/* WebSockethandleFunction(internal) */
-#if UVHTTP_FEATURE_WEBSOCKET
-uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
-    uvhttp_connection_t* conn, const char* ws_key);
-void uvhttp_connection_switch_to_websocket(uvhttp_connection_t* conn);
-void uvhttp_connection_websocket_read(uv_stream_t* stream, ssize_t nread,
-                                      const uv_buf_t* buf);
-void uvhttp_connection_websocket_close(uvhttp_connection_t* conn);
-
 /**
  * @brief ConnectionTimeoutwhen
  *
@@ -189,6 +180,15 @@ uvhttp_error_t uvhttp_connection_start_timeout(uvhttp_connection_t* conn);
  */
 uvhttp_error_t uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn,
                                                       int timeout_seconds);
+
+/* WebSockethandleFunction(internal) */
+#if UVHTTP_FEATURE_WEBSOCKET
+uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
+    uvhttp_connection_t* conn, const char* ws_key);
+void uvhttp_connection_switch_to_websocket(uvhttp_connection_t* conn);
+void uvhttp_connection_websocket_read(uv_stream_t* stream, ssize_t nread,
+                                      const uv_buf_t* buf);
+void uvhttp_connection_websocket_close(uvhttp_connection_t* conn);
 
 #endif /* UVHTTP_FEATURE_WEBSOCKET */
 

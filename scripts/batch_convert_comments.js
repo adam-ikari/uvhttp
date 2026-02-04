@@ -759,7 +759,7 @@ function main() {
         processFile(file);
     }
     
-    console.log('\n✅ All files processed');
+    console.log('\n All files processed');
 }
 
 main();

@@ -75,7 +75,7 @@ set_target_properties(libuv PROPERTIES
 # ============================================================================
 # mbedtls
 # ============================================================================
-if(BUILD_WITH_TLS)
+if(BUILD_WITH_HTTPS)
     message(STATUS "Configuring mbedtls...")
 
     # 检查 mbedtls 是否已经构建
@@ -423,7 +423,7 @@ message(STATUS "")
 
 # 核心依赖（uvhttp 库必需）
 set(UVHTTP_CORE_DEPS libuv xxhash llhttp)
-if(BUILD_WITH_TLS)
+if(BUILD_WITH_HTTPS)
     list(APPEND UVHTTP_CORE_DEPS mbedtls)
 endif()
 

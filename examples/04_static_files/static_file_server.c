@@ -78,7 +78,7 @@ int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         "<body>\n"
         "    <div class=\"container\">\n"
         "        <div class=\"header\">\n"
-        "            <h1>🚀 UVHTTP 静态文件服务器</h1>\n"
+        "            <h1> UVHTTP 静态文件服务器</h1>\n"
         "            <p>高性能、安全的静态文件服务</p>\n"
         "        </div>\n"
         "        <div class=\"links\">\n"
@@ -91,12 +91,12 @@ int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         "        <div style=\"margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 5px;\">\n"
         "            <h3>功能特性：</h3>\n"
         "            <ul>\n"
-        "                <li>✅ 自动MIME类型检测</li>\n"
-        "                <li>✅ 文件缓存机制</li>\n"
-        "                <li>✅ 条件请求支持 (ETag, Last-Modified)</li>\n"
-        "                <li>✅ 路径安全验证</li>\n"
-        "                <li>✅ 目录列表功能</li>\n"
-        "                <li>✅ 压缩支持 (预留)</li>\n"
+        "                <li> 自动MIME类型检测</li>\n"
+        "                <li> 文件缓存机制</li>\n"
+        "                <li> 条件请求支持 (ETag, Last-Modified)</li>\n"
+        "                <li> 路径安全验证</li>\n"
+        "                <li> 目录列表功能</li>\n"
+        "                <li> 压缩支持 (预留)</li>\n"
         "            </ul>\n"
         "        </div>\n"
         "    </div>\n"
@@ -270,7 +270,7 @@ int main() {
         return 1;
     }
     
-    printf("🚀 静态文件服务器启动成功！\n");
+    printf(" 静态文件服务器启动成功！\n");
     printf("📍 服务地址: http://localhost:8080\n");
     printf("📁 静态文件目录: %s\n", static_config.root_directory);
     printf("📄 测试页面: http://localhost:8080/test.html\n");

@@ -90,7 +90,7 @@ cmake -DBUILD_WITH_WEBSOCKET=ON ..
 cmake -DBUILD_WITH_MIMALLOC=ON ..
 
 # 启用 TLS 支持
-cmake -DBUILD_WITH_TLS=ON ..
+cmake -DBUILD_WITH_HTTPS=ON ..
 
 # Debug 模式
 cmake -DENABLE_DEBUG=ON ..

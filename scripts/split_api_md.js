@@ -55,5 +55,5 @@ ${structs.map(s => `- [\`${s.name}\`](./structs/${s.name.toLowerCase().replace(/
 
 fs.writeFileSync(apiFile, indexContent, 'utf-8');
 
-console.log(`✅ 已拆分为 ${structs.length} 个结构体文件`);
+console.log(` 已拆分为 ${structs.length} 个结构体文件`);
 console.log(`📁 输出目录: ${outputDir}`);

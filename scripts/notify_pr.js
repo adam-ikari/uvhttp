@@ -112,21 +112,21 @@ function generatePRComment(workflowName, conclusion, runId, runNumber, performan
   
   // Status icon
   if (conclusion === 'success') {
-    comment += `**Status**: ✅ Passed\n\n`;
+    comment += `**Status**:  Passed\n\n`;
   } else {
-    comment += `**Status**: ❌ Failed\n\n`;
+    comment += `**Status**:  Failed\n\n`;
   }
   
   // Performance comparison
   if (performanceComparison) {
-    comment += `### 📊 Performance Comparison\n\n`;
+    comment += `###  Performance Comparison\n\n`;
     
     if (performanceComparison.regression) {
-      comment += `⚠️ **Performance Regression Detected**\n\n`;
+      comment += ` **Performance Regression Detected**\n\n`;
     } else if (performanceComparison.improvement) {
       comment += `✨ **Performance Improvement Detected**\n\n`;
     } else {
-      comment += `✅ **Performance Stable**\n\n`;
+      comment += ` **Performance Stable**\n\n`;
     }
     
     comment += `| Metric | Baseline | Current | Change |\n`;
@@ -152,8 +152,8 @@ function generatePRComment(workflowName, conclusion, runId, runNumber, performan
   if (testResults) {
     comment += `### 🧪 Test Results\n\n`;
     comment += `- Total: ${testResults.total || 0}\n`;
-    comment += `- Passed: ${testResults.passed || 0} ✅\n`;
-    comment += `- Failed: ${testResults.failed || 0} ❌\n`;
+    comment += `- Passed: ${testResults.passed || 0} \n`;
+    comment += `- Failed: ${testResults.failed || 0} \n`;
     comment += `- Skipped: ${testResults.skipped || 0} ⏭️\n\n`;
   }
   

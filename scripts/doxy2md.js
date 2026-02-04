@@ -254,13 +254,13 @@ async function main() {
   const indexContent = nunjucks.render('index.njk', { structs, functions, defines });
   fs.writeFileSync(path.join(process.cwd(), 'docs/api/api.md'), indexContent, 'utf-8');
   
-  console.log(`✅ 已生成 ${structs.length} 个结构体文件`);
-  console.log(`✅ 已生成 ${functions.length} 个函数文件`);
-  console.log(`✅ 已生成 ${defines.length} 个宏定义文件`);
+  console.log(` 已生成 ${structs.length} 个结构体文件`);
+  console.log(` 已生成 ${functions.length} 个函数文件`);
+  console.log(` 已生成 ${defines.length} 个宏定义文件`);
   console.log(`📁 输出目录: structs/, functions/, defines/`);
 }
 
 main().catch(err => {
-  console.error('❌ 错误:', err);
+  console.error(' 错误:', err);
   process.exit(1);
 });

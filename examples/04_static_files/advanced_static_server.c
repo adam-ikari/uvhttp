@@ -102,18 +102,18 @@ int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         "</head>\n"
         "<body>\n"
         "    <div class=\"container\">\n"
-        "        <h1>🚀 UVHTTP 静态文件服务演示</h1>\n"
+        "        <h1> UVHTTP 静态文件服务演示</h1>\n"
         "        <p>这个演示展示了 UVHTTP 的集成文件读取功能，包括：</p>\n"
         "        <ul>\n"
         "            <li>🔄 智能同步/异步文件读取</li>\n"
-        "            <li>📊 性能统计和监控</li>\n"
+        "            <li> 性能统计和监控</li>\n"
         "            <li>💾 内存缓存机制</li>\n"
         "            <li>🌊 流式文件传输</li>\n"
-        "            <li>🔒 安全的路径解析</li>\n"
+        "            <li> 安全的路径解析</li>\n"
         "        </ul>\n"
         "        \n"
         "        <div class=\"stats\">\n"
-        "            <h2>📈 服务统计</h2>\n"
+        "            <h2> 服务统计</h2>\n"
         "            <p><a href=\"/api/stats\">查看详细统计信息</a></p>\n"
         "        </div>\n"
         "        \n"
@@ -179,7 +179,7 @@ int create_test_files() {
         fclose(f);
     }
     
-    printf("✅ 测试文件已创建在 ./public/ 目录下\n");
+    printf(" 测试文件已创建在 ./public/ 目录下\n");
     return 0;
 }
 
@@ -195,21 +195,21 @@ int main(int argc, char* argv[]) {
         port = atoi(argv[2]);
     }
     
-    printf("🚀 UVHTTP 静态文件服务器\n");
+    printf(" UVHTTP 静态文件服务器\n");
     printf("📁 根目录: %s\n", root_dir);
     printf("🔌 端口: %d\n\n", port);
     
     /* 创建事件循环 */
     uv_loop_t* loop = uv_default_loop();
     if (!loop) {
-        fprintf(stderr, "❌ 无法创建事件循环\n");
+        fprintf(stderr, " 无法创建事件循环\n");
         return 1;
     }
     
     /* 创建应用上下文 */
     app_context_t* ctx = (app_context_t*)uvhttp_alloc(sizeof(app_context_t));
     if (!ctx) {
-        fprintf(stderr, "❌ 无法分配应用上下文\n");
+        fprintf(stderr, " 无法分配应用上下文\n");
         return 1;
     }
     memset(ctx, 0, sizeof(app_context_t));
@@ -248,14 +248,14 @@ int main(int argc, char* argv[]) {
 
     uvhttp_error_t result = uvhttp_static_create(&static_config, &ctx->static_ctx);
     if (result != UVHTTP_OK || !ctx->static_ctx) {
-        fprintf(stderr, "❌ 无法创建静态文件服务上下文\n");
+        fprintf(stderr, " 无法创建静态文件服务上下文\n");
         uvhttp_free(ctx);
         return 1;
     }
     
     /* 初始化异步文件读取 */
     if (0) { /* 异步初始化暂未实现 */
-        fprintf(stderr, "⚠️  异步文件读取初始化失败，将使用同步读取\n");
+        fprintf(stderr, "  异步文件读取初始化失败，将使用同步读取\n");
     }
     
     /* 创建路由 */
@@ -283,7 +283,7 @@ int main(int argc, char* argv[]) {
     
     /* 启动服务器 */
     if (uvhttp_server_listen(ctx->server, "0.0.0.0", port) != 0) {
-        fprintf(stderr, "❌ 无法启动服务器\n");
+        fprintf(stderr, " 无法启动服务器\n");
         uvhttp_static_free(ctx->static_ctx);
         uvhttp_server_free(ctx->server);
         uvhttp_free(ctx);
@@ -291,7 +291,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    printf("✅ 服务器已启动！\n");
+    printf(" 服务器已启动！\n");
     printf("🌐 访问地址：\n");
     printf("   http://localhost:%d/ - 主页\n", port);
     printf("   http://localhost:%d/api/stats - 统计信息\n", port);
@@ -310,7 +310,7 @@ int main(int argc, char* argv[]) {
     printf("\n🧹 正在清理资源...\n");
     
     if (ctx->static_ctx) {
-        printf("\n📊 静态文件服务已停止\n");
+        printf("\n 静态文件服务已停止\n");
         uvhttp_static_free(ctx->static_ctx);
     }
     
@@ -321,6 +321,6 @@ int main(int argc, char* argv[]) {
     uvhttp_free(ctx);
     
     
-    printf("✅ 资源清理完成\n");
+    printf(" 资源清理完成\n");
     return 0;
 }

@@ -61,7 +61,7 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "</head>\n"
         "<body>\n"
         "    <div class='container'>\n"
-        "        <h1>🚀 UVHTTP 路由示例</h1>\n"
+        "        <h1> UVHTTP 路由示例</h1>\n"
         "        <p>欢迎使用 UVHTTP！这是一个简单的路由示例。</p>\n"
         "        \n"
         "        <h2>可用的路由：</h2>\n"

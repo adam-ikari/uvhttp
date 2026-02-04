@@ -78,7 +78,7 @@ uvhttp_result_t home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "</head>"
         "<body>"
         "<div class='container'>"
-        "<h1>🚀 UVHTTP 统一响应处理演示</h1>"
+        "<h1> UVHTTP 统一响应处理演示</h1>"
         "<p>本演示展示如何使用统一的响应处理方式，由使用者控制 Content-Type 设置。</p>"
         
         "<div class='new'>"
@@ -235,8 +235,8 @@ void signal_handler(int sig) {
 }
 
 int main() {
-    printf("🚀 UVHTTP 统一响应处理演示\n");
-    printf("📝 演示如何使用统一的响应处理方式，自动检测内容类型\n\n");
+    printf(" UVHTTP 统一响应处理演示\n");
+    printf(" 演示如何使用统一的响应处理方式，自动检测内容类型\n\n");
     
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
@@ -258,7 +258,7 @@ int main() {
         return 1;
     }
     if (!g_app_context->server) {
-        fprintf(stderr, "❌ 服务器创建失败\n");
+        fprintf(stderr, " 服务器创建失败\n");
         free(g_app_context);
         return 1;
     }
@@ -289,16 +289,16 @@ int main() {
     int listen_result = uvhttp_server_listen(g_app_context->server, "0.0.0.0", 8081);
     (void)listen_result;
     if (result != 0) {
-        fprintf(stderr, "❌ 服务器启动失败 (错误码: %d)\n", result);
+        fprintf(stderr, " 服务器启动失败 (错误码: %d)\n", result);
         uvhttp_server_free(g_app_context->server);
         free(g_app_context);
         return 1;
     }
     
-    printf("✅ 统一响应处理演示服务器启动成功\n");
+    printf(" 统一响应处理演示服务器启动成功\n");
     printf("🌐 服务器运行在 http://localhost:8081\n");
     printf("📖 访问主页查看完整演示文档\n");
-    printf("🎯 尝试不同的 API 端点体验统一响应处理\n");
+    printf(" 尝试不同的 API 端点体验统一响应处理\n");
     printf("⏹️  按 Ctrl+C 停止服务器\n\n");
     
     // 运行事件循环

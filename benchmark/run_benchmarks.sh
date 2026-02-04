@@ -105,7 +105,7 @@ check_test_environment() {
             log_info "  设置命令: sudo cpupower frequency-set -g performance"
             issues_found=$((issues_found + 1))
         else
-            log_success "  CPU 频率调节器: performance ✅"
+            log_success "  CPU 频率调节器: performance "
         fi
     else
         log_warning "  cpupower 未安装，无法检查 CPU 频率调节器"
@@ -121,9 +121,9 @@ check_test_environment() {
         log_info "  禁用 Swap: sudo swapoff -a"
         issues_found=$((issues_found + 1))
     elif [ "$swap_total" -gt 0 ]; then
-        log_success "  Swap 已配置但未使用 ✅"
+        log_success "  Swap 已配置但未使用 "
     else
-        log_success "  Swap 未配置 ✅"
+        log_success "  Swap 未配置 "
     fi
     
     # 3. 检查文件描述符限制
@@ -136,7 +136,7 @@ check_test_environment() {
         log_info "  永久设置: 在 /etc/security/limits.conf 添加 '* soft nofile $required_limit'"
         issues_found=$((issues_found + 1))
     else
-        log_success "  文件描述符限制: $soft_limit ✅"
+        log_success "  文件描述符限制: $soft_limit "
     fi
     
     # 4. 检查系统负载
@@ -151,7 +151,7 @@ check_test_environment() {
         log_info "  建议在系统负载较低时运行测试"
         issues_found=$((issues_found + 1))
     else
-        log_success "  系统负载: $load_1min ✅"
+        log_success "  系统负载: $load_1min "
     fi
     
     # 5. 检查可用内存
@@ -162,7 +162,7 @@ check_test_environment() {
         log_warning "  可用内存不足 (${available_mem}MB)，建议至少 ${required_mem}MB"
         issues_found=$((issues_found + 1))
     else
-        log_success "  可用内存: ${available_mem}MB ✅"
+        log_success "  可用内存: ${available_mem}MB "
     fi
     
     # 6. 检查网络配置
@@ -173,7 +173,7 @@ check_test_environment() {
         log_info "  设置命令: sudo sysctl -w net.core.somaxconn=1024"
         issues_found=$((issues_found + 1))
     else
-        log_success "  TCP backlog: $tcp_backlog ✅"
+        log_success "  TCP backlog: $tcp_backlog "
     fi
     
     # 7. 检查端口占用
@@ -184,7 +184,7 @@ check_test_environment() {
             log_info "  查看占用: lsof -i :$DEFAULT_PORT"
             issues_found=$((issues_found + 1))
         else
-            log_success "  端口 $DEFAULT_PORT 可用 ✅"
+            log_success "  端口 $DEFAULT_PORT 可用 "
         fi
     elif command -v ss &> /dev/null; then
         if ss -tuln | grep -q ":$DEFAULT_PORT "; then
@@ -192,7 +192,7 @@ check_test_environment() {
             log_info "  查看占用: ss -tuln | grep $DEFAULT_PORT"
             issues_found=$((issues_found + 1))
         else
-            log_success "  端口 $DEFAULT_PORT 可用 ✅"
+            log_success "  端口 $DEFAULT_PORT 可用 "
         fi
     else
         log_warning "  无法检查端口占用（lsof 和 ss 都未安装）"
@@ -204,7 +204,7 @@ check_test_environment() {
         log_info "是否继续测试？(Ctrl+C 取消，回车继续)"
         read -r
     else
-        log_success "测试环境检查通过 ✅"
+        log_success "测试环境检查通过 "
     fi
 }
 
@@ -509,11 +509,11 @@ EOF
     if [ -n "$rps2" ] && [ -n "$rps1" ]; then
         local burst_ratio=$(echo "scale=2; $rps2 / $rps1" | bc 2>/dev/null || echo "0")
         if (( $(echo "$burst_ratio >= 0.8" | bc -l 2>/dev/null || echo 0) )); then
-            echo "✅ 突发响应能力优秀（突发响应比: ${burst_ratio}x）" >> "$burst_report"
+            echo " 突发响应能力优秀（突发响应比: ${burst_ratio}x）" >> "$burst_report"
         elif (( $(echo "$burst_ratio >= 0.5" | bc -l 2>/dev/null || echo 0) )); then
-            echo "⚠️  突发响应能力良好（突发响应比: ${burst_ratio}x）" >> "$burst_report"
+            echo "  突发响应能力良好（突发响应比: ${burst_ratio}x）" >> "$burst_report"
         else
-            echo "❌ 突发响应能力需要改进（突发响应比: ${burst_ratio}x）" >> "$burst_report"
+            echo " 突发响应能力需要改进（突发响应比: ${burst_ratio}x）" >> "$burst_report"
         fi
     fi
     

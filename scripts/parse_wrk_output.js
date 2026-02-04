@@ -146,7 +146,7 @@ async function main() {
   // Write to file
   await fs.writeFile(outputFile, JSON.stringify(performanceData, null, 2), 'utf-8');
   
-  console.log(`✅ Performance data written to ${outputFile}`);
+  console.log(` Performance data written to ${outputFile}`);
   console.log(`   RPS values: ${rpsValues.map(v => v.toFixed(2)).join(', ')}`);
 }
 

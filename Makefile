@@ -1,6 +1,6 @@
 BUILD_DIR ?= build
 BUILD_TYPE ?= Release
-CMAKE_ARGS = -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON -DBUILD_WITH_TLS=ON
+CMAKE_ARGS = -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON -DBUILD_WITH_HTTPS=ON
 
 .PHONY: all clean clean-all clean-build clean-deps clean-temp clean-coverage clean-performance test help cppcheck coverage coverage-clean examples build build-deps rebuild format format-check format-all format-diff docs docs-clean test-build-matrix test-all-configs
 
@@ -8,7 +8,7 @@ all: $(BUILD_DIR)/Makefile
 	@$(MAKE) -C $(BUILD_DIR)
 
 build: build-deps all
-	@echo "✅ 构建完成！"
+	@echo " 构建完成！"
 	@echo "可执行文件位置: $(BUILD_DIR)/dist/bin/"
 
 build-deps:
@@ -20,7 +20,7 @@ build-deps:
 	@cd deps/cjson && mkdir -p build && cd build && cmake .. && $(MAKE) -j$$(nproc) 2>/dev/null || true
 	@$(MAKE) -C deps/mimalloc -j$$(nproc) 2>/dev/null || true
 	@$(MAKE) -C deps/googletest/build -j$$(nproc) 2>/dev/null || true
-	@echo "✅ 依赖编译完成！"
+	@echo " 依赖编译完成！"
 
 $(BUILD_DIR)/Makefile:
 	@mkdir -p $(BUILD_DIR) && cd $(BUILD_DIR) && cmake $(CMAKE_ARGS) ..
@@ -43,19 +43,19 @@ clean-deps:
 clean-temp:
 	@echo "🧹 清理临时文件..."
 	@find . -name "*.tmp" -o -name "*.temp" -o -name "*.log" -o -name "*.orig" -o -name "*.rej" -o -name "*.swp" -o -name "*.swo" -o -name "*~" -o -name ".DS_Store" -delete 2>/dev/null || true
-	@echo "✅ 临时文件清理完成！"
+	@echo " 临时文件清理完成！"
 
 clean-coverage:
 	@echo "🧹 清理覆盖率文件..."
 	@find . -name "*.gcov" -o -name "*.gcda" -o -name "*.gcno" -o -name "coverage.info" -delete 2>/dev/null || true
 	@rm -rf coverage_html 2>/dev/null || true
-	@echo "✅ 覆盖率文件清理完成！"
+	@echo " 覆盖率文件清理完成！"
 
 clean-performance:
 	@echo "🧹 清理性能测试结果..."
 	@rm -rf test/performance/results/* 2>/dev/null || true
 	@find . -name "stress_test_results_*" -type d -exec rm -rf {} + 2>/dev/null || true
-	@echo "✅ 性能测试结果清理完成！"
+	@echo " 性能测试结果清理完成！"
 
 test: all
 	@echo "🧪 运行测试..."
@@ -77,13 +77,13 @@ coverage:
 	@cd $(BUILD_DIR) && for test in test_allocator test_async_file_full_coverage test_config_full_coverage test_connection_extended_coverage test_connection_full_coverage test_context_full_coverage test_context_simple test_cors_middleware_full_coverage test_deps_full_coverage test_error_coverage test_error_full_coverage test_error_handler_full_coverage test_error_helpers_full_coverage test_hash_full_coverage test_lru_cache_full_coverage test_mempool_full_coverage test_middleware_full_coverage test_network_full_coverage test_request_full_coverage test_request_null_coverage test_response_full_coverage test_router_full_coverage test_sendfile_timeout test_server_full_coverage test_static_coverage test_static_full_coverage test_tls_full_coverage test_tls_null_coverage test_utils_full_coverage test_validation_full_coverage test_websocket_full_coverage test_websocket_null_coverage test_whitelist_hash; do \
 		./dist/bin/$$test > /dev/null 2>&1 || true; \
 	done
-	@echo "📊 生成覆盖率报告..."
+	@echo " 生成覆盖率报告..."
 	@cd $(BUILD_DIR) && lcov --capture --directory . --output-file coverage.info --base-directory ..
 	@cd $(BUILD_DIR) && lcov --remove coverage.info '*/deps/*' --output-file coverage.info
 	@cd $(BUILD_DIR) && lcov --remove coverage.info '*/test/*' --output-file coverage.info
 	@cd $(BUILD_DIR) && lcov --list coverage.info
 	@cd $(BUILD_DIR) && genhtml coverage.info --output-directory coverage_html --title "UVHTTP Code Coverage"
-	@echo "✅ 覆盖率报告已生成: $(BUILD_DIR)/coverage_html/index.html"
+	@echo " 覆盖率报告已生成: $(BUILD_DIR)/coverage_html/index.html"
 
 coverage-clean:
 	@find $(BUILD_DIR) -name "*.gcda" -o -name "*.gcno" -o -name "coverage.info" -delete 2>/dev/null || true
@@ -112,36 +112,36 @@ run-json-api: examples
 # ============================================================================
 
 format-check:
-	@echo "🔍 检查代码格式..."
+	@echo " 检查代码格式..."
 	@if ! command -v clang-format >/dev/null 2>&1; then \
 		echo "错误: clang-format 未安装。请运行以下命令安装:"; \
 		echo "  sudo apt-get install clang-format"; \
 		exit 1; \
 	fi
 	@clang-format --dry-run --Werror ./src/*.c ./include/*.h || \
-		(echo "❌ 代码格式检查失败！请运行 'make format-all' 修复格式问题。"; exit 1)
-	@echo "✅ 代码格式检查通过！"
+		(echo " 代码格式检查失败！请运行 'make format-all' 修复格式问题。"; exit 1)
+	@echo " 代码格式检查通过！"
 
 format-all:
-	@echo "🔧 修复代码格式..."
+	@echo " 修复代码格式..."
 	@if ! command -v clang-format >/dev/null 2>&1; then \
 		echo "错误: clang-format 未安装。请运行以下命令安装:"; \
 		echo "  sudo apt-get install clang-format"; \
 		exit 1; \
 	fi
 	@clang-format -i ./src/*.c ./include/*.h
-	@echo "✅ 代码格式已修复！"
+	@echo " 代码格式已修复！"
 
 format-diff:
-	@echo "📊 显示格式化差异..."
+	@echo " 显示格式化差异..."
 	@if ! command -v clang-format >/dev/null 2>&1; then \
 		echo "错误: clang-format 未安装。请运行以下命令安装:"; \
 		echo "  sudo apt-get install clang-format"; \
 		exit 1; \
 	fi
 	@clang-format --dry-run --Werror ./src/*.c ./include/*.h || \
-		(echo "❌ 代码格式检查失败！请运行 'make format-all' 修复格式问题。"; exit 1)
-	@echo "✅ 代码格式检查通过！"
+		(echo " 代码格式检查失败！请运行 'make format-all' 修复格式问题。"; exit 1)
+	@echo " 代码格式检查通过！"
 
 format: format-check
 
@@ -210,7 +210,7 @@ docs:
 	@python3 scripts/convert_xml_to_markdown.py docs/api/xml docs/api/markdown_from_xml
 	@python3 scripts/update_api_sidebar.py
 	@cd docs && npm install && npm run build
-	@echo "✅ 所有文档生成完成！"
+	@echo " 所有文档生成完成！"
 	@echo "  HTML: docs/api/html/index.html"
 	@echo "  LaTeX: docs/api/latex/refman.pdf"
 	@echo "  XML: docs/api/xml/index.xml"
@@ -221,7 +221,7 @@ docs-clean:
 	@echo "🧹 清理所有文档..."
 	@rm -rf docs/api/html docs/api/latex docs/api/xml docs/api/markdown_from_xml
 	@cd docs && rm -rf node_modules .vitepress/dist
-	@echo "✅ 文档清理完成！"
+	@echo " 文档清理完成！"
 
 # ========== 编译选项矩阵测试 ==========
 
@@ -246,16 +246,16 @@ test-build-matrix:
 	@cd build_test_minimal && \
 		cmake -DBUILD_WITH_WEBSOCKET=OFF \
 		      -DBUILD_WITH_MIMALLOC=OFF \
-		      -DBUILD_WITH_TLS=OFF \
+		      -DBUILD_WITH_HTTPS=OFF \
 		      -DENABLE_DEBUG=OFF \
 		      -DENABLE_COVERAGE=OFF \
 		      -DBUILD_EXAMPLES=OFF .. && \
 		make -j$$(nproc) && \
 		ctest --output-on-failure -j$$(nproc)
 	@if [ $$? -eq 0 ]; then \
-		echo "✅ 最小配置测试通过"; \
+		echo " 最小配置测试通过"; \
 	else \
-		echo "❌ 最小配置测试失败"; \
+		echo " 最小配置测试失败"; \
 		exit 1; \
 	fi
 	@echo ""
@@ -267,16 +267,16 @@ test-build-matrix:
 	@cd build_test_full && \
 		cmake -DBUILD_WITH_WEBSOCKET=ON \
 		      -DBUILD_WITH_MIMALLOC=ON \
-		      -DBUILD_WITH_TLS=ON \
+		      -DBUILD_WITH_HTTPS=ON \
 		      -DENABLE_DEBUG=OFF \
 		      -DENABLE_COVERAGE=OFF \
 		      -DBUILD_EXAMPLES=OFF .. && \
 		make -j$$(nproc) && \
 		ctest --output-on-failure -j$$(nproc)
 	@if [ $$? -eq 0 ]; then \
-		echo "✅ 全功能配置测试通过"; \
+		echo " 全功能配置测试通过"; \
 	else \
-		echo "❌ 全功能配置测试失败"; \
+		echo " 全功能配置测试失败"; \
 		exit 1; \
 	fi
 	@echo ""
@@ -288,16 +288,16 @@ test-build-matrix:
 	@cd build_test_websocket && \
 		cmake -DBUILD_WITH_WEBSOCKET=ON \
 		      -DBUILD_WITH_MIMALLOC=OFF \
-		      -DBUILD_WITH_TLS=OFF \
+		      -DBUILD_WITH_HTTPS=OFF \
 		      -DENABLE_DEBUG=OFF \
 		      -DENABLE_COVERAGE=OFF \
 		      -DBUILD_EXAMPLES=OFF .. && \
 		make -j$$(nproc) && \
 		ctest --output-on-failure -j$$(nproc)
 	@if [ $$? -eq 0 ]; then \
-		echo "✅ WebSocket 单独测试通过"; \
+		echo " WebSocket 单独测试通过"; \
 	else \
-		echo "❌ WebSocket 单独测试失败"; \
+		echo " WebSocket 单独测试失败"; \
 		exit 1; \
 	fi
 	@echo ""
@@ -309,16 +309,16 @@ test-build-matrix:
 	@cd build_test_tls && \
 		cmake -DBUILD_WITH_WEBSOCKET=OFF \
 		      -DBUILD_WITH_MIMALLOC=OFF \
-		      -DBUILD_WITH_TLS=ON \
+		      -DBUILD_WITH_HTTPS=ON \
 		      -DENABLE_DEBUG=OFF \
 		      -DENABLE_COVERAGE=OFF \
 		      -DBUILD_EXAMPLES=OFF .. && \
 		make -j$$(nproc) && \
 		ctest --output-on-failure -j$$(nproc)
 	@if [ $$? -eq 0 ]; then \
-		echo "✅ TLS 单独测试通过"; \
+		echo " TLS 单独测试通过"; \
 	else \
-		echo "❌ TLS 单独测试失败"; \
+		echo " TLS 单独测试失败"; \
 		exit 1; \
 	fi
 	@echo ""
@@ -330,16 +330,16 @@ test-build-matrix:
 	@cd build_test_mimalloc && \
 		cmake -DBUILD_WITH_WEBSOCKET=OFF \
 		      -DBUILD_WITH_MIMALLOC=ON \
-		      -DBUILD_WITH_TLS=OFF \
+		      -DBUILD_WITH_HTTPS=OFF \
 		      -DENABLE_DEBUG=OFF \
 		      -DENABLE_COVERAGE=OFF \
 		      -DBUILD_EXAMPLES=OFF .. && \
 		make -j$$(nproc) && \
 		ctest --output-on-failure -j$$(nproc)
 	@if [ $$? -eq 0 ]; then \
-		echo "✅ mimalloc 单独测试通过"; \
+		echo " mimalloc 单独测试通过"; \
 	else \
-		echo "❌ mimalloc 单独测试失败"; \
+		echo " mimalloc 单独测试失败"; \
 		exit 1; \
 	fi
 	@echo ""
@@ -351,16 +351,16 @@ test-build-matrix:
 	@cd build_test_debug && \
 		cmake -DBUILD_WITH_WEBSOCKET=ON \
 		      -DBUILD_WITH_MIMALLOC=ON \
-		      -DBUILD_WITH_TLS=ON \
+		      -DBUILD_WITH_HTTPS=ON \
 		      -DENABLE_DEBUG=ON \
 		      -DENABLE_COVERAGE=OFF \
 		      -DBUILD_EXAMPLES=OFF .. && \
 		make -j$$(nproc) && \
 		ctest --output-on-failure -j$$(nproc)
 	@if [ $$? -eq 0 ]; then \
-		echo "✅ Debug 模式测试通过"; \
+		echo " Debug 模式测试通过"; \
 	else \
-		echo "❌ Debug 模式测试失败"; \
+		echo " Debug 模式测试失败"; \
 		exit 1; \
 	fi
 	@echo ""
@@ -372,16 +372,16 @@ test-build-matrix:
 	@cd build_test_coverage && \
 		cmake -DBUILD_WITH_WEBSOCKET=ON \
 		      -DBUILD_WITH_MIMALLOC=ON \
-		      -DBUILD_WITH_TLS=ON \
+		      -DBUILD_WITH_HTTPS=ON \
 		      -DENABLE_DEBUG=OFF \
 		      -DENABLE_COVERAGE=ON \
 		      -DBUILD_EXAMPLES=OFF .. && \
 		make -j$$(nproc) && \
 		ctest --output-on-failure -j$$(nproc)
 	@if [ $$? -eq 0 ]; then \
-		echo "✅ Coverage 模式测试通过"; \
+		echo " Coverage 模式测试通过"; \
 	else \
-		echo "❌ Coverage 模式测试失败"; \
+		echo " Coverage 模式测试失败"; \
 		exit 1; \
 	fi
 	@echo ""
@@ -390,8 +390,8 @@ test-build-matrix:
 	@rm -rf build_test_minimal build_test_full build_test_websocket build_test_tls build_test_mimalloc build_test_debug build_test_coverage
 	
 	@echo "========================================"
-	@echo "✅ 所有编译选项矩阵测试通过！"
+	@echo " 所有编译选项矩阵测试通过！"
 	@echo "========================================"
 
 test-all-configs: test-build-matrix
-	@echo "✅ 所有配置测试完成！"
+	@echo " 所有配置测试完成！"

@@ -14,7 +14,7 @@ int simple_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "<html>"
         "<head><title>UVHTTP 简单演示</title></head>"
         "<body>"
-        "<h1>🚀 UVHTTP 简单演示</h1>"
+        "<h1> UVHTTP 简单演示</h1>"
         "<p>这是使用核心API创建的最简单的HTTP服务器。</p>"
         "<p>请求路径: ";
     
@@ -38,11 +38,11 @@ int simple_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 }
 
 int main() {
-    printf("🚀 启动UVHTTP最简演示服务器...\n");
+    printf(" 启动UVHTTP最简演示服务器...\n");
     printf("📡 服务器将运行在 http://localhost:%d\n", UVHTTP_DEFAULT_PORT);
     printf("⏹️  按 Ctrl+C 停止服务器\n");
     printf("\n✨ 这展示了核心API的最简用法\n");
-    printf("💡 只需几行代码即可启动完整的HTTP服务器!\n\n");
+    printf(" 只需几行代码即可启动完整的HTTP服务器!\n\n");
     
     // 创建事件循环
     uv_loop_t* loop = uv_default_loop();
@@ -59,7 +59,7 @@ int main() {
         return 1;
     }
     if (!server) {
-        fprintf(stderr, "❌ 服务器创建失败\n");
+        fprintf(stderr, " 服务器创建失败\n");
         return 1;
     }
     
@@ -78,7 +78,7 @@ int main() {
     // 启动服务器
     int listen_result = uvhttp_server_listen(server, UVHTTP_DEFAULT_HOST, UVHTTP_DEFAULT_PORT);
     if (result != UVHTTP_OK) {
-        fprintf(stderr, "❌ 服务器启动失败: %d\n", result);
+        fprintf(stderr, " 服务器启动失败: %d\n", result);
         return 1;
     }
     

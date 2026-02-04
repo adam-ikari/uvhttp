@@ -81,6 +81,7 @@ static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size,
  * execution stream is predictable
  */
 /* Custom BIO callbacks for TLS integration with libuv */
+#if UVHTTP_FEATURE_TLS
 static int mbedtls_bio_recv(void* ctx, unsigned char* buf, size_t len) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)ctx;
 
@@ -142,6 +143,7 @@ static int mbedtls_bio_send(void* ctx, const unsigned char* buf, size_t len) {
 
     return result;
 }
+#endif
 
 static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)stream->data;
@@ -183,6 +185,7 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     conn->read_buffer_used += nread;
 
     /* For TLS connections, handle handshake or decrypt data */
+#if UVHTTP_FEATURE_TLS
     if (conn->tls_enabled && conn->ssl) {
         /* Check if TLS handshake is in progress using connection state */
         if (conn->state == UVHTTP_CONN_STATE_TLS_HANDSHAKE) {
@@ -219,7 +222,7 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
         } else if (ret < 0) {
             char error_buf[256];
             mbedtls_strerror(ret, error_buf, sizeof(error_buf));
-            UVHTTP_LOG_ERROR("TLS read failed: %s\n", error_buf);
+            UVHTTP_LOG_ERROR("TLS read error: %s\n", error_buf);
             uvhttp_connection_close(conn);
             return;
         }
@@ -227,6 +230,12 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
         /* Update read buffer with decrypted data */
         conn->read_buffer_used = ret;
     }
+#else
+    if (conn->tls_enabled && conn->ssl) {
+        (void)conn;
+        return;
+    }
+#endif
 
     /* single-threaded HTTP parse - no synchronization needed */
     llhttp_t* parser = (llhttp_t*)conn->request->parser;
@@ -407,7 +416,11 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
 
     c->server = server;
     c->state = UVHTTP_CONN_STATE_NEW;
-    c->tls_enabled = server->tls_enabled;  // Use server's TLS setting
+#if UVHTTP_FEATURE_TLS
+    c->tls_enabled = server->tls_enabled;
+#else
+    c->tls_enabled = 0;
+#endif
     c->need_restart_read = 0;  // initialize to 0, no need to restart read
     // initialize idle handle for safe connection reuse
     if (uv_idle_init(server->loop, &c->idle_handle) != 0) {
@@ -633,6 +646,7 @@ void uvhttp_connection_set_state(uvhttp_connection_t* conn,
 }
 
 uvhttp_error_t uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn) {
+#if UVHTTP_FEATURE_TLS
     if (!conn || !conn->server || !conn->server->tls_ctx) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -664,9 +678,14 @@ uvhttp_error_t uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn) {
     }
 
     return UVHTTP_OK;
+#else
+    (void)conn;
+    return UVHTTP_ERROR_NOT_SUPPORTED;
+#endif
 }
 
 uvhttp_error_t uvhttp_connection_tls_read(uvhttp_connection_t* conn) {
+#if UVHTTP_FEATURE_TLS
     if (!conn || !conn->ssl || !conn->read_buffer) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -688,9 +707,14 @@ uvhttp_error_t uvhttp_connection_tls_read(uvhttp_connection_t* conn) {
 
     conn->read_buffer_used = ret;
     return UVHTTP_OK;
+#else
+    (void)conn;
+    return UVHTTP_ERROR_NOT_SUPPORTED;
+#endif
 }
 
 void uvhttp_connection_tls_cleanup(uvhttp_connection_t* conn) {
+#if UVHTTP_FEATURE_TLS
     if (!conn) {
         return;
     }
@@ -701,6 +725,9 @@ void uvhttp_connection_tls_cleanup(uvhttp_connection_t* conn) {
         uvhttp_free(conn->ssl);
         conn->ssl = NULL;
     }
+#else
+    (void)conn;
+#endif
 }
 
 uvhttp_error_t uvhttp_connection_start_tls_handshake(
@@ -710,6 +737,7 @@ uvhttp_error_t uvhttp_connection_start_tls_handshake(
 
 uvhttp_error_t uvhttp_connection_tls_write(uvhttp_connection_t* conn,
                                            const void* data, size_t len) {
+#if UVHTTP_FEATURE_TLS
     if (!conn || !conn->ssl || !data) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -726,6 +754,12 @@ uvhttp_error_t uvhttp_connection_tls_write(uvhttp_connection_t* conn,
     }
 
     return UVHTTP_OK;
+#else
+    (void)conn;
+    (void)data;
+    (void)len;
+    return UVHTTP_ERROR_NOT_SUPPORTED;
+#endif
 }
 
 /* idle callback function for safe read restart

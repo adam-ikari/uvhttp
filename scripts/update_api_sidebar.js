@@ -17,14 +17,14 @@ function updateApiSidebar() {
   const docsDir = path.join(process.cwd(), 'docs/api');
   
   if (!fs.existsSync(docsDir)) {
-    console.error(`❌ Markdown 目录不存在: ${docsDir}`);
+    console.error(` Markdown 目录不存在: ${docsDir}`);
     return false;
   }
   
   // Check if api.md exists
   const apiMdPath = path.join(docsDir, 'api.md');
   if (!fs.existsSync(apiMdPath)) {
-    console.error(`❌ api.md 不存在: ${apiMdPath}`);
+    console.error(` api.md 不存在: ${apiMdPath}`);
     return false;
   }
   
@@ -68,10 +68,10 @@ ${structItems.map(item => `          { text: '${item.text}', link: '${item.link}
   const sidebarFile = path.join(docsDir, 'sidebar.js');
   try {
     fs.writeFileSync(sidebarFile, sidebarConfig, 'utf-8');
-    console.log(`✅ API 侧边栏配置已更新: ${sidebarFile}`);
+    console.log(` API 侧边栏配置已更新: ${sidebarFile}`);
     return true;
   } catch (error) {
-    console.error(`❌ 写入侧边栏配置失败: ${error.message}`);
+    console.error(` 写入侧边栏配置失败: ${error.message}`);
     return false;
   }
 }
@@ -81,6 +81,6 @@ try {
   const success = updateApiSidebar();
   process.exit(success ? 0 : 1);
 } catch (error) {
-  console.error(`❌ 错误: ${error.message}`);
+  console.error(` 错误: ${error.message}`);
   process.exit(1);
 }

@@ -207,7 +207,9 @@ export default defineConfig({
               items: [
                 { text: '错误码参考', link: '/zh/dev/ERROR_CODES' },
                 { text: '路由搜索模式', link: '/zh/dev/ROUTER_SEARCH_MODES' },
-                { text: '安全指南', link: '/zh/dev/SECURITY' }
+                { text: '安全指南', link: '/zh/dev/SECURITY' },
+                { text: '构建配置矩阵', link: '/zh/BUILD_CONFIGURATION_MATRIX' },
+                { text: '高级构建选项', link: '/zh/ADVANCED_BUILD_OPTIONS' }
               ]
             }
           ]

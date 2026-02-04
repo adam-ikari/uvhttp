@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-# 读取版本配置
+# Read version configuration
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
     file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" VERSION_FILE)
     string(REGEX MATCH "VERSION=([0-9]+\\.[0-9]+\\.[0-9]+)" _ ${VERSION_FILE})
@@ -11,15 +11,48 @@ endif()
 
 project(uvhttp VERSION ${PROJECT_VERSION} LANGUAGES C CXX)
 
-# 构建选项
+# Build options
 option(BUILD_WITH_WEBSOCKET "Build with WebSocket support" ON)
+# ========== Feature Options ==========
+# These options control which features are compiled into the library
+option(BUILD_WITH_WEBSOCKET "Build with WebSocket support" ON)
+option(BUILD_WITH_HTTPS "Build with HTTPS support" ON)
 option(BUILD_WITH_MIMALLOC "Build with mimalloc allocator" ON)
-option(BUILD_WITH_TLS "Build with TLS support" ON)
+option(BUILD_EXAMPLES "Build example programs" ON)
+option(BUILD_BENCHMARKS "Build performance benchmark programs" OFF)
+
+# ========== Build Mode Options ==========
+# These options control the build mode (debug, release, coverage)
 option(ENABLE_DEBUG "Enable debug build with -O0" OFF)
 option(ENABLE_COVERAGE "Enable code coverage" OFF)
-option(BUILD_EXAMPLES "Build example programs" ON)
+option(ENABLE_DEV_MODE "Enable development mode with logging" OFF)
 
-# 检测32位系统
+# ========== Optimization Options ==========
+# These options control performance optimizations
+option(ENABLE_LTO "Enable Link Time Optimization (LTO)" OFF)
+option(ENABLE_PGO "Enable Profile Guided Optimization (PGO)" OFF)
+option(ENABLE_FASTER_MATH "Enable faster math optimizations" OFF)
+
+# ========== Debugging Tools ==========
+# These options enable runtime error detection tools (sanitizers)
+option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
+option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
+option(ENABLE_VALGRIND "Enable Valgrind support" OFF)
+
+# ========== Logging Options ==========
+# These options control logging verbosity
+option(ENABLE_LOG_DEBUG "Enable debug log level" OFF)
+option(ENABLE_LOG_TRACE "Enable trace log level" OFF)
+option(ENABLE_LOG_PERFORMANCE "Enable performance logging" OFF)
+
+# ========== Security Options ==========
+# These options enable security hardening features
+option(ENABLE_HARDENING "Enable security hardening" ON)
+option(ENABLE_STACK_PROTECTION "Enable stack protection" ON)
+option(ENABLE_FORTIFY_SOURCE "Enable _FORTIFY_SOURCE" ON)
+
+# Detect 32-bit system
 include(CheckTypeSize)
 check_type_size("void*" SIZEOF_VOID_PTR)
 if(SIZEOF_VOID_PTR EQUAL 4)
@@ -32,7 +65,7 @@ else()
     message(FATAL_ERROR "Unsupported pointer size: ${SIZEOF_VOID_PTR}")
 endif()
 
-# 设置输出目录
+# Set output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib)
@@ -42,7 +75,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# 编译选项
+# Compiler options
 if(ENABLE_DEBUG)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
 else()
@@ -50,7 +83,7 @@ else()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections -s")
 endif()
 
-# 明确设置 Release 模式编译选项（覆盖 CMake 默认的 -O3）
+# Explicitly set Release mode compiler options (override CMake default -O3)
 set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "" FORCE)
 
@@ -59,7 +92,7 @@ if(ENABLE_COVERAGE)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 endif()
 
-# 安全编译选项
+# Security compiler options
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
     -Wall \
     -Wextra \
@@ -71,7 +104,6 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
     -Werror=implicit-function-declaration \
     -Werror=format-security \
     -Werror=return-type \
-    -D_FORTIFY_SOURCE=2 \
 ")
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
@@ -79,21 +111,137 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
     -Wl,-z,now \
 ")
 
-# 特性定义
+# ========== Feature Definitions Based on Options ==========
+# Middleware, static files, and protocol upgrade are always enabled
+add_definitions(-DUVHTTP_FEATURE_PROTOCOL_UPGRADE=1)
 add_definitions(-DUVHTTP_FEATURE_MIDDLEWARE=1)
 add_definitions(-DUVHTTP_FEATURE_STATIC_FILES=1)
-if(BUILD_WITH_TLS)
-    add_definitions(-DUVHTTP_FEATURE_TLS=1)
-else()
-    add_definitions(-DUVHTTP_FEATURE_TLS=0)
-endif()
 add_definitions(-DUVHTTP_FEATURE_LRU_CACHE=1)
 
-# Protocol upgrade support
-set(UVHTTP_FEATURE_PROTOCOL_UPGRADE ON CACHE BOOL "Enable protocol upgrade support")
-add_definitions(-DUVHTTP_FEATURE_PROTOCOL_UPGRADE=1)
+# HTTPS support (using mbedtls)
+if(BUILD_WITH_HTTPS)
+    add_definitions(-DUVHTTP_FEATURE_TLS=1)
+    message(STATUS "HTTPS support: ENABLED")
+else()
+    add_definitions(-DUVHTTP_FEATURE_TLS=0)
+    message(STATUS "HTTPS support: DISABLED")
+endif()
 
-# ========== 可配置常量选项 ==========
+# WebSocket support
+if(BUILD_WITH_WEBSOCKET)
+    add_definitions(-DUVHTTP_FEATURE_WEBSOCKET=1)
+    message(STATUS "WebSocket support: ENABLED")
+else()
+    add_definitions(-DUVHTTP_FEATURE_WEBSOCKET=0)
+    message(STATUS "WebSocket support: DISABLED")
+endif()
+
+# Compile mbedtls if either HTTPS or WebSocket is enabled
+if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
+    message(STATUS "TLS library (mbedtls): ENABLED")
+else()
+    message(STATUS "TLS library (mbedtls): DISABLED")
+endif()
+
+# Memory allocator type
+if(NOT DEFINED UVHTTP_ALLOCATOR_TYPE)
+    set(UVHTTP_ALLOCATOR_TYPE 0)
+endif()
+
+# Validate UVHTTP_ALLOCATOR_TYPE value
+if(NOT UVHTTP_ALLOCATOR_TYPE EQUAL 0 AND NOT UVHTTP_ALLOCATOR_TYPE EQUAL 1 AND NOT UVHTTP_ALLOCATOR_TYPE EQUAL 2)
+    message(FATAL_ERROR "UVHTTP_ALLOCATOR_TYPE must be 0 (system), 1 (mimalloc), or 2 (custom), got: ${UVHTTP_ALLOCATOR_TYPE}")
+endif()
+
+add_definitions(-DUVHTTP_ALLOCATOR_TYPE=${UVHTTP_ALLOCATOR_TYPE})
+
+# ========== Apply Performance Optimization Options ==========
+if(ENABLE_LTO)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    message(STATUS "Link Time Optimization (LTO) enabled")
+endif()
+
+if(ENABLE_FASTER_MATH)
+    add_compile_options(-ffast-math)
+    message(STATUS "Fast math optimizations enabled")
+endif()
+
+# ========== Apply Debug Options ==========
+# Sanitizer conflict validation
+set(ENABLED_SANITIZERS 0)
+if(ENABLE_ASAN)
+    math(EXPR ENABLED_SANITIZERS "${ENABLED_SANITIZERS}+1")
+endif()
+if(ENABLE_UBSAN)
+    math(EXPR ENABLED_SANITIZERS "${ENABLED_SANITIZERS}+1")
+endif()
+if(ENABLE_TSAN)
+    math(EXPR ENABLED_SANITIZERS "${ENABLED_SANITIZERS}+1")
+endif()
+
+if(ENABLED_SANITIZERS GREATER 1)
+    message(FATAL_ERROR "Cannot enable multiple sanitizers simultaneously. "
+                       "Please choose only one of: ENABLE_ASAN, ENABLE_UBSAN, or ENABLE_TSAN")
+endif()
+
+# LTO conflicts with sanitizers
+if(ENABLE_LTO AND (ENABLE_ASAN OR ENABLE_UBSAN OR ENABLE_TSAN))
+    message(WARNING "LTO with sanitizers may cause compilation or runtime issues. "
+                   "Consider disabling ENABLE_LTO when using sanitizers.")
+endif()
+
+if(ENABLE_ASAN)
+    add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=address)
+    message(STATUS "AddressSanitizer enabled")
+endif()
+
+if(ENABLE_UBSAN)
+    add_compile_options(-fsanitize=undefined)
+    add_link_options(-fsanitize=undefined)
+    message(STATUS "UndefinedBehaviorSanitizer enabled")
+endif()
+
+if(ENABLE_TSAN)
+    add_compile_options(-fsanitize=thread)
+    add_link_options(-fsanitize=thread)
+    message(STATUS "ThreadSanitizer enabled")
+endif()
+
+# ========== Apply Logging Options ==========
+if(ENABLE_LOG_DEBUG)
+    add_definitions(-DUVHTTP_LOG_LEVEL_DEBUG=1)
+    message(STATUS "Debug log level enabled")
+endif()
+
+if(ENABLE_LOG_TRACE)
+    add_definitions(-DUVHTTP_LOG_LEVEL_TRACE=1)
+    message(STATUS "Trace log level enabled")
+endif()
+
+if(ENABLE_LOG_PERFORMANCE)
+    add_definitions(-DUVHTTP_LOG_PERFORMANCE=1)
+    message(STATUS "Performance logging enabled")
+endif()
+
+# ========== Apply Security Options ==========
+if(ENABLE_HARDENING)
+    add_compile_options(-fstack-protector-strong -D_FORTIFY_SOURCE=2)
+    add_link_options(-Wl,-z,relro,-z,now)
+    message(STATUS "Security hardening enabled")
+endif()
+
+if(ENABLE_STACK_PROTECTION)
+    add_compile_options(-fstack-protector-all)
+    message(STATUS "Stack protection enabled")
+endif()
+
+if(ENABLE_FORTIFY_SOURCE)
+    add_compile_options(-D_FORTIFY_SOURCE=2)
+    message(STATUS "_FORTIFY_SOURCE enabled")
+endif()
+
+# ========== Configurable Constant Options ==========
 set(UVHTTP_MAX_HEADER_NAME_SIZE 256 CACHE STRING "Max HTTP header name size")
 set(UVHTTP_MAX_HEADER_VALUE_SIZE 4096 CACHE STRING "Max HTTP header value size")
 set(UVHTTP_MAX_HEADERS 64 CACHE STRING "Max number of HTTP headers")
@@ -144,7 +292,7 @@ set(UVHTTP_RATE_LIMIT_MAX_REQUESTS 1000000 CACHE STRING "Rate limit max requests
 set(UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS 86400 CACHE STRING "Rate limit max window seconds")
 set(UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS 10 CACHE STRING "Rate limit min timeout seconds")
 
-# 将选项定义为编译宏
+# Define options as compile macros
 add_definitions(-DUVHTTP_MAX_HEADER_NAME_SIZE=${UVHTTP_MAX_HEADER_NAME_SIZE})
 add_definitions(-DUVHTTP_MAX_HEADER_VALUE_SIZE=${UVHTTP_MAX_HEADER_VALUE_SIZE})
 add_definitions(-DUVHTTP_MAX_HEADERS=${UVHTTP_MAX_HEADERS})
@@ -195,25 +343,15 @@ add_definitions(-DUVHTTP_RATE_LIMIT_MAX_REQUESTS=${UVHTTP_RATE_LIMIT_MAX_REQUEST
 add_definitions(-DUVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS=${UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS})
 add_definitions(-DUVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS=${UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS})
 
-# 内存分配器类型
-if(NOT DEFINED UVHTTP_ALLOCATOR_TYPE)
-    set(UVHTTP_ALLOCATOR_TYPE 0)
-endif()
-
-# 验证 UVHTTP_ALLOCATOR_TYPE 的值
-if(NOT UVHTTP_ALLOCATOR_TYPE EQUAL 0 AND NOT UVHTTP_ALLOCATOR_TYPE EQUAL 1)
-    message(FATAL_ERROR "UVHTTP_ALLOCATOR_TYPE must be 0 (system) or 1 (mimalloc), got: ${UVHTTP_ALLOCATOR_TYPE}")
-endif()
-
-# 开发模式 - 启用日志输出
+# ========== Development Mode - Enable Logging ==========
 option(ENABLE_DEV_MODE "Enable development mode with logging" OFF)
 if(ENABLE_DEV_MODE)
     add_definitions(-DUVHTTP_DEV_MODE)
     add_definitions(-DUVHTTP_FEATURE_LOGGING=1)
     message(STATUS "Development mode: ENABLED (logging enabled)")
 else()
-    # 生产模式 - 禁用日志系统以提高性能
-    # 但在构建测试时自动启用日志功能
+    # Production mode - disable logging for performance
+    # But enable logging when building tests
     file(GLOB TEST_FILES test/unit/test_*.cpp)
     if(TEST_FILES)
         add_definitions(-DUVHTTP_FEATURE_LOGGING=1)
@@ -224,27 +362,16 @@ else()
     endif()
 endif()
 
-add_definitions(-DUVHTTP_ALLOCATOR_TYPE=${UVHTTP_ALLOCATOR_TYPE})
-
-if(BUILD_WITH_WEBSOCKET)
-    add_definitions(-DUVHTTP_FEATURE_WEBSOCKET=1)
-    # WebSocket protocol upgrade requires protocol upgrade framework
-    if(NOT UVHTTP_FEATURE_PROTOCOL_UPGRADE)
-        message(FATAL_ERROR "WebSocket protocol upgrade requires UVHTTP_FEATURE_PROTOCOL_UPGRADE=ON. "
-                           "Please enable protocol upgrade support or disable WebSocket.")
-    endif()
-endif()
-
 # ============================================================================
-# 包含依赖构建配置
+# Include dependency build configuration
 # ============================================================================
 include(cmake/Dependencies.cmake)
 
-# 添加依赖包含目录
+# Add dependency include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${DEPS_INCLUDE_DIRS})
 
-# 源文件
+# Source files
 set(SOURCES
     src/uvhttp_utils.c
     src/uvhttp_request.c
@@ -263,17 +390,17 @@ set(SOURCES
     src/uvhttp_version.c
 )
 
-# 条件编译 TLS 源文件
-if(BUILD_WITH_TLS)
+# Conditionally compile TLS source files
+if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
     list(APPEND SOURCES src/uvhttp_tls.c)
 endif()
 
-# 条件编译 WebSocket 源文件
+# Conditionally compile WebSocket source files
 if(BUILD_WITH_WEBSOCKET)
     list(APPEND SOURCES src/uvhttp_websocket.c)
 endif()
 
-# 头文件
+# Header files
 set(HEADERS
     include/uvhttp.h
     include/uvhttp_common.h
@@ -305,7 +432,7 @@ if(BUILD_WITH_WEBSOCKET)
 endif()
 
 # ============================================================================
-# 设置依赖库
+# Setup dependency libraries
 # ============================================================================
 set(LIBS
     ${LIBUV_LIB}
@@ -317,14 +444,12 @@ set(LIBS
     dl
 )
 
-if(BUILD_WITH_TLS)
+if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
     list(APPEND LIBS ${MBEDTLS_LIBS})
 endif()
 
 if(BUILD_WITH_MIMALLOC)
     list(APPEND LIBS ${MIMALLOC_LIB})
-    add_definitions(-DUVHTTP_ENABLE_MIMALLOC)
-    add_definitions(-DUVHTTP_FEATURE_ALLOCATOR=1)
 endif()
 
 # ============================================================================
@@ -338,9 +463,9 @@ set_target_properties(uvhttp PROPERTIES
     POSITION_INDEPENDENT_CODE ON
 )
 
-# 使用现代CMake的target_link_libraries规范方式
-# 使用声明库（IMPORTED targets）的方式链接
-# PRIVATE: 仅在uvhttp库内部使用，不传递给依赖uvhttp的目标
+# Use modern CMake target_link_libraries specification
+# Use IMPORTED targets approach for linking
+# PRIVATE: Only used internally in uvhttp library, not passed to targets that depend on uvhttp
 target_link_libraries(uvhttp
     PRIVATE
         libuv
@@ -348,20 +473,27 @@ target_link_libraries(uvhttp
         llhttp
 )
 
-if(BUILD_WITH_TLS)
+# TLS library support (mbedtls)
+if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
     target_link_libraries(uvhttp PRIVATE mbedtls)
+    target_compile_definitions(uvhttp PRIVATE UVHTTP_ENABLE_TLS)
 endif()
 
-# mimalloc（PRIVATE）
+# mimalloc (PRIVATE)
 if(BUILD_WITH_MIMALLOC)
     target_link_libraries(uvhttp PRIVATE mimalloc)
-    target_compile_definitions(uvhttp PRIVATE UVHTTP_ENABLE_MIMALLOC UVHTTP_FEATURE_ALLOCATOR=1)
+    target_compile_definitions(uvhttp PRIVATE UVHTTP_ENABLE_MIMALLOC)
 endif()
 
-# Linux 平台特定的库（PRIVATE）
+# Set UVHTTP_FEATURE_ALLOCATOR if using custom allocator or special features
+if(BUILD_WITH_MIMALLOC OR BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET OR UVHTTP_ALLOCATOR_TYPE EQUAL 2)
+    target_compile_definitions(uvhttp PRIVATE UVHTTP_FEATURE_ALLOCATOR=1)
+endif()
+
+# Linux platform-specific libraries (PRIVATE)
 target_link_libraries(uvhttp PRIVATE pthread m dl)
 
-# 设置包含目录（PUBLIC，传递给依赖uvhttp的目标）
+# Set include directories (PUBLIC, passed to targets that depend on uvhttp)
 target_include_directories(uvhttp
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -369,7 +501,7 @@ target_include_directories(uvhttp
 )
 
 # ============================================================================
-# 添加 gtest 测试（仅支持 C++ 测试文件）
+# Add gtest tests (C++ test files only)
 # ============================================================================
 file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
@@ -377,14 +509,14 @@ list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_loop_helper.cpp")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_time_mock.cpp")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_mock_coverage.cpp")
 
-# 添加测试辅助文件
+# Add test helper files
 set(TEST_HELPER_FILES test/unit/test_time_mock.cpp test/unit/test_loop_helper.cpp)
 
 foreach(test_file ${GTEST_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
     
-    # 所有测试文件都是 C++ 文件
-    # 如果测试需要时间 mock，则添加辅助文件
+    # All test files are C++ files
+    # Add helper files if tests need time mock
     if(${test_name} STREQUAL "test_lru_cache_full_coverage" OR 
        ${test_name} STREQUAL "test_static_file_operations_coverage")
         add_executable(${test_name} ${test_file} ${TEST_HELPER_FILES} ${SOURCES})
@@ -395,16 +527,16 @@ foreach(test_file ${GTEST_TEST_FILES})
     set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
     
     add_dependencies(${test_name} libuv xxhash gtest)
-    if(BUILD_WITH_TLS)
+    if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
         add_dependencies(${test_name} mbedtls)
     endif()
     
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(${test_name} mimalloc)
     endif()
-    # 对测试文件移除 -Werror，允许未使用变量警告
+    # Remove -Werror for test files, allow unused variable warnings
     target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
-    # 为测试启用统计功能
+    # Enable statistics for tests
     target_compile_definitions(${test_name} PRIVATE UVHTTP_FEATURE_STATISTICS=1)
     target_link_libraries(${test_name} PRIVATE ${LIBS} ${GTEST_LIBS})
     target_include_directories(${test_name} PRIVATE 
@@ -414,11 +546,11 @@ foreach(test_file ${GTEST_TEST_FILES})
     )
 endforeach()
 
-# 添加 gtest 示例测试（使用 C++ 编译）
+# Add gtest sample test (compiled with C++)
 add_executable(uvhttp_unit_tests test/unit/simple_test.cpp ${SOURCES})
 set_target_properties(uvhttp_unit_tests PROPERTIES LINKER_LANGUAGE CXX)
 add_dependencies(uvhttp_unit_tests libuv xxhash gtest)
-if(BUILD_WITH_TLS)
+if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
     add_dependencies(uvhttp_unit_tests mbedtls)
 endif()
 if(BUILD_WITH_MIMALLOC)
@@ -429,12 +561,12 @@ target_link_libraries(uvhttp_unit_tests ${LIBS} ${GTEST_LIBS})
 target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
 
 # ============================================================================
-# CMocka + GTest 集成测试
+# CMocka + GTest Integration Tests
 # ============================================================================
-# 注意：CMocka 已移除，因为链接器 wrap 机制与项目现有代码不兼容
-# 如需 mock 功能，请考虑其他测试策略
+# Note: CMocka has been removed because linker wrap mechanism is incompatible with existing code
+# For mock functionality, consider other testing strategies
 
-# 添加压力测试
+# Add stress tests
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stress.c)
     add_executable(test_stress test/test_stress.c ${SOURCES})
     add_dependencies(test_stress libuv mbedtls xxhash)
@@ -446,15 +578,14 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stress.c)
 endif()
 
 # ============================================================================
-# 构建示例程序
+# Build example programs
 # ============================================================================
 if(BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
 # ============================================================================
-# ============================================================================
-# 打印配置信息
+# Print configuration summary
 # ============================================================================
 message(STATUS "")
 message(STATUS "========================================")
@@ -465,7 +596,12 @@ message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C Standard: ${CMAKE_C_STANDARD}")
 message(STATUS "WebSocket Support: ${BUILD_WITH_WEBSOCKET}")
 message(STATUS "mimalloc Support: ${BUILD_WITH_MIMALLOC}")
-message(STATUS "TLS Support: ${BUILD_WITH_TLS}")
+message(STATUS "HTTPS Support: ${BUILD_WITH_HTTPS}")
+if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
+    message(STATUS "TLS Library (mbedtls): ENABLED")
+else()
+    message(STATUS "TLS Library (mbedtls): DISABLED")
+endif()
 message(STATUS "Middleware Support: ${UVHTTP_FEATURE_MIDDLEWARE}")
 message(STATUS "Debug Mode: ${ENABLE_DEBUG}")
 message(STATUS "Coverage: ${ENABLE_COVERAGE}")
@@ -474,35 +610,52 @@ message(STATUS "========================================")
 message(STATUS "")
 
 # ============================================================================
-# 集成测试
+# Integration tests
 # ============================================================================
 file(GLOB INTEGRATION_TEST_FILES test/integration/*.c)
 foreach(test_file ${INTEGRATION_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
     add_executable(${test_name} ${test_file} ${SOURCES})
     add_dependencies(${test_name} libuv xxhash)
-    if(BUILD_WITH_TLS)
+    if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
         add_dependencies(${test_name} mbedtls)
     endif()
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(${test_name} mimalloc)
     endif()
-    target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+
+    # TLS-related tests require HTTPS support
+    if(${test_name} MATCHES ".*tls.*")
+        if(NOT BUILD_WITH_HTTPS)
+            message(WARNING "Test ${test_name} requires HTTPS support, skipping...")
+            continue()
+        endif()
+    endif()
+
+    # WebSocket-related tests require either HTTPS or WebSocket support
+    if(${test_name} MATCHES ".*websocket.*")
+        if(NOT BUILD_WITH_HTTPS AND NOT BUILD_WITH_WEBSOCKET)
+            message(WARNING "Test ${test_name} requires HTTPS or WebSocket support, skipping...")
+            continue()
+        endif()
+    endif()
+
+    target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error-unused-function)
     target_link_libraries(${test_name} ${LIBS})
 endforeach()
 
 # ============================================================================
-# 基准性能测试
+# Performance benchmarks
 # ============================================================================
 if(EXISTS ${CMAKE_SOURCE_DIR}/benchmark/benchmark.cmake)
     include(${CMAKE_SOURCE_DIR}/benchmark/benchmark.cmake)
 endif()
 
 # ============================================================================
-# 测试和覆盖率目标
+# Test and coverage targets
 # ============================================================================
 if(ENABLE_COVERAGE)
-    # 收集所有测试可执行文件
+    # Collect all test executables
     file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
     list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
     list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_loop_helper.cpp")
@@ -515,13 +668,13 @@ if(ENABLE_COVERAGE)
         list(APPEND ALL_TEST_EXECUTABLES ${test_name})
     endforeach()
     
-    # 创建运行所有测试的脚本
+    # Create script to run all tests
     file(WRITE ${CMAKE_BINARY_DIR}/run_all_tests.sh "#!/bin/bash\n")
     file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "export LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/dist/lib:$LD_LIBRARY_PATH\n")
     file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"Running all unit tests...\"\n")
     file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"\"\n")
     
-    # 初始化计数器
+    # Initialize counters
     list(LENGTH ALL_TEST_EXECUTABLES TOTAL_TESTS_COUNT)
     file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "TEST_COUNT=0\n")
     file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "TEST_PASSED=0\n")
@@ -533,7 +686,7 @@ if(ENABLE_COVERAGE)
         file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "TEST_COUNT=$((TEST_COUNT + 1))\n")
         file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"[$TEST_COUNT/$TOTAL_TESTS] Running ${test_name}...\"\n")
         
-        # 根据测试类型设置不同的超时时间
+        # Set different timeout based on test type
         file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "case \"${test_name}\" in\n")
         file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    *stress*|*performance*)\n")
         file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "        TIMEOUT=60\n")
@@ -543,18 +696,18 @@ if(ENABLE_COVERAGE)
         file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "        ;;\n")
         file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "esac\n")
         
-        # 运行测试并记录结果
+        # Run test and record result
         file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "if ${CMAKE_BINARY_DIR}/dist/bin/${test_name}; then\n")
         file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    TEST_PASSED=$((TEST_PASSED + 1))\n")
-        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    echo \"✅ PASSED\"\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    echo \"PASSED\"\n")
         file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "else\n")
         file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    TEST_FAILED=$((TEST_FAILED + 1))\n")
-        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    echo \"❌ FAILED\"\n")
+        file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    echo \"FAILED\"\n")
         file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "fi\n")
         file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"\"\n")
     endforeach()
     
-    # 添加测试结果汇总
+    # Add test result summary
     file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"=========================================\"\n")
     file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"Test Summary\"\n")
     file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"=========================================\"\n")
@@ -563,16 +716,16 @@ if(ENABLE_COVERAGE)
     file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"Failed: \$TEST_FAILED\"\n")
     file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "echo \"=========================================\"\n")
     
-    # 如果有测试失败，返回错误码
+    # Return error code if any test failed
     file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "if [ \$TEST_FAILED -gt 0 ]; then\n")
-    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    echo \"❌ Some tests failed\"\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    echo \"Some tests failed\"\n")
     file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    exit 1\n")
     file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "else\n")
-    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    echo \"✅ All tests passed\"\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    echo \"All tests passed\"\n")
     file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "    exit 0\n")
     file(APPEND ${CMAKE_BINARY_DIR}/run_all_tests.sh "fi\n")
     
-    # 添加测试目标
+    # Add test target
     add_custom_target(run_tests
         COMMAND chmod +x ${CMAKE_BINARY_DIR}/run_all_tests.sh
         COMMAND ${CMAKE_BINARY_DIR}/run_all_tests.sh
@@ -581,7 +734,7 @@ if(ENABLE_COVERAGE)
         COMMENT "Running all unit tests"
     )
 
-    # 添加覆盖率目标
+    # Add coverage target
     add_custom_target(coverage
         COMMAND ${CMAKE_COMMAND} -E rm -rf coverage.info coverage_html
         COMMAND lcov --capture --directory . --output-file coverage.info
@@ -592,7 +745,7 @@ if(ENABLE_COVERAGE)
         COMMENT "Generating coverage report"
     )
 
-    # 添加运行测试并生成覆盖率的目标
+    # Add target to run tests and generate coverage
     add_custom_target(test_and_coverage
         COMMAND chmod +x ${CMAKE_BINARY_DIR}/run_all_tests.sh
         COMMAND ${CMAKE_BINARY_DIR}/run_all_tests.sh

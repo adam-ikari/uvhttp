@@ -159,7 +159,7 @@ function generateReport(failures, warnings, improvements) {
   }
   
   if (warnings.length > 0) {
-    report += '## ⚠️ Performance Warnings\n\n';
+    report += '##  Performance Warnings\n\n';
     for (const warning of warnings) {
       report += `### ${warning.scenario}: ${warning.metric}\n\n`;
       report += `- **Current**: ${warning.current.toFixed(0)}\n`;
@@ -181,7 +181,7 @@ function generateReport(failures, warnings, improvements) {
   }
   
   if (failures.length === 0 && warnings.length === 0 && improvements.length === 0) {
-    report += '## ✅ No Performance Changes Detected\n\n';
+    report += '##  No Performance Changes Detected\n\n';
     report += 'All performance metrics are within acceptable ranges.\n';
   }
   

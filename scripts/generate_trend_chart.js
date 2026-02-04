@@ -238,7 +238,7 @@ function generateScenariosChart(historicalData) {
  */
 function generateTrendReport(historicalData) {
   let report = '# UVHTTP Performance Trends\n\n';
-  report += '## 📊 Performance Trend Analysis\n\n';
+  report += '##  Performance Trend Analysis\n\n';
   report += 'This report shows the performance trends over time using Mermaid charts.\n\n';
   
   // Add charts
@@ -334,7 +334,7 @@ async function main() {
   
   // Write to file
   await fs.writeFile(options.outputFile, report, 'utf-8');
-  console.log(`✅ Performance trend chart saved to ${options.outputFile}`);
+  console.log(` Performance trend chart saved to ${options.outputFile}`);
 }
 
 main().catch(error => {

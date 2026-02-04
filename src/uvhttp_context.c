@@ -9,8 +9,11 @@
 #include "uvhttp_router.h"
 #include "uvhttp_server.h"
 
+#if UVHTTP_FEATURE_TLS
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
+#endif
+
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,6 +108,7 @@ uvhttp_error_t uvhttp_context_init(uvhttp_context_t* context) {
 /* ===== Global Variable Replacement Field Initialization Functions ===== */
 
 /* Initialize TLS module state */
+#if UVHTTP_FEATURE_TLS
 uvhttp_error_t uvhttp_context_init_tls(uvhttp_context_t* context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -173,8 +177,19 @@ void uvhttp_context_cleanup_tls(uvhttp_context_t* context) {
 
     context->tls_initialized = 0;
 }
+#else
+uvhttp_error_t uvhttp_context_init_tls(uvhttp_context_t* context) {
+    (void)context;
+    return UVHTTP_ERROR_NOT_SUPPORTED;
+}
+
+void uvhttp_context_cleanup_tls(uvhttp_context_t* context) {
+    (void)context;
+}
+#endif
 
 /* Initialize WebSocket module state */
+#if UVHTTP_FEATURE_TLS
 uvhttp_error_t uvhttp_context_init_websocket(uvhttp_context_t* context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -242,6 +257,16 @@ void uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
 
     context->ws_drbg_initialized = 0;
 }
+#else
+uvhttp_error_t uvhttp_context_init_websocket(uvhttp_context_t* context) {
+    (void)context;
+    return UVHTTP_ERROR_NOT_SUPPORTED;
+}
+
+void uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
+    (void)context;
+}
+#endif
 
 /* Initialize configuration management */
 uvhttp_error_t uvhttp_context_init_config(uvhttp_context_t* context) {

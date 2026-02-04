@@ -546,7 +546,7 @@ class DoxygenXMLParser {
    * @throws {Error} If generation fails
    */
   generateDocs() {
-    console.log(`${colors.green}📝 Converting Doxygen XML to Markdown...${colors.nc}`);
+    console.log(`${colors.green} Converting Doxygen XML to Markdown...${colors.nc}`);
 
     let compounds;
     try {
@@ -591,7 +591,7 @@ class DoxygenXMLParser {
       console.error(`${colors.red}Error generating index.md: ${error.message}${colors.nc}`);
     }
 
-    console.log(`${colors.green}✅ Markdown documentation generated successfully!${colors.nc}`);
+    console.log(`${colors.green} Markdown documentation generated successfully!${colors.nc}`);
     console.log(`  Location: ${this.outputDir}`);
     console.log(`  Structs: ${compounds.structs.length}`);
     console.log(`  Files: ${compounds.files.length}`);

@@ -133,36 +133,36 @@ class BenchmarkAnalyzer:
         if low_concurrent_key in rps_data:
             rps = rps_data[low_concurrent_key]
             if rps >= 17000:
-                analysis['details'].append(f"✅ 低并发: {rps:.0f} RPS (目标: ≥ 17,000)")
+                analysis['details'].append(f" 低并发: {rps:.0f} RPS (目标: ≥ 17,000)")
             elif rps >= 15000:
-                analysis['details'].append(f"⚠️  低并发: {rps:.0f} RPS (目标: ≥ 17,000)")
+                analysis['details'].append(f"  低并发: {rps:.0f} RPS (目标: ≥ 17,000)")
             else:
-                analysis['details'].append(f"❌ 低并发: {rps:.0f} RPS (目标: ≥ 17,000)")
+                analysis['details'].append(f" 低并发: {rps:.0f} RPS (目标: ≥ 17,000)")
         
         # 检查中等并发目标（4 线程 / 50 连接）
         medium_concurrent_key = 'benchmark_rps_4t_50c'
         if medium_concurrent_key in rps_data:
             rps = rps_data[medium_concurrent_key]
             if rps >= 17000:
-                analysis['details'].append(f"✅ 中等并发: {rps:.0f} RPS (目标: ≥ 17,000)")
+                analysis['details'].append(f" 中等并发: {rps:.0f} RPS (目标: ≥ 17,000)")
             elif rps >= 15000:
-                analysis['details'].append(f"⚠️  中等并发: {rps:.0f} RPS (目标: ≥ 17,000)")
+                analysis['details'].append(f"  中等并发: {rps:.0f} RPS (目标: ≥ 17,000)")
             else:
-                analysis['details'].append(f"❌ 中等并发: {rps:.0f} RPS (目标: ≥ 17,000)")
+                analysis['details'].append(f" 中等并发: {rps:.0f} RPS (目标: ≥ 17,000)")
         
         # 检查高并发目标（8 线程 / 200 连接）
         high_concurrent_key = 'benchmark_rps_8t_200c'
         if high_concurrent_key in rps_data:
             rps = rps_data[high_concurrent_key]
             if rps >= 16000:
-                analysis['details'].append(f"✅ 高并发: {rps:.0f} RPS (目标: ≥ 16,000)")
+                analysis['details'].append(f" 高并发: {rps:.0f} RPS (目标: ≥ 16,000)")
             elif rps >= 14000:
-                analysis['details'].append(f"⚠️  高并发: {rps:.0f} RPS (目标: ≥ 16,000)")
+                analysis['details'].append(f"  高并发: {rps:.0f} RPS (目标: ≥ 16,000)")
             else:
-                analysis['details'].append(f"❌ 高并发: {rps:.0f} RPS (目标: ≥ 16,000)")
+                analysis['details'].append(f" 高并发: {rps:.0f} RPS (目标: ≥ 16,000)")
         
         # 判断整体状态
-        all_pass = all('✅' in detail for detail in analysis['details'])
+        all_pass = all('' in detail for detail in analysis['details'])
         if all_pass:
             analysis['status'] = 'pass'
         else:
@@ -188,25 +188,25 @@ class BenchmarkAnalyzer:
             avg_str = latency_data['avg']
             avg_ms = float(avg_str.split()[0])
             if avg_ms < 15:
-                analysis['details'].append(f"✅ 平均延迟: {avg_str} (目标: < 15ms)")
+                analysis['details'].append(f" 平均延迟: {avg_str} (目标: < 15ms)")
             elif avg_ms < 30:
-                analysis['details'].append(f"⚠️  平均延迟: {avg_str} (目标: < 15ms)")
+                analysis['details'].append(f"  平均延迟: {avg_str} (目标: < 15ms)")
             else:
-                analysis['details'].append(f"❌ 平均延迟: {avg_str} (目标: < 15ms)")
+                analysis['details'].append(f" 平均延迟: {avg_str} (目标: < 15ms)")
         
         # 检查 P99 延迟
         if 'p99' in latency_data:
             p99_str = latency_data['p99']
             p99_ms = float(p99_str.split()[0])
             if p99_ms < 50:
-                analysis['details'].append(f"✅ P99 延迟: {p99_str} (目标: < 50ms)")
+                analysis['details'].append(f" P99 延迟: {p99_str} (目标: < 50ms)")
             elif p99_ms < 100:
-                analysis['details'].append(f"⚠️  P99 延迟: {p99_str} (目标: < 50ms)")
+                analysis['details'].append(f"  P99 延迟: {p99_str} (目标: < 50ms)")
             else:
-                analysis['details'].append(f"❌ P99 延迟: {p99_str} (目标: < 50ms)")
+                analysis['details'].append(f" P99 延迟: {p99_str} (目标: < 50ms)")
         
         # 判断整体状态
-        all_pass = all('✅' in detail for detail in analysis['details'])
+        all_pass = all('' in detail for detail in analysis['details'])
         if all_pass:
             analysis['status'] = 'pass'
         else:
@@ -251,14 +251,14 @@ class BenchmarkAnalyzer:
             rate_str = connection_data['success_rate']
             rate = float(rate_str.replace('%', ''))
             if rate >= 99.9:
-                analysis['details'].append(f"✅ 成功率: {rate_str} (目标: > 99.9%)")
+                analysis['details'].append(f" 成功率: {rate_str} (目标: > 99.9%)")
             elif rate >= 99.0:
-                analysis['details'].append(f"⚠️  成功率: {rate_str} (目标: > 99.9%)")
+                analysis['details'].append(f"  成功率: {rate_str} (目标: > 99.9%)")
             else:
-                analysis['details'].append(f"❌ 成功率: {rate_str} (目标: > 99.9%)")
+                analysis['details'].append(f" 成功率: {rate_str} (目标: > 99.9%)")
         
         # 判断整体状态
-        all_pass = all('✅' in detail for detail in analysis['details'])
+        all_pass = all('' in detail for detail in analysis['details'])
         if all_pass:
             analysis['status'] = 'pass'
         else:
@@ -332,11 +332,11 @@ class BenchmarkAnalyzer:
             f.write("## 整体性能评估\n\n")
             overall = self.analysis['overall_assessment']
             if overall == 'excellent':
-                f.write("✅ **优秀** - 所有性能指标都达到或超过目标\n")
+                f.write(" **优秀** - 所有性能指标都达到或超过目标\n")
             elif overall == 'good':
-                f.write("⚠️  **良好** - 大部分性能指标达到目标，有小部分需要改进\n")
+                f.write("  **良好** - 大部分性能指标达到目标，有小部分需要改进\n")
             else:
-                f.write("❌ **需要改进** - 有多个性能指标未达到目标\n")
+                f.write(" **需要改进** - 有多个性能指标未达到目标\n")
             f.write("\n")
             
             # 建议

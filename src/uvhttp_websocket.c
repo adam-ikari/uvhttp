@@ -18,10 +18,16 @@
 #endif
 
 #include <errno.h>
+
+#if UVHTTP_FEATURE_TLS
 #include <mbedtls/base64.h>
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
 #include <mbedtls/sha1.h>
+#else
+#error "WebSocket requires TLS support (BUILD_WITH_HTTPS=ON)"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

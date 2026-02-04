@@ -234,22 +234,22 @@ static void print_comprehensive_stats(benchmark_context_t* ctx) {
         
         /* 低并发目标: 17,000+ RPS */
         if (rps >= 17000) {
-            printf("✅ RPS 性能: 优秀 (%.2f RPS >= 17,000)\n", rps);
+            printf(" RPS 性能: 优秀 (%.2f RPS >= 17,000)\n", rps);
         } else if (rps >= 15000) {
-            printf("⚠️  RPS 性能: 良好 (%.2f RPS >= 15,000)\n", rps);
+            printf("  RPS 性能: 良好 (%.2f RPS >= 15,000)\n", rps);
         } else {
-            printf("❌ RPS 性能: 需要改进 (%.2f RPS < 15,000)\n", rps);
+            printf(" RPS 性能: 需要改进 (%.2f RPS < 15,000)\n", rps);
         }
         
         /* 延迟目标: < 15ms */
         if (ctx->stats.latency_count > 0) {
             double avg_latency_ms = ctx->stats.latency_sum / ctx->stats.latency_count / 1000.0;
             if (avg_latency_ms < 15.0) {
-                printf("✅ 延迟性能: 优秀 (%.3f ms < 15 ms)\n", avg_latency_ms);
+                printf(" 延迟性能: 优秀 (%.3f ms < 15 ms)\n", avg_latency_ms);
             } else if (avg_latency_ms < 30.0) {
-                printf("⚠️  延迟性能: 良好 (%.3f ms < 30 ms)\n", avg_latency_ms);
+                printf("  延迟性能: 良好 (%.3f ms < 30 ms)\n", avg_latency_ms);
             } else {
-                printf("❌ 延迟性能: 需要改进 (%.3f ms >= 30 ms)\n", avg_latency_ms);
+                printf(" 延迟性能: 需要改进 (%.3f ms >= 30 ms)\n", avg_latency_ms);
             }
         }
         
@@ -257,11 +257,11 @@ static void print_comprehensive_stats(benchmark_context_t* ctx) {
         if (ctx->stats.total_requests > 0) {
             double error_rate = (double)ctx->stats.failed_requests / ctx->stats.total_requests * 100.0;
             if (error_rate < 0.1) {
-                printf("✅ 错误率: 优秀 (%.2f%% < 0.1%%)\n", error_rate);
+                printf(" 错误率: 优秀 (%.2f%% < 0.1%%)\n", error_rate);
             } else if (error_rate < 1.0) {
-                printf("⚠️  错误率: 良好 (%.2f%% < 1%%)\n", error_rate);
+                printf("  错误率: 良好 (%.2f%% < 1%%)\n", error_rate);
             } else {
-                printf("❌ 错误率: 需要改进 (%.2f%% >= 1%%)\n", error_rate);
+                printf(" 错误率: 需要改进 (%.2f%% >= 1%%)\n", error_rate);
             }
         }
     }
