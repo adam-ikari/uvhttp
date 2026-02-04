@@ -99,7 +99,8 @@ set(UVHTTP_MAX_HEADER_VALUE_SIZE 8192 CACHE STRING "Max HTTP header value size")
 |--------|--------|------|----------|
 | `UVHTTP_SENDFILE_CHUNK_SIZE` | 65536 | sendfile 块大小（字节） | 32768-131072 |
 | `UVHTTP_SENDFILE_TIMEOUT_MS` | 30000 | sendfile 超时（毫秒） | 10000-60000 |
-| `UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE` | 10 | LRU 缓存批量驱逐大小 | 5-20 |
+| `UVHTTP_STATIC_MAX_CACHE_SIZE` | 10485760 | 静态文件缓存大小（字节，10MB） | 5242880-52428800 |
+| `UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE` | 2 | LRU 缓存批量驱逐大小 | 1-10 |
 
 ### 限流
 
