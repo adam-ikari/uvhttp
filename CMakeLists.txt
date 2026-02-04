@@ -257,6 +257,7 @@ set(SOURCES
     src/uvhttp_lru_cache.c
     src/uvhttp_static.c
     src/uvhttp_protocol_upgrade.c
+    src/uvhttp_version.c
 )
 
 # 条件编译 WebSocket 源文件

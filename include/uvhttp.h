@@ -13,6 +13,7 @@
 #include "uvhttp_router.h"
 #include "uvhttp_server.h"
 #include "uvhttp_utils.h"
+#include "uvhttp_version.h"
 
 /* Conditional includes for optional features */
 
