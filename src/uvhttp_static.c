@@ -246,6 +246,111 @@ static char* read_file_content(const char* file_path, size_t* file_size) {
 }
 
 /**
+ * chunked file transfer context
+ * - used for streaming large files in chunks
+ * - avoids loading entire file into memory
+ */
+typedef struct {
+    FILE* file;
+    size_t file_size;
+    size_t bytes_sent;
+    size_t chunk_size;
+    char* chunk_buffer;
+    uvhttp_response_t* response;
+    char etag[UVHTTP_MAX_HEADER_VALUE_SIZE];
+    time_t last_modified;
+    char safe_path[UVHTTP_MAX_PATH_SIZE];
+} chunked_transfer_context_t;
+
+/**
+ * send file in chunks (for large files when sendfile is not available)
+ * - avoids loading entire file into memory
+ * - uses fixed-size chunks to balance memory and performance
+ */
+static int send_file_chunked(const char* file_path, size_t file_size,
+                             time_t last_modified, uvhttp_response_t* response,
+                             const char* etag, const char* safe_path) {
+    if (!file_path || !response)
+        return UVHTTP_ERROR_INVALID_PARAM;
+
+    /* open file */
+    FILE* file = fopen(file_path, "rb");
+    if (!file) {
+        return UVHTTP_ERROR_NOT_FOUND;
+    }
+
+    /* allocate chunk buffer */
+    char* chunk_buffer = uvhttp_alloc(UVHTTP_FILE_CHUNK_SIZE);
+    if (!chunk_buffer) {
+        fclose(file);
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+
+    /* set response headers (only once) */
+    uvhttp_static_set_response_headers(response, safe_path, file_size,
+                                       last_modified, etag);
+    uvhttp_response_set_status(response, 200);
+
+    /* send headers first */
+    char* response_data = NULL;
+    size_t response_length = 0;
+    uvhttp_error_t err =
+        uvhttp_response_build_data(response, &response_data, &response_length);
+
+    if (err != UVHTTP_OK) {
+        uvhttp_free(chunk_buffer);
+        fclose(file);
+        return err;
+    }
+
+    /* send headers with NULL response to avoid connection restart */
+    err = uvhttp_response_send_raw(response_data, response_length,
+                                   response->client, NULL);
+    uvhttp_free(response_data);
+
+    if (err != UVHTTP_OK) {
+        uvhttp_free(chunk_buffer);
+        fclose(file);
+        return err;
+    }
+
+    /* send file in chunks */
+    size_t bytes_sent = 0;
+    while (bytes_sent < file_size) {
+        size_t bytes_to_read = UVHTTP_FILE_CHUNK_SIZE;
+        size_t remaining = file_size - bytes_sent;
+
+        if (bytes_to_read > remaining) {
+            bytes_to_read = remaining;
+        }
+
+        size_t bytes_read = fread(chunk_buffer, 1, bytes_to_read, file);
+        if (bytes_read != bytes_to_read) {
+            uvhttp_free(chunk_buffer);
+            fclose(file);
+            return UVHTTP_ERROR_IO_ERROR;
+        }
+
+        /* send chunk with NULL response to avoid connection restart */
+        err = uvhttp_response_send_raw(chunk_buffer, bytes_read,
+                                       response->client, NULL);
+        if (err != UVHTTP_OK) {
+            uvhttp_free(chunk_buffer);
+            fclose(file);
+            return err;
+        }
+
+        bytes_sent += bytes_read;
+    }
+
+    /* cleanup */
+    uvhttp_free(chunk_buffer);
+    fclose(file);
+
+    return UVHTTP_OK;
+}
+
+/**
  * getfileinfo
  */
 static int get_file_info(const char* file_path, size_t* file_size,
@@ -875,12 +980,6 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
         }
     }
 
-    /* checkfilesizelimit */
-    if (file_size > UVHTTP_STATIC_MAX_FILE_SIZE) {
-        uvhttp_response_set_status(response, 413); /* Payload Too Large */
-        return UVHTTP_ERROR_FILE_TOO_LARGE;
-    }
-
     /* for medium and large files (> 64KB), use sendfile zero-copy optimization
      * - performance optimization */
     if (file_size > UVHTTP_SENDFILE_MIN_FILE_SIZE) {
@@ -906,10 +1005,11 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
         if (sendfile_result != UVHTTP_OK) {
             UVHTTP_LOG_ERROR("sendfile failed: %s",
                              uvhttp_error_string(sendfile_result));
-            /* fallback to traditional method */
-            /* note: sendfile may have already set response headers, need to
-             * reset */
-            /* traditional method will reset response headers */
+            /* fallback to chunked transfer for large files */
+            /* chunked transfer avoids loading entire file into memory */
+            int chunked_result = send_file_chunked(
+                safe_path, file_size, last_modified, response, etag, safe_path);
+            return chunked_result;
         } else {
             /* sendfilesuccess, return */
             return UVHTTP_OK;

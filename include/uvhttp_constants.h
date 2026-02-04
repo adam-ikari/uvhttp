@@ -451,6 +451,15 @@
 #        define UVHTTP_SENDFILE_MIN_FILE_SIZE (64 * 1024) /* 64KB */
 #    endif
 
+/* Chunk size for chunked file transfer (when sendfile is not available)
+ * - balances memory usage and performance
+ * - 64KB chunks provide good performance without excessive memory usage
+ * - allows serving files of any size without loading entire file into memory
+ */
+#    ifndef UVHTTP_FILE_CHUNK_SIZE
+#        define UVHTTP_FILE_CHUNK_SIZE (64 * 1024) /* 64KB */
+#    endif
+
 #    ifndef UVHTTP_SENDFILE_DEFAULT_TIMEOUT_MS
 #        define UVHTTP_SENDFILE_DEFAULT_TIMEOUT_MS 30000 /* 30 seconds */
 #    endif
@@ -764,8 +773,9 @@
  * - MONITORING: Enable monitoring (Production environment)
  */
 #    ifndef UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION
-#        define UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION 1 /* Default enabled \
-                                                           */
+#        define UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION \
+            1 /* Default enabled                        \
+               */
 #    endif
 
 /* UVHTTP_ENABLE_ROUTER_CACHE_STATS deleted - unused */

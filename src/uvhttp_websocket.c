@@ -898,7 +898,7 @@ static int websocket_protocol_detector(uvhttp_request_t* request,
                                        size_t protocol_name_len,
                                        const char* upgrade_header,
                                        const char* connection_header) {
-    (void)upgrade_header;  /* Use pre-fetched value below */
+    (void)upgrade_header; /* Use pre-fetched value below */
 
     /* Check required headers */
     if (!upgrade_header || !connection_header) {

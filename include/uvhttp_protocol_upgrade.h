@@ -115,8 +115,10 @@ typedef struct {
  * performance for common protocols.
  *
  * @param server Server object
- * @param protocol_name Protocol name (e.g., "ipps", "grpc-web"), will be normalized to lowercase
- * @param upgrade_header Upgrade header value (optional, for fast matching), will be normalized to lowercase
+ * @param protocol_name Protocol name (e.g., "ipps", "grpc-web"), will be
+ * normalized to lowercase
+ * @param upgrade_header Upgrade header value (optional, for fast matching),
+ * will be normalized to lowercase
  * @param detector Protocol detector function
  * @param handler Protocol upgrade handler function
  * @param user_data User data, will be passed to handler

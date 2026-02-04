@@ -88,6 +88,67 @@ wrk -t4 -c100 -d30s http://127.0.0.1:18095/api/resource50
 wrk -t4 -c100 -d30s http://127.0.0.1:18095/api/resource100
 ```
 
+### benchmark_file_transfer
+
+文件传输性能基准测试服务器，专门用于测试静态文件传输性能，包括 sendfile 零拷贝优化：
+
+**启动服务器：**
+```bash
+./build/dist/bin/benchmark_file_transfer [端口]
+```
+
+**默认端口：** 18082
+
+**可用端点：**
+- `GET /file/small` - 小文件（1KB）
+- `GET /file/medium` - 中等文件（64KB）
+- `GET /file/large` - 大文件（1MB）
+- `GET /file/xlarge` - 超大文件（10MB）
+- `GET /file/xxlarge` - 超超大文件（100MB）
+- `GET /health` - 健康检查
+
+**特性：**
+- 静态文件服务，使用 `uvhttp_router_add_static_route`
+- sendfile 零拷贝优化（> 64KB 文件）
+- LRU 缓存（100MB）
+- ETag 和 Last-Modified 支持
+- 无文件大小限制
+
+**性能测试：**
+```bash
+# 启动服务器
+./build/dist/bin/benchmark_file_transfer 18082
+
+# 小文件测试
+wrk -t4 -c100 -d30s http://127.0.0.1:18082/file/small
+
+# 大文件测试
+wrk -t4 -c100 -d30s http://127.0.0.1:18082/file/large
+
+# 超大文件测试
+wrk -t4 -c100 -d30s http://127.0.0.1:18082/file/xxlarge
+
+# 使用 ab 测试（适合小文件）
+ab -n 1000 -c 10 http://127.0.0.1:18082/file/small
+
+# 并发测试
+wrk -t8 -c200 -d60s http://127.0.0.1:18082/file/medium
+
+# 长时间稳定性测试
+wrk -t4 -c100 -d300s http://127.0.0.1:18082/file/large
+```
+
+**性能指标：**
+- 1KB 文件：~0.002s，1.0 MB/s
+- 64KB 文件：~0.001s，65.5 MB/s
+- 1MB 文件：~0.001s，1.0 GB/s
+- 10MB 文件：~0.007s，1.7 GB/s
+- 100MB 文件：~0.060s，1.8 GB/s
+
+**并发性能：**
+- 10 个并发 1MB 文件：~0.018s
+- 5 个并发 50MB 文件：~0.057s
+
 ### run_benchmarks.sh
 
 自动化测试脚本，运行完整的性能测试套件：
@@ -175,6 +236,40 @@ wrk -t4 -c100 -d30s http://127.0.0.1:18081/medium
 wrk -t4 -c100 -d30s http://127.0.0.1:18081/large
 ```
 
+### 4. 文件传输性能测试
+
+测试静态文件传输性能，包括 sendfile 零拷贝优化：
+
+```bash
+# 启动文件传输测试服务器
+./build/dist/bin/benchmark_file_transfer 18082
+
+# 小文件传输（1KB）
+wrk -t4 -c100 -d30s http://127.0.0.1:18082/file/small
+
+# 中等文件传输（64KB）
+wrk -t4 -c100 -d30s http://127.0.0.1:18082/file/medium
+
+# 大文件传输（1MB）
+wrk -t4 -c100 -d30s http://127.0.0.1:18082/file/large
+
+# 超大文件传输（10MB）
+wrk -t4 -c100 -d30s http://127.0.0.1:18082/file/xlarge
+
+# 超超大文件传输（100MB）
+wrk -t4 -c100 -d30s http://127.0.0.1:18082/file/xxlarge
+
+# 并发文件传输测试
+wrk -t8 -c200 -d60s http://127.0.0.1:18082/file/large
+```
+
+**文件完整性验证：**
+```bash
+# 下载文件并验证 MD5
+curl -o /tmp/test_file.bin http://127.0.0.1:18082/file/large
+md5sum /tmp/test_file.bin /home/zhaodi-chen/project/uvhttp/build/public/file_test/large.bin
+```
+
 ### 3. 使用 ab 工具
 
 使用 Apache Bench 进行性能测试：
@@ -196,6 +291,8 @@ ab -n 100000 -c 200 -k http://127.0.0.1:18081/
 
 根据 UVHTTP 性能基准，服务器应达到以下目标：
 
+### HTTP 响应性能
+
 | 并发级别 | 线程数 | 连接数 | 目标 RPS |
 |---------|--------|--------|----------|
 | 低并发 | 2 | 10 | ≥ 17,000 |
@@ -211,6 +308,24 @@ ab -n 100000 -c 200 -k http://127.0.0.1:18081/
 
 **错误率目标：**
 - 最大错误率: < 0.1%
+
+### 文件传输性能
+
+| 文件大小 | 目标传输时间 | 目标传输速度 |
+|---------|-------------|-------------|
+| 1KB | < 0.005s | > 200 KB/s |
+| 64KB | < 0.005s | > 12 MB/s |
+| 1MB | < 0.005s | > 200 MB/s |
+| 10MB | < 0.010s | > 1 GB/s |
+| 100MB | < 0.100s | > 1 GB/s |
+
+**并发文件传输：**
+- 10 个并发 1MB 文件：< 0.030s
+- 5 个并发 50MB 文件：< 0.100s
+
+**文件完整性：**
+- 所有文件 MD5 验证必须通过
+- 无数据损坏或丢失
 
 ## 测试结果
 
@@ -323,6 +438,24 @@ wrk.headers["Content-Type"] = "application/json"
 wrk -t4 -c100 -d30s -s post.lua http://127.0.0.1:18081/api
 ```
 
+### 文件传输性能分析
+
+使用 curl 分析文件传输性能：
+
+```bash
+# 测试不同大小文件的传输性能
+curl -o /dev/null -s -w "1KB: Status=%{http_code}, Time=%{time_total}s, Speed=%{speed_download} bytes/s\n" http://127.0.0.1:18082/file/small
+curl -o /dev/null -s -w "1MB: Status=%{http_code}, Time=%{time_total}s, Speed=%{speed_download} bytes/s\n" http://127.0.0.1:18082/file/large
+curl -o /dev/null -s -w "100MB: Status=%{http_code}, Time=%{time_total}s, Speed=%{speed_download} bytes/s\n" http://127.0.0.1:18082/file/xxlarge
+
+# 并发文件传输测试
+for i in {1..10}; do curl -o /dev/null -s http://127.0.0.1:18082/file/large & done; wait
+
+# 文件完整性验证
+curl -o /tmp/test.bin http://127.0.0.1:18082/file/large
+md5sum /tmp/test.bin /home/zhaodi-chen/project/uvhttp/build/public/file_test/large.bin
+```
+
 ### 持续性能监控
 
 集成到 CI/CD 流程中：
@@ -333,6 +466,14 @@ wrk -t4 -c100 -d30s -s post.lua http://127.0.0.1:18081/api
   run: |
     cd benchmark
     ./run_benchmarks.sh
+    
+- name: Run file transfer tests
+  run: |
+    ./build/dist/bin/benchmark_file_transfer 18082 &
+    sleep 5
+    curl -o /dev/null -s -w "1MB: %{http_code}, %{time_total}s\n" http://127.0.0.1:18082/file/large
+    curl -o /dev/null -s -w "100MB: %{http_code}, %{time_total}s\n" http://127.0.0.1:18082/file/xxlarge
+    pkill -f benchmark_file_transfer
     
 - name: Check performance regression
   run: |

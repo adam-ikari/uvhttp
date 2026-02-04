@@ -50,49 +50,6 @@ static void signal_handler(int signum) {
     }
 }
 
-/* 文件处理器 */
-static int file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    /* 获取应用上下文 */
-    if (!request->client || !request->client->data) {
-        const char* error = "No connection data";
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error, strlen(error));
-        return uvhttp_response_send(response);
-    }
-
-    uvhttp_connection_t* conn = (uvhttp_connection_t*)request->client->data;
-    if (!conn || !conn->server || !conn->server->user_data) {
-        const char* error = "No server context";
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error, strlen(error));
-        return uvhttp_response_send(response);
-    }
-
-    app_context_t* ctx = (app_context_t*)conn->server->user_data;
-    if (!ctx || !ctx->static_ctx) {
-        const char* error = "No static context";
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error, strlen(error));
-        return uvhttp_response_send(response);
-    }
-
-    /* 直接调用静态文件处理函数 */
-    int result = uvhttp_static_handle_request(ctx->static_ctx, request, response);
-    
-    if (result != UVHTTP_OK) {
-        const char* error = "File Not Found";
-        uvhttp_response_set_status(response, 404);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error, strlen(error));
-        return uvhttp_response_send(response);
-    }
-    
-    return uvhttp_response_send(response);
-}
-
 /* 健康检查处理器 */
 static int health_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     (void)request;  /* 避免未使用参数警告 */
@@ -166,9 +123,6 @@ static void print_usage(const char* program, int port) {
     printf("  wrk -t8 -c200 -d60s http://127.0.0.1:%d/file/medium\n\n", port);
     printf("  # 长时间稳定性测试\n");
     printf("  wrk -t4 -c100 -d300s http://127.0.0.1:%d/file/large\n\n", port);
-    printf("  wrk -t8 -c200 -d60s http://127.0.0.1:%d/file/medium\n\n", port);
-    printf("  # 长时间稳定性测试\n");
-    printf("  wrk -t4 -c100 -d300s http://127.0.0.1:%d/file/large\n\n", port);
     printf("按 Ctrl+C 停止服务器\n");
     printf("========================================\n\n");
     fflush(stdout);
@@ -198,6 +152,12 @@ int main(int argc, char* argv[]) {
     int ret = system(command);
     (void)ret;  /* 避免未使用返回值警告 */
     
+    /* 创建 file 目录和符号链接 */
+    const char* file_dir = "./public/file";
+    snprintf(command, sizeof(command), "mkdir -p %s", file_dir);
+    ret = system(command);
+    (void)ret;
+    
     printf("创建测试文件...\n");
     fflush(stdout);
     
@@ -207,6 +167,25 @@ int main(int argc, char* argv[]) {
     create_test_file("./public/file_test/large.bin", 1024 * 1024);  /* 1MB */
     create_test_file("./public/file_test/xlarge.bin", 10 * 1024 * 1024); /* 10MB */
     create_test_file("./public/file_test/xxlarge.bin", 100 * 1024 * 1024); /* 100MB */
+    
+    /* 创建符号链接，让 /file/small 映射到 file_test/small.txt */
+    printf("创建符号链接...\n");
+    fflush(stdout);
+    unlink("./public/file/small");
+    unlink("./public/file/medium");
+    unlink("./public/file/large");
+    unlink("./public/file/xlarge");
+    unlink("./public/file/xxlarge");
+    ret = symlink("../file_test/small.txt", "./public/file/small");
+    (void)ret;
+    ret = symlink("../file_test/medium.bin", "./public/file/medium");
+    (void)ret;
+    ret = symlink("../file_test/large.bin", "./public/file/large");
+    (void)ret;
+    ret = symlink("../file_test/xlarge.bin", "./public/file/xlarge");
+    (void)ret;
+    ret = symlink("../file_test/xxlarge.bin", "./public/file/xxlarge");
+    (void)ret;
     
     /* 创建事件循环 */
     printf("创建事件循环...\n");
@@ -312,9 +291,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-/* 添加路由 */
+    /* 添加路由 */
     uvhttp_router_add_route(router, "/health", health_handler);
-    uvhttp_router_add_route(router, "/file_test/:filename", file_handler);  /* 文件测试路由 */
+    
+    /* 设置静态文件路由，路径 /file 会映射到 public/file */
+    result = uvhttp_router_add_static_route(router, "/file", ctx->static_ctx);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "无法添加静态文件路由: %s\n", uvhttp_error_string(result));
+    }
     
     server->router = router;
     
