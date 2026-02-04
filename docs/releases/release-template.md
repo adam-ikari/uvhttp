@@ -102,13 +102,19 @@ make -j$(nproc)
 # Coming soon
 ```
 
-## 🔄 Migration Guide
+## 🔄 Migration Guide from v{PREVIOUS_VERSION}
+
+This guide helps you migrate from UVHTTP v{PREVIOUS_VERSION} to v{VERSION}.
 
 ### Prerequisites
 
-- UVHTTP {PREVIOUS_VERSION} or later
+- UVHTTP v{PREVIOUS_VERSION} or later
 - CMake 3.10+
 - C11 compatible compiler
+
+### Migration Overview
+
+{MIGRATION_OVERVIEW}
 
 ### Step-by-Step Migration
 
@@ -120,12 +126,12 @@ make -j$(nproc)
 
 {MIGRATION_STEP_2}
 
-**Before:**
+**Before (v{PREVIOUS_VERSION}):**
 ```c
 {CODE_BEFORE}
 ```
 
-**After:**
+**After (v{VERSION}):**
 ```c
 {CODE_AFTER}
 ```
