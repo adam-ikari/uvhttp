@@ -90,6 +90,124 @@ check_dependencies() {
     log_success "所有依赖已安装"
 }
 
+# 检查测试环境
+check_test_environment() {
+    log_info "检查测试环境..."
+    
+    local issues_found=0
+    
+    # 1. 检查 CPU 频率锁定
+    log_info "  检查 CPU 频率..."
+    if command -v cpupower &> /dev/null; then
+        local governor=$(cpupower frequency-info -p | grep "governor" | awk '{print $3}')
+        if [ "$governor" != "performance" ]; then
+            log_warning "  CPU 频率调节器为 '$governor'，建议设置为 'performance' 以获得稳定性能"
+            log_info "  设置命令: sudo cpupower frequency-set -g performance"
+            issues_found=$((issues_found + 1))
+        else
+            log_success "  CPU 频率调节器: performance ✅"
+        fi
+    else
+        log_warning "  cpupower 未安装，无法检查 CPU 频率调节器"
+        log_info "  安装命令: sudo apt-get install linux-tools-common linux-tools-generic"
+    fi
+    
+    # 2. 检查 Swap 状态
+    log_info "  检查 Swap 状态..."
+    local swap_total=$(free -m | awk '/^Swap:/ {print $2}')
+    local swap_used=$(free -m | awk '/^Swap:/ {print $3}')
+    if [ "$swap_total" -gt 0 ] && [ "$swap_used" -gt 0 ]; then
+        log_warning "  Swap 正在使用 (${swap_used}MB / ${swap_total}MB)，可能影响性能测试结果"
+        log_info "  禁用 Swap: sudo swapoff -a"
+        issues_found=$((issues_found + 1))
+    elif [ "$swap_total" -gt 0 ]; then
+        log_success "  Swap 已配置但未使用 ✅"
+    else
+        log_success "  Swap 未配置 ✅"
+    fi
+    
+    # 3. 检查文件描述符限制
+    log_info "  检查文件描述符限制..."
+    local soft_limit=$(ulimit -n)
+    local required_limit=65536
+    if [ "$soft_limit" -lt "$required_limit" ]; then
+        log_warning "  文件描述符限制过低 ($soft_limit)，建议至少 $required_limit"
+        log_info "  临时设置: ulimit -n $required_limit"
+        log_info "  永久设置: 在 /etc/security/limits.conf 添加 '* soft nofile $required_limit'"
+        issues_found=$((issues_found + 1))
+    else
+        log_success "  文件描述符限制: $soft_limit ✅"
+    fi
+    
+    # 4. 检查系统负载
+    log_info "  检查系统负载..."
+    local load_1min=$(uptime | awk -F'load average:' '{print $2}' | awk '{print $1}' | sed 's/,//')
+    local cpu_count=$(nproc)
+    local load_per_cpu=$(echo "$load_1min / $cpu_count" | bc -l 2>/dev/null || echo "0")
+    local load_threshold=0.5
+    
+    if (( $(echo "$load_per_cpu > $load_threshold" | bc -l 2>/dev/null || echo 0) )); then
+        log_warning "  系统负载较高 ($load_1min, $load_per_cpu per CPU)，可能影响性能测试结果"
+        log_info "  建议在系统负载较低时运行测试"
+        issues_found=$((issues_found + 1))
+    else
+        log_success "  系统负载: $load_1min ✅"
+    fi
+    
+    # 5. 检查可用内存
+    log_info "  检查可用内存..."
+    local available_mem=$(free -m | awk '/^Mem:/ {print $7}')
+    local required_mem=1024  # 至少 1GB 可用内存
+    if [ "$available_mem" -lt "$required_mem" ]; then
+        log_warning "  可用内存不足 (${available_mem}MB)，建议至少 ${required_mem}MB"
+        issues_found=$((issues_found + 1))
+    else
+        log_success "  可用内存: ${available_mem}MB ✅"
+    fi
+    
+    # 6. 检查网络配置
+    log_info "  检查网络配置..."
+    local tcp_backlog=$(sysctl net.core.somaxconn 2>/dev/null | awk '{print $3}')
+    if [ "$tcp_backlog" -lt 1024 ]; then
+        log_warning "  TCP backlog 较低 ($tcp_backlog)，建议设置为 1024 或更高"
+        log_info "  设置命令: sudo sysctl -w net.core.somaxconn=1024"
+        issues_found=$((issues_found + 1))
+    else
+        log_success "  TCP backlog: $tcp_backlog ✅"
+    fi
+    
+    # 7. 检查端口占用
+    log_info "  检查端口 $DEFAULT_PORT..."
+    if command -v lsof &> /dev/null; then
+        if lsof -i :$DEFAULT_PORT &> /dev/null; then
+            log_warning "  端口 $DEFAULT_PORT 已被占用"
+            log_info "  查看占用: lsof -i :$DEFAULT_PORT"
+            issues_found=$((issues_found + 1))
+        else
+            log_success "  端口 $DEFAULT_PORT 可用 ✅"
+        fi
+    elif command -v ss &> /dev/null; then
+        if ss -tuln | grep -q ":$DEFAULT_PORT "; then
+            log_warning "  端口 $DEFAULT_PORT 已被占用"
+            log_info "  查看占用: ss -tuln | grep $DEFAULT_PORT"
+            issues_found=$((issues_found + 1))
+        else
+            log_success "  端口 $DEFAULT_PORT 可用 ✅"
+        fi
+    else
+        log_warning "  无法检查端口占用（lsof 和 ss 都未安装）"
+    fi
+    
+    # 总结
+    if [ $issues_found -gt 0 ]; then
+        log_warning "发现 $issues_found 个环境问题，建议修复后重新运行测试以获得准确结果"
+        log_info "是否继续测试？(Ctrl+C 取消，回车继续)"
+        read -r
+    else
+        log_success "测试环境检查通过 ✅"
+    fi
+}
+
 # 编译基准测试程序
 compile_benchmark_server() {
     log_info "编译基准测试服务器..."
@@ -269,6 +387,140 @@ run_performance_tests() {
     log_success "性能测试完成"
 }
 
+# 运行突发流量测试
+run_burst_traffic_test() {
+    local server_pid=$1
+    local port=$2
+    
+    log_info "开始突发流量测试..."
+    
+    local burst_dir="$RUN_DIR/burst_traffic"
+    mkdir -p "$burst_dir"
+    
+    # 测试场景 1: 从低并发突然增加到高并发
+    log_info "场景 1: 低并发 -> 高并发突发"
+    log_info "  启动低并发测试 (2 线程 / 10 连接, 5 秒)..."
+    wrk -t2 -c10 -d5s "http://127.0.0.1:$port/" > "$burst_dir/phase1_low.txt" 2>&1
+    
+    log_info "  突然增加到高并发 (16 线程 / 500 连接, 20 秒)..."
+    wrk -t16 -c500 -d20s "http://127.0.0.1:$port/" > "$burst_dir/phase2_high.txt" 2>&1
+    
+    sleep 2
+    
+    # 测试场景 2: 多次突发
+    log_info "场景 2: 多次突发测试"
+    for i in {1..3}; do
+        log_info "  突发 $i/3: 低负载 (2 线程 / 10 连接, 3 秒)..."
+        wrk -t2 -c10 -d3s "http://127.0.0.1:$port/" > "$burst_dir/multi_burst_${i}_low.txt" 2>&1
+        
+        log_info "  突发 $i/3: 高负载 (16 线程 / 500 连接, 5 秒)..."
+        wrk -t16 -c500 -d5s "http://127.0.0.1:$port/" > "$burst_dir/multi_burst_${i}_high.txt" 2>&1
+        
+        sleep 1
+    done
+    
+    # 测试场景 3: 持续高并发突发
+    log_info "场景 3: 持续高并发突发测试"
+    log_info "  启动持续突发测试 (16 线程 / 500 连接, 30 秒)..."
+    wrk -t16 -c500 -d30s "http://127.0.0.1:$port/" > "$burst_dir/sustained_burst.txt" 2>&1
+    
+    # 生成突发流量测试报告
+    local burst_report="$burst_dir/report.md"
+    cat > "$burst_report" << EOF
+# 突发流量测试报告
+
+## 测试时间
+$(date)
+
+## 测试场景
+
+### 场景 1: 低并发 -> 高并发突发
+- **阶段 1**: 2 线程 / 10 连接, 5 秒
+- **阶段 2**: 16 线程 / 500 连接, 20 秒
+
+**结果**:
+EOF
+    
+    # 提取结果
+    local rps1=$(grep "Requests/sec" "$burst_dir/phase1_low.txt" | awk '{print $2}')
+    local rps2=$(grep "Requests/sec" "$burst_dir/phase2_high.txt" | awk '{print $2}')
+    
+    echo "- 低并发 RPS: $rps1" >> "$burst_report"
+    echo "- 高并发 RPS: $rps2" >> "$burst_report"
+    
+    cat >> "$burst_report" << EOF
+
+### 场景 2: 多次突发测试
+- **循环次数**: 3 次
+- **每次突发**: 低负载 3 秒 -> 高负载 5 秒
+
+**结果**:
+EOF
+    
+    local total_rps=0
+    local count=0
+    for i in {1..3}; do
+        local rps_low=$(grep "Requests/sec" "$burst_dir/multi_burst_${i}_low.txt" | awk '{print $2}')
+        local rps_high=$(grep "Requests/sec" "$burst_dir/multi_burst_${i}_high.txt" | awk '{print $2}')
+        echo "- 突发 $i: 低 $rps_low -> 高 $rps_high" >> "$burst_report"
+        if [ -n "$rps_high" ]; then
+            total_rps=$((total_rps + $(echo "$rps_high" | cut -d. -f1)))
+            count=$((count + 1))
+        fi
+    done
+    
+    if [ $count -gt 0 ]; then
+        local avg_rps=$((total_rps / count))
+        echo "- 平均高并发 RPS: $avg_rps" >> "$burst_report"
+    fi
+    
+    cat >> "$burst_report" << EOF
+
+### 场景 3: 持续高并发突发
+- **配置**: 16 线程 / 500 连接, 30 秒
+
+**结果**:
+EOF
+    
+    local rps_sustained=$(grep "Requests/sec" "$burst_dir/sustained_burst.txt" | awk '{print $2}')
+    echo "- 持续高并发 RPS: $rps_sustained" >> "$burst_report"
+    
+    cat >> "$burst_report" << EOF
+
+## 性能评估
+
+### 突发响应能力
+- **低并发稳定性**: $rps1 RPS
+- **突发处理能力**: $rps2 RPS
+- **突发响应比**: $(echo "scale=2; $rps2 / $rps1" | bc 2>/dev/null || echo "N/A")x
+
+### 多次突发稳定性
+- **平均高并发 RPS**: $avg_rps
+- **波动范围**: 需要分析各次突发结果
+
+### 持续突发稳定性
+- **持续高并发 RPS**: $rps_sustained
+
+## 建议
+
+EOF
+    
+    # 评估突发性能
+    if [ -n "$rps2" ] && [ -n "$rps1" ]; then
+        local burst_ratio=$(echo "scale=2; $rps2 / $rps1" | bc 2>/dev/null || echo "0")
+        if (( $(echo "$burst_ratio >= 0.8" | bc -l 2>/dev/null || echo 0) )); then
+            echo "✅ 突发响应能力优秀（突发响应比: ${burst_ratio}x）" >> "$burst_report"
+        elif (( $(echo "$burst_ratio >= 0.5" | bc -l 2>/dev/null || echo 0) )); then
+            echo "⚠️  突发响应能力良好（突发响应比: ${burst_ratio}x）" >> "$burst_report"
+        else
+            echo "❌ 突发响应能力需要改进（突发响应比: ${burst_ratio}x）" >> "$burst_report"
+        fi
+    fi
+    
+    log_success "突发流量测试完成"
+    log_info "报告: $burst_report"
+}
+
 # 生成测试报告
 generate_report() {
     log_info "生成测试报告..."
@@ -414,6 +666,10 @@ main() {
     check_dependencies
     echo ""
     
+    # 检查测试环境
+    check_test_environment
+    echo ""
+    
     # 编译基准测试服务器
     compile_benchmark_server
     echo ""
@@ -424,6 +680,10 @@ main() {
     
     # 运行性能测试
     run_performance_tests $server_pid $DEFAULT_PORT
+    echo ""
+    
+    # 运行突发流量测试
+    run_burst_traffic_test $server_pid $DEFAULT_PORT
     echo ""
     
     # 生成报告

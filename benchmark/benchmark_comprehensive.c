@@ -38,6 +38,12 @@ typedef struct {
     size_t peak_memory;
     size_t current_memory;
 
+    /* CPU 统计 */
+    double cpu_usage_percent;
+    uint64_t cpu_time_total;
+    uint64_t cpu_time_user;
+    uint64_t cpu_time_system;
+
     /* 时间统计 */
     uint64_t start_time;
     uint64_t end_time;
@@ -67,6 +73,56 @@ static size_t get_memory_usage_kb(void) {
     struct rusage usage;
     getrusage(RUSAGE_SELF, &usage);
     return usage.ru_maxrss;
+}
+
+/* 获取当前 CPU 使用率（百分比） */
+static double get_cpu_usage_percent(void) {
+    static uint64_t last_cpu_time_total = 0;
+    static uint64_t last_cpu_time_user = 0;
+    static uint64_t last_cpu_time_system = 0;
+    static struct timeval last_time = {0, 0};
+    
+    struct rusage usage;
+    struct timeval current_time;
+    uint64_t cpu_time_user, cpu_time_system, cpu_time_total;
+    uint64_t time_delta_us;
+    double cpu_usage = 0.0;
+    
+    /* 获取当前 CPU 时间 */
+    getrusage(RUSAGE_SELF, &usage);
+    cpu_time_user = usage.ru_utime.tv_sec * 1000000 + usage.ru_utime.tv_usec;
+    cpu_time_system = usage.ru_stime.tv_sec * 1000000 + usage.ru_stime.tv_usec;
+    cpu_time_total = cpu_time_user + cpu_time_system;
+    
+    /* 获取当前时间 */
+    gettimeofday(&current_time, NULL);
+    
+    /* 第一次调用，初始化 */
+    if (last_time.tv_sec == 0) {
+        last_cpu_time_total = cpu_time_total;
+        last_cpu_time_user = cpu_time_user;
+        last_cpu_time_system = cpu_time_system;
+        last_time = current_time;
+        return 0.0;
+    }
+    
+    /* 计算时间差 */
+    time_delta_us = (current_time.tv_sec - last_time.tv_sec) * 1000000 +
+                    (current_time.tv_usec - last_time.tv_usec);
+    
+    /* 计算使用率 */
+    if (time_delta_us > 0) {
+        uint64_t cpu_time_delta = cpu_time_total - last_cpu_time_total;
+        cpu_usage = (double)cpu_time_delta * 100.0 / time_delta_us;
+    }
+    
+    /* 更新最后值 */
+    last_cpu_time_total = cpu_time_total;
+    last_cpu_time_user = cpu_time_user;
+    last_cpu_time_system = cpu_time_system;
+    last_time = current_time;
+    
+    return cpu_usage;
 }
 
 /* 添加延迟样本 */
@@ -150,14 +206,30 @@ static void print_comprehensive_stats(benchmark_context_t* ctx) {
     
     /* 内存统计 */
     printf("=== 内存统计 ===\n");
-    printf("峰值内存使用: %zu KB (%.2f MB)\n", 
+    printf("峰值内存使用: %zu KB (%.2f MB)\n",
            ctx->stats.peak_memory, ctx->stats.peak_memory / 1024.0);
-    printf("当前内存使用: %zu KB (%.2f MB)\n", 
+    printf("当前内存使用: %zu KB (%.2f MB)\n",
            ctx->stats.current_memory, ctx->stats.current_memory / 1024.0);
     
     if (ctx->stats.successful_requests > 0) {
         double memory_per_request = (double)ctx->stats.peak_memory / ctx->stats.successful_requests;
         printf("每请求平均内存: %.2f KB\n", memory_per_request);
+    }
+    printf("\n");
+    
+    /* CPU 统计 */
+    printf("=== CPU 统计 ===\n");
+    printf("CPU 使用率: %.2f%%\n", ctx->stats.cpu_usage_percent);
+    printf("用户态 CPU 时间: %" PRIu64 " μs (%.3f 秒)\n",
+           ctx->stats.cpu_time_user, ctx->stats.cpu_time_user / 1000000.0);
+    printf("内核态 CPU 时间: %" PRIu64 " μs (%.3f 秒)\n",
+           ctx->stats.cpu_time_system, ctx->stats.cpu_time_system / 1000000.0);
+    printf("总 CPU 时间: %" PRIu64 " μs (%.3f 秒)\n",
+           ctx->stats.cpu_time_total, ctx->stats.cpu_time_total / 1000000.0);
+    
+    if (ctx->stats.successful_requests > 0) {
+        double cpu_time_per_request = (double)ctx->stats.cpu_time_total / ctx->stats.successful_requests;
+        printf("每请求平均 CPU 时间: %.2f μs\n", cpu_time_per_request);
     }
     printf("\n");
     
@@ -205,23 +277,27 @@ static void print_comprehensive_stats(benchmark_context_t* ctx) {
 /* 简单的请求处理器 */
 static int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     (void)request;  /* 避免未使用参数警告 */
-    
+
     uint64_t start = get_timestamp_us();
-    
+
     /* 更新内存统计 */
     size_t current_mem = get_memory_usage_kb();
     if (current_mem > g_benchmark_ctx->stats.peak_memory) {
         g_benchmark_ctx->stats.peak_memory = current_mem;
     }
     g_benchmark_ctx->stats.current_memory = current_mem;
-    
+
+    /* 更新 CPU 统计 */
+    double cpu_usage = get_cpu_usage_percent();
+    g_benchmark_ctx->stats.cpu_usage_percent = cpu_usage;
+
     g_benchmark_ctx->stats.total_requests++;
-    
+
     if (!response) {
         g_benchmark_ctx->stats.failed_requests++;
         return -1;
     }
-    
+
     const char* body = "Hello, World!";
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/plain");
@@ -229,12 +305,12 @@ static int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response
     uvhttp_response_set_header(response, "Connection", "keep-alive");
     uvhttp_response_set_body(response, body, 13);
     uvhttp_response_send(response);
-    
+
     uint64_t end = get_timestamp_us();
     add_latency_sample(g_benchmark_ctx, end - start);
-    
+
     g_benchmark_ctx->stats.successful_requests++;
-    
+
     return 0;
 }
 
@@ -345,9 +421,16 @@ static void run_comprehensive_benchmark(const char* test_name) {
     
     /* 运行事件循环 */
     uv_run(loop, UV_RUN_DEFAULT);
-    
+
     ctx->stats.end_time = get_timestamp_us();
-    
+
+    /* 收集最终 CPU 统计 */
+    struct rusage usage;
+    getrusage(RUSAGE_SELF, &usage);
+    ctx->stats.cpu_time_user = usage.ru_utime.tv_sec * 1000000 + usage.ru_utime.tv_usec;
+    ctx->stats.cpu_time_system = usage.ru_stime.tv_sec * 1000000 + usage.ru_stime.tv_usec;
+    ctx->stats.cpu_time_total = ctx->stats.cpu_time_user + ctx->stats.cpu_time_system;
+
     /* 打印综合统计 */
     print_comprehensive_stats(ctx);
     
