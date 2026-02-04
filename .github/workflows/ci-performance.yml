@@ -24,6 +24,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
+permissions:
+  pull-requests: write
+  contents: read
+
 jobs:
   performance-benchmark:
     name: Performance Benchmark Tests
@@ -33,6 +37,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          submodules: recursive
           fetch-depth: 0  # 获取完整历史用于比较
 
       - name: Setup Python
@@ -89,6 +94,10 @@ jobs:
               echo 'Available Memory:'
               free -h | grep Mem
               echo ''
+              
+              # 初始化子模块
+              echo '=== 初始化子模块 ==='
+              git submodule update --init --recursive || true
               
               # 编译项目
               echo '=== 编译项目 ==='
