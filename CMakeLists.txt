@@ -336,10 +336,13 @@ set_target_properties(uvhttp PROPERTIES
 target_link_libraries(uvhttp
     PRIVATE
         libuv
-        mbedtls
         xxhash
         llhttp
 )
+
+if(BUILD_WITH_TLS)
+    target_link_libraries(uvhttp PRIVATE mbedtls)
+endif()
 
 # mimalloc（PRIVATE）
 if(BUILD_WITH_MIMALLOC)
