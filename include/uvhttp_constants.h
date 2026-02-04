@@ -422,7 +422,7 @@
 #    endif
 
 #    ifndef UVHTTP_STATIC_MAX_FILE_SIZE
-#        define UVHTTP_STATIC_MAX_FILE_SIZE (10 * 1024 * 1024) /* 10MB */
+#        define UVHTTP_STATIC_MAX_FILE_SIZE (1024 * 1024 * 1024) /* 1GB */
 #    endif
 
 /**

@@ -980,6 +980,14 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
         }
     }
 
+    /* check file size limit to prevent DoS attacks */
+    if (file_size > UVHTTP_STATIC_MAX_FILE_SIZE) {
+        UVHTTP_LOG_WARN("File too large: %s (size: %zu, limit: %d)", safe_path,
+                        file_size, UVHTTP_STATIC_MAX_FILE_SIZE);
+        uvhttp_response_set_status(response, 413); /* Payload Too Large */
+        return UVHTTP_ERROR_FILE_TOO_LARGE;
+    }
+
     /* for medium and large files (> 64KB), use sendfile zero-copy optimization
      * - performance optimization */
     if (file_size > UVHTTP_SENDFILE_MIN_FILE_SIZE) {
