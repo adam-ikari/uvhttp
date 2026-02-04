@@ -752,6 +752,26 @@ uvhttp_error_t uvhttp_static_create(const uvhttp_static_config_t* config,
         return result;
     }
 
+    /* set max file size in cache */
+    if (config->max_file_size > 0) {
+        uvhttp_lru_cache_set_max_file_size(ctx->cache, config->max_file_size);
+    } else {
+        uvhttp_lru_cache_set_max_file_size(ctx->cache,
+                                           UVHTTP_STATIC_MAX_FILE_SIZE);
+    }
+
+    if (!ctx->cache) {
+        uvhttp_free(ctx);
+        return UVHTTP_ERROR_IO_ERROR;
+    }
+
+    if (result != UVHTTP_OK) {
+        UVHTTP_LOG_ERROR("Failed to create LRU cache: %s",
+                         uvhttp_error_string(result));
+        uvhttp_free(ctx);
+        return result;
+    }
+
     if (!ctx->cache) {
         uvhttp_free(ctx);
         return UVHTTP_ERROR_IO_ERROR;
@@ -981,9 +1001,9 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     }
 
     /* check file size limit to prevent DoS attacks */
-    if (file_size > UVHTTP_STATIC_MAX_FILE_SIZE) {
-        UVHTTP_LOG_WARN("File too large: %s (size: %zu, limit: %d)", safe_path,
-                        file_size, UVHTTP_STATIC_MAX_FILE_SIZE);
+    if (file_size > ctx->config.max_file_size) {
+        UVHTTP_LOG_WARN("File too large: %s (size: %zu, limit: %zu)", safe_path,
+                        file_size, ctx->config.max_file_size);
         uvhttp_response_set_status(response, 413); /* Payload Too Large */
         return UVHTTP_ERROR_FILE_TOO_LARGE;
     }
@@ -1174,7 +1194,7 @@ uvhttp_result_t uvhttp_static_prewarm_cache(uvhttp_static_context_t* ctx,
     time_t last_modified = st.st_mtime;
 
     /* checkfilesizelimit */
-    if (file_size > UVHTTP_STATIC_MAX_FILE_SIZE) {
+    if (file_size > ctx->config.max_file_size) {
         UVHTTP_LOG_WARN("File too large for prewarming: %s (size: %zu)",
                         file_path, file_size);
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -1525,6 +1545,26 @@ uvhttp_error_t uvhttp_static_set_sendfile_config(uvhttp_static_context_t* ctx,
     }
     if (chunk_size > 0) {
         ctx->config.sendfile_chunk_size = chunk_size;
+    }
+
+    return UVHTTP_OK;
+}
+
+/**
+ * set maximum file size limit
+ */
+uvhttp_error_t uvhttp_static_set_max_file_size(uvhttp_static_context_t* ctx,
+                                               size_t max_file_size) {
+    if (!ctx) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    /* set config value (0 means use default value from
+     * UVHTTP_STATIC_MAX_FILE_SIZE) */
+    if (max_file_size > 0) {
+        ctx->config.max_file_size = max_file_size;
+    } else {
+        ctx->config.max_file_size = UVHTTP_STATIC_MAX_FILE_SIZE;
     }
 
     return UVHTTP_OK;

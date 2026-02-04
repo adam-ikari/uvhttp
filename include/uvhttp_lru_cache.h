@@ -51,6 +51,7 @@ struct cache_manager {
     cache_entry_t* lru_tail;              /* LRU */
     size_t total_memory_usage;            /* memoryUse */
     size_t max_memory_usage;              /* memory */
+    size_t max_file_size;                 /* maximum file size */
     int entry_count;                      /* Cacheentry */
     int max_entries;                      /* maximum entries */
     int cache_ttl;                        /* CacheTTL(seconds) */
@@ -147,6 +148,15 @@ void uvhttp_lru_cache_get_stats(cache_manager_t* cache,
  * @param cache Cachemanage
  */
 void uvhttp_lru_cache_reset_stats(cache_manager_t* cache);
+
+/**
+ * set maximum file size for cache
+ *
+ * @param cache Cache manager
+ * @param max_file_size Maximum file size in bytes
+ */
+void uvhttp_lru_cache_set_max_file_size(cache_manager_t* cache,
+                                        size_t max_file_size);
 
 /**
  * entry

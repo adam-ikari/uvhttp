@@ -31,6 +31,7 @@ typedef struct uvhttp_static_config {
     /* 8-byte aligned fields - hot path */
     size_t max_cache_size;      /* Maximum cache size (bytes) */
     size_t sendfile_chunk_size; /* sendfile chunk size (bytes) */
+    size_t max_file_size;       /* Maximum file size (bytes) */
 
     /* 4-byte aligned fields - medium access frequency */
     int cache_ttl;                /* Cache TTL (seconds) */
@@ -82,6 +83,16 @@ uvhttp_error_t uvhttp_static_create(const uvhttp_static_config_t* config,
 uvhttp_error_t uvhttp_static_set_sendfile_config(uvhttp_static_context_t* ctx,
                                                  int timeout_ms, int max_retry,
                                                  size_t chunk_size);
+
+/**
+ * set maximum file size limit
+ *
+ * @param ctx Static file context
+ * @param max_file_size Maximum file size in bytes (0 means use default)
+ * @return UVHTTP_OK Success, other values represent Failure
+ */
+uvhttp_error_t uvhttp_static_set_max_file_size(uvhttp_static_context_t* ctx,
+                                               size_t max_file_size);
 
 /**
  * releaseStatic file

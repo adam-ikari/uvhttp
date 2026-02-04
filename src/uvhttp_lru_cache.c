@@ -263,9 +263,9 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
     }
 
     /* check if file size exceeds limit */
-    if (content_length > UVHTTP_STATIC_MAX_FILE_SIZE) {
-        UVHTTP_LOG_WARN("File size exceeds limit: %s (size: %zu, limit: %d)",
-                        file_path, content_length, UVHTTP_STATIC_MAX_FILE_SIZE);
+    if (content_length > cache->max_file_size) {
+        UVHTTP_LOG_WARN("File size exceeds limit: %s (size: %zu, limit: %zu)",
+                        file_path, content_length, cache->max_file_size);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
@@ -572,6 +572,17 @@ void uvhttp_lru_cache_reset_stats(cache_manager_t* cache) {
     cache->hit_count = 0;
     cache->miss_count = 0;
     cache->eviction_count = 0;
+}
+
+/**
+ * set maximum file size for cache
+ */
+void uvhttp_lru_cache_set_max_file_size(cache_manager_t* cache,
+                                        size_t max_file_size) {
+    if (!cache)
+        return;
+
+    cache->max_file_size = max_file_size;
 }
 
 /**
