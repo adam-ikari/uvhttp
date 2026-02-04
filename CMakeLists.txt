@@ -249,7 +249,6 @@ set(SOURCES
     src/uvhttp_router_cache.c
     src/uvhttp_connection.c
     src/uvhttp_server.c
-    src/uvhttp_tls.c
     src/uvhttp_config.c
     src/uvhttp_context.c
     src/uvhttp_error.c
@@ -259,6 +258,11 @@ set(SOURCES
     src/uvhttp_protocol_upgrade.c
     src/uvhttp_version.c
 )
+
+# 条件编译 TLS 源文件
+if(BUILD_WITH_TLS)
+    list(APPEND SOURCES src/uvhttp_tls.c)
+endif()
 
 # 条件编译 WebSocket 源文件
 if(BUILD_WITH_WEBSOCKET)
