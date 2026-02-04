@@ -828,13 +828,18 @@
 #    if UVHTTP_FEATURE_ROUTER_CACHE
 /* Routing cache size configuration */
 #        define UVHTTP_ROUTER_METHOD_MAP_SIZE 256
-#        define UVHTTP_ROUTER_HASH_SIZE 256
+#        define UVHTTP_ROUTER_HASH_BASE_SIZE 256
+#        define UVHTTP_ROUTER_HASH_LOAD_FACTOR 0.75
+#        define UVHTTP_ROUTER_HASH_MAX_SIZE 4096
 #        define UVHTTP_ROUTER_HOT_PATH_SIZE 64
-#        define UVHTTP_ROUTER_HOT_ROUTES_COUNT 16
+#        define UVHTTP_ROUTER_HOT_MIN_SIZE 16
+#        define UVHTTP_ROUTER_HOT_MAX_SIZE 64
+#        define UVHTTP_ROUTER_HOT_HIT_THRESHOLD 0.8
 #        define UVHTTP_ROUTER_ACCESS_COUNT_SIZE 1024
 #        define UVHTTP_ROUTER_HYBRID_THRESHOLD 100
 #        define UVHTTP_ROUTER_MAX_CHILD_COUNT 16
 #        define UVHTTP_ROUTER_INITIAL_POOL_SIZE 64
+#        define UVHTTP_ACCESS_COUNTER_MAX 0xFFFFFFFF
 #    endif
 
 /* Routing cache optimization features */

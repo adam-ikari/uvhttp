@@ -37,12 +37,6 @@
 extern "C" {
 #endif
 
-/* Version information */
-#define UVHTTP_VERSION_MAJOR 2
-#define UVHTTP_VERSION_MINOR 2
-#define UVHTTP_VERSION_PATCH 0
-#define UVHTTP_VERSION_STRING "2.2.0"
-
 /* API usage instructions:
  *
  * Core API:
