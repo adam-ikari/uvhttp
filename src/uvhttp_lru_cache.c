@@ -4,9 +4,9 @@
 #if UVHTTP_FEATURE_STATIC_FILES
 
 #    include "uvhttp_lru_cache.h"
-#    include "uvhttp_constants.h"
 
 #    include "uvhttp_allocator.h"
+#    include "uvhttp_constants.h"
 #    include "uvhttp_error.h"
 #    include "uvhttp_error_handler.h"
 #    include "uvhttp_error_helpers.h"
@@ -291,7 +291,8 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
 
     while (
         (cache->max_memory_usage > 0 &&
-         cache->total_memory_usage + memory_usage > cache->max_memory_usage * 0.9) ||
+         cache->total_memory_usage + memory_usage >
+             cache->max_memory_usage * 0.9) ||
         (cache->max_entries > 0 && cache->entry_count >= cache->max_entries)) {
 
         /* if cache is null but still need to evict, it means cannot satisfy
@@ -317,9 +318,8 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
             if (!evicted)
                 break;
 
-            UVHTTP_LOG_DEBUG(
-                "Evicting cache entry: %s (freeing memory: %zu)",
-                evicted->file_path, evicted->memory_usage);
+            UVHTTP_LOG_DEBUG("Evicting cache entry: %s (freeing memory: %zu)",
+                             evicted->file_path, evicted->memory_usage);
 
             /* remove from hash table */
             HASH_DEL(cache->hash_table, evicted);
