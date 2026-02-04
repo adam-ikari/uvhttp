@@ -119,14 +119,14 @@ if(BUILD_WITH_TLS)
 
     # 声明 mbedtls 为 IMPORTED 静态库（接口库，包含多个子库）
     add_library(mbedtls INTERFACE IMPORTED)
+    set_target_properties(mbedtls PROPERTIES
+        INTERFACE_LINK_LIBRARIES "${MBEDTLS_LIBS}"
+        INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/include
+    )
 else()
     message(STATUS "TLS support disabled, skipping mbedtls configuration")
     set(MBEDTLS_LIBS "")
 endif()
-set_target_properties(mbedtls PROPERTIES
-    INTERFACE_LINK_LIBRARIES "${MBEDTLS_LIBS}"
-    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/include
-)
 
 # ============================================================================
 # xxhash
