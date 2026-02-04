@@ -407,10 +407,10 @@
  *
  * CMake configuration:
  * - Configure through CMakeLists.txt or command line parameters
- * - Example: cmake -DUVHTTP_STATIC_MAX_CACHE_SIZE=2097152 ..
+ * - Example: cmake -DUVHTTP_STATIC_MAX_CACHE_SIZE=10485760 ..
  */
 #    ifndef UVHTTP_STATIC_MAX_CACHE_SIZE
-#        define UVHTTP_STATIC_MAX_CACHE_SIZE (1024 * 1024) /* 1MB */
+#        define UVHTTP_STATIC_MAX_CACHE_SIZE (10 * 1024 * 1024) /* 10MB */
 #    endif
 
 #    ifndef UVHTTP_STATIC_MAX_PATH_SIZE
@@ -577,6 +577,10 @@
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_CACHE_DEFAULT_TTL=7200 ..
  */
+#    ifndef UVHTTP_CACHE_DEFAULT_MAX_MEMORY_SIZE
+#        define UVHTTP_CACHE_DEFAULT_MAX_MEMORY_SIZE (10 * 1024 * 1024) /* 10MB */
+#    endif
+
 #    ifndef UVHTTP_CACHE_DEFAULT_MAX_ENTRIES
 #        define UVHTTP_CACHE_DEFAULT_MAX_ENTRIES 1000
 #    endif
