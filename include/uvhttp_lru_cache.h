@@ -35,7 +35,7 @@ struct cache_entry {
     time_t cache_time;                            /* Cachewhen */
     size_t memory_usage;                          /* memoryUse */
     int is_compressed;                            /* whethercompress */
-    int priority;                                 /* Cache priority (0-255, higher = more important) */
+    int priority; /* Cache priority (0-255, higher = more important) */
 
     /* uthash hash handle */
     UT_hash_handle hh;
@@ -64,7 +64,7 @@ struct cache_manager {
 
     /* Cache policy */
     int enable_priority_eviction; /* Enable priority-based eviction */
-    int min_priority_threshold;   /* Minimum priority to protect from eviction */
+    int min_priority_threshold; /* Minimum priority to protect from eviction */
 
     /* Statistics */
     int hit_count;      /* times */
@@ -253,8 +253,7 @@ double uvhttp_lru_cache_get_hit_rate(cache_manager_t* cache);
  */
 void uvhttp_lru_cache_set_eviction_callback(
     cache_manager_t* cache,
-    void (*callback)(cache_entry_t* entry, void* user_data),
-    void* user_data);
+    void (*callback)(cache_entry_t* entry, void* user_data), void* user_data);
 
 /**
  * enable priority-based eviction
@@ -274,7 +273,7 @@ void uvhttp_lru_cache_enable_priority_eviction(cache_manager_t* cache,
  * @param threshold Minimum priority (0-255)
  */
 void uvhttp_lru_cache_set_min_priority_threshold(cache_manager_t* cache,
-                                                  int threshold);
+                                                 int threshold);
 
 /**
  * set entry priority
@@ -286,8 +285,8 @@ void uvhttp_lru_cache_set_min_priority_threshold(cache_manager_t* cache,
  * @return UVHTTP_OK on success, error code otherwise
  */
 uvhttp_error_t uvhttp_lru_cache_set_entry_priority(cache_manager_t* cache,
-                                                  const char* file_path,
-                                                  int priority);
+                                                   const char* file_path,
+                                                   int priority);
 
 /**
  * get entry priority
@@ -298,7 +297,7 @@ uvhttp_error_t uvhttp_lru_cache_set_entry_priority(cache_manager_t* cache,
  * @return Priority (0-255), or -1 if entry not found
  */
 int uvhttp_lru_cache_get_entry_priority(cache_manager_t* cache,
-                                       const char* file_path);
+                                        const char* file_path);
 
 /**
  * prewarm cache
@@ -314,10 +313,12 @@ int uvhttp_lru_cache_get_entry_priority(cache_manager_t* cache,
  * @param priority Priority (0-255, higher = more important)
  * @return UVHTTP_OK on success, error code otherwise
  */
-uvhttp_error_t uvhttp_lru_cache_prewarm(
-    cache_manager_t* cache, const char* file_path, char* content,
-    size_t content_length, const char* mime_type, time_t last_modified,
-    const char* etag, int priority);
+uvhttp_error_t uvhttp_lru_cache_prewarm(cache_manager_t* cache,
+                                        const char* file_path, char* content,
+                                        size_t content_length,
+                                        const char* mime_type,
+                                        time_t last_modified, const char* etag,
+                                        int priority);
 
 /**
  * get cache configuration

@@ -382,13 +382,14 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
             if (!evicted)
                 break;
 
-            UVHTTP_LOG_DEBUG("Evicting cache entry: %s (freeing memory: %zu, priority: %d)",
-                             evicted->file_path, evicted->memory_usage,
-                             evicted->priority);
+            UVHTTP_LOG_DEBUG(
+                "Evicting cache entry: %s (freeing memory: %zu, priority: %d)",
+                evicted->file_path, evicted->memory_usage, evicted->priority);
 
             /* Call eviction callback if set */
             if (cache->eviction_callback) {
-                cache->eviction_callback(evicted, cache->eviction_callback_data);
+                cache->eviction_callback(evicted,
+                                         cache->eviction_callback_data);
             }
 
             /* remove from hash table */
@@ -802,8 +803,7 @@ double uvhttp_lru_cache_get_hit_rate(cache_manager_t* cache) {
  */
 void uvhttp_lru_cache_set_eviction_callback(
     cache_manager_t* cache,
-    void (*callback)(cache_entry_t* entry, void* user_data),
-    void* user_data) {
+    void (*callback)(cache_entry_t* entry, void* user_data), void* user_data) {
     if (!cache) {
         UVHTTP_LOG_ERROR("Failed to set eviction callback: cache is NULL");
         return;
@@ -835,7 +835,7 @@ void uvhttp_lru_cache_enable_priority_eviction(cache_manager_t* cache,
  * set minimum priority threshold
  */
 void uvhttp_lru_cache_set_min_priority_threshold(cache_manager_t* cache,
-                                                  int threshold) {
+                                                 int threshold) {
     if (!cache) {
         UVHTTP_LOG_ERROR("Failed to set priority threshold: cache is NULL");
         return;
@@ -856,8 +856,8 @@ void uvhttp_lru_cache_set_min_priority_threshold(cache_manager_t* cache,
  * set entry priority
  */
 uvhttp_error_t uvhttp_lru_cache_set_entry_priority(cache_manager_t* cache,
-                                                  const char* file_path,
-                                                  int priority) {
+                                                   const char* file_path,
+                                                   int priority) {
     if (!cache || !file_path) {
         UVHTTP_LOG_ERROR("Failed to set entry priority: invalid parameters");
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -879,8 +879,7 @@ uvhttp_error_t uvhttp_lru_cache_set_entry_priority(cache_manager_t* cache,
     /* Move to head to reflect priority change */
     uvhttp_lru_cache_move_to_head(cache, entry);
 
-    UVHTTP_LOG_DEBUG("Entry priority updated: %s (%d)", file_path,
-                     priority);
+    UVHTTP_LOG_DEBUG("Entry priority updated: %s (%d)", file_path, priority);
 
     return UVHTTP_OK;
 }
@@ -889,7 +888,7 @@ uvhttp_error_t uvhttp_lru_cache_set_entry_priority(cache_manager_t* cache,
  * get entry priority
  */
 int uvhttp_lru_cache_get_entry_priority(cache_manager_t* cache,
-                                       const char* file_path) {
+                                        const char* file_path) {
     if (!cache || !file_path) {
         UVHTTP_LOG_ERROR("Failed to get entry priority: invalid parameters");
         return -1;
@@ -906,10 +905,12 @@ int uvhttp_lru_cache_get_entry_priority(cache_manager_t* cache,
 /**
  * prewarm cache
  */
-uvhttp_error_t uvhttp_lru_cache_prewarm(
-    cache_manager_t* cache, const char* file_path, char* content,
-    size_t content_length, const char* mime_type, time_t last_modified,
-    const char* etag, int priority) {
+uvhttp_error_t uvhttp_lru_cache_prewarm(cache_manager_t* cache,
+                                        const char* file_path, char* content,
+                                        size_t content_length,
+                                        const char* mime_type,
+                                        time_t last_modified, const char* etag,
+                                        int priority) {
     if (!cache || !file_path || !content) {
         UVHTTP_LOG_ERROR("Failed to prewarm cache: invalid parameters");
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -926,15 +927,15 @@ uvhttp_error_t uvhttp_lru_cache_prewarm(
         /* Update existing entry with new priority */
         existing->priority = priority;
         uvhttp_lru_cache_move_to_head(cache, existing);
-        UVHTTP_LOG_DEBUG("Prewarmed existing entry: %s (priority: %d)", file_path,
-                         priority);
+        UVHTTP_LOG_DEBUG("Prewarmed existing entry: %s (priority: %d)",
+                         file_path, priority);
         return UVHTTP_OK;
     }
 
     /* Add new entry */
-    uvhttp_error_t result = uvhttp_lru_cache_put(cache, file_path, content,
-                                                  content_length, mime_type,
-                                                  last_modified, etag);
+    uvhttp_error_t result =
+        uvhttp_lru_cache_put(cache, file_path, content, content_length,
+                             mime_type, last_modified, etag);
     if (result != UVHTTP_OK) {
         UVHTTP_LOG_ERROR("Failed to prewarm cache entry: %s", file_path);
         return result;
