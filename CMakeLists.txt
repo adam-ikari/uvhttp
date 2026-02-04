@@ -82,7 +82,11 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
 # 特性定义
 add_definitions(-DUVHTTP_FEATURE_MIDDLEWARE=1)
 add_definitions(-DUVHTTP_FEATURE_STATIC_FILES=1)
-add_definitions(-DUVHTTP_FEATURE_TLS=1)
+if(BUILD_WITH_TLS)
+    add_definitions(-DUVHTTP_FEATURE_TLS=1)
+else()
+    add_definitions(-DUVHTTP_FEATURE_TLS=0)
+endif()
 add_definitions(-DUVHTTP_FEATURE_LRU_CACHE=1)
 
 # Protocol upgrade support
