@@ -5,6 +5,105 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-02-04
+
+### Breaking Changes
+
+- **LRU Cache Simplification**
+  - Removed LFU and Hybrid eviction modes (only LRU remains)
+  - Removed dual-threshold eviction mechanism (now single 90% threshold)
+  - Removed task queue mechanism (eviction is now synchronous)
+  - Removed 5 API functions:
+    - `uvhttp_lru_cache_set_eviction_mode()`
+    - `uvhttp_lru_cache_init_task_queue()`
+    - `uvhttp_lru_cache_schedule_eviction()`
+    - `uvhttp_lru_cache_stop_task_queue()`
+    - `uvhttp_lru_cache_perform_eviction()`
+  - **Migration Guide**: See `docs/MIGRATION_GUIDE_LRU_CACHE.md`
+
+### Added
+
+- **LRU Cache Improvements**
+  - Added configurable batch eviction size via `uvhttp_lru_cache_set_batch_eviction_size()`
+  - Increased default cache size to 10MB
+  - Added migration guide for breaking changes
+
+- **Protocol Upgrade Framework**
+  - Implemented zero-overhead protocol upgrade framework
+  - Added support for custom protocol upgrades (e.g., IPPS, gRPC-Web)
+  - Refactored WebSocket to use the new framework
+  - Added fast path optimization for normal HTTP requests
+  - Performance impact: < 0.4% overhead for single protocol scenarios
+
+- **Router Cache Optimization**
+  - Optimized router node structure for CPU cache locality
+  - Reduced node size by 53% (272 → 128 bytes)
+  - Reduced cache line usage by 60% (5 → 2 lines)
+  - Added performance comparison tests
+
+- **Performance Tests**
+  - Added `benchmark_router_comparison.c` for router performance comparison
+  - Added `benchmark_rps_150_routes.c` for large-scale router testing
+  - Added `benchmark_file_transfer.c` for file transfer performance testing
+
+### Changed
+
+- **Code Quality**
+  - Translated all source code comments from Chinese to English
+  - Centralized HTTP constant definitions in `include/uvhttp_constants.h`
+  - Removed obsolete comments and code
+  - Fixed code formatting issues
+
+- **Documentation**
+  - Added comprehensive migration guide for LRU Cache changes
+  - Added bilingual FAQ documentation (English and Chinese)
+  - Added security documentation
+  - Added documentation standards for bilingual support
+  - Updated performance benchmark documentation
+
+- **Build System**
+  - Fixed 32-bit build compatibility issues
+  - Fixed code formatting issues
+  - Updated CMake configuration
+
+### Performance
+
+- **Memory Optimization**
+  - LRU Cache instance overhead: -132 bytes
+  - LRU Cache entry overhead: -4 bytes
+  - Code size reduction: -200 lines (-21%)
+
+- **Router Performance**
+  - Node size: 272 → 128 bytes (-53%)
+  - Cache line usage: 5 → 2 lines (-60%)
+  - Improved CPU cache locality
+
+- **Protocol Upgrade Performance**
+  - Single protocol overhead: < 0.4%
+  - Fast path detection: O(1) check
+  - Zero overhead when disabled
+
+### Fixed
+
+- **32-bit Compatibility**
+  - Fixed `uint64_t` formatting in `benchmark_router_comparison.c`
+  - Added `PRIu64` macro for cross-platform compatibility
+
+- **Code Formatting**
+  - Fixed formatting issues in `uvhttp_lru_cache.c`
+  - Fixed formatting issues in `uvhttp_constants.h`
+  - Fixed formatting issues in `uvhttp_lru_cache.h`
+
+### Migration Notes
+
+**For UVHTTP 2.2.x users upgrading to 2.3.0:**
+
+1. **LRU Cache**: Remove calls to deprecated eviction mode and task queue functions
+2. **Protocol Upgrade**: No changes required if only using HTTP or WebSocket
+3. **Router**: No changes required, performance improvements are automatic
+
+See `docs/MIGRATION_GUIDE_LRU_CACHE.md` for detailed migration instructions.
+
 ## [2.2.2] - 2026-02-02
 
 ### Fixed
