@@ -58,6 +58,7 @@ uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
     cache_ptr->max_entries = max_entries;
     cache_ptr->cache_ttl = cache_ttl;
     cache_ptr->max_file_size = 1024 * 1024 * 1024; /* Default: 1GB */
+    cache_ptr->batch_eviction_size = 2; /* Default: evict 2 entries per batch */
 
     /* Single-threaded version: no need to initialize lock */
 
@@ -286,8 +287,7 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
 
     /* check if need to evict entries - batch eviction optimization */
     int eviction_count = 0;
-    /* Use small batch size (2 entries) to minimize blocking */
-    int batch_size = 2;
+    int batch_size = cache->batch_eviction_size;
 
     while (
         (cache->max_memory_usage > 0 &&
@@ -617,6 +617,25 @@ void uvhttp_lru_cache_set_cache_ttl(cache_manager_t* cache, int cache_ttl) {
         return;
 
     cache->cache_ttl = cache_ttl;
+}
+
+/**
+ * set batch eviction size
+ */
+void uvhttp_lru_cache_set_batch_eviction_size(cache_manager_t* cache,
+                                               int batch_size) {
+    if (!cache)
+        return;
+
+    if (batch_size < 1) {
+        UVHTTP_LOG_WARN(
+            "Invalid batch eviction size: %d (must be >= 1), using default 2",
+            batch_size);
+        batch_size = 2;
+    }
+
+    cache->batch_eviction_size = batch_size;
+    UVHTTP_LOG_INFO("Cache batch eviction size set to: %d", batch_size);
 }
 
 /**

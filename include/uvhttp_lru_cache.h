@@ -55,6 +55,7 @@ struct cache_manager {
     int entry_count;           /* Cacheentry */
     int max_entries;           /* maximum entries */
     int cache_ttl;             /* CacheTTL(seconds) */
+    int batch_eviction_size;   /* Number of entries to evict per batch */
 
     /* Statistics */
     int hit_count;      /* times */
@@ -181,6 +182,15 @@ void uvhttp_lru_cache_set_max_entries(cache_manager_t* cache, int max_entries);
  * @param cache_ttl Cache TTL in seconds (0 means never expires)
  */
 void uvhttp_lru_cache_set_cache_ttl(cache_manager_t* cache, int cache_ttl);
+
+/**
+ * set batch eviction size
+ *
+ * @param cache Cache manager
+ * @param batch_size Number of entries to evict per batch (default: 2)
+ */
+void uvhttp_lru_cache_set_batch_eviction_size(cache_manager_t* cache,
+                                               int batch_size);
 
 /**
  * entry
