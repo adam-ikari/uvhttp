@@ -67,7 +67,6 @@ jobs:
                 git \
                 wrk \
                 apache2-utils \
-                cpupower \
                 linux-tools-common \
                 python3 \
                 python3-pip \
@@ -77,14 +76,12 @@ jobs:
               # 禁用 Swap
               swapoff -a 2>/dev/null || echo 'Swap already disabled'
               
-              # 锁定 CPU 频率到最高
-              cpupower frequency-set -g performance 2>/dev/null || echo 'Cannot set CPU governor'
+              # GitHub Actions 环境中无法控制 CPU 频率，跳过
+              echo '注意: GitHub Actions 环境中无法控制 CPU 频率'
               
               # 验证环境
               echo ''
               echo '=== 测试环境验证 ==='
-              echo 'CPU Governor:'
-              cpupower frequency-info | grep 'governor' || echo '  (无法检测)'
               echo 'Swap Status:'
               free -h | grep Swap || echo '  (无法检测)'
               echo 'File Descriptors:'
