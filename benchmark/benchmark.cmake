@@ -194,11 +194,35 @@ set_target_properties(benchmark_router_minimal PROPERTIES
     COMPILE_FLAGS "-O2 -DNDEBUG"
 )
 
+# 数据库查询模拟性能测试
+add_executable(benchmark_database_simulation
+    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_database_simulation.c
+)
+target_link_libraries(benchmark_database_simulation
+    uvhttp
+    ${UVHTTP_CORE_DEPS}
+)
+set_target_properties(benchmark_database_simulation PROPERTIES
+    COMPILE_FLAGS "-O2 -DNDEBUG"
+)
+
+# 文件上传性能测试
+add_executable(benchmark_file_upload
+    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_file_upload.c
+)
+target_link_libraries(benchmark_file_upload
+    uvhttp
+    ${UVHTTP_CORE_DEPS}
+)
+set_target_properties(benchmark_file_upload PROPERTIES
+    COMPILE_FLAGS "-O2 -DNDEBUG"
+)
+
 # 安装性能测试可执行文件
 install(TARGETS performance_allocator performance_allocator_compare test_bitfield
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/benchmark
 )
 
-install(TARGETS benchmark_rps benchmark_latency benchmark_connection benchmark_memory benchmark_comprehensive benchmark_file_transfer benchmark_router benchmark_router_simple benchmark_router_comparison benchmark_router_simple_comparison benchmark_router_minimal
+install(TARGETS benchmark_rps benchmark_latency benchmark_connection benchmark_memory benchmark_comprehensive benchmark_file_transfer benchmark_router benchmark_router_simple benchmark_router_comparison benchmark_router_simple_comparison benchmark_router_minimal benchmark_database_simulation benchmark_file_upload
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/benchmark
 )

@@ -78,50 +78,44 @@ static size_t get_memory_usage_kb(void) {
 /* 获取当前 CPU 使用率（百分比） */
 static double get_cpu_usage_percent(void) {
     static uint64_t last_cpu_time_total = 0;
-    static uint64_t last_cpu_time_user = 0;
-    static uint64_t last_cpu_time_system = 0;
     static struct timeval last_time = {0, 0};
-    
+
     struct rusage usage;
     struct timeval current_time;
     uint64_t cpu_time_user, cpu_time_system, cpu_time_total;
     uint64_t time_delta_us;
     double cpu_usage = 0.0;
-    
+
     /* 获取当前 CPU 时间 */
     getrusage(RUSAGE_SELF, &usage);
     cpu_time_user = usage.ru_utime.tv_sec * 1000000 + usage.ru_utime.tv_usec;
     cpu_time_system = usage.ru_stime.tv_sec * 1000000 + usage.ru_stime.tv_usec;
     cpu_time_total = cpu_time_user + cpu_time_system;
-    
+
     /* 获取当前时间 */
     gettimeofday(&current_time, NULL);
-    
+
     /* 第一次调用，初始化 */
     if (last_time.tv_sec == 0) {
         last_cpu_time_total = cpu_time_total;
-        last_cpu_time_user = cpu_time_user;
-        last_cpu_time_system = cpu_time_system;
         last_time = current_time;
         return 0.0;
     }
-    
+
     /* 计算时间差 */
     time_delta_us = (current_time.tv_sec - last_time.tv_sec) * 1000000 +
                     (current_time.tv_usec - last_time.tv_usec);
-    
+
     /* 计算使用率 */
     if (time_delta_us > 0) {
         uint64_t cpu_time_delta = cpu_time_total - last_cpu_time_total;
         cpu_usage = (double)cpu_time_delta * 100.0 / time_delta_us;
     }
-    
+
     /* 更新最后值 */
     last_cpu_time_total = cpu_time_total;
-    last_cpu_time_user = cpu_time_user;
-    last_cpu_time_system = cpu_time_system;
     last_time = current_time;
-    
+
     return cpu_usage;
 }
 

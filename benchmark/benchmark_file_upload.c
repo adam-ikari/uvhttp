@@ -214,9 +214,8 @@ static int upload_handler(uvhttp_request_t* request, uvhttp_response_t* response
     }
 
     /* 获取请求体 */
-    const char* body = NULL;
-    size_t body_len = 0;
-    uvhttp_request_get_body(request, &body, &body_len);
+    const char* body = uvhttp_request_get_body(request);
+    size_t body_len = uvhttp_request_get_body_length(request);
 
     /* 模拟文件处理 */
     if (body && body_len > 0) {

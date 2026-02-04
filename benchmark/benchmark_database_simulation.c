@@ -77,7 +77,6 @@ static uint64_t get_timestamp_us(void) {
 /* 模拟数据库查询延迟 */
 static void simulate_database_delay(query_type_t type) {
     uint64_t delay_us;
-    uint64_t now = get_timestamp_us();
 
     switch (type) {
         case QUERY_TYPE_FAST:
@@ -224,6 +223,7 @@ static void print_query_stats(query_stats_t* stats) {
 
 /* 快速查询处理器 */
 static int fast_query_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     if (!response) {
         g_benchmark_ctx->stats.failed_queries++;
         return -1;
@@ -248,6 +248,7 @@ static int fast_query_handler(uvhttp_request_t* request, uvhttp_response_t* resp
 
 /* 中等查询处理器 */
 static int medium_query_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     if (!response) {
         g_benchmark_ctx->stats.failed_queries++;
         return -1;
@@ -272,6 +273,7 @@ static int medium_query_handler(uvhttp_request_t* request, uvhttp_response_t* re
 
 /* 慢速查询处理器 */
 static int slow_query_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     if (!response) {
         g_benchmark_ctx->stats.failed_queries++;
         return -1;
@@ -296,6 +298,7 @@ static int slow_query_handler(uvhttp_request_t* request, uvhttp_response_t* resp
 
 /* 混合查询处理器 */
 static int mixed_query_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     if (!response) {
         g_benchmark_ctx->stats.failed_queries++;
         return -1;
@@ -431,19 +434,19 @@ static void run_database_benchmark(void) {
 
     printf("服务器已启动在 http://127.0.0.1:%d\n", PORT);
     printf("\n");
-    printf("测试端点:\n");
-    printf("  /api/fast   - 快速查询 (1-5ms)\n");
-    printf("  /api/medium - 中等查询 (10-50ms)\n");
-    printf("  /api/slow   - 慢速查询 (100-500ms)\n");
-    printf("  /api/mixed  - 混合查询 (70% 快速, 20% 中等, 10% 慢速)\n");
+    printf("Test Endpoints:\n");
+    printf("  /api/fast   - Fast query (1-5ms)\n");
+    printf("  /api/medium - Medium query (10-50ms)\n");
+    printf("  /api/slow   - Slow query (100-500ms)\n");
+    printf("  /api/mixed  - Mixed query (70%% fast, 20%% medium, 10%% slow)\n");
     printf("\n");
-    printf("请使用 wrk 或 ab 进行性能测试:\n");
+    printf("Use wrk or ab for performance testing:\n");
     printf("  wrk -t4 -c100 -d30s http://127.0.0.1:%d/api/fast\n", PORT);
     printf("  wrk -t4 -c50 -d30s http://127.0.0.1:%d/api/medium\n", PORT);
     printf("  wrk -t4 -c20 -d30s http://127.0.0.1:%d/api/slow\n", PORT);
     printf("  wrk -t4 -c100 -d30s http://127.0.0.1:%d/api/mixed\n", PORT);
     printf("\n");
-    printf("按 Ctrl+C 停止服务器并查看统计...\n");
+    printf("Press Ctrl+C to stop server and view statistics...\n");
     printf("\n");
 
     /* 运行事件循环 */
