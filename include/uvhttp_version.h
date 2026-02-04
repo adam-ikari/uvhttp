@@ -189,19 +189,6 @@ const char* uvhttp_get_platform_info(void);
  */
 void uvhttp_print_build_info(void);
 
-/**
- * @brief Get build information as JSON string
- *
- * @param json_str Pointer to store JSON string pointer (must be freed by caller)
- *
- * @return uvhttp_error_t UVHTTP_OK on success, error code on failure
- *
- * @note Caller must free the returned string using uvhttp_free()
- * @note Returns NULL-terminated JSON string
- * @note Thread-safe
- */
-uvhttp_error_t uvhttp_get_build_info_json(char** json_str);
-
 #ifdef __cplusplus
 }
 #endif

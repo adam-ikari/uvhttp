@@ -69,19 +69,6 @@ int main(void) {
 
     printf("\n");
 
-    /* Test JSON output */
-    char* json_str = NULL;
-    err = uvhttp_get_build_info_json(&json_str);
-    if (err == UVHTTP_OK) {
-        printf("Build Info JSON:\n");
-        printf("%s\n", json_str);
-        uvhttp_free(json_str);
-    } else {
-        printf("Failed to get build info JSON: %d\n", err);
-    }
-
-    printf("\n");
-
     /* Test print function */
     uvhttp_print_build_info();
 
