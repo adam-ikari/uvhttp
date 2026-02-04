@@ -74,31 +74,102 @@ static uint64_t get_timestamp_us(void) {
     return (uint64_t)tv.tv_sec * 1000000 + tv.tv_usec;
 }
 
-/* 模拟数据库查询延迟 */
-static void simulate_database_delay(query_type_t type) {
+/* 异步数据库查询上下文 */
+typedef struct {
+    uvhttp_request_t* request;
+    uvhttp_response_t* response;
+    query_type_t type;
+    uint64_t start_time;
+    uint64_t delay_us;
+    uv_timer_t timer;
+    benchmark_context_t* ctx;
+} async_query_context_t;
+
+/* 异步数据库查询回调 */
+static void on_database_query_complete(uv_timer_t* timer) {
+    async_query_context_t* query_ctx = (async_query_context_t*)timer->data;
+    benchmark_context_t* ctx = query_ctx->ctx;
+    uint64_t end_time = get_timestamp_us();
+    uint64_t latency_us = end_time - query_ctx->start_time;
+
+    /* 更新统计 */
+    ctx->stats.total_queries++;
+    ctx->stats.successful_queries++;
+    ctx->stats.total_latency_us += latency_us;
+
+    if (ctx->stats.total_queries == 1) {
+        ctx->stats.min_latency_us = latency_us;
+        ctx->stats.max_latency_us = latency_us;
+    } else {
+        if (latency_us < ctx->stats.min_latency_us) {
+            ctx->stats.min_latency_us = latency_us;
+        }
+        if (latency_us > ctx->stats.max_latency_us) {
+            ctx->stats.max_latency_us = latency_us;
+        }
+    }
+
+    /* 更新类型统计 */
+    switch (query_ctx->type) {
+        case QUERY_TYPE_FAST:
+            ctx->stats.fast_queries++;
+            break;
+        case QUERY_TYPE_MEDIUM:
+            ctx->stats.medium_queries++;
+            break;
+        case QUERY_TYPE_SLOW:
+            ctx->stats.slow_queries++;
+            break;
+        case QUERY_TYPE_MIXED:
+            /* 根据延迟判断类型 */
+            if (latency_us < QUERY_DELAY_FAST_MAX) {
+                ctx->stats.fast_queries++;
+            } else if (latency_us < QUERY_DELAY_MEDIUM_MAX) {
+                ctx->stats.medium_queries++;
+            } else {
+                ctx->stats.slow_queries++;
+            }
+            break;
+    }
+
+    /* 发送响应 */
+    if (query_ctx->response) {
+        const char* body = "{\"status\":\"ok\",\"query_type\":\"database\"}";
+        uvhttp_response_set_status(query_ctx->response, 200);
+        uvhttp_response_set_header(query_ctx->response, "Content-Type", "application/json");
+        uvhttp_response_set_header(query_ctx->response, "Content-Length", "45");
+        uvhttp_response_set_header(query_ctx->response, "Connection", "keep-alive");
+        uvhttp_response_set_body(query_ctx->response, body, 45);
+        uvhttp_response_send(query_ctx->response);
+    }
+
+    /* 清理 */
+    uv_close((uv_handle_t*)timer, NULL);
+    uvhttp_free(query_ctx);
+}
+
+/* 启动异步数据库查询 */
+static void start_async_database_query(uvhttp_request_t* request,
+                                        uvhttp_response_t* response,
+                                        query_type_t type,
+                                        benchmark_context_t* ctx) {
     uint64_t delay_us;
 
+    /* 计算延迟 */
     switch (type) {
         case QUERY_TYPE_FAST:
-            /* 快速查询：1-5ms */
             delay_us = QUERY_DELAY_FAST_MIN +
                       (rand() % (QUERY_DELAY_FAST_MAX - QUERY_DELAY_FAST_MIN));
             break;
-
         case QUERY_TYPE_MEDIUM:
-            /* 中等查询：10-50ms */
             delay_us = QUERY_DELAY_MEDIUM_MIN +
                       (rand() % (QUERY_DELAY_MEDIUM_MAX - QUERY_DELAY_MEDIUM_MIN));
             break;
-
         case QUERY_TYPE_SLOW:
-            /* 慢速查询：100-500ms */
             delay_us = QUERY_DELAY_SLOW_MIN +
                       (rand() % (QUERY_DELAY_SLOW_MAX - QUERY_DELAY_SLOW_MIN));
             break;
-
         case QUERY_TYPE_MIXED:
-            /* 混合查询：70% 快速，20% 中等，10% 慢速 */
             {
                 int r = rand() % 100;
                 if (r < 70) {
@@ -113,14 +184,43 @@ static void simulate_database_delay(query_type_t type) {
                 }
             }
             break;
-
         default:
             delay_us = 1000;
             break;
     }
 
-    /* 模拟延迟 */
-    usleep(delay_us);
+    /* 创建异步查询上下文 */
+    async_query_context_t* query_ctx = (async_query_context_t*)uvhttp_alloc(sizeof(async_query_context_t));
+    if (!query_ctx) {
+        if (response) {
+            const char* error_body = "{\"status\":\"error\",\"message\":\"Out of memory\"}";
+            uvhttp_response_set_status(response, 500);
+            uvhttp_response_set_header(response, "Content-Type", "application/json");
+            uvhttp_response_set_body(response, error_body, 45);
+            uvhttp_response_send(response);
+        }
+        return;
+    }
+
+    query_ctx->request = request;
+    query_ctx->response = response;
+    query_ctx->type = type;
+    query_ctx->start_time = get_timestamp_us();
+    query_ctx->delay_us = delay_us;
+    query_ctx->ctx = ctx;
+
+    /* 初始化定时器 */
+    uv_timer_init(ctx->loop, &query_ctx->timer);
+    query_ctx->timer.data = query_ctx;
+
+    /* 启动定时器（模拟异步数据库查询） */
+    uv_timer_start(&query_ctx->timer, on_database_query_complete, delay_us / 1000, 0);
+}
+
+/* 模拟数据库查询延迟（保留用于同步场景） */
+static void simulate_database_delay(query_type_t type) {
+    /* 此函数已弃用，使用 start_async_database_query 代替 */
+    (void)type;
 }
 
 /* 更新查询统计 */
@@ -223,26 +323,13 @@ static void print_query_stats(query_stats_t* stats) {
 
 /* 快速查询处理器 */
 static int fast_query_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    (void)request;
     if (!response) {
         g_benchmark_ctx->stats.failed_queries++;
         return -1;
     }
-
-    uint64_t start = get_timestamp_us();
-
-    /* 模拟快速数据库查询 */
-    simulate_database_delay(QUERY_TYPE_FAST);
-
-    const char* body = "{\"status\":\"ok\",\"query_type\":\"fast\",\"data\":[]}";
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
-
-    uint64_t end = get_timestamp_us();
-    update_query_stats(&g_benchmark_ctx->stats, QUERY_TYPE_FAST, end - start);
-
+    
+    /* 使用异步查询模拟 */
+    start_async_database_query(request, response, QUERY_TYPE_FAST, g_benchmark_ctx);
     return 0;
 }
 
