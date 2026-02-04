@@ -159,6 +159,31 @@ void uvhttp_lru_cache_set_max_file_size(cache_manager_t* cache,
                                         size_t max_file_size);
 
 /**
+ * set maximum memory usage for cache
+ *
+ * @param cache Cache manager
+ * @param max_memory_usage Maximum memory usage in bytes
+ */
+void uvhttp_lru_cache_set_max_memory_usage(cache_manager_t* cache,
+                                           size_t max_memory_usage);
+
+/**
+ * set maximum entries for cache
+ *
+ * @param cache Cache manager
+ * @param max_entries Maximum number of entries
+ */
+void uvhttp_lru_cache_set_max_entries(cache_manager_t* cache, int max_entries);
+
+/**
+ * set cache TTL
+ *
+ * @param cache Cache manager
+ * @param cache_ttl Cache TTL in seconds (0 means never expires)
+ */
+void uvhttp_lru_cache_set_cache_ttl(cache_manager_t* cache, int cache_ttl);
+
+/**
  * entry
  *
  * @param cache Cachemanage

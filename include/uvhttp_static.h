@@ -95,6 +95,19 @@ uvhttp_error_t uvhttp_static_set_max_file_size(uvhttp_static_context_t* ctx,
                                                size_t max_file_size);
 
 /**
+ * set cache configuration
+ *
+ * @param ctx Static file context
+ * @param max_cache_size Maximum cache size in bytes (0 means no change)
+ * @param max_entries Maximum cache entries (0 means no change)
+ * @param cache_ttl Cache TTL in seconds (0 means no change)
+ * @return UVHTTP_OK Success, other values represent Failure
+ */
+uvhttp_error_t uvhttp_static_set_cache_config(uvhttp_static_context_t* ctx,
+                                              size_t max_cache_size,
+                                              int max_entries, int cache_ttl);
+
+/**
  * releaseStatic file
  *
  * @param ctx Static file

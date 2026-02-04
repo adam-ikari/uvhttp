@@ -1570,6 +1570,33 @@ uvhttp_error_t uvhttp_static_set_max_file_size(uvhttp_static_context_t* ctx,
     return UVHTTP_OK;
 }
 
+/**
+ * set cache configuration
+ */
+uvhttp_error_t uvhttp_static_set_cache_config(uvhttp_static_context_t* ctx,
+                                              size_t max_cache_size,
+                                              int max_entries, int cache_ttl) {
+    if (!ctx) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    /* update config values (0 means no change) */
+    if (max_cache_size > 0) {
+        ctx->config.max_cache_size = max_cache_size;
+        uvhttp_lru_cache_set_max_memory_usage(ctx->cache, max_cache_size);
+    }
+    if (max_entries > 0) {
+        ctx->config.max_cache_entries = max_entries;
+        uvhttp_lru_cache_set_max_entries(ctx->cache, max_entries);
+    }
+    if (cache_ttl >= 0) {
+        ctx->config.cache_ttl = cache_ttl;
+        uvhttp_lru_cache_set_cache_ttl(ctx->cache, cache_ttl);
+    }
+
+    return UVHTTP_OK;
+}
+
 /* internal function: sendfile with config */
 static uvhttp_result_t uvhttp_static_sendfile_with_config(
     const char* file_path, void* response,

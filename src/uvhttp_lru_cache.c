@@ -586,6 +586,37 @@ void uvhttp_lru_cache_set_max_file_size(cache_manager_t* cache,
 }
 
 /**
+ * set maximum memory usage for cache
+ */
+void uvhttp_lru_cache_set_max_memory_usage(cache_manager_t* cache,
+                                           size_t max_memory_usage) {
+    if (!cache)
+        return;
+
+    cache->max_memory_usage = max_memory_usage;
+}
+
+/**
+ * set maximum entries for cache
+ */
+void uvhttp_lru_cache_set_max_entries(cache_manager_t* cache, int max_entries) {
+    if (!cache)
+        return;
+
+    cache->max_entries = max_entries;
+}
+
+/**
+ * set cache TTL
+ */
+void uvhttp_lru_cache_set_cache_ttl(cache_manager_t* cache, int cache_ttl) {
+    if (!cache)
+        return;
+
+    cache->cache_ttl = cache_ttl;
+}
+
+/**
  * clean expired entries - single-thread version
  */
 int uvhttp_lru_cache_cleanup_expired(cache_manager_t* cache) {
