@@ -422,7 +422,10 @@ message(STATUS "")
 # ============================================================================
 
 # 核心依赖（uvhttp 库必需）
-set(UVHTTP_CORE_DEPS libuv mbedtls xxhash llhttp)
+set(UVHTTP_CORE_DEPS libuv xxhash llhttp)
+if(BUILD_WITH_TLS)
+    list(APPEND UVHTTP_CORE_DEPS mbedtls)
+endif()
 
 # 可选依赖（示例程序可选使用）
 set(UVHTTP_OPTIONAL_DEPS cjson)
