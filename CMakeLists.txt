@@ -1,5 +1,15 @@
 cmake_minimum_required(VERSION 3.10)
-project(uvhttp VERSION 2.2.0 LANGUAGES C CXX)
+
+# 读取版本配置
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
+    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" VERSION_FILE)
+    string(REGEX MATCH "VERSION=([0-9]+\\.[0-9]+\\.[0-9]+)" _ ${VERSION_FILE})
+    set(PROJECT_VERSION ${CMAKE_MATCH_1})
+else()
+    set(PROJECT_VERSION "2.3.0")
+endif()
+
+project(uvhttp VERSION ${PROJECT_VERSION} LANGUAGES C CXX)
 
 # 构建选项
 option(BUILD_WITH_WEBSOCKET "Build with WebSocket support" ON)

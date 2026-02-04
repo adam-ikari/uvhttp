@@ -19,29 +19,55 @@
  *    - Large applications (> 10000 RPS): require system tuning, refer to large
  * application configuration below
  *
- * 3. Memory optimization
- *    - Memory-constrained environments: reduce buffer size, disable cache
- *    - High-performance environments: increase buffer size, enable all caches
+ * ==================== Version Information ====================
  *
- * ==================== Configuration Examples ====================
+ * Current version: UVHTTP_VERSION_MAJOR.UVHTTP_VERSION_MINOR.UVHTTP_VERSION_PATCH
+ * 
+ * Version source: VERSION file in project root
+ * To update version: Modify VERSION file, then run cmake to regenerate
  *
- * Small application configuration (memory priority):
- *   #define UVHTTP_MAX_CONNECTIONS_DEFAULT 512
- *   #define UVHTTP_INITIAL_BUFFER_SIZE 4096
- *   #define UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION 0
+ * ==================== Version Definitions ====================
+ */
+
+#ifndef UVHTTP_VERSION_H
+#define UVHTTP_VERSION_H
+
+/* Version information (from VERSION file) */
+#define UVHTTP_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define UVHTTP_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define UVHTTP_VERSION_PATCH @PROJECT_VERSION_PATCH@
+#define UVHTTP_VERSION "@PROJECT_VERSION@"
+
+/* Version as string (e.g., "2.3.0") */
+#define UVHTTP_VERSION_STRING "@PROJECT_VERSION@"
+
+/* Version as integer (e.g., 20300 for 2.3.0) */
+#define UVHTTP_VERSION_INT (@PROJECT_VERSION_MAJOR@ * 10000 + @PROJECT_VERSION_MINOR@ * 100 + @PROJECT_VERSION_PATCH@)
+
+#endif /* UVHTTP_VERSION_H */
+
+/**
+ * @file uvhttp_constants.h
+ * @brief UVHTTP configurable constant definitions
  *
- * Medium application configuration (balanced):
- *   #define UVHTTP_MAX_CONNECTIONS_DEFAULT 2048  // default
- *   #define UVHTTP_INITIAL_BUFFER_SIZE 8192     // default
- *   #define UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION 1  // default
+ * This file centralizes all configurable constants, organized by functional
+ * modules.
  *
- * Large application configuration (performance priority):
- *   #define UVHTTP_MAX_CONNECTIONS_DEFAULT 10000
- *   #define UVHTTP_INITIAL_BUFFER_SIZE 16384
- *   #define UVHTTP_READ_BUFFER_SIZE 32768
- *   #define UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION 1
- *   #define UVHTTP_ENABLE_ROUTER_CACHE_STATS 1
- *   #define UVHTTP_ENABLE_ROUTER_CACHE_DYNAMIC 1
+ * ==================== Configuration Guide ====================
+ *
+ * 1. Compile-time configuration
+ *    Configure through CMake compile options or directly modify macro
+ * definitions in this file Recommended to use CMake options for easier
+ * maintenance and version control
+ *
+ * 2. Performance tuning recommendations
+    - Small applications (< 1000 RPS): use default configuration
+    - Medium applications (1000-10000 RPS): increase connection count and
+    buffer size
+    - Large applications (> 10000 RPS): require system tuning, refer to large
+ * application configuration below
+ *
+ * ==================== Configuration Guide ====================
  *
  * ==================== System Tuning ====================
  *
