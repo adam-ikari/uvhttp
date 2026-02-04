@@ -380,7 +380,10 @@ foreach(test_file ${GTEST_TEST_FILES})
     
     set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
     
-    add_dependencies(${test_name} libuv mbedtls xxhash gtest)
+    add_dependencies(${test_name} libuv xxhash gtest)
+    if(BUILD_WITH_TLS)
+        add_dependencies(${test_name} mbedtls)
+    endif()
     
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(${test_name} mimalloc)
@@ -400,7 +403,10 @@ endforeach()
 # 添加 gtest 示例测试（使用 C++ 编译）
 add_executable(uvhttp_unit_tests test/unit/simple_test.cpp ${SOURCES})
 set_target_properties(uvhttp_unit_tests PROPERTIES LINKER_LANGUAGE CXX)
-add_dependencies(uvhttp_unit_tests libuv mbedtls xxhash gtest)
+add_dependencies(uvhttp_unit_tests libuv xxhash gtest)
+if(BUILD_WITH_TLS)
+    add_dependencies(uvhttp_unit_tests mbedtls)
+endif()
 if(BUILD_WITH_MIMALLOC)
     add_dependencies(uvhttp_unit_tests mimalloc)
 endif()
