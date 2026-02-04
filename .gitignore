@@ -75,6 +75,9 @@ docs/.vitepress/cache/
 # node.js
 node_modules/
 
+# Public file symlinks
+public/file/
+
 # Doxygen generated documentation
 docs/api/html/
 docs/api/latex/
