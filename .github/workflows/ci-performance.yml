@@ -104,7 +104,8 @@ jobs:
               echo '=== 编译项目 ==='
               mkdir -p build
               cd build
-              cmake -DCMAKE_BUILD_TYPE=Release ..
+              # 禁用 TLS 以加快编译速度
+              cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_TLS=OFF ..
               make -j\$(nproc) benchmark_rps benchmark_comprehensive
               
               # 运行性能测试
