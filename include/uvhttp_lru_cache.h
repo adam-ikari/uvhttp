@@ -35,7 +35,6 @@ struct cache_entry {
     time_t cache_time;                            /* Cachewhen */
     size_t memory_usage;                          /* memoryUse */
     int is_compressed;                            /* whethercompress */
-    int hit_count;                                /* 访问次数（热度） */
 
     /* uthash hash handle */
     UT_hash_handle hh;
@@ -56,8 +55,6 @@ struct cache_manager {
     int entry_count;           /* Cacheentry */
     int max_entries;           /* maximum entries */
     int cache_ttl;             /* CacheTTL(seconds) */
-    int eviction_mode;         /* 淘汰模式：0=LRU, 1=LFU, 2=混合 */
-    const uvhttp_config_t* server_config; /* Server */
 
     /* Statistics */
     int hit_count;      /* times */
@@ -184,15 +181,6 @@ void uvhttp_lru_cache_set_max_entries(cache_manager_t* cache, int max_entries);
  * @param cache_ttl Cache TTL in seconds (0 means never expires)
  */
 void uvhttp_lru_cache_set_cache_ttl(cache_manager_t* cache, int cache_ttl);
-
-/**
- * set eviction mode
- *
- * @param cache Cache manager
- * @param mode Eviction mode: 0=LRU (least recently used), 1=LFU (least
- * frequently used), 2=hybrid (both)
- */
-void uvhttp_lru_cache_set_eviction_mode(cache_manager_t* cache, int mode);
 
 /**
  * entry

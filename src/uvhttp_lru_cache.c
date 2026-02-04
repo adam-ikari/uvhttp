@@ -4,6 +4,7 @@
 #if UVHTTP_FEATURE_STATIC_FILES
 
 #    include "uvhttp_lru_cache.h"
+#    include "uvhttp_constants.h"
 
 #    include "uvhttp_allocator.h"
 #    include "uvhttp_error.h"
@@ -56,8 +57,7 @@ uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
     cache_ptr->max_memory_usage = max_memory_usage;
     cache_ptr->max_entries = max_entries;
     cache_ptr->cache_ttl = cache_ttl;
-    cache_ptr->eviction_mode = 0;    /* Default: LRU */
-    cache_ptr->server_config = NULL; /* Initialize to NULL, set by caller */
+    cache_ptr->max_file_size = 1024 * 1024 * 1024; /* Default: 1GB */
 
     /* Single-threaded version: no need to initialize lock */
 
@@ -129,7 +129,6 @@ cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache,
 
         /* update access time and move to LRU header */
         entry->access_time = time(NULL);
-        entry->hit_count++; /* Increment hit count for LFU */
         uvhttp_lru_cache_move_to_head(cache, entry);
         cache->hit_count++;
         UVHTTP_LOG_DEBUG("Cache hit: %s (size: %zu)", file_path,
@@ -202,29 +201,6 @@ void uvhttp_lru_cache_move_to_head(cache_manager_t* cache,
     if (!cache->lru_tail) {
         cache->lru_tail = entry;
     }
-}
-
-/**
- * find least frequently used entry for LFU eviction
- */
-static cache_entry_t* uvhttp_lru_cache_find_lfu_entry(cache_manager_t* cache) {
-    if (!cache || !cache->lru_tail)
-        return NULL;
-
-    cache_entry_t* lfu_entry = NULL;
-    int min_hits = INT_MAX;
-
-    /* Traverse LRU list to find entry with minimum hit count */
-    cache_entry_t* entry = cache->lru_tail;
-    while (entry) {
-        if (entry->hit_count < min_hits) {
-            min_hits = entry->hit_count;
-            lfu_entry = entry;
-        }
-        entry = entry->lru_prev;
-    }
-
-    return lfu_entry;
 }
 
 /**
@@ -310,13 +286,12 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
 
     /* check if need to evict entries - batch eviction optimization */
     int eviction_count = 0;
-    int batch_size = cache->server_config
-                         ? cache->server_config->lru_cache_batch_eviction_size
-                         : UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE;
+    /* Use small batch size (2 entries) to minimize blocking */
+    int batch_size = 2;
 
     while (
         (cache->max_memory_usage > 0 &&
-         cache->total_memory_usage + memory_usage > cache->max_memory_usage) ||
+         cache->total_memory_usage + memory_usage > cache->max_memory_usage * 0.9) ||
         (cache->max_entries > 0 && cache->entry_count >= cache->max_entries)) {
 
         /* if cache is null but still need to evict, it means cannot satisfy
@@ -331,60 +306,20 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
         for (int i = 0;
              i < batch_size && ((cache->max_memory_usage > 0 &&
                                  cache->total_memory_usage + memory_usage >
-                                     cache->max_memory_usage) ||
+                                     cache->max_memory_usage * 0.9) ||
                                 (cache->max_entries > 0 &&
                                  cache->entry_count >= cache->max_entries));
              i++) {
 
-            cache_entry_t* evicted = NULL;
-
-            /* Select eviction strategy based on mode */
-            if (cache->eviction_mode == 1) {
-                /* LFU: evict least frequently used */
-                evicted = uvhttp_lru_cache_find_lfu_entry(cache);
-                if (evicted) {
-                    /* Remove from LRU list */
-                    if (evicted->lru_prev) {
-                        evicted->lru_prev->lru_next = evicted->lru_next;
-                    } else {
-                        cache->lru_tail = evicted->lru_next;
-                    }
-                    if (evicted->lru_next) {
-                        evicted->lru_next->lru_prev = evicted->lru_prev;
-                    } else {
-                        cache->lru_head = evicted->lru_prev;
-                    }
-                }
-            } else if (cache->eviction_mode == 2) {
-                /* Hybrid: prefer LFU but fall back to LRU if needed */
-                evicted = uvhttp_lru_cache_find_lfu_entry(cache);
-                if (!evicted || evicted->hit_count > 0) {
-                    /* If no LFU candidate or all have hits, use LRU */
-                    evicted = uvhttp_lru_cache_remove_tail(cache);
-                } else {
-                    /* Remove from LRU list */
-                    if (evicted->lru_prev) {
-                        evicted->lru_prev->lru_next = evicted->lru_next;
-                    } else {
-                        cache->lru_tail = evicted->lru_next;
-                    }
-                    if (evicted->lru_next) {
-                        evicted->lru_next->lru_prev = evicted->lru_prev;
-                    } else {
-                        cache->lru_head = evicted->lru_prev;
-                    }
-                }
-            } else {
-                /* LRU: evict least recently used (default) */
-                evicted = uvhttp_lru_cache_remove_tail(cache);
-            }
+            /* LRU: evict least recently used */
+            cache_entry_t* evicted = uvhttp_lru_cache_remove_tail(cache);
 
             if (!evicted)
                 break;
 
             UVHTTP_LOG_DEBUG(
-                "Evicting cache entry: %s (freeing memory: %zu, hits: %d)",
-                evicted->file_path, evicted->memory_usage, evicted->hit_count);
+                "Evicting cache entry: %s (freeing memory: %zu)",
+                evicted->file_path, evicted->memory_usage);
 
             /* remove from hash table */
             HASH_DEL(cache->hash_table, evicted);
@@ -484,7 +419,6 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
     entry->access_time = get_current_time();
     entry->cache_time = entry->access_time;
     entry->is_compressed = 0;
-    entry->hit_count = 0;
 
     /* setMIMEtype */
     if (mime_type) {
@@ -683,25 +617,6 @@ void uvhttp_lru_cache_set_cache_ttl(cache_manager_t* cache, int cache_ttl) {
         return;
 
     cache->cache_ttl = cache_ttl;
-}
-
-/**
- * set eviction mode
- */
-void uvhttp_lru_cache_set_eviction_mode(cache_manager_t* cache, int mode) {
-    if (!cache)
-        return;
-
-    if (mode < 0 || mode > 2) {
-        UVHTTP_LOG_WARN(
-            "Invalid eviction mode: %d (must be 0=LRU, 1=LFU, 2=hybrid)", mode);
-        return;
-    }
-
-    cache->eviction_mode = mode;
-    const char* mode_str[] = {"LRU", "LFU", "Hybrid"};
-    (void)mode_str; /* Suppress unused variable warning */
-    UVHTTP_LOG_INFO("Cache eviction mode set to: %s", mode_str[mode]);
 }
 
 /**
