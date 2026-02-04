@@ -578,7 +578,8 @@
  * - Example: cmake -DUVHTTP_CACHE_DEFAULT_TTL=7200 ..
  */
 #    ifndef UVHTTP_CACHE_DEFAULT_MAX_MEMORY_SIZE
-#        define UVHTTP_CACHE_DEFAULT_MAX_MEMORY_SIZE (10 * 1024 * 1024) /* 10MB */
+#        define UVHTTP_CACHE_DEFAULT_MAX_MEMORY_SIZE \
+            (10 * 1024 * 1024) /* 10MB */
 #    endif
 
 #    ifndef UVHTTP_CACHE_DEFAULT_MAX_ENTRIES

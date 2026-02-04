@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <inttypes.h>
 
 #define TEST_ITERATIONS 100000
 
@@ -250,9 +251,9 @@ static perf_result_t test_param_router(void) {
 /* 打印结果 */
 static void print_result(const perf_result_t* result) {
     printf("%-45s", result->test_name);
-    printf("  Avg: %8lu ns", result->avg_time_ns);
-    printf("  Min: %8lu ns", result->min_time_ns);
-    printf("  Max: %8lu ns", result->max_time_ns);
+    printf("  Avg: %8" PRIu64 " ns", result->avg_time_ns);
+    printf("  Min: %8" PRIu64 " ns", result->min_time_ns);
+    printf("  Max: %8" PRIu64 " ns", result->max_time_ns);
     printf("  Ops/s: %12.0f", result->ops_per_sec);
     printf("\n");
 }

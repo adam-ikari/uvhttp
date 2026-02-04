@@ -190,7 +190,7 @@ void uvhttp_lru_cache_set_cache_ttl(cache_manager_t* cache, int cache_ttl);
  * @param batch_size Number of entries to evict per batch (default: 2)
  */
 void uvhttp_lru_cache_set_batch_eviction_size(cache_manager_t* cache,
-                                               int batch_size);
+                                              int batch_size);
 
 /**
  * entry
