@@ -301,7 +301,6 @@ endif()
 # ============================================================================
 set(LIBS
     ${LIBUV_LIB}
-    ${MBEDTLS_LIBS}
     ${XXHASH_LIB}
     ${LLHTTP_LIB}
     ${CJSON_LIB}
@@ -309,6 +308,10 @@ set(LIBS
     m
     dl
 )
+
+if(BUILD_WITH_TLS)
+    list(APPEND LIBS ${MBEDTLS_LIBS})
+endif()
 
 if(BUILD_WITH_MIMALLOC)
     list(APPEND LIBS ${MIMALLOC_LIB})
