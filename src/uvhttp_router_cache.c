@@ -676,25 +676,4 @@ const char* uvhttp_method_to_string(uvhttp_method_t method) {
     }
 }
 
-uvhttp_error_t uvhttp_router_add_static_route(uvhttp_router_t* router,
-                                              const char* prefix_path,
-                                              void* static_context) {
-    if (!router || !prefix_path || !static_context) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    /* Static file routing not yet supported */
-    return UVHTTP_ERROR_NOT_IMPLEMENTED;
-}
-
-uvhttp_error_t uvhttp_router_add_fallback_route(uvhttp_router_t* router,
-                                                void* static_context) {
-    if (!router || !static_context) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    /* Fallback routing not yet supported */
-    return UVHTTP_ERROR_NOT_IMPLEMENTED;
-}
-
 #endif /* UVHTTP_FEATURE_ROUTER_CACHE */

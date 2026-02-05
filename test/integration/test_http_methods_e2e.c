@@ -9,15 +9,6 @@
 #include <string.h>
 #include <stdio.h>
 
-/* 测试结果统计 */
-typedef struct {
-    int total_tests;
-    int passed_tests;
-    int failed_tests;
-} test_stats_t;
-
-static test_stats_t g_stats = {0, 0, 0};
-
 /* 应用上下文 */
 typedef struct {
     uvhttp_server_t* server;
@@ -425,6 +416,13 @@ int main(int argc, char** argv) {
     
     /* 添加路由 - API 端点 */
     uvhttp_router_add_route(ctx->router, "/api", json_handler);
+    uvhttp_router_add_route_method(ctx->router, "/api", UVHTTP_GET, get_handler);
+    uvhttp_router_add_route_method(ctx->router, "/api", UVHTTP_POST, post_handler);
+    uvhttp_router_add_route_method(ctx->router, "/api", UVHTTP_PUT, put_handler);
+    uvhttp_router_add_route_method(ctx->router, "/api", UVHTTP_DELETE, delete_handler);
+    uvhttp_router_add_route_method(ctx->router, "/api", UVHTTP_PATCH, patch_handler);
+    uvhttp_router_add_route_method(ctx->router, "/api", UVHTTP_HEAD, head_handler);
+    uvhttp_router_add_route_method(ctx->router, "/api", UVHTTP_OPTIONS, options_handler);
     
     /* 添加路由 - 用户端点 */
     uvhttp_router_add_route(ctx->router, "/users/:id", user_handler);

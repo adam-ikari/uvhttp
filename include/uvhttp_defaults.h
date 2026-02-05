@@ -239,13 +239,6 @@ extern "C" {
 
 /* UVHTTP_DEFAULT_ENABLE_ACCESS_LOG delete - Use */
 
-/* ========== CORS Configuration Default Values ========== */
-
-/**
- * CORS Cachewhen(seconds)
- */
-#define UVHTTP_CORS_MAX_AGE_DEFAULT "86400"
-
 /* ========== Hash Configuration Default Values ========== */
 
 /**

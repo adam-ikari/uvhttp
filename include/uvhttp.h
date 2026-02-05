@@ -29,10 +29,8 @@
 #    include "uvhttp_static.h"
 #endif
 
-/* Optional features */
-#if UVHTTP_FEATURE_ALLOCATOR
-#    include "uvhttp_allocator.h"
-#endif
+/* Memory allocator - always included */
+#include "uvhttp_allocator.h"
 
 #ifdef __cplusplus
 extern "C" {

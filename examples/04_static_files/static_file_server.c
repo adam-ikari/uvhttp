@@ -2,6 +2,12 @@
  * UVHTTP 静态文件服务器示例
  * 
  * 演示如何使用UVHTTP的静态文件服务功能
+ * 
+ * 最佳实践：
+ * 1. 静态文件路由应由应用层实现，使用 uvhttp_router_add_route() 添加路由
+ * 2. 创建包装函数调用 uvhttp_static_handle_request()
+ * 3. 通过 server->context 或 loop->data 传递应用上下文
+ * 4. 使用通配符路由处理多个静态文件路径
  */
 
 #include "uvhttp.h"
@@ -17,6 +23,9 @@ typedef struct {
 
 /**
  * 静态文件请求处理器
+ * 
+ * 这是一个应用层实现的包装函数，用于将路由器与静态文件服务连接起来。
+ * 这种方式符合 UVHTTP "专注核心" 的设计原则，将路由逻辑留给应用层控制。
  */
 int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     /* 从 server->context 获取应用上下文 */
@@ -252,10 +261,15 @@ int main() {
         return 1;
     }
     
-    /* 添加路由 */
+    /* 添加路由 - 应用层实现静态文件路由 */
     uvhttp_router_add_route(router, "/", home_handler);
+    
+    /* 静态文件路由模式 1: 使用前缀路径 */
     uvhttp_router_add_route(router, "/static/*", static_file_handler);
-    uvhttp_router_add_route(router, "/*", static_file_handler);  /* 处理所有其他请求 */
+    
+    /* 静态文件路由模式 2: 使用通配符处理所有未匹配的请求 */
+    /* 注意: 通配符路由应该放在最后，否则会阻止其他路由的匹配 */
+    uvhttp_router_add_route(router, "/*", static_file_handler);
     
     /* 设置路由 */
     server->router = router;

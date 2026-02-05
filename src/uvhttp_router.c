@@ -558,6 +558,7 @@ static int static_file_handler_wrapper(uvhttp_request_t* request,
 
     /* call static file processing function */
     if (router->static_context) {
+#ifdef UVHTTP_STATIC_FILES_ENABLED
         uvhttp_result_t result = uvhttp_static_handle_request(
             (uvhttp_static_context_t*)router->static_context, request,
             response);
@@ -565,6 +566,7 @@ static int static_file_handler_wrapper(uvhttp_request_t* request,
         if (result == UVHTTP_OK) {
             return 0;
         }
+#endif
     }
 
     /* static file service failed, return 404 */

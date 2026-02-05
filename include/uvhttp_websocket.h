@@ -254,7 +254,6 @@ uvhttp_error_t uvhttp_ws_generate_accept(const char* key, char* accept,
  */
 uvhttp_error_t uvhttp_ws_verify_accept(const char* key, const char* accept);
 
-#        if UVHTTP_FEATURE_PROTOCOL_UPGRADE
 /**
  * @brief Register WebSocket protocol upgrade
  *
@@ -266,7 +265,6 @@ uvhttp_error_t uvhttp_ws_verify_accept(const char* key, const char* accept);
  */
 uvhttp_error_t uvhttp_server_register_websocket_upgrade(
     uvhttp_server_t* server);
-#        endif
 
 /* Convenience macros */
 #        define uvhttp_websocket_send_text(ctx, ws, text) \

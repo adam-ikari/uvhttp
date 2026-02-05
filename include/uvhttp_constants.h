@@ -843,11 +843,6 @@
 #        define UVHTTP_ACCESS_COUNTER_MAX 0xFFFFFFFF
 #    endif
 
-/* Routing cache optimization features */
-#    ifndef UVHTTP_FEATURE_ROUTER_CACHE
-#        define UVHTTP_FEATURE_ROUTER_CACHE 1 /* Default enabled */
-#    endif
-
 #    define UVHTTP_ROUTER_MAX_CHILDREN 12
 
 /* ========== TLS/SSL Configuration ========== */
@@ -869,11 +864,6 @@
 #    define UVHTTP_TLS_PATH_MAX_SIZE 256
 
 /* ========== Middleware Configuration ========== */
-
-/**
- * CORS max age
- */
-#    define UVHTTP_CORS_MAX_AGE_DEFAULT "86400"
 
 /**
  * Rate limit window

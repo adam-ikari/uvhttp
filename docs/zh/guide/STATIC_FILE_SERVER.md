@@ -4,21 +4,53 @@
 
 UVHTTP静态文件服务器是一个高性能、安全、易于使用的静态文件服务解决方案。它提供了完整的静态文件服务功能，包括自动MIME类型检测、文件缓存、条件请求支持等特性。
 
+## 设计原则
+
+### 应用层实现
+静态文件路由应由应用层实现，而非框架内置。这符合 UVHTTP "专注核心" 的设计原则：
+
+- **框架核心**: 提供 `uvhttp_static_handle_request()` 函数处理单个静态文件请求
+- **应用层**: 负责路由配置、路径映射、上下文传递等逻辑
+- **灵活性**: 应用层完全控制静态文件服务的路由策略
+
+### 推荐的实现方式
+```c
+// 1. 创建静态文件上下文
+uvhttp_static_context_t* static_ctx;
+uvhttp_static_create(&config, &static_ctx);
+
+// 2. 创建应用层包装函数
+int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    // 从上下文获取 static_ctx
+    app_context_t* app_ctx = (app_context_t*)loop->data;
+    return uvhttp_static_handle_request(app_ctx->static_ctx, request, response);
+}
+
+// 3. 添加路由（应用层控制）
+uvhttp_router_add_route(router, "/static/*", static_file_handler);
+uvhttp_router_add_route(router, "/*", static_file_handler);  // 回退路由
+```
+
+### 不提供的原因
+- 避免框架变得臃肿
+- 保持应用层的灵活性和控制力
+- 符合"少即是多"的极简工程原则
+
 ## 核心特性
 
-### 🚀 性能优化
+### 性能优化
 - **LRU缓存系统**: 智能内存缓存，减少磁盘I/O
 - **零拷贝优化**: 高效的文件传输机制
 - **连接复用**: 基于libuv的事件驱动架构
 - **压缩支持**: 预留gzip/deflate压缩接口
 
-### 🔒 安全特性
+### 安全特性
 - **路径安全验证**: 防止目录遍历攻击
 - **文件类型检查**: 可配置的文件类型白名单
 - **访问控制**: 支持基于路径的访问限制
 - **资源限制**: 防止大文件DoS攻击
 
-### 📊 功能特性
+### 功能特性
 - **自动MIME类型检测**: 支持常见文件类型
 - **条件请求**: ETag和Last-Modified支持
 - **目录列表**: 可配置的目录浏览功能
@@ -28,6 +60,18 @@ UVHTTP静态文件服务器是一个高性能、安全、易于使用的静态�
 ## 快速开始
 
 ### 基础示例
+
+见 `examples/04_static_files/static_file_server.c` 完整示例，展示静态文件路由的最佳实践。
+
+### 关键点
+- 使用 `uvhttp_router_add_route()` 添加静态文件路由
+- 创建包装函数调用 `uvhttp_static_handle_request()`
+- 通过 `server->context` 或 `loop->data` 传递应用上下文
+- 使用通配符路由处理多个静态文件路径
+
+## 最佳实践
+
+### 关键点
 
 ```c
 #include "uvhttp.h"

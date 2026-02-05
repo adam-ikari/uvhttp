@@ -75,13 +75,6 @@
 
 
 ---
-### `UVHTTP_FEATURE_ALLOCATOR`
-
-**Value:** `0 /* 自定义分配器支持 */`
-**Description:** TBD
-
-
----
 ### `UVHTTP_WEBSOCKET_ENABLED`
 
 **Description:** TBD

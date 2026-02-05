@@ -45,13 +45,17 @@ UVHTTP 支持通过 CMake 配置选项灵活地组合不同的功能模块，以
 
 ### BUILD_WITH_MIMALLOC
 - **类型**: BOOL
-- **默认值**: ON
+- **默认值**: 基于 `UVHTTP_ALLOCATOR_TYPE`（系统/自定义为 OFF，mimalloc 为 ON）
 - **说明**: 使用 mimalloc 内存分配器
 - **影响**:
   - 链接 mimalloc 库
-  - 提供更快的内存分配性能
+  - 提供更快的内存分配性能（提升 30-50%）
   - 减少内存碎片
 - **依赖**: 无
+- **注意**:
+  - 当 `UVHTTP_ALLOCATOR_TYPE=1` 时自动启用
+  - 可以手动启用，不受分配器类型限制
+  - 对于 `UVHTTP_ALLOCATOR_TYPE=0`（系统）和 `UVHTTP_ALLOCATOR_TYPE=2`（自定义）默认禁用
 
 ### ENABLE_DEBUG
 - **类型**: BOOL
@@ -450,17 +454,36 @@ cmake -DCMAKE_BUILD_TYPE=MinSizeRel \
 
 ## 内存分配器配置
 
+### UVHTTP_ALLOCATOR_TYPE
+- **类型**: STRING
+- **默认值**: 0
+- **说明**: 内存分配器类型选择
+- **选项**:
+  - `0`: 系统分配器 (malloc/free)
+  - `1`: mimalloc 分配器（自动启用 `BUILD_WITH_MIMALLOC=ON`）
+  - `2`: 自定义分配器（应用层实现）
+- **影响**:
+  - 系统分配器：标准性能，无依赖
+  - mimalloc：内存分配速度快 30-50%，减少碎片
+  - 自定义：完全控制内存管理
+- **注意**:
+  - 选项 `1` 会自动启用 `BUILD_WITH_MIMALLOC=ON` 以方便使用
+  - 选项 `2` 需要应用层实现自定义分配器函数
+  - 自定义分配器实现详情请参考 [高级编译选项](ADVANCED_BUILD_OPTIONS.md)
+
 ### BUILD_WITH_MIMALLOC
 - **类型**: BOOL
-- **默认值**: ON
+- **默认值**: 基于 `UVHTTP_ALLOCATOR_TYPE`（系统/自定义为 OFF，mimalloc 为 ON）
 - **说明**: 使用 mimalloc 内存分配器
 - **影响**:
   - 链接 mimalloc 库
   - 提供更快的内存分配性能（提升 30-50%）
   - 减少内存碎片
 - **依赖**: 无
-
-**注意**: 内存分配器类型的详细配置（系统/mimalloc/自定义）请参考 [高级编译选项](ADVANCED_BUILD_OPTIONS.md)。
+- **注意**:
+  - 当 `UVHTTP_ALLOCATOR_TYPE=1` 时自动启用
+  - 可以手动启用，不受分配器类型限制
+  - 对于 `UVHTTP_ALLOCATOR_TYPE=0`（系统）和 `UVHTTP_ALLOCATOR_TYPE=2`（自定义）默认禁用
 
 ## 构建类型
 

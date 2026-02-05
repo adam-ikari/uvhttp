@@ -81,7 +81,6 @@ static int concurrent_post_handler(uvhttp_request_t* request, uvhttp_response_t*
     ctx->request_count++;
     
     size_t body_len = uvhttp_request_get_body_length(request);
-    const char* body = uvhttp_request_get_body(request);
     
     char response_body[512];
     snprintf(response_body, sizeof(response_body),
@@ -379,6 +378,11 @@ int main(int argc, char** argv) {
     
     /* 添加路由 - 并发测试端点 */
     uvhttp_router_add_route(ctx->router, "/concurrent", concurrent_handler);
+    uvhttp_router_add_route_method(ctx->router, "/concurrent", UVHTTP_POST, concurrent_post_handler);
+    uvhttp_router_add_route_method(ctx->router, "/concurrent", UVHTTP_PUT, concurrent_put_handler);
+    uvhttp_router_add_route_method(ctx->router, "/concurrent", UVHTTP_DELETE, concurrent_delete_handler);
+    uvhttp_router_add_route_method(ctx->router, "/concurrent", UVHTTP_HEAD, concurrent_head_handler);
+    uvhttp_router_add_route_method(ctx->router, "/concurrent", UVHTTP_OPTIONS, concurrent_options_handler);
     
     /* 添加路由 - 统计端点 */
     uvhttp_router_add_route(ctx->router, "/stats", stats_handler);

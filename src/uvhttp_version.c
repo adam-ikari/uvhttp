@@ -150,21 +150,13 @@ uvhttp_error_t uvhttp_get_build_info(uvhttp_build_info_t* info) {
 #ifdef UVHTTP_LRU_CACHE_ENABLED
     info->feature_lru_cache = 1;
 #endif
-#ifdef UVHTTP_CORS_ENABLED
-    info->feature_cors = 1;
-#endif
 #ifdef UVHTTP_RATE_LIMIT_ENABLED
     info->feature_rate_limit = 1;
 #endif
-#ifdef UVHTTP_PROTOCOL_UPGRADE_ENABLED
     info->feature_protocol_upgrade = 1;
-#endif
 
     /* Allocator configuration */
     info->allocator_type = uvhttp_allocator_name();
-#ifdef UVHTTP_ALLOCATOR_ENABLED
-    info->allocator_enabled = 1;
-#endif
 
     /* Memory configuration */
     info->max_connections = UVHTTP_MAX_CONNECTIONS;
@@ -243,12 +235,6 @@ int uvhttp_is_feature_enabled(const char* feature) {
 #else
         return 0;
 #endif
-    } else if (strcmp(feature, "cors") == 0) {
-#ifdef UVHTTP_CORS_ENABLED
-        return 1;
-#else
-        return 0;
-#endif
     } else if (strcmp(feature, "rate_limit") == 0) {
 #ifdef UVHTTP_RATE_LIMIT_ENABLED
         return 1;
@@ -256,17 +242,9 @@ int uvhttp_is_feature_enabled(const char* feature) {
         return 0;
 #endif
     } else if (strcmp(feature, "protocol_upgrade") == 0) {
-#ifdef UVHTTP_PROTOCOL_UPGRADE_ENABLED
         return 1;
-#else
-        return 0;
-#endif
     } else if (strcmp(feature, "allocator") == 0) {
-#ifdef UVHTTP_ALLOCATOR_ENABLED
         return 1;
-#else
-        return 0;
-#endif
     }
 
     return -1;
@@ -345,13 +323,11 @@ void uvhttp_print_build_info(void) {
     printf("  Logging:         %s\n", info.feature_logging ? "Enabled" : "Disabled");
     printf("  Router Cache:    %s\n", info.feature_router_cache ? "Enabled" : "Disabled");
     printf("  LRU Cache:       %s\n", info.feature_lru_cache ? "Enabled" : "Disabled");
-    printf("  CORS:            %s\n", info.feature_cors ? "Enabled" : "Disabled");
     printf("  Rate Limit:      %s\n", info.feature_rate_limit ? "Enabled" : "Disabled");
     printf("  Protocol Upgrade: %s\n", info.feature_protocol_upgrade ? "Enabled" : "Disabled");
     printf("\n");
     printf("Allocator:\n");
-    printf("  Type:    %s\n", info.allocator_type);
-    printf("  Enabled: %s\n", info.allocator_enabled ? "Yes" : "No");
+    printf("  Type: %s\n", info.allocator_type);
     printf("\n");
     printf("Memory Configuration:\n");
     printf("  Max Connections: %d\n", info.max_connections);

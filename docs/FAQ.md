@@ -200,7 +200,8 @@ uvhttp_response_set_header(response, "Set-Cookie",
 
 ### Q12: How do I enable CORS?
 
-**Answer:**
+**Answer:** CORS (Cross-Origin Resource Sharing) is implemented at the application layer. You can enable CORS by setting the appropriate response headers:
+
 ```c
 uvhttp_response_set_header(response, "Access-Control-Allow-Origin", "*");
 uvhttp_response_set_header(response, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
@@ -213,6 +214,10 @@ if (uvhttp_request_get_method(request) == UVHTTP_METHOD_OPTIONS) {
     return 0;
 }
 ```
+
+For more advanced CORS handling, you can use the middleware system to create a reusable CORS middleware. See the middleware examples in `examples/03_middleware/`.
+
+**Note:** UVHTTP does not provide built-in CORS support because CORS is an application-level concern. The library provides the flexibility to implement CORS exactly as needed for your use case.
 
 ### Q13: How do I send a file attachment?
 
