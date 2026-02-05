@@ -296,6 +296,14 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    /* 防止重复释放 */
+    if (server->freed) {
+        return UVHTTP_OK;
+    }
+
+    /* 设置 freed 标志 */
+    server->freed = 1;
+
     /* close TCP handle */
     if (!uv_is_closing((uv_handle_t*)&server->tcp_handle)) {
         uv_close((uv_handle_t*)&server->tcp_handle, NULL);

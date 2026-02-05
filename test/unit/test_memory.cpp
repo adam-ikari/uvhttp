@@ -71,7 +71,7 @@ TEST(MemoryTest, ServerMemoryUsage) {
     uvhttp_server_set_router(server, router);
 
     uvhttp_server_free(server);
-    uvhttp_router_free(router);
+    /* router 已被 server 释放，不需要再释放 */
     uv_loop_close(loop);
     uvhttp_free(loop);
 }
@@ -106,7 +106,7 @@ TEST(MemoryTest, MultipleServerCreation) {
         uvhttp_server_free(server);
         uv_run(loop, UV_RUN_DEFAULT);
 
-        uvhttp_router_free(router);
+        /* router 已被 server 释放，不需要再释放 */
         uv_loop_close(loop);
         uvhttp_free(loop);
     }

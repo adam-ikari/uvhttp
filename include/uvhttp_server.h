@@ -88,7 +88,8 @@ struct uvhttp_server {
     /* Frequently accessed in on_connection, connection management */
     int is_listening;                 /* 4 bytes - useparsinglisten */
     int owns_loop;                    /* 4 bytes - useloop */
-    int _padding1[2];                 /* 8 bytes - paddingto16bytes */
+    int freed;                        /* 4 bytes - flag to prevent double free */
+    int _padding1;                    /* 4 bytes - paddingto16bytes */
     size_t active_connections;        /* 8 bytes - Connection */
     size_t max_connections;           /* 8 bytes - Connection */
     size_t max_message_size;          /* 8 bytes - messagesize */
