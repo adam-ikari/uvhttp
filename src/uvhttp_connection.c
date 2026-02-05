@@ -529,12 +529,16 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
     }
 
     /* 检查是否正在关闭中，避免重复释放 */
-    if (conn->close_pending > 0) {
-        /* 句柄正在异步关闭中，由 on_handle_close 回调负责释放 */
-        /* 设置 freed 标志，防止 on_handle_close 再次调用 */
-        conn->freed = 1;
-        return;
-    }
+
+        if (conn->close_pending > 0) {
+
+            /* 句柄正在异步关闭中，由 on_handle_close 回调负责释放 */
+
+            /* 不设置 freed 标志，让 on_handle_close 处理 */
+
+            return;
+
+        }
 
     /* 设置 freed 标志 */
     conn->freed = 1;

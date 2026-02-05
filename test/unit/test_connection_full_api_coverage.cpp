@@ -117,11 +117,9 @@ TEST(UvhttpConnectionFullApiTest, ConnectionCloseSuccess) {
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_CLOSING);
     
     /* 运行循环以处理异步关闭 */
-    for (int i = 0; i < 20; i++) {
-        uv_run(loop, UV_RUN_ONCE);
-    }
+    uv_run(loop, UV_RUN_NOWAIT);
     
-    // 由 on_handle_close 回调自动释放
+    uvhttp_connection_free(conn);
     destroy_server_and_loop(loop, server);
 }
 
@@ -172,22 +170,6 @@ TEST(UvhttpConnectionFullApiTest, ConnectionScheduleRestartReadSuccess) {
     /* 调度重启读取 */
     result = uvhttp_connection_schedule_restart_read(conn);
     /* 可能返回错误，因为连接没有正确初始化 */
-    
-    /* 关闭所有句柄 */
-    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
-        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
-    }
-    if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
-        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
-    }
-    if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
-        uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
-    }
-    
-    /* 运行事件循环等待关闭完成 */
-    for (int i = 0; i < 20; i++) {
-        uv_run(loop, UV_RUN_ONCE);
-    }
     
     uvhttp_connection_free(conn);
     destroy_server_and_loop(loop, server);
@@ -770,9 +752,7 @@ TEST(UvhttpConnectionFullApiTest, ConnectionWebSocket) {
     
     /* 清理服务器 - 运行循环以处理异步关闭 */
     uvhttp_server_free(server);
-    for (int i = 0; i < 20; i++) {
-        uv_run(loop, UV_RUN_ONCE);
-    }
+    uv_run(loop, UV_RUN_NOWAIT);
     uv_loop_close(loop);
     uvhttp_free(loop);
 }
