@@ -410,6 +410,11 @@ TEST(UvhttpConnectionLifecycleTest, ConnectionTimeout) {
     result = uvhttp_connection_start_timeout_custom(conn, 30);
     /* 结果取决于内部状态 */
     
+    /* 停止定时器 */
+    if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
+        uv_timer_stop(&conn->timeout_timer);
+    }
+    
     /* 关闭连接以清理定时器 */
     uvhttp_connection_close(conn);
     uv_run(uv_default_loop(), UV_RUN_NOWAIT);
