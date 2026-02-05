@@ -20,71 +20,34 @@
 extern "C" {
 #endif
 
-/* 编译期选择分配器类型 */
+/* Compile-time allocator type selection */
 #ifndef UVHTTP_ALLOCATOR_TYPE
-#    define UVHTTP_ALLOCATOR_TYPE 0 /* 0=system, 1=mimalloc */
+#    define UVHTTP_ALLOCATOR_TYPE 0 /* 0=system, 1=mimalloc, 2=custom */
 #endif
 
-/* ========== 编译期分配器选择 ========== */
+/* ========== Compile-time Allocator Selection ========== */
 
 #if UVHTTP_ALLOCATOR_TYPE == 1 /* mimalloc */
 #    ifdef UVHTTP_ENABLE_MIMALLOC
 #        include "mimalloc.h"
 
-/**
- * @brief Allocate memory using mimalloc
- *
- * @param size Number of bytes to allocate
- * @return void* Pointer to allocated memory, or NULL on failure
- *
- * @note Uses mimalloc's mi_malloc() for high-performance allocation
- * @note This function is inline-optimized
- */
 static inline void* uvhttp_alloc(size_t size) {
     return mi_malloc(size);
 }
 
-/**
- * @brief Free memory allocated with uvhttp_alloc
- *
- * @param ptr Pointer to memory to free (can be NULL)
- *
- * @note Uses mimalloc's mi_free()
- * @note This function is inline-optimized
- */
 static inline void uvhttp_free(void* ptr) {
     mi_free(ptr);
 }
 
-/**
- * @brief Reallocate memory
- *
- * @param ptr Pointer to previously allocated memory (can be NULL)
- * @param size New size in bytes
- * @return void* Pointer to reallocated memory, or NULL on failure
- *
- * @note Uses mimalloc's mi_realloc()
- * @note This function is inline-optimized
- */
 static inline void* uvhttp_realloc(void* ptr, size_t size) {
     return mi_realloc(ptr, size);
 }
 
-/**
- * @brief Allocate and zero-initialize memory
- *
- * @param nmemb Number of elements
- * @param size Size of each element in bytes
- * @return void* Pointer to allocated and zeroed memory, or NULL on failure
- *
- * @note Uses mimalloc's mi_calloc()
- * @note This function is inline-optimized
- */
 static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
     return mi_calloc(nmemb, size);
 }
 #    else
-/* mimalloc 不可用，回退到系统分配器 */
+/* mimalloc unavailable, fallback to system allocator */
 static inline void* uvhttp_alloc(size_t size) {
     return malloc(size);
 }
@@ -99,64 +62,51 @@ static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
 }
 #    endif
 
-#else /* 系统分配器（默认） */
-/* 系统分配器模式 - 使用内联函数确保可以用作函数指针 */
+#elif UVHTTP_ALLOCATOR_TYPE == 2 /* custom */
+/* Custom allocator - application layer must implement these functions */
+extern void* uvhttp_custom_alloc(size_t size);
+extern void uvhttp_custom_free(void* ptr);
+extern void* uvhttp_custom_realloc(void* ptr, size_t size);
+extern void* uvhttp_custom_calloc(size_t nmemb, size_t size);
 
-/**
- * @brief Allocate memory using system allocator
- *
- * @param size Number of bytes to allocate
- * @return void* Pointer to allocated memory, or NULL on failure
- *
- * @note Uses standard malloc()
- * @note This function is inline-optimized
- */
+static inline void* uvhttp_alloc(size_t size) {
+    return uvhttp_custom_alloc(size);
+}
+
+static inline void uvhttp_free(void* ptr) {
+    uvhttp_custom_free(ptr);
+}
+
+static inline void* uvhttp_realloc(void* ptr, size_t size) {
+    return uvhttp_custom_realloc(ptr, size);
+}
+
+static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
+    return uvhttp_custom_calloc(nmemb, size);
+}
+
+#else /* System(Default) - UVHTTP_ALLOCATOR_TYPE == 0 */
+/* System allocator mode - use inline functions to ensure they can be used as
+ * function pointers */
+
 static inline void* uvhttp_alloc(size_t size) {
     return malloc(size);
 }
 
-/**
- * @brief Free memory allocated with uvhttp_alloc
- *
- * @param ptr Pointer to memory to free (can be NULL)
- *
- * @note Uses standard free()
- * @note This function is inline-optimized
- */
 static inline void uvhttp_free(void* ptr) {
     free(ptr);
 }
 
-/**
- * @brief Reallocate memory
- *
- * @param ptr Pointer to previously allocated memory (can be NULL)
- * @param size New size in bytes
- * @return void* Pointer to reallocated memory, or NULL on failure
- *
- * @note Uses standard realloc()
- * @note This function is inline-optimized
- */
 static inline void* uvhttp_realloc(void* ptr, size_t size) {
     return realloc(ptr, size);
 }
 
-/**
- * @brief Allocate and zero-initialize memory
- *
- * @param nmemb Number of elements
- * @param size Size of each element in bytes
- * @return void* Pointer to allocated and zeroed memory, or NULL on failure
- *
- * @note Uses standard calloc()
- * @note This function is inline-optimized
- */
 static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
     return calloc(nmemb, size);
 }
 #endif
 
-/* ========== 分配器信息 ========== */
+/* ========== Allocator Information ========== */
 
 /**
  * @brief Get the name of the current allocator
@@ -178,7 +128,7 @@ static inline const char* uvhttp_allocator_name(void) {
 #endif
 }
 
-/* ========== 使用说明 ========== */
+/* ========== Usage Instructions ========== */
 
 /**
  * @page memory_allocator_usage Memory Allocator Usage Guide

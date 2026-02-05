@@ -1,0 +1,30 @@
+[
+  {
+    "version": "2.0.0",
+    "date": "2026-02-01T12:01:38.110Z",
+    "commit": "def456",
+    "baseline": {
+      "low_concurrent": {
+        "rps": 18000,
+        "latency_avg": 510
+      },
+      "medium_concurrent": {
+        "rps": 17500,
+        "latency_avg": 2750
+      },
+      "high_concurrent": {
+        "rps": 16800,
+        "latency_avg": 12000
+      }
+    },
+    "environment": {
+      "os": "Linux",
+      "runner": "GitHub Actions",
+      "cpu": "Unknown",
+      "compiler": "GCC",
+      "compiler_version": "11.0.0",
+      "build_type": "Release",
+      "optimization": "-O2"
+    }
+  }
+]

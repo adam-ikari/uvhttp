@@ -9,8 +9,11 @@
 #include "uvhttp_router.h"
 #include "uvhttp_server.h"
 
+#if UVHTTP_FEATURE_TLS
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
+#endif
+
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,11 +22,13 @@
 
 /* ============ Memory Allocator Description ============ */
 /*
- * UVHTTP memory allocator uses compile-time macro design, zero-overhead abstraction
+ * UVHTTP memory allocator uses compile-time macro design, zero-overhead
+ * abstraction
  *
  * No runtime allocator provider implemented, reasons:
  * 1. Performance first: avoid function pointer call overhead
- * 2. Compile-time optimization: compiler can inline and optimize allocation calls
+ * 2. Compile-time optimization: compiler can inline and optimize allocation
+ * calls
  * 3. Simple and direct: reduce complexity, improve maintainability
  *
  * Memory allocator type selected via UVHTTP_ALLOCATOR_TYPE compile macro:
@@ -70,7 +75,8 @@ void uvhttp_context_destroy(uvhttp_context_t* context) {
     uvhttp_context_cleanup_websocket(context);
     uvhttp_context_cleanup_config(context);
 
-    /* Note: memory allocator uses compile-time macros, no runtime cleanup needed */
+    /* Note: memory allocator uses compile-time macros, no runtime cleanup
+     * needed */
 
     uvhttp_free(context);
 }
@@ -102,6 +108,7 @@ uvhttp_error_t uvhttp_context_init(uvhttp_context_t* context) {
 /* ===== Global Variable Replacement Field Initialization Functions ===== */
 
 /* Initialize TLS module state */
+#if UVHTTP_FEATURE_TLS
 uvhttp_error_t uvhttp_context_init_tls(uvhttp_context_t* context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -170,8 +177,19 @@ void uvhttp_context_cleanup_tls(uvhttp_context_t* context) {
 
     context->tls_initialized = 0;
 }
+#else
+uvhttp_error_t uvhttp_context_init_tls(uvhttp_context_t* context) {
+    (void)context;
+    return UVHTTP_ERROR_NOT_SUPPORTED;
+}
+
+void uvhttp_context_cleanup_tls(uvhttp_context_t* context) {
+    (void)context;
+}
+#endif
 
 /* Initialize WebSocket module state */
+#if UVHTTP_FEATURE_TLS
 uvhttp_error_t uvhttp_context_init_websocket(uvhttp_context_t* context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -239,6 +257,16 @@ void uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
 
     context->ws_drbg_initialized = 0;
 }
+#else
+uvhttp_error_t uvhttp_context_init_websocket(uvhttp_context_t* context) {
+    (void)context;
+    return UVHTTP_ERROR_NOT_SUPPORTED;
+}
+
+void uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
+    (void)context;
+}
+#endif
 
 /* Initialize configuration management */
 uvhttp_error_t uvhttp_context_init_config(uvhttp_context_t* context) {

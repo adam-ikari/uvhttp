@@ -377,7 +377,7 @@ UVHTTP 使用 GitHub Actions 实现自动化 CI/CD，专注于 Linux 平台，�
 - `cache-key`: 缓存键（用于标识）
 - `build-type`: 构建类型（Release、Debug）
 
-**缓存键格式**: `deps-${{ runner.os }}-${{ inputs.build-type }}-${{ hashFiles('CMakeLists.txt', 'cmake/Dependencies.cmake') }}`
+**缓存键格式**: `deps-{RUNNER_OS}-{BUILD_TYPE}-{HASH}`
 
 ---
 
@@ -478,9 +478,9 @@ UVHTTP 使用 GitHub Actions 实现自动化 CI/CD，专注于 Linux 平台，�
 - `deps/googletest/build`
 - `deps/cjson/build`
 
-**缓存键**: `deps-${{ runner.os }}-${{ inputs.build-type }}-${{ hashFiles('CMakeLists.txt', 'cmake/Dependencies.cmake') }}`
+**缓存键**: `deps-{RUNNER_OS}-{BUILD_TYPE}-{HASH}`
 
-**恢复键**: `deps-${{ runner.os }}-${{ inputs.build-type }}-`
+**恢复键**: `deps-{RUNNER_OS}-{BUILD_TYPE}-`
 
 ---
 

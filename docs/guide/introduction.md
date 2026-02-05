@@ -68,7 +68,8 @@ int main() {
 
 - **[API Reference](../api/API_REFERENCE.md)**: Complete API documentation
 - **[Architecture Design](../dev/ARCHITECTURE.md)**: System architecture
-- **[Performance Benchmark](../dev/PERFORMANCE_BENCHMARK.md)**: Performance metrics
+- **[Performance Metrics](../performance.md)**: Performance metrics
+- **[Security Policy](../SECURITY.md)**: Security guidelines
 
 ## 🤝 Contributing
 

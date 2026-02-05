@@ -4,11 +4,45 @@ This document provides information about UVHTTP versions and their compatibility
 
 ## Current Version
 
-**Version**: 2.2.0  
-**Release Date**: 2025-01-30  
+**Version**: 2.2.2  
+**Release Date**: 2026-02-02  
 **Status**: Stable
 
 ## Version History
+
+### 2.2.2 (2026-02-02)
+
+**Major Changes**:
+- Router cache optimization: O(1) route lookup with hot path caching
+- Fixed router parameter bug: path parameters now correctly preserved
+- Added recursion depth limit to prevent stack overflow
+- Translated all Chinese comments to English in production code
+
+**Performance Improvements**:
+- Peak throughput: 21,991 RPS (95.3% of 23,070 RPS target)
+- Minimum latency: 551 μs
+- Maximum throughput: 23.02 MB/s
+
+**Bug Fixes**:
+- Fixed path parameter loss in `match_route_node` function
+- Added recursion depth limit to prevent stack overflow
+- Removed duplicate function declarations
+- Fixed code style inconsistencies
+
+**Documentation**:
+- Updated performance benchmark data
+- Added 2.2.2 changelog entry
+- Updated README.md with latest metrics
+
+### 2.2.1 (2026-01-31)
+
+**Breaking Changes**:
+- TLS error type integration: all TLS APIs now return `uvhttp_error_t`
+- Removed `uvhttp_tls_error_t` type
+
+**Bug Fixes**:
+- Fixed TLS error type consistency
+- Added comprehensive TLS error codes
 
 ### 2.2.0 (2025-01-30)
 
@@ -152,9 +186,49 @@ cmake -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON ..
 
 ### From 2.1 to 2.2
 
-**No Breaking Changes**:
+**Breaking Changes**:
 
-Minor improvements and bug fixes. No code changes required.
+1. **TLS Error Type Integration** (2.2.1)
+   - All TLS API functions now return `uvhttp_error_t` instead of `uvhttp_tls_error_t`
+   - Error codes have been integrated into the unified error system
+
+   **Migration**:
+   ```c
+   // Old (2.1.x)
+   uvhttp_tls_error_t result = uvhttp_tls_context_new(&ctx);
+   if (result != UVHTTP_TLS_OK) { /* handle error */ }
+   
+   // New (2.2.x)
+   uvhttp_error_t result = uvhttp_tls_context_new(&ctx);
+   if (result != UVHTTP_OK) { /* handle error */ }
+   ```
+
+2. **Router Cache API Changes** (2.2.2)
+   - Router cache optimization is now enabled by default
+   - New router cache statistics available
+
+   **Migration**:
+   ```c
+   // No code changes required
+   // Router cache is automatically enabled
+   // To disable: define UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION 0
+   ```
+
+**New Features**:
+- Router cache optimization with O(1) lookup
+- Improved path parameter handling
+- Enhanced error messages
+- Better performance monitoring
+
+**Bug Fixes**:
+- Fixed path parameter loss in nested routes
+- Fixed potential stack overflow in route matching
+- Fixed memory leaks in error handling
+
+**Performance Improvements**:
+- Peak throughput: 21,991 RPS (up from 19,776 RPS)
+- Minimum latency: 551 μs (up from 352 μs)
+- Router cache reduces route matching overhead by 50%+
 
 ## Release Schedule
 

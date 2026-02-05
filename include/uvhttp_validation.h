@@ -23,13 +23,13 @@
 extern "C" {
 #endif
 
-/* 危险字符常量 */
-static const char dangerous_path_chars[] = {'<', '>', ':', '"', '|',
-                                            '*', '\n', '\r'};
+/* Dangerous character constants */
+static const char dangerous_path_chars[] = {'<', '>', ':',  '"',
+                                            '|', '*', '\n', '\r'};
 static const char dangerous_query_chars[] = {'<', '>', '"', '\'', '\n', '\r'};
 static const char dangerous_header_chars[] = {'\n', '\r'};
 
-/* ========== 内联验证函数 ========== */
+/* ========== Inline Validation Functions ========== */
 
 /**
  * @brief Validate string length is within specified range

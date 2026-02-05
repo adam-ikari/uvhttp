@@ -48,7 +48,7 @@ ctest --output-on-failure -j1 --timeout 120 || {
     exit 1
 }
 
-echo -e "${GREEN}✅ AddressSanitizer 测试通过${NC}"
+echo -e "${GREEN} AddressSanitizer 测试通过${NC}"
 echo ""
 
 cd ..
@@ -96,15 +96,15 @@ for test in "${TESTS[@]}"; do
         leaks=$(grep "definitely lost:" valgrind_${test}.log | awk '{print $4}')
         
         if [ -n "$leaks" ] && [ "$leaks" != "0" ]; then
-            echo -e "${RED}❌ 泄漏: ${leaks} 字节${NC}"
+            echo -e "${RED} 泄漏: ${leaks} 字节${NC}"
             cat valgrind_${test}.log
             LEAKS_FOUND=1
             TOTAL_LEAKS=$((TOTAL_LEAKS + leaks))
         else
-            echo -e "${GREEN}✅ 无泄漏${NC}"
+            echo -e "${GREEN} 无泄漏${NC}"
         fi
     else
-        echo -e "${YELLOW}⚠️  $test 未找到，跳过${NC}"
+        echo -e "${YELLOW}  $test 未找到，跳过${NC}"
     fi
 done
 
@@ -114,12 +114,12 @@ echo "  测试结果总结"
 echo "========================================"
 
 if [ $LEAKS_FOUND -eq 1 ]; then
-    echo -e "${RED}❌ 发现内存泄漏: ${TOTAL_LEAKS} 字节${NC}"
+    echo -e "${RED} 发现内存泄漏: ${TOTAL_LEAKS} 字节${NC}"
     echo ""
     echo "Valgrind 日志保存在: $BUILD_VG/valgrind_*.log"
     exit 1
 else
-    echo -e "${GREEN}✅ 未发现内存泄漏${NC}"
+    echo -e "${GREEN} 未发现内存泄漏${NC}"
     echo ""
     echo "所有内存泄漏测试通过！"
     exit 0

@@ -75,53 +75,58 @@ set_target_properties(libuv PROPERTIES
 # ============================================================================
 # mbedtls
 # ============================================================================
-message(STATUS "Configuring mbedtls...")
+if(BUILD_WITH_HTTPS)
+    message(STATUS "Configuring mbedtls...")
 
-# 检查 mbedtls 是否已经构建
-set(MBEDTLS_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/build)
-set(MBEDTLS_LIBS
-    ${MBEDTLS_BUILD_DIR}/library/libmbedtls.a
-    ${MBEDTLS_BUILD_DIR}/library/libmbedx509.a
-    ${MBEDTLS_BUILD_DIR}/library/libmbedcrypto.a
-)
-
-if(NOT EXISTS ${MBEDTLS_BUILD_DIR}/library/libmbedtls.a)
-    message(STATUS "Building mbedtls...")
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls -B ${MBEDTLS_BUILD_DIR}
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -DENABLE_TESTING=OFF
-            -DENABLE_PROGRAMS=OFF
-            -DENABLE_DOCS=OFF
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls
-        RESULT_VARIABLE MBEDTLS_CONFIG_RESULT
+    # 检查 mbedtls 是否已经构建
+    set(MBEDTLS_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/build)
+    set(MBEDTLS_LIBS
+        ${MBEDTLS_BUILD_DIR}/library/libmbedtls.a
+        ${MBEDTLS_BUILD_DIR}/library/libmbedx509.a
+        ${MBEDTLS_BUILD_DIR}/library/libmbedcrypto.a
     )
 
-    if(MBEDTLS_CONFIG_RESULT)
-        message(FATAL_ERROR "Failed to configure mbedtls")
+    if(NOT EXISTS ${MBEDTLS_BUILD_DIR}/library/libmbedtls.a)
+        message(STATUS "Building mbedtls...")
+        execute_process(
+            COMMAND ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls -B ${MBEDTLS_BUILD_DIR}
+                -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+                -DENABLE_TESTING=OFF
+                -DENABLE_PROGRAMS=OFF
+                -DENABLE_DOCS=OFF
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls
+            RESULT_VARIABLE MBEDTLS_CONFIG_RESULT
+        )
+
+        if(MBEDTLS_CONFIG_RESULT)
+            message(FATAL_ERROR "Failed to configure mbedtls")
+        endif()
+
+        execute_process(
+            COMMAND ${CMAKE_COMMAND} --build ${MBEDTLS_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls
+            RESULT_VARIABLE MBEDTLS_BUILD_RESULT
+        )
+
+        if(MBEDTLS_BUILD_RESULT)
+            message(FATAL_ERROR "Failed to build mbedtls")
+        endif()
+
+        message(STATUS "mbedtls built successfully")
+    else()
+        message(STATUS "mbedtls already built")
     endif()
 
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} --build ${MBEDTLS_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls
-        RESULT_VARIABLE MBEDTLS_BUILD_RESULT
+    # 声明 mbedtls 为 IMPORTED 静态库（接口库，包含多个子库）
+    add_library(mbedtls INTERFACE IMPORTED)
+    set_target_properties(mbedtls PROPERTIES
+        INTERFACE_LINK_LIBRARIES "${MBEDTLS_LIBS}"
+        INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/include
     )
-
-    if(MBEDTLS_BUILD_RESULT)
-        message(FATAL_ERROR "Failed to build mbedtls")
-    endif()
-
-    message(STATUS "mbedtls built successfully")
 else()
-    message(STATUS "mbedtls already built")
+    message(STATUS "TLS support disabled, skipping mbedtls configuration")
+    set(MBEDTLS_LIBS "")
 endif()
-
-# 声明 mbedtls 为 IMPORTED 静态库（接口库，包含多个子库）
-add_library(mbedtls INTERFACE IMPORTED)
-set_target_properties(mbedtls PROPERTIES
-    INTERFACE_LINK_LIBRARIES "${MBEDTLS_LIBS}"
-    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/include
-)
 
 # ============================================================================
 # xxhash
@@ -417,7 +422,10 @@ message(STATUS "")
 # ============================================================================
 
 # 核心依赖（uvhttp 库必需）
-set(UVHTTP_CORE_DEPS libuv mbedtls xxhash llhttp)
+set(UVHTTP_CORE_DEPS libuv xxhash llhttp)
+if(BUILD_WITH_HTTPS)
+    list(APPEND UVHTTP_CORE_DEPS mbedtls)
+endif()
 
 # 可选依赖（示例程序可选使用）
 set(UVHTTP_OPTIONAL_DEPS cjson)

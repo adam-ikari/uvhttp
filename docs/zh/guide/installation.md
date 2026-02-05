@@ -52,7 +52,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug ..
 # 启用所有功能
 cmake -DBUILD_WITH_WEBSOCKET=ON \
       -DBUILD_WITH_MIMALLOC=ON \
-      -DBUILD_WITH_TLS=ON \
+      -DBUILD_WITH_HTTPS=ON \
       ..
 
 # 启用代码覆盖率
@@ -188,7 +188,7 @@ cmake --build . --config Release
 |------|--------|------|
 | `BUILD_WITH_WEBSOCKET` | `ON` | 启用 WebSocket 支持 |
 | `BUILD_WITH_MIMALLOC` | `ON` | 启用 mimalloc 内存分配器 |
-| `BUILD_WITH_TLS` | `ON` | 启用 TLS 支持 |
+| `BUILD_WITH_HTTPS` | `ON` | 启用 TLS 支持 |
 | `BUILD_EXAMPLES` | `ON` | 编译示例程序 |
 | `ENABLE_DEBUG` | `OFF` | 启用 Debug 模式（-O0） |
 | `ENABLE_COVERAGE` | `OFF` | 启用代码覆盖率 |
@@ -199,14 +199,14 @@ cmake --build . --config Release
 # 最小化配置（仅核心功能）
 cmake -DBUILD_WITH_WEBSOCKET=OFF \
       -DBUILD_WITH_MIMALLOC=OFF \
-      -DBUILD_WITH_TLS=OFF \
+      -DBUILD_WITH_HTTPS=OFF \
       -DBUILD_EXAMPLES=OFF \
       ..
 
 # 完整配置（所有功能）
 cmake -DBUILD_WITH_WEBSOCKET=ON \
       -DBUILD_WITH_MIMALLOC=ON \
-      -DBUILD_WITH_TLS=ON \
+      -DBUILD_WITH_HTTPS=ON \
       -DBUILD_EXAMPLES=ON \
       ..
 

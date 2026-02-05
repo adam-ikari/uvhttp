@@ -178,20 +178,17 @@ int uvhttp_is_valid_status_code(int status_code) {
     return (status_code >= 100 && status_code <= 599) ? TRUE : FALSE;
 }
 
-/* uvhttp_is_valid_content_type deleted - completely unused */
-/* uvhttp_is_valid_string_length deleted - completely unused */
-
 /* IP validation function - manual implementation for best performance */
 int uvhttp_is_valid_ip_address(const char* ip) {
     if (!ip || !*ip)
         return FALSE;
-    
+
     /* Check if IPv6 (contains colon) */
     if (strchr(ip, ':') != NULL) {
         /* IPv6 - simplified check */
         int colon_count = 0;
         int double_colon_count = 0;
-        
+
         /* Check for invalid characters */
         for (const char* p = ip; *p; p++) {
             char c = *p;
@@ -200,7 +197,7 @@ int uvhttp_is_valid_ip_address(const char* ip) {
                   (c >= 'A' && c <= 'F') || c == ':')) {
                 return FALSE;
             }
-            
+
             if (*p == ':') {
                 colon_count++;
                 if (p[1] == ':') {
@@ -214,7 +211,7 @@ int uvhttp_is_valid_ip_address(const char* ip) {
                 }
             }
         }
-        
+
         /* IPv6 validation rules:
          * - If double colon (compressed format), colon count should be 2-7
          * - If no double colon (full format), colon count must be 7
@@ -231,12 +228,12 @@ int uvhttp_is_valid_ip_address(const char* ip) {
             return FALSE;
         }
     }
-    
+
     /* IPv4 - simplified check */
     int dot_count = 0;
     int digit_count = 0;
     int segment_value = 0;
-    
+
     for (const char* p = ip; *p; p++) {
         if (*p == '.') {
             /* Check segment value and digit count */
@@ -262,12 +259,12 @@ int uvhttp_is_valid_ip_address(const char* ip) {
             return FALSE;
         }
     }
-    
+
     /* Check last segment */
     if (segment_value > 255 || digit_count == 0) {
         return FALSE;
     }
-    
+
     /* Must have 3 dots and at least 4 digits total */
     return (dot_count == 3 && digit_count >= 4) ? TRUE : FALSE;
 }
@@ -277,4 +274,3 @@ int uvhttp_is_valid_ip_address(const char* ip) {
  * @param ip IP address string
  * @return TRUE if valid, FALSE otherwise
  */
-/* uvhttp_is_valid_ip_address deleted - completely unused */

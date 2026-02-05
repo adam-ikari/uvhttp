@@ -750,7 +750,7 @@ git submodule update --remote
 option(BUILD_WITH_WEBSOCKET "Build with WebSocket support" ON)
 
 # TLS 支持
-option(BUILD_WITH_TLS "Build with TLS support" ON)
+option(BUILD_WITH_HTTPS "Build with TLS support" ON)
 
 # mimalloc 分配器
 option(BUILD_WITH_MIMALLOC "Build with mimalloc allocator" ON)

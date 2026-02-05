@@ -7,7 +7,7 @@ on:
     paths:
       - 'docs/**'
       - 'Doxyfile'
-      - 'scripts/convert_xml_to_markdown.py'
+      - 'scripts/convert_xml_to_markdown.js'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 

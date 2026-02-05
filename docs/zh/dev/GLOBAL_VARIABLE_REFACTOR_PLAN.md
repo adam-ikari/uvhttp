@@ -179,5 +179,5 @@ int uvhttp_config_reload(uvhttp_app_context_t* ctx);
 ## 参考资料
 
 - [LIBUV_DATA_POINTER.md](LIBUV_DATA_POINTER.md) - libuv 数据指针模式指南
-- [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) - 开发者指南
+- [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) - 贡献者指南
 - [API_REFERENCE.md](API_REFERENCE.md) - API 参考

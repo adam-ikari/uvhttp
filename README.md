@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.2.0-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.3.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux-orange.svg)
@@ -19,23 +19,16 @@ Focus on Core • High Performance • Configurable • Production Ready
 
 **Future Plans**: macOS, Windows, FreeBSD, WebAssembly (WASM), and other Unix-like systems
 
-UVHTTP is currently optimized for Linux platforms. We plan to expand support to other operating systems and platforms in future releases. Contributions for cross-platform compatibility are welcome!
-
 ## ✨ Features
 
-- ⚡ **High Performance**: Built on libuv event-driven architecture with integrated xxHash ultra-fast hashing, peak throughput up to 23,226 RPS
+- ⚡ **High Performance**: Built on libuv event-driven architecture with integrated xxHash ultra-fast hashing
 - 🔒 **Secure**: Buffer overflow protection, input validation, TLS 1.3 support
 - 🛡️ **Production Ready**: Zero compilation warnings, complete error handling, performance monitoring
 - 🔧 **Easy to Use**: Clean API, rich examples, comprehensive documentation
 - 🔄 **Connection Management**: Connection pool, timeout detection, heartbeat detection, broadcast functionality
 - ⚙️ **Configurable**: 36 compile-time configuration options for different scenarios
 - 💾 **Smart Caching**: LRU cache + cache preheating, zero-copy large file transmission
-
-## 📊 Performance Metrics
-
-- **Peak Throughput**: 23,226 RPS (low concurrency scenario)
-- **High Concurrency Stability**: 10-500 concurrent, RPS fluctuation only 5%
-- **Minimum Latency**: 352 μs (low concurrency)
+- 🚀 **Router Cache Optimization**: Advanced caching for route matching with O(1) lookup
 
 ## 🚀 Quick Start
 
@@ -86,9 +79,10 @@ int main() {
 - **[API Reference](docs/api/API_REFERENCE.md)**: Complete API documentation
 - **[Build Guide](docs/guide/build.md)**: Build configuration and options
 - **[Getting Started](docs/guide/getting-started.md)**: Quick start guide
-- **[Dependencies](docs/DEPENDENCIES.md)**: Third-party dependencies and version locking
+- **[Performance](docs/performance/)**: Performance benchmarks and testing
+- **[Dependencies](docs/DEPENDENCIES.md)**: Third-party dependencies
 
-## 🏗️ Architecture
+## 🏗️ Project Structure
 
 ```
 uvhttp/
@@ -102,18 +96,7 @@ uvhttp/
 
 ## 🧪 Testing
 
-```bash
-# Build with coverage
-cmake -DENABLE_COVERAGE=ON ..
-make -j$(nproc)
-
-# Run specific test
-./dist/bin/test_request_comprehensive_coverage
-
-# Generate coverage report
-lcov --capture --directory . --output-file coverage.info
-lcov --summary coverage.info
-```
+See [docs/zh/dev/TESTING_STANDARDS.md](docs/zh/dev/TESTING_STANDARDS.md) for testing guidelines.
 
 ## 🤝 Contributing
 

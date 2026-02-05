@@ -9,7 +9,7 @@ export default {
       link: '/guide/'
     },
     {
-      text: '🔧 开发者文档',
+      text: ' 开发者文档',
       link: '/dev/'
     }
   ],
@@ -37,7 +37,7 @@ export default {
       ]
     },
     {
-      text: '🎯 基础教程',
+      text: ' 基础教程',
       collapsible: true,
       items: [
         {
@@ -59,7 +59,7 @@ export default {
       ]
     },
     {
-      text: '🚀 高级功能',
+      text: ' 高级功能',
       collapsible: true,
       items: [
         {
@@ -107,7 +107,7 @@ export default {
       ]
     },
     {
-      text: '⚡ 性能优化',
+      text: ' 性能优化',
       collapsible: true,
       items: [
         {
@@ -121,7 +121,7 @@ export default {
       ]
     },
     {
-      text: '🔒 安全',
+      text: ' 安全',
       collapsible: true,
       items: [
         {
@@ -209,7 +209,7 @@ export default {
       ]
     },
     {
-      text: '📊 性能分析',
+      text: ' 性能分析',
       collapsible: true,
       items: [
         {
@@ -223,7 +223,7 @@ export default {
       ]
     },
     {
-      text: '🔧 开发工具',
+      text: ' 开发工具',
       collapsible: true,
       items: [
         {
@@ -232,7 +232,21 @@ export default {
         },
         {
           text: '构建系统',
-          link: '/dev/build-system'
+          collapsible: true,
+          items: [
+            {
+              text: '构建系统',
+              link: '/dev/build-system'
+            },
+            {
+              text: '构建配置矩阵',
+              link: '/BUILD_CONFIGURATION_MATRIX.md'
+            },
+            {
+              text: '高级构建选项',
+              link: '/ADVANCED_BUILD_OPTIONS.md'
+            }
+          ]
         },
         {
           text: '调试技巧',

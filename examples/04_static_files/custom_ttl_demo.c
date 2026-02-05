@@ -138,7 +138,7 @@ int main() {
         return 1;
     }
     
-    printf("\n🚀 服务器启动成功！\n");
+    printf("\n 服务器启动成功！\n");
     printf("📍 服务地址: http://localhost:8085\n");
     printf("\n测试文件和自定义 TTL：\n");
     printf("  http://localhost:8085/script.js   - Cache-Control: max-age=7200\n");

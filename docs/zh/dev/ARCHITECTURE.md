@@ -316,7 +316,7 @@ typedef enum {
 docs/
 ├── api/                    # API 文档
 │   └── API_REFERENCE.md
-├── dev/                    # 开发者文档
+├── dev/                    # 贡献者文档
 │   ├── ARCHITECTURE.md     # 架构设计（本文档）
 │   ├── DEVELOPER_GUIDE.md  # 开发指南
 │   └── ROADMAP.md          # 路线图

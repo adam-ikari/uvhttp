@@ -17,27 +17,29 @@ hero:
       link: https://github.com/adam-ikari/uvhttp
 
 features:
-  - title: 🚀 Extreme Performance
-    details: Peak throughput up to 23,226 RPS, built on libuv event-driven architecture with integrated xxHash ultra-fast hashing algorithm
-  - title: ⚡ Zero-Copy Optimization
-    details: Large files use sendfile zero-copy transmission, 50%+ performance improvement, significantly reducing CPU usage
-  - title: 💾 Smart Caching
-    details: LRU cache + cache preheating mechanism, 300%+ performance improvement for repeated requests
-  - title: 🔒 Secure & Reliable
-    details: Buffer overflow protection, input validation, TLS 1.3 support, zero compilation warnings
-  - title: 🧩 Modular Design
-    details: Supports static file serving, WebSocket, rate limiting and other features, flexibly controlled via compile-time macros
-  - title: 📦 Lightweight
-    details: Minimal dependencies, easy to embed, perfect for cloud-native and microservices architectures
-  - title: 🔧 Easy to Use
-    details: Clean API design, comprehensive documentation, rich examples, quick to get started
-  - title: 🧪 Production Ready
-    details: Complete error handling, resource management, observability, stability guarantees
+  - title: Extreme Performance
+    details: Peak throughput up to 23,226 RPS
+  - title: Zero-Copy Optimization
+    details: Large files use sendfile zero-copy transmission
+  - title: Smart Caching
+    details: LRU cache with cache preheating mechanism
+  - title: Secure and Reliable
+    details: Buffer overflow protection and input validation
+  - title: Modular Design
+    details: Supports static file serving and WebSocket
+  - title: Lightweight
+    details: Minimal dependencies and easy to embed
+  - title: Easy to Use
+    details: Clean API design with comprehensive documentation
+  - title: Production Ready
+    details: Complete error handling and resource management
 
-## 📌 Platform Support
+---
 
-**Current Support**: Linux
+## Platform Support
 
-**Future Plans**: macOS, Windows, FreeBSD, WebAssembly (WASM), and other Unix-like systems
+Current Support: Linux
+
+Future Plans: macOS, Windows, FreeBSD, WebAssembly (WASM), and other Unix-like systems
 
 UVHTTP is currently optimized for Linux platforms. We plan to expand support to other operating systems and platforms in future releases.

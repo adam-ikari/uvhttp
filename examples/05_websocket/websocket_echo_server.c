@@ -46,8 +46,9 @@ int main(int argc, char* argv[]) {
     printf("启动WebSocket Echo服务器，端口: %d\n", port);
 
     // 使用统一API创建服务器
+    uv_loop_t* loop = uv_default_loop();
     uvhttp_server_builder_t* server = NULL;
-    if (!uvhttp_server_create("0.0.0.0", port, &server)) {
+    if (!uvhttp_server_create(loop, "0.0.0.0", port, &server)) {
         fprintf(stderr, "服务器创建失败\n");
         return 1;
     }

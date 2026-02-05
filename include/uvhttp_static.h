@@ -1,4 +1,5 @@
-/* UVHTTP 静态文件服务模块 - 统一版本，支持可选LRU缓存 */
+/* UVHTTP Static File Serving Module - Unified version with optional LRU cache
+ */
 
 #ifndef UVHTTP_STATIC_H
 #define UVHTTP_STATIC_H
@@ -12,12 +13,12 @@
 #    include <stddef.h>
 #    include <time.h>
 
-/* LRU缓存条件编译支持 */
+/* LRU cache conditional compilation support */
 #    if UVHTTP_FEATURE_LRU_CACHE
 #        include "uvhttp_lru_cache.h"
 #    endif
 
-/* 前向声明 */
+/* Forward declarations */
 typedef struct cache_manager cache_manager_t;
 typedef struct cache_entry cache_entry_t;
 
@@ -25,155 +26,180 @@ typedef struct cache_entry cache_entry_t;
 extern "C" {
 #    endif
 
-/* 静态文件配置结构 - CPU 缓存优化布局 */
+/* Static file configuration structure - CPU cache optimized layout */
 typedef struct uvhttp_static_config {
-    /* 8字节对齐字段 - 热路径 */
-    size_t max_cache_size;      /* 最大缓存大小（字节） */
-    size_t sendfile_chunk_size; /* sendfile 分块大小（字节） */
+    /* 8-byte aligned fields - hot path */
+    size_t max_cache_size;      /* Maximum cache size (bytes) */
+    size_t sendfile_chunk_size; /* sendfile chunk size (bytes) */
+    size_t max_file_size;       /* Maximum file size (bytes) */
 
-    /* 4字节对齐字段 - 中等访问频率 */
-    int cache_ttl;                /* 缓存TTL（秒） */
-    int max_cache_entries;        /* 最大缓存条目数 */
-    int sendfile_timeout_ms;      /* sendfile 超时时间（毫秒） */
-    int sendfile_max_retry;       /* sendfile 最大重试次数 */
-    int enable_directory_listing; /* 是否启用目录列表 */
-    int enable_etag;              /* 是否启用ETag */
-    int enable_last_modified;     /* 是否启用Last-Modified */
-    int enable_sendfile;          /* 是否启用 sendfile 零拷贝优化 */
+    /* 4-byte aligned fields - medium access frequency */
+    int cache_ttl;                /* Cache TTL (seconds) */
+    int max_cache_entries;        /* Maximum cache entries */
+    int sendfile_timeout_ms;      /* sendfile timeout (milliseconds) */
+    int sendfile_max_retry;       /* sendfile max retry count */
+    int enable_directory_listing; /* Enable directory listing */
+    int enable_etag;              /* Enable ETag */
+    int enable_last_modified;     /* Enable Last-Modified */
+    int enable_sendfile;          /* Enable sendfile zero-copy optimization */
 
-    /* 字符串字段 - 冷路径 */
-    char root_directory[UVHTTP_MAX_FILE_PATH_SIZE];    /* 根目录路径 */
-    char index_file[UVHTTP_MAX_PATH_SIZE];             /* 默认索引文件 */
-    char custom_headers[UVHTTP_MAX_HEADER_VALUE_SIZE]; /* 自定义响应头 */
+    /* String fields - cold path */
+    char root_directory[UVHTTP_MAX_FILE_PATH_SIZE];    /* Root directory path */
+    char index_file[UVHTTP_MAX_PATH_SIZE];             /* Default index file */
+    char custom_headers[UVHTTP_MAX_HEADER_VALUE_SIZE]; /* Custom response
+                                                          headers */
 } uvhttp_static_config_t;
 
-/* 静态文件服务上下文 */
+/* Static file serving context */
 typedef struct uvhttp_static_context {
-    uvhttp_static_config_t config; /* 配置 */
-    cache_manager_t* cache;        /* LRU缓存管理器 */
+    uvhttp_static_config_t config; /*  */
+    cache_manager_t* cache;        /* LRUCachemanage */
 } uvhttp_static_context_t;
 
-/* MIME类型映射条目 */
+/* MIME type mapping entry */
 typedef struct uvhttp_mime_mapping {
-    const char* extension; /* 文件扩展名 */
-    const char* mime_type; /* MIME类型 */
+    const char* extension; /* extend */
+    const char* mime_type; /* MIMEclass */
 } uvhttp_mime_mapping_t;
 
 /**
- * 创建静态文件服务上下文
+ * createStatic file
  *
- * @param config 静态文件配置
- * @param context 输出参数，返回创建的上下文
- * @return UVHTTP_OK 成功，其他值表示错误
+ * @param config Static file
+ * @param context outputParameter, Returncreate
+ * @return UVHTTP_OK Success, othervaluerepresentsError
  */
 uvhttp_error_t uvhttp_static_create(const uvhttp_static_config_t* config,
                                     uvhttp_static_context_t** context);
 /**
- * 设置 sendfile 配置参数
+ * set sendfile Configuration parameter
  *
- * @param ctx 静态文件服务上下文
- * @param timeout_ms 超时时间（毫秒），0 表示使用默认值
- * @param max_retry 最大重试次数，0 表示使用默认值
- * @param chunk_size 分块大小（字节），0 表示使用默认值
- * @return UVHTTP_OK 成功，其他值表示失败
+ * @param ctx Static file
+ * @param timeout_ms Timeoutwhen(seconds), 0 representsUseDefault value
+ * @param max_retry Retrytimes, 0 representsUseDefault value
+ * @param chunk_size chunkedsize(bytes), 0 representsUseDefault value
+ * @return UVHTTP_OK Success, othervaluerepresentsFailure
  */
 uvhttp_error_t uvhttp_static_set_sendfile_config(uvhttp_static_context_t* ctx,
                                                  int timeout_ms, int max_retry,
                                                  size_t chunk_size);
 
 /**
- * 释放静态文件服务上下文
+ * set maximum file size limit
  *
- * @param ctx 静态文件服务上下文
+ * @param ctx Static file context
+ * @param max_file_size Maximum file size in bytes (0 means use default)
+ * @return UVHTTP_OK Success, other values represent Failure
+ */
+uvhttp_error_t uvhttp_static_set_max_file_size(uvhttp_static_context_t* ctx,
+                                               size_t max_file_size);
+
+/**
+ * set cache configuration
+ *
+ * @param ctx Static file context
+ * @param max_cache_size Maximum cache size in bytes (0 means no change)
+ * @param max_entries Maximum cache entries (0 means no change)
+ * @param cache_ttl Cache TTL in seconds (0 means no change)
+ * @return UVHTTP_OK Success, other values represent Failure
+ */
+uvhttp_error_t uvhttp_static_set_cache_config(uvhttp_static_context_t* ctx,
+                                              size_t max_cache_size,
+                                              int max_entries, int cache_ttl);
+
+/**
+ * releaseStatic file
+ *
+ * @param ctx Static file
  */
 void uvhttp_static_free(uvhttp_static_context_t* ctx);
 
 /**
- * 处理静态文件请求
+ * handleStatic fileRequest
  *
- * @param ctx 静态文件服务上下文
- * @param request HTTP请求
- * @param response HTTP响应
- * @return UVHTTP_OK成功，其他值表示失败
+ * @param ctx Static file
+ * @param request HTTPRequest
+ * @param response HTTPResponse
+ * @return UVHTTP_OKSuccess, othervaluerepresentsFailure
  */
 uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                                              void* request, void* response);
 
 /**
- * Nginx 优化：使用 sendfile 零拷贝发送静态文件（混合策略）
+ * Nginx optimization: Use sendfile zerosendStatic file(strategy)
  *
- * 根据文件大小自动选择最优策略：
- * - 小文件 (< 4KB): 使用传统方式（避免 sendfile 开销）
- * - 中等文件 (4KB - 10MB): 使用异步 sendfile
- * - 大文件 (> 10MB): 使用分块 sendfile
+ * rootFile sizeAutomaticstrategy:
+ * -  (< 4KB): Use( sendfile )
+ * -  (4KB - 10MB): UseAsynchronous sendfile
+ * -  (> 10MB): Usechunked sendfile
  *
- * @param file_path 文件路径
- * @param response HTTP响应
- * @return UVHTTP_OK成功，其他值表示失败
+ * @param file_path File path
+ * @param response HTTPResponse
+ * @return UVHTTP_OKSuccess, othervaluerepresentsFailure
  */
 uvhttp_result_t uvhttp_static_sendfile(const char* file_path, void* response);
 
 /**
- * 根据文件扩展名获取MIME类型
+ * rootextendgetMIMEclass
  *
- * @param file_path 文件路径
- * @param mime_type 输出MIME类型缓冲区
- * @param buffer_size 缓冲区大小
- * @return UVHTTP_OK成功，其他值表示失败
+ * @param file_path File path
+ * @param mime_type outputMIMEclassBuffer
+ * @param buffer_size Buffersize
+ * @return UVHTTP_OKSuccess, othervaluerepresentsFailure
  */
 uvhttp_result_t uvhttp_static_get_mime_type(const char* file_path,
                                             char* mime_type,
                                             size_t buffer_size);
 
 /**
- * 清理文件缓存
+ * Cache
  *
- * @param ctx 静态文件服务上下文
+ * @param ctx Static file
  */
 void uvhttp_static_clear_cache(uvhttp_static_context_t* ctx);
 
 /**
- * 缓存预热：预加载指定的文件到缓存中
+ * Cache: loadspecifiedtoCache
  *
- * @param ctx 静态文件服务上下文
- * @param file_path 文件路径（相对于根目录）
- * @return UVHTTP_OK成功，其他值表示失败
+ * @param ctx Static file
+ * @param file_path File path(pairrootDirectory)
+ * @return UVHTTP_OKSuccess, othervaluerepresentsFailure
  */
 uvhttp_result_t uvhttp_static_prewarm_cache(uvhttp_static_context_t* ctx,
                                             const char* file_path);
 
 /**
- * 缓存预热：预加载目录中的所有文件
+ * Cache: loadDirectoryof
  *
- * @param ctx 静态文件服务上下文
- * @param dir_path 目录路径（相对于根目录）
- * @param max_files 最大文件数（0表示无限制）
- * @return 预热的文件数量，-1表示失败
+ * @param ctx Static file
+ * @param dir_path DirectoryPath(pairrootDirectory)
+ * @param max_files (0represents)
+ * @return quantity, -1representsFailure
  */
 int uvhttp_static_prewarm_directory(uvhttp_static_context_t* ctx,
                                     const char* dir_path, int max_files);
 
 /**
- * 检查文件路径是否安全（防止路径遍历攻击）
+ * File pathwhether(preventPathtraverse)
  *
- * @param root_dir 根目录
- * @param file_path 请求的文件路径
- * @param resolved_path 解析后的安全路径
- * @param buffer_size 缓冲区大小
- * @return 1安全，0不安全
+ * @param root_dir rootDirectory
+ * @param file_path RequestFile path
+ * @param resolved_path parsingPath
+ * @param buffer_size Buffersize
+ * @return 1, 0
  */
 int uvhttp_static_resolve_safe_path(const char* root_dir, const char* file_path,
                                     char* resolved_path, size_t buffer_size);
 
 /**
- * 生成ETag值
+ * generateETagvalue
  *
- * @param file_path 文件路径
- * @param last_modified 最后修改时间
- * @param file_size 文件大小
- * @param etag 输出ETag缓冲区
- * @param buffer_size 缓冲区大小
- * @return UVHTTP_OK成功，其他值表示失败
+ * @param file_path File path
+ * @param last_modified lastmodifywhen
+ * @param file_size File size
+ * @param etag outputETagBuffer
+ * @param buffer_size Buffersize
+ * @return UVHTTP_OKSuccess, othervaluerepresentsFailure
  */
 uvhttp_result_t uvhttp_static_generate_etag(const char* file_path,
                                             time_t last_modified,
@@ -181,25 +207,25 @@ uvhttp_result_t uvhttp_static_generate_etag(const char* file_path,
                                             size_t buffer_size);
 
 /**
- * 检查条件请求（If-None-Match, If-Modified-Since）
+ * Request(If-None-Match, If-Modified-Since)
  *
- * @param request HTTP请求
- * @param etag 文件ETag
- * @param last_modified 最后修改时间
- * @return 1需要返回304，0需要返回完整内容
+ * @param request HTTPRequest
+ * @param etag ETag
+ * @param last_modified lastmodifywhen
+ * @return 1needReturn304, 0needReturn
  */
 int uvhttp_static_check_conditional_request(void* request, const char* etag,
                                             time_t last_modified);
 
 /**
- * 设置静态文件相关的响应头
+ * setStatic fileResponse
  *
- * @param response HTTP响应
- * @param file_path 文件路径
- * @param file_size 文件大小
- * @param last_modified 最后修改时间
- * @param etag ETag值
- * @return UVHTTP_OK成功，其他值表示失败
+ * @param response HTTPResponse
+ * @param file_path File path
+ * @param file_size File size
+ * @param last_modified lastmodifywhen
+ * @param etag ETagvalue
+ * @return UVHTTP_OKSuccess, othervaluerepresentsFailure
  */
 uvhttp_result_t uvhttp_static_set_response_headers(void* response,
                                                    const char* file_path,
@@ -208,14 +234,14 @@ uvhttp_result_t uvhttp_static_set_response_headers(void* response,
                                                    const char* etag);
 
 /**
- * 获取缓存统计信息
+ * getCachestatistics
  *
- * @param ctx 静态文件服务上下文
- * @param total_memory_usage 输出总内存使用量
- * @param entry_count 输出条目数量
- * @param hit_count 输出命中次数
- * @param miss_count 输出未命中次数
- * @param eviction_count 输出驱逐次数
+ * @param ctx Static file
+ * @param total_memory_usage outputmemoryUse
+ * @param entry_count outputentryquantity
+ * @param hit_count outputtimes
+ * @param miss_count outputtimes
+ * @param eviction_count outputevicttimes
  */
 void uvhttp_static_get_cache_stats(uvhttp_static_context_t* ctx,
                                    size_t* total_memory_usage, int* entry_count,
@@ -223,42 +249,42 @@ void uvhttp_static_get_cache_stats(uvhttp_static_context_t* ctx,
                                    int* eviction_count);
 
 /**
- * 获取缓存命中率
+ * getCacherate
  *
- * @param ctx 静态文件服务上下文
- * @return 命中率（0.0-1.0）
+ * @param ctx Static file
+ * @return rate(0.0-1.0)
  */
 double uvhttp_static_get_cache_hit_rate(uvhttp_static_context_t* ctx);
 
 /**
- * 清理过期缓存条目
+ * Cacheentry
  *
- * @param ctx 静态文件服务上下文
- * @return 清理的条目数量
+ * @param ctx Static file
+ * @return entryquantity
  */
 int uvhttp_static_cleanup_expired_cache(uvhttp_static_context_t* ctx);
 
 /**
- * 启用缓存（如果之前被禁用）
+ * EnableCache(ifisDisable)
  *
- * @param ctx 静态文件服务上下文
- * @param max_memory 最大内存使用量
- * @param max_entries 最大条目数
- * @param ttl 缓存TTL（秒）
- * @return UVHTTP_OK成功，其他值表示失败
+ * @param ctx Static file
+ * @param max_memory memoryUse
+ * @param max_entries maximum entries
+ * @param ttl CacheTTL(seconds)
+ * @return UVHTTP_OKSuccess, othervaluerepresentsFailure
  */
 uvhttp_result_t uvhttp_static_enable_cache(uvhttp_static_context_t* ctx,
                                            size_t max_memory, int max_entries,
                                            int ttl);
 
 /**
- * 禁用缓存
+ * DisableCache
  *
- * @param ctx 静态文件服务上下文
+ * @param ctx Static file
  */
 void uvhttp_static_disable_cache(uvhttp_static_context_t* ctx);
 
-/* ========== 静态文件中间件接口 ========== */
+/* ========== Static File Middleware Interface ========== */
 
 #    ifdef __cplusplus
 }

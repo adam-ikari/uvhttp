@@ -1,0 +1,20 @@
+# {{ struct.name }}
+
+{% if struct.location %}**Defined at:** `{{ struct.location }}`
+{% endif %}{% if struct.members.length > 0 %}
+
+## Members
+
+{% for member in struct.members %}### `{{ member.name }}`
+
+**Type:** {{ member.type | linkTypes(structNames) }}
+
+{% if member.brief %}**Brief:**
+{{ member.brief | linkTypes(structNames) }}
+{% endif %}{% if member.detailed %}**Details:**
+{{ member.detailed | linkTypes(structNames) }}
+{% endif %}{% if not member.brief and not member.detailed %}**Description:** TBD
+{% endif %}
+
+---
+{% endfor %}{% endif %}

@@ -608,7 +608,7 @@ uint64_t uvhttp_hash_string(const char* str);
 ```cmake
 BUILD_WITH_WEBSOCKET=ON          # 启用 WebSocket 支持
 BUILD_WITH_MIMALLOC=ON           # 启用 mimalloc 分配器
-BUILD_WITH_TLS=ON                # 启用 TLS 支持
+BUILD_WITH_HTTPS=ON                # 启用 TLS 支持
 ENABLE_DEBUG=OFF                 # 调试模式
 ENABLE_COVERAGE=OFF              # 代码覆盖率
 BUILD_EXAMPLES=ON               # 构建示例程序
@@ -665,7 +665,8 @@ int main(void) {
 ## 参考资料
 
 - [架构设计文档](../dev/ARCHITECTURE.md)
-- [开发者指南](../guide/DEVELOPER_GUIDE.md)
-- [教程](../guide/TUTORIAL.md)
+- [贡献者指南 (中文)](../zh/guide/DEVELOPER_GUIDE.md)
+- [教程 (中文)](../zh/guide/TUTORIAL.md)
+- [安全策略](../SECURITY.md)
 - [libuv 文档](https://docs.libuv.org/)
 - [HTTP/1.1 规范](https://tools.ietf.org/html/rfc7230)

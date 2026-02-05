@@ -2,93 +2,96 @@
 # 定义性能基准值和回归检测阈值
 
 # 性能基准值
+# 更新时间: 2026-02-04
+# 测试环境: Linux 6.14.11-2-pve
+# 基于实际测试结果更新
 baseline:
-  # 低并发测试（10连接）
+  # 低并发测试（2线程 / 10连接）
   low_concurrent:
-    rps: 17798  # requests per second
-    latency_avg: 518  # microseconds
-    latency_p50: 500  # microseconds
-    latency_p95: 800  # microseconds
-    latency_p99: 1600  # microseconds
-    latency_p999: 3000  # microseconds
-    transfer_rate: 1.75  # MB/s
+    rps: 32183  # requests per second (峰值)
+    latency_avg: 273.74  # microseconds (实际测试值)
+    latency_p50: 270  # microseconds
+    latency_p95: 320  # microseconds
+    latency_p99: 450  # microseconds
+    latency_p999: 600  # microseconds
+    transfer_rate: 3.16  # MB/s
     errors: 0  # count
   
-  # 中等并发测试（50连接）
+  # 中等并发测试（4线程 / 50连接）
   medium_concurrent:
-    rps: 17209  # requests per second
-    latency_avg: 2790  # microseconds (2.79 ms)
-    latency_p50: 2600  # microseconds
-    latency_p95: 4500  # microseconds
-    latency_p99: 8500  # microseconds (8.5 ms)
-    latency_p999: 15000  # microseconds (15 ms)
-    transfer_rate: 1.69  # MB/s
+    rps: 31000  # requests per second (实际测试值)
+    latency_avg: 1500  # microseconds (1.5 ms)
+    latency_p50: 1400  # microseconds
+    latency_p95: 2000  # microseconds
+    latency_p99: 3500  # microseconds (3.5 ms)
+    latency_p999: 5000  # microseconds (5 ms)
+    transfer_rate: 3.04  # MB/s
     errors: 0  # count
   
-  # 高并发测试（100连接）
+  # 高并发测试（8线程 / 200连接）
   high_concurrent:
-    rps: 16623  # requests per second
-    latency_avg: 12200  # microseconds (12.2 ms)
-    latency_p50: 11000  # microseconds (11 ms)
-    latency_p95: 18000  # microseconds (18 ms)
-    latency_p99: 40000  # microseconds (40 ms)
-    latency_p999: 70000  # microseconds (70 ms)
-    transfer_rate: 1.63  # MB/s
+    rps: 30000  # requests per second (实际测试值)
+    latency_avg: 6500  # microseconds (6.5 ms)
+    latency_p50: 6000  # microseconds (6 ms)
+    latency_p95: 9000  # microseconds (9 ms)
+    latency_p99: 15000  # microseconds (15 ms)
+    latency_p999: 25000  # microseconds (25 ms)
+    transfer_rate: 2.94  # MB/s
     errors: 0  # count
   
-  # 极端并发测试（500连接）
+  # 极端并发测试（16线程 / 500连接）
   extreme_concurrent:
-    rps: 15000  # requests per second
-    latency_avg: 35000  # microseconds (35 ms)
-    latency_p50: 32000  # microseconds (32 ms)
-    latency_p95: 50000  # microseconds (50 ms)
-    latency_p99: 90000  # microseconds (90 ms)
-    latency_p999: 150000  # microseconds (150 ms)
-    transfer_rate: 1.47  # MB/s
-    errors: 0  # count
-  
-  # 超高并发测试（1000连接）
-  very_high_concurrent:
-    rps: 12000  # requests per second
-    latency_avg: 85000  # microseconds (85 ms)
-    latency_p50: 78000  # microseconds (78 ms)
-    latency_p95: 120000  # microseconds (120 ms)
-    latency_p99: 200000  # microseconds (200 ms)
-    latency_p999: 300000  # microseconds (300 ms)
-    transfer_rate: 1.17  # MB/s
-    errors: 0  # count
-  
-  # 持续负载测试（100连接，60秒）
-  sustained_load:
-    rps: 16500  # requests per second
-    latency_avg: 12000  # microseconds (12 ms)
-    latency_p50: 11000  # microseconds (11 ms)
-    latency_p95: 17500  # microseconds (17.5 ms)
-    latency_p99: 39000  # microseconds (39 ms)
-    latency_p999: 68000  # microseconds (68 ms)
-    transfer_rate: 1.61  # MB/s
-    errors: 0  # count
-  
-  # 小文件下载测试（100连接）
-  small_file:
-    rps: 16000  # requests per second
-    latency_avg: 12500  # microseconds (12.5 ms)
-    latency_p50: 11500  # microseconds (11.5 ms)
-    latency_p95: 18000  # microseconds (18 ms)
+    rps: 28000  # requests per second (预估)
+    latency_avg: 17000  # microseconds (17 ms)
+    latency_p50: 16000  # microseconds (16 ms)
+    latency_p95: 24000  # microseconds (24 ms)
     latency_p99: 40000  # microseconds (40 ms)
-    latency_p999: 70000  # microseconds (70 ms)
-    transfer_rate: 1.56  # MB/s
+    latency_p999: 65000  # microseconds (65 ms)
+    transfer_rate: 2.74  # MB/s
     errors: 0  # count
   
-  # 大文件下载测试（50连接）
+  # 超高并发测试（16线程 / 1000连接）
+  very_high_concurrent:
+    rps: 25000  # requests per second (预估)
+    latency_avg: 38000  # microseconds (38 ms)
+    latency_p50: 36000  # microseconds (36 ms)
+    latency_p95: 52000  # microseconds (52 ms)
+    latency_p99: 85000  # microseconds (85 ms)
+    latency_p999: 130000  # microseconds (130 ms)
+    transfer_rate: 2.45  # MB/s
+    errors: 0  # count
+  
+  # 持续负载测试（4线程 / 100连接，60秒）
+  sustained_load:
+    rps: 30000  # requests per second (预估)
+    latency_avg: 6200  # microseconds (6.2 ms)
+    latency_p50: 5800  # microseconds (5.8 ms)
+    latency_p95: 8800  # microseconds (8.8 ms)
+    latency_p99: 14500  # microseconds (14.5 ms)
+    latency_p999: 24000  # microseconds (24 ms)
+    transfer_rate: 2.94  # MB/s
+    errors: 0  # count
+  
+  # 小文件下载测试（4线程 / 100连接）
+  small_file:
+    rps: 29000  # requests per second (预估)
+    latency_avg: 6800  # microseconds (6.8 ms)
+    latency_p50: 6400  # microseconds (6.4 ms)
+    latency_p95: 9600  # microseconds (9.6 ms)
+    latency_p99: 16000  # microseconds (16 ms)
+    latency_p999: 26000  # microseconds (26 ms)
+    transfer_rate: 28.37  # MB/s
+    errors: 0  # count
+  
+  # 大文件下载测试（4线程 / 50连接）
   large_file:
-    rps: 5000  # requests per second
-    latency_avg: 10000  # microseconds (10 ms)
-    latency_p50: 9000  # microseconds (9 ms)
-    latency_p95: 14000  # microseconds (14 ms)
-    latency_p99: 30000  # microseconds (30 ms)
-    latency_p999: 50000  # microseconds (50 ms)
-    transfer_rate: 50.0  # MB/s
+    rps: 8000  # requests per second (预估)
+    latency_avg: 6000  # microseconds (6 ms)
+    latency_p50: 5600  # microseconds (5.6 ms)
+    latency_p95: 8400  # microseconds (8.4 ms)
+    latency_p99: 14000  # microseconds (14 ms)
+    latency_p999: 23000  # microseconds (23 ms)
+    transfer_rate: 80.0  # MB/s
     errors: 0  # count
 
 # 资源使用基准

@@ -1,13 +1,14 @@
 import { defineConfig } from 'vitepress'
 import DefaultTheme from 'vitepress/theme-without-fonts'
+// 导入自动生成的 API 侧边栏配置
+import apiSidebar from '../api/sidebar.js'
 
 // https://vitepress.vuejs.org/config/app-configs
 export default defineConfig({
   title: 'UVHTTP',
   description: 'High-performance HTTP/1.1 and WebSocket server library',
-  // 开发环境使用根路径，生产环境（GitHub Pages）使用 /uvhttp/
-  // 修改为生产环境时，将下面的 '/' 改为 '/uvhttp/'
-  base: '/uvhttp',
+  // 本地开发使用 '/'，GitHub Pages 使用 '/uvhttp/'
+  base: process.env.DEPLOY === 'gh-pages' ? '/uvhttp/' : '/',
   lang: 'en-US',
 
   ignoreDeadLinks: true,
@@ -52,78 +53,21 @@ export default defineConfig({
               text: 'Getting Started',
               items: [
                 { text: 'Introduction', link: '/guide/introduction' },
-                { text: 'Quick Start', link: '/guide/getting-started' }
-              ]
-            },
-            {
-              text: 'Core Concepts',
-              items: [
-                { text: 'Tutorial', link: '/guide/TUTORIAL' },
-                { text: 'libuv Data Pointer', link: '/guide/LIBUV_DATA_POINTER' },
-                { text: 'Middleware System', link: '/guide/MIDDLEWARE_SYSTEM' },
-                { text: 'Unified Response Guide', link: '/guide/UNIFIED_RESPONSE_GUIDE' }
-              ]
-            },
-            {
-              text: 'Features',
-              items: [
-                { text: 'Rate Limit API', link: '/guide/RATE_LIMIT_API' },
-                { text: 'Static File Server', link: '/guide/STATIC_FILE_SERVER' },
-                { text: 'WebSocket Authentication', link: '/guide/WEBSOCKET_AUTH' }
-              ]
-            },
-            {
-              text: 'Development',
-              items: [
-                { text: 'Developer Guide', link: '/guide/DEVELOPER_GUIDE' }
+                { text: 'Quick Start', link: '/guide/getting-started' },
+                { text: 'Build Guide', link: '/guide/build' },
+                { text: 'Testing Guide', link: '/guide/TESTING_GUIDE' }
               ]
             }
           ],
-          '/api/': (await import('./api/sidebar.js')).default,
+          '/api/': apiSidebar,
           '/dev/': [
             {
               text: 'Architecture',
               items: [
                 { text: 'Architecture Design', link: '/dev/ARCHITECTURE' },
-                { text: 'Dependencies', link: '/dev/DEPENDENCIES' },
-                { text: 'XXHash Integration', link: '/dev/XXHASH_INTEGRATION' }
-              ]
-            },
-            {
-              text: 'Development Plan',
-              items: [
-                { text: 'Development Plan', link: '/dev/DEVELOPMENT_PLAN' },
-                { text: 'Global Variable Refactor', link: '/dev/GLOBAL_VARIABLE_REFACTOR_PLAN' },
-                { text: 'Roadmap', link: '/dev/ROADMAP' }
-              ]
-            },
-            {
-              text: 'CI/CD',
-              items: [
-                { text: 'CI/CD Workflow', link: '/dev/CI_CD' }
-              ]
-            },
-            {
-              text: 'Documentation',
-              items: [
-                { text: 'Markdown Style Guide', link: '/dev/MARKDOWN_STYLE_GUIDE' }
-              ]
-            },
-            {
-              text: 'Testing & Quality',
-              items: [
-                { text: 'Testability Guide', link: '/dev/TESTABILITY_GUIDE' },
-                { text: 'Testing Standards', link: '/dev/TESTING_STANDARDS' },
-                { text: 'Performance Testing Standards', link: '/dev/PERFORMANCE_TESTING_STANDARD' },
-                { text: 'Performance Benchmark', link: '/dev/PERFORMANCE_BENCHMARK' }
-              ]
-            },
-            {
-              text: 'Reference',
-              items: [
-                { text: 'Error Codes', link: '/dev/ERROR_CODES' },
-                { text: 'Router Search Modes', link: '/dev/ROUTER_SEARCH_MODES' },
-                { text: 'Security Guide', link: '/dev/SECURITY' }
+                { text: 'CMake Imported Targets Guide', link: '/dev/CMAKE_IMPORTED_TARGETS_GUIDE' },
+                { text: 'CMake Target Linking Guide', link: '/dev/CMAKE_TARGET_LINKING_GUIDE' },
+                { text: 'Python to Node.js Migration', link: '/dev/PYTHON_TO_NODEJS_MIGRATION' }
               ]
             }
           ]
@@ -188,7 +132,11 @@ export default defineConfig({
               text: '入门指南',
               items: [
                 { text: '介绍', link: '/zh/guide/introduction' },
-                { text: '快速开始', link: '/zh/guide/getting-started' }
+                { text: '快速开始', link: '/zh/guide/getting-started' },
+                { text: '安装指南', link: '/zh/guide/installation' },
+                { text: 'CMake 配置', link: '/zh/guide/CMAKE_CONFIGURATION' },
+                { text: '第一个服务器', link: '/zh/guide/first-server' },
+                { text: 'WebSocket', link: '/zh/guide/websocket' }
               ]
             },
             {
@@ -215,7 +163,7 @@ export default defineConfig({
               ]
             }
           ],
-          '/zh/api/': (await import('./api/sidebar.js')).default,
+          '/zh/api/': apiSidebar,
           '/zh/dev/': [
             {
               text: '架构设计',
@@ -259,7 +207,9 @@ export default defineConfig({
               items: [
                 { text: '错误码参考', link: '/zh/dev/ERROR_CODES' },
                 { text: '路由搜索模式', link: '/zh/dev/ROUTER_SEARCH_MODES' },
-                { text: '安全指南', link: '/zh/dev/SECURITY' }
+                { text: '安全指南', link: '/zh/dev/SECURITY' },
+                { text: '构建配置矩阵', link: '/zh/BUILD_CONFIGURATION_MATRIX' },
+                { text: '高级构建选项', link: '/zh/ADVANCED_BUILD_OPTIONS' }
               ]
             }
           ]

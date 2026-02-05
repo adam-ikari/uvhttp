@@ -13,53 +13,95 @@ static int test_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     return UVHTTP_OK;
 }
 
+/* 测试夹具：提供通用的测试环境设置和清理 */
+class UvhttpServerApiTest : public ::testing::Test {
+protected:
+    uv_loop_t* loop;
+    uvhttp_server_t* server;
+    uvhttp_router_t* router;
+    uvhttp_server_builder_t* builder;
+
+    void SetUp() override {
+        /* 初始化 libuv loop */
+        loop = uv_loop_new();
+        ASSERT_NE(loop, nullptr);
+
+        /* 初始化服务器指针 */
+        server = nullptr;
+        router = nullptr;
+        builder = nullptr;
+    }
+
+    void TearDown() override {
+        /* 清理 builder */
+        if (builder) {
+            uvhttp_server_simple_free(builder);
+            builder = nullptr;
+        }
+
+        /* 清理服务器 */
+        if (server) {
+            uvhttp_server_free(server);
+            server = nullptr;
+        }
+
+        /* 清理路由 */
+        if (router) {
+            uvhttp_router_free(router);
+            router = nullptr;
+        }
+
+        /* 清理 loop */
+        if (loop) {
+            uv_loop_close(loop);
+            uvhttp_free(loop);
+            loop = nullptr;
+        }
+    }
+
+    /* 辅助函数：创建服务器 */
+    uvhttp_error_t create_server() {
+        return uvhttp_server_new(loop, &server);
+    }
+
+    /* 辅助函数：创建路由 */
+    uvhttp_error_t create_router() {
+        return uvhttp_router_new(&router);
+    }
+
+    /* 辅助函数：创建 builder 服务器（使用不太可能被占用的端口） */
+    uvhttp_error_t create_builder_server() {
+        return uvhttp_server_create(loop, "127.0.0.1", 18080, &builder);
+    }
+};
+
 /* 测试服务器创建和释放 */
-TEST(UvhttpServerApiTest, ServerNewAndFree) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = NULL;
-    
+TEST_F(UvhttpServerApiTest, ServerNewAndFree) {
     /* 创建服务器 */
-    uvhttp_error_t result = uvhttp_server_new(loop, &server);
+    uvhttp_error_t result = create_server();
     EXPECT_EQ(result, UVHTTP_OK);
     ASSERT_NE(server, nullptr);
-    
-    /* 释放服务器 */
-    uvhttp_server_free(server);
 }
 
 /* 测试服务器设置路由 */
-TEST(UvhttpServerApiTest, ServerSetRouter) {
-    uv_loop_t* loop = uv_loop_new();
-    ASSERT_NE(loop, nullptr);
-
-    uvhttp_server_t* server = NULL;
-
+TEST_F(UvhttpServerApiTest, ServerSetRouter) {
     /* 创建服务器 */
-    ASSERT_EQ(uvhttp_server_new(loop, &server), UVHTTP_OK);
+    ASSERT_EQ(create_server(), UVHTTP_OK);
 
     /* 创建路由 */
-    uvhttp_router_t* router = NULL;
-    uvhttp_error_t result = uvhttp_router_new(&router);
-    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_EQ(create_router(), UVHTTP_OK);
     ASSERT_NE(router, nullptr);
 
     /* 设置路由 */
-    result = uvhttp_server_set_router(server, router);
+    uvhttp_error_t result = uvhttp_server_set_router(server, router);
     EXPECT_EQ(result, UVHTTP_OK);
 
     /* 验证路由已设置 */
     EXPECT_EQ(server->router, router);
-
-    /* 清理 - uvhttp_server_free会自动清理router */
-    uvhttp_server_free(server);
-
-    /* 清理loop */
-    uv_loop_close(loop);
-    uvhttp_free(loop);
 }
 
 /* 测试服务器设置路由 NULL 参数 */
-TEST(UvhttpServerApiTest, ServerSetRouterNullServer) {
+TEST_F(UvhttpServerApiTest, ServerSetRouterNullServer) {
     uvhttp_router_t* router = NULL;
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
@@ -71,34 +113,20 @@ TEST(UvhttpServerApiTest, ServerSetRouterNullServer) {
     uvhttp_router_free(router);
 }
 
-TEST(UvhttpServerApiTest, ServerSetRouterNullRouter) {
-    uv_loop_t* loop = uv_loop_new();
-    ASSERT_NE(loop, nullptr);
-
-    uvhttp_server_t* server = NULL;
-
-    ASSERT_EQ(uvhttp_server_new(loop, &server), UVHTTP_OK);
+TEST_F(UvhttpServerApiTest, ServerSetRouterNullRouter) {
+    /* 创建服务器 */
+    ASSERT_EQ(create_server(), UVHTTP_OK);
 
     /* 设置NULL router是允许的，用于清除路由 */
     uvhttp_error_t result = uvhttp_server_set_router(server, NULL);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(server->router, nullptr);
-
-    uvhttp_server_free(server);
-
-    uv_loop_close(loop);
-    uvhttp_free(loop);
 }
 
 /* 测试服务器设置上下文 */
-TEST(UvhttpServerApiTest, ServerSetContext) {
-    uv_loop_t* loop = uv_loop_new();
-    ASSERT_NE(loop, nullptr);
-
-    uvhttp_server_t* server = NULL;
-
+TEST_F(UvhttpServerApiTest, ServerSetContext) {
     /* 创建服务器 */
-    ASSERT_EQ(uvhttp_server_new(loop, &server), UVHTTP_OK);
+    ASSERT_EQ(create_server(), UVHTTP_OK);
 
     /* 创建上下文 */
     uvhttp_context_t* context = NULL;
@@ -112,85 +140,57 @@ TEST(UvhttpServerApiTest, ServerSetContext) {
 
     /* 验证上下文已设置 */
     EXPECT_EQ(server->context, context);
-
-    /* 清理 */
-    uvhttp_server_free(server);
-
-    uv_loop_close(loop);
-    uvhttp_free(loop);
 }
 
-TEST(UvhttpServerApiTest, ServerSetContextNullServer) {
-    uv_loop_t* loop = uv_loop_new();
-    ASSERT_NE(loop, nullptr);
+TEST_F(UvhttpServerApiTest, ServerSetContextNullServer) {
 
     uvhttp_context_t* context = NULL;
+
     uvhttp_error_t result = uvhttp_context_create(loop, &context);
+
     ASSERT_EQ(result, UVHTTP_OK);
 
+
+
     result = uvhttp_server_set_context(NULL, context);
+
     EXPECT_NE(result, UVHTTP_OK);
+
+
 
     uvhttp_context_destroy(context);
 
-    uv_loop_close(loop);
-    uvhttp_free(loop);
 }
 
 /* 测试服务器设置处理器 */
-TEST(UvhttpServerApiTest, ServerSetHandler) {
-    uv_loop_t* loop = uv_loop_new();
-    ASSERT_NE(loop, nullptr);
-
-    uvhttp_server_t* server = NULL;
-
+TEST_F(UvhttpServerApiTest, ServerSetHandler) {
     /* 创建服务器 */
-    ASSERT_EQ(uvhttp_server_new(loop, &server), UVHTTP_OK);
+    ASSERT_EQ(create_server(), UVHTTP_OK);
 
     /* 设置处理器 */
     uvhttp_error_t result = uvhttp_server_set_handler(server, test_handler);
     EXPECT_EQ(result, UVHTTP_OK);
-
-    /* 清理 */
-    uvhttp_server_free(server);
-
-    uv_loop_close(loop);
-    uvhttp_free(loop);
 }
 
-TEST(UvhttpServerApiTest, ServerSetHandlerNullServer) {
+TEST_F(UvhttpServerApiTest, ServerSetHandlerNullServer) {
     uvhttp_error_t result = uvhttp_server_set_handler(NULL, test_handler);
     EXPECT_NE(result, UVHTTP_OK);
 }
 
-TEST(UvhttpServerApiTest, ServerSetHandlerNullHandler) {
-    uv_loop_t* loop = uv_loop_new();
-    ASSERT_NE(loop, nullptr);
-
-    uvhttp_server_t* server = NULL;
-
-    ASSERT_EQ(uvhttp_server_new(loop, &server), UVHTTP_OK);
+TEST_F(UvhttpServerApiTest, ServerSetHandlerNullHandler) {
+    /* 创建服务器 */
+    ASSERT_EQ(create_server(), UVHTTP_OK);
 
     /* 设置NULL handler是允许的，用于清除处理器 */
     uvhttp_error_t result = uvhttp_server_set_handler(server, NULL);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(server->handler, nullptr);
-
-    uvhttp_server_free(server);
-
-    uv_loop_close(loop);
-    uvhttp_free(loop);
 }
 
 /* 测试服务器 TLS 启用/禁用 */
-TEST(UvhttpServerApiTest, ServerTlsEnableDisable) {
-    uv_loop_t* loop = uv_loop_new();
-    ASSERT_NE(loop, nullptr);
-
-    uvhttp_server_t* server = NULL;
-
+TEST_F(UvhttpServerApiTest, ServerTlsEnableDisable) {
     /* 创建服务器 */
-    ASSERT_EQ(uvhttp_server_new(loop, &server), UVHTTP_OK);
+    ASSERT_EQ(create_server(), UVHTTP_OK);
 
     /* 初始状态：TLS 未启用 */
     EXPECT_EQ(server->tls_enabled, 0);
@@ -198,12 +198,6 @@ TEST(UvhttpServerApiTest, ServerTlsEnableDisable) {
     /* 禁用 TLS（未启用的情况下调用） */
     uvhttp_error_t result = uvhttp_server_disable_tls(server);
     /* 可能失败，因为 TLS 没有被启用 */
-
-    /* 清理 */
-    uvhttp_server_free(server);
-
-    uv_loop_close(loop);
-    uvhttp_free(loop);
 }
 
 /* 测试服务器 TLS NULL 参数 */
@@ -218,38 +212,28 @@ TEST(UvhttpApiTest, ServerTlsDisableNullServer) {
 }
 
 /* 测试服务器停止 */
-TEST(UvhttpServerApiTest, ServerStop) {
-    uv_loop_t* loop = uv_loop_new();
-    ASSERT_NE(loop, nullptr);
-
-    uvhttp_server_t* server = NULL;
-
+TEST_F(UvhttpServerApiTest, ServerStop) {
     /* 创建服务器 */
-    ASSERT_EQ(uvhttp_server_new(loop, &server), UVHTTP_OK);
+    ASSERT_EQ(create_server(), UVHTTP_OK);
 
     /* 停止未启动的服务器，返回UVHTTP_ERROR_SERVER_STOP */
     uvhttp_error_t result = uvhttp_server_stop(server);
     EXPECT_EQ(result, UVHTTP_ERROR_SERVER_STOP);
-
-    /* 清理 */
-    uvhttp_server_free(server);
-
-    uv_loop_close(loop);
-    uvhttp_free(loop);
 }
 /* 测试服务器停止 NULL 参数 */
-TEST(UvhttpServerApiTest, ServerStopNull) {
+TEST_F(UvhttpServerApiTest, ServerStopNull) {
     uvhttp_error_t result = uvhttp_server_stop(NULL);
     EXPECT_NE(result, UVHTTP_OK);
 }
 
 /* 测试服务器创建（Builder 模式） */
-TEST(UvhttpServerApiTest, ServerCreate) {
+TEST_F(UvhttpServerApiTest, ServerCreate) {
     uvhttp_server_builder_t* builder = NULL;
+    uv_loop_t* loop = uv_default_loop();
 
     /* 创建服务器 - 使用一个不太可能被占用的端口 */
     /* 注意：这个测试需要实际的网络绑定，可能会因为端口占用而失败 */
-    uvhttp_error_t result = uvhttp_server_create("127.0.0.1", 18080, &builder);
+    uvhttp_error_t result = uvhttp_server_create(loop, "127.0.0.1", 18080, &builder);
     if (result == UVHTTP_OK) {
         ASSERT_NE(builder, nullptr);
 
@@ -262,24 +246,34 @@ TEST(UvhttpServerApiTest, ServerCreate) {
 }
 
 /* 测试服务器创建 NULL 参数 */
-TEST(UvhttpServerApiTest, ServerCreateNullHost) {
+TEST_F(UvhttpServerApiTest, ServerCreateNullLoop) {
     uvhttp_server_builder_t* builder = NULL;
-    
-    uvhttp_error_t result = uvhttp_server_create(NULL, 8080, &builder);
+
+    uvhttp_error_t result = uvhttp_server_create(NULL, "127.0.0.1", 8080, &builder);
     EXPECT_NE(result, UVHTTP_OK);
 }
 
-TEST(UvhttpServerApiTest, ServerCreateNullBuilder) {
-    uvhttp_error_t result = uvhttp_server_create("127.0.0.1", 8080, NULL);
+TEST_F(UvhttpServerApiTest, ServerCreateNullHost) {
+    uvhttp_server_builder_t* builder = NULL;
+    uv_loop_t* loop = uv_default_loop();
+
+    uvhttp_error_t result = uvhttp_server_create(loop, NULL, 8080, &builder);
+    EXPECT_NE(result, UVHTTP_OK);
+}
+
+TEST_F(UvhttpServerApiTest, ServerCreateNullBuilder) {
+    uv_loop_t* loop = uv_default_loop();
+    uvhttp_error_t result = uvhttp_server_create(loop, "127.0.0.1", 8080, NULL);
     EXPECT_NE(result, UVHTTP_OK);
 }
 
 /* 测试服务器 Builder 模式 */
-TEST(UvhttpServerApiTest, ServerBuilderGet) {
+TEST_F(UvhttpServerApiTest, ServerBuilderGet) {
     uvhttp_server_builder_t* builder = NULL;
+    uv_loop_t* loop = uv_default_loop();
 
     /* 创建服务器 */
-    uvhttp_error_t result = uvhttp_server_create("127.0.0.1", 18080, &builder);
+    uvhttp_error_t result = uvhttp_server_create(loop, "127.0.0.1", 18080, &builder);
     if (result != UVHTTP_OK) {
         GTEST_SKIP() << "Port 18080 is already in use, skipping test";
     }
@@ -293,15 +287,16 @@ TEST(UvhttpServerApiTest, ServerBuilderGet) {
 }
 
 /* 测试服务器 Builder NULL 参数 */
-TEST(UvhttpServerApiTest, ServerBuilderGetNull) {
+TEST_F(UvhttpServerApiTest, ServerBuilderGetNull) {
     uvhttp_server_builder_t* result = uvhttp_get(NULL, "/test", test_handler);
     EXPECT_EQ(result, nullptr);
 }
 
-TEST(UvhttpServerApiTest, ServerBuilderGetNullPath) {
+TEST_F(UvhttpServerApiTest, ServerBuilderGetNullPath) {
     uvhttp_server_builder_t* builder = NULL;
+    uv_loop_t* loop = uv_default_loop();
 
-    uvhttp_error_t result = uvhttp_server_create("127.0.0.1", 18080, &builder);
+    uvhttp_error_t result = uvhttp_server_create(loop, "127.0.0.1", 18080, &builder);
     if (result != UVHTTP_OK) {
         GTEST_SKIP() << "Port 18080 is already in use, skipping test";
     }
@@ -313,10 +308,11 @@ TEST(UvhttpServerApiTest, ServerBuilderGetNullPath) {
     uvhttp_server_simple_free(builder);
 }
 
-TEST(UvhttpServerApiTest, ServerBuilderGetNullHandler) {
+TEST_F(UvhttpServerApiTest, ServerBuilderGetNullHandler) {
     uvhttp_server_builder_t* builder = NULL;
+    uv_loop_t* loop = uv_default_loop();
 
-    uvhttp_error_t result = uvhttp_server_create("127.0.0.1", 18080, &builder);
+    uvhttp_error_t result = uvhttp_server_create(loop, "127.0.0.1", 18080, &builder);
     if (result != UVHTTP_OK) {
         GTEST_SKIP() << "Port 18080 is already in use, skipping test";
     }
@@ -329,11 +325,12 @@ TEST(UvhttpServerApiTest, ServerBuilderGetNullHandler) {
 }
 
 /* 测试服务器 Builder 其他方法 */
-TEST(UvhttpServerApiTest, ServerBuilderMethods) {
+TEST_F(UvhttpServerApiTest, ServerBuilderMethods) {
     uvhttp_server_builder_t* builder = NULL;
+    uv_loop_t* loop = uv_default_loop();
 
     /* 创建服务器 */
-    uvhttp_error_t result = uvhttp_server_create("127.0.0.1", 18080, &builder);
+    uvhttp_error_t result = uvhttp_server_create(loop, "127.0.0.1", 18080, &builder);
     if (result != UVHTTP_OK) {
         GTEST_SKIP() << "Port 18080 is already in use, skipping test";
     }
@@ -367,7 +364,7 @@ TEST(UvhttpServerApiTest, ServerBuilderMethods) {
 }
 
 /* 测试服务器 Builder NULL 参数 */
-TEST(UvhttpServerApiTest, ServerBuilderMethodsNull) {
+TEST_F(UvhttpServerApiTest, ServerBuilderMethodsNull) {
     uvhttp_server_builder_t* result;
 
     result = uvhttp_post(NULL, "/test", test_handler);
@@ -393,11 +390,12 @@ TEST(UvhttpServerApiTest, ServerBuilderMethodsNull) {
 }
 
 /* 测试服务器停止简单模式 */
-TEST(UvhttpServerApiTest, ServerStopSimple) {
+TEST_F(UvhttpServerApiTest, ServerStopSimple) {
     uvhttp_server_builder_t* builder = NULL;
+    uv_loop_t* loop = uv_default_loop();
 
     /* 创建服务器 */
-    uvhttp_error_t result = uvhttp_server_create("127.0.0.1", 18080, &builder);
+    uvhttp_error_t result = uvhttp_server_create(loop, "127.0.0.1", 18080, &builder);
     if (result != UVHTTP_OK) {
         GTEST_SKIP() << "Port 18080 is already in use, skipping test";
     }
@@ -409,13 +407,13 @@ TEST(UvhttpServerApiTest, ServerStopSimple) {
     uvhttp_server_simple_free(builder);
 }
 
-TEST(UvhttpServerApiTest, ServerStopSimpleNull) {
+TEST_F(UvhttpServerApiTest, ServerStopSimpleNull) {
     /* 不应该崩溃 */
     uvhttp_server_stop_simple(NULL);
 }
 
 /* 测试服务器释放简单模式 */
-TEST(UvhttpServerApiTest, ServerSimpleFreeNull) {
+TEST_F(UvhttpServerApiTest, ServerSimpleFreeNull) {
     /* 不应该崩溃 */
     uvhttp_server_simple_free(NULL);
 }

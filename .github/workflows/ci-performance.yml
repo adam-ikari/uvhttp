@@ -1,0 +1,401 @@
+name: CI/CD - Performance Tests
+
+on:
+  schedule:
+    # 每天凌晨 2 点（UTC）运行
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # 允许手动触发
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'benchmark/**'
+      - 'CMakeLists.txt'
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'benchmark/**'
+      - 'CMakeLists.txt'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  performance-benchmark:
+    name: Performance Benchmark Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0  # 获取完整历史用于比较
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Build and Run Performance Tests
+        run: |
+          echo "========================================"
+          echo "  UVHTTP 性能基准测试"
+          echo "========================================"
+          echo ""
+
+          # 使用 Docker 容器隔离环境
+          docker run --rm --privileged \
+            --cpuset-cpus=0-3 \
+            --memory=8g \
+            --memory-swap=8g \
+            --network=host \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            ubuntu:22.04 \
+            bash -c "
+              set -e
+              
+              echo '=== 安装依赖 ==='
+              apt-get update -qq
+              apt-get install -y -qq \
+                build-essential \
+                cmake \
+                git \
+                wrk \
+                apache2-utils \
+                linux-tools-common \
+                python3 \
+                python3-pip \
+                python3-yaml
+              
+              echo '=== 优化测试环境 ==='
+              # 禁用 Swap
+              swapoff -a 2>/dev/null || echo 'Swap already disabled'
+              
+              # GitHub Actions 环境中无法控制 CPU 频率，跳过
+              echo '注意: GitHub Actions 环境中无法控制 CPU 频率'
+              
+              # 验证环境
+              echo ''
+              echo '=== 测试环境验证 ==='
+              echo 'Swap Status:'
+              free -h | grep Swap || echo '  (无法检测)'
+              echo 'File Descriptors:'
+              ulimit -n
+              echo 'Available Memory:'
+              free -h | grep Mem
+              echo ''
+              
+              # 初始化子模块
+              echo '=== 初始化子模块 ==='
+              git config --global --add safe.directory /workspace
+              git submodule update --init --recursive || true
+              
+              # 编译项目
+              echo '=== 编译项目 ==='
+              mkdir -p build
+              cd build
+              # 禁用 TLS 以加快编译速度
+              cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_TLS=OFF ..
+              # 更新依赖子模块并编译
+              make -j\$(nproc) benchmark_rps benchmark_comprehensive
+              
+              # 运行性能测试
+              echo ''
+              echo '=== 运行性能测试 ==='
+              cd /workspace/benchmark
+              
+              # 启动测试服务器
+              ../build/dist/bin/benchmark_rps 18081 > /tmp/server.log 2>&1 &
+              SERVER_PID=\$!
+              
+              # 等待服务器启动
+              sleep 3
+              
+              # 验证服务器是否运行
+              if ! kill -0 \$SERVER_PID 2>/dev/null; then
+                echo 'ERROR: 服务器启动失败'
+                cat /tmp/server.log
+                exit 1
+              fi
+              
+              # 运行基准测试
+              echo '运行低并发测试...'
+              wrk -t2 -c10 -d10s http://127.0.0.1:18081/ > /tmp/wrk_low.txt 2>&1
+              
+              echo '运行中等并发测试...'
+              wrk -t4 -c50 -d10s http://127.0.0.1:18081/ > /tmp/wrk_medium.txt 2>&1
+              
+              echo '运行高并发测试...'
+              wrk -t8 -c200 -d10s http://127.0.0.1:18081/ > /tmp/wrk_high.txt 2>&1
+              
+              # 停止服务器
+              kill \$SERVER_PID 2>/dev/null || true
+              wait \$SERVER_PID 2>/dev/null || true
+              
+              # 提取结果
+              echo ''
+              echo '=== 测试结果 ==='
+              echo '低并发 RPS:'
+              grep 'Requests/sec' /tmp/wrk_low.txt | awk '{print \"  \" \$2}'
+              echo '中等并发 RPS:'
+              grep 'Requests/sec' /tmp/wrk_medium.txt | awk '{print \"  \" \$2}'
+              echo '高并发 RPS:'
+              grep 'Requests/sec' /tmp/wrk_high.txt | awk '{print \"  \" \$2}'
+              
+              # 生成 CSV 结果
+              echo ''
+              echo '=== 生成结果文件 ==='
+              cat > /tmp/results.csv << 'EOF'
+              test_name,rps
+              low_concurrent,\$(grep 'Requests/sec' /tmp/wrk_low.txt | awk '{print \$2}')
+              medium_concurrent,\$(grep 'Requests/sec' /tmp/wrk_medium.txt | awk '{print \$2}')
+              high_concurrent,\$(grep 'Requests/sec' /tmp/wrk_high.txt | awk '{print \$2}')
+              EOF
+              
+              cat /tmp/results.csv
+            "
+
+      - name: Performance Regression Detection
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        run: |
+          echo "=== 性能回归检测 ==="
+          
+          # 运行回归检测脚本
+          python3 scripts/detect_performance_regression.py \
+            /tmp/results.csv \
+            --baseline config/performance-baseline.yml \
+            --output /tmp/regression_report.json \
+            --fail-on-regression || EXIT_CODE=$?
+          
+          # 显示报告
+          if [ -f /tmp/regression_report.json ]; then
+            cat /tmp/regression_report.json | python3 -m json.tool
+          fi
+          
+          # 根据退出码判断
+          if [ "${EXIT_CODE:-0}" = "1" ]; then
+            echo "❌ 检测到性能回归！"
+            exit 1
+          elif [ "${EXIT_CODE:-0}" = "2" ]; then
+            echo "⚠️  检测到性能警告"
+            exit 0
+          else
+            echo "✅ 性能检测通过"
+          fi
+
+      - name: Upload Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results-${{ github.run_number }}
+          path: |
+            /tmp/wrk_*.txt
+            /tmp/results.csv
+            /tmp/regression_report.json
+            /tmp/server.log
+          retention-days: 90
+
+      - name: Generate Performance Report
+        if: always()
+        run: |
+          echo "=== 性能测试报告 ==="
+          echo ""
+          echo "**测试时间**: $(date -u)"
+          echo "**提交**: ${{ github.sha }}"
+          echo "**分支**: ${{ github.ref_name }}"
+          echo ""
+          echo "## 测试结果"
+          echo ""
+          if [ -f /tmp/wrk_low.txt ]; then
+            echo "### 低并发测试 (2线程 / 10连接)"
+            grep 'Requests/sec' /tmp/wrk_low.txt | awk '{print "- RPS: " $2}'
+            grep 'Latency' /tmp/wrk_low.txt | head -1 | awk '{print "- 平均延迟: " $2}'
+            echo ""
+          fi
+          if [ -f /tmp/wrk_medium.txt ]; then
+            echo "### 中等并发测试 (4线程 / 50连接)"
+            grep 'Requests/sec' /tmp/wrk_medium.txt | awk '{print "- RPS: " $2}'
+            grep 'Latency' /tmp/wrk_medium.txt | head -1 | awk '{print "- 平均延迟: " $2}'
+            echo ""
+          fi
+          if [ -f /tmp/wrk_high.txt ]; then
+            echo "### 高并发测试 (8线程 / 200连接)"
+            grep 'Requests/sec' /tmp/wrk_high.txt | awk '{print "- RPS: " $2}'
+            grep 'Latency' /tmp/wrk_high.txt | head -1 | awk '{print "- 平均延迟: " $2}'
+            echo ""
+          fi
+          echo "---"
+          echo ""
+          echo "完整结果已上传到 Artifacts"
+
+      - name: Comment PR with Results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let comment = '## 🚀 性能测试结果\n\n';
+            comment += `**测试时间**: ${new Date().toISOString()}\n`;
+            comment += `**提交**: ${context.sha.substring(0, 7)}\n\n`;
+            
+            // 读取结果文件
+            try {
+              const results = fs.readFileSync('/tmp/results.csv', 'utf8');
+              comment += '### 测试结果\n\n';
+              comment += '```\n' + results + '```\n\n';
+            } catch (e) {
+              comment += '⚠️  无法读取结果文件\n\n';
+            }
+            
+            // 读取回归报告
+            try {
+              const report = JSON.parse(fs.readFileSync('/tmp/regression_report.json', 'utf8'));
+              const summary = report.summary;
+              
+              comment += '### 回归检测\n\n';
+              if (summary.has_regression) {
+                comment += `❌ **检测到 ${summary.total_regressions} 个性能回归**\n\n`;
+              } else if (summary.has_warning) {
+                comment += `⚠️  **检测到 ${summary.total_warnings} 个性能警告**\n\n`;
+              } else {
+                comment += '✅ **未检测到性能回归**\n\n';
+              }
+              
+              if (summary.has_improvement) {
+                comment += `🎉 **检测到 ${summary.total_improvements} 个性能改进**\n\n`;
+              }
+            } catch (e) {
+              comment += '⚠️  无法读取回归报告\n\n';
+            }
+            
+            comment += '---\n\n';
+            comment += '📊 完整结果: [下载 Artifacts](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n';
+            
+            // 查找或创建评论
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('## 🚀 性能测试结果')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+  database-simulation:
+    name: Database Query Simulation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and Test
+        run: |
+          docker run --rm --privileged \
+            --cpuset-cpus=0-3 \
+            --memory=4g \
+            --network=host \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            ubuntu:22.04 \
+            bash -c "
+              apt-get update -qq && apt-get install -y -qq build-essential cmake wrk linux-tools-common git
+              swapoff -a 2>/dev/null || true
+              
+              # 初始化子模块
+              git config --global --add safe.directory /workspace
+              git submodule update --init --recursive || true
+              
+              mkdir -p build && cd build
+              cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_TLS=OFF ..
+              make -j\$(nproc) benchmark_database_simulation
+              
+              # 启动数据库模拟服务器
+              ../build/dist/bin/benchmark_database_simulation > /tmp/db_server.log 2>&1 &
+              DB_PID=\$!
+              sleep 3
+              
+              # 测试快速查询
+              echo '=== 快速查询测试 ==='
+              wrk -t4 -c50 -d10s http://127.0.0.1:18085/api/fast
+              
+              # 测试混合查询
+              echo '=== 混合查询测试 ==='
+              wrk -t4 -c50 -d10s http://127.0.0.1:18085/api/mixed
+              
+              kill \$DB_PID 2>/dev/null || true
+            "
+
+  file-upload-test:
+    name: File Upload Performance
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and Test
+        run: |
+          docker run --rm --privileged \
+            --cpuset-cpus=0-3 \
+            --memory=4g \
+            --network=host \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            ubuntu:22.04 \
+            bash -c "
+              apt-get update -qq && apt-get install -y -qq build-essential cmake curl linux-tools-common git
+              swapoff -a 2>/dev/null || true
+              
+              # 初始化子模块
+              git config --global --add safe.directory /workspace
+              git submodule update --init --recursive || true
+              
+              mkdir -p build && cd build
+              cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_TLS=OFF ..
+              make -j\$(nproc) benchmark_file_upload
+              
+              # 启动文件上传服务器
+              ../build/dist/bin/benchmark_file_upload > /tmp/upload_server.log 2>&1 &
+              UPLOAD_PID=\$!
+              sleep 3
+              
+              # 测试健康检查
+              echo '=== 健康检查 ==='
+              curl -s http://127.0.0.1:18086/health
+              
+              # 测试文件上传
+              echo '=== 文件上传测试 ==='
+              echo 'test data' | curl -X POST -F 'file=@-' http://127.0.0.1:18086/upload
+              
+              kill \$UPLOAD_PID 2>/dev/null || true
+            "

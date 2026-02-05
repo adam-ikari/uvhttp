@@ -1,4 +1,7 @@
 # UVHTTP 基准性能测试 CMake 配置
+#
+# 注意：所有性能测试程序必须使用 Release 模式编译，以确保准确的性能数据
+# 参考：docs/zh/dev/BUILD_MODES.md
 
 # 性能测试可执行文件
 add_executable(performance_allocator
@@ -8,6 +11,10 @@ target_link_libraries(performance_allocator
     uvhttp
     ${UVHTTP_CORE_DEPS}
 )
+# 确保使用 Release 优化
+set_target_properties(performance_allocator PROPERTIES
+    COMPILE_FLAGS "-O2 -DNDEBUG"
+)
 
 add_executable(performance_allocator_compare
     ${CMAKE_SOURCE_DIR}/benchmark/performance_allocator_compare.c
@@ -15,6 +22,9 @@ add_executable(performance_allocator_compare
 target_link_libraries(performance_allocator_compare
     uvhttp
     ${UVHTTP_CORE_DEPS}
+)
+set_target_properties(performance_allocator_compare PROPERTIES
+    COMPILE_FLAGS "-O2 -DNDEBUG"
 )
 
 add_executable(test_bitfield
@@ -24,69 +34,23 @@ target_link_libraries(test_bitfield
     uvhttp
     ${UVHTTP_CORE_DEPS}
 )
-
-# 新增基准测试程序
-add_executable(benchmark_rps
-    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_rps.c
+set_target_properties(test_bitfield PROPERTIES
+    COMPILE_FLAGS "-O2 -DNDEBUG"
 )
-target_link_libraries(benchmark_rps
+
+# 综合性能测试服务器（统一所有单一项目 benchmark）
+add_executable(benchmark_unified
+    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_unified.c
+)
+target_link_libraries(benchmark_unified
     uvhttp
     ${UVHTTP_CORE_DEPS}
 )
-
-add_executable(benchmark_latency
-    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_latency.c
+set_target_properties(benchmark_unified PROPERTIES
+    COMPILE_FLAGS "-O2 -DNDEBUG"
 )
-target_link_libraries(benchmark_latency
-    uvhttp
-    ${UVHTTP_CORE_DEPS}
-)
-
-add_executable(benchmark_connection
-    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_connection.c
-)
-target_link_libraries(benchmark_connection
-    uvhttp
-    ${UVHTTP_CORE_DEPS}
-)
-
-add_executable(benchmark_memory
-    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_memory.c
-)
-target_link_libraries(benchmark_memory
-    uvhttp
-    ${UVHTTP_CORE_DEPS}
-)
-
-add_executable(benchmark_comprehensive
-    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_comprehensive.c
-)
-target_link_libraries(benchmark_comprehensive
-    uvhttp
-    ${UVHTTP_CORE_DEPS}
-)
-
-# 文件传输性能测试
-add_executable(benchmark_file_transfer
-    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_file_transfer.c
-)
-target_link_libraries(benchmark_file_transfer
-    uvhttp
-    ${UVHTTP_CORE_DEPS}
-)
-
-
 
 # 安装性能测试可执行文件
-
-install(TARGETS performance_allocator performance_allocator_compare test_bitfield
-
+install(TARGETS performance_allocator performance_allocator_compare test_bitfield benchmark_unified
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/benchmark
-
 )
-
-
-
-install(TARGETS benchmark_rps benchmark_latency benchmark_connection benchmark_memory benchmark_comprehensive benchmark_file_transfer
-
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/benchmark)
