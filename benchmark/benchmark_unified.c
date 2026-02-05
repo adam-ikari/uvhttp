@@ -495,6 +495,30 @@ static int health_handler(uvhttp_request_t* request, uvhttp_response_t* response
     return 0;
 }
 
+/* Static file handler - application layer wrapper */
+static int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    /* Get application context from global context */
+    if (!g_ctx || !g_ctx->static_ctx) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_header(response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(response, "Static file service not initialized", 35);
+        uvhttp_response_send(response);
+        return -1;
+    }
+
+    /* Handle static file request */
+    int result = uvhttp_static_handle_request(g_ctx->static_ctx, request, response);
+    if (result != 0) {
+        const char* error_body = "Error processing static file request";
+        uvhttp_response_set_header(response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(response, error_body, strlen(error_body));
+        uvhttp_response_send(response);
+        return -1;
+    }
+
+    return 0;
+}
+
 /* Create test file */
 static void create_test_file(const char* path, size_t size) {
     FILE* f = fopen(path, "wb");
@@ -685,12 +709,9 @@ int main(int argc, char* argv[]) {
 
         result = uvhttp_static_create(&static_config, &ctx->static_ctx);
         if (result == UVHTTP_OK) {
-            result = uvhttp_router_add_static_route(router, "/file", ctx->static_ctx);
-            if (result == UVHTTP_OK) {
-                printf("Static file service enabled\n");
-            } else {
-                fprintf(stderr, "Warning: Failed to add static route: %s\n", uvhttp_error_string(result));
-            }
+            /* Add static file route using application layer pattern */
+            uvhttp_router_add_route(router, "/file/*", static_file_handler);
+            printf("Static file service enabled\n");
         } else {
             fprintf(stderr, "Warning: Failed to create static file context: %s\n", uvhttp_error_string(result));
         }
