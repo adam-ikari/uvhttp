@@ -1,1 +1,68 @@
+test_allocator 5 0.000603829
+test_cmocka_simple 5 0.000417175
+test_config_enhanced_coverage 5 0.000440665
+test_connection_api_coverage 0 0
+test_connection_comprehensive_coverage 0 0
+test_connection_enhanced_coverage 5 0.00041333
+test_connection_full_api_coverage 0 0
+test_connection_full_coverage 5 0.000512462
+test_connection_lifecycle 0 0
+test_connection_websocket_integration 0 0
+test_context_simple 5 0.000427221
+test_death 5 0.000550575
+test_error_api_coverage 5 0.00045826
+test_error_comprehensive_coverage 5 0.000408286
+test_error_coverage 5 0.000422949
+test_error_enhanced_coverage 5 0.000409845
+test_error_handler_full_coverage 5 0.000405314
+test_error_helpers_full_coverage 5 0.000435343
+test_hash_full_coverage 5 0.000515848
+test_lru_cache_full_coverage 5 0.400487
+test_memory 0 0
+test_query_validation 5 0.000539984
+test_request_api_coverage 5 0.000464149
+test_request_comprehensive_coverage 5 0.000477277
+test_request_extra_coverage 5 0.000582668
+test_request_full_coverage 5 0.000622554
+test_request_full_coverage_enhanced 5 0.000456146
+test_request_null_coverage 5 0.000394234
+test_response_full_coverage 5 0.000638268
+test_response_full_coverage_enhanced 5 0.000582437
+test_router_enhanced_coverage 5 0.000481327
+test_router_full_coverage 5 0.000470217
+test_sendfile_timeout 5 0.00630052
+test_server_api_coverage 0 0
+test_server_error_coverage 0 0
+test_server_rate_limit_full_coverage 2 0.00128459
+test_server_simple_api_coverage 5 0.000453863
+test_server_simple_handlers_coverage 5 0.000419879
+test_simple_main 5 0.000370392
+test_static_api_coverage 5 0.000437064
+test_static_comprehensive_coverage 1 0.00221245
+test_static_coverage 5 0.000384241
+test_static_enhanced_coverage 5 0.000462626
+test_static_file_operations 5 0.000457504
+test_static_more_coverage 5 0.000463073
+test_stress 5 0.000443024
+test_tls_api_coverage 5 0.000493633
+test_tls_null_coverage 5 0.000497603
+test_utils_api_coverage 3 0.000725281
+test_utils_full_coverage 5 0.000471135
+test_validation_full_coverage 5 0.000455759
+test_websocket_api_coverage 5 0.000514344
+test_websocket_enhanced_full_coverage 5 0.000461711
+test_websocket_full_coverage 5 0.000469728
+test_websocket_native_full_coverage 5 0.000488892
+test_websocket_native_simple 5 0.000382052
+test_websocket_null_coverage 5 0.000475952
+test_whitelist_hash 4 0.000665647
+uvhttp_unit_tests 5 0.000517043
 ---
+test_connection_api_coverage
+test_connection_comprehensive_coverage
+test_connection_full_api_coverage
+test_connection_lifecycle
+test_connection_websocket_integration
+test_memory
+test_server_api_coverage
+test_server_error_coverage

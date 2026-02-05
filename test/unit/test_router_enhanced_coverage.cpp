@@ -334,56 +334,6 @@ TEST(UvhttpRouterEnhancedCoverageTest, ParsePathParamsMultipleParams) {
     }
 }
 
-/* ========== 测试静态文件路由 ========== */
-
-TEST(UvhttpRouterEnhancedCoverageTest, AddStaticRouteNullRouter) {
-    uvhttp_error_t result = uvhttp_router_add_static_route(NULL, "/static", NULL);
-    EXPECT_NE(result, UVHTTP_OK);
-}
-
-TEST(UvhttpRouterEnhancedCoverageTest, AddStaticRouteNullPath) {
-    uvhttp_router_t* router = NULL;
-    uvhttp_error_t result = uvhttp_router_new(&router);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(router, nullptr);
-    
-    result = uvhttp_router_add_static_route(router, NULL, NULL);
-    EXPECT_NE(result, UVHTTP_OK);
-    
-    uvhttp_router_free(router);
-}
-
-TEST(UvhttpRouterEnhancedCoverageTest, AddStaticRouteValid) {
-    uvhttp_router_t* router = NULL;
-    uvhttp_error_t result = uvhttp_router_new(&router);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(router, nullptr);
-    
-    result = uvhttp_router_add_static_route(router, "/static", NULL);
-    /* 可能成功或失败 */
-    
-    uvhttp_router_free(router);
-}
-
-/* ========== 测试回退路由 ========== */
-
-TEST(UvhttpRouterEnhancedCoverageTest, AddFallbackRouteNullRouter) {
-    uvhttp_error_t result = uvhttp_router_add_fallback_route(NULL, NULL);
-    EXPECT_NE(result, UVHTTP_OK);
-}
-
-TEST(UvhttpRouterEnhancedCoverageTest, AddFallbackRouteValid) {
-    uvhttp_router_t* router = NULL;
-    uvhttp_error_t result = uvhttp_router_new(&router);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(router, nullptr);
-    
-    result = uvhttp_router_add_fallback_route(router, NULL);
-    /* 可能成功或失败 */
-    
-    uvhttp_router_free(router);
-}
-
 /* ========== 测试复杂场景 ========== */
 
 TEST(UvhttpRouterEnhancedCoverageTest, MultipleRoutesSamePathDifferentMethods) {

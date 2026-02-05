@@ -599,6 +599,20 @@ target_link_libraries(uvhttp_unit_tests ${LIBS} ${GTEST_LIBS})
 target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
 
 # ============================================================================
+# CTest Configuration
+# ============================================================================
+enable_testing()
+
+# Add unit tests to CTest
+foreach(test_file ${GTEST_TEST_FILES})
+    get_filename_component(test_name ${test_file} NAME_WE)
+    add_test(NAME ${test_name} COMMAND ${CMAKE_BINARY_DIR}/dist/bin/${test_name})
+endforeach()
+
+# Add gtest sample test to CTest
+add_test(NAME uvhttp_unit_tests COMMAND ${CMAKE_BINARY_DIR}/dist/bin/uvhttp_unit_tests)
+
+# ============================================================================
 # CMocka + GTest Integration Tests
 # ============================================================================
 # Note: CMocka has been removed because linker wrap mechanism is incompatible with existing code

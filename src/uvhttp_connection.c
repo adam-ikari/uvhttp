@@ -440,6 +440,7 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
     c->keepalive = 1;         /* HTTP/1.1defaultkeepconnection */
     c->chunked_encoding = 0;  /* default: no chunked transmission */
     c->close_pending = 0;     /* initialize pending close handle count */
+    c->freed = 0;            /* initialize freed flag */
     c->content_length = 0;    /* default: no content length */
     c->body_received = 0;     // received body length
     c->parsing_complete = 0;  // parsing not complete
@@ -521,6 +522,22 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
     if (!conn) {
         return;
     }
+
+    /* 防止重复释放 */
+    if (conn->freed) {
+        return;
+    }
+
+    /* 检查是否正在关闭中，避免重复释放 */
+    if (conn->close_pending > 0) {
+        /* 句柄正在异步关闭中，由 on_handle_close 回调负责释放 */
+        /* 设置 freed 标志，防止 on_handle_close 再次调用 */
+        conn->freed = 1;
+        return;
+    }
+
+    /* 设置 freed 标志 */
+    conn->freed = 1;
 
     // clean request and response data
     if (conn->request) {

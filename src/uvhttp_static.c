@@ -648,7 +648,7 @@ uvhttp_result_t uvhttp_static_set_response_headers(void* response,
                                                    size_t file_size,
                                                    time_t last_modified,
                                                    const char* etag) {
-    if (!response)
+    if (!response || !file_path)
         return UVHTTP_ERROR_INVALID_PARAM;
 
     /* setContent-Type */
