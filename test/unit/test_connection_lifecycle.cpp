@@ -201,9 +201,11 @@ TEST(UvhttpConnectionLifecycleTest, ConnectionClose) {
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_CLOSING);
     
     /* 运行事件循环以完成异步关闭 */
-    uv_run(uv_default_loop(), UV_RUN_NOWAIT);
+    for (int i = 0; i < 10; i++) {
+        uv_run(uv_default_loop(), UV_RUN_ONCE);
+    }
     
-    uvhttp_connection_free(conn);
+    /* 不要手动调用 uvhttp_connection_free，由 on_handle_close 回调自动释放 */
     uvhttp_server_free(server);
 }
 
@@ -223,6 +225,22 @@ TEST(UvhttpConnectionLifecycleTest, RestartRead) {
     /* 测试重启读取 */
     result = uvhttp_connection_restart_read(conn);
     /* 结果取决于内部状态 */
+    
+    /* 关闭所有 libuv 句柄 */
+    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
+        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
+    }
+    if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
+        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
+    }
+    if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
+        uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
+    }
+    
+    /* 运行事件循环等待关闭完成 */
+    for (int i = 0; i < 10; i++) {
+        uv_run(uv_default_loop(), UV_RUN_ONCE);
+    }
     
     uvhttp_connection_free(conn);
     uvhttp_server_free(server);
@@ -244,6 +262,22 @@ TEST(UvhttpConnectionLifecycleTest, ScheduleRestartRead) {
     /* 测试调度重启读取 */
     result = uvhttp_connection_schedule_restart_read(conn);
     /* 结果取决于内部状态 */
+    
+    /* 关闭所有 libuv 句柄 */
+    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
+        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
+    }
+    if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
+        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
+    }
+    if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
+        uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
+    }
+    
+    /* 运行事件循环等待关闭完成 */
+    for (int i = 0; i < 10; i++) {
+        uv_run(uv_default_loop(), UV_RUN_ONCE);
+    }
     
     uvhttp_connection_free(conn);
     uvhttp_server_free(server);
