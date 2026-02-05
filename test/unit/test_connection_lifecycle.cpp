@@ -27,10 +27,12 @@ static void destroy_server_and_loop(uvhttp_server_t* server, uv_loop_t* loop) {
 static void run_and_close(uvhttp_server_t* server, uvhttp_connection_t* conn, uv_loop_t* loop) {
     if (conn) {
         uvhttp_connection_close(conn);
-        uvhttp_connection_free(conn);
+        // 由 on_handle_close 回调自动释放
     }
     uvhttp_server_free(server);
-    uv_run(loop, UV_RUN_NOWAIT);
+    for (int i = 0; i < 20; i++) {
+        uv_run(loop, UV_RUN_ONCE);
+    }
     uv_loop_close(loop);
     uvhttp_free(loop);
 }
@@ -201,7 +203,7 @@ TEST(UvhttpConnectionLifecycleTest, ConnectionClose) {
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_CLOSING);
     
     /* 运行事件循环以完成异步关闭 */
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 20; i++) {
         uv_run(uv_default_loop(), UV_RUN_ONCE);
     }
     
@@ -238,11 +240,11 @@ TEST(UvhttpConnectionLifecycleTest, RestartRead) {
     }
     
     /* 运行事件循环等待关闭完成 */
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 20; i++) {
         uv_run(uv_default_loop(), UV_RUN_ONCE);
     }
     
-    uvhttp_connection_free(conn);
+    // 由 on_handle_close 回调自动释放
     uvhttp_server_free(server);
 }
 
@@ -275,7 +277,7 @@ TEST(UvhttpConnectionLifecycleTest, ScheduleRestartRead) {
     }
     
     /* 运行事件循环等待关闭完成 */
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 20; i++) {
         uv_run(uv_default_loop(), UV_RUN_ONCE);
     }
     
@@ -292,8 +294,8 @@ TEST(UvhttpConnectionLifecycleTest, MultipleConnections) {
     ASSERT_NE(server, nullptr);
     
     /* 创建多个连接 */
-    uvhttp_connection_t* conns[10];
-    for (int i = 0; i < 10; i++) {
+    uvhttp_connection_t* conns[20];
+    for (int i = 0; i < 20; i++) {
         result = uvhttp_connection_new(server, &conns[i]);
         ASSERT_EQ(result, UVHTTP_OK);
         ASSERT_NE(conns[i], nullptr);
@@ -301,7 +303,7 @@ TEST(UvhttpConnectionLifecycleTest, MultipleConnections) {
     }
     
     /* 释放所有连接 */
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 20; i++) {
         uvhttp_connection_free(conns[i]);
     }
     
@@ -414,6 +416,6 @@ TEST(UvhttpConnectionLifecycleTest, ConnectionTimeout) {
     uvhttp_connection_close(conn);
     uv_run(uv_default_loop(), UV_RUN_NOWAIT);
     
-    uvhttp_connection_free(conn);
+    // 由 on_handle_close 回调自动释放
     uvhttp_server_free(server);
 }

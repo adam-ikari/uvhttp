@@ -193,6 +193,22 @@ TEST(UvhttpConnectionWebsocketIntegrationTest, WebsocketCloseAfterSwitch) {
     /* 再关闭 */
     uvhttp_connection_websocket_close(conn);
     
+    /* 关闭所有句柄 */
+    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
+        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
+    }
+    if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
+        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
+    }
+    if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
+        uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
+    }
+    
+    /* 运行事件循环等待关闭完成 */
+    for (int i = 0; i < 20; i++) {
+        uv_run(uv_default_loop(), UV_RUN_ONCE);
+    }
+    
     uvhttp_connection_free(conn);
     uvhttp_server_free(server);
 }

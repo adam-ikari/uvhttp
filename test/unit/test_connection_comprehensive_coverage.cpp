@@ -333,15 +333,15 @@ TEST(UvhttpConnectionComprehensiveTest, MultipleConnections) {
     ASSERT_NE(server, nullptr);
     
     /* 创建多个连接 */
-    uvhttp_connection_t* conns[10];
-    for (int i = 0; i < 10; i++) {
+    uvhttp_connection_t* conns[20];
+    for (int i = 0; i < 20; i++) {
         result = uvhttp_connection_new(server, &conns[i]);
         ASSERT_EQ(result, UVHTTP_OK);
         ASSERT_NE(conns[i], nullptr);
     }
     
     /* 释放所有连接 */
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 20; i++) {
         uvhttp_connection_free(conns[i]);
     }
     
