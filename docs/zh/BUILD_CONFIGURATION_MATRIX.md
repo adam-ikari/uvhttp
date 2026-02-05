@@ -455,7 +455,7 @@ cmake -DCMAKE_BUILD_TYPE=MinSizeRel \
 ## 内存分配器配置
 
 ### UVHTTP_ALLOCATOR_TYPE
-- **类型**: STRING
+- **类型**: INTEGER
 - **默认值**: 0
 - **说明**: 内存分配器类型选择
 - **选项**:

@@ -426,7 +426,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 ## Memory Allocator Configuration
 
 ### UVHTTP_ALLOCATOR_TYPE
-- **Type**: STRING
+- **Type**: INTEGER
 - **Default**: 0
 - **Description**: Memory allocator type selection
 - **Options**:
