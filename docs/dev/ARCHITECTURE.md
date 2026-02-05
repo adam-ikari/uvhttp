@@ -708,6 +708,182 @@ UVHTTP 采用单线程事件循环模型，所有操作都在事件循环线程�
 - **快速处理请求**：每个请求处理时间 < 10ms
 - **使用连接池**：复用连接，减少开销
 
+### 事件循环模式选择
+
+libuv 提供三种事件循环运行模式，选择正确的模式对性能至关重要：
+
+#### UV_RUN_DEFAULT（推荐用于生产）
+
+```c
+uv_run(loop, UV_RUN_DEFAULT);
+```
+
+**特点**：
+- 阻塞模式，直到没有活动句柄
+- 最高性能，无额外延迟
+- 适合长期运行的服务器
+
+**使用场景**：
+- 生产环境 HTTP 服务器
+- 需要最大吞吐量的场景
+- 长期运行的服务
+
+**性能**：
+- RPS: 30,000+
+- 延迟: < 5ms
+- 适合高并发场景
+
+**优雅关闭**：
+需要配合 `uv_signal_t` 和 `uv_stop()` 实现：
+
+```c
+static void on_signal(uv_signal_t* handle, int signum) {
+    (void)signum;
+    (void)handle;
+    
+    if (g_ctx && g_ctx->loop && uv_loop_alive(g_ctx->loop)) {
+        uv_stop(g_ctx->loop);  /* 停止事件循环 */
+    }
+}
+
+/* 在 main 中 */
+uv_signal_t sigint;
+uv_signal_init(loop, &sigint);
+uv_signal_start(&sigint, on_signal, SIGINT);
+
+uv_run(loop, UV_RUN_DEFAULT);
+
+/* 清理 */
+uv_signal_stop(&sigint);
+uv_close((uv_handle_t*)&sigint, on_signal_close);
+uv_run(loop, UV_RUN_ONCE);  /* 处理关闭回调 */
+```
+
+#### UV_RUN_ONCE（不推荐用于生产）
+
+```c
+while (running) {
+    uv_run(loop, UV_RUN_ONCE);
+}
+```
+
+**特点**：
+- 执行一个事件迭代
+- 如果有活动句柄，会阻塞等待
+- 无法优雅关闭（死循环）
+
+**问题**：
+```c
+/* 问题代码 */
+while (ctx->running) {
+    uv_run(loop, UV_RUN_ONCE);  /* 如果有活动句柄，永远不会返回 */
+}
+```
+
+**原因**：
+- TCP 监听句柄是活动句柄
+- `UV_RUN_ONCE` 会一直等待新事件
+- `ctx->running` 永远不会被检查
+
+**性能**：
+- RPS: ~200（受限于事件检查频率）
+- 延迟: 460ms+
+- 不适合生产环境
+
+#### UV_RUN_NOWAIT（仅用于测试）
+
+```c
+while (running) {
+    uv_run(loop, UV_RUN_NOWAIT);
+    usleep(10000);  /* 10ms 睡眠 */
+}
+```
+
+**特点**：
+- 非阻塞模式
+- 需要手动添加睡眠
+- 可以优雅关闭
+
+**性能问题**：
+```c
+/* 性能瓶颈 */
+while (ctx->running) {
+    uv_run(loop, UV_RUN_NOWAIT);
+    usleep(10000);  /* 10ms 睡眠限制吞吐量 */
+}
+```
+
+**性能影响**：
+- 每秒最多 100 次事件循环迭代（1000ms / 10ms）
+- RPS 限制在 ~200
+- 延迟高达 460ms（请求在队列中等待）
+
+**性能对比**：
+
+| 模式 | RPS | 延迟 | 吞吐量 | 适用场景 |
+|------|-----|------|--------|----------|
+| UV_RUN_DEFAULT | 30,000+ | < 5ms | 高 | 生产环境 |
+| UV_RUN_ONCE | ~200 | 460ms+ | 低 | 不推荐 |
+| UV_RUN_NOWAIT + 10ms | ~195 | 460ms+ | 低 | 测试/调试 |
+
+**性能提升案例**：
+
+benchmark_unified.c 优化前后对比：
+
+```c
+/* 优化前：UV_RUN_NOWAIT + usleep(10000) */
+while (ctx->running) {
+    uv_run(loop, UV_RUN_NOWAIT);
+    usleep(10000);  /* 10ms 睡眠 */
+}
+/* 性能：195 RPS, 460ms 延迟 */
+
+/* 优化后：UV_RUN_DEFAULT */
+uv_run(loop, UV_RUN_DEFAULT);
+/* 性能：31,805 RPS, 3.02ms 延迟 */
+/* 提升：157x RPS, 144x 延迟降低 */
+```
+
+### 事件循环优化建议
+
+1. **生产环境使用 UV_RUN_DEFAULT**
+   - 最高性能
+   - 配合 `uv_signal_t` 实现优雅关闭
+   - 使用 `uv_stop()` 停止循环
+
+2. **避免使用 UV_RUN_NOWAIT + usleep**
+   - 性能严重受限
+   - 仅用于测试和调试
+   - 不适合生产环境
+
+3. **信号处理使用 libuv 信号**
+   ```c
+   /* 正确：使用 uv_signal_t */
+   uv_signal_t sigint;
+   uv_signal_init(loop, &sigint);
+   uv_signal_start(&sigint, on_signal, SIGINT);
+   
+   /* 错误：使用 POSIX 信号 */
+   signal(SIGINT, posix_signal_handler);  /* 不安全 */
+   ```
+
+4. **正确清理信号句柄**
+   ```c
+   /* 停止信号 */
+   uv_signal_stop(&sigint);
+   
+   /* 关闭句柄 */
+   uv_close((uv_handle_t*)&sigint, on_signal_close);
+   
+   /* 处理关闭回调 */
+   uv_run(loop, UV_RUN_ONCE);
+   ```
+
+5. **避免阻塞操作**
+   - 使用异步 I/O
+   - 使用 `uv_timer_t` 模拟延迟
+   - 不要在事件循环中使用 `sleep()` 或 `usleep()`
+
 ---
 
 ## 依赖管理
