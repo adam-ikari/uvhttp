@@ -16,13 +16,13 @@
 
 /* ========== HTTP Header Constants ========== */
 /* Buffer size for header names and values (including null terminator) */
-/* Note: These constants have been moved to uvhttp_constants.h */
+/* Note: Optimized for better performance with mimalloc allocator */
 #ifndef UVHTTP_HEADER_NAME_BUFFER_SIZE
 #    define UVHTTP_HEADER_NAME_BUFFER_SIZE 256
 #endif
 
 #ifndef UVHTTP_HEADER_VALUE_BUFFER_SIZE
-#    define UVHTTP_HEADER_VALUE_BUFFER_SIZE 4096
+#    define UVHTTP_HEADER_VALUE_BUFFER_SIZE 2048
 #endif
 
 /* Maximum number of headers limit */

@@ -1908,8 +1908,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
                        ctx->timeout_ms, 0);
 
         int sendfile_result =
-            uv_fs_sendfile(loop, &ctx->sendfile_req, ctx->out_fd, ctx->in_fd, 0,
-                           chunk_size, on_sendfile_complete);
+            uv_fs_sendfile(loop, &ctx->sendfile_req, ctx->out_fd, ctx->in_fd,
+                           ctx->offset, chunk_size, on_sendfile_complete);
 
         /* check if sendfile failed synchronously */
         if (sendfile_result < 0) {

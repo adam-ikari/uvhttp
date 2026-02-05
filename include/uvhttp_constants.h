@@ -280,6 +280,7 @@
  * CMake configuration:
  * - Configure through CMakeLists.txt or command line parameters
  * - Example: cmake -DUVHTTP_INLINE_HEADERS_CAPACITY=64 ..
+ * - Note: Reduced to 32 for better performance with mimalloc allocator
  */
 #    ifndef UVHTTP_INLINE_HEADERS_CAPACITY
 #        define UVHTTP_INLINE_HEADERS_CAPACITY 32

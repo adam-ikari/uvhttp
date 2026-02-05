@@ -18,8 +18,8 @@ option(BUILD_WITH_WEBSOCKET "Build with WebSocket support" ON)
 option(BUILD_WITH_WEBSOCKET "Build with WebSocket support" ON)
 option(BUILD_WITH_HTTPS "Build with HTTPS support" ON)
 option(BUILD_WITH_MIMALLOC "Build with mimalloc allocator" ON)
-option(BUILD_EXAMPLES "Build example programs" ON)
-option(BUILD_BENCHMARKS "Build performance benchmark programs" OFF)
+option(BUILD_EXAMPLES "Build example programs" OFF)
+option(BUILD_BENCHMARKS "Build performance benchmark programs" ON)
 
 # ========== Build Mode Options ==========
 # These options control the build mode (debug, release, coverage)
