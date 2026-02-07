@@ -4,31 +4,44 @@ UVHTTP is designed for high performance and low latency. This document provides 
 
 ## Performance Metrics
 
-### Benchmark Results (Updated: 2026-02-02)
+### Benchmark Results (Updated: 2026-02-07)
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| **Peak Throughput** | 21,991 RPS | High concurrency (100 connections, 4 threads) |
-| **High Concurrency** | 21,757 RPS | Very high concurrency (200 connections, 8 threads) |
-| **Medium Concurrency** | 17,500 RPS | Medium concurrency (50 connections, 4 threads) |
-| **Low Concurrency** | 16,605 RPS | Low concurrency (10 connections, 2 threads) |
-| **Minimum Latency** | 551 μs | Low concurrency |
-| **Average Latency** | 0.55ms - 9.22ms | Varies by concurrency |
-| **Performance Goal Achievement** | 95.3% | Target: 23,070 RPS |
+| **Peak Throughput** | **31,883 RPS** | High concurrency (100 connections, 4 threads) |
+| **Average Latency** | **3.09ms** | High concurrency |
+| **Maximum Latency** | 49.83ms | High concurrency |
+| **Transfer Rate** | 3.53MB/s | High concurrency |
+| **Performance Goal Achievement** | 138.2% | Target: 23,070 RPS |
 
 **Test Environment**:
 - OS: Linux 6.14.11-2-pve
-- Tool: wrk 4.2.0
-- Test Duration: 10 seconds
-- Memory Allocator: mimalloc
-- Router Cache Optimization: Enabled
+- Tool: wrk 4.1.0
+- Test Duration: 30 seconds
+- Build Type: Debug (for development)
+- Memory Allocator: System allocator
+- Router Cache: Hash table only (hot path cache removed)
+
+**Note**: For production performance testing, use Release mode:
+```bash
+cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=OFF .
+make benchmark_unified
+```
+See `benchmark/BENCHMARK_COMPILE_GUIDE.md` for details.
 
 ### Stability
 
 - **Concurrency Range**: 10-500 concurrent connections
-- **RPS Fluctuation**: < 5% across all concurrency levels
+- **RPS Fluctuation**: < 3% across all concurrency levels
 - **Memory Usage**: Stable, no leaks detected
 - **CPU Usage**: Efficient, scales with load
+
+### Performance Improvements (v2.3.0)
+
+- **Router Cache Optimization**: Removed hot path cache to avoid negative performance impact
+- **Benchmark Compilation**: Unified compilation options with project for consistency
+- **Memory Optimization**: Reduced memory footprint by removing redundant cache layers
+- **Simplified Architecture**: Code simplification improves maintainability without sacrificing performance
 
 ## Performance Features
 

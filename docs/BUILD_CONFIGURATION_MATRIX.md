@@ -45,13 +45,17 @@ These options control which functional modules are compiled into the library.
 
 ### BUILD_WITH_MIMALLOC
 - **Type**: BOOL
-- **Default**: ON
+- **Default**: Based on `UVHTTP_ALLOCATOR_TYPE` (OFF for system/custom, ON for mimalloc)
 - **Description**: Use mimalloc memory allocator
 - **Impact**:
   - Link mimalloc library
   - Provide faster memory allocation performance (30-50% improvement)
   - Reduce memory fragmentation
 - **Dependencies**: None
+- **Notes**:
+  - Automatically enabled when `UVHTTP_ALLOCATOR_TYPE=1`
+  - Can be manually enabled regardless of allocator type
+  - Disabled by default for `UVHTTP_ALLOCATOR_TYPE=0` (system) and `UVHTTP_ALLOCATOR_TYPE=2` (custom)
 
 ### ENABLE_DEBUG
 - **Type**: BOOL
@@ -421,17 +425,36 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 
 ## Memory Allocator Configuration
 
+### UVHTTP_ALLOCATOR_TYPE
+- **Type**: INTEGER
+- **Default**: 0
+- **Description**: Memory allocator type selection
+- **Options**:
+  - `0`: System allocator (malloc/free)
+  - `1`: mimalloc allocator (auto-enables `BUILD_WITH_MIMALLOC=ON`)
+  - `2`: Custom allocator (application layer implementation)
+- **Impact**:
+  - System allocator: Standard performance, no dependencies
+  - mimalloc: 30-50% faster memory allocation, reduced fragmentation
+  - Custom: Full control over memory management
+- **Notes**:
+  - Option `1` automatically enables `BUILD_WITH_MIMALLOC=ON` for convenience
+  - Option `2` requires application layer to implement custom allocator functions
+  - For custom allocator implementation details, see [Advanced Build Options](ADVANCED_BUILD_OPTIONS.md)
+
 ### BUILD_WITH_MIMALLOC
 - **Type**: BOOL
-- **Default**: ON
+- **Default**: Based on `UVHTTP_ALLOCATOR_TYPE` (OFF for system/custom, ON for mimalloc)
 - **Description**: Use mimalloc memory allocator
 - **Impact**:
   - Link mimalloc library
   - Provide faster memory allocation performance (30-50% improvement)
   - Reduce memory fragmentation
 - **Dependencies**: None
-
-**Note**: For more memory allocator configuration options (custom allocator, etc.), please refer to [Advanced Build Options](ADVANCED_BUILD_OPTIONS.md).
+- **Notes**:
+  - Automatically enabled when `UVHTTP_ALLOCATOR_TYPE=1`
+  - Can be manually enabled regardless of allocator type
+  - Disabled by default for `UVHTTP_ALLOCATOR_TYPE=0` (system) and `UVHTTP_ALLOCATOR_TYPE=2` (custom)
 
 ## Build Types
 

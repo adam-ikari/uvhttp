@@ -796,56 +796,29 @@
  * Router cache optimization
  *
  * Configuration recommendations:
- * - Route count (< 10): Disable to save memory
- * - Route count (> 10): Enable to improve performance (Default)
+ * - Route count (< 10): Use default configuration
+ * - Route count (10-100): Enable for best performance
+ * - Route count (> 100): Enable for best performance
  *
- * Options:
- * - STATS: Enable statistics function (debug mode)
- * - DYNAMIC: Enable dynamic adjustment (optimization)
- * - MONITORING: Enable monitoring (Production environment)
- */
-#    ifndef UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION
-#        define UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION \
-            1 /* Default enabled                        \
-               */
-#    endif
-
-/* UVHTTP_ENABLE_ROUTER_CACHE_STATS deleted - unused */
-/* UVHTTP_ENABLE_ROUTER_CACHE_DYNAMIC deleted - unused */
-/* UVHTTP_ENABLE_ROUTER_CACHE_MONITORING deleted - unused */
-
-/**
- * Router search mode
+ * Features:
+ * - Hash table: Dynamic hash table for route lookup
+ * - Open addressing: Better cache locality
+ * - Simple and controllable: No adaptive resizing, predictable memory usage
  *
- * Configuration recommendations:
- * - 0: Array mode (when route count is small)
- * - 1: Hash mode (when route count is medium)
- * - 2: Hybrid strategy (Default, best performance)
+ * CMake configuration:
+ * - Configure through CMakeLists.txt or command line parameters
+ * - Example: cmake -DUVHTTP_FEATURE_ROUTER_CACHE=OFF ..
  */
-#    ifndef UVHTTP_ROUTER_SEARCH_MODE
-#        define UVHTTP_ROUTER_SEARCH_MODE 2
+#    ifndef UVHTTP_FEATURE_ROUTER_CACHE
+#        define UVHTTP_FEATURE_ROUTER_CACHE 1 /* Default enabled */
 #    endif
 
 #    if UVHTTP_FEATURE_ROUTER_CACHE
-/* Routing cache size configuration */
-#        define UVHTTP_ROUTER_METHOD_MAP_SIZE 256
+/* Routing cache size configuration (fixed sizes, no adaptive adjustment) */
 #        define UVHTTP_ROUTER_HASH_BASE_SIZE 256
 #        define UVHTTP_ROUTER_HASH_LOAD_FACTOR 0.75
 #        define UVHTTP_ROUTER_HASH_MAX_SIZE 4096
-#        define UVHTTP_ROUTER_HOT_PATH_SIZE 64
-#        define UVHTTP_ROUTER_HOT_MIN_SIZE 16
-#        define UVHTTP_ROUTER_HOT_MAX_SIZE 64
-#        define UVHTTP_ROUTER_HOT_HIT_THRESHOLD 0.8
-#        define UVHTTP_ROUTER_ACCESS_COUNT_SIZE 1024
-#        define UVHTTP_ROUTER_HYBRID_THRESHOLD 100
-#        define UVHTTP_ROUTER_MAX_CHILD_COUNT 16
-#        define UVHTTP_ROUTER_INITIAL_POOL_SIZE 64
 #        define UVHTTP_ACCESS_COUNTER_MAX 0xFFFFFFFF
-#    endif
-
-/* Routing cache optimization features */
-#    ifndef UVHTTP_FEATURE_ROUTER_CACHE
-#        define UVHTTP_FEATURE_ROUTER_CACHE 1 /* Default enabled */
 #    endif
 
 #    define UVHTTP_ROUTER_MAX_CHILDREN 12
@@ -869,11 +842,6 @@
 #    define UVHTTP_TLS_PATH_MAX_SIZE 256
 
 /* ========== Middleware Configuration ========== */
-
-/**
- * CORS max age
- */
-#    define UVHTTP_CORS_MAX_AGE_DEFAULT "86400"
 
 /**
  * Rate limit window

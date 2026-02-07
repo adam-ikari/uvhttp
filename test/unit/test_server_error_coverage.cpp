@@ -249,6 +249,7 @@ TEST(UvhttpServerErrorCoverageTest, ServerCreateAndListen) {
             uvhttp_server_stop(server);
         }
         
+        /* 释放服务器 - router 会被自动释放 */
         uvhttp_server_free(server);
     }
 }

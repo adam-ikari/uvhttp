@@ -8,11 +8,16 @@ UVHTTP 性能基准测试使用标准的 HTTP 性能测试工具（wrk、ab）�
 
 ## 快速开始
 
-### 1. 编译基准测试服务器
+### 1. 编译基准测试服务器（重要：必须使用 Release 模式）
 
 ```bash
-cd /home/zhaodi-chen/project/uvhttp/build
-make benchmark_rps
+# 正确的编译方式（必须使用 Release 模式）
+cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=OFF .
+make benchmark_unified
+
+# 错误的编译方式（不要使用 Debug 模式测试性能）
+# cmake -DCMAKE_BUILD_TYPE=Debug .  # ❌ 错误：性能会低 50-70%
+# cmake -DENABLE_COVERAGE=ON .    # ❌ 错误：覆盖率会严重降低性能
 ```
 
 ### 2. 运行完整测试套件
@@ -26,11 +31,16 @@ cd /home/zhaodi-chen/project/uvhttp/benchmark
 
 ```bash
 # 启动服务器
-./build/dist/bin/benchmark_rps 18081
+./dist/bin/benchmark_unified [端口]
 
 # 在另一个终端运行性能测试
-wrk -t4 -c100 -d30s http://127.0.0.1:18081/
+wrk -t4 -c100 -d30s http://127.0.0.1:[端口]/
 ```
+
+**重要提示**:
+- ⚠️ 性能测试必须使用 Release 模式编译
+- ⚠️ Debug 模式会禁用优化，性能结果会偏低 50-70%
+- ⚠️ 代码覆盖率（Coverage）会显著降低性能
 
 ## 测试工具
 

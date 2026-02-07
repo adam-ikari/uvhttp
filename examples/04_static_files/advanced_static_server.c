@@ -147,10 +147,32 @@ int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     return 0;
 }
 
+/* 静态文件请求处理器 */
+int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    app_context_t* ctx = (app_context_t*)request->client->loop->data;
+    if (!ctx || !ctx->static_ctx) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_header(response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(response, "Static context not initialized", 32);
+        uvhttp_response_send(response);
+        return -1;
+    }
+    
+    int result = uvhttp_static_handle_request(ctx->static_ctx, request, response);
+    if (result != 0) {
+        const char* error_body = "Error processing static file request";
+        uvhttp_response_set_header(response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(response, error_body, strlen(error_body));
+    }
+    
+    uvhttp_response_send(response);
+    return 0;
+}
+
 /* 创建测试文件 */
 int create_test_files() {
     /* 创建测试目录 */
-    system("mkdir -p ./public/images");
+    (void)system("mkdir -p ./public/images");
     
     /* 创建测试文本文件 */
     FILE* f = fopen("./public/test.txt", "w");
@@ -271,11 +293,9 @@ int main(int argc, char* argv[]) {
     uvhttp_router_add_route(router, "/", home_handler);
     uvhttp_router_add_route(router, "/api/stats", stats_handler);
     
-    /* 设置静态文件路由 */
-    uvhttp_router_add_static_route(router, "/static/", ctx->static_ctx);
-    
-    /* 设置回退路由（处理所有其他请求） */
-    uvhttp_router_add_fallback_route(router, ctx->static_ctx);
+    /* 设置静态文件路由 - 应用层实现 */
+    uvhttp_router_add_route(router, "/static/*", static_file_handler);
+    uvhttp_router_add_route(router, "/*", static_file_handler);
     
     /* 配置服务器 */
     ctx->server->router = router;

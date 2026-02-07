@@ -42,6 +42,7 @@ struct uvhttp_connection {
     int close_pending;               /* 4 bytes - pendingclose handle count */
     int need_restart_read;           /* 4 bytes - useneedrestartread */
     int tls_enabled;                 /* 4 bytes - TLS useEnable */
+    int freed;                       /* 4 bytes - flag to prevent double free */
     int _padding1;                   /* 4 bytes - paddingto32bytes */
     size_t body_received;            /* 8 bytes - receive body length */
     size_t content_length;           /* 8 bytes - Content-Length */

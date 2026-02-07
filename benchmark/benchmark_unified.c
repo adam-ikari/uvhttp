@@ -5,7 +5,6 @@
  * This is a comprehensive performance test server supporting all test scenarios:
  * - RPS testing (simple text response, JSON response, different size responses)
  * - Latency testing
- * - Connection management testing
  * - Memory usage testing
  * - File transfer testing
  * - Router performance testing
@@ -25,7 +24,6 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/time.h>
-#include <sys/resource.h>
 #include <sys/stat.h>
 #include <limits.h>
 
@@ -51,9 +49,6 @@ typedef struct {
     uint64_t max_latency;
     double latency_sum;
 
-    /* Memory statistics */
-    size_t peak_memory;
-    size_t current_memory;
 
     /* CPU statistics */
     double cpu_usage_percent;
@@ -95,12 +90,6 @@ static uint64_t get_timestamp_us(void) {
     return (uint64_t)tv.tv_sec * 1000000 + tv.tv_usec;
 }
 
-/* Get current process memory usage in KB */
-static size_t get_memory_usage_kb(void) {
-    struct rusage usage;
-    getrusage(RUSAGE_SELF, &usage);
-    return usage.ru_maxrss;
-}
 
 /* Signal handler using libuv signals */
 static void on_signal(uv_signal_t* handle, int signum) {
@@ -321,30 +310,6 @@ static int latency_handler(uvhttp_request_t* request, uvhttp_response_t* respons
     return 0;
 }
 
-/* Memory test handler */
-static int memory_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    (void)request;  /* Avoid unused parameter warning */
-
-    if (!response || !g_ctx) {
-        return -1;
-    }
-
-    /* Update memory statistics */
-    size_t current_mem = get_memory_usage_kb();
-    if (current_mem > g_ctx->stats.peak_memory) {
-        g_ctx->stats.peak_memory = current_mem;
-    }
-    g_ctx->stats.current_memory = current_mem;
-
-    const char* body = "OK";
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_header(response, "Content-Length", "2");
-    uvhttp_response_set_body(response, body, 2);
-    uvhttp_response_send(response);
-
-    return 0;
-}
 
 /* Fast database query handler (1ms delay) - async I/O */
 static int db_fast_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
@@ -463,9 +428,9 @@ static int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response)
     double rps = elapsed > 0 ? (double)g_ctx->stats.total_requests / elapsed : 0.0;
 
     int len = snprintf(stats_body, sizeof(stats_body),
-        "{\"total_requests\":%d,\"successful_requests\":%d,\"failed_requests\":%d,\"elapsed_seconds\":%" PRIu64 ",\"rps\":%.2f,\"peak_memory_kb\":%zu}",
+        "{\"total_requests\":%d,\"successful_requests\":%d,\"failed_requests\":%d,\"elapsed_seconds\":%" PRIu64 ",\"rps\":%.2f""}",
         g_ctx->stats.total_requests, g_ctx->stats.successful_requests, g_ctx->stats.failed_requests,
-        elapsed, rps, g_ctx->stats.peak_memory);
+        elapsed, rps);
     snprintf(content_length_str, sizeof(content_length_str), "%d", len);
 
     uvhttp_response_set_status(response, 200);
@@ -491,6 +456,30 @@ static int health_handler(uvhttp_request_t* request, uvhttp_response_t* response
     uvhttp_response_set_header(response, "Content-Length", "22");
     uvhttp_response_set_body(response, body, 22);
     uvhttp_response_send(response);
+
+    return 0;
+}
+
+/* Static file handler - application layer wrapper */
+static int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    /* Get application context from global context */
+    if (!g_ctx || !g_ctx->static_ctx) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_header(response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(response, "Static file service not initialized", 35);
+        uvhttp_response_send(response);
+        return -1;
+    }
+
+    /* Handle static file request */
+    int result = uvhttp_static_handle_request(g_ctx->static_ctx, request, response);
+    if (result != 0) {
+        const char* error_body = "Error processing static file request";
+        uvhttp_response_set_header(response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(response, error_body, strlen(error_body));
+        uvhttp_response_send(response);
+        return -1;
+    }
 
     return 0;
 }
@@ -539,7 +528,6 @@ static void print_usage(const char* program) {
     printf("  GET  /medium           - Medium response (10KB)\n");
     printf("  GET  /large            - Large response (100KB)\n");
     printf("  GET  /latency          - Latency test endpoint\n");
-    printf("  GET  /memory           - Memory test endpoint\n");
     printf("  GET  /db/fast          - Fast database query (1ms async delay)\n");
     printf("  GET  /db/medium        - Medium database query (10ms async delay)\n");
     printf("  GET  /db/slow          - Slow database query (50ms async delay)\n");
@@ -570,8 +558,6 @@ static void print_final_stats(void) {
     if (elapsed > 0) {
         printf("Average RPS: %.2f\n", (double)g_ctx->stats.total_requests / elapsed);
     }
-    printf("Peak memory: %zu KB (%.2f MB)\n",
-           g_ctx->stats.peak_memory, g_ctx->stats.peak_memory / 1024.0);
     printf("========================================\n");
 }
 
@@ -650,7 +636,6 @@ int main(int argc, char* argv[]) {
     uvhttp_router_add_route(router, "/medium", medium_handler);
     uvhttp_router_add_route(router, "/large", large_handler);
     uvhttp_router_add_route(router, "/latency", latency_handler);
-    uvhttp_router_add_route(router, "/memory", memory_handler);
     uvhttp_router_add_route(router, "/db/fast", db_fast_handler);
     uvhttp_router_add_route(router, "/db/medium", db_medium_handler);
     uvhttp_router_add_route(router, "/db/slow", db_slow_handler);
@@ -677,20 +662,24 @@ int main(int argc, char* argv[]) {
     static_config.max_file_size = 200 * 1024 * 1024;
     static_config.enable_sendfile = 1;
 
-    char cwd[PATH_MAX];
+    char cwd[UVHTTP_MAX_FILE_PATH_SIZE];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
-        strncpy(static_config.root_directory, cwd, sizeof(static_config.root_directory) - 1);
-        static_config.root_directory[sizeof(static_config.root_directory) - 1] = '\0';
-        strncat(static_config.root_directory, "/public", sizeof(static_config.root_directory) - strlen(static_config.root_directory) - 1);
+        /* 确保路径不会溢出 */
+        size_t cwd_len = strlen(cwd);
+        size_t public_len = strlen("/public");
+        if (cwd_len + public_len + 1 < sizeof(static_config.root_directory)) {
+            snprintf(static_config.root_directory, sizeof(static_config.root_directory), "%s/public", cwd);
+        } else {
+            /* 路径太长，使用当前目录 */
+            strncpy(static_config.root_directory, "./public", sizeof(static_config.root_directory) - 1);
+            static_config.root_directory[sizeof(static_config.root_directory) - 1] = '\0';
+        }
 
         result = uvhttp_static_create(&static_config, &ctx->static_ctx);
         if (result == UVHTTP_OK) {
-            result = uvhttp_router_add_static_route(router, "/file", ctx->static_ctx);
-            if (result == UVHTTP_OK) {
-                printf("Static file service enabled\n");
-            } else {
-                fprintf(stderr, "Warning: Failed to add static route: %s\n", uvhttp_error_string(result));
-            }
+            /* Add static file route using application layer pattern */
+            uvhttp_router_add_route(router, "/file/*", static_file_handler);
+            printf("Static file service enabled\n");
         } else {
             fprintf(stderr, "Warning: Failed to create static file context: %s\n", uvhttp_error_string(result));
         }

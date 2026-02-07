@@ -213,13 +213,13 @@ int uvhttp_is_valid_ip_address(const char* ip) {
         }
 
         /* IPv6 validation rules:
-         * - If double colon (compressed format), colon count should be 2-7
+         * - If double colon (compressed format), colon count should be 1-7
          * - If no double colon (full format), colon count must be 7
          * - Double colon can only appear once
          */
         if (double_colon_count == 1) {
-            /* Compressed format: colon count 2-7 */
-            return (colon_count >= 2 && colon_count <= 7) ? TRUE : FALSE;
+            /* Compressed format: colon count 1-7 (::1 has 1, :: has 0) */
+            return (colon_count >= 1 && colon_count <= 7) ? TRUE : FALSE;
         } else if (double_colon_count == 0) {
             /* Full format: colon count must be 7 */
             return (colon_count == 7) ? TRUE : FALSE;
@@ -265,8 +265,8 @@ int uvhttp_is_valid_ip_address(const char* ip) {
         return FALSE;
     }
 
-    /* Must have 3 dots and at least 4 digits total */
-    return (dot_count == 3 && digit_count >= 4) ? TRUE : FALSE;
+    /* Must have 3 dots */
+    return (dot_count == 3) ? TRUE : FALSE;
 }
 
 /**

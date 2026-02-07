@@ -47,19 +47,8 @@ static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
     return mi_calloc(nmemb, size);
 }
 #    else
-/* mimalloc unavailable, fallback to system allocator */
-static inline void* uvhttp_alloc(size_t size) {
-    return malloc(size);
-}
-static inline void uvhttp_free(void* ptr) {
-    free(ptr);
-}
-static inline void* uvhttp_realloc(void* ptr, size_t size) {
-    return realloc(ptr, size);
-}
-static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
-    return calloc(nmemb, size);
-}
+/* mimalloc unavailable - configuration error */
+#error "UVHTTP_ALLOCATOR_TYPE=1 (mimalloc) requires BUILD_WITH_MIMALLOC=ON"
 #    endif
 
 #elif UVHTTP_ALLOCATOR_TYPE == 2 /* custom */
@@ -111,18 +100,15 @@ static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
 /**
  * @brief Get the name of the current allocator
  *
- * @return const char* Name of the allocator ("mimalloc" or "system")
+ * @return const char* Name of the allocator ("mimalloc", "custom", or "system")
  *
- * @note Returns "system (mimalloc not available)" if mimalloc was requested but
- * not available
+ * @note If mimalloc is requested but not available, compilation will fail
  */
 static inline const char* uvhttp_allocator_name(void) {
 #if UVHTTP_ALLOCATOR_TYPE == 1
-#    ifdef UVHTTP_ENABLE_MIMALLOC
     return "mimalloc";
-#    else
-    return "system (mimalloc not available)";
-#    endif
+#elif UVHTTP_ALLOCATOR_TYPE == 2
+    return "custom";
 #else
     return "system";
 #endif

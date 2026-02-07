@@ -54,6 +54,11 @@ cmake_install.cmake
 build/Makefile
 CTestTestfile.cmake
 
+# Examples CMake generated files
+examples/*/Makefile
+examples/Makefile
+examples/CMakeFiles/
+
 # Temporary files
 *.tmp
 *.temp

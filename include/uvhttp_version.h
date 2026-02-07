@@ -45,13 +45,11 @@ typedef struct {
     int feature_logging;              /**< Logging support enabled */
     int feature_router_cache;         /**< Router cache enabled */
     int feature_lru_cache;            /**< LRU cache enabled */
-    int feature_cors;                 /**< CORS support enabled */
     int feature_rate_limit;           /**< Rate limit enabled */
     int feature_protocol_upgrade;     /**< Protocol upgrade enabled */
 
     /* Allocator configuration */
-    const char* allocator_type;       /**< Allocator type (system/mimalloc) */
-    int allocator_enabled;            /**< Custom allocator enabled */
+    const char* allocator_type;       /**< Allocator type (system/mimalloc/custom) */
 
     /* Memory configuration */
     int max_connections;              /**< Maximum connections */

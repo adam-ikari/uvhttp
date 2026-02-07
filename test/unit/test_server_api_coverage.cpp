@@ -39,14 +39,17 @@ protected:
             builder = nullptr;
         }
 
+        /* 清理路由 - 在释放 server 之前检查是否被 server 拥有 */
+        bool router_owned_by_server = (server && server->router == router);
+        
         /* 清理服务器 */
         if (server) {
             uvhttp_server_free(server);
             server = nullptr;
         }
 
-        /* 清理路由 */
-        if (router) {
+        /* 只有当 router 未被 server 拥有时才释放 */
+        if (router && !router_owned_by_server) {
             uvhttp_router_free(router);
             router = nullptr;
         }

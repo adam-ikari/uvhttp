@@ -6,16 +6,13 @@
 #include "uvhttp_error_handler.h"
 #include "uvhttp_features.h"
 #include "uvhttp_logging.h"
-#include "uvhttp_middleware.h"
 #include "uvhttp_router.h"
 #include "uvhttp_server.h"
 #include "uvhttp_static.h"
 #include "uvhttp_utils.h"
 #include "uvhttp_validation.h"
 
-#if UVHTTP_FEATURE_PROTOCOL_UPGRADE
-#    include "uvhttp_protocol_upgrade.h"
-#endif
+#include "uvhttp_protocol_upgrade.h"
 
 #include "uthash.h"
 
@@ -365,8 +362,7 @@ static int on_message_complete(llhttp_t* parser) {
     }
 #endif
 
-#if UVHTTP_FEATURE_PROTOCOL_UPGRADE
-    /* Fast path: check if Upgrade header is present */
+/* Fast path: check if Upgrade header is present */
     const char* upgrade_header =
         uvhttp_request_get_header(conn->request, UVHTTP_HEADER_UPGRADE);
     if (upgrade_header) {
@@ -479,7 +475,6 @@ static int on_message_complete(llhttp_t* parser) {
             }
         }
     }
-#endif
 
     /* routerprocess */
     if (conn->server && conn->server->router) {
@@ -492,8 +487,9 @@ static int on_message_complete(llhttp_t* parser) {
         if (handler) {
             handler(conn->request, conn->response);
         } else if (conn->server->router->static_context) {
-            /* if no handler found but have static file context, attempt static
-             * file processing */
+#ifdef UVHTTP_STATIC_FILES_ENABLED
+            /* if no handler found but have static file context, attempt
+             * static file processing */
             uvhttp_result_t result = uvhttp_static_handle_request(
                 (uvhttp_static_context_t*)conn->server->router->static_context,
                 conn->request, conn->response);
@@ -508,6 +504,7 @@ static int on_message_complete(llhttp_t* parser) {
                                          strlen(UVHTTP_MESSAGE_NOT_FOUND));
                 uvhttp_response_send(conn->response);
             }
+#endif
         } else {
             uvhttp_response_set_status(conn->response, 404);
             uvhttp_response_set_header(conn->response,

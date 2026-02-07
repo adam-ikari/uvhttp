@@ -29,10 +29,12 @@ static void destroy_server_and_loop(uvhttp_server_t* server, uv_loop_t* loop) {
 static void run_and_close(uvhttp_server_t* server, uvhttp_connection_t* conn, uv_loop_t* loop) {
     if (conn) {
         uvhttp_connection_close(conn);
-        uvhttp_connection_free(conn);
+        // 由 on_handle_close 回调自动释放
     }
     uvhttp_server_free(server);
-    uv_run(loop, UV_RUN_NOWAIT);
+    for (int i = 0; i < 20; i++) {
+        uv_run(loop, UV_RUN_ONCE);
+    }
     uv_loop_close(loop);
     uvhttp_free(loop);
 }
@@ -140,7 +142,11 @@ TEST(UvhttpConnectionApiTest, ConnectionCloseValid) {
     ASSERT_NE(conn, nullptr);
     
     uvhttp_connection_close(conn);
-    uvhttp_connection_free(conn);
+    /* 运行事件循环等待所有句柄关闭完成 */
+    for (int i = 0; i < 20; i++) {
+        uv_run(server->loop, UV_RUN_ONCE);
+    }
+    /* 不要手动调用 uvhttp_connection_free，由 on_handle_close 回调自动释放 */
     uvhttp_server_free(server);
 }
 
@@ -167,7 +173,7 @@ TEST(UvhttpConnectionApiTest, RestartReadValid) {
     result = uvhttp_connection_restart_read(conn);
     /* 结果取决于内部状态 */
     
-    uvhttp_connection_free(conn);
+    // 由 on_handle_close 回调自动释放
     uvhttp_server_free(server);
 }
 
@@ -191,6 +197,22 @@ TEST(UvhttpConnectionApiTest, ScheduleRestartReadValid) {
     
     result = uvhttp_connection_schedule_restart_read(conn);
     /* 结果取决于内部状态 */
+    
+    /* 关闭所有 libuv 句柄 */
+    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
+        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
+    }
+    if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
+        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
+    }
+    if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
+        uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
+    }
+    
+    /* 运行事件循环等待关闭完成 */
+    for (int i = 0; i < 20; i++) {
+        uv_run(server->loop, UV_RUN_ONCE);
+    }
     
     uvhttp_connection_free(conn);
     uvhttp_server_free(server);
@@ -332,9 +354,15 @@ TEST(UvhttpConnectionApiTest, StartTimeoutValid) {
     result = uvhttp_connection_start_timeout(conn);
     /* 结果取决于内部状态 */
     
+    /* 关闭连接，on_handle_close 会自动释放 */
     uvhttp_connection_close(conn);
-    uv_run(loop, UV_RUN_NOWAIT);
-    uvhttp_connection_free(conn);
+    
+    /* 运行事件循环多次等待所有句柄关闭和释放 */
+    for (int i = 0; i < 20; i++) {
+        uv_run(loop, UV_RUN_ONCE);
+    }
+    
+    /* 不手动调用 uvhttp_connection_free，由 on_handle_close 回调处理 */
     destroy_server_and_loop(server, loop);
 }
 
@@ -361,7 +389,7 @@ TEST(UvhttpConnectionApiTest, StartTimeoutCustomMin) {
     
     uvhttp_connection_close(conn);
     uv_run(uv_default_loop(), UV_RUN_NOWAIT);
-    uvhttp_connection_free(conn);
+    // 由 on_handle_close 回调自动释放
     uvhttp_server_free(server);
 }
 
@@ -381,7 +409,7 @@ TEST(UvhttpConnectionApiTest, StartTimeoutCustomMax) {
     
     uvhttp_connection_close(conn);
     uv_run(uv_default_loop(), UV_RUN_NOWAIT);
-    uvhttp_connection_free(conn);
+    // 由 on_handle_close 回调自动释放
     uvhttp_server_free(server);
 }
 
@@ -401,7 +429,7 @@ TEST(UvhttpConnectionApiTest, StartTimeoutCustomTooSmall) {
     
     uvhttp_connection_close(conn);
     uv_run(uv_default_loop(), UV_RUN_NOWAIT);
-    uvhttp_connection_free(conn);
+    // 由 on_handle_close 回调自动释放
     uvhttp_server_free(server);
 }
 
@@ -421,7 +449,7 @@ TEST(UvhttpConnectionApiTest, StartTimeoutCustomTooLarge) {
     
     uvhttp_connection_close(conn);
     uv_run(uv_default_loop(), UV_RUN_NOWAIT);
-    uvhttp_connection_free(conn);
+    // 由 on_handle_close 回调自动释放
     uvhttp_server_free(server);
 }
 

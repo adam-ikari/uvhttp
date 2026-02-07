@@ -551,16 +551,7 @@ uvhttp_router_add_route_method(ctx->router, "/api", UVHTTP_OPTIONS, options_hand
 uvhttp_router_add_route_method(ctx->router, "/api", UVHTTP_METHOD_POST, post_handler);  // 编译错误
 ```
 
-// ❌ 不好的实践：只测试正常流程
-TEST(ConnectionTest, Start) {
-    uvhttp_connection_t* conn = create_connection();
-    uvhttp_error_t result = uvhttp_connection_start(conn);
-    EXPECT_EQ(result, UVHTTP_OK);
-    uvhttp_connection_free(conn);
-}
-```
-
-#### 4. 资源管理
+#### 5. 资源管理
 
 确保所有资源都被正确释放：
 
@@ -807,5 +798,5 @@ TEST(WebsocketTest, Handshake) {
 ---
 
 **文档版本**：1.0  
-**最后更新**：2026-02-01  
+**最后更新**：2026-02-05  
 **维护者**：UVHTTP 开发团队

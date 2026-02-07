@@ -14,7 +14,6 @@
 #    include "uvhttp_error_helpers.h"
 #    include "uvhttp_logging.h"
 #    include "uvhttp_lru_cache.h"
-#    include "uvhttp_middleware.h"
 #    include "uvhttp_platform.h"
 #    include "uvhttp_request.h"
 #    include "uvhttp_response.h"
@@ -649,7 +648,7 @@ uvhttp_result_t uvhttp_static_set_response_headers(void* response,
                                                    size_t file_size,
                                                    time_t last_modified,
                                                    const char* etag) {
-    if (!response)
+    if (!response || !file_path)
         return UVHTTP_ERROR_INVALID_PARAM;
 
     /* setContent-Type */

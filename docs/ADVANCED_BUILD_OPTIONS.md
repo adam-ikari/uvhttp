@@ -15,14 +15,14 @@ Most users should use the default configuration values. These advanced options a
 - **Usage**: Choose the memory allocator implementation
 - **Options**:
   - `0`: System allocator (malloc/free)
-  - `1`: mimalloc allocator
+  - `1`: mimalloc allocator (auto-enables `BUILD_WITH_MIMALLOC=ON`)
   - `2`: Custom allocator (application layer implementation)
 - **Impact**:
   - System allocator: Standard performance, no dependencies
   - mimalloc: 30-50% faster memory allocation, reduced fragmentation
   - Custom: Full control over memory management
 - **Notes**:
-  - Option `1` requires `BUILD_WITH_MIMALLOC=ON`
+  - Option `1` automatically enables `BUILD_WITH_MIMALLOC=ON` for convenience
   - Option `2` requires application layer to implement custom allocator functions
 
 #### Custom Allocator Implementation

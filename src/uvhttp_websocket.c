@@ -13,9 +13,7 @@
 #include "uvhttp_platform.h"
 #include "uvhttp_server.h"
 
-#if UVHTTP_FEATURE_PROTOCOL_UPGRADE
-#    include "uvhttp_protocol_upgrade.h"
-#endif
+#include "uvhttp_protocol_upgrade.h"
 
 #include <errno.h>
 
@@ -989,7 +987,6 @@ static uvhttp_error_t websocket_upgrade_handler(uvhttp_connection_t* conn,
     return UVHTTP_OK;
 }
 
-#if UVHTTP_FEATURE_PROTOCOL_UPGRADE
 /**
  * @brief Register WebSocket protocol upgrade
  *
@@ -1006,4 +1003,3 @@ uvhttp_error_t uvhttp_server_register_websocket_upgrade(
         server, "websocket", UVHTTP_VALUE_WEBSOCKET,
         websocket_protocol_detector, websocket_upgrade_handler, NULL);
 }
-#endif

@@ -34,7 +34,7 @@ UVHTTP 是一个基于 libuv 的高性能、轻量级 HTTP/1.1 和 WebSocket 服
 
 ### 核心特性
 
-- **高性能**：峰值吞吐量 23,226 RPS
+- **高性能**：峰值吞吐量 31,883 RPS（Debug 模式）
 - **零拷贝**：sendfile 大文件传输，性能提升 50%+
 - **智能缓存**：LRU 缓存 + 缓存预热机制
 - **路由缓存**：分层缓存策略，利用 CPU 缓存局部性
@@ -240,16 +240,6 @@ void uvhttp_static_handle_request(uvhttp_static_context_t* ctx, uvhttp_request_t
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    热路径缓存（Hot Path Cache）                │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │ Slot 0   │  │ Slot 1   │  │ Slot 2   │  │ Slot 3   │   │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │ Slot 4   │  │ Slot 5   │  │ Slot 6   │  │ Slot 7   │   │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
-└─────────────────────────────────────────────────────────────┘
-                              ↓ 命中率 > 90%
-┌─────────────────────────────────────────────────────────────┐
 │                    哈希表缓存（Hash Table Cache）              │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
 │  │ Bucket 0 │  │ Bucket 1 │  │ Bucket 2 │  │ Bucket 3 │   │
@@ -258,7 +248,7 @@ void uvhttp_static_handle_request(uvhttp_static_context_t* ctx, uvhttp_request_t
 │  │ Bucket 4 │  │ Bucket 5 │  │ Bucket 6 │  │ Bucket 7 │   │
 │  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
 └─────────────────────────────────────────────────────────────┘
-                              ↓ 命中率 > 80%
+                              ↓ 命中率 > 95%
 ┌─────────────────────────────────────────────────────────────┐
 │                    线性回退（Linear Fallback）                │
 │  顺序遍历路由表，进行完整匹配                                 │
@@ -267,32 +257,11 @@ void uvhttp_static_handle_request(uvhttp_static_context_t* ctx, uvhttp_request_t
 
 ### 实现细节
 
-#### 热路径缓存（Hot Path Cache）
-
-```c
-#define HOT_PATH_CACHE_SIZE 8
-
-typedef struct {
-    const char* path;
-    uvhttp_route_handler_t handler;
-    uint64_t timestamp;
-} hot_path_cache_entry_t;
-
-typedef struct {
-    hot_path_cache_entry_t entries[HOT_PATH_CACHE_SIZE];
-    size_t index;
-} hot_path_cache_t;
-```
-
-**特性**：
-- 固定大小（8 个槽位）
-- LRU 替换策略
-- 无锁设计（单线程事件循环）
-
 #### 哈希表缓存（Hash Table Cache）
 
 ```c
-#define HASH_TABLE_SIZE 64
+#define HASH_TABLE_SIZE 256
+#define HASH_LOAD_FACTOR 0.75
 
 typedef struct {
     const char* path;
@@ -302,39 +271,32 @@ typedef struct {
 
 typedef struct {
     hash_table_entry_t* buckets[HASH_TABLE_SIZE];
+    size_t count;
+    size_t capacity;
 } hash_table_cache_t;
 ```
 
 **特性**：
-- 固定大小（64 个桶）
-- 链表解决冲突
+- 动态大小（初始 256 个桶，最大 4096）
+- 开放寻址解决冲突（更好的 CPU 缓存局部性）
 - xxHash 快速哈希
+- 自动扩容（当负载因子超过 0.75）
 
 #### 路由匹配流程
 
 ```c
 uvhttp_route_handler_t uvhttp_router_match_cached(uvhttp_router_t* router, const char* path) {
-    // 1. 检查热路径缓存（90%+ 命中率）
-    uvhttp_route_handler_t handler = hot_path_cache_lookup(&router->cache->hot_path, path);
+    // 1. 检查哈希表缓存（95%+ 命中率）
+    uvhttp_route_handler_t handler = hash_table_cache_lookup(&router->cache->hash_table, path);
     if (handler) {
         return handler;
     }
     
-    // 2. 检查哈希表缓存（80%+ 命中率）
-    handler = hash_table_cache_lookup(&router->cache->hash_table, path);
-    if (handler) {
-        // 提升到热路径缓存
-        hot_path_cache_insert(&router->cache->hot_path, path, handler);
-        return handler;
-    }
-    
-    // 3. 线性回退：遍历路由表
+    // 2. 线性回退：遍历路由表
     handler = uvhttp_router_match_linear(router, path);
     if (handler) {
         // 插入哈希表缓存
         hash_table_cache_insert(&router->cache->hash_table, path, handler);
-        // 提升到热路径缓存
-        hot_path_cache_insert(&router->cache->hot_path, path, handler);
     }
     
     return handler;
@@ -343,9 +305,9 @@ uvhttp_route_handler_t uvhttp_router_match_cached(uvhttp_router_t* router, const
 
 ### 性能指标
 
-- **缓存命中率**：> 95%（热路径缓存 + 哈希表缓存）
-- **路由匹配时间**：< 1 μs
-- **内存开销**：< 8 KB（固定大小缓存）
+- **缓存命中率**：> 95%（哈希表缓存）
+- **路由匹配时间**：< 1 μs（O(1) 平均查找）
+- **内存开销**：动态调整，根据路由数量自动扩容
 
 ---
 
@@ -464,7 +426,7 @@ uvhttp_route_handler_t uvhttp_router_match_fast(uvhttp_router_t* router, const c
 
 ### 性能指标
 
-- **峰值吞吐量**：23,226 RPS（低并发场景）
+- **峰值吞吐量**：31,883 RPS（Debug 模式，100 并发）
 - **高并发稳定性**：10-500 并发，RPS 波动仅 5%
 - **最小延迟**：352 μs（低并发）
 
@@ -708,6 +670,182 @@ UVHTTP 采用单线程事件循环模型，所有操作都在事件循环线程�
 - **快速处理请求**：每个请求处理时间 < 10ms
 - **使用连接池**：复用连接，减少开销
 
+### 事件循环模式选择
+
+libuv 提供三种事件循环运行模式，选择正确的模式对性能至关重要：
+
+#### UV_RUN_DEFAULT（推荐用于生产）
+
+```c
+uv_run(loop, UV_RUN_DEFAULT);
+```
+
+**特点**：
+- 阻塞模式，直到没有活动句柄
+- 最高性能，无额外延迟
+- 适合长期运行的服务器
+
+**使用场景**：
+- 生产环境 HTTP 服务器
+- 需要最大吞吐量的场景
+- 长期运行的服务
+
+**性能**：
+- RPS: 30,000+
+- 延迟: < 5ms
+- 适合高并发场景
+
+**优雅关闭**：
+需要配合 `uv_signal_t` 和 `uv_stop()` 实现：
+
+```c
+static void on_signal(uv_signal_t* handle, int signum) {
+    (void)signum;
+    (void)handle;
+    
+    if (g_ctx && g_ctx->loop && uv_loop_alive(g_ctx->loop)) {
+        uv_stop(g_ctx->loop);  /* 停止事件循环 */
+    }
+}
+
+/* 在 main 中 */
+uv_signal_t sigint;
+uv_signal_init(loop, &sigint);
+uv_signal_start(&sigint, on_signal, SIGINT);
+
+uv_run(loop, UV_RUN_DEFAULT);
+
+/* 清理 */
+uv_signal_stop(&sigint);
+uv_close((uv_handle_t*)&sigint, on_signal_close);
+uv_run(loop, UV_RUN_ONCE);  /* 处理关闭回调 */
+```
+
+#### UV_RUN_ONCE（不推荐用于生产）
+
+```c
+while (running) {
+    uv_run(loop, UV_RUN_ONCE);
+}
+```
+
+**特点**：
+- 执行一个事件迭代
+- 如果有活动句柄，会阻塞等待
+- 无法优雅关闭（死循环）
+
+**问题**：
+```c
+/* 问题代码 */
+while (ctx->running) {
+    uv_run(loop, UV_RUN_ONCE);  /* 如果有活动句柄，永远不会返回 */
+}
+```
+
+**原因**：
+- TCP 监听句柄是活动句柄
+- `UV_RUN_ONCE` 会一直等待新事件
+- `ctx->running` 永远不会被检查
+
+**性能**：
+- RPS: ~200（受限于事件检查频率）
+- 延迟: 460ms+
+- 不适合生产环境
+
+#### UV_RUN_NOWAIT（仅用于测试）
+
+```c
+while (running) {
+    uv_run(loop, UV_RUN_NOWAIT);
+    usleep(10000);  /* 10ms 睡眠 */
+}
+```
+
+**特点**：
+- 非阻塞模式
+- 需要手动添加睡眠
+- 可以优雅关闭
+
+**性能问题**：
+```c
+/* 性能瓶颈 */
+while (ctx->running) {
+    uv_run(loop, UV_RUN_NOWAIT);
+    usleep(10000);  /* 10ms 睡眠限制吞吐量 */
+}
+```
+
+**性能影响**：
+- 每秒最多 100 次事件循环迭代（1000ms / 10ms）
+- RPS 限制在 ~200
+- 延迟高达 460ms（请求在队列中等待）
+
+**性能对比**：
+
+| 模式 | RPS | 延迟 | 吞吐量 | 适用场景 |
+|------|-----|------|--------|----------|
+| UV_RUN_DEFAULT | 30,000+ | < 5ms | 高 | 生产环境 |
+| UV_RUN_ONCE | ~200 | 460ms+ | 低 | 不推荐 |
+| UV_RUN_NOWAIT + 10ms | ~195 | 460ms+ | 低 | 测试/调试 |
+
+**性能提升案例**：
+
+benchmark_unified.c 优化前后对比：
+
+```c
+/* 优化前：UV_RUN_NOWAIT + usleep(10000) */
+while (ctx->running) {
+    uv_run(loop, UV_RUN_NOWAIT);
+    usleep(10000);  /* 10ms 睡眠 */
+}
+/* 性能：195 RPS, 460ms 延迟 */
+
+/* 优化后：UV_RUN_DEFAULT */
+uv_run(loop, UV_RUN_DEFAULT);
+/* 性能：31,805 RPS, 3.02ms 延迟 */
+/* 提升：157x RPS, 144x 延迟降低 */
+```
+
+### 事件循环优化建议
+
+1. **生产环境使用 UV_RUN_DEFAULT**
+   - 最高性能
+   - 配合 `uv_signal_t` 实现优雅关闭
+   - 使用 `uv_stop()` 停止循环
+
+2. **避免使用 UV_RUN_NOWAIT + usleep**
+   - 性能严重受限
+   - 仅用于测试和调试
+   - 不适合生产环境
+
+3. **信号处理使用 libuv 信号**
+   ```c
+   /* 正确：使用 uv_signal_t */
+   uv_signal_t sigint;
+   uv_signal_init(loop, &sigint);
+   uv_signal_start(&sigint, on_signal, SIGINT);
+   
+   /* 错误：使用 POSIX 信号 */
+   signal(SIGINT, posix_signal_handler);  /* 不安全 */
+   ```
+
+4. **正确清理信号句柄**
+   ```c
+   /* 停止信号 */
+   uv_signal_stop(&sigint);
+   
+   /* 关闭句柄 */
+   uv_close((uv_handle_t*)&sigint, on_signal_close);
+   
+   /* 处理关闭回调 */
+   uv_run(loop, UV_RUN_ONCE);
+   ```
+
+5. **避免阻塞操作**
+   - 使用异步 I/O
+   - 使用 `uv_timer_t` 模拟延迟
+   - 不要在事件循环中使用 `sleep()` 或 `usleep()`
+
 ---
 
 ## 依赖管理
@@ -830,7 +968,7 @@ void uvhttp_server_register_plugin(uvhttp_server_t* server, uvhttp_plugin_t* plu
 
 UVHTTP 采用了先进的架构设计，包括：
 
-1. **分层缓存策略**：热路径缓存 + 哈希表缓存，路由匹配时间 < 1 μs
+1. **哈希表路由缓存**：O(1) 平均查找，路由匹配时间 < 1 μs
 2. **零拷贝优化**：sendfile 大文件传输，性能提升 50%+
 3. **智能缓存**：LRU 缓存 + 缓存预热，性能提升 30%+
 4. **内存优化**：mimalloc 分配器，性能提升 30%+

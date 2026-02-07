@@ -13,7 +13,7 @@ This document provides information about UVHTTP versions and their compatibility
 ### 2.2.2 (2026-02-02)
 
 **Major Changes**:
-- Router cache optimization: O(1) route lookup with hot path caching
+- Router cache optimization: O(1) route lookup with hash table
 - Fixed router parameter bug: path parameters now correctly preserved
 - Added recursion depth limit to prevent stack overflow
 - Translated all Chinese comments to English in production code

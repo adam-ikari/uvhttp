@@ -200,7 +200,8 @@ uvhttp_response_set_header(response, "Set-Cookie",
 
 ### Q12: 如何启用 CORS？
 
-**回答：**
+**回答：** CORS（跨域资源共享）在应用层实现。您可以通过设置相应的响应头来启用 CORS：
+
 ```c
 uvhttp_response_set_header(response, "Access-Control-Allow-Origin", "*");
 uvhttp_response_set_header(response, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
@@ -213,6 +214,10 @@ if (uvhttp_request_get_method(request) == UVHTTP_METHOD_OPTIONS) {
     return 0;
 }
 ```
+
+对于更高级的 CORS 处理，您可以使用中间件系统创建可重用的 CORS 中间件。请参阅 `examples/03_middleware/` 中的中间件示例。
+
+**注意：** UVHTTP 不提供内置的 CORS 支持，因为 CORS 是应用层的关注点。该库提供了灵活性，可以根据您的使用场景完全按需实现 CORS。
 
 ### Q13: 如何发送文件附件？
 

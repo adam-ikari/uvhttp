@@ -144,14 +144,9 @@ uvhttp_error_t uvhttp_parse_path_params(const char* path,
 uvhttp_method_t uvhttp_method_from_string(const char* method);
 const char* uvhttp_method_to_string(uvhttp_method_t method);
 
-/* Static file routing support */
-uvhttp_error_t uvhttp_router_add_static_route(uvhttp_router_t* router,
-                                              const char* prefix_path,
-                                              void* static_context);
-
-/* Fallback routing support */
-uvhttp_error_t uvhttp_router_add_fallback_route(uvhttp_router_t* router,
-                                                void* static_context);
+/* Note: Static file routing and fallback routing should be implemented by the application layer.
+ * Use uvhttp_router_add_route() to add static file handlers that call uvhttp_static_handle_request().
+ * See examples/04_static_files/static_file_server.c for best practices. */
 
 #ifdef __cplusplus
 }

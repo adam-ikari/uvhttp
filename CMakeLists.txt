@@ -11,13 +11,47 @@ endif()
 
 project(uvhttp VERSION ${PROJECT_VERSION} LANGUAGES C CXX)
 
-# Build options
-option(BUILD_WITH_WEBSOCKET "Build with WebSocket support" ON)
 # ========== Feature Options ==========
 # These options control which features are compiled into the library
 option(BUILD_WITH_WEBSOCKET "Build with WebSocket support" ON)
 option(BUILD_WITH_HTTPS "Build with HTTPS support" ON)
-option(BUILD_WITH_MIMALLOC "Build with mimalloc allocator" ON)
+option(BUILD_WITH_STATIC_FILES "Build with static file service support" OFF)
+option(BUILD_WITH_LRU_CACHE "Build with LRU cache support" ON)
+option(BUILD_WITH_ROUTER_CACHE "Build with router cache support" OFF)
+
+# Memory allocator type (must be set before BUILD_WITH_MIMALLOC option)
+if(NOT DEFINED UVHTTP_ALLOCATOR_TYPE)
+    set(UVHTTP_ALLOCATOR_TYPE 0)
+endif()
+
+# Validate UVHTTP_ALLOCATOR_TYPE value
+if(NOT UVHTTP_ALLOCATOR_TYPE EQUAL 0 AND NOT UVHTTP_ALLOCATOR_TYPE EQUAL 1 AND NOT UVHTTP_ALLOCATOR_TYPE EQUAL 2)
+    message(FATAL_ERROR "UVHTTP_ALLOCATOR_TYPE must be 0 (system), 1 (mimalloc), or 2 (mimalloc auto), got: ${UVHTTP_ALLOCATOR_TYPE}")
+endif()
+
+# Set default BUILD_WITH_MIMALLOC based on UVHTTP_ALLOCATOR_TYPE
+if(NOT DEFINED BUILD_WITH_MIMALLOC)
+    if(UVHTTP_ALLOCATOR_TYPE EQUAL 1)
+        set(BUILD_WITH_MIMALLOC ON)
+    else()
+        # UVHTTP_ALLOCATOR_TYPE=0 (system) or 2 (custom) - don't enable mimalloc by default
+        set(BUILD_WITH_MIMALLOC OFF)
+    endif()
+endif()
+
+option(BUILD_WITH_MIMALLOC "Build with mimalloc allocator" ${BUILD_WITH_MIMALLOC})
+
+# Validate configuration consistency
+if(UVHTTP_ALLOCATOR_TYPE EQUAL 1 AND NOT BUILD_WITH_MIMALLOC)
+    message(FATAL_ERROR "UVHTTP_ALLOCATOR_TYPE=1 (mimalloc) requires BUILD_WITH_MIMALLOC=ON. "
+                       "Set BUILD_WITH_MIMALLOC=ON or use UVHTTP_ALLOCATOR_TYPE=0 (system) or 2 (custom).")
+endif()
+
+if(UVHTTP_ALLOCATOR_TYPE EQUAL 2 AND BUILD_WITH_MIMALLOC)
+    message(WARNING "UVHTTP_ALLOCATOR_TYPE=2 (custom allocator) but BUILD_WITH_MIMALLOC=ON. "
+                   "Custom allocator will be used instead of mimalloc.")
+endif()
+
 option(BUILD_EXAMPLES "Build example programs" OFF)
 option(BUILD_BENCHMARKS "Build performance benchmark programs" ON)
 
@@ -112,11 +146,32 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
 ")
 
 # ========== Feature Definitions Based on Options ==========
-# Middleware, static files, and protocol upgrade are always enabled
-add_definitions(-DUVHTTP_FEATURE_PROTOCOL_UPGRADE=1)
-add_definitions(-DUVHTTP_FEATURE_MIDDLEWARE=1)
-add_definitions(-DUVHTTP_FEATURE_STATIC_FILES=1)
-add_definitions(-DUVHTTP_FEATURE_LRU_CACHE=1)
+# Static files support
+if(BUILD_WITH_STATIC_FILES)
+    add_definitions(-DUVHTTP_FEATURE_STATIC_FILES=1)
+    message(STATUS "Static files support: ENABLED")
+else()
+    add_definitions(-DUVHTTP_FEATURE_STATIC_FILES=0)
+    message(STATUS "Static files support: DISABLED")
+endif()
+
+# LRU cache support
+if(BUILD_WITH_LRU_CACHE)
+    add_definitions(-DUVHTTP_FEATURE_LRU_CACHE=1)
+    message(STATUS "LRU cache support: ENABLED")
+else()
+    add_definitions(-DUVHTTP_FEATURE_LRU_CACHE=0)
+    message(STATUS "LRU cache support: DISABLED (reduced memory usage)")
+endif()
+
+# Router cache support
+if(BUILD_WITH_ROUTER_CACHE)
+    add_definitions(-DUVHTTP_FEATURE_ROUTER_CACHE=1)
+    message(STATUS "Router cache support: ENABLED")
+else()
+    add_definitions(-DUVHTTP_FEATURE_ROUTER_CACHE=0)
+    message(STATUS "Router cache support: DISABLED")
+endif()
 
 # HTTPS support (using mbedtls)
 if(BUILD_WITH_HTTPS)
@@ -141,16 +196,6 @@ if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
     message(STATUS "TLS library (mbedtls): ENABLED")
 else()
     message(STATUS "TLS library (mbedtls): DISABLED")
-endif()
-
-# Memory allocator type
-if(NOT DEFINED UVHTTP_ALLOCATOR_TYPE)
-    set(UVHTTP_ALLOCATOR_TYPE 0)
-endif()
-
-# Validate UVHTTP_ALLOCATOR_TYPE value
-if(NOT UVHTTP_ALLOCATOR_TYPE EQUAL 0 AND NOT UVHTTP_ALLOCATOR_TYPE EQUAL 1 AND NOT UVHTTP_ALLOCATOR_TYPE EQUAL 2)
-    message(FATAL_ERROR "UVHTTP_ALLOCATOR_TYPE must be 0 (system), 1 (mimalloc), or 2 (custom), got: ${UVHTTP_ALLOCATOR_TYPE}")
 endif()
 
 add_definitions(-DUVHTTP_ALLOCATOR_TYPE=${UVHTTP_ALLOCATOR_TYPE})
@@ -350,12 +395,10 @@ if(ENABLE_DEV_MODE)
     add_definitions(-DUVHTTP_FEATURE_LOGGING=1)
     message(STATUS "Development mode: ENABLED (logging enabled)")
 else()
-    # Production mode - disable logging for performance
-    # But enable logging when building tests
-    file(GLOB TEST_FILES test/unit/test_*.cpp)
-    if(TEST_FILES)
+    # Production mode - disable logging for performance (unless DEBUG build)
+    if(ENABLE_DEBUG)
         add_definitions(-DUVHTTP_FEATURE_LOGGING=1)
-        message(STATUS "Development mode: DISABLED (logging enabled for testing)")
+        message(STATUS "Development mode: DISABLED (logging enabled for DEBUG build)")
     else()
         add_definitions(-DUVHTTP_FEATURE_LOGGING=0)
         message(STATUS "Development mode: DISABLED (no logging, zero overhead)")
@@ -485,11 +528,6 @@ if(BUILD_WITH_MIMALLOC)
     target_compile_definitions(uvhttp PRIVATE UVHTTP_ENABLE_MIMALLOC)
 endif()
 
-# Set UVHTTP_FEATURE_ALLOCATOR if using custom allocator or special features
-if(BUILD_WITH_MIMALLOC OR BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET OR UVHTTP_ALLOCATOR_TYPE EQUAL 2)
-    target_compile_definitions(uvhttp PRIVATE UVHTTP_FEATURE_ALLOCATOR=1)
-endif()
-
 # Linux platform-specific libraries (PRIVATE)
 target_link_libraries(uvhttp PRIVATE pthread m dl)
 
@@ -559,6 +597,20 @@ endif()
 target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
 target_link_libraries(uvhttp_unit_tests ${LIBS} ${GTEST_LIBS})
 target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
+
+# ============================================================================
+# CTest Configuration
+# ============================================================================
+enable_testing()
+
+# Add unit tests to CTest
+foreach(test_file ${GTEST_TEST_FILES})
+    get_filename_component(test_name ${test_file} NAME_WE)
+    add_test(NAME ${test_name} COMMAND ${CMAKE_BINARY_DIR}/dist/bin/${test_name})
+endforeach()
+
+# Add gtest sample test to CTest
+add_test(NAME uvhttp_unit_tests COMMAND ${CMAKE_BINARY_DIR}/dist/bin/uvhttp_unit_tests)
 
 # ============================================================================
 # CMocka + GTest Integration Tests

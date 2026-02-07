@@ -59,6 +59,9 @@ TEST(UvhttpWhitelistHashTest, AddWhitelistIP) {
     
     for (int i = 0; i < 5; i++) {
         result = uvhttp_server_add_rate_limit_whitelist(server, test_ips[i]);
+        if (result != UVHTTP_OK) {
+            fprintf(stderr, "Failed to add %s: %s\n", test_ips[i], uvhttp_error_string(result));
+        }
         EXPECT_EQ(result, UVHTTP_OK);
     }
     
