@@ -18,7 +18,7 @@ hero:
 
 features:
   - title: Extreme Performance
-    details: Peak throughput up to 23,226 RPS
+    details: Peak throughput up to 31,883 RPS
   - title: Zero-Copy Optimization
     details: Large files use sendfile zero-copy transmission
   - title: Smart Caching

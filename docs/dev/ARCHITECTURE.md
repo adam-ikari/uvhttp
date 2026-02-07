@@ -34,7 +34,7 @@ UVHTTP 是一个基于 libuv 的高性能、轻量级 HTTP/1.1 和 WebSocket 服
 
 ### 核心特性
 
-- **高性能**：峰值吞吐量 23,226 RPS
+- **高性能**：峰值吞吐量 31,883 RPS（Debug 模式）
 - **零拷贝**：sendfile 大文件传输，性能提升 50%+
 - **智能缓存**：LRU 缓存 + 缓存预热机制
 - **路由缓存**：分层缓存策略，利用 CPU 缓存局部性
@@ -464,7 +464,7 @@ uvhttp_route_handler_t uvhttp_router_match_fast(uvhttp_router_t* router, const c
 
 ### 性能指标
 
-- **峰值吞吐量**：23,226 RPS（低并发场景）
+- **峰值吞吐量**：31,883 RPS（Debug 模式，100 并发）
 - **高并发稳定性**：10-500 并发，RPS 波动仅 5%
 - **最小延迟**：352 μs（低并发）
 

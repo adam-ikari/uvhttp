@@ -18,7 +18,7 @@ hero:
 
 features:
   - title: 🚀 极致性能
-    details: 峰值吞吐量达 23,226 RPS，基于 libuv 事件驱动，集成 xxHash 极快哈希算法
+    details: 峰值吞吐量达 31,883 RPS，基于 libuv 事件驱动，集成 xxHash 极快哈希算法
   - title: ⚡ 零拷贝优化
     details: 大文件使用 sendfile 零拷贝传输，性能提升 50%+，大幅降低 CPU 占用
   - title: 💾 智能缓存
