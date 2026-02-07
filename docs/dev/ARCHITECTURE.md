@@ -240,16 +240,6 @@ void uvhttp_static_handle_request(uvhttp_static_context_t* ctx, uvhttp_request_t
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    热路径缓存（Hot Path Cache）                │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │ Slot 0   │  │ Slot 1   │  │ Slot 2   │  │ Slot 3   │   │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │ Slot 4   │  │ Slot 5   │  │ Slot 6   │  │ Slot 7   │   │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
-└─────────────────────────────────────────────────────────────┘
-                              ↓ 命中率 > 90%
-┌─────────────────────────────────────────────────────────────┐
 │                    哈希表缓存（Hash Table Cache）              │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
 │  │ Bucket 0 │  │ Bucket 1 │  │ Bucket 2 │  │ Bucket 3 │   │
@@ -258,7 +248,7 @@ void uvhttp_static_handle_request(uvhttp_static_context_t* ctx, uvhttp_request_t
 │  │ Bucket 4 │  │ Bucket 5 │  │ Bucket 6 │  │ Bucket 7 │   │
 │  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
 └─────────────────────────────────────────────────────────────┘
-                              ↓ 命中率 > 80%
+                              ↓ 命中率 > 95%
 ┌─────────────────────────────────────────────────────────────┐
 │                    线性回退（Linear Fallback）                │
 │  顺序遍历路由表，进行完整匹配                                 │
@@ -267,32 +257,11 @@ void uvhttp_static_handle_request(uvhttp_static_context_t* ctx, uvhttp_request_t
 
 ### 实现细节
 
-#### 热路径缓存（Hot Path Cache）
-
-```c
-#define HOT_PATH_CACHE_SIZE 8
-
-typedef struct {
-    const char* path;
-    uvhttp_route_handler_t handler;
-    uint64_t timestamp;
-} hot_path_cache_entry_t;
-
-typedef struct {
-    hot_path_cache_entry_t entries[HOT_PATH_CACHE_SIZE];
-    size_t index;
-} hot_path_cache_t;
-```
-
-**特性**：
-- 固定大小（8 个槽位）
-- LRU 替换策略
-- 无锁设计（单线程事件循环）
-
 #### 哈希表缓存（Hash Table Cache）
 
 ```c
-#define HASH_TABLE_SIZE 64
+#define HASH_TABLE_SIZE 256
+#define HASH_LOAD_FACTOR 0.75
 
 typedef struct {
     const char* path;
@@ -302,39 +271,32 @@ typedef struct {
 
 typedef struct {
     hash_table_entry_t* buckets[HASH_TABLE_SIZE];
+    size_t count;
+    size_t capacity;
 } hash_table_cache_t;
 ```
 
 **特性**：
-- 固定大小（64 个桶）
-- 链表解决冲突
+- 动态大小（初始 256 个桶，最大 4096）
+- 开放寻址解决冲突（更好的 CPU 缓存局部性）
 - xxHash 快速哈希
+- 自动扩容（当负载因子超过 0.75）
 
 #### 路由匹配流程
 
 ```c
 uvhttp_route_handler_t uvhttp_router_match_cached(uvhttp_router_t* router, const char* path) {
-    // 1. 检查热路径缓存（90%+ 命中率）
-    uvhttp_route_handler_t handler = hot_path_cache_lookup(&router->cache->hot_path, path);
+    // 1. 检查哈希表缓存（95%+ 命中率）
+    uvhttp_route_handler_t handler = hash_table_cache_lookup(&router->cache->hash_table, path);
     if (handler) {
         return handler;
     }
     
-    // 2. 检查哈希表缓存（80%+ 命中率）
-    handler = hash_table_cache_lookup(&router->cache->hash_table, path);
-    if (handler) {
-        // 提升到热路径缓存
-        hot_path_cache_insert(&router->cache->hot_path, path, handler);
-        return handler;
-    }
-    
-    // 3. 线性回退：遍历路由表
+    // 2. 线性回退：遍历路由表
     handler = uvhttp_router_match_linear(router, path);
     if (handler) {
         // 插入哈希表缓存
         hash_table_cache_insert(&router->cache->hash_table, path, handler);
-        // 提升到热路径缓存
-        hot_path_cache_insert(&router->cache->hot_path, path, handler);
     }
     
     return handler;
@@ -343,9 +305,9 @@ uvhttp_route_handler_t uvhttp_router_match_cached(uvhttp_router_t* router, const
 
 ### 性能指标
 
-- **缓存命中率**：> 95%（热路径缓存 + 哈希表缓存）
-- **路由匹配时间**：< 1 μs
-- **内存开销**：< 8 KB（固定大小缓存）
+- **缓存命中率**：> 95%（哈希表缓存）
+- **路由匹配时间**：< 1 μs（O(1) 平均查找）
+- **内存开销**：动态调整，根据路由数量自动扩容
 
 ---
 
@@ -1006,7 +968,7 @@ void uvhttp_server_register_plugin(uvhttp_server_t* server, uvhttp_plugin_t* plu
 
 UVHTTP 采用了先进的架构设计，包括：
 
-1. **分层缓存策略**：热路径缓存 + 哈希表缓存，路由匹配时间 < 1 μs
+1. **哈希表路由缓存**：O(1) 平均查找，路由匹配时间 < 1 μs
 2. **零拷贝优化**：sendfile 大文件传输，性能提升 50%+
 3. **智能缓存**：LRU 缓存 + 缓存预热，性能提升 30%+
 4. **内存优化**：mimalloc 分配器，性能提升 30%+

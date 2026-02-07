@@ -38,9 +38,16 @@ UVHTTP 在性能测试中表现优异，以下是详细的性能指标。
 - **操作系统**: Linux 6.14.11-2pve
 - **测试工具**: wrk 4.1.0
 - **测试时长**: 30 秒
-- **编译模式**: Debug
+- **编译模式**: Debug（用于开发）
 - **内存分配器**: 系统分配器
 - **路由缓存**: 仅哈希表（已移除热路径缓存）
+
+**注意**: 生产环境性能测试应使用 Release 模式：
+```bash
+cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=OFF .
+make benchmark_unified
+```
+详见 `benchmark/BENCHMARK_COMPILE_GUIDE.md`
 
 ### 延迟分布
 

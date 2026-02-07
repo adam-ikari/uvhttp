@@ -18,9 +18,16 @@ UVHTTP is designed for high performance and low latency. This document provides 
 - OS: Linux 6.14.11-2-pve
 - Tool: wrk 4.1.0
 - Test Duration: 30 seconds
-- Build Type: Debug
+- Build Type: Debug (for development)
 - Memory Allocator: System allocator
 - Router Cache: Hash table only (hot path cache removed)
+
+**Note**: For production performance testing, use Release mode:
+```bash
+cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=OFF .
+make benchmark_unified
+```
+See `benchmark/BENCHMARK_COMPILE_GUIDE.md` for details.
 
 ### Stability
 

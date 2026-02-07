@@ -8,19 +8,19 @@ This document describes the optimization plan for the router cache system to imp
 
 ### Architecture
 
-The router cache uses a **hierarchical caching strategy**:
+The router cache uses a **hash table only strategy**:
 
-1. **Hot Path Cache**: Stores the 16 most frequently used routes (CPU cache optimized)
-2. **Hash Table**: Fast lookup for all routes (including cold paths)
+1. **Hash Table**: Fast lookup for all routes with O(1) average complexity
 
 ### Performance Issues
 
 | Issue | Impact | Severity |
 |-------|--------|----------|
 | Fixed hash table size (256) | High collision rate for >100 routes | High |
-| Small hot path cache (16) | Misses for frequently accessed routes | Medium |
 | Access counter overflow | Incorrect eviction decisions | Low |
 | Linked list collision handling | Poor cache locality | High |
+
+**Note**: Hot path cache was removed in v2.3.0 due to negative performance impact (-300% to -400%). The simplified hash table-only strategy provides better performance with lower complexity.
 
 ### Benchmark Results
 
@@ -107,60 +107,52 @@ static inline uint32_t find_slot(hash_table_t* table, const char* path,
 - No pointer chasing
 - 30-50% faster than linked list
 
-### Phase 2: Hot Path Cache Enhancement
+### Phase 2: ~~Hot Path Cache Enhancement~~ (REMOVED in v2.3.0)
 
-**Goal**: Increase hit rate for frequently accessed routes
+**Status**: ❌ **Deprecated** - Removed due to negative performance impact
 
-#### 2.1 Adaptive Hot Path Size
+**Reason**: The hot path cache was removed because it caused significant performance degradation:
 
+1. **Linear scan overhead**: 64 string comparisons per lookup
+2. **String comparison cost**: Full string matching required
+3. **LFU eviction logic**: Frequency statistics and eviction increased CPU overhead
+4. **Memory waste**: 17.4 KB for 256-byte paths
+
+**Result**: Performance improved from 21,991 to 31,883 RPS (+45%) after removal
+
+---
+
+## Current Optimization Strategy (v2.3.0+)
+
+### Hash Table Only Strategy
+
+**Simplified Architecture**:
 ```c
-/* Dynamically adjust hot path cache size based on access pattern */
-#define UVHTTP_ROUTER_HOT_MIN_SIZE 16
-#define UVHTTP_ROUTER_HOT_MAX_SIZE 64
-#define UVHTTP_ROUTER_HOT_HIT_THRESHOLD 0.8  /* 80% hit rate */
+/* Single-layer hash table with open addressing */
+#define UVHTTP_ROUTER_HASH_BASE_SIZE 256
+#define UVHTTP_ROUTER_HASH_LOAD_FACTOR 0.75
+#define UVHTTP_ROUTER_HASH_MAX_SIZE 4096
 
 typedef struct {
-    hot_route_entry_t* routes;
-    size_t capacity;      /* Current capacity */
-    size_t count;         /* Number of entries */
-    size_t hits;          /* Hit counter */
-    size_t misses;        /* Miss counter */
-} hot_cache_t;
-
-/* Auto-adjust capacity based on hit rate */
-static void adjust_hot_cache_size(hot_cache_t* cache) {
-    double hit_rate = (double)cache->hits / (cache->hits + cache->misses);
-    
-    if (hit_rate < UVHTTP_ROUTER_HOT_HIT_THRESHOLD && 
-        cache->capacity < UVHTTP_ROUTER_HOT_MAX_SIZE) {
-        /* Increase size */
-        size_t new_capacity = cache->capacity * 2;
-        hot_route_entry_t* new_routes = uvhttp_realloc(
-            cache->routes, new_capacity * sizeof(hot_route_entry_t));
-        if (new_routes) {
-            cache->routes = new_routes;
-            cache->capacity = new_capacity;
-        }
-    } else if (hit_rate > 0.95 && cache->capacity > UVHTTP_ROUTER_HOT_MIN_SIZE) {
-        /* Decrease size */
-        size_t new_capacity = cache->capacity / 2;
-        hot_route_entry_t* new_routes = uvhttp_realloc(
-            cache->routes, new_capacity * sizeof(hot_route_entry_t));
-        if (new_routes) {
-            cache->routes = new_routes;
-            cache->capacity = new_capacity;
-            cache->count = new_capacity;  /* Evict excess entries */
-        }
-    }
-}
+    hash_entry_t* buckets;
+    size_t capacity;
+    size_t count;
+} hash_table_t;
 ```
 
 **Benefits**:
-- Adaptive to workload patterns
-- Reduces memory waste for small applications
-- Improves hit rate from ~60% to ~85%
+- O(1) average lookup complexity
+- No linear scan overhead
+- Better CPU cache locality (open addressing)
+- Simpler code, easier maintenance
 
-#### 2.2 LFU Eviction Policy
+---
+
+## ~~Phase 2: Hot Path Cache Enhancement~~ (Historical Reference)
+
+**⚠️ NOTE**: This phase was removed in v2.3.0 due to negative performance impact
+
+~~#### 2.1 Adaptive Hot Path Size~~
 
 ```c
 /* Replace LRU with LFU for better hot route detection */
@@ -262,12 +254,14 @@ typedef struct __attribute__((packed)) {
 - [ ] Write unit tests for hash table
 - [ ] Benchmark hash table performance
 
-### Milestone 2: Hot Path Cache Enhancement (Week 2)
-- [ ] Implement adaptive hot path sizing
-- [ ] Replace LRU with LFU eviction
-- [ ] Add hit rate tracking
-- [ ] Write unit tests for hot cache
-- [ ] Benchmark hot cache performance
+### ~~Milestone 2: Hot Path Cache Enhancement~~ (Week 2) - **REMOVED**
+~~- [ ] Implement adaptive hot path sizing~~
+~~- [ ] Replace LRU with LFU eviction~~
+~~- [ ] Add hit rate tracking~~
+~~- [ ] Write unit tests for hot cache~~
+~~- [ ] Benchmark hot cache performance~~
+
+**Note**: Hot path cache was removed in v2.3.0 due to negative performance impact (-300% to -400%)
 
 ### Milestone 3: Access Counter Optimization (Week 3)
 - [ ] Implement saturating counter
