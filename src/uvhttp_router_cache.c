@@ -1,414 +1,427 @@
+#if UVHTTP_FEATURE_ROUTER_CACHE
 
-#if UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION
+#    include "uvhttp_allocator.h"
+#    include "uvhttp_constants.h"
+#    include "uvhttp_hash.h"
+#    include "uvhttp_router.h"
+#    include "uvhttp_utils.h"
 
-#include "uvhttp_router.h"
-#include "uvhttp_allocator.h"
-#include "uvhttp_utils.h"
-#include "uvhttp_hash.h"
-#include "uvhttp_constants.h"
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <stdint.h>
+#    include <ctype.h>
+#    include <stdint.h>
+#    include <stdio.h>
+#    include <stdlib.h>
+#    include <string.h>
 
-// HTTP方法字符串到枚举值的快速查找表
-// 使用ASCII字符作为索引，实现O(1)时间复杂度的查找
-// 注意：这个表仅用于快速提示，实际解析逻辑在fast_method_parse函数中
-static const uvhttp_method_t method_map[256] = {
-    ["G"] = UVHTTP_GET,      // GET方法映射
-// 
-// 路由哈希表大小 - 使用256个桶以减少冲突
-// 选择256是因为ASCII字符范围，便于直接使用字符作为索引
-// 使用常量表中的 UVHTTP_ROUTER_HASH_SIZE
-
-// 
-// 缓存优化的路由器结构体 - 采用分层缓存策略提高性能
-// 包含热路径缓存、哈希表和访问统计信息
-typedef struct {
-    // 热路径缓存：存储最常用的16个路由，利用CPU缓存局部性
-    struct {
-        char path[64];                    // 路径字符串，限制64字节以适应缓存行大小
-        uvhttp_method_t method;          // HTTP方法枚举值
-        uvhttp_request_handler_t handler;  // 处理函数指针
-    } hot_routes[UVHTTP_ROUTER_HOT_ROUTES_COUNT];                     // 固定大小的热路径数组
-    size_t hot_count;                      // 当前热路径数量
-    
-    // 哈希表：用于快速查找所有路由（包括冷路径）
-    route_hash_entry_t* hash_table[UVHTTP_ROUTER_HASH_SIZE];  // 256个哈希桶的数组
-    
-    // 访问统计：用于动态调整热路径缓存
-    unsigned int access_count[UVHTTP_ROUTER_ACCESS_COUNT_SIZE];       // 每个路由的访问计数（用于热路径识别）
-    size_t total_routes;                   // 总路由数量统计
-} cache_optimized_router_t;
-};
-
-// CRC32哈希表用于快速路由查找
-// 使用常量表中的 UVHTTP_ROUTER_HASH_SIZE
-
-// 哈希桶结构
-typedef struct route_hash_entry {
-    const char* path;
+/* Hash bucket structure - optimized for cache locality */
+typedef struct __attribute__((packed)) {
+    char path[UVHTTP_MAX_ROUTE_PATH_LEN];
     uvhttp_method_t method;
     uvhttp_request_handler_t handler;
-    struct route_hash_entry* next;
-} route_hash_entry_t;
+    uint32_t access_count;
+    uint8_t distance;
+    uint8_t _padding[3];
+} hash_entry_t;
 
-// 缓存友好的路由存储
+/* Dynamic hash table with auto-resizing */
 typedef struct {
-    // 热路径：最常用的路由放在连续内存中
-    struct {
-        char path[64];  // 限制长度以适应缓存行
-        uvhttp_method_t method;
-        uvhttp_request_handler_t handler;
-    } hot_routes[UVHTTP_ROUTER_HOT_ROUTES_COUNT];
-    size_t hot_count;
-    
-    // 哈希表：快速查找
-    route_hash_entry_t* hash_table[UVHTTP_ROUTER_HASH_SIZE];
-    
-    // 路由统计（用于动态调整热路径）
-    unsigned int access_count[UVHTTP_ROUTER_ACCESS_COUNT_SIZE];
+    hash_entry_t* entries;
+    size_t size;
+    size_t count;
+    size_t threshold;
+} hash_table_t;
+
+/* Simple router structure - uses hash table only
+ *
+ * Thread safety note:
+ * This implementation is designed for single-threaded event loop architecture
+ * (based on libuv):
+ * - The router must be used in a single event loop thread
+ * - Does not support multi-threaded concurrent access
+ * - If you need to use it in a multi-threaded environment, create independent
+ * server instances and routers for each thread
+ *
+ * Performance optimization:
+ * - Uses hash table with open addressing (O(1) average lookup)
+ * - Lock-free design, avoids mutex overhead
+ * - No extra caching layers, zero overhead
+ */
+typedef struct {
+    /* Hash table: dynamic sizing with open addressing */
+    hash_table_t hash_table;
+
+    /* Route statistics */
     size_t total_routes;
 } cache_optimized_router_t;
 
-// 使用统一的hash函数（热路径函数，提示编译器内联）
+/* Use unified hash function (inline function) */
 static inline uint32_t route_hash(const char* str) {
-    if (!str) return 0;
-    
-    // 限制最大字符串长度以防止哈希冲突攻击
+    if (!str)
+        return 0;
+
     size_t len = strlen(str);
-    if (len > 1024) {
-        len = 1024;  // 截断过长的字符串
+    if (len > UVHTTP_MAX_ROUTE_PATH_LEN - 1) {
+        len = UVHTTP_MAX_ROUTE_PATH_LEN - 1;
     }
-    
+
     return (uint32_t)XXH64(str, len, UVHTTP_HASH_DEFAULT_SEED);
 }
 
-// 快速方法解析（热路径函数，提示编译器内联）
+/* Fast method parsing (inline function) */
 static inline uvhttp_method_t fast_method_parse(const char* method) {
-    if (!method) return UVHTTP_ANY;
-    
-    // 使用前缀快速判断
+    if (!method)
+        return UVHTTP_ANY;
+
+    /* Use prefix for fast determination */
     switch (method[0]) {
-        case 'G': return method[1] == 'E' ? UVHTTP_GET : UVHTTP_ANY;
-        case 'P': 
-            if (method[1] == 'O') return UVHTTP_POST;
-            if (method[1] == 'U') return UVHTTP_PUT;
-            return UVHTTP_ANY;
-        case 'D': return UVHTTP_DELETE;
-        case 'H': return UVHTTP_HEAD;
-        case 'O': return UVHTTP_OPTIONS;
-        case 'C': return UVHTTP_PATCH;
-        default: return UVHTTP_ANY;
+    case 'G':
+        return (method[1] == 'E' && method[2] == 'T' && method[3] == '\0')
+                   ? UVHTTP_GET
+                   : UVHTTP_ANY;
+    case 'P':
+        if (method[1] == 'O') {
+            return (method[2] == 'S' && method[3] == 'T' && method[4] == '\0')
+                       ? UVHTTP_POST
+                       : UVHTTP_ANY;
+        } else if (method[1] == 'U') {
+            return (method[2] == 'T' && method[3] == '\0') ? UVHTTP_PUT
+                                                           : UVHTTP_ANY;
+        }
+        break;
+    case 'D':
+        return (method[1] == 'E' && method[2] == 'L' && method[3] == 'E' &&
+                method[4] == 'T' && method[5] == 'E' && method[6] == '\0')
+                   ? UVHTTP_DELETE
+                   : UVHTTP_ANY;
+    case 'H':
+        return (method[1] == 'E' && method[2] == 'A' && method[3] == 'D' &&
+                method[4] == '\0')
+                   ? UVHTTP_HEAD
+                   : UVHTTP_ANY;
+    case 'O':
+        return (method[1] == 'P' && method[2] == 'T' && method[3] == 'I' &&
+                method[4] == 'O' && method[5] == 'N' && method[6] == 'S' &&
+                method[7] == '\0')
+                   ? UVHTTP_OPTIONS
+                   : UVHTTP_ANY;
+    case 'P':
+        return (method[1] == 'A' && method[2] == 'T' && method[3] == 'C' &&
+                method[4] == 'H' && method[5] == '\0')
+                   ? UVHTTP_PATCH
+                   : UVHTTP_ANY;
+    case 'T':
+        return (method[1] == 'R' && method[2] == 'A' && method[3] == 'C' &&
+                method[4] == 'E' && method[5] == '\0')
+                   ? UVHTTP_TRACE
+                   : UVHTTP_ANY;
+    case 'C':
+        return (method[1] == 'O' && method[2] == 'N' && method[3] == 'N' &&
+                method[4] == 'E' && method[5] == 'C' && method[6] == 'T' &&
+                method[7] == '\0')
+                   ? UVHTTP_CONNECT
+                   : UVHTTP_ANY;
     }
+    return UVHTTP_ANY;
 }
 
-// 创建缓存优化的路由器
-uvhttp_router_t* uvhttp_router_new(void) {
-    cache_optimized_router_t* router = uvhttp_calloc(1, sizeof(cache_optimized_router_t));
-    if (!router) {
-        return NULL;
+/* Initialize hash table */
+static uvhttp_error_t hash_table_init(hash_table_t* table, size_t initial_size) {
+    if (!table || initial_size == 0) {
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
-    return (uvhttp_router_t*)router;
+
+    table->entries = uvhttp_calloc(initial_size, sizeof(hash_entry_t));
+    if (!table->entries) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+
+    table->size = initial_size;
+    table->count = 0;
+    table->threshold = (size_t)(initial_size * UVHTTP_ROUTER_HASH_LOAD_FACTOR);
+
+    return UVHTTP_OK;
 }
 
-void uvhttp_router_free(uvhttp_router_t* router) {
-    if (!router) return;
-    
-    cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
-    
-    // 释放哈希表
-    for (int i = 0; i < ROUTE_HASH_SIZE; i++) {
-        route_hash_entry_t* entry = cr->hash_table[i];
-        while (entry) {
-            route_hash_entry_t* next = entry->next;
-            uvhttp_free((void*)entry->path);  // 释放路径字符串
-            uvhttp_free(entry);
-            entry = next;
+/* Resize hash table */
+static uvhttp_error_t hash_table_resize(hash_table_t* table, size_t new_size) {
+    if (!table || new_size == 0 || new_size > UVHTTP_ROUTER_HASH_MAX_SIZE) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    hash_entry_t* new_entries = uvhttp_calloc(new_size, sizeof(hash_entry_t));
+    if (!new_entries) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+
+    /* Rehash all entries using linear probing */
+    for (size_t i = 0; i < table->size; i++) {
+        hash_entry_t* old_entry = &table->entries[i];
+        if (old_entry->path[0] == '\0') {
+            continue;
+        }
+
+        uint32_t hash = route_hash(old_entry->path);
+        uint32_t index = hash % new_size;
+        uint32_t start_index = index;
+
+        /* Find empty slot using linear probing */
+        while (new_entries[index].path[0] != '\0') {
+            index = (index + 1) % new_size;
+
+            /* Prevent infinite loop */
+            if (index == start_index) {
+                uvhttp_free(new_entries);
+                return UVHTTP_ERROR_OUT_OF_MEMORY;
+            }
+        }
+
+        /* Copy entry */
+        memcpy(&new_entries[index], old_entry, sizeof(hash_entry_t));
+        new_entries[index].distance = 0;
+    }
+
+    uvhttp_free(table->entries);
+    table->entries = new_entries;
+    table->size = new_size;
+    table->threshold = (size_t)(new_size * UVHTTP_ROUTER_HASH_LOAD_FACTOR);
+
+    return UVHTTP_OK;
+}
+
+/* Find slot in hash table (open addressing with linear probing) */
+static uint32_t find_slot(hash_table_t* table, const char* path,
+                          uvhttp_method_t method) {
+    uint32_t hash = route_hash(path);
+    uint32_t index = hash % table->size;
+    uint32_t start_index = index;
+
+    while (1) {
+        hash_entry_t* entry = &table->entries[index];
+
+        if (entry->path[0] == '\0') {
+            return index;
+        }
+
+        if (strcmp(entry->path, path) == 0 && entry->method == method) {
+            return index;
+        }
+
+        index = (index + 1) % table->size;
+
+        /* Prevent infinite loop */
+        if (index == start_index) {
+            return UINT32_MAX;
         }
     }
-    
-    uvhttp_free(router);
 }
 
-// 添加路由到哈希表
+/* Add to hash table */
 static uvhttp_error_t add_to_hash_table(cache_optimized_router_t* cr,
-                                       const char* path,
-                                       uvhttp_method_t method,
-                                       uvhttp_request_handler_t handler) {
+                                        const char* path,
+                                        uvhttp_method_t method,
+                                        uvhttp_request_handler_t handler) {
     if (!cr || !path || !handler) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
-    uint32_t hash = route_hash(path) % ROUTE_HASH_SIZE;
-    
-    route_hash_entry_t* entry = uvhttp_alloc(sizeof(route_hash_entry_t));
-    if (!entry) {
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
-    }
-    
-    // 安全地复制字符串
-    size_t path_len = strlen(path);
-    char* path_copy = uvhttp_alloc(path_len + 1);
-    if (!path_copy) {
-        uvhttp_free(entry);
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
-    }
-    strncpy(path_copy, path, path_len);
-    path_copy[path_len] = '\0';
-    
-    entry->path = path_copy;
-    entry->method = method;
-    entry->handler = handler;
-    entry->next = cr->hash_table[hash];
-    cr->hash_table[hash] = entry;
-    
-    return UVHTTP_OK;
-}
 
-// 添加到热路径
-static uvhttp_error_t add_to_hot_routes(cache_optimized_router_t* cr,
-                                       const char* path,
-                                       uvhttp_method_t method,
-                                       uvhttp_request_handler_t handler) {
-    if (cr->hot_count >= 16) {
-        // 找到访问次数最少的替换
-        size_t min_index = 0;
-        unsigned int min_count = cr->access_count[0];
-        
-        for (size_t i = 1; i < 16; i++) {
-            if (cr->access_count[i] < min_count) {
-                min_count = cr->access_count[i];
-                min_index = i;
+    if (strlen(path) >= UVHTTP_MAX_ROUTE_PATH_LEN) {
+        return UVHTTP_ERROR_HEADER_TOO_LARGE;
+    }
+
+    hash_table_t* table = &cr->hash_table;
+
+    /* Check if resize is needed */
+    if (table->count >= table->threshold) {
+        size_t new_size = table->size * 2;
+        if (new_size > UVHTTP_ROUTER_HASH_MAX_SIZE) {
+            new_size = UVHTTP_ROUTER_HASH_MAX_SIZE;
+        }
+        if (new_size > table->size) {
+            uvhttp_error_t err = hash_table_resize(table, new_size);
+            if (err != UVHTTP_OK) {
+                return err;
             }
         }
-        
-        // 替换
-        snprintf(cr->hot_routes[min_index].path, sizeof(cr->hot_routes[min_index].path),
-                 "%s", path);
-        cr->hot_routes[min_index].method = method;
-        cr->hot_routes[min_index].handler = handler;
-        cr->access_count[min_index] = 0;
-    } else {
-        // 添加到热路径
-        snprintf(cr->hot_routes[cr->hot_count].path, sizeof(cr->hot_routes[cr->hot_count].path),
-                 "%s", path);
-        cr->hot_routes[cr->hot_count].method = method;
-        cr->hot_routes[cr->hot_count].handler = handler;
-        cr->access_count[cr->hot_count] = 0;
-        cr->hot_count++;
     }
-    
+
+    /* Find slot */
+    uint32_t slot = find_slot(table, path, method);
+    hash_entry_t* entry = &table->entries[slot];
+
+    /* Check if already exists */
+    if (entry->path[0] != '\0') {
+        if (strcmp(entry->path, path) == 0 && entry->method == method) {
+            return UVHTTP_ERROR_ALREADY_EXISTS;
+        }
+    }
+
+    /* Insert new entry */
+    uvhttp_safe_strncpy(entry->path, path, UVHTTP_MAX_ROUTE_PATH_LEN);
+    entry->method = method;
+    entry->handler = handler;
+    entry->access_count = 0;
+    entry->distance = 0;
+
+    table->count++;
+    cr->total_routes++;
+
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_router_add_route(uvhttp_router_t* router, 
-                                           const char* path, 
-                                           uvhttp_request_handler_t handler) {
-    return uvhttp_router_add_route_method(router, path, UVHTTP_ANY, handler);
+/* Find in hash table */
+static uvhttp_request_handler_t find_in_hash_table(cache_optimized_router_t* cr,
+                                                   const char* path,
+                                                   uvhttp_method_t method) {
+    if (!cr || !path) {
+        return NULL;
+    }
+
+    hash_table_t* table = &cr->hash_table;
+    uint32_t hash = route_hash(path);
+    uint32_t index = hash % table->size;
+    uint32_t start_index = index;
+
+    while (1) {
+        hash_entry_t* entry = &table->entries[index];
+
+        if (entry->path[0] == '\0') {
+            return NULL;
+        }
+
+        if (strcmp(entry->path, path) == 0 && entry->method == method) {
+            if (entry->access_count < UVHTTP_ACCESS_COUNTER_MAX) {
+                entry->access_count++;
+            }
+            return entry->handler;
+        }
+
+        index = (index + 1) % table->size;
+
+        /* Prevent infinite loop */
+        if (index == start_index) {
+            return NULL;
+        }
+    }
 }
 
-uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
-                                                const char* path,
-                                                uvhttp_method_t method,
-                                                uvhttp_request_handler_t handler) {
+/* ========== Public API Functions ========== */
+
+uvhttp_error_t uvhttp_router_new(uvhttp_router_t** router) {
+    if (!router) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    cache_optimized_router_t* cr =
+        uvhttp_calloc(1, sizeof(cache_optimized_router_t));
+    if (!cr) {
+        *router = NULL;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+
+    memset(cr, 0, sizeof(cache_optimized_router_t));
+
+    uvhttp_error_t err;
+
+    /* Initialize hash table */
+    err = hash_table_init(&cr->hash_table, UVHTTP_ROUTER_HASH_BASE_SIZE);
+    if (err != UVHTTP_OK) {
+        uvhttp_free(cr);
+        *router = NULL;
+        return err;
+    }
+
+    *router = (uvhttp_router_t*)cr;
+    return UVHTTP_OK;
+}
+
+void uvhttp_router_free(uvhttp_router_t* router) {
+    if (!router) {
+        return;
+    }
+
+    cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
+
+    /* Free hash table */
+    if (cr->hash_table.entries) {
+        uvhttp_free(cr->hash_table.entries);
+        cr->hash_table.entries = NULL;
+    }
+
+    uvhttp_free(cr);
+}
+
+uvhttp_error_t uvhttp_router_add_route(uvhttp_router_t* router,
+                                       const char* path,
+                                       uvhttp_request_handler_t handler) {
     if (!router || !path || !handler) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
+    return uvhttp_router_add_route_method(router, path, UVHTTP_ANY, handler);
+}
+
+uvhttp_error_t uvhttp_router_add_route_method(
+    uvhttp_router_t* router, const char* path, uvhttp_method_t method,
+    uvhttp_request_handler_t handler) {
+    if (!router || !path || !handler) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
     cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
-    
-    // 添加到哈希表
+
+    /* Add to hash table */
     uvhttp_error_t err = add_to_hash_table(cr, path, method, handler);
     if (err != UVHTTP_OK) {
         return err;
     }
-    
-    // 如果是前16个路由，加入热路径
-    if (cr->total_routes < 16) {
-        add_to_hot_routes(cr, path, method, handler);
-    }
-    
-    cr->total_routes++;
+
     return UVHTTP_OK;
 }
 
-// 热路径查找（缓存友好，提示编译器内联）
-static inline uvhttp_request_handler_t find_in_hot_routes(cache_optimized_router_t* cr,
-                                                          const char* path,
-                                                          uvhttp_method_t method) {
-    // 循环展开以减少分支预测失败
-    for (size_t i = 0; i < cr->hot_count; i += 4) {
-        // 批量比较4个路由
-        if ((cr->hot_routes[i].method == method || cr->hot_routes[i].method == UVHTTP_ANY) &&
-            strcmp(cr->hot_routes[i].path, path) == 0) {
-            cr->access_count[i]++;
-            return cr->hot_routes[i].handler;
-        }
-        
-        if (i + 1 < cr->hot_count &&
-            (cr->hot_routes[i + 1].method == method || cr->hot_routes[i + 1].method == UVHTTP_ANY) &&
-            strcmp(cr->hot_routes[i + 1].path, path) == 0) {
-            cr->access_count[i + 1]++;
-            return cr->hot_routes[i + 1].handler;
-        }
-        
-        if (i + 2 < cr->hot_count &&
-            (cr->hot_routes[i + 2].method == method || cr->hot_routes[i + 2].method == UVHTTP_ANY) &&
-            strcmp(cr->hot_routes[i + 2].path, path) == 0) {
-            cr->access_count[i + 2]++;
-            return cr->hot_routes[i + 2].handler;
-        }
-        
-        if (i + 3 < cr->hot_count &&
-            (cr->hot_routes[i + 3].method == method || cr->hot_routes[i + 3].method == UVHTTP_ANY) &&
-            strcmp(cr->hot_routes[i + 3].path, path) == 0) {
-            cr->access_count[i + 3]++;
-            return cr->hot_routes[i + 3].handler;
-        }
-    }
-    
-    return NULL;
-}
-
-// 哈希表查找
-static uvhttp_request_handler_t find_in_hash_table(cache_optimized_router_t* cr,
-                                                  const char* path,
-                                                  uvhttp_method_t method) {
-    uint32_t hash = route_hash(path) % ROUTE_HASH_SIZE;
-    
-    route_hash_entry_t* entry = cr->hash_table[hash];
-    while (entry) {
-        if ((entry->method == method || entry->method == UVHTTP_ANY) &&
-            strcmp(entry->path, path) == 0) {
-            return entry->handler;
-        }
-        entry = entry->next;
-    }
-    
-    return NULL;
-}
-
-
-/* 纯线性查找实现 */
-static uvhttp_request_handler_t find_handler_linear_only(
-    const uvhttp_router_t* router,
-    const char* path,
-    uvhttp_method_t method
-) {
-    if (!router || !path) {
-        return NULL;
-    }
-
-    cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
-    
-    /* 遍历所有路由进行线性查找 */
-    /* 由于当前架构限制，通过遍历哈希表实现线性查找 */
-    /* 在实际生产中，应该维护一个路由数组进行真正的线性查找 */
-    for (size_t i = 0; i < UVHTTP_ROUTER_HASH_SIZE; i++) {
-        route_hash_entry_t* entry = cr->hash_table[i];
-        while (entry) {
-            if (strcmp(entry->path, path) == 0 && entry->method == method) {
-                return entry->handler;
-            }
-            entry = entry->next;
-        }
-    }
-    
-    return NULL;
-}
-
-/* 纯哈希查找实现 */
-static uvhttp_request_handler_t find_handler_hash_only(
-    const uvhttp_router_t* router,
-    const char* path,
-    uvhttp_method_t method
-) {
-    if (!router || !path) {
-        return NULL;
-    }
-
-    cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
-    return find_in_hash_table(cr, path, method);
-}
-
-uvhttp_request_handler_t uvhttp_router_find_handler(const uvhttp_router_t* router,
-                                                   const char* path,
-                                                   const char* method) {
+uvhttp_request_handler_t uvhttp_router_find_handler(
+    const uvhttp_router_t* router, const char* path, const char* method) {
     if (!router || !path || !method) {
         return NULL;
     }
 
+    cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
     uvhttp_method_t method_enum = fast_method_parse(method);
 
-#if UVHTTP_ROUTER_SEARCH_MODE == 0
-    /* 纯线性查找模式 - 适用于小规模路由或资源受限环境 */
-    return find_handler_linear_only(router, path, method_enum);
-
-#elif UVHTTP_ROUTER_SEARCH_MODE == 1
-    /* 纯哈希查找模式 - 适用于中等规模路由 */
-    return find_handler_hash_only(router, path, method_enum);
-
-#else
-    /* 混合策略模式（默认） - 适用于大规模高并发场景 */
-    cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
-
-    /* 首先在热路径中查找（缓存友好） */
-    uvhttp_request_handler_t handler = find_in_hot_routes(cr, path, method_enum);
-    if (handler) {
-        return handler;
-    }
-
-    /* 然后在哈希表中查找 */
+    /* Search in hash table only */
     return find_in_hash_table(cr, path, method_enum);
-
-#endif
 }
 
-// 静态路由表（编译时确定）
-static const struct {
-    const char* path;
-    uvhttp_method_t method;
-    uvhttp_request_handler_t handler;
-} static_routes[] = {
-    { "/api/users", UVHTTP_GET, NULL },
-    { "/api/posts", UVHTTP_GET, NULL },
-    { "/health", UVHTTP_GET, NULL },
-    // 更多静态路由...
-};
-
-// 编译时优化的查找（使用二分查找）
-static uvhttp_request_handler_t find_static_route(const char* path, uvhttp_method_t method) {
-    // 这里可以使用编译时生成的完美哈希或二分查找
-    for (size_t i = 0; i < sizeof(static_routes) / sizeof(static_routes[0]); i++) {
-        if (static_routes[i].method == method && 
-            strcmp(static_routes[i].path, path) == 0) {
-            return static_routes[i].handler;
-        }
-    }
-    return NULL;
-}
-
-// 其他必要函数的简化实现
 uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
-                                      const char* path,
-                                      const char* method,
-                                      uvhttp_route_match_t* match) {
+                                   const char* path, const char* method,
+                                   uvhttp_route_match_t* match) {
     if (!router || !path || !method || !match) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
-    memset(match, 0, sizeof(uvhttp_route_match_t));
-    
-    uvhttp_request_handler_t handler = uvhttp_router_find_handler(router, path, method);
-    if (handler) {
-        match->handler = handler;
-        return UVHTTP_OK;
+
+    cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
+    uvhttp_method_t method_enum = fast_method_parse(method);
+
+    /* Search in hash table only */
+    uvhttp_request_handler_t handler = find_in_hash_table(cr, path, method_enum);
+
+    if (!handler) {
+        return UVHTTP_ERROR_NOT_FOUND;
     }
-    
-    return UVHTTP_ERROR_NOT_FOUND;
+
+    match->handler = handler;
+    match->param_count = 0;
+
+    return UVHTTP_OK;
+}
+
+uvhttp_error_t uvhttp_parse_path_params(const char* path,
+                                        uvhttp_param_t* params,
+                                        size_t* param_count) {
+    if (!path || !params || !param_count) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    *param_count = 0;
+    return UVHTTP_OK;
 }
 
 uvhttp_method_t uvhttp_method_from_string(const char* method) {
@@ -417,24 +430,27 @@ uvhttp_method_t uvhttp_method_from_string(const char* method) {
 
 const char* uvhttp_method_to_string(uvhttp_method_t method) {
     switch (method) {
-        case UVHTTP_GET: return UVHTTP_METHOD_GET;
-        case UVHTTP_POST: return UVHTTP_METHOD_POST;
-        case UVHTTP_PUT: return UVHTTP_METHOD_PUT;
-        case UVHTTP_DELETE: return UVHTTP_METHOD_DELETE;
-        case UVHTTP_HEAD: return UVHTTP_METHOD_HEAD;
-        case UVHTTP_OPTIONS: return UVHTTP_METHOD_OPTIONS;
-        case UVHTTP_PATCH: return UVHTTP_METHOD_PATCH;
-        default: return "UNKNOWN";
+    case UVHTTP_GET:
+        return "GET";
+    case UVHTTP_POST:
+        return "POST";
+    case UVHTTP_PUT:
+        return "PUT";
+    case UVHTTP_DELETE:
+        return "DELETE";
+    case UVHTTP_HEAD:
+        return "HEAD";
+    case UVHTTP_OPTIONS:
+        return "OPTIONS";
+    case UVHTTP_PATCH:
+        return "PATCH";
+    case UVHTTP_TRACE:
+        return "TRACE";
+    case UVHTTP_CONNECT:
+        return "CONNECT";
+    default:
+        return "UNKNOWN";
     }
 }
 
-uvhttp_error_t uvhttp_parse_path_params(const char* path,
-                                         uvhttp_param_t* params,
-                                         size_t* param_count) {
-    // 简化实现
-    (void)path;
-    (void)params;
-    *param_count = 0;
-    return UVHTTP_OK;
-}
-#endif /* UVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION */
+#endif /* UVHTTP_FEATURE_ROUTER_CACHE */

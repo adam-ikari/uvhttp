@@ -718,10 +718,119 @@ app_context_t* ctx = (app_context_t*)loop->data;
 ### 代码覆盖率
 
 当前代码覆盖率目标: 80%
+当前代码覆盖率: 42.9% (1904/4435 lines, 69.5% functions)
 
-使用 `./run_tests.sh` 运行测试并生成覆盖率报告。
+**低覆盖率模块**（需要添加更多测试）：
+- `uvhttp_static.c` - 17.2% (727 lines) - **最低**
+- `uvhttp_router.c` - 32.3% (328 lines)
+- `uvhttp_connection.c` - 32.2% (379 lines)
+- `uvhttp_error.c` - 22.5% (347 lines)
+- `uvhttp_request.c` - 40.5% (358 lines)
+- `uvhttp_server.c` - 38.4% (654 lines)
+- `uvhttp_tls.c` - 38.3% (282 lines)
+
+**高覆盖率模块**（已达标）：
+- `benchmark/test_bitfield.c` - 100% (8 lines)
+- `include/uvhttp_allocator.h` - 100% (9 lines)
+- `include/uvhttp_validation.h` - 100% (29 lines)
+- `src/uvhttp_error_helpers.c` - 100% (46 lines)
+- `src/uvhttp_utils.c` - 93.3% (60 lines)
+- `src/uvhttp_lru_cache.c` - 83.6% (256 lines)
+- `src/uvhttp_config.c` - 71.4% (227 lines)
+- `src/uvhttp_response.c` - 73.0% (270 lines)
+- `src/uvhttp_context.c` - 63.9% (108 lines)
+- `src/uvhttp_websocket.c` - 51.6% (347 lines)
+
+**新增测试文件**：
+- `test_static_comprehensive_coverage.cpp` - 静态文件综合测试
+- `test_router_enhanced_coverage.cpp` - 路由器增强测试
+- `test_connection_comprehensive_coverage.cpp` - 连接综合测试
+- `test_server_error_coverage.cpp` - 服务器错误处理测试
+
+**覆盖率提升策略**：
+1. **libuv Mock 测试**：项目已有 libuv mock 框架（`test/mock/libuv_mock.c`），但链接器 wrap 机制未启用
+2. **错误处理测试**：通过测试 NULL 参数和错误情况提升覆盖率
+3. **集成测试**：需要更多端到端测试来覆盖实际 HTTP 请求/响应流程
+4. **压力测试**：`test_stress` 已禁用，需要修复以提升覆盖率
+
+使用 `./run_tests.sh --detailed` 运行测试并生成覆盖率报告。
 
 ## 重要变更记录
+
+### 2026-02-05: 优化内存分配器配置逻辑并恢复自定义分配器支持
+
+**原因**: 之前的 `BUILD_WITH_MIMALLOC` 默认值为 `ON`，导致即使用户选择系统分配器（`UVHTTP_ALLOCATOR_TYPE=0`），mimalloc 仍然会被编译和链接。同时需要恢复自定义分配器选项（`UVHTTP_ALLOCATOR_TYPE=2`）。
+
+**变更内容**:
+- **CMakeLists.txt**:
+  - 修改 `BUILD_WITH_MIMALLOC` 的默认值逻辑，根据 `UVHTTP_ALLOCATOR_TYPE` 动态决定
+  - `UVHTTP_ALLOCATOR_TYPE=0`（系统）：默认 `BUILD_WITH_MIMALLOC=OFF`
+  - `UVHTTP_ALLOCATOR_TYPE=1`（mimalloc）：自动启用 `BUILD_WITH_MIMALLOC=ON`
+  - `UVHTTP_ALLOCATOR_TYPE=2`（自定义）：确保 `BUILD_WITH_MIMALLOC=OFF`
+  - 移除 `UVHTTP_FEATURE_ALLOCATOR` 的设置（不再需要）
+
+- **include/uvhttp_allocator.h**:
+  - 恢复自定义分配器实现（`UVHTTP_ALLOCATOR_TYPE=2`）
+  - 更新 `uvhttp_allocator_name()` 函数，正确返回分配器名称
+  - 三种分配器类型：系统、mimalloc、自定义
+
+- **include/uvhttp.h**:
+  - 移除 `UVHTTP_FEATURE_ALLOCATOR` 条件编译，始终包含 `uvhttp_allocator.h`
+  - 因为无论使用哪种分配器，都需要这个头文件提供的接口
+
+- **文档更新**:
+  - `docs/ADVANCED_BUILD_OPTIONS.md`: 更新分配器配置说明
+  - `docs/zh/ADVANCED_BUILD_OPTIONS.md`: 更新中文版分配器配置说明
+  - `docs/BUILD_CONFIGURATION_MATRIX.md`: 更新 BUILD_WITH_MIMALLOC 默认值，添加 UVHTTP_ALLOCATOR_TYPE 说明
+  - `docs/zh/BUILD_CONFIGURATION_MATRIX.md`: 更新中文版配置说明
+
+**影响**:
+- ✅ 系统分配器（`UVHTTP_ALLOCATOR_TYPE=0`）不再编译 mimalloc，减少编译时间和依赖
+- ✅ mimalloc 分配器（`UVHTTP_ALLOCATOR_TYPE=1`）自动启用，提供更好的用户体验
+- ✅ 自定义分配器（`UVHTTP_ALLOCATOR_TYPE=2`）完全恢复，支持应用层实现
+- ✅ 文档准确反映当前的配置逻辑
+- ✅ 三种配置验证通过：
+  - `UVHTTP_ALLOCATOR_TYPE=0`: mimalloc Support: OFF
+  - `UVHTTP_ALLOCATOR_TYPE=1`: mimalloc Support: ON
+  - `UVHTTP_ALLOCATOR_TYPE=2`: mimalloc Support: OFF
+
+**技术要点**:
+- `UVHTTP_ALLOCATOR_TYPE=1` 提供便捷的 mimalloc 使用方式，无需手动设置 `BUILD_WITH_MIMALLOC=ON`
+- `UVHTTP_ALLOCATOR_TYPE=2` 为高级用户提供完全的内存管理控制
+- 自定义分配器需要应用层实现以下函数：`uvhttp_custom_alloc`、`uvhttp_custom_free`、`uvhttp_custom_realloc`、`uvhttp_custom_calloc`
+- 所有分配器类型都使用统一的内联函数接口，零运行时开销
+
+### 2026-02-05: 修复集成测试编译错误并更新测试文档
+
+**原因**: 集成测试文件中定义了多个 HTTP 方法处理器但未注册到路由，导致编译器报错"定义但未使用的函数"。同时需要添加测试文档的中文版本。
+
+**变更内容**:
+- 修复 `test/integration/test_concurrency_e2e.c`：
+  - 使用 `uvhttp_router_add_route_method` 注册所有 HTTP 方法处理器（POST、PUT、DELETE、HEAD、OPTIONS）
+  - 删除 `concurrent_post_handler` 中未使用的 `body` 变量
+  - 使用枚举值（`UVHTTP_POST` 等）而非字符串常量（`UVHTTP_METHOD_POST` 等）
+- 修复 `test/integration/test_http_methods_e2e.c`：
+  - 使用 `uvhttp_router_add_route_method` 注册所有 HTTP 方法处理器（GET、POST、PUT、DELETE、PATCH、HEAD、OPTIONS）
+  - 删除未使用的 `g_stats` 全局变量和 `test_stats_t` 类型定义
+- 更新 `docs/guide/TESTING_GUIDE.md`：
+  - 更新测试目录结构，添加所有集成测试文件列表
+  - 添加路由方法注册最佳实践说明
+  - 强调使用枚举值而非字符串常量的重要性
+- 创建 `docs/zh/guide/TESTING_GUIDE.md`：
+  - 提供测试指南的完整中文翻译
+  - 包含所有章节：测试框架、Mock 框架、测试组织结构、测试编写规范、覆盖率提升策略、常见问题
+
+**影响**:
+- ✅ 所有测试文件编译成功，无警告无错误
+- ✅ 集成测试现在支持所有 HTTP 方法（GET、POST、PUT、DELETE、PATCH、HEAD、OPTIONS）
+- ✅ 测试文档提供中英双语版本，符合文档规范
+- ✅ 开发者现在了解如何正确使用 `uvhttp_router_add_route_method` API
+
+**技术要点**:
+- `uvhttp_method_t` 是枚举类型（定义在 `uvhttp_request.h`），不是字符串常量
+- 字符串常量（如 `UVHTTP_METHOD_POST`）用于其他目的，不能作为 `uvhttp_router_add_route_method` 的参数
+- 正确的做法：使用枚举值（如 `UVHTTP_POST`、`UVHTTP_PUT` 等）
+- 项目遵循零编译警告原则，所有未使用的函数必须被使用或删除
 
 ### 2026-01-28: 移除网络接口抽象层和更新内存管理
 

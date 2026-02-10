@@ -1,1 +1,5 @@
-{"status":"ok","data":"test"}
+{
+  "name": "uvhttp",
+  "version": "2.2.0",
+  "description": "High-performance HTTP server"
+}

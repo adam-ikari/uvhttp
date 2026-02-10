@@ -1,0 +1,30 @@
+# {{ funcFile.name }} Functions
+
+{% if funcFile.location %}**Defined at:** `{{ funcFile.location }}`
+{% endif %}{% if funcFile.functions.length > 0 %}
+
+## Functions
+
+{% for func in funcFile.functions %}### `{{ func.name }}`
+
+**Signature:**
+```c
+{{ func.returnType | linkTypes(structNames) }} {{ func.name }}({% for param in func.params %}{{ param.type | linkTypes(structNames) }} {{ param.name }}{% if not loop.last %}, {% endif %}{% endfor %})
+```
+
+**Parameters:**
+{% if func.params.length > 0 %}{% for param in func.params %}- `{{ param.name }}` ({{ param.type | linkTypes(structNames) }}): TBD
+{% endfor %}{% else %}None
+{% endif %}
+
+**Returns:**
+`{{ func.returnType | linkTypes(structNames) }}`
+
+{% if func.brief %}**Brief:**
+{{ func.brief | linkTypes(structNames) }}
+{% endif %}{% if func.detailed %}**Details:**
+{{ func.detailed | linkTypes(structNames) }}
+{% endif %}
+
+---
+{% endfor %}{% endif %}

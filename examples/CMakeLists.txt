@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
 project(uvhttp_examples C)
 
+# 设置编译中间产物输出到统一构建目录
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib)
+
 set(CMAKE_C_STANDARD 11)
 
 # 查找 UVHTTP

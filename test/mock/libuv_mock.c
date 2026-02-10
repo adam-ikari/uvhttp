@@ -47,6 +47,17 @@ typedef struct {
     int uv_write_result;
     int uv_is_active_result;
     int uv_is_closing_result;
+    int uv_idle_init_result;
+    int uv_timer_init_result;
+    int uv_timer_stop_result;
+    int uv_timer_start_result;
+    int uv_tcp_nodelay_result;
+    int uv_tcp_keepalive_result;
+    int uv_tcp_simultaneous_accepts_result;
+    int uv_accept_result;
+    int uv_fileno_result;
+    int uv_ip4_addr_result;
+    int uv_ip6_addr_result;
     unsigned int uv_close_delay_ms;
     
     /* 缓冲区设置 */
@@ -90,6 +101,17 @@ static libuv_mock_state_t g_mock_state = {
     .uv_write_result = 0,
     .uv_is_active_result = 1,
     .uv_is_closing_result = 0,
+    .uv_idle_init_result = 0,
+    .uv_timer_init_result = 0,
+    .uv_timer_stop_result = 0,
+    .uv_timer_start_result = 0,
+    .uv_tcp_nodelay_result = 0,
+    .uv_tcp_keepalive_result = 0,
+    .uv_tcp_simultaneous_accepts_result = 0,
+    .uv_accept_result = 0,
+    .uv_fileno_result = 0,
+    .uv_ip4_addr_result = 0,
+    .uv_ip6_addr_result = 0,
     .uv_close_delay_ms = 0,
     .alloc_buffer_size = 4096,
     .trigger_alloc_cb = true,
@@ -218,6 +240,14 @@ void libuv_mock_set_uv_is_active_result(int result) {
 
 void libuv_mock_set_uv_is_closing_result(int result) {
     g_mock_state.uv_is_closing_result = result;
+}
+
+void libuv_mock_set_uv_idle_init_result(int result) {
+    g_mock_state.uv_idle_init_result = result;
+}
+
+void libuv_mock_set_uv_timer_init_result(int result) {
+    g_mock_state.uv_timer_init_result = result;
 }
 
 void libuv_mock_set_uv_close_delay(unsigned int delay_ms) {
@@ -605,4 +635,307 @@ int __wrap_uv_is_closing(const uv_handle_t* handle) {
     (void)handle;
     
     return g_mock_state.uv_is_closing_result;
+}
+
+/* uv_idle_t 函数 */
+
+int __wrap_uv_idle_init(uv_loop_t* loop, uv_idle_t* handle) {
+    if (!g_mock_state.enabled) {
+        extern int __real_uv_idle_init(uv_loop_t*, uv_idle_t*);
+        return __real_uv_idle_init(loop, handle);
+    }
+    
+    g_mock_state.last_loop = loop;
+    (void)handle;
+    
+    if (g_mock_state.next_error != 0) {
+        int err = g_mock_state.next_error;
+        g_mock_state.next_error = 0;
+        return err;
+    }
+    
+    return g_mock_state.uv_idle_init_result;
+}
+
+/* uv_timer_t 函数 */
+
+int __wrap_uv_timer_init(uv_loop_t* loop, uv_timer_t* handle) {
+    if (!g_mock_state.enabled) {
+        extern int __real_uv_timer_init(uv_loop_t*, uv_timer_t*);
+        return __real_uv_timer_init(loop, handle);
+    }
+    
+    g_mock_state.last_loop = loop;
+    (void)handle;
+    
+    if (g_mock_state.next_error != 0) {
+        int err = g_mock_state.next_error;
+        g_mock_state.next_error = 0;
+        return err;
+    }
+    
+    return g_mock_state.uv_timer_init_result;
+}
+
+int __wrap_uv_timer_stop(uv_timer_t* handle) {
+    if (!g_mock_state.enabled) {
+        extern int __real_uv_timer_stop(uv_timer_t*);
+        return __real_uv_timer_stop(handle);
+    }
+    
+    (void)handle;
+    
+    if (g_mock_state.next_error != 0) {
+        int err = g_mock_state.next_error;
+        g_mock_state.next_error = 0;
+        return err;
+    }
+    
+    return g_mock_state.uv_timer_stop_result;
+}
+
+int __wrap_uv_timer_start(uv_timer_t* handle, uv_timer_cb cb, uint64_t timeout, uint64_t repeat) {
+    if (!g_mock_state.enabled) {
+        extern int __real_uv_timer_start(uv_timer_t*, uv_timer_cb, uint64_t, uint64_t);
+        return __real_uv_timer_start(handle, cb, timeout, repeat);
+    }
+    
+    (void)handle;
+    (void)cb;
+    (void)timeout;
+    (void)repeat;
+    
+    if (g_mock_state.next_error != 0) {
+        int err = g_mock_state.next_error;
+        g_mock_state.next_error = 0;
+        return err;
+    }
+    
+    return g_mock_state.uv_timer_start_result;
+}
+
+/* uv_tcp_t 函数 */
+
+int __wrap_uv_tcp_nodelay(uv_tcp_t* handle, int enable) {
+    if (!g_mock_state.enabled) {
+        extern int __real_uv_tcp_nodelay(uv_tcp_t*, int);
+        return __real_uv_tcp_nodelay(handle, enable);
+    }
+    
+    (void)handle;
+    (void)enable;
+    
+    if (g_mock_state.next_error != 0) {
+        int err = g_mock_state.next_error;
+        g_mock_state.next_error = 0;
+        return err;
+    }
+    
+    return g_mock_state.uv_tcp_nodelay_result;
+}
+
+int __wrap_uv_tcp_keepalive(uv_tcp_t* handle, int enable, unsigned int delay) {
+    if (!g_mock_state.enabled) {
+        extern int __real_uv_tcp_keepalive(uv_tcp_t*, int, unsigned int);
+        return __real_uv_tcp_keepalive(handle, enable, delay);
+    }
+    
+    (void)handle;
+    (void)enable;
+    (void)delay;
+    
+    if (g_mock_state.next_error != 0) {
+        int err = g_mock_state.next_error;
+        g_mock_state.next_error = 0;
+        return err;
+    }
+    
+    return g_mock_state.uv_tcp_keepalive_result;
+}
+
+int __wrap_uv_tcp_simultaneous_accepts(uv_tcp_t* handle, int enable) {
+    if (!g_mock_state.enabled) {
+        extern int __real_uv_tcp_simultaneous_accepts(uv_tcp_t*, int);
+        return __real_uv_tcp_simultaneous_accepts(handle, enable);
+    }
+    
+    (void)handle;
+    (void)enable;
+    
+    if (g_mock_state.next_error != 0) {
+        int err = g_mock_state.next_error;
+        g_mock_state.next_error = 0;
+        return err;
+    }
+    
+    return g_mock_state.uv_tcp_simultaneous_accepts_result;
+}
+
+/* uv_stream_t 函数 */
+
+int __wrap_uv_accept(uv_stream_t* server, uv_stream_t* client) {
+    if (!g_mock_state.enabled) {
+        extern int __real_uv_accept(uv_stream_t*, uv_stream_t*);
+        return __real_uv_accept(server, client);
+    }
+    
+    g_mock_state.last_stream = server;
+    (void)client;
+    
+    if (g_mock_state.next_error != 0) {
+        int err = g_mock_state.next_error;
+        g_mock_state.next_error = 0;
+        return err;
+    }
+    
+    return g_mock_state.uv_accept_result;
+}
+
+/* uv_handle_t 函数 */
+
+int __wrap_uv_fileno(const uv_handle_t* handle, uv_os_fd_t* fd) {
+    if (!g_mock_state.enabled) {
+        extern int __real_uv_fileno(const uv_handle_t*, uv_os_fd_t*);
+        return __real_uv_fileno(handle, fd);
+    }
+    
+    (void)handle;
+    (void)fd;
+    
+    if (g_mock_state.next_error != 0) {
+        int err = g_mock_state.next_error;
+        g_mock_state.next_error = 0;
+        return err;
+    }
+    
+    return g_mock_state.uv_fileno_result;
+}
+
+/* uv_util_t 函数 */
+
+int __wrap_uv_ip4_addr(const char* ip, int port, struct sockaddr_in* addr) {
+    if (!g_mock_state.enabled) {
+        extern int __real_uv_ip4_addr(const char*, int, struct sockaddr_in*);
+        return __real_uv_ip4_addr(ip, port, addr);
+    }
+    
+    (void)ip;
+    (void)port;
+    (void)addr;
+    
+    if (g_mock_state.next_error != 0) {
+        int err = g_mock_state.next_error;
+        g_mock_state.next_error = 0;
+        return err;
+    }
+    
+    return g_mock_state.uv_ip4_addr_result;
+}
+
+int __wrap_uv_ip6_addr(const char* ip, int port, struct sockaddr_in6* addr) {
+    if (!g_mock_state.enabled) {
+        extern int __real_uv_ip6_addr(const char*, int, struct sockaddr_in6*);
+        return __real_uv_ip6_addr(ip, port, addr);
+    }
+    
+    (void)ip;
+    (void)port;
+    (void)addr;
+    
+    if (g_mock_state.next_error != 0) {
+        int err = g_mock_state.next_error;
+        g_mock_state.next_error = 0;
+        return err;
+    }
+    
+    return g_mock_state.uv_ip6_addr_result;
+}
+
+/* 全局变量用于 uv_strerror 和 uv_hrtime */
+
+static char g_uv_strerror_msg[256] = "Unknown error";
+static uint64_t g_uv_hrtime_value = 0;
+static uv_buf_t g_uv_buf_init_value = {0, 0};
+
+const char* __wrap_uv_strerror(int err) {
+    if (!g_mock_state.enabled) {
+        extern const char* __real_uv_strerror(int);
+        return __real_uv_strerror(err);
+    }
+    
+    (void)err;
+    return g_uv_strerror_msg;
+}
+
+uint64_t __wrap_uv_hrtime(void) {
+    if (!g_mock_state.enabled) {
+        extern uint64_t __real_uv_hrtime(void);
+        return __real_uv_hrtime();
+    }
+    
+    return g_uv_hrtime_value;
+}
+
+uv_buf_t __wrap_uv_buf_init(char* base, size_t len) {
+    if (!g_mock_state.enabled) {
+        extern uv_buf_t __real_uv_buf_init(char*, size_t);
+        return __real_uv_buf_init(base, len);
+    }
+    
+    (void)base;
+    (void)len;
+    return g_uv_buf_init_value;
+}
+
+/* ========== Setter 函数 ========== */
+
+void libuv_mock_set_uv_timer_stop_result(int result) {
+    g_mock_state.uv_timer_stop_result = result;
+}
+
+void libuv_mock_set_uv_timer_start_result(int result) {
+    g_mock_state.uv_timer_start_result = result;
+}
+
+void libuv_mock_set_uv_tcp_nodelay_result(int result) {
+    g_mock_state.uv_tcp_nodelay_result = result;
+}
+
+void libuv_mock_set_uv_tcp_keepalive_result(int result) {
+    g_mock_state.uv_tcp_keepalive_result = result;
+}
+
+void libuv_mock_set_uv_tcp_simultaneous_accepts_result(int result) {
+    g_mock_state.uv_tcp_simultaneous_accepts_result = result;
+}
+
+void libuv_mock_set_uv_accept_result(int result) {
+    g_mock_state.uv_accept_result = result;
+}
+
+void libuv_mock_set_uv_fileno_result(int result) {
+    g_mock_state.uv_fileno_result = result;
+}
+
+void libuv_mock_set_uv_ip4_addr_result(int result) {
+    g_mock_state.uv_ip4_addr_result = result;
+}
+
+void libuv_mock_set_uv_ip6_addr_result(int result) {
+    g_mock_state.uv_ip6_addr_result = result;
+}
+
+void libuv_mock_set_uv_strerror(const char* error_msg) {
+    if (error_msg) {
+        strncpy(g_uv_strerror_msg, error_msg, sizeof(g_uv_strerror_msg) - 1);
+        g_uv_strerror_msg[sizeof(g_uv_strerror_msg) - 1] = '\0';
+    }
+}
+
+void libuv_mock_set_uv_hrtime(uint64_t hrtime) {
+    g_uv_hrtime_value = hrtime;
+}
+
+void libuv_mock_set_uv_buf_init_result(uv_buf_t buf) {
+    g_uv_buf_init_value = buf;
 }

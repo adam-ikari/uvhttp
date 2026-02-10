@@ -98,39 +98,9 @@ TEST(UvhttpUtilsTest, IsValidStatusCode) {
     EXPECT_EQ(uvhttp_is_valid_status_code(600), FALSE);
 }
 
-TEST(UvhttpUtilsTest, IsValidContentType) {
-    /* 测试 Content-Type 验证 */
-    
-    /* 有效 Content-Type */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain"), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("application/json"), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("application/octet-stream"), TRUE);
-    
-    /* 无效 Content-Type */
-    EXPECT_EQ(uvhttp_is_valid_content_type(nullptr), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_content_type(""), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("text"), FALSE);  /* 缺少 '/' */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/html; charset=utf-8"), FALSE);  /* 包含分号 */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain; charset=\"utf-8\""), FALSE);  /* 包含引号 */
-}
+/* uvhttp_is_valid_content_type 已删除 - 完全未使用 */
 
-TEST(UvhttpUtilsTest, IsValidStringLength) {
-    /* 测试字符串长度验证 */
-    
-    /* 有效字符串 */
-    EXPECT_EQ(uvhttp_is_valid_string_length("Hello", 10), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("Hello", 5), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("", 10), TRUE);
-    
-    /* 无效字符串 */
-    EXPECT_EQ(uvhttp_is_valid_string_length(nullptr, 10), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("Hello", 4), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("Hello World", 5), FALSE);
-    
-    /* 边界值 */
-    EXPECT_EQ(uvhttp_is_valid_string_length("12345", 5), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("12345", 4), FALSE);
-}
+/* uvhttp_is_valid_string_length 已删除 - 完全未使用 */
 
 TEST(UvhttpUtilsTest, SendUnifiedResponse) {
     /* 测试统一响应发送 */
@@ -405,43 +375,8 @@ TEST(UvhttpUtilsTest, SafeStrcpySpecialCharacters) {
     EXPECT_STREQ(dest, "Hello");
 }
 
-TEST(UvhttpUtilsTest, ContentTypeValidation) {
-    /* 测试 Content-Type 验证细节 */
-    
-    /* 基本类型 */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain"), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("application/json"), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("image/png"), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("video/mp4"), TRUE);
-    
-    /* 带参数的类型（无效，因为包含分号） */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain; charset=utf-8"), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("application/json; charset=utf-8"), FALSE);
-    
-    /* 包含分号的类型（无效） */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain; charset=utf-8; param=value"), FALSE);
-    
-    /* 包含引号的类型（无效） */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain; charset=\"utf-8\""), FALSE);
-    
-    /* 包含其他非法字符的类型 */
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain; param=value"), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_content_type("text/plain(param=value)"), FALSE);
-}
-
-TEST(UvhttpUtilsTest, StringLengthValidation) {
-    /* 测试字符串长度验证细节 */
-    
-    /* 边界值测试 */
-    EXPECT_EQ(uvhttp_is_valid_string_length("", 0), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("a", 1), TRUE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("ab", 2), TRUE);
-    
-    /* 超出边界 */
-    EXPECT_EQ(uvhttp_is_valid_string_length("a", 0), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("ab", 1), FALSE);
-    EXPECT_EQ(uvhttp_is_valid_string_length("abc", 2), FALSE);
-}
+/* uvhttp_is_valid_content_type 已删除 - 完全未使用 */
+/* uvhttp_is_valid_string_length 已删除 - 完全未使用 */
 
 TEST(UvhttpUtilsTest, StatusCodeRange) {
     /* 测试状态码范围 */

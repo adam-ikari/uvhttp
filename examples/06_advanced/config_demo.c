@@ -260,7 +260,7 @@ int config_api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
 
 // 配置变化监控回调
 void on_config_change(const char* key, const void* old_value, const void* new_value) {
-    printf("🔧 配置变化通知: %s\n", key);
+    printf(" 配置变化通知: %s\n", key);
     
     if (strcmp(key, "max_connections") == 0) {
         int old_conn = *(const int*)old_value;
@@ -300,7 +300,7 @@ void config_adjustment_timer(uv_timer_t* handle) {
     
     // 每10次调整打印一次状态
     if (adjustment_count % 10 == 0) {
-        printf("📊 服务器状态: 活动连接=%zu, 总请求=%d, 最大连接=%d\n",
+        printf(" 服务器状态: 活动连接=%zu, 总请求=%d, 最大连接=%d\n",
                g_server ? g_server->active_connections : 0,
                g_request_count,
                current->max_connections);
@@ -311,19 +311,19 @@ void config_adjustment_timer(uv_timer_t* handle) {
 void print_config_info(const uvhttp_config_t* config) {
     printf("=== 服务器配置信息 ===\n");
     printf("🔗 最大连接数: %d\n", config->max_connections);
-    printf("📝 每连接最大请求数: %d\n", config->max_requests_per_connection);
+    printf(" 每连接最大请求数: %d\n", config->max_requests_per_connection);
     printf("💾 最大请求体大小: %zuMB\n", config->max_body_size / (1024 * 1024));
     printf("📄 最大请求头大小: %zuKB\n", config->max_header_size / 1024);
     printf("📖 读取缓冲区大小: %zuKB\n", config->read_buffer_size / 1024);
     printf("📋 监听队列大小: %d\n", config->backlog);
     printf("🗜️  启用压缩: %s\n", config->enable_compression ? "是" : "否");
-    printf("🔒 启用TLS: %s\n", config->enable_tls ? "是" : "否");
+    printf(" 启用TLS: %s\n", config->enable_tls ? "是" : "否");
     printf("========================\n");
 }
 
 // 演示不同的配置加载方式
 uvhttp_config_t* load_config_demo() {
-    printf("🔧 配置加载演示\n");
+    printf(" 配置加载演示\n");
     
     uvhttp_config_t* config = NULL;
     uvhttp_error_t result = uvhttp_config_new(&config);
@@ -336,50 +336,9 @@ uvhttp_config_t* load_config_demo() {
     printf("1️⃣ 设置默认配置...\n");
     uvhttp_config_set_defaults(config);
     printf("   默认最大连接数: %d\n", config->max_connections);
-    
-    // 2. 尝试从配置文件加载
-    printf("2️⃣ 尝试从配置文件加载...\n");
-    if (uvhttp_config_load_file(config, "uvhttp_demo.conf") == UVHTTP_OK) {
-        printf("   ✅ 配置文件加载成功\n");
-        printf("   文件配置最大连接数: %d\n", config->max_connections);
-    } else {
-        printf("   ⚠️  配置文件加载失败，将创建示例配置文件\n");
-        
-        // 创建示例配置文件
-        FILE* conf_file = fopen("uvhttp_demo.conf", "w");
-        if (conf_file) {
-            fprintf(conf_file, "# UVHTTP 配置演示文件\n");
-            fprintf(conf_file, "# 服务器配置\n");
-            fprintf(conf_file, "max_connections=2500\n");
-            fprintf(conf_file, "max_requests_per_connection=150\n");
-            fprintf(conf_file, "backlog=1024\n\n");
-            fprintf(conf_file, "# 性能配置\n");
-            fprintf(conf_file, "max_body_size=2097152\n");
-            fprintf(conf_file, "max_header_size=16384\n");
-            fprintf(conf_file, "read_buffer_size=16384\n\n");
-            fprintf(conf_file, "# 安全配置\n");
-            fprintf(conf_file, "rate_limit_window=60\n");
-            fprintf(conf_file, "enable_compression=1\n");
-            fprintf(conf_file, "enable_tls=0\n");
-            fclose(conf_file);
-            printf("   📝 已创建示例配置文件: uvhttp_demo.conf\n");
-            
-            // 重新加载配置文件
-            uvhttp_config_load_file(config, "uvhttp_demo.conf");
-        }
-    }
-    
-    // 3. 从环境变量加载（会覆盖文件配置）
-    printf("3️⃣ 从环境变量加载配置...\n");
-    if (uvhttp_config_load_env(config) == UVHTTP_OK) {
-        printf("   ✅ 环境变量加载成功\n");
-        printf("   环境变量配置最大连接数: %d\n", config->max_connections);
-    } else {
-        printf("   ℹ️  未设置相关环境变量\n");
-    }
-    
-    // 4. 代码中直接覆盖某些配置
-    printf("4️⃣ 代码中自定义配置...\n");
+
+    // 2. 代码中直接覆盖某些配置
+    printf("2️⃣ 代码中自定义配置...\n");
     config->max_connections = 3000;  // 演示用，实际中应该基于需求设置
     config->max_requests_per_connection = 200;
     printf("   代码设置最大连接数: %d\n", config->max_connections);
@@ -387,9 +346,9 @@ uvhttp_config_t* load_config_demo() {
     // 5. 验证配置
     printf("5️⃣ 验证配置参数...\n");
     if (uvhttp_config_validate(config) == UVHTTP_OK) {
-        printf("   ✅ 配置验证通过\n");
+        printf("    配置验证通过\n");
     } else {
-        printf("   ❌ 配置验证失败\n");
+        printf("    配置验证失败\n");
         uvhttp_config_free(config);
         return NULL;
     }
@@ -398,19 +357,19 @@ uvhttp_config_t* load_config_demo() {
 }
 
 int main(int argc, char* argv[]) {
-    printf("🚀 UVHTTP 配置管理演示服务器启动中...\n\n");
+    printf(" UVHTTP 配置管理演示服务器启动中...\n\n");
     
     // 获取事件循环
     uv_loop_t* loop = uv_default_loop();
     if (!loop) {
-        fprintf(stderr, "❌ 获取事件循环失败\n");
+        fprintf(stderr, " 获取事件循环失败\n");
         return 1;
     }
     
     // 创建应用上下文
     app_context_t* ctx = (app_context_t*)malloc(sizeof(app_context_t));
     if (!ctx) {
-        fprintf(stderr, "❌ 无法分配应用上下文\n");
+        fprintf(stderr, " 无法分配应用上下文\n");
         return 1;
     }
     memset(ctx, 0, sizeof(app_context_t));
@@ -426,7 +385,7 @@ int main(int argc, char* argv[]) {
     // 演示配置加载
     uvhttp_config_t* config = load_config_demo();
     if (!config) {
-        fprintf(stderr, "❌ 配置加载失败\n");
+        fprintf(stderr, " 配置加载失败\n");
         free(ctx);
         return 1;
     }
@@ -445,7 +404,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     if (!ctx->server) {
-        fprintf(stderr, "❌ 服务器创建失败\n");
+        fprintf(stderr, " 服务器创建失败\n");
         uvhttp_config_free(config);
         free(ctx);
         return 1;
@@ -457,7 +416,7 @@ int main(int argc, char* argv[]) {
     // 创建上下文
     uvhttp_error_t result_context = uvhttp_context_create(loop, &ctx->context);
     if (result_context != UVHTTP_OK) {
-        fprintf(stderr, "❌ 上下文创建失败\n");
+        fprintf(stderr, " 上下文创建失败\n");
         uvhttp_server_free(ctx->server);
         uvhttp_config_free(config);
         free(ctx);
@@ -467,13 +426,13 @@ int main(int argc, char* argv[]) {
     // 设置全局配置（重要：这会消除"Global configuration not initialized"警告）
     uvhttp_config_set_current(ctx->context, config);
 
-    printf("✅ 服务器创建成功\n");
+    printf(" 服务器创建成功\n");
     
     // 创建路由器
     printf("\n🛣️  设置路由...\n");
     uvhttp_error_t router_result = uvhttp_router_new(&ctx->router);
     if (router_result != UVHTTP_OK) {
-        fprintf(stderr, "❌ 路由器创建失败: %s\n", uvhttp_error_string(router_result));
+        fprintf(stderr, " 路由器创建失败: %s\n", uvhttp_error_string(router_result));
         uvhttp_server_free(ctx->server);
         uvhttp_context_destroy(ctx->context);
         uvhttp_config_free(config);
@@ -485,22 +444,22 @@ int main(int argc, char* argv[]) {
     uvhttp_router_add_route(ctx->router, "/", demo_handler);
     uvhttp_router_add_route(ctx->router, "/config", config_api_handler);
     ctx->server->router = ctx->router;
-    printf("✅ 路由设置完成\n");
+    printf(" 路由设置完成\n");
     
     // 启用配置变化监控
     printf("\n👂 启用配置变化监控...\n");
     uvhttp_config_monitor_changes(ctx->context, on_config_change);
-    printf("✅ 配置监控已启用\n");
+    printf(" 配置监控已启用\n");
     
     // 启动配置动态调整定时器
     printf("\n⏰ 启动动态配置调整定时器...\n");
     ctx->config_timer = (uv_timer_t*)uvhttp_alloc(sizeof(uv_timer_t));
     uv_timer_init(loop, ctx->config_timer);
     uv_timer_start(ctx->config_timer, config_adjustment_timer, 10000, 10000); // 10秒后开始，每10秒执行一次
-    printf("✅ 定时器已启动（每10秒检查一次）\n");
+    printf(" 定时器已启动（每10秒检查一次）\n");
     
     // 启动服务器监听
-    printf("\n🎯 启动服务器监听...\n");
+    printf("\n 启动服务器监听...\n");
     int port = 8080;
     if (argc > 1) {
         port = atoi(argv[1]);
@@ -511,7 +470,7 @@ int main(int argc, char* argv[]) {
     
     uvhttp_error_t result = uvhttp_server_listen(ctx->server, "0.0.0.0", port);
     if (result != UVHTTP_OK) {
-        fprintf(stderr, "❌ 服务器启动失败，错误码: %d\n", result);
+        fprintf(stderr, " 服务器启动失败，错误码: %d\n", result);
         uvhttp_server_free(ctx->server);
         uvhttp_context_destroy(ctx->context);
         uvhttp_config_free(config);
@@ -519,10 +478,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    printf("✅ 服务器启动成功！\n");
+    printf(" 服务器启动成功！\n");
     printf("🌍 服务器地址: http://localhost:%d\n", port);
-    printf("📊 配置API: http://localhost:%d/config\n", port);
-    printf("🔧 动态更新示例: curl 'http://localhost:%d/config?action=update&max_connections=3500'\n", port);
+    printf(" 配置API: http://localhost:%d/config\n", port);
+    printf(" 动态更新示例: curl 'http://localhost:%d/config?action=update&max_connections=3500'\n", port);
     printf("\n按 Ctrl+C 停止服务器\n\n");
     
     // 启动事件循环

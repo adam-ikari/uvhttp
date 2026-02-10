@@ -31,20 +31,17 @@ jobs:
       
       - name: CodeQL Analysis
         if: inputs.scan-type == 'codeql' || inputs.scan-type == 'all'
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
-          languages: cpp
           queries: security-extended,security-and-quality
       
       - name: Autobuild for CodeQL
         if: inputs.scan-type == 'codeql' || inputs.scan-type == 'all'
-        uses: github/codeql-action/autobuild@v2
-      
+        uses: github/codeql-action/autobuild@v3
+
       - name: Perform CodeQL Analysis
         if: inputs.scan-type == 'codeql' || inputs.scan-type == 'all'
-        uses: github/codeql-action/analyze@v2
-        with:
-          category: "/language:cpp"
+        uses: github/codeql-action/analyze@v3
       
       - name: Install cppcheck
         if: inputs.scan-type == 'cppcheck' || inputs.scan-type == 'all'

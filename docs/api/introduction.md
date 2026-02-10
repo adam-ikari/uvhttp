@@ -4,6 +4,14 @@
 
 UVHTTP 提供了一套简洁的 C API，用于构建高性能的 HTTP/1.1 和 WebSocket 服务器。
 
+## 📌 平台支持
+
+**当前支持**: Linux
+
+**未来计划**: macOS, Windows, FreeBSD, WebAssembly (WASM) 和其他 Unix-like 系统
+
+UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中扩展对其他操作系统和平台的支持。
+
 ## 核心模块
 
 ### 服务器 (uvhttp_server)

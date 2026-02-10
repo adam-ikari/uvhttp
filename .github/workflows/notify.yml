@@ -5,8 +5,8 @@ on:
   workflow_run:
     workflows:
       - "CI/CD - PR Quick Validation"
-      - "CI/CD - Push Complete Validation"
-      - "CI/CD - Nightly Deep Testing"
+      - "CI/CD - Push Full Validation"
+      - "CI/CD - Nightly Deep Test"
       - "CI/CD - Release Build"
     types:
       - completed
