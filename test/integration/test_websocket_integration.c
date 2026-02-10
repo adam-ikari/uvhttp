@@ -60,11 +60,11 @@ int main(int argc, char** argv) {
             return 1;
         }
     }
-
-
-    /* 创建服务器 */
-    uvhttp_server_builder_t* server = NULL;
-    uvhttp_error_t result = uvhttp_server_create(host, port, &server);
+    
+        /* 创建服务器 */
+        uv_loop_t* loop = uv_default_loop();
+        uvhttp_server_builder_t* server = NULL;
+        uvhttp_error_t result = uvhttp_server_create(loop, host, port, &server);
     if (!server) {
         fprintf(stderr, "无法创建服务器\n");
         return 1;

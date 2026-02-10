@@ -342,7 +342,7 @@ TEST(UvhttpWebsocketFullCoverageTest, WsVerifyAcceptNull) {
 
 /* 测试WebSocket连接创建和释放 */
 TEST(UvhttpWebsocketFullCoverageTest, WsConnectionCreateFree) {
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 1);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     EXPECT_EQ(conn->state, UVHTTP_WS_STATE_CONNECTING);
     EXPECT_EQ(conn->is_server, 1);
@@ -352,7 +352,7 @@ TEST(UvhttpWebsocketFullCoverageTest, WsConnectionCreateFree) {
 
 /* 测试WebSocket连接创建 - 客户端 */
 TEST(UvhttpWebsocketFullCoverageTest, WsConnectionCreateClient) {
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 0);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 0, NULL);
     ASSERT_NE(conn, nullptr);
     EXPECT_EQ(conn->is_server, 0);
     
@@ -364,7 +364,7 @@ TEST(UvhttpWebsocketFullCoverageTest, WsConnectionCreateWithSsl) {
     mbedtls_ssl_context ssl;
     /* 注意：这里只是测试API，不初始化SSL上下文 */
     
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, &ssl, 1);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, &ssl, 1, NULL);
     ASSERT_NE(conn, nullptr);
     EXPECT_EQ(conn->ssl, &ssl);
     
@@ -373,7 +373,7 @@ TEST(UvhttpWebsocketFullCoverageTest, WsConnectionCreateWithSsl) {
 
 /* 测试设置回调函数 */
 TEST(UvhttpWebsocketFullCoverageTest, WsSetCallbacks) {
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 1);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     uvhttp_ws_on_message_callback on_msg = (uvhttp_ws_on_message_callback)0x1;
@@ -391,7 +391,7 @@ TEST(UvhttpWebsocketFullCoverageTest, WsSetCallbacks) {
 
 /* 测试设置回调函数 - NULL参数 */
 TEST(UvhttpWebsocketFullCoverageTest, WsSetCallbacksNull) {
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 1);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     /* NULL回调应该安全处理 */
@@ -433,7 +433,7 @@ TEST(UvhttpWebsocketFullCoverageTest, WsConnectionSize) {
 
 /* 测试配置结构 */
 TEST(UvhttpWebsocketFullCoverageTest, WsConfigDefaults) {
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 1);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     /* 验证默认配置 */
@@ -448,7 +448,7 @@ TEST(UvhttpWebsocketFullCoverageTest, WsConfigDefaults) {
 
 /* 测试统计信息初始化 */
 TEST(UvhttpWebsocketFullCoverageTest, WsStatsInitialization) {
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 1);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     /* 验证统计信息初始化为0 */
@@ -462,7 +462,7 @@ TEST(UvhttpWebsocketFullCoverageTest, WsStatsInitialization) {
 
 /* 测试缓冲区初始化 */
 TEST(UvhttpWebsocketFullCoverageTest, WsBufferInitialization) {
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 1);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     /* 验证接收缓冲区已分配 */
@@ -484,7 +484,7 @@ TEST(UvhttpWebsocketFullCoverageTest, WsBufferInitialization) {
 
 /* 测试用户数据初始化 */
 TEST(UvhttpWebsocketFullCoverageTest, WsUserdataInitialization) {
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 1);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
     
     /* 验证用户数据初始化为NULL */
@@ -500,7 +500,7 @@ TEST(UvhttpWebsocketFullCoverageTest, WsUserdataInitialization) {
 
 /* 测试客户端key初始化 */
 TEST(UvhttpWebsocketFullCoverageTest, WsClientKeyInitialization) {
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 0);
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(-1, NULL, 0, NULL);
     ASSERT_NE(conn, nullptr);
     
     /* 验证客户端key初始化为空 */

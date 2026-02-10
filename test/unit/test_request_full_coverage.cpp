@@ -273,6 +273,7 @@ TEST(UvhttpRequestTest, GetHeader) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
     
+    request.headers_capacity = UVHTTP_INLINE_HEADERS_CAPACITY;
     strcpy(request.headers[0].name, "Content-Type");
     strcpy(request.headers[0].value, "application/json");
     request.header_count = 1;
@@ -286,6 +287,7 @@ TEST(UvhttpRequestTest, GetHeaderCaseInsensitive) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
     
+    request.headers_capacity = UVHTTP_INLINE_HEADERS_CAPACITY;
     strcpy(request.headers[0].name, "Content-Type");
     strcpy(request.headers[0].value, "application/json");
     request.header_count = 1;
@@ -302,6 +304,7 @@ TEST(UvhttpRequestTest, GetHeaderMultiple) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
     
+    request.headers_capacity = UVHTTP_INLINE_HEADERS_CAPACITY;
     strcpy(request.headers[0].name, "Content-Type");
     strcpy(request.headers[0].value, "application/json");
     strcpy(request.headers[1].name, "Authorization");
@@ -623,6 +626,7 @@ TEST(UvhttpRequestTest, GetClientIpForwarded) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
     
+    request.headers_capacity = UVHTTP_INLINE_HEADERS_CAPACITY;
     strcpy(request.headers[0].name, "X-Forwarded-For");
     strcpy(request.headers[0].value, "192.168.1.1");
     request.header_count = 1;
@@ -636,6 +640,7 @@ TEST(UvhttpRequestTest, GetClientIpForwardedMultiple) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
     
+    request.headers_capacity = UVHTTP_INLINE_HEADERS_CAPACITY;
     strcpy(request.headers[0].name, "X-Forwarded-For");
     strcpy(request.headers[0].value, "192.168.1.1, 10.0.0.1");
     request.header_count = 1;
@@ -649,6 +654,7 @@ TEST(UvhttpRequestTest, GetClientIpRealIp) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
     
+    request.headers_capacity = UVHTTP_INLINE_HEADERS_CAPACITY;
     strcpy(request.headers[0].name, "X-Real-IP");
     strcpy(request.headers[0].value, "192.168.1.2");
     request.header_count = 1;
@@ -662,6 +668,7 @@ TEST(UvhttpRequestTest, GetClientIpForwardedPriority) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
     
+    request.headers_capacity = UVHTTP_INLINE_HEADERS_CAPACITY;
     strcpy(request.headers[0].name, "X-Forwarded-For");
     strcpy(request.headers[0].value, "192.168.1.1");
     strcpy(request.headers[1].name, "X-Real-IP");

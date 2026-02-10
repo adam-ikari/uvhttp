@@ -24,7 +24,7 @@ TEST(UvhttpResponseTest, ResponseInit) {
     EXPECT_EQ(response.body, nullptr);
     EXPECT_EQ(response.body_length, 0);
     EXPECT_EQ(response.headers_sent, 0);
-    EXPECT_EQ(response.keep_alive, 1);
+    EXPECT_EQ(response.keepalive, 1);
     EXPECT_EQ(response.sent, 0);
     EXPECT_EQ(response.finished, 0);
     
@@ -281,7 +281,7 @@ TEST(UvhttpResponseTest, ResponseBuildDataWithKeepAlive) {
     uvhttp_response_init(&response, &client);
     
     /* 启用 keep-alive */
-    response.keep_alive = 1;
+    response.keepalive = 1;
     
     /* 构建响应数据 */
     char* data = nullptr;
@@ -302,7 +302,7 @@ TEST(UvhttpResponseTest, ResponseBuildDataWithoutKeepAlive) {
     uvhttp_response_init(&response, &client);
     
     /* 禁用 keep-alive */
-    response.keep_alive = 0;
+    response.keepalive = 0;
     
     /* 构建响应数据 */
     char* data = nullptr;

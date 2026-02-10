@@ -56,6 +56,7 @@ static char* create_error_response(const char* error, const char* details) {
 
 // 处理 GET /api/info - 返回服务器信息（使用统一响应处理）
 uvhttp_result_t info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req; /* 未使用参数 */
     cJSON* info = cJSON_CreateObject();
     cJSON_AddStringToObject(info, "server", "UVHTTP");
     cJSON_AddStringToObject(info, "version", UVHTTP_VERSION_STRING);
@@ -203,6 +204,7 @@ uvhttp_result_t list_users_handler(uvhttp_request_t* req, uvhttp_response_t* res
 
 // 处理 GET /api/health - 健康检查
 uvhttp_result_t health_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req; /* 未使用参数 */
     cJSON* health = cJSON_CreateObject();
     cJSON_AddStringToObject(health, "status", "healthy");
     cJSON_AddNumberToObject(health, "uptime", 3600);
@@ -236,6 +238,7 @@ uvhttp_result_t health_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 // 主页处理器 - 返回 HTML 说明页面（使用统一响应处理）
 uvhttp_result_t home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req; /* 未使用参数 */
     const char* html = 
         "<!DOCTYPE html>"
         "<html>"
@@ -258,7 +261,7 @@ uvhttp_result_t home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "</head>"
         "<body>"
         "<div class='container'>"
-        "<h1>🚀 UVHTTP JSON API 演示</h1>"
+        "<h1> UVHTTP JSON API 演示</h1>"
         "<p>本演示展示如何在 UVHTTP 中使用 cJSON 处理 JSON 数据，以及新的<strong>统一响应处理</strong>功能。</p>"
         
         "<div class='new'>"
@@ -293,12 +296,12 @@ uvhttp_result_t home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         
         "<h2>🛠️ 技术特点</h2>"
         "<ul>"
-        "<li>✅ 使用 cJSON 轻量级 JSON 库</li>"
-        "<li>✅ <strong>统一响应处理</strong> - 自动检测内容类型</li>"
-        "<li>✅ 完整的错误处理</li>"
-        "<li>✅ 内存安全管理</li>"
-        "<li>✅ 复杂数据结构支持</li>"
-        "<li>✅ 分页和查询参数</li>"
+        "<li> 使用 cJSON 轻量级 JSON 库</li>"
+        "<li> <strong>统一响应处理</strong> - 自动检测内容类型</li>"
+        "<li> 完整的错误处理</li>"
+        "<li> 内存安全管理</li>"
+        "<li> 复杂数据结构支持</li>"
+        "<li> 分页和查询参数</li>"
         "</ul>"
         
         "<h2>📚 统一响应处理 API</h2>"
@@ -335,8 +338,8 @@ void signal_handler(int sig) {
 }
 
 int main() {
-    printf("🚀 UVHTTP JSON API 演示\n");
-    printf("📝 演示 cJSON 集成和 JSON 处理最佳实践\n\n");
+    printf(" UVHTTP JSON API 演示\n");
+    printf(" 演示 cJSON 集成和 JSON 处理最佳实践\n\n");
     
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
@@ -349,7 +352,7 @@ int main() {
         return 1;
     }
     if (!g_server) {
-        fprintf(stderr, "❌ 服务器创建失败\n");
+        fprintf(stderr, " 服务器创建失败\n");
         return 1;
     }
     
@@ -376,12 +379,12 @@ int main() {
     int listen_result = uvhttp_server_listen(g_server, "0.0.0.0", 8080);
     (void)listen_result;
     if (result != 0) {
-        fprintf(stderr, "❌ 服务器启动失败 (错误码: %d)\n", result);
+        fprintf(stderr, " 服务器启动失败 (错误码: %d)\n", result);
         uvhttp_server_free(g_server);
         return 1;
     }
     
-    printf("✅ JSON API 服务器启动成功\n");
+    printf(" JSON API 服务器启动成功\n");
     printf("🌐 服务器运行在 http://localhost:8080\n");
     printf("📖 访问主页查看完整 API 文档\n");
     printf("⏹️  按 Ctrl+C 停止服务器\n\n");

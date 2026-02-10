@@ -26,7 +26,7 @@ chmod 600 "$KEY_FILE"
 chmod 644 "$CERT_FILE"
 
 echo ""
-echo "✅ TLS 证书生成成功！"
+echo " TLS 证书生成成功！"
 echo "证书文件: $CERT_FILE"
 echo "密钥文件: $KEY_FILE"
 echo ""

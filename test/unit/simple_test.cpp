@@ -65,22 +65,7 @@ TEST(UvhttpValidationTest, ValidateHeaderValueInvalid) {
 // HTTP 方法验证测试
 // ============================================================================
 
-TEST(UvhttpValidationTest, ValidateMethodValid) {
-    EXPECT_EQ(uvhttp_validate_http_method("GET"), 1);
-    EXPECT_EQ(uvhttp_validate_http_method("POST"), 1);
-    EXPECT_EQ(uvhttp_validate_http_method("PUT"), 1);
-    EXPECT_EQ(uvhttp_validate_http_method("DELETE"), 1);
-    EXPECT_EQ(uvhttp_validate_http_method("HEAD"), 1);
-    EXPECT_EQ(uvhttp_validate_http_method("OPTIONS"), 1);
-    EXPECT_EQ(uvhttp_validate_http_method("PATCH"), 1);
-}
-
-TEST(UvhttpValidationTest, ValidateMethodInvalid) {
-    EXPECT_EQ(uvhttp_validate_http_method("INVALID"), 0);
-    EXPECT_EQ(uvhttp_validate_http_method("get"), 0); // 小写
-    EXPECT_EQ(uvhttp_validate_http_method(""), 0);
-    EXPECT_EQ(uvhttp_validate_http_method(NULL), 0);
-}
+/* uvhttp_validate_http_method 已删除 - 使用 uvhttp_method_from_string 替代 */
 
 // ============================================================================
 // 边界条件测试
@@ -125,7 +110,7 @@ TEST(UvhttpUtilsTest, PerformanceManyOperations) {
         EXPECT_EQ(uvhttp_safe_strncpy(dest, src, sizeof(dest)), 0);
         EXPECT_EQ(uvhttp_validate_url_path("/api/test"), 1);
         EXPECT_EQ(uvhttp_validate_header_value_safe("value"), 1);
-        EXPECT_EQ(uvhttp_validate_http_method("GET"), 1);
+        /* uvhttp_validate_http_method 已删除 */
     }
 }
 

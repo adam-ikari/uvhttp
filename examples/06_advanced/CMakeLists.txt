@@ -39,6 +39,12 @@ target_link_libraries(app_advanced_memory PRIVATE ${UVHTTP_LIB} libuv mbedtls xx
 target_include_directories(app_advanced_memory PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src)
 add_dependencies(app_advanced_memory uvhttp)
 
+# 协议升级示例
+add_executable(protocol_upgrade_example protocol_upgrade_example.c)
+target_link_libraries(protocol_upgrade_example PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
+target_include_directories(protocol_upgrade_example PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src)
+add_dependencies(protocol_upgrade_example uvhttp)
+
 # 上下文注入示例 - 暂时禁用，需要重构
 # add_executable(context_injection context_injection.c)
 # target_link_libraries(context_injection PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp cjson pthread m dl)

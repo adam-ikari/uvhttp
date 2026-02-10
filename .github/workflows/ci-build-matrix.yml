@@ -1,0 +1,455 @@
+name: CI/CD - Build Matrix Validation
+
+# 触发条件：PR 打开、同步、重新打开到 main 或 develop 分支
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [ main, develop ]
+
+# 并发控制：取消同一 PR 的旧运行
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  # ========== 编译选项矩阵验证 ==========
+  
+  build-matrix:
+    name: "Build: ${{ matrix.config.name }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          # 基础配置（最小依赖）
+          - name: "Minimal (no optional features)"
+            websocket: OFF
+            mimalloc: OFF
+            tls: OFF
+            debug: OFF
+            coverage: OFF
+            examples: OFF
+            description: "Minimal build with no optional features"
+          
+          # 全功能配置
+          - name: "Full Features"
+            websocket: ON
+            mimalloc: ON
+            tls: ON
+            debug: OFF
+            coverage: OFF
+            examples: OFF
+            description: "Full build with all optional features"
+          
+          # WebSocket 单独测试
+          - name: "WebSocket Only"
+            websocket: ON
+            mimalloc: OFF
+            tls: OFF
+            debug: OFF
+            coverage: OFF
+            examples: OFF
+            description: "WebSocket support only"
+          
+          # TLS 单独测试
+          - name: "TLS Only"
+            websocket: OFF
+            mimalloc: OFF
+            tls: ON
+            debug: OFF
+            coverage: OFF
+            examples: OFF
+            description: "TLS support only"
+          
+          # mimalloc 单独测试
+          - name: "mimalloc Only"
+            websocket: OFF
+            mimalloc: ON
+            tls: OFF
+            debug: OFF
+            coverage: OFF
+            examples: OFF
+            description: "mimalloc allocator only"
+          
+          # Debug 模式
+          - name: "Debug Mode"
+            websocket: ON
+            mimalloc: ON
+            tls: ON
+            debug: ON
+            coverage: OFF
+            examples: OFF
+            description: "Debug build with -O0"
+          
+          # Coverage 模式
+          - name: "Coverage Mode"
+            websocket: ON
+            mimalloc: ON
+            tls: ON
+            debug: OFF
+            coverage: ON
+            examples: OFF
+            description: "Coverage build with gcov"
+          
+          # 组合 1: WebSocket + TLS
+          - name: "WebSocket + TLS"
+            websocket: ON
+            mimalloc: OFF
+            tls: ON
+            debug: OFF
+            coverage: OFF
+            examples: OFF
+            description: "WebSocket and TLS support"
+          
+          # 组合 2: WebSocket + mimalloc
+          - name: "WebSocket + mimalloc"
+            websocket: ON
+            mimalloc: ON
+            tls: OFF
+            debug: OFF
+            coverage: OFF
+            examples: OFF
+            description: "WebSocket and mimalloc"
+          
+          # 组合 3: TLS + mimalloc
+          - name: "TLS + mimalloc"
+            websocket: OFF
+            mimalloc: ON
+            tls: ON
+            debug: OFF
+            coverage: OFF
+            examples: OFF
+            description: "TLS and mimalloc"
+          
+          # 组合 4: WebSocket + TLS + mimalloc
+          - name: "WebSocket + TLS + mimalloc"
+            websocket: ON
+            mimalloc: ON
+            tls: ON
+            debug: OFF
+            coverage: OFF
+            examples: OFF
+            description: "All features except debug/coverage"
+          
+          # 组合 5: Debug + Coverage
+          - name: "Debug + Coverage"
+            websocket: ON
+            mimalloc: ON
+            tls: ON
+            debug: ON
+            coverage: ON
+            examples: OFF
+            description: "Debug and coverage together"
+          
+          # 组合 6: Minimal + Debug
+          - name: "Minimal + Debug"
+            websocket: OFF
+            mimalloc: OFF
+            tls: OFF
+            debug: ON
+            coverage: OFF
+            examples: OFF
+            description: "Minimal build in debug mode"
+          
+          # 组合 7: Full + Examples
+          - name: "Full + Examples"
+            websocket: ON
+            mimalloc: ON
+            tls: ON
+            debug: OFF
+            coverage: OFF
+            examples: ON
+            description: "Full build with examples"
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+        with:
+          os: ubuntu-latest
+      
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -DBUILD_WITH_WEBSOCKET=${{ matrix.config.websocket }} \
+            -DBUILD_WITH_MIMALLOC=${{ matrix.config.mimalloc }} \
+            -DBUILD_WITH_TLS=${{ matrix.config.tls }} \
+            -DENABLE_DEBUG=${{ matrix.config.debug }} \
+            -DENABLE_COVERAGE=${{ matrix.config.coverage }} \
+            -DBUILD_EXAMPLES=${{ matrix.config.examples }}
+      
+      - name: Build project
+        run: |
+          cmake --build build --config Release -j$(nproc)
+      
+      - name: Check for warnings
+        run: |
+          if cmake --build build --config Release 2>&1 | grep -i "warning:"; then
+            echo "Found compiler warnings!"
+            exit 1
+          fi
+      
+      - name: Run tests (if not examples only)
+        if: matrix.config.examples == 'OFF'
+        run: |
+          cd build
+          ctest --output-on-failure --timeout 60 -j$(nproc)
+      
+      - name: Generate coverage report (if coverage enabled)
+        if: matrix.config.coverage == 'ON'
+        run: |
+          cd build
+          gcov -r .
+          lcov --capture --directory . --output-file coverage.info
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info
+          lcov --list coverage.info
+      
+      - name: Upload coverage reports (if coverage enabled)
+        if: matrix.config.coverage == 'ON'
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./build/coverage.info
+          flags: ${{ matrix.config.name }}
+          name: ${{ matrix.config.name }}
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: build-${{ matrix.config.name }}-${{ github.event.pull_request.number || github.sha }}
+          path: build/dist/
+          retention-days: 7
+      
+      - name: Upload test logs
+        if: always() && matrix.config.examples == 'OFF'
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: test-logs-${{ matrix.config.name }}-${{ github.event.pull_request.number || github.sha }}
+          path: build/Testing/
+          retention-days: 7
+
+  # ========== 32位构建验证 ==========
+  
+  build-32bit:
+    name: "Build 32-bit"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "32-bit Minimal"
+            websocket: OFF
+            mimalloc: OFF
+            tls: OFF
+            debug: OFF
+          - name: "32-bit Full"
+            websocket: ON
+            mimalloc: ON
+            tls: ON
+            debug: OFF
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Install 32-bit dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-multilib \
+            g++-multilib \
+            libc6-dev-i386 \
+            lib32stdc++6
+      
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+        with:
+          os: ubuntu-latest
+      
+      - name: Configure CMake for 32-bit
+        run: |
+          cmake -B build \
+            -DBUILD_WITH_WEBSOCKET=${{ matrix.config.websocket }} \
+            -DBUILD_WITH_MIMALLOC=${{ matrix.config.mimalloc }} \
+            -DBUILD_WITH_TLS=${{ matrix.config.tls }} \
+            -DENABLE_DEBUG=${{ matrix.config.debug }} \
+            -DCMAKE_C_FLAGS="-m32" \
+            -DCMAKE_CXX_FLAGS="-m32" \
+            -DCMAKE_FIND_ROOT_PATH=/usr/i386-linux-gnu
+      
+      - name: Build project
+        run: |
+          cmake --build build --config Release -j$(nproc)
+      
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure --timeout 60 -j$(nproc)
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: build-32bit-${{ matrix.config.name }}-${{ github.event.pull_request.number || github.sha }}
+          path: build/dist/
+          retention-days: 7
+
+  # ========== 交叉编译验证 ==========
+  
+  cross-compile:
+    name: "Cross-compile: ${{ matrix.target }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - name: "ARM64 (aarch64)"
+            arch: aarch64
+            cc: aarch64-linux-gnu-gcc
+            cxx: aarch64-linux-gnu-g++
+          - name: "ARMv7 (arm)"
+            arch: arm
+            cc: arm-linux-gnueabihf-gcc
+            cxx: arm-linux-gnueabihf-g++
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Install cross-compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-${{ matrix.target.arch }}-linux-gnu \
+            g++-${{ matrix.target.arch }}-linux-gnu
+      
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+        with:
+          os: ubuntu-latest
+      
+      - name: Configure CMake for cross-compilation
+        run: |
+          cmake -B build \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.target.arch }} \
+            -DCMAKE_C_COMPILER=${{ matrix.target.cc }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.target.cxx }} \
+            -DBUILD_WITH_WEBSOCKET=ON \
+            -DBUILD_WITH_MIMALLOC=OFF \
+            -DBUILD_WITH_TLS=ON
+      
+      - name: Build project
+        run: |
+          cmake --build build --config Release -j$(nproc)
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: cross-compile-${{ matrix.target.name }}-${{ github.event.pull_request.number || github.sha }}
+          path: build/dist/lib/
+          retention-days: 7
+
+  # ========== 静态分析验证 ==========
+  
+  static-analysis:
+    name: "Static Analysis: ${{ matrix.tool }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        tool:
+          - name: "cppcheck"
+            command: "make cppcheck"
+          - name: "clang-tidy"
+            command: "make clang-tidy"
+          - name: "clang-format"
+            command: "make format-check"
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+        with:
+          os: ubuntu-latest
+      
+      - name: Run static analysis
+        run: |
+          ${{ matrix.tool.command }}
+      
+      - name: Upload analysis results
+        if: always()
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: static-analysis-${{ matrix.tool.name }}-${{ github.event.pull_request.number || github.sha }}
+          path: |
+            cppcheck-results.xml
+            clang-tidy-results.xml
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ========== 生成总结 ==========
+  
+  generate-summary:
+    needs: [build-matrix, build-32bit, cross-compile, static-analysis]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+    
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## 📊 Build Matrix Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Matrix Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Configuration | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Minimal (no optional features) | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Full Features | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| WebSocket Only | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| TLS Only | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| mimalloc Only | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Debug Mode | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Coverage Mode | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 32-bit Build Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Configuration | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 32-bit Minimal | ${{ needs.build-32bit.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 32-bit Full | ${{ needs.build-32bit.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Cross-compile Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Target | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ARM64 (aarch64) | ${{ needs.cross-compile.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ARMv7 (arm) | ${{ needs.cross-compile.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Static Analysis Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Tool | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| cppcheck | ${{ needs.static-analysis.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| clang-tidy | ${{ needs.static-analysis.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| clang-format | ${{ needs.static-analysis.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Total Configurations Validated" >> $GITHUB_STEP_SUMMARY
+          echo "- Build Matrix: 14 configurations" >> $GITHUB_STEP_SUMMARY
+          echo "- 32-bit Builds: 2 configurations" >> $GITHUB_STEP_SUMMARY
+          echo "- Cross-compiles: 2 targets" >> $GITHUB_STEP_SUMMARY
+          echo "- Static Analysis: 3 tools" >> $GITHUB_STEP_SUMMARY
+          echo "**Total: 21 validation jobs**" >> $GITHUB_STEP_SUMMARY

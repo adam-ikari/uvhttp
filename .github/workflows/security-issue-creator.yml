@@ -3,7 +3,7 @@ name: Security Issue Creator
 # 触发条件：当安全扫描工作流完成时
 on:
   workflow_run:
-    workflows: ['CI/CD - Push Complete Validation', 'CI/CD - Nightly Deep Testing']
+    workflows: ['CI/CD - Push Full Validation', 'CI/CD - Nightly Deep Test']
     types: [completed]
     branches: [main, develop]
 

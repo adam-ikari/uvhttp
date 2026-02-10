@@ -5,6 +5,184 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-02-04
+
+### Breaking Changes
+
+- **LRU Cache Simplification**
+  - Removed LFU and Hybrid eviction modes (only LRU remains)
+  - Removed dual-threshold eviction mechanism (now single 90% threshold)
+  - Removed task queue mechanism (eviction is now synchronous)
+  - Removed 5 API functions:
+    - `uvhttp_lru_cache_set_eviction_mode()`
+    - `uvhttp_lru_cache_init_task_queue()`
+    - `uvhttp_lru_cache_schedule_eviction()`
+    - `uvhttp_lru_cache_stop_task_queue()`
+    - `uvhttp_lru_cache_perform_eviction()`
+  - **Migration Guide**: See `docs/MIGRATION_GUIDE_LRU_CACHE.md`
+
+### Added
+
+- **LRU Cache Improvements**
+  - Added configurable batch eviction size via `uvhttp_lru_cache_set_batch_eviction_size()`
+  - Increased default cache size to 10MB
+  - Added migration guide for breaking changes
+
+- **Protocol Upgrade Framework**
+  - Implemented zero-overhead protocol upgrade framework
+  - Added support for custom protocol upgrades (e.g., IPPS, gRPC-Web)
+  - Refactored WebSocket to use the new framework
+  - Added fast path optimization for normal HTTP requests
+  - Performance impact: < 0.4% overhead for single protocol scenarios
+
+- **Router Cache Optimization**
+  - Optimized router node structure for CPU cache locality
+  - Reduced node size by 53% (272 → 128 bytes)
+  - Reduced cache line usage by 60% (5 → 2 lines)
+  - Added performance comparison tests
+
+- **Performance Tests**
+  - Added `benchmark_router_comparison.c` for router performance comparison
+  - Added `benchmark_rps_150_routes.c` for large-scale router testing
+  - Added `benchmark_file_transfer.c` for file transfer performance testing
+
+### Changed
+
+- **Code Quality**
+  - Translated all source code comments from Chinese to English
+  - Centralized HTTP constant definitions in `include/uvhttp_constants.h`
+  - Removed obsolete comments and code
+  - Fixed code formatting issues
+
+- **Documentation**
+  - Added comprehensive migration guide for LRU Cache changes
+  - Added bilingual FAQ documentation (English and Chinese)
+  - Added security documentation
+  - Added documentation standards for bilingual support
+  - Updated performance benchmark documentation
+
+- **Build System**
+  - Fixed 32-bit build compatibility issues
+  - Fixed code formatting issues
+  - Updated CMake configuration
+
+### Performance
+
+- **Memory Optimization**
+  - LRU Cache instance overhead: -132 bytes
+  - LRU Cache entry overhead: -4 bytes
+  - Code size reduction: -200 lines (-21%)
+
+- **Router Performance**
+  - Node size: 272 → 128 bytes (-53%)
+  - Cache line usage: 5 → 2 lines (-60%)
+  - Improved CPU cache locality
+
+- **Protocol Upgrade Performance**
+  - Single protocol overhead: < 0.4%
+  - Fast path detection: O(1) check
+  - Zero overhead when disabled
+
+### Fixed
+
+- **32-bit Compatibility**
+  - Fixed `uint64_t` formatting in `benchmark_router_comparison.c`
+  - Added `PRIu64` macro for cross-platform compatibility
+
+- **Code Formatting**
+  - Fixed formatting issues in `uvhttp_lru_cache.c`
+  - Fixed formatting issues in `uvhttp_constants.h`
+  - Fixed formatting issues in `uvhttp_lru_cache.h`
+
+### Migration Notes
+
+**For UVHTTP 2.2.x users upgrading to 2.3.0:**
+
+1. **LRU Cache**: Remove calls to deprecated eviction mode and task queue functions
+2. **Protocol Upgrade**: No changes required if only using HTTP or WebSocket
+3. **Router**: No changes required, performance improvements are automatic
+
+See `docs/MIGRATION_GUIDE_LRU_CACHE.md` for detailed migration instructions.
+
+## [2.2.2] - 2026-02-02
+
+### Fixed
+
+- **路由器关键 bug 修复**
+  - 修复路径参数丢失问题（移除错误的 `param_count` 重置）
+  - 添加递归深度限制，防止栈溢出崩溃
+  - 影响范围：所有参数化路由（如 `/api/users/:id`）
+
+- **文档翻译错误修复**
+  - 修复 `include/uvhttp_config.h` 中的拼写错误和速率限制注释
+  - 修复 `include/uvhttp_constants.h` 中 50+ 处损坏的英文翻译
+  - 提升代码可读性和可维护性
+
+- **代码格式统一**
+  - 统一头文件包含的缩进风格（4 空格）
+  - 符合项目 C11 代码规范
+
+### Performance
+
+- **性能提升**
+  - 峰值 RPS 从 20,432 提升到 21,991（+7.6%）
+  - 性能目标达成率：95.3%（目标 23,070 RPS）
+  - 高并发稳定性：10-200 并发，RPS 波动仅 30%
+
+- **性能测试结果**
+  - 简单文本：21,991 RPS，4.56ms 延迟
+  - JSON 响应：21,095 RPS，4.74ms 延迟
+  - 小响应：21,395 RPS，4.67ms 延迟，23.02MB/s 吞吐
+
+### Testing
+
+- **测试覆盖率**
+  - 路由器测试：51 个测试全部通过
+  - 核心模块测试：246 个测试全部通过
+  - 包括连接、服务器、响应、WebSocket、缓存等模块
+
+### Changed
+
+- 合并 `feature/enable-router-cache-optimization` 分支
+- 路由缓存优化功能已启用
+- 更新性能基准测试文档（2026-02-02）
+
+## [2.2.1] - 2026-01-31
+
+### Breaking Changes
+
+⚠️ **重要**: TLS 错误类型已整合到统一错误体系
+
+1. **TLS 错误类型整合**
+   - **影响**: 所有使用 `uvhttp_tls_error_t` 的代码
+   - **变更**: 删除 `uvhttp_tls_error_t`，所有 TLS API 函数返回类型改为 `uvhttp_error_t`
+   - **迁移**: 更新所有 TLS 相关函数调用
+   ```c
+   // 旧代码（已移除）
+   uvhttp_tls_error_t result = uvhttp_tls_context_new(&ctx);
+   if (result != UVHTTP_TLS_OK) { /* 处理错误 */ }
+   
+   // 新代码
+   uvhttp_error_t result = uvhttp_tls_context_new(&ctx);
+   if (result != UVHTTP_OK) { /* 处理错误 */ }
+   ```
+
+2. **TLS 错误码扩展**
+   - **新增**: `UVHTTP_ERROR_TLS_CERT` (-408) 到 `UVHTTP_ERROR_TLS_NO_CERT` (-418)
+   - **新增**: `UVHTTP_ERROR_TLS_WANT_READ` (1) 和 `UVHTTP_ERROR_TLS_WANT_WRITE` (2)
+   - **用途**: 支持更细粒度的 TLS 错误处理和非阻塞 I/O
+
+### Added
+
+- 新增 WebSocket API 测试（52个测试用例）
+- 新增服务器 API 测试
+- 更新 TLS NULL 参数测试
+
+### Changed
+
+- 统一错误处理体系，简化 API 使用
+- 改善类型安全性，减少类型转换错误
+
 ## [2.2.0] - 2026-01-28
 
 ### Breaking Changes
@@ -90,9 +268,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **零开销抽象**: 编译期宏实现，Release 模式下完全零开销
 - **内存分配器**: 性能与系统分配器相当
 - **RPS 性能测试**:
-  - 4线程100连接：22,307 RPS
-  - 2线程50连接：23,070 RPS
-  - 8线程200连接：21,707 RPS
+  - 4线程10连接：20,432 RPS（峰值）
+  - 4线程50连接：19,840 RPS
+  - 4线程100连接：19,776 RPS
+  - 4线程500连接：19,850 RPS
 
 ### Code Reduction
 - **总代码减少**: 23,805 行代码（减少 88%）
@@ -203,7 +382,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Testing
 - **测试通过**: 所有测试通过（34/34）
-- **性能测试**: RPS 基准测试通过（峰值 23,226 RPS）
+- **性能测试**: RPS 基准测试通过（峰值 20,432 RPS）
 
 ## [2.0.0] - 2026-01-24
 
@@ -298,7 +477,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **测试文件格式**: 所有单元测试从 `.c` 重命名为 `.cpp`（34 个文件）
 - **CI/CD 配置**: 测试超时时间从 300 秒增加到 600 秒
 - **构建系统**: 更新 CMakeLists.txt 和 Makefile 支持 C++ 测试
-- **开发者指南**: 更新测试框架说明和最佳实践
+- **贡献者指南**: 更新测试框架说明和最佳实践
 - **连接数限制配置**: 默认最大连接数从 10000 降低到 2048
   - **原因**: 2048 更适合大多数应用场景，避免资源浪费
   - **影响**: 现有高并发应用可能需要调整配置

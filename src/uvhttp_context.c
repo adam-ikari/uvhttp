@@ -1,48 +1,57 @@
-/* UVHTTP 依赖注入和上下文管理实现 */
+/* UVHTTP Dependency Injection and Context Management Implementation */
 
 #include "uvhttp_context.h"
+
 #include "uvhttp_allocator.h"
 #include "uvhttp_connection.h"
-#include "uvhttp_server.h"
-#include "uvhttp_router.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_error_handler.h"
-#include <mbedtls/entropy.h>
+#include "uvhttp_router.h"
+#include "uvhttp_server.h"
+
+#if UVHTTP_FEATURE_TLS
 #include <mbedtls/ctr_drbg.h>
-#include <stdlib.h>
+#include <mbedtls/entropy.h>
+#endif
+
 #include <stddef.h>
-#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
-/* ============ 内存分配器说明 ============ */
+/* ============ Memory Allocator Description ============ */
 /*
- * UVHTTP 内存分配器采用编译时宏设计，零开销抽象
+ * UVHTTP memory allocator uses compile-time macro design, zero-overhead
+ * abstraction
  *
- * 不实现运行时分配器提供者，原因：
- * 1. 性能优先：避免函数指针调用开销
- * 2. 编译时优化：编译器可以内联和优化分配调用
- * 3. 简单直接：减少复杂性，提高可维护性
+ * No runtime allocator provider implemented, reasons:
+ * 1. Performance first: avoid function pointer call overhead
+ * 2. Compile-time optimization: compiler can inline and optimize allocation
+ * calls
+ * 3. Simple and direct: reduce complexity, improve maintainability
  *
- * 内存分配器类型通过 UVHTTP_ALLOCATOR_TYPE 编译宏选择：
- * - 0: 系统默认分配器 (malloc/free)
- * - 1: mimalloc 高性能分配器
- * - 2: 自定义分配器 (外部链接)
+ * Memory allocator type selected via UVHTTP_ALLOCATOR_TYPE compile macro:
+ * - 0: System default allocator (malloc/free)
+ * - 1: mimalloc high-performance allocator
+ * - 2: Custom allocator (external link)
  *
- * 使用方式：
+ * Usage:
  *   #include "uvhttp_allocator.h"
  *   void* ptr = uvhttp_alloc(size);
  *   uvhttp_free(ptr);
  */
 
-/* ============ 上下文管理实现 ============ */
+/* ============ Context Management Implementation ============ */
 
-uvhttp_error_t uvhttp_context_create(uv_loop_t* loop, uvhttp_context_t** context) {
+uvhttp_error_t uvhttp_context_create(uv_loop_t* loop,
+                                     uvhttp_context_t** context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    uvhttp_context_t* ctx = (uvhttp_context_t*)uvhttp_alloc(sizeof(uvhttp_context_t));
+    uvhttp_context_t* ctx =
+        (uvhttp_context_t*)uvhttp_alloc(sizeof(uvhttp_context_t));
     if (!ctx) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
@@ -61,13 +70,13 @@ void uvhttp_context_destroy(uvhttp_context_t* context) {
         return;
     }
 
-    /* 清理全局变量替代字段 */
+    /* Cleanup global variable replacement fields */
     uvhttp_context_cleanup_tls(context);
     uvhttp_context_cleanup_websocket(context);
-    uvhttp_context_cleanup_error_stats(context);
     uvhttp_context_cleanup_config(context);
 
-    /* 注意：内存分配器使用编译时宏，无需运行时清理 */
+    /* Note: memory allocator uses compile-time macros, no runtime cleanup
+     * needed */
 
     uvhttp_free(context);
 }
@@ -77,47 +86,47 @@ uvhttp_error_t uvhttp_context_init(uvhttp_context_t* context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 如果已经初始化，直接返回成功（幂等） */
+    /* If already initialized, return success directly (idempotent) */
     if (context->initialized) {
         return UVHTTP_OK;
     }
 
-    /* 注意：内存分配器使用编译时宏，无需运行时设置
-     * 分配器类型通过 UVHTTP_ALLOCATOR_TYPE 编译宏选择
+    /* Note: memory allocator uses compile-time macros, no runtime setup needed
+     * Allocator type selected via UVHTTP_ALLOCATOR_TYPE compile macro
      */
 
     context->initialized = 1;
 
-    /* 初始化全局变量替代字段 */
+    /* Initialize global variable replacement fields */
     uvhttp_context_init_tls(context);
     uvhttp_context_init_websocket(context);
-    uvhttp_context_init_error_stats(context);
     uvhttp_context_init_config(context);
 
     return UVHTTP_OK;
 }
 
-/* ===== 全局变量替代字段初始化函数 ===== */
+/* ===== Global Variable Replacement Field Initialization Functions ===== */
 
-/* 初始化 TLS 模块状态 */
+/* Initialize TLS module state */
+#if UVHTTP_FEATURE_TLS
 uvhttp_error_t uvhttp_context_init_tls(uvhttp_context_t* context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 如果已经初始化，直接返回成功（幂等） */
+    /* If already initialized, return success directly (idempotent) */
     if (context->tls_initialized) {
         return UVHTTP_OK;
     }
 
-    /* 分配并初始化 entropy 上下文 */
+    /* Allocate and initialize entropy context */
     context->tls_entropy = uvhttp_alloc(sizeof(mbedtls_entropy_context));
     if (!context->tls_entropy) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     mbedtls_entropy_init((mbedtls_entropy_context*)context->tls_entropy);
-    
-    /* 分配并初始化 DRBG 上下文 */
+
+    /* Allocate and initialize DRBG context */
     context->tls_drbg = uvhttp_alloc(sizeof(mbedtls_ctr_drbg_context));
     if (!context->tls_drbg) {
         mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
@@ -126,12 +135,12 @@ uvhttp_error_t uvhttp_context_init_tls(uvhttp_context_t* context) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     mbedtls_ctr_drbg_init((mbedtls_ctr_drbg_context*)context->tls_drbg);
-    
-    /* 使用自定义熵源初始化 DRBG */
-    int ret = mbedtls_ctr_drbg_seed((mbedtls_ctr_drbg_context*)context->tls_drbg, 
-                                     mbedtls_entropy_func, 
-                                     (mbedtls_entropy_context*)context->tls_entropy,
-                                     (const unsigned char*)"uvhttp_tls", 11);
+
+    /* Initialize DRBG with custom entropy source */
+    int ret = mbedtls_ctr_drbg_seed(
+        (mbedtls_ctr_drbg_context*)context->tls_drbg, mbedtls_entropy_func,
+        (mbedtls_entropy_context*)context->tls_entropy,
+        (const unsigned char*)"uvhttp_tls", 11);
     if (ret != 0) {
         mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
         mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
@@ -147,19 +156,19 @@ uvhttp_error_t uvhttp_context_init_tls(uvhttp_context_t* context) {
     return UVHTTP_OK;
 }
 
-/* 清理 TLS 模块状态 */
+/* Cleanup TLS module state */
 void uvhttp_context_cleanup_tls(uvhttp_context_t* context) {
     if (!context || !context->tls_initialized) {
         return;
     }
 
-    /* 释放 mbedtls_entropy_context 和 mbedtls_ctr_drbg_context */
+    /* Free mbedtls_entropy_context and mbedtls_ctr_drbg_context */
     if (context->tls_entropy) {
         mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
         uvhttp_free(context->tls_entropy);
         context->tls_entropy = NULL;
     }
-    
+
     if (context->tls_drbg) {
         mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
         uvhttp_free(context->tls_drbg);
@@ -168,26 +177,37 @@ void uvhttp_context_cleanup_tls(uvhttp_context_t* context) {
 
     context->tls_initialized = 0;
 }
+#else
+uvhttp_error_t uvhttp_context_init_tls(uvhttp_context_t* context) {
+    (void)context;
+    return UVHTTP_ERROR_NOT_SUPPORTED;
+}
 
-/* 初始化 WebSocket 模块状态 */
+void uvhttp_context_cleanup_tls(uvhttp_context_t* context) {
+    (void)context;
+}
+#endif
+
+/* Initialize WebSocket module state */
+#if UVHTTP_FEATURE_TLS
 uvhttp_error_t uvhttp_context_init_websocket(uvhttp_context_t* context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 如果已经初始化，直接返回成功（幂等） */
+    /* If already initialized, return success directly (idempotent) */
     if (context->ws_drbg_initialized) {
         return UVHTTP_OK;
     }
 
-    /* 分配并初始化 entropy 上下文 */
+    /* Allocate and initialize entropy context */
     context->ws_entropy = uvhttp_alloc(sizeof(mbedtls_entropy_context));
     if (!context->ws_entropy) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     mbedtls_entropy_init((mbedtls_entropy_context*)context->ws_entropy);
-    
-    /* 分配并初始化 DRBG 上下文 */
+
+    /* Allocate and initialize DRBG context */
     context->ws_drbg = uvhttp_alloc(sizeof(mbedtls_ctr_drbg_context));
     if (!context->ws_drbg) {
         mbedtls_entropy_free((mbedtls_entropy_context*)context->ws_entropy);
@@ -196,12 +216,11 @@ uvhttp_error_t uvhttp_context_init_websocket(uvhttp_context_t* context) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     mbedtls_ctr_drbg_init((mbedtls_ctr_drbg_context*)context->ws_drbg);
-    
-    /* 初始化 DRBG */
-    int ret = mbedtls_ctr_drbg_seed((mbedtls_ctr_drbg_context*)context->ws_drbg, 
-                                     mbedtls_entropy_func, 
-                                     (mbedtls_entropy_context*)context->ws_entropy, 
-                                     NULL, 0);
+
+    /* Initialize DRBG */
+    int ret = mbedtls_ctr_drbg_seed(
+        (mbedtls_ctr_drbg_context*)context->ws_drbg, mbedtls_entropy_func,
+        (mbedtls_entropy_context*)context->ws_entropy, NULL, 0);
     if (ret != 0) {
         mbedtls_entropy_free((mbedtls_entropy_context*)context->ws_entropy);
         mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->ws_drbg);
@@ -217,19 +236,19 @@ uvhttp_error_t uvhttp_context_init_websocket(uvhttp_context_t* context) {
     return UVHTTP_OK;
 }
 
-/* 清理 WebSocket 模块状态 */
+/* Cleanup WebSocket module state */
 void uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
     if (!context || !context->ws_drbg_initialized) {
         return;
     }
 
-    /* 释放 mbedtls_entropy_context 和 mbedtls_ctr_drbg_context */
+    /* Free mbedtls_entropy_context and mbedtls_ctr_drbg_context */
     if (context->ws_entropy) {
         mbedtls_entropy_free((mbedtls_entropy_context*)context->ws_entropy);
         uvhttp_free(context->ws_entropy);
         context->ws_entropy = NULL;
     }
-    
+
     if (context->ws_drbg) {
         mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->ws_drbg);
         uvhttp_free(context->ws_drbg);
@@ -238,56 +257,29 @@ void uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
 
     context->ws_drbg_initialized = 0;
 }
-
-/* 初始化错误统计 */
-uvhttp_error_t uvhttp_context_init_error_stats(uvhttp_context_t* context) {
-    if (!context) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    /* 如果已经初始化，直接返回成功（幂等） */
-    if (context->error_stats) {
-        return UVHTTP_OK;
-    }
-
-    /* 分配错误统计结构 */
-    uvhttp_error_stats_t* error_stats = uvhttp_alloc(sizeof(uvhttp_error_stats_t));
-    if (!error_stats) {
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
-    }
-
-    /* 初始化错误统计 */
-    memset(error_stats, 0, sizeof(uvhttp_error_stats_t));
-    context->error_stats = error_stats;
-
-    return UVHTTP_OK;
+#else
+uvhttp_error_t uvhttp_context_init_websocket(uvhttp_context_t* context) {
+    (void)context;
+    return UVHTTP_ERROR_NOT_SUPPORTED;
 }
 
-/* 清理错误统计 */
-void uvhttp_context_cleanup_error_stats(uvhttp_context_t* context) {
-    if (!context) {
-        return;
-    }
-
-    if (context->error_stats) {
-        /* 释放错误统计结构 */
-        uvhttp_free(context->error_stats);
-        context->error_stats = NULL;
-    }
+void uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
+    (void)context;
 }
+#endif
 
-/* 初始化配置管理 */
+/* Initialize configuration management */
 uvhttp_error_t uvhttp_context_init_config(uvhttp_context_t* context) {
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* 如果已经初始化，直接返回成功（幂等） */
+    /* If already initialized, return success directly (idempotent) */
     if (context->current_config) {
         return UVHTTP_OK;
     }
 
-    /* 初始化配置管理 */
+    /* Initialize configuration management */
     uvhttp_config_t* current_config = NULL;
     uvhttp_error_t result = uvhttp_config_new(&current_config);
     if (result != UVHTTP_OK) {
@@ -299,24 +291,24 @@ uvhttp_error_t uvhttp_context_init_config(uvhttp_context_t* context) {
     return UVHTTP_OK;
 }
 
-/* 清理配置管理 */
+/* Cleanup configuration management */
 void uvhttp_context_cleanup_config(uvhttp_context_t* context) {
     if (!context) {
         return;
     }
 
     if (context->current_config) {
-        /* 释放配置 */
+        /* Free configuration */
         uvhttp_config_free(context->current_config);
         context->current_config = NULL;
     }
 }
 
-/* 注意：内存分配器使用编译时宏，无需运行时设置
- * 分配器类型通过 UVHTTP_ALLOCATOR_TYPE 编译宏选择：
+/* Note: memory allocator uses compile-time macros, no runtime setup needed
+ * Allocator type selected via UVHTTP_ALLOCATOR_TYPE compile macro:
  *
- * 编译命令示例：
- *   gcc -DUVHTTP_ALLOCATOR_TYPE=0  # 系统默认
+ * Compile command examples:
+ *   gcc -DUVHTTP_ALLOCATOR_TYPE=0  # System default
  *   gcc -DUVHTTP_ALLOCATOR_TYPE=1  # mimalloc
- *   gcc -DUVHTTP_ALLOCATOR_TYPE=2  # 自定义
+ *   gcc -DUVHTTP_ALLOCATOR_TYPE=2  # Custom
  */

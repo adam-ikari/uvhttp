@@ -55,26 +55,25 @@ TEST(MemoryTest, LargeAllocation) {
  * @brief 测试服务器内存使用
  */
 TEST(MemoryTest, ServerMemoryUsage) {
-    uv_loop_t* loop = uv_default_loop();
+    uv_loop_t* loop = uv_loop_new();
     ASSERT_NE(loop, nullptr);
 
     uvhttp_server_t* server = NULL;
     uvhttp_error_t result = uvhttp_server_new(loop, &server);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(server, nullptr);
-    ASSERT_NE(server, nullptr);
 
     uvhttp_router_t* router = NULL;
     result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    ASSERT_NE(router, nullptr);
 
     uvhttp_server_set_router(server, router);
 
     uvhttp_server_free(server);
-    uvhttp_router_free(router);
+    /* router 已被 server 释放，不需要再释放 */
     uv_loop_close(loop);
+    uvhttp_free(loop);
 }
 
 /**
@@ -107,7 +106,7 @@ TEST(MemoryTest, MultipleServerCreation) {
         uvhttp_server_free(server);
         uv_run(loop, UV_RUN_DEFAULT);
 
-        uvhttp_router_free(router);
+        /* router 已被 server 释放，不需要再释放 */
         uv_loop_close(loop);
         uvhttp_free(loop);
     }

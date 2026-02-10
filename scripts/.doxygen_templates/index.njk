@@ -1,0 +1,16 @@
+# API Reference Index
+
+## Structures
+
+{% for struct in structs %}- [`{{ struct.name }}`](./structs/{{ struct.name | replace(' ', '_') | lower }}.md)
+{% endfor %}
+
+## Functions
+
+{% for funcFile in functions %}- [`{{ funcFile.name }}`](./functions/{{ funcFile.name | replace(' ', '_') | lower }}.md)
+{% endfor %}
+
+## Defines
+
+{% for defineFile in defines %}- [`{{ defineFile.name }}`](./defines/{{ defineFile.name | replace(' ', '_') | lower }}.md)
+{% endfor %}

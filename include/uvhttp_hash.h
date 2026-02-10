@@ -1,38 +1,105 @@
-/* UVHTTP 哈希算法接口 - 基于 xxHash */
+/**
+ * @file uvhttp_hash.h
+ * @brief Hash algorithm interface based on xxHash
+ *
+ * This module provides high-performance hash functions using xxHash algorithm.
+ * All functions are inline-optimized for zero runtime overhead.
+ *
+ * @note These functions are static inline and defined in the header file
+ *       to allow compiler optimization and eliminate function call overhead.
+ */
 
 #ifndef UVHTTP_HASH_H
 #define UVHTTP_HASH_H
+
+#include "uvhttp_defaults.h"
 
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 
+/* xxHash header */
+#include "xxhash.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* 默认种子 */
-#define UVHTTP_HASH_DEFAULT_SEED 0x1A2B3C4D5E6F7089ULL
-
-/* 前向声明 */
+/* Forward declarations */
 struct uvhttp_allocator;
 
-/* ========== 主要API ========== */
+/* ========== Main API ========== */
 
-/* 基础哈希函数 */
-uint64_t uvhttp_hash(const void* data, size_t length, uint64_t seed);
-uint64_t uvhttp_hash_string(const char* str);
+/**
+ * @brief Compute hash value for arbitrary data
+ *
+ * @param data Pointer to data buffer to hash
+ * @param length Length of data in bytes
+ * @param seed Seed value for hash computation
+ * @return uint64_t Hash value (0 if data is NULL)
+ *
+ * @note This function is inline-optimized for performance
+ * @note Uses xxHash's 64-bit algorithm (XXH64)
+ */
+static inline uint64_t uvhttp_hash(const void* data, size_t length,
+                                   uint64_t seed) {
+    if (!data)
+        return 0;
+    return XXH64(data, length, seed);
+}
 
-/* 便捷函数 */
+/**
+ * @brief Compute hash value for null-terminated string
+ *
+ * @param str Null-terminated string to hash
+ * @return uint64_t Hash value (0 if str is NULL)
+ *
+ * @note Uses default seed (UVHTTP_HASH_DEFAULT_SEED)
+ * @note String length is computed internally using strlen()
+ */
+static inline uint64_t uvhttp_hash_string(const char* str) {
+    if (!str)
+        return 0;
+    return XXH64(str, strlen(str), UVHTTP_HASH_DEFAULT_SEED);
+}
+
+/* Convenience functions */
+
+/**
+ * @brief Compute hash value using default seed
+ *
+ * @param data Pointer to data buffer to hash
+ * @param length Length of data in bytes
+ * @return uint64_t Hash value using UVHTTP_HASH_DEFAULT_SEED
+ *
+ * @note Convenience wrapper for uvhttp_hash() with default seed
+ */
 static inline uint64_t uvhttp_hash_default(const void* data, size_t length) {
     return uvhttp_hash(data, length, UVHTTP_HASH_DEFAULT_SEED);
 }
 
+/**
+ * @brief Compute string hash using default seed
+ *
+ * @param str Null-terminated string to hash
+ * @return uint64_t Hash value using UVHTTP_HASH_DEFAULT_SEED
+ *
+ * @note Convenience wrapper for uvhttp_hash_string()
+ */
 static inline uint64_t uvhttp_hash_string_default(const char* str) {
     return uvhttp_hash_string(str);
 }
 
-/* 错误处理宏 */
+/* Error handling macros */
+
+/**
+ * @brief Validate pointer is not NULL
+ *
+ * @param ptr Pointer to validate
+ * @return int TRUE if pointer is not NULL, FALSE otherwise
+ *
+ * @note This is a macro for compile-time optimization
+ */
 #define UVHTTP_HASH_VALIDATE_PTR(ptr) ((ptr) != NULL)
 
 #ifdef __cplusplus

@@ -1,4 +1,4 @@
-/* UVHTTP 特性配置定义 */
+/* UVHTTP Feature Configuration Definitions */
 
 #ifndef UVHTTP_FEATURES_H
 #define UVHTTP_FEATURES_H
@@ -9,108 +9,90 @@
 extern "C" {
 #endif
 
-/* 核心 HTTP 功能 - 始终启用 */
+/* Core HTTP functionality - Always enabled */
 #define UVHTTP_FEATURE_HTTP 1
 
-/* 中间件支持 - 编译期配置 */
-#ifndef UVHTTP_FEATURE_MIDDLEWARE
-#define UVHTTP_FEATURE_MIDDLEWARE 1  /* 中间件支持 - 已启用 */
-#endif
+/* Middleware support - Always enabled (compile-time tool for application layer) */
+#define UVHTTP_FEATURE_MIDDLEWARE 1
 
-/* 可选功能模块 */
+/* Optional feature modules */
 #ifndef UVHTTP_FEATURE_WEBSOCKET
-#define UVHTTP_FEATURE_WEBSOCKET 1  /* WebSocket 功能模块 */
+#    define UVHTTP_FEATURE_WEBSOCKET 1 /* WebSocket functionblock */
 #endif
 
 #ifndef UVHTTP_FEATURE_STATIC_FILES
-#define UVHTTP_FEATURE_STATIC_FILES 1 /* 静态文件功能模块 */
-#endif
-
-#ifndef UVHTTP_FEATURE_LOGGING
-#define UVHTTP_FEATURE_LOGGING 0  /* 日志中间件 - 已禁用以提高性能 */
+#    define UVHTTP_FEATURE_STATIC_FILES 1 /* Static filefunctionblock */
 #endif
 
 #ifndef UVHTTP_FEATURE_TLS
-#define UVHTTP_FEATURE_TLS 1        /* TLS/SSL 支持 */
+#    define UVHTTP_FEATURE_TLS 1 /* TLS/SSL Support */
 #endif
 
 #ifndef UVHTTP_FEATURE_ROUTER_CACHE
-#define UVHTTP_FEATURE_ROUTER_CACHE 0 /* 路由缓存支持 */
+#    define UVHTTP_FEATURE_ROUTER_CACHE 0 /* RouterCacheSupport */
 #endif
 
 #ifndef UVHTTP_FEATURE_LRU_CACHE
-#define UVHTTP_FEATURE_LRU_CACHE 1 /* LRU缓存支持 */
-#endif
-
-#ifndef UVHTTP_FEATURE_CORS
-#define UVHTTP_FEATURE_CORS 0       /* CORS 支持 */
+#    define UVHTTP_FEATURE_LRU_CACHE 1 /* LRUCacheSupport */
 #endif
 
 #ifndef UVHTTP_FEATURE_RATE_LIMIT
-#define UVHTTP_FEATURE_RATE_LIMIT 1 /* 限流支持 - 默认启用 */
+#    define UVHTTP_FEATURE_RATE_LIMIT          \
+        1 /* Rate limitSupport - DefaultEnable \
+           */
 #endif
 
-#ifndef UVHTTP_FEATURE_ALLOCATOR
-#define UVHTTP_FEATURE_ALLOCATOR 0  /* 自定义分配器支持 */
-#endif
+/* ============ Conditional Compilation Macros ============ */
 
-/* ============ 条件编译宏 ============ */
-
-/* 基础功能宏 */
+/* Basic feature macros */
 #if UVHTTP_FEATURE_WEBSOCKET
-#define UVHTTP_WEBSOCKET_ENABLED
+#    define UVHTTP_WEBSOCKET_ENABLED
 #endif
 
 #if UVHTTP_FEATURE_LOGGING
-#define UVHTTP_LOGGING_ENABLED
+#    define UVHTTP_LOGGING_ENABLED
 #endif
+
+/* Note: Logging is controlled by ENABLE_DEV_MODE and ENABLE_DEBUG options in CMakeLists.txt */
+/* The UVHTTP_LOGGING_ENABLED macro is defined based on these options */
 
 #if UVHTTP_FEATURE_TLS
-#define UVHTTP_TLS_ENABLED
+#    define UVHTTP_TLS_ENABLED
 #endif
 
-#if UVHTTP_FEATURE_MIDDLEWARE
+/* Middleware support - Always enabled (compile-time tool for application layer) */
 #define UVHTTP_MIDDLEWARE_ENABLED
-#endif
 
 #if UVHTTP_FEATURE_ROUTER_CACHE
-#define UVHTTP_ROUTER_CACHE_ENABLED
-#endif
-
-#if UVHTTP_FEATURE_CORS
-#define UVHTTP_CORS_ENABLED
+#    define UVHTTP_ROUTER_CACHE_ENABLED
 #endif
 
 #if UVHTTP_FEATURE_RATE_LIMIT
-#define UVHTTP_RATE_LIMIT_ENABLED
+#    define UVHTTP_RATE_LIMIT_ENABLED
 #endif
 
 #if UVHTTP_FEATURE_STATIC_FILES
-#define UVHTTP_STATIC_FILES_ENABLED
+#    define UVHTTP_STATIC_FILES_ENABLED
 #endif
 
 #if UVHTTP_FEATURE_LRU_CACHE
-#define UVHTTP_LRU_CACHE_ENABLED
+#    define UVHTTP_LRU_CACHE_ENABLED
 #endif
 
-#if UVHTTP_FEATURE_ALLOCATOR
-#define UVHTTP_ALLOCATOR_ENABLED
-#endif
+/* ============ Compile-time Assertion Macros ============ */
+/* Note: UVHTTP_STATIC_ASSERT is defined in uvhttp_common.h */
 
-/* ============ 编译时断言宏 ============ */
-/* 注意：UVHTTP_STATIC_ASSERT 已在 uvhttp_common.h 中定义 */
-
-/* ============ 属性宏 ============ */
-/* 函数属性 */
+/* ============ Attribute Macros ============ */
+/* Function attributes */
 #define UVHTTP_INLINE __attribute__((always_inline)) static inline
 #define UVHTTP_NOINLINE __attribute__((noinline))
 #define UVHTTP_UNUSED __attribute__((unused))
 #define UVHTTP_DEPRECATED __attribute__((deprecated))
 
-/* 内存对齐 */
+/* Memory alignment */
 #define UVHTTP_ALIGNED(n) __attribute__((aligned(n)))
 
-/* 分支预测优化 */
+/* Branch prediction optimization */
 #define UVHTTP_LIKELY(x) __builtin_expect(!!(x), 1)
 #define UVHTTP_UNLIKELY(x) __builtin_expect(!!(x), 0)
 

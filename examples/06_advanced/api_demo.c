@@ -110,12 +110,13 @@ int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 }
 
 int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req; /* 未使用参数 */
     const char* html = 
         "<!DOCTYPE html>"
         "<html>"
         "<head><title>UVHTTP 核心API演示</title></head>"
         "<body>"
-        "<h1>🚀 UVHTTP 核心API演示</h1>"
+        "<h1> UVHTTP 核心API演示</h1>"
         "<p>这是一个使用核心API创建的HTTP服务器。</p>"
         "<h2>可用的API端点：</h2>"
         "<ul>"
@@ -140,12 +141,12 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 }
 
 int main() {
-    printf("🚀 UVHTTP 核心API演示\n");
+    printf(" UVHTTP 核心API演示\n");
     
     // 创建事件循环
     uv_loop_t* loop = uv_default_loop();
     if (!loop) {
-        fprintf(stderr, "❌ 创建事件循环失败\n");
+        fprintf(stderr, " 创建事件循环失败\n");
         return 1;
     }
     
@@ -166,7 +167,7 @@ int main() {
         return 1;
     }
     if (!ctx->server) {
-        fprintf(stderr, "❌ 服务器创建失败\n");
+        fprintf(stderr, " 服务器创建失败\n");
         free(ctx);
         return 1;
     }
@@ -181,7 +182,7 @@ int main() {
         return 1;
     }
     if (!router) {
-        fprintf(stderr, "❌ 路由器创建失败\n");
+        fprintf(stderr, " 路由器创建失败\n");
         uvhttp_server_free(ctx->server);
         free(ctx);
         return 1;
@@ -205,14 +206,14 @@ int main() {
     uv_signal_init(loop, &ctx->sigterm);
     uv_signal_start(&ctx->sigterm, on_sigterm, SIGTERM);
     
-    printf("✅ 服务器配置完成!\n");
+    printf(" 服务器配置完成!\n");
     printf("🌐 访问 http://localhost:8080 查看演示\n");
     printf("⏹️  按 Ctrl+C 停止服务器\n");
     
     // 启动服务器
     uvhttp_error_t listen_result = uvhttp_server_listen(ctx->server, "0.0.0.0", 8080);
     if (listen_result != UVHTTP_OK) {
-        fprintf(stderr, "❌ 服务器启动失败: %s\n", uvhttp_error_string(listen_result));
+        fprintf(stderr, " 服务器启动失败: %s\n", uvhttp_error_string(listen_result));
         uv_signal_stop(&ctx->sigint);
         uv_signal_stop(&ctx->sigterm);
         uvhttp_server_free(ctx->server);

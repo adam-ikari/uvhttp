@@ -1,10 +1,13 @@
 /* uvhttp_static.c 覆盖率测试 */
 
 #include <gtest/gtest.h>
+#if UVHTTP_FEATURE_STATIC_FILES
 #include "uvhttp_static.h"
+#endif
 #include "uvhttp_allocator.h"
 #include <string.h>
 
+#if UVHTTP_FEATURE_STATIC_FILES
 /* 测试获取MIME类型 */
 TEST(UvhttpStaticCoverageTest, GetMimeType) {
     char mime_type[256];
@@ -98,3 +101,4 @@ TEST(UvhttpStaticCoverageTest, CheckConditionalRequestNull) {
     /* 可能返回0（函数可能忽略NULL） */
     EXPECT_GE(result, 0);
 }
+#endif /* UVHTTP_FEATURE_STATIC_FILES */
