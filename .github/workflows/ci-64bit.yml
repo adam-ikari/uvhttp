@@ -1,9 +1,9 @@
 name: CI/CD - 64-bit Build and Test
 
-# 触发条件：Push 到 main、develop、feature/* 分支
+# 触发条件：Push 到 main、develop、pre-release、feature/* 分支
 on:
   push:
-    branches: [ main, develop, 'feature/**' ]
+    branches: [ main, develop, pre-release, 'feature/**' ]
   workflow_dispatch:
 
 # 并发控制：取消同一分支的旧运行
@@ -38,10 +38,18 @@ jobs:
           cache-key: push-${{ github.sha }}
           build-type: Release
 
+      - name: Clean build directory
+        run: |
+          rm -rf build/CMakeFiles build/Makefile build/CMakeCache.txt
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+
       - name: Build project
         id: build
         run: |
-          make -j$(nproc)
+          cd build && make -j$(nproc)
           echo "build-dir=build" >> $GITHUB_OUTPUT
           echo "status=success" >> $GITHUB_OUTPUT
 
