@@ -5,12 +5,15 @@
 
 #include "uvhttp.h"
 #include "uvhttp_allocator.h"
+#if UVHTTP_FEATURE_STATIC_FILES
 #include "uvhttp_static.h"
+#endif
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
 #include <sys/stat.h>
 
+#if UVHTTP_FEATURE_STATIC_FILES
 /* 应用上下文 */
 typedef struct {
     uvhttp_server_t* server;
@@ -343,10 +346,21 @@ int main(int argc, char** argv) {
         }
         uvhttp_free(ctx);
     }
-    
+
     printf("\n========================================\n");
     printf("服务器已停止\n");
     printf("========================================\n");
-    
+
     return 0;
 }
+#else /* UVHTTP_FEATURE_STATIC_FILES */
+
+/* 当静态文件功能禁用时，提供一个简单的 main 函数 */
+int main(int argc, char** argv) {
+    (void)argc;
+    (void)argv;
+    printf("静态文件功能已禁用，跳过测试\n");
+    return 0;
+}
+
+#endif /* UVHTTP_FEATURE_STATIC_FILES */

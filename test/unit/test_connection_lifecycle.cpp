@@ -1,4 +1,4 @@
-/* uvhttp_connection.c 连接生命周期测试 - 测试连接的完整生命周期 */
+/* uvhttp_connection.c Connection生命周期Test - TestConnection 完整生命周期 */
 
 #include <gtest/gtest.h>
 #include "uvhttp_connection.h"
@@ -6,7 +6,7 @@
 #include "uvhttp_error.h"
 #include <string.h>
 
-/* 辅助函数：创建服务器和循环 */
+/* 辅助函数：Create服务器和循环 */
 static void create_server_and_loop(uv_loop_t** loop, uvhttp_server_t** server) {
     *loop = uv_loop_new();
     ASSERT_NE(*loop, nullptr);
@@ -23,7 +23,7 @@ static void destroy_server_and_loop(uvhttp_server_t* server, uv_loop_t* loop) {
     uvhttp_free(loop);
 }
 
-/* 辅助函数：运行事件循环并关闭 */
+/* 辅助函数：运行事件循环并Close */
 static void run_and_close(uvhttp_server_t* server, uvhttp_connection_t* conn, uv_loop_t* loop) {
     if (conn) {
         uvhttp_connection_close(conn);
@@ -35,7 +35,7 @@ static void run_and_close(uvhttp_server_t* server, uvhttp_connection_t* conn, uv
     uvhttp_free(loop);
 }
 
-/* ========== 测试连接创建和释放 ========== */
+/* ========== TestConnectionCreate和Free ========== */
 
 TEST(UvhttpConnectionLifecycleTest, CreateAndDestroy) {
     uv_loop_t* loop = nullptr;
@@ -47,7 +47,7 @@ TEST(UvhttpConnectionLifecycleTest, CreateAndDestroy) {
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
     
-    /* 验证连接属性 */
+    /* ValidationConnection属性 */
     EXPECT_EQ(conn->server, server);
     EXPECT_EQ(conn->chunked_encoding, 0);
     EXPECT_EQ(conn->parsing_complete, 0);
@@ -61,7 +61,7 @@ TEST(UvhttpConnectionLifecycleTest, CreateAndDestroy) {
     destroy_server_and_loop(server, loop);
 }
 
-/* ========== 测试连接状态转换 ========== */
+/* ========== TestConnectionState转换 ========== */
 
 TEST(UvhttpConnectionLifecycleTest, StateTransitions) {
     uv_loop_t* loop = nullptr;
@@ -73,7 +73,7 @@ TEST(UvhttpConnectionLifecycleTest, StateTransitions) {
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
     
-    /* 测试状态转换 */
+    /* TestState转换 */
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_NEW);
     
     uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_HTTP_READING);
@@ -92,178 +92,162 @@ TEST(UvhttpConnectionLifecycleTest, StateTransitions) {
     destroy_server_and_loop(server, loop);
 }
 
-/* ========== 测试连接标志位 ========== */
+/* ========== TestConnectionFlag位 ========== */
 
 TEST(UvhttpConnectionLifecycleTest, ConnectionFlags) {
+    uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
-    uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(server, nullptr);
-    
+    create_server_and_loop(&loop, &server);
+
     uvhttp_connection_t* conn = nullptr;
-    result = uvhttp_connection_new(server, &conn);
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
-    
-    /* 测试 keepalive 标志 */
+
+    /* Test keepalive Flag */
     conn->keepalive = 1;
     EXPECT_EQ(conn->keepalive, 1);
-    
+
     conn->keepalive = 0;
     EXPECT_EQ(conn->keepalive, 0);
-    
-    /* 测试分块编码标志 */
+
+    /* Test分块编码Flag */
     conn->chunked_encoding = 1;
     EXPECT_EQ(conn->chunked_encoding, 1);
-    
+
     conn->chunked_encoding = 0;
     EXPECT_EQ(conn->chunked_encoding, 0);
-    
-    /* 测试解析完成标志 */
+
+    /* Test解析CompleteFlag */
     conn->parsing_complete = 1;
     EXPECT_EQ(conn->parsing_complete, 1);
-    
+
     conn->parsing_complete = 0;
     EXPECT_EQ(conn->parsing_complete, 0);
-    
-    /* 测试 close_pending 标志 */
+
+    /* Test close_pending Flag */
     conn->close_pending = 1;
     EXPECT_EQ(conn->close_pending, 1);
-    
+
     conn->close_pending = 0;
     EXPECT_EQ(conn->close_pending, 0);
-    
-    /* 测试 need_restart_read 标志 */
+
+    /* Test need_restart_read Flag */
     conn->need_restart_read = 1;
     EXPECT_EQ(conn->need_restart_read, 1);
-    
+
     conn->need_restart_read = 0;
     EXPECT_EQ(conn->need_restart_read, 0);
-    
-    /* 测试 TLS 启用标志 */
+
+    /* Test TLS 启用Flag */
     conn->tls_enabled = 1;
     EXPECT_EQ(conn->tls_enabled, 1);
-    
+
     conn->tls_enabled = 0;
     EXPECT_EQ(conn->tls_enabled, 0);
-    
+
     uvhttp_connection_free(conn);
-    uvhttp_server_free(server);
+    destroy_server_and_loop(server, loop);
 }
 
-/* ========== 测试缓冲区管理 ========== */
+/* ========== TestBuffer管理 ========== */
 
 TEST(UvhttpConnectionLifecycleTest, BufferManagement) {
+    uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
-    uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(server, nullptr);
-    
+    create_server_and_loop(&loop, &server);
+
     uvhttp_connection_t* conn = nullptr;
-    result = uvhttp_connection_new(server, &conn);
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
-    
-    /* 测试缓冲区大小 */
+
+    /* TestBufferSize */
     conn->read_buffer_size = 8192;
     EXPECT_EQ(conn->read_buffer_size, 8192);
-    
+
     conn->read_buffer_used = 4096;
     EXPECT_EQ(conn->read_buffer_used, 4096);
-    
-    /* 测试内容长度 */
+
+    /* Test内容Length */
     conn->content_length = 1024;
     EXPECT_EQ(conn->content_length, 1024);
-    
-    /* 测试已接收 body 长度 */
+
+    /* Test已接收 body Length */
     conn->body_received = 512;
     EXPECT_EQ(conn->body_received, 512);
-    
+
     uvhttp_connection_free(conn);
-    uvhttp_server_free(server);
+    destroy_server_and_loop(server, loop);
 }
 
-/* ========== 测试连接关闭 ========== */
+/* ========== TestConnectionClose ========== */
 
 TEST(UvhttpConnectionLifecycleTest, ConnectionClose) {
+    uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
-    uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(server, nullptr);
-    
+    create_server_and_loop(&loop, &server);
+
     uvhttp_connection_t* conn = nullptr;
-    result = uvhttp_connection_new(server, &conn);
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
-    
-    /* 关闭连接 */
+
+    /* CloseConnection */
     uvhttp_connection_close(conn);
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_CLOSING);
-    
-    /* 运行事件循环以完成异步关闭 */
+
+    /* 运行事件循环以CompleteAsyncClose */
     for (int i = 0; i < 10; i++) {
-        uv_run(uv_default_loop(), UV_RUN_ONCE);
+        uv_run(loop, UV_RUN_ONCE);
     }
-    
-    /* 不要手动调用 uvhttp_connection_free，由 on_handle_close 回调自动释放 */
-    uvhttp_server_free(server);
+
+    /* 不要手动调用 uvhttp_connection_free，由 on_handle_close 回调自动Free */
+    destroy_server_and_loop(server, loop);
 }
 
-/* ========== 测试连接重启读取 ========== */
+/* ========== TestConnectionRestart读取 ========== */
 
 TEST(UvhttpConnectionLifecycleTest, RestartRead) {
+    uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
-    uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(server, nullptr);
-    
+    create_server_and_loop(&loop, &server);
+
     uvhttp_connection_t* conn = nullptr;
-    result = uvhttp_connection_new(server, &conn);
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
-    
-    /* 测试重启读取 */
+
+    /* TestRestart读取 */
     result = uvhttp_connection_restart_read(conn);
-    /* 结果取决于内部状态 */
-    
-    /* 关闭所有 libuv 句柄 */
-    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
-        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
-    }
-    if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
-        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
-    }
-    if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
-        uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
-    }
-    
-    /* 运行事件循环等待关闭完成 */
+    /* ResultDependsInternalState */
+
+    /* 运行事件循环以CompleteAsyncOperation */
     for (int i = 0; i < 10; i++) {
-        uv_run(uv_default_loop(), UV_RUN_ONCE);
+        uv_run(loop, UV_RUN_ONCE);
     }
-    
+
     uvhttp_connection_free(conn);
-    uvhttp_server_free(server);
+    destroy_server_and_loop(server, loop);
 }
 
-/* ========== 测试连接调度重启读取 ========== */
+/* ========== TestConnectionScheduleRestart读取 ========== */
 
 TEST(UvhttpConnectionLifecycleTest, ScheduleRestartRead) {
+    uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
-    uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(server, nullptr);
-    
+    create_server_and_loop(&loop, &server);
+
     uvhttp_connection_t* conn = nullptr;
-    result = uvhttp_connection_new(server, &conn);
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
-    
-    /* 测试调度重启读取 */
+
+    /* TestScheduleRestart读取 */
     result = uvhttp_connection_schedule_restart_read(conn);
-    /* 结果取决于内部状态 */
-    
-    /* 关闭所有 libuv 句柄 */
+    /* ResultDependsInternalState */
+
+    /* CloseAll libuv Handle */
     if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
         uv_close((uv_handle_t*)&conn->idle_handle, NULL);
     }
@@ -273,152 +257,145 @@ TEST(UvhttpConnectionLifecycleTest, ScheduleRestartRead) {
     if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
         uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
     }
-    
-    /* 运行事件循环等待关闭完成 */
+
+    /* 运行事件循环等待CloseComplete */
     for (int i = 0; i < 10; i++) {
-        uv_run(uv_default_loop(), UV_RUN_ONCE);
+        uv_run(loop, UV_RUN_ONCE);
     }
-    
+
     uvhttp_connection_free(conn);
-    uvhttp_server_free(server);
+    destroy_server_and_loop(server, loop);
 }
 
-/* ========== 测试多个连接 ========== */
+/* ========== TestMultipleConnection ========== */
 
 TEST(UvhttpConnectionLifecycleTest, MultipleConnections) {
+    uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
-    uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(server, nullptr);
-    
-    /* 创建多个连接 */
+    create_server_and_loop(&loop, &server);
+
+    /* CreateMultipleConnection */
     uvhttp_connection_t* conns[10];
+    uvhttp_error_t result;
     for (int i = 0; i < 10; i++) {
         result = uvhttp_connection_new(server, &conns[i]);
         ASSERT_EQ(result, UVHTTP_OK);
         ASSERT_NE(conns[i], nullptr);
         EXPECT_EQ(conns[i]->server, server);
     }
-    
-    /* 释放所有连接 */
+
+    /* FreeAllConnection */
     for (int i = 0; i < 10; i++) {
         uvhttp_connection_free(conns[i]);
     }
-    
-    uvhttp_server_free(server);
+
+    destroy_server_and_loop(server, loop);
 }
 
-/* ========== 测试连接错误处理 ========== */
+/* ========== TestConnectionErrorHandling ========== */
 
 TEST(UvhttpConnectionLifecycleTest, ErrorHandling) {
+    uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
-    uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(server, nullptr);
-    
+    create_server_and_loop(&loop, &server);
+
     uvhttp_connection_t* conn = nullptr;
-    result = uvhttp_connection_new(server, &conn);
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
-    
-    /* 测试错误码 */
+
+    /* TestError码 */
     conn->last_error = UVHTTP_ERROR_CONNECTION_INIT;
     EXPECT_EQ(conn->last_error, UVHTTP_ERROR_CONNECTION_INIT);
-    
+
     conn->last_error = UVHTTP_ERROR_CONNECTION_TIMEOUT;
     EXPECT_EQ(conn->last_error, UVHTTP_ERROR_CONNECTION_TIMEOUT);
-    
+
     conn->last_error = UVHTTP_ERROR_CONNECTION_RESET;
     EXPECT_EQ(conn->last_error, UVHTTP_ERROR_CONNECTION_RESET);
-    
+
     uvhttp_connection_free(conn);
-    uvhttp_server_free(server);
+    destroy_server_and_loop(server, loop);
 }
 
-/* ========== 测试连接头部解析 ========== */
+/* ========== TestConnectionHeader解析 ========== */
 
 TEST(UvhttpConnectionLifecycleTest, HeaderParsing) {
+    uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
-    uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(server, nullptr);
-    
+    create_server_and_loop(&loop, &server);
+
     uvhttp_connection_t* conn = nullptr;
-    result = uvhttp_connection_new(server, &conn);
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
-    
-    /* 测试头部解析标志 */
+
+    /* TestHeader解析Flag */
     conn->parsing_header_field = 1;
     EXPECT_EQ(conn->parsing_header_field, 1);
-    
+
     conn->current_header_is_important = 1;
     EXPECT_EQ(conn->current_header_is_important, 1);
-    
+
     conn->current_header_field_len = 100;
     EXPECT_EQ(conn->current_header_field_len, 100);
-    
+
     uvhttp_connection_free(conn);
-    uvhttp_server_free(server);
+    destroy_server_and_loop(server, loop);
 }
 
-/* ========== 测试连接边界情况 ========== */
+/* ========== TestConnectionEdgeCase ========== */
 
 TEST(UvhttpConnectionLifecycleTest, EdgeCases) {
+    uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
-    uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(server, nullptr);
-    
+    create_server_and_loop(&loop, &server);
+
     uvhttp_connection_t* conn = nullptr;
-    result = uvhttp_connection_new(server, &conn);
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
-    
-    /* 测试大值 */
+
+    /* Test大值 */
     conn->read_buffer_size = SIZE_MAX;
     conn->content_length = SIZE_MAX;
     conn->body_received = SIZE_MAX;
-    
-    /* 测试负值（如果允许） */
+
+    /* Test负值（如果允许） */
     conn->keepalive = -1;
     conn->chunked_encoding = -1;
     conn->parsing_complete = -1;
-    
+
     uvhttp_connection_free(conn);
-    uvhttp_server_free(server);
+    destroy_server_and_loop(server, loop);
 }
 
-/* ========== 测试连接超时 ========== */
+/* ========== TestConnectionTimeout ========== */
 
 TEST(UvhttpConnectionLifecycleTest, ConnectionTimeout) {
+    uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
-    uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
-    ASSERT_EQ(result, UVHTTP_OK);
-    ASSERT_NE(server, nullptr);
-    
+    create_server_and_loop(&loop, &server);
+
     uvhttp_connection_t* conn = nullptr;
-    result = uvhttp_connection_new(server, &conn);
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
-    
-    /* 测试启动超时 */
+
+    /* TestStartTimeout */
     result = uvhttp_connection_start_timeout(conn);
-    /* 结果取决于内部状态 */
-    
-    /* 测试自定义超时 */
+    /* ResultDependsInternalState */
+
+    /* TestCustomTimeout */
     result = uvhttp_connection_start_timeout_custom(conn, 30);
-    /* 结果取决于内部状态 */
-    
-    /* 停止定时器 */
+    /* ResultDependsInternalState */
+
+    /* Stop定时器 */
     if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
         uv_timer_stop(&conn->timeout_timer);
     }
-    
-    /* 关闭连接以清理定时器 */
-    uvhttp_connection_close(conn);
-    uv_run(uv_default_loop(), UV_RUN_NOWAIT);
-    
+
+    /* 手动FreeConnection，不使用 close 回调 */
     uvhttp_connection_free(conn);
-    uvhttp_server_free(server);
+    destroy_server_and_loop(server, loop);
 }
