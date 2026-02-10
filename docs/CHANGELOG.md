@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1] - 2026-02-10
+
+### Fixed
+
+- **Performance Regression**
+  - Fixed severe performance regression caused by event loop blocking in connection cleanup
+  - Removed synchronous `uv_run()` calls from `uvhttp_connection_free()`
+  - Replaced with async close mechanism via `uvhttp_connection_close()`
+  - **Performance improvements**:
+    - 10 connections: 10,691 → 31,151 RPS (+192%)
+    - 50 connections: 129 → 30,487 RPS (+23,500%)
+    - 100 connections: 7 → 31,409 RPS (+448,600%)
+  - **Socket errors**: Reduced from 95%+ at high concurrency to 0% at all levels
+  - **Connection leaks**: Eliminated CLOSE_WAIT state connections
+
+### Changed
+
+- **Code Size**
+  - Reduced `uvhttp_connection.c` by 38 lines (-7%)
+
 ## [2.3.0] - 2026-02-04
 
 ### Breaking Changes
