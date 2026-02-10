@@ -30,6 +30,10 @@ jobs:
           cache-key: nightly-${{ github.run_number }}
           build-type: Debug
       
+      - name: Clean build directory
+        run: |
+          rm -rf build/CMakeFiles build/Makefile build/CMakeCache.txt
+      
       - name: Configure CMake with coverage
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON

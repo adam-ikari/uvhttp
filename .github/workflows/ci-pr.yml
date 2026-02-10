@@ -39,6 +39,10 @@ jobs:
           cache-key: pr-${{ github.event.pull_request.number }}
           build-type: Release
       
+      - name: Clean build directory
+        run: |
+          rm -rf build/CMakeFiles build/Makefile build/CMakeCache.txt
+      
       - name: Configure CMake
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release

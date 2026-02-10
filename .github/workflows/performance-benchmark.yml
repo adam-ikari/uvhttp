@@ -62,6 +62,10 @@ jobs:
         # 增加文件描述符限制
         ulimit -n 65535
     
+    - name: Clean build directory
+      run: |
+        rm -rf build/CMakeFiles build/Makefile build/CMakeCache.txt
+    
     - name: Configure CMake
       run: |
         cmake -B build -DCMAKE_BUILD_TYPE=Release
