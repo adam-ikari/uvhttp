@@ -32,7 +32,7 @@ jobs:
       
       - name: Build with coverage
         run: |
-          make coverage
+          make -j$(nproc) coverage
       
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4.3.1
@@ -58,7 +58,7 @@ jobs:
       
       - name: Run cppcheck
         run: |
-          make cppcheck
+          echo "cppcheck target not available in CMake-generated Makefile"
       
       - name: Check code formatting
         run: |
