@@ -17,7 +17,9 @@
 
 #include <uv.h>
 #include <uvhttp.h>
+#if UVHTTP_FEATURE_STATIC_FILES
 #include <uvhttp_static.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,7 +75,9 @@ typedef struct {
 typedef struct {
     volatile sig_atomic_t running;
     comprehensive_stats_t stats;
+#if UVHTTP_FEATURE_STATIC_FILES
     uvhttp_static_context_t* static_ctx;
+#endif
     uv_signal_t sigint;
     uv_signal_t sigterm;
     uv_loop_t* loop;  /* Store loop pointer for uv_stop() */
@@ -460,6 +464,7 @@ static int health_handler(uvhttp_request_t* request, uvhttp_response_t* response
     return 0;
 }
 
+#if UVHTTP_FEATURE_STATIC_FILES
 /* Static file handler - application layer wrapper */
 static int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     /* Get application context from global context */
@@ -483,35 +488,7 @@ static int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* res
 
     return 0;
 }
-
-/* Create test file */
-static void create_test_file(const char* path, size_t size) {
-    FILE* f = fopen(path, "wb");
-    if (!f) {
-        fprintf(stderr, "Failed to create test file: %s\n", path);
-        return;
-    }
-
-    /* Write random data */
-    unsigned char buffer[4096];
-    for (size_t i = 0; i < sizeof(buffer); i++) {
-        buffer[i] = (unsigned char)(rand() % 256);
-    }
-
-    size_t remaining = size;
-    while (remaining > 0) {
-        size_t chunk = (remaining > sizeof(buffer)) ? sizeof(buffer) : remaining;
-        fwrite(buffer, 1, chunk, f);
-        remaining -= chunk;
-    }
-
-    fclose(f);
-}
-
-/* Create directory using mkdir system call */
-static int create_directory(const char* path) {
-    return mkdir(path, 0755);
-}
+#endif
 
 /* Print usage */
 static void print_usage(const char* program) {
@@ -642,6 +619,36 @@ int main(int argc, char* argv[]) {
     uvhttp_router_add_route(router, "/stats", stats_handler);
     uvhttp_router_add_route(router, "/health", health_handler);
 
+    #if UVHTTP_FEATURE_STATIC_FILES
+    /* Create test file */
+    static void create_test_file(const char* path, size_t size) {
+        FILE* f = fopen(path, "wb");
+        if (!f) {
+            fprintf(stderr, "Failed to create test file: %s\n", path);
+            return;
+        }
+
+        /* Write random data */
+        unsigned char buffer[4096];
+        for (size_t i = 0; i < sizeof(buffer); i++) {
+            buffer[i] = (unsigned char)(rand() % 256);
+        }
+
+        size_t remaining = size;
+        while (remaining > 0) {
+            size_t chunk = (remaining > sizeof(buffer)) ? sizeof(buffer) : remaining;
+            fwrite(buffer, 1, chunk, f);
+            remaining -= chunk;
+        }
+
+        fclose(f);
+    }
+
+    /* Create directory using mkdir system call */
+    static int create_directory(const char* path) {
+        return mkdir(path, 0755);
+    }
+
     /* Create test file directory */
     const char* test_dir = "./public/file_test";
     if (create_directory(test_dir) != 0 && errno != EEXIST) {
@@ -684,6 +691,7 @@ int main(int argc, char* argv[]) {
             fprintf(stderr, "Warning: Failed to create static file context: %s\n", uvhttp_error_string(result));
         }
     }
+#endif
 
     /* Set router */
     server->router = router;
@@ -691,9 +699,11 @@ int main(int argc, char* argv[]) {
     /* Setup signal handlers using libuv */
     if (uv_signal_init(loop, &ctx->sigint) != 0) {
         fprintf(stderr, "Error: Failed to initialize SIGINT handler\n");
+#if UVHTTP_FEATURE_STATIC_FILES
         if (ctx->static_ctx) {
             uvhttp_static_free(ctx->static_ctx);
         }
+#endif
         uvhttp_server_free(server);
         uvhttp_free(ctx);
         g_ctx = NULL;
@@ -705,9 +715,11 @@ int main(int argc, char* argv[]) {
     if (uv_signal_init(loop, &ctx->sigterm) != 0) {
         fprintf(stderr, "Error: Failed to initialize SIGTERM handler\n");
         uv_signal_stop(&ctx->sigint);
+#if UVHTTP_FEATURE_STATIC_FILES
         if (ctx->static_ctx) {
             uvhttp_static_free(ctx->static_ctx);
         }
+#endif
         uvhttp_server_free(server);
         uvhttp_free(ctx);
         g_ctx = NULL;
@@ -723,9 +735,11 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Error: Failed to start server: %s\n", uvhttp_error_string(result));
         uv_signal_stop(&ctx->sigint);
         uv_signal_stop(&ctx->sigterm);
+#if UVHTTP_FEATURE_STATIC_FILES
         if (ctx->static_ctx) {
             uvhttp_static_free(ctx->static_ctx);
         }
+#endif
         uvhttp_server_free(server);
         uvhttp_free(ctx);
         g_ctx = NULL;
@@ -754,10 +768,12 @@ int main(int argc, char* argv[]) {
     /* Run loop once more to process close callbacks */
     uv_run(loop, UV_RUN_ONCE);
     
+#if UVHTTP_FEATURE_STATIC_FILES
     if (ctx->static_ctx) {
         uvhttp_static_free(ctx->static_ctx);
         ctx->static_ctx = NULL;
     }
+#endif
     uvhttp_server_free(server);
     uvhttp_free(ctx);
     g_ctx = NULL;
