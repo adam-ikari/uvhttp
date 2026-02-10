@@ -62,6 +62,10 @@ jobs:
         # 增加文件描述符限制
         ulimit -n 65535
     
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
+    
     - name: Build project
       run: |
         make -j$(nproc)
