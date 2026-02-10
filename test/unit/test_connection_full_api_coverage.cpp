@@ -104,22 +104,24 @@ TEST(UvhttpConnectionFullApiTest, ConnectionCloseSuccess) {
     uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
     create_server_and_loop(&loop, &server);
-    
+
     uvhttp_connection_t* conn = nullptr;
     uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
-    
-    /* 设置连接状态为正在处理 */
+
+    /* Set connection state to processing */
     conn->state = UVHTTP_CONN_STATE_HTTP_PROCESSING;
-    
-    /* 关闭连接 */
+
+    /* Close connection - this will trigger async cleanup via on_handle_close */
     uvhttp_connection_close(conn);
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_CLOSING);
-    
-    /* 运行循环以处理异步关闭 */
-    uv_run(loop, UV_RUN_NOWAIT);
-    
-    uvhttp_connection_free(conn);
+
+    /* Run loop to process async close - on_handle_close will free the connection */
+    for (int i = 0; i < 10; i++) {
+        uv_run(loop, UV_RUN_NOWAIT);
+    }
+
+    /* Connection is freed by on_handle_close callback, don't free again */
     destroy_server_and_loop(loop, server);
 }
 
@@ -159,18 +161,23 @@ TEST(UvhttpConnectionFullApiTest, ConnectionScheduleRestartReadSuccess) {
     uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
     create_server_and_loop(&loop, &server);
-    
+
     uvhttp_connection_t* conn = nullptr;
     uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
-    
-    /* 设置需要重启读取标志 */
+
+    /* Set need restart read flag */
     conn->need_restart_read = 1;
-    
-    /* 调度重启读取 */
+
+    /* Schedule restart read - this starts idle handle */
     result = uvhttp_connection_schedule_restart_read(conn);
-    /* 可能返回错误，因为连接没有正确初始化 */
-    
+    /* May return error because connection is not properly initialized */
+
+    /* Stop idle handle before freeing connection */
+    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
+        uv_idle_stop(&conn->idle_handle);
+    }
+
     uvhttp_connection_free(conn);
     destroy_server_and_loop(loop, server);
 }
