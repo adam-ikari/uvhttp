@@ -264,19 +264,23 @@ TEST(UvhttpConnectionFullApiTest, ConnectionTlsCleanupSuccess) {
     uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
     create_server_and_loop(&loop, &server);
-    
+
     uvhttp_connection_t* conn = nullptr;
     uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
-    
-    /* TLS cleanup 函数暂未实现，只测试字段设置 */
+
+    /* TLS cleanup function test - only test field setting */
     conn->tls_enabled = 1;
-    conn->ssl = (void*)0x1234; /* 模拟 SSL 上下文 */
-    
-    /* 验证字段设置成功 */
-    EXPECT_EQ(conn->ssl, (void*)0x1234);
+
+    /* Note: Don't set conn->ssl to an invalid pointer here.
+     * The connection cleanup function will call mbedtls_ssl_free on conn->ssl,
+     * which requires a valid mbedtls_ssl_context pointer. Setting an invalid
+     * pointer will cause a segmentation fault. */
+
+    /* Verify field setting */
+    EXPECT_EQ(conn->ssl, nullptr); /* Should be NULL after creation */
     EXPECT_EQ(conn->tls_enabled, 1);
-    
+
     uvhttp_connection_free(conn);
     destroy_server_and_loop(loop, server);
 }
@@ -614,20 +618,21 @@ TEST(UvhttpConnectionFullApiTest, ConnectionSsl) {
     uv_loop_t* loop = nullptr;
     uvhttp_server_t* server = nullptr;
     create_server_and_loop(&loop, &server);
-    
+
     uvhttp_connection_t* conn = nullptr;
     uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
-    
-    /* 测试 ssl 字段 */
+
+    /* Test ssl field - should be NULL after creation */
     EXPECT_EQ(conn->ssl, nullptr);
-    
-    conn->ssl = (void*)0x1234;
-    EXPECT_EQ(conn->ssl, (void*)0x1234);
-    
-    conn->ssl = nullptr;
+
+    /* Note: Don't set conn->ssl to an invalid pointer.
+     * Setting an invalid pointer and then calling uvhttp_connection_free
+     * will cause a segmentation fault when mbedtls_ssl_free is called. */
+
+    /* Verify ssl field is still NULL */
     EXPECT_EQ(conn->ssl, nullptr);
-    
+
     uvhttp_connection_free(conn);
     destroy_server_and_loop(loop, server);
 }

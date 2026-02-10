@@ -21,9 +21,17 @@ static void create_server_and_loop(uv_loop_t** loop, uvhttp_server_t** server) {
 
 /* 辅助函数：销毁服务器和循环 */
 static void destroy_server_and_loop(uvhttp_server_t* server, uv_loop_t* loop) {
-    uvhttp_server_free(server);
-    uv_loop_close(loop);
-    uvhttp_free(loop);
+    if (server) {
+        uvhttp_server_free(server);
+    }
+    if (loop) {
+        /* Run the loop to process any pending callbacks */
+        for (int i = 0; i < 5; i++) {
+            uv_run(loop, UV_RUN_ONCE);
+        }
+        uv_loop_close(loop);
+        uvhttp_free(loop);
+    }
 }
 
 /* ========== Test WebSocket Handshake ========== */

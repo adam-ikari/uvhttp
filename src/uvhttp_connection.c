@@ -523,27 +523,52 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
         return;
     }
 
-    /* 防止重复释放 */
+    /* Prevent double free */
     if (conn->freed) {
         return;
     }
 
-    /* 检查是否正在关闭中，避免重复释放 */
+    /* Check if handles are being closed asynchronously */
+    if (conn->close_pending > 0) {
+        /* Handles are being closed asynchronously by uvhttp_connection_close.
+         * on_handle_close callback will handle the actual free.
+         * Don't set freed flag here, let on_handle_close handle it. */
+        return;
+    }
 
-        if (conn->close_pending > 0) {
+    /* If handles are not closed yet, close them synchronously by:
+     * 1. Starting the close process with uv_close
+     * 2. Running the loop to process callbacks
+     * 3. Then freeing the connection */
 
-            /* 句柄正在异步关闭中，由 on_handle_close 回调负责释放 */
+    /* Close all handles if they are not already closing */
+    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
+        uv_idle_stop(&conn->idle_handle);
+        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
+    }
 
-            /* 不设置 freed 标志，让 on_handle_close 处理 */
+    if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
+        uv_timer_stop(&conn->timeout_timer);
+        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
+    }
 
-            return;
+    if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
+        uv_read_stop((uv_stream_t*)&conn->tcp_handle);
+        uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
+    }
 
+    /* Run the loop to process close callbacks.
+     * This ensures all handles are fully closed before freeing memory. */
+    if (conn->server && conn->server->loop) {
+        for (int i = 0; i < 10; i++) {
+            uv_run(conn->server->loop, UV_RUN_ONCE);
         }
+    }
 
-    /* 设置 freed 标志 */
+    /* Set freed flag */
     conn->freed = 1;
 
-    // clean request and response data
+    /* Clean request and response data */
     if (conn->request) {
         uvhttp_request_cleanup(conn->request);
         uvhttp_free(conn->request);
@@ -559,13 +584,13 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
     }
 
 #if UVHTTP_FEATURE_TLS
-    // Clean up SSL context to prevent memory leak
+    /* Clean up SSL context to prevent memory leak */
     if (conn->ssl) {
         uvhttp_connection_tls_cleanup(conn);
     }
 #endif
 
-    // releaseconnectionmemory
+    /* Release connection memory */
     uvhttp_free(conn);
 }
 

@@ -198,6 +198,19 @@ uvhttp/fast:
 .PHONY : uvhttp/fast
 
 #=============================================================================
+# Target rules for targets named libuv_mock
+
+# Build rule for target.
+libuv_mock: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 libuv_mock
+.PHONY : libuv_mock
+
+# fast build rule for target.
+libuv_mock/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/libuv_mock.dir/build.make CMakeFiles/libuv_mock.dir/build
+.PHONY : libuv_mock/fast
+
+#=============================================================================
 # Target rules for targets named test_allocator
 
 # Build rule for target.
@@ -952,6 +965,32 @@ test_whitelist_hash/fast:
 .PHONY : test_whitelist_hash/fast
 
 #=============================================================================
+# Target rules for targets named test_connection_lifecycle_mock
+
+# Build rule for target.
+test_connection_lifecycle_mock: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_connection_lifecycle_mock
+.PHONY : test_connection_lifecycle_mock
+
+# fast build rule for target.
+test_connection_lifecycle_mock/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/build
+.PHONY : test_connection_lifecycle_mock/fast
+
+#=============================================================================
+# Target rules for targets named test_connection_simple_mock
+
+# Build rule for target.
+test_connection_simple_mock: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_connection_simple_mock
+.PHONY : test_connection_simple_mock
+
+# fast build rule for target.
+test_connection_simple_mock/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/build
+.PHONY : test_connection_simple_mock/fast
+
+#=============================================================================
 # Target rules for targets named uvhttp_unit_tests
 
 # Build rule for target.
@@ -1224,331 +1263,6 @@ benchmark_unified/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/benchmark_unified.dir/build.make CMakeFiles/benchmark_unified.dir/build
 .PHONY : benchmark_unified/fast
 
-#=============================================================================
-# Target rules for targets named run_tests
-
-# Build rule for target.
-run_tests: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 run_tests
-.PHONY : run_tests
-
-# fast build rule for target.
-run_tests/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/run_tests.dir/build.make CMakeFiles/run_tests.dir/build
-.PHONY : run_tests/fast
-
-#=============================================================================
-# Target rules for targets named coverage
-
-# Build rule for target.
-coverage: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 coverage
-.PHONY : coverage
-
-# fast build rule for target.
-coverage/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/coverage.dir/build.make CMakeFiles/coverage.dir/build
-.PHONY : coverage/fast
-
-#=============================================================================
-# Target rules for targets named test_and_coverage
-
-# Build rule for target.
-test_and_coverage: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_and_coverage
-.PHONY : test_and_coverage
-
-# fast build rule for target.
-test_and_coverage/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_and_coverage.dir/build.make CMakeFiles/test_and_coverage.dir/build
-.PHONY : test_and_coverage/fast
-
-#=============================================================================
-# Target rules for targets named hello_world
-
-# Build rule for target.
-hello_world: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 hello_world
-.PHONY : hello_world
-
-# fast build rule for target.
-hello_world/fast:
-	$(MAKE) $(MAKESILENT) -f examples/01_basics/CMakeFiles/hello_world.dir/build.make examples/01_basics/CMakeFiles/hello_world.dir/build
-.PHONY : hello_world/fast
-
-#=============================================================================
-# Target rules for targets named quick_api_demo
-
-# Build rule for target.
-quick_api_demo: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 quick_api_demo
-.PHONY : quick_api_demo
-
-# fast build rule for target.
-quick_api_demo/fast:
-	$(MAKE) $(MAKESILENT) -f examples/01_basics/CMakeFiles/quick_api_demo.dir/build.make examples/01_basics/CMakeFiles/quick_api_demo.dir/build
-.PHONY : quick_api_demo/fast
-
-#=============================================================================
-# Target rules for targets named signal_handling_demo
-
-# Build rule for target.
-signal_handling_demo: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 signal_handling_demo
-.PHONY : signal_handling_demo
-
-# fast build rule for target.
-signal_handling_demo/fast:
-	$(MAKE) $(MAKESILENT) -f examples/01_basics/CMakeFiles/signal_handling_demo.dir/build.make examples/01_basics/CMakeFiles/signal_handling_demo.dir/build
-.PHONY : signal_handling_demo/fast
-
-#=============================================================================
-# Target rules for targets named simple_routing
-
-# Build rule for target.
-simple_routing: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 simple_routing
-.PHONY : simple_routing
-
-# fast build rule for target.
-simple_routing/fast:
-	$(MAKE) $(MAKESILENT) -f examples/02_routing/CMakeFiles/simple_routing.dir/build.make examples/02_routing/CMakeFiles/simple_routing.dir/build
-.PHONY : simple_routing/fast
-
-#=============================================================================
-# Target rules for targets named method_routing
-
-# Build rule for target.
-method_routing: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 method_routing
-.PHONY : method_routing
-
-# fast build rule for target.
-method_routing/fast:
-	$(MAKE) $(MAKESILENT) -f examples/02_routing/CMakeFiles/method_routing.dir/build.make examples/02_routing/CMakeFiles/method_routing.dir/build
-.PHONY : method_routing/fast
-
-#=============================================================================
-# Target rules for targets named middleware_compile_time_demo
-
-# Build rule for target.
-middleware_compile_time_demo: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 middleware_compile_time_demo
-.PHONY : middleware_compile_time_demo
-
-# fast build rule for target.
-middleware_compile_time_demo/fast:
-	$(MAKE) $(MAKESILENT) -f examples/03_middleware/CMakeFiles/middleware_compile_time_demo.dir/build.make examples/03_middleware/CMakeFiles/middleware_compile_time_demo.dir/build
-.PHONY : middleware_compile_time_demo/fast
-
-#=============================================================================
-# Target rules for targets named middleware_chain_demo
-
-# Build rule for target.
-middleware_chain_demo: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 middleware_chain_demo
-.PHONY : middleware_chain_demo
-
-# fast build rule for target.
-middleware_chain_demo/fast:
-	$(MAKE) $(MAKESILENT) -f examples/03_middleware/CMakeFiles/middleware_chain_demo.dir/build.make examples/03_middleware/CMakeFiles/middleware_chain_demo.dir/build
-.PHONY : middleware_chain_demo/fast
-
-#=============================================================================
-# Target rules for targets named rate_limit_demo
-
-# Build rule for target.
-rate_limit_demo: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 rate_limit_demo
-.PHONY : rate_limit_demo
-
-# fast build rule for target.
-rate_limit_demo/fast:
-	$(MAKE) $(MAKESILENT) -f examples/03_middleware/CMakeFiles/rate_limit_demo.dir/build.make examples/03_middleware/CMakeFiles/rate_limit_demo.dir/build
-.PHONY : rate_limit_demo/fast
-
-#=============================================================================
-# Target rules for targets named test_middleware
-
-# Build rule for target.
-test_middleware: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_middleware
-.PHONY : test_middleware
-
-# fast build rule for target.
-test_middleware/fast:
-	$(MAKE) $(MAKESILENT) -f examples/03_middleware/CMakeFiles/test_middleware.dir/build.make examples/03_middleware/CMakeFiles/test_middleware.dir/build
-.PHONY : test_middleware/fast
-
-#=============================================================================
-# Target rules for targets named static_file_server
-
-# Build rule for target.
-static_file_server: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 static_file_server
-.PHONY : static_file_server
-
-# fast build rule for target.
-static_file_server/fast:
-	$(MAKE) $(MAKESILENT) -f examples/04_static_files/CMakeFiles/static_file_server.dir/build.make examples/04_static_files/CMakeFiles/static_file_server.dir/build
-.PHONY : static_file_server/fast
-
-#=============================================================================
-# Target rules for targets named simple_static_test
-
-# Build rule for target.
-simple_static_test: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 simple_static_test
-.PHONY : simple_static_test
-
-# fast build rule for target.
-simple_static_test/fast:
-	$(MAKE) $(MAKESILENT) -f examples/04_static_files/CMakeFiles/simple_static_test.dir/build.make examples/04_static_files/CMakeFiles/simple_static_test.dir/build
-.PHONY : simple_static_test/fast
-
-#=============================================================================
-# Target rules for targets named advanced_static_server
-
-# Build rule for target.
-advanced_static_server: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 advanced_static_server
-.PHONY : advanced_static_server
-
-# fast build rule for target.
-advanced_static_server/fast:
-	$(MAKE) $(MAKESILENT) -f examples/04_static_files/CMakeFiles/advanced_static_server.dir/build.make examples/04_static_files/CMakeFiles/advanced_static_server.dir/build
-.PHONY : advanced_static_server/fast
-
-#=============================================================================
-# Target rules for targets named cache_test_server
-
-# Build rule for target.
-cache_test_server: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 cache_test_server
-.PHONY : cache_test_server
-
-# fast build rule for target.
-cache_test_server/fast:
-	$(MAKE) $(MAKESILENT) -f examples/04_static_files/CMakeFiles/cache_test_server.dir/build.make examples/04_static_files/CMakeFiles/cache_test_server.dir/build
-.PHONY : cache_test_server/fast
-
-#=============================================================================
-# Target rules for targets named websocket_echo_server
-
-# Build rule for target.
-websocket_echo_server: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 websocket_echo_server
-.PHONY : websocket_echo_server
-
-# fast build rule for target.
-websocket_echo_server/fast:
-	$(MAKE) $(MAKESILENT) -f examples/05_websocket/CMakeFiles/websocket_echo_server.dir/build.make examples/05_websocket/CMakeFiles/websocket_echo_server.dir/build
-.PHONY : websocket_echo_server/fast
-
-#=============================================================================
-# Target rules for targets named websocket_test_server
-
-# Build rule for target.
-websocket_test_server: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 websocket_test_server
-.PHONY : websocket_test_server
-
-# fast build rule for target.
-websocket_test_server/fast:
-	$(MAKE) $(MAKESILENT) -f examples/05_websocket/CMakeFiles/websocket_test_server.dir/build.make examples/05_websocket/CMakeFiles/websocket_test_server.dir/build
-.PHONY : websocket_test_server/fast
-
-#=============================================================================
-# Target rules for targets named test_ws_connection_management
-
-# Build rule for target.
-test_ws_connection_management: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_ws_connection_management
-.PHONY : test_ws_connection_management
-
-# fast build rule for target.
-test_ws_connection_management/fast:
-	$(MAKE) $(MAKESILENT) -f examples/05_websocket/CMakeFiles/test_ws_connection_management.dir/build.make examples/05_websocket/CMakeFiles/test_ws_connection_management.dir/build
-.PHONY : test_ws_connection_management/fast
-
-#=============================================================================
-# Target rules for targets named api_demo
-
-# Build rule for target.
-api_demo: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 api_demo
-.PHONY : api_demo
-
-# fast build rule for target.
-api_demo/fast:
-	$(MAKE) $(MAKESILENT) -f examples/06_advanced/CMakeFiles/api_demo.dir/build.make examples/06_advanced/CMakeFiles/api_demo.dir/build
-.PHONY : api_demo/fast
-
-#=============================================================================
-# Target rules for targets named json_api_demo
-
-# Build rule for target.
-json_api_demo: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 json_api_demo
-.PHONY : json_api_demo
-
-# fast build rule for target.
-json_api_demo/fast:
-	$(MAKE) $(MAKESILENT) -f examples/06_advanced/CMakeFiles/json_api_demo.dir/build.make examples/06_advanced/CMakeFiles/json_api_demo.dir/build
-.PHONY : json_api_demo/fast
-
-#=============================================================================
-# Target rules for targets named simple_config
-
-# Build rule for target.
-simple_config: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 simple_config
-.PHONY : simple_config
-
-# fast build rule for target.
-simple_config/fast:
-	$(MAKE) $(MAKESILENT) -f examples/06_advanced/CMakeFiles/simple_config.dir/build.make examples/06_advanced/CMakeFiles/simple_config.dir/build
-.PHONY : simple_config/fast
-
-#=============================================================================
-# Target rules for targets named unified_response_demo
-
-# Build rule for target.
-unified_response_demo: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 unified_response_demo
-.PHONY : unified_response_demo
-
-# fast build rule for target.
-unified_response_demo/fast:
-	$(MAKE) $(MAKESILENT) -f examples/06_advanced/CMakeFiles/unified_response_demo.dir/build.make examples/06_advanced/CMakeFiles/unified_response_demo.dir/build
-.PHONY : unified_response_demo/fast
-
-#=============================================================================
-# Target rules for targets named app_advanced_memory
-
-# Build rule for target.
-app_advanced_memory: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 app_advanced_memory
-.PHONY : app_advanced_memory
-
-# fast build rule for target.
-app_advanced_memory/fast:
-	$(MAKE) $(MAKESILENT) -f examples/06_advanced/CMakeFiles/app_advanced_memory.dir/build.make examples/06_advanced/CMakeFiles/app_advanced_memory.dir/build
-.PHONY : app_advanced_memory/fast
-
-#=============================================================================
-# Target rules for targets named protocol_upgrade_example
-
-# Build rule for target.
-protocol_upgrade_example: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 protocol_upgrade_example
-.PHONY : protocol_upgrade_example
-
-# fast build rule for target.
-protocol_upgrade_example/fast:
-	$(MAKE) $(MAKESILENT) -f examples/06_advanced/CMakeFiles/protocol_upgrade_example.dir/build.make examples/06_advanced/CMakeFiles/protocol_upgrade_example.dir/build
-.PHONY : protocol_upgrade_example/fast
-
 benchmark/benchmark_unified.o: benchmark/benchmark_unified.c.o
 .PHONY : benchmark/benchmark_unified.o
 
@@ -1709,6 +1423,8 @@ src/uvhttp_config.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_config.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_config.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_config.c.o
@@ -1792,6 +1508,8 @@ src/uvhttp_config.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_config.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_config.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_config.c.i
@@ -1875,6 +1593,8 @@ src/uvhttp_config.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_config.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_config.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_config.c.s
@@ -1958,6 +1678,8 @@ src/uvhttp_connection.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_connection.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_connection.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_connection.c.o
@@ -2041,6 +1763,8 @@ src/uvhttp_connection.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_connection.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_connection.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_connection.c.i
@@ -2124,6 +1848,8 @@ src/uvhttp_connection.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_connection.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_connection.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_connection.c.s
@@ -2207,6 +1933,8 @@ src/uvhttp_context.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_context.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_context.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_context.c.o
@@ -2290,6 +2018,8 @@ src/uvhttp_context.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_context.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_context.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_context.c.i
@@ -2373,6 +2103,8 @@ src/uvhttp_context.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_context.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_context.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_context.c.s
@@ -2456,6 +2188,8 @@ src/uvhttp_error.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_error.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_error.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_error.c.o
@@ -2539,6 +2273,8 @@ src/uvhttp_error.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_error.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_error.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_error.c.i
@@ -2622,6 +2358,8 @@ src/uvhttp_error.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_error.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_error.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_error.c.s
@@ -2705,6 +2443,8 @@ src/uvhttp_error_helpers.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_error_helpers.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_error_helpers.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_error_helpers.c.o
@@ -2788,6 +2528,8 @@ src/uvhttp_error_helpers.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_error_helpers.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_error_helpers.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_error_helpers.c.i
@@ -2871,6 +2613,8 @@ src/uvhttp_error_helpers.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_error_helpers.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_error_helpers.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_error_helpers.c.s
@@ -2954,6 +2698,8 @@ src/uvhttp_lru_cache.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_lru_cache.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_lru_cache.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_lru_cache.c.o
@@ -3037,6 +2783,8 @@ src/uvhttp_lru_cache.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_lru_cache.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_lru_cache.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_lru_cache.c.i
@@ -3120,6 +2868,8 @@ src/uvhttp_lru_cache.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_lru_cache.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_lru_cache.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_lru_cache.c.s
@@ -3203,6 +2953,8 @@ src/uvhttp_protocol_upgrade.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_protocol_upgrade.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_protocol_upgrade.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_protocol_upgrade.c.o
@@ -3286,6 +3038,8 @@ src/uvhttp_protocol_upgrade.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_protocol_upgrade.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_protocol_upgrade.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_protocol_upgrade.c.i
@@ -3369,6 +3123,8 @@ src/uvhttp_protocol_upgrade.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_protocol_upgrade.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_protocol_upgrade.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_protocol_upgrade.c.s
@@ -3452,6 +3208,8 @@ src/uvhttp_request.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_request.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_request.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_request.c.o
@@ -3535,6 +3293,8 @@ src/uvhttp_request.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_request.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_request.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_request.c.i
@@ -3618,6 +3378,8 @@ src/uvhttp_request.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_request.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_request.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_request.c.s
@@ -3701,6 +3463,8 @@ src/uvhttp_response.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_response.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_response.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_response.c.o
@@ -3784,6 +3548,8 @@ src/uvhttp_response.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_response.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_response.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_response.c.i
@@ -3867,6 +3633,8 @@ src/uvhttp_response.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_response.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_response.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_response.c.s
@@ -3950,6 +3718,8 @@ src/uvhttp_router.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_router.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_router.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_router.c.o
@@ -4033,6 +3803,8 @@ src/uvhttp_router.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_router.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_router.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_router.c.i
@@ -4116,6 +3888,8 @@ src/uvhttp_router.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_router.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_router.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_router.c.s
@@ -4199,6 +3973,8 @@ src/uvhttp_router_cache.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_router_cache.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_router_cache.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_router_cache.c.o
@@ -4282,6 +4058,8 @@ src/uvhttp_router_cache.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_router_cache.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_router_cache.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_router_cache.c.i
@@ -4365,6 +4143,8 @@ src/uvhttp_router_cache.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_router_cache.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_router_cache.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_router_cache.c.s
@@ -4448,6 +4228,8 @@ src/uvhttp_server.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_server.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_server.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_server.c.o
@@ -4531,6 +4313,8 @@ src/uvhttp_server.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_server.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_server.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_server.c.i
@@ -4614,6 +4398,8 @@ src/uvhttp_server.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_server.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_server.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_server.c.s
@@ -4697,6 +4483,8 @@ src/uvhttp_static.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_static.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_static.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_static.c.o
@@ -4780,6 +4568,8 @@ src/uvhttp_static.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_static.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_static.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_static.c.i
@@ -4863,6 +4653,8 @@ src/uvhttp_static.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_static.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_static.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_static.c.s
@@ -4946,6 +4738,8 @@ src/uvhttp_tls.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_tls.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_tls.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_tls.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_tls.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_tls.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_tls.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_tls.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_tls.c.o
@@ -5029,6 +4823,8 @@ src/uvhttp_tls.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_tls.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_tls.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_tls.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_tls.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_tls.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_tls.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_tls.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_tls.c.i
@@ -5112,6 +4908,8 @@ src/uvhttp_tls.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_tls.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_tls.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_tls.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_tls.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_tls.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_tls.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_tls.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_tls.c.s
@@ -5195,6 +4993,8 @@ src/uvhttp_utils.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_utils.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_utils.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_utils.c.o
@@ -5278,6 +5078,8 @@ src/uvhttp_utils.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_utils.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_utils.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_utils.c.i
@@ -5361,6 +5163,8 @@ src/uvhttp_utils.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_utils.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_utils.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_utils.c.s
@@ -5444,6 +5248,8 @@ src/uvhttp_version.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_version.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_version.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_version.c.o
@@ -5527,6 +5333,8 @@ src/uvhttp_version.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_version.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_version.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_version.c.i
@@ -5610,6 +5418,8 @@ src/uvhttp_version.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_version.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_version.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_version.c.s
@@ -5693,6 +5503,8 @@ src/uvhttp_websocket.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_websocket.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_websocket.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_websocket.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_websocket.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_websocket.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_websocket.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_websocket.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_websocket.c.o
@@ -5776,6 +5588,8 @@ src/uvhttp_websocket.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_websocket.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_websocket.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_websocket.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_websocket.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_websocket.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_websocket.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_websocket.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_websocket.c.i
@@ -5859,6 +5673,8 @@ src/uvhttp_websocket.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_websocket.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_websocket.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_websocket.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/src/uvhttp_websocket.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/src/uvhttp_websocket.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_websocket.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_websocket.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_websocket.c.s
@@ -6262,6 +6078,30 @@ test/integration/test_websocket_integration.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/test/integration/test_websocket_integration.c.s
 .PHONY : test/integration/test_websocket_integration.c.s
 
+test/mock/libuv_mock.o: test/mock/libuv_mock.c.o
+.PHONY : test/mock/libuv_mock.o
+
+# target to build an object file
+test/mock/libuv_mock.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/libuv_mock.dir/build.make CMakeFiles/libuv_mock.dir/test/mock/libuv_mock.c.o
+.PHONY : test/mock/libuv_mock.c.o
+
+test/mock/libuv_mock.i: test/mock/libuv_mock.c.i
+.PHONY : test/mock/libuv_mock.i
+
+# target to preprocess a source file
+test/mock/libuv_mock.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/libuv_mock.dir/build.make CMakeFiles/libuv_mock.dir/test/mock/libuv_mock.c.i
+.PHONY : test/mock/libuv_mock.c.i
+
+test/mock/libuv_mock.s: test/mock/libuv_mock.c.s
+.PHONY : test/mock/libuv_mock.s
+
+# target to generate assembly for a file
+test/mock/libuv_mock.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/libuv_mock.dir/build.make CMakeFiles/libuv_mock.dir/test/mock/libuv_mock.c.s
+.PHONY : test/mock/libuv_mock.c.s
+
 test/unit/simple_test.o: test/unit/simple_test.cpp.o
 .PHONY : test/unit/simple_test.o
 
@@ -6501,6 +6341,54 @@ test/unit/test_connection_lifecycle.s: test/unit/test_connection_lifecycle.cpp.s
 test/unit/test_connection_lifecycle.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/test/unit/test_connection_lifecycle.cpp.s
 .PHONY : test/unit/test_connection_lifecycle.cpp.s
+
+test/unit/test_connection_lifecycle_mock.o: test/unit/test_connection_lifecycle_mock.cpp.o
+.PHONY : test/unit/test_connection_lifecycle_mock.o
+
+# target to build an object file
+test/unit/test_connection_lifecycle_mock.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/test/unit/test_connection_lifecycle_mock.cpp.o
+.PHONY : test/unit/test_connection_lifecycle_mock.cpp.o
+
+test/unit/test_connection_lifecycle_mock.i: test/unit/test_connection_lifecycle_mock.cpp.i
+.PHONY : test/unit/test_connection_lifecycle_mock.i
+
+# target to preprocess a source file
+test/unit/test_connection_lifecycle_mock.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/test/unit/test_connection_lifecycle_mock.cpp.i
+.PHONY : test/unit/test_connection_lifecycle_mock.cpp.i
+
+test/unit/test_connection_lifecycle_mock.s: test/unit/test_connection_lifecycle_mock.cpp.s
+.PHONY : test/unit/test_connection_lifecycle_mock.s
+
+# target to generate assembly for a file
+test/unit/test_connection_lifecycle_mock.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle_mock.dir/build.make CMakeFiles/test_connection_lifecycle_mock.dir/test/unit/test_connection_lifecycle_mock.cpp.s
+.PHONY : test/unit/test_connection_lifecycle_mock.cpp.s
+
+test/unit/test_connection_simple_mock.o: test/unit/test_connection_simple_mock.cpp.o
+.PHONY : test/unit/test_connection_simple_mock.o
+
+# target to build an object file
+test/unit/test_connection_simple_mock.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/test/unit/test_connection_simple_mock.cpp.o
+.PHONY : test/unit/test_connection_simple_mock.cpp.o
+
+test/unit/test_connection_simple_mock.i: test/unit/test_connection_simple_mock.cpp.i
+.PHONY : test/unit/test_connection_simple_mock.i
+
+# target to preprocess a source file
+test/unit/test_connection_simple_mock.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/test/unit/test_connection_simple_mock.cpp.i
+.PHONY : test/unit/test_connection_simple_mock.cpp.i
+
+test/unit/test_connection_simple_mock.s: test/unit/test_connection_simple_mock.cpp.s
+.PHONY : test/unit/test_connection_simple_mock.s
+
+# target to generate assembly for a file
+test/unit/test_connection_simple_mock.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_simple_mock.dir/build.make CMakeFiles/test_connection_simple_mock.dir/test/unit/test_connection_simple_mock.cpp.s
+.PHONY : test/unit/test_connection_simple_mock.cpp.s
 
 test/unit/test_connection_websocket_integration.o: test/unit/test_connection_websocket_integration.cpp.o
 .PHONY : test/unit/test_connection_websocket_integration.o
@@ -7739,30 +7627,11 @@ help:
 	@echo "... list_install_components"
 	@echo "... rebuild_cache"
 	@echo "... test"
-	@echo "... coverage"
 	@echo "... gtest"
-	@echo "... run_tests"
-	@echo "... test_and_coverage"
-	@echo "... advanced_static_server"
-	@echo "... api_demo"
-	@echo "... app_advanced_memory"
 	@echo "... benchmark_unified"
-	@echo "... cache_test_server"
-	@echo "... hello_world"
-	@echo "... json_api_demo"
-	@echo "... method_routing"
-	@echo "... middleware_chain_demo"
-	@echo "... middleware_compile_time_demo"
+	@echo "... libuv_mock"
 	@echo "... performance_allocator"
 	@echo "... performance_allocator_compare"
-	@echo "... protocol_upgrade_example"
-	@echo "... quick_api_demo"
-	@echo "... rate_limit_demo"
-	@echo "... signal_handling_demo"
-	@echo "... simple_config"
-	@echo "... simple_routing"
-	@echo "... simple_static_test"
-	@echo "... static_file_server"
 	@echo "... test_allocator"
 	@echo "... test_bitfield"
 	@echo "... test_cmocka_simple"
@@ -7774,6 +7643,8 @@ help:
 	@echo "... test_connection_full_api_coverage"
 	@echo "... test_connection_full_coverage"
 	@echo "... test_connection_lifecycle"
+	@echo "... test_connection_lifecycle_mock"
+	@echo "... test_connection_simple_mock"
 	@echo "... test_connection_websocket_integration"
 	@echo "... test_context_simple"
 	@echo "... test_death"
@@ -7789,7 +7660,6 @@ help:
 	@echo "... test_include"
 	@echo "... test_lru_cache_full_coverage"
 	@echo "... test_memory"
-	@echo "... test_middleware"
 	@echo "... test_middleware_compile_time"
 	@echo "... test_no_router"
 	@echo "... test_performance_e2e"
@@ -7839,12 +7709,8 @@ help:
 	@echo "... test_websocket_native_simple"
 	@echo "... test_websocket_null_coverage"
 	@echo "... test_whitelist_hash"
-	@echo "... test_ws_connection_management"
-	@echo "... unified_response_demo"
 	@echo "... uvhttp"
 	@echo "... uvhttp_unit_tests"
-	@echo "... websocket_echo_server"
-	@echo "... websocket_test_server"
 	@echo "... benchmark/benchmark_unified.o"
 	@echo "... benchmark/benchmark_unified.i"
 	@echo "... benchmark/benchmark_unified.s"
@@ -7956,6 +7822,9 @@ help:
 	@echo "... test/integration/test_websocket_integration.o"
 	@echo "... test/integration/test_websocket_integration.i"
 	@echo "... test/integration/test_websocket_integration.s"
+	@echo "... test/mock/libuv_mock.o"
+	@echo "... test/mock/libuv_mock.i"
+	@echo "... test/mock/libuv_mock.s"
 	@echo "... test/unit/simple_test.o"
 	@echo "... test/unit/simple_test.i"
 	@echo "... test/unit/simple_test.s"
@@ -7986,6 +7855,12 @@ help:
 	@echo "... test/unit/test_connection_lifecycle.o"
 	@echo "... test/unit/test_connection_lifecycle.i"
 	@echo "... test/unit/test_connection_lifecycle.s"
+	@echo "... test/unit/test_connection_lifecycle_mock.o"
+	@echo "... test/unit/test_connection_lifecycle_mock.i"
+	@echo "... test/unit/test_connection_lifecycle_mock.s"
+	@echo "... test/unit/test_connection_simple_mock.o"
+	@echo "... test/unit/test_connection_simple_mock.i"
+	@echo "... test/unit/test_connection_simple_mock.s"
 	@echo "... test/unit/test_connection_websocket_integration.o"
 	@echo "... test/unit/test_connection_websocket_integration.i"
 	@echo "... test/unit/test_connection_websocket_integration.s"
