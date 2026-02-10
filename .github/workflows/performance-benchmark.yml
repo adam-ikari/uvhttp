@@ -68,7 +68,7 @@ jobs:
     
     - name: Configure CMake
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=Release
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS=ON
     
     - name: Build project
       run: |
@@ -80,9 +80,9 @@ jobs:
         IS_PR: ${{ github.event_name == 'pull_request' }}
       run: |
         cd build
-        if [ -f "./dist/bin/benchmark_rps" ]; then
-          chmod +x ./dist/bin/benchmark_rps
-          ./dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
+        if [ -f "./dist/bin/benchmark_unified" ]; then
+          chmod +x ./dist/bin/benchmark_unified
+          ./dist/bin/benchmark_unified > /tmp/server.log 2>&1 &
           SERVER_PID=$!
           
           # 等待服务器启动
