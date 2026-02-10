@@ -6,7 +6,7 @@ on:
     - cron: '0 0 * * *'
   workflow_dispatch:  # 允许手动触发
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, pre-release ]
     types: [opened, synchronize, reopened]
 
 env:

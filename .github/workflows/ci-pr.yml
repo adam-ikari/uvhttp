@@ -1,9 +1,9 @@
 name: CI/CD - PR Quick Validation
 
-# 触发条件：PR 打开、同步、重新打开到 main 或 develop 分支
+# 触发条件：PR 打开、同步、重新打开到 main、develop 或 pre-release 分支
 on:
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, pre-release ]
     types: [opened, synchronize, reopened]
 
 # 并发控制：取消同一 PR 的旧运行

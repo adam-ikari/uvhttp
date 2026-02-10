@@ -6,7 +6,7 @@ on:
     branches: [ main, develop ]
     types: [opened, synchronize, reopened]
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, pre-release ]
 
 # 并发控制：取消同一 PR 的旧运行
 concurrency:
