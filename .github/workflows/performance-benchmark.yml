@@ -64,7 +64,7 @@ jobs:
     
     - name: Build project
       run: |
-        make build
+        make -j$(nproc)
     
     - name: Run performance tests
       id: performance
