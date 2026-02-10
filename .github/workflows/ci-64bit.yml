@@ -38,10 +38,14 @@ jobs:
           cache-key: push-${{ github.sha }}
           build-type: Release
 
+      - name: Configure CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+
       - name: Build project
         id: build
         run: |
-          make build
+          cd build && make -j$(nproc)
           echo "build-dir=build" >> $GITHUB_OUTPUT
           echo "status=success" >> $GITHUB_OUTPUT
 
