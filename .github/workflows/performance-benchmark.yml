@@ -72,7 +72,7 @@ jobs:
     
     - name: Build project
       run: |
-        make -j$(nproc)
+        cd build && make -j$(nproc)
     
     - name: Run performance tests
       id: performance
