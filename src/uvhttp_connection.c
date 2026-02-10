@@ -558,9 +558,16 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
     }
 
     /* Run the loop to process close callbacks.
-     * This ensures all handles are fully closed before freeing memory. */
+     * This ensures all handles are fully closed before freeing memory.
+     * Use UVHTTP_CONNECTION_CLEANUP_ITERATIONS to balance between:
+     * - Completeness: All close callbacks are processed
+     * - Performance: Don't spin the loop unnecessarily
+     * 
+     * Rationale: We need to process at least 3 iterations (idle, timer, tcp).
+     * Using 10 iterations provides a safety margin for nested callbacks
+     * while still being fast enough for cleanup paths. */
     if (conn->server && conn->server->loop) {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < UVHTTP_CONNECTION_CLEANUP_ITERATIONS; i++) {
             uv_run(conn->server->loop, UV_RUN_ONCE);
         }
     }

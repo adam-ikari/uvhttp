@@ -560,12 +560,6 @@ list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_mock_coverage.cpp")
 # 排除 mock 测试文件（它们在单独的循环中处理）
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_mock\\.cpp")
 
-# Mock 测试文件（使用 libuv mock）
-set(MOCK_TEST_FILES
-    test/unit/test_connection_lifecycle_mock.cpp
-    test/unit/test_connection_simple_mock.cpp
-)
-
 # Add test helper files
 set(TEST_HELPER_FILES test/unit/test_time_mock.cpp test/unit/test_loop_helper.cpp)
 

@@ -1,4 +1,4 @@
-/* uvhttp_connection.c 综合覆盖率Test - 目标提升至 45%+ */
+/* uvhttp_connection.c comprehensive coverage test - target: 45%+ */
 
 #include <gtest/gtest.h>
 #include "uvhttp_connection.h"
@@ -8,7 +8,7 @@
 #include "uvhttp_allocator.h"
 #include <string.h>
 
-/* 辅助函数：Create服务器和循环 */
+/* Helper function: Create server and loop */
 static void create_server_and_loop(uv_loop_t** loop, uvhttp_server_t** server) {
     *loop = uv_loop_new();
     ASSERT_NE(*loop, nullptr);
@@ -18,7 +18,7 @@ static void create_server_and_loop(uv_loop_t** loop, uvhttp_server_t** server) {
     ASSERT_NE(*server, nullptr);
 }
 
-/* 辅助函数：销毁服务器和循环 */
+/* Helper function: Destroy server and loop */
 static void destroy_server_and_loop(uvhttp_server_t* server, uv_loop_t* loop) {
     uvhttp_server_free(server);
     uv_run(loop, UV_RUN_NOWAIT);
@@ -26,7 +26,7 @@ static void destroy_server_and_loop(uvhttp_server_t* server, uv_loop_t* loop) {
     uvhttp_free(loop);
 }
 
-/* ========== TestConnectionCreate和Free ========== */
+/* ========== Test connection create and free ========== */
 
 TEST(UvhttpConnectionComprehensiveTest, ConnectionNewNullServer) {
     uvhttp_connection_t* conn = NULL;
@@ -50,7 +50,7 @@ TEST(UvhttpConnectionComprehensiveTest, ConnectionFreeNull) {
     uvhttp_connection_free(NULL);
 }
 
-/* ========== TestConnectionState ========== */
+/* ========== Test connection state ========== */
 
 TEST(UvhttpConnectionComprehensiveTest, ConnectionStateTransitions) {
     uv_loop_t* loop = NULL;
@@ -83,7 +83,7 @@ TEST(UvhttpConnectionComprehensiveTest, ConnectionStateTransitions) {
     destroy_server_and_loop(server, loop);
 }
 
-/* ========== TestConnectionFlag位 ========== */
+/* ========== Test connection flags ========== */
 
 TEST(UvhttpConnectionComprehensiveTest, ConnectionFlags) {
     uv_loop_t* loop = NULL;
@@ -120,7 +120,7 @@ TEST(UvhttpConnectionComprehensiveTest, ConnectionFlags) {
     destroy_server_and_loop(server, loop);
 }
 
-/* ========== TestBuffer管理 ========== */
+/* ========== Test buffer management ========== */
 
 TEST(UvhttpConnectionComprehensiveTest, BufferInitialization) {
     uv_loop_t* loop = NULL;
@@ -194,7 +194,7 @@ TEST(UvhttpConnectionComprehensiveTest, ContentLengthTracking) {
     destroy_server_and_loop(server, loop);
 }
 
-/* ========== Test请求和响应Object ========== */
+/* ========== Test request and response objects ========== */
 
 TEST(UvhttpConnectionComprehensiveTest, RequestResponseObjects) {
     uv_loop_t* loop = NULL;
@@ -214,7 +214,7 @@ TEST(UvhttpConnectionComprehensiveTest, RequestResponseObjects) {
     destroy_server_and_loop(server, loop);
 }
 
-/* ========== Test服务器Association ========== */
+/* ========== Test server association ========== */
 
 TEST(UvhttpConnectionComprehensiveTest, ServerAssociation) {
     uv_loop_t* loop = NULL;
@@ -328,7 +328,7 @@ TEST(UvhttpConnectionComprehensiveTest, MultipleConnections) {
     destroy_server_and_loop(server, loop);
 }
 
-/* ========== TestEdgeCase ========== */
+/* ========== Test edge cases ========== */
 
 TEST(UvhttpConnectionComprehensiveTest, EdgeCases) {
     uv_loop_t* loop = NULL;
