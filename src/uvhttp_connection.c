@@ -536,44 +536,11 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
         return;
     }
 
-    /* If handles are not closed yet, close them synchronously by:
-     * 1. Starting the close process with uv_close
-     * 2. Running the loop to process callbacks
-     * 3. Then freeing the connection */
-
-    /* Close all handles if they are not already closing */
-    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
-        uv_idle_stop(&conn->idle_handle);
-        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
-    }
-
-    if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
-        uv_timer_stop(&conn->timeout_timer);
-        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
-    }
-
-    if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
-        uv_read_stop((uv_stream_t*)&conn->tcp_handle);
-        uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
-    }
-
-    /* Run the loop to process close callbacks.
-     * This ensures all handles are fully closed before freeing memory.
-     * Use UVHTTP_CONNECTION_CLEANUP_ITERATIONS to balance between:
-     * - Completeness: All close callbacks are processed
-     * - Performance: Don't spin the loop unnecessarily
-     * 
-     * Rationale: We need to process at least 3 iterations (idle, timer, tcp).
-     * Using 10 iterations provides a safety margin for nested callbacks
-     * while still being fast enough for cleanup paths. */
-    if (conn->server && conn->server->loop) {
-        for (int i = 0; i < UVHTTP_CONNECTION_CLEANUP_ITERATIONS; i++) {
-            uv_run(conn->server->loop, UV_RUN_ONCE);
-        }
-    }
-
-    /* Set freed flag */
-    conn->freed = 1;
+    /* If handles are not closed yet, use async close mechanism.
+     * This avoids blocking the event loop with uv_run calls.
+     * uvhttp_connection_close will start the async close process
+     * and on_handle_close will handle the actual free. */
+    uvhttp_connection_close(conn);
 
     /* Clean request and response data */
     if (conn->request) {
