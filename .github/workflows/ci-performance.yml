@@ -107,7 +107,7 @@ jobs:
               # 禁用 TLS 以加快编译速度
               cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_TLS=OFF ..
               # 更新依赖子模块并编译
-              make -j\$(nproc) benchmark_rps benchmark_comprehensive
+              make -j\$(nproc) benchmark_unified benchmark_comprehensive
               
               # 运行性能测试
               echo ''
@@ -115,7 +115,7 @@ jobs:
               cd /workspace/benchmark
               
               # 启动测试服务器
-              ../build/dist/bin/benchmark_rps 18081 > /tmp/server.log 2>&1 &
+              ../build/dist/bin/benchmark_unified 18081 > /tmp/server.log 2>&1 &
               SERVER_PID=\$!
               
               # 等待服务器启动
