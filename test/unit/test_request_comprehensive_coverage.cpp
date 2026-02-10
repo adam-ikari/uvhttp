@@ -94,11 +94,11 @@ TEST(UvhttpRequestComprehensiveTest, GetPath) {
     path = uvhttp_request_get_path(NULL);
     EXPECT_EQ(path, nullptr);
     
-    /* 测试过长路径（超过缓冲区） */
-    memset(request->url, 'a', 3000);
-    request->url[3000] = '\0';
+    /* Test path exceeding buffer size */
+    memset(request->url, 'a', UVHTTP_MAX_URL_SIZE - 1);
+    request->url[UVHTTP_MAX_URL_SIZE - 1] = '\0';
     path = uvhttp_request_get_path(request);
-    /* 路径超过 UVHTTP_MAX_PATH_SIZE (1024)，返回 url 本身 */
+    /* Path exceeds UVHTTP_MAX_PATH_SIZE (1024), returns url itself */
     EXPECT_EQ(path, request->url);
     
     /* 测试无效路径（包含 ..） */
