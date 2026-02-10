@@ -131,6 +131,88 @@ void libuv_mock_set_uv_is_active_result(int result);
  */
 void libuv_mock_set_uv_is_closing_result(int result);
 
+/* ========== uv_idle_t Mock ========== */
+
+/**
+ * @brief 设置 uv_idle_init 的返回值
+ */
+void libuv_mock_set_uv_idle_init_result(int result);
+
+/* ========== uv_timer_t Mock ========== */
+
+/**
+ * @brief 设置 uv_timer_init 的返回值
+ */
+void libuv_mock_set_uv_timer_init_result(int result);
+
+/**
+ * @brief 设置 uv_timer_stop 的返回值
+ */
+void libuv_mock_set_uv_timer_stop_result(int result);
+
+/**
+ * @brief 设置 uv_timer_start 的返回值
+ */
+void libuv_mock_set_uv_timer_start_result(int result);
+
+/* ========== uv_tcp_t Mock ========== */
+
+/**
+ * @brief 设置 uv_tcp_nodelay 的返回值
+ */
+void libuv_mock_set_uv_tcp_nodelay_result(int result);
+
+/**
+ * @brief 设置 uv_tcp_keepalive 的返回值
+ */
+void libuv_mock_set_uv_tcp_keepalive_result(int result);
+
+/**
+ * @brief 设置 uv_tcp_simultaneous_accepts 的返回值
+ */
+void libuv_mock_set_uv_tcp_simultaneous_accepts_result(int result);
+
+/* ========== uv_stream_t Mock ========== */
+
+/**
+ * @brief 设置 uv_accept 的返回值
+ */
+void libuv_mock_set_uv_accept_result(int result);
+
+/* ========== uv_handle_t Mock ========== */
+
+/**
+ * @brief 设置 uv_fileno 的返回值
+ */
+void libuv_mock_set_uv_fileno_result(int result);
+
+/* ========== uv_util_t Mock ========== */
+
+/**
+ * @brief 设置 uv_ip4_addr 的返回值
+ */
+void libuv_mock_set_uv_ip4_addr_result(int result);
+
+/**
+ * @brief 设置 uv_ip6_addr 的返回值
+ */
+void libuv_mock_set_uv_ip6_addr_result(int result);
+
+/**
+ * @brief 设置 uv_strerror 返回的错误消息
+ */
+void libuv_mock_set_uv_strerror(const char* error_msg);
+
+/**
+ * @brief 设置 uv_hrtime 返回的时间戳
+ */
+void libuv_mock_set_uv_hrtime(uint64_t hrtime);
+
+/**
+ * @brief 设置 uv_buf_init 返回的缓冲区
+ */
+void libuv_mock_set_uv_buf_init_result(uv_buf_t buf);
+
 /* ========== uv_buf_t Mock ========== */
 
 /**
