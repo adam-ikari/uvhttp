@@ -303,10 +303,10 @@ message(STATUS "Configuring googletest...")
 
 set(GTEST_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/build)
 set(GTEST_LIBS
-    ${GTEST_BUILD_DIR}/lib/libgtest.a
     ${GTEST_BUILD_DIR}/lib/libgtest_main.a
-    ${GTEST_BUILD_DIR}/lib/libgmock.a
     ${GTEST_BUILD_DIR}/lib/libgmock_main.a
+    ${GTEST_BUILD_DIR}/lib/libgtest.a
+    ${GTEST_BUILD_DIR}/lib/libgmock.a
 )
 
 if(NOT EXISTS ${GTEST_BUILD_DIR}/lib/libgtest.a)

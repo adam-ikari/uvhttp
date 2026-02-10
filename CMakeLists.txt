@@ -576,9 +576,10 @@ foreach(test_file ${GTEST_TEST_FILES})
     target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
     # Enable statistics for tests
     target_compile_definitions(${test_name} PRIVATE UVHTTP_FEATURE_STATISTICS=1)
-    target_link_libraries(${test_name} PRIVATE ${LIBS} ${GTEST_LIBS})
-    target_include_directories(${test_name} PRIVATE 
-        ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include 
+    # Link googletest first, then LIBS (gmock_main depends on gtest)
+    target_link_libraries(${test_name} PRIVATE ${GTEST_LIBS} ${LIBS})
+    target_include_directories(${test_name} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
     )
@@ -595,7 +596,8 @@ if(BUILD_WITH_MIMALLOC)
     add_dependencies(uvhttp_unit_tests mimalloc)
 endif()
 target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
-target_link_libraries(uvhttp_unit_tests ${LIBS} ${GTEST_LIBS})
+# Link googletest first, then LIBS (gmock_main depends on gtest)
+target_link_libraries(uvhttp_unit_tests ${GTEST_LIBS} ${LIBS})
 target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
 
 # ============================================================================
