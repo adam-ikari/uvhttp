@@ -164,10 +164,10 @@ jobs:
       
       - name: Run performance tests
         run: |
-          chmod +x build/dist/bin/benchmark_rps
+          chmod +x build/dist/bin/benchmark_unified
           
           # 低并发测试
-          build/dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
+          build/dist/bin/benchmark_unified > /tmp/server.log 2>&1 &
           SERVER_PID=$!
           sleep 3
           

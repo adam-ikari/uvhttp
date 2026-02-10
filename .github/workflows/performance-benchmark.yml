@@ -142,7 +142,7 @@ jobs:
           
           cat /tmp/performance.log
         else
-          echo "Error: benchmark_rps not found"
+          echo "Error: benchmark_unified not found"
           exit 1
         fi
     
