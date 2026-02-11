@@ -183,9 +183,12 @@ else()
 endif()
 
 # WebSocket support
+# Note: WebSocket automatically enables TLS support (UVHTTP_FEATURE_TLS=1)
+# because WebSocket needs mbedtls for SHA1/Base64 encoding
 if(BUILD_WITH_WEBSOCKET)
     add_definitions(-DUVHTTP_FEATURE_WEBSOCKET=1)
-    message(STATUS "WebSocket support: ENABLED")
+    add_definitions(-DUVHTTP_FEATURE_TLS=1)
+    message(STATUS "WebSocket support: ENABLED (TLS automatically enabled)")
 else()
     add_definitions(-DUVHTTP_FEATURE_WEBSOCKET=0)
     message(STATUS "WebSocket support: DISABLED")
