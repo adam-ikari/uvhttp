@@ -1,9 +1,9 @@
 name: CI/CD - 64-bit Build and Test
 
-# 触发条件：Push 到 main、develop、pre-release、feature/* 分支
+# 触发条件：Push 到 main、develop、feature/* 分支
 on:
   push:
-    branches: [ main, develop, pre-release, 'feature/**' ]
+    branches: [ main, develop, 'feature/**' ]
   workflow_dispatch:
 
 # 并发控制：取消同一分支的旧运行
@@ -37,10 +37,6 @@ jobs:
         with:
           cache-key: push-${{ github.sha }}
           build-type: Release
-
-      - name: Clean build directory
-        run: |
-          rm -rf build/CMakeFiles build/Makefile build/CMakeCache.txt
 
       - name: Configure CMake
         run: |
@@ -77,7 +73,7 @@ jobs:
       
       - name: Run cppcheck
         run: |
-          echo "cppcheck target not available in CMake-generated Makefile"
+          make cppcheck
       
       - name: Upload cppcheck results
         uses: actions/upload-artifact@v4.3.1
@@ -172,10 +168,10 @@ jobs:
       
       - name: Run performance tests
         run: |
-          chmod +x build/dist/bin/benchmark_rps
+          chmod +x build/dist/bin/benchmark_unified
           
           # 低并发测试
-          build/dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
+          build/dist/bin/benchmark_unified > /tmp/server.log 2>&1 &
           SERVER_PID=$!
           sleep 3
           
