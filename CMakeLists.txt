@@ -948,22 +948,9 @@ write_basic_package_version_file(
     COMPATIBILITY SameMajorVersion
 )
 
-# Export the uvhttp library
-export(TARGETS uvhttp FILE "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-targets.cmake")
-
-# Export the interface library targets
-if(TARGET mbedtls)
-    export(TARGETS mbedtls APPEND FILE "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-targets.cmake")
-endif()
-if(TARGET xxhash)
-    export(TARGETS xxhash APPEND FILE "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-targets.cmake")
-endif()
-if(TARGET libuv)
-    export(TARGETS libuv APPEND FILE "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-targets.cmake")
-endif()
-
 # Installation rules
 install(TARGETS uvhttp
+    EXPORT uvhttp-targets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -975,12 +962,18 @@ install(DIRECTORY include/
     FILES_MATCHING PATTERN "*.h"
 )
 
+# Export and install the uvhttp target
+install(EXPORT uvhttp-targets
+    NAMESPACE uvhttp::
+    FILE uvhttp-targets.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/uvhttp
+)
+
 # Install CMake configuration files
 install(
     FILES
         "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-config.cmake"
         "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-config-version.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-targets.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/uvhttp
 )
 
