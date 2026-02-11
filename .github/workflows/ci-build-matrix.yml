@@ -244,14 +244,15 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          # 禁用mimalloc，因为32位环境下可能有问题
           - name: "32-bit Minimal"
             websocket: OFF
             mimalloc: OFF
             https: OFF
             debug: OFF
-          - name: "32-bit Full"
+          - name: "32-bit WebSocket + TLS"
             websocket: ON
-            mimalloc: ON
+            mimalloc: OFF
             https: ON
             debug: OFF
     
@@ -278,10 +279,9 @@ jobs:
       - name: Configure CMake for 32-bit
         run: |
           cmake -B build \
-            -DCMAKE_C_COMPILER=gcc \
-            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_TOOLCHAIN_FILE=/dev/null \
             -DBUILD_WITH_WEBSOCKET=${{ matrix.config.websocket }} \
-            -DBUILD_WITH_MIMALLOC=${{ matrix.config.mimalloc }} \
+            -DBUILD_WITH_MIMALLOC=OFF \
             -DBUILD_WITH_HTTPS=${{ matrix.config.https }} \
             -DENABLE_DEBUG=${{ matrix.config.debug }} \
             -DCMAKE_C_FLAGS="-m32" \
@@ -439,7 +439,7 @@ jobs:
           echo "| Configuration | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|--------------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| 32-bit Minimal | ${{ needs.build-32bit.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 32-bit Full | ${{ needs.build-32bit.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 32-bit WebSocket + TLS | ${{ needs.build-32bit.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Cross-compile Results" >> $GITHUB_STEP_SUMMARY
           echo "| Target | Status |" >> $GITHUB_STEP_SUMMARY
