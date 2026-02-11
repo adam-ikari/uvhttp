@@ -75,7 +75,9 @@ set_target_properties(libuv PROPERTIES
 # ============================================================================
 # mbedtls
 # ============================================================================
-if(BUILD_WITH_HTTPS)
+# Build mbedtls if either HTTPS or WebSocket is enabled
+# WebSocket needs mbedtls for TLS support and SHA1/Base64 encoding
+if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
     message(STATUS "Configuring mbedtls...")
 
     # 检查 mbedtls 是否已经构建
