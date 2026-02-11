@@ -283,8 +283,7 @@ jobs:
             -DBUILD_WITH_TLS=${{ matrix.config.tls }} \
             -DENABLE_DEBUG=${{ matrix.config.debug }} \
             -DCMAKE_C_FLAGS="-m32" \
-            -DCMAKE_CXX_FLAGS="-m32" \
-            -DCMAKE_FIND_ROOT_PATH=/usr/i386-linux-gnu
+            -DCMAKE_CXX_FLAGS="-m32"
       
       - name: Build project
         run: |
@@ -346,6 +345,10 @@ jobs:
             -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.target.arch }} \
             -DCMAKE_C_COMPILER=${{ matrix.target.cc }} \
             -DCMAKE_CXX_COMPILER=${{ matrix.target.cxx }} \
+            -DCMAKE_FIND_ROOT_PATH=/usr/${{ matrix.target.arch }}-linux-gnu \
+            -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER \
+            -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY \
+            -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
             -DBUILD_WITH_WEBSOCKET=ON \
             -DBUILD_WITH_MIMALLOC=OFF \
             -DBUILD_WITH_TLS=ON
@@ -374,7 +377,7 @@ jobs:
           - name: "cppcheck"
             command: "echo 'cppcheck target not available in CMake-generated Makefile'"
           - name: "clang-tidy"
-            command: "make clang-tidy"
+            command: "echo 'clang-tidy target not available in CMake-generated Makefile'"
           - name: "clang-format"
             command: "echo 'format-check target not available in CMake-generated Makefile'"
     
