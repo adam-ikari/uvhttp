@@ -253,7 +253,7 @@ jobs:
           echo "| Minimal (no optional features) | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Full Features | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| WebSocket Only | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| TLS Only | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GEEKITHUB_STEP_SUMMARY
+          echo "| TLS Only | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| mimalloc Only | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Debug Mode | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Coverage Mode | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
