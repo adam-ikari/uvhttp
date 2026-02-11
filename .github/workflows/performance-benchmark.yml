@@ -62,9 +62,13 @@ jobs:
         # 增加文件描述符限制
         ulimit -n 65535
     
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
+    
     - name: Build project
       run: |
-        make build
+        cd build && make -j$(nproc)
     
     - name: Run performance tests
       id: performance
@@ -72,9 +76,9 @@ jobs:
         IS_PR: ${{ github.event_name == 'pull_request' }}
       run: |
         cd build
-        if [ -f "./dist/bin/benchmark_rps" ]; then
-          chmod +x ./dist/bin/benchmark_rps
-          ./dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
+        if [ -f "./dist/bin/benchmark_unified" ]; then
+          chmod +x ./dist/bin/benchmark_unified
+          ./dist/bin/benchmark_unified > /tmp/server.log 2>&1 &
           SERVER_PID=$!
           
           # 等待服务器启动
@@ -142,7 +146,7 @@ jobs:
           
           cat /tmp/performance.log
         else
-          echo "Error: benchmark_rps not found"
+          echo "Error: benchmark_unified not found"
           exit 1
         fi
     
