@@ -565,6 +565,22 @@ set(TEST_HELPER_FILES test/unit/test_time_mock.cpp test/unit/test_loop_helper.cp
 
 foreach(test_file ${GTEST_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
+
+    # WebSocket-related tests require WebSocket support
+    if(${test_name} MATCHES ".*websocket.*")
+        if(NOT BUILD_WITH_WEBSOCKET)
+            message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
+            continue()
+        endif()
+    endif()
+
+    # TLS-related tests require HTTPS support
+    if(${test_name} MATCHES ".*tls.*")
+        if(NOT BUILD_WITH_HTTPS)
+            message(WARNING "Test ${test_name} requires HTTPS support, skipping...")
+            continue()
+        endif()
+    endif()
     
     # All test files are C++ files
     # Add helper files if tests need time mock
