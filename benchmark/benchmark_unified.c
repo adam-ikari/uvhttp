@@ -28,6 +28,7 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <limits.h>
+#include <inttypes.h>
 
 #define DEFAULT_PORT 18081
 #define MAX_SAMPLES 100000
@@ -429,7 +430,7 @@ static int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response)
     char stats_body[512];
     char content_length_str[32];
     uint64_t elapsed = (uv_hrtime() - g_ctx->stats.start_time) / 1000000000;  /* Convert to seconds */
-    double rps = elapsed > 0 ? (double)g_ctx->stats.total_requests / elapsed : 0.0;
+    double rps = elapsed > 0 ? (double)g_ctx->stats.total_requests / elapsed : 0.0; (void)rps;
 
     int len = snprintf(stats_body, sizeof(stats_body),
         "{\"total_requests\":%d,\"successful_requests\":%d,\"failed_requests\":%d,\"elapsed_seconds\":%" PRIu64 ",\"rps\":%.2f""}",
