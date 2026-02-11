@@ -585,9 +585,16 @@ foreach(test_file ${GTEST_TEST_FILES})
 
     # TLS-related tests require HTTPS support
     # Server TLS API tests require HTTPS support
-    if(${test_name} STREQUAL "test_server_api_coverage" OR ${test_name} STREQUAL "test_server_error_coverage" OR ${test_name} STREQUAL "test_server_simple_api_coverage")
+    # Server WebSocket API tests require WebSocket support
+    if(${test_name} STREQUAL "test_server_api_coverage" OR ${test_name} STREQUAL "test_server_error_coverage")
         if(NOT BUILD_WITH_HTTPS)
             message(WARNING "Test ${test_name} requires HTTPS support, skipping...")
+            continue()
+        endif()
+    endif()
+    if(${test_name} STREQUAL "test_server_simple_api_coverage")
+        if(NOT BUILD_WITH_WEBSOCKET)
+            message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
             continue()
         endif()
     endif()
@@ -772,9 +779,16 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
 
     # TLS-related tests require HTTPS support
     # Server TLS API tests require HTTPS support
-    if(${test_name} STREQUAL "test_server_api_coverage" OR ${test_name} STREQUAL "test_server_error_coverage" OR ${test_name} STREQUAL "test_server_simple_api_coverage")
+    # Server WebSocket API tests require WebSocket support
+    if(${test_name} STREQUAL "test_server_api_coverage" OR ${test_name} STREQUAL "test_server_error_coverage")
         if(NOT BUILD_WITH_HTTPS)
             message(WARNING "Test ${test_name} requires HTTPS support, skipping...")
+            continue()
+        endif()
+    endif()
+    if(${test_name} STREQUAL "test_server_simple_api_coverage")
+        if(NOT BUILD_WITH_WEBSOCKET)
+            message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
             continue()
         endif()
     endif()
