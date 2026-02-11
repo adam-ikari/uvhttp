@@ -785,10 +785,10 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
         endif()
     endif()
 
-    # WebSocket-related tests require either HTTPS or WebSocket support
+    # WebSocket-related tests require WebSocket support
     if(${test_name} MATCHES ".*websocket.*")
-        if(NOT BUILD_WITH_HTTPS AND NOT BUILD_WITH_WEBSOCKET)
-            message(WARNING "Test ${test_name} requires HTTPS or WebSocket support, skipping...")
+        if(NOT BUILD_WITH_WEBSOCKET)
+            message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
             continue()
         endif()
     endif()
