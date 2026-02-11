@@ -935,3 +935,76 @@ if(ENABLE_COVERAGE)
         COMMENT "Running tests and generating coverage report"
     )
 endif()
+
+
+# ============================================================================
+# CMake Package Export Configuration
+# ============================================================================
+# This section enables users to find and use uvhttp via find_package()
+# ============================================================================
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+
+# Set version for package
+set(UVHTTP_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+
+# Configure package version file
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/uvhttp-config.in.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-config.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/uvhttp
+)
+
+# Configure version file
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-config-version.cmake"
+    VERSION ${UVHTTP_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+# Export the uvhttp library
+export(TARGETS uvhttp FILE "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-targets.cmake")
+
+# Export the interface library targets
+if(TARGET mbedtls)
+    export(TARGETS mbedtls APPEND FILE "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-targets.cmake")
+endif()
+if(TARGET xxhash)
+    export(TARGETS xxhash APPEND FILE "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-targets.cmake")
+endif()
+if(TARGET libuv)
+    export(TARGETS libuv APPEND FILE "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-targets.cmake")
+endif()
+
+# Installation rules
+install(TARGETS uvhttp
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# Install headers
+install(DIRECTORY include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING PATTERN "*.h"
+)
+
+# Install CMake configuration files
+install(
+    FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-config-version.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-targets.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/uvhttp
+)
+
+# Install pkg-config file
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/uvhttp.pc.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/uvhttp.pc"
+    @ONLY
+)
+install(
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/uvhttp.pc"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+)
