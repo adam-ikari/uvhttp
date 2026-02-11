@@ -179,6 +179,7 @@ jobs:
       - name: Configure CMake
         run: |
           cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \\
             -DBUILD_WITH_WEBSOCKET=${{ matrix.config.websocket }} \
             -DBUILD_WITH_MIMALLOC=${{ matrix.config.mimalloc }} \
             -DBUILD_WITH_HTTPS=${{ matrix.config.https }} \
