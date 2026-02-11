@@ -585,16 +585,9 @@ foreach(test_file ${GTEST_TEST_FILES})
 
     # TLS-related tests require HTTPS support
     # Server TLS API tests require HTTPS support
-    # Server WebSocket API tests require WebSocket support
-    if(${test_name} STREQUAL "test_server_api_coverage" OR ${test_name} STREQUAL "test_server_error_coverage")
+    if(${test_name} STREQUAL "test_server_api_coverage" OR ${test_name} STREQUAL "test_server_error_coverage" OR ${test_name} STREQUAL "test_server_simple_api_coverage")
         if(NOT BUILD_WITH_HTTPS)
             message(WARNING "Test ${test_name} requires HTTPS support, skipping...")
-            continue()
-        endif()
-    endif()
-    if(${test_name} STREQUAL "test_server_simple_api_coverage")
-        if(NOT BUILD_WITH_WEBSOCKET)
-            message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
             continue()
         endif()
     endif()
@@ -779,16 +772,9 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
 
     # TLS-related tests require HTTPS support
     # Server TLS API tests require HTTPS support
-    # Server WebSocket API tests require WebSocket support
-    if(${test_name} STREQUAL "test_server_api_coverage" OR ${test_name} STREQUAL "test_server_error_coverage")
+    if(${test_name} STREQUAL "test_server_api_coverage" OR ${test_name} STREQUAL "test_server_error_coverage" OR ${test_name} STREQUAL "test_server_simple_api_coverage")
         if(NOT BUILD_WITH_HTTPS)
             message(WARNING "Test ${test_name} requires HTTPS support, skipping...")
-            continue()
-        endif()
-    endif()
-    if(${test_name} STREQUAL "test_server_simple_api_coverage")
-        if(NOT BUILD_WITH_WEBSOCKET)
-            message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
             continue()
         endif()
     endif()
@@ -799,10 +785,10 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
         endif()
     endif()
 
-    # WebSocket-related tests require WebSocket support
+    # WebSocket-related tests require either HTTPS or WebSocket support
     if(${test_name} MATCHES ".*websocket.*")
-        if(NOT BUILD_WITH_WEBSOCKET)
-            message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
+        if(NOT BUILD_WITH_HTTPS AND NOT BUILD_WITH_WEBSOCKET)
+            message(WARNING "Test ${test_name} requires HTTPS or WebSocket support, skipping...")
             continue()
         endif()
     endif()
@@ -962,22 +948,9 @@ write_basic_package_version_file(
     COMPATIBILITY SameMajorVersion
 )
 
-# Export the uvhttp library
-export(TARGETS uvhttp FILE "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-targets.cmake")
-
-# Export the interface library targets
-if(TARGET mbedtls)
-    export(TARGETS mbedtls APPEND FILE "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-targets.cmake")
-endif()
-if(TARGET xxhash)
-    export(TARGETS xxhash APPEND FILE "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-targets.cmake")
-endif()
-if(TARGET libuv)
-    export(TARGETS libuv APPEND FILE "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-targets.cmake")
-endif()
-
 # Installation rules
 install(TARGETS uvhttp
+    EXPORT uvhttp-targets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -989,12 +962,18 @@ install(DIRECTORY include/
     FILES_MATCHING PATTERN "*.h"
 )
 
+# Export and install the uvhttp target
+install(EXPORT uvhttp-targets
+    NAMESPACE uvhttp::
+    FILE uvhttp-targets.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/uvhttp
+)
+
 # Install CMake configuration files
 install(
     FILES
         "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-config.cmake"
         "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-config-version.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-targets.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/uvhttp
 )
 
