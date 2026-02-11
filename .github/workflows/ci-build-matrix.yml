@@ -278,6 +278,8 @@ jobs:
       - name: Configure CMake for 32-bit
         run: |
           cmake -B build \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
             -DBUILD_WITH_WEBSOCKET=${{ matrix.config.websocket }} \
             -DBUILD_WITH_MIMALLOC=${{ matrix.config.mimalloc }} \
             -DBUILD_WITH_TLS=${{ matrix.config.tls }} \
@@ -329,9 +331,11 @@ jobs:
       - name: Install cross-compiler
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            gcc-${{ matrix.target.arch }}-linux-gnu \
-            g++-${{ matrix.target.arch }}-linux-gnu
+          if [ "${{ matrix.target.arch }}" == "arm" ]; then
+            sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+          else
+            sudo apt-get install -y gcc-${{ matrix.target.arch }}-linux-gnu g++-${{ matrix.target.arch }}-linux-gnu
+          fi
       
       - name: Setup build environment
         uses: ./.github/actions/setup-build
