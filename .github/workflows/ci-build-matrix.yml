@@ -28,7 +28,7 @@ jobs:
           - name: "Minimal (no optional features)"
             websocket: OFF
             mimalloc: OFF
-            tls: OFF
+            https: OFF
             debug: OFF
             coverage: OFF
             examples: OFF
@@ -38,7 +38,7 @@ jobs:
           - name: "Full Features"
             websocket: ON
             mimalloc: ON
-            tls: ON
+            https: ON
             debug: OFF
             coverage: OFF
             examples: OFF
@@ -48,7 +48,7 @@ jobs:
           - name: "WebSocket Only"
             websocket: ON
             mimalloc: OFF
-            tls: OFF
+            https: OFF
             debug: OFF
             coverage: OFF
             examples: OFF
@@ -58,7 +58,7 @@ jobs:
           - name: "TLS Only"
             websocket: OFF
             mimalloc: OFF
-            tls: ON
+            https: ON
             debug: OFF
             coverage: OFF
             examples: OFF
@@ -68,7 +68,7 @@ jobs:
           - name: "mimalloc Only"
             websocket: OFF
             mimalloc: ON
-            tls: OFF
+            https: OFF
             debug: OFF
             coverage: OFF
             examples: OFF
@@ -78,7 +78,7 @@ jobs:
           - name: "Debug Mode"
             websocket: ON
             mimalloc: ON
-            tls: ON
+            https: ON
             debug: ON
             coverage: OFF
             examples: OFF
@@ -88,7 +88,7 @@ jobs:
           - name: "Coverage Mode"
             websocket: ON
             mimalloc: ON
-            tls: ON
+            https: ON
             debug: OFF
             coverage: ON
             examples: OFF
@@ -98,7 +98,7 @@ jobs:
           - name: "WebSocket + TLS"
             websocket: ON
             mimalloc: OFF
-            tls: ON
+            https: ON
             debug: OFF
             coverage: OFF
             examples: OFF
@@ -108,7 +108,7 @@ jobs:
           - name: "WebSocket + mimalloc"
             websocket: ON
             mimalloc: ON
-            tls: OFF
+            https: OFF
             debug: OFF
             coverage: OFF
             examples: OFF
@@ -118,7 +118,7 @@ jobs:
           - name: "TLS + mimalloc"
             websocket: OFF
             mimalloc: ON
-            tls: ON
+            https: ON
             debug: OFF
             coverage: OFF
             examples: OFF
@@ -128,7 +128,7 @@ jobs:
           - name: "WebSocket + TLS + mimalloc"
             websocket: ON
             mimalloc: ON
-            tls: ON
+            https: ON
             debug: OFF
             coverage: OFF
             examples: OFF
@@ -138,7 +138,7 @@ jobs:
           - name: "Debug + Coverage"
             websocket: ON
             mimalloc: ON
-            tls: ON
+            https: ON
             debug: ON
             coverage: ON
             examples: OFF
@@ -148,7 +148,7 @@ jobs:
           - name: "Minimal + Debug"
             websocket: OFF
             mimalloc: OFF
-            tls: OFF
+            https: OFF
             debug: ON
             coverage: OFF
             examples: OFF
@@ -158,7 +158,7 @@ jobs:
           - name: "Full + Examples"
             websocket: ON
             mimalloc: ON
-            tls: ON
+            https: ON
             debug: OFF
             coverage: OFF
             examples: ON
@@ -180,7 +180,7 @@ jobs:
           cmake -B build \
             -DBUILD_WITH_WEBSOCKET=${{ matrix.config.websocket }} \
             -DBUILD_WITH_MIMALLOC=${{ matrix.config.mimalloc }} \
-            -DBUILD_WITH_TLS=${{ matrix.config.tls }} \
+            -DBUILD_WITH_HTTPS=${{ matrix.config.https }} \
             -DENABLE_DEBUG=${{ matrix.config.debug }} \
             -DENABLE_COVERAGE=${{ matrix.config.coverage }} \
             -DBUILD_EXAMPLES=${{ matrix.config.examples }}
@@ -247,12 +247,12 @@ jobs:
           - name: "32-bit Minimal"
             websocket: OFF
             mimalloc: OFF
-            tls: OFF
+            https: OFF
             debug: OFF
           - name: "32-bit Full"
             websocket: ON
             mimalloc: ON
-            tls: ON
+            https: ON
             debug: OFF
     
     steps:
@@ -278,9 +278,11 @@ jobs:
       - name: Configure CMake for 32-bit
         run: |
           cmake -B build \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
             -DBUILD_WITH_WEBSOCKET=${{ matrix.config.websocket }} \
             -DBUILD_WITH_MIMALLOC=${{ matrix.config.mimalloc }} \
-            -DBUILD_WITH_TLS=${{ matrix.config.tls }} \
+            -DBUILD_WITH_HTTPS=${{ matrix.config.https }} \
             -DENABLE_DEBUG=${{ matrix.config.debug }} \
             -DCMAKE_C_FLAGS="-m32" \
             -DCMAKE_CXX_FLAGS="-m32"
@@ -329,9 +331,11 @@ jobs:
       - name: Install cross-compiler
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            gcc-${{ matrix.target.arch }}-linux-gnu \
-            g++-${{ matrix.target.arch }}-linux-gnu
+          if [ "${{ matrix.target.arch }}" == "arm" ]; then
+            sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+          else
+            sudo apt-get install -y gcc-${{ matrix.target.arch }}-linux-gnu g++-${{ matrix.target.arch }}-linux-gnu
+          fi
       
       - name: Setup build environment
         uses: ./.github/actions/setup-build
@@ -351,7 +355,7 @@ jobs:
             -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
             -DBUILD_WITH_WEBSOCKET=ON \
             -DBUILD_WITH_MIMALLOC=OFF \
-            -DBUILD_WITH_TLS=ON
+            -DBUILD_WITH_HTTPS=ON
       
       - name: Build project
         run: |
