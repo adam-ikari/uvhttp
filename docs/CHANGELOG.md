@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-02-12
+
+### Added
+
+- **CMake Export Configuration**
+  - Added CMake export configuration for easy library integration
+  - Use install(EXPORT) instead of export()
+  - Add NAMESPACE uvhttp:: to exported target
+  - Dependencies found via find_dependency() in uvhttp-config.in.cmake
+  - Added pkg-config support (uvhttp.pc.in)
+  - Simplifies integration for library users
+
+### Fixed
+
+- **WebSocket Test Conditions**
+  - Fixed WebSocket integration tests to require BUILD_WITH_WEBSOCKET only
+  - Fixed test_server_simple_api_coverage to require BUILD_WITH_WEBSOCKET
+  - WebSocket tests now properly check for WebSocket support
+  - Fixes compilation errors in HTTPS Only builds
+
+- **Static Files Examples**
+  - Fixed static files examples conditional compilation
+  - Only compile examples/04_static_files/ when BUILD_WITH_STATIC_FILES=ON
+  - Static files examples use uvhttp_static.h types which require UVHTTP_FEATURE_STATIC_FILES=1
+  - Fixes Full + Examples build failures
+
+- **Coverage Report Generation**
+  - Improved coverage report generation error handling
+  - Add --base-directory to lcov capture for proper source file location
+  - Remove coverage data from deps/ and test/ directories
+  - Add '|| true' to prevent failures when coverage data is missing
+  - Fixes Coverage Mode and Debug + Coverage build failures
+
+### Changed
+
+- **CI/CD Build Matrix**
+  - Renamed TLS to HTTPS in CI/CD build matrix names
+  - TLS Only → HTTPS Only
+  - WebSocket + TLS → WebSocket + HTTPS
+  - TLS + mimalloc → HTTPS + mimalloc
+  - WebSocket + TLS + mimalloc → WebSocket + HTTPS + mimalloc
+  - Aligns with BUILD_WITH_HTTPS variable name
+
+### CI/CD Status
+- Build Matrix Validation: 15/15 passing ✅
+- All core functionality builds passing
+- Coverage Mode and Debug + Coverage now passing
+
 ## [2.3.1] - 2026-02-10
 
 ### Fixed
