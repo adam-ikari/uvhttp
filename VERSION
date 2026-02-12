@@ -2,22 +2,22 @@
 # 此文件定义项目的当前版本信息
 
 # 当前版本号 (语义化版本: MAJOR.MINOR.PATCH)
-VERSION=2.3.0
+VERSION=2.4.0
 
 # 版本类型: major, minor, patch
-VERSION_TYPE=major
+VERSION_TYPE=minor
 
 # 发布日期
-RELEASE_DATE=2026-02-04
+RELEASE_DATE=2026-02-12
 
 # 上一个版本
-PREVIOUS_VERSION=2.2.2
+PREVIOUS_VERSION=2.3.0
 
 # 下一个版本（开发中）
-NEXT_VERSION=2.4.0
+NEXT_VERSION=2.5.0
 
 # 版本名称（可选）
-VERSION_NAME="LRU Cache Flexibility"
+VERSION_NAME="CMake Export & CI/CD Improvements"
 
 # 是否为预发布版本
 IS_PRERELEASE=false
