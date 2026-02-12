@@ -46,6 +46,9 @@ jobs:
       
       - name: Generate all documentation
         run: |
+          # Create necessary directories
+          mkdir -p docs/api/html docs/api/latex docs/api/xml docs/api/.doxygen
+          
           # Generate Doxygen API documentation
           doxygen Doxyfile
           
