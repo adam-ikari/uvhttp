@@ -55,15 +55,15 @@ jobs:
             examples: OFF
             description: "WebSocket support only"
           
-          # TLS 单独测试
-          - name: "TLS Only"
+          # HTTPS 单独测试
+          - name: "HTTPS Only"
             websocket: OFF
             mimalloc: OFF
             https: ON
             debug: OFF
             coverage: OFF
             examples: OFF
-            description: "TLS support only"
+            description: "HTTPS support only"
           
           # mimalloc 单独测试
           - name: "mimalloc Only"
@@ -95,15 +95,15 @@ jobs:
             examples: OFF
             description: "Coverage build with gcov"
           
-          # 组合 1: WebSocket + TLS
-          - name: "WebSocket + TLS"
+          # 组合 1: WebSocket + HTTPS
+          - name: "WebSocket + HTTPS"
             websocket: ON
             mimalloc: OFF
             https: ON
             debug: OFF
             coverage: OFF
             examples: OFF
-            description: "WebSocket and TLS support"
+            description: "WebSocket and HTTPS support"
           
           # 组合 2: WebSocket + mimalloc
           - name: "WebSocket + mimalloc"
@@ -115,18 +115,18 @@ jobs:
             examples: OFF
             description: "WebSocket and mimalloc"
           
-          # 组合 3: TLS + mimalloc
-          - name: "TLS + mimalloc"
+          # 组合 3: HTTPS + mimalloc
+          - name: "HTTPS + mimalloc"
             websocket: OFF
             mimalloc: ON
             https: ON
             debug: OFF
             coverage: OFF
             examples: OFF
-            description: "TLS and mimalloc"
+            description: "HTTPS and mimalloc"
           
-          # 组合 4: WebSocket + TLS + mimalloc
-          - name: "WebSocket + TLS + mimalloc"
+          # 组合 4: WebSocket + HTTPS + mimalloc
+          - name: "WebSocket + HTTPS + mimalloc"
             websocket: ON
             mimalloc: ON
             https: ON
@@ -267,7 +267,7 @@ jobs:
           echo "| Minimal (no optional features) | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Full Features | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| WebSocket Only | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| TLS Only | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GEEKITHUB_STEP_SUMMARY
+          echo "| HTTPS Only | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| mimalloc Only | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Debug Mode | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Coverage Mode | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
