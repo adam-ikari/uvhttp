@@ -46,7 +46,13 @@ jobs:
       
       - name: Generate all documentation
         run: |
-          make docs
+          # Generate Doxygen API documentation
+          doxygen Doxyfile
+          
+          # Build VitePress documentation site
+          cd docs
+          pnpm install
+          pnpm build
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
