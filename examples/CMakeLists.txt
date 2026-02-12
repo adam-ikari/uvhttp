@@ -58,7 +58,9 @@ add_subdirectory(02_routing)
 add_subdirectory(03_middleware)
 
 # 静态文件示例
-add_subdirectory(04_static_files)
+if(BUILD_WITH_STATIC_FILES)
+    add_subdirectory(04_static_files)
+endif()
 
 # WebSocket 示例
 if(BUILD_WITH_WEBSOCKET)
