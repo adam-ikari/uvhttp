@@ -63,8 +63,8 @@ jobs:
       - name: Performance test
         run: |
           cd build
-          if [ -f "./dist/bin/benchmark_rps" ]; then
-            ./dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
+          if [ -f "./dist/bin/benchmark_unified" ]; then
+            ./dist/bin/benchmark_unified > /tmp/server.log 2>&1 &
             SERVER_PID=$!
             sleep 3
             wrk -t4 -c100 -d30s --timeout 5s http://localhost:18081/
