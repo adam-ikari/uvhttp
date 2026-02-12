@@ -1,0 +1,10 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=@CMAKE_INSTALL_LIBDIR@
+includedir=@CMAKE_INSTALL_INCLUDEDIR@
+
+Name: uvhttp
+Description: High-performance HTTP/1.1 and WebSocket server library based on libuv
+Version: @PROJECT_VERSION@
+Libs: -L${libdir} -luvhttp
+Cflags: -I${includedir}
