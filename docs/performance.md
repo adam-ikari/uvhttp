@@ -4,21 +4,23 @@ UVHTTP is designed for high performance and low latency. This document provides 
 
 ## Performance Metrics
 
-### Benchmark Results (Updated: 2026-02-07)
+### Benchmark Results (Updated: 2026-02-10)
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| **Peak Throughput** | **31,883 RPS** | High concurrency (100 connections, 4 threads) |
-| **Average Latency** | **3.09ms** | High concurrency |
-| **Maximum Latency** | 49.83ms | High concurrency |
-| **Transfer Rate** | 3.53MB/s | High concurrency |
-| **Performance Goal Achievement** | 138.2% | Target: 23,070 RPS |
+| **Peak Throughput** | **31,409 RPS** | High concurrency (100 connections, 4 threads) |
+| **Medium Concurrency** | **30,487 RPS** | Medium concurrency (50 connections, 4 threads) |
+| **Low Concurrency** | **31,151 RPS** | Low concurrency (10 connections, 2 threads) |
+| **Average Latency** | **0.29-3.07ms** | Across all concurrency levels |
+| **Transfer Rate** | 3.37-3.47MB/s | Across all concurrency levels |
+| **Socket Errors** | **0%** | Zero errors at all concurrency levels |
+| **Performance Goal Achievement** | 136.1% | Target: 23,070 RPS |
 
 **Test Environment**:
 - OS: Linux 6.14.11-2-pve
 - Tool: wrk 4.1.0
-- Test Duration: 30 seconds
-- Build Type: Debug (for development)
+- Test Duration: 5 seconds per test
+- Build Type: Release (-O2 -DNDEBUG)
 - Memory Allocator: System allocator
 - Router Cache: Hash table only (hot path cache removed)
 
@@ -31,10 +33,19 @@ See `benchmark/BENCHMARK_COMPILE_GUIDE.md` for details.
 
 ### Stability
 
-- **Concurrency Range**: 10-500 concurrent connections
-- **RPS Fluctuation**: < 3% across all concurrency levels
-- **Memory Usage**: Stable, no leaks detected
+- **Concurrency Range**: 10-100 concurrent connections (tested)
+- **RPS Fluctuation**: < 5% across all concurrency levels
+- **Memory Usage**: Stable, no leaks detected (no CLOSE_WAIT connections)
 - **CPU Usage**: Efficient, scales with load
+- **Socket Errors**: Zero errors at all tested concurrency levels
+
+### Performance Improvements (v2.3.1)
+
+- **Event Loop Blocking Fix**: Removed synchronous `uv_run()` calls from connection cleanup
+- **Performance Recovery**: Restored performance from 7-10,691 RPS to 31,000+ RPS
+- **Zero Socket Errors**: Eliminated socket read errors (from 95%+ to 0%)
+- **No Connection Leaks**: Eliminated CLOSE_WAIT state connections
+- **Code Simplification**: Reduced `uvhttp_connection.c` by 38 lines
 
 ### Performance Improvements (v2.3.0)
 

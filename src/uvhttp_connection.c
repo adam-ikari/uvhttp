@@ -536,69 +536,25 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
         return;
     }
 
-    /* If handles are not closed yet, close them synchronously by:
-     * 1. Starting the close process with uv_close
-     * 2. Running the loop to process callbacks
-     * 3. Then freeing the connection */
-
-    /* Close all handles if they are not already closing */
-    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
-        uv_idle_stop(&conn->idle_handle);
-        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
-    }
-
-    if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
-        uv_timer_stop(&conn->timeout_timer);
-        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
-    }
-
-    if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
-        uv_read_stop((uv_stream_t*)&conn->tcp_handle);
-        uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
-    }
-
-    /* Run the loop to process close callbacks.
-     * This ensures all handles are fully closed before freeing memory.
-     * Use UVHTTP_CONNECTION_CLEANUP_ITERATIONS to balance between:
-     * - Completeness: All close callbacks are processed
-     * - Performance: Don't spin the loop unnecessarily
+/* If handles are not closed yet, use async close mechanism.
+     * This avoids blocking the event loop with uv_run calls.
+     * uvhttp_connection_close will start the async close process
+     * and on_handle_close will handle the actual free.
      * 
-     * Rationale: We need to process at least 3 iterations (idle, timer, tcp).
-     * Using 10 iterations provides a safety margin for nested callbacks
-     * while still being fast enough for cleanup paths. */
-    if (conn->server && conn->server->loop) {
-        for (int i = 0; i < UVHTTP_CONNECTION_CLEANUP_ITERATIONS; i++) {
-            uv_run(conn->server->loop, UV_RUN_ONCE);
-        }
-    }
+     * Important: We do NOT free resources here because:
+     * 1. uvhttp_connection_close() sets close_pending > 0
+     * 2. The close callbacks (on_handle_close) will be called later
+     * 3. on_handle_close will call uvhttp_connection_free() again
+     * 4. That second call will see close_pending == 0 and free everything
+     */
+    uvhttp_connection_close(conn);
 
-    /* Set freed flag */
+    /* Set freed flag to prevent double-free in case
+     * uvhttp_connection_free is called again before callbacks complete */
     conn->freed = 1;
 
-    /* Clean request and response data */
-    if (conn->request) {
-        uvhttp_request_cleanup(conn->request);
-        uvhttp_free(conn->request);
-    }
-
-    if (conn->response) {
-        uvhttp_response_cleanup(conn->response);
-        uvhttp_free(conn->response);
-    }
-
-    if (conn->read_buffer) {
-        uvhttp_free(conn->read_buffer);
-    }
-
-#if UVHTTP_FEATURE_TLS
-    /* Clean up SSL context to prevent memory leak */
-    if (conn->ssl) {
-        uvhttp_connection_tls_cleanup(conn);
-    }
-#endif
-
-    /* Release connection memory */
-    uvhttp_free(conn);
+    /* Return immediately - on_handle_close will do the actual cleanup */
+    return;
 }
 
 uvhttp_error_t uvhttp_connection_start(uvhttp_connection_t* conn) {
