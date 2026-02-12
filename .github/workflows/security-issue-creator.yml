@@ -5,7 +5,7 @@ on:
   workflow_run:
     workflows: ['CI/CD - Push Full Validation', 'CI/CD - Nightly Deep Test']
     types: [completed]
-    branches: [main, develop]
+    branches: [main, develop, pre-release]
 
 jobs:
   create-security-issue:

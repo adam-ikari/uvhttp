@@ -4,11 +4,37 @@ This document provides information about UVHTTP versions and their compatibility
 
 ## Current Version
 
-**Version**: 2.2.2  
-**Release Date**: 2026-02-02  
+**Version**: 2.4.0  
+**Release Date**: 2026-02-12  
 **Status**: Stable
 
 ## Version History
+
+### 2.4.0 (2026-02-12)
+
+**New Features**:
+- CMake export configuration for easy library integration
+- Use install(EXPORT) instead of export()
+- Add NAMESPACE uvhttp:: to exported target
+- Dependencies found via find_dependency() in uvhttp-config.in.cmake
+- Added pkg-config support (uvhttp.pc.in)
+- Simplifies integration for library users
+
+**Bug Fixes**:
+- Fixed WebSocket integration tests to require BUILD_WITH_WEBSOCKET only
+- Fixed test_server_simple_api_coverage to require BUILD_WITH_WEBSOCKET
+- Fixed static files examples conditional compilation
+- Fixed coverage report generation error handling
+
+**Improvements**:
+- Renamed TLS to HTTPS in CI/CD build matrix names
+- Improved CI/CD error handling and coverage report generation
+- CI/CD Build Matrix Validation: 15/15 passing
+
+**Documentation**:
+- Added CMake installation guide (docs/INSTALL_CMAKE.md)
+- Added CMake export configuration documentation
+- Updated CHANGELOG.md with v2.4.0 release notes
 
 ### 2.2.2 (2026-02-02)
 

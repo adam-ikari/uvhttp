@@ -178,14 +178,16 @@ if(BUILD_WITH_HTTPS)
     add_definitions(-DUVHTTP_FEATURE_TLS=1)
     message(STATUS "HTTPS support: ENABLED")
 else()
-    add_definitions(-DUVHTTP_FEATURE_TLS=0)
     message(STATUS "HTTPS support: DISABLED")
 endif()
 
 # WebSocket support
+# Note: WebSocket automatically enables TLS support (UVHTTP_FEATURE_TLS=1)
+# because WebSocket needs mbedtls for SHA1/Base64 encoding
 if(BUILD_WITH_WEBSOCKET)
     add_definitions(-DUVHTTP_FEATURE_WEBSOCKET=1)
-    message(STATUS "WebSocket support: ENABLED")
+    add_definitions(-DUVHTTP_FEATURE_TLS=1)
+    message(STATUS "WebSocket support: ENABLED (TLS automatically enabled)")
 else()
     add_definitions(-DUVHTTP_FEATURE_WEBSOCKET=0)
     message(STATUS "WebSocket support: DISABLED")
@@ -195,6 +197,7 @@ endif()
 if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
     message(STATUS "TLS library (mbedtls): ENABLED")
 else()
+    add_definitions(-DUVHTTP_FEATURE_TLS=0)
     message(STATUS "TLS library (mbedtls): DISABLED")
 endif()
 
@@ -565,7 +568,45 @@ set(TEST_HELPER_FILES test/unit/test_time_mock.cpp test/unit/test_loop_helper.cp
 
 foreach(test_file ${GTEST_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
-    
+
+    # WebSocket-related tests require WebSocket support
+    if(${test_name} STREQUAL "test_connection_api_coverage" OR ${test_name} STREQUAL "test_connection_enhanced_coverage" OR ${test_name} STREQUAL "test_connection_full_api_coverage")
+        if(NOT BUILD_WITH_WEBSOCKET)
+            message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
+            continue()
+        endif()
+    endif()
+    if(${test_name} MATCHES ".*websocket.*")
+        if(NOT BUILD_WITH_WEBSOCKET)
+            message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
+            continue()
+        endif()
+    endif()
+
+    # TLS-related tests require HTTPS support
+    # Server TLS API tests require HTTPS support
+    if(${test_name} STREQUAL "test_server_api_coverage" OR ${test_name} STREQUAL "test_server_error_coverage")
+        if(NOT BUILD_WITH_HTTPS)
+            message(WARNING "Test ${test_name} requires HTTPS support, skipping...")
+            continue()
+        endif()
+    endif()
+
+    # Server WebSocket API tests require WebSocket support
+    if(${test_name} STREQUAL "test_server_simple_api_coverage")
+        if(NOT BUILD_WITH_WEBSOCKET)
+            message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
+            continue()
+        endif()
+    endif()
+
+    if(${test_name} MATCHES ".*tls.*")
+        if(NOT BUILD_WITH_HTTPS)
+            message(WARNING "Test ${test_name} requires HTTPS support, skipping...")
+            continue()
+        endif()
+    endif()
+
     # All test files are C++ files
     # Add helper files if tests need time mock
     if(${test_name} STREQUAL "test_lru_cache_full_coverage" OR 
@@ -737,16 +778,24 @@ message(STATUS "")
 file(GLOB INTEGRATION_TEST_FILES test/integration/*.c)
 foreach(test_file ${INTEGRATION_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
-    add_executable(${test_name} ${test_file} ${SOURCES})
-    add_dependencies(${test_name} libuv xxhash)
-    if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
-        add_dependencies(${test_name} mbedtls)
-    endif()
-    if(BUILD_WITH_MIMALLOC)
-        add_dependencies(${test_name} mimalloc)
-    endif()
 
     # TLS-related tests require HTTPS support
+    # Server TLS API tests require HTTPS support
+    if(${test_name} STREQUAL "test_server_api_coverage" OR ${test_name} STREQUAL "test_server_error_coverage")
+        if(NOT BUILD_WITH_HTTPS)
+            message(WARNING "Test ${test_name} requires HTTPS support, skipping...")
+            continue()
+        endif()
+    endif()
+
+    # Server WebSocket API tests require WebSocket support
+    if(${test_name} STREQUAL "test_server_simple_api_coverage")
+        if(NOT BUILD_WITH_WEBSOCKET)
+            message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
+            continue()
+        endif()
+    endif()
+
     if(${test_name} MATCHES ".*tls.*")
         if(NOT BUILD_WITH_HTTPS)
             message(WARNING "Test ${test_name} requires HTTPS support, skipping...")
@@ -754,12 +803,21 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
         endif()
     endif()
 
-    # WebSocket-related tests require either HTTPS or WebSocket support
+    # WebSocket-related tests require WebSocket support
     if(${test_name} MATCHES ".*websocket.*")
-        if(NOT BUILD_WITH_HTTPS AND NOT BUILD_WITH_WEBSOCKET)
-            message(WARNING "Test ${test_name} requires HTTPS or WebSocket support, skipping...")
+        if(NOT BUILD_WITH_WEBSOCKET)
+            message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
             continue()
         endif()
+    endif()
+
+    add_executable(${test_name} ${test_file} ${SOURCES})
+    add_dependencies(${test_name} libuv xxhash)
+    if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
+        add_dependencies(${test_name} mbedtls)
+    endif()
+    if(BUILD_WITH_MIMALLOC)
+        add_dependencies(${test_name} mimalloc)
     endif()
 
     target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error-unused-function)
@@ -881,3 +939,69 @@ if(ENABLE_COVERAGE)
         COMMENT "Running tests and generating coverage report"
     )
 endif()
+
+
+# ============================================================================
+# CMake Package Export Configuration
+# ============================================================================
+# This section enables users to find and use uvhttp via find_package()
+# ============================================================================
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+
+# Set version for package
+set(UVHTTP_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+
+# Configure package version file
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/uvhttp-config.in.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-config.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/uvhttp
+)
+
+# Configure version file
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-config-version.cmake"
+    VERSION ${UVHTTP_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+# Installation rules
+install(TARGETS uvhttp
+    EXPORT uvhttp-targets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# Install headers
+install(DIRECTORY include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING PATTERN "*.h"
+)
+
+# Export and install the uvhttp target
+install(EXPORT uvhttp-targets
+    NAMESPACE uvhttp::
+    FILE uvhttp-targets.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/uvhttp
+)
+
+# Install CMake configuration files
+install(
+    FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/uvhttp-config-version.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/uvhttp
+)
+
+# Install pkg-config file
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/uvhttp.pc.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/uvhttp.pc"
+    @ONLY
+)
+install(
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/uvhttp.pc"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+)

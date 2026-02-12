@@ -4,11 +4,37 @@
 
 ## 当前版本
 
-**版本**: 2.2.2  
-**发布日期**: 2026-02-02  
+**版本**: 2.4.0  
+**发布日期**: 2026-02-12  
 **状态**: 稳定
 
 ## 版本历史
+
+### 2.4.0 (2026-02-12)
+
+**新功能**:
+- CMake 导出配置，简化库集成
+- 使用 install(EXPORT) 替代 export()
+- 添加 NAMESPACE uvhttp:: 到导出目标
+- 依赖项通过 find_dependency() 在 uvhttp-config.in.cmake 中查找
+- 添加 pkg-config 支持 (uvhttp.pc.in)
+- 简化库用户的集成流程
+
+**Bug 修复**:
+- 修复 WebSocket 集成测试要求 BUILD_WITH_WEBSOCKET
+- 修复 test_server_simple_api_coverage 要求 BUILD_WITH_WEBSOCKET
+- 修复静态文件示例条件编译
+- 修复覆盖率报告生成错误处理
+
+**改进**:
+- CI/CD 构建矩阵中 TLS 重命名为 HTTPS
+- 改进 CI/CD 错误处理和覆盖率报告生成
+- CI/CD 构建矩阵验证：15/15 通过
+
+**文档**:
+- 添加 CMake 安装指南 (docs/INSTALL_CMAKE.md)
+- 添加 CMake 导出配置文档
+- 更新 CHANGELOG.md 添加 v2.4.0 发布信息
 
 ### 2.2.2 (2026-02-02)
 
