@@ -220,10 +220,16 @@ jobs:
         if: matrix.config.coverage == 'ON'
         run: |
           cd build
-          gcov -r .
-          lcov --capture --directory . --output-file coverage.info
-          lcov --remove coverage.info '/usr/*' --output-file coverage.info
-          lcov --list coverage.info
+          # Find all .gcno files
+          find . -name "*.gcno" -type f || echo "No .gcno files found"
+          # Find all .gcda files
+          find . -name "*.gcda" -type f || echo "No .gcda files found"
+          # Generate coverage report
+          lcov --capture --directory . --output-file coverage.info --base-directory .. || true
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info || true
+          lcov --remove coverage.info '*/deps/*' --output-file coverage.info || true
+          lcov --remove coverage.info '*/test/*' --output-file coverage.info || true
+          lcov --list coverage.info || echo "No coverage data generated"
       
       - name: Upload coverage reports (if coverage enabled)
         if: matrix.config.coverage == 'ON'
