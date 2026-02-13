@@ -536,22 +536,12 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
         return;
     }
 
-/* If handles are not closed yet, use async close mechanism.
+    /* If handles are not closed yet, use async close mechanism.
      * This avoids blocking the event loop with uv_run calls.
      * uvhttp_connection_close will start the async close process
      * and on_handle_close will handle the actual free.
-     * 
-     * Important: We do NOT free resources here because:
-     * 1. uvhttp_connection_close() sets close_pending > 0
-     * 2. The close callbacks (on_handle_close) will be called later
-     * 3. on_handle_close will call uvhttp_connection_free() again
-     * 4. That second call will see close_pending == 0 and free everything
      */
     uvhttp_connection_close(conn);
-
-    /* Set freed flag to prevent double-free in case
-     * uvhttp_connection_free is called again before callbacks complete */
-    conn->freed = 1;
 
     /* Return immediately - on_handle_close will do the actual cleanup */
     return;
@@ -606,13 +596,43 @@ static void on_handle_close(uv_handle_t* handle) {
 
     /* release connection when all handles are closed */
     if (conn->close_pending == 0) {
+        /* Prevent double free */
+        if (conn->freed) {
+            return;
+        }
+
+        /* Set freed flag to prevent double-free */
+        conn->freed = 1;
+
         /* single-threaded safe connection count decrement */
         if (conn->server) {
             conn->server->active_connections--;
         }
-        /* release connection resources - safe to execute in event loop thread
-         */
-        uvhttp_connection_free(conn);
+
+        /* Cleanup TLS resources */
+        uvhttp_connection_tls_cleanup(conn);
+
+        /* Cleanup request and response */
+        if (conn->request) {
+            uvhttp_request_cleanup(conn->request);
+            uvhttp_free(conn->request);
+            conn->request = NULL;
+        }
+
+        if (conn->response) {
+            uvhttp_response_cleanup(conn->response);
+            uvhttp_free(conn->response);
+            conn->response = NULL;
+        }
+
+        /* Free read buffer */
+        if (conn->read_buffer) {
+            uvhttp_free(conn->read_buffer);
+            conn->read_buffer = NULL;
+        }
+
+        /* Free connection structure */
+        uvhttp_free(conn);
     }
 }
 
