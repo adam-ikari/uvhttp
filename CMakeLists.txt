@@ -642,6 +642,9 @@ endforeach()
 # ============================================================================
 # Compile mock tests with libuv mock library
 # ============================================================================
+file(GLOB MOCK_TEST_FILES test/unit/test_*_mock*.cpp)
+list(FILTER MOCK_TEST_FILES EXCLUDE REGEX ".*disabled.*")
+
 foreach(test_file ${MOCK_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
     
