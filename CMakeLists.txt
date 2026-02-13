@@ -675,6 +675,18 @@ foreach(test_file ${MOCK_TEST_FILES})
         -Wl,--wrap=uv_is_closing
         -Wl,--wrap=uv_idle_init
         -Wl,--wrap=uv_timer_init
+        -Wl,--wrap=uv_timer_start
+        -Wl,--wrap=uv_timer_stop
+        -Wl,--wrap=uv_tcp_nodelay
+        -Wl,--wrap=uv_tcp_keepalive
+        -Wl,--wrap=uv_tcp_simultaneous_accepts
+        -Wl,--wrap=uv_accept
+        -Wl,--wrap=uv_fileno
+        -Wl,--wrap=uv_ip4_addr
+        -Wl,--wrap=uv_ip6_addr
+        -Wl,--wrap=uv_strerror
+        -Wl,--wrap=uv_hrtime
+        -Wl,--wrap=uv_buf_init
     )
     
     add_dependencies(${test_name} libuv xxhash gtest libuv_mock)
