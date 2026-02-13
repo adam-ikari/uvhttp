@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.1] - 2026-02-13
+
+### Added
+
+- **Extended Test Coverage**
+  - Added 99 new test cases across 4 core modules
+  - test_static_extended_coverage.cpp (25 tests) for uvhttp_static.c
+  - test_router_extended_coverage.cpp (25 tests) for uvhttp_router.c
+  - test_connection_extended_coverage.cpp (24 tests) for uvhttp_connection.c
+  - test_request_extended_coverage.cpp (25 tests) for uvhttp_request.c
+  - Improved overall code coverage and test stability
+
+### Fixed
+
+- **Critical Memory Leak in Connection Lifecycle**
+  - Fixed ~18KB memory leak per connection caused by premature freed flag
+  - Moved resource cleanup from uvhttp_connection_free to on_handle_close callback
+  - Proper cleanup sequence: TLS → request → response → read_buffer → connection
+  - Prevents double-free and ensures all resources are properly released
+  - Critical fix for long-running server applications
+
+- **Test Build System**
+  - Fixed MOCK_TEST_FILES undefined in CMakeLists.txt
+  - Added proper GLOB definition for mock test files
+  - All 58 tests now compile successfully
+  - Excludes disabled tests from compilation
+
+- **Test Script Portability**
+  - Fixed 58 hardcoded paths in run_all_tests.sh
+  - Implemented dynamic path detection with BIN_DIR variable
+  - Script now works with different build configurations (build/ vs dist/)
+  - Improved script usability across different environments
+
+### Changed
+
+- **Test Coverage Metrics**
+  - uvhttp_router.c: 33.6% → 62.9% (line), 68.4% → 84.2% (function)
+  - uvhttp_connection.c: 39.9% → 40.7% (line), 53.6% → 60.7% (function)
+  - uvhttp_request.c: 51.5% → ~60% (line), ~64% → ~70% (function)
+  - uvhttp_static.c: 19.1% → 21.1% (line), 56.2% → 62.5% (function)
+  - 2 modules (router, connection) now exceed 60% coverage target
+
 ## [2.4.0] - 2026-02-12
 
 ### Added

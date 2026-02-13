@@ -4,11 +4,34 @@
 
 ## 当前版本
 
-**版本**: 2.4.0  
-**发布日期**: 2026-02-12  
+**版本**: 2.4.1  
+**发布日期**: 2026-02-13  
 **状态**: 稳定
 
 ## 版本历史
+
+### 2.4.1 (2026-02-13)
+
+**新功能**:
+- 扩展测试覆盖率，为 4 个核心模块添加 99 个新测试用例
+- test_static_extended_coverage.cpp (25 个测试) 用于 uvhttp_static.c
+- test_router_extended_coverage.cpp (25 个测试) 用于 uvhttp_router.c
+- test_connection_extended_coverage.cpp (24 个测试) 用于 uvhttp_connection.c
+- test_request_extended_coverage.cpp (25 个测试) 用于 uvhttp_request.c
+
+**Bug 修复**:
+- 修复连接生命周期清理中的关键内存泄漏（每个连接约 18KB）
+- 修复 CMakeLists.txt 中未定义的 MOCK_TEST_FILES
+- 修复 run_all_tests.sh 中的 58 个硬编码路径以提高可移植性
+
+**改进**:
+- 测试覆盖率提升：router (62.9%), connection (60.7%), request (~60%), static (62.5%)
+- 2 个模块（router 和 connection）超过 60% 覆盖率目标
+- 所有 58 个测试现在都能正确编译，具有正确的 mock 测试过滤
+
+**文档**:
+- 更新 CHANGELOG.md 添加 v2.5.0 发布信息
+- 更新 versions.md 添加 v2.5.0 版本信息
 
 ### 2.4.0 (2026-02-12)
 
