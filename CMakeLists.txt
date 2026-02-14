@@ -642,6 +642,9 @@ endforeach()
 # ============================================================================
 file(GLOB MOCK_TEST_FILES test/unit/test_*_mock*.cpp)
 list(FILTER MOCK_TEST_FILES EXCLUDE REGEX ".*disabled.*")
+# 排除辅助文件（test_time_mock.cpp 和 test_loop_helper.cpp）
+list(FILTER MOCK_TEST_FILES EXCLUDE REGEX ".*test_time_mock\\.cpp")
+list(FILTER MOCK_TEST_FILES EXCLUDE REGEX ".*test_loop_helper\\.cpp")
 
 foreach(test_file ${MOCK_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
