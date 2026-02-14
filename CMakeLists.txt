@@ -608,19 +608,12 @@ foreach(test_file ${GTEST_TEST_FILES})
     endif()
 
     # All test files are C++ files
-    # Add helper files if tests need time mock
-    if(${test_name} STREQUAL "test_lru_cache_full_coverage")
-        add_executable(${test_name} ${test_file} ${TEST_HELPER_FILES} ${SOURCES})
-        # Note: test_lru_cache_full_coverage does not use libuv_mock, it only uses time.h
-        # It's included here for consistency with the original design
-    else()
-        add_executable(${test_name} ${test_file} ${SOURCES})
-        set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
-        
-        add_dependencies(${test_name} libuv xxhash gtest)
-        # Link googletest first, then LIBS (gmock_main depends on gtest)
-        target_link_libraries(${test_name} PRIVATE ${GTEST_LIBS} ${LIBS})
-    endif()
+    add_executable(${test_name} ${test_file} ${SOURCES})
+    set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
+    
+    add_dependencies(${test_name} libuv xxhash gtest)
+    # Link googletest first, then LIBS (gmock_main depends on gtest)
+    target_link_libraries(${test_name} PRIVATE ${GTEST_LIBS} ${LIBS})
     
     # Common dependencies and compile options
     if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
