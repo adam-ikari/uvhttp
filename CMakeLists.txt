@@ -609,8 +609,7 @@ foreach(test_file ${GTEST_TEST_FILES})
 
     # All test files are C++ files
     # Add helper files if tests need time mock
-    if(${test_name} STREQUAL "test_lru_cache_full_coverage" OR 
-       ${test_name} STREQUAL "test_static_file_operations_coverage")
+    if(${test_name} STREQUAL "test_lru_cache_full_coverage")
         add_executable(${test_name} ${test_file} ${TEST_HELPER_FILES} ${SOURCES})
         
         # Link libuv_mock library for tests using time mock
