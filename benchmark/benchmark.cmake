@@ -18,7 +18,7 @@ add_executable(performance_allocator
 )
 target_link_libraries(performance_allocator
     uvhttp
-    ${UVHTTP_CORE_DEPS}
+    ${LIBS}
 )
 
 add_executable(performance_allocator_compare
@@ -26,7 +26,7 @@ add_executable(performance_allocator_compare
 )
 target_link_libraries(performance_allocator_compare
     uvhttp
-    ${UVHTTP_CORE_DEPS}
+    ${LIBS}
 )
 
 add_executable(test_bitfield
@@ -34,7 +34,7 @@ add_executable(test_bitfield
 )
 target_link_libraries(test_bitfield
     uvhttp
-    ${UVHTTP_CORE_DEPS}
+    ${LIBS}
 )
 
 # 综合性能测试服务器（统一所有单一项目 benchmark）
@@ -43,7 +43,7 @@ add_executable(benchmark_unified
 )
 target_link_libraries(benchmark_unified
     uvhttp
-    ${UVHTTP_CORE_DEPS}
+    ${LIBS}
 )
 
 # 安装性能测试可执行文件
