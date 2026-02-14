@@ -107,7 +107,7 @@ jobs:
               # 禁用 TLS 以加快编译速度
               cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_TLS=OFF ..
               # 更新依赖子模块并编译
-              make -j\$(nproc) benchmark_unified benchmark_comprehensive
+              make -j\$(nproc) benchmark_unified
               
               # 运行性能测试
               echo ''
