@@ -612,13 +612,56 @@ foreach(test_file ${GTEST_TEST_FILES})
     if(${test_name} STREQUAL "test_lru_cache_full_coverage" OR 
        ${test_name} STREQUAL "test_static_file_operations_coverage")
         add_executable(${test_name} ${test_file} ${TEST_HELPER_FILES} ${SOURCES})
+        
+        # Link libuv_mock library for tests using time mock
+        target_link_libraries(${test_name} PRIVATE
+            ${GTEST_LIBS}
+            ${LIBS}
+            libuv_mock
+        )
+        
+        # Add linker wrap options for tests using time mock
+        target_link_options(${test_name} PRIVATE
+            -Wl,--wrap=uv_loop_init
+            -Wl,--wrap=uv_loop_close
+            -Wl,--wrap=uv_run
+            -Wl,--wrap=uv_tcp_init
+            -Wl,--wrap=uv_tcp_bind
+            -Wl,--wrap=uv_listen
+            -Wl,--wrap=uv_tcp_accept
+            -Wl,--wrap=uv_read_start
+            -Wl,--wrap=uv_read_stop
+            -Wl,--wrap=uv_write
+            -Wl,--wrap=uv_close
+            -Wl,--wrap=uv_is_active
+            -Wl,--wrap=uv_is_closing
+            -Wl,--wrap=uv_idle_init
+            -Wl,--wrap=uv_timer_init
+            -Wl,--wrap=uv_timer_start
+            -Wl,--wrap=uv_timer_stop
+            -Wl,--wrap=uv_tcp_nodelay
+            -Wl,--wrap=uv_tcp_keepalive
+            -Wl,--wrap=uv_tcp_simultaneous_accepts
+            -Wl,--wrap=uv_accept
+            -Wl,--wrap=uv_fileno
+            -Wl,--wrap=uv_ip4_addr
+            -Wl,--wrap=uv_ip6_addr
+            -Wl,--wrap=uv_strerror
+            -Wl,--wrap=uv_hrtime
+            -Wl,--wrap=uv_buf_init
+        )
+        
+        add_dependencies(${test_name} libuv xxhash gtest libuv_mock)
     else()
         add_executable(${test_name} ${test_file} ${SOURCES})
+        set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
+        
+        add_dependencies(${test_name} libuv xxhash gtest)
+        # Link googletest first, then LIBS (gmock_main depends on gtest)
+        target_link_libraries(${test_name} PRIVATE ${GTEST_LIBS} ${LIBS})
     endif()
     
-    set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
-    
-    add_dependencies(${test_name} libuv xxhash gtest)
+    # Common dependencies and compile options
     if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
         add_dependencies(${test_name} mbedtls)
     endif()
@@ -626,12 +669,13 @@ foreach(test_file ${GTEST_TEST_FILES})
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(${test_name} mimalloc)
     endif()
+    
     # Remove -Werror for test files, allow unused variable warnings
     target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
     # Enable statistics for tests
     target_compile_definitions(${test_name} PRIVATE UVHTTP_FEATURE_STATISTICS=1)
-    # Link googletest first, then LIBS (gmock_main depends on gtest)
-    target_link_libraries(${test_name} PRIVATE ${GTEST_LIBS} ${LIBS})
+    
+    # Common include directories
     target_include_directories(${test_name} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
