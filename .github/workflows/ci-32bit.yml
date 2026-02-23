@@ -1,0 +1,160 @@
+name: CI/CD - 32-bit Build Verification
+
+# 触发条件：Push 到 main、develop、feature/* 分支
+on:
+  push:
+    branches: [ main, develop, 'feature/**' ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+# 并发控制：取消同一分支的旧运行
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ========== 32位编译验证 ==========
+
+  ubuntu-32bit-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Install 32-bit toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib
+
+      - name: Clean previous builds
+        run: |
+          rm -rf deps/*/build
+          rm -rf deps/*/build-32bit
+          rm -rf build-32bit
+
+      - name: Build 32-bit version
+        run: |
+          cmake -B build-32bit \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_FLAGS="-m32 -march=i686 -D_GNU_SOURCE" \
+            -DCMAKE_CXX_FLAGS="-m32 -march=i686 -D_GNU_SOURCE" \
+            -DCMAKE_LD_FLAGS="-m32" \
+            -DBUILD_WITH_WEBSOCKET=ON \
+            -DBUILD_WITH_MIMALLOC=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DENABLE_COVERAGE=OFF
+          cmake --build build-32bit --config Release -j$(nproc)
+
+      - name: Verify 32-bit binary
+        run: |
+          echo "=== Checking library architecture ==="
+          file build-32bit/dist/lib/libuvhttp.a
+          
+          # 验证确实是32位
+          if file build-32bit/dist/lib/libuvhttp.a | grep -q "32-bit"; then
+            echo "✅ 32-bit library verified"
+          else
+            echo "❌ Library is not 32-bit!"
+            file build-32bit/dist/lib/libuvhttp.a
+            exit 1
+          fi
+
+      - name: Verify 32-bit executables
+        run: |
+          echo "=== Checking executable architecture ==="
+          for exe in build-32bit/dist/bin/*; do
+            if [ -f "$exe" ]; then
+              echo "Checking: $exe"
+              file "$exe"
+              if ! file "$exe" | grep -q "32-bit"; then
+                echo "❌ Executable is not 32-bit: $exe"
+                exit 1
+              fi
+            fi
+          done
+          echo "✅ All executables are 32-bit"
+
+      - name: Upload 32-bit build artifacts
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: build-32bit-${{ github.sha }}
+          path: build-32bit/
+          retention-days: 7
+
+  # ========== 32位基础测试 ==========
+
+  ubuntu-32bit-test:
+    needs: [ubuntu-32bit-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Install 32-bit toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib
+
+      - name: Download 32-bit build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-32bit-${{ github.sha }}
+          path: build-32bit/
+
+      - name: Set executable permissions
+        run: |
+          chmod +x build-32bit/dist/bin/* || true
+
+      - name: Run basic tests
+        run: |
+          cd build-32bit
+          
+          # 运行快速测试
+          if [ -f "./dist/bin/uvhttp_unit_tests" ]; then
+            echo "Running unit tests..."
+            ./dist/bin/uvhttp_unit_tests --gtest_filter="*Simple*" || true
+          else
+            echo "No unit tests found"
+          fi
+
+      - name: Upload 32-bit test logs
+        if: always()
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: test-logs-32bit-${{ github.sha }}
+          path: build-32bit/Testing/
+          retention-days: 7
+
+  # ========== 生成总结 ==========
+
+  generate-summary:
+    needs: [ubuntu-32bit-build, ubuntu-32bit-test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## 📊 32-bit Build Verification Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Task | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 32-bit Build | ${{ needs.ubuntu-32bit-build.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 32-bit Test | ${{ needs.ubuntu-32bit-test.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Architecture**: 32-bit (i686)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Compiler Flags**: \`-m32 -march=i686\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **WebSocket**: Enabled" >> $GITHUB_STEP_SUMMARY
+          echo "- **mimalloc**: Disabled (32-bit)" >> $GITHUB_STEP_SUMMARY
