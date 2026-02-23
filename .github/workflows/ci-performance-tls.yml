@@ -1,0 +1,236 @@
+name: Performance Tests (HTTPS & WebSocket)
+
+on:
+  schedule:
+    # 每天凌晨 3 点（UTC）运行，避免与基础性能测试冲突
+    - cron: '0 3 * * *'
+  workflow_dispatch:  # 允许手动触发
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'benchmark/**'
+      - 'CMakeLists.txt'
+      - 'cmake/Dependencies.cmake'
+  push:
+    branches: [ main, develop, pre-release ]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'benchmark/**'
+      - 'CMakeLists.txt'
+      - 'cmake/Dependencies.cmake'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  # HTTPS 性能测试
+  https-performance:
+    name: HTTPS Performance Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Python dependencies for mbedtls
+        run: |
+          pip install jsonschema>=3.2.0 jinja2
+
+      - name: Build with HTTPS support
+        run: |
+          echo "========================================"
+          echo "  UVHTTP HTTPS 性能测试"
+          echo "========================================"
+          
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Release \
+                -DBUILD_EXAMPLES=ON \
+                -DBUILD_WITH_HTTPS=ON \
+                -DBUILD_WITH_WEBSOCKET=OFF \
+                ..
+          make -j$(nproc)
+          
+          echo "✓ HTTPS 构建完成"
+
+      - name: Run HTTPS Performance Tests
+        run: |
+          echo "========================================"
+          echo "  HTTPS 性能测试（暂未实现）"
+          echo "========================================"
+          
+          echo "⚠️  HTTPS 性能测试服务器暂时禁用"
+          echo "原因：需要重新实现以使用正确的 API"
+          echo "参考：examples/04_static_files/static_file_server.c"
+          
+          # 创建测试证书（备用）
+          mkdir -p certs
+          openssl req -x509 -newkey rsa:2048 -keyout certs/key.pem -out certs/cert.pem \
+            -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+          
+          echo "✓ 证书已生成（备用）"
+
+      - name: Test HTTPS with wrk
+        run: |
+          echo "⚠️  HTTPS wrk 测试跳过 - 服务器未实现"
+
+      - name: Test HTTPS with ab
+        run: |
+          echo "⚠️  HTTPS ab 测试跳过 - 服务器未实现"
+
+      - name: Cleanup HTTPS Server
+        if: always()
+        run: |
+          echo "✓ HTTPS 清理完成"
+
+      - name: Upload HTTPS Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: https-performance-results
+          path: |
+            build/certs/
+          retention-days: 7
+
+  # WebSocket 性能测试
+  websocket-performance:
+    name: WebSocket Performance Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Python dependencies for mbedtls
+        run: |
+          pip install jsonschema>=3.2.0 jinja2
+
+      - name: Build with WebSocket support
+        run: |
+          echo "========================================"
+          echo "  UVHTTP WebSocket 性能测试"
+          echo "========================================"
+          
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Release \
+                -DBUILD_EXAMPLES=ON \
+                -DBUILD_WITH_HTTPS=OFF \
+                -DBUILD_WITH_WEBSOCKET=ON \
+                ..
+          make -j$(nproc)
+          
+          echo "✓ WebSocket 构建完成"
+
+      - name: Run WebSocket Performance Tests
+        run: |
+          echo "========================================"
+          echo "  WebSocket 性能测试（暂未实现）"
+          echo "========================================"
+          
+          echo "⚠️  WebSocket 性能测试服务器暂时禁用"
+          echo "原因：需要重新实现以使用正确的 API"
+          echo "参考：examples/05_websocket/websocket_test_server.c"
+
+      - name: Test WebSocket with wscat
+        run: |
+          echo "⚠️  WebSocket wscat 测试跳过 - 服务器未实现"
+
+      - name: Cleanup WebSocket Server
+        if: always()
+        run: |
+          echo "✓ WebSocket 清理完成"
+
+      - name: Upload WebSocket Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: websocket-performance-results
+          path: |
+            build/dist/bin/
+          retention-days: 7
+
+  # 综合 TLS 性能测试
+  tls-comprehensive:
+    name: TLS Comprehensive Performance Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Python dependencies for mbedtls
+        run: |
+          pip install jsonschema>=3.2.0 jinja2
+
+      - name: Build with full TLS support
+        run: |
+          echo "========================================"
+          echo "  UVHTTP TLS 综合性能测试"
+          echo "========================================"
+          
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Release \
+                -DBUILD_EXAMPLES=ON \
+                -DBUILD_WITH_HTTPS=ON \
+                -DBUILD_WITH_WEBSOCKET=ON \
+                ..
+          make -j$(nproc)
+          
+          echo "✓ TLS 综合构建完成"
+
+      - name: Run TLS Performance Tests
+        run: |
+          echo "========================================"
+          echo "  TLS 综合性能测试（暂未实现）"
+          echo "========================================"
+          
+          echo "⚠️  TLS 综合性能测试暂时禁用"
+          echo "原因：需要重新实现 HTTPS 和 WebSocket 服务器"
+
+      - name: Compare TLS vs non-TLS performance
+        run: |
+          echo "⚠️  TLS vs 非 TLS 性能对比跳过 - 服务器未实现"
+
+      - name: Upload TLS Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tls-comprehensive-results
+          path: |
+            build/certs/
+            build/dist/bin/
+          retention-days: 7

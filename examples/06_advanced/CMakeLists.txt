@@ -21,11 +21,11 @@ add_dependencies(json_api_demo uvhttp)
 # target_include_directories(config_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src)
 # add_dependencies(config_demo uvhttp)
 
-# 简单配置
-add_executable(simple_config simple_config.c)
-target_link_libraries(simple_config PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
-target_include_directories(simple_config PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src)
-add_dependencies(simple_config uvhttp)
+# 简单配置 - 暂时禁用，直接访问内部结构体
+# add_executable(simple_config simple_config.c)
+# target_link_libraries(simple_config PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
+# target_include_directories(simple_config PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src)
+# add_dependencies(simple_config uvhttp)
 
 # 统一响应演示
 add_executable(unified_response_demo unified_response_demo.c)

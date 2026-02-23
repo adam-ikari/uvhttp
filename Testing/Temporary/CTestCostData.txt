@@ -58,4 +58,3 @@ test_websocket_null_coverage 12 0.000178502
 test_whitelist_hash 11 0.000207191
 uvhttp_unit_tests 12 0.000193931
 ---
-test_connection_lifecycle

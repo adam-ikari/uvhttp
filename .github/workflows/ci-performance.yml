@@ -104,8 +104,8 @@ jobs:
               echo '=== 编译项目 ==='
               mkdir -p build
               cd build
-              # 禁用 TLS 以加快编译速度
-              cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_TLS=OFF ..
+              # 禁用 HTTPS/TLS 和 WebSocket 以加快编译速度并避免 mbedtls 依赖问题
+              cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_HTTPS=OFF -DBUILD_WITH_WEBSOCKET=OFF ..
               # 更新依赖子模块并编译
               make -j\$(nproc) benchmark_unified
               
