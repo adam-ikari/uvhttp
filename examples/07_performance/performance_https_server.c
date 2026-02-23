@@ -258,18 +258,29 @@ int main(int argc, char* argv[]) {
     }
     
     /* Setup TLS context */
-    uvhttp_tls_context_t* tls_ctx = uvhttp_tls_context_new();
-    if (!tls_ctx) {
-        fprintf(stderr, "Error: Failed to create TLS context\n");
+    uvhttp_tls_context_t* tls_ctx = NULL;
+    int ret = uvhttp_tls_context_new(&tls_ctx);
+    if (ret != UVHTTP_OK || !tls_ctx) {
+        fprintf(stderr, "Error: Failed to create TLS context: %d\n", ret);
         uvhttp_router_free(router);
         uvhttp_server_free(ctx.server);
         return 1;
     }
     
-    /* Load certificate and key */
-    int ret = uvhttp_tls_context_load_cert(tls_ctx, cert_file, key_file);
+    /* Load certificate chain */
+    ret = uvhttp_tls_context_load_cert_chain(tls_ctx, cert_file);
     if (ret != UVHTTP_OK) {
-        fprintf(stderr, "Error: Failed to load certificate/key: %d\n", ret);
+        fprintf(stderr, "Error: Failed to load certificate: %d\n", ret);
+        uvhttp_tls_context_free(tls_ctx);
+        uvhttp_router_free(router);
+        uvhttp_server_free(ctx.server);
+        return 1;
+    }
+    
+    /* Load private key */
+    ret = uvhttp_tls_context_load_private_key(tls_ctx, key_file);
+    if (ret != UVHTTP_OK) {
+        fprintf(stderr, "Error: Failed to load private key: %d\n", ret);
         uvhttp_tls_context_free(tls_ctx);
         uvhttp_router_free(router);
         uvhttp_server_free(ctx.server);
@@ -277,7 +288,14 @@ int main(int argc, char* argv[]) {
     }
     
     /* Configure server with TLS */
-    uvhttp_server_set_tls(ctx.server, tls_ctx);
+    ret = uvhttp_server_enable_tls(ctx.server, tls_ctx);
+    if (ret != UVHTTP_OK) {
+        fprintf(stderr, "Error: Failed to enable TLS: %d\n", ret);
+        uvhttp_tls_context_free(tls_ctx);
+        uvhttp_router_free(router);
+        uvhttp_server_free(ctx.server);
+        return 1;
+    }
     
     /* Add routes */
     uvhttp_router_add_route(router, "/", on_request);
