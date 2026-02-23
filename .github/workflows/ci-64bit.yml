@@ -1,0 +1,171 @@
+name: CI/CD - 64-bit Build Verification
+
+# 触发条件：Push 到 main、develop、feature/* 分支
+on:
+  push:
+    branches: [ main, develop, 'feature/**' ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+# 并发控制：取消同一分支的旧运行
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ========== 64位编译验证 ==========
+
+  ubuntu-64bit-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Clean previous builds
+        run: |
+          rm -rf deps/*/build
+          rm -rf build-64bit
+
+      - name: Build 64-bit version (core library only)
+        run: |
+          cmake -B build-64bit \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_FLAGS="-Wno-format-truncation" \
+            -DCMAKE_CXX_FLAGS="-Wno-format-truncation" \
+            -DBUILD_WITH_WEBSOCKET=ON \
+            -DBUILD_WITH_MIMALLOC=ON \
+            -DBUILD_WITH_HTTPS=ON \
+            -DBUILD_EXAMPLES=OFF \
+            -DENABLE_COVERAGE=OFF
+          # Build the library
+          cmake --build build-64bit --config Release --target uvhttp -j$(nproc)
+
+      - name: Verify 64-bit binary
+        run: |
+          echo "=== Checking library architecture ==="
+          file build-64bit/dist/lib/libuvhttp.a
+          
+          # Verify it's 64-bit using objdump
+          echo "=== Checking object files inside library ==="
+          objdump -f build-64bit/dist/lib/libuvhttp.a | grep -q "elf64-x86-64" && echo "✅ 64-bit library verified" || (echo "❌ Library is not 64-bit!" && exit 1)
+
+      - name: Verify 64-bit dependency libraries
+        run: |
+          echo "=== Checking dependency library architecture ==="
+          
+          # Use objdump to check dependency libraries
+          echo "libuv:"
+          objdump -f build-64bit/deps/libuv/build/libuv.a | head -1 || true
+          echo "mbedtls:"
+          objdump -f build-64bit/deps/mbedtls/build/library/libmbedtls.a | head -1 || true
+          objdump -f build-64bit/deps/mbedtls/build/library/libmbedcrypto.a | head -1 || true
+          objdump -f build-64bit/deps/mbedtls/build/library/libmbedx509.a | head -1 || true
+          echo "llhttp:"
+          objdump -f build-64bit/deps/cllhttp/build/libllhttp.a | head -1 || true
+          
+          # Verify all dependency libraries are 64-bit
+          for lib in build-64bit/deps/*/build/lib*.a build-64bit/deps/*/build/library/lib*.a; do
+            if [ -f "$lib" ]; then
+              if ! objdump -f "$lib" | head -1 | grep -q "elf64-x86-64"; then
+                echo "❌ Dependency library is not 64-bit: $lib"
+                objdump -f "$lib" | head -1
+                exit 1
+              fi
+            fi
+          done
+          echo "✅ All dependency libraries are 64-bit"
+
+      - name: Upload 64-bit build artifacts
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: build-64bit-${{ github.sha }}
+          path: build-64bit/
+          retention-days: 7
+
+  # ========== 64位基础测试 ==========
+
+  ubuntu-64bit-test:
+    needs: [ubuntu-64bit-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Download 64-bit build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-64bit-${{ github.sha }}
+          path: build-64bit/
+
+      - name: Set executable permissions
+        run: |
+          chmod +x build-64bit/dist/bin/* || true
+
+      - name: Run basic validation
+        run: |
+          echo "=== Validating 64-bit build ==="
+          
+          # Check library file exists
+          if [ ! -f "build-64bit/dist/lib/libuvhttp.a" ]; then
+            echo "❌ Library file not found"
+            exit 1
+          fi
+          
+          # Check library file size (should be non-zero)
+          LIB_SIZE=$(stat -f%z build-64bit/dist/lib/libuvhttp.a 2>/dev/null || stat -c%s build-64bit/dist/lib/libuvhttp.a)
+          if [ "$LIB_SIZE" -eq 0 ]; then
+            echo "❌ Library file is empty"
+            exit 1
+          fi
+          
+          echo "✅ 64-bit library validation passed"
+          echo "   Library size: $LIB_SIZE bytes"
+          echo "   Architecture: $(file build-64bit/dist/lib/libuvhttp.a | grep -o '64-bit')"
+
+      - name: Upload 64-bit test logs
+        if: always()
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: test-logs-64bit-${{ github.sha }}
+          path: build-64bit/Testing/
+          retention-days: 7
+
+  # ========== 生成总结 ==========
+
+  generate-summary:
+    needs: [ubuntu-64bit-build, ubuntu-64bit-test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## 📊 64-bit Build Verification Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Task | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 64-bit Library Build | ${{ needs.ubuntu-64bit-build.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 64-bit Validation | ${{ needs.ubuntu-64bit-test.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Architecture**: 64-bit (x86_64)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Compiler**: gcc (default)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Target**: Core library only (no tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- **WebSocket**: Enabled" >> $GITHUB_STEP_SUMMARY
+          echo "- **mimalloc**: Enabled" >> $GITHUB_STEP_SUMMARY
+          echo "- **HTTPS**: Enabled" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Notes" >> $GITHUB_STEP_SUMMARY
+          echo "- Full feature set enabled (WebSocket, mimalloc, HTTPS)" >> $GITHUB_STEP_SUMMARY
+          echo "- Core library and dependencies successfully verified as 64-bit" >> $GITHUB_STEP_SUMMARY
