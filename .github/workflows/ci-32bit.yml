@@ -58,33 +58,30 @@ jobs:
           echo "=== Checking library architecture ==="
           file build-32bit/dist/lib/libuvhttp.a
           
-          # 验证确实是32位
-          if file build-32bit/dist/lib/libuvhttp.a | grep -q "32-bit"; then
-            echo "✅ 32-bit library verified"
-          else
-            echo "❌ Library is not 32-bit!"
-            file build-32bit/dist/lib/libuvhttp.a
-            exit 1
-          fi
+          # 验证确实是32位 - 使用 objdump 检查目标文件
+          echo "=== Checking object files inside library ==="
+          objdump -f build-32bit/dist/lib/libuvhttp.a | grep -q "elf32-i386" && echo "✅ 32-bit library verified" || (echo "❌ Library is not 32-bit!" && exit 1)
 
       - name: Verify 32-bit dependency libraries
         run: |
           echo "=== Checking dependency library architecture ==="
+          
+          # 使用 objdump 检查依赖库
           echo "libuv:"
-          file build-32bit/deps/libuv/build/libuv.a || true
+          objdump -f build-32bit/deps/libuv/build/libuv.a | head -1 || true
           echo "mbedtls:"
-          file build-32bit/deps/mbedtls/build/library/libmbedtls.a || true
-          file build-32bit/deps/mbedtls/build/library/libmbedcrypto.a || true
-          file build-32bit/deps/mbedtls/build/library/libmbedx509.a || true
+          objdump -f build-32bit/deps/mbedtls/build/library/libmbedtls.a | head -1 || true
+          objdump -f build-32bit/deps/mbedtls/build/library/libmbedcrypto.a | head -1 || true
+          objdump -f build-32bit/deps/mbedtls/build/library/libmbedx509.a | head -1 || true
           echo "llhttp:"
-          file build-32bit/deps/cllhttp/build/libllhttp.a || true
+          objdump -f build-32bit/deps/cllhttp/build/libllhttp.a | head -1 || true
           
           # 验证所有依赖库都是32位
           for lib in build-32bit/deps/*/build/lib*.a build-32bit/deps/*/build/library/lib*.a; do
             if [ -f "$lib" ]; then
-              if ! file "$lib" | grep -q "32-bit"; then
+              if ! objdump -f "$lib" | head -1 | grep -q "elf32-i386"; then
                 echo "❌ Dependency library is not 32-bit: $lib"
-                file "$lib"
+                objdump -f "$lib" | head -1
                 exit 1
               fi
             fi
