@@ -43,9 +43,9 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_FLAGS="-m32 -march=i686 -D_GNU_SOURCE -Wno-format-truncation" \
             -DCMAKE_CXX_FLAGS="-m32 -march=i686 -D_GNU_SOURCE -Wno-format-truncation" \
-            -DEXE_LINKER_FLAGS="-m32" \
-            -DSHARED_LINKER_FLAGS="-m32" \
-            -DMODULE_LINKER_FLAGS="-m32" \
+            -DEXE_LINKER_FLAGS="-m32 -lstdc++" \
+            -DSHARED_LINKER_FLAGS="-m32 -lstdc++" \
+            -DMODULE_LINKER_FLAGS="-m32 -lstdc++" \
             -DBUILD_WITH_WEBSOCKET=ON \
             -DBUILD_WITH_MIMALLOC=OFF \
             -DBUILD_EXAMPLES=OFF \
