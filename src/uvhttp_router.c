@@ -620,7 +620,15 @@ uvhttp_request_handler_t uvhttp_router_find_handler(
             return match.handler;
         }
     } else {
-        // arrayfind
+        // arrayfind - first check static prefix
+        if (router->static_prefix && router->static_context) {
+            size_t prefix_len = strlen(router->static_prefix);
+            if (strncmp(path, router->static_prefix, prefix_len) == 0) {
+                // match static router, return static file handler
+                return static_file_handler_wrapper;
+            }
+        }
+
         uvhttp_request_handler_t handler =
             find_array_route(router, path, method_enum);
         if (handler) {
@@ -650,6 +658,16 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
     /* optimization 1: fast path - check array router (suitable for few routers)
      */
     if (!router->use_trie) {
+        // first check static prefix
+        if (router->static_prefix && router->static_context) {
+            size_t prefix_len = strlen(router->static_prefix);
+            if (strncmp(path, router->static_prefix, prefix_len) == 0) {
+                // match static router, return static file handler
+                match->handler = static_file_handler_wrapper;
+                return UVHTTP_OK;
+            }
+        }
+
         uvhttp_request_handler_t handler =
             find_array_route(router, path, method_enum);
         if (handler) {

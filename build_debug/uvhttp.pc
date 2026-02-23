@@ -1,0 +1,10 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=lib
+includedir=include
+
+Name: uvhttp
+Description: High-performance HTTP/1.1 and WebSocket server library based on libuv
+Version: 2.4.0
+Libs: -L${libdir} -luvhttp
+Cflags: -I${includedir}

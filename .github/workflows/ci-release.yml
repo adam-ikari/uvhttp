@@ -41,7 +41,8 @@ jobs:
       
       - name: Build project
         run: |
-          make -j$(nproc)
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cd build && make -j$(nproc)
       
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4.3.1
@@ -71,7 +72,7 @@ jobs:
       
       - name: Run release tests
         run: |
-          ./test_runner.sh
+          ./run_all_tests.sh
       
       - name: Upload test logs
         if: always()

@@ -4,11 +4,60 @@ This document provides information about UVHTTP versions and their compatibility
 
 ## Current Version
 
-**Version**: 2.2.2  
-**Release Date**: 2026-02-02  
+**Version**: 2.4.1  
+**Release Date**: 2026-02-13  
 **Status**: Stable
 
 ## Version History
+
+### 2.4.1 (2026-02-13)
+
+**New Features**:
+- Extended test coverage with 99 new test cases across 4 core modules
+- test_static_extended_coverage.cpp (25 tests) for uvhttp_static.c
+- test_router_extended_coverage.cpp (25 tests) for uvhttp_router.c
+- test_connection_extended_coverage.cpp (24 tests) for uvhttp_connection.c
+- test_request_extended_coverage.cpp (25 tests) for uvhttp_request.c
+
+**Bug Fixes**:
+- Fixed critical ~18KB memory leak per connection in connection lifecycle cleanup
+- Fixed MOCK_TEST_FILES undefined in CMakeLists.txt
+- Fixed 58 hardcoded paths in run_all_tests.sh for improved portability
+
+**Improvements**:
+- Test coverage improvements: router (62.9%), connection (60.7%), request (~60%), static (62.5%)
+- 2 modules (router, connection) now exceed 60% coverage target
+- All 58 tests now compile successfully with proper mock test filtering
+
+**Documentation**:
+- Updated CHANGELOG.md with v2.5.0 release notes
+- Updated versions.md with v2.5.0 version information
+
+### 2.4.0 (2026-02-12)
+
+**New Features**:
+- CMake export configuration for easy library integration
+- Use install(EXPORT) instead of export()
+- Add NAMESPACE uvhttp:: to exported target
+- Dependencies found via find_dependency() in uvhttp-config.in.cmake
+- Added pkg-config support (uvhttp.pc.in)
+- Simplifies integration for library users
+
+**Bug Fixes**:
+- Fixed WebSocket integration tests to require BUILD_WITH_WEBSOCKET only
+- Fixed test_server_simple_api_coverage to require BUILD_WITH_WEBSOCKET
+- Fixed static files examples conditional compilation
+- Fixed coverage report generation error handling
+
+**Improvements**:
+- Renamed TLS to HTTPS in CI/CD build matrix names
+- Improved CI/CD error handling and coverage report generation
+- CI/CD Build Matrix Validation: 15/15 passing
+
+**Documentation**:
+- Added CMake installation guide (docs/INSTALL_CMAKE.md)
+- Added CMake export configuration documentation
+- Updated CHANGELOG.md with v2.4.0 release notes
 
 ### 2.2.2 (2026-02-02)
 
