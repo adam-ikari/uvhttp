@@ -180,7 +180,7 @@ jobs:
 
       - name: Upload HTTPS Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: https-performance-results
           path: |
@@ -320,7 +320,7 @@ jobs:
 
       - name: Upload WebSocket Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: websocket-performance-results
           path: |
@@ -400,7 +400,7 @@ jobs:
 
       - name: Upload TLS Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tls-comprehensive-results
           path: |
