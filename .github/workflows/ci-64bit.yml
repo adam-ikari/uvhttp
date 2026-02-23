@@ -35,6 +35,8 @@ jobs:
         run: |
           cmake -B build-64bit \
             -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_FLAGS="-Wno-format-truncation" \
+            -DCMAKE_CXX_FLAGS="-Wno-format-truncation" \
             -DBUILD_WITH_WEBSOCKET=ON \
             -DBUILD_WITH_MIMALLOC=ON \
             -DBUILD_WITH_HTTPS=ON \
