@@ -39,11 +39,23 @@ jobs:
 
       - name: Build 32-bit version
         run: |
+          # Set environment variables for 32-bit builds
+          export CC="gcc -m32"
+          export CXX="g++ -m32"
+          export CFLAGS="-m32 -march=i686 -D_GNU_SOURCE"
+          export CXXFLAGS="-m32 -march=i686 -D_GNU_SOURCE"
+          export LDFLAGS="-m32"
+          
+          # Configure with 32-bit flags
           cmake -B build-32bit \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_FLAGS="-m32 -march=i686 -D_GNU_SOURCE" \
-            -DCMAKE_CXX_FLAGS="-m32 -march=i686 -D_GNU_SOURCE" \
-            -DCMAKE_LD_FLAGS="-m32" \
+            -DCMAKE_C_COMPILER="${CC}" \
+            -DCMAKE_CXX_COMPILER="${CXX}" \
+            -DCMAKE_C_FLAGS="${CFLAGS}" \
+            -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
+            -DCMAKE_EXE_LINKER_FLAGS="${LDFLAGS}" \
+            -DCMAKE_SHARED_LINKER_FLAGS="${LDFLAGS}" \
+            -DCMAKE_MODULE_LINKER_FLAGS="${LDFLAGS}" \
             -DBUILD_WITH_WEBSOCKET=ON \
             -DBUILD_WITH_MIMALLOC=OFF \
             -DBUILD_EXAMPLES=OFF \
