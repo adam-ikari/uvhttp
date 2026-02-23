@@ -41,8 +41,8 @@ jobs:
         run: |
           cmake -B build-32bit \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_FLAGS="-m32 -march=i686 -D_GNU_SOURCE" \
-            -DCMAKE_CXX_FLAGS="-m32 -march=i686 -D_GNU_SOURCE" \
+            -DCMAKE_C_FLAGS="-m32 -march=i686 -D_GNU_SOURCE -Wno-format-truncation" \
+            -DCMAKE_CXX_FLAGS="-m32 -march=i686 -D_GNU_SOURCE -Wno-format-truncation" \
             -DEXE_LINKER_FLAGS="-m32" \
             -DSHARED_LINKER_FLAGS="-m32" \
             -DMODULE_LINKER_FLAGS="-m32" \
