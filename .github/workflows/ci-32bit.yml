@@ -29,7 +29,7 @@ jobs:
       - name: Install 32-bit toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-multilib g++-multilib g++-12-multilib libstdc++6:i386 libc6:i386
+          sudo apt-get install -y gcc-multilib g++-multilib g++-12-multilib
 
       - name: Clean previous builds
         run: |
