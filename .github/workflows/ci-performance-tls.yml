@@ -50,7 +50,7 @@ jobs:
 
       - name: Install Python dependencies for mbedtls
         run: |
-          pip install jsonschema>=3.2.0
+          pip install jsonschema>=3.2.0 jinja2
 
       - name: Build with HTTPS support
         run: |
@@ -206,7 +206,7 @@ jobs:
 
       - name: Install Python dependencies for mbedtls
         run: |
-          pip install jsonschema>=3.2.0
+          pip install jsonschema>=3.2.0 jinja2
 
       - name: Build with WebSocket support
         run: |
@@ -346,7 +346,7 @@ jobs:
 
       - name: Install Python dependencies for mbedtls
         run: |
-          pip install jsonschema>=3.2.0
+          pip install jsonschema>=3.2.0 jinja2
 
       - name: Build with full TLS support
         run: |
