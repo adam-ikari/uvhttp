@@ -44,15 +44,7 @@ static app_context_t* g_ctx = NULL;
 static uvhttp_server_t* g_signal_server = NULL;
 
 /* Simple response handler */
-static void on_request(uvhttp_request_t* request, void* user_data) {
-    (void)user_data;
-    
-    uvhttp_response_t* response = uvhttp_response_new(request);
-    if (!response) {
-        uvhttp_request_send_error(request, 500, "Internal Server Error");
-        return;
-    }
-    
+static int on_request(uvhttp_request_t* request, uvhttp_response_t* response) {
     /* Set status and headers */
     uvhttp_response_set_status(response, 200, "OK");
     uvhttp_response_set_header(response, "Content-Type", "text/plain");
@@ -65,24 +57,17 @@ static void on_request(uvhttp_request_t* request, void* user_data) {
     
     /* Send response */
     uvhttp_response_send(response);
-    uvhttp_response_free(response);
     
     /* Update statistics */
     if (g_ctx) {
         g_ctx->total_requests++;
     }
+    
+    return UVHTTP_OK;
 }
 
 /* JSON response handler for API testing */
-static void on_request_json(uvhttp_request_t* request, void* user_data) {
-    (void)user_data;
-    
-    uvhttp_response_t* response = uvhttp_response_new(request);
-    if (!response) {
-        uvhttp_request_send_error(request, 500, "Internal Server Error");
-        return;
-    }
-    
+static int on_request_json(uvhttp_request_t* request, uvhttp_response_t* response) {
     /* Set status and headers */
     uvhttp_response_set_status(response, 200, "OK");
     uvhttp_response_set_header(response, "Content-Type", "application/json");
@@ -94,11 +79,12 @@ static void on_request_json(uvhttp_request_t* request, void* user_data) {
     
     /* Send response */
     uvhttp_response_send(response);
-    uvhttp_response_free(response);
     
     if (g_ctx) {
         g_ctx->total_requests++;
     }
+    
+    return UVHTTP_OK;
 }
 
 /* Signal handler */
@@ -144,7 +130,7 @@ int main(int argc, char* argv[]) {
     const char* cert_file = NULL;
     const char* key_file = NULL;
     int threads = 1;
-    int verbose = 0;
+    (void)threads;  // Unused parameter
     
     static struct option long_options[] = {
         {"port",    required_argument, 0, 'p'},
@@ -184,9 +170,6 @@ int main(int argc, char* argv[]) {
                     fprintf(stderr, "Error: Invalid thread count: %s (must be 1-%d)\n", optarg, MAX_THREADS);
                     return 1;
                 }
-                break;
-            case 'v':
-                verbose = 1;
                 break;
             case 0:
                 if (strcmp(long_options[option_index].name, "help") == 0) {
@@ -297,8 +280,8 @@ int main(int argc, char* argv[]) {
     uvhttp_server_set_tls(ctx.server, tls_ctx);
     
     /* Add routes */
-    uvhttp_router_add_route(router, "/", on_request, NULL);
-    uvhttp_router_add_route(router, "/api", on_request_json, NULL);
+    uvhttp_router_add_route(router, "/", on_request);
+    uvhttp_router_add_route(router, "/api", on_request_json);
     
     /* Set router */
     ctx.server->router = router;

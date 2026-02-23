@@ -122,16 +122,16 @@ static void on_ws_close(uvhttp_websocket_t* ws, int code, const char* reason) {
 }
 
 /* HTTP handler for WebSocket upgrade */
-static void on_http_request(uvhttp_request_t* request, void* user_data) {
-    (void)user_data;
-    
+static int on_http_request(uvhttp_request_t* request, uvhttp_response_t* response) {
     const char* path = uvhttp_request_get_path(request);
     const char* method = uvhttp_request_get_method(request);
     
     /* Only handle GET requests */
     if (strcmp(method, "GET") != 0) {
-        uvhttp_request_send_error(request, 405, "Method Not Allowed");
-        return;
+        uvhttp_response_set_status(response, 405, "Method Not Allowed");
+        uvhttp_response_set_body(response, "Method Not Allowed", 18);
+        uvhttp_response_send(response);
+        return UVHTTP_ERROR_INVALID_METHOD;
     }
     
     /* WebSocket upgrade endpoint */
@@ -145,19 +145,13 @@ static void on_http_request(uvhttp_request_t* request, void* user_data) {
         
         int ret = uvhttp_websocket_upgrade(request, &callbacks);
         if (ret != UVHTTP_OK) {
-            uvhttp_request_send_error(request, 500, "WebSocket upgrade failed");
+            return ret;
         }
-        return;
+        return UVHTTP_OK;
     }
     
     /* Health check endpoint */
     if (strcmp(path, "/health") == 0) {
-        uvhttp_response_t* response = uvhttp_response_new(request);
-        if (!response) {
-            uvhttp_request_send_error(request, 500, "Internal Server Error");
-            return;
-        }
-        
         uvhttp_response_set_status(response, 200, "OK");
         uvhttp_response_set_header(response, "Content-Type", "application/json");
         
@@ -174,17 +168,10 @@ static void on_http_request(uvhttp_request_t* request, void* user_data) {
         }
         
         uvhttp_response_send(response);
-        uvhttp_response_free(response);
-        return;
+        return UVHTTP_OK;
     }
     
     /* Default response */
-    uvhttp_response_t* response = uvhttp_response_new(request);
-    if (!response) {
-        uvhttp_request_send_error(request, 500, "Internal Server Error");
-        return;
-    }
-    
     uvhttp_response_set_status(response, 200, "OK");
     uvhttp_response_set_header(response, "Content-Type", "text/plain");
     
@@ -194,7 +181,7 @@ static void on_http_request(uvhttp_request_t* request, void* user_data) {
     uvhttp_response_set_body(response, body, strlen(body));
     
     uvhttp_response_send(response);
-    uvhttp_response_free(response);
+    return UVHTTP_OK;
 }
 
 /* Signal handler */
@@ -332,9 +319,9 @@ int main(int argc, char* argv[]) {
     }
     
     /* Add routes */
-    uvhttp_router_add_route(router, "/", on_http_request, NULL);
-    uvhttp_router_add_route(router, "/ws", on_http_request, NULL);
-    uvhttp_router_add_route(router, "/health", on_http_request, NULL);
+    uvhttp_router_add_route(router, "/", on_http_request);
+    uvhttp_router_add_route(router, "/ws", on_http_request);
+    uvhttp_router_add_route(router, "/health", on_http_request);
     
     /* Set router */
     ctx.server->router = router;
