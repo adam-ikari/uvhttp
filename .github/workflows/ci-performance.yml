@@ -95,10 +95,14 @@ jobs:
               free -h | grep Mem
               echo ''
               
-              # 初始化子模块
+              # 重新初始化子模块（容器内需要）
               echo '=== 初始化子模块 ==='
+              # 添加安全目录以避免 git dubious ownership 错误
               git config --global --add safe.directory /workspace
-              git submodule update --init --recursive || true
+              for dir in deps/*; do
+                git config --global --add safe.directory /workspace/$dir
+              done
+              git submodule update --init --recursive
               
               # 编译项目
               echo '=== 编译项目 ==='
