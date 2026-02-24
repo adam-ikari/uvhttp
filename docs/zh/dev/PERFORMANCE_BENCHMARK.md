@@ -650,7 +650,7 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_DEBUG=OFF -DENABLE_COVERAGE=O
 make -j$(nproc)
 
 # 3. 启动跑分服务器
-./build/dist/bin/benchmark_rps &
+./build/dist/bin/benchmark_unified &
 
 # 4. 运行性能测试
 wrk -t2 -c10 -d10s http://127.0.0.1:18081/
@@ -658,7 +658,7 @@ wrk -t4 -c50 -d10s http://127.0.0.1:18081/
 wrk -t8 -c200 -d10s http://127.0.0.1:18081/
 
 # 5. 停止服务器
-pkill -9 benchmark_rps
+pkill -9 benchmark_unified
 ```
 
 ### 性能基准（生产环境配置）
@@ -677,13 +677,13 @@ pkill -9 benchmark_rps
 
 ```bash
 # 检查二进制文件大小（生产环境应较小）
-ls -lh build/dist/bin/benchmark_rps
+ls -lh build/dist/bin/benchmark_unified
 
 # 检查符号表（生产环境应无符号）
-nm build/dist/bin/benchmark_rps 2>&1 | head -5
+nm build/dist/bin/benchmark_unified 2>&1 | head -5
 
 # 检查优化级别（应显示 -O2）
-objdump -g build/dist/bin/benchmark_rps 2>&1 | grep -i "optimization"
+objdump -g build/dist/bin/benchmark_unified 2>&1 | grep -i "optimization"
 ```
 
 ### 注意事项

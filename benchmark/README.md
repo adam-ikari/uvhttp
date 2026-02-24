@@ -44,18 +44,16 @@ wrk -t4 -c100 -d30s http://127.0.0.1:[端口]/
 
 ## 测试工具
 
-### benchmark_rps
+### benchmark_unified
 
-HTTP 性能基准测试服务器，支持多种测试场景：
+综合性能测试服务器，支持所有测试场景：
 
 **启动服务器：**
 ```bash
-./build/dist/bin/benchmark_rps [端口]
+./build/dist/bin/benchmark_unified [端口]
 ```
 
 **默认端口：** 18081
-
-**路由数量：** 7 个路由（数组模式）
 
 **可用端点：**
 - `GET  /` - 简单文本响应（13 bytes）
@@ -66,36 +64,17 @@ HTTP 性能基准测试服务器，支持多种测试场景：
 - `GET  /large` - 大响应（100KB）
 - `GET  /health` - 健康检查（22 bytes）
 
-### benchmark_rps_150_routes
-
-HTTP 性能基准测试服务器，支持 150 路由场景（Trie 模式）：
-
-**启动服务器：**
-```bash
-./build/dist/bin/benchmark_rps_150_routes [端口]
-```
-
-**默认端口：** 18095
-
-**路由数量：** 150 个路由（超过 HYBRID_THRESHOLD = 100，自动切换到 Trie 模式）
-
-**可用端点：**
-- `GET  /api/resource1` 到 `/api/resource150` - 150 个路由端点
-
-**用途：**
-- 测试 Trie 模式下的路由性能
-- 验证大量路由场景下的性能表现
-- 对比数组模式和 Trie 模式的性能差异
-
 **性能测试：**
 ```bash
 # 启动服务器
-./build/dist/bin/benchmark_rps_150_routes 18095
+./build/dist/bin/benchmark_unified 18081
 
 # 在另一个终端运行性能测试
-wrk -t4 -c100 -d30s http://127.0.0.1:18095/api/resource1
-wrk -t4 -c100 -d30s http://127.0.0.1:18095/api/resource50
-wrk -t4 -c100 -d30s http://127.0.0.1:18095/api/resource100
+wrk -t4 -c100 -d30s http://127.0.0.1:18081/
+wrk -t4 -c100 -d30s http://127.0.0.1:18081/json
+wrk -t4 -c100 -d30s http://127.0.0.1:18081/small
+wrk -t4 -c100 -d30s http://127.0.0.1:18081/medium
+wrk -t4 -c100 -d30s http://127.0.0.1:18081/large
 ```
 
 ### benchmark_file_transfer
@@ -215,16 +194,6 @@ wrk -t4 -c100 -d30s http://127.0.0.1:18095/api/resource50
 wrk -t4 -c100 -d30s http://127.0.0.1:18095/api/resource100
 ```
 
-**性能对比：**
-- 7 路由（数组模式）：约 20,845 RPS
-- 150 路由（Trie 模式）：约 20,376 RPS
-- 性能变化：-1.42%（在测试误差范围内）
-
-**优化效果：**
-- 节点大小从 272 字节减少到 128 字节（-53%）
-- 缓存行使用从 5 行减少到 2 行（-60%）
-- 内存占用减少，缓存局部性提升
-
 ### 3. 不同响应大小测试
 
 测试服务器处理不同大小响应的能力：
@@ -251,33 +220,20 @@ wrk -t4 -c100 -d30s http://127.0.0.1:18081/large
 测试静态文件传输性能，包括 sendfile 零拷贝优化：
 
 ```bash
-# 启动文件传输测试服务器
-./build/dist/bin/benchmark_file_transfer 18082
+# 启动 benchmark_unified 服务器
+./build/dist/bin/benchmark_unified 18081
 
 # 小文件传输（1KB）
-wrk -t4 -c100 -d30s http://127.0.0.1:18082/file/small
+wrk -t4 -c100 -d30s http://127.0.0.1:18081/small
 
-# 中等文件传输（64KB）
-wrk -t4 -c100 -d30s http://127.0.0.1:18082/file/medium
+# 中等文件传输（10KB）
+wrk -t4 -c100 -d30s http://127.0.0.1:18081/medium
 
-# 大文件传输（1MB）
-wrk -t4 -c100 -d30s http://127.0.0.1:18082/file/large
-
-# 超大文件传输（10MB）
-wrk -t4 -c100 -d30s http://127.0.0.1:18082/file/xlarge
-
-# 超超大文件传输（100MB）
-wrk -t4 -c100 -d30s http://127.0.0.1:18082/file/xxlarge
+# 大文件传输（100KB）
+wrk -t4 -c100 -d30s http://127.0.0.1:18081/large
 
 # 并发文件传输测试
-wrk -t8 -c200 -d60s http://127.0.0.1:18082/file/large
-```
-
-**文件完整性验证：**
-```bash
-# 下载文件并验证 MD5
-curl -o /tmp/test_file.bin http://127.0.0.1:18082/file/large
-md5sum /tmp/test_file.bin /home/zhaodi-chen/project/uvhttp/build/public/file_test/large.bin
+wrk -t8 -c200 -d60s http://127.0.0.1:18081/large
 ```
 
 ### 3. 使用 ab 工具
@@ -454,16 +410,12 @@ wrk -t4 -c100 -d30s -s post.lua http://127.0.0.1:18081/api
 
 ```bash
 # 测试不同大小文件的传输性能
-curl -o /dev/null -s -w "1KB: Status=%{http_code}, Time=%{time_total}s, Speed=%{speed_download} bytes/s\n" http://127.0.0.1:18082/file/small
-curl -o /dev/null -s -w "1MB: Status=%{http_code}, Time=%{time_total}s, Speed=%{speed_download} bytes/s\n" http://127.0.0.1:18082/file/large
-curl -o /dev/null -s -w "100MB: Status=%{http_code}, Time=%{time_total}s, Speed=%{speed_download} bytes/s\n" http://127.0.0.1:18082/file/xxlarge
+curl -o /dev/null -s -w "1KB: Status=%{http_code}, Time=%{time_total}s, Speed=%{speed_download} bytes/s\n" http://127.0.0.1:18081/small
+curl -o /dev/null -s -w "10KB: Status=%{http_code}, Time=%{time_total}s, Speed=%{speed_download} bytes/s\n" http://127.0.0.1:18081/medium
+curl -o /dev/null -s -w "100KB: Status=%{http_code}, Time=%{time_total}s, Speed=%{speed_download} bytes/s\n" http://127.0.0.1:18081/large
 
 # 并发文件传输测试
-for i in {1..10}; do curl -o /dev/null -s http://127.0.0.1:18082/file/large & done; wait
-
-# 文件完整性验证
-curl -o /tmp/test.bin http://127.0.0.1:18082/file/large
-md5sum /tmp/test.bin /home/zhaodi-chen/project/uvhttp/build/public/file_test/large.bin
+for i in {1..10}; do curl -o /dev/null -s http://127.0.0.1:18081/large & done; wait
 ```
 
 ### 持续性能监控

@@ -159,7 +159,7 @@ Run performance tests:
 
 ```bash
 # Start test server
-./build/dist/bin/benchmark_rps > /tmp/server.log 2>&1 &
+./build/dist/bin/benchmark_unified > /tmp/server.log 2>&1 &
 SERVER_PID=$!
 sleep 3
 
