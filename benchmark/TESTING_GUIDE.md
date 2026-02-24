@@ -27,10 +27,10 @@ cd benchmark
 ```bash
 # 编译
 cd build
-make benchmark_rps benchmark_latency benchmark_connection benchmark_memory benchmark_comprehensive
+make benchmark_unified
 
 # 运行单个测试
-./dist/bin/benchmark_rps &
+./dist/bin/benchmark_unified &
 wrk -t4 -c100 -d10s http://127.0.0.1:18081/
 
 # 分析结果
@@ -62,7 +62,7 @@ make -j$(nproc)
 #### 1.3 编译基准测试
 
 ```bash
-make benchmark_rps benchmark_latency benchmark_connection benchmark_memory benchmark_comprehensive
+make benchmark_unified
 ```
 
 ### 阶段 2: 运行测试
@@ -70,7 +70,7 @@ make benchmark_rps benchmark_latency benchmark_connection benchmark_memory bench
 #### 2.1 运行 RPS 测试
 
 ```bash
-./dist/bin/benchmark_rps &
+./dist/bin/benchmark_unified &
 wrk -t2 -c10 -d10s http://127.0.0.1:18081/  # 低并发
 wrk -t4 -c50 -d10s http://127.0.0.1:18081/  # 中等并发
 wrk -t8 -c200 -d10s http://127.0.0.1:18081/ # 高并发
@@ -131,11 +131,10 @@ python3 analyze_results.py
 
 | 测试程序 | 端口 |
 |---------|------|
-| benchmark_rps | 18081 |
-| benchmark_latency | 18081 |
-| benchmark_connection | 18082 |
-| benchmark_memory | 18083 |
-| benchmark_comprehensive | 18084 |
+| benchmark_unified | 18081 |
+| performance_allocator | 18082 |
+| performance_allocator_compare | 18083 |
+| test_bitfield | 18084 |
 
 ## 性能目标
 
@@ -224,15 +223,15 @@ python3 analyze_results.py results/old/
 RPS 结果保存在 CSV 文件中：
 
 ```bash
-cat results/run_*/benchmark_rps.rps.csv
+cat results/run_*/results.csv
 ```
 
 格式：
 ```
-test_name,rps
-benchmark_rps_2t_10c,17500.5
-benchmark_rps_4t_50c,17200.3
-benchmark_rps_8t_200c,16600.8
+Endpoint,Threads,Connections,RPS
+/,2,10,17500.5
+/,4,50,17200.3
+/,8,200,16600.8
 ```
 
 ### 2. 查看延迟统计
