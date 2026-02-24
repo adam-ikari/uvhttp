@@ -250,19 +250,6 @@ test_config_enhanced_coverage/fast:
 .PHONY : test_config_enhanced_coverage/fast
 
 #=============================================================================
-# Target rules for targets named test_connection_api_coverage
-
-# Build rule for target.
-test_connection_api_coverage: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_connection_api_coverage
-.PHONY : test_connection_api_coverage
-
-# fast build rule for target.
-test_connection_api_coverage/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/build
-.PHONY : test_connection_api_coverage/fast
-
-#=============================================================================
 # Target rules for targets named test_connection_comprehensive_coverage
 
 # Build rule for target.
@@ -276,19 +263,6 @@ test_connection_comprehensive_coverage/fast:
 .PHONY : test_connection_comprehensive_coverage/fast
 
 #=============================================================================
-# Target rules for targets named test_connection_enhanced_coverage
-
-# Build rule for target.
-test_connection_enhanced_coverage: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_connection_enhanced_coverage
-.PHONY : test_connection_enhanced_coverage
-
-# fast build rule for target.
-test_connection_enhanced_coverage/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/build
-.PHONY : test_connection_enhanced_coverage/fast
-
-#=============================================================================
 # Target rules for targets named test_connection_extended_coverage
 
 # Build rule for target.
@@ -300,19 +274,6 @@ test_connection_extended_coverage: cmake_check_build_system
 test_connection_extended_coverage/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/build
 .PHONY : test_connection_extended_coverage/fast
-
-#=============================================================================
-# Target rules for targets named test_connection_full_api_coverage
-
-# Build rule for target.
-test_connection_full_api_coverage: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_connection_full_api_coverage
-.PHONY : test_connection_full_api_coverage
-
-# fast build rule for target.
-test_connection_full_api_coverage/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/build
-.PHONY : test_connection_full_api_coverage/fast
 
 #=============================================================================
 # Target rules for targets named test_connection_full_coverage
@@ -339,19 +300,6 @@ test_connection_lifecycle: cmake_check_build_system
 test_connection_lifecycle/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/build
 .PHONY : test_connection_lifecycle/fast
-
-#=============================================================================
-# Target rules for targets named test_connection_websocket_integration
-
-# Build rule for target.
-test_connection_websocket_integration: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_connection_websocket_integration
-.PHONY : test_connection_websocket_integration
-
-# fast build rule for target.
-test_connection_websocket_integration/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/build
-.PHONY : test_connection_websocket_integration/fast
 
 #=============================================================================
 # Target rules for targets named test_context_simple
@@ -679,32 +627,6 @@ test_sendfile_timeout/fast:
 .PHONY : test_sendfile_timeout/fast
 
 #=============================================================================
-# Target rules for targets named test_server_api_coverage
-
-# Build rule for target.
-test_server_api_coverage: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_server_api_coverage
-.PHONY : test_server_api_coverage
-
-# fast build rule for target.
-test_server_api_coverage/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/build
-.PHONY : test_server_api_coverage/fast
-
-#=============================================================================
-# Target rules for targets named test_server_error_coverage
-
-# Build rule for target.
-test_server_error_coverage: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_server_error_coverage
-.PHONY : test_server_error_coverage
-
-# fast build rule for target.
-test_server_error_coverage/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/build
-.PHONY : test_server_error_coverage/fast
-
-#=============================================================================
 # Target rules for targets named test_server_rate_limit_full_coverage
 
 # Build rule for target.
@@ -716,19 +638,6 @@ test_server_rate_limit_full_coverage: cmake_check_build_system
 test_server_rate_limit_full_coverage/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/build
 .PHONY : test_server_rate_limit_full_coverage/fast
-
-#=============================================================================
-# Target rules for targets named test_server_simple_api_coverage
-
-# Build rule for target.
-test_server_simple_api_coverage: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_server_simple_api_coverage
-.PHONY : test_server_simple_api_coverage
-
-# fast build rule for target.
-test_server_simple_api_coverage/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/build
-.PHONY : test_server_simple_api_coverage/fast
 
 #=============================================================================
 # Target rules for targets named test_server_simple_handlers_coverage
@@ -861,32 +770,6 @@ test_stress/fast:
 .PHONY : test_stress/fast
 
 #=============================================================================
-# Target rules for targets named test_tls_api_coverage
-
-# Build rule for target.
-test_tls_api_coverage: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_tls_api_coverage
-.PHONY : test_tls_api_coverage
-
-# fast build rule for target.
-test_tls_api_coverage/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/build
-.PHONY : test_tls_api_coverage/fast
-
-#=============================================================================
-# Target rules for targets named test_tls_null_coverage
-
-# Build rule for target.
-test_tls_null_coverage: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_tls_null_coverage
-.PHONY : test_tls_null_coverage
-
-# fast build rule for target.
-test_tls_null_coverage/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/build
-.PHONY : test_tls_null_coverage/fast
-
-#=============================================================================
 # Target rules for targets named test_utils_api_coverage
 
 # Build rule for target.
@@ -924,84 +807,6 @@ test_validation_full_coverage: cmake_check_build_system
 test_validation_full_coverage/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/build
 .PHONY : test_validation_full_coverage/fast
-
-#=============================================================================
-# Target rules for targets named test_websocket_api_coverage
-
-# Build rule for target.
-test_websocket_api_coverage: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_websocket_api_coverage
-.PHONY : test_websocket_api_coverage
-
-# fast build rule for target.
-test_websocket_api_coverage/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/build
-.PHONY : test_websocket_api_coverage/fast
-
-#=============================================================================
-# Target rules for targets named test_websocket_enhanced_full_coverage
-
-# Build rule for target.
-test_websocket_enhanced_full_coverage: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_websocket_enhanced_full_coverage
-.PHONY : test_websocket_enhanced_full_coverage
-
-# fast build rule for target.
-test_websocket_enhanced_full_coverage/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/build
-.PHONY : test_websocket_enhanced_full_coverage/fast
-
-#=============================================================================
-# Target rules for targets named test_websocket_full_coverage
-
-# Build rule for target.
-test_websocket_full_coverage: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_websocket_full_coverage
-.PHONY : test_websocket_full_coverage
-
-# fast build rule for target.
-test_websocket_full_coverage/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/build
-.PHONY : test_websocket_full_coverage/fast
-
-#=============================================================================
-# Target rules for targets named test_websocket_native_full_coverage
-
-# Build rule for target.
-test_websocket_native_full_coverage: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_websocket_native_full_coverage
-.PHONY : test_websocket_native_full_coverage
-
-# fast build rule for target.
-test_websocket_native_full_coverage/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/build
-.PHONY : test_websocket_native_full_coverage/fast
-
-#=============================================================================
-# Target rules for targets named test_websocket_native_simple
-
-# Build rule for target.
-test_websocket_native_simple: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_websocket_native_simple
-.PHONY : test_websocket_native_simple
-
-# fast build rule for target.
-test_websocket_native_simple/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/build
-.PHONY : test_websocket_native_simple/fast
-
-#=============================================================================
-# Target rules for targets named test_websocket_null_coverage
-
-# Build rule for target.
-test_websocket_null_coverage: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_websocket_null_coverage
-.PHONY : test_websocket_null_coverage
-
-# fast build rule for target.
-test_websocket_null_coverage/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/build
-.PHONY : test_websocket_null_coverage/fast
 
 #=============================================================================
 # Target rules for targets named test_whitelist_hash
@@ -1173,71 +978,6 @@ test_static_files_e2e/fast:
 .PHONY : test_static_files_e2e/fast
 
 #=============================================================================
-# Target rules for targets named test_tls_e2e
-
-# Build rule for target.
-test_tls_e2e: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_tls_e2e
-.PHONY : test_tls_e2e
-
-# fast build rule for target.
-test_tls_e2e/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/build
-.PHONY : test_tls_e2e/fast
-
-#=============================================================================
-# Target rules for targets named test_tls_simple
-
-# Build rule for target.
-test_tls_simple: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_tls_simple
-.PHONY : test_tls_simple
-
-# fast build rule for target.
-test_tls_simple/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/build
-.PHONY : test_tls_simple/fast
-
-#=============================================================================
-# Target rules for targets named test_websocket_callback
-
-# Build rule for target.
-test_websocket_callback: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_websocket_callback
-.PHONY : test_websocket_callback
-
-# fast build rule for target.
-test_websocket_callback/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/build
-.PHONY : test_websocket_callback/fast
-
-#=============================================================================
-# Target rules for targets named test_websocket_e2e
-
-# Build rule for target.
-test_websocket_e2e: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_websocket_e2e
-.PHONY : test_websocket_e2e
-
-# fast build rule for target.
-test_websocket_e2e/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/build
-.PHONY : test_websocket_e2e/fast
-
-#=============================================================================
-# Target rules for targets named test_websocket_integration
-
-# Build rule for target.
-test_websocket_integration: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_websocket_integration
-.PHONY : test_websocket_integration
-
-# fast build rule for target.
-test_websocket_integration/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/build
-.PHONY : test_websocket_integration/fast
-
-#=============================================================================
 # Target rules for targets named performance_allocator
 
 # Build rule for target.
@@ -1394,14 +1134,10 @@ src/uvhttp_config.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_config.c.o
@@ -1427,10 +1163,7 @@ src/uvhttp_config.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_config.c.o
@@ -1441,17 +1174,9 @@ src/uvhttp_config.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_config.c.o
@@ -1465,11 +1190,6 @@ src/uvhttp_config.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_config.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_config.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_config.c.o
 .PHONY : src/uvhttp_config.c.o
 
 src/uvhttp_config.i: src/uvhttp_config.c.i
@@ -1481,14 +1201,10 @@ src/uvhttp_config.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_config.c.i
@@ -1514,10 +1230,7 @@ src/uvhttp_config.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_config.c.i
@@ -1528,17 +1241,9 @@ src/uvhttp_config.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_config.c.i
@@ -1552,11 +1257,6 @@ src/uvhttp_config.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_config.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_config.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_config.c.i
 .PHONY : src/uvhttp_config.c.i
 
 src/uvhttp_config.s: src/uvhttp_config.c.s
@@ -1568,14 +1268,10 @@ src/uvhttp_config.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_config.c.s
@@ -1601,10 +1297,7 @@ src/uvhttp_config.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_config.c.s
@@ -1615,17 +1308,9 @@ src/uvhttp_config.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_config.c.s
@@ -1639,11 +1324,6 @@ src/uvhttp_config.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_config.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_config.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_config.c.s
 .PHONY : src/uvhttp_config.c.s
 
 src/uvhttp_connection.o: src/uvhttp_connection.c.o
@@ -1655,14 +1335,10 @@ src/uvhttp_connection.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_connection.c.o
@@ -1688,10 +1364,7 @@ src/uvhttp_connection.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_connection.c.o
@@ -1702,17 +1375,9 @@ src/uvhttp_connection.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_connection.c.o
@@ -1726,11 +1391,6 @@ src/uvhttp_connection.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_connection.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_connection.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_connection.c.o
 .PHONY : src/uvhttp_connection.c.o
 
 src/uvhttp_connection.i: src/uvhttp_connection.c.i
@@ -1742,14 +1402,10 @@ src/uvhttp_connection.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_connection.c.i
@@ -1775,10 +1431,7 @@ src/uvhttp_connection.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_connection.c.i
@@ -1789,17 +1442,9 @@ src/uvhttp_connection.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_connection.c.i
@@ -1813,11 +1458,6 @@ src/uvhttp_connection.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_connection.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_connection.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_connection.c.i
 .PHONY : src/uvhttp_connection.c.i
 
 src/uvhttp_connection.s: src/uvhttp_connection.c.s
@@ -1829,14 +1469,10 @@ src/uvhttp_connection.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_connection.c.s
@@ -1862,10 +1498,7 @@ src/uvhttp_connection.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_connection.c.s
@@ -1876,17 +1509,9 @@ src/uvhttp_connection.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_connection.c.s
@@ -1900,11 +1525,6 @@ src/uvhttp_connection.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_connection.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_connection.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_connection.c.s
 .PHONY : src/uvhttp_connection.c.s
 
 src/uvhttp_context.o: src/uvhttp_context.c.o
@@ -1916,14 +1536,10 @@ src/uvhttp_context.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_context.c.o
@@ -1949,10 +1565,7 @@ src/uvhttp_context.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_context.c.o
@@ -1963,17 +1576,9 @@ src/uvhttp_context.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_context.c.o
@@ -1987,11 +1592,6 @@ src/uvhttp_context.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_context.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_context.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_context.c.o
 .PHONY : src/uvhttp_context.c.o
 
 src/uvhttp_context.i: src/uvhttp_context.c.i
@@ -2003,14 +1603,10 @@ src/uvhttp_context.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_context.c.i
@@ -2036,10 +1632,7 @@ src/uvhttp_context.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_context.c.i
@@ -2050,17 +1643,9 @@ src/uvhttp_context.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_context.c.i
@@ -2074,11 +1659,6 @@ src/uvhttp_context.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_context.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_context.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_context.c.i
 .PHONY : src/uvhttp_context.c.i
 
 src/uvhttp_context.s: src/uvhttp_context.c.s
@@ -2090,14 +1670,10 @@ src/uvhttp_context.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_context.c.s
@@ -2123,10 +1699,7 @@ src/uvhttp_context.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_context.c.s
@@ -2137,17 +1710,9 @@ src/uvhttp_context.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_context.c.s
@@ -2161,11 +1726,6 @@ src/uvhttp_context.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_context.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_context.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_context.c.s
 .PHONY : src/uvhttp_context.c.s
 
 src/uvhttp_error.o: src/uvhttp_error.c.o
@@ -2177,14 +1737,10 @@ src/uvhttp_error.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_error.c.o
@@ -2210,10 +1766,7 @@ src/uvhttp_error.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_error.c.o
@@ -2224,17 +1777,9 @@ src/uvhttp_error.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_error.c.o
@@ -2248,11 +1793,6 @@ src/uvhttp_error.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_error.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_error.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_error.c.o
 .PHONY : src/uvhttp_error.c.o
 
 src/uvhttp_error.i: src/uvhttp_error.c.i
@@ -2264,14 +1804,10 @@ src/uvhttp_error.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_error.c.i
@@ -2297,10 +1833,7 @@ src/uvhttp_error.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_error.c.i
@@ -2311,17 +1844,9 @@ src/uvhttp_error.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_error.c.i
@@ -2335,11 +1860,6 @@ src/uvhttp_error.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_error.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_error.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_error.c.i
 .PHONY : src/uvhttp_error.c.i
 
 src/uvhttp_error.s: src/uvhttp_error.c.s
@@ -2351,14 +1871,10 @@ src/uvhttp_error.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_error.c.s
@@ -2384,10 +1900,7 @@ src/uvhttp_error.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_error.c.s
@@ -2398,17 +1911,9 @@ src/uvhttp_error.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_error.c.s
@@ -2422,11 +1927,6 @@ src/uvhttp_error.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_error.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_error.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_error.c.s
 .PHONY : src/uvhttp_error.c.s
 
 src/uvhttp_error_helpers.o: src/uvhttp_error_helpers.c.o
@@ -2438,14 +1938,10 @@ src/uvhttp_error_helpers.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_error_helpers.c.o
@@ -2471,10 +1967,7 @@ src/uvhttp_error_helpers.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_error_helpers.c.o
@@ -2485,17 +1978,9 @@ src/uvhttp_error_helpers.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_error_helpers.c.o
@@ -2509,11 +1994,6 @@ src/uvhttp_error_helpers.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_error_helpers.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_error_helpers.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_error_helpers.c.o
 .PHONY : src/uvhttp_error_helpers.c.o
 
 src/uvhttp_error_helpers.i: src/uvhttp_error_helpers.c.i
@@ -2525,14 +2005,10 @@ src/uvhttp_error_helpers.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_error_helpers.c.i
@@ -2558,10 +2034,7 @@ src/uvhttp_error_helpers.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_error_helpers.c.i
@@ -2572,17 +2045,9 @@ src/uvhttp_error_helpers.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_error_helpers.c.i
@@ -2596,11 +2061,6 @@ src/uvhttp_error_helpers.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_error_helpers.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_error_helpers.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_error_helpers.c.i
 .PHONY : src/uvhttp_error_helpers.c.i
 
 src/uvhttp_error_helpers.s: src/uvhttp_error_helpers.c.s
@@ -2612,14 +2072,10 @@ src/uvhttp_error_helpers.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_error_helpers.c.s
@@ -2645,10 +2101,7 @@ src/uvhttp_error_helpers.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_error_helpers.c.s
@@ -2659,17 +2112,9 @@ src/uvhttp_error_helpers.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_error_helpers.c.s
@@ -2683,11 +2128,6 @@ src/uvhttp_error_helpers.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_error_helpers.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_error_helpers.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_error_helpers.c.s
 .PHONY : src/uvhttp_error_helpers.c.s
 
 src/uvhttp_lru_cache.o: src/uvhttp_lru_cache.c.o
@@ -2699,14 +2139,10 @@ src/uvhttp_lru_cache.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_lru_cache.c.o
@@ -2732,10 +2168,7 @@ src/uvhttp_lru_cache.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_lru_cache.c.o
@@ -2746,17 +2179,9 @@ src/uvhttp_lru_cache.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_lru_cache.c.o
@@ -2770,11 +2195,6 @@ src/uvhttp_lru_cache.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_lru_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_lru_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_lru_cache.c.o
 .PHONY : src/uvhttp_lru_cache.c.o
 
 src/uvhttp_lru_cache.i: src/uvhttp_lru_cache.c.i
@@ -2786,14 +2206,10 @@ src/uvhttp_lru_cache.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_lru_cache.c.i
@@ -2819,10 +2235,7 @@ src/uvhttp_lru_cache.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_lru_cache.c.i
@@ -2833,17 +2246,9 @@ src/uvhttp_lru_cache.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_lru_cache.c.i
@@ -2857,11 +2262,6 @@ src/uvhttp_lru_cache.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_lru_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_lru_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_lru_cache.c.i
 .PHONY : src/uvhttp_lru_cache.c.i
 
 src/uvhttp_lru_cache.s: src/uvhttp_lru_cache.c.s
@@ -2873,14 +2273,10 @@ src/uvhttp_lru_cache.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_lru_cache.c.s
@@ -2906,10 +2302,7 @@ src/uvhttp_lru_cache.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_lru_cache.c.s
@@ -2920,17 +2313,9 @@ src/uvhttp_lru_cache.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_lru_cache.c.s
@@ -2944,11 +2329,6 @@ src/uvhttp_lru_cache.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_lru_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_lru_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_lru_cache.c.s
 .PHONY : src/uvhttp_lru_cache.c.s
 
 src/uvhttp_protocol_upgrade.o: src/uvhttp_protocol_upgrade.c.o
@@ -2960,14 +2340,10 @@ src/uvhttp_protocol_upgrade.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_protocol_upgrade.c.o
@@ -2993,10 +2369,7 @@ src/uvhttp_protocol_upgrade.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_protocol_upgrade.c.o
@@ -3007,17 +2380,9 @@ src/uvhttp_protocol_upgrade.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_protocol_upgrade.c.o
@@ -3031,11 +2396,6 @@ src/uvhttp_protocol_upgrade.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_protocol_upgrade.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_protocol_upgrade.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_protocol_upgrade.c.o
 .PHONY : src/uvhttp_protocol_upgrade.c.o
 
 src/uvhttp_protocol_upgrade.i: src/uvhttp_protocol_upgrade.c.i
@@ -3047,14 +2407,10 @@ src/uvhttp_protocol_upgrade.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_protocol_upgrade.c.i
@@ -3080,10 +2436,7 @@ src/uvhttp_protocol_upgrade.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_protocol_upgrade.c.i
@@ -3094,17 +2447,9 @@ src/uvhttp_protocol_upgrade.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_protocol_upgrade.c.i
@@ -3118,11 +2463,6 @@ src/uvhttp_protocol_upgrade.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_protocol_upgrade.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_protocol_upgrade.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_protocol_upgrade.c.i
 .PHONY : src/uvhttp_protocol_upgrade.c.i
 
 src/uvhttp_protocol_upgrade.s: src/uvhttp_protocol_upgrade.c.s
@@ -3134,14 +2474,10 @@ src/uvhttp_protocol_upgrade.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_protocol_upgrade.c.s
@@ -3167,10 +2503,7 @@ src/uvhttp_protocol_upgrade.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_protocol_upgrade.c.s
@@ -3181,17 +2514,9 @@ src/uvhttp_protocol_upgrade.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_protocol_upgrade.c.s
@@ -3205,11 +2530,6 @@ src/uvhttp_protocol_upgrade.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_protocol_upgrade.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_protocol_upgrade.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_protocol_upgrade.c.s
 .PHONY : src/uvhttp_protocol_upgrade.c.s
 
 src/uvhttp_request.o: src/uvhttp_request.c.o
@@ -3221,14 +2541,10 @@ src/uvhttp_request.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_request.c.o
@@ -3254,10 +2570,7 @@ src/uvhttp_request.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_request.c.o
@@ -3268,17 +2581,9 @@ src/uvhttp_request.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_request.c.o
@@ -3292,11 +2597,6 @@ src/uvhttp_request.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_request.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_request.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_request.c.o
 .PHONY : src/uvhttp_request.c.o
 
 src/uvhttp_request.i: src/uvhttp_request.c.i
@@ -3308,14 +2608,10 @@ src/uvhttp_request.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_request.c.i
@@ -3341,10 +2637,7 @@ src/uvhttp_request.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_request.c.i
@@ -3355,17 +2648,9 @@ src/uvhttp_request.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_request.c.i
@@ -3379,11 +2664,6 @@ src/uvhttp_request.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_request.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_request.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_request.c.i
 .PHONY : src/uvhttp_request.c.i
 
 src/uvhttp_request.s: src/uvhttp_request.c.s
@@ -3395,14 +2675,10 @@ src/uvhttp_request.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_request.c.s
@@ -3428,10 +2704,7 @@ src/uvhttp_request.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_request.c.s
@@ -3442,17 +2715,9 @@ src/uvhttp_request.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_request.c.s
@@ -3466,11 +2731,6 @@ src/uvhttp_request.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_request.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_request.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_request.c.s
 .PHONY : src/uvhttp_request.c.s
 
 src/uvhttp_response.o: src/uvhttp_response.c.o
@@ -3482,14 +2742,10 @@ src/uvhttp_response.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_response.c.o
@@ -3515,10 +2771,7 @@ src/uvhttp_response.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_response.c.o
@@ -3529,17 +2782,9 @@ src/uvhttp_response.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_response.c.o
@@ -3553,11 +2798,6 @@ src/uvhttp_response.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_response.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_response.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_response.c.o
 .PHONY : src/uvhttp_response.c.o
 
 src/uvhttp_response.i: src/uvhttp_response.c.i
@@ -3569,14 +2809,10 @@ src/uvhttp_response.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_response.c.i
@@ -3602,10 +2838,7 @@ src/uvhttp_response.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_response.c.i
@@ -3616,17 +2849,9 @@ src/uvhttp_response.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_response.c.i
@@ -3640,11 +2865,6 @@ src/uvhttp_response.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_response.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_response.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_response.c.i
 .PHONY : src/uvhttp_response.c.i
 
 src/uvhttp_response.s: src/uvhttp_response.c.s
@@ -3656,14 +2876,10 @@ src/uvhttp_response.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_response.c.s
@@ -3689,10 +2905,7 @@ src/uvhttp_response.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_response.c.s
@@ -3703,17 +2916,9 @@ src/uvhttp_response.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_response.c.s
@@ -3727,11 +2932,6 @@ src/uvhttp_response.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_response.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_response.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_response.c.s
 .PHONY : src/uvhttp_response.c.s
 
 src/uvhttp_router.o: src/uvhttp_router.c.o
@@ -3743,14 +2943,10 @@ src/uvhttp_router.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_router.c.o
@@ -3776,10 +2972,7 @@ src/uvhttp_router.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_router.c.o
@@ -3790,17 +2983,9 @@ src/uvhttp_router.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_router.c.o
@@ -3814,11 +2999,6 @@ src/uvhttp_router.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_router.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_router.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_router.c.o
 .PHONY : src/uvhttp_router.c.o
 
 src/uvhttp_router.i: src/uvhttp_router.c.i
@@ -3830,14 +3010,10 @@ src/uvhttp_router.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_router.c.i
@@ -3863,10 +3039,7 @@ src/uvhttp_router.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_router.c.i
@@ -3877,17 +3050,9 @@ src/uvhttp_router.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_router.c.i
@@ -3901,11 +3066,6 @@ src/uvhttp_router.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_router.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_router.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_router.c.i
 .PHONY : src/uvhttp_router.c.i
 
 src/uvhttp_router.s: src/uvhttp_router.c.s
@@ -3917,14 +3077,10 @@ src/uvhttp_router.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_router.c.s
@@ -3950,10 +3106,7 @@ src/uvhttp_router.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_router.c.s
@@ -3964,17 +3117,9 @@ src/uvhttp_router.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_router.c.s
@@ -3988,11 +3133,6 @@ src/uvhttp_router.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_router.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_router.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_router.c.s
 .PHONY : src/uvhttp_router.c.s
 
 src/uvhttp_router_cache.o: src/uvhttp_router_cache.c.o
@@ -4004,14 +3144,10 @@ src/uvhttp_router_cache.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_router_cache.c.o
@@ -4037,10 +3173,7 @@ src/uvhttp_router_cache.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_router_cache.c.o
@@ -4051,17 +3184,9 @@ src/uvhttp_router_cache.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_router_cache.c.o
@@ -4075,11 +3200,6 @@ src/uvhttp_router_cache.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_router_cache.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_router_cache.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_router_cache.c.o
 .PHONY : src/uvhttp_router_cache.c.o
 
 src/uvhttp_router_cache.i: src/uvhttp_router_cache.c.i
@@ -4091,14 +3211,10 @@ src/uvhttp_router_cache.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_router_cache.c.i
@@ -4124,10 +3240,7 @@ src/uvhttp_router_cache.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_router_cache.c.i
@@ -4138,17 +3251,9 @@ src/uvhttp_router_cache.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_router_cache.c.i
@@ -4162,11 +3267,6 @@ src/uvhttp_router_cache.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_router_cache.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_router_cache.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_router_cache.c.i
 .PHONY : src/uvhttp_router_cache.c.i
 
 src/uvhttp_router_cache.s: src/uvhttp_router_cache.c.s
@@ -4178,14 +3278,10 @@ src/uvhttp_router_cache.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_router_cache.c.s
@@ -4211,10 +3307,7 @@ src/uvhttp_router_cache.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_router_cache.c.s
@@ -4225,17 +3318,9 @@ src/uvhttp_router_cache.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_router_cache.c.s
@@ -4249,11 +3334,6 @@ src/uvhttp_router_cache.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_router_cache.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_router_cache.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_router_cache.c.s
 .PHONY : src/uvhttp_router_cache.c.s
 
 src/uvhttp_server.o: src/uvhttp_server.c.o
@@ -4265,14 +3345,10 @@ src/uvhttp_server.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_server.c.o
@@ -4298,10 +3374,7 @@ src/uvhttp_server.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_server.c.o
@@ -4312,17 +3385,9 @@ src/uvhttp_server.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_server.c.o
@@ -4336,11 +3401,6 @@ src/uvhttp_server.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_server.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_server.c.o
 .PHONY : src/uvhttp_server.c.o
 
 src/uvhttp_server.i: src/uvhttp_server.c.i
@@ -4352,14 +3412,10 @@ src/uvhttp_server.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_server.c.i
@@ -4385,10 +3441,7 @@ src/uvhttp_server.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_server.c.i
@@ -4399,17 +3452,9 @@ src/uvhttp_server.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_server.c.i
@@ -4423,11 +3468,6 @@ src/uvhttp_server.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_server.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_server.c.i
 .PHONY : src/uvhttp_server.c.i
 
 src/uvhttp_server.s: src/uvhttp_server.c.s
@@ -4439,14 +3479,10 @@ src/uvhttp_server.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_server.c.s
@@ -4472,10 +3508,7 @@ src/uvhttp_server.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_server.c.s
@@ -4486,17 +3519,9 @@ src/uvhttp_server.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_server.c.s
@@ -4510,11 +3535,6 @@ src/uvhttp_server.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_server.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_server.c.s
 .PHONY : src/uvhttp_server.c.s
 
 src/uvhttp_static.o: src/uvhttp_static.c.o
@@ -4526,14 +3546,10 @@ src/uvhttp_static.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_static.c.o
@@ -4559,10 +3575,7 @@ src/uvhttp_static.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_static.c.o
@@ -4573,17 +3586,9 @@ src/uvhttp_static.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_static.c.o
@@ -4597,11 +3602,6 @@ src/uvhttp_static.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_static.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_static.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_static.c.o
 .PHONY : src/uvhttp_static.c.o
 
 src/uvhttp_static.i: src/uvhttp_static.c.i
@@ -4613,14 +3613,10 @@ src/uvhttp_static.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_static.c.i
@@ -4646,10 +3642,7 @@ src/uvhttp_static.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_static.c.i
@@ -4660,17 +3653,9 @@ src/uvhttp_static.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_static.c.i
@@ -4684,11 +3669,6 @@ src/uvhttp_static.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_static.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_static.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_static.c.i
 .PHONY : src/uvhttp_static.c.i
 
 src/uvhttp_static.s: src/uvhttp_static.c.s
@@ -4700,14 +3680,10 @@ src/uvhttp_static.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_static.c.s
@@ -4733,10 +3709,7 @@ src/uvhttp_static.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_static.c.s
@@ -4747,17 +3720,9 @@ src/uvhttp_static.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_static.c.s
@@ -4771,273 +3736,7 @@ src/uvhttp_static.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_static.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_static.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_static.c.s
 .PHONY : src/uvhttp_static.c.s
-
-src/uvhttp_tls.o: src/uvhttp_tls.c.o
-.PHONY : src/uvhttp_tls.o
-
-# target to build an object file
-src/uvhttp_tls.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp.dir/build.make CMakeFiles/uvhttp.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_comprehensive_coverage.dir/build.make CMakeFiles/test_error_comprehensive_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_coverage.dir/build.make CMakeFiles/test_error_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_enhanced_coverage.dir/build.make CMakeFiles/test_error_enhanced_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handler_full_coverage.dir/build.make CMakeFiles/test_error_handler_full_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_helpers_full_coverage.dir/build.make CMakeFiles/test_error_helpers_full_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_hash_full_coverage.dir/build.make CMakeFiles/test_hash_full_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_lru_cache_full_coverage.dir/build.make CMakeFiles/test_lru_cache_full_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_memory.dir/build.make CMakeFiles/test_memory.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_query_validation.dir/build.make CMakeFiles/test_query_validation.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_api_coverage.dir/build.make CMakeFiles/test_request_api_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_comprehensive_coverage.dir/build.make CMakeFiles/test_request_comprehensive_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_extended_coverage.dir/build.make CMakeFiles/test_request_extended_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_extra_coverage.dir/build.make CMakeFiles/test_request_extra_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_full_coverage.dir/build.make CMakeFiles/test_request_full_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_full_coverage_enhanced.dir/build.make CMakeFiles/test_request_full_coverage_enhanced.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_null_coverage.dir/build.make CMakeFiles/test_request_null_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_response_full_coverage.dir/build.make CMakeFiles/test_response_full_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_response_full_coverage_enhanced.dir/build.make CMakeFiles/test_response_full_coverage_enhanced.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_enhanced_coverage.dir/build.make CMakeFiles/test_router_enhanced_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_comprehensive_coverage.dir/build.make CMakeFiles/test_static_comprehensive_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_coverage.dir/build.make CMakeFiles/test_static_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_enhanced_coverage.dir/build.make CMakeFiles/test_static_enhanced_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_extended_coverage.dir/build.make CMakeFiles/test_static_extended_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_http_methods_e2e.dir/build.make CMakeFiles/test_http_methods_e2e.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_include.dir/build.make CMakeFiles/test_include.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_middleware_compile_time.dir/build.make CMakeFiles/test_middleware_compile_time.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_no_router.dir/build.make CMakeFiles/test_no_router.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_performance_e2e.dir/build.make CMakeFiles/test_performance_e2e.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rate_limit_e2e.dir/build.make CMakeFiles/test_rate_limit_e2e.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_tls.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_tls.c.o
-.PHONY : src/uvhttp_tls.c.o
-
-src/uvhttp_tls.i: src/uvhttp_tls.c.i
-.PHONY : src/uvhttp_tls.i
-
-# target to preprocess a source file
-src/uvhttp_tls.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp.dir/build.make CMakeFiles/uvhttp.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_comprehensive_coverage.dir/build.make CMakeFiles/test_error_comprehensive_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_coverage.dir/build.make CMakeFiles/test_error_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_enhanced_coverage.dir/build.make CMakeFiles/test_error_enhanced_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handler_full_coverage.dir/build.make CMakeFiles/test_error_handler_full_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_helpers_full_coverage.dir/build.make CMakeFiles/test_error_helpers_full_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_hash_full_coverage.dir/build.make CMakeFiles/test_hash_full_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_lru_cache_full_coverage.dir/build.make CMakeFiles/test_lru_cache_full_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_memory.dir/build.make CMakeFiles/test_memory.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_query_validation.dir/build.make CMakeFiles/test_query_validation.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_api_coverage.dir/build.make CMakeFiles/test_request_api_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_comprehensive_coverage.dir/build.make CMakeFiles/test_request_comprehensive_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_extended_coverage.dir/build.make CMakeFiles/test_request_extended_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_extra_coverage.dir/build.make CMakeFiles/test_request_extra_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_full_coverage.dir/build.make CMakeFiles/test_request_full_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_full_coverage_enhanced.dir/build.make CMakeFiles/test_request_full_coverage_enhanced.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_null_coverage.dir/build.make CMakeFiles/test_request_null_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_response_full_coverage.dir/build.make CMakeFiles/test_response_full_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_response_full_coverage_enhanced.dir/build.make CMakeFiles/test_response_full_coverage_enhanced.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_enhanced_coverage.dir/build.make CMakeFiles/test_router_enhanced_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_comprehensive_coverage.dir/build.make CMakeFiles/test_static_comprehensive_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_coverage.dir/build.make CMakeFiles/test_static_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_enhanced_coverage.dir/build.make CMakeFiles/test_static_enhanced_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_extended_coverage.dir/build.make CMakeFiles/test_static_extended_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_http_methods_e2e.dir/build.make CMakeFiles/test_http_methods_e2e.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_include.dir/build.make CMakeFiles/test_include.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_middleware_compile_time.dir/build.make CMakeFiles/test_middleware_compile_time.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_no_router.dir/build.make CMakeFiles/test_no_router.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_performance_e2e.dir/build.make CMakeFiles/test_performance_e2e.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rate_limit_e2e.dir/build.make CMakeFiles/test_rate_limit_e2e.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_tls.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_tls.c.i
-.PHONY : src/uvhttp_tls.c.i
-
-src/uvhttp_tls.s: src/uvhttp_tls.c.s
-.PHONY : src/uvhttp_tls.s
-
-# target to generate assembly for a file
-src/uvhttp_tls.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp.dir/build.make CMakeFiles/uvhttp.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_comprehensive_coverage.dir/build.make CMakeFiles/test_error_comprehensive_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_coverage.dir/build.make CMakeFiles/test_error_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_enhanced_coverage.dir/build.make CMakeFiles/test_error_enhanced_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handler_full_coverage.dir/build.make CMakeFiles/test_error_handler_full_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_helpers_full_coverage.dir/build.make CMakeFiles/test_error_helpers_full_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_hash_full_coverage.dir/build.make CMakeFiles/test_hash_full_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_lru_cache_full_coverage.dir/build.make CMakeFiles/test_lru_cache_full_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_memory.dir/build.make CMakeFiles/test_memory.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_query_validation.dir/build.make CMakeFiles/test_query_validation.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_api_coverage.dir/build.make CMakeFiles/test_request_api_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_comprehensive_coverage.dir/build.make CMakeFiles/test_request_comprehensive_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_extended_coverage.dir/build.make CMakeFiles/test_request_extended_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_extra_coverage.dir/build.make CMakeFiles/test_request_extra_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_full_coverage.dir/build.make CMakeFiles/test_request_full_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_full_coverage_enhanced.dir/build.make CMakeFiles/test_request_full_coverage_enhanced.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_null_coverage.dir/build.make CMakeFiles/test_request_null_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_response_full_coverage.dir/build.make CMakeFiles/test_response_full_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_response_full_coverage_enhanced.dir/build.make CMakeFiles/test_response_full_coverage_enhanced.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_enhanced_coverage.dir/build.make CMakeFiles/test_router_enhanced_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_comprehensive_coverage.dir/build.make CMakeFiles/test_static_comprehensive_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_coverage.dir/build.make CMakeFiles/test_static_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_enhanced_coverage.dir/build.make CMakeFiles/test_static_enhanced_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_extended_coverage.dir/build.make CMakeFiles/test_static_extended_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_http_methods_e2e.dir/build.make CMakeFiles/test_http_methods_e2e.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_include.dir/build.make CMakeFiles/test_include.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_middleware_compile_time.dir/build.make CMakeFiles/test_middleware_compile_time.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_no_router.dir/build.make CMakeFiles/test_no_router.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_performance_e2e.dir/build.make CMakeFiles/test_performance_e2e.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rate_limit_e2e.dir/build.make CMakeFiles/test_rate_limit_e2e.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_tls.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_tls.c.s
-.PHONY : src/uvhttp_tls.c.s
 
 src/uvhttp_utils.o: src/uvhttp_utils.c.o
 .PHONY : src/uvhttp_utils.o
@@ -5048,14 +3747,10 @@ src/uvhttp_utils.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_utils.c.o
@@ -5081,10 +3776,7 @@ src/uvhttp_utils.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_utils.c.o
@@ -5095,17 +3787,9 @@ src/uvhttp_utils.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_utils.c.o
@@ -5119,11 +3803,6 @@ src/uvhttp_utils.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_utils.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_utils.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_utils.c.o
 .PHONY : src/uvhttp_utils.c.o
 
 src/uvhttp_utils.i: src/uvhttp_utils.c.i
@@ -5135,14 +3814,10 @@ src/uvhttp_utils.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_utils.c.i
@@ -5168,10 +3843,7 @@ src/uvhttp_utils.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_utils.c.i
@@ -5182,17 +3854,9 @@ src/uvhttp_utils.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_utils.c.i
@@ -5206,11 +3870,6 @@ src/uvhttp_utils.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_utils.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_utils.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_utils.c.i
 .PHONY : src/uvhttp_utils.c.i
 
 src/uvhttp_utils.s: src/uvhttp_utils.c.s
@@ -5222,14 +3881,10 @@ src/uvhttp_utils.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_utils.c.s
@@ -5255,10 +3910,7 @@ src/uvhttp_utils.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_utils.c.s
@@ -5269,17 +3921,9 @@ src/uvhttp_utils.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_utils.c.s
@@ -5293,11 +3937,6 @@ src/uvhttp_utils.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_utils.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_utils.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_utils.c.s
 .PHONY : src/uvhttp_utils.c.s
 
 src/uvhttp_version.o: src/uvhttp_version.c.o
@@ -5309,14 +3948,10 @@ src/uvhttp_version.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_version.c.o
@@ -5342,10 +3977,7 @@ src/uvhttp_version.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_version.c.o
@@ -5356,17 +3988,9 @@ src/uvhttp_version.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_version.c.o
@@ -5380,11 +4004,6 @@ src/uvhttp_version.c.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_version.c.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_version.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_version.c.o
 .PHONY : src/uvhttp_version.c.o
 
 src/uvhttp_version.i: src/uvhttp_version.c.i
@@ -5396,14 +4015,10 @@ src/uvhttp_version.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_version.c.i
@@ -5429,10 +4044,7 @@ src/uvhttp_version.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_version.c.i
@@ -5443,17 +4055,9 @@ src/uvhttp_version.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_version.c.i
@@ -5467,11 +4071,6 @@ src/uvhttp_version.c.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_version.c.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_version.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_version.c.i
 .PHONY : src/uvhttp_version.c.i
 
 src/uvhttp_version.s: src/uvhttp_version.c.s
@@ -5483,14 +4082,10 @@ src/uvhttp_version.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_version.c.s
@@ -5516,10 +4111,7 @@ src/uvhttp_version.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_version.c.s
@@ -5530,17 +4122,9 @@ src/uvhttp_version.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_version.c.s
@@ -5554,273 +4138,7 @@ src/uvhttp_version.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_version.c.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_version.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_version.c.s
 .PHONY : src/uvhttp_version.c.s
-
-src/uvhttp_websocket.o: src/uvhttp_websocket.c.o
-.PHONY : src/uvhttp_websocket.o
-
-# target to build an object file
-src/uvhttp_websocket.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp.dir/build.make CMakeFiles/uvhttp.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_comprehensive_coverage.dir/build.make CMakeFiles/test_error_comprehensive_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_coverage.dir/build.make CMakeFiles/test_error_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_enhanced_coverage.dir/build.make CMakeFiles/test_error_enhanced_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handler_full_coverage.dir/build.make CMakeFiles/test_error_handler_full_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_helpers_full_coverage.dir/build.make CMakeFiles/test_error_helpers_full_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_hash_full_coverage.dir/build.make CMakeFiles/test_hash_full_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_lru_cache_full_coverage.dir/build.make CMakeFiles/test_lru_cache_full_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_memory.dir/build.make CMakeFiles/test_memory.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_query_validation.dir/build.make CMakeFiles/test_query_validation.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_api_coverage.dir/build.make CMakeFiles/test_request_api_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_comprehensive_coverage.dir/build.make CMakeFiles/test_request_comprehensive_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_extended_coverage.dir/build.make CMakeFiles/test_request_extended_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_extra_coverage.dir/build.make CMakeFiles/test_request_extra_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_full_coverage.dir/build.make CMakeFiles/test_request_full_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_full_coverage_enhanced.dir/build.make CMakeFiles/test_request_full_coverage_enhanced.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_null_coverage.dir/build.make CMakeFiles/test_request_null_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_response_full_coverage.dir/build.make CMakeFiles/test_response_full_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_response_full_coverage_enhanced.dir/build.make CMakeFiles/test_response_full_coverage_enhanced.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_enhanced_coverage.dir/build.make CMakeFiles/test_router_enhanced_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_comprehensive_coverage.dir/build.make CMakeFiles/test_static_comprehensive_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_coverage.dir/build.make CMakeFiles/test_static_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_enhanced_coverage.dir/build.make CMakeFiles/test_static_enhanced_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_extended_coverage.dir/build.make CMakeFiles/test_static_extended_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_http_methods_e2e.dir/build.make CMakeFiles/test_http_methods_e2e.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_include.dir/build.make CMakeFiles/test_include.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_middleware_compile_time.dir/build.make CMakeFiles/test_middleware_compile_time.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_no_router.dir/build.make CMakeFiles/test_no_router.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_performance_e2e.dir/build.make CMakeFiles/test_performance_e2e.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rate_limit_e2e.dir/build.make CMakeFiles/test_rate_limit_e2e.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_websocket.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_websocket.c.o
-.PHONY : src/uvhttp_websocket.c.o
-
-src/uvhttp_websocket.i: src/uvhttp_websocket.c.i
-.PHONY : src/uvhttp_websocket.i
-
-# target to preprocess a source file
-src/uvhttp_websocket.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp.dir/build.make CMakeFiles/uvhttp.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_comprehensive_coverage.dir/build.make CMakeFiles/test_error_comprehensive_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_coverage.dir/build.make CMakeFiles/test_error_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_enhanced_coverage.dir/build.make CMakeFiles/test_error_enhanced_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handler_full_coverage.dir/build.make CMakeFiles/test_error_handler_full_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_helpers_full_coverage.dir/build.make CMakeFiles/test_error_helpers_full_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_hash_full_coverage.dir/build.make CMakeFiles/test_hash_full_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_lru_cache_full_coverage.dir/build.make CMakeFiles/test_lru_cache_full_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_memory.dir/build.make CMakeFiles/test_memory.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_query_validation.dir/build.make CMakeFiles/test_query_validation.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_api_coverage.dir/build.make CMakeFiles/test_request_api_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_comprehensive_coverage.dir/build.make CMakeFiles/test_request_comprehensive_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_extended_coverage.dir/build.make CMakeFiles/test_request_extended_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_extra_coverage.dir/build.make CMakeFiles/test_request_extra_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_full_coverage.dir/build.make CMakeFiles/test_request_full_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_full_coverage_enhanced.dir/build.make CMakeFiles/test_request_full_coverage_enhanced.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_null_coverage.dir/build.make CMakeFiles/test_request_null_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_response_full_coverage.dir/build.make CMakeFiles/test_response_full_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_response_full_coverage_enhanced.dir/build.make CMakeFiles/test_response_full_coverage_enhanced.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_enhanced_coverage.dir/build.make CMakeFiles/test_router_enhanced_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_comprehensive_coverage.dir/build.make CMakeFiles/test_static_comprehensive_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_coverage.dir/build.make CMakeFiles/test_static_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_enhanced_coverage.dir/build.make CMakeFiles/test_static_enhanced_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_extended_coverage.dir/build.make CMakeFiles/test_static_extended_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_http_methods_e2e.dir/build.make CMakeFiles/test_http_methods_e2e.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_include.dir/build.make CMakeFiles/test_include.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_middleware_compile_time.dir/build.make CMakeFiles/test_middleware_compile_time.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_no_router.dir/build.make CMakeFiles/test_no_router.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_performance_e2e.dir/build.make CMakeFiles/test_performance_e2e.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rate_limit_e2e.dir/build.make CMakeFiles/test_rate_limit_e2e.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_websocket.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_websocket.c.i
-.PHONY : src/uvhttp_websocket.c.i
-
-src/uvhttp_websocket.s: src/uvhttp_websocket.c.s
-.PHONY : src/uvhttp_websocket.s
-
-# target to generate assembly for a file
-src/uvhttp_websocket.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp.dir/build.make CMakeFiles/uvhttp.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_allocator.dir/build.make CMakeFiles/test_allocator.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_cmocka_simple.dir/build.make CMakeFiles/test_cmocka_simple.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_coverage.dir/build.make CMakeFiles/test_connection_full_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_context_simple.dir/build.make CMakeFiles/test_context_simple.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_death.dir/build.make CMakeFiles/test_death.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_api_coverage.dir/build.make CMakeFiles/test_error_api_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_comprehensive_coverage.dir/build.make CMakeFiles/test_error_comprehensive_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_coverage.dir/build.make CMakeFiles/test_error_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_enhanced_coverage.dir/build.make CMakeFiles/test_error_enhanced_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handler_full_coverage.dir/build.make CMakeFiles/test_error_handler_full_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_helpers_full_coverage.dir/build.make CMakeFiles/test_error_helpers_full_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_hash_full_coverage.dir/build.make CMakeFiles/test_hash_full_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_lru_cache_full_coverage.dir/build.make CMakeFiles/test_lru_cache_full_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_memory.dir/build.make CMakeFiles/test_memory.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_query_validation.dir/build.make CMakeFiles/test_query_validation.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_api_coverage.dir/build.make CMakeFiles/test_request_api_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_comprehensive_coverage.dir/build.make CMakeFiles/test_request_comprehensive_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_extended_coverage.dir/build.make CMakeFiles/test_request_extended_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_extra_coverage.dir/build.make CMakeFiles/test_request_extra_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_full_coverage.dir/build.make CMakeFiles/test_request_full_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_full_coverage_enhanced.dir/build.make CMakeFiles/test_request_full_coverage_enhanced.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_request_null_coverage.dir/build.make CMakeFiles/test_request_null_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_response_full_coverage.dir/build.make CMakeFiles/test_response_full_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_response_full_coverage_enhanced.dir/build.make CMakeFiles/test_response_full_coverage_enhanced.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_enhanced_coverage.dir/build.make CMakeFiles/test_router_enhanced_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_extended_coverage.dir/build.make CMakeFiles/test_router_extended_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_router_full_coverage.dir/build.make CMakeFiles/test_router_full_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_handlers_coverage.dir/build.make CMakeFiles/test_server_simple_handlers_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple_main.dir/build.make CMakeFiles/test_simple_main.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_api_coverage.dir/build.make CMakeFiles/test_static_api_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_comprehensive_coverage.dir/build.make CMakeFiles/test_static_comprehensive_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_coverage.dir/build.make CMakeFiles/test_static_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_enhanced_coverage.dir/build.make CMakeFiles/test_static_enhanced_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_extended_coverage.dir/build.make CMakeFiles/test_static_extended_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_file_operations.dir/build.make CMakeFiles/test_static_file_operations.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_more_coverage.dir/build.make CMakeFiles/test_static_more_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_api_coverage.dir/build.make CMakeFiles/test_utils_api_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_utils_full_coverage.dir/build.make CMakeFiles/test_utils_full_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_whitelist_hash.dir/build.make CMakeFiles/test_whitelist_hash.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uvhttp_unit_tests.dir/build.make CMakeFiles/uvhttp_unit_tests.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_concurrency_e2e.dir/build.make CMakeFiles/test_concurrency_e2e.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_error_handling_e2e.dir/build.make CMakeFiles/test_error_handling_e2e.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_http_methods_e2e.dir/build.make CMakeFiles/test_http_methods_e2e.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_include.dir/build.make CMakeFiles/test_include.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_middleware_compile_time.dir/build.make CMakeFiles/test_middleware_compile_time.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_no_router.dir/build.make CMakeFiles/test_no_router.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_performance_e2e.dir/build.make CMakeFiles/test_performance_e2e.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_rate_limit_e2e.dir/build.make CMakeFiles/test_rate_limit_e2e.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_route.dir/build.make CMakeFiles/test_route.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_simple.dir/build.make CMakeFiles/test_simple.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/src/uvhttp_websocket.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/src/uvhttp_websocket.c.s
-.PHONY : src/uvhttp_websocket.c.s
 
 test/integration/test_concurrency_e2e.o: test/integration/test_concurrency_e2e.c.o
 .PHONY : test/integration/test_concurrency_e2e.o
@@ -6086,126 +4404,6 @@ test/integration/test_static_files_e2e.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_static_files_e2e.dir/build.make CMakeFiles/test_static_files_e2e.dir/test/integration/test_static_files_e2e.c.s
 .PHONY : test/integration/test_static_files_e2e.c.s
 
-test/integration/test_tls_e2e.o: test/integration/test_tls_e2e.c.o
-.PHONY : test/integration/test_tls_e2e.o
-
-# target to build an object file
-test/integration/test_tls_e2e.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/test/integration/test_tls_e2e.c.o
-.PHONY : test/integration/test_tls_e2e.c.o
-
-test/integration/test_tls_e2e.i: test/integration/test_tls_e2e.c.i
-.PHONY : test/integration/test_tls_e2e.i
-
-# target to preprocess a source file
-test/integration/test_tls_e2e.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/test/integration/test_tls_e2e.c.i
-.PHONY : test/integration/test_tls_e2e.c.i
-
-test/integration/test_tls_e2e.s: test/integration/test_tls_e2e.c.s
-.PHONY : test/integration/test_tls_e2e.s
-
-# target to generate assembly for a file
-test/integration/test_tls_e2e.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_e2e.dir/build.make CMakeFiles/test_tls_e2e.dir/test/integration/test_tls_e2e.c.s
-.PHONY : test/integration/test_tls_e2e.c.s
-
-test/integration/test_tls_simple.o: test/integration/test_tls_simple.c.o
-.PHONY : test/integration/test_tls_simple.o
-
-# target to build an object file
-test/integration/test_tls_simple.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/test/integration/test_tls_simple.c.o
-.PHONY : test/integration/test_tls_simple.c.o
-
-test/integration/test_tls_simple.i: test/integration/test_tls_simple.c.i
-.PHONY : test/integration/test_tls_simple.i
-
-# target to preprocess a source file
-test/integration/test_tls_simple.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/test/integration/test_tls_simple.c.i
-.PHONY : test/integration/test_tls_simple.c.i
-
-test/integration/test_tls_simple.s: test/integration/test_tls_simple.c.s
-.PHONY : test/integration/test_tls_simple.s
-
-# target to generate assembly for a file
-test/integration/test_tls_simple.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_simple.dir/build.make CMakeFiles/test_tls_simple.dir/test/integration/test_tls_simple.c.s
-.PHONY : test/integration/test_tls_simple.c.s
-
-test/integration/test_websocket_callback.o: test/integration/test_websocket_callback.c.o
-.PHONY : test/integration/test_websocket_callback.o
-
-# target to build an object file
-test/integration/test_websocket_callback.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/test/integration/test_websocket_callback.c.o
-.PHONY : test/integration/test_websocket_callback.c.o
-
-test/integration/test_websocket_callback.i: test/integration/test_websocket_callback.c.i
-.PHONY : test/integration/test_websocket_callback.i
-
-# target to preprocess a source file
-test/integration/test_websocket_callback.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/test/integration/test_websocket_callback.c.i
-.PHONY : test/integration/test_websocket_callback.c.i
-
-test/integration/test_websocket_callback.s: test/integration/test_websocket_callback.c.s
-.PHONY : test/integration/test_websocket_callback.s
-
-# target to generate assembly for a file
-test/integration/test_websocket_callback.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_callback.dir/build.make CMakeFiles/test_websocket_callback.dir/test/integration/test_websocket_callback.c.s
-.PHONY : test/integration/test_websocket_callback.c.s
-
-test/integration/test_websocket_e2e.o: test/integration/test_websocket_e2e.c.o
-.PHONY : test/integration/test_websocket_e2e.o
-
-# target to build an object file
-test/integration/test_websocket_e2e.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/test/integration/test_websocket_e2e.c.o
-.PHONY : test/integration/test_websocket_e2e.c.o
-
-test/integration/test_websocket_e2e.i: test/integration/test_websocket_e2e.c.i
-.PHONY : test/integration/test_websocket_e2e.i
-
-# target to preprocess a source file
-test/integration/test_websocket_e2e.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/test/integration/test_websocket_e2e.c.i
-.PHONY : test/integration/test_websocket_e2e.c.i
-
-test/integration/test_websocket_e2e.s: test/integration/test_websocket_e2e.c.s
-.PHONY : test/integration/test_websocket_e2e.s
-
-# target to generate assembly for a file
-test/integration/test_websocket_e2e.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_e2e.dir/build.make CMakeFiles/test_websocket_e2e.dir/test/integration/test_websocket_e2e.c.s
-.PHONY : test/integration/test_websocket_e2e.c.s
-
-test/integration/test_websocket_integration.o: test/integration/test_websocket_integration.c.o
-.PHONY : test/integration/test_websocket_integration.o
-
-# target to build an object file
-test/integration/test_websocket_integration.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/test/integration/test_websocket_integration.c.o
-.PHONY : test/integration/test_websocket_integration.c.o
-
-test/integration/test_websocket_integration.i: test/integration/test_websocket_integration.c.i
-.PHONY : test/integration/test_websocket_integration.i
-
-# target to preprocess a source file
-test/integration/test_websocket_integration.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/test/integration/test_websocket_integration.c.i
-.PHONY : test/integration/test_websocket_integration.c.i
-
-test/integration/test_websocket_integration.s: test/integration/test_websocket_integration.c.s
-.PHONY : test/integration/test_websocket_integration.s
-
-# target to generate assembly for a file
-test/integration/test_websocket_integration.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_integration.dir/build.make CMakeFiles/test_websocket_integration.dir/test/integration/test_websocket_integration.c.s
-.PHONY : test/integration/test_websocket_integration.c.s
-
 test/mock/libuv_mock.o: test/mock/libuv_mock.c.o
 .PHONY : test/mock/libuv_mock.o
 
@@ -6326,30 +4524,6 @@ test/unit/test_config_enhanced_coverage.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_config_enhanced_coverage.dir/build.make CMakeFiles/test_config_enhanced_coverage.dir/test/unit/test_config_enhanced_coverage.cpp.s
 .PHONY : test/unit/test_config_enhanced_coverage.cpp.s
 
-test/unit/test_connection_api_coverage.o: test/unit/test_connection_api_coverage.cpp.o
-.PHONY : test/unit/test_connection_api_coverage.o
-
-# target to build an object file
-test/unit/test_connection_api_coverage.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/test/unit/test_connection_api_coverage.cpp.o
-.PHONY : test/unit/test_connection_api_coverage.cpp.o
-
-test/unit/test_connection_api_coverage.i: test/unit/test_connection_api_coverage.cpp.i
-.PHONY : test/unit/test_connection_api_coverage.i
-
-# target to preprocess a source file
-test/unit/test_connection_api_coverage.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/test/unit/test_connection_api_coverage.cpp.i
-.PHONY : test/unit/test_connection_api_coverage.cpp.i
-
-test/unit/test_connection_api_coverage.s: test/unit/test_connection_api_coverage.cpp.s
-.PHONY : test/unit/test_connection_api_coverage.s
-
-# target to generate assembly for a file
-test/unit/test_connection_api_coverage.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_api_coverage.dir/build.make CMakeFiles/test_connection_api_coverage.dir/test/unit/test_connection_api_coverage.cpp.s
-.PHONY : test/unit/test_connection_api_coverage.cpp.s
-
 test/unit/test_connection_comprehensive_coverage.o: test/unit/test_connection_comprehensive_coverage.cpp.o
 .PHONY : test/unit/test_connection_comprehensive_coverage.o
 
@@ -6374,30 +4548,6 @@ test/unit/test_connection_comprehensive_coverage.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_comprehensive_coverage.dir/build.make CMakeFiles/test_connection_comprehensive_coverage.dir/test/unit/test_connection_comprehensive_coverage.cpp.s
 .PHONY : test/unit/test_connection_comprehensive_coverage.cpp.s
 
-test/unit/test_connection_enhanced_coverage.o: test/unit/test_connection_enhanced_coverage.cpp.o
-.PHONY : test/unit/test_connection_enhanced_coverage.o
-
-# target to build an object file
-test/unit/test_connection_enhanced_coverage.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/test/unit/test_connection_enhanced_coverage.cpp.o
-.PHONY : test/unit/test_connection_enhanced_coverage.cpp.o
-
-test/unit/test_connection_enhanced_coverage.i: test/unit/test_connection_enhanced_coverage.cpp.i
-.PHONY : test/unit/test_connection_enhanced_coverage.i
-
-# target to preprocess a source file
-test/unit/test_connection_enhanced_coverage.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/test/unit/test_connection_enhanced_coverage.cpp.i
-.PHONY : test/unit/test_connection_enhanced_coverage.cpp.i
-
-test/unit/test_connection_enhanced_coverage.s: test/unit/test_connection_enhanced_coverage.cpp.s
-.PHONY : test/unit/test_connection_enhanced_coverage.s
-
-# target to generate assembly for a file
-test/unit/test_connection_enhanced_coverage.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_enhanced_coverage.dir/build.make CMakeFiles/test_connection_enhanced_coverage.dir/test/unit/test_connection_enhanced_coverage.cpp.s
-.PHONY : test/unit/test_connection_enhanced_coverage.cpp.s
-
 test/unit/test_connection_extended_coverage.o: test/unit/test_connection_extended_coverage.cpp.o
 .PHONY : test/unit/test_connection_extended_coverage.o
 
@@ -6421,30 +4571,6 @@ test/unit/test_connection_extended_coverage.s: test/unit/test_connection_extende
 test/unit/test_connection_extended_coverage.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_extended_coverage.dir/build.make CMakeFiles/test_connection_extended_coverage.dir/test/unit/test_connection_extended_coverage.cpp.s
 .PHONY : test/unit/test_connection_extended_coverage.cpp.s
-
-test/unit/test_connection_full_api_coverage.o: test/unit/test_connection_full_api_coverage.cpp.o
-.PHONY : test/unit/test_connection_full_api_coverage.o
-
-# target to build an object file
-test/unit/test_connection_full_api_coverage.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/test/unit/test_connection_full_api_coverage.cpp.o
-.PHONY : test/unit/test_connection_full_api_coverage.cpp.o
-
-test/unit/test_connection_full_api_coverage.i: test/unit/test_connection_full_api_coverage.cpp.i
-.PHONY : test/unit/test_connection_full_api_coverage.i
-
-# target to preprocess a source file
-test/unit/test_connection_full_api_coverage.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/test/unit/test_connection_full_api_coverage.cpp.i
-.PHONY : test/unit/test_connection_full_api_coverage.cpp.i
-
-test/unit/test_connection_full_api_coverage.s: test/unit/test_connection_full_api_coverage.cpp.s
-.PHONY : test/unit/test_connection_full_api_coverage.s
-
-# target to generate assembly for a file
-test/unit/test_connection_full_api_coverage.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_full_api_coverage.dir/build.make CMakeFiles/test_connection_full_api_coverage.dir/test/unit/test_connection_full_api_coverage.cpp.s
-.PHONY : test/unit/test_connection_full_api_coverage.cpp.s
 
 test/unit/test_connection_full_coverage.o: test/unit/test_connection_full_coverage.cpp.o
 .PHONY : test/unit/test_connection_full_coverage.o
@@ -6493,30 +4619,6 @@ test/unit/test_connection_lifecycle.s: test/unit/test_connection_lifecycle.cpp.s
 test/unit/test_connection_lifecycle.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_lifecycle.dir/build.make CMakeFiles/test_connection_lifecycle.dir/test/unit/test_connection_lifecycle.cpp.s
 .PHONY : test/unit/test_connection_lifecycle.cpp.s
-
-test/unit/test_connection_websocket_integration.o: test/unit/test_connection_websocket_integration.cpp.o
-.PHONY : test/unit/test_connection_websocket_integration.o
-
-# target to build an object file
-test/unit/test_connection_websocket_integration.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/test/unit/test_connection_websocket_integration.cpp.o
-.PHONY : test/unit/test_connection_websocket_integration.cpp.o
-
-test/unit/test_connection_websocket_integration.i: test/unit/test_connection_websocket_integration.cpp.i
-.PHONY : test/unit/test_connection_websocket_integration.i
-
-# target to preprocess a source file
-test/unit/test_connection_websocket_integration.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/test/unit/test_connection_websocket_integration.cpp.i
-.PHONY : test/unit/test_connection_websocket_integration.cpp.i
-
-test/unit/test_connection_websocket_integration.s: test/unit/test_connection_websocket_integration.cpp.s
-.PHONY : test/unit/test_connection_websocket_integration.s
-
-# target to generate assembly for a file
-test/unit/test_connection_websocket_integration.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_websocket_integration.dir/build.make CMakeFiles/test_connection_websocket_integration.dir/test/unit/test_connection_websocket_integration.cpp.s
-.PHONY : test/unit/test_connection_websocket_integration.cpp.s
 
 test/unit/test_context_simple.o: test/unit/test_context_simple.cpp.o
 .PHONY : test/unit/test_context_simple.o
@@ -7118,54 +5220,6 @@ test/unit/test_sendfile_timeout.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_sendfile_timeout.dir/build.make CMakeFiles/test_sendfile_timeout.dir/test/unit/test_sendfile_timeout.cpp.s
 .PHONY : test/unit/test_sendfile_timeout.cpp.s
 
-test/unit/test_server_api_coverage.o: test/unit/test_server_api_coverage.cpp.o
-.PHONY : test/unit/test_server_api_coverage.o
-
-# target to build an object file
-test/unit/test_server_api_coverage.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/test/unit/test_server_api_coverage.cpp.o
-.PHONY : test/unit/test_server_api_coverage.cpp.o
-
-test/unit/test_server_api_coverage.i: test/unit/test_server_api_coverage.cpp.i
-.PHONY : test/unit/test_server_api_coverage.i
-
-# target to preprocess a source file
-test/unit/test_server_api_coverage.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/test/unit/test_server_api_coverage.cpp.i
-.PHONY : test/unit/test_server_api_coverage.cpp.i
-
-test/unit/test_server_api_coverage.s: test/unit/test_server_api_coverage.cpp.s
-.PHONY : test/unit/test_server_api_coverage.s
-
-# target to generate assembly for a file
-test/unit/test_server_api_coverage.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_api_coverage.dir/build.make CMakeFiles/test_server_api_coverage.dir/test/unit/test_server_api_coverage.cpp.s
-.PHONY : test/unit/test_server_api_coverage.cpp.s
-
-test/unit/test_server_error_coverage.o: test/unit/test_server_error_coverage.cpp.o
-.PHONY : test/unit/test_server_error_coverage.o
-
-# target to build an object file
-test/unit/test_server_error_coverage.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/test/unit/test_server_error_coverage.cpp.o
-.PHONY : test/unit/test_server_error_coverage.cpp.o
-
-test/unit/test_server_error_coverage.i: test/unit/test_server_error_coverage.cpp.i
-.PHONY : test/unit/test_server_error_coverage.i
-
-# target to preprocess a source file
-test/unit/test_server_error_coverage.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/test/unit/test_server_error_coverage.cpp.i
-.PHONY : test/unit/test_server_error_coverage.cpp.i
-
-test/unit/test_server_error_coverage.s: test/unit/test_server_error_coverage.cpp.s
-.PHONY : test/unit/test_server_error_coverage.s
-
-# target to generate assembly for a file
-test/unit/test_server_error_coverage.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_error_coverage.dir/build.make CMakeFiles/test_server_error_coverage.dir/test/unit/test_server_error_coverage.cpp.s
-.PHONY : test/unit/test_server_error_coverage.cpp.s
-
 test/unit/test_server_rate_limit_full_coverage.o: test/unit/test_server_rate_limit_full_coverage.cpp.o
 .PHONY : test/unit/test_server_rate_limit_full_coverage.o
 
@@ -7189,30 +5243,6 @@ test/unit/test_server_rate_limit_full_coverage.s: test/unit/test_server_rate_lim
 test/unit/test_server_rate_limit_full_coverage.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_rate_limit_full_coverage.dir/build.make CMakeFiles/test_server_rate_limit_full_coverage.dir/test/unit/test_server_rate_limit_full_coverage.cpp.s
 .PHONY : test/unit/test_server_rate_limit_full_coverage.cpp.s
-
-test/unit/test_server_simple_api_coverage.o: test/unit/test_server_simple_api_coverage.cpp.o
-.PHONY : test/unit/test_server_simple_api_coverage.o
-
-# target to build an object file
-test/unit/test_server_simple_api_coverage.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/test/unit/test_server_simple_api_coverage.cpp.o
-.PHONY : test/unit/test_server_simple_api_coverage.cpp.o
-
-test/unit/test_server_simple_api_coverage.i: test/unit/test_server_simple_api_coverage.cpp.i
-.PHONY : test/unit/test_server_simple_api_coverage.i
-
-# target to preprocess a source file
-test/unit/test_server_simple_api_coverage.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/test/unit/test_server_simple_api_coverage.cpp.i
-.PHONY : test/unit/test_server_simple_api_coverage.cpp.i
-
-test/unit/test_server_simple_api_coverage.s: test/unit/test_server_simple_api_coverage.cpp.s
-.PHONY : test/unit/test_server_simple_api_coverage.s
-
-# target to generate assembly for a file
-test/unit/test_server_simple_api_coverage.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_server_simple_api_coverage.dir/build.make CMakeFiles/test_server_simple_api_coverage.dir/test/unit/test_server_simple_api_coverage.cpp.s
-.PHONY : test/unit/test_server_simple_api_coverage.cpp.s
 
 test/unit/test_server_simple_handlers_coverage.o: test/unit/test_server_simple_handlers_coverage.cpp.o
 .PHONY : test/unit/test_server_simple_handlers_coverage.o
@@ -7454,54 +5484,6 @@ test/unit/test_stress.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_stress.dir/build.make CMakeFiles/test_stress.dir/test/unit/test_stress.cpp.s
 .PHONY : test/unit/test_stress.cpp.s
 
-test/unit/test_tls_api_coverage.o: test/unit/test_tls_api_coverage.cpp.o
-.PHONY : test/unit/test_tls_api_coverage.o
-
-# target to build an object file
-test/unit/test_tls_api_coverage.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/test/unit/test_tls_api_coverage.cpp.o
-.PHONY : test/unit/test_tls_api_coverage.cpp.o
-
-test/unit/test_tls_api_coverage.i: test/unit/test_tls_api_coverage.cpp.i
-.PHONY : test/unit/test_tls_api_coverage.i
-
-# target to preprocess a source file
-test/unit/test_tls_api_coverage.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/test/unit/test_tls_api_coverage.cpp.i
-.PHONY : test/unit/test_tls_api_coverage.cpp.i
-
-test/unit/test_tls_api_coverage.s: test/unit/test_tls_api_coverage.cpp.s
-.PHONY : test/unit/test_tls_api_coverage.s
-
-# target to generate assembly for a file
-test/unit/test_tls_api_coverage.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_api_coverage.dir/build.make CMakeFiles/test_tls_api_coverage.dir/test/unit/test_tls_api_coverage.cpp.s
-.PHONY : test/unit/test_tls_api_coverage.cpp.s
-
-test/unit/test_tls_null_coverage.o: test/unit/test_tls_null_coverage.cpp.o
-.PHONY : test/unit/test_tls_null_coverage.o
-
-# target to build an object file
-test/unit/test_tls_null_coverage.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/test/unit/test_tls_null_coverage.cpp.o
-.PHONY : test/unit/test_tls_null_coverage.cpp.o
-
-test/unit/test_tls_null_coverage.i: test/unit/test_tls_null_coverage.cpp.i
-.PHONY : test/unit/test_tls_null_coverage.i
-
-# target to preprocess a source file
-test/unit/test_tls_null_coverage.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/test/unit/test_tls_null_coverage.cpp.i
-.PHONY : test/unit/test_tls_null_coverage.cpp.i
-
-test/unit/test_tls_null_coverage.s: test/unit/test_tls_null_coverage.cpp.s
-.PHONY : test/unit/test_tls_null_coverage.s
-
-# target to generate assembly for a file
-test/unit/test_tls_null_coverage.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_tls_null_coverage.dir/build.make CMakeFiles/test_tls_null_coverage.dir/test/unit/test_tls_null_coverage.cpp.s
-.PHONY : test/unit/test_tls_null_coverage.cpp.s
-
 test/unit/test_utils_api_coverage.o: test/unit/test_utils_api_coverage.cpp.o
 .PHONY : test/unit/test_utils_api_coverage.o
 
@@ -7574,150 +5556,6 @@ test/unit/test_validation_full_coverage.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_validation_full_coverage.dir/build.make CMakeFiles/test_validation_full_coverage.dir/test/unit/test_validation_full_coverage.cpp.s
 .PHONY : test/unit/test_validation_full_coverage.cpp.s
 
-test/unit/test_websocket_api_coverage.o: test/unit/test_websocket_api_coverage.cpp.o
-.PHONY : test/unit/test_websocket_api_coverage.o
-
-# target to build an object file
-test/unit/test_websocket_api_coverage.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/test/unit/test_websocket_api_coverage.cpp.o
-.PHONY : test/unit/test_websocket_api_coverage.cpp.o
-
-test/unit/test_websocket_api_coverage.i: test/unit/test_websocket_api_coverage.cpp.i
-.PHONY : test/unit/test_websocket_api_coverage.i
-
-# target to preprocess a source file
-test/unit/test_websocket_api_coverage.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/test/unit/test_websocket_api_coverage.cpp.i
-.PHONY : test/unit/test_websocket_api_coverage.cpp.i
-
-test/unit/test_websocket_api_coverage.s: test/unit/test_websocket_api_coverage.cpp.s
-.PHONY : test/unit/test_websocket_api_coverage.s
-
-# target to generate assembly for a file
-test/unit/test_websocket_api_coverage.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_api_coverage.dir/build.make CMakeFiles/test_websocket_api_coverage.dir/test/unit/test_websocket_api_coverage.cpp.s
-.PHONY : test/unit/test_websocket_api_coverage.cpp.s
-
-test/unit/test_websocket_enhanced_full_coverage.o: test/unit/test_websocket_enhanced_full_coverage.cpp.o
-.PHONY : test/unit/test_websocket_enhanced_full_coverage.o
-
-# target to build an object file
-test/unit/test_websocket_enhanced_full_coverage.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/test/unit/test_websocket_enhanced_full_coverage.cpp.o
-.PHONY : test/unit/test_websocket_enhanced_full_coverage.cpp.o
-
-test/unit/test_websocket_enhanced_full_coverage.i: test/unit/test_websocket_enhanced_full_coverage.cpp.i
-.PHONY : test/unit/test_websocket_enhanced_full_coverage.i
-
-# target to preprocess a source file
-test/unit/test_websocket_enhanced_full_coverage.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/test/unit/test_websocket_enhanced_full_coverage.cpp.i
-.PHONY : test/unit/test_websocket_enhanced_full_coverage.cpp.i
-
-test/unit/test_websocket_enhanced_full_coverage.s: test/unit/test_websocket_enhanced_full_coverage.cpp.s
-.PHONY : test/unit/test_websocket_enhanced_full_coverage.s
-
-# target to generate assembly for a file
-test/unit/test_websocket_enhanced_full_coverage.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_enhanced_full_coverage.dir/build.make CMakeFiles/test_websocket_enhanced_full_coverage.dir/test/unit/test_websocket_enhanced_full_coverage.cpp.s
-.PHONY : test/unit/test_websocket_enhanced_full_coverage.cpp.s
-
-test/unit/test_websocket_full_coverage.o: test/unit/test_websocket_full_coverage.cpp.o
-.PHONY : test/unit/test_websocket_full_coverage.o
-
-# target to build an object file
-test/unit/test_websocket_full_coverage.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/test/unit/test_websocket_full_coverage.cpp.o
-.PHONY : test/unit/test_websocket_full_coverage.cpp.o
-
-test/unit/test_websocket_full_coverage.i: test/unit/test_websocket_full_coverage.cpp.i
-.PHONY : test/unit/test_websocket_full_coverage.i
-
-# target to preprocess a source file
-test/unit/test_websocket_full_coverage.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/test/unit/test_websocket_full_coverage.cpp.i
-.PHONY : test/unit/test_websocket_full_coverage.cpp.i
-
-test/unit/test_websocket_full_coverage.s: test/unit/test_websocket_full_coverage.cpp.s
-.PHONY : test/unit/test_websocket_full_coverage.s
-
-# target to generate assembly for a file
-test/unit/test_websocket_full_coverage.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_full_coverage.dir/build.make CMakeFiles/test_websocket_full_coverage.dir/test/unit/test_websocket_full_coverage.cpp.s
-.PHONY : test/unit/test_websocket_full_coverage.cpp.s
-
-test/unit/test_websocket_native_full_coverage.o: test/unit/test_websocket_native_full_coverage.cpp.o
-.PHONY : test/unit/test_websocket_native_full_coverage.o
-
-# target to build an object file
-test/unit/test_websocket_native_full_coverage.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/test/unit/test_websocket_native_full_coverage.cpp.o
-.PHONY : test/unit/test_websocket_native_full_coverage.cpp.o
-
-test/unit/test_websocket_native_full_coverage.i: test/unit/test_websocket_native_full_coverage.cpp.i
-.PHONY : test/unit/test_websocket_native_full_coverage.i
-
-# target to preprocess a source file
-test/unit/test_websocket_native_full_coverage.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/test/unit/test_websocket_native_full_coverage.cpp.i
-.PHONY : test/unit/test_websocket_native_full_coverage.cpp.i
-
-test/unit/test_websocket_native_full_coverage.s: test/unit/test_websocket_native_full_coverage.cpp.s
-.PHONY : test/unit/test_websocket_native_full_coverage.s
-
-# target to generate assembly for a file
-test/unit/test_websocket_native_full_coverage.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_full_coverage.dir/build.make CMakeFiles/test_websocket_native_full_coverage.dir/test/unit/test_websocket_native_full_coverage.cpp.s
-.PHONY : test/unit/test_websocket_native_full_coverage.cpp.s
-
-test/unit/test_websocket_native_simple.o: test/unit/test_websocket_native_simple.cpp.o
-.PHONY : test/unit/test_websocket_native_simple.o
-
-# target to build an object file
-test/unit/test_websocket_native_simple.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/test/unit/test_websocket_native_simple.cpp.o
-.PHONY : test/unit/test_websocket_native_simple.cpp.o
-
-test/unit/test_websocket_native_simple.i: test/unit/test_websocket_native_simple.cpp.i
-.PHONY : test/unit/test_websocket_native_simple.i
-
-# target to preprocess a source file
-test/unit/test_websocket_native_simple.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/test/unit/test_websocket_native_simple.cpp.i
-.PHONY : test/unit/test_websocket_native_simple.cpp.i
-
-test/unit/test_websocket_native_simple.s: test/unit/test_websocket_native_simple.cpp.s
-.PHONY : test/unit/test_websocket_native_simple.s
-
-# target to generate assembly for a file
-test/unit/test_websocket_native_simple.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_native_simple.dir/build.make CMakeFiles/test_websocket_native_simple.dir/test/unit/test_websocket_native_simple.cpp.s
-.PHONY : test/unit/test_websocket_native_simple.cpp.s
-
-test/unit/test_websocket_null_coverage.o: test/unit/test_websocket_null_coverage.cpp.o
-.PHONY : test/unit/test_websocket_null_coverage.o
-
-# target to build an object file
-test/unit/test_websocket_null_coverage.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/test/unit/test_websocket_null_coverage.cpp.o
-.PHONY : test/unit/test_websocket_null_coverage.cpp.o
-
-test/unit/test_websocket_null_coverage.i: test/unit/test_websocket_null_coverage.cpp.i
-.PHONY : test/unit/test_websocket_null_coverage.i
-
-# target to preprocess a source file
-test/unit/test_websocket_null_coverage.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/test/unit/test_websocket_null_coverage.cpp.i
-.PHONY : test/unit/test_websocket_null_coverage.cpp.i
-
-test/unit/test_websocket_null_coverage.s: test/unit/test_websocket_null_coverage.cpp.s
-.PHONY : test/unit/test_websocket_null_coverage.s
-
-# target to generate assembly for a file
-test/unit/test_websocket_null_coverage.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_websocket_null_coverage.dir/build.make CMakeFiles/test_websocket_null_coverage.dir/test/unit/test_websocket_null_coverage.cpp.s
-.PHONY : test/unit/test_websocket_null_coverage.cpp.s
-
 test/unit/test_whitelist_hash.o: test/unit/test_whitelist_hash.cpp.o
 .PHONY : test/unit/test_whitelist_hash.o
 
@@ -7765,14 +5603,10 @@ help:
 	@echo "... test_cmocka_simple"
 	@echo "... test_concurrency_e2e"
 	@echo "... test_config_enhanced_coverage"
-	@echo "... test_connection_api_coverage"
 	@echo "... test_connection_comprehensive_coverage"
-	@echo "... test_connection_enhanced_coverage"
 	@echo "... test_connection_extended_coverage"
-	@echo "... test_connection_full_api_coverage"
 	@echo "... test_connection_full_coverage"
 	@echo "... test_connection_lifecycle"
-	@echo "... test_connection_websocket_integration"
 	@echo "... test_context_simple"
 	@echo "... test_death"
 	@echo "... test_error_api_coverage"
@@ -7806,10 +5640,7 @@ help:
 	@echo "... test_router_extended_coverage"
 	@echo "... test_router_full_coverage"
 	@echo "... test_sendfile_timeout"
-	@echo "... test_server_api_coverage"
-	@echo "... test_server_error_coverage"
 	@echo "... test_server_rate_limit_full_coverage"
-	@echo "... test_server_simple_api_coverage"
 	@echo "... test_server_simple_handlers_coverage"
 	@echo "... test_simple"
 	@echo "... test_simple_main"
@@ -7822,22 +5653,9 @@ help:
 	@echo "... test_static_files_e2e"
 	@echo "... test_static_more_coverage"
 	@echo "... test_stress"
-	@echo "... test_tls_api_coverage"
-	@echo "... test_tls_e2e"
-	@echo "... test_tls_null_coverage"
-	@echo "... test_tls_simple"
 	@echo "... test_utils_api_coverage"
 	@echo "... test_utils_full_coverage"
 	@echo "... test_validation_full_coverage"
-	@echo "... test_websocket_api_coverage"
-	@echo "... test_websocket_callback"
-	@echo "... test_websocket_e2e"
-	@echo "... test_websocket_enhanced_full_coverage"
-	@echo "... test_websocket_full_coverage"
-	@echo "... test_websocket_integration"
-	@echo "... test_websocket_native_full_coverage"
-	@echo "... test_websocket_native_simple"
-	@echo "... test_websocket_null_coverage"
 	@echo "... test_whitelist_hash"
 	@echo "... uvhttp"
 	@echo "... uvhttp_unit_tests"
@@ -7892,18 +5710,12 @@ help:
 	@echo "... src/uvhttp_static.o"
 	@echo "... src/uvhttp_static.i"
 	@echo "... src/uvhttp_static.s"
-	@echo "... src/uvhttp_tls.o"
-	@echo "... src/uvhttp_tls.i"
-	@echo "... src/uvhttp_tls.s"
 	@echo "... src/uvhttp_utils.o"
 	@echo "... src/uvhttp_utils.i"
 	@echo "... src/uvhttp_utils.s"
 	@echo "... src/uvhttp_version.o"
 	@echo "... src/uvhttp_version.i"
 	@echo "... src/uvhttp_version.s"
-	@echo "... src/uvhttp_websocket.o"
-	@echo "... src/uvhttp_websocket.i"
-	@echo "... src/uvhttp_websocket.s"
 	@echo "... test/integration/test_concurrency_e2e.o"
 	@echo "... test/integration/test_concurrency_e2e.i"
 	@echo "... test/integration/test_concurrency_e2e.s"
@@ -7937,21 +5749,6 @@ help:
 	@echo "... test/integration/test_static_files_e2e.o"
 	@echo "... test/integration/test_static_files_e2e.i"
 	@echo "... test/integration/test_static_files_e2e.s"
-	@echo "... test/integration/test_tls_e2e.o"
-	@echo "... test/integration/test_tls_e2e.i"
-	@echo "... test/integration/test_tls_e2e.s"
-	@echo "... test/integration/test_tls_simple.o"
-	@echo "... test/integration/test_tls_simple.i"
-	@echo "... test/integration/test_tls_simple.s"
-	@echo "... test/integration/test_websocket_callback.o"
-	@echo "... test/integration/test_websocket_callback.i"
-	@echo "... test/integration/test_websocket_callback.s"
-	@echo "... test/integration/test_websocket_e2e.o"
-	@echo "... test/integration/test_websocket_e2e.i"
-	@echo "... test/integration/test_websocket_e2e.s"
-	@echo "... test/integration/test_websocket_integration.o"
-	@echo "... test/integration/test_websocket_integration.i"
-	@echo "... test/integration/test_websocket_integration.s"
 	@echo "... test/mock/libuv_mock.o"
 	@echo "... test/mock/libuv_mock.i"
 	@echo "... test/mock/libuv_mock.s"
@@ -7967,30 +5764,18 @@ help:
 	@echo "... test/unit/test_config_enhanced_coverage.o"
 	@echo "... test/unit/test_config_enhanced_coverage.i"
 	@echo "... test/unit/test_config_enhanced_coverage.s"
-	@echo "... test/unit/test_connection_api_coverage.o"
-	@echo "... test/unit/test_connection_api_coverage.i"
-	@echo "... test/unit/test_connection_api_coverage.s"
 	@echo "... test/unit/test_connection_comprehensive_coverage.o"
 	@echo "... test/unit/test_connection_comprehensive_coverage.i"
 	@echo "... test/unit/test_connection_comprehensive_coverage.s"
-	@echo "... test/unit/test_connection_enhanced_coverage.o"
-	@echo "... test/unit/test_connection_enhanced_coverage.i"
-	@echo "... test/unit/test_connection_enhanced_coverage.s"
 	@echo "... test/unit/test_connection_extended_coverage.o"
 	@echo "... test/unit/test_connection_extended_coverage.i"
 	@echo "... test/unit/test_connection_extended_coverage.s"
-	@echo "... test/unit/test_connection_full_api_coverage.o"
-	@echo "... test/unit/test_connection_full_api_coverage.i"
-	@echo "... test/unit/test_connection_full_api_coverage.s"
 	@echo "... test/unit/test_connection_full_coverage.o"
 	@echo "... test/unit/test_connection_full_coverage.i"
 	@echo "... test/unit/test_connection_full_coverage.s"
 	@echo "... test/unit/test_connection_lifecycle.o"
 	@echo "... test/unit/test_connection_lifecycle.i"
 	@echo "... test/unit/test_connection_lifecycle.s"
-	@echo "... test/unit/test_connection_websocket_integration.o"
-	@echo "... test/unit/test_connection_websocket_integration.i"
-	@echo "... test/unit/test_connection_websocket_integration.s"
 	@echo "... test/unit/test_context_simple.o"
 	@echo "... test/unit/test_context_simple.i"
 	@echo "... test/unit/test_context_simple.s"
@@ -8066,18 +5851,9 @@ help:
 	@echo "... test/unit/test_sendfile_timeout.o"
 	@echo "... test/unit/test_sendfile_timeout.i"
 	@echo "... test/unit/test_sendfile_timeout.s"
-	@echo "... test/unit/test_server_api_coverage.o"
-	@echo "... test/unit/test_server_api_coverage.i"
-	@echo "... test/unit/test_server_api_coverage.s"
-	@echo "... test/unit/test_server_error_coverage.o"
-	@echo "... test/unit/test_server_error_coverage.i"
-	@echo "... test/unit/test_server_error_coverage.s"
 	@echo "... test/unit/test_server_rate_limit_full_coverage.o"
 	@echo "... test/unit/test_server_rate_limit_full_coverage.i"
 	@echo "... test/unit/test_server_rate_limit_full_coverage.s"
-	@echo "... test/unit/test_server_simple_api_coverage.o"
-	@echo "... test/unit/test_server_simple_api_coverage.i"
-	@echo "... test/unit/test_server_simple_api_coverage.s"
 	@echo "... test/unit/test_server_simple_handlers_coverage.o"
 	@echo "... test/unit/test_server_simple_handlers_coverage.i"
 	@echo "... test/unit/test_server_simple_handlers_coverage.s"
@@ -8108,12 +5884,6 @@ help:
 	@echo "... test/unit/test_stress.o"
 	@echo "... test/unit/test_stress.i"
 	@echo "... test/unit/test_stress.s"
-	@echo "... test/unit/test_tls_api_coverage.o"
-	@echo "... test/unit/test_tls_api_coverage.i"
-	@echo "... test/unit/test_tls_api_coverage.s"
-	@echo "... test/unit/test_tls_null_coverage.o"
-	@echo "... test/unit/test_tls_null_coverage.i"
-	@echo "... test/unit/test_tls_null_coverage.s"
 	@echo "... test/unit/test_utils_api_coverage.o"
 	@echo "... test/unit/test_utils_api_coverage.i"
 	@echo "... test/unit/test_utils_api_coverage.s"
@@ -8123,24 +5893,6 @@ help:
 	@echo "... test/unit/test_validation_full_coverage.o"
 	@echo "... test/unit/test_validation_full_coverage.i"
 	@echo "... test/unit/test_validation_full_coverage.s"
-	@echo "... test/unit/test_websocket_api_coverage.o"
-	@echo "... test/unit/test_websocket_api_coverage.i"
-	@echo "... test/unit/test_websocket_api_coverage.s"
-	@echo "... test/unit/test_websocket_enhanced_full_coverage.o"
-	@echo "... test/unit/test_websocket_enhanced_full_coverage.i"
-	@echo "... test/unit/test_websocket_enhanced_full_coverage.s"
-	@echo "... test/unit/test_websocket_full_coverage.o"
-	@echo "... test/unit/test_websocket_full_coverage.i"
-	@echo "... test/unit/test_websocket_full_coverage.s"
-	@echo "... test/unit/test_websocket_native_full_coverage.o"
-	@echo "... test/unit/test_websocket_native_full_coverage.i"
-	@echo "... test/unit/test_websocket_native_full_coverage.s"
-	@echo "... test/unit/test_websocket_native_simple.o"
-	@echo "... test/unit/test_websocket_native_simple.i"
-	@echo "... test/unit/test_websocket_native_simple.s"
-	@echo "... test/unit/test_websocket_null_coverage.o"
-	@echo "... test/unit/test_websocket_null_coverage.i"
-	@echo "... test/unit/test_websocket_null_coverage.s"
 	@echo "... test/unit/test_whitelist_hash.o"
 	@echo "... test/unit/test_whitelist_hash.i"
 	@echo "... test/unit/test_whitelist_hash.s"
