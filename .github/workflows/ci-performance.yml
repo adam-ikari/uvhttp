@@ -55,8 +55,8 @@ jobs:
           # 使用 Docker 容器隔离环境
           docker run --rm --privileged \
             --cpuset-cpus=0-3 \
-            --memory=16g \
-            --memory-swap=16g \
+            --memory=32g \
+            --memory-swap=32g \
             --network=host \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
