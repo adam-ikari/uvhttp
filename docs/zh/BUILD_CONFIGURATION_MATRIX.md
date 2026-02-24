@@ -436,21 +436,10 @@ cmake -DCMAKE_BUILD_TYPE=MinSizeRel \
   - 编译 benchmark/ 目录下的所有性能测试程序
   - 生成可执行文件到 build/dist/bin/
   - 包含以下测试程序：
-    - `benchmark_rps` - RPS 性能测试服务器
-    - `benchmark_rps_many_routes` - 大量路由场景测试
-    - `benchmark_rps_150_routes` - 150 路由场景测试
-    - `benchmark_latency` - 延迟测试
-    - `benchmark_connection` - 连接性能测试
-    - `benchmark_memory` - 内存使用测试
-    - `benchmark_comprehensive` - 综合性能测试
-    - `benchmark_file_transfer` - 文件传输测试
-    - `benchmark_router` - 路由器性能测试
-    - `benchmark_router_simple` - 简单路由器测试
-    - `benchmark_router_comparison` - 路由器对比测试
-    - `benchmark_router_simple_comparison` - 简单路由器对比测试
-    - `benchmark_router_minimal` - 最小路由器测试
-    - `benchmark_database_simulation` - 数据库访问模拟测试
-    - `benchmark_file_upload` - 文件上传测试
+    - `benchmark_unified` - 综合性能测试服务器（包含所有测试场景）
+    - `performance_allocator` - 内存分配器性能测试
+    - `performance_allocator_compare` - 内存分配器对比测试
+    - `test_bitfield` - 位域性能测试
 
 ## 内存分配器配置
 
@@ -818,23 +807,15 @@ make -j$(nproc)
 编译特定性能测试程序：
 
 ```bash
-make benchmark_rps
-make benchmark_latency
-make benchmark_comprehensive
+make benchmark_unified
 ```
 
 ### 运行性能测试
 
-运行 RPS 测试：
-
-```bash
-./build/dist/bin/benchmark_rps 18081
-```
-
 运行综合性能测试：
 
 ```bash
-./build/dist/bin/benchmark_comprehensive 18082
+./build/dist/bin/benchmark_unified 18081
 ```
 
 使用 wrk 进行压力测试：

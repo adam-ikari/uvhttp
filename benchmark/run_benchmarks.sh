@@ -222,10 +222,10 @@ compile_benchmark_server() {
     fi
     
     cd "$BUILD_DIR"
-    make -j$(nproc) benchmark_rps
+    make -j$(nproc) benchmark_unified
     
-    if [ ! -f "$BENCHMARK_DIR/benchmark_rps" ]; then
-        log_error "benchmark_rps 编译失败"
+    if [ ! -f "$BENCHMARK_DIR/benchmark_unified" ]; then
+        log_error "benchmark_unified 编译失败"
         exit 1
     fi
     
@@ -238,7 +238,7 @@ start_server() {
     
     log_info "启动测试服务器 (端口: $port)..."
     
-    "$BENCHMARK_DIR/benchmark_rps" $port > "$RUN_DIR/server.log" 2>&1 &
+    "$BENCHMARK_DIR/benchmark_unified" $port > "$RUN_DIR/server.log" 2>&1 &
     local server_pid=$!
     
     # 等待服务器启动
@@ -615,7 +615,7 @@ EOF
 
 \`\`\`bash
 # 启动服务器
-./build/dist/bin/benchmark_rps 18081
+./build/dist/bin/benchmark_unified 18081
 
 # 使用 wrk 测试
 wrk -t4 -c100 -d30s http://127.0.0.1:18081/

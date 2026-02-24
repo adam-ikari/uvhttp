@@ -1194,7 +1194,7 @@ develop → main → pre-release → release
 
 ```bash
 # 启动测试服务器
-./build/dist/bin/benchmark_rps &
+./build/dist/bin/benchmark_unified &
 SERVER_PID=$!
 sleep 3
 
