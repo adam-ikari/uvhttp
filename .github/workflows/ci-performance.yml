@@ -99,9 +99,7 @@ jobs:
               echo '=== 初始化子模块 ==='
               # 添加安全目录以避免 git dubious ownership 错误
               git config --global --add safe.directory /workspace
-              for dir in deps/*; do
-                git config --global --add safe.directory /workspace/$dir
-              done
+              git config --global --add safe.directory '*'
               git submodule update --init --recursive
               
               # 编译项目
