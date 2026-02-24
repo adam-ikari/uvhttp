@@ -345,6 +345,7 @@ jobs:
               
               # 初始化子模块
               git config --global --add safe.directory /workspace
+              git config --global --add safe.directory '*'
               git submodule update --init --recursive || true
               
               mkdir -p build && cd build
@@ -390,6 +391,7 @@ jobs:
               
               # 初始化子模块
               git config --global --add safe.directory /workspace
+              git config --global --add safe.directory '*'
               git submodule update --init --recursive || true
               
               mkdir -p build && cd build
