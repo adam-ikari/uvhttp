@@ -107,11 +107,14 @@ jobs:
               mkdir -p build
               cd build
               # 禁用 HTTPS/TLS 和 WebSocket 以加快编译速度并避免 mbedtls 依赖问题
+              # 减少最大连接数和缓冲区大小以降低内存使用
               cmake -DCMAKE_BUILD_TYPE=Release \
                     -DCMAKE_C_FLAGS="-Wno-format-truncation" \
                     -DCMAKE_CXX_FLAGS="-Wno-format-truncation" \
                     -DBUILD_WITH_HTTPS=OFF \
-                    -DBUILD_WITH_WEBSOCKET=OFF ..
+                    -DBUILD_WITH_WEBSOCKET=OFF \
+                    -DUVHTTP_MAX_CONNECTIONS_DEFAULT=512 \
+                    -DUVHTTP_DEFAULT_READ_BUFFER_SIZE=8192 ..
               # 更新依赖子模块并编译
               make -j\$(nproc) benchmark_unified
               
@@ -352,7 +355,9 @@ jobs:
               cmake -DCMAKE_BUILD_TYPE=Release \
                     -DCMAKE_C_FLAGS="-Wno-format-truncation" \
                     -DCMAKE_CXX_FLAGS="-Wno-format-truncation" \
-                    -DBUILD_WITH_TLS=OFF ..
+                    -DBUILD_WITH_TLS=OFF \
+                    -DUVHTTP_MAX_CONNECTIONS_DEFAULT=512 \
+                    -DUVHTTP_DEFAULT_READ_BUFFER_SIZE=8192 ..
               make -j\$(nproc) benchmark_database_simulation
               
               # 启动数据库模拟服务器
@@ -401,7 +406,9 @@ jobs:
               cmake -DCMAKE_BUILD_TYPE=Release \
                     -DCMAKE_C_FLAGS="-Wno-format-truncation" \
                     -DCMAKE_CXX_FLAGS="-Wno-format-truncation" \
-                    -DBUILD_WITH_TLS=OFF ..
+                    -DBUILD_WITH_TLS=OFF \
+                    -DUVHTTP_MAX_CONNECTIONS_DEFAULT=512 \
+                    -DUVHTTP_DEFAULT_READ_BUFFER_SIZE=8192 ..
               make -j\$(nproc) benchmark_file_upload
               
               # 启动文件上传服务器
