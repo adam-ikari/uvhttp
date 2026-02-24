@@ -349,7 +349,10 @@ jobs:
               git submodule update --init --recursive || true
               
               mkdir -p build && cd build
-              cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_TLS=OFF ..
+              cmake -DCMAKE_BUILD_TYPE=Release \
+                    -DCMAKE_C_FLAGS="-Wno-format-truncation" \
+                    -DCMAKE_CXX_FLAGS="-Wno-format-truncation" \
+                    -DBUILD_WITH_TLS=OFF ..
               make -j\$(nproc) benchmark_database_simulation
               
               # 启动数据库模拟服务器
@@ -395,7 +398,10 @@ jobs:
               git submodule update --init --recursive || true
               
               mkdir -p build && cd build
-              cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_TLS=OFF ..
+              cmake -DCMAKE_BUILD_TYPE=Release \
+                    -DCMAKE_C_FLAGS="-Wno-format-truncation" \
+                    -DCMAKE_CXX_FLAGS="-Wno-format-truncation" \
+                    -DBUILD_WITH_TLS=OFF ..
               make -j\$(nproc) benchmark_file_upload
               
               # 启动文件上传服务器
