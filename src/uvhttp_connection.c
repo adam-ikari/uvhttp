@@ -440,7 +440,7 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
     c->keepalive = 1;         /* HTTP/1.1defaultkeepconnection */
     c->chunked_encoding = 0;  /* default: no chunked transmission */
     c->close_pending = 0;     /* initialize pending close handle count */
-    c->freed = 0;            /* initialize freed flag */
+    c->freed = 0;             /* initialize freed flag */
     c->content_length = 0;    /* default: no content length */
     c->body_received = 0;     // received body length
     c->parsing_complete = 0;  // parsing not complete
