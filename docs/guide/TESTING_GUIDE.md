@@ -597,18 +597,26 @@ TEST(ConnectionTest, CreateConnection) {
 
 ## 覆盖率提升策略
 
-### 当前覆盖率状况
+### 当前覆盖率状况（v2.4.2）
 
 | 模块 | 行覆盖率 | 函数覆盖率 | 优先级 |
 |------|---------|-----------|--------|
-| uvhttp_connection.c | 21.9% | 52.2% | 高 |
-| uvhttp_server.c | 10.3% | 5.6% | 高 |
-| uvhttp_static.c | 0% | 0% | 高 |
-| uvhttp_websocket.c | 0% | 0% | 高 |
-| uvhttp_router.c | 31.1% | 73.7% | 中 |
-| uvhttp_request.c | 12.3% | 11.1% | 中 |
-| uvhttp_response.c | 5.7% | 11.8% | 中 |
-| uvhttp_error.c | 1.2% | 16.7% | 中 |
+| uvhttp_connection.c | 32.2% | 60.7% | 高 |
+| uvhttp_server.c | 38.4% | 65.4% | 高 |
+| uvhttp_static.c | 17.2% | 62.5% | 高 |
+| uvhttp_websocket.c | 51.6% | 78.9% | 高 |
+| uvhttp_router.c | 32.3% | 84.2% | 中 |
+| uvhttp_request.c | 40.5% | 70.0% | 中 |
+| uvhttp_response.c | 73.0% | 85.7% | 中 |
+| uvhttp_error.c | 22.5% | 45.5% | 中 |
+| uvhttp_tls.c | 38.3% | 60.0% | 中 |
+
+**单元测试通过率**: 100% (63/63)
+
+**新增测试（v2.4.2）**:
+- `test_e2e_simple.c` - 简单的端到端测试
+- `test_e2e_real.c` - 完整的端到端测试
+- `test_https_e2e.c` - HTTPS 端到端测试
 
 ### 覆盖率提升步骤
 
