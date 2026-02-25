@@ -2,22 +2,22 @@
 # 此文件定义项目的当前版本信息
 
 # 当前版本号 (语义化版本: MAJOR.MINOR.PATCH)
-VERSION=2.4.0
+VERSION=2.4.2
 
 # 版本类型: major, minor, patch
-VERSION_TYPE=minor
+VERSION_TYPE=patch
 
 # 发布日期
-RELEASE_DATE=2026-02-12
+RELEASE_DATE=2026-02-25
 
 # 上一个版本
-PREVIOUS_VERSION=2.3.0
+PREVIOUS_VERSION=2.4.1
 
 # 下一个版本（开发中）
 NEXT_VERSION=2.5.0
 
 # 版本名称（可选）
-VERSION_NAME="CMake Export & CI/CD Improvements"
+VERSION_NAME="Comprehensive Testing & HTTPS Support"
 
 # 是否为预发布版本
 IS_PRERELEASE=false
