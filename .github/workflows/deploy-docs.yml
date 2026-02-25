@@ -48,14 +48,14 @@ jobs:
         run: |
           # Create necessary directories
           mkdir -p docs/api/html docs/api/latex docs/api/xml docs/api/.doxygen
-          
+
           # Generate Doxygen API documentation
           doxygen Doxyfile
-          
+
           # Build VitePress documentation site
           cd docs
           pnpm install
-          pnpm build
+          DEPLOY=gh-pages pnpm build
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
