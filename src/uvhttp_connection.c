@@ -540,12 +540,12 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
      * This avoids blocking the event loop with uv_run calls.
      * uvhttp_connection_close will start the async close process
      * and on_handle_close will handle the actual free.
-     * 
+     *
      * Important: We do NOT free resources here because:
      * 1. uvhttp_connection_close() sets close_pending > 0
      * 2. The close callbacks (on_handle_close) will be called later
-     * 3. on_handle_close will call uvhttp_connection_free() again
-     * 4. That second call will see close_pending == 0 and free everything
+     * 3. on_handle_close will call uvhttp_connection_free_resources()
+     * 4. uvhttp_connection_free_resources() will free all resources
      */
     uvhttp_connection_close(conn);
 
