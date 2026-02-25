@@ -55,8 +55,8 @@ jobs:
           # 使用 Docker 容器隔离环境
           docker run --rm --privileged \
             --cpuset-cpus=0-3 \
-            --memory=32g \
-            --memory-swap=32g \
+            --memory=12g \
+            --memory-swap=12g \
             --network=host \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
@@ -115,20 +115,59 @@ jobs:
               # 更新依赖子模块并编译
               make -j\$(nproc) benchmark_unified
               
-              # 验证编译成功（不再运行性能测试，避免 OOM 问题）
+              # 运行轻量级性能测试
               echo ''
-              echo '=== 验证编译结果 ==='
-              if [ -f dist/bin/benchmark_unified ]; then
-                echo '✓ benchmark_unified 编译成功'
-                echo '  文件大小: $(ls -lh dist/bin/benchmark_unified | awk '{print $5}')'
-                echo ''
-                echo '说明: 性能基准测试已简化为编译验证'
-                echo '- Database Query Simulation 和 File Upload Performance jobs 提供运行时性能测试'
-                echo '- 本地性能测试: 使用 ./build/dist/bin/benchmark_unified <port> 和 wrk 工具'
-              else
-                echo '✗ benchmark_unified 编译失败'
+              echo '=== 运行轻量级性能测试 ==='
+              cd /workspace/benchmark
+              
+              # 启动测试服务器
+              ../build/dist/bin/benchmark_unified 18081 > /tmp/server.log 2>&1 &
+              SERVER_PID=\$!
+              
+              # 等待服务器启动
+              sleep 3
+              
+              # 验证服务器是否运行
+              if ! kill -0 \$SERVER_PID 2>/dev/null; then
+                echo 'ERROR: 服务器启动失败'
+                cat /tmp/server.log
                 exit 1
               fi
+              
+              # 记录内存使用
+              echo '内存使用:'
+              ps -p \$SERVER_PID -o rss= | awk '{printf "  服务器进程: %.2f MB\n", \$1/1024}'
+              
+              # 运行低并发基准测试
+              echo '运行低并发测试 (10连接, 10秒)...'
+              wrk -t2 -c10 -d10s http://127.0.0.1:18081/ > /tmp/wrk_low.txt 2>&1
+              
+              # 运行中等并发测试
+              echo '运行中等并发测试 (50连接, 10秒)...'
+              wrk -t4 -c50 -d10s http://127.0.0.1:18081/ > /tmp/wrk_medium.txt 2>&1
+              
+              # 停止服务器
+              kill \$SERVER_PID 2>/dev/null || true
+              wait \$SERVER_PID 2>/dev/null || true
+              
+              # 提取结果
+              echo ''
+              echo '=== 测试结果 ==='
+              echo '低并发 RPS:'
+              grep 'Requests/sec' /tmp/wrk_low.txt | awk '{print \"  \" \$2}'
+              echo '中等并发 RPS:'
+              grep 'Requests/sec' /tmp/wrk_medium.txt | awk '{print \"  \" \$2}'
+              
+              # 生成 CSV 结果
+              echo ''
+              echo '=== 生成结果文件 ==='
+              cat > /tmp/results.csv << 'EOF'
+              test_name,rps
+              low_concurrent,\$(grep 'Requests/sec' /tmp/wrk_low.txt | awk '{print \$2}')
+              medium_concurrent,\$(grep 'Requests/sec' /tmp/wrk_medium.txt | awk '{print \$2}')
+              EOF
+              
+              cat /tmp/results.csv
             "
 
       - name: Performance Regression Detection
@@ -143,6 +182,8 @@ jobs:
         with:
           name: performance-results-${{ github.run_number }}
           path: |
+            /tmp/wrk_*.txt
+            /tmp/results.csv
             /tmp/server.log
           retention-days: 90
           if-no-files-found: warn
@@ -156,15 +197,25 @@ jobs:
           echo "**提交**: ${{ github.sha }}"
           echo "**分支**: ${{ github.ref_name }}"
           echo ""
-          echo "## 编译验证"
+          echo "## 测试结果"
           echo ""
-          echo "✓ benchmark_unified 编译成功"
-          echo ""
+          if [ -f /tmp/wrk_low.txt ]; then
+            echo "### 低并发测试 (2线程 / 10连接 / 10秒)"
+            grep 'Requests/sec' /tmp/wrk_low.txt | awk '{print "- RPS: " $2}'
+            grep 'Latency' /tmp/wrk_low.txt | head -1 | awk '{print "- 平均延迟: " $2}'
+            echo ""
+          fi
+          if [ -f /tmp/wrk_medium.txt ]; then
+            echo "### 中等并发测试 (4线程 / 50连接 / 10秒)"
+            grep 'Requests/sec' /tmp/wrk_medium.txt | awk '{print "- RPS: " $2}'
+            grep 'Latency' /tmp/wrk_medium.txt | head -1 | awk '{print "- 平均延迟: " $2}'
+            echo ""
+          fi
           echo "## 说明"
           echo ""
-          echo "- 性能基准测试已简化为编译验证"
-          echo "- Database Query Simulation 和 File Upload Performance jobs 仍提供运行时性能测试"
-          echo "- 本地性能测试: 使用 \`./build/dist/bin/benchmark_unified <port>\` 和 wrk 工具"
+          echo "- 轻量级性能测试：低并发和中等并发场景"
+          echo "- 高并发性能测试：请在本地运行"
+          echo "- 本地测试命令: \`./build/dist/bin/benchmark_unified <port>\` 和 wrk 工具"
           echo "---"
           echo ""
           echo "完整结果已上传到 Artifacts"
@@ -174,18 +225,27 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const fs = require('fs');
+            
             let comment = '## 🚀 性能测试结果\n\n';
             comment += `**测试时间**: ${new Date().toISOString()}\n`;
             comment += `**提交**: ${context.sha.substring(0, 7)}\n\n`;
             
-            comment += '### 编译验证\n\n';
-            comment += '✓ benchmark_unified 编译成功\n\n';
+            comment += '### 测试结果\n\n';
+            
+            // 读取结果文件
+            try {
+              const results = fs.readFileSync('/tmp/results.csv', 'utf8');
+              comment += '```\n' + results + '```\n\n';
+            } catch (e) {
+              comment += '⚠️  无法读取结果文件\n\n';
+            }
+            
             comment += '### 说明\n\n';
-            comment += '- 性能基准测试已简化为编译验证\n';
-            comment += '- Database Query Simulation 和 File Upload Performance jobs 仍提供运行时性能测试\n';
-            comment += '- 本地性能测试: 使用 `./build/dist/bin/benchmark_unified <port>` 和 wrk 工具\n';
-            comment += '---\n\n';
-            comment += '📊 完整结果: [下载 Artifacts](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n';
+            comment += '- 轻量级性能测试：低并发和中等并发场景\n';
+            comment += '- 高并发性能测试：请在本地运行\n';
+            comment += '- Database Query Simulation 和 File Upload Performance jobs 提供额外测试\n';
+            comment += '- 📊 完整结果: [下载 Artifacts](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n';
             
             // 查找或创建评论
             const { data: comments } = await github.rest.issues.listComments({
