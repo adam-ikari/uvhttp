@@ -549,12 +549,59 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
      */
     uvhttp_connection_close(conn);
 
-    /* Set freed flag to prevent double-free in case
-     * uvhttp_connection_free is called again before callbacks complete */
-    conn->freed = 1;
+    /* Do NOT set freed flag here - let the second call from on_handle_close
+     * (when close_pending == 0) do the actual resource cleanup */
 
     /* Return immediately - on_handle_close will do the actual cleanup */
     return;
+}
+
+/* Internal function to free connection resources.
+ * Called when all handles are closed (close_pending == 0). */
+static void uvhttp_connection_free_resources(uvhttp_connection_t* conn) {
+    if (!conn) {
+        return;
+    }
+
+    /* Prevent double free */
+    if (conn->freed) {
+        return;
+    }
+
+    /* Free read buffer */
+    if (conn->read_buffer) {
+        uvhttp_free(conn->read_buffer);
+        conn->read_buffer = NULL;
+    }
+
+    /* Free request object and parser */
+    if (conn->request) {
+        uvhttp_request_cleanup(conn->request);
+        uvhttp_free(conn->request);
+        conn->request = NULL;
+    }
+
+    /* Free response object */
+    if (conn->response) {
+        uvhttp_response_cleanup(conn->response);
+        uvhttp_free(conn->response);
+        conn->response = NULL;
+    }
+
+    /* Free TLS context if enabled */
+#if UVHTTP_FEATURE_TLS
+    if (conn->ssl) {
+        mbedtls_ssl_free((mbedtls_ssl_context*)conn->ssl);
+        uvhttp_free(conn->ssl);
+        conn->ssl = NULL;
+    }
+#endif
+
+    /* Set freed flag */
+    conn->freed = 1;
+
+    /* Free connection structure */
+    uvhttp_free(conn);
 }
 
 uvhttp_error_t uvhttp_connection_start(uvhttp_connection_t* conn) {
@@ -612,7 +659,7 @@ static void on_handle_close(uv_handle_t* handle) {
         }
         /* release connection resources - safe to execute in event loop thread
          */
-        uvhttp_connection_free(conn);
+        uvhttp_connection_free_resources(conn);
     }
 }
 
