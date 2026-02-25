@@ -122,6 +122,9 @@ jobs:
               echo '配置: 最大连接数=128, 缓冲区=8KB, Docker内存=4GB'
               cd /workspace/benchmark
               
+              # 创建测试文件目录（避免服务器启动失败）
+              mkdir -p public/file_test
+              
               # 启动测试服务器
               ../build/dist/bin/benchmark_unified 18081 > /tmp/server.log 2>&1 &
               SERVER_PID=\$!
