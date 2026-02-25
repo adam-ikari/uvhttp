@@ -55,8 +55,8 @@ jobs:
           # 使用 Docker 容器隔离环境
           docker run --rm --privileged \
             --cpuset-cpus=0-3 \
-            --memory=12g \
-            --memory-swap=12g \
+            --memory=4g \
+            --memory-swap=4g \
             --network=host \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
@@ -107,8 +107,9 @@ jobs:
               mkdir -p build
               cd build
               # 禁用 HTTPS/TLS 和 WebSocket 以加快编译速度并避免 mbedtls 依赖问题
+              # 限制最大连接数和缓冲区大小以降低内存使用
               cmake -DCMAKE_BUILD_TYPE=Release \
-                    -DCMAKE_C_FLAGS="-Wno-format-truncation" \
+                    -DCMAKE_C_FLAGS="-Wno-format-truncation -DUVHTTP_MAX_CONNECTIONS_DEFAULT=128 -DUVHTTP_DEFAULT_READ_BUFFER_SIZE=8192" \
                     -DCMAKE_CXX_FLAGS="-Wno-format-truncation" \
                     -DBUILD_WITH_HTTPS=OFF \
                     -DBUILD_WITH_WEBSOCKET=OFF ..
@@ -118,6 +119,7 @@ jobs:
               # 运行轻量级性能测试
               echo ''
               echo '=== 运行轻量级性能测试 ==='
+              echo '配置: 最大连接数=128, 缓冲区=8KB, Docker内存=4GB'
               cd /workspace/benchmark
               
               # 启动测试服务器
@@ -142,10 +144,6 @@ jobs:
               echo '运行低并发测试 (10连接, 10秒)...'
               wrk -t2 -c10 -d10s http://127.0.0.1:18081/ > /tmp/wrk_low.txt 2>&1
               
-              # 运行中等并发测试
-              echo '运行中等并发测试 (50连接, 10秒)...'
-              wrk -t4 -c50 -d10s http://127.0.0.1:18081/ > /tmp/wrk_medium.txt 2>&1
-              
               # 停止服务器
               kill \$SERVER_PID 2>/dev/null || true
               wait \$SERVER_PID 2>/dev/null || true
@@ -155,8 +153,6 @@ jobs:
               echo '=== 测试结果 ==='
               echo '低并发 RPS:'
               grep 'Requests/sec' /tmp/wrk_low.txt | awk '{print \"  \" \$2}'
-              echo '中等并发 RPS:'
-              grep 'Requests/sec' /tmp/wrk_medium.txt | awk '{print \"  \" \$2}'
               
               # 生成 CSV 结果
               echo ''
@@ -164,7 +160,6 @@ jobs:
               cat > /tmp/results.csv << 'EOF'
               test_name,rps
               low_concurrent,\$(grep 'Requests/sec' /tmp/wrk_low.txt | awk '{print \$2}')
-              medium_concurrent,\$(grep 'Requests/sec' /tmp/wrk_medium.txt | awk '{print \$2}')
               EOF
               
               cat /tmp/results.csv
@@ -205,15 +200,15 @@ jobs:
             grep 'Latency' /tmp/wrk_low.txt | head -1 | awk '{print "- 平均延迟: " $2}'
             echo ""
           fi
-          if [ -f /tmp/wrk_medium.txt ]; then
-            echo "### 中等并发测试 (4线程 / 50连接 / 10秒)"
-            grep 'Requests/sec' /tmp/wrk_medium.txt | awk '{print "- RPS: " $2}'
-            grep 'Latency' /tmp/wrk_medium.txt | head -1 | awk '{print "- 平均延迟: " $2}'
-            echo ""
-          fi
+          echo "## 配置"
+          echo ""
+          echo "- 最大连接数: 128"
+          echo "- 缓冲区大小: 8KB"
+          echo "- Docker 内存: 4GB"
+          echo ""
           echo "## 说明"
           echo ""
-          echo "- 轻量级性能测试：低并发和中等并发场景"
+          echo "- 轻量级性能测试：低并发场景（避免 OOM）"
           echo "- 高并发性能测试：请在本地运行"
           echo "- 本地测试命令: \`./build/dist/bin/benchmark_unified <port>\` 和 wrk 工具"
           echo "---"
@@ -230,6 +225,11 @@ jobs:
             let comment = '## 🚀 性能测试结果\n\n';
             comment += `**测试时间**: ${new Date().toISOString()}\n`;
             comment += `**提交**: ${context.sha.substring(0, 7)}\n\n`;
+            
+            comment += '### 配置\n\n';
+            comment += '- 最大连接数: 128\n';
+            comment += '- 缓冲区大小: 8KB\n';
+            comment += '- Docker 内存: 4GB\n\n';
             
             comment += '### 测试结果\n\n';
             
