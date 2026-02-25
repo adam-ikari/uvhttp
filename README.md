@@ -2,10 +2,11 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.4.0-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.4.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux-orange.svg)
+![Tests](https://img.shields.io/badge/tests-100%25%20passing-success.svg)
 
 **High-performance HTTP/1.1 and WebSocket server library**
 

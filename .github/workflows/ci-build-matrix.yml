@@ -181,6 +181,8 @@ jobs:
           BUILD_TYPE="${{ matrix.config.debug == 'ON' && 'Debug' || 'Release' }}"
           cmake -B build \
             -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+            -DCMAKE_C_FLAGS="-Wno-format-truncation" \
+            -DCMAKE_CXX_FLAGS="-Wno-format-truncation" \
             -DBUILD_WITH_WEBSOCKET=${{ matrix.config.websocket }} \
             -DBUILD_WITH_MIMALLOC=${{ matrix.config.mimalloc }} \
             -DBUILD_WITH_HTTPS=${{ matrix.config.https }} \

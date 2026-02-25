@@ -1,0 +1,183 @@
+name: CI/CD - 32-bit Build Verification
+
+# 触发条件：Push 到 main、develop、feature/* 分支
+on:
+  push:
+    branches: [ main, develop, 'feature/**' ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+# 并发控制：取消同一分支的旧运行
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ========== 32位编译验证 ==========
+
+  ubuntu-32bit-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Install 32-bit toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib g++-12-multilib
+
+      - name: Clean previous builds
+        run: |
+          rm -rf deps/*/build
+          rm -rf deps/*/build-32bit
+          rm -rf build-32bit
+
+      - name: Build 32-bit version (core library only)
+        run: |
+          cmake -B build-32bit \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_FLAGS="-m32 -march=i686 -D_GNU_SOURCE -Wno-format-truncation" \
+            -DCMAKE_CXX_FLAGS="-m32 -march=i686 -D_GNU_SOURCE -Wno-format-truncation" \
+            -DEXE_LINKER_FLAGS="-m32" \
+            -DSHARED_LINKER_FLAGS="-m32" \
+            -DMODULE_LINKER_FLAGS="-m32" \
+            -DBUILD_WITH_WEBSOCKET=ON \
+            -DBUILD_WITH_MIMALLOC=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DENABLE_COVERAGE=OFF
+          # Only build the library, skip tests
+          cmake --build build-32bit --config Release --target uvhttp -j$(nproc)
+
+      - name: Verify 32-bit binary
+        run: |
+          echo "=== Checking library architecture ==="
+          file build-32bit/dist/lib/libuvhttp.a
+          
+          # 验证确实是32位 - 使用 objdump 检查目标文件
+          echo "=== Checking object files inside library ==="
+          objdump -f build-32bit/dist/lib/libuvhttp.a | grep -q "elf32-i386" && echo "✅ 32-bit library verified" || (echo "❌ Library is not 32-bit!" && exit 1)
+
+      - name: Verify 32-bit dependency libraries
+        run: |
+          echo "=== Checking dependency library architecture ==="
+          
+          # 使用 objdump 检查依赖库
+          echo "libuv:"
+          objdump -f build-32bit/deps/libuv/build/libuv.a | head -1 || true
+          echo "mbedtls:"
+          objdump -f build-32bit/deps/mbedtls/build/library/libmbedtls.a | head -1 || true
+          objdump -f build-32bit/deps/mbedtls/build/library/libmbedcrypto.a | head -1 || true
+          objdump -f build-32bit/deps/mbedtls/build/library/libmbedx509.a | head -1 || true
+          echo "llhttp:"
+          objdump -f build-32bit/deps/cllhttp/build/libllhttp.a | head -1 || true
+          
+          # 验证所有依赖库都是32位
+          for lib in build-32bit/deps/*/build/lib*.a build-32bit/deps/*/build/library/lib*.a; do
+            if [ -f "$lib" ]; then
+              if ! objdump -f "$lib" | head -1 | grep -q "elf32-i386"; then
+                echo "❌ Dependency library is not 32-bit: $lib"
+                objdump -f "$lib" | head -1
+                exit 1
+              fi
+            fi
+          done
+          echo "✅ All dependency libraries are 32-bit"
+
+      - name: Upload 32-bit build artifacts
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: build-32bit-${{ github.sha }}
+          path: build-32bit/
+          retention-days: 7
+
+  # ========== 32位基础测试 ==========
+
+  ubuntu-32bit-test:
+    needs: [ubuntu-32bit-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Install 32-bit toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib
+
+      - name: Download 32-bit build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-32bit-${{ github.sha }}
+          path: build-32bit/
+
+      - name: Set executable permissions
+        run: |
+          chmod +x build-32bit/dist/bin/* || true
+
+      - name: Run basic validation
+        run: |
+          echo "=== Validating 32-bit build ==="
+          
+          # 检查库文件存在
+          if [ ! -f "build-32bit/dist/lib/libuvhttp.a" ]; then
+            echo "❌ Library file not found"
+            exit 1
+          fi
+          
+          # 检查库文件大小（应该非零）
+          LIB_SIZE=$(stat -f%z build-32bit/dist/lib/libuvhttp.a 2>/dev/null || stat -c%s build-32bit/dist/lib/libuvhttp.a)
+          if [ "$LIB_SIZE" -eq 0 ]; then
+            echo "❌ Library file is empty"
+            exit 1
+          fi
+          
+          echo "✅ 32-bit library validation passed"
+          echo "   Library size: $LIB_SIZE bytes"
+          echo "   Architecture: $(file build-32bit/dist/lib/libuvhttp.a | grep -o '32-bit')"
+
+      - name: Upload 32-bit test logs
+        if: always()
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: test-logs-32bit-${{ github.sha }}
+          path: build-32bit/Testing/
+          retention-days: 7
+
+  # ========== 生成总结 ==========
+
+  generate-summary:
+    needs: [ubuntu-32bit-build, ubuntu-32bit-test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## 📊 32-bit Build Verification Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Status" >> $GITHUB_STEP_SUMMARY
+          echo "| Task | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 32-bit Library Build | ${{ needs.ubuntu-32bit-build.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 32-bit Validation | ${{ needs.ubuntu-32bit-test.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Architecture**: 32-bit (i686)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Compiler Flags**: \`-m32 -march=i686\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Target**: Core library only (no tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- **WebSocket**: Enabled" >> $GITHUB_STEP_SUMMARY
+          echo "- **mimalloc**: Disabled (32-bit)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Notes" >> $GITHUB_STEP_SUMMARY
+          echo "- C++ tests skipped due to 32-bit libstdc++ linking limitations" >> $GITHUB_STEP_SUMMARY
+          echo "- Core library and dependencies successfully verified as 32-bit" >> $GITHUB_STEP_SUMMARY

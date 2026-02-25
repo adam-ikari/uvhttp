@@ -15,19 +15,10 @@
 - 发布版本
 
 **必须使用 Release 模式的程序**：
-- `benchmark_rps` - RPS 性能测试服务器
-- `benchmark_latency` - 延迟测试
-- `benchmark_connection` - 连接性能测试
-- `benchmark_memory` - 内存性能测试
-- `benchmark_comprehensive` - 综合性能测试
-- `benchmark_file_transfer` - 文件传输性能测试
-- `benchmark_router` - 路由性能测试
-- `benchmark_router_simple` - 简化路由性能测试
-- `benchmark_router_comparison` - 路由优化对比测试
-- `benchmark_router_simple_comparison` - 简化路由优化对比测试
-- `benchmark_router_minimal` - 最小化路由性能测试
+- `benchmark_unified` - 综合性能测试服务器（包含所有测试场景）
 - `performance_allocator` - 分配器性能测试
 - `performance_allocator_compare` - 分配器对比测试
+- `test_bitfield` - 位域性能测试
 - 所有示例程序（examples/）
 
 **编译选项**：
@@ -183,8 +174,8 @@ wrk -t4 -c100 -d30s http://127.0.0.1:8080/
 # ✅ 正确：使用 Release 模式运行性能测试
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
-make benchmark_rps
-./dist/bin/benchmark_rps 8080
+make benchmark_unified
+./dist/bin/benchmark_unified 8080
 wrk -t4 -c100 -d30s http://127.0.0.1:8080/
 # 结果：~20,000+ RPS（准确）
 ```
@@ -258,7 +249,7 @@ target_link_libraries(benchmark_rps
 )
 
 # 确保使用 Release 优化
-set_target_properties(benchmark_rps PROPERTIES
+set_target_properties(benchmark_unified PROPERTIES
     CMAKE_BUILD_TYPE Release
 )
 ```
@@ -310,7 +301,7 @@ file build/dist/bin/benchmark_rps
 make VERBOSE=1 | grep -E "\-O[0-3]"
 
 # 检查符号表
-nm build/dist/bin/benchmark_rps | wc -l
+nm build/dist/bin/benchmark_unified | wc -l
 # Release 模式：符号表很小
 # Debug 模式：符号表很大
 ```
@@ -332,7 +323,7 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make clean && make
 
 # 使用空闲端口
-./dist/bin/benchmark_rps 18082
+./dist/bin/benchmark_unified 18082
 
 # 多次测试取平均值
 for i in {1..5}; do

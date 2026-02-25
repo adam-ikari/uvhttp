@@ -35,13 +35,32 @@ set(LIBUV_LIB ${LIBUV_BUILD_DIR}/libuv.a)
 
 if(NOT EXISTS ${LIBUV_LIB})
     message(STATUS "Building libuv...")
+    # Pass C flags to dependencies for 32-bit builds
+    set(LIBUV_CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DBUILD_TESTING=OFF
+        -DLIBUV_BUILD_SHARED=OFF
+        -DLIBUV_BUILD_BENCH=OFF
+        -DLIBUV_BUILD_EXAMPLES=OFF
+    )
+    # Add C flags if they're set (for 32-bit builds)
+    if(DEFINED CMAKE_C_FLAGS)
+        list(APPEND LIBUV_CMAKE_ARGS "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -Wno-format-truncation")
+    else()
+        list(APPEND LIBUV_CMAKE_ARGS "-DCMAKE_C_FLAGS=-Wno-format-truncation")
+    endif()
+    if(DEFINED CMAKE_CXX_FLAGS)
+        list(APPEND LIBUV_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -Wno-format-truncation")
+    else()
+        list(APPEND LIBUV_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=-Wno-format-truncation")
+    endif()
+    if(DEFINED EXE_LINKER_FLAGS)
+        list(APPEND LIBUV_CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=${EXE_LINKER_FLAGS}")
+    endif()
+    
     execute_process(
         COMMAND ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv -B ${LIBUV_BUILD_DIR}
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -DBUILD_TESTING=OFF
-            -DLIBUV_BUILD_SHARED=OFF
-            -DLIBUV_BUILD_BENCH=OFF
-            -DLIBUV_BUILD_EXAMPLES=OFF
+            ${LIBUV_CMAKE_ARGS}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv
         RESULT_VARIABLE LIBUV_CONFIG_RESULT
     )
@@ -90,12 +109,27 @@ if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
 
     if(NOT EXISTS ${MBEDTLS_BUILD_DIR}/library/libmbedtls.a)
         message(STATUS "Building mbedtls...")
+        # Pass C flags to dependencies for 32-bit builds
+        set(MBEDTLS_CMAKE_ARGS
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DENABLE_TESTING=OFF
+            -DENABLE_PROGRAMS=OFF
+            -DENABLE_DOCS=OFF
+        )
+        # Add C flags if they're set (for 32-bit builds)
+        if(DEFINED CMAKE_C_FLAGS)
+            list(APPEND MBEDTLS_CMAKE_ARGS "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}")
+        endif()
+        if(DEFINED CMAKE_CXX_FLAGS)
+            list(APPEND MBEDTLS_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
+        endif()
+        if(DEFINED EXE_LINKER_FLAGS)
+            list(APPEND MBEDTLS_CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=${EXE_LINKER_FLAGS}")
+        endif()
+        
         execute_process(
             COMMAND ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls -B ${MBEDTLS_BUILD_DIR}
-                -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-                -DENABLE_TESTING=OFF
-                -DENABLE_PROGRAMS=OFF
-                -DENABLE_DOCS=OFF
+                ${MBEDTLS_CMAKE_ARGS}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls
             RESULT_VARIABLE MBEDTLS_CONFIG_RESULT
         )
@@ -173,9 +207,24 @@ set(LLHTTP_LIB ${LLHTTP_BUILD_DIR}/libllhttp.a)
 
 if(NOT EXISTS ${LLHTTP_LIB})
     message(STATUS "Building llhttp...")
+    # Pass C flags to dependencies for 32-bit builds
+    set(LLHTTP_CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    )
+    # Add C flags if they're set (for 32-bit builds)
+    if(DEFINED CMAKE_C_FLAGS)
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}")
+    endif()
+    if(DEFINED CMAKE_CXX_FLAGS)
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
+    endif()
+    if(DEFINED EXE_LINKER_FLAGS)
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=${EXE_LINKER_FLAGS}")
+    endif()
+    
     execute_process(
         COMMAND ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp -B ${LLHTTP_BUILD_DIR}
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            ${LLHTTP_CMAKE_ARGS}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp
         RESULT_VARIABLE LLHTTP_CONFIG_RESULT
     )
