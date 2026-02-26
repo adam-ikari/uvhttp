@@ -538,27 +538,27 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
 
     /* If handles are not closed yet, use async close mechanism.
      * This avoids blocking the event loop with uv_run calls.
-          * uvhttp_connection_close will start the async close process
-          * and on_handle_close will handle the actual free.
-          *
-          * Important: We do NOT free resources here because:
-          * 1. uvhttp_connection_close() sets close_pending > 0
-          * 2. The close callbacks (on_handle_close) will be called later
-          * 3. on_handle_close will call uvhttp_connection_free_resources()
-          * 4. uvhttp_connection_free_resources() will free all resources
-          */
-         uvhttp_connection_close(conn);
-     
-         /* Do NOT set freed flag here - let the second call from on_handle_close
-          * (when close_pending == 0) do the actual resource cleanup */
-     
-         /* Return immediately - on_handle_close will do the actual cleanup */
-         return;
-     }
-     
-     /* Internal function to free connection resources.
-      * Called when all handles are closed (close_pending == 0). */
-     static void uvhttp_connection_free_resources(uvhttp_connection_t* conn) {
+     * uvhttp_connection_close will start the async close process
+     * and on_handle_close will handle the actual free.
+     *
+     * Important: We do NOT free resources here because:
+     * 1. uvhttp_connection_close() sets close_pending > 0
+     * 2. The close callbacks (on_handle_close) will be called later
+     * 3. on_handle_close will call uvhttp_connection_free_resources()
+     * 4. uvhttp_connection_free_resources() will free all resources
+     */
+    uvhttp_connection_close(conn);
+
+    /* Do NOT set freed flag here - let the second call from on_handle_close
+     * (when close_pending == 0) do the actual resource cleanup */
+
+    /* Return immediately - on_handle_close will do the actual cleanup */
+    return;
+}
+
+/* Internal function to free connection resources.
+ * Called when all handles are closed (close_pending == 0). */
+static void uvhttp_connection_free_resources(uvhttp_connection_t* conn) {
     if (!conn) {
         return;
     }
