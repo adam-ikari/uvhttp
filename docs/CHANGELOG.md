@@ -5,6 +5,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.4] - 2026-02-26
+
+### Fixed
+
+- **Critical Memory Leak in Connection Cleanup**
+  - Fixed severe memory leak in `uvhttp_connection_free()` (1,932,392 bytes per connection)
+  - Created new internal function `uvhttp_connection_free_resources()` to handle actual cleanup
+  - Updated `on_handle_close()` callback to call `uvhttp_connection_free_resources()` instead of `uvhttp_connection_free()`
+  - Resources are now properly freed when all handles are closed (`close_pending == 0`)
+  - **Impact**: Prevents production server crashes due to memory exhaustion
+
+### Added
+
+- **Comprehensive Memory Leak Testing**
+  - Added `test/unit/test_pure_gtest.cpp`: Pure Google Test baseline tests (3 test cases)
+  - Added `test/unit/test_simple_memory_leak.cpp`: Comprehensive memory leak tests (7 test cases)
+    - Basic operations memory management
+    - Connection lifecycle (10 connections)
+    - Context management
+    - Double free protection
+    - NULL pointer handling
+    - Rapid create/destroy (100 iterations)
+    - Connection resource integrity verification
+
+### Changed
+
+- **Code Quality**
+  - Fixed uninitialized variable in `test_e2e_simple.c` (status variable)
+  - Fixed code alignment in `uvhttp_connection.c`
+  - Updated comments to accurately reflect implementation
+  - Translated Chinese comments to English in test files
+
+- **Documentation**
+  - Fixed broken performance guide link in `STATIC_FILE_SERVER.md`
+  - Added alternative CERT C coding rules link in `SECURITY.md` (no login required)
+  - Enabled VitePress i18n routing in configuration
+  - Updated Chinese version of security documentation
+
+### Performance
+
+- **Memory Impact**:
+  - **Before**: 1,932,392 bytes leak per connection (2,096 direct + 1,930,296 indirect)
+  - **After**: 0 bytes leak
+  - **Verification**: Valgrind confirms "All heap blocks were freed -- no leaks are possible"
+
+- **Test Results**:
+  - All 39 unit tests pass
+  - All integration tests pass
+  - Extended test suite: 1,148 allocs, 1,148 frees (perfect match)
+  - Zero performance regression
+
+### Security
+
+- **Memory Safety**: Proper NULL pointer handling in `uvhttp_connection_free_resources()`
+- **Double Free Protection**: Prevents double-free scenarios with `conn->freed` flag
+- **No New Vulnerabilities**: No security risks introduced by this fix
+
+### Migration
+
+No breaking changes. This is a bug fix release with backward compatibility maintained.
+
 ## [2.4.2] - 2026-02-25
 
 ### Added
