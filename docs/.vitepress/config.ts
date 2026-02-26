@@ -10,6 +10,8 @@ export default defineConfig({
   // 本地开发使用 '/'，GitHub Pages 使用 '/uvhttp/'
   base: process.env.DEPLOY === 'gh-pages' ? '/uvhttp/' : '/',
   lang: 'en-US',
+  defaultLang: 'en-US',
+  i18nRouting: true,
 
   ignoreDeadLinks: true,
 
