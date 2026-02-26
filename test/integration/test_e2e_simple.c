@@ -24,8 +24,7 @@ static int send_http_request(const char* host, int port, const char* method,
     size_t bytes_read = fread(response_body, 1, max_len - 1, pipe);
     response_body[bytes_read] = '\0';
     
-    int status;
-    (void)pclose(pipe);
+    int status = pclose(pipe);
     return (status == 0) ? (int)bytes_read : -1;
 }
 
