@@ -270,7 +270,8 @@ Before deploying to production, ensure:
 - **Security Advisories**: https://github.com/adam-ikari/uvhttp/security/advisories
 - **CVE Database**: https://cve.mitre.org/
 - **OWASP Top 10**: https://owasp.org/www-project-top-ten/
-- **Security Best Practices**: https://wiki.sei.cmu.edu/confluence/display/seccode/Top+10+CERT+C+Coding+Rules
+- **Security Best Practices**: https://wiki.sei.cmu.edu/confluence/display/seccode/Top+10+CERT+C+Coding+Rules (requires login)
+- **Alternative**: https://www.cert.org/confluence/display/seccode/Top+10+CERT+C+Coding+Rules
 
 ## Contact
 
