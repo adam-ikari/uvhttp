@@ -164,7 +164,7 @@ int main() {
     server->router = router;
     uvhttp_server_listen(server, "0.0.0.0", 8080);
     
-    printf("服务器运行在 http://0.0.0.0:8080\n");
+    printf("服务器运行在 http://0.0.0.0:8080\\n");
     uv_run(loop, UV_RUN_DEFAULT);
     
     return 0;

@@ -270,7 +270,8 @@ UVHTTP 实现了多种 DoS 保护机制：
 - **安全公告**: https://github.com/adam-ikari/uvhttp/security/advisories
 - **CVE 数据库**: https://cve.mitre.org/
 - **OWASP Top 10**: https://owasp.org/www-project-top-ten/
-- **安全最佳实践**: https://wiki.sei.cmu.edu/confluence/display/seccode/Top+10+CERT+C+Coding+Rules
+- **安全最佳实践**: https://wiki.sei.cmu.edu/confluence/display/seccode/Top+10+CERT+C+Coding+Rules (需要登录)
+- **替代链接**: https://www.cert.org/confluence/display/seccode/Top+10+CERT+C+Coding+Rules
 
 ## 联系方式
 
