@@ -1,29 +1,29 @@
-# UVHTTP 版本配置
-# 此文件定义项目的当前版本信息
+# UVHTTP Version Configuration
+# This file defines the current version information for the project
 
-# 当前版本号 (语义化版本: MAJOR.MINOR.PATCH)
-VERSION=2.4.2
+# Current version number (semantic version: MAJOR.MINOR.PATCH)
+VERSION=2.4.4
 
-# 版本类型: major, minor, patch
+# Version type: major, minor, patch
 VERSION_TYPE=patch
 
-# 发布日期
-RELEASE_DATE=2026-02-25
+# Release date
+RELEASE_DATE=2026-02-26
 
-# 上一个版本
-PREVIOUS_VERSION=2.4.1
+# Previous version
+PREVIOUS_VERSION=2.4.2
 
-# 下一个版本（开发中）
+# Next version (in development)
 NEXT_VERSION=2.5.0
 
-# 版本名称（可选）
-VERSION_NAME="Comprehensive Testing & HTTPS Support"
+# Version name (optional)
+VERSION_NAME="Critical Memory Leak Fix"
 
-# 是否为预发布版本
+# Whether this is a prerelease version
 IS_PRERELEASE=false
 
-# 预发布标识（如 alpha, beta, rc）
+# Prerelease identifier (e.g., alpha, beta, rc)
 PRERELEASE_IDENTIFIER=""
 
-# 兼容的最低版本
+# Minimum compatible version
 MINIMUM_COMPATIBLE_VERSION=2.0.0
