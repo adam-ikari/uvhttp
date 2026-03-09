@@ -782,23 +782,15 @@ make -j$(nproc)
 Compile specific performance benchmark programs:
 
 ```bash
-make benchmark_rps
-make benchmark_latency
-make benchmark_comprehensive
+make benchmark_unified
 ```
 
 ### Run Performance Tests
 
-Run RPS test:
+Run unified performance test:
 
 ```bash
-./build/dist/bin/benchmark_rps 18081
-```
-
-Run comprehensive performance test:
-
-```bash
-./build/dist/bin/benchmark_comprehensive 18082
+./build/dist/bin/benchmark_unified 18081
 ```
 
 Use wrk for stress testing:

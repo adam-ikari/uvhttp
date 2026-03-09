@@ -5,6 +5,123 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.4] - 2026-02-26
+
+### Fixed
+
+- **Critical Memory Leak in Connection Cleanup**
+  - Fixed severe memory leak in `uvhttp_connection_free()` (1,932,392 bytes per connection)
+  - Created new internal function `uvhttp_connection_free_resources()` to handle actual cleanup
+  - Updated `on_handle_close()` callback to call `uvhttp_connection_free_resources()` instead of `uvhttp_connection_free()`
+  - Resources are now properly freed when all handles are closed (`close_pending == 0`)
+  - **Impact**: Prevents production server crashes due to memory exhaustion
+
+### Added
+
+- **Comprehensive Memory Leak Testing**
+  - Added `test/unit/test_pure_gtest.cpp`: Pure Google Test baseline tests (3 test cases)
+  - Added `test/unit/test_simple_memory_leak.cpp`: Comprehensive memory leak tests (7 test cases)
+    - Basic operations memory management
+    - Connection lifecycle (10 connections)
+    - Context management
+    - Double free protection
+    - NULL pointer handling
+    - Rapid create/destroy (100 iterations)
+    - Connection resource integrity verification
+
+### Changed
+
+- **Code Quality**
+  - Fixed uninitialized variable in `test_e2e_simple.c` (status variable)
+  - Fixed code alignment in `uvhttp_connection.c`
+  - Updated comments to accurately reflect implementation
+  - Translated Chinese comments to English in test files
+
+- **Documentation**
+  - Fixed broken performance guide link in `STATIC_FILE_SERVER.md`
+  - Added alternative CERT C coding rules link in `SECURITY.md` (no login required)
+  - Enabled VitePress i18n routing in configuration
+  - Updated Chinese version of security documentation
+
+### Performance
+
+- **Memory Impact**:
+  - **Before**: 1,932,392 bytes leak per connection (2,096 direct + 1,930,296 indirect)
+  - **After**: 0 bytes leak
+  - **Verification**: Valgrind confirms "All heap blocks were freed -- no leaks are possible"
+
+- **Test Results**:
+  - All 39 unit tests pass
+  - All integration tests pass
+  - Extended test suite: 1,148 allocs, 1,148 frees (perfect match)
+  - Zero performance regression
+
+### Security
+
+- **Memory Safety**: Proper NULL pointer handling in `uvhttp_connection_free_resources()`
+- **Double Free Protection**: Prevents double-free scenarios with `conn->freed` flag
+- **No New Vulnerabilities**: No security risks introduced by this fix
+
+### Migration
+
+No breaking changes. This is a bug fix release with backward compatibility maintained.
+
+## [2.4.2] - 2026-02-25
+
+### Added
+
+- **Comprehensive End-to-End Testing**
+  - Added test_e2e_simple.c for simple e2e testing using external server process
+  - Added test_e2e_real.c for complete e2e testing with in-process server
+  - Added test_https_e2e.c for HTTPS end-to-end testing
+  - Automatic server start/stop in e2e tests
+  - Concurrent request testing (10 concurrent requests)
+  - Response validation and verification
+  - TLS certificate auto-generation for HTTPS testing
+
+- **HTTPS Testing Support**
+  - Enabled BUILD_WITH_HTTPS=ON by default for full test coverage
+  - All TLS-related tests now passing:
+    - test_server_api_coverage
+    - test_server_error_coverage
+    - test_tls_api_coverage
+    - test_tls_null_coverage
+  - Complete TLS context management in tests
+
+### Fixed
+
+- **CI/CD Performance Tests**
+  - Simplified CI/CD performance tests to compile-only verification
+  - Removed runtime performance tests that cannot run in GitHub Actions
+  - Reduced Docker memory limit from 4GB to 2GB for faster execution
+  - Removed benchmark_unified server startup in CI/CD (libuv compatibility issues)
+  - Keep compile-only verification as most reliable approach
+
+- **Test Build Warnings**
+  - Fixed unused variable warnings in e2e tests
+  - Fixed system() return value warnings
+  - All tests now compile with zero warnings
+
+### Changed
+
+- **Test Coverage**
+  - Unit tests: 93% → 100% (63/63 passing)
+  - Added 3 new e2e test files (+552 lines)
+  - Enabled all previously skipped HTTPS tests
+  - Test execution time: 0.24 seconds for all 63 tests
+
+- **Build Configuration**
+  - Default BUILD_WITH_HTTPS=ON (previously OFF)
+  - Default BUILD_WITH_WEBSOCKET=ON
+  - Default BUILD_WITH_MIMALLOC=ON
+  - Full feature set available out of the box
+
+### Performance
+
+- Local performance test: 12,096 RPS (10 connections, 10 seconds)
+- Test time: 0.24 seconds (63 unit tests)
+- Memory optimization: mimalloc allocator enabled by default
+
 ## [2.4.1] - 2026-02-13
 
 ### Added

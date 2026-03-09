@@ -55,7 +55,7 @@ jobs:
           # Build VitePress documentation site
           cd docs
           pnpm install
-          pnpm build
+          DEPLOY=gh-pages pnpm build
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
