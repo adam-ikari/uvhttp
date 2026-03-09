@@ -1,8 +1,25 @@
 #!/bin/bash
 # UVHTTP Documentation Build Script
 # This script builds all documentation including API docs and VitePress site
+#
+# Usage:
+#   ./scripts/build_docs.sh        # Build all documentation
+#   ./scripts/build_docs.sh clean  # Clean generated documentation
 
 set -e
+
+# Handle clean option
+if [ "$1" = "clean" ]; then
+    echo "Cleaning generated documentation..."
+    rm -rf docs/api/xml
+    rm -rf docs/api/markdown_from_xml
+    rm -rf docs/api/html
+    rm -rf docs/api/latex
+    rm -rf docs/.vitepress/dist
+    rm -rf docs/.vitepress/cache
+    echo "Documentation cleaned successfully"
+    exit 0
+fi
 
 # Colors for output
 RED='\033[0;31m'

@@ -54,10 +54,28 @@ scripts/
 
 ### Building Documentation
 
-**Recommended approach:**
+**Option 1: Using Makefile (Recommended)**
+```bash
+# Build all documentation
+make -f GNUmakefile docs
+
+# Preview VitePress site locally
+make -f GNUmakefile docs-preview
+
+# Clean generated documentation
+make -f GNUmakefile docs-clean
+
+# Show all available targets
+make -f GNUmakefile help
+```
+
+**Option 2: Using build script directly**
 ```bash
 # Build all documentation (API + VitePress site)
 ./scripts/build_docs.sh
+
+# Clean generated documentation
+./scripts/build_docs.sh clean
 
 # Preview VitePress site locally
 cd docs && npm run dev
