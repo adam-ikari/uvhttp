@@ -1,5 +1,8 @@
 # Build directory
 build/
+build_debug/
+build_minimal_debug/
+build_release/
 dist/
 
 # Pre-built dependencies and build artifacts
