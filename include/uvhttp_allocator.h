@@ -28,8 +28,7 @@ extern "C" {
 /* ========== Compile-time Allocator Selection ========== */
 
 #if UVHTTP_ALLOCATOR_TYPE == 1 /* mimalloc */
-#    ifdef UVHTTP_ENABLE_MIMALLOC
-#        include "mimalloc.h"
+#    include "mimalloc.h"
 
 static inline void* uvhttp_alloc(size_t size) {
     return mi_malloc(size);
@@ -46,10 +45,6 @@ static inline void* uvhttp_realloc(void* ptr, size_t size) {
 static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
     return mi_calloc(nmemb, size);
 }
-#    else
-/* mimalloc unavailable - configuration error */
-#error "UVHTTP_ALLOCATOR_TYPE=1 (mimalloc) requires BUILD_WITH_MIMALLOC=ON"
-#    endif
 
 #elif UVHTTP_ALLOCATOR_TYPE == 2 /* custom */
 /* Custom allocator - application layer must implement these functions */
