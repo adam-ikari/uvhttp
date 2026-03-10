@@ -82,7 +82,7 @@ if (result != UVHTTP_OK) {
 ### uvhttp_server_free
 
 ```c
-void uvhttp_server_free(uvhttp_server_t* server);
+uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
 ```
 
 释放服务器对象。
@@ -90,9 +90,16 @@ void uvhttp_server_free(uvhttp_server_t* server);
 **参数**:
 - `server`: 服务器对象
 
+**返回值**:
+- `UVHTTP_OK`: 成功
+- 其他值: 错误码
+
 **示例**:
 ```c
-uvhttp_server_free(server);
+uvhttp_error_t result = uvhttp_server_free(server);
+if (result != UVHTTP_OK) {
+    fprintf(stderr, "Failed to free server: %s\n", uvhttp_error_string(result));
+}
 ```
 
 ### uvhttp_server_listen
