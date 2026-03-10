@@ -11,6 +11,7 @@
 #include "uvhttp_router.h"
 #include "uvhttp_server.h"
 #include "uvhttp_tls.h"
+#include "uvhttp_utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1077,8 +1078,7 @@ uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
     }
 
     /* save WebSocket Key (for verification) */
-    strncpy(ws_conn->client_key, ws_key, sizeof(ws_conn->client_key) - 1);
-    ws_conn->client_key[sizeof(ws_conn->client_key) - 1] = '\0';
+    uvhttp_safe_strncpy(ws_conn->client_key, ws_key, sizeof(ws_conn->client_key));
 
     /* create wrapper to save connection object and user handler */
     uvhttp_ws_wrapper_t* wrapper = uvhttp_alloc(sizeof(uvhttp_ws_wrapper_t));

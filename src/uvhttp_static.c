@@ -479,27 +479,29 @@ static dir_entry_t* collect_dir_entries(const char* dir_path,
 }
 
 /**
- * sort directory entry
+ * Compare directory entries for sorting (directories first, then by name)
+ */
+static int compare_dir_entries(const void* a, const void* b) {
+    const dir_entry_t* entry_a = (const dir_entry_t*)a;
+    const dir_entry_t* entry_b = (const dir_entry_t*)b;
+    
+    /* directories first */
+    if (entry_a->is_dir && !entry_b->is_dir) {
+        return -1;
+    }
+    if (!entry_a->is_dir && entry_b->is_dir) {
+        return 1;
+    }
+    
+    /* sort by name for same type */
+    return strcmp(entry_a->name, entry_b->name);
+}
+
+/**
+ * sort directory entry using qsort for O(n log n) performance
  */
 static void sort_dir_entries(dir_entry_t* entries, size_t count) {
-    for (size_t i = 0; i < count - 1; i++) {
-        for (size_t j = i + 1; j < count; j++) {
-            /* directory first */
-            if (!entries[i].is_dir && entries[j].is_dir) {
-                dir_entry_t temp = entries[i];
-                entries[i] = entries[j];
-                entries[j] = temp;
-            }
-            /* sort by name for same type */
-            else if (entries[i].is_dir == entries[j].is_dir) {
-                if (strcmp(entries[i].name, entries[j].name) > 0) {
-                    dir_entry_t temp = entries[i];
-                    entries[i] = entries[j];
-                    entries[j] = temp;
-                }
-            }
-        }
-    }
+    qsort(entries, count, sizeof(dir_entry_t), compare_dir_entries);
 }
 
 /**
@@ -921,8 +923,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
         if (uvhttp_safe_strncpy(clean_path, ctx->config.index_file,
                                 sizeof(clean_path)) != 0) {
             /* index_file too long, use default value */
-            strncpy(clean_path, "index.html", sizeof(clean_path) - 1);
-            clean_path[sizeof(clean_path) - 1] = '\0';
+            uvhttp_safe_strncpy(clean_path, "index.html", sizeof(clean_path));
         }
     }
 

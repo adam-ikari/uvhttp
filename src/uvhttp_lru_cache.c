@@ -456,8 +456,7 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
             return UVHTTP_ERROR_INVALID_PARAM;
         }
 
-        strncpy(entry->file_path, file_path, sizeof(entry->file_path) - 1);
-        entry->file_path[sizeof(entry->file_path) - 1] = '\0';
+        uvhttp_safe_strncpy(entry->file_path, file_path, sizeof(entry->file_path));
 
         /* initializeLRUlistpointer */
         entry->lru_prev = NULL;
@@ -496,18 +495,15 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
 
     /* setMIMEtype */
     if (mime_type) {
-        strncpy(entry->mime_type, mime_type, sizeof(entry->mime_type) - 1);
-        entry->mime_type[sizeof(entry->mime_type) - 1] = '\0';
+        uvhttp_safe_strncpy(entry->mime_type, mime_type, sizeof(entry->mime_type));
     } else {
-        strncpy(entry->mime_type, "application/octet-stream",
-                sizeof(entry->mime_type) - 1);
-        entry->mime_type[sizeof(entry->mime_type) - 1] = '\0';
+        uvhttp_safe_strncpy(entry->mime_type, "application/octet-stream",
+                          sizeof(entry->mime_type));
     }
 
     /* setETag */
     if (etag) {
-        strncpy(entry->etag, etag, sizeof(entry->etag) - 1);
-        entry->etag[sizeof(entry->etag) - 1] = '\0';
+        uvhttp_safe_strncpy(entry->etag, etag, sizeof(entry->etag));
     } else {
         entry->etag[0] = '\0';
     }

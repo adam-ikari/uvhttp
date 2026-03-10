@@ -1105,8 +1105,7 @@ uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(uvhttp_server_t* server,
         }
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
-    strncpy(hash_item->ip, client_ip, INET_ADDRSTRLEN - 1);
-    hash_item->ip[INET_ADDRSTRLEN - 1] = '\0';
+    uvhttp_safe_strncpy(hash_item->ip, client_ip, INET_ADDRSTRLEN);
     HASH_ADD_STR(server->rate_limit_whitelist_hash, ip, hash_item);
 
     return UVHTTP_OK;
@@ -1562,8 +1561,7 @@ void uvhttp_server_ws_add_connection(uvhttp_server_t* server,
 
     memset(node, 0, sizeof(ws_connection_node_t));
     node->ws_conn = ws_conn;
-    strncpy(node->path, path, sizeof(node->path) - 1);
-    node->path[sizeof(node->path) - 1] = '\0';
+    uvhttp_safe_strncpy(node->path, path, sizeof(node->path));
     node->last_activity = uv_hrtime() / 1000000; /* convert to milliseconds */
     node->last_ping_sent = 0;
     node->ping_pending = 0;
