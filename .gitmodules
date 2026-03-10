@@ -18,6 +18,9 @@
 	path = deps/libuv
 	url = https://github.com/libuv/libuv.git
 	branch = v1.51.0
+[submodule "deps/llhttp"]
+	path = deps/llhttp
+	url = https://github.com/nodejs/llhttp.git
 [submodule "deps/uthash"]
 	path = deps/uthash
 	url = https://github.com/troydhanson/uthash.git
