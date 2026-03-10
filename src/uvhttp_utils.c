@@ -13,36 +13,24 @@
 #include <time.h>
 #include <arpa/inet.h>
 
-// Safe string copy function - matches header declaration
+// Safe string copy function - uses snprintf for safety
 int uvhttp_safe_strcpy(char* dest, size_t dest_size, const char* src) {
     if (!dest || !src || dest_size == 0)
         return -1;
 
-    size_t src_len = strlen(src);
-    if (src_len >= dest_size) {
-        src_len = dest_size - 1;
-    }
-    memcpy(dest, src, src_len);
-    dest[src_len] = '\0';
-
+    snprintf(dest, dest_size, "%s", src);
     return 0;
 }
 
 /* ============ Core Utility Functions ============ */
 
-// Safe string copy function
+// Safe string copy function - uses snprintf for safety
 int uvhttp_safe_strncpy(char* dest, const char* src, size_t dest_size) {
     if (!dest || !src || dest_size == 0)
         return -1;
 
-    size_t src_len = strlen(src);
-    if (src_len >= dest_size) {
-        src_len = dest_size - 1;
-    }
-    memcpy(dest, src, src_len);
-    dest[src_len] = '\0';
-
-    return 0;  // Return 0 on success, -1 on failure
+    snprintf(dest, dest_size, "%s", src);
+    return 0;
 }
 
 /* ============ Internal Helper Functions ============ */
