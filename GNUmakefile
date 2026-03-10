@@ -2,25 +2,36 @@
 # This file provides convenient targets for common development tasks
 # Use with: make -f GNUmakefile <target>
 
-.PHONY: help docs docs-clean docs-preview clean-all install-deps test coverage
+.PHONY: help docs docs-clean docs-preview clean-all install-deps test coverage build build-release build-coverage clean rebuild cmake cmake-options
 
 # Default target
 help:
 	@echo "UVHTTP Development Makefile"
 	@echo ""
-	@echo "Available targets:"
-	@echo "  make -f GNUmakefile help          - Show this help message"
+	@echo "Build targets:"
+	@echo "  make -f GNUmakefile cmake         - Run CMake configuration"
+	@echo "  make -f GNUmakefile cmake-options - Show available CMake options"
+	@echo "  make -f GNUmakefile build         - Build project (Debug mode)"
+	@echo "  make -f GNUmakefile build-release - Build project (Release mode)"
+	@echo "  make -f GNUmakefile build-coverage- Build with coverage enabled"
+	@echo "  make -f GNUmakefile rebuild       - Clean and rebuild"
+	@echo "  make -f GNUmakefile clean         - Clean build artifacts"
+	@echo ""
+	@echo "Test targets:"
+	@echo "  make -f GNUmakefile test          - Run tests"
+	@echo "  make -f GNUmakefile coverage      - Generate coverage report"
+	@echo ""
+	@echo "Documentation targets:"
 	@echo "  make -f GNUmakefile docs          - Build all documentation"
 	@echo "  make -f GNUmakefile docs-clean    - Clean generated documentation"
 	@echo "  make -f GNUmakefile docs-preview  - Preview VitePress docs locally"
-	@echo "  make -f GNUmakefile clean-all     - Clean all build artifacts"
-	@echo "  make -f GNUmakefile test          - Run tests (requires CMake build)"
-	@echo "  make -f GNUmakefile coverage      - Generate coverage report"
 	@echo ""
-	@echo "Documentation workflow:"
-	@echo "  1. Write code with Doxygen comments"
-	@echo "  2. Run: make -f GNUmakefile docs"
-	@echo "  3. Preview: make -f GNUmakefile docs-preview"
+	@echo "Utility targets:"
+	@echo "  make -f GNUmakefile clean-all     - Clean all build artifacts"
+	@echo "  make -f GNUmakefile install-deps  - Install development dependencies"
+	@echo ""
+	@echo "Quick start:"
+	@echo "  make -f GNUmakefile build && make -f GNUmakefile test"
 	@echo ""
 
 # Build all documentation
@@ -79,9 +90,61 @@ coverage:
 install-deps:
 	@echo "Installing development dependencies..."
 	@echo "System dependencies:"
-	@echo "  Ubuntu/Debian: sudo apt-get install doxygen graphiz"
+	@echo "  Ubuntu/Debian: sudo apt-get install doxygen graphviz"
 	@echo "  macOS: brew install doxygen graphviz"
 	@echo ""
 	@echo "Node.js dependencies:"
 	@cd docs && npm install
 	@echo "Dependencies installed successfully"
+
+# Build project with CMake (Debug mode)
+build:
+	@echo "Building UVHTTP in Debug mode..."
+	@cmake -B build -DCMAKE_BUILD_TYPE=Debug || (echo "Error: cmake not found. Please install CMake." && exit 1)
+	@cmake --build build -j$$(nproc)
+	@echo "Build completed successfully"
+
+# Build project with CMake (Release mode)
+build-release:
+	@echo "Building UVHTTP in Release mode..."
+	@cmake -B build_release -DCMAKE_BUILD_TYPE=Release || (echo "Error: cmake not found. Please install CMake." && exit 1)
+	@cmake --build build_release -j$$(nproc)
+	@echo "Release build completed successfully"
+
+# Build project with coverage enabled
+build-coverage:
+	@echo "Building UVHTTP with coverage enabled..."
+	@cmake -B build_coverage -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON || (echo "Error: cmake not found. Please install CMake." && exit 1)
+	@cmake --build build_coverage -j$$(nproc)
+	@echo "Coverage build completed successfully"
+
+# Clean build artifacts (current build directory only)
+clean:
+	@echo "Cleaning build artifacts..."
+	@if [ -d build ]; then \
+		cmake --build build --target clean; \
+	fi
+	@echo "Build artifacts cleaned"
+
+# Rebuild project
+rebuild: clean build
+	@echo "Rebuild completed"
+
+# Run CMake configuration
+cmake:
+	@echo "Running CMake configuration..."
+	@cmake -B build || (echo "Error: cmake not found. Please install CMake." && exit 1)
+	@echo "CMake configuration completed"
+
+# Show CMake options
+cmake-options:
+	@echo "Available CMake options:"
+	@echo "  BUILD_WITH_WEBSOCKET=ON/OFF     - Enable WebSocket support (default: ON)"
+	@echo "  BUILD_WITH_MIMALLOC=ON/OFF      - Use mimalloc allocator (default: OFF)"
+	@echo "  UVHTTP_ALLOCATOR_TYPE=0/1/2     - 0=system, 1=mimalloc, 2=custom (default: 0)"
+	@echo "  ENABLE_COVERAGE=ON/OFF           - Enable code coverage (default: OFF)"
+	@echo "  BUILD_EXAMPLES=ON/OFF            - Build example programs (default: OFF)"
+	@echo "  ENABLE_DEBUG=ON/OFF              - Enable debug mode (default: OFF)"
+	@echo ""
+	@echo "Example usage:"
+	@echo "  cmake -B build -DBUILD_WITH_WEBSOCKET=ON -DUVHTTP_ALLOCATOR_TYPE=1"
