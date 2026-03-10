@@ -87,7 +87,6 @@ extern "C" {
 #define UVHTTP_INLINE __attribute__((always_inline)) static inline
 #define UVHTTP_NOINLINE __attribute__((noinline))
 #define UVHTTP_UNUSED __attribute__((unused))
-#define UVHTTP_DEPRECATED __attribute__((deprecated))
 
 /* Memory alignment */
 #define UVHTTP_ALIGNED(n) __attribute__((aligned(n)))

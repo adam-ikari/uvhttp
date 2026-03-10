@@ -331,6 +331,7 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
 #if UVHTTP_FEATURE_TLS
     if (server->tls_ctx) {
         uvhttp_tls_context_free(server->tls_ctx);
+        server->tls_ctx = NULL;  /* Prevent double-free */
     }
 #endif
     if (server->config) {
@@ -803,19 +804,18 @@ static int default_handler(uvhttp_request_t* request,
 int uvhttp_serve(uv_loop_t* loop, const char* host, int port) {
     // Parameter verify
     if (!loop) {
-        fprintf(stderr, "error: loop parameter is required - must be provided "
+        UVHTTP_LOG_ERROR("loop parameter is required - must be provided "
                         "by application layer\n");
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
     if (port < 1 || port > 65535) {
-        fprintf(stderr, "error: port number must be in 1-65535 range\n");
+        UVHTTP_LOG_ERROR("port number must be in 1-65535 range\n");
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
     if (!host) {
-        fprintf(stderr,
-                "warn: host parameter is NULL, use default value 0.0.0.0\n");
+        UVHTTP_LOG_WARN("host parameter is NULL, use default value 0.0.0.0\n");
     }
 
     uvhttp_server_builder_t* server = NULL;
