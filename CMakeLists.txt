@@ -525,9 +525,9 @@ if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
     target_compile_definitions(uvhttp PRIVATE UVHTTP_ENABLE_TLS)
 endif()
 
-# mimalloc (PRIVATE)
+# mimalloc (PUBLIC - needed by tests)
 if(BUILD_WITH_MIMALLOC)
-    target_link_libraries(uvhttp PRIVATE mimalloc)
+    target_link_libraries(uvhttp PUBLIC mimalloc)
     target_compile_definitions(uvhttp PRIVATE UVHTTP_ENABLE_MIMALLOC)
 endif()
 
