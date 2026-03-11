@@ -635,6 +635,13 @@ foreach(test_file ${GTEST_TEST_FILES})
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
     )
+    
+    # Add mimalloc include directory if using mimalloc
+    if(BUILD_WITH_MIMALLOC)
+        target_include_directories(${test_name} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/include
+        )
+    endif()
 endforeach()
 
 # ============================================================================
@@ -708,6 +715,13 @@ foreach(test_file ${MOCK_TEST_FILES})
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
         ${CMAKE_CURRENT_SOURCE_DIR}/test/mock
     )
+    
+    # Add mimalloc include directory if using mimalloc
+    if(BUILD_WITH_MIMALLOC)
+        target_include_directories(${test_name} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/include
+        )
+    endif()
 endforeach()
 
 # Add gtest sample test (compiled with C++)
@@ -724,6 +738,13 @@ target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno
 # Link googletest first, then LIBS (gmock_main depends on gtest)
 target_link_libraries(uvhttp_unit_tests ${GTEST_LIBS} ${LIBS})
 target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
+
+# Add mimalloc include directory if using mimalloc
+if(BUILD_WITH_MIMALLOC)
+    target_include_directories(uvhttp_unit_tests PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/include
+    )
+endif()
 
 # ============================================================================
 # CTest Configuration
@@ -838,6 +859,13 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
 
     target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error-unused-function)
     target_link_libraries(${test_name} ${LIBS})
+    
+    # Add mimalloc include directory if using mimalloc
+    if(BUILD_WITH_MIMALLOC)
+        target_include_directories(${test_name} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/include
+        )
+    endif()
 endforeach()
 
 # ============================================================================

@@ -2,7 +2,7 @@
 # This file provides convenient targets for common development tasks
 # Use with: make -f GNUmakefile <target>
 
-.PHONY: help docs docs-clean docs-preview clean-all install-deps test coverage build build-release build-coverage clean rebuild cmake cmake-options
+.PHONY: help docs docs-clean docs-preview clean-all install-deps test coverage build build-release build-coverage clean rebuild cmake cmake-options bench
 
 # Default target
 help:
@@ -13,6 +13,7 @@ help:
 	@echo "  make -f GNUmakefile cmake-options - Show available CMake options"
 	@echo "  make -f GNUmakefile build         - Build project (Debug mode)"
 	@echo "  make -f GNUmakefile build-release - Build project (Release mode)"
+	@echo "  make -f GNUmakefile bench         - Build benchmark (Release + mimalloc)"
 	@echo "  make -f GNUmakefile build-coverage- Build with coverage enabled"
 	@echo "  make -f GNUmakefile rebuild       - Clean and rebuild"
 	@echo "  make -f GNUmakefile clean         - Clean build artifacts"
@@ -117,6 +118,17 @@ build-coverage:
 	@cmake -B build_coverage -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON || (echo "Error: cmake not found. Please install CMake." && exit 1)
 	@cmake --build build_coverage -j$$(nproc)
 	@echo "Coverage build completed successfully"
+
+# Build benchmark with Release mode and mimalloc allocator
+bench:
+	@echo "Building UVHTTP benchmark (Release + mimalloc)..."
+	@echo "Note: This builds a separate build directory 'build_bench' with mimalloc enabled"
+	@cmake -B build_bench -DCMAKE_BUILD_TYPE=Release -DUVHTTP_ALLOCATOR_TYPE=1 -DBUILD_BENCHMARKS=ON || (echo "Error: cmake not found. Please install CMake." && exit 1)
+	@cmake --build build_bench -j$$(nproc)
+	@echo "Benchmark build completed successfully"
+	@echo ""
+	@echo "Benchmark location: build_bench/dist/bin/"
+	@echo "Run benchmark: ./build_bench/dist/bin/benchmark_unified <port>"
 
 # Clean build artifacts (current build directory only)
 clean:

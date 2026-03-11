@@ -21,6 +21,13 @@ target_link_libraries(performance_allocator
     ${LIBS}
 )
 
+# Add mimalloc include directory if using mimalloc
+if(BUILD_WITH_MIMALLOC)
+    target_include_directories(performance_allocator PRIVATE
+        ${CMAKE_SOURCE_DIR}/deps/mimalloc/include
+    )
+endif()
+
 add_executable(performance_allocator_compare
     ${CMAKE_SOURCE_DIR}/benchmark/performance_allocator_compare.c
 )
@@ -28,6 +35,13 @@ target_link_libraries(performance_allocator_compare
     uvhttp
     ${LIBS}
 )
+
+# Add mimalloc include directory if using mimalloc
+if(BUILD_WITH_MIMALLOC)
+    target_include_directories(performance_allocator_compare PRIVATE
+        ${CMAKE_SOURCE_DIR}/deps/mimalloc/include
+    )
+endif()
 
 add_executable(test_bitfield
     ${CMAKE_SOURCE_DIR}/benchmark/test_bitfield.c
@@ -37,6 +51,13 @@ target_link_libraries(test_bitfield
     ${LIBS}
 )
 
+# Add mimalloc include directory if using mimalloc
+if(BUILD_WITH_MIMALLOC)
+    target_include_directories(test_bitfield PRIVATE
+        ${CMAKE_SOURCE_DIR}/deps/mimalloc/include
+    )
+endif()
+
 # 综合性能测试服务器（统一所有单一项目 benchmark）
 add_executable(benchmark_unified
     ${CMAKE_SOURCE_DIR}/benchmark/benchmark_unified.c
@@ -45,6 +66,13 @@ target_link_libraries(benchmark_unified
     uvhttp
     ${LIBS}
 )
+
+# Add mimalloc include directory if using mimalloc
+if(BUILD_WITH_MIMALLOC)
+    target_include_directories(benchmark_unified PRIVATE
+        ${CMAKE_SOURCE_DIR}/deps/mimalloc/include
+    )
+endif()
 
 # 安装性能测试可执行文件
 install(TARGETS performance_allocator performance_allocator_compare test_bitfield benchmark_unified
