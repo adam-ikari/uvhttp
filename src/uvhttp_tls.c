@@ -141,6 +141,26 @@ uvhttp_error_t uvhttp_tls_context_new(uvhttp_tls_context_t** ctx) {
     }
 
     mbedtls_ssl_conf_rng(&c->conf, mbedtls_ctr_drbg_random, &c->ctr_drbg);
+    
+    /* TODO: Re-enable TLS session cache for performance optimization
+     * 
+     * Reason for disabling: Session cache was temporarily disabled due to
+     * potential thread-safety concerns in single-threaded event loop environment.
+     * 
+     * Performance impact: Without session cache, each TLS connection requires
+     * full handshake (2-3 RTT instead of 1 RTT for resumed sessions), which
+     * significantly increases latency for HTTPS connections.
+     * 
+     * Re-enable criteria:
+     * - Verify thread-safety of mbedtls_ssl_cache in single-threaded context
+     * - Add proper session cache size limits and expiration
+     * - Test with concurrent TLS connections to ensure no crashes
+     * - Benchmark performance improvement (expected: 30-50% reduction in handshake time)
+     * 
+     * Code to uncomment when ready:
+     * mbedtls_ssl_conf_session_cache(&c->conf, &c->cache,
+     *     mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);
+     */
     // mbedtls_ssl_conf_session_cache(&c->conf, &c->cache,
     // mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);  // temporarily disabled
 
