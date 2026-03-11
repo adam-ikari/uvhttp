@@ -5,7 +5,7 @@
 #
 # 编译性能测试的正确方式：
 #   cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=OFF .
-#   make benchmark_unified
+#   make benchmark
 #
 # 不要使用 Debug 模式编译性能测试，因为：
 # - Debug 模式会禁用编译器优化（-O0）
@@ -59,22 +59,22 @@ if(BUILD_WITH_MIMALLOC)
 endif()
 
 # 综合性能测试服务器（统一所有单一项目 benchmark）
-add_executable(benchmark_unified
+add_executable(benchmark
     ${CMAKE_SOURCE_DIR}/benchmark/benchmark_unified.c
 )
-target_link_libraries(benchmark_unified
+target_link_libraries(benchmark
     uvhttp
     ${LIBS}
 )
 
 # Add mimalloc include directory if using mimalloc
 if(BUILD_WITH_MIMALLOC)
-    target_include_directories(benchmark_unified PRIVATE
+    target_include_directories(benchmark PRIVATE
         ${CMAKE_SOURCE_DIR}/deps/mimalloc/include
     )
 endif()
 
 # 安装性能测试可执行文件
-install(TARGETS performance_allocator performance_allocator_compare test_bitfield benchmark_unified
+install(TARGETS performance_allocator performance_allocator_compare test_bitfield benchmark
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/benchmark
 )

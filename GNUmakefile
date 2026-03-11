@@ -128,7 +128,7 @@ bench:
 	@echo "Benchmark build completed successfully"
 	@echo ""
 	@echo "Benchmark location: build_bench/dist/bin/"
-	@echo "Run benchmark: ./build_bench/dist/bin/benchmark_unified <port>"
+	@echo "Run benchmark: ./build_bench/dist/bin/benchmark <port>"
 
 # Clean build artifacts (current build directory only)
 clean:
