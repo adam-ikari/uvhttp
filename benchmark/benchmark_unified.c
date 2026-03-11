@@ -30,6 +30,16 @@
 #include <limits.h>
 #include <inttypes.h>
 
+#if UVHTTP_FEATURE_COMPRESSION
+/* Forward declarations for compression helper functions */
+int uvhttp_should_compress_by_extension(const char* filename);
+int uvhttp_should_compress_by_content_type(const char* content_type);
+uvhttp_error_t uvhttp_response_set_compress_by_filename(uvhttp_response_t* response,
+                                                        const char* filename);
+uvhttp_error_t uvhttp_response_set_compress_by_content_type(uvhttp_response_t* response,
+                                                           const char* content_type);
+#endif
+
 #define DEFAULT_PORT 18081
 #define MAX_SAMPLES 100000
 
@@ -319,9 +329,12 @@ static int compression_text_handler(uvhttp_request_t* request, uvhttp_response_t
     uvhttp_response_set_body(response, compressible_text, text_len);
     
 #if UVHTTP_FEATURE_COMPRESSION
-    /* Enable compression for this endpoint */
-    uvhttp_response_set_compress(response, 1);
+    /* Use helper function for smart compression decision */
+    uvhttp_response_set_compress_by_filename(response, "compressible.txt");
     uvhttp_response_set_compress_threshold(response, 512);  /* Lower threshold for testing */
+#else
+    /* Compression not available */
+    (void)0;
 #endif
     
     return uvhttp_response_send(response);
@@ -362,9 +375,12 @@ static int compression_json_handler(uvhttp_request_t* request, uvhttp_response_t
     uvhttp_response_set_body(response, json_data, json_len);
     
 #if UVHTTP_FEATURE_COMPRESSION
-    /* Enable compression for this endpoint */
-    uvhttp_response_set_compress(response, 1);
+    /* Use helper function for smart compression decision */
+    uvhttp_response_set_compress_by_content_type(response, "application/json");
     uvhttp_response_set_compress_threshold(response, 512);
+#else
+    /* Compression not available */
+    (void)0;
 #endif
     
     return uvhttp_response_send(response);

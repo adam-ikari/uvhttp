@@ -217,20 +217,24 @@ int uvhttp_should_compress_by_extension(const char* filename);
  * @note 基于 MIME 类型的最佳实践
  * 
  * 可压缩的内容类型:
- * - text/* (所有文本类型)
+ * - text/ (所有文本类型)
  * - application/json
  * - application/xml
  * - application/javascript
  * - application/xhtml+xml
  * 
  * 不压缩的内容类型:
- * - image/* (所有图片)
- * - video/* (所有视频)
- * - audio/* (所有音频)
+ * - image/ (所有图片)
+ * - video/ (所有视频)
+ * - audio/ (所有音频)
  * - application/zip
  * - application/gzip
  * - application/x-gzip
  * - application/x-compressed
+ * - application/pdf
+ * - application/vnd.*
+ * 
+ * 未知类型，不压缩（保守策略）
  */
 int uvhttp_should_compress_by_content_type(const char* content_type);
 
