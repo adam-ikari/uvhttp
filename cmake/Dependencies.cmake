@@ -361,23 +361,19 @@ endif()
 if(BUILD_WITH_COMPRESSION)
     message(STATUS "Configuring zlib for compression...")
     
-    # 检查系统是否有 zlib
-    find_package(ZLIB)
+    # 使用子模块中的 zlib
+    set(ZLIB_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/deps/zlib)
+    set(ZLIB_INCLUDE_DIR ${ZLIB_ROOT})
+    set(ZLIB_LIBRARY ${CMAKE_BINARY_DIR}/dist/lib/libz.a)
     
-    if(ZLIB_FOUND)
-        message(STATUS "Using system zlib: ${ZLIB_LIBRARIES}")
-        # 创建 INTERFACE 库以便于链接
-        add_library(zlib INTERFACE IMPORTED)
-        set_target_properties(zlib PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES ${ZLIB_INCLUDE_DIRS}
-            INTERFACE_LINK_LIBRARIES ${ZLIB_LIBRARIES}
-        )
-    else()
-        message(WARNING "zlib not found on system, compression will be disabled")
-        set(BUILD_WITH_COMPRESSION OFF)
-    endif()
+    # 添加 zlib 子目录
+    add_subdirectory(${ZLIB_ROOT} ${CMAKE_BINARY_DIR}/deps/zlib)
     
-    message(STATUS "Compression support: ${BUILD_WITH_COMPRESSION}")
+    # 创建 zlib 别名以便于链接
+    add_library(zlib ALIAS zlibstatic)
+    
+    message(STATUS "Using zlib from submodule: ${ZLIB_ROOT}")
+    message(STATUS "Compression support: ENABLED")
 endif()
 
 # ============================================================================

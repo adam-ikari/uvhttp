@@ -509,7 +509,7 @@ if(BUILD_WITH_MIMALLOC)
 endif()
 
 if(BUILD_WITH_COMPRESSION)
-    list(APPEND LIBS ${ZLIB_LIBRARIES})
+    list(APPEND LIBS ${ZLIB_LIBRARY})
 endif()
 
 # ============================================================================

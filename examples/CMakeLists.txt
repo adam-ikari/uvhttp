@@ -30,14 +30,18 @@ set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/xxhash/libxxhash.a)
 
 # zlib (for compression support)
 if(BUILD_WITH_COMPRESSION)
-    find_package(ZLIB REQUIRED)
-    message(STATUS "Examples will link with zlib: ${ZLIB_LIBRARIES}")
+    # 使用子模块中的 zlib
+    set(ZLIB_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../deps/zlib)
+    set(ZLIB_INCLUDE_DIR ${ZLIB_ROOT})
+    set(ZLIB_LIBRARY ${CMAKE_BINARY_DIR}/dist/lib/libz.a)
+    
+    message(STATUS "Examples will link with zlib: ${ZLIB_LIBRARY}")
     
     # 为所有链接了 uvhttp 的目标自动添加 zlib
     # 使用 generator expression 在链接时自动添加
     function(uvhttp_add_example_dependencies target)
         if(BUILD_WITH_COMPRESSION)
-            target_link_libraries(${target} PRIVATE ${ZLIB_LIBRARIES})
+            target_link_libraries(${target} PRIVATE ${ZLIB_LIBRARY})
         endif()
     endfunction()
 else()
