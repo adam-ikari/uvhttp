@@ -535,35 +535,11 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
         return UVHTTP_OK;
     }
 
-    /* build complete HTTP response - pure memory operation */
-    /* optimization: increase initial buffer size, reduce reallocation */
-    size_t headers_size =
-        UVHTTP_INITIAL_BUFFER_SIZE * 2; /* increase from 512 to 1024 */
-    char* headers_buffer = uvhttp_alloc(headers_size);
-    if (!headers_buffer) {
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
-    }
-
-    size_t headers_length = headers_size;
-    build_response_headers(response, headers_buffer, &headers_length);
-
-    /* check if buffer is too small, if so reallocate larger buffer */
-    if (headers_length >= headers_size) {
-        uvhttp_free(headers_buffer);
-        headers_size =
-            headers_length +
-            UVHTTP_RESPONSE_HEADER_SAFETY_MARGIN; /* add safety margin */
-        headers_buffer = uvhttp_alloc(headers_size);
-        if (!headers_buffer) {
-            return UVHTTP_ERROR_OUT_OF_MEMORY;
-        }
-        headers_length = headers_size;
-        build_response_headers(response, headers_buffer, &headers_length);
-    }
-
-    /* ========== Compression: Zero-overhead optimization ========== */
+    /* ========== Step 1: Compress body first (before building headers) ========== */
     const char* body_to_send = response->body;
     size_t body_length = response->body_length;
+    size_t original_body_length = response->body_length;  /* save for restoration */
+    char* compressed_body = NULL;  /* track for cleanup */
     
 #if UVHTTP_FEATURE_COMPRESSION
     /* 零开销检查：编译期优化会完全移除这个分支 */
@@ -572,7 +548,6 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
         response->body_length >= (size_t)response->compress_threshold) {
         
         /* 尝试压缩响应体 */
-        char* compressed_body = NULL;
         size_t compressed_len = 0;
         
         uvhttp_error_t compress_result = uvhttp_compress_gzip(
@@ -590,22 +565,63 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
             body_to_send = compressed_body;
             body_length = compressed_len;
             
+            /* 临时更新 response->body_length，这样 build_response_headers 会使用压缩后的大小 */
+            response->body_length = compressed_len;
+            
             /* 添加 Content-Encoding 头 */
             uvhttp_response_set_header(response, "Content-Encoding", "gzip");
             
             UVHTTP_LOG_DEBUG("Response compressed: %zu -> %zu bytes (%.1f%% reduction)\n",
-                            response->body_length, compressed_len,
-                            (1.0 - (double)compressed_len / response->body_length) * 100);
+                            original_body_length, compressed_len,
+                            (1.0 - (double)compressed_len / original_body_length) * 100);
         } else {
             /* 压缩失败或无效，使用原数据 */
             if (compressed_body) {
                 uvhttp_free(compressed_body);
+                compressed_body = NULL;
             }
         }
     }
 #endif /* UVHTTP_FEATURE_COMPRESSION */
 
-    /* calculate total size with potentially compressed body */
+    /* ========== Step 2: Build headers (after compression, so Content-Length is correct) ========== */
+    /* optimization: increase initial buffer size, reduce reallocation */
+    size_t headers_size =
+        UVHTTP_INITIAL_BUFFER_SIZE * 2; /* increase from 512 to 1024 */
+    char* headers_buffer = uvhttp_alloc(headers_size);
+    if (!headers_buffer) {
+        if (compressed_body) {
+            uvhttp_free(compressed_body);
+        }
+        /* 恢复原始 body_length */
+        response->body_length = original_body_length;
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+
+    size_t headers_length = headers_size;
+    build_response_headers(response, headers_buffer, &headers_length);
+
+    /* 恢复原始 body_length */
+    response->body_length = original_body_length;
+
+    /* check if buffer is too small, if so reallocate larger buffer */
+    if (headers_length >= headers_size) {
+        uvhttp_free(headers_buffer);
+        headers_size =
+            headers_length +
+            UVHTTP_RESPONSE_HEADER_SAFETY_MARGIN; /* add safety margin */
+        headers_buffer = uvhttp_alloc(headers_size);
+        if (!headers_buffer) {
+            if (compressed_body) {
+                uvhttp_free(compressed_body);
+            }
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
+        }
+        headers_length = headers_size;
+        build_response_headers(response, headers_buffer, &headers_length);
+    }
+
+    /* ========== Step 3: Calculate total size and allocate response data ========== */
     size_t total_size = headers_length + body_length;
     
     /* allocate complete response data */
@@ -626,8 +642,8 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
     
     /* 释放临时压缩缓冲区 */
 #if UVHTTP_FEATURE_COMPRESSION
-    if (body_to_send != response->body && body_to_send != NULL) {
-        uvhttp_free((void*)body_to_send);
+    if (compressed_body) {
+        uvhttp_free(compressed_body);
     }
 #endif
     
