@@ -865,6 +865,157 @@ uvhttp_error_t uvhttp_response_set_compress_threshold(uvhttp_response_t* respons
     return UVHTTP_OK;
 }
 
+/* ========== Compression Helper Functions ========== */
+
+/**
+ * @brief 可压缩的文件扩展名列表
+ */
+static const char* const COMPRESSIBLE_EXTENSIONS[] = {
+    /* 文本文件 */
+    ".html", ".htm", ".css", ".js", ".json", ".xml", ".txt", ".md",
+    /* 脚本文件 */
+    ".php", ".py", ".rb", ".pl", ".sh", ".bat", ".cmd",
+    /* 配置文件 */
+    ".ini", ".cfg", ".conf", ".yaml", ".yml", ".toml",
+    /* 数据文件 */
+    ".csv", ".sql", ".log",
+    /* Web 相关 */
+    ".svg", ".woff", ".woff2", ".ttf", ".eot",
+    NULL
+};
+
+/**
+ * @brief 不压缩的文件扩展名列表
+ */
+static const char* const NON_COMPRESSIBLE_EXTENSIONS[] = {
+    /* 图片 */
+    ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".ico", ".tiff", ".tif",
+    /* 视频 */
+    ".mp4", ".avi", ".mkv", ".mov", ".wmv", ".flv", ".webm", ".m4v", ".3gp",
+    /* 音频 */
+    ".mp3", ".wav", ".ogg", ".flac", ".aac", ".m4a", ".wma",
+    /* 压缩文件 */
+    ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".lzma", ".z",
+    /* 二进制文件 */
+    ".exe", ".dll", ".so", ".dylib", ".bin", ".elf", ".o", ".a", ".lib",
+    /* 办公文档（已压缩） */
+    ".docx", ".xlsx", ".pptx", ".pdf",
+    NULL
+};
+
+int uvhttp_should_compress_by_extension(const char* filename) {
+    if (!filename || !*filename) {
+        return 0;
+    }
+    
+    /* 查找最后一个点（文件扩展名） */
+    const char* last_dot = NULL;
+    const char* p = filename;
+    while (*p) {
+        if (*p == '.') {
+            last_dot = p;
+        }
+        p++;
+    }
+    
+    /* 没有扩展名，不压缩 */
+    if (!last_dot) {
+        return 0;
+    }
+    
+    /* 检查是否在非压缩列表中 */
+    for (size_t i = 0; NON_COMPRESSIBLE_EXTENSIONS[i] != NULL; i++) {
+        if (strcasecmp(last_dot, NON_COMPRESSIBLE_EXTENSIONS[i]) == 0) {
+            return 0;
+        }
+    }
+    
+    /* 检查是否在可压缩列表中 */
+    for (size_t i = 0; COMPRESSIBLE_EXTENSIONS[i] != NULL; i++) {
+        if (strcasecmp(last_dot, COMPRESSIBLE_EXTENSIONS[i]) == 0) {
+            return 1;
+        }
+    }
+    
+    /* 未知扩展名，不压缩（保守策略） */
+    return 0;
+}
+
+int uvhttp_should_compress_by_content_type(const char* content_type) {
+    if (!content_type || !*content_type) {
+        return 0;
+    }
+    
+    /* 不压缩的类型 */
+    if (strncasecmp(content_type, "image/", 6) == 0) return 0;
+    if (strncasecmp(content_type, "video/", 6) == 0) return 0;
+    if (strncasecmp(content_type, "audio/", 6) == 0) return 0;
+    if (strcasecmp(content_type, "application/zip") == 0) return 0;
+    if (strcasecmp(content_type, "application/gzip") == 0) return 0;
+    if (strcasecmp(content_type, "application/x-gzip") == 0) return 0;
+    if (strcasecmp(content_type, "application/x-compressed") == 0) return 0;
+    if (strcasecmp(content_type, "application/pdf") == 0) return 0;
+    if (strncasecmp(content_type, "application/vnd.", 16) == 0) return 0;
+    
+    /* 可压缩的类型 */
+    if (strncasecmp(content_type, "text/", 5) == 0) return 1;
+    if (strcasecmp(content_type, "application/json") == 0) return 1;
+    if (strcasecmp(content_type, "application/xml") == 0) return 1;
+    if (strcasecmp(content_type, "application/javascript") == 0) return 1;
+    if (strcasecmp(content_type, "application/xhtml+xml") == 0) return 1;
+    if (strcasecmp(content_type, "application/rss+xml") == 0) return 1;
+    if (strcasecmp(content_type, "application/atom+xml") == 0) return 1;
+    
+    /* 未知类型，不压缩（保守策略） */
+    return 0;
+}
+
+uvhttp_error_t uvhttp_response_set_compress_by_filename(uvhttp_response_t* response,
+                                                        const char* filename) {
+    if (!response) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    /* 判断是否应该压缩 */
+    int should_compress = uvhttp_should_compress_by_extension(filename);
+    
+    if (should_compress) {
+        /* 启用压缩并设置默认阈值 */
+        response->compress = 1;
+        if (response->compress_threshold == 0) {
+            response->compress_threshold = 1024;
+        }
+    } else {
+        /* 禁用压缩 */
+        response->compress = 0;
+    }
+    
+    return UVHTTP_OK;
+}
+
+uvhttp_error_t uvhttp_response_set_compress_by_content_type(uvhttp_response_t* response,
+                                                           const char* content_type) {
+    if (!response) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    
+    /* 判断是否应该压缩 */
+    int should_compress = uvhttp_should_compress_by_content_type(content_type);
+    
+    if (should_compress) {
+        /* 启用压缩并设置默认阈值 */
+        response->compress = 1;
+        if (response->compress_threshold == 0) {
+            response->compress_threshold = 1024;
+        }
+    } else {
+        /* 禁用压缩 */
+        response->compress = 0;
+    }
+    
+    return UVHTTP_OK;
+}
+
 #endif /* UVHTTP_FEATURE_COMPRESSION */
 
 void uvhttp_response_free(uvhttp_response_t* response) {

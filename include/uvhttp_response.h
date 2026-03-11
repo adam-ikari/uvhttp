@@ -181,6 +181,107 @@ static inline uvhttp_error_t uvhttp_response_set_compress_threshold(uvhttp_respo
     (void)threshold;
     return UVHTTP_OK;
 }
+
+/**
+ * @brief 根据文件扩展名判断是否应该压缩
+ * 
+ * @param filename 文件名或路径
+ * @return int 1=应该压缩, 0=不应该压缩
+ * 
+ * @note 零开销：简单的字符串比较
+ * @note 基于常见文件扩展名的最佳实践
+ * @note 应用层可覆盖此函数实现自定义逻辑
+ * 
+ * 可压缩的文件扩展名:
+ * - 文本文件: .html, .htm, .css, .js, .json, .xml, .txt, .md
+ * - 脚本文件: .php, .py, .rb, .pl, .sh, .bat, .cmd
+ * - 配置文件: .ini, .cfg, .conf, .yaml, .yml, .toml
+ * - 数据文件: .csv, .sql, .log
+ * 
+ * 不压缩的文件扩展名:
+ * - 图片: .jpg, .jpeg, .png, .gif, .bmp, .webp, .svg, .ico
+ * - 视频: .mp4, .avi, .mkv, .mov, .wmv, .flv, .webm
+ * - 音频: .mp3, .wav, .ogg, .flac, .aac, .m4a
+ * - 压缩文件: .zip, .rar, .7z, .tar, .gz, .bz2, .xz
+ * - 二进制文件: .exe, .dll, .so, .dylib, .bin
+ */
+int uvhttp_should_compress_by_extension(const char* filename);
+
+/**
+ * @brief 根据内容类型判断是否应该压缩
+ * 
+ * @param content_type MIME 类型 (例如: "text/html", "application/json")
+ * @return int 1=应该压缩, 0=不应该压缩
+ * 
+ * @note 零开销：简单的字符串比较
+ * @note 基于 MIME 类型的最佳实践
+ * 
+ * 可压缩的内容类型:
+ * - text/* (所有文本类型)
+ * - application/json
+ * - application/xml
+ * - application/javascript
+ * - application/xhtml+xml
+ * 
+ * 不压缩的内容类型:
+ * - image/* (所有图片)
+ * - video/* (所有视频)
+ * - audio/* (所有音频)
+ * - application/zip
+ * - application/gzip
+ * - application/x-gzip
+ * - application/x-compressed
+ */
+int uvhttp_should_compress_by_content_type(const char* content_type);
+
+/**
+ * @brief 根据文件扩展名自动应用压缩策略
+ * 
+ * @param response 响应对象
+ * @param filename 文件名或路径
+ * @return uvhttp_error_t UVHTTP_OK 成功，错误码失败
+ * 
+ * @note 便捷函数：结合判断和应用
+ * @note 自动设置压缩阈值 (1024 字节)
+ * @note 如果文件扩展名不支持压缩，则禁用压缩
+ * 
+ * 使用示例:
+ * @code
+ * uvhttp_response_set_compress_by_filename(response, "index.html");
+ * // 等价于:
+ * if (uvhttp_should_compress_by_extension("index.html")) {
+ *     uvhttp_response_set_compress(response, 1);
+ *     uvhttp_response_set_compress_threshold(response, 1024);
+ * }
+ * @endcode
+ */
+uvhttp_error_t uvhttp_response_set_compress_by_filename(uvhttp_response_t* response,
+                                                        const char* filename);
+
+/**
+ * @brief 根据内容类型自动应用压缩策略
+ * 
+ * @param response 响应对象
+ * @param content_type MIME 类型
+ * @return uvhttp_error_t UVHTTP_OK 成功，错误码失败
+ * 
+ * @note 便捷函数：结合判断和应用
+ * @note 自动设置压缩阈值 (1024 字节)
+ * @note 如果内容类型不支持压缩，则禁用压缩
+ * 
+ * 使用示例:
+ * @code
+ * uvhttp_response_set_compress_by_content_type(response, "application/json");
+ * // 等价于:
+ * if (uvhttp_should_compress_by_content_type("application/json")) {
+ *     uvhttp_response_set_compress(response, 1);
+ *     uvhttp_response_set_compress_threshold(response, 1024);
+ * }
+ * @endcode
+ */
+uvhttp_error_t uvhttp_response_set_compress_by_content_type(uvhttp_response_t* response,
+                                                           const char* content_type);
+
 #endif
 
 /* Response sending functions */
