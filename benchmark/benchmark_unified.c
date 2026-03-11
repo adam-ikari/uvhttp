@@ -288,6 +288,88 @@ static int large_handler(uvhttp_request_t* request, uvhttp_response_t* response)
     return 0;
 }
 
+/* Compression test handler - compressible text */
+static int compression_text_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;  /* Avoid unused parameter warning */
+
+    if (!response) {
+        return -1;
+    }
+
+    /* Generate highly compressible text (repeating pattern) */
+    static char compressible_text[LARGE_BUFFER_SIZE];
+    static int text_initialized = 0;
+
+    if (!text_initialized) {
+        const char* pattern = "HTTP compression reduces network bandwidth. This text will be compressed. ";
+        size_t pattern_len = strlen(pattern);
+        size_t pos = 0;
+        while (pos + pattern_len < sizeof(compressible_text) - 1) {
+            memcpy(compressible_text + pos, pattern, pattern_len);
+            pos += pattern_len;
+        }
+        compressible_text[pos] = '\0';
+        text_initialized = 1;
+    }
+
+    size_t text_len = strlen(compressible_text);
+
+    uvhttp_response_set_status(response, 200);
+    uvhttp_response_set_header(response, "Content-Type", "text/plain");
+    uvhttp_response_set_body(response, compressible_text, text_len);
+    
+#if UVHTTP_FEATURE_COMPRESSION
+    /* Enable compression for this endpoint */
+    uvhttp_response_set_compress(response, 1);
+    uvhttp_response_set_compress_threshold(response, 512);  /* Lower threshold for testing */
+#endif
+    
+    return uvhttp_response_send(response);
+}
+
+/* Compression test handler - JSON */
+static int compression_json_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;  /* Avoid unused parameter warning */
+
+    if (!response) {
+        return -1;
+    }
+
+    /* Generate compressible JSON (array of similar objects) */
+    static char json_data[LARGE_BUFFER_SIZE];
+    static int json_initialized = 0;
+
+    if (!json_initialized) {
+        int pos = 0;
+        pos += snprintf(json_data + pos, sizeof(json_data) - pos, "[\n");
+        for (int i = 0; i < 500 && pos < (int)sizeof(json_data) - 100; i++) {
+            pos += snprintf(json_data + pos, sizeof(json_data) - pos,
+                           "  {\"id\": %d, \"name\": \"Item %d\", \"description\": \"Test\", \"price\": 19.99, \"in_stock\": true},\n",
+                           i, i);
+        }
+        if (pos > 2 && json_data[pos - 2] == ',') {
+            pos -= 2;  /* Remove trailing comma */
+            pos += snprintf(json_data + pos, sizeof(json_data) - pos, "\n");
+        }
+        pos += snprintf(json_data + pos, sizeof(json_data) - pos, "]\n");
+        json_initialized = 1;
+    }
+
+    size_t json_len = strlen(json_data);
+
+    uvhttp_response_set_status(response, 200);
+    uvhttp_response_set_header(response, "Content-Type", "application/json");
+    uvhttp_response_set_body(response, json_data, json_len);
+    
+#if UVHTTP_FEATURE_COMPRESSION
+    /* Enable compression for this endpoint */
+    uvhttp_response_set_compress(response, 1);
+    uvhttp_response_set_compress_threshold(response, 512);
+#endif
+    
+    return uvhttp_response_send(response);
+}
+
 /* Latency test handler */
 static int latency_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     (void)request;  /* Avoid unused parameter warning */
@@ -505,6 +587,10 @@ static void print_usage(const char* program) {
     printf("  GET  /small            - Small response (1KB)\n");
     printf("  GET  /medium           - Medium response (10KB)\n");
     printf("  GET  /large            - Large response (100KB)\n");
+#if UVHTTP_FEATURE_COMPRESSION
+    printf("  GET  /compression/text - Compressible text (100KB, ~90%% compression)\n");
+    printf("  GET  /compression/json - Compressible JSON (100KB, ~90%% compression)\n");
+#endif
     printf("  GET  /latency          - Latency test endpoint\n");
     printf("  GET  /db/fast          - Fast database query (1ms async delay)\n");
     printf("  GET  /db/medium        - Medium database query (10ms async delay)\n");
@@ -613,6 +699,10 @@ int main(int argc, char* argv[]) {
     uvhttp_router_add_route(router, "/small", small_handler);
     uvhttp_router_add_route(router, "/medium", medium_handler);
     uvhttp_router_add_route(router, "/large", large_handler);
+#if UVHTTP_FEATURE_COMPRESSION
+    uvhttp_router_add_route(router, "/compression/text", compression_text_handler);
+    uvhttp_router_add_route(router, "/compression/json", compression_json_handler);
+#endif
     uvhttp_router_add_route(router, "/latency", latency_handler);
     uvhttp_router_add_route(router, "/db/fast", db_fast_handler);
     uvhttp_router_add_route(router, "/db/medium", db_medium_handler);
