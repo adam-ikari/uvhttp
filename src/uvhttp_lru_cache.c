@@ -11,6 +11,7 @@
 #    include "uvhttp_error_handler.h"
 #    include "uvhttp_error_helpers.h"
 #    include "uvhttp_logging.h"
+#    include "uvhttp_utils.h"
 
 #    include <stdlib.h>
 #    include <string.h>

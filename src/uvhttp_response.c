@@ -57,7 +57,7 @@ static uvhttp_error_t uvhttp_compress_gzip(const char* input, size_t input_len,
     if (result != Z_OK) {
         uvhttp_free(compressed_buf);
         UVHTTP_LOG_ERROR("gzip compression failed: %d\n", result);
-        return UVHTTP_ERROR_INTERNAL_ERROR;
+        return UVHTTP_ERROR_IO_ERROR;
     }
 
     /* Reallocate to exact size (save memory) */
@@ -569,7 +569,7 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
     /* 零开销检查：编译期优化会完全移除这个分支 */
     if (response->compress && 
         response->body && 
-        response->body_length >= response->compress_threshold) {
+        response->body_length >= (size_t)response->compress_threshold) {
         
         /* 尝试压缩响应体 */
         char* compressed_body = NULL;
@@ -822,7 +822,7 @@ uvhttp_error_t uvhttp_response_set_compress_algorithm(uvhttp_response_t* respons
     
     /* 只有启用压缩时才能设置算法 */
     if (!response->compress) {
-        return UVHTTP_ERROR_INVALID_STATE;
+        return UVHTTP_ERROR_INVALID_PARAM;  /* Compression not enabled */
     }
     
     /* 验证算法类型 */

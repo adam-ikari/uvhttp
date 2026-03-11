@@ -174,6 +174,15 @@ else()
     message(STATUS "Router cache support: DISABLED")
 endif()
 
+# Compression support
+if(BUILD_WITH_COMPRESSION)
+    add_definitions(-DUVHTTP_FEATURE_COMPRESSION=1)
+    message(STATUS "Compression support: ENABLED")
+else()
+    add_definitions(-DUVHTTP_FEATURE_COMPRESSION=0)
+    message(STATUS "Compression support: DISABLED (zero overhead)")
+endif()
+
 # HTTPS support (using mbedtls)
 if(BUILD_WITH_HTTPS)
     add_definitions(-DUVHTTP_FEATURE_TLS=1)
@@ -499,6 +508,10 @@ if(BUILD_WITH_MIMALLOC)
     list(APPEND LIBS ${MIMALLOC_LIB})
 endif()
 
+if(BUILD_WITH_COMPRESSION)
+    list(APPEND LIBS ${ZLIB_LIBRARIES})
+endif()
+
 # ============================================================================
 # 创建静态库
 # ============================================================================
@@ -530,6 +543,11 @@ endif()
 if(BUILD_WITH_MIMALLOC)
     target_link_libraries(uvhttp PUBLIC mimalloc)
     target_compile_definitions(uvhttp PRIVATE UVHTTP_ENABLE_MIMALLOC)
+endif()
+
+# zlib (for compression support)
+if(BUILD_WITH_COMPRESSION)
+    target_link_libraries(uvhttp PUBLIC zlib)
 endif()
 
 # Linux platform-specific libraries (PRIVATE)

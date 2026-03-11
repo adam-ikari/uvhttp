@@ -129,7 +129,7 @@ TEST_F(UvhttpCompressionTest, DefaultThresholdWhenEnabled) {
 TEST_F(UvhttpCompressionTest, SetAlgorithmWithoutEnable) {
     // Try to set algorithm without enabling compression first
     uvhttp_error_t result = uvhttp_response_set_compress_algorithm(&response, 1);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_STATE);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);  // Compression not enabled
 }
 
 // Test 7: Small body below threshold should not compress
