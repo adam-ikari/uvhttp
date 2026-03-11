@@ -48,6 +48,56 @@ UVHTTP_STATIC_ASSERT(sizeof(uvhttp_request_t) < 2 * 1024 * 1024,
                      "uvhttp_request_t size exceeds 2MB limit, consider "
                      "reducing UVHTTP_INLINE_HEADERS_CAPACITY");
 
+/* ========== Buffer Validation Helper Functions ========== */
+
+/**
+ * @brief Validate read buffer state to prevent overflow
+ * 
+ * @param conn Connection to validate
+ * @return int 0 if valid, -1 if overflow detected
+ * 
+ * @note This helper function centralizes buffer overflow validation logic
+ * @note Logs error and returns -1 if overflow is detected
+ */
+static inline int uvhttp_validate_buffer_state(uvhttp_connection_t* conn) {
+    if (!conn) {
+        return -1;
+    }
+    
+    if (conn->read_buffer_used > conn->read_buffer_size) {
+        UVHTTP_LOG_ERROR("Buffer overflow detected: used=%zu, size=%zu\n",
+                         conn->read_buffer_used, conn->read_buffer_size);
+        return -1;
+    }
+    
+    return 0;
+}
+
+/**
+ * @brief Validate buffer capacity for additional data
+ * 
+ * @param conn Connection to validate
+ * @param additional_size Size of data to add
+ * @return int 0 if sufficient capacity, -1 if overflow would occur
+ * 
+ * @note This helper function validates if buffer has enough space for additional data
+ * @note Logs error and returns -1 if overflow would occur
+ */
+static inline int uvhttp_validate_buffer_capacity(uvhttp_connection_t* conn, 
+                                                    size_t additional_size) {
+    if (!conn) {
+        return -1;
+    }
+    
+    if (conn->read_buffer_used + additional_size > conn->read_buffer_size) {
+        UVHTTP_LOG_ERROR("Buffer capacity exceeded: used=%zu, add=%zu, size=%zu\n",
+                         conn->read_buffer_used, additional_size, conn->read_buffer_size);
+        return -1;
+    }
+    
+    return 0;
+}
+
 UVHTTP_STATIC_ASSERT(sizeof(uvhttp_response_t) >= 65536,
                      "uvhttp_response_t size too small");
 
@@ -96,9 +146,7 @@ static int mbedtls_bio_recv(void* ctx, unsigned char* buf, size_t len) {
     }
 
     /* Validate buffer state to prevent overflow */
-    if (conn->read_buffer_used > conn->read_buffer_size) {
-        UVHTTP_LOG_ERROR("Buffer overflow detected: used=%zu, size=%zu\n",
-                         conn->read_buffer_used, conn->read_buffer_size);
+    if (uvhttp_validate_buffer_state(conn) != 0) {
         return MBEDTLS_ERR_SSL_INTERNAL_ERROR;
     }
 
@@ -174,9 +222,7 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     }
 
     /* check buffer boundary, prevent overflow */
-    if (conn->read_buffer_used + (size_t)nread > conn->read_buffer_size) {
-        UVHTTP_LOG_ERROR("Read buffer overflow: %zu + %zd > %zu\n",
-                         conn->read_buffer_used, nread, conn->read_buffer_size);
+    if (uvhttp_validate_buffer_capacity(conn, (size_t)nread) != 0) {
         uvhttp_connection_close(conn);
         return;
     }
