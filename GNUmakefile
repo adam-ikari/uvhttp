@@ -123,6 +123,16 @@ build-coverage:
 bench:
 	@echo "Building UVHTTP benchmark (Release + mimalloc)..."
 	@echo "Note: This builds a separate build directory 'build_bench' with mimalloc enabled"
+	@if [ -d build_bench ]; then \
+		echo "Checking existing build configuration..."; \
+		if [ -f build_bench/CMakeCache.txt ]; then \
+			if ! grep -q "UVHTTP_ALLOCATOR_TYPE.*1" build_bench/CMakeCache.txt; then \
+				echo "Warning: Existing build configuration conflicts (allocator type mismatch)"; \
+				echo "Cleaning build_bench directory..."; \
+				rm -rf build_bench; \
+			fi; \
+		fi; \
+	fi
 	@cmake -B build_bench -DCMAKE_BUILD_TYPE=Release -DUVHTTP_ALLOCATOR_TYPE=1 -DBUILD_BENCHMARKS=ON || (echo "Error: cmake not found. Please install CMake." && exit 1)
 	@cmake --build build_bench -j$$(nproc)
 	@echo "Benchmark build completed successfully"

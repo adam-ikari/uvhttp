@@ -12,6 +12,15 @@
 # - Debug 模式会添加调试符号（-g），增加二进制大小
 # - 性能测试结果会严重偏离实际部署性能（通常低 50-70%）
 
+# Helper function to add mimalloc include directory to a target
+function(add_mimalloc_include TARGET)
+    if(BUILD_WITH_MIMALLOC)
+        target_include_directories(${TARGET} PRIVATE
+            ${CMAKE_SOURCE_DIR}/deps/mimalloc/include
+        )
+    endif()
+endfunction()
+
 # 性能测试可执行文件
 add_executable(performance_allocator
     ${CMAKE_SOURCE_DIR}/benchmark/performance_allocator.c
@@ -20,13 +29,7 @@ target_link_libraries(performance_allocator
     uvhttp
     ${LIBS}
 )
-
-# Add mimalloc include directory if using mimalloc
-if(BUILD_WITH_MIMALLOC)
-    target_include_directories(performance_allocator PRIVATE
-        ${CMAKE_SOURCE_DIR}/deps/mimalloc/include
-    )
-endif()
+add_mimalloc_include(performance_allocator)
 
 add_executable(performance_allocator_compare
     ${CMAKE_SOURCE_DIR}/benchmark/performance_allocator_compare.c
@@ -35,13 +38,7 @@ target_link_libraries(performance_allocator_compare
     uvhttp
     ${LIBS}
 )
-
-# Add mimalloc include directory if using mimalloc
-if(BUILD_WITH_MIMALLOC)
-    target_include_directories(performance_allocator_compare PRIVATE
-        ${CMAKE_SOURCE_DIR}/deps/mimalloc/include
-    )
-endif()
+add_mimalloc_include(performance_allocator_compare)
 
 add_executable(test_bitfield
     ${CMAKE_SOURCE_DIR}/benchmark/test_bitfield.c
@@ -50,13 +47,7 @@ target_link_libraries(test_bitfield
     uvhttp
     ${LIBS}
 )
-
-# Add mimalloc include directory if using mimalloc
-if(BUILD_WITH_MIMALLOC)
-    target_include_directories(test_bitfield PRIVATE
-        ${CMAKE_SOURCE_DIR}/deps/mimalloc/include
-    )
-endif()
+add_mimalloc_include(test_bitfield)
 
 # 综合性能测试服务器（统一所有单一项目 benchmark）
 add_executable(benchmark
@@ -66,13 +57,7 @@ target_link_libraries(benchmark
     uvhttp
     ${LIBS}
 )
-
-# Add mimalloc include directory if using mimalloc
-if(BUILD_WITH_MIMALLOC)
-    target_include_directories(benchmark PRIVATE
-        ${CMAKE_SOURCE_DIR}/deps/mimalloc/include
-    )
-endif()
+add_mimalloc_include(benchmark)
 
 # 安装性能测试可执行文件
 install(TARGETS performance_allocator performance_allocator_compare test_bitfield benchmark
