@@ -356,6 +356,31 @@ endif()
 # ============================================================================
 
 # ============================================================================
+# zlib (for compression support)
+# ============================================================================
+if(BUILD_WITH_COMPRESSION)
+    message(STATUS "Configuring zlib for compression...")
+    
+    # 检查系统是否有 zlib
+    find_package(ZLIB)
+    
+    if(ZLIB_FOUND)
+        message(STATUS "Using system zlib: ${ZLIB_LIBRARIES}")
+        # 创建 INTERFACE 库以便于链接
+        add_library(zlib INTERFACE IMPORTED)
+        set_target_properties(zlib PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${ZLIB_INCLUDE_DIRS}
+            INTERFACE_LINK_LIBRARIES ${ZLIB_LIBRARIES}
+        )
+    else()
+        message(WARNING "zlib not found on system, compression will be disabled")
+        set(BUILD_WITH_COMPRESSION OFF)
+    endif()
+    
+    message(STATUS "Compression support: ${BUILD_WITH_COMPRESSION}")
+endif()
+
+# ============================================================================
 # googletest
 # ============================================================================
 message(STATUS "Configuring googletest...")

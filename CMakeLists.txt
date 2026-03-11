@@ -18,6 +18,7 @@ option(BUILD_WITH_HTTPS "Build with HTTPS support" ON)
 option(BUILD_WITH_STATIC_FILES "Build with static file service support" OFF)
 option(BUILD_WITH_LRU_CACHE "Build with LRU cache support" ON)
 option(BUILD_WITH_ROUTER_CACHE "Build with router cache support" OFF)
+option(BUILD_WITH_COMPRESSION "Build with HTTP response compression support" OFF)
 
 # Memory allocator type (must be set before BUILD_WITH_MIMALLOC option)
 if(NOT DEFINED UVHTTP_ALLOCATOR_TYPE)

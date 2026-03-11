@@ -47,6 +47,8 @@ struct uvhttp_response {
     int keepalive;       /* 4 bytes - usekeepConnection */
     int compress;        /* 4 bytes - useEnablecompress */
     int cache_ttl;       /* 4 bytes - Cache TTL(seconds) */
+    int compress_algorithm; /* 4 bytes - Compression algorithm (0=auto, 1=gzip) */
+    int compress_threshold; /* 4 bytes - Compression threshold (bytes) */
     int _padding1;       /* 4 bytes - paddingto32bytes */
     size_t header_count; /* 8 bytes - header quantity */
     size_t body_length;  /* 8 bytes - body length */
@@ -112,6 +114,74 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
 uvhttp_error_t uvhttp_response_send_raw(const char* data, size_t length,
                                         void* client,
                                         uvhttp_response_t* response);
+
+/* ============ Compression API ============ */
+#if UVHTTP_FEATURE_COMPRESSION
+/**
+ * @brief 启用响应压缩
+ * 
+ * @param response 响应对象
+ * @param enable 是否启用压缩 (0=禁用, 1=启用)
+ * @return uvhttp_error_t UVHTTP_OK 成功，错误码失败
+ * 
+ * @note 零开销：未启用时无任何性能损失
+ * @note 自动选择最佳压缩算法
+ * @note 压缩仅对 >= compress_threshold 的响应生效
+ * @note 默认阈值: 1024 字节
+ */
+uvhttp_error_t uvhttp_response_set_compress(uvhttp_response_t* response, 
+                                            int enable);
+
+/**
+ * @brief 设置压缩算法
+ * 
+ * @param response 响应对象
+ * @param algorithm 压缩算法 (0=auto, 1=gzip)
+ * @return uvhttp_error_t UVHTTP_OK 成功，错误码失败
+ * 
+ * @note 编译期选择，未启用的算法零成本
+ * @note 0=auto (自动选择最佳算法)
+ * @note 1=gzip (gzip 压缩)
+ */
+uvhttp_error_t uvhttp_response_set_compress_algorithm(uvhttp_response_t* response,
+                                                     int algorithm);
+
+/**
+ * @brief 设置压缩阈值
+ * 
+ * @param response 响应对象
+ * @param threshold 压缩阈值（字节），默认 1024
+ * @return uvhttp_error_t UVHTTP_OK 成功，错误码失败
+ * 
+ * @note 小于阈值的响应不会被压缩
+ * @note 避免小文件压缩反而增大的问题
+ * @note 建议值: 512-2048 字节
+ */
+uvhttp_error_t uvhttp_response_set_compress_threshold(uvhttp_response_t* response,
+                                                       size_t threshold);
+#else
+/* 零开销空实现：编译期优化完全移除压缩相关代码 */
+static inline uvhttp_error_t uvhttp_response_set_compress(uvhttp_response_t* response, 
+                                                            int enable) {
+    (void)response;
+    (void)enable;
+    return UVHTTP_OK;
+}
+
+static inline uvhttp_error_t uvhttp_response_set_compress_algorithm(uvhttp_response_t* response,
+                                                                 int algorithm) {
+    (void)response;
+    (void)algorithm;
+    return UVHTTP_OK;
+}
+
+static inline uvhttp_error_t uvhttp_response_set_compress_threshold(uvhttp_response_t* response,
+                                                                   size_t threshold) {
+    (void)response;
+    (void)threshold;
+    return UVHTTP_OK;
+}
+#endif
 
 /* Response sending functions */
 uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);

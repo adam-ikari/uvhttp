@@ -42,6 +42,10 @@ extern "C" {
            */
 #endif
 
+#ifndef UVHTTP_FEATURE_COMPRESSION
+#    define UVHTTP_FEATURE_COMPRESSION 0 /* HTTP response compression support */
+#endif
+
 /* ============ Conditional Compilation Macros ============ */
 
 /* Basic feature macros */
@@ -69,6 +73,10 @@ extern "C" {
 
 #if UVHTTP_FEATURE_RATE_LIMIT
 #    define UVHTTP_RATE_LIMIT_ENABLED
+#endif
+
+#if UVHTTP_FEATURE_COMPRESSION
+#    define UVHTTP_COMPRESSION_ENABLED
 #endif
 
 #if UVHTTP_FEATURE_STATIC_FILES

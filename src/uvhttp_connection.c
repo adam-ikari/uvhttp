@@ -398,6 +398,8 @@ uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     conn->response->keepalive = 0;
     conn->response->compress = 0;
     conn->response->cache_ttl = 0;
+    conn->response->compress_algorithm = 0;
+    conn->response->compress_threshold = 1024;
     conn->response->header_count = 0;
     conn->response->body_length = 0;
     conn->response->cache_expires = 0;
