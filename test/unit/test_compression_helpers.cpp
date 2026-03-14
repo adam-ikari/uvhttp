@@ -10,7 +10,8 @@
 class CompressionHelpersTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        uvhttp_response_init(&response, NULL);
+        /* Use a dummy client pointer to avoid NULL check in uvhttp_response_init */
+        uvhttp_response_init(&response, (void*)0x1234);
     }
 
     void TearDown() override {

@@ -4,6 +4,7 @@
 #include "uvhttp_common.h"
 #include "uvhttp_error.h"
 #include "uvhttp_platform.h"
+#include "uvhttp_features.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -182,6 +183,11 @@ static inline uvhttp_error_t uvhttp_response_set_compress_threshold(uvhttp_respo
     return UVHTTP_OK;
 }
 
+#endif
+
+/* ============ Compression Helper Functions ============ */
+/* These functions are always available for checking compression eligibility */
+
 /**
  * @brief 根据文件扩展名判断是否应该压缩
  * 
@@ -285,8 +291,6 @@ uvhttp_error_t uvhttp_response_set_compress_by_filename(uvhttp_response_t* respo
  */
 uvhttp_error_t uvhttp_response_set_compress_by_content_type(uvhttp_response_t* response,
                                                            const char* content_type);
-
-#endif
 
 /* Response sending functions */
 uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);

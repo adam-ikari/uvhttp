@@ -298,6 +298,7 @@ static int large_handler(uvhttp_request_t* request, uvhttp_response_t* response)
     return 0;
 }
 
+#if UVHTTP_FEATURE_COMPRESSION
 /* Compression test handler - compressible text */
 static int compression_text_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     (void)request;  /* Avoid unused parameter warning */
@@ -340,7 +341,10 @@ static int compression_text_handler(uvhttp_request_t* request, uvhttp_response_t
     return uvhttp_response_send(response);
 }
 
+#endif /* UVHTTP_FEATURE_COMPRESSION */
+
 /* Compression test handler - JSON */
+#if UVHTTP_FEATURE_COMPRESSION
 static int compression_json_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     (void)request;  /* Avoid unused parameter warning */
 
@@ -385,6 +389,8 @@ static int compression_json_handler(uvhttp_request_t* request, uvhttp_response_t
     
     return uvhttp_response_send(response);
 }
+
+#endif /* UVHTTP_FEATURE_COMPRESSION */
 
 /* Latency test handler */
 static int latency_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
