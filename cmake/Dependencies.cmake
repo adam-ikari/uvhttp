@@ -222,7 +222,8 @@ if(NOT EXISTS ${LLHTTP_LIB})
     # Add C flags if they're set (for 32-bit builds)
     # Remove -Werror from CMAKE_C_FLAGS to avoid llhttp source warnings being treated as errors
     if(DEFINED CMAKE_C_FLAGS)
-        string(REPLACE "-Werror" "" FILTERED_C_FLAGS "${CMAKE_C_FLAGS}")
+        # Use regex to remove -Werror while preserving other flags
+        string(REGEX REPLACE "(^| )[ \t]*-Werror[ \t]*" " " FILTERED_C_FLAGS "${CMAKE_C_FLAGS}")
         list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_C_FLAGS=${FILTERED_C_FLAGS}")
     endif()
     if(DEFINED CMAKE_CXX_FLAGS)
