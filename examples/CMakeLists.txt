@@ -28,6 +28,28 @@ set(MBEDTLS_LIBS
 set(LLHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/build/libllhttp.a)
 set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/xxhash/libxxhash.a)
 
+# zlib (for compression support)
+if(BUILD_WITH_COMPRESSION)
+    # 使用子模块中的 zlib
+    set(ZLIB_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../deps/zlib)
+    set(ZLIB_INCLUDE_DIR ${ZLIB_ROOT})
+    set(ZLIB_LIBRARY ${CMAKE_BINARY_DIR}/dist/lib/libz.a)
+    
+    message(STATUS "Examples will link with zlib: ${ZLIB_LIBRARY}")
+    
+    # 为所有链接了 uvhttp 的目标自动添加 zlib
+    # 使用 generator expression 在链接时自动添加
+    function(uvhttp_add_example_dependencies target)
+        if(BUILD_WITH_COMPRESSION)
+            target_link_libraries(${target} PRIVATE ${ZLIB_LIBRARY})
+        endif()
+    endfunction()
+else()
+    function(uvhttp_add_example_dependencies target)
+        # No-op when compression is disabled
+    endfunction()
+endif()
+
 # UVHTTP 库路径
 # 使用 CMAKE_BINARY_DIR 来获取当前的构建目录
 # 注意：当 examples 作为子项目添加时，CMAKE_BINARY_DIR 指向主项目的构建目录
@@ -47,6 +69,11 @@ message(STATUS "CMAKE_BINARY_DIR: ${CMAKE_BINARY_DIR}")
 
 # 为所有示例禁用未使用参数警告
 add_compile_options(-Wno-error=unused-parameter -Wno-error=unused-function -Wno-error=unused-result -Wno-error=format -Wno-error=discarded-qualifiers)
+
+# 为所有示例添加 zlib 链接（如果启用压缩）
+if(BUILD_WITH_COMPRESSION)
+    link_libraries(${ZLIB_LIBRARIES})
+endif()
 
 # 基础示例
 add_subdirectory(01_basics)

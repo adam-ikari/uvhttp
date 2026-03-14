@@ -17,6 +17,11 @@ target_link_libraries(hello_world
         dl
 )
 
+# Link zlib if compression is enabled
+if(BUILD_WITH_COMPRESSION)
+    target_link_libraries(hello_world PRIVATE ${ZLIB_LIBRARIES})
+endif()
+
 # 设置包含目录（UVHTTP头文件会自动包含依赖库的头文件）
 target_include_directories(hello_world
     PRIVATE
@@ -41,6 +46,11 @@ target_link_libraries(quick_api_demo
         dl
 )
 
+# Link zlib if compression is enabled
+if(BUILD_WITH_COMPRESSION)
+    target_link_libraries(quick_api_demo PRIVATE ${ZLIB_LIBRARIES})
+endif()
+
 # 设置包含目录（UVHTTP头文件会自动包含依赖库的头文件）
 target_include_directories(quick_api_demo
     PRIVATE
@@ -64,6 +74,11 @@ target_link_libraries(signal_handling_demo
         m
         dl
 )
+
+# Link zlib if compression is enabled
+if(BUILD_WITH_COMPRESSION)
+    target_link_libraries(signal_handling_demo PRIVATE ${ZLIB_LIBRARIES})
+endif()
 
 # 设置包含目录（UVHTTP头文件会自动包含依赖库的头文件）
 target_include_directories(signal_handling_demo

@@ -61,8 +61,6 @@ uvhttp_error_t uvhttp_tls_context_enable_session_tickets(
     uvhttp_tls_context_t* ctx, int enable);
 uvhttp_error_t uvhttp_tls_context_set_session_cache(uvhttp_tls_context_t* ctx,
                                                     int max_sessions);
-uvhttp_error_t uvhttp_tls_context_enable_ocsp_stapling(
-    uvhttp_tls_context_t* ctx, int enable);
 uvhttp_error_t uvhttp_tls_context_set_dh_parameters(uvhttp_tls_context_t* ctx,
                                                     const char* dh_file);
 
@@ -91,14 +89,6 @@ uvhttp_error_t uvhttp_tls_context_enable_crl_checking(uvhttp_tls_context_t* ctx,
                                                       int enable);
 uvhttp_error_t uvhttp_tls_load_crl_file(uvhttp_tls_context_t* ctx,
                                         const char* crl_file);
-
-/* OCSP */
-uvhttp_error_t uvhttp_tls_get_ocsp_response(mbedtls_ssl_context* ssl,
-                                            unsigned char** ocsp_response,
-                                            size_t* response_len);
-uvhttp_error_t uvhttp_tls_verify_ocsp_response(
-    mbedtls_x509_crt* cert, const unsigned char* ocsp_response,
-    size_t response_len);
 
 /* TLS 1.3Support */
 uvhttp_error_t uvhttp_tls_context_enable_tls13(uvhttp_tls_context_t* ctx,

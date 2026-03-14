@@ -219,23 +219,22 @@ size_t headers_size = UVHTTP_INITIAL_BUFFER_SIZE * 2;  // 1024 bytes
 ### 4.1 TLS Features Marked as NOT_IMPLEMENTED 🚨
 **Severity**: CRITICAL
 
-**11 functions return `UVHTTP_TLS_ERROR_NOT_IMPLEMENTED`**:
+**9 functions return `UVHTTP_TLS_ERROR_NOT_IMPLEMENTED`**:
 
 1. `uvhttp_tls_context_set_dh_parameters()` - DH parameter configuration
 2. `uvhttp_tls_context_enable_crl_checking()` - Certificate revocation list checking
 3. `uvhttp_tls_load_crl_file()` - CRL file loading
-4. `uvhttp_tls_get_ocsp_response()` - OCSP stapling response
-5. `uvhttp_tls_verify_ocsp_response()` - OCSP response verification
-6. `uvhttp_tls_context_enable_early_data()` - TLS 1.3 early data
-7. `uvhttp_tls_context_set_ticket_key()` - Session ticket key
-8. `uvhttp_tls_context_rotate_ticket_key()` - Ticket key rotation
-9. `uvhttp_tls_context_set_ticket_lifetime()` - Ticket lifetime
-10. `uvhttp_tls_context_add_extra_chain_cert()` - Extra certificate chain
-11. `uvhttp_tls_get_cert_chain()` - Certificate chain retrieval
+4. `uvhttp_tls_context_enable_early_data()` - TLS 1.3 early data
+5. `uvhttp_tls_context_set_ticket_key()` - Session ticket key
+6. `uvhttp_tls_context_rotate_ticket_key()` - Ticket key rotation
+7. `uvhttp_tls_context_set_ticket_lifetime()` - Ticket lifetime
+8. `uvhttp_tls_context_add_extra_chain_cert()` - Extra certificate chain
+9. `uvhttp_tls_get_cert_chain()` - Certificate chain retrieval
+
+**Note**: OCSP functionality has been removed (see "Removed Features" section).
 
 **Security Implications**:
 - ❌ **CRL checking disabled** - Cannot revoke compromised certificates
-- ❌ **OCSP stapling disabled** - Cannot verify real-time certificate status
 - ❌ **No certificate chain verification** - Security compliance issue
 
 **Impact**: CRITICAL - Breaking change for security-conscious deployments

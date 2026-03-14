@@ -48,14 +48,19 @@ int main() {
     uv_loop_t* loop = uv_default_loop();
     
     // Create server
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
     
     // Create router
     uvhttp_router_t* router = uvhttp_router_new();
     server->router = router;
     
     // Add a route handler
-    uvhttp_router_add_route(router, "/hello", [](uvhttp_request_t* req) {
+    void hello_handler(uvhttp_request_t* req) {
         uvhttp_response_t* res = uvhttp_response_new(req);
         
         // Set status code
@@ -69,10 +74,16 @@ int main() {
         
         // Send response
         uvhttp_response_send(res);
-    });
+    }
+    
+    result = uvhttp_router_add_route(router, "/hello", hello_handler);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to add route: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
     
     // Start server
-    uvhttp_error_t result = uvhttp_server_listen(server, "0.0.0.0", 8080);
+    result = uvhttp_server_listen(server, "0.0.0.0", 8080);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to start server: %s\n", uvhttp_error_string(result));
         return 1;

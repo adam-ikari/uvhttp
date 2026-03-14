@@ -356,6 +356,27 @@ endif()
 # ============================================================================
 
 # ============================================================================
+# zlib (for compression support)
+# ============================================================================
+if(BUILD_WITH_COMPRESSION)
+    message(STATUS "Configuring zlib for compression...")
+    
+    # 使用子模块中的 zlib
+    set(ZLIB_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/deps/zlib)
+    set(ZLIB_INCLUDE_DIR ${ZLIB_ROOT})
+    set(ZLIB_LIBRARY ${CMAKE_BINARY_DIR}/dist/lib/libz.a)
+    
+    # 添加 zlib 子目录
+    add_subdirectory(${ZLIB_ROOT} ${CMAKE_BINARY_DIR}/deps/zlib)
+    
+    # 创建 zlib 别名以便于链接
+    add_library(zlib ALIAS zlibstatic)
+    
+    message(STATUS "Using zlib from submodule: ${ZLIB_ROOT}")
+    message(STATUS "Compression support: ENABLED")
+endif()
+
+# ============================================================================
 # googletest
 # ============================================================================
 message(STATUS "Configuring googletest...")

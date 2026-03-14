@@ -2841,8 +2841,8 @@ int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 ## 相关资源
 
 ### 官方文档
-- [API 参考](API_REFERENCE.md)
-- [架构设计](ARCHITECTURE.md)
+- [API 参考](../api/API_REFERENCE.md)
+- [架构设计](../dev/ARCHITECTURE.md)
 - [开发指南](DEVELOPER_GUIDE.md)
 - [libuv 数据指针](LIBUV_DATA_POINTER.md)
 

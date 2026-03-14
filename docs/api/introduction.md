@@ -21,7 +21,7 @@ UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中
 #### 创建服务器
 
 ```c
-uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop);
+uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server);
 ```
 
 #### 启动服务器
@@ -33,7 +33,7 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, i
 #### 停止服务器
 
 ```c
-void uvhttp_server_free(uvhttp_server_t* server);
+uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
 ```
 
 ### 路由 (uvhttp_router)
@@ -158,16 +158,23 @@ int api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
+
     uvhttp_router_t* router = uvhttp_router_new();
     server->router = router;
 
     uvhttp_router_add_route(router, "/", index_handler);
     uvhttp_router_add_route(router, "/api", api_handler);
 
-    uvhttp_error_t result = uvhttp_server_listen(server, "0.0.0.0", 8080);
+    result = uvhttp_server_listen(server, "0.0.0.0", 8080);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to start server: %s\n", uvhttp_error_string(result));
+        uvhttp_server_free(server);
         return 1;
     }
 

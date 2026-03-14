@@ -16,10 +16,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Compile-time allocator type selection */
 #ifndef UVHTTP_ALLOCATOR_TYPE
 #    define UVHTTP_ALLOCATOR_TYPE 0 /* 0=system, 1=mimalloc, 2=custom */
@@ -27,8 +23,19 @@ extern "C" {
 
 /* ========== Compile-time Allocator Selection ========== */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if UVHTTP_ALLOCATOR_TYPE == 1 /* mimalloc */
-#    include "mimalloc.h"
+    /* Forward declare mimalloc functions to avoid template linkage issues */
+    extern void* mi_malloc(size_t size);
+    extern void mi_free(void* ptr);
+    extern void* mi_realloc(void* ptr, size_t size);
+    extern void* mi_calloc(size_t count, size_t size);
+#endif
+
+#if UVHTTP_ALLOCATOR_TYPE == 1 /* mimalloc */
 
 static inline void* uvhttp_alloc(size_t size) {
     return mi_malloc(size);

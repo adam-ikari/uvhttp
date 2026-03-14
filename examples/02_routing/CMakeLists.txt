@@ -14,7 +14,7 @@ set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/xxhash/libxxhash.a)
 set(UVHTTP_LIB ${CMAKE_BINARY_DIR}/dist/lib/libuvhttp.a)
 
 add_executable(simple_routing 01_simple_routing.c)
-target_link_libraries(simple_routing
+target_link_libraries(simple_routing PRIVATE
     ${UVHTTP_LIB}
     ${LIBUV_LIB}
     ${MBEDTLS_LIBS}
@@ -24,9 +24,10 @@ target_link_libraries(simple_routing
     pthread m dl)
 target_include_directories(simple_routing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson)
 add_dependencies(simple_routing uvhttp)
+uvhttp_add_example_dependencies(simple_routing)
 
 add_executable(method_routing 02_method_routing.c)
-target_link_libraries(method_routing
+target_link_libraries(method_routing PRIVATE
     ${UVHTTP_LIB}
     ${LIBUV_LIB}
     ${MBEDTLS_LIBS}
@@ -36,3 +37,4 @@ target_link_libraries(method_routing
     pthread m dl)
 target_include_directories(method_routing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson)
 add_dependencies(method_routing uvhttp)
+uvhttp_add_example_dependencies(method_routing)

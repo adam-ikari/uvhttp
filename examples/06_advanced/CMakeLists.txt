@@ -8,12 +8,14 @@ add_executable(api_demo api_demo.c)
 target_link_libraries(api_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp cjson pthread m dl)
 target_include_directories(api_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson)
 add_dependencies(api_demo uvhttp)
+uvhttp_add_example_dependencies(api_demo)
 
 # JSON API 演示
 add_executable(json_api_demo json_api_demo.c)
 target_link_libraries(json_api_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp cjson pthread m dl)
 target_include_directories(json_api_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson)
 add_dependencies(json_api_demo uvhttp)
+uvhttp_add_example_dependencies(json_api_demo)
 
 # 配置演示 - 暂时禁用，需要重构
 # add_executable(config_demo config_demo.c)
@@ -32,18 +34,21 @@ add_executable(unified_response_demo unified_response_demo.c)
 target_link_libraries(unified_response_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp cjson pthread m dl)
 target_include_directories(unified_response_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson)
 add_dependencies(unified_response_demo uvhttp)
+uvhttp_add_example_dependencies(unified_response_demo)
 
 # 高级内存应用
 add_executable(app_advanced_memory app_advanced_memory.c)
 target_link_libraries(app_advanced_memory PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
 target_include_directories(app_advanced_memory PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src)
 add_dependencies(app_advanced_memory uvhttp)
+uvhttp_add_example_dependencies(app_advanced_memory)
 
 # 协议升级示例
 add_executable(protocol_upgrade_example protocol_upgrade_example.c)
 target_link_libraries(protocol_upgrade_example PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
 target_include_directories(protocol_upgrade_example PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src)
 add_dependencies(protocol_upgrade_example uvhttp)
+uvhttp_add_example_dependencies(protocol_upgrade_example)
 
 # 上下文注入示例 - 暂时禁用，需要重构
 # add_executable(context_injection context_injection.c)
