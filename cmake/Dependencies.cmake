@@ -219,16 +219,9 @@ if(NOT EXISTS ${LLHTTP_LIB})
         -DLLHTTP_BUILD_STATIC_LIBS=ON
         -DLLHTTP_BUILD_SHARED_LIBS=OFF
     )
-    # Add C flags if they're set (for 32-bit builds)
-    # Remove -Werror from CMAKE_C_FLAGS to avoid llhttp source warnings being treated as errors
-    if(DEFINED CMAKE_C_FLAGS)
-        # Use regex to remove -Werror while preserving other flags
-        string(REGEX REPLACE "(^| )[ \t]*-Werror[ \t]*" " " FILTERED_C_FLAGS "${CMAKE_C_FLAGS}")
-        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_C_FLAGS=${FILTERED_C_FLAGS}")
-    endif()
-    if(DEFINED CMAKE_CXX_FLAGS)
-        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
-    endif()
+    # Don't pass CMAKE_C_FLAGS to llhttp to avoid compiler flag conflicts
+    # llhttp will use its own default compiler options
+    # Only pass linker flags if they're set (for 32-bit builds)
     if(DEFINED EXE_LINKER_FLAGS)
         list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=${EXE_LINKER_FLAGS}")
     endif()
