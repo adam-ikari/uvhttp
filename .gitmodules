@@ -16,6 +16,7 @@
 [submodule "deps/llhttp"]
 	path = deps/llhttp
 	url = https://github.com/nodejs/llhttp.git
+	branch = release/v9.3.1
 [submodule "deps/uthash"]
 	path = deps/uthash
 	url = https://github.com/troydhanson/uthash.git
