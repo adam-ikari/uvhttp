@@ -220,8 +220,10 @@ if(NOT EXISTS ${LLHTTP_LIB})
         -DLLHTTP_BUILD_SHARED_LIBS=OFF
     )
     # Add C flags if they're set (for 32-bit builds)
+    # Remove -Werror from CMAKE_C_FLAGS to avoid llhttp source warnings being treated as errors
     if(DEFINED CMAKE_C_FLAGS)
-        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}")
+        string(REPLACE "-Werror" "" FILTERED_C_FLAGS "${CMAKE_C_FLAGS}")
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_C_FLAGS=${FILTERED_C_FLAGS}")
     endif()
     if(DEFINED CMAKE_CXX_FLAGS)
         list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
