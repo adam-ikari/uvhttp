@@ -80,40 +80,49 @@ UVHTTP provides full support for 32-bit architectures with optimizations for res
 
 ### Easy Setup Options
 
-UVHTTP provides multiple ways to get started quickly:
+UVHTTP provides multiple ways to get started quickly. Choose the one that suits you best:
 
-#### Option 1: Quick Start Script (Recommended for Beginners)
+#### Option 1: Python Tools (Recommended)
+
+Modern Python-based tools with better error handling and system detection:
 
 ```bash
-# Clone repository
-git clone https://github.com/adam-ikari/uvhttp.git
-cd uvhttp
+# Interactive configuration wizard
+./configure.py
 
-# Run the quick start script
+# One-command quick start
+./quickstart.py
+
+# With tests and debugging
+./quickstart.py --test --debug
+```
+
+**Advantages:**
+- ✅ Modern Python 3 with type hints
+- ✅ Excellent error handling and validation
+- ✅ Better system detection
+- ✅ Standard library only (no external dependencies)
+- ✅ Cross-platform compatibility
+- ✅ Rich terminal UI with colors
+
+#### Option 2: Shell Scripts
+
+Traditional shell scripts for Unix-like systems:
+
+```bash
+# Interactive configuration
+./configure.sh
+
+# One-command quick start
 ./quickstart.sh
 
-# Or with tests
+# With tests
 ./quickstart.sh --test
 ```
 
-The quick start script automatically:
-- ✅ Checks dependencies
-- ✅ Detects your system architecture
-- ✅ Configures optimal build settings
-- ✅ Compiles the library
-- ✅ Runs tests (optional)
-
-#### Option 2: Interactive Configuration
-
-```bash
-# Run the interactive configuration assistant
-./configure.sh
-
-# Follow the prompts to customize your build
-# The script will generate and run the build command
-```
-
 #### Option 3: Manual Build
+
+For users who prefer manual configuration:
 
 ```bash
 # Clone repository
