@@ -639,7 +639,7 @@ foreach(test_file ${GTEST_TEST_FILES})
     add_executable(${test_name} ${test_file} ${SOURCES})
     set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
     
-    add_dependencies(${test_name} libuv xxhash gtest)
+    add_dependencies(${test_name} libuv xxhash gtest llhttp)
     # Link googletest first, then LIBS (gmock_main depends on gtest)
     target_link_libraries(${test_name} PRIVATE ${GTEST_LIBS} ${LIBS})
     
@@ -662,6 +662,7 @@ foreach(test_file ${GTEST_TEST_FILES})
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/include
     )
     
     # Add mimalloc include directory if using mimalloc
@@ -725,7 +726,7 @@ foreach(test_file ${MOCK_TEST_FILES})
         -Wl,--wrap=uv_buf_init
     )
     
-    add_dependencies(${test_name} libuv xxhash gtest libuv_mock)
+    add_dependencies(${test_name} libuv xxhash gtest libuv_mock llhttp)
     if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
         add_dependencies(${test_name} mbedtls)
     endif()
@@ -741,6 +742,7 @@ foreach(test_file ${MOCK_TEST_FILES})
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/include
         ${CMAKE_CURRENT_SOURCE_DIR}/test/mock
     )
     
@@ -755,7 +757,7 @@ endforeach()
 # Add gtest sample test (compiled with C++)
 add_executable(uvhttp_unit_tests test/unit/simple_test.cpp ${SOURCES})
 set_target_properties(uvhttp_unit_tests PROPERTIES LINKER_LANGUAGE CXX)
-add_dependencies(uvhttp_unit_tests libuv xxhash gtest)
+add_dependencies(uvhttp_unit_tests libuv xxhash gtest llhttp)
 if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
     add_dependencies(uvhttp_unit_tests mbedtls)
 endif()
@@ -765,7 +767,7 @@ endif()
 target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
 # Link googletest first, then LIBS (gmock_main depends on gtest)
 target_link_libraries(uvhttp_unit_tests ${GTEST_LIBS} ${LIBS})
-target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
+target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/include)
 
 # Add mimalloc include directory if using mimalloc
 if(BUILD_WITH_MIMALLOC)
@@ -797,7 +799,7 @@ add_test(NAME uvhttp_unit_tests COMMAND ${CMAKE_BINARY_DIR}/dist/bin/uvhttp_unit
 # Add stress tests
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stress.c)
     add_executable(test_stress test/test_stress.c ${SOURCES})
-    add_dependencies(test_stress libuv mbedtls xxhash)
+    add_dependencies(test_stress libuv mbedtls xxhash llhttp)
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(test_stress mimalloc)
     endif()
@@ -885,7 +887,7 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
     endif()
 
     add_executable(${test_name} ${test_file} ${SOURCES})
-    add_dependencies(${test_name} libuv xxhash)
+    add_dependencies(${test_name} libuv xxhash llhttp)
     if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
         add_dependencies(${test_name} mbedtls)
     endif()
