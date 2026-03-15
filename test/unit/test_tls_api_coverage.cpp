@@ -324,27 +324,6 @@ TEST(UvhttpTlsApiCoverageTest, SetSessionCacheValid) {
     }
 }
 
-/* ========== 测试启用 OCSP Stapling ========== */
-
-TEST(UvhttpTlsApiCoverageTest, EnableOcspStaplingNullContext) {
-    uvhttp_error_t result = uvhttp_tls_context_enable_ocsp_stapling(nullptr, 1);
-    
-    EXPECT_NE(result, UVHTTP_OK);
-}
-
-TEST(UvhttpTlsApiCoverageTest, EnableOcspStaplingValid) {
-    uvhttp_tls_context_t* ctx = nullptr;
-    uvhttp_tls_context_new(&ctx);
-    
-    if (ctx) {
-        uvhttp_error_t result = uvhttp_tls_context_enable_ocsp_stapling(ctx, 1);
-        
-        /* 不强制检查结果 */
-        
-        uvhttp_tls_context_free(ctx);
-    }
-}
-
 /* ========== 测试启用 TLS 1.3 ========== */
 
 TEST(UvhttpTlsApiCoverageTest, EnableTls13NullContext) {

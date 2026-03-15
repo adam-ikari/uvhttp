@@ -314,7 +314,7 @@ static uvhttp_request_handler_t find_array_route(const uvhttp_router_t* router,
 
 // migrate array router to Trie
 static uvhttp_error_t migrate_to_trie(uvhttp_router_t* router) {
-    if (router->use_trie) {
+    if (UVHTTP_LIKELY(router->use_trie)) {
         return UVHTTP_OK;  // already Trie pattern
     }
 
@@ -579,14 +579,14 @@ static int static_file_handler_wrapper(uvhttp_request_t* request,
 
 uvhttp_request_handler_t uvhttp_router_find_handler(
     const uvhttp_router_t* router, const char* path, const char* method) {
-    if (!router || !path || !method) {
+    if (UVHTTP_UNLIKELY(!router || !path || !method)) {
         return NULL;
     }
 
     uvhttp_method_t method_enum = uvhttp_method_from_string(method);
 
     // choose find method based on current pattern
-    if (router->use_trie) {
+    if (UVHTTP_LIKELY(router->use_trie)) {
         // Triefind
         uvhttp_route_match_t match;
         memset(&match, 0, sizeof(match));
@@ -606,7 +606,7 @@ uvhttp_request_handler_t uvhttp_router_find_handler(
         }
 
         // first check static router
-        if (router->static_prefix && router->static_context) {
+        if (UVHTTP_LIKELY(router->static_prefix && router->static_context)) {
             size_t prefix_len = strlen(router->static_prefix);
             if (strncmp(path, router->static_prefix, prefix_len) == 0) {
                 // match static router, return static file handler
@@ -621,7 +621,7 @@ uvhttp_request_handler_t uvhttp_router_find_handler(
         }
     } else {
         // arrayfind - first check static prefix
-        if (router->static_prefix && router->static_context) {
+        if (UVHTTP_LIKELY(router->static_prefix && router->static_context)) {
             size_t prefix_len = strlen(router->static_prefix);
             if (strncmp(path, router->static_prefix, prefix_len) == 0) {
                 // match static router, return static file handler
@@ -659,7 +659,7 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
      */
     if (!router->use_trie) {
         // first check static prefix
-        if (router->static_prefix && router->static_context) {
+        if (UVHTTP_LIKELY(router->static_prefix && router->static_context)) {
             size_t prefix_len = strlen(router->static_prefix);
             if (strncmp(path, router->static_prefix, prefix_len) == 0) {
                 // match static router, return static file handler

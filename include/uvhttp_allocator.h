@@ -16,10 +16,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Compile-time allocator type selection */
 #ifndef UVHTTP_ALLOCATOR_TYPE
 #    define UVHTTP_ALLOCATOR_TYPE 0 /* 0=system, 1=mimalloc, 2=custom */
@@ -27,9 +23,19 @@ extern "C" {
 
 /* ========== Compile-time Allocator Selection ========== */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if UVHTTP_ALLOCATOR_TYPE == 1 /* mimalloc */
-#    ifdef UVHTTP_ENABLE_MIMALLOC
-#        include "mimalloc.h"
+    /* Forward declare mimalloc functions to avoid template linkage issues */
+    extern void* mi_malloc(size_t size);
+    extern void mi_free(void* ptr);
+    extern void* mi_realloc(void* ptr, size_t size);
+    extern void* mi_calloc(size_t count, size_t size);
+#endif
+
+#if UVHTTP_ALLOCATOR_TYPE == 1 /* mimalloc */
 
 static inline void* uvhttp_alloc(size_t size) {
     return mi_malloc(size);
@@ -46,10 +52,6 @@ static inline void* uvhttp_realloc(void* ptr, size_t size) {
 static inline void* uvhttp_calloc(size_t nmemb, size_t size) {
     return mi_calloc(nmemb, size);
 }
-#    else
-/* mimalloc unavailable - configuration error */
-#error "UVHTTP_ALLOCATOR_TYPE=1 (mimalloc) requires BUILD_WITH_MIMALLOC=ON"
-#    endif
 
 #elif UVHTTP_ALLOCATOR_TYPE == 2 /* custom */
 /* Custom allocator - application layer must implement these functions */

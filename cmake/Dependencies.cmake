@@ -17,7 +17,7 @@ set(DEPS_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/include
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/xxhash
-    ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/uthash/src
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
@@ -70,7 +70,7 @@ if(NOT EXISTS ${LIBUV_LIB})
     endif()
 
     execute_process(
-        COMMAND ${CMAKE_COMMAND} --build ${LIBUV_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
+        COMMAND ${CMAKE_COMMAND} --build ${LIBUV_BUILD_DIR} -j
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv
         RESULT_VARIABLE LIBUV_BUILD_RESULT
     )
@@ -139,11 +139,10 @@ if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
         endif()
 
         execute_process(
-            COMMAND ${CMAKE_COMMAND} --build ${MBEDTLS_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls
-            RESULT_VARIABLE MBEDTLS_BUILD_RESULT
-        )
-
+                COMMAND ${CMAKE_COMMAND} --build ${MBEDTLS_BUILD_DIR} -j
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls
+                RESULT_VARIABLE MBEDTLS_BUILD_RESULT
+            )
         if(MBEDTLS_BUILD_RESULT)
             message(FATAL_ERROR "Failed to build mbedtls")
         endif()
@@ -202,30 +201,44 @@ set_target_properties(xxhash PROPERTIES
 # ============================================================================
 message(STATUS "Configuring llhttp...")
 
-set(LLHTTP_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp/build)
+set(LLHTTP_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/build)
 set(LLHTTP_LIB ${LLHTTP_BUILD_DIR}/libllhttp.a)
+
+# 检查 llhttp 源文件是否存在
+if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/build/c/llhttp.c)
+    message(WARNING "llhttp C source files not found at ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/build/c/llhttp.c")
+    message(WARNING "Please run 'cd deps/llhttp && npm install && npm run build' to generate C source files first.")
+    message(WARNING "Or use Makefile: 'cd deps/llhttp && make build/libllhttp.a' to build the static library.")
+endif()
 
 if(NOT EXISTS ${LLHTTP_LIB})
     message(STATUS "Building llhttp...")
     # Pass C flags to dependencies for 32-bit builds
     set(LLHTTP_CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DLLHTTP_BUILD_STATIC_LIBS=ON
+        -DLLHTTP_BUILD_SHARED_LIBS=OFF
     )
-    # Add C flags if they're set (for 32-bit builds)
+    # Pass C flags if they're set (for 32-bit builds)
     if(DEFINED CMAKE_C_FLAGS)
-        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}")
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -Wno-error=unused-parameter")
+    else()
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_C_FLAGS=-Wno-error=unused-parameter")
     endif()
     if(DEFINED CMAKE_CXX_FLAGS)
-        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -Wno-error=unused-parameter")
+    else()
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=-Wno-error=unused-parameter")
     endif()
+    # Pass linker flags if they're set (for 32-bit builds)
     if(DEFINED EXE_LINKER_FLAGS)
         list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=${EXE_LINKER_FLAGS}")
     endif()
     
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp -B ${LLHTTP_BUILD_DIR}
+        COMMAND ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp -B ${LLHTTP_BUILD_DIR}
             ${LLHTTP_CMAKE_ARGS}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp
         RESULT_VARIABLE LLHTTP_CONFIG_RESULT
     )
 
@@ -234,8 +247,8 @@ if(NOT EXISTS ${LLHTTP_LIB})
     endif()
 
     execute_process(
-        COMMAND ${CMAKE_COMMAND} --build ${LLHTTP_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp
+        COMMAND ${CMAKE_COMMAND} --build ${LLHTTP_BUILD_DIR} -j
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp
         RESULT_VARIABLE LLHTTP_BUILD_RESULT
     )
 
@@ -243,16 +256,25 @@ if(NOT EXISTS ${LLHTTP_LIB})
         message(FATAL_ERROR "Failed to build llhttp")
     endif()
 
+    # 验证生成的库文件
+    if(NOT EXISTS ${LLHTTP_LIB})
+        message(FATAL_ERROR "llhttp static library not found at ${LLHTTP_LIB}")
+    endif()
+
     message(STATUS "llhttp built successfully")
 else()
     message(STATUS "llhttp already built: ${LLHTTP_LIB}")
+    # 验证库文件仍然存在
+    if(NOT EXISTS ${LLHTTP_LIB})
+        message(FATAL_ERROR "llhttp static library not found at ${LLHTTP_LIB}. Please rebuild llhttp.")
+    endif()
 endif()
 
 # 声明 llhttp 为 IMPORTED 静态库
 add_library(llhttp STATIC IMPORTED)
 set_target_properties(llhttp PROPERTIES
     IMPORTED_LOCATION ${LLHTTP_LIB}
-    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/cllhttp
+    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/include
 )
 
 # ============================================================================
@@ -300,23 +322,14 @@ if(BUILD_WITH_MIMALLOC)
     
 
         if(MIMALLOC_CONFIG_RESULT)
-
-            message(FATAL_ERROR "Failed to configure mimalloc")
-
-        endif()
-
-    
-
-        execute_process(
-
-            COMMAND ${CMAKE_COMMAND} --build ${MIMALLOC_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} --target mimalloc-static -j
-
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc
-
-            RESULT_VARIABLE MIMALLOC_BUILD_RESULT
-
-        )
-
+                    message(FATAL_ERROR "Failed to configure mimalloc")
+                endif()
+        
+                execute_process(
+                    COMMAND ${CMAKE_COMMAND} --build ${MIMALLOC_BUILD_DIR} --target mimalloc-static -j
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc
+                    RESULT_VARIABLE MIMALLOC_BUILD_RESULT
+                )
     
 
         if(MIMALLOC_BUILD_RESULT)
@@ -346,6 +359,27 @@ endif()
 # ============================================================================
 # 注意：已使用 IMPORTED targets 声明库，不再需要自定义目标
 # ============================================================================
+
+# ============================================================================
+# zlib (for compression support)
+# ============================================================================
+if(BUILD_WITH_COMPRESSION)
+    message(STATUS "Configuring zlib for compression...")
+    
+    # 使用子模块中的 zlib
+    set(ZLIB_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/deps/zlib)
+    set(ZLIB_INCLUDE_DIR ${ZLIB_ROOT})
+    set(ZLIB_LIBRARY ${CMAKE_BINARY_DIR}/dist/lib/libz.a)
+    
+    # 添加 zlib 子目录
+    add_subdirectory(${ZLIB_ROOT} ${CMAKE_BINARY_DIR}/deps/zlib)
+    
+    # 创建 zlib 别名以便于链接
+    add_library(zlib ALIAS zlibstatic)
+    
+    message(STATUS "Using zlib from submodule: ${ZLIB_ROOT}")
+    message(STATUS "Compression support: ENABLED")
+endif()
 
 # ============================================================================
 # googletest
@@ -381,7 +415,7 @@ if(NOT EXISTS ${GTEST_BUILD_DIR}/lib/libgtest.a)
     endif()
 
     execute_process(
-        COMMAND ${CMAKE_COMMAND} --build ${GTEST_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
+        COMMAND ${CMAKE_COMMAND} --build ${GTEST_BUILD_DIR} -j
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest
         RESULT_VARIABLE GTEST_BUILD_RESULT
     )
@@ -426,7 +460,7 @@ if(NOT EXISTS ${CJSON_LIB})
     endif()
 
     execute_process(
-        COMMAND ${CMAKE_COMMAND} --build ${CJSON_BUILD_DIR} --config ${CMAKE_BUILD_TYPE} -j
+        COMMAND ${CMAKE_COMMAND} --build ${CJSON_BUILD_DIR} -j
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson
         RESULT_VARIABLE CJSON_BUILD_RESULT
     )

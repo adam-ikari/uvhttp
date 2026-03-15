@@ -42,6 +42,10 @@ extern "C" {
            */
 #endif
 
+#ifndef UVHTTP_FEATURE_COMPRESSION
+#    define UVHTTP_FEATURE_COMPRESSION 0 /* HTTP response compression support */
+#endif
+
 /* ============ Conditional Compilation Macros ============ */
 
 /* Basic feature macros */
@@ -71,6 +75,10 @@ extern "C" {
 #    define UVHTTP_RATE_LIMIT_ENABLED
 #endif
 
+#if UVHTTP_FEATURE_COMPRESSION
+#    define UVHTTP_COMPRESSION_ENABLED
+#endif
+
 #if UVHTTP_FEATURE_STATIC_FILES
 #    define UVHTTP_STATIC_FILES_ENABLED
 #endif
@@ -87,7 +95,6 @@ extern "C" {
 #define UVHTTP_INLINE __attribute__((always_inline)) static inline
 #define UVHTTP_NOINLINE __attribute__((noinline))
 #define UVHTTP_UNUSED __attribute__((unused))
-#define UVHTTP_DEPRECATED __attribute__((deprecated))
 
 /* Memory alignment */
 #define UVHTTP_ALIGNED(n) __attribute__((aligned(n)))

@@ -255,24 +255,6 @@ uvhttp_error_t uvhttp_tls_context_set_session_cache(uvhttp_tls_context_t ctx, in
 
 
 ---
-### `uvhttp_tls_context_enable_ocsp_stapling`
-
-**Signature:**
-```c
-uvhttp_error_t uvhttp_tls_context_enable_ocsp_stapling(uvhttp_tls_context_t ctx, int enable)
-```
-
-**Parameters:**
-- `ctx` (uvhttp_tls_context_t): TBD
-- `enable` (int): TBD
-
-
-**Returns:**
-`uvhttp_error_t`
-
-
-
----
 ### `uvhttp_tls_context_set_dh_parameters`
 
 **Signature:**
@@ -535,44 +517,6 @@ uvhttp_error_t uvhttp_tls_load_crl_file(uvhttp_tls_context_t ctx, const char * c
 **Parameters:**
 - `ctx` (uvhttp_tls_context_t): TBD
 - `crl_file` (const char *): TBD
-
-
-**Returns:**
-`uvhttp_error_t`
-
-
-
----
-### `uvhttp_tls_get_ocsp_response`
-
-**Signature:**
-```c
-uvhttp_error_t uvhttp_tls_get_ocsp_response(mbedtls_ssl_context * ssl, unsigned char ** ocsp_response, size_t * response_len)
-```
-
-**Parameters:**
-- `ssl` (mbedtls_ssl_context *): TBD
-- `ocsp_response` (unsigned char **): TBD
-- `response_len` (size_t *): TBD
-
-
-**Returns:**
-`uvhttp_error_t`
-
-
-
----
-### `uvhttp_tls_verify_ocsp_response`
-
-**Signature:**
-```c
-uvhttp_error_t uvhttp_tls_verify_ocsp_response(mbedtls_x509_crt * cert, const unsigned char * ocsp_response, size_t response_len)
-```
-
-**Parameters:**
-- `cert` (mbedtls_x509_crt *): TBD
-- `ocsp_response` (const unsigned char *): TBD
-- `response_len` (size_t): TBD
 
 
 **Returns:**

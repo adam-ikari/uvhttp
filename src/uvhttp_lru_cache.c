@@ -11,6 +11,7 @@
 #    include "uvhttp_error_handler.h"
 #    include "uvhttp_error_helpers.h"
 #    include "uvhttp_logging.h"
+#    include "uvhttp_utils.h"
 
 #    include <stdlib.h>
 #    include <string.h>
@@ -18,6 +19,27 @@
 
 /* Include uthash header file */
 #    include "uthash.h"
+
+
+/**
+ * Set cache entry metadata (MIME type and ETag)
+ */
+static void set_cache_entry_metadata(cache_entry_t* entry,
+                                     const char* mime_type,
+                                     const char* etag) {
+    if (mime_type) {
+        uvhttp_safe_strncpy(entry->mime_type, mime_type, sizeof(entry->mime_type));
+    } else {
+        uvhttp_safe_strncpy(entry->mime_type, "application/octet-stream",
+                          sizeof(entry->mime_type));
+    }
+
+    if (etag) {
+        uvhttp_safe_strncpy(entry->etag, etag, sizeof(entry->etag));
+    } else {
+        entry->etag[0] = '\0';
+    }
+}
 
 /**
  * Create LRU cache manager
@@ -456,8 +478,7 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
             return UVHTTP_ERROR_INVALID_PARAM;
         }
 
-        strncpy(entry->file_path, file_path, sizeof(entry->file_path) - 1);
-        entry->file_path[sizeof(entry->file_path) - 1] = '\0';
+        uvhttp_safe_strncpy(entry->file_path, file_path, sizeof(entry->file_path));
 
         /* initializeLRUlistpointer */
         entry->lru_prev = NULL;
@@ -494,23 +515,8 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
     entry->cache_time = entry->access_time;
     entry->is_compressed = 0;
 
-    /* setMIMEtype */
-    if (mime_type) {
-        strncpy(entry->mime_type, mime_type, sizeof(entry->mime_type) - 1);
-        entry->mime_type[sizeof(entry->mime_type) - 1] = '\0';
-    } else {
-        strncpy(entry->mime_type, "application/octet-stream",
-                sizeof(entry->mime_type) - 1);
-        entry->mime_type[sizeof(entry->mime_type) - 1] = '\0';
-    }
-
-    /* setETag */
-    if (etag) {
-        strncpy(entry->etag, etag, sizeof(entry->etag) - 1);
-        entry->etag[sizeof(entry->etag) - 1] = '\0';
-    } else {
-        entry->etag[0] = '\0';
-    }
+    /* Set entry metadata */
+    set_cache_entry_metadata(entry, mime_type, etag);
 
     /* update memory usage */
     cache->total_memory_usage += memory_usage;

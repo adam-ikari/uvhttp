@@ -1,7 +1,7 @@
 # UVHTTP API 参考文档
 
-**版本**: v2.4.2  
-**更新日期**: 2026-02-25  
+**版本**: v2.4.4  
+**更新日期**: 2026-02-26  
 **C 标准**: C11
 
 ## 概述
@@ -55,24 +55,26 @@ typedef struct uvhttp_response uvhttp_response_t;
 ### uvhttp_server_new
 
 ```c
-uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop);
+uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server);
 ```
 
 创建新的服务器对象。
 
 **参数**:
 - `loop`: libuv 事件循环
+- `server`: 输出参数，用于返回服务器对象指针
 
 **返回值**:
-- 成功: 服务器对象指针
-- 失败: `NULL`
+- `UVHTTP_OK`: 成功
+- 其他值: 错误码（使用 `uvhttp_error_string()` 获取错误描述）
 
 **示例**:
 ```c
 uv_loop_t* loop = uv_default_loop();
-uvhttp_server_t* server = uvhttp_server_new(loop);
-if (!server) {
-    fprintf(stderr, "Failed to create server\n");
+uvhttp_server_t* server;
+uvhttp_error_t result = uvhttp_server_new(loop, &server);
+if (result != UVHTTP_OK) {
+    fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(result));
     return 1;
 }
 ```
@@ -80,7 +82,7 @@ if (!server) {
 ### uvhttp_server_free
 
 ```c
-void uvhttp_server_free(uvhttp_server_t* server);
+uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
 ```
 
 释放服务器对象。
@@ -88,9 +90,16 @@ void uvhttp_server_free(uvhttp_server_t* server);
 **参数**:
 - `server`: 服务器对象
 
+**返回值**:
+- `UVHTTP_OK`: 成功
+- 其他值: 错误码
+
 **示例**:
 ```c
-uvhttp_server_free(server);
+uvhttp_error_t result = uvhttp_server_free(server);
+if (result != UVHTTP_OK) {
+    fprintf(stderr, "Failed to free server: %s\n", uvhttp_error_string(result));
+}
 ```
 
 ### uvhttp_server_listen
@@ -146,9 +155,9 @@ void uvhttp_router_free(uvhttp_router_t* router);
 ### uvhttp_router_add_route
 
 ```c
-void uvhttp_router_add_route(uvhttp_router_t* router,
-                             const char* path,
-                             uvhttp_route_handler_t handler);
+uvhttp_error_t uvhttp_router_add_route(uvhttp_router_t* router,
+                                       const char* path,
+                                       uvhttp_request_handler_t handler);
 ```
 
 添加路由规则。
@@ -158,10 +167,23 @@ void uvhttp_router_add_route(uvhttp_router_t* router,
 - `path`: URL 路径（如 "/api"）
 - `handler`: 处理函数
 
+**返回值**:
+- `UVHTTP_OK`: 成功
+- 其他值: 错误码（使用 `uvhttp_error_string()` 获取错误描述）
+
 **示例**:
 ```c
-uvhttp_router_add_route(router, "/", home_handler);
-uvhttp_router_add_route(router, "/api", api_handler);
+uvhttp_error_t result = uvhttp_router_add_route(router, "/", home_handler);
+if (result != UVHTTP_OK) {
+    fprintf(stderr, "Failed to add route: %s\n", uvhttp_error_string(result));
+    return;
+}
+
+result = uvhttp_router_add_route(router, "/api", api_handler);
+if (result != UVHTTP_OK) {
+    fprintf(stderr, "Failed to add route: %s\n", uvhttp_error_string(result));
+    return;
+}
 ```
 
 ## 请求处理 API

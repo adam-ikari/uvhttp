@@ -83,17 +83,16 @@ uvhttp_error_t uvhttp_server_register_protocol_upgrade(
     memset(info, 0, sizeof(uvhttp_protocol_info_t));
 
     /* Normalize protocol name to lowercase */
-    for (size_t i = 0; i < strlen(protocol_name) && i < sizeof(info->name) - 1;
-         i++) {
+    size_t protocol_name_len = strlen(protocol_name);
+    for (size_t i = 0; i < protocol_name_len && i < sizeof(info->name) - 1; i++) {
         info->name[i] = (char)tolower((unsigned char)protocol_name[i]);
     }
     info->name[sizeof(info->name) - 1] = '\0';
 
     if (upgrade_header) {
         /* Normalize upgrade header to lowercase */
-        for (size_t i = 0;
-             i < strlen(upgrade_header) && i < sizeof(info->upgrade_header) - 1;
-             i++) {
+        size_t upgrade_header_len = strlen(upgrade_header);
+        for (size_t i = 0; i < upgrade_header_len && i < sizeof(info->upgrade_header) - 1; i++) {
             info->upgrade_header[i] =
                 (char)tolower((unsigned char)upgrade_header[i]);
         }

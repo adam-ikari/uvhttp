@@ -74,7 +74,7 @@ jobs:
           objdump -f build-32bit/deps/mbedtls/build/library/libmbedcrypto.a | head -1 || true
           objdump -f build-32bit/deps/mbedtls/build/library/libmbedx509.a | head -1 || true
           echo "llhttp:"
-          objdump -f build-32bit/deps/cllhttp/build/libllhttp.a | head -1 || true
+          objdump -f build-32bit/deps/llhttp/build/libllhttp.a | head -1 || true
           
           # 验证所有依赖库都是32位
           for lib in build-32bit/deps/*/build/lib*.a build-32bit/deps/*/build/library/lib*.a; do
