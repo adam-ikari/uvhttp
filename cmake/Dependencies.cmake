@@ -265,7 +265,7 @@ endif()
 add_library(llhttp STATIC IMPORTED)
 set_target_properties(llhttp PROPERTIES
     IMPORTED_LOCATION ${LLHTTP_LIB}
-    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp
+    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/include
 )
 
 # ============================================================================
