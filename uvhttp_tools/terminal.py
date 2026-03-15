@@ -9,7 +9,8 @@ from .constants import (
     COLOR_RED, COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE,
     COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE, COLOR_RESET,
     STYLE_BOLD, STYLE_DIM, STYLE_UNDERLINE,
-    DEFAULT_TERMINAL_WIDTH, ENV_NO_COLOR, ENV_TERM
+    DEFAULT_TERMINAL_WIDTH, ENV_NO_COLOR, ENV_TERM,
+    SYMBOL_SUCCESS, SYMBOL_ERROR, SYMBOL_WARNING, SYMBOL_INFO, SYMBOL_LOADING
 )
 
 
@@ -185,7 +186,7 @@ class Terminal:
         Args:
             message: Success message text.
         """
-        print(f"{Colors.BRIGHT_GREEN}✓{Colors.RESET} {message}")
+        print(f"{Colors.BRIGHT_GREEN}{SYMBOL_SUCCESS}{Colors.RESET} {message}")
     
     @staticmethod
     def print_error(message: str) -> None:
@@ -194,7 +195,7 @@ class Terminal:
         Args:
             message: Error message text.
         """
-        print(f"{Colors.BRIGHT_RED}✗{Colors.RESET} {Colors.RED}{message}{Colors.RESET}")
+        print(f"{Colors.BRIGHT_RED}{SYMBOL_ERROR}{Colors.RESET} {Colors.RED}{message}{Colors.RESET}")
     
     @staticmethod
     def print_warning(message: str) -> None:
@@ -203,7 +204,7 @@ class Terminal:
         Args:
             message: Warning message text.
         """
-        print(f"{Colors.BRIGHT_YELLOW}⚠{Colors.RESET} {Colors.YELLOW}{message}{Colors.RESET}")
+        print(f"{Colors.BRIGHT_YELLOW}{SYMBOL_WARNING}{Colors.RESET} {Colors.YELLOW}{message}{Colors.RESET}")
     
     @staticmethod
     def print_info(message: str) -> None:
@@ -212,7 +213,7 @@ class Terminal:
         Args:
             message: Information message text.
         """
-        print(f"{Colors.BRIGHT_CYAN}ℹ{Colors.RESET} {Colors.CYAN}{message}{Colors.RESET}")
+        print(f"{Colors.BRIGHT_CYAN}{SYMBOL_INFO}{Colors.RESET} {Colors.CYAN}{message}{Colors.RESET}")
     
     @staticmethod
     def print_question(prompt: str) -> None:
@@ -259,11 +260,13 @@ class Terminal:
             total: Total progress value.
             message: Optional message to display.
         """
+        from .constants import PROGRESS_CHAR, PROGRESS_EMPTY_CHAR
+        
         progress = int((current / total) * 100)
         filled = progress // 5
         empty = 20 - filled
         
-        bar = f"{Colors.BRIGHT_GREEN}{'█' * filled}{Colors.DIM}{'░' * empty}{Colors.RESET}"
+        bar = f"{Colors.BRIGHT_GREEN}{PROGRESS_CHAR * filled}{Colors.DIM}{PROGRESS_EMPTY_CHAR * empty}{Colors.RESET}"
         
         if message:
             print(f"\r{Colors.BOLD}{Colors.CYAN}Progress:{Colors.RESET} [{bar}] {progress}% - {message}", 
