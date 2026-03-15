@@ -371,6 +371,9 @@ if(BUILD_WITH_COMPRESSION)
     set(ZLIB_INCLUDE_DIR ${ZLIB_ROOT})
     set(ZLIB_LIBRARY ${CMAKE_BINARY_DIR}/dist/lib/libz.a)
     
+    # 禁用 zlib 测试以避免编译错误（zlib 测试代码有警告，在 -Werror 标志下会失败）
+    set(ZLIB_BUILD_TESTING OFF CACHE BOOL "Disable zlib testing" FORCE)
+    
     # 添加 zlib 子目录
     add_subdirectory(${ZLIB_ROOT} ${CMAKE_BINARY_DIR}/deps/zlib)
     
@@ -379,6 +382,7 @@ if(BUILD_WITH_COMPRESSION)
     
     message(STATUS "Using zlib from submodule: ${ZLIB_ROOT}")
     message(STATUS "Compression support: ENABLED")
+    message(STATUS "zlib testing: DISABLED (to avoid compilation errors)")
 endif()
 
 # ============================================================================
