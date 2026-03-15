@@ -493,7 +493,7 @@ endif()
 set(LIBS
     ${LIBUV_LIB}
     ${XXHASH_LIB}
-    ${LLHTTP_LIB}
+    llhttp
     ${CJSON_LIB}
     pthread
     m
