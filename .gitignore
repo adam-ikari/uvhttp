@@ -102,3 +102,5 @@ docs/api/api.md
 docs/api/sidebar.js
 docs/api/page-*.md
 docs/api/structs/
+build_fix_test/
+uvhttp_tools/__pycache__/
