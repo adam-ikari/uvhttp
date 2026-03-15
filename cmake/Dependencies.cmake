@@ -219,9 +219,18 @@ if(NOT EXISTS ${LLHTTP_LIB})
         -DLLHTTP_BUILD_STATIC_LIBS=ON
         -DLLHTTP_BUILD_SHARED_LIBS=OFF
     )
-    # Don't pass CMAKE_C_FLAGS to llhttp to avoid compiler flag conflicts
-    # llhttp will use its own default compiler options
-    # Only pass linker flags if they're set (for 32-bit builds)
+    # Pass C flags if they're set (for 32-bit builds)
+    if(DEFINED CMAKE_C_FLAGS)
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -Wno-error=unused-parameter")
+    else()
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_C_FLAGS=-Wno-error=unused-parameter")
+    endif()
+    if(DEFINED CMAKE_CXX_FLAGS)
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -Wno-error=unused-parameter")
+    else()
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=-Wno-error=unused-parameter")
+    endif()
+    # Pass linker flags if they're set (for 32-bit builds)
     if(DEFINED EXE_LINKER_FLAGS)
         list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=${EXE_LINKER_FLAGS}")
     endif()
