@@ -173,9 +173,17 @@ class SystemInfo:
                 text=True,
                 timeout=5
             )
-            return result.stdout.split('\n')[0]
-        except:
+            if result.returncode == 0:
+                return result.stdout.split('\n')[0]
             return 'Unknown'
+        except subprocess.TimeoutExpired:
+            return 'Timeout'
+        except subprocess.CalledProcessError:
+            return 'Error'
+        except (FileNotFoundError, PermissionError):
+            return 'Not found'
+        except OSError:
+            return 'Error'
 
     def _determine_arch_type(self) -> str:
         """Determine architecture type"""
@@ -310,13 +318,34 @@ class QuickStartBuilder:
         if self.args.verbose:
             print(f"\n{Colors.DIM}Running: {' '.join(cmake_cmd)}{Colors.RESET}")
 
-        subprocess.run(
-            cmake_cmd,
-            cwd=self.build_dir,
-            check=True
-        )
-
-        Terminal.complete_progress("CMake configuration successful")
+        try:
+            result = subprocess.run(
+                cmake_cmd,
+                cwd=self.build_dir,
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=120
+            )
+            Terminal.complete_progress("CMake configuration successful")
+        except subprocess.CalledProcessError as e:
+            error_msg = f"CMake configuration failed with exit code {e.returncode}"
+            if e.stderr:
+                error_msg += f"\nError output:\n{e.stderr}"
+            Terminal.print_error(error_msg)
+            raise
+        except subprocess.TimeoutExpired:
+            Terminal.print_error("CMake configuration timed out after 120 seconds")
+            raise
+        except FileNotFoundError as e:
+            Terminal.print_error(f"CMake executable not found: {e.filename}")
+            raise
+        except PermissionError:
+            Terminal.print_error("Permission denied: Cannot execute CMake command")
+            raise
+        except OSError as e:
+            Terminal.print_error(f"System error during CMake configuration: {e}")
+            raise
 
     def _compile_project(self):
         """Compile project"""
@@ -327,13 +356,34 @@ class QuickStartBuilder:
         if self.args.verbose:
             print(f"\n{Colors.DIM}Running: {' '.join(make_cmd)}{Colors.RESET}")
 
-        subprocess.run(
-            make_cmd,
-            cwd=self.build_dir,
-            check=True
-        )
-
-        Terminal.complete_progress("Compilation successful")
+        try:
+            result = subprocess.run(
+                make_cmd,
+                cwd=self.build_dir,
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=1800  # 30 minutes
+            )
+            Terminal.complete_progress("Compilation successful")
+        except subprocess.CalledProcessError as e:
+            error_msg = f"Compilation failed with exit code {e.returncode}"
+            if e.stderr:
+                error_msg += f"\nError output:\n{e.stderr[-1000:]}"  # Last 1000 chars
+            Terminal.print_error(error_msg)
+            raise
+        except subprocess.TimeoutExpired:
+            Terminal.print_error("Compilation timed out after 30 minutes")
+            raise
+        except FileNotFoundError:
+            Terminal.print_error("Make executable not found")
+            raise
+        except PermissionError:
+            Terminal.print_error("Permission denied: Cannot execute make command")
+            raise
+        except OSError as e:
+            Terminal.print_error(f"System error during compilation: {e}")
+            raise
 
     def _run_tests(self):
         """Run tests"""

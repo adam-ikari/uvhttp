@@ -483,13 +483,35 @@ class ConfigurationWizard:
             if Validators.validate_yes_no(choice):
                 Terminal.print_info('Running build...')
                 try:
-                    result = subprocess.run(cmd, shell=True, check=True)
+                    # Use a reasonable timeout for build (30 minutes)
+                    result = subprocess.run(
+                        cmd,
+                        shell=True,
+                        check=True,
+                        timeout=1800,
+                        capture_output=True,
+                        text=True
+                    )
                     Terminal.print_success('Build completed successfully')
+                    if result.stdout:
+                        print(result.stdout[-500:])  # Show last 500 chars of output
                 except subprocess.CalledProcessError as e:
-                    Terminal.print_error(f'Build failed with exit code {e.returncode}')
+                    error_msg = f'Build failed with exit code {e.returncode}'
+                    if e.stderr:
+                        error_msg += f'\nError output:\n{e.stderr[-500:]}'
+                    Terminal.print_error(error_msg)
                     raise
                 except subprocess.TimeoutExpired:
-                    Terminal.print_error('Build timed out')
+                    Terminal.print_error('Build timed out after 30 minutes')
+                    raise
+                except PermissionError:
+                    Terminal.print_error('Permission denied: Cannot execute build command')
+                    raise
+                except FileNotFoundError as e:
+                    Terminal.print_error(f'Build command not found: {e.filename}')
+                    raise
+                except OSError as e:
+                    Terminal.print_error(f'Build system error: {e}')
                     raise
         except ValidationError:
             Terminal.print_info('Build command saved. Run manually to build.')

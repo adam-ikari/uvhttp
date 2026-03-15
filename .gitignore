@@ -1,5 +1,6 @@
 # Build directory
 build/
+build_*/
 build_debug/
 build_minimal_debug/
 build_release/
