@@ -22,7 +22,7 @@ target_link_libraries(simple_routing PRIVATE
     ${XXHASH_LIB}
     cjson
     pthread m dl)
-target_include_directories(simple_routing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson)
+target_include_directories(simple_routing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
 add_dependencies(simple_routing uvhttp)
 uvhttp_add_example_dependencies(simple_routing)
 
@@ -35,6 +35,6 @@ target_link_libraries(method_routing PRIVATE
     ${XXHASH_LIB}
     cjson
     pthread m dl)
-target_include_directories(method_routing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson)
+target_include_directories(method_routing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
 add_dependencies(method_routing uvhttp)
 uvhttp_add_example_dependencies(method_routing)
