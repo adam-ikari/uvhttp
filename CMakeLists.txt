@@ -639,9 +639,9 @@ foreach(test_file ${GTEST_TEST_FILES})
     add_executable(${test_name} ${test_file} ${SOURCES})
     set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
     
-    add_dependencies(${test_name} libuv xxhash gtest llhttp)
+    add_dependencies(${test_name} libuv xxhash gtest)
     # Link googletest first, then LIBS (gmock_main depends on gtest)
-    target_link_libraries(${test_name} PRIVATE ${GTEST_LIBS} ${LIBS})
+    target_link_libraries(${test_name} PRIVATE ${GTEST_LIBS} ${LIBS} llhttp)
     
     # Common dependencies and compile options
     if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
