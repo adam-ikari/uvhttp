@@ -12,6 +12,7 @@
 #include "uvhttp_logging.h"
 #include "uvhttp_platform.h"
 #include "uvhttp_server.h"
+#include "uvhttp_utils.h"
 
 #include "uvhttp_protocol_upgrade.h"
 
@@ -359,8 +360,7 @@ uvhttp_error_t uvhttp_ws_handshake_client(uvhttp_context_t* context,
     base64_key[olen] = '\0';
 
     /* save key to connection (for subsequent verification) */
-    strncpy(conn->client_key, (char*)base64_key, sizeof(conn->client_key) - 1);
-    conn->client_key[sizeof(conn->client_key) - 1] = '\0';
+    uvhttp_safe_strncpy(conn->client_key, (char*)base64_key, sizeof(conn->client_key));
 
     /* buildrequest */
     int len = snprintf(request, *request_len,

@@ -38,11 +38,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-      
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
+          cache: 'npm'
+          cache-dependency-path: 'docs/package-lock.json'
       
       - name: Generate all documentation
         run: |
@@ -54,8 +51,8 @@ jobs:
           
           # Build VitePress documentation site
           cd docs
-          pnpm install
-          DEPLOY=gh-pages pnpm build
+          npm install
+          DEPLOY=gh-pages npm run build
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -80,10 +77,8 @@ jobs:
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Generated Documentation" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ HTML: docs/api/html/" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ LaTeX: docs/api/latex/" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ XML: docs/api/xml/" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Markdown: docs/api/markdown_from_xml/" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ API XML: docs/api/xml/" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ API Markdown: docs/api/markdown_from_xml/" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ VitePress Site: docs/.vitepress/dist/" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Changed Files" >> $GITHUB_STEP_SUMMARY

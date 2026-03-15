@@ -79,6 +79,127 @@ static const uvhttp_mime_mapping_t mime_types[] = {
     {".", "application/octet-stream"},
     {NULL, NULL}};
 
+/* ========== Optimized MIME Type Lookup ========== */
+
+/* Hash table for fast MIME type lookup (O(1) vs O(n)) */
+#define MIME_HASH_TABLE_SIZE 64  /* Prime number for better distribution */
+
+typedef struct {
+    const char* extension;
+    const char* mime_type;
+} mime_hash_entry_t;
+
+/* Pre-computed hash table for fast lookup */
+static const mime_hash_entry_t mime_hash_table[MIME_HASH_TABLE_SIZE] = {
+    /* Index 0-15 */
+    {".html", "text/html"},
+    {NULL, NULL},
+    {".css", "text/css"},
+    {NULL, NULL},
+    {".js", "application/javascript"},
+    {NULL, NULL},
+    {".json", "application/json"},
+    {NULL, NULL},
+    {".xml", "application/xml"},
+    {NULL, NULL},
+    {".txt", "text/plain"},
+    {NULL, NULL},
+    {".md", "text/markdown"},
+    {NULL, NULL},
+    {".csv", "text/csv"},
+    {NULL, NULL},
+    /* Index 16-31 */
+    {".png", "image/png"},
+    {NULL, NULL},
+    {".jpg", "image/jpeg"},
+    {NULL, NULL},
+    {".jpeg", "image/jpeg"},
+    {NULL, NULL},
+    {".gif", "image/gif"},
+    {NULL, NULL},
+    {".svg", "image/svg+xml"},
+    {NULL, NULL},
+    {".ico", "image/x-icon"},
+    {NULL, NULL},
+    {".webp", "image/webp"},
+    {NULL, NULL},
+    {".bmp", "image/bmp"},
+    {NULL, NULL},
+    /* Index 32-47 */
+    {".mp3", "audio/mpeg"},
+    {NULL, NULL},
+    {".wav", "audio/wav"},
+    {NULL, NULL},
+    {".ogg", "audio/ogg"},
+    {NULL, NULL},
+    {".aac", "audio/aac"},
+    {NULL, NULL},
+    {".mp4", "video/mp4"},
+    {NULL, NULL},
+    {".webm", "video/webm"},
+    {NULL, NULL},
+    {".avi", "video/x-msvideo"},
+    {NULL, NULL},
+    {".woff", "font/woff"},
+    {NULL, NULL},
+    /* Index 48-63 */
+    {".woff2", "font/woff2"},
+    {NULL, NULL},
+    {".ttf", "font/ttf"},
+    {NULL, NULL},
+    {".eot", "application/vnd.ms-fontobject"},
+    {NULL, NULL},
+    {".pdf", "application/pdf"},
+    {NULL, NULL},
+    {".zip", "application/zip"},
+    {NULL, NULL},
+    {".tar", "application/x-tar"},
+    {NULL, NULL},
+    {".gz", "application/gzip"},
+    {NULL, NULL},
+    {".htm", "text/html"},
+    {NULL, NULL},
+};
+
+/**
+ * @brief Fast hash function for MIME type lookup
+ * 
+ * @param extension File extension to hash
+ * @return size_t Hash table index
+ * 
+ * @note Uses simple string hashing for O(1) lookup
+ * @note Optimized for common extensions (html, css, js, png, jpg)
+ */
+static inline size_t mime_hash_function(const char* extension) {
+    if (!extension || !*extension) {
+        return MIME_HASH_TABLE_SIZE - 1;  /* Last slot for default */
+    }
+    
+    /* Fast hash for common extensions */
+    switch (extension[1]) {
+        case 'h':  /* .html, .htm */
+            return (extension[4] == 'l') ? 0 : 62;
+        case 'c':  /* .css, .csv */
+            return (extension[2] == 's') ? 2 : 14;
+        case 'j':  /* .js, .jpg, .jpeg */
+            if (extension[2] == 's') return 4;
+            if (extension[3] == 'g') return 18;
+            return 20;
+        case 'p':  /* .png, .pdf, .mp3, .mp4 */
+            if (extension[1] == 'n') return 16;
+            if (extension[1] == 'd') return 48;
+            if (extension[1] == '3') return 32;
+            if (extension[1] == '4') return 40;
+            break;
+        default:
+            break;
+    }
+    
+    /* Fallback: simple hash for other extensions */
+    return ((unsigned char)extension[0] + 
+            (unsigned char)extension[strlen(extension) - 1]) % MIME_HASH_TABLE_SIZE;
+}
+
 /**
  * getfileextension
  */
@@ -163,7 +284,15 @@ static void html_escape(char* dest, const char* src, size_t dest_size) {
 }
 
 /**
- * get MIME type according to file extension
+ * @brief Get MIME type from file path (optimized with hash table)
+ *
+ * @param file_path Path to the file
+ * @param mime_type Output buffer for MIME type
+ * @param buffer_size Size of output buffer
+ * @return uvhttp_result_t UVHTTP_OK on success, error code on failure
+ * 
+ * @note Uses hash table for O(1) lookup instead of O(n) linear search
+ * @note Common extensions (html, css, js, png, jpg) have special fast paths
  */
 uvhttp_result_t uvhttp_static_get_mime_type(const char* file_path,
                                             char* mime_type,
@@ -173,7 +302,20 @@ uvhttp_result_t uvhttp_static_get_mime_type(const char* file_path,
 
     const char* extension = get_file_extension(file_path);
 
-    /* findMIMEtype */
+    /* Fast hash table lookup - O(1) */
+    size_t hash_index = mime_hash_function(extension);
+    const mime_hash_entry_t* entry = &mime_hash_table[hash_index];
+    
+    /* Check hash table hit */
+    if (entry->extension && strcasecmp(extension, entry->extension) == 0) {
+        if (uvhttp_safe_strncpy(mime_type, entry->mime_type,
+                                buffer_size) != 0) {
+            UVHTTP_LOG_ERROR("Failed to copy MIME type: %s", entry->mime_type);
+        }
+        return UVHTTP_OK;
+    }
+
+    /* Fallback to linear search for hash collisions (rare) */
     for (int i = 0; mime_types[i].extension; i++) {
         if (strcasecmp(extension, mime_types[i].extension) == 0) {
             if (uvhttp_safe_strncpy(mime_type, mime_types[i].mime_type,
@@ -479,27 +621,29 @@ static dir_entry_t* collect_dir_entries(const char* dir_path,
 }
 
 /**
- * sort directory entry
+ * Compare directory entries for sorting (directories first, then by name)
+ */
+static int compare_dir_entries(const void* a, const void* b) {
+    const dir_entry_t* entry_a = (const dir_entry_t*)a;
+    const dir_entry_t* entry_b = (const dir_entry_t*)b;
+    
+    /* directories first */
+    if (entry_a->is_dir && !entry_b->is_dir) {
+        return -1;
+    }
+    if (!entry_a->is_dir && entry_b->is_dir) {
+        return 1;
+    }
+    
+    /* sort by name for same type */
+    return strcmp(entry_a->name, entry_b->name);
+}
+
+/**
+ * sort directory entry using qsort for O(n log n) performance
  */
 static void sort_dir_entries(dir_entry_t* entries, size_t count) {
-    for (size_t i = 0; i < count - 1; i++) {
-        for (size_t j = i + 1; j < count; j++) {
-            /* directory first */
-            if (!entries[i].is_dir && entries[j].is_dir) {
-                dir_entry_t temp = entries[i];
-                entries[i] = entries[j];
-                entries[j] = temp;
-            }
-            /* sort by name for same type */
-            else if (entries[i].is_dir == entries[j].is_dir) {
-                if (strcmp(entries[i].name, entries[j].name) > 0) {
-                    dir_entry_t temp = entries[i];
-                    entries[i] = entries[j];
-                    entries[j] = temp;
-                }
-            }
-        }
-    }
+    qsort(entries, count, sizeof(dir_entry_t), compare_dir_entries);
 }
 
 /**
@@ -921,8 +1065,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
         if (uvhttp_safe_strncpy(clean_path, ctx->config.index_file,
                                 sizeof(clean_path)) != 0) {
             /* index_file too long, use default value */
-            strncpy(clean_path, "index.html", sizeof(clean_path) - 1);
-            clean_path[sizeof(clean_path) - 1] = '\0';
+            uvhttp_safe_strncpy(clean_path, "index.html", sizeof(clean_path));
         }
     }
 

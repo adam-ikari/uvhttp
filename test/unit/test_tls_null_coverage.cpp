@@ -80,12 +80,6 @@ TEST(UvhttpTlsNullCoverageTest, TlsContextSetSessionCacheNull) {
     EXPECT_NE(err, UVHTTP_OK);
 }
 
-/* 测试启用OCSP装订NULL */
-TEST(UvhttpTlsNullCoverageTest, TlsContextEnableOcspStaplingNull) {
-    uvhttp_error_t err = uvhttp_tls_context_enable_ocsp_stapling(NULL, 0);
-    /* 可能返回OK（函数可能忽略NULL） */
-}
-
 /* 测试设置DH参数NULL */
 TEST(UvhttpTlsNullCoverageTest, TlsContextSetDhParametersNull) {
     uvhttp_error_t err = uvhttp_tls_context_set_dh_parameters(NULL, NULL);
@@ -127,20 +121,6 @@ TEST(UvhttpTlsNullCoverageTest, TlsContextEnableCrlCheckingNull) {
 /* 测试加载CRL文件NULL */
 TEST(UvhttpTlsNullCoverageTest, TlsLoadCrlFileNull) {
     uvhttp_error_t err = uvhttp_tls_load_crl_file(NULL, NULL);
-    EXPECT_NE(err, UVHTTP_OK);
-}
-
-/* 测试获取OCSP响应NULL */
-TEST(UvhttpTlsNullCoverageTest, TlsGetOcspResponseNull) {
-    unsigned char* ocsp_response = NULL;
-    size_t response_len = 0;
-    uvhttp_error_t err = uvhttp_tls_get_ocsp_response(NULL, &ocsp_response, &response_len);
-    EXPECT_NE(err, UVHTTP_OK);
-}
-
-/* 测试验证OCSP响应NULL */
-TEST(UvhttpTlsNullCoverageTest, TlsVerifyOcspResponseNull) {
-    uvhttp_error_t err = uvhttp_tls_verify_ocsp_response(NULL, NULL, 0);
     EXPECT_NE(err, UVHTTP_OK);
 }
 

@@ -1,12 +1,12 @@
 /*
- * Pure Google Test - 测试 Google Test 框架本身是否有内存泄漏
+ * Pure Google Test - Test Google Test framework itself for memory leaks
  */
 
 #include <gtest/gtest.h>
 #include <string>
 #include <vector>
 
-/* 纯 Google Test 测试 - 不使用任何 UVHTTP 代码 */
+/* Pure Google Test - Does not use any UVHTTP code */
 TEST(PureGTest, StringOperations) {
     std::string str = "Hello, World!";
     str += " This is a test.";

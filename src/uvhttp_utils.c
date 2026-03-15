@@ -11,37 +11,26 @@
 #include <string.h>
 #include <strings.h>
 #include <time.h>
+#include <arpa/inet.h>
 
-// Safe string copy function - matches header declaration
+// Safe string copy function - uses snprintf for safety
 int uvhttp_safe_strcpy(char* dest, size_t dest_size, const char* src) {
     if (!dest || !src || dest_size == 0)
         return -1;
 
-    size_t src_len = strlen(src);
-    if (src_len >= dest_size) {
-        src_len = dest_size - 1;
-    }
-    memcpy(dest, src, src_len);
-    dest[src_len] = '\0';
-
+    snprintf(dest, dest_size, "%s", src);
     return 0;
 }
 
 /* ============ Core Utility Functions ============ */
 
-// Safe string copy function
+// Safe string copy function - uses snprintf for safety
 int uvhttp_safe_strncpy(char* dest, const char* src, size_t dest_size) {
     if (!dest || !src || dest_size == 0)
         return -1;
 
-    size_t src_len = strlen(src);
-    if (src_len >= dest_size) {
-        src_len = dest_size - 1;
-    }
-    memcpy(dest, src, src_len);
-    dest[src_len] = '\0';
-
-    return 0;  // Return 0 on success, -1 on failure
+    snprintf(dest, dest_size, "%s", src);
+    return 0;
 }
 
 /* ============ Internal Helper Functions ============ */
@@ -178,95 +167,25 @@ int uvhttp_is_valid_status_code(int status_code) {
     return (status_code >= 100 && status_code <= 599) ? TRUE : FALSE;
 }
 
-/* IP validation function - manual implementation for best performance */
+/* IP validation function - uses standard inet_pton for reliability */
 int uvhttp_is_valid_ip_address(const char* ip) {
     if (!ip || !*ip)
         return FALSE;
 
-    /* Check if IPv6 (contains colon) */
-    if (strchr(ip, ':') != NULL) {
-        /* IPv6 - simplified check */
-        int colon_count = 0;
-        int double_colon_count = 0;
+    struct sockaddr_in sa4;
+    struct sockaddr_in6 sa6;
 
-        /* Check for invalid characters */
-        for (const char* p = ip; *p; p++) {
-            char c = *p;
-            /* IPv6 only allows: 0-9, a-f, A-F, : */
-            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') ||
-                  (c >= 'A' && c <= 'F') || c == ':')) {
-                return FALSE;
-            }
-
-            if (*p == ':') {
-                colon_count++;
-                if (p[1] == ':') {
-                    double_colon_count++;
-                    /* Skip the second colon */
-                    p++;
-                    /* Check for third colon (invalid) */
-                    if (p[1] == ':') {
-                        return FALSE;
-                    }
-                }
-            }
-        }
-
-        /* IPv6 validation rules:
-         * - If double colon (compressed format), colon count should be 1-7
-         * - If no double colon (full format), colon count must be 7
-         * - Double colon can only appear once
-         */
-        if (double_colon_count == 1) {
-            /* Compressed format: colon count 1-7 (::1 has 1, :: has 0) */
-            return (colon_count >= 1 && colon_count <= 7) ? TRUE : FALSE;
-        } else if (double_colon_count == 0) {
-            /* Full format: colon count must be 7 */
-            return (colon_count == 7) ? TRUE : FALSE;
-        } else {
-            /* Double colon appeared multiple times, invalid */
-            return FALSE;
-        }
+    /* Try IPv4 */
+    if (inet_pton(AF_INET, ip, &sa4.sin_addr) == 1) {
+        return TRUE;
     }
 
-    /* IPv4 - simplified check */
-    int dot_count = 0;
-    int digit_count = 0;
-    int segment_value = 0;
-
-    for (const char* p = ip; *p; p++) {
-        if (*p == '.') {
-            /* Check segment value and digit count */
-            if (segment_value > 255 || digit_count == 0) {
-                return FALSE;
-            }
-            dot_count++;
-            digit_count = 0;
-            segment_value = 0;
-        } else if (*p >= '0' && *p <= '9') {
-            /* Check for integer overflow */
-            if (segment_value > (255 - (*p - '0')) / 10) {
-                return FALSE;
-            }
-            segment_value = segment_value * 10 + (*p - '0');
-            digit_count++;
-            /* Limit each segment to max 3 digits */
-            if (digit_count > 3) {
-                return FALSE;
-            }
-        } else {
-            /* Invalid character */
-            return FALSE;
-        }
+    /* Try IPv6 */
+    if (inet_pton(AF_INET6, ip, &sa6.sin6_addr) == 1) {
+        return TRUE;
     }
 
-    /* Check last segment */
-    if (segment_value > 255 || digit_count == 0) {
-        return FALSE;
-    }
-
-    /* Must have 3 dots */
-    return (dot_count == 3) ? TRUE : FALSE;
+    return FALSE;
 }
 
 /**

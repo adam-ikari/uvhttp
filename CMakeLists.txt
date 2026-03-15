@@ -18,6 +18,7 @@ option(BUILD_WITH_HTTPS "Build with HTTPS support" ON)
 option(BUILD_WITH_STATIC_FILES "Build with static file service support" OFF)
 option(BUILD_WITH_LRU_CACHE "Build with LRU cache support" ON)
 option(BUILD_WITH_ROUTER_CACHE "Build with router cache support" OFF)
+option(BUILD_WITH_COMPRESSION "Build with HTTP response compression support" OFF)
 
 # Memory allocator type (must be set before BUILD_WITH_MIMALLOC option)
 if(NOT DEFINED UVHTTP_ALLOCATOR_TYPE)
@@ -171,6 +172,15 @@ if(BUILD_WITH_ROUTER_CACHE)
 else()
     add_definitions(-DUVHTTP_FEATURE_ROUTER_CACHE=0)
     message(STATUS "Router cache support: DISABLED")
+endif()
+
+# Compression support
+if(BUILD_WITH_COMPRESSION)
+    add_definitions(-DUVHTTP_FEATURE_COMPRESSION=1)
+    message(STATUS "Compression support: ENABLED")
+else()
+    add_definitions(-DUVHTTP_FEATURE_COMPRESSION=0)
+    message(STATUS "Compression support: DISABLED (zero overhead)")
 endif()
 
 # HTTPS support (using mbedtls)
@@ -483,7 +493,7 @@ endif()
 set(LIBS
     ${LIBUV_LIB}
     ${XXHASH_LIB}
-    ${LLHTTP_LIB}
+    llhttp
     ${CJSON_LIB}
     pthread
     m
@@ -496,6 +506,10 @@ endif()
 
 if(BUILD_WITH_MIMALLOC)
     list(APPEND LIBS ${MIMALLOC_LIB})
+endif()
+
+if(BUILD_WITH_COMPRESSION)
+    list(APPEND LIBS ${ZLIB_LIBRARY})
 endif()
 
 # ============================================================================
@@ -525,10 +539,15 @@ if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
     target_compile_definitions(uvhttp PRIVATE UVHTTP_ENABLE_TLS)
 endif()
 
-# mimalloc (PRIVATE)
+# mimalloc (PUBLIC - needed by tests)
 if(BUILD_WITH_MIMALLOC)
-    target_link_libraries(uvhttp PRIVATE mimalloc)
+    target_link_libraries(uvhttp PUBLIC mimalloc)
     target_compile_definitions(uvhttp PRIVATE UVHTTP_ENABLE_MIMALLOC)
+endif()
+
+# zlib (for compression support)
+if(BUILD_WITH_COMPRESSION)
+    target_link_libraries(uvhttp PUBLIC zlib)
 endif()
 
 # Linux platform-specific libraries (PRIVATE)
@@ -576,9 +595,18 @@ foreach(test_file ${GTEST_TEST_FILES})
             continue()
         endif()
     endif()
-    if(${test_name} MATCHES ".*websocket.*")
+# Server WebSocket API tests require WebSocket support
+    if(${test_name} STREQUAL "test_server_simple_api_coverage")
         if(NOT BUILD_WITH_WEBSOCKET)
             message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
+            continue()
+        endif()
+    endif()
+
+    # Compression-related tests require compression support
+    if(${test_name} MATCHES ".*compression.*")
+        if(NOT BUILD_WITH_COMPRESSION)
+            message(WARNING "Test ${test_name} requires compression support, skipping...")
             continue()
         endif()
     endif()
@@ -592,17 +620,17 @@ foreach(test_file ${GTEST_TEST_FILES})
         endif()
     endif()
 
-    # Server WebSocket API tests require WebSocket support
-    if(${test_name} STREQUAL "test_server_simple_api_coverage")
-        if(NOT BUILD_WITH_WEBSOCKET)
-            message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
+    if(${test_name} MATCHES ".*tls.*")
+        if(NOT BUILD_WITH_HTTPS)
+            message(WARNING "Test ${test_name} requires HTTPS support, skipping...")
             continue()
         endif()
     endif()
 
-    if(${test_name} MATCHES ".*tls.*")
-        if(NOT BUILD_WITH_HTTPS)
-            message(WARNING "Test ${test_name} requires HTTPS support, skipping...")
+    # WebSocket-related tests require WebSocket support
+    if(${test_name} MATCHES ".*websocket.*")
+        if(NOT BUILD_WITH_WEBSOCKET)
+            message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
             continue()
         endif()
     endif()
@@ -613,7 +641,7 @@ foreach(test_file ${GTEST_TEST_FILES})
     
     add_dependencies(${test_name} libuv xxhash gtest)
     # Link googletest first, then LIBS (gmock_main depends on gtest)
-    target_link_libraries(${test_name} PRIVATE ${GTEST_LIBS} ${LIBS})
+    target_link_libraries(${test_name} PRIVATE ${GTEST_LIBS} ${LIBS} llhttp)
     
     # Common dependencies and compile options
     if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
@@ -634,7 +662,15 @@ foreach(test_file ${GTEST_TEST_FILES})
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/include
     )
+    
+    # Add mimalloc include directory if using mimalloc
+    if(BUILD_WITH_MIMALLOC)
+        target_include_directories(${test_name} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/include
+        )
+    endif()
 endforeach()
 
 # ============================================================================
@@ -690,7 +726,7 @@ foreach(test_file ${MOCK_TEST_FILES})
         -Wl,--wrap=uv_buf_init
     )
     
-    add_dependencies(${test_name} libuv xxhash gtest libuv_mock)
+    add_dependencies(${test_name} libuv xxhash gtest libuv_mock llhttp)
     if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
         add_dependencies(${test_name} mbedtls)
     endif()
@@ -706,14 +742,22 @@ foreach(test_file ${MOCK_TEST_FILES})
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/include
         ${CMAKE_CURRENT_SOURCE_DIR}/test/mock
     )
+    
+    # Add mimalloc include directory if using mimalloc
+    if(BUILD_WITH_MIMALLOC)
+        target_include_directories(${test_name} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/include
+        )
+    endif()
 endforeach()
 
 # Add gtest sample test (compiled with C++)
 add_executable(uvhttp_unit_tests test/unit/simple_test.cpp ${SOURCES})
 set_target_properties(uvhttp_unit_tests PROPERTIES LINKER_LANGUAGE CXX)
-add_dependencies(uvhttp_unit_tests libuv xxhash gtest)
+add_dependencies(uvhttp_unit_tests libuv xxhash gtest llhttp)
 if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
     add_dependencies(uvhttp_unit_tests mbedtls)
 endif()
@@ -723,7 +767,14 @@ endif()
 target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
 # Link googletest first, then LIBS (gmock_main depends on gtest)
 target_link_libraries(uvhttp_unit_tests ${GTEST_LIBS} ${LIBS})
-target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include)
+target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/include)
+
+# Add mimalloc include directory if using mimalloc
+if(BUILD_WITH_MIMALLOC)
+    target_include_directories(uvhttp_unit_tests PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/include
+    )
+endif()
 
 # ============================================================================
 # CTest Configuration
@@ -748,7 +799,7 @@ add_test(NAME uvhttp_unit_tests COMMAND ${CMAKE_BINARY_DIR}/dist/bin/uvhttp_unit
 # Add stress tests
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stress.c)
     add_executable(test_stress test/test_stress.c ${SOURCES})
-    add_dependencies(test_stress libuv mbedtls xxhash)
+    add_dependencies(test_stress libuv mbedtls xxhash llhttp)
     if(BUILD_WITH_MIMALLOC)
         add_dependencies(test_stress mimalloc)
     endif()
@@ -819,6 +870,14 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
         endif()
     endif()
 
+    # HTTPS-related tests require HTTPS support
+    if(${test_name} MATCHES ".*https.*")
+        if(NOT BUILD_WITH_HTTPS)
+            message(WARNING "Test ${test_name} requires HTTPS support, skipping...")
+            continue()
+        endif()
+    endif()
+
     # WebSocket-related tests require WebSocket support
     if(${test_name} MATCHES ".*websocket.*")
         if(NOT BUILD_WITH_WEBSOCKET)
@@ -828,7 +887,7 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
     endif()
 
     add_executable(${test_name} ${test_file} ${SOURCES})
-    add_dependencies(${test_name} libuv xxhash)
+    add_dependencies(${test_name} libuv xxhash llhttp)
     if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
         add_dependencies(${test_name} mbedtls)
     endif()
@@ -838,6 +897,13 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
 
     target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error-unused-function)
     target_link_libraries(${test_name} ${LIBS})
+    
+    # Add mimalloc include directory if using mimalloc
+    if(BUILD_WITH_MIMALLOC)
+        target_include_directories(${test_name} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/deps/mimalloc/include
+        )
+    endif()
 endforeach()
 
 # ============================================================================

@@ -324,8 +324,8 @@ static int check_rate_limit_whitelist(uvhttp_connection_t* conn) {
 /* ensure URL is valid, if null then set to "/" */
 static void ensure_valid_url(uvhttp_request_t* request) {
     if (!request->url[0]) {
-        strncpy(request->url, UVHTTP_VALUE_ROOT_PATH, sizeof(request->url) - 1);
-        request->url[sizeof(request->url) - 1] = '\0';
+        uvhttp_safe_strncpy(request->url, UVHTTP_VALUE_ROOT_PATH, 
+                          sizeof(request->url));
     }
 }
 

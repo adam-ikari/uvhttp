@@ -1,5 +1,12 @@
 # 性能测试示例
 
+# 压缩性能测试服务器
+add_executable(compression_server compression_server.c)
+target_link_libraries(compression_server PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
+target_include_directories(compression_server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
+add_dependencies(compression_server uvhttp)
+uvhttp_add_example_dependencies(compression_server)
+
 # HTTPS 性能测试服务器 - 暂时禁用，需要完全重写以使用正确的 API
 # if(BUILD_WITH_HTTPS)
 #     add_executable(performance_https_server

@@ -13,10 +13,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Global entropy and DRBG context (deprecated, use context instead)
-// static mbedtls_entropy_context g_entropy;
-// static mbedtls_ctr_drbg_context g_ctr_drbg;
-// static int g_tls_initialized = 0;
 struct uvhttp_tls_context {
     mbedtls_ssl_config conf;
     mbedtls_x509_crt srvcert;
@@ -30,9 +26,6 @@ struct uvhttp_tls_context {
     int initialized;
     uvhttp_tls_stats_t stats;
 };
-
-// Global initialization state (deprecated, use context instead)
-// static int g_tls_initialized = 0;
 
 // Custom network callback function
 static int mbedtls_net_send(void* ctx, const unsigned char* buf, size_t len) {
@@ -148,6 +141,26 @@ uvhttp_error_t uvhttp_tls_context_new(uvhttp_tls_context_t** ctx) {
     }
 
     mbedtls_ssl_conf_rng(&c->conf, mbedtls_ctr_drbg_random, &c->ctr_drbg);
+    
+    /* TODO: Re-enable TLS session cache for performance optimization
+     * 
+     * Reason for disabling: Session cache was temporarily disabled due to
+     * potential thread-safety concerns in single-threaded event loop environment.
+     * 
+     * Performance impact: Without session cache, each TLS connection requires
+     * full handshake (2-3 RTT instead of 1 RTT for resumed sessions), which
+     * significantly increases latency for HTTPS connections.
+     * 
+     * Re-enable criteria:
+     * - Verify thread-safety of mbedtls_ssl_cache in single-threaded context
+     * - Add proper session cache size limits and expiration
+     * - Test with concurrent TLS connections to ensure no crashes
+     * - Benchmark performance improvement (expected: 30-50% reduction in handshake time)
+     * 
+     * Code to uncomment when ready:
+     * mbedtls_ssl_conf_session_cache(&c->conf, &c->cache,
+     *     mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);
+     */
     // mbedtls_ssl_conf_session_cache(&c->conf, &c->cache,
     // mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);  // temporarily disabled
 
@@ -289,16 +302,6 @@ uvhttp_error_t uvhttp_tls_context_set_session_cache(uvhttp_tls_context_t* ctx,
 
     mbedtls_ssl_cache_set_max_entries(&ctx->cache, max_sessions);
 
-    return UVHTTP_OK;
-}
-
-uvhttp_error_t uvhttp_tls_context_enable_ocsp_stapling(
-    uvhttp_tls_context_t* ctx, int enable) {
-    if (!ctx) {
-        return UVHTTP_ERROR_TLS_INVALID_PARAM;
-    }
-
-    (void)enable;
     return UVHTTP_OK;
 }
 
@@ -553,36 +556,6 @@ uvhttp_error_t uvhttp_tls_load_crl_file(uvhttp_tls_context_t* ctx,
     return UVHTTP_OK;
 }
 
-// OCSP stapling
-uvhttp_error_t uvhttp_tls_get_ocsp_response(mbedtls_ssl_context* ssl,
-                                            unsigned char** ocsp_response,
-                                            size_t* response_len) {
-    if (!ssl || !ocsp_response || !response_len) {
-        return UVHTTP_ERROR_TLS_INVALID_PARAM;
-    }
-
-    // OCSP response get in mbedTLS 3.x needs additional config
-    // current version returns not implemented, recommend using CRL check as
-    // alternative
-    *ocsp_response = NULL;
-    *response_len = 0;
-    return UVHTTP_ERROR_TLS_NOT_IMPLEMENTED;
-}
-
-uvhttp_error_t uvhttp_tls_verify_ocsp_response(
-    mbedtls_x509_crt* cert, const unsigned char* ocsp_response,
-    size_t response_len) {
-    if (!cert || !ocsp_response || response_len == 0) {
-        return UVHTTP_ERROR_TLS_INVALID_PARAM;
-    }
-
-    // verify OCSP response in mbedTLS 3.x
-    // note: this requires additional OCSP state request config
-    // current version returns not implemented, recommend using CRL check as
-    // alternative
-    return UVHTTP_ERROR_TLS_NOT_IMPLEMENTED;
-}
-
 // TLS 1.3support
 uvhttp_error_t uvhttp_tls_context_enable_tls13(uvhttp_tls_context_t* ctx,
                                                int enable) {
@@ -774,5 +747,5 @@ void uvhttp_tls_get_error_string(int ret, char* buf, size_t buf_size) {
 void uvhttp_tls_print_error(int ret) {
     char buf[256];
     mbedtls_strerror(ret, buf, sizeof(buf));
-    fprintf(stderr, "TLS error: %s\n", buf);
+    UVHTTP_LOG_ERROR("TLS error: %s\n", buf);
 }

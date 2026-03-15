@@ -4,11 +4,45 @@ This document provides information about UVHTTP versions and their compatibility
 
 ## Current Version
 
-**Version**: 2.4.1  
-**Release Date**: 2026-02-13  
+**Version**: 2.4.4  
+**Release Date**: 2026-02-26  
 **Status**: Stable
 
 ## Version History
+
+### 2.4.4 (2026-02-26)
+
+**Critical Fixes**:
+- Fixed critical memory leak in uvhttp_connection_free (~2MB per connection)
+- Fixed memory leak prevention with proper resource cleanup order
+- Valgrind verification confirms zero leaks (was 1,932,392 bytes)
+
+**Dependencies**:
+- Replaced cllhttp with official llhttp submodule (nodejs/llhttp)
+- Updated to llhttp v9.3.1
+- Improved dependency management and maintainability
+
+**Documentation**:
+- Added comprehensive v2.4.4 release notes
+- Optimized documentation workflow with Makefile targets
+- Reorganized scripts directory (archived old scripts)
+- Updated VERSION file with English comments
+
+**Build System**:
+- Improved CI/CD with npm caching
+- Updated build system for llhttp integration
+- Cleaned up build artifacts from git tracking
+
+**Tests**:
+- Added pure Google Test baseline tests (3 test cases)
+- Added comprehensive memory leak tests (7 test cases)
+- Fixed uninitialized variable in test_e2e_simple.c
+- Translated Chinese comments to English in tests
+
+**Code Quality**:
+- Removed build directories from git tracking
+- Cleaned up package.json (moved to docs/)
+- Improved code organization
 
 ### 2.4.1 (2026-02-13)
 

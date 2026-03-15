@@ -58,6 +58,9 @@ static inline int uvhttp_validate_string_length(const char* str, size_t min_len,
  *
  * @note Checks for dangerous characters: < > : " | * \n \r
  * @note Path length must be between 1 and UVHTTP_MAX_PATH_SIZE
+ * @note Path must start with /
+ * @note Checks for path traversal attacks (../, ..\\, %2e%2e, etc.)
+ * @note Validates URL encoding sequences (must be properly encoded %XX)
  * @note NULL path returns FALSE
  * @note Does NOT check for '?' as it's valid in query strings
  */
@@ -69,13 +72,38 @@ static inline int uvhttp_validate_url_path(const char* path) {
     // Path must start with /
     if (path[0] != '/')
         return FALSE;
+    
     // Check for path traversal attacks (../)
     if (strstr(path, "../"))
         return FALSE;
+    
+    // Check for Windows-style path traversal (..\\)
+    if (strstr(path, "..\\"))
+        return FALSE;
+    
+    // Check for URL-encoded path traversal (%2e%2e, %2e%2e%2f, etc.)
+    if (strstr(path, "%2e%2e") || strstr(path, "%2E%2E"))
+        return FALSE;
+    
+    // Validate URL encoding sequences (must be %XX format)
+    for (const char* p = path; *p; p++) {
+        if (*p == '%') {
+            // Check if there are at least 2 more characters
+            if (!*(p+1) || !*(p+2))
+                return FALSE;
+            // Check if next 2 characters are valid hex digits
+            if (!isxdigit(*(p+1)) || !isxdigit(*(p+2)))
+                return FALSE;
+            p += 2; // Skip the hex digits
+        }
+    }
+    
+    // Check for dangerous characters
     for (size_t i = 0; i < sizeof(dangerous_path_chars); i++) {
         if (strchr(path, dangerous_path_chars[i]))
             return FALSE;
     }
+    
     return TRUE;
 }
 
