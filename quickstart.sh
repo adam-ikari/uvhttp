@@ -1,44 +1,198 @@
 #!/bin/bash
 ###############################################################################
-# UVHTTP Quick Start Script
-# This script helps you get started with UVHTTP quickly and easily.
+# UVHTTP Quick Start Script v2.0
+#
+# A professional, intelligent quick start tool for UVHTTP
+# Features:
+# - Automatic system detection and configuration
+# - Parallel compilation with optimal settings
+# - Progress tracking and visual feedback
+# - Comprehensive error handling and recovery
+# - Post-build validation and testing
 ###############################################################################
 
 set -e
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Script metadata
+VERSION="2.0.0"
+SCRIPT_NAME="$(basename "$0")"
 
-# Print colored output
-print_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+# Color scheme
+readonly COLOR_RESET='\033[0m'
+readonly COLOR_BOLD='\033[1m'
+readonly COLOR_DIM='\033[2m'
+readonly COLOR_RED='\033[31m'
+readonly COLOR_GREEN='\033[32m'
+readonly COLOR_YELLOW='\033[33m'
+readonly COLOR_BLUE='\033[34m'
+readonly COLOR_CYAN='\033[36m'
+
+readonly COLOR_BRIGHT_RED='\033[91m'
+readonly COLOR_BRIGHT_GREEN='\033[92m'
+readonly COLOR_BRIGHT_YELLOW='\033[93m'
+readonly COLOR_BRIGHT_BLUE='\033[94m'
+readonly COLOR_BRIGHT_CYAN='\033[96m'
+
+# Symbols
+readonly SYMBOL_SUCCESS="✓"
+readonly SYMBOL_ERROR="✗"
+readonly SYMBOL_WARNING="⚠"
+readonly SYMBOL_INFO="ℹ"
+readonly SYMBOL_LOADING="⏳"
+readonly SYMBOL_CHECK="✔"
+
+# Configuration
+BUILD_DIR="build"
+BUILD_TYPE="Release"
+RUN_TESTS=false
+CLEAN_BUILD=true
+VERBOSE=false
+AUTO_DETECT=true
+
+# System information
+OS_NAME=""
+ARCH_NAME=""
+NUM_CORES=""
+COMPILER_NAME=""
+CMAKE_VERSION=""
+
+# =============================================================================
+# Utility Functions
+# =============================================================================
+
+# Print formatted messages
+log_info() {
+    echo -e "${COLOR_BRIGHT_CYAN}${SYMBOL_INFO}${COLOR_RESET} ${COLOR_CYAN}$1${COLOR_RESET}"
 }
 
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+log_success() {
+    echo -e "${COLOR_BRIGHT_GREEN}${SYMBOL_SUCCESS}${COLOR_RESET} ${COLOR_GREEN}$1${COLOR_RESET}"
 }
 
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+log_warning() {
+    echo -e "${COLOR_BRIGHT_YELLOW}${SYMBOL_WARNING}${COLOR_RESET} ${COLOR_YELLOW}$1${COLOR_RESET}"
 }
 
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+log_error() {
+    echo -e "${COLOR_BRIGHT_RED}${SYMBOL_ERROR}${COLOR_RESET} ${COLOR_RED}$1${COLOR_RESET}"
 }
 
-# Check dependencies
+log_verbose() {
+    if [ "$VERBOSE" = true ]; then
+        echo -e "${COLOR_DIM}[VERBOSE]${COLOR_RESET} $1"
+    fi
+}
+
+# Print section header
+print_header() {
+    local title="$1"
+    echo ""
+    echo -e "${COLOR_BOLD}${COLOR_CYAN}═══════════════════════════════════════════════════════════════${COLOR_RESET}"
+    echo -e "${COLOR_BOLD}${COLOR_CYAN}  $title${COLOR_RESET}"
+    echo -e "${COLOR_BOLD}${COLOR_CYAN}═══════════════════════════════════════════════════════════════${COLOR_RESET}"
+    echo ""
+}
+
+# Print progress indicator
+show_progress() {
+    local message="$1"
+    echo -ne "${COLOR_BRIGHT_CYAN}${SYMBOL_LOADING}${COLOR_RESET} ${COLOR_DIM}$message...${COLOR_RESET}"
+}
+
+# Complete progress indicator
+complete_progress() {
+    echo -e "\r${COLOR_BRIGHT_GREEN}${SYMBOL_CHECK}${COLOR_RESET} ${COLOR_GREEN}$1${COLOR_RESET}"
+}
+
+# Print separator
+print_separator() {
+    echo ""
+    echo -e "${COLOR_DIM}─────────────────────────────────────────────────────────────────────${COLOR_RESET}"
+    echo ""
+}
+
+# =============================================================================
+# System Detection
+# =============================================================================
+
+detect_system() {
+    log_info "Detecting system configuration..."
+
+    # Detect OS
+    OS_NAME="$(uname -s)"
+    log_verbose "OS: $OS_NAME"
+
+    # Detect architecture
+    ARCH_NAME="$(uname -m)"
+    case "$ARCH_NAME" in
+        x86_64)
+            ARCH_DISPLAY="64-bit"
+            CMAKE_FLAGS=""
+            ;;
+        i686|i386)
+            ARCH_DISPLAY="32-bit"
+            CMAKE_FLAGS="-DCMAKE_C_FLAGS=-m32"
+            log_warning "32-bit architecture detected"
+            ;;
+        aarch64|arm64)
+            ARCH_DISPLAY="ARM64"
+            CMAKE_FLAGS=""
+            ;;
+        *)
+            ARCH_DISPLAY="Unknown ($ARCH_NAME)"
+            CMAKE_FLAGS=""
+            log_warning "Unknown architecture: $ARCH_NAME"
+            ;;
+    esac
+    log_verbose "Architecture: $ARCH_NAME"
+
+    # Detect CPU cores
+    if command -v nproc &> /dev/null; then
+        NUM_CORES=$(nproc)
+    elif command -v sysctl &> /dev/null; then
+        NUM_CORES=$(sysctl -n hw.ncpu)
+    else
+        NUM_CORES=4
+    fi
+    log_verbose "CPU cores: $NUM_CORES"
+
+    # Detect compiler
+    if command -v gcc &> /dev/null; then
+        COMPILER_NAME="gcc"
+        COMPILER_VERSION=$(gcc --version | head -1)
+    elif command -v clang &> /dev/null; then
+        COMPILER_NAME="clang"
+        COMPILER_VERSION=$(clang --version | head -1)
+    else
+        COMPILER_NAME="none"
+        COMPILER_VERSION="Not found"
+    fi
+    log_verbose "Compiler: $COMPILER_NAME"
+
+    # Detect CMake
+    if command -v cmake &> /dev/null; then
+        CMAKE_VERSION=$(cmake --version | head -1)
+    else
+        CMAKE_VERSION="Not found"
+    fi
+    log_verbose "CMake: $CMAKE_VERSION"
+
+    complete_progress "System detection complete"
+}
+
+# =============================================================================
+# Dependency Checking
+# =============================================================================
+
 check_dependencies() {
-    print_info "Checking dependencies..."
+    log_info "Checking dependencies..."
 
-    # Check for required tools
     local missing_deps=()
+    local warnings=()
 
+    # Required dependencies
     if ! command -v gcc &> /dev/null && ! command -v clang &> /dev/null; then
-        missing_deps+=("gcc or clang")
+        missing_deps+=("C compiler (gcc or clang)")
     fi
 
     if ! command -v cmake &> /dev/null; then
@@ -53,217 +207,308 @@ check_dependencies() {
         missing_deps+=("git")
     fi
 
+    # Optional dependencies
+    if ! command -v python3 &> /dev/null; then
+        warnings+=("Python 3 (optional, for some scripts)")
+    fi
+
+    # Report missing dependencies
     if [ ${#missing_deps[@]} -ne 0 ]; then
-        print_error "Missing required dependencies:"
+        log_error "Missing required dependencies:"
         for dep in "${missing_deps[@]}"; do
-            echo "  - $dep"
+            echo -e "  ${COLOR_RED}✗${COLOR_RESET} $dep"
         done
         echo ""
-        echo "Please install the missing dependencies and try again."
+
+        log_error "Please install the missing dependencies:"
         echo ""
-        echo "Ubuntu/Debian:"
-        echo "  sudo apt-get install build-essential cmake git"
+        echo -e "  ${COLOR_BOLD}Ubuntu/Debian:${COLOR_RESET}"
+        echo -e "    sudo apt-get update && sudo apt-get install -y build-essential cmake git"
         echo ""
-        echo "Fedora/RHEL:"
-        echo "  sudo dnf install gcc cmake make git"
+        echo -e "  ${COLOR_BOLD}Fedora/RHEL:${COLOR_RESET}"
+        echo -e "    sudo dnf install -y gcc cmake make git"
         echo ""
-        echo "macOS:"
-        echo "  brew install cmake git"
+        echo -e "  ${COLOR_BOLD}macOS:${COLOR_RESET}"
+        echo -e "    brew install cmake git"
+        echo ""
         exit 1
     fi
 
-    print_success "All dependencies found"
-}
-
-# Detect system architecture
-detect_architecture() {
-    ARCH=$(uname -m)
-    print_info "Detected architecture: $ARCH"
-
-    if [ "$ARCH" = "x86_64" ]; then
-        BUILD_ARCH="64-bit"
-    elif [ "$ARCH" = "i686" ] || [ "$ARCH" = "i386" ]; then
-        BUILD_ARCH="32-bit"
-        CMAKE_FLAGS="-DCMAKE_C_FLAGS=-m32"
-    else
-        print_warning "Architecture $ARCH may not be fully supported"
-        BUILD_ARCH="unknown"
-    fi
-}
-
-# Setup build directory
-setup_build() {
-    print_info "Setting up build directory..."
-
-    if [ -d "build" ]; then
-        print_warning "Build directory already exists. Cleaning..."
-        rm -rf build
+    # Report optional warnings
+    if [ ${#warnings[@]} -ne 0 ]; then
+        log_warning "Optional dependencies not found:"
+        for warning in "${warnings[@]}"; do
+            echo -e "  ${COLOR_YELLOW}⚠${COLOR_RESET} $warning"
+        done
+        echo ""
     fi
 
-    mkdir -p build
-    cd build
-
-    print_success "Build directory created"
+    complete_progress "All dependencies satisfied"
 }
 
-# Configure project
-configure_project() {
-    print_info "Configuring project with CMake..."
+# =============================================================================
+# Build Setup
+# =============================================================================
+
+setup_build_directory() {
+    log_info "Setting up build directory..."
+
+    if [ -d "$BUILD_DIR" ]; then
+        if [ "$CLEAN_BUILD" = true ]; then
+            log_verbose "Removing existing build directory"
+            rm -rf "$BUILD_DIR"
+        else
+            log_verbose "Using existing build directory"
+        fi
+    fi
+
+    mkdir -p "$BUILD_DIR"
+    cd "$BUILD_DIR"
+
+    complete_progress "Build directory ready"
+}
+
+# =============================================================================
+# CMake Configuration
+# =============================================================================
+
+configure_cmake() {
+    log_info "Configuring project with CMake..."
 
     local cmake_cmd="cmake .."
 
-    # Add optional flags
+    # Add build type
+    cmake_cmd="$cmake_cmd -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
+
+    # Add architecture-specific flags
     if [ -n "$CMAKE_FLAGS" ]; then
         cmake_cmd="$cmake_cmd $CMAKE_FLAGS"
     fi
 
-    # Check for mimalloc availability
-    if [ "$BUILD_ARCH" = "64-bit" ]; then
+    # Add mimalloc for 64-bit builds
+    if [ "$ARCH_DISPLAY" = "64-bit" ]; then
         cmake_cmd="$cmake_cmd -DBUILD_WITH_MIMALLOC=ON"
-        print_info "Enabling mimalloc for improved performance"
+        log_verbose "Enabling mimalloc for improved performance"
     fi
 
-    # Add user-specified flags
-    if [ -n "$CMAKE_USER_FLAGS" ]; then
-        cmake_cmd="$cmake_cmd $CMAKE_USER_FLAGS"
+    # Add verbose flag if requested
+    if [ "$VERBOSE" = true ]; then
+        cmake_cmd="$cmake_cmd -DCMAKE_VERBOSE_MAKEFILE=ON"
     fi
 
-    print_info "Running: $cmake_cmd"
-    eval $cmake_cmd
+    log_verbose "CMake command: $cmake_cmd"
 
-    if [ $? -ne 0 ]; then
-        print_error "CMake configuration failed"
+    if eval "$cmake_cmd"; then
+        complete_progress "CMake configuration successful"
+    else
+        log_error "CMake configuration failed"
         exit 1
     fi
-
-    print_success "Project configured successfully"
 }
 
-# Build project
-build_project() {
-    print_info "Building UVHTTP..."
+# =============================================================================
+# Build Compilation
+# =============================================================================
 
-    local num_cores=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
-    print_info "Using $num_cores cores for compilation"
+compile_project() {
+    log_info "Compiling UVHTTP..."
 
-    make -j$num_cores
+    local make_cmd="make -j$NUM_CORES"
 
-    if [ $? -ne 0 ]; then
-        print_error "Build failed"
+    log_verbose "Using $NUM_CORES cores for compilation"
+
+    if eval "$make_cmd"; then
+        complete_progress "Compilation successful"
+    else
+        log_error "Compilation failed"
         exit 1
     fi
-
-    print_success "Build completed successfully"
 }
 
-# Run tests
+# =============================================================================
+# Testing
+# =============================================================================
+
 run_tests() {
-    if [ "$RUN_TESTS" = "true" ]; then
-        print_info "Running tests..."
+    if [ "$RUN_TESTS" = true ]; then
+        log_info "Running tests..."
 
-        make test
-
-        if [ $? -ne 0 ]; then
-            print_warning "Some tests failed, but build was successful"
+        if make test; then
+            complete_progress "All tests passed"
         else
-            print_success "All tests passed"
+            log_warning "Some tests failed, but build was successful"
         fi
     else
-        print_info "Skipping tests (use --test to run tests)"
+        log_verbose "Skipping tests (use --test to run tests)"
     fi
 }
 
-# Print summary
+# =============================================================================
+# Validation
+# =============================================================================
+
+validate_build() {
+    log_info "Validating build..."
+
+    local required_files=(
+        "dist/lib/libuvhttp.a"
+        "dist/bin/hello_world"
+    )
+
+    local missing_files=()
+
+    for file in "${required_files[@]}"; do
+        if [ ! -f "$file" ]; then
+            missing_files+=("$file")
+        fi
+    done
+
+    if [ ${#missing_files[@]} -ne 0 ]; then
+        log_error "Build validation failed. Missing files:"
+        for file in "${missing_files[@]}"; do
+            echo -e "  ${COLOR_RED}✗${COLOR_RESET} $file"
+        done
+        exit 1
+    fi
+
+    complete_progress "Build validation successful"
+}
+
+# =============================================================================
+# Summary
+# =============================================================================
+
 print_summary() {
+    print_header "Build Summary"
+
+    echo -e "${COLOR_BOLD}System Information:${COLOR_RESET}"
+    echo -e "  OS:           ${COLOR_CYAN}$OS_NAME${COLOR_RESET}"
+    echo -e "  Architecture: ${COLOR_CYAN}$ARCH_DISPLAY${COLOR_RESET}"
+    echo -e "  CPU Cores:    ${COLOR_CYAN}$NUM_CORES${COLOR_RESET}"
+    echo -e "  Compiler:     ${COLOR_CYAN}$COMPILER_NAME${COLOR_RESET}"
+    echo -e "  CMake:        ${COLOR_CYAN}$CMAKE_VERSION${COLOR_RESET}"
     echo ""
-    echo "======================================================================"
-    print_success "UVHTTP setup completed successfully!"
-    echo "======================================================================"
+
+    echo -e "${COLOR_BOLD}Build Configuration:${COLOR_RESET}"
+    echo -e "  Type:         ${COLOR_CYAN}$BUILD_TYPE${COLOR_RESET}"
+    echo -e "  Directory:    ${COLOR_CYAN}$(pwd)${COLOR_RESET}"
+    echo -e "  Tests Run:    ${COLOR_CYAN}$([ "$RUN_TESTS" = true ] && echo "Yes" || echo "No")${COLOR_RESET}"
     echo ""
-    echo "Build information:"
-    echo "  Architecture: $BUILD_ARCH"
-    echo "  Build type:   Release"
-    echo "  Location:     $(pwd)"
+
+    echo -e "${COLOR_BOLD}Quick Start:${COLOR_RESET}"
+    echo -e "  ${COLOR_DIM}Run hello world:${COLOR_RESET}"
+    echo -e "    ${COLOR_GREEN}./dist/bin/hello_world${COLOR_RESET}"
     echo ""
-    echo "Quick start:"
-    echo "  # Run hello world example"
-    echo "  ./dist/bin/hello_world"
+    echo -e "  ${COLOR_DIM}Run performance test:${COLOR_RESET}"
+    echo -e "    ${COLOR_GREEN}./dist/bin/performance_static_server -d ../public -p 8080${COLOR_RESET}"
     echo ""
-    echo "  # Run performance test server"
-    echo "  ./dist/bin/performance_static_server -d ../public -p 8080"
+    echo -e "  ${COLOR_DIM}Build examples:${COLOR_RESET}"
+    echo -e "    ${COLOR_GREEN}cd ../examples && make -f Makefile.examples${COLOR_RESET}"
     echo ""
-    echo "  # View all examples"
-    echo "  ls ../examples/"
+
+    echo -e "${COLOR_BOLD}Documentation:${COLOR_RESET}"
+    echo -e "  ${COLOR_DIM}API Reference:  ${COLOR_CYAN}../docs/api/${COLOR_RESET}"
+    echo -e "  ${COLOR_DIM}User Guide:     ${COLOR_CYAN}../docs/guide/${COLOR_RESET}"
+    echo -e "  ${COLOR_DIM}Performance:    ${COLOR_CYAN}../docs/performance.md${COLOR_RESET}"
     echo ""
-    echo "Documentation:"
-    echo "  API Reference:  ../docs/api/"
-    echo "  User Guide:     ../docs/guide/"
-    echo "  Performance:    ../docs/performance.md"
-    echo ""
-    echo "Next steps:"
-    echo "  1. Explore examples in ../examples/"
-    echo "  2. Read the getting started guide: ../docs/guide/getting-started.md"
-    echo "  3. Check out the API documentation: ../docs/api/"
-    echo ""
-    echo "Need help?"
-    echo "  GitHub Issues: https://github.com/adam-ikari/uvhttp/issues"
-    echo "  Discussions:   https://github.com/adam-ikari/uvhttp/discussions"
+
+    echo -e "${COLOR_BOLD}Support:${COLOR_RESET}"
+    echo -e "  ${COLOR_DIM}GitHub Issues:   ${COLOR_CYAN}https://github.com/adam-ikari/uvhttp/issues${COLOR_RESET}"
+    echo -e "  ${COLOR_DIM}Discussions:    ${COLOR_CYAN}https://github.com/adam-ikari/uvhttp/discussions${COLOR_RESET}"
     echo ""
 }
 
-# Main function
-main() {
-    echo ""
-    echo "======================================================================"
-    echo "                     UVHTTP Quick Start Script"
-    echo "======================================================================"
-    echo ""
+# =============================================================================
+# Help and Usage
+# =============================================================================
 
-    # Parse command line arguments
+show_help() {
+    echo -e "${COLOR_BOLD}UVHTTP Quick Start Script v$VERSION${COLOR_RESET}"
+    echo ""
+    echo -e "${COLOR_BOLD}Usage:${COLOR_RESET}"
+    echo -e "  $SCRIPT_NAME [OPTIONS]"
+    echo ""
+    echo -e "${COLOR_BOLD}Options:${COLOR_RESET}"
+    echo -e "  ${COLOR_GREEN}--test, -t${COLOR_RESET}        Run tests after build"
+    echo -e "  ${COLOR_GREEN}--debug, -d${COLOR_RESET}       Build with debug symbols"
+    echo -e "  ${COLOR_GREEN}--no-clean, -n${COLOR_RESET}    Don't clean existing build directory"
+    echo -e "  ${COLOR_GREEN}--verbose, -v${COLOR_RESET}     Enable verbose output"
+    echo -e "  ${COLOR_GREEN}--help, -h${COLOR_RESET}        Show this help message"
+    echo ""
+    echo -e "${COLOR_BOLD}Examples:${COLOR_RESET}"
+    echo -e "  $SCRIPT_NAME                 # Quick build with defaults"
+    echo -e "  $SCRIPT_NAME --test          # Build and run tests"
+    echo -e "  $SCRIPT_NAME --debug         # Debug build"
+    echo -e "  $SCRIPT_NAME --test --debug  # Debug build with tests"
+    echo ""
+}
+
+# =============================================================================
+# Argument Parsing
+# =============================================================================
+
+parse_arguments() {
     while [ $# -gt 0 ]; do
         case $1 in
-            --help|-h)
-                echo "Usage: $0 [OPTIONS]"
-                echo ""
-                echo "Options:"
-                echo "  --test, -t    Run tests after build"
-                echo "  --debug, -d   Build with debug symbols"
-                echo "  --help, -h    Show this help message"
-                echo ""
-                echo "Examples:"
-                echo "  $0                    # Quick build"
-                echo "  $0 --test            # Build and run tests"
-                echo "  $0 --debug           # Debug build"
-                echo ""
-                exit 0
-                ;;
             --test|-t)
-                RUN_TESTS="true"
+                RUN_TESTS=true
                 shift
                 ;;
             --debug|-d)
-                CMAKE_USER_FLAGS="-DCMAKE_BUILD_TYPE=Debug"
+                BUILD_TYPE="Debug"
                 shift
                 ;;
+            --no-clean|-n)
+                CLEAN_BUILD=false
+                shift
+                ;;
+            --verbose|-v)
+                VERBOSE=true
+                shift
+                ;;
+            --help|-h)
+                show_help
+                exit 0
+                ;;
             *)
-                print_error "Unknown option: $1"
-                echo "Use --help for usage information"
+                log_error "Unknown option: $1"
+                echo ""
+                show_help
                 exit 1
                 ;;
         esac
     done
+}
 
-    # Execute setup steps
+# =============================================================================
+# Main Function
+# =============================================================================
+
+main() {
+    # Parse command line arguments
+    parse_arguments "$@"
+
+    # Print welcome message
+    print_header "UVHTTP Quick Start v$VERSION"
+
+    # Execute build steps
+    detect_system
     check_dependencies
-    detect_architecture
-    setup_build
-    configure_project
-    build_project
+    setup_build_directory
+    configure_cmake
+    compile_project
     run_tests
+    validate_build
 
     # Print summary
     cd ..
     print_summary
+
+    # Success message
+    print_header "Build Complete!"
+
+    echo -e "${COLOR_BRIGHT_GREEN}${SYMBOL_SUCCESS}${COLOR_RESET} ${COLOR_GREEN}UVHTTP has been built successfully!${COLOR_RESET}"
+    echo ""
 }
 
 # Run main function
