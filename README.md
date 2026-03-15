@@ -163,6 +163,28 @@ export LD_LIBRARY_PATH=../build/dist/lib:$LD_LIBRARY_PATH
 - **CMake**: Version 3.10 or higher
 - **Build Tools**: make, git
 - **Optional**: mimalloc for improved memory performance
+- **Node.js** (for llhttp): Required for building llhttp from source
+
+### Building llhttp (HTTP Parser)
+
+UVHTTP uses llhttp as the HTTP parser. You need to build it before compiling UVHTTP:
+
+```bash
+# Navigate to llhttp directory
+cd deps/llhttp
+
+# Option 1: Using npm (recommended)
+npm install
+npm run build
+
+# Option 2: Using make (if npm not available)
+make build/libllhttp.a
+
+# Return to project root
+cd ../..
+```
+
+**Note**: llhttp is only needed for the first build. The compiled library will be cached for subsequent builds.
 
 ### Advanced Build Options
 

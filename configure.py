@@ -483,14 +483,15 @@ class ConfigurationWizard:
             if Validators.validate_yes_no(choice):
                 Terminal.print_info('Running build...')
                 try:
-                    # Use a reasonable timeout for build (30 minutes)
+                    # Note: shell=True is required for && operators in the command
+                    # The cmd variable contains trusted configuration data only
                     result = subprocess.run(
                         cmd,
                         shell=True,
                         check=True,
-                        timeout=1800,
                         capture_output=True,
-                        text=True
+                        text=True,
+                        timeout=1800  # 30 minutes timeout
                     )
                     Terminal.print_success('Build completed successfully')
                     if result.stdout:
