@@ -78,14 +78,42 @@ UVHTTP provides full support for 32-bit architectures with optimizations for res
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Easy Setup Options
 
-- **C Compiler**: GCC 4.8+ or Clang 3.4+ with C11 support
-- **CMake**: Version 3.10 or higher
-- **Build Tools**: make, git
-- **Optional**: mimalloc for improved memory performance
+UVHTTP provides multiple ways to get started quickly:
 
-### Installation
+#### Option 1: Quick Start Script (Recommended for Beginners)
+
+```bash
+# Clone repository
+git clone https://github.com/adam-ikari/uvhttp.git
+cd uvhttp
+
+# Run the quick start script
+./quickstart.sh
+
+# Or with tests
+./quickstart.sh --test
+```
+
+The quick start script automatically:
+- ✅ Checks dependencies
+- ✅ Detects your system architecture
+- ✅ Configures optimal build settings
+- ✅ Compiles the library
+- ✅ Runs tests (optional)
+
+#### Option 2: Interactive Configuration
+
+```bash
+# Run the interactive configuration assistant
+./configure.sh
+
+# Follow the prompts to customize your build
+# The script will generate and run the build command
+```
+
+#### Option 3: Manual Build
 
 ```bash
 # Clone repository
@@ -108,6 +136,25 @@ make test
 sudo make install
 ```
 
+### Build Examples
+
+```bash
+# After building UVHTTP, compile examples easily
+cd examples
+make -f Makefile.examples
+
+# Run an example
+export LD_LIBRARY_PATH=../build/dist/lib:$LD_LIBRARY_PATH
+./bin/simple_server
+```
+
+### Prerequisites
+
+- **C Compiler**: GCC 4.8+ or Clang 3.4+ with C11 support
+- **CMake**: Version 3.10 or higher
+- **Build Tools**: make, git
+- **Optional**: mimalloc for improved memory performance
+
 ### Advanced Build Options
 
 ```bash
@@ -125,6 +172,21 @@ cmake -DBUILD_WITH_WEBSOCKET=OFF ..
 
 # 32-bit build for embedded systems
 cmake -DCMAKE_C_FLAGS="-m32" ..
+```
+
+### Custom Configuration
+
+For advanced users, you can create a custom configuration file:
+
+```bash
+# Copy the user options template
+cp cmake/UserOptions.cmake cmake/UserOptions.local.cmake
+
+# Edit the file to customize build options
+vim cmake/UserOptions.local.cmake
+
+# Build with custom configuration
+cmake -DCMAKE_USER_CONFIG=ON ..
 ```
 
 ### Basic Usage
@@ -173,6 +235,13 @@ gcc -o server server.c -I./include -L./build/dist/lib -luvhttp -luv
 export LD_LIBRARY_PATH=./build/dist/lib:$LD_LIBRARY_PATH
 ./server
 ```
+
+### Getting Help
+
+- **Quick Start Script**: `./quickstart.sh --help`
+- **Configuration Assistant**: `./configure.sh` (interactive)
+- **Examples Makefile**: `make -f examples/Makefile.examples help`
+- **Documentation**: See [docs/guide/getting-started.md](docs/guide/getting-started.md)
 
 ## 🏗️ Architecture
 
