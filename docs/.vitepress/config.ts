@@ -6,7 +6,7 @@ import apiSidebar from '../api/sidebar.js'
 // https://vitepress.vuejs.org/config/app-configs
 export default defineConfig({
   title: 'UVHTTP',
-  description: 'High-performance HTTP/1.1 and WebSocket server library',
+  description: 'High-performance HTTP/1.1 and WebSocket server library with 32-bit support and compression',
   // 本地开发使用 '/'，GitHub Pages 使用 '/uvhttp/'
   base: process.env.DEPLOY === 'gh-pages' ? '/uvhttp/' : '/',
   lang: 'en-US',
@@ -16,7 +16,7 @@ export default defineConfig({
   ignoreDeadLinks: true,
 
   head: [
-    ['meta', { name: 'keywords', content: 'HTTP, WebSocket, libuv, C, high-performance, server, async I/O' }],
+    ['meta', { name: 'keywords', content: 'HTTP, WebSocket, libuv, C, high-performance, server, async I/O, 32-bit, embedded systems, compression' }],
     ['meta', { name: 'author', content: 'UVHTTP Contributors' }],
     ['meta', { name: 'viewport', content: 'width=device-width,initial-scale=1' }],
     ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
@@ -24,14 +24,14 @@ export default defineConfig({
       'http-equiv': 'Content-Security-Policy',
       content: "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://adam-ikari.github.io; object-src 'none'; base-uri 'self'; form-action 'self';"
     }],
-    ['meta', { property: 'og:title', content: 'UVHTTP - High-performance HTTP/1.1 and WebSocket server library' }],
-    ['meta', { property: 'og:description', content: 'Based on libuv event-driven architecture, peak throughput up to 23,226 RPS' }],
+    ['meta', { property: 'og:title', content: 'UVHTTP v2.5.0 - High-performance HTTP server with 32-bit support and compression' }],
+    ['meta', { property: 'og:description', content: 'Peak throughput: 23,226 RPS | 32-bit embedded support | Zero-overhead compression' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:url', content: 'https://adam-ikari.github.io/uvhttp' }],
     ['meta', { property: 'og:site_name', content: 'UVHTTP' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-    ['meta', { name: 'twitter:title', content: 'UVHTTP - High-performance HTTP/1.1 and WebSocket server library' }],
-    ['meta', { name: 'twitter:description', content: 'Based on libuv event-driven architecture, peak throughput up to 23,226 RPS' }],
+    ['meta', { name: 'twitter:title', content: 'UVHTTP v2.5.0 - High-performance HTTP server with 32-bit support and compression' }],
+    ['meta', { name: 'twitter:description', content: 'Peak throughput: 23,226 RPS | 32-bit embedded support | Zero-overhead compression' }],
     ['link', { rel: 'canonical', href: 'https://adam-ikari.github.io/uvhttp/' }]
   ],
 
@@ -46,7 +46,13 @@ export default defineConfig({
           { text: 'API', link: '/api/introduction' },
           { text: 'Performance', link: '/performance' },
           { text: 'Versions', link: '/versions' },
-          { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' }
+          { 
+            text: 'Download', 
+            items: [
+              { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' },
+              { text: 'Release v2.5.0', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.5.0' }
+            ]
+          }
         ],
         
         sidebar: { auto: false,
@@ -100,7 +106,7 @@ export default defineConfig({
         },
         
         footer: {
-          message: 'Released under the MIT License',
+          message: 'Built with ❤️ for high-performance applications | Released under MIT License',
           copyright: 'Copyright © 2024-present UVHTTP Contributors'
         },
         
@@ -125,7 +131,13 @@ export default defineConfig({
           { text: 'API', link: '/zh/api/introduction' },
           { text: '性能', link: '/zh/performance' },
           { text: '版本', link: '/zh/versions' },
-          { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' }
+          { 
+            text: '下载', 
+            items: [
+              { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' },
+              { text: 'v2.5.0 发布', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.5.0' }
+            ]
+          }
         ],
         
         sidebar: { auto: false,
@@ -242,7 +254,7 @@ export default defineConfig({
         },
         
         footer: {
-          message: '基于 MIT 许可证发布',
+          message: '用 ❤️ 构建高性能应用 | 基于 MIT 许可证发布',
           copyright: 'Copyright © 2024-present UVHTTP Contributors'
         },
         
@@ -259,7 +271,8 @@ export default defineConfig({
 
   themeConfig: {
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/adam-ikari/uvhttp' }
+      { icon: 'github', link: 'https://github.com/adam-ikari/uvhttp' },
+      { icon: 'twitter', link: 'https://twitter.com/uvhttp_lib' }
     ]
   }
 })

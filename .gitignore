@@ -1,5 +1,6 @@
 # Build directory
 build/
+build_*/
 build_debug/
 build_minimal_debug/
 build_release/
@@ -62,6 +63,14 @@ examples/*/Makefile
 examples/Makefile
 examples/CMakeFiles/
 
+# Python cache and bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
 # Temporary files
 *.tmp
 *.temp
@@ -102,3 +111,5 @@ docs/api/api.md
 docs/api/sidebar.js
 docs/api/page-*.md
 docs/api/structs/
+build_fix_test/
+uvhttp_tools/__pycache__/
