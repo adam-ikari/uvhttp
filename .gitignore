@@ -63,6 +63,14 @@ examples/*/Makefile
 examples/Makefile
 examples/CMakeFiles/
 
+# Python cache and bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
 # Temporary files
 *.tmp
 *.temp
