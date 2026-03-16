@@ -219,13 +219,18 @@ if(NOT EXISTS ${LLHTTP_LIB})
         -DLLHTTP_BUILD_STATIC_LIBS=ON
         -DLLHTTP_BUILD_SHARED_LIBS=OFF
     )
-    # Add C flags if they're set (for 32-bit builds)
+    # Pass C flags if they're set (for 32-bit builds)
     if(DEFINED CMAKE_C_FLAGS)
-        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}")
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -Wno-error=unused-parameter")
+    else()
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_C_FLAGS=-Wno-error=unused-parameter")
     endif()
     if(DEFINED CMAKE_CXX_FLAGS)
-        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -Wno-error=unused-parameter")
+    else()
+        list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=-Wno-error=unused-parameter")
     endif()
+    # Pass linker flags if they're set (for 32-bit builds)
     if(DEFINED EXE_LINKER_FLAGS)
         list(APPEND LLHTTP_CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=${EXE_LINKER_FLAGS}")
     endif()
@@ -269,7 +274,7 @@ endif()
 add_library(llhttp STATIC IMPORTED)
 set_target_properties(llhttp PROPERTIES
     IMPORTED_LOCATION ${LLHTTP_LIB}
-    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp
+    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/include
 )
 
 # ============================================================================
@@ -366,6 +371,9 @@ if(BUILD_WITH_COMPRESSION)
     set(ZLIB_INCLUDE_DIR ${ZLIB_ROOT})
     set(ZLIB_LIBRARY ${CMAKE_BINARY_DIR}/dist/lib/libz.a)
     
+    # 禁用 zlib 测试以避免编译错误（zlib 测试代码有警告，在 -Werror 标志下会失败）
+    set(ZLIB_BUILD_TESTING OFF CACHE BOOL "Disable zlib testing" FORCE)
+    
     # 添加 zlib 子目录
     add_subdirectory(${ZLIB_ROOT} ${CMAKE_BINARY_DIR}/deps/zlib)
     
@@ -374,6 +382,7 @@ if(BUILD_WITH_COMPRESSION)
     
     message(STATUS "Using zlib from submodule: ${ZLIB_ROOT}")
     message(STATUS "Compression support: ENABLED")
+    message(STATUS "zlib testing: DISABLED (to avoid compilation errors)")
 endif()
 
 # ============================================================================

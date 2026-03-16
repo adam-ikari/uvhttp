@@ -89,90 +89,79 @@ static const char* generate_large_json(size_t size) {
 }
 
 // Handler for large text response (with compression)
-static void handle_large_text(uvhttp_request_t* request, void* user_data) {
-    (void)user_data;
-    
-    uvhttp_response_t* response = uvhttp_request_get_response(request);
-    assert(response != NULL);
+static int handle_large_text(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // Unused parameter
     
     // Generate 10KB of text
     const char* text = generate_large_text(10 * 1024);
     if (!text) {
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_body(response, "Internal Server Error", 21);
-        uvhttp_response_send(response);
-        return;
+        uvhttp_response_set_status(res, 500);
+        uvhttp_response_set_body(res, "Internal Server Error", 21);
+        return uvhttp_response_send(res);
     }
     
     // Enable compression
-    uvhttp_error_t result = uvhttp_response_set_compress(response, 1);
+    uvhttp_error_t result = uvhttp_response_set_compress(res, 1);
     if (result != UVHTTP_OK) {
-        UVHTTP_LOG_ERROR("Failed to enable compression: %d\n", result);
+        fprintf(stderr, "Failed to enable compression: %d\n", result);
     }
     
     // Set response
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, text, strlen(text));
-    uvhttp_response_send(response);
+    uvhttp_response_set_status(res, 200);
+    uvhttp_response_set_header(res, "Content-Type", "text/plain");
+    uvhttp_response_set_body(res, text, strlen(text));
     
     uvhttp_free((void*)text);
+    
+    return uvhttp_response_send(res);
 }
 
 // Handler for large JSON response (with compression)
-static void handle_large_json(uvhttp_request_t* request, void* user_data) {
-    (void)user_data;
-    
-    uvhttp_response_t* response = uvhttp_request_get_response(request);
-    assert(response != NULL);
+static int handle_large_json(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // Unused parameter
     
     // Generate 20KB of JSON
     const char* json = generate_large_json(20 * 1024);
     if (!json) {
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_body(response, "Internal Server Error", 21);
-        uvhttp_response_send(response);
-        return;
+        uvhttp_response_set_status(res, 500);
+        uvhttp_response_set_body(res, "Internal Server Error", 21);
+        return uvhttp_response_send(res);
     }
     
     // Enable compression with custom threshold
-    uvhttp_error_t result = uvhttp_response_set_compress(response, 1);
+    uvhttp_error_t result = uvhttp_response_set_compress(res, 1);
     if (result != UVHTTP_OK) {
-        UVHTTP_LOG_ERROR("Failed to enable compression: %d\n", result);
+        fprintf(stderr, "Failed to enable compression: %d\n", result);
     }
     
-    uvhttp_response_set_compress_threshold(response, 512);  // Lower threshold
+    uvhttp_response_set_compress_threshold(res, 512);  // Lower threshold
     
     // Set response
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_body(response, json, strlen(json));
-    uvhttp_response_send(response);
+    uvhttp_response_set_status(res, 200);
+    uvhttp_response_set_header(res, "Content-Type", "application/json");
+    uvhttp_response_set_body(res, json, strlen(json));
     
     uvhttp_free((void*)json);
+    
+    return uvhttp_response_send(res);
 }
 
 // Handler for small response (no compression)
-static void handle_small(uvhttp_request_t* request, void* user_data) {
-    (void)user_data;
-    
-    uvhttp_response_t* response = uvhttp_request_get_response(request);
-    assert(response != NULL);
+static int handle_small(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // Unused parameter
     
     const char* body = "Hello, World! This is a small response that won't be compressed.";
     
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_response_set_status(res, 200);
+    uvhttp_response_set_header(res, "Content-Type", "text/plain");
+    uvhttp_response_set_body(res, body, strlen(body));
+    
+    return uvhttp_response_send(res);
 }
 
 // Handler for status endpoint
-static void handle_status(uvhttp_request_t* request, void* user_data) {
-    (void)user_data;
-    
-    uvhttp_response_t* response = uvhttp_request_get_response(request);
-    assert(response != NULL);
+static int handle_status(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;  // Unused parameter
     
 #if UVHTTP_FEATURE_COMPRESSION
     const char* status = "Compression: ENABLED\n";
@@ -180,10 +169,11 @@ static void handle_status(uvhttp_request_t* request, void* user_data) {
     const char* status = "Compression: DISABLED\n";
 #endif
     
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, status, strlen(status));
-    uvhttp_response_send(response);
+    uvhttp_response_set_status(res, 200);
+    uvhttp_response_set_header(res, "Content-Type", "text/plain");
+    uvhttp_response_set_body(res, status, strlen(status));
+    
+    return uvhttp_response_send(res);
 }
 
 int main(int argc, char** argv) {
@@ -233,27 +223,42 @@ int main(int argc, char** argv) {
     }
     
     // Create server
-    g_server = uvhttp_server_new(loop);
-    if (!g_server) {
-        fprintf(stderr, "Failed to create server\n");
+    uvhttp_error_t server_result = uvhttp_server_new(loop, &g_server);
+    if (server_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(server_result));
         return 1;
     }
     
     // Create router
-    uvhttp_router_t* router = uvhttp_router_new();
-    if (!router) {
-        fprintf(stderr, "Failed to create router\n");
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t router_result = uvhttp_router_new(&router);
+    if (router_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(router_result));
         uvhttp_server_free(g_server);
         return 1;
     }
     
-    g_server->router = router;
+    // Set router to server
+    uvhttp_server_set_router(g_server, router);
     
     // Add routes
-    uvhttp_router_add_route(router, "/status", handle_status);
-    uvhttp_router_add_route(router, "/small", handle_small);
-    uvhttp_router_add_route(router, "/large-text", handle_large_text);
-    uvhttp_router_add_route(router, "/large-json", handle_large_json);
+    int route_result;
+    route_result = uvhttp_router_add_route(router, "/status", handle_status);
+    if (route_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to add route /status\n");
+    }
+    route_result = uvhttp_router_add_route(router, "/small", handle_small);
+    if (route_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to add route /small\n");
+    }
+    route_result = uvhttp_router_add_route(router, "/large-text", handle_large_text);
+    if (route_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to add route /large-text\n");
+    }
+    route_result = uvhttp_router_add_route(router, "/large-json", handle_large_json);
+    if (route_result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to add route /large-json\n");
+    }
     
     // Start server
     uvhttp_error_t result = uvhttp_server_listen(g_server, host, port);
