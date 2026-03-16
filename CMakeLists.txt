@@ -589,7 +589,7 @@ foreach(test_file ${GTEST_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
 
     # WebSocket-related tests require WebSocket support
-    if(${test_name} STREQUAL "test_connection_api_coverage" OR ${test_name} STREQUAL "test_connection_enhanced_coverage" OR ${test_name} STREQUAL "test_connection_full_api_coverage")
+    if(${test_name} STREQUAL "test_connection_api_coverage" OR ${test_name} STREQUAL "test_connection_enhanced_coverage" OR ${test_name} STREQUAL "test_connection_full_api_coverage" OR ${test_name} STREQUAL "test_connection_missing_coverage" OR ${test_name} STREQUAL "test_server_missing_coverage" OR ${test_name} STREQUAL "test_static_missing_coverage")
         if(NOT BUILD_WITH_WEBSOCKET)
             message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
             continue()
