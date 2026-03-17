@@ -216,13 +216,9 @@ if(NOT EXISTS ${LLHTTP_LIB})
     
     # Patch llhttp CMakeLists.txt to lower CMake version requirement
     # This is needed for CI environments with older CMake versions
-    execute_process(
-        COMMAND sed -i 's/cmake_minimum_required(VERSION 3.25.0)/cmake_minimum_required(VERSION 3.10.0)/' ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/CMakeLists.txt
-        RESULT_VARIABLE LLHTTP_PATCH_RESULT
-    )
-    if(LLHTTP_PATCH_RESULT)
-        message(WARNING "Failed to patch llhttp CMakeLists.txt, continuing anyway")
-    endif()
+    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/CMakeLists.txt LLHTTP_CMAKE_CONTENT)
+    string(REPLACE "cmake_minimum_required(VERSION 3.25.0)" "cmake_minimum_required(VERSION 3.10.0)" LLHTTP_CMAKE_CONTENT_PATCHED "${LLHTTP_CMAKE_CONTENT}")
+    file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/CMakeLists.txt "${LLHTTP_CMAKE_CONTENT_PATCHED}")
     
     # Pass C flags to dependencies for 32-bit builds
     set(LLHTTP_CMAKE_ARGS
