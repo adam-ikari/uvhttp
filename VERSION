@@ -2,22 +2,22 @@
 # This file defines the current version information for the project
 
 # Current version number (semantic version: MAJOR.MINOR.PATCH)
-VERSION=2.4.4
+VERSION=2.5.0
 
 # Version type: major, minor, patch
-VERSION_TYPE=patch
+VERSION_TYPE=minor
 
 # Release date
-RELEASE_DATE=2026-02-26
+RELEASE_DATE=2026-03-15
 
 # Previous version
-PREVIOUS_VERSION=2.4.2
+PREVIOUS_VERSION=2.4.4
 
 # Next version (in development)
-NEXT_VERSION=2.5.0
+NEXT_VERSION=2.6.0
 
 # Version name (optional)
-VERSION_NAME="Critical Memory Leak Fix"
+VERSION_NAME="32-bit Support & Compression"
 
 # Whether this is a prerelease version
 IS_PRERELEASE=false

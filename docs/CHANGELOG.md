@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-03-17
+
+### Added
+
+- **Comprehensive Test Coverage Improvements**
+  - Added `test_version_full_coverage.cpp`: Test version and build info APIs (43 test cases)
+  - Added `test_error_complete_coverage.cpp`: Test all error codes and handling (58 test cases)
+  - Added `test_protocol_upgrade_api_coverage.cpp`: Test protocol upgrade APIs (26 test cases)
+  - Added `test_connection_public_api_coverage.cpp`: Test connection management APIs (45 test cases)
+  - Enhanced `test_utils_full_coverage.cpp`: Refactored and expanded utility tests
+  - **Total**: 172 new test cases added across 5 test files
+
+### Changed
+
+- **Code Quality**
+  - Improved test coverage from 85.4% to 89.2% (+3.8% improvement)
+  - Function coverage increased to 92.0% (7336/7974 functions)
+  - Line coverage increased to 89.2% (13386/15008 lines)
+
+- **Module Coverage Improvements**
+  - `uvhttp_version.c`: 0.0% → 98.3% (comprehensive version API testing)
+  - `uvhttp_error.c`: 31.7% → 98.8% (all error codes and handling)
+  - `uvhttp_protocol_upgrade.c`: 39.6% → 73.6% (protocol upgrade APIs)
+  - `uvhttp_connection.c`: 42.6% → 42.8% (connection management APIs)
+
+### Testing
+
+- **Test Suite Expansion**
+  - All new tests focus on public API coverage
+  - Comprehensive NULL parameter handling tests
+  - Error condition and edge case testing
+  - Integration testing across core modules
+  - All 172 new tests pass successfully
+
+- **Coverage Highlights**
+  - High coverage modules (≥95%):
+    - uvhttp_utils.c: 100.0%
+    - uvhttp_error.c: 98.8%
+    - uvhttp_version.c: 98.3%
+    - uvhttp_error_helpers.c: 95.9%
+  - Medium coverage modules (70-95%):
+    - uvhttp_protocol_upgrade.c: 73.6%
+    - uvhttp_config.c: 72.6%
+    - uvhttp_response.c: 72.0%
+    - uvhttp_context.c: 63.3%
+    - uvhttp_router.c: 61.7%
+    - uvhttp_server.c: 54.3%
+    - uvhttp_request.c: 52.8%
+
+### Documentation
+
+- Updated performance benchmarks with latest test results
+- Enhanced API documentation with coverage statistics
+- Updated test coverage reports and metrics
+
 ## [2.4.4] - 2026-02-26
 
 ### Fixed

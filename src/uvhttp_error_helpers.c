@@ -109,8 +109,15 @@ uvhttp_error_t uvhttp_sanitize_error_message(const char* message,
     if (buffer_size < 4) {
         uvhttp_safe_strncpy(safe_buffer, message, buffer_size);
     } else if (msg_len >= buffer_size) {
-        uvhttp_safe_strncpy(safe_buffer, message, buffer_size - 4);
-        strcat(safe_buffer, "...");
+        // Copy buffer_size - 4 characters, then add "..."
+        size_t copy_len = buffer_size - 4;
+        for (size_t i = 0; i < copy_len; i++) {
+            safe_buffer[i] = message[i];
+        }
+        safe_buffer[copy_len] = '.';
+        safe_buffer[copy_len + 1] = '.';
+        safe_buffer[copy_len + 2] = '.';
+        safe_buffer[buffer_size - 1] = '\0';
     } else {
         uvhttp_safe_strncpy(safe_buffer, message, buffer_size);
     }
