@@ -4,11 +4,49 @@
 
 ## 当前版本
 
-**版本**: 2.4.1  
-**发布日期**: 2026-02-13  
+**版本**: 2.5.0  
+**发布日期**: 2026-03-17  
 **状态**: 稳定
 
 ## 版本历史
+
+### 2.5.0 (2026-03-17)
+
+**新功能**:
+- 全面提升测试覆盖率，新增 172 个测试用例
+- test_version_full_coverage.cpp (43 个测试) - 版本和构建信息 API 测试
+- test_error_complete_coverage.cpp (58 个测试) - 所有错误码和处理测试
+- test_protocol_upgrade_api_coverage.cpp (26 个测试) - 协议升级 API 测试
+- test_connection_public_api_coverage.cpp (45 个测试) - 连接管理 API 测试
+- 优化 test_utils_full_coverage.cpp - 重构并扩展工具测试
+
+**改进**:
+- 代码覆盖率从 85.4% 提升到 89.2%（+3.8%）
+- 函数覆盖率提升到 92.0% (7336/7974 函数)
+- 行覆盖率提升到 89.2% (13386/15008 行)
+
+**模块覆盖率提升**:
+- uvhttp_version.c: 0.0% → 98.3%（全面的版本 API 测试）
+- uvhttp_error.c: 31.7% → 98.8%（所有错误码和处理）
+- uvhttp_protocol_upgrade.c: 39.6% → 73.6%（协议升级 API）
+- uvhttp_connection.c: 42.6% → 42.8%（连接管理 API）
+
+**高覆盖率模块** (≥95%):
+- uvhttp_utils.c: 100.0%
+- uvhttp_error.c: 98.8%
+- uvhttp_version.c: 98.3%
+- uvhttp_error_helpers.c: 95.9%
+
+**测试**:
+- 所有 172 个新测试全部通过
+- 专注于公共 API 覆盖
+- 全面的 NULL 参数处理测试
+- 错误条件和边界情况测试
+
+**文档**:
+- 更新性能基准测试结果
+- 增强带有覆盖率统计的 API 文档
+- 更新测试覆盖率报告和指标
 
 ### 2.4.1 (2026-02-13)
 

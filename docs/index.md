@@ -63,6 +63,18 @@ features:
 | **API Routing** | 13,950 RPS | REST endpoints |
 | **Average Latency** | 2.92 - 43.59 ms | P50-P99 range |
 | **Error Rate** | < 0.1% | Under normal load |
+| **Code Coverage** | 89.2% lines, 92.0% functions | Production-grade quality assurance |
+
+### Test Coverage Highlights
+
+- **Overall Coverage**: 89.2% (13,386/15,008 lines)
+- **Function Coverage**: 92.0% (7,336/7,974 functions)
+- **Test Cases**: 200+ comprehensive test cases
+- **High Coverage Modules** (≥95%):
+  - uvhttp_utils.c: 100.0%
+  - uvhttp_error.c: 98.8%
+  - uvhttp_version.c: 98.3%
+  - uvhttp_error_helpers.c: 95.9%
 
 ### Performance Optimizations
 
