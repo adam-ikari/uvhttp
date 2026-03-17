@@ -1,0 +1,114 @@
+###############################################################################
+# UVHTTP Examples Makefile
+#
+# Simplified Makefile for compiling UVHTTP examples
+#
+# Usage:
+#   make -f Makefile.examples            # Build all examples
+#   make -f Makefile.examples simple     # Build specific example
+#   make -f Makefile.examples clean      # Clean build artifacts
+###############################################################################
+
+# Configuration
+BUILD_DIR ?= ../build
+SRC_DIR ?= .
+INCLUDE_DIR ?= ../include
+LIB_DIR ?= $(BUILD_DIR)/dist/lib
+BIN_DIR ?= ./bin
+
+# Compiler and flags
+CC ?= gcc
+CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) -std=c11
+LDFLAGS = -L$(LIB_DIR) -luvhttp -luv -lpthread -lm -ldl
+DEBUG_FLAGS = -g -O0
+RELEASE_FLAGS = -O2
+
+# Build type (default: release)
+BUILD_TYPE ?= release
+ifeq ($(BUILD_TYPE),debug)
+    CFLAGS += $(DEBUG_FLAGS)
+else
+    CFLAGS += $(RELEASE_FLAGS)
+endif
+
+# Examples
+EXAMPLES = simple_server hello_world basic_routing
+
+# Targets
+.PHONY: all clean help $(EXAMPLES)
+
+all: $(BIN_DIR) $(EXAMPLES)
+	@echo ""
+	@echo "========================================"
+	@echo "All examples built successfully!"
+	@echo "========================================"
+	@echo ""
+	@echo "To run an example:"
+	@echo "  export LD_LIBRARY_PATH=$(LIB_DIR):$$LD_LIBRARY_PATH"
+	@echo "  ./bin/<example_name>"
+	@echo ""
+
+help:
+	@echo "UVHTTP Examples Makefile"
+	@echo ""
+	@echo "Usage:"
+	@echo "  make -f Makefile.examples [target] [options]"
+	@echo ""
+	@echo "Targets:"
+	@echo "  all              Build all examples (default)"
+	@echo "  simple_server    Build simple server example"
+	@echo "  hello_world      Build hello world example"
+	@echo "  basic_routing    Build basic routing example"
+	@echo "  clean            Remove build artifacts"
+	@echo "  help             Show this help message"
+	@echo ""
+	@echo "Options:"
+	@echo "  BUILD_TYPE=debug     Build with debug symbols"
+	@echo "  BUILD_DIR=...       Specify build directory"
+	@echo "  CC=...               Specify C compiler"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make -f Makefile.examples"
+	@echo "  make -f Makefile.examples BUILD_TYPE=debug"
+	@echo "  make -f Makefile.examples simple_server"
+	@echo ""
+
+# Create bin directory
+$(BIN_DIR):
+	@mkdir -p $(BIN_DIR)
+
+# Build individual examples
+simple_server: $(BIN_DIR)
+	@echo "Building simple_server..."
+	$(CC) $(CFLAGS) $(SRC_DIR)/simple_server.c -o $(BIN_DIR)/simple_server $(LDFLAGS)
+	@echo "  ✓ simple_server built"
+
+hello_world: $(BIN_DIR)
+	@echo "Building hello_world..."
+	$(CC) $(CFLAGS) $(SRC_DIR)/01_basics/hello_world.c -o $(BIN_DIR)/hello_world $(LDFLAGS)
+	@echo "  ✓ hello_world built"
+
+basic_routing: $(BIN_DIR)
+	@echo "Building basic_routing..."
+	$(CC) $(CFLAGS) $(SRC_DIR)/02_routing/simple_routing.c -o $(BIN_DIR)/basic_routing $(LDFLAGS)
+	@echo "  ✓ basic_routing built"
+
+# Clean build artifacts
+clean:
+	@echo "Cleaning build artifacts..."
+	@rm -rf $(BIN_DIR)
+	@echo "  ✓ Clean completed"
+
+# Check if UVHTTP is built
+check_uvhttp:
+	@if [ ! -f $(LIB_DIR)/libuvhttp.a ]; then \
+		echo ""; \
+		echo "Error: UVHTTP library not found!"; \
+		echo ""; \
+		echo "Please build UVHTTP first:"; \
+		echo "  mkdir $(BUILD_DIR) && cd $(BUILD_DIR)"; \
+		echo "  cmake .."; \
+		echo "  make -j$$(nproc)"; \
+		echo ""; \
+		exit 1; \
+	fi

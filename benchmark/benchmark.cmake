@@ -50,16 +50,16 @@ target_link_libraries(test_bitfield
 add_mimalloc_include(test_bitfield)
 
 # 综合性能测试服务器（统一所有单一项目 benchmark）
-add_executable(benchmark
+add_executable(benchmark_unified
     ${CMAKE_SOURCE_DIR}/benchmark/benchmark_unified.c
 )
-target_link_libraries(benchmark
+target_link_libraries(benchmark_unified
     uvhttp
     ${LIBS}
 )
-add_mimalloc_include(benchmark)
+add_mimalloc_include(benchmark_unified)
 
 # 安装性能测试可执行文件
-install(TARGETS performance_allocator performance_allocator_compare test_bitfield benchmark
+install(TARGETS performance_allocator performance_allocator_compare test_bitfield benchmark_unified
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/benchmark
 )

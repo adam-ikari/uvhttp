@@ -4,6 +4,7 @@
 [submodule "deps/mbedtls"]
 	path = deps/mbedtls
 	url = https://github.com/Mbed-TLS/mbedtls.git
+	recursive = true
 [submodule "deps/cjson"]
 	path = deps/cjson
 	url = https://github.com/DaveGamble/cJSON.git
@@ -16,6 +17,7 @@
 [submodule "deps/llhttp"]
 	path = deps/llhttp
 	url = https://github.com/nodejs/llhttp.git
+	branch = release/v9.3.1
 [submodule "deps/uthash"]
 	path = deps/uthash
 	url = https://github.com/troydhanson/uthash.git

@@ -27,6 +27,7 @@ target_include_directories(hello_world
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../../include
         ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include
 )
 
 add_dependencies(hello_world uvhttp)
@@ -57,6 +58,7 @@ target_include_directories(quick_api_demo
         ${CMAKE_CURRENT_SOURCE_DIR}/../../include
         ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src
         ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include
 )
 
 add_dependencies(quick_api_demo uvhttp)
@@ -85,6 +87,7 @@ target_include_directories(signal_handling_demo
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../../include
         ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include
 )
 
 add_dependencies(signal_handling_demo uvhttp)

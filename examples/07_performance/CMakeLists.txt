@@ -3,7 +3,7 @@
 # 压缩性能测试服务器
 add_executable(compression_server compression_server.c)
 target_link_libraries(compression_server PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
-target_include_directories(compression_server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src)
+target_include_directories(compression_server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
 add_dependencies(compression_server uvhttp)
 uvhttp_add_example_dependencies(compression_server)
 
