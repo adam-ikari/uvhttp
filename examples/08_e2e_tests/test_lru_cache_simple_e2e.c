@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    app.router = uvhttp_router_new();
+    uvhttp_router_new(&app.router);
     app.server->router = app.router;
 
     uvhttp_router_add_route(app.router, "/cache/info", cache_info_handler);
