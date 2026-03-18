@@ -3,7 +3,6 @@
  * 限流功能的端到端测试
  */
 
-#include "uvhttp_rate_limit.h"
 
 #include "uvhttp.h"
 
