@@ -26,6 +26,7 @@ set(MBEDTLS_LIBS
     ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/build/library/libmbedcrypto.a
 )
 set(LLHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/llhttp/build/libllhttp.a)
+set(LLHTTP_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../deps/llhttp/include)
 set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/xxhash/libxxhash.a)
 
 # zlib (for compression support)
