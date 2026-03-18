@@ -129,8 +129,8 @@ UVHTTP is currently optimized for Linux platforms with robust 32-bit embedded sy
 ## 🔧 Quick Installation
 
 ```bash
-# Clone repository
-git clone https://github.com/adam-ikari/uvhttp.git
+# Clone repository with submodules
+git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
 
 # Build with default options

@@ -7,13 +7,15 @@ This guide explains how to install and use uvhttp with CMake.
 ### From Source
 
 ```bash
-git clone https://github.com/adam-ikari/uvhttp.git
+git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
 mkdir build && cd build
 cmake ..
 make -j$(nproc)
 sudo make install
 ```
+
+> **Note**: The `--recurse-submodules` flag automatically clones all dependencies. If you forget this flag, you can run `git submodule update --init --recursive` afterward.
 
 ### Installation Options
 

@@ -7,13 +7,15 @@
 ### 从源码安装
 
 ```bash
-git clone https://github.com/adam-ikari/uvhttp.git
+git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
 mkdir build && cd build
 cmake ..
 make -j$(nproc)
 sudo make install
 ```
+
+> **注意**: `--recurse-submodules` 参数会自动克隆所有依赖。如果忘记使用此参数，可以运行 `git submodule update --init --recursive` 来补全。
 
 ### 安装选项
 

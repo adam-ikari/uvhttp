@@ -30,9 +30,11 @@ UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中
 ### 1. 克隆仓库
 
 ```bash
-git clone https://github.com/adam-ikari/uvhttp.git
+git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
 ```
+
+> **注意**: `--recurse-submodules` 参数会自动克隆所有依赖。如果忘记使用此参数，可以运行 `git submodule update --init --recursive` 来补全。
 
 ### 2. 创建构建目录
 
