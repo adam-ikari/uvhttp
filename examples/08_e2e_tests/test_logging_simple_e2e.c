@@ -63,7 +63,7 @@ static void custom_log_callback(uvhttp_log_level_t level, const char* message,
 
 static int log_test_handler(uvhttp_request_t* request,
                             uvhttp_response_t* response) {
-    app_context_t* app = (app_context_t*)request->server->context;
+    app_context_t* app = (app_context_t*)loop->data;
 
     /* Log at different levels */
     uvhttp_log_trace(app->logger, "This is a TRACE message");
@@ -84,7 +84,7 @@ static int log_test_handler(uvhttp_request_t* request,
 
 static int log_stats_handler(uvhttp_request_t* request,
                              uvhttp_response_t* response) {
-    app_context_t* app = (app_context_t*)request->server->context;
+    app_context_t* app = (app_context_t*)loop->data;
 
     char response_body[256];
     snprintf(response_body, sizeof(response_body),
@@ -128,7 +128,7 @@ static int log_level_handler(uvhttp_request_t* request,
         level = UVHTTP_LOG_FATAL;
 
     uvhttp_logger_t* logger =
-        uvhttp_logger_new(level, custom_log_callback, request->server->context);
+        uvhttp_logger_new(level, custom_log_callback, loop->data);
     uvhttp_logger_free(logger);
 
     char response_body[256];

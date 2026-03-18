@@ -105,7 +105,7 @@ static int trigger_500_handler(uvhttp_request_t* request,
 
 static int error_stats_handler(uvhttp_request_t* request,
                                uvhttp_response_t* response) {
-    app_context_t* app = (app_context_t*)request->server->context;
+    app_context_t* app = (app_context_t*)loop->data;
 
     char stats[256];
     snprintf(stats, sizeof(stats),
@@ -192,7 +192,7 @@ int main(int argc, char** argv) {
 
     /* Set custom error handler */
     printf("\nSetting custom error handler...\n");
-    uvhttp_set_error_handler(custom_error_handler, &app);
+    uvhttp_server_set_handler(custom_error_handler, &app);
 
     /* Add routes */
     printf("\nRegistering routes...\n");

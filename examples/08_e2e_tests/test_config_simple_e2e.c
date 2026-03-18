@@ -30,7 +30,7 @@ static void signal_handler(int sig) {
 
 static int config_get_handler(uvhttp_request_t* request,
                               uvhttp_response_t* response) {
-    app_context_t* app = (app_context_t*)request->server->context;
+    app_context_t* app = (app_context_t*)loop->data;
 
     char response_body[512];
     snprintf(response_body, sizeof(response_body),
@@ -57,7 +57,7 @@ static int config_get_handler(uvhttp_request_t* request,
 
 static int config_set_handler(uvhttp_request_t* request,
                               uvhttp_response_t* response) {
-    app_context_t* app = (app_context_t*)request->server->context;
+    app_context_t* app = (app_context_t*)loop->data;
 
     const char* key = uvhttp_request_get_header(request, "X-Config-Key");
     const char* value = uvhttp_request_get_header(request, "X-Config-Value");
@@ -90,7 +90,7 @@ static int config_set_handler(uvhttp_request_t* request,
 
 static int config_reload_handler(uvhttp_request_t* request,
                                  uvhttp_response_t* response) {
-    app_context_t* app = (app_context_t*)request->server->context;
+    app_context_t* app = (app_context_t*)loop->data;
 
     /* Reload configuration */
     uvhttp_config_reload(app->config);
