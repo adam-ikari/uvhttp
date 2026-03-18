@@ -1,10 +1,21 @@
+/**
+ * @file test_context_init_coverage.cpp
+ * @brief Coverage tests for uvhttp_context initialization
+ * 
+ * This test file aims to improve coverage for uvhttp_context.c by testing:
+ * - Full context initialization flow
+ * - Idempotent initialization
+ * - NULL parameter handling
+ * - Context destruction
+ */
+
 #include <gtest/gtest.h>
 #include <stddef.h>
 #include <uv.h>
 #include "uvhttp_context.h"
 #include "uvhttp_error.h"
 
-/* 测试上下文完整初始化流程 */
+// Test full context initialization flow
 TEST(UvhttpContextInitCoverageTest, FullInitialization) {
     uv_loop_t* loop = uv_loop_new();
     ASSERT_NE(loop, nullptr);
@@ -14,27 +25,28 @@ TEST(UvhttpContextInitCoverageTest, FullInitialization) {
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(context, nullptr);
 
-    /* 测试完整初始化 */
+    // Test complete initialization
     result = uvhttp_context_init(context);
     ASSERT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(context->initialized, 1);
 
-    /* 测试幂等性 - 再次初始化应该成功 */
+    // Test idempotency - re-initialization should succeed
     result = uvhttp_context_init(context);
     ASSERT_EQ(result, UVHTTP_OK);
 
-    /* 清理 */
+    // Cleanup
     uvhttp_context_destroy(context);
+    uv_loop_delete(loop);
 }
 
-/* 测试上下文初始化失败场景 */
+// Test context initialization failure scenarios
 TEST(UvhttpContextInitCoverageTest, InitWithNullContext) {
     uvhttp_error_t result = uvhttp_context_init(nullptr);
     ASSERT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
 
-/* 测试上下文销毁空指针 */
+// Test context destruction with null pointer
 TEST(UvhttpContextInitCoverageTest, DestroyNullContext) {
     uvhttp_context_destroy(nullptr);
-    /* 应该不会崩溃 */
+    // Should not crash
 }
