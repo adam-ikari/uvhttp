@@ -27,3 +27,5 @@
 [submodule "deps/zlib"]
 	path = deps/zlib
 	url = https://github.com/madler/zlib.git
+[submodule "deps.llhttp"]
+	branch = release/v9.3.1
