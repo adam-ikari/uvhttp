@@ -35,7 +35,7 @@ TEST_F(UvhttpUtilsTest, SafeStrncpyValidStrings) {
     char dest[100];
     
     int result = uvhttp_safe_strncpy(dest, src, sizeof(dest));
-    EXPECT_GT(result, 0);
+    EXPECT_EQ(result, 0);
     EXPECT_STREQ(dest, src);
 }
 
@@ -52,14 +52,14 @@ TEST_F(UvhttpUtilsTest, SafeStrncpyNullDest) {
     const char* src = "test string";
     
     int result = uvhttp_safe_strncpy(nullptr, src, 100);
-    EXPECT_EQ(result, 0);
+    EXPECT_EQ(result, -1);
 }
 
 TEST_F(UvhttpUtilsTest, SafeStrncpyNullSrc) {
     char dest[100];
     
     int result = uvhttp_safe_strncpy(dest, nullptr, sizeof(dest));
-    EXPECT_EQ(result, 0);
+    EXPECT_EQ(result, -1);
 }
 
 TEST_F(UvhttpUtilsTest, SafeStrncpyZeroSize) {
@@ -67,25 +67,26 @@ TEST_F(UvhttpUtilsTest, SafeStrncpyZeroSize) {
     char dest[100];
     
     int result = uvhttp_safe_strncpy(dest, src, 0);
-    EXPECT_EQ(result, 0);
+    EXPECT_EQ(result, -1);
 }
 
 TEST_F(UvhttpUtilsTest, SafeStrncpyExactSize) {
     const char* src = "test";
-    char dest[5];  // Exactly the size of source string
+    char dest[5];  // Exactly 4 chars + null terminator
     
     int result = uvhttp_safe_strncpy(dest, src, sizeof(dest));
-    EXPECT_GT(result, 0);
+    EXPECT_EQ(result, 0);
     EXPECT_STREQ(dest, src);
 }
 
 TEST_F(UvhttpUtilsTest, SafeStrncpyTruncated) {
     const char* src = "test string";
-    char dest[5];  // Smaller than source string
+    char dest[5];  // Too small
     
     int result = uvhttp_safe_strncpy(dest, src, sizeof(dest));
-    EXPECT_GT(result, 0);
-    EXPECT_EQ(dest[4], '\0');  // Should be null-terminated
+    EXPECT_EQ(result, 0);
+    EXPECT_EQ(dest[4], '\0');  // snprintf guarantees null termination
+    EXPECT_STRNE(dest, src);  // Should be truncated
 }
 
 // Status code validation tests
