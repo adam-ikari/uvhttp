@@ -65,8 +65,6 @@ static int config_get_handler(uvhttp_request_t* request,
 
 static int config_update_handler(uvhttp_request_t* request,
                                  uvhttp_response_t* response) {
-    app_context_t* app = (app_context_t*)((uv_loop_t*)request->client->data);
-
     /* Update configuration using specific API */
     const char* action = uvhttp_request_get_header(request, "X-Config-Action");
 
