@@ -29,7 +29,7 @@ static void signal_handler(int sig) {
 
 static int slow_handler(uvhttp_request_t* request,
                         uvhttp_response_t* response) {
-    app_context_t* app = (app_context_t*)loop->data;
+    app_context_t* app = (app_context_t*)((uv_loop_t*)request->client->data);
     app->request_count++;
 
     /* Simulate slow processing */
@@ -48,7 +48,7 @@ static int slow_handler(uvhttp_request_t* request,
 
 static int fast_handler(uvhttp_request_t* request,
                         uvhttp_response_t* response) {
-    app_context_t* app = (app_context_t*)loop->data;
+    app_context_t* app = (app_context_t*)((uv_loop_t*)request->client->data);
     app->request_count++;
 
     char body[256];
@@ -64,7 +64,7 @@ static int fast_handler(uvhttp_request_t* request,
 
 static int connection_info_handler(uvhttp_request_t* request,
                                    uvhttp_response_t* response) {
-    app_context_t* app = (app_context_t*)loop->data;
+    app_context_t* app = (app_context_t*)((uv_loop_t*)request->client->data);
 
     char info[512];
     snprintf(info, sizeof(info),
