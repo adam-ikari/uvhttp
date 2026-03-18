@@ -99,3 +99,6 @@ add_subdirectory(06_advanced)
 
 # 性能测试示例
 add_subdirectory(07_performance)
+
+# E2E 测试示例
+add_subdirectory(08_e2e_tests)
