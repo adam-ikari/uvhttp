@@ -150,6 +150,6 @@ For detailed installation instructions and build options, see the [Installation 
 
 - **[Getting Started](/guide/getting-started)** - Introduction and quick start guide
 - **[API Reference](/api/introduction)** - Complete API documentation
-- **[Developer Guide](/guide/DEVELOPER_GUIDE)** - Development best practices
-- **[Performance Benchmarks](/dev/PERFORMANCE_BENCHMARK)** - Detailed performance analysis
-- **[Architecture Design](/dev/ARCHITECTURE)** - System architecture documentation
+- **[Installation Guide](/guide/INSTALL_CMAKE)** - Installation and build guide
+- **[Performance Guide](/guide/performance)** - Performance optimization tips
+- **[FAQ](/guide/FAQ)** - Frequently asked questions
