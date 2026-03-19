@@ -373,4 +373,4 @@ cmake -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON ..
 
 ## 变更日志
 
-详细变更日志，请查看 [CHANGELOG.md](../CHANGELOG.md)
+详细变更日志，请查看 [CHANGELOG.md](CHANGELOG.md)

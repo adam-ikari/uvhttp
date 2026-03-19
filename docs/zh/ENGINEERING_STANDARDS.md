@@ -706,7 +706,7 @@ TEST(ConnectionTest, WithMock) {
 }
 ```
 
-详细使用方法请参考 [测试指南](guide/TESTING_GUIDE.md)。
+详细使用方法请参考 [测试指南](/zh/guide/TESTING_GUIDE.md)。
 
 ### 覆盖率目标
 
@@ -1037,7 +1037,7 @@ TEST(ConnectionTest, CreateConnection) {
 
 ### 测试文档
 
-详细的测试编写指南请参考 [测试指南](guide/TESTING_GUIDE.md)，包括：
+详细的测试编写指南请参考 [测试指南](/zh/guide/TESTING_GUIDE.md)，包括：
 - Google Test 框架使用
 - libuv Mock 框架使用
 - 测试组织结构
