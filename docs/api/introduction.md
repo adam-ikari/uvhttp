@@ -1,116 +1,116 @@
-# API 文档
+# API Documentation
 
-## 概述
+## Overview
 
-UVHTTP 提供了一套简洁的 C API，用于构建高性能的 HTTP/1.1 和 WebSocket 服务器。
+UVHTTP provides a concise C API for building high-performance HTTP/1.1 and WebSocket servers.
 
-## 📌 平台支持
+## 📌 Platform Support
 
-**当前支持**: Linux
+**Currently Supported**: Linux
 
-**未来计划**: macOS, Windows, FreeBSD, WebAssembly (WASM) 和其他 Unix-like 系统
+**Planned**: macOS, Windows, FreeBSD, WebAssembly (WASM), and other Unix-like systems
 
-UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中扩展对其他操作系统和平台的支持。
+UVHTTP is currently optimized for the Linux platform. We plan to expand support for other operating systems and platforms in future versions.
 
-## 核心模块
+## Core Modules
 
-### 服务器 (uvhttp_server)
+### Server (uvhttp_server)
 
-`uvhttp_server_t` 是服务器的核心结构体。
+`uvhttp_server_t` is the core structure for the server.
 
-#### 创建服务器
+#### Create Server
 
 ```c
 uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server);
 ```
 
-#### 启动服务器
+#### Start Server
 
 ```c
 uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host, int port);
 ```
 
-#### 停止服务器
+#### Stop Server
 
 ```c
 uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
 ```
 
-### 路由 (uvhttp_router)
+### Router (uvhttp_router)
 
-`uvhttp_router_t` 提供路由功能。
+`uvhttp_router_t` provides routing functionality.
 
-#### 创建路由
+#### Create Router
 
 ```c
 uvhttp_router_t* uvhttp_router_new(void);
 ```
 
-#### 添加路由
+#### Add Route
 
 ```c
 void uvhttp_router_add_route(uvhttp_router_t* router, const char* path, uvhttp_handler_t handler);
 ```
 
-### 请求 (uvhttp_request)
+### Request (uvhttp_request)
 
-`uvhttp_request_t` 表示 HTTP 请求。
+`uvhttp_request_t` represents an HTTP request.
 
-#### 获取请求方法
+#### Get Request Method
 
 ```c
 uvhttp_method_t uvhttp_request_get_method(uvhttp_request_t* req);
 ```
 
-#### 获取请求路径
+#### Get Request Path
 
 ```c
 const char* uvhttp_request_get_path(uvhttp_request_t* req);
 ```
 
-#### 获取请求头
+#### Get Request Header
 
 ```c
 const char* uvhttp_request_get_header(uvhttp_request_t* req, const char* name);
 ```
 
-#### 获取请求体
+#### Get Request Body
 
 ```c
 const char* uvhttp_request_get_body(uvhttp_request_t* req, size_t* len);
 ```
 
-### 响应 (uvhttp_response)
+### Response (uvhttp_response)
 
-`uvhttp_response_t` 用于构建 HTTP 响应。响应对象由框架创建并传递给请求处理器。
+`uvhttp_response_t` is used to build HTTP responses. The response object is created by the framework and passed to the request handler.
 
-#### 设置状态码
+#### Set Status Code
 
 ```c
 uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int status);
 ```
 
-#### 设置响应头
+#### Set Response Header
 
 ```c
 uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response, const char* name, const char* value);
 ```
 
-#### 设置响应体
+#### Set Response Body
 
 ```c
 uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length);
 ```
 
-#### 发送响应
+#### Send Response
 
 ```c
 uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
 ```
 
-## 错误处理
+## Error Handling
 
-所有可能失败的函数都返回 `uvhttp_error_t`：
+All functions that can fail return `uvhttp_error_t`:
 
 ```c
 typedef enum {
@@ -118,11 +118,11 @@ typedef enum {
     UVHTTP_ERROR = -1,
     UVHTTP_ERR_INVALID_PARAM = -2,
     UVHTTP_ERR_OUT_OF_MEMORY = -3,
-    // ... 更多错误码
+    // ... more error codes
 } uvhttp_error_t;
 ```
 
-### 错误检查
+### Error Checking
 
 ```c
 uvhttp_error_t result = uvhttp_server_listen(server, "0.0.0.0", 8080);
@@ -132,7 +132,7 @@ if (result != UVHTTP_OK) {
 }
 ```
 
-## 完整示例
+## Complete Example
 
 ```c
 #include <uvhttp.h>
@@ -186,14 +186,14 @@ int main() {
 }
 ```
 
-## 更多 API
+## More APIs
 
-完整的 API 文档正在完善中，目前包含以下核心模块：
+The complete API documentation is being refined and currently includes the following core modules:
 
-- **服务器 (uvhttp_server)** - 服务器创建、启动、停止
-- **路由 (uvhttp_router)** - 路由管理、参数提取
-- **请求 (uvhttp_request)** - HTTP 请求处理
-- **响应 (uvhttp_response)** - HTTP 响应构建
-- **WebSocket (uvhttp_websocket)** - WebSocket 连接管理
+- **Server (uvhttp_server)** - Server creation, startup, and shutdown
+- **Router (uvhttp_router)** - Route management and parameter extraction
+- **Request (uvhttp_request)** - HTTP request handling
+- **Response (uvhttp_response)** - HTTP response building
+- **WebSocket (uvhttp_websocket)** - WebSocket connection management
 
-详细的 API 参考文档正在编写中，敬请期待。
+Detailed API reference documentation is being written. Stay tuned!
