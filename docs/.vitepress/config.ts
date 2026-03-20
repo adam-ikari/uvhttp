@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 import DefaultTheme from 'vitepress/theme-without-fonts'
 // 导入自动生成的 API 侧边栏配置
-import apiSidebar from '../api/sidebar.js'
+import apiSidebar from '../api/generated/sidebar.js'
 
 // https://vitepress.vuejs.org/config/app-configs
 export default defineConfig({
