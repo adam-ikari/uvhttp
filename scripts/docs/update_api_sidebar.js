@@ -28,15 +28,16 @@ function updateApiSidebar() {
     return false;
   }
   
-  // Read structs directory
-  const structsDir = path.join(docsDir, 'structs');
+  // Read markdown_from_xml directory for generated struct documentation
+  const structsDir = path.join(docsDir, 'markdown_from_xml');
   let structItems = [];
   
   if (fs.existsSync(structsDir)) {
-    const files = fs.readdirSync(structsDir).filter(f => f.endsWith('.md'));
+    const files = fs.readdirSync(structsDir).filter(f => f.startsWith('struct_') && f.endsWith('.md'));
     structItems = files.map(file => {
-      const name = file.replace('.md', '').replace(/_/g, ' ');
-      return { text: name, link: `/api/structs/${file.replace('.md', '')}` };
+      // Remove 'struct_' prefix and '.md' suffix, then replace underscores with spaces
+      const name = file.replace(/^struct_/, '').replace(/\.md$/, '').replace(/_/g, ' ');
+      return { text: name, link: `/api/markdown_from_xml/${file.replace('.md', '')}` };
     }).sort((a, b) => a.text.localeCompare(b.text));
   }
   
