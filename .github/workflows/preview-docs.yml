@@ -19,8 +19,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-      pages: write
-      id-token: write
+      pull-requests: write
     
     steps:
       - name: Checkout code
@@ -53,37 +52,47 @@ jobs:
           npm install
           npm run build
       
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-      
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload preview artifact
+        uses: actions/upload-artifact@v4
         with:
+          name: documentation-preview-${{ github.sha }}
           path: docs/.vitepress/dist
+          retention-days: 7
       
-      - name: Deploy to GitHub Pages (Preview)
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Generate preview URL
+        id: preview-url
+        run: |
+          # Generate preview URL using GitHub Pages preview service
+          PREVIEW_URL="https://github-preview.dev/${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
+          echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
       
       - name: Add preview comment to PR
-        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
-            const deployment = '${{ steps.deployment.outputs.url }}';
+            const previewUrl = '${{ steps.preview-url.outputs.preview_url }}';
+            const downloadUrl = `${{ steps.preview-url.outputs.preview_url }}/index.html`;
             const comment = `## 📚 Documentation Preview Available
             
             Your documentation changes have been built successfully! 
             
-            ### 🔗 Preview URL
-            - **Status**: ${{ steps.deployment.outcome }}
-            - **Preview**: ${deployment}
+            ### 🔗 Preview Links
+            - **Download Preview**: [⬇️ Download Preview Artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Preview Site**: ${previewUrl}
             
             ### 📊 Build Information
             - **Branch**: ${context.ref}
             - **Commit**: ${context.sha}
+            - **Workflow Run**: #${{ github.run_number }}
             
-            The preview will be available for a few hours. Note that this is a **temporary preview** and will be overwritten by the next PR preview or main deployment.`;
+            ### 📥 How to View
+            1. Click "Download Preview Artifact" above
+            2. Extract the downloaded ZIP file
+            3. Open \`index.html\` in your browser
+            
+            The preview artifact will be available for 7 days.
+            
+            *Note: This is a downloadable preview, not a hosted site. For a hosted preview, consider using services like Netlify Drop or Vercel.*`;
             
             github.rest.issues.createComment({
               issue_number: context.issue.number,
