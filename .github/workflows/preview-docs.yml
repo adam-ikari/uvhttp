@@ -1,0 +1,93 @@
+name: CI/CD - Preview Documentation
+
+# 触发条件：Pull Request 且 docs/** 或 Doxyfile 路径有变化
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'Doxyfile'
+      - 'scripts/convert_xml_to_markdown.js'
+      - '.github/workflows/deploy-docs.yml'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  build-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+      
+      - name: Install Doxygen
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen graphviz
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'docs/package-lock.json'
+      
+      - name: Generate documentation
+        run: |
+          # Create necessary directories
+          mkdir -p docs/api/html docs/api/latex docs/api/xml docs/api/.doxygen
+          
+          # Generate Doxygen API documentation
+          doxygen Doxyfile
+          
+          # Build VitePress documentation site
+          cd docs
+          npm install
+          npm run build
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/.vitepress/dist
+      
+      - name: Deploy to GitHub Pages (Preview)
+        id: deployment
+        uses: actions/deploy-pages@v4
+      
+      - name: Add preview comment to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployment = '${{ steps.deployment.outputs.url }}';
+            const comment = `## 📚 Documentation Preview Available
+            
+            Your documentation changes have been built successfully! 
+            
+            ### 🔗 Preview URL
+            - **Status**: ${{ steps.deployment.outcome }}
+            - **Preview**: ${deployment}
+            
+            ### 📊 Build Information
+            - **Branch**: ${context.ref}
+            - **Commit**: ${context.sha}
+            
+            The preview will be available for a few hours. Note that this is a **temporary preview** and will be overwritten by the next PR preview or main deployment.`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
