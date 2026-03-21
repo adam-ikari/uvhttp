@@ -17,9 +17,11 @@ This guide will help you get started with UVHTTP in just a few minutes.
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/adam-ikari/uvhttp.git
+git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
 ```
+
+> **Note**: The `--recurse-submodules` flag automatically clones all dependencies. If you forget this flag, you can run `git submodule update --init --recursive` afterward.
 
 ### Build the Library
 

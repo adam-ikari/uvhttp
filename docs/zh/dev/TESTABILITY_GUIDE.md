@@ -21,13 +21,15 @@
 ### 5分钟体验可测试性
 
 ```bash
-# 1. 克隆项目
-git clone https://github.com/adam-ikari/uvhttp.git
+# 1. 克隆项目（包含子模块）
+git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
 
 # 2. 编译测试版本
 cd test/
 make -f Makefile.testability
+
+> **注意**: `--recurse-submodules` 参数会自动克隆所有依赖。如果忘记使用此参数，可以运行 `git submodule update --init --recursive` 来补全。
 
 # 3. 运行可测试性验证
 ./test_testability_improvements

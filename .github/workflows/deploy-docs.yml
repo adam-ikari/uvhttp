@@ -49,9 +49,12 @@ jobs:
           # Generate Doxygen API documentation
           doxygen Doxyfile
           
-          # Build VitePress documentation site
+          # Generate API documentation from XML
           cd docs
           npm install
+          npm run api:generate
+          
+          # Build VitePress documentation site
           DEPLOY=gh-pages npm run build
       
       - name: Setup Pages
