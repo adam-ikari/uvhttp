@@ -56,6 +56,10 @@ jobs:
           
           # Build VitePress documentation site
           DEPLOY=gh-pages npm run build
+          
+          # Add .nojekyll file to disable Jekyll processing on GitHub Pages
+          # This is critical for VitePress client-side routing to work correctly
+          touch .vitepress/dist/.nojekyll
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
