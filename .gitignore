@@ -104,12 +104,7 @@ public/large-file.dat
 # Doxygen generated documentation
 docs/api/html/
 docs/api/latex/
-docs/api/markdown_from_xml/
-docs/api/xml/
 docs/api/.doxygen/
-docs/api/api.md
-docs/api/sidebar.js
-docs/api/page-*.md
-docs/api/structs/
+docs/api/generated/
 build_fix_test/
 uvhttp_tools/__pycache__/

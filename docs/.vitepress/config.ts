@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 import DefaultTheme from 'vitepress/theme-without-fonts'
 // 导入自动生成的 API 侧边栏配置
-import apiSidebar from '../api/sidebar.js'
+import apiSidebar from '../api/generated/sidebar.js'
 
 // https://vitepress.vuejs.org/config/app-configs
 export default defineConfig({
@@ -44,8 +44,8 @@ export default defineConfig({
           { text: 'Home', link: '/' },
           { text: 'Guide', link: '/guide/getting-started' },
           { text: 'API', link: '/api/introduction' },
-          { text: 'Performance', link: '/performance' },
-          { text: 'Versions', link: '/versions' },
+          { text: 'Performance', link: '/guide/performance' },
+          { text: 'Versions', link: '/guide/versions' },
           { 
             text: 'Download', 
             items: [
@@ -63,22 +63,36 @@ export default defineConfig({
                 { text: 'Introduction', link: '/guide/introduction' },
                 { text: 'Quick Start', link: '/guide/getting-started' },
                 { text: 'Build Guide', link: '/guide/build' },
-                { text: 'Testing Guide', link: '/guide/TESTING_GUIDE' }
+                { text: 'Installation', link: '/guide/INSTALL_CMAKE' }
+              ]
+            },
+            {
+              text: 'Features',
+              items: [
+                { text: 'Static File Server', link: '/guide/STATIC_FILE_SERVER' }
+              ]
+            },
+            {
+              text: 'Advanced',
+              items: [
+                { text: 'Advanced Build Options', link: '/guide/ADVANCED_BUILD_OPTIONS' },
+                { text: 'Build Configuration Matrix', link: '/guide/BUILD_CONFIGURATION_MATRIX' },
+                { text: 'Linux Optimization', link: '/guide/LINUX_OPTIMIZATION' },
+                { text: 'LRU Cache Migration', link: '/guide/MIGRATION_GUIDE_LRU_CACHE' }
+              ]
+            },
+            {
+              text: 'Reference',
+              items: [
+                { text: 'FAQ', link: '/guide/FAQ' },
+                { text: 'Security', link: '/guide/SECURITY' },
+                { text: 'Roadmap', link: '/guide/ROADMAP' },
+                { text: 'Changelog', link: '/guide/CHANGELOG' },
+                { text: 'Versions', link: '/guide/versions' }
               ]
             }
           ],
-          '/api/': apiSidebar,
-          '/dev/': [
-            {
-              text: 'Architecture',
-              items: [
-                { text: 'Architecture Design', link: '/dev/ARCHITECTURE' },
-                { text: 'CMake Imported Targets Guide', link: '/dev/CMAKE_IMPORTED_TARGETS_GUIDE' },
-                { text: 'CMake Target Linking Guide', link: '/dev/CMAKE_TARGET_LINKING_GUIDE' },
-                { text: 'Python to Node.js Migration', link: '/dev/PYTHON_TO_NODEJS_MIGRATION' }
-              ]
-            }
-          ]
+          '/api/': apiSidebar
         },
         
         search: {
@@ -129,8 +143,8 @@ export default defineConfig({
           { text: '首页', link: '/zh/' },
           { text: '指南', link: '/zh/guide/getting-started' },
           { text: 'API', link: '/zh/api/introduction' },
-          { text: '性能', link: '/zh/performance' },
-          { text: '版本', link: '/zh/versions' },
+          { text: '性能', link: '/zh/guide/performance' },
+          { text: '版本', link: '/zh/guide/versions' },
           { 
             text: '下载', 
             items: [

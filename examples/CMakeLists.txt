@@ -25,7 +25,8 @@ set(MBEDTLS_LIBS
     ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/build/library/libmbedx509.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../deps/mbedtls/build/library/libmbedcrypto.a
 )
-set(LLHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cllhttp/build/libllhttp.a)
+set(LLHTTP_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/llhttp/build/libllhttp.a)
+set(LLHTTP_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../deps/llhttp/include)
 set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/xxhash/libxxhash.a)
 
 # zlib (for compression support)
@@ -99,3 +100,6 @@ add_subdirectory(06_advanced)
 
 # 性能测试示例
 add_subdirectory(07_performance)
+
+# E2E 测试示例
+add_subdirectory(08_e2e_tests)
