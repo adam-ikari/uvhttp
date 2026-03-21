@@ -477,5 +477,5 @@ cmake -DUVHTTP_MAX_HEADER_NAME_SIZE=512 \
 ## 相关文档
 
 - [构建配置矩阵](BUILD_CONFIGURATION_MATRIX.md)
-- [开发者指南](guide/DEVELOPER_GUIDE.md)
-- [性能基准测试](dev/PERFORMANCE_BENCHMARK.md)
+- [开发者指南](/zh/guide/DEVELOPER_GUIDE.md)
+- [性能基准测试](/zh/dev/PERFORMANCE_BENCHMARK.md)

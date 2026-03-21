@@ -83,8 +83,10 @@ brew install cmake git
 **获取源码**：
 ```bash
 # 克隆仓库（包含所有依赖）
-git clone https://github.com/adam-ikari/uvhttp.git
+git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
+
+> **注意**: `--recurse-submodules` 参数会自动克隆所有依赖。如果忘记使用此参数，可以运行 `git submodule update --init --recursive` 来补全。
 
 # 或者使用已存在的项目
 cd /path/to/uvhttp
@@ -2420,9 +2422,11 @@ void update_stats(size_t bytes_sent, double response_time) {
 
 #### 编译 UVHTTP
 ```bash
-# 克隆仓库
-git clone https://github.com/adam-ikari/uvhttp.git
+# 克隆仓库（包含子模块）
+git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
+
+> **注意**: `--recurse-submodules` 参数会自动克隆所有依赖。如果忘记使用此参数，可以运行 `git submodule update --init --recursive` 来补全。
 
 # 编译（使用项目自带的依赖）
 mkdir build && cd build

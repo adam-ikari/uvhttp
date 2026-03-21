@@ -18,16 +18,11 @@ This guide covers different ways to install and build UVHTTP.
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/adam-ikari/uvhttp.git
+git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
 ```
 
-### 2. Build Dependencies
-
-UVHTTP includes all necessary dependencies as Git submodules. Initialize them:
-
-```bash
-git submodule update --init --recursive
+> **Note**: The `--recurse-submodules` flag automatically clones all dependencies. If you forget this flag, you can run `git submodule update --init --recursive` afterward.
 ```
 
 ### 3. Create Build Directory
