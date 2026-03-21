@@ -88,7 +88,9 @@ echo -e "${YELLOW}[3/4] Processing API documentation...${NC}"
 
 # Check if XML to Markdown conversion script exists
 if [ -f "scripts/docs/convert_xml_to_markdown.js" ]; then
-    node scripts/docs/convert_xml_to_markdown.js
+    cd docs
+    npm run api:generate
+    cd "$PROJECT_ROOT"
     echo -e "${GREEN}✓ API documentation processed${NC}"
 else
     echo -e "${YELLOW}⚠ XML to Markdown script not found, skipping conversion${NC}"
