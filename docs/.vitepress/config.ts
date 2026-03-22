@@ -287,6 +287,14 @@ export default defineConfig({
     }
   },
 
+  scrollBehavior: (to, from, savedPosition) => {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { top: 0 }
+    }
+  },
+
   themeConfig: {
     socialLinks: [
       { icon: 'github', link: 'https://github.com/adam-ikari/uvhttp' },
