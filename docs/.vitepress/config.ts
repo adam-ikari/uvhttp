@@ -11,9 +11,13 @@ export default defineConfig({
   base: process.env.DEPLOY === 'gh-pages' ? '/uvhttp/' : '/',
   lang: 'en-US',
   defaultLang: 'en-US',
-  i18nRouting: true,
+  i18nRouting: false,
 
   ignoreDeadLinks: true,
+
+  // Disable clean URLs for GitHub Pages compatibility
+  // This ensures consistent URL handling with .html extensions
+  cleanUrls: false,
 
   head: [
     ['meta', { name: 'keywords', content: 'HTTP, WebSocket, libuv, C, high-performance, server, async I/O, 32-bit, embedded systems, compression' }],
