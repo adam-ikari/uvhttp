@@ -23,10 +23,10 @@ export default defineConfig({
     ['meta', { name: 'keywords', content: 'HTTP, WebSocket, libuv, C, high-performance, server, async I/O, 32-bit, embedded systems, compression' }],
     ['meta', { name: 'author', content: 'UVHTTP Contributors' }],
     ['meta', { name: 'viewport', content: 'width=device-width,initial-scale=1' }],
-    ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
+    ['link', { rel: 'icon', href: process.env.DEPLOY === 'gh-pages' ? '/uvhttp/favicon.svg' : '/favicon.svg', type: 'image/svg+xml' }],
     ['meta', {
       'http-equiv': 'Content-Security-Policy',
-      content: "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://adam-ikari.github.io; object-src 'none'; base-uri 'self'; form-action 'self';"
+      content: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://adam-ikari.github.io https://picsum.photos; object-src 'none'; base-uri 'self'; form-action 'self'; connect-src 'self' https://adam-ikari.github.io;"
     }],
     ['meta', { property: 'og:title', content: 'UVHTTP v2.5.0 - High-performance HTTP server with 32-bit support and compression' }],
     ['meta', { property: 'og:description', content: 'Peak throughput: 23,226 RPS | 32-bit embedded support | Zero-overhead compression' }],
@@ -284,6 +284,14 @@ export default defineConfig({
           }
         }
       }
+    }
+  },
+
+  scrollBehavior: (to, from, savedPosition) => {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { top: 0 }
     }
   },
 
