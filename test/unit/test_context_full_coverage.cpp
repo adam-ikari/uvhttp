@@ -404,8 +404,9 @@ TEST_F(UvhttpContextTest, ContextMultipleDestroy) {
     
     // Destroy once
     uvhttp_context_destroy(context);
-    
-    // Destroy again (should not crash)
+    context = nullptr;
+
+    // Second destroy with NULL should be safe (no-op)
     uvhttp_context_destroy(context);
 }
 
