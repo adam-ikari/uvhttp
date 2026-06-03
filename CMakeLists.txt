@@ -784,6 +784,12 @@ enable_testing()
 # Add unit tests to CTest
 foreach(test_file ${GTEST_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
+
+    # Skip compression tests when compression is disabled
+    if(${test_name} MATCHES ".*compression.*" AND NOT BUILD_WITH_COMPRESSION)
+        continue()
+    endif()
+
     add_test(NAME ${test_name} COMMAND ${CMAKE_BINARY_DIR}/dist/bin/${test_name})
 endforeach()
 
