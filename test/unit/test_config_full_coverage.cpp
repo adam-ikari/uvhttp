@@ -298,6 +298,8 @@ TEST_F(UvhttpConfigTest, ConfigGetCurrentValid) {
     uvhttp_config_set_current(context, config);
     const uvhttp_config_t* result = uvhttp_config_get_current(context);
     EXPECT_EQ(result, config);
+    // Detach: context cleanup must not free config (TearDown frees it directly)
+    context->current_config = nullptr;
 }
 
 // Set current configuration tests
@@ -309,6 +311,8 @@ TEST_F(UvhttpConfigTest, ConfigSetCurrentNullContext) {
 TEST_F(UvhttpConfigTest, ConfigSetCurrentValid) {
     uvhttp_config_set_current(context, config);
     EXPECT_EQ(context->current_config, config);
+    // Detach: context cleanup must not free config (TearDown frees it directly)
+    context->current_config = nullptr;
 }
 
 // Dynamic configuration update tests
@@ -337,6 +341,8 @@ TEST_F(UvhttpConfigTest, ConfigUpdateMaxConnectionsValid) {
     int result = uvhttp_config_update_max_connections(context, 500);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(config->max_connections, 500);
+    // Detach: context cleanup must not free config (TearDown frees it directly)
+    context->current_config = nullptr;
 }
 
 TEST_F(UvhttpConfigTest, ConfigUpdateReadBufferSizeNullContext) {
@@ -364,6 +370,8 @@ TEST_F(UvhttpConfigTest, ConfigUpdateReadBufferSizeValid) {
     int result = uvhttp_config_update_read_buffer_size(context, 16384);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(config->read_buffer_size, 16384);
+    // Detach: context cleanup must not free config (TearDown frees it directly)
+    context->current_config = nullptr;
 }
 
 TEST_F(UvhttpConfigTest, ConfigUpdateSizeLimitsNullContext) {
@@ -402,6 +410,8 @@ TEST_F(UvhttpConfigTest, ConfigUpdateSizeLimitsValid) {
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(config->max_body_size, 20 * 1024 * 1024);
     EXPECT_EQ(config->max_header_size, 16384);
+    // Detach: context cleanup must not free config (TearDown frees it directly)
+    context->current_config = nullptr;
 }
 
 // Boundary value tests
@@ -522,6 +532,8 @@ TEST_F(UvhttpConfigTest, ConfigMultipleUpdates) {
     uvhttp_config_update_size_limits(context, 20 * 1024 * 1024, 16384);
     EXPECT_EQ(config->max_body_size, 20 * 1024 * 1024);
     EXPECT_EQ(config->max_header_size, 16384);
+    // Detach: context cleanup must not free config (TearDown frees it directly)
+    context->current_config = nullptr;
 }
 
 // Complete workflow test
@@ -557,6 +569,8 @@ TEST_F(UvhttpConfigTest, ConfigCompleteWorkflow) {
     EXPECT_EQ(workflow_config->max_body_size, 15 * 1024 * 1024);
     EXPECT_EQ(workflow_config->max_header_size, 12288);
     
+    // Detach: context cleanup must not double-free workflow_config
+    context->current_config = nullptr;
     // Clean up
     uvhttp_config_free(workflow_config);
 }
