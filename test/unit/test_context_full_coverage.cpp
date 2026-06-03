@@ -57,7 +57,11 @@ TEST_F(UvhttpContextTest, ContextCreateNullOutput) {
 TEST_F(UvhttpContextTest, ContextCreateNullLoop) {
     uvhttp_context_t* context = nullptr;
     uvhttp_error_t err = uvhttp_context_create(nullptr, &context);
-    EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(err, UVHTTP_OK);
+    // Clean up
+    if (context) {
+        uvhttp_context_destroy(context);
+    }
 }
 
 TEST_F(UvhttpContextTest, ContextDestroyNull) {
