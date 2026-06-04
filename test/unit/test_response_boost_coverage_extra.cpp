@@ -19,6 +19,7 @@ extern "C" {
 }
 
 #include <string.h>
+#include <uv.h>
 
 class ResponseBoostExtraTest : public ::testing::Test {
 protected:
@@ -351,7 +352,28 @@ TEST_F(ResponseBoostExtraTest, BuildData_KeepAlive1_IncludesKeepAliveTimeout) {
     EXPECT_NE(output.find("Keep-Alive: timeout="), std::string::npos);
 }
 
-// ========== send_response_data is internal (not in public header) - skipped ==========
+// ========== send_response_data null parameter tests (lines 428-432) ==========
+
+// Forward declaration of internal function not in any public header
+extern "C" {
+uvhttp_error_t uvhttp_send_response_data(uvhttp_response_t* response,
+                                         const char* data, size_t length);
+}
+
+TEST_F(ResponseBoostExtraTest, SendResponseData_NullResponse_ReturnsError) {
+    EXPECT_EQ(uvhttp_send_response_data(nullptr, "x", 1),
+              UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST_F(ResponseBoostExtraTest, SendResponseData_NullData_ReturnsError) {
+    EXPECT_EQ(uvhttp_send_response_data(resp, nullptr, 1),
+              UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST_F(ResponseBoostExtraTest, SendResponseData_ZeroLength_ReturnsError) {
+    EXPECT_EQ(uvhttp_send_response_data(resp, "x", 0),
+              UVHTTP_ERROR_INVALID_PARAM);
+}
 
 // ========== response_send_raw null checks ==========
 
@@ -493,6 +515,65 @@ TEST_F(ResponseBoostExtraTest, SetHeader_ExpandsMultipleTimes_Works) {
     }
 }
 
+TEST_F(ResponseBoostExtraTest, SetHeader_ReallocPath_TriggersMallocAndMaxCapacity) {
+    // Target: cover uvhttp_response.c lines 332-334 (first malloc when
+    // old_extra_count==0) and lines 314-316/320-321 (max capacity reached).
+    //
+    // With UVHTTP_MAX_HEADERS=64 and UVHTTP_INLINE_HEADERS_CAPACITY=32:
+    //   - Headers 0-31: stored inline (capacity=32)
+    //   - Header 32: triggers expansion to capacity=64, malloc (lines 332-334)
+    //   - Headers 33-63: stored in dynamic array
+    //   - Header 64: expansion requested, but 64*2=128 > UVHTTP_MAX_HEADERS=64,
+    //     capped to 64, which equals current capacity -> returns OUT_OF_MEMORY
+    //     (lines 314-316, 320-321)
+    //
+    // Note: The realloc path (lines 337-338) is unreachable when
+    // UVHTTP_MAX_HEADERS <= 64 because capacity can't grow beyond 64.
+
+    // Add all 64 headers (the maximum)
+    for (int i = 0; i < 64; i++) {
+        char name[32], value[32];
+        snprintf(name, sizeof(name), "X-R%02d", i);
+        snprintf(value, sizeof(value), "realloc-val-%02d", i);
+        uvhttp_error_t err = uvhttp_response_set_header(resp, name, value);
+        ASSERT_EQ(err, UVHTTP_OK) << "Failed to set header " << i;
+    }
+
+    EXPECT_EQ(resp->header_count, (size_t)64);
+    EXPECT_EQ(resp->headers_capacity, (size_t)64);
+    EXPECT_NE(resp->headers_extra, nullptr);
+
+    // Verify boundary headers are accessible and correct
+    uvhttp_header_t* h0 = uvhttp_response_get_header_at(resp, 0);
+    ASSERT_NE(h0, nullptr);
+    EXPECT_STREQ(h0->name, "X-R00");
+    EXPECT_STREQ(h0->value, "realloc-val-00");
+
+    uvhttp_header_t* h31 = uvhttp_response_get_header_at(resp, 31);
+    ASSERT_NE(h31, nullptr);
+    EXPECT_STREQ(h31->name, "X-R31");
+
+    uvhttp_header_t* h32 = uvhttp_response_get_header_at(resp, 32);
+    ASSERT_NE(h32, nullptr);
+    EXPECT_STREQ(h32->name, "X-R32");
+
+    uvhttp_header_t* h63 = uvhttp_response_get_header_at(resp, 63);
+    ASSERT_NE(h63, nullptr);
+    EXPECT_STREQ(h63->name, "X-R63");
+    EXPECT_STREQ(h63->value, "realloc-val-63");
+
+    // Verify the 65th header fails with OUT_OF_MEMORY (max capacity reached)
+    uvhttp_error_t err = uvhttp_response_set_header(resp, "X-Overflow", "nope");
+    EXPECT_EQ(err, UVHTTP_ERROR_OUT_OF_MEMORY);
+
+    // Verify the response still builds correctly with all 64 headers
+    std::string output = build_and_get();
+    ASSERT_FALSE(output.empty());
+    EXPECT_NE(output.find("X-R00: realloc-val-00\r\n"), std::string::npos);
+    EXPECT_NE(output.find("X-R32: realloc-val-32\r\n"), std::string::npos);
+    EXPECT_NE(output.find("X-R63: realloc-val-63\r\n"), std::string::npos);
+}
+
 // ========== build_data header value with tab (allowed) ==========
 
 TEST_F(ResponseBoostExtraTest, BuildData_HeaderValueWithTab_NotSkipped) {
@@ -616,6 +697,31 @@ TEST_F(ResponseBoostExtraTest, BuildData_MixedCaseConnection_Detected) {
     EXPECT_NE(output.find("CONNECTION: close\r\n"), std::string::npos);
     // Should not have auto-generated Connection: keep-alive
     EXPECT_EQ(output.find("Connection: keep-alive"), std::string::npos);
+}
+
+// ========== send_raw stream type and loop validation ==========
+
+TEST_F(ResponseBoostExtraTest, SendRaw_NonTcpStream_ReturnsError) {
+    // Create a fake pipe stream with type != UV_TCP
+    uv_pipe_t pipe;
+    memset(&pipe, 0, sizeof(pipe));
+    pipe.type = (uv_handle_type)UV_NAMED_PIPE;
+
+    const char* data = "hello";
+    uvhttp_error_t err = uvhttp_response_send_raw(data, 5, &pipe, resp);
+    EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST_F(ResponseBoostExtraTest, SendRaw_NullLoop_ReturnsError) {
+    // Create a fake TCP stream with type = UV_TCP but loop = NULL
+    uv_tcp_t tcp;
+    memset(&tcp, 0, sizeof(tcp));
+    tcp.type = UV_TCP;
+    // loop is NULL due to memset
+
+    const char* data = "hello";
+    uvhttp_error_t err = uvhttp_response_send_raw(data, 5, &tcp, resp);
+    EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
 }
 
 int main(int argc, char** argv) {

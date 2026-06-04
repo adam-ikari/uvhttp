@@ -449,13 +449,109 @@ TEST_F(UvhttpContextTest, ContextMemoryLeakPrevention) {
         uvhttp_context_t* context = nullptr;
         uvhttp_error_t err = uvhttp_context_create(&loop, &context);
         ASSERT_EQ(err, UVHTTP_OK);
-        
+
         err = uvhttp_context_init(context);
         ASSERT_EQ(err, UVHTTP_OK);
-        
+
         uvhttp_context_destroy(context);
     }
     // If this test passes without crashing, no memory leaks
+}
+
+// ========== Partial cleanup paths for TLS ==========
+
+TEST_F(UvhttpContextTest, CleanupTls_PartialEntropyOnly) {
+#if UVHTTP_FEATURE_TLS
+    uvhttp_context_t* context = nullptr;
+    uvhttp_error_t err = uvhttp_context_create(&loop, &context);
+    ASSERT_EQ(err, UVHTTP_OK);
+
+    err = uvhttp_context_init_tls(context);
+    ASSERT_EQ(err, UVHTTP_OK);
+    EXPECT_EQ(context->tls_initialized, 1);
+
+    // Null out tls_drbg to test cleanup path where entropy exists but drbg is NULL
+    context->tls_drbg = nullptr;
+
+    // Cleanup should not crash - it should free entropy and skip drbg
+    uvhttp_context_cleanup_tls(context);
+    EXPECT_EQ(context->tls_initialized, 0);
+    EXPECT_EQ(context->tls_entropy, nullptr);
+    EXPECT_EQ(context->tls_drbg, nullptr);
+
+    uvhttp_context_destroy(context);
+#endif
+}
+
+TEST_F(UvhttpContextTest, CleanupTls_PartialDrbgOnly) {
+#if UVHTTP_FEATURE_TLS
+    uvhttp_context_t* context = nullptr;
+    uvhttp_error_t err = uvhttp_context_create(&loop, &context);
+    ASSERT_EQ(err, UVHTTP_OK);
+
+    err = uvhttp_context_init_tls(context);
+    ASSERT_EQ(err, UVHTTP_OK);
+    EXPECT_EQ(context->tls_initialized, 1);
+
+    // Null out tls_entropy to test cleanup path where drbg exists but entropy is NULL
+    context->tls_entropy = nullptr;
+
+    // Cleanup should not crash - it should skip entropy and free drbg
+    uvhttp_context_cleanup_tls(context);
+    EXPECT_EQ(context->tls_initialized, 0);
+    EXPECT_EQ(context->tls_entropy, nullptr);
+    EXPECT_EQ(context->tls_drbg, nullptr);
+
+    uvhttp_context_destroy(context);
+#endif
+}
+
+// ========== Partial cleanup paths for WebSocket ==========
+
+TEST_F(UvhttpContextTest, CleanupWebsocket_PartialEntropyOnly) {
+#if UVHTTP_FEATURE_TLS
+    uvhttp_context_t* context = nullptr;
+    uvhttp_error_t err = uvhttp_context_create(&loop, &context);
+    ASSERT_EQ(err, UVHTTP_OK);
+
+    err = uvhttp_context_init_websocket(context);
+    ASSERT_EQ(err, UVHTTP_OK);
+    EXPECT_EQ(context->ws_drbg_initialized, 1);
+
+    // Null out ws_drbg to test cleanup path where entropy exists but drbg is NULL
+    context->ws_drbg = nullptr;
+
+    // Cleanup should not crash - it should free entropy and skip drbg
+    uvhttp_context_cleanup_websocket(context);
+    EXPECT_EQ(context->ws_drbg_initialized, 0);
+    EXPECT_EQ(context->ws_entropy, nullptr);
+    EXPECT_EQ(context->ws_drbg, nullptr);
+
+    uvhttp_context_destroy(context);
+#endif
+}
+
+TEST_F(UvhttpContextTest, CleanupWebsocket_PartialDrbgOnly) {
+#if UVHTTP_FEATURE_TLS
+    uvhttp_context_t* context = nullptr;
+    uvhttp_error_t err = uvhttp_context_create(&loop, &context);
+    ASSERT_EQ(err, UVHTTP_OK);
+
+    err = uvhttp_context_init_websocket(context);
+    ASSERT_EQ(err, UVHTTP_OK);
+    EXPECT_EQ(context->ws_drbg_initialized, 1);
+
+    // Null out ws_entropy to test cleanup path where drbg exists but entropy is NULL
+    context->ws_entropy = nullptr;
+
+    // Cleanup should not crash - it should skip entropy and free drbg
+    uvhttp_context_cleanup_websocket(context);
+    EXPECT_EQ(context->ws_drbg_initialized, 0);
+    EXPECT_EQ(context->ws_entropy, nullptr);
+    EXPECT_EQ(context->ws_drbg, nullptr);
+
+    uvhttp_context_destroy(context);
+#endif
 }
 
 int main(int argc, char **argv) {

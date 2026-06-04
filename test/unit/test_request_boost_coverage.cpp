@@ -11,6 +11,7 @@
 extern "C" {
 #include "uvhttp_allocator.h"
 #include "uvhttp_request.h"
+#include "uvhttp_server.h"
 }
 
 #include <string.h>
@@ -509,6 +510,104 @@ TEST_F(RequestBoostTest, GetHeader_ValueTooLong_ReturnsNull) {
     const char* result = uvhttp_request_get_header(req, "X-Test");
     // If value exceeds max length, should return NULL
     // (depends on UVHTTP_MAX_HEADER_VALUE_LENGTH vs header->value buffer size)
+}
+
+// ========== uvhttp_request_init ==========
+
+TEST_F(RequestBoostTest, RequestInit_NullRequest) {
+    uv_tcp_t fake_client;
+    EXPECT_EQ(uvhttp_request_init(nullptr, &fake_client),
+              UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST_F(RequestBoostTest, RequestInit_NullClient) {
+    EXPECT_EQ(uvhttp_request_init(req, nullptr), UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST_F(RequestBoostTest, RequestInit_Valid) {
+    uv_tcp_t fake_client;
+    memset(&fake_client, 0, sizeof(fake_client));
+    EXPECT_EQ(uvhttp_request_init(req, &fake_client), UVHTTP_OK);
+    EXPECT_EQ(req->method, UVHTTP_GET);
+    EXPECT_NE(req->body, nullptr);
+    EXPECT_NE(req->parser, nullptr);
+    EXPECT_NE(req->parser_settings, nullptr);
+    EXPECT_EQ(req->client, &fake_client);
+    // Cleanup internals allocated by init; TearDown will free req itself
+    uvhttp_request_cleanup(req);
+}
+
+// ========== uvhttp_request_cleanup with parser ==========
+
+TEST_F(RequestBoostTest, RequestCleanup_WithParser) {
+    uv_tcp_t fake_client;
+    memset(&fake_client, 0, sizeof(fake_client));
+    ASSERT_EQ(uvhttp_request_init(req, &fake_client), UVHTTP_OK);
+    // cleanup frees parser, parser_settings, and body
+    uvhttp_request_cleanup(req);
+    // No crash means success; TearDown will free req
+}
+
+// ========== uvhttp_request_free valid path ==========
+
+TEST_F(RequestBoostTest, RequestFree_Valid) {
+    uv_tcp_t fake_client;
+    memset(&fake_client, 0, sizeof(fake_client));
+    ASSERT_EQ(uvhttp_request_init(req, &fake_client), UVHTTP_OK);
+    // free does cleanup + free(req); null out req so TearDown does not double-free
+    uvhttp_request_free(req);
+    req = nullptr;
+}
+
+// ========== uvhttp_request_get_path validation failure ==========
+
+TEST_F(RequestBoostTest, GetPath_WithPathTraversal) {
+    // Include a query string so get_path copies into path_buffer and validates
+    strncpy(req->url, "/../etc/passwd?query", sizeof(req->url));
+    const char* path = uvhttp_request_get_path(req);
+    ASSERT_NE(path, nullptr);
+    // Path traversal (../) should be rejected, returning "/"
+    EXPECT_STREQ(path, "/");
+}
+
+// ========== uvhttp_request_get_query_string validation failure ==========
+
+TEST_F(RequestBoostTest, GetQueryString_WithScriptTag) {
+    strncpy(req->url, "/?<script>alert(1)</script>", sizeof(req->url));
+    // < and > are in dangerous_query_chars, validation should reject
+    EXPECT_EQ(uvhttp_request_get_query_string(req), nullptr);
+}
+
+// ========== uvhttp_request_get_client_ip with long IP ==========
+
+TEST_F(RequestBoostTest, GetClientIp_LongXForwardedFor) {
+    // Create a 500+ character IP string for X-Forwarded-For
+    char long_ip[600];
+    memset(long_ip, '1', sizeof(long_ip) - 1);
+    long_ip[sizeof(long_ip) - 1] = '\0';
+    add_test_header("X-Forwarded-For", long_ip);
+    const char* ip = uvhttp_request_get_client_ip(req);
+    ASSERT_NE(ip, nullptr);
+    // Should be truncated to UVHTTP_IPV6_MAX_STRING_LENGTH - 1 chars
+    EXPECT_LE(strlen(ip), (size_t)(UVHTTP_IPV6_MAX_STRING_LENGTH - 1));
+}
+
+// ========== uvhttp_request_get_query_param with long value ==========
+
+TEST_F(RequestBoostTest, GetQueryParam_LongValue) {
+    // Build a URL with a long query param value that fills the url buffer.
+    // url field is MAX_URL_LEN (2048) bytes; prefix "/path?key=" is 10 chars.
+    char url_buf[MAX_URL_LEN];
+    snprintf(url_buf, sizeof(url_buf), "/path?key=");
+    size_t prefix_len = strlen(url_buf);
+    size_t fill_len = sizeof(url_buf) - prefix_len - 1;
+    memset(url_buf + prefix_len, 'A', fill_len);
+    url_buf[sizeof(url_buf) - 1] = '\0';
+    strncpy(req->url, url_buf, sizeof(req->url));
+
+    const char* val = uvhttp_request_get_query_param(req, "key");
+    ASSERT_NE(val, nullptr);
+    EXPECT_EQ(strlen(val), fill_len);
 }
 
 int main(int argc, char** argv) {

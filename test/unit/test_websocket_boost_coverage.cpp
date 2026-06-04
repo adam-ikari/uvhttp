@@ -18,6 +18,7 @@
 extern "C" {
 #include "uvhttp_allocator.h"
 #include "uvhttp_context.h"
+#include "uvhttp_server.h"
 #include "uvhttp_websocket.h"
 }
 
@@ -1188,6 +1189,574 @@ TEST_F(WsBoostTest, ConnectionCreate_DefaultConfig) {
     EXPECT_EQ(conn->is_server, 0);
     EXPECT_NE(conn->recv_buffer, nullptr);
     EXPECT_GT(conn->recv_buffer_size, 0u);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_process_data: buffer expansion with max_frame_size cap
+ * ========== Targets lines 691-692: when doubling new_size overshoots
+ * max_frame_size, it gets clamped to max_frame_size. */
+
+TEST_F(WsBoostTest, ProcessData_BufferExpansion_MaxFrameSizeCap) {
+    /* Create connection with small max_frame_size to trigger the cap path */
+    uvhttp_config_t config;
+    memset(&config, 0, sizeof(config));
+    config.websocket_max_frame_size = 12;
+
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, &config);
+    ASSERT_NE(conn, nullptr);
+
+    uvhttp_ws_set_callbacks(conn, test_on_message, test_on_close, test_on_error);
+
+    /* Manually shrink recv_buffer_size to force expansion */
+    conn->recv_buffer_size = 8;
+
+    /* Fill 6 bytes with 0x00 (will parse as zero-length continuation frames) */
+    memset(conn->recv_buffer, 0x00, 6);
+    conn->recv_buffer_pos = 6;
+
+    /* Build a text frame with 4-byte payload (total frame = 6 bytes).
+     * After memcpy: 6 + 6 = 12 bytes total.
+     * Expansion: new_size = 8*2 = 16, while(12 > 16)? No.
+     * Then 16 > 12 (max_frame_size)? Yes -> new_size = 12. 12 > 12? No.
+     * This hits lines 691-692 (the max_frame_size clamp). */
+    uint8_t frame[64];
+    int frame_len = build_raw_frame(frame, sizeof(frame),
+                                    (const uint8_t*)"test", 4,
+                                    UVHTTP_WS_OPCODE_TEXT, 1);
+    ASSERT_GT(frame_len, 0);
+
+    reset_cb_state();
+    uvhttp_error_t ret = uvhttp_ws_process_data(conn, frame, frame_len);
+
+    EXPECT_EQ(ret, UVHTTP_OK);
+    EXPECT_TRUE(g_cb_state.message_called);
+    EXPECT_EQ(g_cb_state.last_message_len, 4u);
+    EXPECT_EQ(memcmp(g_cb_state.last_message, "test", 4), 0);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_process_data: buffer expansion, data exceeds
+ * max_frame_size ========== Targets line 693: return error when even
+ * max_frame_size is insufficient. */
+
+TEST_F(WsBoostTest, ProcessData_BufferExpansion_ExceedsMaxFrameSize) {
+    uvhttp_config_t config;
+    memset(&config, 0, sizeof(config));
+    config.websocket_max_frame_size = 10;
+
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, &config);
+    ASSERT_NE(conn, nullptr);
+
+    /* Manually shrink recv_buffer_size */
+    conn->recv_buffer_size = 8;
+
+    /* Fill 6 bytes */
+    memset(conn->recv_buffer, 0x00, 6);
+    conn->recv_buffer_pos = 6;
+
+    /* Frame with 8-byte payload (total frame = 10 bytes).
+     * 6 + 10 = 16 > 8, triggers expansion.
+     * new_size = 16. 16 > 10 (max_frame_size)? Yes.
+     * new_size = 10. 16 > 10? Yes -> return error. */
+    uint8_t frame[64];
+    int frame_len = build_raw_frame(frame, sizeof(frame),
+                                    (const uint8_t*)"12345678", 8,
+                                    UVHTTP_WS_OPCODE_TEXT, 1);
+    ASSERT_GT(frame_len, 0);
+
+    uvhttp_error_t ret = uvhttp_ws_process_data(conn, frame, frame_len);
+    EXPECT_NE(ret, UVHTTP_OK);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_process_data: fragmented message realloc (intermediate
+ * fragment) ========== Targets lines 762-764: when a non-final fragment's
+ * payload causes fragmented_size + payload_len > fragmented_capacity. */
+
+TEST_F(WsBoostTest, ProcessData_FragmentedMessage_ReallocIntermediate) {
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    uvhttp_ws_set_callbacks(conn, test_on_message, test_on_close, test_on_error);
+
+    /* Fragment 1: FIN=0, payload="AB" (2 bytes).
+     * Initial capacity = 2 * 2 = 4, size = 2. */
+    uint8_t frag1[64];
+    int frag1_len = build_raw_frame(frag1, sizeof(frag1),
+                                    (const uint8_t*)"AB", 2,
+                                    UVHTTP_WS_OPCODE_TEXT, 0);
+    ASSERT_GT(frag1_len, 0);
+
+    /* Fragment 2: FIN=0, payload="CDE" (3 bytes).
+     * 2 + 3 = 5 > 4, triggers realloc in the intermediate fragment path. */
+    uint8_t frag2[64];
+    int frag2_len = build_raw_frame(frag2, sizeof(frag2),
+                                    (const uint8_t*)"CDE", 3,
+                                    UVHTTP_WS_OPCODE_TEXT, 0);
+    ASSERT_GT(frag2_len, 0);
+
+    /* Fragment 3: FIN=1, payload="FG" (2 bytes).
+     * 5 + 2 = 7 > 8? No (capacity was doubled to 8 after frag2 realloc).
+     * But 5 + 2 = 7 <= 8, so no realloc here. */
+    uint8_t frag3[64];
+    int frag3_len = build_raw_frame(frag3, sizeof(frag3),
+                                    (const uint8_t*)"FG", 2,
+                                    UVHTTP_WS_OPCODE_TEXT, 1);
+    ASSERT_GT(frag3_len, 0);
+
+    reset_cb_state();
+    uvhttp_error_t ret;
+
+    ret = uvhttp_ws_process_data(conn, frag1, frag1_len);
+    EXPECT_EQ(ret, UVHTTP_OK);
+    EXPECT_FALSE(g_cb_state.message_called);
+
+    ret = uvhttp_ws_process_data(conn, frag2, frag2_len);
+    EXPECT_EQ(ret, UVHTTP_OK);
+    EXPECT_FALSE(g_cb_state.message_called);
+
+    ret = uvhttp_ws_process_data(conn, frag3, frag3_len);
+    EXPECT_EQ(ret, UVHTTP_OK);
+    EXPECT_TRUE(g_cb_state.message_called);
+    EXPECT_EQ(g_cb_state.last_opcode, UVHTTP_WS_OPCODE_TEXT);
+    EXPECT_EQ(g_cb_state.last_message_len, 7u);
+    EXPECT_EQ(memcmp(g_cb_state.last_message, "ABCDEFG", 7), 0);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_process_data: fragmented message realloc (final
+ * fragment) ========== Targets lines 776-778: when the final (FIN=1)
+ * fragment's payload causes realloc in the completion path. */
+
+TEST_F(WsBoostTest, ProcessData_FragmentedMessage_ReallocFinal) {
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    uvhttp_ws_set_callbacks(conn, test_on_message, test_on_close, test_on_error);
+
+    /* Fragment 1: FIN=0, payload="AB" (2 bytes).
+     * capacity = 4, size = 2. */
+    uint8_t frag1[64];
+    int frag1_len = build_raw_frame(frag1, sizeof(frag1),
+                                    (const uint8_t*)"AB", 2,
+                                    UVHTTP_WS_OPCODE_TEXT, 0);
+    ASSERT_GT(frag1_len, 0);
+
+    /* Fragment 2: FIN=1, payload="CDEFG" (5 bytes).
+     * 2 + 5 = 7 > 4, triggers realloc in the FIN=1 completion path. */
+    uint8_t frag2[64];
+    int frag2_len = build_raw_frame(frag2, sizeof(frag2),
+                                    (const uint8_t*)"CDEFG", 5,
+                                    UVHTTP_WS_OPCODE_TEXT, 1);
+    ASSERT_GT(frag2_len, 0);
+
+    reset_cb_state();
+    uvhttp_ws_process_data(conn, frag1, frag1_len);
+    EXPECT_FALSE(g_cb_state.message_called);
+
+    uvhttp_ws_process_data(conn, frag2, frag2_len);
+    EXPECT_TRUE(g_cb_state.message_called);
+    EXPECT_EQ(g_cb_state.last_opcode, UVHTTP_WS_OPCODE_TEXT);
+    EXPECT_EQ(g_cb_state.last_message_len, 7u);
+    EXPECT_EQ(memcmp(g_cb_state.last_message, "ABCDEFG", 7), 0);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_process_data: fragmented binary message realloc
+ * ========== Same realloc paths but with BINARY opcode to cover that branch.
+ */
+
+TEST_F(WsBoostTest, ProcessData_FragmentedBinary_ReallocFinal) {
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    uvhttp_ws_set_callbacks(conn, test_on_message, test_on_close, test_on_error);
+
+    uint8_t p1[] = {0x01, 0x02};
+    uint8_t frag1[64];
+    int frag1_len = build_raw_frame(frag1, sizeof(frag1), p1, 2,
+                                    UVHTTP_WS_OPCODE_BINARY, 0);
+    ASSERT_GT(frag1_len, 0);
+
+    uint8_t p2[] = {0x03, 0x04, 0x05, 0x06, 0x07};
+    uint8_t frag2[64];
+    int frag2_len = build_raw_frame(frag2, sizeof(frag2), p2, 5,
+                                    UVHTTP_WS_OPCODE_BINARY, 1);
+    ASSERT_GT(frag2_len, 0);
+
+    reset_cb_state();
+    uvhttp_ws_process_data(conn, frag1, frag1_len);
+    EXPECT_FALSE(g_cb_state.message_called);
+
+    uvhttp_ws_process_data(conn, frag2, frag2_len);
+    EXPECT_TRUE(g_cb_state.message_called);
+    EXPECT_EQ(g_cb_state.last_opcode, UVHTTP_WS_OPCODE_BINARY);
+    EXPECT_EQ(g_cb_state.last_message_len, 7u);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_process_data: ping with wrapper that has NULL conn
+ * ========== Targets line 832: wrapper exists but wrapper->conn is NULL,
+ * so the pong auto-reply is skipped. */
+
+TEST_F(WsBoostTest, ProcessData_PingFrame_WrapperConnNull) {
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    uvhttp_ws_set_callbacks(conn, test_on_message, test_on_close, test_on_error);
+
+    /* Set up a wrapper with NULL conn */
+    typedef struct {
+        void* conn;
+        void* user_handler;
+    } test_wrapper_t;
+
+    test_wrapper_t wrapper;
+    wrapper.conn = NULL;
+    wrapper.user_handler = NULL;
+    conn->user_data = &wrapper;
+
+    uint8_t frame[64];
+    int frame_len = build_raw_frame(frame, sizeof(frame),
+                                    (const uint8_t*)"ping!", 5,
+                                    UVHTTP_WS_OPCODE_PING, 1);
+    ASSERT_GT(frame_len, 0);
+
+    reset_cb_state();
+    uvhttp_error_t ret = uvhttp_ws_process_data(conn, frame, frame_len);
+    EXPECT_EQ(ret, UVHTTP_OK);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_process_data: ping with wrapper that has valid conn
+ * but NULL server ========== Targets line 835: http_conn exists but
+ * http_conn->server is NULL. */
+
+TEST_F(WsBoostTest, ProcessData_PingFrame_WrapperServerNull) {
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    uvhttp_ws_set_callbacks(conn, test_on_message, test_on_close, test_on_error);
+
+    /* Create a fake http_connection with NULL server */
+    uvhttp_connection_t fake_http_conn;
+    memset(&fake_http_conn, 0, sizeof(fake_http_conn));
+    fake_http_conn.server = NULL;
+
+    typedef struct {
+        void* conn;
+        void* user_handler;
+    } test_wrapper_t;
+
+    test_wrapper_t wrapper;
+    wrapper.conn = &fake_http_conn;
+    wrapper.user_handler = NULL;
+    conn->user_data = &wrapper;
+
+    uint8_t frame[64];
+    int frame_len = build_raw_frame(frame, sizeof(frame),
+                                    (const uint8_t*)"ping!", 5,
+                                    UVHTTP_WS_OPCODE_PING, 1);
+    ASSERT_GT(frame_len, 0);
+
+    reset_cb_state();
+    uvhttp_error_t ret = uvhttp_ws_process_data(conn, frame, frame_len);
+    EXPECT_EQ(ret, UVHTTP_OK);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_process_data: ping with wrapper, server context NULL
+ * ========== Targets line 836: http_conn->server exists but
+ * http_conn->server->context is NULL. */
+
+TEST_F(WsBoostTest, ProcessData_PingFrame_WrapperContextNull) {
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    uvhttp_ws_set_callbacks(conn, test_on_message, test_on_close, test_on_error);
+
+    /* Create fake structures: server with NULL context */
+    uvhttp_server_t fake_server;
+    memset(&fake_server, 0, sizeof(fake_server));
+    fake_server.context = NULL;
+
+    uvhttp_connection_t fake_http_conn;
+    memset(&fake_http_conn, 0, sizeof(fake_http_conn));
+    fake_http_conn.server = &fake_server;
+
+    typedef struct {
+        void* conn;
+        void* user_handler;
+    } test_wrapper_t;
+
+    test_wrapper_t wrapper;
+    wrapper.conn = &fake_http_conn;
+    wrapper.user_handler = NULL;
+    conn->user_data = &wrapper;
+
+    uint8_t frame[64];
+    int frame_len = build_raw_frame(frame, sizeof(frame),
+                                    (const uint8_t*)"ping!", 5,
+                                    UVHTTP_WS_OPCODE_PING, 1);
+    ASSERT_GT(frame_len, 0);
+
+    reset_cb_state();
+    uvhttp_error_t ret = uvhttp_ws_process_data(conn, frame, frame_len);
+    EXPECT_EQ(ret, UVHTTP_OK);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_process_data: ping auto-reply with valid wrapper
+ * ========== Targets lines 833-838: the full pong auto-reply path through
+ * uvhttp_ws_send_pong. Requires a socketpair for send() to succeed. */
+
+TEST_F(WsBoostTest, ProcessData_PingFrame_WithWrapper_AutoReply) {
+    int fds[2];
+    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        fds[0], NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+    conn->state = UVHTTP_WS_STATE_OPEN;
+
+    uvhttp_ws_set_callbacks(conn, test_on_message, test_on_close, test_on_error);
+
+    /* Create fake structures: server with valid context */
+    uvhttp_context_t fake_ctx;
+    memset(&fake_ctx, 0, sizeof(fake_ctx));
+
+    uvhttp_server_t fake_server;
+    memset(&fake_server, 0, sizeof(fake_server));
+    fake_server.context = &fake_ctx;
+
+    uvhttp_connection_t fake_http_conn;
+    memset(&fake_http_conn, 0, sizeof(fake_http_conn));
+    fake_http_conn.server = &fake_server;
+
+    typedef struct {
+        void* conn;
+        void* user_handler;
+    } test_wrapper_t;
+
+    test_wrapper_t wrapper;
+    wrapper.conn = &fake_http_conn;
+    wrapper.user_handler = NULL;
+    conn->user_data = &wrapper;
+
+    /* Build a ping frame */
+    uint8_t frame[64];
+    int frame_len = build_raw_frame(frame, sizeof(frame),
+                                    (const uint8_t*)"ping!", 5,
+                                    UVHTTP_WS_OPCODE_PING, 1);
+    ASSERT_GT(frame_len, 0);
+
+    reset_cb_state();
+    uvhttp_error_t ret = uvhttp_ws_process_data(conn, frame, frame_len);
+    EXPECT_EQ(ret, UVHTTP_OK);
+
+    /* The pong should have been sent via send() on the socketpair.
+     * Read from the other end to verify data was sent. */
+    uint8_t recv_buf[64];
+    ssize_t n = recv(fds[1], recv_buf, sizeof(recv_buf), 0);
+    EXPECT_GT(n, 0); /* pong frame was sent */
+
+    uvhttp_ws_connection_free(conn);
+    close(fds[0]);
+    close(fds[1]);
+}
+
+/* ========== uvhttp_ws_connection_free: with send_buffer and fragmented_message
+ * ========== Targets lines 103-105 (send_buffer free) and 107-109
+ * (fragmented_message free). */
+
+TEST_F(WsBoostTest, ConnectionFree_WithSendBufferAndFragmented) {
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    /* Manually allocate send_buffer and fragmented_message */
+    conn->send_buffer = (uint8_t*)uvhttp_alloc(64);
+    ASSERT_NE(conn->send_buffer, nullptr);
+    conn->send_buffer_size = 64;
+
+    conn->fragmented_message = (uint8_t*)uvhttp_alloc(32);
+    ASSERT_NE(conn->fragmented_message, nullptr);
+    conn->fragmented_size = 10;
+    conn->fragmented_capacity = 32;
+
+    /* Free should not crash and should release all buffers */
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_connection_free: with send_buffer only ========== */
+
+TEST_F(WsBoostTest, ConnectionFree_WithSendBufferOnly) {
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    conn->send_buffer = (uint8_t*)uvhttp_alloc(128);
+    ASSERT_NE(conn->send_buffer, nullptr);
+    conn->send_buffer_size = 128;
+
+    /* fragmented_message is NULL, send_buffer is non-NULL */
+    EXPECT_EQ(conn->fragmented_message, nullptr);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_connection_free: with fragmented_message only ==========
+ */
+
+TEST_F(WsBoostTest, ConnectionFree_WithFragmentedOnly) {
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    conn->fragmented_message = (uint8_t*)uvhttp_alloc(48);
+    ASSERT_NE(conn->fragmented_message, nullptr);
+    conn->fragmented_size = 20;
+    conn->fragmented_capacity = 48;
+
+    /* send_buffer is NULL, fragmented_message is non-NULL */
+    EXPECT_EQ(conn->send_buffer, nullptr);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_handshake_server: whitespace skip after colon
+ * ========== Targets line 302-303: the while loop that skips whitespace
+ * before the Sec-WebSocket-Key value. */
+
+TEST_F(WsBoostTest, HandshakeServer_WhitespaceSkip) {
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    /* Request with multiple spaces after "Sec-WebSocket-Key:" to exercise
+     * the whitespace skip loop at line 302. The code does key_start += 19
+     * (skipping "Sec-WebSocket-Key:" + 1 char), then the while loop skips
+     * remaining spaces. With 3 spaces after colon, the second and third
+     * spaces are skipped by the loop. */
+    const char* request =
+        "GET /chat HTTP/1.1\r\n"
+        "Host: example.com\r\n"
+        "Upgrade: websocket\r\n"
+        "Connection: Upgrade\r\n"
+        "Sec-WebSocket-Key:   dGhlIHNhbXBsZSBub25jZQ==\r\n"
+        "Sec-WebSocket-Version: 13\r\n"
+        "\r\n";
+
+    char response[512];
+    size_t response_len = sizeof(response);
+
+    uvhttp_error_t ret = uvhttp_ws_handshake_server(
+        conn, request, strlen(request), response, &response_len);
+
+    EXPECT_EQ(ret, UVHTTP_OK);
+    EXPECT_EQ(conn->state, UVHTTP_WS_STATE_OPEN);
+    /* Verify response contains the accept header */
+    EXPECT_NE(strstr(response, "101 Switching Protocols"), nullptr);
+    EXPECT_NE(strstr(response, "Sec-WebSocket-Accept:"), nullptr);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_handshake_server: single space after colon ========== */
+
+TEST_F(WsBoostTest, HandshakeServer_SingleSpace) {
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    /* Standard format with single space (the += 19 skips past it) */
+    const char* request =
+        "GET / HTTP/1.1\r\n"
+        "Host: localhost\r\n"
+        "Upgrade: websocket\r\n"
+        "Connection: Upgrade\r\n"
+        "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n"
+        "Sec-WebSocket-Version: 13\r\n"
+        "\r\n";
+
+    char response[512];
+    size_t response_len = sizeof(response);
+
+    uvhttp_error_t ret = uvhttp_ws_handshake_server(
+        conn, request, strlen(request), response, &response_len);
+
+    EXPECT_EQ(ret, UVHTTP_OK);
+    EXPECT_EQ(conn->state, UVHTTP_WS_STATE_OPEN);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_handshake_server: null parameters ========== */
+
+TEST_F(WsBoostTest, HandshakeServer_NullParams) {
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    char response[512];
+    size_t response_len = sizeof(response);
+
+    EXPECT_EQ(uvhttp_ws_handshake_server(
+        nullptr, "GET / HTTP/1.1\r\n\r\n", 20, response, &response_len),
+        UVHTTP_ERROR_INVALID_PARAM);
+
+    EXPECT_EQ(uvhttp_ws_handshake_server(
+        conn, nullptr, 0, response, &response_len),
+        UVHTTP_ERROR_INVALID_PARAM);
+
+    EXPECT_EQ(uvhttp_ws_handshake_server(
+        conn, "GET / HTTP/1.1\r\n\r\n", 20, nullptr, &response_len),
+        UVHTTP_ERROR_INVALID_PARAM);
+
+    EXPECT_EQ(uvhttp_ws_handshake_server(
+        conn, "GET / HTTP/1.1\r\n\r\n", 20, response, nullptr),
+        UVHTTP_ERROR_INVALID_PARAM);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_handshake_server: missing key header ========== */
+
+TEST_F(WsBoostTest, HandshakeServer_MissingKeyHeader) {
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    const char* request =
+        "GET / HTTP/1.1\r\n"
+        "Host: localhost\r\n"
+        "Upgrade: websocket\r\n"
+        "\r\n";
+
+    char response[512];
+    size_t response_len = sizeof(response);
+
+    uvhttp_error_t ret = uvhttp_ws_handshake_server(
+        conn, request, strlen(request), response, &response_len);
+
+    EXPECT_EQ(ret, UVHTTP_ERROR_INVALID_PARAM);
 
     uvhttp_ws_connection_free(conn);
 }
