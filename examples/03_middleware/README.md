@@ -113,6 +113,22 @@ UVHTTP_DEFINE_MIDDLEWARE_CHAIN(api_chain,
 UVHTTP_EXECUTE_MIDDLEWARE_CHAIN(req, resp, api_chain);
 ```
 
+### UVHTTP_DEFINE_MIDDLEWARE_HANDLER / UVHTTP_MIDDLEWARE_HANDLER
+
+将路由处理器（`uvhttp_request_handler_t`，返回 0=CONTINUE，非 0=STOP）适配为中间件，以便在中间件链中复用：
+
+```c
+/* 定义包装器（放在文件顶部或函数外部） */
+UVHTTP_DEFINE_MIDDLEWARE_HANDLER(my_route_handler);
+
+/* 在中间件链中使用 */
+UVHTTP_EXECUTE_MIDDLEWARE(req, resp,
+    auth_middleware,
+    UVHTTP_MIDDLEWARE_HANDLER(my_route_handler),
+    cors_middleware
+);
+```
+
 ## 中间件函数签名
 
 所有中间件函数必须遵循以下签名：
