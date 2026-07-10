@@ -525,7 +525,11 @@ TEST(UvhttpConnectionMissingCoverageTest, HandleWebsocketHandshake_NullRequest) 
     uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
 
-    // Force request to NULL so the path lookup returns NULL
+    // Force request to NULL so the path lookup returns NULL. The request was
+    // allocated by uvhttp_connection_new; free it first so we don't leak it by
+    // dropping the only reference to it. uvhttp_connection_free's free_resources
+    // guards on conn->request, so leaving it NULL is safe.
+    uvhttp_request_free(conn->request);
     conn->request = nullptr;
     result = uvhttp_connection_handle_websocket_handshake(
         conn, "dGhlIHNhbXBsZSBub25jZQ==");

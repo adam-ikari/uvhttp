@@ -197,24 +197,17 @@ TEST(UvhttpConnectionApiTest, ScheduleRestartReadValid) {
     
     result = uvhttp_connection_schedule_restart_read(conn);
     /* 结果取决于内部状态 */
-    
-    /* 关闭所有 libuv 句柄 */
-    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
-        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
-    }
-    if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
-        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
-    }
-    if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
-        uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
-    }
-    
-    /* 运行事件循环等待关闭完成 */
+
+    /* Tear down via the library's close path so on_handle_close fires and
+     * frees the connection. Manual uv_close with NULL callbacks previously
+     * bypassed on_handle_close and leaked the connection. */
+    uvhttp_connection_close(conn);
+
+    /* 运行事件循环等待关闭完成. on_handle_close frees conn during the run. */
     for (int i = 0; i < 20; i++) {
         uv_run(server->loop, UV_RUN_ONCE);
     }
-    
-    uvhttp_connection_free(conn);
+
     uvhttp_server_free(server);
 }
 

@@ -150,7 +150,7 @@ TEST(UvhttpRequestExtendedTest, RequestFieldsInitialization) {
 TEST(UvhttpRequestExtendedTest, AddHeaderEmptyName) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
-    
+
     uvhttp_error_t result = uvhttp_request_add_header(&request, "", "value");
     /* Empty name behavior depends on implementation */
     if (result != UVHTTP_OK) {
@@ -159,40 +159,53 @@ TEST(UvhttpRequestExtendedTest, AddHeaderEmptyName) {
         /* If allowed, verify it was added */
         EXPECT_GT(request.header_count, (size_t)0);
     }
+
+    /* memset 将 headers_capacity 置零，首次 add_header 会分配 headers_extra；
+     * 释放该动态扩展数组，避免内存泄漏。*/
+    uvhttp_request_cleanup(&request);
 }
 
 TEST(UvhttpRequestExtendedTest, AddHeaderEmptyValue) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
-    
+
     uvhttp_error_t result = uvhttp_request_add_header(&request, "name", "");
     /* Empty value might be allowed or rejected */
+
+    /* 释放 add_header 分配的 headers_extra，避免内存泄漏。*/
+    uvhttp_request_cleanup(&request);
 }
 
 TEST(UvhttpRequestExtendedTest, AddHeaderLongName) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
-    
+
     /* Test with very long header name */
     char long_name[1000];
     memset(long_name, 'a', sizeof(long_name) - 1);
     long_name[sizeof(long_name) - 1] = '\0';
-    
+
     uvhttp_error_t result = uvhttp_request_add_header(&request, long_name, "value");
     /* Long name might be rejected or truncated */
+
+    /* 释放 add_header 分配的 headers_extra，避免内存泄漏。*/
+    uvhttp_request_cleanup(&request);
 }
 
 TEST(UvhttpRequestExtendedTest, AddHeaderLongValue) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
-    
+
     /* Test with very long header value */
     char long_value[10000];
     memset(long_value, 'b', sizeof(long_value) - 1);
     long_value[sizeof(long_value) - 1] = '\0';
-    
+
     uvhttp_error_t result = uvhttp_request_add_header(&request, "name", long_value);
     /* Long value might be rejected or truncated */
+
+    /* 释放 add_header 分配的 headers_extra，避免内存泄漏。*/
+    uvhttp_request_cleanup(&request);
 }
 
 /* ========== Test Request Get Query Param ========== */

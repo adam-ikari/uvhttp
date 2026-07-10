@@ -204,10 +204,11 @@ protected:
 
     void TearDown() override {
         if (builder) {
-            // Clear server's router reference since builder owns it
-            if (builder->server) {
-                builder->server->router = nullptr;
-            }
+            // uvhttp_server_simple_free calls uvhttp_server_free, which frees
+            // builder->server->router (the same allocation as builder->router,
+            // assigned in create_simple_server_internal). Do NOT null the
+            // server's router pointer here - that would defeat the free and
+            // leak the entire router tree.
             uvhttp_server_simple_free(builder);
             builder = nullptr;
         }
@@ -689,6 +690,17 @@ protected:
         if (server) {
             // Disable connection management if active (clears timers)
             if (server->ws_connection_manager) {
+                // Many tests register stack-local uvhttp_ws_connection_t objects
+                // that go out of scope when the test body ends. Null out the
+                // stored ws_conn pointers so uvhttp_server_ws_disable_connection_management
+                // does not dereference them (use-after-scope) when sending close
+                // frames. (Same pattern used by the CloseAll_* tests below.)
+                ws_connection_node_t* node =
+                    server->ws_connection_manager->connections;
+                while (node) {
+                    node->ws_conn = nullptr;
+                    node = node->next;
+                }
                 uvhttp_server_ws_disable_connection_management(server);
             }
             uvhttp_server_free(server);
@@ -861,6 +873,10 @@ TEST_F(WSConnectionManagementTest, AddConnection_Valid) {
     uvhttp_server_ws_add_connection(server, &fake_conn, "/ws/chat");
     EXPECT_EQ(server->ws_connection_manager->connection_count, 1);
     EXPECT_EQ(uvhttp_server_ws_get_connection_count(server), 1);
+    // Unregister before the stack-local fake_conn goes out of scope; otherwise
+    // TearDown's ws_disable_connection_management would dereference a stale
+    // pointer (use-after-scope).
+    uvhttp_server_ws_remove_connection(server, &fake_conn);
 }
 
 TEST_F(WSConnectionManagementTest, AddConnection_MultipleSamePath) {
@@ -871,6 +887,9 @@ TEST_F(WSConnectionManagementTest, AddConnection_MultipleSamePath) {
     uvhttp_server_ws_add_connection(server, &fake3, "/ws");
     EXPECT_EQ(server->ws_connection_manager->connection_count, 3);
     EXPECT_EQ(uvhttp_server_ws_get_connection_count_by_path(server, "/ws"), 3);
+    uvhttp_server_ws_remove_connection(server, &fake1);
+    uvhttp_server_ws_remove_connection(server, &fake2);
+    uvhttp_server_ws_remove_connection(server, &fake3);
 }
 
 TEST_F(WSConnectionManagementTest, AddConnection_DifferentPaths) {
@@ -885,6 +904,8 @@ TEST_F(WSConnectionManagementTest, AddConnection_DifferentPaths) {
         uvhttp_server_ws_get_connection_count_by_path(server, "/ws/notify"), 1);
     EXPECT_EQ(
         uvhttp_server_ws_get_connection_count_by_path(server, "/ws/other"), 0);
+    uvhttp_server_ws_remove_connection(server, &fake1);
+    uvhttp_server_ws_remove_connection(server, &fake2);
 }
 
 TEST_F(WSConnectionManagementTest, RemoveConnection_NullServer) {
@@ -1721,8 +1742,10 @@ TEST_F(OnConnectionTest, MaxConnectionsReached_503Response) {
     uv_close((uv_handle_t*)&client, test_on_close);
     pump_loop(&loop, 100);
 
-    // Prevent TearDown from double-freeing config
-    server->config = nullptr;
+    // Leave server->config set: uvhttp_server_new does not allocate a config
+    // (it starts NULL), so the config we assigned at line 1707 is the sole one
+    // and is owned by the server. TearDown's uvhttp_server_free will free it.
+    // (Nulling it here, as the old code did, leaks the config.)
 }
 
 // Test 3: uvhttp_serve success path (lines 817-838)
@@ -2016,7 +2039,9 @@ protected:
             if (uv_run(&loop, UV_RUN_NOWAIT) == 0) break;
         }
         if (builder) {
-            builder->server->router = nullptr;
+            // uvhttp_server_simple_free -> uvhttp_server_free frees
+            // builder->server->router (== builder->router). Do NOT null it,
+            // that leaks the router tree.
             uvhttp_server_simple_free(builder);
             builder = nullptr;
         }

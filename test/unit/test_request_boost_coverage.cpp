@@ -28,10 +28,11 @@ protected:
 
     void TearDown() override {
         if (req) {
-            if (req->headers_extra) {
-                uvhttp_free(req->headers_extra);
-                req->headers_extra = nullptr;
-            }
+            /* cleanup 释放 body、parser、parser_settings 和 headers_extra，
+             * 并将各指针置 NULL，因此幂等：即便测试已自行调用过 cleanup
+             * （留下的是 NULL 指针而非悬垂指针），这里再次调用也安全。
+             * 最后释放 req 结构体本身（由 uvhttp_calloc 分配）。*/
+            uvhttp_request_cleanup(req);
             uvhttp_free(req);
             req = nullptr;
         }

@@ -294,7 +294,10 @@ TEST(UvhttpRequestExtraCoverageTest, RequestLargeBody) {
     
     const char* body = uvhttp_request_get_body(request);
     ASSERT_NE(body, nullptr);
-    EXPECT_EQ(strlen(body), MAX_BODY_LEN);
+    // The body is MAX_BODY_LEN bytes of 'A' with no trailing NUL terminator
+    // (large/binary bodies are not required to be NUL-terminated). Use the
+    // stored length, not strlen(), which would read past the allocation.
+    EXPECT_EQ(uvhttp_request_get_body_length(request), MAX_BODY_LEN);
     EXPECT_EQ(body[0], 'A');
     EXPECT_EQ(body[MAX_BODY_LEN - 1], 'A');
     

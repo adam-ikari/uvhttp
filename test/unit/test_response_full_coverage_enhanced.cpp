@@ -226,6 +226,10 @@ TEST(UvhttpResponseEnhancedTest, SetHeaders) {
     // 测试自定义头
     result = uvhttp_response_set_header(&response, "X-Custom-Header", "custom-value");
     EXPECT_EQ(result, UVHTTP_OK);
+
+    // memset 将 headers_capacity 置零，首次 set_header 会分配 headers_extra；
+    // 释放该动态扩展数组，避免内存泄漏。
+    uvhttp_response_cleanup(&response);
 }
 
 /* 测试设置响应体 - 各种大小 */
@@ -238,18 +242,23 @@ TEST(UvhttpResponseEnhancedTest, SetBodySizes) {
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 
     // 测试小响应体
+    uvhttp_response_cleanup(&response);   // 释放上一次 set_body 的 body（若有）
     memset(&response, 0, sizeof(response));
     result = uvhttp_response_set_body(&response, "test", 4);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(response.body_length, 4);
 
     // 测试中等响应体
+    uvhttp_response_cleanup(&response);   // 释放小响应体的 body，避免 memset 丢失指针
     memset(&response, 0, sizeof(response));
     char medium_body[1024];
     memset(medium_body, 'A', sizeof(medium_body));
     result = uvhttp_response_set_body(&response, medium_body, sizeof(medium_body));
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(response.body_length, sizeof(medium_body));
+
+    // 释放中等响应体的 body，避免内存泄漏
+    uvhttp_response_cleanup(&response);
 }
 
 /* 测试响应体长度超过限制 */
@@ -278,6 +287,9 @@ TEST(UvhttpResponseEnhancedTest, SetHeadersTooMany) {
     
     // 头数量应该被限制
     EXPECT_LE(response.header_count, MAX_HEADERS);
+
+    // 释放 set_header 动态扩展分配的 headers_extra，避免内存泄漏
+    uvhttp_response_cleanup(&response);
 }
 
 /* 测试 HTTP/1.1 优化字段 */

@@ -19,6 +19,12 @@
 #include "uvhttp_context.h"
 #include "uvhttp_config.h"
 #include "uvhttp_error.h"
+#include "uvhttp_allocator.h"
+
+#if UVHTTP_FEATURE_TLS
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/entropy.h>
+#endif
 
 class UvhttpContextTest : public ::testing::Test {
 protected:
@@ -470,10 +476,13 @@ TEST_F(UvhttpContextTest, CleanupTls_PartialEntropyOnly) {
     ASSERT_EQ(err, UVHTTP_OK);
     EXPECT_EQ(context->tls_initialized, 1);
 
-    // Null out tls_drbg to test cleanup path where entropy exists but drbg is NULL
+    // 将 tls_drbg 置空以测试 entropy 存在但 drbg 为 NULL 的清理路径。
+    // 先释放 drbg，避免因丢弃唯一引用而泄漏其分配。
+    mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
+    uvhttp_free(context->tls_drbg);
     context->tls_drbg = nullptr;
 
-    // Cleanup should not crash - it should free entropy and skip drbg
+    // 清理不应崩溃 - 应释放 entropy 并跳过 drbg
     uvhttp_context_cleanup_tls(context);
     EXPECT_EQ(context->tls_initialized, 0);
     EXPECT_EQ(context->tls_entropy, nullptr);
@@ -493,10 +502,13 @@ TEST_F(UvhttpContextTest, CleanupTls_PartialDrbgOnly) {
     ASSERT_EQ(err, UVHTTP_OK);
     EXPECT_EQ(context->tls_initialized, 1);
 
-    // Null out tls_entropy to test cleanup path where drbg exists but entropy is NULL
+    // 将 tls_entropy 置空以测试 drbg 存在但 entropy 为 NULL 的清理路径。
+    // 先释放 entropy，避免因丢弃唯一引用而泄漏其分配。
+    mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
+    uvhttp_free(context->tls_entropy);
     context->tls_entropy = nullptr;
 
-    // Cleanup should not crash - it should skip entropy and free drbg
+    // 清理不应崩溃 - 应跳过 entropy 并释放 drbg
     uvhttp_context_cleanup_tls(context);
     EXPECT_EQ(context->tls_initialized, 0);
     EXPECT_EQ(context->tls_entropy, nullptr);
@@ -518,10 +530,13 @@ TEST_F(UvhttpContextTest, CleanupWebsocket_PartialEntropyOnly) {
     ASSERT_EQ(err, UVHTTP_OK);
     EXPECT_EQ(context->ws_drbg_initialized, 1);
 
-    // Null out ws_drbg to test cleanup path where entropy exists but drbg is NULL
+    // 将 ws_drbg 置空以测试 entropy 存在但 drbg 为 NULL 的清理路径。
+    // 先释放 drbg，避免因丢弃唯一引用而泄漏其分配。
+    mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->ws_drbg);
+    uvhttp_free(context->ws_drbg);
     context->ws_drbg = nullptr;
 
-    // Cleanup should not crash - it should free entropy and skip drbg
+    // 清理不应崩溃 - 应释放 entropy 并跳过 drbg
     uvhttp_context_cleanup_websocket(context);
     EXPECT_EQ(context->ws_drbg_initialized, 0);
     EXPECT_EQ(context->ws_entropy, nullptr);
@@ -541,10 +556,13 @@ TEST_F(UvhttpContextTest, CleanupWebsocket_PartialDrbgOnly) {
     ASSERT_EQ(err, UVHTTP_OK);
     EXPECT_EQ(context->ws_drbg_initialized, 1);
 
-    // Null out ws_entropy to test cleanup path where drbg exists but entropy is NULL
+    // 将 ws_entropy 置空以测试 drbg 存在但 entropy 为 NULL 的清理路径。
+    // 先释放 entropy，避免因丢弃唯一引用而泄漏其分配。
+    mbedtls_entropy_free((mbedtls_entropy_context*)context->ws_entropy);
+    uvhttp_free(context->ws_entropy);
     context->ws_entropy = nullptr;
 
-    // Cleanup should not crash - it should skip entropy and free drbg
+    // 清理不应崩溃 - 应跳过 entropy 并释放 drbg
     uvhttp_context_cleanup_websocket(context);
     EXPECT_EQ(context->ws_drbg_initialized, 0);
     EXPECT_EQ(context->ws_entropy, nullptr);
