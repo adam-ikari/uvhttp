@@ -155,6 +155,11 @@ static uint32_t find_or_create_child(uvhttp_router_t* router,
         return UINT32_MAX;
     }
 
+    // create_route_node may uvhttp_realloc() the node pool to grow it, which
+    // can move it to a new address and free the old block. Re-fetch parent
+    // here so we never dereference a dangling pointer captured above.
+    parent = &router->node_pool[parent_index];
+
     uvhttp_route_node_t* child = &router->node_pool[child_index];
     size_t seg_len = strlen(segment);
     child->segment_len = (uint8_t)(seg_len < 32 ? seg_len : 31);
