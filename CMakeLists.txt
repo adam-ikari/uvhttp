@@ -113,9 +113,28 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 # Compiler options
 if(ENABLE_DEBUG)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
+elseif(ENABLE_ASAN OR ENABLE_UBSAN OR ENABLE_TSAN)
+    # Sanitizer builds need debug symbols and frame pointers to produce
+    # actionable stack traces. Strip (-s) must NOT be applied, otherwise ASan
+    # findings are undebuggable (addr2line/symbolizer return ??). Keep -O1 for
+    # usable but fast sanitizer instrumentation. Apply to both C and CXX since
+    # the test suite is C++ linking the C library statically.
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O1 -fno-omit-frame-pointer")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O1 -fno-omit-frame-pointer")
 else()
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -DNDEBUG -ffunction-sections -fdata-sections")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections -s")
+    # Only strip (-s) release-style builds. A Debug build type (or any build
+    # passing -fsanitize via CMAKE_C_FLAGS, as the CI memory job does) must keep
+    # symbols so sanitizer stack traces are resolvable. Check the upper-cased
+    # build type and scan C_FLAGS for an active sanitizer.
+    string(TOUPPER "${CMAKE_BUILD_TYPE}" _uvhttp_build_type_upper)
+    string(FIND "${CMAKE_C_FLAGS} ${CMAKE_CXX_FLAGS}" "-fsanitize=" _uvhttp_has_sanitize)
+    if(NOT "${_uvhttp_build_type_upper}" STREQUAL "DEBUG" AND _uvhttp_has_sanitize EQUAL -1)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections -s")
+    else()
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections")
+    endif()
 endif()
 
 # Explicitly set Release mode compiler options (override CMake default -O3)

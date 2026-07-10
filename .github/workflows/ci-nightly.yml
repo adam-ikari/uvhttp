@@ -448,9 +448,10 @@ jobs:
 
       - name: Configure with AddressSanitizer
         run: |
-          cmake -B build-asan -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_C_FLAGS="-fsanitize=address -fno-omit-frame-pointer" \
-            -DCMAKE_CXX_FLAGS="-fsanitize=address -fno-omit-frame-pointer"
+          # Use the project's ENABLE_ASAN option (not raw -fsanitize flags) so
+          # CMake keeps debug symbols and does not strip the binaries, making
+          # ASan stack traces resolvable.
+          cmake -B build-asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON
           cmake --build build-asan -j$(nproc)
 
       - name: Run tests with AddressSanitizer
@@ -468,11 +469,52 @@ jobs:
           path: |
             build-asan/Testing/
           retention-days: 30
-  
+
+  test-ubsan:
+    needs: [ubuntu-build-all]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: build-ubuntu-nightly-${{ github.run_number }}
+          path: build/
+
+      - name: Configure with UndefinedBehaviorSanitizer
+        run: |
+          # UBSan catches undefined behavior (signed overflow, shifts, null
+          # deref, alignment, etc.) that ASan does not. ASan and UBSan cannot
+          # be combined per CMakeLists.txt, so this is a separate job.
+          cmake -B build-ubsan -DCMAKE_BUILD_TYPE=Debug -DENABLE_UBSAN=ON
+          cmake --build build-ubsan -j$(nproc)
+
+      - name: Run tests with UndefinedBehaviorSanitizer
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build-ubsan
+          test-type: all
+          timeout: 120
+          parallel: 1
+
+      - name: Upload UBSan test results
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: ubsan-test-results-nightly-${{ github.run_number }}
+          path: |
+            build-ubsan/Testing/
+          retention-days: 30
+
   # ========== 阶段 4: 生成总结 ==========
   
   generate-summary:
-    needs: [test-coverage, test-memory, test-stress, performance-full]
+    needs: [test-coverage, test-memory, test-ubsan, test-stress, performance-full]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: always()
@@ -487,6 +529,7 @@ jobs:
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Coverage | ${{ needs.test-coverage.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Memory Test | ${{ needs.test-memory.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| UBSan Test | ${{ needs.test-ubsan.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Stress Test | ${{ needs.test-stress.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Performance | ${{ needs.performance-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
