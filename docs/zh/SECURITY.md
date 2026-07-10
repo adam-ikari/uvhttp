@@ -231,10 +231,11 @@ UVHTTP 实现了多种 DoS 保护机制：
 
 ### 内存安全
 
+- **Sanitizer 验证通过**: 全部 91 项测试通过 AddressSanitizer（开启泄漏检测——零泄漏、零 use-after-free、零缓冲区溢出）与 UndefinedBehaviorSanitizer（零未定义行为）验证。详见 `.github/workflows/ci-nightly.yml`（`test-memory` 与 `test-ubsan` 任务）。
 - **零编译警告**: 所有代码使用 `-Werror` 编译
-- **内存分配器**: 使用 mimalloc 提高内存安全性
+- **内存分配器**: 使用 mimalloc 提高内存安全性（可选；亦支持系统分配器）
 - **缓冲区溢出保护**: 所有字符串操作都经过验证
-- **内存泄漏检测**: 定期 Valgrind 测试
+- **内存泄漏检测**: 定期 Valgrind 与 AddressSanitizer 测试
 
 ### 输入验证
 

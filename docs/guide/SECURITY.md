@@ -101,11 +101,20 @@ Use the following tools for automated security scanning:
    valgrind --leak-check=full --show-leak-kinds=all ./uvhttp_server
    ```
 
-4. **Address Sanitizer**
+4. **AddressSanitizer (leaks, use-after-free, overflows)**
    ```bash
-   # Use ASan for memory safety
-   cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON ..
+   cmake -B build_asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON ..
+   cmake --build build_asan -j$(nproc)
+   (cd build_asan && ctest --output-on-failure)   # full suite, leak detection on
    ```
+
+5. **UndefinedBehaviorSanitizer (signed overflow, shifts, alignment, ...)**
+   ```bash
+   cmake -B build_ubsan -DCMAKE_BUILD_TYPE=Debug -DENABLE_UBSAN=ON ..
+   cmake --build build_ubsan -j$(nproc)
+   (cd build_ubsan && ctest --output-on-failure)
+   ```
+   ASan and UBSan cannot be combined in a single build; run them as separate builds.
 
 ## Security Best Practices
 
@@ -231,10 +240,11 @@ If you discover a security vulnerability, please report it responsibly:
 
 ### Memory Safety
 
+- **Sanitizer-verified**: The full 91-test suite passes clean under AddressSanitizer (with leak detection — zero leaks, zero use-after-free, zero buffer overflows) and UndefinedBehaviorSanitizer (zero undefined behavior). See `.github/workflows/ci-nightly.yml` (`test-memory` + `test-ubsan` jobs).
 - **Zero compilation warnings**: All code compiles with `-Werror`
-- **Memory allocator**: mimalloc for improved memory safety
+- **Memory allocator**: mimalloc for improved memory safety (optional; system allocator also supported)
 - **Buffer overflow protection**: All string operations validated
-- **Memory leak detection**: Regular Valgrind testing
+- **Memory leak detection**: Regular Valgrind and AddressSanitizer testing
 
 ### Input Validation
 

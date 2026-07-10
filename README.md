@@ -6,12 +6,14 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
-![Tests](https://img.shields.io/badge/tests-42.9%25%20coverage-yellow.svg)
-![Performance](https://img.shields.io/badge/performance-23%2C226%20RPS-brightgreen.svg)
+![Tests](https://img.shields.io/badge/tests-91%2F91%20passing-success.svg)
+![ASan](https://img.shields.io/badge/ASan-clean-success.svg)
+![UBSan](https://img.shields.io/badge/UBSan-clean-success.svg)
+![Performance](https://img.shields.io/badge/performance-~20K%20RPS-brightgreen.svg)
 
 **High-Performance HTTP/1.1 and WebSocket Server Library**
 
-32-bit Embedded Support • Zero-Copy Optimization • Production Grade
+32-bit Embedded Support • Zero-Copy Optimization • Production Grade (ASan/UBSan-verified)
 
 </div>
 
@@ -21,14 +23,19 @@ UVHTTP is a production-grade, event-driven HTTP server library built on libuv fo
 
 ### Key Metrics (v2.5.0)
 
+Throughput varies by hardware. Values below are from the original benchmark host;
+on a comparable VM the library sustains ~17K–20K RPS (100 connections) / ~20K peak
+(low concurrency) with **zero socket errors**. Reproduce with `wrk -t4 -c100 -d10s`.
+
 | Metric | Value | Context |
 |--------|-------|---------|
-| **Peak Throughput** | 23,226 RPS | HTTP/1.1, low concurrency |
-| **High Concurrency** | 31,409 RPS | 100 concurrent connections |
+| **Peak Throughput** | ~20K RPS | HTTP/1.1, low concurrency (10 conn) |
+| **High Concurrency** | ~17–19K RPS | 100 concurrent connections |
 | **Static Files** | 12,510 RPS | 1MB files with zero-copy |
 | **API Routing** | 13,950 RPS | REST endpoints |
-| **Average Latency** | 2.92 - 43.59 ms | P50-P99 range |
-| **Error Rate** | < 0.1% | Under normal load |
+| **Average Latency** | ~9–21 ms | P50–P90, 100 connections |
+| **Error Rate** | 0% | Zero socket errors under load |
+| **Test Suite** | 91/91 pass | ASan + UBSan verified clean |
 
 ## 🌍 Platform Support
 
@@ -46,7 +53,7 @@ UVHTTP provides full support for 32-bit architectures with optimizations for res
 ## ✨ Core Features
 
 ### Performance
-- ⚡ **Exceptional Performance**: Peak throughput of 23,226 RPS with sub-millisecond latency
+- ⚡ **Exceptional Performance**: Peak throughput of ~20K RPS with low-latency event-driven I/O
 - 💾 **Zero-Copy Transmission**: Native sendfile integration for large files (>1MB)
 - 🧠 **Intelligent Caching**: LRU cache with automatic preheating mechanisms
 - 🚀 **Keep-Alive Optimization**: ~1000x performance improvement through connection reuse
@@ -60,7 +67,7 @@ UVHTTP provides full support for 32-bit architectures with optimizations for res
 ### Security
 - 🔒 **Security-First**: Comprehensive buffer overflow protection and input validation
 - 🛡️ **TLS 1.3 Support**: Encryption through mbedtls integration
-- ✅ **Memory Safety**: Optional AddressSanitizer and Valgrind compatibility
+- ✅ **Memory Safety**: Verified clean under AddressSanitizer (no leaks, no use-after-free, no overflows) and UndefinedBehaviorSanitizer across the full 91-test suite
 - 🚨 **Resource Limits**: Configurable limits for connections, headers, and body size
 
 ### Developer Experience
@@ -388,10 +395,10 @@ uvhttp/
 ## 🧪 Testing & Quality Assurance
 
 ### Test Coverage
-- **Current Coverage**: 42.9% (1904/4435 lines)
-- **Active Tests**: 37 unit tests
-- **CI/CD**: Automated testing on multiple platforms
-- **Code Quality**: Zero compilation warnings, strict linting
+- **Test Suite**: 91 unit/integration tests, all passing
+- **Memory Safety**: Full suite verified clean under AddressSanitizer (no leaks, no use-after-free, no buffer overflows) and UndefinedBehaviorSanitizer (no undefined behavior)
+- **CI/CD**: Automated testing on multiple platforms; nightly ASan + UBSan jobs
+- **Code Quality**: Zero compilation warnings, strict linting (`-Werror`)
 
 ### Running Tests
 
@@ -405,16 +412,28 @@ uvhttp/
 # Run specific test
 cd build
 ./uvhttp_unit_tests --gtest_filter=TestSuite.TestName
+
+# Memory-safety verification (AddressSanitizer, with leak detection)
+cmake -B build_asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON
+cmake --build build_asan -j$(nproc)
+cd build_asan && ctest --output-on-failure
+
+# Undefined-behavior verification (UBSan)
+cmake -B build_ubsan -DCMAKE_BUILD_TYPE=Debug -DENABLE_UBSAN=ON
+cmake --build build_ubsan -j$(nproc)
+cd build_ubsan && ctest --output-on-failure
 ```
 
 ### Performance Testing
 
 ```bash
-# Start test server
-./build/dist/bin/performance_static_server -d ./public -p 8080
+# Start the performance test server (built-in endpoints: /simple /json /large ...)
+./build/dist/bin/test_performance_e2e 8080
+#   ...or the unified benchmark server:
+./build/dist/bin/benchmark_unified 8080
 
 # Run wrk benchmark
-wrk -t4 -c100 -d30s http://localhost:8080/
+wrk -t4 -c100 -d30s http://localhost:8080/simple
 
 # Run Apache Bench
 ab -n 10000 -c 100 http://localhost:8080/

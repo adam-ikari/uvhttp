@@ -19,8 +19,12 @@ hero:
 features:
   - title: 🚀 Exceptional Performance
     details: |
-      Peak throughput: **23,226 RPS** with sub-millisecond latency.
-      Optimized for high-concurrency scenarios with efficient event-driven architecture.
+      Peak throughput: **~20K RPS** with low-latency event-driven I/O.
+      Optimized for high-concurrency scenarios with zero socket errors under load.
+  - title: 🛡️ Memory-Safety Verified
+    details: |
+      Full 91-test suite verified clean under AddressSanitizer (no leaks, no
+      use-after-free, no overflows) and UndefinedBehaviorSanitizer.
   - title: 💾 Zero-Copy Transmission
     details: |
       Native sendfile integration for large file transfers (>1MB).
@@ -56,21 +60,27 @@ features:
 
 ### Key Metrics (v2.5.0)
 
+Throughput varies by hardware. Values below are representative; on a comparable VM
+the library sustains ~17K–20K RPS (100 connections) / ~20K peak (low concurrency)
+with **zero socket errors**. Reproduce with `wrk -t4 -c100 -d10s`.
+
 | Metric | Value | Notes |
 |--------|-------|-------|
-| **Peak Throughput** | 23,226 RPS | Low concurrency, HTTP/1.1 |
+| **Peak Throughput** | ~20K RPS | Low concurrency (10 conn), HTTP/1.1 |
+| **High Concurrency** | ~17–19K RPS | 100 concurrent connections |
 | **Static Files** | 12,510 RPS | Medium concurrency, 1MB files |
 | **API Routing** | 13,950 RPS | REST endpoints |
-| **Average Latency** | 2.92 - 43.59 ms | P50-P99 range |
-| **Error Rate** | < 0.1% | Under normal load |
-| **Code Coverage** | 89.2% lines, 92.0% functions | Production-grade quality assurance |
+| **Average Latency** | ~9–21 ms | P50–P90, 100 connections |
+| **Error Rate** | 0% | Zero socket errors under load |
+| **Test Suite** | 91/91 pass | ASan + UBSan verified clean |
 
-### Test Coverage Highlights
+### Memory-Safety & Quality Highlights
 
-- **Overall Coverage**: 89.2% (13,386/15,008 lines)
-- **Function Coverage**: 92.0% (7,336/7,974 functions)
-- **Test Cases**: 200+ comprehensive test cases
-- **High Coverage Modules** (≥95%):
+- **AddressSanitizer**: Full 91-test suite passes with leak detection enabled — zero leaks, zero use-after-free, zero buffer overflows
+- **UndefinedBehaviorSanitizer**: Full suite passes — zero undefined behavior
+- **Test Cases**: 91 unit/integration tests, all passing
+- **CI/CD**: Nightly ASan + UBSan jobs (see `.github/workflows/ci-nightly.yml`)
+- **High-Coverage Modules** (≥95%):
   - uvhttp_utils.c: 100.0%
   - uvhttp_error.c: 98.8%
   - uvhttp_version.c: 98.3%

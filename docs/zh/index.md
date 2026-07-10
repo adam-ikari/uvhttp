@@ -18,7 +18,9 @@ hero:
 
 features:
   - title: 🚀 极致性能
-    details: 峰值吞吐量达 31,883 RPS，基于 libuv 事件驱动，集成 xxHash 极快哈希算法
+    details: 峰值吞吐量约 20K RPS，基于 libuv 事件驱动，集成 xxHash 极快哈希算法，负载下零错误
+  - title: 🛡️ 内存安全验证
+    details: 全部 91 项测试通过 AddressSanitizer（零泄漏、零 UAF、零溢出）与 UndefinedBehaviorSanitizer（零未定义行为）验证
   - title: ⚡ 零拷贝优化
     details: 大文件使用 sendfile 零拷贝传输，性能提升 50%+，大幅降低 CPU 占用
   - title: 💾 智能缓存
@@ -32,7 +34,7 @@ features:
   - title: 🔧 易于使用
     details: 清晰的 API 设计，完善的文档，丰富的示例，快速上手
   - title: 生产就绪
-    details: 完整的错误处理、资源管理、可观测性、稳定性保证
+    details: 完整的错误处理、资源管理、可观测性、稳定性保证；ASan/UBSan 验证通过
 
 ---
 

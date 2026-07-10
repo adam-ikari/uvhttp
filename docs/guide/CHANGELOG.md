@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - Production-grade memory-safety pass
+
+### Fixed — genuine memory-safety bugs in library code (all passed normal tests but corrupted memory under ASan)
+
+- **`uvhttp_router.c` `find_or_create_child`**: heap-use-after-free — a cached `parent` pointer into the node pool dangled after `create_route_node` reallocated the pool. Now re-fetched after the realloc.
+- **`uvhttp_server.c` `uvhttp_server_free`**: heap-use-after-free on double-free — the `freed` flag was read from already-freed memory. `NULL` is now a safe no-op (standard `free(NULL)` convention).
+- **`uvhttp_websocket.c` `uvhttp_ws_close`**: stack-buffer-underflow — tests registered stack-local `ws_conn` objects whose lifetime ended before teardown.
+- **`uvhttp_response.c` `build_response_headers`**: heap-buffer-overflow — `snprintf` return-value accumulation let `pos` exceed the buffer, underflowing the `*length - pos` bound. Fixed with a clamped `UVHTTP_SNAPPEND` macro.
+- **`uvhttp_connection.c`**: multiple fixes — use-after-free on post-close read; `restart_read` leaked the request body (nulled the pointer without freeing); `connection_close` re-entry broke `close_pending` accounting; `switch_to_websocket` clobbered the CLOSING state; `conn->lifecycle` was never freed.
+- **`uvhttp_request.c` `uvhttp_request_cleanup`**: made idempotent (nulls `body`/`parser`/`parser_settings` after freeing) to prevent double-free.
+- **`uvhttp_response.c` `uvhttp_response_set_header`**: leaked a pre-existing `headers_extra` on first-allocation expansion at the capacity boundary.
+- **`uvhttp_error_helpers.c`**: `uvhttp_handle_write_error`/`uvhttp_log_safe_error` used `uv_strerror` with non-libuv errno values, triggering a libuv `uv__strdup` leak. Switched to `uv_strerror_r` (reentrant, no allocation) and `uvhttp_error_string`.
+- **`uvhttp_server.c` `on_connection` 503 path**: the `temp_client` (`uv_tcp_t`) was allocated but never closed/freed. `write_503_response_cb` now closes and frees it.
+- **`uvhttp_server.c` `create_simple_server_internal`**: listen-failure path nulled `router` before `uvhttp_server_free`, defeating the router free.
+- **`uvhttp_server.c` `uvhttp_server_ws_disable_connection_management`**: freed the manager struct (with embedded `uv_timer_t` handles) immediately after `uv_close` on the timers, so libuv accessed freed memory when the close callbacks fired. Now drains close callbacks before freeing.
+
+### Fixed — test suite leaks (25 → 0 ASan failures)
+
+- Resolved all leak-only test failures across the request/response/router/server/connection/context/tls/protocol_upgrade test files (free-before-null, drain-after-close, mbedTLS partial-cleanup patterns).
+
+### Changed — build & CI
+
+- **`CMakeLists.txt`**: Sanitizer/Debug builds no longer strip (`-s`) — ASan/UBSan stack traces are now resolvable. Detection covers `ENABLE_DEBUG`, `ENABLE_ASAN/UBSAN/TSAN`, `CMAKE_BUILD_TYPE=Debug`, and any `-fsanitize=` in flags. Release builds still strip.
+- **`.github/workflows/ci-nightly.yml`**: `test-memory` job now uses `ENABLE_ASAN=ON` (symbols preserved); added a new `test-ubsan` job (`ENABLE_UBSAN=ON`), wired into the summary.
+- **`benchmark/benchmark_unified.c`**: fixed invalid `static` nested-function definitions that prevented compilation; added missing `<errno.h>`.
+
+### Verified
+
+- ASan: 91/91 tests pass — zero leaks, zero use-after-free, zero buffer overflows.
+- UBSan: 91/91 tests pass — zero undefined behavior.
+- Normal build: 91/91 tests pass.
+
 ## [2.5.0] - 2026-03-17
 
 ### Added

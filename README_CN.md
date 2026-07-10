@@ -2,15 +2,17 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.4.4-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.5.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux-orange.svg)
-![Tests](https://img.shields.io/badge/tests-100%25%20passing-success.svg)
+![Tests](https://img.shields.io/badge/tests-91%2F91%20passing-success.svg)
+![ASan](https://img.shields.io/badge/ASan-clean-success.svg)
+![UBSan](https://img.shields.io/badge/UBSan-clean-success.svg)
 
 **专注 HTTP/1.1 和 WebSocket 的高性能服务器库**
 
-专注核心 • 高性能 • 可配置 • 生产就绪
+专注核心 • 高性能 • 可配置 • 生产就绪（ASan/UBSan 验证）
 
 </div>
 
