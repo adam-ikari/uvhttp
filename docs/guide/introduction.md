@@ -188,6 +188,7 @@ server->max_body_size = 10 * 1024 * 1024; // 10MB
 ```c
 #include <uvhttp.h>
 #include <uv.h>
+#include <string.h>
 
 // Request handler function
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
@@ -200,7 +201,7 @@ int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     
     // Set response body
     const char* body = "{\"message\":\"Hello from UVHTTP\",\"version\":\"2.5.0\"}";
-    uvhttp_response_set_body(res, body);
+    uvhttp_response_set_body(res, body, strlen(body));
     
     // Send response
     return uvhttp_response_send(res);
@@ -211,11 +212,13 @@ int main() {
     uv_loop_t* loop = uv_default_loop();
     
     // Create server
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
     
     // Create router
-    uvhttp_router_t* router = uvhttp_router_new();
-    server->router = router;
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
+    uvhttp_server_set_router(server, router);
     
     // Add route
     uvhttp_router_add_route(router, "/hello", hello_handler);

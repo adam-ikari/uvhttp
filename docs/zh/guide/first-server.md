@@ -55,22 +55,23 @@ int main() {
     uv_loop_t* loop = uv_default_loop();
     
     // 创建服务器
-    g_server = uvhttp_server_new(loop);
-    if (!g_server) {
-        fprintf(stderr, "创建服务器失败\n");
+    uvhttp_error_t r = uvhttp_server_new(loop, &g_server);
+    if (r != UVHTTP_OK) {
+        fprintf(stderr, "创建服务器失败: %s\n", uvhttp_error_string(r));
         return 1;
     }
     
     // 创建路由器
-    uvhttp_router_t* router = uvhttp_router_new();
-    if (!router) {
-        fprintf(stderr, "创建路由器失败\n");
+    uvhttp_router_t* router = NULL;
+    r = uvhttp_router_new(&router);
+    if (r != UVHTTP_OK) {
+        fprintf(stderr, "创建路由器失败: %s\n", uvhttp_error_string(r));
         uvhttp_server_free(g_server);
         return 1;
     }
     
     // 设置路由器
-    g_server->router = router;
+    uvhttp_server_set_router(g_server, router);
     
     // 添加路由
     uvhttp_router_add_route(router, "/", hello_handler);
@@ -187,22 +188,23 @@ int main() {
     uv_loop_t* loop = uv_default_loop();
     
     // 创建服务器
-    g_server = uvhttp_server_new(loop);
-    if (!g_server) {
-        fprintf(stderr, "创建服务器失败\n");
+    uvhttp_error_t r = uvhttp_server_new(loop, &g_server);
+    if (r != UVHTTP_OK) {
+        fprintf(stderr, "创建服务器失败: %s\n", uvhttp_error_string(r));
         return 1;
     }
     
     // 创建路由器
-    uvhttp_router_t* router = uvhttp_router_new();
-    if (!router) {
-        fprintf(stderr, "创建路由器失败\n");
+    uvhttp_router_t* router = NULL;
+    r = uvhttp_router_new(&router);
+    if (r != UVHTTP_OK) {
+        fprintf(stderr, "创建路由器失败: %s\n", uvhttp_error_string(r));
         uvhttp_server_free(g_server);
         return 1;
     }
     
     // 设置路由器
-    g_server->router = router;
+    uvhttp_server_set_router(g_server, router);
     
     // 添加多个路由
     uvhttp_router_add_route(router, "/api", api_handler);
@@ -334,22 +336,23 @@ int main() {
     uv_loop_t* loop = uv_default_loop();
     
     // 创建服务器
-    g_server = uvhttp_server_new(loop);
-    if (!g_server) {
-        fprintf(stderr, "创建服务器失败\n");
+    uvhttp_error_t r = uvhttp_server_new(loop, &g_server);
+    if (r != UVHTTP_OK) {
+        fprintf(stderr, "创建服务器失败: %s\n", uvhttp_error_string(r));
         return 1;
     }
     
     // 创建路由器
-    uvhttp_router_t* router = uvhttp_router_new();
-    if (!router) {
-        fprintf(stderr, "创建路由器失败\n");
+    uvhttp_router_t* router = NULL;
+    r = uvhttp_router_new(&router);
+    if (r != UVHTTP_OK) {
+        fprintf(stderr, "创建路由器失败: %s\n", uvhttp_error_string(r));
         uvhttp_server_free(g_server);
         return 1;
     }
     
     // 设置路由器
-    g_server->router = router;
+    uvhttp_server_set_router(g_server, router);
     
     // 添加路由（使用通配符）
     uvhttp_router_add_route(router, "/users/*", user_handler);

@@ -81,9 +81,11 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
-    server->router = router;
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
+    uvhttp_server_set_router(server, router);
 
     // 添加路由
     uvhttp_router_add_route(router, "/", hello_handler);

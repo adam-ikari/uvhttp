@@ -88,7 +88,8 @@ int main() {
 #include "uvhttp.h"
 
 // 创建服务器
-uvhttp_server_t* server = uvhttp_server_new(loop);
+uvhttp_server_t* server = NULL;
+uvhttp_server_new(loop, &server);
 
 // 设置路由
 uvhttp_router_add_route(router, "/", handler);

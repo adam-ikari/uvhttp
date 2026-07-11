@@ -4,11 +4,19 @@ This document provides information about UVHTTP versions and their compatibility
 
 ## Current Version
 
-**Version**: 2.4.4  
-**Release Date**: 2026-02-26  
+**Version**: 2.5.0  
+**Release Date**: 2026-03-15  
 **Status**: Stable
 
 ## Version History
+
+### 2.5.0 (2026-03-15)
+
+- 32-bit embedded architecture support
+- Compression features (gzip/deflate)
+- Compile-time middleware system
+- Memory-safety pass: full test suite verified clean under AddressSanitizer and
+  UndefinedBehaviorSanitizer (see [Changelog](./CHANGELOG.md))
 
 ### 2.4.4 (2026-02-26)
 
@@ -247,9 +255,11 @@ if (result != UVHTTP_OK) {
 uvhttp_server_t* server = server_new(loop);
 
 // New
-uvhttp_server_t* server = uvhttp_server_new(loop);
-uvhttp_router_t* router = uvhttp_router_new();
-server->router = router;
+uvhttp_server_t* server = NULL;
+uvhttp_server_new(loop, &server);
+uvhttp_router_t* router = NULL;
+uvhttp_router_new(&router);
+uvhttp_server_set_router(server, router);
 ```
 
 ### From 2.0 to 2.1
@@ -333,6 +343,56 @@ cmake -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON ..
 - **Status**: Production ready
 - **Stability**: Fully tested and documented
 
+### From 2.4 to 2.5
+
+**Breaking Changes**:
+
+1. **Constructor output-parameter style**
+   - `uvhttp_server_new` and `uvhttp_router_new` now take an output parameter and
+     return `uvhttp_error_t` instead of returning a pointer.
+
+   **Migration**:
+   ```c
+   // Old (2.4.x)
+   uvhttp_server_t* server = uvhttp_server_new(loop);
+   uvhttp_router_t* router = uvhttp_router_new();
+   server->router = router;
+
+   // New (2.5.x)
+   uvhttp_server_t* server = NULL;
+   uvhttp_error_t r = uvhttp_server_new(loop, &server);
+   if (r != UVHTTP_OK) { /* handle error */ }
+
+   uvhttp_router_t* router = NULL;
+   uvhttp_router_new(&router);
+   uvhttp_server_set_router(server, router);  // use the setter, not direct struct access
+   ```
+
+2. **Request handler signature**
+   - Handlers now receive both the request **and** the response, and return `int`.
+     There is no `uvhttp_response_new()` — the framework creates the response.
+
+   ```c
+   // Old (2.4.x)
+   void hello_handler(uvhttp_request_t* req) {
+       uvhttp_response_t* res = uvhttp_response_new(req);
+       uvhttp_response_set_body(res, "Hello");
+       uvhttp_response_send(res);
+   }
+
+   // New (2.5.x)
+   int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+       uvhttp_response_set_status(res, 200);
+       uvhttp_response_set_body(res, "Hello");
+       return uvhttp_response_send(res);
+   }
+   ```
+
+3. **Memory-safety verification**
+   - The full test suite is now verified clean under AddressSanitizer (no leaks,
+     use-after-free, or overflows) and UndefinedBehaviorSanitizer. See the
+     [Changelog](./CHANGELOG.md) for the complete list of fixes.
+
 ## Release Process
 
 1. Development on `develop` branch
@@ -347,19 +407,19 @@ cmake -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON ..
 
 - **Duration**: 6 months
 - **Updates**: Security fixes only
-- **Current LTS**: 2.2.x
+- **Current LTS**: 2.5.x
 
 ### Stable
 
 - **Duration**: 3 months
 - **Updates**: Bug fixes and security fixes
-- **Current Stable**: 2.2.x
+- **Current Stable**: 2.5.x
 
 ### Development
 
 - **Duration**: Until next stable release
 - **Updates**: All changes including breaking changes
-- **Current Development**: 2.3.x (develop branch)
+- **Current Development**: 2.6.x (develop branch)
 
 ## Getting Help
 

@@ -251,9 +251,11 @@ if (result != UVHTTP_OK) {
 uvhttp_server_t* server = server_new(loop);
 
 // 新版本
-uvhttp_server_t* server = uvhttp_server_new(loop);
-uvhttp_router_t* router = uvhttp_router_new();
-server->router = router;
+uvhttp_server_t* server = NULL;
+uvhttp_server_new(loop, &server);
+uvhttp_router_t* router = NULL;
+uvhttp_router_new(&router);
+uvhttp_server_set_router(server, router);
 ```
 
 ### 从 2.0 升级到 2.1
@@ -337,6 +339,55 @@ cmake -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON ..
 - **状态**: 生产就绪
 - **稳定性**: 完全测试且有文档
 
+### 从 2.4 升级到 2.5
+
+**破坏性变更**:
+
+1. **构造函数改为输出参数风格**
+   - `uvhttp_server_new` 与 `uvhttp_router_new` 改为接收输出参数并返回
+     `uvhttp_error_t`，不再返回指针。
+
+   ```c
+   // 旧版本 (2.4.x)
+   uvhttp_server_t* server = uvhttp_server_new(loop);
+   uvhttp_router_t* router = uvhttp_router_new();
+   server->router = router;
+
+   // 新版本 (2.5.x)
+   uvhttp_server_t* server = NULL;
+   uvhttp_error_t r = uvhttp_server_new(loop, &server);
+   if (r != UVHTTP_OK) { /* 处理错误 */ }
+
+   uvhttp_router_t* router = NULL;
+   uvhttp_router_new(&router);
+   uvhttp_server_set_router(server, router);  // 使用 setter，不要直接访问结构体
+   ```
+
+2. **请求处理函数签名**
+   - 处理函数现在同时接收 request 与 response，并返回 `int`。不再有
+     `uvhttp_response_new()`——response 由框架创建。
+
+   ```c
+   // 旧版本 (2.4.x)
+   void hello_handler(uvhttp_request_t* req) {
+       uvhttp_response_t* res = uvhttp_response_new(req);
+       uvhttp_response_set_body(res, "Hello");
+       uvhttp_response_send(res);
+   }
+
+   // 新版本 (2.5.x)
+   int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+       uvhttp_response_set_status(res, 200);
+       uvhttp_response_set_body(res, "Hello");
+       return uvhttp_response_send(res);
+   }
+   ```
+
+3. **内存安全验证**
+   - 全部测试套件已通过 AddressSanitizer（零泄漏、零 use-after-free、零溢出）
+     与 UndefinedBehaviorSanitizer 验证。完整修复列表见
+     [更新日志](../guide/CHANGELOG.md)。
+
 ## 发布流程
 
 1. 在 `develop` 分支开发
@@ -351,19 +402,19 @@ cmake -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON ..
 
 - **持续时间**: 6 个月
 - **更新**: 仅安全修复
-- **当前 LTS**: 2.2.x
+- **当前 LTS**: 2.5.x
 
 ### 稳定版
 
 - **持续时间**: 3 个月
 - **更新**: Bug 修复和安全修复
-- **当前稳定版**: 2.2.x
+- **当前稳定版**: 2.5.x
 
 ### 开发版
 
 - **持续时间**: 直到下一个稳定版发布
 - **更新**: 所有更改，包括破坏性变更
-- **当前开发版**: 2.3.x（develop 分支）
+- **当前开发版**: 2.6.x（develop 分支）
 
 ## 获取帮助
 

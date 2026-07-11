@@ -175,13 +175,14 @@ static void process_request(uvhttp_request_t* request) {
  * @brief Create a new HTTP server
  *
  * @param loop The libuv event loop
- * @return uvhttp_server_t* Server object, or NULL on failure
+ * @param server Output parameter for the server object
+ * @return uvhttp_error_t UVHTTP_OK on success, error code on failure
  *
  * @note The server does not start listening until uvhttp_server_listen() is called
  * @see uvhttp_server_listen()
  * @see uvhttp_server_free()
  */
-uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop);
+uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server);
 ```
 
 #### 行内注释
@@ -563,9 +564,10 @@ if (result != UVHTTP_OK) {
 
 ```c
 uvhttp_error_t init_server(uvhttp_server_t** server_out) {
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    if (!server) {
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t err = uvhttp_server_new(loop, &server);
+    if (err != UVHTTP_OK) {
+        return err;
     }
 
     uvhttp_error_t result = uvhttp_server_listen(server, "0.0.0.0", 8080);
@@ -631,7 +633,9 @@ int uvhttp_error_is_recoverable(uvhttp_error_t error);
 ```cpp
 /* 示例：test_router_add_route.cpp */
 TEST(RouterTest, AddRoute) {
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_error_t result = uvhttp_router_new(&router);
+    ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
     
     uvhttp_router_add_route(router, "/api", test_handler);
@@ -1318,7 +1322,8 @@ netstat -s
  * @brief Create a new HTTP server
  *
  * @param loop The libuv event loop
- * @return uvhttp_server_t* Server object, or NULL on failure
+ * @param server Output parameter for the server object
+ * @return uvhttp_error_t UVHTTP_OK on success, error code on failure
  *
  * @note The server does not start listening until uvhttp_server_listen() is called
  * @see uvhttp_server_listen()
@@ -1326,11 +1331,12 @@ netstat -s
  * 
  * @code
  * uv_loop_t* loop = uv_default_loop();
- * uvhttp_server_t* server = uvhttp_server_new(loop);
+ * uvhttp_server_t* server = NULL;
+ * uvhttp_server_new(loop, &server);
  * uvhttp_server_listen(server, "0.0.0.0", 8080);
  * @endcode
  */
-uvhttp_server_t* uvhttp_server_new(uv_loop_t* loop);
+uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server);
 ```
 
 #### API 文档结构
@@ -1404,7 +1410,8 @@ UVHTTP 是一个基于 libuv 的高性能 HTTP 服务器库。
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
     uv_run(loop, UV_RUN_DEFAULT);
     return 0;

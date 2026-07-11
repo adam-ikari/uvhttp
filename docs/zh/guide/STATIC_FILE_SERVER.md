@@ -90,16 +90,19 @@ int main() {
     };
     
     // 创建静态文件服务上下文
-    uvhttp_static_context_t* ctx = uvhttp_static_create(&config);
+    uvhttp_static_context_t* ctx = NULL;
+    uvhttp_static_create(&config, &ctx);
     
     // 创建服务器
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
     
     // 设置静态文件处理器
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     uvhttp_router_add_route(router, "/*", static_file_handler);
-    server->router = router;
+    uvhttp_server_set_router(server, router);
     
     // 启动服务器
     uvhttp_server_listen(server, "0.0.0.0", 8080);
@@ -270,13 +273,14 @@ uvhttp_add_mime_mapping(".custom", "application/custom");
 2. **使用请求处理器**：
 ```c
 // 在处理器中进行自定义验证
-void custom_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+int custom_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* path = uvhttp_request_get_path(req);
     if (!is_allowed_file(path)) {
         uvhttp_response_set_status(res, 403);
         return uvhttp_response_send(res);
     }
     // 处理请求
+    return uvhttp_response_send(res);
 }
 ```                serve_500_page(response);
                 break;
@@ -383,7 +387,8 @@ config.sendfile_timeout_ms = 15000;  // 15秒超时
 config.sendfile_max_retry = 3;       // 最多重试3次
 config.sendfile_chunk_size = 128 * 1024;  // 128KB分块
 
-uvhttp_static_context_t* ctx = uvhttp_static_create(&config);
+uvhttp_static_context_t* ctx = NULL;
+uvhttp_static_create(&config, &ctx);
 ```
 
 #### 超时检测机制

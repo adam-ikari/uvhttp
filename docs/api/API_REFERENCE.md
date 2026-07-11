@@ -135,14 +135,17 @@ if (result != UVHTTP_OK) {
 ### uvhttp_router_new
 
 ```c
-uvhttp_router_t* uvhttp_router_new(void);
+uvhttp_error_t uvhttp_router_new(uvhttp_router_t** router);
 ```
 
 Creates a new router object.
 
+**Parameters**:
+- `router`: Output parameter, returns router object pointer
+
 **Return Value**:
-- Success: Router object pointer
-- Failure: `NULL`
+- `UVHTTP_OK`: Success
+- Other values: Error code (use `uvhttp_error_string()` to get error description)
 
 ### uvhttp_router_free
 
@@ -248,8 +251,8 @@ Gets the request body.
 ### uvhttp_response_set_status
 
 ```c
-void uvhttp_response_set_status(uvhttp_response_t* response,
-                               int status_code);
+uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response,
+                                          int status_code);
 ```
 
 Sets the response status code.
@@ -266,9 +269,9 @@ uvhttp_response_set_status(response, 200);
 ### uvhttp_response_set_header
 
 ```c
-void uvhttp_response_set_header(uvhttp_response_t* response,
-                               const char* name,
-                               const char* value);
+uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response,
+                                          const char* name,
+                                          const char* value);
 ```
 
 Sets a response header.
@@ -286,9 +289,9 @@ uvhttp_response_set_header(response, "Content-Type", "application/json");
 ### uvhttp_response_set_body
 
 ```c
-void uvhttp_response_set_body(uvhttp_response_t* response,
-                             const char* body,
-                             size_t len);
+uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response,
+                                        const char* body,
+                                        size_t len);
 ```
 
 Sets the response body.
@@ -659,21 +662,27 @@ UVHTTP_ALLOCATOR_TYPE             # Allocator type (0=system, 1=mimalloc)
 ```c
 #include "uvhttp.h"
 
-void home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/plain");
     const char* body = "Hello, World!";
     uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    return uvhttp_response_send(response);
 }
 
 int main(void) {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t r = uvhttp_server_new(loop, &server);
+    if (r != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(r));
+        return 1;
+    }
     
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     uvhttp_router_add_route(router, "/", home_handler);
-    server->router = router;
+    uvhttp_server_set_router(server, router);
     
     uvhttp_error_t result = uvhttp_server_listen(server, "0.0.0.0", 8080);
     if (result != UVHTTP_OK) {

@@ -83,7 +83,12 @@ int main() {
     signal(SIGTERM, signal_handler);
     
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t r = uvhttp_server_new(loop, &server);
+    if (r != UVHTTP_OK) {
+        fprintf(stderr, "创建服务器失败: %s\n", uvhttp_error_string(r));
+        return 1;
+    }
     // ... 配置服务器 ...
     
     uvhttp_server_listen(server, "0.0.0.0", 8080);
@@ -120,8 +125,10 @@ uvhttp_server_listen(server, "127.0.0.1", 8080);
 uv_loop_t* loop = uv_default_loop();
 
 // 创建多个服务器
-uvhttp_server_t* server1 = uvhttp_server_new(loop);
-uvhttp_server_t* server2 = uvhttp_server_new(loop);
+uvhttp_server_t* server1 = NULL;
+uvhttp_server_t* server2 = NULL;
+uvhttp_server_new(loop, &server1);
+uvhttp_server_new(loop, &server2);
 
 // 配置每个服务器
 uvhttp_server_listen(server1, "0.0.0.0", 8080);
@@ -355,7 +362,8 @@ int on_message(uvhttp_ws_connection_t* ws_conn, const char* data,
 uvhttp_config_t* config = uvhttp_config_create();
 config->keepalive_timeout = 60;  // 60 秒
 
-uvhttp_server_t* server = uvhttp_server_new(loop);
+uvhttp_server_t* server = NULL;
+uvhttp_server_new(loop, &server);
 uvhttp_server_set_config(server, config);
 ```
 
@@ -367,7 +375,10 @@ uvhttp_server_set_config(server, config);
 // 使用 uvhttp_static 时自动启用
 
 // 启动时预热缓存
-uvhttp_static_context_t* static_ctx = uvhttp_static_create("/var/www/static");
+uvhttp_static_config_t config = {0};
+strncpy(config.root_directory, "/var/www/static", sizeof(config.root_directory) - 1);
+uvhttp_static_context_t* static_ctx = NULL;
+uvhttp_static_create(&config, &static_ctx);
 uvhttp_static_prewarm_directory(static_ctx, "/var/www/static", 100);
 
 // 大文件（>1MB）自动使用 sendfile
@@ -425,7 +436,8 @@ uvhttp_config_t* config = uvhttp_config_create();
 uvhttp_config_set_keepalive_timeout(config, 300);  // 5 分钟
 uvhttp_config_set_request_timeout(config, 60);    // 1 分钟
 
-uvhttp_server_t* server = uvhttp_server_new(loop);
+uvhttp_server_t* server = NULL;
+uvhttp_server_new(loop, &server);
 uvhttp_server_set_config(server, config);
 ```
 

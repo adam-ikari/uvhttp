@@ -83,7 +83,8 @@ int main() {
     signal(SIGTERM, signal_handler);
     
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
     // ... setup server ...
     
     uvhttp_server_listen(server, "0.0.0.0", 8080);
@@ -120,8 +121,10 @@ uvhttp_server_listen(server, "127.0.0.1", 8080);
 uv_loop_t* loop = uv_default_loop();
 
 // Create multiple servers
-uvhttp_server_t* server1 = uvhttp_server_new(loop);
-uvhttp_server_t* server2 = uvhttp_server_new(loop);
+uvhttp_server_t* server1 = NULL;
+uvhttp_server_t* server2 = NULL;
+uvhttp_server_new(loop, &server1);
+uvhttp_server_new(loop, &server2);
 
 // Configure each server
 uvhttp_server_listen(server1, "0.0.0.0", 8080);
@@ -355,7 +358,8 @@ int on_message(uvhttp_ws_connection_t* ws_conn, const char* data,
 uvhttp_config_t* config = uvhttp_config_create();
 config->keepalive_timeout = 60;  // 60 seconds
 
-uvhttp_server_t* server = uvhttp_server_new(loop);
+uvhttp_server_t* server = NULL;
+uvhttp_server_new(loop, &server);
 uvhttp_server_set_config(server, config);
 ```
 
@@ -425,7 +429,8 @@ uvhttp_config_t* config = uvhttp_config_create();
 uvhttp_config_set_keepalive_timeout(config, 300);  // 5 minutes
 uvhttp_config_set_request_timeout(config, 60);    // 1 minute
 
-uvhttp_server_t* server = uvhttp_server_new(loop);
+uvhttp_server_t* server = NULL;
+uvhttp_server_new(loop, &server);
 uvhttp_server_set_config(server, config);
 ```
 
