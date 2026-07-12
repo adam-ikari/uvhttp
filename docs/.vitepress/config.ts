@@ -50,6 +50,7 @@ export default defineConfig({
           { text: 'API', link: '/api/introduction' },
           { text: 'Memory Safety', link: '/MEMORY_SAFETY' },
           { text: 'Performance', link: '/guide/performance' },
+          { text: 'Embedded Profile', link: '/embedded-profile' },
           { text: 'Versions', link: '/guide/versions' },
           {
             text: 'Download',
@@ -151,6 +152,7 @@ export default defineConfig({
           { text: 'API', link: '/zh/api/introduction' },
           { text: '内存安全', link: '/zh/MEMORY_SAFETY' },
           { text: '性能', link: '/zh/performance' },
+          { text: '嵌入式画像', link: '/zh/embedded-profile' },
           { text: '版本', link: '/zh/versions' },
           { 
             text: '下载', 
