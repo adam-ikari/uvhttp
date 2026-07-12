@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed — genuine memory-safety bugs in library code (all passed normal tests but corrupted memory under ASan)
 
+- **`uvhttp_router.c` `add_route_method`** (found by libFuzzer): heap-buffer-overflow — after a parameter route triggered migration to the trie (`migrate_to_trie` reset `array_capacity` to 0), a subsequent *non-parameter* route fell through to `add_array_route`, whose `new_capacity = array_capacity * 2` computed 0, causing `realloc(NULL, 0)` to return a minimal block that `strncpy` then overflowed. Fixed: the trie/array branch decision now also checks `router->use_trie`, so all routes go to the trie once migrated.
 - **`uvhttp_router.c` `find_or_create_child`**: heap-use-after-free — a cached `parent` pointer into the node pool dangled after `create_route_node` reallocated the pool. Now re-fetched after the realloc.
 - **`uvhttp_server.c` `uvhttp_server_free`**: heap-use-after-free on double-free — the `freed` flag was read from already-freed memory. `NULL` is now a safe no-op (standard `free(NULL)` convention).
 - **`uvhttp_websocket.c` `uvhttp_ws_close`**: stack-buffer-underflow — tests registered stack-local `ws_conn` objects whose lifetime ended before teardown.

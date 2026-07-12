@@ -56,11 +56,48 @@ resolvable, source-level stack trace.
 
 Memory safety is a **non-regressing invariant**, not a one-time check:
 
+- **PR CI gate** (`.github/workflows/ci-pr.yml`): the `asan-gate` job runs the
+  suite under ASan on every pull request — memory safety cannot regress into
+  `main`.
 - **Nightly CI** (`.github/workflows/ci-nightly.yml`): the `test-memory` (ASan
   with leak detection) and `test-ubsan` jobs run the full suite under each
   sanitizer every night.
+- **Nightly fuzzing** (`.github/workflows/ci-fuzz.yml`): a libFuzzer harness
+  (`test/fuzz/fuzz_router.c`) drives the router with millions of arbitrary
+  inputs under ASan — finding bugs the fixed test inputs do not reach (it
+  already found one; see below).
 - **Build-system guard**: sanitizer/Debug builds are never stripped, so CI
   findings are always debuggable.
+
+## Fuzzing
+
+Sanitizers cover the code paths the test suite exercises. Fuzzing covers the
+paths it doesn't. UVHTTP ships a libFuzzer harness for the router
+(`test/fuzz/fuzz_router.c`), run nightly in CI.
+
+```bash
+# Build (clang + libFuzzer + ASan)
+cmake -B build_fuzz -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON \
+  -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+cmake --build build_fuzz -j$(nproc) --target uvhttp
+clang -g -O1 -fsanitize=fuzzer,address -fno-omit-frame-pointer \
+  -Iinclude -Ideps/llhttp/include -Ideps/uthash/src \
+  -Ideps/mbedtls/include -Ideps/cjson -Ideps/libuv/include \
+  test/fuzz/fuzz_router.c build_fuzz/dist/lib/libuvhttp.a \
+  -Wl,--start-group \
+  deps/llhttp/build/libllhttp.a deps/cjson/build/libcjson.a \
+  deps/mbedtls/build/library/libmbedtls.a deps/mbedtls/build/library/libmbedx509.a \
+  deps/mbedtls/build/library/libmbedcrypto.a deps/libuv/build/libuv.a \
+  -Wl,--end-group -lpthread -lm -ldl -o fuzz_router
+
+# Run
+./fuzz_router -max_total_time=60 -max_len=256
+```
+
+A clean run exits 0 with no `ERROR:` line. The harness already found the
+`add_route_method` heap-buffer-overflow listed in the table below (a
+post-migration non-parameter route registration that the unit tests never
+performed in that order) — which is exactly the point of fuzzing.
 
 ## Bug classes fixed to reach this guarantee
 
@@ -71,6 +108,7 @@ normal test suite but corrupted memory under sanitizers. Representative fixes
 
 | Bug class | Location | Detail |
 |-----------|----------|--------|
+| heap-buffer-overflow | `uvhttp_router.c` `add_route_method` | **Found by libFuzzer.** After a parameter route triggered trie migration (resetting `array_capacity` to 0), a later non-parameter route fell through to `add_array_route`, whose `0*2` capacity computed a zero-size realloc that `strncpy` overflowed. The normal test suite never hit this route-registration order. |
 | heap-use-after-free | `uvhttp_router.c` `find_or_create_child` | cached pointer into node pool dangled after `realloc` grew the pool |
 | heap-use-after-free | `uvhttp_server.c` `uvhttp_server_free` | `freed` flag read from already-freed memory on double-free |
 | heap-use-after-free | `uvhttp_connection.c` | post-close read; `close_pending` accounting broken on re-entry |

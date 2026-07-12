@@ -402,7 +402,8 @@ uvhttp_error_t uvhttp_router_add_route_method(
     int has_params = (strchr(path, ':') != NULL);
 
     // if has parameter or router count exceeds threshold, use Trie
-    if (has_params || router->array_route_count >= HYBRID_THRESHOLD) {
+    if (has_params || router->array_route_count >= HYBRID_THRESHOLD ||
+        router->use_trie) {
         if (!router->use_trie) {
             uvhttp_error_t err = migrate_to_trie(router);
             if (err != UVHTTP_OK) {

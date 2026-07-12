@@ -159,6 +159,44 @@ jobs:
           path: build/Testing/
           retention-days: 7
   
+  # 任务: ASan memory-safety gate (runs on every PR, not just nightly).
+  # Memory safety is a non-regressing invariant. A fast ASan subset on each PR
+  # catches leaks/use-after-free/overflows before merge instead of waiting for
+  # the nightly full run. The full ASan+UBSan suite still runs nightly
+  # (ci-nightly.yml test-memory / test-ubsan).
+  asan-gate:
+    needs: [ubuntu-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Configure with AddressSanitizer
+        run: |
+          # ENABLE_ASAN keeps debug symbols (no strip) so findings are debuggable.
+          cmake -B build-asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON
+          cmake --build build-asan -j$(nproc)
+
+      - name: Run tests under ASan (memory-safety gate)
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build-asan
+          test-type: memory
+          timeout: 120
+          parallel: 1
+
+      - name: Upload ASan test results
+        if: always()
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: asan-gate-pr-${{ github.event.pull_request.number }}
+          path: build-asan/Testing/
+          retention-days: 7
+
   # 任务 5: 代码格式检查
   format-check:
     runs-on: ubuntu-latest
@@ -182,7 +220,7 @@ jobs:
   # ========== 阶段 2: 生成总结 ==========
   
   generate-summary:
-    needs: [ubuntu-build, code-quality-check, dependency-scan, ubuntu-test-fast, format-check]
+    needs: [ubuntu-build, code-quality-check, dependency-scan, ubuntu-test-fast, asan-gate, format-check]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
@@ -209,6 +247,7 @@ jobs:
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| cppcheck | ${{ needs.code-quality-check.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Format | ${{ needs.format-check.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ASan memory-safety gate | ${{ needs.asan-gate.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Security" >> $GITHUB_STEP_SUMMARY
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY

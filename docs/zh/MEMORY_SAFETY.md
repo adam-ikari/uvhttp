@@ -47,8 +47,35 @@ cmake --build build_ubsan -j$(nproc)
 
 内存安全是一项**不回退的不变量（non-regressing invariant）**，而非一次性的检查：
 
+- **PR CI 门禁**（`.github/workflows/ci-pr.yml`）：`asan-gate` 作业在每个 PR 上以 ASan 运行测试套件——内存安全不可回退进 `main`。
 - **每夜 CI**（`.github/workflows/ci-nightly.yml`）：`test-memory`（含内存泄漏检测的 ASan）与 `test-ubsan` 作业每夜在各自消毒器下运行完整测试套件。
+- **每夜模糊测试**（`.github/workflows/ci-fuzz.yml`）：libFuzzer 测试桩（`test/fuzz/fuzz_router.c`）在 ASan 下以数百万任意输入驱动路由器——发现固定测试输入无法覆盖的 bug（已发现一个，见下）。
 - **构建系统护栏**：消毒器 / Debug 构建从不被 strip，因此 CI 中的发现始终可调试。
+
+## 模糊测试
+
+消毒器覆盖测试套件所执行的代码路径。模糊测试覆盖它未触及的路径。UVHTTP 为路由器提供了一个 libFuzzer 测试桩（`test/fuzz/fuzz_router.c`），在 CI 中每夜运行。
+
+```bash
+# Build (clang + libFuzzer + ASan)
+cmake -B build_fuzz -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON \
+  -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+cmake --build build_fuzz -j$(nproc) --target uvhttp
+clang -g -O1 -fsanitize=fuzzer,address -fno-omit-frame-pointer \
+  -Iinclude -Ideps/llhttp/include -Ideps/uthash/src \
+  -Ideps/mbedtls/include -Ideps/cjson -Ideps/libuv/include \
+  test/fuzz/fuzz_router.c build_fuzz/dist/lib/libuvhttp.a \
+  -Wl,--start-group \
+  deps/llhttp/build/libllhttp.a deps/cjson/build/libcjson.a \
+  deps/mbedtls/build/library/libmbedtls.a deps/mbedtls/build/library/libmbedx509.a \
+  deps/mbedtls/build/library/libmbedcrypto.a deps/libuv/build/libuv.a \
+  -Wl,--end-group -lpthread -lm -ldl -o fuzz_router
+
+# Run
+./fuzz_router -max_total_time=60 -max_len=256
+```
+
+一次干净的运行以 0 退出且不含 `ERROR:` 行。该测试桩已发现下表所列的 `add_route_method` 堆缓冲区溢出（一种迁移后注册非参数路由的方式，单元测试从未以该顺序执行过）——这恰恰正是模糊测试的意义所在。
 
 ## 为达成此承诺而修复的缺陷类别
 
@@ -56,6 +83,7 @@ cmake --build build_ubsan -j$(nproc)
 
 | 缺陷类别 | 位置 | 详情 |
 |----------|------|------|
+| 堆缓冲区溢出 | `uvhttp_router.c` `add_route_method` | **由 libFuzzer 发现。** 在一条参数路由触发 trie 迁移（将 `array_capacity` 重置为 0）后，后续的一条非参数路由落入 `add_array_route`，其 `0*2` 容量计算出一个零大小的 realloc，`strncpy` 随之溢出。常规测试套件从未触及这一路由注册顺序。 |
 | 堆内存释放后使用 | `uvhttp_router.c` `find_or_create_child` | 指向节点池的缓存指针在 `realloc` 扩展池后悬空 |
 | 堆内存释放后使用 | `uvhttp_server.c` `uvhttp_server_free` | 双重释放时从已释放内存读取 `freed` 标志 |
 | 堆内存释放后使用 | `uvhttp_connection.c` | 关闭后读取；`close_pending` 计数在重入时出错 |
