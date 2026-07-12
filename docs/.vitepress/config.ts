@@ -29,13 +29,13 @@ export default defineConfig({
       content: "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://adam-ikari.github.io; object-src 'none'; base-uri 'self'; form-action 'self';"
     }],
     ['meta', { property: 'og:title', content: 'UVHTTP v2.5.0 - High-performance HTTP server with 32-bit support and compression' }],
-    ['meta', { property: 'og:description', content: 'Peak throughput: 23,226 RPS | 32-bit embedded support | Zero-overhead compression' }],
+    ['meta', { property: 'og:description', content: 'ASan/UBSan-verified | ~20K RPS | 32-bit embedded support | Zero-overhead compression' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:url', content: 'https://adam-ikari.github.io/uvhttp' }],
     ['meta', { property: 'og:site_name', content: 'UVHTTP' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     ['meta', { name: 'twitter:title', content: 'UVHTTP v2.5.0 - High-performance HTTP server with 32-bit support and compression' }],
-    ['meta', { name: 'twitter:description', content: 'Peak throughput: 23,226 RPS | 32-bit embedded support | Zero-overhead compression' }],
+    ['meta', { name: 'twitter:description', content: 'ASan/UBSan-verified | ~20K RPS | 32-bit embedded support | Zero-overhead compression' }],
     ['link', { rel: 'canonical', href: 'https://adam-ikari.github.io/uvhttp/' }]
   ],
 
@@ -147,8 +147,8 @@ export default defineConfig({
           { text: '首页', link: '/zh/' },
           { text: '指南', link: '/zh/guide/getting-started' },
           { text: 'API', link: '/zh/api/introduction' },
-          { text: '性能', link: '/zh/guide/performance' },
-          { text: '版本', link: '/zh/guide/versions' },
+          { text: '性能', link: '/zh/performance' },
+          { text: '版本', link: '/zh/versions' },
           { 
             text: '下载', 
             items: [
@@ -176,7 +176,6 @@ export default defineConfig({
               items: [
                 { text: '教程', link: '/zh/guide/TUTORIAL' },
                 { text: 'libuv 数据指针', link: '/zh/guide/LIBUV_DATA_POINTER' },
-                { text: '中间件系统', link: '/zh/guide/MIDDLEWARE_SYSTEM' },
                 { text: '统一响应指南', link: '/zh/guide/UNIFIED_RESPONSE_GUIDE' }
               ]
             },
@@ -184,14 +183,23 @@ export default defineConfig({
               text: '功能模块',
               items: [
                 { text: '限流 API', link: '/zh/guide/RATE_LIMIT_API' },
-                { text: '静态文件服务', link: '/zh/guide/STATIC_FILE_SERVER' },
-                { text: 'WebSocket 认证', link: '/zh/guide/WEBSOCKET_AUTH' }
+                { text: '静态文件服务', link: '/zh/guide/STATIC_FILE_SERVER' }
               ]
             },
             {
               text: '开发指南',
               items: [
                 { text: '开发者指南', link: '/zh/guide/DEVELOPER_GUIDE' }
+              ]
+            },
+            {
+              text: '参考',
+              items: [
+                { text: '常见问题', link: '/zh/FAQ' },
+                { text: '安全指南', link: '/zh/SECURITY' },
+                { text: '路线图', link: '/zh/ROADMAP' },
+                { text: '性能指标', link: '/zh/performance' },
+                { text: '版本信息', link: '/zh/versions' }
               ]
             }
           ],
@@ -237,7 +245,6 @@ export default defineConfig({
             {
               text: '参考文档',
               items: [
-                { text: '错误码参考', link: '/zh/dev/ERROR_CODES' },
                 { text: '路由搜索模式', link: '/zh/dev/ROUTER_SEARCH_MODES' },
                 { text: '安全指南', link: '/zh/dev/SECURITY' },
                 { text: '构建配置矩阵', link: '/zh/BUILD_CONFIGURATION_MATRIX' },
