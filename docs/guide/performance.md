@@ -4,24 +4,28 @@ UVHTTP is designed for high performance and low latency. This document provides 
 
 ## Performance Metrics
 
-### Benchmark Results (Updated: 2026-07-10)
+### Benchmark Results (Updated: 2026-07-12)
 
-Throughput varies by hardware. The values below are from a recent run on a Linux
-VM (Linux 6.17, x86_64) using `wrk 4.1.0` against the built-in `test_performance_e2e`
-server, Release build. Reproduce: `wrk -t4 -c<N> -d10s http://127.0.0.1:18080/simple`.
+Measured on the original benchmark host (AMD Ryzen 7 5800H, 12 cores, Linux
+6.17.13-2-pve) with `wrk 4.1.0` against the built-in `test_performance_e2e`
+server, GCC 11.4.0 Release build (`-O2 -DNDEBUG`), system allocator.
+Reproduce: `wrk -t4 -c<N> -d10s http://127.0.0.1:18090/simple`.
 
-| Metric | Value | Notes |
-|--------|-------|-------|
-| **Peak Throughput** | ~20K RPS | Low concurrency (10 connections, 2 threads) |
-| **High Concurrency** | ~19K RPS | 100 connections, 4 threads |
-| **Very High Concurrency** | ~19K RPS | 1000 connections, 4 threads |
-| **JSON Endpoint** | ~19.7K RPS | 100 connections |
-| **Large Response (1KB)** | ~19.4K RPS | 100 connections, 9.85 MB/s transfer |
-| **Average Latency** | ~9–21 ms | P50–P90, 100 connections (`/json`) |
-| **Socket Errors** | **0%** | Zero errors at all concurrency levels |
+| Scenario | RPS | Avg Latency | Max Latency | Notes |
+|----------|-----|-------------|-------------|-------|
+| **Low concurrency** (10 conn) | **19,887** | 0.35 ms | 6.59 ms | P50 0.32 / P99 0.86 ms |
+| **Medium concurrency** (100 conn) | **19,834** | 5.03 ms | 19.25 ms | |
+| **High concurrency** (500 conn) | **19,810** | 25.31 ms | 62.81 ms | flat vs 100 conn |
+| **Extreme concurrency** (1000 conn) | **18,518** | 56.31 ms | 322 ms | graceful degradation |
+| **JSON endpoint** (100 conn) | 19,451 | 5.15 ms | 20.48 ms | 2.84 MB/s transfer |
+| **Large response 1KB** (100 conn) | 19,524 | 5.13 ms | 14.50 ms | 9.92 MB/s transfer |
+| **Socket errors** | **0** | — | — | zero errors across all levels |
+| **Total requests served** | 1,341,713 | — | — | zero server-side errors |
 
 **Test Environment**:
 - OS: Linux 6.17.13-2-pve
+- CPU: AMD Ryzen 7 5800H (12 cores)
+- Compiler: GCC 11.4.0
 - Tool: wrk 4.1.0
 - Test Duration: 10 seconds per test
 - Build Type: Release (-O2 -DNDEBUG)
@@ -32,7 +36,7 @@ server, Release build. Reproduce: `wrk -t4 -c<N> -d10s http://127.0.0.1:18080/si
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=OFF .
 cmake --build . -j$(nproc) --target test_performance_e2e
-./dist/bin/test_performance_e2e 18080
+./dist/bin/test_performance_e2e 18090
 wrk -t4 -c100 -d10s http://127.0.0.1:18080/simple
 ```
 
@@ -196,14 +200,17 @@ kill $SERVER_PID 2>/dev/null || true
 
 | Library | Throughput (RPS) | Latency (ms) | Memory Usage |
 |---------|------------------|--------------|--------------|
-| **UVHTTP** | **~20,000** | **~9 (P50)** | **Low** |
+| **UVHTTP** | **~19,800** | **~5 (P50), ~0.86 (P99 low)** | **Low** |
 | libuv-http | 18,500 | 3.45 | Medium |
 | microhttpd | 15,200 | 4.20 | Low |
 | mongoose | 12,800 | 5.10 | Medium |
 
-*Note: Results may vary based on hardware and configuration. UVHTTP figures are
-from a recent Linux VM run; earlier measurements on the original benchmark host
-reported up to ~31K RPS at 100 connections.*
+*Note: Results may vary based on hardware, host load, and test duration. UVHTTP
+figures above are from the 2026-07-12 run on the original benchmark host
+(AMD Ryzen 7 5800H, 10s duration). Earlier 3s-duration runs on the same host
+reported up to ~28–31K RPS; the sustained-throughput figure (~19.8K, flat from
+100 to 500 connections, zero errors) is the production-representative number.
+Full historical baselines are in `docs/performance/baseline-history.json`.*
 
 ## Monitoring Performance
 
