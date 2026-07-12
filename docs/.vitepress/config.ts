@@ -48,10 +48,11 @@ export default defineConfig({
           { text: 'Home', link: '/' },
           { text: 'Guide', link: '/guide/getting-started' },
           { text: 'API', link: '/api/introduction' },
+          { text: 'Memory Safety', link: '/MEMORY_SAFETY' },
           { text: 'Performance', link: '/guide/performance' },
           { text: 'Versions', link: '/guide/versions' },
-          { 
-            text: 'Download', 
+          {
+            text: 'Download',
             items: [
               { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' },
               { text: 'Release v2.5.0', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.5.0' }
@@ -88,6 +89,7 @@ export default defineConfig({
             {
               text: 'Reference',
               items: [
+                { text: 'Memory Safety', link: '/MEMORY_SAFETY' },
                 { text: 'FAQ', link: '/guide/FAQ' },
                 { text: 'Security', link: '/guide/SECURITY' },
                 { text: 'Roadmap', link: '/guide/ROADMAP' },
@@ -147,6 +149,7 @@ export default defineConfig({
           { text: '首页', link: '/zh/' },
           { text: '指南', link: '/zh/guide/getting-started' },
           { text: 'API', link: '/zh/api/introduction' },
+          { text: '内存安全', link: '/zh/MEMORY_SAFETY' },
           { text: '性能', link: '/zh/performance' },
           { text: '版本', link: '/zh/versions' },
           { 
@@ -195,6 +198,7 @@ export default defineConfig({
             {
               text: '参考',
               items: [
+                { text: '内存安全', link: '/zh/MEMORY_SAFETY' },
                 { text: '常见问题', link: '/zh/FAQ' },
                 { text: '安全指南', link: '/zh/SECURITY' },
                 { text: '路线图', link: '/zh/ROADMAP' },

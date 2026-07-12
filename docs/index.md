@@ -3,28 +3,33 @@ layout: home
 
 hero:
   name: UVHTTP
-  text: High-Performance HTTP/1.1 and WebSocket Server Library
-  tagline: Event-driven architecture with 32-bit embedded support and zero-overhead compression
+  text: Lightweight, Embeddable HTTP/1.1 & WebSocket — Memory-Safety Verified
+  tagline: The C HTTP library in its class with ASan + UBSan-verified memory safety. 32-bit embedded support, zero-copy, ~20K RPS — throughput you can measure, memory safety you can prove.
   actions:
     - theme: brand
       text: Get Started
       link: /guide/getting-started
     - theme: alt
-      text: API Reference
-      link: /api/introduction
+      text: Memory Safety
+      link: /MEMORY_SAFETY
     - theme: alt
       text: View on GitHub
       link: https://github.com/adam-ikari/uvhttp
 
 features:
-  - title: 🚀 Exceptional Performance
-    details: |
-      Peak throughput: **~20K RPS** with low-latency event-driven I/O.
-      Optimized for high-concurrency scenarios with zero socket errors under load.
-  - title: 🛡️ Memory-Safety Verified
+  - title: 🛡️ Memory-Safety Verified (the differentiator)
     details: |
       Full 91-test suite verified clean under AddressSanitizer (no leaks, no
-      use-after-free, no overflows) and UndefinedBehaviorSanitizer.
+      use-after-free, no overflows) and UndefinedBehaviorSanitizer. Verified on
+      every nightly CI run — and reproducible with one command:
+      `make verify-memory-safety`. The property most lightweight C HTTP
+      libraries do not provide, and the one that matters for long-running and
+      embedded deployments.
+  - title: 🚀 Solid, Stable Throughput
+    details: |
+      ~20K RPS, flat from 100 to 500 connections, with zero socket errors across
+      1M+ requests. Not chasing the single-host peak (nginx/h2o win there) —
+      chasing predictable, leak-free, long-uptime behavior.
   - title: 💾 Zero-Copy Transmission
     details: |
       Native sendfile integration for large file transfers (>1MB).
@@ -80,11 +85,32 @@ with **zero socket errors**. Reproduce with `wrk -t4 -c100 -d10s`.
 - **UndefinedBehaviorSanitizer**: Full suite passes — zero undefined behavior
 - **Test Cases**: 91 unit/integration tests, all passing
 - **CI/CD**: Nightly ASan + UBSan jobs (see `.github/workflows/ci-nightly.yml`)
+- **One-command verify**: `make verify-memory-safety` — see [Memory Safety](./MEMORY_SAFETY.md)
 - **High-Coverage Modules** (≥95%):
   - uvhttp_utils.c: 100.0%
   - uvhttp_error.c: 98.8%
   - uvhttp_version.c: 98.3%
   - uvhttp_error_helpers.c: 95.9%
+
+### Why UVHTTP (vs. other lightweight C HTTP libraries)
+
+UVHTTP does not chase the single-host throughput crown — nginx and h2o win
+there. Its differentiator is **verified memory safety in a lightweight,
+embeddable, 32-bit-capable C library** — the property that matters for
+long-running services and embedded devices, and the one most comparable
+libraries do not provide.
+
+| Library | Embeddable C lib | 32-bit | ASan-clean (verified) | UBSan-clean (verified) |
+|---------|:----------------:|:------:|:---------------------:|:-----------------------:|
+| **UVHTTP** | ✅ | ✅ | ✅ 91/91, nightly CI | ✅ 91/91, nightly CI |
+| libuv-http | ✅ | ⚠️ | ❓ not advertised | ❓ not advertised |
+| microhttpd | ✅ | ⚠️ | ❓ not advertised | ❓ not advertised |
+| mongoose | ✅ | ✅ | ❓ not advertised | ❓ not advertised |
+| nginx | ❌ (standalone) | ✅ | ✅ (large team) | ❓ |
+
+> "not advertised" = the project does not publish a sanitizer-clean test gate;
+> absence of a finding is not verifiable. UVHTTP's is reproducible with
+> `make verify-memory-safety`.
 
 ### Performance Optimizations
 

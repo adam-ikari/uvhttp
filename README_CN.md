@@ -7,8 +7,8 @@
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux-orange.svg)
 ![Tests](https://img.shields.io/badge/tests-91%2F91%20passing-success.svg)
-![ASan](https://img.shields.io/badge/ASan-clean-success.svg)
-![UBSan](https://img.shields.io/badge/UBSan-clean-success.svg)
+[![ASan](https://img.shields.io/badge/ASan-clean-success.svg)](https://github.com/adam-ikari/uvhttp/actions/workflows/ci-nightly.yml)
+[![UBSan](https://img.shields.io/badge/UBSan-clean-success.svg)](https://github.com/adam-ikari/uvhttp/actions/workflows/ci-nightly.yml)
 
 **专注 HTTP/1.1 和 WebSocket 的高性能服务器库**
 
