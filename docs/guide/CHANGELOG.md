@@ -28,9 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed — build & CI
 
+- **`CMakeLists.txt`**: switched the C standard from C11 to **C99**
+  (`CMAKE_C_STANDARD 99`). The full library, tests, and examples build and
+  pass (91/91) under `-std=c99`/`-std=gnu99`. This broadens compiler support
+  and aligns with embedded toolchains that default to C99.
 - **`CMakeLists.txt`**: Sanitizer/Debug builds no longer strip (`-s`) — ASan/UBSan stack traces are now resolvable. Detection covers `ENABLE_DEBUG`, `ENABLE_ASAN/UBSAN/TSAN`, `CMAKE_BUILD_TYPE=Debug`, and any `-fsanitize=` in flags. Release builds still strip.
 - **`.github/workflows/ci-nightly.yml`**: `test-memory` job now uses `ENABLE_ASAN=ON` (symbols preserved); added a new `test-ubsan` job (`ENABLE_UBSAN=ON`), wired into the summary.
 - **`benchmark/benchmark_unified.c`**: fixed invalid `static` nested-function definitions that prevented compilation; added missing `<errno.h>`.
+- **`examples/Makefile.examples`**: `-std=c11` → `-std=c99`.
 
 ### Verified
 
@@ -435,7 +440,7 @@ See `docs/MIGRATION_GUIDE_LRU_CACHE.md` for detailed migration instructions.
 
 - **代码格式统一**
   - 统一头文件包含的缩进风格（4 空格）
-  - 符合项目 C11 代码规范
+  - 符合项目 C99 代码规范
 
 ### Performance
 

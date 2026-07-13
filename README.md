@@ -158,7 +158,7 @@ export LD_LIBRARY_PATH=../build/dist/lib:$LD_LIBRARY_PATH
 ### Prerequisites
 
 - **Just Command Runner**: Required for building (auto-installed via `./install_just.sh`)
-- **C Compiler**: GCC 4.8+ or Clang 3.4+ with C11 support
+- **C Compiler**: GCC 4.8+ or Clang 3.4+ with C99 support
 - **CMake**: Version 3.10 or higher
 - **Build Tools**: make, git
 - **Optional**: mimalloc for improved memory performance
@@ -444,7 +444,7 @@ ab -n 10000 -c 100 http://localhost:8080/
 We welcome contributions! Please follow these guidelines:
 
 1. Read [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines
-2. Follow the code style: C11 standard, 4-space indentation, K&R braces
+2. Follow the code style: C99 standard, 4-space indentation, K&R braces
 3. Ensure all tests pass: `./run_tests.sh`
 4. Zero compilation warnings: `-Werror` enabled
 5. Add tests for new features

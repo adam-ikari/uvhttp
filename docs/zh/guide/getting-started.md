@@ -11,7 +11,7 @@ UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中
 ## 环境要求
 
 - CMake 3.10+
-- C11 编译器（GCC 4.9+, Clang 3.5+）
+- C99 编译器（GCC 4.9+, Clang 3.5+）
 - libuv 1.x
 - llhttp
 

@@ -79,7 +79,7 @@ UVHTTP leverages libuv's event-driven architecture to achieve high concurrency w
 
 UVHTTP is designed with portability in mind:
 
-- **Standard C11 Compliance**: No compiler-specific extensions required
+- **Standard C99 Compliance**: No compiler-specific extensions required
 - **Self-Contained Dependencies**: All external libraries included as submodules
 - **Conditional Compilation**: Platform-specific code isolated behind feature macros
 - **POSIX Compliance**: Leverages POSIX APIs where available

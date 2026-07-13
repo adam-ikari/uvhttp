@@ -137,7 +137,7 @@ UVHTTP 旨在成为最受信任、性能最高、最友好的 C 语言 HTTP 服�
 ## 技术栈演进
 
 ### 当前技术栈
-- **核心**: C11、libuv、llhttp
+- **核心**: C99、libuv、llhttp
 - **TLS**: mbedtls
 - **内存**: mimalloc（可选）
 - **哈希**: xxHash

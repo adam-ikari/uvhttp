@@ -227,7 +227,7 @@ cd test/
 make -f Makefile.testability
 
 # 手动编译（确保包含所有必要的源文件）
-gcc -std=c11 -Wall -Wextra -g -O0 \
+gcc -std=c99 -Wall -Wextra -g -O0 \
     -DUVHTTP_TEST_MODE=1 \
     -DUVHTTP_FEATURE_MEMORY_TRACKING=1 \
     -DUVHTTP_FEATURE_NETWORK_MOCK=1 \
@@ -241,7 +241,7 @@ gcc -std=c11 -Wall -Wextra -g -O0 \
     -luv
 
 # 性能优化版本
-gcc -std=c11 -O2 -DNDEBUG \
+gcc -std=c99 -O2 -DNDEBUG \
     -DUVHTTP_TEST_MODE=1 \
     -I../include \
     -o test_program source.c \

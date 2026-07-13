@@ -2,7 +2,7 @@
 
 **Version**: v2.4.4  
 **Updated**: 2026-02-26  
-**C Standard**: C11
+**C Standard**: C99
 
 ## Overview
 
