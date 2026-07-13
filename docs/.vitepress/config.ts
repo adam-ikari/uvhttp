@@ -6,7 +6,8 @@ import apiSidebar from '../api/generated/sidebar.js'
 // https://vitepress.vuejs.org/config/app-configs
 export default defineConfig({
   title: 'UVHTTP',
-  description: 'High-performance HTTP/1.1 and WebSocket server library with 32-bit support and compression',
+  titleTemplate: ':title — UVHTTP',
+  description: 'Lightweight, embeddable C99 HTTP/1.1 & WebSocket server library with ASan/UBSan-verified memory safety, 32-bit embedded support, and zero-copy performance (~20K RPS).',
   // 本地开发使用 '/'，GitHub Pages 使用 '/uvhttp/'
   base: process.env.DEPLOY === 'gh-pages' ? '/uvhttp/' : '/',
   lang: 'en-US',
@@ -15,28 +16,61 @@ export default defineConfig({
 
   ignoreDeadLinks: true,
 
+  // Auto-generate a sitemap.xml on build (replaces the stale static one).
+  sitemap: {
+    hostname: 'https://adam-ikari.github.io/uvhttp/',
+    lastmodDate: new Date('2026-07-13')
+  },
+
   // Disable clean URLs for GitHub Pages compatibility
-  // This ensures consistent URL handling with .html extensions
   cleanUrls: false,
 
   head: [
-    ['meta', { name: 'keywords', content: 'HTTP, WebSocket, libuv, C, high-performance, server, async I/O, 32-bit, embedded systems, compression' }],
+    ['meta', { name: 'keywords', content: 'C HTTP server library, HTTP/1.1 server, WebSocket server, libuv, C99, ASan verified memory safety, UBSan, embedded HTTP server, 32-bit, zero-copy sendfile, lightweight C library' }],
     ['meta', { name: 'author', content: 'UVHTTP Contributors' }],
     ['meta', { name: 'viewport', content: 'width=device-width,initial-scale=1' }],
+    ['meta', { name: 'theme-color', content: '#3a7afe' }],
+    ['meta', { name: 'robots', content: 'index, follow, max-image-preview:large, max-snippet:-1' }],
     ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
     ['meta', {
       'http-equiv': 'Content-Security-Policy',
       content: "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://adam-ikari.github.io; object-src 'none'; base-uri 'self'; form-action 'self';"
     }],
-    ['meta', { property: 'og:title', content: 'UVHTTP v2.5.0 - High-performance HTTP server with 32-bit support and compression' }],
-    ['meta', { property: 'og:description', content: 'ASan/UBSan-verified | ~20K RPS | 32-bit embedded support | Zero-overhead compression' }],
+    ['meta', { property: 'og:title', content: 'UVHTTP — Memory-Safety-Verified C HTTP Server Library' }],
+    ['meta', { property: 'og:description', content: 'Lightweight, embeddable C99 HTTP/1.1 & WebSocket library with ASan+UBSan-verified memory safety, 32-bit embedded support, and ~20K RPS. Throughput you can measure, memory safety you can prove.' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:url', content: 'https://adam-ikari.github.io/uvhttp' }],
     ['meta', { property: 'og:site_name', content: 'UVHTTP' }],
+    ['meta', { property: 'og:locale', content: 'en_US' }],
+    ['meta', { property: 'og:locale:alternate', content: 'zh_CN' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-    ['meta', { name: 'twitter:title', content: 'UVHTTP v2.5.0 - High-performance HTTP server with 32-bit support and compression' }],
-    ['meta', { name: 'twitter:description', content: 'ASan/UBSan-verified | ~20K RPS | 32-bit embedded support | Zero-overhead compression' }],
-    ['link', { rel: 'canonical', href: 'https://adam-ikari.github.io/uvhttp/' }]
+    ['meta', { name: 'twitter:title', content: 'UVHTTP — Memory-Safety-Verified C HTTP Server Library' }],
+    ['meta', { name: 'twitter:description', content: 'Lightweight, embeddable C99 HTTP/1.1 & WebSocket library with ASan+UBSan-verified memory safety, 32-bit embedded support, ~20K RPS.' }],
+    ['link', { rel: 'canonical', href: 'https://adam-ikari.github.io/uvhttp/' }],
+    // Structured data: helps search engines understand this is a software library.
+    ['script', { type: 'application/ld+json' }, JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: 'UVHTTP',
+      applicationCategory: 'DeveloperApplication',
+      operatingSystem: 'Linux',
+      softwareVersion: '2.5.0',
+      programmingLanguage: 'C (C99)',
+      description: 'Lightweight, embeddable HTTP/1.1 and WebSocket server library built on libuv, with ASan/UBSan-verified memory safety and 32-bit embedded support.',
+      url: 'https://adam-ikari.github.io/uvhttp',
+      downloadUrl: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.5.0',
+      author: { '@type': 'Organization', name: 'UVHTTP Contributors' },
+      license: 'https://github.com/adam-ikari/uvhttp/blob/main/LICENSE',
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      featureList: [
+        'HTTP/1.1 and WebSocket server',
+        'ASan/UBSan-verified memory safety (91/91 tests)',
+        '32-bit embedded support',
+        'Zero-copy sendfile for large files',
+        'TLS 1.3 via mbedtls',
+        'Compile-time modular features'
+      ]
+    })]
   ],
 
   locales: {

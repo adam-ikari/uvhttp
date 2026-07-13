@@ -11,9 +11,9 @@
 [![UBSan](https://img.shields.io/badge/UBSan-clean-success.svg)](https://github.com/adam-ikari/uvhttp/actions/workflows/ci-nightly.yml)
 ![Performance](https://img.shields.io/badge/performance-~20K%20RPS-brightgreen.svg)
 
-**High-Performance HTTP/1.1 and WebSocket Server Library**
+**Memory-Safety-Verified C HTTP/1.1 & WebSocket Server Library**
 
-32-bit Embedded Support • Zero-Copy Optimization • Production Grade (ASan/UBSan-verified)
+Lightweight & Embeddable • 32-bit Support • Zero-Copy • ASan/UBSan-Verified Production Grade
 
 </div>
 

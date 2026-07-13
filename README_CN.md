@@ -10,9 +10,9 @@
 [![ASan](https://img.shields.io/badge/ASan-clean-success.svg)](https://github.com/adam-ikari/uvhttp/actions/workflows/ci-nightly.yml)
 [![UBSan](https://img.shields.io/badge/UBSan-clean-success.svg)](https://github.com/adam-ikari/uvhttp/actions/workflows/ci-nightly.yml)
 
-**专注 HTTP/1.1 和 WebSocket 的高性能服务器库**
+**内存安全已验证的 C HTTP/1.1 与 WebSocket 服务器库**
 
-专注核心 • 高性能 • 可配置 • 生产就绪（ASan/UBSan 验证）
+轻量可嵌入 • 32 位支持 • 零拷贝 • ASan/UBSan 验证生产级
 
 </div>
 

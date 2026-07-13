@@ -1,3 +1,8 @@
+---
+title: Introduction
+description: UVHTTP is a production-grade, event-driven HTTP/1.1 and WebSocket server library for modern C, built on libuv. ASan/UBSan-verified memory safety, 32-bit embedded support, zero-copy, modular features. Architecture overview and core principles.
+---
+
 # Introduction to UVHTTP
 
 Welcome to UVHTTP, a high-performance HTTP/1.1 and WebSocket server library built on libuv for modern C applications. This documentation provides comprehensive guidance for developers building scalable, efficient web services.

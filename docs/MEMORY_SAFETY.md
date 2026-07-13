@@ -1,3 +1,8 @@
+---
+title: Memory Safety — ASan & UBSan Verified
+description: "UVHTTP's memory-safety guarantee: the full 91-test suite is verified clean under AddressSanitizer and UndefinedBehaviorSanitizer, nightly in CI, reproducible with one command. Bug classes fixed, defense in depth, and why it matters for long-running and embedded deployments."
+---
+
 # Memory Safety
 
 UVHTTP's headline differentiator is not peak single-host throughput (nginx and

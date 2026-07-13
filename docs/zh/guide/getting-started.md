@@ -1,3 +1,8 @@
+---
+title: 快速开始
+description: 几分钟上手 UVHTTP——构建 C99 HTTP/WebSocket 服务器库，运行 hello-world 示例，添加第一条路由。涵盖 CMake/Just 构建、示例服务器与首个请求。
+---
+
 # 快速开始
 
 ## 📌 平台支持

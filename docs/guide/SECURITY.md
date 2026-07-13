@@ -1,3 +1,8 @@
+---
+title: Security
+description: UVHTTP security features — buffer-overflow protection, HTTP response-splitting prevention, input validation, TLS 1.3 via mbedtls, secure defaults, and the ASan/UBSan memory-safety verification workflow.
+---
+
 # Security Policy
 
 ## Overview

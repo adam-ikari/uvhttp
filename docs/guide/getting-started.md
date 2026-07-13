@@ -1,3 +1,8 @@
+---
+title: Quick Start
+description: Get started with UVHTTP in minutes — build the C99 HTTP/WebSocket server library, run the hello-world example, and add your first route. Covers build with CMake/Just, example servers, and first request.
+---
+
 # Quick Start
 
 This guide will help you get started with UVHTTP in just a few minutes.

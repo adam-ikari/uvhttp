@@ -1,3 +1,8 @@
+---
+title: 简介
+description: UVHTTP 是生产级、事件驱动的 HTTP/1.1 与 WebSocket 服务器库，基于 libuv 构建于现代 C。ASan/UBSan 验证内存安全，支持 32 位嵌入式，零拷贝，模块化特性。架构概览与核心原则。
+---
+
 # UVHTTP 简介
 
 欢迎使用 UVHTTP，这是一个基于 libuv 构建的高性能 HTTP/1.1 与 WebSocket 服务器库，面向现代 C 应用。本套文档为构建可扩展、高效 Web 服务的开发者提供全面指引。

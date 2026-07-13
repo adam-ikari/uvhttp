@@ -1,3 +1,8 @@
+---
+title: Versions & Compatibility
+description: UVHTTP version history and compatibility — current version 2.5.0, support policy, upgrade guide (including the 2.4→2.5 API migration to output-parameter constructors and the ASan/UBSan memory-safety verification).
+---
+
 # Versions
 
 This document provides information about UVHTTP versions and their compatibility.

@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: UVHTTP
-  text: Lightweight, Embeddable HTTP/1.1 & WebSocket — Memory-Safety Verified
-  tagline: The C HTTP library in its class with ASan + UBSan-verified memory safety. 32-bit embedded support, zero-copy, ~20K RPS — throughput you can measure, memory safety you can prove.
+  text: Memory-Safety-Verified C HTTP Server
+  tagline: A lightweight, embeddable C99 HTTP/1.1 & WebSocket library — the only one in its class verified clean under ASan and UBSan. Runs 32-bit embedded, serves ~20K RPS, leaks nothing. Throughput you can measure, memory safety you can prove.
   actions:
     - theme: brand
       text: Get Started
@@ -17,47 +17,45 @@ hero:
       link: https://github.com/adam-ikari/uvhttp
 
 features:
-  - title: 🛡️ Memory-Safety Verified (the differentiator)
+  - title: 🛡️ Memory-Safety Verified
     details: |
-      Full 91-test suite verified clean under AddressSanitizer (no leaks, no
-      use-after-free, no overflows) and UndefinedBehaviorSanitizer. Verified on
-      every nightly CI run — and reproducible with one command:
-      `make verify-memory-safety`. The property most lightweight C HTTP
-      libraries do not provide, and the one that matters for long-running and
-      embedded deployments.
-  - title: 🚀 Solid, Stable Throughput
+      The full 91-test suite passes clean under AddressSanitizer (zero leaks,
+      use-after-free, or overflows) and UndefinedBehaviorSanitizer — verified
+      nightly in CI, reproducible with one command: `make verify-memory-safety`.
+      The property most lightweight C HTTP libraries don't provide, and the one
+      that matters for long-running and embedded deployments.
+  - title: 🚀 Stable, Leak-Free Throughput
     details: |
-      ~20K RPS, flat from 100 to 500 connections, with zero socket errors across
+      ~20K RPS, flat from 100 to 500 connections, zero socket errors across
       1M+ requests. Not chasing the single-host peak (nginx/h2o win there) —
       chasing predictable, leak-free, long-uptime behavior.
-  - title: 💾 Zero-Copy Transmission
+  - title: 📦 Lightweight & 32-bit Embedded
     details: |
-      Native sendfile integration for large file transfers (>1MB).
-      Eliminates data copying between kernel and user space, achieving 50%+ performance gains.
+      ~257 KB static library, runs on 32-bit targets, cold-starts in ~310 ms.
+      Compile-time feature selection means you only pay for what you use —
+      perfect for resource-constrained devices.
+  - title: 💾 Zero-Copy File Transfer
+    details: |
+      Native sendfile integration moves large files (>1MB) directly from kernel
+      to socket, eliminating user-space copies and cutting CPU use 50%+.
   - title: 🧠 Intelligent Caching
     details: |
-      LRU cache with automatic preheating mechanisms.
-      Reduces disk I/O for frequently accessed static content, improving response times.
+      LRU cache with automatic preheating serves hot static content from memory,
+      shrinking disk I/O and response times for repeated requests.
   - title: 🔒 Security-First Design
     details: |
-      Comprehensive buffer overflow protection and rigorous input validation.
-      TLS 1.3 support through mbedtls for encrypted communications.
+      Buffer-overflow guards on every string path, response-splitting
+      prevention, strict input validation, and TLS 1.3 via mbedtls — with
+      zero compiler warnings under `-Werror`.
   - title: 🔧 Modular Architecture
     details: |
-      Compile-time feature selection for WebSocket, static files, rate limiting, and more.
-      Zero runtime overhead through macro-based modularization.
-  - title: ⚡ Minimal Footprint
-    details: |
-      Self-contained dependencies with optional mimalloc integration.
-      Suitable for embedded systems and resource-constrained environments.
+      Toggle WebSocket, static files, rate limiting, TLS, and compression at
+      compile time. Macro-based modularization adds zero runtime overhead.
   - title: 📐 Professional API
     details: |
-      Consistent naming conventions and intuitive API design.
-      Comprehensive error handling with detailed error codes and recovery suggestions.
-  - title: ✅ Production-Grade
-    details: |
-      Zero compilation warnings with strict code quality standards.
-      Complete resource management, memory safety, and extensive test coverage.
+      Consistent naming, intuitive request/response model, and a unified error
+      system with detailed codes and recovery guidance — easy to learn, hard to
+      misuse.
 
 ---
 
@@ -94,11 +92,12 @@ with **zero socket errors**. Reproduce with `wrk -t4 -c100 -d10s`.
 
 ### Why UVHTTP (vs. other lightweight C HTTP libraries)
 
-UVHTTP does not chase the single-host throughput crown — nginx and h2o win
-there. Its differentiator is **verified memory safety in a lightweight,
-embeddable, 32-bit-capable C library** — the property that matters for
-long-running services and embedded devices, and the one most comparable
-libraries do not provide.
+Most lightweight C HTTP libraries optimize for peak RPS and stop there. UVHTTP
+optimizes for **the property that breaks production**: memory safety. A
+per-connection leak or use-after-free that survives a 10-second benchmark will
+OOM an embedded device over a week. UVHTTP is the lightweight, embeddable,
+32-bit-capable C library that proves — under both AddressSanitizer and
+UndefinedBehaviorSanitizer, on every nightly CI run — that those bugs are gone.
 
 | Library | Embeddable C lib | 32-bit | ASan-clean (verified) | UBSan-clean (verified) |
 |---------|:----------------:|:------:|:---------------------:|:-----------------------:|
@@ -108,8 +107,8 @@ libraries do not provide.
 | mongoose | ✅ | ✅ | ❓ not advertised | ❓ not advertised |
 | nginx | ❌ (standalone) | ✅ | ✅ (large team) | ❓ |
 
-> "not advertised" = the project does not publish a sanitizer-clean test gate;
-> absence of a finding is not verifiable. UVHTTP's is reproducible with
+> "not advertised" means the project publishes no sanitizer-clean test gate, so
+> the absence of a finding is not verifiable. UVHTTP's is reproducible with
 > `make verify-memory-safety`.
 
 ### Performance Optimizations

@@ -1,3 +1,8 @@
+---
+title: Performance Benchmarks
+description: UVHTTP performance benchmarks — ~20K RPS, flat throughput from 100 to 500 connections, zero socket errors, P50/P99 latency. Measured on AMD Ryzen 7 5800H with wrk. Includes reproduce commands and historical baselines.
+---
+
 # Performance
 
 UVHTTP is designed for high performance and low latency. This document provides performance metrics and optimization tips.

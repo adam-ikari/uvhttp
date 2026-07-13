@@ -1,3 +1,8 @@
+---
+title: Embedded & Long-Run Profile
+description: "UVHTTP's embedded and long-running metrics: flat RSS over sustained load (0 KB growth in 60s), ~257 KB static library, ~310 ms cold start, and 32-bit support. The runtime complement to the ASan-clean memory-safety guarantee."
+---
+
 # Embedded & Long-Run Profile
 
 Peak single-host throughput is not UVHTTP's pitch (nginx and h2o win there).

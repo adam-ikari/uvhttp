@@ -1,3 +1,8 @@
+---
+title: API Reference
+description: UVHTTP API reference — server, router, request, response, connection, WebSocket, TLS, static files, and error handling. Current C99 API with output-parameter constructors and the int(req,res) handler signature.
+---
+
 # API Documentation
 
 ## Overview
