@@ -306,8 +306,8 @@ int main(int argc, char* argv[]) {
     uvhttp_router_add_route(router, "/strategy3", handler_strategy_3);
     uvhttp_router_add_route(router, "/convenient", handler_convenient);
     
-    server->router = router;
-    
+    uvhttp_server_set_router(server, router);
+
     /* 启动服务器 */
     if (uvhttp_server_listen(server, "0.0.0.0", port) != UVHTTP_OK) {
         fprintf(stderr, "Failed to start server\n");

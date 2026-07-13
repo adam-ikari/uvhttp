@@ -53,7 +53,7 @@ static int logging_demo_handler(uvhttp_request_t* request, uvhttp_response_t* re
 static int log_level_info_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     (void)request;
     
-    char body[512];
+    char body[1024];
     snprintf(body, sizeof(body),
              "UVHTTP Logging System\n"
              "==================\n\n"

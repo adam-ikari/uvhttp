@@ -76,7 +76,7 @@ for i in {1..10}; do curl http://localhost:8085/api; done
 **运行方式**：
 ```bash
 cd build
-./dist/bin/test_middleware
+./dist/bin/middleware_test_demo
 ```
 
 ## 中间件 API

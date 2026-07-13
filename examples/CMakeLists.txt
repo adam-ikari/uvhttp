@@ -76,6 +76,23 @@ if(BUILD_WITH_COMPRESSION)
     link_libraries(${ZLIB_LIBRARIES})
 endif()
 
+# 根目录示例（位于 examples/ 直接子文件）
+add_executable(simple_server simple_server.c)
+target_link_libraries(simple_server PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp cjson pthread m dl)
+target_include_directories(simple_server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include ${CMAKE_CURRENT_SOURCE_DIR}/../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cjson ${CMAKE_CURRENT_SOURCE_DIR}/../deps/llhttp/include)
+add_dependencies(simple_server uvhttp)
+uvhttp_add_example_dependencies(simple_server)
+
+# custom_compression_strategy.c uses the compression helpers, which are only
+# compiled in when BUILD_WITH_COMPRESSION is ON.
+if(BUILD_WITH_COMPRESSION)
+    add_executable(custom_compression_strategy custom_compression_strategy.c)
+    target_link_libraries(custom_compression_strategy PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp cjson pthread m dl)
+    target_include_directories(custom_compression_strategy PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include ${CMAKE_CURRENT_SOURCE_DIR}/../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../deps/cjson ${CMAKE_CURRENT_SOURCE_DIR}/../deps/llhttp/include)
+    add_dependencies(custom_compression_strategy uvhttp)
+    uvhttp_add_example_dependencies(custom_compression_strategy)
+endif()
+
 # 基础示例
 add_subdirectory(01_basics)
 
