@@ -20,6 +20,10 @@ typedef struct {
     uvhttp_static_context_t* static_ctx;
 } app_context_t;
 
+/* File-scope pointer so handlers (which take only req+res) can reach the
+ * static context. */
+static app_context_t* g_app = NULL;
+
 /* Signal handler */
 static void signal_handler(int sig) {
     (void)sig;
@@ -30,7 +34,10 @@ static void signal_handler(int sig) {
 
 static int static_handler(uvhttp_request_t* request,
                           uvhttp_response_t* response) {
-    return uvhttp_static_handle_request(request, response);
+    if (g_app && g_app->static_ctx) {
+        return uvhttp_static_handle_request(g_app->static_ctx, request, response);
+    }
+    return 0;
 }
 
 static int index_handler(uvhttp_request_t* request,
@@ -112,11 +119,21 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    app.server->router = app.router;
+    uvhttp_server_set_router(app.server, app.router);
+    g_app = &app;
 
     /* Create static files context */
     printf("\nCreating static files context...\n");
-    result = uvhttp_static_create(&app.static_ctx, static_dir);
+    uvhttp_static_config_t static_config;
+    memset(&static_config, 0, sizeof(static_config));
+    static_config.enable_directory_listing = 1;
+    static_config.enable_etag = 1;
+    static_config.enable_last_modified = 1;
+    static_config.max_cache_size = 10 * 1024 * 1024;
+    static_config.cache_ttl = 3600;
+    snprintf(static_config.root_directory, sizeof(static_config.root_directory),
+             "%s", static_dir);
+    result = uvhttp_static_create(&static_config, &app.static_ctx);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to create static context: %d\n", result);
         uvhttp_router_free(app.router);
