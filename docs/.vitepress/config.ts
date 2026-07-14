@@ -34,7 +34,7 @@ export default defineConfig({
     ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
     ['meta', {
       'http-equiv': 'Content-Security-Policy',
-      content: "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://adam-ikari.github.io; object-src 'none'; base-uri 'self'; form-action 'self';"
+      content: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://adam-ikari.github.io; object-src 'none'; base-uri 'self'; form-action 'self';"
     }],
     ['meta', { property: 'og:title', content: 'UVHTTP — Memory-Safety-Verified C HTTP Server Library' }],
     ['meta', { property: 'og:description', content: 'Lightweight, embeddable C99 HTTP/1.1 & WebSocket library with ASan+UBSan-verified memory safety, 32-bit embedded support, and ~20K RPS. Throughput you can measure, memory safety you can prove.' }],
