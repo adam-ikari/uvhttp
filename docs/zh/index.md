@@ -18,21 +18,21 @@ hero:
 
 features:
   - title: 🛡️ 内存安全已验证
-    details: 全部 91 项测试通过 ASan（零泄漏/UAF/溢出）与 UBSan 验证，每夜 CI 持续验证，`make verify-memory-safety` 一键复现。这是大多数轻量 C HTTP 库欠缺、却对长期运行与嵌入式至关重要的属性。
-  - title: 🚀 稳定无泄漏的吞吐
-    details: ~20K RPS，100 至 500 连接吞吐持平，1M+ 请求零 socket 错误。不追求单机峰值（那是 nginx/h2o 的强项），追求可预测、无泄漏、长寿命的行为。
-  - title: 📦 轻量且支持 32 位嵌入式
-    details: 静态库仅 ~257 KB，支持 32 位目标，冷启动 ~310ms。编译期按需启用功能，只为所用付费——完美适配资源受限设备。
-  - title: ⚡ 零拷贝文件传输
-    details: 原生 sendfile 集成，将大文件（>1MB）直接从内核送到 socket，消除用户态拷贝，CPU 占用降低 50%+。
+    details: ASan + UBSan 零问题——91/91 测试，零泄漏，每夜 CI。
+  - title: 🚀 稳定吞吐
+    details: ~20K RPS，100→500 连接持平，零 socket 错误。
+  - title: 📦 轻量且 32 位
+    details: 静态库 ~257 KB，支持 32 位，冷启动 ~310ms。
+  - title: ⚡ 零拷贝文件
+    details: 原生 sendfile 处理大文件——CPU 降低 50%+。
   - title: 💾 智能缓存
-    details: LRU 缓存配合自动预热，热门静态内容从内存直出，减少磁盘 I/O、缩短重复请求响应时间。
+    details: LRU 缓存 + 自动预热，热门内容直出内存。
   - title: 🔒 安全为先
-    details: 每条字符串路径均有缓冲区溢出防护，防响应拆分攻击，严格输入校验，TLS 1.3 基于 mbedtls，`-Werror` 下零编译警告。
-  - title: 🧩 模块化架构
-    details: WebSocket、静态文件、限流、TLS、压缩均可编译期开关。基于宏的模块化，运行时零开销。
-  - title: 📐 专业 API
-    details: 一致的命名、直观的请求/响应模型、统一的错误系统（含详细错误码与恢复建议）——易学、难误用。
+    details: 溢出防护、防响应拆分、TLS 1.3。
+  - title: 🧩 模块化
+    details: WebSocket / 静态 / TLS / 限流编译期开关。
+  - title: 📐 干净 API
+    details: 一致命名、统一错误，易学难误用。
 
 ---
 

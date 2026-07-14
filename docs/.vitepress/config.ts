@@ -204,6 +204,7 @@ export default defineConfig({
               items: [
                 { text: '介绍', link: '/zh/guide/introduction' },
                 { text: '快速开始', link: '/zh/guide/getting-started' },
+                { text: '构建指南', link: '/zh/guide/build' },
                 { text: '安装指南', link: '/zh/guide/installation' },
                 { text: 'CMake 配置', link: '/zh/guide/CMAKE_CONFIGURATION' },
                 { text: '第一个服务器', link: '/zh/guide/first-server' },
@@ -226,6 +227,15 @@ export default defineConfig({
               ]
             },
             {
+              text: '高级',
+              items: [
+                { text: '高级构建选项', link: '/zh/ADVANCED_BUILD_OPTIONS' },
+                { text: '构建配置矩阵', link: '/zh/BUILD_CONFIGURATION_MATRIX' },
+                { text: 'Linux 优化', link: '/zh/guide/LINUX_OPTIMIZATION' },
+                { text: 'LRU 缓存迁移', link: '/zh/guide/MIGRATION_GUIDE_LRU_CACHE' }
+              ]
+            },
+            {
               text: '开发指南',
               items: [
                 { text: '开发者指南', link: '/zh/guide/DEVELOPER_GUIDE' }
@@ -238,6 +248,7 @@ export default defineConfig({
                 { text: '常见问题', link: '/zh/FAQ' },
                 { text: '安全指南', link: '/zh/SECURITY' },
                 { text: '路线图', link: '/zh/ROADMAP' },
+                { text: '更新日志', link: '/zh/guide/CHANGELOG' },
                 { text: '性能指标', link: '/zh/performance' },
                 { text: '版本信息', link: '/zh/versions' }
               ]

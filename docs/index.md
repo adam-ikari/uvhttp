@@ -18,44 +18,21 @@ hero:
 
 features:
   - title: 🛡️ Memory-Safety Verified
-    details: |
-      The full 91-test suite passes clean under AddressSanitizer (zero leaks,
-      use-after-free, or overflows) and UndefinedBehaviorSanitizer — verified
-      nightly in CI, reproducible with one command: `make verify-memory-safety`.
-      The property most lightweight C HTTP libraries don't provide, and the one
-      that matters for long-running and embedded deployments.
-  - title: 🚀 Stable, Leak-Free Throughput
-    details: |
-      ~20K RPS, flat from 100 to 500 connections, zero socket errors across
-      1M+ requests. Not chasing the single-host peak (nginx/h2o win there) —
-      chasing predictable, leak-free, long-uptime behavior.
-  - title: 📦 Lightweight & 32-bit Embedded
-    details: |
-      ~257 KB static library, runs on 32-bit targets, cold-starts in ~310 ms.
-      Compile-time feature selection means you only pay for what you use —
-      perfect for resource-constrained devices.
-  - title: 💾 Zero-Copy File Transfer
-    details: |
-      Native sendfile integration moves large files (>1MB) directly from kernel
-      to socket, eliminating user-space copies and cutting CPU use 50%+.
-  - title: 🧠 Intelligent Caching
-    details: |
-      LRU cache with automatic preheating serves hot static content from memory,
-      shrinking disk I/O and response times for repeated requests.
-  - title: 🔒 Security-First Design
-    details: |
-      Buffer-overflow guards on every string path, response-splitting
-      prevention, strict input validation, and TLS 1.3 via mbedtls — with
-      zero compiler warnings under `-Werror`.
-  - title: 🔧 Modular Architecture
-    details: |
-      Toggle WebSocket, static files, rate limiting, TLS, and compression at
-      compile time. Macro-based modularization adds zero runtime overhead.
-  - title: 📐 Professional API
-    details: |
-      Consistent naming, intuitive request/response model, and a unified error
-      system with detailed codes and recovery guidance — easy to learn, hard to
-      misuse.
+    details: ASan + UBSan clean — 91/91 tests, zero leaks, nightly CI.
+  - title: 🚀 Stable Throughput
+    details: ~20K RPS, flat 100→500 connections, zero socket errors.
+  - title: 📦 Lightweight & 32-bit
+    details: ~257 KB static lib, runs on 32-bit, ~310 ms cold start.
+  - title: 💾 Zero-Copy Files
+    details: Native sendfile for large transfers — 50%+ less CPU.
+  - title: 🧠 Smart Caching
+    details: LRU cache with preheating for hot static content.
+  - title: 🔒 Security-First
+    details: Overflow guards, response-splitting prevention, TLS 1.3.
+  - title: 🔧 Modular
+    details: Toggle WebSocket / static / TLS / rate-limit at compile time.
+  - title: 📐 Clean API
+    details: Consistent naming, unified errors, easy to learn and misuse-proof.
 
 ---
 
