@@ -75,8 +75,6 @@ per-connection leak or use-after-free that survives a 10-second benchmark will
 OOM an embedded device over a week. UVHTTP is the lightweight, embeddable,
 32-bit-capable C library that proves — under both AddressSanitizer and
 UndefinedBehaviorSanitizer, on every nightly CI run — that those bugs are gone.
-
-| Library | Embeddable C lib | 32-bit | ASan-clean (verified) | UBSan-clean (verified) |
 |---------|:----------------:|:------:|:---------------------:|:-----------------------:|
 | **UVHTTP** | ✅ | ✅ | ✅ 91/91, nightly CI | ✅ 91/91, nightly CI |
 | libuv-http | ✅ | ⚠️ | ❓ not advertised | ❓ not advertised |
@@ -90,33 +88,33 @@ UndefinedBehaviorSanitizer, on every nightly CI run — that those bugs are gone
 
 ### Performance Optimizations
 
-- **Keep-Alive Connections**: ~1000x performance improvement through connection reuse
-- **TCP Optimizations**: TCP_NODELAY and TCP_KEEPALIVE enabled by default
-- **Router Optimization**: O(1) prefix matching for fast route resolution
-- **Memory Allocation**: Optional mimalloc for faster allocations
-- **Direct libuv Calls**: Zero abstraction layer overhead
+- **Keep-Alive**: connection reuse avoids re-establishing TCP per request
+- **TCP**: `TCP_NODELAY` and `TCP_KEEPALIVE` enabled by default
+- **Router**: O(1) prefix matching for route resolution
+- **Allocation**: optional mimalloc
+- **libuv**: called directly, no abstraction layer
 
 ---
 
 ## 🎯 Core Principles
 
 ### 1. Focus on Core Functionality
-UVHTTP provides essential HTTP/1.1 and WebSocket protocol handling without imposing business logic constraints. Application developers maintain complete control over authentication, databases, and other features.
+UVHTTP handles HTTP/1.1 and WebSocket protocol details; it does not impose business logic. The application keeps control over authentication, databases, and other features.
 
 ### 2. Zero Overhead Abstractions
-All abstractions are compile-time macros with zero runtime cost in production builds. Direct libuv API calls ensure maximum performance without intermediate layers.
+Abstractions are compile-time macros with no runtime cost in production builds. The library calls libuv directly, with no intermediate layers.
 
 ### 3. Minimalist Engineering
-The codebase prioritizes simplicity and clarity, eliminating unnecessary complexity. Self-contained dependencies and clean architecture reduce maintenance burden.
+The codebase favors simplicity. Self-contained dependencies and a clean architecture keep maintenance cost low.
 
 ### 4. Test Separation
-Production code contains no test-specific code. Testing is achieved through linker wrapping and external mock frameworks, ensuring library purity.
+Production code contains no test-specific code. Tests use linker wrapping and external mock frameworks, so the library ships clean.
 
 ### 5. Zero Global Variables
-All state is managed through libuv data pointers (loop->data or server->context), enabling multi-instance support and unit testing without global state pollution.
+All state is held in libuv data pointers (`loop->data` or `server->context`). This enables multi-instance support and unit testing without global-state pollution.
 
-### 6. Comprehensive Error Handling
-Unified error type system with detailed error codes, descriptions, and recovery suggestions. Every potential failure point is properly checked and reported.
+### 6. Error Handling
+A unified error type carries codes, descriptions, and recovery hints. Every failure point is checked and reported.
 
 ---
 
@@ -134,7 +132,7 @@ Unified error type system with detailed error codes, descriptions, and recovery 
 - **✅ x86 (32-bit)**: Fully supported with embedded optimizations
 - **🔨 ARM64**: Planned for future releases
 
-UVHTTP is currently optimized for Linux platforms with robust 32-bit embedded system support. We actively plan to expand cross-platform compatibility in upcoming releases.
+UVHTTP targets Linux, with 32-bit embedded support. Cross-platform expansion is on the roadmap.
 
 ---
 

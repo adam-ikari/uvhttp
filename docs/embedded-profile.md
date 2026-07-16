@@ -7,9 +7,8 @@ description: "UVHTTP's embedded and long-running metrics: flat RSS over sustaine
 
 Peak single-host throughput is not UVHTTP's pitch (nginx and h2o win there).
 For embedded devices and long-running services, the metrics that matter are
-different: **does memory stay flat over days of uptime? how small is the
-footprint? does it run on 32-bit? how fast does it start?** This page answers
-those.
+different: does memory stay flat over days of uptime? how small is the
+footprint? does it run on 32-bit? how fast does it start? This page covers each.
 
 These measurements complement the [memory-safety guarantee](./MEMORY_SAFETY.md):
 sanitizer-clean status tells you there are *no leaks by construction*; the

@@ -50,23 +50,23 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 
 ### 新增
 
-- **全面的测试覆盖改进**
-  - 新增 `test_version_full_coverage.cpp`：测试版本与构建信息 API（43 个测试用例）
-  - 新增 `test_error_complete_coverage.cpp`：测试所有错误码与处理（58 个测试用例）
-  - 新增 `test_protocol_upgrade_api_coverage.cpp`：测试协议升级 API（26 个测试用例）
-  - 新增 `test_connection_public_api_coverage.cpp`：测试连接管理 API（45 个测试用例）
-  - 增强 `test_utils_full_coverage.cpp`：重构并扩展工具测试
+- **测试覆盖改进**
+  - 新增 `test_version_full_coverage.cpp`：版本与构建信息 API（43 个测试用例）
+  - 新增 `test_error_complete_coverage.cpp`：错误码与处理（58 个测试用例）
+  - 新增 `test_protocol_upgrade_api_coverage.cpp`：协议升级 API（26 个测试用例）
+  - 新增 `test_connection_public_api_coverage.cpp`：连接管理 API（45 个测试用例）
+  - 增强 `test_utils_full_coverage.cpp`：工具测试重构
   - **合计**：跨 5 个测试文件新增 172 个测试用例
 
 ### 变更
 
 - **代码质量**
-  - 测试覆盖率从 85.4% 提升至 89.2%（+3.8%）
-  - 函数覆盖率达 92.0%（7336/7974 个函数）
-  - 行覆盖率达 89.2%（13386/15008 行）
+  - 覆盖率从 85.4% 提升至 89.2%（+3.8%）
+  - 函数覆盖率 92.0%（7336/7974 个函数）
+  - 行覆盖率 89.2%（13386/15008 行）
 
 - **模块覆盖率改进**
-  - `uvhttp_version.c`：0.0% → 98.3%（全面的版本 API 测试）
+  - `uvhttp_version.c`：0.0% → 98.3%（版本 API 测试）
   - `uvhttp_error.c`：31.7% → 98.8%（全部错误码与处理）
   - `uvhttp_protocol_upgrade.c`：39.6% → 73.6%（协议升级 API）
   - `uvhttp_connection.c`：42.6% → 42.8%（连接管理 API）
@@ -74,11 +74,11 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 ### 测试
 
 - **测试套件扩展**
-  - 所有新测试聚焦公共 API 覆盖
-  - 完整的 NULL 参数处理测试
-  - 错误条件与边界用例测试
-  - 跨核心模块的集成测试
-  - 全部 172 个新测试成功通过
+  - 新测试聚焦公共 API 覆盖
+  - NULL 参数处理测试
+  - 错误条件和边界用例测试
+  - 跨核心模块集成测试
+  - 172 个新测试全部通过
 
 - **覆盖要点**
   - 高覆盖模块（≥95%）：
@@ -97,9 +97,9 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 
 ### 文档
 
-- 使用最新测试结果更新性能基准
-- 结合覆盖统计增强 API 文档
-- 更新测试覆盖报告与指标
+- 更新性能基准
+- 增强 API 文档（覆盖率统计）
+- 更新测试覆盖率报告
 
 ## [2.4.4] - 2026-02-26
 
@@ -114,9 +114,9 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 
 ### 新增
 
-- **全面的内存泄漏测试**
+- **内存泄漏测试**
   - 新增 `test/unit/test_pure_gtest.cpp`：纯 Google Test 基线测试（3 个测试用例）
-  - 新增 `test/unit/test_simple_memory_leak.cpp`：全面的内存泄漏测试（7 个测试用例）
+  - 新增 `test/unit/test_simple_memory_leak.cpp`：内存泄漏测试（7 个测试用例）
     - 基本操作的内存管理
     - 连接生命周期（10 个连接）
     - 上下文管理
@@ -166,7 +166,7 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 
 ### 新增
 
-- **全面的端到端测试**
+- **端到端测试**
   - 新增 test_e2e_simple.c，使用外部服务器进程进行简单 e2e 测试
   - 新增 test_e2e_real.c，使用进程内服务器进行完整 e2e 测试
   - 新增 test_https_e2e.c，进行 HTTPS 端到端测试
@@ -236,7 +236,7 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
   - 修复每连接约 18KB 的内存泄漏，原因在于过早设置 freed 标志
   - 将资源清理从 uvhttp_connection_free 移至 on_handle_close 回调
   - 正确的清理顺序：TLS → request → response → read_buffer → connection
-  - 防止重复释放并确保所有资源被正确回收
+  - 防止重复释放，所有资源正确回收
   - 对长时间运行的服务器应用至关重要
 
 - **测试构建系统**
@@ -378,7 +378,7 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
   - 修复代码格式问题
 
 - **文档**
-  - 为 LRU 缓存变更新增全面迁移指南
+  - 为 LRU 缓存变更新增迁移指南
   - 新增双语 FAQ 文档（英文与中文）
   - 新增安全文档
   - 新增双语支持的文档规范
@@ -727,7 +727,7 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 - **边界检查**: 增强缓冲区边界检查，提升安全性
 
 ### Fixed
-- **循环逻辑**: 修复服务器循环逻辑，确保回调执行
+- **循环逻辑**: 修复服务器循环逻辑，回调执行
 - **内存泄漏**: 修复示例代码空指针保护
 - **测试超时**: 调整测试超时配置，避免并发竞争
 
@@ -880,7 +880,7 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 - **内存泄漏**: 修复 WebSocket 连接管理中的内存泄漏
 - **中等文件传输超时**: 使用分块发送（1MB chunks）
 - **示例程序内存泄漏**: 修复所有示例程序的内存管理不一致问题
-- **超时检测不完整**: 确保网络完全阻塞时也能及时响应
+- **超时检测不完整**: 网络完全阻塞时也能及时响应
 
 ### Performance
 - **性能测试结果**: 
@@ -929,7 +929,7 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 - **性能测试标准**: 详细的性能测试标准文档
 - **服务器配置指南**: 服务器配置性能优化指南
 - **限流功能**: 完整的限流功能实现和API文档
-- **性能测试工具**: 全面的性能测试框架和工具
+- **性能测试工具**: 性能测试框架和工具
 
 ### Changed
 - **限流API重构**: 将限流功能从中间件改为服务器核心功能
@@ -946,7 +946,7 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 
 ### Performance
 - **性能优化**: 完成性能优化和代码质量改进
-- **测试覆盖**: 添加全面的限流功能测试框架
+- **测试覆盖**: 添加限流功能测试框架
 - **API简化**: 简化限流API，移除未使用的算法参数
 
 ### Testing
@@ -1047,7 +1047,7 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 - **输入验证**: 28处输入验证调用，覆盖所有用户输入点
 
 ### Performance
-- **哈希算法**: 使用xxHash高性能哈希算法
+- **哈希算法**: 使用 xxHash 哈希算法
 - **LRU缓存**: 优化路由缓存和静态文件缓存
 - **零拷贝**: 减少内存拷贝操作
 - **连接池**: 优化连接复用和管理
@@ -1067,19 +1067,19 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 ## [1.0.0] - 2025-12-20
 
 ### Added
-- **初始发布**: 基于libuv的高性能HTTP服务器
+- **初始发布**: 基于 libuv 的 HTTP 服务器
 - **路由系统**: 支持动态路由和参数提取
 - **静态文件服务**: 高效的静态文件服务
 - **WebSocket支持**: 完整的WebSocket协议支持
 - **TLS/SSL**: 支持HTTPS加密连接
-- **LRU缓存**: 高性能缓存系统
+- **LRU缓存**: 缓存系统
 - **连接池**: 优化连接复用
 - **配置系统**: 灵活的配置管理
 - **错误处理**: 完善的错误处理和日志系统
 
 ### Features
 - 单线程事件驱动模型
-- 高性能异步I/O
+- 异步 I/O
 - 模块化设计
 - 可扩展的插件系统
 - 详细的文档和示例

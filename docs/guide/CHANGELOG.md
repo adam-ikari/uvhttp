@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Comprehensive Test Coverage Improvements**
+- **Test Coverage Improvements**
   - Added `test_version_full_coverage.cpp`: Test version and build info APIs (43 test cases)
   - Added `test_error_complete_coverage.cpp`: Test all error codes and handling (58 test cases)
   - Added `test_protocol_upgrade_api_coverage.cpp`: Test protocol upgrade APIs (26 test cases)
@@ -95,7 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
 - Updated performance benchmarks with latest test results
-- Enhanced API documentation with coverage statistics
+- Added coverage statistics to API documentation
 - Updated test coverage reports and metrics
 
 ## [2.4.4] - 2026-02-26

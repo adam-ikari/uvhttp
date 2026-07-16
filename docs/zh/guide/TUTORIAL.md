@@ -1,7 +1,6 @@
-# UVHTTP 完整教程 - 从入门到精通
+# UVHTTP 完整教程
 
-> 本教程循序渐进地介绍如何使用 UVHTTP 构建高性能 HTTP 服务器
-> 从单线程服务到多线程架构，从简单路由到复杂配置，涵盖数据库集成和负载均衡
+> 本教程介绍如何使用 UVHTTP 构建 HTTP 服务器。
 
 ## 前置要求
 
@@ -351,7 +350,7 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 // 关于页面处理器
 int about_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    const char* html = "<html><body><h1>关于</h1><p>UVHTTP 高性能 HTTP 服务器</p></body></html>";
+    const char* html = "<html><body><h1>关于</h1><p>UVHTTP HTTP 服务器</p></body></html>";
     
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
@@ -1094,7 +1093,7 @@ cat > public/about.html << 'EOF'
 </head>
 <body>
     <h1>关于 UVHTTP</h1>
-    <p>UVHTTP 是一个高性能的 HTTP 服务器库。</p>
+    <p>UVHTTP 是 HTTP 服务器库。</p>
     <a href="/static/index.html">返回主页</a>
 </body>
 </html>
@@ -2658,7 +2657,7 @@ UVHTTP 采用自包含的依赖管理方式，所有必需的依赖都包含在 
 | llhttp | `deps/llhttp/` | HTTP 解析器 |
 | mbedtls | `deps/mbedtls/` | TLS/SSL 支持 |
 | cjson | `deps/cjson/` | JSON 解析和生成 |
-| mimalloc | `deps/mimalloc/` | 高性能内存分配器 |
+| mimalloc | `deps/mimalloc/` | 内存分配器 |
 | uthash | `deps/uthash/` | 哈希表实现 |
 | xxhash | `deps/xxhash/` | 快速哈希算法 |
 
@@ -2769,7 +2768,7 @@ chmod +x build_example.sh
 ```bash
 error: uvhttp.h: No such file or directory
 ```
-**解决方案**：确保包含路径正确
+**解决方案**：包含路径正确
 ```bash
 gcc -I../include ...
 ```
@@ -2778,7 +2777,7 @@ gcc -I../include ...
 ```bash
 undefined reference to `uvhttp_server_new'
 ```
-**解决方案**：确保链接了 UVHTTP 库
+**解决方案**：链接 UVHTTP 库
 ```bash
 gcc -L../build -luvhttp ...
 ```
@@ -2898,4 +2897,4 @@ int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 ---
 
-祝您使用 UVHTTP 构建高性能 HTTP 服务器！
+使用 UVHTTP 构建 HTTP 服务器。

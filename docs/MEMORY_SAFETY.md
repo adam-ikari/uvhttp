@@ -132,16 +132,16 @@ Each was root-caused (not masked) and fixed at the source.
 A C HTTP library that "passes its tests" can still leak a few kilobytes per
 connection, dereference freed memory on a rare close race, or build an
 unterminated string into a response. None of these fail a functional test. They
-manifest as:
+surface as:
 
 - **Slow RSS growth** over days/weeks of uptime (embedded devices cannot restart).
-- **Intermittent crashes** under production load patterns the test suite never hit.
+- **Intermittent crashes** under load patterns the test suite never hit.
 - **Security-reachable corruption** (buffer overflows in header/body parsing).
 
-Sanitizers are how you find these *before* deployment. The reason most
-lightweight C HTTP libraries do not advertise sanitizer-clean status is not that
-they are clean — it is that they have not run the check. UVHTTP runs it on every
-nightly, and treats any finding as a release blocker.
+Sanitizers catch these *before* deployment. Most lightweight C HTTP libraries do
+not advertise sanitizer-clean status — not because they are clean, but because
+they have not run the check. UVHTTP runs it nightly and treats any finding as a
+release blocker.
 
 ## Defense in depth
 

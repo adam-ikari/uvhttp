@@ -5,28 +5,28 @@ description: UVHTTP is a production-grade, event-driven HTTP/1.1 and WebSocket s
 
 # Introduction to UVHTTP
 
-Welcome to UVHTTP, a high-performance HTTP/1.1 and WebSocket server library built on libuv for modern C applications. This documentation provides comprehensive guidance for developers building scalable, efficient web services.
+UVHTTP is an event-driven HTTP/1.1 and WebSocket server library for C, built on libuv. These docs cover building web services with it.
 
 ## 🎯 What is UVHTTP?
 
-UVHTTP is a **production-grade, event-driven HTTP server library** designed for developers who require:
+UVHTTP is an **event-driven HTTP server library** for C, built on libuv:
 
-- **Exceptional Performance**: Peak throughput of 23,226 RPS with sub-millisecond latency
-- **Resource Efficiency**: Minimal memory footprint and CPU usage through zero-copy optimizations
-- **Architecture Flexibility**: Support for both 64-bit and 32-bit embedded systems
-- **Developer Experience**: Clean, intuitive API with comprehensive error handling
-- **Production Readiness**: Zero compilation warnings, complete test coverage, and security-first design
+- **Throughput**: peak 23,226 RPS, sub-millisecond latency
+- **Resource use**: small memory footprint and CPU usage via zero-copy
+- **Architecture**: 64-bit and 32-bit embedded support
+- **API**: clean, with error handling built in
+- **Production state**: zero warnings, full test coverage, security-first defaults
 
 ### Core Philosophy
 
-UVHTTP follows these fundamental principles:
+UVHTTP follows these principles:
 
-1. **Focus on Core Protocol Handling**: Provides HTTP/1.1 and WebSocket protocol processing without imposing business logic constraints
-2. **Zero Overhead Abstractions**: All abstractions are compile-time macros with zero runtime cost
-3. **Minimalist Engineering**: Eliminates unnecessary complexity while maintaining functionality
-4. **Test Separation**: Production code contains no test-specific code or debug instrumentation
-5. **Zero Global Variables**: All state managed through libuv data pointers for multi-instance support
-6. **Comprehensive Error Handling**: Unified error system with detailed diagnostics and recovery guidance
+1. **Focus on Core Protocol Handling**: HTTP/1.1 and WebSocket processing only; no business logic
+2. **Zero Overhead Abstractions**: all abstractions are compile-time macros with no runtime cost
+3. **Minimalist Engineering**: cut unnecessary complexity, keep functionality
+4. **Test Separation**: production code contains no test-specific code or debug instrumentation
+5. **Zero Global Variables**: all state held in libuv data pointers for multi-instance support
+6. **Error Handling**: unified error system with diagnostics and recovery guidance
 
 ---
 
@@ -34,7 +34,7 @@ UVHTTP follows these fundamental principles:
 
 ### Event-Driven Design
 
-UVHTTP leverages libuv's event-driven architecture to achieve high concurrency without threading complexity:
+UVHTTP uses libuv's event loop for high concurrency without threads:
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -82,12 +82,12 @@ UVHTTP leverages libuv's event-driven architecture to achieve high concurrency w
 
 ### Cross-Platform Considerations
 
-UVHTTP is designed with portability in mind:
+UVHTTP is built for portability:
 
-- **Standard C99 Compliance**: No compiler-specific extensions required
-- **Self-Contained Dependencies**: All external libraries included as submodules
-- **Conditional Compilation**: Platform-specific code isolated behind feature macros
-- **POSIX Compliance**: Leverages POSIX APIs where available
+- **Standard C99**: no compiler-specific extensions required
+- **Self-contained dependencies**: all external libraries included as submodules
+- **Conditional compilation**: platform-specific code isolated behind feature macros
+- **POSIX**: uses POSIX APIs where available
 
 ---
 
@@ -125,13 +125,13 @@ API Routing:
 
 ### Performance Optimizations
 
-1. **Keep-Alive Connections**: ~1000x improvement through connection reuse
-2. **TCP Optimizations**: TCP_NODELAY and TCP_KEEPALIVE enabled by default
-3. **Router Optimization**: O(1) prefix matching eliminates linear search
-4. **Memory Allocation**: Optional mimalloc for faster allocations and better fragmentation
-5. **Direct libuv Calls**: Zero abstraction layer between application and libuv
-6. **LRU Caching**: Automatic caching of static files with preheating
-7. **Zero-Copy I/O**: sendfile integration for large file transfers
+1. **Keep-Alive**: connection reuse avoids per-request TCP setup
+2. **TCP**: `TCP_NODELAY` and `TCP_KEEPALIVE` enabled by default
+3. **Router**: O(1) prefix matching, no linear search
+4. **Allocation**: optional mimalloc
+5. **Direct libuv calls**: no abstraction layer between application and libuv
+6. **LRU caching**: static files cached with preheating
+7. **Zero-copy I/O**: `sendfile` for large file transfers
 
 ---
 
@@ -139,12 +139,12 @@ API Routing:
 
 ### Built-in Security
 
-- **Buffer Overflow Protection**: Comprehensive bounds checking on all buffers
-- **Input Validation**: Strict validation of HTTP headers and request data
-- **TLS 1.3 Support**: Modern encryption through mbedtls integration
-- **Memory Safety**: Optional AddressSanitizer and Valgrind compatibility
-- **Error Handling**: Detailed error messages without information leakage
-- **Resource Limits**: Configurable limits for connections, headers, and body size
+- **Buffer Overflow Protection**: bounds checking on all buffers
+- **Input Validation**: HTTP headers and request data validated
+- **TLS 1.3 Support**: via mbedtls
+- **Memory Safety**: AddressSanitizer and Valgrind compatible
+- **Error Handling**: detailed errors without information leakage
+- **Resource Limits**: configurable connections, headers, and body size
 
 ### Security Best Practices
 
@@ -260,9 +260,9 @@ We welcome contributions! Please read our [Contributing Guidelines](../../CONTRI
 
 ### Getting Help
 
-- **GitHub Issues**: Report bugs and request features
-- **Discussions**: Ask questions and share ideas
-- **Documentation**: Comprehensive guides and API reference
+- **GitHub Issues**: report bugs and request features
+- **Discussions**: ask questions and share ideas
+- **Documentation**: guides and API reference
 
 ### License
 

@@ -7,7 +7,7 @@ description: UVHTTP security features — buffer-overflow protection, HTTP respo
 
 ## Overview
 
-This document describes the security policy for the UVHTTP project, including dependency management, vulnerability response procedures, and security best practices.
+This document covers the UVHTTP security policy: dependency management, vulnerability response, and security practices.
 
 ## Dependency Management
 
@@ -125,7 +125,7 @@ Use the following tools for automated security scanning:
 
 ### Input Validation
 
-UVHTTP implements comprehensive input validation:
+UVHTTP validates input:
 
 1. **URL Validation**
    - Maximum URL length: 2048 bytes
@@ -182,7 +182,7 @@ mbedtls_ssl_conf_ciphersuites(&conf, ciphers);
 
 ### DoS Protection
 
-UVHTTP implements multiple DoS protection mechanisms:
+UVHTTP applies several DoS protections:
 
 1. **Rate Limiting**
    - Token bucket algorithm
@@ -248,8 +248,8 @@ If you discover a security vulnerability, please report it responsibly:
 - **Sanitizer-verified**: The full 91-test suite passes clean under AddressSanitizer (with leak detection — zero leaks, zero use-after-free, zero buffer overflows) and UndefinedBehaviorSanitizer (zero undefined behavior). See `.github/workflows/ci-nightly.yml` (`test-memory` + `test-ubsan` jobs).
 - **Zero compilation warnings**: All code compiles with `-Werror`
 - **Memory allocator**: mimalloc for improved memory safety (optional; system allocator also supported)
-- **Buffer overflow protection**: All string operations validated
-- **Memory leak detection**: Regular Valgrind and AddressSanitizer testing
+- **Buffer overflow protection**: all string operations validated
+- **Memory leak detection**: regular Valgrind and AddressSanitizer testing
 
 ### Input Validation
 

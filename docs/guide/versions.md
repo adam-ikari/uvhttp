@@ -5,7 +5,7 @@ description: UVHTTP version history and compatibility — current version 2.5.0,
 
 # Versions
 
-This document provides information about UVHTTP versions and their compatibility.
+UVHTTP versions and compatibility.
 
 ## Current Version
 
