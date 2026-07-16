@@ -117,7 +117,7 @@ set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "" FORCE)
 ```
 
-**说明**：
+**说明**:
 - `-O2`：启用高级优化，平衡性能和编译时间
 - `-DNDEBUG`：禁用断言，提升性能
 - `-ffunction-sections -fdata-sections`：函数和数据分段
@@ -132,7 +132,7 @@ if(ENABLE_DEBUG)
 endif()
 ```
 
-**说明**：
+**说明**:
 - `-g`：生成调试信息
 - `-O0`：禁用所有优化
 - 保留所有断言和调试代码
@@ -147,7 +147,7 @@ if(ENABLE_COVERAGE)
 endif()
 ```
 
-**说明**：
+**说明**:
 - `--coverage`：启用代码覆盖率收集
 - `-fprofile-arcs`：生成程序流图
 - `-ftest-coverage`：生成覆盖率数据
@@ -156,14 +156,14 @@ endif()
 
 ### 1. 性能测试必须使用 Release 模式
 
-**原因**：
+**原因**:
 - Debug 模式的性能数据不具代表性
 - Debug 模式禁用所有优化，性能可能低 10-100 倍
 - 性能测试需要在生产环境配置下进行
 
-**示例**：
+**示例**:
 ```bash
-# ❌ 错误：使用 Debug 模式运行性能测试
+# 错误：使用 Debug 模式运行性能测试
 mkdir build && cd build
 cmake -DENABLE_DEBUG=ON ..
 make benchmark_rps
@@ -171,7 +171,7 @@ make benchmark_rps
 wrk -t4 -c100 -d30s http://127.0.0.1:8080/
 # 结果：~10,000 RPS（不准确）
 
-# ✅ 正确：使用 Release 模式运行性能测试
+# 正确：使用 Release 模式运行性能测试
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make benchmark_unified
@@ -182,12 +182,12 @@ wrk -t4 -c100 -d30s http://127.0.0.1:8080/
 
 ### 2. 开发和调试使用 Debug 模式
 
-**原因**：
+**原因**:
 - 完整的调试信息
 - 启用断言，及早发现问题
 - 便于使用 GDB/LLDB 调试
 
-**示例**：
+**示例**:
 ```bash
 mkdir build && cd build
 cmake -DENABLE_DEBUG=ON ..
@@ -197,11 +197,11 @@ make uvhttp_unit_tests
 
 ### 3. 代码覆盖率使用 Coverage 模式
 
-**原因**：
+**原因**:
 - 准确的覆盖率数据
 - 支持生成详细的覆盖率报告
 
-**示例**：
+**示例**:
 ```bash
 mkdir build && cd build
 cmake -DENABLE_COVERAGE=ON ..
@@ -212,7 +212,7 @@ gcovr --html --html-details -o coverage.html
 
 ### 4. 分离构建目录
 
-**推荐做法**：
+**推荐做法**:
 ```bash
 # Debug 构建
 mkdir build-debug && cd build-debug
@@ -371,14 +371,14 @@ cmake -DCMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG" \
 
 Debug 模式的性能通常比 Release 模式低 **10-100 倍**，因此：
 
-- ❌ 不要使用 Debug 模式的性能数据作为基准
-- ❌ 不要基于 Debug 模式的性能做优化决策
-- ✅ 性能测试必须使用 Release 模式
-- ✅ 性能对比必须在相同构建模式下进行
+- 不要使用 Debug 模式的性能数据作为基准
+- 不要基于 Debug 模式的性能做优化决策
+- 性能测试必须使用 Release 模式
+- 性能对比必须在相同构建模式下进行
 
 ## 总结
 
-**关键原则**：
+**关键原则**:
 1. **性能测试必须使用 Release 模式** - 否则数据不准确
 2. **开发和调试使用 Debug 模式** - 便于问题排查
 3. **覆盖率分析使用 Coverage 模式** - 准确的覆盖率数据

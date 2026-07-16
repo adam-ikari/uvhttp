@@ -683,12 +683,10 @@ if (result != UVHTTP_OK) {
 
 ## 7. 总结
 
-本文档描述了 UVHTTP 的完整生命周期管理方案，包括：
+UVHTTP 生命周期管理方案：
 
 1. **连接生命周期**: NEW → ACCEPTED → READING → SENDING → CLOSING → CLOSED
 2. **请求生命周期**: CREATED → PARSING → COMPLETE → HANDLED → CLEANED
 3. **响应生命周期**: CREATED → BUILDING → READY → SENDING → SENT → CLEANED
 4. **资源管理**: 统一分配器、句柄管理、内存管理
 5. **错误处理**: 错误检测、错误处理、错误恢复
-
-通过遵循这个生命周期方案，可以确保 UVHTTP 服务器能够正确地处理请求和发送响应，同时避免内存泄漏和资源泄漏。

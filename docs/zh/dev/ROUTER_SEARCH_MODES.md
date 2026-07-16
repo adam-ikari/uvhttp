@@ -1,6 +1,6 @@
 # uvhttp 路由查找模式配置指南
 
-## 📋 概述
+## 概述
 
 uvhttp 提供三种路由查找模式：
 
@@ -8,7 +8,7 @@ uvhttp 提供三种路由查找模式：
 - **模式 1**: 纯哈希查找 - 适用于中等规模应用  
 - **模式 2**: 混合策略 - 适用于大规模高并发应用（默认）
 
-## ⚙️ 编译配置
+## 编译配置
 
 ### 基本用法
 
@@ -42,7 +42,7 @@ gcc -DUVHTTP_ENABLE_ROUTER_CACHE_DYNAMIC=1 ...
 gcc -DUVHTTP_ENABLE_ROUTER_CACHE_MONITORING=1 ...
 ```
 
-## 📊 模式对比
+## 模式对比
 
 | 模式 | 内存开销 | 查找性能 | 适用场景 | 推荐配置 |
 |------|---------|---------|---------|---------|
@@ -50,7 +50,7 @@ gcc -DUVHTTP_ENABLE_ROUTER_CACHE_MONITORING=1 ...
 | 1 - 哈希 | 中等 | O(1) | 中等规模、10-50路由 | `SEARCH_MODE=1` |
 | 2 - 混合 | 较大 | O(1)最优 | 大规模、>50路由 | `SEARCH_MODE=2` |
 
-## 🎯 场景推荐
+## 场景推荐
 
 ### 嵌入式设备
 ```bash
@@ -74,7 +74,7 @@ gcc -DUVHTTP_ROUTER_SEARCH_MODE=2 \
      -O3 -march=native
 ```
 
-## 🔧 性能调优
+## 性能调优
 
 ### 内存优化
 - 使用 `SEARCH_MODE=0` 减少内存占用
@@ -89,7 +89,7 @@ gcc -DUVHTTP_ROUTER_SEARCH_MODE=2 \
 - 使用 `SEARCH_MODE=0` 简化调试过程
 - 禁用复杂缓存逻辑
 
-## 📈 性能基准
+## 性能基准
 
 理论性能估算（50个路由）：
 
@@ -99,7 +99,7 @@ gcc -DUVHTTP_ROUTER_SEARCH_MODE=2 \
 | 哈希 | ~200ns | ~4KB | N/A |
 | 混合 | ~180ns | ~8KB | ~60% |
 
-## 🚀 最佳实践
+## 最佳实践
 
 1. **开发阶段**: 使用 `SEARCH_MODE=0` 便于调试
 2. **测试阶段**: 使用 `SEARCH_MODE=1` 验证功能
@@ -109,4 +109,4 @@ gcc -DUVHTTP_ROUTER_SEARCH_MODE=2 \
 
 ---
 
-*基于 uvhttp 高性能 HTTP 服务器设计，为不同场景提供最优的路由查找策略。*
+*基于 uvhttp HTTP 服务器设计，为不同场景提供最优的路由查找策略。*
