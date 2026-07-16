@@ -36,7 +36,7 @@
 
 ### 背景
 
-UVHTTP 是一个基于 libuv 的高性能 HTTP/1.1 和 WebSocket 服务器库，采用 C99 标准编写。为了确保代码质量、性能稳定性和持续交付能力，需要构建一套完善的 CI/CD 系统。
+UVHTTP 是基于 libuv 的 HTTP/1.1 和 WebSocket 服务器库，采用 C99 标准编写。为了确保代码质量、性能稳定性和持续交付能力，需要构建一套 CI/CD 系统。
 
 ### 目标
 
@@ -703,7 +703,7 @@ current_rps = 21000
 degradation = (baseline_rps - current_rps) / baseline_rps * 100
 
 if degradation > 5:
-    print(f"⚠️ 性能退化: {degradation:.2f}%")
+    print(f"性能退化: {degradation:.2f}%")
 ```
 
 #### 基线管理
@@ -1402,13 +1402,13 @@ ctest --output-on-failure || {
 
 | 模块 | 目标覆盖率 | 当前覆盖率 | 状态 |
 |-----|-----------|-----------|------|
-| 整体 | 80% | 42.9% | ⚠️ 需提升 |
-| uvhttp_static.c | 80% | 17.2% | ❌ 严重不足 |
-| uvhttp_router.c | 80% | 32.3% | ⚠️ 需提升 |
-| uvhttp_connection.c | 80% | 32.2% | ⚠️ 需提升 |
-| uvhttp_server.c | 80% | 38.4% | ⚠️ 需提升 |
-| uvhttp_request.c | 80% | 40.5% | ⚠️ 需提升 |
-| uvhttp_tls.c | 80% | 38.3% | ⚠️ 需提升 |
+| 整体 | 80% | 42.9% | 需提升 |
+| uvhttp_static.c | 80% | 17.2% | 严重不足 |
+| uvhttp_router.c | 80% | 32.3% | 需提升 |
+| uvhttp_connection.c | 80% | 32.2% | 需提升 |
+| uvhttp_server.c | 80% | 38.4% | 需提升 |
+| uvhttp_request.c | 80% | 40.5% | 需提升 |
+| uvhttp_tls.c | 80% | 38.3% | 需提升 |
 
 ### 覆盖率报告生成
 
@@ -1519,11 +1519,11 @@ def check_performance_degradation(current, baseline, threshold=0.05):
 
 | 指标 | 退化阈值 | 告警级别 |
 |-----|---------|---------|
-| RPS | > 5% | ⚠️ Warning |
-| RPS | > 10% | 🔴 Error |
-| P95 延迟 | > 20% | ⚠️ Warning |
-| P95 延迟 | > 50% | 🔴 Error |
-| 错误率 | > 0.1% | 🔴 Error |
+| RPS | > 5% | Warning |
+| RPS | > 10% | Error |
+| P95 延迟 | > 20% | Warning |
+| P95 延迟 | > 50% | Error |
+| 错误率 | > 0.1% | Error |
 
 ### 性能趋势分析
 
@@ -1568,10 +1568,10 @@ def plot_performance_trend(data):
 
 | Scenario | Baseline RPS | Current RPS | Change | Status |
 |----------|--------------|-------------|--------|--------|
-| Low Concurrent (10) | 30,000 | 31,151 | +3.8% | ✅ |
-| Medium Concurrent (50) | 30,000 | 30,487 | +1.6% | ✅ |
-| High Concurrent (100) | 30,000 | 31,409 | +4.7% | ✅ |
-| Extreme Concurrent (500) | 25,000 | 28,234 | +12.9% | ✅ |
+| Low Concurrent (10) | 30,000 | 31,151 | +3.8% | |
+| Medium Concurrent (50) | 30,000 | 30,487 | +1.6% | |
+| High Concurrent (100) | 30,000 | 31,409 | +4.7% | |
+| Extreme Concurrent (500) | 25,000 | 28,234 | +12.9% | |
 
 ## Conclusion
 
@@ -1659,7 +1659,7 @@ jobs:
             const issue = await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `🔒 Security: ${alert.security_vulnerability.package.name}`,
+              title: `Security: ${alert.security_vulnerability.package.name}`,
               body: `Security alert: ${alert.html_url}`,
               labels: ['security', 'dependabot']
             });
@@ -1759,12 +1759,12 @@ git push origin v$(cat VERSION)
 
 | 指标 | 工具 | 阈值 | 告警 |
 |-----|------|------|------|
-| CI/CD 失败率 | GitHub Actions | > 5% | ✉️ Email |
-| 测试失败率 | Google Test | > 0% | ✉️ Email |
-| 性能退化 | wrk | > 5% | ✉️ Email |
-| 覆盖率下降 | lcov | > 1% | ✉️ Email |
-| 安全漏洞 | CodeQL | 高危 | 🔴 Issue |
-| 依赖漏洞 | Dependabot | 高危 | 🔴 Issue |
+| CI/CD 失败率 | GitHub Actions | > 5% | Email |
+| 测试失败率 | Google Test | > 0% | Email |
+| 性能退化 | wrk | > 5% | Email |
+| 覆盖率下降 | lcov | > 1% | Email |
+| 安全漏洞 | CodeQL | 高危 | Issue |
+| 依赖漏洞 | Dependabot | 高危 | Issue |
 
 ### 告警渠道
 
@@ -1814,7 +1814,7 @@ git push origin v$(cat VERSION)
     degradation = (baseline_rps - current_rps) / baseline_rps
     
     if degradation > 0.05:
-        print(f"⚠️ Performance degradation: {degradation:.2%}")
+        print(f"Performance degradation: {degradation:.2%}")
         exit(1)
     EOF
 ```
@@ -1825,7 +1825,7 @@ git push origin v$(cat VERSION)
 
 ### 1. 工作流设计
 
-#### ✅ 推荐
+#### 推荐
 
 ```yaml
 # 使用并发控制
@@ -1840,7 +1840,7 @@ strategy:
     config: [...]
 ```
 
-#### ❌ 避免
+#### 避免
 
 ```yaml
 # 不要硬编码版本号
@@ -1852,7 +1852,7 @@ strategy:
 
 ### 2. 缓存策略
 
-#### ✅ 推荐
+#### 推荐
 
 ```yaml
 - uses: actions/cache@v3
@@ -1863,7 +1863,7 @@ strategy:
     key: ${{ hashFiles('CMakeLists.txt') }}
 ```
 
-#### ❌ 避免
+#### 避免
 
 ```yaml
 # 不要缓存所有内容
@@ -1874,7 +1874,7 @@ strategy:
 
 ### 3. 错误处理
 
-#### ✅ 推荐
+#### 推荐
 
 ```yaml
 # 检查测试退出码
@@ -1889,7 +1889,7 @@ strategy:
   }
 ```
 
-#### ❌ 避免
+#### 避免
 
 ```yaml
 # 不要忽略所有错误
@@ -1898,7 +1898,7 @@ strategy:
 
 ### 4. 安全实践
 
-#### ✅ 推荐
+#### 推荐
 
 ```yaml
 # 使用最小权限
@@ -1910,7 +1910,7 @@ permissions:
 - run: echo ${{ secrets.MY_SECRET }}
 ```
 
-#### ❌ 避免
+#### 避免
 
 ```yaml
 # 不要给予过多权限
@@ -1923,7 +1923,7 @@ permissions:
 
 ### 5. 文档和注释
 
-#### ✅ 推荐
+#### 推荐
 
 ```yaml
 # 添加详细的注释
@@ -1936,7 +1936,7 @@ permissions:
     cmake -B build-32bit -DCMAKE_C_FLAGS="-m32"
 ```
 
-#### ❌ 避免
+#### 避免
 
 ```yaml
 # 不要没有注释的复杂命令

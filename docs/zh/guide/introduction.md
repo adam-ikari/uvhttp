@@ -67,12 +67,12 @@ UVHTTP 借助 libuv 的事件驱动架构实现高并发：
 
 | 平台 | 状态 | 备注 |
 |----------|--------|-------|
-| **Linux x86_64** | ✅ 稳定 | 主要平台 |
-| **Linux x86（32 位）** | ✅ 稳定 | 嵌入式优化 |
-| **macOS** | 🔨 开发中 | 测试阶段 |
-| **Windows** | 📋 已规划 | 下一主要版本 |
-| **FreeBSD** | 📋 已规划 | 社区需求 |
-| **WebAssembly** | 📋 已规划 | 浏览器环境 |
+| **Linux x86_64** | 稳定 | 主要平台 |
+| **Linux x86（32 位）** | 稳定 | 嵌入式优化 |
+| **macOS** | 开发中 | 测试阶段 |
+| **Windows** | 已规划 | 下一主要版本 |
+| **FreeBSD** | 已规划 | 社区需求 |
+| **WebAssembly** | 已规划 | 浏览器环境 |
 
 ### 跨平台考量
 
@@ -112,7 +112,7 @@ HTTP/1.1:
 API 路由:
   - Throughput: 13,950 RPS
   - Route Lookup: O(1)
-  - Middleware Overhead: < 10μs per request
+  - Middleware Overhead: < 10μs
 ```
 
 ### 性能优化

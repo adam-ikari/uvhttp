@@ -10,18 +10,18 @@ UVHTTP 集成 **xxHash** 作为核心哈希算法，用于路由查找、缓存�
 
 | 特性 | xxHash | CRC32 | FNV-1a | MD5 |
 |------|--------|-------|--------|-----|
-| **速度** | ⚡⚡⚡ 极快 | ⚡⚡ 快 | ⚡ 中等 | ⚡ 慢 |
+| **速度** | 极快 | 快 | 中等 | 慢 |
 | **冲突率** | 低 | 中 | 中 | 极低 |
 | **分布质量** | 优秀 | 良好 | 中等 | 优秀 |
 | **适用场景** | 路由、缓存、哈希表 | 校验和、简单哈希 | 字符串哈希 | 安全哈希 |
-| **跨平台** | ✅ 全平台 | ✅ 全平台 | ✅ 全平台 | ✅ 全平台 |
+| **跨平台** | 全平台 | 全平台 | 全平台 | 全平台 |
 
 ### 性能数据
 
-- **比 CRC32 快 3-5 倍**
-- **接近 RAM 速度限制**
-- **零分配设计，无内存开销**
-- **优秀的缓存局部性**
+- 比 CRC32 快 3-5 倍
+- 接近 RAM 速度限制
+- 零分配设计，无内存开销
+- 良好的缓存局部性
 
 ## API 接口
 
@@ -132,33 +132,33 @@ static inline uint32_t route_hash(const char* str) {
 ### 1. 字符串哈希
 
 ```c
-// ✅ 推荐：使用专用字符串哈希函数
+// 推荐：使用专用字符串哈希函数
 uint64_t hash = uvhttp_hash_string("user_data");
 
-// ❌ 避免：手动计算长度
+// 避免：手动计算长度
 uint64_t hash = uvhttp_hash("user_data", strlen("user_data"), seed);
 ```
 
 ### 2. 默认种子使用
 
 ```c
-// ✅ 推荐：使用默认种子确保一致性
+// 推荐：使用默认种子确保一致性
 uint64_t hash = uvhttp_hash_default(data, length);
 
-// ✅ 可选：自定义种子用于特定场景
+// 可选：自定义种子用于特定场景
 uint64_t hash = uvhttp_hash(data, length, custom_seed);
 ```
 
 ### 3. 性能优化
 
 ```c
-// ✅ 推荐：缓存频繁使用的哈希值
+// 推荐：缓存频繁使用的哈希值
 static uint64_t cached_route_hash = 0;
 if (!cached_route_hash) {
     cached_route_hash = uvhttp_hash_string("/api/users");
 }
 
-// ✅ 推荐：批量处理时重用种子
+// 推荐：批量处理时重用种子
 uint64_t seed = UVHTTP_HASH_DEFAULT_SEED;
 for (int i = 0; i < count; i++) {
     hashes[i] = uvhttp_hash(data[i], lengths[i], seed);
@@ -168,7 +168,7 @@ for (int i = 0; i < count; i++) {
 ### 4. 错误处理
 
 ```c
-// ✅ 推荐：输入验证
+// 推荐：输入验证
 if (!data || length == 0) {
     return 0; // 或适当的错误值
 }
@@ -180,22 +180,22 @@ uint64_t hash = uvhttp_hash(data, length, UVHTTP_HASH_DEFAULT_SEED);
 
 ### 适用场景
 
-xxHash 适用于以下**非加密**场景：
+xxHash 适用于以下非加密场景：
 
-- ✅ 路由查找和匹配
-- ✅ 缓存键生成
-- ✅ 数据完整性校验
-- ✅ 负载均衡
-- ✅ 哈希表实现
+- 路由查找和匹配
+- 缓存键生成
+- 数据完整性校验
+- 负载均衡
+- 哈希表实现
 
 ### 不适用场景
 
-xxHash **不适用于**以下加密场景：
+xxHash 不适用于以下加密场景：
 
-- ❌ 密码存储
-- ❌ 数字签名
-- ❌ 加密密钥生成
-- ❌ 安全令牌
+- 密码存储
+- 数字签名
+- 加密密钥生成
+- 安全令牌
 
 ### 安全增强
 
@@ -226,7 +226,7 @@ endif()
 xxHash 对内存对齐敏感，确保数据结构对齐：
 
 ```c
-// ✅ 推荐：对齐的数据结构
+// 推荐：对齐的数据结构
 typedef struct __attribute__((aligned(8))) {
     char data[64];
 } aligned_data_t;
