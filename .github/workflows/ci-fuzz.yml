@@ -1,0 +1,77 @@
+name: ci-fuzz
+
+on:
+  schedule:
+    # 03:17 UTC daily — off the top of the hour to spread load.
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Install clang (libFuzzer)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang
+
+      - name: Build fuzz targets (clang, libFuzzer + ASan)
+        run: |
+          # Use CMake to build the UVHTTP library so all feature defines match
+          # the real build, then link the harness against it with libFuzzer.
+          # libFuzzer requires clang.
+          export CC=clang
+          export CXX=clang++
+          export CFLAGS="-g -O1 -fsanitize=fuzzer-no-link,address -fno-omit-frame-pointer"
+          export CXXFLAGS="$CFLAGS"
+
+          # Configure the library with sanitizers (ENABLE_ASAN adds the right
+          # flags and keeps symbols). Tests/examples off to speed the build.
+          cmake -B build_fuzz -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON \
+            -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+          cmake --build build_fuzz -j$(nproc) --target uvhttp
+
+          INCLUDES="-Iinclude -Ideps/llhttp/include -Ideps/uthash/src -Ideps/mbedtls/include -Ideps/cjson -Ideps/libuv/include"
+
+          # Link the router fuzz harness against the CMake-built library + deps.
+          # --start-group handles mbedtls's circular deps.
+          $CC $CFLAGS $INCLUDES -fsanitize=fuzzer,address \
+            test/fuzz/fuzz_router.c \
+            build_fuzz/dist/lib/libuvhttp.a \
+            -Wl,--start-group \
+            deps/llhttp/build/libllhttp.a \
+            deps/cjson/build/libcjson.a \
+            deps/mbedtls/build/library/libmbedtls.a \
+            deps/mbedtls/build/library/libmbedx509.a \
+            deps/mbedtls/build/library/libmbedcrypto.a \
+            deps/libuv/build/libuv.a \
+            -Wl,--end-group \
+            -lpthread -lm -ldl \
+            -o build_fuzz/fuzz_router
+
+      - name: Run fuzz_router (60s, no crashes expected)
+        run: |
+          # -max_total_time bounds the run. ASan + UBSan-default libFuzzer will
+          # abort on any memory-safety bug. A clean exit (0) means no crash.
+          ./build_fuzz/fuzz_router -max_total_time=60 -max_len=256 -print_final_stats=1
+
+      - name: Upload crash artifacts (if any)
+        if: failure()
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: fuzz-crash-artifacts
+          path: |
+            build_fuzz/crash-*
+            build_fuzz/oom-*
+            build_fuzz/timeout-*
+          retention-days: 30

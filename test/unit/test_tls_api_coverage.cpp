@@ -6,6 +6,11 @@
 
 #include <gtest/gtest.h>
 
+#if UVHTTP_FEATURE_TLS
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/entropy.h>
+#endif
+
 extern "C" {
     #include "uvhttp_tls.h"
     #include "uvhttp_context.h"
@@ -30,10 +35,20 @@ TEST(UvhttpTlsApiCoverageTest, TlsInitValid) {
     
     if (result == UVHTTP_OK && context) {
         result = uvhttp_tls_init(context);
-        
+
         /* 不强制检查结果 */
-        
+
         uvhttp_tls_cleanup(context);
+        /* uvhttp_tls_cleanup 仅释放 mbedTLS 内部状态，但不释放
+         * uvhttp_context_init_tls 通过 uvhttp_alloc 分配的 entropy/drbg
+         * 内存，且会把 tls_initialized 置 0，导致 uvhttp_context_destroy
+         * 内的 cleanup 成为空操作而泄漏。这里显式释放分配以匹配初始化。 */
+#if UVHTTP_FEATURE_TLS
+        uvhttp_free(context->tls_entropy);
+        context->tls_entropy = nullptr;
+        uvhttp_free(context->tls_drbg);
+        context->tls_drbg = nullptr;
+#endif
         uvhttp_context_destroy(context);
     }
     

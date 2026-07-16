@@ -1,172 +1,139 @@
-#include <time.h>
 /*
- * UVHTTP 分层内存分配器使用示例
- * 
- * 本示例展示了如何使用分层内存分配器（mimalloc + 内存池混合模式）
- * 来优化内存分配性能。
+ * UVHTTP 统一内存分配器使用示例
+ *
+ * 本示例展示了如何使用 UVHTTP 的统一内存分配接口
+ * （编译时可选 system / mimalloc / custom），以及与系统分配器的性能对比。
+ *
+ * 分配器类型在编译时通过 UVHTTP_ALLOCATOR_TYPE 选择：
+ *   0 = system (默认)
+ *   1 = mimalloc
+ *   2 = custom (应用层实现 uvhttp_custom_alloc / uvhttp_custom_free 等)
+ *
+ * 对应头文件：include/uvhttp_allocator.h
  */
 
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "uvhttp_hierarchical_allocator.h"
+#include "uvhttp_allocator.h"
 
 /* 示例1：基本使用 */
 void example1_basic_usage(void) {
     printf("\n=== 示例1：基本使用 ===\n");
-    
-    /* 创建分层分配器 */
-    uvhttp_halloc_t* alloc = uvhttp_halloc_create(NULL);
-    if (!alloc) {
-        fprintf(stderr, "创建分配器失败\n");
-        return;
-    }
-    
-    /* 分配小对象（使用内存池） */
-    void* small_ptr = uvhttp_halloc_alloc(alloc, 64);
+
+    printf("当前分配器: %s\n", uvhttp_allocator_name());
+
+    /* 分配小对象 */
+    void* small_ptr = uvhttp_alloc(64);
     if (small_ptr) {
         printf("分配小对象成功: %p (64 字节)\n", small_ptr);
         strcpy((char*)small_ptr, "Hello, World!");
         printf("内容: %s\n", (char*)small_ptr);
-        uvhttp_halloc_free(alloc, small_ptr);
+        uvhttp_free(small_ptr);
     }
-    
-    /* 分配大对象（使用 mimalloc 或系统分配器） */
-    void* large_ptr = uvhttp_halloc_alloc(alloc, 8192);
+
+    /* 分配大对象 */
+    void* large_ptr = uvhttp_alloc(8192);
     if (large_ptr) {
         printf("分配大对象成功: %p (8192 字节)\n", large_ptr);
         memset(large_ptr, 0xAB, 8192);
-        uvhttp_halloc_free(alloc, large_ptr);
+        uvhttp_free(large_ptr);
     }
-    
-    /* 销毁分配器 */
-    uvhttp_halloc_destroy(alloc);
-    printf("分配器已销毁\n");
+
+    printf("分配器为内联实现，无需显式销毁\n");
 }
 
-/* 示例2：自定义配置 */
-void example2_custom_config(void) {
-    printf("\n=== 示例2：自定义配置 ===\n");
-    
-    /* 配置分配器 */
-    uvhttp_halloc_config_t config;
-    uvhttp_halloc_get_default_config(&config);
-    
-    /* 修改配置 */
-    config.allocator_type = UVHTTP_ALLOCATOR_TYPE_MIMALLOC;
-    config.small_size_threshold = 1024;  /* 小对象阈值 1KB */
-    config.pool_block_size = 8192;       /* 内存池块大小 8KB */
-    config.max_pool_blocks = 500;        /* 最大内存池块数 */
-    config.enable_stats = true;           /* 启用统计 */
-    
-    /* 创建分配器 */
-    uvhttp_halloc_t* alloc = uvhttp_halloc_create(&config);
-    if (!alloc) {
-        fprintf(stderr, "创建分配器失败\n");
-        return;
-    }
-    
-    printf("配置:\n");
-    printf("  小对象阈值: %zu 字节\n", config.small_size_threshold);
-    printf("  内存池块大小: %zu 字节\n", config.pool_block_size);
-    printf("  最大内存池块数: %zu\n", config.max_pool_blocks);
-    printf("  统计: %s\n", config.enable_stats ? "启用" : "禁用");
-    
-    /* 分配一些内存 */
+/* 示例2：编译时配置说明 */
+void example2_compile_time_config(void) {
+    printf("\n=== 示例2：编译时配置 ===\n");
+
+    printf("当前分配器类型: UVHTTP_ALLOCATOR_TYPE = %d\n", UVHTTP_ALLOCATOR_TYPE);
+    printf("  0 = system, 1 = mimalloc, 2 = custom\n");
+    printf("当前分配器名称: %s\n", uvhttp_allocator_name());
+
+    /* 分配一些内存并立即释放，演示统一接口 */
     for (int i = 0; i < 10; i++) {
-        void* ptr = uvhttp_halloc_alloc(alloc, 256);
+        void* ptr = uvhttp_alloc(256);
         if (ptr) {
-            uvhttp_halloc_free(alloc, ptr);
+            uvhttp_free(ptr);
         }
     }
-    
-    /* 获取统计信息 */
-    uvhttp_halloc_stats_t stats;
-    uvhttp_halloc_get_stats(alloc, &stats);
-    
-    printf("\n统计信息:\n");
-    printf("  总分配次数: %zu\n", stats.total_allocations);
-    printf("  总释放次数: %zu\n", stats.total_deallocations);
-    printf("  内存池分配: %zu 次 (%zu 字节)\n", stats.pool_allocations, stats.pool_bytes_used);
-    printf("  大对象分配: %zu 次 (%zu 字节)\n", stats.large_allocations, stats.large_bytes_used);
-    
-    uvhttp_halloc_destroy(alloc);
+
+    printf("统一分配接口 (uvhttp_alloc/uvhttp_free) 零运行时开销\n");
 }
 
-/* 示例3：使用全局分配器 */
-void example3_global_allocator(void) {
-    printf("\n=== 示例3：使用全局分配器 ===\n");
-    
-    /* 初始化全局分配器 */
-    int result = uvhttp_halloc_global_init(NULL);
-    if (result != 0) {
-        fprintf(stderr, "初始化全局分配器失败\n");
-        return;
-    }
-    
-    printf("全局分配器已初始化\n");
-    
-    /* 使用全局分配器 */
-    void* ptr = uvhttp_halloc_alloc(g_uvhttp_halloc, 512);
+/* 示例3：使用 calloc 与 realloc */
+void example3_companion_allocators(void) {
+    printf("\n=== 示例3：calloc 与 realloc ===\n");
+
+    /* uvhttp_calloc 分配并清零 */
+    void* ptr = uvhttp_calloc(16, 32);  /* 16 * 32 = 512 字节，内容清零 */
     if (ptr) {
-        printf("使用全局分配器分配内存: %p\n", ptr);
-        uvhttp_halloc_free(g_uvhttp_halloc, ptr);
+        printf("使用 uvhttp_calloc 分配内存: %p (512 字节，已清零)\n", ptr);
+        /* 验证内存已清零 */
+        int zeroed = 1;
+        for (int i = 0; i < 512; i++) {
+            if (((unsigned char*)ptr)[i] != 0) { zeroed = 0; break; }
+        }
+        printf("  内存已清零: %s\n", zeroed ? "是" : "否");
+
+        /* 扩展内存 */
+        void* bigger = uvhttp_realloc(ptr, 4096);
+        if (bigger) {
+            printf("使用 uvhttp_realloc 扩展至 4096 字节: %p\n", bigger);
+            uvhttp_free(bigger);
+        } else {
+            printf("uvhttp_realloc 失败，释放原内存\n");
+            uvhttp_free(ptr);
+        }
     }
-    
-    /* 清理全局分配器 */
-    uvhttp_halloc_global_cleanup();
-    printf("全局分配器已清理\n");
 }
 
-/* 示例4：性能对比 */
+/* 示例4：性能对比（统一分配器 vs 系统分配器） */
 void example4_performance_comparison(void) {
     printf("\n=== 示例4：性能对比 ===\n");
-    
+
     const int iterations = 10000;
     const int small_size = 64;
     const int large_size = 4096;
-    
-    /* 测试分层分配器 */
-    uvhttp_halloc_t* alloc = uvhttp_halloc_create(NULL);
-    if (alloc) {
-        printf("测试分层分配器...\n");
-        
-        /* 小对象分配 */
-        clock_t start = clock();
-        for (int i = 0; i < iterations; i++) {
-            void* ptr = uvhttp_halloc_alloc(alloc, small_size);
-            if (ptr) uvhttp_halloc_free(alloc, ptr);
-        }
-        clock_t end = clock();
-        double time = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
-        printf("  小对象分配 (%d 次): %.2f ms\n", iterations, time);
-        
-        /* 大对象分配 */
-        start = clock();
-        for (int i = 0; i < iterations; i++) {
-            void* ptr = uvhttp_halloc_alloc(alloc, large_size);
-            if (ptr) uvhttp_halloc_free(alloc, ptr);
-        }
-        end = clock();
-        time = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
-        printf("  大对象分配 (%d 次): %.2f ms\n", iterations, time);
-        
-        uvhttp_halloc_destroy(alloc);
-    }
-    
-    /* 测试系统分配器 */
-    printf("\n测试系统分配器...\n");
-    
+
+    /* 测试 UVHTTP 统一分配器 */
+    printf("测试 UVHTTP 统一分配器 (%s)...\n", uvhttp_allocator_name());
+
     /* 小对象分配 */
     clock_t start = clock();
     for (int i = 0; i < iterations; i++) {
-        void* ptr = malloc(small_size);
-        if (ptr) free(ptr);
+        void* ptr = uvhttp_alloc(small_size);
+        if (ptr) uvhttp_free(ptr);
     }
     clock_t end = clock();
     double time = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
     printf("  小对象分配 (%d 次): %.2f ms\n", iterations, time);
-    
+
+    /* 大对象分配 */
+    start = clock();
+    for (int i = 0; i < iterations; i++) {
+        void* ptr = uvhttp_alloc(large_size);
+        if (ptr) uvhttp_free(ptr);
+    }
+    end = clock();
+    time = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+    printf("  大对象分配 (%d 次): %.2f ms\n", iterations, time);
+
+    /* 测试系统分配器 (malloc/free) */
+    printf("\n测试系统分配器 (malloc/free)...\n");
+
+    /* 小对象分配 */
+    start = clock();
+    for (int i = 0; i < iterations; i++) {
+        void* ptr = malloc(small_size);
+        if (ptr) free(ptr);
+    }
+    end = clock();
+    time = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+    printf("  小对象分配 (%d 次): %.2f ms\n", iterations, time);
+
     /* 大对象分配 */
     start = clock();
     for (int i = 0; i < iterations; i++) {
@@ -178,63 +145,43 @@ void example4_performance_comparison(void) {
     printf("  大对象分配 (%d 次): %.2f ms\n", iterations, time);
 }
 
-/* 示例5：内存池优势 */
-void example5_mempool_advantage(void) {
-    printf("\n=== 示例5：内存池优势 ===\n");
-    
-    uvhttp_halloc_config_t config;
-    uvhttp_halloc_get_default_config(&config);
-    config.small_size_threshold = 256;
-    config.enable_stats = true;
-    
-    uvhttp_halloc_t* alloc = uvhttp_halloc_create(&config);
-    if (!alloc) {
-        fprintf(stderr, "创建分配器失败\n");
-        return;
-    }
-    
-    /* 分配大量小对象 */
+/* 示例5：批量分配与释放 */
+void example5_batch_alloc_free(void) {
+    printf("\n=== 示例5：批量分配与释放 ===\n");
+
     const int count = 1000;
     void* ptrs[count];
-    
+
     printf("分配 %d 个小对象...\n", count);
     for (int i = 0; i < count; i++) {
-        ptrs[i] = uvhttp_halloc_alloc(alloc, 64);
+        ptrs[i] = uvhttp_alloc(64);
     }
-    
-    /* 查看统计 */
-    uvhttp_halloc_stats_t stats;
-    uvhttp_halloc_get_stats(alloc, &stats);
-    
-    printf("\n内存池统计:\n");
-    printf("  内存池分配: %zu 次\n", stats.pool_allocations);
-    printf("  大对象分配: %zu 次\n", stats.large_allocations);
-    printf("  内存池使用: %zu 字节\n", stats.pool_bytes_used);
-    
+
     /* 释放所有对象 */
+    int freed = 0;
     for (int i = 0; i < count; i++) {
         if (ptrs[i]) {
-            uvhttp_halloc_free(alloc, ptrs[i]);
+            uvhttp_free(ptrs[i]);
+            freed++;
         }
     }
-    
-    uvhttp_halloc_destroy(alloc);
+    printf("已释放 %d/%d 个对象\n", freed, count);
 }
 
 int main(void) {
     printf("========================================\n");
-    printf("UVHTTP 分层内存分配器使用示例\n");
-    printf("========================================");
-    
+    printf("UVHTTP 统一内存分配器使用示例\n");
+    printf("========================================\n");
+
     example1_basic_usage();
-    example2_custom_config();
-    example3_global_allocator();
+    example2_compile_time_config();
+    example3_companion_allocators();
     example4_performance_comparison();
-    example5_mempool_advantage();
-    
+    example5_batch_alloc_free();
+
     printf("\n========================================\n");
     printf("所有示例执行完成\n");
     printf("========================================\n");
-    
+
     return 0;
 }

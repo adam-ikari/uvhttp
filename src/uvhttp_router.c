@@ -155,6 +155,11 @@ static uint32_t find_or_create_child(uvhttp_router_t* router,
         return UINT32_MAX;
     }
 
+    // create_route_node may uvhttp_realloc() the node pool to grow it, which
+    // can move it to a new address and free the old block. Re-fetch parent
+    // here so we never dereference a dangling pointer captured above.
+    parent = &router->node_pool[parent_index];
+
     uvhttp_route_node_t* child = &router->node_pool[child_index];
     size_t seg_len = strlen(segment);
     child->segment_len = (uint8_t)(seg_len < 32 ? seg_len : 31);
@@ -397,7 +402,8 @@ uvhttp_error_t uvhttp_router_add_route_method(
     int has_params = (strchr(path, ':') != NULL);
 
     // if has parameter or router count exceeds threshold, use Trie
-    if (has_params || router->array_route_count >= HYBRID_THRESHOLD) {
+    if (has_params || router->array_route_count >= HYBRID_THRESHOLD ||
+        router->use_trie) {
         if (!router->use_trie) {
             uvhttp_error_t err = migrate_to_trie(router);
             if (err != UVHTTP_OK) {

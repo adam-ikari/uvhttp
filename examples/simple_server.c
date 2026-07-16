@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <uvhttp.h>
 #include <uv.h>
 
@@ -33,8 +34,11 @@ int root_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_header(res, "X-Powered-By", "UVHTTP/2.5.0");
 
     // Set response body
-    uvhttp_response_set_body(res, "Welcome to UVHTTP Simple Server!\n"
-                              "Try: /hello, /api/data");
+    {
+        const char* body = "Welcome to UVHTTP Simple Server!\n"
+                            "Try: /hello, /api/data";
+        uvhttp_response_set_body(res, body, strlen(body));
+    }
 
     // Send response
     return uvhttp_response_send(res);
@@ -46,7 +50,10 @@ int root_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello, World!");
+    {
+        const char* body = "Hello, World!";
+        uvhttp_response_set_body(res, body, strlen(body));
+    }
     return uvhttp_response_send(res);
 }
 
@@ -56,13 +63,15 @@ int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 int api_data_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res,
-        "{"
-        "  \"message\": \"Hello from UVHTTP\","
-        "  \"version\": \"2.5.0\","
-        "  \"status\": \"success\""
-        "}"
-    );
+    {
+        const char* body =
+            "{"
+            "  \"message\": \"Hello from UVHTTP\","
+            "  \"version\": \"2.5.0\","
+            "  \"status\": \"success\""
+            "}";
+        uvhttp_response_set_body(res, body, strlen(body));
+    }
     return uvhttp_response_send(res);
 }
 
@@ -78,22 +87,22 @@ int main(void) {
     }
 
     // Create UVHTTP server
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    if (!server) {
+    uvhttp_server_t* server = NULL;
+    if (uvhttp_server_new(loop, &server) != UVHTTP_OK) {
         fprintf(stderr, "Failed to create server\n");
         return 1;
     }
 
     // Create router
-    uvhttp_router_t* router = uvhttp_router_new();
-    if (!router) {
+    uvhttp_router_t* router = NULL;
+    if (uvhttp_router_new(&router) != UVHTTP_OK) {
         fprintf(stderr, "Failed to create router\n");
         uvhttp_server_free(server);
         return 1;
     }
 
     // Attach router to server
-    server->router = router;
+    uvhttp_server_set_router(server, router);
 
     // Add routes
     uvhttp_router_add_route(router, "/", root_handler);

@@ -25,10 +25,10 @@ static void destroy_server_and_loop(uvhttp_server_t* server, uv_loop_t* loop) {
         uvhttp_server_free(server);
     }
     if (loop) {
-        /* Run the loop to process any pending callbacks */
-        for (int i = 0; i < 5; i++) {
-            uv_run(loop, UV_RUN_ONCE);
-        }
+        /* Run the loop to process any pending callbacks. UV_RUN_DEFAULT drains
+         * until no more work remains, ensuring on_handle_close fires and frees
+         * connections closed by uvhttp_connection_free. */
+        uv_run(loop, UV_RUN_DEFAULT);
         uv_loop_close(loop);
         uvhttp_free(loop);
     }
@@ -151,7 +151,11 @@ TEST(UvhttpConnectionWebsocketIntegrationTest, SwitchToWebsocketMultipleTimes) {
     uvhttp_connection_switch_to_websocket(conn);
     uvhttp_connection_switch_to_websocket(conn);
 
-    uvhttp_connection_free(conn);
+    /* Close via the library path; on_handle_close frees the connection when the
+     * loop is drained below. (uvhttp_connection_free defers to the same async
+     * close, so calling close + drain directly is equivalent and avoids leaving
+     * the deferred free dependent on a separately-drained loop.) */
+    uvhttp_connection_close(conn);
     destroy_server_and_loop(server, loop);
 }
 

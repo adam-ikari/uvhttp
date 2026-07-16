@@ -59,9 +59,18 @@ void uvhttp_handle_write_error(uv_write_t* req, int status,
         return;
 
     char safe_msg[UVHTTP_ERROR_CONTEXT_BUFFER_SIZE];
-    const char* error_desc = uv_strerror(status);
+    /* NOTE: do NOT use uv_strerror(status) here. For status values outside the
+     * libuv errno map (this includes status==0 on the success path AND any
+     * other non-mapped/internal code), uv_strerror falls through to
+     * uv__unknown_err_code, which uv__strdup's "Unknown system error N" and
+     * never frees it - a real leak observed under ASan. uv_strerror_r writes
+     * the description into a caller-provided buffer and never allocates,
+     * regardless of the status value. This mirrors the reasoning in
+     * uvhttp_log_safe_error. */
+    char err_desc[UVHTTP_ERROR_CONTEXT_BUFFER_SIZE];
+    uv_strerror_r(status, err_desc, sizeof(err_desc));
 
-    if (uvhttp_sanitize_error_message(error_desc, safe_msg, sizeof(safe_msg)) ==
+    if (uvhttp_sanitize_error_message(err_desc, safe_msg, sizeof(safe_msg)) ==
         0) {
         UVHTTP_LOG_ERROR("Write error in %s: %s\n", context, safe_msg);
     } else {
@@ -75,7 +84,12 @@ void uvhttp_handle_write_error(uv_write_t* req, int status,
 void uvhttp_log_safe_error(int error_code, const char* context,
                            const char* user_msg) {
     char safe_buffer[UVHTTP_ERROR_LOG_BUFFER_SIZE];
-    const char* error_desc = error_code ? uv_strerror(error_code) : user_msg;
+    /* 注意: error_code 是 UVHTTP 错误码, 必须用 uvhttp_error_string 解析,
+     * 不能用 uv_strerror。后者对未知(非 libuv errno)的错误码会 strdup 出
+     * "Unknown system error N" 且永不释放(泄漏), 同时 UVHTTP 错误码也会被
+     * 误报成 libuv 的未知系统错误。uvhttp_error_string 返回静态字符串字面量,
+     * 无内存分配。 */
+    const char* error_desc = error_code ? uvhttp_error_string(error_code) : user_msg;
 
     if (uvhttp_sanitize_error_message(error_desc, safe_buffer,
                                       sizeof(safe_buffer)) == 0) {

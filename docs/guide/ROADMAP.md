@@ -137,7 +137,7 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 ## Technology Stack Evolution
 
 ### Current Stack
-- **Core**: C11, libuv, llhttp
+- **Core**: C99, libuv, llhttp
 - **TLS**: mbedtls
 - **Memory**: mimalloc (optional)
 - **Hashing**: xxHash

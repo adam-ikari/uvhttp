@@ -184,7 +184,7 @@ git submodule update --init --recursive
 
 ### Compilation Errors
 
-Make sure you have a C11-compliant compiler:
+Make sure you have a C99-compliant compiler:
 
 ```bash
 gcc --version  # Should be 4.8 or higher

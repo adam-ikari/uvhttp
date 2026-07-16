@@ -55,7 +55,19 @@ typedef struct ws_route_entry {
  * @param status write operation state
  */
 static void write_503_response_cb(uv_write_t* req, int status) {
+    /* The temp_client uv_tcp_t that received this 503 response is stashed in
+     * req->data by on_connection. It is not tracked anywhere else, so we must
+     * close and free it here; otherwise it (and libuv-internal peer info)
+     * leaks. Read it before uvhttp_handle_write_error frees req. */
+    uv_tcp_t* temp_client = (uv_tcp_t*)req->data;
     uvhttp_handle_write_error(req, status, "503_response");
+    if (temp_client) {
+        if (!uv_is_closing((uv_handle_t*)temp_client)) {
+            uv_close((uv_handle_t*)temp_client, (uv_close_cb)uvhttp_free);
+        } else {
+            uvhttp_free(temp_client);
+        }
+    }
 }
 
 /**
@@ -135,6 +147,10 @@ static void on_connection(uv_stream_t* server_handle, int status) {
             if (write_req) {
                 uv_buf_t buf =
                     uv_buf_init((char*)response_503, sizeof(response_503) - 1);
+
+                /* Stash temp_client on the write request so write_503_response_cb
+                 * can close+free it after the response is flushed. */
+                write_req->data = temp_client;
 
                 int write_result =
                     uv_write(write_req, (uv_stream_t*)temp_client, &buf, 1,
@@ -296,16 +312,23 @@ uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
 }
 
 uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
+    /* NULL is a safe no-op: supports the standard "free(p); p=NULL; free(p)"
+     * idempotent-free idiom without touching freed memory. */
     if (!server) {
-        return UVHTTP_ERROR_INVALID_PARAM;
+        return UVHTTP_OK;
     }
 
-    /* Prevent double free */
+    /* Best-effort double-free guard. This only protects against a second call
+     * that reuses the SAME (still-valid) pointer before the caller NULLs it;
+     * it relies on the block not having been reclaimed or poisoned. A truly
+     * sound double-free guarantee is impossible with a single-pointer free API
+     * (the flag lives in the very memory that gets freed), so callers that need
+     * idempotency must NULL their pointer after freeing. */
     if (server->freed) {
         return UVHTTP_OK;
     }
 
-    /* Set freed flag */
+    /* Set freed flag before releasing any resources. */
     server->freed = 1;
 
     /* close TCP handle */
@@ -650,10 +673,10 @@ static uvhttp_error_t create_simple_server_internal(
     // startlisten
     if (uvhttp_server_listen(simple->server, host, port) != UVHTTP_OK) {
         UVHTTP_LOG_ERROR("Failed to start server on %s:%d\n", host, port);
-        // Before calling uvhttp_server_free, set config and router to NULL
-        // Because they will be released in uvhttp_server_free
-        // simple->server->config = NULL;
-        simple->server->router = NULL;
+        // By this point simple->server->config and simple->server->router have
+        // already been assigned (above), so uvhttp_server_free will release
+        // them. Do NOT null them here - that would defeat the free and leak
+        // the router (and its internal allocations).
         uvhttp_server_free(simple->server);
         uvhttp_free(simple);
         *server = NULL;  // set to NULL to avoid double release
@@ -1393,6 +1416,19 @@ uvhttp_error_t uvhttp_server_ws_disable_connection_management(
     manager->connections = NULL;
     manager->connection_count = 0;
     manager->enabled = 0;
+
+    /* The timer handles are embedded in the manager struct. uv_close() above
+     * schedules close callbacks that libuv will invoke on the next loop
+     * iteration(s), accessing that memory. We must NOT uvhttp_free(manager)
+     * until those callbacks have run, otherwise libuv dereferences freed
+     * memory (use-after-free). Drain the close callbacks now. UV_RUN_ONCE
+     * processes pending callbacks and returns; a bounded loop avoids hanging
+     * if the loop never goes idle. */
+    if (server->loop) {
+        for (int i = 0; i < UVHTTP_SERVER_CLEANUP_LOOP_ITERATIONS; i++) {
+            uv_run(server->loop, UV_RUN_NOWAIT);
+        }
+    }
 
     /* release manager */
     uvhttp_free(manager);

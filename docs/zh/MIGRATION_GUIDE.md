@@ -89,7 +89,8 @@ uvhttp_context_set_connection_provider(context, provider);
 
 // 新代码（2.2.0）
 // 连接管理直接在应用层实现
-uvhttp_connection_t* conn = uvhttp_connection_new(server);
+uvhttp_connection_t* conn = NULL;
+uvhttp_connection_new(server, &conn);
 ```
 
 #### uvhttp_logger_provider_t
@@ -161,9 +162,10 @@ UVHTTP_DEFINE_MIDDLEWARE_CHAIN(middleware_chain,
     rate_limit_middleware
 );
 
-void request_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+int request_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     UVHTTP_EXECUTE_MIDDLEWARE(middleware_chain, req, res);
     // 处理请求
+    return uvhttp_response_send(res);
 }
 ```
 
@@ -277,9 +279,16 @@ int main() {
     
     // 创建服务器
     uvhttp_server_t* server = NULL;
-    result = uvhttp_server_new(context, &server);
+    result = uvhttp_server_new(loop, &server);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
+
+    // 关联上下文
+    result = uvhttp_server_set_context(server, context);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to set context: %s\n", uvhttp_error_string(result));
         return 1;
     }
     
@@ -332,10 +341,11 @@ A: 日志系统使用编译期宏，您可以通过定义自己的宏来替换�
 A: 连接管理应该在应用层实现。您可以在请求处理器中直接管理连接：
 
 ```c
-void request_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+int request_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // 自定义连接管理逻辑
     uvhttp_connection_t* conn = uvhttp_connection_get_from_request(req);
     // ... 自定义逻辑 ...
+    return uvhttp_response_send(res);
 }
 ```
 

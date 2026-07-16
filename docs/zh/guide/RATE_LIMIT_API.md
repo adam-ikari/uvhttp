@@ -2,7 +2,7 @@
 
 ## 概述
 
-UVHTTP 提供服务器级别的限流功能，用于防止 DDoS 攻击和过载。限流功能是核心功能，可以在编译时通过宏配置启用或禁用。
+UVHTTP 提供服务器级别的限流功能，用于防止 DDoS 攻击和过载。限流功能可以在编译时通过宏配置启用或禁用。
 
 ## 特性
 
@@ -215,7 +215,8 @@ uvhttp_server_clear_rate_limit_all(server);
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
 
     // 启用限流：每秒最多 1000 个请求
     uvhttp_server_enable_rate_limit(server, 1000, 1);
