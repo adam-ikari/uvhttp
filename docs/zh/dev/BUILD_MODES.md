@@ -8,49 +8,49 @@
 
 ### 1. Release 模式（生产环境）
 
-**适用场景**：
+**适用场景**:
 - 所有性能测试程序
 - 生产环境部署
 - 性能基准测试
 - 发布版本
 
-**必须使用 Release 模式的程序**：
+**必须使用 Release 模式的程序**:
 - `benchmark_unified` - 综合性能测试服务器（包含所有测试场景）
 - `performance_allocator` - 分配器性能测试
 - `performance_allocator_compare` - 分配器对比测试
 - `test_bitfield` - 位域性能测试
 - 所有示例程序（examples/）
 
-**编译选项**：
+**编译选项**:
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release ..
 ```
 
-**优化级别**：`-O2`（默认）
+**优化级别**: `-O2`（默认）
 - 代码大小优化
 - 性能优化
 - 无调试符号
 - 启用 `NDEBUG` 宏
 
-**性能特征**：
+**性能特征**:
 - 最高性能
 - 最小内存占用
 - 最小二进制大小
 
 ### 2. Debug 模式（开发调试）
 
-**适用场景**：
+**适用场景**:
 - 单元测试
 - 集成测试
 - 代码覆盖率分析
 - 调试和问题排查
 - 开发阶段
 
-**可以使用 Debug 模式的程序**：
+**可以使用 Debug 模式的程序**:
 - `uvhttp_unit_tests` - 单元测试
 - 所有测试程序（test/）
 
-**编译选项**：
+**编译选项**:
 ```bash
 cmake -DENABLE_DEBUG=ON ..
 ```
@@ -61,13 +61,13 @@ cmake -DENABLE_DEBUG=ON ..
 cmake -DCMAKE_BUILD_TYPE=Debug ..
 ```
 
-**优化级别**：`-O0`
+**优化级别**: `-O0`
 - 无优化
 - 完整调试符号
 - 禁用 `NDEBUG` 宏
 - 启用断言
 
-**调试特征**：
+**调试特征**:
 - 完整的调试信息
 - 支持 GDB/LLDB 调试
 - 支持 Valgrind 内存检查
@@ -75,21 +75,21 @@ cmake -DCMAKE_BUILD_TYPE=Debug ..
 
 ### 3. Coverage 模式（代码覆盖率）
 
-**适用场景**：
+**适用场景**:
 - 代码覆盖率分析
 - 测试质量评估
 
-**编译选项**：
+**编译选项**:
 ```bash
 cmake -DENABLE_COVERAGE=ON ..
 ```
 
-**优化级别**：`-O0`
+**优化级别**: `-O0`
 - 无优化
 - 启用 gcov 覆盖率收集
 - 生成 `.gcda` 和 `.gcno` 文件
 
-**覆盖率特征**：
+**覆盖率特征**:
 - 支持行覆盖率
 - 支持分支覆盖率
 - 支持函数覆盖率
