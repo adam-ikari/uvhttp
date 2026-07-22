@@ -6,13 +6,12 @@ This directory contains automation scripts organized by function.
 
 ```
 scripts/
-├── archived/         # One-time migration scripts (historical reference only)
-├── ci/              # CI/CD automation scripts
-├── docs/            # Documentation generation scripts
-├── performance/     # Performance analysis scripts
-├── test/            # Test automation scripts
-├── build_docs.sh    # Unified documentation build script
-└── .doxygen_templates/  # Doxygen templates
+├── .doxygen_templates/  # Doxygen templates
+├── build_docs.sh        # Unified documentation build script
+├── check_links.sh       # Check for broken links in markdown docs
+├── ci/                  # CI/CD automation scripts
+├── docs/                # Documentation generation scripts
+└── performance/         # Performance analysis scripts
 ```
 
 ## Main Scripts
@@ -28,9 +27,8 @@ scripts/
 
 ### Documentation (`docs/`)
 - `doxy2md.js` - Convert Doxygen XML to Markdown
-- `convert_xml_to_markdown.js` - XML to Markdown conversion
+- `convert_xml_to_markdown.js` - XML to Markdown conversion (main converter)
 - `split_api_md.js` - Split API documentation into separate files
-- `update_api_sidebar.js` - Auto-generate VitePress API sidebar
 
 ### CI/CD (`ci/`)
 - `notify_pr.js` - PR notification automation
@@ -40,15 +38,7 @@ scripts/
 - `parse_wrk_output.js` - Parse wrk benchmark output
 - `performance_regression.js` - Performance regression detection
 - `update_baseline.js` - Update performance baseline
-
-### Test (`test/`)
-- `detect_performance_regression.py` - Detect performance regressions
-- `detect_regression.js` - General regression detection
-
-### Archived (`archived/`)
-- One-time migration scripts from previous documentation transitions
-- **DO NOT USE** for ongoing development
-- Preserved for historical reference only
+- `long_run_memory.sh` - Long-run memory stability test
 
 ## Usage
 
@@ -90,13 +80,3 @@ Each script should be run from the project root directory. Refer to individual s
 2. **Build docs**: `./scripts/build_docs.sh`
 3. **Preview locally**: `cd docs && npm run dev`
 4. **Commit changes**: Git will track documentation updates
-
-## Simplification Progress
-
-The scripts directory has been significantly simplified:
-
-- **Before**: 44 scripts (8,158+ lines)
-- **After**: ~10 active scripts (~1,500 lines)
-- **Reduction**: 82% fewer scripts, 82% less code
-
-Archived scripts are preserved in `scripts/archived/` for reference.

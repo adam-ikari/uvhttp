@@ -45,9 +45,10 @@ docs:
 docs-clean:
 	@echo "Cleaning generated documentation..."
 	@rm -rf docs/api/xml
-	@rm -rf docs/api/markdown_from_xml
+	@rm -rf docs/api/generated
 	@rm -rf docs/api/html
 	@rm -rf docs/api/latex
+	@rm -rf docs/api/.doxygen
 	@rm -rf docs/.vitepress/dist
 	@rm -rf docs/.vitepress/cache
 	@echo "Documentation cleaned successfully"
