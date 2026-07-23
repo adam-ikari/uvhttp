@@ -355,8 +355,8 @@ int on_message(uvhttp_ws_connection_t* ws_conn, const char* data,
 **Answer:**
 ```c
 // Enable Keep-Alive by setting configuration
-uvhttp_config_t config;
-uvhttp_config_new(loop, &config);
+uvhttp_config_t* config = NULL;
+uvhttp_config_new(&config);
 config->keepalive_timeout = 60;  // 60 seconds
 
 uvhttp_server_t* server = NULL;
@@ -430,9 +430,9 @@ uvhttp_server_listen(server, "0.0.0.0", 8081);
 ```c
 // Increase timeout values
 uvhttp_config_t* config = NULL;
-uvhttp_config_new(loop, &config);
+uvhttp_config_new(&config);
 config->keepalive_timeout = 300;  // 5 minutes
-uvhttp_config_set_request_timeout(config, 60);    // 1 minute
+config->request_timeout = 60;    // 1 minute
 
 uvhttp_server_t* server = NULL;
 uvhttp_server_new(loop, &server);
