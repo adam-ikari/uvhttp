@@ -551,6 +551,10 @@ static int static_file_handler_wrapper(uvhttp_request_t* request,
     /* get connection from client */
     uvhttp_connection_t* conn =
         (uvhttp_connection_t*)uv_handle_get_data((uv_handle_t*)client);
+
+    /* validate the connection pointer — uv_handle_get_data may return
+     * uninitialized (non-NULL but invalid) data from a handle whose
+     * data field was never set. Check server as a proxy for validity. */
     if (!conn || !conn->server || !conn->server->router) {
         uvhttp_response_set_status(response, 500);
         uvhttp_response_set_header(response, "Content-Type", "text/plain");
