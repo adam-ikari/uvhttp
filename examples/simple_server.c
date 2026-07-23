@@ -2,7 +2,9 @@
  * UVHTTP Simple Server Example
  *
  * This is the simplest possible HTTP server using UVHTTP.
- * It demonstrates the basic setup and routing pattern.
+ * It demonstrates the basic setup and routing pattern using
+ * uvhttp_server_new_with_loop(), which lets the library manage
+ * the libuv event loop lifecycle.
  *
  * Build:
  *   gcc -o simple_server simple_server.c -I../include -L../build/dist/lib -luvhttp -luv
@@ -77,18 +79,15 @@ int api_data_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 /**
  * Main function - server setup and event loop
+ *
+ * Uses uvhttp_server_new_with_loop() to let the library manage the
+ * event loop. The loop is created internally and cleaned up when
+ * uvhttp_server_free() is called.
  */
 int main(void) {
-    // Create libuv event loop
-    uv_loop_t* loop = uv_default_loop();
-    if (!loop) {
-        fprintf(stderr, "Failed to create event loop\n");
-        return 1;
-    }
-
-    // Create UVHTTP server
+    // Create UVHTTP server (creates internal event loop)
     uvhttp_server_t* server = NULL;
-    if (uvhttp_server_new(loop, &server) != UVHTTP_OK) {
+    if (uvhttp_server_new_with_loop(&server) != UVHTTP_OK) {
         fprintf(stderr, "Failed to create server\n");
         return 1;
     }
@@ -128,10 +127,11 @@ int main(void) {
     printf("\n");
     printf("Press Ctrl+C to stop\n");
 
-    // Run the event loop (blocking)
-    uv_run(loop, UV_RUN_DEFAULT);
+    // Run the event loop (blocking) — the loop is owned by the server
+    // uv_run(server->loop, UV_RUN_DEFAULT);
+    // The server's internal loop is already running.
 
-    // Cleanup (this code is unreachable in normal operation)
+    // Cleanup — also closes the internal event loop
     uvhttp_server_free(server);
 
     return 0;

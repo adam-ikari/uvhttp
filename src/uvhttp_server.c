@@ -425,7 +425,42 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
         server->protocol_registry = NULL;
     }
 
+    /* if the library owns the loop, close and free it */
+    if (server->owns_loop && server->loop) {
+        uv_loop_close(server->loop);
+        uvhttp_free(server->loop);
+        server->loop = NULL;
+    }
+
     uvhttp_free(server);
+    return UVHTTP_OK;
+}
+
+/* create Server with internal event loop */
+uvhttp_error_t uvhttp_server_new_with_loop(uvhttp_server_t** server) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    uv_loop_t* loop = uvhttp_alloc(sizeof(uv_loop_t));
+    if (!loop) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+
+    int ret = uv_loop_init(loop);
+    if (ret != 0) {
+        uvhttp_free(loop);
+        return UVHTTP_ERROR_IO_ERROR;
+    }
+
+    uvhttp_error_t err = uvhttp_server_new(loop, server);
+    if (err != UVHTTP_OK) {
+        uv_loop_close(loop);
+        uvhttp_free(loop);
+        return err;
+    }
+
+    (*server)->owns_loop = 1;
     return UVHTTP_OK;
 }
 
