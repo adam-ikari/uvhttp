@@ -22,20 +22,20 @@
 
 ```bash
 sudo apt-get update
-sudo apt-get install build-essential cmake libuv-dev libmbedtls-dev
+sudo apt-get install build-essential cmake
 ```
 
 #### CentOS/RHEL
 
 ```bash
 sudo yum groupinstall "Development Tools"
-sudo yum install cmake libuv-devel mbedtls-devel
+sudo yum install cmake
 ```
 
 #### macOS
 
 ```bash
-brew install cmake libuv mbedtls
+brew install cmake
 ```
 
 ## 编译项目

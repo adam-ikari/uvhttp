@@ -50,13 +50,13 @@ make test
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y cmake build-essential libuv1-dev
+sudo apt-get install -y cmake build-essential
 ```
 
 #### macOS（未来支持）
 
 ```bash
-brew install cmake libuv
+brew install cmake
 ```
 
 #### Windows（未来支持）

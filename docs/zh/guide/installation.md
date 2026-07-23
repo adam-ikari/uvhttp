@@ -87,14 +87,17 @@ make install
 sudo apt-get update
 sudo apt-get install -y \
     cmake \
-    build-essential \
-    libuv1-dev \
-    libssl-dev
+    build-essential
 ```
+
+> 注意：libuv 已作为子模块包含在项目中，无需单独安装。编译时会自动构建。
 
 #### 编译
 
 ```bash
+# 初始化子模块（首次克隆时需要）
+git submodule update --init --recursive
+
 mkdir build && cd build
 cmake ..
 make -j$(nproc)
@@ -108,9 +111,10 @@ make -j$(nproc)
 sudo yum groupinstall "Development Tools"
 sudo yum install -y \
     cmake3 \
-    libuv-devel \
     openssl-devel
 ```
+
+> 注意：libuv 已作为子模块包含在项目中，无需单独安装。编译时会自动构建。
 
 #### 编译
 
@@ -129,7 +133,7 @@ make -j$(nproc)
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # 安装依赖
-brew install cmake libuv openssl
+brew install cmake openssl
 
 # 编译
 mkdir build && cd build
@@ -250,19 +254,12 @@ make
 
 ### 编译错误
 
-**问题**: 找不到 libuv 或其他依赖
+**问题**: 找不到依赖
 
 **解决方案**:
 ```bash
-# 检查依赖是否已安装
-# Linux
-ldconfig -p | grep libuv
-
-# macOS
-otool -L /usr/local/lib | grep libuv
-
-# Windows
-where libuv.dll
+# 确保子模块已初始化
+git submodule update --init --recursive
 ```
 
 ### 链接错误
