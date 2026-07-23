@@ -326,7 +326,8 @@ int on_message(uvhttp_ws_connection_t* ws_conn, const char* data,
 ### Q21: 如何启用连接池？
 
 ```c
-uvhttp_config_t* config = uvhttp_config_create();
+uvhttp_config_t* config = NULL;
+uvhttp_config_new(loop, &config);
 config->keepalive_timeout = 60;  // 60 秒
 
 uvhttp_server_t* server = NULL;
@@ -389,8 +390,9 @@ uvhttp_server_listen(server, "0.0.0.0", 8081);
 ### Q26: 连接超时错误
 
 ```c
-uvhttp_config_t* config = uvhttp_config_create();
-uvhttp_config_set_keepalive_timeout(config, 300);  // 5 分钟
+uvhttp_config_t* config = NULL;
+uvhttp_config_new(loop, &config);
+config->keepalive_timeout = 300;  // 5 分钟
 uvhttp_config_set_request_timeout(config, 60);    // 1 分钟
 
 uvhttp_server_t* server = NULL;
@@ -405,7 +407,7 @@ uvhttp_server_set_config(server, config);
 valgrind --leak-check=full --show-leak-kinds=all ./your_server
 
 # 或使用 AddressSanitizer 构建
-cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_SANITIZERS=ON ..
+cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON ..
 make
 ./your_server
 ```

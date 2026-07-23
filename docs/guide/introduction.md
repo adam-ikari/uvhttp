@@ -75,10 +75,9 @@ UVHTTP uses libuv's event loop for high concurrency without threads:
 |----------|--------|-------|
 | **Linux x86_64** | ✅ Fully Supported | Primary platform |
 | **Linux x86 (32-bit)** | ✅ Fully Supported | Embedded-optimized |
-| **macOS** | 🔨 In Progress | Testing phase |
-| **Windows** | 📋 Planned | Next major version |
+| **macOS** | 📋 Planned | |
+| **Windows** | 📋 Planned | |
 | **FreeBSD** | 📋 Planned | Community requested |
-| **WebAssembly** | 📋 Planned | Browser environments |
 
 ### Cross-Platform Considerations
 
