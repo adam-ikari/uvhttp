@@ -130,9 +130,7 @@ export default defineConfig({
                 { text: 'Roadmap', link: '/guide/ROADMAP' },
                 { text: 'Changelog', link: '/guide/CHANGELOG' },
                 { text: 'Versions', link: '/guide/versions' },
-                { text: 'Specifications', link: '/spec/' },
-                { text: 'Agile Guide', link: '/AGILE' },
-                { text: 'Sprint Backlog', link: '/sprint-backlog' }
+                { text: 'Specifications', link: '/spec/' }
               ]
             }
           ],
@@ -254,8 +252,7 @@ export default defineConfig({
                 { text: '更新日志', link: '/zh/guide/CHANGELOG' },
                 { text: '性能指标', link: '/zh/performance' },
                 { text: '版本信息', link: '/zh/versions' },
-                { text: '规格文档', link: '/spec/' },
-                { text: '敏捷指南', link: '/AGILE' }
+                { text: '规格文档', link: '/spec/' }
               ]
             }
           ],
