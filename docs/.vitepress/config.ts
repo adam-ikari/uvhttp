@@ -257,54 +257,6 @@ export default defineConfig({
             }
           ],
           '/zh/api/': apiSidebar,
-          '/zh/dev/': [
-            {
-              text: '架构设计',
-              items: [
-                { text: '架构设计', link: '/zh/dev/ARCHITECTURE' },
-                { text: '依赖说明', link: '/zh/dev/DEPENDENCIES' },
-                { text: 'XXHash 集成', link: '/zh/dev/XXHASH_INTEGRATION' }
-              ]
-            },
-            {
-              text: '开发计划',
-              items: [
-                { text: '开发计划', link: '/zh/dev/DEVELOPMENT_PLAN' },
-                { text: '全局变量重构', link: '/zh/dev/GLOBAL_VARIABLE_REFACTOR_PLAN' },
-                { text: '路线图', link: '/zh/dev/ROADMAP' }
-              ]
-            },
-            {
-              text: 'CI/CD',
-              items: [
-                { text: 'CI/CD 工作流', link: '/zh/dev/CI_CD' }
-              ]
-            },
-            {
-              text: '文档规范',
-              items: [
-                { text: 'Markdown 样式指南', link: '/zh/dev/MARKDOWN_STYLE_GUIDE' }
-              ]
-            },
-            {
-              text: '测试与质量',
-              items: [
-                { text: '可测试性指南', link: '/zh/dev/TESTABILITY_GUIDE' },
-                { text: '测试标准', link: '/zh/dev/TESTING_STANDARDS' },
-                { text: '性能测试标准', link: '/zh/dev/PERFORMANCE_TESTING_STANDARD' },
-                { text: '性能基准', link: '/zh/dev/PERFORMANCE_BENCHMARK' }
-              ]
-            },
-            {
-              text: '参考文档',
-              items: [
-                { text: '路由搜索模式', link: '/zh/dev/ROUTER_SEARCH_MODES' },
-                { text: '安全指南', link: '/zh/dev/SECURITY' },
-                { text: '构建配置矩阵', link: '/zh/BUILD_CONFIGURATION_MATRIX' },
-                { text: '高级构建选项', link: '/zh/ADVANCED_BUILD_OPTIONS' }
-              ]
-            }
-          ]
         },
         
         search: {
