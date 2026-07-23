@@ -8,16 +8,16 @@ UVHTTP 项目的安全策略，包括依赖管理、漏洞响应流程和安全�
 
 ### 当前依赖
 
-| 依赖 | 版本 | 用途 | 更新策略 |
-|------|------|------|----------|
-| libuv | v1.51.0 | 事件循环 | 定期更新 |
-| mbedtls | v3.6.0 | TLS/SSL | 优先安全更新 |
-| mimalloc | v3.1.5 | 内存分配器 | 定期更新 |
-| cjson | v1.7.15 | JSON 解析 | 定期更新 |
-| llhttp | v9.2.1 | HTTP 解析 | 定期更新 |
-| uthash | v1.9.8 | 哈希表 | 定期更新 |
-| xxhash | v0.7.4 | 快速哈希 | 定期更新 |
-| googletest | release-1.12.1 | 测试框架 | 按需更新 |
+| 依赖 | 版本（在 .gitmodules 中） | 用途 | 更新策略 |
+|------|--------------------------|------|----------|
+| libuv | git submodule | 事件循环 | 定期更新 |
+| mbedtls | git submodule | TLS/SSL | 优先安全更新 |
+| mimalloc | git submodule | 内存分配器 | 定期更新 |
+| cjson | git submodule | JSON 解析 | 定期更新 |
+| llhttp | git submodule | HTTP 解析 | 定期更新 |
+| uthash | git submodule | 哈希表 | 定期更新 |
+| xxhash | git submodule | 快速哈希 | 定期更新 |
+| googletest | git submodule | 测试框架 | 按需更新 |
 
 ### 依赖更新策略
 

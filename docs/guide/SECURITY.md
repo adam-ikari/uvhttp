@@ -13,16 +13,16 @@ This document covers the UVHTTP security policy: dependency management, vulnerab
 
 ### Current Dependencies
 
-| Dependency | Version | Purpose | Update Policy |
-|------------|---------|---------|---------------|
-| libuv | v1.51.0 | Event loop | Regular updates |
-| mbedtls | v3.6.0 | TLS/SSL | Security updates priority |
-| mimalloc | v3.1.5 | Memory allocator | Regular updates |
-| cjson | v1.7.15 | JSON parsing | Regular updates |
-| llhttp | v9.2.1 | HTTP parsing | Regular updates |
-| uthash | v1.9.8 | Hash table | Regular updates |
-| xxhash | v0.7.4 | Fast hashing | Regular updates |
-| googletest | release-1.12.1 | Testing framework | As needed |
+| Dependency | Version (in .gitmodules) | Purpose | Update Policy |
+|------------|--------------------------|---------|---------------|
+| libuv | git submodule | Event loop | Regular updates |
+| mbedtls | git submodule | TLS/SSL | Security updates priority |
+| mimalloc | git submodule | Memory allocator | Regular updates |
+| cjson | git submodule | JSON parsing | Regular updates |
+| llhttp | git submodule | HTTP parsing | Regular updates |
+| uthash | git submodule | Hash table | Regular updates |
+| xxhash | git submodule | Fast hashing | Regular updates |
+| googletest | git submodule | Testing framework | As needed |
 
 ### Dependency Update Policy
 
