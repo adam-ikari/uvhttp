@@ -520,7 +520,9 @@ TEST_F(RouterBoostCoverageTest, StaticHandler_NullConnection) {
     uv_loop_init(&loop);
     uv_tcp_t tcp_handle;
     uv_tcp_init(&loop, &tcp_handle);
-    // uv_handle_get_data returns NULL by default (no data set)
+    // Explicitly set data to NULL (uv_handle_get_data may return garbage
+    // from uninitialized memory under ASan if not explicitly set)
+    uv_handle_set_data((uv_handle_t*)&tcp_handle, NULL);
 
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));

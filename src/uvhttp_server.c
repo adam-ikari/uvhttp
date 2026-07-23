@@ -1217,6 +1217,7 @@ static void ws_timeout_timer_callback(uv_timer_t* handle) {
             if (current->ws_conn) {
                 uvhttp_ws_close(NULL, current->ws_conn, 1000,
                                 "Connection timeout");
+                current->ws_conn = NULL;
             }
 
             /* remove from list */
@@ -1406,7 +1407,10 @@ uvhttp_error_t uvhttp_server_ws_disable_connection_management(
         ws_connection_node_t* next = current->next;
 
         if (current->ws_conn) {
+            /* close and null out the ws_conn pointer so a concurrent
+             * timeout/heartbeat callback does not double-close it */
             uvhttp_ws_close(NULL, current->ws_conn, 1000, "Server shutdown");
+            current->ws_conn = NULL;
         }
 
         uvhttp_free(current);
