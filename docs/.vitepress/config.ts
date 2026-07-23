@@ -129,7 +129,9 @@ export default defineConfig({
                 { text: 'Security', link: '/guide/SECURITY' },
                 { text: 'Roadmap', link: '/guide/ROADMAP' },
                 { text: 'Changelog', link: '/guide/CHANGELOG' },
-                { text: 'Versions', link: '/guide/versions' }
+                { text: 'Versions', link: '/guide/versions' },
+                { text: 'Agile Guide', link: '/AGILE' },
+                { text: 'Sprint Backlog', link: '/sprint-backlog' }
               ]
             }
           ],
