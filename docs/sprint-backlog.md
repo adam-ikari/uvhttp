@@ -1,54 +1,35 @@
-# Sprint 3 — Product Backlog
+# Sprint Backlog
 
-**Sprint 周期**: 2026-07-24 至 2026-08-06  
-**Sprint 目标**: 提升测试覆盖率 + 完善 SDD 规格文档  
-**Sprint 容量**: 18 Story Points
+## 每日工作流
 
-看板地址: https://github.com/adam-ikari/uvhttp/issues
+每天早上重新规划当日 Sprint 的工作量：
 
-## Sprint Backlog
+1. 检查 `daily-build` 昨晚的结果
+   - 如果有失败，创建 bug issue 并加入当日 backlog
+   - 如果全部通过，继续推进原有任务
 
-### P1 — 必须完成
+2. 从 Product Backlog 中选取优先级最高的任务
+   - 估算工作量（6-7h = 1天容量）
+   - 创建 Issue 并标记 `sprint-N` label
 
-| ID | 标题 | 类型 | 估算 | 状态 | 链接 |
-|----|------|------|------|------|------|
-| #252 | Router 测试覆盖率提升至 80% (当前 62.9%) | test | 5 | backlog | [#252](https://github.com/adam-ikari/uvhttp/issues/252) |
-| #253 | Connection 测试覆盖率提升至 70% (当前 42.8%) | test | 5 | backlog | [#253](https://github.com/adam-ikari/uvhttp/issues/253) |
+3. 开始当天开发
 
-### P2 — 应该完成
+## 当前 Sprint
 
-| ID | 标题 | 类型 | 估算 | 状态 | 链接 |
-|----|------|------|------|------|------|
-| #254 | WebSocket 集成自动化测试 | test | 5 | backlog | [#254](https://github.com/adam-ikari/uvhttp/issues/254) |
-| #255 | 补充缺失的 SDD 规格文档 | docs | 3 | backlog | [#255](https://github.com/adam-ikari/uvhttp/issues/255) |
-| #256 | 验证 UBSan 构建干净 | chore | 2 | backlog | [#256](https://github.com/adam-ikari/uvhttp/issues/256) |
-
-## 工作流
-
-每个 Issue 的流转：
-```
-Backlog → In Progress → Review → Done
-```
-
-**Backlog → In Progress**: 创建功能分支 `feat/fix/docs/test/chore/<description>`
-**In Progress → Review**: 创建 PR，关联 Issue
-**Review → Done**: PR 合并，CI 通过
+最新 Issue 列表: https://github.com/adam-ikari/uvhttp/issues?q=label%3Asprint-N
 
 ## 速查命令
 
 ```bash
-# 查看所有 open issues
-gh issue list
+# 查看 daily-build 结果
+gh run list --workflow "daily-build" --limit 1 --json conclusion
 
-# 查看 sprint 3 issues
-gh issue list --label sprint-3
+# 查看当前 Sprint 的任务
+gh issue list --label "sprint-3"
 
-# 查看我的任务
-gh issue list --assignee @me
+# 创建新的 Sprint Issue
+gh issue create --label "test,P2,sprint-3" --title "..."
 
-# 开始一个任务
-gh issue develop <number> --branch-name <type>/<description>
-
-# 创建 PR 关联 issue
-gh pr create --base main --title "<type>: <description>" --body "Closes #<number>"
+# 关闭完成的 Issue
+gh issue close <number>
 ```
