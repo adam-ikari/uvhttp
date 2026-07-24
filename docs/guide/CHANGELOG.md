@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] - Production-grade memory-safety pass
+## [2.5.1] - 2026-07-25
+
+### Added
+- **Connection test coverage**: 44 new tests, coverage from 42.8% → ~70%
+- **WebSocket automated tests**: 99 test cases in new test_websocket_automated.cpp
+- **Router test coverage**: find_array_route and match_route_node coverage tests
+- **SDD specification documents**: static-api, tls-api, protocol-upgrade specs
+- **Development rhythm documentation**: AI-driven 24h development workflow
+- **Daily-build CI**: Automatic build and test at UTC 20:00, creates issue on failure
+
+### Changed
+- **uvhttp_server_new_with_loop**: New API for internal event loop management
+- **Documentation**: Removed system libuv dependency from Chinese docs
+- **Documentation style spec**: Added writing standards and AI flavor removal guidelines
+- **VitePress sidebar**: Removed internal dev docs from public website
+
+### Fixed
+- **ASan memory bugs**: 3 fixes for stack-buffer-underflow, null pointer, and test leaks
+- **FAQ API signatures**: Corrected uvhttp_config_new and uvhttp_static_create examples
+- **Product-site consistency**: Removed fabricated data from zh/performance.md
+- **CSP**: Added 'unsafe-inline' for SPA navigation
+
+### Removed
+- **gh-pages branch**: Fully migrated to GitHub Actions deployment
+- **Conflicting skills**: Removed standalone skills in favor of Superpowers framework
+- **Stale branches**: Cleaned up develop, gh-pages, and other unused branches
+- **System libuv dependency**: libuv is now exclusively vendored as submodule
+- **Internal dev docs**: Removed zh/dev/ section from public website sidebar
 
 ### Fixed — genuine memory-safety bugs in library code (all passed normal tests but corrupted memory under ASan)
 
