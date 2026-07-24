@@ -49,7 +49,9 @@ static void destroy_server_and_loop(uvhttp_server_t* server,
  * After this call the connection pointer is invalid.
  */
 static void close_and_drain(uvhttp_connection_t* conn, uv_loop_t* loop) {
-    uvhttp_connection_close(conn);
+    /* Call free which internally handles close + drain + resource cleanup */
+    uvhttp_connection_free(conn);
+    /* Run the loop to process any pending close callbacks */
     uv_run(loop, UV_RUN_DEFAULT);
 }
 
@@ -65,6 +67,10 @@ TEST(ConnectionBoostCoverage, RestartRead_WithRequestBody) {
     ASSERT_EQ(result, UVHTTP_OK);
 
     ASSERT_NE(conn->request, nullptr);
+    /* Free the body allocated by uvhttp_request_init before replacing it */
+    if (conn->request->body) {
+        uvhttp_free(conn->request->body);
+    }
     conn->request->body = (char*)uvhttp_alloc(128);
     ASSERT_NE(conn->request->body, nullptr);
     conn->request->body_length = 128;
@@ -77,6 +83,7 @@ TEST(ConnectionBoostCoverage, RestartRead_WithRequestBody) {
     EXPECT_EQ(conn->request->body_length, 0u);
     EXPECT_EQ(conn->request->body_capacity, 0u);
 
+    /* The body was already freed by restart_read, no need to free again */
     close_and_drain(conn, loop);
     destroy_server_and_loop(server, loop);
 }
@@ -93,6 +100,10 @@ TEST(ConnectionBoostCoverage, RestartRead_WithResponseBody) {
     ASSERT_EQ(result, UVHTTP_OK);
 
     ASSERT_NE(conn->response, nullptr);
+    /* Free the body allocated by uvhttp_request_init before replacing it */
+    if (conn->response->body) {
+        uvhttp_free(conn->response->body);
+    }
     conn->response->body = (char*)uvhttp_alloc(256);
     ASSERT_NE(conn->response->body, nullptr);
 
@@ -861,6 +872,10 @@ TEST(ConnectionBoostCoverage, RestartRead_ResponseBodyFree) {
     ASSERT_EQ(result, UVHTTP_OK);
 
     ASSERT_NE(conn->response, nullptr);
+    /* Free the body allocated by uvhttp_request_init before replacing it */
+    if (conn->response->body) {
+        uvhttp_free(conn->response->body);
+    }
     conn->response->body = (char*)uvhttp_alloc(512);
     ASSERT_NE(conn->response->body, nullptr);
 
