@@ -1,6 +1,6 @@
 ---
 title: Versions & Compatibility
-description: UVHTTP version history and compatibility — current version 2.5.0, support policy, upgrade guide (including the 2.4→2.5 API migration to output-parameter constructors and the ASan/UBSan memory-safety verification).
+description: UVHTTP version history and compatibility — current version 2.5.1, support policy, upgrade guide (including the 2.4→2.5 API migration to output-parameter constructors and the ASan/UBSan memory-safety verification).
 ---
 
 # Versions
@@ -9,13 +9,23 @@ UVHTTP versions and compatibility.
 
 ## Current Version
 
-**Version**: 2.5.0  
-**Release Date**: 2026-03-15  
+**Version**: 2.5.1  
+**Release Date**: 2026-07-25  
 **Status**: Stable
 
 ## Version History
 
-### 2.5.0 (2026-03-15)
+### 2.5.1 (2026-07-25)
+
+- Test coverage improvements: 93 tests (was 91), connection 42.8% → ~70%
+- WebSocket automated integration tests: 99 test cases
+- Router coverage: find_array_route and match_route_node tests
+- SDD specification documents: 17 total (was 14)
+- ASan/UBSan 93/93 clean
+- uvhttp_server_new_with_loop API for internal loop management
+- Daily-build CI workflow
+- Development rhythm documentation
+- Various doc fixes and consistency improvements
 
 - 32-bit embedded architecture support
 - Compression features (gzip/deflate)
