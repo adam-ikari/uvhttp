@@ -1,61 +1,61 @@
 {
   "embedded-profile.md": {
-    "en": 1784178077,
-    "zh": 1783967194,
+    "en": "5a26c78ba54717d041c4fde52fcf1efa0586cc9c",
+    "zh": "bec4872c7a030bbfa520ce16ded89a9b6df61bbe",
     "outdated": 1
   }
 ,
   "guide/build.md": {
-    "en": 1783936101,
-    "zh": 1784002766,
-    "outdated": 0
+    "en": "a47bc5a32186776500458a086ff0baacfd5163af",
+    "zh": "2fe6681e722d0a3c8aa82af4e1ea482f8e79de7a",
+    "outdated": 1
   }
 ,
   "guide/CHANGELOG.md": {
-    "en": 1784887445,
-    "zh": 1784178077,
+    "en": "89f33b9d2353b11a66db73a33312cd851292d310",
+    "zh": "5a26c78ba54717d041c4fde52fcf1efa0586cc9c",
     "outdated": 1
   }
 ,
   "guide/getting-started.md": {
-    "en": 1783967194,
-    "zh": 1784848769,
-    "outdated": 0
+    "en": "bec4872c7a030bbfa520ce16ded89a9b6df61bbe",
+    "zh": "d7fb5034212b78cdfb31c77546796e486a844d62",
+    "outdated": 1
   }
 ,
   "guide/introduction.md": {
-    "en": 1784777899,
-    "zh": 1784777899,
+    "en": "4582a5a23dbdba1621fdb667c665ba2fde61b1e2",
+    "zh": "4582a5a23dbdba1621fdb667c665ba2fde61b1e2",
     "outdated": 0
   }
 ,
   "guide/LINUX_OPTIMIZATION.md": {
-    "en": 1774067240,
-    "zh": 1784002766,
-    "outdated": 0
+    "en": "24b63df81b6c3e86daaa9e108437255121d026f6",
+    "zh": "2fe6681e722d0a3c8aa82af4e1ea482f8e79de7a",
+    "outdated": 1
   }
 ,
   "guide/MIGRATION_GUIDE_LRU_CACHE.md": {
-    "en": 1774067240,
-    "zh": 1784002766,
-    "outdated": 0
+    "en": "24b63df81b6c3e86daaa9e108437255121d026f6",
+    "zh": "2fe6681e722d0a3c8aa82af4e1ea482f8e79de7a",
+    "outdated": 1
   }
 ,
   "guide/STATIC_FILE_SERVER.md": {
-    "en": 1784178077,
-    "zh": 1784178077,
+    "en": "5a26c78ba54717d041c4fde52fcf1efa0586cc9c",
+    "zh": "5a26c78ba54717d041c4fde52fcf1efa0586cc9c",
     "outdated": 0
   }
 ,
   "index.md": {
-    "en": 1784178077,
-    "zh": 1784002766,
+    "en": "5a26c78ba54717d041c4fde52fcf1efa0586cc9c",
+    "zh": "2fe6681e722d0a3c8aa82af4e1ea482f8e79de7a",
     "outdated": 1
   }
 ,
   "MEMORY_SAFETY.md": {
-    "en": 1784178077,
-    "zh": 1783967194,
+    "en": "5a26c78ba54717d041c4fde52fcf1efa0586cc9c",
+    "zh": "bec4872c7a030bbfa520ce16ded89a9b6df61bbe",
     "outdated": 1
   }
 
