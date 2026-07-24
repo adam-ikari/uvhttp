@@ -129,7 +129,6 @@ export default defineConfig({
                 { text: 'Security', link: '/guide/SECURITY' },
                 { text: 'Roadmap', link: '/guide/ROADMAP' },
                 { text: 'Changelog', link: '/guide/CHANGELOG' },
-                { text: 'Versions', link: '/guide/versions' },
                 { text: 'Specifications', link: '/spec/' }
               ]
             }
@@ -188,7 +187,6 @@ export default defineConfig({
           { text: '内存安全', link: '/zh/MEMORY_SAFETY' },
           { text: '性能', link: '/zh/performance' },
           { text: '嵌入式画像', link: '/zh/embedded-profile' },
-          { text: '版本', link: '/zh/versions' },
           { 
             text: '下载', 
             items: [
@@ -251,7 +249,6 @@ export default defineConfig({
                 { text: '路线图', link: '/zh/ROADMAP' },
                 { text: '更新日志', link: '/zh/guide/CHANGELOG' },
                 { text: '性能指标', link: '/zh/performance' },
-                { text: '版本信息', link: '/zh/versions' },
                 { text: '规格文档', link: '/spec/' }
               ]
             }
