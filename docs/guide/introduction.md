@@ -269,6 +269,38 @@ This project is licensed under the MIT License - see the [LICENSE](../../LICENSE
 
 ---
 
+## Compatibility
+
+### Platform Support
+
+| Platform | Version | Status |
+|----------|---------|--------|
+| Linux x86_64 | 2.2.0+ | ✅ Stable |
+| Linux i386 | 2.2.0+ | ✅ Stable |
+| macOS x86_64 | 2.2.0+ | ✅ Stable |
+| macOS ARM64 | 2.2.0+ | ✅ Stable |
+| Windows x86_64 | 2.2.0+ | ⚠️ Experimental |
+
+### Compiler Support
+
+| Compiler | Version | Status |
+|----------|---------|--------|
+| GCC | 4.8+ | ✅ Stable |
+| Clang | 3.4+ | ✅ Stable |
+| MSVC | 2019+ | ⚠️ Experimental |
+
+### Dependency Versions
+
+| Dependency | Version | Status |
+|------------|---------|--------|
+| libuv | 1.44.0+ | ✅ Required |
+| llhttp | 8.1.0+ | ✅ Required |
+| mbedtls | 3.0.0+ | ✅ Optional (TLS) |
+| mimalloc | 2.0.0+ | ✅ Optional (Allocator) |
+| cjson | 1.7.0+ | ✅ Optional (JSON) |
+
+---
+
 ## 📖 Next Steps
 
 - **[Quick Start Guide](getting-started.md)**: Begin building your first server
