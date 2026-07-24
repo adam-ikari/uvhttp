@@ -1,5 +1,6 @@
 ---
 title: 内存安全 — ASan 与 UBSan 验证
+sync_hash: 5a26c78ba54717d041c4fde52fcf1efa0586cc9c
 description: UVHTTP 的内存安全保证：91 项测试通过 ASan 与 UBSan 验证，每夜 CI 持续验证，一键复现。涵盖已修复的 bug 类别、纵深防御，以及对长期运行与嵌入式场景的意义。
 ---
 

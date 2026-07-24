@@ -1,3 +1,7 @@
+---
+sync_hash: 5a26c78ba54717d041c4fde52fcf1efa0586cc9c
+title: UVHTTP 静态文件服务器指南
+---
 # UVHTTP 静态文件服务器指南
 
 ## 概述

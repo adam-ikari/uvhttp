@@ -1,5 +1,6 @@
 ---
 title: 简介
+sync_hash: 4582a5a23dbdba1621fdb667c665ba2fde61b1e2
 description: UVHTTP 是基于 libuv 的 HTTP/1.1 与 WebSocket 服务器库，C99 编写。ASan/UBSan 验证内存安全，支持 32 位嵌入式，零拷贝，模块化特性。
 ---
 
