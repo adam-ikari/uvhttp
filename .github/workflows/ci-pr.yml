@@ -217,10 +217,53 @@ jobs:
         run: |
           echo "format-check target not available in CMake-generated Makefile"
   
+  # 任务: 中英文文档同步检查
+  doc-sync-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          fetch-depth: 0
+
+      - name: Check EN/ZH doc sync
+        run: |
+          echo "## 🌐 中英文文档同步检查" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 文件 | EN 修改时间 | ZH 修改时间 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-----------|-----------|------|" >> $GITHUB_STEP_SUMMARY
+
+          outdated=0
+          for en_file in $(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep "^docs/.*\.md$" | grep -v "^docs/zh/" | grep -v "/api/" || true); do
+            zh_file="docs/zh/${en_file#docs/}"
+            if [ -f "$zh_file" ]; then
+              en_time=$(git log -1 --format=%ci "$en_file" 2>/dev/null || echo "unknown")
+              zh_time=$(git log -1 --format=%ci "$zh_file" 2>/dev/null || echo "unknown")
+              en_ts=$(git log -1 --format=%ct "$en_file" 2>/dev/null || echo "0")
+              zh_ts=$(git log -1 --format=%ct "$zh_file" 2>/dev/null || echo "0")
+              if [ "$en_ts" -gt "$zh_ts" ]; then
+                echo "| $en_file | $en_time | $zh_time | ⚠️ 可能过时 |" >> $GITHUB_STEP_SUMMARY
+                outdated=$((outdated + 1))
+              else
+                echo "| $en_file | $en_time | $zh_time | ✅ 同步 |" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "$outdated" -gt 0 ]; then
+            echo "**发现 $outdated 个文件可能过时，请在合并前更新中文翻译。**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**所有中文文档与英文同步。** ✅" >> $GITHUB_STEP_SUMMARY
+          fi
+
   # ========== 阶段 2: 生成总结 ==========
-  
+
   generate-summary:
-    needs: [ubuntu-build, code-quality-check, dependency-scan, ubuntu-test-fast, asan-gate, format-check]
+    needs: [ubuntu-build, code-quality-check, dependency-scan, ubuntu-test-fast, asan-gate, format-check, doc-sync-check]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
