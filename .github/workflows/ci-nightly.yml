@@ -520,6 +520,15 @@ jobs:
     if: always()
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          fetch-depth: 0
+
+      - name: Generate doc sync status
+        run: |
+          bash scripts/check-doc-sync.sh
+
       - name: Generate nightly summary
         run: |
           echo "## 🌙 Nightly Test Report" >> $GITHUB_STEP_SUMMARY
@@ -530,6 +539,15 @@ jobs:
           echo "| Coverage | ${{ needs.test-coverage.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Memory Test | ${{ needs.test-memory.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| UBSan Test | ${{ needs.test-ubsan.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Stress Test | ${{ needs.test-stress.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Performance | ${{ needs.performance-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Doc Sync Status" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          for entry in $(python3 -c "import json; d=json.load(open('.vitepress/sync-status.json')); [print(f'{k}|{\"⚠️\" if v[\"outdated\"] else \"✅\"}') for k,v in d.items()]" 2>/dev/null); do
+            echo "| $entry |" >> $GITHUB_STEP_SUMMARY
+          done
           echo "| Stress Test | ${{ needs.test-stress.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Performance | ${{ needs.performance-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

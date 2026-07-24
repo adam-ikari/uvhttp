@@ -1,0 +1,62 @@
+{
+  "embedded-profile.md": {
+    "en": 1784178077,
+    "zh": 1783967194,
+    "outdated": 1
+  }
+,
+  "guide/build.md": {
+    "en": 1783936101,
+    "zh": 1784002766,
+    "outdated": 0
+  }
+,
+  "guide/CHANGELOG.md": {
+    "en": 1784887445,
+    "zh": 1784178077,
+    "outdated": 1
+  }
+,
+  "guide/getting-started.md": {
+    "en": 1783967194,
+    "zh": 1784848769,
+    "outdated": 0
+  }
+,
+  "guide/introduction.md": {
+    "en": 1784777899,
+    "zh": 1784777899,
+    "outdated": 0
+  }
+,
+  "guide/LINUX_OPTIMIZATION.md": {
+    "en": 1774067240,
+    "zh": 1784002766,
+    "outdated": 0
+  }
+,
+  "guide/MIGRATION_GUIDE_LRU_CACHE.md": {
+    "en": 1774067240,
+    "zh": 1784002766,
+    "outdated": 0
+  }
+,
+  "guide/STATIC_FILE_SERVER.md": {
+    "en": 1784178077,
+    "zh": 1784178077,
+    "outdated": 0
+  }
+,
+  "index.md": {
+    "en": 1784178077,
+    "zh": 1784002766,
+    "outdated": 1
+  }
+,
+  "MEMORY_SAFETY.md": {
+    "en": 1784178077,
+    "zh": 1783967194,
+    "outdated": 1
+  }
+
+}

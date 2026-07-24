@@ -312,5 +312,22 @@ export default defineConfig({
       { icon: 'github', link: 'https://github.com/adam-ikari/uvhttp' },
       { icon: 'twitter', link: 'https://twitter.com/uvhttp_lib' }
     ]
+  },
+  transformHead: ({ page }) => {
+    try {
+      const syncStatus = require('./sync-status.json');
+      if (page && page.relativePath && page.relativePath.startsWith('zh/')) {
+        const enPath = page.relativePath.replace(/^zh\//, '');
+        const entry = syncStatus[enPath];
+        if (entry && entry.outdated) {
+          return [
+            ['meta', { name: 'doc-outdated', content: 'true' }]
+          ];
+        }
+      }
+    } catch (e) {
+      // sync-status.json may not exist in dev mode
+    }
+    return [];
   }
 })
