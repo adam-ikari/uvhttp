@@ -1,5 +1,6 @@
 ---
 title: 嵌入式与长期运行画像
+sync_hash: 5a26c78ba54717d041c4fde52fcf1efa0586cc9c
 description: UVHTTP 嵌入式与长跑指标：持续负载下 RSS 持平（60s 零增长）、静态库 ~257 KB、冷启动 ~310ms、支持 32 位。ASan-clean 内存安全保证的运行时佐证。
 ---
 

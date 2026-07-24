@@ -1,5 +1,6 @@
 ---
 title: 更新日志
+sync_hash: 89f33b9d2353b11a66db73a33312cd851292d310
 description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，遵循语义化版本规范。涵盖 1.0.0 至 2.5.0 各版本的新增、修复、变更、安全与性能改进，以及生产级内存安全验证。
 ---
 
