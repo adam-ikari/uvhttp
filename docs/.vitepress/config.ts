@@ -8,8 +8,8 @@ export default defineConfig({
   title: 'UVHTTP',
   titleTemplate: ':title — UVHTTP',
   description: 'Lightweight, embeddable C99 HTTP/1.1 & WebSocket server library with ASan/UBSan-verified memory safety, 32-bit embedded support, and zero-copy performance (~20K RPS).',
-  // 本地开发使用 '/'，GitHub Pages 使用 '/uvhttp/'
-  base: process.env.DEPLOY === 'gh-pages' ? '/uvhttp/' : '/',
+  // 本地开发使用 '/'，部署到 GitHub Pages 使用 '/uvhttp/'
+  base: process.env.DEPLOY === 'pages' ? '/uvhttp/' : '/',
   lang: 'en-US',
   defaultLang: 'en-US',
   i18nRouting: false,
