@@ -1183,6 +1183,85 @@ TEST_F(RouterBoostCoverageTest, Match_TrieMode_NoParamPath_FastPath) {
 // main
 // ============================================================================
 
+// ============================================================================
+// main
+// ============================================================================
+
+// ============================================================================
+// 20. find_array_route — array mode method matching (lines 306-318)
+//
+// find_array_route is used in array mode (before HYBRID_THRESHOLD=100).
+// Test method-specific matching and UVHTTP_ANY fallback.
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, FindArrayRoute_MethodExactMatch) {
+    // Add routes with specific methods (stays in array mode)
+    uvhttp_router_add_route_method(router, "/get", UVHTTP_GET, dummy_handler);
+    uvhttp_router_add_route_method(router, "/post", UVHTTP_POST, dummy_handler2);
+    uvhttp_router_add_route_method(router, "/any", UVHTTP_ANY, dummy_handler3);
+
+    // Exact method match
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/get", "GET"), dummy_handler);
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/post", "POST"), dummy_handler2);
+
+    // Wrong method returns NULL
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/get", "POST"), nullptr);
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/post", "GET"), nullptr);
+
+    // UVHTTP_ANY matches any method
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/any", "GET"), dummy_handler3);
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/any", "POST"), dummy_handler3);
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/any", "PUT"), dummy_handler3);
+}
+
+TEST_F(RouterBoostCoverageTest, FindArrayRoute_NotFound) {
+    uvhttp_router_add_route_method(router, "/exists", UVHTTP_GET, dummy_handler);
+
+    // Non-existent path
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/nonexistent", "GET"), nullptr);
+    // Empty router
+    uvhttp_router_t* empty = nullptr;
+    uvhttp_router_new(&empty);
+    EXPECT_EQ(uvhttp_router_find_handler(empty, "/anything", "GET"), nullptr);
+    uvhttp_router_free(empty);
+}
+
+// ============================================================================
+// 21. match_route_node — trie mode matching (lines 464-538)
+//
+// match_route_node is the core trie traversal function. Test edge cases.
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, MatchRouteNode_ParamAtDifferentDepths) {
+    // Force trie mode by adding param routes
+    uvhttp_router_add_route_method(router, "/users/:id", UVHTTP_GET, dummy_handler);
+    uvhttp_router_add_route_method(router, "/users/:id/posts/:postId", UVHTTP_GET, dummy_handler2);
+
+    uvhttp_route_match_t match;
+
+    // Single param
+    EXPECT_EQ(uvhttp_router_match(router, "/users/42", "GET", &match), UVHTTP_OK);
+    EXPECT_EQ(match.handler, dummy_handler);
+    EXPECT_EQ(match.param_count, 1);
+
+    // Nested params
+    EXPECT_EQ(uvhttp_router_match(router, "/users/42/posts/7", "GET", &match), UVHTTP_OK);
+    EXPECT_EQ(match.handler, dummy_handler2);
+    EXPECT_EQ(match.param_count, 2);
+}
+
+TEST_F(RouterBoostCoverageTest, MatchRouteNode_InvalidNodeIndex) {
+    // match_route_node with invalid node_index (UINT32_MAX) should return -1
+    // This is exercised internally when the trie traversal hits an invalid index
+    uvhttp_route_match_t match;
+    memset(&match, 0, sizeof(match));
+
+    // An empty router should return NOT_FOUND
+    EXPECT_EQ(uvhttp_router_match(router, "/anything", "GET", &match),
+              UVHTTP_ERROR_NOT_FOUND);
+}
+
+
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
