@@ -23,6 +23,7 @@ behavior contract, interfaces, and quality criteria for a module.
 - [Test Coverage Spec](test-coverage.md) — Coverage targets, test categories
 - [Performance Spec](performance.md) — Throughput, latency, resource limits
 - [Build System Spec](build-system.md) — CMake configuration, C standard, flags
+- [Documentation Style Spec](documentation-style.md) — Writing standards, AI flavor removal
 
 ### Internal Specifications
 - [Allocator Spec](allocator.md) — `uvhttp_allocator_t` interface, backends
