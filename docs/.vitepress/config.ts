@@ -161,7 +161,7 @@ export default defineConfig({
         },
         
         footer: {
-          message: 'Built with ❤️ for high-performance applications | Released under MIT License',
+          message: 'Released under MIT License',
           copyright: 'Copyright © 2024-present UVHTTP Contributors'
         },
         
@@ -281,7 +281,7 @@ export default defineConfig({
         },
         
         footer: {
-          message: '用 ❤️ 构建高性能应用 | 基于 MIT 许可证发布',
+          message: '基于 MIT 许可证发布',
           copyright: 'Copyright © 2024-present UVHTTP Contributors'
         },
         
