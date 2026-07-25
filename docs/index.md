@@ -163,3 +163,4 @@ For detailed installation instructions and build options, see the [Installation 
 - **[Installation Guide](/guide/INSTALL_CMAKE)** - Installation and build guide
 - **[Performance Guide](/guide/performance)** - Performance optimization tips
 - **[FAQ](/guide/FAQ)** - Frequently asked questions
+<!-- site updated: 1784942602 -->
