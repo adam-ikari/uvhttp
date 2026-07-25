@@ -27,9 +27,18 @@ Sprint 编号仅用于标识开发周期，不与版本号绑定。版本号由�
 
 | 天 | Sprint | 确认要点 |
 |---|--------|---------|
-| 周一至周四 | Sprint 1-4 | 开发，从 GitHub Issues 选取 P0/P1 任务 |
-| 周五 | Sprint 5 | 代码冻结，只做测试+发布，不引入新代码 |
+| 周一至周四 | Sprint N 至 N+3 | 开发，从 GitHub Issues 选取 P0/P1 任务 |
+| 周五 | Sprint N+4 | 代码冻结，只做测试+发布，不引入新代码 |
 | 周末 | — | 判断是否有溢出任务或紧急 bug，否则休息 |
+
+## 回顾
+
+Sprint 完成后进行简单回顾：
+
+1. **检查已完成**: `gh issue list --label sprint-N --state closed`
+2. **检查未完成**: `gh issue list --label sprint-N --state open`
+3. **未完成任务滚入下个 Sprint**: `gh issue edit <number> --add-label sprint-N+1 --remove-label sprint-N`
+4. **关闭已完成的 Issue**: 自动关闭
 
 ## 周末判断标准
 
