@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include <limits.h>
 #include <inttypes.h>
 
@@ -647,6 +648,37 @@ static void print_final_stats(void) {
     printf("========================================\n");
 }
 
+#if UVHTTP_FEATURE_STATIC_FILES
+/* Create a test file of the given size filled with random data. */
+static void create_test_file(const char* path, size_t size) {
+    FILE* f = fopen(path, "wb");
+    if (!f) {
+        fprintf(stderr, "Failed to create test file: %s\n", path);
+        return;
+    }
+
+    /* Write random data */
+    unsigned char buffer[4096];
+    for (size_t i = 0; i < sizeof(buffer); i++) {
+        buffer[i] = (unsigned char)(rand() % 256);
+    }
+
+    size_t remaining = size;
+    while (remaining > 0) {
+        size_t chunk = (remaining > sizeof(buffer)) ? sizeof(buffer) : remaining;
+        fwrite(buffer, 1, chunk, f);
+        remaining -= chunk;
+    }
+
+    fclose(f);
+}
+
+/* Create directory using mkdir system call */
+static int create_directory(const char* path) {
+    return mkdir(path, 0755);
+}
+#endif /* UVHTTP_FEATURE_STATIC_FILES */
+
 int main(int argc, char* argv[]) {
     int port = DEFAULT_PORT;
 
@@ -733,35 +765,6 @@ int main(int argc, char* argv[]) {
     uvhttp_router_add_route(router, "/health", health_handler);
 
     #if UVHTTP_FEATURE_STATIC_FILES
-    /* Create test file */
-    static void create_test_file(const char* path, size_t size) {
-        FILE* f = fopen(path, "wb");
-        if (!f) {
-            fprintf(stderr, "Failed to create test file: %s\n", path);
-            return;
-        }
-
-        /* Write random data */
-        unsigned char buffer[4096];
-        for (size_t i = 0; i < sizeof(buffer); i++) {
-            buffer[i] = (unsigned char)(rand() % 256);
-        }
-
-        size_t remaining = size;
-        while (remaining > 0) {
-            size_t chunk = (remaining > sizeof(buffer)) ? sizeof(buffer) : remaining;
-            fwrite(buffer, 1, chunk, f);
-            remaining -= chunk;
-        }
-
-        fclose(f);
-    }
-
-    /* Create directory using mkdir system call */
-    static int create_directory(const char* path) {
-        return mkdir(path, 0755);
-    }
-
     /* Create test file directory */
     const char* test_dir = "./public/file_test";
     if (create_directory(test_dir) != 0 && errno != EEXIST) {

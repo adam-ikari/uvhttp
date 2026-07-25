@@ -470,8 +470,7 @@ int http_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/plain");
     uvhttp_response_set_body(response, "Hello from HTTP", 17);
-    uvhttp_response_send(response);
-    return 0;
+    return uvhttp_response_send(response);
 }
 
 int main() {
@@ -488,9 +487,10 @@ int main() {
     uvhttp_server_new(loop, &server);
     
     // 4. 注册 HTTP 路由
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     uvhttp_router_add_route(router, "/", http_handler);
-    server->router = router;
+    uvhttp_server_set_router(server, router);
     
     // 5. 注册 IPPS 协议升级
     uvhttp_server_register_protocol_upgrade(

@@ -141,7 +141,7 @@ static int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response)
              "  \"requests_per_second\": %.2f,\n"
              "  \"server_info\": {\n"
              "    \"name\": \"uvhttp\",\n"
-             "    \"version\": \"2.2.0\",\n"
+             "    \"version\": \"2.5.0\",\n"
              "    \"test_mode\": \"performance\"\n"
              "  }\n"
              "}",

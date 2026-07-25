@@ -6,33 +6,71 @@ import apiSidebar from '../api/generated/sidebar.js'
 // https://vitepress.vuejs.org/config/app-configs
 export default defineConfig({
   title: 'UVHTTP',
-  description: 'High-performance HTTP/1.1 and WebSocket server library with 32-bit support and compression',
-  // 本地开发使用 '/'，GitHub Pages 使用 '/uvhttp/'
-  base: process.env.DEPLOY === 'gh-pages' ? '/uvhttp/' : '/',
+  titleTemplate: ':title — UVHTTP',
+  description: 'Lightweight, embeddable C99 HTTP/1.1 & WebSocket server library with ASan/UBSan-verified memory safety, 32-bit embedded support, and zero-copy performance (~20K RPS).',
+  // 本地开发使用 '/'，部署到 GitHub Pages 使用 '/uvhttp/'
+  base: process.env.DEPLOY === 'pages' ? '/uvhttp/' : '/',
   lang: 'en-US',
   defaultLang: 'en-US',
-  i18nRouting: true,
+  i18nRouting: false,
 
   ignoreDeadLinks: true,
 
+  // Auto-generate a sitemap.xml on build (replaces the stale static one).
+  sitemap: {
+    hostname: 'https://adam-ikari.github.io/uvhttp/',
+    lastmodDate: new Date('2026-07-13')
+  },
+
+  // Disable clean URLs for GitHub Pages compatibility
+  cleanUrls: false,
+
   head: [
-    ['meta', { name: 'keywords', content: 'HTTP, WebSocket, libuv, C, high-performance, server, async I/O, 32-bit, embedded systems, compression' }],
+    ['meta', { name: 'keywords', content: 'C HTTP server library, HTTP/1.1 server, WebSocket server, libuv, C99, ASan verified memory safety, UBSan, embedded HTTP server, 32-bit, zero-copy sendfile, lightweight C library' }],
     ['meta', { name: 'author', content: 'UVHTTP Contributors' }],
     ['meta', { name: 'viewport', content: 'width=device-width,initial-scale=1' }],
+    ['meta', { name: 'theme-color', content: '#3a7afe' }],
+    ['meta', { name: 'robots', content: 'index, follow, max-image-preview:large, max-snippet:-1' }],
     ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
     ['meta', {
       'http-equiv': 'Content-Security-Policy',
-      content: "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://adam-ikari.github.io; object-src 'none'; base-uri 'self'; form-action 'self';"
+      content: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://adam-ikari.github.io; object-src 'none'; base-uri 'self'; form-action 'self';"
     }],
-    ['meta', { property: 'og:title', content: 'UVHTTP v2.5.0 - High-performance HTTP server with 32-bit support and compression' }],
-    ['meta', { property: 'og:description', content: 'Peak throughput: 23,226 RPS | 32-bit embedded support | Zero-overhead compression' }],
+    ['meta', { property: 'og:title', content: 'UVHTTP — Memory-Safety-Verified C HTTP Server Library' }],
+    ['meta', { property: 'og:description', content: 'Lightweight, embeddable C99 HTTP/1.1 & WebSocket library with ASan+UBSan-verified memory safety, 32-bit embedded support, and ~20K RPS. Throughput you can measure, memory safety you can prove.' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:url', content: 'https://adam-ikari.github.io/uvhttp' }],
     ['meta', { property: 'og:site_name', content: 'UVHTTP' }],
+    ['meta', { property: 'og:locale', content: 'en_US' }],
+    ['meta', { property: 'og:locale:alternate', content: 'zh_CN' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-    ['meta', { name: 'twitter:title', content: 'UVHTTP v2.5.0 - High-performance HTTP server with 32-bit support and compression' }],
-    ['meta', { name: 'twitter:description', content: 'Peak throughput: 23,226 RPS | 32-bit embedded support | Zero-overhead compression' }],
-    ['link', { rel: 'canonical', href: 'https://adam-ikari.github.io/uvhttp/' }]
+    ['meta', { name: 'twitter:title', content: 'UVHTTP — Memory-Safety-Verified C HTTP Server Library' }],
+    ['meta', { name: 'twitter:description', content: 'Lightweight, embeddable C99 HTTP/1.1 & WebSocket library with ASan+UBSan-verified memory safety, 32-bit embedded support, ~20K RPS.' }],
+    ['link', { rel: 'canonical', href: 'https://adam-ikari.github.io/uvhttp/' }],
+    // Structured data: helps search engines understand this is a software library.
+    ['script', { type: 'application/ld+json' }, JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: 'UVHTTP',
+      applicationCategory: 'DeveloperApplication',
+      operatingSystem: 'Linux',
+      softwareVersion: '2.5.1',
+      programmingLanguage: 'C (C99)',
+      description: 'Lightweight, embeddable HTTP/1.1 and WebSocket server library built on libuv, with ASan/UBSan-verified memory safety and 32-bit embedded support.',
+      url: 'https://adam-ikari.github.io/uvhttp',
+      downloadUrl: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.5.1',
+      author: { '@type': 'Organization', name: 'UVHTTP Contributors' },
+      license: 'https://github.com/adam-ikari/uvhttp/blob/main/LICENSE',
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      featureList: [
+        'HTTP/1.1 and WebSocket server',
+        'ASan/UBSan-verified memory safety (91/91 tests)',
+        '32-bit embedded support',
+        'Zero-copy sendfile for large files',
+        'TLS 1.3 via mbedtls',
+        'Compile-time modular features'
+      ]
+    })]
   ],
 
   locales: {
@@ -44,13 +82,15 @@ export default defineConfig({
           { text: 'Home', link: '/' },
           { text: 'Guide', link: '/guide/getting-started' },
           { text: 'API', link: '/api/introduction' },
+          { text: 'Memory Safety', link: '/MEMORY_SAFETY' },
           { text: 'Performance', link: '/guide/performance' },
+          { text: 'Embedded Profile', link: '/embedded-profile' },
           { text: 'Versions', link: '/guide/versions' },
-          { 
-            text: 'Download', 
+          {
+            text: 'Download',
             items: [
               { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' },
-              { text: 'Release v2.5.0', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.5.0' }
+              { text: 'Release v2.5.1', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.5.1' }
             ]
           }
         ],
@@ -84,11 +124,12 @@ export default defineConfig({
             {
               text: 'Reference',
               items: [
+                { text: 'Memory Safety', link: '/MEMORY_SAFETY' },
                 { text: 'FAQ', link: '/guide/FAQ' },
                 { text: 'Security', link: '/guide/SECURITY' },
                 { text: 'Roadmap', link: '/guide/ROADMAP' },
                 { text: 'Changelog', link: '/guide/CHANGELOG' },
-                { text: 'Versions', link: '/guide/versions' }
+                { text: 'Specifications', link: '/spec/' }
               ]
             }
           ],
@@ -120,7 +161,7 @@ export default defineConfig({
         },
         
         footer: {
-          message: 'Built with ❤️ for high-performance applications | Released under MIT License',
+          message: 'Released under MIT License',
           copyright: 'Copyright © 2024-present UVHTTP Contributors'
         },
         
@@ -143,13 +184,14 @@ export default defineConfig({
           { text: '首页', link: '/zh/' },
           { text: '指南', link: '/zh/guide/getting-started' },
           { text: 'API', link: '/zh/api/introduction' },
-          { text: '性能', link: '/zh/guide/performance' },
-          { text: '版本', link: '/zh/guide/versions' },
+          { text: '内存安全', link: '/zh/MEMORY_SAFETY' },
+          { text: '性能', link: '/zh/performance' },
+          { text: '嵌入式与长期运行', link: '/zh/embedded-profile' },
           { 
             text: '下载', 
             items: [
               { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' },
-              { text: 'v2.5.0 发布', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.5.0' }
+              { text: 'v2.5.1 发布', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.5.1' }
             ]
           }
         ],
@@ -161,6 +203,7 @@ export default defineConfig({
               items: [
                 { text: '介绍', link: '/zh/guide/introduction' },
                 { text: '快速开始', link: '/zh/guide/getting-started' },
+                { text: '构建指南', link: '/zh/guide/build' },
                 { text: '安装指南', link: '/zh/guide/installation' },
                 { text: 'CMake 配置', link: '/zh/guide/CMAKE_CONFIGURATION' },
                 { text: '第一个服务器', link: '/zh/guide/first-server' },
@@ -172,7 +215,6 @@ export default defineConfig({
               items: [
                 { text: '教程', link: '/zh/guide/TUTORIAL' },
                 { text: 'libuv 数据指针', link: '/zh/guide/LIBUV_DATA_POINTER' },
-                { text: '中间件系统', link: '/zh/guide/MIDDLEWARE_SYSTEM' },
                 { text: '统一响应指南', link: '/zh/guide/UNIFIED_RESPONSE_GUIDE' }
               ]
             },
@@ -180,8 +222,16 @@ export default defineConfig({
               text: '功能模块',
               items: [
                 { text: '限流 API', link: '/zh/guide/RATE_LIMIT_API' },
-                { text: '静态文件服务', link: '/zh/guide/STATIC_FILE_SERVER' },
-                { text: 'WebSocket 认证', link: '/zh/guide/WEBSOCKET_AUTH' }
+                { text: '静态文件服务', link: '/zh/guide/STATIC_FILE_SERVER' }
+              ]
+            },
+            {
+              text: '高级',
+              items: [
+                { text: '高级构建选项', link: '/zh/ADVANCED_BUILD_OPTIONS' },
+                { text: '构建配置矩阵', link: '/zh/BUILD_CONFIGURATION_MATRIX' },
+                { text: 'Linux 优化', link: '/zh/guide/LINUX_OPTIMIZATION' },
+                { text: 'LRU 缓存迁移', link: '/zh/guide/MIGRATION_GUIDE_LRU_CACHE' }
               ]
             },
             {
@@ -189,58 +239,21 @@ export default defineConfig({
               items: [
                 { text: '开发者指南', link: '/zh/guide/DEVELOPER_GUIDE' }
               ]
+            },
+            {
+              text: '参考',
+              items: [
+                { text: '内存安全', link: '/zh/MEMORY_SAFETY' },
+                { text: '常见问题', link: '/zh/FAQ' },
+                { text: '安全指南', link: '/zh/SECURITY' },
+                { text: '路线图', link: '/zh/ROADMAP' },
+                { text: '更新日志', link: '/zh/guide/CHANGELOG' },
+                { text: '性能指标', link: '/zh/performance' },
+                { text: '规格文档', link: '/spec/' }
+              ]
             }
           ],
           '/zh/api/': apiSidebar,
-          '/zh/dev/': [
-            {
-              text: '架构设计',
-              items: [
-                { text: '架构设计', link: '/zh/dev/ARCHITECTURE' },
-                { text: '依赖说明', link: '/zh/dev/DEPENDENCIES' },
-                { text: 'XXHash 集成', link: '/zh/dev/XXHASH_INTEGRATION' }
-              ]
-            },
-            {
-              text: '开发计划',
-              items: [
-                { text: '开发计划', link: '/zh/dev/DEVELOPMENT_PLAN' },
-                { text: '全局变量重构', link: '/zh/dev/GLOBAL_VARIABLE_REFACTOR_PLAN' },
-                { text: '路线图', link: '/zh/dev/ROADMAP' }
-              ]
-            },
-            {
-              text: 'CI/CD',
-              items: [
-                { text: 'CI/CD 工作流', link: '/zh/dev/CI_CD' }
-              ]
-            },
-            {
-              text: '文档规范',
-              items: [
-                { text: 'Markdown 样式指南', link: '/zh/dev/MARKDOWN_STYLE_GUIDE' }
-              ]
-            },
-            {
-              text: '测试与质量',
-              items: [
-                { text: '可测试性指南', link: '/zh/dev/TESTABILITY_GUIDE' },
-                { text: '测试标准', link: '/zh/dev/TESTING_STANDARDS' },
-                { text: '性能测试标准', link: '/zh/dev/PERFORMANCE_TESTING_STANDARD' },
-                { text: '性能基准', link: '/zh/dev/PERFORMANCE_BENCHMARK' }
-              ]
-            },
-            {
-              text: '参考文档',
-              items: [
-                { text: '错误码参考', link: '/zh/dev/ERROR_CODES' },
-                { text: '路由搜索模式', link: '/zh/dev/ROUTER_SEARCH_MODES' },
-                { text: '安全指南', link: '/zh/dev/SECURITY' },
-                { text: '构建配置矩阵', link: '/zh/BUILD_CONFIGURATION_MATRIX' },
-                { text: '高级构建选项', link: '/zh/ADVANCED_BUILD_OPTIONS' }
-              ]
-            }
-          ]
         },
         
         search: {
@@ -268,7 +281,7 @@ export default defineConfig({
         },
         
         footer: {
-          message: '用 ❤️ 构建高性能应用 | 基于 MIT 许可证发布',
+          message: '基于 MIT 许可证发布',
           copyright: 'Copyright © 2024-present UVHTTP Contributors'
         },
         
@@ -283,10 +296,35 @@ export default defineConfig({
     }
   },
 
+  scrollBehavior: (to, from, savedPosition) => {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { top: 0 }
+    }
+  },
+
   themeConfig: {
     socialLinks: [
       { icon: 'github', link: 'https://github.com/adam-ikari/uvhttp' },
       { icon: 'twitter', link: 'https://twitter.com/uvhttp_lib' }
     ]
+  },
+  transformHead: ({ page }) => {
+    try {
+      const syncStatus = require('./sync-status.json');
+      if (page && page.relativePath && page.relativePath.startsWith('zh/')) {
+        const enPath = page.relativePath.replace(/^zh\//, '');
+        const entry = syncStatus[enPath];
+        if (entry && entry.outdated) {
+          return [
+            ['meta', { name: 'doc-outdated', content: 'true' }]
+          ];
+        }
+      }
+    } catch (e) {
+      // sync-status.json may not exist in dev mode
+    }
+    return [];
   }
 })

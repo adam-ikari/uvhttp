@@ -17,17 +17,19 @@ target_include_directories(json_api_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../
 add_dependencies(json_api_demo uvhttp)
 uvhttp_add_example_dependencies(json_api_demo)
 
-# 配置演示 - 暂时禁用，需要重构
-# add_executable(config_demo config_demo.c)
-# target_link_libraries(config_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp cjson pthread m dl)
-# target_include_directories(config_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
-# add_dependencies(config_demo uvhttp)
+# 配置演示
+add_executable(config_demo config_demo.c)
+target_link_libraries(config_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp cjson pthread m dl)
+target_include_directories(config_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
+add_dependencies(config_demo uvhttp)
+uvhttp_add_example_dependencies(config_demo)
 
-# 简单配置 - 暂时禁用，直接访问内部结构体
-# add_executable(simple_config simple_config.c)
-# target_link_libraries(simple_config PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
-# target_include_directories(simple_config PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
-# add_dependencies(simple_config uvhttp)
+# 简单配置
+add_executable(simple_config simple_config.c)
+target_link_libraries(simple_config PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
+target_include_directories(simple_config PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
+add_dependencies(simple_config uvhttp)
+uvhttp_add_example_dependencies(simple_config)
 
 # 统一响应演示
 add_executable(unified_response_demo unified_response_demo.c)
@@ -50,14 +52,16 @@ target_include_directories(protocol_upgrade_example PRIVATE ${CMAKE_CURRENT_SOUR
 add_dependencies(protocol_upgrade_example uvhttp)
 uvhttp_add_example_dependencies(protocol_upgrade_example)
 
-# 上下文注入示例 - 暂时禁用，需要重构
-# add_executable(context_injection context_injection.c)
-# target_link_libraries(context_injection PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp cjson pthread m dl)
-# target_include_directories(context_injection PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
-# add_dependencies(context_injection uvhttp)
+# 上下文注入示例
+add_executable(context_injection context_injection.c)
+target_link_libraries(context_injection PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp cjson pthread m dl)
+target_include_directories(context_injection PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
+add_dependencies(context_injection uvhttp)
+uvhttp_add_example_dependencies(context_injection)
 
-# 分层分配器示例 - 暂时禁用，缺少头文件
-# add_executable(hierarchical_allocator_example hierarchical_allocator_example.c)
-# target_link_libraries(hierarchical_allocator_example PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
-# target_include_directories(hierarchical_allocator_example PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
-# add_dependencies(hierarchical_allocator_example uvhttp)
+# 分层分配器示例
+add_executable(hierarchical_allocator_example hierarchical_allocator_example.c)
+target_link_libraries(hierarchical_allocator_example PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
+target_include_directories(hierarchical_allocator_example PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
+add_dependencies(hierarchical_allocator_example uvhttp)
+uvhttp_add_example_dependencies(hierarchical_allocator_example)

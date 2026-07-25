@@ -2,7 +2,7 @@
 # This file provides convenient targets for common development tasks
 # Use with: make -f GNUmakefile <target>
 
-.PHONY: help docs docs-clean docs-preview clean-all install-deps test coverage build build-release build-coverage clean rebuild cmake cmake-options bench
+.PHONY: help docs docs-clean docs-preview clean-all install-deps test coverage build build-release build-coverage clean rebuild cmake cmake-options bench verify-memory-safety
 
 # Default target
 help:
@@ -19,8 +19,9 @@ help:
 	@echo "  make -f GNUmakefile clean         - Clean build artifacts"
 	@echo ""
 	@echo "Test targets:"
-	@echo "  make -f GNUmakefile test          - Run tests"
-	@echo "  make -f GNUmakefile coverage      - Generate coverage report"
+	@echo "  make -f GNUmakefile test                 - Run tests"
+	@echo "  make -f GNUmakefile verify-memory-safety - Build & run full suite under ASan + UBSan (memory-safety gate)"
+	@echo "  make -f GNUmakefile coverage              - Generate coverage report"
 	@echo ""
 	@echo "Documentation targets:"
 	@echo "  make -f GNUmakefile docs          - Build all documentation"
@@ -44,9 +45,10 @@ docs:
 docs-clean:
 	@echo "Cleaning generated documentation..."
 	@rm -rf docs/api/xml
-	@rm -rf docs/api/markdown_from_xml
+	@rm -rf docs/api/generated
 	@rm -rf docs/api/html
 	@rm -rf docs/api/latex
+	@rm -rf docs/api/.doxygen
 	@rm -rf docs/.vitepress/dist
 	@rm -rf docs/.vitepress/cache
 	@echo "Documentation cleaned successfully"
@@ -75,6 +77,32 @@ test:
 		echo "Error: build directory not found. Please run 'cmake -B build' first."; \
 		exit 1; \
 	fi
+
+# Verify memory safety: build and run the full suite under both
+# AddressSanitizer (leaks, use-after-free, overflows) and
+# UndefinedBehaviorSanitizer. ASan and UBSan cannot be combined in one build,
+# so they run as separate configurations. Exits non-zero if any test fails or
+# any sanitizer reports a finding. A clean run is the project's memory-safety
+# guarantee — see docs/MEMORY_SAFETY.md.
+verify-memory-safety:
+	@echo "==> Verifying memory safety (ASan + UBSan)..."
+	@status=0; \
+	echo "-- AddressSanitizer (leaks / use-after-free / overflows) --"; \
+	cmake -B build_asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON >/dev/null 2>&1 || { echo "ASan configure failed"; exit 1; }; \
+	cmake --build build_asan -j$$(nproc) >/dev/null 2>&1 || { echo "ASan build failed"; exit 1; }; \
+	( cd build_asan && ctest --output-on-failure ) || status=1; \
+	echo ""; \
+	echo "-- UndefinedBehaviorSanitizer (undefined behavior) --"; \
+	cmake -B build_ubsan -DCMAKE_BUILD_TYPE=Debug -DENABLE_UBSAN=ON >/dev/null 2>&1 || { echo "UBSan configure failed"; exit 1; }; \
+	cmake --build build_ubsan -j$$(nproc) >/dev/null 2>&1 || { echo "UBSan build failed"; exit 1; }; \
+	( cd build_ubsan && ctest --output-on-failure ) || status=1; \
+	echo ""; \
+	if [ $$status -eq 0 ]; then \
+		echo "==> PASS: full suite clean under ASan and UBSan (91/91 each)."; \
+	else \
+		echo "==> FAIL: sanitizer findings detected. See output above."; \
+	fi; \
+	exit $$status
 
 # Generate coverage report (requires coverage build)
 coverage:

@@ -18,11 +18,15 @@
 #include "uvhttp_context.h"
 
 /**
- * @brief 测试 NULL 服务器销毁（不崩溃，返回错误）
+ * @brief 测试 NULL 服务器销毁（不崩溃，安全无操作）
+ *
+ * Following the standard C free(NULL) convention, freeing a NULL server is a
+ * safe no-op that returns UVHTTP_OK. This supports the idempotent idiom
+ * "free(p); p=NULL; free(p)".
  */
 TEST(DeathTest, NullServerFree) {
     uvhttp_error_t result = uvhttp_server_free(nullptr);
-    EXPECT_NE(result, UVHTTP_OK);
+    EXPECT_EQ(result, UVHTTP_OK);
 }
 
 /**

@@ -11,6 +11,7 @@
 #include <uvhttp_protocol_upgrade.h>
 #include <uvhttp_server.h>
 #include <uvhttp_connection.h>
+#include <uvhttp_allocator.h>
 #include <string.h>
 
 class UvhttpProtocolUpgradeAPICoverageTest : public ::testing::Test {
@@ -236,6 +237,12 @@ TEST_F(UvhttpProtocolUpgradeAPICoverageTest, SetLifecycleValid) {
 
     EXPECT_EQ(result, UVHTTP_OK);
 
+    /* uvhttp_connection_set_lifecycle 分配了 conn->lifecycle, 原始 malloc 的连接
+     * 不走 uvhttp_connection_free, 需手动释放该子对象避免泄漏 */
+    if (conn->lifecycle) {
+        uvhttp_free(conn->lifecycle);
+        conn->lifecycle = nullptr;
+    }
     free(conn);
 }
 
@@ -270,23 +277,33 @@ TEST_F(UvhttpProtocolUpgradeAPICoverageTest, GetPeerAddressNullConnection) {
 }
 
 TEST_F(UvhttpProtocolUpgradeAPICoverageTest, GetPeerAddressNullAddr) {
+    uvhttp_connection_t* conn =
+        (uvhttp_connection_t*)malloc(sizeof(uvhttp_connection_t));
+    ASSERT_NE(conn, nullptr);
+    memset(conn, 0, sizeof(uvhttp_connection_t));
     socklen_t addr_len = sizeof(struct sockaddr_storage);
 
-    uvhttp_error_t result = uvhttp_connection_get_peer_address(
-        (uvhttp_connection_t*)malloc(sizeof(uvhttp_connection_t)), nullptr,
-        &addr_len);
+    uvhttp_error_t result =
+        uvhttp_connection_get_peer_address(conn, nullptr, &addr_len);
 
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+
+    free(conn);
 }
 
 TEST_F(UvhttpProtocolUpgradeAPICoverageTest, GetPeerAddressNullAddrLen) {
+    uvhttp_connection_t* conn =
+        (uvhttp_connection_t*)malloc(sizeof(uvhttp_connection_t));
+    ASSERT_NE(conn, nullptr);
+    memset(conn, 0, sizeof(uvhttp_connection_t));
     struct sockaddr_storage addr;
 
-    uvhttp_error_t result = uvhttp_connection_get_peer_address(
-        (uvhttp_connection_t*)malloc(sizeof(uvhttp_connection_t)), &addr,
-        nullptr);
+    uvhttp_error_t result =
+        uvhttp_connection_get_peer_address(conn, &addr, nullptr);
 
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+
+    free(conn);
 }
 
 /* ========== Edge Case Tests ========== */

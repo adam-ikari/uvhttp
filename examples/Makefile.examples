@@ -18,7 +18,7 @@ BIN_DIR ?= ./bin
 
 # Compiler and flags
 CC ?= gcc
-CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) -std=c11
+CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) -std=c99
 LDFLAGS = -L$(LIB_DIR) -luvhttp -luv -lpthread -lm -ldl
 DEBUG_FLAGS = -g -O0
 RELEASE_FLAGS = -O2

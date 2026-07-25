@@ -24,9 +24,9 @@ target_include_directories(rate_limit_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/.
 add_dependencies(rate_limit_demo uvhttp)
 uvhttp_add_example_dependencies(rate_limit_demo)
 
-# 中间件测试
-add_executable(test_middleware test_middleware.c)
-target_link_libraries(test_middleware PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
-target_include_directories(test_middleware PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
-add_dependencies(test_middleware uvhttp)
-uvhttp_add_example_dependencies(test_middleware)
+# 中间件测试演示（重命名以避免与单元测试目标 test_middleware 冲突）
+add_executable(middleware_test_demo test_middleware.c)
+target_link_libraries(middleware_test_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
+target_include_directories(middleware_test_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
+add_dependencies(middleware_test_demo uvhttp)
+uvhttp_add_example_dependencies(middleware_test_demo)

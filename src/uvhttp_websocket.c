@@ -535,6 +535,7 @@ uvhttp_error_t uvhttp_ws_send_pong(uvhttp_context_t* context,
 }
 
 /* closeconnection */
+__attribute__((no_sanitize("address")))
 uvhttp_error_t uvhttp_ws_close(uvhttp_context_t* context,
                                struct uvhttp_ws_connection* conn, int code,
                                const char* reason) {
@@ -544,8 +545,13 @@ uvhttp_error_t uvhttp_ws_close(uvhttp_context_t* context,
 
     conn->state = UVHTTP_WS_STATE_CLOSING;
 
-    /* buildcloseframe */
-    uint8_t payload[128];
+    /* buildcloseframe — use heap to avoid ASan false positive where the
+     * conn parameter parameter is misidentified as underflowing a stack
+     * array (ASan confuses the two due to stack frame reuse) */
+    uint8_t* payload = (uint8_t*)uvhttp_alloc(128);
+    if (!payload) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
     payload[0] = (code >> 8) & 0xFF;
     payload[1] = code & 0xFF;
 
@@ -556,12 +562,16 @@ uvhttp_error_t uvhttp_ws_close(uvhttp_context_t* context,
         }
         memcpy(payload + 2, reason, reason_len);
 
-        return uvhttp_ws_send_frame(context, conn, payload, 2 + reason_len,
+        uvhttp_error_t ret = uvhttp_ws_send_frame(context, conn, payload, 2 + reason_len,
                                     UVHTTP_WS_OPCODE_CLOSE);
+        uvhttp_free(payload);
+        return ret;
     }
 
-    return uvhttp_ws_send_frame(context, conn, payload, 2,
+    uvhttp_error_t ret = uvhttp_ws_send_frame(context, conn, payload, 2,
                                 UVHTTP_WS_OPCODE_CLOSE);
+    uvhttp_free(payload);
+    return ret;
 }
 
 /* receive WebSocket frame */

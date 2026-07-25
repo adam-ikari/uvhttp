@@ -7,16 +7,15 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 ## Current Status (v2.5.0)
 
 ### ✅ Completed
-- High-performance HTTP/1.1 server (23,226 RPS)
-- WebSocket support with full-duplex communication
+- HTTP/1.1 server (23,226 RPS)
+- WebSocket with full-duplex communication
 - Zero-copy file transmission
 - LRU caching with preheating
-- TLS 1.3 support via mbedtls
+- TLS 1.3 via mbedtls
 - 32-bit embedded system support
 - Comprehensive documentation
-- Python-based configuration tools
 - Input validation and security hardening
-- Enterprise-grade error handling
+- Error handling
 
 ### 🔄 In Progress
 - Enhanced test coverage (target: 80%)
@@ -137,7 +136,7 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 ## Technology Stack Evolution
 
 ### Current Stack
-- **Core**: C11, libuv, llhttp
+- **Core**: C99, libuv, llhttp
 - **TLS**: mbedtls
 - **Memory**: mimalloc (optional)
 - **Hashing**: xxHash

@@ -90,6 +90,14 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
     case UVHTTP_ERROR_WEBSOCKET_FRAME:
         return "WebSocket frame processing failed";
 
+    /* Middleware errors */
+    case UVHTTP_ERROR_MIDDLEWARE_STOPPED:
+        return "Middleware chain stopped";
+    case UVHTTP_ERROR_MIDDLEWARE_CHAIN_EMPTY:
+        return "Middleware chain is empty";
+    case UVHTTP_ERROR_MIDDLEWARE_INVALID:
+        return "Invalid middleware handler";
+
     /* Configuration errors */ case UVHTTP_ERROR_CONFIG_PARSE:
         return "Configuration parse error";
     case UVHTTP_ERROR_CONFIG_INVALID:
@@ -468,7 +476,16 @@ const char* uvhttp_error_description(uvhttp_error_t error) {
 
         return "Missing required configuration";
 
-        /* Middleware errors */
+    /* Middleware errors */
+
+    case UVHTTP_ERROR_MIDDLEWARE_STOPPED:
+        return "A middleware returned STOP, aborting the chain";
+
+    case UVHTTP_ERROR_MIDDLEWARE_CHAIN_EMPTY:
+        return "The middleware chain has no handlers";
+
+    case UVHTTP_ERROR_MIDDLEWARE_INVALID:
+        return "A middleware handler is NULL or invalid";
 
         /* Logging errors */
 
