@@ -186,7 +186,7 @@ export default defineConfig({
           { text: 'API', link: '/zh/api/introduction' },
           { text: '内存安全', link: '/zh/MEMORY_SAFETY' },
           { text: '性能', link: '/zh/performance' },
-          { text: '嵌入式画像', link: '/zh/embedded-profile' },
+          { text: '嵌入式与长期运行', link: '/zh/embedded-profile' },
           { 
             text: '下载', 
             items: [
