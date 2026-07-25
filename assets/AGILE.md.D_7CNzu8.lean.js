@@ -1,0 +1,1 @@
+import{_ as i,o as t,c as e,a1 as s}from"./chunks/framework.DdbKPUhY.js";const k=JSON.parse('{"title":"UVHTTP 敏捷开发管理指南","description":"","frontmatter":{},"headers":[],"relativePath":"AGILE.md","filePath":"AGILE.md"}'),n={name:"AGILE.md"};function l(d,a,r,o,h,p){return t(),e("div",null,[...a[0]||(a[0]=[s("",43)])])}const u=i(n,[["render",l]]);export{k as __pageData,u as default};
