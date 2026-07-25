@@ -8,49 +8,49 @@
 
 ### 1. Release 模式（生产环境）
 
-**适用场景**：
+**适用场景**:
 - 所有性能测试程序
 - 生产环境部署
 - 性能基准测试
 - 发布版本
 
-**必须使用 Release 模式的程序**：
+**必须使用 Release 模式的程序**:
 - `benchmark_unified` - 综合性能测试服务器（包含所有测试场景）
 - `performance_allocator` - 分配器性能测试
 - `performance_allocator_compare` - 分配器对比测试
 - `test_bitfield` - 位域性能测试
 - 所有示例程序（examples/）
 
-**编译选项**：
+**编译选项**:
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release ..
 ```
 
-**优化级别**：`-O2`（默认）
+**优化级别**: `-O2`（默认）
 - 代码大小优化
 - 性能优化
 - 无调试符号
 - 启用 `NDEBUG` 宏
 
-**性能特征**：
+**性能特征**:
 - 最高性能
 - 最小内存占用
 - 最小二进制大小
 
 ### 2. Debug 模式（开发调试）
 
-**适用场景**：
+**适用场景**:
 - 单元测试
 - 集成测试
 - 代码覆盖率分析
 - 调试和问题排查
 - 开发阶段
 
-**可以使用 Debug 模式的程序**：
+**可以使用 Debug 模式的程序**:
 - `uvhttp_unit_tests` - 单元测试
 - 所有测试程序（test/）
 
-**编译选项**：
+**编译选项**:
 ```bash
 cmake -DENABLE_DEBUG=ON ..
 ```
@@ -61,13 +61,13 @@ cmake -DENABLE_DEBUG=ON ..
 cmake -DCMAKE_BUILD_TYPE=Debug ..
 ```
 
-**优化级别**：`-O0`
+**优化级别**: `-O0`
 - 无优化
 - 完整调试符号
 - 禁用 `NDEBUG` 宏
 - 启用断言
 
-**调试特征**：
+**调试特征**:
 - 完整的调试信息
 - 支持 GDB/LLDB 调试
 - 支持 Valgrind 内存检查
@@ -75,21 +75,21 @@ cmake -DCMAKE_BUILD_TYPE=Debug ..
 
 ### 3. Coverage 模式（代码覆盖率）
 
-**适用场景**：
+**适用场景**:
 - 代码覆盖率分析
 - 测试质量评估
 
-**编译选项**：
+**编译选项**:
 ```bash
 cmake -DENABLE_COVERAGE=ON ..
 ```
 
-**优化级别**：`-O0`
+**优化级别**: `-O0`
 - 无优化
 - 启用 gcov 覆盖率收集
 - 生成 `.gcda` 和 `.gcno` 文件
 
-**覆盖率特征**：
+**覆盖率特征**:
 - 支持行覆盖率
 - 支持分支覆盖率
 - 支持函数覆盖率
@@ -117,7 +117,7 @@ set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "" FORCE)
 ```
 
-**说明**：
+**说明**:
 - `-O2`：启用高级优化，平衡性能和编译时间
 - `-DNDEBUG`：禁用断言，提升性能
 - `-ffunction-sections -fdata-sections`：函数和数据分段
@@ -132,7 +132,7 @@ if(ENABLE_DEBUG)
 endif()
 ```
 
-**说明**：
+**说明**:
 - `-g`：生成调试信息
 - `-O0`：禁用所有优化
 - 保留所有断言和调试代码
@@ -147,7 +147,7 @@ if(ENABLE_COVERAGE)
 endif()
 ```
 
-**说明**：
+**说明**:
 - `--coverage`：启用代码覆盖率收集
 - `-fprofile-arcs`：生成程序流图
 - `-ftest-coverage`：生成覆盖率数据
@@ -156,14 +156,14 @@ endif()
 
 ### 1. 性能测试必须使用 Release 模式
 
-**原因**：
+**原因**:
 - Debug 模式的性能数据不具代表性
 - Debug 模式禁用所有优化，性能可能低 10-100 倍
 - 性能测试需要在生产环境配置下进行
 
-**示例**：
+**示例**:
 ```bash
-# ❌ 错误：使用 Debug 模式运行性能测试
+# 错误：使用 Debug 模式运行性能测试
 mkdir build && cd build
 cmake -DENABLE_DEBUG=ON ..
 make benchmark_rps
@@ -171,7 +171,7 @@ make benchmark_rps
 wrk -t4 -c100 -d30s http://127.0.0.1:8080/
 # 结果：~10,000 RPS（不准确）
 
-# ✅ 正确：使用 Release 模式运行性能测试
+# 正确：使用 Release 模式运行性能测试
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make benchmark_unified
@@ -182,12 +182,12 @@ wrk -t4 -c100 -d30s http://127.0.0.1:8080/
 
 ### 2. 开发和调试使用 Debug 模式
 
-**原因**：
+**原因**:
 - 完整的调试信息
 - 启用断言，及早发现问题
 - 便于使用 GDB/LLDB 调试
 
-**示例**：
+**示例**:
 ```bash
 mkdir build && cd build
 cmake -DENABLE_DEBUG=ON ..
@@ -197,11 +197,11 @@ make uvhttp_unit_tests
 
 ### 3. 代码覆盖率使用 Coverage 模式
 
-**原因**：
+**原因**:
 - 准确的覆盖率数据
 - 支持生成详细的覆盖率报告
 
-**示例**：
+**示例**:
 ```bash
 mkdir build && cd build
 cmake -DENABLE_COVERAGE=ON ..
@@ -212,7 +212,7 @@ gcovr --html --html-details -o coverage.html
 
 ### 4. 分离构建目录
 
-**推荐做法**：
+**推荐做法**:
 ```bash
 # Debug 构建
 mkdir build-debug && cd build-debug
@@ -371,14 +371,14 @@ cmake -DCMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG" \
 
 Debug 模式的性能通常比 Release 模式低 **10-100 倍**，因此：
 
-- ❌ 不要使用 Debug 模式的性能数据作为基准
-- ❌ 不要基于 Debug 模式的性能做优化决策
-- ✅ 性能测试必须使用 Release 模式
-- ✅ 性能对比必须在相同构建模式下进行
+- 不要使用 Debug 模式的性能数据作为基准
+- 不要基于 Debug 模式的性能做优化决策
+- 性能测试必须使用 Release 模式
+- 性能对比必须在相同构建模式下进行
 
 ## 总结
 
-**关键原则**：
+**关键原则**:
 1. **性能测试必须使用 Release 模式** - 否则数据不准确
 2. **开发和调试使用 Debug 模式** - 便于问题排查
 3. **覆盖率分析使用 Coverage 模式** - 准确的覆盖率数据

@@ -62,8 +62,8 @@ int main() {
     ctx->start_time = time(NULL);
     
     // 创建服务器
-    ctx->server = uvhttp_server_new(loop);
-    ctx->router = uvhttp_router_new();
+    uvhttp_server_new(loop, &ctx->server);
+    uvhttp_router_new(&ctx->router);
     uvhttp_server_set_router(ctx->server, ctx->router);
     
     // 将上下文设置到事件循环的 data 指针
@@ -191,8 +191,8 @@ int main() {
     loop->data = ctx;
     
     // 创建服务器
-    ctx->server = uvhttp_server_new(loop);
-    ctx->router = uvhttp_router_new();
+    uvhttp_server_new(loop, &ctx->server);
+    uvhttp_router_new(&ctx->router);
     uvhttp_server_set_router(ctx->server, ctx->router);
     
     // 添加路由
@@ -269,8 +269,8 @@ void* worker_thread(void* arg) {
     ctx->loop->data = ctx;
     
     // 创建服务器
-    ctx->server = uvhttp_server_new(ctx->loop);
-    ctx->router = uvhttp_router_new();
+    uvhttp_server_new(ctx->loop, &ctx->server);
+    uvhttp_router_new(&ctx->router);
     uvhttp_server_set_router(ctx->server, ctx->router);
     
     // 添加路由
@@ -351,8 +351,10 @@ app_context_t* app_context_create(uv_loop_t* loop) {
     app_context_t* ctx = malloc(sizeof(app_context_t));
     if (!ctx) return NULL;
     
-    ctx->server = uvhttp_server_new(loop);
-    ctx->router = uvhttp_router_new();
+    ctx->server = NULL;
+    ctx->router = NULL;
+    uvhttp_server_new(loop, &ctx->server);
+    uvhttp_router_new(&ctx->router);
     ctx->request_count = 0;
     ctx->start_time = time(NULL);
     

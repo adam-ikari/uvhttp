@@ -245,7 +245,316 @@ TEST(UvhttpConnectionMissingCoverageTest, StateToString) {
         uvhttp_connection_set_state(conn, states[i]);
         EXPECT_EQ(conn->state, states[i]);
     }
-    
+
+    uvhttp_connection_free(conn);
+    destroy_server_and_loop(loop, server);
+}
+
+/* ========== Null parameter tests for TLS and connection functions ========== */
+
+TEST(UvhttpConnectionMissingCoverageTest, TlsHandshakeFunc_NullConn) {
+    uvhttp_error_t result = uvhttp_connection_tls_handshake_func(nullptr);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, TlsHandshakeFunc_NullServer) {
+    uv_loop_t* loop = nullptr;
+    uvhttp_server_t* server = nullptr;
+    create_server_and_loop(&loop, &server);
+
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    // Set server to NULL to trigger the null server check
+    conn->server = nullptr;
+    result = uvhttp_connection_tls_handshake_func(conn);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+
+    // Restore server before freeing (connection_free may need it)
+    conn->server = server;
+    uvhttp_connection_free(conn);
+    destroy_server_and_loop(loop, server);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, TlsRead_NullConn) {
+    uvhttp_error_t result = uvhttp_connection_tls_read(nullptr);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, TlsRead_NullSsl) {
+    uv_loop_t* loop = nullptr;
+    uvhttp_server_t* server = nullptr;
+    create_server_and_loop(&loop, &server);
+
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    // ssl is NULL by default from calloc
+    ASSERT_EQ(conn->ssl, nullptr);
+    result = uvhttp_connection_tls_read(conn);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+
+    uvhttp_connection_free(conn);
+    destroy_server_and_loop(loop, server);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, TlsWrite_NullConn) {
+    const char data[] = "test";
+    uvhttp_error_t result = uvhttp_connection_tls_write(nullptr, data, 4);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, TlsWrite_NullSsl) {
+    uv_loop_t* loop = nullptr;
+    uvhttp_server_t* server = nullptr;
+    create_server_and_loop(&loop, &server);
+
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    // ssl is NULL by default
+    ASSERT_EQ(conn->ssl, nullptr);
+    const char data[] = "test";
+    result = uvhttp_connection_tls_write(conn, data, 4);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+
+    uvhttp_connection_free(conn);
+    destroy_server_and_loop(loop, server);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, ScheduleRestartRead_NullConn) {
+    uvhttp_error_t result = uvhttp_connection_schedule_restart_read(nullptr);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, ConnectionStart_NullConn) {
+    uvhttp_error_t result = uvhttp_connection_start(nullptr);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, ConnectionClose_NullConn) {
+    // Should not crash
+    uvhttp_connection_close(nullptr);
+}
+
+/* ========== Null parameter tests for timeout functions ========== */
+
+TEST(UvhttpConnectionMissingCoverageTest, StartTimeout_NullConn) {
+    uvhttp_error_t result = uvhttp_connection_start_timeout(nullptr);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, StartTimeout_NullServer) {
+    uv_loop_t* loop = nullptr;
+    uvhttp_server_t* server = nullptr;
+    create_server_and_loop(&loop, &server);
+
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    // Set server to NULL to trigger the null server check
+    conn->server = nullptr;
+    result = uvhttp_connection_start_timeout(conn);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+
+    // Restore server before freeing
+    conn->server = server;
+    uvhttp_connection_free(conn);
+    destroy_server_and_loop(loop, server);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, StartTimeoutCustom_NullConn) {
+    uvhttp_error_t result = uvhttp_connection_start_timeout_custom(nullptr, 30);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, StartTimeoutCustom_ZeroTimeout) {
+    uv_loop_t* loop = nullptr;
+    uvhttp_server_t* server = nullptr;
+    create_server_and_loop(&loop, &server);
+
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    // 0 is below UVHTTP_CONNECTION_TIMEOUT_MIN (5), should be rejected
+    result = uvhttp_connection_start_timeout_custom(conn, 0);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+
+    uvhttp_connection_free(conn);
+    destroy_server_and_loop(loop, server);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, StartTimeoutCustom_NegativeTimeout) {
+    uv_loop_t* loop = nullptr;
+    uvhttp_server_t* server = nullptr;
+    create_server_and_loop(&loop, &server);
+
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    // Negative value should be rejected
+    result = uvhttp_connection_start_timeout_custom(conn, -1);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+
+    uvhttp_connection_free(conn);
+    destroy_server_and_loop(loop, server);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, StartTimeoutCustom_ExcessiveTimeout) {
+    uv_loop_t* loop = nullptr;
+    uvhttp_server_t* server = nullptr;
+    create_server_and_loop(&loop, &server);
+
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    // 301 is above UVHTTP_CONNECTION_TIMEOUT_MAX (300), should be rejected
+    result = uvhttp_connection_start_timeout_custom(conn, 301);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+
+    uvhttp_connection_free(conn);
+    destroy_server_and_loop(loop, server);
+}
+
+/* ========== TLS cleanup null check ========== */
+
+TEST(UvhttpConnectionMissingCoverageTest, TlsCleanup_NullConn) {
+    // Should not crash
+    uvhttp_connection_tls_cleanup(nullptr);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, TlsCleanup_NoSsl) {
+    uv_loop_t* loop = nullptr;
+    uvhttp_server_t* server = nullptr;
+    create_server_and_loop(&loop, &server);
+
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    // ssl is NULL by default from calloc, should be a no-op
+    ASSERT_EQ(conn->ssl, nullptr);
+    uvhttp_connection_tls_cleanup(conn);
+
+    uvhttp_connection_free(conn);
+    destroy_server_and_loop(loop, server);
+}
+
+/* ========== TLS write null data check ========== */
+
+TEST(UvhttpConnectionMissingCoverageTest, TlsWrite_NullData) {
+    uvhttp_error_t result = uvhttp_connection_tls_write(nullptr, nullptr, 0);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+/* ========== Timeout with valid connection ========== */
+
+TEST(UvhttpConnectionMissingCoverageTest, StartTimeout_ValidConnection) {
+    uv_loop_t* loop = nullptr;
+    uvhttp_server_t* server = nullptr;
+    create_server_and_loop(&loop, &server);
+
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    // Start timeout with default config (server has no config set, uses default)
+    result = uvhttp_connection_start_timeout(conn);
+    // May succeed or fail depending on timer state, just verify no crash
+
+    uvhttp_connection_free(conn);
+    destroy_server_and_loop(loop, server);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, StartTimeoutCustom_ValidConnection) {
+    uv_loop_t* loop = nullptr;
+    uvhttp_server_t* server = nullptr;
+    create_server_and_loop(&loop, &server);
+
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    // Use a valid timeout value within [UVHTTP_CONNECTION_TIMEOUT_MIN, UVHTTP_CONNECTION_TIMEOUT_MAX]
+    result = uvhttp_connection_start_timeout_custom(conn, 30);
+    // May succeed or fail depending on timer state, just verify no crash
+
+    uvhttp_connection_free(conn);
+    destroy_server_and_loop(loop, server);
+}
+
+/* ========== WebSocket handshake null checks ========== */
+
+#if UVHTTP_FEATURE_WEBSOCKET
+
+TEST(UvhttpConnectionMissingCoverageTest, HandleWebsocketHandshake_NullConn) {
+    uvhttp_error_t result = uvhttp_connection_handle_websocket_handshake(
+        nullptr, "dGhlIHNhbXBsZSBub25jZQ==");
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, HandleWebsocketHandshake_NullWsKey) {
+    uv_loop_t* loop = nullptr;
+    uvhttp_server_t* server = nullptr;
+    create_server_and_loop(&loop, &server);
+
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    result = uvhttp_connection_handle_websocket_handshake(conn, nullptr);
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+
+    uvhttp_connection_free(conn);
+    destroy_server_and_loop(loop, server);
+}
+
+TEST(UvhttpConnectionMissingCoverageTest, HandleWebsocketHandshake_NullRequest) {
+    uv_loop_t* loop = nullptr;
+    uvhttp_server_t* server = nullptr;
+    create_server_and_loop(&loop, &server);
+
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    // Force request to NULL so the path lookup returns NULL. The request was
+    // allocated by uvhttp_connection_new; free it first so we don't leak it by
+    // dropping the only reference to it. uvhttp_connection_free's free_resources
+    // guards on conn->request, so leaving it NULL is safe.
+    uvhttp_request_free(conn->request);
+    conn->request = nullptr;
+    result = uvhttp_connection_handle_websocket_handshake(
+        conn, "dGhlIHNhbXBsZSBub25jZQ==");
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+
+    uvhttp_connection_free(conn);
+    destroy_server_and_loop(loop, server);
+}
+
+#endif /* UVHTTP_FEATURE_WEBSOCKET */
+
+/* ========== Schedule restart read with valid connection ========== */
+
+TEST(UvhttpConnectionMissingCoverageTest, ScheduleRestartRead_ValidConnection) {
+    uv_loop_t* loop = nullptr;
+    uvhttp_server_t* server = nullptr;
+    create_server_and_loop(&loop, &server);
+
+    uvhttp_connection_t* conn = nullptr;
+    uvhttp_error_t result = uvhttp_connection_new(server, &conn);
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    result = uvhttp_connection_schedule_restart_read(conn);
+    // May succeed or fail depending on idle handle state, just verify no crash
+
     uvhttp_connection_free(conn);
     destroy_server_and_loop(loop, server);
 }

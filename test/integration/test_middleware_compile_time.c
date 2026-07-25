@@ -1,120 +1,220 @@
 /**
  * @file test_middleware_compile_time.c
- * @brief 测试编译时中间件调用
- * 
- * 这个测试验证中间件系统在编译时正确工作，
- * 不需要运行时注册或动态调用。
+ * @brief 中间件编译时特性集成测试
+ *
+ * 验证中间件宏在真实编译环境下正确工作：
+ * - 多次使用不冲突
+ * - 与路由处理器集成
+ * - 链式执行顺序正确
+ * - 上下文清理正确
  */
 
-#include <uv.h>
-#include <uvhttp.h>
-#include <uvhttp_logging.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#include <assert.h>
+#include "uvhttp_middleware.h"
+#include "uvhttp_request.h"
+#include "uvhttp_response.h"
 
-/* 编译时中间件函数 - 日志记录 */
-static void logging_middleware(const char* message) {
-    // 编译时中间件：直接调用函数，不需要注册
-    #if !defined(NDEBUG) && UVHTTP_FEATURE_LOGGING
-    UVHTTP_LOG_INFO("Middleware: %s", message);
-    #else
-    (void)message; // 避免未使用警告
-    #endif
+/* --- 调用顺序追踪 --- */
+
+static int call_order[8];
+static int call_order_idx = 0;
+
+static int mw_first(uvhttp_request_t* req, uvhttp_response_t* resp,
+                     uvhttp_middleware_context_t* ctx) {
+    (void)req; (void)resp; (void)ctx;
+    call_order[call_order_idx++] = 1;
+    return UVHTTP_MIDDLEWARE_CONTINUE;
 }
 
-/* 编译时中间件函数 - 数据转换 */
-static int transform_middleware(int value) {
-    // 编译时中间件：直接调用函数
-    return value * 2;
+static int mw_second(uvhttp_request_t* req, uvhttp_response_t* resp,
+                      uvhttp_middleware_context_t* ctx) {
+    (void)req; (void)resp; (void)ctx;
+    call_order[call_order_idx++] = 2;
+    return UVHTTP_MIDDLEWARE_CONTINUE;
 }
 
-/* 测试编译时中间件调用 */
-int test_compile_time_middleware(void) {
-    printf("Testing compile-time middleware...\n");
-    
-    // 测试日志中间件
-    logging_middleware("Test message");
-    
-    // 测试转换中间件
-    int input = 10;
-    int output = transform_middleware(input);
-    if (output != 20) {
-        fprintf(stderr, "Transform middleware failed: expected 20, got %d\n", output);
-        return 1;
-    }
-    
-    printf("✓ Compile-time middleware test passed\n");
+static int mw_blocker(uvhttp_request_t* req, uvhttp_response_t* resp,
+                       uvhttp_middleware_context_t* ctx) {
+    (void)req; (void)resp; (void)ctx;
+    call_order[call_order_idx++] = 3;
+    return UVHTTP_MIDDLEWARE_STOP;
+}
+
+static int mw_after_block(uvhttp_request_t* req, uvhttp_response_t* resp,
+                           uvhttp_middleware_context_t* ctx) {
+    (void)req; (void)resp; (void)ctx;
+    call_order[call_order_idx++] = 4;
+    return UVHTTP_MIDDLEWARE_CONTINUE;
+}
+
+/* --- 上下文清理 --- */
+
+static int g_cleanup_called = 0;
+
+static void test_cleanup(void* data) {
+    free(data);
+    g_cleanup_called = 1;
+}
+
+static int mw_with_cleanup(uvhttp_request_t* req, uvhttp_response_t* resp,
+                            uvhttp_middleware_context_t* ctx) {
+    (void)req; (void)resp;
+    ctx->data = malloc(32);
+    ctx->cleanup = test_cleanup;
+    return UVHTTP_MIDDLEWARE_CONTINUE;
+}
+
+static int mw_with_cleanup_stop(uvhttp_request_t* req,
+                                 uvhttp_response_t* resp,
+                                 uvhttp_middleware_context_t* ctx) {
+    (void)req; (void)resp;
+    ctx->data = malloc(32);
+    ctx->cleanup = test_cleanup;
+    return UVHTTP_MIDDLEWARE_STOP;
+}
+
+/* --- 路由处理器 --- */
+
+static int g_handler_result = 0;
+
+static int route_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
+    (void)req; (void)resp;
+    g_handler_result = 42;
     return 0;
 }
 
-/* 测试中间件链的正确性 */
-int test_middleware_chain(void) {
-    printf("Testing middleware chain...\n");
-    
-    // 测试中间件链调用
-    int value = 5;
-    
-    // 链式调用：transform -> transform -> transform
-    value = transform_middleware(value);
-    value = transform_middleware(value);
-    value = transform_middleware(value);
-    
-    // 5 * 2 * 2 * 2 = 40
-    if (value != 40) {
-        fprintf(stderr, "Middleware chain failed: expected 40, got %d\n", value);
-        return 1;
-    }
-    
-    printf("✓ Middleware chain test passed\n");
-    return 0;
+UVHTTP_DEFINE_MIDDLEWARE_HANDLER(route_handler);
+
+/* --- 测试函数 --- */
+
+static void test_execute_continue(void) {
+    call_order_idx = 0;
+    memset(call_order, 0, sizeof(call_order));
+
+    uvhttp_request_t* req = NULL;
+    uvhttp_response_t* resp = NULL;
+
+    UVHTTP_EXECUTE_MIDDLEWARE(req, resp, mw_first, mw_second);
+
+    assert(call_order[0] == 1);
+    assert(call_order[1] == 2);
+    printf("  PASS: execute_continue\n");
 }
 
-/* 测试不同中间件组合 */
-int test_middleware_combinations(void) {
-    printf("Testing middleware combinations...\n");
-    
-    // 测试各种中间件组合
-    // 1. 单个中间件
-    int result1 = transform_middleware(10);
-    if (result1 != 20) return 1;
-    
-    // 2. 两个中间件
-    int result2 = transform_middleware(transform_middleware(5));
-    if (result2 != 20) return 1;
-    
-    // 3. 三个中间件
-    int result3 = transform_middleware(transform_middleware(transform_middleware(3)));
-    if (result3 != 24) return 1;
-    
-    printf("✓ Middleware combinations test passed\n");
-    return 0;
+static void test_execute_stop(void) {
+    call_order_idx = 0;
+    memset(call_order, 0, sizeof(call_order));
+
+    uvhttp_request_t* req = NULL;
+    uvhttp_response_t* resp = NULL;
+
+    UVHTTP_EXECUTE_MIDDLEWARE(req, resp, mw_first, mw_blocker, mw_after_block);
+
+    assert(call_order[0] == 1);
+    assert(call_order[1] == 3);
+    assert(call_order[2] == 0);
+    printf("  PASS: execute_stop\n");
+}
+
+static void test_cleanup_continue(void) {
+    g_cleanup_called = 0;
+
+    uvhttp_request_t* req = NULL;
+    uvhttp_response_t* resp = NULL;
+
+    UVHTTP_EXECUTE_MIDDLEWARE(req, resp, mw_with_cleanup);
+
+    assert(g_cleanup_called == 1);
+    printf("  PASS: cleanup_continue\n");
+}
+
+static void test_cleanup_stop(void) {
+    g_cleanup_called = 0;
+
+    uvhttp_request_t* req = NULL;
+    uvhttp_response_t* resp = NULL;
+
+    UVHTTP_EXECUTE_MIDDLEWARE(req, resp, mw_with_cleanup_stop);
+
+    assert(g_cleanup_called == 1);
+    printf("  PASS: cleanup_stop\n");
+}
+
+static void test_multiple_usage(void) {
+    call_order_idx = 0;
+    memset(call_order, 0, sizeof(call_order));
+
+    uvhttp_request_t* req = NULL;
+    uvhttp_response_t* resp = NULL;
+
+    UVHTTP_EXECUTE_MIDDLEWARE(req, resp, mw_first);
+    UVHTTP_EXECUTE_MIDDLEWARE(req, resp, mw_second);
+
+    assert(call_order[0] == 1);
+    assert(call_order[1] == 2);
+    printf("  PASS: multiple_usage\n");
+}
+
+static void test_handler_wrapper(void) {
+    g_handler_result = 0;
+
+    uvhttp_request_t* req = NULL;
+    uvhttp_response_t* resp = NULL;
+
+    UVHTTP_EXECUTE_MIDDLEWARE(req, resp,
+        UVHTTP_MIDDLEWARE_HANDLER(route_handler));
+
+    assert(g_handler_result == 42);
+    printf("  PASS: handler_wrapper\n");
+}
+
+static void test_chain(void) {
+    call_order_idx = 0;
+    memset(call_order, 0, sizeof(call_order));
+
+    UVHTTP_DEFINE_MIDDLEWARE_CHAIN(test_chain, mw_first, mw_second);
+
+    uvhttp_request_t* req = NULL;
+    uvhttp_response_t* resp = NULL;
+
+    UVHTTP_EXECUTE_MIDDLEWARE_CHAIN(req, resp, test_chain);
+
+    assert(call_order[0] == 1);
+    assert(call_order[1] == 2);
+    printf("  PASS: chain\n");
+}
+
+static void test_chain_stop(void) {
+    call_order_idx = 0;
+    memset(call_order, 0, sizeof(call_order));
+
+    UVHTTP_DEFINE_MIDDLEWARE_CHAIN(block_chain,
+        mw_first, mw_blocker, mw_after_block);
+
+    uvhttp_request_t* req = NULL;
+    uvhttp_response_t* resp = NULL;
+
+    UVHTTP_EXECUTE_MIDDLEWARE_CHAIN(req, resp, block_chain);
+
+    assert(call_order[0] == 1);
+    assert(call_order[1] == 3);
+    assert(call_order[2] == 0);
+    printf("  PASS: chain_stop\n");
 }
 
 int main(void) {
-    printf("=== Compile-time Middleware Integration Tests ===\n\n");
-    
-    int failed = 0;
-    
-    if (test_compile_time_middleware() != 0) {
-        failed++;
-    }
-    
-    if (test_middleware_chain() != 0) {
-        failed++;
-    }
-    
-    if (test_middleware_combinations() != 0) {
-        failed++;
-    }
-    
-    printf("\n=== Test Summary ===\n");
-    if (failed == 0) {
-        printf("✓ All tests passed\n");
-        return 0;
-    } else {
-        printf("✗ %d test(s) failed\n", failed);
-        return 1;
-    }
+    printf("Middleware compile-time integration tests:\n");
+    test_execute_continue();
+    test_execute_stop();
+    test_cleanup_continue();
+    test_cleanup_stop();
+    test_multiple_usage();
+    test_handler_wrapper();
+    test_chain();
+    test_chain_stop();
+    printf("All tests passed!\n");
+    return 0;
 }

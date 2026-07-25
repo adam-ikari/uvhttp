@@ -98,14 +98,19 @@ void uvhttp_request_cleanup(uvhttp_request_t* request) {
         return;
     }
 
+    /* 释放后将指针置 NULL，使 cleanup 幂等：可安全重复调用
+     * （例如测试中先手动 cleanup 再由析构统一 cleanup），避免 double-free。 */
     if (request->body) {
         uvhttp_free(request->body);
+        request->body = NULL;
     }
     if (request->parser) {
         uvhttp_free(request->parser);
+        request->parser = NULL;
     }
     if (request->parser_settings) {
         uvhttp_free(request->parser_settings);
+        request->parser_settings = NULL;
     }
     if (request->headers_extra) {
         uvhttp_free(request->headers_extra);
