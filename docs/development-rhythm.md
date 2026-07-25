@@ -16,10 +16,23 @@ AI 持续开发，24h 不间断。每周 5 个 Sprint 开发，周末 2 天作�
 
 ## 每日节奏
 
-- 启动后自动检查 daily-build 结果
-- 从 Product Backlog 选取最高优先级任务
-- 并行派发 subagent 执行
-- 持续开发直到当日 Sprint 完成
+1. **确认日期**: 运行 `date "+%Y-%m-%d %A"` 确认今天是周几，判断当前 Sprint 阶段
+2. **检查 daily-build 结果**: 如果有失败，创建 bug issue 加入当日 backlog
+3. **从 Product Backlog 选取最高优先级任务**
+4. **并行派发 subagent 执行**
+5. **持续开发直到当日 Sprint 完成**
+
+### 各 Sprint 确认要点
+
+| 天 | Sprint | 确认要点 |
+|---|--------|---------|
+| 周一至周四 | Sprint 1-4 | 开发，选取 Product Backlog 中优先级最高的任务 |
+| 周五 | Sprint 5 | 代码冻结，只做测试+发布，不引入新代码 |
+| 周六/周日 | buffer | 检查是否有溢出任务，否则休息 |
+
+## 当前日期映射
+
+运行 `date "+%Y-%m-%d %A"` 确定当天活动。
 
 ## Sprint 容量
 
