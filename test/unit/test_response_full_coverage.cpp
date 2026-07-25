@@ -122,6 +122,9 @@ TEST(UvhttpResponseTest, ResponseSetHeaderMaxHeaders) {
     
     /* 尝试添加超过限制的头部 */
     EXPECT_EQ(uvhttp_response_set_header(&response, "Extra-Header", "Extra-Value"), UVHTTP_ERROR_OUT_OF_MEMORY);
+
+    /* 释放 set_header 分配的 headers_extra，避免内存泄漏 */
+    uvhttp_response_cleanup(&response);
 }
 
 TEST(UvhttpResponseTest, ResponseSetBody) {
@@ -158,6 +161,9 @@ TEST(UvhttpResponseTest, ResponseSetBody) {
     char large_body[UVHTTP_MAX_BODY_SIZE + 1];
     memset(large_body, 'A', sizeof(large_body));
     EXPECT_EQ(uvhttp_response_set_body(&response, large_body, sizeof(large_body)), UVHTTP_ERROR_INVALID_PARAM);
+
+    /* 释放 set_body 分配的 response.body，避免内存泄漏 */
+    uvhttp_response_cleanup(&response);
 }
 
 TEST(UvhttpResponseTest, ResponseSetBodyBinary) {
@@ -170,6 +176,9 @@ TEST(UvhttpResponseTest, ResponseSetBodyBinary) {
     EXPECT_EQ(uvhttp_response_set_body(&response, (const char*)binary_data, sizeof(binary_data)), UVHTTP_OK);
     EXPECT_EQ(response.body_length, sizeof(binary_data));
     EXPECT_EQ(memcmp(response.body, binary_data, sizeof(binary_data)), 0);
+
+    /* 释放 set_body 分配的 response.body，避免内存泄漏 */
+    uvhttp_response_cleanup(&response);
 }
 
 TEST(UvhttpResponseTest, ResponseCleanup) {
@@ -248,9 +257,12 @@ TEST(UvhttpResponseTest, ResponseBuildData) {
     
     /* 验证响应数据包含 Connection 头 */
     EXPECT_NE(strstr(data, "Connection:"), nullptr);
-    
+
     /* 释放数据 */
     uvhttp_free(data);
+
+    /* 释放 set_header 分配的 headers_extra 和 set_body 分配的 body */
+    uvhttp_response_cleanup(&response);
 }
 
 TEST(UvhttpResponseTest, ResponseBuildDataNoBody) {
@@ -373,6 +385,9 @@ TEST(UvhttpResponseTest, ResponseBuildDataLargeHeaders) {
     
     /* 释放数据 */
     uvhttp_free(data);
+
+    /* 释放 set_header 动态扩展分配的 headers_extra，避免内存泄漏 */
+    uvhttp_response_cleanup(&response);
 }
 
 TEST(UvhttpResponseTest, ResponseSendRawInvalidParams) {
@@ -602,6 +617,9 @@ TEST(UvhttpResponseTest, ResponseBuildDataLargeBody) {
     /* 释放数据 */
     uvhttp_free(data);
     uvhttp_free(body);
+
+    /* set_body 复制了一份 body 到 response.body，需要释放该副本 */
+    uvhttp_response_cleanup(&response);
 }
 
 TEST(UvhttpResponseTest, ResponseBuildDataWithAllHeaders) {
@@ -669,6 +687,9 @@ TEST(UvhttpResponseTest, ResponseBuildDataMemorySafety) {
         EXPECT_GT(length, 0);
         uvhttp_free(data);
     }
+
+    /* 释放 set_body 分配的 response.body，避免内存泄漏 */
+    uvhttp_response_cleanup(&response);
 }
 
 TEST(UvhttpResponseTest, ResponseInitMultipleTimes) {
@@ -713,6 +734,9 @@ TEST(UvhttpResponseTest, ResponseSetBodyWithNullBytes) {
     EXPECT_EQ(uvhttp_response_set_body(&response, body, body_len), UVHTTP_OK);
     EXPECT_EQ(response.body_length, body_len);
     EXPECT_EQ(memcmp(response.body, body, body_len), 0);
+
+    /* 释放 set_body 分配的 response.body，避免内存泄漏 */
+    uvhttp_response_cleanup(&response);
 }
 
 TEST(UvhttpResponseTest, ResponseBuildDataCaseInsensitiveHeaders) {

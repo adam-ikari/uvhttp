@@ -1,3 +1,8 @@
+---
+title: Quick Start
+description: Get started with UVHTTP in minutes — build the C99 HTTP/WebSocket server library, run the hello-world example, and add your first route. Covers build with CMake/Just, example servers, and first request.
+---
+
 # Quick Start
 
 This guide will help you get started with UVHTTP in just a few minutes.
@@ -58,26 +63,33 @@ int main() {
     }
     
     // Create router
-    uvhttp_router_t* router = uvhttp_router_new();
-    server->router = router;
-    
-    // Add a route handler
-    void hello_handler(uvhttp_request_t* req) {
-        uvhttp_response_t* res = uvhttp_response_new(req);
-        
+    uvhttp_router_t* router = NULL;
+    result = uvhttp_router_new(&router);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
+    result = uvhttp_server_set_router(server, router);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to set router: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
+
+    // Add a route handler. Handlers take (request, response) and return int.
+    int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         // Set status code
         uvhttp_response_set_status(res, 200);
-        
+
         // Set headers
         uvhttp_response_set_header(res, "Content-Type", "text/plain");
-        
+
         // Set body
         uvhttp_response_set_body(res, "Hello, World!");
-        
+
         // Send response
-        uvhttp_response_send(res);
+        return uvhttp_response_send(res);
     }
-    
+
     result = uvhttp_router_add_route(router, "/hello", hello_handler);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to add route: %s\n", uvhttp_error_string(result));

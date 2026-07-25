@@ -83,7 +83,8 @@ int main() {
     signal(SIGTERM, signal_handler);
     
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
     // ... setup server ...
     
     uvhttp_server_listen(server, "0.0.0.0", 8080);
@@ -120,8 +121,10 @@ uvhttp_server_listen(server, "127.0.0.1", 8080);
 uv_loop_t* loop = uv_default_loop();
 
 // Create multiple servers
-uvhttp_server_t* server1 = uvhttp_server_new(loop);
-uvhttp_server_t* server2 = uvhttp_server_new(loop);
+uvhttp_server_t* server1 = NULL;
+uvhttp_server_t* server2 = NULL;
+uvhttp_server_new(loop, &server1);
+uvhttp_server_new(loop, &server2);
 
 // Configure each server
 uvhttp_server_listen(server1, "0.0.0.0", 8080);
@@ -352,10 +355,12 @@ int on_message(uvhttp_ws_connection_t* ws_conn, const char* data,
 **Answer:**
 ```c
 // Enable Keep-Alive by setting configuration
-uvhttp_config_t* config = uvhttp_config_create();
+uvhttp_config_t* config = NULL;
+uvhttp_config_new(&config);
 config->keepalive_timeout = 60;  // 60 seconds
 
-uvhttp_server_t* server = uvhttp_server_new(loop);
+uvhttp_server_t* server = NULL;
+uvhttp_server_new(loop, &server);
 uvhttp_server_set_config(server, config);
 ```
 
@@ -367,7 +372,10 @@ uvhttp_server_set_config(server, config);
 // Automatically enabled when using uvhttp_static
 
 // Pre-warm cache on startup
-uvhttp_static_context_t* static_ctx = uvhttp_static_create("/var/www/static");
+uvhttp_static_config_t static_config = {0};
+strncpy(static_config.root_directory, "/var/www/static", sizeof(static_config.root_directory) - 1);
+uvhttp_static_context_t* static_ctx = NULL;
+uvhttp_static_create(&static_config, &static_ctx);
 uvhttp_static_prewarm_directory(static_ctx, "/var/www/static", 100);
 
 // Large files (>1MB) use sendfile automatically
@@ -421,11 +429,13 @@ uvhttp_server_listen(server, "0.0.0.0", 8081);
 **Answer:**
 ```c
 // Increase timeout values
-uvhttp_config_t* config = uvhttp_config_create();
-uvhttp_config_set_keepalive_timeout(config, 300);  // 5 minutes
-uvhttp_config_set_request_timeout(config, 60);    // 1 minute
+uvhttp_config_t* config = NULL;
+uvhttp_config_new(&config);
+config->keepalive_timeout = 300;  // 5 minutes
+config->request_timeout = 60;    // 1 minute
 
-uvhttp_server_t* server = uvhttp_server_new(loop);
+uvhttp_server_t* server = NULL;
+uvhttp_server_new(loop, &server);
 uvhttp_server_set_config(server, config);
 ```
 
@@ -437,7 +447,7 @@ uvhttp_server_set_config(server, config);
 valgrind --leak-check=full --show-leak-kinds=all ./your_server
 
 # Or build with AddressSanitizer
-cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_SANITIZERS=ON ..
+cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON ..
 make
 ./your_server
 ```

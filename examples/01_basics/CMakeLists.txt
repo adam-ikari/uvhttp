@@ -91,3 +91,90 @@ target_include_directories(signal_handling_demo
 )
 
 add_dependencies(signal_handling_demo uvhttp)
+
+add_executable(helloworld helloworld.c)
+
+# 使用声明库（IMPORTED targets）的方式链接
+target_link_libraries(helloworld
+    PRIVATE
+        ${UVHTTP_LIB}
+        libuv
+        mbedtls
+        xxhash
+        llhttp
+        m
+        dl
+)
+
+# Link zlib if compression is enabled
+if(BUILD_WITH_COMPRESSION)
+    target_link_libraries(helloworld PRIVATE ${ZLIB_LIBRARIES})
+endif()
+
+# 设置包含目录（UVHTTP头文件会自动包含依赖库的头文件）
+target_include_directories(helloworld
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include
+)
+
+add_dependencies(helloworld uvhttp)
+
+add_executable(helloworld_complete helloworld_complete.c)
+
+# 使用声明库（IMPORTED targets）的方式链接
+target_link_libraries(helloworld_complete
+    PRIVATE
+        ${UVHTTP_LIB}
+        libuv
+        mbedtls
+        xxhash
+        llhttp
+        m
+        dl
+)
+
+# Link zlib if compression is enabled
+if(BUILD_WITH_COMPRESSION)
+    target_link_libraries(helloworld_complete PRIVATE ${ZLIB_LIBRARIES})
+endif()
+
+# 设置包含目录（UVHTTP头文件会自动包含依赖库的头文件）
+target_include_directories(helloworld_complete
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include
+)
+
+add_dependencies(helloworld_complete uvhttp)
+
+add_executable(simple_api_demo simple_api_demo.c)
+
+# 使用声明库（IMPORTED targets）的方式链接
+target_link_libraries(simple_api_demo
+    PRIVATE
+        ${UVHTTP_LIB}
+        libuv
+        mbedtls
+        xxhash
+        llhttp
+        m
+        dl
+)
+
+# Link zlib if compression is enabled
+if(BUILD_WITH_COMPRESSION)
+    target_link_libraries(simple_api_demo PRIVATE ${ZLIB_LIBRARIES})
+endif()
+
+# 设置包含目录（UVHTTP头文件会自动包含依赖库的头文件）
+target_include_directories(simple_api_demo
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include
+)
+
+add_dependencies(simple_api_demo uvhttp)

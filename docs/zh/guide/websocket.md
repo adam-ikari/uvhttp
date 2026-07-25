@@ -78,9 +78,11 @@ int on_error(uvhttp_ws_connection_t* ws_conn,
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
-    server->router = router;
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
+    uvhttp_server_set_router(server, router);
 
     // 注册 WebSocket 处理器
     uvhttp_ws_handler_t ws_handler = {

@@ -73,7 +73,7 @@ echo -e "${YELLOW}[2/4] Generating API documentation with Doxygen...${NC}"
 mkdir -p docs/api/xml docs/api/markdown_from_xml
 
 # Run Doxygen
-doxygen Doxyfile
+doxygen docs/Doxyfile
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ API documentation generated successfully${NC}"

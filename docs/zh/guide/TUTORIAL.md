@@ -1,7 +1,6 @@
-# UVHTTP 完整教程 - 从入门到精通
+# UVHTTP 完整教程
 
-> 本教程循序渐进地介绍如何使用 UVHTTP 构建高性能 HTTP 服务器
-> 从单线程服务到多线程架构，从简单路由到复杂配置，涵盖数据库集成和负载均衡
+> 本教程介绍如何使用 UVHTTP 构建 HTTP 服务器。
 
 ## 前置要求
 
@@ -151,23 +150,25 @@ int main() {
     uv_loop_t* loop = uv_default_loop();
     
     // 创建服务器
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    if (!server) {
-        fprintf(stderr, "服务器创建失败\n");
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "服务器创建失败: %s\n", uvhttp_error_string(result));
         return 1;
     }
     
     // 创建路由器
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     uvhttp_server_set_router(server, router);
     
     // 添加路由
     uvhttp_router_add_route(router, "/", hello_handler);
     
     // 启动服务器监听
-    int result = uvhttp_server_listen(server, "0.0.0.0", 8080);
+    result = uvhttp_server_listen(server, "0.0.0.0", 8080);
     if (result != UVHTTP_OK) {
-        fprintf(stderr, "服务器启动失败: %d\n", result);
+        fprintf(stderr, "服务器启动失败: %s\n", uvhttp_error_string(result));
         return 1;
     }
     
@@ -349,7 +350,7 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 // 关于页面处理器
 int about_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    const char* html = "<html><body><h1>关于</h1><p>UVHTTP 高性能 HTTP 服务器</p></body></html>";
+    const char* html = "<html><body><h1>关于</h1><p>UVHTTP HTTP 服务器</p></body></html>";
     
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
@@ -371,8 +372,10 @@ int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     
     // 添加多个路由
     uvhttp_router_add_route(router, "/", home_handler);
@@ -448,8 +451,10 @@ int user_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     
     // 添加带参数的路由
     uvhttp_router_add_route(router, "/user/*", user_handler);
@@ -542,8 +547,10 @@ int delete_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     
     // 添加不同 HTTP 方法的路由
     uvhttp_router_add_route(router, "/resource", get_handler);
@@ -631,8 +638,10 @@ int public_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     
     // 添加路由
     uvhttp_router_add_route(router, "/public", public_handler);
@@ -707,8 +716,10 @@ int api_v2_posts_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     
     // API v1 路由组
     uvhttp_router_add_route(router, "/api/v1/users", api_v1_users_handler);
@@ -801,8 +812,10 @@ int headers_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     
     uvhttp_router_add_route(router, "/headers", headers_handler);
     
@@ -890,8 +903,10 @@ int upload_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     
     uvhttp_router_add_route(router, "/api/json", json_post_handler);
     uvhttp_router_add_route(router, "/api/upload", upload_handler);
@@ -989,8 +1004,10 @@ int main() {
     printf("启动静态文件服务器...\n");
     
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     
     // 配置静态文件服务
     uvhttp_static_config_t static_config = {
@@ -1005,7 +1022,7 @@ int main() {
     };
     
     // 创建静态文件服务上下文
-    g_static_ctx = uvhttp_static_create(&static_config);
+    uvhttp_static_create(&static_config, &g_static_ctx);
     if (!g_static_ctx) {
         fprintf(stderr, "错误: 无法创建静态文件服务上下文\n");
         return 1;
@@ -1076,7 +1093,7 @@ cat > public/about.html << 'EOF'
 </head>
 <body>
     <h1>关于 UVHTTP</h1>
-    <p>UVHTTP 是一个高性能的 HTTP 服务器库。</p>
+    <p>UVHTTP 是 HTTP 服务器库。</p>
     <a href="/static/index.html">返回主页</a>
 </body>
 </html>
@@ -1175,8 +1192,10 @@ int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     
     uvhttp_router_add_route(router, "/api", api_handler);
     
@@ -1252,8 +1271,10 @@ int sse_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     
     uvhttp_router_add_route(router, "/stream", stream_handler);
     uvhttp_router_add_route(router, "/sse", sse_handler);
@@ -1344,14 +1365,14 @@ app_context_t* app_context_create(uv_loop_t* loop, const char* name) {
     strncpy(ctx->server_name, name, sizeof(ctx->server_name) - 1);
     
     // 创建服务器
-    ctx->server = uvhttp_server_new(loop);
+    uvhttp_server_new(loop, &ctx->server);
     if (!ctx->server) {
         free(ctx);
         return NULL;
     }
     
     // 创建路由器
-    ctx->router = uvhttp_router_new();
+    uvhttp_router_new(&ctx->router);
     if (!ctx->router) {
         uvhttp_server_free(ctx->server);
         free(ctx);
@@ -1490,8 +1511,10 @@ void* worker_thread(void* arg) {
     
     // 创建线程特定的上下文
     app_context_t* thread_ctx = malloc(sizeof(app_context_t));
-    thread_ctx->server = uvhttp_server_new(worker->loop);
-    thread_ctx->router = uvhttp_router_new();
+    thread_ctx->server = NULL;
+    thread_ctx->router = NULL;
+    uvhttp_server_new(worker->loop, &thread_ctx->server);
+    uvhttp_router_new(&thread_ctx->router);
     
     // 设置到事件循环
     worker->loop->data = thread_ctx;
@@ -1584,14 +1607,16 @@ void* worker_thread_func(void* arg) {
     worker->loop = uv_loop_new();
     
     // 创建服务器
-    worker->server = uvhttp_server_new(worker->loop);
+    worker->server = NULL;
+    uvhttp_server_new(worker->loop, &worker->server);
     if (!worker->server) {
         fprintf(stderr, "线程 %d: 服务器创建失败\n", worker->thread_id);
         return NULL;
     }
     
     // 创建路由器
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     uvhttp_router_add_route(router, "/", request_handler);
     uvhttp_server_set_router(worker->server, router);
     
@@ -1871,8 +1896,10 @@ int main() {
     db_init(&g_db);
     
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     
     // 添加 API 路由
     uvhttp_router_add_route(router, "/api/users", get_users_handler);
@@ -2022,8 +2049,10 @@ int main() {
     connection_pool_init(&g_pool, MAX_CONNECTIONS);
     
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     
     uvhttp_router_add_route(router, "/api", api_handler);
     
@@ -2220,8 +2249,10 @@ int main() {
     init_backends();
     
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     
     // 添加路由
     uvhttp_router_add_route(router, "/", load_balance_handler);
@@ -2454,8 +2485,10 @@ make simple_routing
 
 ```c
 uv_loop_t* loop = uv_default_loop();
-uvhttp_server_t* server = uvhttp_server_new(loop);
-uvhttp_router_t* router = uvhttp_router_new();
+uvhttp_server_t* server = NULL;
+uvhttp_server_new(loop, &server);
+uvhttp_router_t* router = NULL;
+uvhttp_router_new(&router);
 uvhttp_server_set_router(server, router);
 
 uvhttp_router_add_route(router, "/", handler);
@@ -2474,7 +2507,8 @@ typedef struct {
 } app_context_t;
 
 app_context_t* ctx = malloc(sizeof(app_context_t));
-ctx->server = uvhttp_server_new(loop);
+ctx->server = NULL;
+uvhttp_server_new(loop, &ctx->server);
 loop->data = ctx;
 
 // 在处理器中访问
@@ -2553,7 +2587,8 @@ uvhttp_static_config_t static_config = {
 };
 
 // 创建上下文
-uvhttp_static_context_t* ctx = uvhttp_static_create(&static_config);
+uvhttp_static_context_t* ctx = NULL;
+uvhttp_static_create(&static_config, &ctx);
 
 // 处理请求
 uvhttp_static_handle_request(ctx, req, res);
@@ -2622,7 +2657,7 @@ UVHTTP 采用自包含的依赖管理方式，所有必需的依赖都包含在 
 | llhttp | `deps/llhttp/` | HTTP 解析器 |
 | mbedtls | `deps/mbedtls/` | TLS/SSL 支持 |
 | cjson | `deps/cjson/` | JSON 解析和生成 |
-| mimalloc | `deps/mimalloc/` | 高性能内存分配器 |
+| mimalloc | `deps/mimalloc/` | 内存分配器 |
 | uthash | `deps/uthash/` | 哈希表实现 |
 | xxhash | `deps/xxhash/` | 快速哈希算法 |
 
@@ -2733,7 +2768,7 @@ chmod +x build_example.sh
 ```bash
 error: uvhttp.h: No such file or directory
 ```
-**解决方案**：确保包含路径正确
+**解决方案**：包含路径正确
 ```bash
 gcc -I../include ...
 ```
@@ -2742,7 +2777,7 @@ gcc -I../include ...
 ```bash
 undefined reference to `uvhttp_server_new'
 ```
-**解决方案**：确保链接了 UVHTTP 库
+**解决方案**：链接 UVHTTP 库
 ```bash
 gcc -L../build -luvhttp ...
 ```
@@ -2862,4 +2897,4 @@ int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 ---
 
-祝您使用 UVHTTP 构建高性能 HTTP 服务器！
+使用 UVHTTP 构建 HTTP 服务器。

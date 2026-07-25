@@ -21,6 +21,11 @@ static void destroy_server_and_loop(uv_loop_t* loop, uvhttp_server_t* server) {
         uvhttp_server_free(server);
     }
     if (loop) {
+        /* uvhttp_connection_free() defers the actual resource cleanup to the
+         * libuv close callback (on_handle_close -> free_resources). Drain
+         * pending close callbacks so connections are fully freed before the
+         * loop is closed; otherwise they leak. */
+        uv_run(loop, UV_RUN_DEFAULT);
         uv_loop_close(loop);
         uvhttp_free(loop);
     }

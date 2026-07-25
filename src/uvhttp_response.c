@@ -143,10 +143,22 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer,
                                    size_t* length) {
     size_t pos = 0;
 
+    /* snprintf returns the number of bytes that *would* be written (even when
+     * truncated), so accumulating its return value into pos lets pos exceed the
+     * buffer capacity. Once that happens, (*length - pos) underflows (size_t is
+     * unsigned) and the next snprintf writes past the buffer. CLAMP the size
+     * argument to 0 once pos reaches the end: snprintf with size 0 writes
+     * nothing but still returns the would-be length, so pos keeps tracking the
+     * total bytes needed (reported back via *length for the caller's realloc). */
+#define UVHTTP_SNAPPEND(fmt, ...)                                             \
+    do {                                                                      \
+        size_t _rem = (pos < *length) ? (*length - pos) : 0;                  \
+        pos += snprintf(buffer + pos, _rem, (fmt), ##__VA_ARGS__);            \
+    } while (0)
+
     // status line
-    pos +=
-        snprintf(buffer + pos, *length - pos, UVHTTP_VERSION_1_1 " %d %s\r\n",
-                 response->status_code, get_status_text(response->status_code));
+    UVHTTP_SNAPPEND(UVHTTP_VERSION_1_1 " %d %s\r\n", response->status_code,
+                    get_status_text(response->status_code));
 
     // defaultheaderscheck
     int has_content_type = 0;
@@ -170,9 +182,7 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer,
             continue;
         }
 
-        pos += snprintf(buffer + pos, *length - pos, "%s: %s\r\n", header->name,
-                        header->value);
-
+        UVHTTP_SNAPPEND("%s: %s\r\n", header->name, header->value);
         if (strcasecmp(header->name, "Content-Type") == 0) {
             has_content_type = 1;
         }
@@ -186,42 +196,38 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer,
 
     // adddefaultContent-Type
     if (!has_content_type) {
-        pos += snprintf(buffer + pos, *length - pos,
-                        "Content-Type: text/plain\r\n");
+        UVHTTP_SNAPPEND("Content-Type: text/plain\r\n");
     }
 
     // HTTP/1.1 requirement: must have Content-Length or use chunked encoding
     // here we always add Content-Length to ensure protocol compliance
     if (!has_content_length) {
         if (response->body && response->body_length > 0) {
-            pos += snprintf(buffer + pos, *length - pos,
-                            "Content-Length: %zu\r\n", response->body_length);
+            UVHTTP_SNAPPEND("Content-Length: %zu\r\n", response->body_length);
         } else {
             // even if there is no body, still set Content-Length: 0
-            pos +=
-                snprintf(buffer + pos, *length - pos, "Content-Length: 0\r\n");
+            UVHTTP_SNAPPEND("Content-Length: 0\r\n");
         }
     }
 
     // HTTP/1.1 optimization: set Connection header based on keep-alive
     if (!has_connection) {
         if (response->keepalive) {
-            pos += snprintf(buffer + pos, *length - pos,
-                            HTTP_HEADER_CONNECTION_KEEPALIVE);
-            pos += snprintf(buffer + pos, *length - pos,
-                            "Keep-Alive: timeout=%d, max=%d\r\n",
+            UVHTTP_SNAPPEND(HTTP_HEADER_CONNECTION_KEEPALIVE);
+            UVHTTP_SNAPPEND("Keep-Alive: timeout=%d, max=%d\r\n",
                             UVHTTP_DEFAULT_KEEP_ALIVE_TIMEOUT,
                             UVHTTP_DEFAULT_KEEP_ALIVE_MAX);
         } else {
-            pos += snprintf(buffer + pos, *length - pos,
-                            HTTP_HEADER_CONNECTION_CLOSE);
+            UVHTTP_SNAPPEND(HTTP_HEADER_CONNECTION_CLOSE);
         }
     }
 
     // endheaders
-    pos += snprintf(buffer + pos, *length - pos, "\r\n");
+    UVHTTP_SNAPPEND("\r\n");
 
     *length = pos;
+
+#undef UVHTTP_SNAPPEND
 }
 
 uvhttp_error_t uvhttp_response_init(uvhttp_response_t* response, void* client) {
@@ -332,6 +338,13 @@ uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response,
         if (old_extra_count == 0) {
             /* first allocation, use malloc */
             new_extra = uvhttp_alloc(new_extra_count * sizeof(uvhttp_header_t));
+            /* 释放可能残留的旧 headers_extra：当 headers_capacity 恰好等于
+             * UVHTTP_INLINE_HEADERS_CAPACITY（例如之前 capacity 为 0 时首次扩展
+             * 分配了一个 0 大小的占位块）时，old_extra_count 会被记为 0 走此分支，
+             * 若不释放旧指针直接覆盖会造成内存泄漏。*/
+            if (response->headers_extra) {
+                uvhttp_free(response->headers_extra);
+            }
         } else {
             /* reallocate, use realloc */
             new_extra =

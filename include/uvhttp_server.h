@@ -183,6 +183,17 @@ UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, max_connections,
  * @note Failure when, *server is set to NULL
  */
 uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server);
+
+/**
+ * @brief create Server withinfrastructureevent loop
+ * @param server output parameter, used for receive server pointer
+ * @return UVHTTP_OK success, other value represents failure
+ * @note Creating the libuv event loop internally, the library will handle
+ * the lifecycle of the event loop (including cleanup)
+ * @note Related to uvhttp_server_new, this function is suitable for application
+ * scenarios that do not need to manage the event loop themselves
+ */
+uvhttp_error_t uvhttp_server_new_with_loop(uvhttp_server_t** server);
 uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
                                     int port);
 uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server);
