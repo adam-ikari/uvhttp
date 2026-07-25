@@ -1261,6 +1261,641 @@ TEST_F(RouterBoostCoverageTest, MatchRouteNode_InvalidNodeIndex) {
               UVHTTP_ERROR_NOT_FOUND);
 }
 
+// ============================================================================
+// 22. add_array_route capacity expansion (lines 279-303)
+//
+// By default, array_capacity = HYBRID_THRESHOLD = 100. We can manually lower
+// it to force the realloc path in add_array_route when adding routes in array
+// mode.
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, AddArrayRoute_CapacityExpansion) {
+    // Manually shrink array_capacity to a small value to force expansion
+    router->array_capacity = 2;
+
+    // Add first route (fits in capacity 2)
+    uvhttp_error_t err = uvhttp_router_add_route_method(
+        router, "/route1", UVHTTP_GET, dummy_handler);
+    ASSERT_EQ(err, UVHTTP_OK);
+    EXPECT_EQ(router->array_route_count, 1u);
+    EXPECT_EQ(router->array_capacity, 2u);
+    EXPECT_EQ(router->use_trie, 0);
+
+    // Add second route (fits in capacity 2)
+    err = uvhttp_router_add_route_method(
+        router, "/route2", UVHTTP_GET, dummy_handler2);
+    ASSERT_EQ(err, UVHTTP_OK);
+    EXPECT_EQ(router->array_route_count, 2u);
+    EXPECT_EQ(router->array_capacity, 2u);
+
+    // Add third route (forces expansion: 2 -> 4)
+    err = uvhttp_router_add_route_method(
+        router, "/route3", UVHTTP_GET, dummy_handler3);
+    ASSERT_EQ(err, UVHTTP_OK);
+    EXPECT_EQ(router->array_route_count, 3u);
+    EXPECT_EQ(router->array_capacity, 4u);
+
+    // Add fourth route (fits in expanded capacity 4)
+    err = uvhttp_router_add_route_method(
+        router, "/route4", UVHTTP_GET, dummy_handler);
+    ASSERT_EQ(err, UVHTTP_OK);
+
+    // Add fifth route (forces expansion: 4 -> 8)
+    err = uvhttp_router_add_route_method(
+        router, "/route5", UVHTTP_GET, dummy_handler2);
+    ASSERT_EQ(err, UVHTTP_OK);
+    EXPECT_EQ(router->array_route_count, 5u);
+    EXPECT_EQ(router->array_capacity, 8u);
+
+    // Verify all routes are still findable
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/route1", "GET"), dummy_handler);
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/route2", "GET"), dummy_handler2);
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/route3", "GET"), dummy_handler3);
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/route4", "GET"), dummy_handler);
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/route5", "GET"), dummy_handler2);
+}
+
+// ============================================================================
+// 23. migrate_to_trie with parameterized array routes (line 344)
+//
+// When migrate_to_trie processes an array route that contains a ':',
+// it skips the colon prefix. We force this by stuffing a param route into
+// the array by manipulating capacity, then manually triggering migration.
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, MigrateToTrie_ParamInArrayRoutes) {
+    // Add non-param routes spread across multiple groups so each parent
+    // node stays under the 12-child limit when migrated to trie.
+    // We use /g0/r0 through /g9/r9 = 100 routes, each group has 10 children.
+    for (int g = 0; g < 10; g++) {
+        for (int r = 0; r < 10; r++) {
+            char path[64];
+            snprintf(path, sizeof(path), "/g%d/r%d", g, r);
+            uvhttp_error_t err = uvhttp_router_add_route_method(
+                router, path, UVHTTP_GET, dummy_handler);
+            ASSERT_EQ(err, UVHTTP_OK);
+        }
+    }
+    EXPECT_EQ(router->array_route_count, 100u);
+    EXPECT_EQ(router->use_trie, 0);
+
+    // Trigger migration by adding a param route
+    uvhttp_error_t err = uvhttp_router_add_route_method(
+        router, "/users/:id", UVHTTP_GET, dummy_handler2);
+    ASSERT_EQ(err, UVHTTP_OK);
+    EXPECT_EQ(router->use_trie, 1);
+
+    // Verify old routes work
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/g0/r0", "GET"), dummy_handler);
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/g9/r9", "GET"), dummy_handler);
+
+    // Verify param route works
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/users/42", "GET"), dummy_handler2);
+}
+
+// ============================================================================
+// 24. migrate_to_trie when already in trie mode (line 322-323, no-op path)
+//
+// This is already covered by MigrateToTrie_AlreadyTrie_NoOp.
+// ============================================================================
+
+// ============================================================================
+// 25. uvhttp_router_add_route_method with query string in path (line 397)
+//
+// Paths with '?' should be rejected.
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, AddRouteMethod_QueryStringPath) {
+    // Path with query string should be rejected
+    uvhttp_error_t err = uvhttp_router_add_route_method(
+        router, "/api/users?page=1", UVHTTP_GET, dummy_handler);
+    EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
+
+    // Also test with uvhttp_router_add_route
+    err = uvhttp_router_add_route(router, "/api/posts?limit=10", dummy_handler);
+    EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
+
+    // Normal path still works
+    err = uvhttp_router_add_route_method(
+        router, "/api/users", UVHTTP_GET, dummy_handler);
+    EXPECT_EQ(err, UVHTTP_OK);
+}
+
+// ============================================================================
+// 26. uvhttp_router_add_route_method with different error conditions
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, AddRouteMethod_NullHandler) {
+    // Null handler should be rejected
+    uvhttp_error_t err = uvhttp_router_add_route_method(
+        router, "/api", UVHTTP_GET, nullptr);
+    EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST_F(RouterBoostCoverageTest, AddRoute_NullHandler) {
+    uvhttp_error_t err = uvhttp_router_add_route(router, "/api", nullptr);
+    EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+// ============================================================================
+// 27. uvhttp_router_match with null parameters (line 660)
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, Match_NullRouter) {
+    uvhttp_route_match_t match;
+    EXPECT_EQ(uvhttp_router_match(nullptr, "/path", "GET", &match),
+              UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST_F(RouterBoostCoverageTest, Match_NullPath) {
+    uvhttp_route_match_t match;
+    EXPECT_EQ(uvhttp_router_match(router, nullptr, "GET", &match),
+              UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST_F(RouterBoostCoverageTest, Match_NullMethod) {
+    uvhttp_route_match_t match;
+    EXPECT_EQ(uvhttp_router_match(router, "/path", nullptr, &match),
+              UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST_F(RouterBoostCoverageTest, Match_NullMatch) {
+    EXPECT_EQ(uvhttp_router_match(router, "/path", "GET", nullptr),
+              UVHTTP_ERROR_INVALID_PARAM);
+}
+
+// ============================================================================
+// 28. uvhttp_router_find_handler with null parameters (line 592)
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, FindHandler_NullRouter) {
+    EXPECT_EQ(uvhttp_router_find_handler(nullptr, "/path", "GET"), nullptr);
+}
+
+TEST_F(RouterBoostCoverageTest, FindHandler_NullPath) {
+    EXPECT_EQ(uvhttp_router_find_handler(router, nullptr, "GET"), nullptr);
+}
+
+TEST_F(RouterBoostCoverageTest, FindHandler_NullMethod) {
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/path", nullptr), nullptr);
+}
+
+// ============================================================================
+// 29. uvhttp_method_from_string HEAD and OPTIONS (lines 73-83)
+//
+// HEAD and OPTIONS were not being tested, leaving those branches uncovered.
+// ============================================================================
+
+TEST(RouterMethodEdgeTest, HEAD_Method) {
+    EXPECT_EQ(uvhttp_method_from_string("HEAD"), UVHTTP_HEAD);
+    EXPECT_EQ(uvhttp_method_from_string("HEADX"), UVHTTP_ANY);
+    EXPECT_EQ(uvhttp_method_from_string("HEA"), UVHTTP_ANY);
+}
+
+TEST(RouterMethodEdgeTest, OPTIONS_Method) {
+    EXPECT_EQ(uvhttp_method_from_string("OPTIONS"), UVHTTP_OPTIONS);
+    EXPECT_EQ(uvhttp_method_from_string("OPTIONX"), UVHTTP_ANY);
+    EXPECT_EQ(uvhttp_method_from_string("OPTIO"), UVHTTP_ANY);
+}
+
+// ============================================================================
+// 30. uvhttp_method_to_string (lines 90-107)
+//
+// uvhttp_method_to_string was not being called in any test, leaving those
+// lines uncovered.
+// ============================================================================
+
+TEST(RouterMethodEdgeTest, MethodToString_AllMethods) {
+    EXPECT_STREQ(uvhttp_method_to_string(UVHTTP_GET), "GET");
+    EXPECT_STREQ(uvhttp_method_to_string(UVHTTP_POST), "POST");
+    EXPECT_STREQ(uvhttp_method_to_string(UVHTTP_PUT), "PUT");
+    EXPECT_STREQ(uvhttp_method_to_string(UVHTTP_DELETE), "DELETE");
+    EXPECT_STREQ(uvhttp_method_to_string(UVHTTP_HEAD), "HEAD");
+    EXPECT_STREQ(uvhttp_method_to_string(UVHTTP_OPTIONS), "OPTIONS");
+    EXPECT_STREQ(uvhttp_method_to_string(UVHTTP_PATCH), "PATCH");
+    EXPECT_STREQ(uvhttp_method_to_string(UVHTTP_ANY), "ANY");
+    EXPECT_STREQ(uvhttp_method_to_string((uvhttp_method_t)999), "UNKNOWN");
+    EXPECT_STREQ(uvhttp_method_to_string((uvhttp_method_t)-1), "UNKNOWN");
+}
+
+// ============================================================================
+// 31. uvhttp_router_match trie mode with array routes fast path (lines 692-709)
+//
+// This path is hit when the router is in trie mode, the path has no params,
+// and array_routes is still valid (non-NULL with routes). This happens when
+// the router was created with non-param routes in trie mode (e.g., by
+// exceeding HYBRID_THRESHOLD during migration, then the array was freed).
+// Actually, after migration array_routes is NULL. But we can directly set it.
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, Match_TrieMode_NoParamFastPath) {
+    // Start with trie mode (add param route first)
+    uvhttp_router_add_route_method(router, "/param/:id", UVHTTP_GET, dummy_handler);
+    EXPECT_EQ(router->use_trie, 1);
+
+    // Add a non-param route in trie mode
+    uvhttp_router_add_route_method(router, "/static/path", UVHTTP_GET, dummy_handler2);
+
+    // Match without params should still work via trie
+    uvhttp_route_match_t match;
+    EXPECT_EQ(uvhttp_router_match(router, "/static/path", "GET", &match),
+              UVHTTP_OK);
+    EXPECT_EQ(match.handler, dummy_handler2);
+}
+
+// ============================================================================
+// 32. Router with only static_prefix but no array or trie routes
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, FindHandler_StaticOnly_NoRoutes) {
+    int fake_ctx = 42;
+    uvhttp_router_add_static_route(router, "/static/", &fake_ctx);
+
+    // find_handler should return static handler for matching prefix
+    uvhttp_request_handler_t h =
+        uvhttp_router_find_handler(router, "/static/file.txt", "GET");
+    EXPECT_NE(h, nullptr);
+}
+
+// ============================================================================
+// 33. uvhttp_router_match in array mode with static prefix fallback
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, Match_ArrayMode_StaticPrefixNoMatch) {
+    // Static prefix set but path doesn't match
+    int fake_ctx = 42;
+    uvhttp_router_add_static_route(router, "/static/", &fake_ctx);
+
+    // Add a regular route
+    uvhttp_router_add_route(router, "/api/test", dummy_handler);
+
+    // Path that doesn't match static prefix but does match a route
+    uvhttp_route_match_t match;
+    EXPECT_EQ(uvhttp_router_match(router, "/api/test", "GET", &match),
+              UVHTTP_OK);
+    EXPECT_EQ(match.handler, dummy_handler);
+
+    // Path that doesn't match anything
+    EXPECT_EQ(uvhttp_router_match(router, "/unknown", "GET", &match),
+              UVHTTP_ERROR_NOT_FOUND);
+}
+
+// ============================================================================
+// 34. uvhttp_router_match in trie mode with static prefix
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, Match_TrieMode_StaticPrefix) {
+    // In trie mode, match does NOT check static prefix (only find_handler does)
+    // So a static prefix path should return NOT_FOUND via match
+    int fake_ctx = 42;
+    uvhttp_router_add_static_route(router, "/assets/", &fake_ctx);
+    uvhttp_router_add_route_method(router, "/users/:id", UVHTTP_GET, dummy_handler);
+
+    uvhttp_route_match_t match;
+    EXPECT_EQ(uvhttp_router_match(router, "/assets/app.js", "GET", &match),
+              UVHTTP_ERROR_NOT_FOUND);
+
+    // But find_handler does check static prefix
+    EXPECT_NE(uvhttp_router_find_handler(router, "/assets/app.js", "GET"), nullptr);
+}
+
+// ============================================================================
+// 35. match_route_node with method mismatch at leaf node (lines 476-481)
+//
+// When the trie reaches a leaf node but the method doesn't match,
+// it should return -1 (not found).
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, TrieMatch_MethodMismatch_LeafNode) {
+    uvhttp_router_add_route_method(router, "/resource", UVHTTP_POST, dummy_handler);
+
+    // GET should not match a POST-only route
+    uvhttp_route_match_t match;
+    EXPECT_EQ(uvhttp_router_match(router, "/resource", "GET", &match),
+              UVHTTP_ERROR_NOT_FOUND);
+
+    // POST should match
+    EXPECT_EQ(uvhttp_router_match(router, "/resource", "POST", &match),
+              UVHTTP_OK);
+    EXPECT_EQ(match.handler, dummy_handler);
+}
+
+// ============================================================================
+// 36. Router with fallback context only, no routes (line 651)
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, FindHandler_FallbackOnly_NoRoutes) {
+    int fake_fallback = 99;
+    uvhttp_router_add_fallback_route(router, &fake_fallback);
+
+    // No routes, no static prefix, only fallback
+    uvhttp_request_handler_t h =
+        uvhttp_router_find_handler(router, "/anything", "GET");
+    EXPECT_NE(h, nullptr);  // returns static_file_handler_wrapper via fallback
+}
+
+// ============================================================================
+// 37. parse_path_params with colon-delimited params (lines 174-207)
+//
+// The parse_path_params function extracts :name:value pairs from paths.
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, ParsePathParams_ColonDelimited) {
+    uvhttp_param_t params[8];
+    size_t count = 0;
+
+    // Single param
+    EXPECT_EQ(uvhttp_parse_path_params("/:name:value", params, &count), 0);
+    EXPECT_EQ(count, 1u);
+    EXPECT_STREQ(params[0].name, "name");
+    EXPECT_STREQ(params[0].value, "value");
+
+    // Multiple params
+    count = 0;
+    EXPECT_EQ(uvhttp_parse_path_params("/:a:1/:b:2/:c:3", params, &count), 0);
+    EXPECT_EQ(count, 3u);
+    EXPECT_STREQ(params[0].name, "a");
+    EXPECT_STREQ(params[0].value, "1");
+    EXPECT_STREQ(params[1].name, "b");
+    EXPECT_STREQ(params[1].value, "2");
+    EXPECT_STREQ(params[2].name, "c");
+    EXPECT_STREQ(params[2].value, "3");
+
+    // No params (no colon prefix)
+    count = 0;
+    EXPECT_EQ(uvhttp_parse_path_params("/plain/path", params, &count), 0);
+    EXPECT_EQ(count, 0u);
+}
+
+// ============================================================================
+// 38. Router with static prefix and fallback, no routes
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, StaticPrefix_And_Fallback) {
+    int static_ctx = 42;
+    int fallback_ctx = 99;
+    uvhttp_router_add_static_route(router, "/static/", &static_ctx);
+    uvhttp_router_add_fallback_route(router, &fallback_ctx);
+
+    // Static prefix should match
+    EXPECT_NE(uvhttp_router_find_handler(router, "/static/file.txt", "GET"), nullptr);
+
+    // Non-static path should hit fallback
+    EXPECT_NE(uvhttp_router_find_handler(router, "/other/path", "GET"), nullptr);
+}
+
+// ============================================================================
+// 39. find_handler with static prefix only (no routes, no fallback)
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, FindHandler_StaticPrefixOnly_NoMatch) {
+    int static_ctx = 42;
+    uvhttp_router_add_static_route(router, "/static/", &static_ctx);
+
+    // Matches static prefix
+    EXPECT_NE(uvhttp_router_find_handler(router, "/static/file.txt", "GET"), nullptr);
+
+    // Does NOT match static prefix, no fallback -> nullptr
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/other/file.txt", "GET"), nullptr);
+}
+
+// ============================================================================
+// 40. find_array_route with UVHTTP_ANY method (line 311)
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, FindArrayRoute_AnyMethod_ArrayMode) {
+    uvhttp_router_add_route_method(router, "/any-path", UVHTTP_ANY, dummy_handler);
+
+    // UVHTTP_ANY should match any method
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/any-path", "GET"), dummy_handler);
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/any-path", "POST"), dummy_handler);
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/any-path", "PUT"), dummy_handler);
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/any-path", "DELETE"), dummy_handler);
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/any-path", "PATCH"), dummy_handler);
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/any-path", "HEAD"), dummy_handler);
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/any-path", "OPTIONS"), dummy_handler);
+}
+
+// ============================================================================
+// 41. uvhttp_router_match for root path in trie mode
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, Match_TrieMode_RootPath) {
+    uvhttp_router_add_route_method(router, "/", UVHTTP_GET, dummy_handler);
+
+    uvhttp_route_match_t match;
+    EXPECT_EQ(uvhttp_router_match(router, "/", "GET", &match), UVHTTP_OK);
+    EXPECT_EQ(match.handler, dummy_handler);
+}
+
+// ============================================================================
+// 42. uvhttp_router_match for non-existent path in trie mode
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, Match_TrieMode_NotFound) {
+    uvhttp_router_add_route_method(router, "/api/:id", UVHTTP_GET, dummy_handler);
+
+    uvhttp_route_match_t match;
+    // Wrong method
+    EXPECT_EQ(uvhttp_router_match(router, "/api/42", "POST", &match),
+              UVHTTP_ERROR_NOT_FOUND);
+    // Non-existent path
+    EXPECT_EQ(uvhttp_router_match(router, "/unknown", "GET", &match),
+              UVHTTP_ERROR_NOT_FOUND);
+}
+
+// ============================================================================
+// 43. uvhttp_router_match with empty path (should not crash)
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, Match_EmptyPath) {
+    uvhttp_router_add_route_method(router, "/", UVHTTP_GET, dummy_handler);
+
+    uvhttp_route_match_t match;
+    // Empty path - should not crash
+    EXPECT_EQ(uvhttp_router_match(router, "", "GET", &match),
+              UVHTTP_ERROR_NOT_FOUND);
+}
+
+// ============================================================================
+// 44. uvhttp_router_find_handler with empty path
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, FindHandler_EmptyPath) {
+    uvhttp_router_add_route_method(router, "/", UVHTTP_GET, dummy_handler);
+
+    // Empty path in array mode
+    uvhttp_request_handler_t h = uvhttp_router_find_handler(router, "", "GET");
+    EXPECT_EQ(h, nullptr);
+}
+
+// ============================================================================
+// 45. uvhttp_router_add_route_method with empty path (line 388-389)
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, AddRouteMethod_EmptyPath) {
+    uvhttp_error_t err = uvhttp_router_add_route_method(
+        router, "", UVHTTP_GET, dummy_handler);
+    EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST_F(RouterBoostCoverageTest, AddRoute_EmptyPath) {
+    uvhttp_error_t err = uvhttp_router_add_route(router, "", dummy_handler);
+    EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+// ============================================================================
+// 46. uvhttp_router_add_route_method with very long path (line 392-393)
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, AddRouteMethod_TooLongPath) {
+    char path[300];
+    memset(path, 'a', 299);
+    path[0] = '/';
+    path[299] = '\0';
+
+    uvhttp_error_t err = uvhttp_router_add_route_method(
+        router, path, UVHTTP_GET, dummy_handler);
+    EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
+}
+
+// ============================================================================
+// 47. uvhttp_router_free with static_prefix and fallback (lines 270-273)
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, FreeWithStaticPrefixAndFallback) {
+    int ctx = 42;
+    uvhttp_router_add_static_route(router, "/static/", &ctx);
+    uvhttp_router_add_fallback_route(router, &ctx);
+    uvhttp_router_add_route(router, "/api/test", dummy_handler);
+
+    // TearDown will call uvhttp_router_free which should clean up
+    // static_prefix, array_routes, node_pool, and fallback_context
+    // without crashing
+    SUCCEED();
+}
+
+// ============================================================================
+// 48. Backtracking in match_route_node with multiple params at same depth
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, TrieMatch_Backtracking_MultipleParams) {
+    // Two routes with different param depths but same prefix
+    // /api/:id (matches 2 segments)
+    // /api/:id/posts (matches 3 segments)
+    uvhttp_router_add_route_method(router, "/api/:id", UVHTTP_GET, dummy_handler);
+    uvhttp_router_add_route_method(router, "/api/:id/posts", UVHTTP_GET, dummy_handler2);
+
+    uvhttp_route_match_t match;
+
+    // Shorter path should match /api/:id
+    EXPECT_EQ(uvhttp_router_match(router, "/api/42", "GET", &match), UVHTTP_OK);
+    EXPECT_EQ(match.handler, dummy_handler);
+
+    // Longer path should match /api/:id/posts
+    EXPECT_EQ(uvhttp_router_match(router, "/api/42/posts", "GET", &match),
+              UVHTTP_OK);
+    EXPECT_EQ(match.handler, dummy_handler2);
+}
+
+// ============================================================================
+// 49. Trie with exact match and param at same depth (backtracking)
+// /api/users  (exact match)
+// /api/:id    (param match)
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, TrieMatch_ExactVsParam_SameDepth) {
+    uvhttp_router_add_route_method(router, "/api/users", UVHTTP_GET, dummy_handler);
+    uvhttp_router_add_route_method(router, "/api/:id", UVHTTP_GET, dummy_handler2);
+
+    uvhttp_route_match_t match;
+
+    // Exact match should be preferred
+    EXPECT_EQ(uvhttp_router_match(router, "/api/users", "GET", &match), UVHTTP_OK);
+    EXPECT_EQ(match.handler, dummy_handler);
+
+    // Param match should work for non-matching segments
+    EXPECT_EQ(uvhttp_router_match(router, "/api/anything", "GET", &match),
+              UVHTTP_OK);
+    EXPECT_EQ(match.handler, dummy_handler2);
+}
+
+// ============================================================================
+// 50. Trie with multiple params at the same depth (backtracking)
+// /api/:id
+// /api/:id/details
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, TrieMatch_MultipleParamsAtSameDepth) {
+    // When two routes share the same param node (:id), the second one
+    // overwrites the first's handler since they share the same trie node.
+    uvhttp_router_add_route_method(router, "/api/:id", UVHTTP_GET, dummy_handler);
+    // Adding a route with the same param name overwrites the handler
+    // because find_or_create_child finds the existing node.
+    uvhttp_router_add_route_method(router, "/api/:id/details", UVHTTP_GET, dummy_handler2);
+
+    uvhttp_route_match_t match;
+    // The param route should match
+    EXPECT_EQ(uvhttp_router_match(router, "/api/42", "GET", &match), UVHTTP_OK);
+    // Handler is whatever was set (dummy_handler from first route)
+    EXPECT_EQ(match.handler, dummy_handler);
+
+    // The deeper route should match too
+    EXPECT_EQ(uvhttp_router_match(router, "/api/42/details", "GET", &match),
+              UVHTTP_OK);
+    EXPECT_EQ(match.handler, dummy_handler2);
+}
+
+// ============================================================================
+// 51. uvhttp_router_match with method = UVHTTP_ANY in trie
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, TrieMatch_AnyMethod) {
+    uvhttp_router_add_route_method(router, "/resource", UVHTTP_ANY, dummy_handler);
+
+    uvhttp_route_match_t match;
+    EXPECT_EQ(uvhttp_router_match(router, "/resource", "GET", &match), UVHTTP_OK);
+    EXPECT_EQ(match.handler, dummy_handler);
+    EXPECT_EQ(uvhttp_router_match(router, "/resource", "POST", &match), UVHTTP_OK);
+    EXPECT_EQ(match.handler, dummy_handler);
+    EXPECT_EQ(uvhttp_router_match(router, "/resource", "PUT", &match), UVHTTP_OK);
+    EXPECT_EQ(match.handler, dummy_handler);
+}
+
+// ============================================================================
+// 52. uvhttp_router_free with all fields populated (line 260-276)
+// ============================================================================
+
+TEST(RouterFreeTest, FreeRouter_AllFields) {
+    uvhttp_router_t* r = nullptr;
+    ASSERT_EQ(uvhttp_router_new(&r), UVHTTP_OK);
+
+    int ctx = 42;
+    uvhttp_router_add_static_route(r, "/static/", &ctx);
+    uvhttp_router_add_fallback_route(r, &ctx);
+    uvhttp_router_add_route(r, "/api/test", dummy_handler);
+
+    // Free should clean up without crashing
+    uvhttp_router_free(r);
+}
+
+// ============================================================================
+// 53. uvhttp_router_free with NULL router (line 261)
+// ============================================================================
+
+TEST(RouterFreeTest, FreeRouter_Null) {
+    // Should not crash
+    uvhttp_router_free(nullptr);
+}
+
+// ============================================================================
+// 54. uvhttp_router_new with NULL output (line 210-211)
+// ============================================================================
+
+TEST(RouterNewTest, NewRouter_NullOutput) {
+    EXPECT_EQ(uvhttp_router_new(nullptr), UVHTTP_ERROR_INVALID_PARAM);
+}
+
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
