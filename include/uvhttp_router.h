@@ -83,6 +83,8 @@ struct uvhttp_router {
     /* Static file routing support (8-byte aligned) */
     char* static_prefix;                     /* 8 bytes */
     void* static_context;                    /* 8 bytes */
+    const void* static_data;                 /* 8 bytes - binary route data */
+    size_t static_data_len;                  /* 8 bytes - binary route data len */
     uvhttp_request_handler_t static_handler; /* 8 bytes */
 
     /* Fallback routing support (8-byte aligned) */
@@ -129,6 +131,17 @@ uvhttp_error_t uvhttp_router_add_route_method(uvhttp_router_t* router,
 /* Route lookup */
 uvhttp_request_handler_t uvhttp_router_find_handler(
     const uvhttp_router_t* router, const char* path, const char* method);
+
+/* Binary data route — for embedded devices without a filesystem.
+ * Registers a route that returns a static binary blob with the given
+ * MIME type. The data pointer must remain valid for the lifetime of
+ * the router (typically a static/global buffer). The handler copies
+ * the data into the response body on each request. */
+uvhttp_error_t uvhttp_router_add_binary_route(uvhttp_router_t* router,
+                                              const char* path,
+                                              const char* mime_type,
+                                              const void* data,
+                                              size_t data_len);
 
 /* Route matching (get parameters) */
 uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,

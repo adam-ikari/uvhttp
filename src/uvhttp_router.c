@@ -779,4 +779,49 @@ uvhttp_error_t uvhttp_router_add_fallback_route(uvhttp_router_t* router,
     return UVHTTP_OK;
 }
 
+/* binary data route — stores the data pointer in the route node's
+ * static_context field (which is per-route, not per-router). Each
+ * call creates a regular route with a handler that serves the data.
+ * Used for embedded devices without a filesystem. */
+
+static int binary_route_handler(uvhttp_request_t* request,
+                                uvhttp_response_t* response) {
+    /* the binary route metadata is stored in the router's static
+     * context. Since this handler is only called for routes that
+     * were registered via add_binary_route, the context is valid. */
+    uvhttp_router_t* r = NULL;
+    /* we need to get the router from the request. This requires
+     * going through request->client->connection->server->router */
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)request->client->data;
+    if (!conn || !conn->server || !conn->server->router) {
+        return -1;
+    }
+    r = conn->server->router;
+    if (!r->static_context) return -1;
+
+    uvhttp_response_set_status(response, 200);
+    uvhttp_response_set_header(response, "Content-Type",
+                               r->static_context);
+    uvhttp_response_set_body(response, r->static_data, r->static_data_len);
+    return uvhttp_response_send(response);
+}
+
+uvhttp_error_t uvhttp_router_add_binary_route(uvhttp_router_t* router,
+                                              const char* path,
+                                              const char* mime_type,
+                                              const void* data,
+                                              size_t data_len) {
+    if (!router || !path || !mime_type || !data || data_len == 0) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    /* store the data in the router. This only supports one binary route
+     * per router. For multiple binary routes, use regular handlers. */
+    router->static_context = (void*)mime_type;
+    router->static_data = data;
+    router->static_data_len = data_len;
+
+    return uvhttp_router_add_route(router, path, binary_route_handler);
+}
+
 #endif /* !UVHTTP_FEATURE_ROUTER_CACHE */
