@@ -1897,6 +1897,112 @@ TEST(RouterNewTest, NewRouter_NullOutput) {
 }
 
 
+// ============================================================================
+// 55. uvhttp_router_add_binary_route tests
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, AddBinaryRoute_StringData) {
+    static const char* test_data = "Hello, binary world!";
+    uvhttp_error_t err = uvhttp_router_add_binary_route(
+        router, "/api/binary", "text/plain", test_data, strlen(test_data));
+    EXPECT_EQ(err, UVHTTP_OK);
+
+    // Verify the route can be found
+    uvhttp_request_handler_t handler =
+        uvhttp_router_find_handler(router, "/api/binary", "GET");
+    EXPECT_NE(handler, nullptr);
+    EXPECT_NE(handler, dummy_handler);
+
+    // Verify router state
+    EXPECT_EQ(router->static_data, test_data);
+    EXPECT_EQ(router->static_data_len, strlen(test_data));
+    EXPECT_STREQ((const char*)router->static_context, "text/plain");
+}
+
+TEST_F(RouterBoostCoverageTest, AddBinaryRoute_BinaryData) {
+    static const unsigned char binary_blob[] = {
+        0x00, 0x01, 0x02, 0xFF, 0xFE, 0x7F, 0x80, 0x00};
+    uvhttp_error_t err = uvhttp_router_add_binary_route(
+        router, "/api/blob", "application/octet-stream",
+        binary_blob, sizeof(binary_blob));
+    EXPECT_EQ(err, UVHTTP_OK);
+
+    // Verify the route can be found
+    uvhttp_request_handler_t handler =
+        uvhttp_router_find_handler(router, "/api/blob", "GET");
+    EXPECT_NE(handler, nullptr);
+
+    // Verify router state
+    EXPECT_EQ(router->static_data, binary_blob);
+    EXPECT_EQ(router->static_data_len, sizeof(binary_blob));
+    EXPECT_STREQ((const char*)router->static_context, "application/octet-stream");
+}
+
+TEST_F(RouterBoostCoverageTest, AddBinaryRoute_NullRouter) {
+    EXPECT_EQ(uvhttp_router_add_binary_route(
+                  nullptr, "/path", "text/plain", "data", 4),
+              UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST_F(RouterBoostCoverageTest, AddBinaryRoute_NullPath) {
+    EXPECT_EQ(uvhttp_router_add_binary_route(
+                  router, nullptr, "text/plain", "data", 4),
+              UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST_F(RouterBoostCoverageTest, AddBinaryRoute_NullMimeType) {
+    EXPECT_EQ(uvhttp_router_add_binary_route(
+                  router, "/path", nullptr, "data", 4),
+              UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST_F(RouterBoostCoverageTest, AddBinaryRoute_NullData) {
+    EXPECT_EQ(uvhttp_router_add_binary_route(
+                  router, "/path", "text/plain", nullptr, 4),
+              UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST_F(RouterBoostCoverageTest, AddBinaryRoute_ZeroLength) {
+    EXPECT_EQ(uvhttp_router_add_binary_route(
+                  router, "/path", "text/plain", "data", 0),
+              UVHTTP_ERROR_INVALID_PARAM);
+}
+
+TEST_F(RouterBoostCoverageTest, AddBinaryRoute_FindViaRouterMatch) {
+    static const char* test_data = "binary content";
+    uvhttp_error_t err = uvhttp_router_add_binary_route(
+        router, "/data/asset", "image/png", test_data, strlen(test_data));
+    ASSERT_EQ(err, UVHTTP_OK);
+
+    // Verify via uvhttp_router_match
+    uvhttp_route_match_t match;
+    EXPECT_EQ(uvhttp_router_match(router, "/data/asset", "GET", &match),
+              UVHTTP_OK);
+    EXPECT_NE(match.handler, nullptr);
+}
+
+// ============================================================================
+// 56. uvhttp_router_add_binary_route with multiple routes (array mode)
+// ============================================================================
+
+TEST_F(RouterBoostCoverageTest, AddBinaryRoute_WithOtherRoutes) {
+    // Add a regular route first
+    uvhttp_router_add_route(router, "/api/regular", dummy_handler);
+
+    // Then add a binary route
+    static const char* test_data = "binary data here";
+    uvhttp_error_t err = uvhttp_router_add_binary_route(
+        router, "/api/binary", "text/plain", test_data, strlen(test_data));
+    EXPECT_EQ(err, UVHTTP_OK);
+
+    // Both routes should be findable
+    EXPECT_EQ(uvhttp_router_find_handler(router, "/api/regular", "GET"),
+              dummy_handler);
+    EXPECT_NE(uvhttp_router_find_handler(router, "/api/binary", "GET"),
+              nullptr);
+}
+
+
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
