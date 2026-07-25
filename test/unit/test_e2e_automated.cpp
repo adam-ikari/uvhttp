@@ -64,14 +64,14 @@ static std::string curl_body_and_code(const std::string& method,
                                       const std::string& data = "") {
     std::string cmd;
     if (data.empty()) {
-        cmd = "curl -s -w '\n%{http_code}' -X " + method + " \"" + url + "\" 2>/dev/null";
+        cmd = "curl -s --connect-timeout 2 --max-time 5 -w '\n%{http_code}' -X " + method + " \"" + url + "\" 2>/dev/null";
     } else {
         std::string escaped;
         for (char c : data) {
             if (c == '\'') escaped += "'\\''";
             else escaped += c;
         }
-        cmd = "curl -s -w '\n%{http_code}' -X " + method + " -d '" + escaped + "' \"" + url + "\" 2>/dev/null";
+        cmd = "curl -s --connect-timeout 2 --max-time 5 -w '\n%{http_code}' -X " + method + " -d '" + escaped + "' \"" + url + "\" 2>/dev/null";
     }
     FILE* pipe = popen(cmd.c_str(), "r");
     if (!pipe) return "";
@@ -100,7 +100,7 @@ static std::string curl_body_and_code(const std::string& method,
  * =================================================================== */
 static bool wait_for_server(const std::string& url, int max_retries = 10) {
     for (int i = 0; i < max_retries; i++) {
-        std::string cmd = "curl -s -o /dev/null -w '%{http_code}' \"" + url + "\" 2>/dev/null";
+        std::string cmd = "curl -s --connect-timeout 2 --max-time 5 -o /dev/null -w '%{http_code}' \"" + url + "\" 2>/dev/null";
         FILE* pipe = popen(cmd.c_str(), "r");
         if (!pipe) { usleep(50000); continue; }
         char buf[16];
@@ -305,15 +305,25 @@ public:
             loop_thread_.join();
         }
 
-        /* 2. Free the server.  uvhttp_server_free closes the TCP handle,
-         *    runs the loop to process close callbacks, and frees the
-         *    router internally.  It is safe to call even if the server
-         *    was initialised but never started (listen). */
+        /* 2. Free the server resources.  Only call uvhttp_server_free if
+         *    the server was started (listening), because calling it on a
+         *    zero-initialised (never-started) server would attempt to close
+         *    an uninitialised TCP handle and corrupt the event loop. */
         if (server_) {
-            uvhttp_server_free(server_);
+            if (running_) {
+                uvhttp_server_free(server_);
+                /* uvhttp_server_free also frees the router */
+                router_ = nullptr;
+            }
             server_ = nullptr;
         }
-        router_ = nullptr;  /* already freed by uvhttp_server_free */
+
+        /* 3. Free the router if the server was never started. */
+        if (router_) {
+            uvhttp_router_free(router_);
+            router_ = nullptr;
+        }
+
         running_ = false;
     }
 
@@ -540,6 +550,8 @@ TEST_F(E2EAutomatedTest, StaticFileServing) {
     ASSERT_EQ(result, UVHTTP_OK) << "Failed to create static context";
     ASSERT_NE(static_ctx, nullptr);
 
+    std::string filename = filepath.substr(filepath.rfind('/') + 1);
+
     /* Verify MIME type resolution */
     char mime_type[256];
     result = uvhttp_static_get_mime_type("test.html", mime_type, sizeof(mime_type));
@@ -548,11 +560,13 @@ TEST_F(E2EAutomatedTest, StaticFileServing) {
         EXPECT_NE(strlen(mime_type), (size_t)0);
     }
 
-    /* Verify safe path resolution */
+    /* Verify safe path resolution (URL path relative to root) */
     char resolved[UVHTTP_MAX_FILE_PATH_SIZE];
-    int safe = uvhttp_static_resolve_safe_path(dir.c_str(), filepath.c_str(),
+    std::string url_path = "/" + filename;
+    int safe = uvhttp_static_resolve_safe_path(dir.c_str(), url_path.c_str(),
                                                 resolved, sizeof(resolved));
-    EXPECT_EQ(safe, 1);
+    EXPECT_EQ(safe, 1) << "safe path resolution failed for " << url_path
+                       << " under " << dir;
 
     /* Verify cache configuration */
     result = uvhttp_static_set_cache_config(static_ctx, 512 * 1024, 50, 1800);
