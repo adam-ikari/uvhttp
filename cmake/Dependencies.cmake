@@ -400,28 +400,43 @@ endif()
 # ============================================================================
 
 # ============================================================================
-# zlib (for compression support)
+# zlib (miniz drop-in replacement for compression support)
 # ============================================================================
 if(BUILD_WITH_COMPRESSION)
-    message(STATUS "Configuring zlib for compression...")
-    
-    # 使用子模块中的 zlib
-    set(ZLIB_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/deps/zlib)
-    set(ZLIB_INCLUDE_DIR ${ZLIB_ROOT})
-    set(ZLIB_LIBRARY ${CMAKE_BINARY_DIR}/dist/lib/libz.a)
-    
-    # 禁用 zlib 测试以避免编译错误（zlib 测试代码有警告，在 -Werror 标志下会失败）
-    set(ZLIB_BUILD_TESTING OFF CACHE BOOL "Disable zlib testing" FORCE)
-    
-    # 添加 zlib 子目录
-    add_subdirectory(${ZLIB_ROOT} ${CMAKE_BINARY_DIR}/deps/zlib)
-    
-    # 创建 zlib 别名以便于链接
-    add_library(zlib ALIAS zlibstatic)
-    
-    message(STATUS "Using zlib from submodule: ${ZLIB_ROOT}")
-    message(STATUS "Compression support: ENABLED")
-    message(STATUS "zlib testing: DISABLED (to avoid compilation errors)")
+    message(STATUS "Configuring miniz (zlib-compatible) for compression...")
+
+    # miniz source files
+    set(MINIZ_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/deps)
+    set(MINIZ_INCLUDE_DIR ${MINIZ_ROOT})
+
+    # Build miniz as a static library
+    add_library(miniz STATIC
+        ${MINIZ_ROOT}/miniz.c
+        ${MINIZ_ROOT}/miniz_tdef.c
+        ${MINIZ_ROOT}/miniz_tinfl.c
+        ${MINIZ_ROOT}/miniz_zip.c
+    )
+    target_include_directories(miniz PUBLIC
+        $<BUILD_INTERFACE:${MINIZ_ROOT}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
+    target_compile_definitions(miniz PRIVATE MINIZ_NO_STDIO MINIZ_NO_TIME MINIZ_NO_ARCHIVE_APIS)
+
+    # Install miniz library
+    set_target_properties(miniz PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/dist/lib"
+    )
+    # Install miniz library (part of uvhttp export set)
+    install(TARGETS miniz
+        EXPORT uvhttp-targets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+
+    # Create zlib alias so existing target_link_libraries(uvhttp PUBLIC zlib) still works
+    add_library(zlib ALIAS miniz)
+
+    message(STATUS "Using miniz from: ${MINIZ_ROOT}/miniz.{c,h,tdef.c,tdef.h,tinfl.c,tinfl.h,common.h,export.h}")
+    message(STATUS "Compression support: ENABLED (miniz drop-in)")
 endif()
 
 # ============================================================================

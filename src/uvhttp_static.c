@@ -795,11 +795,32 @@ uvhttp_result_t uvhttp_static_set_response_headers(void* response,
     if (!response || !file_path)
         return UVHTTP_ERROR_INVALID_PARAM;
 
-    /* setContent-Type */
+    /* setContent-Type — strip .gz suffix for pre-compressed files */
+    char mime_path[UVHTTP_MAX_FILE_PATH_SIZE];
+    const char* mime_source = file_path;
+    int is_precompressed = 0;
+    size_t path_len = strlen(file_path);
+    if (path_len > 3 && strcmp(file_path + path_len - 3, ".gz") == 0) {
+        /* for .gz files, use the original file's MIME type and add
+         * Content-Encoding: gzip. The .gz suffix is stripped for MIME lookup. */
+        size_t base_len = path_len - 3;
+        if (base_len < sizeof(mime_path)) {
+            memcpy(mime_path, file_path, base_len);
+            mime_path[base_len] = '\0';
+            mime_source = mime_path;
+            is_precompressed = 1;
+        }
+    }
+
     char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
-    if (uvhttp_static_get_mime_type(file_path, mime_type, sizeof(mime_type)) ==
+    if (uvhttp_static_get_mime_type(mime_source, mime_type, sizeof(mime_type)) ==
         0) {
         uvhttp_response_set_header(response, "Content-Type", mime_type);
+    }
+
+    /* set Content-Encoding for pre-compressed files */
+    if (is_precompressed) {
+        uvhttp_response_set_header(response, "Content-Encoding", "gzip");
     }
 
     /* setContent-Length */
@@ -1148,6 +1169,24 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                         file_size, ctx->config.max_file_size);
         uvhttp_response_set_status(response, 413); /* Payload Too Large */
         return UVHTTP_ERROR_FILE_TOO_LARGE;
+    }
+
+    /* check if a pre-compressed .gz version exists and client accepts gzip */
+    if (file_size >= 512) {  /* only precompress files >= 512 bytes */
+        const char* accept_encoding = uvhttp_request_get_header(request, "Accept-Encoding");
+        if (accept_encoding && strstr(accept_encoding, "gzip")) {
+            char gz_path[UVHTTP_MAX_FILE_PATH_SIZE];
+            int ret = snprintf(gz_path, sizeof(gz_path), "%s.gz", safe_path);
+            if (ret > 0 && ret < (int)sizeof(gz_path)) {
+                size_t gz_size;
+                time_t gz_mtime;
+                if (get_file_info(gz_path, &gz_size, &gz_mtime) == 0 && gz_size > 0) {
+                    uvhttp_safe_strncpy(safe_path, gz_path, sizeof(safe_path));
+                    file_size = gz_size;
+                    last_modified = gz_mtime;
+                }
+            }
+        }
     }
 
     /* for medium and large files (> 64KB), use sendfile zero-copy optimization
