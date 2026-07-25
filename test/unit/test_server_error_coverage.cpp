@@ -223,7 +223,8 @@ TEST(UvhttpServerErrorCoverageTest, MultipleFree) {
     uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
     if (result == UVHTTP_OK && server != NULL) {
         uvhttp_server_free(server);
-        uvhttp_server_free(server);  /* 第二次释放，不应该崩溃 */
+        server = NULL;                      /* 标准做法：释放后置空 */
+        uvhttp_server_free(server);         /* 第二次释放(NULL)，安全无操作 */
     }
 }
 

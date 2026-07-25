@@ -36,13 +36,15 @@ protected:
     }
 
     void TearDown() override {
+        if (context) {
+            // Detach config before destroy to avoid double-free
+            context->current_config = nullptr;
+            uvhttp_context_destroy(context);
+            context = nullptr;
+        }
         if (config) {
             uvhttp_config_free(config);
             config = nullptr;
-        }
-        if (context) {
-            uvhttp_context_destroy(context);
-            context = nullptr;
         }
         uv_loop_close(&loop);
     }
@@ -165,7 +167,7 @@ TEST_F(UvhttpConfigTest, ConfigValidateMinWebSocketFrameSize) {
 }
 
 TEST_F(UvhttpConfigTest, ConfigValidateMaxWebSocketFrameSize) {
-    config->websocket_max_frame_size = 20 * 1024 * 1024;  // Above maximum
+    config->websocket_max_frame_size = 300 * 1024 * 1024;  // Above maximum (256MB)
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
@@ -177,7 +179,7 @@ TEST_F(UvhttpConfigTest, ConfigValidateMinWebSocketMessageSize) {
 }
 
 TEST_F(UvhttpConfigTest, ConfigValidateMaxWebSocketMessageSize) {
-    config->websocket_max_message_size = 100 * 1024 * 1024;  // Above maximum
+    config->websocket_max_message_size = 2ULL * 1024 * 1024 * 1024;  // Above maximum (1GB)
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
@@ -204,7 +206,7 @@ TEST_F(UvhttpConfigTest, ConfigValidateMinTcpKeepaliveTimeout) {
 }
 
 TEST_F(UvhttpConfigTest, ConfigValidateMaxTcpKeepaliveTimeout) {
-    config->tcp_keepalive_timeout = 7200;  // Above maximum
+    config->tcp_keepalive_timeout = 7201;  // Above maximum (7200)
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
@@ -217,14 +219,14 @@ TEST_F(UvhttpConfigTest, ConfigValidateMinSendfileTimeout) {
 }
 
 TEST_F(UvhttpConfigTest, ConfigValidateMaxSendfileTimeout) {
-    config->sendfile_timeout_ms = 60000;  // Above maximum
+    config->sendfile_timeout_ms = 400000;  // Above maximum (300000)
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
 
 // Cache configuration validation
 TEST_F(UvhttpConfigTest, ConfigValidateMinCacheMaxEntries) {
-    config->cache_default_max_entries = 0;  // Below minimum
+    config->cache_default_max_entries = -1;  // Below minimum (0)
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
@@ -236,7 +238,7 @@ TEST_F(UvhttpConfigTest, ConfigValidateMaxCacheMaxEntries) {
 }
 
 TEST_F(UvhttpConfigTest, ConfigValidateMinCacheTTL) {
-    config->cache_default_ttl = 0;  // Below minimum
+    config->cache_default_ttl = -1;  // Below minimum (0)
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
@@ -255,7 +257,7 @@ TEST_F(UvhttpConfigTest, ConfigValidateMinRateLimitMaxRequests) {
 }
 
 TEST_F(UvhttpConfigTest, ConfigValidateMaxRateLimitMaxRequests) {
-    config->rate_limit_max_requests = 1000000;  // Above maximum
+    config->rate_limit_max_requests = 20000000;  // Above maximum (10000000)
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
@@ -267,7 +269,7 @@ TEST_F(UvhttpConfigTest, ConfigValidateMinRateLimitWindowSeconds) {
 }
 
 TEST_F(UvhttpConfigTest, ConfigValidateMaxRateLimitWindowSeconds) {
-    config->rate_limit_max_window_seconds = 3600 * 2;  // Above maximum
+    config->rate_limit_max_window_seconds = 100000;  // Above maximum (86400)
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
@@ -503,7 +505,7 @@ TEST_F(UvhttpConfigTest, ConfigAllCacheFields) {
 TEST_F(UvhttpConfigTest, ConfigAllRateLimitFields) {
     config->rate_limit_max_requests = 100;
     config->rate_limit_max_window_seconds = 60;
-    config->rate_limit_min_timeout_seconds = 1;
+    config->rate_limit_min_timeout_seconds = 10;
     
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_OK);

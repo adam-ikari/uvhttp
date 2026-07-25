@@ -151,19 +151,20 @@ target_compile_definitions(server PRIVATE -DUVHTTP_FEATURE_WEBSOCKET=1)
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
     
     // 添加路由
     uvhttp_router_add_route(router, "/", [](uvhttp_request_t* request, uvhttp_response_t* response) {
         uvhttp_response_set_status(response, 200);
         uvhttp_response_set_header(response, "Content-Type", "text/plain");
         uvhttp_response_set_body(response, "Hello, World!");
-        uvhttp_response_send(response);
-        return 0;
+        return uvhttp_response_send(response);
     });
     
-    server->router = router;
+    uvhttp_server_set_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
     
     printf("服务器运行在 http://0.0.0.0:8080\n");

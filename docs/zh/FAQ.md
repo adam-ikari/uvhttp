@@ -1,6 +1,6 @@
 # UVHTTP 常见问题解答 (FAQ)
 
-本文档回答了关于使用 UVHTTP 库的常见问题。
+UVHTTP 常见问题。
 
 ## 目录
 
@@ -19,7 +19,6 @@
 
 ### Q1: UVHTTP 的系统要求是什么？
 
-**回答：**
 - **操作系统**: Linux, macOS, Windows
 - **编译器**: GCC 4.8+, Clang 3.4+, MSVC 2015+
 - **构建系统**: CMake 3.10+
@@ -34,7 +33,6 @@ make
 
 ### Q2: 如何启用可选功能如 WebSocket？
 
-**回答：**
 使用 CMake 选项配置构建：
 
 ```bash
@@ -50,7 +48,6 @@ cmake -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON ..
 
 ### Q3: 如何在系统分配器和 mimalloc 之间切换？
 
-**回答：**
 使用编译时的分配器类型标志：
 
 ```bash
@@ -67,7 +64,6 @@ cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..
 
 ### Q4: 如何优雅地关闭服务器？
 
-**回答：**
 ```c
 #include <signal.h>
 
@@ -81,27 +77,31 @@ void signal_handler(int sig) {
 int main() {
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
-    
+
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t r = uvhttp_server_new(loop, &server);
+    if (r != UVHTTP_OK) {
+        fprintf(stderr, "创建服务器失败: %s\n", uvhttp_error_string(r));
+        return 1;
+    }
     // ... 配置服务器 ...
-    
+
     uvhttp_server_listen(server, "0.0.0.0", 8080);
-    
+
     // 运行直到收到信号
     uv_run(loop, UV_RUN_DEFAULT);
-    
+
     // 清理
     uvhttp_server_stop(server);
     uvhttp_server_free(server);
-    
+
     return 0;
 }
 ```
 
 ### Q5: 如何更改服务器的地址绑定？
 
-**回答：**
 ```c
 // 绑定到特定 IP
 uvhttp_server_listen(server, "192.168.1.100", 8080);
@@ -115,13 +115,14 @@ uvhttp_server_listen(server, "127.0.0.1", 8080);
 
 ### Q6: 如何在同一循环上运行多个服务器？
 
-**回答：**
 ```c
 uv_loop_t* loop = uv_default_loop();
 
 // 创建多个服务器
-uvhttp_server_t* server1 = uvhttp_server_new(loop);
-uvhttp_server_t* server2 = uvhttp_server_new(loop);
+uvhttp_server_t* server1 = NULL;
+uvhttp_server_t* server2 = NULL;
+uvhttp_server_new(loop, &server1);
+uvhttp_server_new(loop, &server2);
 
 // 配置每个服务器
 uvhttp_server_listen(server1, "0.0.0.0", 8080);
@@ -137,7 +138,6 @@ uv_run(loop, UV_RUN_DEFAULT);
 
 ### Q7: 如何访问请求头？
 
-**回答：**
 ```c
 // 获取特定请求头
 const char* user_agent = uvhttp_request_get_header(request, "User-Agent");
@@ -152,15 +152,12 @@ uvhttp_request_foreach_header(request, header_callback, NULL);
 
 ### Q8: 如何获取客户端 IP 地址？
 
-**回答：**
 ```c
-// 获取客户端 IP 地址
 const char* client_ip = uvhttp_request_get_client_ip(request);
 ```
 
 ### Q9: 如何处理请求体？
 
-**回答：**
 ```c
 // 获取请求体
 const char* body = uvhttp_request_get_body(request);
@@ -168,13 +165,10 @@ size_t body_len = uvhttp_request_get_body_length(request);
 
 // 获取 Content-Length 头
 const char* content_length = uvhttp_request_get_header(request, "Content-Length");
-
-// 处理请求体...
 ```
 
 ### Q10: 如何处理查询参数？
 
-**回答：**
 ```c
 // 获取所有查询参数
 const char* query = uvhttp_request_get_query_string(request);
@@ -190,17 +184,16 @@ const char* page = uvhttp_request_get_query_param(request, "page");
 
 ### Q11: 如何在响应中设置 Cookie？
 
-**回答：**
 ```c
-uvhttp_response_set_header(response, "Set-Cookie", 
+uvhttp_response_set_header(response, "Set-Cookie",
     "session=abc123; Path=/; HttpOnly; Secure; SameSite=Strict");
-uvhttp_response_set_header(response, "Set-Cookie", 
+uvhttp_response_set_header(response, "Set-Cookie",
     "theme=dark; Path=/; Max-Age=31536000");
 ```
 
 ### Q12: 如何启用 CORS？
 
-**回答：** CORS（跨域资源共享）在应用层实现。您可以通过设置相应的响应头来启用 CORS：
+CORS（跨域资源共享）在应用层实现。通过设置响应头启用：
 
 ```c
 uvhttp_response_set_header(response, "Access-Control-Allow-Origin", "*");
@@ -215,15 +208,14 @@ if (uvhttp_request_get_method(request) == UVHTTP_METHOD_OPTIONS) {
 }
 ```
 
-对于更高级的 CORS 处理，您可以使用中间件系统创建可重用的 CORS 中间件。请参阅 `examples/03_middleware/` 中的中间件示例。
+对于更高级的 CORS 处理，可以使用中间件系统创建可重用的 CORS 中间件。请参阅 `examples/03_middleware/` 中的中间件示例。
 
-**注意：** UVHTTP 不提供内置的 CORS 支持，因为 CORS 是应用层的关注点。该库提供了灵活性，可以根据您的使用场景完全按需实现 CORS。
+**注意：** UVHTTP 不提供内置的 CORS 支持，因为 CORS 是应用层的关注点。
 
 ### Q13: 如何发送文件附件？
 
-**回答：**
 ```c
-uvhttp_response_set_header(response, "Content-Disposition", 
+uvhttp_response_set_header(response, "Content-Disposition",
     "attachment; filename=\"example.txt\"");
 
 const char* file_content = "文件内容...";
@@ -233,11 +225,8 @@ uvhttp_response_send(response);
 
 ### Q14: 如何处理大响应？
 
-**回答：**
 ```c
-// 对于大响应，直接设置响应体
-// UVHTTP 自动高效处理大响应
-const char* large_data = get_large_data();  // 您的数据源
+const char* large_data = get_large_data();
 size_t data_length = get_data_length();
 
 uvhttp_response_set_status(response, 200);
@@ -251,7 +240,6 @@ uvhttp_response_send(response);
 
 ### Q15: 如何为测试生成自签名证书？
 
-**回答：**
 ```bash
 # 生成 CA 私钥
 openssl genrsa -out ca.key 4096
@@ -275,7 +263,6 @@ openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key \
 
 ### Q16: 如何启用客户端证书认证？
 
-**回答：**
 ```c
 // 启用客户端认证
 uvhttp_tls_context_enable_client_auth(tls_ctx, 1);
@@ -289,29 +276,21 @@ uvhttp_tls_context_load_ca_file(tls_ctx, "client_ca.crt");
 
 ### Q17: 如何配置密码套件？
 
-**回答：**
 ```c
-// 定义密码套件
 static const int cipher_suites[] = {
     MBEDTLS_TLS_AES_256_GCM_SHA384,
     MBEDTLS_TLS_CHACHA20_POLY1305_SHA256,
     MBEDTLS_TLS_AES_128_GCM_SHA256,
-    0  // 终止符
+    0
 };
 
-// 设置密码套件
 uvhttp_tls_context_set_cipher_suites(tls_ctx, cipher_suites);
 ```
 
 ### Q18: 如何启用 TLS 1.3？
 
-**回答：**
 ```c
-// 启用 TLS 1.3
 uvhttp_tls_context_enable_tls13(tls_ctx, 1);
-
-// 设置最低 TLS 版本
-// 启用 TLS 1.3 时会自动处理
 ```
 
 ---
@@ -320,21 +299,18 @@ uvhttp_tls_context_enable_tls13(tls_ctx, 1);
 
 ### Q19: 如何向所有连接的 WebSocket 客户端发送消息？
 
-**回答：**
 ```c
-// 向特定路径上的所有客户端广播消息
 uvhttp_server_ws_broadcast(server, "/ws", "大家好", 9);
 ```
 
 ### Q20: 如何处理 WebSocket ping/pong？
 
-**回答：**
 ```c
-// 发送 ping（需要 context）
+// 发送 ping
 uvhttp_ws_send_ping(context, ws_conn, (const uint8_t*)"心跳", 6);
 
 // 在回调中处理 pong
-int on_message(uvhttp_ws_connection_t* ws_conn, const char* data, 
+int on_message(uvhttp_ws_connection_t* ws_conn, const char* data,
                size_t len, int opcode) {
     if (opcode == UVHTTP_WS_OPCODE_PONG) {
         printf("收到 pong: %s\n", data);
@@ -349,45 +325,41 @@ int on_message(uvhttp_ws_connection_t* ws_conn, const char* data,
 
 ### Q21: 如何启用连接池？
 
-**回答：**
 ```c
-// 通过设置配置启用 Keep-Alive
-uvhttp_config_t* config = uvhttp_config_create();
+uvhttp_config_t* config = NULL;
+uvhttp_config_new(&config);
 config->keepalive_timeout = 60;  // 60 秒
 
-uvhttp_server_t* server = uvhttp_server_new(loop);
+uvhttp_server_t* server = NULL;
+uvhttp_server_new(loop, &server);
 uvhttp_server_set_config(server, config);
 ```
 
 ### Q22: 如何优化静态文件服务？
 
-**回答：**
 ```c
 // 为静态文件启用 LRU 缓存
 // 使用 uvhttp_static 时自动启用
 
 // 启动时预热缓存
-uvhttp_static_context_t* static_ctx = uvhttp_static_create("/var/www/static");
+uvhttp_static_config_t config = {0};
+strncpy(config.root_directory, "/var/www/static", sizeof(config.root_directory) - 1);
+uvhttp_static_context_t* static_ctx = NULL;
+uvhttp_static_create(&config, &static_ctx);
 uvhttp_static_prewarm_directory(static_ctx, "/var/www/static", 100);
 
 // 大文件（>1MB）自动使用 sendfile
-// 无需额外配置
 ```
 
 ### Q23: 如何监控服务器性能？
 
-**回答：**
 ```c
-// 获取活动连接数
 size_t active_connections = server->active_connections;
-
-// 定期记录统计信息
 printf("活动连接数: %zu\n", active_connections);
 ```
 
 ### Q24: 如何配置速率限制？
 
-**回答：**
 ```c
 // 在服务器上启用限流（每秒 1000 请求）
 uvhttp_server_enable_rate_limit(server, 1000, 1);
@@ -402,7 +374,6 @@ uvhttp_server_add_rate_limit_whitelist(server, "192.168.1.100");
 
 ### Q25: 服务器启动失败，提示"地址已被使用"
 
-**回答：**
 ```bash
 # 查找使用端口的进程
 lsof -i :8080
@@ -418,33 +389,31 @@ uvhttp_server_listen(server, "0.0.0.0", 8081);
 
 ### Q26: 连接超时错误
 
-**回答：**
 ```c
-// 增加超时值
-uvhttp_config_t* config = uvhttp_config_create();
-uvhttp_config_set_keepalive_timeout(config, 300);  // 5 分钟
-uvhttp_config_set_request_timeout(config, 60);    // 1 分钟
+uvhttp_config_t* config = NULL;
+uvhttp_config_new(&config);
+config->keepalive_timeout = 300;  // 5 分钟
+config->request_timeout = 60;    // 1 分钟
 
-uvhttp_server_t* server = uvhttp_server_new(loop);
+uvhttp_server_t* server = NULL;
+uvhttp_server_new(loop, &server);
 uvhttp_server_set_config(server, config);
 ```
 
 ### Q27: 内存使用持续增长
 
-**回答：**
 ```bash
 # 检查内存泄漏
 valgrind --leak-check=full --show-leak-kinds=all ./your_server
 
 # 或使用 AddressSanitizer 构建
-cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_SANITIZERS=ON ..
+cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON ..
 make
 ./your_server
 ```
 
 ### Q28: CPU 使用率过高
 
-**回答：**
 ```c
 // 检查忙等待循环
 // 确保使用 UV_RUN_DEFAULT，而不是在紧密循环中使用 UV_RUN_NOWAIT
@@ -458,7 +427,6 @@ make
 
 ### Q29: TLS 握手失败，提示"证书验证失败"
 
-**回答：**
 ```c
 // 为测试禁用证书验证（不推荐用于生产环境）
 uvhttp_tls_context_enable_client_auth(tls_ctx, 0);
@@ -473,7 +441,6 @@ uvhttp_tls_context_enable_client_auth(tls_ctx, 0);
 
 ### Q30: 如何启用调试日志？
 
-**回答：**
 ```bash
 # 1. 在 include/uvhttp_features.h 中启用日志
 #define UVHTTP_FEATURE_LOGGING 1

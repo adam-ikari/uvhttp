@@ -14,6 +14,7 @@
 
 #include "uvhttp_error_helpers.h"
 #include "uvhttp_error.h"
+#include "uvhttp_allocator.h"
 
 #include <cstring>
 
@@ -60,17 +61,27 @@ TEST_F(UvhttpErrorHelpersBasicTest, HandleWriteErrorWithNullReq) {
 }
 
 TEST_F(UvhttpErrorHelpersBasicTest, HandleWriteErrorWithValidStatus) {
-    uv_write_t req;
+    // uvhttp_handle_write_error calls uvhttp_free(req), so req must be heap-allocated
+    uv_write_t* req = (uv_write_t*)uvhttp_alloc(sizeof(uv_write_t));
+    ASSERT_NE(req, nullptr);
     // Should not crash with various status codes
-    uvhttp_handle_write_error(&req, UV_EPIPE, "test_context");
-    uvhttp_handle_write_error(&req, UV_ECONNRESET, "test_context");
-    uvhttp_handle_write_error(&req, UV_ECANCELED, "test_context");
+    uvhttp_handle_write_error(req, UV_EPIPE, "test_context");
+
+    uv_write_t* req2 = (uv_write_t*)uvhttp_alloc(sizeof(uv_write_t));
+    ASSERT_NE(req2, nullptr);
+    uvhttp_handle_write_error(req2, UV_ECONNRESET, "test_context");
+
+    uv_write_t* req3 = (uv_write_t*)uvhttp_alloc(sizeof(uv_write_t));
+    ASSERT_NE(req3, nullptr);
+    uvhttp_handle_write_error(req3, UV_ECANCELED, "test_context");
 }
 
 TEST_F(UvhttpErrorHelpersBasicTest, HandleWriteErrorWithNullContext) {
-    uv_write_t req;
+    // uvhttp_handle_write_error calls uvhttp_free(req), so req must be heap-allocated
+    uv_write_t* req = (uv_write_t*)uvhttp_alloc(sizeof(uv_write_t));
+    ASSERT_NE(req, nullptr);
     // Should not crash with null context
-    uvhttp_handle_write_error(&req, 0, nullptr);
+    uvhttp_handle_write_error(req, 0, nullptr);
 }
 
 // Safe error logging tests

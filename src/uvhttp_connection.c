@@ -361,6 +361,11 @@ uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     conn->request->header_count = 0;
     conn->request->path = NULL;
     conn->request->query = NULL;
+    /* Free the request body before dropping the pointer, otherwise the
+     * allocation from uvhttp_request_init leaks on every restart_read. */
+    if (conn->request->body) {
+        uvhttp_free(conn->request->body);
+    }
     conn->request->body = NULL;
     conn->request->body_length = 0;
     conn->request->body_capacity = 0;
@@ -646,6 +651,12 @@ static void uvhttp_connection_free_resources(uvhttp_connection_t* conn) {
     }
 #endif
 
+    /* 释放协议升级生命周期回调结构 (uvhttp_connection_set_lifecycle 分配) */
+    if (conn->lifecycle) {
+        uvhttp_free(conn->lifecycle);
+        conn->lifecycle = NULL;
+    }
+
     /* Set freed flag */
     conn->freed = 1;
 
@@ -717,16 +728,32 @@ void uvhttp_connection_close(uvhttp_connection_t* conn) {
         return;
     }
 
+    /* Idempotent: if a close is already in progress (handles mid-close, with
+     * pending on_handle_close callbacks), do not re-enter. A second close
+     * previously reset close_pending to 0 here, discarding the in-flight count
+     * so on_handle_close would underflow past 0 and never free the connection
+     * (leak). Let the existing close sequence complete. */
+    if (conn->state == UVHTTP_CONN_STATE_CLOSING && conn->close_pending > 0) {
+        return;
+    }
+
     uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_CLOSING);
 
     /* initialize pending close handle count */
     conn->close_pending = 0;
+
+    /* Track how many handles were already mid-close before this call. Those
+     * have pending on_handle_close callbacks that we did not initiate (and did
+     * not count into close_pending); they will fire later. */
+    int already_closing = 0;
 
     /* stop idle handle (if running) */
     if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
         uv_idle_stop(&conn->idle_handle);
         uv_close((uv_handle_t*)&conn->idle_handle, on_handle_close);
         conn->close_pending++;
+    } else if (uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
+        already_closing++;
     }
 
     /* stop timeout timer (if running) */
@@ -734,12 +761,26 @@ void uvhttp_connection_close(uvhttp_connection_t* conn) {
         uv_timer_stop(&conn->timeout_timer);
         uv_close((uv_handle_t*)&conn->timeout_timer, on_handle_close);
         conn->close_pending++;
+    } else if (uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
+        already_closing++;
     }
 
     /* close TCP handle */
     if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
         uv_close((uv_handle_t*)&conn->tcp_handle, on_handle_close);
         conn->close_pending++;
+    } else if (uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
+        already_closing++;
+    }
+
+    /* If this call initiated no closes (close_pending == 0) AND no handles were
+     * already mid-close (already_closing == 0), then no on_handle_close
+     * callback will ever fire for this connection and its resources would
+     * never be released (leak). Free synchronously. This is safe precisely
+     * because no close callback is pending to later dereference conn.
+     * free_resources is idempotent (guards on conn->freed). */
+    if (conn->close_pending == 0 && already_closing == 0) {
+        uvhttp_connection_free_resources(conn);
     }
 }
 
@@ -1177,6 +1218,18 @@ uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
  */
 void uvhttp_connection_switch_to_websocket(uvhttp_connection_t* conn) {
     if (!conn) {
+        return;
+    }
+
+    /* 防止对正在关闭的连接重复进入。若连接已进入 CLOSING 状态(由之前的
+     * uv_read_start 失败 -> uvhttp_connection_close 触发), 句柄已 uv_close 且
+     * close_pending>0, 在途的 on_handle_close 回调尚未全部派发。此时若继续
+     * 执行, 下面的 conn->state=HTTP_PROCESSING 会把 CLOSING 状态覆盖掉, 使
+     * uvhttp_connection_close 的幂等守卫(state==CLOSING && close_pending>0)
+     * 失效, 进而 close_pending 被重置为 0, 在途回调派发时计数下溢到负数,
+     * uvhttp_connection_free_resources 永不调用 -> 连接泄漏。直接返回即可,
+     * 既不覆盖状态, 也不对正在关闭的句柄调用 uv_read_stop/uv_read_start。 */
+    if (conn->state == UVHTTP_CONN_STATE_CLOSING) {
         return;
     }
 

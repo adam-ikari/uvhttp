@@ -247,23 +247,17 @@ TEST(UvhttpConnectionLifecycleTest, ScheduleRestartRead) {
     result = uvhttp_connection_schedule_restart_read(conn);
     /* ResultDependsInternalState */
 
-    /* CloseAll libuv Handle */
-    if (!uv_is_closing((uv_handle_t*)&conn->idle_handle)) {
-        uv_close((uv_handle_t*)&conn->idle_handle, NULL);
-    }
-    if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
-        uv_close((uv_handle_t*)&conn->timeout_timer, NULL);
-    }
-    if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
-        uv_close((uv_handle_t*)&conn->tcp_handle, NULL);
-    }
+    /* Tear down via the library's close path so on_handle_close fires and
+     * frees the connection. Previously this closed handles manually with NULL
+     * callbacks, which bypassed on_handle_close and leaked the connection. */
+    uvhttp_connection_close(conn);
 
-    /* 运行事件循环等待CloseComplete */
+    /* 运行事件循环等待CloseComplete. on_handle_close frees the connection
+     * during the run, so conn must not be touched afterward. */
     for (int i = 0; i < 10; i++) {
         uv_run(loop, UV_RUN_ONCE);
     }
 
-    uvhttp_connection_free(conn);
     destroy_server_and_loop(server, loop);
 }
 

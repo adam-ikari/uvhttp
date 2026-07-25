@@ -1,3 +1,9 @@
+---
+title: 快速开始
+sync_hash: bec4872c7a030bbfa520ce16ded89a9b6df61bbe
+description: 几分钟上手 UVHTTP——构建 C99 HTTP/WebSocket 服务器库，运行 hello-world 示例，添加第一条路由。涵盖 CMake/Just 构建、示例服务器与首个请求。
+---
+
 # 快速开始
 
 ## 📌 平台支持
@@ -11,7 +17,7 @@ UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中
 ## 环境要求
 
 - CMake 3.10+
-- C11 编译器（GCC 4.9+, Clang 3.5+）
+- C99 编译器（GCC 4.9+, Clang 3.5+）
 - libuv 1.x
 - llhttp
 
@@ -45,13 +51,13 @@ make test
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y cmake build-essential libuv1-dev
+sudo apt-get install -y cmake build-essential
 ```
 
 #### macOS（未来支持）
 
 ```bash
-brew install cmake libuv
+brew install cmake
 ```
 
 #### Windows（未来支持）
@@ -81,9 +87,11 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
-    server->router = router;
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
+    uvhttp_server_set_router(server, router);
 
     // 添加路由
     uvhttp_router_add_route(router, "/", hello_handler);

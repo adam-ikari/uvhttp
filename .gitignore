@@ -106,5 +106,7 @@ docs/api/html/
 docs/api/latex/
 docs/api/.doxygen/
 docs/api/generated/
-build_fix_test/
-uvhttp_tools/__pycache__/
+build_asan/
+build_ubsan/
+build_bench/
+build_coverage/

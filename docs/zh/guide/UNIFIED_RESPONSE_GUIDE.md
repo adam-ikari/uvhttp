@@ -2,14 +2,14 @@
 
 ## 概述
 
-UVHTTP 提供简洁高效的响应处理机制，基于核心API构建。应用开发者通过直接操作响应对象，完全控制HTTP响应的各个方面，包括状态码、头部和内容。
+UVHTTP 响应处理。
 
 ## 核心特性
 
 - **直接控制**：应用开发者直接设置响应状态码、头部和内容
 - **类型安全**：编译时类型检查，运行时验证
 - **灵活性**：支持任意内容类型和自定义头部
-- **性能优化**：零开销抽象，直接映射到libuv操作
+- **性能优化**：零开销抽象，直接映射到 libuv 操作
 - **错误处理**：统一的错误响应格式和处理方式
 
 ## 核心 API 参考
@@ -18,7 +18,7 @@ UVHTTP 提供简洁高效的响应处理机制，基于核心API构建。应用�
 
 #### `uvhttp_response_set_status()`
 
-设置HTTP状态码。
+设置 HTTP 状态码。
 
 ```c
 uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int status_code);
@@ -26,7 +26,7 @@ uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int statu
 
 **参数：**
 - `response`: 响应对象
-- `status_code`: HTTP状态码（如200、404等）
+- `status_code`: HTTP 状态码（如 200、404 等）
 
 **返回值：**
 - `UVHTTP_OK`: 成功
@@ -37,8 +37,8 @@ uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int statu
 设置响应头。
 
 ```c
-uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response, 
-                                         const char* name, 
+uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response,
+                                         const char* name,
                                          const char* value);
 ```
 
@@ -52,8 +52,8 @@ uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response,
 设置响应体。
 
 ```c
-uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, 
-                                       const char* body, 
+uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response,
+                                       const char* body,
                                        size_t length);
 ```
 
@@ -77,11 +77,11 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
 ```c
 int json_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"message\":\"Hello World\"}";
-    
+
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
     uvhttp_response_set_body(res, json, strlen(json));
-    
+
     return uvhttp_response_send(res);
 }
 ```
@@ -91,11 +91,11 @@ int json_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 ```c
 int html_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* html = "<html><body><h1>Hello World</h1></body></html>";
-    
+
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
     uvhttp_response_set_body(res, html, strlen(html));
-    
+
     return uvhttp_response_send(res);
 }
 ```
@@ -107,17 +107,14 @@ int html_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* accept_header = uvhttp_request_get_header(req, "Accept");
-    
+
     if (accept_header && strstr(accept_header, "application/json")) {
-        // JSON 响应
         const char* json = "{\"message\":\"Hello World\"}";
         uvhttp_response_set_status(res, 200);
         uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
         uvhttp_response_set_body(res, json, strlen(json));
         return uvhttp_response_send(res);
-    }
-    else {
-        // HTML 响应
+    } else {
         const char* html = "<html><body><h1>Hello World</h1></body></html>";
         uvhttp_response_set_status(res, 200);
         uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
@@ -131,7 +128,6 @@ int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 ```c
 uvhttp_result_t error_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    // 使用统一的错误响应函数
     uvhttp_error_t result = uvhttp_send_error_response(res, 400, "请求参数错误", "缺少必需的参数");
     return (result == UVHTTP_OK) ? UVHTTP_OK : UVHTTP_ERROR_RESPONSE_SEND;
 }
@@ -163,7 +159,7 @@ UVHTTP 统一响应处理遵循使用者控制原则：
 
 1. **明确设置 Content-Type**：在使用 `uvhttp_send_unified_response()` 前务必设置正确的 Content-Type
 2. **便捷函数用于明确场景**：当内容类型明确时，可以使用便捷函数如 `uvhttp_send_json_response()`
-3. **错误处理统一化**：使用 `uvhttp_send_error_response()` 确保错误响应格式一致
+3. **统一错误处理**：使用 `uvhttp_send_error_response()` 错误响应格式一致
 4. **内容验证**：在发送响应前验证内容的正确性
 5. **保持一致性**：在同一个项目中保持 Content-Type 设置的一致性
 

@@ -2,16 +2,16 @@
 
 ## Overview
 
-UVHTTP static file server is a high-performance, secure, and easy-to-use solution for serving static files. It provides comprehensive static file serving capabilities including automatic MIME type detection, file caching, conditional request support, and more.
+UVHTTP's static file server serves static files with automatic MIME type detection, file caching, conditional request support, and related features.
 
 ## Design Principles
 
 ### Application Layer Implementation
-Static file routing should be implemented by the application layer, not built into the framework. This follows UVHTTP's "Focus on Core" design principle:
+Static file routing is implemented by the application layer, not built into the framework. This follows UVHTTP's "Focus on Core" principle:
 
-- **Framework Core**: Provides `uvhttp_static_handle_request()` function to handle individual static file requests
-- **Application Layer**: Responsible for routing configuration, path mapping, context passing, etc.
-- **Flexibility**: Application layer has complete control over static file service routing strategies
+- **Framework Core**: `uvhttp_static_handle_request()` handles individual static file requests
+- **Application Layer**: responsible for routing configuration, path mapping, context passing
+- **Flexibility**: the application controls static file service routing strategies
 
 ### Recommended Implementation
 ```c
@@ -32,36 +32,36 @@ uvhttp_router_add_route(router, "/*", static_file_handler);  // Fallback route
 ```
 
 ### Why Not Built-in?
-- Avoid framework bloat
-- Maintain application layer flexibility and control
-- Follow the "Less is More" minimalist engineering principle
+- Avoids framework bloat
+- Keeps application layer flexibility and control
+- Follows the "Less is More" minimalist principle
 
 ## Core Features
 
 ### Performance Optimization
-- **LRU Cache System**: Intelligent memory caching reduces disk I/O
-- **Zero-Copy Optimization**: Efficient file transfer mechanism
-- **Connection Reuse**: libuv-based event-driven architecture
-- **Compression Support**: Reserved gzip/deflate compression interface
+- **LRU Cache System**: in-memory cache reduces disk I/O
+- **Zero-Copy Optimization**: sendfile-based file transfer
+- **Connection Reuse**: libuv event-driven architecture
+- **Compression Support**: gzip/deflate compression interface
 
 ### Security Features
-- **Path Safety Validation**: Prevents directory traversal attacks
-- **File Type Checking**: Configurable file type whitelist
-- **Access Control**: Path-based access restriction support
-- **Resource Limits**: Prevents large file DoS attacks
+- **Path Safety Validation**: prevents directory traversal attacks
+- **File Type Checking**: configurable file type whitelist
+- **Access Control**: path-based access restriction
+- **Resource Limits**: guards against large-file DoS
 
 ### Functional Features
-- **Automatic MIME Type Detection**: Support for common file types
+- **Automatic MIME Type Detection**: common file types
 - **Conditional Requests**: ETag and Last-Modified support
-- **Directory Listing**: Configurable directory browsing
-- **Custom Headers**: Support for adding custom HTTP headers
-- **Error Handling**: Friendly error pages and logging
+- **Directory Listing**: configurable directory browsing
+- **Custom Headers**: add custom HTTP headers
+- **Error Handling**: error pages and logging
 
 ## Quick Start
 
 ### Basic Example
 
-See `examples/04_static_files/static_file_server.c` for a complete example demonstrating best practices for static file routing.
+See `examples/04_static_files/static_file_server.c` for a complete example of static file routing.
 
 ### Key Points
 - Use `uvhttp_router_add_route()` to add static file routes
@@ -94,7 +94,7 @@ For detailed API documentation, see:
 
 ## Cache Prewarming Strategies
 
-UVHTTP provides flexible cache prewarming APIs that allow the application layer to implement various optimization strategies based on specific use cases. This follows the principle of "application layer control" - the framework provides the infrastructure, and the application decides the strategy.
+UVHTTP provides cache prewarming APIs so the application layer can implement strategies for its own use cases. The framework provides the infrastructure; the application decides the strategy.
 
 ### Available Prewarming APIs
 
@@ -312,25 +312,25 @@ void print_cache_stats(uvhttp_static_context_t* ctx) {
 
 ### Best Practices for Prewarming
 
-1. **Start Simple**: Begin with directory-based prewarming before implementing complex strategies
-2. **Monitor Memory**: Track cache usage to avoid excessive memory consumption
-3. **Prioritize**: Set higher priorities for frequently accessed files
-4. **Be Selective**: Don't prewarm everything - focus on critical resources
-5. **Profile**: Use cache statistics to identify hot files and optimize prewarming strategy
+1. **Start simple**: begin with directory-based prewarming before complex strategies
+2. **Watch memory**: track cache usage to avoid excess memory consumption
+3. **Prioritize**: set higher priorities for frequently accessed files
+4. **Be selective**: don't prewarm everything — focus on critical resources
+5. **Profile**: use cache statistics to find hot files and tune the strategy
 
 ### When to Use Prewarming
 
-- **Production Deployment**: Preload critical assets before accepting traffic
-- **Zero-Downtime Deployments**: Warm up new instances before routing traffic
-- **High-Traffic Events**: Prepare cache for expected traffic spikes
-- **Performance Tuning**: Optimize based on access patterns
+- **Production deployment**: preload critical assets before accepting traffic
+- **Zero-downtime deployments**: warm new instances before routing traffic
+- **High-traffic events**: prepare cache for expected spikes
+- **Performance tuning**: optimize based on access patterns
 
 ### When NOT to Use Prewarming
 
-- **Development**: Unnecessary during development
-- **Small-Scale Apps**: Cache may not provide significant benefit
-- **Dynamically Generated Content**: Static cache won't help
-- **Memory-Constrained Environments**: May cause memory pressure
+- **Development**: unnecessary during development
+- **Small-scale apps**: cache may not help
+- **Dynamically generated content**: static cache won't help
+- **Memory-constrained environments**: may cause memory pressure
 
 ## See Also
 

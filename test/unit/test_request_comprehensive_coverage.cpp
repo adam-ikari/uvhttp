@@ -192,7 +192,16 @@ TEST(UvhttpRequestComprehensiveTest, RequestFree) {
     request->path = (char*)uvhttp_alloc(256);
     request->query = (char*)uvhttp_alloc(256);
     request->body = (char*)uvhttp_alloc(1024);
-    
+
+    /* 注意：uvhttp_request_free 调用 uvhttp_request_cleanup，后者只释放
+     * body、parser、parser_settings、headers_extra，不释放 path 和 query
+     * （这两个字段不是库拥有的资源，库代码从不分配它们）。因此需要手动释放
+     * path 和 query，避免内存泄漏。*/
+    uvhttp_free(request->path);
+    request->path = NULL;
+    uvhttp_free(request->query);
+    request->query = NULL;
+
     /* 释放请求 */
     uvhttp_request_free(request);
     

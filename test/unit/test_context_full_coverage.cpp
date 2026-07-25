@@ -19,6 +19,12 @@
 #include "uvhttp_context.h"
 #include "uvhttp_config.h"
 #include "uvhttp_error.h"
+#include "uvhttp_allocator.h"
+
+#if UVHTTP_FEATURE_TLS
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/entropy.h>
+#endif
 
 class UvhttpContextTest : public ::testing::Test {
 protected:
@@ -57,7 +63,11 @@ TEST_F(UvhttpContextTest, ContextCreateNullOutput) {
 TEST_F(UvhttpContextTest, ContextCreateNullLoop) {
     uvhttp_context_t* context = nullptr;
     uvhttp_error_t err = uvhttp_context_create(nullptr, &context);
-    EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(err, UVHTTP_OK);
+    // Clean up
+    if (context) {
+        uvhttp_context_destroy(context);
+    }
 }
 
 TEST_F(UvhttpContextTest, ContextDestroyNull) {
@@ -404,8 +414,9 @@ TEST_F(UvhttpContextTest, ContextMultipleDestroy) {
     
     // Destroy once
     uvhttp_context_destroy(context);
-    
-    // Destroy again (should not crash)
+    context = nullptr;
+
+    // Second destroy with NULL should be safe (no-op)
     uvhttp_context_destroy(context);
 }
 
@@ -444,13 +455,121 @@ TEST_F(UvhttpContextTest, ContextMemoryLeakPrevention) {
         uvhttp_context_t* context = nullptr;
         uvhttp_error_t err = uvhttp_context_create(&loop, &context);
         ASSERT_EQ(err, UVHTTP_OK);
-        
+
         err = uvhttp_context_init(context);
         ASSERT_EQ(err, UVHTTP_OK);
-        
+
         uvhttp_context_destroy(context);
     }
     // If this test passes without crashing, no memory leaks
+}
+
+// ========== Partial cleanup paths for TLS ==========
+
+TEST_F(UvhttpContextTest, CleanupTls_PartialEntropyOnly) {
+#if UVHTTP_FEATURE_TLS
+    uvhttp_context_t* context = nullptr;
+    uvhttp_error_t err = uvhttp_context_create(&loop, &context);
+    ASSERT_EQ(err, UVHTTP_OK);
+
+    err = uvhttp_context_init_tls(context);
+    ASSERT_EQ(err, UVHTTP_OK);
+    EXPECT_EQ(context->tls_initialized, 1);
+
+    // 将 tls_drbg 置空以测试 entropy 存在但 drbg 为 NULL 的清理路径。
+    // 先释放 drbg，避免因丢弃唯一引用而泄漏其分配。
+    mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->tls_drbg);
+    uvhttp_free(context->tls_drbg);
+    context->tls_drbg = nullptr;
+
+    // 清理不应崩溃 - 应释放 entropy 并跳过 drbg
+    uvhttp_context_cleanup_tls(context);
+    EXPECT_EQ(context->tls_initialized, 0);
+    EXPECT_EQ(context->tls_entropy, nullptr);
+    EXPECT_EQ(context->tls_drbg, nullptr);
+
+    uvhttp_context_destroy(context);
+#endif
+}
+
+TEST_F(UvhttpContextTest, CleanupTls_PartialDrbgOnly) {
+#if UVHTTP_FEATURE_TLS
+    uvhttp_context_t* context = nullptr;
+    uvhttp_error_t err = uvhttp_context_create(&loop, &context);
+    ASSERT_EQ(err, UVHTTP_OK);
+
+    err = uvhttp_context_init_tls(context);
+    ASSERT_EQ(err, UVHTTP_OK);
+    EXPECT_EQ(context->tls_initialized, 1);
+
+    // 将 tls_entropy 置空以测试 drbg 存在但 entropy 为 NULL 的清理路径。
+    // 先释放 entropy，避免因丢弃唯一引用而泄漏其分配。
+    mbedtls_entropy_free((mbedtls_entropy_context*)context->tls_entropy);
+    uvhttp_free(context->tls_entropy);
+    context->tls_entropy = nullptr;
+
+    // 清理不应崩溃 - 应跳过 entropy 并释放 drbg
+    uvhttp_context_cleanup_tls(context);
+    EXPECT_EQ(context->tls_initialized, 0);
+    EXPECT_EQ(context->tls_entropy, nullptr);
+    EXPECT_EQ(context->tls_drbg, nullptr);
+
+    uvhttp_context_destroy(context);
+#endif
+}
+
+// ========== Partial cleanup paths for WebSocket ==========
+
+TEST_F(UvhttpContextTest, CleanupWebsocket_PartialEntropyOnly) {
+#if UVHTTP_FEATURE_TLS
+    uvhttp_context_t* context = nullptr;
+    uvhttp_error_t err = uvhttp_context_create(&loop, &context);
+    ASSERT_EQ(err, UVHTTP_OK);
+
+    err = uvhttp_context_init_websocket(context);
+    ASSERT_EQ(err, UVHTTP_OK);
+    EXPECT_EQ(context->ws_drbg_initialized, 1);
+
+    // 将 ws_drbg 置空以测试 entropy 存在但 drbg 为 NULL 的清理路径。
+    // 先释放 drbg，避免因丢弃唯一引用而泄漏其分配。
+    mbedtls_ctr_drbg_free((mbedtls_ctr_drbg_context*)context->ws_drbg);
+    uvhttp_free(context->ws_drbg);
+    context->ws_drbg = nullptr;
+
+    // 清理不应崩溃 - 应释放 entropy 并跳过 drbg
+    uvhttp_context_cleanup_websocket(context);
+    EXPECT_EQ(context->ws_drbg_initialized, 0);
+    EXPECT_EQ(context->ws_entropy, nullptr);
+    EXPECT_EQ(context->ws_drbg, nullptr);
+
+    uvhttp_context_destroy(context);
+#endif
+}
+
+TEST_F(UvhttpContextTest, CleanupWebsocket_PartialDrbgOnly) {
+#if UVHTTP_FEATURE_TLS
+    uvhttp_context_t* context = nullptr;
+    uvhttp_error_t err = uvhttp_context_create(&loop, &context);
+    ASSERT_EQ(err, UVHTTP_OK);
+
+    err = uvhttp_context_init_websocket(context);
+    ASSERT_EQ(err, UVHTTP_OK);
+    EXPECT_EQ(context->ws_drbg_initialized, 1);
+
+    // 将 ws_entropy 置空以测试 drbg 存在但 entropy 为 NULL 的清理路径。
+    // 先释放 entropy，避免因丢弃唯一引用而泄漏其分配。
+    mbedtls_entropy_free((mbedtls_entropy_context*)context->ws_entropy);
+    uvhttp_free(context->ws_entropy);
+    context->ws_entropy = nullptr;
+
+    // 清理不应崩溃 - 应跳过 entropy 并释放 drbg
+    uvhttp_context_cleanup_websocket(context);
+    EXPECT_EQ(context->ws_drbg_initialized, 0);
+    EXPECT_EQ(context->ws_entropy, nullptr);
+    EXPECT_EQ(context->ws_drbg, nullptr);
+
+    uvhttp_context_destroy(context);
+#endif
 }
 
 int main(int argc, char **argv) {

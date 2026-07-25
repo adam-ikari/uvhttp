@@ -22,20 +22,20 @@
 
 ```bash
 sudo apt-get update
-sudo apt-get install build-essential cmake libuv-dev libmbedtls-dev
+sudo apt-get install build-essential cmake
 ```
 
 #### CentOS/RHEL
 
 ```bash
 sudo yum groupinstall "Development Tools"
-sudo yum install cmake libuv-devel mbedtls-devel
+sudo yum install cmake
 ```
 
 #### macOS
 
 ```bash
-brew install cmake libuv mbedtls
+brew install cmake
 ```
 
 ## 编译项目
@@ -51,8 +51,8 @@ UVHTTP 项目定义了三种构建模式，每种模式适用于不同的场景�
 | **Coverage** | 代码覆盖率分析 | `-O0 --coverage` | 覆盖率测试 |
 
 **重要提示**：
-- ⚠️ **性能测试必须使用 Release 模式**，否则数据不准确（Debug 模式性能可能低 10-100 倍）
-- ✅ 详细的构建模式规范请参考 [BUILD_MODES.md](../dev/BUILD_MODES.md)
+- 性能测试必须使用 Release 模式，否则数据不准确（Debug 模式性能可能低 10-100 倍）
+- 详细的构建模式规范请参考 [BUILD_MODES.md](../dev/BUILD_MODES.md)
 
 ### 基本编译
 
@@ -123,7 +123,7 @@ cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..
 
 ### 代码风格
 
-- **标准**: C11
+- **标准**: C99
 - **缩进**: 4 个空格
 - **大括号**: K&R 风格
 - **行长度**: 最大 120 字符
@@ -181,9 +181,9 @@ UVHTTP 支持两种分配器类型：
    - 适合大多数场景
 
 2. **mimalloc 分配器**
-   - 高性能现代分配器
+   - 现代分配器
    - 内置小对象优化
-   - 更好的多线程扩展性
+   - 多线程扩展性
    - 降低内存碎片
 
 #### 编译配置

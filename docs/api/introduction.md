@@ -1,3 +1,8 @@
+---
+title: API Reference
+description: UVHTTP API reference — server, router, request, response, connection, WebSocket, TLS, static files, and error handling. Current C99 API with output-parameter constructors and the int(req,res) handler signature.
+---
+
 # API Documentation
 
 ## Overview
@@ -43,13 +48,13 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
 #### Create Router
 
 ```c
-uvhttp_router_t* uvhttp_router_new(void);
+uvhttp_error_t uvhttp_router_new(uvhttp_router_t** router);
 ```
 
 #### Add Route
 
 ```c
-void uvhttp_router_add_route(uvhttp_router_t* router, const char* path, uvhttp_handler_t handler);
+uvhttp_error_t uvhttp_router_add_route(uvhttp_router_t* router, const char* path, uvhttp_request_handler_t handler);
 ```
 
 ### Request (uvhttp_request)
@@ -143,8 +148,7 @@ int index_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/html");
     uvhttp_response_set_body(response, "<h1>Hello, UVHTTP!</h1>", strlen("<h1>Hello, UVHTTP!</h1>"));
-    uvhttp_response_send(response);
-    return UVHTTP_OK;
+    return uvhttp_response_send(response);
 }
 
 int api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
@@ -152,8 +156,7 @@ int api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     uvhttp_response_set_header(response, "Content-Type", "application/json");
     const char* json_body = "{\"message\":\"API response\"}";
     uvhttp_response_set_body(response, json_body, strlen(json_body));
-    uvhttp_response_send(response);
-    return UVHTTP_OK;
+    return uvhttp_response_send(response);
 }
 
 int main() {
@@ -165,8 +168,9 @@ int main() {
         return 1;
     }
 
-    uvhttp_router_t* router = uvhttp_router_new();
-    server->router = router;
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
+    uvhttp_server_set_router(server, router);
 
     uvhttp_router_add_route(router, "/", index_handler);
     uvhttp_router_add_route(router, "/api", api_handler);
