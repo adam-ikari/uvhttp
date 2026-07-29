@@ -801,7 +801,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS=ON ..
-make -j$(nproc)
+make build
 ```
 
 编译特定性能测试程序：

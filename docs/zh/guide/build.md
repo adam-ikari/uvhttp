@@ -31,44 +31,25 @@ cd uvhttp
 > **注意**: `--recurse-submodules` 参数会自动克隆所有依赖。如果忘记使用此参数，可以运行 `git submodule update --init --recursive` 来补全。
 ```
 
-### 3. 创建构建目录
+### 2. 编译
 
 ```bash
-mkdir build && cd build
+make build
 ```
 
-### 4. 使用 CMake 配置
+**自定义配置:** 直接修改 `CMakeLists.txt` 中的 `option()` 条目，然后编译：
 
-**基本配置:**
 ```bash
-cmake ..
+make build
 ```
 
-**启用所有功能:**
-```bash
-cmake -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON ..
-```
+### 3. 在自己的项目中使用
 
-**自定义配置:**
-```bash
-cmake \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DBUILD_WITH_WEBSOCKET=ON \
-  -DBUILD_WITH_MIMALLOC=ON \
-  -DBUILD_EXAMPLES=ON \
-  ..
-```
+编译完成后，在你的 CMake 项目中通过 `add_subdirectory` 引用：
 
-### 5. 编译
-
-```bash
-make -j$(nproc)
-```
-
-### 6. 安装（可选）
-
-```bash
-sudo make install
+```cmake
+add_subdirectory(path/to/uvhttp)
+target_link_libraries(myapp uvhttp)
 ```
 
 ## 构建选项
@@ -85,22 +66,10 @@ sudo make install
 
 ### 高级构建选项
 
+高级选项可直接修改 `CMakeLists.txt` 中的 `option()` 配置，然后重新编译：
+
 ```bash
-# 使用自定义构建目录
-BUILD_DIR=custom_build cmake ..
-
-# 使用 Debug 模式
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-
-# 使用 -O2 优化（禁用 -O3）
-cmake -DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG" ..
-
-# 启用代码覆盖率
-cmake -DENABLE_COVERAGE=ON ..
-
-# 选择内存分配器
-cmake -DUVHTTP_ALLOCATOR_TYPE=0 ..  # 系统分配器
-cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..  # mimalloc 分配器
+make build
 ```
 
 ## 输出文件
@@ -150,32 +119,28 @@ ab -n 10000 -c 100 http://localhost:8080/
 - **头文件**: `/usr/local/include/uvhttp/`
 - **示例程序**: `/usr/local/bin/`
 
-你可以通过 CMake 更改这些路径：
+你可以通过 `make build` 的 `PREFIX` 参数更改安装路径：
 
 ```bash
-cmake -DCMAKE_INSTALL_PREFIX=/custom/path ..
+make build PREFIX=/custom/path
 ```
 
 ## 交叉编译
 
 ### 交叉编译 32 位版本
 
+使用 32 位编译器构建：
+
 ```bash
-cmake \
-  -DCMAKE_C_COMPILER=gcc \
-  -DCMAKE_CXX_COMPILER=g++ \
-  -DCMAKE_C_FLAGS="-m32" \
-  -DCMAKE_CXX_FLAGS="-m32" \
-  -DBUILD_WITH_MIMALLOC=OFF \
-  ..
+make build CC="gcc -m32" CXX="g++ -m32"
 ```
 
 ### 交叉编译 ARM 版本
 
+使用交叉编译工具链：
+
 ```bash
-cmake \
-  -DCMAKE_TOOLCHAIN_FILE=path/to/toolchain.cmake \
-  ..
+make build CMAKE_TOOLCHAIN_FILE=path/to/toolchain.cmake
 ```
 
 ## 故障排除
@@ -210,7 +175,7 @@ gcc --version  # 应为 4.8 或更高版本
 
 ```bash
 # 编译 libuv
-cd deps/libuv && mkdir -p build && cd build && cmake .. && make -j$(nproc)
+cd deps/libuv && make -f Makefile
 
 # 编译 mbedtls
 cd deps/mbedtls && python3 scripts/config.py set MBEDTLS_X509_USE_C && make -j$(nproc)
@@ -224,22 +189,15 @@ cd deps/cllhttp && gcc -c llhttp.c -o llhttp.o && ar rcs libllhttp.a llhttp.o
 如果遇到构建问题，可以完全重新构建：
 
 ```bash
-cd build
-make clean
-cmake ..
-make -j$(nproc)
+make build
 ```
 
 ### 内存分配器问题
 
-如果遇到内存分配器相关问题：
+如果遇到内存分配器相关问题，可修改 `CMakeLists.txt` 中的 `UVHTTP_ALLOCATOR_TYPE` 选项，然后重新编译：
 
 ```bash
-# 切换到系统分配器
-cmake -DUVHTTP_ALLOCATOR_TYPE=0 ..
-
-# 或切换到 mimalloc
-cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..
+make build
 ```
 
 ## 下一步

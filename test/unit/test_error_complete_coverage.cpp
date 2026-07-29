@@ -796,8 +796,9 @@ TEST_F(UvhttpErrorCompleteCoverageTest, ErrorRecoverableUnknownError) {
 /* ========== Error Log Function Tests ========== */
 
 TEST_F(UvhttpErrorCompleteCoverageTest, LogErrorNotNull) {
-    // Note: uvhttp_log_error is not in public API
-    // This function is internal and tested separately
+    uvhttp_log_error(UVHTTP_OK, "test context");
+    uvhttp_log_error(UVHTTP_ERROR_INVALID_PARAM, NULL);
+    uvhttp_log_error(UVHTTP_ERROR_OUT_OF_MEMORY, "memory");
 }
 
 /* ========== Edge Case Tests ========== */

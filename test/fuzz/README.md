@@ -9,6 +9,7 @@ AddressSanitizer and feeds it arbitrary bytes via libFuzzer.
 | Harness | Fuzzes | What it catches |
 |---------|--------|-----------------|
 | `fuzz_router.c` | `uvhttp_router_find_handler` / `uvhttp_router_match` / `uvhttp_parse_path_params` over arbitrary path strings | router trie traversal, parameter extraction, path-parsing overflows/UAF |
+| `fuzz_request.c` | `uvhttp_request_parse` over arbitrary byte sequences | HTTP request parsing, llhttp integration, header extraction, connection state management |
 
 ## Build & run
 

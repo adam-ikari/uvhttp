@@ -1,35 +1,41 @@
-# CMake Installation and Usage Guide
+# Using uvhttp in Your CMake Project
 
-This guide explains how to install and use uvhttp with CMake.
+This guide explains how to integrate uvhttp as a static library dependency in your CMake project.
 
-## Installation
+## Quick Start: add_subdirectory
 
-### From Source
+The simplest way is to add uvhttp as a subdirectory:
 
 ```bash
 git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
-cd uvhttp
-mkdir build && cd build
-cmake ..
-make -j$(nproc)
-sudo make install
 ```
 
-> **Note**: The `--recurse-submodules` flag automatically clones all dependencies. If you forget this flag, you can run `git submodule update --init --recursive` afterward.
+Then in your project's `CMakeLists.txt`:
 
-### Installation Options
+```cmake
+cmake_minimum_required(VERSION 3.10)
+project(myapp C)
+
+# Add uvhttp as a subdirectory
+add_subdirectory(path/to/uvhttp)
+
+# Create executable
+add_executable(myapp main.c)
+
+# Link against uvhttp (static)
+target_link_libraries(myapp uvhttp)
+target_include_directories(myapp PRIVATE path/to/uvhttp/include)
+```
+
+Build:
 
 ```bash
-cmake .. \
-    -DCMAKE_INSTALL_PREFIX=/usr/local \
-    -DBUILD_WITH_WEBSOCKET=ON \
-    -DBUILD_WITH_HTTPS=ON \
-    -DBUILD_WITH_MIMALLOC=ON
+make build
 ```
 
-## Using uvhttp in Your Project
+## Method 1: Using find_package()
 
-### Method 1: Using find_package()
+If uvhttp is in a known location:
 
 ```cmake
 cmake_minimum_required(VERSION 3.10)
@@ -45,7 +51,7 @@ add_executable(myapp main.c)
 target_link_libraries(myapp uvhttp)
 ```
 
-### Method 2: Using pkg-config
+## Method 2: Using pkg-config
 
 ```cmake
 cmake_minimum_required(VERSION 3.10)
@@ -62,17 +68,19 @@ target_link_libraries(myapp ${UVHTTP_LIBRARIES})
 target_include_directories(myapp PUBLIC ${UVHTTP_INCLUDE_DIRS})
 ```
 
-### Method 3: Using uvhttpConfig.cmake directly
+## Method 3: Using FetchContent
 
 ```cmake
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 project(myapp C)
 
-# Set uvhttp installation path
-set(UVHTTP_DIR "/usr/local" CACHE PATH "Path to uvhttp installation")
-
-# Find uvhttp
-find_package(uvhttp CONFIG REQUIRED PATHS ${UVHTTP_DIR})
+include(FetchContent)
+FetchContent_Declare(
+  uvhttp
+  GIT_REPOSITORY https://github.com/adam-ikari/uvhttp.git
+  GIT_TAG main
+)
+FetchContent_MakeAvailable(uvhttp)
 
 # Create executable
 add_executable(myapp main.c)
@@ -83,17 +91,13 @@ target_link_libraries(myapp uvhttp)
 
 ## Building with Specific Features
 
-When installing uvhttp with specific features, you need to ensure the same features are enabled when using find_package():
+When building uvhttp with specific features, ensure the same features are enabled:
 
 ```cmake
-# Install with features
-cmake .. -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_HTTPS=ON
-sudo make install
-
-# In your project
-set(BUILD_WITH_WEBSOCKET ON)
-set(BUILD_WITH_HTTPS ON)
-find_package(uvhttp REQUIRED)
+# Build with features
+set(BUILD_WITH_WEBSOCKET ON CACHE BOOL "" FORCE)
+set(BUILD_WITH_HTTPS ON CACHE BOOL "" FORCE)
+add_subdirectory(path/to/uvhttp)
 ```
 
 ## CMake Variables
@@ -102,7 +106,7 @@ After finding uvhttp, the following variables are available:
 
 | Variable | Description |
 |----------|-------------|
-| `UVHTTP_VERSION` | Package version (e.g., "2.2.0") |
+| `UVHTTP_VERSION` | Package version (e.g., "2.5.0") |
 | `UVHTTP_INCLUDE_DIRS` | Include directories |
 | `UVHTTP_LIBRARIES` | Library names (uvhttp) |
 | `UVHTTP_LIBRARY_DIRS` | Library directory paths |
@@ -133,7 +137,7 @@ Here's a complete example project using uvhttp:
 cmake_minimum_required(VERSION 3.10)
 project(http_server C)
 
-find_package(uvhttp REQUIRED)
+add_subdirectory(uvhttp)
 
 add_executable(server server.c)
 
@@ -165,36 +169,23 @@ int main() {
     uvhttp_server_new(loop, &server);
     uvhttp_router_t* router = NULL;
     uvhttp_router_new(&router);
-    
+
     // Add routes
     uvhttp_router_add_route(router, "/", home_handler);
-    
+
     uvhttp_server_set_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
-    
+
     printf("Server running on http://0.0.0.0:8080\n");
     uv_run(loop, UV_RUN_DEFAULT);
-    
+
     return 0;
 }
-```
-
-## Uninstallation
-
-```bash
-# Remove installed files
-sudo xargs rm -v < build/install_manifest.txt
-
-# Or manually remove
-sudo rm -rf /usr/local/lib/cmake/uvhttp
-sudo rm -rf /usr/local/include/uvhttp*
-sudo rm /usr/local/lib/libuvhttp*
-sudo rm /usr/local/lib/pkgconfig/uvhttp.pc
 ```
 
 ## Notes
 
 - uvhttp follows CMake package naming conventions
-- The `find_package(uvhttp CONFIG)` command is preferred
-- Feature compatibility: Ensure the same features are enabled when building and using uvhttp
+- The `add_subdirectory` or `FetchContent` approach is recommended over system installation
 - Library dependencies (libuv, mbedtls, xxhash) are automatically linked
+- Feature compatibility: Ensure the same features are enabled when building and using uvhttp

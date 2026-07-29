@@ -495,8 +495,8 @@ int __wrap_uv_listen(uv_stream_t* stream, int backlog, uv_connection_cb cb) {
 
 int __wrap_uv_tcp_accept(uv_tcp_t* server, uv_tcp_t* client) {
     if (!g_mock_state.enabled) {
-        extern int __real_uv_tcp_accept(uv_tcp_t*, uv_tcp_t*);
-        return __real_uv_tcp_accept(server, client);
+        extern int __real_uv_accept(uv_stream_t*, uv_stream_t*);
+        return __real_uv_accept((uv_stream_t*)server, (uv_stream_t*)client);
     }
     
     if (g_mock_state.record_calls) {
@@ -938,4 +938,48 @@ void libuv_mock_set_uv_hrtime(uint64_t hrtime) {
 
 void libuv_mock_set_uv_buf_init_result(uv_buf_t buf) {
     g_uv_buf_init_value = buf;
+}
+
+/* ========== 新增的 Mock 函数 ========== */
+
+int __wrap_uv_try_write(uv_stream_t* stream, const uv_buf_t* bufs, unsigned int nbufs) {
+    if (!g_mock_state.enabled) {
+        extern int __real_uv_try_write(uv_stream_t*, const uv_buf_t*, unsigned int);
+        return __real_uv_try_write(stream, bufs, nbufs);
+    }
+    (void)stream;
+    (void)bufs;
+    (void)nbufs;
+    return g_mock_state.next_error ? g_mock_state.next_error : 4;
+}
+
+int __wrap_uv_tcp_getpeername(const uv_tcp_t* handle, struct sockaddr* name, int* namelen) {
+    if (!g_mock_state.enabled) {
+        extern int __real_uv_tcp_getpeername(const uv_tcp_t*, struct sockaddr*, int*);
+        return __real_uv_tcp_getpeername(handle, name, namelen);
+    }
+    (void)handle;
+    (void)name;
+    (void)namelen;
+    return 0;
+}
+
+int __wrap_uv_idle_stop(uv_idle_t* handle) {
+    if (!g_mock_state.enabled) {
+        extern int __real_uv_idle_stop(uv_idle_t*);
+        return __real_uv_idle_stop(handle);
+    }
+    (void)handle;
+    return 0;
+}
+
+int __wrap_uv_tcp_getsockname(const uv_tcp_t* handle, struct sockaddr* name, int* namelen) {
+    if (!g_mock_state.enabled) {
+        extern int __real_uv_tcp_getsockname(const uv_tcp_t*, struct sockaddr*, int*);
+        return __real_uv_tcp_getsockname(handle, name, namelen);
+    }
+    (void)handle;
+    (void)name;
+    (void)namelen;
+    return 0;
 }

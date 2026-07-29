@@ -315,7 +315,7 @@ cache_entry_t* uvhttp_lru_cache_remove_lowest_priority(cache_manager_t* cache) {
  * check if cache entry has expired
  */
 /* time Mock function for testing (weak symbol) */
-__attribute__((weak)) time_t get_current_time() {
+time_t get_current_time() {
     return time(NULL);
 }
 

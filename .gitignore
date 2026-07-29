@@ -110,3 +110,5 @@ build_asan/
 build_ubsan/
 build_bench/
 build_coverage/
+Makefile
+GNUmakefile

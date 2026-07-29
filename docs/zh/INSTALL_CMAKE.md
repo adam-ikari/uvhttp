@@ -1,35 +1,39 @@
-# CMake 安装和使用指南
+# 在 CMake 项目中使用 uvhttp
 
-本指南介绍如何使用 CMake 安装和使用 uvhttp。
+本指南介绍如何将 uvhttp 作为静态库依赖集成到你的 CMake 项目中。
 
-## 安装
+## 快速开始：add_subdirectory
 
-### 从源码安装
+最简单的方式是将 uvhttp 作为子目录添加到项目中：
 
 ```bash
 git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
-cd uvhttp
-mkdir build && cd build
-cmake ..
-make -j$(nproc)
-sudo make install
 ```
 
-> **注意**: `--recurse-submodules` 参数会自动克隆所有依赖。如果忘记使用此参数，可以运行 `git submodule update --init --recursive` 来补全。
+然后在项目的 `CMakeLists.txt` 中：
 
-### 安装选项
+```cmake
+cmake_minimum_required(VERSION 3.10)
+project(myapp C)
+
+# 添加 uvhttp 作为子目录
+add_subdirectory(path/to/uvhttp)
+
+# 创建可执行文件
+add_executable(myapp main.c)
+
+# 链接 uvhttp（静态库）
+target_link_libraries(myapp uvhttp)
+target_include_directories(myapp PRIVATE path/to/uvhttp/include)
+```
+
+编译：
 
 ```bash
-cmake .. \
-    -DCMAKE_INSTALL_PREFIX=/usr/local \
-    -DBUILD_WITH_WEBSOCKET=ON \
-    -DBUILD_WITH_HTTPS=ON \
-    -DBUILD_WITH_MIMALLOC=ON
+make build
 ```
 
-## 在项目中使用 uvhttp
-
-### 方法 1: 使用 find_package()
+## 方法 1: 使用 find_package()
 
 ```cmake
 cmake_minimum_required(VERSION 3.10)
@@ -45,7 +49,7 @@ add_executable(myapp main.c)
 target_link_libraries(myapp uvhttp)
 ```
 
-### 方法 2: 使用 pkg-config
+## 方法 2: 使用 pkg-config
 
 ```cmake
 cmake_minimum_required(VERSION 3.10)
@@ -62,17 +66,19 @@ target_link_libraries(myapp ${UVHTTP_LIBRARIES})
 target_include_directories(myapp PUBLIC ${UVHTTP_INCLUDE_DIRS})
 ```
 
-### 方法 3: 直接使用 uvhttpConfig.cmake
+## 方法 3: 使用 FetchContent
 
 ```cmake
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 project(myapp C)
 
-# 设置 uvhttp 安装路径
-set(UVHTTP_DIR "/usr/local" CACHE PATH "uvhttp 安装路径")
-
-# 查找 uvhttp
-find_package(uvhttp CONFIG REQUIRED PATHS ${UVHTTP_DIR})
+include(FetchContent)
+FetchContent_Declare(
+  uvhttp
+  GIT_REPOSITORY https://github.com/adam-ikari/uvhttp.git
+  GIT_TAG main
+)
+FetchContent_MakeAvailable(uvhttp)
 
 # 创建可执行文件
 add_executable(myapp main.c)
@@ -83,17 +89,13 @@ target_link_libraries(myapp uvhttp)
 
 ## 使用特定功能构建
 
-安装 uvhttp 时启用特定功能后，在使用 find_package() 时需要确保启用相同的功能：
+启用特定功能后构建 uvhttp：
 
 ```cmake
-# 安装时启用功能
-cmake .. -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_HTTPS=ON
-sudo make install
-
-# 在项目中
-set(BUILD_WITH_WEBSOCKET ON)
-set(BUILD_WITH_HTTPS ON)
-find_package(uvhttp REQUIRED)
+# 构建时启用功能
+set(BUILD_WITH_WEBSOCKET ON CACHE BOOL "" FORCE)
+set(BUILD_WITH_HTTPS ON CACHE BOOL "" FORCE)
+add_subdirectory(path/to/uvhttp)
 ```
 
 ## CMake 变量
@@ -102,7 +104,7 @@ find_package(uvhttp REQUIRED)
 
 | 变量 | 描述 |
 |------|------|
-| `UVHTTP_VERSION` | 包版本（例如 "2.2.0"） |
+| `UVHTTP_VERSION` | 包版本（例如 "2.5.0"） |
 | `UVHTTP_INCLUDE_DIRS` | 包含目录 |
 | `UVHTTP_LIBRARIES` | 库名称（uvhttp） |
 | `UVHTTP_LIBRARY_DIRS` | 库目录路径 |
@@ -133,7 +135,7 @@ endif()
 cmake_minimum_required(VERSION 3.10)
 project(http_server C)
 
-find_package(uvhttp REQUIRED)
+add_subdirectory(uvhttp)
 
 add_executable(server server.c)
 
@@ -148,6 +150,16 @@ target_compile_definitions(server PRIVATE -DUVHTTP_FEATURE_WEBSOCKET=1)
 #include "uvhttp.h"
 
 #include <stdio.h>
+#include <string.h>
+
+int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
+    uvhttp_response_set_status(response, 200);
+    uvhttp_response_set_header(response, "Content-Type", "text/plain");
+    const char* body = "Hello, World!";
+    uvhttp_response_set_body(response, body, strlen(body));
+    return uvhttp_response_send(response);
+}
 
 int main() {
     uv_loop_t* loop = uv_default_loop();
@@ -155,41 +167,23 @@ int main() {
     uvhttp_server_new(loop, &server);
     uvhttp_router_t* router = NULL;
     uvhttp_router_new(&router);
-    
+
     // 添加路由
-    uvhttp_router_add_route(router, "/", [](uvhttp_request_t* request, uvhttp_response_t* response) {
-        uvhttp_response_set_status(response, 200);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, "Hello, World!");
-        return uvhttp_response_send(response);
-    });
-    
+    uvhttp_router_add_route(router, "/", home_handler);
+
     uvhttp_server_set_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
-    
-    printf("服务器运行在 http://0.0.0.0:8080\n");
+
+    printf("Server running on http://0.0.0.0:8080\n");
     uv_run(loop, UV_RUN_DEFAULT);
-    
+
     return 0;
 }
-```
-
-## 卸载
-
-```bash
-# 删除已安装的文件
-sudo xargs rm -v < build/install_manifest.txt
-
-# 或手动删除
-sudo rm -rf /usr/local/lib/cmake/uvhttp
-sudo rm -rf /usr/local/include/uvhttp*
-sudo rm /usr/local/lib/libuvhttp*
-sudo rm /usr/local/lib/pkgconfig/uvhttp.pc
 ```
 
 ## 注意事项
 
 - uvhttp 遵循 CMake 包命名约定
-- 首选使用 `find_package(uvhttp CONFIG)` 命令
-- 功能兼容性：确保构建和使用 uvhttp 时启用相同的功能
+- 推荐使用 `add_subdirectory` 或 `FetchContent` 方式集成，而非系统安装
 - 库依赖（libuv、mbedtls、xxhash）会自动链接
+- 功能兼容性：确保构建和使用 uvhttp 时启用相同的功能

@@ -36,46 +36,11 @@ cd uvhttp
 
 > **注意**: `--recurse-submodules` 参数会自动克隆所有依赖。如果忘记使用此参数，可以运行 `git submodule update --init --recursive` 来补全。
 
-### 2. 创建构建目录
+### 2. 配置并编译项目
 
 ```bash
-mkdir build && cd build
-```
-
-### 3. 配置项目
-
-```bash
-# 基本配置（Release 模式）
-cmake ..
-
-# Debug 模式
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-
-# 启用所有功能
-cmake -DBUILD_WITH_WEBSOCKET=ON \
-      -DBUILD_WITH_MIMALLOC=ON \
-      -DBUILD_WITH_HTTPS=ON \
-      ..
-
-# 启用代码覆盖率
-cmake -DENABLE_COVERAGE=ON ..
-```
-
-### 4. 编译
-
-```bash
-# 使用所有 CPU 核心编译
-make -j$(nproc)
-
-# 或使用特定数量的核心
-make -j4
-```
-
-### 5. 安装（可选）
-
-```bash
-make install
-```
+# 基本配置并编译（Release 模式）
+make build
 
 ## 平台特定说明
 
@@ -98,9 +63,7 @@ sudo apt-get install -y \
 # 初始化子模块（首次克隆时需要）
 git submodule update --init --recursive
 
-mkdir build && cd build
-cmake ..
-make -j$(nproc)
+make build
 ```
 
 ### CentOS/RHEL
@@ -119,9 +82,7 @@ sudo yum install -y \
 #### 编译
 
 ```bash
-mkdir build && cd build
-cmake3 ..
-make -j$(nproc)
+make build
 ```
 
 ### macOS
@@ -136,9 +97,7 @@ make -j$(nproc)
 brew install cmake openssl
 
 # 编译
-mkdir build && cd build
-cmake ..
-make -j$(sysctl -n hw.nc)
+make build
 ```
 
 #### 使用 MacPorts
@@ -149,9 +108,7 @@ make -j$(sysctl -n hw.nc)
 sudo port install cmake libuv openssl
 
 # 编译
-mkdir build && cd build
-cmake ..
-make -j$(sysctl -n hw.nc)
+make build
 ```
 
 ### Windows
@@ -169,21 +126,19 @@ cd vcpkg
 vcpkg install libuv openssl:x64-windows
 
 # 编译
-mkdir build && cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=[vcpkg路径]/scripts/buildsystems/vcpkg.cmake
-cmake --build . --config Release
+make build
 ```
 
 #### 使用预编译依赖
 
 1. 下载并安装 libuv: https://github.com/libuv/libuv/releases
 2. 下载并安装 OpenSSL: https://slproweb.com/products/Win32OpenSSL.html
-3. 在 CMake 配置时指定库路径：
-   ```bash
-   cmake .. -DLIBUV_INCLUDE_DIR=[libuv include路径] \
-            -DLIBUV_LIBRARY=[libuv lib路径] \
-            -DOPENSSL_INCLUDE_DIR=[OpenSSL include路径] \
-            -DOPENSSL_LIBRARY=[OpenSSL lib路径]
+3. 在 `CMakeLists.txt` 中指定库路径，然后运行 `make build`：
+   ```cmake
+   set(LIBUV_INCLUDE_DIR "[libuv include路径]" CACHE PATH "")
+   set(LIBUV_LIBRARY "[libuv lib路径]" CACHE FILEPATH "")
+   set(OPENSSL_INCLUDE_DIR "[OpenSSL include路径]" CACHE PATH "")
+   set(OPENSSL_LIBRARY "[OpenSSL lib路径]" CACHE FILEPATH "")
    ```
 
 ## 构建选项
@@ -201,25 +156,17 @@ cmake --build . --config Release
 
 ### 示例配置
 
+编辑 `CMakeLists.txt` 中的 `option()` 默认值，然后运行 `make build`：
+
 ```bash
-# 最小化配置（仅核心功能）
-cmake -DBUILD_WITH_WEBSOCKET=OFF \
-      -DBUILD_WITH_MIMALLOC=OFF \
-      -DBUILD_WITH_HTTPS=OFF \
-      -DBUILD_EXAMPLES=OFF \
-      ..
+# 最小化配置（仅核心功能）— 在 CMakeLists.txt 中将相应选项设为 OFF
+make build
 
 # 完整配置（所有功能）
-cmake -DBUILD_WITH_WEBSOCKET=ON \
-      -DBUILD_WITH_MIMALLOC=ON \
-      -DBUILD_WITH_HTTPS=ON \
-      -DBUILD_EXAMPLES=ON \
-      ..
+make build
 
-# 调试配置
-cmake -DENABLE_DEBUG=ON \
-      -DENABLE_COVERAGE=ON \
-      ..
+# 调试配置 — 在 CMakeLists.txt 中将 ENABLE_DEBUG 和 ENABLE_COVERAGE 设为 ON
+make build
 ```
 
 ## 验证安装
@@ -290,8 +237,7 @@ wget https://github.com/Kitware/CMake/releases/download/v3.28.0/cmake-3.28.0.tar
 tar -xzf cmake-3.28.0.tar.gz
 cd cmake-3. 相关
 ./bootstrap
-make -j$(nproc)
-sudo make install
+make build
 ```
 
 ## 下一步

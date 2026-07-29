@@ -31,8 +31,8 @@ Sprint 1-4 纯开发，Sprint 5 只做测试和发布，不引入新代码。
 ### 周五 (Sprint 5)
 
 1. **全面测试**
-   - `make -f GNUmakefile test` (Debug 91/91)
-   - `make -f GNUmakefile verify-memory-safety` (ASan + UBSan)
+   - `make test` (Debug 91/91)
+   - `make verify-memory-safety` (ASan + UBSan)
    - `cd docs && npm run docs:build`
 
 2. **版本发布**

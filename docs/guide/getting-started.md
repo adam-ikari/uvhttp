@@ -31,9 +31,7 @@ cd uvhttp
 ### Build the Library
 
 ```bash
-mkdir build && cd build
-cmake ..
-make -j$(nproc)
+make build
 ```
 
 ### Run Tests

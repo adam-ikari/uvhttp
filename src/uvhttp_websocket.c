@@ -535,7 +535,6 @@ uvhttp_error_t uvhttp_ws_send_pong(uvhttp_context_t* context,
 }
 
 /* closeconnection */
-__attribute__((no_sanitize("address")))
 uvhttp_error_t uvhttp_ws_close(uvhttp_context_t* context,
                                struct uvhttp_ws_connection* conn, int code,
                                const char* reason) {
@@ -875,31 +874,6 @@ void uvhttp_ws_set_callbacks(struct uvhttp_ws_connection* conn,
     conn->on_message = on_message;
     conn->on_close = on_close;
     conn->on_error = on_error;
-}
-
-/* triggermessagecallback */
-__attribute__((unused)) static void uvhttp_ws_trigger_message_callback(
-    struct uvhttp_ws_connection* conn, const uint8_t* data, size_t len,
-    uvhttp_ws_opcode_t opcode) {
-    if (conn && conn->on_message) {
-        conn->on_message(conn, (const char*)data, len, opcode);
-    }
-}
-
-/* triggerclosecallback */
-__attribute__((unused)) static void uvhttp_ws_trigger_close_callback(
-    struct uvhttp_ws_connection* conn, int code, const char* reason) {
-    if (conn && conn->on_close) {
-        conn->on_close(conn, code, reason);
-    }
-}
-
-/* triggererrorcallback */
-__attribute__((unused)) static void uvhttp_ws_trigger_error_callback(
-    struct uvhttp_ws_connection* conn, int error_code, const char* error_msg) {
-    if (conn && conn->on_error) {
-        conn->on_error(conn, error_code, error_msg);
-    }
 }
 
 /* ========== Protocol upgrade framework integration ========== */

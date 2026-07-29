@@ -2,12 +2,12 @@
 
 ## Project Overview
 A C99 HTTP/1.1 & WebSocket server library built on libuv. Key differentiator:
-ASan/UBSan-verified memory safety (91/91 tests, zero findings).
+ASan/UBSan-verified memory safety (101/101 tests, zero findings).
 
 ## Current Status
-- **Version**: 2.5.0
-- **Tests**: 91/91 pass (Debug, Release, ASan, UBSan)
-- **Coverage**: ~50% (target: 80%)
+- **Version**: 2.5.1
+- **Tests**: 101/101 pass (Debug, Release, ASan, UBSan)
+- **Coverage**: 86% lines / 99% functions (project code, excl deps/)
 - **Build**: CMake, C99, -Werror, -fstack-protector-strong
 - **CI**: ci-pr.yml (PR gate), ci-nightly.yml, ci-fuzz.yml, deploy-docs.yml
 
@@ -20,17 +20,18 @@ ASan/UBSan-verified memory safety (91/91 tests, zero findings).
 
 ## Key Commands
 ```bash
-make -f GNUmakefile test          # Run tests
-make -f GNUmakefile verify-memory-safety  # ASan + UBSan gate
+make build                        # Build (Debug)
+make test                         # Run tests
+make verify-memory-safety         # ASan + UBSan gate
+make check-syntax                 # Syntax check all source files
 cd docs && npm run docs:build     # Build documentation site
-cmake -B build && cmake --build build -j$(nproc)  # Build
 ```
 
 ## Development Workflow
 1. Branch from `main`: `git checkout -b <type>/<description>`
 2. Implement changes
-3. Run tests: `make -f GNUmakefile test`
-4. Verify memory safety: `make -f GNUmakefile verify-memory-safety`
+3. Run tests: `make test`
+4. Verify memory safety: `make verify-memory-safety`
 5. Create PR: `gh pr create --base main`
 6. Merge after review: `gh pr merge <number> --merge --delete-branch`
 
@@ -39,3 +40,9 @@ cmake -B build && cmake --build build -j$(nproc)  # Build
 - Terse, factual, technical voice
 - Claims must be verifiable from code or test results
 - Chinese docs must match English docs in content and accuracy
+
+## Weekly Development Plan
+- Every Monday: run `make test && make verify-memory-safety && make check-syntax` to get baseline
+- Follow the weekly plan template at `~/.claude/instructions/weekly-plan.md`
+- Every Friday: run retrospective, update `docs/PERFORMANCE_TARGETS.md` if performance changed
+- Plan format: baseline → goals → daily tasks → Friday retrospective → indicators → next week

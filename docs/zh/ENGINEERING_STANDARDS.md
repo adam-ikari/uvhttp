@@ -321,12 +321,12 @@ UVHTTP 使用统一的内存分配接口，支持编译期选择系统分配器�
 
 #### 分配器选择
 
-```cmake
-# 系统分配器（默认）
-cmake -DUVHTTP_ALLOCATOR_TYPE=0 ..
+编辑 `CMakeLists.txt`，修改 `UVHTTP_ALLOCATOR_TYPE` 的值，然后运行 `make build`：
 
-# mimalloc 分配器
-cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..
+```bash
+# 系统分配器（默认）— UVHTTP_ALLOCATOR_TYPE=0
+# mimalloc 分配器 — UVHTTP_ALLOCATOR_TYPE=1
+make build
 ```
 
 #### 分配函数
@@ -444,9 +444,8 @@ void process_request(uvhttp_request_t* request) {
 #### 使用 Valgrind
 
 ```bash
-# 编译调试版本
-cmake -DENABLE_DEBUG=ON ..
-make
+# 编译调试版本 — 在 CMakeLists.txt 中将 ENABLE_DEBUG 设为 ON，然后运行：
+make build
 
 # 运行 Valgrind
 valgrind --leak-check=full --show-leak-kinds=all ./your_server
@@ -455,9 +454,8 @@ valgrind --leak-check=full --show-leak-kinds=all ./your_server
 #### 使用 AddressSanitizer
 
 ```bash
-# 编译时启用 ASan
-cmake -DCMAKE_C_FLAGS="-g -O1 -fsanitize=address" ..
-make
+# 编译时启用 ASan — 在 CMakeLists.txt 中添加编译标志，然后运行：
+make build
 
 # 运行测试
 ./your_server
@@ -898,9 +896,7 @@ make clean          # 清理构建文件
 #### 使用 CMake
 
 ```bash
-mkdir build && cd build
-cmake ..
-make -j$(nproc)
+make build
 ctest
 ```
 
@@ -1641,9 +1637,7 @@ Dependabot 自动检测依赖漏洞并创建 PR。
 
 ```bash
 # 构建项目
-mkdir build && cd build
-cmake ..
-make -j$(nproc)
+make build
 
 # 运行测试
 ./run_tests.sh

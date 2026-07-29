@@ -59,57 +59,43 @@ UVHTTP 项目定义了三种构建模式，每种模式适用于不同的场景�
 #### Release 模式（推荐用于性能测试）
 
 ```bash
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j$(nproc)
+make build
 ```
 
 #### Debug 模式（用于开发调试）
 
 ```bash
-mkdir build && cd build
-cmake -DENABLE_DEBUG=ON ..
-make -j$(nproc)
+make build
 ```
 
 #### Coverage 模式（用于覆盖率分析）
 
 ```bash
-mkdir build && cd build
-cmake -DENABLE_COVERAGE=ON ..
-make -j$(nproc)
+make build
 ```
 
 ### 编译选项
 
+编辑 `CMakeLists.txt` 中的 `option()` 默认值，然后运行 `make build`：
+
 ```bash
-# 启用 WebSocket 支持
-cmake -DBUILD_WITH_WEBSOCKET=ON ..
-
-# 启用 mimalloc 分配器
-cmake -DBUILD_WITH_MIMALLOC=ON ..
-
-# 启用 TLS 支持
-cmake -DBUILD_WITH_HTTPS=ON ..
-
-# Debug 模式
-cmake -DENABLE_DEBUG=ON ..
-
-# 启用代码覆盖率
-cmake -DENABLE_COVERAGE=ON ..
-
-# 启用示例程序
-cmake -DBUILD_EXAMPLES=ON ..
+# 启用 WebSocket 支持 — 在 CMakeLists.txt 中将 BUILD_WITH_WEBSOCKET 设为 ON
+# 启用 mimalloc 分配器 — 在 CMakeLists.txt 中将 BUILD_WITH_MIMALLOC 设为 ON
+# 启用 TLS 支持 — 在 CMakeLists.txt 中将 BUILD_WITH_HTTPS 设为 ON
+# Debug 模式 — 在 CMakeLists.txt 中将 ENABLE_DEBUG 设为 ON
+# 启用代码覆盖率 — 在 CMakeLists.txt 中将 ENABLE_COVERAGE 设为 ON
+# 启用示例程序 — 在 CMakeLists.txt 中将 BUILD_EXAMPLES 设为 ON
+make build
 ```
 
 ### 选择内存分配器
 
-```bash
-# 系统分配器（默认）
-cmake -DUVHTTP_ALLOCATOR_TYPE=0 ..
+编辑 `CMakeLists.txt`，修改 `UVHTTP_ALLOCATOR_TYPE` 的值，然后运行 `make build`：
 
-# mimalloc 分配器
-cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..
+```bash
+# 系统分配器（默认）— UVHTTP_ALLOCATOR_TYPE=0
+# mimalloc 分配器 — UVHTTP_ALLOCATOR_TYPE=1
+make build
 ```
 
 ## 代码规范
@@ -188,12 +174,12 @@ UVHTTP 支持两种分配器类型：
 
 #### 编译配置
 
-```bash
-# 系统分配器（默认）
-cmake -DUVHTTP_ALLOCATOR_TYPE=0 ..
+编辑 `CMakeLists.txt`，修改 `UVHTTP_ALLOCATOR_TYPE` 的值，然后运行 `make build`：
 
-# mimalloc 分配器
-cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..
+```bash
+# 系统分配器（默认）— UVHTTP_ALLOCATOR_TYPE=0
+# mimalloc 分配器 — UVHTTP_ALLOCATOR_TYPE=1
+make build
 ```
 
 #### 性能特性
@@ -245,9 +231,8 @@ void example_memory_usage(void) {
 使用 Valgrind 检测内存泄漏：
 
 ```bash
-# 编译 Debug 版本
-cmake -DENABLE_DEBUG=ON ..
-make
+# 编译 Debug 版本 — 在 CMakeLists.txt 中将 ENABLE_DEBUG 设为 ON，然后运行：
+make build
 
 # 运行 Valgrind
 valgrind --leak-check=full --show-leak-kinds=all ./dist/bin/helloworld
@@ -367,8 +352,8 @@ const char* data = uvhttp_request_get_body(request, &len);
 ### 启用调试输出
 
 ```bash
-cmake -DENABLE_DEBUG=ON ..
-make
+# 在 CMakeLists.txt 中将 ENABLE_DEBUG 设为 ON，然后运行：
+make build
 ```
 
 ### 使用 GDB
@@ -460,7 +445,8 @@ A:
 - **mimalloc**: 适合高并发、多线程场景，性能更好
 
 ```bash
-cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..
+# 编辑 CMakeLists.txt，将 UVHTTP_ALLOCATOR_TYPE 设为 1，然后运行：
+make build
 ```
 
 ### Q: 如何处理内存泄漏？

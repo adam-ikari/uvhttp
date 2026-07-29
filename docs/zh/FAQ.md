@@ -26,36 +26,28 @@ UVHTTP 常见问题。
 
 **构建命令：**
 ```bash
-mkdir build && cd build
-cmake ..
-make
+make build
 ```
 
 ### Q2: 如何启用可选功能如 WebSocket？
 
-使用 CMake 选项配置构建：
+使用 CMake 选项配置构建。编辑 `CMakeLists.txt` 中的 `option()` 默认值，然后运行 `make build`：
 
 ```bash
-# 启用 WebSocket
-cmake -DBUILD_WITH_WEBSOCKET=ON ..
-
-# 启用 mimalloc 分配器
-cmake -DBUILD_WITH_MIMALLOC=ON ..
-
-# 启用所有功能
-cmake -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON ..
+# 启用 WebSocket — 在 CMakeLists.txt 中将 BUILD_WITH_WEBSOCKET 设为 ON
+# 启用 mimalloc 分配器 — 在 CMakeLists.txt 中将 BUILD_WITH_MIMALLOC 设为 ON
+# 启用所有功能 — 在 CMakeLists.txt 中将相应选项设为 ON
+make build
 ```
 
 ### Q3: 如何在系统分配器和 mimalloc 之间切换？
 
-使用编译时的分配器类型标志：
+使用编译时的分配器类型标志。编辑 `CMakeLists.txt`，修改 `UVHTTP_ALLOCATOR_TYPE` 的值，然后运行 `make build`：
 
 ```bash
-# 系统分配器（默认）
-cmake -DUVHTTP_ALLOCATOR_TYPE=0 ..
-
-# mimalloc 分配器
-cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..
+# 系统分配器（默认）— UVHTTP_ALLOCATOR_TYPE=0
+# mimalloc 分配器 — UVHTTP_ALLOCATOR_TYPE=1
+make build
 ```
 
 ---
@@ -406,9 +398,8 @@ uvhttp_server_set_config(server, config);
 # 检查内存泄漏
 valgrind --leak-check=full --show-leak-kinds=all ./your_server
 
-# 或使用 AddressSanitizer 构建
-cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON ..
-make
+# 或使用 AddressSanitizer 构建 — 在 CMakeLists.txt 中将 ENABLE_DEBUG 和 ENABLE_ASAN 设为 ON，然后运行：
+make build
 ./your_server
 ```
 
@@ -445,9 +436,8 @@ uvhttp_tls_context_enable_client_auth(tls_ctx, 0);
 # 1. 在 include/uvhttp_features.h 中启用日志
 #define UVHTTP_FEATURE_LOGGING 1
 
-# 2. 以 Debug 模式构建
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-make
+# 2. 以 Debug 模式构建 — 在 CMakeLists.txt 中将 ENABLE_DEBUG 设为 ON，然后运行：
+make build
 
 # 3. 运行并查看调试输出
 ./your_server

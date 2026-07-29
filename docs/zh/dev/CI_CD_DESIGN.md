@@ -1940,7 +1940,7 @@ permissions:
 
 ```yaml
 # 不要没有注释的复杂命令
-- run: cmake -B build-32bit -DCMAKE_C_FLAGS="-m32" && cd build-32bit && make -j$(nproc) && file dist/lib/libuvhttp.a
+- run: cmake -B build-32bit -DCMAKE_C_FLAGS="-m32" && cd build-32bit && make build && file dist/lib/libuvhttp.a
 ```
 
 ---

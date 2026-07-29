@@ -427,12 +427,115 @@ TEST(UvhttpTlsApiCoverageTest, ResetStatsNullContext) {
 TEST(UvhttpTlsApiCoverageTest, ResetStatsValid) {
     uvhttp_tls_context_t* ctx = nullptr;
     uvhttp_tls_context_new(&ctx);
-    
+
     if (ctx) {
         uvhttp_error_t result = uvhttp_tls_reset_stats(ctx);
-        
+
         /* 不强制检查结果 */
-        
+
         uvhttp_tls_context_free(ctx);
     }
+}
+
+/* ========== 测试证书验证函数 ========== */
+
+TEST(UvhttpTlsApiCoverageTest, VerifyPeerCertNull) {
+    int result = uvhttp_tls_verify_peer_cert(nullptr);
+    EXPECT_EQ(result, 0);
+}
+
+TEST(UvhttpTlsApiCoverageTest, VerifyHostnameNullCert) {
+    int result = uvhttp_tls_verify_hostname(nullptr, "example.com");
+    EXPECT_EQ(result, 0);
+}
+
+TEST(UvhttpTlsApiCoverageTest, VerifyHostnameNullHostname) {
+    mbedtls_x509_crt cert;
+    mbedtls_x509_crt_init(&cert);
+    int result = uvhttp_tls_verify_hostname(&cert, nullptr);
+    EXPECT_EQ(result, 0);
+    mbedtls_x509_crt_free(&cert);
+}
+
+TEST(UvhttpTlsApiCoverageTest, CheckCertValidityNull) {
+    int result = uvhttp_tls_check_cert_validity(nullptr);
+    EXPECT_EQ(result, 0);
+}
+
+TEST(UvhttpTlsApiCoverageTest, CheckCertValidityValid) {
+    mbedtls_x509_crt cert;
+    mbedtls_x509_crt_init(&cert);
+    int ret = mbedtls_x509_crt_parse_file(&cert, "test/certs/server.crt");
+    if (ret == 0) {
+        int result = uvhttp_tls_check_cert_validity(&cert);
+        EXPECT_EQ(result, 1);
+    }
+    mbedtls_x509_crt_free(&cert);
+}
+
+TEST(UvhttpTlsApiCoverageTest, GetPeerCertNull) {
+    mbedtls_x509_crt* result = uvhttp_tls_get_peer_cert(nullptr);
+    EXPECT_EQ(result, nullptr);
+}
+
+TEST(UvhttpTlsApiCoverageTest, GetCertSubjectNull) {
+    char buf[256];
+    int result = uvhttp_tls_get_cert_subject(nullptr, buf, sizeof(buf));
+    EXPECT_EQ(result, 0);
+}
+
+TEST(UvhttpTlsApiCoverageTest, GetCertSubjectNullBuf) {
+    mbedtls_x509_crt cert;
+    mbedtls_x509_crt_init(&cert);
+    int result = uvhttp_tls_get_cert_subject(&cert, nullptr, 100);
+    EXPECT_EQ(result, 0);
+    mbedtls_x509_crt_free(&cert);
+}
+
+TEST(UvhttpTlsApiCoverageTest, GetCertSubjectValid) {
+    mbedtls_x509_crt cert;
+    mbedtls_x509_crt_init(&cert);
+    int ret = mbedtls_x509_crt_parse_file(&cert, "test/certs/server.crt");
+    if (ret == 0) {
+        char buf[256];
+        int result = uvhttp_tls_get_cert_subject(&cert, buf, sizeof(buf));
+        EXPECT_GT(result, 0);
+    }
+    mbedtls_x509_crt_free(&cert);
+}
+
+TEST(UvhttpTlsApiCoverageTest, GetCertIssuerNull) {
+    char buf[256];
+    int result = uvhttp_tls_get_cert_issuer(nullptr, buf, sizeof(buf));
+    EXPECT_EQ(result, 0);
+}
+
+TEST(UvhttpTlsApiCoverageTest, GetCertIssuerValid) {
+    mbedtls_x509_crt cert;
+    mbedtls_x509_crt_init(&cert);
+    int ret = mbedtls_x509_crt_parse_file(&cert, "test/certs/server.crt");
+    if (ret == 0) {
+        char buf[256];
+        int result = uvhttp_tls_get_cert_issuer(&cert, buf, sizeof(buf));
+        EXPECT_GT(result, 0);
+    }
+    mbedtls_x509_crt_free(&cert);
+}
+
+TEST(UvhttpTlsApiCoverageTest, GetCertSerialNull) {
+    char buf[256];
+    int result = uvhttp_tls_get_cert_serial(nullptr, buf, sizeof(buf));
+    EXPECT_EQ(result, 0);
+}
+
+TEST(UvhttpTlsApiCoverageTest, GetCertSerialValid) {
+    mbedtls_x509_crt cert;
+    mbedtls_x509_crt_init(&cert);
+    int ret = mbedtls_x509_crt_parse_file(&cert, "test/certs/server.crt");
+    if (ret == 0) {
+        char buf[256];
+        int result = uvhttp_tls_get_cert_serial(&cert, buf, sizeof(buf));
+        EXPECT_GT(result, 0);
+    }
+    mbedtls_x509_crt_free(&cert);
 }

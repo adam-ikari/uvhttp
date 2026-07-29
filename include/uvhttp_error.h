@@ -142,6 +142,9 @@ const char* uvhttp_error_description(uvhttp_error_t error);
 /* Error code to suggestion */
 const char* uvhttp_error_suggestion(uvhttp_error_t error);
 
+/* Log error with context (internal, exposed for testing) */
+void uvhttp_log_error(uvhttp_error_t error, const char* context);
+
 /* Check if error is recoverable */
 int uvhttp_error_is_recoverable(uvhttp_error_t error);
 

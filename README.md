@@ -2,11 +2,11 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.5.0-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.5.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
-![Tests](https://img.shields.io/badge/tests-91%2F91%20passing-success.svg)
+![Tests](https://img.shields.io/badge/tests-101%2F101%20passing-success.svg)
 [![ASan](https://img.shields.io/badge/ASan-clean-success.svg)](https://github.com/adam-ikari/uvhttp/actions/workflows/ci-nightly.yml)
 [![UBSan](https://img.shields.io/badge/UBSan-clean-success.svg)](https://github.com/adam-ikari/uvhttp/actions/workflows/ci-nightly.yml)
 ![Performance](https://img.shields.io/badge/performance-~20K%20RPS-brightgreen.svg)
@@ -21,7 +21,7 @@ Lightweight & Embeddable • 32-bit Support • Zero-Copy • ASan/UBSan-Verifie
 
 UVHTTP is a production-grade, event-driven HTTP server library built on libuv for modern C applications. It delivers exceptional performance with minimal resource consumption, making it ideal for both high-performance servers and embedded systems.
 
-### Key Metrics (v2.5.0)
+### Key Metrics (v2.5.1)
 
 Throughput varies by hardware. Values below are from the original benchmark host;
 on a comparable VM the library sustains ~17K–20K RPS (100 connections) / ~20K peak
@@ -35,7 +35,7 @@ on a comparable VM the library sustains ~17K–20K RPS (100 connections) / ~20K 
 | **API Routing** | 13,950 RPS | REST endpoints |
 | **Average Latency** | ~9–21 ms | P50–P90, 100 connections |
 | **Error Rate** | 0% | Zero socket errors under load |
-| **Test Suite** | 91/91 pass | ASan + UBSan verified clean |
+| **Test Suite** | 101/101 pass | ASan + UBSan verified clean |
 
 ## 🌍 Platform Support
 
@@ -67,7 +67,7 @@ UVHTTP provides full support for 32-bit architectures with optimizations for res
 ### Security
 - 🔒 **Security-First**: Comprehensive buffer overflow protection and input validation
 - 🛡️ **TLS 1.3 Support**: Encryption through mbedtls integration
-- ✅ **Memory Safety**: Verified clean under AddressSanitizer (no leaks, no use-after-free, no overflows) and UndefinedBehaviorSanitizer across the full 91-test suite
+- ✅ **Memory Safety**: Verified clean under AddressSanitizer (no leaks, no use-after-free, no overflows) and UndefinedBehaviorSanitizer across the full 101-test suite
 - 🚨 **Resource Limits**: Configurable limits for connections, headers, and body size
 
 ### Developer Experience
@@ -252,7 +252,7 @@ cmake -DCMAKE_USER_CONFIG=ON ..
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello from UVHTTP v2.5.0!");
+    uvhttp_response_set_body(res, "Hello from UVHTTP v2.5.1!");
     return uvhttp_response_send(res);
 }
 
@@ -395,7 +395,7 @@ uvhttp/
 ## 🧪 Testing & Quality Assurance
 
 ### Test Coverage
-- **Test Suite**: 91 unit/integration tests, all passing
+- **Test Suite**: 101 unit/integration tests, all passing
 - **Memory Safety**: Full suite verified clean under AddressSanitizer (no leaks, no use-after-free, no buffer overflows) and UndefinedBehaviorSanitizer (no undefined behavior)
 - **CI/CD**: Automated testing on multiple platforms; nightly ASan + UBSan jobs
 - **Code Quality**: Zero compilation warnings, strict linting (`-Werror`)
@@ -511,6 +511,7 @@ UVHTTP is built upon excellent open-source projects:
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.5.1** | 2026-07-27 | Coverage 86% lines / 99% functions, 101/101 tests |
 | **v2.5.0** | 2026-03-15 | 32-bit embedded support, compression features |
 | **v2.4.4** | 2026-01-28 | Performance optimizations, code cleanup |
 | **v2.3.0** | 2026-02-10 | Performance fix for connection cleanup |

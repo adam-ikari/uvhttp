@@ -1,6 +1,7 @@
 import DefaultTheme from 'vitepress/theme-without-fonts'
 import { h } from 'vue'
 import syncStatus from '../sync-status.json'
+import './style.css'
 
 export default {
   extends: DefaultTheme,

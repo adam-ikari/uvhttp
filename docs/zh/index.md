@@ -18,7 +18,7 @@ hero:
 
 features:
   - title: 🛡️ 内存安全已验证
-    details: ASan + UBSan 零问题——91/91 测试，零泄漏，每夜 CI。
+    details: ASan + UBSan 零问题——101/101 测试，零泄漏，每夜 CI。
   - title: 🚀 稳定吞吐
     details: ~20K RPS，100→500 连接持平，零 socket 错误。
   - title: 📦 轻量且 32 位
@@ -38,11 +38,11 @@ features:
 
 ## 为什么选 UVHTTP（对比其他轻量 C HTTP 库）
 
-大多数轻量 C HTTP 库只优化峰值 RPS 便止步。UVHTTP 优化的是**会击垮生产的属性**：内存安全。一个能在 10 秒基准测试中存活下来的每连接泄漏或 use-after-free，会在一周内让嵌入式设备 OOM。UVHTTP 是轻量、可嵌入、支持 32 位的 C 库，并在每夜 CI 中以 ASan 与 UBSan 双重验证，证明这类 bug 已根除。
+大多数轻量 C HTTP 库只追求峰值 RPS。UVHTTP 优化的核心是**内存安全**——这是生产环境不可妥协的属性。一个能在 10 秒基准测试中存活下来的每连接泄漏或 use-after-free，会在一周内让嵌入式设备 OOM。UVHTTP 是轻量、可嵌入、支持 32 位的 C 库，并在每夜 CI 中以 ASan 与 UBSan 双重验证，证明这类 bug 已根除。
 
 | 库 | 可嵌入 C 库 | 32 位 | ASan-clean（已验证） | UBSan-clean（已验证） |
 |---------|:----------------:|:------:|:---------------------:|:-----------------------:|
-| **UVHTTP** | ✅ | ✅ | ✅ 91/91，每夜 CI | ✅ 91/91，每夜 CI |
+| **UVHTTP** | ✅ | ✅ | ✅ 101/101，每夜 CI | ✅ 101/101，每夜 CI |
 | libuv-http | ✅ | ⚠️ | ❓ 未公开 | ❓ 未公开 |
 | microhttpd | ✅ | ⚠️ | ❓ 未公开 | ❓ 未公开 |
 | mongoose | ✅ | ✅ | ❓ 未公开 | ❓ 未公开 |

@@ -775,8 +775,8 @@ This script will test the above 20 configuration combinations and report pass/fa
 Compile all performance benchmark programs:
 
 ```bash
-cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS=ON ..
-make -j$(nproc)
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS=ON
+make build
 ```
 
 Compile specific performance benchmark programs:
