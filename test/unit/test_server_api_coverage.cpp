@@ -420,3 +420,19 @@ TEST_F(UvhttpServerApiTest, ServerSimpleFreeNull) {
     /* 不应该崩溃 */
     uvhttp_server_simple_free(NULL);
 }
+
+/* ========== 测试 uvhttp_server_new_with_loop ========== */
+
+TEST_F(UvhttpServerApiTest, ServerNewWithLoopNull) {
+    uvhttp_error_t err = uvhttp_server_new_with_loop(NULL);
+    EXPECT_NE(err, UVHTTP_OK);
+}
+
+TEST_F(UvhttpServerApiTest, ServerNewWithLoopSuccess) {
+    uvhttp_server_t* srv = NULL;
+    uvhttp_error_t err = uvhttp_server_new_with_loop(&srv);
+    if (err == UVHTTP_OK && srv) {
+        EXPECT_NE(srv, nullptr);
+        uvhttp_server_free(srv);
+    }
+}

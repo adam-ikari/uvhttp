@@ -144,12 +144,10 @@ git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
 
 # Build with default options
-mkdir build && cd build
-cmake ..
-make -j$(nproc)
+make build
 
 # Run example server
-./dist/bin/hello_world
+./build/dist/bin/hello_world
 ```
 
 For detailed installation instructions and build options, see the [Installation Guide](/guide/build).

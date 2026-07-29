@@ -25,9 +25,7 @@ UVHTTP 采用自包含的依赖管理方式，所有依赖都包含在项目源�
 cd uvhttp
 
 # 2. 编译项目
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j$(nproc)
+make build
 
 # 3. 编译完成，库文件位于 build/ 目录
 ```
@@ -93,17 +91,7 @@ cd /path/to/uvhttp
 
 **编译 UVHTTP**（使用项目自带的依赖）：
 ```bash
-# 创建构建目录
-mkdir build && cd build
-
-# 配置 CMake（会自动使用 deps/ 目录中的依赖）
-cmake -DCMAKE_BUILD_TYPE=Release ..
-
-# 编译
-make -j$(nproc)
-
-# 安装（可选）
-sudo make install
+make build
 ```
 
 **依赖说明**：
@@ -189,8 +177,7 @@ int main() {
 ```bash
 # 方法 1：使用 CMake 编译（推荐）
 # 在项目根目录
-mkdir -p build/examples
-cd build/examples
+mkdir -p examples
 
 # 创建 CMakeLists.txt
 cat > CMakeLists.txt << 'EOF'
@@ -210,8 +197,7 @@ target_link_libraries(hello_world ${UVHTTP_LIBRARY} uv pthread m)
 EOF
 
 # 编译
-cmake ..
-make
+make build
 
 # 运行
 ./hello_world
@@ -220,8 +206,7 @@ make
 **或者使用项目统一的构建系统**：
 ```bash
 # 在项目根目录
-cd build
-cmake ..
+make build
 make hello_world
 
 # 运行
@@ -401,9 +386,7 @@ int main() {
 **编译和运行**：
 ```bash
 # 使用 CMake 编译
-cd build
-cmake ..
-make simple_routing
+make build
 
 # 运行
 ./examples/simple_routing
@@ -1121,9 +1104,7 @@ EOF
 
 **编译和运行**：
 ```bash
-cd build
-cmake ..
-make static_files
+make build
 ./examples/static_files
 
 # 测试
@@ -2460,17 +2441,15 @@ cd uvhttp
 > **注意**: `--recurse-submodules` 参数会自动克隆所有依赖。如果忘记使用此参数，可以运行 `git submodule update --init --recursive` 来补全。
 
 # 编译（使用项目自带的依赖）
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j$(nproc)
+make build
 ```
 
 #### 编译示例程序
 ```bash
 # 编译所有示例
-cd build
-cmake ..
-make examples
+make build
+
+# 编译特定示例
 
 # 编译特定示例
 make hello_world
@@ -2665,28 +2644,23 @@ UVHTTP 采用自包含的依赖管理方式，所有必需的依赖都包含在 
 
 **调试版本**：
 ```bash
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-make -j$(nproc)
+make build
 ```
 
 **发布版本**：
 ```bash
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j$(nproc)
+make build
 ```
 
 **启用特定功能**：
+
+编辑 `CMakeLists.txt` 中的 `option()` 默认值，然后运行 `make build`：
+
 ```bash
-# 启用 TLS 支持
-cmake -DUVHTTP_FEATURE_TLS=ON ..
-
-# 启用 WebSocket 支持
-cmake -DUVHTTP_FEATURE_WEBSOCKET=ON ..
-
-# 禁用 mimalloc（使用系统 malloc）
-cmake -DUVHTTP_HAS_MIMALLOC=OFF ..
+# 启用 TLS 支持 — 在 CMakeLists.txt 中将 UVHTTP_FEATURE_TLS 设为 ON
+# 启用 WebSocket 支持 — 在 CMakeLists.txt 中将 UVHTTP_FEATURE_WEBSOCKET 设为 ON
+# 禁用 mimalloc（使用系统 malloc）— 在 CMakeLists.txt 中将 UVHTTP_HAS_MIMALLOC 设为 OFF
+make build
 ```
 
 ### 编译示例程序
@@ -2694,8 +2668,7 @@ cmake -DUVHTTP_HAS_MIMALLOC=OFF ..
 **使用 CMake 编译单个示例**：
 ```bash
 # 在项目根目录
-cd build
-cmake ..
+make build
 
 # 编译特定示例
 make hello_world
@@ -2745,7 +2718,7 @@ EOF
 EXAMPLE_NAME=$1
 
 cd build
-cmake .. > /dev/null 2>&1
+make build > /dev/null 2>&1
 make $EXAMPLE_NAME
 
 if [ $? -eq 0 ]; then

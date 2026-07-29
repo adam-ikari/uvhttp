@@ -22,47 +22,16 @@ git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
 ```
 
-> **Note**: The `--recurse-submodules` flag automatically clones all dependencies. If you forget this flag, you can run `git submodule update --init --recursive` afterward.
-```
-
-### 3. Create Build Directory
+### 2. Build
 
 ```bash
-mkdir build && cd build
+make build
 ```
 
-### 4. Configure with CMake
-
-**Basic configuration:**
-```bash
-cmake ..
-```
-
-**With all features:**
-```bash
-cmake -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON ..
-```
-
-**Custom configuration:**
-```bash
-cmake \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DBUILD_WITH_WEBSOCKET=ON \
-  -DBUILD_WITH_MIMALLOC=ON \
-  -DBUILD_EXAMPLES=ON \
-  ..
-```
-
-### 5. Build
+**Custom configuration:** edit `option()` entries in `CMakeLists.txt`, then build:
 
 ```bash
-make -j$(nproc)
-```
-
-### 6. Install (Optional)
-
-```bash
-sudo make install
+make build
 ```
 
 ## Build Options
@@ -79,23 +48,21 @@ sudo make install
 
 ### Advanced Build Options
 
+Advanced options can be configured by editing the `option()` entries in `CMakeLists.txt` directly, then rebuild:
+
 ```bash
-# 使用自定义构建目录
-BUILD_DIR=custom_build cmake ..
-
-# 使用 Debug 模式
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-
-# 使用 -O2 优化（禁用 -O3）
-cmake -DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG" ..
-
-# 启用代码覆盖率
-cmake -DENABLE_COVERAGE=ON ..
-
-# 选择内存分配器
-cmake -DUVHTTP_ALLOCATOR_TYPE=0 ..  # 系统分配器
-cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..  # mimalloc 分配器
+make build
 ```
+
+Common options available in `CMakeLists.txt`:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `BUILD_WITH_WEBSOCKET` | ON | Enable WebSocket support |
+| `BUILD_WITH_MIMALLOC` | ON | Use mimalloc allocator |
+| `BUILD_EXAMPLES` | OFF | Build example programs |
+| `ENABLE_COVERAGE` | OFF | Enable code coverage |
+| `ENABLE_DEBUG` | OFF | Enable debug mode |
 
 ## Output Files
 
@@ -136,40 +103,25 @@ For detailed coverage report:
 ./run_tests.sh --detailed
 ```
 
-## Installation Paths
+## Output Files
 
-By default, UVHTTP installs to:
-
-- **Library**: `/usr/local/lib/libuvhttp.a`
-- **Headers**: `/usr/local/include/uvhttp/`
-- **Examples**: `/usr/local/bin/`
-
-You can change these with CMake:
-
-```bash
-cmake -DCMAKE_INSTALL_PREFIX=/custom/path ..
-```
+Build output is located in `build/dist/`:
+- `bin/` - Executables (examples, tests)
+- `lib/` - Library (libuvhttp.a)
+- `include/` - Headers
 
 ## Cross-Compilation
 
 ### Cross-compile for 32-bit
 
 ```bash
-cmake \
-  -DCMAKE_C_COMPILER=gcc \
-  -DCMAKE_CXX_COMPILER=g++ \
-  -DCMAKE_C_FLAGS="-m32" \
-  -DCMAKE_CXX_FLAGS="-m32" \
-  -DBUILD_WITH_MIMALLOC=OFF \
-  ..
+make build CC="gcc -m32" CXX="g++ -m32"
 ```
 
 ### Cross-compile for ARM
 
 ```bash
-cmake \
-  -DCMAKE_TOOLCHAIN_FILE=path/to/toolchain.cmake \
-  ..
+make build CMAKE_TOOLCHAIN_FILE=path/to/toolchain.cmake
 ```
 
 ## Troubleshooting
@@ -204,7 +156,7 @@ If you see linker errors, make sure you're linking against the required librarie
 
 ```bash
 # 编译 libuv
-cd deps/libuv && mkdir -p build && cd build && cmake .. && make -j$(nproc)
+cd deps/libuv && make -f Makefile
 
 # 编译 mbedtls
 cd deps/mbedtls && python3 scripts/config.py set MBEDTLS_X509_USE_C && make -j$(nproc)
@@ -218,22 +170,15 @@ cd deps/cllhttp && gcc -c llhttp.c -o llhttp.o && ar rcs libllhttp.a llhttp.o
 如果遇到构建问题，可以完全重新构建：
 
 ```bash
-cd build
-make clean
-cmake ..
-make -j$(nproc)
+make rebuild
 ```
 
 ### 内存分配器问题
 
-如果遇到内存分配器相关问题：
+如果遇到内存分配器相关问题，可修改 `CMakeLists.txt` 中的 `UVHTTP_ALLOCATOR_TYPE` 选项，然后重新编译：
 
 ```bash
-# 切换到系统分配器
-cmake -DUVHTTP_ALLOCATOR_TYPE=0 ..
-
-# 或切换到 mimalloc
-cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..
+make build
 ```
 
 ## Next Steps

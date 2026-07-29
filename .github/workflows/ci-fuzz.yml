@@ -59,11 +59,20 @@ jobs:
             -lpthread -lm -ldl \
             -o build_fuzz/fuzz_router
 
+          # Link the request fuzz harness (lighter deps — llhttp only).
+          $CC $CFLAGS -Iinclude -Ideps/llhttp/include -fsanitize=fuzzer,address \
+            test/fuzz/fuzz_request.c \
+            src/uvhttp_request.c src/uvhttp_error.c src/uvhttp_utils.c \
+            deps/llhttp/build/libllhttp.a \
+            -o build_fuzz/fuzz_request
+
       - name: Run fuzz_router (60s, no crashes expected)
         run: |
-          # -max_total_time bounds the run. ASan + UBSan-default libFuzzer will
-          # abort on any memory-safety bug. A clean exit (0) means no crash.
           ./build_fuzz/fuzz_router -max_total_time=60 -max_len=256 -print_final_stats=1
+
+      - name: Run fuzz_request (60s, no crashes expected)
+        run: |
+          ./build_fuzz/fuzz_request -max_total_time=60 -max_len=4096 -print_final_stats=1
 
       - name: Upload crash artifacts (if any)
         if: failure()

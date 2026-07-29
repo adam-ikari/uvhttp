@@ -8,24 +8,12 @@ UVHTTP 支持通过 CMake 配置各种编译时常量，允许用户根据实际
 
 ### 1. 基本配置
 
-在运行 `cmake` 时，可以通过 `-D` 参数指定常量的值：
+编辑 `CMakeLists.txt` 中的 `option()` 或 `set()` 配置常量的值，然后运行 `make build`：
 
 ```bash
-mkdir build && cd build
-cmake -DUVHTTP_MAX_HEADER_NAME_SIZE=512 -DUVHTTP_MAX_HEADER_VALUE_SIZE=8192 ..
-make -j$(nproc)
+make build
 ```
 
-### 2. 交互式配置
-
-使用 `ccmake` 进行交互式配置：
-
-```bash
-mkdir build && cd build
-ccmake ..
-```
-
-### 3. 配置文件
 
 在 `CMakeLists.txt` 中预设配置：
 
@@ -121,43 +109,34 @@ set(UVHTTP_MAX_HEADER_VALUE_SIZE 8192 CACHE STRING "Max HTTP header value size")
 
 ### 示例 1：高并发场景
 
+编辑 `CMakeLists.txt`，添加或修改以下配置，然后运行 `make build`：
+
 ```bash
-cmake \
-  -DUVHTTP_MAX_CONNECTIONS_DEFAULT=4096 \
-  -DUVHTTP_MAX_CONNECTIONS_MAX=20000 \
-  -DUVHTTP_BACKLOG=16384 \
-  -DUVHTTP_READ_BUFFER_SIZE=65536 \
-  ..
+make build
 ```
 
 ### 示例 2：大文件传输
 
+编辑 `CMakeLists.txt`，添加或修改以下配置，然后运行 `make build`：
+
 ```bash
-cmake \
-  -DUVHTTP_MAX_BODY_SIZE=104857600 \
-  -DUVHTTP_STATIC_MAX_FILE_SIZE=104857600 \
-  -DUVHTTP_SENDFILE_CHUNK_SIZE=131072 \
-  ..
+make build
 ```
 
 ### 示例 3：内存受限环境
 
+编辑 `CMakeLists.txt`，添加或修改以下配置，然后运行 `make build`：
+
 ```bash
-cmake \
-  -DUVHTTP_MAX_CONNECTIONS_DEFAULT=512 \
-  -DUVHTTP_STATIC_MAX_CACHE_SIZE=524288 \
-  -DUVHTTP_INITIAL_BUFFER_SIZE=4096 \
-  ..
+make build
 ```
 
 ### 示例 4：WebSocket 优化
 
+编辑 `CMakeLists.txt`，添加或修改以下配置，然后运行 `make build`：
+
 ```bash
-cmake \
-  -DUVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE=33554432 \
-  -DUVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE=134217728 \
-  -DUVHTTP_WEBSOCKET_DEFAULT_RECV_BUFFER_SIZE=131072 \
-  ..
+make build
 ```
 
 ## 注意事项
@@ -173,8 +152,11 @@ cmake \
 编译后，可以通过以下方式验证配置：
 
 ```bash
+# 构建项目
+make build
+
 # 查看编译命令中的宏定义
-make VERBOSE=1 2>&1 | grep UVHTTP_MAX_HEADER_NAME_SIZE
+grep UVHTTP_MAX_HEADER_NAME_SIZE build/CMakeCache.txt
 
 # 运行测试验证
 ./dist/bin/uvhttp_unit_tests

@@ -17,15 +17,15 @@ UVHTTP 提供服务器级别的限流功能，用于防止 DDoS 攻击和过载�
 ### 启用限流功能（默认）
 
 ```bash
-cmake ..
-make
+make build
 ```
 
 ### 禁用限流功能
 
+编辑 `CMakeLists.txt`，将 `option(UVHTTP_FEATURE_RATE_LIMIT ...)` 的默认值改为 `OFF`，然后运行：
+
 ```bash
-cmake -DUVHTTP_FEATURE_RATE_LIMIT=0 ..
-make
+make build
 ```
 
 ## API 参考

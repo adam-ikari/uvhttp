@@ -79,13 +79,13 @@ The allocator is selected at compile time via `UVHTTP_ALLOCATOR_TYPE`:
 
 | Target | Description |
 |--------|-------------|
-| `make -f GNUmakefile build` | Debug build |
-| `make -f GNUmakefile build-release` | Release build |
-| `make -f GNUmakefile test` | Run tests |
-| `make -f GNUmakefile verify-memory-safety` | ASan + UBSan gate |
-| `make -f GNUmakefile docs` | Build all documentation |
-| `make -f GNUmakefile docs-clean` | Clean generated docs |
-| `make -f GNUmakefile bench` | Benchmark build |
+| `make build` | Debug build |
+| `make build-release` | Release build |
+| `make test` | Run tests |
+| `make verify-memory-safety` | ASan + UBSan gate |
+| `make docs` | Build all documentation |
+| `make docs-clean` | Clean generated docs |
+| `make bench` | Benchmark build |
 
 ## Test Registration
 

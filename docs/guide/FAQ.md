@@ -27,38 +27,25 @@ This document answers common questions about using the UVHTTP library.
 
 **Build Commands:**
 ```bash
-mkdir build && cd build
-cmake ..
-make
+make build
 ```
 
 ### Q2: How do I enable optional features like WebSocket?
 
 **Answer:**
-Use CMake options when configuring the build:
+Edit `option()` entries in `CMakeLists.txt`, then rebuild:
 
 ```bash
-# Enable WebSocket
-cmake -DBUILD_WITH_WEBSOCKET=ON ..
-
-# Enable mimalloc allocator
-cmake -DBUILD_WITH_MIMALLOC=ON ..
-
-# Enable all features
-cmake -DBUILD_WITH_WEBSOCKET=ON -DBUILD_WITH_MIMALLOC=ON ..
+make build
 ```
 
 ### Q3: How do I switch between system allocator and mimalloc?
 
 **Answer:**
-Use the allocator type flag at compile time:
+Edit the `UVHTTP_ALLOCATOR_TYPE` option in `CMakeLists.txt`, then rebuild:
 
 ```bash
-# System allocator (default)
-cmake -DUVHTTP_ALLOCATOR_TYPE=0 ..
-
-# mimalloc allocator
-cmake -DUVHTTP_ALLOCATOR_TYPE=1 ..
+make build
 ```
 
 ---
@@ -447,8 +434,7 @@ uvhttp_server_set_config(server, config);
 valgrind --leak-check=full --show-leak-kinds=all ./your_server
 
 # Or build with AddressSanitizer
-cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON ..
-make
+make build
 ./your_server
 ```
 
@@ -489,8 +475,7 @@ uvhttp_tls_context_enable_client_auth(tls_ctx, 0);
 #define UVHTTP_FEATURE_LOGGING 1
 
 # 2. Build in Debug mode
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-make
+make build
 
 # 3. Run with debug output
 ./your_server

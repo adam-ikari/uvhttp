@@ -77,23 +77,21 @@ collect2: error: ld returned 1 exit status
    cd deps/libuv
    mkdir build && cd build
    cmake .. -DBUILD_TESTING=OFF
-   make -j$(nproc)
+   make build
    ```
 
 2. **构建 mbedtls**
    ```bash
    cd deps/mbedtls
    mkdir build && cd build
-   cmake ..
-   make -j$(nproc)
+   make build
    ```
 
 3. **构建 llhttp**
    ```bash
    cd deps/llhttp
    mkdir build && cd build
-   cmake ..
-   make -j$(nproc)
+   make build
    ```
 
 4. **构建 xxhash**
@@ -106,8 +104,7 @@ collect2: error: ld returned 1 exit status
    ```bash
    cd deps/mimalloc
    mkdir build && cd build
-   cmake ..
-   make -j$(nproc)
+   make build
    ```
 
 6. **更新 CMakeLists.txt**
@@ -955,21 +952,19 @@ echo "Building libuv..."
 cd "$PROJECT_ROOT/deps/libuv"
 mkdir -p build && cd build
 cmake .. -DBUILD_TESTING=OFF
-make -j$(nproc)
+make build
 
 # Build mbedtls
 echo "Building mbedtls..."
 cd "$PROJECT_ROOT/deps/mbedtls"
 mkdir -p build && cd build
-cmake ..
-make -j$(nproc)
+make build
 
 # Build llhttp
 echo "Building llhttp..."
 cd "$PROJECT_ROOT/deps/llhttp"
 mkdir -p build && cd build
-cmake ..
-make -j$(nproc)
+make build
 
 # Build xxhash
 echo "Building xxhash..."
@@ -980,8 +975,7 @@ make
 echo "Building mimalloc..."
 cd "$PROJECT_ROOT/deps/mimalloc"
 mkdir -p build && cd build
-cmake ..
-make -j$(nproc)
+make build
 
 echo "All dependencies built successfully!"
 ```

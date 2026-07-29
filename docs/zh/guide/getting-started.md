@@ -30,16 +30,8 @@ UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中
 git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
 
-# 创建构建目录
-mkdir build && cd build
-
-# 配置项目
-
-> **注意**: `--recurse-submodules` 参数会自动克隆所有依赖。如果忘记使用此参数，可以运行 `git submodule update --init --recursive` 来补全。
-cmake ..
-
-# 编译
-make -j$(nproc)
+# 构建项目
+make build
 
 # 运行测试（可选）
 make test
@@ -138,21 +130,11 @@ uvhttp/
 
 ## 配置选项
 
+可通过修改 `CMakeLists.txt` 中的 `option()` 配置编译选项，然后运行 `make build`：
+
 ```bash
-# 启用 WebSocket 支持
-cmake -DBUILD_WITH_WEBSOCKET=ON ..
-
-# 启用 mimalloc 分配器
-cmake -DBUILD_WITH_MIMALLOC=ON ..
-
-# Debug 模式
-cmake -DENABLE_DEBUG=ON ..
-
-# 启用代码覆盖率
-cmake -DENABLE_COVERAGE=ON ..
-
-# 启用示例程序编译
-cmake -DBUILD_EXAMPLES=ON ..
+# 修改 CMakeLists.txt 中的选项后构建
+make build
 ```
 
 ## 下一步

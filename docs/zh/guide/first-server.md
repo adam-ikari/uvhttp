@@ -89,8 +89,7 @@ int main() {
 
 ```bash
 # 方法 1: 使用 CMake
-mkdir build && cd build
-cmake ..
+make build
 make hello_world
 
 # 方法 2: 直接编译

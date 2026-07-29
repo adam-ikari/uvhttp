@@ -136,33 +136,27 @@ cmake -DUVHTTP_FEATURE_LOGGING=OFF ..
 
 ### 标准构建
 ```bash
-mkdir build && cd build
-cmake ..
-make
+make build
 ```
 
 ### 调试构建
 ```bash
-cmake -DENABLE_DEBUG=ON ..
-make
+make build
 ```
 
 ### 覆盖率构建
 ```bash
-cmake -DENABLE_COVERAGE=ON ..
-make
+make build
 ```
 
 ### 使用 mimalloc
 ```bash
-cmake -DBUILD_WITH_MIMALLOC=ON ..
-make
+make build
 ```
 
 ### 组合选项
 ```bash
-cmake -DENABLE_DEBUG=ON -DENABLE_COVERAGE=ON -DBUILD_WITH_MIMALLOC=ON ..
-make
+make build
 ```
 
 ## 安全考虑

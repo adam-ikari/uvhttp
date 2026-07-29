@@ -27,7 +27,7 @@ cd uvhttp
 
 # 2. 编译测试版本
 cd test/
-make -f Makefile.testability
+make build
 
 > **注意**: `--recurse-submodules` 参数会自动克隆所有依赖。如果忘记使用此参数，可以运行 `git submodule update --init --recursive` 来补全。
 
@@ -443,7 +443,7 @@ uvhttp_response_set_status(response, 999);    // 无效状态码
 运行提供的验证测试：
 ```bash
 cd test/
-make -f Makefile.testability test
+make test
 ```
 
 预期输出：
@@ -485,8 +485,7 @@ error: uvhttp_test_helpers.h: No such file or directory
 ```bash
 # 确保在正确的目录编译
 cd test/
-make -f Makefile.testability clean
-make -f Makefile.testability
+make build
 
 # 或手动指定包含路径
 gcc -I../include -DUVHTTP_TEST_MODE=1 source.c
@@ -499,7 +498,7 @@ undefined reference to `uvhttp_test_memory_tracker_init'
 **解决方案：**
 ```bash
 # 确保链接了所有必要的源文件
-make -f Makefile.testability LDFLAGS="-luv --coverage"
+make build
 ```
 
 #### 运行时问题

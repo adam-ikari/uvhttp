@@ -647,7 +647,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_DEBUG=OFF -DENABLE_COVERAGE=OFF
 
 # 2. 编译跑分程序
-make -j$(nproc)
+make build
 
 # 3. 启动跑分服务器
 ./build/dist/bin/benchmark_unified &

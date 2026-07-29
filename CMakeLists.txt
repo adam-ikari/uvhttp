@@ -601,6 +601,8 @@ list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_time_mock.cpp")
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_mock_coverage.cpp")
 # 排除 mock 测试文件（它们在单独的循环中处理）
 list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_mock\\.cpp")
+list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_mock_test\\.cpp")
+list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_libuv_fail\\.cpp")
 
 # Add test helper files
 set(TEST_HELPER_FILES test/unit/test_time_mock.cpp test/unit/test_loop_helper.cpp)
@@ -676,6 +678,8 @@ foreach(test_file ${GTEST_TEST_FILES})
     target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
     # Enable statistics for tests
     target_compile_definitions(${test_name} PRIVATE UVHTTP_FEATURE_STATISTICS=1)
+    # Expose internal functions for testability
+    target_compile_definitions(${test_name} PRIVATE UVHTTP_EXPOSE_INTERNALS)
     
     # Common include directories
     target_include_directories(${test_name} PRIVATE
@@ -696,7 +700,7 @@ endforeach()
 # ============================================================================
 # Compile mock tests with libuv mock library
 # ============================================================================
-file(GLOB MOCK_TEST_FILES test/unit/test_*_mock*.cpp)
+file(GLOB MOCK_TEST_FILES test/unit/test_*_mock*.cpp test/unit/test_*_libuv_fail*.cpp)
 list(FILTER MOCK_TEST_FILES EXCLUDE REGEX ".*disabled.*")
 # 排除辅助文件（test_time_mock.cpp 和 test_loop_helper.cpp）
 list(FILTER MOCK_TEST_FILES EXCLUDE REGEX ".*test_time_mock\\.cpp")
@@ -744,6 +748,10 @@ foreach(test_file ${MOCK_TEST_FILES})
         -Wl,--wrap=uv_strerror
         -Wl,--wrap=uv_hrtime
         -Wl,--wrap=uv_buf_init
+        -Wl,--wrap=uv_try_write
+        -Wl,--wrap=uv_tcp_getpeername
+        -Wl,--wrap=uv_idle_stop
+        -Wl,--wrap=uv_tcp_getsockname
     )
     
     add_dependencies(${test_name} libuv xxhash gtest libuv_mock llhttp)
@@ -785,6 +793,7 @@ if(BUILD_WITH_MIMALLOC)
     add_dependencies(uvhttp_unit_tests mimalloc)
 endif()
 target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+    target_compile_definitions(uvhttp_unit_tests PRIVATE UVHTTP_FEATURE_STATISTICS=1 UVHTTP_EXPOSE_INTERNALS)
 # Link googletest first, then LIBS (gmock_main depends on gtest)
 target_link_libraries(uvhttp_unit_tests ${GTEST_LIBS} ${LIBS})
 target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/include)
@@ -949,9 +958,20 @@ if(ENABLE_COVERAGE)
     list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_loop_helper.cpp")
     list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_time_mock.cpp")
     list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_mock_coverage.cpp")
-    
+    list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_mock\\.cpp")
+    list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_mock_test\\.cpp")
+
     set(ALL_TEST_EXECUTABLES)
     foreach(test_file ${GTEST_TEST_FILES})
+        get_filename_component(test_name ${test_file} NAME_WE)
+        list(APPEND ALL_TEST_EXECUTABLES ${test_name})
+    endforeach()
+
+    # Also include mock test files (they need libuv_mock)
+    file(GLOB MOCK_TEST_FILES_FULL test/unit/test_*_mock*.cpp test/unit/test_*_libuv_fail*.cpp)
+    list(FILTER MOCK_TEST_FILES_FULL EXCLUDE REGEX ".*test_time_mock\\.cpp")
+    list(FILTER MOCK_TEST_FILES_FULL EXCLUDE REGEX ".*test_loop_helper\\.cpp")
+    foreach(test_file ${MOCK_TEST_FILES_FULL})
         get_filename_component(test_name ${test_file} NAME_WE)
         list(APPEND ALL_TEST_EXECUTABLES ${test_name})
     endforeach()

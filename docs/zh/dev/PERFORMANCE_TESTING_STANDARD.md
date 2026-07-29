@@ -161,7 +161,7 @@ cmake -DBUILD_WITH_WEBSOCKET=ON \
 make clean
 
 # 编译（使用所有 CPU 核心）
-make -j$(nproc)
+make build
 
 # 验证编译结果
 ls -lh build/dist/lib/libuvhttp.a

@@ -70,16 +70,16 @@ criteria for the UVHTTP test suite.
 
 ```bash
 # All tests
-make -f GNUmakefile test
+make test
 
 # Specific test (via ctest)
 cd build && ctest -R "test_router"
 
 # Memory safety
-make -f GNUmakefile verify-memory-safety
+make verify-memory-safety
 
 # Coverage
-make -f GNUmakefile coverage
+make coverage
 ```
 
 ## Continuous Verification
