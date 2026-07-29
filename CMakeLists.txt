@@ -170,6 +170,17 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
 if(BUILD_WITH_STATIC_FILES)
     add_definitions(-DUVHTTP_FEATURE_STATIC_FILES=1)
     message(STATUS "Static files support: ENABLED")
+
+    # Post-build: pre-compress static files for zero-copy gzip serving
+    # Only runs when a static root is specified via STATIC_ROOT cache variable.
+    # Example: cmake -B build -DSTATIC_ROOT=/var/www/html
+    if(DEFINED STATIC_ROOT AND EXISTS "${STATIC_ROOT}")
+        add_custom_target(precompress-static ALL
+            COMMAND ${CMAKE_SOURCE_DIR}/scripts/precompress-static.sh
+                "${STATIC_ROOT}" --quiet
+            COMMENT "Pre-compressing static files in ${STATIC_ROOT}"
+        )
+    endif()
 else()
     add_definitions(-DUVHTTP_FEATURE_STATIC_FILES=0)
     message(STATUS "Static files support: DISABLED")
