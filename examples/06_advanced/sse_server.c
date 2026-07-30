@@ -3,15 +3,8 @@
  * @brief Server-Sent Events (SSE) example
  *
  * Demonstrates real-time event streaming using standard HTTP/1.1.
- * SSE is simpler than WebSocket: unidirectional, text-based, works
- * over plain HTTP without upgrade.
- *
- * Build:
- *   gcc -std=c99 -I../include sse_server.c -o sse_server
- *   -L../build/dist/lib -luvhttp -luv -lpthread -lm -ldl
- *
- * Run:
- *   ./sse_server
+ * Uses uv_timer to send events asynchronously without blocking the
+ * event loop.
  *
  * Test:
  *   curl -N http://127.0.0.1:8080/events
@@ -23,11 +16,17 @@
 #include <string.h>
 #include <time.h>
 
-/* ========== SSE helper ========== */
+/* ========== SSE context (per-connection state) ========== */
 
-/* Send an SSE event via uvhttp_response_send_raw.
- * The response must already have been started with status 200 and
- * Content-Type: text/event-stream before calling this. */
+typedef struct {
+    uvhttp_response_t* resp;   /* SSE response handle */
+    uv_timer_t timer;          /* periodic event timer */
+    int count;                 /* event counter */
+    int max_events;            /* stop after this many */
+} sse_ctx_t;
+
+/* ========== SSE event sender ========== */
+
 static int sse_send_event(const char* event, const char* data,
                            uvhttp_response_t* resp) {
     char buf[4096];
@@ -41,39 +40,68 @@ static int sse_send_event(const char* event, const char* data,
     return uvhttp_response_send_raw(buf, n, resp->client, resp);
 }
 
+/* ========== Timer callback (fires every 1s) ========== */
+
+static void sse_timer_cb(uv_timer_t* timer) {
+    sse_ctx_t* ctx = (sse_ctx_t*)timer->data;
+    if (!ctx || !ctx->resp) return;
+
+    if (ctx->count >= ctx->max_events) {
+        /* Send done event and stop */
+        sse_send_event("done", "{\"reason\": \"max_events\"}", ctx->resp);
+        uv_timer_stop(timer);
+        uvhttp_free(ctx);
+        return;
+    }
+
+    char data[128];
+    time_t now = time(NULL);
+    snprintf(data, sizeof(data),
+             "{\"count\": %d, \"timestamp\": %ld}", ctx->count, (long)now);
+
+    if (sse_send_event("tick", data, ctx->resp) != 0) {
+        /* Client disconnected — stop timer and free context */
+        uv_timer_stop(timer);
+        uvhttp_free(ctx);
+        return;
+    }
+    ctx->count++;
+}
+
 /* ========== SSE event handler ========== */
 
 static int events_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     (void)req;
 
-    /* Set SSE headers */
-    uvhttp_response_set_status(resp, 200);
-    uvhttp_response_set_header(resp, "Content-Type", "text/event-stream");
-    uvhttp_response_set_header(resp, "Cache-Control", "no-cache");
-    uvhttp_response_set_header(resp, "Connection", "keep-alive");
+    /* Set SSE headers and send HTTP response head directly.
+     * We cannot use uvhttp_response_send because it sets Content-Length.
+     * SSE needs an unbounded response stream. */
+    const char* head =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/event-stream\r\n"
+        "Cache-Control: no-cache\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n";
+    uvhttp_response_send_raw(head, strlen(head), resp->client, resp);
 
     /* Send initial comment (some proxies drop the first message) */
     uvhttp_response_send_raw(": SSE connection established\n\n", 30, resp->client, resp);
 
-    /* Send periodic events */
-    int count = 0;
-    while (count < 10) {
-        char data[128];
-        time_t now = time(NULL);
-        snprintf(data, sizeof(data),
-                 "{\"count\": %d, \"timestamp\": %ld}", count, (long)now);
+    /* Allocate per-connection context */
+    sse_ctx_t* ctx = uvhttp_alloc(sizeof(sse_ctx_t));
+    if (!ctx) return UVHTTP_ERROR_OUT_OF_MEMORY;
 
-        if (sse_send_event("tick", data, resp) != 0) {
-            break; /* Client disconnected */
-        }
-        count++;
+    ctx->resp = resp;
+    ctx->count = 0;
+    ctx->max_events = 10;
 
-        struct timespec ts = {1, 0};
-        nanosleep(&ts, NULL);
-    }
+    /* Start a 1-second periodic timer on the default loop */
+    uv_timer_init(uv_default_loop(), &ctx->timer);
+    ctx->timer.data = ctx;
+    uv_timer_start(&ctx->timer, sse_timer_cb, 1000, 1000);
 
-    /* Send done event */
-    sse_send_event("done", "{\"reason\": \"max_events\"}", resp);
+    /* Send initial comment (some proxies drop the first message) */
+    uvhttp_response_send_raw(": SSE connection established\n\n", 30, resp->client, resp);
 
     return 0;
 }
@@ -147,8 +175,8 @@ int main(int argc, char** argv) {
     }
 
     printf("SSE server running on http://127.0.0.1:%d\n", port);
-    printf("  curl -N http://127.0.0.1:8080/events\n");
-    printf("  Browser: http://127.0.0.1:8080/\n");
+    printf("  curl -N http://127.0.0.1:%d/events\n", port);
+    printf("  Browser: http://127.0.0.1:%d/\n", port);
 
     uv_run(loop, UV_RUN_DEFAULT);
 
