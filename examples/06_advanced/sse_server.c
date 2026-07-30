@@ -38,7 +38,7 @@ static int sse_send_event(const char* event, const char* data,
     }
     n += snprintf(buf + n, sizeof(buf) - n, "data: %s\n\n", data);
 
-    return uvhttp_response_send_raw(buf, n, resp);
+    return uvhttp_response_send_raw(buf, n, resp->client, resp);
 }
 
 /* ========== SSE event handler ========== */
@@ -53,7 +53,7 @@ static int events_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     uvhttp_response_set_header(resp, "Connection", "keep-alive");
 
     /* Send initial comment (some proxies drop the first message) */
-    uvhttp_response_send_raw(": SSE connection established\n\n", 30, resp);
+    uvhttp_response_send_raw(": SSE connection established\n\n", 30, resp->client, resp);
 
     /* Send periodic events */
     int count = 0;
@@ -109,7 +109,16 @@ static int index_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
 
 /* ========== Main ========== */
 
-int main(void) {
+int main(int argc, char** argv) {
+    int port = 8080;
+    if (argc > 1) {
+        port = atoi(argv[1]);
+        if (port <= 0 || port > 65535) {
+            fprintf(stderr, "Invalid port: %s\n", argv[1]);
+            return 1;
+        }
+    }
+
     uv_loop_t* loop = uv_default_loop();
     uvhttp_server_t* server = NULL;
     uvhttp_error_t err;
@@ -131,13 +140,13 @@ int main(void) {
     uvhttp_router_add_route(router, "/events", events_handler);
     uvhttp_server_set_router(server, router);
 
-    err = uvhttp_server_listen(server, "127.0.0.1", 8080);
+    err = uvhttp_server_listen(server, "127.0.0.1", port);
     if (err != UVHTTP_OK) {
         fprintf(stderr, "Failed to listen: %s\n", uvhttp_error_string(err));
         return 1;
     }
 
-    printf("SSE server running on http://127.0.0.1:8080\n");
+    printf("SSE server running on http://127.0.0.1:%d\n", port);
     printf("  curl -N http://127.0.0.1:8080/events\n");
     printf("  Browser: http://127.0.0.1:8080/\n");
 

@@ -5,22 +5,22 @@ set(UVHTTP_LIB ${CMAKE_BINARY_DIR}/dist/lib/libuvhttp.a)
 
 # API 演示
 add_executable(api_demo api_demo.c)
-target_link_libraries(api_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp cjson pthread m dl)
-target_include_directories(api_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
+target_link_libraries(api_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
+target_include_directories(api_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
 add_dependencies(api_demo uvhttp)
 uvhttp_add_example_dependencies(api_demo)
 
 # JSON API 演示
 add_executable(json_api_demo json_api_demo.c)
-target_link_libraries(json_api_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp cjson pthread m dl)
-target_include_directories(json_api_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
+target_link_libraries(json_api_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
+target_include_directories(json_api_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
 add_dependencies(json_api_demo uvhttp)
 uvhttp_add_example_dependencies(json_api_demo)
 
 # 配置演示
 add_executable(config_demo config_demo.c)
-target_link_libraries(config_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp cjson pthread m dl)
-target_include_directories(config_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
+target_link_libraries(config_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
+target_include_directories(config_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
 add_dependencies(config_demo uvhttp)
 uvhttp_add_example_dependencies(config_demo)
 
@@ -33,8 +33,8 @@ uvhttp_add_example_dependencies(simple_config)
 
 # 统一响应演示
 add_executable(unified_response_demo unified_response_demo.c)
-target_link_libraries(unified_response_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp cjson pthread m dl)
-target_include_directories(unified_response_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
+target_link_libraries(unified_response_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
+target_include_directories(unified_response_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
 add_dependencies(unified_response_demo uvhttp)
 uvhttp_add_example_dependencies(unified_response_demo)
 
@@ -54,8 +54,8 @@ uvhttp_add_example_dependencies(protocol_upgrade_example)
 
 # 上下文注入示例
 add_executable(context_injection context_injection.c)
-target_link_libraries(context_injection PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp cjson pthread m dl)
-target_include_directories(context_injection PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/cjson ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
+target_link_libraries(context_injection PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
+target_include_directories(context_injection PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
 add_dependencies(context_injection uvhttp)
 uvhttp_add_example_dependencies(context_injection)
 
@@ -65,3 +65,10 @@ target_link_libraries(hierarchical_allocator_example PRIVATE ${UVHTTP_LIB} libuv
 target_include_directories(hierarchical_allocator_example PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
 add_dependencies(hierarchical_allocator_example uvhttp)
 uvhttp_add_example_dependencies(hierarchical_allocator_example)
+
+# SSE 服务器示例
+add_executable(sse_server sse_server.c)
+target_link_libraries(sse_server PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
+target_include_directories(sse_server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
+add_dependencies(sse_server uvhttp)
+uvhttp_add_example_dependencies(sse_server)
