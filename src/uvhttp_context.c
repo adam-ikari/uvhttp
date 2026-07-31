@@ -46,7 +46,7 @@
 
 uvhttp_error_t uvhttp_context_create(uv_loop_t* loop,
                                      uvhttp_context_t** context) {
-    if (!context) {
+    if (!loop || !context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
