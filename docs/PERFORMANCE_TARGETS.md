@@ -107,3 +107,4 @@ cmake --build build_bench -j$(nproc) --target test_performance_e2e
 | Date | Version | Simple RPS | JSON RPS | Large RPS | Notes |
 |------|---------|-----------|----------|-----------|-------|
 | 2026-07-25 | 2.5.1 | 21,529 | 21,451 | 21,314 | Baseline (Gold tier goal) |
+| 2026-07-31 | 2.5.1 | 18,108 | — | — | Removed GCC extensions. ~6.6% perf cost, acceptable for portability. |

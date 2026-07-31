@@ -12,8 +12,8 @@
 #    include <stdlib.h>
 #    include <string.h>
 
-/* Hash bucket structure */
-typedef struct {
+/* Hash bucket structure - optimized for cache locality */
+typedef struct __attribute__((packed)) {
     char path[UVHTTP_MAX_ROUTE_PATH_LEN];
     uvhttp_method_t method;
     uvhttp_request_handler_t handler;
