@@ -562,6 +562,36 @@ uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server,
     return UVHTTP_OK;
 }
 
+/* Health check endpoint handler */
+static int health_check_handler(uvhttp_request_t* req,
+                                uvhttp_response_t* resp) {
+    (void)req;
+    const char* body = "{\"status\":\"ok\"}";
+    uvhttp_response_set_status(resp, 200);
+    uvhttp_response_set_header(resp, "Content-Type", "application/json");
+    uvhttp_response_set_body(resp, body, strlen(body));
+    return uvhttp_response_send(resp);
+}
+
+uvhttp_error_t uvhttp_server_enable_health_check(uvhttp_server_t* server,
+                                                 const char* path) {
+    if (!server || !path) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    /* Register the health check handler on the server's router.
+     * If the server has no router yet, create one. */
+    if (!server->router) {
+        uvhttp_error_t err = uvhttp_router_new(&server->router);
+        if (err != UVHTTP_OK) {
+            return err;
+        }
+    }
+
+    return uvhttp_router_add_route(server->router, path,
+                                   health_check_handler);
+}
+
 uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server,
                                          struct uvhttp_context* context) {
     if (!server) {
