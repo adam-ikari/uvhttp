@@ -36,6 +36,62 @@ features:
 
 ---
 
+## 📊 性能基准
+
+### 关键指标 (v2.6.0)
+
+吞吐量因硬件而异。以下数值具有代表性；在同类 VM 上，该库可维持约 17K–20K RPS（100 连接）/ 约 20K 峰值（低并发），且**零 socket 错误**。使用 `wrk -t4 -c100 -d10s` 复现。
+
+| 指标 | 数值 | 说明 |
+|--------|-------|-------|
+| **峰值吞吐量** | ~20K RPS | 低并发（10 连接），HTTP/1.1 |
+| **高并发** | ~17–19K RPS | 100 并发连接 |
+| **静态文件** | 12,510 RPS | 中等并发，1MB 文件 |
+| **API 路由** | 13,950 RPS | REST 端点 |
+| **平均延迟** | ~9–21 ms | P50–P90，100 连接 |
+| **错误率** | 0% | 负载下零 socket 错误 |
+| **测试套件** | 101/101 通过 | ASan + UBSan 验证通过 |
+
+### 内存安全与质量亮点
+
+- **AddressSanitizer**：完整 101 项测试套件在启用泄漏检测下通过——零泄漏、零 use-after-free、零缓冲区溢出
+- **UndefinedBehaviorSanitizer**：完整套件通过——零未定义行为
+- **测试用例**：101 项单元/集成测试，全部通过
+- **CI/CD**：每夜 ASan + UBSan 任务（见 `.github/workflows/ci-nightly.yml`）
+- **一键验证**：`make verify-memory-safety`——参见[内存安全](./MEMORY_SAFETY.md)
+
+### 性能优化
+
+- **Keep-Alive**：连接复用避免每请求重新建立 TCP
+- **TCP**：默认启用 `TCP_NODELAY` 和 `TCP_KEEPALIVE`
+- **路由**：O(1) 前缀匹配路由解析
+- **分配器**：可选 mimalloc
+- **libuv**：直接调用，无抽象层
+
+---
+
+## 🎯 核心原则
+
+### 1. 专注核心功能
+UVHTTP 处理 HTTP/1.1 和 WebSocket 协议细节，不强加业务逻辑。应用层控制认证、数据库等特性。
+
+### 2. 零开销抽象
+抽象均为编译期宏，生产构建无运行时成本。库直接调用 libuv，无中间层。
+
+### 3. 极简工程
+代码库崇尚简洁。自包含依赖和干净架构保持维护成本低。
+
+### 4. 测试分离
+生产代码不含测试专用代码。测试使用链接器包装和外部 mock 框架，库保持干净。
+
+### 5. 零全局变量
+所有状态保存在 libuv 数据指针（`loop->data` 或 `server->context`）中。支持多实例和单元测试，无全局状态污染。
+
+### 6. 错误处理
+统一的错误类型携带代码、描述和恢复提示。每个失败点都被检查和报告。
+
+---
+
 ## 为什么选 UVHTTP（对比其他轻量 C HTTP 库）
 
 大多数轻量 C HTTP 库只追求峰值 RPS。UVHTTP 优化的核心是**内存安全**——这是生产环境不可妥协的属性。一个能在 10 秒基准测试中存活下来的每连接泄漏或 use-after-free，会在一周内让嵌入式设备 OOM。UVHTTP 是轻量、可嵌入、支持 32 位的 C 库，并在每夜 CI 中以 ASan 与 UBSan 双重验证，证明这类 bug 已根除。
@@ -51,10 +107,28 @@ features:
 > “未公开”表示该项目未发布 sanitizer-clean 测试门禁，故“无 finding”不可验证。
 > UVHTTP 的可通过 `make verify-memory-safety` 一键复现。
 
-## 平台支持
+## 🔧 快速安装
 
-当前支持: Linux
+```bash
+# 克隆仓库（含子模块）
+git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
+cd uvhttp
 
-未来计划: macOS, Windows, FreeBSD, WebAssembly (WASM) 和其他 Unix-like 系统
+# 使用默认选项构建
+make build
 
-UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中扩展对其他操作系统和平台的支持。
+# 运行示例服务器
+./build/dist/bin/hello_world
+```
+
+详细的安装说明和构建选项请参见[安装指南](/zh/guide/build)。
+
+---
+
+## 📚 文档
+
+- **[快速开始](/zh/guide/getting-started)** - 入门和快速上手
+- **[API 参考](/zh/api/introduction)** - 完整的 API 文档
+- **[安装指南](/zh/guide/INSTALL_CMAKE)** - 安装和构建指南
+- **[性能指南](/zh/guide/performance)** - 性能优化建议
+- **[常见问题](/zh/guide/FAQ)** - 常见问题解答

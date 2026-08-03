@@ -119,10 +119,31 @@ gcc hello.c -Iinclude -Lbuild/dist/lib -luvhttp -lpthread -luv -o hello
 
 Visit `http://localhost:8080/hello` in your browser!
 
+## Project Structure
+
+```
+uvhttp/
+├── include/           # Public headers
+├── src/               # Source implementation
+├── docs/              # Documentation
+├── examples/          # Example programs
+├── test/              # Tests
+└── build/             # Build output directory
+```
+
+## Configuration Options
+
+Build options can be configured by editing `option()` entries in `CMakeLists.txt`, then rebuilding:
+
+```bash
+# Rebuild after editing CMakeLists.txt options
+make build
+```
+
 ## Next Steps
 
-- Learn about [routing (Chinese)](../zh/guide/TUTORIAL.md)
-- Explore [WebSocket support](../zh/guide/websocket.md)
+- Learn about [routing](../zh/guide/TUTORIAL.md)
+- Explore [WebSocket support](./websocket.md)
 - Check out [API reference](../api/API_REFERENCE.md)
 
 ## Need Help?

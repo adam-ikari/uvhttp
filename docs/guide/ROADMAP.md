@@ -4,7 +4,7 @@
 
 UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP server library for C applications, setting the standard for production-grade, zero-overhead networking solutions.
 
-## Current Status (v2.5.0)
+## Current Status (v2.6.0)
 
 ### ✅ Completed
 - HTTP/1.1 server (23,226 RPS)
@@ -179,14 +179,14 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 ## Milestones
 
 ### Q1 2026 (Completed)
-- ✅ v2.5.0 release
+- ✅ v2.6.0 release
 - ✅ 32-bit support
 - ✅ Python tools
 - ✅ Security hardening
 - ✅ Documentation enhancement
 
 ### Q2 2026
-- 🔄 v2.6.0 release
+- ✅ v2.6.0 release
 - 🔄 macOS/Windows support
 - 🔄 Performance optimization
 - 🔄 Enhanced testing
