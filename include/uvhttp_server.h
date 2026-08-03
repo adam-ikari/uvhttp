@@ -345,6 +345,14 @@ const char* uvhttp_get_param(uvhttp_request_t* request, const char* name);
 const char* uvhttp_get_header(uvhttp_request_t* request, const char* name);
 const char* uvhttp_get_body(uvhttp_request_t* request);
 
+/* Health check endpoint.
+ * Registers a handler at the given path that returns HTTP 200 with
+ * a JSON body {"status":"ok"}. Useful for load balancers and
+ * orchestration probes. Returns UVHTTP_ERROR_INVALID_PARAM if server
+ * or path is NULL. */
+uvhttp_error_t uvhttp_server_enable_health_check(uvhttp_server_t* server,
+                                                 const char* path);
+
 /* Server runtime and cleanup */
 int uvhttp_server_run(uvhttp_server_builder_t* server);
 void uvhttp_server_stop_simple(uvhttp_server_builder_t* server);

@@ -236,3 +236,60 @@ TEST(UvhttpContextBoundaryTest, CreateNullOut) {
 TEST(UvhttpContextBoundaryTest, DestroyNull) {
     uvhttp_context_destroy(NULL);
 }
+
+/* ========== Health check endpoint ========== */
+
+TEST(UvhttpHealthCheckTest, EnableNullServer) {
+    uvhttp_error_t err = uvhttp_server_enable_health_check(NULL, "/healthz");
+    EXPECT_NE(err, UVHTTP_OK);
+}
+
+TEST(UvhttpHealthCheckTest, EnableNullPath) {
+    uv_loop_t* loop = uv_loop_new();
+    uvhttp_server_t* srv = NULL;
+    uvhttp_server_new(loop, &srv);
+    uvhttp_error_t err = uvhttp_server_enable_health_check(srv, NULL);
+    EXPECT_NE(err, UVHTTP_OK);
+    uvhttp_server_free(srv);
+    uv_run(loop, UV_RUN_NOWAIT);
+    uv_loop_close(loop);
+    uvhttp_free(loop);
+}
+
+TEST(UvhttpHealthCheckTest, EnableCreatesRouter) {
+    uv_loop_t* loop = uv_loop_new();
+    uvhttp_server_t* srv = NULL;
+    uvhttp_server_new(loop, &srv);
+    ASSERT_NE(srv, nullptr);
+
+    /* Server has no router yet */
+    EXPECT_EQ(srv->router, nullptr);
+
+    uvhttp_error_t err = uvhttp_server_enable_health_check(srv, "/healthz");
+    EXPECT_EQ(err, UVHTTP_OK);
+    EXPECT_NE(srv->router, nullptr);
+
+    uvhttp_server_free(srv);
+    uv_run(loop, UV_RUN_NOWAIT);
+    uv_loop_close(loop);
+    uvhttp_free(loop);
+}
+
+TEST(UvhttpHealthCheckTest, EnableOnExistingRouter) {
+    uv_loop_t* loop = uv_loop_new();
+    uvhttp_server_t* srv = NULL;
+    uvhttp_server_new(loop, &srv);
+
+    uvhttp_router_t* router = NULL;
+    uvhttp_router_new(&router);
+    uvhttp_server_set_router(srv, router);
+
+    uvhttp_error_t err = uvhttp_server_enable_health_check(srv, "/healthz");
+    EXPECT_EQ(err, UVHTTP_OK);
+    EXPECT_EQ(srv->router, router);
+
+    uvhttp_server_free(srv);
+    uv_run(loop, UV_RUN_NOWAIT);
+    uv_loop_close(loop);
+    uvhttp_free(loop);
+}
