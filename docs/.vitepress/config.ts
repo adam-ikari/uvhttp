@@ -54,17 +54,17 @@ export default defineConfig({
       name: 'UVHTTP',
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Linux',
-      softwareVersion: '2.5.1',
+      softwareVersion: "2.6.0",
       programmingLanguage: 'C (C99)',
       description: 'Lightweight, embeddable HTTP/1.1 and WebSocket server library built on libuv, with ASan/UBSan-verified memory safety and 32-bit embedded support.',
       url: 'https://adam-ikari.github.io/uvhttp',
-      downloadUrl: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.5.1',
+      downloadUrl: "https://github.com/adam-ikari/uvhttp/releases/tag/v2.6.0",
       author: { '@type': 'Organization', name: 'UVHTTP Contributors' },
       license: 'https://github.com/adam-ikari/uvhttp/blob/main/LICENSE',
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
       featureList: [
         'HTTP/1.1 and WebSocket server',
-        'ASan/UBSan-verified memory safety (91/91 tests)',
+        'ASan/UBSan-verified memory safety (101/101 tests)',
         '32-bit embedded support',
         'Zero-copy sendfile for large files',
         'TLS 1.3 via mbedtls',
@@ -90,7 +90,7 @@ export default defineConfig({
             text: 'Download',
             items: [
               { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' },
-              { text: 'Release v2.5.1', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.5.1' }
+              { text: 'Release v2.6.0', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.6.0' }
             ]
           }
         ],
@@ -103,12 +103,24 @@ export default defineConfig({
                 { text: 'Introduction', link: '/guide/introduction' },
                 { text: 'Quick Start', link: '/guide/getting-started' },
                 { text: 'Build Guide', link: '/guide/build' },
-                { text: 'Installation', link: '/guide/INSTALL_CMAKE' }
+                { text: 'Installation', link: '/guide/INSTALL_CMAKE' },
+                { text: 'CMake Configuration', link: '/guide/CMAKE_CONFIGURATION' },
+                { text: 'First Server', link: '/guide/first-server' },
+                { text: 'WebSocket', link: '/guide/websocket' }
+              ]
+            },
+            {
+              text: 'Core Concepts',
+              items: [
+                { text: 'Tutorial', link: '/guide/TUTORIAL' },
+                { text: 'libuv Data Pointer', link: '/guide/LIBUV_DATA_POINTER' },
+                { text: 'Unified Response Guide', link: '/guide/UNIFIED_RESPONSE_GUIDE' }
               ]
             },
             {
               text: 'Features',
               items: [
+                { text: 'Rate Limit API', link: '/guide/RATE_LIMIT_API' },
                 { text: 'Static File Server', link: '/guide/STATIC_FILE_SERVER' }
               ]
             },
@@ -122,6 +134,12 @@ export default defineConfig({
               ]
             },
             {
+              text: 'Developer Guide',
+              items: [
+                { text: 'Developer Guide', link: '/guide/DEVELOPER_GUIDE' }
+              ]
+            },
+            {
               text: 'Reference',
               items: [
                 { text: 'Memory Safety', link: '/MEMORY_SAFETY' },
@@ -129,6 +147,7 @@ export default defineConfig({
                 { text: 'Security', link: '/guide/SECURITY' },
                 { text: 'Roadmap', link: '/guide/ROADMAP' },
                 { text: 'Changelog', link: '/guide/CHANGELOG' },
+                { text: 'Performance', link: '/guide/performance' },
                 { text: 'Specifications', link: '/spec/' }
               ]
             }
@@ -191,7 +210,7 @@ export default defineConfig({
             text: '下载', 
             items: [
               { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' },
-              { text: 'v2.5.1 发布', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.5.1' }
+              { text: 'v2.6.0 发布', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.6.0' }
             ]
           }
         ],
