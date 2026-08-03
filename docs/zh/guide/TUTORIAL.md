@@ -2853,15 +2853,15 @@ int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 ## 相关资源
 
 ### 官方文档
-- [API 参考](../api/API_REFERENCE.md)
+- [API 参考](../../api/API_REFERENCE.md)
 - [架构设计](../dev/ARCHITECTURE.md)
 - [开发指南](DEVELOPER_GUIDE.md)
 - [libuv 数据指针](LIBUV_DATA_POINTER.md)
 
 ### 示例程序
-- [基础示例](../examples/01_basics/)
-- [路由示例](../examples/02_routing/)
-- [高级示例](../examples/05_advanced/)
+- [基础示例](https://github.com/adam-ikari/uvhttp/tree/main/examples/01_basics)
+- [路由示例](https://github.com/adam-ikari/uvhttp/tree/main/examples/02_routing)
+- [高级示例](https://github.com/adam-ikari/uvhttp/tree/main/examples/06_advanced)
 
 ### 外部资源
 - [libuv 官方文档](https://docs.libuv.org/)

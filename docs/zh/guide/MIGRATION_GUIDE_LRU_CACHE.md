@@ -190,8 +190,8 @@ TEST(LRUCacheTest, SingleThresholdEviction) { /* ... */ }
 
 如果在迁移过程中遇到问题：
 
-1. 查看 [API 参考](./api/API_REFERENCE.md)
-2. 浏览 [示例](../examples/)
+1. 查看 [API 参考](../../api/API_REFERENCE.md)
+2. 浏览 [示例](https://github.com/adam-ikari/uvhttp/tree/main/examples)
 3. 在 [GitHub](https://github.com/adam-ikari/uvhttp/issues) 上提交 issue
 
 ## 总结

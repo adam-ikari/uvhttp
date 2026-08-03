@@ -1,7 +1,7 @@
 ---
 title: 内存安全 — ASan 与 UBSan 验证
 sync_hash: 5a26c78ba54717d041c4fde52fcf1efa0586cc9c
-description: UVHTTP 的内存安全保证：91 项测试通过 ASan 与 UBSan 验证，每夜 CI 持续验证，一键复现。涵盖已修复的 bug 类别、纵深防御，以及对长期运行与嵌入式场景的意义。
+description: UVHTTP 的内存安全保证：101 项测试通过 ASan 与 UBSan 验证，每夜 CI 持续验证，一键复现。涵盖已修复的 bug 类别、纵深防御，以及对长期运行与嵌入式场景的意义。
 ---
 
 # 内存安全
@@ -12,12 +12,12 @@ UVHTTP 最突出的差异化优势并非单机峰值吞吐（这方面 nginx 与
 
 ## 承诺
 
-完整的 91 项测试套件在以下**两种**配置下均验证通过：
+完整的 101 项测试套件在以下**两种**配置下均验证通过：
 
 | 消毒器 | 检测内容 | 结果 |
 |--------|----------|------|
-| **AddressSanitizer**（含内存泄漏检测） | 堆内存释放后使用、堆缓冲区溢出、栈缓冲区溢出、内存泄漏 | **91/91 pass，零发现** |
-| **UndefinedBehaviorSanitizer** | 有符号整数溢出、非法移位、空指针解引用、对齐错误、越界访问 | **91/91 pass，零发现** |
+| **AddressSanitizer**（含内存泄漏检测） | 堆内存释放后使用、堆缓冲区溢出、栈缓冲区溢出、内存泄漏 | **101/101 pass，零发现** |
+| **UndefinedBehaviorSanitizer** | 有符号整数溢出、非法移位、空指针解引用、对齐错误、越界访问 | **101/101 pass，零发现** |
 
 ASan 与 UBSan 无法在同一个构建中共存，因此以两个独立配置分别运行。两者必须全部为绿色（通过）。
 
@@ -27,10 +27,10 @@ ASan 与 UBSan 无法在同一个构建中共存，因此以两个独立配置�
 make verify-memory-safety
 ```
 
-该命令会在 ASan 与 UBSan 下分别配置并构建测试套件，在每种消毒器下运行完整的 91 项测试，若任一测试失败或任一消毒器报告发现，则以非零状态码退出。一次干净的运行会输出：
+该命令会在 ASan 与 UBSan 下分别配置并构建测试套件，在每种消毒器下运行完整的 101 项测试，若任一测试失败或任一消毒器报告发现，则以非零状态码退出。一次干净的运行会输出：
 
 ```
-==> PASS: full suite clean under ASan and UBSan (91/91 each).
+==> PASS: full suite clean under ASan and UBSan (101/101 each).
 ```
 
 等价的手动命令如下：
@@ -52,6 +52,10 @@ cmake --build build_ubsan -j$(nproc)
 ## 持续验证
 
 内存安全是一项**不回退的不变量（non-regressing invariant）**，而非一次性的检查：
+
+> **覆盖率**：项目代码（不含 deps/）行覆盖率 86%、函数覆盖率 99%。
+
+
 
 - **PR CI 门禁**（`.github/workflows/ci-pr.yml`）：`asan-gate` 作业在每个 PR 上以 ASan 运行测试套件——内存安全不可回退进 `main`。
 - **每夜 CI**（`.github/workflows/ci-nightly.yml`）：`test-memory`（含内存泄漏检测的 ASan）与 `test-ubsan` 作业每夜在各自消毒器下运行完整测试套件。

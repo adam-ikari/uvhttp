@@ -477,5 +477,5 @@ For low-latency environments, consider:
 ## Related Documentation
 
 - [Build Configuration Matrix](BUILD_CONFIGURATION_MATRIX.md)
-- [Developer Guide](guide/DEVELOPER_GUIDE.md)
-- [Performance Benchmark](dev/PERFORMANCE_BENCHMARK.md)
+- [Developer Guide](../zh/guide/DEVELOPER_GUIDE.md)
+- [Performance Benchmark](../zh/dev/PERFORMANCE_BENCHMARK.md)

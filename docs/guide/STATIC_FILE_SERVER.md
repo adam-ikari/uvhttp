@@ -334,6 +334,6 @@ void print_cache_stats(uvhttp_static_context_t* ctx) {
 
 ## See Also
 
-- [FAQ](../FAQ.md) - Common questions and answers
+- [FAQ](./FAQ.md) - Common questions and answers
 - [API Reference](../api/API_REFERENCE.md) - Complete API documentation
-- [Performance Guide](../performance.md) - Performance benchmarks
+- [Performance Guide](./performance.md) - Performance benchmarks

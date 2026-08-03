@@ -245,11 +245,11 @@ make build
 安装完成后，请继续阅读：
 - [快速开始](./getting-started.md) - 5 分钟快速上手
 - [第一个服务器](./first-server.md) - 创建你的第一个 HTTP 服务器
-- [完整教程](../TUTORIAL.md) - 从基础到高级的完整教程
+- [完整教程](./TUTORIAL.md) - 从基础到高级的完整教程
 
 ## 获取帮助
 
 如果遇到安装问题：
-- 查看 [常见问题](./faq.md)
+- 查看 [常见问题](../FAQ.md)
 - 提交 [Issue](https://github.com/adam-ikari/uvhttp/issues)
-- 查看 [错误码参考](../ERROR_CODES.md)
+- 查看 错误码参考

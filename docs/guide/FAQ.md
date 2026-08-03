@@ -510,9 +510,9 @@ make build
 
 ## Related Documentation
 
-- [API Reference](api/API_REFERENCE.md)
-- [Developer Guide](guide/DEVELOPER_GUIDE.md)
-- [Tutorial](guide/TUTORIAL.md)
+- [API Reference](../api/API_REFERENCE.md)
+- [Developer Guide](../zh/guide/DEVELOPER_GUIDE.md)
+- [Tutorial](../zh/guide/TUTORIAL.md)
 
 ---
 

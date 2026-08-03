@@ -37,7 +37,7 @@ For details, see [MEMORY_SAFETY.md](./MEMORY_SAFETY.md).
 
 ## Security-Related Configuration
 
-See the [TLS Configuration Guide](./guide/TLS.md) for best practices on:
+See the [TLS documentation](./guide/build.md) for best practices on:
 - Certificate management
 - Cipher suite selection
 - TLS version configuration

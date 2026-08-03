@@ -858,14 +858,14 @@ wrk -t4 -c100 -d30s http://127.0.0.1:18081/
 
 - [高级编译选项](ADVANCED_BUILD_OPTIONS.md)
 
-- [开发者指南](docs/guide/DEVELOPER_GUIDE.md)
+- [开发者指南](./guide/DEVELOPER_GUIDE.md)
 
-- [构建模式详解](docs/zh/dev/BUILD_MODES.md)
+- [构建模式详解](./dev/BUILD_MODES.md)
 
-- [CMake 目标链接指南](docs/dev/CMAKE_TARGET_LINKING_GUIDE.md)
+- CMAKE_TARGET_LINKING_GUIDE
 
-- [性能基准测试](docs/dev/PERFORMANCE_BENCHMARK.md)
+- [性能基准测试](./dev/PERFORMANCE_BENCHMARK.md)
 
-- [性能测试指南](benchmark/README.md)
+- 性能测试指南（benchmark/README）
 
-- [性能测试标准](docs/dev/PERFORMANCE_TESTING_STANDARD.md)
+- [性能测试标准](./dev/PERFORMANCE_TESTING_STANDARD.md)

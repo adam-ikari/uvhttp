@@ -384,6 +384,6 @@ A: 客户端实现自动重连逻辑，服务器端维护连接状态。
 ## 相关资源
 
 - [WebSocket 协议规范](https://tools.ietf.org/html/rfc6455)
-- [WebSocket API 参考](../API_REFERENCE.md#websocket)
-- [WebSocket 示例代码](../../examples/05_websocket/)
-- [最佳实践](./best-practices.md)
+- [WebSocket API 参考](../../api/API_REFERENCE.md#websocket)
+- [WebSocket 示例代码](https://github.com/adam-ikari/uvhttp/tree/main/examples/05_websocket)
+- best practices
