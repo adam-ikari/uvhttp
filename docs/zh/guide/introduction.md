@@ -14,7 +14,7 @@ UVHTTP 是基于 libuv 的 HTTP/1.1 与 WebSocket 服务器库，面向现代 C 
 - **资源**：零拷贝优化，低内存与 CPU 占用
 - **架构**：64 位与 32 位嵌入式系统
 - **API**：简洁直观，错误处理完善
-- **质量**：零编译警告，91 项测试通过，ASan/UBSan 验证
+- **质量**：零编译警告，101 项测试通过，ASan/UBSan 验证
 
 ### 核心理念
 
@@ -85,7 +85,7 @@ UVHTTP 借助 libuv 的事件驱动架构实现高并发：
 
 ## 性能特征
 
-### 基准测试（v2.5.0）
+### 基准测试（v2.6.0）
 
 ```yaml
 配置:
@@ -165,13 +165,13 @@ server->max_body_size = 10 * 1024 * 1024; // 10MB
 ### 核心概念
 - **[教程](TUTORIAL.md)**：渐进式学习
 - **[libuv 数据指针](LIBUV_DATA_POINTER.md)**：上下文传递
-- **[中间件系统](MIDDLEWARE_SYSTEM.md)**：请求/响应流水线
+- **中间件系统**：请求/响应流水线
 - **[统一响应指南](UNIFIED_RESPONSE_GUIDE.md)**：标准响应模式
 
 ### 高级特性
 - **[限流 API](RATE_LIMIT_API.md)**：令牌桶限流
 - **[静态文件服务器](STATIC_FILE_SERVER.md)**：文件服务
-- **[压缩](../dev/COMPRESSION_FEATURE_REPORT.md)**：零开销压缩
+- **压缩**：零开销压缩
 
 ### 开发者资源
 - **[开发者指南](DEVELOPER_GUIDE.md)**：开发实践
@@ -190,9 +190,9 @@ server->max_body_size = 10 * 1024 * 1024; // 10MB
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_header(res, "X-Powered-By", "UVHTTP/2.5.0");
+    uvhttp_response_set_header(res, "X-Powered-By", "UVHTTP/2.6.0");
 
-    const char* body = "{\"message\":\"Hello from UVHTTP\",\"version\":\"2.5.0\"}";
+    const char* body = "{\"message\":\"Hello from UVHTTP\",\"version\":\"2.6.0\"}";
     uvhttp_response_set_body(res, body, strlen(body));
 
     return uvhttp_response_send(res);
@@ -236,7 +236,7 @@ export LD_LIBRARY_PATH=./build/dist/lib:$LD_LIBRARY_PATH
 
 ### 贡献
 
-在提交 Pull Request 之前，请先阅读[贡献指南](../../CONTRIBUTING.md)。
+在提交 Pull Request 之前，请先阅读[贡献指南](https://github.com/adam-ikari/uvhttp/blob/main/CONTRIBUTING.md)。
 
 ### 获取帮助
 
@@ -246,7 +246,7 @@ export LD_LIBRARY_PATH=./build/dist/lib:$LD_LIBRARY_PATH
 
 ### 许可证
 
-MIT 许可证，详见 [LICENSE](../../LICENSE)。
+MIT 许可证，详见 [LICENSE](https://github.com/adam-ikari/uvhttp/blob/main/LICENSE)。
 
 ---
 
@@ -286,5 +286,5 @@ MIT 许可证，详见 [LICENSE](../../LICENSE)。
 
 - **[快速开始指南](getting-started.md)**：构建第一个服务器
 - **[API 参考](../api/introduction)**：探索完整 API
-- **[示例](../../examples/)**：浏览实用示例
+- **[示例](https://github.com/adam-ikari/uvhttp/tree/main/examples)**：浏览实用示例
 - **[性能基准](../performance.md)**：了解性能特征

@@ -164,6 +164,6 @@ grep UVHTTP_MAX_HEADER_NAME_SIZE build/CMakeCache.txt
 
 ## 相关文档
 
-- [API 参考](../api/API_REFERENCE.md)
+- [API 参考](../../api/API_REFERENCE.md)
 - [性能基准](../dev/PERFORMANCE_BENCHMARK.md)
 - [贡献者指南](DEVELOPER_GUIDE.md)

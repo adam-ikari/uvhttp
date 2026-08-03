@@ -483,8 +483,8 @@ int main(void) {
 ## 参考资源
 
 - [Google Test 文档](https://google.github.io/googletest/)
-- [UVHTTP 架构文档](../docs/ARCHITECTURE.md)
-- [UVHTTP 开发指南](../docs/DEVELOPER_GUIDE.md)
+- [UVHTTP 架构文档](./ARCHITECTURE.md)
+- [UVHTTP 开发指南](../guide/DEVELOPER_GUIDE.md)
 
 ## 版本历史
 

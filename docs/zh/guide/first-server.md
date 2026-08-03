@@ -353,10 +353,10 @@ curl http://localhost:8080/users/bob?format=json
 
 ## 下一步
 
-- [路由系统](./routing.md) - 更复杂的路由配置
-- [请求处理](./requests.md) - HTTP 请求处理
-- [响应处理](./responses.md) - 发送不同类型的响应
-- [完整教程](../TUTORIAL.md) - 从基础到高级
+- 路由系统 - 更复杂的路由配置
+- 请求处理 - HTTP 请求处理
+- 响应处理 - 发送不同类型的响应
+- [完整教程](./TUTORIAL.md) - 从基础到高级
 
 ## 常见问题
 

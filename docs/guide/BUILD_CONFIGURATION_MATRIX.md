@@ -829,9 +829,9 @@ When `BUILD_WITH_HTTPS=OFF`, TLS-related code in the source files needs to be wr
 ## Related Documentation
 
 - [Advanced Build Options](ADVANCED_BUILD_OPTIONS.md)
-- [Developer Guide](guide/DEVELOPER_GUIDE.md)
-- [Build Modes Details](zh/dev/BUILD_MODES.md)
-- [CMake Target Linking Guide](dev/CMAKE_TARGET_LINKING_GUIDE.md)
-- [Performance Benchmark](dev/PERFORMANCE_BENCHMARK.md)
-- [Performance Testing Guide](benchmark/README.md)
-- [Performance Testing Standard](dev/PERFORMANCE_TESTING_STANDARD.md)
+- [Developer Guide](../zh/guide/DEVELOPER_GUIDE.md)
+- [Build Modes Details](../zh/dev/BUILD_MODES.md)
+- CMAKE_TARGET_LINKING_GUIDE
+- [Performance Benchmark](../zh/dev/PERFORMANCE_BENCHMARK.md)
+- Performance Testing Guide (benchmark/README)
+- [Performance Testing Standard](../zh/dev/PERFORMANCE_TESTING_STANDARD.md)

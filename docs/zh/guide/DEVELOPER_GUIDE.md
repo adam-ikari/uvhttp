@@ -475,7 +475,7 @@ A:
 ## 参考资料
 
 - [架构设计文档](../dev/ARCHITECTURE.md)
-- [API 参考文档](../api/API_REFERENCE.md)
+- [API 参考文档](../../api/API_REFERENCE.md)
 - [教程](../guide/TUTORIAL.md)
 - [libuv 文档](https://docs.libuv.org/)
 - [HTTP/1.1 规范](https://tools.ietf.org/html/rfc7230)

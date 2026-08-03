@@ -699,9 +699,9 @@ int main(void) {
 
 ## References
 
-- [Architecture Documentation](../dev/ARCHITECTURE.md)
-- [Developer Guide](../guide/DEVELOPER_GUIDE.md)
-- [Tutorial](../guide/TUTORIAL.md)
+- [Architecture Documentation](../zh/dev/ARCHITECTURE.md)
+- [Developer Guide](../zh/guide/DEVELOPER_GUIDE.md)
+- [Tutorial](../zh/guide/TUTORIAL.md)
 - [Security Policy](../SECURITY.md)
 - [libuv Documentation](https://docs.libuv.org/)
 - [HTTP/1.1 Specification](https://tools.ietf.org/html/rfc7230)

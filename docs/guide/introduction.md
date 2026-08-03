@@ -92,7 +92,7 @@ UVHTTP is built for portability:
 
 ## 🚀 Performance Characteristics
 
-### Benchmark Results (v2.5.0)
+### Benchmark Results (v2.6.0)
 
 ```yaml
 Configuration:
@@ -165,24 +165,24 @@ server->max_body_size = 10 * 1024 * 1024; // 10MB
 
 ### User Guides
 - **[Quick Start](getting-started.md)**: Get running in 5 minutes
-- **[Installation](installation.md)**: Detailed installation instructions
-- **[First Server](first-server.md)**: Build your first HTTP server
-- **[WebSocket](websocket.md)**: Real-time communication setup
+- **[Installation](../zh/guide/installation.md)**: Detailed installation instructions
+- **[First Server](../zh/guide/first-server.md)**: Build your first HTTP server
+- **[WebSocket](../zh/guide/websocket.md)**: Real-time communication setup
 
 ### Core Concepts
-- **[Tutorial](TUTORIAL.md)**: Progressive learning from basics to advanced
-- **[libuv Data Pointer](LIBUV_DATA_POINTER.md)**: Understanding context passing
-- **[Middleware System](MIDDLEWARE_SYSTEM.md)**: Request/response processing pipeline
-- **[Unified Response Guide](UNIFIED_RESPONSE_GUIDE.md)**: Standard response patterns
+- **[Tutorial](../zh/guide/TUTORIAL.md)**: Progressive learning from basics to advanced
+- **[libuv Data Pointer](../zh/guide/LIBUV_DATA_POINTER.md)**: Understanding context passing
+- **Middleware System**: Request/response processing pipeline
+- **[Unified Response Guide](../zh/guide/UNIFIED_RESPONSE_GUIDE.md)**: Standard response patterns
 
 ### Advanced Features
-- **[Rate Limit API](RATE_LIMIT_API.md)**: Token bucket rate limiting
+- **[Rate Limit API](../zh/guide/RATE_LIMIT_API.md)**: Token bucket rate limiting
 - **[Static File Server](STATIC_FILE_SERVER.md)**: Efficient file serving
-- **[Compression](../dev/COMPRESSION_FEATURE_REPORT.md)**: Zero-overhead compression
+- **Compression**: Zero-overhead compression
 
 ### Developer Resources
-- **[Developer Guide](DEVELOPER_GUIDE.md)**: Development best practices
-- **[CMake Configuration](CMAKE_CONFIGURATION.md)**: Build system customization
+- **[Developer Guide](../zh/guide/DEVELOPER_GUIDE.md)**: Development best practices
+- **[CMake Configuration](../zh/guide/CMAKE_CONFIGURATION.md)**: Build system customization
 - **[API Reference](../api/introduction)**: Complete API documentation
 
 ---
@@ -201,10 +201,10 @@ int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     
     // Set response headers
     uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_header(res, "X-Powered-By", "UVHTTP/2.5.0");
+    uvhttp_response_set_header(res, "X-Powered-By", "UVHTTP/2.6.0");
     
     // Set response body
-    const char* body = "{\"message\":\"Hello from UVHTTP\",\"version\":\"2.5.0\"}";
+    const char* body = "{\"message\":\"Hello from UVHTTP\",\"version\":\"2.6.0\"}";
     uvhttp_response_set_body(res, body, strlen(body));
     
     // Send response
@@ -306,4 +306,4 @@ This project is licensed under the MIT License - see the [LICENSE](../../LICENSE
 - **[Quick Start Guide](getting-started.md)**: Begin building your first server
 - **[API Reference](../api/introduction)**: Explore the complete API
 - **[Examples](../../examples/)**: Browse practical examples
-- **[Performance Benchmarks](../performance.md)**: Understand performance characteristics
+- **[Performance Benchmarks](./performance.md)**: Understand performance characteristics

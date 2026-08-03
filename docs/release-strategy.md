@@ -31,7 +31,7 @@ Sprint 1-4 纯开发，Sprint 5 只做测试和发布，不引入新代码。
 ### 周五 (Sprint 5)
 
 1. **全面测试**
-   - `make test` (Debug 91/91)
+   - `make test` (Debug 101/101)
    - `make verify-memory-safety` (ASan + UBSan)
    - `cd docs && npm run docs:build`
 
@@ -47,7 +47,7 @@ Sprint 1-4 纯开发，Sprint 5 只做测试和发布，不引入新代码。
 
 ## 发布检查清单
 
-- [ ] 所有测试通过 (91/91)
+- [ ] 所有测试通过 (101/101)
 - [ ] ASan 零发现
 - [ ] UBSan 零发现
 - [ ] 文档构建通过

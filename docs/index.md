@@ -18,7 +18,7 @@ hero:
 
 features:
   - title: 🛡️ Memory-Safety Verified
-    details: ASan + UBSan clean — 91/91 tests, zero leaks, nightly CI.
+    details: ASan + UBSan clean — 101/101 tests, zero leaks, nightly CI.
   - title: 🚀 Stable Throughput
     details: ~20K RPS, flat 100→500 connections, zero socket errors.
   - title: 📦 Lightweight & 32-bit
@@ -38,7 +38,7 @@ features:
 
 ## 📊 Performance Benchmarks
 
-### Key Metrics (v2.5.0)
+### Key Metrics (v2.6.0)
 
 Throughput varies by hardware. Values below are representative; on a comparable VM
 the library sustains ~17K–20K RPS (100 connections) / ~20K peak (low concurrency)
@@ -52,13 +52,13 @@ with **zero socket errors**. Reproduce with `wrk -t4 -c100 -d10s`.
 | **API Routing** | 13,950 RPS | REST endpoints |
 | **Average Latency** | ~9–21 ms | P50–P90, 100 connections |
 | **Error Rate** | 0% | Zero socket errors under load |
-| **Test Suite** | 91/91 pass | ASan + UBSan verified clean |
+| **Test Suite** | 101/101 pass | ASan + UBSan verified clean |
 
 ### Memory-Safety & Quality Highlights
 
-- **AddressSanitizer**: Full 91-test suite passes with leak detection enabled — zero leaks, zero use-after-free, zero buffer overflows
+- **AddressSanitizer**: Full 101-test suite passes with leak detection enabled — zero leaks, zero use-after-free, zero buffer overflows
 - **UndefinedBehaviorSanitizer**: Full suite passes — zero undefined behavior
-- **Test Cases**: 91 unit/integration tests, all passing
+- **Test Cases**: 101 unit/integration tests, all passing
 - **CI/CD**: Nightly ASan + UBSan jobs (see `.github/workflows/ci-nightly.yml`)
 - **One-command verify**: `make verify-memory-safety` — see [Memory Safety](./MEMORY_SAFETY.md)
 - **High-Coverage Modules** (≥95%):
@@ -76,7 +76,7 @@ OOM an embedded device over a week. UVHTTP is the lightweight, embeddable,
 32-bit-capable C library that proves — under both AddressSanitizer and
 UndefinedBehaviorSanitizer, on every nightly CI run — that those bugs are gone.
 |---------|:----------------:|:------:|:---------------------:|:-----------------------:|
-| **UVHTTP** | ✅ | ✅ | ✅ 91/91, nightly CI | ✅ 91/91, nightly CI |
+| **UVHTTP** | ✅ | ✅ | ✅ 101/101, nightly CI | ✅ 101/101, nightly CI |
 | libuv-http | ✅ | ⚠️ | ❓ not advertised | ❓ not advertised |
 | microhttpd | ✅ | ⚠️ | ❓ not advertised | ❓ not advertised |
 | mongoose | ✅ | ✅ | ❓ not advertised | ❓ not advertised |

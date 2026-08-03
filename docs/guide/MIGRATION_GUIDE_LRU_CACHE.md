@@ -186,8 +186,8 @@ If you need to rollback to UVHTTP 2.2.x:
 
 If you encounter issues during migration:
 
-1. Check the [API Reference](./api/API_REFERENCE.md)
-2. Review the [Examples](../examples/)
+1. Check the [API Reference](../api/API_REFERENCE.md)
+2. Review the [Examples](https://github.com/adam-ikari/uvhttp/tree/main/examples)
 3. Open an issue on [GitHub](https://github.com/adam-ikari/uvhttp/issues)
 
 ## Summary

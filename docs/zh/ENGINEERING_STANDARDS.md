@@ -1415,9 +1415,9 @@ int main() {
 \`\`\`
 
 ## 文档
-- [API 参考](docs/api/API_REFERENCE.md)
-- [贡献者指南](docs/guide/DEVELOPER_GUIDE.md)
-- [教程](docs/guide/TUTORIAL.md)
+- [API 参考](../api/API_REFERENCE.md)
+- [贡献者指南](./guide/DEVELOPER_GUIDE.md)
+- [教程](./guide/TUTORIAL.md)
 ```
 
 ### 文档更新流程
@@ -1657,12 +1657,12 @@ wrk -t4 -c100 -d30s http://localhost:8080/
 
 ### B. 相关文档
 
-- [API 参考](docs/api/API_REFERENCE.md)
-- [开发者指南](docs/guide/DEVELOPER_GUIDE.md)
-- [教程](docs/guide/TUTORIAL.md)
-- [分支策略](docs/BRANCH_STRATEGY.md)
-- [发布检查清单](docs/RELEASE_CHECKLIST.md)
-- [性能文档](docs/performance.md)
+- [API 参考](../api/API_REFERENCE.md)
+- [开发者指南](./guide/DEVELOPER_GUIDE.md)
+- [教程](./guide/TUTORIAL.md)
+- 分支策略
+- 发布检查清单
+- [性能文档](../guide/performance.md)
 
 ### C. 联系方式
 
@@ -1983,7 +1983,7 @@ flowchart TD
 #### A. Python 到 Node.js 迁移详细文档
 
 详细的迁移文档请参考：
-- [Python 到 Node.js 迁移评估报告](dev/PYTHON_TO_NODEJS_MIGRATION.md)
+- Python 到 Node.js 迁移评估报告
 
 #### B. 技术栈评估模板
 

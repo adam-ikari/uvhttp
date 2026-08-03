@@ -203,5 +203,5 @@ make build
 ## 下一步
 
 - [快速开始](/zh/guide/getting-started) - 创建你的第一个服务器
-- [API 参考](../api/API_REFERENCE.md) - 完整的 API 文档
-- [示例](../../examples/) - 示例程序
+- [API 参考](../../api/API_REFERENCE.md) - 完整的 API 文档
+- [示例](https://github.com/adam-ikari/uvhttp/tree/main/examples) - 示例程序
