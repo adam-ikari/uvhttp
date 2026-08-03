@@ -106,7 +106,7 @@ After finding uvhttp, the following variables are available:
 
 | Variable | Description |
 |----------|-------------|
-| `UVHTTP_VERSION` | Package version (e.g., "2.5.0") |
+| `UVHTTP_VERSION` | Package version (e.g., "2.6.0") |
 | `UVHTTP_INCLUDE_DIRS` | Include directories |
 | `UVHTTP_LIBRARIES` | Library names (uvhttp) |
 | `UVHTTP_LIBRARY_DIRS` | Library directory paths |

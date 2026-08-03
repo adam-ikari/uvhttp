@@ -31,7 +31,7 @@ UVHTTP 性能基准。
 ### 可靠性与内存安全
 
 - **零错误**：全部并发级别下 socket 错误为 0，服务端日志无错误。
-- **内存安全验证**：91 项测试通过 AddressSanitizer（零泄漏/UAF/溢出）与
+- **内存安全验证**：101 项测试通过 AddressSanitizer（零泄漏/UAF/溢出）与
   UndefinedBehaviorSanitizer（零未定义行为）验证。
 
 ### 延迟分布

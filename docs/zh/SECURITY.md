@@ -231,7 +231,7 @@ UVHTTP 应用多种 DoS 保护：
 
 ### 内存安全
 
-- **Sanitizer 验证**: 91 项测试通过 AddressSanitizer（零泄漏、零 use-after-free、零溢出）与 UndefinedBehaviorSanitizer（零未定义行为）。详见 `.github/workflows/ci-nightly.yml`（`test-memory` 与 `test-ubsan` 任务）。
+- **Sanitizer 验证**: 101 项测试通过 AddressSanitizer（零泄漏、零 use-after-free、零溢出）与 UndefinedBehaviorSanitizer（零未定义行为）。详见 `.github/workflows/ci-nightly.yml`（`test-memory` 与 `test-ubsan` 任务）。
 - **零编译警告**: 所有代码使用 `-Werror` 编译
 - **内存分配器**: mimalloc（可选；亦支持系统分配器）
 - **缓冲区溢出保护**: 字符串操作验证
