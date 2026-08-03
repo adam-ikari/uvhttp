@@ -5,7 +5,7 @@ A C99 HTTP/1.1 & WebSocket server library built on libuv. Key differentiator:
 ASan/UBSan-verified memory safety (101/101 tests, zero findings).
 
 ## Current Status
-- **Version**: 2.5.1
+- **Version**: 2.6.0
 - **Tests**: 101/101 pass (Debug, Release, ASan, UBSan)
 - **Coverage**: 86% lines / 99% functions (project code, excl deps/)
 - **Build**: CMake, C99, -Werror, -fstack-protector-strong

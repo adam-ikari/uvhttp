@@ -2,22 +2,22 @@
 # This file defines the current version information for the project
 
 # Current version number (semantic version: MAJOR.MINOR.PATCH)
-VERSION=2.5.1
+VERSION=2.6.0
 
 # Version type: major, minor, patch
-VERSION_TYPE=patch
+VERSION_TYPE=minor
 
 # Release date
-RELEASE_DATE=2026-07-25
+RELEASE_DATE=2026-07-31
 
 # Previous version
-PREVIOUS_VERSION=2.5.0
+PREVIOUS_VERSION=2.5.1
 
 # Next version (in development)
-NEXT_VERSION=2.5.2
+NEXT_VERSION=2.6.1
 
 # Version name (optional)
-VERSION_NAME="Test Coverage & SDD Specs"
+VERSION_NAME="Health Check, SSE & Testability"
 
 # Whether this is a prerelease version
 IS_PRERELEASE=false
