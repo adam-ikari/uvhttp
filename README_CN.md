@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.5.1-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.6.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
@@ -21,7 +21,7 @@
 
 UVHTTP 是一个基于 libuv 的生产级事件驱动 HTTP 服务器库，专为现代 C 应用设计。它在极低资源消耗下提供卓越性能，既适用于高性能服务器，也适用于嵌入式系统。
 
-### 关键指标 (v2.5.1)
+### 关键指标 (v2.6.0)
 
 吞吐量因硬件而异。以下数值来自原始基准测试主机；在同类 VM 上，该库可维持约 17K–20K RPS（100 连接）/ 约 20K 峰值（低并发），且**零 socket 错误**。使用 `wrk -t4 -c100 -d10s` 复现。
 
@@ -241,7 +241,7 @@ cmake -DCMAKE_USER_CONFIG=ON ..
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello from UVHTTP v2.5.1!");
+    uvhttp_response_set_body(res, "Hello from UVHTTP v2.6.0!");
     return uvhttp_response_send(res);
 }
 
@@ -500,6 +500,7 @@ UVHTTP 基于以下优秀的开源项目构建：
 
 | 版本 | 日期 | 亮点 |
 |---------|------|------------|
+| **v2.6.0** | 2026-07-31 | 健康检查端点、SSE 示例、mock 测试基础设施、Makefile 构建入口 |
 | **v2.5.1** | 2026-07-27 | 覆盖率 86% 行 / 99% 函数，101/101 测试 |
 | **v2.5.0** | 2026-03-15 | 32 位嵌入式支持，压缩特性 |
 | **v2.4.4** | 2026-01-28 | 性能优化，代码清理 |

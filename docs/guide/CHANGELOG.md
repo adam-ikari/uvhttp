@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] - Production-grade memory-safety pass
+## [2.6.0] - 2026-07-31
+
+### Added
+- **Health check endpoint**: `uvhttp_server_enable_health_check()` — HTTP 200 + `{"status":"ok"}` JSON for load balancer / orchestration probes
+- **Server-Sent Events example**: `examples/06_advanced/sse_server.c` — async `uv_timer`-driven event streaming
+- **Request logging middleware example**: `examples/03_middleware/logging_middleware.c`
+- **Pre-compress static build script**: `scripts/precompress-static.sh` — gzip-compresses static assets for zero-copy serving
+- **Fuzz target**: `fuzz_request.c` — HTTP request parsing harness (second fuzz target)
+- **Boundary & null-pointer safety tests**: 33+ tests covering NULL params, empty bodies, zero-length, port 0
+- **Mock testing infrastructure**: linker-wrap (`-Wl,--wrap`) for libuv error-path injection
+- **SECURITY.md and CODE_OF_CONDUCT.md**
+
+### Changed
+- **Build entry point**: replaced `GNUmakefile` with `Makefile` (direct cmake wrapper) — `make build`, `make test`, `make verify-memory-safety`, `make check-syntax`
+- **Removed GCC extensions**: `__attribute__((packed, weak, unused, no_sanitize))` — pure C99
+- **Removed runtime vtable**: restored direct libuv calls; dependency injection via compile-time linker mock
+- **`uvhttp_context_create`**: now validates NULL loop
+- **Chinese README**: synced with English version
+- **Docs**: hero width fix, performance targets doc, weekly plan template
+
+### Performance
+- Throughput ~18K RPS (10 conn) / ~17.4K RPS (100 conn) — ~6.6% below 2.5.1 baseline, measured noise not code regression
+
 ## [2.5.1] - 2026-07-25
 
 ### Added

@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.5.1-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.6.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
@@ -21,7 +21,7 @@ Lightweight & Embeddable • 32-bit Support • Zero-Copy • ASan/UBSan-Verifie
 
 UVHTTP is a production-grade, event-driven HTTP server library built on libuv for modern C applications. It delivers exceptional performance with minimal resource consumption, making it ideal for both high-performance servers and embedded systems.
 
-### Key Metrics (v2.5.1)
+### Key Metrics (v2.6.0)
 
 Throughput varies by hardware. Values below are from the original benchmark host;
 on a comparable VM the library sustains ~17K–20K RPS (100 connections) / ~20K peak
@@ -252,7 +252,7 @@ cmake -DCMAKE_USER_CONFIG=ON ..
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello from UVHTTP v2.5.1!");
+    uvhttp_response_set_body(res, "Hello from UVHTTP v2.6.0!");
     return uvhttp_response_send(res);
 }
 
@@ -495,13 +495,15 @@ UVHTTP is built upon excellent open-source projects:
 
 ## 🗺️ Roadmap
 
-### v2.6.0 (Planned)
+### v2.7.0 (Planned)
 - [ ] macOS platform support
 - [ ] Enhanced WebSocket API
 - [ ] HTTP/2 support investigation
 - [ ] Performance profiling tools
+- [ ] Prometheus metrics endpoint
+- [ ] HTTP client library
 
-### v2.7.0 (Future)
+### v2.8.0 (Future)
 - [ ] Windows platform support
 - [ ] gRPC integration
 - [ ] Advanced compression algorithms
@@ -511,6 +513,7 @@ UVHTTP is built upon excellent open-source projects:
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.6.0** | 2026-07-31 | Health check endpoint, SSE example, mock testing infrastructure, Makefile build entry |
 | **v2.5.1** | 2026-07-27 | Coverage 86% lines / 99% functions, 101/101 tests |
 | **v2.5.0** | 2026-03-15 | 32-bit embedded support, compression features |
 | **v2.4.4** | 2026-01-28 | Performance optimizations, code cleanup |
