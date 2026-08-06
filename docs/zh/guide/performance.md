@@ -1,6 +1,5 @@
 ---
 title: 性能基准
-sync_hash: bec4872c7a030bbfa520ce16ded89a9b6df61bbe
 description: UVHTTP 性能基准——~20K RPS、100 至 500 连接吞吐持平、零 socket 错误、P50/P99 延迟。在 AMD Ryzen 7 5800H 上用 wrk 测得，含复现命令与历史基准。
 ---
 

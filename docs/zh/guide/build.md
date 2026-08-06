@@ -1,6 +1,5 @@
 ---
 title: 构建指南
-sync_hash: a47bc5a32186776500458a086ff0baacfd5163af
 description: "UVHTTP 构建指南——从源码编译、构建选项、交叉编译到故障排除，涵盖 CMake 配置、性能测试与安装路径。"
 ---
 
