@@ -39,10 +39,26 @@ file_hash() {
   git -C "$PROJECT_ROOT" log -1 --format=%H -- "$1" 2>/dev/null || echo "0000000000000000000000000000000000000000"
 }
 
+# Get the commit timestamp (Unix epoch) for a file's latest commit
+file_timestamp() {
+  git -C "$PROJECT_ROOT" log -1 --format=%ct -- "$1" 2>/dev/null || echo "0"
+}
+
+# Check if ZH is outdated relative to EN.
+# Returns 0 (in-sync) if ZH commit timestamp >= EN commit timestamp,
+# meaning ZH was last modified at or after EN's latest change.
+is_outdated() {
+  local en_ts="$1"
+  local zh_ts="$2"
+  [ "$zh_ts" -lt "$en_ts" ] && return 0 || return 1
+}
+
 MODE="${1:-generate}"
 
 declare -A en_hashes
 declare -A zh_hashes
+declare -A en_timestamps
+declare -A zh_timestamps
 outdated_count=0
 total_count=0
 
@@ -60,18 +76,22 @@ while IFS= read -r -d '' en_file; do
 
   en_hash=$(file_hash "$en_file")
   zh_hash=$(file_hash "$zh_file")
+  en_ts=$(file_timestamp "$en_file")
+  zh_ts=$(file_timestamp "$zh_file")
 
   en_hashes["$rel"]="$en_hash"
   zh_hashes["$rel"]="$zh_hash"
+  en_timestamps["$rel"]="$en_ts"
+  zh_timestamps["$rel"]="$zh_ts"
   total_count=$((total_count + 1))
 done < <(find "$DOCS_DIR" -name "*.md" -type f -not -path "*/zh/*" -not -path "*/node_modules/*" -not -path "*/.vitepress/*" -print0 | sort -z)
 
 # --- Handle modes that don't write JSON ---
 if [ "$MODE" = "--list" ]; then
   for rel in $(printf '%s\n' "${!en_hashes[@]}" | sort); do
-    en_h="${en_hashes[$rel]}"
-    zh_h="${zh_hashes[$rel]}"
-    if [ "$en_h" != "$zh_h" ]; then
+    en_ts="${en_timestamps[$rel]}"
+    zh_ts="${zh_timestamps[$rel]}"
+    if [ "$zh_ts" -lt "$en_ts" ]; then
       echo "$rel"
       outdated_count=$((outdated_count + 1))
     fi
@@ -86,7 +106,9 @@ fi
   for rel in $(printf '%s\n' "${!en_hashes[@]}" | sort); do
     en_h="${en_hashes[$rel]}"
     zh_h="${zh_hashes[$rel]}"
-    outdated=$([ "$en_h" != "$zh_h" ] && echo "1" || echo "0")
+    en_ts="${en_timestamps[$rel]}"
+    zh_ts="${zh_timestamps[$rel]}"
+    outdated=$([ "$zh_ts" -lt "$en_ts" ] && echo "1" || echo "0")
     [ "$outdated" = "1" ] && outdated_count=$((outdated_count + 1))
 
     if [ "$first" = true ]; then first=false; else echo ","; fi

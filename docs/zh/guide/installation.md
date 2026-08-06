@@ -251,6 +251,6 @@ make build
 ## 获取帮助
 
 如果遇到安装问题：
-- 查看 [常见问题](../FAQ.md)
+- 查看 [常见问题](./FAQ.md)
 - 提交 [Issue](https://github.com/adam-ikari/uvhttp/issues)
 - 查看错误码参考
