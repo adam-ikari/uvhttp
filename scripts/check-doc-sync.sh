@@ -1,84 +1,109 @@
 #!/usr/bin/env bash
-# Check EN/ZH doc sync status
-# Compares git hashes of EN and ZH doc pairs.
-# If the EN file has a different hash than the ZH file (meaning EN was
-# updated without updating ZH), marks it as outdated.
+# Check EN/ZH doc sync status.
 #
-# Usage: bash scripts/check-doc-sync.sh
-# Output: docs/.vitepress/sync-status.json
+# Without flags: generates docs/.vitepress/sync-status.json
+# With --check:  exits 1 if any file is outdated (for CI blocking gate)
+# With --list:   prints outdated file paths, one per line
+#
+# Scope: user-facing docs (excludes dev/, spec/, releases/, api/)
+# EN is source of truth. ZH files must have a commit hash >= EN file's commit hash.
+#
+# Usage:
+#   bash scripts/check-doc-sync.sh           # generate sync-status.json
+#   bash scripts/check-doc-sync.sh --check   # CI gate: exit 1 if outdated
+#   bash scripts/check-doc-sync.sh --list    # list outdated files
 
 set -euo pipefail
 
-DOCS_DIR="/home/gem/project/uvhttp/docs"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+DOCS_DIR="$PROJECT_ROOT/docs"
 OUTPUT_FILE="$DOCS_DIR/.vitepress/sync-status.json"
 
-echo "{" > "$OUTPUT_FILE"
-first=true
-
-# Track all EN files that have a ZH counterpart, plus detect missing pairs.
-# EN docs live in docs/ (index, MEMORY_SAFETY) and docs/guide/ (FAQ, build, ...).
-# ZH docs live in docs/zh/ mirroring docs/, or docs/zh/guide/ mirroring docs/guide/.
-declare -A en_files
-for en_file in $(find "$DOCS_DIR" -name "*.md" -not -path "*/node_modules/*" -not -path "*/.vitepress/*" -not -path "*/zh/*" -not -path "*/api/*" -not -path "*/releases/*" -not -path "*/superpowers/*" -not -path "*/spec/*" | sort); do
-  en_path="${en_file#$DOCS_DIR/}"
-
-  # Find matching ZH file: strip optional guide/ prefix then re-add under zh/
-  if [[ "$en_path" == guide/* ]]; then
-    zh_file="$DOCS_DIR/zh/$en_path"
-  else
-    zh_file="$DOCS_DIR/zh/$en_path"
-  fi
-  # Also try docs/zh/guide/ for top-level EN docs that have guide-version ZH
-  if [ ! -f "$zh_file" ] && [[ "$en_path" != guide/* ]]; then
-    zh_file="$DOCS_DIR/zh/guide/$en_path"
-  fi
-  # Track basename for missing-pair detection
-  en_files["${en_path##*/}"]=1
-
-  if [ -f "$zh_file" ]; then
-    en_hash=$(git log -1 --format=%H "$en_file" 2>/dev/null || echo "0000")
-    zh_hash=$(git log -1 --format=%H "$zh_file" 2>/dev/null || echo "0000")
-
-    if [ "$first" = true ]; then
-      first=false
-    else
-      echo "," >> "$OUTPUT_FILE"
-    fi
-
-    cat >> "$OUTPUT_FILE" << EOF
-  "$en_path": {
-    "en": "$en_hash",
-    "zh": "$zh_hash",
-    "outdated": $([ "$en_hash" != "$zh_hash" ] && echo "1" || echo "0")
-  }
-EOF
-  fi
-done
-
-# Detect ZH files that have no EN counterpart (missing English translation).
-for zh_file in $(find "$DOCS_DIR/zh" -name "*.md" -not -path "*/node_modules/*" | sort); do
-  base="${zh_file##*/}"
-  # Skip helper/framework files that don't need translation
-  case "$base" in
-    DOCUMENTATION_STANDARDS.md|*) ;;
+# Files/dirs excluded from sync scope
+is_in_scope() {
+  local path="$1"
+  # Exclude dirs
+  case "$path" in
+    zh/*|*/zh/*|api/*|*/api/*|releases/*|*/releases/*|spec/*|*/spec/*|dev/*|*/dev/*|node_modules/*|*/node_modules/*|.vitepress/*|*/.vitepress/*|superpowers/*|*/superpowers/*) return 1 ;;
   esac
-  if [ -z "${en_files[$base]+x}" ]; then
-    if [ "$first" = true ]; then
-      first=false
-    else
-      echo "," >> "$OUTPUT_FILE"
-    fi
+  # Exclude process/management docs (no ZH translation needed)
+  case "$path" in
+    AGILE.md|development-rhythm.md|release-strategy.md|sprint-backlog.md|PERFORMANCE_TARGETS.md|SECURITY.md) return 1 ;;
+  esac
+  return 0
+}
 
-    rel_path="${zh_file#$DOCS_DIR/zh/}"
-    cat >> "$OUTPUT_FILE" << EOF
-  "$rel_path": {
-    "en": "MISSING",
-    "zh": "present",
-    "outdated": 1
-  }
-EOF
+# Get the latest commit hash that touched a file
+file_hash() {
+  git -C "$PROJECT_ROOT" log -1 --format=%H -- "$1" 2>/dev/null || echo "0000000000000000000000000000000000000000"
+}
+
+MODE="${1:-generate}"
+
+declare -A en_hashes
+declare -A zh_hashes
+outdated_count=0
+total_count=0
+
+# --- Scan EN files in scope ---
+while IFS= read -r -d '' en_file; do
+  rel="${en_file#$DOCS_DIR/}"
+  is_in_scope "$rel" || continue
+
+  zh_file="$DOCS_DIR/zh/$rel"
+  if [ ! -f "$zh_file" ]; then
+    # ZH translation missing entirely
+    echo "MISSING: $rel (no ZH translation at zh/$rel)" >&2
+    continue
   fi
-done
 
-echo "" >> "$OUTPUT_FILE"
-echo "}" >> "$OUTPUT_FILE"
+  en_hash=$(file_hash "$en_file")
+  zh_hash=$(file_hash "$zh_file")
+
+  en_hashes["$rel"]="$en_hash"
+  zh_hashes["$rel"]="$zh_hash"
+  total_count=$((total_count + 1))
+done < <(find "$DOCS_DIR" -name "*.md" -type f -not -path "*/zh/*" -not -path "*/node_modules/*" -not -path "*/.vitepress/*" -print0 | sort -z)
+
+# --- Handle modes that don't write JSON ---
+if [ "$MODE" = "--list" ]; then
+  for rel in $(printf '%s\n' "${!en_hashes[@]}" | sort); do
+    en_h="${en_hashes[$rel]}"
+    zh_h="${zh_hashes[$rel]}"
+    if [ "$en_h" != "$zh_h" ]; then
+      echo "$rel"
+      outdated_count=$((outdated_count + 1))
+    fi
+  done
+  exit $(( outdated_count > 0 ? 1 : 0 ))
+fi
+
+# --- Generate sync-status.json ---
+{
+  echo "{"
+  first=true
+  for rel in $(printf '%s\n' "${!en_hashes[@]}" | sort); do
+    en_h="${en_hashes[$rel]}"
+    zh_h="${zh_hashes[$rel]}"
+    outdated=$([ "$en_h" != "$zh_h" ] && echo "1" || echo "0")
+    [ "$outdated" = "1" ] && outdated_count=$((outdated_count + 1))
+
+    if [ "$first" = true ]; then first=false; else echo ","; fi
+    printf '  "%s": {\n    "en": "%s",\n    "zh": "%s",\n    "outdated": %s\n  }' \
+      "$rel" "$en_h" "$zh_h" "$outdated"
+  done
+  echo ""
+  echo "}"
+} > "$OUTPUT_FILE"
+
+echo "sync-status.json: $total_count files, $outdated_count outdated"
+
+if [ "$MODE" = "--check" ]; then
+  if [ "$outdated_count" -gt 0 ]; then
+    echo "FAIL: $outdated_count file(s) have outdated ZH translations." >&2
+    echo "Run: bash scripts/check-doc-sync.sh --list to see outdated files." >&2
+    exit 1
+  fi
+  echo "OK: all $total_count EN/ZH pairs in sync."
+fi
