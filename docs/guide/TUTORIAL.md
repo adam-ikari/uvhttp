@@ -2856,7 +2856,7 @@ int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 ## Related Resources
 
 ### Official Documentation
-- [API Reference](../../api/API_REFERENCE.md)
+- [API Reference](../api/API_REFERENCE.md)
 - [Architecture Design](../dev/ARCHITECTURE.md)
 - [Developer Guide](DEVELOPER_GUIDE.md)
 - [libuv Data Pointer](LIBUV_DATA_POINTER.md)

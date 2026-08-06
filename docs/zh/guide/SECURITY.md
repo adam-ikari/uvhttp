@@ -1,17 +1,22 @@
+---
+title: 安全
+description: UVHTTP 安全特性 — 缓冲区溢出保护、HTTP 响应拆分防护、输入验证、通过 mbedtls 实现 TLS 1.3、安全默认值，以及 ASan/UBSan 内存安全验证工作流。
+---
+
 # 安全策略
 
 ## 概述
 
-UVHTTP 项目的安全策略，包括依赖管理、漏洞响应流程和安全实践。
+本文档涵盖 UVHTTP 安全策略：依赖管理、漏洞响应和安全实践。
 
 ## 依赖管理
 
 ### 当前依赖
 
-| 依赖 | 版本（在 .gitmodules 中） | 用途 | 更新策略 |
-|------|--------------------------|------|----------|
+| 依赖 | 版本（.gitmodules 中） | 用途 | 更新策略 |
+|------------|--------------------------|---------|---------------|
 | libuv | git submodule | 事件循环 | 定期更新 |
-| mbedtls | git submodule | TLS/SSL | 优先安全更新 |
+| mbedtls | git submodule | TLS/SSL | 安全更新优先 |
 | mimalloc | git submodule | 内存分配器 | 定期更新 |
 | cjson | git submodule | JSON 解析 | 定期更新 |
 | llhttp | git submodule | HTTP 解析 | 定期更新 |
@@ -22,8 +27,8 @@ UVHTTP 项目的安全策略，包括依赖管理、漏洞响应流程和安全�
 ### 依赖更新策略
 
 #### 1. 安全更新（高优先级）
-- **触发**: 发现 CVE 漏洞或严重安全问题
-- **响应时间**: 7 天评估，14 天修复
+- **触发条件**: 发现 CVE 漏洞或严重安全问题
+- **响应时间**: 7 天内评估，14 天内修复
 - **流程**:
   1. 评估漏洞影响范围
   2. 检查上游修复版本
@@ -32,32 +37,32 @@ UVHTTP 项目的安全策略，包括依赖管理、漏洞响应流程和安全�
   5. 发布安全补丁版本
 
 #### 2. 功能更新（中优先级）
-- **触发**: 新功能、性能改进、API 变更
+- **触发条件**: 新功能、性能改进、API 变更
 - **响应时间**: 季度评估
 - **流程**:
   1. 评估新功能价值
   2. 检查 API 兼容性
   3. 更新依赖版本
   4. 更新相关文档
-  5. 发布次版本
+  5. 发布次要版本
 
 #### 3. 维护更新（低优先级）
-- **触发**: 依赖版本过时（> 1 年）
-- **响应时间**: 半年度评估
+- **触发条件**: 依赖版本过时（> 1 年）
+- **响应时间**: 半年评估
 - **流程**:
   1. 检查兼容性
   2. 更新依赖版本
   3. 运行测试
   4. 发布补丁版本
 
-### 依赖版本锁定
+### 依赖版本固定
 
-所有依赖版本在 `.gitmodules` 中锁定，以支持可重现的构建。
+所有依赖版本都在 `.gitmodules` 中固定，以确保可重复构建。
 
 **优势**:
-- 可重现的构建
+- 可重复构建
 - 避免意外的破坏性变更
-- 更容易跟踪问题
+- 更容易追踪问题
 
 **劣势**:
 - 需要手动更新依赖
@@ -66,14 +71,14 @@ UVHTTP 项目的安全策略，包括依赖管理、漏洞响应流程和安全�
 **缓解措施**:
 - 定期安全扫描
 - 订阅安全公告
-- 建立自动检查
+- 建立自动化检查
 
 ## 安全审计
 
 ### 定期审计计划
 
 | 审计类型 | 频率 | 负责人 |
-|---------|------|--------|
+|------------|-----------|-------|
 | 依赖漏洞扫描 | 每周 | 自动化 |
 | 代码安全审查 | 每月 | 安全团队 |
 | 渗透测试 | 每季度 | 第三方 |
@@ -92,20 +97,29 @@ UVHTTP 项目的安全策略，包括依赖管理、漏洞响应流程和安全�
 2. **静态代码分析**
    ```bash
    # 使用 cppcheck
-   cppcheck --enable=all src/
+cppcheck --enable=all src/
    ```
 
 3. **内存安全检查**
    ```bash
    # 使用 Valgrind
-   valgrind --leak-check=full --show-leak-kinds=all ./uvhttp_server
+valgrind --leak-check=full --show-leak-kinds=all ./uvhttp_server
    ```
 
-4. **地址消毒器**
+4. **AddressSanitizer（泄漏、释放后使用、溢出）**
    ```bash
-   # 使用 ASan 进行内存安全检查
-   cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON ..
+   cmake -B build_asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON ..
+   cmake --build build_asan -j$(nproc)
+   (cd build_asan && ctest --output-on-failure)   # 完整套件，泄漏检测开启
    ```
+
+5. **UndefinedBehaviorSanitizer（有符号溢出、移位、对齐等）**
+   ```bash
+   cmake -B build_ubsan -DCMAKE_BUILD_TYPE=Debug -DENABLE_UBSAN=ON ..
+   cmake --build build_ubsan -j$(nproc)
+   (cd build_ubsan && ctest --output-on-failure)
+   ```
+   ASan 和 UBSan 不能在同一个构建中组合使用；需要分别运行。
 
 ## 安全最佳实践
 
@@ -123,9 +137,9 @@ UVHTTP 验证输入：
    - 最大头部名称长度：256 字节
    - 最大头部值长度：4096 字节
 
-3. **Body 大小限制**
-   - 最大 body 大小：10MB（可配置）
-   - 支持分块传输编码
+3. **请求体大小限制**
+   - 最大请求体大小：10MB（可配置）
+   - 分块传输编码支持
 
 ### 缓冲区溢出保护
 
@@ -166,14 +180,14 @@ const int ciphers[] = {
 mbedtls_ssl_conf_ciphersuites(&conf, ciphers);
 ```
 
-### DoS 保护
+### DoS 防护
 
-UVHTTP 应用多种 DoS 保护：
+UVHTTP 应用多项 DoS 防护措施：
 
 1. **限流**
    - 令牌桶算法
-   - 每个 IP 可配置限制
-   - 支持白名单
+   - 每 IP 可配置限制
+   - 白名单支持
 
 2. **连接限制**
    - 最大连接数：2048（可配置）
@@ -181,27 +195,27 @@ UVHTTP 应用多种 DoS 保护：
    - 请求超时：30 秒
 
 3. **资源限制**
-   - 最大 body 大小：10MB
+   - 最大请求体大小：10MB
    - 最大头部大小：8KB
-   - 每个连接最大并发请求数：100
+   - 每连接最大并发请求数：100
 
 ## 漏洞报告
 
 ### 报告流程
 
-发现安全漏洞，请负责任地报告：
+如果发现安全漏洞，请负责任地报告：
 
 1. **不要创建公开 issue**
 2. **发送邮件至**: security@uvhttp.org
-3. **包含**: 漏洞描述、复现步骤、受影响的版本
-4. **响应时间**: 48 小时内响应
+3. **包含**: 漏洞描述、复现步骤、受影响版本
+4. **响应时间**: 我们将在 48 小时内响应
 
 ### 漏洞处理流程
 
 1. **确认**（48 小时内）
    - 确认收到报告
-   - 分配严重级别
-   - 估算修复时间
+   - 分配严重等级
+   - 预估修复时间
 
 2. **评估**（7 天内）
    - 复现漏洞
@@ -218,30 +232,30 @@ UVHTTP 应用多种 DoS 保护：
    - 发布补丁版本
    - 协调披露
 
-### 严重级别
+### 严重等级
 
-| 严重级别 | 描述 | 响应时间 |
-|---------|------|----------|
+| 严重等级 | 说明 | 响应时间 |
+|----------|-------------|---------------|
 | 严重 | 远程代码执行 | 48 小时 |
 | 高 | 数据泄露或 DoS | 7 天 |
 | 中 | 信息泄露 | 14 天 |
 | 低 | 轻微安全问题 | 30 天 |
 
-## 安全功能
+## 安全特性
 
 ### 内存安全
 
-- **Sanitizer 验证**: 101 项测试通过 AddressSanitizer（零泄漏、零 use-after-free、零溢出）与 UndefinedBehaviorSanitizer（零未定义行为）。详见 `.github/workflows/ci-nightly.yml`（`test-memory` 与 `test-ubsan` 任务）。
+- **Sanitizer 验证**: 完整的 91 项测试套件在 AddressSanitizer（泄漏检测开启 — 零泄漏、零释放后使用、零缓冲区溢出）和 UndefinedBehaviorSanitizer（零未定义行为）下通过。参见 `.github/workflows/ci-nightly.yml`（`test-memory` + `test-ubsan` 任务）。
 - **零编译警告**: 所有代码使用 `-Werror` 编译
-- **内存分配器**: mimalloc（可选；亦支持系统分配器）
-- **缓冲区溢出保护**: 字符串操作验证
-- **内存泄漏检测**: 定期 Valgrind 与 AddressSanitizer 测试
+- **内存分配器**: mimalloc 提升内存安全（可选；也支持系统分配器）
+- **缓冲区溢出保护**: 所有字符串操作均已验证
+- **内存泄漏检测**: 定期的 Valgrind 和 AddressSanitizer 测试
 
 ### 输入验证
 
 - **URL 验证**: 长度限制、路径遍历保护
 - **头部验证**: 大小限制、格式验证
-- **Body 验证**: 大小限制、编码验证
+- **请求体验证**: 大小限制、编码验证
 - **参数验证**: 类型检查、范围验证
 
 ### 安全默认值
@@ -253,13 +267,13 @@ UVHTTP 应用多种 DoS 保护：
 
 ## 安全检查清单
 
-部署到生产环境前：
+部署到生产环境前，确保：
 
 - [ ] 所有依赖都是最新的
 - [ ] 依赖中没有已知漏洞
-- [ ] TLS 正确配置
+- [ ] TLS 已正确配置
 - [ ] 限流已启用
-- [ ] 输入验证已启用
+- [ ] 输入验证是全面的
 - [ ] 错误消息不泄露敏感信息
 - [ ] 日志不暴露敏感数据
 - [ ] 文件权限正确
@@ -271,15 +285,15 @@ UVHTTP 应用多种 DoS 保护：
 - **安全公告**: https://github.com/adam-ikari/uvhttp/security/advisories
 - **CVE 数据库**: https://cve.mitre.org/
 - **OWASP Top 10**: https://owasp.org/www-project-top-ten/
-- **安全最佳实践**: https://wiki.sei.cmu.edu/confluence/display/seccode/Top+10+CERT+C+Coding+Rules (需要登录)
-- **替代链接**: https://www.cert.org/confluence/display/seccode/Top+10+CERT+C+Coding+Rules
+- **安全最佳实践**: https://wiki.sei.cmu.edu/confluence/display/seccode/Top+10+CERT+C+Coding+Rules（需要登录）
+- **替代**: https://www.cert.org/confluence/display/seccode/Top+10+CERT+C+Coding+Rules
 
 ## 联系方式
 
-安全相关问题或报告漏洞：
+安全相关问题或漏洞报告：
 - **邮件**: security@uvhttp.org
-- **GitHub Security**: https://github.com/adam-ikari/uvhttp/security
-- **PGP 密钥**: 按需提供
+- **GitHub 安全**: https://github.com/adam-ikari/uvhttp/security
+- **PGP 密钥**: 可应要求提供
 
 ---
 

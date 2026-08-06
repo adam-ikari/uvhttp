@@ -1,6 +1,6 @@
-# 第一个服务器
+# 你的第一个服务器
 
-创建第一个 UVHTTP 服务器。
+创建你的第一个 UVHTTP 服务器。
 
 ## Hello World 服务器
 
@@ -20,7 +20,7 @@
 static uvhttp_server_t* g_server = NULL;
 
 void signal_handler(int sig) {
-    printf("\n收到信号 %d，正在关闭服务器...\n", sig);
+    printf("\nReceived signal %d, shutting down server...\n", sig);
     if (g_server) {
         uvhttp_server_stop(g_server);
         uvhttp_server_free(g_server);
@@ -48,14 +48,14 @@ int main() {
 
     uvhttp_error_t r = uvhttp_server_new(loop, &g_server);
     if (r != UVHTTP_OK) {
-        fprintf(stderr, "创建服务器失败: %s\n", uvhttp_error_string(r));
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(r));
         return 1;
     }
 
     uvhttp_router_t* router = NULL;
     r = uvhttp_router_new(&router);
     if (r != UVHTTP_OK) {
-        fprintf(stderr, "创建路由器失败: %s\n", uvhttp_error_string(r));
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(r));
         uvhttp_server_free(g_server);
         return 1;
     }
@@ -65,14 +65,14 @@ int main() {
 
     uvhttp_error_t result = uvhttp_server_listen(g_server, "0.0.0.0", 8080);
     if (result != UVHTTP_OK) {
-        fprintf(stderr, "启动服务器失败: %s\n", uvhttp_error_string(result));
+        fprintf(stderr, "Failed to start server: %s\n", uvhttp_error_string(result));
         uvhttp_router_free(router);
         uvhttp_server_free(g_server);
         return 1;
     }
 
-    printf("服务器运行在 http://localhost:8080\n");
-    printf("按 Ctrl+C 停止服务器\n");
+    printf("Server running at http://localhost:8080\n");
+    printf("Press Ctrl+C to stop the server\n");
 
     uv_run(loop, UV_RUN_DEFAULT);
 
@@ -128,7 +128,7 @@ curl http://localhost:8080/
 static uvhttp_server_t* g_server = NULL;
 
 void signal_handler(int sig) {
-    printf("\n收到信号 %d，正在关闭服务器...\n", sig);
+    printf("\nReceived signal %d, shutting down server...\n", sig);
     if (g_server) {
         uvhttp_server_stop(g_server);
         uvhttp_server_free(g_server);
@@ -161,14 +161,14 @@ int main() {
 
     uvhttp_error_t r = uvhttp_server_new(loop, &g_server);
     if (r != UVHTTP_OK) {
-        fprintf(stderr, "创建服务器失败: %s\n", uvhttp_error_string(r));
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(r));
         return 1;
     }
 
     uvhttp_router_t* router = NULL;
     r = uvhttp_router_new(&router);
     if (r != UVHTTP_OK) {
-        fprintf(stderr, "创建路由器失败: %s\n", uvhttp_error_string(r));
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(r));
         uvhttp_server_free(g_server);
         return 1;
     }
@@ -179,16 +179,16 @@ int main() {
 
     uvhttp_error_t result = uvhttp_server_listen(g_server, "0.0.0.0", 8080);
     if (result != UVHTTP_OK) {
-        fprintf(stderr, "启动服务器失败: %s\n", uvhttp_error_string(result));
+        fprintf(stderr, "Failed to start server: %s\n", uvhttp_error_string(result));
         uvhttp_router_free(router);
         uvhttp_server_free(g_server);
         return 1;
     }
 
-    printf("JSON API 服务器运行在 http://localhost:8080\n");
+    printf("JSON API server running at http://localhost:8080\n");
     printf("  - http://localhost:8080/api\n");
     printf("  - http://localhost:8080/api/status\n");
-    printf("按 Ctrl+C 停止服务器\n");
+    printf("Press Ctrl+C to stop the server\n");
 
     uv_run(loop, UV_RUN_DEFAULT);
 
@@ -245,7 +245,7 @@ curl http://localhost:8080/api
 static uvhttp_server_t* g_server = NULL;
 
 void signal_handler(int sig) {
-    printf("\n收到信号 %d，正在关闭服务器...\n", sig);
+    printf("\nReceived signal %d, shutting down server...\n", sig);
     if (g_server) {
         uvhttp_server_stop(g_server);
         uvhttp_server_free(g_server);
@@ -256,10 +256,10 @@ void signal_handler(int sig) {
 
 int user_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     const char* path = uvhttp_request_get_path(request);
-    const char* username = path + 7;  // 跳过 "/users/"
+    const char* username = path + 7;  // Skip "/users/"
     const char* format = uvhttp_request_get_query_param(request, "format");
 
-    printf("请求用户: %s\n", username);
+    printf("Requested user: %s\n", username);
 
     uvhttp_response_set_status(response, 200);
 
@@ -291,14 +291,14 @@ int main() {
 
     uvhttp_error_t r = uvhttp_server_new(loop, &g_server);
     if (r != UVHTTP_OK) {
-        fprintf(stderr, "创建服务器失败: %s\n", uvhttp_error_string(r));
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(r));
         return 1;
     }
 
     uvhttp_router_t* router = NULL;
     r = uvhttp_router_new(&router);
     if (r != UVHTTP_OK) {
-        fprintf(stderr, "创建路由器失败: %s\n", uvhttp_error_string(r));
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(r));
         uvhttp_server_free(g_server);
         return 1;
     }
@@ -308,16 +308,16 @@ int main() {
 
     uvhttp_error_t result = uvhttp_server_listen(g_server, "0.0.0.0", 8080);
     if (result != UVHTTP_OK) {
-        fprintf(stderr, "启动服务器失败: %s\n", uvhttp_error_string(result));
+        fprintf(stderr, "Failed to start server: %s\n", uvhttp_error_string(result));
         uvhttp_router_free(router);
         uvhttp_server_free(g_server);
         return 1;
     }
 
-    printf("路径参数服务器运行在 http://localhost:8080\n");
+    printf("Path parameter server running at http://localhost:8080\n");
     printf("  - http://localhost:8080/users/alice\n");
     printf("  - http://localhost:8080/users/bob?format=json\n");
-    printf("按 Ctrl+C 停止服务器\n");
+    printf("Press Ctrl+C to stop the server\n");
 
     uv_run(loop, UV_RUN_DEFAULT);
 

@@ -1,5 +1,4 @@
 ---
-sync_hash: 24b63df81b6c3e86daaa9e108437255121d026f6
 title: LRU 缓存迁移指南
 ---
 # LRU 缓存迁移指南
