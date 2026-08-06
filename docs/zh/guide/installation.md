@@ -2,30 +2,30 @@
 
 本指南介绍如何安装和构建 UVHTTP。
 
-## 📌 平台支持
+## 平台支持
 
 **当前支持**: Linux
 
-**未来计划**: macOS, Windows, FreeBSD, WebAssembly (WASM) 和其他 Unix-like 系统
+**计划**: macOS, Windows, FreeBSD, WebAssembly (WASM) 和其他类 Unix 系统
 
-UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中扩展对其他操作系统和平台的支持。
+UVHTTP 目前针对 Linux 平台进行了优化。计划在未来版本中扩展对其他操作系统和平台的支持。
 
 ## 系统要求
 
 ### 最低要求
 - **CMake**: 3.10 或更高版本
-- **C 编译器**: 
+- **C 编译器**:
   - GCC 4.9+ (Linux)
   - Clang 3.5+ (Linux)
 - **操作系统**: Linux
 
 ### 推荐要求
 - **CMake**: 3.15 或更高版本
-- **C 编译器**: 
+- **C 编译器**:
   - GCC 7+ (Linux)
   - Clang 10+ (Linux)
 
-## 从源码编译
+## 从源码构建
 
 ### 1. 克隆仓库
 
@@ -34,13 +34,14 @@ git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
 ```
 
-> **注意**: `--recurse-submodules` 参数会自动克隆所有依赖。如果忘记使用此参数，可以运行 `git submodule update --init --recursive` 来补全。
+> **注意**: `--recurse-submodules` 参数会自动克隆所有依赖。如果忘记使用此参数，运行 `git submodule update --init --recursive` 来补全。
 
-### 2. 配置并编译项目
+### 2. 配置并构建项目
 
 ```bash
-# 基本配置并编译（Release 模式）
+# 基本配置并构建（Release 模式）
 make build
+```
 
 ## 平台特定说明
 
@@ -55,9 +56,9 @@ sudo apt-get install -y \
     build-essential
 ```
 
-> 注意：libuv 已作为子模块包含在项目中，无需单独安装。编译时会自动构建。
+> 注意：libuv 已作为子模块包含在项目中，无需单独安装。构建时会自动构建。
 
-#### 编译
+#### 构建
 
 ```bash
 # 初始化子模块（首次克隆时需要）
@@ -77,9 +78,9 @@ sudo yum install -y \
     openssl-devel
 ```
 
-> 注意：libuv 已作为子模块包含在项目中，无需单独安装。编译时会自动构建。
+> 注意：libuv 已作为子模块包含在项目中，无需单独安装。构建时会自动构建。
 
-#### 编译
+#### 构建
 
 ```bash
 make build
@@ -96,7 +97,7 @@ make build
 # 安装依赖
 brew install cmake openssl
 
-# 编译
+# 构建
 make build
 ```
 
@@ -107,7 +108,7 @@ make build
 # 然后安装依赖
 sudo port install cmake libuv openssl
 
-# 编译
+# 构建
 make build
 ```
 
@@ -125,7 +126,7 @@ cd vcpkg
 # 安装依赖
 vcpkg install libuv openssl:x64-windows
 
-# 编译
+# 构建
 make build
 ```
 
@@ -135,10 +136,10 @@ make build
 2. 下载并安装 OpenSSL: https://slproweb.com/products/Win32OpenSSL.html
 3. 在 `CMakeLists.txt` 中指定库路径，然后运行 `make build`：
    ```cmake
-   set(LIBUV_INCLUDE_DIR "[libuv include路径]" CACHE PATH "")
-   set(LIBUV_LIBRARY "[libuv lib路径]" CACHE FILEPATH "")
-   set(OPENSSL_INCLUDE_DIR "[OpenSSL include路径]" CACHE PATH "")
-   set(OPENSSL_LIBRARY "[OpenSSL lib路径]" CACHE FILEPATH "")
+   set(LIBUV_INCLUDE_DIR "[libuv include path]" CACHE PATH "")
+   set(LIBUV_LIBRARY "[libuv library path]" CACHE FILEPATH "")
+   set(OPENSSL_INCLUDE_DIR "[OpenSSL include path]" CACHE PATH "")
+   set(OPENSSL_LIBRARY "[OpenSSL library path]" CACHE FILEPATH "")
    ```
 
 ## 构建选项
@@ -150,7 +151,7 @@ make build
 | `BUILD_WITH_WEBSOCKET` | `ON` | 启用 WebSocket 支持 |
 | `BUILD_WITH_MIMALLOC` | `ON` | 启用 mimalloc 内存分配器 |
 | `BUILD_WITH_HTTPS` | `ON` | 启用 TLS 支持 |
-| `BUILD_EXAMPLES` | `ON` | 编译示例程序 |
+| `BUILD_EXAMPLES` | `ON` | 构建示例程序 |
 | `ENABLE_DEBUG` | `OFF` | 启用 Debug 模式（-O0） |
 | `ENABLE_COVERAGE` | `OFF` | 启用代码覆盖率 |
 
@@ -181,7 +182,7 @@ ctest --output-on-failure
 ### 运行示例
 
 ```bash
-# 编译示例
+# 构建示例
 make
 
 # 运行 Hello World 示例
@@ -235,7 +236,7 @@ brew install cmake
 # 从源码安装
 wget https://github.com/Kitware/CMake/releases/download/v3.28.0/cmake-3.28.0.tar.gz
 tar -xzf cmake-3.28.0.tar.gz
-cd cmake-3. 相关
+cd cmake-3.28.0
 ./bootstrap
 make build
 ```
@@ -250,6 +251,6 @@ make build
 ## 获取帮助
 
 如果遇到安装问题：
-- 查看 [常见问题](./FAQ.md)
+- 查看 [常见问题](../FAQ.md)
 - 提交 [Issue](https://github.com/adam-ikari/uvhttp/issues)
-- 查看 错误码参考
+- 查看错误码参考

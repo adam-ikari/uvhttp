@@ -1,10 +1,10 @@
 # 在 CMake 项目中使用 uvhttp
 
-本指南介绍如何将 uvhttp 作为静态库依赖集成到你的 CMake 项目中。
+本指南介绍如何将 uvhttp 作为静态库依赖集成到 CMake 项目中。
 
 ## 快速开始：add_subdirectory
 
-最简单的方式是将 uvhttp 作为子目录添加到项目中：
+最简单的方式是将 uvhttp 作为子目录：
 
 ```bash
 git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
@@ -16,24 +16,26 @@ git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cmake_minimum_required(VERSION 3.10)
 project(myapp C)
 
-# 添加 uvhttp 作为子目录
+# 将 uvhttp 作为子目录
 add_subdirectory(path/to/uvhttp)
 
 # 创建可执行文件
 add_executable(myapp main.c)
 
-# 链接 uvhttp（静态库）
+# 链接 uvhttp（静态）
 target_link_libraries(myapp uvhttp)
 target_include_directories(myapp PRIVATE path/to/uvhttp/include)
 ```
 
-编译：
+构建：
 
 ```bash
 make build
 ```
 
-## 方法 1: 使用 find_package()
+## 方法 1：使用 find_package()
+
+如果 uvhttp 在已知位置：
 
 ```cmake
 cmake_minimum_required(VERSION 3.10)
@@ -49,7 +51,7 @@ add_executable(myapp main.c)
 target_link_libraries(myapp uvhttp)
 ```
 
-## 方法 2: 使用 pkg-config
+## 方法 2：使用 pkg-config
 
 ```cmake
 cmake_minimum_required(VERSION 3.10)
@@ -66,7 +68,7 @@ target_link_libraries(myapp ${UVHTTP_LIBRARIES})
 target_include_directories(myapp PUBLIC ${UVHTTP_INCLUDE_DIRS})
 ```
 
-## 方法 3: 使用 FetchContent
+## 方法 3：使用 FetchContent
 
 ```cmake
 cmake_minimum_required(VERSION 3.14)
@@ -89,10 +91,10 @@ target_link_libraries(myapp uvhttp)
 
 ## 使用特定功能构建
 
-启用特定功能后构建 uvhttp：
+使用特定功能构建 uvhttp 时，确保启用相同的功能：
 
 ```cmake
-# 构建时启用功能
+# 使用功能构建
 set(BUILD_WITH_WEBSOCKET ON CACHE BOOL "" FORCE)
 set(BUILD_WITH_HTTPS ON CACHE BOOL "" FORCE)
 add_subdirectory(path/to/uvhttp)
@@ -100,11 +102,11 @@ add_subdirectory(path/to/uvhttp)
 
 ## CMake 变量
 
-找到 uvhttp 后，可以使用以下变量：
+查找 uvhttp 后，以下变量可用：
 
-| 变量 | 描述 |
-|------|------|
-| `UVHTTP_VERSION` | 包版本（例如 "2.6.0"） |
+| 变量 | 说明 |
+|----------|-------------|
+| `UVHTTP_VERSION` | 包版本（如 "2.6.0"） |
 | `UVHTTP_INCLUDE_DIRS` | 包含目录 |
 | `UVHTTP_LIBRARIES` | 库名称（uvhttp） |
 | `UVHTTP_LIBRARY_DIRS` | 库目录路径 |
@@ -128,7 +130,7 @@ endif()
 
 ## 示例项目
 
-以下是一个使用 uvhttp 的完整示例项目：
+以下是使用 uvhttp 的完整示例项目：
 
 ```cmake
 # CMakeLists.txt
@@ -181,9 +183,9 @@ int main() {
 }
 ```
 
-## 注意事项
+## 注意
 
 - uvhttp 遵循 CMake 包命名约定
-- 推荐使用 `add_subdirectory` 或 `FetchContent` 方式集成，而非系统安装
+- 推荐使用 `add_subdirectory` 或 `FetchContent` 方式，而非系统安装
 - 库依赖（libuv、mbedtls、xxhash）会自动链接
-- 功能兼容性：确保构建和使用 uvhttp 时启用相同的功能
+- 功能兼容性：构建和使用 uvhttp 时确保启用相同的功能
