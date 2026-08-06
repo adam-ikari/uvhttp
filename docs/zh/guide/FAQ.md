@@ -472,7 +472,7 @@ make build
 
 ## 相关文档
 
-- [API 参考](/zh/api/API_REFERENCE.md)
+- [API 参考](/api/API_REFERENCE.md)
 - [贡献者指南](/zh/guide/DEVELOPER_GUIDE.md)
 - [教程](/zh/guide/TUTORIAL.md)
 

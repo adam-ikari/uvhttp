@@ -133,4 +133,4 @@ clang -g -O1 -fsanitize=fuzzer,address -fno-omit-frame-pointer \
 3. 在源码层面修复——不要抑制。
 4. 合并前确认 ASan 与 UBSan 均为绿色。
 
-与安全相关的发现，请按[安全指南](./SECURITY.md)中的流程报告。
+与安全相关的发现，请按[安全指南](./guide/SECURITY.md)中的流程报告。

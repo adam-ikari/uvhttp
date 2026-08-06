@@ -384,6 +384,6 @@ A: Implement automatic reconnection logic on the client, and maintain connection
 ## Related Resources
 
 - [WebSocket Protocol Specification](https://tools.ietf.org/html/rfc6455)
-- [WebSocket API Reference](../../api/API_REFERENCE.md#websocket)
+- [WebSocket API Reference](../api/API_REFERENCE.md#websocket)
 - [WebSocket Example Code](https://github.com/adam-ikari/uvhttp/tree/main/examples/05_websocket)
 - best practices

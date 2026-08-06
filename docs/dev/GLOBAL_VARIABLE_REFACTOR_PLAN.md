@@ -180,4 +180,4 @@ It is recommended to implement this refactor in version **v2.0.0** because it is
 
 - [LIBUV_DATA_POINTER.md](../guide/LIBUV_DATA_POINTER.md) - libuv data pointer pattern guide
 - [DEVELOPER_GUIDE.md](../guide/DEVELOPER_GUIDE.md) - contributor guide
-- [API_REFERENCE.md](../../api/API_REFERENCE.md) - API reference
+- [API_REFERENCE.md](../api/API_REFERENCE.md) - API reference

@@ -246,6 +246,9 @@ jobs:
           echo "## EN/ZH Doc Sync" >> $GITHUB_STEP_SUMMARY
           bash scripts/check-doc-sync.sh --list >> $GITHUB_STEP_SUMMARY || true
 
+      - name: Check internal links
+        run: bash scripts/check-links.sh
+
   # ========== 阶段 2: 生成总结 ==========
 
   generate-summary:

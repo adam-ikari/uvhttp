@@ -286,4 +286,4 @@ MIT 许可证，详见 [LICENSE](https://github.com/adam-ikari/uvhttp/blob/main/
 - **[快速开始指南](getting-started.md)**：构建第一个服务器
 - **[API 参考](../api/introduction)**：探索完整 API
 - **[示例](https://github.com/adam-ikari/uvhttp/tree/main/examples)**：浏览实用示例
-- **[性能基准](../performance.md)**：了解性能特征
+- **[性能基准](./performance.md)**：了解性能特征

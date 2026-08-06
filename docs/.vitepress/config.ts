@@ -14,7 +14,7 @@ export default defineConfig({
   defaultLang: 'en-US',
   i18nRouting: false,
 
-  ignoreDeadLinks: true,
+  ignoreDeadLinks: false,
 
   // Auto-generate a sitemap.xml on build (replaces the stale static one).
   sitemap: {

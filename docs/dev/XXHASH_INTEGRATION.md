@@ -282,4 +282,4 @@ void debug_hash(const void* data, size_t length) {
 - [xxHash Official Documentation](https://github.com/Cyan4973/xxHash)
 - [xxHash Performance Benchmarks](https://github.com/Cyan4973/xxHash/wiki/Performance-comparison)
 - [UVHTTP Architecture Design](./ARCHITECTURE.md)
-- [UVHTTP API Reference](../../api/API_REFERENCE.md)
+- [UVHTTP API Reference](../api/API_REFERENCE.md)

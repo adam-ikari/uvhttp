@@ -1416,7 +1416,7 @@ int main() {
 \`\`\`
 
 ## Documentation
-- [API Reference](../api/API_REFERENCE.md)
+- [API Reference](./api/API_REFERENCE.md)
 - [Contributor Guide](./guide/DEVELOPER_GUIDE.md)
 - [Tutorial](./guide/TUTORIAL.md)
 ```
@@ -1658,12 +1658,12 @@ wrk -t4 -c100 -d30s http://localhost:8080/
 
 ### B. Related Documentation
 
-- [API Reference](../api/API_REFERENCE.md)
+- [API Reference](./api/API_REFERENCE.md)
 - [Developer Guide](./guide/DEVELOPER_GUIDE.md)
 - [Tutorial](./guide/TUTORIAL.md)
 - Branch strategy
 - Release checklist
-- [Performance documentation](../guide/performance.md)
+- [Performance documentation](./guide/performance.md)
 
 ### C. Contact
 
