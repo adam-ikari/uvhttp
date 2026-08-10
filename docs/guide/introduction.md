@@ -255,7 +255,7 @@ export LD_LIBRARY_PATH=./build/dist/lib:$LD_LIBRARY_PATH
 
 ### Contributing
 
-We welcome contributions! Please read our [Contributing Guidelines](../../CONTRIBUTING.md) before submitting pull requests.
+We welcome contributions! Please read our [Contributing Guidelines](https://github.com/adam-ikari/uvhttp/blob/main/CONTRIBUTING.md) before submitting pull requests.
 
 ### Getting Help
 
@@ -265,7 +265,7 @@ We welcome contributions! Please read our [Contributing Guidelines](../../CONTRI
 
 ### License
 
-This project is licensed under the MIT License - see the [LICENSE](../../LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/adam-ikari/uvhttp/blob/main/LICENSE) file for details.
 
 ---
 
@@ -305,5 +305,5 @@ This project is licensed under the MIT License - see the [LICENSE](../../LICENSE
 
 - **[Quick Start Guide](getting-started.md)**: Begin building your first server
 - **[API Reference](../api/introduction)**: Explore the complete API
-- **[Examples](../../examples/)**: Browse practical examples
+- **[Examples](https://github.com/adam-ikari/uvhttp/tree/main/examples)**: Browse practical examples
 - **[Performance Benchmarks](./performance.md)**: Understand performance characteristics

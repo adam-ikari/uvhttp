@@ -71,6 +71,16 @@ target_link_libraries(myapp uvhttp)
 make build
 ```
 
+`CMakeLists.txt` 中可用的通用选项：
+
+| 选项 | 默认值 | 说明 |
+|--------|---------|-------------|
+| `BUILD_WITH_WEBSOCKET` | ON | 启用 WebSocket 支持 |
+| `BUILD_WITH_MIMALLOC` | ON | 使用 mimalloc 分配器 |
+| `BUILD_EXAMPLES` | OFF | 编译示例程序 |
+| `ENABLE_COVERAGE` | OFF | 启用代码覆盖率 |
+| `ENABLE_DEBUG` | OFF | 启用 Debug 模式 |
+
 ## 输出文件
 
 编译后的文件位于 `build/dist/` 目录：

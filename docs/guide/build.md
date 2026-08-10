@@ -185,4 +185,4 @@ make build
 
 - [Quick Start](getting-started.md) - Create your first server
 - [API Reference](../api/API_REFERENCE.md) - Complete API documentation
-- [Examples](../../examples/) - Example programs
+- [Examples](https://github.com/adam-ikari/uvhttp/tree/main/examples) - Example programs
