@@ -228,12 +228,18 @@ jobs:
         uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 0
+          # Check out the PR head, not the synthetic merge ref. The sync check
+          # compares EN/ZH commit timestamps; at the merge ref, git reports the
+          # merge commit itself as the newest commit touching any PR-modified
+          # EN file, which can never be older than ZH and produces false
+          # failures. The PR head is what the author tested locally.
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Check EN/ZH doc sync
         id: sync
         run: |
           # Only check if EN docs were changed in this PR
-          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep "^docs/.*\.md$" | grep -v "^docs/zh/" | grep -v "/api/" | grep -v "/dev/" | grep -v "/spec/"; then
+          if git diff --name-only ${{ github.event.before }} ${{ github.event.pull_request.head.sha }} | grep "^docs/.*\.md$" | grep -v "^docs/zh/" | grep -v "/api/" | grep -v "/dev/" | grep -v "/spec/"; then
             echo "EN docs changed — running sync check..."
             bash scripts/check-doc-sync.sh --check
           else
