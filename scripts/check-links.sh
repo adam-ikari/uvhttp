@@ -29,10 +29,11 @@ while IFS= read -r -d '' file; do
       resolved="$dir/$target"
     fi
 
-    # Normalize
+    # Normalize to PROJECT_ROOT-relative path
     resolved=$(realpath --relative-to="$PROJECT_ROOT" "$resolved" 2>/dev/null || echo "")
 
-    if [ ! -f "$resolved" ]; then
+    # Check existence against PROJECT_ROOT so the script is CWD-independent
+    if [ ! -f "$PROJECT_ROOT/$resolved" ]; then
       echo "BROKEN: $file -> $target" >&2
       errors=$((errors + 1))
     fi

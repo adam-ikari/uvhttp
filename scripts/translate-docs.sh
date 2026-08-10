@@ -39,28 +39,10 @@ if [ -n "$TARGET" ]; then
   fi
   FILES=("$REL")
 else
-  # Batch mode: find all outdated via check-doc-sync.sh --list
-  # Output is plain file paths, one per line; exit code 1 if any outdated
+  # Batch mode: find all outdated or missing via check-doc-sync.sh --list
+  # Output is plain file paths (relative to docs/), one per line;
+  # exit code 1 if any out of sync (ignored here — we process the list).
   mapfile -t FILES < <(bash "$SCRIPT_DIR/check-doc-sync.sh" --list 2>/dev/null || true)
-
-  # Also find EN files with no corresponding ZH file
-  while IFS= read -r -d '' en_file; do
-    rel="${en_file#$DOCS_DIR/}"
-    # Skip excluded dirs
-    case "$rel" in
-      zh/*|*/zh/*|api/*|*/api/*|releases/*|*/releases/*|spec/*|*/spec/*|dev/*|*/dev/*|node_modules/*|*/node_modules/*|.vitepress/*|*/.vitepress/*|superpowers/*|*/superpowers/*) continue ;;
-    esac
-    # Skip process/management docs
-    case "$rel" in
-      AGILE.md|development-rhythm.md|release-strategy.md|sprint-backlog.md|PERFORMANCE_TARGETS.md|SECURITY.md) continue ;;
-    esac
-
-    zh_path="$DOCS_DIR/zh/$rel"
-    if [ ! -f "$zh_path" ]; then
-      # Add missing ZH files that aren't already in the list
-      FILES+=("$rel")
-    fi
-  done < <(find "$DOCS_DIR" -name "*.md" -type f -not -path "*/zh/*" -not -path "*/node_modules/*" -not -path "*/.vitepress/*" -print0 | sort -z)
 
   # Deduplicate
   FILES=($(printf '%s\n' "${FILES[@]}" | sort -u))
