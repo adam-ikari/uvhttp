@@ -1,8 +1,8 @@
-# UVHTTP 响应处理指南
+# UVHTTP 统一响应指南
 
 ## 概述
 
-UVHTTP 响应处理。
+UVHTTP 统一响应处理。
 
 ## 核心特性
 
@@ -128,7 +128,7 @@ int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 ```c
 uvhttp_result_t error_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    uvhttp_error_t result = uvhttp_send_error_response(res, 400, "请求参数错误", "缺少必需的参数");
+    uvhttp_error_t result = uvhttp_send_error_response(res, 400, "invalid_parameters", "Missing required parameters");
     return (result == UVHTTP_OK) ? UVHTTP_OK : UVHTTP_ERROR_RESPONSE_SEND;
 }
 ```

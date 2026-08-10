@@ -340,6 +340,6 @@ UVHTTP_ERROR_RATE_LIMIT_EXCEEDED = -550  // Rate limit exceeded
 
 ## Related Documentation
 
-- [API Reference](../../api/API_REFERENCE.md)
+- [API Reference](../api/API_REFERENCE.md)
 - [Architecture Design](../dev/ARCHITECTURE.md)
 - Error code reference

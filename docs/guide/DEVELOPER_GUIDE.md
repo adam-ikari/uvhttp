@@ -475,7 +475,7 @@ A:
 ## Reference Materials
 
 - [Architecture Design](../dev/ARCHITECTURE.md)
-- [API Reference](../../api/API_REFERENCE.md)
+- [API Reference](../api/API_REFERENCE.md)
 - [Tutorial](../guide/TUTORIAL.md)
 - [libuv Documentation](https://docs.libuv.org/)
 - [HTTP/1.1 Specification](https://tools.ietf.org/html/rfc7230)

@@ -251,6 +251,6 @@ After installation, continue with:
 ## Getting Help
 
 If you encounter installation problems:
-- See [FAQ](../FAQ.md)
+- See [FAQ](./FAQ.md)
 - Open an [Issue](https://github.com/adam-ikari/uvhttp/issues)
 - See the Error Code Reference

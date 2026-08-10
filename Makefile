@@ -3,7 +3,7 @@
 # Use with: make <target>
 
 .PHONY: help build build-release build-coverage test bench verify-memory-safety coverage \
-        check-syntax docs docs-clean docs-preview clean clean-all rebuild cmake cmake-options install-deps
+        check-syntax check-docs docs docs-clean docs-preview clean clean-all rebuild cmake cmake-options install-deps
 
 help:
 	@echo "UVHTTP Makefile"
@@ -21,6 +21,7 @@ help:
 	@echo ""
 	@echo "Quality targets:"
 	@echo "  make check-syntax       - Syntax check all source files"
+	@echo "  make check-docs         - Check EN/ZH doc sync and broken links"
 	@echo ""
 	@echo "Documentation targets:"
 	@echo "  make docs               - Build all documentation"
@@ -139,6 +140,14 @@ docs-clean:
 docs-preview:
 	@echo "Starting VitePress documentation server..."
 	@cd docs && npm run dev
+
+.PHONY: check-docs
+check-docs:
+	@echo "=== Doc sync check ==="
+	@bash scripts/check-doc-sync.sh --check
+	@echo "=== Link check ==="
+	@bash scripts/check-links.sh
+	@echo "All documentation checks passed."
 
 # ========== Utility targets ==========
 

@@ -70,7 +70,9 @@ echo ""
 echo -e "${YELLOW}[2/4] Generating API documentation with Doxygen...${NC}"
 
 # Create necessary directories (only XML is generated per Doxyfile configuration)
-mkdir -p docs/api/xml docs/api/markdown_from_xml
+# NOTE: .doxygen/xml must be pre-created — doxygen 1.9.1 cannot create
+# hidden output directories itself (fails with "Could not create output directory").
+mkdir -p docs/api/xml docs/api/markdown_from_xml docs/api/.doxygen/xml
 
 # Run Doxygen
 doxygen docs/Doxyfile
@@ -111,7 +113,7 @@ else
 fi
 
 # Build VitePress site
-DEPLOY=${DEPLOY:-local} npm run build
+DEPLOY=${DEPLOY:-local} npm run docs:build
 
 if [ $? -eq 0 ]; then
     cd "$PROJECT_ROOT"

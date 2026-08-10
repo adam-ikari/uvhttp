@@ -84,6 +84,9 @@ __pycache__/
 !cmake/Dependencies.cmake
 test/results/
 
+# Claude worktrees
+.claude/worktrees/
+
 # VitePress
 docs/node_modules/
 docs/.vitepress/dist/
