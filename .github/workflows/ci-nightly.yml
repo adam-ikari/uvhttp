@@ -190,6 +190,9 @@ jobs:
           timeout: 120
           parallel: $(nproc)
 
+      - name: Install lcov
+        run: sudo apt-get update && sudo apt-get install -y lcov
+
       - name: Generate coverage report
         run: |
           cd build
@@ -535,6 +538,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: always()
+    permissions:
+      contents: write   # Create nightly release 需要
 
     steps:
       - name: Checkout code
@@ -596,7 +601,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: nightly-${{ github.run_number }}
-          name: Nightly Build - ${{ github.event.head_commit.timestamp }}
+          name: Nightly Build - ${{ github.event.head_commit.timestamp || github.run_number }}
           body_path: performance-trend.md
           draft: false
           prerelease: true
