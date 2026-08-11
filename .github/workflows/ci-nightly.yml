@@ -77,7 +77,10 @@ jobs:
   
   security-scan-full:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write   # 上传 CodeQL SARIF 需要
 
     steps:
       - name: Checkout code
@@ -85,10 +88,18 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Run CodeQL analysis
-        uses: github/codeql-action/analyze@v3
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
         with:
           languages: cpp
+
+      - name: Build
+        run: make build
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          output: codeql-results
 
       - name: Run dependency check
         run: |
@@ -168,6 +179,9 @@ jobs:
           name: build-ubuntu-nightly-${{ github.run_number }}
           path: build/
 
+      - name: Restore executable permission
+        run: chmod -R +x build/dist/bin 2>/dev/null || true
+
       - name: Run tests with coverage
         uses: ./.github/actions/run-tests
         with:
@@ -216,6 +230,9 @@ jobs:
         with:
           name: build-ubuntu-nightly-${{ github.run_number }}
           path: build/
+
+      - name: Restore executable permission
+        run: chmod -R +x build/dist/bin 2>/dev/null || true
 
       - name: Run tests with coverage
         run: |
@@ -562,6 +579,18 @@ jobs:
           gh run download ${{ github.run_id }} --pattern "*nightly-${{ github.run_number }}*" -D /tmp/artifacts
         env:
           GH_TOKEN: ${{ github.token }}
+
+      - name: Ensure performance-trend.md exists
+        run: |
+          TREND=$(find /tmp/artifacts -name performance-trend.md -print -quit 2>/dev/null)
+          if [ -n "$TREND" ]; then
+            cp "$TREND" ./performance-trend.md
+          fi
+          if [ ! -f performance-trend.md ]; then
+            echo "# Nightly Performance Trend" > performance-trend.md
+            echo "" >> performance-trend.md
+            echo "（本次 run 未生成趋势数据，见 performance-full job 结果）" >> performance-trend.md
+          fi
 
       - name: Create nightly release
         uses: softprops/action-gh-release@v1
