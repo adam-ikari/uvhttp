@@ -243,14 +243,16 @@ TEST_F(WsBroadcastOpenTest, Broadcast_OpenConnection) {
         uvhttp_server_ws_enable_connection_management(server, 60, 30);
     ASSERT_EQ(err, UVHTTP_OK);
 
-    // Create a ws_connection in OPEN state with a valid fd
-    uvhttp_ws_connection_t ws_conn{};
-    ws_conn.state = UVHTTP_WS_STATE_OPEN;
-    ws_conn.fd = sock_fds[0];
-    ws_conn.is_server = 1;
+    // The connection manager borrows the ws_conn pointer and never frees
+    // it, so the connection must outlive its registration. Heap-allocate
+    // and free only after connection management is disabled.
+    uvhttp_ws_connection_t* ws_conn = new uvhttp_ws_connection_t{};
+    ws_conn->state = UVHTTP_WS_STATE_OPEN;
+    ws_conn->fd = sock_fds[0];
+    ws_conn->is_server = 1;
 
     // Add the connection to the manager
-    uvhttp_server_ws_add_connection(server, &ws_conn, "/chat");
+    uvhttp_server_ws_add_connection(server, ws_conn, "/chat");
     EXPECT_EQ(server->ws_connection_manager->connection_count, 1);
 
     // Broadcast to the path - exercises lines 1474-1475
@@ -262,6 +264,11 @@ TEST_F(WsBroadcastOpenTest, Broadcast_OpenConnection) {
     char buf[64];
     ssize_t n = recv(sock_fds[1], buf, sizeof(buf), 0);
     EXPECT_GT(n, 0);  // Should have received the WebSocket frame
+
+    // Disable management (drops the borrowed reference) before freeing the
+    // connection so the manager never dereferences freed memory.
+    uvhttp_server_ws_disable_connection_management(server);
+    delete ws_conn;
 }
 
 TEST_F(WsBroadcastOpenTest, Broadcast_MultipleOpenConnections) {
@@ -271,27 +278,31 @@ TEST_F(WsBroadcastOpenTest, Broadcast_MultipleOpenConnections) {
         uvhttp_server_ws_enable_connection_management(server, 60, 30);
     ASSERT_EQ(err, UVHTTP_OK);
 
-    // Add multiple connections in OPEN state
-    uvhttp_ws_connection_t ws1{}, ws2{}, ws3{};
+    // Add multiple connections in OPEN state. The manager borrows each
+    // ws_conn pointer (it never frees them), so they must outlive their
+    // registration: heap-allocate and free after disabling management.
+    uvhttp_ws_connection_t* ws1 = new uvhttp_ws_connection_t{};
+    uvhttp_ws_connection_t* ws2 = new uvhttp_ws_connection_t{};
+    uvhttp_ws_connection_t* ws3 = new uvhttp_ws_connection_t{};
     int fds_a[2], fds_b[2];
     ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds_a), 0);
     ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds_b), 0);
 
-    ws1.state = UVHTTP_WS_STATE_OPEN;
-    ws1.fd = sock_fds[0];
-    ws1.is_server = 1;
+    ws1->state = UVHTTP_WS_STATE_OPEN;
+    ws1->fd = sock_fds[0];
+    ws1->is_server = 1;
 
-    ws2.state = UVHTTP_WS_STATE_OPEN;
-    ws2.fd = fds_a[0];
-    ws2.is_server = 1;
+    ws2->state = UVHTTP_WS_STATE_OPEN;
+    ws2->fd = fds_a[0];
+    ws2->is_server = 1;
 
-    ws3.state = UVHTTP_WS_STATE_OPEN;
-    ws3.fd = fds_b[0];
-    ws3.is_server = 1;
+    ws3->state = UVHTTP_WS_STATE_OPEN;
+    ws3->fd = fds_b[0];
+    ws3->is_server = 1;
 
-    uvhttp_server_ws_add_connection(server, &ws1, "/chat");
-    uvhttp_server_ws_add_connection(server, &ws2, "/chat");
-    uvhttp_server_ws_add_connection(server, &ws3, "/other");
+    uvhttp_server_ws_add_connection(server, ws1, "/chat");
+    uvhttp_server_ws_add_connection(server, ws2, "/chat");
+    uvhttp_server_ws_add_connection(server, ws3, "/other");
     EXPECT_EQ(server->ws_connection_manager->connection_count, 3);
 
     // Broadcast to /chat - should send to ws1 and ws2 (both OPEN)
@@ -307,6 +318,12 @@ TEST_F(WsBroadcastOpenTest, Broadcast_MultipleOpenConnections) {
     while (recv(sock_fds[1], buf, sizeof(buf), MSG_DONTWAIT) > 0) {}
     while (recv(fds_a[1], buf, sizeof(buf), MSG_DONTWAIT) > 0) {}
     while (recv(fds_b[1], buf, sizeof(buf), MSG_DONTWAIT) > 0) {}
+
+    // Disable management before freeing the borrowed connections.
+    uvhttp_server_ws_disable_connection_management(server);
+    delete ws1;
+    delete ws2;
+    delete ws3;
 
     close(fds_a[0]); close(fds_a[1]);
     close(fds_b[0]); close(fds_b[1]);
@@ -349,13 +366,14 @@ TEST_F(WsCloseAllWithConnTest, CloseAll_WithNonNullWsConn) {
         uvhttp_server_ws_enable_connection_management(server, 60, 30);
     ASSERT_EQ(err, UVHTTP_OK);
 
-    // Create a connection with non-null ws_conn so line 1512 is executed
-    uvhttp_ws_connection_t ws_conn{};
-    ws_conn.state = UVHTTP_WS_STATE_OPEN;
-    ws_conn.fd = sock_fds[0];
-    ws_conn.is_server = 1;
+    // Create a connection with non-null ws_conn so line 1512 is executed.
+    // The manager borrows the pointer (never frees it), so heap-allocate.
+    uvhttp_ws_connection_t* ws_conn = new uvhttp_ws_connection_t{};
+    ws_conn->state = UVHTTP_WS_STATE_OPEN;
+    ws_conn->fd = sock_fds[0];
+    ws_conn->is_server = 1;
 
-    uvhttp_server_ws_add_connection(server, &ws_conn, "/chat");
+    uvhttp_server_ws_add_connection(server, ws_conn, "/chat");
     EXPECT_EQ(server->ws_connection_manager->connection_count, 1);
 
     // close_all with a matching path - exercises line 1512
@@ -363,6 +381,11 @@ TEST_F(WsCloseAllWithConnTest, CloseAll_WithNonNullWsConn) {
     err = uvhttp_server_ws_close_all(server, "/chat");
     EXPECT_EQ(err, UVHTTP_OK);
     EXPECT_EQ(server->ws_connection_manager->connection_count, 0);
+
+    // close_all removed the node but never frees the connection itself.
+    // Disable management (idempotent after close_all) then free.
+    uvhttp_server_ws_disable_connection_management(server);
+    delete ws_conn;
 }
 
 TEST_F(WsCloseAllWithConnTest, CloseAll_NullPathClosesAll_WithWsConn) {
@@ -374,23 +397,30 @@ TEST_F(WsCloseAllWithConnTest, CloseAll_NullPathClosesAll_WithWsConn) {
         uvhttp_server_ws_enable_connection_management(server, 60, 30);
     ASSERT_EQ(err, UVHTTP_OK);
 
-    uvhttp_ws_connection_t ws1{}, ws2{};
-    ws1.state = UVHTTP_WS_STATE_OPEN;
-    ws1.fd = sock_fds[0];
-    ws1.is_server = 1;
+    uvhttp_ws_connection_t* ws1 = new uvhttp_ws_connection_t{};
+    uvhttp_ws_connection_t* ws2 = new uvhttp_ws_connection_t{};
+    ws1->state = UVHTTP_WS_STATE_OPEN;
+    ws1->fd = sock_fds[0];
+    ws1->is_server = 1;
 
-    ws2.state = UVHTTP_WS_STATE_CLOSING;
-    ws2.fd = fds2[0];
-    ws2.is_server = 1;
+    ws2->state = UVHTTP_WS_STATE_CLOSING;
+    ws2->fd = fds2[0];
+    ws2->is_server = 1;
 
-    uvhttp_server_ws_add_connection(server, &ws1, "/chat");
-    uvhttp_server_ws_add_connection(server, &ws2, "/other");
+    uvhttp_server_ws_add_connection(server, ws1, "/chat");
+    uvhttp_server_ws_add_connection(server, ws2, "/other");
     EXPECT_EQ(server->ws_connection_manager->connection_count, 2);
 
     // NULL path closes all connections - exercises line 1512 for both nodes
     err = uvhttp_server_ws_close_all(server, nullptr);
     EXPECT_EQ(err, UVHTTP_OK);
     EXPECT_EQ(server->ws_connection_manager->connection_count, 0);
+
+    // close_all removed the nodes but never frees the connections.
+    // Disable management then free the heap-allocated connections.
+    uvhttp_server_ws_disable_connection_management(server);
+    delete ws1;
+    delete ws2;
 
     close(fds2[0]); close(fds2[1]);
 }
@@ -431,13 +461,14 @@ TEST_F(WsTimeoutTimerTest, TimeoutTimer_ClosesTimedOutConnection) {
     ws_connection_manager_t* mgr = server->ws_connection_manager;
     ASSERT_NE(mgr, nullptr);
 
-    // Add a connection with a very old last_activity
-    uvhttp_ws_connection_t ws_conn{};
-    ws_conn.state = UVHTTP_WS_STATE_OPEN;
-    ws_conn.fd = -1;  // Will fail send, but timeout just needs to detect staleness
-    ws_conn.is_server = 1;
+    // Add a connection with a very old last_activity. The manager borrows
+    // the pointer (never frees it), so heap-allocate the connection.
+    uvhttp_ws_connection_t* ws_conn = new uvhttp_ws_connection_t{};
+    ws_conn->state = UVHTTP_WS_STATE_OPEN;
+    ws_conn->fd = -1;  // Will fail send, but timeout just needs to detect staleness
+    ws_conn->is_server = 1;
 
-    uvhttp_server_ws_add_connection(server, &ws_conn, "/ws");
+    uvhttp_server_ws_add_connection(server, ws_conn, "/ws");
     EXPECT_EQ(mgr->connection_count, 1);
 
     // Set last_activity to 0 so current_time - 0 > timeout_ms immediately
@@ -456,6 +487,11 @@ TEST_F(WsTimeoutTimerTest, TimeoutTimer_ClosesTimedOutConnection) {
 
     // The timeout callback should have closed and removed the connection
     EXPECT_EQ(mgr->connection_count, 0);
+
+    // The timeout callback removed the node but never frees the connection.
+    // Disable management then free.
+    uvhttp_server_ws_disable_connection_management(server);
+    delete ws_conn;
 }
 
 TEST_F(WsTimeoutTimerTest, TimeoutTimer_KeepsActiveConnection) {
@@ -466,13 +502,14 @@ TEST_F(WsTimeoutTimerTest, TimeoutTimer_KeepsActiveConnection) {
     ws_connection_manager_t* mgr = server->ws_connection_manager;
     ASSERT_NE(mgr, nullptr);
 
-    // Add a connection with a recent last_activity (will be set by add_connection)
-    uvhttp_ws_connection_t ws_conn{};
-    ws_conn.state = UVHTTP_WS_STATE_OPEN;
-    ws_conn.fd = -1;
-    ws_conn.is_server = 1;
+    // Add a connection with a recent last_activity (will be set by add_connection).
+    // The manager borrows the pointer (never frees it), so heap-allocate.
+    uvhttp_ws_connection_t* ws_conn = new uvhttp_ws_connection_t{};
+    ws_conn->state = UVHTTP_WS_STATE_OPEN;
+    ws_conn->fd = -1;
+    ws_conn->is_server = 1;
 
-    uvhttp_server_ws_add_connection(server, &ws_conn, "/ws");
+    uvhttp_server_ws_add_connection(server, ws_conn, "/ws");
     EXPECT_EQ(mgr->connection_count, 1);
     // last_activity was set to current time by add_connection
 
@@ -488,6 +525,11 @@ TEST_F(WsTimeoutTimerTest, TimeoutTimer_KeepsActiveConnection) {
 
     // The connection should NOT have been removed (it's still active)
     EXPECT_EQ(mgr->connection_count, 1);
+
+    // The connection is still registered. Disable management (drops the
+    // borrowed reference, closing the connection) before freeing it.
+    uvhttp_server_ws_disable_connection_management(server);
+    delete ws_conn;
 }
 
 TEST_F(WsTimeoutTimerTest, TimeoutTimer_MultipleConnections) {
@@ -498,15 +540,18 @@ TEST_F(WsTimeoutTimerTest, TimeoutTimer_MultipleConnections) {
     ws_connection_manager_t* mgr = server->ws_connection_manager;
     ASSERT_NE(mgr, nullptr);
 
-    // Add 3 connections: 2 stale, 1 active
-    uvhttp_ws_connection_t ws1{}, ws2{}, ws3{};
-    ws1.state = UVHTTP_WS_STATE_OPEN; ws1.fd = -1; ws1.is_server = 1;
-    ws2.state = UVHTTP_WS_STATE_OPEN; ws2.fd = -1; ws2.is_server = 1;
-    ws3.state = UVHTTP_WS_STATE_OPEN; ws3.fd = -1; ws3.is_server = 1;
+    // Add 3 connections: 2 stale, 1 active. The manager borrows each
+    // pointer (never frees them), so heap-allocate all three.
+    uvhttp_ws_connection_t* ws1 = new uvhttp_ws_connection_t{};
+    uvhttp_ws_connection_t* ws2 = new uvhttp_ws_connection_t{};
+    uvhttp_ws_connection_t* ws3 = new uvhttp_ws_connection_t{};
+    ws1->state = UVHTTP_WS_STATE_OPEN; ws1->fd = -1; ws1->is_server = 1;
+    ws2->state = UVHTTP_WS_STATE_OPEN; ws2->fd = -1; ws2->is_server = 1;
+    ws3->state = UVHTTP_WS_STATE_OPEN; ws3->fd = -1; ws3->is_server = 1;
 
-    uvhttp_server_ws_add_connection(server, &ws1, "/ws");
-    uvhttp_server_ws_add_connection(server, &ws2, "/ws");
-    uvhttp_server_ws_add_connection(server, &ws3, "/ws");
+    uvhttp_server_ws_add_connection(server, ws1, "/ws");
+    uvhttp_server_ws_add_connection(server, ws2, "/ws");
+    uvhttp_server_ws_add_connection(server, ws3, "/ws");
     EXPECT_EQ(mgr->connection_count, 3);
 
     // Set first two connections' last_activity to 0 (stale)
@@ -532,6 +577,13 @@ TEST_F(WsTimeoutTimerTest, TimeoutTimer_MultipleConnections) {
 
     // Only the active connection should remain
     EXPECT_EQ(mgr->connection_count, 1);
+
+    // ws1/ws2 nodes were removed by the timeout callback (never freed);
+    // ws3 is still registered. Disable management, then free all three.
+    uvhttp_server_ws_disable_connection_management(server);
+    delete ws1;
+    delete ws2;
+    delete ws3;
 }
 
 // ============================================================================
@@ -574,13 +626,14 @@ TEST_F(WsHeartbeatTimerTest, Heartbeat_SendsPingToOpenConnection) {
     ws_connection_manager_t* mgr = server->ws_connection_manager;
     ASSERT_NE(mgr, nullptr);
 
-    // Add a connection in OPEN state with a valid fd for send()
-    uvhttp_ws_connection_t ws_conn{};
-    ws_conn.state = UVHTTP_WS_STATE_OPEN;
-    ws_conn.fd = sock_fds[0];
-    ws_conn.is_server = 1;
+    // Add a connection in OPEN state with a valid fd for send(). The manager
+    // borrows the pointer (never frees it), so heap-allocate the connection.
+    uvhttp_ws_connection_t* ws_conn = new uvhttp_ws_connection_t{};
+    ws_conn->state = UVHTTP_WS_STATE_OPEN;
+    ws_conn->fd = sock_fds[0];
+    ws_conn->is_server = 1;
 
-    uvhttp_server_ws_add_connection(server, &ws_conn, "/ws");
+    uvhttp_server_ws_add_connection(server, ws_conn, "/ws");
     EXPECT_EQ(mgr->connection_count, 1);
     EXPECT_EQ(mgr->connections->ping_pending, 0);
 
@@ -600,6 +653,11 @@ TEST_F(WsHeartbeatTimerTest, Heartbeat_SendsPingToOpenConnection) {
     // Drain any data sent to the socketpair
     char buf[64];
     while (recv(sock_fds[1], buf, sizeof(buf), MSG_DONTWAIT) > 0) {}
+
+    // The connection is still registered. Disable management (drops the
+    // borrowed reference) before freeing it.
+    uvhttp_server_ws_disable_connection_management(server);
+    delete ws_conn;
 }
 
 TEST_F(WsHeartbeatTimerTest, Heartbeat_PingTimeoutClosesConnection) {
@@ -610,13 +668,14 @@ TEST_F(WsHeartbeatTimerTest, Heartbeat_PingTimeoutClosesConnection) {
     ws_connection_manager_t* mgr = server->ws_connection_manager;
     ASSERT_NE(mgr, nullptr);
 
-    // Add a connection in OPEN state
-    uvhttp_ws_connection_t ws_conn{};
-    ws_conn.state = UVHTTP_WS_STATE_OPEN;
-    ws_conn.fd = sock_fds[0];
-    ws_conn.is_server = 1;
+    // Add a connection in OPEN state. The manager borrows the pointer
+    // (never frees it), so heap-allocate the connection.
+    uvhttp_ws_connection_t* ws_conn = new uvhttp_ws_connection_t{};
+    ws_conn->state = UVHTTP_WS_STATE_OPEN;
+    ws_conn->fd = sock_fds[0];
+    ws_conn->is_server = 1;
 
-    uvhttp_server_ws_add_connection(server, &ws_conn, "/ws");
+    uvhttp_server_ws_add_connection(server, ws_conn, "/ws");
     EXPECT_EQ(mgr->connection_count, 1);
 
     // Simulate that a ping was already sent and has timed out
@@ -636,7 +695,12 @@ TEST_F(WsHeartbeatTimerTest, Heartbeat_PingTimeoutClosesConnection) {
 
     // The heartbeat should have detected the ping timeout and closed the connection
     // (sets state to CLOSING, but node remains in list)
-    EXPECT_EQ(ws_conn.state, UVHTTP_WS_STATE_CLOSING);
+    EXPECT_EQ(ws_conn->state, UVHTTP_WS_STATE_CLOSING);
+
+    // The node remains in the list. Disable management (drops the borrowed
+    // reference) before freeing the connection.
+    uvhttp_server_ws_disable_connection_management(server);
+    delete ws_conn;
 }
 
 TEST_F(WsHeartbeatTimerTest, Heartbeat_SkipsNonOpenConnection) {
@@ -647,13 +711,14 @@ TEST_F(WsHeartbeatTimerTest, Heartbeat_SkipsNonOpenConnection) {
     ws_connection_manager_t* mgr = server->ws_connection_manager;
     ASSERT_NE(mgr, nullptr);
 
-    // Add a connection in CLOSING state (not OPEN)
-    uvhttp_ws_connection_t ws_conn{};
-    ws_conn.state = UVHTTP_WS_STATE_CLOSING;
-    ws_conn.fd = sock_fds[0];
-    ws_conn.is_server = 1;
+    // Add a connection in CLOSING state (not OPEN). The manager borrows the
+    // pointer (never frees it), so heap-allocate the connection.
+    uvhttp_ws_connection_t* ws_conn = new uvhttp_ws_connection_t{};
+    ws_conn->state = UVHTTP_WS_STATE_CLOSING;
+    ws_conn->fd = sock_fds[0];
+    ws_conn->is_server = 1;
 
-    uvhttp_server_ws_add_connection(server, &ws_conn, "/ws");
+    uvhttp_server_ws_add_connection(server, ws_conn, "/ws");
     EXPECT_EQ(mgr->connection_count, 1);
     EXPECT_EQ(mgr->connections->ping_pending, 0);
 
@@ -668,6 +733,11 @@ TEST_F(WsHeartbeatTimerTest, Heartbeat_SkipsNonOpenConnection) {
 
     // ping_pending should remain 0 since connection is not OPEN
     EXPECT_EQ(mgr->connections->ping_pending, 0);
+
+    // The connection is still registered. Disable management (drops the
+    // borrowed reference) before freeing it.
+    uvhttp_server_ws_disable_connection_management(server);
+    delete ws_conn;
 }
 
 // ============================================================================
