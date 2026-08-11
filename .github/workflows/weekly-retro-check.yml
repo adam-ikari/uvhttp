@@ -19,7 +19,7 @@ jobs:
       - name: Check this week's retro artifact
         id: check
         run: |
-          YYYY=$(date -u +%Y); WW=$(date -u +%V)
+          YYYY=$(date -u +%G); WW=$(date -u +%V)
           if ls docs/dev/weekly/${YYYY}-W${WW}.md >/dev/null 2>&1; then
             echo "found=true" >> "$GITHUB_OUTPUT"
           else
