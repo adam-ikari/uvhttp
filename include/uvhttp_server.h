@@ -410,7 +410,12 @@ uvhttp_error_t uvhttp_server_ws_broadcast(uvhttp_server_t* server,
 uvhttp_error_t uvhttp_server_ws_close_all(uvhttp_server_t* server,
                                           const char* path);
 
-/* internalFunction( uvhttp_connection ) */
+/* internalFunction( uvhttp_connection )
+ *
+ * NOTE: these functions borrow the ws_conn pointer — the library never
+ * copies or frees it. The caller owns the connection and must keep it
+ * alive until it is removed from the manager (remove_connection/close_all)
+ * or until uvhttp_server_ws_disable_connection_management() is called. */
 void uvhttp_server_ws_add_connection(uvhttp_server_t* server,
                                      uvhttp_ws_connection_t* ws_conn,
                                      const char* path);
