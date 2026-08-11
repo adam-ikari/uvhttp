@@ -1,52 +1,35 @@
-# UVHTTP 敏捷开发管理指南
+# UVHTTP 单人 AI 敏捷开发指南
 
 ## 概述
 
-UVHTTP 采用敏捷开发（Scrum 风格）管理项目，以 2 周为一个 Sprint，通过
-GitHub Issues + Projects 跟踪进度，确保每个迭代都有可交付的增量。
+UVHTTP 采用单人 AI 敏捷模型管理项目。执行者是单个 AI 开发者（Claude），
+流程由自动化（CI）强制兜底。任务通过 GitHub Issues 跟踪，每个改动以 PR
+合并到 `main` 为完成标志。
 
 ## 角色
 
-| 角色 | 职责 |
-|------|------|
-| **Product Owner** | 定义需求优先级，维护 Product Backlog，验收完成的工作 |
-| **Scrum Master** | 保障流程顺畅，消除阻碍，主持 Sprint 仪式 |
-| **Development Team** | 实现 Sprint Backlog 中的任务，自组织完成工作 |
+| 角色 | 承担者 | 职责 |
+|------|--------|------|
+| Product Owner | 用户 | 定义需求优先级，维护 Backlog，验收完成的工作 |
+| Developer | Claude | 实现 Backlog 中的任务，提交 PR |
+| Scrum Master | 自动化（CI） | 流程门禁：测试失败建 issue、周五复盘检查 |
 
-## Sprint 周期（2 周）
+流程不设专职 Scrum Master。CI 门禁替代仪式：失败会自动建 issue，
+复盘缺失会提醒，不依赖执行者自觉。
 
-```
-第 1 天：Sprint Planning
-第 1-10 天：Development
-第 10 天：Sprint Review + Retrospective
-```
+## 每周循环
 
-### Sprint Planning
+不做 2 周 Sprint，不估 Story Points，无站会、评审会、复盘会。
 
-- 从 Product Backlog 中选取优先级最高的任务
-- 团队估算工作量（Story Points: 1, 2, 3, 5, 8, 13）
-- 承诺 Sprint 目标
-- 输出：Sprint Backlog
+| 天 | 活动 |
+|----|------|
+| 周一 | 基线检查（`make test && make verify-memory-safety && make check-syntax`）+ 定本周目标 |
+| 周二至周四 | 从 Issues 按优先级（P0→P3）选取任务，实现并提交 PR |
+| 周五 | 有可发布内容时发布；写复盘（`docs/dev/weekly/<YYYY>-W<WW>.md`） |
 
-### Daily Standup (每日站会)
+详细节奏见 [开发节奏](development-rhythm.md)。
 
-- 昨天做了什么？
-- 今天计划做什么？
-- 有什么阻碍？
-
-### Sprint Review
-
-- 演示完成的功能
-- 运行测试套件（101/101 通过）
-- 检查规格文档一致性
-
-### Sprint Retrospective
-
-- 做得好的
-- 做得不好的
-- 改进计划
-
-## Product Backlog 结构
+## Backlog 结构
 
 Backlog 使用 GitHub Issues 管理，每条 Issue 包含：
 
@@ -55,7 +38,7 @@ Backlog 使用 GitHub Issues 管理，每条 Issue 包含：
 [类型] 简短描述
 
 ## 描述
-用户故事或技术任务描述
+任务描述
 
 ## 验收标准
 - [ ] 条件 1
@@ -68,7 +51,6 @@ Backlog 使用 GitHub Issues 管理，每条 Issue 包含：
 ## 标签
 类型：feature / bug / refactor / docs / test / chore
 优先级：P0 (紧急) / P1 (高) / P2 (中) / P3 (低)
-状态：backlog / ready / in-progress / review / done
 ```
 
 ## Issue 类型
@@ -90,18 +72,17 @@ Backlog → Ready → In Progress → Review → Done
 ```
 
 ### Backlog → Ready
-- Product Owner 确认优先级和验收标准
-- 团队确认需求清晰
+- 用户确认优先级和验收标准
+- 需求清晰
 
 ### Ready → In Progress
-- 开发者认领任务
 - 创建功能分支：`<type>/<short-description>`
 - 例如：`feat/add-compression`, `fix/memory-leak`
 
 ### In Progress → Review
 - 代码实现完成
-- 本地测试通过（101/101）
-- ASan 无发现
+- 本地测试通过（`make test`）
+- ASan 无发现（`make verify-memory-safety`）
 - 创建 Pull Request
 
 ### Review → Done
@@ -143,17 +124,15 @@ feature/     ●──●──●────●
 | P2 (Medium) | 2 周 | 次要功能缺失、非关键 bug |
 | P3 (Low) | 待定 | 改进、优化、文档、技术债务 |
 
-## Sprint 0 — 初始 Backlog
+## 已完成基线
 
-当前项目的初始 Sprint 0 已完成：
-
-- ✅ ASan/UBSan 内存安全验证（101/101）
-- ✅ 文档去 AI 味（英文 8 文件 + 中文 41 文件）
-- ✅ 网站一致性修复
-- ✅ 项目结构清理（122 个文件删除）
-- ✅ SDD 规格文档（14 个文件）
-- ✅ CI/CD 流水线（4 个工作流）
+- ASan/UBSan 内存安全验证（101/101）
+- 文档去 AI 味（英文 8 文件 + 中文 41 文件）
+- 网站一致性修复
+- 项目结构清理（122 个文件删除）
+- SDD 规格文档（14 个文件）
+- CI/CD 流水线（4 个工作流）
 
 ## 下一阶段
 
-见 [Sprint Backlog](sprint-backlog.md) 获取当前 Sprint 的详细任务列表。
+见 [Backlog 与每日工作流](sprint-backlog.md) 获取当前任务列表。

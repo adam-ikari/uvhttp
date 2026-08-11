@@ -77,7 +77,10 @@ jobs:
   
   security-scan-full:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write   # 上传 CodeQL SARIF 需要
 
     steps:
       - name: Checkout code
@@ -85,10 +88,18 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Run CodeQL analysis
-        uses: github/codeql-action/analyze@v3
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
         with:
           languages: cpp
+
+      - name: Build
+        run: make build
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          output: codeql-results
 
       - name: Run dependency check
         run: |
@@ -168,6 +179,9 @@ jobs:
           name: build-ubuntu-nightly-${{ github.run_number }}
           path: build/
 
+      - name: Restore executable permission
+        run: chmod -R +x build/dist/bin 2>/dev/null || true
+
       - name: Run tests with coverage
         uses: ./.github/actions/run-tests
         with:
@@ -216,6 +230,9 @@ jobs:
         with:
           name: build-ubuntu-nightly-${{ github.run_number }}
           path: build/
+
+      - name: Restore executable permission
+        run: chmod -R +x build/dist/bin 2>/dev/null || true
 
       - name: Run tests with coverage
         run: |
@@ -563,6 +580,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      - name: Ensure performance-trend.md exists
+        run: |
+          TREND=$(find /tmp/artifacts -name performance-trend.md -print -quit 2>/dev/null)
+          if [ -n "$TREND" ]; then
+            cp "$TREND" ./performance-trend.md
+          fi
+          if [ ! -f performance-trend.md ]; then
+            echo "# Nightly Performance Trend" > performance-trend.md
+            echo "" >> performance-trend.md
+            echo "（本次 run 未生成趋势数据，见 performance-full job 结果）" >> performance-trend.md
+          fi
+
       - name: Create nightly release
         uses: softprops/action-gh-release@v1
         with:
@@ -575,3 +604,45 @@ jobs:
             /tmp/artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  create-issue-on-failure:
+    needs: [ubuntu-build-all, code-quality-full, security-scan-full, ubuntu-test-full, test-coverage, coverage-report, test-stress, performance-full, test-memory, test-ubsan]
+    if: always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - name: Ensure labels exist
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = ['nightly', 'bug'];
+            for (const l of labels) {
+              try { await github.rest.issues.createLabel({ owner: context.repo.owner, repo: context.repo.repo, name: l, color: 'd73a4a' }); }
+              catch (e) { if (e.status !== 422) throw e; }  // 422 = already exists
+            }
+      - name: Create or update nightly failure issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const failed = ${{ toJSON(needs) }};
+            const failedJobs = Object.entries(failed)
+              .filter(([,v]) => v.result === 'failure' || v.result === 'cancelled')
+              .map(([k]) => k);
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const title = `[nightly] CI 失败 ${new Date().toISOString().slice(0,10)}`;
+            const body = `Nightly CI 失败 jobs: \`${failedJobs.join(', ')}\`\n\nRun: ${runUrl}\n\n失败原因见上方链接。请修复后合并，下一晚 nightly 自动验证。`;
+            // dedup：找 open issue，title 以 "[nightly] CI 失败" 开头且带 nightly label
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'nightly', per_page: 100 });
+            const existing = issues.find(i => i.title.startsWith('[nightly] CI 失败'));
+            if (existing) {
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: existing.number, body: `再次失败 (${new Date().toISOString().slice(0,10)}): ${failedJobs.join(', ')} — ${runUrl}` });
+            } else {
+              await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels: ['nightly', 'bug'] });
+            }
