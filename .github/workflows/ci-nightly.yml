@@ -611,7 +611,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   create-issue-on-failure:
-    needs: [ubuntu-build-all, code-quality-full, security-scan-full, ubuntu-test-full, test-coverage, coverage-report, test-stress, performance-full, test-memory, test-ubsan]
+    needs: [ubuntu-build-all, code-quality-full, security-scan-full, ubuntu-test-full, test-coverage, coverage-report, test-stress, performance-full, test-memory, test-ubsan, generate-summary]
     if: always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
