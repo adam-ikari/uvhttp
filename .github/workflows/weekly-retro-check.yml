@@ -1,0 +1,46 @@
+name: weekly-retro-check
+on:
+  schedule:
+    - cron: '0 11 * * 5'   # 周五 11:00 UTC = 北京 19:00
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  retro-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.1.1
+        with:
+          fetch-depth: 0
+      - name: Check this week's retro artifact
+        id: check
+        run: |
+          YYYY=$(date -u +%Y); WW=$(date -u +%V)
+          if ls docs/dev/weekly/${YYYY}-W${WW}.md >/dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Ensure labels exist
+        if: steps.check.outputs.found == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try { await github.rest.issues.createLabel({ owner: context.repo.owner, repo: context.repo.repo, name: 'retro', color: 'fbca04' }); }
+            catch (e) { if (e.status !== 422) throw e; }
+      - name: Create retro reminder issue
+        if: steps.check.outputs.found == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `[retro] 本周复盘缺失 ${new Date().toISOString().slice(0,10)}`;
+            const body = '本周五复盘产物缺失。请创建 `docs/dev/weekly/<YYYY>-W<WW>.md`（模板见 docs/development-rhythm.md 周五复盘节），记录本周完成/未完成/下周目标/CI 状态。';
+            const { data: issues } = await github.rest.issues.listForRepo({ owner: context.repo.owner, repo: context.repo.repo, state: 'open', labels: 'retro', per_page: 100 });
+            const existing = issues.find(i => i.title.startsWith('[retro] 本周复盘缺失'));
+            if (!existing) {
+              await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body, labels: ['retro'] });
+            }
