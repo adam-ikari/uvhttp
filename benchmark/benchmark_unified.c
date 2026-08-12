@@ -620,7 +620,7 @@ static void print_usage(const char* program) {
     printf("  GET  /db/slow          - Slow database query (50ms async delay)\n");
     printf("  GET  /stats            - Server statistics\n");
     printf("  GET  /health           - Health check\n");
-    printf("  GET  /file/*           - Static file test\n");
+    printf("  GET  /file/:name       - Static file test\n");
     printf("\n");
     printf("Performance Testing:\n");
     printf("  wrk -t4 -c100 -d30s http://127.0.0.1:18081/\n");
@@ -765,16 +765,17 @@ int main(int argc, char* argv[]) {
     uvhttp_router_add_route(router, "/health", health_handler);
 
     #if UVHTTP_FEATURE_STATIC_FILES
-    /* Create test file directory */
-    const char* test_dir = "./public/file_test";
+    /* Create test file directory. Files live under public/file/ so the
+     * /file/<name> URLs resolve to <root>/file/<name> (root = cwd/public). */
+    const char* test_dir = "./public/file";
     if (create_directory(test_dir) != 0 && errno != EEXIST) {
         fprintf(stderr, "Warning: Failed to create test directory: %s\n", test_dir);
     }
 
     /* Create test files */
-    create_test_file("./public/file_test/small.txt", 1024);
-    create_test_file("./public/file_test/medium.bin", 64 * 1024);
-    create_test_file("./public/file_test/large.bin", 1024 * 1024);
+    create_test_file("./public/file/small.txt", 1024);
+    create_test_file("./public/file/medium.bin", 64 * 1024);
+    create_test_file("./public/file/large.bin", 1024 * 1024);
 
     /* Create static file context */
     uvhttp_static_config_t static_config;
@@ -791,7 +792,8 @@ int main(int argc, char* argv[]) {
         size_t cwd_len = strlen(cwd);
         size_t public_len = strlen("/public");
         if (cwd_len + public_len + 1 < sizeof(static_config.root_directory)) {
-            snprintf(static_config.root_directory, sizeof(static_config.root_directory), "%s/public", cwd);
+            memcpy(static_config.root_directory, cwd, cwd_len);
+            memcpy(static_config.root_directory + cwd_len, "/public", public_len + 1);
         } else {
             /* 路径太长，使用当前目录 */
             strncpy(static_config.root_directory, "./public", sizeof(static_config.root_directory) - 1);
@@ -801,7 +803,7 @@ int main(int argc, char* argv[]) {
         result = uvhttp_static_create(&static_config, &ctx->static_ctx);
         if (result == UVHTTP_OK) {
             /* Add static file route using application layer pattern */
-            uvhttp_router_add_route(router, "/file/*", static_file_handler);
+            uvhttp_router_add_route(router, "/file/:name", static_file_handler);
             printf("Static file service enabled\n");
         } else {
             fprintf(stderr, "Warning: Failed to create static file context: %s\n", uvhttp_error_string(result));

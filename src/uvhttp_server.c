@@ -27,6 +27,7 @@
 #include "uvhttp_utils.h"
 
 #include <netinet/tcp.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -242,6 +243,11 @@ uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
     }
 
     *server = NULL;
+
+    /* Ignore SIGPIPE: writes to a disconnected peer (e.g. sendfile to a
+     * closed socket on the thread pool) must return EPIPE and be handled
+     * by the event loop, not terminate the process. */
+    signal(SIGPIPE, SIG_IGN);
 
 /* Initialize TLS module (if not yet initialized) */
 #if UVHTTP_FEATURE_TLS

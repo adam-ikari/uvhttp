@@ -940,6 +940,14 @@ uvhttp_error_t uvhttp_connection_schedule_restart_read(
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    /* If the connection is already closing, the close path has stopped the
+     * idle handle. Starting it again would resurrect a handle on a connection
+     * about to be freed, and on_idle_restart_read would fire on freed memory
+     * (heap-use-after-free). Nothing left to restart. */
+    if (conn->state == UVHTTP_CONN_STATE_CLOSING) {
+        return UVHTTP_OK;
+    }
+
     // use idle handle to safely restart read in next event loop
     conn->idle_handle.data = conn;
 

@@ -32,7 +32,7 @@ jobs:
 
       - name: Configure CMake with coverage
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON -DBUILD_WITH_STATIC_FILES=ON
 
       - name: Build with coverage
         run: |
@@ -356,11 +356,11 @@ jobs:
                 ;;
               7)
                 echo "Test 7: Small File Transfer" >> performance.log
-                wrk -t4 -c50 -d30s --timeout 10s http://localhost:18081/small.txt >> performance.log 2>&1
+                wrk -t4 -c50 -d30s --timeout 10s http://localhost:18081/file/small.txt >> performance.log 2>&1
                 ;;
               8)
                 echo "Test 8: Large File Transfer" >> performance.log
-                wrk -t4 -c50 -d30s --timeout 10s http://localhost:18081/large.bin >> performance.log 2>&1
+                wrk -t4 -c50 -d30s --timeout 10s http://localhost:18081/file/large.bin >> performance.log 2>&1
                 ;;
             esac
             sleep 5
