@@ -1262,7 +1262,9 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     uvhttp_response_set_status(response, 200);
     uvhttp_response_send(response);
 
-    /* note: file content memory is now managed by cache, don't release here */
+    /* cache_put and response_set_body both copy the content, so the
+     * read_file_content buffer is owned by this function */
+    uvhttp_free(file_content);
 
     return 0;
 }
@@ -1506,6 +1508,8 @@ typedef struct {
     uv_fs_t close_req;
     uv_file in_fd;
     uvhttp_response_t* response;
+    uv_loop_t* loop; /* event loop, outlives connection (response/client may
+                        be freed on disconnect) */
     char* file_path;
     size_t file_size;
     size_t bytes_sent;
@@ -1592,7 +1596,7 @@ static void on_sendfile_timeout(uv_timer_t* timer) {
     uv_close((uv_handle_t*)timer, NULL);
 
     /* close file and clean resources */
-    uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)ctx->response->client);
+    uv_loop_t* loop = ctx->loop;
     uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
 }
 
@@ -1626,7 +1630,7 @@ static void on_sendfile_complete(uv_fs_t* req) {
     }
 
     /* getevent loop */
-    uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)ctx->response->client);
+    uv_loop_t* loop = ctx->loop;
 
     /* stop timeout timer (if still running) */
     if (!uv_is_closing((uv_handle_t*)&ctx->timeout_timer)) {
@@ -1651,8 +1655,15 @@ static void on_sendfile_complete(uv_fs_t* req) {
                 (remaining > ctx->chunk_size) ? ctx->chunk_size : remaining;
 
             uv_fs_req_cleanup(req);
-            uv_fs_sendfile(loop, &ctx->sendfile_req, ctx->out_fd, ctx->in_fd,
-                           ctx->offset, chunk_size, on_sendfile_complete);
+            int resend_result =
+                uv_fs_sendfile(loop, &ctx->sendfile_req, ctx->out_fd, ctx->in_fd,
+                               ctx->offset, chunk_size, on_sendfile_complete);
+            /* socket may be closed (client disconnect): sync failure means no
+             * callback will fire, so release ctx via on_file_close */
+            if (resend_result < 0) {
+                uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
+                return;
+            }
             return;
         }
 
@@ -1696,8 +1707,15 @@ static void on_sendfile_complete(uv_fs_t* req) {
             (remaining > ctx->chunk_size) ? ctx->chunk_size : remaining;
 
         uv_fs_req_cleanup(req);
-        uv_fs_sendfile(loop, &ctx->sendfile_req, ctx->out_fd, ctx->in_fd,
-                       ctx->offset, chunk_size, on_sendfile_complete);
+        int resend_result =
+            uv_fs_sendfile(loop, &ctx->sendfile_req, ctx->out_fd, ctx->in_fd,
+                           ctx->offset, chunk_size, on_sendfile_complete);
+        /* socket may be closed (client disconnect): sync failure means no
+         * callback will fire, so release ctx via on_file_close */
+        if (resend_result < 0) {
+            uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
+            return;
+        }
 
         /* restart timeout timer */
         if (!uv_is_closing((uv_handle_t*)&ctx->timeout_timer)) {
@@ -1853,14 +1871,16 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
 
         memset(ctx, 0, sizeof(sendfile_context_t));
         ctx->response = resp;
+        ctx->loop = loop;
         ctx->file_size = file_size;
         ctx->offset = 0;
         ctx->bytes_sent = 0;
         ctx->completed = 0;
         ctx->start_time = uv_now(loop);
         ctx->retry_count = 0;
-        ctx->sendfile_req.data = ctx; /* setcallbackdata */
-        ctx->cork_enabled = 0;        /* initialize as disabled */
+        ctx->sendfile_req.data = ctx;  /* setcallbackdata */
+        ctx->close_req.data = ctx;     /* on_file_close releases ctx via this */
+        ctx->cork_enabled = 0;         /* initialize as disabled */
 
         /* initializeconfigparameter */
         init_sendfile_config(ctx, file_size, config);
@@ -1964,9 +1984,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
             /* clean resources */
             uv_timer_stop(&ctx->timeout_timer);
             uv_close((uv_handle_t*)&ctx->timeout_timer, NULL);
+            /* on_file_close (close_req.data == ctx) frees file_path + ctx */
             uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
-            uvhttp_free(ctx->file_path);
-            uvhttp_free(ctx);
             return UVHTTP_ERROR_RESPONSE_SEND;
         }
 
@@ -1988,6 +2007,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
 
         memset(ctx, 0, sizeof(sendfile_context_t));
         ctx->response = resp;
+        ctx->loop = loop;
         ctx->file_size = file_size;
         ctx->offset = 0;
         ctx->bytes_sent = 0;
@@ -1996,6 +2016,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         ctx->retry_count = 0;
         ctx->cork_enabled = 0;        /* initialize as disabled */
         ctx->sendfile_req.data = ctx; /* setcallbackdata */
+        ctx->close_req.data = ctx;    /* on_file_close releases ctx via this */
 
         /* initializeconfigparameter */
         init_sendfile_config(ctx, file_size, config);
@@ -2099,9 +2120,8 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
             /* clean resources */
             uv_timer_stop(&ctx->timeout_timer);
             uv_close((uv_handle_t*)&ctx->timeout_timer, NULL);
+            /* on_file_close (close_req.data == ctx) frees file_path + ctx */
             uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
-            uvhttp_free(ctx->file_path);
-            uvhttp_free(ctx);
             return UVHTTP_ERROR_RESPONSE_SEND;
         }
 
