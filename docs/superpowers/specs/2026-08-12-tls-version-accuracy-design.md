@@ -25,6 +25,8 @@ info->tls_version = "TLS 1.2 - 1.3";
 
 字段语义：`uvhttp_get_config_info()` 返回的静态配置信息，描述库支持的协议范围（非当前连接所用版本）。测试（`test/unit/test_version_full_coverage.cpp:447-448,596-597`）仅断言非空，改字符串无破坏。
 
+格式约定：API 返回字符串用 `TLS 1.2 - 1.3`（空格破折号，可读性优先），文档用 `TLS 1.2/1.3`（斜杠，紧凑）。两种格式并存是有意的，不统一为同一字面量。
+
 ### 文档（6 对，EN/ZH 对称）
 
 | 文件 | 现状 | 改为 |
@@ -32,8 +34,8 @@ info->tls_version = "TLS 1.2 - 1.3";
 | `README.md:69` / `README_CN.md:67` | TLS 1.3 Support | TLS 1.2/1.3 Support |
 | `docs/index.md:31` / `docs/zh/index.md:31` | TLS 1.3 | TLS 1.2/1.3 |
 | `docs/guide/introduction.md:143` / `docs/zh/guide/introduction.md:137` | TLS 1.3 Support: via mbedtls | TLS 1.2/1.3 Support: via mbedtls |
-| `docs/guide/SECURITY.md:263` / `docs/zh/guide/SECURITY.md:263` | TLS 1.3: Enabled by default when TLS is used | TLS 1.2/1.3: both enabled by default, TLS 1.3 as maximum |
-| `docs/guide/ROADMAP.md:14` / `docs/zh/guide/ROADMAP.md:14` | TLS 1.3 via mbedtls | TLS 1.2/1.3 via mbedtls |
+| `docs/guide/SECURITY.md:263` / `docs/zh/guide/SECURITY.md:263` | EN: TLS 1.3: Enabled by default when TLS is used / ZH: TLS 1.3: 使用 TLS 时默认启用 | EN: TLS 1.2/1.3: both enabled by default, TLS 1.3 as maximum / ZH: TLS 1.2/1.3: 使用 TLS 时均默认启用，TLS 1.3 为最高版本 |
+| `docs/guide/ROADMAP.md:14` / `docs/zh/guide/ROADMAP.md:14` | TLS 1.3 via mbedtls / 通过 mbedtls 实现 TLS 1.3 | TLS 1.2/1.3 via mbedtls / 通过 mbedtls 实现 TLS 1.2/1.3 |
 
 ### 不改（历史或已准确）
 
@@ -49,9 +51,11 @@ info->tls_version = "TLS 1.2 - 1.3";
 1. `make test` — 101/101 保持通过
 2. `make check-syntax` — 通过
 3. `bash scripts/check-doc-sync.sh --check` — 无 outdated 对
-4. 重建后运行版本查询，确认输出 `TLS 1.2 - 1.3`
+4. 重建后运行 `examples/07_performance/test_version_api`（调用 `uvhttp_print_build_info()`），确认输出 `Version: TLS 1.2 - 1.3`
 5. `make verify-memory-safety` — ASan/UBSan clean
 
 ## 交付
 
 分支 `fix/tls-version-accuracy`，PR 打向 `main`，merge 后删除分支。不提交 `deps/llhttp` 子模块脏状态。
+
+关键约束：`check-doc-sync.sh` 用 commit 时间戳门禁（ZH 必须不早于 EN）。**每对 EN/ZH 文档必须同一 commit 提交**（全部 10 个文档文件一次 commit），否则 ZH 会被判为 outdated、`--check` 失败。
