@@ -5,7 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - Production-grade memory-safety pass
+## [2.6.1] - 2026-08-12
+
+### Added
+- **EN/ZH doc consistency gate**: `make check-docs` — `check-doc-sync.sh` 作为阻断式 PR 门禁，中英文档不一致会阻止合并
+- **`translate-docs.sh`**: AI-assisted EN→ZH 翻译脚本
+- **`benchmark/benchmark.cmake`**: 构建 `benchmark_unified`，供 nightly test-stress / performance-full 使用
+- **Nightly 失败自动建 issue**: ci-nightly 失败时自动创建 `[nightly]` issue（去重，重复失败追加评论）
+- **周五复盘检查**: weekly-retro-check.yml 检查 `docs/dev/weekly/<YYYY>-W<WW>.md`，缺失时自动建 `[retro]` issue
+
+### Changed
+- **4 个流程文档重写**为单人 AI 敏捷模型（AGILE / development-rhythm / release-strategy / sprint-backlog）：PO=用户、Dev=Claude、SM=自动化，按需发布 SemVer
+- **中英文档一致性**: 29 个 ZH 文件翻译/校对与 EN 对齐，移除孤儿 sync_hash frontmatter，修复 docs 目录结构
+- **Nightly CI 权限**: 安装 lcov + 授予 release 权限
+- **基准**: /simple 25,949 RPS、/json 26,088 RPS、/large 25,154 RPS（2 threads/10 conn/5s，3 次中位数）—— 从 Silver tier 提升至 **Gold**（25,000+ RPS），较 v2.6.0 基线 +20%
+
+### Fixed
+- **WebSocket use-after-return**: websocket manager 测试中的 stack-use-after-return（ASan，PR #315）
+- **静态文件内存安全**: 释放 static 内存路径中的 `read_file_content` buffer（PR #322）
+- **prewarm FIFO 挂起**: `uvhttp_static_prewarm_cache` 加 `S_ISREG` guard，遇 FIFO 不再挂起（PR #325）
+- **Nightly CI 基础设施**: CodeQL 配置（init step + `security-events` 权限）、artifact 执行位丢失（`chmod -R +x`）、`performance-trend.md` ENOENT 时序（PR #316 / #318 / #321）
+- **文档死链**: VitePress 无法路由 `docs/` 目录外的链接
+- **docs build 脚本**: doxygen 隐藏目录与 npm 脚本名错误
+
 ## [2.6.0] - 2026-07-31
 
 ### Added

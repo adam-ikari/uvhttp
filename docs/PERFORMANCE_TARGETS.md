@@ -4,13 +4,13 @@ This document defines the performance targets and benchmarks for UVHTTP.
 
 ## Current Baseline
 
-Measured 2026-07-25 on Linux x86_64 (Release build, system allocator, 2 threads, 10 concurrent connections, 5s test):
+Measured 2026-08-12 on Linux x86_64 (Release build, system allocator, 2 threads, 10 concurrent connections, 5s test, median of 3 runs):
 
 | Endpoint | Throughput (RPS) | Avg Latency | P99 Latency |
 |----------|-----------------|-------------|-------------|
-| `/simple` (text/plain) | 21,529 | 401µs | 0.95ms |
-| `/json` (application/json) | 21,451 | 402µs | 0.95ms |
-| `/large` (1KB body) | 21,314 | 405µs | 0.95ms |
+| `/simple` (text/plain) | 25,949 | 319µs | 0.96ms |
+| `/json` (application/json) | 26,088 | 320µs | 0.96ms |
+| `/large` (1KB body) | 25,154 | 330µs | 0.97ms |
 
 ## Targets
 
@@ -23,7 +23,7 @@ Measured 2026-07-25 on Linux x86_64 (Release build, system allocator, 2 threads,
 | **Gold** | **25,000** | **25,000** | **25,000** |
 | Platinum | 35,000 | 35,000 | 35,000 |
 
-**Current tier: Silver** (21,500 RPS)
+**Current tier: Gold** (25,000+ RPS)
 
 ### Latency
 
@@ -33,7 +33,7 @@ Measured 2026-07-25 on Linux x86_64 (Release build, system allocator, 2 threads,
 | P99 latency | <10ms | <5ms | **<1ms** | <500µs |
 | P999 latency | <50ms | <25ms | **<5ms** | <2ms |
 
-**Current tier: Silver** (~400µs avg, ~0.95ms P99)
+**Current tier: Gold** (~320µs avg, ~0.96ms P99)
 
 ### Memory
 
@@ -108,3 +108,4 @@ cmake --build build_bench -j$(nproc) --target test_performance_e2e
 |------|---------|-----------|----------|-----------|-------|
 | 2026-07-25 | 2.5.1 | 21,529 | 21,451 | 21,314 | Baseline (Gold tier goal) |
 | 2026-07-31 | 2.5.1 | 18,108 | — | — | Removed GCC extensions. ~6.6% perf cost, acceptable for portability. |
+| 2026-08-12 | 2.6.1 | 25,949 | 26,088 | 25,154 | Gold tier reached. Median of 3 runs, 2 threads/10 conn/5s. |

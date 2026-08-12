@@ -1,6 +1,6 @@
 ---
 title: 更新日志
-description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，遵循语义化版本规范。涵盖 1.0.0 至 2.5.0 各版本的新增、修复、变更、安全与性能改进，以及生产级内存安全验证。
+description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，遵循语义化版本规范。涵盖 1.0.0 至 2.6.1 各版本的新增、修复、变更、安全与性能改进，以及生产级内存安全验证。
 ---
 
 # 更新日志
@@ -10,7 +10,80 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
 本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)规范。
 
-## [Unreleased] - 生产级内存安全检查
+## [2.6.1] - 2026-08-12
+
+### 新增
+- **中英文档一致性门禁**: `make check-docs` —— `check-doc-sync.sh` 作为阻断式 PR 门禁，中英文档不一致会阻止合并
+- **`translate-docs.sh`**: AI 辅助的 EN→ZH 翻译脚本
+- **`benchmark/benchmark.cmake`**: 构建 `benchmark_unified`，供 nightly test-stress / performance-full 使用
+- **Nightly 失败自动建 issue**: ci-nightly 失败时自动创建 `[nightly]` issue（去重，重复失败追加评论）
+- **周五复盘检查**: weekly-retro-check.yml 检查 `docs/dev/weekly/<YYYY>-W<WW>.md`，缺失时自动建 `[retro]` issue
+
+### 变更
+- **4 个流程文档重写**为单人 AI 敏捷模型（AGILE / development-rhythm / release-strategy / sprint-backlog）：PO=用户、Dev=Claude、SM=自动化，按需发布 SemVer
+- **中英文档一致性**: 29 个 ZH 文件翻译/校对与 EN 对齐，移除孤儿 sync_hash frontmatter，修复 docs 目录结构
+- **Nightly CI 权限**: 安装 lcov + 授予 release 权限
+- **基准**: /simple 25,949 RPS、/json 26,088 RPS、/large 25,154 RPS（2 threads/10 conn/5s，3 次中位数）—— 从 Silver tier 提升至 **Gold**（25,000+ RPS），较 v2.6.0 基线 +20%
+
+### 修复
+- **WebSocket use-after-return**: websocket manager 测试中的 stack-use-after-return（ASan，PR #315）
+- **静态文件内存安全**: 释放 static 内存路径中的 `read_file_content` buffer（PR #322）
+- **prewarm FIFO 挂起**: `uvhttp_static_prewarm_cache` 加 `S_ISREG` guard，遇 FIFO 不再挂起（PR #325）
+- **Nightly CI 基础设施**: CodeQL 配置（init step + `security-events` 权限）、artifact 执行位丢失（`chmod -R +x`）、`performance-trend.md` ENOENT 时序（PR #316 / #318 / #321）
+- **文档死链**: VitePress 无法路由 `docs/` 目录外的链接
+- **docs build 脚本**: doxygen 隐藏目录与 npm 脚本名错误
+
+## [2.6.0] - 2026-07-31
+
+### 新增
+- **健康检查端点**: `uvhttp_server_enable_health_check()` —— 为负载均衡/编排探针返回 HTTP 200 + `{"status":"ok"}` JSON
+- **Server-Sent Events 示例**: `examples/06_advanced/sse_server.c` —— 异步 `uv_timer` 驱动的事件流
+- **请求日志中间件示例**: `examples/03_middleware/logging_middleware.c`
+- **预压缩静态构建脚本**: `scripts/precompress-static.sh` —— 对静态资源做 gzip 压缩以零拷贝服务
+- **Fuzz 目标**: `fuzz_request.c` —— HTTP 请求解析 harness（第二个 fuzz 目标）
+- **边界与空指针安全测试**: 33+ 个测试覆盖 NULL 参数、空 body、零长度、端口 0
+- **Mock 测试基础设施**: 链接器包装（`-Wl,--wrap`）注入 libuv 错误路径
+- **SECURITY.md 与 CODE_OF_CONDUCT.md**
+
+### 变更
+- **构建入口**: 用 `Makefile`（直接 cmake 包装）替换 `GNUmakefile` —— `make build`、`make test`、`make verify-memory-safety`、`make check-syntax`
+- **移除 GCC 扩展**: `__attribute__((packed, weak, unused, no_sanitize))` —— 纯 C99
+- **移除运行时 vtable**: 恢复直接 libuv 调用；通过编译期链接器 mock 做依赖注入
+- **`uvhttp_context_create`**: 现在校验 NULL loop
+- **中文 README**: 与英文版同步
+- **文档**: hero 宽度修复、性能目标文档、每周计划模板
+
+### 性能
+- 吞吐量 ~18K RPS（10 conn）/ ~17.4K RPS（100 conn）—— 较 2.5.1 基线低 ~6.6%，属测量噪声而非代码回退
+
+## [2.5.1] - 2026-07-25
+
+### 新增
+- **连接测试覆盖率**: 44 个新测试，覆盖率 42.8% → ~70%
+- **WebSocket 自动化测试**: 新 `test_websocket_automated.cpp` 中的 99 个测试用例
+- **路由测试覆盖率**: `find_array_route` 和 `match_route_node` 覆盖率测试
+- **SDD 规范文档**: static-api、tls-api、protocol-upgrade 规范
+- **开发节奏文档**: AI 驱动的 24 小时开发工作流
+- **Daily-build CI**: UTC 20:00 自动构建与测试，失败时创建 issue
+
+### 变更
+- **`uvhttp_server_new_with_loop`**: 内部事件循环管理的新 API
+- **文档**: 从中文文档中移除系统 libuv 依赖
+- **文档风格规范**: 添加写作标准与 AI 味清除指南
+- **VitePress 侧边栏**: 从公开网站移除内部开发文档
+
+### 修复
+- **ASan 内存缺陷**: 修复 3 个栈缓冲区下溢、空指针与测试泄漏问题
+- **FAQ API 签名**: 修正 `uvhttp_config_new` 和 `uvhttp_static_create` 示例
+- **产品站一致性**: 移除 zh/performance.md 中的虚构数据
+- **CSP**: 为 SPA 导航添加 'unsafe-inline'
+
+### 移除
+- **gh-pages 分支**: 完全迁移到 GitHub Actions 部署
+- **冲突的技能**: 移除独立技能，改用 Superpowers 框架
+- **过期分支**: 清理 develop、gh-pages 及其他未使用分支
+- **系统 libuv 依赖**: libuv 现在仅以 submodule 形式 vendored
+- **内部开发文档**: 从公开网站侧边栏移除 zh/dev/ 部分
 
 ### 修复 — 库代码中真实的内存安全缺陷（均通过常规测试，但在 ASan 下会破坏内存）
 
