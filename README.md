@@ -66,7 +66,7 @@ UVHTTP provides full support for 32-bit architectures with optimizations for res
 
 ### Security
 - 🔒 **Security-First**: Comprehensive buffer overflow protection and input validation
-- 🛡️ **TLS 1.3 Support**: Encryption through mbedtls integration
+- 🛡️ **TLS 1.2/1.3 Support**: Encryption through mbedtls integration
 - ✅ **Memory Safety**: Verified clean under AddressSanitizer (no leaks, no use-after-free, no overflows) and UndefinedBehaviorSanitizer across the full 101-test suite
 - 🚨 **Resource Limits**: Configurable limits for connections, headers, and body size
 

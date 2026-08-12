@@ -28,7 +28,7 @@ features:
   - title: 💾 智能缓存
     details: LRU 缓存 + 自动预热，热门内容直出内存。
   - title: 🔒 安全为先
-    details: 溢出防护、防响应拆分、TLS 1.3。
+    details: 溢出防护、防响应拆分、TLS 1.2/1.3。
   - title: 🧩 模块化
     details: WebSocket / 静态 / TLS / 限流编译期开关。
   - title: 📐 干净 API

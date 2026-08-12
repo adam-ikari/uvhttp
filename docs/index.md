@@ -28,7 +28,7 @@ features:
   - title: 🧠 Smart Caching
     details: LRU cache with preheating for hot static content.
   - title: 🔒 Security-First
-    details: Overflow guards, response-splitting prevention, TLS 1.3.
+    details: Overflow guards, response-splitting prevention, TLS 1.2/1.3.
   - title: 🔧 Modular
     details: Toggle WebSocket / static / TLS / rate-limit at compile time.
   - title: 📐 Clean API
