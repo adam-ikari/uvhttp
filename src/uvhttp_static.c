@@ -1368,7 +1368,7 @@ uvhttp_result_t uvhttp_static_prewarm_cache(uvhttp_static_context_t* ctx,
 
     /* check if file exists */
     struct stat st;
-    if (stat(full_path, &st) != 0 || S_ISDIR(st.st_mode)) {
+    if (stat(full_path, &st) != 0 || !S_ISREG(st.st_mode)) {
         return UVHTTP_ERROR_NOT_FOUND;
     }
 
