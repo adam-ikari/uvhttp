@@ -2866,7 +2866,7 @@ int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 ### 外部资源
 - [libuv 官方文档](https://docs.libuv.org/)
 - [HTTP/1.1 规范](https://tools.ietf.org/html/rfc7231)
-- [C 语言最佳实践](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)
+- [C++ 核心指南最佳实践](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)
 
 ---
 
