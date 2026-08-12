@@ -11,7 +11,7 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 - WebSocket with full-duplex communication
 - Zero-copy file transmission
 - LRU caching with preheating
-- TLS 1.3 via mbedtls
+- TLS 1.2/1.3 via mbedtls
 - 32-bit embedded system support
 - Comprehensive documentation
 - Input validation and security hardening

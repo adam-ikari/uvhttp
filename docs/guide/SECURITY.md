@@ -260,7 +260,7 @@ If you discover a security vulnerability, please report it responsibly:
 
 ### Secure Defaults
 
-- **TLS 1.3**: Enabled by default when TLS is used
+- **TLS 1.2/1.3**: both enabled by default, TLS 1.3 as maximum
 - **Certificate verification**: Required by default
 - **Secure cipher suites**: Pre-configured
 - **Rate limiting**: Enabled by default

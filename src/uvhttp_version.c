@@ -180,7 +180,7 @@ uvhttp_error_t uvhttp_get_build_info(uvhttp_build_info_t* info) {
     /* TLS configuration */
 #ifdef UVHTTP_TLS_ENABLED
     info->tls_enabled = 1;
-    info->tls_version = "TLS 1.3";
+    info->tls_version = "TLS 1.2 - 1.3";
 #endif
 
     return UVHTTP_OK;

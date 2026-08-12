@@ -140,7 +140,7 @@ API Routing:
 
 - **Buffer Overflow Protection**: bounds checking on all buffers
 - **Input Validation**: HTTP headers and request data validated
-- **TLS 1.3 Support**: via mbedtls
+- **TLS 1.2/1.3 Support**: via mbedtls
 - **Memory Safety**: AddressSanitizer and Valgrind compatible
 - **Error Handling**: detailed errors without information leakage
 - **Resource Limits**: configurable connections, headers, and body size
