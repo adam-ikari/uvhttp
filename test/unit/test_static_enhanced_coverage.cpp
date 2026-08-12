@@ -470,24 +470,21 @@ TEST(UvhttpStaticEnhancedCoverageTest, PrewarmDirectory_NonexistentDir) {
 }
 
 TEST(UvhttpStaticEnhancedCoverageTest, PrewarmDirectory_ValidDir) {
-    /* Create a temp dir with a few files */
+    /* Create a temp dir as the root; never scan a shared dir like /tmp */
     char tmpdir[] = "/tmp/uvhttp_prewarm_XXXXXX";
     ASSERT_NE(mkdtemp(tmpdir), nullptr);
 
-    /* Create a couple of files */
-    char f1[512], f2[512];
+    /* Create a couple of regular files */
+    char f1[512], f2[512], fifo[512];
     snprintf(f1, sizeof(f1), "%s/test1.html", tmpdir);
     snprintf(f2, sizeof(f2), "%s/test2.css", tmpdir);
+    snprintf(fifo, sizeof(fifo), "%s/pipe", tmpdir);
     int fd1 = open(f1, O_CREAT | O_WRONLY | O_TRUNC, 0644);
     if (fd1 >= 0) { write(fd1, "html", 4); close(fd1); }
     int fd2 = open(f2, O_CREAT | O_WRONLY | O_TRUNC, 0644);
     if (fd2 >= 0) { write(fd2, "css", 3); close(fd2); }
-
-    /* Use the parent of the temp dir as root */
-    char* last_slash = strrchr(tmpdir, '/');
-    ASSERT_NE(last_slash, nullptr);
-    *last_slash = '\0';
-    const char* dirname = last_slash + 1;
+    /* A FIFO must be skipped by prewarm without blocking on fopen */
+    mkfifo(fifo, 0644);
 
     uvhttp_static_config_t config;
     memset(&config, 0, sizeof(config));
@@ -502,14 +499,14 @@ TEST(UvhttpStaticEnhancedCoverageTest, PrewarmDirectory_ValidDir) {
 
     if (err == UVHTTP_OK) {
         int count = uvhttp_static_prewarm_directory(ctx, ".", 10);
-        /* Should prewarm 2 files */
-        EXPECT_GE(count, 0);
+        /* Should prewarm exactly the 2 regular files, skipping the FIFO */
+        EXPECT_EQ(count, 2);
         uvhttp_static_free(ctx);
     }
 
-    *last_slash = '/';
     unlink(f1);
     unlink(f2);
+    unlink(fifo);
     rmdir(tmpdir);
 }
 
