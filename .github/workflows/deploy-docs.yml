@@ -53,7 +53,10 @@ jobs:
           cd docs
           npm install
           npm run api:generate
-          
+
+          # Generate doc-sync status (VitePress theme imports sync-status.json)
+          bash ../scripts/check-doc-sync.sh
+
           # Build VitePress documentation site
           DEPLOY=pages npm run docs:build
           
