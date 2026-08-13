@@ -29,23 +29,6 @@
  * ==================== Version Definitions ====================
  */
 
-#ifndef UVHTTP_VERSION_H
-#define UVHTTP_VERSION_H
-
-/* Version information (from VERSION file) */
-#define UVHTTP_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
-#define UVHTTP_VERSION_MINOR @PROJECT_VERSION_MINOR@
-#define UVHTTP_VERSION_PATCH @PROJECT_VERSION_PATCH@
-#define UVHTTP_VERSION "@PROJECT_VERSION@"
-
-/* Version as string (e.g., "2.3.0") */
-#define UVHTTP_VERSION_STRING "@PROJECT_VERSION@"
-
-/* Version as integer (e.g., 20300 for 2.3.0) */
-#define UVHTTP_VERSION_INT (@PROJECT_VERSION_MAJOR@ * 10000 + @PROJECT_VERSION_MINOR@ * 100 + @PROJECT_VERSION_PATCH@)
-
-#endif /* UVHTTP_VERSION_H */
-
 /**
  * @file uvhttp_constants.h
  * @brief UVHTTP configurable constant definitions
