@@ -109,6 +109,9 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+# Strict -std=c99 hides POSIX decls (strdup, strcasecmp, gettimeofday...)
+add_definitions(-D_GNU_SOURCE)
 
 # Compiler options
 if(ENABLE_DEBUG)

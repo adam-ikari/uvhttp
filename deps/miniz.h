@@ -115,7 +115,8 @@
 #include "miniz_export.h"
 
 #if defined(__STRICT_ANSI__)
-#define MZ_FORCEINLINE
+/* Strict ISO C99: keep inline so unused zlib-compat wrappers are exempt from -Wunused-function */
+#define MZ_FORCEINLINE inline
 #elif defined(_MSC_VER)
 #define MZ_FORCEINLINE __forceinline
 #elif defined(__GNUC__)
