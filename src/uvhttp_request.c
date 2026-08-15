@@ -500,16 +500,26 @@ static int on_message_complete(llhttp_t* parser) {
                 conn->request, conn->response);
 
             if (result != UVHTTP_OK) {
-                uvhttp_response_set_status(conn->response, 404);
-                uvhttp_response_set_header(conn->response,
-                                           UVHTTP_HEADER_CONTENT_TYPE,
-                                           UVHTTP_CONTENT_TYPE_TEXT);
-                uvhttp_response_set_body(conn->response,
-                                         UVHTTP_MESSAGE_NOT_FOUND,
-                                         strlen(UVHTTP_MESSAGE_NOT_FOUND));
-                uvhttp_response_send(conn->response);
+                /* static miss — fall through to the server-level handler so an
+                 * embedder (e.g. qwrt's JS serve()) can respond before 404 */
+                if (conn->server->handler) {
+                    conn->server->handler(conn->request, conn->response);
+                } else {
+                    uvhttp_response_set_status(conn->response, 404);
+                    uvhttp_response_set_header(conn->response,
+                                               UVHTTP_HEADER_CONTENT_TYPE,
+                                               UVHTTP_CONTENT_TYPE_TEXT);
+                    uvhttp_response_set_body(conn->response,
+                                             UVHTTP_MESSAGE_NOT_FOUND,
+                                             strlen(UVHTTP_MESSAGE_NOT_FOUND));
+                    uvhttp_response_send(conn->response);
+                }
             }
 #endif
+        } else if (conn->server->handler) {
+            /* no router match and no static context — server-level catch-all
+             * handler (set via uvhttp_server_set_handler) */
+            conn->server->handler(conn->request, conn->response);
         } else {
             uvhttp_response_set_status(conn->response, 404);
             uvhttp_response_set_header(conn->response,
