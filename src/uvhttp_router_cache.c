@@ -85,6 +85,11 @@ static inline uvhttp_method_t fast_method_parse(const char* method) {
         } else if (method[1] == 'U') {
             return (method[2] == 'T' && method[3] == '\0') ? UVHTTP_PUT
                                                            : UVHTTP_ANY;
+        } else if (method[1] == 'A') {
+            return (method[2] == 'T' && method[3] == 'C' && method[4] == 'H' &&
+                    method[5] == '\0')
+                       ? UVHTTP_PATCH
+                       : UVHTTP_ANY;
         }
         break;
     case 'D':
@@ -102,22 +107,6 @@ static inline uvhttp_method_t fast_method_parse(const char* method) {
                 method[4] == 'O' && method[5] == 'N' && method[6] == 'S' &&
                 method[7] == '\0')
                    ? UVHTTP_OPTIONS
-                   : UVHTTP_ANY;
-    case 'P':
-        return (method[1] == 'A' && method[2] == 'T' && method[3] == 'C' &&
-                method[4] == 'H' && method[5] == '\0')
-                   ? UVHTTP_PATCH
-                   : UVHTTP_ANY;
-    case 'T':
-        return (method[1] == 'R' && method[2] == 'A' && method[3] == 'C' &&
-                method[4] == 'E' && method[5] == '\0')
-                   ? UVHTTP_TRACE
-                   : UVHTTP_ANY;
-    case 'C':
-        return (method[1] == 'O' && method[2] == 'N' && method[3] == 'N' &&
-                method[4] == 'E' && method[5] == 'C' && method[6] == 'T' &&
-                method[7] == '\0')
-                   ? UVHTTP_CONNECT
                    : UVHTTP_ANY;
     }
     return UVHTTP_ANY;
@@ -444,10 +433,6 @@ const char* uvhttp_method_to_string(uvhttp_method_t method) {
         return "OPTIONS";
     case UVHTTP_PATCH:
         return "PATCH";
-    case UVHTTP_TRACE:
-        return "TRACE";
-    case UVHTTP_CONNECT:
-        return "CONNECT";
     default:
         return "UNKNOWN";
     }
