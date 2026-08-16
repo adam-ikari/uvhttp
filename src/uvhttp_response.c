@@ -511,9 +511,11 @@ static void uvhttp_free_write_data(uv_write_t* req, int status) {
                     if (!write_data->response->keepalive) {
                         /* closeconnection */
                         uvhttp_connection_close(conn);
-                    } else {
+                    } else if (!conn->is_websocket) {
                         /* keep-alive connection, restart read to receive next
-                         * request */
+                         * request (skip for websocket: its read callback was
+                         * already set up by switch_to_websocket; restarting
+                         * HTTP read here would override it) */
                         uvhttp_connection_schedule_restart_read(conn);
                     }
                 }
@@ -737,6 +739,22 @@ uvhttp_error_t uvhttp_response_send_raw(const char* data, size_t length,
             UVHTTP_LOG_ERROR("TLS write failed: %d\n", tls_result);
             uvhttp_free(write_data);
             return tls_result;
+        }
+        /* TLS writes are synchronous (mbedtls_ssl_write + uv_try_write), so
+         * the uv_write completion callback (uvhttp_free_write_data) that
+         * normally schedules restart_read for keep-alive never fires.
+         * Schedule it here or the llhttp parser stays at the completed state
+         * and the next request on this connection is never parsed. */
+        if (response) {
+            if (!response->keepalive) {
+                uvhttp_connection_close(conn);
+            } else if (!conn->is_websocket && response->status_code != 101) {
+                /* 101 = WebSocket upgrade: the handshake path calls
+                 * uvhttp_connection_switch_to_websocket which starts the WS
+                 * read callback; scheduling restart_read here would let the
+                 * idle callback restart plain HTTP reads and override it. */
+                uvhttp_connection_schedule_restart_read(conn);
+            }
         }
         /* TLS write succeeded, data was sent through mbedtls_bio_send callback
          */
