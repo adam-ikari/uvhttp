@@ -1083,10 +1083,20 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
 
     /* process root path */
     if (strcmp(clean_path, "/") == 0) {
-        if (uvhttp_safe_strncpy(clean_path, ctx->config.index_file,
-                                sizeof(clean_path)) != 0) {
+        /* index_file must keep the leading '/' — uvhttp_validate_url_path()
+         * rejects paths that do not start with '/' */
+        char buf[UVHTTP_MAX_PATH_SIZE];
+        if (uvhttp_safe_strncpy(buf, ctx->config.index_file, sizeof(buf)) ==
+            0) {
+            if (buf[0] == '/') {
+                uvhttp_safe_strncpy(clean_path, buf, sizeof(clean_path));
+            } else {
+                snprintf(clean_path, sizeof(clean_path), "/%s", buf);
+            }
+        } else {
             /* index_file too long, use default value */
-            uvhttp_safe_strncpy(clean_path, "index.html", sizeof(clean_path));
+            uvhttp_safe_strncpy(clean_path, "/index.html",
+                                sizeof(clean_path));
         }
     }
 
