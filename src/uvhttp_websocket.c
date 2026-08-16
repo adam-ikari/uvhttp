@@ -842,16 +842,10 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
             /* automatically reply Pong */
             /* get wrapper from conn->user_data, then get conn, then get */
             /* server->context */
-            typedef struct {
-                void* conn;
-                void* user_handler;
-            } uvhttp_ws_wrapper_t;
-
             uvhttp_ws_wrapper_t* wrapper =
                 (uvhttp_ws_wrapper_t*)conn->user_data;
             if (wrapper && wrapper->conn) {
-                uvhttp_connection_t* http_conn =
-                    (uvhttp_connection_t*)wrapper->conn;
+                uvhttp_connection_t* http_conn = wrapper->conn;
                 if (http_conn && http_conn->server &&
                     http_conn->server->context) {
                     uvhttp_ws_send_pong(http_conn->server->context, conn,
