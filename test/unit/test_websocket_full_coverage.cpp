@@ -49,9 +49,9 @@ TEST(UvhttpWebsocketFullCoverageTest, WsParseFrameHeaderExtended126) {
     EXPECT_EQ(header.fin, 1);
     EXPECT_EQ(header.opcode, UVHTTP_WS_OPCODE_BINARY);
     EXPECT_EQ(header.mask, 0);
-    /* 注意：由于payload_len是7位字段，256会溢出为0 */
-    /* 这是一个已知的bug，但为了覆盖率测试，我们验证实际行为 */
-    EXPECT_EQ(header.payload_len, 0); /* 256 % 128 = 0 */
+    /* 修复后：扩展长度写入 payload_length，payload_len 保留原始长度码 126 */
+    EXPECT_EQ(header.payload_length, 256);
+    EXPECT_EQ(header.payload_len, 126); /* raw length code */
     EXPECT_EQ(header_size, 4);
 }
 
@@ -66,9 +66,9 @@ TEST(UvhttpWebsocketFullCoverageTest, WsParseFrameHeaderExtended127) {
     EXPECT_EQ(header.fin, 1);
     EXPECT_EQ(header.opcode, UVHTTP_WS_OPCODE_BINARY);
     EXPECT_EQ(header.mask, 0);
-    /* 注意：由于payload_len是7位字段，65536会溢出 */
-    /* 65536 % 128 = 0 */
-    EXPECT_EQ(header.payload_len, 0);
+    /* 修复后：64 位扩展长度正确解析 */
+    EXPECT_EQ(header.payload_length, 65536);
+    EXPECT_EQ(header.payload_len, 127); /* raw length code */
     EXPECT_EQ(header_size, 10);
 }
 
@@ -423,7 +423,8 @@ TEST(UvhttpWebsocketFullCoverageTest, WsStateValues) {
 
 /* 测试帧头结构大小 */
 TEST(UvhttpWebsocketFullCoverageTest, WsFrameHeaderSize) {
-    EXPECT_EQ(sizeof(uvhttp_ws_frame_header_t), 2);
+    /* fin..payload_len 位域 2 字节 + payload_length (uint64_t) 8 字节 + 对齐 */
+    EXPECT_EQ(sizeof(uvhttp_ws_frame_header_t), 16);
 }
 
 /* 测试连接结构大小 */
