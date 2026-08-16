@@ -1017,8 +1017,13 @@ uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn,
     // get context
     uvhttp_context_t* context = NULL;
     if (ws_conn->ssl) {
-        // TLS connection
-        uvhttp_connection_t* conn = (uvhttp_connection_t*)ws_conn->user_data;
+        // TLS connection: reach the owning HTTP connection through the
+        // wrapper (ws_conn->user_data is uvhttp_ws_wrapper_t, NOT a
+        // uvhttp_connection_t; casting it directly reads past the wrapper
+        // and dereferences garbage).
+        uvhttp_ws_wrapper_t* wrapper =
+            (uvhttp_ws_wrapper_t*)ws_conn->user_data;
+        uvhttp_connection_t* conn = wrapper ? wrapper->conn : NULL;
         if (conn && conn->server && conn->server->context) {
             context = conn->server->context;
         }
@@ -1043,8 +1048,13 @@ uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code,
     // get context
     uvhttp_context_t* context = NULL;
     if (ws_conn->ssl) {
-        // TLS connection
-        uvhttp_connection_t* conn = (uvhttp_connection_t*)ws_conn->user_data;
+        // TLS connection: reach the owning HTTP connection through the
+        // wrapper (ws_conn->user_data is uvhttp_ws_wrapper_t, NOT a
+        // uvhttp_connection_t; casting it directly reads past the wrapper
+        // and dereferences garbage).
+        uvhttp_ws_wrapper_t* wrapper =
+            (uvhttp_ws_wrapper_t*)ws_conn->user_data;
+        uvhttp_connection_t* conn = wrapper ? wrapper->conn : NULL;
         if (conn && conn->server && conn->server->context) {
             context = conn->server->context;
         }
