@@ -17,6 +17,7 @@
 #include "uvhttp_protocol_upgrade.h"
 
 #include <errno.h>
+#include <time.h>
 
 #if UVHTTP_FEATURE_TLS
 #include <mbedtls/base64.h>
@@ -132,21 +133,25 @@ uvhttp_error_t uvhttp_ws_parse_frame_header(const uint8_t* data, size_t len,
     /* parse second byte */
     header->mask = (data[1] & 0x80) != 0;
     header->payload_len = data[1] & 0x7F;
+    header->payload_length = header->payload_len;
 
     *header_size = 2;
 
-    /* parse extended payload length */
+    /* parse extended payload length. NOTE: payload_len is a 7-bit bitfield
+     * (the raw length code), so extended lengths MUST go into
+     * payload_length — writing them into payload_len silently truncates
+     * (e.g. 200 -> 72). */
     if (header->payload_len == 126) {
         if (len < 4) {
             return UVHTTP_ERROR_INVALID_PARAM;
         }
-        header->payload_len = (data[2] << 8) | data[3];
+        header->payload_length = ((uint64_t)data[2] << 8) | data[3];
         *header_size = 4;
     } else if (header->payload_len == 127) {
         if (len < 10) {
             return UVHTTP_ERROR_INVALID_PARAM;
         }
-        header->payload_len =
+        header->payload_length =
             ((uint64_t)data[2] << 56) | ((uint64_t)data[3] << 48) |
             ((uint64_t)data[4] << 40) | ((uint64_t)data[5] << 32) |
             ((uint64_t)data[6] << 24) | ((uint64_t)data[7] << 16) |
@@ -179,12 +184,21 @@ uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    size_t header_size = 2;
-    size_t total_size = header_size + payload_len;
-
-    if (mask) {
-        total_size += 4;
+    /* Determine real header size first so total_size matches the actual frame
+     * (126/127 extended length bytes are part of the header). */
+    size_t header_size;
+    if (payload_len < 126) {
+        header_size = 2;
+    } else if (payload_len < 65536) {
+        header_size = 4;
+    } else {
+        header_size = 10;
     }
+    size_t total_size;
+    if (payload_len > SIZE_MAX - header_size - (mask ? 4 : 0)) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    total_size = header_size + payload_len + (mask ? 4 : 0);
 
     if (buffer_size < total_size) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -200,7 +214,6 @@ uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
         buffer[1] = (mask ? 0x80 : 0x00) | 126;
         buffer[2] = (payload_len >> 8) & 0xFF;
         buffer[3] = payload_len & 0xFF;
-        header_size = 4;
     } else {
         /* use uint64_t to avoid shift warning on 32-bit systems */
         uint64_t len = (uint64_t)payload_len;
@@ -213,7 +226,6 @@ uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
         buffer[7] = (len >> 16) & 0xFF;
         buffer[8] = (len >> 8) & 0xFF;
         buffer[9] = len & 0xFF;
-        header_size = 10;
     }
 
     /* add masking key (if client) */
@@ -465,7 +477,10 @@ uvhttp_error_t uvhttp_ws_send_frame(uvhttp_context_t* context,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* allocatesendbuffer */
+    /* allocatesendbuffer (guard the 10+len+4 sum against overflow) */
+    if (len > SIZE_MAX - 14) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
     size_t buffer_size =
         10 + len + 4; /* maximum frame header + payload + masking */
     uint8_t* buffer = uvhttp_alloc(buffer_size);
@@ -485,15 +500,40 @@ uvhttp_error_t uvhttp_ws_send_frame(uvhttp_context_t* context,
     /* senddata */
     int ret;
     if (conn->ssl) {
-        ret = mbedtls_ssl_write(conn->ssl, buffer, frame_len);
+        /* mbedtls_ssl_write emits at most one TLS record (~16KB) per call;
+         * loop until the whole frame is flushed. Without this, frames larger
+         * than one record are truncated on the wire (clients stall waiting
+         * for the missing tail). */
+        size_t sent = 0;
+        int want_retries = 0;
+        while (sent < (size_t)frame_len) {
+            ret = mbedtls_ssl_write(conn->ssl, buffer + sent,
+                                    (size_t)frame_len - sent);
+            if (ret > 0) {
+                sent += (size_t)ret;
+                want_retries = 0;
+                continue;
+            }
+            if (ret == MBEDTLS_ERR_SSL_WANT_READ ||
+                ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+                if (++want_retries > 100) {
+                    break;
+                }
+                struct timespec ts;
+                ts.tv_sec = 0;
+                ts.tv_nsec = 1000000; /* 1ms */
+                nanosleep(&ts, NULL);
+                continue;
+            }
+            break;
+        }
+        if (sent == 0) {
+            uvhttp_free(buffer);
+            return UVHTTP_ERROR_INVALID_PARAM;
+        }
+        ret = (int)sent;
     } else {
         ret = send(conn->fd, buffer, frame_len, 0);
-    }
-
-    uvhttp_free(buffer);
-
-    if (ret < 0) {
-        return UVHTTP_ERROR_INVALID_PARAM;
     }
 
     conn->bytes_sent += ret;
@@ -543,7 +583,12 @@ uvhttp_error_t uvhttp_ws_close(uvhttp_context_t* context,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    conn->state = UVHTTP_WS_STATE_CLOSING;
+    /* send_frame requires state == OPEN; only move to CLOSING after the
+     * close frame has been handed to the send path (setting it first made
+     * this function always fail with UVHTTP_ERROR_INVALID_PARAM) */
+    /* send_frame requires state == OPEN; move to CLOSING only after the
+     * close frame has been handed to the send path (setting it first made
+     * this function always fail with UVHTTP_ERROR_INVALID_PARAM) */
 
     /* buildcloseframe — use heap to avoid ASan false positive where the
      * conn parameter parameter is misidentified as underflowing a stack
@@ -555,6 +600,7 @@ uvhttp_error_t uvhttp_ws_close(uvhttp_context_t* context,
     payload[0] = (code >> 8) & 0xFF;
     payload[1] = code & 0xFF;
 
+    uvhttp_error_t ret;
     if (reason) {
         size_t reason_len = strlen(reason);
         if (reason_len > 125) {
@@ -562,14 +608,14 @@ uvhttp_error_t uvhttp_ws_close(uvhttp_context_t* context,
         }
         memcpy(payload + 2, reason, reason_len);
 
-        uvhttp_error_t ret = uvhttp_ws_send_frame(context, conn, payload, 2 + reason_len,
-                                    UVHTTP_WS_OPCODE_CLOSE);
-        uvhttp_free(payload);
-        return ret;
+        ret = uvhttp_ws_send_frame(context, conn, payload, 2 + reason_len,
+                                   UVHTTP_WS_OPCODE_CLOSE);
+    } else {
+        ret = uvhttp_ws_send_frame(context, conn, payload, 2,
+                                   UVHTTP_WS_OPCODE_CLOSE);
     }
 
-    uvhttp_error_t ret = uvhttp_ws_send_frame(context, conn, payload, 2,
-                                UVHTTP_WS_OPCODE_CLOSE);
+    conn->state = UVHTTP_WS_STATE_CLOSING;
     uvhttp_free(payload);
     return ret;
 }
@@ -583,7 +629,7 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
 
     memset(frame, 0, sizeof(uvhttp_ws_frame_t));
 
-    /* read frame header */
+    /* read first two bytes of the header */
     uint8_t header[10];
     int ret;
 
@@ -593,18 +639,22 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
         ret = recv(conn->fd, header, 2, 0);
     }
 
-    if (ret <= 0) {
+    if (ret != 2) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* parse frame header */
-    size_t header_size;
-    if (uvhttp_ws_parse_frame_header(header, ret, &frame->header,
-                                     &header_size) != 0) {
-        return UVHTTP_ERROR_INVALID_PARAM;
+    /* Determine the full header size from the length code before parsing:
+     * parsing with only the first 2 bytes would reject 126/127 frames
+     * outright (uvhttp_ws_parse_frame_header requires len >= 4/10). */
+    size_t header_size = 2;
+    uint8_t len_code = header[1] & 0x7F;
+    if (len_code == 126) {
+        header_size = 4;
+    } else if (len_code == 127) {
+        header_size = 10;
     }
 
-    /* read extended payload length (if any) */
+    /* read the extended payload length, if any */
     if (header_size > 2) {
         if (conn->ssl) {
             ret = mbedtls_ssl_read(conn->ssl, header + 2, header_size - 2);
@@ -615,6 +665,12 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
         if (ret != (int)(header_size - 2)) {
             return UVHTTP_ERROR_INVALID_PARAM;
         }
+    }
+
+    /* parse frame header */
+    if (uvhttp_ws_parse_frame_header(header, header_size, &frame->header,
+                                     &header_size) != 0) {
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
 
     /* read masking key (if any) */
@@ -631,26 +687,27 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
     }
 
     /* read payload */
-    if (frame->header.payload_len > 0) {
-        if (frame->header.payload_len > conn->config.max_frame_size) {
+    if (frame->header.payload_length > 0) {
+        if (frame->header.payload_length > (uint64_t)conn->config.max_frame_size) {
             return UVHTTP_ERROR_INVALID_PARAM;
         }
 
-        frame->payload = uvhttp_alloc(frame->header.payload_len);
+        frame->payload = uvhttp_alloc((size_t)frame->header.payload_length);
         if (!frame->payload) {
             return UVHTTP_ERROR_INVALID_PARAM;
         }
 
-        frame->payload_size = frame->header.payload_len;
+        frame->payload_size = (size_t)frame->header.payload_length;
 
         if (conn->ssl) {
             ret = mbedtls_ssl_read(conn->ssl, frame->payload,
-                                   frame->header.payload_len);
+                                   frame->header.payload_length);
         } else {
-            ret = recv(conn->fd, frame->payload, frame->header.payload_len, 0);
+            ret = recv(conn->fd, frame->payload, frame->header.payload_length,
+                       0);
         }
 
-        if (ret != (int)frame->header.payload_len) {
+        if (ret != (int)frame->header.payload_length) {
             uvhttp_free(frame->payload);
             frame->payload = NULL;
             return UVHTTP_ERROR_INVALID_PARAM;
@@ -658,12 +715,12 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
 
         /* application masking (if any) */
         if (frame->header.mask) {
-            uvhttp_ws_apply_mask(frame->payload, frame->header.payload_len,
+            uvhttp_ws_apply_mask(frame->payload, frame->header.payload_length,
                                  frame->masking_key);
         }
     }
 
-    conn->bytes_received += frame->header.payload_len;
+    conn->bytes_received += frame->header.payload_length;
     conn->frames_received++;
 
     return UVHTTP_OK;
@@ -727,8 +784,18 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
             break;
         }
 
-        /* check if has enough data */
-        size_t total_frame_size = header_size + header.payload_len;
+        /* Reject frames whose declared payload exceeds the configured limit.
+         * Without this, a 64-bit (length code 127) wire length such as
+         * 2^64-1 makes header_size + payload_length wrap around size_t, the
+         * "enough data" check below passes with only the header buffered,
+         * and uvhttp_ws_apply_mask runs an out-of-bounds write. */
+        if (header.payload_length > (uint64_t)conn->config.max_frame_size) {
+            return UVHTTP_ERROR_INVALID_PARAM;
+        }
+
+        /* check if has enough data (payload_length is bounded by
+         * max_frame_size above, so this sum cannot overflow) */
+        size_t total_frame_size = header_size + (size_t)header.payload_length;
         if (header.mask) {
             total_frame_size += 4;
         }
@@ -740,14 +807,15 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
         /* extract payload */
         uint8_t* payload = NULL;
 
-        if (header.payload_len > 0) {
+        if (header.payload_length > 0) {
             payload = conn->recv_buffer + header_size;
 
             if (header.mask) {
                 uint8_t masking_key[4] = {0};
                 memcpy(masking_key, conn->recv_buffer + header_size, 4);
                 payload += 4;
-                uvhttp_ws_apply_mask(payload, header.payload_len, masking_key);
+                uvhttp_ws_apply_mask(payload, header.payload_length,
+                                     masking_key);
             }
         }
 
@@ -760,14 +828,14 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                 if (conn->fragmented_message == NULL) {
                     /* new fragmented message */
                     conn->fragmented_opcode = header.opcode;
-                    conn->fragmented_capacity = header.payload_len * 2;
+                    conn->fragmented_capacity = header.payload_length * 2;
                     conn->fragmented_message =
                         uvhttp_alloc(conn->fragmented_capacity);
                     conn->fragmented_size = 0;
                 }
 
                 /* expand buffer (if needed) */
-                while (conn->fragmented_size + header.payload_len >
+                while (conn->fragmented_size + header.payload_length >
                        conn->fragmented_capacity) {
                     conn->fragmented_capacity *= 2;
                     conn->fragmented_message = uvhttp_realloc(
@@ -775,13 +843,13 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                 }
 
                 memcpy(conn->fragmented_message + conn->fragmented_size,
-                       payload, header.payload_len);
-                conn->fragmented_size += header.payload_len;
+                       payload, (size_t)header.payload_length);
+                conn->fragmented_size += header.payload_length;
             } else {
                 /* last fragment or complete message */
                 if (conn->fragmented_message != NULL) {
                     /* complete fragmented message */
-                    while (conn->fragmented_size + header.payload_len >
+                    while (conn->fragmented_size + header.payload_length >
                            conn->fragmented_capacity) {
                         conn->fragmented_capacity *= 2;
                         conn->fragmented_message =
@@ -790,8 +858,8 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                     }
 
                     memcpy(conn->fragmented_message + conn->fragmented_size,
-                           payload, header.payload_len);
-                    conn->fragmented_size += header.payload_len;
+                           payload, (size_t)header.payload_length);
+                    conn->fragmented_size += header.payload_length;
 
                     if (conn->on_message) {
                         conn->on_message(
@@ -807,24 +875,59 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                     /* complete message */
                     if (conn->on_message) {
                         conn->on_message(conn, (const char*)payload,
-                                         header.payload_len, header.opcode);
+                                         (size_t)header.payload_length,
+                                         header.opcode);
                     }
                 }
             }
         } else if (header.opcode == UVHTTP_WS_OPCODE_CLOSE) {
             /* closeframe */
-            if (conn->on_close) {
-                int code = 1000;
-                const char* reason = "";
+            int close_code = 1000;
+            const char* close_reason = "";
 
-                if (header.payload_len >= 2) {
-                    code = (payload[0] << 8) | payload[1];
-                    if (header.payload_len > 2) {
-                        reason = (const char*)(payload + 2);
+            if (header.payload_length >= 2) {
+                close_code = (payload[0] << 8) | payload[1];
+                if (header.payload_length > 2) {
+                    close_reason = (const char*)(payload + 2);
+                }
+            }
+
+            if (conn->on_close) {
+                conn->on_close(conn, close_code, close_reason);
+            }
+
+            /* Echo a close frame back (RFC 6455 §5.5.1) so the peer is not
+             * left waiting for the close handshake; best effort, only when
+             * the connection is wired to a server context. */
+            {
+                uvhttp_ws_wrapper_t* wrapper =
+                    (uvhttp_ws_wrapper_t*)conn->user_data;
+                if (wrapper && wrapper->conn) {
+                    uvhttp_connection_t* http_conn = wrapper->conn;
+                    if (http_conn && http_conn->server &&
+                        http_conn->server->context) {
+                        uint8_t close_payload[2 + 125];
+                        size_t close_len = 0;
+                        if (header.payload_length >= 2) {
+                            close_payload[0] = payload[0];
+                            close_payload[1] = payload[1];
+                            close_len = 2;
+                            size_t reason_len =
+                                (size_t)header.payload_length - 2;
+                            if (reason_len > 125) {
+                                reason_len = 125;
+                            }
+                            if (reason_len > 0) {
+                                memcpy(close_payload + 2, payload + 2,
+                                       reason_len);
+                                close_len = 2 + reason_len;
+                            }
+                        }
+                        uvhttp_ws_send_frame(http_conn->server->context, conn,
+                                             close_payload, close_len,
+                                             UVHTTP_WS_OPCODE_CLOSE);
                     }
                 }
-
-                conn->on_close(conn, code, reason);
             }
 
             conn->state = UVHTTP_WS_STATE_CLOSED;
@@ -832,20 +935,14 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
             /* automatically reply Pong */
             /* get wrapper from conn->user_data, then get conn, then get */
             /* server->context */
-            typedef struct {
-                void* conn;
-                void* user_handler;
-            } uvhttp_ws_wrapper_t;
-
             uvhttp_ws_wrapper_t* wrapper =
                 (uvhttp_ws_wrapper_t*)conn->user_data;
             if (wrapper && wrapper->conn) {
-                uvhttp_connection_t* http_conn =
-                    (uvhttp_connection_t*)wrapper->conn;
+                uvhttp_connection_t* http_conn = wrapper->conn;
                 if (http_conn && http_conn->server &&
                     http_conn->server->context) {
                     uvhttp_ws_send_pong(http_conn->server->context, conn,
-                                        payload, header.payload_len);
+                                        payload, header.payload_length);
                 }
             }
         }

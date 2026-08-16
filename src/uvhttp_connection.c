@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <uv.h>
 
 #if UVHTTP_FEATURE_TLS
@@ -83,18 +84,32 @@ static inline int uvhttp_validate_buffer_state(uvhttp_connection_t* conn) {
  * @note This helper function validates if buffer has enough space for additional data
  * @note Logs error and returns -1 if overflow would occur
  */
-static inline int uvhttp_validate_buffer_capacity(uvhttp_connection_t* conn, 
+static inline int uvhttp_validate_buffer_capacity(uvhttp_connection_t* conn,
                                                     size_t additional_size) {
     if (!conn) {
         return -1;
     }
-    
+
+#if UVHTTP_FEATURE_TLS
+    /* TLS: socket bytes land in the dedicated ciphertext buffer, not
+     * read_buffer (which holds decrypted plaintext for llhttp). */
+    if (conn->tls_enabled && conn->ssl && conn->tls_cipher_buf) {
+        if (conn->tls_cipher_used + additional_size > conn->tls_cipher_cap) {
+            UVHTTP_LOG_ERROR(
+                "TLS buffer capacity exceeded: used=%zu, add=%zu, cap=%zu\n",
+                conn->tls_cipher_used, additional_size, conn->tls_cipher_cap);
+            return -1;
+        }
+        return 0;
+    }
+#endif
+
     if (conn->read_buffer_used + additional_size > conn->read_buffer_size) {
         UVHTTP_LOG_ERROR("Buffer capacity exceeded: used=%zu, add=%zu, size=%zu\n",
                          conn->read_buffer_used, additional_size, conn->read_buffer_size);
         return -1;
     }
-    
+
     return 0;
 }
 
@@ -114,7 +129,23 @@ static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size,
                             uv_buf_t* buf) {
     (void)suggested_size;
     uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
-    if (!conn || !conn->read_buffer) {
+    if (!conn) {
+        buf->base = NULL;
+        buf->len = 0;
+        return;
+    }
+
+#if UVHTTP_FEATURE_TLS
+    if (conn->tls_enabled && conn->ssl && conn->tls_cipher_buf) {
+        /* TLS: ciphertext lands in the dedicated ciphertext buffer */
+        size_t remaining = conn->tls_cipher_cap - conn->tls_cipher_used;
+        buf->base = conn->tls_cipher_buf + conn->tls_cipher_used;
+        buf->len = remaining;
+        return;
+    }
+#endif
+
+    if (!conn->read_buffer) {
         buf->base = NULL;
         buf->len = 0;
         return;
@@ -136,32 +167,28 @@ static void on_alloc_buffer(uv_handle_t* handle, size_t suggested_size,
 static int mbedtls_bio_recv(void* ctx, unsigned char* buf, size_t len) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)ctx;
 
-    if (!conn || !conn->read_buffer) {
+    if (!conn || !conn->tls_cipher_buf) {
         return MBEDTLS_ERR_SSL_INTERNAL_ERROR;
     }
 
-    /* Check if we have data in the read buffer */
-    if (conn->read_buffer_used == 0) {
+    /* Check if we have ciphertext pending. read_buffer is reserved for
+     * decrypted plaintext only (llhttp input). */
+    if (conn->tls_cipher_used == 0) {
         return MBEDTLS_ERR_SSL_WANT_READ;
     }
 
-    /* Validate buffer state to prevent overflow */
-    if (uvhttp_validate_buffer_state(conn) != 0) {
-        return MBEDTLS_ERR_SSL_INTERNAL_ERROR;
-    }
-
-    /* Copy data from read buffer to SSL buffer */
+    /* Copy data from ciphertext buffer to SSL input */
     size_t copy_len =
-        (len < conn->read_buffer_used) ? len : conn->read_buffer_used;
-    memcpy(buf, conn->read_buffer, copy_len);
+        (len < conn->tls_cipher_used) ? len : conn->tls_cipher_used;
+    memcpy(buf, conn->tls_cipher_buf, copy_len);
 
-    /* Shift remaining data in buffer */
-    if (copy_len < conn->read_buffer_used) {
-        memmove(conn->read_buffer, conn->read_buffer + copy_len,
-                conn->read_buffer_used - copy_len);
+    /* Shift remaining ciphertext */
+    if (copy_len < conn->tls_cipher_used) {
+        memmove(conn->tls_cipher_buf, conn->tls_cipher_buf + copy_len,
+                conn->tls_cipher_used - copy_len);
     }
 
-    conn->read_buffer_used -= copy_len;
+    conn->tls_cipher_used -= copy_len;
 
     return (int)copy_len;
 }
@@ -227,9 +254,26 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
         return;
     }
 
-    /* Copy received data to read buffer */
-    memcpy(conn->read_buffer + conn->read_buffer_used, buf->base, nread);
-    conn->read_buffer_used += nread;
+    /* Copy received data to the appropriate buffer. TLS ciphertext goes to the
+     * dedicated ciphertext buffer (consumed by mbedtls_bio_recv); plain HTTP
+     * goes straight to read_buffer for llhttp. read_buffer is ONLY decrypted
+     * plaintext for TLS connections — never ciphertext — otherwise
+     * mbedtls_ssl_read output would clobber not-yet-consumed ciphertext and
+     * HTTPS keep-alive (second request on a connection) would stall. */
+#if UVHTTP_FEATURE_TLS
+    if (conn->tls_enabled && conn->ssl && conn->tls_cipher_buf) {
+        if (conn->tls_cipher_used + (size_t)nread > conn->tls_cipher_cap) {
+            uvhttp_connection_close(conn);
+            return;
+        }
+        memcpy(conn->tls_cipher_buf + conn->tls_cipher_used, buf->base, nread);
+        conn->tls_cipher_used += nread;
+    } else
+#endif
+    {
+        memcpy(conn->read_buffer + conn->read_buffer_used, buf->base, nread);
+        conn->read_buffer_used += nread;
+    }
 
     /* For TLS connections, handle handshake or decrypt data */
 #if UVHTTP_FEATURE_TLS
@@ -254,28 +298,40 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
             uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_HTTP_READING);
         }
 
-        /* Decrypt data from TLS */
-        int ret = mbedtls_ssl_read((mbedtls_ssl_context*)conn->ssl,
-                                   (unsigned char*)conn->read_buffer,
-                                   conn->read_buffer_size);
+        /* Decrypt: drain all available plaintext records into read_buffer.
+         * mbedtls consumes ciphertext from tls_cipher_buf via bio_recv and
+         * writes decrypted bytes into read_buffer; loop until mbedtls needs
+         * more socket data (WANT_READ) or the buffer is full. */
+        size_t total = 0;
+        for (;;) {
+            int ret = mbedtls_ssl_read(
+                (mbedtls_ssl_context*)conn->ssl,
+                (unsigned char*)conn->read_buffer + total,
+                conn->read_buffer_size - total);
 
-        if (ret == MBEDTLS_ERR_SSL_WANT_READ ||
-            ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
-            /* Need more data, wait for next read callback */
-            return;
-        } else if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
-            uvhttp_connection_close(conn);
-            return;
-        } else if (ret < 0) {
-            char error_buf[256];
-            mbedtls_strerror(ret, error_buf, sizeof(error_buf));
-            UVHTTP_LOG_ERROR("TLS read error: %s\n", error_buf);
-            uvhttp_connection_close(conn);
-            return;
+            if (ret == MBEDTLS_ERR_SSL_WANT_READ ||
+                ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+                /* Need more data, wait for next read callback */
+                break;
+            } else if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
+                uvhttp_connection_close(conn);
+                return;
+            } else if (ret < 0) {
+                char error_buf[256];
+                mbedtls_strerror(ret, error_buf, sizeof(error_buf));
+                UVHTTP_LOG_ERROR("TLS read error: %s\n", error_buf);
+                uvhttp_connection_close(conn);
+                return;
+            }
+
+            total += (size_t)ret;
+            if (total >= conn->read_buffer_size) {
+                break;
+            }
         }
 
-        /* Update read buffer with decrypted data */
-        conn->read_buffer_used = ret;
+        /* read_buffer now holds only decrypted plaintext */
+        conn->read_buffer_used = total;
     }
 #else
     if (conn->tls_enabled && conn->ssl) {
@@ -293,8 +349,11 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
                          parser->data, conn);
         enum llhttp_errno err =
             llhttp_execute(parser, conn->read_buffer, conn->read_buffer_used);
-
-        if (err != HPE_OK) {
+        /* HPE_PAUSED_UPGRADE is the normal result for Upgrade requests
+         * (WebSocket handshake): the request was fully parsed and the
+         * connection is being handed over to the upgraded protocol. It is not
+         * a parse error. */
+        if (err != HPE_OK && err != HPE_PAUSED_UPGRADE) {
             const char* err_name = llhttp_errno_name(err);
             UVHTTP_LOG_ERROR("HTTP parse error: %d (%s)\n", err,
                              err_name ? err_name : "unknown");
@@ -315,6 +374,11 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 
     /* Clear read buffer after parsing */
     conn->read_buffer_used = 0;
+#if UVHTTP_FEATURE_TLS
+    /* Ciphertext buffer is drained by mbedtls; any remainder waits for the
+     * next read callback. */
+    (void)0;
+#endif
 }
 
 /* restart read for new request - used for keep-alive connection */
@@ -400,7 +464,7 @@ uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     conn->response->headers_sent = 0;
     conn->response->sent = 0;
     conn->response->finished = 0;
-    conn->response->keepalive = 0;
+    conn->response->keepalive = 1; /* HTTP/1.1 default: keep connection alive */
     conn->response->compress = 0;
     conn->response->cache_ttl = 0;
     conn->response->compress_algorithm = 0;
@@ -526,6 +590,23 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
     }
     c->read_buffer_used = 0;
 
+#if UVHTTP_FEATURE_TLS
+    /* Dedicated ciphertext buffer (bio_recv input), allocated lazily only for
+     * TLS servers so plain HTTP connections pay nothing extra. */
+    c->tls_cipher_buf = NULL;
+    c->tls_cipher_used = 0;
+    c->tls_cipher_cap = 0;
+    if (server->tls_enabled) {
+        c->tls_cipher_buf = uvhttp_alloc(c->read_buffer_size);
+        if (!c->tls_cipher_buf) {
+            uvhttp_free(c->read_buffer);
+            uvhttp_free(c);
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
+        }
+        c->tls_cipher_cap = c->read_buffer_size;
+    }
+#endif
+
     // create request and response objects
     c->request = uvhttp_alloc(sizeof(uvhttp_request_t));
     if (!c->request) {
@@ -622,11 +703,29 @@ static void uvhttp_connection_free_resources(uvhttp_connection_t* conn) {
         return;
     }
 
+    /* Notify embedder before any resource is freed so it can drop references
+     * (e.g. qwrt pending async responses) to conn->request/response. */
+    if (conn->on_destroy) {
+        void (*cb)(uvhttp_connection_t*) = conn->on_destroy;
+        conn->on_destroy = NULL;
+        cb(conn);
+    }
+
     /* Free read buffer */
     if (conn->read_buffer) {
         uvhttp_free(conn->read_buffer);
         conn->read_buffer = NULL;
     }
+
+#if UVHTTP_FEATURE_TLS
+    /* Free dedicated ciphertext buffer */
+    if (conn->tls_cipher_buf) {
+        uvhttp_free(conn->tls_cipher_buf);
+        conn->tls_cipher_buf = NULL;
+        conn->tls_cipher_used = 0;
+        conn->tls_cipher_cap = 0;
+    }
+#endif
 
     /* Free request object and parser */
     if (conn->request) {
@@ -727,7 +826,6 @@ void uvhttp_connection_close(uvhttp_connection_t* conn) {
     if (!conn) {
         return;
     }
-
     /* Idempotent: if a close is already in progress (handles mid-close, with
      * pending on_handle_close callbacks), do not re-enter. A second close
      * previously reset close_pending to 0 here, discarding the in-flight count
@@ -888,11 +986,35 @@ uvhttp_error_t uvhttp_connection_tls_write(uvhttp_connection_t* conn,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* Write data through TLS */
-    int ret = mbedtls_ssl_write((mbedtls_ssl_context*)conn->ssl, data, len);
-    if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
-        return UVHTTP_ERROR_TLS_WANT_WRITE;
-    } else if (ret < 0) {
+    /* Write data through TLS. mbedtls_ssl_write may make partial progress
+     * (ret > 0 but ret < remaining) or stall on a full kernel buffer
+     * (WANT_WRITE from uv_try_write in the bio send callback), so loop until
+     * everything is flushed. Short sleeps avoid nested uv_run reentry in the
+     * single-threaded embedding. */
+    const unsigned char* p = (const unsigned char*)data;
+    size_t remaining = len;
+    int retries = 0;
+
+    while (remaining > 0) {
+        int ret = mbedtls_ssl_write((mbedtls_ssl_context*)conn->ssl, p,
+                                    remaining);
+        if (ret > 0) {
+            p += ret;
+            remaining -= ret;
+            retries = 0;
+            continue;
+        }
+        if (ret == MBEDTLS_ERR_SSL_WANT_READ ||
+            ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+            if (++retries > 200) {
+                return UVHTTP_ERROR_TLS_WANT_WRITE;
+            }
+            struct timespec ts;
+            ts.tv_sec = 0;
+            ts.tv_nsec = 1000000; /* 1ms */
+            nanosleep(&ts, NULL);
+            continue;
+        }
         char error_buf[256];
         mbedtls_strerror(ret, error_buf, sizeof(error_buf));
         UVHTTP_LOG_ERROR("TLS write failed: %s\n", error_buf);
@@ -988,20 +1110,54 @@ static void on_websocket_read(uv_stream_t* stream, ssize_t nread,
     /* processWebSocketframedata */
     uvhttp_ws_connection_t* ws_conn =
         (uvhttp_ws_connection_t*)conn->ws_connection;
-    int result =
-        uvhttp_ws_process_data(ws_conn, (const uint8_t*)buf->base, nread);
+    int result = 0;
+#if UVHTTP_FEATURE_TLS
+    if (conn->tls_enabled && conn->ssl && conn->tls_cipher_buf) {
+        /* TLS: buf->base points into tls_cipher_buf (ciphertext). Track the
+         * fill level (on_alloc_buffer handed uv the space, but the read
+         * callback must advance tls_cipher_used) then decrypt into
+         * read_buffer (plaintext) before handing frames to the WS parser. */
+        conn->tls_cipher_used += (size_t)nread;
+        size_t total = 0;
+        for (;;) {
+            int ret = mbedtls_ssl_read(
+                (mbedtls_ssl_context*)conn->ssl,
+                (unsigned char*)conn->read_buffer + total,
+                conn->read_buffer_size - total);
+            if (ret == MBEDTLS_ERR_SSL_WANT_READ ||
+                ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+                break;
+            } else if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
+                uvhttp_connection_websocket_close(conn);
+                return;
+            } else if (ret < 0) {
+                char error_buf[256];
+                mbedtls_strerror(ret, error_buf, sizeof(error_buf));
+                UVHTTP_LOG_ERROR("TLS read error: %s\n", error_buf);
+                uvhttp_connection_websocket_close(conn);
+                return;
+            }
+            total += (size_t)ret;
+            if (total >= conn->read_buffer_size) {
+                break;
+            }
+        }
+        if (total > 0) {
+            result = uvhttp_ws_process_data(ws_conn,
+                                            (const uint8_t*)conn->read_buffer,
+                                            total);
+        }
+    } else
+#endif
+    {
+        result =
+            uvhttp_ws_process_data(ws_conn, (const uint8_t*)buf->base, nread);
+    }
     if (result != 0) {
         UVHTTP_LOG_ERROR("WebSocket data processing failed: %d\n", result);
         uvhttp_connection_websocket_close(conn);
     }
 }
-
-/* WebSocket connection wrapper - used to store user handler and connection
- * object */
-typedef struct {
-    uvhttp_connection_t* conn;
-    uvhttp_ws_handler_t* user_handler;
-} uvhttp_ws_wrapper_t;
 
 /* WebSocketconnectionclosecallback */
 static int on_websocket_close(uvhttp_ws_connection_t* ws_conn, int code,
@@ -1166,9 +1322,11 @@ uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
         return UVHTTP_ERROR_IO_ERROR;
     }
 
-    /* create WebSocket connection object */
+    /* create WebSocket connection object. Pass the TLS context so WS frame
+     * writes go through mbedtls (encrypted); passing NULL makes send_frame
+     * fall back to raw send() and leak plaintext frames onto the TLS socket. */
     uvhttp_ws_connection_t* ws_conn =
-        uvhttp_ws_connection_create(fd, NULL, 1, conn->server->config);
+        uvhttp_ws_connection_create(fd, conn->ssl, 1, conn->server->config);
     if (!ws_conn) {
         UVHTTP_LOG_ERROR("Failed to create WebSocket connection object\n");
         return UVHTTP_ERROR_IO_ERROR;
@@ -1197,6 +1355,12 @@ uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
     /* save to connection object */
     conn->ws_connection = ws_conn;
     conn->is_websocket = 1;
+
+    /* Server-side handshake is complete: transition the WebSocket connection
+     * to OPEN so ws_send (which validates state == OPEN) works from
+     * on_connect onward. uvhttp_ws_connection_create leaves it at CONNECTING
+     * and nothing in the server handshake path sets it to OPEN. */
+    ws_conn->state = UVHTTP_WS_STATE_OPEN;
 
     /* call user-registered connection callback */
     if (user_handler && user_handler->on_connect) {

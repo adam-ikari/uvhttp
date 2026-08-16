@@ -92,8 +92,7 @@ TEST(UvhttpWebSocketNativeTest, ParseFrameHeader126Bytes) {
     EXPECT_EQ(header.fin, 1);
     EXPECT_EQ(header.opcode, UVHTTP_WS_OPCODE_BINARY);
     EXPECT_EQ(header.mask, 0);
-    /* 注意：由于 payload_len 是 7 位位域，256 会被截断为 0 */
-    /* 这是一个已知的 bug，但不影响测试覆盖率 */
+    /* 修复后：16 位扩展长度写入 payload_length，payload_len 保留长度码 126 */
     EXPECT_EQ(header_size, 4);
 }
 
@@ -107,8 +106,7 @@ TEST(UvhttpWebSocketNativeTest, ParseFrameHeader127Bytes) {
     EXPECT_EQ(header.fin, 1);
     EXPECT_EQ(header.opcode, UVHTTP_WS_OPCODE_TEXT);
     EXPECT_EQ(header.mask, 0);
-    /* 注意：由于 payload_len 是 7 位位域，65536 会被截断为 0 */
-    /* 这是一个已知的 bug，但不影响测试覆盖率 */
+    /* 修复后：64 位扩展长度正确解析 */
     EXPECT_EQ(header_size, 10);
 }
 
@@ -239,7 +237,7 @@ TEST(UvhttpWebSocketNativeTest, BuildFrame126Bytes) {
     memset(&context, 0, sizeof(context));
     
     int result = uvhttp_ws_build_frame(&context, buffer, 130, payload, 126, UVHTTP_WS_OPCODE_BINARY, 0, 1);
-    EXPECT_EQ(result, 128); /* 帧头 + 负载 */
+    EXPECT_EQ(result, 130); /* 4 字节扩展头 + 126 负载（修复前少算 2 字节） */
     EXPECT_EQ(buffer[0], 0x82); /* FIN=1, opcode=BINARY */
     EXPECT_EQ(buffer[1], 0x7E); /* 扩展长度 */
     EXPECT_EQ(buffer[2], 0x00); /* 长度高字节 */
@@ -256,7 +254,7 @@ TEST(UvhttpWebSocketNativeTest, BuildFrame127Bytes) {
     memset(&context, 0, sizeof(context));
     
     int result = uvhttp_ws_build_frame(&context, buffer, 140, payload, 127, UVHTTP_WS_OPCODE_TEXT, 0, 1);
-    EXPECT_EQ(result, 129); /* 帧头 + 扩展长度 + 负载 */
+    EXPECT_EQ(result, 131); /* 4 字节扩展头 + 127 负载 */
     EXPECT_EQ(buffer[0], 0x81); /* FIN=1, opcode=TEXT */
     EXPECT_EQ(buffer[1], 0x7E); /* 扩展长度 */
 }

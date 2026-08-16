@@ -379,6 +379,15 @@ typedef struct {
     void* timeout_callback_user_data; /* 8 bytes - callbackUser */
 } uvhttp_ws_handler_t;
 
+/* WebSocket connection wrapper - links the HTTP connection and the
+ * user-registered WS handler; stored as ws_connection->user_data. Kept
+ * public so embedder-side helpers (uvhttp_server_ws_send / ws_close) can
+ * reach the owning uvhttp_connection_t for the TLS context. */
+typedef struct {
+    uvhttp_connection_t* conn;
+    uvhttp_ws_handler_t* user_handler;
+} uvhttp_ws_wrapper_t;
+
 uvhttp_error_t uvhttp_server_register_ws_handler(uvhttp_server_t* server,
                                                  const char* path,
                                                  uvhttp_ws_handler_t* handler);
