@@ -132,21 +132,25 @@ uvhttp_error_t uvhttp_ws_parse_frame_header(const uint8_t* data, size_t len,
     /* parse second byte */
     header->mask = (data[1] & 0x80) != 0;
     header->payload_len = data[1] & 0x7F;
+    header->payload_length = header->payload_len;
 
     *header_size = 2;
 
-    /* parse extended payload length */
+    /* parse extended payload length. NOTE: payload_len is a 7-bit bitfield
+     * (the raw length code), so extended lengths MUST go into
+     * payload_length — writing them into payload_len silently truncates
+     * (e.g. 200 -> 72). */
     if (header->payload_len == 126) {
         if (len < 4) {
             return UVHTTP_ERROR_INVALID_PARAM;
         }
-        header->payload_len = (data[2] << 8) | data[3];
+        header->payload_length = ((uint64_t)data[2] << 8) | data[3];
         *header_size = 4;
     } else if (header->payload_len == 127) {
         if (len < 10) {
             return UVHTTP_ERROR_INVALID_PARAM;
         }
-        header->payload_len =
+        header->payload_length =
             ((uint64_t)data[2] << 56) | ((uint64_t)data[3] << 48) |
             ((uint64_t)data[4] << 40) | ((uint64_t)data[5] << 32) |
             ((uint64_t)data[6] << 24) | ((uint64_t)data[7] << 16) |
@@ -179,12 +183,17 @@ uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    size_t header_size = 2;
-    size_t total_size = header_size + payload_len;
-
-    if (mask) {
-        total_size += 4;
+    /* Determine real header size first so total_size matches the actual frame
+     * (126/127 extended length bytes are part of the header). */
+    size_t header_size;
+    if (payload_len < 126) {
+        header_size = 2;
+    } else if (payload_len < 65536) {
+        header_size = 4;
+    } else {
+        header_size = 10;
     }
+    size_t total_size = header_size + payload_len + (mask ? 4 : 0);
 
     if (buffer_size < total_size) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -200,7 +209,6 @@ uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
         buffer[1] = (mask ? 0x80 : 0x00) | 126;
         buffer[2] = (payload_len >> 8) & 0xFF;
         buffer[3] = payload_len & 0xFF;
-        header_size = 4;
     } else {
         /* use uint64_t to avoid shift warning on 32-bit systems */
         uint64_t len = (uint64_t)payload_len;
@@ -213,7 +221,6 @@ uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
         buffer[7] = (len >> 16) & 0xFF;
         buffer[8] = (len >> 8) & 0xFF;
         buffer[9] = len & 0xFF;
-        header_size = 10;
     }
 
     /* add masking key (if client) */
@@ -631,26 +638,27 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
     }
 
     /* read payload */
-    if (frame->header.payload_len > 0) {
-        if (frame->header.payload_len > conn->config.max_frame_size) {
+    if (frame->header.payload_length > 0) {
+        if (frame->header.payload_length > (uint64_t)conn->config.max_frame_size) {
             return UVHTTP_ERROR_INVALID_PARAM;
         }
 
-        frame->payload = uvhttp_alloc(frame->header.payload_len);
+        frame->payload = uvhttp_alloc((size_t)frame->header.payload_length);
         if (!frame->payload) {
             return UVHTTP_ERROR_INVALID_PARAM;
         }
 
-        frame->payload_size = frame->header.payload_len;
+        frame->payload_size = (size_t)frame->header.payload_length;
 
         if (conn->ssl) {
             ret = mbedtls_ssl_read(conn->ssl, frame->payload,
-                                   frame->header.payload_len);
+                                   frame->header.payload_length);
         } else {
-            ret = recv(conn->fd, frame->payload, frame->header.payload_len, 0);
+            ret = recv(conn->fd, frame->payload, frame->header.payload_length,
+                       0);
         }
 
-        if (ret != (int)frame->header.payload_len) {
+        if (ret != (int)frame->header.payload_length) {
             uvhttp_free(frame->payload);
             frame->payload = NULL;
             return UVHTTP_ERROR_INVALID_PARAM;
@@ -658,12 +666,12 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
 
         /* application masking (if any) */
         if (frame->header.mask) {
-            uvhttp_ws_apply_mask(frame->payload, frame->header.payload_len,
+            uvhttp_ws_apply_mask(frame->payload, frame->header.payload_length,
                                  frame->masking_key);
         }
     }
 
-    conn->bytes_received += frame->header.payload_len;
+    conn->bytes_received += frame->header.payload_length;
     conn->frames_received++;
 
     return UVHTTP_OK;
@@ -728,7 +736,7 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
         }
 
         /* check if has enough data */
-        size_t total_frame_size = header_size + header.payload_len;
+        size_t total_frame_size = header_size + (size_t)header.payload_length;
         if (header.mask) {
             total_frame_size += 4;
         }
@@ -740,14 +748,15 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
         /* extract payload */
         uint8_t* payload = NULL;
 
-        if (header.payload_len > 0) {
+        if (header.payload_length > 0) {
             payload = conn->recv_buffer + header_size;
 
             if (header.mask) {
                 uint8_t masking_key[4] = {0};
                 memcpy(masking_key, conn->recv_buffer + header_size, 4);
                 payload += 4;
-                uvhttp_ws_apply_mask(payload, header.payload_len, masking_key);
+                uvhttp_ws_apply_mask(payload, header.payload_length,
+                                     masking_key);
             }
         }
 
@@ -760,14 +769,14 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                 if (conn->fragmented_message == NULL) {
                     /* new fragmented message */
                     conn->fragmented_opcode = header.opcode;
-                    conn->fragmented_capacity = header.payload_len * 2;
+                    conn->fragmented_capacity = header.payload_length * 2;
                     conn->fragmented_message =
                         uvhttp_alloc(conn->fragmented_capacity);
                     conn->fragmented_size = 0;
                 }
 
                 /* expand buffer (if needed) */
-                while (conn->fragmented_size + header.payload_len >
+                while (conn->fragmented_size + header.payload_length >
                        conn->fragmented_capacity) {
                     conn->fragmented_capacity *= 2;
                     conn->fragmented_message = uvhttp_realloc(
@@ -775,13 +784,13 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                 }
 
                 memcpy(conn->fragmented_message + conn->fragmented_size,
-                       payload, header.payload_len);
-                conn->fragmented_size += header.payload_len;
+                       payload, (size_t)header.payload_length);
+                conn->fragmented_size += header.payload_length;
             } else {
                 /* last fragment or complete message */
                 if (conn->fragmented_message != NULL) {
                     /* complete fragmented message */
-                    while (conn->fragmented_size + header.payload_len >
+                    while (conn->fragmented_size + header.payload_length >
                            conn->fragmented_capacity) {
                         conn->fragmented_capacity *= 2;
                         conn->fragmented_message =
@@ -790,8 +799,8 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                     }
 
                     memcpy(conn->fragmented_message + conn->fragmented_size,
-                           payload, header.payload_len);
-                    conn->fragmented_size += header.payload_len;
+                           payload, (size_t)header.payload_length);
+                    conn->fragmented_size += header.payload_length;
 
                     if (conn->on_message) {
                         conn->on_message(
@@ -807,7 +816,8 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                     /* complete message */
                     if (conn->on_message) {
                         conn->on_message(conn, (const char*)payload,
-                                         header.payload_len, header.opcode);
+                                         (size_t)header.payload_length,
+                                         header.opcode);
                     }
                 }
             }
@@ -817,9 +827,9 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                 int code = 1000;
                 const char* reason = "";
 
-                if (header.payload_len >= 2) {
+                if (header.payload_length >= 2) {
                     code = (payload[0] << 8) | payload[1];
-                    if (header.payload_len > 2) {
+                    if (header.payload_length > 2) {
                         reason = (const char*)(payload + 2);
                     }
                 }
@@ -845,7 +855,7 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                 if (http_conn && http_conn->server &&
                     http_conn->server->context) {
                     uvhttp_ws_send_pong(http_conn->server->context, conn,
-                                        payload, header.payload_len);
+                                        payload, header.payload_length);
                 }
             }
         }
