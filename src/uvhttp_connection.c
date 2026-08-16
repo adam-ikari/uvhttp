@@ -84,18 +84,32 @@ static inline int uvhttp_validate_buffer_state(uvhttp_connection_t* conn) {
  * @note This helper function validates if buffer has enough space for additional data
  * @note Logs error and returns -1 if overflow would occur
  */
-static inline int uvhttp_validate_buffer_capacity(uvhttp_connection_t* conn, 
+static inline int uvhttp_validate_buffer_capacity(uvhttp_connection_t* conn,
                                                     size_t additional_size) {
     if (!conn) {
         return -1;
     }
-    
+
+#if UVHTTP_FEATURE_TLS
+    /* TLS: socket bytes land in the dedicated ciphertext buffer, not
+     * read_buffer (which holds decrypted plaintext for llhttp). */
+    if (conn->tls_enabled && conn->ssl && conn->tls_cipher_buf) {
+        if (conn->tls_cipher_used + additional_size > conn->tls_cipher_cap) {
+            UVHTTP_LOG_ERROR(
+                "TLS buffer capacity exceeded: used=%zu, add=%zu, cap=%zu\n",
+                conn->tls_cipher_used, additional_size, conn->tls_cipher_cap);
+            return -1;
+        }
+        return 0;
+    }
+#endif
+
     if (conn->read_buffer_used + additional_size > conn->read_buffer_size) {
         UVHTTP_LOG_ERROR("Buffer capacity exceeded: used=%zu, add=%zu, size=%zu\n",
                          conn->read_buffer_used, additional_size, conn->read_buffer_size);
         return -1;
     }
-    
+
     return 0;
 }
 
@@ -1144,13 +1158,6 @@ static void on_websocket_read(uv_stream_t* stream, ssize_t nread,
         uvhttp_connection_websocket_close(conn);
     }
 }
-
-/* WebSocket connection wrapper - used to store user handler and connection
- * object */
-typedef struct {
-    uvhttp_connection_t* conn;
-    uvhttp_ws_handler_t* user_handler;
-} uvhttp_ws_wrapper_t;
 
 /* WebSocketconnectionclosecallback */
 static int on_websocket_close(uvhttp_ws_connection_t* ws_conn, int code,

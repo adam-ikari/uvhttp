@@ -18,7 +18,10 @@
 
 #include <gtest/gtest.h>
 #include <uvhttp.h>
+
 #include <cstring>
+#include <sys/socket.h>
+#include <unistd.h>
 
 TEST(WsFrameHeaderParse, SmallPayloadLength) {
     uint8_t f[8] = {0x81, 0x85, 0, 0, 0, 0, 'a', 'b'}; /* masked, 5 bytes */
@@ -156,6 +159,130 @@ TEST(WsBuildFrame, InsufficientBufferRejected) {
     uint8_t payload[200] = {0};
     uvhttp_error_t r = uvhttp_ws_build_frame(NULL, buf, sizeof(buf), payload,
                                              sizeof(payload),
+                                             UVHTTP_WS_OPCODE_TEXT, 0, 1);
+    EXPECT_NE(r, UVHTTP_OK);
+}
+
+/* ========== regression: 64-bit extended length overflow (CVE-class) ===== */
+/* A 127-length-code frame declaring payload_length = 2^64-1 used to wrap
+ * header_size + payload_length + 4 around size_t, pass the "enough data"
+ * check with only the header buffered, and drive an out-of-bounds access in
+ * uvhttp_ws_apply_mask. process_data must now reject it outright. */
+TEST(WsFrameHeaderParse, ProcessDataRejectsHuge64BitLength) {
+    uvhttp_ws_connection_t* conn =
+        uvhttp_ws_connection_create(0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    /* FIN=1, TEXT, masked, 127 length code = 0xFFFFFFFFFFFFFFFF */
+    uint8_t frame[14] = {
+        0x81, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0x00, 0x00, 0x00, 0x00 /* masking key */
+    };
+    uvhttp_error_t r = uvhttp_ws_process_data(conn, frame, sizeof(frame));
+    EXPECT_NE(r, UVHTTP_OK);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* A 127-length-code frame declaring more than max_frame_size must also be
+ * rejected (not silently buffered forever). */
+TEST(WsFrameHeaderParse, ProcessDataRejectsLengthOverMaxFrameSize) {
+    uvhttp_ws_connection_t* conn =
+        uvhttp_ws_connection_create(0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    /* declared length = max_frame_size + 1 (default max is 16MB) */
+    uint64_t huge = (uint64_t)conn->config.max_frame_size + 1;
+    uint8_t frame[14] = {
+        0x81, 0xFF,
+        (uint8_t)((huge >> 56) & 0xFF), (uint8_t)((huge >> 48) & 0xFF),
+        (uint8_t)((huge >> 40) & 0xFF), (uint8_t)((huge >> 32) & 0xFF),
+        (uint8_t)((huge >> 24) & 0xFF), (uint8_t)((huge >> 16) & 0xFF),
+        (uint8_t)((huge >> 8) & 0xFF),  (uint8_t)(huge & 0xFF),
+        0x00, 0x00, 0x00, 0x00 /* masking key */
+    };
+    uvhttp_error_t r = uvhttp_ws_process_data(conn, frame, sizeof(frame));
+    EXPECT_NE(r, UVHTTP_OK);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== regression: recv_frame with extended payload lengths ========= */
+/* recv_frame used to read only the first 2 header bytes before parsing, so
+ * 126/127 frames failed with UVHTTP_ERROR_INVALID_PARAM before the extended
+ * length was ever read. Exercise the full read path over a socketpair. */
+TEST(WsRecvFrame, Extended16BitLength) {
+    int sv[2];
+    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, sv), 0);
+
+    uvhttp_ws_connection_t* conn =
+        uvhttp_ws_connection_create(sv[0], NULL, 0, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    uint8_t payload[200];
+    memset(payload, 'a', sizeof(payload));
+    uint8_t wire[256];
+    int wire_len = uvhttp_ws_build_frame(NULL, wire, sizeof(wire), payload,
+                                         sizeof(payload),
+                                         UVHTTP_WS_OPCODE_BINARY, 0, 1);
+    ASSERT_GT(wire_len, 0);
+    ASSERT_EQ((int)write(sv[1], wire, (size_t)wire_len), wire_len);
+
+    uvhttp_ws_frame_t frame;
+    memset(&frame, 0, sizeof(frame));
+    uvhttp_error_t r = uvhttp_ws_recv_frame(conn, &frame);
+    EXPECT_EQ(r, UVHTTP_OK);
+    EXPECT_EQ(frame.header.payload_length, (uint64_t)200);
+    EXPECT_EQ(frame.payload_size, (size_t)200);
+    if (frame.payload) {
+        EXPECT_EQ(memcmp(frame.payload, payload, sizeof(payload)), 0);
+        uvhttp_free(frame.payload);
+    }
+
+    uvhttp_ws_connection_free(conn);
+    close(sv[0]);
+    close(sv[1]);
+}
+
+TEST(WsRecvFrame, Extended64BitLength) {
+    int sv[2];
+    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, sv), 0);
+
+    uvhttp_ws_connection_t* conn =
+        uvhttp_ws_connection_create(sv[0], NULL, 0, NULL);
+    ASSERT_NE(conn, nullptr);
+
+    uint8_t payload[70000];
+    memset(payload, 'b', sizeof(payload));
+    uint8_t wire[70016];
+    int wire_len = uvhttp_ws_build_frame(NULL, wire, sizeof(wire), payload,
+                                         sizeof(payload),
+                                         UVHTTP_WS_OPCODE_BINARY, 0, 1);
+    ASSERT_GT(wire_len, 0);
+    ASSERT_EQ((int)write(sv[1], wire, (size_t)wire_len), wire_len);
+
+    uvhttp_ws_frame_t frame;
+    memset(&frame, 0, sizeof(frame));
+    uvhttp_error_t r = uvhttp_ws_recv_frame(conn, &frame);
+    EXPECT_EQ(r, UVHTTP_OK);
+    EXPECT_EQ(frame.header.payload_length, (uint64_t)70000);
+    if (frame.payload) {
+        EXPECT_EQ(memcmp(frame.payload, payload, sizeof(payload)), 0);
+        uvhttp_free(frame.payload);
+    }
+
+    uvhttp_ws_connection_free(conn);
+    close(sv[0]);
+    close(sv[1]);
+}
+
+/* build_frame must reject a payload length that would overflow total_size. */
+TEST(WsBuildFrame, HugeLengthRejected) {
+    uint8_t buf[32];
+    uint8_t payload[8] = {0};
+    (void)payload;
+    uvhttp_error_t r = uvhttp_ws_build_frame(NULL, buf, sizeof(buf), payload,
+                                             SIZE_MAX,
                                              UVHTTP_WS_OPCODE_TEXT, 0, 1);
     EXPECT_NE(r, UVHTTP_OK);
 }
