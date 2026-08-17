@@ -359,8 +359,8 @@ TEST_F(WsBoostTest, BuildFrame_MaskMode_NoDRBG_Fails) {
     memset(&no_drbg_ctx, 0, sizeof(no_drbg_ctx));
     no_drbg_ctx.ws_drbg_initialized = 0;
 
-    /* Must use heap buffer: build_frame calls uvhttp_free(buffer) on DRBG
-     * error path (line 223), so a stack buffer would cause a crash. */
+    /* Buffer is caller-owned: build_frame no longer frees it on error (S1
+     * fix in PR #336 removed the double-free), so the test must release it. */
     uint8_t* buf = (uint8_t*)uvhttp_alloc(64);
     ASSERT_NE(buf, nullptr);
     const char* payload = "test";
@@ -370,11 +370,12 @@ TEST_F(WsBoostTest, BuildFrame_MaskMode_NoDRBG_Fails) {
         UVHTTP_WS_OPCODE_TEXT, 1, 1);
 
     EXPECT_LT(ret, 0);
+    uvhttp_free(buf);
 }
 
 TEST_F(WsBoostTest, BuildFrame_MaskMode_NullContext_Fails) {
-    /* Must use heap buffer: build_frame calls uvhttp_free(buffer) on DRBG
-     * error path (line 223), so a stack buffer would cause a crash. */
+    /* Buffer is caller-owned: build_frame no longer frees it on error (S1
+     * fix in PR #336 removed the double-free), so the test must release it. */
     uint8_t* buf = (uint8_t*)uvhttp_alloc(64);
     ASSERT_NE(buf, nullptr);
     const char* payload = "test";
@@ -384,6 +385,7 @@ TEST_F(WsBoostTest, BuildFrame_MaskMode_NullContext_Fails) {
         UVHTTP_WS_OPCODE_TEXT, 1, 1);
 
     EXPECT_LT(ret, 0);
+    uvhttp_free(buf);
 }
 
 /* ========== uvhttp_ws_build_frame: error cases ========== */
