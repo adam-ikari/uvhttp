@@ -102,7 +102,7 @@ static void on_connection(uv_stream_t* server_handle, int status) {
 #endif
 
     /* Single-threaded connection count check - use server specific config */
-    size_t max_connections = UVHTTP_MAX_CONNECTIONS_DEFAULT;  // defaultvalue
+    size_t max_connections = server->max_connections;  // authoritative per-server value
     if (server->config) {
         max_connections = server->config->max_connections;
     } else {
@@ -174,7 +174,13 @@ static void on_connection(uv_stream_t* server_handle, int status) {
             }
         } else {
             UVHTTP_LOG_ERROR("Failed to accept temporary connection\n");
-            uvhttp_free(temp_client);
+            /* uv_close, not uvhttp_free: temp_client was initialized via
+             * uv_tcp_init, so it is registered in the loop's handle queue.
+             * Freeing the memory directly leaves a dangling pointer in the
+             * queue -> use-after-free on the next uv_run / uv_loop_close.
+             * uv_close drops it from the queue and frees it via the close
+             * callback. */
+            uv_close((uv_handle_t*)temp_client, (uv_close_cb)uvhttp_free);
         }
 
         return;
@@ -268,8 +274,7 @@ uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
     memset(s, 0, sizeof(uvhttp_server_t));
 
     // initializeconnectionlimitdefaultvalue
-    s->max_connections =
-        UVHTTP_MAX_CONNECTIONS_MAX;              // default max connection count
+    s->max_connections = UVHTTP_MAX_CONNECTIONS_DEFAULT;  // default max connection count
     s->max_message_size = UVHTTP_MAX_BODY_SIZE;  // default max message size 1MB
 // Initialize WebSocket router table
 #if UVHTTP_FEATURE_WEBSOCKET
