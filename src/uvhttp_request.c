@@ -35,6 +35,33 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length);
 static int on_body(llhttp_t* parser, const char* at, size_t length);
 static int on_message_complete(llhttp_t* parser);
 
+/* Map llhttp's method enum (HTTP_DELETE=0, HTTP_GET=1, HTTP_HEAD=2,
+ * HTTP_POST=3, ...) onto qwrt/uvhttp's uvhttp_method_t (UVHTTP_ANY=0,
+ * UVHTTP_GET=1, UVHTTP_POST=2, ...). The two enums are NOT aligned, so a
+ * direct cast corrupts the method (POST parsed as PUT, PATCH as DELETE,
+ * DELETE as ANY). */
+static uvhttp_method_t llhttp_method_to_uvhttp(llhttp_method_t m) {
+    switch (m) {
+    case HTTP_GET:
+        return UVHTTP_GET;
+    case HTTP_POST:
+        return UVHTTP_POST;
+    case HTTP_PUT:
+        return UVHTTP_PUT;
+    case HTTP_DELETE:
+        return UVHTTP_DELETE;
+    case HTTP_HEAD:
+        return UVHTTP_HEAD;
+    case HTTP_OPTIONS:
+        return UVHTTP_OPTIONS;
+    case HTTP_PATCH:
+        return UVHTTP_PATCH;
+    default:
+        /* TRACE/CONNECT/COPY/LOCK/... have no uvhttp_method_t slot */
+        return UVHTTP_ANY;
+    }
+}
+
 #if UVHTTP_FEATURE_RATE_LIMIT
 static int check_rate_limit_whitelist(uvhttp_connection_t* conn);
 static int is_client_whitelisted(uvhttp_connection_t* conn);
@@ -355,8 +382,10 @@ static int on_message_complete(llhttp_t* parser) {
         return 0;
     }
 
-    /* setHTTPmethod */
-    conn->request->method = (uvhttp_method_t)llhttp_get_method(parser);
+    /* setHTTPmethod — map llhttp's enum onto uvhttp_method_t (the two enums
+     * are not aligned; a direct cast would corrupt POST/PUT/DELETE/HEAD) */
+    conn->request->method =
+        llhttp_method_to_uvhttp(llhttp_get_method(parser));
     conn->parsing_complete = 1;
     conn->read_buffer_used = 0;
 

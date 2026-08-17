@@ -31,7 +31,10 @@
  * @param output_len Output data length
  * @return uvhttp_error_t UVHTTP_OK 成功，错误码失败
  * 
- * @note Uses zlib with default compression level (6)
+ * @note Uses zlib-style deflate (from qwrt's vendored miniz) at default level 6
+ * @note Emits a real gzip stream (RFC 1952: gzip header + raw deflate + CRC32
+ *   + ISIZE trailer), NOT zlib-wrapped deflate — the two formats are distinct
+ *   and standard gzip decoders reject zlib streams (magic 0x78 vs 0x1f8b).
  * @note Caller is responsible for freeing output buffer
  */
 static uvhttp_error_t uvhttp_compress_gzip(const char* input, size_t input_len,
@@ -39,37 +42,72 @@ static uvhttp_error_t uvhttp_compress_gzip(const char* input, size_t input_len,
     if (!input || !output || !output_len) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
+    if (input_len == 0) {
+        *output = NULL;
+        *output_len = 0;
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
 
-    /* Calculate compressed buffer size (zlib requirement: source + 0.1% + 12) */
-    uLongf compressed_size = compressBound(input_len);
-    
-    /* Allocate compressed buffer */
-    char* compressed_buf = uvhttp_alloc(compressed_size);
-    if (!compressed_buf) {
+    /* deflate raw (no zlib header) + gzip header (10) + CRC32 + ISIZE (8) */
+    const size_t gzip_header_len = 10;
+    const size_t trailer_len = 8;
+    uLongf raw_size = compressBound(input_len);
+    char* buf = uvhttp_alloc(gzip_header_len + raw_size + trailer_len);
+    if (!buf) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
 
-    /* Compress data */
-    int result = compress2((Bytef*)compressed_buf, &compressed_size,
-                          (const Bytef*)input, input_len,
-                          Z_DEFAULT_COMPRESSION);
+    /* gzip header (RFC 1952): magic, method=deflate, flags=0, mtime=0,
+     * xfl=0, OS=0xff (unknown; avoids OS-specific byte) */
+    buf[0] = 0x1f;
+    buf[1] = 0x8b;
+    buf[2] = 0x08;
+    buf[3] = 0x00;
+    buf[4] = 0x00;
+    buf[5] = 0x00;
+    buf[6] = 0x00;
+    buf[7] = 0x00;
+    buf[8] = 0x00;
+    buf[9] = 0xff;
 
-    if (result != Z_OK) {
-        uvhttp_free(compressed_buf);
-        UVHTTP_LOG_ERROR("gzip compression failed: %d\n", result);
+    /* raw deflate stream */
+    z_stream zs;
+    memset(&zs, 0, sizeof(zs));
+    if (deflateInit2(&zs, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
+                     -Z_DEFAULT_WINDOW_BITS, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
+        uvhttp_free(buf);
         return UVHTTP_ERROR_IO_ERROR;
     }
-
-    /* Reallocate to exact size (save memory) */
-    char* exact_buf = uvhttp_realloc(compressed_buf, compressed_size);
-    if (!exact_buf) {
-        uvhttp_free(compressed_buf);
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    zs.next_in = (Bytef*)input;
+    zs.avail_in = (uInt)(input_len > 0xFFFFFFFFUL ? 0xFFFFFFFFUL : input_len);
+    zs.next_out = (Bytef*)(buf + gzip_header_len);
+    zs.avail_out = (uInt)raw_size;
+    int result = deflate(&zs, Z_FINISH);
+    if (result != Z_STREAM_END) {
+        deflateEnd(&zs);
+        uvhttp_free(buf);
+        UVHTTP_LOG_ERROR("gzip deflate failed: %d\n", result);
+        return UVHTTP_ERROR_IO_ERROR;
     }
+    size_t deflate_len = zs.total_out;
+    deflateEnd(&zs);
 
-    *output = exact_buf;
-    *output_len = compressed_size;
+    /* CRC32 of the ORIGINAL input + ISIZE (input_len mod 2^32), little-endian */
+    unsigned long crc = crc32(0L, (const Bytef*)input, input_len);
+    char* tp = buf + gzip_header_len + deflate_len;
+    tp[0] = (char)(crc & 0xff);
+    tp[1] = (char)((crc >> 8) & 0xff);
+    tp[2] = (char)((crc >> 16) & 0xff);
+    tp[3] = (char)((crc >> 24) & 0xff);
+    unsigned long isize = (unsigned long)(input_len & 0xffffffffUL);
+    tp[4] = (char)(isize & 0xff);
+    tp[5] = (char)((isize >> 8) & 0xff);
+    tp[6] = (char)((isize >> 16) & 0xff);
+    tp[7] = (char)((isize >> 24) & 0xff);
 
+    size_t total = gzip_header_len + deflate_len + trailer_len;
+    *output = buf;
+    *output_len = total;
     return UVHTTP_OK;
 }
 
@@ -84,6 +122,10 @@ static void uvhttp_free_write_data(uv_write_t* req, int status);
 
 static const char* get_status_text(int status_code) {
     switch (status_code) {
+    case UVHTTP_STATUS_CONTINUE:
+        return "Continue";
+    case UVHTTP_STATUS_SWITCHING_PROTOCOLS:
+        return "Switching Protocols";
     case UVHTTP_STATUS_OK:
         return "OK";
     case UVHTTP_STATUS_CREATED:
