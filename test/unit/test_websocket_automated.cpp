@@ -338,7 +338,7 @@ TEST(UvhttpWebsocketAutomatedTest, BuildFrameText) {
     uint8_t buffer[256];
     const char* payload = "Hello";
 
-    uvhttp_error_t result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
+    long result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
                                                    (const uint8_t*)payload,
                                                    strlen(payload),
                                                    UVHTTP_WS_OPCODE_TEXT, 0, 1);
@@ -357,7 +357,7 @@ TEST(UvhttpWebsocketAutomatedTest, BuildFrameBinary) {
     uint8_t buffer[256];
     uint8_t payload[] = {0x00, 0x01, 0x02, 0x03};
 
-    uvhttp_error_t result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
+    long result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
                                                    payload, sizeof(payload),
                                                    UVHTTP_WS_OPCODE_BINARY, 0, 1);
     EXPECT_GT(result, 0);
@@ -371,7 +371,7 @@ TEST(UvhttpWebsocketAutomatedTest, BuildFrameClose) {
     memset(&context, 0, sizeof(context));
     uint8_t buffer[256];
 
-    uvhttp_error_t result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
+    long result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
                                                    NULL, 0,
                                                    UVHTTP_WS_OPCODE_CLOSE, 0, 1);
     EXPECT_GT(result, 0);
@@ -385,7 +385,7 @@ TEST(UvhttpWebsocketAutomatedTest, BuildFramePing) {
     uint8_t buffer[256];
     uint8_t ping_data[] = {0x01, 0x02};
 
-    uvhttp_error_t result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
+    long result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
                                                    ping_data, sizeof(ping_data),
                                                    UVHTTP_WS_OPCODE_PING, 0, 1);
     EXPECT_GT(result, 0);
@@ -399,7 +399,7 @@ TEST(UvhttpWebsocketAutomatedTest, BuildFramePong) {
     memset(&context, 0, sizeof(context));
     uint8_t buffer[256];
 
-    uvhttp_error_t result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
+    long result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
                                                    NULL, 0,
                                                    UVHTTP_WS_OPCODE_PONG, 0, 1);
     EXPECT_GT(result, 0);
@@ -414,7 +414,7 @@ TEST(UvhttpWebsocketAutomatedTest, BuildFrameMasked) {
     uint8_t buffer[256];
     const char* payload = "Hello";
 
-    uvhttp_error_t result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
+    long result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
                                                    (const uint8_t*)payload,
                                                    strlen(payload),
                                                    UVHTTP_WS_OPCODE_TEXT, 1, 1);
@@ -430,7 +430,7 @@ TEST(UvhttpWebsocketAutomatedTest, BuildFrameFragmented) {
     uint8_t buffer[256];
     const char* payload = "Hello";
 
-    uvhttp_error_t result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
+    long result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
                                                    (const uint8_t*)payload,
                                                    strlen(payload),
                                                    UVHTTP_WS_OPCODE_TEXT, 0, 0);
@@ -444,7 +444,7 @@ TEST(UvhttpWebsocketAutomatedTest, BuildFrameContinuation) {
     uint8_t buffer[256];
     const char* payload = " world";
 
-    uvhttp_error_t result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
+    long result = uvhttp_ws_build_frame(&context, buffer, sizeof(buffer),
                                                    (const uint8_t*)payload,
                                                    strlen(payload),
                                                    UVHTTP_WS_OPCODE_CONTINUATION, 0, 1);
@@ -459,7 +459,7 @@ TEST(UvhttpWebsocketAutomatedTest, BuildFrameContinuation) {
 TEST(UvhttpWebsocketAutomatedTest, BuildFrameNullBuffer) {
     uvhttp_context_t context;
     memset(&context, 0, sizeof(context));
-    uvhttp_error_t result = uvhttp_ws_build_frame(&context, NULL, 256, NULL, 0,
+    long result = uvhttp_ws_build_frame(&context, NULL, 256, NULL, 0,
                                                    UVHTTP_WS_OPCODE_TEXT, 0, 1);
     EXPECT_NE(result, UVHTTP_OK);
 }
@@ -468,7 +468,7 @@ TEST(UvhttpWebsocketAutomatedTest, BuildFrameBufferTooSmall) {
     uvhttp_context_t context;
     memset(&context, 0, sizeof(context));
     uint8_t buffer[2]; /* only enough for header, no payload */
-    uvhttp_error_t result = uvhttp_ws_build_frame(&context, buffer, 2,
+    long result = uvhttp_ws_build_frame(&context, buffer, 2,
                                                    (const uint8_t*)"Hello", 5,
                                                    UVHTTP_WS_OPCODE_TEXT, 0, 1);
     EXPECT_NE(result, UVHTTP_OK);

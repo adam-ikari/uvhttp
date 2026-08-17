@@ -232,11 +232,17 @@ uvhttp_error_t uvhttp_ws_parse_frame_header(const uint8_t* data, size_t len,
 /**
  * build frame
  */
-uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
-                                     size_t buffer_size, const uint8_t* payload,
-                                     size_t payload_len,
-                                     uvhttp_ws_opcode_t opcode, int mask,
-                                     int fin);
+/**
+ * build frame
+ * Returns the total wire size on success (>= 0), negative error on failure.
+ * Long return type: the frame size can exceed INT_MAX on 64-bit payloads
+ * (review L3).
+ */
+long uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
+                           size_t buffer_size, const uint8_t* payload,
+                           size_t payload_len,
+                           uvhttp_ws_opcode_t opcode, int mask,
+                           int fin);
 
 /**
  * apply mask

@@ -1155,6 +1155,11 @@ static void on_websocket_read(uv_stream_t* stream, ssize_t nread,
     }
     if (result != 0) {
         UVHTTP_LOG_ERROR("WebSocket data processing failed: %d\n", result);
+        /* RFC 6455 §7.1.7: on a protocol error, send a Close frame with
+         * status 1002 (protocol error) before tearing down the TCP
+         * connection (review M5). Best effort — send_frame may itself
+         * fail if the socket is already broken. */
+        uvhttp_ws_close(NULL, ws_conn, 1002, "protocol error");
         uvhttp_connection_websocket_close(conn);
     }
 }

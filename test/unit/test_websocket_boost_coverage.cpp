@@ -45,21 +45,30 @@ static int build_raw_frame(uint8_t* out_buf, size_t out_buf_size,
     if (out_buf_size < 2) return -1;
     out_buf[pos++] = (fin ? 0x80 : 0x00) | (opcode & 0x0F);
 
-    /* Byte 1+: payload length (no mask) */
+    /* Byte 1+: payload length, masked (RFC 6455: client frames MUST be
+     * masked; these helpers feed uvhttp_ws_process_data on the server
+     * path, which now rejects unmasked frames) */
     if (payload_len < 126) {
-        out_buf[pos++] = (uint8_t)payload_len;
+        out_buf[pos++] = 0x80 | (uint8_t)payload_len;
     } else if (payload_len < 65536) {
-        if (out_buf_size < pos + 2) return -1;
-        out_buf[pos++] = 126;
+        if (out_buf_size < pos + 3) return -1;
+        out_buf[pos++] = 0x80 | 126;
         out_buf[pos++] = (payload_len >> 8) & 0xFF;
         out_buf[pos++] = payload_len & 0xFF;
     } else {
-        if (out_buf_size < pos + 8) return -1;
-        out_buf[pos++] = 127;
+        if (out_buf_size < pos + 9) return -1;
+        out_buf[pos++] = 0x80 | 127;
         for (int i = 7; i >= 0; i--) {
             out_buf[pos++] = (payload_len >> (i * 8)) & 0xFF;
         }
     }
+
+    /* masking key: all-zero, so the masked payload equals the plaintext */
+    if (out_buf_size < pos + 4) return -1;
+    out_buf[pos++] = 0x00;
+    out_buf[pos++] = 0x00;
+    out_buf[pos++] = 0x00;
+    out_buf[pos++] = 0x00;
 
     /* Payload */
     if (payload && payload_len > 0) {
@@ -166,7 +175,7 @@ TEST_F(WsBoostTest, BuildFrame_ExtendedLength127) {
     ASSERT_NE(buf, nullptr);
 
     /* mask=0, fin=1, opcode=TEXT */
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         nullptr, buf, buf_size, payload, payload_len,
         UVHTTP_WS_OPCODE_TEXT, 0, 1);
 
@@ -190,7 +199,7 @@ TEST_F(WsBoostTest, BuildFrame_ExtendedLength127_Binary) {
     uint8_t* buf = (uint8_t*)uvhttp_alloc(buf_size);
     ASSERT_NE(buf, nullptr);
 
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         nullptr, buf, buf_size, payload, payload_len,
         UVHTTP_WS_OPCODE_BINARY, 0, 1);
 
@@ -210,7 +219,7 @@ TEST_F(WsBoostTest, BuildFrame_ServerMode_NoMask_ShortPayload) {
     size_t payload_len = 5;
     uint8_t buf[64];
 
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         nullptr, buf, sizeof(buf), (const uint8_t*)payload, payload_len,
         UVHTTP_WS_OPCODE_TEXT, 0, 1);
 
@@ -231,7 +240,7 @@ TEST_F(WsBoostTest, BuildFrame_ServerMode_NoMask_MediumPayload) {
     uint8_t* buf = (uint8_t*)uvhttp_alloc(buf_size);
     ASSERT_NE(buf, nullptr);
 
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         nullptr, buf, buf_size, payload, payload_len,
         UVHTTP_WS_OPCODE_TEXT, 0, 1);
 
@@ -248,7 +257,7 @@ TEST_F(WsBoostTest, BuildFrame_ServerMode_NoMask_NullPayload) {
     uint8_t buf[16];
 
     /* payload=NULL, payload_len=0 -> zero-length frame */
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         nullptr, buf, sizeof(buf), nullptr, 0,
         UVHTTP_WS_OPCODE_PING, 0, 1);
 
@@ -260,7 +269,7 @@ TEST_F(WsBoostTest, BuildFrame_ServerMode_NoMask_NullPayload) {
 TEST_F(WsBoostTest, BuildFrame_ServerMode_NoPayload_Pong) {
     uint8_t buf[16];
 
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         nullptr, buf, sizeof(buf), nullptr, 0,
         UVHTTP_WS_OPCODE_PONG, 0, 1);
 
@@ -272,7 +281,7 @@ TEST_F(WsBoostTest, BuildFrame_FinZero) {
     const char* payload = "frag";
     uint8_t buf[64];
 
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         nullptr, buf, sizeof(buf), (const uint8_t*)payload, 4,
         UVHTTP_WS_OPCODE_TEXT, 0, 0);
 
@@ -288,7 +297,7 @@ TEST_F(WsBoostTest, BuildFrame_MaskMode_WithDRBG_ShortPayload) {
     /* header(2) + mask_key(4) + payload(6) = 12 */
     uint8_t buf[16];
 
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         &ctx_, buf, sizeof(buf), (const uint8_t*)payload, payload_len,
         UVHTTP_WS_OPCODE_TEXT, 1, 1);
 
@@ -319,7 +328,7 @@ TEST_F(WsBoostTest, BuildFrame_MaskMode_WithDRBG_MediumPayload) {
     uint8_t* buf = (uint8_t*)uvhttp_alloc(buf_size);
     ASSERT_NE(buf, nullptr);
 
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         &ctx_, buf, buf_size, payload, payload_len,
         UVHTTP_WS_OPCODE_BINARY, 1, 1);
 
@@ -334,7 +343,7 @@ TEST_F(WsBoostTest, BuildFrame_MaskMode_WithDRBG_MediumPayload) {
 TEST_F(WsBoostTest, BuildFrame_MaskMode_WithDRBG_NullPayload) {
     uint8_t buf[16];
 
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         &ctx_, buf, sizeof(buf), nullptr, 0,
         UVHTTP_WS_OPCODE_PING, 1, 1);
 
@@ -356,7 +365,7 @@ TEST_F(WsBoostTest, BuildFrame_MaskMode_NoDRBG_Fails) {
     ASSERT_NE(buf, nullptr);
     const char* payload = "test";
 
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         &no_drbg_ctx, buf, 64, (const uint8_t*)payload, 4,
         UVHTTP_WS_OPCODE_TEXT, 1, 1);
 
@@ -370,7 +379,7 @@ TEST_F(WsBoostTest, BuildFrame_MaskMode_NullContext_Fails) {
     ASSERT_NE(buf, nullptr);
     const char* payload = "test";
 
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         nullptr, buf, 64, (const uint8_t*)payload, 4,
         UVHTTP_WS_OPCODE_TEXT, 1, 1);
 
@@ -380,7 +389,7 @@ TEST_F(WsBoostTest, BuildFrame_MaskMode_NullContext_Fails) {
 /* ========== uvhttp_ws_build_frame: error cases ========== */
 
 TEST_F(WsBoostTest, BuildFrame_NullBuffer) {
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         nullptr, nullptr, 0, nullptr, 0,
         UVHTTP_WS_OPCODE_TEXT, 0, 1);
 
@@ -391,7 +400,7 @@ TEST_F(WsBoostTest, BuildFrame_BufferTooSmall) {
     uint8_t buf[2];
     const char* payload = "Hello";
 
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         nullptr, buf, sizeof(buf), (const uint8_t*)payload, 5,
         UVHTTP_WS_OPCODE_TEXT, 0, 1);
 
@@ -399,6 +408,28 @@ TEST_F(WsBoostTest, BuildFrame_BufferTooSmall) {
 }
 
 /* ========== uvhttp_ws_send_frame: OPEN state connection ========== */
+
+TEST_F(WsBoostTest, SendFrame_ClientNoDrbg_ReturnsError_NoDoubleFree) {
+    int fds[2];
+    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
+
+    /* client connection (masking required), NULL context -> DRBG missing */
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        fds[0], NULL, 0, NULL);
+    ASSERT_NE(conn, nullptr);
+    conn->state = UVHTTP_WS_STATE_OPEN;
+
+    /* Regression (review S1): uvhttp_ws_build_frame used to free the
+     * caller-owned buffer on its mask path, then uvhttp_ws_send_frame
+     * freed it again -> double-free (ASan crash). The call must now
+     * simply report an error and leave the buffer to the caller. */
+    uvhttp_error_t ret = uvhttp_ws_send_text(NULL, conn, "hi", 2);
+    EXPECT_NE(ret, UVHTTP_OK);
+
+    uvhttp_ws_connection_free(conn);
+    close(fds[0]);
+    close(fds[1]);
+}
 
 TEST_F(WsBoostTest, SendFrame_ServerMode_OpenState) {
     /* Create a socketpair so send() can succeed */
@@ -767,13 +798,13 @@ TEST_F(WsBoostTest, ProcessData_FragmentedMessage) {
                                     UVHTTP_WS_OPCODE_TEXT, 0);
     ASSERT_GT(frag1_len, 0);
 
-    /* Fragment 2: FIN=1, opcode=TEXT, payload="lo"
-     * Note: this implementation only enters the fragment path for TEXT/BINARY
-     * opcodes, so the final fragment must also use the same opcode. */
+    /* Fragment 2: FIN=1, opcode=CONTINUATION, payload="lo"
+     * (RFC 6455 §5.4: subsequent fragments of a fragmented message
+     * must use the CONTINUATION opcode). */
     uint8_t frag2[64];
     int frag2_len = build_raw_frame(frag2, sizeof(frag2),
                                     (const uint8_t*)"lo", 2,
-                                    UVHTTP_WS_OPCODE_TEXT, 1);
+                                    UVHTTP_WS_OPCODE_CONTINUATION, 1);
     ASSERT_GT(frag2_len, 0);
 
     reset_cb_state();
@@ -809,12 +840,11 @@ TEST_F(WsBoostTest, ProcessData_FragmentedBinary) {
                                     UVHTTP_WS_OPCODE_BINARY, 0);
     ASSERT_GT(frag1_len, 0);
 
-    /* Fragment 2: FIN=1, opcode=BINARY (same opcode to enter the fragment
-     * completion path, since this impl does not handle CONTINUATION opcode) */
+    /* Fragment 2: FIN=1, opcode=CONTINUATION (RFC 6455 §5.4) */
     uint8_t p2[] = {0xCC, 0xDD};
     uint8_t frag2[64];
     int frag2_len = build_raw_frame(frag2, sizeof(frag2), p2, 2,
-                                    UVHTTP_WS_OPCODE_BINARY, 1);
+                                    UVHTTP_WS_OPCODE_CONTINUATION, 1);
     ASSERT_GT(frag2_len, 0);
 
     reset_cb_state();
@@ -902,7 +932,9 @@ TEST_F(WsBoostTest, ProcessData_PartialFrame) {
 
     uvhttp_ws_set_callbacks(conn, test_on_message, test_on_close, test_on_error);
 
-    /* Feed only 1 byte of a 2-byte header */
+    /* Feed only 1 byte of a 2-byte header (masked TEXT frame).
+     * RFC 6455 §5.1: server must reject unmasked frames, so the rest must
+     * be a masked frame. */
     uint8_t partial[] = {0x81};
 
     reset_cb_state();
@@ -911,8 +943,9 @@ TEST_F(WsBoostTest, ProcessData_PartialFrame) {
     EXPECT_EQ(ret, UVHTTP_OK);
     EXPECT_FALSE(g_cb_state.message_called); /* not enough data yet */
 
-    /* Feed the rest */
-    uint8_t rest[] = {0x05, 'H', 'e', 'l', 'l', 'o'};
+    /* Feed the rest: mask bit + length + zero masking key + "Hello" */
+    uint8_t rest[] = {0x85, 0x00, 0x00, 0x00, 0x00,
+                      'H', 'e', 'l', 'l', 'o'};
     ret = uvhttp_ws_process_data(conn, rest, sizeof(rest));
 
     EXPECT_EQ(ret, UVHTTP_OK);
@@ -1001,9 +1034,17 @@ TEST_F(WsBoostTest, ProcessData_BufferExpansion) {
 
     uvhttp_ws_set_callbacks(conn, test_on_message, test_on_close, test_on_error);
 
-    /* Fill recv buffer to near capacity with dummy data (not parseable) */
+    /* Fill recv buffer to near capacity with masked PONG frames (0x8A FIN=1
+     * opcode PONG, mask bit, zero key) — these are legal for a server to
+     * receive (masked) and are ignored by the parser, so they act as inert
+     * padding while testing the buffer-expansion logic. (Previously the
+     * padding was 0x00, which now correctly parses as an illegal unmasked
+     * CONTINUATION frame and is rejected — see RFC 6455 §5.1/§5.4.) */
     size_t fill_size = conn->recv_buffer_size - 4;
-    memset(conn->recv_buffer, 0x00, fill_size);
+    const uint8_t pong[] = {0x8A, 0x80, 0x00, 0x00, 0x00, 0x00};
+    for (size_t i = 0; i + sizeof(pong) <= fill_size; i += sizeof(pong)) {
+        memcpy(conn->recv_buffer + i, pong, sizeof(pong));
+    }
     conn->recv_buffer_pos = fill_size;
 
     /* Now feed a valid small text frame. process_data must expand the
@@ -1212,15 +1253,13 @@ TEST_F(WsBoostTest, ProcessData_BufferExpansion_MaxFrameSizeCap) {
     /* Manually shrink recv_buffer_size to force expansion */
     conn->recv_buffer_size = 8;
 
-    /* Fill 6 bytes with 0x00 (will parse as zero-length continuation frames) */
-    memset(conn->recv_buffer, 0x00, 6);
-    conn->recv_buffer_pos = 6;
-
-    /* Build a text frame with 4-byte payload (total frame = 6 bytes).
-     * After memcpy: 6 + 6 = 12 bytes total.
-     * Expansion: new_size = 8*2 = 16, while(12 > 16)? No.
+    /* Build a masked text frame with 4-byte payload. build_raw_frame now
+     * emits a masked frame (RFC 6455 §5.1): 2 header + 4 mask key + 4
+     * payload = 10 bytes total.
+     * After memcpy: 0 + 10 = 10 bytes total.
+     * Expansion: new_size = 8*2 = 16, while(10 > 16)? No.
      * Then 16 > 12 (max_frame_size)? Yes -> new_size = 12. 12 > 12? No.
-     * This hits lines 691-692 (the max_frame_size clamp). */
+     * This hits the max_frame_size clamp in the buffer-expansion path. */
     uint8_t frame[64];
     int frame_len = build_raw_frame(frame, sizeof(frame),
                                     (const uint8_t*)"test", 4,
@@ -1293,21 +1332,21 @@ TEST_F(WsBoostTest, ProcessData_FragmentedMessage_ReallocIntermediate) {
                                     UVHTTP_WS_OPCODE_TEXT, 0);
     ASSERT_GT(frag1_len, 0);
 
-    /* Fragment 2: FIN=0, payload="CDE" (3 bytes).
+    /* Fragment 2: FIN=0, opcode=CONTINUATION, payload="CDE" (3 bytes).
      * 2 + 3 = 5 > 4, triggers realloc in the intermediate fragment path. */
     uint8_t frag2[64];
     int frag2_len = build_raw_frame(frag2, sizeof(frag2),
                                     (const uint8_t*)"CDE", 3,
-                                    UVHTTP_WS_OPCODE_TEXT, 0);
+                                    UVHTTP_WS_OPCODE_CONTINUATION, 0);
     ASSERT_GT(frag2_len, 0);
 
-    /* Fragment 3: FIN=1, payload="FG" (2 bytes).
+    /* Fragment 3: FIN=1, opcode=CONTINUATION, payload="FG" (2 bytes).
      * 5 + 2 = 7 > 8? No (capacity was doubled to 8 after frag2 realloc).
      * But 5 + 2 = 7 <= 8, so no realloc here. */
     uint8_t frag3[64];
     int frag3_len = build_raw_frame(frag3, sizeof(frag3),
                                     (const uint8_t*)"FG", 2,
-                                    UVHTTP_WS_OPCODE_TEXT, 1);
+                                    UVHTTP_WS_OPCODE_CONTINUATION, 1);
     ASSERT_GT(frag3_len, 0);
 
     reset_cb_state();
@@ -1350,12 +1389,12 @@ TEST_F(WsBoostTest, ProcessData_FragmentedMessage_ReallocFinal) {
                                     UVHTTP_WS_OPCODE_TEXT, 0);
     ASSERT_GT(frag1_len, 0);
 
-    /* Fragment 2: FIN=1, payload="CDEFG" (5 bytes).
+    /* Fragment 2: FIN=1, opcode=CONTINUATION, payload="CDEFG" (5 bytes).
      * 2 + 5 = 7 > 4, triggers realloc in the FIN=1 completion path. */
     uint8_t frag2[64];
     int frag2_len = build_raw_frame(frag2, sizeof(frag2),
                                     (const uint8_t*)"CDEFG", 5,
-                                    UVHTTP_WS_OPCODE_TEXT, 1);
+                                    UVHTTP_WS_OPCODE_CONTINUATION, 1);
     ASSERT_GT(frag2_len, 0);
 
     reset_cb_state();
@@ -1391,7 +1430,7 @@ TEST_F(WsBoostTest, ProcessData_FragmentedBinary_ReallocFinal) {
     uint8_t p2[] = {0x03, 0x04, 0x05, 0x06, 0x07};
     uint8_t frag2[64];
     int frag2_len = build_raw_frame(frag2, sizeof(frag2), p2, 5,
-                                    UVHTTP_WS_OPCODE_BINARY, 1);
+                                    UVHTTP_WS_OPCODE_CONTINUATION, 1);
     ASSERT_GT(frag2_len, 0);
 
     reset_cb_state();
@@ -1402,6 +1441,90 @@ TEST_F(WsBoostTest, ProcessData_FragmentedBinary_ReallocFinal) {
     EXPECT_TRUE(g_cb_state.message_called);
     EXPECT_EQ(g_cb_state.last_opcode, UVHTTP_WS_OPCODE_BINARY);
     EXPECT_EQ(g_cb_state.last_message_len, 7u);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_process_data: protocol-error sequences (RFC 6455 §5.4) ========== */
+
+TEST_F(WsBoostTest, ProcessData_ContinuationWithoutInit_ReturnsError) {
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+    uvhttp_ws_set_callbacks(conn, test_on_message, test_on_close, test_on_error);
+
+    /* A CONTINUATION frame with no fragmented message in progress is a
+     * protocol violation (RFC 6455 §5.6) — the parser must reject it. */
+    uint8_t frame[64];
+    int frame_len = build_raw_frame(frame, sizeof(frame),
+                                    (const uint8_t*)"x", 1,
+                                    UVHTTP_WS_OPCODE_CONTINUATION, 1);
+    ASSERT_GT(frame_len, 0);
+
+    reset_cb_state();
+    uvhttp_error_t ret = uvhttp_ws_process_data(conn, frame, frame_len);
+    EXPECT_NE(ret, UVHTTP_OK);
+    EXPECT_FALSE(g_cb_state.message_called);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+TEST_F(WsBoostTest, ProcessData_DataFrameDuringFragment_ReturnsError) {
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, NULL);
+    ASSERT_NE(conn, nullptr);
+    uvhttp_ws_set_callbacks(conn, test_on_message, test_on_close, test_on_error);
+
+    uint8_t frag1[64], frag2[64];
+    int n1 = build_raw_frame(frag1, sizeof(frag1),
+                             (const uint8_t*)"ab", 2,
+                             UVHTTP_WS_OPCODE_TEXT, 0);
+    ASSERT_GT(n1, 0);
+    /* A fresh data frame while a fragment is pending is a protocol error. */
+    int n2 = build_raw_frame(frag2, sizeof(frag2),
+                             (const uint8_t*)"cd", 2,
+                             UVHTTP_WS_OPCODE_TEXT, 1);
+    ASSERT_GT(n2, 0);
+
+    reset_cb_state();
+    EXPECT_EQ(uvhttp_ws_process_data(conn, frag1, n1), UVHTTP_OK);
+    uvhttp_error_t ret = uvhttp_ws_process_data(conn, frag2, n2);
+    EXPECT_NE(ret, UVHTTP_OK);
+
+    uvhttp_ws_connection_free(conn);
+}
+
+/* ========== uvhttp_ws_process_data: max_message_size enforcement (S4) ========== */
+
+TEST_F(WsBoostTest, ProcessData_FragmentExceedsMaxMessage_ReturnsError) {
+    uvhttp_config_t cfg;
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.websocket_max_frame_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE;
+    cfg.websocket_max_message_size = 4; /* tiny cap */
+    cfg.websocket_ping_interval = UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL;
+    cfg.websocket_ping_timeout = UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT;
+
+    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
+        0, NULL, 1, &cfg);
+    ASSERT_NE(conn, nullptr);
+    uvhttp_ws_set_callbacks(conn, test_on_message, test_on_close, test_on_error);
+
+    uint8_t frag1[64];
+    int n1 = build_raw_frame(frag1, sizeof(frag1),
+                             (const uint8_t*)"abc", 3,
+                             UVHTTP_WS_OPCODE_TEXT, 0);
+    ASSERT_GT(n1, 0);
+    uint8_t frag2[64];
+    int n2 = build_raw_frame(frag2, sizeof(frag2),
+                             (const uint8_t*)"de", 2,
+                             UVHTTP_WS_OPCODE_CONTINUATION, 1);
+    ASSERT_GT(n2, 0);
+
+    reset_cb_state();
+    EXPECT_EQ(uvhttp_ws_process_data(conn, frag1, n1), UVHTTP_OK);
+    /* 3 + 2 = 5 > max_message_size(4) → must fail */
+    uvhttp_error_t ret = uvhttp_ws_process_data(conn, frag2, n2);
+    EXPECT_NE(ret, UVHTTP_OK);
 
     uvhttp_ws_connection_free(conn);
 }
