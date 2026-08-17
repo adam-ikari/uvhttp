@@ -28,6 +28,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <strings.h>  /* strcasecmp */
 #include <sys/socket.h>
 #include <unistd.h>
 

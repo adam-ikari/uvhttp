@@ -31,6 +31,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* HTTP field values / tokens are case-insensitive (RFC 7230 §3.2): a server
+ * may send 'connection: upgrade' and clients commonly do (undici sends
+ * lowercase header fields). Case-sensitive strstr breaks protocol detection
+ * on the server and handshake verification on the client. */
+static const char* uvhttp_strcasestr(const char* haystack, const char* needle) {
+    if (!haystack || !needle) {
+        return NULL;
+    }
+    size_t nlen = strlen(needle);
+    if (nlen == 0) {
+        return haystack;
+    }
+    for (const char* p = haystack; *p; p++) {
+        if (strncasecmp(p, needle, nlen) == 0) {
+            return p;
+        }
+    }
+    return NULL;
+}
+
 /* WebSocket GUID (RFC 6455) */
 #define WS_GUID "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
@@ -298,7 +318,7 @@ uvhttp_error_t uvhttp_ws_handshake_server(struct uvhttp_ws_connection* conn,
     (void)request_len; /* parameter not used (calculated via strlen) */
 
     /* parserequest, get Sec-WebSocket-Key */
-    const char* key_start = strstr(request, "Sec-WebSocket-Key:");
+    const char* key_start = uvhttp_strcasestr(request, "Sec-WebSocket-Key:");
     if (!key_start) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -402,13 +422,13 @@ uvhttp_error_t uvhttp_ws_verify_handshake_response(
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* check Upgrade header */
-    if (strstr(response, "Upgrade: websocket") == NULL) {
+    /* check Upgrade header (case-insensitive) */
+    if (uvhttp_strcasestr(response, "Upgrade: websocket") == NULL) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* verify Sec-WebSocket-Accept */
-    const char* accept_start = strstr(response, "Sec-WebSocket-Accept:");
+    /* verify Sec-WebSocket-Accept (case-insensitive field name) */
+    const char* accept_start = uvhttp_strcasestr(response, "Sec-WebSocket-Accept:");
     if (!accept_start) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -945,8 +965,9 @@ static int websocket_protocol_detector(uvhttp_request_t* request,
         return 0;
     }
 
-    /* Check Connection header (may contain multiple values) */
-    if (strstr(connection_header, UVHTTP_HEADER_UPGRADE) == NULL) {
+    /* Check Connection header (may contain multiple values; RFC 7230 field
+     * values are case-insensitive — undici sends 'connection: upgrade') */
+    if (uvhttp_strcasestr(connection_header, UVHTTP_HEADER_UPGRADE) == NULL) {
         return 0;
     }
 

@@ -1091,7 +1091,13 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
             if (buf[0] == '/') {
                 uvhttp_safe_strncpy(clean_path, buf, sizeof(clean_path));
             } else {
-                snprintf(clean_path, sizeof(clean_path), "/%s", buf);
+                size_t blen = strlen(buf);
+                if (blen + 1 >= sizeof(clean_path)) {
+                    blen = sizeof(clean_path) - 2; /* keep room for '/' + NUL */
+                }
+                clean_path[0] = '/';
+                memcpy(clean_path + 1, buf, blen);
+                clean_path[blen + 1] = '\0';
             }
         } else {
             /* index_file too long, use default value */
