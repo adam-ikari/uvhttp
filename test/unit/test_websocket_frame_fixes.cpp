@@ -72,13 +72,25 @@ TEST(WsFrameHeaderParse, Extended64BitPayloadLength) {
 }
 
 TEST(WsFrameHeaderParse, Extended64BitMaxLength) {
+    /* length code 127 declaring 2^64-1: RFC 6455 §5.2 requires the most
+     * significant bit of a 64-bit length to be 0, so this must now be
+     * rejected (review M3). */
     uint8_t f[16] = {0x82, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                     0xFF, 0xFF, 0, 0, 0, 0, 0, 0};
+    uvhttp_ws_frame_header_t h;
+    size_t hsize = 0;
+    EXPECT_NE(uvhttp_ws_parse_frame_header(f, 16, &h, &hsize), UVHTTP_OK);
+}
+
+TEST(WsFrameHeaderParse, Extended64BitMaxLegalLength) {
+    /* 2^63-1 is the largest legal 64-bit length (MSB must be 0). */
+    uint8_t f[16] = {0x82, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                      0xFF, 0xFF, 0, 0, 0, 0, 0, 0};
     uvhttp_ws_frame_header_t h;
     size_t hsize = 0;
     ASSERT_EQ(uvhttp_ws_parse_frame_header(f, 16, &h, &hsize), UVHTTP_OK);
     EXPECT_EQ(hsize, (size_t)10);
-    EXPECT_EQ(h.payload_length, (uint64_t)UINT64_MAX);
+    EXPECT_EQ(h.payload_length, (uint64_t)INT64_MAX);
     EXPECT_EQ(h.payload_len, (uint8_t)127);
 }
 
@@ -93,7 +105,7 @@ TEST(WsFrameHeaderParse, TooShortForExtendedHeader) {
 TEST(WsBuildFrame, SmallFrameTotalSizeAndBytes) {
     uint8_t buf[64];
     uint8_t payload[5] = {'h', 'e', 'l', 'l', 'o'};
-    uvhttp_error_t r = uvhttp_ws_build_frame(NULL, buf, sizeof(buf), payload, 5,
+    long r = uvhttp_ws_build_frame(NULL, buf, sizeof(buf), payload, 5,
                                              UVHTTP_WS_OPCODE_TEXT, 0, 1);
     /* 2-byte header + 5 payload = 7 */
     ASSERT_EQ((int)r, 7);
@@ -106,7 +118,7 @@ TEST(WsBuildFrame, Extended16BitTotalSizeAndBytes) {
     uint8_t buf[256];
     uint8_t payload[200];
     memset(payload, 'x', sizeof(payload));
-    uvhttp_error_t r = uvhttp_ws_build_frame(NULL, buf, sizeof(buf), payload,
+    long r = uvhttp_ws_build_frame(NULL, buf, sizeof(buf), payload,
                                              sizeof(payload),
                                              UVHTTP_WS_OPCODE_TEXT, 0, 1);
     /* 4-byte header + 200 payload = 204 (previously reported 202) */
@@ -122,7 +134,7 @@ TEST(WsBuildFrame, Extended16BitBoundary) {
     uint8_t buf[65536 + 16];
     uint8_t payload[65535];
     memset(payload, 'y', sizeof(payload));
-    uvhttp_error_t r = uvhttp_ws_build_frame(NULL, buf, sizeof(buf), payload,
+    long r = uvhttp_ws_build_frame(NULL, buf, sizeof(buf), payload,
                                              sizeof(payload),
                                              UVHTTP_WS_OPCODE_BINARY, 0, 1);
     ASSERT_EQ((int)r, 4 + 65535);
@@ -136,7 +148,7 @@ TEST(WsBuildFrame, Extended64BitTotalSizeAndBytes) {
     uint8_t buf[70016];
     uint8_t payload[70000];
     memset(payload, 'z', sizeof(payload));
-    uvhttp_error_t r = uvhttp_ws_build_frame(NULL, buf, sizeof(buf), payload,
+    long r = uvhttp_ws_build_frame(NULL, buf, sizeof(buf), payload,
                                              sizeof(payload),
                                              UVHTTP_WS_OPCODE_BINARY, 0, 1);
     /* 10-byte header + 70000 payload */
@@ -157,7 +169,7 @@ TEST(WsBuildFrame, Extended64BitTotalSizeAndBytes) {
 TEST(WsBuildFrame, InsufficientBufferRejected) {
     uint8_t buf[8]; /* too small for a 200-byte frame */
     uint8_t payload[200] = {0};
-    uvhttp_error_t r = uvhttp_ws_build_frame(NULL, buf, sizeof(buf), payload,
+    long r = uvhttp_ws_build_frame(NULL, buf, sizeof(buf), payload,
                                              sizeof(payload),
                                              UVHTTP_WS_OPCODE_TEXT, 0, 1);
     EXPECT_NE(r, UVHTTP_OK);
@@ -281,7 +293,7 @@ TEST(WsBuildFrame, HugeLengthRejected) {
     uint8_t buf[32];
     uint8_t payload[8] = {0};
     (void)payload;
-    uvhttp_error_t r = uvhttp_ws_build_frame(NULL, buf, sizeof(buf), payload,
+    long r = uvhttp_ws_build_frame(NULL, buf, sizeof(buf), payload,
                                              SIZE_MAX,
                                              UVHTTP_WS_OPCODE_TEXT, 0, 1);
     EXPECT_NE(r, UVHTTP_OK);

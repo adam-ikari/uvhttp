@@ -32,6 +32,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Case-insensitive substring search. HTTP header names (and the Upgrade
+ * token) are case-insensitive per RFC 7230 §3.2 — review M4. */
+static const char* uvhttp_ws_strcasestr(const char* haystack,
+                                        const char* needle) {
+    if (!haystack || !needle || !*needle) {
+        return NULL;
+    }
+    size_t nlen = strlen(needle);
+    for (const char* p = haystack; *p; ++p) {
+        if (strncasecmp(p, needle, nlen) == 0) {
+            return p;
+        }
+    }
+    return NULL;
+}
+
 /* WebSocket GUID (RFC 6455) */
 #define WS_GUID "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
@@ -156,6 +172,12 @@ uvhttp_error_t uvhttp_ws_parse_frame_header(const uint8_t* data, size_t len,
             ((uint64_t)data[4] << 40) | ((uint64_t)data[5] << 32) |
             ((uint64_t)data[6] << 24) | ((uint64_t)data[7] << 16) |
             ((uint64_t)data[8] << 8) | (uint64_t)data[9];
+        /* RFC 6455 §5.2: the most significant bit of a 64-bit length
+         * (length code 127) MUST be 0; a value >= 2^63 is a protocol
+         * error (review M3). */
+        if (header->payload_length & ((uint64_t)1 << 63)) {
+            return UVHTTP_ERROR_INVALID_PARAM;
+        }
         *header_size = 10;
     }
 
@@ -174,12 +196,15 @@ void uvhttp_ws_apply_mask(uint8_t* data, size_t len,
     }
 }
 
-/* build WebSocket frame */
-uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
-                                     size_t buffer_size, const uint8_t* payload,
-                                     size_t payload_len,
-                                     uvhttp_ws_opcode_t opcode, int mask,
-                                     int fin) {
+/* build WebSocket frame
+ * Returns the total wire size of the built frame on success (>= 0), or a
+ * negative error code on failure. A separate return type (not
+ * uvhttp_error_t) is used because the size can exceed INT_MAX on
+ * 64-bit payloads — review L3. */
+long uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
+                           size_t buffer_size, const uint8_t* payload,
+                           size_t payload_len, uvhttp_ws_opcode_t opcode,
+                           int mask, int fin) {
     if (!buffer) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -232,7 +257,11 @@ uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
     if (mask) {
         uint8_t masking_key[4];
         if (uvhttp_ws_random_bytes(context, masking_key, 4) != 0) {
-            uvhttp_free(buffer);
+            /* NOTE: do NOT free(buffer) here — the buffer is owned by the
+             * caller (uvhttp_ws_send_frame), which frees it exactly once on
+             * error. Freeing it here caused a double-free (see fix/ws-rfc-
+             * compliance review S1). All other error paths in this function
+             * also leave the buffer untouched. */
             return UVHTTP_ERROR_INVALID_PARAM;
         }
         for (int i = 0; i < 4; i++) {
@@ -252,7 +281,7 @@ uvhttp_error_t uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
         }
     }
 
-    return total_size;
+    return (long)total_size;
 }
 
 /* generate Sec-WebSocket-Accept */
@@ -302,13 +331,17 @@ uvhttp_error_t uvhttp_ws_handshake_server(struct uvhttp_ws_connection* conn,
 
     (void)request_len; /* parameter not used (calculated via strlen) */
 
-    /* parserequest, get Sec-WebSocket-Key */
-    const char* key_start = strstr(request, "Sec-WebSocket-Key:");
+    /* parserequest, get Sec-WebSocket-Key (header names are
+     * case-insensitive per RFC 7230 §3.2 — review M4) */
+    const char* key_start = uvhttp_ws_strcasestr(request, UVHTTP_HEADER_WEBSOCKET_KEY);
     if (!key_start) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    key_start += 19; /* skip "Sec-WebSocket-Key:" */
+    /* UVHTTP_HEADER_WEBSOCKET_KEY is "Sec-WebSocket-Key" without the
+     * trailing colon; skip the colon itself so key_start points at the
+     * header value (review M4). */
+    key_start += strlen(UVHTTP_HEADER_WEBSOCKET_KEY) + 1;
 
     /* skip null whitespace */
     while (*key_start == ' ') {
@@ -407,18 +440,22 @@ uvhttp_error_t uvhttp_ws_verify_handshake_response(
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* check Upgrade header */
-    if (strstr(response, "Upgrade: websocket") == NULL) {
+    /* check Upgrade header (case-insensitive — review M4) */
+    if (uvhttp_ws_strcasestr(response, "Upgrade: websocket") == NULL) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* verify Sec-WebSocket-Accept */
-    const char* accept_start = strstr(response, "Sec-WebSocket-Accept:");
+    /* verify Sec-WebSocket-Accept (header names are case-insensitive) */
+    const char* accept_start =
+        uvhttp_ws_strcasestr(response, UVHTTP_HEADER_WEBSOCKET_ACCEPT);
     if (!accept_start) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    accept_start += 22; /* skip "Sec-WebSocket-Accept:" */
+    /* UVHTTP_HEADER_WEBSOCKET_ACCEPT is "Sec-WebSocket-Accept" without the
+     * trailing colon; skip the colon itself so accept_start points at the
+     * header value (review M4). */
+    accept_start += strlen(UVHTTP_HEADER_WEBSOCKET_ACCEPT) + 1;
 
     /* skip null whitespace */
     while (*accept_start == ' ') {
@@ -489,13 +526,17 @@ uvhttp_error_t uvhttp_ws_send_frame(uvhttp_context_t* context,
     }
 
     /* build frame (client needs masking) */
-    int frame_len =
+    long frame_len_long =
         uvhttp_ws_build_frame(context, buffer, buffer_size, data, len, opcode,
                               conn->is_server ? 0 : 1, 1);
-    if (frame_len < 0) {
+    if (frame_len_long < 0) {
         uvhttp_free(buffer);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
+    /* frame_len fits in int here because buffer_size is capped by the
+     * allocator and len is bounded by SIZE_MAX - 14; keep the arithmetic
+     * below in size_t where possible. */
+    size_t frame_len = (size_t)frame_len_long;
 
     /* senddata */
     int ret;
@@ -534,11 +575,19 @@ uvhttp_error_t uvhttp_ws_send_frame(uvhttp_context_t* context,
         ret = (int)sent;
     } else {
         ret = send(conn->fd, buffer, frame_len, 0);
+        if (ret < 0) {
+            uvhttp_free(buffer);
+            return UVHTTP_ERROR_CONNECTION_BROKEN;
+        }
     }
 
     conn->bytes_sent += ret;
     conn->frames_sent++;
 
+    /* Release the send buffer on the success path too. Previously the
+     * buffer leaked on every successful send (review S2); only the two
+     * error paths freed it. */
+    uvhttp_free(buffer);
     return UVHTTP_OK;
 }
 
@@ -575,7 +624,6 @@ uvhttp_error_t uvhttp_ws_send_pong(uvhttp_context_t* context,
 }
 
 /* closeconnection */
-__attribute__((no_sanitize("address")))
 uvhttp_error_t uvhttp_ws_close(uvhttp_context_t* context,
                                struct uvhttp_ws_connection* conn, int code,
                                const char* reason) {
@@ -583,9 +631,6 @@ uvhttp_error_t uvhttp_ws_close(uvhttp_context_t* context,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* send_frame requires state == OPEN; only move to CLOSING after the
-     * close frame has been handed to the send path (setting it first made
-     * this function always fail with UVHTTP_ERROR_INVALID_PARAM) */
     /* send_frame requires state == OPEN; move to CLOSING only after the
      * close frame has been handed to the send path (setting it first made
      * this function always fail with UVHTTP_ERROR_INVALID_PARAM) */
@@ -726,6 +771,56 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
     return UVHTTP_OK;
 }
 
+/* Append payload_len bytes to the in-progress fragmented message.
+ * Enforces config.max_message_size on the accumulated size, guards the
+ * doubling growth against size_t overflow, and checks allocation failures
+ * (review S4: previously the cumulative size was unbounded, the doubling
+ * could overflow, and realloc NULL results were memcpy'd into).
+ * Returns UVHTTP_OK on success, UVHTTP_ERROR_INVALID_PARAM otherwise — the
+ * caller must treat that as a fatal protocol error and close the connection. */
+static uvhttp_error_t uvhttp_ws_fragment_append(
+    struct uvhttp_ws_connection* conn, const uint8_t* payload,
+    size_t payload_len) {
+    /* max_message_size enforcement: the accumulated message must never
+     * exceed the configured cap. */
+    if ((size_t)conn->config.max_message_size > 0 &&
+        (conn->fragmented_size > (size_t)conn->config.max_message_size ||
+         payload_len > (size_t)conn->config.max_message_size -
+                            conn->fragmented_size)) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    /* Grow only when needed; double with overflow guards. */
+    if (payload_len > conn->fragmented_capacity - conn->fragmented_size) {
+        size_t required = conn->fragmented_size + payload_len;
+        size_t new_capacity = conn->fragmented_capacity;
+        if (new_capacity == 0) {
+            /* first fragment: start at the exact required size, otherwise
+             * doubling 0 stays 0 forever (infinite loop) */
+            new_capacity = required;
+        } else {
+            while (new_capacity < required) {
+                if (new_capacity > SIZE_MAX / 2) {
+                    return UVHTTP_ERROR_INVALID_PARAM;
+                }
+                new_capacity *= 2;
+            }
+        }
+        uint8_t* new_buf =
+            uvhttp_realloc(conn->fragmented_message, new_capacity);
+        if (!new_buf) {
+            return UVHTTP_ERROR_INVALID_PARAM;
+        }
+        conn->fragmented_message = new_buf;
+        conn->fragmented_capacity = new_capacity;
+    }
+
+    memcpy(conn->fragmented_message + conn->fragmented_size, payload,
+           payload_len);
+    conn->fragmented_size += payload_len;
+    return UVHTTP_OK;
+}
+
 /* process received data */
 uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                                       const uint8_t* data, size_t len) {
@@ -781,7 +876,39 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
         if (uvhttp_ws_parse_frame_header(conn->recv_buffer,
                                          conn->recv_buffer_pos, &header,
                                          &header_size) != 0) {
-            break;
+            /* Distinguish "need more data" (partial header buffered) from a
+             * genuine protocol error (e.g. the length-code-127 high bit being
+             * set — review M3). With a partial header we must wait for the
+             * rest of the frame; otherwise the frame is malformed and the
+             * connection must be closed rather than silently skipping it. */
+            uint8_t len_code = conn->recv_buffer[1] & 0x7F;
+            size_t need =
+                (len_code == 126) ? 4 : (len_code == 127) ? 10 : 2;
+            if (conn->recv_buffer_pos < need) {
+                break;
+            }
+            return UVHTTP_ERROR_INVALID_PARAM;
+        }
+
+        /* RFC 6455 §5.2: when no extension is in use, a nonzero RSV bit is
+         * a protocol error and the connection MUST be closed (review M1). */
+        if (header.rsv1 || header.rsv2 || header.rsv3) {
+            return UVHTTP_ERROR_INVALID_PARAM;
+        }
+
+        /* RFC 6455 §5.5/§5.6: control frames (CLOSE/PING/PONG) MUST have a
+         * payload <= 125 bytes and MUST NOT be fragmented (FIN must be set);
+         * violations are protocol errors (review M2). */
+        if (header.opcode >= UVHTTP_WS_OPCODE_CLOSE) {
+            if (header.payload_length > 125 || !header.fin) {
+                return UVHTTP_ERROR_INVALID_PARAM;
+            }
+        }
+
+        /* RFC 6455 §5.1: client-to-server frames MUST be masked; a server
+         * receiving an unmasked frame MUST close the connection. */
+        if (conn->is_server && !header.mask) {
+            return UVHTTP_ERROR_INVALID_PARAM;
         }
 
         /* Reject frames whose declared payload exceeds the configured limit.
@@ -821,56 +948,36 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
 
         /* processframe */
         if (header.opcode == UVHTTP_WS_OPCODE_TEXT ||
-            header.opcode == UVHTTP_WS_OPCODE_BINARY) {
-            /* process fragmented message */
-            if (!header.fin) {
-                /* fragment start or continue */
-                if (conn->fragmented_message == NULL) {
-                    /* new fragmented message */
+            header.opcode == UVHTTP_WS_OPCODE_BINARY ||
+            header.opcode == UVHTTP_WS_OPCODE_CONTINUATION) {
+            /* RFC 6455 §5.4 fragment state machine (review S3: CONTINUATION
+             * frames used to be silently dropped, so multi-frame messages
+             * never completed):
+             * - fresh TEXT/BINARY with FIN=1 and no pending fragment is a
+             *   complete message;
+             * - fresh TEXT/BINARY with FIN=0 starts a fragmented message;
+             * - CONTINUATION frames extend the pending message; FIN=1
+             *   completes it;
+             * - CONTINUATION with no pending message, or a fresh TEXT/BINARY
+             *   while a fragment is pending, is a protocol error (§5.6) and
+             *   the connection must be closed. */
+            if (conn->fragmented_message == NULL) {
+                if (header.opcode == UVHTTP_WS_OPCODE_CONTINUATION) {
+                    /* continuation with no initial fragment — protocol
+                     * violation */
+                    return UVHTTP_ERROR_INVALID_PARAM;
+                }
+                if (!header.fin) {
+                    /* start a new fragmented message */
                     conn->fragmented_opcode = header.opcode;
-                    conn->fragmented_capacity = header.payload_length * 2;
-                    conn->fragmented_message =
-                        uvhttp_alloc(conn->fragmented_capacity);
-                    conn->fragmented_size = 0;
-                }
-
-                /* expand buffer (if needed) */
-                while (conn->fragmented_size + header.payload_length >
-                       conn->fragmented_capacity) {
-                    conn->fragmented_capacity *= 2;
-                    conn->fragmented_message = uvhttp_realloc(
-                        conn->fragmented_message, conn->fragmented_capacity);
-                }
-
-                memcpy(conn->fragmented_message + conn->fragmented_size,
-                       payload, (size_t)header.payload_length);
-                conn->fragmented_size += header.payload_length;
-            } else {
-                /* last fragment or complete message */
-                if (conn->fragmented_message != NULL) {
-                    /* complete fragmented message */
-                    while (conn->fragmented_size + header.payload_length >
-                           conn->fragmented_capacity) {
-                        conn->fragmented_capacity *= 2;
-                        conn->fragmented_message =
-                            uvhttp_realloc(conn->fragmented_message,
-                                           conn->fragmented_capacity);
-                    }
-
-                    memcpy(conn->fragmented_message + conn->fragmented_size,
-                           payload, (size_t)header.payload_length);
-                    conn->fragmented_size += header.payload_length;
-
-                    if (conn->on_message) {
-                        conn->on_message(
-                            conn, (const char*)conn->fragmented_message,
-                            conn->fragmented_size, conn->fragmented_opcode);
-                    }
-
-                    uvhttp_free(conn->fragmented_message);
-                    conn->fragmented_message = NULL;
                     conn->fragmented_size = 0;
                     conn->fragmented_capacity = 0;
+                    conn->fragmented_message = NULL;
+                    if (uvhttp_ws_fragment_append(
+                            conn, payload,
+                            (size_t)header.payload_length) != UVHTTP_OK) {
+                        return UVHTTP_ERROR_INVALID_PARAM;
+                    }
                 } else {
                     /* complete message */
                     if (conn->on_message) {
@@ -878,6 +985,32 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                                          (size_t)header.payload_length,
                                          header.opcode);
                     }
+                }
+            } else {
+                /* a fragmented message is in progress; only CONTINUATION
+                 * frames may extend it */
+                if (header.opcode != UVHTTP_WS_OPCODE_CONTINUATION) {
+                    /* a fresh data frame interrupting a fragmented message
+                     * — protocol violation */
+                    return UVHTTP_ERROR_INVALID_PARAM;
+                }
+                if (uvhttp_ws_fragment_append(
+                        conn, payload,
+                        (size_t)header.payload_length) != UVHTTP_OK) {
+                    return UVHTTP_ERROR_INVALID_PARAM;
+                }
+                if (header.fin) {
+                    /* message complete — deliver and reset */
+                    if (conn->on_message) {
+                        conn->on_message(
+                            conn, (const char*)conn->fragmented_message,
+                            conn->fragmented_size,
+                            conn->fragmented_opcode);
+                    }
+                    uvhttp_free(conn->fragmented_message);
+                    conn->fragmented_message = NULL;
+                    conn->fragmented_size = 0;
+                    conn->fragmented_capacity = 0;
                 }
             }
         } else if (header.opcode == UVHTTP_WS_OPCODE_CLOSE) {
@@ -1027,8 +1160,9 @@ static int websocket_protocol_detector(uvhttp_request_t* request,
         return 0;
     }
 
-    /* Check Connection header (may contain multiple values) */
-    if (strstr(connection_header, UVHTTP_HEADER_UPGRADE) == NULL) {
+    /* Check Connection header (may contain multiple values); header names
+     * and the token are case-insensitive — review M4 */
+    if (uvhttp_ws_strcasestr(connection_header, "upgrade") == NULL) {
         return 0;
     }
 

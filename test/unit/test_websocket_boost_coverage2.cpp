@@ -47,21 +47,30 @@ static int build_raw_frame(uint8_t* out_buf, size_t out_buf_size,
     if (out_buf_size < 2) return -1;
     out_buf[pos++] = (fin ? 0x80 : 0x00) | (opcode & 0x0F);
 
-    /* Byte 1+: payload length (no mask) */
+    /* Byte 1+: payload length, masked (RFC 6455 §5.1: server must reject
+     * unmasked client frames, so all frames fed to uvhttp_ws_process_data
+     * on the server path must carry the mask bit). */
     if (payload_len < 126) {
-        out_buf[pos++] = (uint8_t)payload_len;
+        out_buf[pos++] = 0x80 | (uint8_t)payload_len;
     } else if (payload_len < 65536) {
         if (out_buf_size < pos + 3) return -1;
-        out_buf[pos++] = 126;
+        out_buf[pos++] = 0x80 | 126;
         out_buf[pos++] = (payload_len >> 8) & 0xFF;
         out_buf[pos++] = payload_len & 0xFF;
     } else {
         if (out_buf_size < pos + 9) return -1;
-        out_buf[pos++] = 127;
+        out_buf[pos++] = 0x80 | 127;
         for (int i = 7; i >= 0; i--) {
             out_buf[pos++] = (payload_len >> (i * 8)) & 0xFF;
         }
     }
+
+    /* masking key: all-zero, so the masked payload equals the plaintext */
+    if (out_buf_size < pos + 4) return -1;
+    out_buf[pos++] = 0x00;
+    out_buf[pos++] = 0x00;
+    out_buf[pos++] = 0x00;
+    out_buf[pos++] = 0x00;
 
     /* Payload */
     if (payload && payload_len > 0) {
@@ -719,7 +728,7 @@ TEST_F(WsBoost2Test, BuildFrame_Extended127_Masked) {
     ASSERT_NE(buf, nullptr);
 
     /* mask=1 with valid context (DRBG initialized) */
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         &ctx_, buf, buf_size, payload, payload_len,
         UVHTTP_WS_OPCODE_TEXT, 1, 1);
 
@@ -754,7 +763,7 @@ TEST_F(WsBoost2Test, BuildFrame_Extended126_Masked) {
     uint8_t* buf = (uint8_t*)uvhttp_alloc(buf_size);
     ASSERT_NE(buf, nullptr);
 
-    uvhttp_error_t ret = uvhttp_ws_build_frame(
+    long ret = uvhttp_ws_build_frame(
         &ctx_, buf, buf_size, payload, payload_len,
         UVHTTP_WS_OPCODE_BINARY, 1, 1);
 
@@ -1067,15 +1076,18 @@ TEST_F(WsBoost2Test, ProcessData_FragmentedMessage_ManyFragments) {
 
     uvhttp_ws_set_callbacks(conn, test_on_message, test_on_close, test_on_error);
 
-    /* 4 fragments: FIN=0, TEXT */
+    /* 4 fragments: TEXT(FIN=0) then 2×CONTINUATION(FIN=0) then
+     * CONTINUATION(FIN=1) — RFC 6455 §5.4 sequence */
     const char* parts[] = {"AB", "CD", "EF", "GH"};
     uint8_t frags[4][64];
     int frag_lens[4];
 
     for (int i = 0; i < 4; i++) {
+        uint8_t opcode =
+            (i == 0) ? UVHTTP_WS_OPCODE_TEXT : UVHTTP_WS_OPCODE_CONTINUATION;
         frag_lens[i] = build_raw_frame(frags[i], sizeof(frags[i]),
                                         (const uint8_t*)parts[i], 2,
-                                        UVHTTP_WS_OPCODE_TEXT,
+                                        opcode,
                                         (i == 3) ? 1 : 0);
         ASSERT_GT(frag_lens[i], 0);
     }
