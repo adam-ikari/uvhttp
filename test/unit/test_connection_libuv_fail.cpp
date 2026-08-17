@@ -102,6 +102,75 @@ TEST_F(UvhttpConnectionMockTest, ServerListenListenFails) {
     EXPECT_NE(err, UVHTTP_OK);
 }
 
+/* ========== on_connection 503 path: uv_accept failure ========== */
+
+/*
+ * Regression test: when the connection limit is reached and uv_accept fails
+ * on the temporary 503 client, the temp_client must be released through
+ * uv_close (so libuv drops it from the loop's handle queue and then frees it),
+ * not freed directly. Directly freeing an initialized libuv handle leaves a
+ * dangling pointer in the loop's handle queue -> use-after-free on the next
+ * uv_run / uv_loop_close.
+ */
+TEST_F(UvhttpConnectionMockTest, ConnectionLimitAcceptFailClosesTempClient) {
+    /* Force the 503 path: max_connections = 0 so a single new connection
+     * already exceeds the limit. The config is owned by the server (freed by
+     * uvhttp_server_free in TearDown). */
+    uvhttp_config_t* config = nullptr;
+    uvhttp_error_t cerr = uvhttp_config_new(&config);
+    ASSERT_EQ(cerr, UVHTTP_OK);
+    ASSERT_NE(config, nullptr);
+    config->max_connections = 0;
+    server->config = config;
+
+    /* Listen so uv_listen registers on_connection as the connection callback */
+    uvhttp_error_t err = uvhttp_server_listen(server, "127.0.0.1", 0);
+    ASSERT_EQ(err, UVHTTP_OK);
+
+    /* Make uv_accept fail on the temporary 503 client */
+    libuv_mock_set_uv_accept_result(-1);
+
+    size_t close_before = 0;
+    libuv_mock_get_call_count("uv_close", &close_before);
+
+    /* Trigger on_connection via the stored connection_cb */
+    libuv_mock_trigger_connection_cb((uv_stream_t*)&server->tcp_handle, 0);
+
+    size_t close_after = 0;
+    libuv_mock_get_call_count("uv_close", &close_after);
+    /* The temp_client must be closed through uv_close, not freed directly. */
+    EXPECT_GT(close_after, close_before);
+}
+
+/*
+ * Regression test: server->max_connections (public struct field) must be
+ * honored by on_connection when no config is attached, instead of a hardcoded
+ * default. Previously the field was initialized to UVHTTP_MAX_CONNECTIONS_MAX
+ * and never read, so setting it to 0 here had no effect and the 503 path was
+ * never entered.
+ */
+TEST_F(UvhttpConnectionMockTest, ServerMaxConnectionsFieldIsAuthoritative) {
+    /* No server->config: on_connection must fall back to server->max_connections.
+     * Setting it to 0 forces the 503 path (a single new connection exceeds it). */
+    server->max_connections = 0;
+    /* Fail uv_accept so the 503 temp client is closed (uv_close) instead of
+     * starting a write we'd have to drain. */
+    libuv_mock_set_uv_accept_result(-1);
+
+    uvhttp_error_t err = uvhttp_server_listen(server, "127.0.0.1", 0);
+    ASSERT_EQ(err, UVHTTP_OK);
+
+    size_t close_before = 0;
+    libuv_mock_get_call_count("uv_close", &close_before);
+
+    libuv_mock_trigger_connection_cb((uv_stream_t*)&server->tcp_handle, 0);
+
+    size_t close_after = 0;
+    libuv_mock_get_call_count("uv_close", &close_after);
+    /* 503 path entered => temp client created + closed via uv_close. */
+    EXPECT_GT(close_after, close_before);
+}
+
 /* ========== Server new_with_loop failure ========== */
 
 TEST_F(UvhttpConnectionMockTest, ServerNewWithLoopLoopInitFails) {

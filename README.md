@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.6.0-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.6.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
@@ -513,6 +513,7 @@ UVHTTP is built upon excellent open-source projects:
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.6.2** | 2026-08-17 | Connection-limit memory safety fix (uv_close on accept failure), WebSocket RFC 6455/memory-safety fixes (PR #336), uv_strerror_r consistency |
 | **v2.6.0** | 2026-07-31 | Health check endpoint, SSE example, mock testing infrastructure, Makefile build entry |
 | **v2.5.1** | 2026-07-27 | Coverage 86% lines / 99% functions, 101/101 tests |
 | **v2.5.0** | 2026-03-15 | 32-bit embedded support, compression features |
