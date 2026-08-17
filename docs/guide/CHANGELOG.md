@@ -28,6 +28,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **文档死链**: VitePress 无法路由 `docs/` 目录外的链接
 - **docs build 脚本**: doxygen 隐藏目录与 npm 脚本名错误
 
+## [2.6.2] - 2026-08-17
+
+### Fixed
+- **连接上限 503 路径 use-after-free**: `on_connection` 中当连接数达到上限、临时 503 客户端 `uv_accept` 失败时，改用 `uv_close`（close 回调中释放）而非直接 `uvhttp_free`——直接释放已注册到 libuv 句柄队列的内存会在下一次 `uv_run`/`uv_loop_close` 触发 use-after-free
+- **`server->max_connections` 误导性死状态**: 结构体字段此前初始化为 `UVHTTP_MAX_CONNECTIONS_MAX`(10000) 但从未被读取，实际限制来自 config（默认 2048）；现改为初始化为 `UVHTTP_MAX_CONNECTIONS_DEFAULT` 并让 `on_connection` 在无 config 时以该字段为权威值，字段与真实行为一致
+- **WebSocket RFC 6455 合规与内存安全**（PR #336）: `uvhttp_ws_send_frame` 成功路径释放发送缓冲（此前每帧泄漏）、修复 build_frame 的 double-free、实现 fragmentation 状态机（CONTINUATION 帧不再静默丢弃）、对累积分片强制执行 `config.max_message_size` 并防护 size_t 溢出
+- **uv_strerror 一致性**: 将 `uvhttp_server.c` 中残留的直接 `uv_strerror` 调用改为 `uv_strerror_r`，与 `uvhttp_error_helpers.c` 文档化的统一错误处理约定一致（`uv_strerror` 对未映射错误码会经 `uv__strdup` 泄漏）
+
+### Tests
+- **回归测试**: `test_connection_libuv_fail` 新增 `ConnectionLimitAcceptFailClosesTempClient`（uv_accept 失败必须经 uv_close 关闭临时客户端）与 `ServerMaxConnectionsFieldIsAuthoritative`（无 config 时 `server->max_connections` 字段必须被遵守）
+
 ## [2.6.0] - 2026-07-31
 
 ### Added

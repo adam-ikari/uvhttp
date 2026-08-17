@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.6.0-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.6.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
@@ -500,6 +500,7 @@ UVHTTP 基于以下优秀的开源项目构建：
 
 | 版本 | 日期 | 亮点 |
 |---------|------|------------|
+| **v2.6.2** | 2026-08-17 | 连接上限内存安全修复（accept 失败时 uv_close）、WebSocket RFC 6455/内存安全修复（PR #336）、uv_strerror_r 一致性 |
 | **v2.6.0** | 2026-07-31 | 健康检查端点、SSE 示例、mock 测试基础设施、Makefile 构建入口 |
 | **v2.5.1** | 2026-07-27 | 覆盖率 86% 行 / 99% 函数，101/101 测试 |
 | **v2.5.0** | 2026-03-15 | 32 位嵌入式支持，压缩特性 |
