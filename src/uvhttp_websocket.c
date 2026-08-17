@@ -489,21 +489,32 @@ uvhttp_error_t uvhttp_ws_send_frame(uvhttp_context_t* context,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* senddata */
-    int ret;
-    if (conn->ssl) {
-        ret = mbedtls_ssl_write(conn->ssl, buffer, frame_len);
-    } else {
-        ret = send(conn->fd, buffer, frame_len, 0);
+    /* senddata — loop until the whole frame is written: mbedtls_ssl_write
+     * and send() can return partial writes for large frames (TLS records,
+     * socket backpressure), and truncating the frame stalls the peer. */
+    size_t sent_total = 0;
+    while (sent_total < (size_t)frame_len) {
+        int ret;
+        if (conn->ssl) {
+            ret = mbedtls_ssl_write(conn->ssl, buffer + sent_total,
+                                    (size_t)frame_len - sent_total);
+            if (ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+                continue; /* local socket backpressure; retry immediately */
+            }
+        } else {
+            ret = send(conn->fd, buffer + sent_total,
+                       (size_t)frame_len - sent_total, 0);
+        }
+        if (ret <= 0) {
+            uvhttp_free(buffer);
+            return UVHTTP_ERROR_INVALID_PARAM;
+        }
+        sent_total += (size_t)ret;
     }
 
     uvhttp_free(buffer);
 
-    if (ret < 0) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    conn->bytes_sent += ret;
+    conn->bytes_sent += sent_total;
     conn->frames_sent++;
 
     return UVHTTP_OK;
