@@ -102,7 +102,7 @@ TEST_F(ParserCallbackTest, CompleteGetRequest) {
 
     // Verify request was populated by the callbacks
     // on_message_complete stores raw llhttp_method_t in request->method
-    EXPECT_EQ(conn->request->method, (uvhttp_method_t)HTTP_GET);
+    EXPECT_EQ(conn->request->method, UVHTTP_GET);
     EXPECT_STREQ(conn->request->url, "/test");
 
     // Verify Host header was stored
@@ -124,7 +124,7 @@ TEST_F(ParserCallbackTest, CompletePostWithBody) {
     EXPECT_EQ(rc, 0);
 
     // on_message_complete stores raw llhttp_method_t in request->method
-    EXPECT_EQ(conn->request->method, (uvhttp_method_t)HTTP_POST);
+    EXPECT_EQ(conn->request->method, UVHTTP_POST);
     EXPECT_STREQ(conn->request->url, "/submit");
 
     // Body should be populated by on_body callback
@@ -354,7 +354,7 @@ TEST_F(ParserCallbackTest, DuplicateMessageComplete) {
     EXPECT_EQ(rc, 0);
     // The second parse should have updated the URL and method
     EXPECT_STREQ(conn->request->url, "/second");
-    EXPECT_EQ(conn->request->method, (uvhttp_method_t)HTTP_POST);
+    EXPECT_EQ(conn->request->method, UVHTTP_POST);
 }
 
 // ============================================================================
@@ -390,7 +390,7 @@ TEST_F(ParserCallbackTest, EmptyBodyPost) {
                       "\r\n";
     int rc = Execute(raw);
     EXPECT_EQ(rc, 0);
-    EXPECT_EQ(conn->request->method, (uvhttp_method_t)HTTP_POST);
+    EXPECT_EQ(conn->request->method, UVHTTP_POST);
     EXPECT_EQ(conn->request->body_length, (size_t)0);
 }
 
@@ -401,7 +401,7 @@ TEST_F(ParserCallbackTest, HeadRequest) {
     const char* raw = "HEAD /resource HTTP/1.1\r\nHost: x\r\n\r\n";
     int rc = Execute(raw);
     EXPECT_EQ(rc, 0);
-    EXPECT_EQ(conn->request->method, (uvhttp_method_t)HTTP_HEAD);
+    EXPECT_EQ(conn->request->method, UVHTTP_HEAD);
     EXPECT_STREQ(conn->request->url, "/resource");
 }
 
@@ -416,7 +416,7 @@ TEST_F(ParserCallbackTest, PutRequest) {
                       "data";
     int rc = Execute(raw);
     EXPECT_EQ(rc, 0);
-    EXPECT_EQ(conn->request->method, (uvhttp_method_t)HTTP_PUT);
+    EXPECT_EQ(conn->request->method, UVHTTP_PUT);
     EXPECT_STREQ(conn->request->url, "/item/1");
     EXPECT_EQ(conn->request->body_length, (size_t)4);
 }
@@ -428,7 +428,7 @@ TEST_F(ParserCallbackTest, DeleteRequest) {
     const char* raw = "DELETE /item/1 HTTP/1.1\r\nHost: x\r\n\r\n";
     int rc = Execute(raw);
     EXPECT_EQ(rc, 0);
-    EXPECT_EQ(conn->request->method, (uvhttp_method_t)HTTP_DELETE);
+    EXPECT_EQ(conn->request->method, UVHTTP_DELETE);
     EXPECT_STREQ(conn->request->url, "/item/1");
 }
 
@@ -463,7 +463,7 @@ TEST_F(ParserCallbackTest, MultipleRequestsKeepAlive) {
     int rc = Execute(raw1);
     EXPECT_EQ(rc, 0);
     EXPECT_STREQ(conn->request->url, "/first");
-    EXPECT_EQ(conn->request->method, (uvhttp_method_t)HTTP_GET);
+    EXPECT_EQ(conn->request->method, UVHTTP_GET);
 
     // Re-init parser for second request (simulating keep-alive)
     ReInitParser();
@@ -477,7 +477,7 @@ TEST_F(ParserCallbackTest, MultipleRequestsKeepAlive) {
     rc = Execute(raw2);
     EXPECT_EQ(rc, 0);
     EXPECT_STREQ(conn->request->url, "/second");
-    EXPECT_EQ(conn->request->method, (uvhttp_method_t)HTTP_POST);
+    EXPECT_EQ(conn->request->method, UVHTTP_POST);
     EXPECT_EQ(conn->request->body_length, (size_t)3);
 }
 
@@ -636,16 +636,16 @@ TEST_F(ParserCallbackTest, RouterDispatch_NoHandler_404) {
 
 // ============================================================================
 // 29. Router dispatch - POST method matching (lines 481-489)
-// Note: llhttp stores raw http_method enum in request->method via cast.
-// llhttp's HTTP_POST=3 maps to UVHTTP_PUT=3 in the uvhttp enum, so the
-// router lookup string is "PUT". We register with UVHTTP_PUT to match.
+// request->method now stores uvhttp_method_t (mapped from llhttp), so
+// POST correctly resolves to UVHTTP_POST and the router lookup string is
+// "POST". Register with UVHTTP_POST to match.
 // ============================================================================
 TEST_F(ParserCallbackTest, RouterDispatch_PostMethodMatch) {
     uvhttp_router_t* router = nullptr;
     ASSERT_EQ(uvhttp_router_new(&router), UVHTTP_OK);
 
-    // Register as UVHTTP_PUT because (uvhttp_method_t)HTTP_POST == UVHTTP_PUT
-    ASSERT_EQ(uvhttp_router_add_route_method(router, "/submit", UVHTTP_PUT,
+    // Register as UVHTTP_POST (method enum is mapped correctly now)
+    ASSERT_EQ(uvhttp_router_add_route_method(router, "/submit", UVHTTP_POST,
                                               test_route_handler),
               UVHTTP_OK);
 
