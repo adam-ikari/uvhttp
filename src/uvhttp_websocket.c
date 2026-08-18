@@ -1025,6 +1025,18 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                 }
             }
 
+            /* Capture the server context BEFORE on_close runs: the close
+             * callback (on_websocket_close) frees the wrapper and nulls
+             * user_data, so reading user_data after it would return NULL and
+             * the close-frame echo below could never fire. */
+            uvhttp_ws_wrapper_t* wrapper =
+                (uvhttp_ws_wrapper_t*)conn->user_data;
+            uvhttp_context_t* srv_ctx = NULL;
+            if (wrapper && wrapper->conn && wrapper->conn->server &&
+                wrapper->conn->server->context) {
+                srv_ctx = wrapper->conn->server->context;
+            }
+
             if (conn->on_close) {
                 conn->on_close(conn, close_code, close_reason);
             }
@@ -1032,35 +1044,26 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
             /* Echo a close frame back (RFC 6455 §5.5.1) so the peer is not
              * left waiting for the close handshake; best effort, only when
              * the connection is wired to a server context. */
-            {
-                uvhttp_ws_wrapper_t* wrapper =
-                    (uvhttp_ws_wrapper_t*)conn->user_data;
-                if (wrapper && wrapper->conn) {
-                    uvhttp_connection_t* http_conn = wrapper->conn;
-                    if (http_conn && http_conn->server &&
-                        http_conn->server->context) {
-                        uint8_t close_payload[2 + 125];
-                        size_t close_len = 0;
-                        if (header.payload_length >= 2) {
-                            close_payload[0] = payload[0];
-                            close_payload[1] = payload[1];
-                            close_len = 2;
-                            size_t reason_len =
-                                (size_t)header.payload_length - 2;
-                            if (reason_len > 125) {
-                                reason_len = 125;
-                            }
-                            if (reason_len > 0) {
-                                memcpy(close_payload + 2, payload + 2,
-                                       reason_len);
-                                close_len = 2 + reason_len;
-                            }
-                        }
-                        uvhttp_ws_send_frame(http_conn->server->context, conn,
-                                             close_payload, close_len,
-                                             UVHTTP_WS_OPCODE_CLOSE);
+            if (srv_ctx) {
+                uint8_t close_payload[2 + 125];
+                size_t close_len = 0;
+                if (header.payload_length >= 2) {
+                    close_payload[0] = payload[0];
+                    close_payload[1] = payload[1];
+                    close_len = 2;
+                    size_t reason_len =
+                        (size_t)header.payload_length - 2;
+                    if (reason_len > 125) {
+                        reason_len = 125;
+                    }
+                    if (reason_len > 0) {
+                        memcpy(close_payload + 2, payload + 2,
+                               reason_len);
+                        close_len = 2 + reason_len;
                     }
                 }
+                uvhttp_ws_send_frame(srv_ctx, conn, close_payload,
+                                     close_len, UVHTTP_WS_OPCODE_CLOSE);
             }
 
             conn->state = UVHTTP_WS_STATE_CLOSED;

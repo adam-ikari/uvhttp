@@ -1118,12 +1118,10 @@ static void on_websocket_read(uv_stream_t* stream, ssize_t nread,
          * callback must advance tls_cipher_used) then decrypt into
          * read_buffer (plaintext) before handing frames to the WS parser. */
         conn->tls_cipher_used += (size_t)nread;
-        size_t total = 0;
         for (;;) {
             int ret = mbedtls_ssl_read(
                 (mbedtls_ssl_context*)conn->ssl,
-                (unsigned char*)conn->read_buffer + total,
-                conn->read_buffer_size - total);
+                (unsigned char*)conn->read_buffer, conn->read_buffer_size);
             if (ret == MBEDTLS_ERR_SSL_WANT_READ ||
                 ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
                 break;
@@ -1136,16 +1134,21 @@ static void on_websocket_read(uv_stream_t* stream, ssize_t nread,
                 UVHTTP_LOG_ERROR("TLS read error: %s\n", error_buf);
                 uvhttp_connection_websocket_close(conn);
                 return;
+            } else if (ret == 0) {
+                break; /* no more plaintext available */
             }
-            total += (size_t)ret;
-            if (total >= conn->read_buffer_size) {
-                break;
+            /* Feed each decrypted chunk to the WS parser immediately.
+             * Accumulating up to read_buffer_size (16KB) and stopping leaves
+             * plaintext stuck inside mbedtls once the peer has sent everything
+             * and no further socket reads arrive — large frames (>16KB) then
+             * never complete and the client stalls. The WS parser buffers
+             * partial frames across chunks, so per-chunk delivery is safe and
+             * frame-size independent. */
+            result = uvhttp_ws_process_data(
+                ws_conn, (const uint8_t*)conn->read_buffer, (size_t)ret);
+            if (result != 0) {
+                break; /* fall through to the M5 error handling below */
             }
-        }
-        if (total > 0) {
-            result = uvhttp_ws_process_data(ws_conn,
-                                            (const uint8_t*)conn->read_buffer,
-                                            total);
         }
     } else
 #endif
@@ -1439,9 +1442,18 @@ void uvhttp_connection_websocket_close(uvhttp_connection_t* conn) {
             conn->server, (uvhttp_ws_connection_t*)conn->ws_connection);
     }
 
-    /* release WebSocket connection object */
+    /* release WebSocket connection object. Fire the close callback chain
+     * first (it runs the user on_close handler and frees the wrapper) —
+     * the TLS error/EOF path reaches this function directly and was
+     * previously skipping it, leaking the wrapper and leaving embedders'
+     * per-connection state (e.g. qwrt ws_entry) dangling. */
     if (conn->ws_connection) {
-        uvhttp_ws_connection_free((uvhttp_ws_connection_t*)conn->ws_connection);
+        uvhttp_ws_connection_t* ws_conn =
+            (uvhttp_ws_connection_t*)conn->ws_connection;
+        if (ws_conn->on_close) {
+            ws_conn->on_close(ws_conn, 1000, "");
+        }
+        uvhttp_ws_connection_free(ws_conn);
         conn->ws_connection = NULL;
     }
 
