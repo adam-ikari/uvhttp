@@ -6,6 +6,10 @@
 #    include "uvhttp_router.h"
 #    include "uvhttp_utils.h"
 
+#    include "uvhttp_connection.h"
+#    include "uvhttp_server.h"
+#    include "uvhttp_static.h"
+
 #    include <ctype.h>
 #    include <stdint.h>
 #    include <stdio.h>
@@ -44,8 +48,20 @@ typedef struct {
  * - Uses hash table with open addressing (O(1) average lookup)
  * - Lock-free design, avoids mutex overhead
  * - No extra caching layers, zero overhead
+ *
+ * ABI note: the public uvhttp_router_t is embedded as the FIRST member so
+ * the `(uvhttp_router_t*)cr` cast used throughout this module is valid and
+ * every uvhttp_router_t field (static_prefix, static_context, fallback_*,
+ * node_pool, array_routes, ...) lives inside this allocation. Previously this
+ * struct was smaller than uvhttp_router_t, so reads of router->static_context
+ * (uvhttp_request.c:494) dereferenced memory past the allocation and crashed.
  */
 typedef struct {
+    /* Public router struct prefix — all uvhttp_router_t fields are valid
+     * (zero-initialized by calloc) even though this module only uses the
+     * hash table below. */
+    uvhttp_router_t router;
+
     /* Hash table: dynamic sizing with open addressing */
     hash_table_t hash_table;
 
@@ -85,6 +101,11 @@ static inline uvhttp_method_t fast_method_parse(const char* method) {
         } else if (method[1] == 'U') {
             return (method[2] == 'T' && method[3] == '\0') ? UVHTTP_PUT
                                                            : UVHTTP_ANY;
+        } else if (method[1] == 'A') {
+            return (method[2] == 'T' && method[3] == 'C' && method[4] == 'H' &&
+                    method[5] == '\0')
+                       ? UVHTTP_PATCH
+                       : UVHTTP_ANY;
         }
         break;
     case 'D':
@@ -102,22 +123,6 @@ static inline uvhttp_method_t fast_method_parse(const char* method) {
                 method[4] == 'O' && method[5] == 'N' && method[6] == 'S' &&
                 method[7] == '\0')
                    ? UVHTTP_OPTIONS
-                   : UVHTTP_ANY;
-    case 'P':
-        return (method[1] == 'A' && method[2] == 'T' && method[3] == 'C' &&
-                method[4] == 'H' && method[5] == '\0')
-                   ? UVHTTP_PATCH
-                   : UVHTTP_ANY;
-    case 'T':
-        return (method[1] == 'R' && method[2] == 'A' && method[3] == 'C' &&
-                method[4] == 'E' && method[5] == '\0')
-                   ? UVHTTP_TRACE
-                   : UVHTTP_ANY;
-    case 'C':
-        return (method[1] == 'O' && method[2] == 'N' && method[3] == 'N' &&
-                method[4] == 'E' && method[5] == 'C' && method[6] == 'T' &&
-                method[7] == '\0')
-                   ? UVHTTP_CONNECT
                    : UVHTTP_ANY;
     }
     return UVHTTP_ANY;
@@ -287,7 +292,8 @@ static uvhttp_request_handler_t find_in_hash_table(cache_optimized_router_t* cr,
             return NULL;
         }
 
-        if (strcmp(entry->path, path) == 0 && entry->method == method) {
+        if (strcmp(entry->path, path) == 0 &&
+            (entry->method == method || entry->method == UVHTTP_ANY)) {
             if (entry->access_count < UVHTTP_ACCESS_COUNTER_MAX) {
                 entry->access_count++;
             }
@@ -304,6 +310,72 @@ static uvhttp_request_handler_t find_in_hash_table(cache_optimized_router_t* cr,
 }
 
 /* ========== Public API Functions ========== */
+
+/* static file request handler wrapper — mirrors the one in uvhttp_router.c so
+ * the router_cache module can serve static files and fallback routes too. */
+static int static_file_handler_wrapper(uvhttp_request_t* request,
+                                       uvhttp_response_t* response) {
+    /* get connection */
+    uv_tcp_t* client = request->client;
+    if (!client) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_header(response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(response, "Internal Server Error", 21);
+        uvhttp_response_send(response);
+        return -1;
+    }
+
+    /* get connection from client */
+    uvhttp_connection_t* conn =
+        (uvhttp_connection_t*)uv_handle_get_data((uv_handle_t*)client);
+
+    if (!conn || !conn->server || !conn->server->router) {
+        uvhttp_response_set_status(response, 500);
+        uvhttp_response_set_header(response, "Content-Type", "text/plain");
+        uvhttp_response_set_body(response, "Internal Server Error", 21);
+        uvhttp_response_send(response);
+        return -1;
+    }
+
+    uvhttp_router_t* router = conn->server->router;
+
+    /* static file processing — prefer static_context, fall back to
+     * fallback_context if the static context is not installed */
+    void* ctx = router->static_context ? router->static_context
+                                       : router->fallback_context;
+    if (ctx) {
+#ifdef UVHTTP_STATIC_FILES_ENABLED
+        uvhttp_result_t result = uvhttp_static_handle_request(
+            (uvhttp_static_context_t*)ctx, request, response);
+
+        if (result == UVHTTP_OK) {
+            return 0;
+        }
+#else
+        (void)ctx;
+#endif
+    }
+
+    /* static file service failed, return 404 */
+    uvhttp_response_set_status(response, 404);
+    uvhttp_response_set_header(response, "Content-Type", "text/plain");
+    uvhttp_response_set_body(response, "Not Found", 9);
+    uvhttp_response_send(response);
+    return -1;
+}
+
+/* static prefix match — returns the wrapper handler when the request path is
+ * under the configured static prefix and a static context is installed. */
+static uvhttp_request_handler_t static_prefix_handler(const uvhttp_router_t* router,
+                                                      const char* path) {
+    if (router->static_prefix && router->static_context && path) {
+        size_t prefix_len = strlen(router->static_prefix);
+        if (strncmp(path, router->static_prefix, prefix_len) == 0) {
+            return static_file_handler_wrapper;
+        }
+    }
+    return NULL;
+}
 
 uvhttp_error_t uvhttp_router_new(uvhttp_router_t** router) {
     if (!router) {
@@ -346,7 +418,86 @@ void uvhttp_router_free(uvhttp_router_t* router) {
         cr->hash_table.entries = NULL;
     }
 
+    /* Free static prefix (owned by the router, see add_static_route) */
+    if (router->static_prefix) {
+        uvhttp_free(router->static_prefix);
+        router->static_prefix = NULL;
+    }
+
     uvhttp_free(cr);
+}
+
+uvhttp_error_t uvhttp_router_add_static_route(uvhttp_router_t* router,
+                                              const char* prefix_path,
+                                              void* static_context) {
+    if (!router || !prefix_path || !static_context) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    /* release previous prefix */
+    if (router->static_prefix) {
+        uvhttp_free(router->static_prefix);
+    }
+
+    /* copy new prefix (use uvhttp_alloc to avoid mixing allocators) */
+    size_t prefix_len = strlen(prefix_path);
+    router->static_prefix = (char*)uvhttp_alloc(prefix_len + 1);
+    if (!router->static_prefix) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    memcpy(router->static_prefix, prefix_path, prefix_len + 1);
+
+    router->static_context = static_context;
+    router->static_handler = NULL; /* use static file processing logic */
+
+    return UVHTTP_OK;
+}
+
+uvhttp_error_t uvhttp_router_add_fallback_route(uvhttp_router_t* router,
+                                                void* static_context) {
+    if (!router || !static_context) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    router->fallback_context = static_context;
+    router->fallback_handler = NULL; /* use static file processing logic */
+
+    return UVHTTP_OK;
+}
+
+/* binary data route — mirrors uvhttp_router.c. The mime type is stored in
+ * router->static_context and the blob in static_data/static_data_len (one
+ * binary route per router; use regular handlers for more). */
+static int binary_route_handler(uvhttp_request_t* request,
+                                uvhttp_response_t* response) {
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)request->client->data;
+    if (!conn || !conn->server || !conn->server->router) {
+        return -1;
+    }
+    uvhttp_router_t* r = conn->server->router;
+    if (!r->static_context) return -1;
+
+    uvhttp_response_set_status(response, 200);
+    uvhttp_response_set_header(response, "Content-Type",
+                               r->static_context);
+    uvhttp_response_set_body(response, r->static_data, r->static_data_len);
+    return uvhttp_response_send(response);
+}
+
+uvhttp_error_t uvhttp_router_add_binary_route(uvhttp_router_t* router,
+                                              const char* path,
+                                              const char* mime_type,
+                                              const void* data,
+                                              size_t data_len) {
+    if (!router || !path || !mime_type || !data || data_len == 0) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    router->static_context = (void*)mime_type;
+    router->static_data = data;
+    router->static_data_len = data_len;
+
+    return uvhttp_router_add_route(router, path, binary_route_handler);
 }
 
 uvhttp_error_t uvhttp_router_add_route(uvhttp_router_t* router,
@@ -383,11 +534,27 @@ uvhttp_request_handler_t uvhttp_router_find_handler(
         return NULL;
     }
 
+    /* static prefix match first (mirrors uvhttp_router.c array mode) */
+    uvhttp_request_handler_t static_h = static_prefix_handler(router, path);
+    if (static_h) {
+        return static_h;
+    }
+
     cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
     uvhttp_method_t method_enum = fast_method_parse(method);
 
-    /* Search in hash table only */
-    return find_in_hash_table(cr, path, method_enum);
+    uvhttp_request_handler_t handler =
+        find_in_hash_table(cr, path, method_enum);
+    if (handler) {
+        return handler;
+    }
+
+    /* fallback router (mirrors uvhttp_router.c) */
+    if (router->fallback_context) {
+        return static_file_handler_wrapper;
+    }
+
+    return NULL;
 }
 
 uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
@@ -444,10 +611,6 @@ const char* uvhttp_method_to_string(uvhttp_method_t method) {
         return "OPTIONS";
     case UVHTTP_PATCH:
         return "PATCH";
-    case UVHTTP_TRACE:
-        return "TRACE";
-    case UVHTTP_CONNECT:
-        return "CONNECT";
     default:
         return "UNKNOWN";
     }
