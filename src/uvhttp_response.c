@@ -6,6 +6,7 @@
 #include "uvhttp_constants.h"
 #include "uvhttp_error_handler.h"
 #include "uvhttp_features.h"
+#include "uvhttp_hash.h"
 #include "uvhttp_logging.h"
 #include "uvhttp_validation.h"
 
@@ -13,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <limits.h>
 
 #if UVHTTP_FEATURE_COMPRESSION
 #include <zlib.h>
@@ -21,6 +23,67 @@
 /* ========== Compression Implementation ========== */
 
 #if UVHTTP_FEATURE_COMPRESSION
+
+/* ------------------------------------------------------------------
+ * gzip result cache (single-threaded, LRU): key = body xxhash64 + len,
+ * value = compressed gzip stream. Repeated identical response bodies
+ * compress once and reuse; avoids re-running deflate per request.
+ * ------------------------------------------------------------------ */
+#define GZIP_CACHE_ENTRIES 64
+
+typedef struct {
+    uint64_t key_hash;
+    size_t body_len;
+    char* compressed;
+    size_t compressed_len;
+    unsigned char valid;
+    unsigned long last_used; /* LRU tick */
+} gzip_cache_entry_t;
+
+static gzip_cache_entry_t g_gzip_cache[GZIP_CACHE_ENTRIES];
+static unsigned long g_gzip_cache_tick = 0;
+
+static char* gzip_cache_lookup(uint64_t hash, size_t body_len,
+                               size_t* out_len) {
+    for (int i = 0; i < GZIP_CACHE_ENTRIES; i++) {
+        gzip_cache_entry_t* e = &g_gzip_cache[i];
+        if (e->valid && e->key_hash == hash && e->body_len == body_len) {
+            e->last_used = ++g_gzip_cache_tick;
+            *out_len = e->compressed_len;
+            return e->compressed;
+        }
+    }
+    return NULL;
+}
+
+static void gzip_cache_store(uint64_t hash, size_t body_len,
+                             const char* compressed, size_t compressed_len) {
+    int victim = -1;
+    unsigned long oldest = ULONG_MAX;
+    for (int i = 0; i < GZIP_CACHE_ENTRIES; i++) {
+        if (!g_gzip_cache[i].valid) {
+            victim = i;
+            break;
+        }
+        if (g_gzip_cache[i].last_used < oldest) {
+            oldest = g_gzip_cache[i].last_used;
+            victim = i;
+        }
+    }
+    if (victim < 0) return;
+
+    gzip_cache_entry_t* e = &g_gzip_cache[victim];
+    if (e->compressed) uvhttp_free(e->compressed);
+    char* copy = uvhttp_alloc(compressed_len);
+    if (!copy) return;
+    memcpy(copy, compressed, compressed_len);
+    e->key_hash = hash;
+    e->body_len = body_len;
+    e->compressed = copy;
+    e->compressed_len = compressed_len;
+    e->valid = 1;
+    e->last_used = ++g_gzip_cache_tick;
+}
 
 /**
  * @brief Compress data using gzip
@@ -603,39 +666,60 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
     if (response->compress && 
         response->body && 
         response->body_length >= (size_t)response->compress_threshold) {
-        
-        /* 尝试压缩响应体 */
-        size_t compressed_len = 0;
-        
-        uvhttp_error_t compress_result = uvhttp_compress_gzip(
-            response->body, 
-            response->body_length,
-            &compressed_body, 
-            &compressed_len
-        );
-        
-        /* 如果压缩成功且有效（压缩后更小），使用压缩数据 */
-        if (compress_result == UVHTTP_OK && 
-            compressed_body && 
-            compressed_len < response->body_length) {
-            
-            body_to_send = compressed_body;
-            body_length = compressed_len;
-            
-            /* 临时更新 response->body_length，这样 build_response_headers 会使用压缩后的大小 */
-            response->body_length = compressed_len;
-            
-            /* 添加 Content-Encoding 头 */
+
+        /* 先查 gzip LRU 缓存：相同 body 内容只压缩一次 */
+        size_t cached_len = 0;
+        char* cached = gzip_cache_lookup(
+            uvhttp_hash_default(response->body, response->body_length),
+            response->body_length, &cached_len);
+
+        if (cached) {
+            /* 缓存命中：直接用缓存压缩结果（send 收尾只释放 compressed_body，安全） */
+            body_to_send = cached;
+            body_length = cached_len;
+            response->body_length = cached_len;
             uvhttp_response_set_header(response, "Content-Encoding", "gzip");
-            
-            UVHTTP_LOG_DEBUG("Response compressed: %zu -> %zu bytes (%.1f%% reduction)\n",
-                            original_body_length, compressed_len,
-                            (1.0 - (double)compressed_len / original_body_length) * 100);
+            UVHTTP_LOG_DEBUG("Response compressed (cache hit): %zu -> %zu bytes\n",
+                             original_body_length, cached_len);
         } else {
-            /* 压缩失败或无效，使用原数据 */
-            if (compressed_body) {
-                uvhttp_free(compressed_body);
-                compressed_body = NULL;
+            /* 尝试压缩响应体 */
+            size_t compressed_len = 0;
+
+            uvhttp_error_t compress_result = uvhttp_compress_gzip(
+                response->body, 
+                response->body_length,
+                &compressed_body, 
+                &compressed_len
+            );
+
+            /* 如果压缩成功且有效（压缩后更小），使用压缩数据 */
+            if (compress_result == UVHTTP_OK && 
+                compressed_body && 
+                compressed_len < response->body_length) {
+
+                body_to_send = compressed_body;
+                body_length = compressed_len;
+
+                /* 临时更新 response->body_length，这样 build_response_headers 会使用压缩后的大小 */
+                response->body_length = compressed_len;
+
+                /* 添加 Content-Encoding 头 */
+                uvhttp_response_set_header(response, "Content-Encoding", "gzip");
+
+                /* 缓存压缩结果（内部拷贝，不受 response 释放影响） */
+                gzip_cache_store(
+                    uvhttp_hash_default(response->body, original_body_length),
+                    original_body_length, compressed_body, compressed_len);
+
+                UVHTTP_LOG_DEBUG("Response compressed: %zu -> %zu bytes (%.1f%% reduction)\n",
+                                original_body_length, compressed_len,
+                                (1.0 - (double)compressed_len / original_body_length) * 100);
+            } else {
+                /* 压缩失败或无效，使用原数据 */
+                if (compressed_body) {
+                    uvhttp_free(compressed_body);
+                    compressed_body = NULL;
+                }
             }
         }
     }
