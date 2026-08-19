@@ -39,7 +39,7 @@ jobs:
 
       - name: Create issue for failed tests
         if: steps.check.outputs.has_failures == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const failures = `${{ steps.check.outputs.failure_count }}`;
