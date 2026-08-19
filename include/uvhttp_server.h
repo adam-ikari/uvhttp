@@ -154,7 +154,12 @@ struct uvhttp_server {
 
     /* ========== Cache line 6 (320-383 bytes): protocol upgrade ========== */
     void* protocol_registry; /* 8 bytes - Protocol upgrade registry */
+#if UVHTTP_FEATURE_COMPRESSION
+    void* gzip_cache; /* 8 bytes - Gzip compression cache (uvhttp_gzip_cache_t*) */
+    int _padding6[12]; /* 48bytes - paddingto64bytes */
+#else
     int _padding6[14];       /* 56bytes - paddingto64bytes */
+#endif
     /* Cache line 6 total: 64 bytes */
 };
 

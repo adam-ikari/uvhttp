@@ -643,6 +643,13 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
         return UVHTTP_ERROR_IO_ERROR;
     }
 
+#if UVHTTP_FEATURE_COMPRESSION
+    /* Borrow the server's gzip compression cache. The response does not own
+     * it: the cache lives on the server and is released by uvhttp_server_free
+     * after all connections/responses are gone. NULL means no caching. */
+    c->response->gzip_cache = server->gzip_cache;
+#endif
+
     // set parser's data pointer to connection object
     llhttp_t* parser = (llhttp_t*)c->request->parser;
     if (parser) {

@@ -38,6 +38,10 @@
 #    include "uvhttp_websocket.h"
 #endif
 
+#if UVHTTP_FEATURE_COMPRESSION
+#    include "uvhttp_gzip_cache.h"
+#endif
+
 // WebSocket route entry forward declaration
 #if UVHTTP_FEATURE_WEBSOCKET
 typedef struct ws_route_entry {
@@ -325,6 +329,23 @@ uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
     }
 #endif
 
+#if UVHTTP_FEATURE_COMPRESSION
+    /* Create the gzip compression cache. Failure to create the cache is not
+     * fatal: responses fall back to compressing without caching (graceful
+     * degradation), matching the philosophy that cache is an optimization. */
+    uvhttp_gzip_cache_t* gzip_cache = NULL;
+    uvhttp_error_t gzip_err = uvhttp_gzip_cache_create(
+        UVHTTP_GZIP_CACHE_DEFAULT_MAX_MEMORY,
+        UVHTTP_GZIP_CACHE_DEFAULT_MAX_ENTRIES,
+        UVHTTP_GZIP_CACHE_DEFAULT_TTL, &gzip_cache);
+    if (gzip_err == UVHTTP_OK && gzip_cache) {
+        s->gzip_cache = gzip_cache;
+    } else {
+        UVHTTP_LOG_WARN("Failed to create gzip cache: %s",
+                        uvhttp_error_string(gzip_err));
+    }
+#endif
+
     *server = s;
     return UVHTTP_OK;
 }
@@ -442,6 +463,15 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
         uvhttp_free(registry);
         server->protocol_registry = NULL;
     }
+
+#if UVHTTP_FEATURE_COMPRESSION
+    /* Free the gzip compression cache (releases all cached compressed
+     * streams). Done here so it is released before server memory. */
+    if (server->gzip_cache) {
+        uvhttp_gzip_cache_free((uvhttp_gzip_cache_t*)server->gzip_cache);
+        server->gzip_cache = NULL;
+    }
+#endif
 
     /* if the library owns the loop, close and free it */
     if (server->owns_loop && server->loop) {

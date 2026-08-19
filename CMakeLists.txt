@@ -463,6 +463,7 @@ set(SOURCES
     src/uvhttp_error.c
     src/uvhttp_error_helpers.c
     src/uvhttp_lru_cache.c
+    src/uvhttp_gzip_cache.c
     src/uvhttp_static.c
     src/uvhttp_protocol_upgrade.c
     src/uvhttp_version.c
@@ -492,6 +493,7 @@ set(HEADERS
     include/uvhttp_features.h
     include/uvhttp_hash.h
     include/uvhttp_lru_cache.h
+    include/uvhttp_gzip_cache.h
     include/uvhttp_middleware.h
     include/uvhttp_protocol_upgrade.h
     include/uvhttp_request.h

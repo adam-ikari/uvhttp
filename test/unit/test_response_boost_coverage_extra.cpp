@@ -84,12 +84,12 @@ TEST_F(ResponseBoostExtraTest, BuildData_UnknownStatusCode_ReturnsUnknown) {
         << "Expected 'Unknown' status text for code 399, got: " << output.substr(0, 80);
 }
 
-TEST_F(ResponseBoostExtraTest, BuildData_StatusCode101_ReturnsUnknown) {
-    // 101 (Switching Protocols) is in valid range but not in the switch
+TEST_F(ResponseBoostExtraTest, BuildData_StatusCode101_SwitchingProtocols) {
+    // 101 (Switching Protocols) is in valid range and in the switch
     resp->status_code = 101;
     std::string output = build_and_get();
-    EXPECT_NE(output.find("HTTP/1.1 101 Unknown\r\n"), std::string::npos)
-        << "Expected 'Unknown' status text for code 101, got: " << output.substr(0, 80);
+    EXPECT_NE(output.find("HTTP/1.1 101 Switching Protocols\r\n"), std::string::npos)
+        << "Expected 'Switching Protocols' status text for code 101, got: " << output.substr(0, 80);
 }
 
 TEST_F(ResponseBoostExtraTest, BuildData_StatusCode202_ReturnsUnknown) {

@@ -64,7 +64,9 @@ struct uvhttp_response {
     uvhttp_header_t*
         headers_extra;       /* 8 bytes - Extra headers (dynamic expansion) */
     size_t headers_capacity; /* 8 bytes - Total headers capacity */
-    int _padding2[10];       /* 40 bytes - Padding to 64 bytes */
+    void* gzip_cache;        /* 8 bytes - Gzip compression cache
+                                (uvhttp_gzip_cache_t*), borrowed from server */
+    int _padding2[8];        /* 32 bytes - Padding to 64 bytes */
     /* Cache line 2 total: 64 bytes */
 
     /* ========== Cache line 3+ (128+ bytes): Headers array ========== */
