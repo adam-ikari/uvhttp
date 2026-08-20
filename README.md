@@ -293,6 +293,7 @@ export LD_LIBRARY_PATH=./build/dist/lib:$LD_LIBRARY_PATH
 
 - **Just Task List**: `just --list` (shows all 31 available tasks)
 - **Just Task Help**: `just --show <task>` (shows task details)
+- **Design Philosophy**: See [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md)
 - **Quick Start Guide**: See [JUSTFILE_GUIDE.md](JUSTFILE_GUIDE.md)
 - **Examples Makefile**: `make -f examples/Makefile.examples help`
 - **Documentation**: See [docs/guide/getting-started.md](docs/guide/getting-started.md)
