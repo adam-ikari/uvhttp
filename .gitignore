@@ -115,3 +115,6 @@ build_bench/
 build_coverage/
 Makefile
 GNUmakefile
+
+# Agent local state
+.pi/
