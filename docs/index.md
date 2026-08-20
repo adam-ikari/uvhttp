@@ -157,6 +157,7 @@ For detailed installation instructions and build options, see the [Installation 
 ## 📚 Documentation
 
 - **[Design Philosophy](/PHILOSOPHY)** — What UVHTTP is, isn't, and why
+- **[Embedding Checklist](/embedding-checklist)** — Verify your integration
 - **[Getting Started](/guide/getting-started)** — Introduction and quick start guide
 - **[API Reference](/api/introduction)** — Complete API documentation
 - **[Installation Guide](/guide/INSTALL_CMAKE)** — Installation and build guide
