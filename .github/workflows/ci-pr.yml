@@ -255,10 +255,67 @@ jobs:
       - name: Check internal links
         run: bash scripts/check-links.sh
 
+  # ========== 构建组合验证矩阵 ==========
+  # 哲学文档第九节：CI 此前只测默认配置。此 job 用 matrix 验证多个
+  # 特性组合均可编译且通过快速测试（编译时裁剪 / ROUTER_CACHE / 静态文件等）。
+  build-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: all-on
+            flags: "-DBUILD_WITH_STATIC_FILES=ON -DBUILD_WITH_ROUTER_CACHE=ON"
+            run-tests: true
+          - name: minimal
+            description: "核心 HTTP/1.1 最小化（验证编译时裁剪）"
+            flags: "-DBUILD_WITH_WEBSOCKET=OFF -DBUILD_WITH_HTTPS=OFF -DBUILD_WITH_STATIC_FILES=OFF -DBUILD_WITH_LRU_CACHE=OFF -DBUILD_WITH_COMPRESSION=OFF"
+            run-tests: false
+          - name: router-cache
+            flags: "-DBUILD_WITH_ROUTER_CACHE=ON"
+            run-tests: true
+          - name: static-files
+            flags: "-DBUILD_WITH_STATIC_FILES=ON"
+            run-tests: true
+          - name: no-compression
+            flags: "-DBUILD_WITH_COMPRESSION=OFF"
+            run-tests: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          submodules: recursive
+
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+        with:
+          os: ubuntu-latest
+
+      - name: Configure CMake (${{ matrix.config.name }})
+        run: |
+          cmake -B build-${{ matrix.config.name }} \
+            -DCMAKE_BUILD_TYPE=Release \
+            ${{ matrix.config.flags }}
+
+      - name: Build (${{ matrix.config.name }})
+        run: |
+          cd build-${{ matrix.config.name }} && make -j$(nproc)
+
+      - name: Run fast tests (${{ matrix.config.name }})
+        if: matrix.config.run-tests
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build-${{ matrix.config.name }}
+          test-type: fast
+          timeout: 60
+          parallel: $(nproc)
+
   # ========== 阶段 2: 生成总结 ==========
 
   generate-summary:
-    needs: [ubuntu-build, code-quality-check, dependency-scan, ubuntu-test-fast, asan-gate, format-check, doc-sync-check]
+    needs: [ubuntu-build, code-quality-check, dependency-scan, ubuntu-test-fast, asan-gate, format-check, doc-sync-check, build-matrix]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
@@ -272,6 +329,7 @@ jobs:
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Ubuntu (Linux) | ${{ needs.ubuntu-build.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Matrix | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Test Results" >> $GITHUB_STEP_SUMMARY
           echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
