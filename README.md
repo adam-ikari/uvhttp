@@ -83,62 +83,58 @@ UVHTTP provides full support for 32-bit architectures with optimizations for res
 
 ## 🚀 Quick Start
 
-### Easy Setup Options
+### Build System
 
-UVHTTP provides modern Just-based build system with zero dependencies.
+UVHTTP uses **CMake** as the build system and **Make** as the command entry point. The `Makefile` wraps CMake with familiar targets — no extra tools needed.
 
-#### Option 1: Just (Recommended)
-
-Modern Just command runner with excellent performance and simplicity:
-
-```bash
-# Install Just
-./install_just.sh
-
-# Build UVHTTP
-just build
-
-# Run tests
-just test
-
-# Full development workflow
-just dev
-
-# Clean build artifacts
-just clean
-```
-
-**Advantages:**
-- ✅ Zero dependencies (no Python required)
-- ✅ Ultra-fast startup (100x faster than Python)
-- ✅ Single executable file (~1.5MB)
-- ✅ Modern command runner with rich features
-- ✅ Cross-platform compatibility (Linux, macOS, Windows, embedded)
-- ✅ 31+ built-in tasks for common operations
-
-#### Option 2: Manual Build
-
-For users who prefer manual configuration:
+#### Option 1: Make (Recommended)
 
 ```bash
 # Clone repository
-git clone https://github.com/adam-ikari/uvhttp.git
+git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
 
-# Create build directory
-mkdir build && cd build
+# Build (Debug)
+make build
 
-# Configure with default options
-cmake ..
-
-# Build library and examples
-make -j$(nproc)
-
-# Run tests (optional)
+# Run tests
 make test
 
-# Install system-wide (optional)
-sudo make install
+# Verify memory safety (ASan + UBSan)
+make verify-memory-safety
+
+# Clean build artifacts
+make clean
+```
+
+**Advantages:**
+- ✅ Universal — pre-installed on virtually all Linux/macOS systems
+- ✅ Familiar to embedded C developers
+- ✅ Zero additional dependencies
+- ✅ Wraps CMake directly — transparent, debuggable
+- ✅ Cross-platform (Linux, macOS, WSL)
+
+#### Option 2: Direct CMake
+
+For CI scripts or custom workflows:
+
+```bash
+# Clone repository
+git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
+cd uvhttp
+
+# Configure
+mkdir build && cd build
+cmake ..
+
+# Build
+cmake --build . -j$(nproc)
+
+# Run tests
+ctest --output-on-failure
+
+# Install (optional)
+sudo cmake --install .
 ```
 
 ### Build Examples
@@ -155,7 +151,7 @@ export LD_LIBRARY_PATH=../build/dist/lib:$LD_LIBRARY_PATH
 
 ### Prerequisites
 
-- **Just Command Runner**: Required for building (auto-installed via `./install_just.sh`)
+- **Just Command Runner**: Optional, for developers who prefer `just` (`cargo install just` or see [just.systems](https://just.systems))
 - **C Compiler**: GCC 4.8+ or Clang 3.4+ with C99 support
 - **CMake**: Version 3.10 or higher
 - **Build Tools**: make, git
@@ -289,11 +285,11 @@ export LD_LIBRARY_PATH=./build/dist/lib:$LD_LIBRARY_PATH
 
 ### Getting Help
 
-- **Just Task List**: `just --list` (shows all 31 available tasks)
-- **Just Task Help**: `just --show <task>` (shows task details)
+- **Make Targets**: `make help` (shows all available targets)
+- **CMake Options**: `make cmake-options` (shows all CMake build options)
 - **Design Philosophy**: See [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md)
 - **Embedding Checklist**: See [docs/embedding-checklist.md](docs/embedding-checklist.md)
-- **Quick Start Guide**: See [JUSTFILE_GUIDE.md](JUSTFILE_GUIDE.md)
+- **Quick Start Guide**: See [docs/guide/getting-started.md](docs/guide/getting-started.md)
 - **Examples Makefile**: `make -f examples/Makefile.examples help`
 - **Documentation**: See [docs/guide/getting-started.md](docs/guide/getting-started.md)
 
@@ -495,19 +491,25 @@ UVHTTP is built upon excellent open-source projects:
 
 ## 🗺️ Roadmap
 
-### v2.7.0 (Planned)
-- [ ] macOS platform support
-- [ ] Enhanced WebSocket API
-- [ ] HTTP/2 support investigation
-- [ ] Performance profiling tools
-- [ ] Prometheus metrics endpoint
-- [ ] HTTP client library
+### v2.7.0 (Released 2026-08-21)
+- [x] TLS session cache (2048 entries, 24h timeout)
+- [x] CI performance benchmark workflow
+- [x] Code quality fixes (L3-L5)
+- [x] Brain knowledge base documentation
+- [x] Platinum tier baseline (83K RPS on CI)
 
-### v2.8.0 (Future)
-- [ ] Windows platform support
-- [ ] gRPC integration
-- [ ] Advanced compression algorithms
-- [ ] Kubernetes deployment guides
+### v2.8.0 (Planned)
+- [ ] Performance regression gate (CI)
+- [ ] Embedding verification round 2
+- [ ] io_uring exploration for static file path
+- [ ] New embedder integration docs
+- [ ] Memory allocation optimization
+
+### v2.9.0 (Future)
+- [ ] FreeBSD support
+- [ ] Fuzz testing enhancement
+- [ ] Community contribution guide
+- [ ] Chinese/English doc completeness
 
 ## 📊 Version History
 

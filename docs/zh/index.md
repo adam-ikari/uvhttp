@@ -4,7 +4,7 @@ layout: home
 hero:
   name: UVHTTP
   text: 内存安全已验证的 C HTTP 服务器
-  tagline: 轻量、可嵌入的 C99 HTTP/1.1 与 WebSocket 库——同类中唯一经 ASan 与 UBSan 验证零内存安全问题者。支持 32 位嵌入式，~20K RPS，零泄漏。吞吐可测，内存安全可证。
+  tagline: 轻量、可嵌入的 C99 HTTP/1.1 与 WebSocket 库——同类中唯一经 ASan 与 UBSan 验证零内存安全问题者。支持 32 位嵌入式，CI 上 83K RPS，零泄漏。吞吐可测，内存安全可证。
   actions:
     - theme: brand
       text: 快速开始
@@ -20,7 +20,7 @@ features:
   - title: 🛡️ 内存安全已验证
     details: ASan + UBSan 零问题——101/101 测试，零泄漏，每夜 CI。
   - title: 🚀 稳定吞吐
-    details: ~20K RPS，100→500 连接持平，零 socket 错误。
+    details: GitHub CI runner 上 83K RPS（Platinum 层级），10 轮测试方差仅 0.4–2.4%。
   - title: 📦 轻量且 32 位
     details: 静态库 ~257 KB，支持 32 位，冷启动 ~310ms。
   - title: ⚡ 零拷贝文件
@@ -38,18 +38,18 @@ features:
 
 ## 📊 性能基准
 
-### 关键指标 (v2.6.0)
+### 关键指标 (v2.7.0，GitHub CI 基准)
 
-吞吐量因硬件而异。以下数值具有代表性；在同类 VM 上，该库可维持约 17K–20K RPS（100 连接）/ 约 20K 峰值（低并发），且**零 socket 错误**。使用 `wrk -t4 -c100 -d10s` 复现。
+性能基准在 **GitHub Actions `ubuntu-latest` runner** 上测量，以确保硬件一致性。此前的本地基准（v2.6.x，约 20K RPS）在开发者硬件上测量，受 CPU 热降频影响方差高达 40%+。CI runner 消除了这一方差（CV 0.4–2.4%），提供了权威的、可复现的基线。
 
 | 指标 | 数值 | 说明 |
 |--------|-------|-------|
-| **峰值吞吐量** | ~20K RPS | 低并发（10 连接），HTTP/1.1 |
-| **高并发** | ~17–19K RPS | 100 并发连接 |
-| **静态文件** | 12,510 RPS | 中等并发，1MB 文件 |
-| **API 路由** | 13,950 RPS | REST 端点 |
-| **平均延迟** | ~9–21 ms | P50–P90，100 连接 |
-| **错误率** | 0% | 负载下零 socket 错误 |
+| **峰值吞吐量** | ~83K RPS | 10 连接，HTTP/1.1，GitHub CI runner |
+| **高并发** | ~55K RPS | 1000 并发连接 |
+| **静态文件** | 5.7K RPS | ~100KB body，`benchmark_unified` |
+| **API 路由** | 82K RPS | JSON 端点 |
+| **平均延迟** | ~117µs | P50，10 连接 |
+| **错误率** | 0% | 负载下零 socket 错误（10 连接） |
 | **测试套件** | 101/101 通过 | ASan + UBSan 验证通过 |
 
 ### 内存安全与质量亮点

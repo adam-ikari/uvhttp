@@ -10,6 +10,29 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
 本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)规范。
 
+## [2.7.0] - 2026-08-21
+
+### 新增
+- **TLS 会话缓存**: 重新启用 `mbedtls_ssl_conf_session_cache()`，默认 2048 条目 / 86400s（24h）超时，预期减少 30-50% TLS 握手时间
+- **TLS 会话票据**: 重新启用 `mbedtls_ssl_conf_session_tickets()`
+- **CI 性能基准工作流** (`ci-benchmark.yml`): 10 轮多轮测试，报告峰值 vs 稳态值，支持 workflow_dispatch / PR 'benchmark' 标签 / pre-release push 三种触发方式
+- **Brain 知识库**: 填充全部 6 个根页面（background/architecture/flow/mindmap/stack/roadmap），新增 4 个决策页面
+- **设计哲学文档**: PHILOSOPHY.md（项目定位、分发模型、嵌入式优先、内存安全基础设施、测试基础设施、零成本抽象、嵌入验证）
+- **嵌入验证清单** (`docs/embedding-checklist.md`): 基于 qwrt 嵌入经验的 9 类验证维度
+- **构建矩阵 CI** (`build-matrix` job): 验证全开/最简/ROUTER_CACHE/静态文件/无压缩等特性组合
+
+### 变更
+- **性能基准迁移至 GitHub CI**: 从本地基准（AMD 5800H, 40%+ 方差）迁移到 GitHub CI runner（0.4-2.4% CV），新基线 **Platinum 层级** 83K RPS（simple）/ 82K RPS（json）/ 5.7K RPS（large）
+- **Platinum 层级**: 新增 80K RPS tier，Diamond tier 设为 100K RPS 远期目标
+- **CV 作为 KPI**: 变异系数 < 5% 作为 runner 稳定性指标
+- **严格 ISO C99**: `CMAKE_C_EXTENSIONS OFF` + `-D_GNU_SOURCE`，miniz `MZ_FORCEINLINE` 修复
+
+### 修复
+- **L3: gzip 缓存内存追踪**: `total_memory` 现在计入 `sizeof(gzip_cache_entry_t)` 结构体开销（~56 bytes/entry），此前的 `max_memory_usage` 保证是近似值
+- **L4: set_max_entries 边界**: `uvhttp_gzip_cache_set_max_entries()` 在 `max_entries > capacity` 时自动扩容 entries 数组，而非静默失效
+- **L5: 注释拼写**: `paddingto32bytes` → `padding to 32 bytes`（response.h, server.h）
+- **Router cache ABI**: 修复 `cache_optimized_router_t` 与 `uvhttp_router_t` 结构体布局不兼容（S1）和 `UVHTTP_ANY` 匹配缺失（S2）
+
 ## [2.6.1] - 2026-08-12
 
 ### 新增
