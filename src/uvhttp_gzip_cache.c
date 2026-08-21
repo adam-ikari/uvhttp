@@ -25,6 +25,9 @@ typedef struct {
     unsigned long last_used; /* LRU tick */
 } gzip_cache_entry_t;
 
+/* Per-entry struct overhead tracked in total_memory. */
+#define GZIP_CACHE_ENTRY_OVERHEAD (sizeof(gzip_cache_entry_t))
+
 struct uvhttp_gzip_cache {
     gzip_cache_entry_t* entries; /* dynamic array of slots */
     int capacity;                /* allocated slot count */
@@ -62,7 +65,7 @@ static void gzip_cache_evict_one(uvhttp_gzip_cache_t* cache) {
     if (victim < 0) return;
     gzip_cache_entry_t* e = &cache->entries[victim];
     if (e->compressed) uvhttp_free(e->compressed);
-    cache->total_memory -= e->compressed_len;
+    cache->total_memory -= e->compressed_len + GZIP_CACHE_ENTRY_OVERHEAD;
     e->valid = 0;
     e->compressed = NULL;
     e->compressed_len = 0;
@@ -128,7 +131,7 @@ const char* uvhttp_gzip_cache_find(uvhttp_gzip_cache_t* cache, uint64_t hash,
         /* Lazy TTL eviction */
         if (cache->cache_ttl > 0 && (now - e->stored_at) > cache->cache_ttl) {
             if (e->compressed) uvhttp_free(e->compressed);
-            cache->total_memory -= e->compressed_len;
+            cache->total_memory -= e->compressed_len + GZIP_CACHE_ENTRY_OVERHEAD;
             e->valid = 0;
             e->compressed = NULL;
             e->compressed_len = 0;
@@ -169,12 +172,12 @@ uvhttp_error_t uvhttp_gzip_cache_put(uvhttp_gzip_cache_t* cache, uint64_t hash,
             if (!copy) return UVHTTP_ERROR_OUT_OF_MEMORY;
             memcpy(copy, compressed, compressed_len);
             if (e->compressed) uvhttp_free(e->compressed);
-            cache->total_memory -= e->compressed_len;
+            cache->total_memory -= e->compressed_len + GZIP_CACHE_ENTRY_OVERHEAD;
             e->compressed = copy;
             e->compressed_len = compressed_len;
             e->stored_at = time(NULL);
             e->last_used = ++cache->tick;
-            cache->total_memory += compressed_len;
+            cache->total_memory += compressed_len + GZIP_CACHE_ENTRY_OVERHEAD;
             return UVHTTP_OK;
         }
     }
@@ -215,13 +218,26 @@ uvhttp_error_t uvhttp_gzip_cache_put(uvhttp_gzip_cache_t* cache, uint64_t hash,
     e->valid = 1;
     e->stored_at = time(NULL);
     e->last_used = ++cache->tick;
-    cache->total_memory += compressed_len;
+    cache->total_memory += compressed_len + GZIP_CACHE_ENTRY_OVERHEAD;
     return UVHTTP_OK;
 }
 
 void uvhttp_gzip_cache_set_max_entries(uvhttp_gzip_cache_t* cache,
                                        int max_entries) {
     if (!cache || max_entries <= 0) return;
+    if (max_entries > cache->capacity) {
+        /* Grow the entries array to accommodate the new limit. */
+        gzip_cache_entry_t* new_entries = (gzip_cache_entry_t*)uvhttp_alloc(
+            sizeof(gzip_cache_entry_t) * (size_t)max_entries);
+        if (!new_entries) return;
+        memset(new_entries, 0,
+               sizeof(gzip_cache_entry_t) * (size_t)max_entries);
+        memcpy(new_entries, cache->entries,
+               sizeof(gzip_cache_entry_t) * (size_t)cache->capacity);
+        uvhttp_free(cache->entries);
+        cache->entries = new_entries;
+        cache->capacity = max_entries;
+    }
     cache->max_entries = max_entries;
     while (gzip_cache_entry_count(cache) > cache->max_entries) {
         gzip_cache_evict_one(cache);

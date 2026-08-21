@@ -2,21 +2,41 @@
 slug: background
 title: Project background
 role: project background
-updated: "2026-06-22T00:00:00"
+updated: "2026-08-21T03:19:46"
 ---
 
-## Why
+# Project background
 
-<!-- The core problem the project solves, and the motivation. -->
+## 为什么
 
-## Goals
+UVHTTP 是一个 C 语言 HTTP/1.1 + WebSocket 服务器库，基于 libuv 事件循环构建。其核心动机是：
 
-<!-- What we want to achieve; measurable success criteria. -->
+- **服务端 C 语言缺乏一个内存安全可验证的 HTTP 库**——大多数 C HTTP 服务器要么是重量级应用（nginx、Apache），要么是玩具级实现，缺少生产级所需的内存安全、错误处理和资源管理。
+- **嵌入式场景需要轻量级 HTTP 服务器**——已有解决方案（如 libmicrohttpd、mongoose）在内存安全、协议合规或性能方面有妥协。
+- **零成本抽象哲学**——C 语言本身没有运行时开销，但已有的 C HTTP 库往往引入不必要的抽象层。UVHTTP 的设计目标是：抽象是编译期的宏，不产生运行时开销。
 
-## Non-goals
+## 目标
 
-<!-- What we explicitly won't do — drawing the boundaries. -->
+1. **内存安全可验证**——ASan/UBSan CI 门禁，零泄漏、零 UAF、零溢出
+2. **嵌入式优先**——32-bit 支持、编译时裁剪、静态库 ~257KB stripped
+3. **协议正确性**——HTTP/1.1 (RFC 7230-7235) 和 WebSocket (RFC 6455) 合规
+4. **零成本抽象**——所有特性开关为编译期宏，热路径无间接调用
+5. **生产级可靠性**——统一错误系统、资源限制、超时检测、心跳监控
 
-## Target user
+## 非目标
 
-<!-- Who it's for, their scenarios and pain points. -->
+- **CPU 峰值吞吐量不是卖点**——nginx 和 h2o 在这方面更强；UVHTTP 追求的是低资源下的稳定吞吐
+- **HTTP/2**——多路复用与 libuv 事件模型不兼容，需要应用层可见的多路复用
+- **HTTP/3/QUIC**——需要完全不同的传输层，超出轻量级 C 库范围
+- **Windows 原生支持**——sendfile 和 epoll 深度依赖使 Windows 支持需要大量工作
+- **业务逻辑内置**——不提供认证、授权、数据库、模板引擎、会话管理
+- **插件系统**——动态加载与嵌入式安全目标冲突
+- **配置热加载**——嵌入式场景通常不需要；需要热加载的可在应用层实现
+
+## 目标用户
+
+- **嵌入式 C 开发者**——在资源受限的 32-bit 设备上运行 HTTP 服务
+- **IoT/边缘计算开发者**——需要轻量级、低资源占用的 HTTP 服务器
+- **C 语言后端开发者**——需要可嵌入的 HTTP 库，而不是完整的应用服务器
+- **性能敏感的应用**——需要零拷贝、零间接调用的 HTTP 处理
+- **安全敏感的场景**——需要 ASan/UBSan 验证过的内存安全
