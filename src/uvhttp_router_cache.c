@@ -611,6 +611,8 @@ const char* uvhttp_method_to_string(uvhttp_method_t method) {
         return "OPTIONS";
     case UVHTTP_PATCH:
         return "PATCH";
+    case UVHTTP_ANY:
+        return "ANY";
     default:
         return "UNKNOWN";
     }
