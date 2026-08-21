@@ -23,11 +23,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#if UVHTTP_FEATURE_COMPRESSION
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#if UVHTTP_FEATURE_COMPRESSION
 
 /* Default cache limits */
 #define UVHTTP_GZIP_CACHE_DEFAULT_MAX_ENTRIES 64

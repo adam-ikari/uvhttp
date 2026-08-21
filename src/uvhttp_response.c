@@ -556,7 +556,12 @@ static void uvhttp_free_write_data(uv_write_t* req, int status) {
                     if (!write_data->response->keepalive) {
                         /* closeconnection */
                         uvhttp_connection_close(conn);
-                    } else if (!conn->is_websocket) {
+                    }
+#if UVHTTP_FEATURE_WEBSOCKET
+                    else if (!conn->is_websocket) {
+#else
+                    else {
+#endif
                         /* keep-alive connection, restart read to receive next
                          * request (skip for websocket: its read callback was
                          * already set up by switch_to_websocket; restarting
@@ -823,7 +828,12 @@ uvhttp_error_t uvhttp_response_send_raw(const char* data, size_t length,
         if (response) {
             if (!response->keepalive) {
                 uvhttp_connection_close(conn);
-            } else if (!conn->is_websocket && response->status_code != 101) {
+            }
+#if UVHTTP_FEATURE_WEBSOCKET
+            else if (!conn->is_websocket && response->status_code != 101) {
+#else
+            else {
+#endif
                 /* 101 = WebSocket upgrade: the handshake path calls
                  * uvhttp_connection_switch_to_websocket which starts the WS
                  * read callback; scheduling restart_read here would let the

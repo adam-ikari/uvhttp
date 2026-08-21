@@ -212,6 +212,7 @@ TEST(UvhttpConnectionCallbackTest, ConnectionStart) {
 }
 
 /* ========== Websocket close ========== */
+#if UVHTTP_FEATURE_WEBSOCKET
 
 TEST(UvhttpConnectionCallbackTest, WebsocketCloseNull) {
     uvhttp_connection_websocket_close(nullptr);
@@ -237,6 +238,8 @@ TEST(UvhttpConnectionCallbackTest, WebsocketClose) {
     uv_loop_close(loop);
     uvhttp_free(loop);
 }
+
+#endif /* UVHTTP_FEATURE_WEBSOCKET */
 
 /* ========== TLS cleanup ========== */
 
