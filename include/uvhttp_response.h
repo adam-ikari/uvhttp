@@ -50,7 +50,7 @@ struct uvhttp_response {
     int cache_ttl;       /* 4 bytes - Cache TTL(seconds) */
     int compress_algorithm; /* 4 bytes - Compression algorithm (0=auto, 1=gzip) */
     int compress_threshold; /* 4 bytes - Compression threshold (bytes) */
-    int _padding1;       /* 4 bytes - paddingto32bytes */
+    int _padding1;       /* 4 bytes - padding to 32 bytes */
     size_t header_count; /* 8 bytes - header quantity */
     size_t body_length;  /* 8 bytes - body length */
     uv_tcp_t* client;    /* 8 bytes - TCP Client */

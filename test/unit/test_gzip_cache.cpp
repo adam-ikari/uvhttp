@@ -118,7 +118,9 @@ TEST_F(GzipCacheTest, StatsTracking) {
     int entries = -1, hits = -1, misses = -1;
     uvhttp_gzip_cache_get_stats(cache, &mem, &entries, &hits, &misses);
     EXPECT_EQ(entries, 1);
-    EXPECT_EQ(mem, strlen(z));
+    /* total_memory = compressed_len + entry_struct_overhead (sizeof(gzip_cache_entry_t) ~56) */
+    EXPECT_GE(mem, strlen(z));
+    EXPECT_LT(mem, strlen(z) + 128);
     EXPECT_EQ(hits, 1);
     EXPECT_EQ(misses, 2);
 }
