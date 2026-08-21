@@ -306,7 +306,11 @@ TEST(ConnectionBoostCoverage, Start_TlsEnabledNoCtx) {
     ASSERT_EQ(result, UVHTTP_OK);
 
     conn->tls_enabled = 1;
+#if UVHTTP_FEATURE_TLS
     ASSERT_EQ(server->tls_ctx, nullptr);
+#else
+    /* When TLS is disabled, tls_ctx doesn't exist; just verify start fails */
+#endif
 
     result = uvhttp_connection_start(conn);
     EXPECT_EQ(result, UVHTTP_ERROR_CONNECTION_START);
