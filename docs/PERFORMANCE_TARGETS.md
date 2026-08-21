@@ -10,6 +10,31 @@ Measured 2026-08-21 on GitHub Actions `ubuntu-latest` runner (Release build, sys
 
 GitHub CI runners provide **consistent hardware** without the thermal throttling variance that plagues local benchmarks. Local benchmarks on AMD Ryzen 7 5800H showed 40%+ coefficient of variation due to CPU thermal throttling; CI runners show 0.4–2.4% CV.
 
+### CI Runner Environment
+
+Performance is measured on GitHub Actions `ubuntu-latest` runners. Standard runner specs:
+
+| Item | Value |
+|------|-------|
+| OS | Ubuntu 22.04 LTS (or 24.04) |
+| Architecture | x86_64 |
+| CPU | 4-core (Intel Xeon or AMD EPYC) |
+| RAM | 16 GB |
+| Disk | 14 GB SSD |
+
+> **Note**: GitHub Actions runners are shared VMs; actual CPU model and frequency may vary between runs. The `ci-benchmark.yml` workflow collects the exact environment info (CPU model, frequency, memory, kernel, compiler, wrk version) in each run and stores it as `benchmark-env.md` in the run artifacts.
+
+> **Reproducibility**: To compare results, download the `benchmark-env.md` artifact from the specific CI run and verify the CPU model matches. Results from different runner generations (e.g., Intel Xeon vs AMD EPYC) are not directly comparable.
+
+### Build Configuration
+
+| Item | Value |
+|------|-------|
+| Build type | Release (`-DCMAKE_BUILD_TYPE=Release`) |
+| Build options | `-DBUILD_BENCHMARKS=ON -DBUILD_EXAMPLES=OFF` |
+| Binary | `benchmark_unified` (port 18081) |
+| wrk params | `-t2 -c10 -d10s` (standard), `-t4 -c1000 -d10s` (high concurrency) |
+
 ### Results
 
 | Endpoint | Median (RPS) | Mean (RPS) | CV | Avg Latency | Steady (RPS) |
