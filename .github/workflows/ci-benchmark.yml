@@ -1,6 +1,7 @@
 name: CI - Performance Benchmark
 
-# Trigger: manual, or on PR with 'benchmark' label
+# Trigger: manual, PR with 'benchmark' label, or push to pre-release
+# pre-release branch = regression benchmark gate before official release
 on:
   workflow_dispatch:
     inputs:
@@ -19,10 +20,12 @@ on:
   pull_request:
     types: [labeled, opened, synchronize, reopened]
     branches: [main]
+  push:
+    branches: [pre-release]
 
 jobs:
   benchmark:
-    if: github.event_name == 'workflow_dispatch' || contains(join(github.event.pull_request.labels.*.name, ','), 'benchmark')
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || contains(join(github.event.pull_request.labels.*.name, ','), 'benchmark')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -126,6 +129,19 @@ jobs:
             benchmark-raw.csv
             /tmp/server.log
           retention-days: 90
+
+      - name: Commit benchmark trend data
+        if: github.event_name == 'push' && github.ref == 'refs/heads/pre-release'
+        run: |
+          mkdir -p docs/benchmark-trends
+          DATE=$(date -u +%Y-%m-%d)
+          cp benchmark-results.md "docs/benchmark-trends/benchmark-${DATE}.md"
+          cp benchmark-raw.csv "docs/benchmark-trends/benchmark-${DATE}.csv"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/benchmark-trends/
+          git commit -m "docs(benchmark): trend data for ${DATE}" || echo "No changes to commit"
+          git push
 
       - name: Comment PR with results
         if: github.event_name == 'pull_request'
