@@ -2,41 +2,41 @@
 
 This document defines the performance targets and benchmarks for UVHTTP.
 
-## Current Baseline
+## Current Baseline (GitHub CI)
 
-Measured 2026-08-21 on Linux x86_64 (Release build, system allocator, 2 threads, 10 concurrent connections, 10s test, 10 rounds per endpoint).
+Measured 2026-08-21 on GitHub Actions `ubuntu-latest` runner (Release build, system allocator, 2 threads, 10 concurrent connections, 10s test, 10 rounds per endpoint, `benchmark_unified` binary).
 
-### Observations
+### Why GitHub CI is the authoritative baseline
 
-**CPU thermal throttling dominates variance.** The benchmark host's CPU enters turbo boost for the first 20-30s (~3 rounds), then thermally throttles to a lower sustained frequency. This causes ~40% coefficient of variation across runs. Two values are reported per endpoint:
+GitHub CI runners provide **consistent hardware** without the thermal throttling variance that plagues local benchmarks. Local benchmarks on AMD Ryzen 7 5800H showed 40%+ coefficient of variation due to CPU thermal throttling; CI runners show 0.4–2.4% CV.
 
-- **Peak**: median of the first 3 rounds (turbo boost active)
-- **Steady state**: median of the last 7 rounds (after thermal equilibrium)
+### Results
 
-| Endpoint | Peak (RPS) | Peak Latency | Steady (RPS) | Steady Latency | CV |
-|----------|-----------|-------------|-------------|-------------|-----|
-| `/simple` (text/plain) | 33,678 | 475µs | **15,265** | 1.04ms | 40.6% |
-| `/json` (application/json) | 35,166 | 430µs | **14,478** | 1.13ms | 46.6% |
-| `/large` (1KB body) | 31,459 | 565µs | **28,409** | 669µs | 34.9% |
+| Endpoint | Median (RPS) | Mean (RPS) | CV | Avg Latency | Steady (RPS) |
+|----------|-------------|------------|-----|-------------|-------------|
+| `/` (simple text) | **83,099** | 82,769 | 2.0% | 117µs | 83,008 |
+| `/json` (application/json) | **81,848** | 81,711 | 2.4% | 117µs | 80,688 |
+| `/large` (~100KB body) | **5,721** | 5,719 | 0.4% | 1.74ms | 5,732 |
 
-> **Note on methodology**: The `/large` endpoint shows higher steady-state throughput than `/simple`/`/json`. This is likely because the 1KB body triggers a different code path (writev vs small-write) that happens to be more CPU-cache-friendly on this test host. This is not a generalizable result — verify on target hardware.
+> **Note**: The `/large` endpoint in `benchmark_unified` returns a ~100KB body, much larger than the ~1KB body in `test_performance_e2e`. The two binaries are not directly comparable.
 
-### Latency (steady state, P50–P99)
-
-| Metric | Simple | JSON | Large |
-|--------|--------|------|-------|
-| Average | 1.04ms | 1.13ms | 669µs |
-| P99 | ~2ms | ~2.5ms | ~1.5ms |
-
-### High concurrency (1000 connections, steady state)
+### High concurrency (1000 connections, 3 rounds)
 
 | Metric | Value |
 |--------|-------|
-| Throughput | ~14,300 RPS |
-| Avg latency | ~35ms |
-| Timeout errors | ~260/run (out of ~143K requests) |
+| Throughput | ~55,000 RPS |
+| Avg latency | ~27ms |
+| Timeout errors | ~310/run (out of ~550K requests) |
 
-The high-concurrency test shows that the single-threaded event loop saturates at ~14K RPS regardless of connection count. Timeout errors suggest the connection backlog exceeds the kernel's accept queue under load.
+### Peak vs Steady State
+
+On CI runners, **peak and steady state are nearly identical** (no thermal throttling):
+
+| Endpoint | Peak (first 3 median) | Steady (last 7 median) | Drop |
+|----------|----------------------|------------------------|------|
+| `/` | 83,190 | 83,008 | 0.2% |
+| `/json` | 84,179 | 80,688 | 4.1% |
+| `/large` | 5,716 | 5,732 | 0% |
 
 ## Targets
 
@@ -44,93 +44,107 @@ The high-concurrency test shows that the single-threaded event loop saturates at
 
 | Tier | Simple RPS | JSON RPS | Large RPS |
 |------|-----------|----------|-----------|
-| Bronze | 10,000 | 10,000 | 10,000 |
-| Silver | 15,000 | 15,000 | 15,000 |
-| **Gold** | **25,000** | **25,000** | **25,000** |
-| Platinum | 30,000 | 30,000 | 30,000 |
-| Diamond | 40,000 | 40,000 | 40,000 |
+| Bronze | 20,000 | 20,000 | 2,000 |
+| Silver | 40,000 | 40,000 | 3,000 |
+| Gold | 60,000 | 60,000 | 4,000 |
+| **Platinum** | **80,000** | **80,000** | **5,000** |
+| Diamond | 100,000 | 100,000 | 8,000 |
 
-**Current tier: Silver** (steady state ~15K RPS)  
-**Peak tier: Gold** (turbo-boosted ~30K RPS)
+**Current tier: Platinum** (83K RPS simple, 82K RPS JSON, 5.7K RPS large)
 
 ### Latency
 
-| Metric | Bronze | Silver | **Gold** | Platinum | Diamond |
-|--------|--------|--------|----------|----------|---------|
-| Avg latency | <2ms | <1.5ms | **<1ms** | <500µs | <300µs |
-| P99 latency | <10ms | <5ms | **<2ms** | <1ms | <800µs |
-| P999 latency | <50ms | <25ms | **<5ms** | <5ms | <2ms |
+| Metric | Bronze | Silver | Gold | **Platinum** | Diamond |
+|--------|--------|--------|------|----------|---------|
+| Avg latency | <1ms | <500µs | <200µs | **<150µs** | <100µs |
+| P99 latency | <5ms | <2ms | <1ms | **<500µs** | <200µs |
 
-**Current tier: Silver** (~1ms avg, ~2ms P99 steady state)
+**Current tier: Platinum** (~117µs avg for simple/JSON)
 
-### Memory
+### High Concurrency
 
-| Metric | Bronze | Silver | **Gold** | Platinum | Diamond |
-|--------|--------|--------|----------|----------|---------|
-| Per-connection overhead | <64KB | <32KB | **<16KB** | <8KB | <4KB |
-| Memory per 10K connections | <640MB | <320MB | **<160MB** | <80MB | <40MB |
-| Request object size | <128KB | <96KB | **<64KB** | <32KB | <16KB |
+| Concurrent Connections | Bronze | Silver | Gold | **Platinum** | Diamond |
+|----------------------|--------|--------|------|----------|---------|
+| 1,000 | 20,000 RPS | 30,000 RPS | 40,000 RPS | **50,000 RPS** | 80,000 RPS |
 
-### TLS Performance
-
-| Metric | Bronze | Silver | **Gold** | Platinum | Diamond |
-|--------|--------|--------|----------|----------|---------|
-| HTTPS RPS (vs HTTP) | 50% | 60% | **70%** | 80% | 90% |
-| TLS handshake/s | 500 | 1,000 | **2,000** | 5,000 | 10,000 |
-| Session resumption rate | N/A | 50% | **70%** | 90% | 95% |
+**Current tier: Platinum** (~55K RPS at 1000 connections)
 
 ## Key Performance Indicators
 
-1. **P99 latency < 2ms** for simple requests at 10 concurrent connections (steady state)
-2. **Throughput > 15,000 RPS** for simple requests at 10 concurrent connections (steady state)
-3. **Scaling**: throughput drops < 50% when going from 10 to 1,000 concurrent connections
-4. **Memory**: per-connection overhead < 64KB under load
-5. **TLS overhead**: HTTPS achieves > 60% of HTTP throughput
+1. **Avg latency < 150µs** for simple requests at 10 concurrent connections
+2. **Throughput > 80,000 RPS** for simple requests at 10 concurrent connections
+3. **CV < 5%** across 10 rounds (CI runner stability)
+4. **Scaling**: throughput drops < 40% when going from 10 to 1,000 concurrent connections
+5. **Memory**: per-connection overhead < 64KB under load
 
 ## Benchmarking Methodology
 
-### Environment
-- Hardware: x86_64, 4+ cores, 8GB+ RAM
-- OS: Linux kernel 5.x+
-- Tool: wrk (or ab)
-- Duration: 10s minimum for stable results
-- Run: 10 rounds per endpoint, report median of last 7 rounds (steady state)
-- Note: CPU thermal throttling causes 30-40% variance between cold and warm runs
+### Primary: GitHub CI (authoritative)
 
-### Commands
+Run via `ci-benchmark.yml` workflow:
+
+- **Trigger**: `workflow_dispatch`, PR with `benchmark` label, push to `pre-release`
+- **Runner**: `ubuntu-latest` (consistent hardware, no thermal throttling)
+- **Build**: Release, `BUILD_BENCHMARKS=ON`
+- **Binary**: `benchmark_unified` (port 18081)
+- **Rounds**: 10 per endpoint, 10s each
+- **Stats**: median, mean, CV, peak (first 3 median), steady (last 7 median)
+- **Artifacts**: retained 90 days for trend tracking
+
 ```bash
-# Simple response
-wrk -t2 -c10 -d10s http://localhost:8086/simple
+# Trigger manually
+gh workflow run ci-benchmark.yml --ref main -f rounds=10 -f duration=10
 
-# JSON response
-wrk -t2 -c10 -d10s http://localhost:8086/json
-
-# Large response
-wrk -t2 -c10 -d10s http://localhost:8086/large
-
-# High concurrency
-wrk -t4 -c1000 -d10s http://localhost:8086/simple
-
-# TLS (if available)
-wrk -t4 -c100 -d10s https://localhost:8443/simple
+# Or via PR label
+gh pr edit <PR_NUMBER> --add-label benchmark
 ```
 
-### Test Server
+### Secondary: Local benchmark (development)
+
+For development-time quick checks. **Not authoritative** due to hardware variance.
+
 ```bash
-cd uvhttp
-cmake -B build -DCMAKE_BUILD_TYPE=Release
+# Build
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS=ON
 cmake --build build -j$(nproc)
-./build/dist/bin/test_performance_e2e 8086
+
+# Run
+./build/dist/bin/benchmark_unified 18081 &
+wrk -t2 -c10 -d10s http://localhost:18081/
+wrk -t2 -c10 -d10s http://localhost:18081/json
+wrk -t2 -c10 -d10s http://localhost:18081/large
 ```
+
+> **Warning**: Local benchmarks on mobile/laptop CPUs (e.g., AMD Ryzen 7 5800H) may show 40%+ variance due to thermal throttling. Use CI results as the authoritative baseline.
+
+### Endpoints (benchmark_unified)
+
+| Endpoint | Response | Body Size |
+|----------|----------|-----------|
+| `/` | Simple text | ~2 bytes |
+| `/json` | JSON | ~37 bytes |
+| `/large` | Filled text | ~100KB |
+| `/small` | Small text | ~128 bytes |
+| `/medium` | Medium text | ~1KB |
+| `/compression/text` | Compressible text | ~50KB |
+| `/compression/json` | Compressible JSON | ~50KB |
 
 ## Historical Tracking
 
-| Date | Version | Simple RPS | JSON RPS | Large RPS | Notes |
-|------|---------|-----------|----------|-----------|-------|
-| 2026-07-25 | 2.5.1 | 21,529 | 21,451 | 21,314 | Baseline (single 5s run, turbo zone) |
-| 2026-07-31 | 2.5.1 | 18,108 | — | — | Removed GCC extensions. ~6.6% perf cost. |
-| 2026-08-12 | 2.6.1 | 25,949 | 26,088 | 25,154 | Single 5s run, turbo zone. Gold tier. |
-| 2026-08-21 | 2.6.2 | 15,265* | 14,478* | 28,409* | 10 rounds, 10s each. Steady state. *Silver tier. |
-| 2026-08-21 | 2.6.2 | 33,678† | 35,166† | 31,459† | †Peak turbo (first 3 rounds). Gold tier. |
+| Date | Version | Runner | Simple RPS | JSON RPS | Large RPS | CV | Notes |
+|------|---------|--------|-----------|----------|-----------|-----|-------|
+| 2026-07-25 | 2.5.1 | Local | 21,529 | 21,451 | 21,314 | — | Baseline (single 5s run) |
+| 2026-08-12 | 2.6.1 | Local | 25,949 | 26,088 | 25,154 | — | Single 5s run, turbo zone |
+| 2026-08-21 | 2.6.2 | Local | 15,265† | 14,478† | 28,409† | 40% | †Steady state, AMD 5800H throttled |
+| 2026-08-21 | 2.6.2 | Local | 33,678‡ | 35,166‡ | 31,459‡ | 40% | ‡Peak turbo (first 3 rounds) |
+| **2026-08-21** | **2.6.2** | **CI** | **83,099** | **81,848** | **5,721** | **2.0%** | **Authoritative baseline. GitHub CI runner.** |
 
-> **Historical note**: Earlier baselines (2026-07-25, 2026-08-12) used single 5s runs which captured only the turbo-boosted zone. The 2026-08-21 multi-round baseline reveals that steady-state throughput is ~15K RPS (Silver tier), while peak turbo throughput is ~33K RPS (Gold tier). The difference is entirely due to CPU thermal throttling on the benchmark host, not code changes.
+> **Note on /large**: Local `test_performance_e2e` has ~1KB `/large` body; CI `benchmark_unified` has ~100KB `/large` body. The 5,721 RPS CI result for `/large` reflects the larger payload, not a performance regression.
+
+## Change Log
+
+| Date | Change |
+|------|--------|
+| 2026-08-21 | Switched primary baseline from local to GitHub CI. Added Platinum tier (80K RPS). Added CV as KPI. |
+| 2026-08-21 | Added multi-round methodology (10 rounds, peak vs steady). Documented thermal throttling impact. |
+| 2026-08-12 | Initial Gold tier baseline (25K RPS, single 5s run). |
