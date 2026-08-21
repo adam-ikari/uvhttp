@@ -2,14 +2,14 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.6.2-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.7.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
 ![Tests](https://img.shields.io/badge/tests-101%2F101%20passing-success.svg)
 [![ASan](https://img.shields.io/badge/ASan-clean-success.svg)](https://github.com/adam-ikari/uvhttp/actions/workflows/ci-nightly.yml)
 [![UBSan](https://img.shields.io/badge/UBSan-clean-success.svg)](https://github.com/adam-ikari/uvhttp/actions/workflows/ci-nightly.yml)
-![Performance](https://img.shields.io/badge/performance-~20K%20RPS-brightgreen.svg)
+![Performance](https://img.shields.io/badge/performance-~83K%20RPS%20(CI)-brightgreen.svg)
 
 **Memory-Safety-Verified C HTTP/1.1 & WebSocket Server Library**
 
@@ -21,20 +21,18 @@ Lightweight & Embeddable • 32-bit Support • Zero-Copy • ASan/UBSan-Verifie
 
 UVHTTP is a production-grade, event-driven HTTP server library built on libuv for modern C applications. It delivers exceptional performance with minimal resource consumption, making it ideal for both high-performance servers and embedded systems.
 
-### Key Metrics (v2.6.0)
+### Key Metrics (v2.7.0, GitHub CI baseline)
 
-Throughput varies by hardware. Values below are from the original benchmark host;
-on a comparable VM the library sustains ~17K–20K RPS (100 connections) / ~20K peak
-(low concurrency) with **zero socket errors**. Reproduce with `wrk -t4 -c100 -d10s`.
+Performance baselines are measured on **GitHub Actions `ubuntu-latest` runners** for hardware consistency. Previous local baselines (v2.6.x, ~20K RPS) were measured on developer hardware with 40%+ variance from CPU thermal throttling. The CI runner eliminates this variance (CV 0.4–2.4%), providing an authoritative, reproducible baseline.
 
 | Metric | Value | Context |
 |--------|-------|---------|
-| **Peak Throughput** | ~20K RPS | HTTP/1.1, low concurrency (10 conn) |
-| **High Concurrency** | ~17–19K RPS | 100 concurrent connections |
-| **Static Files** | 12,510 RPS | 1MB files with zero-copy |
-| **API Routing** | 13,950 RPS | REST endpoints |
-| **Average Latency** | ~9–21 ms | P50–P90, 100 connections |
-| **Error Rate** | 0% | Zero socket errors under load |
+| **Peak Throughput** | ~83K RPS | HTTP/1.1, 10 conn, GitHub CI runner |
+| **High Concurrency** | ~55K RPS | 1000 concurrent connections |
+| **Static Files** | 5.7K RPS | ~100KB body, `benchmark_unified` |
+| **API Routing** | 82K RPS | JSON endpoint |
+| **Average Latency** | ~117µs | P50, 10 connections |
+| **Error Rate** | 0% | Zero socket errors under load (10 conn) |
 | **Test Suite** | 101/101 pass | ASan + UBSan verified clean |
 
 ## 🌍 Platform Support
@@ -53,7 +51,7 @@ UVHTTP provides full support for 32-bit architectures with optimizations for res
 ## ✨ Core Features
 
 ### Performance
-- ⚡ **Exceptional Performance**: Peak throughput of ~20K RPS with low-latency event-driven I/O
+- ⚡ **Exceptional Performance**: 83K RPS on GitHub CI runners (Platinum tier), with 0.4–2.4% variance across 10 rounds
 - 💾 **Zero-Copy Transmission**: Native sendfile integration for large files (>1MB)
 - 🧠 **Intelligent Caching**: LRU cache with automatic preheating mechanisms
 - 🚀 **Keep-Alive Optimization**: ~1000x performance improvement through connection reuse
@@ -252,7 +250,7 @@ cmake -DCMAKE_USER_CONFIG=ON ..
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello from UVHTTP v2.6.0!");
+    uvhttp_response_set_body(res, "Hello from UVHTTP v2.7.0!");
     return uvhttp_response_send(res);
 }
 
@@ -515,6 +513,7 @@ UVHTTP is built upon excellent open-source projects:
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.7.0** | 2026-08-21 | TLS session cache re-enabled, CI benchmark workflow (ci-benchmark.yml), code quality fixes (L3-L5), brain documentation, Platinum tier baseline (83K RPS on CI) |
 | **v2.6.2** | 2026-08-17 | Connection-limit memory safety fix (uv_close on accept failure), WebSocket RFC 6455/memory-safety fixes (PR #336), uv_strerror_r consistency |
 | **v2.6.0** | 2026-07-31 | Health check endpoint, SSE example, mock testing infrastructure, Makefile build entry |
 | **v2.5.1** | 2026-07-27 | Coverage 86% lines / 99% functions, 101/101 tests |

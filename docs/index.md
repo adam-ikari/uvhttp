@@ -4,7 +4,7 @@ layout: home
 hero:
   name: UVHTTP
   text: Memory-Safety-Verified C HTTP Server
-  tagline: A lightweight, embeddable C99 HTTP/1.1 & WebSocket library — the only one in its class verified clean under ASan and UBSan. Runs 32-bit embedded, serves ~20K RPS, leaks nothing. Throughput you can measure, memory safety you can prove.
+  tagline: A lightweight, embeddable C99 HTTP/1.1 & WebSocket library — the only one in its class verified clean under ASan and UBSan. Runs 32-bit embedded, serves 83K RPS on CI, leaks nothing. Throughput you can measure, memory safety you can prove.
   actions:
     - theme: brand
       text: Get Started
@@ -20,7 +20,7 @@ features:
   - title: 🛡️ Memory-Safety Verified
     details: ASan + UBSan clean — 101/101 tests, zero leaks, nightly CI.
   - title: 🚀 Stable Throughput
-    details: ~20K RPS, flat 100→500 connections, zero socket errors.
+    details: 83K RPS on GitHub CI runners (Platinum tier), 0.4–2.4% variance across 10 rounds.
   - title: 📦 Lightweight & 32-bit
     details: ~257 KB static lib, runs on 32-bit, ~310 ms cold start.
   - title: 💾 Zero-Copy Files
@@ -38,20 +38,18 @@ features:
 
 ## 📊 Performance Benchmarks
 
-### Key Metrics (v2.6.0)
+### Key Metrics (v2.7.0, GitHub CI baseline)
 
-Throughput varies by hardware. Values below are representative; on a comparable VM
-the library sustains ~17K–20K RPS (100 connections) / ~20K peak (low concurrency)
-with **zero socket errors**. Reproduce with `wrk -t4 -c100 -d10s`.
+Performance baselines are measured on **GitHub Actions `ubuntu-latest` runners** for hardware consistency. Previous local baselines (v2.6.x, ~20K RPS) were measured on developer hardware with 40%+ variance from CPU thermal throttling. The CI runner eliminates this variance (CV 0.4–2.4%), providing an authoritative, reproducible baseline.
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| **Peak Throughput** | ~20K RPS | Low concurrency (10 conn), HTTP/1.1 |
-| **High Concurrency** | ~17–19K RPS | 100 concurrent connections |
-| **Static Files** | 12,510 RPS | Medium concurrency, 1MB files |
-| **API Routing** | 13,950 RPS | REST endpoints |
-| **Average Latency** | ~9–21 ms | P50–P90, 100 connections |
-| **Error Rate** | 0% | Zero socket errors under load |
+| **Peak Throughput** | ~83K RPS | 10 conn, HTTP/1.1, GitHub CI runner |
+| **High Concurrency** | ~55K RPS | 1000 concurrent connections |
+| **Static Files** | 5.7K RPS | ~100KB body, `benchmark_unified` |
+| **API Routing** | 82K RPS | JSON endpoint |
+| **Average Latency** | ~117µs | P50, 10 connections |
+| **Error Rate** | 0% | Zero socket errors under load (10 conn) |
 | **Test Suite** | 101/101 pass | ASan + UBSan verified clean |
 
 ### Memory-Safety & Quality Highlights
