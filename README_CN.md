@@ -2,14 +2,14 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.6.2-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.7.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
 ![Tests](https://img.shields.io/badge/tests-101%2F101%20passing-success.svg)
 [![ASan](https://img.shields.io/badge/ASan-clean-success.svg)](https://github.com/adam-ikari/uvhttp/actions/workflows/ci-nightly.yml)
 [![UBSan](https://img.shields.io/badge/UBSan-clean-success.svg)](https://github.com/adam-ikari/uvhttp/actions/workflows/ci-nightly.yml)
-![Performance](https://img.shields.io/badge/performance-~20K%20RPS-brightgreen.svg)
+![Performance](https://img.shields.io/badge/performance-~83K%20RPS%20(CI)-brightgreen.svg)
 
 **内存安全已验证的 C HTTP/1.1 与 WebSocket 服务器库**
 
@@ -21,18 +21,18 @@
 
 UVHTTP 是一个基于 libuv 的生产级事件驱动 HTTP 服务器库，专为现代 C 应用设计。它在极低资源消耗下提供卓越性能，既适用于高性能服务器，也适用于嵌入式系统。
 
-### 关键指标 (v2.6.0)
+### 关键指标 (v2.7.0, GitHub CI 基准)
 
-吞吐量因硬件而异。以下数值来自原始基准测试主机；在同类 VM 上，该库可维持约 17K–20K RPS（100 连接）/ 约 20K 峰值（低并发），且**零 socket 错误**。使用 `wrk -t4 -c100 -d10s` 复现。
+性能基准在 **GitHub Actions `ubuntu-latest` runner** 上测量，以确保硬件一致性。此前的本地基准（v2.6.x，约 20K RPS）在开发者硬件上测量，受 CPU 热降频影响方差高达 40%+。CI runner 消除了这一方差（CV 0.4–2.4%），提供了权威的、可复现的基线。
 
 | 指标 | 数值 | 说明 |
 |--------|-------|-------|
-| **峰值吞吐量** | ~20K RPS | HTTP/1.1，低并发（10 连接） |
-| **高并发** | ~17–19K RPS | 100 并发连接 |
-| **静态文件** | 12,510 RPS | 1MB 文件，零拷贝 |
-| **API 路由** | 13,950 RPS | REST 端点 |
-| **平均延迟** | ~9–21 ms | P50–P90，100 连接 |
-| **错误率** | 0% | 负载下零 socket 错误 |
+| **峰值吞吐量** | ~83K RPS | HTTP/1.1，10 连接，GitHub CI runner |
+| **高并发** | ~55K RPS | 1000 并发连接 |
+| **静态文件** | 5.7K RPS | ~100KB body，`benchmark_unified` |
+| **API 路由** | 82K RPS | JSON 端点 |
+| **平均延迟** | ~117µs | P50，10 连接 |
+| **错误率** | 0% | 负载下零 socket 错误（10 连接） |
 | **测试套件** | 101/101 通过 | ASan + UBSan 验证通过 |
 
 ## 🌍 平台支持
@@ -51,7 +51,7 @@ UVHTTP 完整支持 32 位架构，针对资源受限环境进行了优化，适
 ## ✨ 核心特性
 
 ### 性能
-- ⚡ **卓越性能**：峰值吞吐量 ~20K RPS，低延迟事件驱动 I/O
+- ⚡ **卓越性能**：GitHub CI runner 上 83K RPS（Platinum 层级），10 轮测试方差仅 0.4–2.4%
 - 💾 **零拷贝传输**：原生 sendfile 集成，支持大文件（>1MB）
 - 🧠 **智能缓存**：LRU 缓存与自动预热机制
 - 🚀 **Keep-Alive 优化**：通过连接重用实现约 1000 倍性能提升
@@ -241,7 +241,7 @@ cmake -DCMAKE_USER_CONFIG=ON ..
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello from UVHTTP v2.6.0!");
+    uvhttp_response_set_body(res, "Hello from UVHTTP v2.7.0!");
     return uvhttp_response_send(res);
 }
 
@@ -500,6 +500,7 @@ UVHTTP 基于以下优秀的开源项目构建：
 
 | 版本 | 日期 | 亮点 |
 |---------|------|------------|
+| **v2.7.0** | 2026-08-21 | TLS 会话缓存重新启用、CI 基准工作流 (ci-benchmark.yml)、代码质量修复 (L3-L5)、Brain 文档、Platinum 层级基线（CI 上 83K RPS） |
 | **v2.6.2** | 2026-08-17 | 连接上限内存安全修复（accept 失败时 uv_close）、WebSocket RFC 6455/内存安全修复（PR #336）、uv_strerror_r 一致性 |
 | **v2.6.0** | 2026-07-31 | 健康检查端点、SSE 示例、mock 测试基础设施、Makefile 构建入口 |
 | **v2.5.1** | 2026-07-27 | 覆盖率 86% 行 / 99% 函数，101/101 测试 |
