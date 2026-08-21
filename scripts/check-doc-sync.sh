@@ -25,7 +25,7 @@ is_in_scope() {
   local path="$1"
   # Exclude dirs
   case "$path" in
-    zh/*|*/zh/*|api/*|*/api/*|releases/*|*/releases/*|spec/*|*/spec/*|dev/*|*/dev/*|node_modules/*|*/node_modules/*|.vitepress/*|*/.vitepress/*|superpowers/*|*/superpowers/*) return 1 ;;
+    zh/*|*/zh/*|api/*|*/api/*|releases/*|*/releases/*|spec/*|*/spec/*|dev/*|*/dev/*|node_modules/*|*/node_modules/*|.vitepress/*|*/.vitepress/*|superpowers/*|*/superpowers/*|code-review/*|*/code-review/*) return 1 ;;
   esac
   # Exclude process/management docs (no ZH translation needed)
   case "$path" in

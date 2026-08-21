@@ -83,53 +83,58 @@ UVHTTP 完整支持 32 位架构，针对资源受限环境进行了优化，适
 
 ## 🚀 快速开始
 
-### 简便构建方式
+### 构建系统
 
-UVHTTP 提供基于 Just 的现代构建系统，零依赖。
+UVHTTP 使用 **CMake** 作为构建系统，**Make** 作为命令入口。`Makefile` 封装了 CMake，使用你熟悉的 make 目标——无需额外工具。
 
-#### 方式一：Just（推荐）
-
-现代 Just 命令运行器，性能卓越，简洁易用：
-
-```bash
-# 安装 Just
-./install_just.sh
-
-# 构建 UVHTTP
-just build
-
-# 运行测试
-just test
-
-# 完整开发工作流
-just dev
-
-# 清理构建产物
-just clean
-```
-
-**优势：**
-- ✅ 零依赖（无需 Python）
-- ✅ 超快启动（比 Python 快 100 倍）
-- ✅ 单一可执行文件（约 1.5MB）
-- ✅ 现代命令运行器，功能丰富
-- ✅ 跨平台兼容（Linux、macOS、Windows、嵌入式）
-- ✅ 31+ 内置任务，覆盖常见操作
-
-#### 方式二：手动构建
-
-偏好手动配置的用户：
+#### 方式一：Make（推荐）
 
 ```bash
 # 克隆仓库
 git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
 
-# 构建（Debug 模式）
+# 构建（Debug）
 make build
 
 # 运行测试
 make test
+
+# 验证内存安全（ASan + UBSan）
+make verify-memory-safety
+
+# 清理构建产物
+make clean
+```
+
+**优势：**
+- ✅ 通用——预装于几乎所有 Linux/macOS 系统
+- ✅ 嵌入式 C 开发者熟悉
+- ✅ 零额外依赖
+- ✅ 直接封装 CMake——透明、可调试
+- ✅ 跨平台（Linux、macOS、WSL）
+
+#### 方式二：直接使用 CMake
+
+适用于 CI 脚本或自定义工作流：
+
+```bash
+# 克隆仓库
+git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
+cd uvhttp
+
+# 配置
+mkdir build && cd build
+cmake ..
+
+# 构建
+cmake --build . -j$(nproc)
+
+# 运行测试
+ctest --output-on-failure
+
+# 安装（可选）
+sudo cmake --install .
 ```
 
 ### 构建示例
@@ -146,7 +151,7 @@ export LD_LIBRARY_PATH=../build/dist/lib:$LD_LIBRARY_PATH
 
 ### 前置依赖
 
-- **Just 命令运行器**：构建所需（通过 `./install_just.sh` 自动安装）
+- **Just 命令运行器**：可选，偏好 `just` 的开发者（`cargo install just` 或参见 [just.systems](https://just.systems））
 - **C 编译器**：GCC 4.8+ 或 Clang 3.4+，支持 C99
 - **CMake**：3.10 或更高版本
 - **构建工具**：make、git
@@ -280,9 +285,9 @@ export LD_LIBRARY_PATH=./build/dist/lib:$LD_LIBRARY_PATH
 
 ### 获取帮助
 
-- **Just 任务列表**：`just --list`（显示全部 31 个可用任务）
-- **Just 任务帮助**：`just --show <task>`（显示任务详情）
-- **快速开始指南**：参见 [JUSTFILE_GUIDE.md](JUSTFILE_GUIDE.md)
+- **Make 目标**：`make help`（显示所有可用目标）
+- **CMake 选项**：`make cmake-options`（显示所有 CMake 构建选项）
+- **快速开始指南**：参见 [docs/guide/getting-started.md](docs/guide/getting-started.md)
 - **示例 Makefile**：`make -f examples/Makefile.examples help`
 - **文档**：参见 [docs/guide/getting-started.md](docs/guide/getting-started.md)
 
@@ -484,17 +489,25 @@ UVHTTP 基于以下优秀的开源项目构建：
 
 ## 🗺️ 路线图
 
-### v2.6.0（计划中）
-- [ ] macOS 平台支持
-- [ ] 增强 WebSocket API
-- [ ] HTTP/2 支持调研
-- [ ] 性能分析工具
+### v2.7.0（已发布 2026-08-21）
+- [x] TLS 会话缓存（2048 条目，24h 超时）
+- [x] CI 性能基准工作流
+- [x] 代码质量修复（L3-L5）
+- [x] Brain 知识库文档
+- [x] Platinum 层级基线（CI 上 83K RPS）
 
-### v2.7.0（未来规划）
-- [ ] Windows 平台支持
-- [ ] gRPC 集成
-- [ ] 高级压缩算法
-- [ ] Kubernetes 部署指南
+### v2.8.0（计划中）
+- [ ] 性能回归门禁（CI）
+- [ ] 嵌入验证第二轮
+- [ ] io_uring 静态文件路径探索
+- [ ] 新嵌入者集成文档
+- [ ] 内存分配优化
+
+### v2.9.0（未来规划）
+- [ ] FreeBSD 支持
+- [ ] Fuzz 测试增强
+- [ ] 社区贡献指南
+- [ ] 中英文档完善
 
 ## 📊 版本历史
 
