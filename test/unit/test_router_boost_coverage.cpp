@@ -24,12 +24,6 @@ extern "C" {
 #include <string.h>
 #include <uv.h>
 
-#if !UVHTTP_FEATURE_ROUTER_CACHE
-/* This test file targets src/uvhttp_router.c internals (trie node pool, array
- * capacity, static_prefix threshold). When ROUTER_CACHE=ON, the cache
- * implementation replaces the router and these internal structure tests
- * are not applicable. */
-
 // ============================================================================
 // Declarations not in any public header - defined in uvhttp_router.c
 // ============================================================================
@@ -2011,8 +2005,6 @@ TEST_F(RouterBoostCoverageTest, AddBinaryRoute_WithOtherRoutes) {
     EXPECT_NE(uvhttp_router_find_handler(router, "/api/binary", "GET"),
               nullptr);
 }
-
-#endif /* !UVHTTP_FEATURE_ROUTER_CACHE */
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);

@@ -16,6 +16,13 @@
 #    include <stdlib.h>
 #    include <string.h>
 
+/* Route count threshold to switch to Trie mode — mirrors uvhttp_router.c so
+ * the public struct fields (use_trie/array_route_count/array_capacity) stay
+ * consistent between the two implementations. */
+#    ifndef HYBRID_THRESHOLD
+#        define HYBRID_THRESHOLD 100
+#    endif
+
 /* Hash bucket structure - optimized for cache locality */
 typedef struct __attribute__((packed)) {
     char path[UVHTTP_MAX_ROUTE_PATH_LEN];
@@ -527,17 +534,24 @@ uvhttp_error_t uvhttp_router_add_binary_route(uvhttp_router_t* router,
 uvhttp_error_t uvhttp_router_add_route(uvhttp_router_t* router,
                                        const char* path,
                                        uvhttp_request_handler_t handler) {
-    if (!router || !path || !handler) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
     return uvhttp_router_add_route_method(router, path, UVHTTP_ANY, handler);
 }
 
 uvhttp_error_t uvhttp_router_add_route_method(
     uvhttp_router_t* router, const char* path, uvhttp_method_t method,
     uvhttp_request_handler_t handler) {
+    /* Validation mirrors uvhttp_router.c: reject null args, empty paths,
+     * over-long paths, and query-string paths. */
     if (!router || !path || !handler) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    if (strlen(path) == 0) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    if (strlen(path) >= MAX_ROUTE_PATH_LEN) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    if (strchr(path, '?') != NULL) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
@@ -549,19 +563,25 @@ uvhttp_error_t uvhttp_router_add_route_method(
         return err;
     }
 
-    /* Root Cause A fix: keep public struct fields in sync */
+    /* Keep public struct fields in sync with the non-cache router. */
     router->route_count++;
-    router->array_route_count++;
-    if (router->array_route_count > router->array_capacity) {
-        router->array_capacity = router->array_route_count;
-    }
-    /* If path contains ':', it's a parameterized route — mark trie mode */
-    if (strchr(path, ':')) {
+    int has_params = (strchr(path, ':') != NULL);
+
+    if (has_params || router->array_route_count >= HYBRID_THRESHOLD ||
+        router->use_trie) {
+        /* Trie mode (parameterized route or threshold exceeded) */
         if (!router->use_trie) {
-            /* First parameterized route triggers "migration" to trie mode */
             router->use_trie = 1;
             router->array_route_count = 0;
         }
+    } else {
+        /* Array mode: track count; double capacity when full */
+        if (router->array_route_count >= router->array_capacity) {
+            router->array_capacity = (router->array_capacity == 0)
+                                         ? HYBRID_THRESHOLD
+                                         : router->array_capacity * 2;
+        }
+        router->array_route_count++;
     }
 
     return UVHTTP_OK;
@@ -606,8 +626,11 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
     cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
     uvhttp_method_t method_enum = fast_method_parse(method);
 
-    /* Root Cause C fix: check static prefix before hash table lookup */
-    if (router->static_prefix && router->static_context && path) {
+    /* Static prefix is only checked in array mode (mirrors uvhttp_router.c:
+     * uvhttp_router_match checks static prefix only when !use_trie; trie mode
+     * routes through parameter matching instead). */
+    if (!router->use_trie && router->static_prefix && router->static_context &&
+        path) {
         size_t prefix_len = strlen(router->static_prefix);
         if (strncmp(path, router->static_prefix, prefix_len) == 0) {
             match->handler = static_file_handler_wrapper;
