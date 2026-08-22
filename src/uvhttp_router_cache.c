@@ -273,40 +273,64 @@ static uvhttp_error_t add_to_hash_table(cache_optimized_router_t* cr,
 }
 
 /* Find in hash table */
-static uvhttp_request_handler_t find_in_hash_table(cache_optimized_router_t* cr,
-                                                   const char* path,
-                                                   uvhttp_method_t method) {
+/* Find handler and optionally return matched route path.
+ * route_path_out (may be NULL): if non-NULL and a param route matched,
+ *   set to the entry's path (e.g. "/items/:item_id").
+ * Returns handler or NULL. */
+static uvhttp_request_handler_t find_in_hash_table_ex(
+    cache_optimized_router_t* cr,
+    const char* path, uvhttp_method_t method,
+    const char** route_path_out) {
     if (!cr || !path) {
         return NULL;
     }
-
     hash_table_t* table = &cr->hash_table;
     uint32_t hash = route_hash(path);
     uint32_t index = hash % table->size;
     uint32_t start_index = index;
-
+    /* First pass: exact match */
     while (1) {
         hash_entry_t* entry = &table->entries[index];
-
-        if (entry->path[0] == '\0') {
-            return NULL;
-        }
-
+        if (entry->path[0] == '\0') break;
         if (strcmp(entry->path, path) == 0 &&
             (entry->method == method || entry->method == UVHTTP_ANY)) {
-            if (entry->access_count < UVHTTP_ACCESS_COUNTER_MAX) {
-                entry->access_count++;
-            }
+            if (entry->access_count < UVHTTP_ACCESS_COUNTER_MAX) entry->access_count++;
+            if (route_path_out) *route_path_out = entry->path;
             return entry->handler;
         }
-
         index = (index + 1) % table->size;
-
-        /* Prevent infinite loop */
-        if (index == start_index) {
-            return NULL;
+        if (index == start_index) break;
+    }
+    /* Second pass: parameterized route match */
+    for (uint32_t i = 0; i < table->size; i++) {
+        hash_entry_t* entry = &table->entries[i];
+        if (entry->path[0] == '\0') continue;
+        if (entry->method != method && entry->method != UVHTTP_ANY) continue;
+        if (!strchr(entry->path, ':')) continue;
+        const char* rp = entry->path;
+        const char* pp = path;
+        int matched = 1;
+        while (*rp && *pp) {
+            if (*rp == ':') {
+                while (*rp && *rp != '/') rp++;
+                while (*pp && *pp != '/') pp++;
+            } else if (*rp == *pp) {
+                rp++; pp++;
+            } else { matched = 0; break; }
+        }
+        if (matched && *rp == '\0' && *pp == '\0') {
+            if (entry->access_count < UVHTTP_ACCESS_COUNTER_MAX) entry->access_count++;
+            if (route_path_out) *route_path_out = entry->path;
+            return entry->handler;
         }
     }
+    return NULL;
+}
+
+static uvhttp_request_handler_t find_in_hash_table(cache_optimized_router_t* cr,
+                                                   const char* path,
+                                                   uvhttp_method_t method) {
+    return find_in_hash_table_ex(cr, path, method, NULL);
 }
 
 /* ========== Public API Functions ========== */
@@ -525,6 +549,21 @@ uvhttp_error_t uvhttp_router_add_route_method(
         return err;
     }
 
+    /* Root Cause A fix: keep public struct fields in sync */
+    router->route_count++;
+    router->array_route_count++;
+    if (router->array_route_count > router->array_capacity) {
+        router->array_capacity = router->array_route_count;
+    }
+    /* If path contains ':', it's a parameterized route — mark trie mode */
+    if (strchr(path, ':')) {
+        if (!router->use_trie) {
+            /* First parameterized route triggers "migration" to trie mode */
+            router->use_trie = 1;
+            router->array_route_count = 0;
+        }
+    }
+
     return UVHTTP_OK;
 }
 
@@ -567,8 +606,19 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
     cache_optimized_router_t* cr = (cache_optimized_router_t*)router;
     uvhttp_method_t method_enum = fast_method_parse(method);
 
-    /* Search in hash table only */
-    uvhttp_request_handler_t handler = find_in_hash_table(cr, path, method_enum);
+    /* Root Cause C fix: check static prefix before hash table lookup */
+    if (router->static_prefix && router->static_context && path) {
+        size_t prefix_len = strlen(router->static_prefix);
+        if (strncmp(path, router->static_prefix, prefix_len) == 0) {
+            match->handler = static_file_handler_wrapper;
+            match->param_count = 0;
+            return UVHTTP_OK;
+        }
+    }
+
+    /* Search in hash table */
+    const char* route_path = NULL;
+    uvhttp_request_handler_t handler = find_in_hash_table_ex(cr, path, method_enum, &route_path);
 
     if (!handler) {
         return UVHTTP_ERROR_NOT_FOUND;
@@ -576,6 +626,43 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
 
     match->handler = handler;
     match->param_count = 0;
+
+    /* Extract parameters by comparing route template with request path.
+     * Route: /items/:item_id  Request: /items/abc123
+     * Result: param name="item_id", value="abc123" */
+    if (route_path && strchr(route_path, ':')) {
+        const char* rp = route_path;
+        const char* pp = path;
+        while (*rp && *pp && match->param_count < MAX_PARAMS) {
+            if (*rp == ':') {
+                /* Extract param name from route template */
+                const char* name_start = rp + 1;
+                const char* name_end = name_start;
+                while (*name_end && *name_end != '/') name_end++;
+                size_t name_len = name_end - name_start;
+                /* Extract param value from request path */
+                const char* val_end = pp;
+                while (*val_end && *val_end != '/') val_end++;
+                if (name_len > 0 && name_len < sizeof(match->params[match->param_count].name)) {
+                    strncpy(match->params[match->param_count].name, name_start, name_len);
+                    match->params[match->param_count].name[name_len] = '\0';
+                    size_t val_len = val_end - pp;
+                    if (val_len < sizeof(match->params[match->param_count].value)) {
+                        strncpy(match->params[match->param_count].value, pp, val_len);
+                        match->params[match->param_count].value[val_len] = '\0';
+                        match->param_count++;
+                    }
+                }
+                rp = name_end;
+                pp = val_end;
+            } else if (*rp == *pp) {
+                rp++;
+                pp++;
+            } else {
+                break;
+            }
+        }
+    }
 
     return UVHTTP_OK;
 }
@@ -586,8 +673,29 @@ uvhttp_error_t uvhttp_parse_path_params(const char* path,
     if (!path || !params || !param_count) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-
     *param_count = 0;
+    char path_copy[UVHTTP_MAX_ROUTE_PATH_LEN];
+    strncpy(path_copy, path, sizeof(path_copy) - 1);
+    path_copy[sizeof(path_copy) - 1] = '\0';
+    char* token = strtok(path_copy, "/");
+    while (token && *param_count < MAX_PARAMS) {
+        if (token[0] == ':') {
+            char* colon = strchr(token + 1, ':');
+            if (colon) {
+                *colon = '\0';
+                strncpy(params[*param_count].name, token + 1,
+                        sizeof(params[*param_count].name) - 1);
+                strncpy(params[*param_count].value, colon + 1,
+                        sizeof(params[*param_count].value) - 1);
+                params[*param_count]
+                    .name[sizeof(params[*param_count].name) - 1] = '\0';
+                params[*param_count]
+                    .value[sizeof(params[*param_count].value) - 1] = '\0';
+                (*param_count)++;
+            }
+        }
+        token = strtok(NULL, "/");
+    }
     return UVHTTP_OK;
 }
 
