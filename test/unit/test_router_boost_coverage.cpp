@@ -24,6 +24,12 @@ extern "C" {
 #include <string.h>
 #include <uv.h>
 
+#if !UVHTTP_FEATURE_ROUTER_CACHE
+/* This test file targets src/uvhttp_router.c internals (trie node pool, array
+ * capacity, static_prefix threshold). When ROUTER_CACHE=ON, the cache
+ * implementation replaces the router and these internal structure tests
+ * are not applicable. */
+
 // ============================================================================
 // Declarations not in any public header - defined in uvhttp_router.c
 // ============================================================================
@@ -116,7 +122,9 @@ TEST_F(RouterBoostCoverageTest, NodePoolExpansion_ManyParamRoutes) {
     EXPECT_EQ(router->use_trie, 1);
 
     // Verify the pool was expanded (capacity should be > 64)
+#if !UVHTTP_FEATURE_ROUTER_CACHE
     EXPECT_GT(router->node_pool_size, 64u);
+#endif
 
     // Verify routes still resolve correctly after pool expansion
     EXPECT_EQ(uvhttp_router_find_handler(router, "/g0/s0/42", "GET"),
@@ -153,7 +161,9 @@ TEST_F(RouterBoostCoverageTest, NodePoolExpansion_ManyUniqueSegments) {
     // Total nodes: 1(root) + 4(a) + 16(b) + 64(c) + 64(id param) = 149
     // This far exceeds 64, forcing multiple pool expansions.
     EXPECT_EQ(router->route_count, 64u);
+#if !UVHTTP_FEATURE_ROUTER_CACHE
     EXPECT_GT(router->node_pool_size, 64u);
+#endif
 
     // Verify routes work
     EXPECT_EQ(uvhttp_router_find_handler(router, "/a0/b0/c0/1", "GET"),
@@ -2002,6 +2012,7 @@ TEST_F(RouterBoostCoverageTest, AddBinaryRoute_WithOtherRoutes) {
               nullptr);
 }
 
+#endif /* !UVHTTP_FEATURE_ROUTER_CACHE */
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
