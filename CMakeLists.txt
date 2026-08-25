@@ -549,9 +549,9 @@ set_target_properties(uvhttp PROPERTIES
 
 # Use modern CMake target_link_libraries specification
 # Use IMPORTED targets approach for linking
-# PRIVATE: Only used internally in uvhttp library, not passed to targets that depend on uvhttp
+# PUBLIC: Only used internally in uvhttp library, not passed to targets that depend on uvhttp
 target_link_libraries(uvhttp
-    PRIVATE
+    PUBLIC
         libuv
         xxhash
         llhttp
@@ -559,7 +559,7 @@ target_link_libraries(uvhttp
 
 # TLS library support (mbedtls)
 if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
-    target_link_libraries(uvhttp PRIVATE mbedtls)
+    target_link_libraries(uvhttp PUBLIC mbedtls)
     target_compile_definitions(uvhttp PRIVATE UVHTTP_ENABLE_TLS)
 endif()
 
@@ -583,6 +583,7 @@ target_include_directories(uvhttp
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/deps>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/deps/uthash/src>
 )
 
 # ============================================================================
