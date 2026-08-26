@@ -49,31 +49,6 @@ UVHTTP_STATIC_ASSERT(sizeof(uvhttp_request_t) < 2 * 1024 * 1024,
                      "uvhttp_request_t size exceeds 2MB limit, consider "
                      "reducing UVHTTP_INLINE_HEADERS_CAPACITY");
 
-/* ========== Buffer Validation Helper Functions ========== */
-
-/**
- * @brief Validate read buffer state to prevent overflow
- * 
- * @param conn Connection to validate
- * @return int 0 if valid, -1 if overflow detected
- * 
- * @note This helper function centralizes buffer overflow validation logic
- * @note Logs error and returns -1 if overflow is detected
- */
-static inline int uvhttp_validate_buffer_state(uvhttp_connection_t* conn) {
-    if (!conn) {
-        return -1;
-    }
-    
-    if (conn->read_buffer_used > conn->read_buffer_size) {
-        UVHTTP_LOG_ERROR("Buffer overflow detected: used=%zu, size=%zu\n",
-                         conn->read_buffer_used, conn->read_buffer_size);
-        return -1;
-    }
-    
-    return 0;
-}
-
 /**
  * @brief Validate buffer capacity for additional data
  * 
