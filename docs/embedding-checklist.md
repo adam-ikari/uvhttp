@@ -7,10 +7,10 @@
 
 ## 1. 构建集成
 
-- [ ] 项目能以 submodule 方式成功克隆：`git clone --recurse-submodules`
-- [ ] 项目能成功编译：`mkdir build && cd build && cmake .. && make`
-- [ ] 嵌入者能通过 CMake `add_subdirectory` 或 `FetchContent` 集成
-- [ ] 嵌入者能选择裁剪特性：`cmake .. -DBUILD_WITH_WEBSOCKET=OFF`
+- [x] 项目能以 submodule 方式成功克隆：`git clone --recurse-submodules`
+- [x] 项目能成功编译：`mkdir build && cd build && cmake .. && make`
+- [x] 嵌入者能通过 CMake `add_subdirectory` 集成
+- [x] 嵌入者能选择裁剪特性：`cmake .. -DBUILD_WITH_WEBSOCKET=OFF`
 - [ ] 所有特性开关组合均能编译（见 [BUILD_CONFIGURATION_MATRIX.md](guide/BUILD_CONFIGURATION_MATRIX.md)）
 
 ## 2. 方法枚举映射
@@ -92,3 +92,4 @@
 | 版本 | 日期 | 变更 |
 |------|------|------|
 | 1.0 | 2026-08-20 | 初始版本，基于 qwrt 嵌入经验 |
+| 1.1 | 2026-08-25 | 第二轮验证：add_subdirectory 集成，CMake 依赖可见性修复 |
