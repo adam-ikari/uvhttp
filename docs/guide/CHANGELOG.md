@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.1] - 2026-08-26
+
+### Added
+- **性能回归门禁** (`scripts/performance/regression_check.py`): CI 基准测试后自动对比内置基线（/ 83K, /json 81K, /large 5.7K RPS），阈值 10%，RPS 低于基线 90% 则 CI 失败（PR #366）
+- **嵌入验证第二轮**: `add_subdirectory` 集成方式验证通过，更新嵌入验证清单（PR #365）
+
+### Changed
+- **CMAKE_C_STANDARD**: 99 → 11，与 PHILOSOPHY.md "实际构建使用 C11" 文档对齐，修复 clang C99 下重复 typedef 编译错误（PR #364）
+- **CMake 依赖可见性**: `libuv`/`xxhash`/`llhttp`/`mbedtls` 从 `PRIVATE` → `PUBLIC` 链接，嵌入者通过 `add_subdirectory` 集成时可正确传播 include 路径（PR #365）
+- **CMake PUBLIC include**: 添加 `deps/uthash/src`（uthash 为 header-only 库，无 IMPORTED target）（PR #365）
+
+### Fixed
+- **ci-fuzz 连续 5 天失败**: clang + C99 + `-Werror` 下同 TU 重复 typedef 报 `-Wtypedef-redefinition`（GCC 不报故主 CI 一直绿）；修复为 C11 对齐 + 删除未使用的 `uvhttp_validate_buffer_state` + fuzz_router 链接补齐 `libminiz.a`/`libxxhash.a`（PR #364）
+- **fuzz_request 过时 harness**: 引用已不存在的 `uvhttp_request_parse`/`UVHTTP_REQUEST_STATE_DONE` API，从 CI 移除（fuzz_router 已覆盖请求解析路径）（PR #364）
+- **嵌入者无法编译**: public headers 引用 `llhttp.h`/`<uv.h>`/`xxhash.h`/`uthash.h`/mbedtls，但这些依赖被标记为 PRIVATE，嵌入者找不到头文件（PR #365）
+
 ## [2.7.0] - 2026-08-21
 
 ### Added
