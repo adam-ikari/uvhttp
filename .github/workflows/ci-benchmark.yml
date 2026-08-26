@@ -152,6 +152,11 @@ jobs:
           wait $SERVER_PID 2>/dev/null
           cat benchmark-results.md
 
+      - name: Regression gate check
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        run: |
+          python3 scripts/performance/regression_check.py benchmark-raw.csv --threshold 0.10
+
       - name: Upload benchmark results
         uses: actions/upload-artifact@v7.0.1
         with:

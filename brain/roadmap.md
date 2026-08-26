@@ -2,7 +2,7 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-08-21T04:27:28"
+updated: "2026-08-26T03:46:46"
 ---
 
 # Roadmap
@@ -15,11 +15,11 @@ gantt
   dateFormat YYYY-MM-DD
   section v2.7.x — 质量与嵌入
   性能基准更新与优化        :done, b1, 2026-08-21, 1d
-  Embedding 验证第二轮      :a3, 2026-08-25, 14d
+  ci-fuzz 修复（C11对齐）  :done, b1b, 2026-08-25, 1d
+  嵌入验证第二轮            :done, a3, 2026-08-25, 3d
   section v2.8.x — 性能与平台
-  性能回归门禁建设          :b0, after b1, 14d
+  性能回归门禁建设          :b0, after b1b, 14d
   io_uring 静态文件路径     :b2, after b0, 21d
-  新嵌入者集成验证          :b3, after a3, 14d
   macOS 支持               :c2, after b2, 21d
   FreeBSD 支持             :c3, after b2, 21d
   section v2.9.x — 生态
@@ -34,7 +34,8 @@ gantt
 | TLS 会话缓存 | P0 | ✅ 已完成 | 重新启用 session cache，默认 2048 条目/24h 超时 |
 | 代码质量修复 | P1 | ✅ 已完成 | 修复 L3-L5：gzip 缓存开销追踪、set_max_entries 扩容、注释拼写 |
 | 性能基准更新 | P2 | ✅ 已完成 | 10 轮多轮测试，稳态 15K RPS (Silver)，峰值 33K RPS (Gold) |
-| 嵌入验证第二轮 | P1 | 📋 待办 | 以 qwrt 的经验为基础，验证更多嵌入场景 |
+| ci-fuzz 修复 | P0 | ✅ 已完成 | C11 对齐 + 链接补齐 + fuzz_request 移除 |
+| 嵌入验证第二轮 | P1 | ✅ 已完成 | add_subdirectory 集成验证，CMake 依赖可见性修复 |
 
 ### v2.8.x — 性能优化与平台扩展（2026 Q4）
 
@@ -55,9 +56,9 @@ gantt
 | Fuzz 测试增强 | P1 | 📋 待办 | 扩展 fuzz 测试覆盖更多协议路径 |
 | 社区贡献指南 | P1 | 📋 待办 | 完善 CONTRIBUTING.md、代码评审流程 |
 
-### 完成项（v2.6.x + v2.7.0）
+### 完成项（v2.6.x + v2.7.x）
 
-- ✅ HTTP/1.1 服务器（稳态 ~15K RPS / 峰值 ~33K RPS）
+- ✅ HTTP/1.1 服务器（稳态 ~83K RPS，CI 基线）
 - ✅ WebSocket 全双工通信（RFC 6455）
 - ✅ TLS 1.2/1.3（mbedtls）
 - ✅ TLS 会话缓存（默认 2048 条目/24h，可配置）
@@ -74,4 +75,6 @@ gantt
 - ✅ 设计哲学文档
 - ✅ Brain 知识库文档
 - ✅ 代码质量修复（L3-L5）
-- ✅ 性能基准更新（10 轮多轮测试，稳态 Silver / 峰值 Gold）
+- ✅ 性能基准更新（CI 基线 83K RPS，Platinum tier）
+- ✅ ci-fuzz 修复（C11 对齐 + 链接补齐）
+- ✅ 嵌入验证第二轮（add_subdirectory 集成验证）
