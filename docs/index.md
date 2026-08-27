@@ -38,7 +38,7 @@ features:
 
 ## 📊 Performance Benchmarks
 
-### Key Metrics (v2.7.0, GitHub CI baseline)
+### Key Metrics (v2.7.1, GitHub CI baseline)
 
 Performance baselines are measured on **GitHub Actions `ubuntu-latest` runners** for hardware consistency. Previous local baselines (v2.6.x, ~20K RPS) were measured on developer hardware with 40%+ variance from CPU thermal throttling. The CI runner eliminates this variance (CV 0.4–2.4%), providing an authoritative, reproducible baseline.
 

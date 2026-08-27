@@ -38,7 +38,7 @@ features:
 
 ## 📊 性能基准
 
-### 关键指标 (v2.7.0，GitHub CI 基准)
+### 关键指标 (v2.7.1，GitHub CI 基准)
 
 性能基准在 **GitHub Actions `ubuntu-latest` runner** 上测量，以确保硬件一致性。此前的本地基准（v2.6.x，约 20K RPS）在开发者硬件上测量，受 CPU 热降频影响方差高达 40%+。CI runner 消除了这一方差（CV 0.4–2.4%），提供了权威的、可复现的基线。
 

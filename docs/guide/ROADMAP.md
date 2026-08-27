@@ -4,10 +4,10 @@
 
 UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP server library for C applications, setting the standard for production-grade, zero-overhead networking solutions.
 
-## Current Status (v2.6.0)
+## Current Status (v2.7.1)
 
 ### ✅ Completed
-- HTTP/1.1 server (23,226 RPS)
+- HTTP/1.1 server (~83,000 RPS, CI baseline)
 - WebSocket with full-duplex communication
 - Zero-copy file transmission
 - LRU caching with preheating
@@ -16,6 +16,10 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 - Comprehensive documentation
 - Input validation and security hardening
 - Error handling
+- TLS session cache (2048 entries, 24h timeout)
+- CI fuzz fixes (C11 alignment)
+- Embedding verification round 2 (add_subdirectory integration)
+- Performance regression gate (10% RPS threshold)
 
 ### 🔄 In Progress
 - Enhanced test coverage (target: 80%)
@@ -23,7 +27,7 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 - Performance optimization
 - Community engagement
 
-## Short-Term Goals (v2.6.0 - Q2 2026)
+## Short-Term Goals (v2.7.1 - Q3 2026)
 
 ### Platform Support
 - [ ] macOS support (ARM64 and Intel)
@@ -59,7 +63,7 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 - [ ] Architecture diagrams
 - [ ] Performance tuning guide
 
-## Medium-Term Goals (v2.7.0 - v2.9.0, 2026)
+## Medium-Term Goals (v2.8.0 - v2.9.0, 2026-2027)
 
 ### Core Enhancements
 - [ ] HTTP/2 production support
@@ -153,13 +157,13 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 ## Quality Metrics
 
 ### Code Quality
-- **Coverage**: 80%+ (current: 42.9%)
+- **Coverage**: 80%+ (current: 86%)
 - **Warnings**: Zero
 - **Tests**: All passing
 - **Security**: No known vulnerabilities
 
 ### Performance
-- **Throughput**: 23,226 RPS (current)
+- **Throughput**: 83,000 RPS (CI baseline)
 - **Latency**: 2.92-43.59ms P50-P99
 - **Memory**: Minimal footprint
 - **CPU**: Efficient usage
@@ -193,7 +197,7 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 - 🔄 Community growth
 
 ### Q3 2026
-- 📋 v2.7.0 release
+- ✅ v2.7.1 release (2026-08-26)
 - 📋 HTTP/2 support
 - 📋 Security enhancements
 - 📋 Observability features

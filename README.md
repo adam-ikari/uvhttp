@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.7.0-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.7.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
@@ -21,7 +21,7 @@ Lightweight & Embeddable • 32-bit Support • Zero-Copy • ASan/UBSan-Verifie
 
 UVHTTP is a production-grade, event-driven HTTP server library built on libuv for modern C applications. It delivers exceptional performance with minimal resource consumption, making it ideal for both high-performance servers and embedded systems.
 
-### Key Metrics (v2.7.0, GitHub CI baseline)
+### Key Metrics (v2.7.1, GitHub CI baseline)
 
 Performance baselines are measured on **GitHub Actions `ubuntu-latest` runners** for hardware consistency. Previous local baselines (v2.6.x, ~20K RPS) were measured on developer hardware with 40%+ variance from CPU thermal throttling. The CI runner eliminates this variance (CV 0.4–2.4%), providing an authoritative, reproducible baseline.
 
@@ -246,7 +246,7 @@ cmake -DCMAKE_USER_CONFIG=ON ..
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello from UVHTTP v2.7.0!");
+    uvhttp_response_set_body(res, "Hello from UVHTTP v2.7.1!");
     return uvhttp_response_send(res);
 }
 
@@ -498,12 +498,16 @@ UVHTTP is built upon excellent open-source projects:
 - [x] Brain knowledge base documentation
 - [x] Platinum tier baseline (83K RPS on CI)
 
+
+### v2.7.1 (Released 2026-08-26)
+- [x] CI fuzz fixes (C11 alignment, PR #364)
+- [x] Embedding CMake dependency visibility (PR #365)
+- [x] Performance regression gate (10% RPS threshold, PR #366)
+
 ### v2.8.0 (Planned)
-- [ ] Performance regression gate (CI)
-- [ ] Embedding verification round 2
 - [ ] io_uring exploration for static file path
-- [ ] New embedder integration docs
 - [ ] Memory allocation optimization
+- [ ] macOS/FreeBSD support
 
 ### v2.9.0 (Future)
 - [ ] FreeBSD support
@@ -515,6 +519,7 @@ UVHTTP is built upon excellent open-source projects:
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.7.1** | 2026-08-26 | CI fuzz fixes (C11 alignment, PR #364), embedding CMake dependency visibility (PR #365), performance regression gate (10% RPS threshold, PR #366) |
 | **v2.7.0** | 2026-08-21 | TLS session cache re-enabled, CI benchmark workflow (ci-benchmark.yml), code quality fixes (L3-L5), brain documentation, Platinum tier baseline (83K RPS on CI) |
 | **v2.6.2** | 2026-08-17 | Connection-limit memory safety fix (uv_close on accept failure), WebSocket RFC 6455/memory-safety fixes (PR #336), uv_strerror_r consistency |
 | **v2.6.0** | 2026-07-31 | Health check endpoint, SSE example, mock testing infrastructure, Makefile build entry |

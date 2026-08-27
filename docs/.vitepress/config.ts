@@ -54,11 +54,11 @@ export default defineConfig({
       name: 'UVHTTP',
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Linux',
-      softwareVersion: "2.6.0",
+      softwareVersion: "2.7.1",
       programmingLanguage: 'C (C99)',
       description: 'Lightweight, embeddable HTTP/1.1 and WebSocket server library built on libuv, with ASan/UBSan-verified memory safety and 32-bit embedded support.',
       url: 'https://adam-ikari.github.io/uvhttp',
-      downloadUrl: "https://github.com/adam-ikari/uvhttp/releases/tag/v2.6.1",
+      downloadUrl: "https://github.com/adam-ikari/uvhttp/releases/tag/v2.7.1",
       author: { '@type': 'Organization', name: 'UVHTTP Contributors' },
       license: 'https://github.com/adam-ikari/uvhttp/blob/main/LICENSE',
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
@@ -89,7 +89,7 @@ export default defineConfig({
             text: 'Download',
             items: [
               { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' },
-              { text: 'Release v2.6.1', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.6.1' }
+              { text: 'Release v2.7.1', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.7.1' }
             ]
           }
         ],
@@ -210,7 +210,7 @@ export default defineConfig({
             text: '下载', 
             items: [
               { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' },
-              { text: 'v2.6.1 发布', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.6.1' }
+              { text: 'v2.7.1 发布', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.7.1' }
             ]
           }
         ],

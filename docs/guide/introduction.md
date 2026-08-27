@@ -92,7 +92,7 @@ UVHTTP is built for portability:
 
 ## 🚀 Performance Characteristics
 
-### Benchmark Results (v2.6.0)
+### Benchmark Results (v2.7.1)
 
 ```yaml
 Configuration:

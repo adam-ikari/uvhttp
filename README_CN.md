@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.7.0-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.7.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
@@ -21,7 +21,7 @@
 
 UVHTTP 是一个基于 libuv 的生产级事件驱动 HTTP 服务器库，专为现代 C 应用设计。它在极低资源消耗下提供卓越性能，既适用于高性能服务器，也适用于嵌入式系统。
 
-### 关键指标 (v2.7.0, GitHub CI 基准)
+### 关键指标 (v2.7.1, GitHub CI 基准)
 
 性能基准在 **GitHub Actions `ubuntu-latest` runner** 上测量，以确保硬件一致性。此前的本地基准（v2.6.x，约 20K RPS）在开发者硬件上测量，受 CPU 热降频影响方差高达 40%+。CI runner 消除了这一方差（CV 0.4–2.4%），提供了权威的、可复现的基线。
 
@@ -246,7 +246,7 @@ cmake -DCMAKE_USER_CONFIG=ON ..
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello from UVHTTP v2.7.0!");
+    uvhttp_response_set_body(res, "Hello from UVHTTP v2.7.1!");
     return uvhttp_response_send(res);
 }
 
@@ -496,12 +496,15 @@ UVHTTP 基于以下优秀的开源项目构建：
 - [x] Brain 知识库文档
 - [x] Platinum 层级基线（CI 上 83K RPS）
 
+### v2.7.1（已发布 2026-08-26）
+- [x] CI fuzz 修复（C11 对齐，PR #364）
+- [x] 嵌入构建 CMake 依赖可见性（PR #365）
+- [x] 性能回归门禁（10% RPS 阈值，PR #366）
+
 ### v2.8.0（计划中）
-- [ ] 性能回归门禁（CI）
-- [ ] 嵌入验证第二轮
 - [ ] io_uring 静态文件路径探索
-- [ ] 新嵌入者集成文档
 - [ ] 内存分配优化
+- [ ] macOS/FreeBSD 支持
 
 ### v2.9.0（未来规划）
 - [ ] FreeBSD 支持
@@ -513,6 +516,7 @@ UVHTTP 基于以下优秀的开源项目构建：
 
 | 版本 | 日期 | 亮点 |
 |---------|------|------------|
+| **v2.7.1** | 2026-08-26 | CI fuzz 修复（C11 对齐，PR #364）、嵌入 CMake 依赖可见性（PR #365）、性能回归门禁（10% RPS 阈值，PR #366） |
 | **v2.7.0** | 2026-08-21 | TLS 会话缓存重新启用、CI 基准工作流 (ci-benchmark.yml)、代码质量修复 (L3-L5)、Brain 文档、Platinum 层级基线（CI 上 83K RPS） |
 | **v2.6.2** | 2026-08-17 | 连接上限内存安全修复（accept 失败时 uv_close）、WebSocket RFC 6455/内存安全修复（PR #336）、uv_strerror_r 一致性 |
 | **v2.6.0** | 2026-07-31 | 健康检查端点、SSE 示例、mock 测试基础设施、Makefile 构建入口 |
