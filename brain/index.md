@@ -1,6 +1,6 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-08-27T07:57:45.558Z._
+_Auto-generated. Last updated 2026-08-27T09:56:04.987Z._
 
 - [benchmark-thermal-throttling](pages/benchmark-thermal-throttling.md) — category: decision | tags: [performance, benchmark, methodology] | <current best understanding — replace this with the real content>
 - [build-system-make-cmake](pages/build-system-make-cmake.md) — category: decision | tags: [build-system, cmake, make, just, embedded] | <current best understanding — replace this with the real content>
@@ -8,6 +8,7 @@ _Auto-generated. Last updated 2026-08-27T07:57:45.558Z._
 - [code-quality-l3-l5-fixes](pages/code-quality-l3-l5-fixes.md) — category: decision | tags: [code-quality, gzip-cache, comments] | <current best understanding — replace this with the real content>
 - [connection-limit-503-memory-safety](pages/connection-limit-503-memory-safety.md) — category: decision | tags: [memory-safety, server, connection-limit] | # 结论
 - [embedding-cmake-public-deps](pages/embedding-cmake-public-deps.md) — category: decision | tags: [embedding, cmake, build, add_subdirectory] | ## 发现
+- [embedding-guide-examples](pages/embedding-guide-examples.md) — category: decision | tags: [embedding, guide, examples, add_subdirectory] | ## 交付物
 - [perf-regression-gate](pages/perf-regression-gate.md) — category: decision | tags: [performance, benchmark, ci, gate] | ## 方案
 - [performance-benchmark-update](pages/performance-benchmark-update.md) — category: decision | tags: [performance, benchmark, release-v2.6.2] | <current best understanding — replace this with the real content>
 - [release-v262](pages/release-v262.md) — category: decision | tags: [release, memory-safety, websocket] | # v2.6.2 发布记录

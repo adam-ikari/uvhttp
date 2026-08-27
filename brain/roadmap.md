@@ -2,7 +2,7 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-08-26T04:45:36"
+updated: "2026-08-27T09:53:09"
 ---
 
 # Roadmap
@@ -19,6 +19,7 @@ gantt
   嵌入验证第二轮            :done, a3, 2026-08-25, 3d
   性能回归门禁建设          :done, b0, 2026-08-26, 1d
   section v2.8.x — 性能与平台
+  新嵌入者接入              :done, a4, 2026-08-27, 1d
   io_uring 静态文件路径     :b2, after b0, 21d
   macOS 支持               :c2, after b2, 21d
   FreeBSD 支持             :c3, after b2, 21d
@@ -42,9 +43,9 @@ gantt
 
 | 目标 | 优先级 | 状态 | 说明 |
 |------|--------|------|------|
+| 新嵌入者接入 | P1 | ✅ 已完成 | 完整嵌入式集成文档（英/中）+ 独立示例 `examples/embedding/` |
 | io_uring 探索 | P2 | 📋 待办 | 评估 io_uring 替代 epoll 在静态文件路径中的收益 |
 | 内存分配优化 | P2 | 📋 待办 | 减少热路径中的分配次数 |
-| 新嵌入者接入 | P1 | 📋 待办 | 完整的嵌入式集成文档 + 示例 |
 | macOS 支持 | P3 | 📋 待办 | kqueue 适配、sendfile 兼容、CI 测试 |
 | FreeBSD 支持 | P3 | 📋 待办 | kqueue 已有经验，适配 FreeBSD 差异 |
 
@@ -79,3 +80,4 @@ gantt
 - ✅ ci-fuzz 修复（C11 对齐 + 链接补齐）
 - ✅ 嵌入验证第二轮（add_subdirectory 集成验证）
 - ✅ 性能回归门禁（10% RPS 阈值，CI 自动失败）
+- ✅ 新嵌入者接入（双语接入指南 + 独立嵌入示例）

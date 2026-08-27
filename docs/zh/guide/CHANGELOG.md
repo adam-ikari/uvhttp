@@ -10,6 +10,11 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
 本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)规范。
 
+## [Unreleased] (v2.8.x)
+
+### 新增
+- **新嵌入者接入**: 完整嵌入式集成文档 `EMBEDDING_GUIDE.md`（英/中），新增独立可运行的嵌入示例项目 `examples/embedding/`（add_subdirectory + FetchContent 两种方式）
+
 ## [2.7.1] - 2026-08-26
 
 ### 新增

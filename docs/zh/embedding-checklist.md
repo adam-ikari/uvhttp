@@ -76,11 +76,13 @@
 
 ## 9. 嵌入者接入清单（新嵌入者专用）
 
-第一次将 uvhttp 作为 submodule 添加时，按以下步骤验证：
+第一次将 uvhttp 作为 submodule 添加时，按以下步骤验证。
+完整的接入指南见 [EMBEDDING_GUIDE.md](guide/EMBEDDING_GUIDE.md)，
+可运行的独立示例项目见 [examples/embedding/](../../examples/embedding/)。
 
 1. [ ] 在嵌入项目的 `CMakeLists.txt` 中添加 `add_subdirectory` 或 `FetchContent`
 2. [ ] 编译嵌入项目，确认 uvhttp 头文件可引用
-3. [ ] 创建最小 HTTP 服务器示例（~20 行），验证 `hello world` 响应
+3. [ ] 创建最小 HTTP 服务器示例（~20 行，可直接参考 `examples/embedding/main.c`），验证 `hello world` 响应
 4. [ ] 运行 uvhttp 的测试套件：`cd <uvhttp>/build && ctest --output-on-failure`
 5. [ ] 在嵌入项目上运行 ASan：`cmake -DENABLE_ASAN=ON .. && make && ./your-server`
 6. [ ] 发送一个完整的 HTTP 请求并验证响应
@@ -92,3 +94,5 @@
 | 版本 | 日期 | 变更 |
 |------|------|------|
 | 1.0 | 2026-08-20 | 初始版本，基于 qwrt 嵌入经验 |
+| 1.1 | 2026-08-25 | 第二轮验证：add_subdirectory 集成，CMake 依赖可见性修复 |
+| 1.2 | 2026-08-27 | 新嵌入者接入：新增独立示例 `examples/embedding/` 与完整指南 `EMBEDDING_GUIDE.md` |
