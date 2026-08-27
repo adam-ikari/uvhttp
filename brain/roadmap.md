@@ -2,7 +2,7 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-08-27T09:53:09"
+updated: "2026-08-27T14:30:28"
 ---
 
 # Roadmap
@@ -21,8 +21,6 @@ gantt
   section v2.8.x — 性能与平台
   新嵌入者接入              :done, a4, 2026-08-27, 1d
   io_uring 静态文件路径     :b2, after b0, 21d
-  macOS 支持               :c2, after b2, 21d
-  FreeBSD 支持             :c3, after b2, 21d
   section v2.9.x — 生态
   文档多语言完善            :c1, after b2, 14d
   Fuzz 测试增强            :c4, after b2, 14d
@@ -46,8 +44,6 @@ gantt
 | 新嵌入者接入 | P1 | ✅ 已完成 | 完整嵌入式集成文档（英/中）+ 独立示例 `examples/embedding/` |
 | io_uring 探索 | P2 | 📋 待办 | 评估 io_uring 替代 epoll 在静态文件路径中的收益 |
 | 内存分配优化 | P2 | 📋 待办 | 减少热路径中的分配次数 |
-| macOS 支持 | P3 | 📋 待办 | kqueue 适配、sendfile 兼容、CI 测试 |
-| FreeBSD 支持 | P3 | 📋 待办 | kqueue 已有经验，适配 FreeBSD 差异 |
 
 ### v2.9.x — 生态扩展（2027 Q1）
 
@@ -56,6 +52,15 @@ gantt
 | 文档完善 | P1 | 📋 待办 | 中文文档同步、API 参考补充 |
 | Fuzz 测试增强 | P1 | 📋 待办 | 扩展 fuzz 测试覆盖更多协议路径 |
 | 社区贡献指南 | P1 | 📋 待办 | 完善 CONTRIBUTING.md、代码评审流程 |
+
+### 最低优先级（长期 / 按需）
+
+> macOS / FreeBSD 平台支持已降级为最低优先级：不进入近期里程碑排期，按需推进。
+
+| 目标 | 优先级 | 状态 | 说明 |
+|------|--------|------|------|
+| macOS 支持 | 最低 | 📋 待办（无排期） | kqueue 适配、sendfile 兼容、CI 测试；按需推进 |
+| FreeBSD 支持 | 最低 | 📋 待办（无排期） | kqueue 已有经验，适配 FreeBSD 差异；按需推进 |
 
 ### 完成项（v2.6.x + v2.7.x）
 
