@@ -1,6 +1,6 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-08-26T04:23:36.643Z._
+_Auto-generated. Last updated 2026-08-27T07:57:45.558Z._
 
 - [benchmark-thermal-throttling](pages/benchmark-thermal-throttling.md) — category: decision | tags: [performance, benchmark, methodology] | <current best understanding — replace this with the real content>
 - [build-system-make-cmake](pages/build-system-make-cmake.md) — category: decision | tags: [build-system, cmake, make, just, embedded] | <current best understanding — replace this with the real content>
@@ -11,6 +11,7 @@ _Auto-generated. Last updated 2026-08-26T04:23:36.643Z._
 - [perf-regression-gate](pages/perf-regression-gate.md) — category: decision | tags: [performance, benchmark, ci, gate] | ## 方案
 - [performance-benchmark-update](pages/performance-benchmark-update.md) — category: decision | tags: [performance, benchmark, release-v2.6.2] | <current best understanding — replace this with the real content>
 - [release-v262](pages/release-v262.md) — category: decision | tags: [release, memory-safety, websocket] | # v2.6.2 发布记录
+- [release-v271](pages/release-v271.md) — category: decision | tags: [release, embedding, ci] | # v2.7.1 发布记录
 - [router-cache-parity](pages/router-cache-parity.md) — category: decision | tags: [router, cache, ci] | # 路由缓存实现必须与非缓存路由器行为对齐
 - [tls-session-cache](pages/tls-session-cache.md) — category: decision | tags: [tls, performance, session-cache] | <current best understanding — replace this with the real content>
 - [websocket-tls-pr335-merge](pages/websocket-tls-pr335-merge.md) — category: decision | tags: [websocket, tls, pr] | ## 背景

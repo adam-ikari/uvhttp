@@ -2,7 +2,7 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-08-26T03:46:46"
+updated: "2026-08-26T04:45:36"
 ---
 
 # Roadmap
@@ -17,8 +17,8 @@ gantt
   性能基准更新与优化        :done, b1, 2026-08-21, 1d
   ci-fuzz 修复（C11对齐）  :done, b1b, 2026-08-25, 1d
   嵌入验证第二轮            :done, a3, 2026-08-25, 3d
+  性能回归门禁建设          :done, b0, 2026-08-26, 1d
   section v2.8.x — 性能与平台
-  性能回归门禁建设          :b0, after b1b, 14d
   io_uring 静态文件路径     :b2, after b0, 21d
   macOS 支持               :c2, after b2, 21d
   FreeBSD 支持             :c3, after b2, 21d
@@ -36,12 +36,12 @@ gantt
 | 性能基准更新 | P2 | ✅ 已完成 | 10 轮多轮测试，稳态 15K RPS (Silver)，峰值 33K RPS (Gold) |
 | ci-fuzz 修复 | P0 | ✅ 已完成 | C11 对齐 + 链接补齐 + fuzz_request 移除 |
 | 嵌入验证第二轮 | P1 | ✅ 已完成 | add_subdirectory 集成验证，CMake 依赖可见性修复 |
+| 性能回归门禁 | P0 | ✅ 已完成 | 10% RPS 阈值，CI 自动失败 |
 
 ### v2.8.x — 性能优化与平台扩展（2026 Q4）
 
 | 目标 | 优先级 | 状态 | 说明 |
 |------|--------|------|------|
-| 性能回归门禁 | P0 | 📋 待办 | 建立 CI 性能回归门禁，防止性能退化 |
 | io_uring 探索 | P2 | 📋 待办 | 评估 io_uring 替代 epoll 在静态文件路径中的收益 |
 | 内存分配优化 | P2 | 📋 待办 | 减少热路径中的分配次数 |
 | 新嵌入者接入 | P1 | 📋 待办 | 完整的嵌入式集成文档 + 示例 |
@@ -78,3 +78,4 @@ gantt
 - ✅ 性能基准更新（CI 基线 83K RPS，Platinum tier）
 - ✅ ci-fuzz 修复（C11 对齐 + 链接补齐）
 - ✅ 嵌入验证第二轮（add_subdirectory 集成验证）
+- ✅ 性能回归门禁（10% RPS 阈值，CI 自动失败）
