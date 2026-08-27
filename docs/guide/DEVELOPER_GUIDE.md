@@ -332,7 +332,8 @@ uvhttp_static_sendfile("/path/to/file", response);
 uvhttp_static_prewarm_cache(ctx, "/static/index.html");
 
 // Use an LRU cache
-uvhttp_lru_cache_t* cache = uvhttp_lru_cache_new(1024);
+cache_manager_t* cache = NULL;
+uvhttp_lru_cache_create(1024 * 1024, 256, 0, &cache);
 ```
 
 ### Memory Optimization
@@ -370,8 +371,8 @@ gdb ./dist/bin/helloworld
 ```c
 #include "uvhttp_logging.h"
 
-// Set the log level
-uvhttp_log_set_level(UVHTTP_LOG_LEVEL_DEBUG);
+// Log output goes to stderr in debug builds
+// (controlled by NDEBUG / UVHTTP_FEATURE_LOGGING at compile time)
 
 // Output logs
 UVHTTP_LOG_DEBUG("Debug message: %s", message);

@@ -106,7 +106,7 @@ add_subdirectory(path/to/uvhttp)
 
 | 变量 | 说明 |
 |----------|-------------|
-| `UVHTTP_VERSION` | 包版本（如 "2.6.0"） |
+| `UVHTTP_VERSION` | 包版本（如 "2.7.1"） |
 | `UVHTTP_INCLUDE_DIRS` | 包含目录 |
 | `UVHTTP_LIBRARIES` | 库名称（uvhttp） |
 | `UVHTTP_LIBRARY_DIRS` | 库目录路径 |

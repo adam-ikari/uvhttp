@@ -72,8 +72,7 @@ int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/plain");
     uvhttp_response_set_body(response, "Hello, World!", strlen("Hello, World!"));
-    uvhttp_response_send(response);
-    return UVHTTP_OK;
+    return uvhttp_response_send(response);
 }
 
 int main() {
@@ -139,3 +138,9 @@ make build
 ## 下一步
 
 - [API 文档](/api/introduction) - 学习完整的 API
+
+## 需要帮助？
+
+- 查阅[文档](/)
+- 打开 [Issue](https://github.com/adam-ikari/uvhttp/issues)
+- 加入 GitHub 讨论

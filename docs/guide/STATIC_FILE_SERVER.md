@@ -109,10 +109,11 @@ int uvhttp_static_prewarm_directory(uvhttp_static_context_t* ctx,
 
 // Direct cache prewarming (low-level)
 uvhttp_error_t uvhttp_lru_cache_prewarm(cache_manager_t* cache,
-                                        const char* file_path,
-                                        const char* content,
+                                        const char* file_path, char* content,
                                         size_t content_length,
-                                        const char* mime_type);
+                                        const char* mime_type,
+                                        time_t last_modified, const char* etag,
+                                        int priority);
 ```
 
 ### Strategy 1: Directory-Based Prewarming by File Type
@@ -255,8 +256,9 @@ void gradual_prewarm(uvhttp_static_context_t* ctx, const char* dir_path) {
     printf("Prewarmed %d additional files\n", prewarmed);
 
     // Continue until cache is full or all files are loaded
-    size_t total_memory, entry_count;
-    uvhttp_lru_cache_get_stats(ctx->cache, &total_memory, &entry_count, NULL);
+    size_t total_memory;
+    int entry_count;
+    uvhttp_lru_cache_get_stats(ctx->cache, &total_memory, &entry_count, NULL, NULL, NULL);
     printf("Cache stats: %zu bytes, %d entries\n", total_memory, entry_count);
 }
 ```
@@ -297,10 +299,7 @@ Monitor cache effectiveness:
 ```c
 void print_cache_stats(uvhttp_static_context_t* ctx) {
     size_t total_memory;
-    int entry_count;
-    double hit_rate;
-
-    uvhttp_lru_cache_get_stats(ctx->cache, &total_memory, &entry_count, NULL);
+    uvhttp_lru_cache_get_stats(ctx->cache, &total_memory, &entry_count, NULL, NULL, NULL);
     hit_rate = uvhttp_lru_cache_get_hit_rate(ctx->cache);
 
     printf("Cache Statistics:\n");

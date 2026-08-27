@@ -114,7 +114,8 @@ uvhttp_lru_cache_init_task_queue(cache, loop);
 
 **After:**
 ```c
-uvhttp_lru_cache_t* cache = uvhttp_lru_cache_create(1000, 3600);
+cache_manager_t* cache = NULL;
+uvhttp_lru_cache_create(1024 * 1024, 1000, 3600, &cache);
 // Cache is ready to use immediately
 ```
 

@@ -158,7 +158,7 @@ UVHTTP 统一响应处理遵循使用者控制原则：
 ## 最佳实践
 
 1. **明确设置 Content-Type**：在使用 `uvhttp_send_unified_response()` 前务必设置正确的 Content-Type
-2. **便捷函数用于明确场景**：当内容类型明确时，可以使用便捷函数如 `uvhttp_send_json_response()`
+2. **便捷函数用于明确场景**：当内容类型明确时，可以使用便捷函数如 `uvhttp_send_unified_response()`（先设置 `Content-Type` 头，例如 `uvhttp_response_set_header(res, "Content-Type", "application/json")`）
 3. **统一错误处理**：使用 `uvhttp_send_error_response()` 错误响应格式一致
 4. **内容验证**：在发送响应前验证内容的正确性
 5. **保持一致性**：在同一个项目中保持 Content-Type 设置的一致性

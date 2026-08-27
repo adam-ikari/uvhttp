@@ -37,7 +37,7 @@ make build
 ### Run Tests
 
 ```bash
-./run_tests.sh
+make test
 ```
 
 ## Your First Server
@@ -46,7 +46,7 @@ Create a file `hello.c`:
 
 ```c
 #include <uvhttp.h>
-#include <uv_loop.h>
+#include <string.h>
 
 int main() {
     // Create event loop
@@ -82,7 +82,7 @@ int main() {
         uvhttp_response_set_header(res, "Content-Type", "text/plain");
 
         // Set body
-        uvhttp_response_set_body(res, "Hello, World!");
+        uvhttp_response_set_body(res, "Hello, World!", strlen("Hello, World!"));
 
         // Send response
         return uvhttp_response_send(res);

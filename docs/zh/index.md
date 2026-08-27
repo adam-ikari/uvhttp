@@ -59,6 +59,7 @@ features:
 - **测试用例**：101 项单元/集成测试，全部通过
 - **CI/CD**：每夜 ASan + UBSan 任务（见 `.github/workflows/ci-nightly.yml`）
 - **一键验证**：`make verify-memory-safety`——参见[内存安全](./MEMORY_SAFETY.md)
+- **高覆盖模块**（≥95%）：uvhttp_utils.c 100.0%、uvhttp_error.c 98.8%、uvhttp_version.c 98.3%、uvhttp_error_helpers.c 95.9%
 
 ### 性能优化
 

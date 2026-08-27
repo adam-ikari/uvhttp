@@ -127,10 +127,10 @@ uvhttp_server_ws_send(ws_conn, text, strlen(text));
 
 // Send a binary message
 const char* binary_data = "\x01\x02\x03\x04";
-uvhttp_server_ws_send_binary(ws_conn, binary_data, 4);
+uvhttp_server_ws_send(ws_conn, binary_data, 4);
 
 // Send a Ping
-uvhttp_server_ws_send_ping(ws_conn, "ping");
+uvhttp_ws_send_ping(NULL, ws_conn, (const uint8_t*)"ping", 4);
 
 // Send a Close
 uvhttp_server_ws_close(ws_conn, 1000, "Normal closure");
@@ -138,34 +138,16 @@ uvhttp_server_ws_close(ws_conn, 1000, "Normal closure");
 
 ## Application-Level Authentication
 
-Since authentication should be implemented at the application layer, you can authenticate during the WebSocket handshake:
+Since authentication should be implemented at the application layer, you can accept or reject connections in the `on_connect` callback. Note that `on_connect` receives only the connection object — the original HTTP request headers (e.g. `Authorization`) are not accessible there. Header-based authentication must be performed at the HTTP layer before the WebSocket upgrade completes:
 
 ```c
-int on_connect(uvhttp_ws_connection_t* ws_conn, void* user_data) {
-    (void)user_data;
-    
-    // Get the HTTP request header
-    const char* auth_header = uvhttp_ws_get_request_header(ws_conn, "Authorization");
-    
-    // Validate the Token
-    if (!auth_header || strncmp(auth_header, "Bearer ", 7) != 0) {
-        printf("Authentication failed: missing or invalid Token\n");
-        return -1;  // Reject the connection
-    }
-    
-    const char* token = auth_header + 7;
-    if (!validate_token(token)) {
-        printf("Authentication failed: invalid Token\n");
-        return -1;
-    }
-    
-    printf("Authentication successful\n");
-    return 0;
-}
-
-bool validate_token(const char* token) {
-    // Implement your token validation logic
-    return strcmp(token, "my-secret-token") == 0;
+int on_connect(uvhttp_ws_connection_t* ws_conn) {
+    // on_connect receives only the WebSocket connection; the original HTTP
+    // request headers (e.g. Authorization) are not available here. Validate
+    // request headers in your HTTP handlers/middleware before the upgrade,
+    // then accept or reject the connection here.
+    printf("WebSocket connection established\n");
+    return 0;  // Accept the connection
 }
 ```
 
@@ -223,7 +205,8 @@ void broadcast_message(const char* message, size_t len) {
 void heartbeat_timer_callback(uv_timer_t* handle) {
     const char* ping_msg = "ping";
     for (int i = 0; i < g_connection_count; i++) {
-        uvhttp_server_ws_send_ping(g_connections[i], ping_msg);
+        uvhttp_ws_send_ping(NULL, g_connections[i], (const uint8_t*)ping_msg,
+                            strlen(ping_msg));
     }
     
     // Reset the timer
