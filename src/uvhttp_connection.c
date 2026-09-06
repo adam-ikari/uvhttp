@@ -482,6 +482,19 @@ uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     return result;
 }
 
+/* Close callback for handles of a connection that failed mid-init in
+ * uvhttp_connection_new: every uv_*_init'ed handle registered on the loop
+ * must be uv_close'd (freeing its memory directly would leave a dangling
+ * handle in the loop queue). Once the last handle has been closed, release
+ * the connection struct itself. Note: this connection was never counted in
+ * server->active_connections, so no decrement here. */
+static void connection_new_close_cb(uv_handle_t* handle) {
+    uvhttp_connection_t* c = (uvhttp_connection_t*)handle->data;
+    if (c && --c->close_pending == 0) {
+        uvhttp_free(c);
+    }
+}
+
 /* create new HTTP connection object (single-threaded event-driven)
  * server: HTTP server that owns this connection
  * return: connection object, all operations are processed in event loop thread
@@ -524,7 +537,10 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
 
     // initialize timeout timer
     if (uv_timer_init(server->loop, &c->timeout_timer) != 0) {
-        uvhttp_free(c);
+        /* idle_handle is already registered on the loop: uv_close it and
+         * let the close callback release the connection memory. */
+        c->close_pending = 1;
+        uv_close((uv_handle_t*)&c->idle_handle, connection_new_close_cb);
         return UVHTTP_ERROR_IO_ERROR;
     }
     c->timeout_timer.data = c;
@@ -546,10 +562,12 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
 
     // TCP initialize - complete implementation
     if (uv_tcp_init(server->loop, &c->tcp_handle) != 0) {
-        /* Note: uv_close is async, cannot be used here
-         * For initialization failure cases, just release memory directly
-         * Because these handles have not been added to event loop yet */
-        uvhttp_free(c);
+        /* idle + timeout handles are already registered on the loop:
+         * release them via uv_close; the close callback frees the
+         * connection memory once both handles are closed. */
+        c->close_pending = 2;
+        uv_close((uv_handle_t*)&c->idle_handle, connection_new_close_cb);
+        uv_close((uv_handle_t*)&c->timeout_timer, connection_new_close_cb);
         return UVHTTP_ERROR_IO_ERROR;
     }
     c->tcp_handle.data = c;
@@ -560,7 +578,10 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
     c->read_buffer_size = UVHTTP_READ_BUFFER_SIZE;
     c->read_buffer = uvhttp_alloc(c->read_buffer_size);
     if (!c->read_buffer) {
-        uvhttp_free(c);
+        c->close_pending = 3;
+        uv_close((uv_handle_t*)&c->idle_handle, connection_new_close_cb);
+        uv_close((uv_handle_t*)&c->timeout_timer, connection_new_close_cb);
+        uv_close((uv_handle_t*)&c->tcp_handle, connection_new_close_cb);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     c->read_buffer_used = 0;
@@ -575,7 +596,11 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
         c->tls_cipher_buf = uvhttp_alloc(c->read_buffer_size);
         if (!c->tls_cipher_buf) {
             uvhttp_free(c->read_buffer);
-            uvhttp_free(c);
+            c->read_buffer = NULL;
+            c->close_pending = 3;
+            uv_close((uv_handle_t*)&c->idle_handle, connection_new_close_cb);
+            uv_close((uv_handle_t*)&c->timeout_timer, connection_new_close_cb);
+            uv_close((uv_handle_t*)&c->tcp_handle, connection_new_close_cb);
             return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
         c->tls_cipher_cap = c->read_buffer_size;
@@ -586,15 +611,24 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
     c->request = uvhttp_alloc(sizeof(uvhttp_request_t));
     if (!c->request) {
         uvhttp_free(c->read_buffer);
-        uvhttp_free(c);
+        c->read_buffer = NULL;
+        c->close_pending = 3;
+        uv_close((uv_handle_t*)&c->idle_handle, connection_new_close_cb);
+        uv_close((uv_handle_t*)&c->timeout_timer, connection_new_close_cb);
+        uv_close((uv_handle_t*)&c->tcp_handle, connection_new_close_cb);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
 
     // correctly initialize request object (contains HTTP parser)
     if (uvhttp_request_init(c->request, &c->tcp_handle) != 0) {
         uvhttp_free(c->request);
+        c->request = NULL;
         uvhttp_free(c->read_buffer);
-        uvhttp_free(c);
+        c->read_buffer = NULL;
+        c->close_pending = 3;
+        uv_close((uv_handle_t*)&c->idle_handle, connection_new_close_cb);
+        uv_close((uv_handle_t*)&c->timeout_timer, connection_new_close_cb);
+        uv_close((uv_handle_t*)&c->tcp_handle, connection_new_close_cb);
         return UVHTTP_ERROR_IO_ERROR;
     }
 
@@ -602,8 +636,13 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
     if (!c->response) {
         uvhttp_request_cleanup(c->request);
         uvhttp_free(c->request);
+        c->request = NULL;
         uvhttp_free(c->read_buffer);
-        uvhttp_free(c);
+        c->read_buffer = NULL;
+        c->close_pending = 3;
+        uv_close((uv_handle_t*)&c->idle_handle, connection_new_close_cb);
+        uv_close((uv_handle_t*)&c->timeout_timer, connection_new_close_cb);
+        uv_close((uv_handle_t*)&c->tcp_handle, connection_new_close_cb);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
 
@@ -611,10 +650,14 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
     if (uvhttp_response_init(c->response, &c->tcp_handle) != 0) {
         uvhttp_request_cleanup(c->request);
         uvhttp_free(c->request);
-        uvhttp_free(c->response);  // release directly, no cleanup needed (due
-                                   // to initialization failure)
+        uvhttp_free(c->response); /* no cleanup: init failed */
+        c->response = NULL;
         uvhttp_free(c->read_buffer);
-        uvhttp_free(c);
+        c->read_buffer = NULL;
+        c->close_pending = 3;
+        uv_close((uv_handle_t*)&c->idle_handle, connection_new_close_cb);
+        uv_close((uv_handle_t*)&c->timeout_timer, connection_new_close_cb);
+        uv_close((uv_handle_t*)&c->tcp_handle, connection_new_close_cb);
         return UVHTTP_ERROR_IO_ERROR;
     }
 
@@ -692,6 +735,25 @@ static void uvhttp_connection_free_resources(uvhttp_connection_t* conn) {
         conn->on_destroy = NULL;
         cb(conn);
     }
+#if UVHTTP_FEATURE_WEBSOCKET
+    /* Any path that reaches free_resources (timeout, read error, EOF) must
+     * tear down the WebSocket wrapper too. The WS-specific close path
+     * (uvhttp_connection_websocket_close) already cleared both fields before
+     * closing the handles, so this is a no-op there. */
+    if (conn->is_websocket && conn->ws_connection) {
+        uvhttp_ws_connection_t* ws_conn =
+            (uvhttp_ws_connection_t*)conn->ws_connection;
+        conn->ws_connection = NULL;
+        conn->is_websocket = 0;
+        if (conn->server) {
+            uvhttp_server_ws_remove_connection(conn->server, ws_conn);
+        }
+        if (ws_conn->on_close) {
+            ws_conn->on_close(ws_conn, 1000, "");
+        }
+        uvhttp_ws_connection_free(ws_conn);
+    }
+#endif
 
     /* Free read buffer */
     if (conn->read_buffer) {

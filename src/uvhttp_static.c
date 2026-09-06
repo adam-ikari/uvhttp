@@ -868,11 +868,23 @@ int uvhttp_static_check_conditional_request(void* request, const char* etag,
     const char* if_modified_since =
         uvhttp_request_get_header(request, "If-Modified-Since");
     if (if_modified_since && last_modified > 0) {
-        struct tm tm = {0};
-        if (strptime(if_modified_since, "%a, %d %b %Y %H:%M:%S GMT", &tm)) {
-            time_t if_time = mktime(&tm);
-            if (if_time >= last_modified) {
-                return 1; /* return304 */
+        /* RFC 7231 §7.1.1.1: recipients MUST accept all three HTTP-date
+         * formats. Parse as GMT and convert with timegm (mktime would apply
+         * the local timezone and skew the comparison). */
+        static const char* const http_date_formats[] = {
+            "%a, %d %b %Y %H:%M:%S GMT",  /* IMF-fixdate */
+            "%A, %d-%b-%y %H:%M:%S GMT",  /* obsolete RFC 850 */
+            "%a %b %e %H:%M:%S %Y"        /* asctime */
+        };
+        size_t i;
+        for (i = 0; i < sizeof(http_date_formats) / sizeof(char*); i++) {
+            struct tm tm = {0};
+            if (strptime(if_modified_since, http_date_formats[i], &tm)) {
+                time_t if_time = timegm(&tm);
+                if (if_time >= last_modified) {
+                    return 1; /* return304 */
+                }
+                break;
             }
         }
     }

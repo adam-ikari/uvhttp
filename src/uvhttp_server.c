@@ -205,12 +205,21 @@ static void on_connection(uv_stream_t* server_handle, int status) {
         return;
     }
 
+    /* Count the connection BEFORE accept: the failure path below goes
+     * uvhttp_connection_free -> uvhttp_connection_close -> on_handle_close,
+     * which decrements active_connections unconditionally. Incrementing only
+     * after a successful accept left failure-path decrements unpaired,
+     * underflowing the size_t counter (-> SIZE_MAX) and locking the server
+     * into a permanent 503 "connection limit reached" state. */
+    server->active_connections++;
+
     /* acceptconnection */
     int accept_result =
         uv_accept(server_handle, (uv_stream_t*)&conn->tcp_handle);
 
     if (accept_result != 0) {
         UVHTTP_LOG_ERROR("Failed to accept connection: %d\n", accept_result);
+        /* free -> close -> on_handle_close pairs the increment above */
         uvhttp_connection_free(conn);
         return;
     }
@@ -220,9 +229,6 @@ static void on_connection(uv_stream_t* server_handle, int status) {
 
     /* Request and response objects have been initialized when connection was
      * created */
-
-    /* Single-threaded safe connection count increment */
-    server->active_connections++;
 
     /* Start connection process (TLS handshake or HTTP read)
      * All subsequent processes are done asynchronously through libuv callback
@@ -379,12 +385,26 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
      * Fix: Regardless of whether owning loop, need to run loop to process close
      * callback Use UV_RUN_ONCE instead of UV_RUN_NOWAIT to ensure callback is
      * executed */
+    /* Drain the loop (bounded) so every still-active connection's handles
+     * are closed and their on_handle_close callbacks fire NOW, while the
+     * server and the resources it owns (router, gzip cache, TLS context)
+     * are still alive. Without this, open connections leak EBUSY handles at
+     * uv_loop_close time, or fire callbacks into already-freed resources. */
     if (server->loop) {
-        for (int index = 0; index < UVHTTP_SERVER_CLEANUP_LOOP_ITERATIONS;
+        for (int index = 0; index < UVHTTP_SERVER_CLEANUP_LOOP_ITERATIONS &&
+                            uv_loop_alive(server->loop);
              index++) {
             uv_run(server->loop, UV_RUN_ONCE);
         }
     }
+    /* TODO(structural): the server keeps only an active_connections counter,
+     * no connection list, so live connections' handles cannot be force-closed
+     * here — the drain above only completes close callbacks already in flight
+     * (listen handle, 503 temp clients, connections mid-close). Fully closing
+     * live HTTP connections before uv_loop_close requires a connection
+     * registry on the server; adding one was ruled out as too invasive for
+     * this fix. Callers that own live connections should close them before
+     * uvhttp_server_free, else uv_loop_close reports UV_EBUSY. */
 
     /* Clean connection pool */
     if (server->router) {
