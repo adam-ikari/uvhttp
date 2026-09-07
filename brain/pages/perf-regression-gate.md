@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [performance, benchmark, ci, gate]
 created: "2026-08-26T04:20:15"
-updated: "2026-08-26T04:23:36"
+updated: "2026-09-07T07:13:56"
 ---
 
 <!-- compiled_truth -->
@@ -43,3 +43,9 @@ updated: "2026-08-26T04:23:36"
   summary: "性能回归门禁：10% RPS 阈值 CI 失败"
   source: "性能回归门禁建设会话"
   affects: [perf-regression-gate]
+
+- time: 2026-09-07T07:13:56
+  kind: note
+  summary: "触发条件修正：pre-release 分支 push 是死配置，改为 release 事件（published）+ PR benchmark 标签；趋势数据仅 pre-release 落库。详见 [[release-process-benchmark-gate]]"
+  source: "CI/发布配置与真实流程脱节修复"
+  affects: [release-process-benchmark-gate]
