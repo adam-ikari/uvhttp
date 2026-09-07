@@ -439,6 +439,8 @@ if(BUILD_WITH_COMPRESSION)
     message(STATUS "Compression support: ENABLED (miniz drop-in)")
 endif()
 
+if(BUILD_TESTS)
+
 # ============================================================================
 # googletest
 # ============================================================================
@@ -491,6 +493,9 @@ add_custom_target(gtest
     COMMAND ${CMAKE_COMMAND} --build ${GTEST_BUILD_DIR} -j
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest
 )
+
+endif()
+
 
 # ============================================================================
 # cJSON
@@ -554,7 +559,9 @@ message(STATUS "cjson: ${CJSON_LIB}")
 if(BUILD_WITH_MIMALLOC)
     message(STATUS "mimalloc: ${MIMALLOC_LIB}")
 endif()
-message(STATUS "googletest: ${GTEST_LIBS}")
+if(BUILD_TESTS)
+    message(STATUS "googletest: ${GTEST_LIBS}")
+endif()
 message(STATUS "========================================")
 message(STATUS "")
 

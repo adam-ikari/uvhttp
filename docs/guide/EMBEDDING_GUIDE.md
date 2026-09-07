@@ -248,6 +248,7 @@ cmake -DBUILD_WITH_WEBSOCKET=OFF -DBUILD_WITH_HTTPS=OFF ..
 | `UVHTTP_ALLOCATOR_TYPE` | 0 | Allocator: `0` system, `1` mimalloc, `2` custom |
 | `BUILD_EXAMPLES` | OFF | uvhttp's own examples |
 | `BUILD_BENCHMARKS` | ON | uvhttp's benchmarks (disable when embedding) |
+| `BUILD_TESTS` | ON | uvhttp's unit/integration tests (disable when embedding) |
 
 \* `BUILD_WITH_MIMALLOC` defaults depend on `UVHTTP_ALLOCATOR_TYPE`; see
 `CMakeLists.txt` for the exact rule.
@@ -255,7 +256,7 @@ cmake -DBUILD_WITH_WEBSOCKET=OFF -DBUILD_WITH_HTTPS=OFF ..
 When embedding, also pass:
 
 ```bash
-cmake -DBUILD_BENCHMARKS=OFF -DBUILD_EXAMPLES=OFF ..
+cmake -DBUILD_BENCHMARKS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=OFF ..
 ```
 
 See [Build Configuration Matrix](./BUILD_CONFIGURATION_MATRIX.md) and

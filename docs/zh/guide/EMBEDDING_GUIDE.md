@@ -241,6 +241,7 @@ cmake -DBUILD_WITH_WEBSOCKET=OFF -DBUILD_WITH_HTTPS=OFF ..
 | `UVHTTP_ALLOCATOR_TYPE` | 0 | 分配器：`0` 系统、`1` mimalloc、`2` 自定义 |
 | `BUILD_EXAMPLES` | OFF | uvhttp 自带示例 |
 | `BUILD_BENCHMARKS` | ON | uvhttp 自带基准（嵌入时建议关闭） |
+| `BUILD_TESTS` | ON | uvhttp 单元/集成测试（嵌入时关闭） |
 
 \* `BUILD_WITH_MIMALLOC` 默认值取决于 `UVHTTP_ALLOCATOR_TYPE`，精确规则见
 `CMakeLists.txt`。
@@ -248,7 +249,7 @@ cmake -DBUILD_WITH_WEBSOCKET=OFF -DBUILD_WITH_HTTPS=OFF ..
 嵌入时建议同时传入：
 
 ```bash
-cmake -DBUILD_BENCHMARKS=OFF -DBUILD_EXAMPLES=OFF ..
+cmake -DBUILD_BENCHMARKS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=OFF ..
 ```
 
 完整选项集见 [构建配置矩阵](./BUILD_CONFIGURATION_MATRIX.md) 与
