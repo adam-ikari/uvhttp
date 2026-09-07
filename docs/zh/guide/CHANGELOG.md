@@ -1,6 +1,6 @@
 ---
 title: 更新日志
-description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，遵循语义化版本规范。涵盖 1.0.0 至 2.7.1 各版本的新增、修复、变更、安全与性能改进，以及生产级内存安全验证。
+description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，遵循语义化版本规范。涵盖 1.0.0 至 2.7.2 各版本的新增、修复、变更、安全与性能改进，以及生产级内存安全验证。
 ---
 
 # 更新日志
@@ -19,21 +19,20 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 
 ### 修复
 
-#### P0/P1 — 13 项关键缺陷修复（commit a3bc755）
+#### P0/P1 — 11 项关键缺陷修复（commit a3bc755）
 - **query string 路由匹配**: 参数化路由匹配前剥离 query string，`/users/1?tab=2` 不再误匹配除 `/users/:id` 之外的路径
 - **MAX_PARAMS 栈溢出边界**: 超出 `MAX_PARAMS` 时参数写入不再越界，路由参数提取受边界保护
 - **on_url/on_header_field 跨 chunk 分段累积**: 解析回调跨 chunk 边界的分段数据正确累积，不再截断/错位
 - **migrate_to_trie 失败悬垂指针**: trie 迁移失败路径修复悬垂指针，路由表切换后不再访问已释放内存
 - **WS 非 TLS send 短写截帧**: WebSocket 非 TLS 路径 send 短写时循环重发，不再截断帧
 - **CLOSE 后继续处理帧（RFC 6455）**: 收到 CLOSE 帧后停止处理后续数据帧，符合 RFC 6455
-- **If-Modified-Since 时区错误**: `mktime` → `timegm`，时间比较使用 UTC 避免本地时区偏移
+- **If-Modified-Since 时区错误与 3 种日期格式**: `mktime` → `timegm`（UTC 比较避免本地时区偏移），兼容 RFC 7231 的 IMF-fixdate / RFC 850 / asctime 三种 HTTP-date 格式
 - **accept 失败 active_connections 下溢**: `uv_accept` 失败时连接计数不再下溢，永久 503 问题消除
 - **connection_new 失败路径 UAF**: 连接创建失败路径修复 use-after-free
 - **server_free 不排空在途 close 回调**: 释放时正确排空在途 close 回调，避免 libuv 访问已释放内存
 - **超时路径 WS wrapper 泄漏**: 超时路径下 WebSocket wrapper 不再泄漏
-- **TLS send 忙等降限**: TLS 非阻塞 send 忙等降为有界重试，减少 CPU 空转
 
-#### P2/P3 — 21 项改进与修复（commit a0eae2b）
+#### P2/P3 — 11 项改进与修复（commit a0eae2b）
 - **TLS EINTR 重试**: TLS send/recv 遇到 `EINTR` 自动重试
 - **If-None-Match weak/多值 ETag**: 支持 weak comparison 与多值 ETag 列表
 - **目录列表 TOCTOU**: 静态目录列表路径修复 TOCTOU 竞态
@@ -45,7 +44,6 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 - **死代码清理**: 移除失效代码路径
 - **listen 参数校验**: `uvhttp_server_listen` 校验非法参数（端口 0 / 空地址）
 - **server_stop 幂等化**: `uvhttp_server_stop` 重复调用安全
-- **If-Modified-Since 支持 3 种 HTTP-date 格式**: RFC 7231 的 IMF-fixdate / RFC 850 / asctime 三种格式
 
 
 ## [2.7.1] - 2026-08-26
