@@ -55,6 +55,7 @@ endif()
 
 option(BUILD_EXAMPLES "Build example programs" OFF)
 option(BUILD_BENCHMARKS "Build performance benchmark programs" ON)
+option(BUILD_TESTS "Build unit and integration tests" ON)
 
 # ========== Build Mode Options ==========
 # These options control the build mode (debug, release, coverage)
@@ -586,6 +587,8 @@ target_include_directories(uvhttp
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/deps/uthash/src>
 )
 
+if(BUILD_TESTS)
+
 # ============================================================================
 # Add libuv mock library for testing
 # ============================================================================
@@ -844,6 +847,9 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stress.c)
     target_link_libraries(test_stress ${LIBS})
 endif()
 
+endif()
+
+
 # ============================================================================
 # Build example programs
 # ============================================================================
@@ -875,6 +881,8 @@ message(STATUS "Coverage: ${ENABLE_COVERAGE}")
 message(STATUS "Examples: ${BUILD_EXAMPLES}")
 message(STATUS "========================================")
 message(STATUS "")
+
+if(BUILD_TESTS)
 
 # ============================================================================
 # Integration tests
@@ -943,6 +951,9 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
     endif()
 endforeach()
 
+endif()
+
+
 # ============================================================================
 # Performance benchmarks
 # ============================================================================
@@ -953,7 +964,11 @@ endif()
 # ============================================================================
 # Test and coverage targets
 # ============================================================================
-if(ENABLE_COVERAGE)
+# Coverage targets run the test executables, so they require BUILD_TESTS=ON.
+if(ENABLE_COVERAGE AND NOT BUILD_TESTS)
+    message(WARNING "ENABLE_COVERAGE=ON requires BUILD_TESTS=ON; coverage targets disabled")
+endif()
+if(BUILD_TESTS AND ENABLE_COVERAGE)
     # Collect all test executables
     file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
     list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*disabled.*")
