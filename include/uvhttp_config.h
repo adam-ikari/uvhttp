@@ -53,6 +53,10 @@ typedef struct {
                                       */
     int rate_limit_window; /* Rate limiting time window, default 60 seconds,
                               balance accuracy and performance */
+    int trust_proxy_headers; /* Trust X-Forwarded-For/X-Real-IP when resolving
+                              * client IP. Default 0 (spoof-safe): always use
+                              * the TCP peer address. Enable only behind a
+                              * trusted reverse proxy. */
 
     /* WebSocket configuration */
     int websocket_max_frame_size; /* Maximum frame size, default 16MB, RFC 6455

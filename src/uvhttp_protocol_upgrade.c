@@ -65,10 +65,12 @@ uvhttp_error_t uvhttp_server_register_protocol_upgrade(
         existing = existing->next;
     }
 
-    /* Check protocol count limit */
+    /* Capacity limit — parameters are valid but the registry is full.
+     * UVHTTP_ERROR_INVALID_PARAM is returned for API compatibility; the
+     * real semantics here are "capacity exceeded", not "bad argument". */
     if (registry->protocol_count >= 10) {
-        UVHTTP_LOG_WARN("Too many protocols registered (max 10), performance "
-                        "may be affected");
+        UVHTTP_LOG_WARN("Protocol registry full (max 10), cannot register: %s",
+                        protocol_name);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
@@ -167,18 +169,32 @@ uvhttp_error_t uvhttp_connection_transfer_ownership(
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* Validate connection state */
+    /* Validate connection state — must be in HTTP processing, not already
+     * upgraded or closed. (The old "already upgraded" check below was dead
+     * code: the line above already returned for any non-HTTP_PROCESSING
+     * state, including PROTOCOL_UPGRADED.) */
     if (conn->state != UVHTTP_CONN_STATE_HTTP_PROCESSING) {
         UVHTTP_LOG_ERROR("Invalid connection state for ownership transfer: %d",
                          conn->state);
         return UVHTTP_ERROR_CONNECTION_INIT;
     }
 
-    /* Check if already upgraded */
-    if (conn->state == UVHTTP_CONN_STATE_PROTOCOL_UPGRADED) {
-        UVHTTP_LOG_ERROR("Connection already upgraded");
+    /* Get and validate file descriptor BEFORE stopping I/O. If this fails
+     * the connection must remain in its normal HTTP_PROCESSING state with
+     * reading and timers active — otherwise it enters a permanent limbo
+     * (no reader, no timeout, no owner). */
+    int fd = 0;
+    int result = uv_fileno((uv_handle_t*)&conn->tcp_handle, &fd);
+    if (result != 0) {
+        UVHTTP_LOG_ERROR("Failed to get file descriptor");
+        return UVHTTP_ERROR_IO_ERROR;
+    }
+    if (fd < 0) {
+        UVHTTP_LOG_ERROR("Invalid file descriptor: %d", fd);
         return UVHTTP_ERROR_CONNECTION_INIT;
     }
+
+    /* --- Point of no return: mutate connection state --- */
 
     /* Stop HTTP reading */
     uv_read_stop((uv_stream_t*)&conn->tcp_handle);
@@ -186,20 +202,6 @@ uvhttp_error_t uvhttp_connection_transfer_ownership(
     /* Stop timeout timer */
     if (!uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
         uv_timer_stop(&conn->timeout_timer);
-    }
-
-    /* Get file descriptor */
-    int fd = 0;
-    int result = uv_fileno((uv_handle_t*)&conn->tcp_handle, &fd);
-    if (result != 0) {
-        UVHTTP_LOG_ERROR("Failed to get file descriptor");
-        return UVHTTP_ERROR_IO_ERROR;
-    }
-
-    /* Validate file descriptor */
-    if (fd < 0) {
-        UVHTTP_LOG_ERROR("Invalid file descriptor: %d", fd);
-        return UVHTTP_ERROR_CONNECTION_INIT;
     }
 
     /* Mark connection as upgraded */
@@ -219,8 +221,9 @@ uvhttp_error_t uvhttp_connection_set_lifecycle(
     if (!conn || !lifecycle) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-
-    /* Allocate lifecycle callback structure */
+    /* Reuse existing allocation if present (zero extra alloc). The struct
+     * currently holds only function pointers + void* user_data, so an
+     * in-place overwrite is safe — no owned heap pointers to leak. */
     if (!conn->lifecycle) {
         conn->lifecycle = uvhttp_alloc(sizeof(uvhttp_connection_lifecycle_t));
         if (!conn->lifecycle) {
@@ -228,8 +231,6 @@ uvhttp_error_t uvhttp_connection_set_lifecycle(
             return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
     }
-
-    /* Copy lifecycle callbacks */
     memcpy(conn->lifecycle, lifecycle, sizeof(uvhttp_connection_lifecycle_t));
 
     return UVHTTP_OK;

@@ -285,26 +285,30 @@ TEST_F(RequestBoostTest, GetClientIp_NoHeadersNoClient_ReturnsDefault) {
     EXPECT_STREQ(ip, "127.0.0.1");
 }
 
-TEST_F(RequestBoostTest, GetClientIp_WithXForwardedFor_ReturnsFirstIp) {
+TEST_F(RequestBoostTest, GetClientIp_WithXForwardedFor_Untrusted_IgnoresHeader) {
+    /* Default (trust_proxy_headers=0): proxy headers are spoofable and
+     * must not override the TCP peer address (Fix 5). With no connection
+     * the fallback is the default loopback string. */
     add_test_header("X-Forwarded-For", "10.0.0.1, 10.0.0.2, 10.0.0.3");
     const char* ip = uvhttp_request_get_client_ip(req);
     ASSERT_NE(ip, nullptr);
-    EXPECT_STREQ(ip, "10.0.0.1");
+    EXPECT_STREQ(ip, "127.0.0.1");
 }
 
-TEST_F(RequestBoostTest, GetClientIp_WithXForwardedForSingle_ReturnsIp) {
+TEST_F(RequestBoostTest, GetClientIp_WithXForwardedForSingle_Untrusted_IgnoresHeader) {
     add_test_header("X-Forwarded-For", "192.168.1.100");
     const char* ip = uvhttp_request_get_client_ip(req);
     ASSERT_NE(ip, nullptr);
-    EXPECT_STREQ(ip, "192.168.1.100");
+    EXPECT_STREQ(ip, "127.0.0.1");
 }
 
-TEST_F(RequestBoostTest, GetClientIp_WithXRealIp_ReturnsIp) {
+TEST_F(RequestBoostTest, GetClientIp_WithXRealIp_Untrusted_IgnoresHeader) {
     add_test_header("X-Real-IP", "172.16.0.50");
     const char* ip = uvhttp_request_get_client_ip(req);
     ASSERT_NE(ip, nullptr);
-    EXPECT_STREQ(ip, "172.16.0.50");
+    EXPECT_STREQ(ip, "127.0.0.1");
 }
+
 
 // ========== uvhttp_request_get_header_count ==========
 

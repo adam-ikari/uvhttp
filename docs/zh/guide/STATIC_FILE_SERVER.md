@@ -198,15 +198,15 @@ uvhttp_static_config_t advanced_config = {
 
 ### 工具函数
 
-#### `const char* uvhttp_static_get_mime_type(const char* file_path)`
+#### `uvhttp_result_t uvhttp_static_get_mime_type(const char* file_path, char* mime_type, size_t mime_type_size)`
 
 根据文件路径获取 MIME 类型。
 
-#### `int uvhttp_static_is_safe_path(const char* root_dir, const char* file_path)`
+#### `int uvhttp_static_resolve_safe_path(const char* root_dir, const char* file_path, char* resolved_path, size_t buffer_size)`
 
 检查文件路径是否安全（防止目录遍历）。
 
-#### `char* uvhttp_static_generate_etag(const char* file_path, size_t file_size, time_t mtime)`
+#### `uvhttp_result_t uvhttp_static_generate_etag(const char* file_path, time_t last_modified, size_t file_size, char* etag, size_t buffer_size)`
 
 为文件生成 ETag 值。
 
@@ -261,14 +261,12 @@ static const uvhttp_mime_mapping_t default_mime_types[] = {
 - 无需配置扩展名列表
 - 编译时确定，无运行时解析开销
 - 基于 MIME 类型而非简单扩展名匹配
-- 支持添加新的 MIME 类型映射
+- MIME 类型由内置映射表（`uvhttp_mime_mapping_t`）驱动，无需配置扩展名列表
 
 ### 扩展控制
 
-1. **添加自定义 MIME 类型**：
-```c
-uvhttp_add_mime_mapping(".custom", "application/custom");
-```
+1. **MIME 类型映射**：
+   MIME 类型由内置映射表（`uvhttp_mime_mapping_t`）驱动。当前库未提供运行时新增映射的 API；如需自定义类型，请在源码的 MIME 映射表中添加条目后重新编译。
 
 2. **使用请求处理器**：
 ```c
@@ -435,6 +433,248 @@ printf("  未命中次数: %zu\n", miss_count);
 printf("  命中率: %.2f%%\n",
        (double)hit_count / (hit_count + miss_count) * 100);
 ```
+
+## 缓存预热策略
+
+UVHTTP 提供缓存预热 API，应用层可据此为自己的使用场景实现策略。框架提供基础设施，策略由应用决定。
+
+### 可用的预热 API
+
+```c
+// 预热单个文件
+uvhttp_result_t uvhttp_static_prewarm_cache(uvhttp_static_context_t* ctx,
+                                            const char* file_path);
+
+// 预热整个目录
+int uvhttp_static_prewarm_directory(uvhttp_static_context_t* ctx,
+                                    const char* dir_path, int max_files);
+
+// 直接预热缓存（底层）
+uvhttp_error_t uvhttp_lru_cache_prewarm(cache_manager_t* cache,
+                                        const char* file_path, char* content,
+                                        size_t content_length,
+                                        const char* mime_type,
+                                        time_t last_modified, const char* etag,
+                                        int priority);
+```
+
+### 策略 1：按文件类型预热目录
+
+从目录预加载常见的 Web 资源类型：
+
+```c
+int prewarm_web_assets(uvhttp_static_context_t* ctx, const char* dir_path) {
+    const char* web_extensions[] = {".css", ".js", ".png", ".jpg", ".svg", ".woff2"};
+    int prewarmed_count = 0;
+
+    DIR* dir = opendir(dir_path);
+    if (!dir) return -1;
+
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != NULL && prewarmed_count < 100) {
+        const char* ext = strrchr(entry->d_name, '.');
+        if (!ext) continue;
+
+        // 检查扩展名是否为 Web 资源
+        for (size_t i = 0; i < sizeof(web_extensions) / sizeof(web_extensions[0]); i++) {
+            if (strcasecmp(ext, web_extensions[i]) == 0) {
+                char full_path[512];
+                snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, entry->d_name);
+
+                if (uvhttp_static_prewarm_cache(ctx, full_path) == UVHTTP_OK) {
+                    prewarmed_count++;
+                }
+                break;
+            }
+        }
+    }
+
+    closedir(dir);
+    return prewarmed_count;
+}
+
+// 用法
+prewarm_web_assets(static_ctx, "./public/static");
+```
+
+### 策略 2：从 HTML 预加载关联文件
+
+解析 HTML 提取并预加载引用的资源：
+
+```c
+int preload_html_resources(uvhttp_static_context_t* ctx, const char* html_path) {
+    // 读取 HTML 文件
+    FILE* f = fopen(html_path, "r");
+    if (!f) return -1;
+
+    fseek(f, 0, SEEK_END);
+    long size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    char* html = malloc(size + 1);
+    fread(html, 1, size, f);
+    html[size] = '\0';
+    fclose(f);
+
+    // 提取资源路径（简化示例）
+    char* patterns[] = {"href=\"", "src=\""};
+    int prewarmed_count = 0;
+
+    for (int i = 0; i < 2 && prewarmed_count < 50; i++) {
+        char* p = html;
+        while ((p = strstr(p, patterns[i])) != NULL && prewarmed_count < 50) {
+            p += strlen(patterns[i]);
+            char* end = strchr(p, '"');
+            if (!end) break;
+
+            *end = '\0';
+            char resource_path[512];
+            snprintf(resource_path, sizeof(resource_path), "./public/%s", p);
+
+            if (uvhttp_static_prewarm_cache(ctx, resource_path) == UVHTTP_OK) {
+                prewarmed_count++;
+            }
+
+            *end = '"';
+            p = end + 1;
+        }
+    }
+
+    free(html);
+    return prewarmed_count;
+}
+
+// 用法
+preload_html_resources(static_ctx, "./public/index.html");
+```
+
+### 策略 3：按优先级预热
+
+为不同文件类型设置不同优先级：
+
+```c
+void prewarm_with_priority(uvhttp_static_context_t* ctx) {
+    // 高优先级：核心 CSS 和 JS
+    const char* high_priority_files[] = {
+        "./public/css/main.css",
+        "./public/js/app.js",
+        "./public/js/vendor.js"
+    };
+
+    for (size_t i = 0; i < sizeof(high_priority_files) / sizeof(high_priority_files[0]); i++) {
+        uvhttp_lru_cache_set_entry_priority(ctx->cache, high_priority_files[i], 100);
+        uvhttp_static_prewarm_cache(ctx, high_priority_files[i]);
+    }
+
+    // 中优先级：图片
+    const char* medium_priority_files[] = {
+        "./public/images/logo.png",
+        "./public/images/banner.jpg"
+    };
+
+    for (size_t i = 0; i < sizeof(medium_priority_files) / sizeof(medium_priority_files[0]); i++) {
+        uvhttp_lru_cache_set_entry_priority(ctx->cache, medium_priority_files[i], 50);
+        uvhttp_static_prewarm_cache(ctx, medium_priority_files[i]);
+    }
+}
+```
+
+### 策略 4：服务器启动时渐进预热
+
+在服务器初始化期间逐步预热缓存：
+
+```c
+void gradual_prewarm(uvhttp_static_context_t* ctx, const char* dir_path) {
+    int batch_size = 10;
+    int total_files = 0;
+    int prewarmed = 0;
+
+    // 第一批：核心文件
+    prewarmed = uvhttp_static_prewarm_directory(ctx, dir_path, batch_size);
+    printf("Prewarmed %d core files\n", prewarmed);
+
+    // 第二批：附加文件
+    prewarmed = uvhttp_static_prewarm_directory(ctx, dir_path, batch_size);
+    printf("Prewarmed %d additional files\n", prewarmed);
+
+    // 持续到缓存满或所有文件加载完成
+    size_t total_memory;
+    int entry_count;
+    uvhttp_lru_cache_get_stats(ctx->cache, &total_memory, &entry_count, NULL, NULL, NULL);
+    printf("Cache stats: %zu bytes, %d entries\n", total_memory, entry_count);
+}
+```
+
+### 策略 5：按需预热
+
+在首次请求文件时预加载：
+
+```c
+int smart_file_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    app_context_t* app_ctx = (app_context_t*)req->client->loop->data;
+
+    // 处理当前请求
+    int result = uvhttp_static_handle_request(app_ctx->static_ctx, req, res);
+
+    // 如果是 CSS 或 JS 文件，预加载关联文件
+    if (result == UVHTTP_OK && req->path) {
+        if (strstr(req->path, ".css") || strstr(req->path, ".js")) {
+            char base_path[512];
+            strncpy(base_path, req->path, sizeof(base_path));
+            char* last_slash = strrchr(base_path, '/');
+            if (last_slash) {
+                *last_slash = '\0';
+                // 预热同目录下的其他文件
+                uvhttp_static_prewarm_directory(app_ctx->static_ctx, base_path, 5);
+            }
+        }
+    }
+
+    return result;
+}
+```
+
+### 性能监控
+
+监控缓存效果：
+
+```c
+void print_cache_stats(uvhttp_static_context_t* ctx) {
+    size_t total_memory;
+    int entry_count;
+    double hit_rate;
+
+    uvhttp_lru_cache_get_stats(ctx->cache, &total_memory, &entry_count, NULL, NULL, NULL);
+    hit_rate = uvhttp_lru_cache_get_hit_rate(ctx->cache);
+
+    printf("Cache Statistics:\n");
+    printf("  Memory Usage: %zu bytes\n", total_memory);
+    printf("  Entry Count: %d\n", entry_count);
+    printf("  Hit Rate: %.2f%%\n", hit_rate * 100);
+}
+```
+
+### 预热最佳实践
+
+1. **从简单开始**：先使用目录级预热，再考虑复杂策略
+2. **关注内存**：跟踪缓存用量，避免过度消耗内存
+3. **设置优先级**：为频繁访问的文件设置更高优先级
+4. **有所取舍**：不要预热所有内容——聚焦关键资源
+5. **性能剖析**：使用缓存统计找出热点文件并调整策略
+
+### 何时使用预热
+
+- **生产部署**：在接收流量前预加载关键资源
+- **零停机部署**：在路由流量前预热新实例
+- **高流量事件**：为预期峰值准备缓存
+- **性能调优**：根据访问模式优化
+
+### 何时不应使用预热
+
+- **开发阶段**：开发时无此必要
+- **小型应用**：缓存可能没有帮助
+- **动态生成内容**：静态缓存无济于事
+- **内存受限环境**：可能导致内存压力
 
 ## 故障排除
 

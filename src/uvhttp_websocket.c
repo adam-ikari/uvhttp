@@ -574,11 +574,29 @@ uvhttp_error_t uvhttp_ws_send_frame(uvhttp_context_t* context,
         }
         ret = (int)sent;
     } else {
-        ret = send(conn->fd, buffer, frame_len, 0);
-        if (ret < 0) {
+        /* send() may accept only part of a large frame (short write); loop
+         * until the whole frame is flushed. Without this, frames larger than
+         * the socket send buffer are truncated on the wire. */
+        size_t sent = 0;
+        while (sent < (size_t)frame_len) {
+            ret = (int)send(conn->fd, buffer + sent, frame_len - sent, 0);
+            if (ret < 0) {
+                if (errno == EINTR) {
+                    continue;
+                }
+                uvhttp_free(buffer);
+                return UVHTTP_ERROR_CONNECTION_BROKEN;
+            }
+            if (ret == 0) {
+                break;
+            }
+            sent += (size_t)ret;
+        }
+        if (sent == 0) {
             uvhttp_free(buffer);
             return UVHTTP_ERROR_CONNECTION_BROKEN;
         }
+        ret = (int)sent;
     }
 
     conn->bytes_sent += ret;
@@ -1067,6 +1085,11 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
             }
 
             conn->state = UVHTTP_WS_STATE_CLOSED;
+            /* RFC 6455 §7.1.1: after receiving a CLOSE frame the connection
+             * must not process any further frames. Stop draining the buffer
+             * instead of continuing the parse loop (review fix: callbacks
+             * like on_message/on_close must not fire on post-close bytes). */
+            break;
         } else if (header.opcode == UVHTTP_WS_OPCODE_PING) {
             /* automatically reply Pong */
             /* get wrapper from conn->user_data, then get conn, then get */

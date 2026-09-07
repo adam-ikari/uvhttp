@@ -86,7 +86,7 @@ UVHTTP 借助 libuv 的事件驱动架构实现高并发：
 
 ## 性能特征
 
-### 基准测试（v2.6.0）
+### 基准测试（v2.7.1）
 
 ```yaml
 配置:
@@ -143,14 +143,15 @@ API 路由:
 
 ```c
 // 启用 TLS
-uvhttp_tls_context_t* tls_ctx = uvhttp_tls_context_new();
-uvhttp_tls_context_load_cert(tls_ctx, "server.crt", "server.key");
+uvhttp_tls_context_t* tls_ctx = NULL;
+uvhttp_tls_context_new(&tls_ctx);
+uvhttp_tls_context_load_cert_chain(tls_ctx, "server.crt");
+uvhttp_tls_context_load_private_key(tls_ctx, "server.key");
 server->tls_ctx = tls_ctx;
 
 // 设置资源限制
 server->max_connections = 1000;
-server->max_headers = 100;
-server->max_body_size = 10 * 1024 * 1024; // 10MB
+server->config->max_body_size = 10 * 1024 * 1024; // 10MB
 ```
 
 ---
@@ -191,9 +192,9 @@ server->max_body_size = 10 * 1024 * 1024; // 10MB
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_header(res, "X-Powered-By", "UVHTTP/2.6.0");
+    uvhttp_response_set_header(res, "X-Powered-By", "UVHTTP/2.7.1");
 
-    const char* body = "{\"message\":\"Hello from UVHTTP\",\"version\":\"2.6.0\"}";
+    const char* body = "{\"message\":\"Hello from UVHTTP\",\"version\":\"2.7.1\"}";
     uvhttp_response_set_body(res, body, strlen(body));
 
     return uvhttp_response_send(res);

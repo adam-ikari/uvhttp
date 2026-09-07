@@ -92,7 +92,7 @@ UVHTTP is built for portability:
 
 ## 🚀 Performance Characteristics
 
-### Benchmark Results (v2.6.0)
+### Benchmark Results (v2.7.1)
 
 ```yaml
 Configuration:
@@ -149,14 +149,15 @@ API Routing:
 
 ```c
 // Example: Enable TLS for production deployments
-uvhttp_tls_context_t* tls_ctx = uvhttp_tls_context_new();
-uvhttp_tls_context_load_cert(tls_ctx, "server.crt", "server.key");
+uvhttp_tls_context_t* tls_ctx = NULL;
+uvhttp_tls_context_new(&tls_ctx);
+uvhttp_tls_context_load_cert_chain(tls_ctx, "server.crt");
+uvhttp_tls_context_load_private_key(tls_ctx, "server.key");
 server->tls_ctx = tls_ctx;
 
 // Example: Set reasonable resource limits
 server->max_connections = 1000;
-server->max_headers = 100;
-server->max_body_size = 10 * 1024 * 1024; // 10MB
+server->config->max_body_size = 10 * 1024 * 1024; // 10MB
 ```
 
 ---
@@ -201,10 +202,10 @@ int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     
     // Set response headers
     uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_header(res, "X-Powered-By", "UVHTTP/2.6.0");
+    uvhttp_response_set_header(res, "X-Powered-By", "UVHTTP/2.7.1");
     
     // Set response body
-    const char* body = "{\"message\":\"Hello from UVHTTP\",\"version\":\"2.6.0\"}";
+    const char* body = "{\"message\":\"Hello from UVHTTP\",\"version\":\"2.7.1\"}";
     uvhttp_response_set_body(res, body, strlen(body));
     
     // Send response

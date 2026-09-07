@@ -2321,8 +2321,10 @@ server->config = config;
 ```c
 // 启用 TLS
 #if UVHTTP_FEATURE_TLS
-uvhttp_tls_context_t* tls_ctx = uvhttp_tls_context_new();
-uvhttp_tls_context_load_cert(tls_ctx, "server.crt", "server.key");
+uvhttp_tls_context_t* tls_ctx = NULL;
+uvhttp_tls_context_new(&tls_ctx);
+uvhttp_tls_context_load_cert_chain(tls_ctx, "server.crt");
+uvhttp_tls_context_load_private_key(tls_ctx, "server.key");
 uvhttp_server_enable_tls(server, tls_ctx);
 #endif
 ```

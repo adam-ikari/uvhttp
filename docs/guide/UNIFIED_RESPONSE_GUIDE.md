@@ -158,7 +158,7 @@ Although no automatic detection is performed, the use of standard Content-Types 
 ## Best Practices
 
 1. **Set Content-Type explicitly**: always set the correct Content-Type before using `uvhttp_send_unified_response()`
-2. **Use convenience functions for unambiguous scenarios**: when the content type is clear, use convenience functions such as `uvhttp_send_json_response()`
+2. **Use convenience functions for unambiguous scenarios**: when the content type is clear, use convenience functions such as `uvhttp_send_unified_response()` (set the `Content-Type` header first, e.g. `uvhttp_response_set_header(res, "Content-Type", "application/json")`)
 3. **Unified error handling**: use `uvhttp_send_error_response()` for consistent error response format
 4. **Content validation**: validate content correctness before sending the response
 5. **Maintain consistency**: keep Content-Type settings consistent within the same project

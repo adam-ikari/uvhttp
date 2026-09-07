@@ -54,11 +54,11 @@ export default defineConfig({
       name: 'UVHTTP',
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Linux',
-      softwareVersion: "2.6.0",
+      softwareVersion: "2.7.1",
       programmingLanguage: 'C (C99)',
       description: 'Lightweight, embeddable HTTP/1.1 and WebSocket server library built on libuv, with ASan/UBSan-verified memory safety and 32-bit embedded support.',
       url: 'https://adam-ikari.github.io/uvhttp',
-      downloadUrl: "https://github.com/adam-ikari/uvhttp/releases/tag/v2.6.1",
+      downloadUrl: "https://github.com/adam-ikari/uvhttp/releases/tag/v2.7.1",
       author: { '@type': 'Organization', name: 'UVHTTP Contributors' },
       license: 'https://github.com/adam-ikari/uvhttp/blob/main/LICENSE',
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
@@ -89,7 +89,7 @@ export default defineConfig({
             text: 'Download',
             items: [
               { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' },
-              { text: 'Release v2.6.1', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.6.1' }
+              { text: 'Release v2.7.1', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.7.1' }
             ]
           }
         ],
@@ -103,7 +103,7 @@ export default defineConfig({
                 { text: 'Quick Start', link: '/guide/getting-started' },
                 { text: 'Build Guide', link: '/guide/build' },
                 { text: 'Installation', link: '/guide/installation' },
-                { text: 'CMake Integration', link: '/guide/INSTALL_CMAKE' },
+                { text: 'Embedding Guide', link: '/guide/EMBEDDING_GUIDE' },
                 { text: 'CMake Configuration', link: '/guide/CMAKE_CONFIGURATION' },
                 { text: 'First Server', link: '/guide/first-server' },
                 { text: 'WebSocket', link: '/guide/websocket' }
@@ -210,7 +210,7 @@ export default defineConfig({
             text: '下载', 
             items: [
               { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' },
-              { text: 'v2.6.1 发布', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.6.1' }
+              { text: 'v2.7.1 发布', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.7.1' }
             ]
           }
         ],
@@ -224,7 +224,7 @@ export default defineConfig({
                 { text: '快速开始', link: '/zh/guide/getting-started' },
                 { text: '构建指南', link: '/zh/guide/build' },
                 { text: '安装指南', link: '/zh/guide/installation' },
-                { text: 'CMake 集成', link: '/zh/guide/INSTALL_CMAKE' },
+                { text: '嵌入指南', link: '/zh/guide/EMBEDDING_GUIDE' },
                 { text: 'CMake 配置', link: '/zh/guide/CMAKE_CONFIGURATION' },
                 { text: '第一个服务器', link: '/zh/guide/first-server' },
                 { text: 'WebSocket', link: '/zh/guide/websocket' }

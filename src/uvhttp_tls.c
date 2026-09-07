@@ -13,6 +13,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* MBEDTLS_ERR_NET_CONN_RESET lives in mbedtls/net_sockets.h, but including
+ * that header declares non-static mbedtls_net_send/recv prototypes that
+ * clash with the static definitions below. Define the constant locally
+ * (value matches mbedtls 2.x net_sockets.h). */
+#ifndef MBEDTLS_ERR_NET_CONN_RESET
+#define MBEDTLS_ERR_NET_CONN_RESET (-0x0050)
+#endif
+
 struct uvhttp_tls_context {
     mbedtls_ssl_config conf;
     mbedtls_x509_crt srvcert;
@@ -27,29 +35,47 @@ struct uvhttp_tls_context {
     uvhttp_tls_stats_t stats;
 };
 
-// Custom network callback function
+/* Custom network callback — handles EINTR (retry) and maps ECONNRESET/EPIPE
+ * to MBEDTLS_ERR_NET_CONN_RESET so the TLS layer sees a peer-reset rather
+ * than a generic internal error. */
 static int mbedtls_net_send(void* ctx, const unsigned char* buf, size_t len) {
     int fd = *(int*)ctx;
-    int ret = send(fd, buf, len, 0);
-    if (ret < 0) {
+    for (;;) {
+        int ret = send(fd, buf, len, 0);
+        if (ret >= 0) {
+            return ret;
+        }
+        if (errno == EINTR) {
+            continue; /* signal interrupted — retry */
+        }
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             return MBEDTLS_ERR_SSL_WANT_WRITE;
         }
+        if (errno == ECONNRESET || errno == EPIPE) {
+            return MBEDTLS_ERR_NET_CONN_RESET;
+        }
         return MBEDTLS_ERR_SSL_INTERNAL_ERROR;
     }
-    return ret;
 }
 
 static int mbedtls_net_recv(void* ctx, unsigned char* buf, size_t len) {
     int fd = *(int*)ctx;
-    int ret = recv(fd, buf, len, 0);
-    if (ret < 0) {
+    for (;;) {
+        int ret = recv(fd, buf, len, 0);
+        if (ret >= 0) {
+            return ret;
+        }
+        if (errno == EINTR) {
+            continue; /* signal interrupted — retry */
+        }
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             return MBEDTLS_ERR_SSL_WANT_READ;
         }
+        if (errno == ECONNRESET || errno == EPIPE) {
+            return MBEDTLS_ERR_NET_CONN_RESET;
+        }
         return MBEDTLS_ERR_SSL_INTERNAL_ERROR;
     }
-    return ret;
 }
 
 // TLS module lock management

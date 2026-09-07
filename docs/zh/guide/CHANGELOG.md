@@ -1,6 +1,6 @@
 ---
 title: 更新日志
-description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，遵循语义化版本规范。涵盖 1.0.0 至 2.7.1 各版本的新增、修复、变更、安全与性能改进，以及生产级内存安全验证。
+description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，遵循语义化版本规范。涵盖 1.0.0 至 2.7.2 各版本的新增、修复、变更、安全与性能改进，以及生产级内存安全验证。
 ---
 
 # 更新日志
@@ -9,6 +9,42 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
 本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)规范。
+
+## [Unreleased] (v2.8.x)
+
+### 新增
+- **新嵌入者接入**: 完整嵌入式集成文档 `EMBEDDING_GUIDE.md`（英/中），新增独立可运行的嵌入示例项目 `examples/embedding/`（add_subdirectory + FetchContent 两种方式）
+
+## [2.7.2] - 2026-09-07
+
+### 修复
+
+#### P0/P1 — 11 项关键缺陷修复（commit a3bc755）
+- **query string 路由匹配**: 参数化路由匹配前剥离 query string，`/users/1?tab=2` 不再误匹配除 `/users/:id` 之外的路径
+- **MAX_PARAMS 栈溢出边界**: 超出 `MAX_PARAMS` 时参数写入不再越界，路由参数提取受边界保护
+- **on_url/on_header_field 跨 chunk 分段累积**: 解析回调跨 chunk 边界的分段数据正确累积，不再截断/错位
+- **migrate_to_trie 失败悬垂指针**: trie 迁移失败路径修复悬垂指针，路由表切换后不再访问已释放内存
+- **WS 非 TLS send 短写截帧**: WebSocket 非 TLS 路径 send 短写时循环重发，不再截断帧
+- **CLOSE 后继续处理帧（RFC 6455）**: 收到 CLOSE 帧后停止处理后续数据帧，符合 RFC 6455
+- **If-Modified-Since 时区错误与 3 种日期格式**: `mktime` → `timegm`（UTC 比较避免本地时区偏移），兼容 RFC 7231 的 IMF-fixdate / RFC 850 / asctime 三种 HTTP-date 格式
+- **accept 失败 active_connections 下溢**: `uv_accept` 失败时连接计数不再下溢，永久 503 问题消除
+- **connection_new 失败路径 UAF**: 连接创建失败路径修复 use-after-free
+- **server_free 不排空在途 close 回调**: 释放时正确排空在途 close 回调，避免 libuv 访问已释放内存
+- **超时路径 WS wrapper 泄漏**: 超时路径下 WebSocket wrapper 不再泄漏
+
+#### P2/P3 — 11 项改进与修复（commit a0eae2b）
+- **TLS EINTR 重试**: TLS send/recv 遇到 `EINTR` 自动重试
+- **If-None-Match weak/多值 ETag**: 支持 weak comparison 与多值 ETag 列表
+- **目录列表 TOCTOU**: 静态目录列表路径修复 TOCTOU 竞态
+- **on_header_value 分段累积**: header value 跨 chunk 分段正确累积
+- **keep-alive headers_extra 泄漏**: keep-alive 连接复用不再泄漏 `headers_extra`
+- **X-Forwarded-For 默认不信任**: 默认不信任 `X-Forwarded-For`，新增 `trust_proxy_headers` 配置开关
+- **MIME 双表合并单表**: 静态文件 MIME 类型双表合并为单表，消除查找不一致
+- **TLS cipher 满排空**: cipher 列表满时正确排空，不再静默截断
+- **死代码清理**: 移除失效代码路径
+- **listen 参数校验**: `uvhttp_server_listen` 校验非法参数（端口 0 / 空地址）
+- **server_stop 幂等化**: `uvhttp_server_stop` 重复调用安全
+
 
 ## [2.7.1] - 2026-08-26
 
@@ -71,6 +107,17 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 - **Nightly CI 基础设施**: CodeQL 配置（init step + `security-events` 权限）、artifact 执行位丢失（`chmod -R +x`）、`performance-trend.md` ENOENT 时序（PR #316 / #318 / #321）
 - **文档死链**: VitePress 无法路由 `docs/` 目录外的链接
 - **docs build 脚本**: doxygen 隐藏目录与 npm 脚本名错误
+
+## [2.6.2] - 2026-08-17
+
+### 修复
+- **连接上限 503 路径 use-after-free**: `on_connection` 中当连接数达到上限、临时 503 客户端 `uv_accept` 失败时，改用 `uv_close`（close 回调中释放）而非直接 `uvhttp_free`——直接释放已注册到 libuv 句柄队列的内存会在下一次 `uv_run`/`uv_loop_close` 触发 use-after-free
+- **`server->max_connections` 误导性死状态**: 结构体字段此前初始化为 `UVHTTP_MAX_CONNECTIONS_MAX`(10000) 但从未被读取，实际限制来自 config（默认 2048）；现改为初始化为 `UVHTTP_MAX_CONNECTIONS_DEFAULT` 并让 `on_connection` 在无 config 时以该字段为权威值，字段与真实行为一致
+- **WebSocket RFC 6455 合规与内存安全**（PR #336）: `uvhttp_ws_send_frame` 成功路径释放发送缓冲（此前每帧泄漏）、修复 build_frame 的 double-free、实现 fragmentation 状态机（CONTINUATION 帧不再静默丢弃）、对累积分片强制执行 `config.max_message_size` 并防护 size_t 溢出
+- **uv_strerror 一致性**: 将 `uvhttp_server.c` 中残留的直接 `uv_strerror` 调用改为 `uv_strerror_r`，与 `uvhttp_error_helpers.c` 文档化的统一错误处理约定一致（`uv_strerror` 对未映射错误码会经 `uv__strdup` 泄漏）
+
+### 测试
+- **回归测试**: `test_connection_libuv_fail` 新增 `ConnectionLimitAcceptFailClosesTempClient`（uv_accept 失败必须经 uv_close 关闭临时客户端）与 `ServerMaxConnectionsFieldIsAuthoritative`（无 config 时 `server->max_connections` 字段必须被遵守）
 
 ## [2.6.0] - 2026-07-31
 

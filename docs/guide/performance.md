@@ -47,7 +47,7 @@ wrk -t4 -c100 -d10s http://127.0.0.1:18080/simple
 
 ### Memory-Safety Verification
 
-Performance is meaningless without correctness. The full 91-test suite is verified
+Performance is meaningless without correctness. The full 101-test suite is verified
 clean under both sanitizers before any performance work is considered done:
 
 ```bash

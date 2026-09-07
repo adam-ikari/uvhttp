@@ -2,7 +2,7 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-08-26T03:46:46"
+updated: "2026-09-07T03:40:14"
 ---
 
 # Roadmap
@@ -17,11 +17,11 @@ gantt
   性能基准更新与优化        :done, b1, 2026-08-21, 1d
   ci-fuzz 修复（C11对齐）  :done, b1b, 2026-08-25, 1d
   嵌入验证第二轮            :done, a3, 2026-08-25, 3d
+  性能回归门禁建设          :done, b0, 2026-08-26, 1d
+  代码评审缺陷修复          :done, b5, 2026-09-07, 1d
   section v2.8.x — 性能与平台
-  性能回归门禁建设          :b0, after b1b, 14d
+  新嵌入者接入              :done, a4, 2026-08-27, 1d
   io_uring 静态文件路径     :b2, after b0, 21d
-  macOS 支持               :c2, after b2, 21d
-  FreeBSD 支持             :c3, after b2, 21d
   section v2.9.x — 生态
   文档多语言完善            :c1, after b2, 14d
   Fuzz 测试增强            :c4, after b2, 14d
@@ -36,17 +36,16 @@ gantt
 | 性能基准更新 | P2 | ✅ 已完成 | 10 轮多轮测试，稳态 15K RPS (Silver)，峰值 33K RPS (Gold) |
 | ci-fuzz 修复 | P0 | ✅ 已完成 | C11 对齐 + 链接补齐 + fuzz_request 移除 |
 | 嵌入验证第二轮 | P1 | ✅ 已完成 | add_subdirectory 集成验证，CMake 依赖可见性修复 |
+| 性能回归门禁 | P0 | ✅ 已完成 | 10% RPS 阈值，CI 自动失败 |
+| 代码评审缺陷修复 | P1 | ✅ 已完成 | 34 项缺陷修复（13 P0/P1 + 21 P2/P3），v2.7.2 |
 
 ### v2.8.x — 性能优化与平台扩展（2026 Q4）
 
 | 目标 | 优先级 | 状态 | 说明 |
 |------|--------|------|------|
-| 性能回归门禁 | P0 | 📋 待办 | 建立 CI 性能回归门禁，防止性能退化 |
+| 新嵌入者接入 | P1 | ✅ 已完成 | 完整嵌入式集成文档（英/中）+ 独立示例 `examples/embedding/` |
 | io_uring 探索 | P2 | 📋 待办 | 评估 io_uring 替代 epoll 在静态文件路径中的收益 |
 | 内存分配优化 | P2 | 📋 待办 | 减少热路径中的分配次数 |
-| 新嵌入者接入 | P1 | 📋 待办 | 完整的嵌入式集成文档 + 示例 |
-| macOS 支持 | P3 | 📋 待办 | kqueue 适配、sendfile 兼容、CI 测试 |
-| FreeBSD 支持 | P3 | 📋 待办 | kqueue 已有经验，适配 FreeBSD 差异 |
 
 ### v2.9.x — 生态扩展（2027 Q1）
 
@@ -55,6 +54,15 @@ gantt
 | 文档完善 | P1 | 📋 待办 | 中文文档同步、API 参考补充 |
 | Fuzz 测试增强 | P1 | 📋 待办 | 扩展 fuzz 测试覆盖更多协议路径 |
 | 社区贡献指南 | P1 | 📋 待办 | 完善 CONTRIBUTING.md、代码评审流程 |
+
+### 最低优先级（长期 / 按需）
+
+> macOS / FreeBSD 平台支持已降级为最低优先级：不进入近期里程碑排期，按需推进。
+
+| 目标 | 优先级 | 状态 | 说明 |
+|------|--------|------|------|
+| macOS 支持 | 最低 | 📋 待办（无排期） | kqueue 适配、sendfile 兼容、CI 测试；按需推进 |
+| FreeBSD 支持 | 最低 | 📋 待办（无排期） | kqueue 已有经验，适配 FreeBSD 差异；按需推进 |
 
 ### 完成项（v2.6.x + v2.7.x）
 
@@ -78,3 +86,6 @@ gantt
 - ✅ 性能基准更新（CI 基线 83K RPS，Platinum tier）
 - ✅ ci-fuzz 修复（C11 对齐 + 链接补齐）
 - ✅ 嵌入验证第二轮（add_subdirectory 集成验证）
+- ✅ 性能回归门禁（10% RPS 阈值，CI 自动失败）
+- ✅ 新嵌入者接入（双语接入指南 + 独立嵌入示例）
+- ✅ 代码评审缺陷修复（34 项：13 P0/P1 + 21 P2/P3，v2.7.2）

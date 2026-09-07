@@ -158,6 +158,7 @@ static int on_message_begin(llhttp_t* parser) {
     conn->parsing_complete = 0;
     conn->content_length = 0;
     conn->body_received = 0;
+    conn->request->url[0] = '\0'; /* reset URL accumulator (Fix 3) */
 
     return 0;
 }
@@ -170,20 +171,17 @@ static int on_url(llhttp_t* parser, const char* at, size_t length) {
         return -1;
     }
 
-    // ensure URL length does not exceed limit
-    if (length >= MAX_URL_LEN) {
-        UVHTTP_LOG_ERROR("on_url: URL too long: %zu\n", length);
+    /* llhttp may invoke on_url multiple times for one request-target when
+     * it spans TCP read boundaries — append at the accumulated offset
+     * instead of overwriting from 0 (Fix 3) */
+    size_t used = strlen(conn->request->url);
+    if (used + length >= sizeof(conn->request->url)) {
+        UVHTTP_LOG_ERROR("on_url: URL too long: %zu\n", used + length);
         return -1;
     }
 
-    // check if exceeds target buffer size, ensure safety
-    if (length >= sizeof(conn->request->url)) {
-        UVHTTP_LOG_ERROR("on_url: URL exceeds buffer size: %zu\n", length);
-        return -1;
-    }
-
-    memcpy(conn->request->url, at, length);
-    conn->request->url[length] = '\0';
+    memcpy(conn->request->url + used, at, length);
+    conn->request->url[used + length] = '\0';
 
     return 0;
 }
@@ -196,40 +194,71 @@ static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
         return -1;
     }
 
-    /* performance optimization: only set length marker, avoid zeroing entire
-     * buffer (256 bytes) */
-    conn->current_header_field_len = 0;
+    /* llhttp may invoke on_header_field multiple times for one field name
+     * when it spans TCP read boundaries. parsing_header_field states:
+     * 0 = idle, 1 = field name accumulating, 2 = value in progress
+     * (committed). Entering state 2 means the previous name/value pair is
+     * already stored, so the name buffer restarts for the next field.
+     * (Fix 4) */
+    size_t field_len = conn->parsing_header_field == 1
+                           ? conn->current_header_field_len
+                           : 0;
     conn->parsing_header_field = 1;
 
-    /* check header field name length limit */
-    if (length >= UVHTTP_MAX_HEADER_NAME_SIZE) {
+    if (field_len + length >= UVHTTP_MAX_HEADER_NAME_SIZE) {
         UVHTTP_LOG_ERROR("on_header_field: header name too long: %zu\n",
-                         length);
+                         field_len + length);
         return -1; /* field name too long */
     }
 
-    /* copy header field name */
-    memcpy(conn->current_header_field, at, length);
-    conn->current_header_field_len = length;
+    memcpy(conn->current_header_field + field_len, at, length);
+    conn->current_header_field_len = field_len + length;
 
     return 0;
 }
 
 static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
-
     uvhttp_connection_t* conn = (uvhttp_connection_t*)parser->data;
     if (!conn || !conn->request) {
+        return -1;
+    }
+
+    uvhttp_request_t* request = conn->request;
+
+    /* llhttp may invoke on_header_value multiple times for one value when
+     * it spans TCP read boundaries. The first segment is committed via
+     * add_header; continuation segments append into that stored header —
+     * calling add_header per segment would store duplicate fragments of
+     * which get_header only surfaces the first (Fix 5). */
+    if (conn->parsing_header_field == 2) {
+        /* continuation of a value split across reads */
+        if (request->header_count == 0) {
+            return -1;
+        }
+        uvhttp_header_t* header =
+            uvhttp_request_get_header_at(request, request->header_count - 1);
+        if (!header) {
+            return -1;
+        }
+        size_t value_len = strlen(header->value);
+        if (value_len + length >= sizeof(header->value)) {
+            UVHTTP_LOG_ERROR("on_header_value: header value too long: %zu\n",
+                             value_len + length);
+            return -1;
+        }
+        memcpy(header->value + value_len, at, length);
+        header->value[value_len + length] = '\0';
+        return 0;
+    }
+
+    /* first segment: a field name must be pending */
+    if (conn->parsing_header_field != 1 || conn->current_header_field_len == 0) {
         return -1;
     }
 
     // checkheadervaluelengthlimit
     if (length >= UVHTTP_MAX_HEADER_VALUE_SIZE) {
         return -1;  // value too long
-    }
-
-    // check if current header field name exists
-    if (conn->current_header_field_len == 0) {
-        return -1;  // no corresponding header field name
     }
 
     // construct header name and value
@@ -249,17 +278,14 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
     memcpy(header_value, at, value_len);
     header_value[value_len] = '\0';
 
-    // use new API to add header
-
-    if (uvhttp_request_add_header(conn->request, header_name, header_value) !=
-        0) {
-        return -1;  // addfailure
+    if (uvhttp_request_add_header(request, header_name, header_value) != 0) {
+        return -1;
     }
 
-    /* performance optimization: only set length marker, avoid zeroing entire
-     * buffer (256 bytes) */
-    conn->current_header_field_len = 0;
-    conn->parsing_header_field = 0;
+    /* pair committed; mark value-in-progress so continuation segments
+     * append instead of re-adding. current_header_field is stale from
+     * here on and is reset when the next on_header_field starts. */
+    conn->parsing_header_field = 2;
 
     return 0;
 }
@@ -514,8 +540,20 @@ static int on_message_complete(llhttp_t* parser) {
     if (conn->server && conn->server->router) {
         ensure_valid_url(conn->request);
 
+        /* strip query string for route matching (Fix 1): find_handler
+         * tokenizes on '/', so a trailing "?query" would corrupt the last
+         * segment and 404 every request that carries one. request->url is
+         * left untouched so get_query_string still works. */
+        char route_path[MAX_URL_LEN];
+        strncpy(route_path, conn->request->url, sizeof(route_path) - 1);
+        route_path[sizeof(route_path) - 1] = '\0';
+        char* query_start = strchr(route_path, '?');
+        if (query_start) {
+            *query_start = '\0';
+        }
+
         uvhttp_request_handler_t handler = uvhttp_router_find_handler(
-            conn->server->router, conn->request->url,
+            conn->server->router, route_path,
             uvhttp_method_to_string(conn->request->method));
 
         if (handler) {
@@ -770,37 +808,55 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
         return NULL;
     }
 
-    // attempt to get from X-Forwarded-For header (proxy/load balancer)
-    const char* forwarded_for =
-        uvhttp_request_get_header(request, UVHTTP_HEADER_X_FORWARDED_FOR);
-    if (forwarded_for) {
-        // X-Forwarded-For may contain multiple IPs, take the first one
-        static char client_ip[UVHTTP_IPV6_MAX_STRING_LENGTH];
-        const char* comma = strchr(forwarded_for, ',');
-        size_t ip_len;
-
-        if (comma) {
-            ip_len = comma - forwarded_for;
-        } else {
-            ip_len = strlen(forwarded_for);
+    /* Proxy headers (X-Forwarded-For / X-Real-IP) are client-controlled and
+     * trivially spoofable. Only honor them when the server is explicitly
+     * configured to sit behind a trusted reverse proxy (Fix 5); otherwise
+     * always report the actual TCP peer address. */
+    int trust_proxy = 0;
+    /* Reverse-lookup the owning connection via the parser back-pointer
+     * (uvhttp_connection sets parser->data = conn). Do NOT cast
+     * uv_handle_get_data(request->client): request->client may be a foreign
+     * handle whose data field is not a uvhttp_connection_t. llhttp_init
+     * zeroes data, so standalone requests resolve to NULL here. */
+    if (request->parser) {
+        uvhttp_connection_t* conn = (uvhttp_connection_t*)request->parser->data;
+        if (conn && conn->server && conn->server->config) {
+            trust_proxy = conn->server->config->trust_proxy_headers;
         }
-
-        if (ip_len >= sizeof(client_ip)) {
-            ip_len = sizeof(client_ip) - 1;
-        }
-
-        strncpy(client_ip, forwarded_for, ip_len);
-        client_ip[ip_len] = '\0';
-        return client_ip;
     }
 
-    // attempt to get from X-Real-IP header
-    const char* real_ip =
-        uvhttp_request_get_header(request, UVHTTP_HEADER_X_REAL_IP);
-    if (real_ip) {
-        return real_ip;
-    }
+    if (trust_proxy) {
+        // attempt to get from X-Forwarded-For header (proxy/load balancer)
+        const char* forwarded_for =
+            uvhttp_request_get_header(request, UVHTTP_HEADER_X_FORWARDED_FOR);
+        if (forwarded_for) {
+            // X-Forwarded-For may contain multiple IPs, take the first one
+            static char client_ip[UVHTTP_IPV6_MAX_STRING_LENGTH];
+            const char* comma = strchr(forwarded_for, ',');
+            size_t ip_len;
 
+            if (comma) {
+                ip_len = comma - forwarded_for;
+            } else {
+                ip_len = strlen(forwarded_for);
+            }
+
+            if (ip_len >= sizeof(client_ip)) {
+                ip_len = sizeof(client_ip) - 1;
+            }
+
+            strncpy(client_ip, forwarded_for, ip_len);
+            client_ip[ip_len] = '\0';
+            return client_ip;
+        }
+
+        // attempt to get from X-Real-IP header
+        const char* real_ip =
+            uvhttp_request_get_header(request, UVHTTP_HEADER_X_REAL_IP);
+        if (real_ip) {
+            return real_ip;
+        }
+    }
     // get real IP from TCP connection (need to access underlying socket)
     if (request->client) {
         struct sockaddr_storage addr;

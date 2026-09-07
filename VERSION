@@ -2,25 +2,14 @@
 # This file defines the current version information for the project
 
 # Current version number (semantic version: MAJOR.MINOR.PATCH)
-VERSION=2.7.1
-
-# Version type: major, minor, patch
+VERSION=2.7.2
 VERSION_TYPE=patch
-
-# Release date
-RELEASE_DATE=2026-08-26
-
-# Previous version
-PREVIOUS_VERSION=2.7.0
-
-# Next version (in development)
-NEXT_VERSION=2.7.2
-
-# Version name (optional)
-VERSION_NAME="Embedding & CI Quality" # v2.7.1
-
-# Whether this is a prerelease version
+RELEASE_DATE=2026-09-07
+PREVIOUS_VERSION=2.7.1
+NEXT_VERSION=2.8.0
+VERSION_NAME="22 项代码评审缺陷修复" # v2.7.2
 IS_PRERELEASE=false
+PRERELEASE_IDENTIFIER=""
 
 # Prerelease identifier (e.g., alpha, beta, rc)
 PRERELEASE_IDENTIFIER=""

@@ -59,6 +59,7 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config) {
 
     config->max_requests_per_connection = UVHTTP_DEFAULT_MAX_REQUESTS_PER_CONN;
     config->rate_limit_window = UVHTTP_DEFAULT_RATE_LIMIT_WINDOW;
+    config->trust_proxy_headers = 0; /* default: never trust proxy headers */
 
     /* WebSocket config */
     config->websocket_max_frame_size = UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE;

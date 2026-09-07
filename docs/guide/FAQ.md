@@ -348,7 +348,7 @@ config->keepalive_timeout = 60;  // 60 seconds
 
 uvhttp_server_t* server = NULL;
 uvhttp_server_new(loop, &server);
-uvhttp_server_set_config(server, config);
+server->config = config;
 ```
 
 ### Q22: How do I optimize static file serving?
@@ -423,7 +423,7 @@ config->request_timeout = 60;    // 1 minute
 
 uvhttp_server_t* server = NULL;
 uvhttp_server_new(loop, &server);
-uvhttp_server_set_config(server, config);
+server->config = config;
 ```
 
 ### Q27: Memory usage keeps increasing

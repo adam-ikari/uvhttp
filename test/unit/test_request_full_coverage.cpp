@@ -621,7 +621,7 @@ TEST(UvhttpRequestTest, GetClientIpNoForwarded) {
     EXPECT_STREQ(ip, "127.0.0.1");
 }
 
-/* 测试获取客户端 IP 从 X-Forwarded-For */
+/* 测试获取客户端 IP：默认不信任 X-Forwarded-For (Fix 5) */
 TEST(UvhttpRequestTest, GetClientIpForwarded) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
@@ -632,10 +632,10 @@ TEST(UvhttpRequestTest, GetClientIpForwarded) {
     request.header_count = 1;
     
     const char* ip = uvhttp_request_get_client_ip(&request);
-    EXPECT_STREQ(ip, "192.168.1.1");
+    EXPECT_STREQ(ip, "127.0.0.1");
 }
 
-/* 测试获取客户端 IP 从 X-Forwarded-For 多个 IP */
+/* 测试获取客户端 IP：多个 IP 的 X-Forwarded-For 同样被忽略 */
 TEST(UvhttpRequestTest, GetClientIpForwardedMultiple) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
@@ -646,10 +646,10 @@ TEST(UvhttpRequestTest, GetClientIpForwardedMultiple) {
     request.header_count = 1;
     
     const char* ip = uvhttp_request_get_client_ip(&request);
-    EXPECT_STREQ(ip, "192.168.1.1");
+    EXPECT_STREQ(ip, "127.0.0.1");
 }
 
-/* 测试获取客户端 IP 从 X-Real-IP */
+/* 测试获取客户端 IP：默认不信任 X-Real-IP */
 TEST(UvhttpRequestTest, GetClientIpRealIp) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
@@ -660,10 +660,10 @@ TEST(UvhttpRequestTest, GetClientIpRealIp) {
     request.header_count = 1;
     
     const char* ip = uvhttp_request_get_client_ip(&request);
-    EXPECT_STREQ(ip, "192.168.1.2");
+    EXPECT_STREQ(ip, "127.0.0.1");
 }
 
-/* 测试获取客户端 IP X-Forwarded-For 优先 */
+/* 测试获取客户端 IP：X-Forwarded-For 优先级仅在信任代理时生效 */
 TEST(UvhttpRequestTest, GetClientIpForwardedPriority) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
@@ -676,5 +676,5 @@ TEST(UvhttpRequestTest, GetClientIpForwardedPriority) {
     request.header_count = 2;
     
     const char* ip = uvhttp_request_get_client_ip(&request);
-    EXPECT_STREQ(ip, "192.168.1.1");
+    EXPECT_STREQ(ip, "127.0.0.1");
 }

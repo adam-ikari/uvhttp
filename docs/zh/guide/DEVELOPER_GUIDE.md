@@ -332,7 +332,8 @@ uvhttp_static_sendfile("/path/to/file", response);
 uvhttp_static_prewarm_cache(ctx, "/static/index.html");
 
 // 使用 LRU 缓存
-uvhttp_lru_cache_t* cache = uvhttp_lru_cache_new(1024);
+cache_manager_t* cache = NULL;
+uvhttp_lru_cache_create(1024 * 1024, 256, 0, &cache);
 ```
 
 ### 内存优化
@@ -370,8 +371,8 @@ gdb ./dist/bin/helloworld
 ```c
 #include "uvhttp_logging.h"
 
-// 设置日志级别
-uvhttp_log_set_level(UVHTTP_LOG_LEVEL_DEBUG);
+// 日志输出在 Debug 构建中写入 stderr
+// （由编译期的 NDEBUG / UVHTTP_FEATURE_LOGGING 控制）
 
 // 输出日志
 UVHTTP_LOG_DEBUG("Debug message: %s", message);

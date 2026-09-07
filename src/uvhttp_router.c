@@ -347,6 +347,12 @@ static uvhttp_error_t migrate_to_trie(uvhttp_router_t* router) {
             current_index =
                 find_or_create_child(router, current_index, token, is_param);
             if (current_index == UINT32_MAX) {
+                /* detach before free (Fix 5): use_trie is still 0 on this
+                 * failure path, so a later find_handler would walk the
+                 * freed array as a dangling pointer */
+                router->array_routes = NULL;
+                router->array_route_count = 0;
+                router->array_capacity = 0;
                 uvhttp_free(old_routes);  // clean allocated memory
                 return UVHTTP_ERROR_OUT_OF_MEMORY;
             }
@@ -489,6 +495,12 @@ static int match_route_node(const uvhttp_router_t* router, uint32_t node_index,
         const uvhttp_route_node_t* child = &router->node_pool[child_index];
 
         if (child->is_param) {
+            /* bound check: match->params is a fixed MAX_PARAMS array — a
+             * route tree with more param segments than that must fail the
+             * match, not write past the end (Fix 2) */
+            if (match->param_count >= MAX_PARAMS) {
+                return -1;
+            }
             // parameter node, match any segment
             size_t name_len = child->param_name_len;
             size_t name_copy_len =
@@ -685,27 +697,6 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
             return UVHTTP_OK;
         }
         return UVHTTP_ERROR_NOT_FOUND;
-    }
-
-    /* optimization 2: fast path - check static router (no parameters) */
-    /* for paths without parameters, use fast find */
-    int has_params = 0;
-    for (const char* p = path; *p; p++) {
-        if (*p == ':' || *p == '{') {
-            has_params = 1;
-            break;
-        }
-    }
-
-    if (!has_params && router->array_routes && router->array_route_count > 0) {
-        /* no parameter path, use array router fast find */
-        /* but need to check if array_routes is still valid */
-        uvhttp_request_handler_t handler =
-            find_array_route(router, path, method_enum);
-        if (handler) {
-            match->handler = handler;
-            return UVHTTP_OK;
-        }
     }
 
     /* optimization 3: Trie tree match (supports parameters) */

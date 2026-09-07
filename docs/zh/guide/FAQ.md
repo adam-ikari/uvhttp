@@ -324,7 +324,7 @@ config->keepalive_timeout = 60;  // 60 秒
 
 uvhttp_server_t* server = NULL;
 uvhttp_server_new(loop, &server);
-uvhttp_server_set_config(server, config);
+server->config = config;
 ```
 
 ### Q22: 如何优化静态文件服务？
@@ -389,7 +389,7 @@ config->request_timeout = 60;    // 1 分钟
 
 uvhttp_server_t* server = NULL;
 uvhttp_server_new(loop, &server);
-uvhttp_server_set_config(server, config);
+server->config = config;
 ```
 
 ### Q27: 内存使用持续增长

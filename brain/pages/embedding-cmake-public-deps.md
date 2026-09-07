@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [embedding, cmake, build, add_subdirectory]
 created: "2026-08-25T03:18:24"
-updated: "2026-08-25T03:18:46"
+updated: "2026-08-27T09:56:04"
 ---
 
 <!-- compiled_truth -->
@@ -39,4 +39,10 @@ updated: "2026-08-25T03:18:46"
   kind: decision
   summary: "嵌入验证第二轮发现：依赖链接可见性修复"
   source: "嵌入验证第二轮会话"
+  affects: [embedding-cmake-public-deps]
+
+- time: 2026-08-27T09:56:04
+  kind: decision
+  summary: "FetchContent 集成方式已验证可用：SOURCE_DIR 模式端到端通过；git-fetch 模式需显式 GIT_TAG main（默认 master 不存在），8 个 submodule 拉取较重（mbedtls 100MB+）"
+  source: "v2.8.x 新嵌入者接入会话"
   affects: [embedding-cmake-public-deps]

@@ -28,21 +28,21 @@ UVHTTP uses Google Test as its unit testing framework, providing the following f
 
 ```cpp
 #include <gtest/gtest.h>
-#include "uvhttp_module.h"
+#include "uvhttp_router.h"
 
-TEST(ModuleNameTest, TestCaseName) {
+TEST(RouterTest, CreateRouter) {
     // Arrange: Prepare test data
-    uvhttp_module_t* obj = nullptr;
+    uvhttp_router_t* obj = nullptr;
     
     // Act: Execute the operation under test
-    uvhttp_error_t result = uvhttp_module_new(&obj);
+    uvhttp_error_t result = uvhttp_router_new(&obj);
     
     // Assert: Verify the result
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_NE(obj, nullptr);
     
     // Cleanup: Free resources
-    uvhttp_module_free(obj);
+    uvhttp_router_free(obj);
 }
 ```
 

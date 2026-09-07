@@ -34,8 +34,7 @@ UVHTTP 提供了完整的 WebSocket 支持，允许你轻松实现实时双向�
 #include "uvhttp.h"
 
 // WebSocket 连接建立回调
-int on_connect(uvhttp_ws_connection_t* ws_conn, void* user_data) {
-    (void)user_data;
+int on_connect(uvhttp_ws_connection_t* ws_conn) {
     printf("WebSocket 连接建立\n");
     return 0;
 }
@@ -44,10 +43,8 @@ int on_connect(uvhttp_ws_connection_t* ws_conn, void* user_data) {
 int on_message(uvhttp_ws_connection_t* ws_conn, 
                const char* data, 
                size_t len, 
-               int opcode, 
-               void* user_data) {
+               int opcode) {
     (void)ws_conn;
-    (void)user_data;
     
     printf("收到消息: %.*s\n", (int)len, data);
     
@@ -58,9 +55,8 @@ int on_message(uvhttp_ws_connection_t* ws_conn,
 }
 
 // WebSocket 连接关闭回调
-int on_close(uvhttp_ws_connection_t* ws_conn, void* user_data) {
+int on_close(uvhttp_ws_connection_t* ws_conn) {
     (void)ws_conn;
-    (void)user_data;
     printf("WebSocket 连接关闭\n");
     return 0;
 }
@@ -68,10 +64,8 @@ int on_close(uvhttp_ws_connection_t* ws_conn, void* user_data) {
 // WebSocket 错误回调
 int on_error(uvhttp_ws_connection_t* ws_conn, 
              int error_code, 
-             const char* error_msg, 
-             void* user_data) {
+             const char* error_msg) {
     (void)ws_conn;
-    (void)user_data;
     printf("WebSocket 错误: %d - %s\n", error_code, error_msg);
     return 0;
 }
@@ -127,10 +121,10 @@ uvhttp_server_ws_send(ws_conn, text, strlen(text));
 
 // 发送二进制消息
 const char* binary_data = "\x01\x02\x03\x04";
-uvhttp_server_ws_send_binary(ws_conn, binary_data, 4);
+uvhttp_server_ws_send(ws_conn, binary_data, 4);
 
 // 发送 Ping
-uvhttp_server_ws_send_ping(ws_conn, "ping");
+uvhttp_ws_send_ping(NULL, ws_conn, (const uint8_t*)"ping", 4);
 
 // 发送 Close
 uvhttp_server_ws_close(ws_conn, 1000, "正常关闭");
@@ -138,34 +132,15 @@ uvhttp_server_ws_close(ws_conn, 1000, "正常关闭");
 
 ## 应用层认证
 
-由于认证功能应该在应用层实现，你可以在 WebSocket 握手时进行认证：
+由于认证功能应该在应用层实现，你可以在 `on_connect` 回调中接受或拒绝连接。注意 `on_connect` 只接收连接对象——原始 HTTP 请求头（如 `Authorization`）在此不可访问。基于请求头的认证必须在 WebSocket 升级完成前、于 HTTP 层进行：
 
 ```c
-int on_connect(uvhttp_ws_connection_t* ws_conn, void* user_data) {
-    (void)user_data;
-    
-    // 获取 HTTP 请求头
-    const char* auth_header = uvhttp_ws_get_request_header(ws_conn, "Authorization");
-    
-    // 验证 Token
-    if (!auth_header || strncmp(auth_header, "Bearer ", 7) != 0) {
-        printf("认证失败：缺少或无效的 Token\n");
-        return -1;  // 拒绝连接
-    }
-    
-    const char* token = auth_header + 7;
-    if (!validate_token(token)) {
-        printf("认证失败：无效的 Token\n");
-        return -1;
-    }
-    
-    printf("认证成功\n");
-    return 0;
-}
-
-bool validate_token(const char* token) {
-    // 实现你的 Token 验证逻辑
-    return strcmp(token, "my-secret-token") == 0;
+int on_connect(uvhttp_ws_connection_t* ws_conn) {
+    // on_connect 只接收 WebSocket 连接对象；原始 HTTP 请求头
+    // （如 Authorization）在此不可访问。请在升级前的 HTTP 处理器/
+    // 中间件中校验请求头，然后在此接受或拒绝连接。
+    printf("WebSocket 连接建立\n");
+    return 0;  // 接受连接
 }
 ```
 
@@ -178,8 +153,7 @@ bool validate_token(const char* token) {
 static uvhttp_ws_connection_t* g_connections[MAX_CONNECTIONS];
 static int g_connection_count = 0;
 
-int on_connect(uvhttp_ws_connection_t* ws_conn, void* user_data) {
-    (void)user_data;
+int on_connect(uvhttp_ws_connection_t* ws_conn) {
     
     if (g_connection_count < MAX_CONNECTIONS) {
         g_connections[g_connection_count++] = ws_conn;
@@ -192,8 +166,7 @@ int on_connect(uvhttp_ws_connection_t* ws_conn, void* user_data) {
     return 0;
 }
 
-int on_close(uvhttp_ws_connection_t* ws_conn, void* user_data) {
-    (void)user_data;
+int on_close(uvhttp_ws_connection_t* ws_conn) {
     
     // 从连接列表中移除
     for (int i = 0; i < g_connection_count; i++) {
@@ -223,7 +196,8 @@ void broadcast_message(const char* message, size_t len) {
 void heartbeat_timer_callback(uv_timer_t* handle) {
     const char* ping_msg = "ping";
     for (int i = 0; i < g_connection_count; i++) {
-        uvhttp_server_ws_send_ping(g_connections[i], ping_msg);
+        uvhttp_ws_send_ping(NULL, g_connections[i], (const uint8_t*)ping_msg,
+                            strlen(ping_msg));
     }
     
     // 重新设置定时器
@@ -250,11 +224,9 @@ int main() {
 int on_message(uvhttp_ws_connection_t* ws_conn, 
                const char* data, 
                size_t len, 
-               int opcode, 
-               void* user_data) {
+               int opcode) {
     (void)ws_conn;
     (void)opcode;
-    (void)user_data;
     
     if (len > MAX_MESSAGE_SIZE) {
         printf("消息过大: %zu 字节\n", len);
@@ -274,10 +246,8 @@ int on_message(uvhttp_ws_connection_t* ws_conn,
 ```c
 int on_error(uvhttp_ws_connection_t* ws_conn, 
              int error_code, 
-             const char* error_msg, 
-             void* user_data) {
+             const char* error_msg) {
     (void)ws_conn;
-    (void)user_data;
     
     printf("WebSocket 错误: %d - %s\n", error_code, error_msg);
     

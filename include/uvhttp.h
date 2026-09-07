@@ -39,8 +39,10 @@ extern "C" {
 /* API usage instructions:
  *
  * Core API:
- *   uvhttp_server_t* server = uvhttp_server_new(loop);
- *   uvhttp_router_t* router = uvhttp_router_new();
+ *   uvhttp_server_t* server = NULL;
+ *   uvhttp_error_t err = uvhttp_server_new(loop, &server);
+ *   uvhttp_router_t* router = NULL;
+ *   err = uvhttp_router_new(&router);
  *   uvhttp_router_add_route(router, "/", handler);
  *
  * Start server:
