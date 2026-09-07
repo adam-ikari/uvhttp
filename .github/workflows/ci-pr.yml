@@ -64,30 +64,42 @@ jobs:
           path: build/dist/
           retention-days: 7
   
-  # 任务 2: 代码质量检查
+  # 任务 2: 代码质量检查（真实 cppcheck 静态分析，任何告警即阻塞 PR 门禁）
   code-quality-check:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    outputs:
-      cppcheck-issues: ${{ steps.cppcheck.outputs.issues }}
-      clang-tidy-issues: ${{ steps.clang-tidy.outputs.issues }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
         with:
           submodules: recursive
-      
+
       - name: Setup build environment
         uses: ./.github/actions/setup-build
         with:
           os: ubuntu-latest
-      
+
       - name: Run cppcheck
         id: cppcheck
         run: |
-          echo "cppcheck target not available in CMake-generated Makefile"
-      
+          # 真实静态分析：--error-exitcode=1 使任何告警都阻塞门禁。
+          # 当前 src/ 在此级别零告警（本地验证 18/18 文件通过）。
+          # 三个标志消除的是 cppcheck 配置解析产物，而非真实问题：
+          #   - toomanyconfigs：information 级提示，默认 12 配置已足够
+          #   - UVHTTP_STRINGIFY 在头文件中定义，需显式告知 cppcheck
+          #   - 强制 UVHTTP_FEATURE_TLS=1，避免 cppcheck 尝试
+          #     WEBSOCKET=ON+TLS=OFF 这一 CMake 永不产出的组合
+          #     （该组合在 uvhttp_websocket.c 中有意 #error）
+          cppcheck --enable=warning,performance,portability \
+            --error-exitcode=1 \
+            --suppress=toomanyconfigs \
+            -D'UVHTTP_STRINGIFY(x)=#x' \
+            -DUVHTTP_FEATURE_TLS=1 \
+            --xml --xml-version=2 \
+            --output-file=cppcheck-results.xml \
+            src/
+
       - name: Upload code quality results
         if: always()
         uses: actions/upload-artifact@v7.0.1
@@ -96,26 +108,7 @@ jobs:
           path: cppcheck-results.xml
           retention-days: 7
   
-  # 任务 3: 依赖漏洞扫描
-  dependency-scan:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      vulnerabilities: ${{ steps.scan.outputs.vulnerabilities }}
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7.0.1
-        with:
-          submodules: recursive
-      
-      - name: Run dependency scan
-        id: scan
-        run: |
-          echo "Dependency scan completed"
-          echo "vulnerabilities=0" >> $GITHUB_OUTPUT
-  
-  # 任务 4: 快速测试
+  # 任务 3: 快速测试
   ubuntu-test-fast:
     needs: [ubuntu-build]
     runs-on: ubuntu-latest
@@ -197,25 +190,41 @@ jobs:
           path: build-asan/Testing/
           retention-days: 7
 
-  # 任务 5: 代码格式检查
+  # 任务 4: 代码格式检查（clang-format，只门禁本 PR 变更的 C/C++ 文件）
   format-check:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
         with:
           submodules: recursive
-      
-      - name: Setup build environment
-        uses: ./.github/actions/setup-build
-        with:
-          os: ubuntu-latest
-      
-      - name: Check code format
+          # 需要完整历史以相对 base 计算 PR 变更文件
+          fetch-depth: 0
+
+      - name: Install clang-format
         run: |
-          echo "format-check target not available in CMake-generated Makefile"
+          sudo apt-get update && sudo apt-get install -y clang-format
+
+      - name: Check format of PR-changed files
+        run: |
+          # 只门禁本 PR 变更的 C/C++ 文件，避免存量格式漂移阻塞
+          # （历史代码存在大量漂移，全量 dry-run 不可行）。
+          # 无 C/C++ 变更则跳过通过。
+          files=$(git diff --name-only --diff-filter=ACMR \
+            ${{ github.event.before }} ${{ github.event.pull_request.head.sha }} \
+            | grep -E '\.(c|h)$' || true)
+          if [ -z "$files" ]; then
+            echo "No C/C++ files changed in this PR — skipping format check."
+            exit 0
+          fi
+          echo "Checking format of:"
+          echo "$files"
+          if ! clang-format --dry-run --Werror $files 2>&1; then
+            echo "::error::clang-format violations found. Fix with: clang-format -i $files"
+            exit 1
+          fi
   
   # 任务: 中英文文档同步检查 (hash-based, blocking)
   doc-sync-check:
@@ -315,7 +324,7 @@ jobs:
   # ========== 阶段 2: 生成总结 ==========
 
   generate-summary:
-    needs: [ubuntu-build, code-quality-check, dependency-scan, ubuntu-test-fast, asan-gate, format-check, doc-sync-check, build-matrix]
+    needs: [ubuntu-build, code-quality-check, ubuntu-test-fast, asan-gate, format-check, doc-sync-check, build-matrix]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
@@ -344,8 +353,3 @@ jobs:
           echo "| cppcheck | ${{ needs.code-quality-check.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Format | ${{ needs.format-check.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| ASan memory-safety gate | ${{ needs.asan-gate.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Security" >> $GITHUB_STEP_SUMMARY
-          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Dependency Scan | ${{ needs.dependency-scan.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
