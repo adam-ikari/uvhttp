@@ -699,27 +699,6 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
         return UVHTTP_ERROR_NOT_FOUND;
     }
 
-    /* optimization 2: fast path - check static router (no parameters) */
-    /* for paths without parameters, use fast find */
-    int has_params = 0;
-    for (const char* p = path; *p; p++) {
-        if (*p == ':' || *p == '{') {
-            has_params = 1;
-            break;
-        }
-    }
-
-    if (!has_params && router->array_routes && router->array_route_count > 0) {
-        /* no parameter path, use array router fast find */
-        /* but need to check if array_routes is still valid */
-        uvhttp_request_handler_t handler =
-            find_array_route(router, path, method_enum);
-        if (handler) {
-            match->handler = handler;
-            return UVHTTP_OK;
-        }
-    }
-
     /* optimization 3: Trie tree match (supports parameters) */
     /* parse path segments */
     char path_copy[MAX_ROUTE_PATH_LEN];

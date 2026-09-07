@@ -219,9 +219,9 @@ TEST_F(UvhttpServerApiTest, ServerStop) {
     /* 创建服务器 */
     ASSERT_EQ(create_server(), UVHTTP_OK);
 
-    /* 停止未启动的服务器，返回UVHTTP_ERROR_SERVER_STOP */
+    /* 停止未启动的服务器：幂等操作，返回 UVHTTP_OK */
     uvhttp_error_t result = uvhttp_server_stop(server);
-    EXPECT_EQ(result, UVHTTP_ERROR_SERVER_STOP);
+    EXPECT_EQ(result, UVHTTP_OK);
 }
 /* 测试服务器停止 NULL 参数 */
 TEST_F(UvhttpServerApiTest, ServerStopNull) {

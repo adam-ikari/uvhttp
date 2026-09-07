@@ -357,18 +357,20 @@ TEST(UvhttpRequestComprehensiveTest, GetClientIp) {
     ip = uvhttp_request_get_client_ip(request);
     EXPECT_STREQ(ip, "127.0.0.1");
     
-    /* 测试有 X-Forwarded-For header */
+    /* 默认不信任代理头 (trust_proxy_headers=0, Fix 5): 伪造的
+     * X-Forwarded-For 不得覆盖 TCP 对端地址；无连接时回退默认值。 */
     request->header_count = 1;
     request->headers_capacity = 1;
     strcpy(request->headers[0].name, "X-Forwarded-For");
     strcpy(request->headers[0].value, "192.168.1.1");
     ip = uvhttp_request_get_client_ip(request);
-    EXPECT_STREQ(ip, "192.168.1.1");
+    EXPECT_STREQ(ip, "127.0.0.1");
     
-    /* 测试有多个 IP 的 X-Forwarded-For */
+    /* 多个 IP 的 X-Forwarded-For 同样被忽略 */
     strcpy(request->headers[0].value, "192.168.1.1, 10.0.0.1");
     ip = uvhttp_request_get_client_ip(request);
-    EXPECT_STREQ(ip, "192.168.1.1");
+    EXPECT_STREQ(ip, "127.0.0.1");
+    
     
     uvhttp_free(request);
 }

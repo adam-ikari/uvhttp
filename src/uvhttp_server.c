@@ -391,10 +391,13 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
      * are still alive. Without this, open connections leak EBUSY handles at
      * uv_loop_close time, or fire callbacks into already-freed resources. */
     if (server->loop) {
-        for (int index = 0; index < UVHTTP_SERVER_CLEANUP_LOOP_ITERATIONS &&
-                            uv_loop_alive(server->loop);
+        /* Fixed-count non-blocking drain: UV_RUN_ONCE can BLOCK waiting on
+         * a live connection's timer, and uv_loop_alive() can short-circuit
+         * while close callbacks are still pending. UV_RUN_NOWAIT pumps
+         * ready callbacks without ever blocking. */
+        for (int index = 0; index < UVHTTP_SERVER_CLEANUP_LOOP_ITERATIONS;
              index++) {
-            uv_run(server->loop, UV_RUN_ONCE);
+            uv_run(server->loop, UV_RUN_NOWAIT);
         }
     }
     /* TODO(structural): the server keeps only an active_connections counter,
@@ -543,7 +546,10 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
     }
 
     struct sockaddr_in addr;
-    uv_ip4_addr(host, port, &addr);
+    if (uv_ip4_addr(host, port, &addr) != 0) {
+        UVHTTP_LOG_ERROR("Invalid listen host: %s\n", host);
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
 
     /* Nginx optimize: bindport */
     int ret =
@@ -567,6 +573,11 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
     unsigned int keepalive_timeout = server->config
                                          ? server->config->tcp_keepalive_timeout
                                          : UVHTTP_TCP_KEEPALIVE_TIMEOUT;
+    if (keepalive_timeout == 0) {
+        /* config 0 disables the keepalive idle time — fall back to default
+         * instead of passing 0 to TCP_KEEPIDLE (EINVAL, silently ignored). */
+        keepalive_timeout = UVHTTP_TCP_KEEPALIVE_TIMEOUT;
+    }
     uv_tcp_keepalive(&server->tcp_handle, enable, keepalive_timeout);
 
     /* performanceoptimize: set TCP buffersize */
@@ -599,7 +610,7 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
 
     int backlog = UVHTTP_BACKLOG;
     if (config && config->backlog > 0) {
-        backlog = config->backlog;
+        backlog = config->backlog > SOMAXCONN ? SOMAXCONN : config->backlog;
     }
 
     ret = uv_listen((uv_stream_t*)&server->tcp_handle, backlog, on_connection);
@@ -664,8 +675,14 @@ uvhttp_error_t uvhttp_server_enable_health_check(uvhttp_server_t* server,
         }
     }
 
-    return uvhttp_router_add_route(server->router, path,
-                                   health_check_handler);
+    uvhttp_error_t err = uvhttp_router_add_route(server->router, path,
+                                                 health_check_handler);
+    if (err != UVHTTP_OK) {
+        UVHTTP_LOG_ERROR("Failed to add health check route: %d\n", err);
+        return err;
+    }
+
+    return UVHTTP_OK;
 }
 
 uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server,
@@ -689,7 +706,8 @@ uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server) {
         return UVHTTP_OK;
     }
 
-    return UVHTTP_ERROR_SERVER_STOP;
+    /* already stopped: idempotent, not an error */
+    return UVHTTP_OK;
 }
 
 #if UVHTTP_FEATURE_TLS
@@ -841,7 +859,11 @@ static uvhttp_server_builder_t* add_route_internal(
     if (!server || !path || !handler)
         return server;
 
-    uvhttp_router_add_route_method(server->router, path, method, handler);
+    uvhttp_error_t err =
+        uvhttp_router_add_route_method(server->router, path, method, handler);
+    if (err != UVHTTP_OK) {
+        UVHTTP_LOG_ERROR("Failed to add route %s: %d\n", path, err);
+    }
     return server;
 }
 

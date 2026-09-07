@@ -452,18 +452,9 @@ uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response,
     if (length == 0) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-
     // check length limit - simplified version uses 1MB limit
     if (length > UVHTTP_MAX_BODY_SIZE) {
         return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    // verifybodycontent - checkinvalidcharacter
-    for (size_t i = 0; i < length; i++) {
-        // allow all binary data, but record warning
-        if (i < length - 1 && body[i] == 0) {
-            // NULL byte is valid, no need to process
-        }
     }
 
     if (response->body) {
@@ -855,20 +846,6 @@ uvhttp_error_t uvhttp_response_send_raw(const char* data, size_t length,
         /* write failure, immediately clean resources */
         uvhttp_free(write_data);
         return UVHTTP_ERROR_RESPONSE_SEND;
-    }
-
-    /* if response set Connection: close, need to close connection after send
-     * complete */
-    if (response && !response->keepalive) {
-
-        /* get connection object and close connection */
-        uv_tcp_t* client_tcp = (uv_tcp_t*)response->client;
-        if (client_tcp) {
-            uvhttp_connection_t* conn = (uvhttp_connection_t*)client_tcp->data;
-            if (conn) {
-                conn->keepalive = 0;
-            }
-        }
     }
 
     return UVHTTP_OK;

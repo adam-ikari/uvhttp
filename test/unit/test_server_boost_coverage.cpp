@@ -125,7 +125,8 @@ TEST_F(ServerSetFunctionsTest, Stop_NullServer) {
 TEST_F(ServerSetFunctionsTest, Stop_NotListening) {
     // Server was created but never started listening
     uvhttp_error_t err = uvhttp_server_stop(server);
-    EXPECT_EQ(err, UVHTTP_ERROR_SERVER_STOP);
+    // idempotent: stopping an already-stopped server is not an error
+    EXPECT_EQ(err, UVHTTP_OK);
 }
 
 // ============================================================================

@@ -79,126 +79,14 @@ static const uvhttp_mime_mapping_t mime_types[] = {
     {".", "application/octet-stream"},
     {NULL, NULL}};
 
-/* ========== Optimized MIME Type Lookup ========== */
+/* ========== MIME Type Lookup ========== */
 
-/* Hash table for fast MIME type lookup (O(1) vs O(n)) */
-#define MIME_HASH_TABLE_SIZE 64  /* Prime number for better distribution */
+/* Single lookup path: linear search over mime_types[] defined above.
+ * The old hash table + linear fallback dual-structure was removed to
+ * eliminate the need to keep two tables in sync. The table is small
+ * (~40 entries); linear scan is O(n) with negligible cost and one
+ * source of truth. */
 
-typedef struct {
-    const char* extension;
-    const char* mime_type;
-} mime_hash_entry_t;
-
-/* Pre-computed hash table for fast lookup */
-static const mime_hash_entry_t mime_hash_table[MIME_HASH_TABLE_SIZE] = {
-    /* Index 0-15 */
-    {".html", "text/html"},
-    {NULL, NULL},
-    {".css", "text/css"},
-    {NULL, NULL},
-    {".js", "application/javascript"},
-    {NULL, NULL},
-    {".json", "application/json"},
-    {NULL, NULL},
-    {".xml", "application/xml"},
-    {NULL, NULL},
-    {".txt", "text/plain"},
-    {NULL, NULL},
-    {".md", "text/markdown"},
-    {NULL, NULL},
-    {".csv", "text/csv"},
-    {NULL, NULL},
-    /* Index 16-31 */
-    {".png", "image/png"},
-    {NULL, NULL},
-    {".jpg", "image/jpeg"},
-    {NULL, NULL},
-    {".jpeg", "image/jpeg"},
-    {NULL, NULL},
-    {".gif", "image/gif"},
-    {NULL, NULL},
-    {".svg", "image/svg+xml"},
-    {NULL, NULL},
-    {".ico", "image/x-icon"},
-    {NULL, NULL},
-    {".webp", "image/webp"},
-    {NULL, NULL},
-    {".bmp", "image/bmp"},
-    {NULL, NULL},
-    /* Index 32-47 */
-    {".mp3", "audio/mpeg"},
-    {NULL, NULL},
-    {".wav", "audio/wav"},
-    {NULL, NULL},
-    {".ogg", "audio/ogg"},
-    {NULL, NULL},
-    {".aac", "audio/aac"},
-    {NULL, NULL},
-    {".mp4", "video/mp4"},
-    {NULL, NULL},
-    {".webm", "video/webm"},
-    {NULL, NULL},
-    {".avi", "video/x-msvideo"},
-    {NULL, NULL},
-    {".woff", "font/woff"},
-    {NULL, NULL},
-    /* Index 48-63 */
-    {".woff2", "font/woff2"},
-    {NULL, NULL},
-    {".ttf", "font/ttf"},
-    {NULL, NULL},
-    {".eot", "application/vnd.ms-fontobject"},
-    {NULL, NULL},
-    {".pdf", "application/pdf"},
-    {NULL, NULL},
-    {".zip", "application/zip"},
-    {NULL, NULL},
-    {".tar", "application/x-tar"},
-    {NULL, NULL},
-    {".gz", "application/gzip"},
-    {NULL, NULL},
-    {".htm", "text/html"},
-    {NULL, NULL},
-};
-
-/**
- * @brief Fast hash function for MIME type lookup
- * 
- * @param extension File extension to hash
- * @return size_t Hash table index
- * 
- * @note Uses simple string hashing for O(1) lookup
- * @note Optimized for common extensions (html, css, js, png, jpg)
- */
-static inline size_t mime_hash_function(const char* extension) {
-    if (!extension || !*extension) {
-        return MIME_HASH_TABLE_SIZE - 1;  /* Last slot for default */
-    }
-    
-    /* Fast hash for common extensions */
-    switch (extension[1]) {
-        case 'h':  /* .html, .htm */
-            return (extension[4] == 'l') ? 0 : 62;
-        case 'c':  /* .css, .csv */
-            return (extension[2] == 's') ? 2 : 14;
-        case 'j':  /* .js, .jpg, .jpeg */
-            if (extension[2] == 's') return 4;
-            if (extension[3] == 'g') return 18;
-            return 20;
-        case 'p':  /* .png, .pdf, .mp3, .mp4 */
-            if (extension[1] == 'n') return 16;
-            if (extension[1] == 'd') return 48;
-            if (extension[1] == '3') return 32;
-            if (extension[1] == '4') return 40;
-            break;
-        default:
-            break;
-    }
-    
-    /* Fallback: simple hash for other extensions */
-    return ((unsigned char)extension[0] + 
-            (unsigned char)extension[strlen(extension) - 1]) % MIME_HASH_TABLE_SIZE;
-}
 
 /**
  * getfileextension
@@ -284,15 +172,12 @@ static void html_escape(char* dest, const char* src, size_t dest_size) {
 }
 
 /**
- * @brief Get MIME type from file path (optimized with hash table)
+ * @brief Get MIME type from file path
  *
  * @param file_path Path to the file
  * @param mime_type Output buffer for MIME type
  * @param buffer_size Size of output buffer
  * @return uvhttp_result_t UVHTTP_OK on success, error code on failure
- * 
- * @note Uses hash table for O(1) lookup instead of O(n) linear search
- * @note Common extensions (html, css, js, png, jpg) have special fast paths
  */
 uvhttp_result_t uvhttp_static_get_mime_type(const char* file_path,
                                             char* mime_type,
@@ -302,20 +187,7 @@ uvhttp_result_t uvhttp_static_get_mime_type(const char* file_path,
 
     const char* extension = get_file_extension(file_path);
 
-    /* Fast hash table lookup - O(1) */
-    size_t hash_index = mime_hash_function(extension);
-    const mime_hash_entry_t* entry = &mime_hash_table[hash_index];
-    
-    /* Check hash table hit */
-    if (entry->extension && strcasecmp(extension, entry->extension) == 0) {
-        if (uvhttp_safe_strncpy(mime_type, entry->mime_type,
-                                buffer_size) != 0) {
-            UVHTTP_LOG_ERROR("Failed to copy MIME type: %s", entry->mime_type);
-        }
-        return UVHTTP_OK;
-    }
-
-    /* Fallback to linear search for hash collisions (rare) */
+    /* Single lookup path: linear scan over mime_types[] */
     for (int i = 0; mime_types[i].extension; i++) {
         if (strcasecmp(extension, mime_types[i].extension) == 0) {
             if (uvhttp_safe_strncpy(mime_type, mime_types[i].mime_type,
@@ -515,36 +387,8 @@ static int get_file_info(const char* file_path, size_t* file_size,
 
     return 0;
 }
-
 /**
- * calculate buffer size needed for directory list
- */
-static size_t calculate_dir_listing_buffer_size(const char* dir_path,
-                                                size_t* entry_count) {
-    DIR* dir = opendir(dir_path);
-    if (!dir) {
-        return 0;
-    }
-
-    size_t buffer_size = UVHTTP_DIR_LISTING_BUFFER_SIZE;
-    *entry_count = 0;
-
-    struct dirent* entry;
-    while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(entry->d_name, ".") == 0) {
-            continue;
-        }
-
-        buffer_size += strlen(entry->d_name) + UVHTTP_DIR_ENTRY_HTML_OVERHEAD;
-        (*entry_count)++;
-    }
-
-    closedir(dir);
-    return buffer_size;
-}
-
-/**
- * directoryentrystructure
+ * directory entry structure
  */
 typedef struct {
     char name[256];
@@ -554,7 +398,9 @@ typedef struct {
 } dir_entry_t;
 
 /**
- * collect directory entry info
+ * collect directory entry info (single pass — eliminates TOCTOU between
+ * size calculation and collection). Returns a malloc'd array the caller
+ * must uvhttp_free.
  */
 static dir_entry_t* collect_dir_entries(const char* dir_path,
                                         size_t* actual_count) {
@@ -655,20 +501,29 @@ static char* generate_directory_listing(const char* dir_path,
         return NULL;
     }
 
-    /* calculatebuffersize */
-    size_t entry_count = 0;
-    size_t buffer_size =
-        calculate_dir_listing_buffer_size(dir_path, &entry_count);
-    if (buffer_size == 0) {
+    /* Collect entries FIRST (single readdir pass), then compute buffer
+     * from actual data. Eliminates TOCTOU between the old two-pass
+     * size-then-collect and fixes buffer underestimation: each file name
+     * appears twice in the HTML (href + text), each char expands up to
+     * 6× via html_escape, plus fixed tag overhead. */
+    size_t actual_count = 0;
+    dir_entry_t* entries = collect_dir_entries(dir_path, &actual_count);
+    if (!entries) {
         return NULL;
     }
 
-    /* allocatebuffer */
+    /* Compute buffer from actual entries: base HTML + 2×6×name + overhead */
+    size_t buffer_size = UVHTTP_DIR_LISTING_BUFFER_SIZE;
+    for (size_t i = 0; i < actual_count; i++) {
+        buffer_size += 2 * 6 * strlen(entries[i].name) +
+                       UVHTTP_DIR_ENTRY_HTML_OVERHEAD;
+    }
+
     char* html = uvhttp_alloc(buffer_size);
     if (!html) {
+        uvhttp_free(entries);
         return NULL;
     }
-
     /* startgenerateHTML */
     size_t offset = 0;
     offset +=
@@ -704,13 +559,7 @@ static char* generate_directory_listing(const char* dir_path,
                            "class=\"dir\">-</td><td>-</td></tr>\n");
     }
 
-    /* collect directory entry */
-    size_t actual_count = 0;
-    dir_entry_t* entries = collect_dir_entries(dir_path, &actual_count);
-    if (!entries) {
-        uvhttp_free(html);
-        return NULL;
-    }
+
 
     /* sort entry */
     sort_dir_entries(entries, actual_count);
@@ -857,11 +706,67 @@ int uvhttp_static_check_conditional_request(void* request, const char* etag,
     if (!request)
         return 0;
 
-    /* checkIf-None-Match */
+    /* Parse If-None-Match as comma-separated entity-tag list per RFC 7232
+     * §3.2. Each entry may be a strong or weak validator: 'W/"abc"' or
+     * '"abc"'. Strip the optional W/ prefix and surrounding quotes before
+     * comparing to the resource ETag (which is already quoted). If any
+     * entry matches (or the list contains "*"), return 304. */
     const char* if_none_match =
         uvhttp_request_get_header(request, "If-None-Match");
-    if (if_none_match && etag && strcmp(if_none_match, etag) == 0) {
-        return 1; /* return304 */
+    if (if_none_match && etag && *etag) {
+        if (if_none_match[0] == '*' && if_none_match[1] == '\0') {
+            return 1; /* wildcard — matches any resource */
+        }
+        /* Walk comma-separated list, comparing each entry to etag. */
+        const char* p = if_none_match;
+        while (*p) {
+            /* Skip leading whitespace/commas */
+            while (*p == ' ' || *p == ',' || *p == '\t') {
+                p++;
+            }
+            if (*p == '\0') {
+                break;
+            }
+            /* Start of this entry */
+            const char* entry = p;
+            /* Find end (next unquoted comma) */
+            int in_quotes = 0;
+            const char* end = p;
+            while (*end) {
+                if (*end == '"') {
+                    in_quotes = !in_quotes;
+                } else if (*end == ',' && !in_quotes) {
+                    break;
+                }
+                end++;
+            }
+            /* Weak comparison per RFC 7232 §2.3.2: strip the optional W/
+             * prefix from BOTH the header entry and the resource etag, so
+             * weak validators match strong ones and vice versa. */
+            const char* cmp = entry;
+            size_t cmp_len = (size_t)(end - entry);
+            /* Trim trailing whitespace/commas from this entry */
+            while (cmp_len > 0 && (cmp[cmp_len - 1] == ' ' ||
+                                   cmp[cmp_len - 1] == '\t')) {
+                cmp_len--;
+            }
+            if (cmp_len >= 2 && (cmp[0] == 'W' || cmp[0] == 'w') &&
+                cmp[1] == '/') {
+                cmp += 2;
+                cmp_len -= 2;
+            }
+            const char* ref = etag;
+            size_t ref_len = strlen(etag);
+            if (ref_len >= 2 && (ref[0] == 'W' || ref[0] == 'w') &&
+                ref[1] == '/') {
+                ref += 2;
+                ref_len -= 2;
+            }
+            if (cmp_len == ref_len && strncmp(cmp, ref, cmp_len) == 0) {
+                return 1; /* return 304 */
+            }
+            p = end;
+        }
     }
 
     /* checkIf-Modified-Since */

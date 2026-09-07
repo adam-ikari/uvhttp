@@ -836,8 +836,11 @@ TEST_F(ClientIpTcpTest, GetClientIp_TcpPeerName_IPv4) {
     EXPECT_STREQ(ip, "127.0.0.1");
 }
 
-TEST_F(ClientIpTcpTest, GetClientIp_TcpPeerName_WithXForwardedFor) {
-    // When X-Forwarded-For is set, it takes priority over TCP peer name
+TEST_F(ClientIpTcpTest, GetClientIp_TcpPeerName_WithXForwardedFor_Untrusted) {
+    /* Default (trust_proxy_headers=0, Fix 5): a spoofable X-Forwarded-For
+     * must not override the TCP peer name (127.0.0.1). This also covers the
+     * request-without-connection path: parser is NULL here, so the
+     * parser->data reverse lookup must not dereference anything. */
     if (!SetupConnectedSocket()) {
         GTEST_SKIP() << "Could not set up TCP connection for testing";
     }
@@ -851,7 +854,7 @@ TEST_F(ClientIpTcpTest, GetClientIp_TcpPeerName_WithXForwardedFor) {
 
     const char* ip = uvhttp_request_get_client_ip(&req);
     ASSERT_NE(ip, nullptr);
-    EXPECT_STREQ(ip, "10.0.0.1");
+    EXPECT_STREQ(ip, "127.0.0.1");
 }
 
 // ============================================================================
