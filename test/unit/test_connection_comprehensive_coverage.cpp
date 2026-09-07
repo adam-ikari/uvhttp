@@ -75,9 +75,15 @@ TEST(UvhttpConnectionComprehensiveTest, ConnectionStateTransitions) {
     conn->state = UVHTTP_CONN_STATE_CLOSING;
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_CLOSING);
 
-    /* Test无效State */
-    conn->state = (uvhttp_connection_state_t)999;
-    EXPECT_EQ(conn->state, (uvhttp_connection_state_t)999);
+    /* Test剩余合法State转换 */
+    conn->state = UVHTTP_CONN_STATE_TLS_HANDSHAKE;
+    EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_TLS_HANDSHAKE);
+
+    conn->state = UVHTTP_CONN_STATE_HTTP_PROCESSING;
+    EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_HTTP_PROCESSING);
+
+    conn->state = UVHTTP_CONN_STATE_PROTOCOL_UPGRADED;
+    EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_PROTOCOL_UPGRADED);
 
     uvhttp_connection_free(conn);
     destroy_server_and_loop(server, loop);
