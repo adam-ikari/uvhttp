@@ -2,7 +2,7 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-08-27T14:30:28"
+updated: "2026-09-07T03:40:14"
 ---
 
 # Roadmap
@@ -18,6 +18,7 @@ gantt
   ci-fuzz 修复（C11对齐）  :done, b1b, 2026-08-25, 1d
   嵌入验证第二轮            :done, a3, 2026-08-25, 3d
   性能回归门禁建设          :done, b0, 2026-08-26, 1d
+  代码评审缺陷修复          :done, b5, 2026-09-07, 1d
   section v2.8.x — 性能与平台
   新嵌入者接入              :done, a4, 2026-08-27, 1d
   io_uring 静态文件路径     :b2, after b0, 21d
@@ -36,6 +37,7 @@ gantt
 | ci-fuzz 修复 | P0 | ✅ 已完成 | C11 对齐 + 链接补齐 + fuzz_request 移除 |
 | 嵌入验证第二轮 | P1 | ✅ 已完成 | add_subdirectory 集成验证，CMake 依赖可见性修复 |
 | 性能回归门禁 | P0 | ✅ 已完成 | 10% RPS 阈值，CI 自动失败 |
+| 代码评审缺陷修复 | P1 | ✅ 已完成 | 34 项缺陷修复（13 P0/P1 + 21 P2/P3），v2.7.2 |
 
 ### v2.8.x — 性能优化与平台扩展（2026 Q4）
 
@@ -86,3 +88,4 @@ gantt
 - ✅ 嵌入验证第二轮（add_subdirectory 集成验证）
 - ✅ 性能回归门禁（10% RPS 阈值，CI 自动失败）
 - ✅ 新嵌入者接入（双语接入指南 + 独立嵌入示例）
+- ✅ 代码评审缺陷修复（34 项：13 P0/P1 + 21 P2/P3，v2.7.2）
