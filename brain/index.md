@@ -1,6 +1,6 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-09-07T03:40:27.898Z._
+_Auto-generated. Last updated 2026-09-07T07:14:34.485Z._
 
 - [benchmark-thermal-throttling](pages/benchmark-thermal-throttling.md) — category: decision | tags: [performance, benchmark, methodology] | <current best understanding — replace this with the real content>
 - [build-system-make-cmake](pages/build-system-make-cmake.md) — category: decision | tags: [build-system, cmake, make, just, embedded] | <current best understanding — replace this with the real content>
@@ -11,6 +11,7 @@ _Auto-generated. Last updated 2026-09-07T03:40:27.898Z._
 - [embedding-guide-examples](pages/embedding-guide-examples.md) — category: decision | tags: [embedding, guide, examples, add_subdirectory] | ## 交付物
 - [perf-regression-gate](pages/perf-regression-gate.md) — category: decision | tags: [performance, benchmark, ci, gate] | ## 方案
 - [performance-benchmark-update](pages/performance-benchmark-update.md) — category: decision | tags: [performance, benchmark, release-v2.6.2] | <current best understanding — replace this with the real content>
+- [release-process-benchmark-gate](pages/release-process-benchmark-gate.md) — category: decision | tags: [release, ci, benchmark] | ## 决定
 - [release-v262](pages/release-v262.md) — category: decision | tags: [release, memory-safety, websocket] | # v2.6.2 发布记录
 - [release-v271](pages/release-v271.md) — category: decision | tags: [release, embedding, ci] | # v2.7.1 发布记录
 - [release-v272](pages/release-v272.md) — category: decision | tags: [release, code-review] | # v2.7.2 发布记录

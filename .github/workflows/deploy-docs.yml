@@ -1,9 +1,9 @@
 name: CI/CD - Deploy Documentation
 
-# 触发条件：Push 到 main 或 release/* 分支，且 docs/** 或 Doxyfile 路径有变化
+# 触发条件：Push 到 main，且 docs/** 或 Doxyfile 路径有变化
 on:
   push:
-    branches: [ main, 'release/**' ]
+    branches: [ main ]
     paths:
       - 'docs/**'
       - 'docs/Doxyfile'

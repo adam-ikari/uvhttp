@@ -17,19 +17,35 @@
 
 ## 发布流程
 
+> **分支策略**：所有 main 变更（含发布 commit）必须走 PR 合并，禁止直推 main。
+
+### 阶段一：预发布
+
 1. **全面测试**
    - `make test` (Debug 101/101)
    - `make verify-memory-safety` (ASan + UBSan)
    - `cd docs && npm run docs:build`
 
-2. **版本发布**
+2. **版本准备**
    - 更新 `VERSION` 文件
    - 更新 `docs/guide/CHANGELOG.md`
+   - 通过 PR 合并到 main（PR-only，禁止直推）
+
+3. **创建预发布 Release**
    - 创建 Git tag: `git tag v2.x.y`
    - 推送 tag: `git push origin v2.x.y`
+   - 创建 pre-release: `gh release create v2.x.y --prerelease`
+   - **自动触发 ci-benchmark 回归门禁**（10% RPS 阈值 vs 基线）
+   - 门禁绿（CI 通过 / gate 通过）才可转正式
 
-3. **部署**
-   - Push 到 main 触发 CI 自动部署
+### 阶段二：正式发布
+
+4. **确认门禁**
+   - 确认 benchmark 回归门禁为绿（PR 标签或 release 事件均触发 gate）
+
+5. **转正式**
+   - `gh release edit v2.x.y --latest`（移除 prerelease 标记）
+   - main 经 PR 合并触发文档自动部署
    - 确认网站更新
 
 ## 发布检查清单
@@ -41,6 +57,9 @@
 - [ ] CHANGELOG 已更新
 - [ ] VERSION 已更新
 - [ ] Git tag 已创建并推送
+- [ ] Benchmark 回归门禁通过（CI / gate 绿）
+- [ ] 预发布 Release 已创建（--prerelease）
+- [ ] 正式 Release 已确认（--latest）
 - [ ] 网站已部署
 
 ## 版本历史
