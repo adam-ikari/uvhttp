@@ -534,35 +534,52 @@ uvhttp_error_t uvhttp_send_response_data(uvhttp_response_t* response,
  * single-thread advantage: no locks needed, resource release order is
  * predictable
  */
+/* Shared post-write handling: close the connection when the response asked
+ * for it, otherwise restart the HTTP read for the next keep-alive request.
+ * Called from every write-completion callback after the write resources have
+ * been released. The connection (and with it response->body, when the write
+ * referenced it) outlives the write callback: restart_read/free_resources only
+ * run after the write has fully completed, so referencing response-owned
+ * memory from a uv_buf_t for the duration of uv_write is safe. */
+static void uvhttp_response_after_write(uvhttp_response_t* response) {
+    if (!response) {
+        return;
+    }
+    uv_tcp_t* client = (uv_tcp_t*)response->client;
+    if (!client) {
+        return;
+    }
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)client->data;
+    if (!conn) {
+        return;
+    }
+    if (!response->keepalive) {
+        /* closeconnection */
+        uvhttp_connection_close(conn);
+    }
+#if UVHTTP_FEATURE_WEBSOCKET
+    else if (!conn->is_websocket) {
+#else
+    else {
+#endif
+        /* keep-alive connection, restart read to receive next
+         * request (skip for websocket: its read callback was
+         * already set up by switch_to_websocket; restarting
+         * HTTP read here would override it) */
+        uvhttp_connection_schedule_restart_read(conn);
+    }
+}
+
+/* single-thread safe write complete callback
+ * executed in libuv event loop thread, safely release write related resources
+ * single-thread advantage: no locks needed, resource release order is
+ * predictable
+ */
 static void uvhttp_free_write_data(uv_write_t* req, int status) {
     (void)status;  // avoid unused parameter warning
     uvhttp_write_data_t* write_data = (uvhttp_write_data_t*)req->data;
     if (write_data) {
-        /* check if need to close connection or restart read */
-        if (write_data->response) {
-            uv_tcp_t* client = (uv_tcp_t*)write_data->response->client;
-            if (client) {
-                uvhttp_connection_t* conn = (uvhttp_connection_t*)client->data;
-                if (conn) {
-                    if (!write_data->response->keepalive) {
-                        /* closeconnection */
-                        uvhttp_connection_close(conn);
-                    }
-#if UVHTTP_FEATURE_WEBSOCKET
-                    else if (!conn->is_websocket) {
-#else
-                    else {
-#endif
-                        /* keep-alive connection, restart read to receive next
-                         * request (skip for websocket: its read callback was
-                         * already set up by switch_to_websocket; restarting
-                         * HTTP read here would override it) */
-                        uvhttp_connection_schedule_restart_read(conn);
-                    }
-                }
-            }
-        }
-
+        uvhttp_response_after_write(write_data->response);
         /* release write_data (data buffer is part of struct, no need to
          * separately release) */
         uvhttp_free(write_data);
@@ -578,29 +595,42 @@ static void uvhttp_free_write_data(uv_write_t* req, int status) {
  *
  * note: caller is responsible for releasing returned *out_data memory
  */
-uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
-                                          char** out_data, size_t* out_length) {
-    if (!response || !out_data || !out_length) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
 
-    /* duplicate send check */
-    if (response->sent) {
-        *out_data = NULL;
-        *out_length = 0;
-        return UVHTTP_OK;
-    }
+/* Prepare a response for transmission: apply optional compression and build
+ * the header block.
+ *
+ * On success:
+ *   *out_headers / *out_headers_len  heap buffer holding the header block
+ *                                    (caller frees with uvhttp_free)
+ *   *out_body / *out_body_len        body bytes to send; points into
+ *                                    response->body, the gzip cache, or into
+ *                                    *out_owned
+ *   *out_owned                       non-NULL only when a freshly compressed
+ *                                    buffer was produced; the caller must
+ *                                    free it once the buffer is no longer
+ *                                    referenced (after uv_write completes)
+ *
+ * response->body_length is restored to its original value on every path.
+ */
+static uvhttp_error_t uvhttp_response_prepare(
+    uvhttp_response_t* response, char** out_headers, size_t* out_headers_len,
+    const char** out_body, size_t* out_body_len, char** out_owned) {
+    *out_headers = NULL;
+    *out_headers_len = 0;
+    *out_body = NULL;
+    *out_body_len = 0;
+    *out_owned = NULL;
 
     /* ========== Step 1: Compress body first (before building headers) ========== */
     const char* body_to_send = response->body;
     size_t body_length = response->body_length;
     size_t original_body_length = response->body_length;  /* save for restoration */
     char* compressed_body = NULL;  /* track for cleanup */
-    
+
 #if UVHTTP_FEATURE_COMPRESSION
     /* 零开销检查：编译期优化会完全移除这个分支 */
-    if (response->compress && 
-        response->body && 
+    if (response->compress &&
+        response->body &&
         response->body_length >= (size_t)response->compress_threshold) {
 
         /* 先查 gzip LRU 缓存：相同 body 内容只压缩一次 */
@@ -626,15 +656,15 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
             size_t compressed_len = 0;
 
             uvhttp_error_t compress_result = uvhttp_compress_gzip(
-                response->body, 
+                response->body,
                 response->body_length,
-                &compressed_body, 
+                &compressed_body,
                 &compressed_len
             );
 
             /* 如果压缩成功且有效（压缩后更小），使用压缩数据 */
-            if (compress_result == UVHTTP_OK && 
-                compressed_body && 
+            if (compress_result == UVHTTP_OK &&
+                compressed_body &&
                 compressed_len < response->body_length) {
 
                 body_to_send = compressed_body;
@@ -707,14 +737,51 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
         build_response_headers(response, headers_buffer, &headers_length);
     }
 
+    *out_headers = headers_buffer;
+    *out_headers_len = headers_length;
+    *out_body = body_to_send;
+    *out_body_len = body_length;
+    *out_owned = compressed_body;
+    return UVHTTP_OK;
+}
+
+uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
+                                          char** out_data, size_t* out_length) {
+    if (!response || !out_data || !out_length) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    /* duplicate send check */
+    if (response->sent) {
+        *out_data = NULL;
+        *out_length = 0;
+        return UVHTTP_OK;
+    }
+
+    /* build headers and resolve the body to send (compression applied inside) */
+    char* headers_buffer = NULL;
+    size_t headers_length = 0;
+    const char* body_to_send = NULL;
+    size_t body_length = 0;
+    char* compressed_body = NULL;
+    uvhttp_error_t err = uvhttp_response_prepare(
+        response, &headers_buffer, &headers_length, &body_to_send,
+        &body_length, &compressed_body);
+    if (err != UVHTTP_OK) {
+        return err;
+    }
+
     /* ========== Step 3: Calculate total size and allocate response data ========== */
     size_t total_size = headers_length + body_length;
-    
+
     /* allocate complete response data */
     char* response_data =
         uvhttp_alloc(total_size + 1); /* +1 for null terminator */
     if (!response_data) {
         uvhttp_free(headers_buffer);
+        if (compressed_body) {
+            uvhttp_free(compressed_body);
+        }
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
 
@@ -725,14 +792,12 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
     if (body_to_send && body_length > 0) {
         memcpy(response_data + headers_length, body_to_send, body_length);
     }
-    
+
     /* 释放临时压缩缓冲区 */
-#if UVHTTP_FEATURE_COMPRESSION
     if (compressed_body) {
         uvhttp_free(compressed_body);
     }
-#endif
-    
+
     /* ensure null-terminated (although HTTP does not need it, but for safety)
      */
     response_data[total_size] = '\0';
@@ -857,24 +922,105 @@ uvhttp_error_t uvhttp_response_send_raw(const char* data, size_t length,
  *
  * this function combines data building and actual sending
  */
-uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
-    if (!response) {
-        return UVHTTP_ERROR_INVALID_PARAM;
+
+/* Zero-copy write context: owns the (small) header block and, when
+ * compression produced a fresh buffer, the compressed body. The body uv_buf
+ * points directly at response->body when no compression was applied, so the
+ * 100KB-scale body is never copied nor re-allocated on the send path.
+ *
+ * Lifetime: response->body is freed only by restart_read / free_resources,
+ * both of which run strictly after this write completes (the write callback
+ * schedules restart_read, and uv_close cancels pending writes before the
+ * close callbacks run). The header block and owned compressed buffer are
+ * freed here in the completion callback. */
+typedef struct {
+    uv_write_t req;
+    uvhttp_response_t* response;
+    char* headers;    /* heap buffer with the header block (freed here) */
+    char* owned_body; /* compressed buffer produced by prepare (freed here) */
+    uv_buf_t bufs[2]; /* [0] headers, [1] body (may point into response->body) */
+} uvhttp_resp_write_t;
+
+/* write completion callback for the zero-copy send path */
+static void uvhttp_resp_write_done(uv_write_t* req, int status) {
+    (void)status;  /* avoid unused parameter warning */
+    uvhttp_resp_write_t* w = (uvhttp_resp_write_t*)req->data;
+    uvhttp_response_t* response = w->response;
+    if (w->owned_body) {
+        uvhttp_free(w->owned_body);
+    }
+    if (w->headers) {
+        uvhttp_free(w->headers);
+    }
+    uvhttp_free(w);
+    uvhttp_response_after_write(response);
+}
+
+/* Send the response with a single uv_write over [header, body] (writev), so
+ * the body is referenced in place instead of being concatenated and copied.
+ * Only the small header block and write context are heap-allocated. */
+static uvhttp_error_t uvhttp_response_send_zerocopy(
+    uvhttp_response_t* response) {
+    char* headers = NULL;
+    size_t headers_len = 0;
+    const char* body = NULL;
+    size_t body_len = 0;
+    char* owned = NULL;
+    uvhttp_error_t err =
+        uvhttp_response_prepare(response, &headers, &headers_len, &body,
+                                &body_len, &owned);
+    if (err != UVHTTP_OK) {
+        return err;
     }
 
-    /* debug output: show response send start */
-
-    /* single-thread safe duplicate send check */
-    if (response->sent) {
-        return UVHTTP_OK;
+    uvhttp_resp_write_t* w = uvhttp_alloc(sizeof(*w));
+    if (!w) {
+        uvhttp_free(headers);
+        if (owned) {
+            uvhttp_free(owned);
+        }
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
+    w->response = response;
+    w->headers = headers;
+    w->owned_body = owned;
+    w->bufs[0] = uv_buf_init(headers, headers_len);
+    w->bufs[1] = uv_buf_init((char*)body, body_len);
+    memset(&w->req, 0, sizeof(w->req));
+    w->req.data = w;
 
+    /* mark response as sent (write is queued or the connection is broken) */
+    response->sent = 1;
+
+    int result =
+        uv_write(&w->req, (uv_stream_t*)response->client, w->bufs,
+                 (body && body_len > 0) ? 2 : 1, uvhttp_resp_write_done);
+    if (result < 0) {
+        if (w->owned_body) {
+            uvhttp_free(w->owned_body);
+        }
+        if (w->headers) {
+            uvhttp_free(w->headers);
+        }
+        uvhttp_free(w);
+        return UVHTTP_ERROR_RESPONSE_SEND;
+    }
+    return UVHTTP_OK;
+}
+
+/* Copy-based send: builds the full response (headers + body) into one
+ * contiguous buffer and hands it to uvhttp_response_send_raw. Used for TLS
+ * connections (mbedtls_ssl_write consumes a single plaintext span) and for
+ * clients that are not a real uvhttp_connection TCP stream; send_raw performs
+ * its own client/stream validation and returns the same error codes as before
+ * the zero-copy optimization. */
+static uvhttp_error_t uvhttp_response_send_copy(
+    uvhttp_response_t* response) {
     /* call pure function build response data */
     char* response_data = NULL;
     size_t response_length = 0;
     uvhttp_error_t err =
         uvhttp_response_build_data(response, &response_data, &response_length);
-
     if (err != UVHTTP_OK) {
         return err;
     }
@@ -891,9 +1037,47 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
 
     if (err == UVHTTP_OK) {
         response->finished = 1;
-    } else {
+    }
+    return err;
+}
+
+uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
+    if (!response) {
+        return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    /* single-thread safe duplicate send check */
+    if (response->sent) {
+        return UVHTTP_OK;
+    }
+
+    /* Only a real uvhttp_connection TCP stream takes the zero-copy writev
+     * path. Anything else (NULL client, a handle without a connection, a
+     * client that is not the connection's own tcp_handle, or TLS) falls back
+     * to the original build_data+send_raw route, which validates the client
+     * and returns the same errors as before the optimization — never pass a
+     * NULL or bogus stream to uv_write. */
+    uv_stream_t* stream = (uv_stream_t*)response->client;
+    int use_zerocopy = 0;
+    if (stream && stream->type == UV_TCP && stream->loop) {
+        uvhttp_connection_t* conn =
+            (uvhttp_connection_t*)stream->data;
+        if (conn && stream == (uv_stream_t*)&conn->tcp_handle) {
+            /* TLS needs a contiguous plaintext buffer (mbedtls_ssl_write
+             * consumes a single span), so the copy path is kept for
+             * encrypted connections. */
+            use_zerocopy = !(conn->tls_enabled && conn->ssl);
+        }
+    }
+    if (!use_zerocopy) {
+        return uvhttp_response_send_copy(response);
+    }
+
+    /* non-TLS: zero-copy writev (header buf + body buf), no body memcpy */
+    uvhttp_error_t err = uvhttp_response_send_zerocopy(response);
+    if (err == UVHTTP_OK) {
+        response->finished = 1;
+    }
     return err;
 }
 
