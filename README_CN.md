@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.7.1-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.7.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
@@ -21,7 +21,7 @@
 
 UVHTTP 是一个基于 libuv 的生产级事件驱动 HTTP 服务器库，专为现代 C 应用设计。它在极低资源消耗下提供卓越性能，既适用于高性能服务器，也适用于嵌入式系统。
 
-### 关键指标 (v2.7.1, GitHub CI 基准)
+### 关键指标 (v2.7.2, GitHub CI 基准)
 
 性能基准在 **GitHub Actions `ubuntu-latest` runner** 上测量，以确保硬件一致性。此前的本地基准（v2.6.x，约 20K RPS）在开发者硬件上测量，受 CPU 热降频影响方差高达 40%+。CI runner 消除了这一方差（CV 0.4–2.4%），提供了权威的、可复现的基线。
 
@@ -29,7 +29,7 @@ UVHTTP 是一个基于 libuv 的生产级事件驱动 HTTP 服务器库，专为
 |--------|-------|-------|
 | **峰值吞吐量** | ~83K RPS | HTTP/1.1，10 连接，GitHub CI runner |
 | **高并发** | ~55K RPS | 1000 并发连接 |
-| **静态文件** | 5.7K RPS | ~100KB body，`benchmark_unified` |
+| **静态文件** | 8.8K RPS | ~100KB body，`benchmark_unified`，零拷贝 writev |
 | **API 路由** | 82K RPS | JSON 端点 |
 | **平均延迟** | ~117µs | P50，10 连接 |
 | **错误率** | 0% | 负载下零 socket 错误（10 连接） |
@@ -78,7 +78,7 @@ UVHTTP 完整支持 32 位架构，针对资源受限环境进行了优化，适
 - 🔄 **连接管理**：连接池、超时检测、心跳监控
 - 📊 **限流**：基于令牌桶算法，支持白名单
 - 🌐 **WebSocket**：全双工通信，支持 Ping/Pong
-- ⚙️ **高度可配置**：36 个编译期选项，适应不同部署场景
+- ⚙️ **高度可配置**：27 个编译期选项，适应不同部署场景
 - 🎛️ **内存优化**：可选 mimalloc 实现更快的分配
 
 ## 🚀 快速开始
@@ -152,7 +152,7 @@ export LD_LIBRARY_PATH=../build/dist/lib:$LD_LIBRARY_PATH
 ### 前置依赖
 
 - **Just 命令运行器**：可选，偏好 `just` 的开发者（`cargo install just` 或参见 [just.systems](https://just.systems））
-- **C 编译器**：GCC 4.8+ 或 Clang 3.4+，支持 C99
+- **C 编译器**：GCC 4.8+ 或 Clang 3.4+，支持 C11
 - **CMake**：3.10 或更高版本
 - **构建工具**：make、git
 - **可选**：mimalloc 用于提升内存性能
@@ -168,39 +168,15 @@ cd deps/llhttp
 npm install
 npm run build
 
-# 方式二：使用 make
-cd deps/llhttp
-make build/libllhttp.a
-
-# 方式三：使用 Python（如 npm 不可用）
-cd deps/llhttp
-python3 -m http.server 8080 &
-npm install
-npm run build
-```
-
-**注意**：llhttp 库在首次构建后会被缓存，只需构建一次。
-
-### 构建 llhttp（HTTP 解析器）
-
-UVHTTP 使用 llhttp 作为 HTTP 解析器。编译 UVHTTP 前需要先构建它：
-
-```bash
-# 进入 llhttp 目录
-cd deps/llhttp
-
-# 方式一：使用 npm（推荐）
-npm install
-npm run build
-
 # 方式二：使用 make（如 npm 不可用）
+cd deps/llhttp
 make build/libllhttp.a
 
 # 返回项目根目录
 cd ../..
 ```
 
-**注意**：llhttp 仅在首次构建时需要。编译后的库会被缓存供后续构建使用。
+**注意**：llhttp 库在首次构建后会被缓存，只需构建一次。
 
 ### 高级构建选项
 
@@ -241,44 +217,61 @@ cmake -DCMAKE_USER_CONFIG=ON ..
 ```c
 #include <uvhttp.h>
 #include <uv.h>
+#include <string.h>
 
 // 请求处理函数
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello from UVHTTP v2.7.1!");
+    uvhttp_response_set_body(res, "Hello from UVHTTP v2.7.2!", strlen("Hello from UVHTTP v2.7.2!"));
     return uvhttp_response_send(res);
 }
 
 int main() {
     // 创建事件循环
     uv_loop_t* loop = uv_default_loop();
-    
-    // 创建服务器和路由器
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
-    server->router = router;
-    
+
+    // 创建服务器（输出参数 + 错误码）
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "创建服务器失败: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
+
+    // 创建路由器并挂载到服务器
+    uvhttp_router_t* router = NULL;
+    result = uvhttp_router_new(&router);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "创建路由器失败: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
+    uvhttp_server_set_router(server, router);
+
     // 添加路由
-    uvhttp_router_add_route(router, "/hello", hello_handler);
-    
+    result = uvhttp_router_add_route(router, "/hello", hello_handler);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "添加路由失败: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
+
     // 启动服务器
-    int result = uvhttp_server_listen(server, "0.0.0.0", 8080);
+    result = uvhttp_server_listen(server, "0.0.0.0", 8080);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "服务器启动失败: %s\n", uvhttp_error_string(result));
         return 1;
     }
-    
+
     printf("服务器监听在 http://0.0.0.0:8080\n");
     uv_run(loop, UV_RUN_DEFAULT);
-    
+
     return 0;
 }
 ```
 
 **编译和运行**：
 ```bash
-gcc -o server server.c -I./include -L./build/dist/lib -luvhttp -luv
+gcc -o server server.c -I./include -L./build/dist/lib -luvhttp -lpthread -luv
 export LD_LIBRARY_PATH=./build/dist/lib:$LD_LIBRARY_PATH
 ./server
 ```
@@ -341,29 +334,28 @@ UVHTTP 采用模块化、事件驱动的架构，兼顾性能与灵活性：
 - **[快速开始](docs/guide/getting-started.md)** - 5 分钟快速入门
 - **[API 参考](docs/api/introduction.md)** - 完整 API 文档
 - **[构建指南](docs/guide/CMAKE_CONFIGURATION.md)** - 构建系统配置
-- **[性能基准](docs/performance.md)** - 性能分析和指标
+- **[性能基准](docs/guide/performance.md)** - 性能分析和指标
 
 ### 开发者资源
 - **[架构设计](docs/dev/ARCHITECTURE.md)** - 系统架构与设计决策
 - **[开发者指南](docs/guide/DEVELOPER_GUIDE.md)** - 开发最佳实践
 - **[测试标准](docs/dev/TESTING_STANDARDS.md)** - 测试指南与覆盖率
-- **[迁移指南](docs/MIGRATION_GUIDE.md)** - 版本升级
+- **[迁移指南（LRU 缓存）](docs/guide/MIGRATION_GUIDE_LRU_CACHE.md)** - 升级到 LRU 缓存
 
 ### 高级主题
 - **[WebSocket 指南](docs/guide/websocket.md)** - 实时通信
 - **[静态文件服务器](docs/guide/STATIC_FILE_SERVER.md)** - 文件服务优化
 - **[限流 API](docs/guide/RATE_LIMIT_API.md)** - 限流实现
-- **[压缩特性](COMPRESSION_FEATURE_REPORT.md)** - 零开销压缩
 
 ## 🏗️ 项目结构
 
 ```
 uvhttp/
-├── include/              # 公共 API 头文件（27 个文件）
+├── include/              # 公共 API 头文件（29 个文件）
 │   ├── uvhttp.h         # 主头文件
 │   ├── uvhttp_*.h       # 模块头文件
 │   └── uvhttp_features.h # 特性配置
-├── src/                 # 实现（23 个 .c 文件）
+├── src/                 # 实现（18 个 .c 文件）
 │   ├── uvhttp_*.c       # 核心模块
 │   └── uvhttp_websocket.c # WebSocket 实现
 ├── docs/                # 文档
@@ -398,10 +390,10 @@ uvhttp/
 
 ```bash
 # 运行所有测试
-./run_tests.sh
+make test
 
 # 运行测试并生成覆盖率报告
-./run_tests.sh --detailed
+make coverage
 
 # 运行特定测试
 cd build
@@ -438,8 +430,8 @@ ab -n 10000 -c 100 http://localhost:8080/
 欢迎贡献！请遵循以下指南：
 
 1. 阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 了解贡献规范
-2. 遵循代码风格：C99 标准，4 空格缩进，K&R 大括号
-3. 确保所有测试通过：`./run_tests.sh`
+2. 遵循代码风格：C11 标准，4 空格缩进，K&R 大括号
+3. 确保所有测试通过：`make test`
 4. 零编译警告：已启用 `-Werror`
 5. 为新功能添加测试
 6. 为 API 变更更新文档
@@ -501,6 +493,12 @@ UVHTTP 基于以下优秀的开源项目构建：
 - [x] 嵌入构建 CMake 依赖可见性（PR #365）
 - [x] 性能回归门禁（10% RPS 阈值，PR #366）
 
+### v2.7.2（已发布 2026-09-07）
+- [x] 34 项代码评审缺陷修复（P0-P3）：query string 路由匹配、MAX_PARAMS 边界、WS 短写截帧、If-Modified-Since 时区/日期格式、accept 下溢
+- [x] 大响应零拷贝 writev —— /large RPS 5.1K → 8.8K
+- [x] TLS EINTR 重试、If-None-Match weak/多值 ETag、目录列表 TOCTOU 修复
+- [x] 默认不信任 X-Forwarded-For（`trust_proxy_headers` 可选开启）、listen 参数校验、`server_stop` 幂等
+
 ### v2.8.0（计划中）
 - [ ] io_uring 静态文件路径探索
 - [ ] 内存分配优化
@@ -516,6 +514,7 @@ UVHTTP 基于以下优秀的开源项目构建：
 
 | 版本 | 日期 | 亮点 |
 |---------|------|------------|
+| **v2.7.2** | 2026-09-07 | 34 项代码评审缺陷修复：query string 路由匹配、MAX_PARAMS 边界、WS 短写截帧、If-Modified-Since 时区/3 种日期格式、accept 下溢等；/large 零拷贝 writev（5.1K→8.8K RPS） |
 | **v2.7.1** | 2026-08-26 | CI fuzz 修复（C11 对齐，PR #364）、嵌入 CMake 依赖可见性（PR #365）、性能回归门禁（10% RPS 阈值，PR #366） |
 | **v2.7.0** | 2026-08-21 | TLS 会话缓存重新启用、CI 基准工作流 (ci-benchmark.yml)、代码质量修复 (L3-L5)、Brain 文档、Platinum 层级基线（CI 上 83K RPS） |
 | **v2.6.2** | 2026-08-17 | 连接上限内存安全修复（accept 失败时 uv_close）、WebSocket RFC 6455/内存安全修复（PR #336）、uv_strerror_r 一致性 |
@@ -526,7 +525,7 @@ UVHTTP 基于以下优秀的开源项目构建：
 | **v2.3.0** | 2026-02-10 | 连接清理性能修复 |
 | **v2.2.0** | 2026-01-27 | 重大重构，零开销抽象 |
 
-详见 [CHANGELOG.md](docs/CHANGELOG.md) 发布说明。
+详见 [CHANGELOG.md](docs/guide/CHANGELOG.md) 发布说明。
 
 ---
 
