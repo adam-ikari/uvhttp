@@ -328,6 +328,32 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    /* Validate fields that are actually consumed at runtime.
+     * connection_timeout is multiplied by 1000 for uv_timer_start
+     * (connection.c): 0 means an immediate timeout, a negative value makes
+     * uv_timer_start fail with UV_EINVAL. */
+    if (config->connection_timeout < UVHTTP_CONNECTION_TIMEOUT_MIN ||
+        config->connection_timeout > UVHTTP_CONNECTION_TIMEOUT_MAX) {
+        UVHTTP_LOG_ERROR(
+            "connection_timeout=%d exceeds valid range [%d-%d]",
+            config->connection_timeout, UVHTTP_CONNECTION_TIMEOUT_MIN,
+            UVHTTP_CONNECTION_TIMEOUT_MAX);
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    if (config->sendfile_max_retry < UVHTTP_SENDFILE_MIN_RETRY) {
+        UVHTTP_LOG_ERROR("sendfile_max_retry=%d below minimum %d",
+                         config->sendfile_max_retry,
+                         UVHTTP_SENDFILE_MIN_RETRY);
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
+    if (config->trust_proxy_headers != 0 && config->trust_proxy_headers != 1) {
+        UVHTTP_LOG_ERROR("trust_proxy_headers=%d must be 0 or 1",
+                         config->trust_proxy_headers);
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
     if (config->backlog > config->max_connections) {
         UVHTTP_LOG_WARN("backlog=%d > max_connections=%d, this may cause "
                         "connection rejection",
@@ -392,7 +418,8 @@ int uvhttp_config_update_max_connections(uvhttp_context_t* context,
     if (!context) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    if (max_connections < 1 || max_connections > 10000) {
+    if (max_connections < UVHTTP_MIN_CONNECTIONS ||
+        max_connections > UVHTTP_MAX_CONNECTIONS_HARD) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
@@ -473,7 +500,22 @@ int uvhttp_config_update_size_limits(uvhttp_context_t* context,
 /* Set global configuration */
 void uvhttp_config_set_current(uvhttp_context_t* context,
                                uvhttp_config_t* config) {
-    if (context) {
-        context->current_config = config;
+    if (!context) {
+        return;
     }
+
+    /* Installing a configuration does NOT transfer ownership to the
+     * context: the context only borrows the pointer and will not free it in
+     * uvhttp_context_cleanup_config. The caller retains ownership and stays
+     * responsible for releasing it (directly via uvhttp_config_free, or via
+     * the server once the same object is assigned to server->config -
+     * uvhttp_server_free frees it). */
+    if (context->config_owned && context->current_config &&
+        context->current_config != (void*)config) {
+        /* The context created its own default config earlier: release it so
+         * it does not leak once replaced. */
+        uvhttp_config_free((uvhttp_config_t*)context->current_config);
+    }
+    context->current_config = config;
+    context->config_owned = 0;
 }

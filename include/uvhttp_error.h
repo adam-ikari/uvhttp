@@ -124,7 +124,6 @@ typedef enum {
     UVHTTP_ERROR_LOG_FILE_OPEN = -1102,
     UVHTTP_ERROR_LOG_NOT_INITIALIZED = -1103,
 
-    UVHTTP_ERROR_MAX /* calculateMaximum value */
 } uvhttp_error_t;
 
 /* Unified return type alias for all API functions */

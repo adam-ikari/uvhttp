@@ -33,6 +33,16 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
         return "Not found";
     case UVHTTP_ERROR_ALREADY_EXISTS:
         return "Already exists";
+    case UVHTTP_ERROR_NULL_POINTER:
+        return "Null pointer";
+    case UVHTTP_ERROR_BUFFER_TOO_SMALL:
+        return "Buffer too small";
+    case UVHTTP_ERROR_TIMEOUT:
+        return "Operation timed out";
+    case UVHTTP_ERROR_CANCELLED:
+        return "Operation cancelled";
+    case UVHTTP_ERROR_NOT_SUPPORTED:
+        return "Not supported";
 
     /* Server errors */
     case UVHTTP_ERROR_SERVER_INIT:
@@ -43,6 +53,12 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
         return "Server stop failed";
     case UVHTTP_ERROR_CONNECTION_LIMIT:
         return "Connection limit reached";
+    case UVHTTP_ERROR_SERVER_ALREADY_RUNNING:
+        return "Server already running";
+    case UVHTTP_ERROR_SERVER_NOT_RUNNING:
+        return "Server not running";
+    case UVHTTP_ERROR_SERVER_INVALID_CONFIG:
+        return "Invalid server configuration";
 
     /* Connection errors */
     case UVHTTP_ERROR_CONNECTION_INIT:
@@ -53,6 +69,14 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
         return "Connection start failed";
     case UVHTTP_ERROR_CONNECTION_CLOSE:
         return "Connection close failed";
+    case UVHTTP_ERROR_CONNECTION_RESET:
+        return "Connection reset by peer";
+    case UVHTTP_ERROR_CONNECTION_TIMEOUT:
+        return "Connection timed out";
+    case UVHTTP_ERROR_CONNECTION_REFUSED:
+        return "Connection refused";
+    case UVHTTP_ERROR_CONNECTION_BROKEN:
+        return "Connection broken";
 
     /* Request/Response errors */
     case UVHTTP_ERROR_REQUEST_INIT:
@@ -61,6 +85,20 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
         return "Response initialization failed";
     case UVHTTP_ERROR_RESPONSE_SEND:
         return "Response send failed";
+    case UVHTTP_ERROR_INVALID_HTTP_METHOD:
+        return "Invalid HTTP method";
+    case UVHTTP_ERROR_INVALID_HTTP_VERSION:
+        return "Invalid HTTP version";
+    case UVHTTP_ERROR_HEADER_TOO_LARGE:
+        return "Header too large";
+    case UVHTTP_ERROR_BODY_TOO_LARGE:
+        return "Body too large";
+    case UVHTTP_ERROR_MALFORMED_REQUEST:
+        return "Malformed request";
+    case UVHTTP_ERROR_FILE_TOO_LARGE:
+        return "File too large";
+    case UVHTTP_ERROR_IO_ERROR:
+        return "I/O error";
 
     /* TLS errors */
     case UVHTTP_ERROR_TLS_INIT:
@@ -69,18 +107,66 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
         return "TLS context creation failed";
     case UVHTTP_ERROR_TLS_HANDSHAKE:
         return "TLS handshake failed";
+    case UVHTTP_ERROR_TLS_CERT_LOAD:
+        return "TLS certificate load failed";
+    case UVHTTP_ERROR_TLS_KEY_LOAD:
+        return "TLS private key load failed";
+    case UVHTTP_ERROR_TLS_VERIFY_FAILED:
+        return "TLS certificate verification failed";
+    case UVHTTP_ERROR_TLS_EXPIRED:
+        return "TLS certificate expired";
+    case UVHTTP_ERROR_TLS_NOT_YET_VALID:
+        return "TLS certificate not yet valid";
+    case UVHTTP_ERROR_TLS_CERT:
+        return "TLS certificate error";
+    case UVHTTP_ERROR_TLS_KEY:
+        return "TLS private key error";
+    case UVHTTP_ERROR_TLS_CA:
+        return "TLS CA error";
+    case UVHTTP_ERROR_TLS_VERIFY:
+        return "TLS verification error";
+    case UVHTTP_ERROR_TLS_READ:
+        return "TLS read failed";
+    case UVHTTP_ERROR_TLS_WRITE:
+        return "TLS write failed";
+    case UVHTTP_ERROR_TLS_INVALID_PARAM:
+        return "Invalid TLS parameter";
+    case UVHTTP_ERROR_TLS_MEMORY:
+        return "TLS memory allocation failed";
+    case UVHTTP_ERROR_TLS_NOT_IMPLEMENTED:
+        return "TLS feature not implemented";
+    case UVHTTP_ERROR_TLS_PARSE:
+        return "TLS parse error";
+    case UVHTTP_ERROR_TLS_NO_CERT:
+        return "No TLS certificate";
+    case UVHTTP_ERROR_TLS_WANT_READ:
+        return "TLS wants read";
+    case UVHTTP_ERROR_TLS_WANT_WRITE:
+        return "TLS wants write";
 
     /* Router errors */
     case UVHTTP_ERROR_ROUTER_INIT:
         return "Router initialization failed";
     case UVHTTP_ERROR_ROUTER_ADD:
         return "Router add failed";
+    case UVHTTP_ERROR_ROUTE_NOT_FOUND:
+        return "Route not found";
+    case UVHTTP_ERROR_ROUTE_ALREADY_EXISTS:
+        return "Route already exists";
+    case UVHTTP_ERROR_INVALID_ROUTE_PATTERN:
+        return "Invalid route pattern";
+
+    /* Rate limit errors */
+    case UVHTTP_ERROR_RATE_LIMIT_EXCEEDED:
+        return "Rate limit exceeded";
 
     /* Allocator errors */
     case UVHTTP_ERROR_ALLOCATOR_INIT:
         return "Allocator initialization failed";
     case UVHTTP_ERROR_ALLOCATOR_SET:
         return "Allocator set failed";
+    case UVHTTP_ERROR_ALLOCATOR_NOT_INITIALIZED:
+        return "Allocator not initialized";
 
     /* WebSocket errors */
     case UVHTTP_ERROR_WEBSOCKET_INIT:
@@ -89,6 +175,26 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
         return "WebSocket handshake failed";
     case UVHTTP_ERROR_WEBSOCKET_FRAME:
         return "WebSocket frame processing failed";
+    case UVHTTP_ERROR_WEBSOCKET_TOO_LARGE:
+        return "WebSocket message too large";
+    case UVHTTP_ERROR_WEBSOCKET_INVALID_OPCODE:
+        return "Invalid WebSocket opcode";
+    case UVHTTP_ERROR_WEBSOCKET_NOT_CONNECTED:
+        return "WebSocket not connected";
+    case UVHTTP_ERROR_WEBSOCKET_ALREADY_CONNECTED:
+        return "WebSocket already connected";
+    case UVHTTP_ERROR_WEBSOCKET_CLOSED:
+        return "WebSocket closed";
+
+    /* Configuration errors */
+    case UVHTTP_ERROR_CONFIG_PARSE:
+        return "Configuration parse error";
+    case UVHTTP_ERROR_CONFIG_INVALID:
+        return "Invalid configuration";
+    case UVHTTP_ERROR_CONFIG_FILE_NOT_FOUND:
+        return "Configuration file not found";
+    case UVHTTP_ERROR_CONFIG_MISSING_REQUIRED:
+        return "Missing required configuration";
 
     /* Middleware errors */
     case UVHTTP_ERROR_MIDDLEWARE_STOPPED:
@@ -98,13 +204,17 @@ const char* uvhttp_error_string(uvhttp_error_t error) {
     case UVHTTP_ERROR_MIDDLEWARE_INVALID:
         return "Invalid middleware handler";
 
-    /* Configuration errors */ case UVHTTP_ERROR_CONFIG_PARSE:
-        return "Configuration parse error";
-    case UVHTTP_ERROR_CONFIG_INVALID:
-        return "Invalid configuration";
+    /* Logging errors */
+    case UVHTTP_ERROR_LOG_INIT:
+        return "Logging initialization failed";
+    case UVHTTP_ERROR_LOG_WRITE:
+        return "Log write failed";
+    case UVHTTP_ERROR_LOG_FILE_OPEN:
+        return "Log file open failed";
+    case UVHTTP_ERROR_LOG_NOT_INITIALIZED:
+        return "Logging not initialized";
 
     default:
-
         return "Unknown error";
     }
 }
@@ -120,7 +230,7 @@ const char* uvhttp_error_category_string(uvhttp_error_t error) {
 
     /* General errors */
 
-    if (error >= -8 && error <= -1) {
+    if (error >= -9 && error <= -1) {
 
         return "General Error";
     }
@@ -141,14 +251,21 @@ const char* uvhttp_error_category_string(uvhttp_error_t error) {
 
     /* Request/Response errors */
 
-    if (error >= -307 && error <= -300) {
+    if (error >= -309 && error <= -300) {
 
         return "Request/Response Error";
     }
 
     /* TLS errors */
 
-    if (error >= -407 && error <= -400) {
+    if (error >= -418 && error <= -400) {
+
+        return "TLS Error";
+    }
+
+    /* TLS non-blocking states (positive values) */
+
+    if (error >= 1 && error <= 2) {
 
         return "TLS Error";
     }
@@ -158,6 +275,13 @@ const char* uvhttp_error_category_string(uvhttp_error_t error) {
     if (error >= -504 && error <= -500) {
 
         return "Router Error";
+    }
+
+    /* Rate limit errors */
+
+    if (error == -550) {
+
+        return "Rate Limit Error";
     }
 
     /* Allocator errors */
@@ -174,13 +298,6 @@ const char* uvhttp_error_category_string(uvhttp_error_t error) {
         return "WebSocket Error";
     }
 
-    /* HTTP/2 errors */
-
-    if (error >= -805 && error <= -800) {
-
-        return "HTTP/2 Error";
-    }
-
     /* Configuration errors */
 
     if (error >= -903 && error <= -900) {
@@ -190,7 +307,7 @@ const char* uvhttp_error_category_string(uvhttp_error_t error) {
 
     /* Middleware errors */
 
-    if (error >= -1003 && error <= -1000) {
+    if (error >= -1002 && error <= -1000) {
 
         return "Middleware Error";
     }
@@ -248,6 +365,10 @@ const char* uvhttp_error_description(uvhttp_error_t error) {
     case UVHTTP_ERROR_CANCELLED:
 
         return "Operation was cancelled";
+
+    case UVHTTP_ERROR_NOT_SUPPORTED:
+
+        return "Operation is not supported by this build";
 
         /* Server errors */
 
@@ -389,6 +510,58 @@ const char* uvhttp_error_description(uvhttp_error_t error) {
 
         return "TLS certificate is not yet valid";
 
+    case UVHTTP_ERROR_TLS_CERT:
+
+        return "TLS certificate error";
+
+    case UVHTTP_ERROR_TLS_KEY:
+
+        return "TLS private key error";
+
+    case UVHTTP_ERROR_TLS_CA:
+
+        return "TLS CA certificate error";
+
+    case UVHTTP_ERROR_TLS_VERIFY:
+
+        return "TLS verification error";
+
+    case UVHTTP_ERROR_TLS_READ:
+
+        return "Failed to read from TLS connection";
+
+    case UVHTTP_ERROR_TLS_WRITE:
+
+        return "Failed to write to TLS connection";
+
+    case UVHTTP_ERROR_TLS_INVALID_PARAM:
+
+        return "Invalid TLS parameter";
+
+    case UVHTTP_ERROR_TLS_MEMORY:
+
+        return "TLS memory allocation failed";
+
+    case UVHTTP_ERROR_TLS_NOT_IMPLEMENTED:
+
+        return "TLS feature not implemented";
+
+    case UVHTTP_ERROR_TLS_PARSE:
+
+        return "Failed to parse TLS data";
+
+    case UVHTTP_ERROR_TLS_NO_CERT:
+
+        return "No TLS certificate provided";
+
+    case UVHTTP_ERROR_TLS_WANT_READ:
+
+        return "TLS would block on read";
+
+    case UVHTTP_ERROR_TLS_WANT_WRITE:
+
+        return "TLS would block on write";
+
         /* Router errors */
 
     case UVHTTP_ERROR_ROUTER_INIT:
@@ -410,6 +583,10 @@ const char* uvhttp_error_description(uvhttp_error_t error) {
     case UVHTTP_ERROR_INVALID_ROUTE_PATTERN:
 
         return "Invalid route pattern";
+
+    case UVHTTP_ERROR_RATE_LIMIT_EXCEEDED:
+
+        return "Rate limit exceeded";
 
         /* Allocator errors */
 
@@ -555,6 +732,10 @@ const char* uvhttp_error_suggestion(uvhttp_error_t error) {
 
         return "Check if operation was intentionally cancelled";
 
+    case UVHTTP_ERROR_NOT_SUPPORTED:
+
+        return "Check build features or use a supported operation";
+
         /* Server errors */
 
     case UVHTTP_ERROR_SERVER_INIT:
@@ -695,6 +876,58 @@ const char* uvhttp_error_suggestion(uvhttp_error_t error) {
 
         return "Check system time or wait for certificate validity";
 
+    case UVHTTP_ERROR_TLS_CERT:
+
+        return "Check the TLS certificate configuration";
+
+    case UVHTTP_ERROR_TLS_KEY:
+
+        return "Check the TLS private key configuration";
+
+    case UVHTTP_ERROR_TLS_CA:
+
+        return "Check the TLS CA certificate configuration";
+
+    case UVHTTP_ERROR_TLS_VERIFY:
+
+        return "Review the TLS verification settings";
+
+    case UVHTTP_ERROR_TLS_READ:
+
+        return "Retry the read or check the connection state";
+
+    case UVHTTP_ERROR_TLS_WRITE:
+
+        return "Retry the write or check the connection state";
+
+    case UVHTTP_ERROR_TLS_INVALID_PARAM:
+
+        return "Check the TLS parameters passed";
+
+    case UVHTTP_ERROR_TLS_MEMORY:
+
+        return "Free up memory or check TLS resource usage";
+
+    case UVHTTP_ERROR_TLS_NOT_IMPLEMENTED:
+
+        return "Use a TLS feature supported by this build";
+
+    case UVHTTP_ERROR_TLS_PARSE:
+
+        return "Check the TLS data format";
+
+    case UVHTTP_ERROR_TLS_NO_CERT:
+
+        return "Provide a valid TLS certificate";
+
+    case UVHTTP_ERROR_TLS_WANT_READ:
+
+        return "Wait for data to be available and retry";
+
+    case UVHTTP_ERROR_TLS_WANT_WRITE:
+
+        return "Wait for the socket to be writable and retry";
+
         /* Router errors */
 
     case UVHTTP_ERROR_ROUTER_INIT:
@@ -716,6 +949,10 @@ const char* uvhttp_error_suggestion(uvhttp_error_t error) {
     case UVHTTP_ERROR_INVALID_ROUTE_PATTERN:
 
         return "Use a valid route pattern";
+
+    case UVHTTP_ERROR_RATE_LIMIT_EXCEEDED:
+
+        return "Wait for the rate limit window or raise the limit";
 
         /* Allocator errors */
 
@@ -784,6 +1021,18 @@ const char* uvhttp_error_suggestion(uvhttp_error_t error) {
 
         /* Middleware errors */
 
+    case UVHTTP_ERROR_MIDDLEWARE_STOPPED:
+
+        return "Inspect middleware chain for early stop";
+
+    case UVHTTP_ERROR_MIDDLEWARE_CHAIN_EMPTY:
+
+        return "Register at least one middleware handler";
+
+    case UVHTTP_ERROR_MIDDLEWARE_INVALID:
+
+        return "Provide a valid middleware handler";
+
         /* Logging errors */
 
     case UVHTTP_ERROR_LOG_INIT:
@@ -811,6 +1060,9 @@ const char* uvhttp_error_suggestion(uvhttp_error_t error) {
 /* Check if error is recoverable */
 int uvhttp_error_is_recoverable(uvhttp_error_t error) {
     switch (error) {
+
+    /* Transient timeout - retry is safe */
+    case UVHTTP_ERROR_TIMEOUT:
     /* Retriable connection errors */
     case UVHTTP_ERROR_CONNECTION_ACCEPT:
     case UVHTTP_ERROR_CONNECTION_START:

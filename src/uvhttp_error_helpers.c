@@ -25,17 +25,30 @@ static int contains_sensitive_info(const char* str) {
     if (!str)
         return FALSE;
 
-    char lower_str[UVHTTP_ERROR_MESSAGE_BUFFER_SIZE];
-    uvhttp_safe_strncpy(lower_str, str, sizeof(lower_str));
-
-    // Convert to lowercase for comparison
-    for (char* p = lower_str; *p; p++) {
-        *p = (char)tolower((unsigned char)*p);
-    }
-
+    /* Scan the WHOLE message (not a truncated prefix, which would let a
+     * sensitive word beyond the first UVHTTP_ERROR_MESSAGE_BUFFER_SIZE bytes
+     * bypass the filter) for whole-word occurrences of any sensitive keyword.
+     * Word boundaries prevent false positives such as "key" inside "monkey"
+     * or "auth" inside "author". */
     for (int i = 0; sensitive_keywords[i]; i++) {
-        if (strstr(lower_str, sensitive_keywords[i])) {
-            return TRUE;
+        const char* kw = sensitive_keywords[i];
+        size_t kwlen = strlen(kw);
+        const char* p = str;
+        while (*p) {
+            size_t j = 0;
+            while (j < kwlen && p[j] &&
+                   tolower((unsigned char)p[j]) == (unsigned char)kw[j]) {
+                j++;
+            }
+            if (j == kwlen) {
+                int before_ok =
+                    (p == str) || !isalnum((unsigned char)p[-1]);
+                int after_ok = !isalnum((unsigned char)p[kwlen]);
+                if (before_ok && after_ok) {
+                    return TRUE;
+                }
+            }
+            p++;
         }
     }
     return FALSE;

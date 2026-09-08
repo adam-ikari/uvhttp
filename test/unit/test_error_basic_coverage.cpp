@@ -34,12 +34,11 @@ TEST_F(UvhttpErrorBasicTest, ErrorStringGeneralErrors) {
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_OUT_OF_MEMORY), "Out of memory");
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_NOT_FOUND), "Not found");
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_ALREADY_EXISTS), "Already exists");
-    // Note: These error codes are not implemented in uvhttp_error_string() and will return "Unknown error"
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_NULL_POINTER), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_BUFFER_TOO_SMALL), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_TIMEOUT), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CANCELLED), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_NOT_SUPPORTED), "Unknown error");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_NULL_POINTER), "Null pointer");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_BUFFER_TOO_SMALL), "Buffer too small");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_TIMEOUT), "Operation timed out");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CANCELLED), "Operation cancelled");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_NOT_SUPPORTED), "Not supported");
 }
 
 TEST_F(UvhttpErrorBasicTest, ErrorStringServerErrors) {
@@ -47,10 +46,9 @@ TEST_F(UvhttpErrorBasicTest, ErrorStringServerErrors) {
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_SERVER_LISTEN), "Server listen failed");
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_SERVER_STOP), "Server stop failed");
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONNECTION_LIMIT), "Connection limit reached");
-    // Note: These error codes are not implemented in uvhttp_error_string() and will return "Unknown error"
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_SERVER_ALREADY_RUNNING), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_SERVER_NOT_RUNNING), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_SERVER_INVALID_CONFIG), "Unknown error");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_SERVER_ALREADY_RUNNING), "Server already running");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_SERVER_NOT_RUNNING), "Server not running");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_SERVER_INVALID_CONFIG), "Invalid server configuration");
 }
 
 TEST_F(UvhttpErrorBasicTest, ErrorStringConnectionErrors) {
@@ -58,74 +56,66 @@ TEST_F(UvhttpErrorBasicTest, ErrorStringConnectionErrors) {
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONNECTION_ACCEPT), "Connection accept failed");
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONNECTION_START), "Connection start failed");
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONNECTION_CLOSE), "Connection close failed");
-    // Note: These error codes are not implemented in uvhttp_error_string() and will return "Unknown error"
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONNECTION_RESET), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONNECTION_TIMEOUT), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONNECTION_REFUSED), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONNECTION_BROKEN), "Unknown error");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONNECTION_RESET), "Connection reset by peer");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONNECTION_TIMEOUT), "Connection timed out");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONNECTION_REFUSED), "Connection refused");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONNECTION_BROKEN), "Connection broken");
 }
 
 TEST_F(UvhttpErrorBasicTest, ErrorStringRequestResponseErrors) {
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_REQUEST_INIT), "Request initialization failed");
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_RESPONSE_INIT), "Response initialization failed");
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_RESPONSE_SEND), "Response send failed");
-    // Note: These error codes are not implemented in uvhttp_error_string() and will return "Unknown error"
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_INVALID_HTTP_METHOD), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_INVALID_HTTP_VERSION), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_HEADER_TOO_LARGE), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_BODY_TOO_LARGE), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_MALFORMED_REQUEST), "Unknown error");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_INVALID_HTTP_METHOD), "Invalid HTTP method");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_INVALID_HTTP_VERSION), "Invalid HTTP version");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_HEADER_TOO_LARGE), "Header too large");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_BODY_TOO_LARGE), "Body too large");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_MALFORMED_REQUEST), "Malformed request");
 }
 
 TEST_F(UvhttpErrorBasicTest, ErrorStringFileErrors) {
-    // Note: These error codes are not implemented in uvhttp_error_string() and will return "Unknown error"
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_FILE_TOO_LARGE), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_IO_ERROR), "Unknown error");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_FILE_TOO_LARGE), "File too large");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_IO_ERROR), "I/O error");
 }
 
 TEST_F(UvhttpErrorBasicTest, ErrorStringTLSErrors) {
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_TLS_INIT), "TLS initialization failed");
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_TLS_CONTEXT), "TLS context creation failed");
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_TLS_HANDSHAKE), "TLS handshake failed");
-    // Note: These error codes are not implemented in uvhttp_error_string() and will return "Unknown error"
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_TLS_CERT_LOAD), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_TLS_KEY_LOAD), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_TLS_VERIFY_FAILED), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_TLS_EXPIRED), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_TLS_NOT_YET_VALID), "Unknown error");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_TLS_CERT_LOAD), "TLS certificate load failed");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_TLS_KEY_LOAD), "TLS private key load failed");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_TLS_VERIFY_FAILED), "TLS certificate verification failed");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_TLS_EXPIRED), "TLS certificate expired");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_TLS_NOT_YET_VALID), "TLS certificate not yet valid");
 }
 
 TEST_F(UvhttpErrorBasicTest, ErrorStringRouterErrors) {
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_ROUTER_INIT), "Router initialization failed");
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_ROUTER_ADD), "Router add failed");
-    // Note: These error codes are not implemented in uvhttp_error_string() and will return "Unknown error"
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_ROUTE_NOT_FOUND), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_ROUTE_ALREADY_EXISTS), "Unknown error");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_ROUTE_NOT_FOUND), "Route not found");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_ROUTE_ALREADY_EXISTS), "Route already exists");
 }
 
 TEST_F(UvhttpErrorBasicTest, ErrorStringWebSocketErrors) {
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_WEBSOCKET_INIT), "WebSocket initialization failed");
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_WEBSOCKET_HANDSHAKE), "WebSocket handshake failed");
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_WEBSOCKET_FRAME), "WebSocket frame processing failed");
-    // Note: These error codes are not implemented in uvhttp_error_string() and will return "Unknown error"
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_WEBSOCKET_TOO_LARGE), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_WEBSOCKET_INVALID_OPCODE), "Unknown error");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_WEBSOCKET_TOO_LARGE), "WebSocket message too large");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_WEBSOCKET_INVALID_OPCODE), "Invalid WebSocket opcode");
 }
 
 TEST_F(UvhttpErrorBasicTest, ErrorStringConfigErrors) {
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONFIG_PARSE), "Configuration parse error");
     EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONFIG_INVALID), "Invalid configuration");
-    // Note: These error codes are not implemented in uvhttp_error_string() and will return "Unknown error"
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONFIG_FILE_NOT_FOUND), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONFIG_MISSING_REQUIRED), "Unknown error");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONFIG_FILE_NOT_FOUND), "Configuration file not found");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_CONFIG_MISSING_REQUIRED), "Missing required configuration");
 }
 
 TEST_F(UvhttpErrorBasicTest, ErrorStringLogErrors) {
-    // Note: All log error codes are not implemented in uvhttp_error_string() and will return "Unknown error"
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_LOG_INIT), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_LOG_WRITE), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_LOG_FILE_OPEN), "Unknown error");
-    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_LOG_NOT_INITIALIZED), "Unknown error");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_LOG_INIT), "Logging initialization failed");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_LOG_WRITE), "Log write failed");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_LOG_FILE_OPEN), "Log file open failed");
+    EXPECT_STREQ(uvhttp_error_string(UVHTTP_ERROR_LOG_NOT_INITIALIZED), "Logging not initialized");
 }
 
 TEST_F(UvhttpErrorBasicTest, ErrorStringUnknown) {
