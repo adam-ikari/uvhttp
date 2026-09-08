@@ -299,6 +299,103 @@ static int large_handler(uvhttp_request_t* request, uvhttp_response_t* response)
     return 0;
 }
 
+/* ========== SSE + streaming endpoints (benchmark targets) ========== */
+
+#define SSE_EVENT_COUNT 10
+#define SSE_BUFFER_SIZE 2048
+
+/* Server-Sent Events handler — short-lived stream: sends SSE_EVENT_COUNT
+ * events then terminates the stream.
+ *
+ * Benchmark semantics: a long-lived SSE connection has no natural "request
+ * rate", so wrk measures "SSE streams/sec" — one request == one SSE stream
+ * established and fully delivered. The body is framed with chunked
+ * transfer-encoding (the standard HTTP/1.1 transport for event streams):
+ * each event is one chunk, terminated by the 0-chunk. That gives wrk an
+ * explicit end-of-response marker, so the connection can stay keep-alive and
+ * be reused — otherwise every request would need a fresh TCP connection
+ * (close-delimited framing) and wrk's read-error accounting would be noisy. */
+static int sse_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
+
+    if (!response) {
+        return -1;
+    }
+
+    static char sse_body[SSE_BUFFER_SIZE];
+    static size_t sse_length = 0;
+
+    if (sse_length == 0) {
+        int n = 0;
+        n += snprintf(sse_body + n, sizeof(sse_body) - n,
+                      "HTTP/1.1 200 OK\r\n"
+                      "Content-Type: text/event-stream\r\n"
+                      "Cache-Control: no-cache\r\n"
+                      "Transfer-Encoding: chunked\r\n"
+                      "\r\n");
+        for (int i = 0; i < SSE_EVENT_COUNT; i++) {
+            char ev[96];
+            int elen = snprintf(ev, sizeof(ev),
+                                "event: tick\ndata: {\"seq\": %d}\n\n", i);
+            n += snprintf(sse_body + n, sizeof(sse_body) - n, "%x\r\n", elen);
+            memcpy(sse_body + n, ev, (size_t)elen);
+            n += elen;
+            memcpy(sse_body + n, "\r\n", 2);
+            n += 2;
+        }
+        memcpy(sse_body + n, "0\r\n\r\n", 5);
+        n += 5;
+        sse_length = (size_t)n;
+    }
+
+    /* keepalive stays 1 (default): connection is reused for the next request */
+    return uvhttp_response_send_raw(sse_body, sse_length, response->client,
+                                    response);
+}
+
+#define STREAM_CHUNK_COUNT 10
+#define STREAM_CHUNK_SIZE 10240
+#define STREAM_BUFFER_SIZE (512 + STREAM_CHUNK_COUNT * (STREAM_CHUNK_SIZE + 16))
+
+/* Streaming response handler — chunked transfer-encoding: STREAM_CHUNK_COUNT
+ * chunks of STREAM_CHUNK_SIZE (~100KB total, same size class as /large),
+ * keep-alive. wrk parses the chunked framing and counts the request complete
+ * at the terminating 0-chunk, then reuses the connection. */
+static int stream_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
+
+    if (!response) {
+        return -1;
+    }
+
+    static char stream_body[STREAM_BUFFER_SIZE];
+    static size_t stream_length = 0;
+
+    if (stream_length == 0) {
+        int n = 0;
+        n += snprintf(stream_body + n, sizeof(stream_body) - n,
+                      "HTTP/1.1 200 OK\r\n"
+                      "Content-Type: text/plain\r\n"
+                      "Transfer-Encoding: chunked\r\n"
+                      "\r\n");
+        for (int i = 0; i < STREAM_CHUNK_COUNT; i++) {
+            n += snprintf(stream_body + n, sizeof(stream_body) - n,
+                          "%x\r\n", STREAM_CHUNK_SIZE);
+            memset(stream_body + n, 'D' + (i % 3), STREAM_CHUNK_SIZE);
+            n += STREAM_CHUNK_SIZE;
+            memcpy(stream_body + n, "\r\n", 2);
+            n += 2;
+        }
+        memcpy(stream_body + n, "0\r\n\r\n", 5);
+        n += 5;
+        stream_length = (size_t)n;
+    }
+
+    /* keepalive stays 1 (default): connection is reused for the next request */
+    return uvhttp_response_send_raw(stream_body, stream_length,
+                                    response->client, response);
+}
+
 #if UVHTTP_FEATURE_COMPRESSION
 /* Compression test handler - compressible text */
 static int compression_text_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
@@ -570,6 +667,36 @@ static int health_handler(uvhttp_request_t* request, uvhttp_response_t* response
     return 0;
 }
 
+#if UVHTTP_FEATURE_WEBSOCKET
+/* ========== WebSocket echo endpoint (benchmark target) ========== */
+
+/* WebSocket connect callback — no-op, benchmark client measures handshake
+ * completion via the HTTP 101 response. */
+static int ws_echo_connect_handler(uvhttp_ws_connection_t* ws_conn) {
+    (void)ws_conn;
+    return 0;
+}
+
+/* WebSocket message callback — echo the message back.
+ * Deliberately silent (no per-message logging) so the benchmark measures
+ * frame parsing + transport, not stdio. Send failures (client already gone)
+ * are ignored; the connection teardown path handles cleanup. */
+static int ws_echo_message_handler(uvhttp_ws_connection_t* ws_conn,
+                                   const char* data,
+                                   size_t len,
+                                   int opcode) {
+    (void)opcode;
+    uvhttp_server_ws_send(ws_conn, data, len);
+    return 0;
+}
+
+/* WebSocket close callback — no-op. */
+static int ws_echo_close_handler(uvhttp_ws_connection_t* ws_conn) {
+    (void)ws_conn;
+    return 0;
+}
+#endif /* UVHTTP_FEATURE_WEBSOCKET */
+
 #if UVHTTP_FEATURE_STATIC_FILES
 /* Static file handler - application layer wrapper */
 static int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
@@ -610,6 +737,11 @@ static void print_usage(const char* program) {
     printf("  GET  /small            - Small response (1KB)\n");
     printf("  GET  /medium           - Medium response (10KB)\n");
     printf("  GET  /large            - Large response (100KB)\n");
+    printf("  GET  /sse              - SSE short stream (10 events, then close)\n");
+    printf("  GET  /stream           - Chunked streaming response (10x10KB)\n");
+#if UVHTTP_FEATURE_WEBSOCKET
+    printf("  WS   /ws               - WebSocket echo (benchmark client)\n");
+#endif
 #if UVHTTP_FEATURE_COMPRESSION
     printf("  GET  /compression/text - Compressible text (100KB, ~90%% compression)\n");
     printf("  GET  /compression/json - Compressible JSON (100KB, ~90%% compression)\n");
@@ -753,6 +885,8 @@ int main(int argc, char* argv[]) {
     uvhttp_router_add_route(router, "/small", small_handler);
     uvhttp_router_add_route(router, "/medium", medium_handler);
     uvhttp_router_add_route(router, "/large", large_handler);
+    uvhttp_router_add_route(router, "/sse", sse_handler);
+    uvhttp_router_add_route(router, "/stream", stream_handler);
 #if UVHTTP_FEATURE_COMPRESSION
     uvhttp_router_add_route(router, "/compression/text", compression_text_handler);
     uvhttp_router_add_route(router, "/compression/json", compression_json_handler);
@@ -813,6 +947,24 @@ int main(int argc, char* argv[]) {
 
     /* Set router */
     server->router = router;
+
+#if UVHTTP_FEATURE_WEBSOCKET
+    /* Register WebSocket echo endpoint (driven by
+     * benchmark/ws_benchmark_client.py). Handler struct is copied into the
+     * server's ws_routes table, so a stack copy is safe. */
+    uvhttp_ws_handler_t ws_handler;
+    memset(&ws_handler, 0, sizeof(ws_handler));
+    ws_handler.on_connect = ws_echo_connect_handler;
+    ws_handler.on_message = ws_echo_message_handler;
+    ws_handler.on_close = ws_echo_close_handler;
+    result = uvhttp_server_register_ws_handler(server, "/ws", &ws_handler);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Warning: Failed to register /ws WebSocket handler: %s\n",
+                uvhttp_error_string(result));
+    } else {
+        printf("WebSocket echo endpoint: ws://127.0.0.1:%d/ws\n", port);
+    }
+#endif
 
     /* Setup signal handlers using libuv */
     if (uv_signal_init(loop, &ctx->sigint) != 0) {

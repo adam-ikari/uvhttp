@@ -50,8 +50,18 @@ def parse_benchmark_csv(csv_path):
     return stats
 
 def check_regression(results, baseline, threshold):
-    """Check if any endpoint regresses beyond threshold."""
+    """Check if any endpoint regresses beyond threshold.
+
+    Endpoints in `results` without a baseline entry are reported but never
+    gated: they have no reference value yet (e.g. newly added benchmark
+    targets /sse, /stream, /ws_connect, /ws_echo). Once a baseline is added
+    to DEFAULT_BASELINE (or a baseline JSON), they start gating normally.
+    """
     failures = []
+    for ep in sorted(results):
+        if ep not in baseline:
+            med = results[ep]['median']
+            print(f"INFO: {ep} — {med:.0f} RPS (no baseline, report only)")
     for ep, base_rps in baseline.items():
         if ep not in results:
             print(f"SKIP: {ep} not in benchmark results")
