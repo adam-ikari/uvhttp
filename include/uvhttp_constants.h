@@ -793,7 +793,7 @@
  * - Example: cmake -DUVHTTP_FEATURE_ROUTER_CACHE=OFF ..
  */
 #    ifndef UVHTTP_FEATURE_ROUTER_CACHE
-#        define UVHTTP_FEATURE_ROUTER_CACHE 1 /* Default enabled */
+#        define UVHTTP_FEATURE_ROUTER_CACHE 0 /* Disabled by default (see uvhttp_features.h) */
 #    endif
 
 #    if UVHTTP_FEATURE_ROUTER_CACHE
