@@ -1,7 +1,7 @@
 name: CI - Performance Benchmark
 
-# Trigger: manual, PR with 'benchmark' label, or release published
-# release event = regression benchmark gate before official release
+# Trigger: manual, PR with 'benchmark' label, or push to pre-release
+# pre-release branch = regression benchmark gate before official release
 on:
   workflow_dispatch:
     inputs:
@@ -14,18 +14,18 @@ on:
         required: false
         default: '10'
       endpoints:
-        description: 'Endpoints to test (comma-separated: /,/json,/large)'
+        description: 'Endpoints to test (comma-separated: /,/json,/large,/sse,/stream)'
         required: false
-        default: '/,/json,/large'
+        default: '/,/json,/large,/sse,/stream'
   pull_request:
     types: [labeled, opened, synchronize, reopened]
     branches: [main]
-  release:
-    types: [published]
+  push:
+    branches: [pre-release]
 
 jobs:
   benchmark:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'release' || contains(join(github.event.pull_request.labels.*.name, ','), 'benchmark')
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || contains(join(github.event.pull_request.labels.*.name, ','), 'benchmark')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -79,7 +79,7 @@ jobs:
         env:
           ROUNDS: ${{ github.event.inputs.rounds || '10' }}
           DURATION: ${{ github.event.inputs.duration || '10' }}
-          ENDPOINTS: ${{ github.event.inputs.endpoints || '/,/json,/large' }}
+          ENDPOINTS: ${{ github.event.inputs.endpoints || '/,/json,/large,/sse,/stream' }}
         run: |
           chmod +x build/dist/bin/benchmark_unified
           build/dist/bin/benchmark_unified > /tmp/server.log 2>&1 &
@@ -129,6 +129,19 @@ jobs:
             echo ""
           done
 
+          # WebSocket benchmark — wrk cannot speak RFC 6455, so a dedicated
+          # stdlib-only client drives the /ws echo endpoint. It appends
+          # /ws_connect (connection establishment) and /ws_echo (message echo
+          # throughput) rows to benchmark-raw.csv in the same CSV format, and
+          # prints a human summary into the markdown report.
+          echo "### WebSocket Benchmark" >> benchmark-results.md
+          echo "" >> benchmark-results.md
+          echo '```' >> benchmark-results.md
+          python3 benchmark/ws_benchmark_client.py --host 127.0.0.1 --port 18081 \
+            --connections 10 --messages 200 --rounds 3 --csv benchmark-raw.csv | tee -a benchmark-results.md
+          echo '```' >> benchmark-results.md
+          echo "" >> benchmark-results.md
+
           echo "### High Concurrency (1000 connections)" >> benchmark-results.md
           echo "" >> benchmark-results.md
           echo "| Round | RPS | Avg Latency | Errors |" >> benchmark-results.md
@@ -152,10 +165,8 @@ jobs:
           wait $SERVER_PID 2>/dev/null
           cat benchmark-results.md
 
-      # 回归门禁：PR（benchmark 标签）或 release 事件都跑 gate。正式 release（prerelease=false）
-      # 重复跑无害——同一 commit 结果一致（幂等）；workflow_dispatch 不阻塞。
       - name: Regression gate check
-        if: github.event_name == 'pull_request' || github.event_name == 'release'
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
         run: |
           python3 scripts/performance/regression_check.py benchmark-raw.csv --threshold 0.10
 
@@ -170,9 +181,8 @@ jobs:
             /tmp/server.log
           retention-days: 90
 
-      # 趋势数据只在 pre-release 落库；正式 release 只做门禁校验、不落趋势。
       - name: Commit benchmark trend data
-        if: github.event_name == 'release' && github.event.release.prerelease == true
+        if: github.event_name == 'push' && github.ref == 'refs/heads/pre-release'
         run: |
           mkdir -p docs/benchmark-trends
           DATE=$(date -u +%Y-%m-%d)
