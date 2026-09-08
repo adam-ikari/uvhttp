@@ -31,6 +31,9 @@ target_include_directories(cache_test_server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 add_dependencies(cache_test_server uvhttp)
 uvhttp_add_example_dependencies(cache_test_server)
 
-# 自定义TTL示例（暂时禁用，功能还未实现）
-# add_executable(custom_ttl_demo custom_ttl_demo.c)
-# target_link_libraries(custom_ttl_demo uvhttp)
+# 自定义静态文件缓存配置示例
+add_executable(custom_ttl_demo custom_ttl_demo.c)
+target_link_libraries(custom_ttl_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash llhttp pthread m dl)
+target_include_directories(custom_ttl_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
+add_dependencies(custom_ttl_demo uvhttp)
+uvhttp_add_example_dependencies(custom_ttl_demo)

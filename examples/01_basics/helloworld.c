@@ -42,7 +42,8 @@ static app_context_t* app_context_new(uv_loop_t* loop) {
     return ctx;
 }
 
-/* Release an application context. The router is owned by the server, so it is
+/* Release an application context. The router and config are owned by the
+ * server (set via uvhttp_server_set_router / server->config), so they are
  * freed together with the server. */
 static void app_context_free(app_context_t* ctx) {
     if (ctx) {
@@ -50,10 +51,8 @@ static void app_context_free(app_context_t* ctx) {
             uvhttp_server_free(ctx->server);
             ctx->server = NULL;
         }
-        if (ctx->config) {
-            uvhttp_config_free(ctx->config);
-            ctx->config = NULL;
-        }
+        /* Config is owned by the server (server->config) and freed by
+         * uvhttp_server_free. Do not free it here. */
         if (ctx->uvhttp_ctx) {
             uvhttp_context_destroy(ctx->uvhttp_ctx);
             ctx->uvhttp_ctx = NULL;

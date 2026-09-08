@@ -139,7 +139,8 @@ int main() {
     uvhttp_error_t result_context = uvhttp_context_create(loop, &g_app_context->context);
     if (result_context != UVHTTP_OK) {
         fprintf(stderr, "上下文创建失败\n");
-        uvhttp_config_free(config);
+        /* config is owned by the server (server->config was set above);
+         * uvhttp_server_free releases it. Do not free it here. */
         uvhttp_server_free(g_app_context->server);
         free(g_app_context);
         return 1;
@@ -177,7 +178,11 @@ int main() {
 
     uv_run(loop, UV_RUN_DEFAULT);
 
-    // 清理上下文
+    // 清理资源（服务器释放配置；上下文未挂到服务器，需单独销毁）
+    if (g_app_context && g_app_context->server) {
+        uvhttp_server_free(g_app_context->server);
+        g_app_context->server = NULL;
+    }
     if (g_app_context && g_app_context->context) {
         uvhttp_context_destroy(g_app_context->context);
     }

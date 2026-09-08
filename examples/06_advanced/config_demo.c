@@ -364,7 +364,8 @@ int main(int argc, char* argv[]) {
     if (result_context != UVHTTP_OK) {
         fprintf(stderr, " 上下文创建失败\n");
         uvhttp_server_free(g_app->server);
-        uvhttp_config_free(config);
+        /* config is owned by the server (server->config was set above);
+         * uvhttp_server_free releases it. Do not free it here. */
         free(g_app);
         g_app = NULL;
         return 1;
@@ -382,7 +383,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, " 路由器创建失败: %s\n", uvhttp_error_string(router_result));
         uvhttp_server_free(g_app->server);
         uvhttp_context_destroy(g_app->context);
-        uvhttp_config_free(config);
+        /* config is owned by the server; uvhttp_server_free releases it. */
         free(g_app);
         g_app = NULL;
         return 1;
@@ -417,7 +418,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, " 服务器启动失败，错误码: %d\n", result);
         uvhttp_server_free(g_app->server);
         uvhttp_context_destroy(g_app->context);
-        uvhttp_config_free(config);
+        /* config is owned by the server; uvhttp_server_free releases it. */
         free(g_app);
         g_app = NULL;
         return 1;
@@ -432,18 +433,14 @@ int main(int argc, char* argv[]) {
     // 启动事件循环
     uv_run(loop, UV_RUN_DEFAULT);
 
-    // 清理资源（正常退出时）
-    if (g_app->config_timer) {
-        uv_timer_stop(g_app->config_timer);
-        uvhttp_free(g_app->config_timer);
+    // 清理资源（服务器释放配置与路由；上下文未挂到服务器，需单独销毁）
+    if (g_app->server) {
+        uvhttp_server_free(g_app->server);
+        g_app->server = NULL;
     }
-
     if (g_app->context) {
         uvhttp_context_destroy(g_app->context);
     }
-
-    free(g_app);
-    g_app = NULL;
 
     printf("服务器已停止\n");
     return 0;
