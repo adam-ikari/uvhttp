@@ -1,12 +1,16 @@
 # UVHTTP API Reference
 
-**Version**: v2.4.4  
-**Updated**: 2026-02-26  
-**C Standard**: C99
+**Version**: v2.7.2  
+**Updated**: 2026-09-08  
+**C Standard**: C11
 
 ## Overview
 
 UVHTTP provides a concise, efficient C API for building HTTP/1.1 servers.
+
+> This is a curated, tutorial-style reference covering the most common APIs.
+> The complete, auto-generated reference for all ~290 public functions lives in
+> [docs/api/generated/](./generated/index.html) (Doxygen).
 
 ## Core Types
 
@@ -234,17 +238,30 @@ const char* content_type = uvhttp_request_get_header(request, "Content-Type");
 ### uvhttp_request_get_body
 
 ```c
-const char* uvhttp_request_get_body(uvhttp_request_t* request,
-                                   size_t* len);
+const char* uvhttp_request_get_body(uvhttp_request_t* request);
 ```
 
-Gets the request body.
+Gets the request body (NULL-terminated). The body length is obtained
+separately via `uvhttp_request_get_body_length()`.
 
 **Parameters**:
 - `request`: Request object
-- `len`: Output parameter, returns request body length
 
-**Return Value**: Request body data pointer
+**Return Value**: Request body data pointer, or `NULL` when there is no body
+
+### uvhttp_request_get_body_length
+
+```c
+size_t uvhttp_request_get_body_length(uvhttp_request_t* request);
+```
+
+Gets the request body length in bytes.
+
+**Parameters**:
+- `request`: Request object
+
+**Return Value**: Body length (0 when there is no body)
+
 
 ## Response Handling API
 
@@ -338,15 +355,16 @@ Creates a context object.
 - `UVHTTP_OK`: Success
 - Other values: Error code
 
-### uvhttp_context_free
+### uvhttp_context_destroy
 
 ```c
-void uvhttp_context_free(uvhttp_context_t* context);
+void uvhttp_context_destroy(uvhttp_context_t* context);
 ```
 
 Frees the context object.
 
-## Error Handling API
+**Parameters**:
+- `context`: Context object
 
 ### uvhttp_error_string
 
@@ -398,7 +416,7 @@ UVHTTP provides a unified memory management interface with compile-time allocato
 
 ```c
 void* uvhttp_alloc(size_t size);
-void uvhttp_realloc(void* ptr, size_t size);
+void* uvhttp_realloc(void* ptr, size_t size);
 void uvhttp_free(void* ptr);
 void* uvhttp_calloc(size_t nmemb, size_t size);
 ```
@@ -569,13 +587,7 @@ void example_memory_usage(void) {
 ```c
 int uvhttp_safe_strcpy(char* dest, size_t dest_size, const char* src);
 ```
-Safe string copy.
-
-#### uvhttp_url_decode
-```c
-int uvhttp_url_decode(const char* src, char* dest, size_t dest_size);
-```
-URL decoding.
+Safe string copy (declared in `uvhttp_common.h`).
 
 ### Hash Functions
 
@@ -583,20 +595,161 @@ URL decoding.
 ```c
 uint64_t uvhttp_hash_string(const char* str);
 ```
-Calculates string hash value.
+Calculates string hash value (declared in `uvhttp_hash.h`).
+
+> **Note**: The `uvhttp_url_decode` function listed in earlier versions of this
+> document has been removed — it never existed in the public API.
 
 ## Error Codes
+
+Error codes are defined in `uvhttp_error.h` (`uvhttp_error_t`, alias
+`uvhttp_result_t`). Use `uvhttp_error_string()` / `uvhttp_error_description()`
+to format an error at runtime.
+
+### General errors (all modules)
 
 | Error Code | Value | Description |
 |------------|-------|-------------|
 | UVHTTP_OK | 0 | Success |
 | UVHTTP_ERROR_INVALID_PARAM | -1 | Invalid parameter |
 | UVHTTP_ERROR_OUT_OF_MEMORY | -2 | Out of memory |
-| UVHTTP_ERROR_IO | -3 | I/O error |
-| UVHTTP_ERROR_TLS | -4 | TLS error |
-| UVHTTP_ERROR_WEBSOCKET | -5 | WebSocket error |
-| UVHTTP_ERROR_ROUTER | -6 | Router error |
-| UVHTTP_ERROR_STATIC_FILE | -7 | Static file error |
+| UVHTTP_ERROR_NOT_FOUND | -3 | Not found |
+| UVHTTP_ERROR_ALREADY_EXISTS | -4 | Already exists |
+| UVHTTP_ERROR_NULL_POINTER | -5 | NULL pointer |
+| UVHTTP_ERROR_BUFFER_TOO_SMALL | -6 | Buffer too small |
+| UVHTTP_ERROR_TIMEOUT | -7 | Timeout |
+| UVHTTP_ERROR_CANCELLED | -8 | Cancelled |
+| UVHTTP_ERROR_NOT_SUPPORTED | -9 | Not supported |
+
+### Server (-100s)
+
+| Error Code | Value | Description |
+|------------|-------|-------------|
+| UVHTTP_ERROR_SERVER_INIT | -100 | Server init failed |
+| UVHTTP_ERROR_SERVER_LISTEN | -101 | Listen failed |
+| UVHTTP_ERROR_SERVER_STOP | -102 | Stop failed |
+| UVHTTP_ERROR_CONNECTION_LIMIT | -103 | Connection limit reached |
+| UVHTTP_ERROR_SERVER_ALREADY_RUNNING | -104 | Server already running |
+| UVHTTP_ERROR_SERVER_NOT_RUNNING | -105 | Server not running |
+| UVHTTP_ERROR_SERVER_INVALID_CONFIG | -106 | Invalid server config |
+
+### Connection (-200s)
+
+| Error Code | Value | Description |
+|------------|-------|-------------|
+| UVHTTP_ERROR_CONNECTION_INIT | -200 | Connection init failed |
+| UVHTTP_ERROR_CONNECTION_ACCEPT | -201 | Accept failed |
+| UVHTTP_ERROR_CONNECTION_START | -202 | Connection start failed |
+| UVHTTP_ERROR_CONNECTION_CLOSE | -203 | Connection close failed |
+| UVHTTP_ERROR_CONNECTION_RESET | -204 | Connection reset |
+| UVHTTP_ERROR_CONNECTION_TIMEOUT | -205 | Connection timeout |
+| UVHTTP_ERROR_CONNECTION_REFUSED | -206 | Connection refused |
+| UVHTTP_ERROR_CONNECTION_BROKEN | -207 | Connection broken |
+
+### Request / Response (-300s)
+
+| Error Code | Value | Description |
+|------------|-------|-------------|
+| UVHTTP_ERROR_REQUEST_INIT | -300 | Request init failed |
+| UVHTTP_ERROR_RESPONSE_INIT | -301 | Response init failed |
+| UVHTTP_ERROR_RESPONSE_SEND | -302 | Response send failed |
+| UVHTTP_ERROR_INVALID_HTTP_METHOD | -303 | Invalid HTTP method |
+| UVHTTP_ERROR_INVALID_HTTP_VERSION | -304 | Invalid HTTP version |
+| UVHTTP_ERROR_HEADER_TOO_LARGE | -305 | Header too large |
+| UVHTTP_ERROR_BODY_TOO_LARGE | -306 | Body too large |
+| UVHTTP_ERROR_MALFORMED_REQUEST | -307 | Malformed request |
+| UVHTTP_ERROR_FILE_TOO_LARGE | -308 | File too large |
+| UVHTTP_ERROR_IO_ERROR | -309 | I/O error |
+
+### TLS (-400s)
+
+| Error Code | Value | Description |
+|------------|-------|-------------|
+| UVHTTP_ERROR_TLS_INIT | -400 | TLS init failed |
+| UVHTTP_ERROR_TLS_CONTEXT | -401 | TLS context error |
+| UVHTTP_ERROR_TLS_HANDSHAKE | -402 | TLS handshake failed |
+| UVHTTP_ERROR_TLS_CERT_LOAD | -403 | Certificate load failed |
+| UVHTTP_ERROR_TLS_KEY_LOAD | -404 | Key load failed |
+| UVHTTP_ERROR_TLS_VERIFY_FAILED | -405 | Certificate verify failed |
+| UVHTTP_ERROR_TLS_EXPIRED | -406 | Certificate expired |
+| UVHTTP_ERROR_TLS_NOT_YET_VALID | -407 | Certificate not yet valid |
+| UVHTTP_ERROR_TLS_CERT | -408 | Certificate error |
+| UVHTTP_ERROR_TLS_KEY | -409 | Key error |
+| UVHTTP_ERROR_TLS_CA | -410 | CA error |
+| UVHTTP_ERROR_TLS_VERIFY | -411 | Verify error |
+| UVHTTP_ERROR_TLS_READ | -412 | TLS read error |
+| UVHTTP_ERROR_TLS_WRITE | -413 | TLS write error |
+| UVHTTP_ERROR_TLS_INVALID_PARAM | -414 | Invalid TLS parameter |
+| UVHTTP_ERROR_TLS_MEMORY | -415 | TLS memory error |
+| UVHTTP_ERROR_TLS_NOT_IMPLEMENTED | -416 | TLS feature not implemented |
+| UVHTTP_ERROR_TLS_PARSE | -417 | TLS parse error |
+| UVHTTP_ERROR_TLS_NO_CERT | -418 | No certificate |
+
+TLS also defines two positive non-blocking states: `UVHTTP_ERROR_TLS_WANT_READ
+= 1` and `UVHTTP_ERROR_TLS_WANT_WRITE = 2`.
+
+### Router (-500s)
+
+| Error Code | Value | Description |
+|------------|-------|-------------|
+| UVHTTP_ERROR_ROUTER_INIT | -500 | Router init failed |
+| UVHTTP_ERROR_ROUTER_ADD | -501 | Route add failed |
+| UVHTTP_ERROR_ROUTE_NOT_FOUND | -502 | Route not found |
+| UVHTTP_ERROR_ROUTE_ALREADY_EXISTS | -503 | Route already exists |
+| UVHTTP_ERROR_INVALID_ROUTE_PATTERN | -504 | Invalid route pattern |
+
+### Rate limit
+
+| Error Code | Value | Description |
+|------------|-------|-------------|
+| UVHTTP_ERROR_RATE_LIMIT_EXCEEDED | -550 | Rate limit exceeded |
+
+### Allocator (-600s)
+
+| Error Code | Value | Description |
+|------------|-------|-------------|
+| UVHTTP_ERROR_ALLOCATOR_INIT | -600 | Allocator init failed |
+| UVHTTP_ERROR_ALLOCATOR_SET | -601 | Allocator set failed |
+| UVHTTP_ERROR_ALLOCATOR_NOT_INITIALIZED | -602 | Allocator not initialized |
+
+### WebSocket (-700s)
+
+| Error Code | Value | Description |
+|------------|-------|-------------|
+| UVHTTP_ERROR_WEBSOCKET_INIT | -700 | WebSocket init failed |
+| UVHTTP_ERROR_WEBSOCKET_HANDSHAKE | -701 | WebSocket handshake failed |
+| UVHTTP_ERROR_WEBSOCKET_FRAME | -702 | Invalid frame |
+| UVHTTP_ERROR_WEBSOCKET_TOO_LARGE | -703 | Frame too large |
+| UVHTTP_ERROR_WEBSOCKET_INVALID_OPCODE | -704 | Invalid opcode |
+| UVHTTP_ERROR_WEBSOCKET_NOT_CONNECTED | -705 | Not connected |
+| UVHTTP_ERROR_WEBSOCKET_ALREADY_CONNECTED | -706 | Already connected |
+| UVHTTP_ERROR_WEBSOCKET_CLOSED | -707 | Connection closed |
+
+### Configuration (-900s)
+
+| Error Code | Value | Description |
+|------------|-------|-------------|
+| UVHTTP_ERROR_CONFIG_PARSE | -900 | Config parse failed |
+| UVHTTP_ERROR_CONFIG_INVALID | -901 | Invalid config |
+| UVHTTP_ERROR_CONFIG_FILE_NOT_FOUND | -902 | Config file not found |
+| UVHTTP_ERROR_CONFIG_MISSING_REQUIRED | -903 | Missing required setting |
+
+### Middleware (-1000s)
+
+| Error Code | Value | Description |
+|------------|-------|-------------|
+| UVHTTP_ERROR_MIDDLEWARE_STOPPED | -1000 | Middleware chain stopped |
+| UVHTTP_ERROR_MIDDLEWARE_CHAIN_EMPTY | -1001 | Middleware chain empty |
+| UVHTTP_ERROR_MIDDLEWARE_INVALID | -1002 | Invalid middleware |
+
+### Logging (-1100s)
+
+| Error Code | Value | Description |
+|------------|-------|-------------|
+| UVHTTP_ERROR_LOG_INIT | -1100 | Log init failed |
+| UVHTTP_ERROR_LOG_WRITE | -1101 | Log write failed |
+| UVHTTP_ERROR_LOG_FILE_OPEN | -1102 | Log file open failed |
+| UVHTTP_ERROR_LOG_NOT_INITIALIZED | -1103 | Log not initialized |
 
 ## Constants
 
@@ -609,6 +762,7 @@ Calculates string hash value.
 #define UVHTTP_METHOD_DELETE "DELETE"
 #define UVHTTP_METHOD_HEAD "HEAD"
 #define UVHTTP_METHOD_OPTIONS "OPTIONS"
+#define UVHTTP_METHOD_PATCH "PATCH"
 ```
 
 ### HTTP Status Codes
@@ -618,7 +772,7 @@ Calculates string hash value.
 #define UVHTTP_STATUS_CREATED 201
 #define UVHTTP_STATUS_BAD_REQUEST 400
 #define UVHTTP_STATUS_NOT_FOUND 404
-#define UVHTTP_STATUS_INTERNAL_SERVER_ERROR 500
+#define UVHTTP_STATUS_INTERNAL_ERROR 500
 ```
 
 ### Constant Limits
@@ -626,8 +780,8 @@ Calculates string hash value.
 ```c
 #define UVHTTP_MAX_HEADERS 64
 #define UVHTTP_MAX_HEADER_NAME_SIZE 256
-#define UVHTTP_MAX_HEADER_VALUE_SIZE 8192
-#define UVHTTP_MAX_URL_SIZE 8192
+#define UVHTTP_MAX_HEADER_VALUE_SIZE 4096
+#define UVHTTP_MAX_URL_SIZE 2048
 ```
 
 ## Compilation Options
@@ -636,11 +790,13 @@ Calculates string hash value.
 
 ```cmake
 BUILD_WITH_WEBSOCKET=ON          # Enable WebSocket support
-BUILD_WITH_MIMALLOC=ON           # Enable mimalloc allocator
 BUILD_WITH_HTTPS=ON              # Enable TLS support
+UVHTTP_ALLOCATOR_TYPE=0          # 0=system, 1=mimalloc, 2=custom
+BUILD_EXAMPLES=ON                # Build example programs
+BUILD_BENCHMARKS=ON              # Build performance benchmarks
+BUILD_TESTS=ON                   # Build unit/integration tests
 ENABLE_DEBUG=OFF                 # Debug mode
 ENABLE_COVERAGE=OFF              # Code coverage
-BUILD_EXAMPLES=ON                # Build example programs
 ```
 
 ### Compilation Macros
@@ -651,8 +807,10 @@ UVHTTP_FEATURE_STATIC_FILES       # Static file serving
 UVHTTP_FEATURE_TLS                # TLS support
 UVHTTP_FEATURE_LRU_CACHE          # LRU cache
 UVHTTP_FEATURE_ROUTER_CACHE       # Router cache
+UVHTTP_FEATURE_RATE_LIMIT         # Rate limiting
+UVHTTP_FEATURE_COMPRESSION        # Response compression
 UVHTTP_FEATURE_LOGGING            # Logging system
-UVHTTP_ALLOCATOR_TYPE             # Allocator type (0=system, 1=mimalloc)
+UVHTTP_ALLOCATOR_TYPE             # Allocator type (0=system, 1=mimalloc, 2=custom)
 ```
 
 ## Examples
@@ -699,9 +857,9 @@ int main(void) {
 
 ## References
 
-- [Architecture Documentation](../zh/dev/ARCHITECTURE.md)
-- [Developer Guide](../zh/guide/DEVELOPER_GUIDE.md)
-- [Tutorial](../zh/guide/TUTORIAL.md)
+- [Architecture Documentation](../dev/ARCHITECTURE.md)
+- [Developer Guide](../guide/DEVELOPER_GUIDE.md)
+- [Tutorial](../guide/TUTORIAL.md)
 - [Security Policy](../SECURITY.md)
 - [libuv Documentation](https://docs.libuv.org/)
 - [HTTP/1.1 Specification](https://tools.ietf.org/html/rfc7230)
