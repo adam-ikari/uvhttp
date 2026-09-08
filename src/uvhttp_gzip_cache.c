@@ -50,13 +50,15 @@ static int gzip_cache_entry_count(uvhttp_gzip_cache_t* cache) {
     return n;
 }
 
-/* Evict the least-recently-used entry. Assumes at least one valid entry. */
-static void gzip_cache_evict_one(uvhttp_gzip_cache_t* cache) {
+/* Evict the least-recently-used entry other than entries[exclude] (or any
+ * valid entry if exclude < 0). Assumes at least one eligible entry exists. */
+static void gzip_cache_evict_one_excluding(uvhttp_gzip_cache_t* cache,
+                                           int exclude) {
     int victim = -1;
     unsigned long oldest = 0;
     for (int i = 0; i < cache->capacity; i++) {
         gzip_cache_entry_t* e = &cache->entries[i];
-        if (!e->valid) continue;
+        if (!e->valid || i == exclude) continue;
         if (victim < 0 || e->last_used < oldest) {
             victim = i;
             oldest = e->last_used;
@@ -72,6 +74,10 @@ static void gzip_cache_evict_one(uvhttp_gzip_cache_t* cache) {
     cache->eviction_count++;
 }
 
+/* Evict the least-recently-used entry. Assumes at least one valid entry. */
+static void gzip_cache_evict_one(uvhttp_gzip_cache_t* cache) {
+    gzip_cache_evict_one_excluding(cache, -1);
+}
 uvhttp_error_t uvhttp_gzip_cache_create(size_t max_memory_usage, int max_entries,
                                         int cache_ttl,
                                         uvhttp_gzip_cache_t** cache) {
@@ -171,6 +177,20 @@ uvhttp_error_t uvhttp_gzip_cache_put(uvhttp_gzip_cache_t* cache, uint64_t hash,
             char* copy = (char*)uvhttp_alloc(compressed_len);
             if (!copy) return UVHTTP_ERROR_OUT_OF_MEMORY;
             memcpy(copy, compressed, compressed_len);
+
+            /* Replacing in place changes memory by (new - old); if that
+             * growth would exceed the budget, evict OTHER LRU entries until
+             * it fits. The entry being replaced is the newest value and is
+             * never evicted here. */
+            size_t delta = (compressed_len + GZIP_CACHE_ENTRY_OVERHEAD) -
+                           (e->compressed_len + GZIP_CACHE_ENTRY_OVERHEAD);
+            while (delta > 0 &&
+                   cache->total_memory + delta > cache->max_memory_usage &&
+                   gzip_cache_entry_count(cache) > 1) {
+                gzip_cache_evict_one_excluding(cache,
+                                               (int)(e - cache->entries));
+            }
+
             if (e->compressed) uvhttp_free(e->compressed);
             cache->total_memory -= e->compressed_len + GZIP_CACHE_ENTRY_OVERHEAD;
             e->compressed = copy;
@@ -184,7 +204,8 @@ uvhttp_error_t uvhttp_gzip_cache_put(uvhttp_gzip_cache_t* cache, uint64_t hash,
 
     /* Respect the memory budget: if adding this entry would exceed the budget,
      * evict least-recently-used entries until it fits (or until empty). */
-    while (cache->total_memory + compressed_len > cache->max_memory_usage &&
+    while (cache->total_memory + compressed_len + GZIP_CACHE_ENTRY_OVERHEAD >
+               cache->max_memory_usage &&
            gzip_cache_entry_count(cache) > 0) {
         gzip_cache_evict_one(cache);
     }

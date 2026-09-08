@@ -385,6 +385,7 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
         }
 
         /* batch evict multiple entries to reduce loop count */
+        int evicted_this_batch = 0;
         for (int i = 0;
              i < batch_size && ((cache->max_memory_usage > 0 &&
                                  cache->total_memory_usage + memory_usage >
@@ -422,9 +423,20 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
             cache->entry_count--;
             cache->eviction_count++;
             eviction_count++;
+            evicted_this_batch++;
 
             /* releasememory */
             free_cache_entry(evicted);
+        }
+
+        /* If a full batch could not evict anything (e.g. every remaining
+         * entry is protected by the priority threshold), the condition can
+         * never be satisfied - stop instead of looping forever. */
+        if (evicted_this_batch == 0) {
+            UVHTTP_LOG_ERROR(
+                "Cannot evict cache entries to make room: all remaining "
+                "entries are protected by the priority threshold");
+            return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
 
         /* if still not enough space after one batch eviction, continue to next
@@ -446,12 +458,25 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
     cache_entry_t* entry = NULL;
     HASH_FIND_STR(cache->hash_table, file_path, entry);
 
+    /* Allocate and copy the new content BEFORE touching the existing entry:
+     * an allocation failure here leaves the cache completely unchanged (no
+     * dangling content pointer, no lost accounting). */
+    char* new_content = (char*)uvhttp_alloc(content_length + 1);
+    if (!new_content) {
+        UVHTTP_LOG_ERROR("Failed to allocate content buffer: size=%zu",
+                         content_length);
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
+    memcpy(new_content, content, content_length);
+    new_content[content_length] = '\0';
+
     if (entry) {
-        /* updateexistingentry */
+        /* update existing entry */
         UVHTTP_LOG_DEBUG(
             "Updating existing cache entry: %s (old size: %zu, new size: %zu)",
             file_path, entry->content_length, content_length);
         uvhttp_free(entry->content);
+        entry->content = new_content;
 
         /* update memory usage */
         cache->total_memory_usage -= entry->memory_usage;
@@ -462,6 +487,7 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
             UVHTTP_LOG_ERROR(
                 "Failed to create cache entry: memory allocation error");
             uvhttp_handle_memory_failure("cache_entry", NULL, NULL);
+            uvhttp_free(new_content);
             return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
 
@@ -474,15 +500,21 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
         if (strlen(file_path) >= sizeof(entry->file_path)) {
             UVHTTP_LOG_ERROR("File path too long: %s (max: %zu)", file_path,
                              sizeof(entry->file_path) - 1);
+            uvhttp_free(new_content);
             uvhttp_free(entry);
             return UVHTTP_ERROR_INVALID_PARAM;
         }
 
-        uvhttp_safe_strncpy(entry->file_path, file_path, sizeof(entry->file_path));
+        uvhttp_safe_strncpy(entry->file_path, file_path,
+                            sizeof(entry->file_path));
 
-        /* initializeLRUlistpointer */
+        /* initialize LRU list pointer */
         entry->lru_prev = NULL;
         entry->lru_next = NULL;
+
+        /* content is fully populated before the entry becomes visible in the
+         * hash table, so an OOM can never leave a NULL-content entry behind */
+        entry->content = new_content;
 
         /* add to hash table */
         HASH_ADD_STR(cache->hash_table, file_path, entry);
@@ -491,23 +523,7 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
         UVHTTP_LOG_DEBUG("Created new cache entry: %s", file_path);
     }
 
-    /* allocate and copy content */
-    entry->content = (char*)uvhttp_alloc(content_length + 1);
-    if (!entry->content) {
-        UVHTTP_LOG_ERROR("Failed to allocate content buffer: size=%zu",
-                         content_length);
-        if (!entry->file_path[0]) {
-            /* new entry, need to remove from hash table and release */
-            HASH_DEL(cache->hash_table, entry);
-            cache->entry_count--;
-            uvhttp_free(entry);
-        }
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
-    }
-    memcpy(entry->content, content, content_length);
-    entry->content[content_length] = '\0';
-
-    /* setentrycontent */
+    /* set entry content */
     entry->content_length = content_length;
     entry->memory_usage = memory_usage;
     entry->last_modified = last_modified;
@@ -733,7 +749,7 @@ int uvhttp_lru_cache_cleanup_expired(cache_manager_t* cache) {
 
     int cleaned_count = 0;
     size_t freed_memory = 0;
-    time_t now = time(NULL);
+    time_t now = get_current_time();
 
     cache_entry_t* entry = cache->lru_tail;
     while (entry) {

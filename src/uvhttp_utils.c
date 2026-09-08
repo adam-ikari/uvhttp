@@ -95,6 +95,60 @@ uvhttp_error_t uvhttp_send_unified_response(uvhttp_response_t* response,
     return uvhttp_response_send(response);
 }
 
+/* Escape a string for embedding inside a JSON string literal: backslash,
+ * double-quote and control characters are escaped (control chars as \u00XX)
+ * so the produced JSON document stays syntactically valid. dst is always
+ * NUL-terminated. */
+static void json_escape(const char* src, char* dst, size_t dst_size) {
+    static const char hex[] = "0123456789abcdef";
+    size_t j = 0;
+    for (size_t i = 0; src[i] && j + 6 < dst_size; i++) {
+        unsigned char c = (unsigned char)src[i];
+        switch (c) {
+        case '"':
+            dst[j++] = '\\';
+            dst[j++] = '"';
+            break;
+        case '\\':
+            dst[j++] = '\\';
+            dst[j++] = '\\';
+            break;
+        case '\b':
+            dst[j++] = '\\';
+            dst[j++] = 'b';
+            break;
+        case '\f':
+            dst[j++] = '\\';
+            dst[j++] = 'f';
+            break;
+        case '\n':
+            dst[j++] = '\\';
+            dst[j++] = 'n';
+            break;
+        case '\r':
+            dst[j++] = '\\';
+            dst[j++] = 'r';
+            break;
+        case '\t':
+            dst[j++] = '\\';
+            dst[j++] = 't';
+            break;
+        default:
+            if (c < 0x20) {
+                dst[j++] = '\\';
+                dst[j++] = 'u';
+                dst[j++] = '0';
+                dst[j++] = '0';
+                dst[j++] = hex[c >> 4];
+                dst[j++] = hex[c & 0x0F];
+            } else {
+                dst[j++] = (char)c;
+            }
+        }
+    }
+    dst[j] = '\0';
+}
+
 /**
  * @brief Create standard error response (JSON format)
  * @param response Response object
@@ -131,17 +185,27 @@ uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response,
 
     // Create safe JSON error response
     char error_json[1024];
+    char escaped_msg[6 * MAX_ERROR_MSG_LEN + 1];
+    char escaped_details[6 * MAX_ERROR_DETAILS_LEN + 1];
     int json_len;
+
+    // Escape message and details so the JSON document stays valid even when
+    // they contain quotes, backslashes or control characters
+    json_escape(error_message, escaped_msg, sizeof(escaped_msg));
+    if (details && strlen(details) > 0) {
+        json_escape(details, escaped_details, sizeof(escaped_details));
+    }
 
     if (details && strlen(details) > 0) {
         json_len = snprintf(error_json, sizeof(error_json),
                             "{\"error\":\"%s\",\"details\":\"%s\",\"code\":%d,"
                             "\"timestamp\":%ld}",
-                            error_message, details, error_code, time(NULL));
+                            escaped_msg, escaped_details, error_code,
+                            time(NULL));
     } else {
         json_len = snprintf(error_json, sizeof(error_json),
                             "{\"error\":\"%s\",\"code\":%d,\"timestamp\":%ld}",
-                            error_message, error_code, time(NULL));
+                            escaped_msg, error_code, time(NULL));
     }
 
     // Validate snprintf success

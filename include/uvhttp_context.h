@@ -73,6 +73,12 @@ typedef struct uvhttp_context {
     /* Configuration management */
     void* current_config;  /* uvhttp_config_t* */
     void* config_callback; /* uvhttp_config_change_callback_t */
+    /* Ownership of current_config:
+     * 1 = the context created it (uvhttp_context_init_config) and releases it
+     *     in uvhttp_context_cleanup_config;
+     * 0 = it was installed via uvhttp_config_set_current (borrowed): the
+     *     caller retains ownership and remains responsible for freeing it. */
+    int config_owned;
 
     /* User data (for storing application-specific context) */
     void* user_data;

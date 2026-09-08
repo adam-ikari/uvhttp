@@ -287,6 +287,7 @@ uvhttp_error_t uvhttp_context_init_config(uvhttp_context_t* context) {
     }
 
     context->current_config = current_config;
+    context->config_owned = 1; /* context created it: context owns it */
 
     return UVHTTP_OK;
 }
@@ -297,11 +298,16 @@ void uvhttp_context_cleanup_config(uvhttp_context_t* context) {
         return;
     }
 
-    if (context->current_config) {
-        /* Free configuration */
-        uvhttp_config_free(context->current_config);
-        context->current_config = NULL;
+    /* Free only the config the context created itself. A config installed
+     * via uvhttp_config_set_current is borrowed: the caller retains
+     * ownership (it may also be owned by the server, which frees
+     * server->config in uvhttp_server_free - freeing it here again would be
+     * a double free). */
+    if (context->current_config && context->config_owned) {
+        uvhttp_config_free((uvhttp_config_t*)context->current_config);
     }
+    context->current_config = NULL;
+    context->config_owned = 0;
 }
 
 /* Note: memory allocator uses compile-time macros, no runtime setup needed
