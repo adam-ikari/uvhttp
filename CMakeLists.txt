@@ -6,7 +6,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
     string(REGEX MATCH "VERSION=([0-9]+\\.[0-9]+\\.[0-9]+)" _ ${VERSION_FILE})
     set(PROJECT_VERSION ${CMAKE_MATCH_1})
 else()
-    set(PROJECT_VERSION "2.3.0")
+    message(FATAL_ERROR "VERSION file not found — cannot determine project version")
 endif()
 
 project(uvhttp VERSION ${PROJECT_VERSION} LANGUAGES C CXX)
@@ -442,6 +442,66 @@ else()
 endif()
 
 # ============================================================================
+# Feature/ABI macro values (1/0) for consumer propagation
+# ============================================================================
+# add_definitions() above is directory-scoped: it configures this build but
+# never reaches exported targets or add_subdirectory consumers. The public
+# headers lay out structs (uvhttp_server_t, uvhttp_request_t, ...) and gate
+# API declarations on these macros, so every consumer MUST compile with the
+# exact same values or structs/declarations disagree with the compiled
+# library (ABI mismatch / unresolved symbols). The *_VALUE variables below
+# mirror the add_definitions() values one-to-one and feed
+# target_compile_definitions(uvhttp PUBLIC ...) plus the generated
+# uvhttp-config.cmake / uvhttp.pc templates.
+if(BUILD_WITH_STATIC_FILES)
+    set(UVHTTP_FEATURE_STATIC_FILES_VALUE 1)
+else()
+    set(UVHTTP_FEATURE_STATIC_FILES_VALUE 0)
+endif()
+
+if(BUILD_WITH_LRU_CACHE)
+    set(UVHTTP_FEATURE_LRU_CACHE_VALUE 1)
+else()
+    set(UVHTTP_FEATURE_LRU_CACHE_VALUE 0)
+endif()
+
+if(BUILD_WITH_ROUTER_CACHE)
+    set(UVHTTP_FEATURE_ROUTER_CACHE_VALUE 1)
+else()
+    set(UVHTTP_FEATURE_ROUTER_CACHE_VALUE 0)
+endif()
+
+if(BUILD_WITH_COMPRESSION)
+    set(UVHTTP_FEATURE_COMPRESSION_VALUE 1)
+else()
+    set(UVHTTP_FEATURE_COMPRESSION_VALUE 0)
+endif()
+
+# TLS mirrors the rules above: WebSocket needs mbedtls, so UVHTTP_FEATURE_TLS
+# is on when either BUILD_WITH_HTTPS or BUILD_WITH_WEBSOCKET is on.
+if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
+    set(UVHTTP_FEATURE_TLS_VALUE 1)
+else()
+    set(UVHTTP_FEATURE_TLS_VALUE 0)
+endif()
+
+if(BUILD_WITH_WEBSOCKET)
+    set(UVHTTP_FEATURE_WEBSOCKET_VALUE 1)
+else()
+    set(UVHTTP_FEATURE_WEBSOCKET_VALUE 0)
+endif()
+
+# Rate limiting has no build option: always compiled in (header default).
+set(UVHTTP_FEATURE_RATE_LIMIT_VALUE 1)
+
+# Logging value mirrors the ENABLE_DEV_MODE / ENABLE_DEBUG logic above.
+if(ENABLE_DEV_MODE OR ENABLE_DEBUG)
+    set(UVHTTP_FEATURE_LOGGING_VALUE 1)
+else()
+    set(UVHTTP_FEATURE_LOGGING_VALUE 0)
+endif()
+
+# ============================================================================
 # Include dependency build configuration
 # ============================================================================
 include(cmake/Dependencies.cmake)
@@ -546,6 +606,28 @@ add_library(uvhttp STATIC ${SOURCES})
 set_target_properties(uvhttp PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib
     POSITION_INDEPENDENT_CODE ON
+)
+
+# Propagate feature/ABI macros to every consumer of the uvhttp target
+# (add_subdirectory and find_package(uvhttp) alike). Values come from the
+# *_VALUE block above and match the directory-scoped add_definitions() used
+# for this build, so headers and struct layouts stay in sync on both sides.
+target_compile_definitions(uvhttp PUBLIC
+    UVHTTP_FEATURE_WEBSOCKET=${UVHTTP_FEATURE_WEBSOCKET_VALUE}
+    UVHTTP_FEATURE_TLS=${UVHTTP_FEATURE_TLS_VALUE}
+    UVHTTP_FEATURE_STATIC_FILES=${UVHTTP_FEATURE_STATIC_FILES_VALUE}
+    UVHTTP_FEATURE_LRU_CACHE=${UVHTTP_FEATURE_LRU_CACHE_VALUE}
+    UVHTTP_FEATURE_ROUTER_CACHE=${UVHTTP_FEATURE_ROUTER_CACHE_VALUE}
+    UVHTTP_FEATURE_COMPRESSION=${UVHTTP_FEATURE_COMPRESSION_VALUE}
+    UVHTTP_FEATURE_RATE_LIMIT=${UVHTTP_FEATURE_RATE_LIMIT_VALUE}
+    UVHTTP_FEATURE_LOGGING=${UVHTTP_FEATURE_LOGGING_VALUE}
+    UVHTTP_ALLOCATOR_TYPE=${UVHTTP_ALLOCATOR_TYPE}
+    UVHTTP_MAX_HEADER_NAME_SIZE=${UVHTTP_MAX_HEADER_NAME_SIZE}
+    UVHTTP_MAX_HEADER_VALUE_SIZE=${UVHTTP_MAX_HEADER_VALUE_SIZE}
+    UVHTTP_MAX_HEADERS=${UVHTTP_MAX_HEADERS}
+    UVHTTP_INLINE_HEADERS_CAPACITY=${UVHTTP_INLINE_HEADERS_CAPACITY}
+    UVHTTP_MAX_URL_SIZE=${UVHTTP_MAX_URL_SIZE}
+    UVHTTP_MAX_PATH_SIZE=${UVHTTP_MAX_PATH_SIZE}
 )
 
 # Use modern CMake target_link_libraries specification
@@ -1078,6 +1160,53 @@ endif()
 
 
 # ============================================================================
+# Template support variables (uvhttp-config.cmake / uvhttp.pc)
+# ============================================================================
+# pkg-config Cflags: mirror the feature/ABI macros so pkg-config consumers
+# compile against the same ABI as the compiled library.
+set(UVHTTP_PC_CFLAGS
+    "-DUVHTTP_FEATURE_WEBSOCKET=${UVHTTP_FEATURE_WEBSOCKET_VALUE}"
+    "-DUVHTTP_FEATURE_TLS=${UVHTTP_FEATURE_TLS_VALUE}"
+    "-DUVHTTP_FEATURE_STATIC_FILES=${UVHTTP_FEATURE_STATIC_FILES_VALUE}"
+    "-DUVHTTP_FEATURE_LRU_CACHE=${UVHTTP_FEATURE_LRU_CACHE_VALUE}"
+    "-DUVHTTP_FEATURE_ROUTER_CACHE=${UVHTTP_FEATURE_ROUTER_CACHE_VALUE}"
+    "-DUVHTTP_FEATURE_COMPRESSION=${UVHTTP_FEATURE_COMPRESSION_VALUE}"
+    "-DUVHTTP_FEATURE_RATE_LIMIT=${UVHTTP_FEATURE_RATE_LIMIT_VALUE}"
+    "-DUVHTTP_FEATURE_LOGGING=${UVHTTP_FEATURE_LOGGING_VALUE}"
+    "-DUVHTTP_ALLOCATOR_TYPE=${UVHTTP_ALLOCATOR_TYPE}"
+    "-DUVHTTP_MAX_HEADER_NAME_SIZE=${UVHTTP_MAX_HEADER_NAME_SIZE}"
+    "-DUVHTTP_MAX_HEADER_VALUE_SIZE=${UVHTTP_MAX_HEADER_VALUE_SIZE}"
+    "-DUVHTTP_MAX_HEADERS=${UVHTTP_MAX_HEADERS}"
+    "-DUVHTTP_INLINE_HEADERS_CAPACITY=${UVHTTP_INLINE_HEADERS_CAPACITY}"
+    "-DUVHTTP_MAX_URL_SIZE=${UVHTTP_MAX_URL_SIZE}"
+    "-DUVHTTP_MAX_PATH_SIZE=${UVHTTP_MAX_PATH_SIZE}"
+)
+string(REPLACE ";" " " UVHTTP_PC_CFLAGS "${UVHTTP_PC_CFLAGS}")
+
+# pkg-config Libs.private: uvhttp is a static archive, so consumers must
+# link its transitive static dependencies as well.
+set(UVHTTP_PC_LIBS_PRIVATE "-L\${libdir} -luv -lxxhash -lllhttp")
+if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
+    string(APPEND UVHTTP_PC_LIBS_PRIVATE " -lmbedtls -lmbedx509 -lmbedcrypto")
+endif()
+if(BUILD_WITH_MIMALLOC)
+    string(APPEND UVHTTP_PC_LIBS_PRIVATE " -lmimalloc")
+endif()
+if(BUILD_WITH_COMPRESSION)
+    string(APPEND UVHTTP_PC_LIBS_PRIVATE " -lminiz")
+endif()
+string(APPEND UVHTTP_PC_LIBS_PRIVATE " -lpthread -lm -ldl")
+
+# Installed name of the mimalloc static archive (differs for Debug builds).
+if(BUILD_WITH_MIMALLOC)
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(UVHTTP_MIMALLOC_LIB_NAME "libmimalloc-debug.a")
+    else()
+        set(UVHTTP_MIMALLOC_LIB_NAME "libmimalloc.a")
+    endif()
+endif()
+
+# ============================================================================
 # CMake Package Export Configuration
 # ============================================================================
 # This section enables users to find and use uvhttp via find_package()
@@ -1115,6 +1244,66 @@ install(DIRECTORY include/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     FILES_MATCHING PATTERN "*.h"
 )
+
+# ============================================================================
+# Install vendored dependency headers (A1)
+# ============================================================================
+# The public headers include third-party headers that live under deps/ and
+# are NOT covered by the include/ rule above. Without them, installed
+# consumers fail to compile: uvhttp_request.h/uvhttp_connection.h include
+# "llhttp.h", uvhttp_server.h includes "uthash.h", uvhttp_hash.h includes
+# "xxhash.h" and uvhttp_tls.h includes <mbedtls/*>.
+install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/include/llhttp.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/uthash/src/uthash.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/uthash/src/utarray.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/uthash/src/utlist.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/uthash/src/utringbuffer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/uthash/src/utstack.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/uthash/src/utstring.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+# xxHash: xxhash.h pulls xxh3.h/xxh_x86dispatch.h in its implementation
+# section, so install the whole header set.
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/xxhash/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING PATTERN "*.h"
+)
+
+# mbedTLS: uvhttp_tls.h includes <mbedtls/*> and those headers include
+# <psa/*>, so install the whole include tree.
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mbedtls/include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING PATTERN "*.h"
+)
+
+# libuv: the public headers include <uv.h>; ship the vendored headers so the
+# installed package is self-contained.
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING PATTERN "*.h"
+)
+
+# ============================================================================
+# Install vendored dependency static libraries (B1)
+# ============================================================================
+# The exported uvhttp::uvhttp target links these by name; uvhttp-config.cmake
+# defines matching IMPORTED targets that point into the install tree.
+install(FILES
+    ${LIBUV_LIB}
+    ${LLHTTP_LIB}
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+if(XXHASH_LIB)
+    install(FILES ${XXHASH_LIB} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
+if(BUILD_WITH_HTTPS OR BUILD_WITH_WEBSOCKET)
+    install(FILES ${MBEDTLS_LIBS} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
+if(BUILD_WITH_MIMALLOC)
+    install(FILES ${MIMALLOC_LIB} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 # Export and install the uvhttp target
 install(EXPORT uvhttp-targets

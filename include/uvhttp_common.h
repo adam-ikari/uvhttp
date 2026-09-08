@@ -26,6 +26,9 @@
 #endif
 
 /* Maximum number of headers limit */
+#ifndef UVHTTP_MAX_HEADERS
+#    define UVHTTP_MAX_HEADERS 64
+#endif
 #ifndef MAX_HEADERS
 #    define MAX_HEADERS UVHTTP_MAX_HEADERS
 #endif

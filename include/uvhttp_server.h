@@ -199,19 +199,81 @@ uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server);
  * scenarios that do not need to manage the event loop themselves
  */
 uvhttp_error_t uvhttp_server_new_with_loop(uvhttp_server_t** server);
+/**
+ * @brief Start listening for incoming connections
+ *
+ * @param server Server created with uvhttp_server_new / uvhttp_server_new_with_loop
+ * @param host Bind address (e.g. "0.0.0.0" or "127.0.0.1")
+ * @param port TCP port to bind
+ * @return UVHTTP_OK on success, error code otherwise
+ *
+ * @note The server must be driven by the libuv event loop (uv_run) after
+ *       this call; the server keeps no background threads.
+ */
 uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
                                     int port);
+/**
+ * @brief Stop listening and close accepted connections
+ *
+ * @param server Server to stop
+ * @return UVHTTP_OK on success, error code otherwise
+ *
+ * @note The server object itself is NOT released; call uvhttp_server_free
+ *       afterwards to release it.
+ */
 uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server);
 #if UVHTTP_FEATURE_TLS
 uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server,
                                         uvhttp_tls_context_t* tls_ctx);
 uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server);
 #endif
+/**
+ * @brief Release a server and everything it owns
+ *
+ * @param server Server to release (may be NULL, then this is a no-op)
+ * @return UVHTTP_OK on success, error code otherwise
+ *
+ * @note Ownership contract: once set with uvhttp_server_set_router /
+ *       uvhttp_server_set_context, the router and context are owned by the
+ *       server and are released by this function. The caller MUST NOT free
+ *       them separately, otherwise the double free occurs. The same applies
+ *       to any config reached through the context.
+ * @note If the server was created with uvhttp_server_new_with_loop, the
+ *       internal event loop is also closed here.
+ */
 uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
+/**
+ * @brief Set the request handler used when no router is attached
+ *
+ * @param server Server to configure
+ * @param handler Request handler callback
+ * @return UVHTTP_OK on success, error code otherwise
+ */
 uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server,
                                          uvhttp_request_handler_t handler);
+/**
+ * @brief Attach a router to the server
+ *
+ * @param server Server to configure
+ * @param router Router created with uvhttp_router_new
+ * @return UVHTTP_OK on success, error code otherwise
+ *
+ * @note Ownership contract: after this call the server owns the router and
+ *       releases it in uvhttp_server_free. Do NOT call uvhttp_router_free on
+ *       it yourself.
+ */
 uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server,
                                         uvhttp_router_t* router);
+/**
+ * @brief Attach a context (shared configuration/state) to the server
+ *
+ * @param server Server to configure
+ * @param context Context created with uvhttp_context_create
+ * @return UVHTTP_OK on success, error code otherwise
+ *
+ * @note Ownership contract: after this call the server owns the context and
+ *       releases it in uvhttp_server_free. Do NOT free it yourself.
+ */
 uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server,
                                          struct uvhttp_context* context);
 
