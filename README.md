@@ -30,7 +30,7 @@ Performance baselines are measured on **GitHub Actions `ubuntu-latest` runners**
 | **Peak Throughput** | ~83K RPS | HTTP/1.1, 10 conn, GitHub CI runner |
 | **High Concurrency** | ~55K RPS | 1000 concurrent connections |
 | **Static Files** | 8.8K RPS | ~100KB body, `benchmark_unified`, zero-copy writev |
-| **API Routing** | 82K RPS | JSON endpoint |
+| **API Routing** | 81K RPS | JSON endpoint |
 | **Average Latency** | ~117µs | P50, 10 connections |
 | **Error Rate** | 0% | Zero socket errors under load (10 conn) |
 | **Test Suite** | 101/101 pass | ASan + UBSan verified clean |
@@ -269,10 +269,15 @@ int main() {
 }
 ```
 
-**Compile and Run**:
+**Compile and Run** (from the repository root):
 ```bash
-gcc -o server server.c -I./include -L./build/dist/lib -luvhttp -lpthread -luv
-export LD_LIBRARY_PATH=./build/dist/lib:$LD_LIBRARY_PATH
+gcc -o server server.c \
+    -I./include -Ideps/libuv/include -Ideps/uthash/src \
+    -Ideps/llhttp/include -Ideps/mbedtls/include \
+    -L./build/dist/lib -Ldeps/libuv/build -Ldeps/mbedtls/build/library \
+    -Ldeps/llhttp/build -Ldeps/xxhash \
+    -luvhttp -luv -lmbedtls -lmbedx509 -lmbedcrypto \
+    -lxxhash -lllhttp -lminiz -lpthread -lm -ldl
 ./server
 ```
 

@@ -30,7 +30,7 @@ UVHTTP 是一个基于 libuv 的生产级事件驱动 HTTP 服务器库，专为
 | **峰值吞吐量** | ~83K RPS | HTTP/1.1，10 连接，GitHub CI runner |
 | **高并发** | ~55K RPS | 1000 并发连接 |
 | **静态文件** | 8.8K RPS | ~100KB body，`benchmark_unified`，零拷贝 writev |
-| **API 路由** | 82K RPS | JSON 端点 |
+| **API 路由** | 81K RPS | JSON 端点 |
 | **平均延迟** | ~117µs | P50，10 连接 |
 | **错误率** | 0% | 负载下零 socket 错误（10 连接） |
 | **测试套件** | 101/101 通过 | ASan + UBSan 验证通过 |
@@ -269,10 +269,15 @@ int main() {
 }
 ```
 
-**编译和运行**：
+**编译和运行**（在仓库根目录下）：
 ```bash
-gcc -o server server.c -I./include -L./build/dist/lib -luvhttp -lpthread -luv
-export LD_LIBRARY_PATH=./build/dist/lib:$LD_LIBRARY_PATH
+gcc -o server server.c \
+    -I./include -Ideps/libuv/include -Ideps/uthash/src \
+    -Ideps/llhttp/include -Ideps/mbedtls/include \
+    -L./build/dist/lib -Ldeps/libuv/build -Ldeps/mbedtls/build/library \
+    -Ldeps/llhttp/build -Ldeps/xxhash \
+    -luvhttp -luv -lmbedtls -lmbedx509 -lmbedcrypto \
+    -lxxhash -lllhttp -lminiz -lpthread -lm -ldl
 ./server
 ```
 
