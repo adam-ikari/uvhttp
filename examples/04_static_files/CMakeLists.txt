@@ -1,4 +1,11 @@
 # 静态文件示例
+# 特性关闭时跳过，避免默认配置（BUILD_WITH_STATIC_FILES=OFF）下
+# 链接到未编译的 uvhttp_static_* 符号导致失败
+if(BUILD_WITH_STATIC_FILES)
+
+# 从父 CMakeLists.txt 获取 UVHTTP 库路径
+set(UVHTTP_LIB ${CMAKE_BINARY_DIR}/dist/lib/libuvhttp.a)
+
 
 # 从父 CMakeLists.txt 获取 UVHTTP 库路径
 set(UVHTTP_LIB ${CMAKE_BINARY_DIR}/dist/lib/libuvhttp.a)
@@ -37,3 +44,5 @@ target_link_libraries(custom_ttl_demo PRIVATE ${UVHTTP_LIB} libuv mbedtls xxhash
 target_include_directories(custom_ttl_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/uthash/src ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/llhttp/include)
 add_dependencies(custom_ttl_demo uvhttp)
 uvhttp_add_example_dependencies(custom_ttl_demo)
+
+endif()
