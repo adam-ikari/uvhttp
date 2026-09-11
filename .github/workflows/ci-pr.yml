@@ -41,7 +41,8 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          # BUILD_EXAMPLES=ON：示例纳入 PR 门禁编译（04_static_files 由特性门跳过）
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
 
       - name: Build project
         id: build

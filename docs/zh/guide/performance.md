@@ -259,7 +259,7 @@ sysctl -w net.core.somaxconn=4096
 
 ## 下一步
 
-- [性能基准（中文）](../zh/dev/PERFORMANCE_BENCHMARK.md) - 详细基准结果
-- [性能测试标准（中文）](../zh/dev/PERFORMANCE_TESTING_STANDARD.md) - 测试方法论
-- [API 参考](../api/API_REFERENCE.md) - 完整 API 文档
-- [安全策略](../SECURITY.md) - 安全指南
+- [性能基准（中文）](../dev/PERFORMANCE_BENCHMARK.md) - 详细基准结果
+- [性能测试标准（中文）](../dev/PERFORMANCE_TESTING_STANDARD.md) - 测试方法论
+- [API 参考](../../api/API_REFERENCE.md) - 完整 API 文档
+- [安全策略](../../SECURITY.md) - 安全指南
