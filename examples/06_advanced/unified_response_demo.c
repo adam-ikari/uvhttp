@@ -29,7 +29,7 @@ uvhttp_result_t info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // 创建 JSON 响应
     cJSON* info = cJSON_CreateObject();
     cJSON_AddStringToObject(info, "server", "UVHTTP");
-    cJSON_AddStringToObject(info, "version", UVHTTP_VERSION_STRING);
+    cJSON_AddStringToObject(info, "version", uvhttp_get_version_string());
     cJSON_AddStringToObject(info, "description", "高性能 HTTP 服务器库 - 统一响应处理演示");
     
     cJSON* features = cJSON_CreateArray();

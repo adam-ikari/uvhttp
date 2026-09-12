@@ -31,12 +31,16 @@ set(XXHASH_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../deps/xxhash/libxxhash.a)
 
 # zlib (for compression support)
 if(BUILD_WITH_COMPRESSION)
-    # 使用子模块中的 zlib
-    set(ZLIB_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../deps/zlib)
-    set(ZLIB_INCLUDE_DIR ${ZLIB_ROOT})
-    set(ZLIB_LIBRARY ${CMAKE_BINARY_DIR}/dist/lib/libz.a)
-    
-    message(STATUS "Examples will link with zlib: ${ZLIB_LIBRARY}")
+    # The main build provides compression via miniz (a zlib drop-in), exposed
+    # as the "zlib" ALIAS target in cmake/Dependencies.cmake. Link that target
+    # instead of a file path — there is no libz.a in this build tree.
+    set(ZLIB_LIBRARY zlib)
+    # Some examples (01_basics) link via ${ZLIB_LIBRARIES}; point it at the
+    # same alias target so those targets get miniz too.
+    set(ZLIB_LIBRARIES zlib)
+    set(ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../deps)
+
+    message(STATUS "Examples will link with compression lib: ${ZLIB_LIBRARY}")
     
     # 为所有链接了 uvhttp 的目标自动添加 zlib
     # 使用 generator expression 在链接时自动添加

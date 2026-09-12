@@ -17,7 +17,7 @@ import statistics
 DEFAULT_BASELINE = {
     "/": 83000,
     "/json": 81000,
-    "/large": 5700,
+    "/large": 8800,  # v2.7.2 零拷贝优化后基线（#378）
 }
 
 DEFAULT_THRESHOLD = 0.10  # 10% regression threshold

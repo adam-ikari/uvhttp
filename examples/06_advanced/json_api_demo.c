@@ -59,7 +59,7 @@ uvhttp_result_t info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     (void)req; /* 未使用参数 */
     cJSON* info = cJSON_CreateObject();
     cJSON_AddStringToObject(info, "server", "UVHTTP");
-    cJSON_AddStringToObject(info, "version", UVHTTP_VERSION_STRING);
+    cJSON_AddStringToObject(info, "version", uvhttp_get_version_string());
     cJSON_AddStringToObject(info, "description", "高性能 HTTP 服务器库");
     cJSON_AddStringToObject(info, "response_type", "unified_processing");
     
@@ -208,7 +208,7 @@ uvhttp_result_t health_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     cJSON* health = cJSON_CreateObject();
     cJSON_AddStringToObject(health, "status", "healthy");
     cJSON_AddNumberToObject(health, "uptime", 3600);
-    cJSON_AddStringToObject(health, "version", UVHTTP_VERSION_STRING);
+    cJSON_AddStringToObject(health, "version", uvhttp_get_version_string());
     
     cJSON* checks = cJSON_CreateArray();
     

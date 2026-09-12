@@ -13,13 +13,25 @@
 BUILD_DIR ?= ../build
 SRC_DIR ?= .
 INCLUDE_DIR ?= ../include
+DEPS_DIR ?= ../deps
 LIB_DIR ?= $(BUILD_DIR)/dist/lib
 BIN_DIR ?= ./bin
 
 # Compiler and flags
 CC ?= gcc
-CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) -std=c99
-LDFLAGS = -L$(LIB_DIR) -luvhttp -luv -lpthread -lm -ldl
+CFLAGS = -Wall -Wextra -pthread -I$(INCLUDE_DIR) -I$(DEPS_DIR)/uthash/src \
+         -I$(DEPS_DIR)/llhttp/include -I$(DEPS_DIR)/cjson \
+         -I$(DEPS_DIR)/mbedtls/include -I$(DEPS_DIR)/libuv/include \
+         -std=gnu99
+# UVHTTP links against its vendored dependencies (mbedtls / llhttp / xxhash /
+# cjson / miniz) and libuv; keep the same set here so static linking succeeds.
+# miniz (a zlib drop-in) is built into $(LIB_DIR) as libminiz.a when
+# BUILD_WITH_COMPRESSION=ON (the default).
+LDFLAGS = -L$(LIB_DIR) \
+          -L$(DEPS_DIR)/mbedtls/build/library -L$(DEPS_DIR)/llhttp/build \
+          -L$(DEPS_DIR)/xxhash -L$(DEPS_DIR)/cjson/build \
+          -luvhttp -luv -lmbedtls -lmbedx509 -lmbedcrypto \
+          -lxxhash -lllhttp -lcjson -lminiz -lpthread -lm -ldl
 DEBUG_FLAGS = -g -O0
 RELEASE_FLAGS = -O2
 
@@ -31,11 +43,11 @@ else
     CFLAGS += $(RELEASE_FLAGS)
 endif
 
-# Examples
+# Examples (source files under examples/)
 EXAMPLES = simple_server hello_world basic_routing
 
 # Targets
-.PHONY: all clean help $(EXAMPLES)
+.PHONY: all clean help check_uvhttp $(EXAMPLES)
 
 all: $(BIN_DIR) $(EXAMPLES)
 	@echo ""
@@ -78,19 +90,19 @@ $(BIN_DIR):
 	@mkdir -p $(BIN_DIR)
 
 # Build individual examples
-simple_server: $(BIN_DIR)
+simple_server: $(BIN_DIR) check_uvhttp
 	@echo "Building simple_server..."
 	$(CC) $(CFLAGS) $(SRC_DIR)/simple_server.c -o $(BIN_DIR)/simple_server $(LDFLAGS)
 	@echo "  ✓ simple_server built"
 
-hello_world: $(BIN_DIR)
+hello_world: $(BIN_DIR) check_uvhttp
 	@echo "Building hello_world..."
-	$(CC) $(CFLAGS) $(SRC_DIR)/01_basics/hello_world.c -o $(BIN_DIR)/hello_world $(LDFLAGS)
+	$(CC) $(CFLAGS) $(SRC_DIR)/01_basics/01_hello_world.c -o $(BIN_DIR)/hello_world $(LDFLAGS)
 	@echo "  ✓ hello_world built"
 
-basic_routing: $(BIN_DIR)
+basic_routing: $(BIN_DIR) check_uvhttp
 	@echo "Building basic_routing..."
-	$(CC) $(CFLAGS) $(SRC_DIR)/02_routing/simple_routing.c -o $(BIN_DIR)/basic_routing $(LDFLAGS)
+	$(CC) $(CFLAGS) $(SRC_DIR)/02_routing/01_simple_routing.c -o $(BIN_DIR)/basic_routing $(LDFLAGS)
 	@echo "  ✓ basic_routing built"
 
 # Clean build artifacts

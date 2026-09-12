@@ -99,7 +99,8 @@ int main(int argc, char* argv[]) {
     int listen_result = uvhttp_server_listen(g_server, "0.0.0.0", port);
     if (listen_result != 0) {
         printf("错误：无法启动服务器 (错误码: %d)\n", listen_result);
-        uvhttp_router_free(router);
+        /* router is owned by the server (g_server->router was set above);
+         * uvhttp_server_free releases it. Do not free it here. */
         uvhttp_static_free(g_static_ctx);
         uvhttp_server_free(g_server);
         return 1;
@@ -114,7 +115,10 @@ int main(int argc, char* argv[]) {
         uvhttp_context_destroy(g_context);
     }
 
-    uvhttp_router_free(router);
+    /* router is owned by the server and released by uvhttp_server_free;
+     * config was installed borrowed via uvhttp_config_set_current, so it
+     * remains owned by this example and is freed here. */
+    uvhttp_config_free(config);
     uvhttp_static_free(g_static_ctx);
     uvhttp_server_free(g_server);
 
