@@ -1,6 +1,6 @@
 ---
 title: Performance Benchmarks
-description: UVHTTP performance benchmarks — ~20K RPS, flat throughput from 100 to 500 connections, zero socket errors, P50/P99 latency. Measured on AMD Ryzen 7 5800H with wrk. Includes reproduce commands and historical baselines.
+description: UVHTTP performance benchmarks — ~83K RPS on GitHub CI runners, 81K RPS JSON, 8.8K RPS large responses, zero socket errors, P50 ~117µs latency. Includes reproduce commands, optimization tips, and monitoring.
 ---
 
 # Performance
@@ -9,12 +9,23 @@ UVHTTP is designed for high performance and low latency. This document provides 
 
 ## Performance Metrics
 
-### Benchmark Results (Updated: 2026-07-12)
+### CI Baseline (Authoritative)
 
-Measured on the original benchmark host (AMD Ryzen 7 5800H, 12 cores, Linux
-6.17.13-2-pve) with `wrk 4.1.0` against the built-in `test_performance_e2e`
-server, GCC 11.4.0 Release build (`-O2 -DNDEBUG`), system allocator.
-Reproduce: `wrk -t4 -c<N> -d10s http://127.0.0.1:18090/simple`.
+The authoritative baseline is measured on **GitHub Actions `ubuntu-latest` runners** with `benchmark_unified` (Release build, system allocator, 2 threads, 10 concurrent connections, 10s per round, 10 rounds per endpoint). CI runners remove the CPU thermal-throttling variance that plagues local benchmarks (CV 0.4–2.4% on CI vs 40%+ locally). Full methodology and the exact runner environment are recorded in [Performance Targets](../PERFORMANCE_TARGETS.md).
+
+| Endpoint | RPS | Avg Latency | Notes |
+|----------|-----|-------------|-------|
+| `/` (simple text) | **~83K** | ~117µs | HTTP/1.1, 10 conn, GitHub CI runner |
+| `/json` | **~81K** | ~117µs | JSON endpoint |
+| `/large` (~100KB body) | **~8.8K** | — | Large responses; zero-copy writev optimization (5.1K → 8.8K, +72.7%) |
+| High concurrency (1000 conn) | **~55K** | ~27ms | graceful degradation |
+| Socket errors | **0** | — | zero errors under load |
+
+> **Note**: `benchmark_unified` `/large` returns a ~100KB body — much larger than the ~1KB body in `test_performance_e2e`. The two binaries are not directly comparable.
+
+### Local Benchmark (Development Reference)
+
+The following local measurements are kept for development-time reference only; they are **not** the authoritative baseline. Measured on the original benchmark host (AMD Ryzen 7 5800H, 12 cores, Linux 6.17.13-2-pve) with `wrk 4.1.0` against the built-in `test_performance_e2e` server, GCC 11.4.0 Release build (`-O2 -DNDEBUG`), system allocator. Reproduce: `wrk -t4 -c<N> -d10s http://127.0.0.1:18090/simple`.
 
 | Scenario | RPS | Avg Latency | Max Latency | Notes |
 |----------|-----|-------------|-------------|-------|
@@ -42,7 +53,7 @@ Reproduce: `wrk -t4 -c<N> -d10s http://127.0.0.1:18090/simple`.
 cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=OFF .
 cmake --build . -j$(nproc) --target test_performance_e2e
 ./dist/bin/test_performance_e2e 18090
-wrk -t4 -c100 -d10s http://127.0.0.1:18080/simple
+wrk -t4 -c100 -d10s http://127.0.0.1:18090/simple
 ```
 
 ### Memory-Safety Verification
@@ -62,8 +73,8 @@ cmake --build build_ubsan -j$(nproc) && (cd build_ubsan && ctest -j4)
 
 ### Stability
 
-- **Concurrency Range**: 10-100 concurrent connections (tested)
-- **RPS Fluctuation**: < 5% across all concurrency levels
+- **Concurrency Range**: 10-1000 concurrent connections (tested)
+- **RPS Fluctuation**: < 5% across all concurrency levels locally; CV 0.4–2.4% on CI
 - **Memory Usage**: Stable, no leaks detected (no CLOSE_WAIT connections)
 - **CPU Usage**: Efficient, scales with load
 - **Socket Errors**: Zero errors at all tested concurrency levels
@@ -143,12 +154,14 @@ cmake -DBUILD_WITH_MIMALLOC=ON ..
 
 ### 2. Use Zero-Copy for Large Files
 
-For serving large files, use the static file module:
+For serving large files, register a normal C handler with the static file module:
 
 ```c
-uvhttp_router_add_route(router, "/static/*", [](uvhttp_request_t* req) {
-    uvhttp_static_handle_request(req, static_ctx);
-});
+int static_file_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    return uvhttp_static_handle_request(static_ctx, req, res);
+}
+
+uvhttp_router_add_route(router, "/static/*", static_file_handler);
 ```
 
 ### 3. Preheat Cache
@@ -178,8 +191,9 @@ uvhttp_router_add_route(router, "/api/posts", posts_handler);
 Adjust keep-alive timeout based on your workload:
 
 ```c
-uvhttp_config_t* config = uvhttp_config_new();
-config->keep_alive_timeout = 60; // seconds
+uvhttp_config_t* config = NULL;
+uvhttp_config_new(&config);
+config->keepalive_timeout = 60; // seconds
 ```
 
 ## Performance Testing
@@ -205,28 +219,26 @@ kill $SERVER_PID 2>/dev/null || true
 
 | Library | Throughput (RPS) | Latency (ms) | Memory Usage |
 |---------|------------------|--------------|--------------|
-| **UVHTTP** | **~19,800** | **~5 (P50), ~0.86 (P99 low)** | **Low** |
+| **UVHTTP** | **~83,000** | **~0.117 (P50, CI)** | **Low** |
 | libuv-http | 18,500 | 3.45 | Medium |
 | microhttpd | 15,200 | 4.20 | Low |
 | mongoose | 12,800 | 5.10 | Medium |
 
-*Note: Results may vary based on hardware, host load, and test duration. UVHTTP
-figures above are from the 2026-07-12 run on the original benchmark host
-(AMD Ryzen 7 5800H, 10s duration). Earlier 3s-duration runs on the same host
-reported up to ~28–31K RPS; the sustained-throughput figure (~19.8K, flat from
-100 to 500 connections, zero errors) is the production-representative number.
-Full historical baselines are in `docs/performance/baseline-history.json`.*
+*Note: Results may vary based on hardware, host load, and test duration. The
+UVHTTP figure is the GitHub CI baseline (~83K RPS, 10 connections, `benchmark_unified`).
+Competitor figures are indicative local measurements and are not directly
+comparable to the CI numbers. Full historical baselines are in
+`docs/performance/baseline-history.json`.*
 
 ## Monitoring Performance
 
 ### Built-in Metrics
 
-UVHTTP provides built-in performance monitoring:
+UVHTTP tracks the active connection count directly on the server object:
 
 ```c
-// Get connection statistics
-size_t active_connections = server->stats.active_connections;
-size_t total_requests = server->stats.total_requests;
+// Active connection count
+size_t active_connections = server->active_connections;
 ```
 
 ### External Tools

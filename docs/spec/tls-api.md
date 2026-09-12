@@ -25,7 +25,7 @@ The TLS module provides Transport Layer Security (TLS) for HTTP connections, imp
 - **Postconditions**: All mbedTLS contexts (SSL config, certificates, private key, CA cert, CRL, entropy, DRBG, cache) are freed. The context memory is released. The pointer is invalid after return.
 - **Thread safety**: Not thread-safe.
 
-### uvhttp_tls_context_load_cert
+### uvhttp_tls_context_load_cert_chain
 - **Signature**: `uvhttp_error_t uvhttp_tls_context_load_cert_chain(uvhttp_tls_context_t* ctx, const char* cert_file)`
 - **Purpose**: Load a certificate (chain) from a PEM file
 - **Preconditions**: `ctx` must be valid. `cert_file` must be non-NULL and point to a readable PEM file.
@@ -35,7 +35,7 @@ The TLS module provides Transport Layer Security (TLS) for HTTP connections, imp
   - `UVHTTP_ERROR_TLS_CERT`: mbedTLS cert parse or config failed
 - **Thread safety**: Not thread-safe.
 
-### uvhttp_tls_context_load_key
+### uvhttp_tls_context_load_private_key
 - **Signature**: `uvhttp_error_t uvhttp_tls_context_load_private_key(uvhttp_tls_context_t* ctx, const char* key_file)`
 - **Purpose**: Load a private key from a PEM file
 - **Preconditions**: `ctx` must be valid. `key_file` must be non-NULL and point to a readable PEM key file. The certificate should have been loaded first (`uvhttp_tls_context_load_cert_chain`).

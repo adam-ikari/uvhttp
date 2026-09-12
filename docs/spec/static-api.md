@@ -50,7 +50,7 @@ The Static File module serves static files from a root directory via HTTP. It pr
 - **Thread safety**: Thread-safe. Uses a static hash table for O(1) lookup.
 - **Performance**: Hash table lookup for common extensions (html, css, js, png, jpg) with fallback linear scan for hash collisions.
 
-### uvhttp_static_is_safe_path
+### uvhttp_static_resolve_safe_path
 - **Signature** (internal): The module provides `uvhttp_static_resolve_safe_path(const char* root_dir, const char* file_path, char* resolved_path, size_t buffer_size)`
 - **Purpose**: Resolve a file path and verify it is within the root directory (path traversal prevention)
 - **Preconditions**: `root_dir`, `file_path`, and `resolved_path` must be non-NULL. `buffer_size` must be > 0.

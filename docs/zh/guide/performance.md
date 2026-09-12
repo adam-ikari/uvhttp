@@ -1,6 +1,6 @@
 ---
 title: 性能基准
-description: UVHTTP 性能基准——约 20K RPS、100 至 500 连接吞吐持平、零 socket 错误、P50/P99 延迟。在 AMD Ryzen 7 5800H 上用 wrk 测得，含复现命令与历史基线。
+description: UVHTTP 性能基准——GitHub CI runner 上约 83K RPS、JSON 81K RPS、大响应 8.8K RPS、零 socket 错误、P50 约 117µs 延迟。含复现命令、优化建议与监控。
 ---
 
 # 性能
@@ -9,9 +9,23 @@ UVHTTP 专为高性能与低延迟而设计。本文档提供性能指标与优�
 
 ## 性能指标
 
-### 基准测试结果（更新于 2026-07-12）
+### CI 基线（权威）
 
-在原始基准主机（AMD Ryzen 7 5800H，12 核，Linux 6.17.13-2-pve）上使用 `wrk 4.1.0` 对内置 `test_performance_e2e` 服务器测量，GCC 11.4.0 Release 构建（`-O2 -DNDEBUG`），系统分配器。复现命令：`wrk -t4 -c<N> -d10s http://127.0.0.1:18090/simple`。
+权威基线在 **GitHub Actions `ubuntu-latest` runner** 上使用 `benchmark_unified` 测量（Release 构建、系统分配器、2 线程、10 并发连接、每轮 10 秒、每端点 10 轮）。CI runner 消除了困扰本地基准的 CPU 热降频方差（CI 上 CV 0.4–2.4%，本地 40%+）。完整方法论与 runner 环境记录见 [性能目标](../../PERFORMANCE_TARGETS.md)。
+
+| 端点 | RPS | 平均延迟 | 备注 |
+|----------|-----|-------------|-------|
+| `/`（纯文本） | **约 83K** | 约 117µs | HTTP/1.1，10 连接，GitHub CI runner |
+| `/json` | **约 81K** | 约 117µs | JSON 端点 |
+| `/large`（约 100KB body） | **约 8.8K** | — | 大响应；零拷贝 writev 优化（5.1K → 8.8K，+72.7%） |
+| 高并发（1000 连接） | **约 55K** | 约 27ms | 平滑退化 |
+| Socket 错误 | **0** | — | 负载下零错误 |
+
+> **注意**：`benchmark_unified` 的 `/large` 返回约 100KB body，远大于 `test_performance_e2e` 的约 1KB body。两个二进制不可直接比较。
+
+### 本地基准（开发参考）
+
+以下本地测量仅供开发期参考，**并非**权威基线。在原始基准主机（AMD Ryzen 7 5800H，12 核，Linux 6.17.13-2-pve）上使用 `wrk 4.1.0` 对内置 `test_performance_e2e` 服务器测量，GCC 11.4.0 Release 构建（`-O2 -DNDEBUG`），系统分配器。复现命令：`wrk -t4 -c<N> -d10s http://127.0.0.1:18090/simple`。
 
 | 场景 | RPS | 平均延迟 | 最大延迟 | 备注 |
 |----------|-----|-------------|-------------|-------|
@@ -39,7 +53,7 @@ UVHTTP 专为高性能与低延迟而设计。本文档提供性能指标与优�
 cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=OFF .
 cmake --build . -j$(nproc) --target test_performance_e2e
 ./dist/bin/test_performance_e2e 18090
-wrk -t4 -c100 -d10s http://127.0.0.1:18080/simple
+wrk -t4 -c100 -d10s http://127.0.0.1:18090/simple
 ```
 
 ### 内存安全验证
@@ -58,8 +72,8 @@ cmake --build build_ubsan -j$(nproc) && (cd build_ubsan && ctest -j4)
 
 ### 稳定性
 
-- **并发范围**：10-100 并发连接（已测试）
-- **RPS 波动**：所有并发级别下 < 5%
+- **并发范围**：10-1000 并发连接（已测试）
+- **RPS 波动**：本地所有并发级别下 < 5%；CI 上 CV 0.4–2.4%
 - **内存占用**：稳定，未检测到泄漏（无 CLOSE_WAIT 连接）
 - **CPU 占用**：高效，随负载扩展
 - **Socket 错误**：所有测试并发级别下零错误
@@ -139,12 +153,14 @@ cmake -DBUILD_WITH_MIMALLOC=ON ..
 
 ### 2. 大文件使用零拷贝
 
-要服务大文件，请使用静态文件模块：
+要服务大文件，请用普通 C 处理函数注册静态文件模块：
 
 ```c
-uvhttp_router_add_route(router, "/static/*", [](uvhttp_request_t* req) {
-    uvhttp_static_handle_request(req, static_ctx);
-});
+int static_file_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    return uvhttp_static_handle_request(static_ctx, req, res);
+}
+
+uvhttp_router_add_route(router, "/static/*", static_file_handler);
 ```
 
 ### 3. 预热缓存
@@ -174,8 +190,9 @@ uvhttp_router_add_route(router, "/api/posts", posts_handler);
 根据工作负载调整 keep-alive 超时：
 
 ```c
-uvhttp_config_t* config = uvhttp_config_new();
-config->keep_alive_timeout = 60; // 秒
+uvhttp_config_t* config = NULL;
+uvhttp_config_new(&config);
+config->keepalive_timeout = 60; // 秒
 ```
 
 ## 性能测试
@@ -201,23 +218,22 @@ kill $SERVER_PID 2>/dev/null || true
 
 | 库 | 吞吐量（RPS） | 延迟（ms） | 内存占用 |
 |---------|------------------|--------------|--------------|
-| **UVHTTP** | **约 19,800** | **约 5（P50），约 0.86（P99 低）** | **低** |
+| **UVHTTP** | **约 83,000** | **约 0.117（P50，CI）** | **低** |
 | libuv-http | 18,500 | 3.45 | 中 |
 | microhttpd | 15,200 | 4.20 | 低 |
 | mongoose | 12,800 | 5.10 | 中 |
 
-*注：结果可能因硬件、主机负载和测试时长而异。上表 UVHTTP 数据来自 2026-07-12 在原始基准主机（AMD Ryzen 7 5800H，10 秒时长）上的运行。同一主机的早期 3 秒运行时报告了约 28–31K RPS；持续吞吐数字（约 19.8K，100 至 500 连接持平，零错误）才是具有生产代表性的数值。完整历史基线见 `docs/performance/baseline-history.json`。*
+*注：结果可能因硬件、主机负载和测试时长而异。UVHTTP 数据为 GitHub CI 基线（约 83K RPS，10 连接，`benchmark_unified`）。竞品数据为指示性本地测量，与 CI 数字不可直接比较。完整历史基线见 `docs/performance/baseline-history.json`。*
 
 ## 监控性能
 
 ### 内置指标
 
-UVHTTP 提供内置的性能监控：
+UVHTTP 直接在 server 对象上跟踪活跃连接数：
 
 ```c
-// 获取连接统计
-size_t active_connections = server->stats.active_connections;
-size_t total_requests = server->stats.total_requests;
+// 活跃连接数
+size_t active_connections = server->active_connections;
 ```
 
 ### 外部工具
@@ -259,7 +275,7 @@ sysctl -w net.core.somaxconn=4096
 
 ## 下一步
 
-- [性能基准（中文）](../zh/dev/PERFORMANCE_BENCHMARK.md) - 详细基准结果
-- [性能测试标准（中文）](../zh/dev/PERFORMANCE_TESTING_STANDARD.md) - 测试方法论
-- [API 参考](../api/API_REFERENCE.md) - 完整 API 文档
-- [安全策略](../SECURITY.md) - 安全指南
+- [性能基准（中文）](../dev/PERFORMANCE_BENCHMARK.md) - 详细基准结果
+- [性能测试标准（中文）](../dev/PERFORMANCE_TESTING_STANDARD.md) - 测试方法论
+- [API 参考](../../api/API_REFERENCE.md) - 完整 API 文档
+- [安全策略](../../SECURITY.md) - 安全指南

@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.7.1-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.7.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
@@ -21,7 +21,7 @@ Lightweight & Embeddable • 32-bit Support • Zero-Copy • ASan/UBSan-Verifie
 
 UVHTTP is a production-grade, event-driven HTTP server library built on libuv for modern C applications. It delivers exceptional performance with minimal resource consumption, making it ideal for both high-performance servers and embedded systems.
 
-### Key Metrics (v2.7.1, GitHub CI baseline)
+### Key Metrics (v2.7.2, GitHub CI baseline)
 
 Performance baselines are measured on **GitHub Actions `ubuntu-latest` runners** for hardware consistency. Previous local baselines (v2.6.x, ~20K RPS) were measured on developer hardware with 40%+ variance from CPU thermal throttling. The CI runner eliminates this variance (CV 0.4–2.4%), providing an authoritative, reproducible baseline.
 
@@ -29,8 +29,8 @@ Performance baselines are measured on **GitHub Actions `ubuntu-latest` runners**
 |--------|-------|---------|
 | **Peak Throughput** | ~83K RPS | HTTP/1.1, 10 conn, GitHub CI runner |
 | **High Concurrency** | ~55K RPS | 1000 concurrent connections |
-| **Static Files** | 5.7K RPS | ~100KB body, `benchmark_unified` |
-| **API Routing** | 82K RPS | JSON endpoint |
+| **Static Files** | 8.8K RPS | ~100KB body, `benchmark_unified`, zero-copy writev |
+| **API Routing** | 81K RPS | JSON endpoint |
 | **Average Latency** | ~117µs | P50, 10 connections |
 | **Error Rate** | 0% | Zero socket errors under load (10 conn) |
 | **Test Suite** | 101/101 pass | ASan + UBSan verified clean |
@@ -78,7 +78,7 @@ UVHTTP provides full support for 32-bit architectures with optimizations for res
 - 🔄 **Connection Management**: Connection pool, timeout detection, heartbeat monitoring
 - 📊 **Rate Limiting**: Token bucket algorithm with whitelist support
 - 🌐 **WebSocket**: Full-duplex communication with Ping/Pong support
-- ⚙️ **Highly Configurable**: 36 compile-time options for different deployment scenarios
+- ⚙️ **Highly Configurable**: 27 compile-time options for different deployment scenarios
 - 🎛️ **Memory Optimization**: Optional mimalloc for faster allocations
 
 ## 🚀 Quick Start
@@ -152,7 +152,7 @@ export LD_LIBRARY_PATH=../build/dist/lib:$LD_LIBRARY_PATH
 ### Prerequisites
 
 - **Just Command Runner**: Optional, for developers who prefer `just` (`cargo install just` or see [just.systems](https://just.systems))
-- **C Compiler**: GCC 4.8+ or Clang 3.4+ with C99 support
+- **C Compiler**: GCC 4.8+ or Clang 3.4+ with C11 support
 - **CMake**: Version 3.10 or higher
 - **Build Tools**: make, git
 - **Optional**: mimalloc for improved memory performance
@@ -168,39 +168,15 @@ cd deps/llhttp
 npm install
 npm run build
 
-# Option 2: Using make
-cd deps/llhttp
-make build/libllhttp.a
-
-# Option 3: Using Python (if npm not available)
-cd deps/llhttp
-python3 -m http.server 8080 &
-npm install
-npm run build
-```
-
-**Note**: The llhttp library is cached after the first build, so you only need to build it once.
-
-### Building llhttp (HTTP Parser)
-
-UVHTTP uses llhttp as the HTTP parser. You need to build it before compiling UVHTTP:
-
-```bash
-# Navigate to llhttp directory
-cd deps/llhttp
-
-# Option 1: Using npm (recommended)
-npm install
-npm run build
-
 # Option 2: Using make (if npm not available)
+cd deps/llhttp
 make build/libllhttp.a
 
 # Return to project root
 cd ../..
 ```
 
-**Note**: llhttp is only needed for the first build. The compiled library will be cached for subsequent builds.
+**Note**: The llhttp library is cached after the first build, so you only need to build it once.
 
 ### Advanced Build Options
 
@@ -241,45 +217,67 @@ cmake -DCMAKE_USER_CONFIG=ON ..
 ```c
 #include <uvhttp.h>
 #include <uv.h>
+#include <string.h>
 
 // Request handler
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello from UVHTTP v2.7.1!");
+    uvhttp_response_set_body(res, "Hello from UVHTTP v2.7.2!", strlen("Hello from UVHTTP v2.7.2!"));
     return uvhttp_response_send(res);
 }
 
 int main() {
     // Create event loop
     uv_loop_t* loop = uv_default_loop();
-    
-    // Create server and router
-    uvhttp_server_t* server = uvhttp_server_new(loop);
-    uvhttp_router_t* router = uvhttp_router_new();
-    server->router = router;
-    
+
+    // Create server (output parameter + error code)
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t result = uvhttp_server_new(loop, &server);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
+
+    // Create router and attach it to the server
+    uvhttp_router_t* router = NULL;
+    result = uvhttp_router_new(&router);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
+    uvhttp_server_set_router(server, router);
+
     // Add route
-    uvhttp_router_add_route(router, "/hello", hello_handler);
-    
+    result = uvhttp_router_add_route(router, "/hello", hello_handler);
+    if (result != UVHTTP_OK) {
+        fprintf(stderr, "Failed to add route: %s\n", uvhttp_error_string(result));
+        return 1;
+    }
+
     // Start server
-    int result = uvhttp_server_listen(server, "0.0.0.0", 8080);
+    result = uvhttp_server_listen(server, "0.0.0.0", 8080);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to start server: %s\n", uvhttp_error_string(result));
         return 1;
     }
-    
+
     printf("Server listening on http://0.0.0.0:8080\n");
     uv_run(loop, UV_RUN_DEFAULT);
-    
+
     return 0;
 }
 ```
 
-**Compile and Run**:
+**Compile and Run** (from the repository root):
 ```bash
-gcc -o server server.c -I./include -L./build/dist/lib -luvhttp -luv
-export LD_LIBRARY_PATH=./build/dist/lib:$LD_LIBRARY_PATH
+gcc -o server server.c \
+    -I./include -Ideps/libuv/include -Ideps/uthash/src \
+    -Ideps/llhttp/include -Ideps/mbedtls/include \
+    -L./build/dist/lib -Ldeps/libuv/build -Ldeps/mbedtls/build/library \
+    -Ldeps/llhttp/build -Ldeps/xxhash \
+    -luvhttp -luv -lmbedtls -lmbedx509 -lmbedcrypto \
+    -lxxhash -lllhttp -lminiz -lpthread -lm -ldl
 ./server
 ```
 
@@ -343,29 +341,28 @@ UVHTTP follows a modular, event-driven architecture designed for performance and
 - **[Getting Started](docs/guide/getting-started.md)** - 5-minute quick start guide
 - **[API Reference](docs/api/introduction.md)** - Complete API documentation
 - **[Build Guide](docs/guide/CMAKE_CONFIGURATION.md)** - Build system configuration
-- **[Performance Benchmarks](docs/performance.md)** - Performance analysis and metrics
+- **[Performance Benchmarks](docs/guide/performance.md)** - Performance analysis and metrics
 
 ### Developer Resources
 - **[Architecture Design](docs/dev/ARCHITECTURE.md)** - System architecture and design decisions
 - **[Developer Guide](docs/guide/DEVELOPER_GUIDE.md)** - Development best practices
 - **[Testing Standards](docs/dev/TESTING_STANDARDS.md)** - Testing guidelines and coverage
-- **[Migration Guide](docs/MIGRATION_GUIDE.md)** - Upgrading between versions
+- **[Migration Guide (LRU Cache)](docs/guide/MIGRATION_GUIDE_LRU_CACHE.md)** - Upgrading to the LRU cache
 
 ### Advanced Topics
 - **[WebSocket Guide](docs/guide/websocket.md)** - Real-time communication
 - **[Static File Server](docs/guide/STATIC_FILE_SERVER.md)** - File serving optimization
 - **[Rate Limit API](docs/guide/RATE_LIMIT_API.md)** - Rate limiting implementation
-- **[Compression Features](COMPRESSION_FEATURE_REPORT.md)** - Zero-overhead compression
 
 ## 🏗️ Project Structure
 
 ```
 uvhttp/
-├── include/              # Public API headers (27 files)
+├── include/              # Public API headers (29 files)
 │   ├── uvhttp.h         # Main header file
 │   ├── uvhttp_*.h       # Module headers
 │   └── uvhttp_features.h # Feature configuration
-├── src/                 # Implementation (23 .c files)
+├── src/                 # Implementation (18 .c files)
 │   ├── uvhttp_*.c       # Core modules
 │   └── uvhttp_websocket.c # WebSocket implementation
 ├── docs/                # Documentation
@@ -400,10 +397,10 @@ uvhttp/
 
 ```bash
 # Run all tests
-./run_tests.sh
+make test
 
 # Run tests with coverage report
-./run_tests.sh --detailed
+make coverage
 
 # Run specific test
 cd build
@@ -440,8 +437,8 @@ ab -n 10000 -c 100 http://localhost:8080/
 We welcome contributions! Please follow these guidelines:
 
 1. Read [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines
-2. Follow the code style: C99 standard, 4-space indentation, K&R braces
-3. Ensure all tests pass: `./run_tests.sh`
+2. Follow the code style: C11 standard, 4-space indentation, K&R braces
+3. Ensure all tests pass: `make test`
 4. Zero compilation warnings: `-Werror` enabled
 5. Add tests for new features
 6. Update documentation for API changes
@@ -504,6 +501,12 @@ UVHTTP is built upon excellent open-source projects:
 - [x] Embedding CMake dependency visibility (PR #365)
 - [x] Performance regression gate (10% RPS threshold, PR #366)
 
+### v2.7.2 (Released 2026-09-07)
+- [x] 34 code-review defect fixes (P0-P3): query-string routing, MAX_PARAMS boundary, WS send short-write, If-Modified-Since timezone/date formats, accept underflow
+- [x] Large-response zero-copy writev — /large RPS 5.1K → 8.8K
+- [x] TLS EINTR retry, If-None-Match weak/multi-value ETag, directory listing TOCTOU fix
+- [x] X-Forwarded-For not trusted by default (`trust_proxy_headers` opt-in), listen param validation, idempotent `server_stop`
+
 ### v2.8.0 (Planned)
 - [ ] io_uring exploration for static file path
 - [ ] Memory allocation optimization
@@ -519,6 +522,7 @@ UVHTTP is built upon excellent open-source projects:
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.7.2** | 2026-09-07 | 34 项代码评审缺陷修复：query string 路由匹配、MAX_PARAMS 边界、WS 短写截帧、If-Modified-Since 时区/3 种日期格式、accept 下溢等；/large 零拷贝 writev（5.1K→8.8K RPS） |
 | **v2.7.1** | 2026-08-26 | CI fuzz fixes (C11 alignment, PR #364), embedding CMake dependency visibility (PR #365), performance regression gate (10% RPS threshold, PR #366) |
 | **v2.7.0** | 2026-08-21 | TLS session cache re-enabled, CI benchmark workflow (ci-benchmark.yml), code quality fixes (L3-L5), brain documentation, Platinum tier baseline (83K RPS on CI) |
 | **v2.6.2** | 2026-08-17 | Connection-limit memory safety fix (uv_close on accept failure), WebSocket RFC 6455/memory-safety fixes (PR #336), uv_strerror_r consistency |
@@ -529,7 +533,7 @@ UVHTTP is built upon excellent open-source projects:
 | **v2.3.0** | 2026-02-10 | Performance fix for connection cleanup |
 | **v2.2.0** | 2026-01-27 | Major refactor, zero-overhead abstractions |
 
-See [CHANGELOG.md](docs/CHANGELOG.md) for detailed release notes.
+See [CHANGELOG.md](docs/guide/CHANGELOG.md) for detailed release notes.
 
 ---
 
