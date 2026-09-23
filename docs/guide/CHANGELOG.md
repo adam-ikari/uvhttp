@@ -5,10 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] (v2.8.x)
+
+## [2.8.0] - 2026-09-23
 
 ### Added
-- **新嵌入者接入**: 完整嵌入式集成文档 `EMBEDDING_GUIDE.md`（英/中），新增独立可运行的嵌入示例项目 `examples/embedding/`（add_subdirectory + FetchContent 两种方式）
+- **基准测试 SSE / 流式 / WebSocket 三维度** (`benchmark/ws_benchmark_client.py`): 新增 `/sse`（~60-68K 流/s）、`/stream`（~9.5-10.8K req/s）、`/ws_connect`、`/ws_echo` 基准场景，长连接与流式路径纳入回归观测（PR #379）
+- **`BUILD_TESTS` 编译选项**: 嵌入者可裁剪测试构建，不再编译 googletest（PR #377）
+- **CI 纳入 examples 编译验证**: ubuntu-build job 编译全部示例（PR #385）
+
+### Changed
+- **大 response 零拷贝 writev 发送**: header+body 组装 iovec 一次 writev，消除每请求 200KB memcpy 与两次 100KB 分配——/large RPS **5140 → 8881（+72.7%）**；TLS/非法 client 自动回退原拷贝路径（PR #378）
+- **benchmark 回归门禁接入 GitHub release 事件**: pre-release 门禁 + 趋势落库；原 pre-release 分支触发为死配置，发布流程改为两阶段 PR-only（PR #373）
+- **/large 回归基线更新至 8800**: v2.7.x 零拷贝优化后的新基线（PR #385）
+- **UBSan 门禁恢复 101/101 零发现**: 修复预存测试中的非法枚举值（PR #375）
+- **PR 门禁占位 job 真实化**: cppcheck 真实实现、format-check 门禁变更文件、移除假 dependency-scan（PR #376）
+
+### Fixed
+
+#### 第二轮代码评审 — 17 项（commit 63f29bd）
+- **lru_cache**: OOM 路径 use-after-free 与淘汰逻辑死循环修复
+- **config 双归属多次释放**: server 持有 / context 借用归属厘清，消除 double-free
+- **错误码映射补齐**: `uvhttp_strerror` 覆盖全部 84 个枚举值
+- **gzip 替换路径预算绕过**: 压缩缓存替换路径不再绕过内存预算
+- **JSON 注入转义**: 输出 JSON 的用户数据正确转义
+- **敏感词过滤**: 过滤逻辑缺陷修复
+- **版本 fallback 漂移**: 版本号回退路径与 VERSION 文件一致
+
+#### API / 构建系统高危（commit 8da889f）
+- **install 不再发布第三方头与静态库**: 第三方依赖产物不泄漏到消费者系统
+- **特性宏 / 分配器类型 PUBLIC 传播**: 消除消费者 ABI 错配
+- **find_package 全链路重写**: `uvhttp-config.cmake` / `uvhttp.pc` 消费者验证通过
+
+#### 构建与示例（commit 504dff6 / 52202ed / b9826a1）
+- **08_e2e_tests 构建顺序**: 14 个目标补 `add_dependencies`
+- **examples 全部可编译**: 4 个坏示例重写、Makefile 依赖、6 处 config 双 free
+- **llhttp submodule dirty 显示**: `.gitmodules` 增加 `ignore = dirty`
+
+#### 发布收尾（2026-09-23 发布 PR）
+- **ci-benchmark 发布门禁触发器回归**: PR #379 基于改动前的 `ci-benchmark.yml` 覆盖了 PR #373 已合并的 `release: [published]` 触发，门禁退回 `push: branches: [pre-release]` 死配置（该分支从不创建，导致 pre-release 不触发回归门禁）；恢复触发器、job 条件、gate 步骤与趋势落库条件（仅 `prerelease == true` 落库）
+- **文档死链 7 处修复**: `examples/embedding/` 目录链接位于 docs srcDir 之外改为 GitHub URL、`API_REFERENCE` 指向不存在的 `generated/index.html` 改为纯文本——VitePress 构建与 deploy-docs 部署管线（自 2026-09-07 起连续 5 次失败）恢复可用
+- **版本引用同步 2.8.0**: `src/uvhttp_version.c` 非 CMake 构建版本 fallback、README badge 与关键指标标题、`API_REFERENCE` 版本头、嵌入指南 `GIT_TAG v2.8.0`（英/中）
+
+### Docs
+- **API_REFERENCE 与实际 API 对齐**: 错误码表重建、虚构函数修正（PR #382）
+- **README / README_CN / performance / spec 对齐**: 签名/死链/RPS 基线/编译命令实测可用（PR #384）
 
 ## [2.7.2] - 2026-09-07
 
