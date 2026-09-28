@@ -88,6 +88,7 @@ set(UVHTTP_MAX_HEADER_VALUE_SIZE 8192 CACHE STRING "Max HTTP header value size")
 | `UVHTTP_SENDFILE_TIMEOUT_MS` | 30000 | sendfile timeout (milliseconds) | 10000-60000 |
 | `UVHTTP_STATIC_MAX_CACHE_SIZE` | 10485760 | Static file cache size (bytes, 10MB) | 5242880-52428800 |
 | `UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE` | 2 | LRU cache batch eviction size | 1-10 |
+| `UVHTTP_ZEROCOPY_MIN_BODY` | 4096 | Minimum response body size (bytes) using the zero-copy writev send path | 4096-8192 |
 
 ### Rate Limiting
 

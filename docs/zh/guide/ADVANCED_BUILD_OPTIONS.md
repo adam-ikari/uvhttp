@@ -314,6 +314,15 @@ void* uvhttp_custom_calloc(size_t nmemb, size_t size) {
 - **用法**: 小于此值的文件使用常规文件操作
 - **影响**: 调整此值影响小文件性能特征
 
+## 零拷贝发送配置
+
+### UVHTTP_ZEROCOPY_MIN_BODY
+- **类型**: STRING
+- **默认值**: 4096 (4KB)
+- **说明**: 走零拷贝 writev 发送路径（header + body 两个 iovec 一次写入）的最小响应 body 大小
+- **用法**: 小于此值的 body 使用单缓冲拷贝路径；TLS 连接始终使用拷贝路径
+- **影响**: 小 body 下双 iovec 写入比拷贝路径慢约 14%，大 body 下约快 1.5 倍，因此降低阈值会损失小响应吞吐
+
 ## 文件大小阈值
 
 ### UVHTTP_FILE_SIZE_SMALL

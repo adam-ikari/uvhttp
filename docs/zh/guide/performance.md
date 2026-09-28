@@ -23,6 +23,8 @@ UVHTTP 专为高性能与低延迟而设计。本文档提供性能指标与优�
 
 > **注意**：`benchmark_unified` 的 `/large` 返回约 100KB body，远大于 `test_performance_e2e` 的约 1KB body。两个二进制不可直接比较。
 
+> **零拷贝适用范围**：writev 发送路径（header + body 两个 iovec）仅对 body 不小于 `UVHTTP_ZEROCOPY_MIN_BODY`（默认 4096 字节）且非 TLS 的连接生效。同机配对测量显示，小 body 下双 iovec 写入比单缓冲拷贝路径慢约 14%，因此 `/` 与 `/json` 走拷贝路径；`/large` 保留完整 writev 增益。
+
 ### 本地基准（开发参考）
 
 以下本地测量仅供开发期参考，**并非**权威基线。在原始基准主机（AMD Ryzen 7 5800H，12 核，Linux 6.17.13-2-pve）上使用 `wrk 4.1.0` 对内置 `test_performance_e2e` 服务器测量，GCC 11.4.0 Release 构建（`-O2 -DNDEBUG`），系统分配器。复现命令：`wrk -t4 -c<N> -d10s http://127.0.0.1:18090/simple`。

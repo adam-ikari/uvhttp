@@ -23,6 +23,8 @@ The authoritative baseline is measured on **GitHub Actions `ubuntu-latest` runne
 
 > **Note**: `benchmark_unified` `/large` returns a ~100KB body — much larger than the ~1KB body in `test_performance_e2e`. The two binaries are not directly comparable.
 
+> **Zero-copy scope**: the writev send path (header + body in two iovecs) applies only to bodies of at least `UVHTTP_ZEROCOPY_MIN_BODY` (default 4096 bytes) and to non-TLS connections. Paired same-host measurements showed the two-iov write is ~14% *slower* than the contiguous copy path for small bodies, so `/` and `/json` keep the copy route; `/large` keeps the full writev gain.
+
 ### Local Benchmark (Development Reference)
 
 The following local measurements are kept for development-time reference only; they are **not** the authoritative baseline. Measured on the original benchmark host (AMD Ryzen 7 5800H, 12 cores, Linux 6.17.13-2-pve) with `wrk 4.1.0` against the built-in `test_performance_e2e` server, GCC 11.4.0 Release build (`-O2 -DNDEBUG`), system allocator. Reproduce: `wrk -t4 -c<N> -d10s http://127.0.0.1:18090/simple`.

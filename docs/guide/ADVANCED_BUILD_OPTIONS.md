@@ -314,6 +314,15 @@ void* uvhttp_custom_calloc(size_t nmemb, size_t size) {
 - **Usage**: Files smaller than this use regular file operations
 - **Impact**: Adjusting this value affects performance characteristics for small files
 
+## Zero-Copy Send Configuration
+
+### UVHTTP_ZEROCOPY_MIN_BODY
+- **Type**: STRING
+- **Default**: 4096 (4KB)
+- **Description**: Minimum response body size for the zero-copy writev send path (header + body sent as two iovecs in one write)
+- **Usage**: Bodies smaller than this use the contiguous copy path; TLS connections always use the copy path
+- **Impact**: Two-iov writev is ~14% slower than the copy path for small bodies and ~1.5x faster for large ones, so lowering the threshold costs small-response throughput
+
 ## File Size Thresholds
 
 ### UVHTTP_FILE_SIZE_SMALL
