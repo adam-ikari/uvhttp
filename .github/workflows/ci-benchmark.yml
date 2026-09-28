@@ -32,6 +32,14 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'release' || contains(join(github.event.pull_request.labels.*.name, ','), 'benchmark')
     runs-on: ubuntu-latest
     timeout-minutes: 50
+    # The repo default is read-only, which silently killed the PR comment and
+    # the trend commit. contents stays read here: this job builds PR-head code,
+    # so it must not hold a token that can write the repository. The only job
+    # that pushes (trend data, release events only) is a separate job.
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -357,20 +365,6 @@ jobs:
             /tmp/base-server.log
           retention-days: 90
 
-      # 趋势数据只在 pre-release 落库；正式 release 只做门禁校验、不落趋势。
-      - name: Commit benchmark trend data
-        if: github.event_name == 'release' && github.event.release.prerelease == true
-        run: |
-          mkdir -p docs/benchmark-trends
-          DATE=$(date -u +%Y-%m-%d)
-          cp benchmark-results.md "docs/benchmark-trends/benchmark-${DATE}.md"
-          cp benchmark-raw.csv "docs/benchmark-trends/benchmark-${DATE}.csv"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/benchmark-trends/
-          git commit -m "docs(benchmark): trend data for ${DATE}" || echo "No changes to commit"
-          git push
-
       - name: Comment PR with results
         # always(): a red gate is exactly the run whose report the author needs.
         if: always() && github.event_name == 'pull_request'
@@ -390,3 +384,51 @@ jobs:
               issue_number: context.issue.number,
               body: body
             });
+
+  # 趋势数据只在 pre-release 落库；正式 release 只做门禁校验、不落趋势。
+  # This is the only step in the workflow that pushes, so it lives in its own
+  # job: the benchmark job builds PR-head code and must keep a read-only
+  # contents token. Release events carry maintainer-created tags, so writing
+  # here cannot hand a PR author the repository.
+  trend:
+    if: github.event_name == 'release' && github.event.release.prerelease == true
+    needs: benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: main
+
+      - name: Download benchmark results
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: benchmark-results-${{ github.run_id }}
+          path: run-artifacts
+
+      - name: Commit benchmark trend data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p docs/benchmark-trends
+          DATE=$(date -u +%Y-%m-%d)
+          cp run-artifacts/benchmark-results.md "docs/benchmark-trends/benchmark-${DATE}.md"
+          cp run-artifacts/benchmark-raw.csv "docs/benchmark-trends/benchmark-${DATE}.csv"
+          if [ -f run-artifacts/head-paired.csv ]; then
+            cp run-artifacts/head-paired.csv "docs/benchmark-trends/benchmark-${DATE}-head-paired.csv"
+            cp run-artifacts/base-paired.csv "docs/benchmark-trends/benchmark-${DATE}-base-paired.csv"
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/benchmark-trends/
+          if git diff --cached --quiet; then
+            echo "No trend changes to commit"
+          else
+            git commit -m "docs(benchmark): trend data for ${DATE}"
+            git push origin HEAD:main
+          fi
