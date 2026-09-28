@@ -138,17 +138,28 @@ measuring **both revisions on the same runner in the same job**:
 2. Check out and build it next to head (`bench-base/`, Release, same flags).
 3. Start both `benchmark_unified` servers (head on 18081, base on 18082),
    warm both up, then run the gated endpoints (`/`, `/json`, `/large`)
-   alternately: head round *i*, base round *i*, for 6 rounds each.
+   alternately: head round *i*, base round *i*, 10 rounds each — odd rounds
+   load head first, even rounds load base first, so a within-pair ordering
+   effect is shared rather than assigned to one side.
 4. `scripts/performance/regression_check.py head-paired.csv --compare base-paired.csv`
-   pairs samples by round number, takes the median of the per-round
-   head/base ratios, and fails when a gated endpoint lands below 90% of base.
-   Fewer than 3 pairs, or no base sample, fails the gate too — an
-   inconclusive measurement is not a pass.
+   pairs samples by round number, takes the median of the per-round head/base
+   ratios, and fails only when the **robust lower confidence bound** of that
+   median (median − 1.7·SE, SE from the median absolute deviation) falls below
+   90%. The bound rather than the median is what decides: measured 2026-09-28,
+   two byte-identical builds six rounds apart still spread ~10% on the
+   small-response endpoint, and a hard cutoff read that as a regression.
+   Fewer than 3 pairs, or no base sample, fails the gate too — an inconclusive
+   measurement is not a pass.
 5. The absolute `DEFAULT_BASELINE` comparison still runs, but as report-only
    output in the same log, so trends stay visible without gating on them.
 
 If no base revision can be resolved the job falls back to the old absolute
 baseline gate and says so in the log.
+
+> First paired run (2026-09-28, PR #388 — which changes no C code at all):
+> `/large` 99.9%, `/json` 112.8%, `/` 89.6% against the 90% cutoff. Absolute
+> baseline in the same run said 76.0% for `/`. That spread between two
+> identical builds is what the confidence bound exists to absorb.
 
 ```bash
 # Paired check outside CI: two CSVs measured on the same machine

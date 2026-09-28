@@ -235,7 +235,7 @@ jobs:
         if: steps.base.outputs.paired == 'true'
         env:
           GATE_ENDPOINTS: '/,/json,/large'
-          PAIR_ROUNDS: '6'
+          PAIR_ROUNDS: '10'
           DURATION: ${{ github.event.inputs.duration || '10' }}
         run: |
           HEAD_BIN=build/dist/bin/benchmark_unified
@@ -276,7 +276,14 @@ jobs:
 
           for ep in $EPS; do
             for i in $(seq 1 "$PAIR_ROUNDS"); do
-              for variant in head base; do
+              # Odd rounds load head first, even rounds load base first, so any
+              # within-pair ordering effect falls on both variants equally.
+              if [ $((i % 2)) -eq 0 ]; then
+                ORDER="base head"
+              else
+                ORDER="head base"
+              fi
+              for variant in $ORDER; do
                 if [ "$variant" = head ]; then
                   port="$HEAD_PORT"
                 else
