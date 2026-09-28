@@ -182,7 +182,7 @@ jobs:
 
             RPS_VALUES=""
             for i in $(seq 1 "$ROUNDS"); do
-              result=$(wrk -t2 -c10 -d${DURATION}s "http://localhost:18081${ep}" 2>/dev/null)
+              result=$(wrk -t2 -c10 -L -d${DURATION}s "http://localhost:18081${ep}" 2>/dev/null)
               rps=$(echo "$result" | grep "Requests/sec" | awk '{print $2}')
               avg_lat=$(echo "$result" | grep "Latency" | head -1 | awk '{print $2}')
               p99_lat=$(echo "$result" | awk '/^ *99%/{print $2; exit}')
@@ -297,7 +297,7 @@ jobs:
                 else
                   port="$BASE_PORT"
                 fi
-                result=$(wrk -t2 -c10 -d"${DURATION}s" "http://localhost:${port}${ep}" 2>/dev/null)
+                result=$(wrk -t2 -c10 -L -d"${DURATION}s" "http://localhost:${port}${ep}" 2>/dev/null)
                 rps=$(echo "$result" | grep "Requests/sec" | awk '{print $2}')
                 avg_lat=$(echo "$result" | grep "Latency" | head -1 | awk '{print $2}')
                 p99_lat=$(echo "$result" | awk '/^ *99%/{print $2; exit}')
