@@ -160,11 +160,20 @@ measuring **both revisions on the same runner in the same job**:
 If no base revision can be resolved the job falls back to the old absolute
 baseline gate and says so in the log.
 
-> First two paired runs (2026-09-28, PR #388 — which changes no C code at all):
-> run 1 gave `/large` 99.9%, `/json` 112.8%, `/` 89.6%; run 2 (10 rounds) gave
-> `/large` 101.9%, `/json` 106.9%, `/` 97.4%. Same-run absolute baseline said
-> 76.0% for `/`. That spread between identical builds — ~40% across runs, ~14%
-> MAD even within one paired run — is what the median-plus-majority rule absorbs.
+> Three self-test runs of this gate on PR #388, which changes no C code at all
+> (base = the PR's own base SHA), all on 2026-09-28:
+>
+> | rule under test | `/` | `/json` | `/large` | verdict |
+> |---|---|---|---|---|
+> | 6 rounds, hard 90% cutoff on the median | 89.6% | 112.8% | 99.9% | false FAIL |
+> | 10 rounds, median − 1.7·MAD-SE bound | 97.4% (MAD 14.4%) | 106.9% | 101.9% | false FAIL (bound 88.2%) |
+> | 10 rounds, median + majority | 98.4% (3/10 under limit) | 95.9% | 100.6% | PASS |
+>
+> The raw per-round `/` ratios in the passing run were
+> 93 80 103 72 97 123 100 88 100 109 (% of base) — single rounds up to 28% below
+> and 23% above the median, while `/large` in the same run stayed inside 95–107%.
+> Absolute baseline in that same run reported 74.1% for `/`, which is the
+> cross-run layer, not a regression.
 
 ```bash
 # Paired check outside CI: two CSVs measured on the same machine
