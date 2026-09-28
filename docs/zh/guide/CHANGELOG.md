@@ -14,7 +14,7 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 ## [Unreleased]
 
 ### 变更
-- **基准回归门禁改为同机配对比较**: `ci-benchmark.yml` 现在在同一 runner、同一 job 内检出并构建 base 版本（PR base sha / 上一个 release tag / 手动 `base_ref`），两台 `benchmark_unified`（18081/18082）按轮次交替测量 `/`、`/json`、`/large`（各 10 轮，奇数轮先压 head、偶数轮先压 base）；`regression_check.py --compare` 按 round 配对取 head/base 比值中位数，并以**稳健下界**（中位数 − 1.7·MAD-SE）判定：下界 < 90% 才失败（base 缺数据或配对 <3 轮同样失败）。绝对 RPS 基线（83K/81K/8.8K）降级为报告信息——同一 commit 跨 run 的中位数在共享 runner 上漂移可达 40%，绝对阈值实际 gate 的是机器运气而非代码；而同一 PR（零 C 改动）6 轮配对仍出现 ~10% 抖动，故改用置信下界而非硬阈值
+- **基准回归门禁改为同机配对比较**: `ci-benchmark.yml` 现在在同一 runner、同一 job 内检出并构建 base 版本（PR base sha / 上一个 release tag / 手动 `base_ref`），两台 `benchmark_unified`（18081/18082）按轮次交替测量 `/`、`/json`、`/large`（各 10 轮，奇数轮先压 head、偶数轮先压 base）；`regression_check.py --compare` 按 round 配对取 head/base 比值中位数，判定条件为中位数 < 90% **且**多数配对本身也低于 90%（base 缺数据或配对 <3 轮同样失败）。绝对 RPS 基线（83K/81K/8.8K）降级为报告信息——同一 commit 跨 run 的中位数在共享 runner 上漂移可达 40%，绝对阈值实际 gate 的是机器运气而非代码。比值噪声本身重尾：零 C 改动的 PR 上 10 轮配对仍给出中位数 97.4%、MAD 14.4%，故先试的稳健置信下界（中位数 − 1.7·MAD-SE）会把同一构建判红，已换为中位数 + 多数规则；真实的 writev 小 body 回退（−14%、散布约 2%）几乎每个配对都在阈值以下，仍被 gate 捕获
 
 
 ## [2.8.0] - 2026-09-23

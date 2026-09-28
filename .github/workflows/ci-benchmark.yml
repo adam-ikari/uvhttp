@@ -339,6 +339,9 @@ jobs:
           python3 scripts/performance/regression_check.py benchmark-raw.csv --threshold 0.10
 
       - name: Upload benchmark results
+        # A red gate must still ship its evidence: the paired CSVs are what the
+        # verdict table was computed from.
+        if: always()
         uses: actions/upload-artifact@v7.0.1
         with:
           name: benchmark-results-${{ github.run_id }}
@@ -369,11 +372,16 @@ jobs:
           git push
 
       - name: Comment PR with results
-        if: github.event_name == 'pull_request'
+        # always(): a red gate is exactly the run whose report the author needs.
+        if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
+            if (!fs.existsSync('benchmark-results.md')) {
+              core.warning('benchmark-results.md missing, skipping PR comment');
+              return;
+            }
             const results = fs.readFileSync('benchmark-results.md', 'utf8');
             const body = `## 📊 Performance Benchmark Results\n\n${results}\n\n[Full results artifact](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
             await github.rest.issues.createComment({

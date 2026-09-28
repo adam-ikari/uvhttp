@@ -142,12 +142,16 @@ measuring **both revisions on the same runner in the same job**:
    load head first, even rounds load base first, so a within-pair ordering
    effect is shared rather than assigned to one side.
 4. `scripts/performance/regression_check.py head-paired.csv --compare base-paired.csv`
-   pairs samples by round number, takes the median of the per-round head/base
-   ratios, and fails only when the **robust lower confidence bound** of that
-   median (median − 1.7·SE, SE from the median absolute deviation) falls below
-   90%. The bound rather than the median is what decides: measured 2026-09-28,
-   two byte-identical builds six rounds apart still spread ~10% on the
-   small-response endpoint, and a hard cutoff read that as a regression.
+   pairs samples by round number and gates on the **median** of the per-round
+   head/base ratios: an endpoint fails only when that median is below 90% **and**
+   a majority of the individual pairs are also below 90%. The majority condition
+   is what keeps heavy tails off the verdict — measured 2026-09-28, ten paired
+   rounds of two byte-identical builds gave `/` a median of 97.4% with a median
+   absolute deviation of 14.4%, i.e. single unlucky rounds land far off the
+   median in both directions. A real regression (the writev small-body case,
+   −14% with ~2% spread) puts nearly every pair under the limit and still fails.
+   A confidence bound (median − 1.7·MAD-SE) was tried first and rejected: with
+   heavy-tailed samples it inherits the tail and failed those identical builds.
    Fewer than 3 pairs, or no base sample, fails the gate too — an inconclusive
    measurement is not a pass.
 5. The absolute `DEFAULT_BASELINE` comparison still runs, but as report-only
@@ -156,10 +160,11 @@ measuring **both revisions on the same runner in the same job**:
 If no base revision can be resolved the job falls back to the old absolute
 baseline gate and says so in the log.
 
-> First paired run (2026-09-28, PR #388 — which changes no C code at all):
-> `/large` 99.9%, `/json` 112.8%, `/` 89.6% against the 90% cutoff. Absolute
-> baseline in the same run said 76.0% for `/`. That spread between two
-> identical builds is what the confidence bound exists to absorb.
+> First two paired runs (2026-09-28, PR #388 — which changes no C code at all):
+> run 1 gave `/large` 99.9%, `/json` 112.8%, `/` 89.6%; run 2 (10 rounds) gave
+> `/large` 101.9%, `/json` 106.9%, `/` 97.4%. Same-run absolute baseline said
+> 76.0% for `/`. That spread between identical builds — ~40% across runs, ~14%
+> MAD even within one paired run — is what the median-plus-majority rule absorbs.
 
 ```bash
 # Paired check outside CI: two CSVs measured on the same machine

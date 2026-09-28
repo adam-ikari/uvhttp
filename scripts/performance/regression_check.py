@@ -5,12 +5,11 @@ Performance regression check script.
 Modes:
     paired (what the PR/release gate should use) — head and base are measured
     on the SAME runner, interleaved in the same job, and an endpoint fails only
-    when the robust lower confidence bound of its per-round head/base ratios
-    drops below 1 - threshold. The absolute baseline is reported but does not
-    decide the gate: GitHub-hosted runners show ~40% between-run variance on
-    these endpoints (within-run CV stays under 5%), so a fixed RPS baseline ends
-    up gating runner luck instead of code — and even six pairs of identical
-    builds still spread ~10%, which is why the bound, not the median, decides.
+    when its median per-round head/base ratio drops below 1 - threshold AND a
+    majority of individual pairs do too. The absolute baseline is reported but
+    does not decide the gate: GitHub-hosted runners show ~40% between-run
+    variance on these endpoints (within-run CV stays under 5%), so a fixed RPS
+    baseline ends up gating runner luck instead of code.
     python3 regression_check.py head.csv --compare base.csv --threshold 0.10
 
     absolute (legacy default) — compare against built-in or JSON baseline:
@@ -31,8 +30,7 @@ DEFAULT_BASELINE = {
 }
 
 DEFAULT_THRESHOLD = 0.10  # 10% regression threshold
-MIN_PAIRED_SAMPLES = 3    # fewer paired rounds than this is noise, report only
-CONFIDENCE_K = 1.7        # ~90% one-sided; paired gate fails on this lower bound
+MIN_PAIRED_SAMPLES = 3    # fewer paired rounds than this is inconclusive, fail closed
 
 def parse_benchmark_csv(csv_path):
     """Parse benchmark-raw.csv and compute per-endpoint stats."""
@@ -116,35 +114,29 @@ def check_regression(results, baseline, threshold):
             print(f"PASS: {ep} — {actual:.0f} RPS ({ratio:.1f}% of baseline)")
     return failures
 
-def paired_ratio_stats(ratios):
-    """Median head/base ratio plus a robust lower confidence bound.
-
-    SE is derived from the median absolute deviation (1.1926*MAD/sqrt(n)), so a
-    handful of unlucky rounds cannot move the bound, and a genuinely noisy
-    endpoint gets a wide bound instead of a coin-flip verdict. SE is floored at
-    0.5% of the median so an artificially flat sample still leaves some room.
-    """
-    med = statistics.median(ratios)
-    mad = statistics.median([abs(r - med) for r in ratios])
-    se = max(1.1926 * mad / (len(ratios) ** 0.5), 0.005 * med)
-    return med, med - CONFIDENCE_K * se, se
-
 def check_paired(head_rounds, base_rounds, threshold, gated):
     """Gate head against base measured on the same runner, round by round.
 
     Round i of head is paired with round i of base (the harness alternates the
-    two binaries, and swaps which one goes first on odd vs even rounds), so the
-    runner's slow and fast phases hit both sides and cancel out. An endpoint
-    fails only when the *lower confidence bound* of its head/base ratio falls
-    below 1 - threshold: pairing removes most between-run variance, but
-    measured 2026-09-28, six pairs of two byte-identical builds still spread
-    ~10% on the small-response endpoint, which a hard cutoff reads as a
-    regression.
+    two binaries and swaps which one goes first on odd vs even rounds), so the
+    runner's slow and fast phases hit both sides and cancel out.
+
+    An endpoint fails only when BOTH hold, with limit = 1 - threshold:
+      1. the median head/base ratio is below the limit, and
+      2. a majority of individual pairs are below the limit.
+
+    The second condition is what keeps heavy tails from gating: on 2026-09-28 a
+    PR with no C changes at all produced 10 pairs on `/` with median 97.4% but
+    median absolute deviation 14.4% — single unlucky rounds land far off the
+    median in both directions. A real regression (the writev small-body case,
+    -14% with ~2% spread) puts nearly every pair under the limit, so it still
+    fails. A MAD-based confidence bound was tried first and rejected: with
+    heavy-tailed samples it inherits the tail and fails identical builds.
     """
     failures = []
     print(f"{'endpoint':<14} {'head med':>10} {'base med':>10} {'ratio':>8}"
-          f" {'90% low':>8} {'spread':>7}   verdict")
-    print("-" * 84)
+          f" {'pairs<lim':>10} {'MAD':>7}   verdict")
+    print("-" * 86)
     for ep in sorted(head_rounds):
         common = sorted(set(head_rounds[ep]) & set(base_rounds.get(ep, {})))
         head_all = [head_rounds[ep][r] for r in sorted(head_rounds[ep])]
@@ -153,7 +145,7 @@ def check_paired(head_rounds, base_rounds, threshold, gated):
         base_med = statistics.median(base_all) if base_all else None
         shown_base = f"{base_med:>10.0f}" if base_med is not None else f"{'-':>10}"
         if ep not in gated:
-            print(f"{ep:<14} {head_med:>10.0f} {shown_base} {'-':>8} {'-':>8} "
+            print(f"{ep:<14} {head_med:>10.0f} {shown_base} {'-':>8} {'-':>10} "
                   f"{'-':>7}   report only")
             continue
         if base_med is None or base_med <= 0:
@@ -165,7 +157,7 @@ def check_paired(head_rounds, base_rounds, threshold, gated):
                 'pairs': 0,
                 'reason': 'no base data',
             })
-            print(f"{ep:<14} {head_med:>10.0f} {shown_base} {'-':>8} {'-':>8} "
+            print(f"{ep:<14} {head_med:>10.0f} {shown_base} {'-':>8} {'-':>10} "
                   f"{'-':>7}   FAIL (no base data)")
             continue
         ratios = [head_rounds[ep][r] / base_rounds[ep][r] for r in common
@@ -184,25 +176,28 @@ def check_paired(head_rounds, base_rounds, threshold, gated):
                 'reason': f'only {len(ratios)} paired round(s)',
             })
             print(f"{ep:<14} {head_med:>10.0f} {base_med:>10.0f} "
-                  f"{ratio_pct:>7.1f}% {'-':>8} {'-':>7}   "
+                  f"{ratio_pct:>7.1f}% {'-':>10} {'-':>7}   "
                   f"FAIL (only {len(ratios)} pairs, need {MIN_PAIRED_SAMPLES})")
             continue
-        ratio, low, se = paired_ratio_stats(ratios)
+        ratio = statistics.median(ratios)
         ratio_pct = ratio * 100
-        spread_pct = statistics.median([abs(r - ratio) for r in ratios]) * 100
+        below = sum(1 for r in ratios if r < 1 - threshold)
+        mad_pct = statistics.median([abs(r - ratio) for r in ratios]) * 100
         shown = (f"{ep:<14} {head_med:>10.0f} {base_med:>10.0f} "
-                 f"{ratio_pct:>7.1f}% {low*100:>7.1f}% {spread_pct:>6.1f}%")
-        if low < 1 - threshold:
+                 f"{ratio_pct:>7.1f}% {below:>7}/{len(ratios)} {mad_pct:>6.1f}%")
+        if ratio < 1 - threshold and below * 2 > len(ratios):
             failures.append({
                 'endpoint': ep,
                 'head': head_med,
                 'base': base_med,
                 'ratio': ratio_pct,
                 'pairs': len(ratios),
-                'reason': f'{ratio_pct:.1f}% of base (low bound {low*100:.1f}%), '
-                          f'limit {limit_pct:.0f}%',
+                'reason': f'median {ratio_pct:.1f}% of base and {below}/{len(ratios)} '
+                          f'pairs under {limit_pct:.0f}%',
             })
-            print(shown + f"   FAIL (low bound < {limit_pct:.0f}%)")
+            print(shown + f"   FAIL (median and majority < {limit_pct:.0f}%)")
+        elif ratio < 1 - threshold:
+            print(shown + "   NOISE (median under limit, majority is not)")
         else:
             print(shown + f"   PASS ({len(ratios)} pairs)")
     return failures
