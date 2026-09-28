@@ -13,7 +13,7 @@
 
 /* Version macros from CMake */
 #ifndef UVHTTP_VERSION_STRING
-#define UVHTTP_VERSION_STRING "2.7.2"
+#define UVHTTP_VERSION_STRING "2.8.0"
 #endif
 
 #ifndef UVHTTP_VERSION_MAJOR
@@ -21,11 +21,11 @@
 #endif
 
 #ifndef UVHTTP_VERSION_MINOR
-#define UVHTTP_VERSION_MINOR 7
+#define UVHTTP_VERSION_MINOR 8
 #endif
 
 #ifndef UVHTTP_VERSION_PATCH
-#define UVHTTP_VERSION_PATCH 2
+#define UVHTTP_VERSION_PATCH 0
 #endif
 
 #ifndef UVHTTP_VERSION_INT

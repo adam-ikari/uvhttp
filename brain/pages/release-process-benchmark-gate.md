@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [release, ci, benchmark]
 created: "2026-09-07T07:13:20"
-updated: "2026-09-07T07:13:40"
+updated: "2026-09-23T04:16:34"
 ---
 
 <!-- compiled_truth -->
@@ -44,4 +44,10 @@ updated: "2026-09-07T07:13:40"
   kind: decision
   summary: "发布流程改两阶段（pre-release 门禁 + 正式确认），benchmark 回归门禁绑定 release 事件，main PR-only"
   source: "CI/发布配置与真实流程脱节修复"
+  affects: [release-process-benchmark-gate]
+
+- time: 2026-09-23T04:16:34
+  kind: evidence
+  summary: "PR #379（028f2f1）基于改动前的 ci-benchmark.yml 覆盖了本页记录的 release 触发器，门禁退回 push: pre-release 死配置；2026-09-23 v2.8.0 发布 PR 恢复触发器、job if、gate 步骤与趋势落库条件"
+  source: "v2.8.0 发布会话"
   affects: [release-process-benchmark-gate]

@@ -4,7 +4,7 @@
 完整走一遍接入流程：前置条件、每种集成方式、最小可运行服务器、特性裁剪与故障排查。
 
 > 可独立运行、自包含的示例项目位于
-> [`examples/embedding/`](../../../examples/embedding/)。本指南的所有内容
+> [`examples/embedding/`](https://github.com/adam-ikari/uvhttp/tree/main/examples/embedding)。本指南的所有内容
 > 都在那里得到体现——可以直接作为模板使用。
 
 ---
@@ -66,7 +66,7 @@ project(myapp C)
 include(FetchContent)
 FetchContent_Declare(uvhttp
   GIT_REPOSITORY https://github.com/adam-ikari/uvhttp.git
-  GIT_TAG        v2.7.1
+  GIT_TAG        v2.8.0
 )
 FetchContent_MakeAvailable(uvhttp)
 
@@ -293,7 +293,7 @@ cmake -DBUILD_BENCHMARKS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=OFF ..
 
 ## 7. 下一步
 
-- 运行实际示例：[`examples/embedding/`](../../../examples/embedding/)
+- 运行实际示例：[`examples/embedding/`](https://github.com/adam-ikari/uvhttp/tree/main/examples/embedding)
 - 嵌入式配置与画像：[嵌入式配置](../embedded-profile.md)
 - CMake 细节：[CMake 集成](./INSTALL_CMAKE.md)、[CMake 配置](./CMAKE_CONFIGURATION.md)
 - 逐版本验证：[嵌入验证清单](../embedding-checklist.md)

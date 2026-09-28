@@ -1,7 +1,7 @@
 # UVHTTP API Reference
 
-**Version**: v2.7.2  
-**Updated**: 2026-09-08  
+**Version**: v2.8.0  
+**Updated**: 2026-09-23  
 **C Standard**: C11
 
 ## Overview
@@ -10,7 +10,7 @@ UVHTTP provides a concise, efficient C API for building HTTP/1.1 servers.
 
 > This is a curated, tutorial-style reference covering the most common APIs.
 > The complete, auto-generated reference for all ~290 public functions lives in
-> [docs/api/generated/](./generated/index.html) (Doxygen).
+> `docs/api/generated/` (Doxygen).
 
 ## Core Types
 

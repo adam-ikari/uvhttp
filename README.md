@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.7.2-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.8.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
@@ -21,7 +21,7 @@ Lightweight & Embeddable • 32-bit Support • Zero-Copy • ASan/UBSan-Verifie
 
 UVHTTP is a production-grade, event-driven HTTP server library built on libuv for modern C applications. It delivers exceptional performance with minimal resource consumption, making it ideal for both high-performance servers and embedded systems.
 
-### Key Metrics (v2.7.2, GitHub CI baseline)
+### Key Metrics (v2.8.0, GitHub CI baseline)
 
 Performance baselines are measured on **GitHub Actions `ubuntu-latest` runners** for hardware consistency. Previous local baselines (v2.6.x, ~20K RPS) were measured on developer hardware with 40%+ variance from CPU thermal throttling. The CI runner eliminates this variance (CV 0.4–2.4%), providing an authoritative, reproducible baseline.
 
@@ -223,7 +223,7 @@ cmake -DCMAKE_USER_CONFIG=ON ..
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello from UVHTTP v2.7.2!", strlen("Hello from UVHTTP v2.7.2!"));
+    uvhttp_response_set_body(res, "Hello from UVHTTP v2.8.0!", strlen("Hello from UVHTTP v2.8.0!"));
     return uvhttp_response_send(res);
 }
 
@@ -507,21 +507,26 @@ UVHTTP is built upon excellent open-source projects:
 - [x] TLS EINTR retry, If-None-Match weak/multi-value ETag, directory listing TOCTOU fix
 - [x] X-Forwarded-For not trusted by default (`trust_proxy_headers` opt-in), listen param validation, idempotent `server_stop`
 
-### v2.8.0 (Planned)
+### v2.8.0 (Released 2026-09-23)
+- [x] Large-response zero-copy writev — /large RPS 5.1K → 8.8K, per-request 200KB memcpy eliminated (PR #378)
+- [x] Second-round code-review fixes — 17 defects: LRU OOM use-after-free, config double-free, error-code mapping, gzip budget bypass, JSON escaping (PR #380)
+- [x] Public API / build-system fixes — install no longer ships third-party artifacts, feature macros propagate PUBLIC, `find_package`/pkg-config work end-to-end (PR #381)
+- [x] Benchmark coverage for SSE / streaming / WebSocket (PR #379)
+- [x] `BUILD_TESTS` option, real PR gates, examples compiled in CI (PR #376/#377/#385)
+
+### v2.9.0 (Planned)
 - [ ] io_uring exploration for static file path
 - [ ] Memory allocation optimization
-- [ ] macOS/FreeBSD support
-
-### v2.9.0 (Future)
-- [ ] FreeBSD support
 - [ ] Fuzz testing enhancement
-- [ ] Community contribution guide
 - [ ] Chinese/English doc completeness
+- [ ] Community contribution guide
+- [ ] macOS/FreeBSD support (lowest priority)
 
 ## 📊 Version History
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.8.0** | 2026-09-23 | Large-response zero-copy writev (/large 5.1K→8.8K RPS, PR #378), second-round review fixes (17 defects, PR #380), public API / build-system fixes (PR #381), SSE/streaming/WebSocket benchmarks (PR #379) |
 | **v2.7.2** | 2026-09-07 | 34 项代码评审缺陷修复：query string 路由匹配、MAX_PARAMS 边界、WS 短写截帧、If-Modified-Since 时区/3 种日期格式、accept 下溢等；/large 零拷贝 writev（5.1K→8.8K RPS） |
 | **v2.7.1** | 2026-08-26 | CI fuzz fixes (C11 alignment, PR #364), embedding CMake dependency visibility (PR #365), performance regression gate (10% RPS threshold, PR #366) |
 | **v2.7.0** | 2026-08-21 | TLS session cache re-enabled, CI benchmark workflow (ci-benchmark.yml), code quality fixes (L3-L5), brain documentation, Platinum tier baseline (83K RPS on CI) |

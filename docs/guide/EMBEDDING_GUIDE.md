@@ -6,7 +6,7 @@ each integration method, a minimal working server, feature trimming, and
 troubleshooting.
 
 > A runnable, self-contained example project lives in
-> [`examples/embedding/`](../../examples/embedding/). Everything in this guide
+> [`examples/embedding/`](https://github.com/adam-ikari/uvhttp/tree/main/examples/embedding). Everything in this guide
 > is reflected there — use it as a template.
 
 ---
@@ -71,7 +71,7 @@ project(myapp C)
 include(FetchContent)
 FetchContent_Declare(uvhttp
   GIT_REPOSITORY https://github.com/adam-ikari/uvhttp.git
-  GIT_TAG        v2.7.1
+  GIT_TAG        v2.8.0
 )
 FetchContent_MakeAvailable(uvhttp)
 
@@ -301,7 +301,7 @@ specifically for first-time embedders).
 
 ## 7. Next steps
 
-- Run the live example: [`examples/embedding/`](../../examples/embedding/)
+- Run the live example: [`examples/embedding/`](https://github.com/adam-ikari/uvhttp/tree/main/examples/embedding)
 - Embedded profiles & configuration: [Embedded Profile](../embedded-profile.md)
 - CMake specifics: [CMake Integration](./INSTALL_CMAKE.md),
   [CMake Configuration](./CMAKE_CONFIGURATION.md)
