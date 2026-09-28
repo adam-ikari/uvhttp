@@ -11,7 +11,7 @@ UVHTTP is designed for high performance and low latency. This document provides 
 
 ### CI Baseline (Authoritative)
 
-The authoritative baseline is measured on **GitHub Actions `ubuntu-latest` runners** with `benchmark_unified` (Release build, system allocator, 2 threads, 10 concurrent connections, 10s per round, 10 rounds per endpoint). CI runners remove the CPU thermal-throttling variance that plagues local benchmarks (CV 0.4–2.4% on CI vs 40%+ locally). Full methodology and the exact runner environment are recorded in [Performance Targets](../PERFORMANCE_TARGETS.md).
+The authoritative baseline is measured on **GitHub Actions `ubuntu-latest` runners** with `benchmark_unified` (Release build, system allocator, 2 threads, 10 concurrent connections, 10s per round, 10 rounds per endpoint). CI runners remove the CPU thermal-throttling variance that plagues local benchmarks (within-run CV 0.4–2.4% on CI vs 40%+ locally). That stability holds only *inside* a run: across runs of the same commit the medians move by tens of percent, because runners are shared VMs. These numbers are therefore the reference for documentation, while the **regression gate compares head against base on the same runner in the same job**. Full methodology and the exact runner environment are recorded in [Performance Targets](../PERFORMANCE_TARGETS.md).
 
 | Endpoint | RPS | Avg Latency | Notes |
 |----------|-----|-------------|-------|

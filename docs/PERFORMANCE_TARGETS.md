@@ -8,7 +8,11 @@ Measured 2026-08-21 on GitHub Actions `ubuntu-latest` runner (Release build, sys
 
 ### Why GitHub CI is the authoritative baseline
 
-GitHub CI runners provide **consistent hardware** without the thermal throttling variance that plagues local benchmarks. Local benchmarks on AMD Ryzen 7 5800H showed 40%+ coefficient of variation due to CPU thermal throttling; CI runners show 0.4–2.4% CV.
+GitHub CI runners provide **consistent hardware** without the thermal throttling variance that plagues local benchmarks. Local benchmarks on AMD Ryzen 7 5800H showed 40%+ coefficient of variation due to CPU thermal throttling; CI runs show 0.4–2.4% CV.
+
+> **That CV is within a single run.** The 10 rounds of one endpoint share one runner and one warm server, so they agree closely. Across *runs* of the same commit the medians do not: re-running `ci-benchmark.yml` on the unchanged 2026-08-21 control commit (2026-09-28) produced small-response medians in the ~40–54K band against the recorded 83K. Runners are shared VMs whose neighbours, CPU model, and frequency differ per allocation.
+>
+> Consequence: **absolute RPS numbers are comparable only as documentation, not as a gate.** The regression gate therefore measures head and base on the same runner in the same job and compares paired rounds — see [Regression Gate](#regression-gate-paired-same-runner).
 
 ### CI Runner Environment
 
@@ -122,6 +126,36 @@ gh workflow run ci-benchmark.yml --ref main -f rounds=10 -f duration=10
 
 # Or via PR label
 gh pr edit <PR_NUMBER> --add-label benchmark
+```
+
+### Regression Gate (paired, same runner)
+
+`ci-benchmark.yml` gates PRs (with the `benchmark` label) and releases by
+measuring **both revisions on the same runner in the same job**:
+
+1. Resolve a base revision — PR base SHA, previous published release tag, or
+   the `base_ref` input of a manual run.
+2. Check out and build it next to head (`bench-base/`, Release, same flags).
+3. Start both `benchmark_unified` servers (head on 18081, base on 18082),
+   warm both up, then run the gated endpoints (`/`, `/json`, `/large`)
+   alternately: head round *i*, base round *i*, for 6 rounds each.
+4. `scripts/performance/regression_check.py head-paired.csv --compare base-paired.csv`
+   pairs samples by round number, takes the median of the per-round
+   head/base ratios, and fails when a gated endpoint lands below 90% of base.
+   Fewer than 3 pairs, or no base sample, fails the gate too — an
+   inconclusive measurement is not a pass.
+5. The absolute `DEFAULT_BASELINE` comparison still runs, but as report-only
+   output in the same log, so trends stay visible without gating on them.
+
+If no base revision can be resolved the job falls back to the old absolute
+baseline gate and says so in the log.
+
+```bash
+# Paired check outside CI: two CSVs measured on the same machine
+python3 scripts/performance/regression_check.py head.csv --compare base.csv --threshold 0.10
+
+# Legacy absolute comparison
+python3 scripts/performance/regression_check.py benchmark-raw.csv --threshold 0.10
 ```
 
 ### Secondary: Local benchmark (development)

@@ -17,6 +17,10 @@ on:
         description: 'Endpoints to test (comma-separated: /,/json,/large,/sse,/stream)'
         required: false
         default: '/,/json,/large,/sse,/stream'
+      base_ref:
+        description: 'Base revision for the paired gate (tag/sha/branch; empty = previous release or PR base)'
+        required: false
+        default: ''
   pull_request:
     types: [labeled, opened, synchronize, reopened]
     branches: [main]
@@ -27,7 +31,7 @@ jobs:
   benchmark:
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'release' || contains(join(github.event.pull_request.labels.*.name, ','), 'benchmark')
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 50
 
     steps:
       - name: Checkout code
@@ -44,6 +48,65 @@ jobs:
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS=ON -DBUILD_EXAMPLES=OFF
           cmake --build build -j$(nproc)
+
+      # The gate compares head against base on THIS runner. GitHub-hosted
+      # runners vary ~40% between runs on these endpoints (within-run CV stays
+      # under 5%), so an absolute RPS baseline gates runner luck, not code.
+      - name: Resolve comparison base
+        id: base
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_BASE: ${{ github.event.inputs.base_ref }}
+        run: |
+          REF=""
+          case "$EVENT_NAME" in
+            pull_request) REF="$PR_BASE_SHA" ;;
+            workflow_dispatch) REF="$INPUT_BASE" ;;
+            release) REF="" ;;
+          esac
+          if [ -z "$REF" ] && [ "$EVENT_NAME" = "release" ]; then
+            # Newest published release that is not the one being gated.
+            REF=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" | python3 -c 'import json,os,sys; rs=json.load(sys.stdin); cur=os.environ["RELEASE_TAG"]; print(next((r["tag_name"] for r in rs if not r.get("draft") and r.get("tag_name") != cur), ""))')
+          fi
+          if [ -z "$REF" ]; then
+            echo "paired=false" >> "$GITHUB_OUTPUT"
+            echo "No base revision resolved; gate falls back to absolute baseline"
+            exit 0
+          fi
+          # Reject anything that is not a ref/name this repo actually has before
+          # handing it to checkout.
+          if ! git ls-remote --exit-code --heads --tags origin "$REF" > /dev/null 2>&1 \
+             && ! echo "$REF" | grep -Eq '^[0-9a-fA-F]{7,40}$'; then
+            echo "paired=false" >> "$GITHUB_OUTPUT"
+            echo "Unusable base ref: $REF; gate falls back to absolute baseline"
+            exit 0
+          fi
+          {
+            echo "paired=true"
+            echo "ref=$REF"
+          } >> "$GITHUB_OUTPUT"
+          echo "Paired gate base: $REF"
+
+      - name: Checkout base revision
+        if: steps.base.outputs.paired == 'true'
+        uses: actions/checkout@v7.0.1
+        with:
+          # A resolved ref from the step above (PR base sha, previous release
+          # tag, or an explicitly dispatched ref) — never raw event payload.
+          ref: ${{ steps.base.outputs.ref }}
+          repository: ${{ github.repository }}
+          path: bench-base
+          submodules: recursive
+
+      - name: Build base (Release)
+        if: steps.base.outputs.paired == 'true'
+        run: |
+          cmake -S bench-base -B bench-base/build -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_BENCHMARKS=ON -DBUILD_EXAMPLES=OFF
+          cmake --build bench-base/build -j$(nproc)
 
       - name: Collect environment info
         run: |
@@ -162,14 +225,110 @@ jobs:
           cat benchmark-env.md >> benchmark-results.md
 
           kill $SERVER_PID 2>/dev/null
-          wait $SERVER_PID 2>/dev/null
+          wait $SERVER_PID 2>/dev/null || true
           cat benchmark-results.md
 
-      # 回归门禁：PR（benchmark 标签）或 release 事件都跑 gate。正式 release（prerelease=false）
-      # 重复跑无害——同一 commit 结果一致（幂等）；workflow_dispatch 不阻塞。
+      # Paired gate: head and base alternate round by round on the same runner,
+      # both servers resident so neither pays a restart. Same wrk settings as the
+      # report above (-t2 -c10) — only the A/B structure differs.
+      - name: Run paired gate benchmark
+        if: steps.base.outputs.paired == 'true'
+        env:
+          GATE_ENDPOINTS: '/,/json,/large'
+          PAIR_ROUNDS: '6'
+          DURATION: ${{ github.event.inputs.duration || '10' }}
+        run: |
+          HEAD_BIN=build/dist/bin/benchmark_unified
+          BASE_BIN=bench-base/build/dist/bin/benchmark_unified
+          HEAD_PORT=18081
+          BASE_PORT=18082
+          chmod +x "$HEAD_BIN" "$BASE_BIN"
+
+          for f in head-paired.csv base-paired.csv; do
+            echo "endpoint,round,rps,avg_latency,p99_latency" > "$f"
+          done
+
+          "$HEAD_BIN" "$HEAD_PORT" > /tmp/head-server.log 2>&1 &
+          HEAD_PID=$!
+          "$BASE_BIN" "$BASE_PORT" > /tmp/base-server.log 2>&1 &
+          BASE_PID=$!
+          sleep 3
+          for pid in "$HEAD_PID" "$BASE_PID"; do
+            if ! kill -0 "$pid" 2>/dev/null; then
+              echo "ERROR: paired benchmark server failed to start"
+              cat /tmp/head-server.log /tmp/base-server.log
+              exit 1
+            fi
+          done
+
+          EPS=$(echo "$GATE_ENDPOINTS" | tr ',' ' ')
+          for ep in $EPS; do
+            for port in "$HEAD_PORT" "$BASE_PORT"; do
+              code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${port}${ep}")
+              if [ "$code" != "200" ]; then
+                echo "ERROR: $ep returned $code on port $port — paired gate needs both sides"
+                cat /tmp/head-server.log /tmp/base-server.log
+                exit 1
+              fi
+              wrk -t2 -c10 -d3s "http://localhost:${port}${ep}" > /dev/null 2>&1 || true
+            done
+          done
+
+          for ep in $EPS; do
+            for i in $(seq 1 "$PAIR_ROUNDS"); do
+              for variant in head base; do
+                if [ "$variant" = head ]; then
+                  port="$HEAD_PORT"
+                else
+                  port="$BASE_PORT"
+                fi
+                result=$(wrk -t2 -c10 -d"${DURATION}s" "http://localhost:${port}${ep}" 2>/dev/null)
+                rps=$(echo "$result" | grep "Requests/sec" | awk '{print $2}')
+                avg_lat=$(echo "$result" | grep "Latency" | head -1 | awk '{print $2}')
+                p99_lat=$(echo "$result" | grep -A3 "Latency" | tail -1 | awk '{print $4}')
+                if [ -z "$rps" ]; then
+                  echo "ERROR: no RPS for $ep $variant round $i"
+                  cat /tmp/head-server.log /tmp/base-server.log
+                  exit 1
+                fi
+                echo "${ep},${i},${rps},${avg_lat},${p99_lat}" >> "${variant}-paired.csv"
+              done
+            done
+          done
+
+          kill "$HEAD_PID" "$BASE_PID" 2>/dev/null || true
+          wait "$HEAD_PID" "$BASE_PID" 2>/dev/null || true
+          echo "Paired samples collected:"
+          tail -n +2 head-paired.csv | cut -d, -f1 | sort | uniq -c
+          tail -n +2 base-paired.csv | cut -d, -f1 | sort | uniq -c
+
+      # 回归门禁：优先用同机配对结果（head vs base 同一 runner 交替测量）。
+      # 只有解析不到 base 版本时才退回绝对基线——绝对基线在共享 runner 上
+      # 方差 ~40%，只能当参考。正式 release（prerelease=false）重复跑无害——
+      # 同一 commit 结果一致（幂等）；workflow_dispatch 不阻塞。
       - name: Regression gate check
         if: github.event_name == 'pull_request' || github.event_name == 'release'
+        env:
+          BASE_REF: ${{ steps.base.outputs.ref }}
         run: |
+          set -euo pipefail
+          if [ -f base-paired.csv ]; then
+            rc=0
+            python3 scripts/performance/regression_check.py head-paired.csv \
+              --compare base-paired.csv --threshold 0.10 > paired-gate.log || rc=$?
+            cat paired-gate.log
+            {
+              echo ""
+              echo "### Paired Gate (head vs \`$BASE_REF\`, same runner)"
+              echo ""
+              echo '```'
+              cat paired-gate.log
+              echo '```'
+              echo ""
+            } >> benchmark-results.md
+            exit "$rc"
+          fi
+          echo "WARNING: no base revision measured; gating on absolute baseline"
           python3 scripts/performance/regression_check.py benchmark-raw.csv --threshold 0.10
 
       - name: Upload benchmark results
@@ -180,7 +339,12 @@ jobs:
             benchmark-results.md
             benchmark-raw.csv
             benchmark-env.md
+            head-paired.csv
+            base-paired.csv
+            paired-gate.log
             /tmp/server.log
+            /tmp/head-server.log
+            /tmp/base-server.log
           retention-days: 90
 
       # 趋势数据只在 pre-release 落库；正式 release 只做门禁校验、不落趋势。

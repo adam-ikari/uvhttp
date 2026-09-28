@@ -11,6 +11,12 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)规范。
 
 
+## [Unreleased]
+
+### 变更
+- **基准回归门禁改为同机配对比较**: `ci-benchmark.yml` 现在在同一 runner、同一 job 内检出并构建 base 版本（PR base sha / 上一个 release tag / 手动 `base_ref`），两台 `benchmark_unified`（18081/18082）按轮次交替测量 `/`、`/json`、`/large`；`regression_check.py --compare` 以每轮 head/base 比值的中位数判定（<90% 失败，配对样本 <3 或缺 base 同样失败）。绝对 RPS 基线（83K/81K/8.8K）降级为报告信息——同一 commit 跨 run 的中位数在共享 runner 上漂移可达 40%，绝对阈值实际 gate 的是机器运气而非代码
+
+
 ## [2.8.0] - 2026-09-23
 
 ### 新增
