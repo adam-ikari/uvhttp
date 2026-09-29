@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [embedding, cmake, build, add_subdirectory]
 created: "2026-08-25T03:18:24"
-updated: "2026-09-29T01:23:22"
+updated: "2026-09-29T02:26:32"
 ---
 
 <!-- compiled_truth -->
@@ -16,6 +16,11 @@ updated: "2026-09-29T01:23:22"
 1. **CMakeLists.txt**: `libuv`, `xxhash`, `llhttp` 从 `PRIVATE` → `PUBLIC`，其 IMPORTED target 的 `INTERFACE_INCLUDE_DIRECTORIES` 传播给嵌入者。
 2. **CMakeLists.txt**: `mbedtls` 从 `PRIVATE` → `PUBLIC`（`uvhttp_tls.h` 是 public header 且包含 mbedtls 头）。
 3. **CMakeLists.txt**: `target_include_directories(uvhttp PUBLIC ...)` 添加 `deps/uthash/src`（uthash 是 header-only，无 IMPORTED target）。
+
+## 验证边界（照此判断证据强度，别把"编译通过"读成"功能验证通过"）
+- 当时用独立测试项目（`/tmp/embed-test`）经 `add_subdirectory` 集成：**编译通过**、服务器启停正常（timer 回调停止）、101/101 单元测试通过（GCC + C11）。
+- **当时的 HTTP 实际响应验证没做成**，受环境代理干扰；那部分覆盖靠仓库自身 e2e 测试套件。
+- 运行时缺口后来由 `examples/embedding/` 补齐：`curl` 拿到 `Hello from embedded uvhttp!`、`SIGTERM` 优雅退出（见 `embedding-guide-examples`）。
 
 ## 结论与状态
 - `add_subdirectory` 集成：验证通过（配置/构建/起停/响应）。
@@ -47,4 +52,10 @@ updated: "2026-09-29T01:23:22"
   kind: decision
   summary: Rewrote compiled_truth to the new best understanding
   source: "brain 审核会话（2026-09-29）— 对照 main 现状校正过期主张"
+  affects: [embedding-cmake-public-deps]
+
+- time: 2026-09-29T02:26:32
+  kind: decision
+  summary: Rewrote compiled_truth to the new best understanding
+  source: "PR #389 第二轮修订 — 补回被压缩掉的验证边界（哪些是编译验证、哪些是运行时验证）"
   affects: [embedding-cmake-public-deps]
