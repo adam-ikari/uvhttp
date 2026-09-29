@@ -265,6 +265,9 @@ jobs:
       - name: Check internal links
         run: bash scripts/check-links.sh
 
+      - name: Check brain pages
+        run: bash scripts/check-brain.sh
+
   # ========== 构建组合验证矩阵 ==========
   # 哲学文档第九节：CI 此前只测默认配置。此 job 用 matrix 验证多个
   # 特性组合均可编译且通过快速测试（编译时裁剪 / ROUTER_CACHE / 静态文件等）。
