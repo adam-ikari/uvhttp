@@ -106,7 +106,8 @@ static void on_connection(uv_stream_t* server_handle, int status) {
 #endif
 
     /* Single-threaded connection count check - use server specific config */
-    size_t max_connections = server->max_connections;  // authoritative per-server value
+    size_t max_connections =
+        server->max_connections;  // authoritative per-server value
     if (server->config) {
         max_connections = server->config->max_connections;
     } else {
@@ -153,8 +154,9 @@ static void on_connection(uv_stream_t* server_handle, int status) {
                 uv_buf_t buf =
                     uv_buf_init((char*)response_503, sizeof(response_503) - 1);
 
-                /* Stash temp_client on the write request so write_503_response_cb
-                 * can close+free it after the response is flushed. */
+                /* Stash temp_client on the write request so
+                 * write_503_response_cb can close+free it after the response is
+                 * flushed. */
                 write_req->data = temp_client;
 
                 int write_result =
@@ -291,7 +293,8 @@ uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
     memset(s, 0, sizeof(uvhttp_server_t));
 
     // initializeconnectionlimitdefaultvalue
-    s->max_connections = UVHTTP_MAX_CONNECTIONS_DEFAULT;  // default max connection count
+    s->max_connections =
+        UVHTTP_MAX_CONNECTIONS_DEFAULT;          // default max connection count
     s->max_message_size = UVHTTP_MAX_BODY_SIZE;  // default max message size 1MB
 // Initialize WebSocket router table
 #if UVHTTP_FEATURE_WEBSOCKET
@@ -340,10 +343,10 @@ uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
      * fatal: responses fall back to compressing without caching (graceful
      * degradation), matching the philosophy that cache is an optimization. */
     uvhttp_gzip_cache_t* gzip_cache = NULL;
-    uvhttp_error_t gzip_err = uvhttp_gzip_cache_create(
-        UVHTTP_GZIP_CACHE_DEFAULT_MAX_MEMORY,
-        UVHTTP_GZIP_CACHE_DEFAULT_MAX_ENTRIES,
-        UVHTTP_GZIP_CACHE_DEFAULT_TTL, &gzip_cache);
+    uvhttp_error_t gzip_err =
+        uvhttp_gzip_cache_create(UVHTTP_GZIP_CACHE_DEFAULT_MAX_MEMORY,
+                                 UVHTTP_GZIP_CACHE_DEFAULT_MAX_ENTRIES,
+                                 UVHTTP_GZIP_CACHE_DEFAULT_TTL, &gzip_cache);
     if (gzip_err == UVHTTP_OK && gzip_cache) {
         s->gzip_cache = gzip_cache;
     } else {
@@ -416,7 +419,7 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
 #if UVHTTP_FEATURE_TLS
     if (server->tls_ctx) {
         uvhttp_tls_context_free(server->tls_ctx);
-        server->tls_ctx = NULL;  /* Prevent double-free */
+        server->tls_ctx = NULL; /* Prevent double-free */
     }
 #endif
     if (server->config) {
@@ -472,7 +475,7 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
     // Rate limit state has been embedded in struct, no need for extra cleanup
 #endif
 
-// Clean protocol registry
+    // Clean protocol registry
     if (server->protocol_registry) {
         uvhttp_protocol_registry_t* registry =
             (uvhttp_protocol_registry_t*)server->protocol_registry;
@@ -675,8 +678,8 @@ uvhttp_error_t uvhttp_server_enable_health_check(uvhttp_server_t* server,
         }
     }
 
-    uvhttp_error_t err = uvhttp_router_add_route(server->router, path,
-                                                 health_check_handler);
+    uvhttp_error_t err =
+        uvhttp_router_add_route(server->router, path, health_check_handler);
     if (err != UVHTTP_OK) {
         UVHTTP_LOG_ERROR("Failed to add health check route: %d\n", err);
         return err;
@@ -991,7 +994,7 @@ int uvhttp_serve(uv_loop_t* loop, const char* host, int port) {
     // Parameter verify
     if (!loop) {
         UVHTTP_LOG_ERROR("loop parameter is required - must be provided "
-                        "by application layer\n");
+                         "by application layer\n");
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
@@ -1113,8 +1116,7 @@ uvhttp_error_t uvhttp_server_ws_send(uvhttp_ws_connection_t* ws_conn,
         // wrapper (ws_conn->user_data is uvhttp_ws_wrapper_t, NOT a
         // uvhttp_connection_t; casting it directly reads past the wrapper
         // and dereferences garbage).
-        uvhttp_ws_wrapper_t* wrapper =
-            (uvhttp_ws_wrapper_t*)ws_conn->user_data;
+        uvhttp_ws_wrapper_t* wrapper = (uvhttp_ws_wrapper_t*)ws_conn->user_data;
         uvhttp_connection_t* conn = wrapper ? wrapper->conn : NULL;
         if (conn && conn->server && conn->server->context) {
             context = conn->server->context;
@@ -1144,8 +1146,7 @@ uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code,
         // wrapper (ws_conn->user_data is uvhttp_ws_wrapper_t, NOT a
         // uvhttp_connection_t; casting it directly reads past the wrapper
         // and dereferences garbage).
-        uvhttp_ws_wrapper_t* wrapper =
-            (uvhttp_ws_wrapper_t*)ws_conn->user_data;
+        uvhttp_ws_wrapper_t* wrapper = (uvhttp_ws_wrapper_t*)ws_conn->user_data;
         uvhttp_connection_t* conn = wrapper ? wrapper->conn : NULL;
         if (conn && conn->server && conn->server->context) {
             context = conn->server->context;
@@ -1713,7 +1714,8 @@ uvhttp_error_t uvhttp_server_ws_close_all(uvhttp_server_t* server,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* Only consumed by UVHTTP_LOG_DEBUG; unused when logging is compiled out. */
+    /* Only consumed by UVHTTP_LOG_DEBUG; unused when logging is compiled out.
+     */
     UVHTTP_UNUSED int closed_count = 0;
     ws_connection_node_t* current = server->ws_connection_manager->connections;
     ws_connection_node_t* prev = NULL;
