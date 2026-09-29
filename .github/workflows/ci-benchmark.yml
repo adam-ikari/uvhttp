@@ -419,6 +419,13 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: write
+    # Serialise trend pushes: two prereleases published in the same window
+    # (e.g. a nightly and a manual pre-release) each check out main, commit
+    # trend data, and push. Without a group the second push hits a non-FF
+    # rejection; the rebase-retry below then folds in the first job's commit.
+    concurrency:
+      group: benchmark-trend-push
+      cancel-in-progress: false
 
     steps:
       - name: Checkout main
@@ -453,5 +460,21 @@ jobs:
             echo "No trend changes to commit"
           else
             git commit -m "docs(benchmark): trend data for ${DATE}"
-            git push origin HEAD:main
+            # main may have moved since checkout (other merges, or another
+            # trend job that ran first in this concurrency group); rebase
+            # and retry a few times before giving up.
+            pushed=1
+            for attempt in 1 2 3; do
+              git pull --rebase origin main
+              if git push origin HEAD:main; then
+                pushed=0
+                break
+              fi
+              echo "push attempt $attempt rejected, retrying..."
+              sleep $(( attempt * 5 ))
+            done
+            if [ "$pushed" -ne 0 ]; then
+              echo "::error::trend push failed after 3 retries (rebase conflict or persistent non-FF)"
+              exit 1
+            fi
           fi
