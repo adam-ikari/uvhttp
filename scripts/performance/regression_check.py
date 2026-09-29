@@ -132,12 +132,32 @@ def check_paired(head_rounds, base_rounds, threshold, gated):
     -14% with ~2% spread) puts nearly every pair under the limit, so it still
     fails. A MAD-based confidence bound was tried first and rejected: with
     heavy-tailed samples it inherits the tail and fails identical builds.
+
+    Fail closed in every inconclusive case: a gated endpoint missing from the
+    head CSV, missing from the base CSV, or paired in fewer than
+    MIN_PAIRED_SAMPLES rounds is a failure, not a pass.
     """
     failures = []
     print(f"{'endpoint':<14} {'head med':>10} {'base med':>10} {'ratio':>8}"
           f" {'pairs<lim':>10} {'MAD':>7}   verdict")
     print("-" * 86)
-    for ep in sorted(head_rounds):
+    for ep in sorted(set(head_rounds) | set(gated)):
+        if ep not in head_rounds:
+            # Gated endpoint missing from the head CSV entirely: the harness
+            # measured something else (GATE_ENDPOINTS typo, endpoint renamed).
+            # Fail closed — a gate that silently inspects nothing is greener
+            # than no gate.
+            failures.append({
+                'endpoint': ep,
+                'head': None,
+                'base': None,
+                'ratio': None,
+                'pairs': 0,
+                'reason': 'gated endpoint absent from head CSV',
+            })
+            print(f"{ep:<14} {'-':>10} {'-':>10} {'-':>8} {'-':>10} {'-':>7}   "
+                  f"FAIL (no head samples)")
+            continue
         common = sorted(set(head_rounds[ep]) & set(base_rounds.get(ep, {})))
         head_all = [head_rounds[ep][r] for r in sorted(head_rounds[ep])]
         base_all = [base_rounds[ep][r] for r in sorted(base_rounds.get(ep, {}))]

@@ -152,8 +152,11 @@ measuring **both revisions on the same runner in the same job**:
    −14% with ~2% spread) puts nearly every pair under the limit and still fails.
    A confidence bound (median − 1.7·MAD-SE) was tried first and rejected: with
    heavy-tailed samples it inherits the tail and failed those identical builds.
-   Fewer than 3 pairs, or no base sample, fails the gate too — an inconclusive
-   measurement is not a pass.
+   Fewer than 3 pairs, no base sample, or a gated endpoint missing from either
+   CSV fails the gate too — an inconclusive measurement is not a pass, and a
+   gate that inspects nothing must not be greener than no gate. The endpoint
+   list has a single source: the workflow's `GATE_ENDPOINTS`, passed to the
+   script as `--gate`.
 5. The absolute `DEFAULT_BASELINE` comparison still runs, but as report-only
    output in the same log, so trends stay visible without gating on them.
 
