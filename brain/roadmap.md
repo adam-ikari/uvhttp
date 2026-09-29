@@ -2,7 +2,16 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-09-29T01:47:17"
+updated: "2026-09-29T09:05:17"
+---
+
+# Roadmap
+
+---
+slug: roadmap
+title: Roadmap
+role: milestones
+updated: "2026-09-29T09:00:00Z"
 ---
 
 # Roadmap
@@ -23,7 +32,7 @@ gantt
   新嵌入者接入              :done, a4, 2026-08-27, 1d
   v2.8.0 发布               :done, b6, 2026-09-23, 1d
   回归门禁改同机配对        :done, b7, 2026-09-28, 1d
-  v2.8.0 处置（重打tag或2.8.1）:crit, b8, 2026-09-29, 3d
+  v2.8.1 补丁发布与收尾     :done, b8, 2026-09-29, 3d
   io_uring 静态文件路径     :b2, after b8, 21d
   section v2.9.x — 生态
   文档多语言完善            :c1, after b2, 14d
@@ -50,7 +59,11 @@ gantt
 | v2.8.0 发布 | P0 | ✅ 已完成 | 零拷贝 writev（/large +72.7%）、第二轮评审 17 项修复、公共 API/构建系统修复（2026-09-23） |
 | 回归门禁改造为同机配对 | P0 | ✅ 已完成 | 绝对 RPS 阈值 gate 的是 runner 跨 run 方差（~40%）；改为同 runner head/base 交替 10 轮 + 中位数与多数规则 + fail closed（PR #388） |
 | 零拷贝小 body 阈值 | P0 | ✅ 已完成 | writev 对 body < 4096 是负优化（−14%），新增 `UVHTTP_ZEROCOPY_MIN_BODY`（PR #387）；配对门禁实测 `/` +23.4%、`/json` +27.6% |
-| v2.8.0 发布处置 | P0 | 🔄 进行中 | v2.8.0 保持 pre-release；#387/#388 已合入 main，待决定原地重打 tag 还是发 v2.8.1 |
+| 门禁 base 解析排除 nightly | P0 | ✅ 已完成 | nightly 预发布构建自移动中的 main，作 base 会让 head/base ≈ 100% 空测绿灯（PR #391） |
+| v2.8.1 补丁发布 | P0 | ✅ 已完成 | tag `b26e9ac`，设为 Latest；v2.8.0 保持 pre-release 不回退。配对门禁实测 vs v2.8.0：`/` +27.7%、`/json` +21.5%、`/large` +1.2% |
+| 零拷贝阈值边界测试 | P1 | ✅ 已完成 | 4095/4096/4097 wire 等价性（PR #393），含提前退出与 fd 泄漏修复（PR #396） |
+| trend 推送竞态修复 | P1 | ✅ 已完成 | concurrency group + rebase-retry，三次失败 exit 1 而非静默通过（PR #394） |
+| brain lint 空占位守卫 | P1 | ✅ 已完成 | `scripts/check-brain.sh` 检查占位/空 compiled_truth/断链，挂 doc-sync-check（PR #394） |
 | io_uring 探索 | P2 | 📋 待办 | 评估 io_uring 替代 epoll 在静态文件路径中的收益 |
 | 内存分配优化 | P2 | 📋 待办 | 减少热路径中的分配次数 |
 
@@ -58,7 +71,7 @@ gantt
 
 | 目标 | 优先级 | 状态 | 说明 |
 |------|--------|------|------|
-| 文档完善 | P1 | 📋 待办 | 中文文档同步、API 参考补充；`docs/releases/*` 尚未同步 v2.8.0 |
+| 文档完善 | P1 | ✅ 已完成 | v2.8.0/v2.8.1 release notes、CHANGELOG 双语、API 参考版本头均已同步 |
 | Fuzz 测试增强 | P1 | 📋 待办 | 扩展 fuzz 测试覆盖更多协议路径 |
 | 社区贡献指南 | P1 | 📋 待办 | 完善 CONTRIBUTING.md、代码评审流程 |
 
@@ -84,20 +97,3 @@ gantt
 - ✅ 限流（令牌桶 + 白名单）
 - ✅ ASan/UBSan CI 门禁（101/101 测试通过）
 - ✅ 编译时裁剪（36 个选项）
-- ✅ 统一错误系统
-- ✅ 构建矩阵验证（Build Matrix）
-- ✅ 嵌入验证清单
-- ✅ 设计哲学文档
-- ✅ Brain 知识库文档
-- ✅ 代码质量修复（L3-L5）
-- ✅ 性能基准更新（CI 基线 83K RPS，Platinum tier）
-- ✅ ci-fuzz 修复（C11 对齐 + 链接补齐）
-- ✅ 嵌入验证第二轮（add_subdirectory + FetchContent 集成验证）
-- ✅ 性能回归门禁（10% RPS 阈值，CI 自动失败）→ 已被同机配对门禁替换
-- ✅ 新嵌入者接入（双语接入指南 + 独立嵌入示例）
-- ✅ 代码评审缺陷修复（34 项：13 P0/P1 + 21 P2/P3，v2.7.2）
-- ✅ v2.8.0 发布（大响应零拷贝 writev、第二轮评审 17 项修复、公共 API/构建系统修复）
-- ✅ 基准扩展到 SSE / 流式 / WebSocket（PR #379）
-- ✅ `BUILD_TESTS` 裁剪开关 + examples 纳入 CI 编译（PR #377/#385）
-- ✅ 回归门禁改为同机 head/base 配对 + fail closed（PR #388）
-- ✅ 零拷贝 writev 限定最小 body 阈值（PR #387）

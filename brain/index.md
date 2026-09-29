@@ -1,6 +1,6 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-09-29T05:37:19.833Z._
+_Auto-generated. Last updated 2026-09-29T09:06:28.325Z._
 
 - [benchmark-thermal-throttling](pages/benchmark-thermal-throttling.md) — category: decision | tags: [performance, benchmark, methodology] | ## 发现（2026-08-21，多轮基准 + CPU 频率/温度监控）
 - [build-system-make-cmake](pages/build-system-make-cmake.md) — category: decision | tags: [build-system, cmake, make, just, embedded] | ## 决策

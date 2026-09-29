@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [release, performance, quality]
 created: "2026-09-23T04:16:34"
-updated: "2026-09-29T05:37:14"
+updated: "2026-09-29T09:06:28"
 ---
 
 <!-- compiled_truth -->
@@ -69,4 +69,10 @@ updated: "2026-09-29T05:37:14"
   kind: decision
   summary: "v2.8.0 处置完结：v2.8.1 发布为 Latest，v2.8.0 保持 pre-release；记录 release 事件门禁空测坑（tag 早于 #391）与手动配对补跑"
   source: "v2.8.1 发布会话（2026-09-29）"
+  affects: [release-v280]
+
+- time: 2026-09-29T09:06:28
+  kind: decision
+  summary: "v2.8.1 发布闭环完成：v2.8.1 tag b26e9ac 设为 Latest，v2.8.0 保持 pre-release。配对门禁实测 vs v2.8.0：/ +27.7%、/json +21.5%、/large +1.2%。本轮补齐 v2.8.x 三项遗留（4095/4096/4097 边界测试 #393、trend 推送竞态 + brain lint 守卫 #394、边界测试自身的提前退出与 fd 泄漏修复 #396）。"
+  source: "v2.8.1 收尾与自评审会话（2026-09-29）"
   affects: [release-v280]
