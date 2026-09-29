@@ -5,18 +5,18 @@ category: decision
 status: active
 tags: [release, performance, quality]
 created: "2026-09-23T04:16:34"
-updated: "2026-09-29T01:48:14"
+updated: "2026-09-29T05:37:14"
 ---
 
 <!-- compiled_truth -->
 # v2.8.0 发布记录
 
-## ⚠️ 处置状态（2026-09-29，未完结，勿当作已发布）
-- tag `v2.8.0` 已推送，GitHub Release 以 `--prerelease` 创建（PR #386 于 2026-09-28 合并，merge commit `fe27413`；CHANGELOG 里写的日期是 `2026-09-23`）。
-- **回归门禁红灯**：`/`、`/json` 低于 8 月绝对基线 ~19%，因此 **未执行 `gh release edit --latest`**，v2.8.0 停在 pre-release。
-- 红灯是**正确的**，不是误报：即使换成新的配对门禁重跑，v2.8.0 比的是 v2.7.2，而 writev 小 body 回退真实存在（见 [[zerocopy-small-body-regression]]）。
-- 修复路线已落地：PR #388（门禁改同机配对）合入 main `d51be09`；PR #387（`UVHTTP_ZEROCOPY_MIN_BODY=4096`）合入 main `cda4815`，配对实测 `/` +23.4%、`/json` +27.6%、`/large` +1.8%。
-- **待决**：原地重打 `v2.8.0` tag（覆盖已对外可见的 pre-release）还是发 **v2.8.1** 补丁？倾向 v2.8.1。CHANGELOG 的 `## [Unreleased]` 块已不含版本号标注，两种处置都不需要再改文档。
+## ✅ 处置状态（2026-09-29 完结）
+- v2.8.0 保持 pre-release 不再转正：它比 v2.7.2 确有真实回归（writev 小 body，见 [[zerocopy-small-body-regression]]），红灯是对的。
+- **v2.8.1 作为补丁发布并设为 Latest**：tag `v2.8.1`（merge commit `b26e9ac`，PR #390），GitHub Release 非 pre-release，2026-09-29 上线。CHANGELOG / API_REFERENCE / 嵌入指南 GIT_TAG / README 已同步 v2.8.1。
+- 修复链：PR #387（`UVHTTP_ZEROCOPY_MIN_BODY=4096`，合入 `cda4815`，配对实测 `/` +23.4%、`/json` +27.6%、`/large` +1.8%）+ PR #388（配对门禁，`d51be09`）+ PR #391（base 解析跳过 nightly，`d1e554a`）。
+- **门禁坑（已记录）**：v2.8.1 的 release 事件门禁用的是 **tag 处的旧 workflow 文件**（v2.8.1 tag 早于 #391 合入），base 解析成 `nightly-250`（从移动 main 构建、已含 #387）——head/base 同码，门禁空测绿灯。真实验证靠手动 `workflow_dispatch`（run 36526370976，`base_ref=v2.8.0`，head=main）完成配对比较。
+- 教训：**release tag 之后合入的 ci-benchmark 修复不会对本次 release 事件生效**；gate 修复要合入后再手动补跑一次配对门禁，不能只信 release 事件的自动结果。
 
 ## 发布时间
 2026-09-23，VERSION_TYPE=minor，版本名「性能优化与质量加固」。走两阶段流程（[[release-process-benchmark-gate]]）：release PR 合并 main → tag `v2.8.0` → `gh release create --prerelease` 触发 ci-benchmark 回归门禁 → 门禁绿后 `gh release edit --latest` 转正式，main push 触发文档部署。
@@ -39,8 +39,8 @@ updated: "2026-09-29T01:48:14"
 - 回归基线变化：/large 5700 → 8800 RPS
 
 ## 下一步
-- v2.8.x：io_uring 静态文件路径探索（P2）、内存分配优化（P2）
-- 已知待办：`format-check` 门禁在 pull_request 事件下空转（见 [[ci-format-check-gate-noop]]），修复需先清理存量格式漂移；`docs/releases/*` 与 API 参考尚未同步 v2.8.0
+- v2.8.x：io_uring 静态文件路径探索（P2）、内存分配优化（P2）；4095/4096/4097 三条路径 wire 等价边界测试；`trend` job 推送竞态
+- 已知待办：`format-check` 门禁在 pull_request 事件下空转（见 [[ci-format-check-gate-noop]]），修复需先清理存量格式漂移
 
 关联 [[release-process-benchmark-gate]]、[[perf-regression-gate]]、[[zerocopy-small-body-regression]]、[[release-v272]]
 
@@ -63,4 +63,10 @@ updated: "2026-09-29T01:48:14"
   kind: decision
   summary: Rewrote compiled_truth to the new best understanding
   source: "brain 审核会话（2026-09-29）— 发布记录 + 门禁红灯定性与处置状态"
+  affects: [release-v280]
+
+- time: 2026-09-29T05:37:14
+  kind: decision
+  summary: "v2.8.0 处置完结：v2.8.1 发布为 Latest，v2.8.0 保持 pre-release；记录 release 事件门禁空测坑（tag 早于 #391）与手动配对补跑"
+  source: "v2.8.1 发布会话（2026-09-29）"
   affects: [release-v280]

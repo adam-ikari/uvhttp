@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [performance, benchmark, writev, methodology]
 created: "2026-09-28T18:56:30"
-updated: "2026-09-29T01:51:22"
+updated: "2026-09-29T05:37:19"
 ---
 
 <!-- compiled_truth -->
@@ -48,4 +48,10 @@ PR #387（`fix/zerocopy-small-body`）；v2.8.0 仍为 pre-release，待 #387/#3
   kind: evidence
   summary: "PR #387 已合入 main（cda4815）。合入前用同机配对门禁实测：base = 含全量 writev 的 main、head = 加阈值，10 轮配对给出 / 123.4%、/json 127.6%、/large 101.8%，三端点 MAD 2–4%、0/10 配对低于限——与本地单核绑核测得的 +14%（小 body 回到拷贝路径）方向一致、幅度更大（CI 是 -t2 -c10 轻载，拷贝路径优势更明显）。v2.8.0 处置仍待定（原地重打 tag vs v2.8.1）"
   source: "PR #387 合并（2026-09-29）+ 配对门禁实测"
+  affects: [zerocopy-small-body-regression]
+
+- time: 2026-09-29T05:37:19
+  kind: note
+  summary: "v2.8.1 已发布为 Latest（tag b26e9ac），本页阈值修复随 v2.8.1 上线。v2.8.0 pre-release 保持不回退。PR #391（base 跳过 nightly）合入后 release 事件门禁 base 解析不再漂移。"
+  source: "v2.8.1 发布会话（2026-09-29）"
   affects: [zerocopy-small-body-regression]
