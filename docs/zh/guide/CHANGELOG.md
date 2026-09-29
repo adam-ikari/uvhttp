@@ -11,13 +11,13 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)规范。
 
 
-## [Unreleased]
+## [2.8.1] - 2026-09-29
 
 ### 变更
 - **基准回归门禁改为同机配对比较**: `ci-benchmark.yml` 现在在同一 runner、同一 job 内检出并构建 base 版本（PR base sha / 上一个 release tag / 手动 `base_ref`），两台 `benchmark_unified`（18081/18082）按轮次交替测量 `/`、`/json`、`/large`（各 10 轮，奇数轮先压 head、偶数轮先压 base）；`regression_check.py --compare` 按 round 配对取 head/base 比值中位数，判定条件为中位数 < 90% **且**多数配对本身也低于 90%（base 缺数据、配对 <3 轮、或被 gate 端点在任一 CSV 缺失同样失败——空跑的 gate 不算通过）。门禁端点清单单一来源为 workflow 的 `GATE_ENDPOINTS`，以 `--gate` 传给脚本。绝对 RPS 基线（83K/81K/8.8K）降级为报告信息——同一 commit 跨 run 的中位数在共享 runner 上漂移可达 40%，绝对阈值实际 gate 的是机器运气而非代码。比值噪声本身重尾：零 C 改动的 PR 上 10 轮配对仍给出中位数 97.4%、MAD 14.4%，故先试的稳健置信下界（中位数 − 1.7·MAD-SE）会把同一构建判红，已换为中位数 + 多数规则（改后同一对比第三次运行给出 `/` 98.4%、仅 3/10 配对低于限，PASS）；真实的 writev 小 body 回退（−14%、散布约 2%）几乎每个配对都在阈值以下，仍被 gate 捕获。同时修正 benchmark job 的 token 权限（仓库默认 read-only 使 PR 评论与趋势落库一直无法执行，趋势落库拆为独立 job）
 
 ### 修复
-- **零拷贝 writev 拖慢小响应**: v2.8.0 的 writev 路径对全部非 TLS 响应生效，小 body 下 header+body 双 iovec 反而比单缓冲拷贝路径慢。服务端绑核单核、`wrk -t4 -c100` 同机配对测量下 `/` 中位数比 v2.7.2 低 13.9%。现仅当 `body_length >= UVHTTP_ZEROCOPY_MIN_BODY`（默认 4096，可经 CMake 调整）才走 writev，小响应回到拷贝路径（`/` 恢复到 v2.7.2 的 98.7%），`/large` 零拷贝增益不变（1.51x）
+- **零拷贝 writev 拖慢小响应**: v2.8.0 的 writev 路径对全部非 TLS 响应生效，小 body 下 header+body 双 iovec 反而比单缓冲拷贝路径慢。服务端绑核单核、`wrk -t4 -c100` 同机配对测量下 `/` 中位数比 v2.7.2 低 13.9%。现仅当 `body_length >= UVHTTP_ZEROCOPY_MIN_BODY`（默认 4096，可经 CMake 调整）才走 writev，小响应回到拷贝路径（`/` 恢复到 v2.7.2 的 98.7%），`/large` 零拷贝增益不变（1.51x）。合入前由新的同机配对门禁实测（base = 含全量 writev 的 main）：`/` **+23.4%**、`/json` **+27.6%**、`/large` +1.8%
 
 ## [2.8.0] - 2026-09-23
 

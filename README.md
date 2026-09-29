@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.8.0-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.8.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
@@ -21,7 +21,7 @@ Lightweight & Embeddable • 32-bit Support • Zero-Copy • ASan/UBSan-Verifie
 
 UVHTTP is a production-grade, event-driven HTTP server library built on libuv for modern C applications. It delivers exceptional performance with minimal resource consumption, making it ideal for both high-performance servers and embedded systems.
 
-### Key Metrics (v2.8.0, GitHub CI baseline)
+### Key Metrics (v2.8.1, GitHub CI baseline)
 
 Performance baselines are measured on **GitHub Actions `ubuntu-latest` runners** for hardware consistency. Previous local baselines (v2.6.x, ~20K RPS) were measured on developer hardware with 40%+ variance from CPU thermal throttling. The CI runner eliminates this variance (CV 0.4–2.4%), providing an authoritative, reproducible baseline.
 
@@ -223,7 +223,7 @@ cmake -DCMAKE_USER_CONFIG=ON ..
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello from UVHTTP v2.8.0!", strlen("Hello from UVHTTP v2.8.0!"));
+    uvhttp_response_set_body(res, "Hello from UVHTTP v2.8.1!", strlen("Hello from UVHTTP v2.8.1!"));
     return uvhttp_response_send(res);
 }
 
@@ -507,6 +507,10 @@ UVHTTP is built upon excellent open-source projects:
 - [x] TLS EINTR retry, If-None-Match weak/multi-value ETag, directory listing TOCTOU fix
 - [x] X-Forwarded-For not trusted by default (`trust_proxy_headers` opt-in), listen param validation, idempotent `server_stop`
 
+### v2.8.1 (Released 2026-09-29)
+- [x] Zero-copy writev now gated by `UVHTTP_ZEROCOPY_MIN_BODY` (default 4096) — small responses return to the copy path (`/` +23.4%, `/json` +27.6%, `/large` gain preserved) (PR #387)
+- [x] Benchmark regression gate rewritten as same-runner paired comparison (head 18081 vs base 18082, 10 alternating rounds, median ratio + majority rule); absolute RPS baselines demoted to report-only (PR #388)
+
 ### v2.8.0 (Released 2026-09-23)
 - [x] Large-response zero-copy writev — /large RPS 5.1K → 8.8K, per-request 200KB memcpy eliminated (PR #378)
 - [x] Second-round code-review fixes — 17 defects: LRU OOM use-after-free, config double-free, error-code mapping, gzip budget bypass, JSON escaping (PR #380)
@@ -526,6 +530,7 @@ UVHTTP is built upon excellent open-source projects:
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.8.1** | 2026-09-29 | Zero-copy threshold `UVHTTP_ZEROCOPY_MIN_BODY` restores small-response throughput (PR #387), benchmark gate rewritten as same-runner paired comparison (PR #388) |
 | **v2.8.0** | 2026-09-23 | Large-response zero-copy writev (/large 5.1K→8.8K RPS, PR #378), second-round review fixes (17 defects, PR #380), public API / build-system fixes (PR #381), SSE/streaming/WebSocket benchmarks (PR #379) |
 | **v2.7.2** | 2026-09-07 | 34 项代码评审缺陷修复：query string 路由匹配、MAX_PARAMS 边界、WS 短写截帧、If-Modified-Since 时区/3 种日期格式、accept 下溢等；/large 零拷贝 writev（5.1K→8.8K RPS） |
 | **v2.7.1** | 2026-08-26 | CI fuzz fixes (C11 alignment, PR #364), embedding CMake dependency visibility (PR #365), performance regression gate (10% RPS threshold, PR #366) |
