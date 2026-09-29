@@ -160,7 +160,7 @@ measuring **both revisions on the same runner in the same job**:
 If no base revision can be resolved the job falls back to the old absolute
 baseline gate and says so in the log.
 
-> Three self-test runs of this gate on PR #388, which changes no C code at all
+> Five self-test runs of this gate on PR #388, which changes no C code at all
 > (base = the PR's own base SHA), all on 2026-09-28:
 >
 > | rule under test | `/` | `/json` | `/large` | verdict |
@@ -168,12 +168,15 @@ baseline gate and says so in the log.
 > | 6 rounds, hard 90% cutoff on the median | 89.6% | 112.8% | 99.9% | false FAIL |
 > | 10 rounds, median − 1.7·MAD-SE bound | 97.4% (MAD 14.4%) | 106.9% | 101.9% | false FAIL (bound 88.2%) |
 > | 10 rounds, median + majority | 98.4% (3/10 under limit) | 95.9% | 100.6% | PASS |
+> | same rule, re-run | 103.3% (1/10) | 107.9% | 100.9% | PASS |
+> | same rule, re-run | 103.5% (0/10) | 100.5% | 99.4% | PASS |
 >
-> The raw per-round `/` ratios in the passing run were
+> The raw per-round `/` ratios in the first passing run were
 > 93 80 103 72 97 123 100 88 100 109 (% of base) — single rounds up to 28% below
 > and 23% above the median, while `/large` in the same run stayed inside 95–107%.
 > Absolute baseline in that same run reported 74.1% for `/`, which is the
-> cross-run layer, not a regression.
+> cross-run layer, not a regression. The rule has since passed three consecutive
+> self-tests on identical code, and still fails the injected −14%/2%-spread case.
 
 ```bash
 # Paired check outside CI: two CSVs measured on the same machine
