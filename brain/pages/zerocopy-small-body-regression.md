@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [performance, benchmark, writev, methodology]
 created: "2026-09-28T18:56:30"
-updated: "2026-09-29T01:14:08"
+updated: "2026-09-29T01:51:22"
 ---
 
 <!-- compiled_truth -->
@@ -42,4 +42,10 @@ PR #387（`fix/zerocopy-small-body`）；v2.8.0 仍为 pre-release，待 #387/#3
   kind: note
   summary: "阈值判定用的是压缩前的 response->body_length：uvhttp_response_send() 在调用 prepare()（gzip 会就地改写 body_length）之前就决定走 writev 还是拷贝路径。后果仅限性能——原始 body ≥4096 但压缩后 <4096 的可压缩响应仍走双 iovec writev，落在小 body 慢 14% 的区间；正确性不受影响（prepare 返回的压缩 buffer 才是实际发送内容，Content-Encoding 一致）。暂不改：收窄判定需把 prepare 提到决策前，代价大于收益。"
   source: "PR #387 自评审（代码路径核对 src/uvhttp_response.c:1044-1080 / :962-970 / :615-743）"
+  affects: [zerocopy-small-body-regression]
+
+- time: 2026-09-29T01:51:22
+  kind: evidence
+  summary: "PR #387 已合入 main（cda4815）。合入前用同机配对门禁实测：base = 含全量 writev 的 main、head = 加阈值，10 轮配对给出 / 123.4%、/json 127.6%、/large 101.8%，三端点 MAD 2–4%、0/10 配对低于限——与本地单核绑核测得的 +14%（小 body 回到拷贝路径）方向一致、幅度更大（CI 是 -t2 -c10 轻载，拷贝路径优势更明显）。v2.8.0 处置仍待定（原地重打 tag vs v2.8.1）"
+  source: "PR #387 合并（2026-09-29）+ 配对门禁实测"
   affects: [zerocopy-small-body-regression]
