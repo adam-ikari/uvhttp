@@ -83,8 +83,11 @@ jobs:
             release) REF="" ;;
           esac
           if [ -z "$REF" ] && [ "$EVENT_NAME" = "release" ]; then
-            # Newest published release that is not the one being gated.
-            REF=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" | python3 -c 'import json,os,sys; rs=json.load(sys.stdin); cur=os.environ["RELEASE_TAG"]; print(next((r["tag_name"] for r in rs if not r.get("draft") and r.get("tag_name") != cur), ""))')
+            # Newest published release that is not the one being gated. Nightly
+            # prereleases are skipped: they are built from a moving main, so a
+            # nightly as base would compare the release against itself and turn
+            # the gate green without measuring anything.
+            REF=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" | python3 -c 'import json,os,sys; rs=json.load(sys.stdin); cur=os.environ["RELEASE_TAG"]; print(next((r["tag_name"] for r in rs if not r.get("draft") and r.get("tag_name") != cur and not r.get("tag_name","").startswith("nightly")), ""))')
           fi
           if [ -z "$REF" ]; then
             echo "paired=false" >> "$GITHUB_OUTPUT"
