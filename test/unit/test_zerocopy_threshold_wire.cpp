@@ -21,6 +21,8 @@
 
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
+#include "uvhttp_request.h"
+#include "uvhttp_response.h"
 #include "uvhttp_router.h"
 #include "uvhttp_server.h"
 
