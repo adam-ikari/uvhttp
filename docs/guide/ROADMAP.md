@@ -204,7 +204,8 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 - 📋 Ecosystem expansion
 
 ### Q4 2026
-- 📋 v2.8.0 release
+- ✅ v2.8.0 release (2026-09-23)
+- ✅ v2.8.1 patch release (2026-09-29)
 - 📋 Advanced features
 - 📋 Platform maturity
 - 📋 Documentation overhaul

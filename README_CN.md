@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.8.0-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-2.8.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
@@ -21,7 +21,7 @@
 
 UVHTTP 是一个基于 libuv 的生产级事件驱动 HTTP 服务器库，专为现代 C 应用设计。它在极低资源消耗下提供卓越性能，既适用于高性能服务器，也适用于嵌入式系统。
 
-### 关键指标 (v2.8.0, GitHub CI 基准)
+### 关键指标 (v2.8.1, GitHub CI 基准)
 
 性能基准在 **GitHub Actions `ubuntu-latest` runner** 上测量，以确保硬件一致性。此前的本地基准（v2.6.x，约 20K RPS）在开发者硬件上测量，受 CPU 热降频影响方差高达 40%+。CI runner 消除了这一方差（CV 0.4–2.4%），提供了权威的、可复现的基线。
 
@@ -223,7 +223,7 @@ cmake -DCMAKE_USER_CONFIG=ON ..
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello from UVHTTP v2.8.0!", strlen("Hello from UVHTTP v2.8.0!"));
+    uvhttp_response_set_body(res, "Hello from UVHTTP v2.8.1!", strlen("Hello from UVHTTP v2.8.1!"));
     return uvhttp_response_send(res);
 }
 
@@ -504,6 +504,10 @@ UVHTTP 基于以下优秀的开源项目构建：
 - [x] TLS EINTR 重试、If-None-Match weak/多值 ETag、目录列表 TOCTOU 修复
 - [x] 默认不信任 X-Forwarded-For（`trust_proxy_headers` 可选开启）、listen 参数校验、`server_stop` 幂等
 
+### v2.8.1（已发布 2026-09-29）
+- [x] 零拷贝 writev 增加 `UVHTTP_ZEROCOPY_MIN_BODY` 阈值（默认 4096）——小响应回到拷贝路径（`/` +23.4%、`/json` +27.6%，`/large` 增益不变）（PR #387）
+- [x] 基准回归门禁改为同机配对比较（head 18081 vs base 18082，10 轮交替，比值中位数 + 多数规则）；绝对 RPS 基线降级为报告信息（PR #388）
+
 ### v2.8.0（已发布 2026-09-23）
 - [x] 大响应零拷贝 writev —— /large RPS 5.1K → 8.8K，消除每请求 200KB memcpy（PR #378）
 - [x] 第二轮代码评审修复 —— 17 项缺陷：LRU OOM use-after-free、config 双重释放、错误码映射、gzip 预算绕过、JSON 转义（PR #380）
@@ -523,6 +527,7 @@ UVHTTP 基于以下优秀的开源项目构建：
 
 | 版本 | 日期 | 亮点 |
 |---------|------|------------|
+| **v2.8.1** | 2026-09-29 | 零拷贝阈值 `UVHTTP_ZEROCOPY_MIN_BODY` 恢复小响应吞吐（PR #387）、基准门禁改为同机配对比较（PR #388） |
 | **v2.8.0** | 2026-09-23 | 大响应零拷贝 writev（/large 5.1K→8.8K RPS，PR #378）、第二轮评审 17 项缺陷修复（PR #380）、公共 API/构建系统修复（PR #381）、SSE/流式/WebSocket 基准（PR #379） |
 | **v2.7.2** | 2026-09-07 | 34 项代码评审缺陷修复：query string 路由匹配、MAX_PARAMS 边界、WS 短写截帧、If-Modified-Since 时区/3 种日期格式、accept 下溢等；/large 零拷贝 writev（5.1K→8.8K RPS） |
 | **v2.7.1** | 2026-08-26 | CI fuzz 修复（C11 对齐，PR #364）、嵌入 CMake 依赖可见性（PR #365）、性能回归门禁（10% RPS 阈值，PR #366） |

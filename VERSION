@@ -2,12 +2,12 @@
 # This file defines the current version information for the project
 
 # Current version number (semantic version: MAJOR.MINOR.PATCH)
-VERSION=2.8.0
-VERSION_TYPE=minor
-RELEASE_DATE=2026-09-23
-PREVIOUS_VERSION=2.7.2
+VERSION=2.8.1
+VERSION_TYPE=patch
+RELEASE_DATE=2026-09-29
+PREVIOUS_VERSION=2.8.0
 NEXT_VERSION=2.9.0
-VERSION_NAME="性能优化与质量加固" # v2.8.0
+VERSION_NAME="零拷贝小 body 阈值与基准门禁改造" # v2.8.1
 IS_PRERELEASE=false
 PRERELEASE_IDENTIFIER=""
 

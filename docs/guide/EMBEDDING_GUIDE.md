@@ -71,7 +71,7 @@ project(myapp C)
 include(FetchContent)
 FetchContent_Declare(uvhttp
   GIT_REPOSITORY https://github.com/adam-ikari/uvhttp.git
-  GIT_TAG        v2.8.0
+  GIT_TAG        v2.8.1
 )
 FetchContent_MakeAvailable(uvhttp)
 
