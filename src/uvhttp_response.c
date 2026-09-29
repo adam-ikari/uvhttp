@@ -1051,15 +1051,17 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
         return UVHTTP_OK;
     }
 
-    /* Only a real uvhttp_connection TCP stream takes the zero-copy writev
-     * path. Anything else (NULL client, a handle without a connection, a
-     * client that is not the connection's own tcp_handle, or TLS) falls back
+    /* Only a real uvhttp_connection TCP stream with a body worth splitting
+     * takes the zero-copy writev path. Anything else (NULL client, a handle
+     * without a connection, a client that is not the connection's own
+     * tcp_handle, TLS, or a body below UVHTTP_ZEROCOPY_MIN_BODY) falls back
      * to the original build_data+send_raw route, which validates the client
      * and returns the same errors as before the optimization — never pass a
      * NULL or bogus stream to uv_write. */
     uv_stream_t* stream = (uv_stream_t*)response->client;
     int use_zerocopy = 0;
-    if (stream && stream->type == UV_TCP && stream->loop) {
+    if (stream && stream->type == UV_TCP && stream->loop &&
+        response->body_length >= UVHTTP_ZEROCOPY_MIN_BODY) {
         uvhttp_connection_t* conn =
             (uvhttp_connection_t*)stream->data;
         if (conn && stream == (uv_stream_t*)&conn->tcp_handle) {

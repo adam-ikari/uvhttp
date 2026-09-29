@@ -413,6 +413,22 @@
 #    endif
 
 /**
+ * Minimum response body size for the zero-copy writev send path
+ *
+ * Below this size the header + body two-iov writev is slower than the
+ * contiguous copy path: measured on a pinned single-core server with
+ * wrk -t4 -c100, small responses ran ~14% slower through writev while
+ * bodies above the threshold kept the ~1.5x writev gain.
+ *
+ * CMake configuration:
+ * - Configure through CMakeLists.txt or command line parameters
+ * - Example: cmake -DUVHTTP_ZEROCOPY_MIN_BODY=8192 ..
+ */
+#    ifndef UVHTTP_ZEROCOPY_MIN_BODY
+#        define UVHTTP_ZEROCOPY_MIN_BODY 4096 /* 4KB */
+#    endif
+
+/**
  * Static file cache size
  *
  * CMake configuration:
