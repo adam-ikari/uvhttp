@@ -8,7 +8,11 @@ Measured 2026-08-21 on GitHub Actions `ubuntu-latest` runner (Release build, sys
 
 ### Why GitHub CI is the authoritative baseline
 
-GitHub CI runners provide **consistent hardware** without the thermal throttling variance that plagues local benchmarks. Local benchmarks on AMD Ryzen 7 5800H showed 40%+ coefficient of variation due to CPU thermal throttling; CI runners show 0.4–2.4% CV.
+GitHub CI runners provide **consistent hardware** without the thermal throttling variance that plagues local benchmarks. Local benchmarks on AMD Ryzen 7 5800H showed 40%+ coefficient of variation due to CPU thermal throttling; CI runs show 0.4–2.4% CV.
+
+> **That CV is within a single run.** The 10 rounds of one endpoint share one runner and one warm server, so they agree closely. Across *runs* of the same commit the medians do not: re-running `ci-benchmark.yml` on the unchanged 2026-08-21 control commit (2026-09-28) produced small-response medians in the ~40–54K band against the recorded 83K. Runners are shared VMs whose neighbours, CPU model, and frequency differ per allocation.
+>
+> Consequence: **absolute RPS numbers are comparable only as documentation, not as a gate.** The regression gate therefore measures head and base on the same runner in the same job and compares paired rounds — see [Regression Gate](#regression-gate-paired-same-runner).
 
 ### CI Runner Environment
 
@@ -122,6 +126,67 @@ gh workflow run ci-benchmark.yml --ref main -f rounds=10 -f duration=10
 
 # Or via PR label
 gh pr edit <PR_NUMBER> --add-label benchmark
+```
+
+### Regression Gate (paired, same runner)
+
+`ci-benchmark.yml` gates PRs (with the `benchmark` label) and releases by
+measuring **both revisions on the same runner in the same job**:
+
+1. Resolve a base revision — PR base SHA, previous published release tag, or
+   the `base_ref` input of a manual run.
+2. Check out and build it next to head (`bench-base/`, Release, same flags).
+3. Start both `benchmark_unified` servers (head on 18081, base on 18082),
+   warm both up, then run the gated endpoints (`/`, `/json`, `/large`)
+   alternately: head round *i*, base round *i*, 10 rounds each — odd rounds
+   load head first, even rounds load base first, so a within-pair ordering
+   effect is shared rather than assigned to one side.
+4. `scripts/performance/regression_check.py head-paired.csv --compare base-paired.csv`
+   pairs samples by round number and gates on the **median** of the per-round
+   head/base ratios: an endpoint fails only when that median is below 90% **and**
+   a majority of the individual pairs are also below 90%. The majority condition
+   is what keeps heavy tails off the verdict — measured 2026-09-28, ten paired
+   rounds of two byte-identical builds gave `/` a median of 97.4% with a median
+   absolute deviation of 14.4%, i.e. single unlucky rounds land far off the
+   median in both directions. A real regression (the writev small-body case,
+   −14% with ~2% spread) puts nearly every pair under the limit and still fails.
+   A confidence bound (median − 1.7·MAD-SE) was tried first and rejected: with
+   heavy-tailed samples it inherits the tail and failed those identical builds.
+   Fewer than 3 pairs, no base sample, or a gated endpoint missing from either
+   CSV fails the gate too — an inconclusive measurement is not a pass, and a
+   gate that inspects nothing must not be greener than no gate. The endpoint
+   list has a single source: the workflow's `GATE_ENDPOINTS`, passed to the
+   script as `--gate`.
+5. The absolute `DEFAULT_BASELINE` comparison still runs, but as report-only
+   output in the same log, so trends stay visible without gating on them.
+
+If no base revision can be resolved the job falls back to the old absolute
+baseline gate and says so in the log.
+
+> Five self-test runs of this gate on PR #388, which changes no C code at all
+> (base = the PR's own base SHA), all on 2026-09-28:
+>
+> | rule under test | `/` | `/json` | `/large` | verdict |
+> |---|---|---|---|---|
+> | 6 rounds, hard 90% cutoff on the median | 89.6% | 112.8% | 99.9% | false FAIL |
+> | 10 rounds, median − 1.7·MAD-SE bound | 97.4% (MAD 14.4%) | 106.9% | 101.9% | false FAIL (bound 88.2%) |
+> | 10 rounds, median + majority | 98.4% (3/10 under limit) | 95.9% | 100.6% | PASS |
+> | same rule, re-run | 103.3% (1/10) | 107.9% | 100.9% | PASS |
+> | same rule, re-run | 103.5% (0/10) | 100.5% | 99.4% | PASS |
+>
+> The raw per-round `/` ratios in the first passing run were
+> 93 80 103 72 97 123 100 88 100 109 (% of base) — single rounds up to 28% below
+> and 23% above the median, while `/large` in the same run stayed inside 95–107%.
+> Absolute baseline in that same run reported 74.1% for `/`, which is the
+> cross-run layer, not a regression. The rule has since passed three consecutive
+> self-tests on identical code, and still fails the injected −14%/2%-spread case.
+
+```bash
+# Paired check outside CI: two CSVs measured on the same machine
+python3 scripts/performance/regression_check.py head.csv --compare base.csv --threshold 0.10
+
+# Legacy absolute comparison
+python3 scripts/performance/regression_check.py benchmark-raw.csv --threshold 0.10
 ```
 
 ### Secondary: Local benchmark (development)

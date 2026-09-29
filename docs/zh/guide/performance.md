@@ -11,7 +11,7 @@ UVHTTP 专为高性能与低延迟而设计。本文档提供性能指标与优�
 
 ### CI 基线（权威）
 
-权威基线在 **GitHub Actions `ubuntu-latest` runner** 上使用 `benchmark_unified` 测量（Release 构建、系统分配器、2 线程、10 并发连接、每轮 10 秒、每端点 10 轮）。CI runner 消除了困扰本地基准的 CPU 热降频方差（CI 上 CV 0.4–2.4%，本地 40%+）。完整方法论与 runner 环境记录见 [性能目标](../../PERFORMANCE_TARGETS.md)。
+权威基线在 **GitHub Actions `ubuntu-latest` runner** 上使用 `benchmark_unified` 测量（Release 构建、系统分配器、2 线程、10 并发连接、每轮 10 秒、每端点 10 轮）。CI runner 消除了困扰本地基准的 CPU 热降频方差（同一次运行内 CV 0.4–2.4%，本地 40%+）。但这种稳定性只在**单次运行内部**成立：同一 commit 跨 run 的中位数会漂移数十个百分点，因为 runner 是共享虚拟机。因此下表数值是文档参考基线，而**回归门禁在同一 runner、同一 job 内配对比较 head 与 base**。完整方法论与 runner 环境记录见 [性能目标](../../PERFORMANCE_TARGETS.md)。
 
 | 端点 | RPS | 平均延迟 | 备注 |
 |----------|-----|-------------|-------|

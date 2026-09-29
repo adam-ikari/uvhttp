@@ -35,13 +35,14 @@
    - 创建 Git tag: `git tag v2.x.y`
    - 推送 tag: `git push origin v2.x.y`
    - 创建 pre-release: `gh release create v2.x.y --prerelease`
-   - **自动触发 ci-benchmark 回归门禁**（10% RPS 阈值 vs 基线）
+   - **自动触发 ci-benchmark 回归门禁**（同机配对：head vs 上一个 release，10% 阈值）
    - 门禁绿（CI 通过 / gate 通过）才可转正式
 
 ### 阶段二：正式发布
 
 4. **确认门禁**
    - 确认 benchmark 回归门禁为绿（PR 标签或 release 事件均触发 gate）
+   - gate 以同一 runner 上 head/base 交替测量的比值判定（配对比值中位数 < 90% 且多数配对也在 90% 以下才失败）；绝对 RPS 基线只作为报告信息，不参与判定（GitHub runner 跨 run 方差约 40%，绝对阈值会 gate 到 runner 运气而非代码）
 
 5. **转正式**
    - `gh release edit v2.x.y --latest`（移除 prerelease 标记）

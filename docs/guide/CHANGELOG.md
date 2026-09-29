@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Changed
+- **基准回归门禁改为同机配对比较**: `ci-benchmark.yml` 现在在同一 runner、同一 job 内检出并构建 base 版本（PR base sha / 上一个 release tag / 手动 `base_ref`），两台 `benchmark_unified`（18081/18082）按轮次交替测量 `/`、`/json`、`/large`（各 10 轮，奇数轮先压 head、偶数轮先压 base）；`regression_check.py --compare` 按 round 配对取 head/base 比值中位数，判定条件为中位数 < 90% **且**多数配对本身也低于 90%（base 缺数据、配对 <3 轮、或被 gate 端点在任一 CSV 缺失同样失败——空跑的 gate 不算通过）。门禁端点清单单一来源为 workflow 的 `GATE_ENDPOINTS`，以 `--gate` 传给脚本。绝对 RPS 基线（83K/81K/8.8K）降级为报告信息——同一 commit 跨 run 的中位数在共享 runner 上漂移可达 40%，绝对阈值实际 gate 的是机器运气而非代码。比值噪声本身重尾：零 C 改动的 PR 上 10 轮配对仍给出中位数 97.4%、MAD 14.4%，故先试的稳健置信下界（中位数 − 1.7·MAD-SE）会把同一构建判红，已换为中位数 + 多数规则（改后同一对比第三次运行给出 `/` 98.4%、仅 3/10 配对低于限，PASS）；真实的 writev 小 body 回退（−14%、散布约 2%）几乎每个配对都在阈值以下，仍被 gate 捕获。同时修正 benchmark job 的 token 权限（仓库默认 read-only 使 PR 评论与趋势落库一直无法执行，趋势落库拆为独立 job）
+
+
 ## [2.8.0] - 2026-09-23
 
 ### Added
