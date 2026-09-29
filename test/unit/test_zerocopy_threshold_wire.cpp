@@ -143,6 +143,11 @@ bool FetchRaw(uv_loop_t* loop, int port, const std::string& path,
      * server's write can actually be issued. */
     out->raw.clear();
     char buf[8192];
+    /* Bytes the whole response occupies on the wire: header block, blank-line
+     * separator, and the declared body. raw.size() already includes the
+     * headers, so comparing it against the body length alone would let this
+     * loop exit while the body is still short — by up to one header block —
+     * whenever TCP delivers the response in more than one segment. */
     size_t expected_total = 0;
     bool have_length = false;
     const int kMaxPolls = 200;
@@ -175,9 +180,12 @@ bool FetchRaw(uv_loop_t* loop, int port, const std::string& path,
             const std::string kKey = "Content-Length: ";
             size_t cl = out->header_block.find(kKey);
             if (cl == std::string::npos) {
+                close(fd);
                 return false; /* framed by something other than a length */
             }
+            /* header block + blank-line separator + declared body */
             expected_total =
+                sep + 4 +
                 (size_t)atol(out->header_block.c_str() + cl + kKey.size());
             have_length = true;
         }
