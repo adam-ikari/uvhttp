@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [release, memory-safety, websocket]
 created: "2026-08-17T16:10:13"
-updated: "2026-08-17T16:10:52"
+updated: "2026-09-29T01:25:51"
 ---
 
 <!-- compiled_truth -->
@@ -34,9 +34,9 @@ updated: "2026-08-17T16:10:52"
 - 分支保护规则：main 只能通过 PR 合并（直接 push 被拒）
 - 发布分支命名注意：不能用 `release/vX.Y.Z`（与已存在的 `release` 分支冲突），用 `release-X.Y.Z`
 
-## 待处理
-- PR #335（fix/ws-tls-large-frames）与 main 冲突（connection.c / websocket.c），需 rebase 解决
-- 10 个 dependabot PR（#337-#346）CI 全绿但未合并
+## 发布时挂起的两项（2026-09-29 核对：均已关闭）
+- PR #335（fix/ws-tls-large-frames）：当时与 main 冲突需 rebase → **已于 2026-08-18 合并**，处置方式见 `websocket-tls-pr335-merge`（rebase 到含 #336 的 main，丢弃 3 个回归，只保留两个真实 TLS 修复）
+- 10 个 dependabot PR（#337–#346）：当时 CI 全绿未合并 → **全部已合并**
 
 
 ## Timeline
@@ -51,4 +51,10 @@ updated: "2026-08-17T16:10:52"
   kind: decision
   summary: Rewrote compiled_truth to the new best understanding
   source: brain update-truth
+  affects: [release-v262]
+
+- time: 2026-09-29T01:25:51
+  kind: decision
+  summary: Rewrote compiled_truth to the new best understanding
+  source: "brain 审核会话（2026-09-29）— 核对并关闭过期待办"
   affects: [release-v262]

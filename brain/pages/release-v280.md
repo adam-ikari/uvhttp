@@ -5,11 +5,18 @@ category: decision
 status: active
 tags: [release, performance, quality]
 created: "2026-09-23T04:16:34"
-updated: "2026-09-23T04:17:39"
+updated: "2026-09-29T01:48:14"
 ---
 
 <!-- compiled_truth -->
 # v2.8.0 发布记录
+
+## ⚠️ 处置状态（2026-09-29，未完结，勿当作已发布）
+- tag `v2.8.0` 已推送，GitHub Release 以 `--prerelease` 创建（PR #386 于 2026-09-28 合并，merge commit `fe27413`；CHANGELOG 里写的日期是 `2026-09-23`）。
+- **回归门禁红灯**：`/`、`/json` 低于 8 月绝对基线 ~19%，因此 **未执行 `gh release edit --latest`**，v2.8.0 停在 pre-release。
+- 红灯是**正确的**，不是误报：即使换成新的配对门禁重跑，v2.8.0 比的是 v2.7.2，而 writev 小 body 回退真实存在（见 [[zerocopy-small-body-regression]]）。
+- 修复路线已落地：PR #388（门禁改同机配对）合入 main `d51be09`；PR #387（`UVHTTP_ZEROCOPY_MIN_BODY=4096`）合入 main `cda4815`，配对实测 `/` +23.4%、`/json` +27.6%、`/large` +1.8%。
+- **待决**：原地重打 `v2.8.0` tag（覆盖已对外可见的 pre-release）还是发 **v2.8.1** 补丁？倾向 v2.8.1。CHANGELOG 的 `## [Unreleased]` 块已不含版本号标注，两种处置都不需要再改文档。
 
 ## 发布时间
 2026-09-23，VERSION_TYPE=minor，版本名「性能优化与质量加固」。走两阶段流程（[[release-process-benchmark-gate]]）：release PR 合并 main → tag `v2.8.0` → `gh release create --prerelease` 触发 ci-benchmark 回归门禁 → 门禁绿后 `gh release edit --latest` 转正式，main push 触发文档部署。
@@ -24,7 +31,7 @@ updated: "2026-09-23T04:17:39"
 ## 发布会话补充（收尾阶段完成）
 - **版本引用同步**：`src/uvhttp_version.c` 非 CMake 构建的版本 fallback（2.7.2→2.8.0，MINOR 7→8、PATCH 2→0）、README/README_CN（badge、关键指标标题、示例串、路线图 v2.8.0 转已发布 + 未完成项并入 v2.9.0、版本历史表加行）、`docs/api/API_REFERENCE.md` 版本头、嵌入指南 `GIT_TAG` v2.7.1→v2.8.0（英/中）
 - **修复 ci-benchmark 发布门禁回归**：PR #373（e213557）已把触发器改为 `release: [published]`，但 PR #379（028f2f1）基于改动前的文件把它覆盖回 `push: branches: [pre-release]` 死配置——若不恢复，pre-release 不会触发回归门禁，两阶段流程会静默跳过门禁。本次恢复触发器、job `if`、gate 步骤 `if`、趋势落库条件（仅 `prerelease == true`）
-- **门禁结果**：Debug / ASan / UBSan 三套 101/101 通过且零 sanitizer 发现；VitePress 文档构建通过（`docs/api/generated` 由 doxygen + `api:generate` 产出，属 gitignore 生成物，本地从主工作区补齐）；`check-doc-sync` 31/31 同步、`check-links` 全绿
+- **门禁结果**：Debug / ASan / UBSan 三套 101/101 通过且零 sanitizer 发现；VitePress 文档构建通过；`check-doc-sync` 31/31 同步、`check-links` 全绿
 
 ## 兼容性
 - 零破坏性变更：minor release，运行时 API 完全向后兼容
@@ -33,9 +40,9 @@ updated: "2026-09-23T04:17:39"
 
 ## 下一步
 - v2.8.x：io_uring 静态文件路径探索（P2）、内存分配优化（P2）
-- 已知待办：`format-check` 门禁在 pull_request 事件下空转（见 [[ci-format-check-gate-noop]]），修复需先清理存量格式漂移
+- 已知待办：`format-check` 门禁在 pull_request 事件下空转（见 [[ci-format-check-gate-noop]]），修复需先清理存量格式漂移；`docs/releases/*` 与 API 参考尚未同步 v2.8.0
 
-关联 [[release-process-benchmark-gate]]、[[perf-regression-gate]]、[[release-v272]]
+关联 [[release-process-benchmark-gate]]、[[perf-regression-gate]]、[[zerocopy-small-body-regression]]、[[release-v272]]
 
 
 ## Timeline
@@ -50,4 +57,10 @@ updated: "2026-09-23T04:17:39"
   kind: decision
   summary: "v2.8.0 发布记录：包含内容、发布会话补充（版本同步与门禁回归修复）、门禁结果、兼容性与下一步"
   source: "v2.8.0 发布会话"
+  affects: [release-v280]
+
+- time: 2026-09-29T01:48:14
+  kind: decision
+  summary: Rewrote compiled_truth to the new best understanding
+  source: "brain 审核会话（2026-09-29）— 发布记录 + 门禁红灯定性与处置状态"
   affects: [release-v280]

@@ -2,7 +2,7 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-09-23T04:05:08"
+updated: "2026-09-29T01:47:17"
 ---
 
 # Roadmap
@@ -22,7 +22,9 @@ gantt
   section v2.8.x — 性能与平台
   新嵌入者接入              :done, a4, 2026-08-27, 1d
   v2.8.0 发布               :done, b6, 2026-09-23, 1d
-  io_uring 静态文件路径     :b2, after b6, 21d
+  回归门禁改同机配对        :done, b7, 2026-09-28, 1d
+  v2.8.0 处置（重打tag或2.8.1）:crit, b8, 2026-09-29, 3d
+  io_uring 静态文件路径     :b2, after b8, 21d
   section v2.9.x — 生态
   文档多语言完善            :c1, after b2, 14d
   Fuzz 测试增强            :c4, after b2, 14d
@@ -37,7 +39,7 @@ gantt
 | 性能基准更新 | P2 | ✅ 已完成 | 10 轮多轮测试，稳态 15K RPS (Silver)，峰值 33K RPS (Gold) |
 | ci-fuzz 修复 | P0 | ✅ 已完成 | C11 对齐 + 链接补齐 + fuzz_request 移除 |
 | 嵌入验证第二轮 | P1 | ✅ 已完成 | add_subdirectory 集成验证，CMake 依赖可见性修复 |
-| 性能回归门禁 | P0 | ✅ 已完成 | 10% RPS 阈值，CI 自动失败 |
+| 性能回归门禁 | P0 | ✅ 已完成 | v2.7.1 初版为绝对 RPS 阈值；v2.8.x 已替换为同机 head/base 配对（见 v2.8.x 表） |
 | 代码评审缺陷修复 | P1 | ✅ 已完成 | 34 项缺陷修复（13 P0/P1 + 21 P2/P3），v2.7.2 |
 
 ### v2.8.x — 性能优化与平台扩展（2026 Q4）
@@ -46,6 +48,9 @@ gantt
 |------|--------|------|------|
 | 新嵌入者接入 | P1 | ✅ 已完成 | 完整嵌入式集成文档（英/中）+ 独立示例 `examples/embedding/` |
 | v2.8.0 发布 | P0 | ✅ 已完成 | 零拷贝 writev（/large +72.7%）、第二轮评审 17 项修复、公共 API/构建系统修复（2026-09-23） |
+| 回归门禁改造为同机配对 | P0 | ✅ 已完成 | 绝对 RPS 阈值 gate 的是 runner 跨 run 方差（~40%）；改为同 runner head/base 交替 10 轮 + 中位数与多数规则 + fail closed（PR #388） |
+| 零拷贝小 body 阈值 | P0 | ✅ 已完成 | writev 对 body < 4096 是负优化（−14%），新增 `UVHTTP_ZEROCOPY_MIN_BODY`（PR #387）；配对门禁实测 `/` +23.4%、`/json` +27.6% |
+| v2.8.0 发布处置 | P0 | 🔄 进行中 | v2.8.0 保持 pre-release；#387/#388 已合入 main，待决定原地重打 tag 还是发 v2.8.1 |
 | io_uring 探索 | P2 | 📋 待办 | 评估 io_uring 替代 epoll 在静态文件路径中的收益 |
 | 内存分配优化 | P2 | 📋 待办 | 减少热路径中的分配次数 |
 
@@ -53,7 +58,7 @@ gantt
 
 | 目标 | 优先级 | 状态 | 说明 |
 |------|--------|------|------|
-| 文档完善 | P1 | 📋 待办 | 中文文档同步、API 参考补充 |
+| 文档完善 | P1 | 📋 待办 | 中文文档同步、API 参考补充；`docs/releases/*` 尚未同步 v2.8.0 |
 | Fuzz 测试增强 | P1 | 📋 待办 | 扩展 fuzz 测试覆盖更多协议路径 |
 | 社区贡献指南 | P1 | 📋 待办 | 完善 CONTRIBUTING.md、代码评审流程 |
 
@@ -68,7 +73,7 @@ gantt
 
 ### 完成项（v2.6.x ~ v2.8.x）
 
-- ✅ HTTP/1.1 服务器（稳态 ~83K RPS，CI 基线）
+- ✅ HTTP/1.1 服务器（CI 记录基线 ~83K RPS；绝对值仅作趋势记录，不当门禁）
 - ✅ WebSocket 全双工通信（RFC 6455）
 - ✅ TLS 1.2/1.3（mbedtls）
 - ✅ TLS 会话缓存（默认 2048 条目/24h，可配置）
@@ -87,8 +92,12 @@ gantt
 - ✅ 代码质量修复（L3-L5）
 - ✅ 性能基准更新（CI 基线 83K RPS，Platinum tier）
 - ✅ ci-fuzz 修复（C11 对齐 + 链接补齐）
-- ✅ 嵌入验证第二轮（add_subdirectory 集成验证）
-- ✅ 性能回归门禁（10% RPS 阈值，CI 自动失败）
+- ✅ 嵌入验证第二轮（add_subdirectory + FetchContent 集成验证）
+- ✅ 性能回归门禁（10% RPS 阈值，CI 自动失败）→ 已被同机配对门禁替换
 - ✅ 新嵌入者接入（双语接入指南 + 独立嵌入示例）
 - ✅ 代码评审缺陷修复（34 项：13 P0/P1 + 21 P2/P3，v2.7.2）
 - ✅ v2.8.0 发布（大响应零拷贝 writev、第二轮评审 17 项修复、公共 API/构建系统修复）
+- ✅ 基准扩展到 SSE / 流式 / WebSocket（PR #379）
+- ✅ `BUILD_TESTS` 裁剪开关 + examples 纳入 CI 编译（PR #377/#385）
+- ✅ 回归门禁改为同机 head/base 配对 + fail closed（PR #388）
+- ✅ 零拷贝 writev 限定最小 body 阈值（PR #387）
