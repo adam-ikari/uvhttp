@@ -61,10 +61,31 @@ jobs:
             -lpthread -lm -ldl \
             -o build_fuzz/fuzz_router
 
+
+          # Link the request-parser fuzz harness (same library + deps).
+          $CC $CFLAGS $INCLUDES -fsanitize=fuzzer,address \
+            test/fuzz/fuzz_request.c \
+            build_fuzz/dist/lib/libuvhttp.a \
+            build_fuzz/dist/lib/libminiz.a \
+            deps/xxhash/libxxhash.a \
+            -Wl,--start-group \
+            deps/llhttp/build/libllhttp.a \
+            deps/cjson/build/libcjson.a \
+            deps/mbedtls/build/library/libmbedtls.a \
+            deps/mbedtls/build/library/libmbedx509.a \
+            deps/mbedtls/build/library/libmbedcrypto.a \
+            deps/libuv/build/libuv.a \
+            -Wl,--end-group \
+            -lpthread -lm -ldl \
+            -o build_fuzz/fuzz_request
       - name: Run fuzz_router (60s, no crashes expected)
         run: |
           ./build_fuzz/fuzz_router -max_total_time=60 -max_len=256 -print_final_stats=1
 
+
+      - name: Run fuzz_request (60s, no crashes expected)
+        run: |
+          ./build_fuzz/fuzz_request -max_total_time=60 -max_len=4096 -print_final_stats=1
       - name: Upload crash artifacts (if any)
         if: failure()
         uses: actions/upload-artifact@v7.0.1
