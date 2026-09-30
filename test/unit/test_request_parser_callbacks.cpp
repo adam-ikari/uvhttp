@@ -10,11 +10,11 @@
 #include <gtest/gtest.h>
 
 extern "C" {
-#include "uvhttp_server.h"
-#include "uvhttp_request.h"
 #include "uvhttp_connection.h"
 #include "uvhttp_protocol_upgrade.h"
+#include "uvhttp_request.h"
 #include "uvhttp_router.h"
+#include "uvhttp_server.h"
 }
 
 #include <string.h>
@@ -24,7 +24,7 @@ extern "C" {
 // Test fixture: creates a server + connection with a live parser
 // ============================================================================
 class ParserCallbackTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
     uvhttp_connection_t* conn = nullptr;
@@ -235,10 +235,12 @@ TEST_F(ParserCallbackTest, UrlAtMaxLength) {
 }
 
 // ============================================================================
-// 11. Header name too long (on_header_field - UVHTTP_MAX_HEADER_NAME_SIZE is 256)
+// 11. Header name too long (on_header_field - UVHTTP_MAX_HEADER_NAME_SIZE is
+// 256)
 // ============================================================================
 TEST_F(ParserCallbackTest, HeaderNameTooLong) {
-    // UVHTTP_MAX_HEADER_NAME_SIZE = 256. A header name >= 256 bytes is rejected.
+    // UVHTTP_MAX_HEADER_NAME_SIZE = 256. A header name >= 256 bytes is
+    // rejected.
     std::string long_name(300, 'X');
     std::string raw = "GET / HTTP/1.1\r\n" + long_name + ": value\r\n\r\n";
     int rc = Execute(raw.c_str());
@@ -247,13 +249,14 @@ TEST_F(ParserCallbackTest, HeaderNameTooLong) {
 }
 
 // ============================================================================
-// 12. Header value too long (on_header_value - UVHTTP_MAX_HEADER_VALUE_SIZE is 4096)
+// 12. Header value too long (on_header_value - UVHTTP_MAX_HEADER_VALUE_SIZE is
+// 4096)
 // ============================================================================
 TEST_F(ParserCallbackTest, HeaderValueTooLong) {
-    // UVHTTP_MAX_HEADER_VALUE_SIZE = 4096. A header value >= 4096 bytes is rejected.
+    // UVHTTP_MAX_HEADER_VALUE_SIZE = 4096. A header value >= 4096 bytes is
+    // rejected.
     std::string long_value(5000, 'V');
-    std::string raw =
-        "GET / HTTP/1.1\r\nX-Test: " + long_value + "\r\n\r\n";
+    std::string raw = "GET / HTTP/1.1\r\nX-Test: " + long_value + "\r\n\r\n";
     int rc = Execute(raw.c_str());
     // on_header_value returns -1 when length >= UVHTTP_MAX_HEADER_VALUE_SIZE
     EXPECT_NE(rc, 0);
@@ -296,6 +299,65 @@ TEST_F(ParserCallbackTest, BodyTooLarge) {
 }
 
 // ============================================================================
+// 13b. Real body-size ceiling
+// ============================================================================
+TEST_F(ParserCallbackTest, BodyLargerThanMaxIsRejected) {
+    // The 16KB case above only proves the realloc path works — it never
+    // reaches the ceiling. on_body rejects when the grown capacity would
+    // exceed UVHTTP_MAX_BODY_SIZE, so feed enough body to cross 1MB and
+    // assert the parser actually stops rather than buffering it all.
+    const size_t kOverLimit = UVHTTP_MAX_BODY_SIZE + 8192;
+    std::string head = "POST /upload HTTP/1.1\r\nContent-Length: " +
+                       std::to_string(kOverLimit) + "\r\n\r\n";
+    ASSERT_EQ(Execute(head.c_str()), 0);
+
+    // Deliver in chunks so the buffer grows by doubling the way a real
+    // client would drive it.
+    std::string chunk(64 * 1024, 'X');
+    size_t sent = 0;
+    int rc = 0;
+    while (sent < kOverLimit && rc == 0) {
+        rc = ExecuteN(chunk.data(), chunk.size());
+        sent += chunk.size();
+    }
+
+    EXPECT_NE(rc, 0) << "body over the ceiling was accepted in full";
+    EXPECT_EQ(llhttp_get_errno(conn->request->parser), HPE_USER);
+    // The refusal must happen before the whole oversized body is buffered.
+    EXPECT_LT(conn->request->body_length, kOverLimit)
+        << "body buffered past the ceiling before being refused";
+}
+
+// ============================================================================
+// 13c. Body split across many chunks reassembles exactly
+// ============================================================================
+TEST_F(ParserCallbackTest, BodySplitAcrossChunksReassemblesExactly) {
+    // on_body appends across callbacks with a doubling realloc. A body
+    // delivered one byte at a time exercises every boundary in that growth
+    // logic; the accumulated bytes must equal what was sent, in order.
+    const size_t kSize = 20000; /* forces several doublings past 8192 */
+    std::string head =
+        "POST /upload HTTP/1.1\r\nContent-Length: " + std::to_string(kSize) +
+        "\r\n\r\n";
+    ASSERT_EQ(Execute(head.c_str()), 0);
+
+    std::string payload(kSize, ' ');
+    for (size_t i = 0; i < kSize; i++) {
+        payload[i] = (char)('a' + (i % 26)); /* non-uniform, order-sensitive */
+    }
+
+    for (size_t i = 0; i < kSize; i++) {
+        ASSERT_EQ(ExecuteN(payload.data() + i, 1), 0)
+            << "single-byte chunk rejected at offset " << i;
+    }
+
+    EXPECT_EQ(conn->request->body_length, kSize);
+    ASSERT_NE(conn->request->body, nullptr);
+    EXPECT_EQ(memcmp(conn->request->body, payload.data(), kSize), 0)
+        << "body reassembled out of order or with gaps";
+}
+
+// ============================================================================
 // 14. Multiple headers
 // ============================================================================
 TEST_F(ParserCallbackTest, MultipleHeaders) {
@@ -323,8 +385,7 @@ TEST_F(ParserCallbackTest, MultipleHeaders) {
 // 15. Request with query string
 // ============================================================================
 TEST_F(ParserCallbackTest, RequestWithQueryString) {
-    const char* raw =
-        "GET /search?q=hello&lang=en HTTP/1.1\r\nHost: x\r\n\r\n";
+    const char* raw = "GET /search?q=hello&lang=en HTTP/1.1\r\nHost: x\r\n\r\n";
     int rc = Execute(raw);
     EXPECT_EQ(rc, 0);
     EXPECT_STREQ(conn->request->url, "/search?q=hello&lang=en");
@@ -446,9 +507,8 @@ TEST_F(ParserCallbackTest, RootUrl) {
 // 23. URL with special characters
 // ============================================================================
 TEST_F(ParserCallbackTest, UrlWithSpecialChars) {
-    const char* raw =
-        "GET /path%20with%20spaces?foo=bar&baz=qux HTTP/1.1\r\n"
-        "Host: x\r\n\r\n";
+    const char* raw = "GET /path%20with%20spaces?foo=bar&baz=qux HTTP/1.1\r\n"
+                      "Host: x\r\n\r\n";
     int rc = Execute(raw);
     EXPECT_EQ(rc, 0);
     EXPECT_STREQ(conn->request->url, "/path%20with%20spaces?foo=bar&baz=qux");
@@ -581,7 +641,7 @@ TEST_F(ParserCallbackTest, RouterDispatch_HandlerFound) {
     ASSERT_NE(router, nullptr);
 
     ASSERT_EQ(uvhttp_router_add_route_method(router, "/api/test", UVHTTP_GET,
-                                              test_route_handler),
+                                             test_route_handler),
               UVHTTP_OK);
 
     // Attach router to server
@@ -611,7 +671,7 @@ TEST_F(ParserCallbackTest, RouterDispatch_NoHandler_404) {
     ASSERT_EQ(uvhttp_router_new(&router), UVHTTP_OK);
 
     ASSERT_EQ(uvhttp_router_add_route_method(router, "/other", UVHTTP_GET,
-                                              test_route_handler),
+                                             test_route_handler),
               UVHTTP_OK);
 
     ASSERT_EQ(uvhttp_server_set_router(server, router), UVHTTP_OK);
@@ -619,8 +679,7 @@ TEST_F(ParserCallbackTest, RouterDispatch_NoHandler_404) {
     s_router_handler_called = 0;
 
     // Feed a request that doesn't match any route
-    const char* raw =
-        "GET /nonexistent HTTP/1.1\r\nHost: example.com\r\n\r\n";
+    const char* raw = "GET /nonexistent HTTP/1.1\r\nHost: example.com\r\n\r\n";
     int rc = Execute(raw);
     EXPECT_EQ(rc, 0);
 
@@ -646,7 +705,7 @@ TEST_F(ParserCallbackTest, RouterDispatch_PostMethodMatch) {
 
     // Register as UVHTTP_POST (method enum is mapped correctly now)
     ASSERT_EQ(uvhttp_router_add_route_method(router, "/submit", UVHTTP_POST,
-                                              test_route_handler),
+                                             test_route_handler),
               UVHTTP_OK);
 
     ASSERT_EQ(uvhttp_server_set_router(server, router), UVHTTP_OK);
@@ -674,7 +733,7 @@ TEST_F(ParserCallbackTest, RouterDispatch_WrongMethod_404) {
 
     // Register GET handler only
     ASSERT_EQ(uvhttp_router_add_route_method(router, "/api/data", UVHTTP_GET,
-                                              test_route_handler),
+                                             test_route_handler),
               UVHTTP_OK);
 
     ASSERT_EQ(uvhttp_server_set_router(server, router), UVHTTP_OK);
@@ -755,7 +814,8 @@ TEST_F(ParserCallbackTest, ProtocolUpgrade_SingleProto_HandlerFails) {
 
 // ============================================================================
 // 33. Protocol upgrade - single proto, no upgrade_header match (lines 415-438)
-//     Register protocol with empty upgrade_header so detector is called directly
+//     Register protocol with empty upgrade_header so detector is called
+//     directly
 // ============================================================================
 TEST_F(ParserCallbackTest, ProtocolUpgrade_SingleProto_NoUpgradeHeader) {
     s_detector_called = 0;
