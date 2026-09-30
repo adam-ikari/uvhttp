@@ -21,10 +21,18 @@
 
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
+#include "uvhttp_features.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_router.h"
 #include "uvhttp_server.h"
+#if UVHTTP_FEATURE_COMPRESSION
+/* Only the compression-interaction tests below need a decoder, and the
+ * headers ship with the feature. The no-compression build matrix entry must
+ * still compile this file. */
+#    include "miniz.h"
+#    include "miniz_tinfl.h"
+#endif
 
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
@@ -37,6 +45,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <uv.h>
+#include <vector>
 
 namespace {
 
@@ -56,9 +65,17 @@ void FillPattern(char* buf, size_t n) {
 }
 
 /* Body size is carried in the path so each request is self-describing and no
- * handler state has to survive across the loop pumps below. */
+ * handler state has to survive across the loop pumps below. A `/gzip/` prefix
+ * additionally turns on response compression, which makes the body shrink
+ * below the zero-copy threshold — the interaction between the two size
+ * decisions is what these tests exercise. */
 int BodyHandler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     const char* path = uvhttp_request_get_path(req);
+    int gzip = 0;
+    if (strncmp(path, "/gzip/", 6) == 0) {
+        gzip = 1;
+        path += 5; /* keep the '/' so strrchr below still finds the digits */
+    }
     const char* digits = strrchr(path, '/');
     long size = digits ? atol(digits + 1) : 0;
 
@@ -67,6 +84,13 @@ int BodyHandler(uvhttp_request_t* req, uvhttp_response_t* resp) {
         uvhttp_response_set_header(resp, "Content-Type", "text/plain");
         uvhttp_response_set_body(resp, "bad size", 8);
         return uvhttp_response_send(resp);
+    }
+
+    if (gzip) {
+        uvhttp_response_set_compress(resp, 1);
+        /* Force the compression path regardless of the default 1KB floor, so
+         * the size under test is the only variable. */
+        uvhttp_response_set_compress_threshold(resp, 1);
     }
 
     /* set_body copies into a response-owned buffer, so a stack buffer is
@@ -119,6 +143,11 @@ struct WireResponse {
     std::string raw;
     std::string header_block;
     std::string body;
+    /* The Content-Length value the server declared, kept separately so a test
+     * can assert it against what actually arrived. Comparing body.size() to
+     * the raw framing would be circular — FetchRaw reads exactly this many
+     * bytes, so they agree by construction even when the value is wrong. */
+    size_t declared_length = 0;
 };
 
 /* Issue one GET and read until Content-Length bytes of body have arrived.
@@ -184,9 +213,9 @@ bool FetchRaw(uv_loop_t* loop, int port, const std::string& path,
                 return false; /* framed by something other than a length */
             }
             /* header block + blank-line separator + declared body */
-            expected_total =
-                sep + 4 +
+            out->declared_length =
                 (size_t)atol(out->header_block.c_str() + cl + kKey.size());
+            expected_total = sep + 4 + out->declared_length;
             have_length = true;
         }
     }
@@ -222,6 +251,12 @@ std::string BodyPath(size_t size) {
     return std::string(path);
 }
 
+std::string GzipPath(size_t size) {
+    char path[64];
+    snprintf(path, sizeof(path), "/gzip/%zu", size);
+    return std::string(path);
+}
+
 }  // namespace
 
 class ZerocopyThresholdWireTest : public ::testing::Test {
@@ -241,6 +276,9 @@ class ZerocopyThresholdWireTest : public ::testing::Test {
                                 UVHTTP_ZEROCOPY_MIN_BODY + 1};
         for (size_t size : sizes) {
             ASSERT_EQ(uvhttp_router_add_route(router, BodyPath(size).c_str(),
+                                              BodyHandler),
+                      UVHTTP_OK);
+            ASSERT_EQ(uvhttp_router_add_route(router, GzipPath(size).c_str(),
                                               BodyHandler),
                       UVHTTP_OK);
         }
@@ -320,3 +358,94 @@ TEST_F(ZerocopyThresholdWireTest, HeaderBlockIsIdenticalAcrossThreshold) {
     EXPECT_NE(below.header_block, at.header_block)
         << "Content-Length did not track the body size";
 }
+
+#if UVHTTP_FEATURE_COMPRESSION
+/* ---------------- compression × zero-copy interaction ---------------- */
+
+/* Decompress a gzip stream and return the byte count, or -1 if the bytes are
+ * not a valid stream.
+ *
+ * UVHTTP builds gzip by hand: a 10-byte header, then a RAW deflate stream
+ * (windowBits = -15, no zlib wrapper), then CRC32 + ISIZE. The bundled miniz
+ * tinfl decodes raw deflate only, so the header and trailer are stripped here
+ * rather than handed to it. Decoding with zlib instead would be a different
+ * container than what actually went on the wire. */
+long GunzipSize(const std::string& in, size_t expect) {
+    const size_t kHeader = 10; /* magic, CM, FLG, MTIME, XFL, OS */
+    const size_t kTrailer = 8; /* CRC32 + ISIZE */
+    if (in.size() <= kHeader + kTrailer) {
+        return -1;
+    }
+    if (in.compare(0, 2, std::string("\x1f\x8b", 2)) != 0) {
+        return -1; /* not a gzip stream at all */
+    }
+
+    std::vector<unsigned char> out(expect + 64);
+    const char* raw = in.data() + kHeader;
+    size_t raw_len = in.size() - kHeader - kTrailer;
+    size_t n =
+        tinfl_decompress_mem_to_mem(out.data(), out.size(), raw, raw_len,
+                                    TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF);
+    if (n == TINFL_DECOMPRESS_MEM_TO_MEM_FAILED) {
+        return -1;
+    }
+    return static_cast<long>(n);
+}
+
+/* A compressible body at/above the zero-copy threshold shrinks below it, so
+ * the two size decisions disagree: the send path chooses zero-copy from the
+ * PRE-compression length while the wire carries the POST-compression bytes.
+ * Whatever route is chosen, the response must be self-consistent —
+ * Content-Encoding announces gzip, Content-Length matches what actually
+ * arrives, and the bytes inflate back to the original body. */
+TEST_F(ZerocopyThresholdWireTest, CompressedBodyIsSelfConsistent) {
+    for (size_t size :
+         {UVHTTP_ZEROCOPY_MIN_BODY, UVHTTP_ZEROCOPY_MIN_BODY + 1}) {
+        WireResponse resp;
+        ASSERT_TRUE(FetchRaw(loop_, port_, GzipPath(size), &resp))
+            << "no complete response for gzip body size " << size;
+
+        EXPECT_NE(resp.header_block.find("Content-Encoding: gzip"),
+                  std::string::npos)
+            << "compressible body was not compressed at size " << size;
+
+        /* The declared length must be what actually arrived — and this must
+         * be checked against the header VALUE, not against the raw framing:
+         * FetchRaw reads exactly declared_length bytes, so framing agreement
+         * holds by construction even when the declared value is wrong. */
+        EXPECT_EQ(resp.declared_length, resp.body.size())
+            << "Content-Length describes " << resp.declared_length
+            << " bytes but " << resp.body.size() << " arrived for body size "
+            << size;
+        EXPECT_NE(resp.declared_length, size)
+            << "Content-Length still describes the uncompressed body size "
+            << size;
+
+        /* Compression must have actually shrunk it, otherwise this test is
+         * not exercising the size-disagreement case at all. */
+        EXPECT_LT(resp.body.size(), size)
+            << "body did not shrink below the original size " << size;
+
+        /* And the bytes must decode back to exactly what the handler set. */
+        EXPECT_EQ(GunzipSize(resp.body, size), static_cast<long>(size))
+            << "gzip payload does not inflate to the original body size "
+            << size;
+    }
+}
+
+/* The same body uncompressed must arrive as plain bytes with no
+ * Content-Encoding — the compression switch is what distinguishes the two
+ * routes, so without it this would only prove the handler echoes input. */
+TEST_F(ZerocopyThresholdWireTest, UncompressedBodyCarriesNoContentEncoding) {
+    WireResponse resp;
+    ASSERT_TRUE(
+        FetchRaw(loop_, port_, BodyPath(UVHTTP_ZEROCOPY_MIN_BODY), &resp));
+
+    EXPECT_EQ(resp.header_block.find("Content-Encoding"), std::string::npos);
+    EXPECT_EQ(resp.body.size(), UVHTTP_ZEROCOPY_MIN_BODY);
+    for (size_t i = 0; i < resp.body.size(); i++) {
+        ASSERT_EQ(resp.body[i], PatternByte(i))
+            << "plain body byte " << i << " differs";
+    }
+}
+#endif /* UVHTTP_FEATURE_COMPRESSION */
