@@ -127,6 +127,19 @@ Closes #123
 - [ ] 内存管理正确（使用 UVHTTP_MALLOC/UVHTTP_FREE）
 - [ ] 错误处理完整
 
+### 本项目易漏的检查点
+
+以下每一条都在本项目造成过实际返工，均为「看代码看不出来、跑一遍也未必暴露」的类型：
+
+- [ ] **测试真的会被执行到** — `test/integration/*.c` 会被 CMake 编译但**不会注册进 ctest**（只有 `add_test` 的测试才跑）。放进 integration 目录的测试 CI 永远不会执行。要进 CI 门禁必须放 `test/unit/`。
+- [ ] **新增测试文件在裁剪构建下能编译** — `build-matrix` 的 `minimal` 配置关掉 WebSocket/HTTPS/static-files/LRU/compression，传递 include 会被裁掉。测试文件要**直接 include 自己调用的头**，不能依赖传递包含（`fuzz_*.c` 需要 `uvhttp_features.h` 同理）。
+- [ ] **新增/改动 `.c/.h` 会被 format-check 门禁** — `format-check` 只对本 PR 变更的 C/H 文件跑 `clang-format --dry-run`，且是**全文件**检查（存量漂移也会挡）。`src/` 存量漂移已清理，但新改动务必 `clang-format -i`。
+- [ ] **`.clang-format` 无重复键** — clang-format 18 拒绝解析含重复 mapping key 的配置（CI 用 18，本地可能是 14 而无法复现）。用工具校验而非凭印象；PyYAML 的 `safe_load` 默认**接受**重复键，是假阴性。
+- [ ] **socket/loop 类测试的 fd 与 handle 释放** — 内存测试的 fd 泄漏 ASan 查不到（fd 不在 malloc 域）。fixture 内每条 `return`/提前退出路径都要 `close(fd)`；read 循环的退出条件要基于**实际收到的 body 长度**，而非 `Content-Length` 值混算，否则 TCP 分段投递时会读到截断 body 假失败。
+- [ ] **CI 步骤顺序本身是正确性的一部分** — `upload-artifact`/`if: failure()` 只对**已执行过**的步骤生效。crash artifact 上传等收尾步骤必须排在**所有**会被 crash 打断的 Run 步骤之后，否则最需要留证时反而丢证据。
+- [ ] **变异验证新测试有牙齿** — 造一个该测试本应捕获的 bug（如丢一个 iovec、破坏阈值边界），确认测试**变红**。一个改错了也照样绿的新测试，等于没有测试。
+- [ ] **新增 fuzz harness 能在空 corpus 下命中回调** — 从空 corpus 起步跑短程，若 cov 长期停在个位数说明没触达目标函数。构造函数要「用真实 API 驱动」，不要自造不存在的接口（历史 `fuzz_request.c` 曾引用不存在的 `uvhttp_request_parse` 而从未编译）。
+
 ## 文档规范
 
 ### 文档双语要求
@@ -245,6 +258,20 @@ ctest
 - 目标覆盖率：80%
 - 新功能必须包含测试
 - Bug 修复必须包含回归测试
+
+### 选择测试形态
+
+不是所有测试都该放同一个目录。判断依据是**这条测试要被谁执行**：
+
+| 形态 | 位置 | 谁执行 | 适用 |
+|---|---|---|---|
+| 单元测试 | `test/unit/*.cpp` | ctest → `ubuntu-test-fast` + `asan-gate` | 需要断言的逻辑、wire 级行为、回归测试 |
+| fuzz harness | `test/fuzz/*.c` | 夜间 `ci-fuzz` | 吃不可信字节的解析/解码路径 |
+| 集成测试 | `test/integration/*.c` | **无人执行**（仅编译） | 长驻服务进程、需外部 curl 驱动 |
+
+**关键**：`test/integration/*.c` 虽然被 CMake 编译进 build，但**不注册进 ctest**，所以 CI 不会跑它。写单元测试时放 `test/unit/`，否则等于没写。
+
+测试真实 socket 行为时用 gtest 起真实 server（`uv_tcp_getsockname` 取实际端口 + 阻塞 socket + `uv_run(UV_RUN_NOWAIT)` 泵循环），见 `test/unit/test_zerocopy_threshold_wire.cpp`。尺寸/阈值类参数从被测宏推导（如 `UVHTTP_ZEROCOPY_MIN_BODY`），不要硬编码——这样改配置无需改测试。
 
 ## 发布流程
 
