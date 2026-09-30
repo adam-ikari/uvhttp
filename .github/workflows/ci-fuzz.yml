@@ -41,6 +41,15 @@ jobs:
             -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
           cmake --build build_fuzz -j$(nproc) --target uvhttp
 
+
+          # fuzz_static_path exercises uvhttp_static_resolve_safe_path, which
+          # is only compiled when BUILD_WITH_STATIC_FILES is on (it defaults to
+          # OFF). That library is built separately so the default-config
+          # library the other harnesses link against stays unchanged.
+          cmake -B build_fuzz_static -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON \
+            -DBUILD_WITH_STATIC_FILES=ON \
+            -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+          cmake --build build_fuzz_static -j$(nproc) --target uvhttp
           INCLUDES="-Iinclude -Ideps/llhttp/include -Ideps/uthash/src -Ideps/mbedtls/include -Ideps/cjson -Ideps/libuv/include"
 
           # Link the router fuzz harness against the CMake-built library + deps.
@@ -95,6 +104,24 @@ jobs:
             -Wl,--end-group \
             -lpthread -lm -ldl \
             -o build_fuzz/fuzz_websocket
+
+          # Static-path harness links the static-files-enabled library built
+          # above, since resolve_safe_path is compiled out of the default one.
+          $CC $CFLAGS $INCLUDES -fsanitize=fuzzer,address \
+            test/fuzz/fuzz_static_path.c \
+            build_fuzz_static/dist/lib/libuvhttp.a \
+            build_fuzz_static/dist/lib/libminiz.a \
+            deps/xxhash/libxxhash.a \
+            -Wl,--start-group \
+            deps/llhttp/build/libllhttp.a \
+            deps/cjson/build/libcjson.a \
+            deps/mbedtls/build/library/libmbedtls.a \
+            deps/mbedtls/build/library/libmbedx509.a \
+            deps/mbedtls/build/library/libmbedcrypto.a \
+            deps/libuv/build/libuv.a \
+            -Wl,--end-group \
+            -lpthread -lm -ldl \
+            -o build_fuzz/fuzz_static_path
       - name: Run fuzz_router (60s, no crashes expected)
         run: |
           ./build_fuzz/fuzz_router -max_total_time=60 -max_len=256 -print_final_stats=1
@@ -106,6 +133,10 @@ jobs:
       - name: Run fuzz_websocket (60s, no crashes expected)
         run: |
           ./build_fuzz/fuzz_websocket -max_total_time=60 -max_len=256 -print_final_stats=1
+
+      - name: Run fuzz_static_path (60s, no crashes expected)
+        run: |
+          ./build_fuzz/fuzz_static_path -max_total_time=60 -max_len=256 -print_final_stats=1
       - name: Upload crash artifacts (if any)
         if: failure()
         uses: actions/upload-artifact@v7.0.1

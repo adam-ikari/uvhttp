@@ -10,6 +10,7 @@ AddressSanitizer and feeds it arbitrary bytes via libFuzzer.
 |---------|--------|-----------------|
 | `fuzz_router.c` | `uvhttp_router_find_handler` / `uvhttp_router_match` / `uvhttp_parse_path_params` over arbitrary path strings | router trie traversal, parameter extraction, path-parsing overflows/UAF |
 | `fuzz_request.c` | the llhttp → uvhttp request-parse callback chain (`on_url` / `on_header_field` / `on_header_value` / `on_body`) over arbitrary byte sequences | URL accumulation, header extraction, body buffering — chunk-boundary and overflow edge cases |
+| `fuzz_static_path.c` | `uvhttp_static_resolve_safe_path` over arbitrary URL paths against a fixed tree containing files, nested dirs, and symlinks that escape the root | path containment: whether an accepted path can resolve outside the root; `..`/encoded-`%2e%2e`/symlink handling |
 | `fuzz_websocket.c` | `uvhttp_ws_parse_frame_header` (RFC 6455 frame-header decode) + `uvhttp_ws_apply_mask` (mask XOR) over arbitrary byte sequences | frame-header bitfield packing, 16/64-bit extended length, RFC 6455 §5.2 top-bit rejection, mask index-wrap |
 
 
@@ -53,10 +54,27 @@ clang -g -O1 -fsanitize=fuzzer,address -fno-omit-frame-pointer \
   deps/mbedtls/build/library/libmbedcrypto.a deps/libuv/build/libuv.a \
   -Wl,--end-group -lpthread -lm -ldl -o build_fuzz/fuzz_websocket
 
+# 2b. fuzz_static_path needs a library built with static files enabled — the
+#     option defaults to OFF, so resolve_safe_path is not in the library above.
+cmake -B build_fuzz_static -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON \
+  -DBUILD_WITH_STATIC_FILES=ON -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+cmake --build build_fuzz_static -j$(nproc) --target uvhttp
+
+clang -g -O1 -fsanitize=fuzzer,address -fno-omit-frame-pointer \
+  -Iinclude -Ideps/llhttp/include -Ideps/uthash/src \
+  -Ideps/mbedtls/include -Ideps/cjson -Ideps/libuv/include \
+  test/fuzz/fuzz_static_path.c build_fuzz_static/dist/lib/libuvhttp.a \
+  -Wl,--start-group \
+  deps/llhttp/build/libllhttp.a deps/cjson/build/libcjson.a \
+  deps/mbedtls/build/library/libmbedtls.a deps/mbedtls/build/library/libmbedx509.a \
+  deps/mbedtls/build/library/libmbedcrypto.a deps/libuv/build/libuv.a \
+  -Wl,--end-group -lpthread -lm -ldl -o build_fuzz/fuzz_static_path
+
 # 3. Run (60s by default).
 ./build_fuzz/fuzz_router -max_total_time=60 -max_len=256
 ./build_fuzz/fuzz_request -max_total_time=60 -max_len=4096
 ./build_fuzz/fuzz_websocket -max_total_time=60 -max_len=256
+./build_fuzz/fuzz_static_path -max_total_time=60 -max_len=256
 
 A clean run exits 0 with no `ERROR:` line. libFuzzer writes any crashing input
 to `crash-*`; reproduce with `./fuzz_router crash-<hash>`.
