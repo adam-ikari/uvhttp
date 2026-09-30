@@ -20,18 +20,17 @@
 /* Include uthash header file */
 #    include "uthash.h"
 
-
 /**
  * Set cache entry metadata (MIME type and ETag)
  */
 static void set_cache_entry_metadata(cache_entry_t* entry,
-                                     const char* mime_type,
-                                     const char* etag) {
+                                     const char* mime_type, const char* etag) {
     if (mime_type) {
-        uvhttp_safe_strncpy(entry->mime_type, mime_type, sizeof(entry->mime_type));
+        uvhttp_safe_strncpy(entry->mime_type, mime_type,
+                            sizeof(entry->mime_type));
     } else {
         uvhttp_safe_strncpy(entry->mime_type, "application/octet-stream",
-                          sizeof(entry->mime_type));
+                            sizeof(entry->mime_type));
     }
 
     if (etag) {
@@ -614,8 +613,10 @@ void uvhttp_lru_cache_clear(cache_manager_t* cache) {
 
     /* single-thread version: no need to add locks */
 
-    int cleared_count = 0;
-    size_t freed_memory = 0;
+    /* Only read by the UVHTTP_LOG_INFO below; when logging is compiled out
+     * these become dead stores, which newer clang rejects under -Werror. */
+    UVHTTP_UNUSED int cleared_count = 0;
+    UVHTTP_UNUSED size_t freed_memory = 0;
 
     cache_entry_t *entry, *tmp;
     HASH_ITER(hh, cache->hash_table, entry, tmp) {
@@ -748,7 +749,9 @@ int uvhttp_lru_cache_cleanup_expired(cache_manager_t* cache) {
     /* single-thread version: no need to add locks */
 
     int cleaned_count = 0;
-    size_t freed_memory = 0;
+    /* cleaned_count is returned below, so it is genuinely used; only the
+     * memory total is log-only. */
+    UVHTTP_UNUSED size_t freed_memory = 0;
     time_t now = get_current_time();
 
     cache_entry_t* entry = cache->lru_tail;
