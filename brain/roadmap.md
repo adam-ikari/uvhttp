@@ -2,16 +2,7 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-09-29T09:05:17"
----
-
-# Roadmap
-
----
-slug: roadmap
-title: Roadmap
-role: milestones
-updated: "2026-09-29T09:00:00Z"
+updated: "2026-09-30T11:05:51"
 ---
 
 # Roadmap
@@ -65,7 +56,7 @@ gantt
 | trend 推送竞态修复 | P1 | ✅ 已完成 | concurrency group + rebase-retry，三次失败 exit 1 而非静默通过（PR #394） |
 | brain lint 空占位守卫 | P1 | ✅ 已完成 | `scripts/check-brain.sh` 检查占位/空 compiled_truth/断链，挂 doc-sync-check（PR #394） |
 | io_uring 探索 | P2 | 📋 待办 | 评估 io_uring 替代 epoll 在静态文件路径中的收益 |
-| 内存分配优化 | P2 | 📋 待办 | 减少热路径中的分配次数 |
+| 内存分配优化 | P2 | ❌ 已关闭（实测收益过低） | keep-alive 3 次分配/请求且无泄漏；唯一可省的 1024B scratch 上限 **0.026%**（12ns ÷ 45.7µs），远低于 runner 方差 ~40%，不做。见 [[alloc-hotpath-measured]] |
 
 ### v2.9.x — 生态扩展（2027 Q1）
 
