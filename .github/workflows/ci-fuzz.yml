@@ -78,6 +78,23 @@ jobs:
             -Wl,--end-group \
             -lpthread -lm -ldl \
             -o build_fuzz/fuzz_request
+
+          # Link the WebSocket frame-parser fuzz harness (same library + deps).
+          $CC $CFLAGS $INCLUDES -fsanitize=fuzzer,address \
+            test/fuzz/fuzz_websocket.c \
+            build_fuzz/dist/lib/libuvhttp.a \
+            build_fuzz/dist/lib/libminiz.a \
+            deps/xxhash/libxxhash.a \
+            -Wl,--start-group \
+            deps/llhttp/build/libllhttp.a \
+            deps/cjson/build/libcjson.a \
+            deps/mbedtls/build/library/libmbedtls.a \
+            deps/mbedtls/build/library/libmbedx509.a \
+            deps/mbedtls/build/library/libmbedcrypto.a \
+            deps/libuv/build/libuv.a \
+            -Wl,--end-group \
+            -lpthread -lm -ldl \
+            -o build_fuzz/fuzz_websocket
       - name: Run fuzz_router (60s, no crashes expected)
         run: |
           ./build_fuzz/fuzz_router -max_total_time=60 -max_len=256 -print_final_stats=1
@@ -96,3 +113,7 @@ jobs:
             build_fuzz/oom-*
             build_fuzz/timeout-*
           retention-days: 30
+
+      - name: Run fuzz_websocket (60s, no crashes expected)
+        run: |
+          ./build_fuzz/fuzz_websocket -max_total_time=60 -max_len=256 -print_final_stats=1
