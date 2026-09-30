@@ -22,7 +22,7 @@ extern "C" {
 #include <uv.h>
 
 class ResponseBoostExtraTest : public ::testing::Test {
-protected:
+   protected:
     uvhttp_response_t* resp = nullptr;
 
     void SetUp() override {
@@ -81,15 +81,18 @@ TEST_F(ResponseBoostExtraTest, BuildData_UnknownStatusCode_ReturnsUnknown) {
     resp->status_code = 399;
     std::string output = build_and_get();
     EXPECT_NE(output.find("HTTP/1.1 399 Unknown\r\n"), std::string::npos)
-        << "Expected 'Unknown' status text for code 399, got: " << output.substr(0, 80);
+        << "Expected 'Unknown' status text for code 399, got: "
+        << output.substr(0, 80);
 }
 
 TEST_F(ResponseBoostExtraTest, BuildData_StatusCode101_SwitchingProtocols) {
     // 101 (Switching Protocols) is in valid range and in the switch
     resp->status_code = 101;
     std::string output = build_and_get();
-    EXPECT_NE(output.find("HTTP/1.1 101 Switching Protocols\r\n"), std::string::npos)
-        << "Expected 'Switching Protocols' status text for code 101, got: " << output.substr(0, 80);
+    EXPECT_NE(output.find("HTTP/1.1 101 Switching Protocols\r\n"),
+              std::string::npos)
+        << "Expected 'Switching Protocols' status text for code 101, got: "
+        << output.substr(0, 80);
 }
 
 TEST_F(ResponseBoostExtraTest, BuildData_StatusCode202_ReturnsUnknown) {
@@ -97,7 +100,8 @@ TEST_F(ResponseBoostExtraTest, BuildData_StatusCode202_ReturnsUnknown) {
     resp->status_code = 202;
     std::string output = build_and_get();
     EXPECT_NE(output.find("HTTP/1.1 202 Unknown\r\n"), std::string::npos)
-        << "Expected 'Unknown' status text for code 202, got: " << output.substr(0, 80);
+        << "Expected 'Unknown' status text for code 202, got: "
+        << output.substr(0, 80);
 }
 
 TEST_F(ResponseBoostExtraTest, BuildData_StatusCode599_ReturnsUnknown) {
@@ -105,14 +109,15 @@ TEST_F(ResponseBoostExtraTest, BuildData_StatusCode599_ReturnsUnknown) {
     resp->status_code = 599;
     std::string output = build_and_get();
     EXPECT_NE(output.find("HTTP/1.1 599 Unknown\r\n"), std::string::npos)
-        << "Expected 'Unknown' status text for code 599, got: " << output.substr(0, 80);
+        << "Expected 'Unknown' status text for code 599, got: "
+        << output.substr(0, 80);
 }
 
 // ========== build_response_headers control character skip ==========
 
 TEST_F(ResponseBoostExtraTest, BuildData_HeaderValueWithControlChar_Skipped) {
-    // Directly set a header with control character bypassing set_header validation
-    // to test the build_response_headers control char skip path
+    // Directly set a header with control character bypassing set_header
+    // validation to test the build_response_headers control char skip path
     resp->headers[0].name[0] = 'X';
     resp->headers[0].name[1] = '-';
     resp->headers[0].name[2] = 'E';
@@ -138,8 +143,10 @@ TEST_F(ResponseBoostExtraTest, BuildData_HeaderValueWithControlChar_Skipped) {
     EXPECT_NE(output.find("HTTP/1.1 200 OK\r\n"), std::string::npos);
 }
 
-TEST_F(ResponseBoostExtraTest, BuildData_HeaderValueWithCarriageReturn_Skipped) {
-    // Header value with CR should be skipped (HTTP response splitting prevention)
+TEST_F(ResponseBoostExtraTest,
+       BuildData_HeaderValueWithCarriageReturn_Skipped) {
+    // Header value with CR should be skipped (HTTP response splitting
+    // prevention)
     resp->headers[0].name[0] = 'X';
     resp->headers[0].name[1] = '-';
     resp->headers[0].name[2] = 'C';
@@ -237,7 +244,8 @@ TEST_F(ResponseBoostExtraTest, BuildData_ManyLargeHeaders_TriggersRealloc) {
     for (int i = 0; i < 12; i++) {
         char name[32];
         snprintf(name, sizeof(name), "X-Large-%02d", i);
-        uvhttp_error_t err = uvhttp_response_set_header(resp, name, large_value);
+        uvhttp_error_t err =
+            uvhttp_response_set_header(resp, name, large_value);
         ASSERT_EQ(err, UVHTTP_OK) << "Failed to set header " << i;
     }
 
@@ -250,7 +258,8 @@ TEST_F(ResponseBoostExtraTest, BuildData_ManyLargeHeaders_TriggersRealloc) {
 
     // Verify the response is well-formed
     EXPECT_NE(output.find("HTTP/1.1 200 OK\r\n"), std::string::npos);
-    EXPECT_NE(output.find("\r\n\r\n"), std::string::npos);  // header/body separator
+    EXPECT_NE(output.find("\r\n\r\n"),
+              std::string::npos);  // header/body separator
 }
 
 TEST_F(ResponseBoostExtraTest, BuildData_FillInlineThenDynamicExpansion) {
@@ -265,18 +274,22 @@ TEST_F(ResponseBoostExtraTest, BuildData_FillInlineThenDynamicExpansion) {
     }
 
     EXPECT_EQ(resp->header_count, (size_t)(UVHTTP_INLINE_HEADERS_CAPACITY + 5));
-    EXPECT_NE(resp->headers_extra, nullptr) << "Dynamic expansion should have occurred";
+    EXPECT_NE(resp->headers_extra, nullptr)
+        << "Dynamic expansion should have occurred";
 
     std::string output = build_and_get();
     ASSERT_FALSE(output.empty());
 
     // Check a few headers from the inline and dynamic ranges
     EXPECT_NE(output.find("X-Idx-00: val-00\r\n"), std::string::npos);
-    EXPECT_NE(output.find("X-Idx-31: val-31\r\n"), std::string::npos);  // last inline
-    EXPECT_NE(output.find("X-Idx-36: val-36\r\n"), std::string::npos);  // in dynamic
+    EXPECT_NE(output.find("X-Idx-31: val-31\r\n"),
+              std::string::npos);  // last inline
+    EXPECT_NE(output.find("X-Idx-36: val-36\r\n"),
+              std::string::npos);  // in dynamic
 }
 
-// ========== build_data with custom Content-Type, Content-Length, Connection ==========
+// ========== build_data with custom Content-Type, Content-Length, Connection
+// ==========
 
 TEST_F(ResponseBoostExtraTest, BuildData_CustomContentLength_NotOverwritten) {
     // When Content-Length is already set as a header, it should not be
@@ -289,7 +302,8 @@ TEST_F(ResponseBoostExtraTest, BuildData_CustomContentLength_NotOverwritten) {
     EXPECT_NE(output.find("Content-Length: 42\r\n"), std::string::npos);
     // Should NOT have Content-Length matching the actual body length
     char auto_len[64];
-    snprintf(auto_len, sizeof(auto_len), "Content-Length: %zu", resp->body_length);
+    snprintf(auto_len, sizeof(auto_len), "Content-Length: %zu",
+             resp->body_length);
     EXPECT_EQ(output.find(auto_len), std::string::npos)
         << "Auto-generated Content-Length should not appear when custom is set";
 }
@@ -310,19 +324,22 @@ TEST_F(ResponseBoostExtraTest, BuildData_CustomContentType_NotOverwritten) {
     uvhttp_response_set_header(resp, "Content-Type", "application/xml");
 
     std::string output = build_and_get();
-    EXPECT_NE(output.find("Content-Type: application/xml\r\n"), std::string::npos);
+    EXPECT_NE(output.find("Content-Type: application/xml\r\n"),
+              std::string::npos);
     // Should NOT have default Content-Type: text/plain
     EXPECT_EQ(output.find("Content-Type: text/plain"), std::string::npos);
 }
 
 TEST_F(ResponseBoostExtraTest, BuildData_AllThreeCustomHeaders) {
     // Set all three "auto-generated" headers manually
-    uvhttp_response_set_header(resp, "Content-Type", "application/octet-stream");
+    uvhttp_response_set_header(resp, "Content-Type",
+                               "application/octet-stream");
     uvhttp_response_set_header(resp, "Content-Length", "0");
     uvhttp_response_set_header(resp, "Connection", "teardown");
 
     std::string output = build_and_get();
-    EXPECT_NE(output.find("Content-Type: application/octet-stream\r\n"), std::string::npos);
+    EXPECT_NE(output.find("Content-Type: application/octet-stream\r\n"),
+              std::string::npos);
     EXPECT_NE(output.find("Content-Length: 0\r\n"), std::string::npos);
     EXPECT_NE(output.find("Connection: teardown\r\n"), std::string::npos);
     // No auto-generated headers
@@ -333,7 +350,8 @@ TEST_F(ResponseBoostExtraTest, BuildData_AllThreeCustomHeaders) {
 
 // ========== Keepalive edge cases ==========
 
-TEST_F(ResponseBoostExtraTest, BuildData_KeepAlive0_CustomConnectionNotOverwritten) {
+TEST_F(ResponseBoostExtraTest,
+       BuildData_KeepAlive0_CustomConnectionNotOverwritten) {
     // keepalive=0 but Connection is already set
     resp->keepalive = 0;
     uvhttp_response_set_header(resp, "Connection", "keep-alive");
@@ -345,7 +363,8 @@ TEST_F(ResponseBoostExtraTest, BuildData_KeepAlive0_CustomConnectionNotOverwritt
 }
 
 TEST_F(ResponseBoostExtraTest, BuildData_KeepAlive1_IncludesKeepAliveTimeout) {
-    // When keepalive=1 and no custom Connection, should include Keep-Alive header
+    // When keepalive=1 and no custom Connection, should include Keep-Alive
+    // header
     resp->keepalive = 1;
     std::string output = build_and_get();
     EXPECT_NE(output.find("Connection: keep-alive\r\n"), std::string::npos);
@@ -490,11 +509,13 @@ TEST_F(ResponseBoostExtraTest, BuildData_LargeBody_CorrectContentLength) {
     ASSERT_FALSE(output.empty());
 
     char expected_cl[64];
-    snprintf(expected_cl, sizeof(expected_cl), "Content-Length: %zu", body_size);
+    snprintf(expected_cl, sizeof(expected_cl), "Content-Length: %zu",
+             body_size);
     EXPECT_NE(output.find(expected_cl), std::string::npos);
 }
 
-// ========== Dynamic expansion realloc path (headers_extra reallocation) ==========
+// ========== Dynamic expansion realloc path (headers_extra reallocation)
+// ==========
 
 TEST_F(ResponseBoostExtraTest, SetHeader_ExpandsMultipleTimes_Works) {
     // Fill inline, then add more to trigger reallocation of headers_extra
@@ -511,11 +532,13 @@ TEST_F(ResponseBoostExtraTest, SetHeader_ExpandsMultipleTimes_Works) {
     // Verify all headers are accessible
     for (size_t i = 0; i < resp->header_count; i++) {
         uvhttp_header_t* h = uvhttp_response_get_header_at(resp, i);
-        ASSERT_NE(h, nullptr) << "Header at index " << i << " should not be null";
+        ASSERT_NE(h, nullptr)
+            << "Header at index " << i << " should not be null";
     }
 }
 
-TEST_F(ResponseBoostExtraTest, SetHeader_ReallocPath_TriggersMallocAndMaxCapacity) {
+TEST_F(ResponseBoostExtraTest,
+       SetHeader_ReallocPath_TriggersMallocAndMaxCapacity) {
     // Target: cover uvhttp_response.c lines 332-334 (first malloc when
     // old_extra_count==0) and lines 314-316/320-321 (max capacity reached).
     //
@@ -572,6 +595,44 @@ TEST_F(ResponseBoostExtraTest, SetHeader_ReallocPath_TriggersMallocAndMaxCapacit
     EXPECT_NE(output.find("X-R00: realloc-val-00\r\n"), std::string::npos);
     EXPECT_NE(output.find("X-R32: realloc-val-32\r\n"), std::string::npos);
     EXPECT_NE(output.find("X-R63: realloc-val-63\r\n"), std::string::npos);
+}
+
+// ========== header NAME control chars are filtered ==========
+
+TEST_F(ResponseBoostExtraTest, BuildData_HeaderNameWithCRLF_IsSkipped) {
+    // set_header validates the name (validate_header_name allows only alnum
+    // and '-'), so this path is unreachable through the public API. It is
+    // reachable by writing resp->headers[] directly, which the sibling tests
+    // already do — and build_response_headers used to filter only the VALUE:
+    //
+    //     if (contains_control_chars(header->value)) { ... continue; }
+    //     UVHTTP_SNAPPEND("%s: %s\r\n", header->name, header->value);
+    //
+    // A CR/LF in the name therefore landed in the response verbatim. The
+    // filter now covers both halves of the formatted line.
+    resp->headers[0].name[0] = 'X';
+    resp->headers[0].name[1] = '\r';
+    resp->headers[0].name[2] = '\n';
+    resp->headers[0].name[3] = 'I';
+    resp->headers[0].name[4] = 'n';
+    resp->headers[0].name[5] = 'j';
+    resp->headers[0].name[6] = 'e';
+    resp->headers[0].name[7] = 'c';
+    resp->headers[0].name[8] = 't';
+    resp->headers[0].name[9] = 'e';
+    resp->headers[0].name[10] = 'd';
+    resp->headers[0].name[11] = '\0';
+
+    resp->headers[0].value[0] = 'v';
+    resp->headers[0].value[1] = '\0';
+    resp->header_count = 1;
+
+    std::string output = build_and_get();
+    EXPECT_EQ(output.find("X\r\n"), std::string::npos)
+        << "CRLF in a header name reached the response (response splitting): "
+        << output.substr(0, 120);
+    EXPECT_EQ(output.find("Injected"), std::string::npos)
+        << "header with a CRLF name was emitted at all";
 }
 
 // ========== build_data header value with tab (allowed) ==========
@@ -665,7 +726,8 @@ TEST_F(ResponseBoostExtraTest, ForeachHeader_ManyHeaders_CountsAll) {
     EXPECT_EQ(counter.count, 20);
 }
 
-// ========== Header name case sensitivity in Content-Type/Length/Connection detection ==========
+// ========== Header name case sensitivity in Content-Type/Length/Connection
+// detection ==========
 
 TEST_F(ResponseBoostExtraTest, BuildData_UpperCaseContentType_Detected) {
     // The strcasecmp check should match regardless of case
@@ -674,7 +736,8 @@ TEST_F(ResponseBoostExtraTest, BuildData_UpperCaseContentType_Detected) {
 
     std::string output = build_and_get();
     // Should have our custom content type, not the default
-    EXPECT_NE(output.find("CONTENT-TYPE: application/json\r\n"), std::string::npos);
+    EXPECT_NE(output.find("CONTENT-TYPE: application/json\r\n"),
+              std::string::npos);
     EXPECT_EQ(output.find("Content-Type: text/plain"), std::string::npos);
 }
 

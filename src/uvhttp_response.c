@@ -11,14 +11,14 @@
 #include "uvhttp_logging.h"
 #include "uvhttp_validation.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <limits.h>
 
 #if UVHTTP_FEATURE_COMPRESSION
-#include <zlib.h>
+#    include <zlib.h>
 #endif
 
 /* ========== Compression Implementation ========== */
@@ -27,13 +27,13 @@
 
 /**
  * @brief Compress data using gzip
- * 
+ *
  * @param input Input data
  * @param input_len Input data length
  * @param output Output buffer (caller must free)
  * @param output_len Output data length
  * @return uvhttp_error_t UVHTTP_OK 成功，错误码失败
- * 
+ *
  * @note Uses zlib-style deflate (from qwrt's vendored miniz) at default level 6
  * @note Emits a real gzip stream (RFC 1952: gzip header + raw deflate + CRC32
  *   + ISIZE trailer), NOT zlib-wrapped deflate — the two formats are distinct
@@ -95,7 +95,8 @@ static uvhttp_error_t uvhttp_compress_gzip(const char* input, size_t input_len,
     size_t deflate_len = zs.total_out;
     deflateEnd(&zs);
 
-    /* CRC32 of the ORIGINAL input + ISIZE (input_len mod 2^32), little-endian */
+    /* CRC32 of the ORIGINAL input + ISIZE (input_len mod 2^32), little-endian
+     */
     unsigned long crc = crc32(0L, (const Bytef*)input, input_len);
     char* tp = buf + gzip_header_len + deflate_len;
     tp[0] = (char)(crc & 0xff);
@@ -194,11 +195,12 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer,
      * unsigned) and the next snprintf writes past the buffer. CLAMP the size
      * argument to 0 once pos reaches the end: snprintf with size 0 writes
      * nothing but still returns the would-be length, so pos keeps tracking the
-     * total bytes needed (reported back via *length for the caller's realloc). */
-#define UVHTTP_SNAPPEND(fmt, ...)                                             \
-    do {                                                                      \
-        size_t _rem = (pos < *length) ? (*length - pos) : 0;                  \
-        pos += snprintf(buffer + pos, _rem, (fmt), ##__VA_ARGS__);            \
+     * total bytes needed (reported back via *length for the caller's realloc).
+     */
+#define UVHTTP_SNAPPEND(fmt, ...)                                  \
+    do {                                                           \
+        size_t _rem = (pos < *length) ? (*length - pos) : 0;       \
+        pos += snprintf(buffer + pos, _rem, (fmt), ##__VA_ARGS__); \
     } while (0)
 
     // status line
@@ -217,11 +219,15 @@ static void build_response_headers(uvhttp_response_t* response, char* buffer,
             continue;
         }
 
-        // safe check: verify header value does not contain control characters,
-        // prevent response splitting
-        if (contains_control_chars(header->value)) {
-            // if header value contains control characters, skip this header
-            UVHTTP_LOG_ERROR("Invalid header value detected: header '%s' "
+        // safe check: verify header name and value do not contain control
+        // characters, prevent response splitting. set_header already rejects
+        // such names, but headers[] is also written directly elsewhere, and
+        // this filter is the last line before the bytes reach the wire — it
+        // must cover both halves of the "%s: %s\r\n" it formats.
+        if (contains_control_chars(header->name) ||
+            contains_control_chars(header->value)) {
+            // skip the header entirely rather than emitting a partial one
+            UVHTTP_LOG_ERROR("Invalid header detected: name '%s' or its value "
                              "contains control characters\n",
                              header->name);
             continue;
@@ -385,8 +391,8 @@ uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response,
             new_extra = uvhttp_alloc(new_extra_count * sizeof(uvhttp_header_t));
             /* 释放可能残留的旧 headers_extra：当 headers_capacity 恰好等于
              * UVHTTP_INLINE_HEADERS_CAPACITY（例如之前 capacity 为 0 时首次扩展
-             * 分配了一个 0 大小的占位块）时，old_extra_count 会被记为 0 走此分支，
-             * 若不释放旧指针直接覆盖会造成内存泄漏。*/
+             * 分配了一个 0 大小的占位块）时，old_extra_count 会被记为 0
+             * 走此分支， 若不释放旧指针直接覆盖会造成内存泄漏。*/
             if (response->headers_extra) {
                 uvhttp_free(response->headers_extra);
             }
@@ -621,16 +627,17 @@ static uvhttp_error_t uvhttp_response_prepare(
     *out_body_len = 0;
     *out_owned = NULL;
 
-    /* ========== Step 1: Compress body first (before building headers) ========== */
+    /* ========== Step 1: Compress body first (before building headers)
+     * ========== */
     const char* body_to_send = response->body;
     size_t body_length = response->body_length;
-    size_t original_body_length = response->body_length;  /* save for restoration */
-    char* compressed_body = NULL;  /* track for cleanup */
+    size_t original_body_length =
+        response->body_length;    /* save for restoration */
+    char* compressed_body = NULL; /* track for cleanup */
 
 #if UVHTTP_FEATURE_COMPRESSION
     /* 零开销检查：编译期优化会完全移除这个分支 */
-    if (response->compress &&
-        response->body &&
+    if (response->compress && response->body &&
         response->body_length >= (size_t)response->compress_threshold) {
 
         /* 先查 gzip LRU 缓存：相同 body 内容只压缩一次 */
@@ -644,37 +651,37 @@ static uvhttp_error_t uvhttp_response_prepare(
         }
 
         if (cached) {
-            /* 缓存命中：直接用缓存压缩结果（send 收尾只释放 compressed_body，安全） */
+            /* 缓存命中：直接用缓存压缩结果（send 收尾只释放
+             * compressed_body，安全） */
             body_to_send = cached;
             body_length = cached_len;
             response->body_length = cached_len;
             uvhttp_response_set_header(response, "Content-Encoding", "gzip");
-            UVHTTP_LOG_DEBUG("Response compressed (cache hit): %zu -> %zu bytes\n",
-                             original_body_length, cached_len);
+            UVHTTP_LOG_DEBUG(
+                "Response compressed (cache hit): %zu -> %zu bytes\n",
+                original_body_length, cached_len);
         } else {
             /* 尝试压缩响应体 */
             size_t compressed_len = 0;
 
-            uvhttp_error_t compress_result = uvhttp_compress_gzip(
-                response->body,
-                response->body_length,
-                &compressed_body,
-                &compressed_len
-            );
+            uvhttp_error_t compress_result =
+                uvhttp_compress_gzip(response->body, response->body_length,
+                                     &compressed_body, &compressed_len);
 
             /* 如果压缩成功且有效（压缩后更小），使用压缩数据 */
-            if (compress_result == UVHTTP_OK &&
-                compressed_body &&
+            if (compress_result == UVHTTP_OK && compressed_body &&
                 compressed_len < response->body_length) {
 
                 body_to_send = compressed_body;
                 body_length = compressed_len;
 
-                /* 临时更新 response->body_length，这样 build_response_headers 会使用压缩后的大小 */
+                /* 临时更新 response->body_length，这样 build_response_headers
+                 * 会使用压缩后的大小 */
                 response->body_length = compressed_len;
 
                 /* 添加 Content-Encoding 头 */
-                uvhttp_response_set_header(response, "Content-Encoding", "gzip");
+                uvhttp_response_set_header(response, "Content-Encoding",
+                                           "gzip");
 
                 /* 缓存压缩结果（内部拷贝，不受 response 释放影响） */
                 if (response->gzip_cache) {
@@ -682,13 +689,15 @@ static uvhttp_error_t uvhttp_response_prepare(
                         (uvhttp_gzip_cache_t*)response->gzip_cache,
                         uvhttp_hash_default(response->body,
                                             original_body_length),
-                        original_body_length, compressed_body,
-                        compressed_len);
+                        original_body_length, compressed_body, compressed_len);
                 }
 
-                UVHTTP_LOG_DEBUG("Response compressed: %zu -> %zu bytes (%.1f%% reduction)\n",
-                                original_body_length, compressed_len,
-                                (1.0 - (double)compressed_len / original_body_length) * 100);
+                UVHTTP_LOG_DEBUG(
+                    "Response compressed: %zu -> %zu bytes (%.1f%% "
+                    "reduction)\n",
+                    original_body_length, compressed_len,
+                    (1.0 - (double)compressed_len / original_body_length) *
+                        100);
             } else {
                 /* 压缩失败或无效，使用原数据 */
                 if (compressed_body) {
@@ -700,7 +709,8 @@ static uvhttp_error_t uvhttp_response_prepare(
     }
 #endif /* UVHTTP_FEATURE_COMPRESSION */
 
-    /* ========== Step 2: Build headers (after compression, so Content-Length is correct) ========== */
+    /* ========== Step 2: Build headers (after compression, so Content-Length is
+     * correct) ========== */
     /* optimization: increase initial buffer size, reduce reallocation */
     size_t headers_size =
         UVHTTP_INITIAL_BUFFER_SIZE * 2; /* increase from 512 to 1024 */
@@ -758,20 +768,22 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
         return UVHTTP_OK;
     }
 
-    /* build headers and resolve the body to send (compression applied inside) */
+    /* build headers and resolve the body to send (compression applied inside)
+     */
     char* headers_buffer = NULL;
     size_t headers_length = 0;
     const char* body_to_send = NULL;
     size_t body_length = 0;
     char* compressed_body = NULL;
-    uvhttp_error_t err = uvhttp_response_prepare(
-        response, &headers_buffer, &headers_length, &body_to_send,
-        &body_length, &compressed_body);
+    uvhttp_error_t err =
+        uvhttp_response_prepare(response, &headers_buffer, &headers_length,
+                                &body_to_send, &body_length, &compressed_body);
     if (err != UVHTTP_OK) {
         return err;
     }
 
-    /* ========== Step 3: Calculate total size and allocate response data ========== */
+    /* ========== Step 3: Calculate total size and allocate response data
+     * ========== */
     size_t total_size = headers_length + body_length;
 
     /* allocate complete response data */
@@ -938,12 +950,13 @@ typedef struct {
     uvhttp_response_t* response;
     char* headers;    /* heap buffer with the header block (freed here) */
     char* owned_body; /* compressed buffer produced by prepare (freed here) */
-    uv_buf_t bufs[2]; /* [0] headers, [1] body (may point into response->body) */
+    uv_buf_t
+        bufs[2]; /* [0] headers, [1] body (may point into response->body) */
 } uvhttp_resp_write_t;
 
 /* write completion callback for the zero-copy send path */
 static void uvhttp_resp_write_done(uv_write_t* req, int status) {
-    (void)status;  /* avoid unused parameter warning */
+    (void)status; /* avoid unused parameter warning */
     uvhttp_resp_write_t* w = (uvhttp_resp_write_t*)req->data;
     uvhttp_response_t* response = w->response;
     if (w->owned_body) {
@@ -966,9 +979,8 @@ static uvhttp_error_t uvhttp_response_send_zerocopy(
     const char* body = NULL;
     size_t body_len = 0;
     char* owned = NULL;
-    uvhttp_error_t err =
-        uvhttp_response_prepare(response, &headers, &headers_len, &body,
-                                &body_len, &owned);
+    uvhttp_error_t err = uvhttp_response_prepare(
+        response, &headers, &headers_len, &body, &body_len, &owned);
     if (err != UVHTTP_OK) {
         return err;
     }
@@ -1014,8 +1026,7 @@ static uvhttp_error_t uvhttp_response_send_zerocopy(
  * clients that are not a real uvhttp_connection TCP stream; send_raw performs
  * its own client/stream validation and returns the same error codes as before
  * the zero-copy optimization. */
-static uvhttp_error_t uvhttp_response_send_copy(
-    uvhttp_response_t* response) {
+static uvhttp_error_t uvhttp_response_send_copy(uvhttp_response_t* response) {
     /* call pure function build response data */
     char* response_data = NULL;
     size_t response_length = 0;
@@ -1062,8 +1073,7 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
     int use_zerocopy = 0;
     if (stream && stream->type == UV_TCP && stream->loop &&
         response->body_length >= UVHTTP_ZEROCOPY_MIN_BODY) {
-        uvhttp_connection_t* conn =
-            (uvhttp_connection_t*)stream->data;
+        uvhttp_connection_t* conn = (uvhttp_connection_t*)stream->data;
         if (conn && stream == (uv_stream_t*)&conn->tcp_handle) {
             /* TLS needs a contiguous plaintext buffer (mbedtls_ssl_write
              * consumes a single span), so the copy path is kept for
@@ -1087,14 +1097,14 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
 
 #if UVHTTP_FEATURE_COMPRESSION
 
-uvhttp_error_t uvhttp_response_set_compress(uvhttp_response_t* response, 
+uvhttp_error_t uvhttp_response_set_compress(uvhttp_response_t* response,
                                             int enable) {
     if (!response) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
     response->compress = enable ? 1 : 0;
-    
+
     /* 重置压缩相关状态 */
     if (!enable) {
         response->compress_algorithm = 0;
@@ -1102,44 +1112,44 @@ uvhttp_error_t uvhttp_response_set_compress(uvhttp_response_t* response,
     } else {
         /* 设置默认值 */
         if (response->compress_threshold == 0) {
-            response->compress_threshold = 1024;  /* 默认 1KB */
+            response->compress_threshold = 1024; /* 默认 1KB */
         }
     }
-    
+
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_response_set_compress_algorithm(uvhttp_response_t* response,
-                                                     int algorithm) {
+uvhttp_error_t uvhttp_response_set_compress_algorithm(
+    uvhttp_response_t* response, int algorithm) {
     if (!response) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
     /* 只有启用压缩时才能设置算法 */
     if (!response->compress) {
-        return UVHTTP_ERROR_INVALID_PARAM;  /* Compression not enabled */
+        return UVHTTP_ERROR_INVALID_PARAM; /* Compression not enabled */
     }
-    
+
     /* 验证算法类型 */
     if (algorithm < 0 || algorithm > 1) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
     response->compress_algorithm = algorithm;
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_response_set_compress_threshold(uvhttp_response_t* response,
-                                                       size_t threshold) {
+uvhttp_error_t uvhttp_response_set_compress_threshold(
+    uvhttp_response_t* response, size_t threshold) {
     if (!response) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
     /* 验证阈值范围 */
     if (threshold > UVHTTP_MAX_BODY_SIZE) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
     response->compress_threshold = threshold;
     return UVHTTP_OK;
 }
@@ -1159,9 +1169,7 @@ static const char* const COMPRESSIBLE_EXTENSIONS[] = {
     /* 数据文件 */
     ".csv", ".sql", ".log",
     /* Web 相关 */
-    ".svg", ".woff", ".woff2", ".ttf", ".eot",
-    NULL
-};
+    ".svg", ".woff", ".woff2", ".ttf", ".eot", NULL};
 
 /**
  * @brief 不压缩的文件扩展名列表
@@ -1178,15 +1186,13 @@ static const char* const NON_COMPRESSIBLE_EXTENSIONS[] = {
     /* 二进制文件 */
     ".exe", ".dll", ".so", ".dylib", ".bin", ".elf", ".o", ".a", ".lib",
     /* 办公文档（已压缩） */
-    ".docx", ".xlsx", ".pptx", ".pdf",
-    NULL
-};
+    ".docx", ".xlsx", ".pptx", ".pdf", NULL};
 
 int uvhttp_should_compress_by_extension(const char* filename) {
     if (!filename || !*filename) {
         return 0;
     }
-    
+
     /* 查找最后一个点（文件扩展名） */
     const char* last_dot = NULL;
     const char* p = filename;
@@ -1196,26 +1202,26 @@ int uvhttp_should_compress_by_extension(const char* filename) {
         }
         p++;
     }
-    
+
     /* 没有扩展名，不压缩 */
     if (!last_dot) {
         return 0;
     }
-    
+
     /* 检查是否在非压缩列表中 */
     for (size_t i = 0; NON_COMPRESSIBLE_EXTENSIONS[i] != NULL; i++) {
         if (strcasecmp(last_dot, NON_COMPRESSIBLE_EXTENSIONS[i]) == 0) {
             return 0;
         }
     }
-    
+
     /* 检查是否在可压缩列表中 */
     for (size_t i = 0; COMPRESSIBLE_EXTENSIONS[i] != NULL; i++) {
         if (strcasecmp(last_dot, COMPRESSIBLE_EXTENSIONS[i]) == 0) {
             return 1;
         }
     }
-    
+
     /* 未知扩展名，不压缩（保守策略） */
     return 0;
 }
@@ -1224,40 +1230,56 @@ int uvhttp_should_compress_by_content_type(const char* content_type) {
     if (!content_type || !*content_type) {
         return 0;
     }
-    
+
     /* 不压缩的类型 */
-    if (strncasecmp(content_type, "image/", 6) == 0) return 0;
-    if (strncasecmp(content_type, "video/", 6) == 0) return 0;
-    if (strncasecmp(content_type, "audio/", 6) == 0) return 0;
-    if (strcasecmp(content_type, "application/zip") == 0) return 0;
-    if (strcasecmp(content_type, "application/gzip") == 0) return 0;
-    if (strcasecmp(content_type, "application/x-gzip") == 0) return 0;
-    if (strcasecmp(content_type, "application/x-compressed") == 0) return 0;
-    if (strcasecmp(content_type, "application/pdf") == 0) return 0;
-    if (strncasecmp(content_type, "application/vnd.", 16) == 0) return 0;
-    
+    if (strncasecmp(content_type, "image/", 6) == 0)
+        return 0;
+    if (strncasecmp(content_type, "video/", 6) == 0)
+        return 0;
+    if (strncasecmp(content_type, "audio/", 6) == 0)
+        return 0;
+    if (strcasecmp(content_type, "application/zip") == 0)
+        return 0;
+    if (strcasecmp(content_type, "application/gzip") == 0)
+        return 0;
+    if (strcasecmp(content_type, "application/x-gzip") == 0)
+        return 0;
+    if (strcasecmp(content_type, "application/x-compressed") == 0)
+        return 0;
+    if (strcasecmp(content_type, "application/pdf") == 0)
+        return 0;
+    if (strncasecmp(content_type, "application/vnd.", 16) == 0)
+        return 0;
+
     /* 可压缩的类型 */
-    if (strncasecmp(content_type, "text/", 5) == 0) return 1;
-    if (strcasecmp(content_type, "application/json") == 0) return 1;
-    if (strcasecmp(content_type, "application/xml") == 0) return 1;
-    if (strcasecmp(content_type, "application/javascript") == 0) return 1;
-    if (strcasecmp(content_type, "application/xhtml+xml") == 0) return 1;
-    if (strcasecmp(content_type, "application/rss+xml") == 0) return 1;
-    if (strcasecmp(content_type, "application/atom+xml") == 0) return 1;
-    
+    if (strncasecmp(content_type, "text/", 5) == 0)
+        return 1;
+    if (strcasecmp(content_type, "application/json") == 0)
+        return 1;
+    if (strcasecmp(content_type, "application/xml") == 0)
+        return 1;
+    if (strcasecmp(content_type, "application/javascript") == 0)
+        return 1;
+    if (strcasecmp(content_type, "application/xhtml+xml") == 0)
+        return 1;
+    if (strcasecmp(content_type, "application/rss+xml") == 0)
+        return 1;
+    if (strcasecmp(content_type, "application/atom+xml") == 0)
+        return 1;
+
     /* 未知类型，不压缩（保守策略） */
     return 0;
 }
 
-uvhttp_error_t uvhttp_response_set_compress_by_filename(uvhttp_response_t* response,
-                                                        const char* filename) {
+uvhttp_error_t uvhttp_response_set_compress_by_filename(
+    uvhttp_response_t* response, const char* filename) {
     if (!response) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
     /* 判断是否应该压缩 */
     int should_compress = uvhttp_should_compress_by_extension(filename);
-    
+
     if (should_compress) {
         /* 启用压缩并设置默认阈值 */
         response->compress = 1;
@@ -1268,19 +1290,19 @@ uvhttp_error_t uvhttp_response_set_compress_by_filename(uvhttp_response_t* respo
         /* 禁用压缩 */
         response->compress = 0;
     }
-    
+
     return UVHTTP_OK;
 }
 
-uvhttp_error_t uvhttp_response_set_compress_by_content_type(uvhttp_response_t* response,
-                                                           const char* content_type) {
+uvhttp_error_t uvhttp_response_set_compress_by_content_type(
+    uvhttp_response_t* response, const char* content_type) {
     if (!response) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    
+
     /* 判断是否应该压缩 */
     int should_compress = uvhttp_should_compress_by_content_type(content_type);
-    
+
     if (should_compress) {
         /* 启用压缩并设置默认阈值 */
         response->compress = 1;
@@ -1291,7 +1313,7 @@ uvhttp_error_t uvhttp_response_set_compress_by_content_type(uvhttp_response_t* r
         /* 禁用压缩 */
         response->compress = 0;
     }
-    
+
     return UVHTTP_OK;
 }
 
