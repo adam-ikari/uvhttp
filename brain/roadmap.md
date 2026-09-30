@@ -2,7 +2,7 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-09-30T11:05:51"
+updated: "2026-09-30T14:32:13"
 ---
 
 # Roadmap
@@ -24,7 +24,7 @@ gantt
   v2.8.0 发布               :done, b6, 2026-09-23, 1d
   回归门禁改同机配对        :done, b7, 2026-09-28, 1d
   v2.8.1 补丁发布与收尾     :done, b8, 2026-09-29, 3d
-  io_uring 静态文件路径     :b2, after b8, 21d
+  io_uring 静态文件路径     :cancelled, b2, after b8, 21d
   section v2.9.x — 生态
   文档多语言完善            :c1, after b2, 14d
   Fuzz 测试增强            :c4, after b2, 14d
@@ -55,7 +55,7 @@ gantt
 | 零拷贝阈值边界测试 | P1 | ✅ 已完成 | 4095/4096/4097 wire 等价性（PR #393），含提前退出与 fd 泄漏修复（PR #396） |
 | trend 推送竞态修复 | P1 | ✅ 已完成 | concurrency group + rebase-retry，三次失败 exit 1 而非静默通过（PR #394） |
 | brain lint 空占位守卫 | P1 | ✅ 已完成 | `scripts/check-brain.sh` 检查占位/空 compiled_truth/断链，挂 doc-sync-check（PR #394） |
-| io_uring 探索 | P2 | 📋 待办 | 评估 io_uring 替代 epoll 在静态文件路径中的收益 |
+| io_uring 探索 | P2 | ❌ 已关闭（架构不可达） | libuv 1.52 不覆盖 sendfile，uvhttp 静态文件热路径全走 sendfile+线程池；要受益需绕过 libuv 自管 ring fd，属架构重构。基准门禁 3 端点均为内存 body 也验证不到。见 [[io-uring-evaluation]] |
 | 内存分配优化 | P2 | ❌ 已关闭（实测收益过低） | keep-alive 3 次分配/请求且无泄漏；唯一可省的 1024B scratch 上限 **0.026%**（12ns ÷ 45.7µs），远低于 runner 方差 ~40%，不做。见 [[alloc-hotpath-measured]] |
 
 ### v2.9.x — 生态扩展（2027 Q1）
