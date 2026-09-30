@@ -283,7 +283,25 @@ ctest
 | fuzz harness | `test/fuzz/*.c` | 夜间 `ci-fuzz` | 吃不可信字节的解析/解码路径 |
 | 集成测试 | `test/integration/*.c` | **无人执行**（仅编译） | 长驻服务进程、需外部 curl 驱动 |
 
-**关键**：`test/integration/*.c` 虽然被 CMake 编译进 build，但**不注册进 ctest**，所以 CI 不会跑它。写单元测试时放 `test/unit/`，否则等于没写。
+**`test/integration/` 里的文件全部是长驻 server，不是自动化测试。** 19 个文件无一例外：都是 `uv_run(loop, UV_RUN_DEFAULT)` 永不返回 + 打印 usage 等人用 curl 驱动。CMake 只对 `test/unit/*.cpp` 调 `add_test`，integration 目录的文件仅被编译、**从不被执行**——注册进去会撞 `ctest --timeout 90` 被杀。
+
+**不要在这些文件里用 `assert()` 做验证。** CI 与本地都用 `CMAKE_BUILD_TYPE=Release`，Release 定义 `NDEBUG`，`assert()` 全部展开为 no-op：
+
+```bash
+nm build/dist/bin/test_middleware_compile_time | grep -c __assert_fail
+# → 0
+```
+
+仓库里已有 4 个文件（42 处断言）处于这个状态：它们 `exit=0` 不是"通过"，是"什么都没检查"，手动跑时给出的是**虚假绿灯**。要断言就用 gtest 放 `test/unit/`。
+
+**改 `.c` 前先确认它在哪些配置下会被编译。** 部分源文件整个内容被 `#if UVHTTP_FEATURE_*` 整体包裹（例如 `src/uvhttp_lru_cache.c` 被 `UVHTTP_FEATURE_STATIC_FILES` 包裹），而本地默认 `build/` 是该 feature 关闭的——**这个文件在本地根本不编译**，本地 `make` 通过不构成任何证据。判断方法：
+
+```bash
+grep -n 'if UVHTTP_FEATURE' src/<file>.c
+```
+
+若被 feature 宏整体包裹，必须用该 feature 开启的配置单独构建一次（只有 `build-matrix` 的对应条目会编它）。同理，若要用 `UVHTTP_UNUSED`（定义在 `uvhttp_features.h`），确认该文件 include 了它——靠间接包含拿到 `UVHTTP_FEATURE_*` 不等于拿到 `UVHTTP_UNUSED`。
+
 
 测试真实 socket 行为时用 gtest 起真实 server（`uv_tcp_getsockname` 取实际端口 + 阻塞 socket + `uv_run(UV_RUN_NOWAIT)` 泵循环），见 `test/unit/test_zerocopy_threshold_wire.cpp`。尺寸/阈值类参数从被测宏推导（如 `UVHTTP_ZEROCOPY_MIN_BODY`），不要硬编码——这样改配置无需改测试。
 
