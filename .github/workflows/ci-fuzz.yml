@@ -103,6 +103,9 @@ jobs:
       - name: Run fuzz_request (60s, no crashes expected)
         run: |
           ./build_fuzz/fuzz_request -max_total_time=60 -max_len=4096 -print_final_stats=1
+      - name: Run fuzz_websocket (60s, no crashes expected)
+        run: |
+          ./build_fuzz/fuzz_websocket -max_total_time=60 -max_len=256 -print_final_stats=1
       - name: Upload crash artifacts (if any)
         if: failure()
         uses: actions/upload-artifact@v7.0.1
@@ -114,6 +117,3 @@ jobs:
             build_fuzz/timeout-*
           retention-days: 30
 
-      - name: Run fuzz_websocket (60s, no crashes expected)
-        run: |
-          ./build_fuzz/fuzz_websocket -max_total_time=60 -max_len=256 -print_final_stats=1
