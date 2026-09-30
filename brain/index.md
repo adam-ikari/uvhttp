@@ -1,9 +1,9 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-09-30T11:03:30.208Z._
+_Auto-generated. Last updated 2026-09-30T12:47:46.262Z._
 
 - [alloc-hotpath-measured](pages/alloc-hotpath-measured.md) — category: decision | tags: [performance, benchmark, allocator, methodology, yagni] | # 每请求分配已实测：省一次仅 0.026%，内存分配优化不做
-- [benchmark-thermal-throttling](pages/benchmark-thermal-throttling.md) — category: decision | tags: [performance, benchmark, methodology] | ## 发现（2026-08-21，多轮基准 + CPU 频率/温度监控）
+- [benchmark-thermal-throttling](pages/benchmark-thermal-throttling.md) — category: decision | tags: [performance, benchmark, methodology] | # 禁止在本机做性能测量 —— 连配对 A/B 也不行
 - [build-system-make-cmake](pages/build-system-make-cmake.md) — category: decision | tags: [build-system, cmake, make, just, embedded] | ## 决策
 - [ci-format-check-gate-noop](pages/ci-format-check-gate-noop.md) — category: decision | tags: [ci, gates, format] | ## 结论
 - [ci-fuzz-c11-fix](pages/ci-fuzz-c11-fix.md) — category: decision | tags: [ci, fuzz, c11, clang] | ## 根因（连续失败 5 天：2026-08-20 ~ 08-24）
