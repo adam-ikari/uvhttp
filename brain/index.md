@@ -1,6 +1,6 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-10-01T01:40:43.812Z._
+_Auto-generated. Last updated 2026-10-01T01:54:54.843Z._
 
 - [alloc-hotpath-measured](pages/alloc-hotpath-measured.md) — category: decision | tags: [performance, benchmark, allocator, methodology, yagni] | # 每请求分配已实测：省一次仅 0.026%，内存分配优化不做
 - [benchmark-thermal-throttling](pages/benchmark-thermal-throttling.md) — category: decision | tags: [performance, benchmark, methodology] | # 禁止在本机做性能测量 —— 连配对 A/B 也不行
@@ -23,4 +23,4 @@ _Auto-generated. Last updated 2026-10-01T01:40:43.812Z._
 - [router-cache-parity](pages/router-cache-parity.md) — category: decision | tags: [router, cache, ci] | # 路由缓存实现必须与非缓存路由器行为对齐
 - [tls-session-cache](pages/tls-session-cache.md) — category: decision | tags: [tls, performance, session-cache] | ## 决策（v2.7.0，commit aecb053，P0）
 - [websocket-tls-pr335-merge](pages/websocket-tls-pr335-merge.md) — category: decision | tags: [websocket, tls, pr] | ## 背景
-- [zerocopy-small-body-regression](pages/zerocopy-small-body-regression.md) — category: decision | tags: [performance, benchmark, writev, methodology] | ## 结论
+- [zerocopy-small-body-regression](pages/zerocopy-small-body-regression.md) — category: decision | tags: [performance, benchmark, writev, methodology] | 评估完毕（2026-09-30）：维持「代价大于收益」，正式关闭重构。
