@@ -14,16 +14,6 @@ test/
 │   ├── config_valid.conf           # 有效配置示例
 │   ├── PERFORMANCE_COMPARISON_REPORT.md # 性能对比综合报告
 │   └── README.md                   # 测试说明文档
-├── integration/                    # 集成测试
-│   ├── test_include.c              # 包含测试
-│   ├── test_no_router.c            # 无路由测试
-│   ├── test_route.c                # 路由测试
-│   ├── test_simple.c               # 简单测试
-│   ├── test_static/                # 静态文件测试目录
-│   ├── test_static_middleware.c    # 静态文件中间件测试
-│   ├── test_websocket_callback.c   # WebSocket 回调测试
-│   ├── test_websocket_integration.c # WebSocket 集成测试
-│   └── websocket_test.html         # WebSocket 测试页面
 ├── performance/                    # 性能测试
 │   ├── performance_allocator.c     # 分配器性能测试
 │   ├── performance_allocator_compare.c # 分配器性能对比
@@ -77,20 +67,22 @@ TEST(TestSuiteName, TestName) {
 }
 ```
 
-## 集成测试
+## 手动测试工具（manual/）
 
-集成测试位于 `test/integration/` 目录，测试多个组件之间的交互。
-
-### 运行集成测试
+这些是**手动工具，不是自动化测试**——长驻 server，需人用 curl/wrk 驱动。
+它们位于 `manual/` 目录，CMake 仅编译（glob `manual/*.c`）、**不注册进
+ctest**，因为 `uv_run(UV_RUN_DEFAULT)` 永不返回。
 
 ```bash
-# 编译集成测试
-cd build
-make test_simple
-
-# 运行集成测试
-./dist/bin/test_simple
+# 编译并运行一个（build/dist/bin/ 下）
+cd build && make test_simple
+./dist/bin/test_simple &
+curl -i http://127.0.0.1:8081/
 ```
+
+注意：构建是 `Release`（`NDEBUG`），这些文件里的 `assert()` 全部是 no-op。
+想写真正的断言测试放 `test/unit/*.cpp`（gtest，被 CI 执行）。详见
+`manual/README.md`。
 
 ## 性能测试
 
@@ -134,7 +126,7 @@ bash test/scripts/run_rate_limit_tests.sh
 
 ## WebSocket 测试
 
-WebSocket 测试页面: `test/integration/websocket_test.html`
+WebSocket 测试页面: `manual/websocket_test.html`
 
 启动 WebSocket 服务器后，在浏览器中打开该页面进行测试。
 

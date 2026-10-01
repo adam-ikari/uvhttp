@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [test, integration, assert, ci, cleanup]
 created: "2026-09-30T16:31:48"
-updated: "2026-09-30T16:32:08"
+updated: "2026-10-01T01:40:43"
 ---
 
 <!-- compiled_truth -->
@@ -100,4 +100,10 @@ uv_run(loop, UV_RUN_DEFAULT);   /* 永不返回 */
   kind: decision
   summary: "19 个 integration 文件全是长驻 server 无自验证；其中 4 个纯 assert 文件的 42 处断言在 Release（NDEBUG）下全部不执行，exit=0 是虚假绿灯；处置建议待决策"
   source: "integration 测试清理调研（2026-09-30）"
+  affects: [integration-tests-are-servers]
+
+- time: 2026-10-01T01:40:43
+  kind: decision
+  summary: "19 个 integration 文件处置完毕：删 4 个纯 assert + 移 15 个长驻 server 到 manual/，test/integration 目录删除，全部文档同步"
+  source: "处置执行（2026-09-30）"
   affects: [integration-tests-are-servers]

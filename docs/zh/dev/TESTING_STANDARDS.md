@@ -29,15 +29,15 @@
   - 可重复：每次执行结果一致
   - 自动化：可集成到 CI/CD
 
-### 集成测试 (Integration Tests)
+### 手动测试工具 (Manual Test Tools)
 
-- **位置**: `test/integration/`
-- **目的**: 测试多个模块之间的交互
+- **位置**: `manual/`
+- **目的**: 长驻 server，供手动 curl/wrk 驱动验证
 - **特点**:
-  - 中等执行时间（秒级）
-  - 可能依赖外部资源（文件、网络）
-  - 测试真实场景下的模块协作
-  - 可自动化
+  - 永不终止（uv_run 默认循环）
+  - 非自动化——仅编译，从不注册进 ctest
+  - 不要用 `assert()`（构建为 Release，NDEBUG 使其成为 no-op）
+  - 要真正断言用 `test/unit/*.cpp`
 
 ### 性能测试 (Performance Tests)
 
@@ -90,8 +90,8 @@ test/
 │   ├── test_*.cpp          # C++ 测试（使用 GTest）
 │   ├── test_*.c            # C 测试（使用 assert）
 │   └── simple_test.cpp     # GTest 示例测试
-├── integration/            # 集成测试
-│   ├── test_*.c            # C 测试
+├── manual/                 # 手动测试工具（长驻 server）
+│   ├── test_*.c            # C 服务器，curl/wrk 驱动
 │   └── websocket_test.html # WebSocket 测试页面
 ├── performance/            # 性能测试
 │   ├── test_*.c            # C 测试
@@ -112,9 +112,10 @@ test/
 - C 测试: `test_<module>.c`
 - 示例: `test_allocator.cpp`, `test_utils.c`
 
-**集成测试**:
+**手动工具**:
 - 格式: `test_<feature>.c`
 - 示例: `test_simple.c`, `test_route.c`
+- 位于 `manual/`，非自动化测试
 
 **性能测试**:
 - 格式: `performance_<feature>.c`

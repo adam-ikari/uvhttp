@@ -644,12 +644,14 @@ TEST(RouterTest, AddRoute) {
 }
 ```
 
-##### 集成测试
+##### 手动测试工具
 
-- **目的**：测试模块间交互
-- **工具**：Google Test + libuv
-- **位置**：`test/integration/`
-- **命名**：`test_<feature>_integration.c`
+- **目的**：长驻 server，供手动 curl/wrk 驱动验证
+- **工具**：libuv（独立可执行）
+- **位置**：`manual/`
+- **命名**：`test_<feature>.c`
+- **注意**：非自动化——从不注册进 ctest。不要用 `assert()`（构建为
+  Release，NDEBUG 使其成为 no-op）。要真正断言用 `test/unit/*.cpp`。
 
 ##### 性能测试
 

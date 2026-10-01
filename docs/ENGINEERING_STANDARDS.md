@@ -644,12 +644,15 @@ TEST(RouterTest, AddRoute) {
 }
 ```
 
-##### Integration Tests
+##### Manual Test Tools
 
-- **Purpose**: test interactions between modules
-- **Tool**: Google Test + libuv
-- **Location**: `test/integration/`
-- **Naming**: `test_<feature>_integration.c`
+- **Purpose**: long-lived servers for manual curl/wrk-driven verification
+- **Tool**: libuv (standalone executables)
+- **Location**: `manual/`
+- **Naming**: `test_<feature>.c`
+- **Note**: NOT automated — never registered with ctest. Do not use `assert()`
+  (builds are Release, NDEBUG makes it a no-op). For real assertions use
+  `test/unit/*.cpp`.
 
 ##### Performance Tests
 

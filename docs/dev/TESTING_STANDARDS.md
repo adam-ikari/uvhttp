@@ -29,15 +29,15 @@ This document defines the testing standards for the UVHTTP project, including st
   - Repeatable: consistent results across runs
   - Automated: can be integrated into CI/CD
 
-### Integration Tests
+### Manual Test Tools
 
-- **Location**: `test/integration/`
-- **Purpose**: Test the interaction between multiple modules
+- **Location**: `manual/`
+- **Purpose**: Long-lived servers for manual curl/wrk-driven verification
 - **Characteristics**:
-  - Moderate execution time (second-scale)
-  - May depend on external resources (files, network)
-  - Test module cooperation in realistic scenarios
-  - Can be automated
+  - Never terminate (uv_run default loop)
+  - NOT automated — compiled but never registered with ctest
+  - Do not use `assert()` (builds are Release, NDEBUG makes it a no-op)
+  - For real assertions use `test/unit/*.cpp`
 
 ### Performance Tests
 
@@ -90,8 +90,8 @@ test/
 │   ├── test_*.cpp          # C++ tests (using GTest)
 │   ├── test_*.c            # C tests (using assert)
 │   └── simple_test.cpp     # GTest example test
-├── integration/            # Integration tests
-│   ├── test_*.c            # C tests
+├── manual/                 # Manual test tools (long-lived servers)
+│   ├── test_*.c            # C servers driven by curl/wrk
 │   └── websocket_test.html # WebSocket test page
 ├── performance/            # Performance tests
 │   ├── test_*.c            # C tests
@@ -112,9 +112,10 @@ test/
 - C tests: `test_<module>.c`
 - Examples: `test_allocator.cpp`, `test_utils.c`
 
-**Integration tests**:
+**Manual tools**:
 - Format: `test_<feature>.c`
 - Examples: `test_simple.c`, `test_route.c`
+- These live in `manual/` and are NOT automated tests
 
 **Performance tests**:
 - Format: `performance_<feature>.c`
