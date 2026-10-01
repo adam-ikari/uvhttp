@@ -2,7 +2,7 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-09-30T14:32:13"
+updated: "2026-10-01T02:42:15"
 ---
 
 # Roadmap
@@ -26,8 +26,10 @@ gantt
   v2.8.1 补丁发布与收尾     :done, b8, 2026-09-29, 3d
   io_uring 静态文件路径     :cancelled, b2, after b8, 21d
   section v2.9.x — 生态
-  文档多语言完善            :c1, after b2, 14d
-  Fuzz 测试增强            :c4, after b2, 14d
+  文档多语言完善            :done, c1, after b2, 14d
+  Fuzz 测试增强            :done, c4, after b2, 14d
+  社区贡献指南            :done, c4b, after c4, 3d
+  测试基建清理            :done, c4c, after c4b, 1d
 ```
 
 ### v2.7.x — 质量巩固与嵌入验证（2026 Q3）
@@ -63,8 +65,9 @@ gantt
 | 目标 | 优先级 | 状态 | 说明 |
 |------|--------|------|------|
 | 文档完善 | P1 | ✅ 已完成 | v2.8.0/v2.8.1 release notes、CHANGELOG 双语、API 参考版本头均已同步 |
-| Fuzz 测试增强 | P1 | 📋 待办 | 扩展 fuzz 测试覆盖更多协议路径 |
-| 社区贡献指南 | P1 | 📋 待办 | 完善 CONTRIBUTING.md、代码评审流程 |
+| Fuzz 测试增强 | P1 | ✅ 已完成 | `fuzz_static_path` 补路径解析面（#408）——变异验证证明 harness 有牙齿（移除包含检查后 1s 抓逃逸），60s 自由 fuzz 未发现可利用穿越；`lru_cache` dead-store 修复（#409）让四 harness 在 CI 稳定跑 |
+| 社区贡献指南 | P1 | ✅ 已完成 | 代码审查清单 + 测试形态选择（#401）；补 integration 真相、assert 在 Release 下失效、本地构建盲区（#410） |
+| 测试基建清理 | P2 | ✅ 已完成 | `test/integration/` 19 个文件移到 `manual/`，删 4 个纯 assert 文件（42 处断言在 NDEBUG 下全失效，exit=0 是虚假绿灯）；CMake glob 同步（#411） |
 
 ### 最低优先级（长期 / 按需）
 
