@@ -15,7 +15,7 @@
 ## 每日节奏
 
 1. **确认日期**: `date "+%Y-%m-%d %A"` 确定周几，判断阶段
-2. **检查 CI 结果**: 查看 `ci-daily` 运行结果，有失败则认领对应的自动 issue
+2. **检查 CI 结果**: 查看 `ci-nightly` 运行结果，有失败则认领对应的自动 issue
 3. **从 GitHub Issues 选取最高优先级任务**（以 Issues 为准，sprint-backlog.md 为概览参考）
 4. **实现并提交 PR**
 5. **持续推进直到当日目标完成**
@@ -58,7 +58,7 @@ CI 失败自动建 issue，无需人工记挂：
 - <按优先级>
 
 ## CI 状态
-- nightly / ci-daily 是否全绿；失败的修复状态
+- nightly 是否全绿；失败的修复状态
 
 ## 指标对比
 - 测试：<数>/<数>；覆盖率：<百分比>
@@ -85,7 +85,6 @@ Issue 完成。
 
 ## 自动化
 
-- **ci-daily**（每日凌晨，`.github/workflows/ci-daily.yml`）: 构建 + 测试
 - **ci-nightly**（每日，`.github/workflows/ci-nightly.yml`）: 深度测试 + 覆盖率 + ASan + UBSan，失败自动建 issue
 - **weekly-retro-check**（每周五，`.github/workflows/weekly-retro-check.yml`）: 复盘缺失提醒
 - **PR CI**: 每次 PR 自动验证（ci-pr.yml）
