@@ -969,9 +969,16 @@ message(STATUS "")
 if(BUILD_TESTS)
 
 # ============================================================================
-# Integration tests
+# Manual test tools
+#
+# Files in manual/ are long-lived servers meant to be started by hand and
+# driven with curl/wrk — they are NOT automated tests. They run
+# uv_run(loop, UV_RUN_DEFAULT) and never return, so they are compiled here
+# for convenience but deliberately NOT registered with add_test (which would
+# hit the ctest --timeout and fail). Do not use assert() in them: builds are
+# Release, NDEBUG makes assert a no-op.
 # ============================================================================
-file(GLOB INTEGRATION_TEST_FILES test/integration/*.c)
+file(GLOB INTEGRATION_TEST_FILES manual/*.c)
 foreach(test_file ${INTEGRATION_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
 

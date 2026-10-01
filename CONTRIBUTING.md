@@ -145,7 +145,7 @@ Closes #123
 
 以下每一条都在本项目造成过实际返工，均为「看代码看不出来、跑一遍也未必暴露」的类型：
 
-- [ ] **测试真的会被执行到** — `test/integration/*.c` 会被 CMake 编译但**不会注册进 ctest**（只有 `add_test` 的测试才跑）。放进 integration 目录的测试 CI 永远不会执行。要进 CI 门禁必须放 `test/unit/`。
+- [ ] **测试真的会被执行到** — `manual/*.c` 会被 CMake 编译但**不会注册进 ctest**（只有 `add_test` 的测试才跑）。放进 manual 目录的测试 CI 永远不会执行。要进 CI 门禁必须放 `test/unit/`。
 - [ ] **新增测试文件在裁剪构建下能编译** — `build-matrix` 的 `minimal` 配置关掉 WebSocket/HTTPS/static-files/LRU/compression，传递 include 会被裁掉。测试文件要**直接 include 自己调用的头**，不能依赖传递包含（`fuzz_*.c` 需要 `uvhttp_features.h` 同理）。
 - [ ] **新增/改动 `.c/.h` 会被 format-check 门禁** — `format-check` 只对本 PR 变更的 C/H 文件跑 `clang-format --dry-run`，且是**全文件**检查（存量漂移也会挡）。`src/` 存量漂移已清理，但新改动务必 `clang-format -i`。
 - [ ] **`.clang-format` 无重复键** — clang-format 18 拒绝解析含重复 mapping key 的配置（CI 用 18，本地可能是 14 而无法复现）。用工具校验而非凭印象；PyYAML 的 `safe_load` 默认**接受**重复键，是假阴性。
@@ -281,9 +281,9 @@ ctest
 |---|---|---|---|
 | 单元测试 | `test/unit/*.cpp` | ctest → `ubuntu-test-fast` + `asan-gate` | 需要断言的逻辑、wire 级行为、回归测试 |
 | fuzz harness | `test/fuzz/*.c` | 夜间 `ci-fuzz` | 吃不可信字节的解析/解码路径 |
-| 集成测试 | `test/integration/*.c` | **无人执行**（仅编译） | 长驻服务进程、需外部 curl 驱动 |
+| 手动测试工具 | `manual/*.c` | **无人执行**（仅编译） | 长驻服务进程、需外部 curl 驱动 |
 
-**`test/integration/` 里的文件全部是长驻 server，不是自动化测试。** 19 个文件无一例外：都是 `uv_run(loop, UV_RUN_DEFAULT)` 永不返回 + 打印 usage 等人用 curl 驱动。CMake 只对 `test/unit/*.cpp` 调 `add_test`，integration 目录的文件仅被编译、**从不被执行**——注册进去会撞 `ctest --timeout 90` 被杀。
+**`manual/` 里的文件全部是长驻 server，不是自动化测试。** 它们从 `test/integration/` 移到 `manual/` 就是为了不让人误以为 CI 会跑：都是 `uv_run(loop, UV_RUN_DEFAULT)` 永不返回 + 打印 usage 等人用 curl 驱动。CMake 只对 `test/unit/*.cpp` 调 `add_test`，manual 目录的文件仅被编译、**从不被执行**——注册进去会撞 `ctest --timeout 90` 被杀。
 
 **不要在这些文件里用 `assert()` 做验证。** CI 与本地都用 `CMAKE_BUILD_TYPE=Release`，Release 定义 `NDEBUG`，`assert()` 全部展开为 no-op：
 
