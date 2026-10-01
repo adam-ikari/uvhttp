@@ -11,6 +11,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+# Minimal GITHUB_TOKEN. The repo default is admin/maintain/push/triage — all
+# this workflow needs is checkout (contents: read). generate-summary writes
+# $GITHUB_STEP_SUMMARY, which is local to the run and needs no scope. The
+# benchmark-label job lives in ci-benchmark.yml with its own permissions.
+permissions:
+  contents: read
 jobs:
   # ========== 并行任务组 ==========
   

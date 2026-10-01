@@ -5,6 +5,10 @@ on:
     - cron: '0 20 * * *'  # UTC 20:00 = 北京时间 04:00 (凌晨)
   workflow_dispatch:
 
+# Minimal GITHUB_TOKEN. The repo default is admin/maintain/push/triage — this
+# daily build only checks out (contents: read) and builds; it pushes nothing.
+permissions:
+  contents: read
 jobs:
   daily-build:
     runs-on: ubuntu-latest
