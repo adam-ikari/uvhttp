@@ -11,21 +11,20 @@
 #include "uvhttp_error.h"
 #include "uvhttp_logging.h"
 #include "uvhttp_platform.h"
+#include "uvhttp_protocol_upgrade.h"
 #include "uvhttp_server.h"
 #include "uvhttp_utils.h"
-
-#include "uvhttp_protocol_upgrade.h"
 
 #include <errno.h>
 #include <time.h>
 
 #if UVHTTP_FEATURE_TLS
-#include <mbedtls/base64.h>
-#include <mbedtls/ctr_drbg.h>
-#include <mbedtls/entropy.h>
-#include <mbedtls/sha1.h>
+#    include <mbedtls/base64.h>
+#    include <mbedtls/ctr_drbg.h>
+#    include <mbedtls/entropy.h>
+#    include <mbedtls/sha1.h>
 #else
-#error "WebSocket requires TLS support (BUILD_WITH_HTTPS=ON)"
+#    error "WebSocket requires TLS support (BUILD_WITH_HTTPS=ON)"
 #endif
 
 #include <stdio.h>
@@ -333,7 +332,8 @@ uvhttp_error_t uvhttp_ws_handshake_server(struct uvhttp_ws_connection* conn,
 
     /* parserequest, get Sec-WebSocket-Key (header names are
      * case-insensitive per RFC 7230 §3.2 — review M4) */
-    const char* key_start = uvhttp_ws_strcasestr(request, UVHTTP_HEADER_WEBSOCKET_KEY);
+    const char* key_start =
+        uvhttp_ws_strcasestr(request, UVHTTP_HEADER_WEBSOCKET_KEY);
     if (!key_start) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -405,7 +405,8 @@ uvhttp_error_t uvhttp_ws_handshake_client(uvhttp_context_t* context,
     base64_key[olen] = '\0';
 
     /* save key to connection (for subsequent verification) */
-    uvhttp_safe_strncpy(conn->client_key, (char*)base64_key, sizeof(conn->client_key));
+    uvhttp_safe_strncpy(conn->client_key, (char*)base64_key,
+                        sizeof(conn->client_key));
 
     /* buildrequest */
     int len = snprintf(request, *request_len,
@@ -751,7 +752,8 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
 
     /* read payload */
     if (frame->header.payload_length > 0) {
-        if (frame->header.payload_length > (uint64_t)conn->config.max_frame_size) {
+        if (frame->header.payload_length >
+            (uint64_t)conn->config.max_frame_size) {
             return UVHTTP_ERROR_INVALID_PARAM;
         }
 
@@ -766,8 +768,8 @@ uvhttp_error_t uvhttp_ws_recv_frame(struct uvhttp_ws_connection* conn,
             ret = mbedtls_ssl_read(conn->ssl, frame->payload,
                                    frame->header.payload_length);
         } else {
-            ret = recv(conn->fd, frame->payload, frame->header.payload_length,
-                       0);
+            ret =
+                recv(conn->fd, frame->payload, frame->header.payload_length, 0);
         }
 
         if (ret != (int)frame->header.payload_length) {
@@ -803,8 +805,8 @@ static uvhttp_error_t uvhttp_ws_fragment_append(
      * exceed the configured cap. */
     if ((size_t)conn->config.max_message_size > 0 &&
         (conn->fragmented_size > (size_t)conn->config.max_message_size ||
-         payload_len > (size_t)conn->config.max_message_size -
-                            conn->fragmented_size)) {
+         payload_len >
+             (size_t)conn->config.max_message_size - conn->fragmented_size)) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
@@ -900,8 +902,7 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
              * rest of the frame; otherwise the frame is malformed and the
              * connection must be closed rather than silently skipping it. */
             uint8_t len_code = conn->recv_buffer[1] & 0x7F;
-            size_t need =
-                (len_code == 126) ? 4 : (len_code == 127) ? 10 : 2;
+            size_t need = (len_code == 126) ? 4 : (len_code == 127) ? 10 : 2;
             if (conn->recv_buffer_pos < need) {
                 break;
             }
@@ -992,8 +993,8 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                     conn->fragmented_capacity = 0;
                     conn->fragmented_message = NULL;
                     if (uvhttp_ws_fragment_append(
-                            conn, payload,
-                            (size_t)header.payload_length) != UVHTTP_OK) {
+                            conn, payload, (size_t)header.payload_length) !=
+                        UVHTTP_OK) {
                         return UVHTTP_ERROR_INVALID_PARAM;
                     }
                 } else {
@@ -1012,9 +1013,9 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                      * — protocol violation */
                     return UVHTTP_ERROR_INVALID_PARAM;
                 }
-                if (uvhttp_ws_fragment_append(
-                        conn, payload,
-                        (size_t)header.payload_length) != UVHTTP_OK) {
+                if (uvhttp_ws_fragment_append(conn, payload,
+                                              (size_t)header.payload_length) !=
+                    UVHTTP_OK) {
                     return UVHTTP_ERROR_INVALID_PARAM;
                 }
                 if (header.fin) {
@@ -1022,8 +1023,7 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                     if (conn->on_message) {
                         conn->on_message(
                             conn, (const char*)conn->fragmented_message,
-                            conn->fragmented_size,
-                            conn->fragmented_opcode);
+                            conn->fragmented_size, conn->fragmented_opcode);
                     }
                     uvhttp_free(conn->fragmented_message);
                     conn->fragmented_message = NULL;
@@ -1069,19 +1069,17 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                     close_payload[0] = payload[0];
                     close_payload[1] = payload[1];
                     close_len = 2;
-                    size_t reason_len =
-                        (size_t)header.payload_length - 2;
+                    size_t reason_len = (size_t)header.payload_length - 2;
                     if (reason_len > 125) {
                         reason_len = 125;
                     }
                     if (reason_len > 0) {
-                        memcpy(close_payload + 2, payload + 2,
-                               reason_len);
+                        memcpy(close_payload + 2, payload + 2, reason_len);
                         close_len = 2 + reason_len;
                     }
                 }
-                uvhttp_ws_send_frame(srv_ctx, conn, close_payload,
-                                     close_len, UVHTTP_WS_OPCODE_CLOSE);
+                uvhttp_ws_send_frame(srv_ctx, conn, close_payload, close_len,
+                                     UVHTTP_WS_OPCODE_CLOSE);
             }
 
             conn->state = UVHTTP_WS_STATE_CLOSED;

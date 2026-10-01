@@ -580,7 +580,7 @@ static int static_file_handler_wrapper(uvhttp_request_t* request,
 
     /* call static file processing function */
     if (router->static_context) {
-#ifdef UVHTTP_STATIC_FILES_ENABLED
+#    ifdef UVHTTP_STATIC_FILES_ENABLED
         uvhttp_result_t result = uvhttp_static_handle_request(
             (uvhttp_static_context_t*)router->static_context, request,
             response);
@@ -588,7 +588,7 @@ static int static_file_handler_wrapper(uvhttp_request_t* request,
         if (result == UVHTTP_OK) {
             return 0;
         }
-#endif
+#    endif
     }
 
     /* static file service failed, return 404 */
@@ -788,11 +788,11 @@ static int binary_route_handler(uvhttp_request_t* request,
         return -1;
     }
     r = conn->server->router;
-    if (!r->static_context) return -1;
+    if (!r->static_context)
+        return -1;
 
     uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type",
-                               r->static_context);
+    uvhttp_response_set_header(response, "Content-Type", r->static_context);
     uvhttp_response_set_body(response, r->static_data, r->static_data_len);
     return uvhttp_response_send(response);
 }

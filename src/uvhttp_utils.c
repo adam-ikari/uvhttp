@@ -5,13 +5,13 @@
 #include "uvhttp_constants.h"
 #include "uvhttp_response.h"
 
+#include <arpa/inet.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <time.h>
-#include <arpa/inet.h>
 
 // Safe string copy function - uses snprintf for safety
 int uvhttp_safe_strcpy(char* dest, size_t dest_size, const char* src) {
@@ -197,11 +197,11 @@ uvhttp_error_t uvhttp_send_error_response(uvhttp_response_t* response,
     }
 
     if (details && strlen(details) > 0) {
-        json_len = snprintf(error_json, sizeof(error_json),
-                            "{\"error\":\"%s\",\"details\":\"%s\",\"code\":%d,"
-                            "\"timestamp\":%ld}",
-                            escaped_msg, escaped_details, error_code,
-                            time(NULL));
+        json_len =
+            snprintf(error_json, sizeof(error_json),
+                     "{\"error\":\"%s\",\"details\":\"%s\",\"code\":%d,"
+                     "\"timestamp\":%ld}",
+                     escaped_msg, escaped_details, error_code, time(NULL));
     } else {
         json_len = snprintf(error_json, sizeof(error_json),
                             "{\"error\":\"%s\",\"code\":%d,\"timestamp\":%ld}",

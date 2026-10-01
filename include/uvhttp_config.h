@@ -51,8 +51,8 @@ typedef struct {
     int max_requests_per_connection; /* Maximum requests per connection, default
                                       * 100, prevent long connection abuse
                                       */
-    int rate_limit_window; /* Rate limiting time window, default 60 seconds,
-                              balance accuracy and performance */
+    int rate_limit_window;   /* Rate limiting time window, default 60 seconds,
+                                balance accuracy and performance */
     int trust_proxy_headers; /* Trust X-Forwarded-For/X-Real-IP when resolving
                               * client IP. Default 0 (spoof-safe): always use
                               * the TCP peer address. Enable only behind a

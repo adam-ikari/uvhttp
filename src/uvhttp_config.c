@@ -334,17 +334,16 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
      * uv_timer_start fail with UV_EINVAL. */
     if (config->connection_timeout < UVHTTP_CONNECTION_TIMEOUT_MIN ||
         config->connection_timeout > UVHTTP_CONNECTION_TIMEOUT_MAX) {
-        UVHTTP_LOG_ERROR(
-            "connection_timeout=%d exceeds valid range [%d-%d]",
-            config->connection_timeout, UVHTTP_CONNECTION_TIMEOUT_MIN,
-            UVHTTP_CONNECTION_TIMEOUT_MAX);
+        UVHTTP_LOG_ERROR("connection_timeout=%d exceeds valid range [%d-%d]",
+                         config->connection_timeout,
+                         UVHTTP_CONNECTION_TIMEOUT_MIN,
+                         UVHTTP_CONNECTION_TIMEOUT_MAX);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
     if (config->sendfile_max_retry < UVHTTP_SENDFILE_MIN_RETRY) {
         UVHTTP_LOG_ERROR("sendfile_max_retry=%d below minimum %d",
-                         config->sendfile_max_retry,
-                         UVHTTP_SENDFILE_MIN_RETRY);
+                         config->sendfile_max_retry, UVHTTP_SENDFILE_MIN_RETRY);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 

@@ -24,51 +24,51 @@ extern "C" {
  */
 typedef struct {
     /* Version information */
-    const char* version_string;       /**< Version string (e.g., "2.3.0") */
-    int version_major;                /**< Major version number */
-    int version_minor;                /**< Minor version number */
-    int version_patch;                /**< Patch version number */
-    int version_int;                  /**< Version as integer (e.g., 20300 for 2.3.0) */
+    const char* version_string; /**< Version string (e.g., "2.3.0") */
+    int version_major;          /**< Major version number */
+    int version_minor;          /**< Minor version number */
+    int version_patch;          /**< Patch version number */
+    int version_int; /**< Version as integer (e.g., 20300 for 2.3.0) */
 
     /* Build information */
-    const char* build_type;           /**< Build type (Debug/Release) */
-    const char* build_date;           /**< Build date (__DATE__) */
-    const char* build_time;           /**< Build time (__TIME__) */
-    const char* compiler;             /**< Compiler information */
-    const char* platform;             /**< Platform information */
+    const char* build_type; /**< Build type (Debug/Release) */
+    const char* build_date; /**< Build date (__DATE__) */
+    const char* build_time; /**< Build time (__TIME__) */
+    const char* compiler;   /**< Compiler information */
+    const char* platform;   /**< Platform information */
 
     /* Feature flags */
-    int feature_websocket;            /**< WebSocket support enabled */
-    int feature_static_files;         /**< Static file support enabled */
-    int feature_tls;                  /**< TLS/SSL support enabled */
-    int feature_middleware;           /**< Middleware support enabled */
-    int feature_logging;              /**< Logging support enabled */
-    int feature_router_cache;         /**< Router cache enabled */
-    int feature_lru_cache;            /**< LRU cache enabled */
-    int feature_rate_limit;           /**< Rate limit enabled */
-    int feature_protocol_upgrade;     /**< Protocol upgrade enabled */
+    int feature_websocket;        /**< WebSocket support enabled */
+    int feature_static_files;     /**< Static file support enabled */
+    int feature_tls;              /**< TLS/SSL support enabled */
+    int feature_middleware;       /**< Middleware support enabled */
+    int feature_logging;          /**< Logging support enabled */
+    int feature_router_cache;     /**< Router cache enabled */
+    int feature_lru_cache;        /**< LRU cache enabled */
+    int feature_rate_limit;       /**< Rate limit enabled */
+    int feature_protocol_upgrade; /**< Protocol upgrade enabled */
 
     /* Allocator configuration */
-    const char* allocator_type;       /**< Allocator type (system/mimalloc/custom) */
+    const char* allocator_type; /**< Allocator type (system/mimalloc/custom) */
 
     /* Memory configuration */
-    int max_connections;              /**< Maximum connections */
-    int max_headers;                  /**< Maximum headers per request */
-    int max_body_size;                /**< Maximum body size */
-    int buffer_size;                  /**< Default buffer size */
+    int max_connections; /**< Maximum connections */
+    int max_headers;     /**< Maximum headers per request */
+    int max_body_size;   /**< Maximum body size */
+    int buffer_size;     /**< Default buffer size */
 
     /* Router configuration */
-    int router_hash_size;             /**< Router hash table size */
-    int router_hot_cache_size;        /**< Router hot cache size */
-    int router_hybrid_threshold;      /**< Router hybrid threshold */
+    int router_hash_size;        /**< Router hash table size */
+    int router_hot_cache_size;   /**< Router hot cache size */
+    int router_hybrid_threshold; /**< Router hybrid threshold */
 
     /* Cache configuration */
-    int lru_cache_size;               /**< LRU cache size (entries) */
-    int lru_cache_max_memory;         /**< LRU cache max memory (bytes) */
+    int lru_cache_size;       /**< LRU cache size (entries) */
+    int lru_cache_max_memory; /**< LRU cache max memory (bytes) */
 
     /* TLS configuration */
-    int tls_enabled;                  /**< TLS enabled */
-    const char* tls_version;          /**< TLS version */
+    int tls_enabled;         /**< TLS enabled */
+    const char* tls_version; /**< TLS version */
 } uvhttp_build_info_t;
 
 /**
@@ -111,8 +111,8 @@ int uvhttp_get_version_int(void);
  * @return uvhttp_error_t UVHTTP_OK on success, error code on failure
  *
  * @note If info is NULL, returns UVHTTP_ERROR_INVALID_PARAM
- * @note The returned structure contains pointers to statically allocated strings,
- *       do not free them
+ * @note The returned structure contains pointers to statically allocated
+ * strings, do not free them
  * @note This function is thread-safe
  */
 uvhttp_error_t uvhttp_get_build_info(uvhttp_build_info_t* info);

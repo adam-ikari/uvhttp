@@ -20,6 +20,7 @@
 #define UVHTTP_GZIP_CACHE_H
 
 #include "uvhttp_error.h"
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -30,9 +31,9 @@ extern "C" {
 #if UVHTTP_FEATURE_COMPRESSION
 
 /* Default cache limits */
-#define UVHTTP_GZIP_CACHE_DEFAULT_MAX_ENTRIES 64
-#define UVHTTP_GZIP_CACHE_DEFAULT_MAX_MEMORY (1u << 20) /* 1 MiB */
-#define UVHTTP_GZIP_CACHE_DEFAULT_TTL 0                  /* 0 = never expire */
+#    define UVHTTP_GZIP_CACHE_DEFAULT_MAX_ENTRIES 64
+#    define UVHTTP_GZIP_CACHE_DEFAULT_MAX_MEMORY (1u << 20) /* 1 MiB */
+#    define UVHTTP_GZIP_CACHE_DEFAULT_TTL 0 /* 0 = never expire */
 
 typedef struct uvhttp_gzip_cache uvhttp_gzip_cache_t;
 
@@ -45,8 +46,8 @@ typedef struct uvhttp_gzip_cache uvhttp_gzip_cache_t;
  * @param cache Output parameter, receives the created cache
  * @return UVHTTP_OK on success, otherwise an error code
  */
-uvhttp_error_t uvhttp_gzip_cache_create(size_t max_memory_usage, int max_entries,
-                                        int cache_ttl,
+uvhttp_error_t uvhttp_gzip_cache_create(size_t max_memory_usage,
+                                        int max_entries, int cache_ttl,
                                         uvhttp_gzip_cache_t** cache);
 
 /**

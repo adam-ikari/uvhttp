@@ -81,10 +81,10 @@ struct uvhttp_router {
     size_t array_capacity;       /* 8 bytes */
 
     /* Static file routing support (8-byte aligned) */
-    char* static_prefix;                     /* 8 bytes */
-    void* static_context;                    /* 8 bytes */
-    const void* static_data;                 /* 8 bytes - binary route data */
-    size_t static_data_len;                  /* 8 bytes - binary route data len */
+    char* static_prefix;     /* 8 bytes */
+    void* static_context;    /* 8 bytes */
+    const void* static_data; /* 8 bytes - binary route data */
+    size_t static_data_len;  /* 8 bytes - binary route data len */
     uvhttp_request_handler_t static_handler; /* 8 bytes */
 
     /* Fallback routing support (8-byte aligned) */
@@ -157,9 +157,10 @@ uvhttp_error_t uvhttp_parse_path_params(const char* path,
 uvhttp_method_t uvhttp_method_from_string(const char* method);
 const char* uvhttp_method_to_string(uvhttp_method_t method);
 
-/* Note: Static file routing and fallback routing should be implemented by the application layer.
- * Use uvhttp_router_add_route() to add static file handlers that call uvhttp_static_handle_request().
- * See examples/04_static_files/static_file_server.c for best practices. */
+/* Note: Static file routing and fallback routing should be implemented by the
+ * application layer. Use uvhttp_router_add_route() to add static file handlers
+ * that call uvhttp_static_handle_request(). See
+ * examples/04_static_files/static_file_server.c for best practices. */
 
 #ifdef __cplusplus
 }

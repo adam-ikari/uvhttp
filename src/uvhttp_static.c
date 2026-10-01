@@ -87,7 +87,6 @@ static const uvhttp_mime_mapping_t mime_types[] = {
  * (~40 entries); linear scan is O(n) with negligible cost and one
  * source of truth. */
 
-
 /**
  * getfileextension
  */
@@ -472,7 +471,7 @@ static dir_entry_t* collect_dir_entries(const char* dir_path,
 static int compare_dir_entries(const void* a, const void* b) {
     const dir_entry_t* entry_a = (const dir_entry_t*)a;
     const dir_entry_t* entry_b = (const dir_entry_t*)b;
-    
+
     /* directories first */
     if (entry_a->is_dir && !entry_b->is_dir) {
         return -1;
@@ -480,7 +479,7 @@ static int compare_dir_entries(const void* a, const void* b) {
     if (!entry_a->is_dir && entry_b->is_dir) {
         return 1;
     }
-    
+
     /* sort by name for same type */
     return strcmp(entry_a->name, entry_b->name);
 }
@@ -515,8 +514,8 @@ static char* generate_directory_listing(const char* dir_path,
     /* Compute buffer from actual entries: base HTML + 2×6×name + overhead */
     size_t buffer_size = UVHTTP_DIR_LISTING_BUFFER_SIZE;
     for (size_t i = 0; i < actual_count; i++) {
-        buffer_size += 2 * 6 * strlen(entries[i].name) +
-                       UVHTTP_DIR_ENTRY_HTML_OVERHEAD;
+        buffer_size +=
+            2 * 6 * strlen(entries[i].name) + UVHTTP_DIR_ENTRY_HTML_OVERHEAD;
     }
 
     char* html = uvhttp_alloc(buffer_size);
@@ -558,8 +557,6 @@ static char* generate_directory_listing(const char* dir_path,
                            "<tr><td><a href=\"../\">../</a></td><td "
                            "class=\"dir\">-</td><td>-</td></tr>\n");
     }
-
-
 
     /* sort entry */
     sort_dir_entries(entries, actual_count);
@@ -651,7 +648,8 @@ uvhttp_result_t uvhttp_static_set_response_headers(void* response,
     size_t path_len = strlen(file_path);
     if (path_len > 3 && strcmp(file_path + path_len - 3, ".gz") == 0) {
         /* for .gz files, use the original file's MIME type and add
-         * Content-Encoding: gzip. The .gz suffix is stripped for MIME lookup. */
+         * Content-Encoding: gzip. The .gz suffix is stripped for MIME lookup.
+         */
         size_t base_len = path_len - 3;
         if (base_len < sizeof(mime_path)) {
             memcpy(mime_path, file_path, base_len);
@@ -662,8 +660,8 @@ uvhttp_result_t uvhttp_static_set_response_headers(void* response,
     }
 
     char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
-    if (uvhttp_static_get_mime_type(mime_source, mime_type, sizeof(mime_type)) ==
-        0) {
+    if (uvhttp_static_get_mime_type(mime_source, mime_type,
+                                    sizeof(mime_type)) == 0) {
         uvhttp_response_set_header(response, "Content-Type", mime_type);
     }
 
@@ -746,8 +744,8 @@ int uvhttp_static_check_conditional_request(void* request, const char* etag,
             const char* cmp = entry;
             size_t cmp_len = (size_t)(end - entry);
             /* Trim trailing whitespace/commas from this entry */
-            while (cmp_len > 0 && (cmp[cmp_len - 1] == ' ' ||
-                                   cmp[cmp_len - 1] == '\t')) {
+            while (cmp_len > 0 &&
+                   (cmp[cmp_len - 1] == ' ' || cmp[cmp_len - 1] == '\t')) {
                 cmp_len--;
             }
             if (cmp_len >= 2 && (cmp[0] == 'W' || cmp[0] == 'w') &&
@@ -777,9 +775,9 @@ int uvhttp_static_check_conditional_request(void* request, const char* etag,
          * formats. Parse as GMT and convert with timegm (mktime would apply
          * the local timezone and skew the comparison). */
         static const char* const http_date_formats[] = {
-            "%a, %d %b %Y %H:%M:%S GMT",  /* IMF-fixdate */
-            "%A, %d-%b-%y %H:%M:%S GMT",  /* obsolete RFC 850 */
-            "%a %b %e %H:%M:%S %Y"        /* asctime */
+            "%a, %d %b %Y %H:%M:%S GMT", /* IMF-fixdate */
+            "%A, %d-%b-%y %H:%M:%S GMT", /* obsolete RFC 850 */
+            "%a %b %e %H:%M:%S %Y"       /* asctime */
         };
         size_t i;
         for (i = 0; i < sizeof(http_date_formats) / sizeof(char*); i++) {
@@ -1018,8 +1016,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
             }
         } else {
             /* index_file too long, use default value */
-            uvhttp_safe_strncpy(clean_path, "/index.html",
-                                sizeof(clean_path));
+            uvhttp_safe_strncpy(clean_path, "/index.html", sizeof(clean_path));
         }
     }
 
@@ -1105,15 +1102,17 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     }
 
     /* check if a pre-compressed .gz version exists and client accepts gzip */
-    if (file_size >= 512) {  /* only precompress files >= 512 bytes */
-        const char* accept_encoding = uvhttp_request_get_header(request, "Accept-Encoding");
+    if (file_size >= 512) { /* only precompress files >= 512 bytes */
+        const char* accept_encoding =
+            uvhttp_request_get_header(request, "Accept-Encoding");
         if (accept_encoding && strstr(accept_encoding, "gzip")) {
             char gz_path[UVHTTP_MAX_FILE_PATH_SIZE];
             int ret = snprintf(gz_path, sizeof(gz_path), "%s.gz", safe_path);
             if (ret > 0 && ret < (int)sizeof(gz_path)) {
                 size_t gz_size;
                 time_t gz_mtime;
-                if (get_file_info(gz_path, &gz_size, &gz_mtime) == 0 && gz_size > 0) {
+                if (get_file_info(gz_path, &gz_size, &gz_mtime) == 0 &&
+                    gz_size > 0) {
                     uvhttp_safe_strncpy(safe_path, gz_path, sizeof(safe_path));
                     file_size = gz_size;
                     last_modified = gz_mtime;
@@ -1588,9 +1587,9 @@ static void on_sendfile_complete(uv_fs_t* req) {
                 (remaining > ctx->chunk_size) ? ctx->chunk_size : remaining;
 
             uv_fs_req_cleanup(req);
-            int resend_result =
-                uv_fs_sendfile(loop, &ctx->sendfile_req, ctx->out_fd, ctx->in_fd,
-                               ctx->offset, chunk_size, on_sendfile_complete);
+            int resend_result = uv_fs_sendfile(
+                loop, &ctx->sendfile_req, ctx->out_fd, ctx->in_fd, ctx->offset,
+                chunk_size, on_sendfile_complete);
             /* socket may be closed (client disconnect): sync failure means no
              * callback will fire, so release ctx via on_file_close */
             if (resend_result < 0) {
@@ -1811,9 +1810,9 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         ctx->completed = 0;
         ctx->start_time = uv_now(loop);
         ctx->retry_count = 0;
-        ctx->sendfile_req.data = ctx;  /* setcallbackdata */
-        ctx->close_req.data = ctx;     /* on_file_close releases ctx via this */
-        ctx->cork_enabled = 0;         /* initialize as disabled */
+        ctx->sendfile_req.data = ctx; /* setcallbackdata */
+        ctx->close_req.data = ctx;    /* on_file_close releases ctx via this */
+        ctx->cork_enabled = 0;        /* initialize as disabled */
 
         /* initializeconfigparameter */
         init_sendfile_config(ctx, file_size, config);

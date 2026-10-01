@@ -86,7 +86,8 @@ uvhttp_error_t uvhttp_server_register_protocol_upgrade(
 
     /* Normalize protocol name to lowercase */
     size_t protocol_name_len = strlen(protocol_name);
-    for (size_t i = 0; i < protocol_name_len && i < sizeof(info->name) - 1; i++) {
+    for (size_t i = 0; i < protocol_name_len && i < sizeof(info->name) - 1;
+         i++) {
         info->name[i] = (char)tolower((unsigned char)protocol_name[i]);
     }
     info->name[sizeof(info->name) - 1] = '\0';
@@ -94,7 +95,9 @@ uvhttp_error_t uvhttp_server_register_protocol_upgrade(
     if (upgrade_header) {
         /* Normalize upgrade header to lowercase */
         size_t upgrade_header_len = strlen(upgrade_header);
-        for (size_t i = 0; i < upgrade_header_len && i < sizeof(info->upgrade_header) - 1; i++) {
+        for (size_t i = 0;
+             i < upgrade_header_len && i < sizeof(info->upgrade_header) - 1;
+             i++) {
             info->upgrade_header[i] =
                 (char)tolower((unsigned char)upgrade_header[i]);
         }

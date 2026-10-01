@@ -147,8 +147,9 @@ Closes #123
 
 - [ ] **测试真的会被执行到** — `manual/*.c` 会被 CMake 编译但**不会注册进 ctest**（只有 `add_test` 的测试才跑）。放进 manual 目录的测试 CI 永远不会执行。要进 CI 门禁必须放 `test/unit/`。
 - [ ] **新增测试文件在裁剪构建下能编译** — `build-matrix` 的 `minimal` 配置关掉 WebSocket/HTTPS/static-files/LRU/compression，传递 include 会被裁掉。测试文件要**直接 include 自己调用的头**，不能依赖传递包含（`fuzz_*.c` 需要 `uvhttp_features.h` 同理）。
-- [ ] **新增/改动 `.c/.h` 会被 format-check 门禁** — `format-check` 只对本 PR 变更的 C/H 文件跑 `clang-format --dry-run`，且是**全文件**检查（存量漂移也会挡）。`src/` 存量漂移已清理，但新改动务必 `clang-format -i`。
-- [ ] **`.clang-format` 无重复键** — clang-format 18 拒绝解析含重复 mapping key 的配置（CI 用 18，本地可能是 14 而无法复现）。用工具校验而非凭印象；PyYAML 的 `safe_load` 默认**接受**重复键，是假阴性。
+- [ ] **新增/改动 `.c/.h` 会被 format-check 门禁** — `format-check` 只对本 PR 变更的 C/H 文件跑 `clang-format --dry-run`，且是**全文件**检查。存量漂移已在 #416 用 clang-format 18.1.8 清理干净，新改动务必用**同一版本** `clang-format -i`。
+- [ ] **clang-format 版本必须与门禁一致** — 门禁用 `pip install clang-format==18.1.8`（**不用 apt**：apt 装的是 runner 镜像当前版本，随镜像升级漂移）。clang-format 输出跨大版本差异很大——同一份代码 v14 判 0 违规、v18 判 424 处。版本不一致时「本地过、CI 红」且无法复现。本地对齐：`pip install clang-format==18.1.8`，然后 `clang-format --version` 确认。
+- [ ] **`.clang-format` 无重复键** — clang-format 18 拒绝解析含重复 mapping key 的配置。用工具校验而非凭印象；PyYAML 的 `safe_load` 默认**接受**重复键，是假阴性。
 - [ ] **socket/loop 类测试的 fd 与 handle 释放** — 内存测试的 fd 泄漏 ASan 查不到（fd 不在 malloc 域）。fixture 内每条 `return`/提前退出路径都要 `close(fd)`；read 循环的退出条件要基于**实际收到的 body 长度**，而非 `Content-Length` 值混算，否则 TCP 分段投递时会读到截断 body 假失败。
 - [ ] **CI 步骤顺序本身是正确性的一部分** — `upload-artifact`/`if: failure()` 只对**已执行过**的步骤生效。crash artifact 上传等收尾步骤必须排在**所有**会被 crash 打断的 Run 步骤之后，否则最需要留证时反而丢证据。
 - [ ] **变异验证新测试有牙齿** — 造一个该测试本应捕获的 bug（如丢一个 iovec、破坏阈值边界），确认测试**变红**。一个改错了也照样绿的新测试，等于没有测试。

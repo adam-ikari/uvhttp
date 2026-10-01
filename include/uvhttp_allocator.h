@@ -28,11 +28,11 @@ extern "C" {
 #endif
 
 #if UVHTTP_ALLOCATOR_TYPE == 1 /* mimalloc */
-    /* Forward declare mimalloc functions to avoid template linkage issues */
-    extern void* mi_malloc(size_t size);
-    extern void mi_free(void* ptr);
-    extern void* mi_realloc(void* ptr, size_t size);
-    extern void* mi_calloc(size_t count, size_t size);
+/* Forward declare mimalloc functions to avoid template linkage issues */
+extern void* mi_malloc(size_t size);
+extern void mi_free(void* ptr);
+extern void* mi_realloc(void* ptr, size_t size);
+extern void* mi_calloc(size_t count, size_t size);
 #endif
 
 #if UVHTTP_ALLOCATOR_TYPE == 1 /* mimalloc */

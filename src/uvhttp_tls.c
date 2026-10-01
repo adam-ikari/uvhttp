@@ -18,7 +18,7 @@
  * clash with the static definitions below. Define the constant locally
  * (value matches mbedtls 2.x net_sockets.h). */
 #ifndef MBEDTLS_ERR_NET_CONN_RESET
-#define MBEDTLS_ERR_NET_CONN_RESET (-0x0050)
+#    define MBEDTLS_ERR_NET_CONN_RESET (-0x0050)
 #endif
 
 struct uvhttp_tls_context {
@@ -167,7 +167,7 @@ uvhttp_error_t uvhttp_tls_context_new(uvhttp_tls_context_t** ctx) {
     }
 
     mbedtls_ssl_conf_rng(&c->conf, mbedtls_ctr_drbg_random, &c->ctr_drbg);
-    
+
     /* TLS session cache: re-enabled (2026-08-21)
      *
      * Thread-safety: uvhttp runs in a single-threaded libuv event loop.
@@ -178,8 +178,8 @@ uvhttp_error_t uvhttp_tls_context_new(uvhttp_tls_context_t** ctx) {
      * Users can override via uvhttp_tls_context_set_session_cache() and
      * uvhttp_tls_context_set_ticket_lifetime().
      */
-    mbedtls_ssl_conf_session_cache(&c->conf, &c->cache,
-        mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);
+    mbedtls_ssl_conf_session_cache(&c->conf, &c->cache, mbedtls_ssl_cache_get,
+                                   mbedtls_ssl_cache_set);
     mbedtls_ssl_cache_set_max_entries(&c->cache, 2048);
     mbedtls_ssl_cache_set_timeout(&c->cache, 86400);
 
@@ -304,10 +304,10 @@ uvhttp_error_t uvhttp_tls_context_enable_session_tickets(
 
     if (enable) {
         mbedtls_ssl_conf_session_tickets(&ctx->conf,
-            MBEDTLS_SSL_SESSION_TICKETS_ENABLED);
+                                         MBEDTLS_SSL_SESSION_TICKETS_ENABLED);
     } else {
         mbedtls_ssl_conf_session_tickets(&ctx->conf,
-            MBEDTLS_SSL_SESSION_TICKETS_DISABLED);
+                                         MBEDTLS_SSL_SESSION_TICKETS_DISABLED);
     }
 
     return UVHTTP_OK;

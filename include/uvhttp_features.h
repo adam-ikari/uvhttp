@@ -12,7 +12,8 @@ extern "C" {
 /* Core HTTP functionality - Always enabled */
 #define UVHTTP_FEATURE_HTTP 1
 
-/* Middleware support - Always enabled (compile-time tool for application layer) */
+/* Middleware support - Always enabled (compile-time tool for application layer)
+ */
 #define UVHTTP_FEATURE_MIDDLEWARE 1
 
 /* Optional feature modules */
@@ -43,7 +44,7 @@ extern "C" {
 #endif
 
 #ifndef UVHTTP_FEATURE_COMPRESSION
-#    define UVHTTP_FEATURE_COMPRESSION 0 /* HTTP response compression support */
+#    define UVHTTP_FEATURE_COMPRESSION 0  // HTTP response compression support
 #endif
 
 /* ============ Conditional Compilation Macros ============ */
@@ -57,14 +58,16 @@ extern "C" {
 #    define UVHTTP_LOGGING_ENABLED
 #endif
 
-/* Note: Logging is controlled by ENABLE_DEV_MODE and ENABLE_DEBUG options in CMakeLists.txt */
+/* Note: Logging is controlled by ENABLE_DEV_MODE and ENABLE_DEBUG options in
+ * CMakeLists.txt */
 /* The UVHTTP_LOGGING_ENABLED macro is defined based on these options */
 
 #if UVHTTP_FEATURE_TLS
 #    define UVHTTP_TLS_ENABLED
 #endif
 
-/* Middleware support - Always enabled (compile-time tool for application layer) */
+/* Middleware support - Always enabled (compile-time tool for application layer)
+ */
 #define UVHTTP_MIDDLEWARE_ENABLED
 
 #if UVHTTP_FEATURE_ROUTER_CACHE

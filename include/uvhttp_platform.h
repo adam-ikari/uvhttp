@@ -28,7 +28,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <strings.h>  /* strcasecmp */
+#include <strings.h> /* strcasecmp */
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -50,7 +50,7 @@ typedef socklen_t uvhttp_socklen_t;
 
 /* whenFunction */
 #include <unistd.h>
-#define uvhttp_sleep_ms(ms) usleep((ms)*1000)
+#define uvhttp_sleep_ms(ms) usleep((ms) * 1000)
 
 /* 32bitsSystem */
 #ifdef UVHTTP_32BIT
@@ -78,13 +78,12 @@ typedef socklen_t uvhttp_socklen_t;
 /* ========== Branch Prediction Macros ========== */
 /* Optimize branch prediction for hot paths */
 #if defined(__GNUC__) || defined(__clang__)
-#    define UVHTTP_LIKELY(x)   __builtin_expect(!!(x), 1)
+#    define UVHTTP_LIKELY(x) __builtin_expect(!!(x), 1)
 #    define UVHTTP_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #else
-#    define UVHTTP_LIKELY(x)   (x)
+#    define UVHTTP_LIKELY(x) (x)
 #    define UVHTTP_UNLIKELY(x) (x)
 #endif
-
 
 /* Cachesize( CPU  64 bytes) */
 #ifndef UVHTTP_CACHE_LINE_SIZE

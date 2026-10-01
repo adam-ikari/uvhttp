@@ -70,37 +70,36 @@ typedef int (*uvhttp_middleware_handler_t)(uvhttp_request_t* request,
                                            uvhttp_middleware_context_t* ctx);
 
 /* Execute middleware chain */
-#define _UVHTTP_MW_EXECUTE_IMPL_(counter, req, resp, ...)                      \
-    do {                                                                        \
-        static const uvhttp_middleware_handler_t _uvhttp_mw_handlers_##counter[] = { \
-            __VA_ARGS__};                                                       \
-        uvhttp_middleware_context_t _uvhttp_mw_ctx_##counter = {0};             \
-        for (size_t _uvhttp_mw_i = 0;                                           \
-             _uvhttp_mw_i <                                                     \
-             sizeof(_uvhttp_mw_handlers_##counter) / sizeof(_uvhttp_mw_handlers_##counter[0]); \
-             _uvhttp_mw_i++) {                                                  \
-            if (_uvhttp_mw_handlers_##counter[_uvhttp_mw_i] &&                  \
-                _uvhttp_mw_handlers_##counter[_uvhttp_mw_i](req, resp,          \
-                                                  &_uvhttp_mw_ctx_##counter) != \
-                    UVHTTP_MIDDLEWARE_CONTINUE) {                               \
-                goto _uvhttp_mw_stop_##counter;                                 \
-            }                                                                   \
-        }                                                                       \
-        if (_uvhttp_mw_ctx_##counter.cleanup) {                                 \
-            _uvhttp_mw_ctx_##counter.cleanup(_uvhttp_mw_ctx_##counter.data);    \
-        }                                                                       \
-        goto _uvhttp_mw_done_##counter;                                         \
-        _uvhttp_mw_stop_##counter:                                              \
-        if (_uvhttp_mw_ctx_##counter.cleanup) {                                 \
-            _uvhttp_mw_ctx_##counter.cleanup(_uvhttp_mw_ctx_##counter.data);    \
-        }                                                                       \
-        _uvhttp_mw_done_##counter:;                                             \
+#define _UVHTTP_MW_EXECUTE_IMPL_(counter, req, resp, ...)                    \
+    do {                                                                     \
+        static const uvhttp_middleware_handler_t                             \
+            _uvhttp_mw_handlers_##counter[] = {__VA_ARGS__};                 \
+        uvhttp_middleware_context_t _uvhttp_mw_ctx_##counter = {0};          \
+        for (size_t _uvhttp_mw_i = 0;                                        \
+             _uvhttp_mw_i < sizeof(_uvhttp_mw_handlers_##counter) /          \
+                                sizeof(_uvhttp_mw_handlers_##counter[0]);    \
+             _uvhttp_mw_i++) {                                               \
+            if (_uvhttp_mw_handlers_##counter[_uvhttp_mw_i] &&               \
+                _uvhttp_mw_handlers_##counter[_uvhttp_mw_i](                 \
+                    req, resp, &_uvhttp_mw_ctx_##counter) !=                 \
+                    UVHTTP_MIDDLEWARE_CONTINUE) {                            \
+                goto _uvhttp_mw_stop_##counter;                              \
+            }                                                                \
+        }                                                                    \
+        if (_uvhttp_mw_ctx_##counter.cleanup) {                              \
+            _uvhttp_mw_ctx_##counter.cleanup(_uvhttp_mw_ctx_##counter.data); \
+        }                                                                    \
+        goto _uvhttp_mw_done_##counter;                                      \
+        _uvhttp_mw_stop_##counter : if (_uvhttp_mw_ctx_##counter.cleanup) {  \
+            _uvhttp_mw_ctx_##counter.cleanup(_uvhttp_mw_ctx_##counter.data); \
+        }                                                                    \
+        _uvhttp_mw_done_##counter :;                                         \
     } while (0)
 
-#define _UVHTTP_MW_EXECUTE_IMPL(counter, req, resp, ...)                       \
+#define _UVHTTP_MW_EXECUTE_IMPL(counter, req, resp, ...) \
     _UVHTTP_MW_EXECUTE_IMPL_(counter, req, resp, __VA_ARGS__)
 
-#define UVHTTP_EXECUTE_MIDDLEWARE(req, resp, ...)                              \
+#define UVHTTP_EXECUTE_MIDDLEWARE(req, resp, ...) \
     _UVHTTP_MW_EXECUTE_IMPL(__COUNTER__, req, resp, __VA_ARGS__)
 
 /* Define middleware chain (for reuse) */
@@ -111,32 +110,32 @@ typedef int (*uvhttp_middleware_handler_t)(uvhttp_request_t* request,
         sizeof(name##_handlers) / sizeof(name##_handlers[0])
 
 /* Execute predefined middleware chain */
-#define _UVHTTP_MW_CHAIN_IMPL_(counter, req, resp, name)                       \
-    do {                                                                        \
-        uvhttp_middleware_context_t _uvhttp_mw_ctx_##counter = {0};             \
-        for (size_t _uvhttp_mw_i = 0; _uvhttp_mw_i < name##_count;              \
-             _uvhttp_mw_i++) {                                                  \
-            if (name##_handlers[_uvhttp_mw_i] &&                                \
-                name##_handlers[_uvhttp_mw_i](req, resp, &_uvhttp_mw_ctx_##counter) != \
-                    UVHTTP_MIDDLEWARE_CONTINUE) {                               \
-                goto _uvhttp_mw_stop_##counter;                                 \
-            }                                                                   \
-        }                                                                       \
-        if (_uvhttp_mw_ctx_##counter.cleanup) {                                 \
-            _uvhttp_mw_ctx_##counter.cleanup(_uvhttp_mw_ctx_##counter.data);    \
-        }                                                                       \
-        goto _uvhttp_mw_done_##counter;                                         \
-        _uvhttp_mw_stop_##counter:                                              \
-        if (_uvhttp_mw_ctx_##counter.cleanup) {                                 \
-            _uvhttp_mw_ctx_##counter.cleanup(_uvhttp_mw_ctx_##counter.data);    \
-        }                                                                       \
-        _uvhttp_mw_done_##counter:;                                             \
+#define _UVHTTP_MW_CHAIN_IMPL_(counter, req, resp, name)                     \
+    do {                                                                     \
+        uvhttp_middleware_context_t _uvhttp_mw_ctx_##counter = {0};          \
+        for (size_t _uvhttp_mw_i = 0; _uvhttp_mw_i < name##_count;           \
+             _uvhttp_mw_i++) {                                               \
+            if (name##_handlers[_uvhttp_mw_i] &&                             \
+                name##_handlers[_uvhttp_mw_i](req, resp,                     \
+                                              &_uvhttp_mw_ctx_##counter) !=  \
+                    UVHTTP_MIDDLEWARE_CONTINUE) {                            \
+                goto _uvhttp_mw_stop_##counter;                              \
+            }                                                                \
+        }                                                                    \
+        if (_uvhttp_mw_ctx_##counter.cleanup) {                              \
+            _uvhttp_mw_ctx_##counter.cleanup(_uvhttp_mw_ctx_##counter.data); \
+        }                                                                    \
+        goto _uvhttp_mw_done_##counter;                                      \
+        _uvhttp_mw_stop_##counter : if (_uvhttp_mw_ctx_##counter.cleanup) {  \
+            _uvhttp_mw_ctx_##counter.cleanup(_uvhttp_mw_ctx_##counter.data); \
+        }                                                                    \
+        _uvhttp_mw_done_##counter :;                                         \
     } while (0)
 
-#define _UVHTTP_MW_CHAIN_IMPL(counter, req, resp, name)                        \
+#define _UVHTTP_MW_CHAIN_IMPL(counter, req, resp, name) \
     _UVHTTP_MW_CHAIN_IMPL_(counter, req, resp, name)
 
-#define UVHTTP_EXECUTE_MIDDLEWARE_CHAIN(req, resp, name)                       \
+#define UVHTTP_EXECUTE_MIDDLEWARE_CHAIN(req, resp, name) \
     _UVHTTP_MW_CHAIN_IMPL(__COUNTER__, req, resp, name)
 
 /**
@@ -154,16 +153,16 @@ typedef int (*uvhttp_middleware_handler_t)(uvhttp_request_t* request,
  *       auth_middleware,
  *       UVHTTP_MIDDLEWARE_HANDLER(my_handler));
  */
-#define UVHTTP_MIDDLEWARE_HANDLER(handler) \
-    _uvhttp_mw_handler_wrapper_##handler
+#define UVHTTP_MIDDLEWARE_HANDLER(handler) _uvhttp_mw_handler_wrapper_##handler
 
-#define UVHTTP_DEFINE_MIDDLEWARE_HANDLER(handler)                               \
-    static int _uvhttp_mw_handler_wrapper_##handler(                            \
-        uvhttp_request_t* _req, uvhttp_response_t* _resp,                      \
-        uvhttp_middleware_context_t* _ctx) {                                    \
-        (void)_ctx;                                                             \
-        int _ret = handler(_req, _resp);                                        \
-        return _ret == 0 ? UVHTTP_MIDDLEWARE_CONTINUE : UVHTTP_MIDDLEWARE_STOP; \
+#define UVHTTP_DEFINE_MIDDLEWARE_HANDLER(handler)         \
+    static int _uvhttp_mw_handler_wrapper_##handler(      \
+        uvhttp_request_t* _req, uvhttp_response_t* _resp, \
+        uvhttp_middleware_context_t* _ctx) {              \
+        (void)_ctx;                                       \
+        int _ret = handler(_req, _resp);                  \
+        return _ret == 0 ? UVHTTP_MIDDLEWARE_CONTINUE     \
+                         : UVHTTP_MIDDLEWARE_STOP;        \
     }
 
 #ifdef __cplusplus
