@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [ci, gates, format]
 created: "2026-09-23T04:16:34"
-updated: "2026-09-23T04:16:34"
+updated: "2026-10-01T06:57:52"
 ---
 
 <!-- compiled_truth -->
@@ -46,4 +46,10 @@ updated: "2026-09-23T04:16:34"
   kind: decision
   summary: "format-check 空转根因、存量格式漂移证据与三步修复路径"
   source: "v2.8.0 发布会话"
+  affects: [ci-format-check-gate-noop]
+
+- time: 2026-10-01T06:57:52
+  kind: reversal
+  summary: "已修复（#416）：base 改 pull_request.base.sha + 门禁钉 clang-format 18.1.8 + 全量重格式化"
+  source: "确保生产级质量（2026-10-01）"
   affects: [ci-format-check-gate-noop]
