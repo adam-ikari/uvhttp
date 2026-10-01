@@ -10,6 +10,29 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
 本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)规范。
 
+## [2.9.0] - 2026-10-01
+
+### 新增
+- **Fuzz 覆盖扩展**: 新增三个 libFuzzer + ASan harness 覆盖此前未 fuzz 的解析路径——`fuzz_request`（HTTP 请求解析回调链，#398）、`fuzz_websocket`（RFC 6455 帧头解码 + mask XOR，#399）、`fuzz_static_path`（`uvhttp_static_resolve_safe_path` 路径解析面，含符号链接逃逸测试树，#408）。`fuzz_static_path` 经变异验证证明 harness 有牙齿（移除包含性检查后 1s 抓到逃逸），60s 自由 fuzz 未发现可利用路径穿越。ci-fuzz 现稳定跑四个目标
+- **零拷贝阈值 wire 等价性测试**: `test/unit/test_zerocopy_threshold_wire.cpp` 用真实 server（`uv_tcp_getsockname` 取实际端口 + 阻塞 socket + `uv_run(UV_RUN_NOWAIT)` 泵循环）验证 writev 双 iovec 与单缓冲拷贝两条路径的 wire 行为一致——Content-Length、body 完整性、阈值边界（#393，含提前退出与 fd 泄漏修复 #396）
+- **压缩 × 零拷贝阈值交互测试**: 验证可压缩响应跨阈值（原始≥4096、压缩后<4096）的 wire 行为自洽，覆盖 #402 回归的触发条件（#402）
+- **请求体上限与跨 chunk 累积边界测试**: 补请求体长度上限、跨 chunk 边界的 header/body 累积覆盖（#403）
+
+### 修复
+- **响应 header 名称 control-char 检查**: `uvhttp_response_set_header` 此前只校验 header 值的 control-char，header 名称未校验——攻击者可控的名称可注入 CRLF 造成响应分割。现名称与值统一过 `contains_control_chars`（#404）
+- **`uvhttp_lru_cache` 仅日志用变量的构建修复**: 三个局部变量（`cleared_count`、两处 `freed_memory`）只在 `UVHTTP_LOG_*` 里被读，日志被 `NDEBUG`/`UVHTTP_FEATURE_LOGGING=OFF` 裁剪后成为 dead store，新版 clang 的 `-Wunused-but-set-variable` + `-Werror` 让构建失败。加 `UVHTTP_UNUSED` 并补 `uvhttp_features.h` include（该文件整个内容被 `UVHTTP_FEATURE_STATIC_FILES` 包裹，本地默认配置根本不编译它）（#409）
+- **fuzz crash artifact 上传顺序**: 上传步骤原先排在部分 Run fuzz 步骤之前，导致崩溃产物丢失。移到所有 Run 之后（#400）
+
+### 变更
+- **`test/integration/` 19 个文件移到 `manual/`**: 这些文件没有一个是自动化测试——全是长驻 server（`uv_run` 永不返回）+ 外部 curl/wrk 驱动，CMake 仅编译、从不注册进 ctest。其中 4 个（42 处 `assert()`）在 Release（`NDEBUG`）下断言全部展开为 no-op，`exit=0` 是虚假绿灯。删 4 个纯 assert 文件，其余 15 个长驻 server + 资产移到 `manual/`，CMake glob 同步，位置不再传递「在 test/ 下就会被 CI 跑」的误导（#411）
+- **benchmark base 解析排除 nightly 预发布**: nightly 自动构建自移动中的 main，若作配对门禁的 base 会让 head/base ≈ 100% 空测绿灯。base 解析现跳过 prerelease 标记的 release（#391）
+- **社区贡献指南增补**: CONTRIBUTING 增补代码审查清单与测试形态选择（#401）；补「integration 目录不被执行」「assert 在 Release 下失效」「feature 宏整体包裹的文件本地编译不到」三条已踩过的坑（#410）
+
+### 内部（决策，非用户可见）
+- 性能测量禁止在本机下结论——连配对 A/B 也不行（本机热降频使连续多轮不可复现，#406）
+- io_uring 评估关闭——libuv 1.52 不覆盖 sendfile，静态文件热路径不可达（#407）
+- 内存分配优化 P2 关闭——收益 0.026% 低于 40% 测量噪声（#405）
+- 零拷贝阈值压缩前判定评估关闭——收益上限 ~1.4% 低于噪声，且 prepare 非幂等使低成本改法不可行（#412）
 
 ## [2.8.1] - 2026-09-29
 
@@ -1291,5 +1314,6 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 - 可扩展的插件系统
 - 详细的文档和示例
 
+[2.9.0]: https://github.com/adam-ikari/uvhttp/compare/v2.8.1...v2.9.0
 [1.1.0]: https://github.com/adam-ikari/uvhttp/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/adam-ikari/uvhttp/releases/tag/v1.0.0
