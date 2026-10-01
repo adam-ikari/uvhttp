@@ -2,12 +2,12 @@
 # This file defines the current version information for the project
 
 # Current version number (semantic version: MAJOR.MINOR.PATCH)
-VERSION=2.9.0
-VERSION_TYPE=minor
+VERSION=2.9.1
+VERSION_TYPE=patch
 RELEASE_DATE=2026-10-01
-PREVIOUS_VERSION=2.8.1
-NEXT_VERSION=2.10.0
-VERSION_NAME="Fuzz 覆盖扩展与测试基建清理" # v2.9.0
+PREVIOUS_VERSION=2.9.0
+NEXT_VERSION=2.9.2
+VERSION_NAME="CI 门禁修复与死代码清理" # v2.9.1
 IS_PRERELEASE=false
 PRERELEASE_IDENTIFIER=""
 
