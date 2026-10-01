@@ -5,23 +5,36 @@ category: decision
 status: active
 tags: [performance, benchmark, writev, methodology]
 created: "2026-09-28T18:56:30"
-updated: "2026-09-29T05:37:19"
+updated: "2026-10-01T01:54:54"
 ---
 
 <!-- compiled_truth -->
-## 结论
-writev 双 iovec（header + body 一次 `uv_write`）只在 body 够大时才是优化。小 body 下它比"memcpy 到单缓冲 + 一次 write"**慢约 14%**：多一个 iov 让 libuv 走 writev 而非单缓冲快路径，省下的那次小 memcpy 抵不过 syscall 侧的开销。因此 v2.8.0 把 writev 无条件用于全部非 TLS 响应后，`/`（几十字节 body）出现真实回归。
+评估完毕（2026-09-30）：维持「代价大于收益」，正式关闭重构。与 alloc-hotpath-measured 同理——影响上限低于测量噪声，不值得为它动手。
 
-修复：`src/uvhttp_response.c` 的 writev 分支加 `body_length >= UVHTTP_ZEROCOPY_MIN_BODY`（新具名常量，默认 4096，CMake 可调）。`/large`（~100KB）保持 writev 增益 ~1.51x。
+## 收益上限量化
 
-## 测量条件（换环境数字不成立，方法可复用）
-- 服务端绑到单核（CPU 0），`wrk -t4 -c100` 放 CPU 1-9 —— **必须保证是 server-bound**。反例：把 server 与 wrk 一起绑在 2 个核上时客户端先饱和，三个变体都停在 ~13.6K，差异被完全掩盖。
-- 同一台机器交替跑 A/B/A/B，取中位数比**配对比值**，不比绝对值；本机噪声大（内存高占用），绝对值不可信。
-- 单变量实验定位根因：只加阈值、不改其他，`/` 从 v2.7.2 的 0.861 恢复到 0.987，`/large` 仍 1.51x。
-- 排除项：router-cache 默认值翻转（`include/uvhttp_constants.h`）不是原因——CMake 总是显式定义该宏。
+受益请求 = 可压缩 + 原始 body ≥ 4096 + 压缩后 < 4096。这类响应从 writev 双 iovec 改为单 buffer，单个请求快约 14%（brain 已实测 writev 对小 body 的负优化幅度）。
 
-## 状态
-PR #387（`fix/zerocopy-small-body`）；v2.8.0 仍为 pre-release，待 #387/#388 处置后再决定是否 promote。
+- 乐观假设这类请求占 10%
+- 整体影响上限 ≈ 1.4%
+- 1.4% << runner 跨 run 方差 ~40%（perf-regression-gate）
+- **不可测，也无从验证** —— writev 与单 buffer 对 1.4% 级差异，CI 配对门禁是盲的
+
+## 为什么不能低成本改
+
+关键约束（代码核对 src/uvhttp_response.c）：uvhttp_response_prepare 压缩成功后**就地改写 response->body_length** 为压缩后值，但 response->body 仍指向原始 buffer。因此：
+
+- send_copy → build_data → prepare 这条链，若在 send() 先调一次 prepare 再走 copy，第二次 prepare 会**重新压缩**（非幂等）
+- 要让「先 prepare 再用压缩后长度判定」不重复压缩，必须把 writev 与 copy 两条路径都内联进 uvhttp_response_send()——中等重构，owned/headers 释放的错误清理是风险点
+
+## 决策
+
+改对了是纯增益但无门禁能验证；改错了有 bug 风险（现有 wire 测试只保证正确性，不保证这条路径的性能形态）。收益 ~1.4% 无法测量，重构风险真实存在。**YAGNI 关闭**。
+
+## 重启条件
+
+- 出现可压缩且原始 ≥4096 但压缩后 <4096 的响应成为主导负载（届时先量化占比，再按 perf-regression-gate 走 CI 门禁验证）
+- 有证据表明 writev 对小 body 的负优化在本项目实际负载下 >10% 且可测
 
 
 ## Timeline
@@ -54,4 +67,10 @@ PR #387（`fix/zerocopy-small-body`）；v2.8.0 仍为 pre-release，待 #387/#3
   kind: note
   summary: "v2.8.1 已发布为 Latest（tag b26e9ac），本页阈值修复随 v2.8.1 上线。v2.8.0 pre-release 保持不回退。PR #391（base 跳过 nightly）合入后 release 事件门禁 base 解析不再漂移。"
   source: "v2.8.1 发布会话（2026-09-29）"
+  affects: [zerocopy-small-body-regression]
+
+- time: 2026-10-01T01:54:54
+  kind: decision
+  summary: "评估完毕正式关闭：收益上限 ~1.4%（仅可压缩且跨阈值的响应，乐观占10%）<< 40% 方差不可测；且 prepare 非幂等使低成本改法不可行（需内联双路径，风险真实）。YAGNI 关闭"
+  source: "阶段 3 评估（2026-09-30）"
   affects: [zerocopy-small-body-regression]
