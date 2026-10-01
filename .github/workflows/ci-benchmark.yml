@@ -419,10 +419,11 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: write
+      pull-requests: write
     # Serialise trend pushes: two prereleases published in the same window
-    # (e.g. a nightly and a manual pre-release) each check out main, commit
-    # trend data, and push. Without a group the second push hits a non-FF
-    # rejection; the rebase-retry below then folds in the first job's commit.
+    # (e.g. a nightly and a manual pre-release) each check out main and
+    # force-push the benchmark-trends branch. Without a group the second run
+    # could race the first one's push and then clobber it.
     concurrency:
       group: benchmark-trend-push
       cancel-in-progress: false
@@ -460,21 +461,28 @@ jobs:
             echo "No trend changes to commit"
           else
             git commit -m "docs(benchmark): trend data for ${DATE}"
-            # main may have moved since checkout (other merges, or another
-            # trend job that ran first in this concurrency group); rebase
-            # and retry a few times before giving up.
-            pushed=1
-            for attempt in 1 2 3; do
-              git pull --rebase origin main
-              if git push origin HEAD:main; then
-                pushed=0
-                break
-              fi
-              echo "push attempt $attempt rejected, retrying..."
-              sleep $(( attempt * 5 ))
-            done
-            if [ "$pushed" -ne 0 ]; then
-              echo "::error::trend push failed after 3 retries (rebase conflict or persistent non-FF)"
-              exit 1
+            # Push to a dedicated branch, not directly to main. main is
+            # PR-only (see brain release-process-benchmark-gate), so
+            # `git push origin HEAD:main` is rejected by branch protection
+            # (GH013: Repository rule violations) — this is what made the
+            # trend job fail on the v2.9.0 pre-release.
+            #
+            # Only this job writes benchmark-trends, and the concurrency
+            # group above serialises runs, so force-pushing on top of the
+            # latest main is safe: the branch always tracks main plus this
+            # run's trend files. Already-merged trend commits live in main's
+            # history and are inherited automatically.
+            git push --force origin HEAD:benchmark-trends
+            # Open a PR if there isn't one already. Trend data is generated
+            # read-only output — it needs a merge, not a line-by-line review.
+            existing=$(gh pr list --head benchmark-trends --state open \
+              --json number --jq '.[0].number // empty' 2>/dev/null || true)
+            if [ -z "$existing" ]; then
+              gh pr create --base main --head benchmark-trends \
+                --title "docs(benchmark): 趋势数据自动落库" \
+                --body "由 \`ci-benchmark\` 的 \`trend\` job 在 pre-release 事件自动生成。内容为基准测试历史数据文件（\`docs/benchmark-trends/\`），仅供趋势查看，无需逐行审阅。" \
+                || echo "::warning::could not create trend PR (non-fatal)"
+            else
+              echo "benchmark-trends PR #$existing already open — force push updated it."
             fi
           fi
