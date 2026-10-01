@@ -72,10 +72,10 @@ static inline void uvhttp_error_report_(uvhttp_error_t error_code,
  * @note Automatically captures function name, file, and line number
  * @note Uses do-while(0) for safe macro expansion
  */
-#define UVHTTP_ERROR_REPORT_WITH_DATA(error_code, message, user_data)         \
-    do {                                                                      \
-        uvhttp_error_report_((error_code), (message), __func__, __FILE__,     \
-                             __LINE__, (user_data));                          \
+#define UVHTTP_ERROR_REPORT_WITH_DATA(error_code, message, user_data)     \
+    do {                                                                  \
+        uvhttp_error_report_((error_code), (message), __func__, __FILE__, \
+                             __LINE__, (user_data));                      \
     } while (0)
 
 #ifdef __cplusplus

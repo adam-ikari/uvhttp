@@ -1,14 +1,13 @@
 #if UVHTTP_FEATURE_ROUTER_CACHE
 
 #    include "uvhttp_allocator.h"
+#    include "uvhttp_connection.h"
 #    include "uvhttp_constants.h"
 #    include "uvhttp_hash.h"
 #    include "uvhttp_router.h"
-#    include "uvhttp_utils.h"
-
-#    include "uvhttp_connection.h"
 #    include "uvhttp_server.h"
 #    include "uvhttp_static.h"
+#    include "uvhttp_utils.h"
 
 #    include <ctype.h>
 #    include <stdint.h>
@@ -136,7 +135,8 @@ static inline uvhttp_method_t fast_method_parse(const char* method) {
 }
 
 /* Initialize hash table */
-static uvhttp_error_t hash_table_init(hash_table_t* table, size_t initial_size) {
+static uvhttp_error_t hash_table_init(hash_table_t* table,
+                                      size_t initial_size) {
     if (!table || initial_size == 0) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -285,8 +285,7 @@ static uvhttp_error_t add_to_hash_table(cache_optimized_router_t* cr,
  *   set to the entry's path (e.g. "/items/:item_id").
  * Returns handler or NULL. */
 static uvhttp_request_handler_t find_in_hash_table_ex(
-    cache_optimized_router_t* cr,
-    const char* path, uvhttp_method_t method,
+    cache_optimized_router_t* cr, const char* path, uvhttp_method_t method,
     const char** route_path_out) {
     if (!cr || !path) {
         return NULL;
@@ -298,36 +297,51 @@ static uvhttp_request_handler_t find_in_hash_table_ex(
     /* First pass: exact match */
     while (1) {
         hash_entry_t* entry = &table->entries[index];
-        if (entry->path[0] == '\0') break;
+        if (entry->path[0] == '\0')
+            break;
         if (strcmp(entry->path, path) == 0 &&
             (entry->method == method || entry->method == UVHTTP_ANY)) {
-            if (entry->access_count < UVHTTP_ACCESS_COUNTER_MAX) entry->access_count++;
-            if (route_path_out) *route_path_out = entry->path;
+            if (entry->access_count < UVHTTP_ACCESS_COUNTER_MAX)
+                entry->access_count++;
+            if (route_path_out)
+                *route_path_out = entry->path;
             return entry->handler;
         }
         index = (index + 1) % table->size;
-        if (index == start_index) break;
+        if (index == start_index)
+            break;
     }
     /* Second pass: parameterized route match */
     for (uint32_t i = 0; i < table->size; i++) {
         hash_entry_t* entry = &table->entries[i];
-        if (entry->path[0] == '\0') continue;
-        if (entry->method != method && entry->method != UVHTTP_ANY) continue;
-        if (!strchr(entry->path, ':')) continue;
+        if (entry->path[0] == '\0')
+            continue;
+        if (entry->method != method && entry->method != UVHTTP_ANY)
+            continue;
+        if (!strchr(entry->path, ':'))
+            continue;
         const char* rp = entry->path;
         const char* pp = path;
         int matched = 1;
         while (*rp && *pp) {
             if (*rp == ':') {
-                while (*rp && *rp != '/') rp++;
-                while (*pp && *pp != '/') pp++;
+                while (*rp && *rp != '/')
+                    rp++;
+                while (*pp && *pp != '/')
+                    pp++;
             } else if (*rp == *pp) {
-                rp++; pp++;
-            } else { matched = 0; break; }
+                rp++;
+                pp++;
+            } else {
+                matched = 0;
+                break;
+            }
         }
         if (matched && *rp == '\0' && *pp == '\0') {
-            if (entry->access_count < UVHTTP_ACCESS_COUNTER_MAX) entry->access_count++;
-            if (route_path_out) *route_path_out = entry->path;
+            if (entry->access_count < UVHTTP_ACCESS_COUNTER_MAX)
+                entry->access_count++;
+            if (route_path_out)
+                *route_path_out = entry->path;
             return entry->handler;
         }
     }
@@ -375,16 +389,16 @@ static int static_file_handler_wrapper(uvhttp_request_t* request,
     void* ctx = router->static_context ? router->static_context
                                        : router->fallback_context;
     if (ctx) {
-#ifdef UVHTTP_STATIC_FILES_ENABLED
+#    ifdef UVHTTP_STATIC_FILES_ENABLED
         uvhttp_result_t result = uvhttp_static_handle_request(
             (uvhttp_static_context_t*)ctx, request, response);
 
         if (result == UVHTTP_OK) {
             return 0;
         }
-#else
+#    else
         (void)ctx;
-#endif
+#    endif
     }
 
     /* static file service failed, return 404 */
@@ -397,8 +411,8 @@ static int static_file_handler_wrapper(uvhttp_request_t* request,
 
 /* static prefix match — returns the wrapper handler when the request path is
  * under the configured static prefix and a static context is installed. */
-static uvhttp_request_handler_t static_prefix_handler(const uvhttp_router_t* router,
-                                                      const char* path) {
+static uvhttp_request_handler_t static_prefix_handler(
+    const uvhttp_router_t* router, const char* path) {
     if (router->static_prefix && router->static_context && path) {
         size_t prefix_len = strlen(router->static_prefix);
         if (strncmp(path, router->static_prefix, prefix_len) == 0) {
@@ -506,11 +520,11 @@ static int binary_route_handler(uvhttp_request_t* request,
         return -1;
     }
     uvhttp_router_t* r = conn->server->router;
-    if (!r->static_context) return -1;
+    if (!r->static_context)
+        return -1;
 
     uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type",
-                               r->static_context);
+    uvhttp_response_set_header(response, "Content-Type", r->static_context);
     uvhttp_response_set_body(response, r->static_data, r->static_data_len);
     return uvhttp_response_send(response);
 }
@@ -641,7 +655,8 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
 
     /* Search in hash table */
     const char* route_path = NULL;
-    uvhttp_request_handler_t handler = find_in_hash_table_ex(cr, path, method_enum, &route_path);
+    uvhttp_request_handler_t handler =
+        find_in_hash_table_ex(cr, path, method_enum, &route_path);
 
     if (!handler) {
         return UVHTTP_ERROR_NOT_FOUND;
@@ -661,17 +676,23 @@ uvhttp_error_t uvhttp_router_match(const uvhttp_router_t* router,
                 /* Extract param name from route template */
                 const char* name_start = rp + 1;
                 const char* name_end = name_start;
-                while (*name_end && *name_end != '/') name_end++;
+                while (*name_end && *name_end != '/')
+                    name_end++;
                 size_t name_len = name_end - name_start;
                 /* Extract param value from request path */
                 const char* val_end = pp;
-                while (*val_end && *val_end != '/') val_end++;
-                if (name_len > 0 && name_len < sizeof(match->params[match->param_count].name)) {
-                    strncpy(match->params[match->param_count].name, name_start, name_len);
+                while (*val_end && *val_end != '/')
+                    val_end++;
+                if (name_len > 0 &&
+                    name_len < sizeof(match->params[match->param_count].name)) {
+                    strncpy(match->params[match->param_count].name, name_start,
+                            name_len);
                     match->params[match->param_count].name[name_len] = '\0';
                     size_t val_len = val_end - pp;
-                    if (val_len < sizeof(match->params[match->param_count].value)) {
-                        strncpy(match->params[match->param_count].value, pp, val_len);
+                    if (val_len <
+                        sizeof(match->params[match->param_count].value)) {
+                        strncpy(match->params[match->param_count].value, pp,
+                                val_len);
                         match->params[match->param_count].value[val_len] = '\0';
                         match->param_count++;
                     }

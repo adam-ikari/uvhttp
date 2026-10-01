@@ -46,7 +46,8 @@ typedef struct {
     uint8_t rsv3 : 1;
     uint8_t opcode : 4;
     uint8_t mask : 1;
-    uint8_t payload_len : 7; /* raw length code: 0-125, 126 (16-bit ext), 127 (64-bit ext) */
+    uint8_t payload_len : 7; /* raw length code: 0-125, 126 (16-bit ext), 127
+                                (64-bit ext) */
     uint64_t payload_length; /* actual payload length (extended for 126/127) */
 } uvhttp_ws_frame_header_t;
 
@@ -240,9 +241,8 @@ uvhttp_error_t uvhttp_ws_parse_frame_header(const uint8_t* data, size_t len,
  */
 long uvhttp_ws_build_frame(uvhttp_context_t* context, uint8_t* buffer,
                            size_t buffer_size, const uint8_t* payload,
-                           size_t payload_len,
-                           uvhttp_ws_opcode_t opcode, int mask,
-                           int fin);
+                           size_t payload_len, uvhttp_ws_opcode_t opcode,
+                           int mask, int fin);
 
 /**
  * apply mask

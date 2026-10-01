@@ -41,8 +41,7 @@ static int contains_sensitive_info(const char* str) {
                 j++;
             }
             if (j == kwlen) {
-                int before_ok =
-                    (p == str) || !isalnum((unsigned char)p[-1]);
+                int before_ok = (p == str) || !isalnum((unsigned char)p[-1]);
                 int after_ok = !isalnum((unsigned char)p[kwlen]);
                 if (before_ok && after_ok) {
                     return TRUE;
@@ -102,7 +101,8 @@ void uvhttp_log_safe_error(int error_code, const char* context,
      * "Unknown system error N" 且永不释放(泄漏), 同时 UVHTTP 错误码也会被
      * 误报成 libuv 的未知系统错误。uvhttp_error_string 返回静态字符串字面量,
      * 无内存分配。 */
-    const char* error_desc = error_code ? uvhttp_error_string(error_code) : user_msg;
+    const char* error_desc =
+        error_code ? uvhttp_error_string(error_code) : user_msg;
 
     if (uvhttp_sanitize_error_message(error_desc, safe_buffer,
                                       sizeof(safe_buffer)) == 0) {

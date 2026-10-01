@@ -21,8 +21,9 @@
  *
  * ==================== Version Information ====================
  *
- * Current version: UVHTTP_VERSION_MAJOR.UVHTTP_VERSION_MINOR.UVHTTP_VERSION_PATCH
- * 
+ * Current version:
+ * UVHTTP_VERSION_MAJOR.UVHTTP_VERSION_MINOR.UVHTTP_VERSION_PATCH
+ *
  * Version source: VERSION file in project root
  * To update version: Modify VERSION file, then run cmake to regenerate
  *
@@ -95,7 +96,7 @@
 #    endif
 
 /* Stringification macro */
-#    define UVHTTP_STRINGIFY(x) #    x
+#    define UVHTTP_STRINGIFY(x) #x
 
 /* ========== HTTP Protocol Related ========== */
 
@@ -809,7 +810,8 @@
  * - Example: cmake -DUVHTTP_FEATURE_ROUTER_CACHE=OFF ..
  */
 #    ifndef UVHTTP_FEATURE_ROUTER_CACHE
-#        define UVHTTP_FEATURE_ROUTER_CACHE 0 /* Disabled by default (see uvhttp_features.h) */
+#        define UVHTTP_FEATURE_ROUTER_CACHE \
+            0 /* Disabled by default (see uvhttp_features.h) */
 #    endif
 
 #    if UVHTTP_FEATURE_ROUTER_CACHE

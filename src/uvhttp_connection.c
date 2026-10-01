@@ -51,16 +51,17 @@ UVHTTP_STATIC_ASSERT(sizeof(uvhttp_request_t) < 2 * 1024 * 1024,
 
 /**
  * @brief Validate buffer capacity for additional data
- * 
+ *
  * @param conn Connection to validate
  * @param additional_size Size of data to add
  * @return int 0 if sufficient capacity, -1 if overflow would occur
- * 
- * @note This helper function validates if buffer has enough space for additional data
+ *
+ * @note This helper function validates if buffer has enough space for
+ * additional data
  * @note Logs error and returns -1 if overflow would occur
  */
 static inline int uvhttp_validate_buffer_capacity(uvhttp_connection_t* conn,
-                                                    size_t additional_size) {
+                                                  size_t additional_size) {
     if (!conn) {
         return -1;
     }
@@ -80,8 +81,9 @@ static inline int uvhttp_validate_buffer_capacity(uvhttp_connection_t* conn,
 #endif
 
     if (conn->read_buffer_used + additional_size > conn->read_buffer_size) {
-        UVHTTP_LOG_ERROR("Buffer capacity exceeded: used=%zu, add=%zu, size=%zu\n",
-                         conn->read_buffer_used, additional_size, conn->read_buffer_size);
+        UVHTTP_LOG_ERROR(
+            "Buffer capacity exceeded: used=%zu, add=%zu, size=%zu\n",
+            conn->read_buffer_used, additional_size, conn->read_buffer_size);
         return -1;
     }
 
@@ -218,10 +220,9 @@ static int tls_decrypt_pending(uvhttp_connection_t* conn, size_t start) {
         if (total >= conn->read_buffer_size) {
             break;
         }
-        ret = mbedtls_ssl_read(
-            (mbedtls_ssl_context*)conn->ssl,
-            (unsigned char*)conn->read_buffer + total,
-            conn->read_buffer_size - total);
+        ret = mbedtls_ssl_read((mbedtls_ssl_context*)conn->ssl,
+                               (unsigned char*)conn->read_buffer + total,
+                               conn->read_buffer_size - total);
         if (ret == MBEDTLS_ERR_SSL_WANT_READ ||
             ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
             /* Need more data, wait for next read callback */
@@ -242,7 +243,6 @@ static int tls_decrypt_pending(uvhttp_connection_t* conn, size_t start) {
     return 0;
 }
 #endif
-
 
 static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)stream->data;
@@ -1109,8 +1109,8 @@ uvhttp_error_t uvhttp_connection_tls_write(uvhttp_connection_t* conn,
     int retries = 0;
 
     while (remaining > 0) {
-        int ret = mbedtls_ssl_write((mbedtls_ssl_context*)conn->ssl, p,
-                                    remaining);
+        int ret =
+            mbedtls_ssl_write((mbedtls_ssl_context*)conn->ssl, p, remaining);
         if (ret > 0) {
             p += ret;
             remaining -= ret;
@@ -1224,7 +1224,7 @@ static void on_websocket_read(uv_stream_t* stream, ssize_t nread,
     uvhttp_ws_connection_t* ws_conn =
         (uvhttp_ws_connection_t*)conn->ws_connection;
     int result = 0;
-#if UVHTTP_FEATURE_TLS
+#    if UVHTTP_FEATURE_TLS
     if (conn->tls_enabled && conn->ssl && conn->tls_cipher_buf) {
         /* TLS: buf->base points into tls_cipher_buf (ciphertext). Track the
          * fill level (on_alloc_buffer handed uv the space, but the read
@@ -1232,9 +1232,9 @@ static void on_websocket_read(uv_stream_t* stream, ssize_t nread,
          * read_buffer (plaintext) before handing frames to the WS parser. */
         conn->tls_cipher_used += (size_t)nread;
         for (;;) {
-            int ret = mbedtls_ssl_read(
-                (mbedtls_ssl_context*)conn->ssl,
-                (unsigned char*)conn->read_buffer, conn->read_buffer_size);
+            int ret = mbedtls_ssl_read((mbedtls_ssl_context*)conn->ssl,
+                                       (unsigned char*)conn->read_buffer,
+                                       conn->read_buffer_size);
             if (ret == MBEDTLS_ERR_SSL_WANT_READ ||
                 ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
                 break;
@@ -1264,7 +1264,7 @@ static void on_websocket_read(uv_stream_t* stream, ssize_t nread,
             }
         }
     } else
-#endif
+#    endif
     {
         result =
             uvhttp_ws_process_data(ws_conn, (const uint8_t*)buf->base, nread);
@@ -1386,7 +1386,6 @@ uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-
     /* find user-registered WebSocket handler */
     uvhttp_ws_handler_t* user_handler = NULL;
     if (conn->server) {
@@ -1417,7 +1416,8 @@ uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
     }
 
     /* save WebSocket Key (for verification) */
-    uvhttp_safe_strncpy(ws_conn->client_key, ws_key, sizeof(ws_conn->client_key));
+    uvhttp_safe_strncpy(ws_conn->client_key, ws_key,
+                        sizeof(ws_conn->client_key));
 
     /* create wrapper to save connection object and user handler */
     uvhttp_ws_wrapper_t* wrapper = uvhttp_alloc(sizeof(uvhttp_ws_wrapper_t));

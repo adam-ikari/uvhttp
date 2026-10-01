@@ -86,13 +86,13 @@ struct uvhttp_server {
     /* ========== Cache line 1 (0-63 bytes): hot path fields - most frequently
      * accessed ========== */
     /* Frequently accessed in on_connection, connection management */
-    int is_listening;                 /* 4 bytes - useparsinglisten */
-    int owns_loop;                    /* 4 bytes - useloop */
-    int freed;                        /* 4 bytes - flag to prevent double free */
-    int _padding1;                    /* 4 bytes - padding to 16 bytes */
-    size_t active_connections;        /* 8 bytes - Connection */
-    size_t max_connections;           /* 8 bytes - Connection */
-    size_t max_message_size;          /* 8 bytes - messagesize */
+    int is_listening;          /* 4 bytes - useparsinglisten */
+    int owns_loop;             /* 4 bytes - useloop */
+    int freed;                 /* 4 bytes - flag to prevent double free */
+    int _padding1;             /* 4 bytes - padding to 16 bytes */
+    size_t active_connections; /* 8 bytes - Connection */
+    size_t max_connections;    /* 8 bytes - Connection */
+    size_t max_message_size;   /* 8 bytes - messagesize */
     uvhttp_request_handler_t handler; /* 8 bytes - Requesthandle */
     uvhttp_timeout_callback_t
         timeout_callback;             /* 8 bytes - Timeoutstatisticscallback */
@@ -112,7 +112,7 @@ struct uvhttp_server {
     int tls_enabled;               /* 4 bytes - TLS useEnable */
     int _padding2[3];              /* 12bytes - paddingto16bytes */
 #else
-    int _padding2[4];  /* 16bytes - paddingto64bytes */
+    int _padding2[4]; /* 16bytes - paddingto64bytes */
 #endif
     /* Cache line 2 total: approximately 64 bytes (depends on whether TLS is
      * enabled) */
@@ -155,10 +155,11 @@ struct uvhttp_server {
     /* ========== Cache line 6 (320-383 bytes): protocol upgrade ========== */
     void* protocol_registry; /* 8 bytes - Protocol upgrade registry */
 #if UVHTTP_FEATURE_COMPRESSION
-    void* gzip_cache; /* 8 bytes - Gzip compression cache (uvhttp_gzip_cache_t*) */
+    void* gzip_cache; /* 8 bytes - Gzip compression cache (uvhttp_gzip_cache_t*)
+                       */
     int _padding6[12]; /* 48bytes - paddingto64bytes */
 #else
-    int _padding6[14];       /* 56bytes - paddingto64bytes */
+    int _padding6[14]; /* 56bytes - paddingto64bytes */
 #endif
     /* Cache line 6 total: 64 bytes */
 };
@@ -202,7 +203,8 @@ uvhttp_error_t uvhttp_server_new_with_loop(uvhttp_server_t** server);
 /**
  * @brief Start listening for incoming connections
  *
- * @param server Server created with uvhttp_server_new / uvhttp_server_new_with_loop
+ * @param server Server created with uvhttp_server_new /
+ * uvhttp_server_new_with_loop
  * @param host Bind address (e.g. "0.0.0.0" or "127.0.0.1")
  * @param port TCP port to bind
  * @return UVHTTP_OK on success, error code otherwise

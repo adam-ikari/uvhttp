@@ -10,8 +10,8 @@
 #include "uvhttp_server.h"
 
 #if UVHTTP_FEATURE_TLS
-#include <mbedtls/ctr_drbg.h>
-#include <mbedtls/entropy.h>
+#    include <mbedtls/ctr_drbg.h>
+#    include <mbedtls/entropy.h>
 #endif
 
 #include <stddef.h>

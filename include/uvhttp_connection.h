@@ -95,7 +95,7 @@ struct uvhttp_connection {
     /* ========== Cache line 6+ (320+ bytes): large buffers ========== */
     /* Placed at the end to avoid affecting cache locality of hot path fields */
     char current_header_field[UVHTTP_MAX_HEADER_NAME_SIZE]; /* blockmemory */
-    void* user_data;        /* embedder data */
+    void* user_data;                                        /* embedder data */
     void (*on_destroy)(uvhttp_connection_t* conn); /* before resources freed */
     /* TLS ciphertext buffer: the socket bytes go here, mbedtls_bio_recv
      * consumes from here, while conn->read_buffer holds only decrypted

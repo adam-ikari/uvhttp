@@ -653,7 +653,7 @@ const char* uvhttp_error_description(uvhttp_error_t error) {
 
         return "Missing required configuration";
 
-    /* Middleware errors */
+        /* Middleware errors */
 
     case UVHTTP_ERROR_MIDDLEWARE_STOPPED:
         return "A middleware returned STOP, aborting the chain";

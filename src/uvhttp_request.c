@@ -6,13 +6,12 @@
 #include "uvhttp_error_handler.h"
 #include "uvhttp_features.h"
 #include "uvhttp_logging.h"
+#include "uvhttp_protocol_upgrade.h"
 #include "uvhttp_router.h"
 #include "uvhttp_server.h"
 #include "uvhttp_static.h"
 #include "uvhttp_utils.h"
 #include "uvhttp_validation.h"
-
-#include "uvhttp_protocol_upgrade.h"
 
 #include "uthash.h"
 
@@ -200,9 +199,8 @@ static int on_header_field(llhttp_t* parser, const char* at, size_t length) {
      * (committed). Entering state 2 means the previous name/value pair is
      * already stored, so the name buffer restarts for the next field.
      * (Fix 4) */
-    size_t field_len = conn->parsing_header_field == 1
-                           ? conn->current_header_field_len
-                           : 0;
+    size_t field_len =
+        conn->parsing_header_field == 1 ? conn->current_header_field_len : 0;
     conn->parsing_header_field = 1;
 
     if (field_len + length >= UVHTTP_MAX_HEADER_NAME_SIZE) {
@@ -252,7 +250,8 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
     }
 
     /* first segment: a field name must be pending */
-    if (conn->parsing_header_field != 1 || conn->current_header_field_len == 0) {
+    if (conn->parsing_header_field != 1 ||
+        conn->current_header_field_len == 0) {
         return -1;
     }
 
@@ -382,8 +381,8 @@ static int check_rate_limit_whitelist(uvhttp_connection_t* conn) {
 /* ensure URL is valid, if null then set to "/" */
 static void ensure_valid_url(uvhttp_request_t* request) {
     if (!request->url[0]) {
-        uvhttp_safe_strncpy(request->url, UVHTTP_VALUE_ROOT_PATH, 
-                          sizeof(request->url));
+        uvhttp_safe_strncpy(request->url, UVHTTP_VALUE_ROOT_PATH,
+                            sizeof(request->url));
     }
 }
 
@@ -410,8 +409,7 @@ static int on_message_complete(llhttp_t* parser) {
 
     /* setHTTPmethod — map llhttp's enum onto uvhttp_method_t (the two enums
      * are not aligned; a direct cast would corrupt POST/PUT/DELETE/HEAD) */
-    conn->request->method =
-        llhttp_method_to_uvhttp(llhttp_get_method(parser));
+    conn->request->method = llhttp_method_to_uvhttp(llhttp_get_method(parser));
     conn->parsing_complete = 1;
     conn->read_buffer_used = 0;
 
@@ -422,7 +420,7 @@ static int on_message_complete(llhttp_t* parser) {
     }
 #endif
 
-/* Fast path: check if Upgrade header is present */
+    /* Fast path: check if Upgrade header is present */
     const char* upgrade_header =
         uvhttp_request_get_header(conn->request, UVHTTP_HEADER_UPGRADE);
     if (upgrade_header) {

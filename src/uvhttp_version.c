@@ -4,6 +4,7 @@
  */
 
 #include "uvhttp_version.h"
+
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_utils.h"
@@ -13,52 +14,54 @@
 
 /* Version macros from CMake */
 #ifndef UVHTTP_VERSION_STRING
-#define UVHTTP_VERSION_STRING "2.8.1"
+#    define UVHTTP_VERSION_STRING "2.8.1"
 #endif
 
 #ifndef UVHTTP_VERSION_MAJOR
-#define UVHTTP_VERSION_MAJOR 2
+#    define UVHTTP_VERSION_MAJOR 2
 #endif
 
 #ifndef UVHTTP_VERSION_MINOR
-#define UVHTTP_VERSION_MINOR 8
+#    define UVHTTP_VERSION_MINOR 8
 #endif
 
 #ifndef UVHTTP_VERSION_PATCH
-#define UVHTTP_VERSION_PATCH 1
+#    define UVHTTP_VERSION_PATCH 1
 #endif
 
 #ifndef UVHTTP_VERSION_INT
-#define UVHTTP_VERSION_INT ((UVHTTP_VERSION_MAJOR * 10000) + (UVHTTP_VERSION_MINOR * 100) + UVHTTP_VERSION_PATCH)
+#    define UVHTTP_VERSION_INT                                           \
+        ((UVHTTP_VERSION_MAJOR * 10000) + (UVHTTP_VERSION_MINOR * 100) + \
+         UVHTTP_VERSION_PATCH)
 #endif
 
 /* Default values for configuration constants */
 #ifndef UVHTTP_MAX_CONNECTIONS
-#define UVHTTP_MAX_CONNECTIONS 1000
+#    define UVHTTP_MAX_CONNECTIONS 1000
 #endif
 
 #ifndef UVHTTP_BUFFER_SIZE
-#define UVHTTP_BUFFER_SIZE 8192
+#    define UVHTTP_BUFFER_SIZE 8192
 #endif
 
 #ifndef UVHTTP_ROUTER_HASH_BASE_SIZE
-#define UVHTTP_ROUTER_HASH_BASE_SIZE 256
+#    define UVHTTP_ROUTER_HASH_BASE_SIZE 256
 #endif
 
 #ifndef UVHTTP_ROUTER_HOT_MIN_SIZE
-#define UVHTTP_ROUTER_HOT_MIN_SIZE 16
+#    define UVHTTP_ROUTER_HOT_MIN_SIZE 16
 #endif
 
 #ifndef UVHTTP_ROUTER_HYBRID_THRESHOLD
-#define UVHTTP_ROUTER_HYBRID_THRESHOLD 100
+#    define UVHTTP_ROUTER_HYBRID_THRESHOLD 100
 #endif
 
 #ifndef UVHTTP_LRU_CACHE_SIZE
-#define UVHTTP_LRU_CACHE_SIZE 1000
+#    define UVHTTP_LRU_CACHE_SIZE 1000
 #endif
 
 #ifndef UVHTTP_LRU_CACHE_MAX_MEMORY
-#define UVHTTP_LRU_CACHE_MAX_MEMORY 1048576
+#    define UVHTTP_LRU_CACHE_MAX_MEMORY 1048576
 #endif
 
 /* ========== Version Information ========== */
@@ -316,15 +319,24 @@ void uvhttp_print_build_info(void) {
     printf("  Platform: %s\n", info.platform);
     printf("\n");
     printf("Features:\n");
-    printf("  WebSocket:       %s\n", info.feature_websocket ? "Enabled" : "Disabled");
-    printf("  Static Files:    %s\n", info.feature_static_files ? "Enabled" : "Disabled");
-    printf("  TLS/SSL:         %s\n", info.feature_tls ? "Enabled" : "Disabled");
-    printf("  Middleware:      %s\n", info.feature_middleware ? "Enabled" : "Disabled");
-    printf("  Logging:         %s\n", info.feature_logging ? "Enabled" : "Disabled");
-    printf("  Router Cache:    %s\n", info.feature_router_cache ? "Enabled" : "Disabled");
-    printf("  LRU Cache:       %s\n", info.feature_lru_cache ? "Enabled" : "Disabled");
-    printf("  Rate Limit:      %s\n", info.feature_rate_limit ? "Enabled" : "Disabled");
-    printf("  Protocol Upgrade: %s\n", info.feature_protocol_upgrade ? "Enabled" : "Disabled");
+    printf("  WebSocket:       %s\n",
+           info.feature_websocket ? "Enabled" : "Disabled");
+    printf("  Static Files:    %s\n",
+           info.feature_static_files ? "Enabled" : "Disabled");
+    printf("  TLS/SSL:         %s\n",
+           info.feature_tls ? "Enabled" : "Disabled");
+    printf("  Middleware:      %s\n",
+           info.feature_middleware ? "Enabled" : "Disabled");
+    printf("  Logging:         %s\n",
+           info.feature_logging ? "Enabled" : "Disabled");
+    printf("  Router Cache:    %s\n",
+           info.feature_router_cache ? "Enabled" : "Disabled");
+    printf("  LRU Cache:       %s\n",
+           info.feature_lru_cache ? "Enabled" : "Disabled");
+    printf("  Rate Limit:      %s\n",
+           info.feature_rate_limit ? "Enabled" : "Disabled");
+    printf("  Protocol Upgrade: %s\n",
+           info.feature_protocol_upgrade ? "Enabled" : "Disabled");
     printf("\n");
     printf("Allocator:\n");
     printf("  Type: %s\n", info.allocator_type);
@@ -346,7 +358,8 @@ void uvhttp_print_build_info(void) {
     printf("\n");
     printf("TLS Configuration:\n");
     printf("  Enabled:         %s\n", info.tls_enabled ? "Yes" : "No");
-    printf("  Version:         %s\n", info.tls_version ? info.tls_version : "N/A");
+    printf("  Version:         %s\n",
+           info.tls_version ? info.tls_version : "N/A");
     printf("\n");
     printf("========================================\n");
 }
