@@ -1,6 +1,6 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-10-01T13:41:43.398Z._
+_Auto-generated. Last updated 2026-10-01T15:58:20.085Z._
 
 - [alloc-hotpath-measured](pages/alloc-hotpath-measured.md) — category: decision | tags: [performance, benchmark, allocator, methodology, yagni] | # 每请求分配已实测：省一次仅 0.026%，内存分配优化不做
 - [benchmark-thermal-throttling](pages/benchmark-thermal-throttling.md) — category: decision | tags: [performance, benchmark, methodology] | # 禁止在本机做性能测量 —— 连配对 A/B 也不行
@@ -22,7 +22,7 @@ _Auto-generated. Last updated 2026-10-01T13:41:43.398Z._
 - [release-v272](pages/release-v272.md) — category: decision | tags: [release, code-review] | # v2.7.2 发布记录
 - [release-v280](pages/release-v280.md) — category: decision | tags: [release, performance, quality] | # v2.8.0 发布记录
 - [release-v290](pages/release-v290.md) — category: decision | tags: [release, v2.9.0, benchmark, quality] | # 发布 v2.9.0
-- [release-v291-prep](pages/release-v291-prep.md) — category: decision | tags: [release, v2.9.1, ci, quality, pre-release] | ## 趋势数据落库：API 无法改设置，需手动走 web UI
+- [release-v291-prep](pages/release-v291-prep.md) — category: decision | tags: [release, v2.9.1, ci, quality, pre-release] | ## 预发布转正式的条件（来源：docs/release-strategy.md）
 - [router-cache-parity](pages/router-cache-parity.md) — category: decision | tags: [router, cache, ci] | # 路由缓存实现必须与非缓存路由器行为对齐
 - [tls-session-cache](pages/tls-session-cache.md) — category: decision | tags: [tls, performance, session-cache] | ## 决策（v2.7.0，commit aecb053，P0）
 - [websocket-tls-pr335-merge](pages/websocket-tls-pr335-merge.md) — category: decision | tags: [websocket, tls, pr] | ## 背景

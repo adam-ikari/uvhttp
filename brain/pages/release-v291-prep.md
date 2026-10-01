@@ -5,45 +5,57 @@ category: decision
 status: active
 tags: [release, v2.9.1, ci, quality, pre-release]
 created: "2026-10-01T10:07:05"
-updated: "2026-10-01T13:41:43"
+updated: "2026-10-01T15:58:20"
 ---
 
 <!-- compiled_truth -->
-## 趋势数据落库：API 无法改设置，需手动走 web UI
+## 预发布转正式的条件（来源：docs/release-strategy.md）
 
-尝试 `PATCH /repos/adam-ikari/uvhttp/actions/permissions/workflow` 设
-`can_approve_pull_request_reviews=true`，**持续 404**：
-- `gh api` 带与不带 `X-GitHub-Api-Version` header 都 404
-- curl 直连（带 `repo` scope token）同样 404
-- 同 endpoint 的 GET 正常返回（说明路径存在），但 PATCH 被拒写
+**唯一门禁条件是 benchmark 回归门禁为绿。** 其余检查清单 8 项（测试 / ASan / UBSan / 文档构建 / CHANGELOG / VERSION / tag / 网站部署）都是**创建 pre-release 之前**的前置条件，不是转正式时的条件。
 
-**结论：该设置在 API 上对本仓库拒写，只能通过 web UI 改。**
+流程的因果结构：
 
-web UI 路径：**Settings → Actions → General → Workflow permissions →
-"Allow GitHub Actions to create and approve pull requests"**
-
-### 已用手工方式验证 PR 路径可行
-
-在设置改好之前，用维护者 token 手动开了 PR #423（`benchmark-trends` → main），
-状态 `MERGEABLE`，已 squash 合并（main `a059bcd`）。
-
-合并内容确认无误，是 v2.9.1 pre-release 的趋势数据：
 ```
-docs/benchmark-trends/benchmark-2026-10-01.md                    (178 行)
-docs/benchmark-trends/benchmark-2026-10-01.csv                   (60 行)
-docs/benchmark-trends/benchmark-2026-10-01-head-paired.csv       (31 行)
-docs/benchmark-trends/benchmark-2026-10-01-base-paired.csv       (31 行)
+前置条件全满足 → 打 tag → gh release create --prerelease
+                                    ↓
+                        release 事件自动触发 ci-benchmark
+                                    ↓
+                    paired gate 绿 ← 这是唯一的转正式门禁
+                                    ↓
+                        gh release edit --latest
 ```
 
-这证明「push 到分支 + 开 PR 合并」这条路径本身完全可行，缺的只是
-Actions 自主开 PR 的权限。设置打开后，trend job 会自动完成这一步。
+因此「门禁绿」= 同一 runner 上 head/base 交替 10 轮，配对比值中位数 ≥ 90%（且多数配对不低于 90%）。绝对 RPS 只作报告，不参与判定（runner 跨 run 方差约 40%，绝对阈值 gate 的是机器运气）。
 
-### 遗留
+## v2.9.1 逐项核对
 
-- `benchmark-trends` 分支仍存在（已与 main 内容相同）。下次 trend job 会
-  force push 重建，无需手动清理
-- v2.9.1 仍是 pre-release（v2.9.0 是 Latest）。benchmark 门禁已 ALL PASS，
-  可 `gh release edit v2.9.1 --latest` 转正式
+| 条件 | 状态 | 证据 |
+|---|---|---|
+| benchmark 回归门禁绿 | ✅ | run 36859077349 success；/ 100.6%、/json 99.6%、/large 97.3% |
+| 测试通过 | ✅ | 102/102（#427 CI ubuntu-test-fast） |
+| ASan 零发现 | ✅ | asan-gate pass（#427） |
+| 文档构建 / doc-sync | ✅ | doc-sync-check 31/31 |
+| CHANGELOG / VERSION | ✅ | [2.9.1] EN+ZH 已写；VERSION=2.9.1 |
+| tag 已推送 | ✅ | v2.9.1 → f324784 |
+| **UBSan 零发现** | ⚠️ **未覆盖** | nightly 最新跑在 `da93630`，早于 #417 死代码删除与本次 tag |
+
+## tag 落后于 main 不构成阻塞（此前我的判断过重）
+
+```
+git diff v2.9.1..main -- src/ include/   →  空
+```
+
+main 落后的 2 个提交（#426 format-check 删除、#427 ci-daily 删除）只改
+`.github/workflows/` 与 `docs/`，**库代码逐字节一致**。门禁测的是 tag，
+tag 的库代码就是 main 的库代码，所以转正式不会发布未经门禁测量的代码。
+
+## UBSan 缺口的实际影响
+
+da93630 之后的库代码改动只有 #417：删除 `chunked_transfer_context_t`
+（一个从未被实例化的 typedef）与一行注释缩短。两者都不引入未定义行为，
+且 #417 的 PR 跑过 asan-gate + build-matrix 全配置。UBSan 会在下一个
+nightly（UTC 00:00）自动覆盖。若要严格按清单执行，可在转正式前手动触发
+`gh workflow run ci-nightly.yml --ref main`。
 
 
 ## Timeline
@@ -82,4 +94,10 @@ Actions 自主开 PR 的权限。设置打开后，trend job 会自动完成这�
   kind: note
   summary: "ASan/UBSan 盲点已知但不修（极简决策，2026-10-01）：asan-gate 用默认配置（STATIC_FILES=OFF），uvhttp_static/lru_cache/router_cache 三个被 feature 宏包裹的源文件不编译进 ASan 库（nm 符号数 0），8 个 static 测试是空壳绿灯；UBSan 只在 nightly 不阻塞 PR。明知存在，按极简哲学不扩展检查面，维持现状"
   source: "极简决策（2026-10-01）"
+  affects: [release-v291-prep]
+
+- time: 2026-10-01T15:58:20
+  kind: decision
+  summary: "转正式的唯一门禁是 benchmark paired gate 绿（其余 8 项是创建 pre-release 前的前置条件）。v2.9.1 门禁已绿（100.6/99.6/97.3%），唯一未覆盖项是 UBSan（nightly 最新跑在 da93630，早于 #417）。tag 落后 main 2 个提交但 src/include 逐字节一致，不构成阻塞"
+  source: "预发布转正式条件核对（2026-10-01）"
   affects: [release-v291-prep]
