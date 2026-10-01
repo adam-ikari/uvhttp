@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [release, v2.9.1, ci, quality, pre-release]
 created: "2026-10-01T10:07:05"
-updated: "2026-10-01T15:58:20"
+updated: "2026-10-01T16:08:00"
 ---
 
 <!-- compiled_truth -->
@@ -100,4 +100,10 @@ nightly（UTC 00:00）自动覆盖。若要严格按清单执行，可在转正�
   kind: decision
   summary: "转正式的唯一门禁是 benchmark paired gate 绿（其余 8 项是创建 pre-release 前的前置条件）。v2.9.1 门禁已绿（100.6/99.6/97.3%），唯一未覆盖项是 UBSan（nightly 最新跑在 da93630，早于 #417）。tag 落后 main 2 个提交但 src/include 逐字节一致，不构成阻塞"
   source: "预发布转正式条件核对（2026-10-01）"
+  affects: [release-v291-prep]
+
+- time: 2026-10-01T16:08:00
+  kind: decision
+  summary: "v2.9.1 已转正式发布（Latest，prerelease=false）"
+  source: "预发布转正式（2026-10-01）"
   affects: [release-v291-prep]
