@@ -14,10 +14,12 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 ### 修复
 - **format-check 门禁此前完全不工作**: job 用 `${{ github.event.before }}` 作 `git diff` 的 base，但 `pull_request` 事件 payload 没有该字段 → 展开为空串 → `git diff --name-only --diff-filter=ACMR "" <sha>` 报 `fatal: ambiguous argument ''` → `files` 为空 → 恒走 "No C/C++ files changed — skipping" exit 0。自 PR #380 引入该 job 起，**所有 PR 的 C/C++ 格式变更都未被检查过**（门禁一直是空转绿灯）。改用正确的 `${{ github.event.pull_request.base.sha }}`（#416）
 - **format-check 门禁 clang-format 版本漂移**: 门禁装 `apt` 的 clang-format（跟随 runner 镜像版本，ubuntu-24.04 为 18.x），跨大版本输出差异极大——实测同一份代码 v14 判 0 违规、v18 判 424 处，导致「本地过、CI 红」且无法复现。门禁改为 `pip install clang-format==18.1.8` 钉住版本，存量按该版本全量重格式化（424 处，30 文件）（#416）
-- **trend job 直推 main 被分支保护拒绝**: `git push origin HEAD:main` 触发 `GH013: Repository rule violations for refs/heads/main`（main 是 PR-only）。#394 修过竞态重试但未解决「直推 vs PR-only」根本冲突，v2.9.0 pre-release 首次真正触发即失败。改推专用分支 `benchmark-trends` + 自动开 PR，`permissions` 增加 `pull-requests: write`（#418）
 
 ### 安全
 - **CI GITHUB_TOKEN 权限最小化**: `ci-pr.yml` 与 `ci-daily.yml` 未声明 `permissions`，继承仓库默认（admin/maintain/push/triage 全开）。PR CI 与 daily build 实际只需 checkout（`contents: read`）；权限过宽意味着 CI 被 compromise 时可向 main 推代码。加显式最小权限声明（#420）
+
+### 移除
+- **趋势数据落库（trend job + `docs/benchmark-trends/`）**: `ci-benchmark.yml` 的 trend job 在 pre-release 事件把基准数据 push 到 `benchmark-trends` 分支并自动开 PR。v2.9.0 pre-release 暴露该 job 直推 main 被 GH013 拒（main PR-only），#418 改推专用分支修复，但实际验证时 `gh pr create` 又被仓库 Actions policy 拒（`can_approve_pull_request_reviews: False`），且该设置无法通过 API 修改。趋势数据落库本身是辅助展示，门禁判定（paired gate）不依赖它——判定由 `regression_check.py` 在 CI 内即时完成。故整体删除 trend job 与 `docs/benchmark-trends/` 目录
 
 ### 变更
 - **删除死代码 `chunked_transfer_context_t`**（`uvhttp_static.c`）: cppcheck `--std=c99` 报该类型所有字段未使用，核实后确认是**整个结构体从未被实例化**（非字段死，是类型死）——实际分块传输走同名局部变量/参数。删除整个 typedef + 注释。`uvhttp_websocket.c` 另清理一处冗余 NULL 检查（外层已保证非 NULL）（#417）
