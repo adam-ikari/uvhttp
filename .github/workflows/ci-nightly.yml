@@ -63,10 +63,6 @@ jobs:
       - name: Run cppcheck
         run: |
           echo "cppcheck target not available in CMake-generated Makefile"
-
-      - name: Check code formatting
-        run: |
-          echo "format-check target not available in CMake-generated Makefile"
       
       - name: Upload quality results
         uses: actions/upload-artifact@v7.0.1
