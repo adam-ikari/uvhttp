@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [release, v2.9.1, ci, quality, pre-release]
 created: "2026-10-01T10:07:05"
-updated: "2026-10-01T11:44:49"
+updated: "2026-10-01T13:41:43"
 ---
 
 <!-- compiled_truth -->
@@ -76,4 +76,10 @@ Actions 自主开 PR 的权限。设置打开后，trend job 会自动完成这�
   kind: reversal
   summary: "删除趋势数据落库功能（trend job + docs/benchmark-trends/ + benchmark-trends 分支）：用户决定不要趋势数据。两层限制（GH013 + Actions policy 不可 API 改）使修复链无尽头，且 trend 不参与门禁判定，删了对质量无影响"
   source: "删除趋势数据功能（2026-10-01）"
+  affects: [release-v291-prep]
+
+- time: 2026-10-01T13:41:43
+  kind: note
+  summary: "ASan/UBSan 盲点已知但不修（极简决策，2026-10-01）：asan-gate 用默认配置（STATIC_FILES=OFF），uvhttp_static/lru_cache/router_cache 三个被 feature 宏包裹的源文件不编译进 ASan 库（nm 符号数 0），8 个 static 测试是空壳绿灯；UBSan 只在 nightly 不阻塞 PR。明知存在，按极简哲学不扩展检查面，维持现状"
+  source: "极简决策（2026-10-01）"
   affects: [release-v291-prep]
