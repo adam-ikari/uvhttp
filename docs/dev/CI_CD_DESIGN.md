@@ -207,8 +207,7 @@ Phase 1: Parallel execution
 ├─ ubuntu-build: Ubuntu build and test
 ├─ code-quality-check: Code quality check
 ├─ dependency-scan: Dependency vulnerability scan
-├─ ubuntu-test-fast: Fast tests
-└─ format-check: Code format check
+└─ ubuntu-test-fast: Fast tests
 
 Phase 2: Result summary
 └─ generate-summary: Generate the PR summary

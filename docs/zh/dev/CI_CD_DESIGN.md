@@ -206,8 +206,7 @@ on:
 ├─ ubuntu-build: Ubuntu 构建和测试
 ├─ code-quality-check: 代码质量检查
 ├─ dependency-scan: 依赖漏洞扫描
-├─ ubuntu-test-fast: 快速测试
-└─ format-check: 代码格式检查
+└─ ubuntu-test-fast: 快速测试
 
 阶段 2: 结果汇总
 └─ generate-summary: 生成 PR 摘要

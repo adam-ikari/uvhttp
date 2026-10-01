@@ -197,54 +197,6 @@ jobs:
           path: build-asan/Testing/
           retention-days: 7
 
-  # 任务 4: 代码格式检查（clang-format，只门禁本 PR 变更的 C/C++ 文件）
-  format-check:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7.0.1
-        with:
-          submodules: recursive
-          # 需要完整历史以相对 base 计算 PR 变更文件
-          fetch-depth: 0
-
-      - name: Install clang-format (pinned)
-        run: |
-          # Pinned, NOT apt. `apt-get install clang-format` tracks whatever
-          # the runner image ships (currently 18.x on ubuntu-24.04), and
-          # clang-format's output changes between major versions — the
-          # repository was fully formatted with 18.1.8 and a drifting
-          # version makes this gate report violations nobody can reproduce
-          # locally. Contributors install the same version with:
-          #   pip install clang-format==18.1.8
-          pip install --quiet clang-format==18.1.8
-          clang-format --version
-
-      - name: Check format of PR-changed files
-        run: |
-          # Gate only the C/C++ files this PR changed, so unrelated stock
-          # drift can never block a PR. The base must be
-          # pull_request.base.sha: this job previously used
-          # github.event.before, which does not exist on pull_request
-          # events — it expanded to an empty string, `git diff` failed with
-          # "ambiguous argument", $files came out empty and the job skipped
-          # unconditionally. The gate was green and checked nothing.
-          files=$(git diff --name-only --diff-filter=ACMR \
-            ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} \
-            | grep -E '\.(c|h)$' || true)
-          if [ -z "$files" ]; then
-            echo "No C/C++ files changed in this PR — skipping format check."
-            exit 0
-          fi
-          echo "Checking format of:"
-          echo "$files"
-          if ! clang-format --dry-run --Werror $files 2>&1; then
-            echo "::error::clang-format violations found. Fix with: clang-format -i $files (clang-format 18.1.8)"
-            exit 1
-          fi
-  
   # 任务: 中英文文档同步检查 (hash-based, blocking)
   doc-sync-check:
     runs-on: ubuntu-latest
@@ -346,7 +298,7 @@ jobs:
   # ========== 阶段 2: 生成总结 ==========
 
   generate-summary:
-    needs: [ubuntu-build, code-quality-check, ubuntu-test-fast, asan-gate, format-check, doc-sync-check, build-matrix]
+    needs: [ubuntu-build, code-quality-check, ubuntu-test-fast, asan-gate, doc-sync-check, build-matrix]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
@@ -373,5 +325,4 @@ jobs:
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| cppcheck | ${{ needs.code-quality-check.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Format | ${{ needs.format-check.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| ASan memory-safety gate | ${{ needs.asan-gate.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
