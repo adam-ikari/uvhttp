@@ -67,7 +67,9 @@
 
 | 版本 | 日期 | 主要内容 |
 |------|------|---------|
-| v2.7.1 | 2026-08-26 | 嵌入构建修复、性能回归门禁、ci-fuzz 修复 |
+| v2.9.0 | 2026-10-01 | Fuzz 覆盖扩展（request/websocket/static_path 三 harness）、header 名称 control-char 检查（防响应分割）、integration→manual/ 测试基建清理 |
+| v2.8.1 | 2026-09-29 | 同机配对门禁、零拷贝小 body 阈值修复 |
+| v2.8.0 | 2026-09-23 | 零拷贝 writev（/large +72.7%）、第二轮评审 17 项修复 |
 | v2.7.0 | 2026-08-21 | TLS 会话缓存、CI 性能基准、Platinum tier |
 | v2.6.1 | 2026-08-12 | 文档同步、CI 修复与内存安全 |
 | v2.6.0 | 2026-08-03 | Health Check、SSE 与可测试性 |

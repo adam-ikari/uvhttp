@@ -307,40 +307,30 @@ grep -n 'if UVHTTP_FEATURE' src/<file>.c
 
 ## 发布流程
 
-### 版本发布
+发布流程详见 [`docs/release-strategy.md`](docs/release-strategy.md)，要点：
 
-1. **创建 release 分支**
-   ```bash
-   git checkout -b release/v1.6.0 develop
-   ```
+1. **预发布**：全测通过（ASan/UBSan/ctest）→ 更新 `VERSION` 文件 + `docs/guide/CHANGELOG.md`（EN+ZH）→ 创建 Git tag `vX.Y.Z` 并推送 → `gh release create vX.Y.Z --prerelease` → 自动触发 `ci-benchmark` 同机配对门禁（head vs 上一个 release，10% 阈值）
+2. **转正式**：确认 benchmark 门禁绿 → `gh release edit vX.Y.Z --latest`（移除 prerelease 标记）→ main 经 PR 合并触发文档部署
 
-2. **更新版本号**
-   - 修改 `include/uvhttp.h` 中的版本号
-   - 更新 `CHANGELOG.md`
+### 发布前检查清单
 
-3. **测试和验证**
-   - 运行完整测试套件
-   - 进行性能基准测试
-   - 验证文档完整性
-
-4. **创建 PR 到 main**
-   - 目标分支：`main`
-   - 需要至少 2 人审查批准
-   - 所有检查必须通过
-
-5. **合并和发布**
-   - 合并到 main 后自动触发部署
-   - 创建 Git 标签
-   - 发布 GitHub Release
+- [ ] 所有测试通过（ctest 102/102）
+- [ ] ASan 零发现（`asan-gate`）
+- [ ] UBSan 零发现（`ci-nightly` 的 `test-ubsan`）
+- [ ] `build-matrix` 全配置编译通过（minimal / static-files / no-compression / router-cache / all-on）
+- [ ] `format-check` + `code-quality-check`（cppcheck）通过
+- [ ] `doc-sync-check` + `check-links` 通过
+- [ ] ci-fuzz 四 harness 无崩溃
+- [ ] CHANGELOG 已更新（EN+ZH）
+- [ ] VERSION 已更新
+- [ ] Git tag 已创建并推送
+- [ ] **Benchmark 回归门禁通过**（CI / gate 绿）——这是核心质量门禁，检测 head vs 上一个 release 的性能回归
+- [ ] 预发布 Release 已创建（`--prerelease`）
+- [ ] 门禁绿后正式 Release 确认（`--latest`）
 
 ### 热修复
 
-对于紧急修复：
-
-1. 从 main 创建 hotfix 分支
-2. 修复问题并测试
-3. 合并回 main 和 develop
-4. 立即发布补丁版本
+从 main 创建 `hotfix/vX.Y.Z` 分支 → 修复并测试 → PR 合并回 main → 同样走预发布 + 门禁两阶段（不跳过门禁）。
 
 ## 问题报告
 
