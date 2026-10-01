@@ -67,6 +67,7 @@
 
 | 版本 | 日期 | 主要内容 |
 |------|------|---------|
+| v2.9.1 | 2026-10-01 | CI 门禁修复（format-check 空转 + clang-format 版本钉住 + trend 改推分支开 PR）、CI 权限最小化、死代码清理 |
 | v2.9.0 | 2026-10-01 | Fuzz 覆盖扩展（request/websocket/static_path 三 harness）、header 名称 control-char 检查（防响应分割）、integration→manual/ 测试基建清理 |
 | v2.8.1 | 2026-09-29 | 同机配对门禁、零拷贝小 body 阈值修复 |
 | v2.8.0 | 2026-09-23 | 零拷贝 writev（/large +72.7%）、第二轮评审 17 项修复 |
