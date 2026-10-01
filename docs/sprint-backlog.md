@@ -2,7 +2,7 @@
 
 ## 每日工作流
 
-1. 检查 `ci-daily` 昨晚的结果
+1. 检查 `ci-nightly` 昨晚的结果
    - 有失败 → 认领对应的自动 issue（带 `bug` label）
    - 全部通过 → 继续推进原有任务
 
@@ -17,10 +17,7 @@
 ## 速查命令
 
 ```bash
-# 查看 ci-daily 结果
-gh run list --workflow ci-daily.yml --limit 1 --json conclusion
-
-# 查看夜间深度测试（nightly）结果
+# 查看夜间深度测试（nightly）结果（含 Debug 构建 + 测试，失败自动建 issue）
 gh run list --workflow ci-nightly.yml --limit 1 --json conclusion
 
 # 查看当前 open Issues（按优先级）

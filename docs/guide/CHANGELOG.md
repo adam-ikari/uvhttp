@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI GITHUB_TOKEN 权限最小化**: `ci-pr.yml` 与 `ci-daily.yml` 未声明 `permissions`，继承仓库默认（admin/maintain/push/triage 全开）。PR CI 与 daily build 实际只需 checkout（`contents: read`）；权限过宽意味着 CI 被 compromise 时可向 main 推代码。加显式最小权限声明（#420）
 
 ### Removed
+- **`ci-daily.yml` 冗余定时 workflow**: 只跑 Debug 构建 + 测试 + 建 issue，是 `ci-nightly` 的严格子集（nightly 覆盖 Debug 构建、测试、ASan、UBSan、覆盖率、压力测试，且已含自动建 issue）。调度只早 8 小时，捕获的回归 PR CI 已在每个 PR 上拦截。删除该 workflow，日常检查改看 `ci-nightly`
 - **趋势数据落库（trend job + `docs/benchmark-trends/`）**: `ci-benchmark.yml` 的 trend job 在 pre-release 事件把基准数据 push 到 `benchmark-trends` 分支并自动开 PR。v2.9.0 pre-release 暴露该 job 直推 main 被 GH013 拒（main PR-only），#418 改推专用分支修复，但实际验证时 `gh pr create` 又被仓库 Actions policy 拒（`can_approve_pull_request_reviews: False`），且该设置无法通过 API 修改。趋势数据落库本身是辅助展示，门禁判定（paired gate）不依赖它——判定由 `regression_check.py` 在 CI 内即时完成。故整体删除 trend job 与 `docs/benchmark-trends/` 目录
 
 ### Changed
