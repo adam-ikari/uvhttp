@@ -1096,8 +1096,8 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
                 (uvhttp_ws_wrapper_t*)conn->user_data;
             if (wrapper && wrapper->conn) {
                 uvhttp_connection_t* http_conn = wrapper->conn;
-                if (http_conn && http_conn->server &&
-                    http_conn->server->context) {
+                /* non-NULL: wrapper->conn was just tested */
+                if (http_conn->server && http_conn->server->context) {
                     uvhttp_ws_send_pong(http_conn->server->context, conn,
                                         payload, header.payload_length);
                 }

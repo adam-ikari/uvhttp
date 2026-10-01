@@ -258,23 +258,6 @@ static char* read_file_content(const char* file_path, size_t* file_size) {
 }
 
 /**
- * chunked file transfer context
- * - used for streaming large files in chunks
- * - avoids loading entire file into memory
- */
-typedef struct {
-    FILE* file;
-    size_t file_size;
-    size_t bytes_sent;
-    size_t chunk_size;
-    char* chunk_buffer;
-    uvhttp_response_t* response;
-    char etag[UVHTTP_MAX_HEADER_VALUE_SIZE];
-    time_t last_modified;
-    char safe_path[UVHTTP_MAX_PATH_SIZE];
-} chunked_transfer_context_t;
-
-/**
  * send file in chunks (for large files when sendfile is not available)
  * - avoids loading entire file into memory
  * - uses fixed-size chunks to balance memory and performance
