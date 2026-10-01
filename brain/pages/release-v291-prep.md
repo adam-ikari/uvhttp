@@ -5,58 +5,45 @@ category: decision
 status: active
 tags: [release, v2.9.1, ci, quality, pre-release]
 created: "2026-10-01T10:07:05"
-updated: "2026-10-01T10:55:33"
+updated: "2026-10-01T11:44:49"
 ---
 
 <!-- compiled_truth -->
-# v2.9.1 预发布已创建 + trend job 端到端验证结果
+## 趋势数据落库：API 无法改设置，需手动走 web UI
 
-## 发布状态
+尝试 `PATCH /repos/adam-ikari/uvhttp/actions/permissions/workflow` 设
+`can_approve_pull_request_reviews=true`，**持续 404**：
+- `gh api` 带与不带 `X-GitHub-Api-Version` header 都 404
+- curl 直连（带 `repo` scope token）同样 404
+- 同 endpoint 的 GET 正常返回（说明路径存在），但 PATCH 被拒写
 
-- tag `v2.9.1` → `55a79ac`（main `970146b`）
-- GitHub Release v2.9.1 = **pre-release**（未转 latest，v2.9.0 仍是 Latest）
-- release 事件自动触发 ci-benchmark `36848815265`（head v2.9.1，base 自动解析为 v2.9.0）
+**结论：该设置在 API 上对本仓库拒写，只能通过 web UI 改。**
 
-### benchmark 门禁：ALL PASS
-| 端点 | head | base | ratio | pairs<lim | MAD | verdict |
-|---|---|---|---|---|---|---|
-| / | 78155 | 79023 | 96.3% | 1/10 | 6.1% | PASS |
-| /json | 77264 | 79525 | 98.4% | 3/10 | 8.8% | PASS |
-| /large | 10072 | 10192 | 98.8% | 0/10 | 3.3% | PASS |
+web UI 路径：**Settings → Actions → General → Workflow permissions →
+"Allow GitHub Actions to create and approve pull requests"**
 
-全远高于 90% 阈值，差异在 MAD 内（1–3 个 MAD），无回归。v2.9.0..v2.9.1 唯一的 src 改动是删死代码与冗余 NULL 检查（零性能影响），结果符合预期。
+### 已用手工方式验证 PR 路径可行
 
-## trend job 端到端验证：GH013 已修复，但暴露第二层限制
+在设置改好之前，用维护者 token 手动开了 PR #423（`benchmark-trends` → main），
+状态 `MERGEABLE`，已 squash 合并（main `a059bcd`）。
 
-#418 的核心修复**验证通过**：
-- `git push --force origin HEAD:benchmark-trends` 成功（分支 `benchmark-trends` 存在，ahead_by 1，commit `docs(benchmark): trend data for 2026-10-01`）
-- 旧的 `GH013 Repository rule violations for refs/heads/main` 不再出现
-
-但 `gh pr create` 失败：
+合并内容确认无误，是 v2.9.1 pre-release 的趋势数据：
 ```
-pull request create failed: GraphQL: GitHub Actions is not permitted to
-create or approve pull requests (createPullRequest)
+docs/benchmark-trends/benchmark-2026-10-01.md                    (178 行)
+docs/benchmark-trends/benchmark-2026-10-01.csv                   (60 行)
+docs/benchmark-trends/benchmark-2026-10-01-head-paired.csv       (31 行)
+docs/benchmark-trends/benchmark-2026-10-01-base-paired.csv       (31 行)
 ```
 
-**这是仓库级 Actions policy 限制**，不是 workflow 权限问题：
-`gh api repos/adam-ikari/uvhttp/actions/permissions/workflow` 返回
-`can_approve_pull_request_reviews: False`。我给 trend job 加的
-`pull-requests: write` 只控制 GITHUB_TOKEN 的 scope，而 GitHub 仓库设置里
-「Allow GitHub Actions to create and approve pull requests」是独立的开关。
+这证明「push 到分支 + 开 PR 合并」这条路径本身完全可行，缺的只是
+Actions 自主开 PR 的权限。设置打开后，trend job 会自动完成这一步。
 
-## 待决策：趋势数据如何落库
+### 遗留
 
-当前状态：趋势数据堆在 `benchmark-trends` 分支（1 个 commit），永不合并到 main。
-
-三个选项：
-1. **启用仓库设置**允许 Actions 创建 PR（admin 权限可改）——标准做法，但扩大 Actions 权限
-2. **保持现状**：趋势数据只在分支，需手动定期合并
-3. **改用 artifact / gh-pages 落趋势数据**，不经过 main
-
-选项 1 最符合「PR-only + 自动落库」的设计意图（见 [[release-process-benchmark-gate]]）。
-
-## v2.9.1 是否转正式？
-两阶段流程要求 benchmark 门禁绿 → `gh release edit v2.9.1 --latest`。门禁已 ALL PASS，可转。但转正式前建议先定 trend job 方案，否则每次 pre-release 都会留一个未合并分支。
+- `benchmark-trends` 分支仍存在（已与 main 内容相同）。下次 trend job 会
+  force push 重建，无需手动清理
+- v2.9.1 仍是 pre-release（v2.9.0 是 Latest）。benchmark 门禁已 ALL PASS，
+  可 `gh release edit v2.9.1 --latest` 转正式
 
 
 ## Timeline
@@ -77,4 +64,16 @@ create or approve pull requests (createPullRequest)
   kind: decision
   summary: "v2.9.1 prerelease 已发布（tag 55a79ac，pre-release 未转 latest）；benchmark 门禁 ALL PASS（96.3/98.4/98.8%，差异在 MAD 内无回归）；trend job 端到端验证：push 到 benchmark-trends 成功（GH013 已修），但 gh pr create 被仓库 Actions policy 拒（can_approve_pull_request_reviews: False），趋势数据堆在分支待决策"
   source: "v2.9.1 pre-release + trend job 验证（2026-10-01）"
+  affects: [release-v291-prep]
+
+- time: 2026-10-01T11:19:46
+  kind: decision
+  summary: "趋势数据落库：API PATCH can_approve_pull_request_reviews 持续 404（curl 直连同样拒写，GET 正常），该设置只能走 web UI（Settings→Actions→General→Workflow permissions）；已用维护者 token 手动开 PR #423 验证路径可行并合并（main a059bcd，4 个趋势文件）。v2.9.1 仍 pre-release 待转正式"
+  source: "趋势落库方案落地（2026-10-01）"
+  affects: [release-v291-prep]
+
+- time: 2026-10-01T11:44:49
+  kind: reversal
+  summary: "删除趋势数据落库功能（trend job + docs/benchmark-trends/ + benchmark-trends 分支）：用户决定不要趋势数据。两层限制（GH013 + Actions policy 不可 API 改）使修复链无尽头，且 trend 不参与门禁判定，删了对质量无影响"
+  source: "删除趋势数据功能（2026-10-01）"
   affects: [release-v291-prep]
