@@ -36,7 +36,6 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 - [ ] Enhanced cross-platform testing
 
 ### Performance
-- [ ] HTTP/2 support (experimental)
 - [ ] Connection pooling optimization
 - [ ] Memory usage reduction
 - [ ] CPU efficiency improvements
@@ -66,7 +65,6 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 ## Medium-Term Goals (v2.8.0 - v2.9.0, 2026-2027)
 
 ### Core Enhancements
-- [ ] HTTP/2 production support
 - [ ] QUIC/HTTP3 research
 - [ ] IPv6 support enhancement
 - [ ] Async I/O improvements
@@ -198,7 +196,6 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 
 ### Q3 2026
 - ✅ v2.7.1 release (2026-08-26)
-- 📋 HTTP/2 support
 - 📋 Security enhancements
 - 📋 Observability features
 - 📋 Ecosystem expansion
