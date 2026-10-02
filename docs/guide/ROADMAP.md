@@ -45,7 +45,6 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 - [ ] Advanced rate limiting (IP-based, user-based)
 - [ ] Request/response middleware system
 - [ ] Enhanced logging framework
-- [ ] Configuration file support (YAML/JSON)
 - [ ] Hot reload support
 
 ### Developer Experience
@@ -65,7 +64,6 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 ## Medium-Term Goals (v2.8.0 - v2.9.0, 2026-2027)
 
 ### Core Enhancements
-- [ ] QUIC/HTTP3 research
 - [ ] Async I/O improvements
 - [ ] Event loop optimization
 
@@ -107,7 +105,6 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 - [ ] Serverless ready
 
 ### Protocols
-- [ ] QUIC/HTTP3 full support
 - [ ] gRPC integration
 - [ ] WebSocket extensions
 - [ ] Custom protocol support
