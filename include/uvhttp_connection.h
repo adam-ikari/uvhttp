@@ -197,8 +197,6 @@ uvhttp_error_t uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn,
 uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
     uvhttp_connection_t* conn, const char* ws_key);
 void uvhttp_connection_switch_to_websocket(uvhttp_connection_t* conn);
-void uvhttp_connection_websocket_read(uv_stream_t* stream, ssize_t nread,
-                                      const uv_buf_t* buf);
 void uvhttp_connection_websocket_close(uvhttp_connection_t* conn);
 
 #endif /* UVHTTP_FEATURE_WEBSOCKET */
