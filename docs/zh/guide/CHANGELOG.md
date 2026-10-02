@@ -40,7 +40,7 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 ## [2.9.1] - 2026-10-01
 
 ### 修复
-- **format-check 门禁此前完全不工作**: job 用 `${{ github.event.before }}` 作 `git diff` 的 base，但 `pull_request` 事件 payload 没有该字段 → 展开为空串 → `git diff --name-only --diff-filter=ACMR "" <sha>` 报 `fatal: ambiguous argument ''` → `files` 为空 → 恒走 "No C/C++ files changed — skipping" exit 0。自 PR #380 引入该 job 起，**所有 PR 的 C/C++ 格式变更都未被检查过**（门禁一直是空转绿灯）。改用正确的 `${{ github.event.pull_request.base.sha }}`（#416）
+- **format-check 门禁此前完全不工作**: job 用 <span v-pre>`${{ github.event.before }}`</span> 作 `git diff` 的 base，但 `pull_request` 事件 payload 没有该字段 → 展开为空串 → `git diff --name-only --diff-filter=ACMR "" <sha>` 报 `fatal: ambiguous argument ''` → `files` 为空 → 恒走 "No C/C++ files changed — skipping" exit 0。自 PR #380 引入该 job 起，**所有 PR 的 C/C++ 格式变更都未被检查过**（门禁一直是空转绿灯）。改用正确的 <span v-pre>`${{ github.event.pull_request.base.sha }}`</span>（#416）
 - **format-check 门禁 clang-format 版本漂移**: 门禁装 `apt` 的 clang-format（跟随 runner 镜像版本，ubuntu-24.04 为 18.x），跨大版本输出差异极大——实测同一份代码 v14 判 0 违规、v18 判 424 处，导致「本地过、CI 红」且无法复现。门禁改为 `pip install clang-format==18.1.8` 钉住版本，存量按该版本全量重格式化（424 处，30 文件）（#416）
 
 ### 安全
