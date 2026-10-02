@@ -236,6 +236,21 @@ endif()
 
 add_definitions(-DUVHTTP_ALLOCATOR_TYPE=${UVHTTP_ALLOCATOR_TYPE})
 
+# Version numbers: single source of truth is the VERSION file, parsed into
+# PROJECT_VERSION at the top of this file. These override the `#ifndef`
+# defaults in src/uvhttp_version.c — without them the library reports a
+# stale version (it said 2.8.1 while the VERSION file said 2.9.1).
+#
+# Directory-scoped (add_definitions, not target_compile_definitions) because
+# uvhttp_get_version_string() is a header inline function: every translation
+# unit needs the macro, including test targets, which link ${LIBS} (the
+# archive) rather than the uvhttp target and therefore do not inherit its
+# PUBLIC definitions.
+add_definitions(-DUVHTTP_VERSION_STRING="${PROJECT_VERSION}")
+add_definitions(-DUVHTTP_VERSION_MAJOR=${PROJECT_VERSION_MAJOR})
+add_definitions(-DUVHTTP_VERSION_MINOR=${PROJECT_VERSION_MINOR})
+add_definitions(-DUVHTTP_VERSION_PATCH=${PROJECT_VERSION_PATCH})
+
 # ========== Apply Performance Optimization Options ==========
 if(ENABLE_LTO)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)

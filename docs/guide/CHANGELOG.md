@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.2] - 2026-10-02
+
+### Removed
+- **`format-check` CI gate deleted**: the job now runs (it was fixed in #416), but the gate duplicates `code-quality-check`'s clang-format verification for the same C/C++ files. Deleting it removes a redundant gate that must be kept in sync with the version pin (#426)
+- **`ci-daily.yml` scheduled workflow deleted**: a strict subset of `ci-nightly` (nightly covers Debug build, tests, ASan, UBSan, coverage, stress, and auto-filing issues). Its schedule was only 8 hours earlier, so regressions were already caught by PR CI (#427)
+
+### Changed
+- **ROADMAP rewritten (316 -> 92 lines)**: dropped HTTP/2 (#429), IPv6 enhancements (#430), HTTP/3 / QUIC / YAML-JSON config (#431), per-user rate limiting (#432). None had committed work; keeping them in the roadmap implied commitments the project does not intend to make (#433)
+- **`uvhttp_connection_websocket_read` declaration removed**: declared in the public header `include/uvhttp_connection.h` but **no implementation exists anywhere in `src/`** — it was the only public API with zero test references. Deleting the declaration; callers already could not link against it (#434)
+
+### Added
+Behavior tests for code paths that existing tests could not reach. Every group below was verified by mutation testing (deliberately breaking the implementation and confirming the tests turn red):
+
+- **TLS certificate verification** (9 tests, real X.509 from `test/certs/server.crt`): the 81 existing TLS tests all passed `nullptr` or zero-initialized structs, so only the first-line null check ever ran. Now covers CN matching, case-insensitivity, substring rejection, not-yet-valid and expired rejection (#434)
+- **URL path encoding validation** (10 tests): `uvhttp_validate_url_path` has three separate loops (`%XX` encoding format, `..\` traversal, dangerous-character scan) that only execute for inputs containing specific characters. Truncated `%2`, non-hex `%zz`, CRLF injection, and `%2e%2e` encoded traversal are now covered (#435)
+- **Conditional request RFC 7232 parsing** (20 tests): `uvhttp_static_check_conditional_request` had zero coverage of If-None-Match list traversal, `W/` weak-validator stripping, and the three HTTP-date formats for If-Modified-Since. Mutation-verified that replacing `timegm` with `mktime` (which would skew comparisons by local timezone) turns tests red (#436)
+- **gzip cache replacement path** (4 tests): the eviction loop in the same-key replacement branch never executed because all existing puts used equal-length values, making `delta` always 0 (#437)
+- **LRU cache capacity boundary** (5 tests): the "cache empty but still needs space" early-return never executed. Mutation analysis revealed it is a **serial double defense** with the `evicted_this_batch == 0` fallback — removing either alone does not change observable behavior (#438)
+- **Response header buffer resize** (6 tests): the `headers_length >= headers_size` branch never triggered because no test produced header blocks over 16384 bytes. Also records that `set_header` silently truncates values above 2048 bytes while validation permits 4096 (#439)
+- **llhttp read-boundary continuation** (12 tests): `on_url`, `on_header_field`, and `on_header_value` all implement continuation logic for tokens split across TCP reads, but every existing test fed complete requests in a single call. Request fragmentation is routine in production (Nagle, MTU, slow clients) (#440)
+- **Query parameter parsing** (24 tests): pins three contracts — first duplicate key wins, values are **not** URL-decoded (`%XX` and `+` preserved), and key matching respects the `=` boundary. Also confirms the value-truncation branch is unreachable given `url[MAX_URL_LEN]` and `param_value[UVHTTP_MAX_URL_SIZE]` are both 2048 (#441)
+- **Router trie child limit** (10 tests): the 12-children-per-node cap was never hit because short paths bypass the trie entirely, and existing bulk-route tests explicitly stayed under the limit. Mutation-tested by both removing the cap and changing it to 8 (#442)
+- **Connection timeout callback** (9 tests): the existing test set a counter but never ran the event loop, so all four callback branches were unexecuted. Verified under AddressSanitizer with zero use-after-free (#443)
+- **Accept failure counter pairing** (6 tests, mock): mutation-testing restores the historical bug where `active_connections++` sat after `uv_accept`, leaving the failure path's unconditional decrement unpaired and underflowing the `size_t` counter to `SIZE_MAX` — a permanent 503 state (#444)
+
+### Fixed
+- **A test that could never fail**: `CheckCertValidityValid` in `test_tls_api_coverage.cpp` wrapped its assertions in `if (ret == 0)`, but ctest runs from `build/` where the relative cert path is unreachable, so `ret != 0` and the assertion was silently skipped — permanently green with zero verification. Replaced with `GTEST_SKIP()` so "not tested" is visible in output (#434)
+
 ## [2.9.1] - 2026-10-01
 
 ### Fixed

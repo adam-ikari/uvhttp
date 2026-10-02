@@ -2,12 +2,12 @@
 # This file defines the current version information for the project
 
 # Current version number (semantic version: MAJOR.MINOR.PATCH)
-VERSION=2.9.1
+VERSION=2.9.2
 VERSION_TYPE=patch
-RELEASE_DATE=2026-10-01
-PREVIOUS_VERSION=2.9.0
-NEXT_VERSION=2.9.2
-VERSION_NAME="CI 门禁修复与死代码清理" # v2.9.1
+RELEASE_DATE=2026-10-02
+PREVIOUS_VERSION=2.9.1
+NEXT_VERSION=2.9.3
+VERSION_NAME="行为测试补全（11 组，132 个测试）+ CI 门禁精简" # v2.9.2
 IS_PRERELEASE=false
 PRERELEASE_IDENTIFIER=""
 

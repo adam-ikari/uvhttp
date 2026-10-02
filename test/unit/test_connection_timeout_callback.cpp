@@ -83,18 +83,37 @@ class ConnectionTimeoutCallback : public ::testing::Test {
     }
 
     void TearDown() override {
+        /* Free the connection before the server. uvhttp_connection_free()
+         * closes its handles; the close callbacks that actually release the
+         * connection only run once the loop is pumped below. Skipping the
+         * free leaks the ~76 KB uvhttp_connection_new() allocated —
+         * LeakSanitizer caught exactly this. */
         if (conn_) {
             if (!uv_is_closing((uv_handle_t*)&conn_->timeout_timer)) {
                 uv_timer_stop(&conn_->timeout_timer);
             }
+            uvhttp_connection_free(conn_);
             conn_ = nullptr;
         }
         if (server_) {
             uvhttp_server_free(server_);
             server_ = nullptr;
         }
+        /* pump so the close callbacks land, then close the loop */
         uv_run(&loop_, UV_RUN_DEFAULT);
         uv_loop_close(&loop_);
+    }
+
+    /* Run the loop until the timeout fires. connection_timeout_cb calls
+     * uvhttp_connection_close(), and on_handle_close then RELEASES the
+     * connection — after this returns the pointer is dangling, so ownership
+     * is dropped here to keep TearDown from freeing it a second time
+     * (uvhttp_connection_free's double-free guard still dereferences the
+     * struct to read conn->freed, so calling it on freed memory is a
+     * use-after-free, not a no-op). */
+    void RunUntilTimeoutFires() {
+        uv_run(&loop_, UV_RUN_DEFAULT);
+        conn_ = nullptr;
     }
 };
 
@@ -114,11 +133,14 @@ TEST_F(ConnectionTimeoutCallback, CallbackFiresOnceThenClosesConnection) {
 
     ASSERT_EQ(uvhttp_connection_start_timeout_custom(conn_, kMinTimeout),
               UVHTTP_OK);
-    uv_run(&loop_, UV_RUN_DEFAULT);
+    /* keep the pointer for the assertion below — RunUntilTimeoutFires()
+     * drops our ownership of it */
+    uvhttp_connection_t* expected_conn = conn_;
+    RunUntilTimeoutFires();
 
     /* 分支 3：回调恰好触发一次，且参数正确 */
     EXPECT_EQ(g_call_count, 1) << "超时后应用层回调应恰好触发一次";
-    EXPECT_EQ(g_last_conn, conn_) << "回调应收到超时的那个连接";
+    EXPECT_EQ(g_last_conn, expected_conn) << "回调应收到超时的那个连接";
     EXPECT_EQ(g_last_user_data, &marker) << "user_data 应原样透传";
     EXPECT_EQ(g_last_timeout_ms,
               static_cast<uint64_t>(UVHTTP_CONNECTION_TIMEOUT_DEFAULT) * 1000)
@@ -143,7 +165,7 @@ TEST_F(ConnectionTimeoutCallback, RepeatedStartDoesNotMultiplyCallbacks) {
         ASSERT_EQ(uvhttp_connection_start_timeout_custom(conn_, kMinTimeout),
                   UVHTTP_OK);
     }
-    uv_run(&loop_, UV_RUN_DEFAULT);
+    RunUntilTimeoutFires();
 
     EXPECT_EQ(g_call_count, 1)
         << "反复 start_timeout 不应导致回调被多次调用（实际 " << g_call_count
@@ -162,7 +184,7 @@ TEST_F(ConnectionTimeoutCallback, NoCallbackConfiguredDoesNotCrash) {
 
     /* 分支 3 的 else 侧：无回调时直接关闭连接，不应崩溃。
      * 同样不能断言 conn_ 字段——超时后连接已被释放。 */
-    uv_run(&loop_, UV_RUN_DEFAULT);
+    RunUntilTimeoutFires();
     EXPECT_EQ(g_call_count, 0) << "未配置回调时不应有回调被调用";
 }
 
@@ -215,7 +237,7 @@ TEST_F(ConnectionTimeoutCallback, StartAfterCloseDoesNotFireCallback) {
     uvhttp_connection_close(conn_);
     /* close 后再 start timer 不应导致回调触发 */
     uvhttp_connection_start_timeout_custom(conn_, kMinTimeout);
-    uv_run(&loop_, UV_RUN_DEFAULT);
+    RunUntilTimeoutFires();
 
     EXPECT_EQ(g_call_count, 0) << "连接关闭后不应再触发超时回调";
 }

@@ -9,6 +9,34 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
 本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)规范。
+## [2.9.2] - 2026-10-02
+
+### 移除
+- **删除 `format-check` CI 门禁**: 该 job 在 #416 修好后确实能工作，但它与 `code-quality-check` 对同一批 C/C++ 文件做 clang-format 校验，功能重复。删除可省去一个需要同步维护版本钉的门禁（#426）
+- **删除 `ci-daily.yml` 定时 workflow**: 它是 `ci-nightly` 的严格子集（nightly 已覆盖 Debug 构建、测试、ASan、UBSan、覆盖率、压力测试与自动建 issue），调度只早 8 小时，捕获的回归 PR CI 已在每个 PR 上拦截（#427）
+
+### 变更
+- **重写 ROADMAP（316 → 92 行）**: 砍掉 HTTP/2（#429）、IPv6 增强（#430）、HTTP/3 / QUIC / YAML-JSON 配置（#431）、per-user 限流（#432）。这几项均无已投入的工作，留在 roadmap 里等于项目并不打算兑现的承诺（#433）
+- **删除 `uvhttp_connection_websocket_read` 声明**: 它声明在公开头文件 `include/uvhttp_connection.h`，但 **src/ 下无任何实现**——是全项目唯一零测试引用的公开 API。删除该声明；调用者本就无法链接（#434）
+
+### 新增
+为现有测试触达不到的代码路径补行为测试。以下每组均经变异验证（故意破坏实现，确认测试变红）：
+
+- **TLS 证书验证**（9 个测试，用 `test/certs/server.crt` 真实 X.509 驱动）: 现有 81 个 TLS 测试全部传 `nullptr` 或零初始化结构体，只覆盖到函数第一行的 null 检查。现覆盖 CN 匹配、大小写不敏感、子串拒绝、未生效与已过期拒绝（#434）
+- **URL 路径编码校验**（10 个）: `uvhttp_validate_url_path` 有三个独立循环（`%XX` 编码格式、`..\` 穿越、危险字符扫描），只对含特定字符的输入才执行。现覆盖截断的 `%2`、非十六进制 `%zz`、CRLF 注入与 `%2e%2e` 编码穿越（#435）
+- **条件请求 RFC 7232 解析**（20 个）: `uvhttp_static_check_conditional_request` 的 If-None-Match 列表遍历、`W/` 弱验证剥离、If-Modified-Since 的三种 HTTP-date 格式全零覆盖。变异验证显示把 `timegm` 换成 `mktime`（会引入本地时区偏移）会让测试变红（#436）
+- **gzip 缓存替换路径**（4 个）: 同键替换分支里的淘汰循环从未执行——现有 put 全用等长值，`delta` 恒为 0（#437）
+- **LRU 缓存容量边界**（5 个）: 「缓存已空但仍需空间」的早退分支从未执行。变异分析揭示它与 `evicted_this_batch == 0` 兜底构成**串行双防线**——单独移除任一都不改变可观察行为（#438）
+- **响应头缓冲区扩容**（6 个）: `headers_length >= headers_size` 分支从未触发，因无测试产出超过 16384 字节的 header 块。同时记录 `set_header` 校验允许 4096 字节但实际存储仅 2048 字节，**超长值被静默截断**（#439）
+- **llhttp 跨读边界续写**（12 个）: `on_url`、`on_header_field`、`on_header_value` 都实现了 token 跨 TCP 读分段时的续写逻辑，但现有测试全部一次性喂入完整请求。请求分片在生产中是常态（Nagle 合并、MTU 边界、慢客户端）（#440）
+- **Query 参数解析**（24 个）: 钉死三条契约——重复 key 首个胜出、返回值**不做 URL 解码**（保持 `%XX` 与 `+`）、key 匹配遵循 `=` 边界。同时确认值截断分支不可达（`url[MAX_URL_LEN]` 与 `param_value[UVHTTP_MAX_URL_SIZE]` 均为 2048）（#441）
+- **路由 trie 子节点上限**（10 个）: 每节点 12 子节点的上限从未被触发——短路径根本不走 trie，且现有批量路由测试刻意留在上限之下。变异验证同时测了「移除上限」与「上限改成 8」两种破坏（#442）
+- **连接超时回调**（9 个）: 现有测试设置了计数器却从不跑 event loop，回调体四条分支全部未执行。已用 AddressSanitizer 验证零 use-after-free（#443）
+- **accept 失败路径计数配对**（6 个，mock）: 变异验证精确复现了历史缺陷——`active_connections++` 若位于 `uv_accept` 之后，失败路径的无条件自减将失去配对，使 `size_t` 计数下溢到 SIZE_MAX，服务器陷入永久 503（#444）
+
+### 修复
+- **一个永远不可能失败的测试**: `test_tls_api_coverage.cpp` 的 `CheckCertValidityValid` 把断言包在 `if (ret == 0)` 里，但 ctest 的工作目录是 `build/`，相对证书路径不可达 → `ret != 0` → 断言被静默跳过——**恒绿且零验证**。改用 `GTEST_SKIP()`，让「没测」这件事在输出里可见（#434）
+
 ## [2.9.1] - 2026-10-01
 
 ### 修复
