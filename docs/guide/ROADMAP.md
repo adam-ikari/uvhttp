@@ -42,7 +42,6 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 - [ ] Target: 30,000+ RPS
 
 ### Features
-- [ ] Advanced rate limiting (IP-based, user-based)
 - [ ] Request/response middleware system
 - [ ] Enhanced logging framework
 - [ ] Hot reload support
@@ -69,7 +68,6 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 
 ### Security
 - [ ] Advanced authentication mechanisms
-- [ ] Rate limiting per user
 - [ ] DDoS protection
 - [ ] Certificate management
 - [ ] Security audit tools
