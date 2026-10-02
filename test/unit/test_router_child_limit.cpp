@@ -34,8 +34,13 @@
 
 #include <gtest/gtest.h>
 
+/* src/uvhttp_router.c 整体被 `#if !UVHTTP_FEATURE_ROUTER_CACHE` 包裹——启用
+ * router cache 时改走另一套实现，本文件测的 12 子节点 trie 上限不存在。
+ * 与其它 router 测试一致，本文件受同一条件控制。 */
+#if !UVHTTP_FEATURE_ROUTER_CACHE
+
 extern "C" {
-#include "uvhttp_router.h"
+#    include "uvhttp_router.h"
 }
 
 namespace {
@@ -243,3 +248,5 @@ TEST_F(RouterChildLimit, ArrayModeIsNotSubjectToChildLimit) {
     }
     EXPECT_EQ(router_->route_count, 13u);
 }
+
+#endif /* !UVHTTP_FEATURE_ROUTER_CACHE */
