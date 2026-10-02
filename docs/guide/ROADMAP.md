@@ -66,7 +66,6 @@ UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP 
 
 ### Core Enhancements
 - [ ] QUIC/HTTP3 research
-- [ ] IPv6 support enhancement
 - [ ] Async I/O improvements
 - [ ] Event loop optimization
 
