@@ -2,315 +2,91 @@
 
 ## Vision
 
-UVHTTP aims to become the most trusted, performant, and developer-friendly HTTP server library for C applications, setting the standard for production-grade, zero-overhead networking solutions.
+A lightweight, production-grade **HTTP/1.1** server library for C — with no hidden layer between your application and libuv.
 
-## Current Status (v2.7.1)
+## Scope Boundary
 
-### ✅ Completed
-- HTTP/1.1 server (~83,000 RPS, CI baseline)
-- WebSocket with full-duplex communication
-- Zero-copy file transmission
-- LRU caching with preheating
-- TLS 1.2/1.3 via mbedtls
-- 32-bit embedded system support
-- Comprehensive documentation
-- Input validation and security hardening
-- Error handling
-- TLS session cache (2048 entries, 24h timeout)
-- CI fuzz fixes (C11 alignment)
-- Embedding verification round 2 (add_subdirectory integration)
-- Performance regression gate (10% RPS threshold)
+What this library is deliberately **not** responsible for. Each was evaluated and excluded; the reasoning for the protocol choices is recorded in [PHILOSOPHY](../PHILOSOPHY.md).
 
-### 🔄 In Progress
-- Enhanced test coverage (target: 80%)
-- Platform expansion (macOS, Windows)
-- Performance optimization
-- Community engagement
+| Concern | Why it is out of scope |
+|---|---|
+| HTTP/2 | Multiplexing is incompatible with libuv's transparent per-connection event model |
+| HTTP/3 (QUIC) | Requires a different transport layer; outside the scope of a lightweight C library |
+| IPv6 **listening** | Gateway / network-stack concern. Client-side IPv6 address extraction *is* supported |
+| YAML/JSON config files | The framework or application embedding this library owns its own configuration format |
+| Per-user / per-IP rate limiting | Gateway / reverse-proxy concern. A global token bucket with whitelist *is* provided |
+| Observability (metrics, tracing, dashboards) | Prometheus / OpenTelemetry territory |
+| Auth, DDoS protection, certificate management | Gateway / security-layer concern |
+| Plugin system, microservices, cloud-native, serverless | Infrastructure. Compile-time feature selection (27 CMake options) covers capability needs |
+| Hot reload | Process/supervisor concern |
 
-## Short-Term Goals (v2.7.1 - Q3 2026)
+## Current Status (v2.9.1)
 
-### Platform Support
-- [ ] macOS support (ARM64 and Intel)
-- [ ] Windows support (x86_64)
-- [ ] FreeBSD support (x86_64)
-- [ ] Enhanced cross-platform testing
+### Delivered
+
+- **HTTP/1.1** — ~85K RPS on CI runners (paired-gate measured)
+- **WebSocket** — full-duplex, RFC 6455, Ping/Pong with heartbeat
+- **TLS 1.2/1.3** via mbedtls, with session cache (2048 entries / 24h)
+- **Static files** — `sendfile` zero-copy with chunked fallback; path resolution fuzz-verified
+- **gzip** compression with LRU cache
+- **Rate limiting** — global token bucket + whitelist
+- **Middleware** — compile-time, zero runtime overhead
+- **32-bit embedded** support
+- **27 compile-time options** for capability trimming
+
+### Quality Infrastructure
+
+- 102 unit tests, all green
+- ASan gate on every PR; UBSan, stress, and coverage runs nightly
+- 4 libFuzzer harnesses (router / request / websocket / static-path)
+- Same-runner paired performance gate: head vs base, 10% threshold, fail-closed
+- cppcheck static analysis, zero warnings
+- CI `GITHUB_TOKEN` scoped to `contents: read`
+
+## Open Work
+
+Genuine gaps, ordered by value.
 
 ### Performance
-- [ ] Connection pooling optimization
-- [ ] Memory usage reduction
-- [ ] CPU efficiency improvements
-- [ ] Target: 30,000+ RPS
 
-### Features
-- [ ] Request/response middleware system
-- [ ] Enhanced logging framework
-- [ ] Hot reload support
+- [ ] Connection pooling optimization
+- [ ] Memory usage reduction per request
+- [ ] CPU efficiency on the hot path
 
 ### Developer Experience
-- [ ] Interactive debugger
-- [ ] Performance profiling tools
-- [ ] Memory leak detection
-- [ ] Static analysis integration
-- [ ] Enhanced error messages
+
+- [ ] Enhanced logging framework (structured levels, pluggable sinks)
+- [ ] API reference completeness pass
 
 ### Documentation
-- [ ] Video tutorials
-- [ ] Interactive examples
-- [ ] API reference improvements
+
 - [ ] Architecture diagrams
 - [ ] Performance tuning guide
 
-## Medium-Term Goals (v2.8.0 - v2.9.0, 2026-2027)
+### Platform — no schedule, on demand
 
-### Core Enhancements
-- [ ] Async I/O improvements
-- [ ] Event loop optimization
+- [ ] macOS
+- [ ] FreeBSD
 
-### Security
-- [ ] Advanced authentication mechanisms
-- [ ] DDoS protection
-- [ ] Certificate management
-- [ ] Security audit tools
+## Technology Stack
 
-### Observability
-- [ ] Built-in metrics collection
-- [ ] Distributed tracing support
-- [ ] Performance monitoring
-- [ ] Error tracking integration
-- [ ] Real-time dashboard
+| Layer | Choice |
+|---|---|
+| Core | C99, libuv 1.52, llhttp |
+| TLS | mbedtls |
+| Memory | mimalloc (optional) |
+| Hashing | xxHash |
+| JSON | cJSON (optional) |
+| Testing | Google Test, libFuzzer |
 
-### Ecosystem
-- [ ] Plugin system
-- [ ] Community extensions
-- [ ] Third-party integrations
-- [ ] Package manager support
-- [ ] CI/CD templates
+## Measured Performance
 
-### Testing
-- [ ] Fuzzing framework
-- [ ] Chaos engineering
-- [ ] Contract testing
-- [ ] Load testing tools
-- [ ] Automated regression testing
+From the paired gate (same runner, head vs base, 10 alternating rounds):
 
-## Long-Term Vision (v3.0.0+, 2027+)
+| Endpoint | RPS | Note |
+|---|---|---|
+| `/` | ~85K | In-memory response |
+| `/json` | ~85K | JSON serialization |
+| `/large` | ~9.6K | 100KB body |
 
-### Architecture
-- [ ] Modular kernel design
-- [ ] Microservices support
-- [ ] Cloud-native features
-- [ ] Container optimization
-- [ ] Serverless ready
-
-### Protocols
-- [ ] gRPC integration
-- [ ] WebSocket extensions
-- [ ] Custom protocol support
-- [ ] Protocol version negotiation
-
-### Performance
-- [ ] 50,000+ RPS target
-- [ ] Sub-millisecond latency
-- [ ] Zero-allocation design
-- [ ] Lock-free data structures
-- [ ] NUMA awareness
-
-### Platform
-- [ ] WebAssembly support
-- [ ] Embedded Linux optimization
-- [ ] Real-time OS support
-- [ ] GPU acceleration research
-- [ ] Mobile platforms (iOS, Android)
-
-### Community
-- [ ] Contributor growth program
-- [ ] Conference presence
-- [ ] University partnerships
-- [ ] Open source governance
-- [ ] Sponsorship program
-
-## Technology Stack Evolution
-
-### Current Stack
-- **Core**: C99, libuv, llhttp
-- **TLS**: mbedtls
-- **Memory**: mimalloc (optional)
-- **Hashing**: xxHash
-- **JSON**: cJSON (optional)
-- **Testing**: Google Test
-
-### Future Considerations
-- **TLS**: BoringSSL, LibreSSL
-- **Hashing**: FarmHash, MetroHash
-- **Memory**: jemalloc, tcmalloc
-- **Async**: io_uring (Linux), kqueue (BSD)
-- **Compression**: zstd, brotli
-
-## Quality Metrics
-
-### Code Quality
-- **Coverage**: 80%+ (current: 86%)
-- **Warnings**: Zero
-- **Tests**: All passing
-- **Security**: No known vulnerabilities
-
-### Performance
-- **Throughput**: 83,000 RPS (CI baseline)
-- **Latency**: 2.92-43.59ms P50-P99
-- **Memory**: Minimal footprint
-- **CPU**: Efficient usage
-
-### Documentation
-- **API Reference**: Complete
-- **Examples**: 7+ categories
-- **Guides**: Comprehensive
-- **Languages**: English + Chinese
-
-### Community
-- **Stars**: Growing
-- **Issues**: Responsive
-- **PRs**: Regular merges
-- **Contributors**: Expanding
-
-## Milestones
-
-### Q1 2026 (Completed)
-- ✅ v2.6.0 release
-- ✅ 32-bit support
-- ✅ Python tools
-- ✅ Security hardening
-- ✅ Documentation enhancement
-
-### Q2 2026
-- ✅ v2.6.0 release
-- 🔄 macOS/Windows support
-- 🔄 Performance optimization
-- 🔄 Enhanced testing
-- 🔄 Community growth
-
-### Q3 2026
-- ✅ v2.7.1 release (2026-08-26)
-- 📋 Security enhancements
-- 📋 Observability features
-- 📋 Ecosystem expansion
-
-### Q4 2026
-- ✅ v2.8.0 release (2026-09-23)
-- ✅ v2.8.1 patch release (2026-09-29)
-- 📋 Advanced features
-- 📋 Platform maturity
-- 📋 Documentation overhaul
-- 📋 Community programs
-
-### 2027
-- 📋 v3.0.0 release
-- 📋 Major architecture updates
-- 📋 Protocol expansion
-- 📋 Performance breakthroughs
-- 📋 Industry recognition
-
-## Dependencies
-
-### Current Dependencies
-- libuv (core)
-- llhttp (HTTP parser)
-- mbedtls (TLS)
-- xxHash (hashing)
-- mimalloc (memory, optional)
-- cJSON (JSON, optional)
-- Google Test (testing)
-
-### Dependency Strategy
-- Minimize external dependencies
-- Prefer bundled dependencies
-- Regular security updates
-- Compatibility testing
-- Version pinning for stability
-
-### Future Dependencies
-- Evaluating: io_uring, kqueue
-- Researching: WASM SDK, GPU compute
-- Monitoring: New libraries
-- Testing: Additional frameworks
-- Security: Regular audits
-
-## Community Goals
-
-### Contributors
-- **2026**: 20+ active contributors
-- **2027**: 50+ active contributors
-- **2028**: 100+ active contributors
-
-### Users
-- **2026**: 1,000+ GitHub stars
-- **2027**: 5,000+ GitHub stars
-- **2028**: 10,000+ GitHub stars
-
-### Adoption
-- **2026**: 50+ production deployments
-- **2027**: 200+ production deployments
-- **2028**: 500+ production deployments
-
-### Recognition
-- **2026**: Industry blog mentions
-- **2027**: Conference presentations
-- **2028**: Technical papers published
-
-## Risk Mitigation
-
-### Technical Risks
-- **Security**: Regular audits, bug bounties
-- **Performance**: Continuous benchmarking
-- **Compatibility**: Extensive testing
-- **Stability**: Gradual rollout
-- **Scalability**: Load testing
-
-### Project Risks
-- **Burnout**: Sustainable pace, clear priorities
-- **Scope Creep**: Strict roadmap, focused goals
-- **Quality**: Automated checks, code reviews
-- **Communication**: Regular updates, transparency
-- **Resources**: Funding, partnerships
-
-## Success Metrics
-
-### Technical Success
-- Performance benchmarks met
-- Security zero vulnerabilities
-- Compatibility matrix complete
-- Test coverage 80%+
-- Zero compilation warnings
-
-### Project Success
-- Active contributor growth
-- Community engagement
-- Industry adoption
-- Documentation quality
-- Issue response time
-
-### Business Success
-- Production deployments
-- Enterprise adoption
-- Consulting opportunities
-- Training programs
-- Commercial partnerships
-
-## Feedback Loop
-
-### Continuous Improvement
-- Regular community surveys
-- Issue analysis and prioritization
-- Feature request tracking
-- Performance monitoring
-- Security incident response
-
-### Adaptation Strategy
-- Quarterly roadmap reviews
-- Annual strategic planning
-- Technology trend analysis
-- Competitive landscape monitoring
-- User feedback integration
-
----
-
-*This roadmap is a living document and will be updated regularly based on community feedback, technical advances, and market needs.*
+Absolute values drift roughly 40% across runs on shared runners, so **only paired ratios are meaningful**. The gate fails when the median ratio drops below 90% *and* most individual pairs also fall below 90% — absolute RPS thresholds would gate on runner luck rather than on code.
