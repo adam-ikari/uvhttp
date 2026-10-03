@@ -2,41 +2,45 @@
 
 #if UVHTTP_FEATURE_STATIC_FILES
 
-#include <gtest/gtest.h>
-#include "uvhttp_static.h"
-#include "uvhttp_server.h"
-#include "uvhttp_router.h"
-#include "uvhttp_request.h"
-#include "uvhttp_response.h"
-#include "uvhttp_allocator.h"
-#include "uvhttp_error.h"
-#include <string.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#    include "uvhttp_allocator.h"
+#    include "uvhttp_error.h"
+#    include "uvhttp_request.h"
+#    include "uvhttp_response.h"
+#    include "uvhttp_router.h"
+#    include "uvhttp_server.h"
+#    include "uvhttp_static.h"
+
+#    include <fcntl.h>
+#    include <gtest/gtest.h>
+#    include <string.h>
+#    include <sys/stat.h>
+#    include <unistd.h>
 
 /* ========== 测试 MIME 类型检测 ========== */
 
 TEST(UvhttpStaticExtendedTest, GetMimeTypeNullPath) {
     char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
-    uvhttp_result_t result = uvhttp_static_get_mime_type(NULL, mime_type, sizeof(mime_type));
+    uvhttp_result_t result =
+        uvhttp_static_get_mime_type(NULL, mime_type, sizeof(mime_type));
     EXPECT_NE(result, UVHTTP_OK);
 }
 
 TEST(UvhttpStaticExtendedTest, GetMimeTypeNullBuffer) {
-    uvhttp_result_t result = uvhttp_static_get_mime_type("test.html", NULL, 100);
+    uvhttp_result_t result =
+        uvhttp_static_get_mime_type("test.html", NULL, 100);
     EXPECT_NE(result, UVHTTP_OK);
 }
 
 TEST(UvhttpStaticExtendedTest, GetMimeTypeZeroSize) {
     char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
-    uvhttp_result_t result = uvhttp_static_get_mime_type("test.html", mime_type, 0);
+    uvhttp_result_t result =
+        uvhttp_static_get_mime_type("test.html", mime_type, 0);
     EXPECT_NE(result, UVHTTP_OK);
 }
 
 TEST(UvhttpStaticExtendedTest, GetMimeTypeCommonExtensions) {
     char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
-    
+
     struct {
         const char* filename;
         const char* expected_mime;
@@ -57,7 +61,7 @@ TEST(UvhttpStaticExtendedTest, GetMimeTypeCommonExtensions) {
         {"test.zip", "application/zip"},
         {"test.unknown", "application/octet-stream"},
     };
-    
+
     for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++) {
         uvhttp_result_t result = uvhttp_static_get_mime_type(
             test_cases[i].filename, mime_type, sizeof(mime_type));
@@ -72,25 +76,29 @@ TEST(UvhttpStaticExtendedTest, GetMimeTypeCommonExtensions) {
 
 TEST(UvhttpStaticExtendedTest, GenerateEtagNullPath) {
     char etag[UVHTTP_MAX_HEADER_VALUE_SIZE];
-    uvhttp_result_t result = uvhttp_static_generate_etag(NULL, 1234567890, 100, etag, sizeof(etag));
+    uvhttp_result_t result =
+        uvhttp_static_generate_etag(NULL, 1234567890, 100, etag, sizeof(etag));
     EXPECT_NE(result, UVHTTP_OK);
 }
 
 TEST(UvhttpStaticExtendedTest, GenerateEtagNullBuffer) {
-    uvhttp_result_t result = uvhttp_static_generate_etag("test.txt", 1234567890, 100, NULL, 100);
+    uvhttp_result_t result =
+        uvhttp_static_generate_etag("test.txt", 1234567890, 100, NULL, 100);
     EXPECT_NE(result, UVHTTP_OK);
 }
 
 TEST(UvhttpStaticExtendedTest, GenerateEtagZeroSize) {
     char etag[UVHTTP_MAX_HEADER_VALUE_SIZE];
-    uvhttp_result_t result = uvhttp_static_generate_etag("test.txt", 1234567890, 100, etag, 0);
+    uvhttp_result_t result =
+        uvhttp_static_generate_etag("test.txt", 1234567890, 100, etag, 0);
     EXPECT_NE(result, UVHTTP_OK);
 }
 
 TEST(UvhttpStaticExtendedTest, GenerateEtagValidParameters) {
     char etag[UVHTTP_MAX_HEADER_VALUE_SIZE];
-    uvhttp_result_t result = uvhttp_static_generate_etag("test.txt", 1234567890, 1024, etag, sizeof(etag));
-    
+    uvhttp_result_t result = uvhttp_static_generate_etag(
+        "test.txt", 1234567890, 1024, etag, sizeof(etag));
+
     EXPECT_EQ(result, UVHTTP_OK);
     if (result == UVHTTP_OK) {
         EXPECT_GT(strlen(etag), 0);
@@ -106,7 +114,7 @@ TEST(UvhttpStaticExtendedTest, SendfileNullPath) {
     char response_buffer[sizeof(uvhttp_response_t)];
     uvhttp_response_t* resp = (uvhttp_response_t*)response_buffer;
     memset(resp, 0, sizeof(uvhttp_response_t));
-    
+
     uvhttp_result_t result = uvhttp_static_sendfile(NULL, resp);
     EXPECT_NE(result, UVHTTP_OK);
 }
@@ -120,8 +128,9 @@ TEST(UvhttpStaticExtendedTest, SendfileNonexistentFile) {
     char response_buffer[sizeof(uvhttp_response_t)];
     uvhttp_response_t* resp = (uvhttp_response_t*)response_buffer;
     memset(resp, 0, sizeof(uvhttp_response_t));
-    
-    uvhttp_result_t result = uvhttp_static_sendfile("/nonexistent/file.txt", resp);
+
+    uvhttp_result_t result =
+        uvhttp_static_sendfile("/nonexistent/file.txt", resp);
     EXPECT_NE(result, UVHTTP_OK);
 }
 
@@ -130,14 +139,14 @@ TEST(UvhttpStaticExtendedTest, SendfileSmallFile) {
     const char* tmp_file = "/tmp/uvhttp_test_small.txt";
     int fd = open(tmp_file, O_CREAT | O_WRONLY | O_TRUNC, 0644);
     ASSERT_GE(fd, 0);
-    
+
     const char* content = "small file content";
     write(fd, content, strlen(content));
     close(fd);
-    
+
     /* 跳过这个测试，因为需要完整的 libuv 事件循环 */
     /* 这里只测试函数存在性和基本参数验证 */
-    
+
     unlink(tmp_file);
     SUCCEED();
 }
@@ -147,7 +156,7 @@ TEST(UvhttpStaticExtendedTest, SendfileMediumFile) {
     const char* tmp_file = "/tmp/uvhttp_test_medium.txt";
     int fd = open(tmp_file, O_CREAT | O_WRONLY | O_TRUNC, 0644);
     ASSERT_GE(fd, 0);
-    
+
     /* 写入 100KB 数据 */
     char buffer[8192];
     memset(buffer, 'A', sizeof(buffer));
@@ -155,10 +164,10 @@ TEST(UvhttpStaticExtendedTest, SendfileMediumFile) {
         write(fd, buffer, sizeof(buffer));
     }
     close(fd);
-    
+
     /* 跳过这个测试，因为需要完整的 libuv 事件循环 */
     /* 这里只测试函数存在性和基本参数验证 */
-    
+
     unlink(tmp_file);
     SUCCEED();
 }
@@ -177,14 +186,14 @@ TEST(UvhttpStaticExtendedTest, PrewarmCacheNullPath) {
     config.cache_ttl = 3600;
     config.max_cache_entries = 100;
     strncpy(config.root_directory, ".", sizeof(config.root_directory) - 1);
-    
+
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
-    
+
     if (err == UVHTTP_OK) {
         uvhttp_result_t result = uvhttp_static_prewarm_cache(ctx, NULL);
         EXPECT_NE(result, UVHTTP_OK);
-        
+
         uvhttp_static_free(ctx);
     }
 }
@@ -196,14 +205,15 @@ TEST(UvhttpStaticExtendedTest, PrewarmCacheNonexistentPath) {
     config.cache_ttl = 3600;
     config.max_cache_entries = 100;
     strncpy(config.root_directory, ".", sizeof(config.root_directory) - 1);
-    
+
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
-    
+
     if (err == UVHTTP_OK) {
-        uvhttp_result_t result = uvhttp_static_prewarm_cache(ctx, "/nonexistent/path");
+        uvhttp_result_t result =
+            uvhttp_static_prewarm_cache(ctx, "/nonexistent/path");
         EXPECT_NE(result, UVHTTP_OK);
-        
+
         uvhttp_static_free(ctx);
     }
 }
@@ -212,46 +222,60 @@ TEST(UvhttpStaticExtendedTest, PrewarmCacheValidDirectory) {
     /* 创建临时目录 */
     const char* tmp_dir = "/tmp/uvhttp_test_prewarm";
     mkdir(tmp_dir, 0755);
-    
+
     /* 创建一些测试文件 */
     char file1[256], file2[256];
     snprintf(file1, sizeof(file1), "%s/test1.html", tmp_dir);
     snprintf(file2, sizeof(file2), "%s/test2.css", tmp_dir);
-    
+
     int fd1 = open(file1, O_CREAT | O_WRONLY | O_TRUNC, 0644);
     write(fd1, "test html content", 17);
     close(fd1);
-    
+
     int fd2 = open(file2, O_CREAT | O_WRONLY | O_TRUNC, 0644);
     write(fd2, "test css content", 16);
     close(fd2);
-    
+
     uvhttp_static_config_t config;
     memset(&config, 0, sizeof(config));
     config.max_cache_size = 1024 * 1024;
     config.cache_ttl = 3600;
     config.max_cache_entries = 100;
+    /* MUST set: 0 means "no file allowed" — prewarm_cache rejects any file
+     * with size > max_file_size (src/uvhttp_static.c:1295). The same trap is
+     * already documented in test_static_enhanced_coverage.cpp:308; this file
+     * had missed it, which is why the assertions below had to be commented
+     * out (prewarm returned INVALID_PARAM and never exercised the real path).
+     */
+    config.max_file_size = 1024 * 1024;
     strncpy(config.root_directory, tmp_dir, sizeof(config.root_directory) - 1);
-    
+
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
-    
-    if (err == UVHTTP_OK) {
-        uvhttp_result_t result = uvhttp_static_prewarm_cache(ctx, tmp_dir);
-        /* 预热可能失败，但不应该崩溃 */
-        /* EXPECT_EQ(result, UVHTTP_OK); */
-        
+    /* 创建失败时后续断言全部无法执行——原来的 if (err == UVHTTP_OK) 包裹
+     * 让整段静默跳过。改用 ASSERT 让失败显式可见。 */
+    ASSERT_EQ(err, UVHTTP_OK) << "static context 应创建成功";
+    {
+        /* prewarm_cache 接受的是**相对 root 的单个文件路径**，不是目录：
+         * 它拼接 root_directory + "/" + file_path 后 stat 并要求 S_ISREG
+         * （src/uvhttp_static.c:1286）。原测试传 tmp_dir（目录），路径被
+         * 二次拼接成无效路径 → NOT_FOUND，断言因此被注释掉。
+         * 改传真实文件名后，断言才能真正执行。 */
+        uvhttp_result_t result = uvhttp_static_prewarm_cache(ctx, "test1.html");
+        EXPECT_EQ(result, UVHTTP_OK)
+            << "预热存在的文件应成功（传入的是相对 root 的文件路径）";
+
         /* 检查缓存统计 */
         size_t total_memory;
         int entry_count, hit_count, miss_count, eviction_count;
         uvhttp_static_get_cache_stats(ctx, &total_memory, &entry_count,
-                                       &hit_count, &miss_count, &eviction_count);
-        /* 预热可能不成功，entry_count 可能为 0 */
-        /* EXPECT_GT(entry_count, 0); */
-        
+                                      &hit_count, &miss_count, &eviction_count);
+        EXPECT_GT(entry_count, 0)
+            << "预热成功后缓存应有条目（否则预热等于没做）";
+
         uvhttp_static_free(ctx);
     }
-    
+
     unlink(file1);
     unlink(file2);
     rmdir(tmp_dir);
@@ -270,9 +294,9 @@ TEST(UvhttpStaticExtendedTest, SetResponseHeadersNullPath) {
     char response_buffer[sizeof(uvhttp_response_t)];
     uvhttp_response_t* resp = (uvhttp_response_t*)response_buffer;
     memset(resp, 0, sizeof(uvhttp_response_t));
-    
-    uvhttp_result_t result = uvhttp_static_set_response_headers(
-        resp, NULL, 1024, 1234567890, NULL);
+
+    uvhttp_result_t result =
+        uvhttp_static_set_response_headers(resp, NULL, 1024, 1234567890, NULL);
     EXPECT_NE(result, UVHTTP_OK);
 }
 
@@ -290,18 +314,19 @@ TEST(UvhttpStaticExtendedTest, SetMaxFileSizeValidContext) {
     config.cache_ttl = 3600;
     config.max_cache_entries = 100;
     strncpy(config.root_directory, ".", sizeof(config.root_directory) - 1);
-    
+
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
-    
+
     if (err == UVHTTP_OK) {
-        uvhttp_error_t result = uvhttp_static_set_max_file_size(ctx, 10 * 1024 * 1024);
+        uvhttp_error_t result =
+            uvhttp_static_set_max_file_size(ctx, 10 * 1024 * 1024);
         EXPECT_EQ(result, UVHTTP_OK);
-        
+
         /* 测试零值 */
         result = uvhttp_static_set_max_file_size(ctx, 0);
         EXPECT_EQ(result, UVHTTP_OK);
-        
+
         uvhttp_static_free(ctx);
     }
 }
@@ -309,7 +334,8 @@ TEST(UvhttpStaticExtendedTest, SetMaxFileSizeValidContext) {
 /* ========== 测试缓存配置 ========== */
 
 TEST(UvhttpStaticExtendedTest, SetCacheConfigNullContext) {
-    uvhttp_error_t result = uvhttp_static_set_cache_config(NULL, 2048 * 1024, 7200, 200);
+    uvhttp_error_t result =
+        uvhttp_static_set_cache_config(NULL, 2048 * 1024, 7200, 200);
     EXPECT_NE(result, UVHTTP_OK);
 }
 
@@ -320,18 +346,19 @@ TEST(UvhttpStaticExtendedTest, SetCacheConfigValidContext) {
     config.cache_ttl = 3600;
     config.max_cache_entries = 100;
     strncpy(config.root_directory, ".", sizeof(config.root_directory) - 1);
-    
+
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
-    
+
     if (err == UVHTTP_OK) {
-        uvhttp_error_t result = uvhttp_static_set_cache_config(ctx, 2048 * 1024, 7200, 200);
+        uvhttp_error_t result =
+            uvhttp_static_set_cache_config(ctx, 2048 * 1024, 7200, 200);
         EXPECT_EQ(result, UVHTTP_OK);
-        
+
         /* 测试零值 */
         result = uvhttp_static_set_cache_config(ctx, 0, 0, 0);
         EXPECT_EQ(result, UVHTTP_OK);
-        
+
         uvhttp_static_free(ctx);
     }
 }
@@ -350,24 +377,24 @@ TEST(UvhttpStaticExtendedTest, ClearCacheValidContext) {
     config.cache_ttl = 3600;
     config.max_cache_entries = 100;
     strncpy(config.root_directory, ".", sizeof(config.root_directory) - 1);
-    
+
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
-    
+
     if (err == UVHTTP_OK) {
         /* 添加一些缓存项 */
         uvhttp_static_prewarm_cache(ctx, ".");
-        
+
         /* 清除缓存 */
         uvhttp_static_clear_cache(ctx);
-        
+
         /* 验证缓存已清除 */
         size_t total_memory;
         int entry_count, hit_count, miss_count, eviction_count;
         uvhttp_static_get_cache_stats(ctx, &total_memory, &entry_count,
-                                       &hit_count, &miss_count, &eviction_count);
+                                      &hit_count, &miss_count, &eviction_count);
         EXPECT_EQ(entry_count, 0);
-        
+
         uvhttp_static_free(ctx);
     }
 }

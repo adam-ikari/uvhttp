@@ -1,21 +1,22 @@
 /* uvhttp_server.c 错误处理覆盖率测试 - 测试 NULL 参数和错误情况 */
 
-#include <gtest/gtest.h>
-#include "uvhttp_server.h"
-#include "uvhttp_router.h"
-#include "uvhttp_error.h"
 #include "uvhttp_allocator.h"
+#include "uvhttp_error.h"
+#include "uvhttp_router.h"
+#include "uvhttp_server.h"
+
+#include <gtest/gtest.h>
 #include <string.h>
 
 /* 测试服务器创建 NULL 参数 */
 TEST(UvhttpServerErrorCoverageTest, ServerNewNullParams) {
     uvhttp_server_t* server = NULL;
-    
+
     /* 测试 NULL loop，NULL server 指针 */
     uvhttp_error_t result = uvhttp_server_new(NULL, NULL);
     EXPECT_NE(result, UVHTTP_OK);
     EXPECT_EQ(server, (uvhttp_server_t*)NULL);
-    
+
     /* 测试 NULL server 指针 */
     result = uvhttp_server_new(uv_default_loop(), NULL);
     EXPECT_NE(result, UVHTTP_OK);
@@ -32,7 +33,7 @@ TEST(UvhttpServerErrorCoverageTest, ServerListenNullParams) {
     /* 测试 NULL 服务器 */
     uvhttp_error_t result = uvhttp_server_listen(NULL, "127.0.0.1", 8080);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     /* 测试 NULL 主机 */
     uvhttp_server_t* server = NULL;
     result = uvhttp_server_new(uv_default_loop(), &server);
@@ -54,7 +55,7 @@ TEST(UvhttpServerErrorCoverageTest, SetHandlerNullParams) {
     /* 测试 NULL 服务器 */
     uvhttp_error_t result = uvhttp_server_set_handler(NULL, NULL);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     /* 测试 NULL 处理器 */
     uvhttp_server_t* server = NULL;
     result = uvhttp_server_new(uv_default_loop(), &server);
@@ -70,7 +71,7 @@ TEST(UvhttpServerErrorCoverageTest, SetRouterNullParams) {
     /* 测试 NULL 服务器 */
     uvhttp_error_t result = uvhttp_server_set_router(NULL, NULL);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     /* 测试 NULL 路由器 */
     uvhttp_server_t* server = NULL;
     result = uvhttp_server_new(uv_default_loop(), &server);
@@ -86,7 +87,7 @@ TEST(UvhttpServerErrorCoverageTest, SetContextNullParams) {
     /* 测试 NULL 服务器 */
     uvhttp_error_t result = uvhttp_server_set_context(NULL, NULL);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     /* 测试 NULL 上下文 */
     uvhttp_server_t* server = NULL;
     result = uvhttp_server_new(uv_default_loop(), &server);
@@ -103,25 +104,31 @@ TEST(UvhttpServerErrorCoverageTest, RateLimitNullParams) {
     /* 测试 NULL 服务器 */
     uvhttp_error_t result = uvhttp_server_enable_rate_limit(NULL, 100, 60);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     result = uvhttp_server_disable_rate_limit(NULL);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     result = uvhttp_server_check_rate_limit(NULL);
-    /* check_rate_limit 在限流未启用时可能返回 UVHTTP_OK，这里只验证不崩溃 */
-    /* EXPECT_NE(result, UVHTTP_OK); */
-    
+    /* 实测返回 UVHTTP_OK：这是有意设计（src/uvhttp_server.c:1218
+     * `if (!server || !server->rate_limit_enabled) return UVHTTP_OK;`）——
+     * 限流未启用时放行，NULL server 等价于未启用。原实现把断言注释掉
+     * 并只「验证不崩溃」，导致把该返回值改成错误也无人发现（已变异确认）。
+     * 此处钉死契约：限流开关类函数对 NULL 返回错误，查询类函数返回放行。 */
+    EXPECT_EQ(result, UVHTTP_OK)
+        << "限流未启用（含 NULL server）时应放行，而非返回参数错误";
+
     result = uvhttp_server_add_rate_limit_whitelist(NULL, "127.0.0.1");
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     int remaining;
     uint64_t reset_time;
-    result = uvhttp_server_get_rate_limit_status(NULL, "127.0.0.1", &remaining, &reset_time);
+    result = uvhttp_server_get_rate_limit_status(NULL, "127.0.0.1", &remaining,
+                                                 &reset_time);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     result = uvhttp_server_reset_rate_limit_client(NULL, "127.0.0.1");
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     result = uvhttp_server_clear_rate_limit_all(NULL);
     EXPECT_NE(result, UVHTTP_OK);
 }
@@ -134,17 +141,17 @@ TEST(UvhttpServerErrorCoverageTest, RateLimitInvalidParams) {
         /* 测试无效的 max_requests */
         result = uvhttp_server_enable_rate_limit(server, 0, 60);
         EXPECT_NE(result, UVHTTP_OK);
-        
+
         result = uvhttp_server_enable_rate_limit(server, -1, 60);
         EXPECT_NE(result, UVHTTP_OK);
-        
+
         /* 测试无效的 window_seconds */
         result = uvhttp_server_enable_rate_limit(server, 100, 0);
         EXPECT_NE(result, UVHTTP_OK);
-        
+
         result = uvhttp_server_enable_rate_limit(server, 100, -1);
         EXPECT_NE(result, UVHTTP_OK);
-        
+
         uvhttp_server_free(server);
     }
 }
@@ -154,25 +161,26 @@ TEST(UvhttpServerErrorCoverageTest, RateLimitInvalidParams) {
 /* 测试 WebSocket 功能 NULL 参数 */
 TEST(UvhttpServerErrorCoverageTest, WebSocketNullParams) {
     /* 测试 NULL 服务器 */
-    uvhttp_error_t result = uvhttp_server_register_ws_handler(NULL, "/ws", NULL);
+    uvhttp_error_t result =
+        uvhttp_server_register_ws_handler(NULL, "/ws", NULL);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     result = uvhttp_server_ws_send(NULL, "test", 4);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     result = uvhttp_server_ws_close(NULL, 1000, "Normal");
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     result = uvhttp_server_ws_broadcast(NULL, "/ws", "test", 4);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     result = uvhttp_server_ws_close_all(NULL, "/ws");
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     /* 测试获取连接数 */
     int count = uvhttp_server_ws_get_connection_count(NULL);
     EXPECT_EQ(count, 0);
-    
+
     count = uvhttp_server_ws_get_connection_count_by_path(NULL, "/ws");
     EXPECT_EQ(count, 0);
 }
@@ -180,9 +188,10 @@ TEST(UvhttpServerErrorCoverageTest, WebSocketNullParams) {
 /* 测试 WebSocket 连接管理 NULL 参数 */
 TEST(UvhttpServerErrorCoverageTest, WebSocketConnectionManagementNullParams) {
     /* 测试 NULL 服务器 */
-    uvhttp_error_t result = uvhttp_server_ws_enable_connection_management(NULL, 60, 30);
+    uvhttp_error_t result =
+        uvhttp_server_ws_enable_connection_management(NULL, 60, 30);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     result = uvhttp_server_ws_disable_connection_management(NULL);
     EXPECT_NE(result, UVHTTP_OK);
 }
@@ -194,7 +203,7 @@ TEST(UvhttpServerErrorCoverageTest, TLSNullParams) {
     /* 测试 NULL 服务器 */
     uvhttp_error_t result = uvhttp_server_enable_tls(NULL, NULL);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     result = uvhttp_server_disable_tls(NULL);
     EXPECT_NE(result, UVHTTP_OK);
 }
@@ -212,7 +221,7 @@ TEST(UvhttpServerErrorCoverageTest, ServerStructureFields) {
         EXPECT_EQ(server->owns_loop, 0);
         EXPECT_EQ(server->active_connections, 0);
         EXPECT_NE(server->loop, nullptr);
-        
+
         uvhttp_server_free(server);
     }
 }
@@ -223,8 +232,8 @@ TEST(UvhttpServerErrorCoverageTest, MultipleFree) {
     uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
     if (result == UVHTTP_OK && server != NULL) {
         uvhttp_server_free(server);
-        server = NULL;                      /* 标准做法：释放后置空 */
-        uvhttp_server_free(server);         /* 第二次释放(NULL)，安全无操作 */
+        server = NULL;              /* 标准做法：释放后置空 */
+        uvhttp_server_free(server); /* 第二次释放(NULL)，安全无操作 */
     }
 }
 
@@ -239,17 +248,17 @@ TEST(UvhttpServerErrorCoverageTest, ServerCreateAndListen) {
         if (result == UVHTTP_OK && router != NULL) {
             uvhttp_router_add_route(router, "/", NULL);
             uvhttp_server_set_router(server, router);
-            
+
             /* 尝试监听（可能失败，这是预期的） */
             result = uvhttp_server_listen(server, "127.0.0.1", 18080);
             if (result != UVHTTP_OK) {
                 /* 监听失败是预期的，因为端口可能被占用 */
             }
-            
+
             /* 停止服务器 */
             uvhttp_server_stop(server);
         }
-        
+
         /* 释放服务器 - router 会被自动释放 */
         uvhttp_server_free(server);
     }
