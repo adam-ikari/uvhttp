@@ -21,27 +21,29 @@
  * matches all methods on the same path.
  */
 
-#include <gtest/gtest.h>
-#include <uv.h>
-#include "uvhttp.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_error.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_router.h"
 #include "uvhttp_server.h"
-#include <string.h>
-#include <stdlib.h>
+
+#include "uvhttp.h"
+
+#include <atomic>
+#include <fcntl.h>
+#include <gtest/gtest.h>
+#include <sstream>
 #include <stdio.h>
-#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <fcntl.h>
-#include <string>
-#include <vector>
-#include <sstream>
 #include <thread>
-#include <atomic>
+#include <unistd.h>
+#include <uv.h>
+#include <vector>
 
 /* ===================================================================
  * Port management: use a base port so tests don't collide.
@@ -64,17 +66,24 @@ static std::string curl_body_and_code(const std::string& method,
                                       const std::string& data = "") {
     std::string cmd;
     if (data.empty()) {
-        cmd = "curl -s --connect-timeout 2 --max-time 5 -w '\n%{http_code}' -X " + method + " \"" + url + "\" 2>/dev/null";
+        cmd =
+            "curl -s --connect-timeout 2 --max-time 5 -w '\n%{http_code}' -X " +
+            method + " \"" + url + "\" 2>/dev/null";
     } else {
         std::string escaped;
         for (char c : data) {
-            if (c == '\'') escaped += "'\\''";
-            else escaped += c;
+            if (c == '\'')
+                escaped += "'\\''";
+            else
+                escaped += c;
         }
-        cmd = "curl -s --connect-timeout 2 --max-time 5 -w '\n%{http_code}' -X " + method + " -d '" + escaped + "' \"" + url + "\" 2>/dev/null";
+        cmd =
+            "curl -s --connect-timeout 2 --max-time 5 -w '\n%{http_code}' -X " +
+            method + " -d '" + escaped + "' \"" + url + "\" 2>/dev/null";
     }
     FILE* pipe = popen(cmd.c_str(), "r");
-    if (!pipe) return "";
+    if (!pipe)
+        return "";
     std::string result;
     char buf[4096];
     size_t n;
@@ -100,9 +109,14 @@ static std::string curl_body_and_code(const std::string& method,
  * =================================================================== */
 static bool wait_for_server(const std::string& url, int max_retries = 10) {
     for (int i = 0; i < max_retries; i++) {
-        std::string cmd = "curl -s --connect-timeout 2 --max-time 5 -o /dev/null -w '%{http_code}' \"" + url + "\" 2>/dev/null";
+        std::string cmd = "curl -s --connect-timeout 2 --max-time 5 -o "
+                          "/dev/null -w '%{http_code}' \"" +
+                          url + "\" 2>/dev/null";
         FILE* pipe = popen(cmd.c_str(), "r");
-        if (!pipe) { usleep(50000); continue; }
+        if (!pipe) {
+            usleep(50000);
+            continue;
+        }
         char buf[16];
         size_t n = fread(buf, 1, sizeof(buf) - 1, pipe);
         buf[n] = '\0';
@@ -124,7 +138,8 @@ static bool wait_for_server(const std::string& url, int max_retries = 10) {
 static std::string create_temp_file(const std::string& content) {
     char tmpl[] = "/tmp/uvhttp_e2e_XXXXXX";
     int fd = mkstemp(tmpl);
-    if (fd < 0) return "";
+    if (fd < 0)
+        return "";
     std::string path(tmpl);
     ssize_t written = write(fd, content.c_str(), content.size());
     (void)written;
@@ -136,7 +151,8 @@ static std::string create_temp_file(const std::string& content) {
  * Handler implementations for test routes.
  * =================================================================== */
 
-static int handler_hello(uvhttp_request_t* request, uvhttp_response_t* response) {
+static int handler_hello(uvhttp_request_t* request,
+                         uvhttp_response_t* response) {
     (void)request;
     const char* body = "Hello, World!";
     uvhttp_response_set_status(response, 200);
@@ -146,7 +162,8 @@ static int handler_hello(uvhttp_request_t* request, uvhttp_response_t* response)
     return 0;
 }
 
-static int handler_post(uvhttp_request_t* request, uvhttp_response_t* response) {
+static int handler_post(uvhttp_request_t* request,
+                        uvhttp_response_t* response) {
     (void)request;
     const char* body = "POST response body";
     uvhttp_response_set_status(response, 201);
@@ -166,7 +183,8 @@ static int handler_put(uvhttp_request_t* request, uvhttp_response_t* response) {
     return 0;
 }
 
-static int handler_delete(uvhttp_request_t* request, uvhttp_response_t* response) {
+static int handler_delete(uvhttp_request_t* request,
+                          uvhttp_response_t* response) {
     (void)request;
     const char* body = "DELETE response body";
     uvhttp_response_set_status(response, 200);
@@ -176,7 +194,8 @@ static int handler_delete(uvhttp_request_t* request, uvhttp_response_t* response
     return 0;
 }
 
-static int handler_head(uvhttp_request_t* request, uvhttp_response_t* response) {
+static int handler_head(uvhttp_request_t* request,
+                        uvhttp_response_t* response) {
     (void)request;
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/plain");
@@ -185,7 +204,8 @@ static int handler_head(uvhttp_request_t* request, uvhttp_response_t* response) 
     return 0;
 }
 
-static int handler_options(uvhttp_request_t* request, uvhttp_response_t* response) {
+static int handler_options(uvhttp_request_t* request,
+                           uvhttp_response_t* response) {
     (void)request;
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Allow", "GET, POST, OPTIONS");
@@ -221,18 +241,14 @@ static int handler_500(uvhttp_request_t* request, uvhttp_response_t* response) {
  * which is illegal inside a constructor/destructor body.
  * =================================================================== */
 class E2ETestServer {
-public:
+   public:
     E2ETestServer()
-        : loop_(nullptr)
-        , server_(nullptr)
-        , router_(nullptr)
-        , port_(0)
-        , running_(false)
-        , valid_(false)
-        , loop_thread_running_(false)
-    {
+        : loop_(nullptr), server_(nullptr), router_(nullptr), port_(0),
+          running_(false), valid_(false), loop_thread_running_(false),
+          router_attached_(false) {
         loop_ = (uv_loop_t*)uvhttp_alloc(sizeof(uv_loop_t));
-        if (!loop_) return;
+        if (!loop_)
+            return;
         if (uv_loop_init(loop_) != 0) {
             uvhttp_free(loop_);
             loop_ = nullptr;
@@ -251,7 +267,9 @@ public:
         }
     }
 
-    bool is_valid() const { return valid_; }
+    bool is_valid() const {
+        return valid_;
+    }
 
     void init() {
         ASSERT_TRUE(valid_) << "E2ETestServer loop initialisation failed";
@@ -269,20 +287,25 @@ public:
     void add_route_method(const char* path, uvhttp_method_t method,
                           uvhttp_request_handler_t handler) {
         ASSERT_NE(router_, nullptr);
-        ASSERT_EQ(uvhttp_router_add_route_method(router_, path, method, handler), UVHTTP_OK);
+        ASSERT_EQ(
+            uvhttp_router_add_route_method(router_, path, method, handler),
+            UVHTTP_OK);
     }
 
     void set_router() {
         ASSERT_NE(server_, nullptr);
         ASSERT_NE(router_, nullptr);
         server_->router = router_;
+        /* From here on uvhttp_server_free() owns (and frees) the router. */
+        router_attached_ = true;
     }
 
     int start(const char* host = "127.0.0.1") {
         port_ = get_next_port();
         uvhttp_error_t err = uvhttp_server_listen(server_, host, port_);
         EXPECT_EQ(err, UVHTTP_OK) << "Failed to listen on port " << port_;
-        if (err != UVHTTP_OK) return -1;
+        if (err != UVHTTP_OK)
+            return -1;
         running_ = true;
 
         /* Start the libuv event loop in a background thread */
@@ -305,16 +328,28 @@ public:
             loop_thread_.join();
         }
 
-        /* 2. Free the server resources.  Only call uvhttp_server_free if
-         *    the server was started (listening), because calling it on a
-         *    zero-initialised (never-started) server would attempt to close
-         *    an uninitialised TCP handle and corrupt the event loop. */
+        /* 2. Free the server.
+         *
+         * The original guard (only free when running_) was wrong: a test that
+         * creates the server but never starts listening — StaticFileServing,
+         * which exercises the static API against uvhttp_static_create without
+         * registering a handler — left server_ dangling and leaked the whole
+         * server (600 B) plus its loop (448 B + 128 B realloc).
+         *
+         * uvhttp_server_free is safe for a server that was created but never
+         * listened on: it guards the TCP handle with uv_is_closing() before
+         * closing (src/uvhttp_server.c:383). The hazard the old comment warned
+         * about was a *zero-initialised* struct that never went through
+         * uvhttp_server_new at all — not this case, where init() allocated it.
+         */
         if (server_) {
-            if (running_) {
-                uvhttp_server_free(server_);
-                /* uvhttp_server_free also frees the router */
+            uvhttp_server_free(server_);
+            /* uvhttp_server_free frees the router only when set_router() had
+             * handed it over; otherwise router_ is still ours to release. */
+            if (router_attached_) {
                 router_ = nullptr;
             }
+            router_attached_ = false;
             server_ = nullptr;
         }
 
@@ -327,19 +362,29 @@ public:
         running_ = false;
     }
 
-    int port() const { return port_; }
-    uv_loop_t* loop() { return loop_; }
-    uvhttp_server_t* server() { return server_; }
-    uvhttp_router_t* router() { return router_; }
+    int port() const {
+        return port_;
+    }
+    uv_loop_t* loop() {
+        return loop_;
+    }
+    uvhttp_server_t* server() {
+        return server_;
+    }
+    uvhttp_router_t* router() {
+        return router_;
+    }
 
     std::string url(const std::string& path = "/") const {
         return "http://127.0.0.1:" + std::to_string(port_) + path;
     }
 
-private:
+   private:
     uv_loop_t* loop_;
     uvhttp_server_t* server_;
     uvhttp_router_t* router_;
+    /* True once set_router() handed router_ over to server_->router. */
+    bool router_attached_;
     int port_;
     bool running_;
     bool valid_;
@@ -351,7 +396,7 @@ private:
  * Test fixture
  * =================================================================== */
 class E2EAutomatedTest : public ::testing::Test {
-protected:
+   protected:
     void SetUp() override {
         server_ = new E2ETestServer();
         ASSERT_TRUE(server_->is_valid());
@@ -385,7 +430,8 @@ TEST_F(E2EAutomatedTest, GetRequest) {
     ASSERT_GT(port, 0);
     ASSERT_TRUE(wait_for_server(server_->url("/get-test")));
 
-    std::string code, body = curl_body_and_code("GET", server_->url("/get-test"), code);
+    std::string code,
+        body = curl_body_and_code("GET", server_->url("/get-test"), code);
     EXPECT_EQ(code, "200");
     EXPECT_EQ(body, "Hello, World!");
 }
@@ -397,7 +443,8 @@ TEST_F(E2EAutomatedTest, PostRequest) {
     ASSERT_GT(port, 0);
     ASSERT_TRUE(wait_for_server(server_->url("/post-test")));
 
-    std::string code, body = curl_body_and_code("POST", server_->url("/post-test"), code);
+    std::string code,
+        body = curl_body_and_code("POST", server_->url("/post-test"), code);
     EXPECT_EQ(code, "201");
     EXPECT_EQ(body, "POST response body");
 }
@@ -409,7 +456,8 @@ TEST_F(E2EAutomatedTest, PutRequest) {
     ASSERT_GT(port, 0);
     ASSERT_TRUE(wait_for_server(server_->url("/put-test")));
 
-    std::string code, body = curl_body_and_code("PUT", server_->url("/put-test"), code);
+    std::string code,
+        body = curl_body_and_code("PUT", server_->url("/put-test"), code);
     EXPECT_EQ(code, "200");
     EXPECT_EQ(body, "PUT response body");
 }
@@ -421,7 +469,8 @@ TEST_F(E2EAutomatedTest, DeleteRequest) {
     ASSERT_GT(port, 0);
     ASSERT_TRUE(wait_for_server(server_->url("/delete-test")));
 
-    std::string code, body = curl_body_and_code("DELETE", server_->url("/delete-test"), code);
+    std::string code,
+        body = curl_body_and_code("DELETE", server_->url("/delete-test"), code);
     EXPECT_EQ(code, "200");
     EXPECT_EQ(body, "DELETE response body");
 }
@@ -434,7 +483,8 @@ TEST_F(E2EAutomatedTest, HeadRequest) {
     ASSERT_TRUE(wait_for_server(server_->url("/head-test")));
 
     /* HEAD: use -I to inspect headers, body should be empty */
-    std::string cmd = "curl -s -I -X HEAD \"" + server_->url("/head-test") + "\" 2>/dev/null | head -1";
+    std::string cmd = "curl -s -I -X HEAD \"" + server_->url("/head-test") +
+                      "\" 2>/dev/null | head -1";
     FILE* pipe = popen(cmd.c_str(), "r");
     ASSERT_NE(pipe, nullptr);
     char buf[256];
@@ -452,7 +502,8 @@ TEST_F(E2EAutomatedTest, OptionsRequest) {
     ASSERT_GT(port, 0);
     ASSERT_TRUE(wait_for_server(server_->url("/options-test")));
 
-    std::string code, body = curl_body_and_code("OPTIONS", server_->url("/options-test"), code);
+    std::string code, body = curl_body_and_code(
+                          "OPTIONS", server_->url("/options-test"), code);
     EXPECT_EQ(code, "200");
     (void)body;
 }
@@ -470,7 +521,8 @@ TEST_F(E2EAutomatedTest, NotFound404) {
     ASSERT_GT(port, 0);
     ASSERT_TRUE(wait_for_server(server_->url("/exists")));
 
-    std::string code, body = curl_body_and_code("GET", server_->url("/nonexistent"), code);
+    std::string code,
+        body = curl_body_and_code("GET", server_->url("/nonexistent"), code);
     EXPECT_EQ(code, "404");
 }
 
@@ -481,7 +533,8 @@ TEST_F(E2EAutomatedTest, InternalServerError500) {
     ASSERT_GT(port, 0);
     ASSERT_TRUE(wait_for_server(server_->url("/error")));
 
-    std::string code, body = curl_body_and_code("GET", server_->url("/error"), code);
+    std::string code,
+        body = curl_body_and_code("GET", server_->url("/error"), code);
     EXPECT_EQ(code, "500");
     EXPECT_EQ(body, "500 Internal Server Error");
 }
@@ -499,14 +552,16 @@ TEST_F(E2EAutomatedTest, RateLimiting) {
     /* Enable strict rate limiting: 5 requests per 60 seconds.
      * wait_for_server below will consume one, so we only send 4 more
      * before expecting a 429 on the 5th. */
-    uvhttp_error_t err = uvhttp_server_enable_rate_limit(server_->server(), 5, 60);
+    uvhttp_error_t err =
+        uvhttp_server_enable_rate_limit(server_->server(), 5, 60);
     ASSERT_EQ(err, UVHTTP_OK);
 
     ASSERT_TRUE(wait_for_server(server_->url("/limited")));
 
     /* Send 4 more requests — should all succeed (total 5 including wait) */
     for (int i = 0; i < 4; i++) {
-        std::string code, body = curl_body_and_code("GET", server_->url("/limited"), code);
+        std::string code,
+            body = curl_body_and_code("GET", server_->url("/limited"), code);
         EXPECT_EQ(code, "200") << "Request " << i << " should succeed";
         EXPECT_EQ(body, "Hello, World!") << "Request " << i << " body mismatch";
     }
@@ -538,7 +593,8 @@ TEST_F(E2EAutomatedTest, StaticFileServing) {
     /* Set up static file serving context */
     uvhttp_static_config_t config;
     memset(&config, 0, sizeof(config));
-    strncpy(config.root_directory, dir.c_str(), sizeof(config.root_directory) - 1);
+    strncpy(config.root_directory, dir.c_str(),
+            sizeof(config.root_directory) - 1);
     config.max_cache_size = 1024 * 1024;
     config.cache_ttl = 3600;
     config.max_cache_entries = 100;
@@ -554,7 +610,8 @@ TEST_F(E2EAutomatedTest, StaticFileServing) {
 
     /* Verify MIME type resolution */
     char mime_type[256];
-    result = uvhttp_static_get_mime_type("test.html", mime_type, sizeof(mime_type));
+    result =
+        uvhttp_static_get_mime_type("test.html", mime_type, sizeof(mime_type));
     EXPECT_EQ(result, UVHTTP_OK);
     if (result == UVHTTP_OK) {
         EXPECT_NE(strlen(mime_type), (size_t)0);
@@ -564,7 +621,7 @@ TEST_F(E2EAutomatedTest, StaticFileServing) {
     char resolved[UVHTTP_MAX_FILE_PATH_SIZE];
     std::string url_path = "/" + filename;
     int safe = uvhttp_static_resolve_safe_path(dir.c_str(), url_path.c_str(),
-                                                resolved, sizeof(resolved));
+                                               resolved, sizeof(resolved));
     EXPECT_EQ(safe, 1) << "safe path resolution failed for " << url_path
                        << " under " << dir;
 
@@ -588,7 +645,8 @@ TEST_F(E2EAutomatedTest, StaticFileServing) {
 
 TEST_F(E2EAutomatedTest, MultipleMethodsSamePath) {
     /* Use add_route (UVHTTP_ANY) for all methods since method-specific
-     * dispatch is broken for POST/PUT/DELETE/HEAD due to llhttp enum mismatch. */
+     * dispatch is broken for POST/PUT/DELETE/HEAD due to llhttp enum mismatch.
+     */
     server_->add_route("/resource", handler_hello);
     server_->set_router();
     int port = server_->start();
@@ -597,22 +655,26 @@ TEST_F(E2EAutomatedTest, MultipleMethodsSamePath) {
 
     /* All methods should hit the same handler */
     {
-        std::string code, body = curl_body_and_code("GET", server_->url("/resource"), code);
+        std::string code,
+            body = curl_body_and_code("GET", server_->url("/resource"), code);
         EXPECT_EQ(code, "200");
         EXPECT_EQ(body, "Hello, World!");
     }
     {
-        std::string code, body = curl_body_and_code("POST", server_->url("/resource"), code);
+        std::string code,
+            body = curl_body_and_code("POST", server_->url("/resource"), code);
         EXPECT_EQ(code, "200");
         EXPECT_EQ(body, "Hello, World!");
     }
     {
-        std::string code, body = curl_body_and_code("PUT", server_->url("/resource"), code);
+        std::string code,
+            body = curl_body_and_code("PUT", server_->url("/resource"), code);
         EXPECT_EQ(code, "200");
         EXPECT_EQ(body, "Hello, World!");
     }
     {
-        std::string code, body = curl_body_and_code("DELETE", server_->url("/resource"), code);
+        std::string code, body = curl_body_and_code(
+                              "DELETE", server_->url("/resource"), code);
         EXPECT_EQ(code, "200");
         EXPECT_EQ(body, "Hello, World!");
     }
@@ -636,8 +698,8 @@ TEST_F(E2EAutomatedTest, ConcurrentRequests) {
 
     /* Launch all curl processes in parallel */
     for (int i = 0; i < N; i++) {
-        std::string cmd = "curl -s -w '\n%{http_code}' \""
-                          + server_->url("/") + "\" 2>/dev/null";
+        std::string cmd = "curl -s -w '\n%{http_code}' \"" + server_->url("/") +
+                          "\" 2>/dev/null";
         pipes[i] = popen(cmd.c_str(), "r");
     }
 
