@@ -184,7 +184,18 @@ jobs:
       - name: Configure with AddressSanitizer
         run: |
           # ENABLE_ASAN keeps debug symbols (no strip) so findings are debuggable.
-          cmake -B build-asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON
+          #
+          # BUILD_WITH_STATIC_FILES=ON is required for coverage, not optional
+          # tuning. It defaults to OFF, which left src/uvhttp_static.c and
+          # src/uvhttp_lru_cache.c out of the build entirely — so the ASan gate
+          # never saw uvhttp_static_resolve_safe_path (the path-traversal
+          # guard), and the 8 static/LRU test binaries ran 0 test cases while
+          # still reporting PASS. Turning it on immediately surfaced three real
+          # defects the gate had been blind to: a file-buffer leak in
+          # uvhttp_static_prewarm_cache, a dangling server+loop in the e2e
+          # fixture, and type-punning in a static test (PR #449).
+          cmake -B build-asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON \
+            -DBUILD_WITH_STATIC_FILES=ON
           cmake --build build-asan -j$(nproc)
 
       - name: Run tests under ASan (memory-safety gate)

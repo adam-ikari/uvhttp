@@ -467,7 +467,8 @@ jobs:
           # Use the project's ENABLE_ASAN option (not raw -fsanitize flags) so
           # CMake keeps debug symbols and does not strip the binaries, making
           # ASan stack traces resolvable.
-          cmake -B build-asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON
+          cmake -B build-asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON \
+            -DBUILD_WITH_STATIC_FILES=ON
           cmake --build build-asan -j$(nproc)
 
       - name: Run tests with AddressSanitizer
@@ -508,7 +509,10 @@ jobs:
           # UBSan catches undefined behavior (signed overflow, shifts, null
           # deref, alignment, etc.) that ASan does not. ASan and UBSan cannot
           # be combined per CMakeLists.txt, so this is a separate job.
-          cmake -B build-ubsan -DCMAKE_BUILD_TYPE=Debug -DENABLE_UBSAN=ON
+          # Same reason as the ASan job above — STATIC_FILES=ON so
+          # uvhttp_static.c is actually compiled under UBSan. See PR #449.
+          cmake -B build-ubsan -DCMAKE_BUILD_TYPE=Debug -DENABLE_UBSAN=ON \
+            -DBUILD_WITH_STATIC_FILES=ON
           cmake --build build-ubsan -j$(nproc)
 
       - name: Run tests with UndefinedBehaviorSanitizer

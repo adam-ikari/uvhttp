@@ -1315,12 +1315,19 @@ uvhttp_result_t uvhttp_static_prewarm_cache(uvhttp_static_context_t* ctx,
                                 sizeof(etag));
 
     /* add to cache */
+    /* uvhttp_lru_cache_put copies the content internally (it allocates
+     * new_content and memcpy's, src/uvhttp_lru_cache.c:470-471) — it does NOT
+     * take ownership of the caller's pointer. Releasing file_content only on
+     * the failure path leaked the whole file buffer on every successful
+     * prewarm. AddressSanitizer could not see this because STATIC_FILES
+     * defaults to OFF, leaving uvhttp_static.c out of the ASan build entirely.
+     */
     uvhttp_error_t cache_result =
         uvhttp_lru_cache_put(ctx->cache, full_path, file_content, file_size,
                              mime_type, last_modified, etag);
+    uvhttp_free(file_content);
     if (cache_result != UVHTTP_OK) {
         UVHTTP_LOG_WARN("Failed to cache file for prewarming: %s", file_path);
-        uvhttp_free(file_content);
         return cache_result;
     }
 
