@@ -107,6 +107,12 @@ jobs:
             --output-file=cppcheck-results.xml \
             src/
 
+      # 阻止「恒绿零验证」的测试进入仓库：断言被注释掉、断言被无
+      # GTEST_SKIP 的 if 罩住、新增零断言测试（详见脚本 docstring）。
+      # 基线来自 2026-10-03 普查，逐项治理后应下调。
+      - name: Check test validity (no always-green tests)
+        run: python3 scripts/ci/check_test_validity.py --strict
+
       - name: Upload code quality results
         if: always()
         uses: actions/upload-artifact@v7.0.1
