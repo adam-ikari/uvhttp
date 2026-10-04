@@ -1,5 +1,6 @@
 import DefaultTheme from 'vitepress/theme-without-fonts'
 import { h } from 'vue'
+import VersionSelect from '../components/VersionSelect.vue'
 import syncStatus from '../sync-status.json'
 import './style.css'
 
@@ -7,6 +8,12 @@ export default {
   extends: DefaultTheme,
   Layout() {
     return h(DefaultTheme.Layout, null, {
+      /* Version badge/selector beside the nav title. VersionSelect.vue was
+       * dead code until it was mounted here — nothing referenced it, so the
+       * badge silently never rendered. It reads versions.json (served from
+       * public/, resolved via BASE_URL) to show the doc version; with a single
+       * deployment it renders as a static "vX.Y.Z" badge. */
+      'nav-bar-title-after': () => h(VersionSelect),
       'content-top': () => null
     })
   },
