@@ -1,0 +1,19 @@
+{
+  "current": "2.9.2",
+  "baseUrl": "/uvhttp",
+  "versions": [
+    {
+      "version": "2.9.2",
+      "status": "current",
+      "releaseDate": "2026-10-02",
+      "url": "/",
+      "githubUrl": "https://github.com/adam-ikari/uvhttp/releases/tag/v2.9.2"
+    }
+  ],
+  "statusLabels": {
+    "current": "当前版本",
+    "security": "安全更新",
+    "limited": "有限支持",
+    "deprecated": "不再支持"
+  }
+}

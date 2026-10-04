@@ -23,11 +23,11 @@ interface VersionConfig {
 
 // 默认版本配置
 const DEFAULT_VERSION: Version = {
-  version: '2.0.0',
+  version: '2.9.2',
   status: 'current',
-  releaseDate: '2026-01-21',
+  releaseDate: '2026-10-02',
   url: '/',
-  githubUrl: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.0.0'
+  githubUrl: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.9.2'
 }
 
 const versionsConfig = ref<VersionConfig | null>(null)
@@ -36,12 +36,24 @@ const hasHistoryVersions = ref(false)
 
 onMounted(async () => {
   try {
-    const response = await fetch('/.vitepress/versions.json')
+    /* Resolve through BASE_URL rather than a hard-coded path. The file lives
+     * in docs/public/ (VitePress copies publicDir into dist), so it is served
+     * at the site root — which is '/uvhttp/' on GitHub Pages, not '/'. The old
+     * fetch('/.vitepress/versions.json') asked for two wrong things at once:
+     * a directory that is never copied into dist, and a root that ignores the
+     * configured base. It therefore always 404'd and the badge silently fell
+     * back to DEFAULT_VERSION — which is why the site kept advertising 2.0.0
+     * long after the project had moved past it. */
+    const url = `${import.meta.env.BASE_URL}versions.json`
+    const response = await fetch(url)
     if (response.ok) {
       const config = await response.json()
       versionsConfig.value = config
       currentVersion.value = config.versions.find((v: Version) => v.status === 'current') || config.versions[0]
       hasHistoryVersions.value = config.versions.length > 1
+    } else {
+      console.warn(`versions.json not found at ${url} (HTTP ${response.status})`)
+      currentVersion.value = DEFAULT_VERSION
     }
   } catch (error) {
     console.warn('Failed to load versions config:', error)
