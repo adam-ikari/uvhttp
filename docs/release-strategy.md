@@ -30,6 +30,7 @@
    - 更新 `VERSION` 文件
    - 更新 `docs/guide/CHANGELOG.md`
    - 通过 PR 合并到 main（PR-only，禁止直推）
+   - 运行 `scripts/ci/release_checklist.sh --pre`：本地可验证项全过才推进
 
 3. **创建预发布 Release**
    - 创建 Git tag: `git tag v2.x.y`
@@ -47,6 +48,7 @@
 5. **转正式**
    - `gh release edit v2.x.y --latest`（移除 prerelease 标记）
    - main 经 PR 合并触发文档自动部署
+   - 运行 `scripts/ci/release_checklist.sh --post`：tag / release latest / 线上 versions.json 全过才算发布完成
    - 确认网站更新
 
 ## 发布检查清单
