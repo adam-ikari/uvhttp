@@ -410,13 +410,10 @@ TEST(UvhttpRequestTest, GetPathNullUrl) {
     request.url[0] = '\0';
 
     const char* path = uvhttp_request_get_path(&request);
-    /* 注意：空 URL 可能返回空字符串而不是 "/" */
-    if (path && path[0] == '\0') {
-        /* 空字符串是预期行为 */
-        printf("Warning: Empty URL returns empty string instead of '/'\n");
-    } else {
-        EXPECT_STREQ(path, "/");
-    }
+    /* 实测：空 URL 返回空字符串（非 "/"）。原 if/else 两分支都为绿——
+     * 返回空串走 printf 警告、返回 "/" 走断言，等价于从不验证。 */
+    ASSERT_NE(path, nullptr) << "空 URL 也应返回路径（空串）";
+    EXPECT_STREQ(path, "");
 }
 
 /* 测试获取路径简单路径 */
@@ -543,13 +540,9 @@ TEST(UvhttpRequestTest, GetQueryParam) {
     strcpy(request.url, "/test/path?key=value");
 
     const char* param = uvhttp_request_get_query_param(&request, "key");
-    /* 注意：由于查询字符串验证可能失败，这个测试可能失败 */
-    if (param) {
-        EXPECT_STREQ(param, "value");
-    } else {
-        /* 查询字符串验证失败，这是预期行为 */
-        printf("Warning: Query param extraction failed for 'key=value'\n");
-    }
+    /* 实测：正常 query 串提取成功（同 #441）。去掉恒绿的 if/else。 */
+    ASSERT_NE(param, nullptr) << "key=value 应能提取";
+    EXPECT_STREQ(param, "value");
 }
 
 /* 测试获取查询参数多个参数 */
@@ -559,19 +552,13 @@ TEST(UvhttpRequestTest, GetQueryParamMultiple) {
     strcpy(request.url, "/test/path?key1=value1&key2=value2");
 
     const char* param = uvhttp_request_get_query_param(&request, "key1");
-    /* 注意：由于查询字符串验证可能失败，这个测试可能失败 */
-    if (param) {
-        EXPECT_STREQ(param, "value1");
-    } else {
-        printf("Warning: Query param extraction failed for 'key1=value1'\n");
-    }
+    /* 实测：多参数 query 串逐 key 提取成功。去掉恒绿的 if/else。 */
+    ASSERT_NE(param, nullptr);
+    EXPECT_STREQ(param, "value1");
 
     param = uvhttp_request_get_query_param(&request, "key2");
-    if (param) {
-        EXPECT_STREQ(param, "value2");
-    } else {
-        printf("Warning: Query param extraction failed for 'key2=value2'\n");
-    }
+    ASSERT_NE(param, nullptr);
+    EXPECT_STREQ(param, "value2");
 }
 
 /* 测试获取查询参数不存在的参数 */
@@ -591,12 +578,10 @@ TEST(UvhttpRequestTest, GetQueryParamEmptyValue) {
     strcpy(request.url, "/test/path?key=");
 
     const char* param = uvhttp_request_get_query_param(&request, "key");
-    /* 注意：由于查询字符串验证可能失败，这个测试可能失败 */
-    if (param) {
-        EXPECT_STREQ(param, "");
-    } else {
-        printf("Warning: Query param extraction failed for 'key='\n");
-    }
+    /* 实测：空值 key= 返回空串（同 #441 EmptyValueReturnsEmptyString）。
+     * 去掉恒绿的 if/else。 */
+    ASSERT_NE(param, nullptr);
+    EXPECT_STREQ(param, "");
 }
 
 /* 测试获取客户端 IP NULL 请求 */
