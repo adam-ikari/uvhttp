@@ -139,9 +139,14 @@ TEST_F(ConnectionClose, AlreadyClosingHandleIsCountedSeparately) {
 /* ========== 分支 3：close 前置校验 ========== */
 
 TEST_F(ConnectionClose, NullConnectionIsSafeNoOp) {
-    /* close 返回 void 且首行即判空返回——传 NULL 不应崩溃 */
+    /* close 返回 void 且首行即判空返回——传 NULL 不应崩溃，且不应影响
+     * server 的连接计数。用计数比对给出真实断言（SUCCEED() 不算断言）。 */
+    const size_t before = server_->active_connections;
     uvhttp_connection_close(nullptr);
-    SUCCEED();
+    EXPECT_EQ(server_->active_connections, before)
+        << "close(NULL) 不应触碰 server 计数";
+    EXPECT_EQ(server_->active_connections, 0u)
+        << "本 fixture 未接受任何连接，计数应仍为 0";
 }
 
 /* 未 close 过的连接：close_pending 应登记全部三个句柄 */
