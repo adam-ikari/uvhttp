@@ -1,9 +1,10 @@
 /* UVHTTP Request Extended Coverage Test - Target: 60%+ */
 
+#include "uvhttp_allocator.h"
+#include "uvhttp_request.h"
+
 #include <gtest/gtest.h>
 #include <string.h>
-#include "uvhttp_request.h"
-#include "uvhttp_allocator.h"
 
 /* ========== Test Request Get Functions ========== */
 
@@ -57,7 +58,7 @@ TEST(UvhttpRequestExtendedTest, GetHeaderNullRequest) {
 TEST(UvhttpRequestExtendedTest, GetHeaderNullName) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
-    
+
     const char* value = uvhttp_request_get_header(&request, NULL);
     EXPECT_EQ(value, (const char*)NULL);
 }
@@ -65,8 +66,9 @@ TEST(UvhttpRequestExtendedTest, GetHeaderNullName) {
 TEST(UvhttpRequestExtendedTest, GetHeaderNonExistent) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
-    
-    const char* value = uvhttp_request_get_header(&request, "NonExistent-Header");
+
+    const char* value =
+        uvhttp_request_get_header(&request, "NonExistent-Header");
     EXPECT_EQ(value, (const char*)NULL);
 }
 
@@ -78,7 +80,7 @@ TEST(UvhttpRequestExtendedTest, GetHeaderAtNullRequest) {
 TEST(UvhttpRequestExtendedTest, GetHeaderAtOutOfRange) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
-    
+
     uvhttp_header_t* header = uvhttp_request_get_header_at(&request, 999);
     EXPECT_EQ(header, (uvhttp_header_t*)NULL);
 }
@@ -107,7 +109,8 @@ TEST(UvhttpRequestExtendedTest, ForeachHeaderNullRequest) {
     uvhttp_request_foreach_header(NULL, NULL, NULL);
 }
 
-static void test_header_callback(const char* name, const char* value, void* user_data) {
+static void test_header_callback(const char* name, const char* value,
+                                 void* user_data) {
     int* count = (int*)user_data;
     if (count) {
         (*count)++;
@@ -117,7 +120,7 @@ static void test_header_callback(const char* name, const char* value, void* user
 TEST(UvhttpRequestExtendedTest, ForeachHeaderEmpty) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
-    
+
     int count = 0;
     uvhttp_request_foreach_header(&request, test_header_callback, &count);
     EXPECT_EQ(count, 0);
@@ -128,7 +131,7 @@ TEST(UvhttpRequestExtendedTest, ForeachHeaderEmpty) {
 TEST(UvhttpRequestExtendedTest, RequestFieldsInitialization) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
-    
+
     /* Verify all important fields are initialized to zero */
     EXPECT_EQ(request.method, (uvhttp_method_t)0);
     EXPECT_EQ(request.parsing_complete, 0);
@@ -152,13 +155,11 @@ TEST(UvhttpRequestExtendedTest, AddHeaderEmptyName) {
     memset(&request, 0, sizeof(request));
 
     uvhttp_error_t result = uvhttp_request_add_header(&request, "", "value");
-    /* Empty name behavior depends on implementation */
-    if (result != UVHTTP_OK) {
-        SUCCEED();  /* Expected to fail */
-    } else {
-        /* If allowed, verify it was added */
-        EXPECT_GT(request.header_count, (size_t)0);
-    }
+    /* 空 header 名按 RFC 7230 §3.2 非法（token 至少 1 字符），add_header
+     * 应当拒绝。原测试 if/else 两分支都绿（失败→SUCCEED，成功→断言），
+     * 等于从不验证。 */
+    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(request.header_count, 0u) << "被拒的空名不应留下条目";
 
     /* memset 将 headers_capacity 置零，首次 add_header 会分配 headers_extra；
      * 释放该动态扩展数组，避免内存泄漏。*/
@@ -169,8 +170,10 @@ TEST(UvhttpRequestExtendedTest, AddHeaderEmptyValue) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
 
+    /* 空 header VALUE 是合法的（RFC 7230: field-value 可为空），与空名不同。 */
     uvhttp_error_t result = uvhttp_request_add_header(&request, "name", "");
-    /* Empty value might be allowed or rejected */
+    EXPECT_EQ(result, UVHTTP_OK);
+    EXPECT_EQ(request.header_count, 1u);
 
     /* 释放 add_header 分配的 headers_extra，避免内存泄漏。*/
     uvhttp_request_cleanup(&request);
@@ -185,7 +188,8 @@ TEST(UvhttpRequestExtendedTest, AddHeaderLongName) {
     memset(long_name, 'a', sizeof(long_name) - 1);
     long_name[sizeof(long_name) - 1] = '\0';
 
-    uvhttp_error_t result = uvhttp_request_add_header(&request, long_name, "value");
+    uvhttp_error_t result =
+        uvhttp_request_add_header(&request, long_name, "value");
     /* Long name might be rejected or truncated */
 
     /* 释放 add_header 分配的 headers_extra，避免内存泄漏。*/
@@ -201,7 +205,8 @@ TEST(UvhttpRequestExtendedTest, AddHeaderLongValue) {
     memset(long_value, 'b', sizeof(long_value) - 1);
     long_value[sizeof(long_value) - 1] = '\0';
 
-    uvhttp_error_t result = uvhttp_request_add_header(&request, "name", long_value);
+    uvhttp_error_t result =
+        uvhttp_request_add_header(&request, "name", long_value);
     /* Long value might be rejected or truncated */
 
     /* 释放 add_header 分配的 headers_extra，避免内存泄漏。*/
@@ -213,7 +218,7 @@ TEST(UvhttpRequestExtendedTest, AddHeaderLongValue) {
 TEST(UvhttpRequestExtendedTest, GetQueryParamNullName) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
-    
+
     const char* param = uvhttp_request_get_query_param(&request, NULL);
     EXPECT_EQ(param, (const char*)NULL);
 }
@@ -221,7 +226,7 @@ TEST(UvhttpRequestExtendedTest, GetQueryParamNullName) {
 TEST(UvhttpRequestExtendedTest, GetQueryParamEmptyName) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
-    
+
     const char* param = uvhttp_request_get_query_param(&request, "");
     EXPECT_EQ(param, (const char*)NULL);
 }

@@ -30,8 +30,8 @@ REPO = Path(__file__).resolve().parents[2]
 TEST_DIR = REPO / "test" / "unit"
 
 # 既有存量（2026-10-03 普查）。逐项修复后下调，下调即治理进度。
-BASELINE_SILENT_SKIP = 18
-BASELINE_ZERO_ASSERT = 270
+BASELINE_SILENT_SKIP = 15
+BASELINE_ZERO_ASSERT = 267
 
 ASSERT_CALL = re.compile(r'\b(EXPECT|ASSERT)_[A-Z]+\s*\(')
 ASSERT_COMMENT = re.compile(r'^\s*(//|/\*)\s*(EXPECT|ASSERT)_[A-Z]+')

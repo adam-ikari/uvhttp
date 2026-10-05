@@ -925,6 +925,21 @@ uvhttp_error_t uvhttp_request_add_header(uvhttp_request_t* request,
     if (!request || !name || !value) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
+    /* RFC 7230 §3.2: header-name = token, and a token is one or more tchar —
+     * an empty header name is not a valid field name. add_header() used to
+     * accept "" and store a header with an empty name (probe confirmed
+     * add_header("", "v") returned UVHTTP_OK with header_count == 1).
+     *
+     * Only the empty case is rejected here. The character-set check and the
+     * length ceiling live in uvhttp_validate_header_name(), but adopting it
+     * wholesale would also reject over-long names, which add_header()
+     * deliberately truncates (AddHeader_LongName_Truncated). Changing that
+     * truncation contract is a separate decision — it is not implied by the
+     * empty-name defect, and long-name truncation is the same class of
+     * silent-truncation question tracked separately for header values. */
+    if (name[0] == '\0') {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
     /* check if need to expand */
 
     if (request->header_count >= request->headers_capacity) {
