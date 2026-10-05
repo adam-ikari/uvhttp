@@ -100,11 +100,10 @@ TEST(UvhttpStaticExtendedTest, GenerateEtagValidParameters) {
         "test.txt", 1234567890, 1024, etag, sizeof(etag));
 
     EXPECT_EQ(result, UVHTTP_OK);
-    if (result == UVHTTP_OK) {
-        EXPECT_GT(strlen(etag), 0);
-        EXPECT_EQ(etag[0], '"');
-        EXPECT_EQ(etag[strlen(etag) - 1], '"');
-    }
+    ASSERT_EQ(result, UVHTTP_OK);
+    EXPECT_GT(strlen(etag), 0);
+    EXPECT_EQ(etag[0], '"');
+    EXPECT_EQ(etag[strlen(etag) - 1], '"');
 }
 
 /* ========== 测试 Sendfile ========== */
@@ -190,12 +189,11 @@ TEST(UvhttpStaticExtendedTest, PrewarmCacheNullPath) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        uvhttp_result_t result = uvhttp_static_prewarm_cache(ctx, NULL);
-        EXPECT_NE(result, UVHTTP_OK);
+    ASSERT_EQ(err, UVHTTP_OK);
+    uvhttp_result_t result = uvhttp_static_prewarm_cache(ctx, NULL);
+    EXPECT_NE(result, UVHTTP_OK);
 
-        uvhttp_static_free(ctx);
-    }
+    uvhttp_static_free(ctx);
 }
 
 TEST(UvhttpStaticExtendedTest, PrewarmCacheNonexistentPath) {
@@ -209,13 +207,12 @@ TEST(UvhttpStaticExtendedTest, PrewarmCacheNonexistentPath) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        uvhttp_result_t result =
-            uvhttp_static_prewarm_cache(ctx, "/nonexistent/path");
-        EXPECT_NE(result, UVHTTP_OK);
+    ASSERT_EQ(err, UVHTTP_OK);
+    uvhttp_result_t result =
+        uvhttp_static_prewarm_cache(ctx, "/nonexistent/path");
+    EXPECT_NE(result, UVHTTP_OK);
 
-        uvhttp_static_free(ctx);
-    }
+    uvhttp_static_free(ctx);
 }
 
 TEST(UvhttpStaticExtendedTest, PrewarmCacheValidDirectory) {
@@ -318,17 +315,16 @@ TEST(UvhttpStaticExtendedTest, SetMaxFileSizeValidContext) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        uvhttp_error_t result =
-            uvhttp_static_set_max_file_size(ctx, 10 * 1024 * 1024);
-        EXPECT_EQ(result, UVHTTP_OK);
+    ASSERT_EQ(err, UVHTTP_OK);
+    uvhttp_error_t result =
+        uvhttp_static_set_max_file_size(ctx, 10 * 1024 * 1024);
+    EXPECT_EQ(result, UVHTTP_OK);
 
-        /* 测试零值 */
-        result = uvhttp_static_set_max_file_size(ctx, 0);
-        EXPECT_EQ(result, UVHTTP_OK);
+    /* 测试零值 */
+    result = uvhttp_static_set_max_file_size(ctx, 0);
+    EXPECT_EQ(result, UVHTTP_OK);
 
-        uvhttp_static_free(ctx);
-    }
+    uvhttp_static_free(ctx);
 }
 
 /* ========== 测试缓存配置 ========== */
@@ -350,17 +346,16 @@ TEST(UvhttpStaticExtendedTest, SetCacheConfigValidContext) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        uvhttp_error_t result =
-            uvhttp_static_set_cache_config(ctx, 2048 * 1024, 7200, 200);
-        EXPECT_EQ(result, UVHTTP_OK);
+    ASSERT_EQ(err, UVHTTP_OK);
+    uvhttp_error_t result =
+        uvhttp_static_set_cache_config(ctx, 2048 * 1024, 7200, 200);
+    EXPECT_EQ(result, UVHTTP_OK);
 
-        /* 测试零值 */
-        result = uvhttp_static_set_cache_config(ctx, 0, 0, 0);
-        EXPECT_EQ(result, UVHTTP_OK);
+    /* 测试零值 */
+    result = uvhttp_static_set_cache_config(ctx, 0, 0, 0);
+    EXPECT_EQ(result, UVHTTP_OK);
 
-        uvhttp_static_free(ctx);
-    }
+    uvhttp_static_free(ctx);
 }
 
 /* ========== 测试清除缓存 ========== */
@@ -381,22 +376,21 @@ TEST(UvhttpStaticExtendedTest, ClearCacheValidContext) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        /* 添加一些缓存项 */
-        uvhttp_static_prewarm_cache(ctx, ".");
+    ASSERT_EQ(err, UVHTTP_OK);
+    /* 添加一些缓存项 */
+    uvhttp_static_prewarm_cache(ctx, ".");
 
-        /* 清除缓存 */
-        uvhttp_static_clear_cache(ctx);
+    /* 清除缓存 */
+    uvhttp_static_clear_cache(ctx);
 
-        /* 验证缓存已清除 */
-        size_t total_memory;
-        int entry_count, hit_count, miss_count, eviction_count;
-        uvhttp_static_get_cache_stats(ctx, &total_memory, &entry_count,
-                                      &hit_count, &miss_count, &eviction_count);
-        EXPECT_EQ(entry_count, 0);
+    /* 验证缓存已清除 */
+    size_t total_memory;
+    int entry_count, hit_count, miss_count, eviction_count;
+    uvhttp_static_get_cache_stats(ctx, &total_memory, &entry_count, &hit_count,
+                                  &miss_count, &eviction_count);
+    EXPECT_EQ(entry_count, 0);
 
-        uvhttp_static_free(ctx);
-    }
+    uvhttp_static_free(ctx);
 }
 
 #endif /* UVHTTP_FEATURE_STATIC_FILES */

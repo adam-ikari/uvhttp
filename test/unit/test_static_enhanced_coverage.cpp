@@ -295,10 +295,9 @@ TEST(UvhttpStaticEnhancedCoverageTest, SetResponseHeaders_ValidParams) {
     /* The function may legitimately reject a path that does not exist, but it
      * must not report success for a header-less response: either it set
      * headers (count > 0) or it returned an error. */
-    if (result == UVHTTP_OK) {
-        EXPECT_GT(uvhttp_response_get_header_count(&resp), 0u)
-            << "返回 OK 时必须真的设置了响应头";
-    }
+    ASSERT_EQ(result, UVHTTP_OK);
+    EXPECT_GT(uvhttp_response_get_header_count(&resp), 0u)
+        << "返回 OK 时必须真的设置了响应头";
 
     uvhttp_response_cleanup(&resp);
 }
@@ -362,27 +361,25 @@ TEST(UvhttpStaticEnhancedCoverageTest, PrewarmCache_RealFile) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t result = uvhttp_static_create(&config, &ctx);
 
-    if (result == UVHTTP_OK) {
-        /* Get just the filename from the full path */
-        const char* fname = strrchr(tmpfile, '/');
-        ASSERT_NE(fname, nullptr);
-        fname++; /* skip '/' */
+    ASSERT_EQ(result, UVHTTP_OK);
+    /* Get just the filename from the full path */
+    const char* fname = strrchr(tmpfile, '/');
+    ASSERT_NE(fname, nullptr);
+    fname++; /* skip '/' */
 
-        /* Prewarm the file */
-        uvhttp_result_t prewarm_result =
-            uvhttp_static_prewarm_cache(ctx, fname);
-        EXPECT_EQ(prewarm_result, UVHTTP_OK);
+    /* Prewarm the file */
+    uvhttp_result_t prewarm_result = uvhttp_static_prewarm_cache(ctx, fname);
+    EXPECT_EQ(prewarm_result, UVHTTP_OK);
 
-        /* Check cache stats - should have one entry */
-        size_t total_memory;
-        int entry_count, hit_count, miss_count, eviction_count;
-        uvhttp_static_get_cache_stats(ctx, &total_memory, &entry_count,
-                                      &hit_count, &miss_count, &eviction_count);
-        EXPECT_GT(entry_count, 0);
+    /* Check cache stats - should have one entry */
+    size_t total_memory;
+    int entry_count, hit_count, miss_count, eviction_count;
+    uvhttp_static_get_cache_stats(ctx, &total_memory, &entry_count, &hit_count,
+                                  &miss_count, &eviction_count);
+    EXPECT_GT(entry_count, 0);
 
-        uvhttp_static_clear_cache(ctx);
-        uvhttp_static_free(ctx);
-    }
+    uvhttp_static_clear_cache(ctx);
+    uvhttp_static_free(ctx);
 
     cleanup_file(tmpfile);
 }
@@ -403,11 +400,10 @@ TEST(UvhttpStaticEnhancedCoverageTest, PrewarmCache_NullPath) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        uvhttp_result_t result = uvhttp_static_prewarm_cache(ctx, NULL);
-        EXPECT_NE(result, UVHTTP_OK);
-        uvhttp_static_free(ctx);
-    }
+    ASSERT_EQ(err, UVHTTP_OK);
+    uvhttp_result_t result = uvhttp_static_prewarm_cache(ctx, NULL);
+    EXPECT_NE(result, UVHTTP_OK);
+    uvhttp_static_free(ctx);
 }
 
 TEST(UvhttpStaticEnhancedCoverageTest, PrewarmCache_NonexistentFile) {
@@ -421,12 +417,11 @@ TEST(UvhttpStaticEnhancedCoverageTest, PrewarmCache_NonexistentFile) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        uvhttp_result_t result =
-            uvhttp_static_prewarm_cache(ctx, "nonexistent_file_xyz.txt");
-        EXPECT_NE(result, UVHTTP_OK);
-        uvhttp_static_free(ctx);
-    }
+    ASSERT_EQ(err, UVHTTP_OK);
+    uvhttp_result_t result =
+        uvhttp_static_prewarm_cache(ctx, "nonexistent_file_xyz.txt");
+    EXPECT_NE(result, UVHTTP_OK);
+    uvhttp_static_free(ctx);
 }
 
 TEST(UvhttpStaticEnhancedCoverageTest, PrewarmCache_FileTooLarge) {
@@ -446,16 +441,15 @@ TEST(UvhttpStaticEnhancedCoverageTest, PrewarmCache_FileTooLarge) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        const char* fname = strrchr(tmpfile, '/');
-        ASSERT_NE(fname, nullptr);
-        fname++;
+    ASSERT_EQ(err, UVHTTP_OK);
+    const char* fname = strrchr(tmpfile, '/');
+    ASSERT_NE(fname, nullptr);
+    fname++;
 
-        uvhttp_result_t result = uvhttp_static_prewarm_cache(ctx, fname);
-        /* Should fail because file is too large */
-        EXPECT_NE(result, UVHTTP_OK);
-        uvhttp_static_free(ctx);
-    }
+    uvhttp_result_t result = uvhttp_static_prewarm_cache(ctx, fname);
+    /* Should fail because file is too large */
+    EXPECT_NE(result, UVHTTP_OK);
+    uvhttp_static_free(ctx);
 
     cleanup_file(tmpfile);
 }
@@ -471,13 +465,12 @@ TEST(UvhttpStaticEnhancedCoverageTest, PrewarmCache_EmptyPath) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        /* Empty path -> stat will fail or it's a directory */
-        uvhttp_result_t result = uvhttp_static_prewarm_cache(ctx, "");
-        /* Should fail because "" is not a valid file */
-        EXPECT_NE(result, UVHTTP_OK);
-        uvhttp_static_free(ctx);
-    }
+    ASSERT_EQ(err, UVHTTP_OK);
+    /* Empty path -> stat will fail or it's a directory */
+    uvhttp_result_t result = uvhttp_static_prewarm_cache(ctx, "");
+    /* Should fail because "" is not a valid file */
+    EXPECT_NE(result, UVHTTP_OK);
+    uvhttp_static_free(ctx);
 }
 
 /* ========== prewarm directory ========== */
@@ -498,11 +491,10 @@ TEST(UvhttpStaticEnhancedCoverageTest, PrewarmDirectory_NullPath) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        int count = uvhttp_static_prewarm_directory(ctx, NULL, 10);
-        EXPECT_EQ(count, -1);
-        uvhttp_static_free(ctx);
-    }
+    ASSERT_EQ(err, UVHTTP_OK);
+    int count = uvhttp_static_prewarm_directory(ctx, NULL, 10);
+    EXPECT_EQ(count, -1);
+    uvhttp_static_free(ctx);
 }
 
 TEST(UvhttpStaticEnhancedCoverageTest, PrewarmDirectory_NonexistentDir) {
@@ -516,12 +508,11 @@ TEST(UvhttpStaticEnhancedCoverageTest, PrewarmDirectory_NonexistentDir) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        int count = uvhttp_static_prewarm_directory(
-            ctx, "/nonexistent_directory_xyz", 10);
-        EXPECT_EQ(count, -1);
-        uvhttp_static_free(ctx);
-    }
+    ASSERT_EQ(err, UVHTTP_OK);
+    int count =
+        uvhttp_static_prewarm_directory(ctx, "/nonexistent_directory_xyz", 10);
+    EXPECT_EQ(count, -1);
+    uvhttp_static_free(ctx);
 }
 
 TEST(UvhttpStaticEnhancedCoverageTest, PrewarmDirectory_ValidDir) {
@@ -558,12 +549,11 @@ TEST(UvhttpStaticEnhancedCoverageTest, PrewarmDirectory_ValidDir) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        int count = uvhttp_static_prewarm_directory(ctx, ".", 10);
-        /* Should prewarm exactly the 2 regular files, skipping the FIFO */
-        EXPECT_EQ(count, 2);
-        uvhttp_static_free(ctx);
-    }
+    ASSERT_EQ(err, UVHTTP_OK);
+    int count = uvhttp_static_prewarm_directory(ctx, ".", 10);
+    /* Should prewarm exactly the 2 regular files, skipping the FIFO */
+    EXPECT_EQ(count, 2);
+    uvhttp_static_free(ctx);
 
     unlink(f1);
     unlink(f2);
@@ -589,12 +579,11 @@ TEST(UvhttpStaticEnhancedCoverageTest, SetMaxFileSize_ZeroValue) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        /* Zero value should reset to default */
-        uvhttp_error_t result = uvhttp_static_set_max_file_size(ctx, 0);
-        EXPECT_EQ(result, UVHTTP_OK);
-        uvhttp_static_free(ctx);
-    }
+    ASSERT_EQ(err, UVHTTP_OK);
+    /* Zero value should reset to default */
+    uvhttp_error_t result = uvhttp_static_set_max_file_size(ctx, 0);
+    EXPECT_EQ(result, UVHTTP_OK);
+    uvhttp_static_free(ctx);
 }
 
 TEST(UvhttpStaticEnhancedCoverageTest, SetMaxFileSize_PositiveValue) {
@@ -608,12 +597,11 @@ TEST(UvhttpStaticEnhancedCoverageTest, SetMaxFileSize_PositiveValue) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        uvhttp_error_t result =
-            uvhttp_static_set_max_file_size(ctx, 10 * 1024 * 1024);
-        EXPECT_EQ(result, UVHTTP_OK);
-        uvhttp_static_free(ctx);
-    }
+    ASSERT_EQ(err, UVHTTP_OK);
+    uvhttp_error_t result =
+        uvhttp_static_set_max_file_size(ctx, 10 * 1024 * 1024);
+    EXPECT_EQ(result, UVHTTP_OK);
+    uvhttp_static_free(ctx);
 }
 
 /* ========== set_cache_config ========== */
@@ -635,12 +623,11 @@ TEST(UvhttpStaticEnhancedCoverageTest, SetCacheConfig_AllZero) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        /* All zeros -> no change */
-        uvhttp_error_t result = uvhttp_static_set_cache_config(ctx, 0, 0, 0);
-        EXPECT_EQ(result, UVHTTP_OK);
-        uvhttp_static_free(ctx);
-    }
+    ASSERT_EQ(err, UVHTTP_OK);
+    /* All zeros -> no change */
+    uvhttp_error_t result = uvhttp_static_set_cache_config(ctx, 0, 0, 0);
+    EXPECT_EQ(result, UVHTTP_OK);
+    uvhttp_static_free(ctx);
 }
 
 TEST(UvhttpStaticEnhancedCoverageTest, SetCacheConfig_PositiveValues) {
@@ -654,12 +641,11 @@ TEST(UvhttpStaticEnhancedCoverageTest, SetCacheConfig_PositiveValues) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        uvhttp_error_t result =
-            uvhttp_static_set_cache_config(ctx, 2048 * 1024, 200, 7200);
-        EXPECT_EQ(result, UVHTTP_OK);
-        uvhttp_static_free(ctx);
-    }
+    ASSERT_EQ(err, UVHTTP_OK);
+    uvhttp_error_t result =
+        uvhttp_static_set_cache_config(ctx, 2048 * 1024, 200, 7200);
+    EXPECT_EQ(result, UVHTTP_OK);
+    uvhttp_static_free(ctx);
 }
 
 /* ========== set_sendfile_config ========== */
@@ -681,11 +667,10 @@ TEST(UvhttpStaticEnhancedCoverageTest, SetSendfileConfig_AllZero) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        uvhttp_error_t result = uvhttp_static_set_sendfile_config(ctx, 0, 0, 0);
-        EXPECT_EQ(result, UVHTTP_OK);
-        uvhttp_static_free(ctx);
-    }
+    ASSERT_EQ(err, UVHTTP_OK);
+    uvhttp_error_t result = uvhttp_static_set_sendfile_config(ctx, 0, 0, 0);
+    EXPECT_EQ(result, UVHTTP_OK);
+    uvhttp_static_free(ctx);
 }
 
 TEST(UvhttpStaticEnhancedCoverageTest, SetSendfileConfig_PositiveValues) {
@@ -699,12 +684,11 @@ TEST(UvhttpStaticEnhancedCoverageTest, SetSendfileConfig_PositiveValues) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        uvhttp_error_t result =
-            uvhttp_static_set_sendfile_config(ctx, 10000, 5, 16384);
-        EXPECT_EQ(result, UVHTTP_OK);
-        uvhttp_static_free(ctx);
-    }
+    ASSERT_EQ(err, UVHTTP_OK);
+    uvhttp_error_t result =
+        uvhttp_static_set_sendfile_config(ctx, 10000, 5, 16384);
+    EXPECT_EQ(result, UVHTTP_OK);
+    uvhttp_static_free(ctx);
 }
 
 /* ========== cache operations ========== */
@@ -724,34 +708,33 @@ TEST(UvhttpStaticEnhancedCoverageTest, CacheStats_AfterPrewarm) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        const char* fname = strrchr(tmpfile, '/');
-        ASSERT_NE(fname, nullptr);
-        fname++;
+    ASSERT_EQ(err, UVHTTP_OK);
+    const char* fname = strrchr(tmpfile, '/');
+    ASSERT_NE(fname, nullptr);
+    fname++;
 
-        /* Prewarm a file */
-        uvhttp_static_prewarm_cache(ctx, fname);
+    /* Prewarm a file */
+    uvhttp_static_prewarm_cache(ctx, fname);
 
-        /* Get stats */
-        size_t total_memory;
-        int entry_count, hit_count, miss_count, eviction_count;
-        uvhttp_static_get_cache_stats(ctx, &total_memory, &entry_count,
-                                      &hit_count, &miss_count, &eviction_count);
+    /* Get stats */
+    size_t total_memory;
+    int entry_count, hit_count, miss_count, eviction_count;
+    uvhttp_static_get_cache_stats(ctx, &total_memory, &entry_count, &hit_count,
+                                  &miss_count, &eviction_count);
 
-        /* Should have at least the entry */
-        EXPECT_GE(entry_count, 0);
-        EXPECT_GE(total_memory, (size_t)0);
+    /* Should have at least the entry */
+    EXPECT_GE(entry_count, 0);
+    EXPECT_GE(total_memory, (size_t)0);
 
-        /* Get hit rate */
-        double hit_rate = uvhttp_static_get_cache_hit_rate(ctx);
-        EXPECT_GE(hit_rate, 0.0);
+    /* Get hit rate */
+    double hit_rate = uvhttp_static_get_cache_hit_rate(ctx);
+    EXPECT_GE(hit_rate, 0.0);
 
-        /* Cleanup expired */
-        int cleaned = uvhttp_static_cleanup_expired_cache(ctx);
-        EXPECT_GE(cleaned, 0);
+    /* Cleanup expired */
+    int cleaned = uvhttp_static_cleanup_expired_cache(ctx);
+    EXPECT_GE(cleaned, 0);
 
-        uvhttp_static_free(ctx);
-    }
+    uvhttp_static_free(ctx);
 
     cleanup_file(tmpfile);
 }
@@ -771,25 +754,24 @@ TEST(UvhttpStaticEnhancedCoverageTest, ClearCache_WithPrewarmedData) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        const char* fname = strrchr(tmpfile, '/');
-        ASSERT_NE(fname, nullptr);
-        fname++;
+    ASSERT_EQ(err, UVHTTP_OK);
+    const char* fname = strrchr(tmpfile, '/');
+    ASSERT_NE(fname, nullptr);
+    fname++;
 
-        uvhttp_static_prewarm_cache(ctx, fname);
+    uvhttp_static_prewarm_cache(ctx, fname);
 
-        /* Clear cache */
-        uvhttp_static_clear_cache(ctx);
+    /* Clear cache */
+    uvhttp_static_clear_cache(ctx);
 
-        /* Verify cache is empty */
-        size_t total_memory;
-        int entry_count, hit_count, miss_count, eviction_count;
-        uvhttp_static_get_cache_stats(ctx, &total_memory, &entry_count,
-                                      &hit_count, &miss_count, &eviction_count);
-        EXPECT_EQ(entry_count, 0);
+    /* Verify cache is empty */
+    size_t total_memory;
+    int entry_count, hit_count, miss_count, eviction_count;
+    uvhttp_static_get_cache_stats(ctx, &total_memory, &entry_count, &hit_count,
+                                  &miss_count, &eviction_count);
+    EXPECT_EQ(entry_count, 0);
 
-        uvhttp_static_free(ctx);
-    }
+    uvhttp_static_free(ctx);
 
     cleanup_file(tmpfile);
 }
@@ -805,13 +787,12 @@ TEST(UvhttpStaticEnhancedCoverageTest, CacheHitRate_AfterPrewarm) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        /* Hit rate should be 0.0 with no activity */
-        double hit_rate = uvhttp_static_get_cache_hit_rate(ctx);
-        EXPECT_EQ(hit_rate, 0.0);
+    ASSERT_EQ(err, UVHTTP_OK);
+    /* Hit rate should be 0.0 with no activity */
+    double hit_rate = uvhttp_static_get_cache_hit_rate(ctx);
+    EXPECT_EQ(hit_rate, 0.0);
 
-        uvhttp_static_free(ctx);
-    }
+    uvhttp_static_free(ctx);
 }
 
 /* ========== handle_request with different scenarios ========== */
@@ -832,11 +813,10 @@ TEST(UvhttpStaticEnhancedCoverageTest, HandleRequest_NullRequest) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t err = uvhttp_static_create(&config, &ctx);
 
-    if (err == UVHTTP_OK) {
-        uvhttp_result_t result = uvhttp_static_handle_request(ctx, NULL, NULL);
-        EXPECT_NE(result, UVHTTP_OK);
-        uvhttp_static_free(ctx);
-    }
+    ASSERT_EQ(err, UVHTTP_OK);
+    uvhttp_result_t result = uvhttp_static_handle_request(ctx, NULL, NULL);
+    EXPECT_NE(result, UVHTTP_OK);
+    uvhttp_static_free(ctx);
 }
 
 /* ========== conditional request ========== */
@@ -928,10 +908,9 @@ TEST(UvhttpStaticEnhancedCoverageTest, Create_FullConfig) {
     uvhttp_static_context_t* ctx = NULL;
     uvhttp_error_t result = uvhttp_static_create(&config, &ctx);
 
-    if (result == UVHTTP_OK) {
-        ASSERT_NE(ctx, nullptr);
-        uvhttp_static_free(ctx);
-    }
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_NE(ctx, nullptr);
+    uvhttp_static_free(ctx);
 }
 
 /* ========== pre-compressed file support (.gz files) ========== */
