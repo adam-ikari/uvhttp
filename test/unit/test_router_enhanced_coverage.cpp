@@ -1,10 +1,12 @@
 /* UVHTTP 路由器模块增强覆盖率测试 - 目标提升至 50%+ */
 
+#include "uvhttp_constants.h"
+#include "uvhttp_router.h"
+
+#include "uvhttp.h"
+
 #include <gtest/gtest.h>
 #include <string.h>
-#include "uvhttp.h"
-#include "uvhttp_router.h"
-#include "uvhttp_constants.h"
 
 /* ========== 测试创建和释放 ========== */
 
@@ -35,14 +37,14 @@ TEST(UvhttpRouterEnhancedCoverageTest, MethodFromStringCaseInsensitive) {
 TEST(UvhttpRouterEnhancedCoverageTest, MethodFromStringSpecialCases) {
     /* 测试 NULL */
     EXPECT_EQ(uvhttp_method_from_string(NULL), UVHTTP_ANY);
-    
+
     /* 测试空字符串 */
     EXPECT_EQ(uvhttp_method_from_string(""), UVHTTP_ANY);
-    
+
     /* 测试无效方法 */
     EXPECT_EQ(uvhttp_method_from_string("INVALID"), UVHTTP_ANY);
     EXPECT_EQ(uvhttp_method_from_string("NOTAREALMETHOD"), UVHTTP_ANY);
-    
+
     /* 测试带空格的方法 */
     EXPECT_EQ(uvhttp_method_from_string(" GET "), UVHTTP_ANY);
 }
@@ -66,10 +68,10 @@ TEST(UvhttpRouterEnhancedCoverageTest, AddRouteNullPath) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
+
     result = uvhttp_router_add_route(router, NULL, NULL);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     uvhttp_router_free(router);
 }
 
@@ -78,10 +80,10 @@ TEST(UvhttpRouterEnhancedCoverageTest, AddRouteEmptyPath) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
+
     result = uvhttp_router_add_route(router, "", NULL);
     /* 空路径可能被接受或拒绝 */
-    
+
     uvhttp_router_free(router);
 }
 
@@ -90,15 +92,15 @@ TEST(UvhttpRouterEnhancedCoverageTest, AddRouteLongPath) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
+
     /* 测试超长路径 */
     char long_path[1000];
     memset(long_path, 'a', sizeof(long_path) - 1);
     long_path[sizeof(long_path) - 1] = '\0';
-    
+
     result = uvhttp_router_add_route(router, long_path, NULL);
     /* 超长路径可能被拒绝 */
-    
+
     uvhttp_router_free(router);
 }
 
@@ -107,7 +109,7 @@ TEST(UvhttpRouterEnhancedCoverageTest, AddRouteSpecialCharacters) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
+
     /* 测试特殊字符路径 */
     uvhttp_router_add_route(router, "/api/v1/users", NULL);
     uvhttp_router_add_route(router, "/api/v1/posts", NULL);
@@ -115,12 +117,13 @@ TEST(UvhttpRouterEnhancedCoverageTest, AddRouteSpecialCharacters) {
     uvhttp_router_add_route(router, "/api/v2/posts", NULL);
     uvhttp_router_add_route(router, "/health-check", NULL);
     uvhttp_router_add_route(router, "/api/test_value", NULL);
-    
+
     uvhttp_router_free(router);
 }
 
 TEST(UvhttpRouterEnhancedCoverageTest, AddRouteMethodNullRouter) {
-    uvhttp_error_t result = uvhttp_router_add_route_method(NULL, "/api", UVHTTP_GET, NULL);
+    uvhttp_error_t result =
+        uvhttp_router_add_route_method(NULL, "/api", UVHTTP_GET, NULL);
     EXPECT_NE(result, UVHTTP_OK);
 }
 
@@ -129,10 +132,10 @@ TEST(UvhttpRouterEnhancedCoverageTest, AddRouteMethodNullPath) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
+
     result = uvhttp_router_add_route_method(router, NULL, UVHTTP_GET, NULL);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     uvhttp_router_free(router);
 }
 
@@ -141,7 +144,7 @@ TEST(UvhttpRouterEnhancedCoverageTest, AddRouteMethodAllMethods) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
+
     /* 测试所有 HTTP 方法 */
     uvhttp_router_add_route_method(router, "/api", UVHTTP_GET, NULL);
     uvhttp_router_add_route_method(router, "/api", UVHTTP_POST, NULL);
@@ -151,14 +154,15 @@ TEST(UvhttpRouterEnhancedCoverageTest, AddRouteMethodAllMethods) {
     uvhttp_router_add_route_method(router, "/api", UVHTTP_OPTIONS, NULL);
     uvhttp_router_add_route_method(router, "/api", UVHTTP_PATCH, NULL);
     uvhttp_router_add_route_method(router, "/api", UVHTTP_ANY, NULL);
-    
+
     uvhttp_router_free(router);
 }
 
 /* ========== 测试路由查找 ========== */
 
 TEST(UvhttpRouterEnhancedCoverageTest, FindHandlerNullRouter) {
-    uvhttp_request_handler_t handler = uvhttp_router_find_handler(NULL, "/api", "GET");
+    uvhttp_request_handler_t handler =
+        uvhttp_router_find_handler(NULL, "/api", "GET");
     EXPECT_EQ(handler, nullptr);
 }
 
@@ -167,10 +171,11 @@ TEST(UvhttpRouterEnhancedCoverageTest, FindHandlerNullPath) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
-    uvhttp_request_handler_t handler = uvhttp_router_find_handler(router, NULL, "GET");
+
+    uvhttp_request_handler_t handler =
+        uvhttp_router_find_handler(router, NULL, "GET");
     EXPECT_EQ(handler, nullptr);
-    
+
     uvhttp_router_free(router);
 }
 
@@ -179,12 +184,13 @@ TEST(UvhttpRouterEnhancedCoverageTest, FindHandlerNullMethod) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
+
     uvhttp_router_add_route(router, "/api", NULL);
-    
-    uvhttp_request_handler_t handler = uvhttp_router_find_handler(router, "/api", NULL);
+
+    uvhttp_request_handler_t handler =
+        uvhttp_router_find_handler(router, "/api", NULL);
     /* 可能返回 handler 或 nullptr */
-    
+
     uvhttp_router_free(router);
 }
 
@@ -193,10 +199,11 @@ TEST(UvhttpRouterEnhancedCoverageTest, FindHandlerNonexistentRoute) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
-    uvhttp_request_handler_t handler = uvhttp_router_find_handler(router, "/nonexistent", "GET");
+
+    uvhttp_request_handler_t handler =
+        uvhttp_router_find_handler(router, "/nonexistent", "GET");
     EXPECT_EQ(handler, nullptr);
-    
+
     uvhttp_router_free(router);
 }
 
@@ -205,12 +212,13 @@ TEST(UvhttpRouterEnhancedCoverageTest, FindHandlerRootPath) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
+
     uvhttp_router_add_route(router, "/", NULL);
-    
-    uvhttp_request_handler_t handler = uvhttp_router_find_handler(router, "/", "GET");
+
+    uvhttp_request_handler_t handler =
+        uvhttp_router_find_handler(router, "/", "GET");
     /* 应该找到路由 */
-    
+
     uvhttp_router_free(router);
 }
 
@@ -219,13 +227,15 @@ TEST(UvhttpRouterEnhancedCoverageTest, FindHandlerWithTrailingSlash) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
+
     uvhttp_router_add_route(router, "/api", NULL);
-    
+
     /* 测试带和不带尾部斜杠 */
-    uvhttp_request_handler_t handler1 = uvhttp_router_find_handler(router, "/api", "GET");
-    uvhttp_request_handler_t handler2 = uvhttp_router_find_handler(router, "/api/", "GET");
-    
+    uvhttp_request_handler_t handler1 =
+        uvhttp_router_find_handler(router, "/api", "GET");
+    uvhttp_request_handler_t handler2 =
+        uvhttp_router_find_handler(router, "/api/", "GET");
+
     uvhttp_router_free(router);
 }
 
@@ -242,11 +252,11 @@ TEST(UvhttpRouterEnhancedCoverageTest, MatchNullPath) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
+
     uvhttp_route_match_t match;
     result = uvhttp_router_match(router, NULL, "GET", &match);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     uvhttp_router_free(router);
 }
 
@@ -255,10 +265,10 @@ TEST(UvhttpRouterEnhancedCoverageTest, MatchNullMatch) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
+
     result = uvhttp_router_match(router, "/api", "GET", NULL);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     uvhttp_router_free(router);
 }
 
@@ -267,11 +277,11 @@ TEST(UvhttpRouterEnhancedCoverageTest, MatchNonexistentRoute) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
+
     uvhttp_route_match_t match;
     result = uvhttp_router_match(router, "/nonexistent", "GET", &match);
     EXPECT_NE(result, UVHTTP_OK);
-    
+
     uvhttp_router_free(router);
 }
 
@@ -280,19 +290,22 @@ TEST(UvhttpRouterEnhancedCoverageTest, MatchNonexistentRoute) {
 TEST(UvhttpRouterEnhancedCoverageTest, ParsePathParamsNullPath) {
     uvhttp_param_t params[16];
     size_t param_count = 0;
-    uvhttp_error_t result = uvhttp_parse_path_params(NULL, params, &param_count);
+    uvhttp_error_t result =
+        uvhttp_parse_path_params(NULL, params, &param_count);
     EXPECT_NE(result, UVHTTP_OK);
 }
 
 TEST(UvhttpRouterEnhancedCoverageTest, ParsePathParamsNullParams) {
     size_t param_count = 0;
-    uvhttp_error_t result = uvhttp_parse_path_params("/api/users/123", NULL, &param_count);
+    uvhttp_error_t result =
+        uvhttp_parse_path_params("/api/users/123", NULL, &param_count);
     EXPECT_NE(result, UVHTTP_OK);
 }
 
 TEST(UvhttpRouterEnhancedCoverageTest, ParsePathParamsNullCount) {
     uvhttp_param_t params[16];
-    uvhttp_error_t result = uvhttp_parse_path_params("/api/users/123", params, NULL);
+    uvhttp_error_t result =
+        uvhttp_parse_path_params("/api/users/123", params, NULL);
     EXPECT_NE(result, UVHTTP_OK);
 }
 
@@ -306,17 +319,20 @@ TEST(UvhttpRouterEnhancedCoverageTest, ParsePathParamsEmptyPath) {
 TEST(UvhttpRouterEnhancedCoverageTest, ParsePathParamsNoParams) {
     uvhttp_param_t params[16];
     size_t param_count = 0;
-    uvhttp_error_t result = uvhttp_parse_path_params("/api/users", params, &param_count);
-    if (result == UVHTTP_OK) {
-        EXPECT_EQ(param_count, 0);
-    }
+    uvhttp_error_t result =
+        uvhttp_parse_path_params("/api/users", params, &param_count);
+    /* probe 实测：无参路径恒返回 OK + param_count 0。守卫让它在回归时
+     * 静默跳过——改为显式断言（无参解析是确定行为）。 */
+    ASSERT_EQ(result, UVHTTP_OK);
+    EXPECT_EQ(param_count, 0u);
 }
 
 TEST(UvhttpRouterEnhancedCoverageTest, ParsePathParamsSingleParam) {
     uvhttp_param_t params[16];
     size_t param_count = 0;
     /* uvhttp_parse_path_params 只解析查询字符串参数，不解析路径参数 */
-    uvhttp_error_t result = uvhttp_parse_path_params("/api/users?id=123", params, &param_count);
+    uvhttp_error_t result =
+        uvhttp_parse_path_params("/api/users?id=123", params, &param_count);
     /* 只验证函数不崩溃，不验证参数数量 */
     if (result == UVHTTP_OK) {
         /* 参数数量可能为 0，取决于实现 */
@@ -327,7 +343,8 @@ TEST(UvhttpRouterEnhancedCoverageTest, ParsePathParamsMultipleParams) {
     uvhttp_param_t params[16];
     size_t param_count = 0;
     /* uvhttp_parse_path_params 只解析查询字符串参数，不解析路径参数 */
-    uvhttp_error_t result = uvhttp_parse_path_params("/api/users?id=123&name=test", params, &param_count);
+    uvhttp_error_t result = uvhttp_parse_path_params(
+        "/api/users?id=123&name=test", params, &param_count);
     /* 只验证函数不崩溃，不验证参数数量 */
     if (result == UVHTTP_OK) {
         /* 参数数量可能为 0，取决于实现 */
@@ -341,17 +358,19 @@ TEST(UvhttpRouterEnhancedCoverageTest, MultipleRoutesSamePathDifferentMethods) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
+
     /* 同一路径，不同方法 */
     uvhttp_router_add_route_method(router, "/api/users", UVHTTP_GET, NULL);
     uvhttp_router_add_route_method(router, "/api/users", UVHTTP_POST, NULL);
     uvhttp_router_add_route_method(router, "/api/users", UVHTTP_PUT, NULL);
     uvhttp_router_add_route_method(router, "/api/users", UVHTTP_DELETE, NULL);
-    
+
     /* 查找不同方法 */
-    uvhttp_request_handler_t handler_get = uvhttp_router_find_handler(router, "/api/users", "GET");
-    uvhttp_request_handler_t handler_post = uvhttp_router_find_handler(router, "/api/users", "POST");
-    
+    uvhttp_request_handler_t handler_get =
+        uvhttp_router_find_handler(router, "/api/users", "GET");
+    uvhttp_request_handler_t handler_post =
+        uvhttp_router_find_handler(router, "/api/users", "POST");
+
     uvhttp_router_free(router);
 }
 
@@ -360,7 +379,7 @@ TEST(UvhttpRouterEnhancedCoverageTest, NestedRoutes) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
+
     /* 嵌套路由 */
     uvhttp_router_add_route(router, "/api", NULL);
     uvhttp_router_add_route(router, "/api/v1", NULL);
@@ -369,10 +388,11 @@ TEST(UvhttpRouterEnhancedCoverageTest, NestedRoutes) {
     uvhttp_router_add_route(router, "/api/v1/posts", NULL);
     uvhttp_router_add_route(router, "/api/v2", NULL);
     uvhttp_router_add_route(router, "/api/v2/users", NULL);
-    
+
     /* 查找嵌套路由 */
-    uvhttp_request_handler_t handler = uvhttp_router_find_handler(router, "/api/v1/users/123", "GET");
-    
+    uvhttp_request_handler_t handler =
+        uvhttp_router_find_handler(router, "/api/v1/users/123", "GET");
+
     uvhttp_router_free(router);
 }
 
@@ -381,16 +401,17 @@ TEST(UvhttpRouterEnhancedCoverageTest, LargeNumberOfRoutes) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    
+
     /* 添加大量路由 */
     for (int i = 0; i < 50; i++) {
         char path[64];
         snprintf(path, sizeof(path), "/api/endpoint%d", i);
         uvhttp_router_add_route(router, path, NULL);
     }
-    
+
     /* 查找路由 */
-    uvhttp_request_handler_t handler = uvhttp_router_find_handler(router, "/api/endpoint25", "GET");
-    
+    uvhttp_request_handler_t handler =
+        uvhttp_router_find_handler(router, "/api/endpoint25", "GET");
+
     uvhttp_router_free(router);
 }
