@@ -7,17 +7,19 @@
  * the real libuv.
  */
 
-#include <gtest/gtest.h>
-#include "uvhttp_connection.h"
-#include "uvhttp_server.h"
-#include "uvhttp_router.h"
-#include "uvhttp_error.h"
 #include "uvhttp_allocator.h"
+#include "uvhttp_connection.h"
+#include "uvhttp_error.h"
+#include "uvhttp_router.h"
+#include "uvhttp_server.h"
+
 #include "libuv_mock.h"
+
+#include <gtest/gtest.h>
 #include <string.h>
 
 class UvhttpConnectionMockTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t* loop;
     uvhttp_server_t* server;
 
@@ -82,8 +84,9 @@ TEST_F(UvhttpConnectionMockTest, StartReadStartFails) {
 
     err = uvhttp_connection_start(conn);
     EXPECT_NE(err, UVHTTP_OK);
-    /* connection_start failure already called uvhttp_connection_close internally,
-     * which triggered the close callback (via mock). Do not call free again. */
+    /* connection_start failure already called uvhttp_connection_close
+     * internally, which triggered the close callback (via mock). Do not call
+     * free again. */
 }
 
 /* ========== Server listen failure ========== */
@@ -150,8 +153,9 @@ TEST_F(UvhttpConnectionMockTest, ConnectionLimitAcceptFailClosesTempClient) {
  * never entered.
  */
 TEST_F(UvhttpConnectionMockTest, ServerMaxConnectionsFieldIsAuthoritative) {
-    /* No server->config: on_connection must fall back to server->max_connections.
-     * Setting it to 0 forces the 503 path (a single new connection exceeds it). */
+    /* No server->config: on_connection must fall back to
+     * server->max_connections. Setting it to 0 forces the 503 path (a single
+     * new connection exceeds it). */
     server->max_connections = 0;
     /* Fail uv_accept so the 503 temp client is closed (uv_close) instead of
      * starting a write we'd have to drain. */
@@ -180,4 +184,52 @@ TEST_F(UvhttpConnectionMockTest, ServerNewWithLoopLoopInitFails) {
     uvhttp_error_t err = uvhttp_server_new_with_loop(&srv);
     EXPECT_NE(err, UVHTTP_OK);
     EXPECT_EQ(srv, nullptr);
+}
+/* ========== uvhttp_connection_start_timeout timer failure ========== */
+
+/*
+ * uv_timer_start failing is the only error-propagation path in
+ * uvhttp_connection_start_timeout (src/uvhttp_connection.c:1585-1589) and
+ * uvhttp_connection_start_timeout_custom (:1622-1626): both return
+ * UVHTTP_ERROR_CONNECTION_TIMEOUT. libuv_mock provides
+ * libuv_mock_set_uv_timer_start_result but no test had ever set a non-zero
+ * value, so both error branches were dead. Probe-confirmed that the success
+ * path is what the real-loop tests in test_connection_timeout_callback.cpp
+ * already exercise — these cover only the failure side.
+ */
+
+TEST_F(UvhttpConnectionMockTest, StartTimeoutReturnsErrorWhenTimerStartFails) {
+    uvhttp_connection_t* conn = nullptr;
+    ASSERT_EQ(uvhttp_connection_new(server, &conn), UVHTTP_OK);
+    ASSERT_NE(conn, nullptr);
+
+    libuv_mock_set_uv_timer_start_result(-1);
+    EXPECT_EQ(uvhttp_connection_start_timeout(conn),
+              UVHTTP_ERROR_CONNECTION_TIMEOUT)
+        << "uv_timer_start 失败时应传播 CONNECTION_TIMEOUT 而非伪装成功";
+
+    libuv_mock_set_uv_timer_start_result(0);
+    EXPECT_EQ(uvhttp_connection_start_timeout(conn), UVHTTP_OK)
+        << "恢复后应成功（对照：前置不是恒真的守卫）";
+
+    uvhttp_connection_free(conn);
+}
+
+TEST_F(UvhttpConnectionMockTest,
+       StartTimeoutCustomReturnsErrorWhenTimerStartFails) {
+    uvhttp_connection_t* conn = nullptr;
+    ASSERT_EQ(uvhttp_connection_new(server, &conn), UVHTTP_OK);
+    ASSERT_NE(conn, nullptr);
+
+    /* UVHTTP_CONNECTION_TIMEOUT_MIN = 5（uvhttp_defaults.h:81），小于该值
+     * start_timeout_custom 先被参数校验拒绝，无法到达 timer 分支。 */
+    libuv_mock_set_uv_timer_start_result(-1);
+    EXPECT_EQ(uvhttp_connection_start_timeout_custom(conn, 5),
+              UVHTTP_ERROR_CONNECTION_TIMEOUT)
+        << "custom 变体同样应传播 timer 启动失败";
+
+    libuv_mock_set_uv_timer_start_result(0);
+    EXPECT_EQ(uvhttp_connection_start_timeout_custom(conn, 5), UVHTTP_OK);
+
+    uvhttp_connection_free(conn);
 }
