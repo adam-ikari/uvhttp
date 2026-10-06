@@ -1,5 +1,13 @@
 name: CI/CD - Nightly Deep Test
 
+# 职责边界（测试分层，勿重复）：
+#   - ci-pr.yml           PR：编译 + 代码质量（不跑测试）
+#   - ci-release-gate.yml pre-release：fast / 各配置测试 / ASan 内存安全
+#   - ci-nightly.yml（本文件）仅保留 PR 与 pre-release 都不做的长时深度项：
+#       全量测试、覆盖率、压力测试、UBSan、依赖安全扫描
+#   已移除与上述门禁重叠的 job：test-memory（重叠 pre-release 的 ASan 门禁）、
+#   performance-full（重叠 ci-benchmark 的 release 性能门禁）、
+#   code-quality-full（仅 echo 占位，且与 PR 的 cppcheck 重复）。
 # 触发条件：每日 UTC 0:00 运行，或手动触发
 on:
   schedule:
@@ -44,32 +52,6 @@ jobs:
           name: build-ubuntu-nightly-${{ github.run_number }}
           path: build/
           retention-days: 7
-  
-  code-quality-full:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7.0.1
-        with:
-          submodules: recursive
-      
-      - name: Setup build environment
-        uses: ./.github/actions/setup-build
-        with:
-          os: ubuntu-latest
-
-      - name: Run cppcheck
-        run: |
-          echo "cppcheck target not available in CMake-generated Makefile"
-      
-      - name: Upload quality results
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: code-quality-results-nightly-${{ github.run_number }}
-          path: cppcheck-results.xml
-          retention-days: 30
   
   security-scan-full:
     runs-on: ubuntu-latest
@@ -289,204 +271,6 @@ jobs:
             /tmp/server.log
           retention-days: 30
 
-  performance-full:
-    needs: [ubuntu-build-all]
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7.0.1
-        with:
-          submodules: recursive
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v8.0.1
-        with:
-          name: build-ubuntu-nightly-${{ github.run_number }}
-          path: build/
-
-      - name: Install wrk and tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wrk python3 python3-pip
-          pip3 install matplotlib numpy
-
-      - name: Run full performance benchmark
-        run: |
-          chmod +x build/dist/bin/benchmark_unified
-
-          # 启动服务器
-          build/dist/bin/benchmark_unified > /tmp/server.log 2>&1 &
-          SERVER_PID=$!
-          sleep 3
-
-          # 运行多种性能测试场景
-          echo "Running performance tests..." > performance.log
-
-          for test_id in 1 2 3 4 5 6 7 8; do
-            case $test_id in
-              1)
-                echo "Test 1: Low Concurrent (10 connections, 30s)" >> performance.log
-                wrk -t2 -c10 -d30s --timeout 10s http://localhost:18081/ >> performance.log 2>&1
-                ;;
-              2)
-                echo "Test 2: Medium Concurrent (50 connections, 30s)" >> performance.log
-                wrk -t4 -c50 -d30s --timeout 10s http://localhost:18081/ >> performance.log 2>&1
-                ;;
-              3)
-                echo "Test 3: High Concurrent (100 connections, 30s)" >> performance.log
-                wrk -t4 -c100 -d30s --timeout 10s http://localhost:18081/ >> performance.log 2>&1
-                ;;
-              4)
-                echo "Test 4: Extreme Concurrent (500 connections, 30s)" >> performance.log
-                wrk -t8 -c500 -d30s --timeout 10s http://localhost:18081/ >> performance.log 2>&1
-                ;;
-              5)
-                echo "Test 5: Very High Concurrent (1000 connections, 30s)" >> performance.log
-                wrk -t8 -c1000 -d30s --timeout 10s http://localhost:18081/ >> performance.log 2>&1
-                ;;
-              6)
-                echo "Test 6: Sustained Load (100 connections, 60s)" >> performance.log
-                wrk -t4 -c100 -d60s --timeout 10s http://localhost:18081/ >> performance.log 2>&1
-                ;;
-              7)
-                echo "Test 7: Small File Transfer" >> performance.log
-                wrk -t4 -c50 -d30s --timeout 10s http://localhost:18081/file/small.txt >> performance.log 2>&1
-                ;;
-              8)
-                echo "Test 8: Large File Transfer" >> performance.log
-                wrk -t4 -c50 -d30s --timeout 10s http://localhost:18081/file/large.bin >> performance.log 2>&1
-                ;;
-            esac
-            sleep 5
-          done
-
-          kill $SERVER_PID 2>/dev/null || true
-
-      - name: Parse performance results
-        run: |
-          python3 << 'EOF'
-          import re
-          import json
-
-          results = {}
-          current_test = None
-
-          with open('performance.log', 'r') as f:
-            for line in f:
-              if 'Test ' in line and ':' in line:
-                match = re.search(r'Test (\d+):', line)
-                if match:
-                  current_test = f'test_{match.group(1)}'
-                  results[current_test] = {'rps': 0, 'latency': 'N/A'}
-              elif 'Requests/sec:' in line and current_test:
-                match = re.search(r'Requests/sec:\s+([\d.]+)', line)
-                if match:
-                  results[current_test]['rps'] = float(match.group(1))
-              elif 'Latency' in line and 's' in line and current_test:
-                match = re.search(r'Latency\s+([\d.]+[a-z]+)', line)
-                if match:
-                  results[current_test]['latency'] = match.group(1)
-
-          with open('performance-results.json', 'w') as f:
-            json.dump({'results': results}, f, indent=2)
-
-          print(f"parsed={len(results)} tests")
-          EOF
-
-      - name: Generate performance trend report
-        run: |
-          cat > performance-trend.md << 'EOF'
-          # Nightly Performance Trend Report
-
-          - **Date**: ${{ github.event.head_commit.timestamp }}
-          - **Commit**: ${{ github.sha }}
-          - **Run**: #${{ github.run_number }}
-
-          ## Test Results
-
-          | Test | RPS | Latency |
-          |------|-----|---------|
-
-          EOF
-
-          # 添加测试结果表格
-          python3 << 'EOF'
-          import json
-
-          with open('performance-results.json', 'r') as f:
-              data = json.load(f)
-
-          test_names = {
-              'test_1': 'Low Concurrent (10)',
-              'test_2': 'Medium Concurrent (50)',
-              'test_3': 'High Concurrent (100)',
-              'test_4': 'Extreme Concurrent (500)',
-              'test_5': 'Very High Concurrent (1000)',
-              'test_6': 'Sustained Load',
-              'test_7': 'Small File',
-              'test_8': 'Large File'
-          }
-
-          with open('performance-trend.md', 'a') as f:
-              for test_id, result in data['results'].items():
-                  name = test_names.get(test_id, test_id)
-                  f.write(f"| {name} | {result['rps']:.2f} | {result['latency']} |\n")
-          EOF
-
-      - name: Upload performance artifacts
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: performance-full-nightly-${{ github.run_number }}
-          path: |
-            performance-results.json
-            performance-trend.md
-            performance.log
-          retention-days: 30
-
-  test-memory:
-    needs: [ubuntu-build-all]
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7.0.1
-        with:
-          submodules: recursive
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v8.0.1
-        with:
-          name: build-ubuntu-nightly-${{ github.run_number }}
-          path: build/
-
-      - name: Configure with AddressSanitizer
-        run: |
-          # Use the project's ENABLE_ASAN option (not raw -fsanitize flags) so
-          # CMake keeps debug symbols and does not strip the binaries, making
-          # ASan stack traces resolvable.
-          cmake -B build-asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON \
-            -DBUILD_WITH_STATIC_FILES=ON
-          cmake --build build-asan -j$(nproc)
-
-      - name: Run tests with AddressSanitizer
-        uses: ./.github/actions/run-tests
-        with:
-          build-dir: build-asan
-          test-type: memory
-          timeout: 120
-          parallel: 1
-
-      - name: Upload memory test results
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: memory-test-results-nightly-${{ github.run_number }}
-          path: |
-            build-asan/Testing/
-          retention-days: 30
-
   test-ubsan:
     needs: [ubuntu-build-all]
     runs-on: ubuntu-latest
@@ -534,7 +318,7 @@ jobs:
   # ========== 阶段 4: 生成总结 ==========
   
   generate-summary:
-    needs: [test-coverage, test-memory, test-ubsan, test-stress, performance-full]
+    needs: [test-coverage, test-ubsan, test-stress]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: always()
@@ -559,10 +343,8 @@ jobs:
           echo "| Category | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Coverage | ${{ needs.test-coverage.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Memory Test | ${{ needs.test-memory.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| UBSan Test | ${{ needs.test-ubsan.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Stress Test | ${{ needs.test-stress.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Performance | ${{ needs.performance-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Doc Sync Status" >> $GITHUB_STEP_SUMMARY
           echo "| File | Status |" >> $GITHUB_STEP_SUMMARY
@@ -570,8 +352,6 @@ jobs:
           for entry in $(python3 -c "import json; d=json.load(open('.vitepress/sync-status.json')); [print(f'{k}|{\"⚠️\" if v[\"outdated\"] else \"✅\"}') for k,v in d.items()]" 2>/dev/null); do
             echo "| $entry |" >> $GITHUB_STEP_SUMMARY
           done
-          echo "| Stress Test | ${{ needs.test-stress.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Performance | ${{ needs.performance-full.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
           echo "- [Coverage Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
@@ -594,7 +374,7 @@ jobs:
           if [ ! -f performance-trend.md ]; then
             echo "# Nightly Performance Trend" > performance-trend.md
             echo "" >> performance-trend.md
-            echo "（本次 run 未生成趋势数据，见 performance-full job 结果）" >> performance-trend.md
+            echo "（本次 run 未生成趋势数据；性能回归门禁见 ci-benchmark 的 release 触发结果）" >> performance-trend.md
           fi
 
       - name: Create nightly release
@@ -611,7 +391,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   create-issue-on-failure:
-    needs: [ubuntu-build-all, code-quality-full, security-scan-full, ubuntu-test-full, test-coverage, coverage-report, test-stress, performance-full, test-memory, test-ubsan, generate-summary]
+    needs: [ubuntu-build-all, security-scan-full, ubuntu-test-full, test-coverage, coverage-report, test-stress, test-ubsan, generate-summary]
     if: always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
