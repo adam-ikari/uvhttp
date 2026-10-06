@@ -618,6 +618,7 @@ static void uvhttp_free_write_data(uv_write_t* req, int status) {
  *
  * response->body_length is restored to its original value on every path.
  */
+#if UVHTTP_FEATURE_COMPRESSION
 /* After compression, a caller-set Content-Length no longer matches the bytes
  * actually sent (the body is now gzip). Update it in place to the compressed
  * length: build_response_headers' has_content_length gate then keeps the
@@ -635,6 +636,7 @@ static void uvhttp_response_sync_content_length(uvhttp_response_t* response,
         }
     }
 }
+#endif /* UVHTTP_FEATURE_COMPRESSION */
 static uvhttp_error_t uvhttp_response_prepare(
     uvhttp_response_t* response, char** out_headers, size_t* out_headers_len,
     const char** out_body, size_t* out_body_len, char** out_owned) {
