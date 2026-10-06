@@ -618,6 +618,25 @@ static void uvhttp_free_write_data(uv_write_t* req, int status) {
  *
  * response->body_length is restored to its original value on every path.
  */
+#if UVHTTP_FEATURE_COMPRESSION
+/* After compression, a caller-set Content-Length no longer matches the bytes
+ * actually sent (the body is now gzip). Update it in place to the compressed
+ * length: build_response_headers' has_content_length gate then keeps the
+ * caller's header position but with the correct value. Without this, a manual
+ * Content-Length combined with compression advertises the pre-compression
+ * size while sending the compressed body — clients frame-misalign (data
+ * corruption). */
+static void uvhttp_response_sync_content_length(uvhttp_response_t* response,
+                                                size_t new_len) {
+    for (size_t i = 0; i < response->header_count; i++) {
+        uvhttp_header_t* h = uvhttp_response_get_header_at(response, i);
+        if (h && strcasecmp(h->name, "Content-Length") == 0) {
+            snprintf(h->value, sizeof(h->value), "%zu", new_len);
+            return;
+        }
+    }
+}
+#endif /* UVHTTP_FEATURE_COMPRESSION */
 static uvhttp_error_t uvhttp_response_prepare(
     uvhttp_response_t* response, char** out_headers, size_t* out_headers_len,
     const char** out_body, size_t* out_body_len, char** out_owned) {
@@ -657,6 +676,7 @@ static uvhttp_error_t uvhttp_response_prepare(
             body_length = cached_len;
             response->body_length = cached_len;
             uvhttp_response_set_header(response, "Content-Encoding", "gzip");
+            uvhttp_response_sync_content_length(response, cached_len);
             UVHTTP_LOG_DEBUG(
                 "Response compressed (cache hit): %zu -> %zu bytes\n",
                 original_body_length, cached_len);
@@ -683,6 +703,7 @@ static uvhttp_error_t uvhttp_response_prepare(
                 uvhttp_response_set_header(response, "Content-Encoding",
                                            "gzip");
 
+                uvhttp_response_sync_content_length(response, compressed_len);
                 /* 缓存压缩结果（内部拷贝，不受 response 释放影响） */
                 if (response->gzip_cache) {
                     uvhttp_gzip_cache_put(
