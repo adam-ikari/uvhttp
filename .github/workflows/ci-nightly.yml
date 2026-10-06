@@ -8,6 +8,11 @@ name: CI/CD - Nightly Deep Test
 #   已移除与上述门禁重叠的 job：test-memory（重叠 pre-release 的 ASan 门禁）、
 #   performance-full（重叠 ci-benchmark 的 release 性能门禁）、
 #   code-quality-full（仅 echo 占位，且与 PR 的 cppcheck 重复）。
+#   另移除 ubuntu-test-full：它与 test-coverage 的 ctest 命令字面相同
+#   （run-tests 的 all 与 coverage 分支都是无过滤的
+#   `ctest --timeout 360 --schedule-random`，后者仅多一步 lcov --summary，
+#   且正常流程下 coverage.info 在 build 后尚不存在故 ctest 会执行），
+#   属同一全集跑两遍。
 # 触发条件：每日 UTC 0:00 运行，或手动触发
 on:
   schedule:
@@ -95,51 +100,6 @@ jobs:
   
   # ========== 阶段 2: 完整测试 ==========
   
-  ubuntu-test-full:
-    needs: [ubuntu-build-all]
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    outputs:
-      test-status: ${{ steps.test.outputs.status }}
-      test-total: ${{ steps.test.outputs.total }}
-      test-passed: ${{ steps.test.outputs.passed }}
-      test-failed: ${{ steps.test.outputs.failed }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7.0.1
-        with:
-          submodules: recursive
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v8.0.1
-        with:
-          name: build-ubuntu-nightly-${{ github.run_number }}
-          path: build/
-
-      - name: Set executable permissions
-        run: |
-          chmod +x build/dist/bin/* || true
-
-      - name: Run full tests
-        id: test
-        uses: ./.github/actions/run-tests
-        with:
-          build-dir: build
-          test-type: all
-          timeout: 180
-          parallel: $(nproc)
-
-      - name: Upload test logs
-        if: always()
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: test-logs-ubuntu-nightly-${{ github.run_number }}
-          path: build/Testing/
-          retention-days: 7
-
-  # ========== 阶段 3: 覆盖率报告 ==========
-
   test-coverage:
     needs: [ubuntu-build-all]
     runs-on: ubuntu-latest
@@ -391,7 +351,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   create-issue-on-failure:
-    needs: [ubuntu-build-all, security-scan-full, ubuntu-test-full, test-coverage, coverage-report, test-stress, test-ubsan, generate-summary]
+    needs: [ubuntu-build-all, security-scan-full, test-coverage, coverage-report, test-stress, test-ubsan, generate-summary]
     if: always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
