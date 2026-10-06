@@ -33,15 +33,18 @@
    - 运行 `scripts/ci/release_checklist.sh --pre`：本地可验证项全过才推进
 
 3. **创建预发布 Release**
-   - 创建 Git tag: `git tag v2.x.y`
-   - 推送 tag: `git push origin v2.x.y`
-   - 创建 pre-release: `gh release create v2.x.y --prerelease`
-   - **自动触发 ci-benchmark 回归门禁**（同机配对：head vs 上一个 release，10% 阈值）
-   - 门禁绿（CI 通过 / gate 通过）才可转正式
+  - 创建 Git tag: `git tag v2.x.y`
+  - 推送 tag: `git push origin v2.x.y`
+  - 创建 pre-release: `gh release create v2.x.y --prerelease`
+  - **自动触发两条门禁**：
+     - `ci-release-gate.yml`（完整测试：fast tests / 各配置矩阵测试 / ASan 内存安全）
+     - `ci-benchmark.yml`（性能回归门禁：同机配对，10% 阈值）
+  - 两条门禁全绿才可转正式
 
 ### 阶段二：正式发布
 
 4. **确认门禁**
+   - 确认 `ci-release-gate` 测试门禁为绿（完整测试：fast / 各配置 / ASan 内存安全）
    - 确认 benchmark 回归门禁为绿（PR 标签或 release 事件均触发 gate）
    - gate 以同一 runner 上 head/base 交替测量的比值判定（配对比值中位数 < 90% 且多数配对也在 90% 以下才失败）；绝对 RPS 基线只作为报告信息，不参与判定（GitHub runner 跨 run 方差约 40%，绝对阈值会 gate 到 runner 运气而非代码）
 
@@ -53,15 +56,15 @@
 
 ## 发布检查清单
 
-- [ ] 所有测试通过 (101/101)
-- [ ] ASan 零发现
-- [ ] UBSan 零发现
+- [ ] 本地 `make test` 通过（Release 全量，Debug 由 pre-release 门禁覆盖）
+- [ ] `make verify-memory-safety` 通过（ASan + UBSan）
 - [ ] 文档构建通过
 - [ ] CHANGELOG 已更新
 - [ ] VERSION 已更新
 - [ ] Git tag 已创建并推送
-- [ ] Benchmark 回归门禁通过（CI / gate 绿）
 - [ ] 预发布 Release 已创建（--prerelease）
+- [ ] **`ci-release-gate` 测试门禁通过**（fast / 各配置 / ASan 内存安全）
+- [ ] Benchmark 回归门禁通过（CI / gate 绿）
 - [ ] 正式 Release 已确认（--latest）
 - [ ] 网站已部署
 

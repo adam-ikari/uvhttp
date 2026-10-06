@@ -1,0 +1,225 @@
+name: CI - Pre-Release Test Gate
+
+# 发布前完整测试门禁：仅在创建 pre-release 时触发
+# （gh release create vX.Y.Z --prerelease），以及手动触发。
+#
+# 背景：PR 阶段（ci-pr.yml）只做编译 + 质量 + 裁剪配置编译验证，不跑测试——
+# 避免每次 PR 都重复跑完整测试矩阵浪费 CI 资源。完整测试（fast tests /
+# 各配置测试 / ASan 内存安全）集中在此，pre-release 必须全绿才能转正式发布。
+#
+# PR 阶段保留裁剪配置编译（build-matrix）的原因：compile-time feature 裁剪
+# 是本项目的高危面（各 feature 有独立 #if 路径，裁剪后才发现编译错已太晚，
+# e.g. PR #464 的 unused-function 只在 COMPRESSION=OFF 暴露）。编译验证 ≠ 测试。
+on:
+  release:
+    types: [prerelease]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # ========== 编译 ==========
+  ubuntu-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      build-status: ${{ steps.build.outputs.status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          submodules: recursive
+
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+        with:
+          os: ubuntu-latest
+
+      - name: Cache dependencies
+        uses: ./.github/actions/cache-deps
+        with:
+          cache-key: release-${{ github.event.release.tag_name || github.run_id }}
+          build-type: Release
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
+
+      - name: Build project
+        id: build
+        run: |
+          cd build && make -j$(nproc)
+          echo "status=success" >> $GITHUB_OUTPUT
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: build-release-${{ github.event.release.tag_name || github.run_id }}
+          path: build/dist/
+          retention-days: 7
+
+  # ========== 快速测试（默认配置） ==========
+  ubuntu-test-fast:
+    needs: [ubuntu-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      test-status: ${{ steps.test.outputs.status }}
+      test-total: ${{ steps.test.outputs.total }}
+      test-passed: ${{ steps.test.outputs.passed }}
+      test-failed: ${{ steps.test.outputs.failed }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          submodules: recursive
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: build-release-${{ github.event.release.tag_name || github.run_id }}
+          path: build/
+
+      - name: Set executable permissions
+        run: |
+          chmod +x build/dist/bin/* || true
+
+      - name: Run fast tests
+        id: test
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build
+          test-type: fast
+          timeout: 60
+          parallel: $(nproc)
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: test-logs-release-${{ github.event.release.tag_name || github.run_id }}
+          path: build/Testing/
+          retention-days: 7
+
+  # ========== 各配置矩阵（编译 + 测试） ==========
+  build-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: all-on
+            flags: "-DBUILD_WITH_STATIC_FILES=ON -DBUILD_WITH_ROUTER_CACHE=ON"
+            run-tests: true
+          - name: minimal
+            description: "核心 HTTP/1.1 最小化（验证编译时裁剪）"
+            flags: "-DBUILD_WITH_WEBSOCKET=OFF -DBUILD_WITH_HTTPS=OFF -DBUILD_WITH_STATIC_FILES=OFF -DBUILD_WITH_LRU_CACHE=OFF -DBUILD_WITH_COMPRESSION=OFF"
+            run-tests: false
+          - name: router-cache
+            flags: "-DBUILD_WITH_ROUTER_CACHE=ON"
+            run-tests: true
+          - name: static-files
+            flags: "-DBUILD_WITH_STATIC_FILES=ON"
+            run-tests: true
+          - name: no-compression
+            flags: "-DBUILD_WITH_COMPRESSION=OFF"
+            run-tests: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          submodules: recursive
+
+      - name: Setup build environment
+        uses: ./.github/actions/setup-build
+        with:
+          os: ubuntu-latest
+
+      - name: Configure CMake (${{ matrix.config.name }})
+        run: |
+          cmake -B build-${{ matrix.config.name }} \
+            -DCMAKE_BUILD_TYPE=Release \
+            ${{ matrix.config.flags }}
+
+      - name: Build (${{ matrix.config.name }})
+        run: |
+          cd build-${{ matrix.config.name }} && make -j$(nproc)
+
+      - name: Run fast tests (${{ matrix.config.name }})
+        if: matrix.config.run-tests
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build-${{ matrix.config.name }}
+          test-type: fast
+          timeout: 60
+          parallel: $(nproc)
+
+  # ========== ASan 内存安全门禁 ==========
+  # 内存安全是不可回退的不变量。此处跑完整 ASan 套件（此前 PR 阶段只跑快速
+  # 子集，现全部集中到 pre-release）。完整 ASan+UBSan 仍由 ci-nightly.yml 覆盖。
+  asan-gate:
+    needs: [ubuntu-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          submodules: recursive
+
+      - name: Configure with AddressSanitizer
+        run: |
+          # ENABLE_ASAN keeps debug symbols (no strip) so findings are debuggable.
+          # BUILD_WITH_STATIC_FILES=ON is required for coverage, not optional
+          # tuning. It defaults to OFF, which left src/uvhttp_static.c and
+          # src/uvhttp_lru_cache.c out of the build entirely — so the ASan gate
+          # never saw uvhttp_static_resolve_safe_path (the path-traversal
+          # guard), and the 8 static/LRU test binaries ran 0 test cases while
+          # still reporting PASS. Turning it on immediately surfaced three real
+          # defects the gate had been blind to (PR #449).
+          cmake -B build-asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON \
+            -DBUILD_WITH_STATIC_FILES=ON
+          cmake --build build-asan -j$(nproc)
+
+      - name: Run tests under ASan (memory-safety gate)
+        uses: ./.github/actions/run-tests
+        with:
+          build-dir: build-asan
+          test-type: memory
+          timeout: 120
+          parallel: 1
+
+      - name: Upload ASan test results
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: asan-gate-release-${{ github.event.release.tag_name || github.run_id }}
+          path: build-asan/Testing/
+          retention-days: 7
+
+  # ========== 汇总 ==========
+  generate-summary:
+    needs: [ubuntu-build, ubuntu-test-fast, build-matrix, asan-gate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## 🧪 Pre-Release Test Gate" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.ubuntu-build.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Fast Tests (default) | ${{ needs.ubuntu-test-fast.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Matrix (per-config tests) | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ASan memory-safety | ${{ needs.asan-gate.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Tests: ${{ needs.ubuntu-test-fast.outputs.test-passed || 'N/A' }} passed / ${{ needs.ubuntu-test-fast.outputs.test-total || 'N/A' }} total" >> $GITHUB_STEP_SUMMARY
