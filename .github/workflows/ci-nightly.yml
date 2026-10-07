@@ -45,7 +45,7 @@ jobs:
 
       - name: Configure CMake with coverage
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON -DBUILD_WITH_STATIC_FILES=ON
+          cmake -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON -DBUILD_WITH_STATIC_FILES=ON -DBUILD_WITH_ROUTER_CACHE=ON
 
       - name: Build with coverage
         run: |
@@ -256,7 +256,7 @@ jobs:
           # Same reason as the ASan job above — STATIC_FILES=ON so
           # uvhttp_static.c is actually compiled under UBSan. See PR #449.
           cmake -B build-ubsan -DCMAKE_BUILD_TYPE=Debug -DENABLE_UBSAN=ON \
-            -DBUILD_WITH_STATIC_FILES=ON
+            -DBUILD_WITH_STATIC_FILES=ON -DBUILD_WITH_ROUTER_CACHE=ON
           cmake --build build-ubsan -j$(nproc)
 
       - name: Run tests with UndefinedBehaviorSanitizer
