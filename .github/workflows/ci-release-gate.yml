@@ -184,7 +184,7 @@ jobs:
           # still reporting PASS. Turning it on immediately surfaced three real
           # defects the gate had been blind to (PR #449).
           cmake -B build-asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON \
-            -DBUILD_WITH_STATIC_FILES=ON
+            -DBUILD_WITH_STATIC_FILES=ON -DBUILD_WITH_ROUTER_CACHE=ON
           cmake --build build-asan -j$(nproc)
 
       - name: Run tests under ASan (memory-safety gate)
