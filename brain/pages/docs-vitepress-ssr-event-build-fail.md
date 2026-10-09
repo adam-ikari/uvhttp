@@ -5,51 +5,63 @@ category: project
 status: active
 tags: [docs, ci, vitepress]
 created: "2026-10-02T10:31:34"
-updated: "2026-10-02T10:31:59"
+updated: "2026-10-02T15:02:34"
 ---
 
 <!-- compiled_truth -->
-# VitePress 文档构建失败
+# VitePress 文档构建失败（已修复）
 
-## 结论
+## 状态
 
-`npm run docs:build` 在 main 上持续失败，`deploy-docs.yml` 最近 12 次运行
-失败 10 次。**与 v2.9.2 发布内容无关**——最早失败发生在 #433（ROADMAP 重写），
-早于本轮全部测试 PR。
+**已修复** — PR #446（2026-10-02）。`npm run docs:build` 成功。
 
-## 现象
+## 根因
+
+v2.9.1 发布准备（#421）在 CHANGELOG 里写了 GitHub Actions 表达式
+`${{ github.event.before }}`。VitePress 把 Markdown 编译成 Vue 模板，
+**行内代码中的 `{{ ... }}` 不被转义**，被 Vue 当模板插值求值——
+`github` 未定义 → 读取 `.event` 报错：
 
 ```
 TypeError: Cannot read properties of undefined (reading 'event')
-    at _sfc_ssrRender (.vitepress/.temp/guide_CHANGELOG.md.js:7:7496)
-    at renderComponentSubTree (@vue/server-renderer)
+    at _sfc_ssrRender (.vitepress/.temp/guide_CHANGELOG.md.js)
 ```
 
-CI（Node 18）与本地（Node 22 / Node 24）报同一个错。
+`deploy-docs.yml` 自 v2.9.1 起连续失败 10 次。
 
-## 已排除的原因
+## 关键区分
 
-1. **不是 CHANGELOG 内容**：把 `docs/guide/CHANGELOG.md` 换成 3 行极简内容、
-   清空 `.vitepress/cache` `.vitepress/dist` `.vitepress/.temp` 后仍失败。
-2. **不是 Node 版本**：Node 18（CI）/ 22 / 24 均失败。
-3. **不是本次发布改动**：`git stash push docs/` 移除全部 docs 改动后仍失败。
-4. **报错栈指向 CHANGELOG 具误导性**：该页内容换成极简后仍报同一栈。
+**围栏代码块内的 `{{ }}` 会被 markdown-it 转义，Vue 不插值** ——
+`dev/CI_CD_DESIGN.md`、`dev/DEVELOPMENT_PLAN.md` 等文件里大量
+`${{ github.* }}` 写法是安全的。
 
-## 可疑点（未验证）
+**只有行内代码（单反引号）会触发。**
 
-`docs/.vitepress/components/VersionSelect.vue` 的
-`handleVersionChange(event: Event)` 里访问 `event.target`。SSR 阶段事件对象
-为 undefined。需确认该组件是否被 CHANGELOG 页面的 layout 引入。
+## 排查方法（下次遇到同类问题照此做）
 
-## 排查困难点
+1. `gh run list --workflow=deploy-docs.yml` 找最后一次成功与第一次
+   失败的 headSha——比直接猜模板片段可靠得多
+2. 在主仓库 `git checkout <sha>` 逐提交构建，**每个提交前必须清空**
+   `.vitepress/cache` `.vitepress/dist` `.vitepress/.temp`
+3. 二分结果定位到 `970146b`（该区间唯一改动 `docs/` 的提交）
 
-VitePress 构建结束会删除 `.vitepress/.temp/`，无法在构建后读编译产物定位
-`7:7496` 对应的模板片段。可行做法：构建过程中并发抓取该文件，或临时改
-VitePress 配置保留 temp 目录。
+之前卡住的「报错栈指向 CHANGELOG 但内容换成极简仍失败」是**缓存未清**
+造成的假象，不是线索误导。
 
-## 影响
+## 修复方案
 
-文档站点无法自动部署。不阻塞 GitHub Release 本身。
+✅ `<span v-pre>`\`\`${{ ... }}\`\`\`</span> —— `v-pre` 让 Vue 跳过该元素的
+模板编译，markdown-it 仍正常把反引号解析为 `<code>`。渲染输出：
+
+    <span><code>${{ github.event.before }}</code></span>
+
+❌ `&#123;&#123;` 实体 —— markdown-it 会二次转义成 `&amp;#123;`，
+页面显示字面量而非 `{{`。
+
+## 教训
+
+文档里写 GitHub Actions 表达式时，行内代码中的 `${{ }}` 必须用
+`v-pre` 包裹；围栏代码块内则安全。
 
 
 ## Timeline
@@ -64,4 +76,16 @@ VitePress 配置保留 temp 目录。
   kind: decision
   summary: Rewrote compiled_truth to the new best understanding
   source: "v2.9.2 发布前排查 2026-10-02"
+  affects: [docs-vitepress-ssr-event-build-fail]
+
+- time: 2026-10-02T15:02:00
+  kind: reversal
+  summary: "文档构建失败已修复（#446）：根因是 CHANGELOG 行内代码中的 ${{ }} 被 Vue 当模板插值求值，github 未定义致读取 .event 报错；用 <span v-pre> 包裹修复。二分定位：逐提交构建，970146b（v2.9.1 发布准备）是引入点。围栏代码块内的 {{ }} 安全，只有行内代码会触发。"
+  source: "v2.9.2 发布后修复，PR #446"
+  affects: [docs-vitepress-ssr-event-build-fail]
+
+- time: 2026-10-02T15:02:34
+  kind: decision
+  summary: Rewrote compiled_truth to the new best understanding
+  source: "修复后更新 2026-10-02，PR #446"
   affects: [docs-vitepress-ssr-event-build-fail]
