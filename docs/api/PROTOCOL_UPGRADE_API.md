@@ -490,7 +490,7 @@ int main() {
     uvhttp_router_t* router = NULL;
     uvhttp_router_new(&router);
     uvhttp_router_add_route(router, "/", http_handler);
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     
     // 5. 注册 IPPS 协议升级
     uvhttp_server_register_protocol_upgrade(

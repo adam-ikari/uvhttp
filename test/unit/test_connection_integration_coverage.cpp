@@ -65,7 +65,7 @@ static int setup_server(uv_loop_t* loop, uvhttp_server_t** server) {
     uvhttp_router_new(&router);
     if (router) {
         uvhttp_router_add_route(router, "/test", test_handler);
-        uvhttp_server_set_router(*server, router);
+        uvhttp_server_take_router(*server, router);
     }
 
     err = uvhttp_server_listen(*server, "127.0.0.1", 0);

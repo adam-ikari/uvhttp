@@ -840,7 +840,7 @@ int main(void) {
     uvhttp_router_t* router = NULL;
     uvhttp_router_new(&router);
     uvhttp_router_add_route(router, "/", home_handler);
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     
     uvhttp_error_t result = uvhttp_server_listen(server, "0.0.0.0", 8080);
     if (result != UVHTTP_OK) {

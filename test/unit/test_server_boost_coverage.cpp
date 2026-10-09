@@ -93,7 +93,7 @@ TEST_F(ServerSetFunctionsTest, SetRouter_ValidServer) {
     ASSERT_EQ(rerr, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
 
-    uvhttp_error_t err = uvhttp_server_set_router(server, router);
+    uvhttp_error_t err = uvhttp_server_take_router(server, router);
     EXPECT_EQ(err, UVHTTP_OK);
     EXPECT_EQ(server->router, router);
 
@@ -102,18 +102,18 @@ TEST_F(ServerSetFunctionsTest, SetRouter_ValidServer) {
 }
 
 TEST_F(ServerSetFunctionsTest, SetRouter_NullServer) {
-    uvhttp_error_t err = uvhttp_server_set_router(server, nullptr);
+    uvhttp_error_t err = uvhttp_server_take_router(server, nullptr);
     // NULL router is a valid operation (clears router)
     EXPECT_EQ(err, UVHTTP_OK);
 }
 
 TEST_F(ServerSetFunctionsTest, SetContext_ValidServer) {
-    uvhttp_error_t err = uvhttp_server_set_context(server, nullptr);
+    uvhttp_error_t err = uvhttp_server_take_context(server, nullptr);
     EXPECT_EQ(err, UVHTTP_OK);
 }
 
 TEST_F(ServerSetFunctionsTest, SetContext_NullServer) {
-    uvhttp_error_t err = uvhttp_server_set_context(nullptr, nullptr);
+    uvhttp_error_t err = uvhttp_server_take_context(nullptr, nullptr);
     EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
 }
 
@@ -313,17 +313,17 @@ TEST_F(BuilderAPITest, SetMaxBodySize_Valid) {
 // --- Convenient request parameter access ---
 
 TEST_F(BuilderAPITest, GetParam_NullRequest) {
-    const char* result = uvhttp_get_param(nullptr, "key");
+    const char* result = uvhttp_request_get_query_param(nullptr, "key");
     EXPECT_EQ(result, nullptr);
 }
 
 TEST_F(BuilderAPITest, GetHeader_NullRequest) {
-    const char* result = uvhttp_get_header(nullptr, "Content-Type");
+    const char* result = uvhttp_request_get_header(nullptr, "Content-Type");
     EXPECT_EQ(result, nullptr);
 }
 
 TEST_F(BuilderAPITest, GetBody_NullRequest) {
-    const char* result = uvhttp_get_body(nullptr);
+    const char* result = uvhttp_request_get_body(nullptr);
     EXPECT_EQ(result, nullptr);
 }
 
@@ -1887,7 +1887,7 @@ TEST_F(TcpHttpCycleTest, FullHttpRequestResponseCycle) {
     ASSERT_EQ(rerr, UVHTTP_OK);
 
     // Attach router to server
-    uvhttp_error_t serr = uvhttp_server_set_router(server, router);
+    uvhttp_error_t serr = uvhttp_server_take_router(server, router);
     ASSERT_EQ(serr, UVHTTP_OK);
 
     // Listen on port 0 (OS assigns random port)
@@ -2206,7 +2206,7 @@ TEST_F(TcpHttpCycleTest, SendResponseData_DirectCall_WithRealConnection) {
                                            send_data_direct_handler);
     ASSERT_EQ(rerr, UVHTTP_OK);
 
-    uvhttp_error_t serr = uvhttp_server_set_router(server, router);
+    uvhttp_error_t serr = uvhttp_server_take_router(server, router);
     ASSERT_EQ(serr, UVHTTP_OK);
 
     serr = uvhttp_server_listen(server, "127.0.0.1", 0);
@@ -2322,7 +2322,7 @@ TEST_F(TcpHttpCycleTest, ResponseSendRaw_KeepAlive0_SetsConnKeepAlive) {
                                            keepalive_close_handler);
     ASSERT_EQ(rerr, UVHTTP_OK);
 
-    uvhttp_error_t serr = uvhttp_server_set_router(server, router);
+    uvhttp_error_t serr = uvhttp_server_take_router(server, router);
     ASSERT_EQ(serr, UVHTTP_OK);
 
     serr = uvhttp_server_listen(server, "127.0.0.1", 0);

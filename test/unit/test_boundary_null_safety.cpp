@@ -282,7 +282,7 @@ TEST(UvhttpHealthCheckTest, EnableOnExistingRouter) {
 
     uvhttp_router_t* router = NULL;
     uvhttp_router_new(&router);
-    uvhttp_server_set_router(srv, router);
+    uvhttp_server_take_router(srv, router);
 
     uvhttp_error_t err = uvhttp_server_enable_health_check(srv, "/healthz");
     EXPECT_EQ(err, UVHTTP_OK);

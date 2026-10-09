@@ -862,7 +862,7 @@ int main(int argc, char* argv[]) {
 
     /* Set server context */
     g_signal_server = server;
-    uvhttp_error_t result = uvhttp_server_set_context(server, NULL);
+    uvhttp_error_t result = uvhttp_server_take_context(server, NULL);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Warning: Failed to set server context: %s\n", uvhttp_error_string(result));
     }

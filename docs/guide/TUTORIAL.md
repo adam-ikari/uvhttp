@@ -144,7 +144,7 @@ int main() {
     // Create a router
     uvhttp_router_t* router = NULL;
     uvhttp_router_new(&router);
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
 
     // Add a route
     uvhttp_router_add_route(router, "/", hello_handler);
@@ -367,7 +367,7 @@ int main() {
     uvhttp_router_add_route(router, "/about", about_handler);
     uvhttp_router_add_route(router, "/api", api_handler);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
 
     printf("Server running at http://localhost:8080\n");
@@ -442,7 +442,7 @@ int main() {
     // Add a route with a parameter
     uvhttp_router_add_route(router, "/user/*", user_handler);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
 
     printf("Server running at http://localhost:8080\n");
@@ -541,7 +541,7 @@ int main() {
     uvhttp_router_add_route(router, "/resource", put_handler);
     uvhttp_router_add_route(router, "/resource", delete_handler);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
 
     printf("Server running at http://localhost:8080\n");
@@ -630,7 +630,7 @@ int main() {
     uvhttp_router_add_route(router, "/public", public_handler);
     uvhttp_router_add_route(router, "/protected", protected_handler);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
 
     printf("Server running at http://localhost:8080\n");
@@ -712,7 +712,7 @@ int main() {
     uvhttp_router_add_route(router, "/api/v2/users", api_v2_users_handler);
     uvhttp_router_add_route(router, "/api/v2/posts", api_v2_posts_handler);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
 
     printf("Server running at http://localhost:8080\n");
@@ -802,7 +802,7 @@ int main() {
 
     uvhttp_router_add_route(router, "/headers", headers_handler);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
 
     printf("Server running at http://localhost:8080\n");
@@ -894,7 +894,7 @@ int main() {
     uvhttp_router_add_route(router, "/api/json", json_post_handler);
     uvhttp_router_add_route(router, "/api/upload", upload_handler);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
 
     printf("Server running at http://localhost:8080\n");
@@ -1019,7 +1019,7 @@ int main() {
     uvhttp_router_add_route(router, "/", home_handler);
     uvhttp_router_add_route(router, "/static/*", static_file_handler);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
 
     printf("\n========================================\n");
@@ -1181,7 +1181,7 @@ int main() {
 
     uvhttp_router_add_route(router, "/api", api_handler);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
 
     printf("Server running at http://localhost:8080\n");
@@ -1263,7 +1263,7 @@ int main() {
     uvhttp_router_add_route(router, "/stream", stream_handler);
     uvhttp_router_add_route(router, "/sse", sse_handler);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
 
     printf("Server running at http://localhost:8080\n");
@@ -1364,7 +1364,7 @@ app_context_t* app_context_create(uv_loop_t* loop, const char* name) {
     }
 
     // Set the router
-    uvhttp_server_set_router(ctx->server, ctx->router);
+    uvhttp_server_take_router(ctx->server, ctx->router);
 
     // Set the context into the event loop
     loop->data = ctx;
@@ -1604,7 +1604,7 @@ void* worker_thread_func(void* arg) {
     uvhttp_router_t* router = NULL;
     uvhttp_router_new(&router);
     uvhttp_router_add_route(router, "/", request_handler);
-    uvhttp_server_set_router(worker->server, router);
+    uvhttp_server_take_router(worker->server, router);
 
     // Start listening (each thread listens on a different port)
     int port = PORT_BASE + worker->thread_id;
@@ -1891,7 +1891,7 @@ int main() {
     uvhttp_router_add_route(router, "/api/users", get_users_handler);
     uvhttp_router_add_route(router, "/api/users", create_user_handler);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
 
     printf("Server running at http://localhost:8080\n");
@@ -2042,7 +2042,7 @@ int main() {
 
     uvhttp_router_add_route(router, "/api", api_handler);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
 
     printf("Server running at http://localhost:8080\n");
@@ -2244,7 +2244,7 @@ int main() {
     uvhttp_router_add_route(router, "/", load_balance_handler);
     uvhttp_router_add_route(router, "/health", health_check_handler);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
 
     printf("Load balancer running at http://localhost:8080\n");
@@ -2473,7 +2473,7 @@ uvhttp_server_t* server = NULL;
 uvhttp_server_new(loop, &server);
 uvhttp_router_t* router = NULL;
 uvhttp_router_new(&router);
-uvhttp_server_set_router(server, router);
+uvhttp_server_take_router(server, router);
 
 uvhttp_router_add_route(router, "/", handler);
 uvhttp_server_listen(server, "0.0.0.0", 8080);

@@ -162,34 +162,27 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    if (uvhttp_server_new(loop, &g_app.server) != UVHTTP_OK) {
-        fprintf(stderr, "error: cannot create uvhttp server\n");
+    /* Atomic construction: server + routes + listen in one call.
+     *
+     * Before v2.10 this was five calls with a hand-written rollback per
+     * failure. The listen-failure branch called uvhttp_router_free on a
+     * router the server already owned (take_router transfers ownership) and
+     * then uvhttp_server_free freed it again - a double free.
+     * uvhttp_server_listen_routes has no partial state, so there is nothing
+     * to roll back. */
+    const uvhttp_route_t routes[] = {
+        {"/", UVHTTP_ANY, hello_handler},
+    };
+    if (uvhttp_server_listen_routes(loop, routes, 1, "0.0.0.0", port,
+                                    &g_app.server) != UVHTTP_OK) {
+        fprintf(stderr, "error: cannot start server on 0.0.0.0:%d\n", port);
         return 1;
     }
-    if (uvhttp_router_new(&g_app.router) != UVHTTP_OK) {
-        fprintf(stderr, "error: cannot create router\n");
-        uvhttp_server_free(g_app.server);
-        return 1;
-    }
-    if (uvhttp_router_add_route(g_app.router, "/", hello_handler) != UVHTTP_OK) {
-        fprintf(stderr, "error: cannot add route /\n");
-        uvhttp_router_free(g_app.router);
-        uvhttp_server_free(g_app.server);
-        return 1;
-    }
-    uvhttp_server_set_router(g_app.server, g_app.router);
 
     uv_signal_init(loop, &g_sigint);
     uv_signal_start(&g_sigint, on_signal, SIGINT);
     uv_signal_init(loop, &g_sigterm);
     uv_signal_start(&g_sigterm, on_signal, SIGTERM);
-
-    if (uvhttp_server_listen(g_app.server, "0.0.0.0", port) != UVHTTP_OK) {
-        fprintf(stderr, "error: cannot listen on 0.0.0.0:%d\n", port);
-        uvhttp_router_free(g_app.router);
-        uvhttp_server_free(g_app.server);
-        return 1;
-    }
 
     printf("Embedded uvhttp listening on http://0.0.0.0:%d\n", port);
     printf("Test: curl http://localhost:%d/\n", port);

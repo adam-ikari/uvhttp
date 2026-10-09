@@ -58,8 +58,8 @@ connection management.
   - `UVHTTP_ERROR_INVALID_PARAM`: `server` or `handler` is NULL
 - **Thread safety**: Not thread-safe.
 
-### uvhttp_server_set_router
-- **Signature**: `uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server, uvhttp_router_t* router)`
+### uvhttp_server_take_router
+- **Signature**: `uvhttp_error_t uvhttp_server_take_router(uvhttp_server_t* server, uvhttp_router_t* router)`
 - **Purpose**: Attach a router for path-based request dispatching
 - **Preconditions**: `server` must be valid. `router` must be a valid router.
 - **Postconditions**: `server->router` is set. The server does not own the router; the caller must free it after the server.

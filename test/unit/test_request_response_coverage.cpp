@@ -1042,7 +1042,7 @@ TEST_F(RequestCoverageTest, Router_NoMatch_404Response) {
     ASSERT_EQ(uvhttp_router_add_route_method(router, "/other", UVHTTP_GET,
                                               cov_route_handler),
               UVHTTP_OK);
-    ASSERT_EQ(uvhttp_server_set_router(server, router), UVHTTP_OK);
+    ASSERT_EQ(uvhttp_server_take_router(server, router), UVHTTP_OK);
 
     const char* raw = "GET /nonexistent HTTP/1.1\r\nHost: x\r\n\r\n";
     int rc = Execute(raw);
@@ -1059,7 +1059,7 @@ TEST_F(RequestCoverageTest, Router_Match_HandlerCalled) {
     ASSERT_EQ(uvhttp_router_add_route_method(router, "/api/test", UVHTTP_GET,
                                               cov_route_handler),
               UVHTTP_OK);
-    ASSERT_EQ(uvhttp_server_set_router(server, router), UVHTTP_OK);
+    ASSERT_EQ(uvhttp_server_take_router(server, router), UVHTTP_OK);
 
     const char* raw = "GET /api/test HTTP/1.1\r\nHost: x\r\n\r\n";
     int rc = Execute(raw);

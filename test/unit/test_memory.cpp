@@ -68,7 +68,7 @@ TEST(MemoryTest, ServerMemoryUsage) {
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
 
     uvhttp_server_free(server);
     /* router 已被 server 释放，不需要再释放 */
@@ -98,7 +98,7 @@ TEST(MemoryTest, MultipleServerCreation) {
         ASSERT_NE(router, nullptr);
         ASSERT_NE(router, nullptr);
 
-        uvhttp_server_set_router(server, router);
+        uvhttp_server_take_router(server, router);
 
         result = uvhttp_server_listen(server, "127.0.0.1", 0);
         ASSERT_EQ(result, UVHTTP_OK);

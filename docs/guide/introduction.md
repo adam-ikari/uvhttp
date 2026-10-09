@@ -223,7 +223,7 @@ int main() {
     // Create router
     uvhttp_router_t* router = NULL;
     uvhttp_router_new(&router);
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     
     // Add route
     uvhttp_router_add_route(router, "/hello", hello_handler);

@@ -28,7 +28,7 @@ TEST(UvhttpServerSimpleHandlersTest, GetParam) {
     request.path = request.url;
 
     /* 获取参数 */
-    const char* param = uvhttp_get_param(&request, "name");
+    const char* param = uvhttp_request_get_query_param(&request, "name");
     /* probe 实测正常返回。去掉 if(param) 守卫——param 为 NULL 时应显式
      * 失败而非跳过断言（恒绿假阳性）。 */
     ASSERT_NE(param, nullptr);
@@ -37,7 +37,7 @@ TEST(UvhttpServerSimpleHandlersTest, GetParam) {
 
 /* 测试获取参数 NULL 请求 */
 TEST(UvhttpServerSimpleHandlersTest, GetParamNullRequest) {
-    const char* param = uvhttp_get_param(NULL, "name");
+    const char* param = uvhttp_request_get_query_param(NULL, "name");
     EXPECT_EQ(param, nullptr);
 }
 
@@ -46,7 +46,7 @@ TEST(UvhttpServerSimpleHandlersTest, GetParamNullName) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
 
-    const char* param = uvhttp_get_param(&request, NULL);
+    const char* param = uvhttp_request_get_query_param(&request, NULL);
     EXPECT_EQ(param, nullptr);
 }
 
@@ -67,14 +67,14 @@ TEST(UvhttpServerSimpleHandlersTest, GetHeader) {
     ASSERT_EQ(
         uvhttp_request_add_header(&request, "Content-Type", "application/json"),
         UVHTTP_OK);
-    const char* header = uvhttp_get_header(&request, "Content-Type");
+    const char* header = uvhttp_request_get_header(&request, "Content-Type");
     ASSERT_NE(header, nullptr);
     EXPECT_STREQ(header, "application/json");
 }
 
 /* 测试获取请求头 NULL 请求 */
 TEST(UvhttpServerSimpleHandlersTest, GetHeaderNullRequest) {
-    const char* header = uvhttp_get_header(NULL, "Content-Type");
+    const char* header = uvhttp_request_get_header(NULL, "Content-Type");
     EXPECT_EQ(header, nullptr);
 }
 
@@ -83,7 +83,7 @@ TEST(UvhttpServerSimpleHandlersTest, GetHeaderNullName) {
     uvhttp_request_t request;
     memset(&request, 0, sizeof(request));
 
-    const char* header = uvhttp_get_header(&request, NULL);
+    const char* header = uvhttp_request_get_header(&request, NULL);
     EXPECT_EQ(header, nullptr);
 }
 
@@ -98,13 +98,13 @@ TEST(UvhttpServerSimpleHandlersTest, GetBody) {
     request.body_length = strlen(body);
 
     /* 获取请求体 */
-    const char* body_content = uvhttp_get_body(&request);
+    const char* body_content = uvhttp_request_get_body(&request);
     ASSERT_NE(body_content, nullptr);
     EXPECT_STREQ(body_content, "Test body content");
 }
 
 /* 测试获取请求体 NULL 请求 */
 TEST(UvhttpServerSimpleHandlersTest, GetBodyNullRequest) {
-    const char* body = uvhttp_get_body(NULL);
+    const char* body = uvhttp_request_get_body(NULL);
     EXPECT_EQ(body, nullptr);
 }

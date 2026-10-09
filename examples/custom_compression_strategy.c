@@ -306,12 +306,13 @@ int main(int argc, char* argv[]) {
     uvhttp_router_add_route(router, "/strategy3", handler_strategy_3);
     uvhttp_router_add_route(router, "/convenient", handler_convenient);
     
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
 
     /* 启动服务器 */
     if (uvhttp_server_listen(server, "0.0.0.0", port) != UVHTTP_OK) {
         fprintf(stderr, "Failed to start server\n");
-        uvhttp_router_free(router);
+        /* router 已通过 take_router 交给 server，只需释放 server。
+         * 再调 uvhttp_router_free(router) 是二次释放。 */
         uvhttp_server_free(server);
         return 1;
     }

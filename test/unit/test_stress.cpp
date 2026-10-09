@@ -75,8 +75,8 @@ static void setup_stress_server() {
     // 添加路由
     uvhttp_router_add_route(router, "/", simple_handler);
 
-    result = uvhttp_server_set_router(g_stress_server, router);
-    ASSERT_EQ(result, UVHTTP_OK) << "uvhttp_server_set_router failed: " << result;
+    result = uvhttp_server_take_router(g_stress_server, router);
+    ASSERT_EQ(result, UVHTTP_OK) << "uvhttp_server_take_router failed: " << result;
 
     result = uvhttp_server_listen(g_stress_server, STRESS_TEST_HOST, g_stress_test_port);
     ASSERT_EQ(result, UVHTTP_OK) << "uvhttp_server_listen failed: " << result << " (port: " << g_stress_test_port << ")";

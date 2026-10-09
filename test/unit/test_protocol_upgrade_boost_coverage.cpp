@@ -532,7 +532,7 @@ TEST_F(ConnectionHelperTest, GetFd_WithAcceptedConnection_ReturnsValidFd) {
     rerr = uvhttp_router_add_route_method(router, "/test", UVHTTP_GET,
                                             fd_peeraddr_handler);
     ASSERT_EQ(rerr, UVHTTP_OK);
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
 
     // Listen on port 0
     uvhttp_error_t serr = uvhttp_server_listen(server, "127.0.0.1", 0);
@@ -614,7 +614,7 @@ TEST_F(ConnectionHelperTest, GetPeerAddress_WithAcceptedConnection_ReturnsAddr) 
     rerr = uvhttp_router_add_route_method(router, "/test", UVHTTP_GET,
                                             fd_peeraddr_handler);
     ASSERT_EQ(rerr, UVHTTP_OK);
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
 
     // Listen on port 0
     uvhttp_error_t serr = uvhttp_server_listen(server, "127.0.0.1", 0);

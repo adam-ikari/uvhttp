@@ -129,7 +129,7 @@ TEST_F(ListenWithContextConfigTest, Listen_WithContextConfigBacklog) {
     uvhttp_config_set_current(context, config);
 
     // Set the context on the server
-    err = uvhttp_server_set_context(server, context);
+    err = uvhttp_server_take_context(server, context);
     ASSERT_EQ(err, UVHTTP_OK);
 
     // Set a handler
@@ -161,7 +161,7 @@ TEST_F(ListenWithContextConfigTest, Listen_WithContextNullConfig) {
     ASSERT_EQ(err, UVHTTP_OK);
 
     // Set the context on the server
-    err = uvhttp_server_set_context(server, context);
+    err = uvhttp_server_take_context(server, context);
     ASSERT_EQ(err, UVHTTP_OK);
 
     // Listen - context exists but config is NULL, uses default backlog
@@ -187,7 +187,7 @@ TEST_F(ListenWithContextConfigTest, Listen_WithContextConfigBacklogZero) {
     uvhttp_config_set_current(context, config);
 
     // Set the context on the server
-    err = uvhttp_server_set_context(server, context);
+    err = uvhttp_server_take_context(server, context);
     ASSERT_EQ(err, UVHTTP_OK);
 
     // Listen - config->backlog is 0, so default backlog is used

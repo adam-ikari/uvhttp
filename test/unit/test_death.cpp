@@ -67,7 +67,7 @@ TEST(DeathTest, NullServerSetRouter) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    result = uvhttp_server_set_router(nullptr, router);
+    result = uvhttp_server_take_router(nullptr, router);
     EXPECT_NE(result, UVHTTP_OK);
     uvhttp_router_free(router);
 }

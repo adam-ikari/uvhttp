@@ -282,7 +282,7 @@ class ZerocopyThresholdWireTest : public ::testing::Test {
                                               BodyHandler),
                       UVHTTP_OK);
         }
-        uvhttp_server_set_router(server_, router);
+        uvhttp_server_take_router(server_, router);
 
         ASSERT_EQ(uvhttp_server_listen(server_, "127.0.0.1", 0), UVHTTP_OK);
 
