@@ -22,7 +22,9 @@
  *      test_router_boost_coverage.cpp:90「well under the 12-child limit per
  * node」 test_router_boost_coverage.cpp:180/213「spread across ... to avoid
  *                                       exceeding the 12-child limit」
- *    循环上界全是 i < 10，全仓无任何测试构造同一父节点下 12+ 个子段。
+ *    修复前全仓无任何测试构造同一父节点下 12+ 个子段；本文件即补上这一类，
+ *    并覆盖更危险的一条：迁移**本身**也会撞这个上限（见文末
+ *    RouterMigrationAtomicity）。
  *
  * 实测行为（probe 确认）：参数段 `:id` **也占用一个子节点额度**。
  * 注册 `/api/:id` 后再注册 `/api/r0`..`/api/r10`，父节点 "api" 下的
@@ -247,6 +249,141 @@ TEST_F(RouterChildLimit, ArrayModeIsNotSubjectToChildLimit) {
             << "/p" << i << " 在 array 模式下不应受 trie 子节点上限约束";
     }
     EXPECT_EQ(router_->route_count, 13u);
+}
+
+/* ==================================================================== */
+/* ========== array → trie 迁移失败：必须不损坏已注册路由 ========== */
+/* ==================================================================== */
+
+/*
+ * 上面所有用例都先用 EnterTrieMode() 进入 trie，迁移是在**空 array** 上发生
+ * 的，因而从未测到真正的危险路径：array 里已有路由、迁移中途撞 12 子节点
+ * 上限而失败。
+ *
+ * migrate_to_trie（src/uvhttp_router.c:321）把 array 的每条路由逐个插入 trie。
+ * 插入用的是同一个 find_or_create_child，所以**迁移本身也会撞上限**。触发
+ * 条件很普通：13 条不同顶层路由（都留在 array，因为 13 < HYBRID_THRESHOLD）
+ * 之后再注册任意一条 `:参数` 路由 —— has_params 强制迁移，根节点需要 13 个
+ * 子节点，第 13 个失败。
+ *
+ * 修复前这里会 free 掉整张 array 路由表（当年为躲 dangling pointer 而 detach
+ * + free），而 use_trie 仍是 0，于是 find_handler 走 array 分支却已无表可查：
+ * **所有已注册路由静默全丢，服务器整站 404**。
+ *
+ * 迁移因此必须是原子的：要么全部迁成，要么什么都不变。
+ */
+
+/* 触发迁移失败：13 条顶层静态路由 + 1 条参数路由 */
+class RouterMigrationAtomicity : public ::testing::Test {
+   protected:
+    uvhttp_router_t* router_ = nullptr;
+    static constexpr int kTopLevelRoutes = 13;
+
+    void SetUp() override {
+        ASSERT_EQ(uvhttp_router_new(&router_), UVHTTP_OK);
+        ASSERT_NE(router_, nullptr);
+        for (int i = 0; i < kTopLevelRoutes; i++) {
+            char path[32];
+            snprintf(path, sizeof(path), "/p%d", i);
+            ASSERT_EQ(uvhttp_router_add_route(router_, path, DummyHandler),
+                      UVHTTP_OK)
+                << "前置条件：" << path << " 应注册成功";
+        }
+        ASSERT_EQ(router_->use_trie, 0) << "前置条件：应仍处于 array 模式";
+    }
+
+    void TearDown() override {
+        if (router_) {
+            /* 释放不崩、不二次释放——本用例同时是 ASan/UBSan 的探针 */
+            uvhttp_router_free(router_);
+            router_ = nullptr;
+        }
+    }
+
+    /* 参数路由令 array 全量迁入 trie，根节点需 kTopLevelRoutes 个子节点 */
+    uvhttp_error_t AddParamRouteForcingMigration() {
+        return uvhttp_router_add_route(router_, "/p0/:id", DummyHandler);
+    }
+};
+
+/* 迁移失败必须留在 array 模式：use_trie 与路由表同时才是有效状态 */
+TEST_F(RouterMigrationAtomicity, FailedMigrationKeepsRouterInArrayMode) {
+    EXPECT_EQ(AddParamRouteForcingMigration(), UVHTTP_ERROR_OUT_OF_MEMORY);
+    EXPECT_EQ(router_->use_trie, 0);
+}
+
+/* 核心回归：迁移失败不得销毁已注册路由 */
+TEST_F(RouterMigrationAtomicity,
+       FailedMigrationPreservesEveryRegisteredRoute) {
+    ASSERT_EQ(AddParamRouteForcingMigration(), UVHTTP_ERROR_OUT_OF_MEMORY);
+
+    /* 表还在、计数还在——这正是修复前变成悬空指针的那三个字段 */
+    EXPECT_EQ(router_->array_route_count,
+              static_cast<size_t>(kTopLevelRoutes))
+        << "失败的迁移不应清空 array 路由表";
+    EXPECT_EQ(router_->route_count, static_cast<size_t>(kTopLevelRoutes))
+        << "失败的迁移不应丢失路由计数";
+
+    for (int i = 0; i < kTopLevelRoutes; i++) {
+        char path[32];
+        snprintf(path, sizeof(path), "/p%d", i);
+        EXPECT_NE(uvhttp_router_find_handler(router_, path, "GET"), nullptr)
+            << path << " 在迁移失败后仍必须可解析";
+    }
+}
+
+/* uvhttp_router_match 是请求路径实际走的接口，必须同样不受损 */
+TEST_F(RouterMigrationAtomicity, FailedMigrationKeepsRoutesMatchable) {
+    ASSERT_EQ(AddParamRouteForcingMigration(), UVHTTP_ERROR_OUT_OF_MEMORY);
+
+    for (int i = 0; i < kTopLevelRoutes; i++) {
+        char path[32];
+        snprintf(path, sizeof(path), "/p%d", i);
+        uvhttp_route_match_t m;
+        EXPECT_EQ(uvhttp_router_match(router_, path, "GET", &m), UVHTTP_OK)
+            << path << " 应仍匹配成功，而非 404";
+        EXPECT_NE(m.handler, nullptr) << path;
+    }
+}
+
+/* 触发迁移的那条路由本身注册失败，不应留下半成品条目 */
+TEST_F(RouterMigrationAtomicity, RouteThatTriggeredFailureIsNotAdded) {
+    ASSERT_EQ(AddParamRouteForcingMigration(), UVHTTP_ERROR_OUT_OF_MEMORY);
+    EXPECT_EQ(router_->route_count, static_cast<size_t>(kTopLevelRoutes))
+        << "失败的注册不应计入 route_count";
+
+    uvhttp_route_match_t m;
+    EXPECT_NE(uvhttp_router_match(router_, "/p0/123", "GET", &m), UVHTTP_OK)
+        << "未注册成功的参数路由不应匹配";
+}
+
+/* 迁移失败是可重复的：后续注册同样失败，但同样不损坏状态 */
+TEST_F(RouterMigrationAtomicity, RepeatedFailedMigrationStaysStable) {
+    for (int i = 0; i < 4; i++) {
+        EXPECT_EQ(AddParamRouteForcingMigration(),
+                  UVHTTP_ERROR_OUT_OF_MEMORY)
+            << "第 " << i << " 次迁移应同样被拒";
+        EXPECT_EQ(router_->use_trie, 0);
+        EXPECT_EQ(router_->route_count, static_cast<size_t>(kTopLevelRoutes));
+    }
+
+    for (int i = 0; i < kTopLevelRoutes; i++) {
+        char path[32];
+        snprintf(path, sizeof(path), "/p%d", i);
+        EXPECT_NE(uvhttp_router_find_handler(router_, path, "GET"), nullptr)
+            << path << " 在多次失败迁移后仍必须可解析";
+    }
+}
+
+/* 迁移失败后，array 侧新增路由仍应正常注册（上限只挡 trie，不该连带） */
+TEST_F(RouterMigrationAtomicity, ArrayAddsStillWorkAfterFailedMigration) {
+    ASSERT_EQ(AddParamRouteForcingMigration(), UVHTTP_ERROR_OUT_OF_MEMORY);
+
+    EXPECT_EQ(uvhttp_router_add_route(router_, "/late", DummyHandler),
+              UVHTTP_OK);
+    EXPECT_NE(uvhttp_router_find_handler(router_, "/late", "GET"), nullptr);
+    EXPECT_NE(uvhttp_router_find_handler(router_, "/p0", "GET"), nullptr)
+        << "新增路由不应挤掉已有路由";
 }
 
 #endif /* !UVHTTP_FEATURE_ROUTER_CACHE */
