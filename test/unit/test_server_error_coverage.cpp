@@ -69,7 +69,7 @@ TEST(UvhttpServerErrorCoverageTest, SetHandlerNullParams) {
 /* 测试设置路由器 NULL 参数 */
 TEST(UvhttpServerErrorCoverageTest, SetRouterNullParams) {
     /* 测试 NULL 服务器 */
-    uvhttp_error_t result = uvhttp_server_set_router(NULL, NULL);
+    uvhttp_error_t result = uvhttp_server_take_router(NULL, NULL);
     EXPECT_NE(result, UVHTTP_OK);
 
     /* 测试 NULL 路由器 */
@@ -77,7 +77,7 @@ TEST(UvhttpServerErrorCoverageTest, SetRouterNullParams) {
     result = uvhttp_server_new(uv_default_loop(), &server);
     ASSERT_EQ(result, UVHTTP_OK) << "server 创建失败";
     ASSERT_NE(server, nullptr);
-    result = uvhttp_server_set_router(server, NULL);
+    result = uvhttp_server_take_router(server, NULL);
     EXPECT_EQ(result, UVHTTP_OK);
     uvhttp_server_free(server);
 }
@@ -85,7 +85,7 @@ TEST(UvhttpServerErrorCoverageTest, SetRouterNullParams) {
 /* 测试设置上下文 NULL 参数 */
 TEST(UvhttpServerErrorCoverageTest, SetContextNullParams) {
     /* 测试 NULL 服务器 */
-    uvhttp_error_t result = uvhttp_server_set_context(NULL, NULL);
+    uvhttp_error_t result = uvhttp_server_take_context(NULL, NULL);
     EXPECT_NE(result, UVHTTP_OK);
 
     /* 测试 NULL 上下文 */
@@ -93,7 +93,7 @@ TEST(UvhttpServerErrorCoverageTest, SetContextNullParams) {
     result = uvhttp_server_new(uv_default_loop(), &server);
     ASSERT_EQ(result, UVHTTP_OK) << "server 创建失败";
     ASSERT_NE(server, nullptr);
-    result = uvhttp_server_set_context(server, NULL);
+    result = uvhttp_server_take_context(server, NULL);
     EXPECT_EQ(result, UVHTTP_OK);
     uvhttp_server_free(server);
 }
@@ -248,7 +248,7 @@ TEST(UvhttpServerErrorCoverageTest, ServerCreateAndListen) {
     result = uvhttp_router_new(&router);
     if (result == UVHTTP_OK && router != NULL) {
         uvhttp_router_add_route(router, "/", NULL);
-        uvhttp_server_set_router(server, router);
+        uvhttp_server_take_router(server, router);
 
         /* 尝试监听（可能失败，这是预期的） */
         result = uvhttp_server_listen(server, "127.0.0.1", 18080);

@@ -135,7 +135,7 @@ int main(void) {
     /* Wrap handlers with the logging middleware */
     uvhttp_router_add_route(router, "/", hello_handler);
     uvhttp_router_add_route(router, "/delay", delay_handler);
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
 
     err = uvhttp_server_listen(server, "127.0.0.1", 8080);
     if (err != UVHTTP_OK) {

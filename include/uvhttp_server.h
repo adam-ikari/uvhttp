@@ -25,6 +25,11 @@ typedef struct uvhttp_response uvhttp_response_t;
 typedef struct uvhttp_router uvhttp_router_t;
 typedef struct uvhttp_connection uvhttp_connection_t;
 
+/* uvhttp_method_t and uvhttp_request_handler_t come from uvhttp_common.h so
+ * this header can declare uvhttp_route_t without including uvhttp_request.h.
+ * Neither header includes the other: request/response are forward-declared
+ * above, and only .c files need their full definitions. */
+
 #if UVHTTP_FEATURE_TLS
 typedef struct uvhttp_tls_context uvhttp_tls_context_t;
 #endif
@@ -63,6 +68,14 @@ extern "C" {
 #define MAX_CONNECTIONS 1000
 
 typedef struct uvhttp_server uvhttp_server_t;
+
+/* One route table entry, for uvhttp_server_listen_routes. UVHTTP_ANY means
+ * "match every method". */
+typedef struct {
+    const char* path;
+    uvhttp_method_t method;
+    uvhttp_request_handler_t handler;
+} uvhttp_route_t;
 
 /* Server builder structure (unified API) */
 typedef struct {
@@ -224,6 +237,46 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
  *       afterwards to release it.
  */
 uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server);
+
+/**
+ * @brief Create a server, register routes, and start listening - atomically
+ *
+ * @param loop Event loop (owned by the caller; the server never closes it)
+ * @param routes Route table (may be NULL only when route_count is 0)
+ * @param route_count Number of entries in routes
+ * @param host Bind address (e.g. "0.0.0.0" or "127.0.0.1")
+ * @param port TCP port to bind
+ * @param server Output parameter; set to NULL on every failure path
+ * @return UVHTTP_OK on success, error code otherwise
+ *
+ * @note This is the ATOMIC form of what used to be five separate calls:
+ *       uvhttp_server_new -> uvhttp_router_new -> uvhttp_router_add_route xN
+ *       -> uvhttp_server_take_router -> uvhttp_server_listen.
+ *       Either the returned server is fully listening with every route
+ *       registered, or nothing was created. There is no intermediate state
+ *       and no cleanup for the caller to write.
+ *
+ * @note On success the server owns the routes (it builds and holds the
+ *       router internally) and releases them in uvhttp_server_free.
+ *
+ * @note Added in v2.10. The five-step sequence remains available for callers
+ *       that need to keep the router handle - prefer this for everything else.
+ *
+ * @example
+ *   uvhttp_server_t* server = NULL;
+ *   uvhttp_route_t routes[] = {
+ *       {"/",        UVHTTP_ANY, hello},
+ *       {"/health", UVHTTP_GET, health},
+ *   };
+ *   if (uvhttp_server_listen_routes(loop, routes, 2, "0.0.0.0", 8080,
+ *                                   &server) != UVHTTP_OK) {
+ *       // nothing was allocated; nothing to clean up
+ *   }
+ */
+uvhttp_error_t uvhttp_server_listen_routes(uv_loop_t* loop,
+                                           const uvhttp_route_t* routes,
+                                           size_t route_count, const char* host,
+                                           int port, uvhttp_server_t** server);
 #if UVHTTP_FEATURE_TLS
 uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server,
                                         uvhttp_tls_context_t* tls_ctx);
@@ -235,8 +288,8 @@ uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server);
  * @param server Server to release (may be NULL, then this is a no-op)
  * @return UVHTTP_OK on success, error code otherwise
  *
- * @note Ownership contract: once set with uvhttp_server_set_router /
- *       uvhttp_server_set_context, the router and context are owned by the
+ * @note Ownership contract: once set with uvhttp_server_take_router /
+ *       uvhttp_server_take_context, the router and context are owned by the
  *       server and are released by this function. The caller MUST NOT free
  *       them separately, otherwise the double free occurs. The same applies
  *       to any config reached through the context.
@@ -254,30 +307,50 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server,
                                          uvhttp_request_handler_t handler);
 /**
- * @brief Attach a router to the server
+ * @brief Hand a router over to the server (ownership transfer)
  *
  * @param server Server to configure
  * @param router Router created with uvhttp_router_new
  * @return UVHTTP_OK on success, error code otherwise
  *
- * @note Ownership contract: after this call the server owns the router and
- *       releases it in uvhttp_server_free. Do NOT call uvhttp_router_free on
- *       it yourself.
+ * @note OWNERSHIP TRANSFERS HERE. After this call the server owns the router
+ *       and releases it in uvhttp_server_free. Do NOT call uvhttp_router_free
+ *       on it yourself - doing so is a double free.
+ *
+ * @note Renamed from uvhttp_server_set_router in v2.10. The old name implied
+ *       a borrow while the behavior was a transfer; that mismatch is what made
+ *       examples/embedding/main.c double-free on its listen-failure path.
+ *
+ * @note Returns UVHTTP_ERROR_INVALID_PARAM if the server already owns a
+ *       different router, rather than silently leaking the previous one.
+ *       Passing the same router again is idempotent (teardown paths rely on
+ *       it).
+ *
+ * @note There is no detach operation: a taken router cannot be handed back,
+ *       replaced, or unset by the caller - the server owns it until
+ *       uvhttp_server_free. A NULL router is only a no-op when the server
+ *       holds none already; once a router has been taken, NULL is rejected
+ *       like any other pointer.
  */
-uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server,
-                                        uvhttp_router_t* router);
+uvhttp_error_t uvhttp_server_take_router(uvhttp_server_t* server,
+                                         uvhttp_router_t* router);
 /**
- * @brief Attach a context (shared configuration/state) to the server
+ * @brief Hand a context over to the server (ownership transfer)
  *
  * @param server Server to configure
  * @param context Context created with uvhttp_context_create
  * @return UVHTTP_OK on success, error code otherwise
  *
- * @note Ownership contract: after this call the server owns the context and
- *       releases it in uvhttp_server_free. Do NOT free it yourself.
+ * @note OWNERSHIP TRANSFERS HERE. After this call the server owns the context
+ *       and releases it in uvhttp_server_free. Do NOT free it yourself.
+ *
+ * @note Renamed from uvhttp_server_set_context in v2.10, for the same reason
+ *       as uvhttp_server_take_router. No detach operation exists: a NULL
+ *       context is only a no-op when the server holds none already, and is
+ *       rejected once one has been taken.
  */
-uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server,
-                                         struct uvhttp_context* context);
+uvhttp_error_t uvhttp_server_take_context(uvhttp_server_t* server,
+                                          struct uvhttp_context* context);
 
 #if UVHTTP_FEATURE_RATE_LIMIT
 /* ========== Rate Limiting API (Core Functionality) ========== */
@@ -409,10 +482,13 @@ uvhttp_server_builder_t* uvhttp_set_timeout(uvhttp_server_builder_t* server,
 uvhttp_server_builder_t* uvhttp_set_max_body_size(
     uvhttp_server_builder_t* server, size_t size);
 
-/* Convenient request parameter access */
-const char* uvhttp_get_param(uvhttp_request_t* request, const char* name);
-const char* uvhttp_get_header(uvhttp_request_t* request, const char* name);
-const char* uvhttp_get_body(uvhttp_request_t* request);
+/* Request accessors live in uvhttp_request.h:
+ *   uvhttp_request_get_header()        (was also uvhttp_get_header)
+ *   uvhttp_request_get_query_param()   (was also uvhttp_get_param)
+ *   uvhttp_request_get_body()          (was also uvhttp_get_body)
+ * The short aliases were removed in v2.10 - they were pure forwarders that
+ * gave the request API two entry points with no basis for choosing between
+ * them, and they were declared here despite operating on the request. */
 
 /* Health check endpoint.
  * Registers a handler at the given path that returns HTTP 200 with

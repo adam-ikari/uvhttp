@@ -173,7 +173,7 @@ int main() {
     // Add routes
     uvhttp_router_add_route(router, "/", home_handler);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8080);
 
     printf("Server running on http://0.0.0.0:8080\n");

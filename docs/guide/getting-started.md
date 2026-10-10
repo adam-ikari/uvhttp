@@ -67,7 +67,7 @@ int main() {
         fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(result));
         return 1;
     }
-    result = uvhttp_server_set_router(server, router);
+    result = uvhttp_server_take_router(server, router);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to set router: %s\n", uvhttp_error_string(result));
         return 1;

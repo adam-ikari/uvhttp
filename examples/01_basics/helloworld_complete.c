@@ -42,7 +42,7 @@ static app_context_t* app_context_new(uv_loop_t* loop) {
 }
 
 /* Release an application context. The router and config are owned by the
- * server (set via uvhttp_server_set_router / server->config), so they are
+ * server (set via uvhttp_server_take_router / server->config), so they are
  * freed together with the server. */
 static void app_context_free(app_context_t* ctx) {
     if (ctx) {
@@ -228,7 +228,7 @@ int main() {
     uvhttp_config_set_current(ctx->uvhttp_ctx, config);
     printf("Global configuration set\n");
 
-    uvhttp_server_set_context(ctx->server, ctx->uvhttp_ctx);
+    uvhttp_server_take_context(ctx->server, ctx->uvhttp_ctx);
     printf("uvhttp context set to server\n");
 
     /* Create the router (output-parameter style). */
@@ -255,7 +255,7 @@ int main() {
     printf("Route added successfully\n");
 
     /* Wire the router into the server via the setter. */
-    uvhttp_server_set_router(ctx->server, ctx->router);
+    uvhttp_server_take_router(ctx->server, ctx->router);
     printf("Router set to server\n");
 
     /* Start listening. */

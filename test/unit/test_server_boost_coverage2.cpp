@@ -8,23 +8,25 @@
  * - uvhttp_server_ws_close_all with non-null ws_conn (line 1512)
  * - ws_timeout_timer_callback (lines 1174-1208)
  * - ws_heartbeat_timer_callback (lines 1221-1255)
- * - uvhttp_server_ws_enable_connection_management success path (lines 1307-1349)
+ * - uvhttp_server_ws_enable_connection_management success path (lines
+ * 1307-1349)
  */
 
 #include <gtest/gtest.h>
 
 extern "C" {
-#include "uvhttp.h"
 #include "uvhttp_allocator.h"
-#include "uvhttp_server.h"
-#include "uvhttp_context.h"
 #include "uvhttp_config.h"
+#include "uvhttp_context.h"
+#include "uvhttp_server.h"
+
+#include "uvhttp.h"
 }
 
 #include <string.h>
-#include <unistd.h>
-#include <time.h>
 #include <sys/socket.h>
+#include <time.h>
+#include <unistd.h>
 
 // ============================================================================
 // Helper: dummy request handler
@@ -47,7 +49,8 @@ static void pump_loop(uv_loop_t* loop, int timeout_ms) {
         clock_gettime(CLOCK_MONOTONIC, &now);
         long elapsed_ms = (now.tv_sec - start.tv_sec) * 1000 +
                           (now.tv_nsec - start.tv_nsec) / 1000000;
-        if (elapsed_ms >= timeout_ms) break;
+        if (elapsed_ms >= timeout_ms)
+            break;
         usleep(1000);  // 1ms
     }
 }
@@ -71,7 +74,7 @@ static void boost2_close_walk_cb(uv_handle_t* handle, void* arg) {
 // uvhttp_server_listen with context config (lines 467, 470-472)
 // ============================================================================
 class ListenWithContextConfigTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
     uvhttp_context_t* context = nullptr;
@@ -88,7 +91,8 @@ protected:
         // Walk and close any remaining handles
         uv_walk(&loop, boost2_close_walk_cb, nullptr);
         for (int i = 0; i < 20; i++) {
-            if (uv_run(&loop, UV_RUN_NOWAIT) == 0) break;
+            if (uv_run(&loop, UV_RUN_NOWAIT) == 0)
+                break;
         }
 
         if (server) {
@@ -129,14 +133,15 @@ TEST_F(ListenWithContextConfigTest, Listen_WithContextConfigBacklog) {
     uvhttp_config_set_current(context, config);
 
     // Set the context on the server
-    err = uvhttp_server_set_context(server, context);
+    err = uvhttp_server_take_context(server, context);
     ASSERT_EQ(err, UVHTTP_OK);
 
     // Set a handler
     err = uvhttp_server_set_handler(server, boost2_dummy_handler);
     ASSERT_EQ(err, UVHTTP_OK);
 
-    // Listen - this should use the context's config backlog (lines 467, 470-472)
+    // Listen - this should use the context's config backlog (lines 467,
+    // 470-472)
     err = uvhttp_server_listen(server, "127.0.0.1", 0);
     ASSERT_EQ(err, UVHTTP_OK);
     ASSERT_EQ(server->is_listening, 1);
@@ -161,7 +166,7 @@ TEST_F(ListenWithContextConfigTest, Listen_WithContextNullConfig) {
     ASSERT_EQ(err, UVHTTP_OK);
 
     // Set the context on the server
-    err = uvhttp_server_set_context(server, context);
+    err = uvhttp_server_take_context(server, context);
     ASSERT_EQ(err, UVHTTP_OK);
 
     // Listen - context exists but config is NULL, uses default backlog
@@ -187,7 +192,7 @@ TEST_F(ListenWithContextConfigTest, Listen_WithContextConfigBacklogZero) {
     uvhttp_config_set_current(context, config);
 
     // Set the context on the server
-    err = uvhttp_server_set_context(server, context);
+    err = uvhttp_server_take_context(server, context);
     ASSERT_EQ(err, UVHTTP_OK);
 
     // Listen - config->backlog is 0, so default backlog is used
@@ -208,7 +213,7 @@ TEST_F(ListenWithContextConfigTest, Listen_WithContextConfigBacklogZero) {
 // uvhttp_server_ws_broadcast with OPEN connections (lines 1474-1475)
 // ============================================================================
 class WsBroadcastOpenTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
     int sock_fds[2]{-1, -1};
@@ -228,8 +233,14 @@ protected:
             uvhttp_server_free(server);
             server = nullptr;
         }
-        if (sock_fds[0] >= 0) { close(sock_fds[0]); sock_fds[0] = -1; }
-        if (sock_fds[1] >= 0) { close(sock_fds[1]); sock_fds[1] = -1; }
+        if (sock_fds[0] >= 0) {
+            close(sock_fds[0]);
+            sock_fds[0] = -1;
+        }
+        if (sock_fds[1] >= 0) {
+            close(sock_fds[1]);
+            sock_fds[1] = -1;
+        }
         uv_loop_close(&loop);
     }
 };
@@ -260,7 +271,8 @@ TEST_F(WsBroadcastOpenTest, Broadcast_OpenConnection) {
     err = uvhttp_server_ws_broadcast(server, "/chat", "hello", 5);
     EXPECT_EQ(err, UVHTTP_OK);
 
-    // Read the sent data from the other end of the socketpair to prevent buffer fill
+    // Read the sent data from the other end of the socketpair to prevent buffer
+    // fill
     char buf[64];
     ssize_t n = recv(sock_fds[1], buf, sizeof(buf), 0);
     EXPECT_GT(n, 0);  // Should have received the WebSocket frame
@@ -315,9 +327,12 @@ TEST_F(WsBroadcastOpenTest, Broadcast_MultipleOpenConnections) {
 
     // Drain sockets
     char buf[64];
-    while (recv(sock_fds[1], buf, sizeof(buf), MSG_DONTWAIT) > 0) {}
-    while (recv(fds_a[1], buf, sizeof(buf), MSG_DONTWAIT) > 0) {}
-    while (recv(fds_b[1], buf, sizeof(buf), MSG_DONTWAIT) > 0) {}
+    while (recv(sock_fds[1], buf, sizeof(buf), MSG_DONTWAIT) > 0) {
+    }
+    while (recv(fds_a[1], buf, sizeof(buf), MSG_DONTWAIT) > 0) {
+    }
+    while (recv(fds_b[1], buf, sizeof(buf), MSG_DONTWAIT) > 0) {
+    }
 
     // Disable management before freeing the borrowed connections.
     uvhttp_server_ws_disable_connection_management(server);
@@ -325,15 +340,17 @@ TEST_F(WsBroadcastOpenTest, Broadcast_MultipleOpenConnections) {
     delete ws2;
     delete ws3;
 
-    close(fds_a[0]); close(fds_a[1]);
-    close(fds_b[0]); close(fds_b[1]);
+    close(fds_a[0]);
+    close(fds_a[1]);
+    close(fds_b[0]);
+    close(fds_b[1]);
 }
 
 // ============================================================================
 // uvhttp_server_ws_close_all with non-null ws_conn (line 1512)
 // ============================================================================
 class WsCloseAllWithConnTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
     int sock_fds[2]{-1, -1};
@@ -353,8 +370,14 @@ protected:
             uvhttp_server_free(server);
             server = nullptr;
         }
-        if (sock_fds[0] >= 0) { close(sock_fds[0]); sock_fds[0] = -1; }
-        if (sock_fds[1] >= 0) { close(sock_fds[1]); sock_fds[1] = -1; }
+        if (sock_fds[0] >= 0) {
+            close(sock_fds[0]);
+            sock_fds[0] = -1;
+        }
+        if (sock_fds[1] >= 0) {
+            close(sock_fds[1]);
+            sock_fds[1] = -1;
+        }
         uv_loop_close(&loop);
     }
 };
@@ -377,7 +400,8 @@ TEST_F(WsCloseAllWithConnTest, CloseAll_WithNonNullWsConn) {
     EXPECT_EQ(server->ws_connection_manager->connection_count, 1);
 
     // close_all with a matching path - exercises line 1512
-    // uvhttp_ws_close(NULL, ws_conn, 1000, "Server closed connection") is called
+    // uvhttp_ws_close(NULL, ws_conn, 1000, "Server closed connection") is
+    // called
     err = uvhttp_server_ws_close_all(server, "/chat");
     EXPECT_EQ(err, UVHTTP_OK);
     EXPECT_EQ(server->ws_connection_manager->connection_count, 0);
@@ -422,14 +446,15 @@ TEST_F(WsCloseAllWithConnTest, CloseAll_NullPathClosesAll_WithWsConn) {
     delete ws1;
     delete ws2;
 
-    close(fds2[0]); close(fds2[1]);
+    close(fds2[0]);
+    close(fds2[1]);
 }
 
 // ============================================================================
 // ws_timeout_timer_callback (lines 1174-1208)
 // ============================================================================
 class WsTimeoutTimerTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
 
@@ -465,7 +490,8 @@ TEST_F(WsTimeoutTimerTest, TimeoutTimer_ClosesTimedOutConnection) {
     // the pointer (never frees it), so heap-allocate the connection.
     uvhttp_ws_connection_t* ws_conn = new uvhttp_ws_connection_t{};
     ws_conn->state = UVHTTP_WS_STATE_OPEN;
-    ws_conn->fd = -1;  // Will fail send, but timeout just needs to detect staleness
+    ws_conn->fd =
+        -1;  // Will fail send, but timeout just needs to detect staleness
     ws_conn->is_server = 1;
 
     uvhttp_server_ws_add_connection(server, ws_conn, "/ws");
@@ -502,8 +528,9 @@ TEST_F(WsTimeoutTimerTest, TimeoutTimer_KeepsActiveConnection) {
     ws_connection_manager_t* mgr = server->ws_connection_manager;
     ASSERT_NE(mgr, nullptr);
 
-    // Add a connection with a recent last_activity (will be set by add_connection).
-    // The manager borrows the pointer (never frees it), so heap-allocate.
+    // Add a connection with a recent last_activity (will be set by
+    // add_connection). The manager borrows the pointer (never frees it), so
+    // heap-allocate.
     uvhttp_ws_connection_t* ws_conn = new uvhttp_ws_connection_t{};
     ws_conn->state = UVHTTP_WS_STATE_OPEN;
     ws_conn->fd = -1;
@@ -545,9 +572,15 @@ TEST_F(WsTimeoutTimerTest, TimeoutTimer_MultipleConnections) {
     uvhttp_ws_connection_t* ws1 = new uvhttp_ws_connection_t{};
     uvhttp_ws_connection_t* ws2 = new uvhttp_ws_connection_t{};
     uvhttp_ws_connection_t* ws3 = new uvhttp_ws_connection_t{};
-    ws1->state = UVHTTP_WS_STATE_OPEN; ws1->fd = -1; ws1->is_server = 1;
-    ws2->state = UVHTTP_WS_STATE_OPEN; ws2->fd = -1; ws2->is_server = 1;
-    ws3->state = UVHTTP_WS_STATE_OPEN; ws3->fd = -1; ws3->is_server = 1;
+    ws1->state = UVHTTP_WS_STATE_OPEN;
+    ws1->fd = -1;
+    ws1->is_server = 1;
+    ws2->state = UVHTTP_WS_STATE_OPEN;
+    ws2->fd = -1;
+    ws2->is_server = 1;
+    ws3->state = UVHTTP_WS_STATE_OPEN;
+    ws3->fd = -1;
+    ws3->is_server = 1;
 
     uvhttp_server_ws_add_connection(server, ws1, "/ws");
     uvhttp_server_ws_add_connection(server, ws2, "/ws");
@@ -590,7 +623,7 @@ TEST_F(WsTimeoutTimerTest, TimeoutTimer_MultipleConnections) {
 // ws_heartbeat_timer_callback (lines 1221-1255)
 // ============================================================================
 class WsHeartbeatTimerTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
     int sock_fds[2]{-1, -1};
@@ -611,8 +644,14 @@ protected:
             uvhttp_server_free(server);
             server = nullptr;
         }
-        if (sock_fds[0] >= 0) { close(sock_fds[0]); sock_fds[0] = -1; }
-        if (sock_fds[1] >= 0) { close(sock_fds[1]); sock_fds[1] = -1; }
+        if (sock_fds[0] >= 0) {
+            close(sock_fds[0]);
+            sock_fds[0] = -1;
+        }
+        if (sock_fds[1] >= 0) {
+            close(sock_fds[1]);
+            sock_fds[1] = -1;
+        }
         uv_loop_close(&loop);
     }
 };
@@ -652,7 +691,8 @@ TEST_F(WsHeartbeatTimerTest, Heartbeat_SendsPingToOpenConnection) {
 
     // Drain any data sent to the socketpair
     char buf[64];
-    while (recv(sock_fds[1], buf, sizeof(buf), MSG_DONTWAIT) > 0) {}
+    while (recv(sock_fds[1], buf, sizeof(buf), MSG_DONTWAIT) > 0) {
+    }
 
     // The connection is still registered. Disable management (drops the
     // borrowed reference) before freeing it.
@@ -693,8 +733,8 @@ TEST_F(WsHeartbeatTimerTest, Heartbeat_PingTimeoutClosesConnection) {
     // Pump the loop so the heartbeat fires
     pump_loop(&loop, 200);
 
-    // The heartbeat should have detected the ping timeout and closed the connection
-    // (sets state to CLOSING, but node remains in list)
+    // The heartbeat should have detected the ping timeout and closed the
+    // connection (sets state to CLOSING, but node remains in list)
     EXPECT_EQ(ws_conn->state, UVHTTP_WS_STATE_CLOSING);
 
     // The node remains in the list. Disable management (drops the borrowed
@@ -744,7 +784,7 @@ TEST_F(WsHeartbeatTimerTest, Heartbeat_SkipsNonOpenConnection) {
 // uvhttp_server_ws_enable_connection_management success path (lines 1307-1349)
 // ============================================================================
 class WsEnableConnMgmtSuccessTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
 

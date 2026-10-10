@@ -20,17 +20,10 @@ extern "C" {
 #define MAX_URL_LEN 2048
 #define MAX_BODY_LEN (1024 * 1024)  // 1MB
 
-// HTTP method enumeration
-typedef enum {
-    UVHTTP_ANY = 0,
-    UVHTTP_GET,
-    UVHTTP_POST,
-    UVHTTP_PUT,
-    UVHTTP_DELETE,
-    UVHTTP_HEAD,
-    UVHTTP_OPTIONS,
-    UVHTTP_PATCH
-} uvhttp_method_t;
+/* uvhttp_method_t lives in uvhttp_common.h — both this header and
+ * uvhttp_server.h need it (uvhttp_route_t embeds the handler type), and
+ * neither header includes the other, so the shared header is the only place
+ * the type can live. */
 
 typedef struct uvhttp_request uvhttp_request_t;
 

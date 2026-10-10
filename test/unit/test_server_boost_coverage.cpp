@@ -13,21 +13,22 @@
 #include <gtest/gtest.h>
 
 extern "C" {
-#include "uvhttp.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_server.h"
+
+#include "uvhttp.h"
 #if UVHTTP_FEATURE_TLS
-#include "uvhttp_tls.h"
+#    include "uvhttp_tls.h"
 #endif
 }
 
-#include <string.h>
-#include <unistd.h>
-#include <time.h>
 #include <arpa/inet.h>
+#include <atomic>
+#include <string.h>
 #include <sys/socket.h>
 #include <thread>
-#include <atomic>
+#include <time.h>
+#include <unistd.h>
 
 // Declaration not in any public header - defined in uvhttp_server.c
 extern "C" {
@@ -50,7 +51,7 @@ static int dummy_handler(uvhttp_request_t* request,
 // Server Set Functions (lines 487-529)
 // ============================================================================
 class ServerSetFunctionsTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
 
@@ -93,7 +94,7 @@ TEST_F(ServerSetFunctionsTest, SetRouter_ValidServer) {
     ASSERT_EQ(rerr, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
 
-    uvhttp_error_t err = uvhttp_server_set_router(server, router);
+    uvhttp_error_t err = uvhttp_server_take_router(server, router);
     EXPECT_EQ(err, UVHTTP_OK);
     EXPECT_EQ(server->router, router);
 
@@ -102,18 +103,20 @@ TEST_F(ServerSetFunctionsTest, SetRouter_ValidServer) {
 }
 
 TEST_F(ServerSetFunctionsTest, SetRouter_NullServer) {
-    uvhttp_error_t err = uvhttp_server_set_router(server, nullptr);
-    // NULL router is a valid operation (clears router)
+    uvhttp_error_t err = uvhttp_server_take_router(server, nullptr);
+    // NULL is only a no-op when the server holds no router (there is no
+    // detach operation); once a router is taken, NULL is rejected just like
+    // any other pointer - see test_server_atomic_construct.cpp.
     EXPECT_EQ(err, UVHTTP_OK);
 }
 
 TEST_F(ServerSetFunctionsTest, SetContext_ValidServer) {
-    uvhttp_error_t err = uvhttp_server_set_context(server, nullptr);
+    uvhttp_error_t err = uvhttp_server_take_context(server, nullptr);
     EXPECT_EQ(err, UVHTTP_OK);
 }
 
 TEST_F(ServerSetFunctionsTest, SetContext_NullServer) {
-    uvhttp_error_t err = uvhttp_server_set_context(nullptr, nullptr);
+    uvhttp_error_t err = uvhttp_server_take_context(nullptr, nullptr);
     EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
 }
 
@@ -133,7 +136,7 @@ TEST_F(ServerSetFunctionsTest, Stop_NotListening) {
 // Timeout Callback (lines 1650-1661)
 // ============================================================================
 class TimeoutCallbackTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
 
@@ -163,8 +166,8 @@ static void test_timeout_callback(uvhttp_server_t* srv,
 }
 
 TEST_F(TimeoutCallbackTest, SetTimeoutCallback_NullServer) {
-    uvhttp_error_t err =
-        uvhttp_server_set_timeout_callback(nullptr, test_timeout_callback, NULL);
+    uvhttp_error_t err = uvhttp_server_set_timeout_callback(
+        nullptr, test_timeout_callback, NULL);
     EXPECT_EQ(err, UVHTTP_ERROR_INVALID_PARAM);
 }
 
@@ -189,7 +192,7 @@ TEST_F(TimeoutCallbackTest, SetTimeoutCallback_NullCallback) {
 // Builder API (lines 685-778)
 // ============================================================================
 class BuilderAPITest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_builder_t* builder = nullptr;
 
@@ -220,51 +223,61 @@ protected:
 // --- Chained route API null checks ---
 
 TEST_F(BuilderAPITest, Get_NullServer) {
-    uvhttp_server_builder_t* result = uvhttp_get(nullptr, "/test", dummy_handler);
+    uvhttp_server_builder_t* result =
+        uvhttp_get(nullptr, "/test", dummy_handler);
     EXPECT_EQ(result, nullptr);
 }
 
 TEST_F(BuilderAPITest, Get_NullPath) {
-    if (!builder) GTEST_SKIP();
-    uvhttp_server_builder_t* result = uvhttp_get(builder, nullptr, dummy_handler);
+    if (!builder)
+        GTEST_SKIP();
+    uvhttp_server_builder_t* result =
+        uvhttp_get(builder, nullptr, dummy_handler);
     EXPECT_EQ(result, builder);  // returns server unchanged
 }
 
 TEST_F(BuilderAPITest, Get_NullHandler) {
-    if (!builder) GTEST_SKIP();
+    if (!builder)
+        GTEST_SKIP();
     uvhttp_server_builder_t* result = uvhttp_get(builder, "/test", nullptr);
     EXPECT_EQ(result, builder);  // returns server unchanged
 }
 
 TEST_F(BuilderAPITest, Get_Valid) {
-    if (!builder) GTEST_SKIP();
-    uvhttp_server_builder_t* result = uvhttp_get(builder, "/test", dummy_handler);
+    if (!builder)
+        GTEST_SKIP();
+    uvhttp_server_builder_t* result =
+        uvhttp_get(builder, "/test", dummy_handler);
     EXPECT_EQ(result, builder);
 }
 
 TEST_F(BuilderAPITest, Post_Valid) {
-    if (!builder) GTEST_SKIP();
+    if (!builder)
+        GTEST_SKIP();
     uvhttp_server_builder_t* result =
         uvhttp_post(builder, "/submit", dummy_handler);
     EXPECT_EQ(result, builder);
 }
 
 TEST_F(BuilderAPITest, Put_Valid) {
-    if (!builder) GTEST_SKIP();
+    if (!builder)
+        GTEST_SKIP();
     uvhttp_server_builder_t* result =
         uvhttp_put(builder, "/update", dummy_handler);
     EXPECT_EQ(result, builder);
 }
 
 TEST_F(BuilderAPITest, Delete_Valid) {
-    if (!builder) GTEST_SKIP();
+    if (!builder)
+        GTEST_SKIP();
     uvhttp_server_builder_t* result =
         uvhttp_delete(builder, "/remove", dummy_handler);
     EXPECT_EQ(result, builder);
 }
 
 TEST_F(BuilderAPITest, Any_Valid) {
-    if (!builder) GTEST_SKIP();
+    if (!builder)
+        GTEST_SKIP();
     uvhttp_server_builder_t* result =
         uvhttp_any(builder, "/catch-all", dummy_handler);
     EXPECT_EQ(result, builder);
@@ -278,7 +291,8 @@ TEST_F(BuilderAPITest, SetMaxConnections_NullServer) {
 }
 
 TEST_F(BuilderAPITest, SetMaxConnections_Valid) {
-    if (!builder) GTEST_SKIP();
+    if (!builder)
+        GTEST_SKIP();
     uvhttp_server_builder_t* result = uvhttp_set_max_connections(builder, 500);
     EXPECT_EQ(result, builder);
     EXPECT_EQ(builder->config->max_connections, 500);
@@ -290,7 +304,8 @@ TEST_F(BuilderAPITest, SetTimeout_NullServer) {
 }
 
 TEST_F(BuilderAPITest, SetTimeout_Valid) {
-    if (!builder) GTEST_SKIP();
+    if (!builder)
+        GTEST_SKIP();
     uvhttp_server_builder_t* result = uvhttp_set_timeout(builder, 60);
     EXPECT_EQ(result, builder);
     EXPECT_EQ(builder->config->request_timeout, 60);
@@ -303,9 +318,9 @@ TEST_F(BuilderAPITest, SetMaxBodySize_NullServer) {
 }
 
 TEST_F(BuilderAPITest, SetMaxBodySize_Valid) {
-    if (!builder) GTEST_SKIP();
-    uvhttp_server_builder_t* result =
-        uvhttp_set_max_body_size(builder, 2048);
+    if (!builder)
+        GTEST_SKIP();
+    uvhttp_server_builder_t* result = uvhttp_set_max_body_size(builder, 2048);
     EXPECT_EQ(result, builder);
     EXPECT_EQ(builder->config->max_body_size, (size_t)2048);
 }
@@ -313,17 +328,17 @@ TEST_F(BuilderAPITest, SetMaxBodySize_Valid) {
 // --- Convenient request parameter access ---
 
 TEST_F(BuilderAPITest, GetParam_NullRequest) {
-    const char* result = uvhttp_get_param(nullptr, "key");
+    const char* result = uvhttp_request_get_query_param(nullptr, "key");
     EXPECT_EQ(result, nullptr);
 }
 
 TEST_F(BuilderAPITest, GetHeader_NullRequest) {
-    const char* result = uvhttp_get_header(nullptr, "Content-Type");
+    const char* result = uvhttp_request_get_header(nullptr, "Content-Type");
     EXPECT_EQ(result, nullptr);
 }
 
 TEST_F(BuilderAPITest, GetBody_NullRequest) {
-    const char* result = uvhttp_get_body(nullptr);
+    const char* result = uvhttp_request_get_body(nullptr);
     EXPECT_EQ(result, nullptr);
 }
 
@@ -347,7 +362,8 @@ TEST_F(BuilderAPITest, ServerStopSimple_NullServer) {
 }
 
 TEST_F(BuilderAPITest, ServerStopSimple_ValidServer) {
-    if (!builder) GTEST_SKIP();
+    if (!builder)
+        GTEST_SKIP();
     // Server is not listening, but stop_simple just delegates
     uvhttp_server_stop_simple(builder);
     SUCCEED();
@@ -363,7 +379,7 @@ TEST_F(BuilderAPITest, ServerSimpleFree_Null) {
 // ============================================================================
 #if UVHTTP_FEATURE_RATE_LIMIT
 class RateLimitBoostTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
 
@@ -554,20 +570,20 @@ TEST_F(RateLimitBoostTest, GetStatus_NullServer) {
     int remaining = 0;
     uint64_t reset_time = 0;
     EXPECT_EQ(uvhttp_server_get_rate_limit_status(nullptr, "127.0.0.1",
-                                                   &remaining, &reset_time),
+                                                  &remaining, &reset_time),
               UVHTTP_ERROR_INVALID_PARAM);
 }
 
 TEST_F(RateLimitBoostTest, GetStatus_NullRemaining) {
-    EXPECT_EQ(uvhttp_server_get_rate_limit_status(server, "127.0.0.1",
-                                                   nullptr, nullptr),
+    EXPECT_EQ(uvhttp_server_get_rate_limit_status(server, "127.0.0.1", nullptr,
+                                                  nullptr),
               UVHTTP_ERROR_INVALID_PARAM);
 }
 
 TEST_F(RateLimitBoostTest, GetStatus_NotEnabled) {
     int remaining = 0;
     EXPECT_EQ(uvhttp_server_get_rate_limit_status(server, "127.0.0.1",
-                                                   &remaining, nullptr),
+                                                  &remaining, nullptr),
               UVHTTP_OK);
     EXPECT_EQ(remaining, -1);
 }
@@ -577,7 +593,7 @@ TEST_F(RateLimitBoostTest, GetStatus_Enabled) {
     int remaining = 0;
     uint64_t reset_time = 0;
     EXPECT_EQ(uvhttp_server_get_rate_limit_status(server, "127.0.0.1",
-                                                   &remaining, &reset_time),
+                                                  &remaining, &reset_time),
               UVHTTP_OK);
     EXPECT_EQ(remaining, 100);
     // reset_time should be > 0 since window_start_time is 0 and window is 60s
@@ -590,7 +606,7 @@ TEST_F(RateLimitBoostTest, GetStatus_WithNullResetTime) {
     int remaining = 0;
     // Pass nullptr for reset_time - should still succeed
     EXPECT_EQ(uvhttp_server_get_rate_limit_status(server, "127.0.0.1",
-                                                   &remaining, nullptr),
+                                                  &remaining, nullptr),
               UVHTTP_OK);
     EXPECT_EQ(remaining, 50);
 }
@@ -676,7 +692,7 @@ TEST_F(RateLimitBoostTest, DisableAndReenable) {
 // ============================================================================
 #if UVHTTP_FEATURE_WEBSOCKET
 class WSConnectionManagementTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
 
@@ -691,11 +707,12 @@ protected:
         if (server) {
             // Disable connection management if active (clears timers)
             if (server->ws_connection_manager) {
-                // Many tests register stack-local uvhttp_ws_connection_t objects
-                // that go out of scope when the test body ends. Null out the
-                // stored ws_conn pointers so uvhttp_server_ws_disable_connection_management
-                // does not dereference them (use-after-scope) when sending close
-                // frames. (Same pattern used by the CloseAll_* tests below.)
+                // Many tests register stack-local uvhttp_ws_connection_t
+                // objects that go out of scope when the test body ends. Null
+                // out the stored ws_conn pointers so
+                // uvhttp_server_ws_disable_connection_management does not
+                // dereference them (use-after-scope) when sending close frames.
+                // (Same pattern used by the CloseAll_* tests below.)
                 ws_connection_node_t* node =
                     server->ws_connection_manager->connections;
                 while (node) {
@@ -827,7 +844,8 @@ TEST_F(WSConnectionManagementTest, GetCountByPath_NullServer) {
 
 TEST_F(WSConnectionManagementTest, GetCountByPath_NullPath) {
     uvhttp_server_ws_enable_connection_management(server, 60, 30);
-    EXPECT_EQ(uvhttp_server_ws_get_connection_count_by_path(server, nullptr), 0);
+    EXPECT_EQ(uvhttp_server_ws_get_connection_count_by_path(server, nullptr),
+              0);
 }
 
 TEST_F(WSConnectionManagementTest, GetCountByPath_NoManager) {
@@ -1165,7 +1183,7 @@ TEST_F(WSConnectionManagementTest, CloseAll_PathNoMatch) {
 // WS Handler Registration (lines 850-889 in server.c)
 // ============================================================================
 class WsHandlerRegistrationTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
 
@@ -1270,7 +1288,7 @@ TEST_F(WsHandlerRegistrationTest, FindWsHandler_NullPath) {
 // WS Send/Close null checks (lines 913-966 in server.c)
 // ============================================================================
 class WsSendCloseTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
 
@@ -1316,7 +1334,7 @@ TEST_F(WsSendCloseTest, WsClose_NullConn) {
 // WS Disable management with no manager (no-op path)
 // ============================================================================
 class WsDisableMgmtTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
 
@@ -1360,7 +1378,7 @@ int uvhttp_server_is_tls_enabled(uvhttp_server_t* server);
 }
 
 class TlsBoostTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
 
@@ -1443,12 +1461,16 @@ TEST_F(TlsBoostTest, DisableTls_ClearsFlag) {
 // uvhttp_serve parameter validation (lines 804-842 in server.c)
 // ============================================================================
 class ServeParamValidationTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
 
-    void SetUp() override { uv_loop_init(&loop); }
+    void SetUp() override {
+        uv_loop_init(&loop);
+    }
 
-    void TearDown() override { uv_loop_close(&loop); }
+    void TearDown() override {
+        uv_loop_close(&loop);
+    }
 };
 
 TEST_F(ServeParamValidationTest, Serve_NullLoop) {
@@ -1483,7 +1505,7 @@ TEST_F(ServeParamValidationTest, Serve_InvalidPortMaxInt) {
 #if UVHTTP_FEATURE_TLS
 
 class TlsRealContextTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
 
@@ -1608,7 +1630,7 @@ static void test_read_cb(uv_stream_t* stream, ssize_t nread,
 }
 
 class OnConnectionTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
 
@@ -1624,7 +1646,8 @@ protected:
         // 503 path)
         uv_walk(&loop, test_close_walk_cb, nullptr);
         for (int i = 0; i < 20; i++) {
-            if (uv_run(&loop, UV_RUN_NOWAIT) == 0) break;
+            if (uv_run(&loop, UV_RUN_NOWAIT) == 0)
+                break;
         }
 
         if (server) {
@@ -1645,7 +1668,8 @@ static void pump_loop(uv_loop_t* loop, int timeout_ms) {
         clock_gettime(CLOCK_MONOTONIC, &now);
         long elapsed_ms = (now.tv_sec - start.tv_sec) * 1000 +
                           (now.tv_nsec - start.tv_nsec) / 1000000;
-        if (elapsed_ms >= timeout_ms) break;
+        if (elapsed_ms >= timeout_ms)
+            break;
         usleep(1000);  // 1ms
     }
 }
@@ -1680,8 +1704,9 @@ TEST_F(OnConnectionTest, NormalConnectionAcceptance) {
     uv_ip4_addr("127.0.0.1", port, &connect_addr);
 
     uv_connect_t connect_req;
-    ret = uv_tcp_connect(&connect_req, &client,
-                         (const struct sockaddr*)&connect_addr, test_on_connect);
+    ret =
+        uv_tcp_connect(&connect_req, &client,
+                       (const struct sockaddr*)&connect_addr, test_on_connect);
     ASSERT_EQ(ret, 0);
 
     // Pump the loop for 100ms to process connect and on_connection
@@ -1728,8 +1753,9 @@ TEST_F(OnConnectionTest, MaxConnectionsReached_503Response) {
     uv_ip4_addr("127.0.0.1", port, &connect_addr);
 
     uv_connect_t connect_req;
-    ret = uv_tcp_connect(&connect_req, &client,
-                         (const struct sockaddr*)&connect_addr, test_on_connect);
+    ret =
+        uv_tcp_connect(&connect_req, &client,
+                       (const struct sockaddr*)&connect_addr, test_on_connect);
     ASSERT_EQ(ret, 0);
 
     // Pump the loop for 100ms to process connect, on_connection (503 path),
@@ -1839,7 +1865,7 @@ static int hello_handler(uvhttp_request_t* request,
 }
 
 class TcpHttpCycleTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
     uvhttp_router_t* router = nullptr;
@@ -1855,7 +1881,8 @@ protected:
         // Walk and close any remaining handles
         uv_walk(&loop, test_close_walk_cb, nullptr);
         for (int i = 0; i < 20; i++) {
-            if (uv_run(&loop, UV_RUN_NOWAIT) == 0) break;
+            if (uv_run(&loop, UV_RUN_NOWAIT) == 0)
+                break;
         }
 
         if (server) {
@@ -1883,11 +1910,11 @@ TEST_F(TcpHttpCycleTest, FullHttpRequestResponseCycle) {
     ASSERT_NE(router, nullptr);
 
     rerr = uvhttp_router_add_route_method(router, "/hello", UVHTTP_GET,
-                                           hello_handler);
+                                          hello_handler);
     ASSERT_EQ(rerr, UVHTTP_OK);
 
     // Attach router to server
-    uvhttp_error_t serr = uvhttp_server_set_router(server, router);
+    uvhttp_error_t serr = uvhttp_server_take_router(server, router);
     ASSERT_EQ(serr, UVHTTP_OK);
 
     // Listen on port 0 (OS assigns random port)
@@ -1921,13 +1948,15 @@ TEST_F(TcpHttpCycleTest, FullHttpRequestResponseCycle) {
     bool connected = false;
     // Reuse a connect callback that sets a flag via connect_req.data
     auto on_connect_send = [](uv_connect_t* req, int status) {
-        if (status < 0) return;
+        if (status < 0)
+            return;
         bool* flag = (bool*)req->data;
         *flag = true;
     };
     connect_req.data = &connected;
-    ret = uv_tcp_connect(&connect_req, &client,
-                         (const struct sockaddr*)&connect_addr, on_connect_send);
+    ret =
+        uv_tcp_connect(&connect_req, &client,
+                       (const struct sockaddr*)&connect_addr, on_connect_send);
     ASSERT_EQ(ret, 0);
 
     // Pump until connected
@@ -1935,11 +1964,10 @@ TEST_F(TcpHttpCycleTest, FullHttpRequestResponseCycle) {
     ASSERT_TRUE(connected);
 
     // Send a raw HTTP GET request via uv_write
-    const char* http_request =
-        "GET /hello HTTP/1.1\r\n"
-        "Host: 127.0.0.1\r\n"
-        "Connection: close\r\n"
-        "\r\n";
+    const char* http_request = "GET /hello HTTP/1.1\r\n"
+                               "Host: 127.0.0.1\r\n"
+                               "Connection: close\r\n"
+                               "\r\n";
     uv_buf_t write_buf = uv_buf_init((char*)http_request, strlen(http_request));
     uv_write_t write_req;
     bool write_done = false;
@@ -2003,7 +2031,7 @@ TEST_F(TcpHttpCycleTest, FullHttpRequestResponseCycle) {
 // Handler that mimics what default_handler does (covers the same response API
 // code paths: set_status, set_header, set_body, send)
 static int default_like_handler(uvhttp_request_t* request,
-                                 uvhttp_response_t* response) {
+                                uvhttp_response_t* response) {
     const char* method = uvhttp_request_get_method(request);
     const char* url = uvhttp_request_get_url(request);
 
@@ -2025,7 +2053,7 @@ static int default_like_handler(uvhttp_request_t* request,
 }
 
 class DefaultHandlerTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
     uvhttp_server_builder_t* builder = nullptr;
@@ -2037,7 +2065,8 @@ protected:
     void TearDown() override {
         uv_walk(&loop, test_close_walk_cb, nullptr);
         for (int i = 0; i < 20; i++) {
-            if (uv_run(&loop, UV_RUN_NOWAIT) == 0) break;
+            if (uv_run(&loop, UV_RUN_NOWAIT) == 0)
+                break;
         }
         if (builder) {
             // uvhttp_server_simple_free -> uvhttp_server_free frees
@@ -2063,7 +2092,7 @@ TEST_F(DefaultHandlerTest, DefaultRoute_RespondsWithUnifiedApiBody) {
     struct sockaddr_in bound_addr;
     int namelen = sizeof(bound_addr);
     int ret = uv_tcp_getsockname(&builder->server->tcp_handle,
-                                  (struct sockaddr*)&bound_addr, &namelen);
+                                 (struct sockaddr*)&bound_addr, &namelen);
     ASSERT_EQ(ret, 0);
     int port = ntohs(bound_addr.sin_port);
     ASSERT_GT(port, 0);
@@ -2084,21 +2113,21 @@ TEST_F(DefaultHandlerTest, DefaultRoute_RespondsWithUnifiedApiBody) {
     connect_req.data = &connected;
 
     auto on_conn = [](uv_connect_t* req, int status) {
-        if (status < 0) return;
+        if (status < 0)
+            return;
         *(bool*)req->data = true;
     };
     ret = uv_tcp_connect(&connect_req, &client,
-                          (const struct sockaddr*)&connect_addr, on_conn);
+                         (const struct sockaddr*)&connect_addr, on_conn);
     ASSERT_EQ(ret, 0);
     pump_loop(&loop, 200);
     ASSERT_TRUE(connected);
 
     // Send GET / HTTP/1.1
-    const char* http_request =
-        "GET / HTTP/1.1\r\n"
-        "Host: 127.0.0.1\r\n"
-        "Connection: close\r\n"
-        "\r\n";
+    const char* http_request = "GET / HTTP/1.1\r\n"
+                               "Host: 127.0.0.1\r\n"
+                               "Connection: close\r\n"
+                               "\r\n";
     uv_buf_t write_buf = uv_buf_init((char*)http_request, strlen(http_request));
     uv_write_t write_req;
     bool write_done = false;
@@ -2113,7 +2142,8 @@ TEST_F(DefaultHandlerTest, DefaultRoute_RespondsWithUnifiedApiBody) {
     ASSERT_TRUE(write_done);
 
     // Read the response - use a read callback that checks for "UVHTTP unified
-    // API" instead of the shared client_read_cb which looks for "Hello, uvhttp!"
+    // API" instead of the shared client_read_cb which looks for "Hello,
+    // uvhttp!"
     auto default_read_cb = [](uv_stream_t* stream, ssize_t nread,
                               const uv_buf_t* buf) {
         ClientReadCtx* rctx = (ClientReadCtx*)stream->data;
@@ -2128,7 +2158,8 @@ TEST_F(DefaultHandlerTest, DefaultRoute_RespondsWithUnifiedApiBody) {
             uv_read_stop(stream);
         }
     };
-    ret = uv_read_start((uv_stream_t*)&client, client_alloc_cb, default_read_cb);
+    ret =
+        uv_read_start((uv_stream_t*)&client, client_alloc_cb, default_read_cb);
     ASSERT_EQ(ret, 0);
     pump_loop(&loop, 500);
     uv_read_stop((uv_stream_t*)&client);
@@ -2168,7 +2199,8 @@ TEST_F(DefaultHandlerTest, DefaultRoute_ServeSuccessPath_CoversDefaultHandler) {
     // Drain
     uv_walk(&loop, test_close_walk_cb, nullptr);
     for (int i = 0; i < 50; i++) {
-        if (uv_run(&loop, UV_RUN_NOWAIT) == 0) break;
+        if (uv_run(&loop, UV_RUN_NOWAIT) == 0)
+            break;
     }
 }
 
@@ -2191,7 +2223,8 @@ static int send_data_direct_handler(uvhttp_request_t* request,
     // Use uvhttp_send_response_data to write raw data
     const char* body = "HTTP/1.1 200 OK\r\nContent-Length: 13\r\n"
                        "Connection: close\r\n\r\nDirect write!";
-    uvhttp_error_t err = uvhttp_send_response_data(response, body, strlen(body));
+    uvhttp_error_t err =
+        uvhttp_send_response_data(response, body, strlen(body));
     (void)err;
     return 0;
 }
@@ -2203,10 +2236,10 @@ TEST_F(TcpHttpCycleTest, SendResponseData_DirectCall_WithRealConnection) {
     ASSERT_NE(router, nullptr);
 
     rerr = uvhttp_router_add_route_method(router, "/direct", UVHTTP_GET,
-                                           send_data_direct_handler);
+                                          send_data_direct_handler);
     ASSERT_EQ(rerr, UVHTTP_OK);
 
-    uvhttp_error_t serr = uvhttp_server_set_router(server, router);
+    uvhttp_error_t serr = uvhttp_server_take_router(server, router);
     ASSERT_EQ(serr, UVHTTP_OK);
 
     serr = uvhttp_server_listen(server, "127.0.0.1", 0);
@@ -2237,21 +2270,21 @@ TEST_F(TcpHttpCycleTest, SendResponseData_DirectCall_WithRealConnection) {
     bool connected = false;
     connect_req.data = &connected;
     auto on_conn = [](uv_connect_t* req, int status) {
-        if (status < 0) return;
+        if (status < 0)
+            return;
         *(bool*)req->data = true;
     };
     ret = uv_tcp_connect(&connect_req, &client,
-                          (const struct sockaddr*)&connect_addr, on_conn);
+                         (const struct sockaddr*)&connect_addr, on_conn);
     ASSERT_EQ(ret, 0);
     pump_loop(&loop, 200);
     ASSERT_TRUE(connected);
 
     // Send GET /direct HTTP/1.1
-    const char* http_request =
-        "GET /direct HTTP/1.1\r\n"
-        "Host: 127.0.0.1\r\n"
-        "Connection: close\r\n"
-        "\r\n";
+    const char* http_request = "GET /direct HTTP/1.1\r\n"
+                               "Host: 127.0.0.1\r\n"
+                               "Connection: close\r\n"
+                               "\r\n";
     uv_buf_t write_buf = uv_buf_init((char*)http_request, strlen(http_request));
     uv_write_t write_req;
     bool write_done = false;
@@ -2319,10 +2352,10 @@ TEST_F(TcpHttpCycleTest, ResponseSendRaw_KeepAlive0_SetsConnKeepAlive) {
     ASSERT_NE(router, nullptr);
 
     rerr = uvhttp_router_add_route_method(router, "/close", UVHTTP_GET,
-                                           keepalive_close_handler);
+                                          keepalive_close_handler);
     ASSERT_EQ(rerr, UVHTTP_OK);
 
-    uvhttp_error_t serr = uvhttp_server_set_router(server, router);
+    uvhttp_error_t serr = uvhttp_server_take_router(server, router);
     ASSERT_EQ(serr, UVHTTP_OK);
 
     serr = uvhttp_server_listen(server, "127.0.0.1", 0);
@@ -2353,21 +2386,21 @@ TEST_F(TcpHttpCycleTest, ResponseSendRaw_KeepAlive0_SetsConnKeepAlive) {
     bool connected = false;
     connect_req.data = &connected;
     auto on_conn = [](uv_connect_t* req, int status) {
-        if (status < 0) return;
+        if (status < 0)
+            return;
         *(bool*)req->data = true;
     };
     ret = uv_tcp_connect(&connect_req, &client,
-                          (const struct sockaddr*)&connect_addr, on_conn);
+                         (const struct sockaddr*)&connect_addr, on_conn);
     ASSERT_EQ(ret, 0);
     pump_loop(&loop, 200);
     ASSERT_TRUE(connected);
 
     // Send GET /close HTTP/1.1
-    const char* http_request =
-        "GET /close HTTP/1.1\r\n"
-        "Host: 127.0.0.1\r\n"
-        "Connection: close\r\n"
-        "\r\n";
+    const char* http_request = "GET /close HTTP/1.1\r\n"
+                               "Host: 127.0.0.1\r\n"
+                               "Connection: close\r\n"
+                               "\r\n";
     uv_buf_t write_buf = uv_buf_init((char*)http_request, strlen(http_request));
     uv_write_t write_req;
     bool write_done = false;
@@ -2393,7 +2426,8 @@ TEST_F(TcpHttpCycleTest, ResponseSendRaw_KeepAlive0_SetsConnKeepAlive) {
 
     // Verify Connection: close appears in the response
     EXPECT_NE(read_ctx.data.find("Connection: close"), std::string::npos)
-        << "Response should have Connection: close header, got: " << read_ctx.data;
+        << "Response should have Connection: close header, got: "
+        << read_ctx.data;
 
     uv_close((uv_handle_t*)&client, test_on_close);
     pump_loop(&loop, 100);
@@ -2452,17 +2486,16 @@ TEST(DefaultHandlerCoverageTest, DefaultHandler_InvokedByServedRequest) {
         while (uv_run(&serve_loop, UV_RUN_NOWAIT) > 0) {
         }
         uv_loop_close(&serve_loop);
-        FAIL() << "Failed to connect to server on port " << port
-               << ": " << strerror(errno);
+        FAIL() << "Failed to connect to server on port " << port << ": "
+               << strerror(errno);
     }
     ASSERT_EQ(connect_ret, 0);
 
     // Send GET / HTTP/1.1
-    const char* request =
-        "GET / HTTP/1.1\r\n"
-        "Host: localhost\r\n"
-        "Connection: close\r\n"
-        "\r\n";
+    const char* request = "GET / HTTP/1.1\r\n"
+                          "Host: localhost\r\n"
+                          "Connection: close\r\n"
+                          "\r\n";
     ssize_t sent = send(sock, request, strlen(request), 0);
     ASSERT_GT(sent, 0);
 

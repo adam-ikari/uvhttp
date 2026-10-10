@@ -392,8 +392,8 @@ int main(int argc, char* argv[]) {
     // 添加路由
     uvhttp_router_add_route(g_app->router, "/", demo_handler);
     uvhttp_router_add_route(g_app->router, "/config", config_api_handler);
-    // 使用 uvhttp_server_set_router 而非直接赋值
-    uvhttp_server_set_router(g_app->server, g_app->router);
+    // 使用 uvhttp_server_take_router 而非直接赋值
+    uvhttp_server_take_router(g_app->server, g_app->router);
     printf(" 路由设置完成\n");
 
     // 启动配置动态调整定时器

@@ -101,7 +101,7 @@ int main(void) {
     }
 
     // Attach router to server
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
 
     // Add routes
     uvhttp_router_add_route(router, "/", root_handler);

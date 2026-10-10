@@ -6,16 +6,18 @@
  * 注意：由于项目限制，这里只测试 NULL 指针处理，不触发实际崩溃
  */
 
+#include "uvhttp_allocator.h"
+#include "uvhttp_config.h"
+#include "uvhttp_context.h"
+#include "uvhttp_error.h"
+#include "uvhttp_response.h"
+#include "uvhttp_router.h"
+#include "uvhttp_server.h"
+
+#include "uvhttp.h"
+
 #include <gtest/gtest.h>
 #include <uv.h>
-#include "uvhttp.h"
-#include "uvhttp_server.h"
-#include "uvhttp_router.h"
-#include "uvhttp_response.h"
-#include "uvhttp_config.h"
-#include "uvhttp_error.h"
-#include "uvhttp_allocator.h"
-#include "uvhttp_context.h"
 
 /**
  * @brief 测试 NULL 服务器销毁（不崩溃，安全无操作）
@@ -67,7 +69,7 @@ TEST(DeathTest, NullServerSetRouter) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    result = uvhttp_server_set_router(nullptr, router);
+    result = uvhttp_server_take_router(nullptr, router);
     EXPECT_NE(result, UVHTTP_OK);
     uvhttp_router_free(router);
 }
@@ -76,7 +78,8 @@ TEST(DeathTest, NullServerSetRouter) {
  * @brief 测试 NULL 路由器添加路由
  */
 TEST(DeathTest, NullRouterAddRoute) {
-    uvhttp_request_handler_t handler = [](uvhttp_request_t* req, uvhttp_response_t* res) -> int {
+    uvhttp_request_handler_t handler = [](uvhttp_request_t* req,
+                                          uvhttp_response_t* res) -> int {
         uvhttp_response_set_status(res, 200);
         return uvhttp_response_send(res);
     };
@@ -93,7 +96,8 @@ TEST(DeathTest, NullPathAddRoute) {
     uvhttp_error_t result = uvhttp_router_new(&router);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
-    uvhttp_request_handler_t handler = [](uvhttp_request_t* req, uvhttp_response_t* res) -> int {
+    uvhttp_request_handler_t handler = [](uvhttp_request_t* req,
+                                          uvhttp_response_t* res) -> int {
         uvhttp_response_set_status(res, 200);
         return uvhttp_response_send(res);
     };
@@ -128,7 +132,8 @@ TEST(DeathTest, NullResponseSetStatus) {
  * @brief 测试 NULL 响应设置头
  */
 TEST(DeathTest, NullResponseSetHeader) {
-    uvhttp_error_t result = uvhttp_response_set_header(nullptr, "Content-Type", "text/plain");
+    uvhttp_error_t result =
+        uvhttp_response_set_header(nullptr, "Content-Type", "text/plain");
     EXPECT_NE(result, UVHTTP_OK);
 }
 
@@ -233,17 +238,20 @@ TEST(DeathTest, ErrorCodes) {
     EXPECT_STRNE(error_str, "");  // 不应该是空字符串
 
     // 测试错误分类
-    const char* category = uvhttp_error_category_string(UVHTTP_ERROR_INVALID_PARAM);
+    const char* category =
+        uvhttp_error_category_string(UVHTTP_ERROR_INVALID_PARAM);
     ASSERT_NE(category, nullptr);
     EXPECT_STRNE(category, "");  // 不应该是空字符串
 
     // 测试错误描述
-    const char* description = uvhttp_error_description(UVHTTP_ERROR_INVALID_PARAM);
+    const char* description =
+        uvhttp_error_description(UVHTTP_ERROR_INVALID_PARAM);
     ASSERT_NE(description, nullptr);
     EXPECT_STRNE(description, "");  // 不应该是空字符串
 
     // 测试错误建议
-    const char* suggestion = uvhttp_error_suggestion(UVHTTP_ERROR_INVALID_PARAM);
+    const char* suggestion =
+        uvhttp_error_suggestion(UVHTTP_ERROR_INVALID_PARAM);
     ASSERT_NE(suggestion, nullptr);
     EXPECT_STRNE(suggestion, "");  // 不应该是空字符串
 

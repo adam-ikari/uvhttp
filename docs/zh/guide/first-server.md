@@ -46,28 +46,15 @@ int main() {
 
     uv_loop_t* loop = uv_default_loop();
 
-    uvhttp_error_t r = uvhttp_server_new(loop, &g_server);
-    if (r != UVHTTP_OK) {
-        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(r));
-        return 1;
-    }
+    /* 原子构造：一次调用完成 server + 路由 + 监听，无中间态、无需回滚 */
+    const uvhttp_route_t routes[] = {
+        {"/", UVHTTP_ANY, hello_handler},
+    };
 
-    uvhttp_router_t* router = NULL;
-    r = uvhttp_router_new(&router);
-    if (r != UVHTTP_OK) {
-        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(r));
-        uvhttp_server_free(g_server);
-        return 1;
-    }
-
-    uvhttp_server_set_router(g_server, router);
-    uvhttp_router_add_route(router, "/", hello_handler);
-
-    uvhttp_error_t result = uvhttp_server_listen(g_server, "0.0.0.0", 8080);
+    uvhttp_error_t result =
+        uvhttp_server_listen_routes(loop, routes, 1, "0.0.0.0", 8080, &g_server);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to start server: %s\n", uvhttp_error_string(result));
-        uvhttp_router_free(router);
-        uvhttp_server_free(g_server);
         return 1;
     }
 
@@ -159,29 +146,15 @@ int main() {
 
     uv_loop_t* loop = uv_default_loop();
 
-    uvhttp_error_t r = uvhttp_server_new(loop, &g_server);
-    if (r != UVHTTP_OK) {
-        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(r));
-        return 1;
-    }
+    const uvhttp_route_t routes[] = {
+        {"/api",        UVHTTP_ANY, api_handler},
+        {"/api/status", UVHTTP_ANY, api_handler},
+    };
 
-    uvhttp_router_t* router = NULL;
-    r = uvhttp_router_new(&router);
-    if (r != UVHTTP_OK) {
-        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(r));
-        uvhttp_server_free(g_server);
-        return 1;
-    }
-
-    uvhttp_server_set_router(g_server, router);
-    uvhttp_router_add_route(router, "/api", api_handler);
-    uvhttp_router_add_route(router, "/api/status", api_handler);
-
-    uvhttp_error_t result = uvhttp_server_listen(g_server, "0.0.0.0", 8080);
+    uvhttp_error_t result =
+        uvhttp_server_listen_routes(loop, routes, 2, "0.0.0.0", 8080, &g_server);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to start server: %s\n", uvhttp_error_string(result));
-        uvhttp_router_free(router);
-        uvhttp_server_free(g_server);
         return 1;
     }
 
@@ -289,28 +262,14 @@ int main() {
 
     uv_loop_t* loop = uv_default_loop();
 
-    uvhttp_error_t r = uvhttp_server_new(loop, &g_server);
-    if (r != UVHTTP_OK) {
-        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(r));
-        return 1;
-    }
+    const uvhttp_route_t routes[] = {
+        {"/users/:id", UVHTTP_ANY, user_handler},
+    };
 
-    uvhttp_router_t* router = NULL;
-    r = uvhttp_router_new(&router);
-    if (r != UVHTTP_OK) {
-        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(r));
-        uvhttp_server_free(g_server);
-        return 1;
-    }
-
-    uvhttp_server_set_router(g_server, router);
-    uvhttp_router_add_route(router, "/users/*", user_handler);
-
-    uvhttp_error_t result = uvhttp_server_listen(g_server, "0.0.0.0", 8080);
+    uvhttp_error_t result =
+        uvhttp_server_listen_routes(loop, routes, 1, "0.0.0.0", 8080, &g_server);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to start server: %s\n", uvhttp_error_string(result));
-        uvhttp_router_free(router);
-        uvhttp_server_free(g_server);
         return 1;
     }
 

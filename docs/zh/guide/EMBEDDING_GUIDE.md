@@ -155,34 +155,25 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    if (uvhttp_server_new(loop, &g_app.server) != UVHTTP_OK) {
-        fprintf(stderr, "error: cannot create uvhttp server\n");
+    /* 原子构造：一次调用完成 server + 路由 + 监听
+     *
+     * v2.10 之前这里需要 5 步，每个失败分支都要手写回滚。listen 失败
+     * 分支里的 uvhttp_router_free 释放的是 server 已经接管的 router
+     * （take_router 转移所有权），随后 uvhttp_server_free 再释放一次 ——
+     * 二次释放。uvhttp_server_listen_routes 不存在中间态，无需回滚。 */
+    const uvhttp_route_t routes[] = {
+        {"/", UVHTTP_ANY, hello_handler},
+    };
+    if (uvhttp_server_listen_routes(loop, routes, 1, "0.0.0.0", port,
+                                    &g_app.server) != UVHTTP_OK) {
+        fprintf(stderr, "error: cannot start server on 0.0.0.0:%d\n", port);
         return 1;
     }
-    if (uvhttp_router_new(&g_app.router) != UVHTTP_OK) {
-        fprintf(stderr, "error: cannot create router\n");
-        uvhttp_server_free(g_app.server);
-        return 1;
-    }
-    if (uvhttp_router_add_route(g_app.router, "/", hello_handler) != UVHTTP_OK) {
-        fprintf(stderr, "error: cannot add route /\n");
-        uvhttp_router_free(g_app.router);
-        uvhttp_server_free(g_app.server);
-        return 1;
-    }
-    uvhttp_server_set_router(g_app.server, g_app.router);
 
     uv_signal_init(loop, &g_sigint);
     uv_signal_start(&g_sigint, on_signal, SIGINT);
     uv_signal_init(loop, &g_sigterm);
     uv_signal_start(&g_sigterm, on_signal, SIGTERM);
-
-    if (uvhttp_server_listen(g_app.server, "0.0.0.0", port) != UVHTTP_OK) {
-        fprintf(stderr, "error: cannot listen on 0.0.0.0:%d\n", port);
-        uvhttp_router_free(g_app.router);
-        uvhttp_server_free(g_app.server);
-        return 1;
-    }
 
     printf("Embedded uvhttp listening on http://0.0.0.0:%d\n", port);
     printf("Test: curl http://localhost:%d/\n", port);
