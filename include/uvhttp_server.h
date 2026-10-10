@@ -276,8 +276,7 @@ uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server);
 uvhttp_error_t uvhttp_server_listen_routes(uv_loop_t* loop,
                                            const uvhttp_route_t* routes,
                                            size_t route_count, const char* host,
-                                           int port,
-                                           uvhttp_server_t** server);
+                                           int port, uvhttp_server_t** server);
 #if UVHTTP_FEATURE_TLS
 uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server,
                                         uvhttp_tls_context_t* tls_ctx);

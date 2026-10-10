@@ -5,15 +5,17 @@
  * 内存测试用于验证系统的内存使用情况
  */
 
+#include "uvhttp_allocator.h"
+#include "uvhttp_config.h"
+#include "uvhttp_response.h"
+#include "uvhttp_router.h"
+#include "uvhttp_server.h"
+
+#include "uvhttp.h"
+
 #include <gtest/gtest.h>
 #include <uv.h>
 #include <vector>
-#include "uvhttp.h"
-#include "uvhttp_server.h"
-#include "uvhttp_router.h"
-#include "uvhttp_response.h"
-#include "uvhttp_config.h"
-#include "uvhttp_allocator.h"
 
 // 内存测试配置
 #define MEMORY_TEST_ALLOCATIONS 1000

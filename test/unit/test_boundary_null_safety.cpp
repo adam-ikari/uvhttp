@@ -4,18 +4,19 @@
  * zero-length buffers, and NULL parameter paths.
  */
 
-#include <gtest/gtest.h>
-#include "uvhttp_server.h"
+#include "uvhttp_allocator.h"
+#include "uvhttp_config.h"
 #include "uvhttp_connection.h"
+#include "uvhttp_context.h"
+#include "uvhttp_error.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_router.h"
-#include "uvhttp_config.h"
-#include "uvhttp_context.h"
-#include "uvhttp_error.h"
-#include "uvhttp_allocator.h"
-#include <string.h>
+#include "uvhttp_server.h"
+
+#include <gtest/gtest.h>
 #include <limits.h>
+#include <string.h>
 
 /* ========== Null-pointer safety for public APIs ========== */
 

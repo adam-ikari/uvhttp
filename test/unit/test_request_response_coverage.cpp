@@ -34,7 +34,7 @@ extern "C" {
 // ============================================================================
 
 class ResponseCoverageTest : public ::testing::Test {
-protected:
+   protected:
     uvhttp_response_t* resp = nullptr;
 
     void SetUp() override {
@@ -175,8 +175,9 @@ TEST_F(ResponseCoverageTest, BuildData_HeaderWithDEL_Skipped) {
 // Response: null header in build_response_headers iteration (line 159-160)
 //
 // get_header_at returns NULL when index >= UVHTTP_INLINE_HEADERS_CAPACITY
-// and headers_extra is NULL. Setting header_count > UVHTTP_INLINE_HEADERS_CAPACITY
-// without allocating headers_extra triggers this path.
+// and headers_extra is NULL. Setting header_count >
+// UVHTTP_INLINE_HEADERS_CAPACITY without allocating headers_extra triggers this
+// path.
 // ============================================================================
 
 TEST_F(ResponseCoverageTest, BuildData_NullHeaderInIteration_Skipped) {
@@ -220,10 +221,11 @@ TEST_F(ResponseCoverageTest, SetHeader_ReallocPath_TriggersRealloc) {
     //    old_extra_count = 40 - 32 = 8 (non-zero) -> realloc path
 
     const size_t fake_capacity = 40;
-    const size_t fake_extra_count = fake_capacity - UVHTTP_INLINE_HEADERS_CAPACITY;
+    const size_t fake_extra_count =
+        fake_capacity - UVHTTP_INLINE_HEADERS_CAPACITY;
 
-    resp->headers_extra =
-        (uvhttp_header_t*)uvhttp_calloc(fake_extra_count, sizeof(uvhttp_header_t));
+    resp->headers_extra = (uvhttp_header_t*)uvhttp_calloc(
+        fake_extra_count, sizeof(uvhttp_header_t));
     ASSERT_NE(resp->headers_extra, nullptr);
     resp->headers_capacity = fake_capacity;
 
@@ -240,7 +242,8 @@ TEST_F(ResponseCoverageTest, SetHeader_ReallocPath_TriggersRealloc) {
     EXPECT_NE(resp->headers_extra, nullptr);
 
     // Adding one more should trigger realloc (lines 337-338)
-    uvhttp_error_t err = uvhttp_response_set_header(resp, "X-Extra", "reallocated");
+    uvhttp_error_t err =
+        uvhttp_response_set_header(resp, "X-Extra", "reallocated");
     EXPECT_EQ(err, UVHTTP_OK);
 
     EXPECT_EQ(resp->header_count, fake_capacity + 1);
@@ -266,7 +269,7 @@ TEST_F(ResponseCoverageTest, SetHeader_ReallocPath_TriggersRealloc) {
 // ============================================================================
 
 class RequestCoverageTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
     uvhttp_connection_t* conn = nullptr;
@@ -315,8 +318,7 @@ static int s_cov_detector_called = 0;
 static int s_cov_handler_called = 0;
 static uvhttp_error_t s_cov_handler_return = UVHTTP_OK;
 
-static int cov_detector_matches(uvhttp_request_t* request,
-                                char* protocol_name,
+static int cov_detector_matches(uvhttp_request_t* request, char* protocol_name,
                                 size_t protocol_name_len,
                                 const char* upgrade_header,
                                 const char* connection_header) {
@@ -330,8 +332,7 @@ static int cov_detector_matches(uvhttp_request_t* request,
     return 0;
 }
 
-static int cov_detector_always(uvhttp_request_t* request,
-                               char* protocol_name,
+static int cov_detector_always(uvhttp_request_t* request, char* protocol_name,
                                size_t protocol_name_len,
                                const char* upgrade_header,
                                const char* connection_header) {
@@ -457,13 +458,14 @@ TEST_F(RequestCoverageTest, ProtoUpgrade_DefaultWebSocket_SingleProtoPath) {
     // llhttp returns HPE_PAUSED_UPGRADE for Upgrade requests
     EXPECT_TRUE(rc == 0 || rc == HPE_PAUSED_UPGRADE);
 
-    // The default WebSocket handler was invoked (single proto path lines 392-400)
-    // The handler may succeed or fail depending on the handshake logic,
-    // but the code path is covered.
+    // The default WebSocket handler was invoked (single proto path lines
+    // 392-400) The handler may succeed or fail depending on the handshake
+    // logic, but the code path is covered.
 }
 
 // ============================================================================
-// Protocol upgrade: single protocol, no upgrade_header specified (lines 415-437)
+// Protocol upgrade: single protocol, no upgrade_header specified (lines
+// 415-437)
 //
 // Unregister the default websocket protocol, then register a custom one
 // with empty upgrade_header so proto->upgrade_header[0] == '\0',
@@ -673,8 +675,10 @@ TEST_F(RequestCoverageTest, EnsureValidUrl_EmptyUrl_DefaultsToRoot) {
 
     // Route handler that checks the request URL
     static const char* captured_path = nullptr;
-    auto url_capture = [](uvhttp_request_t* req, uvhttp_response_t* resp) -> int {
-        // This is a lambda but we need a function pointer; use a static variable
+    auto url_capture = [](uvhttp_request_t* req,
+                          uvhttp_response_t* resp) -> int {
+        // This is a lambda but we need a function pointer; use a static
+        // variable
         return 0;
     };
 
@@ -702,7 +706,7 @@ TEST_F(RequestCoverageTest, EnsureValidUrl_EmptyUrl_DefaultsToRoot) {
 // ============================================================================
 
 class ClientIpTcpTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uv_tcp_t server_handle{};
     uv_tcp_t client_handle{};
@@ -739,7 +743,8 @@ protected:
         }
         // Run loop to process close callbacks
         for (int i = 0; i < 20; i++) {
-            if (uv_run(&loop, UV_RUN_NOWAIT) == 0) break;
+            if (uv_run(&loop, UV_RUN_NOWAIT) == 0)
+                break;
         }
         if (accepted_handle) {
             uvhttp_free(accepted_handle);
@@ -769,18 +774,22 @@ protected:
     bool SetupConnectedSocket() {
         // Initialize server TCP handle
         int r = uv_tcp_init(&loop, &server_handle);
-        if (r != 0) return false;
+        if (r != 0)
+            return false;
         server_initialized = true;
 
         struct sockaddr_in addr;
         uv_ip4_addr("127.0.0.1", 0, &addr);  // port 0 = ephemeral
         r = uv_tcp_bind(&server_handle, (const struct sockaddr*)&addr, 0);
-        if (r != 0) return false;
+        if (r != 0)
+            return false;
 
         // Get the actual bound port
         int namelen = sizeof(addr);
-        r = uv_tcp_getsockname(&server_handle, (struct sockaddr*)&addr, &namelen);
-        if (r != 0) return false;
+        r = uv_tcp_getsockname(&server_handle, (struct sockaddr*)&addr,
+                               &namelen);
+        if (r != 0)
+            return false;
         int port = ntohs(addr.sin_port);
 
         // Set server data pointer for callback
@@ -788,18 +797,22 @@ protected:
 
         // Pre-allocate accepted handle before listen
         accepted_handle = (uv_tcp_t*)uvhttp_alloc(sizeof(uv_tcp_t));
-        if (!accepted_handle) return false;
+        if (!accepted_handle)
+            return false;
         r = uv_tcp_init(&loop, accepted_handle);
-        if (r != 0) return false;
+        if (r != 0)
+            return false;
         accepted_initialized = true;
 
         // Listen with callback
         r = uv_listen((uv_stream_t*)&server_handle, 1, on_connection);
-        if (r != 0) return false;
+        if (r != 0)
+            return false;
 
         // Initialize client TCP handle
         r = uv_tcp_init(&loop, &client_handle);
-        if (r != 0) return false;
+        if (r != 0)
+            return false;
         client_initialized = true;
 
         // Connect client to server using libuv async connect
@@ -809,7 +822,8 @@ protected:
 
         r = uv_tcp_connect(&connect_req, &client_handle,
                            (const struct sockaddr*)&connect_addr, on_connect);
-        if (r != 0) return false;
+        if (r != 0)
+            return false;
 
         // Run the event loop until both connect and accept complete
         for (int i = 0; i < 100 && !(connect_done && accepted_done); i++) {
@@ -925,8 +939,7 @@ TEST_F(ClientIpTcpTest, RateLimitWhitelist_DisabledRateLimit) {
 // upgrade_header but proto has one set (skip path, lines 387-391)
 // ============================================================================
 
-static int cov_detector_never(uvhttp_request_t* request,
-                              char* protocol_name,
+static int cov_detector_never(uvhttp_request_t* request, char* protocol_name,
                               size_t protocol_name_len,
                               const char* upgrade_header,
                               const char* connection_header) {
@@ -939,7 +952,8 @@ static int cov_detector_never(uvhttp_request_t* request,
     return 0;
 }
 
-TEST_F(RequestCoverageTest, ProtoUpgrade_SingleProto_HeaderMismatch_DetectorNotCalled) {
+TEST_F(RequestCoverageTest,
+       ProtoUpgrade_SingleProto_HeaderMismatch_DetectorNotCalled) {
     s_cov_detector_called = 0;
     s_cov_handler_called = 0;
 
@@ -980,8 +994,9 @@ TEST_F(ResponseCoverageTest, GetHeaderAt_BeyondCapacity_NoExtra) {
     // header_count > UVHTTP_INLINE_HEADERS_CAPACITY but no headers_extra
     resp->header_count = UVHTTP_INLINE_HEADERS_CAPACITY + 5;
     resp->headers_extra = nullptr;
-    EXPECT_EQ(uvhttp_response_get_header_at(resp, UVHTTP_INLINE_HEADERS_CAPACITY + 1),
-              nullptr);
+    EXPECT_EQ(
+        uvhttp_response_get_header_at(resp, UVHTTP_INLINE_HEADERS_CAPACITY + 1),
+        nullptr);
 }
 
 // ============================================================================
@@ -1040,7 +1055,7 @@ TEST_F(RequestCoverageTest, Router_NoMatch_404Response) {
     uvhttp_router_t* router = nullptr;
     ASSERT_EQ(uvhttp_router_new(&router), UVHTTP_OK);
     ASSERT_EQ(uvhttp_router_add_route_method(router, "/other", UVHTTP_GET,
-                                              cov_route_handler),
+                                             cov_route_handler),
               UVHTTP_OK);
     ASSERT_EQ(uvhttp_server_take_router(server, router), UVHTTP_OK);
 
@@ -1057,7 +1072,7 @@ TEST_F(RequestCoverageTest, Router_Match_HandlerCalled) {
     uvhttp_router_t* router = nullptr;
     ASSERT_EQ(uvhttp_router_new(&router), UVHTTP_OK);
     ASSERT_EQ(uvhttp_router_add_route_method(router, "/api/test", UVHTTP_GET,
-                                              cov_route_handler),
+                                             cov_route_handler),
               UVHTTP_OK);
     ASSERT_EQ(uvhttp_server_take_router(server, router), UVHTTP_OK);
 

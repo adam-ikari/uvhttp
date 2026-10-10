@@ -17,8 +17,9 @@
 #include <gtest/gtest.h>
 
 extern "C" {
-#include "uvhttp.h"
 #include "uvhttp_context.h"
+
+#include "uvhttp.h"
 }
 
 #include <arpa/inet.h>
@@ -61,9 +62,9 @@ TEST(UvhttpServerAtomicConstruct, BuildsListeningServerWithRoutes) {
     };
 
     uvhttp_server_t* server = nullptr;
-    ASSERT_EQ(uvhttp_server_listen_routes(loop, routes, 3, "127.0.0.1", 0,
-                                          &server),
-              UVHTTP_OK)
+    ASSERT_EQ(
+        uvhttp_server_listen_routes(loop, routes, 3, "127.0.0.1", 0, &server),
+        UVHTTP_OK)
         << "atomic construction should succeed";
     ASSERT_NE(server, nullptr);
 
@@ -77,9 +78,9 @@ TEST(UvhttpServerAtomicConstruct, ZeroRoutesIsAllowed) {
     ASSERT_NE(loop, nullptr);
 
     uvhttp_server_t* server = nullptr;
-    ASSERT_EQ(uvhttp_server_listen_routes(loop, nullptr, 0, "127.0.0.1", 0,
-                                          &server),
-              UVHTTP_OK);
+    ASSERT_EQ(
+        uvhttp_server_listen_routes(loop, nullptr, 0, "127.0.0.1", 0, &server),
+        UVHTTP_OK);
     ASSERT_NE(server, nullptr);
 
     uvhttp_server_free(server);
@@ -100,9 +101,9 @@ TEST(UvhttpServerAtomicConstruct, RoutesAreActuallyInstalledInTheRouter) {
     };
 
     uvhttp_server_t* server = nullptr;
-    ASSERT_EQ(uvhttp_server_listen_routes(loop, routes, 2, "127.0.0.1", 0,
-                                          &server),
-              UVHTTP_OK);
+    ASSERT_EQ(
+        uvhttp_server_listen_routes(loop, routes, 2, "127.0.0.1", 0, &server),
+        UVHTTP_OK);
     ASSERT_NE(server, nullptr);
     ASSERT_NE(server->router, nullptr);
 
@@ -119,15 +120,16 @@ TEST(UvhttpServerAtomicConstruct, RoutesAreActuallyInstalledInTheRouter) {
     uvhttp_server_free(server);
 }
 
-/* ---------- failure paths: *server must be NULL, nothing allocated ---------- */
+/* ---------- failure paths: *server must be NULL, nothing allocated ----------
+ */
 
 TEST(UvhttpServerAtomicConstruct, NullOutParamIsRejected) {
     uv_loop_t* loop = uv_default_loop();
     ASSERT_NE(loop, nullptr);
 
-    EXPECT_EQ(uvhttp_server_listen_routes(loop, nullptr, 0, "127.0.0.1", 0,
-                                          nullptr),
-              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(
+        uvhttp_server_listen_routes(loop, nullptr, 0, "127.0.0.1", 0, nullptr),
+        UVHTTP_ERROR_INVALID_PARAM);
 }
 
 TEST(UvhttpServerAtomicConstruct, NullLoopIsRejected) {
@@ -143,9 +145,9 @@ TEST(UvhttpServerAtomicConstruct, NullHostIsRejected) {
     ASSERT_NE(loop, nullptr);
 
     uvhttp_server_t* server = nullptr;
-    EXPECT_EQ(uvhttp_server_listen_routes(loop, nullptr, 0, nullptr, 0,
-                                          &server),
-              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(
+        uvhttp_server_listen_routes(loop, nullptr, 0, nullptr, 0, &server),
+        UVHTTP_ERROR_INVALID_PARAM);
     EXPECT_EQ(server, nullptr);
 }
 
@@ -155,9 +157,9 @@ TEST(UvhttpServerAtomicConstruct, NullRoutesWithNonZeroCountIsRejected) {
     ASSERT_NE(loop, nullptr);
 
     uvhttp_server_t* server = nullptr;
-    EXPECT_EQ(uvhttp_server_listen_routes(loop, nullptr, 3, "127.0.0.1", 0,
-                                          &server),
-              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(
+        uvhttp_server_listen_routes(loop, nullptr, 3, "127.0.0.1", 0, &server),
+        UVHTTP_ERROR_INVALID_PARAM);
     EXPECT_EQ(server, nullptr);
 }
 
@@ -173,9 +175,9 @@ TEST(UvhttpServerAtomicConstruct, NullPathInRouteTableIsRejected) {
     };
 
     uvhttp_server_t* server = nullptr;
-    EXPECT_EQ(uvhttp_server_listen_routes(loop, routes, 2, "127.0.0.1", 0,
-                                          &server),
-              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(
+        uvhttp_server_listen_routes(loop, routes, 2, "127.0.0.1", 0, &server),
+        UVHTTP_ERROR_INVALID_PARAM);
     EXPECT_EQ(server, nullptr)
         << "a bad entry must abort the whole construction, not half-apply it";
 }
@@ -189,9 +191,9 @@ TEST(UvhttpServerAtomicConstruct, NullHandlerInRouteTableIsRejected) {
     };
 
     uvhttp_server_t* server = nullptr;
-    EXPECT_EQ(uvhttp_server_listen_routes(loop, routes, 1, "127.0.0.1", 0,
-                                          &server),
-              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(
+        uvhttp_server_listen_routes(loop, routes, 1, "127.0.0.1", 0, &server),
+        UVHTTP_ERROR_INVALID_PARAM);
     EXPECT_EQ(server, nullptr);
 }
 
@@ -207,9 +209,9 @@ TEST(UvhttpServerAtomicConstruct, OutOfRangeMethodIsRejected) {
     };
 
     uvhttp_server_t* server = nullptr;
-    EXPECT_EQ(uvhttp_server_listen_routes(loop, routes, 1, "127.0.0.1", 0,
-                                          &server),
-              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(
+        uvhttp_server_listen_routes(loop, routes, 1, "127.0.0.1", 0, &server),
+        UVHTTP_ERROR_INVALID_PARAM);
     EXPECT_EQ(server, nullptr);
 }
 
@@ -230,15 +232,14 @@ TEST(UvhttpServerAtomicConstruct, ListenFailureLeavesNothingBehind) {
     struct sockaddr_in bind_addr;
     ASSERT_EQ(uv_ip4_addr("127.0.0.1", 0, &bind_addr), 0);
     ASSERT_EQ(uv_tcp_bind(&blocker, (const struct sockaddr*)&bind_addr, 0), 0);
-    ASSERT_EQ(uv_listen((uv_stream_t*)&blocker, 1,
-                        [](uv_stream_t*, int) {}),
+    ASSERT_EQ(uv_listen((uv_stream_t*)&blocker, 1, [](uv_stream_t*, int) {}),
               0);
 
     struct sockaddr_in bound_addr;
     int addr_len = sizeof(bound_addr);
-    ASSERT_EQ(uv_tcp_getsockname(&blocker, (struct sockaddr*)&bound_addr,
-                                 &addr_len),
-              0);
+    ASSERT_EQ(
+        uv_tcp_getsockname(&blocker, (struct sockaddr*)&bound_addr, &addr_len),
+        0);
     const int occupied_port = ntohs(bound_addr.sin_port);
     ASSERT_GT(occupied_port, 0);
 
@@ -250,8 +251,8 @@ TEST(UvhttpServerAtomicConstruct, ListenFailureLeavesNothingBehind) {
     const uvhttp_error_t err = uvhttp_server_listen_routes(
         loop, routes, 1, "127.0.0.1", occupied_port, &server);
 
-    EXPECT_NE(err, UVHTTP_OK) << "port " << occupied_port
-                              << " is occupied; listen must fail";
+    EXPECT_NE(err, UVHTTP_OK)
+        << "port " << occupied_port << " is occupied; listen must fail";
     EXPECT_EQ(server, nullptr)
         << "out param must be NULL after a failed bind; the router the "
            "server had already taken ownership of must not be freed twice";

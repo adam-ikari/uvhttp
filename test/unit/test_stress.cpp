@@ -5,18 +5,20 @@
  * 压力测试用于验证系统在高负载下的稳定性和性能
  */
 
-#include <gtest/gtest.h>
-#include <uv.h>
-#include <thread>
-#include <vector>
+#include "uvhttp_allocator.h"
+#include "uvhttp_config.h"
+#include "uvhttp_response.h"
+#include "uvhttp_router.h"
+#include "uvhttp_server.h"
+
+#include "uvhttp.h"
+
 #include <atomic>
 #include <chrono>
-#include "uvhttp.h"
-#include "uvhttp_server.h"
-#include "uvhttp_router.h"
-#include "uvhttp_response.h"
-#include "uvhttp_config.h"
-#include "uvhttp_allocator.h"
+#include <gtest/gtest.h>
+#include <thread>
+#include <uv.h>
+#include <vector>
 
 // 压力测试配置
 #define STRESS_TEST_HOST "127.0.0.1"
@@ -59,12 +61,15 @@ static void setup_stress_server() {
     // 创建独立的循环，避免与默认循环冲突
     g_stress_loop = (uv_loop_t*)uvhttp_alloc(sizeof(uv_loop_t));
     ASSERT_NE(g_stress_loop, nullptr);
-    
-    int loop_init_result = uv_loop_init(g_stress_loop);
-    ASSERT_EQ(loop_init_result, 0) << "uv_loop_init failed: " << loop_init_result;
 
-    uvhttp_error_t server_result = uvhttp_server_new(g_stress_loop, &g_stress_server);
-    ASSERT_EQ(server_result, UVHTTP_OK) << "uvhttp_server_new failed: " << server_result;
+    int loop_init_result = uv_loop_init(g_stress_loop);
+    ASSERT_EQ(loop_init_result, 0)
+        << "uv_loop_init failed: " << loop_init_result;
+
+    uvhttp_error_t server_result =
+        uvhttp_server_new(g_stress_loop, &g_stress_server);
+    ASSERT_EQ(server_result, UVHTTP_OK)
+        << "uvhttp_server_new failed: " << server_result;
     ASSERT_NE(g_stress_server, nullptr);
 
     uvhttp_router_t* router = NULL;
@@ -76,10 +81,13 @@ static void setup_stress_server() {
     uvhttp_router_add_route(router, "/", simple_handler);
 
     result = uvhttp_server_take_router(g_stress_server, router);
-    ASSERT_EQ(result, UVHTTP_OK) << "uvhttp_server_take_router failed: " << result;
+    ASSERT_EQ(result, UVHTTP_OK)
+        << "uvhttp_server_take_router failed: " << result;
 
-    result = uvhttp_server_listen(g_stress_server, STRESS_TEST_HOST, g_stress_test_port);
-    ASSERT_EQ(result, UVHTTP_OK) << "uvhttp_server_listen failed: " << result << " (port: " << g_stress_test_port << ")";
+    result = uvhttp_server_listen(g_stress_server, STRESS_TEST_HOST,
+                                  g_stress_test_port);
+    ASSERT_EQ(result, UVHTTP_OK) << "uvhttp_server_listen failed: " << result
+                                 << " (port: " << g_stress_test_port << ")";
 }
 
 /**
