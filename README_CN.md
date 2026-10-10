@@ -246,7 +246,10 @@ int main() {
         fprintf(stderr, "创建路由器失败: %s\n", uvhttp_error_string(result));
         return 1;
     }
-    uvhttp_server_set_router(server, router);
+    // 把 router 交给服务器；从此刻起服务器持有它，并在 uvhttp_server_free
+    // 中释放（v2.10：由 uvhttp_server_set_router 改名而来——旧名字暗示借用，
+    // 而行为一直是所有权转移）
+    uvhttp_server_take_router(server, router);
 
     // 添加路由
     result = uvhttp_router_add_route(router, "/hello", hello_handler);

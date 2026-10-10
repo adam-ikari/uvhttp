@@ -121,7 +121,9 @@ TEST_F(UvhttpServerApiTest, ServerSetRouterNullRouter) {
     /* 创建服务器 */
     ASSERT_EQ(create_server(), UVHTTP_OK);
 
-    /* 设置NULL router是允许的，用于清除路由 */
+    /* NULL router 仅在服务器尚未持有 router 时是空操作（没有 detach 操作，
+     * 已 take 的 router 不可摘除或替换，传 NULL 同样返回 INVALID_PARAM）——
+     * 见 test_server_atomic_construct.cpp 的 NullRouterAfterTakeIsRejected */
     uvhttp_error_t result = uvhttp_server_take_router(server, NULL);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(server->router, nullptr);

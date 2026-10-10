@@ -103,7 +103,9 @@ TEST_F(ServerSetFunctionsTest, SetRouter_ValidServer) {
 
 TEST_F(ServerSetFunctionsTest, SetRouter_NullServer) {
     uvhttp_error_t err = uvhttp_server_take_router(server, nullptr);
-    // NULL router is a valid operation (clears router)
+    // NULL is only a no-op when the server holds no router (there is no
+    // detach operation); once a router is taken, NULL is rejected just like
+    // any other pointer - see test_server_atomic_construct.cpp.
     EXPECT_EQ(err, UVHTTP_OK);
 }
 

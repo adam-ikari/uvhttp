@@ -25,9 +25,10 @@ typedef struct uvhttp_response uvhttp_response_t;
 typedef struct uvhttp_router uvhttp_router_t;
 typedef struct uvhttp_connection uvhttp_connection_t;
 
-/* uvhttp_method_t comes from uvhttp_common.h (moved there in v2.10 to break
- * the request.h <-> server.h cycle). uvhttp_request_handler_t is declared in
- * uvhttp_request.h, which this header must not include. */
+/* uvhttp_method_t and uvhttp_request_handler_t come from uvhttp_common.h so
+ * this header can declare uvhttp_route_t without including uvhttp_request.h.
+ * Neither header includes the other: request/response are forward-declared
+ * above, and only .c files need their full definitions. */
 
 #if UVHTTP_FEATURE_TLS
 typedef struct uvhttp_tls_context uvhttp_tls_context_t;
@@ -323,6 +324,14 @@ uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server,
  *
  * @note Returns UVHTTP_ERROR_INVALID_PARAM if the server already owns a
  *       different router, rather than silently leaking the previous one.
+ *       Passing the same router again is idempotent (teardown paths rely on
+ *       it).
+ *
+ * @note There is no detach operation: a taken router cannot be handed back,
+ *       replaced, or unset by the caller - the server owns it until
+ *       uvhttp_server_free. A NULL router is only a no-op when the server
+ *       holds none already; once a router has been taken, NULL is rejected
+ *       like any other pointer.
  */
 uvhttp_error_t uvhttp_server_take_router(uvhttp_server_t* server,
                                          uvhttp_router_t* router);
@@ -337,7 +346,9 @@ uvhttp_error_t uvhttp_server_take_router(uvhttp_server_t* server,
  *       and releases it in uvhttp_server_free. Do NOT free it yourself.
  *
  * @note Renamed from uvhttp_server_set_context in v2.10, for the same reason
- *       as uvhttp_server_take_router.
+ *       as uvhttp_server_take_router. No detach operation exists: a NULL
+ *       context is only a no-op when the server holds none already, and is
+ *       rejected once one has been taken.
  */
 uvhttp_error_t uvhttp_server_take_context(uvhttp_server_t* server,
                                           struct uvhttp_context* context);

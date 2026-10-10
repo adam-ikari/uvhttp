@@ -134,6 +134,55 @@ if (result != UVHTTP_OK) {
 }
 ```
 
+### uvhttp_server_listen_routes
+
+```c
+uvhttp_error_t uvhttp_server_listen_routes(uv_loop_t* loop,
+                                          const uvhttp_route_t* routes,
+                                          size_t route_count,
+                                          const char* host,
+                                          int port,
+                                          uvhttp_server_t** server);
+```
+
+Atomic construction: creates a server, installs the route table, and starts
+listening in one call. On success `*server` is a fully listening server with
+every route registered; on any failure `*server` is NULL and nothing is
+allocated, so the caller has no rollback branches to write. Route entries are
+copied, so the `routes` array can be freed after the call. The router becomes
+internal to the server (its handle is not reachable afterwards).
+
+**Parameters**:
+- `loop`: Initialized event loop
+- `routes`: Route table; may be NULL only when `route_count` is 0
+- `route_count`: Number of entries in `routes`
+- `host`: Listen address (e.g., "0.0.0.0")
+- `port`: Listen port
+- `server`: Out pointer; NULL on failure
+
+**Return Value**:
+- `UVHTTP_OK`: Success - fully listening server
+- `UVHTTP_ERROR_INVALID_PARAM`: NULL `loop`/`host`/`server`, or a route entry with NULL `path`/`handler` or an out-of-range `method`
+- `UVHTTP_ERROR_OUT_OF_MEMORY`: Allocation or route registration failed
+- `UVHTTP_ERROR_SERVER_LISTEN`: bind or listen syscall failed
+
+**Example**:
+```c
+const uvhttp_route_t routes[] = {
+    {"/",        UVHTTP_ANY, hello_handler},
+    {"/health",  UVHTTP_GET, health_handler},
+};
+uvhttp_server_t* server = NULL;
+uvhttp_error_t result =
+    uvhttp_server_listen_routes(loop, routes, 2, "0.0.0.0", 8080, &server);
+if (result != UVHTTP_OK) {
+    fprintf(stderr, "Failed to start: %s\n", uvhttp_error_string(result));
+    return 1;
+}
+uv_run(loop, UV_RUN_DEFAULT);
+uvhttp_server_free(server);
+```
+
 ## Router API
 
 ### uvhttp_router_new

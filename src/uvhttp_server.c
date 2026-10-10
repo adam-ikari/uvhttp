@@ -415,6 +415,7 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
     /* Clean connection pool */
     if (server->router) {
         uvhttp_router_free(server->router);
+        server->router = NULL; /* same post-free reset as the fields below */
     }
 #if UVHTTP_FEATURE_TLS
     if (server->tls_ctx) {
@@ -688,6 +689,16 @@ uvhttp_error_t uvhttp_server_listen_routes(uv_loop_t* loop,
                 uvhttp_server_free(s);
                 return UVHTTP_ERROR_INVALID_PARAM;
             }
+            if (routes[i].method < UVHTTP_ANY ||
+                routes[i].method > UVHTTP_PATCH) {
+                /* An out-of-range method would register a route that can
+                 * never match - every lookup is an equality test - i.e. a
+                 * silently dead route. Reject it here rather than build a
+                 * server whose route table lies. */
+                uvhttp_router_free(router);
+                uvhttp_server_free(s);
+                return UVHTTP_ERROR_INVALID_PARAM;
+            }
             err = routes[i].method == UVHTTP_ANY
                       ? uvhttp_router_add_route(router, routes[i].path,
                                                 routes[i].handler)
@@ -732,17 +743,21 @@ uvhttp_error_t uvhttp_server_take_router(uvhttp_server_t* server,
     }
 
     /* Ownership transfer is deliberate and is now named as such
-     * (uvhttp_server_take_router, v2.10; was uvhttp_server_take_router).
+     * (uvhttp_server_take_router, v2.10; was uvhttp_server_set_router).
      * "set" implied a borrow, but the server frees the router in
      * uvhttp_server_free - a mismatch that made the official embedding
      * example double-free on its listen-failure path.
      *
      * Handing over a router that is already owned leaves the previous one
-     * leaked; reject it rather than silently drop the reference. */
+     * leaked; reject it rather than silently drop the reference. NULL is
+     * only a no-op when the server holds no router yet - there is no detach
+     * operation, so a router that has been taken can neither be replaced
+     * nor cleared. */
     if (server->router && server->router != router) {
         UVHTTP_LOG_ERROR(
-            "server already owns a router - free it first or use a server "
-            "that has none");
+            "server already owns a router; pass the same router again "
+            "(idempotent) or use a new server - a taken router cannot be "
+            "detached, and freeing it from the caller is a use-after-free");
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
@@ -794,7 +809,10 @@ uvhttp_error_t uvhttp_server_take_context(uvhttp_server_t* server,
 
     /* Ownership transfer - see uvhttp_server_take_router. */
     if (server->context && server->context != context) {
-        UVHTTP_LOG_ERROR("server already owns a context - free it first");
+        UVHTTP_LOG_ERROR(
+            "server already owns a context; pass the same context again "
+            "(idempotent) or use a new server - a taken context cannot be "
+            "detached, and freeing it from the caller is a use-after-free");
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 

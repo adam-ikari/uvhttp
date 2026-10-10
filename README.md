@@ -246,7 +246,10 @@ int main() {
         fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(result));
         return 1;
     }
-    uvhttp_server_set_router(server, router);
+    // Hand the router to the server; the server owns it from here and frees
+    // it in uvhttp_server_free (v2.10: renamed from uvhttp_server_set_router,
+    // which implied a borrow while the behavior was always a transfer)
+    uvhttp_server_take_router(server, router);
 
     // Add route
     result = uvhttp_router_add_route(router, "/hello", hello_handler);

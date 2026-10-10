@@ -21,9 +21,26 @@ extern "C" {
 #include "uvhttp_context.h"
 }
 
+#include <arpa/inet.h>
+#include <sys/socket.h>
+
 namespace {
 
 int ok_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
+    (void)req;
+    (void)resp;
+    return 0;
+}
+
+/* Distinct handlers, so "the route landed" can be checked per path instead
+ * of just "some handler is somewhere in the table". */
+int health_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
+    (void)req;
+    (void)resp;
+    return 0;
+}
+
+int submit_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     (void)req;
     (void)resp;
     return 0;
@@ -64,6 +81,40 @@ TEST(UvhttpServerAtomicConstruct, ZeroRoutesIsAllowed) {
                                           &server),
               UVHTTP_OK);
     ASSERT_NE(server, nullptr);
+
+    uvhttp_server_free(server);
+}
+
+/* A listening server is not evidence that its routes landed: a regression
+ * that swallowed add_route results would still produce a listening server
+ * here whose every path 404s, and every assertion above would still pass.
+ * Same bug class as the router migration that silently dropped every
+ * registered route - pin the route table itself. */
+TEST(UvhttpServerAtomicConstruct, RoutesAreActuallyInstalledInTheRouter) {
+    uv_loop_t* loop = uv_default_loop();
+    ASSERT_NE(loop, nullptr);
+
+    const uvhttp_route_t routes[] = {
+        {"/health", UVHTTP_GET, health_handler},
+        {"/submit", UVHTTP_POST, submit_handler},
+    };
+
+    uvhttp_server_t* server = nullptr;
+    ASSERT_EQ(uvhttp_server_listen_routes(loop, routes, 2, "127.0.0.1", 0,
+                                          &server),
+              UVHTTP_OK);
+    ASSERT_NE(server, nullptr);
+    ASSERT_NE(server->router, nullptr);
+
+    EXPECT_EQ(uvhttp_router_find_handler(server->router, "/health", "GET"),
+              health_handler)
+        << "the route that was just registered must resolve to its handler";
+    EXPECT_EQ(uvhttp_router_find_handler(server->router, "/submit", "POST"),
+              submit_handler);
+    /* A method mismatch must not resolve - guards against routes that match
+     * every method by accident. */
+    EXPECT_EQ(uvhttp_router_find_handler(server->router, "/health", "POST"),
+              nullptr);
 
     uvhttp_server_free(server);
 }
@@ -144,32 +195,69 @@ TEST(UvhttpServerAtomicConstruct, NullHandlerInRouteTableIsRejected) {
     EXPECT_EQ(server, nullptr);
 }
 
-/* Port 1 is privileged, so bind fails. This is the exact path the embedding
- * example got wrong: the server already owned the router at this point, so
- * the cleanup must be server_free ALONE. Under ASan/valgrind a double free
- * here is the regression signal. */
+/* An out-of-range method registers a route that can never match: every
+ * lookup is an equality test against the method enum. That is a silently
+ * dead route, so it must be rejected instead of built into the table. */
+TEST(UvhttpServerAtomicConstruct, OutOfRangeMethodIsRejected) {
+    uv_loop_t* loop = uv_default_loop();
+    ASSERT_NE(loop, nullptr);
+
+    const uvhttp_route_t routes[] = {
+        {"/", (uvhttp_method_t)99, ok_handler},
+    };
+
+    uvhttp_server_t* server = nullptr;
+    EXPECT_EQ(uvhttp_server_listen_routes(loop, routes, 1, "127.0.0.1", 0,
+                                          &server),
+              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(server, nullptr);
+}
+
+/* Deterministic bind failure: occupy an ephemeral port with our own
+ * listening socket first, then hand the same port to listen_routes - it must
+ * fail with EADDRINUSE no matter who runs the test. (The previous version
+ * bound privileged port 1 instead, which succeeds under root: the test then
+ * GTEST_SKIPs and this exact path - the one the embedding example got wrong -
+ * goes unverified.) The server already owned the router at this point, so the
+ * cleanup must be server_free ALONE; under ASan a double free here is the
+ * regression signal. */
 TEST(UvhttpServerAtomicConstruct, ListenFailureLeavesNothingBehind) {
     uv_loop_t* loop = uv_default_loop();
     ASSERT_NE(loop, nullptr);
+
+    uv_tcp_t blocker;
+    ASSERT_EQ(uv_tcp_init(loop, &blocker), 0);
+    struct sockaddr_in bind_addr;
+    ASSERT_EQ(uv_ip4_addr("127.0.0.1", 0, &bind_addr), 0);
+    ASSERT_EQ(uv_tcp_bind(&blocker, (const struct sockaddr*)&bind_addr, 0), 0);
+    ASSERT_EQ(uv_listen((uv_stream_t*)&blocker, 1,
+                        [](uv_stream_t*, int) {}),
+              0);
+
+    struct sockaddr_in bound_addr;
+    int addr_len = sizeof(bound_addr);
+    ASSERT_EQ(uv_tcp_getsockname(&blocker, (struct sockaddr*)&bound_addr,
+                                 &addr_len),
+              0);
+    const int occupied_port = ntohs(bound_addr.sin_port);
+    ASSERT_GT(occupied_port, 0);
 
     const uvhttp_route_t routes[] = {
         {"/", UVHTTP_ANY, ok_handler},
     };
 
     uvhttp_server_t* server = nullptr;
-    const uvhttp_error_t err =
-        uvhttp_server_listen_routes(loop, routes, 1, "127.0.0.1", 1, &server);
+    const uvhttp_error_t err = uvhttp_server_listen_routes(
+        loop, routes, 1, "127.0.0.1", occupied_port, &server);
 
-    /* Binding a privileged port must fail. If it somehow succeeds, the test
-     * would leak the server, so free it and skip rather than assert. */
-    if (err == UVHTTP_OK) {
-        uvhttp_server_free(server);
-        GTEST_SKIP() << "running as root: privileged port bind succeeded";
-    }
-
+    EXPECT_NE(err, UVHTTP_OK) << "port " << occupied_port
+                              << " is occupied; listen must fail";
     EXPECT_EQ(server, nullptr)
         << "out param must be NULL after a failed bind; the router the "
            "server had already taken ownership of must not be freed twice";
+
+    uv_close((uv_handle_t*)&blocker, nullptr);
+    uv_run(loop, UV_RUN_NOWAIT);
 }
 
 /* ---------- ownership: take_router ---------- */
@@ -223,7 +311,10 @@ TEST(UvhttpServerOwnership, RetakingSameRouterIsIdempotent) {
     ASSERT_EQ(uvhttp_router_add_route(router, "/", ok_handler), UVHTTP_OK);
 
     ASSERT_EQ(uvhttp_server_take_router(server, router), UVHTTP_OK);
-    EXPECT_EQ(uvhttp_server_take_router(server, router), UVHTTP_OK);
+    EXPECT_EQ(uvhttp_server_take_router(server, router), UVHTTP_OK)
+        << "re-taking the same router is a no-op, not an error";
+    EXPECT_EQ(server->router, router)
+        << "the no-op must leave the owned router in place";
 
     uvhttp_server_free(server);
 }
@@ -245,5 +336,81 @@ TEST(UvhttpServerOwnership, SecondContextIsRejected) {
               UVHTTP_ERROR_INVALID_PARAM);
 
     uvhttp_context_destroy(second);
+    uvhttp_server_free(server);
+}
+
+/* ---------- ownership: NULL is not a detach ----------
+ *
+ * Before v2.10, take_router / take_context were "set_*" and passing NULL was
+ * documented as clearing the field. That only ever worked when the server
+ * held nothing: once an object is taken, the reject-if-different guard turns
+ * NULL into an error too. There is no detach operation - a taken object
+ * stays owned by the server until uvhttp_server_free. These tests pin that
+ * (the misinterpretation is what made callers free a router the server still
+ * owns). */
+
+TEST(UvhttpServerOwnership, NullRouterAfterTakeIsRejected) {
+    uv_loop_t* loop = uv_default_loop();
+    ASSERT_NE(loop, nullptr);
+
+    uvhttp_server_t* server = nullptr;
+    ASSERT_EQ(uvhttp_server_new(loop, &server), UVHTTP_OK);
+
+    uvhttp_router_t* router = nullptr;
+    ASSERT_EQ(uvhttp_router_new(&router), UVHTTP_OK);
+    ASSERT_EQ(uvhttp_server_take_router(server, router), UVHTTP_OK);
+
+    EXPECT_EQ(uvhttp_server_take_router(server, nullptr),
+              UVHTTP_ERROR_INVALID_PARAM)
+        << "there is no detach: a taken router stays owned by the server";
+    EXPECT_EQ(server->router, router)
+        << "the rejected NULL must leave the owned router in place";
+
+    uvhttp_server_free(server);
+}
+
+TEST(UvhttpServerOwnership, NullRouterWithoutRouterIsNoOp) {
+    uv_loop_t* loop = uv_default_loop();
+    ASSERT_NE(loop, nullptr);
+
+    uvhttp_server_t* server = nullptr;
+    ASSERT_EQ(uvhttp_server_new(loop, &server), UVHTTP_OK);
+
+    EXPECT_EQ(uvhttp_server_take_router(server, nullptr), UVHTTP_OK)
+        << "NULL is only a no-op when the server holds no router";
+    EXPECT_EQ(server->router, nullptr);
+
+    uvhttp_server_free(server);
+}
+
+TEST(UvhttpServerOwnership, NullContextAfterTakeIsRejected) {
+    uv_loop_t* loop = uv_default_loop();
+    ASSERT_NE(loop, nullptr);
+
+    uvhttp_server_t* server = nullptr;
+    ASSERT_EQ(uvhttp_server_new(loop, &server), UVHTTP_OK);
+
+    uvhttp_context_t* context = nullptr;
+    ASSERT_EQ(uvhttp_context_create(loop, &context), UVHTTP_OK);
+    ASSERT_EQ(uvhttp_server_take_context(server, context), UVHTTP_OK);
+
+    EXPECT_EQ(uvhttp_server_take_context(server, nullptr),
+              UVHTTP_ERROR_INVALID_PARAM)
+        << "there is no detach: a taken context stays owned by the server";
+    EXPECT_EQ(server->context, context);
+
+    uvhttp_server_free(server);
+}
+
+TEST(UvhttpServerOwnership, NullContextWithoutContextIsNoOp) {
+    uv_loop_t* loop = uv_default_loop();
+    ASSERT_NE(loop, nullptr);
+
+    uvhttp_server_t* server = nullptr;
+    ASSERT_EQ(uvhttp_server_new(loop, &server), UVHTTP_OK);
+
+    EXPECT_EQ(uvhttp_server_take_context(server, nullptr), UVHTTP_OK);
+    EXPECT_EQ(server->context, nullptr);
+
     uvhttp_server_free(server);
 }
