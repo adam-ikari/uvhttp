@@ -347,13 +347,15 @@ static uvhttp_error_t migrate_to_trie(uvhttp_router_t* router) {
             current_index =
                 find_or_create_child(router, current_index, token, is_param);
             if (current_index == UINT32_MAX) {
-                /* detach before free (Fix 5): use_trie is still 0 on this
-                 * failure path, so a later find_handler would walk the
-                 * freed array as a dangling pointer */
-                router->array_routes = NULL;
-                router->array_route_count = 0;
-                router->array_capacity = 0;
-                uvhttp_free(old_routes);  // clean allocated memory
+                /* Migration is all-or-nothing: leave the array routes attached
+                 * and use_trie at 0. The router keeps serving every route it
+                 * already had; only the route that triggered migration fails.
+                 *
+                 * The trie nodes built so far stay in the pool unreferenced
+                 * (use_trie is 0, so no lookup reaches them) and are reused by
+                 * the next attempt, which walks the array again from the root.
+                 * Freeing or detaching old_routes here would destroy every
+                 * previously registered route. */
                 return UVHTTP_ERROR_OUT_OF_MEMORY;
             }
 
