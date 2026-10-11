@@ -202,7 +202,7 @@ int main(void) {
     uvhttp_router_add_route(router, "/public", public_handler);
     uvhttp_router_add_route(router, "/protected", protected_handler);
     
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8082);
     
     printf("服务器运行在 http://localhost:8082\n");

@@ -645,7 +645,7 @@ TEST_F(ParserCallbackTest, RouterDispatch_HandlerFound) {
               UVHTTP_OK);
 
     // Attach router to server
-    ASSERT_EQ(uvhttp_server_set_router(server, router), UVHTTP_OK);
+    ASSERT_EQ(uvhttp_server_take_router(server, router), UVHTTP_OK);
 
     s_router_handler_called = 0;
 
@@ -674,7 +674,7 @@ TEST_F(ParserCallbackTest, RouterDispatch_NoHandler_404) {
                                              test_route_handler),
               UVHTTP_OK);
 
-    ASSERT_EQ(uvhttp_server_set_router(server, router), UVHTTP_OK);
+    ASSERT_EQ(uvhttp_server_take_router(server, router), UVHTTP_OK);
 
     s_router_handler_called = 0;
 
@@ -708,7 +708,7 @@ TEST_F(ParserCallbackTest, RouterDispatch_PostMethodMatch) {
                                              test_route_handler),
               UVHTTP_OK);
 
-    ASSERT_EQ(uvhttp_server_set_router(server, router), UVHTTP_OK);
+    ASSERT_EQ(uvhttp_server_take_router(server, router), UVHTTP_OK);
 
     s_router_handler_called = 0;
 
@@ -736,7 +736,7 @@ TEST_F(ParserCallbackTest, RouterDispatch_WrongMethod_404) {
                                              test_route_handler),
               UVHTTP_OK);
 
-    ASSERT_EQ(uvhttp_server_set_router(server, router), UVHTTP_OK);
+    ASSERT_EQ(uvhttp_server_take_router(server, router), UVHTTP_OK);
 
     s_router_handler_called = 0;
 

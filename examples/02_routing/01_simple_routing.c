@@ -281,7 +281,7 @@ int main() {
     printf("\n");
     
     // 设置路由器
-    uvhttp_server_set_router(ctx.server, router);
+    uvhttp_server_take_router(ctx.server, router);
     
     // 启动服务器
     int listen_result = uvhttp_server_listen(ctx.server, "0.0.0.0", 8080);

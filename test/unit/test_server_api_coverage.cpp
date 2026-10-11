@@ -97,7 +97,7 @@ TEST_F(UvhttpServerApiTest, ServerSetRouter) {
     ASSERT_NE(router, nullptr);
 
     /* 设置路由 */
-    uvhttp_error_t result = uvhttp_server_set_router(server, router);
+    uvhttp_error_t result = uvhttp_server_take_router(server, router);
     EXPECT_EQ(result, UVHTTP_OK);
 
     /* 验证路由已设置 */
@@ -111,7 +111,7 @@ TEST_F(UvhttpServerApiTest, ServerSetRouterNullServer) {
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
 
-    result = uvhttp_server_set_router(NULL, router);
+    result = uvhttp_server_take_router(NULL, router);
     EXPECT_NE(result, UVHTTP_OK);
 
     uvhttp_router_free(router);
@@ -121,8 +121,10 @@ TEST_F(UvhttpServerApiTest, ServerSetRouterNullRouter) {
     /* 创建服务器 */
     ASSERT_EQ(create_server(), UVHTTP_OK);
 
-    /* 设置NULL router是允许的，用于清除路由 */
-    uvhttp_error_t result = uvhttp_server_set_router(server, NULL);
+    /* NULL router 仅在服务器尚未持有 router 时是空操作（没有 detach 操作，
+     * 已 take 的 router 不可摘除或替换，传 NULL 同样返回 INVALID_PARAM）——
+     * 见 test_server_atomic_construct.cpp 的 NullRouterAfterTakeIsRejected */
+    uvhttp_error_t result = uvhttp_server_take_router(server, NULL);
     EXPECT_EQ(result, UVHTTP_OK);
     EXPECT_EQ(server->router, nullptr);
 }
@@ -139,7 +141,7 @@ TEST_F(UvhttpServerApiTest, ServerSetContext) {
     ASSERT_NE(context, nullptr);
 
     /* 设置上下文 */
-    result = uvhttp_server_set_context(server, context);
+    result = uvhttp_server_take_context(server, context);
     EXPECT_EQ(result, UVHTTP_OK);
 
     /* 验证上下文已设置 */
@@ -154,7 +156,7 @@ TEST_F(UvhttpServerApiTest, ServerSetContextNullServer) {
 
     ASSERT_EQ(result, UVHTTP_OK);
 
-    result = uvhttp_server_set_context(NULL, context);
+    result = uvhttp_server_take_context(NULL, context);
 
     EXPECT_NE(result, UVHTTP_OK);
 

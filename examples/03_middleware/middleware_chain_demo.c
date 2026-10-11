@@ -246,7 +246,7 @@ int main(void) {
     uvhttp_router_add_route(router, "/api/admin", admin_handler);
     uvhttp_router_add_route(router, "/health", health_handler);
     
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     uvhttp_server_listen(server, "0.0.0.0", 8083);
     
     printf("服务器运行在 http://localhost:8083\n");

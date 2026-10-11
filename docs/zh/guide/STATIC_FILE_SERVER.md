@@ -101,7 +101,7 @@ int main() {
     uvhttp_router_t* router = NULL;
     uvhttp_router_new(&router);
     uvhttp_router_add_route(router, "/*", static_file_handler);
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
 
     uvhttp_server_listen(server, "0.0.0.0", 8080);
     uv_run(loop, UV_RUN_DEFAULT);

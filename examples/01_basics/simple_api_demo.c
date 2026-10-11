@@ -75,7 +75,7 @@ int main() {
         uvhttp_server_free(server);
         return 1;
     }
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
 
     /* Add a catch-all route. */
     uvhttp_router_add_route(router, "/*", simple_handler);

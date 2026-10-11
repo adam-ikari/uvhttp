@@ -189,7 +189,7 @@ int main() {
     }
     
     // 设置路由器到服务器
-    uvhttp_server_set_router(ctx->server, router);
+    uvhttp_server_take_router(ctx->server, router);
     
     // 添加路由
     uvhttp_router_add_route(router, "/", home_handler);

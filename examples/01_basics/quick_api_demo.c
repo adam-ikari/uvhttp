@@ -139,7 +139,7 @@ int main() {
         free(ctx);
         return 1;
     }
-    uvhttp_server_set_router(ctx->server, router);
+    uvhttp_server_take_router(ctx->server, router);
 
     // 添加路由
     uvhttp_router_add_route(router, "/", hello_handler);

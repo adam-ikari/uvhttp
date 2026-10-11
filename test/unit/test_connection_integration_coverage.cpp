@@ -4,19 +4,20 @@
  * Creates a real server and TCP client to trigger internal libuv callbacks.
  */
 
-#include <gtest/gtest.h>
+#include "uvhttp_allocator.h"
 #include "uvhttp_connection.h"
-#include "uvhttp_server.h"
 #include "uvhttp_context.h"
 #include "uvhttp_error.h"
-#include "uvhttp_allocator.h"
 #include "uvhttp_router.h"
-#include <string.h>
-#include <uv.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
+#include "uvhttp_server.h"
+
 #include <arpa/inet.h>
+#include <gtest/gtest.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <uv.h>
 
 static int test_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     (void)req;
@@ -28,7 +29,8 @@ static int test_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
 
 static int connect_to_port(int port) {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0) return -1;
+    if (fd < 0)
+        return -1;
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
@@ -59,22 +61,25 @@ static void run_loop_with_timeout(uv_loop_t* loop, int ms) {
 /* Setup server and get port */
 static int setup_server(uv_loop_t* loop, uvhttp_server_t** server) {
     uvhttp_error_t err = uvhttp_server_new(loop, server);
-    if (err != UVHTTP_OK) return -1;
+    if (err != UVHTTP_OK)
+        return -1;
 
     uvhttp_router_t* router = nullptr;
     uvhttp_router_new(&router);
     if (router) {
         uvhttp_router_add_route(router, "/test", test_handler);
-        uvhttp_server_set_router(*server, router);
+        uvhttp_server_take_router(*server, router);
     }
 
     err = uvhttp_server_listen(*server, "127.0.0.1", 0);
-    if (err != UVHTTP_OK) return -1;
+    if (err != UVHTTP_OK)
+        return -1;
 
     struct sockaddr_in addr;
     int namelen = sizeof(addr);
     memset(&addr, 0, sizeof(addr));
-    uv_tcp_getsockname(&(*server)->tcp_handle, (struct sockaddr*)&addr, &namelen);
+    uv_tcp_getsockname(&(*server)->tcp_handle, (struct sockaddr*)&addr,
+                       &namelen);
     return ntohs(addr.sin_port);
 }
 

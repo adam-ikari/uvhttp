@@ -64,7 +64,7 @@ int main() {
     // Create the server
     uvhttp_server_new(loop, &ctx->server);
     uvhttp_router_new(&ctx->router);
-    uvhttp_server_set_router(ctx->server, ctx->router);
+    uvhttp_server_take_router(ctx->server, ctx->router);
 
     // Set the context into the event loop's data pointer
     loop->data = ctx;
@@ -193,7 +193,7 @@ int main() {
     // Create the server
     uvhttp_server_new(loop, &ctx->server);
     uvhttp_router_new(&ctx->router);
-    uvhttp_server_set_router(ctx->server, ctx->router);
+    uvhttp_server_take_router(ctx->server, ctx->router);
 
     // Add routes
     uvhttp_router_add_route(ctx->router, "/stats", stats_handler);
@@ -271,7 +271,7 @@ void* worker_thread(void* arg) {
     // Create the server
     uvhttp_server_new(ctx->loop, &ctx->server);
     uvhttp_router_new(&ctx->router);
-    uvhttp_server_set_router(ctx->server, ctx->router);
+    uvhttp_server_take_router(ctx->server, ctx->router);
 
     // Add routes
     uvhttp_router_add_route(ctx->router, "/", worker_handler);
@@ -359,7 +359,7 @@ app_context_t* app_context_create(uv_loop_t* loop) {
     ctx->start_time = time(NULL);
 
     if (ctx->server && ctx->router) {
-        uvhttp_server_set_router(ctx->server, ctx->router);
+        uvhttp_server_take_router(ctx->server, ctx->router);
         loop->data = ctx;
         return ctx;
     }

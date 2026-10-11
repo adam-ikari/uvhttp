@@ -127,7 +127,7 @@ int main() {
     
     // 步骤 5: 设置路由器到服务器
     printf("步骤 5: 设置路由器...\n");
-    uvhttp_server_set_router(ctx.server, router);
+    uvhttp_server_take_router(ctx.server, router);
     printf("✓ 路由器设置成功\n\n");
     
     // 步骤 6: 启动服务器监听

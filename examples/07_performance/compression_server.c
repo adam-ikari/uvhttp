@@ -239,7 +239,7 @@ int main(int argc, char** argv) {
     }
     
     // Set router to server
-    uvhttp_server_set_router(g_server, router);
+    uvhttp_server_take_router(g_server, router);
     
     // Add routes
     int route_result;

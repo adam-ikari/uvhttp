@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
         return 1;
     }
     memset(server_ctx, 0, sizeof(struct uvhttp_context));
-    result = uvhttp_server_set_context(ctx->server, server_ctx);
+    result = uvhttp_server_take_context(ctx->server, server_ctx);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to set context: %s\n", uvhttp_error_string(result));
         uvhttp_free(server_ctx);

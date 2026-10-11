@@ -301,7 +301,7 @@ int main(int argc, char* argv[]) {
     uvhttp_router_add_route(router, "/api", on_request_json);
 
     /* Set router (owned by the server from now on) */
-    uvhttp_server_set_router(ctx.server, router);
+    uvhttp_server_take_router(ctx.server, router);
 
     /* Listen */
     err = uvhttp_server_listen(ctx.server, host, port);

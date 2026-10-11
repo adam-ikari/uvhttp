@@ -89,7 +89,7 @@ app_context_t* app_context_create(uv_loop_t* loop, const char* name) {
     }
 
     // 设置路由器
-    uvhttp_server_set_router(ctx->server, ctx->router);
+    uvhttp_server_take_router(ctx->server, ctx->router);
 
     // 创建 uvhttp_context 并设置到服务器
     // 这是避免独占 loop->data 的关键！
@@ -97,7 +97,7 @@ app_context_t* app_context_create(uv_loop_t* loop, const char* name) {
     uvhttp_error_t result_uvhttp_ctx = uvhttp_context_create(loop, &uvhttp_ctx);
     if (result_uvhttp_ctx != UVHTTP_OK || !uvhttp_ctx) {
         fprintf(stderr, "错误: 无法创建 uvhttp_context\n");
-        uvhttp_router_free(ctx->router);
+        /* router 已通过 take_router 交给 server，不要再单独释放 */
         uvhttp_server_free(ctx->server);
         uvhttp_free(ctx);
         return NULL;
@@ -107,7 +107,7 @@ app_context_t* app_context_create(uv_loop_t* loop, const char* name) {
     ctx->uvhttp_ctx = uvhttp_ctx;
 
     // 将 uvhttp_context 设置到服务器
-    uvhttp_server_set_context(ctx->server, uvhttp_ctx);
+    uvhttp_server_take_context(ctx->server, uvhttp_ctx);
 
     printf("✓ 应用上下文创建成功\n");
     printf("  服务器名称: %s\n", ctx->server_name);
@@ -371,7 +371,7 @@ int info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
     cJSON_AddStringToObject(json_obj, "example", "shared_loop_data");
     cJSON_AddStringToObject(json_obj, "description", "演示如何避免独占 loop->data");
-    cJSON_AddStringToObject(json_obj, "solution", "使用 uvhttp_server_set_context() 设置服务器上下文");
+    cJSON_AddStringToObject(json_obj, "solution", "使用 uvhttp_server_take_context() 设置服务器上下文");
     cJSON_AddStringToObject(json_obj, "scenario", "当其他应用也在使用 loop->data 时");
 
     char* json_string = cJSON_PrintUnformatted(json_obj);

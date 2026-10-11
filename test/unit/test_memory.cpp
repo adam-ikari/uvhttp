@@ -5,15 +5,17 @@
  * 内存测试用于验证系统的内存使用情况
  */
 
+#include "uvhttp_allocator.h"
+#include "uvhttp_config.h"
+#include "uvhttp_response.h"
+#include "uvhttp_router.h"
+#include "uvhttp_server.h"
+
+#include "uvhttp.h"
+
 #include <gtest/gtest.h>
 #include <uv.h>
 #include <vector>
-#include "uvhttp.h"
-#include "uvhttp_server.h"
-#include "uvhttp_router.h"
-#include "uvhttp_response.h"
-#include "uvhttp_config.h"
-#include "uvhttp_allocator.h"
 
 // 内存测试配置
 #define MEMORY_TEST_ALLOCATIONS 1000
@@ -68,7 +70,7 @@ TEST(MemoryTest, ServerMemoryUsage) {
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(router, nullptr);
 
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
 
     uvhttp_server_free(server);
     /* router 已被 server 释放，不需要再释放 */
@@ -98,7 +100,7 @@ TEST(MemoryTest, MultipleServerCreation) {
         ASSERT_NE(router, nullptr);
         ASSERT_NE(router, nullptr);
 
-        uvhttp_server_set_router(server, router);
+        uvhttp_server_take_router(server, router);
 
         result = uvhttp_server_listen(server, "127.0.0.1", 0);
         ASSERT_EQ(result, UVHTTP_OK);

@@ -58,23 +58,36 @@ connection management.
   - `UVHTTP_ERROR_INVALID_PARAM`: `server` or `handler` is NULL
 - **Thread safety**: Not thread-safe.
 
-### uvhttp_server_set_router
-- **Signature**: `uvhttp_error_t uvhttp_server_set_router(uvhttp_server_t* server, uvhttp_router_t* router)`
-- **Purpose**: Attach a router for path-based request dispatching
-- **Preconditions**: `server` must be valid. `router` must be a valid router.
-- **Postconditions**: `server->router` is set. The server does not own the router; the caller must free it after the server.
+### uvhttp_server_take_router
+- **Signature**: `uvhttp_error_t uvhttp_server_take_router(uvhttp_server_t* server, uvhttp_router_t* router)`
+- **Purpose**: Hand a router over to the server for path-based request dispatching. Ownership transfers.
+- **Preconditions**: `server` must be valid. `router` must be a valid router, or NULL when the server holds no router.
+- **Postconditions**: `server->router` is set. **The server owns the router from this point and releases it in `uvhttp_server_free`; the caller must NOT call `uvhttp_router_free` on it** (doing so is a double free). There is no detach operation: a taken router can neither be replaced nor cleared. Passing the same router again is idempotent (returns `UVHTTP_OK`).
 - **Error conditions**:
-  - `UVHTTP_ERROR_INVALID_PARAM`: `server` or `router` is NULL
+  - `UVHTTP_ERROR_INVALID_PARAM`: `server` is NULL, or the server already owns a different router (overwriting would leak the previous one)
 - **Thread safety**: Not thread-safe.
+- **History**: Renamed from `uvhttp_server_set_router` in v2.10. "set" implied a borrow while the behavior was a transfer - that mismatch made the official embedding example double-free on its listen-failure path.
 
-### uvhttp_server_set_context
-- **Signature**: `uvhttp_error_t uvhttp_server_set_context(uvhttp_server_t* server, struct uvhttp_context* context)`
-- **Purpose**: Attach a context object for shared state
-- **Preconditions**: `server` must be valid. `context` must be a valid context.
-- **Postconditions**: `server->context` is set.
+### uvhttp_server_take_context
+- **Signature**: `uvhttp_error_t uvhttp_server_take_context(uvhttp_server_t* server, struct uvhttp_context* context)`
+- **Purpose**: Hand a context object over to the server for shared state. Ownership transfers.
+- **Preconditions**: `server` must be valid. `context` must be a valid context, or NULL when the server holds none.
+- **Postconditions**: `server->context` is set. The server owns the context and releases it in `uvhttp_server_free`; the caller must NOT free it. No detach operation exists; passing the same context again is idempotent.
 - **Error conditions**:
-  - `UVHTTP_ERROR_INVALID_PARAM`: `server` or `context` is NULL
+  - `UVHTTP_ERROR_INVALID_PARAM`: `server` is NULL, or the server already owns a different context
 - **Thread safety**: Not thread-safe.
+- **History**: Renamed from `uvhttp_server_set_context` in v2.10, for the same reason as `uvhttp_server_take_router`.
+
+### uvhttp_server_listen_routes
+- **Signature**: `uvhttp_error_t uvhttp_server_listen_routes(uv_loop_t* loop, const uvhttp_route_t* routes, size_t route_count, const char* host, int port, uvhttp_server_t** server)`
+- **Purpose**: Atomic construction: create a server, install a route table, and start listening in one call - all-or-nothing.
+- **Preconditions**: `loop` must be a valid, initialized `uv_loop_t`. `host` must be non-NULL. `routes` must be non-NULL when `route_count > 0`. Each entry needs a non-NULL `path` and `handler` and a method within `UVHTTP_ANY..UVHTTP_PATCH`. `server` must be a non-NULL out pointer.
+- **Postconditions**: On success, `*server` points to a fully listening server with all routes installed. On any failure, `*server` is NULL and nothing is allocated - there is no partial state for the caller to roll back. Route entries are copied (the `routes` array may be freed by the caller afterwards); the router is internal to the server and its handle is not reachable afterwards, so later routes must be registered on a router before calling this (or via the five-step sequence).
+- **Error conditions**:
+  - `UVHTTP_ERROR_INVALID_PARAM`: `loop`, `host`, or `server` is NULL; `route_count > 0` with NULL `routes`; an entry with NULL `path`/`handler` or an out-of-range method
+  - `UVHTTP_ERROR_OUT_OF_MEMORY`: server or router allocation failed, or a route failed to register
+  - `UVHTTP_ERROR_SERVER_LISTEN`: bind or listen syscall failed
+- **Thread safety**: Not thread-safe. Must be called from the event loop thread.
 
 ### uvhttp_server_enable_tls / uvhttp_server_disable_tls
 - **Signature**: `uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server, uvhttp_tls_context_t* tls_ctx)` / `uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server)`

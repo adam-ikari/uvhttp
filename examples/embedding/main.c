@@ -64,39 +64,31 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    /* 创建服务器 */
-    if (uvhttp_server_new(loop, &g_app.server) != UVHTTP_OK) {
-        fprintf(stderr, "error: cannot create uvhttp server\n");
+    /* 创建服务器 + 注册路由 + 监听：一次调用完成（原子构造）
+     *
+     * v2.10 之前这里需要 5 步（server_new / router_new / add_route /
+     * take_router / listen），并且每个失败分支都要手写回滚。那段回滚代码
+     * 在 listen 失败时会先 router_free 再 server_free —— 而 server 已经
+     * 通过 take_router 接管了 router，于是二次释放（ASan 可复现的
+     * double-free）。
+     *
+     * 现在只有一次调用：要么返回一个完全就绪的监听中的 server，
+     * 要么什么都没创建，不需要任何清理。 */
+    const uvhttp_route_t routes[] = {
+        {"/", UVHTTP_ANY, hello_handler},
+    };
+    if (uvhttp_server_listen_routes(loop, routes, 1, "0.0.0.0", port,
+                                    &g_app.server) != UVHTTP_OK) {
+        fprintf(stderr, "error: cannot start server on 0.0.0.0:%d\n", port);
         return 1;
     }
-
-    /* 创建路由器并注册路由 */
-    if (uvhttp_router_new(&g_app.router) != UVHTTP_OK) {
-        fprintf(stderr, "error: cannot create router\n");
-        uvhttp_server_free(g_app.server);
-        return 1;
-    }
-    if (uvhttp_router_add_route(g_app.router, "/", hello_handler) != UVHTTP_OK) {
-        fprintf(stderr, "error: cannot add route /\n");
-        uvhttp_router_free(g_app.router);
-        uvhttp_server_free(g_app.server);
-        return 1;
-    }
-    uvhttp_server_set_router(g_app.server, g_app.router);
+    /* router 由 server 内部创建并持有，不要（也不能）自己释放 */
 
     /* 注册优雅退出信号 */
     uv_signal_init(loop, &g_sigint);
     uv_signal_start(&g_sigint, on_signal, SIGINT);
     uv_signal_init(loop, &g_sigterm);
     uv_signal_start(&g_sigterm, on_signal, SIGTERM);
-
-    /* 监听并启动 */
-    if (uvhttp_server_listen(g_app.server, "0.0.0.0", port) != UVHTTP_OK) {
-        fprintf(stderr, "error: cannot listen on 0.0.0.0:%d\n", port);
-        uvhttp_router_free(g_app.router);
-        uvhttp_server_free(g_app.server);
-        return 1;
-    }
 
     printf("Embedded uvhttp listening on http://0.0.0.0:%d\n", port);
     printf("Test: curl http://localhost:%d/\n", port);

@@ -7,6 +7,22 @@
 /* Include constant definitions */
 #include "uvhttp_constants.h"
 
+/* ========== HTTP Method Enumeration ==========
+ * Lives here rather than in uvhttp_request.h because both uvhttp_request.h
+ * and uvhttp_server.h need it and the two are mutually reachable; common.h
+ * is the shared dependency that breaks the cycle.
+ * Moved in v2.10 for that reason - the type itself is unchanged. */
+typedef enum uvhttp_method {
+    UVHTTP_ANY = 0,
+    UVHTTP_GET,
+    UVHTTP_POST,
+    UVHTTP_PUT,
+    UVHTTP_DELETE,
+    UVHTTP_HEAD,
+    UVHTTP_OPTIONS,
+    UVHTTP_PATCH
+} uvhttp_method_t;
+
 /* ========== Static Assertion Macro Definitions ========== */
 #ifdef __cplusplus
 #    define UVHTTP_STATIC_ASSERT(cond, msg) static_assert(cond, msg)

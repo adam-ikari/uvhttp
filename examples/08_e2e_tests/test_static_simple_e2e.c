@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    uvhttp_server_set_router(app.server, app.router);
+    uvhttp_server_take_router(app.server, app.router);
     g_app = &app;
 
     /* Create static files context */
@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
     result = uvhttp_static_create(&static_config, &app.static_ctx);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to create static context: %d\n", result);
-        uvhttp_router_free(app.router);
+        /* router 已通过 take_router 交给 server，不要再单独释放 */
         uvhttp_server_free(app.server);
         return 1;
     }
@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to start server: %d\n", result);
         uvhttp_static_free(app.static_ctx);
-        uvhttp_router_free(app.router);
+        /* router 已通过 take_router 交给 server，不要再单独释放 */
         uvhttp_server_free(app.server);
         return 1;
     }

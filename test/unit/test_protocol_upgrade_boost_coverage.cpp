@@ -16,12 +16,12 @@ extern "C" {
 #include "uvhttp_server.h"
 }
 
-#include <string.h>
+#include <arpa/inet.h>
 #include <stddef.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <uv.h>
-#include <arpa/inet.h>
 
 // Dummy detector and handler for testing
 static int test_detector(uvhttp_request_t* request, char* protocol_name,
@@ -46,7 +46,7 @@ static uvhttp_error_t test_handler(uvhttp_connection_t* conn,
 }
 
 class ProtocolUpgradeTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop;
     uvhttp_server_t* server = nullptr;
 
@@ -83,15 +83,17 @@ protected:
 // ========== uvhttp_server_register_protocol_upgrade ==========
 
 TEST_F(ProtocolUpgradeTest, Register_NullServer_ReturnsError) {
-    EXPECT_EQ(uvhttp_server_register_protocol_upgrade(
-                  nullptr, "test", "websocket", test_detector, test_handler, nullptr),
-              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(
+        uvhttp_server_register_protocol_upgrade(
+            nullptr, "test", "websocket", test_detector, test_handler, nullptr),
+        UVHTTP_ERROR_INVALID_PARAM);
 }
 
 TEST_F(ProtocolUpgradeTest, Register_NullName_ReturnsError) {
-    EXPECT_EQ(uvhttp_server_register_protocol_upgrade(
-                  server, nullptr, "websocket", test_detector, test_handler, nullptr),
-              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(
+        uvhttp_server_register_protocol_upgrade(
+            server, nullptr, "websocket", test_detector, test_handler, nullptr),
+        UVHTTP_ERROR_INVALID_PARAM);
 }
 
 TEST_F(ProtocolUpgradeTest, Register_NullDetector_ReturnsError) {
@@ -110,46 +112,53 @@ TEST_F(ProtocolUpgradeTest, Register_NameTooLong_ReturnsError) {
     char long_name[64];
     memset(long_name, 'a', sizeof(long_name) - 1);
     long_name[sizeof(long_name) - 1] = '\0';
-    EXPECT_EQ(uvhttp_server_register_protocol_upgrade(
-                  server, long_name, nullptr, test_detector, test_handler, nullptr),
-              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(
+        uvhttp_server_register_protocol_upgrade(
+            server, long_name, nullptr, test_detector, test_handler, nullptr),
+        UVHTTP_ERROR_INVALID_PARAM);
 }
 
 TEST_F(ProtocolUpgradeTest, Register_UpgradeHeaderTooLong_ReturnsError) {
     char long_header[128];
     memset(long_header, 'b', sizeof(long_header) - 1);
     long_header[sizeof(long_header) - 1] = '\0';
-    EXPECT_EQ(uvhttp_server_register_protocol_upgrade(
-                  server, "test", long_header, test_detector, test_handler, nullptr),
-              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(
+        uvhttp_server_register_protocol_upgrade(
+            server, "test", long_header, test_detector, test_handler, nullptr),
+        UVHTTP_ERROR_INVALID_PARAM);
 }
 
 TEST_F(ProtocolUpgradeTest, Register_Valid_CreatesRegistry) {
     // Server pre-registers websocket, so use a different name
     EXPECT_EQ(uvhttp_server_register_protocol_upgrade(
-                  server, "custom-proto", "custom-upgrade", test_detector, test_handler, nullptr),
+                  server, "custom-proto", "custom-upgrade", test_detector,
+                  test_handler, nullptr),
               UVHTTP_OK);
     EXPECT_NE(server->protocol_registry, nullptr);
 }
 
 TEST_F(ProtocolUpgradeTest, Register_NullUpgradeHeader_Success) {
-    EXPECT_EQ(uvhttp_server_register_protocol_upgrade(
-                  server, "custom", nullptr, test_detector, test_handler, nullptr),
-              UVHTTP_OK);
+    EXPECT_EQ(
+        uvhttp_server_register_protocol_upgrade(
+            server, "custom", nullptr, test_detector, test_handler, nullptr),
+        UVHTTP_OK);
 }
 
 TEST_F(ProtocolUpgradeTest, Register_DuplicateName_ReturnsAlreadyExists) {
     EXPECT_EQ(uvhttp_server_register_protocol_upgrade(
-                  server, "myproto", "myupgrade", test_detector, test_handler, nullptr),
+                  server, "myproto", "myupgrade", test_detector, test_handler,
+                  nullptr),
               UVHTTP_OK);
     EXPECT_EQ(uvhttp_server_register_protocol_upgrade(
-                  server, "myproto", "myupgrade", test_detector, test_handler, nullptr),
+                  server, "myproto", "myupgrade", test_detector, test_handler,
+                  nullptr),
               UVHTTP_ERROR_ALREADY_EXISTS);
 }
 
 TEST_F(ProtocolUpgradeTest, Register_NameNormalizedToLowercase) {
     EXPECT_EQ(uvhttp_server_register_protocol_upgrade(
-                  server, "MyCustomProto", "MyUpgradeHeader", test_detector, test_handler, nullptr),
+                  server, "MyCustomProto", "MyUpgradeHeader", test_detector,
+                  test_handler, nullptr),
               UVHTTP_OK);
 
     uvhttp_protocol_registry_t* reg =
@@ -166,14 +175,17 @@ TEST_F(ProtocolUpgradeTest, Register_MultipleProtocols_InsertedAtHead) {
     {
         uvhttp_protocol_registry_t* reg =
             (uvhttp_protocol_registry_t*)server->protocol_registry;
-        if (reg) initial_count = reg->protocol_count;
+        if (reg)
+            initial_count = reg->protocol_count;
     }
 
+    EXPECT_EQ(
+        uvhttp_server_register_protocol_upgrade(
+            server, "proto1", "upgrade1", test_detector, test_handler, nullptr),
+        UVHTTP_OK);
     EXPECT_EQ(uvhttp_server_register_protocol_upgrade(
-                  server, "proto1", "upgrade1", test_detector, test_handler, nullptr),
-              UVHTTP_OK);
-    EXPECT_EQ(uvhttp_server_register_protocol_upgrade(
-                  server, "proto2", "upgrade2", test_detector, test_handler, (void*)0x42),
+                  server, "proto2", "upgrade2", test_detector, test_handler,
+                  (void*)0x42),
               UVHTTP_OK);
 
     uvhttp_protocol_registry_t* reg =
@@ -190,13 +202,15 @@ TEST_F(ProtocolUpgradeTest, Register_MaxProtocols_ReturnsError) {
     for (int i = 0; i < 9; i++) {
         char name[32];
         snprintf(name, sizeof(name), "proto%d", i);
-        EXPECT_EQ(uvhttp_server_register_protocol_upgrade(
-                      server, name, nullptr, test_detector, test_handler, nullptr),
-                  UVHTTP_OK);
+        EXPECT_EQ(
+            uvhttp_server_register_protocol_upgrade(
+                server, name, nullptr, test_detector, test_handler, nullptr),
+            UVHTTP_OK);
     }
     // 11th total (10 + 1 existing) should fail
-    EXPECT_EQ(uvhttp_server_register_protocol_upgrade(
-                  server, "proto_extra", nullptr, test_detector, test_handler, nullptr),
+    EXPECT_EQ(uvhttp_server_register_protocol_upgrade(server, "proto_extra",
+                                                      nullptr, test_detector,
+                                                      test_handler, nullptr),
               UVHTTP_ERROR_INVALID_PARAM);
 }
 
@@ -227,8 +241,9 @@ TEST_F(ProtocolUpgradeTest, Unregister_Valid_RemovesProtocol) {
         (uvhttp_protocol_registry_t*)server->protocol_registry;
     size_t initial = reg->protocol_count;
 
-    uvhttp_server_register_protocol_upgrade(
-        server, "tempproto", "tempupgrade", test_detector, test_handler, nullptr);
+    uvhttp_server_register_protocol_upgrade(server, "tempproto", "tempupgrade",
+                                            test_detector, test_handler,
+                                            nullptr);
     EXPECT_EQ(reg->protocol_count, initial + 1);
 
     EXPECT_EQ(uvhttp_server_unregister_protocol_upgrade(server, "tempproto"),
@@ -297,7 +312,8 @@ TEST_F(ProtocolUpgradeTest, SetLifecycle_NullLifecycle_ReturnsError) {
 
 TEST_F(ProtocolUpgradeTest, GetFd_NullConn_ReturnsError) {
     int fd = 0;
-    EXPECT_EQ(uvhttp_connection_get_fd(nullptr, &fd), UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(uvhttp_connection_get_fd(nullptr, &fd),
+              UVHTTP_ERROR_INVALID_PARAM);
 }
 
 TEST_F(ProtocolUpgradeTest, GetFd_NullFd_ReturnsError) {
@@ -342,8 +358,9 @@ TEST_F(ProtocolUpgradeTest, TransferOwnership_NullConn_ReturnsError) {
 TEST_F(ProtocolUpgradeTest, TransferOwnership_NullCallback_ReturnsError) {
     uvhttp_connection_t dummy_conn;
     memset(&dummy_conn, 0, sizeof(dummy_conn));
-    EXPECT_EQ(uvhttp_connection_transfer_ownership(&dummy_conn, nullptr, nullptr),
-              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(
+        uvhttp_connection_transfer_ownership(&dummy_conn, nullptr, nullptr),
+        UVHTTP_ERROR_INVALID_PARAM);
 }
 
 // ========== uvhttp_connection_transfer_ownership wrong state ==========
@@ -404,18 +421,20 @@ TEST_F(ProtocolUpgradeTest, SetLifecycle_Overwrite_Works) {
     uvhttp_connection_free(conn);
 }
 
-// ========== uvhttp_connection_get_fd and get_peer_address with accepted connection ==========
+// ========== uvhttp_connection_get_fd and get_peer_address with accepted
+// connection ==========
 
 // Helper: connect callback for protocol upgrade tests
 static void proto_upgrade_on_connect(uv_connect_t* req, int status) {
-    if (status < 0) return;
+    if (status < 0)
+        return;
     bool* flag = (bool*)req->data;
     *flag = true;
 }
 
 // Helper: alloc callback for protocol upgrade read
 static void proto_upgrade_alloc_cb(uv_handle_t* handle, size_t suggested_size,
-                                    uv_buf_t* buf) {
+                                   uv_buf_t* buf) {
     (void)handle;
     (void)suggested_size;
     static char slab[4096];
@@ -445,7 +464,8 @@ static void proto_upgrade_pump_loop(uv_loop_t* loop, int timeout_ms) {
         clock_gettime(CLOCK_MONOTONIC, &now);
         long elapsed_ms = (now.tv_sec - start.tv_sec) * 1000 +
                           (now.tv_nsec - start.tv_nsec) / 1000000;
-        if (elapsed_ms >= timeout_ms) break;
+        if (elapsed_ms >= timeout_ms)
+            break;
         usleep(1000);  // 1ms
     }
 }
@@ -459,7 +479,7 @@ static socklen_t g_handler_peer_addr_len = 0;
 
 // Handler that exercises get_fd and get_peer_address on the connection
 static int fd_peeraddr_handler(uvhttp_request_t* request,
-                                uvhttp_response_t* response) {
+                               uvhttp_response_t* response) {
     (void)response;
 
     // Get the connection from request->client using offsetof
@@ -491,7 +511,7 @@ static int fd_peeraddr_handler(uvhttp_request_t* request,
 }
 
 class ConnectionHelperTest : public ::testing::Test {
-protected:
+   protected:
     uv_loop_t loop{};
     uvhttp_server_t* server = nullptr;
     uvhttp_router_t* router = nullptr;
@@ -510,7 +530,8 @@ protected:
     void TearDown() override {
         uv_walk(&loop, proto_upgrade_close_walk_cb, nullptr);
         for (int i = 0; i < 20; i++) {
-            if (uv_run(&loop, UV_RUN_NOWAIT) == 0) break;
+            if (uv_run(&loop, UV_RUN_NOWAIT) == 0)
+                break;
         }
         if (router) {
             server->router = nullptr;
@@ -530,9 +551,9 @@ TEST_F(ConnectionHelperTest, GetFd_WithAcceptedConnection_ReturnsValidFd) {
     uvhttp_error_t rerr = uvhttp_router_new(&router);
     ASSERT_EQ(rerr, UVHTTP_OK);
     rerr = uvhttp_router_add_route_method(router, "/test", UVHTTP_GET,
-                                            fd_peeraddr_handler);
+                                          fd_peeraddr_handler);
     ASSERT_EQ(rerr, UVHTTP_OK);
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
 
     // Listen on port 0
     uvhttp_error_t serr = uvhttp_server_listen(server, "127.0.0.1", 0);
@@ -542,7 +563,7 @@ TEST_F(ConnectionHelperTest, GetFd_WithAcceptedConnection_ReturnsValidFd) {
     struct sockaddr_in bound_addr;
     int namelen = sizeof(bound_addr);
     int ret = uv_tcp_getsockname(&server->tcp_handle,
-                                  (struct sockaddr*)&bound_addr, &namelen);
+                                 (struct sockaddr*)&bound_addr, &namelen);
     ASSERT_EQ(ret, 0);
     int port = ntohs(bound_addr.sin_port);
 
@@ -556,18 +577,17 @@ TEST_F(ConnectionHelperTest, GetFd_WithAcceptedConnection_ReturnsValidFd) {
     bool connected = false;
     connect_req.data = &connected;
     ret = uv_tcp_connect(&connect_req, &client,
-                          (const struct sockaddr*)&connect_addr,
-                          proto_upgrade_on_connect);
+                         (const struct sockaddr*)&connect_addr,
+                         proto_upgrade_on_connect);
     ASSERT_EQ(ret, 0);
     proto_upgrade_pump_loop(&loop, 200);
     ASSERT_TRUE(connected);
 
     // Send HTTP request
-    const char* http_request =
-        "GET /test HTTP/1.1\r\n"
-        "Host: 127.0.0.1\r\n"
-        "Connection: close\r\n"
-        "\r\n";
+    const char* http_request = "GET /test HTTP/1.1\r\n"
+                               "Host: 127.0.0.1\r\n"
+                               "Connection: close\r\n"
+                               "\r\n";
     uv_buf_t write_buf = uv_buf_init((char*)http_request, strlen(http_request));
     uv_write_t write_req;
     bool write_done = false;
@@ -600,21 +620,21 @@ TEST_F(ConnectionHelperTest, GetFd_WithAcceptedConnection_ReturnsValidFd) {
     // Verify get_fd was called successfully
     EXPECT_EQ(g_handler_fd_result, UVHTTP_OK)
         << "uvhttp_connection_get_fd should succeed on accepted connection";
-    EXPECT_GE(g_handler_fd, 0)
-        << "File descriptor should be non-negative";
+    EXPECT_GE(g_handler_fd, 0) << "File descriptor should be non-negative";
 
     uv_close((uv_handle_t*)&client, proto_upgrade_on_close);
     proto_upgrade_pump_loop(&loop, 100);
 }
 
-TEST_F(ConnectionHelperTest, GetPeerAddress_WithAcceptedConnection_ReturnsAddr) {
+TEST_F(ConnectionHelperTest,
+       GetPeerAddress_WithAcceptedConnection_ReturnsAddr) {
     // Set up router with handler that calls get_peer_address
     uvhttp_error_t rerr = uvhttp_router_new(&router);
     ASSERT_EQ(rerr, UVHTTP_OK);
     rerr = uvhttp_router_add_route_method(router, "/test", UVHTTP_GET,
-                                            fd_peeraddr_handler);
+                                          fd_peeraddr_handler);
     ASSERT_EQ(rerr, UVHTTP_OK);
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
 
     // Listen on port 0
     uvhttp_error_t serr = uvhttp_server_listen(server, "127.0.0.1", 0);
@@ -624,7 +644,7 @@ TEST_F(ConnectionHelperTest, GetPeerAddress_WithAcceptedConnection_ReturnsAddr) 
     struct sockaddr_in bound_addr;
     int namelen = sizeof(bound_addr);
     int ret = uv_tcp_getsockname(&server->tcp_handle,
-                                  (struct sockaddr*)&bound_addr, &namelen);
+                                 (struct sockaddr*)&bound_addr, &namelen);
     ASSERT_EQ(ret, 0);
     int port = ntohs(bound_addr.sin_port);
 
@@ -638,18 +658,17 @@ TEST_F(ConnectionHelperTest, GetPeerAddress_WithAcceptedConnection_ReturnsAddr) 
     bool connected = false;
     connect_req.data = &connected;
     ret = uv_tcp_connect(&connect_req, &client,
-                          (const struct sockaddr*)&connect_addr,
-                          proto_upgrade_on_connect);
+                         (const struct sockaddr*)&connect_addr,
+                         proto_upgrade_on_connect);
     ASSERT_EQ(ret, 0);
     proto_upgrade_pump_loop(&loop, 200);
     ASSERT_TRUE(connected);
 
     // Send HTTP request
-    const char* http_request =
-        "GET /test HTTP/1.1\r\n"
-        "Host: 127.0.0.1\r\n"
-        "Connection: close\r\n"
-        "\r\n";
+    const char* http_request = "GET /test HTTP/1.1\r\n"
+                               "Host: 127.0.0.1\r\n"
+                               "Connection: close\r\n"
+                               "\r\n";
     uv_buf_t write_buf = uv_buf_init((char*)http_request, strlen(http_request));
     uv_write_t write_req;
     bool write_done = false;
@@ -680,7 +699,8 @@ TEST_F(ConnectionHelperTest, GetPeerAddress_WithAcceptedConnection_ReturnsAddr) 
 
     // Verify get_peer_address was called successfully
     EXPECT_EQ(g_handler_peer_result, UVHTTP_OK)
-        << "uvhttp_connection_get_peer_address should succeed on accepted connection";
+        << "uvhttp_connection_get_peer_address should succeed on accepted "
+           "connection";
     EXPECT_GT(g_handler_peer_addr_len, (socklen_t)0)
         << "Address length should be positive";
 
@@ -698,7 +718,8 @@ TEST_F(ConnectionHelperTest, GetPeerAddress_WithAcceptedConnection_ReturnsAddr) 
         inet_ntop(AF_INET6, &peer_in6->sin6_addr, ip_str, sizeof(ip_str));
         EXPECT_STREQ(ip_str, "::1");
     } else {
-        FAIL() << "Unexpected address family: " << g_handler_peer_addr.ss_family;
+        FAIL() << "Unexpected address family: "
+               << g_handler_peer_addr.ss_family;
     }
 
     uv_close((uv_handle_t*)&client, proto_upgrade_on_close);

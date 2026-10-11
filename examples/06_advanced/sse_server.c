@@ -201,7 +201,7 @@ int main(int argc, char** argv) {
 
     uvhttp_router_add_route(router, "/", index_handler);
     uvhttp_router_add_route(router, "/events", events_handler);
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
 
     err = uvhttp_server_listen(server, "127.0.0.1", port);
     if (err != UVHTTP_OK) {
@@ -215,7 +215,7 @@ int main(int argc, char** argv) {
 
     uv_run(loop, UV_RUN_DEFAULT);
 
-    uvhttp_router_free(router);
+    /* router 已交给 server（take_router），由 uvhttp_server_free 一并释放 */
     uvhttp_server_free(server);
     return 0;
 }

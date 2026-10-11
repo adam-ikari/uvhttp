@@ -291,7 +291,7 @@ int main(int argc, char* argv[]) {
     uvhttp_router_t* router = NULL;
     uvhttp_router_new(&router);
     uvhttp_router_add_route(router, "/", http_request_handler);
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
     
     /* 6. Register IPPS protocol upgrade */
     result = uvhttp_server_register_protocol_upgrade(

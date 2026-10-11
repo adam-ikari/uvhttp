@@ -82,7 +82,7 @@ int main() {
     uvhttp_server_new(loop, &server);
     uvhttp_router_t* router = NULL;
     uvhttp_router_new(&router);
-    uvhttp_server_set_router(server, router);
+    uvhttp_server_take_router(server, router);
 
     // Register the WebSocket handler
     uvhttp_ws_handler_t ws_handler = {
