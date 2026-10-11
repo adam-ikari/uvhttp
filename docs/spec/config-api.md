@@ -46,21 +46,45 @@ set at the server level and can be shared across multiple server instances.
 
 ## Configurable Options
 
-| Field | Type | Default | Range | Description |
-|-------|------|---------|-------|-------------|
-| `max_connections` | size_t | 2048 | 1-65535 | Max concurrent connections |
-| `keepalive_timeout` | int | 60 | 0-3600 | Keep-alive timeout (seconds) |
-| `request_timeout` | int | 30 | 1-3600 | Request timeout (seconds) |
-| `max_header_size` | size_t | 8192 | 256-65536 | Max header size (bytes) |
-| `max_body_size` | size_t | 10485760 | 1024-1073741824 | Max body size (bytes) |
-| `max_headers` | int | 64 | 8-256 | Max header count |
-| `read_buffer_size` | size_t | 4096 | 256-65536 | Read buffer size (bytes) |
-| `backlog` | int | 128 | 0-65535 | TCP listen backlog |
-| `tcp_nodelay` | int | 1 | 0-1 | TCP_NODELAY |
-| `tcp_keepalive` | int | 1 | 0-1 | TCP keepalive |
-| `websocket_max_frame_size` | size_t | 65536 | 1024-1048576 | Max WebSocket frame (bytes) |
-| `websocket_ping_interval` | int | 30 | 5-300 | Ping interval (seconds) |
-| `websocket_ping_timeout` | int | 10 | 3-60 | Ping timeout (seconds) |
+**Rule: a field is either authoritative or absent.** Every field below is read
+by at least one execution path. v2.10 deleted the 14 fields that were set,
+validated, printed — and then ignored by the whole library:
+
+| Removed field (v2.10) | What actually owned that limit |
+|---|---|
+| `read_buffer_size` | compile-time `UVHTTP_READ_BUFFER_SIZE` (per-connection buffer, `connection.c`) |
+| `max_body_size` | compile-time `UVHTTP_MAX_BODY_SIZE` (`request.c` / `response.c` / `utils.c`) |
+| `max_header_size` | nothing enforced it at all |
+| `max_url_size` | `MAX_URL_LEN` (2048) in `request.h` |
+| `max_requests_per_connection` | nothing enforced it at all |
+| `request_timeout`, `keepalive_timeout` | `connection_timeout` (`connection.c` idle timer) — these were two extra names for the same knob |
+| `rate_limit_window`, `rate_limit_max_requests`, `rate_limit_max_window_seconds`, `rate_limit_min_timeout_seconds` | `server->rate_limit_*`, set by `uvhttp_server_enable_rate_limit()` |
+| `cache_default_max_entries`, `cache_default_ttl` | compile-time `UVHTTP_CACHE_DEFAULT_MAX_ENTRIES` / `_TTL` |
+| `lru_cache_batch_eviction_size` | compile-time `UVHTTP_LRU_CACHE_*_BATCH_EVICTION_SIZE` |
+
+`uvhttp_set_timeout()`, `uvhttp_set_max_body_size()`,
+`uvhttp_config_update_size_limits()` and
+`uvhttp_config_update_read_buffer_size()` were removed with them: they wrote
+those fields and reported success. If you need one of these limits to be
+runtime-tunable, add the field back **together with the code that reads it** —
+a config entry nobody reads is documentation, not control.
+
+### Surviving fields
+
+| Field | Type | Default | Valid range | Read by |
+|-------|------|---------|-------------|---------|
+| `max_connections` | int | 2048 | 1-65535 | `server.c` connection cap |
+| `backlog` | int | 256 | validated only as `<= max_connections` (warn) | `server.c` listen |
+| `connection_timeout` | int | 60 | 5-300 | `connection.c` idle timer |
+| `max_file_size` | size_t | 10 MB | not range-checked | `static.c` file responses |
+| `trust_proxy_headers` | int | 0 | 0 or 1 | `request.c` client-IP resolution |
+| `websocket_max_frame_size` | int | 16 MB | 1 KB-256 MB | `websocket.c` |
+| `websocket_max_message_size` | int | 64 MB | 1 KB-1 GB, `>= frame_size` | `websocket.c` |
+| `websocket_ping_interval` | int | 30 | 1-3600 | `websocket.c` |
+| `websocket_ping_timeout` | int | 10 | 1-3600 | `websocket.c` |
+| `tcp_keepalive_timeout` | int | 60 | 1-7200 | `server.c` TCP keepalive |
+| `sendfile_timeout_ms` | int | 30000 | 1000-300000 | `static.c` sendfile wait |
+| `sendfile_max_retry` | int | 2 | `>= 0` | `static.c` sendfile retry |
 
 ## Behavior Rules
 

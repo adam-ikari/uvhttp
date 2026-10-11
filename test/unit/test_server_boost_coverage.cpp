@@ -298,33 +298,6 @@ TEST_F(BuilderAPITest, SetMaxConnections_Valid) {
     EXPECT_EQ(builder->config->max_connections, 500);
 }
 
-TEST_F(BuilderAPITest, SetTimeout_NullServer) {
-    uvhttp_server_builder_t* result = uvhttp_set_timeout(nullptr, 30);
-    EXPECT_EQ(result, nullptr);
-}
-
-TEST_F(BuilderAPITest, SetTimeout_Valid) {
-    if (!builder)
-        GTEST_SKIP();
-    uvhttp_server_builder_t* result = uvhttp_set_timeout(builder, 60);
-    EXPECT_EQ(result, builder);
-    EXPECT_EQ(builder->config->request_timeout, 60);
-    EXPECT_EQ(builder->config->keepalive_timeout, 60);
-}
-
-TEST_F(BuilderAPITest, SetMaxBodySize_NullServer) {
-    uvhttp_server_builder_t* result = uvhttp_set_max_body_size(nullptr, 1024);
-    EXPECT_EQ(result, nullptr);
-}
-
-TEST_F(BuilderAPITest, SetMaxBodySize_Valid) {
-    if (!builder)
-        GTEST_SKIP();
-    uvhttp_server_builder_t* result = uvhttp_set_max_body_size(builder, 2048);
-    EXPECT_EQ(result, builder);
-    EXPECT_EQ(builder->config->max_body_size, (size_t)2048);
-}
-
 // --- Convenient request parameter access ---
 
 TEST_F(BuilderAPITest, GetParam_NullRequest) {

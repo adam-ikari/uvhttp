@@ -96,16 +96,16 @@ static int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response)
         "Hello, World!\n\n"
         "=== Server Configuration ===\n"
         "Max connections: %d\n"
-        "Max requests per connection: %d\n"
+        "Backlog: %d\n"
         "Active connections: %zu\n"
-        "Max body size: %zuMB\n"
-        "Read buffer size: %zuKB\n"
+        "Connection timeout: %ds\n"
+        "Max body size (compile-time): %zuMB\n"
         "===========================\n",
         config->max_connections,
-        config->max_requests_per_connection,
+        config->backlog,
         active_connections,
-        config->max_body_size / (1024 * 1024),
-        (size_t)config->read_buffer_size / 1024
+        config->connection_timeout,
+        (size_t)UVHTTP_MAX_BODY_SIZE / (1024 * 1024)
     );
 
     uvhttp_response_set_status(response, 200);
@@ -146,13 +146,15 @@ int main() {
 
     /* Apply defaults, then override a few values. */
     uvhttp_config_set_defaults(config);
+    /* Every field below is read by the server: max_connections caps
+     * concurrent connections, backlog sizes the listen queue, and
+     * connection_timeout drives the per-connection idle timer
+     * (connection.c). Limits that look configurable but are not were
+     * removed in v2.10 - body/header/URL/read-buffer sizes are owned by
+     * the compile-time constants in uvhttp_constants.h. */
     config->max_connections = 500;
-    config->max_requests_per_connection = 100;
     config->backlog = 128;
-    config->max_body_size = 1048576;  /* 1MB */
-    config->read_buffer_size = 8192;
-    config->keepalive_timeout = 30;
-    config->request_timeout = 60;
+    config->connection_timeout = 60;
 
     if (uvhttp_config_validate(config) != UVHTTP_OK) {
         fprintf(stderr, "Configuration validation failed\n");
@@ -162,10 +164,8 @@ int main() {
 
     printf("Configuration loaded successfully:\n");
     printf("  Max connections: %d\n", config->max_connections);
-    printf("  Max requests per connection: %d\n",
-           config->max_requests_per_connection);
-    printf("  Max body size: %zu bytes\n", config->max_body_size);
-    printf("  Read buffer size: %d bytes\n", config->read_buffer_size);
+    printf("  Backlog: %d\n", config->backlog);
+    printf("  Connection timeout: %d s\n", config->connection_timeout);
 
     /* Get the default loop. */
     uv_loop_t* loop = uv_default_loop();

@@ -149,9 +149,11 @@ uvhttp_tls_context_load_cert_chain(tls_ctx, "server.crt");
 uvhttp_tls_context_load_private_key(tls_ctx, "server.key");
 server->tls_ctx = tls_ctx;
 
-// 设置资源限制
-server->max_connections = 1000;
-server->config->max_body_size = 10 * 1024 * 1024; // 10MB
+// 设置资源限制（只列执行路径真正读取的字段）。请求体 / 请求头 / URL 上限
+// 是编译期常量（UVHTTP_MAX_BODY_SIZE 等），不是配置项 —— v2.10 删除了那些
+// 从未生效的配置字段。
+server->config->max_connections = 1000;
+server->config->max_file_size = 10 * 1024 * 1024; // 10MB
 ```
 
 ---

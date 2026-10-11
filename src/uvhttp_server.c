@@ -1032,23 +1032,6 @@ uvhttp_server_builder_t* uvhttp_set_max_connections(
     return server;
 }
 
-uvhttp_server_builder_t* uvhttp_set_timeout(uvhttp_server_builder_t* server,
-                                            int timeout) {
-    if (server && server->config) {
-        server->config->request_timeout = timeout;
-        server->config->keepalive_timeout = timeout;
-    }
-    return server;
-}
-
-uvhttp_server_builder_t* uvhttp_set_max_body_size(
-    uvhttp_server_builder_t* server, size_t size) {
-    if (server && server->config) {
-        server->config->max_body_size = size;
-    }
-    return server;
-}
-
 // Server run and cleanup
 int uvhttp_server_run(uvhttp_server_builder_t* server) {
     if (!server || !server->loop)

@@ -181,9 +181,9 @@ ls -lh build/dist/lib/libuvhttp.a
 ```c
 // 推荐配置
 config.max_connections = 10000;
-config.read_buffer_size = 16384;
+config.backlog = 256;
 config.write_buffer_size = 16384;
-config.keepalive_timeout = 60;
+config.connection_timeout = 60;
 config.connection_timeout = 30;
 ```
 

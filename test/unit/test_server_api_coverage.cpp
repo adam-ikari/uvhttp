@@ -361,12 +361,6 @@ TEST_F(UvhttpServerApiTest, ServerBuilderMethods) {
     result2 = uvhttp_set_max_connections(builder, 100);
     EXPECT_NE(result2, nullptr);
 
-    result2 = uvhttp_set_timeout(builder, 30);
-    EXPECT_NE(result2, nullptr);
-
-    result2 = uvhttp_set_max_body_size(builder, 1024 * 1024);
-    EXPECT_NE(result2, nullptr);
-
     /* 释放服务器 */
     uvhttp_server_simple_free(builder);
 }
@@ -388,12 +382,6 @@ TEST_F(UvhttpServerApiTest, ServerBuilderMethodsNull) {
     EXPECT_EQ(result, nullptr);
 
     result = uvhttp_set_max_connections(NULL, 100);
-    EXPECT_EQ(result, nullptr);
-
-    result = uvhttp_set_timeout(NULL, 30);
-    EXPECT_EQ(result, nullptr);
-
-    result = uvhttp_set_max_body_size(NULL, 1024 * 1024);
     EXPECT_EQ(result, nullptr);
 }
 

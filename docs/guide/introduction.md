@@ -155,9 +155,11 @@ uvhttp_tls_context_load_cert_chain(tls_ctx, "server.crt");
 uvhttp_tls_context_load_private_key(tls_ctx, "server.key");
 server->tls_ctx = tls_ctx;
 
-// Example: Set reasonable resource limits
-server->max_connections = 1000;
-server->config->max_body_size = 10 * 1024 * 1024; // 10MB
+// Example: Set reasonable resource limits (fields an execution path reads).
+// Body/header/URL limits are compile-time constants (UVHTTP_MAX_BODY_SIZE etc.),
+// not config entries — v2.10 removed the config fields that never took effect.
+server->config->max_connections = 1000;
+server->config->max_file_size = 10 * 1024 * 1024; // 10MB
 ```
 
 ---

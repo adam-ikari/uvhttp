@@ -25,34 +25,17 @@ typedef struct uvhttp_context uvhttp_context_t;
 /* Configuration structure */
 typedef struct {
     /* Server configuration */
-    int max_connections;  /* Maximum connections, default 1000, based on system
-                             resource limits */
-    int read_buffer_size; /* Read buffer size, default 8KB, balance memory and
-                             performance */
+    int max_connections; /* Maximum connections, default 1000, based on system
+                            resource limits */
     int backlog; /* Listen queue length, default 128, Linux kernel default */
-    int keepalive_timeout; /* Keep-Alive timeout, default 30 seconds, balance
-                            * connection reuse and resource release
-                            */
-    int request_timeout; /* Request timeout, default 30 seconds, based on common
-                            web application requirements */
     int connection_timeout; /* Connection timeout (seconds), default 60 seconds,
                                prevent slow connection attacks */
 
     /* Performance configuration */
-    size_t max_body_size;   /* Maximum request body size, default 10MB, prevent
-                               DoS attacks */
-    size_t max_header_size; /* Maximum request header size, default 8KB,
-                               HTTP/1.1 recommended value */
-    size_t max_url_size;    /* Maximum URL length, default 2KB, browser limit */
     size_t max_file_size; /* Maximum file size for file response, default 100MB,
                              balance memory and bandwidth */
 
     /* Security configuration */
-    int max_requests_per_connection; /* Maximum requests per connection, default
-                                      * 100, prevent long connection abuse
-                                      */
-    int rate_limit_window;   /* Rate limiting time window, default 60 seconds,
-                                balance accuracy and performance */
     int trust_proxy_headers; /* Trust X-Forwarded-For/X-Real-IP when resolving
                               * client IP. Default 0 (spoof-safe): always use
                               * the TCP peer address. Enable only behind a
@@ -76,29 +59,21 @@ typedef struct {
                                   performance and reliability */
     int sendfile_max_retry;    /* sendfile maximum retry count, default 3 times,
                                   empirical value */
-
-    /* Cache configuration */
-    int cache_default_max_entries; /* Cache default maximum entries, default
-                                    * 1000, based on memory and performance
-                                    * balance
-                                    */
-    int cache_default_ttl; /* Cache default TTL, default 3600 seconds (1 hour),
-                            * common web cache strategy
-                            */
-    int lru_cache_batch_eviction_size; /* LRU cache batch eviction size, default
-                                        * 10, performance optimization
-                                        */
-
-    /* Rate limiting configuration */
-    int rate_limit_max_requests;        /* Rate limit max requests, default 100,
-                                           prevent abuse */
-    int rate_limit_max_window_seconds;  /* Rate limit window, default 60
-                                           seconds, same as rate_limit_window */
-    int rate_limit_min_timeout_seconds; /* Rate limit timeout when limit
-                                         * exceeded, Default 1 seconds, prevent
-                                         * request spam
-                                         */
 } uvhttp_config_t;
+
+/* Every field above is read by at least one execution path: these are the
+ * compile-time defaults' runtime overrides. v2.10 deleted the 14 fields whose
+ * values never reached the server (read_buffer_size, max_body_size,
+ * max_header_size, max_url_size, max_requests_per_connection,
+ * request_timeout, keepalive_timeout, the four rate_limit_* fields,
+ * cache_default_max_entries, cache_default_ttl,
+ * lru_cache_batch_eviction_size) - they were set, validated, printed, and then
+ * ignored by every code path. Behaviour for those limits is owned by the
+ * compile-time constants in uvhttp_constants.h (UVHTTP_MAX_BODY_SIZE,
+ * UVHTTP_READ_BUFFER_SIZE, MAX_URL_LEN, UVHTTP_CACHE_DEFAULT_*), or, for rate
+ * limiting, by uvhttp_server_enable_rate_limit() on the server itself.
+ * A field that is neither authoritative nor absent is noise: if you need one
+ * of these knobs, add it back together with the code that reads it. */
 
 /* Configuration management functions */
 /**
@@ -120,11 +95,6 @@ void uvhttp_config_print(const uvhttp_config_t* config);
 /* Dynamic configuration adjustment */
 int uvhttp_config_update_max_connections(uvhttp_context_t* context,
                                          int max_connections);
-int uvhttp_config_update_read_buffer_size(uvhttp_context_t* context,
-                                          int buffer_size);
-int uvhttp_config_update_size_limits(uvhttp_context_t* context,
-                                     size_t max_body_size,
-                                     size_t max_header_size);
 
 /* Get current configuration */
 const uvhttp_config_t* uvhttp_config_get_current(uvhttp_context_t* context);

@@ -1,7 +1,7 @@
 /**
  * @file test_config_full_coverage.cpp
  * @brief Comprehensive coverage tests for uvhttp_config module
- * 
+ *
  * This test file aims to achieve 100% coverage for uvhttp_config.c by testing:
  * - NULL parameter handling
  * - Memory allocation failures
@@ -11,25 +11,24 @@
  * - Edge cases and boundary conditions
  */
 
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-
 #include "uvhttp_config.h"
 #include "uvhttp_context.h"
 #include "uvhttp_error.h"
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <limits.h>
 
 class UvhttpConfigTest : public ::testing::Test {
-protected:
+   protected:
     void SetUp() override {
         uv_error = uv_loop_init(&loop);
         ASSERT_EQ(uv_error, 0);
-        
+
         uvhttp_error_t err = uvhttp_config_new(&config);
         ASSERT_EQ(err, UVHTTP_OK);
         ASSERT_NE(config, nullptr);
-        
+
         err = uvhttp_context_create(&loop, &context);
         ASSERT_EQ(err, UVHTTP_OK);
         ASSERT_NE(context, nullptr);
@@ -60,10 +59,10 @@ protected:
 TEST_F(UvhttpConfigTest, ConfigNewSuccess) {
     uvhttp_config_t* test_config = nullptr;
     uvhttp_error_t err = uvhttp_config_new(&test_config);
-    
+
     EXPECT_EQ(err, UVHTTP_OK);
     EXPECT_NE(test_config, nullptr);
-    
+
     uvhttp_config_free(test_config);
 }
 
@@ -84,13 +83,29 @@ TEST_F(UvhttpConfigTest, ConfigSetDefaultsNull) {
 
 TEST_F(UvhttpConfigTest, ConfigSetDefaultsValid) {
     uvhttp_config_set_defaults(config);
-    
-    // Verify default values are set
-    EXPECT_GT(config->max_connections, 0);
-    EXPECT_GT(config->read_buffer_size, 0);
-    EXPECT_GT(config->backlog, 0);
-    EXPECT_GT(config->keepalive_timeout, 0);
-    EXPECT_GT(config->request_timeout, 0);
+
+    // Pin every surviving field to its documented default. v2.10 deleted the 14
+    // fields nothing read; this test is the inventory that must keep shrinking
+    // or growing only together with the code that reads the field - never on
+    // its own.
+    EXPECT_EQ(config->max_connections, UVHTTP_DEFAULT_MAX_CONNECTIONS);
+    EXPECT_EQ(config->backlog, UVHTTP_DEFAULT_BACKLOG);
+    EXPECT_EQ(config->connection_timeout, UVHTTP_CONNECTION_TIMEOUT_DEFAULT);
+    EXPECT_EQ(config->max_file_size, UVHTTP_DEFAULT_MAX_FILE_SIZE);
+    EXPECT_EQ(config->trust_proxy_headers, 0);
+    EXPECT_EQ(config->websocket_max_frame_size,
+              UVHTTP_WEBSOCKET_DEFAULT_MAX_FRAME_SIZE);
+    EXPECT_EQ(config->websocket_max_message_size,
+              UVHTTP_WEBSOCKET_DEFAULT_MAX_MESSAGE_SIZE);
+    EXPECT_EQ(config->websocket_ping_interval,
+              UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL);
+    EXPECT_EQ(config->websocket_ping_timeout,
+              UVHTTP_WEBSOCKET_DEFAULT_PING_TIMEOUT);
+    EXPECT_EQ(config->tcp_keepalive_timeout, UVHTTP_TCP_KEEPALIVE_TIMEOUT);
+    EXPECT_EQ(config->sendfile_timeout_ms, UVHTTP_SENDFILE_TIMEOUT_MS);
+    EXPECT_EQ(config->sendfile_max_retry, UVHTTP_SENDFILE_DEFAULT_MAX_RETRY);
+
+    EXPECT_EQ(uvhttp_config_validate(config), UVHTTP_OK);
 }
 
 // Configuration validation tests
@@ -123,42 +138,6 @@ TEST_F(UvhttpConfigTest, ConfigValidateValidConnections) {
     EXPECT_EQ(result, UVHTTP_OK);
 }
 
-TEST_F(UvhttpConfigTest, ConfigValidateMinBufferSize) {
-    config->read_buffer_size = 512;  // Below minimum
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigValidateMaxBufferSize) {
-    config->read_buffer_size = 2 * 1024 * 1024;  // Above maximum
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigValidateValidBufferSize) {
-    config->read_buffer_size = 8192;
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_OK);
-}
-
-TEST_F(UvhttpConfigTest, ConfigValidateMinBodySize) {
-    config->max_body_size = 512;  // Below minimum
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigValidateMaxBodySize) {
-    config->max_body_size = 200 * 1024 * 1024;  // Above maximum
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigValidateValidBodySize) {
-    config->max_body_size = 10 * 1024 * 1024;
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_OK);
-}
-
 // WebSocket configuration validation
 TEST_F(UvhttpConfigTest, ConfigValidateMinWebSocketFrameSize) {
     config->websocket_max_frame_size = 0;  // Below minimum
@@ -167,7 +146,8 @@ TEST_F(UvhttpConfigTest, ConfigValidateMinWebSocketFrameSize) {
 }
 
 TEST_F(UvhttpConfigTest, ConfigValidateMaxWebSocketFrameSize) {
-    config->websocket_max_frame_size = 300 * 1024 * 1024;  // Above maximum (256MB)
+    config->websocket_max_frame_size =
+        300 * 1024 * 1024;  // Above maximum (256MB)
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
@@ -179,14 +159,16 @@ TEST_F(UvhttpConfigTest, ConfigValidateMinWebSocketMessageSize) {
 }
 
 TEST_F(UvhttpConfigTest, ConfigValidateMaxWebSocketMessageSize) {
-    config->websocket_max_message_size = 2ULL * 1024 * 1024 * 1024;  // Above maximum (1GB)
+    config->websocket_max_message_size =
+        2ULL * 1024 * 1024 * 1024;  // Above maximum (1GB)
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
 
 TEST_F(UvhttpConfigTest, ConfigValidateMessageSizeLessThanFrameSize) {
     config->websocket_max_frame_size = 16 * 1024 * 1024;
-    config->websocket_max_message_size = 8 * 1024 * 1024;  // Less than frame size
+    config->websocket_max_message_size =
+        8 * 1024 * 1024;  // Less than frame size
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
 }
@@ -225,55 +207,7 @@ TEST_F(UvhttpConfigTest, ConfigValidateMaxSendfileTimeout) {
 }
 
 // Cache configuration validation
-TEST_F(UvhttpConfigTest, ConfigValidateMinCacheMaxEntries) {
-    config->cache_default_max_entries = -1;  // Below minimum (0)
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigValidateMaxCacheMaxEntries) {
-    config->cache_default_max_entries = 1000000;  // Above maximum
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigValidateMinCacheTTL) {
-    config->cache_default_ttl = -1;  // Below minimum (0)
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigValidateMaxCacheTTL) {
-    config->cache_default_ttl = 86400 * 2;  // Above maximum
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
 // Rate limiting validation
-TEST_F(UvhttpConfigTest, ConfigValidateMinRateLimitMaxRequests) {
-    config->rate_limit_max_requests = 0;  // Below minimum
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigValidateMaxRateLimitMaxRequests) {
-    config->rate_limit_max_requests = 20000000;  // Above maximum (10000000)
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigValidateMinRateLimitWindowSeconds) {
-    config->rate_limit_max_window_seconds = 0;  // Below minimum
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigValidateMaxRateLimitWindowSeconds) {
-    config->rate_limit_max_window_seconds = 100000;  // Above maximum (86400)
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
 // Configuration print tests
 TEST_F(UvhttpConfigTest, ConfigPrintNull) {
     // Should not crash
@@ -341,71 +275,6 @@ TEST_F(UvhttpConfigTest, ConfigUpdateMaxConnectionsValid) {
     EXPECT_EQ(config->max_connections, 500);
 }
 
-TEST_F(UvhttpConfigTest, ConfigUpdateReadBufferSizeNullContext) {
-    int result = uvhttp_config_update_read_buffer_size(nullptr, 8192);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigUpdateReadBufferSizeMinValue) {
-    int result = uvhttp_config_update_read_buffer_size(context, 512);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigUpdateReadBufferSizeMaxValue) {
-    int result = uvhttp_config_update_read_buffer_size(context, 2 * 1024 * 1024);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigUpdateReadBufferSizeNoConfig) {
-    int result = uvhttp_config_update_read_buffer_size(context, 8192);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigUpdateReadBufferSizeValid) {
-    uvhttp_config_set_current(context, config);
-    int result = uvhttp_config_update_read_buffer_size(context, 16384);
-    EXPECT_EQ(result, UVHTTP_OK);
-    EXPECT_EQ(config->read_buffer_size, 16384);
-}
-
-TEST_F(UvhttpConfigTest, ConfigUpdateSizeLimitsNullContext) {
-    int result = uvhttp_config_update_size_limits(nullptr, 1024, 512);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigUpdateSizeLimitsMinBodySize) {
-    int result = uvhttp_config_update_size_limits(context, 512, 512);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigUpdateSizeLimitsMaxBodySize) {
-    int result = uvhttp_config_update_size_limits(context, 200 * 1024 * 1024, 512);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigUpdateSizeLimitsMinHeaderSize) {
-    int result = uvhttp_config_update_size_limits(context, 1024, 256);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigUpdateSizeLimitsMaxHeaderSize) {
-    int result = uvhttp_config_update_size_limits(context, 1024, 128 * 1024);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigUpdateSizeLimitsNoConfig) {
-    int result = uvhttp_config_update_size_limits(context, 1024, 512);
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(UvhttpConfigTest, ConfigUpdateSizeLimitsValid) {
-    uvhttp_config_set_current(context, config);
-    int result = uvhttp_config_update_size_limits(context, 20 * 1024 * 1024, 16384);
-    EXPECT_EQ(result, UVHTTP_OK);
-    EXPECT_EQ(config->max_body_size, 20 * 1024 * 1024);
-    EXPECT_EQ(config->max_header_size, 16384);
-}
-
 // Boundary value tests
 TEST_F(UvhttpConfigTest, ConfigBoundaryConnectionsMin) {
     config->max_connections = 1;
@@ -419,57 +288,26 @@ TEST_F(UvhttpConfigTest, ConfigBoundaryConnectionsMax) {
     EXPECT_EQ(result, UVHTTP_OK);
 }
 
-TEST_F(UvhttpConfigTest, ConfigBoundaryBufferSizeMin) {
-    config->read_buffer_size = 1024;
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_OK);
-}
-
-TEST_F(UvhttpConfigTest, ConfigBoundaryBufferSizeMax) {
-    config->read_buffer_size = 1024 * 1024;
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_OK);
-}
-
-TEST_F(UvhttpConfigTest, ConfigBoundaryBodySizeMin) {
-    config->max_body_size = 1024;
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_OK);
-}
-
-TEST_F(UvhttpConfigTest, ConfigBoundaryBodySizeMax) {
-    config->max_body_size = 100 * 1024 * 1024;
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_OK);
-}
-
 // All configuration fields tests
 TEST_F(UvhttpConfigTest, ConfigAllServerFields) {
     config->max_connections = 1000;
-    config->read_buffer_size = 8192;
     config->backlog = 128;
-    config->keepalive_timeout = 30;
-    config->request_timeout = 30;
     config->connection_timeout = 60;
-    
+
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_OK);
 }
 
 TEST_F(UvhttpConfigTest, ConfigAllPerformanceFields) {
-    config->max_body_size = 10 * 1024 * 1024;
-    config->max_header_size = 8192;
-    config->max_url_size = 2048;
     config->max_file_size = 100 * 1024 * 1024;
-    
+
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_OK);
 }
 
 TEST_F(UvhttpConfigTest, ConfigAllSecurityFields) {
-    config->max_requests_per_connection = 100;
-    config->rate_limit_window = 60;
-    
+    config->trust_proxy_headers = 1;
+
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_OK);
 }
@@ -479,7 +317,7 @@ TEST_F(UvhttpConfigTest, ConfigAllWebSocketFields) {
     config->websocket_max_message_size = 64 * 1024 * 1024;
     config->websocket_ping_interval = 30;
     config->websocket_ping_timeout = 10;
-    
+
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_OK);
 }
@@ -488,25 +326,7 @@ TEST_F(UvhttpConfigTest, ConfigAllNetworkFields) {
     config->tcp_keepalive_timeout = 60;
     config->sendfile_timeout_ms = 5000;
     config->sendfile_max_retry = 3;
-    
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_OK);
-}
 
-TEST_F(UvhttpConfigTest, ConfigAllCacheFields) {
-    config->cache_default_max_entries = 1000;
-    config->cache_default_ttl = 3600;
-    config->lru_cache_batch_eviction_size = 10;
-    
-    int result = uvhttp_config_validate(config);
-    EXPECT_EQ(result, UVHTTP_OK);
-}
-
-TEST_F(UvhttpConfigTest, ConfigAllRateLimitFields) {
-    config->rate_limit_max_requests = 100;
-    config->rate_limit_max_window_seconds = 60;
-    config->rate_limit_min_timeout_seconds = 10;
-    
     int result = uvhttp_config_validate(config);
     EXPECT_EQ(result, UVHTTP_OK);
 }
@@ -514,16 +334,9 @@ TEST_F(UvhttpConfigTest, ConfigAllRateLimitFields) {
 // Multiple updates test
 TEST_F(UvhttpConfigTest, ConfigMultipleUpdates) {
     uvhttp_config_set_current(context, config);
-    
+
     uvhttp_config_update_max_connections(context, 500);
     EXPECT_EQ(config->max_connections, 500);
-    
-    uvhttp_config_update_read_buffer_size(context, 16384);
-    EXPECT_EQ(config->read_buffer_size, 16384);
-    
-    uvhttp_config_update_size_limits(context, 20 * 1024 * 1024, 16384);
-    EXPECT_EQ(config->max_body_size, 20 * 1024 * 1024);
-    EXPECT_EQ(config->max_header_size, 16384);
 }
 
 // Complete workflow test
@@ -533,37 +346,32 @@ TEST_F(UvhttpConfigTest, ConfigCompleteWorkflow) {
     uvhttp_error_t err = uvhttp_config_new(&workflow_config);
     ASSERT_EQ(err, UVHTTP_OK);
     ASSERT_NE(workflow_config, nullptr);
-    
+
     // Set defaults
     uvhttp_config_set_defaults(workflow_config);
-    
+
     // Validate
     int result = uvhttp_config_validate(workflow_config);
     EXPECT_EQ(result, UVHTTP_OK);
-    
+
     // Set to context
     uvhttp_config_set_current(context, workflow_config);
-    
+
     // Get current
     const uvhttp_config_t* current = uvhttp_config_get_current(context);
     EXPECT_EQ(current, workflow_config);
-    
+
     // Update values
     uvhttp_config_update_max_connections(context, 800);
-    uvhttp_config_update_read_buffer_size(context, 16384);
-    uvhttp_config_update_size_limits(context, 15 * 1024 * 1024, 12288);
-    
+
     // Verify updates
     EXPECT_EQ(workflow_config->max_connections, 800);
-    EXPECT_EQ(workflow_config->read_buffer_size, 16384);
-    EXPECT_EQ(workflow_config->max_body_size, 15 * 1024 * 1024);
-    EXPECT_EQ(workflow_config->max_header_size, 12288);
-    
+
     // Clean up
     uvhttp_config_free(workflow_config);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

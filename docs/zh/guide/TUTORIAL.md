@@ -2305,7 +2305,7 @@ void* memory_pool_alloc(memory_pool_t* pool) {
 ```c
 // 启用 Keep-Alive
 uvhttp_config_t* config = uvhttp_config_new();
-config->keepalive_timeout = 30; // 30秒
+config->connection_timeout = 30; // 30秒（Keep-Alive 默认开启）
 server->config = config;
 
 // 连接复用
@@ -2520,13 +2520,24 @@ if (result != UVHTTP_OK) {
 
 ### B. 配置参数
 
+以下参数都会被服务器在运行时读取。看起来可配置、实际不是的限额（请求体 /
+请求头 / URL 大小、读缓冲大小、请求超时、每连接请求数）由
+`uvhttp_constants.h` 的编译期常量决定 —— v2.10 删除了那些从未生效的配置字段。
+
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
-| max_connections | 1000 | 最大连接数 |
-| max_body_size | 1048576 | 最大请求体大小 (1MB) |
-| read_buffer_size | 8192 | 读取缓冲区大小 |
-| keepalive_timeout | 30 | Keep-Alive 超时 (秒) |
-| request_timeout | 60 | 请求超时 (秒) |
+| max_connections | 2048 | 最大连接数 |
+| backlog | 256 | 监听队列长度 |
+| connection_timeout | 60 | 空闲连接超时（秒，5-300） |
+| max_file_size | 10MB | 静态文件响应大小上限 |
+| trust_proxy_headers | 0 | 是否采信 X-Forwarded-For 作为客户端 IP |
+| websocket_max_frame_size | 16MB | WebSocket 单帧上限 |
+| websocket_max_message_size | 64MB | WebSocket 消息上限 |
+| websocket_ping_interval | 30 | ping 间隔（秒） |
+| websocket_ping_timeout | 10 | ping 超时（秒） |
+| tcp_keepalive_timeout | 60 | TCP keepalive 空闲时间（秒） |
+| sendfile_timeout_ms | 30000 | sendfile 等待超时 |
+| sendfile_max_retry | 2 | sendfile 重试次数 |
 
 ### C. HTTP 状态码
 
