@@ -190,12 +190,14 @@ uvhttp_router_add_route(router, "/api/posts", posts_handler);
 
 ### 5. Configure Keep-Alive
 
-Adjust keep-alive timeout based on your workload:
+Adjust the idle timeout based on your workload. `connection_timeout` is the
+field the connection timer actually reads (valid range 5-300 seconds):
 
 ```c
 uvhttp_config_t* config = NULL;
 uvhttp_config_new(&config);
-config->keepalive_timeout = 60; // seconds
+uvhttp_config_set_defaults(config);
+config->connection_timeout = 60; // seconds
 ```
 
 ## Performance Testing

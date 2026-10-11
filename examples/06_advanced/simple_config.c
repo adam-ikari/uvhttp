@@ -54,13 +54,13 @@ int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         "UVHTTP 简单配置示例\n\n"
         "当前配置:\n"
         "- 最大连接数: %d\n"
-        "- 每连接最大请求数: %d\n"
+        "- 监听队列长度: %d\n"
         "- 当前活动连接数: %zu\n"
-        "- 最大请求体大小: %zuMB\n",
+        "- 连接超时: %d 秒\n",
         config->max_connections,
-        config->max_requests_per_connection,
+        config->backlog,
         server ? server->active_connections : 0,
-        config->max_body_size / (1024 * 1024)
+        config->connection_timeout
     );
     
     uvhttp_response_set_status(response, 200);
@@ -118,10 +118,12 @@ int main() {
     
     // 设置并发连接数限制
     printf("设置配置参数...\n");
-    config->max_connections = 1500;              // 最大1500个并发连接
-    config->max_requests_per_connection = 100;   // 每个连接最多100个请求
-    config->max_body_size = 2 * 1024 * 1024;     // 2MB最大请求体
-    config->read_buffer_size = 8192;             // 8KB读取缓冲区
+    // 只设置真正会被服务器读取的字段。请求体上限、读缓冲大小等在 v2.10
+    // 被移出配置结构 —— 它们由 uvhttp_constants.h 的编译期常量决定，
+    // 放进配置里只会"设置成功但毫无作用"。
+    config->max_connections = 1500;   // 最大1500个并发连接
+    config->backlog = 256;            // 监听队列长度
+    config->connection_timeout = 60;  // 空闲连接超时（秒）
     
     // 验证配置
     if (uvhttp_config_validate(config) != UVHTTP_OK) {
@@ -163,8 +165,8 @@ int main() {
     
     // 启动服务器
     printf("启动服务器 (端口 8080)...\n");
-    printf("配置: 最大连接数=%d, 每连接最大请求数=%d\n", 
-           config->max_connections, config->max_requests_per_connection);
+    printf("配置: 最大连接数=%d, 监听队列=%d, 连接超时=%d秒\n",
+           config->max_connections, config->backlog, config->connection_timeout);
     
     if (uvhttp_server_listen(g_app_context->server, "0.0.0.0", 8080) != UVHTTP_OK) {
         fprintf(stderr, "服务器启动失败\n");

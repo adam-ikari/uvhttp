@@ -318,9 +318,13 @@ int on_message(uvhttp_ws_connection_t* ws_conn, const char* data,
 ### Q21: 如何启用连接池？
 
 ```c
+// Keep-Alive 默认开启。空闲超时由 connection_timeout 决定（秒，5-300）；
+// 原来的 keepalive_timeout / request_timeout 字段在 v2.10 被删除，
+// 因为没有任何代码路径读取它们。
 uvhttp_config_t* config = NULL;
 uvhttp_config_new(&config);
-config->keepalive_timeout = 60;  // 60 秒
+uvhttp_config_set_defaults(config);
+config->connection_timeout = 60;  // 60 秒
 
 uvhttp_server_t* server = NULL;
 uvhttp_server_new(loop, &server);
@@ -382,10 +386,13 @@ uvhttp_server_listen(server, "0.0.0.0", 8081);
 ### Q26: 连接超时错误
 
 ```c
+// 调大空闲超时（connection_timeout，合法范围 5-300 秒）。
+// 没有独立的 request_timeout / keepalive_timeout —— v2.10 删除了这两个字段，
+// 连接计时器读的是 connection_timeout。
 uvhttp_config_t* config = NULL;
 uvhttp_config_new(&config);
-config->keepalive_timeout = 300;  // 5 分钟
-config->request_timeout = 60;    // 1 分钟
+uvhttp_config_set_defaults(config);
+config->connection_timeout = 300;  // 5 分钟
 
 uvhttp_server_t* server = NULL;
 uvhttp_server_new(loop, &server);

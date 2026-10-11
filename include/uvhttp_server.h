@@ -474,13 +474,17 @@ uvhttp_server_builder_t* uvhttp_any(uvhttp_server_builder_t* server,
                                     const char* path,
                                     uvhttp_request_handler_t handler);
 
-/* Simplified configuration API */
+/* Simplified configuration API
+ *
+ * uvhttp_set_timeout() and uvhttp_set_max_body_size() were removed in v2.10:
+ * they wrote config->request_timeout / keepalive_timeout / max_body_size, and
+ * no execution path ever read those fields (the real limits are owned by the
+ * compile-time constants UVHTTP_CONNECTION_TIMEOUT_DEFAULT and
+ * UVHTTP_MAX_BODY_SIZE). Both returned the builder, so callers had no way to
+ * see that nothing changed. Use uvhttp_set_max_connections() for the one knob
+ * that is real. */
 uvhttp_server_builder_t* uvhttp_set_max_connections(
     uvhttp_server_builder_t* server, int max_conn);
-uvhttp_server_builder_t* uvhttp_set_timeout(uvhttp_server_builder_t* server,
-                                            int timeout);
-uvhttp_server_builder_t* uvhttp_set_max_body_size(
-    uvhttp_server_builder_t* server, size_t size);
 
 /* Request accessors live in uvhttp_request.h:
  *   uvhttp_request_get_header()        (was also uvhttp_get_header)

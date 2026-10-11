@@ -37,22 +37,12 @@ static int config_get_handler(uvhttp_request_t* request,
     snprintf(response_body, sizeof(response_body),
              "Configuration:\n"
              "Max Connections: %d\n"
-             "Read Buffer Size: %d\n"
              "Backlog: %d\n"
-             "Keepalive Timeout: %d\n"
-             "Request Timeout: %d\n"
-             "Max Body Size: %zu\n"
-             "Max Header Size: %zu\n"
-             "Max URL Size: %zu\n"
+             "Connection Timeout: %d\n"
              "Max File Size: %zu",
              app->config->max_connections,
-             app->config->read_buffer_size,
              app->config->backlog,
-             app->config->keepalive_timeout,
-             app->config->request_timeout,
-             app->config->max_body_size,
-             app->config->max_header_size,
-             app->config->max_url_size,
+             app->config->connection_timeout,
              app->config->max_file_size);
 
     uvhttp_response_set_status(response, 200);
@@ -151,8 +141,8 @@ int main(int argc, char** argv) {
 
     printf("Default configuration loaded\n");
     printf("  Max Connections: %d\n", app.config->max_connections);
-    printf("  Request Timeout: %d\n", app.config->request_timeout);
-    printf("  Max Body Size: %zu\n", app.config->max_body_size);
+    printf("  Backlog: %d\n", app.config->backlog);
+    printf("  Connection Timeout: %d\n", app.config->connection_timeout);
 
     /* Create server */
     uvhttp_error_t result = uvhttp_server_new(loop, &app.server);

@@ -341,10 +341,13 @@ int on_message(uvhttp_ws_connection_t* ws_conn, const char* data,
 
 **Answer:**
 ```c
-// Enable Keep-Alive by setting configuration
+// Keep-Alive is on by default. The idle timeout is connection_timeout
+// (seconds, valid 5-300); the old keepalive_timeout / request_timeout
+// fields were removed in v2.10 because no code path ever read them.
 uvhttp_config_t* config = NULL;
 uvhttp_config_new(&config);
-config->keepalive_timeout = 60;  // 60 seconds
+uvhttp_config_set_defaults(config);
+config->connection_timeout = 60;  // 60 seconds
 
 uvhttp_server_t* server = NULL;
 uvhttp_server_new(loop, &server);
@@ -415,11 +418,13 @@ uvhttp_server_listen(server, "0.0.0.0", 8081);
 
 **Answer:**
 ```c
-// Increase timeout values
+// Increase the idle timeout (connection_timeout: 5-300 seconds).
+// There is no separate request_timeout / keepalive_timeout — v2.10 removed
+// both fields because the connection timer is driven by connection_timeout.
 uvhttp_config_t* config = NULL;
 uvhttp_config_new(&config);
-config->keepalive_timeout = 300;  // 5 minutes
-config->request_timeout = 60;    // 1 minute
+uvhttp_config_set_defaults(config);
+config->connection_timeout = 300;  // 5 minutes
 
 uvhttp_server_t* server = NULL;
 uvhttp_server_new(loop, &server);

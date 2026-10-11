@@ -70,6 +70,11 @@ TEST(UvhttpServerSimpleHandlersTest, GetHeader) {
     const char* header = uvhttp_request_get_header(&request, "Content-Type");
     ASSERT_NE(header, nullptr);
     EXPECT_STREQ(header, "application/json");
+
+    /* add_header 溢出内联表时会堆分配 headers_extra；request 本身在栈上，
+     * 不会有人替你调用析构。不清理即为 ASan 报告的泄漏（#455 改用 add_header
+     * 构造可查询的 header 时引入）。 */
+    uvhttp_request_cleanup(&request);
 }
 
 /* 测试获取请求头 NULL 请求 */

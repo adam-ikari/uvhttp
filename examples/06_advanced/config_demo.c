@@ -79,20 +79,18 @@ int demo_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         "<h2>当前配置信息</h2>"
         "<ul>"
         "<li>最大连接数: %d</li>"
-        "<li>每连接最大请求数: %d</li>"
+        "<li>监听队列长度: %d</li>"
         "<li>当前活动连接数: %zu</li>"
         "<li>已处理请求数: %d</li>"
-        "<li>最大请求体大小: %zuMB</li>"
-        "<li>读取缓冲区大小: %dKB</li>"
+        "<li>连接超时: %d秒</li>"
         "</ul>"
         "<p>请求时间: %s</p>"
         "</body></html>",
         config->max_connections,
-        config->max_requests_per_connection,
+        config->backlog,
         g_app->server ? g_app->server->active_connections : (size_t)0,
         g_app->request_count,
-        config->max_body_size / (1024 * 1024),
-        config->read_buffer_size / 1024,
+        config->connection_timeout,
         ctime(&(time_t){time(NULL)})
     );
 
@@ -184,12 +182,14 @@ int config_api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         return uvhttp_response_send(response);
     }
 
+    /* 只报告真正生效的字段。v2.10 删除了 14 个"设置成功但无人读取"的
+     * 配置字段（max_body_size / read_buffer_size / max_header_size 等）——
+     * 它们的真实上限来自编译期常量，报告出来只会误导使用者。 */
     cJSON_AddNumberToObject(json_obj, "max_connections", config->max_connections);
-    cJSON_AddNumberToObject(json_obj, "max_requests_per_connection", config->max_requests_per_connection);
-    cJSON_AddNumberToObject(json_obj, "max_body_size", (double)config->max_body_size);
-    cJSON_AddNumberToObject(json_obj, "max_header_size", (double)config->max_header_size);
-    cJSON_AddNumberToObject(json_obj, "read_buffer_size", config->read_buffer_size);
     cJSON_AddNumberToObject(json_obj, "backlog", config->backlog);
+    cJSON_AddNumberToObject(json_obj, "connection_timeout", config->connection_timeout);
+    cJSON_AddNumberToObject(json_obj, "max_body_size_compile_time",
+                            (double)UVHTTP_MAX_BODY_SIZE);
     cJSON_AddNumberToObject(json_obj, "current_active_connections",
                             g_app->server ? (double)g_app->server->active_connections : 0.0);
     cJSON_AddNumberToObject(json_obj, "total_requests_handled", g_app->request_count);
@@ -258,11 +258,11 @@ void config_adjustment_timer(uv_timer_t* handle) {
 void print_config_info(const uvhttp_config_t* config) {
     printf("=== 服务器配置信息 ===\n");
     printf("最大连接数: %d\n", config->max_connections);
-    printf(" 每连接最大请求数: %d\n", config->max_requests_per_connection);
-    printf("最大请求体大小: %zuMB\n", config->max_body_size / (1024 * 1024));
-    printf("最大请求头大小: %zuKB\n", config->max_header_size / 1024);
-    printf("读取缓冲区大小: %dKB\n", config->read_buffer_size / 1024);
     printf("监听队列大小: %d\n", config->backlog);
+    printf("连接超时: %d秒\n", config->connection_timeout);
+    printf("最大文件响应大小: %zuMB\n", config->max_file_size / (1024 * 1024));
+    printf("最大请求体大小(编译期常量): %zuMB\n",
+           (size_t)UVHTTP_MAX_BODY_SIZE / (1024 * 1024));
     printf("当前分配器: %s\n", uvhttp_allocator_name());
     printf("========================\n");
 }
@@ -286,7 +286,7 @@ uvhttp_config_t* load_config_demo() {
     // 2. 代码中直接覆盖某些配置
     printf("代码中自定义配置...\n");
     config->max_connections = 3000;  // 演示用，实际中应该基于需求设置
-    config->max_requests_per_connection = 200;
+    config->connection_timeout = 90;
     printf("   代码设置最大连接数: %d\n", config->max_connections);
 
     // 5. 验证配置

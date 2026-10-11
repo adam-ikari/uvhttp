@@ -2308,9 +2308,10 @@ void* memory_pool_alloc(memory_pool_t* pool) {
 #### 11.2 Connection Optimization
 
 ```c
-// Enable Keep-Alive
+// Keep-Alive is on by default; connection_timeout is the knob the
+// connection timer reads (5-300 seconds).
 uvhttp_config_t* config = uvhttp_config_new();
-config->keepalive_timeout = 30; // 30 seconds
+config->connection_timeout = 30; // 30 seconds
 server->config = config;
 
 // Connection reuse
@@ -2523,13 +2524,25 @@ if (result != UVHTTP_OK) {
 
 ### B. Configuration Parameters
 
+Every parameter below is read by the server at runtime. Limits that look
+configurable but are not (body/header/URL size, read buffer size, request
+timeout, requests per connection) are compile-time constants in
+`uvhttp_constants.h` — v2.10 removed the config fields that never took effect.
+
 | Parameter | Default | Description |
 |------|--------|------|
-| max_connections | 1000 | Maximum number of connections |
-| max_body_size | 1048576 | Maximum request body size (1MB) |
-| read_buffer_size | 8192 | Read buffer size |
-| keepalive_timeout | 30 | Keep-Alive timeout (seconds) |
-| request_timeout | 60 | Request timeout (seconds) |
+| max_connections | 2048 | Maximum number of connections |
+| backlog | 256 | Listen queue length |
+| connection_timeout | 60 | Idle connection timeout (seconds, 5-300) |
+| max_file_size | 10MB | Maximum static file response size |
+| trust_proxy_headers | 0 | Honour X-Forwarded-For for client IP |
+| websocket_max_frame_size | 16MB | Maximum WebSocket frame size |
+| websocket_max_message_size | 64MB | Maximum WebSocket message size |
+| websocket_ping_interval | 30 | Ping interval (seconds) |
+| websocket_ping_timeout | 10 | Ping timeout (seconds) |
+| tcp_keepalive_timeout | 60 | TCP keepalive idle time (seconds) |
+| sendfile_timeout_ms | 30000 | sendfile wait timeout |
+| sendfile_max_retry | 2 | sendfile retry count |
 
 ### C. HTTP Status Codes
 

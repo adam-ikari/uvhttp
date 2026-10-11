@@ -46,19 +46,11 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config) {
         return;
 
     config->max_connections = UVHTTP_DEFAULT_MAX_CONNECTIONS;
-    config->read_buffer_size = UVHTTP_DEFAULT_READ_BUFFER_SIZE;
     config->backlog = UVHTTP_DEFAULT_BACKLOG;
-    config->keepalive_timeout = UVHTTP_DEFAULT_KEEPALIVE_TIMEOUT;
-    config->request_timeout = UVHTTP_DEFAULT_REQUEST_TIMEOUT;
     config->connection_timeout = UVHTTP_CONNECTION_TIMEOUT_DEFAULT;
 
-    config->max_body_size = UVHTTP_DEFAULT_MAX_BODY_SIZE;
-    config->max_header_size = UVHTTP_DEFAULT_MAX_HEADER_SIZE;
-    config->max_url_size = UVHTTP_DEFAULT_MAX_URL_SIZE;
     config->max_file_size = UVHTTP_DEFAULT_MAX_FILE_SIZE;
 
-    config->max_requests_per_connection = UVHTTP_DEFAULT_MAX_REQUESTS_PER_CONN;
-    config->rate_limit_window = UVHTTP_DEFAULT_RATE_LIMIT_WINDOW;
     config->trust_proxy_headers = 0; /* default: never trust proxy headers */
 
     /* WebSocket config */
@@ -72,19 +64,6 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config) {
     config->tcp_keepalive_timeout = UVHTTP_TCP_KEEPALIVE_TIMEOUT;
     config->sendfile_timeout_ms = UVHTTP_SENDFILE_TIMEOUT_MS;
     config->sendfile_max_retry = UVHTTP_SENDFILE_DEFAULT_MAX_RETRY;
-
-    /* cacheconfig */
-    config->cache_default_max_entries = UVHTTP_CACHE_DEFAULT_MAX_ENTRIES;
-    config->cache_default_ttl = UVHTTP_CACHE_DEFAULT_TTL;
-    config->lru_cache_batch_eviction_size =
-        UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE;
-
-    /* limit stream config */
-    config->rate_limit_max_requests = UVHTTP_RATE_LIMIT_MAX_REQUESTS;
-    config->rate_limit_max_window_seconds =
-        UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS;
-    config->rate_limit_min_timeout_seconds =
-        UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS;
 }
 
 /* Validate configuration */
@@ -99,10 +78,12 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
      *
      * UVHTTP_MIN_CONNECTIONS: Minimum connections, ensure basic server
      * functionality UVHTTP_MAX_CONNECTIONS_HARD: Hard limit, based on system
-     * file descriptor limit UVHTTP_MIN_BUFFER_SIZE: Minimum buffer, ensure
-     * basic HTTP processing capability UVHTTP_MAX_BUFFER_SIZE: Maximum buffer,
-     * balance memory usage and performance UVHTTP_MAX_BODY_SIZE_CONFIG: Maximum
-     * request body, prevent memory exhaustion attack
+     * file descriptor limit
+     *
+     * Only fields that an execution path actually reads are validated here;
+     * v2.10 removed the 14 fields whose values never reached the server (see
+     * the "fields are either authoritative or absent" rule in docs/spec/
+     * config-api.md).
      *
      * Performance considerations:
      * - Each connection consumes about 4KB memory (buffer + struct)
@@ -112,34 +93,13 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
      */
 #define UVHTTP_MIN_CONNECTIONS 1
 #define UVHTTP_MAX_CONNECTIONS_HARD 65535 /* Based on system limits */
-#define UVHTTP_MIN_BUFFER_SIZE 1024
-#define UVHTTP_MAX_BUFFER_SIZE (1024 * 1024)
-#define UVHTTP_MIN_BODY_SIZE 1024
-#define UVHTTP_MAX_BODY_SIZE_CONFIG \
-    (100 * 1024 * 1024) /* Avoid conflict with macros in header file */
 
-    /* Core validation: connection count and buffer size */
+    /* Core validation: connection count */
     if (config->max_connections < UVHTTP_MIN_CONNECTIONS ||
         config->max_connections > UVHTTP_MAX_CONNECTIONS_HARD) {
         UVHTTP_LOG_ERROR("max_connections=%d exceeds valid range [%d-%d]",
                          config->max_connections, UVHTTP_MIN_CONNECTIONS,
                          UVHTTP_MAX_CONNECTIONS_HARD);
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    if (config->read_buffer_size < UVHTTP_MIN_BUFFER_SIZE ||
-        config->read_buffer_size > UVHTTP_MAX_BUFFER_SIZE) {
-        UVHTTP_LOG_ERROR("read_buffer_size=%d exceeds valid range [%d-%d]",
-                         config->read_buffer_size, UVHTTP_MIN_BUFFER_SIZE,
-                         UVHTTP_MAX_BUFFER_SIZE);
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    if (config->max_body_size < UVHTTP_MIN_BODY_SIZE ||
-        config->max_body_size > UVHTTP_MAX_BODY_SIZE_CONFIG) {
-        UVHTTP_LOG_ERROR("max_body_size=%zu exceeds valid range [%zu-%zu]",
-                         config->max_body_size, (size_t)UVHTTP_MIN_BODY_SIZE,
-                         (size_t)UVHTTP_MAX_BODY_SIZE_CONFIG);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
@@ -225,100 +185,6 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    if (config->cache_default_max_entries < UVHTTP_CACHE_MIN_MAX_ENTRIES ||
-        config->cache_default_max_entries > UVHTTP_CACHE_MAX_MAX_ENTRIES) {
-
-        UVHTTP_LOG_ERROR(
-            "cache_default_max_entries=%d exceeds valid range [%d-%d]",
-
-            config->cache_default_max_entries, UVHTTP_CACHE_MIN_MAX_ENTRIES,
-
-            UVHTTP_CACHE_MAX_MAX_ENTRIES);
-
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    if (config->cache_default_ttl < UVHTTP_CACHE_MIN_TTL ||
-
-        config->cache_default_ttl > UVHTTP_CACHE_MAX_TTL) {
-
-        UVHTTP_LOG_ERROR("cache_default_ttl=%d exceeds valid range [%d-%d]",
-
-                         config->cache_default_ttl, UVHTTP_CACHE_MIN_TTL,
-
-                         UVHTTP_CACHE_MAX_TTL);
-
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    if (config->lru_cache_batch_eviction_size <
-            UVHTTP_LRU_CACHE_MIN_BATCH_EVICTION_SIZE ||
-
-        config->lru_cache_batch_eviction_size >
-            UVHTTP_LRU_CACHE_MAX_BATCH_EVICTION_SIZE) {
-
-        UVHTTP_LOG_ERROR(
-            "lru_cache_batch_eviction_size=%d exceeds valid range [%d-%d]",
-
-            config->lru_cache_batch_eviction_size,
-
-            UVHTTP_LRU_CACHE_MIN_BATCH_EVICTION_SIZE,
-
-            UVHTTP_LRU_CACHE_MAX_BATCH_EVICTION_SIZE);
-
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    if (config->rate_limit_max_requests < UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS ||
-
-        config->rate_limit_max_requests > UVHTTP_RATE_LIMIT_MAX_MAX_REQUESTS) {
-
-        UVHTTP_LOG_ERROR(
-            "rate_limit_max_requests=%d exceeds valid range [%d-%d]",
-
-            config->rate_limit_max_requests, UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS,
-
-            UVHTTP_RATE_LIMIT_MAX_MAX_REQUESTS);
-
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    if (config->rate_limit_max_window_seconds <
-            UVHTTP_RATE_LIMIT_MIN_WINDOW_SECONDS ||
-
-        config->rate_limit_max_window_seconds >
-            UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS) {
-
-        UVHTTP_LOG_ERROR(
-            "rate_limit_max_window_seconds=%d exceeds valid range [%d-%d]",
-
-            config->rate_limit_max_window_seconds,
-
-            UVHTTP_RATE_LIMIT_MIN_WINDOW_SECONDS,
-
-            UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS);
-
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    if (config->rate_limit_min_timeout_seconds <
-            UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS ||
-
-        config->rate_limit_min_timeout_seconds >
-            UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS) {
-
-        UVHTTP_LOG_ERROR(
-            "rate_limit_min_timeout_seconds=%d exceeds valid range [%d-%d]",
-
-            config->rate_limit_min_timeout_seconds,
-
-            UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS,
-
-            UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS);
-
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
     /* Configuration dependency validation */
     if (config->websocket_max_message_size < config->websocket_max_frame_size) {
         UVHTTP_LOG_ERROR("websocket_max_message_size=%d < "
@@ -383,19 +249,10 @@ void uvhttp_config_print(const uvhttp_config_t* config) {
     printf("\n=== UVHTTP Configuration ===\n");
     printf("Server:\n");
     printf("  Max Connections: %d\n", config->max_connections);
-    printf("  Read Buffer Size: %d bytes\n", config->read_buffer_size);
     printf("  Backlog: %d\n", config->backlog);
-    printf("  Keepalive Timeout: %d seconds\n", config->keepalive_timeout);
-    printf("  Request Timeout: %d seconds\n", config->request_timeout);
-
-    printf("\nPerformance:\n");
-    printf("  Max Body Size: %zu bytes\n", config->max_body_size);
-    printf("  Max Header Size: %zu bytes\n", config->max_header_size);
-    printf("  Max URL Size: %zu bytes\n", config->max_url_size);
-    printf("\nSecurity:\n");
-    printf("  Max Requests per Connection: %d\n",
-           config->max_requests_per_connection);
-    printf("  Rate Limit Window: %d seconds\n", config->rate_limit_window);
+    printf("  Connection Timeout: %d seconds\n", config->connection_timeout);
+    printf("  Max File Size: %zu bytes\n", config->max_file_size);
+    printf("  Trust Proxy Headers: %d\n", config->trust_proxy_headers);
     printf("==============================\n\n");
 }
 
@@ -431,65 +288,6 @@ int uvhttp_config_update_max_connections(uvhttp_context_t* context,
         UVHTTP_LOG_INFO("Max connections updated: %d -> %d", old_value,
                         max_connections);
         (void)old_value;
-        return UVHTTP_OK;
-    }
-
-    return UVHTTP_ERROR_INVALID_PARAM;
-}
-
-/* Dynamically update read buffer size */
-int uvhttp_config_update_read_buffer_size(uvhttp_context_t* context,
-                                          int buffer_size) {
-    if (!context) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    if (buffer_size < 1024 || buffer_size > 1048576) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    if (context->current_config) {
-        int old_value =
-            ((uvhttp_config_t*)context->current_config)->read_buffer_size;
-        ((uvhttp_config_t*)context->current_config)->read_buffer_size =
-            buffer_size;
-
-        UVHTTP_LOG_INFO("Read buffer size updated: %d -> %d", old_value,
-                        buffer_size);
-        (void)old_value;
-        return UVHTTP_OK;
-    }
-
-    return UVHTTP_ERROR_INVALID_PARAM;
-}
-
-/* Dynamically update size limits */
-int uvhttp_config_update_size_limits(uvhttp_context_t* context,
-                                     size_t max_body_size,
-                                     size_t max_header_size) {
-    if (!context) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    if (max_body_size < 1024 || max_body_size > 100 * 1024 * 1024) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    if (max_header_size < 512 || max_header_size > 64 * 1024) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    if (context->current_config) {
-        size_t old_body =
-            ((uvhttp_config_t*)context->current_config)->max_body_size;
-        size_t old_header =
-            ((uvhttp_config_t*)context->current_config)->max_header_size;
-
-        ((uvhttp_config_t*)context->current_config)->max_body_size =
-            max_body_size;
-        ((uvhttp_config_t*)context->current_config)->max_header_size =
-            max_header_size;
-        UVHTTP_LOG_INFO("Limits updated - Body: %zu -> %zu, Header: %zu -> %zu",
-                        old_body, max_body_size, old_header, max_header_size);
-        (void)old_body;
-        (void)old_header;
         return UVHTTP_OK;
     }
 
