@@ -689,10 +689,22 @@ void uvhttp_lru_cache_set_max_file_size(cache_manager_t* cache,
 /**
  * set maximum memory usage for cache
  */
+/* Range is enforced at the write point, not only at create time.
+ * uvhttp_lru_cache_create rejects max_memory_usage == 0 ("cannot be zero"),
+ * and the eviction path reads the limit as "enabled only when > 0". A setter
+ * that accepted 0 therefore silently disabled the memory ceiling on a live
+ * cache — a value create refuses to build in the first place. */
 void uvhttp_lru_cache_set_max_memory_usage(cache_manager_t* cache,
                                            size_t max_memory_usage) {
     if (!cache)
         return;
+
+    if (max_memory_usage == 0) {
+        UVHTTP_LOG_WARN(
+            "Ignoring max_memory_usage=0 (create rejects it; 0 would disable "
+            "the memory ceiling)");
+        return;
+    }
 
     cache->max_memory_usage = max_memory_usage;
 }
@@ -700,9 +712,19 @@ void uvhttp_lru_cache_set_max_memory_usage(cache_manager_t* cache,
 /**
  * set maximum entries for cache
  */
+/* Same rule as create: max_entries must be positive. The eviction path
+ * treats "> 0" as "limit enabled", so accepting 0 here would turn a bounded
+ * cache into an unbounded one behind the caller's back. */
 void uvhttp_lru_cache_set_max_entries(cache_manager_t* cache, int max_entries) {
     if (!cache)
         return;
+
+    if (max_entries <= 0) {
+        UVHTTP_LOG_WARN(
+            "Ignoring max_entries=%d (must be positive, same rule as create)",
+            max_entries);
+        return;
+    }
 
     cache->max_entries = max_entries;
 }

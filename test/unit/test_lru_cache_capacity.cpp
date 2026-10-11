@@ -122,4 +122,78 @@ TEST_F(LruCacheCapacity, EntryJustUnderThresholdIsAccepted) {
     EXPECT_EQ(cache_->entry_count, 1);
 }
 
+/*
+ * 背景：uvhttp_lru_cache_create 拒绝 max_memory_usage == 0（"cannot be zero"）
+ * 且要求 max_entries > 0，而淘汰路径把 "> 0" 读作"限额生效"。setter 此前
+ * 直接赋值，于是两条写路径对同一个不变量给出相反答案：create 拒绝的值，
+ * setter 照单全收，还顺手把运行中缓存的限额关掉了（0 → 视为无限额）。
+ *
+ * 同一个库内的正确范式是 uvhttp_lru_cache_set_batch_eviction_size：越界时
+ * 告警并保持原值，而不是静默接受。
+ */
+
+TEST_F(LruCacheCapacity, SetMaxMemoryUsageRejectsZero) {
+    Create(kBudget);
+
+    uvhttp_lru_cache_set_max_memory_usage(cache_, 0);
+
+    EXPECT_EQ(cache_->max_memory_usage, kBudget)
+        << "create 拒绝 0（cannot be zero），setter 不得把它写进去";
+}
+
+/* 越界值不生效后，限额仍是原来那个 —— 不是被静默放宽 */
+TEST_F(LruCacheCapacity, ZeroMaxMemoryUsageDoesNotWidenTheBudget) {
+    Create(kBudget);
+
+    uvhttp_lru_cache_set_max_memory_usage(cache_, 0);
+
+    /* 预算仍是 16KB：8KB 内容条目（+约 10KB 开销）依旧放不进 */
+    EXPECT_EQ(Put("/big.bin", 8 * 1024, 'x'), UVHTTP_ERROR_OUT_OF_MEMORY)
+        << "写入 0 之后内存上限必须仍然生效";
+}
+
+TEST_F(LruCacheCapacity, SetMaxMemoryUsageAcceptsPositiveValue) {
+    Create(kBudget);
+
+    uvhttp_lru_cache_set_max_memory_usage(cache_, 32 * 1024);
+
+    EXPECT_EQ(cache_->max_memory_usage, 32 * 1024);
+    EXPECT_EQ(Put("/big.bin", 8 * 1024, 'x'), UVHTTP_OK)
+        << "合法的更大预算应立即生效";
+}
+
+TEST_F(LruCacheCapacity, SetMaxEntriesRejectsZeroAndNegative) {
+    Create(kBudget);
+
+    uvhttp_lru_cache_set_max_entries(cache_, 0);
+    EXPECT_EQ(cache_->max_entries, 10) << "create 要求 max_entries > 0";
+
+    uvhttp_lru_cache_set_max_entries(cache_, -5);
+    EXPECT_EQ(cache_->max_entries, 10) << "负值同样必须被拒";
+}
+
+/* 关闭条目限额会让有界缓存退化成无界缓存 —— 这正是校验要阻止的后果 */
+TEST_F(LruCacheCapacity, ZeroMaxEntriesWouldDisableTheEntryCeiling) {
+    Create(kBudget);
+
+    uvhttp_lru_cache_set_max_entries(cache_, 0);
+
+    /* 限额仍是 10：放入第 11 条时应触发淘汰，entry_count 不越过上限 */
+    for (int i = 0; i < 11; i++) {
+        char path[32];
+        snprintf(path, sizeof(path), "/f%d.bin", i);
+        Put(path, 64, 's');
+    }
+    EXPECT_LE(cache_->entry_count, cache_->max_entries)
+        << "条目上限必须仍然生效";
+}
+
+TEST_F(LruCacheCapacity, SetMaxEntriesAcceptsPositiveValue) {
+    Create(kBudget);
+
+    uvhttp_lru_cache_set_max_entries(cache_, 3);
+
+    EXPECT_EQ(cache_->max_entries, 3);
+}
+
 #endif /* UVHTTP_FEATURE_STATIC_FILES */
