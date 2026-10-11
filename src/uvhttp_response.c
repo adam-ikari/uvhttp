@@ -463,18 +463,23 @@ uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    if (response->body) {
-        uvhttp_free(response->body);
-        response->body = NULL;
-    }
-
-    response->body = uvhttp_alloc(length);
-    if (!response->body) {
-        response->body_length = 0;
+    /* Atomic replace: allocate the new body FIRST, then drop the old one.
+     *
+     * The previous order (free old -> alloc new) lost the old body whenever
+     * the allocation failed: the caller got UVHTTP_ERROR_OUT_OF_MEMORY and
+     * a response with body=NULL, so a retry had nothing to fall back on.
+     * set_header already had this property for free because uvhttp_realloc
+     * keeps the old block when it fails; set_body allocates a fresh block,
+     * so it has to buy the atomicity explicitly. */
+    char* new_body = uvhttp_alloc(length);
+    if (!new_body) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
+    memcpy(new_body, body, length);
 
-    memcpy(response->body, body, length);
+    /* Only now is the old body expendable. */
+    uvhttp_free(response->body);
+    response->body = new_body;
     response->body_length = length;
 
     return UVHTTP_OK;
