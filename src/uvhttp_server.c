@@ -898,73 +898,78 @@ static uvhttp_error_t create_simple_server_internal(
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
+    /* One out-param invariant, established once here instead of being
+     * re-asserted in every failure branch: the caller either gets a fully
+     * listening builder or NULL. */
+    *server = NULL;
+
+    // Loop must be provided by application layer
+    if (!loop) {
+        UVHTTP_LOG_ERROR("loop parameter is required - must be provided by "
+                         "application layer");
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
 
     uvhttp_server_builder_t* simple =
         uvhttp_alloc(sizeof(uvhttp_server_builder_t));
     if (!simple) {
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
-
     memset(simple, 0, sizeof(uvhttp_server_builder_t));
-
-    // Loop must be provided by application layer
-    if (!loop) {
-        UVHTTP_LOG_ERROR("loop parameter is required - must be provided by "
-                         "application layer");
-        uvhttp_free(simple);
-        *server = NULL;
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
     simple->loop = loop;
 
-    // Create server
-    uvhttp_error_t server_result =
-        uvhttp_server_new(simple->loop, &simple->server);
-    if (server_result != UVHTTP_OK) {
+    /* Each sub-object is owned by a local until the single handover point
+     * below. Every failure between here and there frees its own object by
+     * name, so no branch ever has to "un-own" anything from the server -
+     * which is what the previous shape required (it nulled server->config /
+     * server->router on some branches and not others, and needed a comment
+     * warning against "fixing" the one branch where nulling would leak). */
+    uvhttp_server_t* srv = NULL;
+    uvhttp_error_t err = uvhttp_server_new(loop, &srv);
+    if (err != UVHTTP_OK) {
         uvhttp_free(simple);
-        *server = NULL;  // set to NULL to avoid double release
-        return server_result;
+        return err;
     }
 
-    // Create router
-    uvhttp_error_t router_result = uvhttp_router_new(&simple->router);
-    if (router_result != UVHTTP_OK) {
-        // Before calling uvhttp_server_free, set config to NULL
-        simple->server->config = NULL;
-        uvhttp_server_free(simple->server);
+    uvhttp_router_t* router = NULL;
+    err = uvhttp_router_new(&router);
+    if (err != UVHTTP_OK) {
+        uvhttp_server_free(srv);
         uvhttp_free(simple);
-        *server = NULL;  // set to NULL to avoid double release
-        return router_result;
+        return err;
     }
 
-    // Create and set default config
-    uvhttp_error_t result = uvhttp_config_new(&simple->config);
-    if (result != UVHTTP_OK) {
-        // Before calling uvhttp_server_free, set config and router to NULL
-        simple->server->config = NULL;
-        simple->server->router = NULL;
-        uvhttp_router_free(simple->router);
-        uvhttp_server_free(simple->server);
+    uvhttp_config_t* config = NULL;
+    err = uvhttp_config_new(&config);
+    if (err != UVHTTP_OK) {
+        uvhttp_router_free(router);
+        uvhttp_server_free(srv);
         uvhttp_free(simple);
-        *server = NULL;  // set to NULL to avoid double release
-        return result;
+        return err;
     }
 
-    simple->server->config = simple->config;
-    simple->server->router = simple->router;
-    simple->auto_cleanup = 1;
+    /* Ownership handover: exactly one point, reached only on the path that
+     * built everything. From here on, uvhttp_server_free releases srv, the
+     * router and the config; the builder struct holds the handles for the
+     * caller's convenience but owns none of them. */
+    simple->server = srv;
+    simple->router = router;
+    simple->config = config;
+    srv->config = config;
+    srv->router = router;
 
     // startlisten
-    if (uvhttp_server_listen(simple->server, host, port) != UVHTTP_OK) {
-        UVHTTP_LOG_ERROR("Failed to start server on %s:%d\n", host, port);
-        // By this point simple->server->config and simple->server->router have
-        // already been assigned (above), so uvhttp_server_free will release
-        // them. Do NOT null them here - that would defeat the free and leak
-        // the router (and its internal allocations).
-        uvhttp_server_free(simple->server);
+    err = uvhttp_server_listen(srv, host, port);
+    if (err != UVHTTP_OK) {
+        UVHTTP_LOG_ERROR("Failed to start server on %s:%d\n", host ? host : "",
+                         port);
+        /* Propagate the real reason instead of collapsing every listen
+         * failure into SERVER_LISTEN: a NULL host is a caller mistake
+         * (INVALID_PARAM), an occupied port is a runtime one
+         * (SERVER_LISTEN), and the two deserve different remediation. */
+        uvhttp_server_free(srv);
         uvhttp_free(simple);
-        *server = NULL;  // set to NULL to avoid double release
-        return UVHTTP_ERROR_SERVER_LISTEN;
+        return err;
     }
 
     *server = simple;

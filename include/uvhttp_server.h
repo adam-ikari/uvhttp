@@ -77,13 +77,18 @@ typedef struct {
     uvhttp_request_handler_t handler;
 } uvhttp_route_t;
 
-/* Server builder structure (unified API) */
+/* Server builder structure (unified API)
+ *
+ * server/router/config are handles the builder exposes for the caller's
+ * convenience; the builder owns none of them - uvhttp_server_free releases
+ * all three. The struct is therefore only a view, never an owner, which is
+ * why a partially built builder is safe to drop with uvhttp_free() alone
+ * (see create_simple_server_internal). */
 typedef struct {
     uvhttp_server_t* server;
     uvhttp_router_t* router;
     uvhttp_config_t* config;
     uv_loop_t* loop;
-    int auto_cleanup;
 } uvhttp_server_builder_t;
 /* ========== Timeout Statistics Callback ========== */
 /**
