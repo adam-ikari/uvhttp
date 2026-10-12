@@ -677,11 +677,25 @@ void uvhttp_lru_cache_reset_stats(cache_manager_t* cache) {
 
 /**
  * set maximum file size for cache
+ *
+ * The write point is the ONLY guard for this field: uvhttp_lru_cache_create
+ * takes no max_file_size argument (it hardcodes a 1GB default), and put()
+ * applies it as a hard cutoff (content_length > max_file_size, see the
+ * "check if file size exceeds limit" branch). A zero written here therefore
+ * bricks the cache - every later put returns UVHTTP_ERROR_INVALID_PARAM with
+ * only a WARN as explanation - so it is rejected like the two setters above
+ * instead of being written silently.
  */
 void uvhttp_lru_cache_set_max_file_size(cache_manager_t* cache,
                                         size_t max_file_size) {
     if (!cache)
         return;
+
+    if (max_file_size == 0) {
+        UVHTTP_LOG_WARN(
+            "Ignoring max_file_size=0 (put() would reject every entry)");
+        return;
+    }
 
     cache->max_file_size = max_file_size;
 }

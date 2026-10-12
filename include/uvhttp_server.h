@@ -262,6 +262,13 @@ uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server);
  * @note Added in v2.10. The five-step sequence remains available for callers
  *       that need to keep the router handle - prefer this for everything else.
  *
+ * @note This entry builds a bare server: no `uvhttp_context_t` and no
+ *       `uvhttp_config_t` are attached. Every config-backed setting on the
+ *       result therefore falls back to its compile-time constant (backlog,
+ *       tcp_keepalive_timeout). If you need those tunable, use the five-step
+ *       sequence with a context instead - wiring a config into this path is
+ *       tracked separately.
+ *
  * @example
  *   uvhttp_server_t* server = NULL;
  *   uvhttp_route_t routes[] = {
@@ -331,6 +338,12 @@ uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server,
  *       uvhttp_server_free. A NULL router is only a no-op when the server
  *       holds none already; once a router has been taken, NULL is rejected
  *       like any other pointer.
+ *
+ * @note The guard above is per-server, so it does NOT stop the same router
+ *       from being handed to two different servers. Do that and both
+ *       uvhttp_server_free calls release it: the second one is a double free
+ *       (ASan reports it at free time, far from the assignment). One router
+ *       belongs to exactly one server.
  */
 uvhttp_error_t uvhttp_server_take_router(uvhttp_server_t* server,
                                          uvhttp_router_t* router);
@@ -348,6 +361,10 @@ uvhttp_error_t uvhttp_server_take_router(uvhttp_server_t* server,
  *       as uvhttp_server_take_router. No detach operation exists: a NULL
  *       context is only a no-op when the server holds none already, and is
  *       rejected once one has been taken.
+ *
+ * @note Like take_router, the guard is per-server: handing the same context
+ *       to two servers makes both destroy it - a double free at free time.
+ *       One context belongs to exactly one server.
  */
 uvhttp_error_t uvhttp_server_take_context(uvhttp_server_t* server,
                                           struct uvhttp_context* context);
