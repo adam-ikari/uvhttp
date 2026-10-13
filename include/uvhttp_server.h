@@ -607,10 +607,6 @@ void uvhttp_server_ws_update_activity(uvhttp_server_t* server,
                                       uvhttp_ws_connection_t* ws_conn);
 #endif
 
-/* internalFunction */
-uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client);
-void uvhttp_request_cleanup(uvhttp_request_t* request);
-
 /* TLSFunction (whenDisable) */
 /* uvhttp_error_t uvhttp_tls_init(void); */
 /* void uvhttp_tls_context_free(uvhttp_tls_context_t* ctx); */

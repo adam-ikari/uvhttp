@@ -89,6 +89,70 @@ connection management.
   - `UVHTTP_ERROR_SERVER_LISTEN`: bind or listen syscall failed
 - **Thread safety**: Not thread-safe. Must be called from the event loop thread.
 
+### uvhttp_server_new_with_loop
+- **Signature**: `uvhttp_error_t uvhttp_server_new_with_loop(uvhttp_server_t** server)`
+- **Purpose**: Create a server that **owns** its event loop (`uv_loop_new` internally; released by `uvhttp_server_free`).
+- **Preconditions**: `server` must be a non-NULL out pointer.
+- **Postconditions**: `*server` is a valid, non-listening server with `config == NULL` and `context == NULL` (no context is created).
+- **Error conditions**:
+  - `UVHTTP_ERROR_INVALID_PARAM`: `server` is NULL
+  - `UVHTTP_ERROR_OUT_OF_MEMORY`: server or loop allocation failed
+- **Thread safety**: Not thread-safe.
+- **Note**: Prefer `uvhttp_server_new(loop, &server)` - the caller-owns-the-loop shape is what most embedding code already does. This entry exists for the rare case where the server should outlive the caller's loop.
+
+### uvhttp_server_create
+- **Signature**: `uvhttp_error_t uvhttp_server_create(uv_loop_t* loop, const char* host, int port, uvhttp_server_builder_t** server)`
+- **Purpose**: Builder construction: create server + router + config, start listening, and return a **builder** for chaining routes and the one tunable config knob.
+- **Preconditions**: `loop`, `host`, and `server` must be non-NULL.
+- **Postconditions**: On success, `*server` is a fully listening builder. On **any** failure, `*server` is NULL and nothing is allocated - the caller has no rollback to write (v2.10: the out-param is established once at function entry instead of per branch).
+- **Ownership**: the builder is a **view, not an owner**. `server`/`router`/`config` handles are exposed for convenience; `uvhttp_server_free` releases all three. Dropping a builder is therefore always `uvhttp_server_simple_free()` (server + builder), never a per-field teardown.
+- **Error conditions** (v2.10: propagated, not collapsed - a caller mistake and a runtime failure need different remediation):
+  - `UVHTTP_ERROR_INVALID_PARAM`: `loop`, `host`, or `server` is NULL
+  - `UVHTTP_ERROR_OUT_OF_MEMORY`: any allocation failed
+  - `UVHTTP_ERROR_SERVER_LISTEN`: bind or listen syscall failed (occupied port)
+- **Thread safety**: Not thread-safe. Must be called from the event loop thread.
+
+### uvhttp_server_run / uvhttp_server_stop_simple / uvhttp_server_simple_free
+- **Signatures**: `int uvhttp_server_run(uvhttp_server_builder_t* server)` / `void uvhttp_server_stop_simple(uvhttp_server_builder_t* server)` / `void uvhttp_server_simple_free(uvhttp_server_builder_t* server)`
+- **Purpose**: Run the loop until stopped; stop accepting connections; release the builder (and, through it, the server, router and config).
+- **Preconditions**: `server` must be a builder from `uvhttp_server_create` (NULL-tolerant throughout: each function no-ops on NULL).
+- **Postconditions**: `simple_free` leaves nothing allocated; the builder owns nothing, so there is no double-release hazard when the caller also holds handles from the builder struct.
+- **Thread safety**: Not thread-safe. `run` blocks the calling thread.
+
+### uvhttp_get / uvhttp_post / uvhttp_put / uvhttp_delete / uvhttp_any
+- **Signature**: `uvhttp_server_builder_t* uvhttp_<method>(uvhttp_server_builder_t* server, const char* path, uvhttp_request_handler_t handler)`
+- **Purpose**: Register a route on the builder's router and return the builder (chaining).
+- **Preconditions**: `server`, `path`, and `handler` must be non-NULL; `path` must match the router's rules (no query string, `:param` supported, length < `MAX_ROUTE_PATH_LEN`).
+- **Postconditions**: `server->router` contains the route. The builder pointer is returned unchanged for chaining, so a NULL argument silently returns NULL.
+- **Error conditions**: registration failure is **logged, not returned** - the chain continues, so the caller must verify the path/handler it passed rather than the return value.
+- **Thread safety**: Not thread-safe.
+
+### uvhttp_set_max_connections
+- **Signature**: `uvhttp_server_builder_t* uvhttp_set_max_connections(uvhttp_server_builder_t* server, int max_conn)`
+- **Purpose**: Set the connection cap - **the only builder config knob that has an effect**. It writes `config->max_connections`, which the connection path reads.
+- **Preconditions**: `server` must be a builder from `uvhttp_server_create` (it must have a config).
+- **Postconditions**: `config->max_conn == max_conn`. Returns the builder for chaining; on NULL it returns NULL.
+- **Error conditions**: none reported - a builder without a config (e.g. from `uvhttp_server_new`) makes this a silent no-op, as does NULL.
+- **History**: `uvhttp_set_timeout()` and `uvhttp_set_max_body_size()` were removed in v2.10 (they wrote config fields no execution path read); see docs/spec/config-api.md.
+- **Thread safety**: Not thread-safe.
+
+### uvhttp_serve
+- **Signature**: `int uvhttp_serve(uv_loop_t* loop, const char* host, int port)`
+- **Purpose**: One-key start: `uvhttp_server_create` + a `/` default route + run + free. For scripts and demos.
+- **Preconditions**: `loop` non-NULL, `port` in 1..65535. `host` may be NULL (treated as 0.0.0.0 with a warning).
+- **Postconditions**: returns when the loop stops; the server is freed before returning.
+- **Error conditions**: `UVHTTP_ERROR_INVALID_PARAM` (NULL loop, out-of-range port, or NULL host - which makes the listen call fail) or whatever `uvhttp_server_create` propagated; 0 on a clean loop exit.
+- **Thread safety**: Not thread-safe. Blocks the calling thread.
+
+### uvhttp_server_enable_health_check
+- **Signature**: `uvhttp_error_t uvhttp_server_enable_health_check(uvhttp_server_t* server, const char* path)`
+- **Purpose**: Register a `{"status":"ok"}` handler at `path` for load-balancer probes.
+- **Preconditions**: `server` and `path` must be non-NULL. A router is created if the server has none.
+- **Postconditions**: `GET path` returns 200 `application/json` `{"status":"ok"}`.
+- **Error conditions**:
+  - `UVHTTP_ERROR_INVALID_PARAM`: `server` or `path` is NULL, or route registration failed
+- **Thread safety**: Not thread-safe.
+
 ### uvhttp_server_enable_tls / uvhttp_server_disable_tls
 - **Signature**: `uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server, uvhttp_tls_context_t* tls_ctx)` / `uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server)`
 - **Purpose**: Enable or disable TLS on the server

@@ -88,6 +88,7 @@ UVHTTP_STATIC_ASSERT(offsetof(uvhttp_request_t, headers) >= 64,
                      "headers array should be after first 64 bytes");
 
 /* API functions */
+uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request, uv_tcp_t* client);
 const char* uvhttp_request_get_method(uvhttp_request_t* request);
 const char* uvhttp_request_get_url(uvhttp_request_t* request);
 void uvhttp_request_free(uvhttp_request_t* request);
