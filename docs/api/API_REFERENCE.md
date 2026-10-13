@@ -183,6 +183,161 @@ uv_run(loop, UV_RUN_DEFAULT);
 uvhttp_server_free(server);
 ```
 
+## Server API (reference)
+
+### uvhttp_server_new_with_loop
+
+```c
+uvhttp_error_t uvhttp_server_new_with_loop(uvhttp_server_t** server);
+```
+
+Creates a server that **owns** its event loop (released by `uvhttp_server_free`).
+Prefer `uvhttp_server_new(loop, &server)` unless the server must outlive the
+caller's loop.
+
+**Return Value**: `UVHTTP_OK`, `UVHTTP_ERROR_INVALID_PARAM` (NULL `server`), or
+`UVHTTP_ERROR_OUT_OF_MEMORY`.
+
+### uvhttp_server_enable_tls / uvhttp_server_disable_tls
+
+```c
+uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server,
+                                        uvhttp_tls_context_t* tls_ctx);
+uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server);
+```
+
+Hands a TLS context to the server (**ownership transfers** - the server frees it,
+like `uvhttp_server_take_router`). Requires `BUILD_WITH_HTTPS`.
+
+### uvhttp_server_set_handler
+
+```c
+uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server,
+                                         uvhttp_request_handler_t handler);
+```
+
+Sets a single catch-all handler for every request. Mutually exclusive with a
+router: when a router is installed it wins.
+
+### uvhttp_server_take_context
+
+```c
+uvhttp_error_t uvhttp_server_take_context(uvhttp_server_t* server,
+                                          struct uvhttp_context* context);
+```
+
+Hands a context to the server (**ownership transfers**, no detach, one context
+per server). See `uvhttp_server_take_router` for the same rules.
+
+### uvhttp_server_enable_health_check
+
+```c
+uvhttp_error_t uvhttp_server_enable_health_check(uvhttp_server_t* server,
+                                                const char* path);
+```
+
+Registers a `{"status":"ok"}` handler at `path` on the server's router,
+creating a router first if the server has none.
+
+## Builder API
+
+The builder entry point (`uvhttp_server_create`) creates server + router +
+config, starts listening, and returns a `uvhttp_server_builder_t*` for
+chaining. It has the same all-or-nothing contract as
+`uvhttp_server_listen_routes`: on any failure the out pointer is NULL and
+nothing is allocated.
+
+The builder is a **view, not an owner**: `server`, `router` and `config`
+handles are exposed for convenience, but `uvhttp_server_free` releases all
+three. Tear down with `uvhttp_server_simple_free()` (server + builder) - never
+per-field.
+
+### uvhttp_server_create
+
+```c
+uvhttp_error_t uvhttp_server_create(uv_loop_t* loop, const char* host,
+                                    int port,
+                                    uvhttp_server_builder_t** server);
+```
+
+**Parameters**:
+- `loop`: Initialized event loop
+- `host`: Listen address (e.g. "0.0.0.0")
+- `port`: Listen port
+- `server`: Out pointer; NULL on failure
+
+**Return Value** (v2.10: the real cause is propagated, not collapsed into
+`SERVER_LISTEN`):
+- `UVHTTP_OK`: Success - fully listening builder
+- `UVHTTP_ERROR_INVALID_PARAM`: NULL `loop`/`host`/`server`
+- `UVHTTP_ERROR_OUT_OF_MEMORY`: any allocation failed
+- `UVHTTP_ERROR_SERVER_LISTEN`: bind or listen syscall failed
+
+**Example**:
+```c
+uvhttp_server_builder_t* builder = NULL;
+uvhttp_error_t result =
+    uvhttp_server_create(loop, "0.0.0.0", 8080, &builder);
+if (result != UVHTTP_OK) {
+    /* nothing was allocated; nothing to clean up */
+    return 1;
+}
+
+/* Chaining: routes plus the one config knob that has an effect. */
+uvhttp_get(builder, "/", hello_handler);
+uvhttp_get(builder, "/health", health_handler);
+uvhttp_set_max_connections(builder, 1000);
+
+uvhttp_server_run(builder);
+uvhttp_server_simple_free(builder);
+```
+
+### uvhttp_get / uvhttp_post / uvhttp_put / uvhttp_delete / uvhttp_any
+
+```c
+uvhttp_server_builder_t* uvhttp_get(uvhttp_server_builder_t* server,
+                                    const char* path,
+                                    uvhttp_request_handler_t handler);
+```
+
+Registers a route on the builder's router; the four siblings differ only in
+method. Returns the builder for chaining (NULL in, NULL out).
+
+Registration failures are **logged, not returned** - the chain continues, so
+verify the path/handler you passed rather than the return value.
+
+### uvhttp_set_max_connections
+
+```c
+uvhttp_server_builder_t* uvhttp_set_max_connections(
+    uvhttp_server_builder_t* server, int max_conn);
+```
+
+The connection cap, and the only builder config knob with an effect. Silent
+no-op on NULL or on a builder without a config.
+
+### uvhttp_server_run / uvhttp_server_stop_simple / uvhttp_server_simple_free
+
+```c
+int  uvhttp_server_run(uvhttp_server_builder_t* server);
+void uvhttp_server_stop_simple(uvhttp_server_builder_t* server);
+void uvhttp_server_simple_free(uvhttp_server_builder_t* server);
+```
+
+Run the loop until stopped; stop accepting connections; release the builder
+(and, through it, the server, router and config). All three are NULL-tolerant.
+
+### uvhttp_serve
+
+```c
+int uvhttp_serve(uv_loop_t* loop, const char* host, int port);
+```
+
+One-key start for scripts and demos: `uvhttp_server_create` + a `/` default
+route + run + free. Validates `port` in 1..65535; a NULL `host` is treated as
+0.0.0.0 with a warning (the listen call then fails, so a NULL host is an
+error, not a default).
+
 ## Router API
 
 ### uvhttp_router_new
