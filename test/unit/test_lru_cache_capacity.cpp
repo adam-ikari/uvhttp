@@ -196,4 +196,50 @@ TEST_F(LruCacheCapacity, SetMaxEntriesAcceptsPositiveValue) {
     EXPECT_EQ(cache_->max_entries, 3);
 }
 
+/* ========== set_max_file_size：写点不变量 ========== */
+
+/*
+ * put() 在「check if file size exceeds limit」分支用
+ *     if (content_length > cache->max_file_size) → INVALID_PARAM
+ * 对内容长度做硬截断。而 create() 根本不接收 max_file_size（默认 1GB 写死在
+ * lru_cache.c:82），所以 setter 是这个字段唯一的守卫。
+ *
+ * 评审探针实证：set_max_file_size(cache, 0) 之后，每次 put 都以 -1 失败 ——
+ * 缓存被砖化，调用方只看到一串 "File size exceeds limit" 的 WARN。
+ * 本次补上与另两个 setter 同范式的下限校验。
+ */
+
+TEST_F(LruCacheCapacity, SetMaxFileSizeRejectsZero) {
+    Create(kBudget);
+
+    uvhttp_lru_cache_set_max_file_size(cache_, 0);
+
+    EXPECT_EQ(cache_->max_file_size, 1024u * 1024 * 1024)
+        << "create 把默认值写死为 1GB；setter 不得把 0 写进去";
+}
+
+/* 核心回归：0 不得砖化缓存。砖化的表现是 put 永久 INVALID_PARAM。 */
+TEST_F(LruCacheCapacity, ZeroMaxFileSizeDoesNotBrickTheCache) {
+    Create(kBudget);
+
+    uvhttp_lru_cache_set_max_file_size(cache_, 0);
+
+    EXPECT_EQ(Put("/after.bin", 64, 's'), UVHTTP_OK)
+        << "写入 0 之后 put 必须仍能成功（评审探针在此处实测返回 -1）";
+    EXPECT_EQ(cache_->entry_count, 1);
+}
+
+/* 合法值仍然立即生效：小于新上限的进得去，大于的被拒 */
+TEST_F(LruCacheCapacity, SetMaxFileSizeAcceptsPositiveValue) {
+    Create(kBudget);
+
+    uvhttp_lru_cache_set_max_file_size(cache_, 1024);
+    EXPECT_EQ(cache_->max_file_size, 1024u);
+
+    EXPECT_EQ(Put("/small.bin", 512, 's'), UVHTTP_OK)
+        << "小于新上限的内容应能放入";
+    EXPECT_EQ(Put("/big.bin", 4096, 'b'), UVHTTP_ERROR_INVALID_PARAM)
+        << "大于新上限的内容应被拒（文件大小判定先于内存预算判定）";
+}
+
 #endif /* UVHTTP_FEATURE_STATIC_FILES */
