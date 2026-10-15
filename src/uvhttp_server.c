@@ -549,6 +549,21 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    /* Range-check the port here rather than trusting uv_ip4_addr: libuv
+     * writes it with htons(), so an out-of-range value is silently truncated
+     * (65536 -> 0, i.e. an ephemeral port; 99999 -> 34463) and the caller
+     * ends up listening somewhere else with no error. This used to live in
+     * uvhttp_serve, which was the only caller that validated it; when that
+     * entry went away in v2.10 the check moved to the choke point both
+     * uvhttp_server_listen and uvhttp_server_listen_routes pass through.
+     * Port 0 stays legal: "bind an ephemeral port" is meaningful libuv
+     * semantics at this layer (uvhttp_serve rejected it, but that was its
+     * own one-key-start policy, not a property of listen). */
+    if (port < 0 || port > 65535) {
+        UVHTTP_LOG_ERROR("port %d out of range (must be 0-65535)", port);
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
     struct sockaddr_in addr;
     if (uv_ip4_addr(host, port, &addr) != 0) {
         UVHTTP_LOG_ERROR("Invalid listen host: %s\n", host);
