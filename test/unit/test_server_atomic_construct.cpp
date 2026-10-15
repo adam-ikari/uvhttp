@@ -157,6 +157,51 @@ TEST(UvhttpServerAtomicConstruct, NullHostIsRejected) {
     EXPECT_EQ(server, nullptr);
 }
 
+/* An out-of-range port used to be handed straight to uv_ip4_addr, which stores
+ * it with htons(): -1 becomes 65535 and 65536 becomes 0 (an ephemeral port),
+ * so the server would silently listen somewhere the caller did not ask for.
+ * uvhttp_serve was the only entry that range-checked, and it was removed in
+ * v2.10 - the check now lives on uvhttp_server_listen, the choke point below
+ * listen_routes. Port 0 is deliberately NOT in this set: it is the legal
+ * "bind an ephemeral port" request that several tests (and callers) rely on. */
+TEST(UvhttpServerAtomicConstruct, OutOfRangePortIsRejected) {
+    uv_loop_t* loop = uv_default_loop();
+    ASSERT_NE(loop, nullptr);
+
+    const int bad_ports[] = {-1, 65536, 99999, -1000};
+
+    for (int port : bad_ports) {
+        uvhttp_server_t* server = nullptr;
+        EXPECT_EQ(uvhttp_server_listen_routes(loop, nullptr, 0, "127.0.0.1",
+                                              port, &server),
+                  UVHTTP_ERROR_INVALID_PARAM)
+            << "listen_routes must reject port " << port;
+        EXPECT_EQ(server, nullptr)
+            << "rejected port " << port << " must not leave a server behind";
+    }
+}
+
+/* Same guard on the primitive, not just the atomic wrapper: a caller that
+ * reaches for uvhttp_server_listen directly gets the same rejection, and the
+ * server must not be left half-listening. */
+TEST(UvhttpServerAtomicConstruct, ListenRejectsOutOfRangePort) {
+    uv_loop_t* loop = uv_default_loop();
+    ASSERT_NE(loop, nullptr);
+
+    uvhttp_server_t* server = nullptr;
+    ASSERT_EQ(uvhttp_server_new(loop, &server), UVHTTP_OK);
+    ASSERT_NE(server, nullptr);
+
+    EXPECT_EQ(uvhttp_server_listen(server, "127.0.0.1", -1),
+              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(uvhttp_server_listen(server, "127.0.0.1", 65536),
+              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(server->is_listening, 0)
+        << "a rejected port must not have started listening";
+
+    uvhttp_server_free(server);
+}
+
 /* count > 0 with a NULL table is a caller bug; must not dereference. */
 TEST(UvhttpServerAtomicConstruct, NullRoutesWithNonZeroCountIsRejected) {
     uv_loop_t* loop = uv_default_loop();
