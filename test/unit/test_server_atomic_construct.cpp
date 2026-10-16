@@ -12,6 +12,12 @@
  *   - all-or-nothing construction (no partial state on any failure path)
  *   - *server is NULL on every failure
  *   - ownership transfer is total and cannot be double-applied
+ *
+ * (The builder entry point that used to pair with these - uvhttp_server_create
+ *  and its chaining API - was removed in v2.10 along with the whole builder
+ *  layer: a library hands out primitives, it does not run the caller's loop or
+ *  own construction on their behalf. Its rollback invariants now live in
+ *  uvhttp_server_listen_routes, which every test below covers.)
  */
 
 #include <gtest/gtest.h>
@@ -149,6 +155,51 @@ TEST(UvhttpServerAtomicConstruct, NullHostIsRejected) {
         uvhttp_server_listen_routes(loop, nullptr, 0, nullptr, 0, &server),
         UVHTTP_ERROR_INVALID_PARAM);
     EXPECT_EQ(server, nullptr);
+}
+
+/* An out-of-range port used to be handed straight to uv_ip4_addr, which stores
+ * it with htons(): -1 becomes 65535 and 65536 becomes 0 (an ephemeral port),
+ * so the server would silently listen somewhere the caller did not ask for.
+ * uvhttp_serve was the only entry that range-checked, and it was removed in
+ * v2.10 - the check now lives on uvhttp_server_listen, the choke point below
+ * listen_routes. Port 0 is deliberately NOT in this set: it is the legal
+ * "bind an ephemeral port" request that several tests (and callers) rely on. */
+TEST(UvhttpServerAtomicConstruct, OutOfRangePortIsRejected) {
+    uv_loop_t* loop = uv_default_loop();
+    ASSERT_NE(loop, nullptr);
+
+    const int bad_ports[] = {-1, 65536, 99999, -1000};
+
+    for (int port : bad_ports) {
+        uvhttp_server_t* server = nullptr;
+        EXPECT_EQ(uvhttp_server_listen_routes(loop, nullptr, 0, "127.0.0.1",
+                                              port, &server),
+                  UVHTTP_ERROR_INVALID_PARAM)
+            << "listen_routes must reject port " << port;
+        EXPECT_EQ(server, nullptr)
+            << "rejected port " << port << " must not leave a server behind";
+    }
+}
+
+/* Same guard on the primitive, not just the atomic wrapper: a caller that
+ * reaches for uvhttp_server_listen directly gets the same rejection, and the
+ * server must not be left half-listening. */
+TEST(UvhttpServerAtomicConstruct, ListenRejectsOutOfRangePort) {
+    uv_loop_t* loop = uv_default_loop();
+    ASSERT_NE(loop, nullptr);
+
+    uvhttp_server_t* server = nullptr;
+    ASSERT_EQ(uvhttp_server_new(loop, &server), UVHTTP_OK);
+    ASSERT_NE(server, nullptr);
+
+    EXPECT_EQ(uvhttp_server_listen(server, "127.0.0.1", -1),
+              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(uvhttp_server_listen(server, "127.0.0.1", 65536),
+              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(server->is_listening, 0)
+        << "a rejected port must not have started listening";
+
+    uvhttp_server_free(server);
 }
 
 /* count > 0 with a NULL table is a caller bug; must not dereference. */
@@ -414,95 +465,4 @@ TEST(UvhttpServerOwnership, NullContextWithoutContextIsNoOp) {
     EXPECT_EQ(server->context, nullptr);
 
     uvhttp_server_free(server);
-}
-
-/* ---------- builder 构造路径（create_simple_server_internal） ---------- */
-
-/*
- * v2.10 d5：builder 构造路径原来在 5 个分支里各自 `*server = NULL`，并在两个
- * 分支里手工置 `server->config/router = NULL`（其中三处其实是无操作——那两项
- * 的所有权要到后面才移交），还靠一条"Do NOT null them here"的注释防止后人
- * "修好"唯一不能置空的分支。
- *
- * 现在：out-param 在函数头部一次性建立；子对象由局部变量持有到唯一的移交点；
- * 每个失败分支只释放自己命名的对象；移交之后 server_free 一并释放三者。
- * 下面锁住这两条不变式。
- */
-
-/* 所有失败路径上 out-param 必须是 NULL（此前未断言过，只是各分支自觉置）。
- * 用哨兵值而非 nullptr 初始化：否则"函数压根没写 out-param"也照样绿。 */
-TEST(UvhttpServerAtomicConstruct, CreateBuilderFailureLeavesOutParamNull) {
-    uvhttp_server_builder_t* builder =
-        reinterpret_cast<uvhttp_server_builder_t*>(0x1);
-
-    EXPECT_EQ(uvhttp_server_create(nullptr, "127.0.0.1", 8080, &builder),
-              UVHTTP_ERROR_INVALID_PARAM);
-    EXPECT_EQ(builder, nullptr) << "loop 缺失时 out-param 应被写成 NULL";
-
-    uv_loop_t* loop = uv_default_loop();
-    ASSERT_NE(loop, nullptr);
-
-    builder = reinterpret_cast<uvhttp_server_builder_t*>(0x1);
-    /* host 为 NULL：uvhttp_server_listen 自己拒绝，构造路径据此回滚 */
-    EXPECT_EQ(uvhttp_server_create(loop, nullptr, 8080, &builder),
-              UVHTTP_ERROR_INVALID_PARAM);
-    EXPECT_EQ(builder, nullptr) << "host 缺失时 out-param 应被写成 NULL";
-}
-
-/* listen 失败（端口被占）：server 已经接管 router 与 config，清理必须只走
- * server_free —— 这一条正是旧五步法 double free 的同款路径。端口占用用
- * uv_listen 占位实现，与运行身份无关（特权端口在 root 下会绑定成功）。
- * 错误码必须是 SERVER_LISTEN（运行时占用），不是 INVALID_PARAM。 */
-TEST(UvhttpServerAtomicConstruct, CreateBuilderListenFailureLeavesNothing) {
-    uv_loop_t* loop = uv_default_loop();
-    ASSERT_NE(loop, nullptr);
-
-    uv_tcp_t blocker;
-    ASSERT_EQ(uv_tcp_init(loop, &blocker), 0);
-    struct sockaddr_in bind_addr;
-    ASSERT_EQ(uv_ip4_addr("127.0.0.1", 0, &bind_addr), 0);
-    ASSERT_EQ(uv_tcp_bind(&blocker, (const struct sockaddr*)&bind_addr, 0), 0);
-    ASSERT_EQ(uv_listen((uv_stream_t*)&blocker, 1, [](uv_stream_t*, int) {}),
-              0);
-    struct sockaddr_in bound_addr;
-    int addr_len = sizeof(bound_addr);
-    ASSERT_EQ(
-        uv_tcp_getsockname(&blocker, (struct sockaddr*)&bound_addr, &addr_len),
-        0);
-    const int occupied_port = ntohs(bound_addr.sin_port);
-    ASSERT_GT(occupied_port, 0);
-
-    uvhttp_server_builder_t* builder = nullptr;
-    const uvhttp_error_t err =
-        uvhttp_server_create(loop, "127.0.0.1", occupied_port, &builder);
-
-    EXPECT_EQ(err, UVHTTP_ERROR_SERVER_LISTEN);
-    EXPECT_EQ(builder, nullptr) << "listen 失败时不得交出半成品 builder（其 "
-                                   "router/config 已归 server 所有）";
-
-    uv_close((uv_handle_t*)&blocker, nullptr);
-    uv_run(loop, UV_RUN_NOWAIT);
-}
-
-/* 成功路径的唯一移交点：builder 是视图不是所有者 —— 三个句柄必须指向
- * server 持有的同一批对象（移交与"server 侧接管"是同一个动作）。 */
-TEST(UvhttpServerAtomicConstruct, BuilderIsAViewNotAnOwner) {
-    uv_loop_t* loop = uv_default_loop();
-    ASSERT_NE(loop, nullptr);
-
-    uvhttp_server_builder_t* builder = nullptr;
-    ASSERT_EQ(uvhttp_server_create(loop, "127.0.0.1", 0, &builder), UVHTTP_OK);
-    ASSERT_NE(builder, nullptr);
-
-    EXPECT_EQ(builder->server->config, builder->config)
-        << "config 必须在同一个移交点交给 server";
-    EXPECT_EQ(builder->server->router, builder->router)
-        << "router 必须在同一个移交点交给 server";
-    EXPECT_NE(builder->server->config, nullptr);
-    EXPECT_NE(builder->server->router, nullptr);
-    EXPECT_EQ(builder->loop, loop);
-
-    /* simple_free 只释放 server（连带 router/config）与 builder 自身；
-     * 若 builder 也拥有这些对象，这里就是 double free（ASan 会报）。 */
-    uvhttp_server_simple_free(builder);
 }

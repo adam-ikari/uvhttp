@@ -77,19 +77,6 @@ typedef struct {
     uvhttp_request_handler_t handler;
 } uvhttp_route_t;
 
-/* Server builder structure (unified API)
- *
- * server/router/config are handles the builder exposes for the caller's
- * convenience; the builder owns none of them - uvhttp_server_free releases
- * all three. The struct is therefore only a view, never an owner, which is
- * why a partially built builder is safe to drop with uvhttp_free() alone
- * (see create_simple_server_internal). */
-typedef struct {
-    uvhttp_server_t* server;
-    uvhttp_router_t* router;
-    uvhttp_config_t* config;
-    uv_loop_t* loop;
-} uvhttp_server_builder_t;
 /* ========== Timeout Statistics Callback ========== */
 /**
  * @brief Timeoutstatisticscallback functionsclass
@@ -466,71 +453,8 @@ uvhttp_error_t uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server);
 
 /* ========== Unified API Functions ========== */
 
-/* Quick create and start server */
-/**
- * Create simple server (API)
- *
- * @param loop libuv event loop (must be provided by application layer)
- * @param host listen address
- * @param port listen port
- * @param server output parameter, return created server
- * @return UVHTTP_OK success, other value represents error
- */
-uvhttp_error_t uvhttp_server_create(uv_loop_t* loop, const char* host, int port,
-                                    uvhttp_server_builder_t** server);
-
-/* Chained routing API */
-uvhttp_server_builder_t* uvhttp_get(uvhttp_server_builder_t* server,
-                                    const char* path,
-                                    uvhttp_request_handler_t handler);
-uvhttp_server_builder_t* uvhttp_post(uvhttp_server_builder_t* server,
-                                     const char* path,
-                                     uvhttp_request_handler_t handler);
-uvhttp_server_builder_t* uvhttp_put(uvhttp_server_builder_t* server,
-                                    const char* path,
-                                    uvhttp_request_handler_t handler);
-uvhttp_server_builder_t* uvhttp_delete(uvhttp_server_builder_t* server,
-                                       const char* path,
-                                       uvhttp_request_handler_t handler);
-uvhttp_server_builder_t* uvhttp_any(uvhttp_server_builder_t* server,
-                                    const char* path,
-                                    uvhttp_request_handler_t handler);
-
-/* Simplified configuration API
- *
- * uvhttp_set_timeout() and uvhttp_set_max_body_size() were removed in v2.10:
- * they wrote config->request_timeout / keepalive_timeout / max_body_size, and
- * no execution path ever read those fields (the real limits are owned by the
- * compile-time constants UVHTTP_CONNECTION_TIMEOUT_DEFAULT and
- * UVHTTP_MAX_BODY_SIZE). Both returned the builder, so callers had no way to
- * see that nothing changed. Use uvhttp_set_max_connections() for the one knob
- * that is real. */
-uvhttp_server_builder_t* uvhttp_set_max_connections(
-    uvhttp_server_builder_t* server, int max_conn);
-
-/* Request accessors live in uvhttp_request.h:
- *   uvhttp_request_get_header()        (was also uvhttp_get_header)
- *   uvhttp_request_get_query_param()   (was also uvhttp_get_param)
- *   uvhttp_request_get_body()          (was also uvhttp_get_body)
- * The short aliases were removed in v2.10 - they were pure forwarders that
- * gave the request API two entry points with no basis for choosing between
- * them, and they were declared here despite operating on the request. */
-
-/* Health check endpoint.
- * Registers a handler at the given path that returns HTTP 200 with
- * a JSON body {"status":"ok"}. Useful for load balancers and
- * orchestration probes. Returns UVHTTP_ERROR_INVALID_PARAM if server
- * or path is NULL. */
 uvhttp_error_t uvhttp_server_enable_health_check(uvhttp_server_t* server,
                                                  const char* path);
-
-/* Server runtime and cleanup */
-int uvhttp_server_run(uvhttp_server_builder_t* server);
-void uvhttp_server_stop_simple(uvhttp_server_builder_t* server);
-void uvhttp_server_simple_free(uvhttp_server_builder_t* server);
-
-/* one key function (API) */
-int uvhttp_serve(uv_loop_t* loop, const char* host, int port);
 
 /* WebSocket API */
 #if UVHTTP_FEATURE_WEBSOCKET
