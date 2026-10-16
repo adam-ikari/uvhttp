@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [performance, benchmark, ci, gate]
 created: "2026-08-26T04:20:15"
-updated: "2026-09-29T02:26:09"
+updated: "2026-10-16T04:22:21"
 ---
 
 <!-- compiled_truth -->
@@ -17,7 +17,7 @@ updated: "2026-09-29T02:26:09"
 - 判定：`regression_check.py --compare` 按 round 配对取每轮 head/base 比值。**失败需同时满足两条**：比值中位数 < `1 − threshold`（默认 10%），且**多数**单个配对也低于该限。中位数在限内但多数配对不在 → 打印 `NOISE`，不判失败。
 - **fail closed（四种测不出结论的情形都算失败）**：base 无数据、配对 < 3 轮、被 gate 的端点在 head CSV 缺失、在 base CSV 缺失。端点清单**单一来源**是 workflow 的 job env `GATE_ENDPOINTS`，以 `--gate` 传给脚本——否则"脚本默认基线键"与"实测端点"两处真源会漂移。
 - 绝对基线（`/` 83K、`/json` 81K、`/large` 8.8K）在配对模式下仍打印，但只是报告信息。
-- 触发条件（2026-09-07 修正、09-28 复核）：`release: [published]` + PR 侧 `benchmark` label；pre-release 分支 push 是死配置，见 [[release-process-benchmark-gate]]。**该 label 在仓库里直到 2026-09-28 才被创建**，所以 PR 侧门禁历史上等于没跑过；今天不带 label 的 PR 依旧静默跳过——审 PR 时先看 label。
+- 触发条件（2026-10-16 更新）：`release: [published]` + **目标分支为 `pre-release` 的 PR**（`pull_request.branches: [pre-release]`——`branches` 匹配 PR 的 **base**）；**其余 PR 一律不自动跑**，需要时用 `workflow_dispatch` 手动触发。此前的 `benchmark` 标签 opt-in、以及曾在 PR #480 试过的「每个 PR 自动跑」都已否决：性能门禁只在发布暂存路径（pre-release）与 release 事件上自动生效，避免每个 PR/每次 push 排队跑 ~29 分钟。pre-release 分支本身仍是历史遗留（末次提交 2026-07-25），用它在 PR 上触发前需先复活该分支。
 
 ## exit code 契约（CI 依赖它，改动要同步）
 `regression_check.py`：`0` = 通过；`1` = 门禁判红；`2` = **数据不可用**（CSV 解析不到结果、配对模式下任一侧没有 round 数据）。`2` 与 `1` 都必须让 job 失败，但语义不同：`1` 是"测出了回归"，`2` 是"根本没测到"。空 CSV 走 `2` 而不是静默通过，是 fail-closed 链条的第一环。
@@ -26,7 +26,7 @@ updated: "2026-09-29T02:26:09"
 - **内置基线，不依赖外部文件**：`DEFAULT_BASELINE` 写在脚本里，随代码版本一起更新；引入外部 baseline JSON 会让基线与代码版本脱钩（`--baseline` 参数保留给临时实验）。
 - **比中位数，不比均值**：单轮 wrk 掉尾会把均值拉偏，median 对离群轮鲁棒。配对模式继承了这一点（比的是逐轮比值的**中位数**）。
 - **每端点取 10 轮的 median**，不是单次采样。
-- **`workflow_dispatch` 不阻塞**：手动跑基准只出报告、不判红，开发期看趋势用；门禁只在 `pull_request`（带 label）与 `release` 上生效。
+- **`workflow_dispatch` 不阻塞**：手动跑基准只出报告、不判红，开发期看趋势用；门禁只在目标为 `pre-release` 的 `pull_request` 与 `release` 上生效。
 
 ## 三层噪声，各自对应一个对策
 1. **run 间**（跨机器）：同一 commit 小响应中位数可从记录的 83K 漂到 40–54K（~40%）。绝对阈值 gate 的是这个 → 同机配对消除。旧口径"CI CV < 5%"只在**单次运行内**成立。
@@ -95,4 +95,10 @@ updated: "2026-09-29T02:26:09"
   kind: decision
   summary: Rewrote compiled_truth to the new best understanding
   source: "PR #389 第二轮修订 — 找回初版仍成立的约定 + 补 exit code 契约"
+  affects: [perf-regression-gate]
+
+- time: 2026-10-16T04:22:21
+  kind: decision
+  summary: "触发条件定稿：PR 侧仅对目标为 pre-release 分支的 PR 自动跑，其余 PR 手动 workflow_dispatch；否决 benchmark 标签与「每个 PR 自动跑」两种方案"
+  source: "用户要求「每次 pre-release 的 PR 自动触发，其他手动」，2026-10-16"
   affects: [perf-regression-gate]

@@ -1,6 +1,6 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-10-09T01:08:06.656Z._
+_Auto-generated. Last updated 2026-10-16T04:22:21.115Z._
 
 - [alloc-hotpath-measured](pages/alloc-hotpath-measured.md) — category: decision | tags: [performance, benchmark, allocator, methodology, yagni] | # 每请求分配已实测：省一次仅 0.026%，内存分配优化不做
 - [api-atomicity-audit](pages/api-atomicity-audit.md) — category: decision | tags: [api, atomicity, orthogonality, audit, v2.10] | # API 原子化与正交性审计
