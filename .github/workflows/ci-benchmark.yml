@@ -1,7 +1,9 @@
 name: CI - Performance Benchmark
 
-# Trigger: manual, PR with 'benchmark' label, or release published
-# release event = regression benchmark gate before official release
+# Trigger: manual, PRs targeting the pre-release branch, or release published
+# - a PR whose base branch is 'pre-release' runs the paired gate automatically
+#   (release-staging path); every other PR is manual (workflow_dispatch)
+# - release event = regression benchmark gate before official release
 on:
   workflow_dispatch:
     inputs:
@@ -22,20 +24,24 @@ on:
         required: false
         default: ''
   pull_request:
-    types: [labeled, opened, synchronize, reopened]
-    branches: [main]
+    # Only PRs into the pre-release staging branch run the gate; ordinary PRs
+    # to main are manual (workflow_dispatch). 'branches' matches the PR's BASE
+    # branch.
+    types: [opened, synchronize, reopened]
+    branches: [pre-release]
   release:
     types: [published]
 
 jobs:
   benchmark:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'release' || contains(join(github.event.pull_request.labels.*.name, ','), 'benchmark')
+    # Auto only for pre-release PRs (see 'on' above) and releases; every other
+    # run is manual. The old 'benchmark' label opt-in was removed.
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'release' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 50
-    # The repo default is read-only, which silently killed the PR comment and
-    # the trend commit. contents stays read here: this job builds PR-head code,
-    # so it must not hold a token that can write the repository. The only job
-    # that pushes (trend data, release events only) is a separate job.
+    # The repo default is read-only, which silently killed the PR comment.
+    # contents stays read here: this job builds PR-head code, so it must not
+    # hold a token that can write the repository.
     permissions:
       contents: read
       issues: write
