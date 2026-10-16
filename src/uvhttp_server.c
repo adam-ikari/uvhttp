@@ -110,11 +110,15 @@ static void on_connection(uv_stream_t* server_handle, int status) {
         server->max_connections;  // authoritative per-server value
     if (server->config) {
         max_connections = server->config->max_connections;
-    } else {
-        // Fall back to global config (use server->context)
-        uvhttp_context_t* context = server->context;
+    } else if (server->context) {
+        // Fall back to the context's config. Guarded on context: a server
+        // with neither a config nor a context is the normal shape since
+        // v2.10 (nothing sets server->config any more; take_context is
+        // optional), and uvhttp_config_get_current(NULL) logs a misleading
+        // "Context is NULL" warning - once per accepted connection. Same
+        // guard as uvhttp_server_listen already uses when it reads backlog.
         const uvhttp_config_t* global_config =
-            uvhttp_config_get_current(context);
+            uvhttp_config_get_current(server->context);
         if (global_config) {
             max_connections = global_config->max_connections;
         }
