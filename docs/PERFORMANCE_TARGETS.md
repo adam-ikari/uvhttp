@@ -112,7 +112,7 @@ On CI runners, **peak and steady state are nearly identical** (no thermal thrott
 
 Run via `ci-benchmark.yml` workflow:
 
-- **Trigger**: `workflow_dispatch`, PR with `benchmark` label, push to `pre-release`
+- **Trigger**: `workflow_dispatch`, or creating a prerelease (`gh release create --prerelease`)
 - **Runner**: `ubuntu-latest` (consistent hardware, no thermal throttling)
 - **Build**: Release, `BUILD_BENCHMARKS=ON`
 - **Binary**: `benchmark_unified` (port 18081)
@@ -123,17 +123,14 @@ Run via `ci-benchmark.yml` workflow:
 ```bash
 # Trigger manually
 gh workflow run ci-benchmark.yml --ref main -f rounds=10 -f duration=10
-
-# Or via PR label
-gh pr edit <PR_NUMBER> --add-label benchmark
 ```
 
 ### Regression Gate (paired, same runner)
 
-`ci-benchmark.yml` gates PRs (with the `benchmark` label) and releases by
+`ci-benchmark.yml` gates prereleases by
 measuring **both revisions on the same runner in the same job**:
 
-1. Resolve a base revision — PR base SHA, previous published release tag, or
+1. Resolve a base revision — the previous published release tag, or
    the `base_ref` input of a manual run.
 2. Check out and build it next to head (`bench-base/`, Release, same flags).
 3. Start both `benchmark_unified` servers (head on 18081, base on 18082),

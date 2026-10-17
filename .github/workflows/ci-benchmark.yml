@@ -1,7 +1,13 @@
 name: CI - Performance Benchmark
 
-# Trigger: manual, PR with 'benchmark' label, or release published
-# release event = regression benchmark gate before official release
+# Trigger: manual, or a prerelease being created
+# - release prerelease event = the regression benchmark gate on the staging
+#   path (docs/release-strategy.md 阶段一 step 3: gh release create --prerelease)
+#   It fires there and NOT on the later --latest promotion, so a red gate
+#   blocks the promotion to a formal release instead of post-dating it.
+# - every other run is manual (workflow_dispatch). There is no PR trigger: the
+#   release flow stages via tag + GitHub prerelease, never via PRs into the
+#   stale 'pre-release' branch, so a PR-side branch trigger never fires.
 on:
   workflow_dispatch:
     inputs:
@@ -18,28 +24,29 @@ on:
         required: false
         default: '/,/json,/large,/sse,/stream'
       base_ref:
-        description: 'Base revision for the paired gate (tag/sha/branch; empty = previous release or PR base)'
+        description: 'Base revision for the paired gate (tag/sha/branch; empty = previous published release)'
         required: false
         default: ''
-  pull_request:
-    types: [labeled, opened, synchronize, reopened]
-    branches: [main]
   release:
-    types: [published]
+    # Only 'prerelease' (gh release create --prerelease), i.e. the staging
+    # release the gate is supposed to block on. 'released' would fire only
+    # after the --latest promotion.
+    types: [prerelease]
 
 jobs:
   benchmark:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'release' || contains(join(github.event.pull_request.labels.*.name, ','), 'benchmark')
+    # Nightly creates a prerelease too (tag 'nightly-<run>'), which would fire
+    # this trigger every day. Nightly already benchmarks itself in
+    # ci-nightly.yml, and a nightly build is not a release candidate, so
+    # gating on it only spends ~29 min of runner and can go red on main drift.
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, 'nightly')
     runs-on: ubuntu-latest
     timeout-minutes: 50
-    # The repo default is read-only, which silently killed the PR comment and
-    # the trend commit. contents stays read here: this job builds PR-head code,
-    # so it must not hold a token that can write the repository. The only job
-    # that pushes (trend data, release events only) is a separate job.
+    # Nothing in this job writes to the repository, so the read-only default
+    # is exactly what it needs — contents: read is stated rather than inherited
+    # so a future repo-wide permission change cannot silently widen this token.
     permissions:
       contents: read
-      issues: write
-      pull-requests: write
 
     env:
       # Single source of truth: the same list drives the paired harness and the
@@ -72,17 +79,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EVENT_NAME: ${{ github.event_name }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
           INPUT_BASE: ${{ github.event.inputs.base_ref }}
         run: |
           REF=""
           case "$EVENT_NAME" in
-            pull_request) REF="$PR_BASE_SHA" ;;
             workflow_dispatch) REF="$INPUT_BASE" ;;
             release) REF="" ;;
           esac
-          if [ -z "$REF" ] && [ "$EVENT_NAME" = "release" ]; then
+          if [ "$EVENT_NAME" = "release" ] && [ -z "$REF" ]; then
             # Newest published release that is not the one being gated. Nightly
             # prereleases are skipped: they are built from a moving main, so a
             # nightly as base would compare the release against itself and turn
@@ -112,8 +117,8 @@ jobs:
         if: steps.base.outputs.paired == 'true'
         uses: actions/checkout@v7.0.1
         with:
-          # A resolved ref from the step above (PR base sha, previous release
-          # tag, or an explicitly dispatched ref) — never raw event payload.
+          # A resolved ref from the step above (previous release tag, or an
+          # explicitly dispatched ref) — never raw event payload.
           ref: ${{ steps.base.outputs.ref }}
           repository: ${{ github.repository }}
           path: bench-base
@@ -328,10 +333,10 @@ jobs:
 
       # 回归门禁：优先用同机配对结果（head vs base 同一 runner 交替测量）。
       # 只有解析不到 base 版本时才退回绝对基线——绝对基线在共享 runner 上
-      # 方差 ~40%，只能当参考。正式 release（prerelease=false）重复跑无害——
-      # 同一 commit 结果一致（幂等）；workflow_dispatch 不阻塞。
+      # 方差 ~40%，只能当参考。门禁只在 release prerelease 事件上判定；workflow_dispatch
+      # 出报告不判红。
       - name: Regression gate check
-        if: github.event_name == 'pull_request' || github.event_name == 'release'
+        if: github.event_name == 'release'
         env:
           BASE_REF: ${{ steps.base.outputs.ref }}
         run: |
@@ -386,24 +391,3 @@ jobs:
             head-server.log
             base-server.log
           retention-days: 90
-
-      - name: Comment PR with results
-        # always(): a red gate is exactly the run whose report the author needs.
-        if: always() && github.event_name == 'pull_request'
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const fs = require('fs');
-            if (!fs.existsSync('benchmark-results.md')) {
-              core.warning('benchmark-results.md missing, skipping PR comment');
-              return;
-            }
-            const results = fs.readFileSync('benchmark-results.md', 'utf8');
-            const body = `## 📊 Performance Benchmark Results\n\n${results}\n\n[Full results artifact](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: body
-            });
-

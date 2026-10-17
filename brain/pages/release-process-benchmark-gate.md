@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [release, ci, benchmark]
 created: "2026-09-07T07:13:20"
-updated: "2026-09-23T04:16:34"
+updated: "2026-10-17T17:41:40"
 ---
 
 <!-- compiled_truth -->
@@ -15,7 +15,7 @@ updated: "2026-09-23T04:16:34"
    - 阶段一（预发布）：全面测试（make test / ASan / UBSan）→ 更新 VERSION + CHANGELOG → 创建 tag → `gh release create vX.Y.Z --prerelease`，自动触发 ci-benchmark 回归门禁（10% RPS 阈值 vs 基线），绿才可转正式
    - 阶段二（正式发布）：确认 benchmark 门禁绿 → `gh release edit vX.Y.Z --latest`（移除 prerelease 标记）→ main 经 PR 合并触发文档部署
 
-2. **benchmark 回归门禁绑定 release 事件**：ci-benchmark.yml 的 `push: branches: [pre-release]` 是死配置（项目从不创建 pre-release 分支），改为 `release: types: [published]`。正式 release（prerelease=false）重复跑 gate 无害——同一 commit 结果一致（幂等）；趋势数据只在 pre-release 落库（`github.event.release.prerelease == true`）。
+2. **benchmark 回归门禁绑定 release 事件**：ci-benchmark.yml 的 `push: branches: [pre-release]` 是死配置（项目从不创建 pre-release 分支），改为 `release` 事件触发。事件类型 2026-10-17 定为 **`prerelease`**（曾短暂写成 `published`）：门禁要在 `gh release create --prerelease` 那一刻判红才能拦住转正式，`published` 只在 `--latest` 之后触发，等于把结论放到检查后面。nightly 也建 prerelease（tag `nightly-<run>`），由 job 级 `if` 排除——nightly 自己在 ci-nightly.yml 里已测性能，且它不是发布候选。同一理由否决了 PR 侧的 `pull_request.branches: [pre-release]`（PR #481），详见 [[perf-regression-gate]]。趋势落库 job 已移除。
 
 3. **main PR-only**：所有 main 变更（含发布 commit）必须走 PR 合并，禁止直推。deploy-docs.yml 删除 `release/**` 死路径（项目从不推 release 分支），文档部署只依赖 main push。
 
@@ -50,4 +50,10 @@ updated: "2026-09-23T04:16:34"
   kind: evidence
   summary: "PR #379（028f2f1）基于改动前的 ci-benchmark.yml 覆盖了本页记录的 release 触发器，门禁退回 push: pre-release 死配置；2026-09-23 v2.8.0 发布 PR 恢复触发器、job if、gate 步骤与趋势落库条件"
   source: "v2.8.0 发布会话"
+  affects: [release-process-benchmark-gate]
+
+- time: 2026-10-17T17:41:40
+  kind: decision
+  summary: Rewrote compiled_truth to the new best understanding
+  source: "2026-10-17 PR #481 评审修正：门禁事件类型定为 prerelease，并记录 nightly 排除与 PR 侧否决"
   affects: [release-process-benchmark-gate]
