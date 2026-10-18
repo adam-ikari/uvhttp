@@ -84,10 +84,10 @@ TEST_F(UvhttpConfigTest, ConfigSetDefaultsNull) {
 TEST_F(UvhttpConfigTest, ConfigSetDefaultsValid) {
     uvhttp_config_set_defaults(config);
 
-    // Pin every surviving field to its documented default. v2.10 deleted the 14
-    // fields nothing read; this test is the inventory that must keep shrinking
-    // or growing only together with the code that reads the field - never on
-    // its own.
+    // Pin every surviving field to its documented default. v3.0.0 deleted the
+    // 14 fields nothing read; this test is the inventory that must keep
+    // shrinking or growing only together with the code that reads the field -
+    // never on its own.
     EXPECT_EQ(config->max_connections, UVHTTP_DEFAULT_MAX_CONNECTIONS);
     EXPECT_EQ(config->backlog, UVHTTP_DEFAULT_BACKLOG);
     EXPECT_EQ(config->connection_timeout, UVHTTP_CONNECTION_TIMEOUT_DEFAULT);

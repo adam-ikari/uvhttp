@@ -62,7 +62,7 @@ typedef struct {
 } uvhttp_config_t;
 
 /* Every field above is read by at least one execution path: these are the
- * compile-time defaults' runtime overrides. v2.10 deleted the 14 fields whose
+ * compile-time defaults' runtime overrides. v3.0.0 deleted the 14 fields whose
  * values never reached the server (read_buffer_size, max_body_size,
  * max_header_size, max_url_size, max_requests_per_connection,
  * request_timeout, keepalive_timeout, the four rate_limit_* fields,

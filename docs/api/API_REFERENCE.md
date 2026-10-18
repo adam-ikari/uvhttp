@@ -239,13 +239,13 @@ uvhttp_error_t uvhttp_server_enable_health_check(uvhttp_server_t* server,
 Registers a `{"status":"ok"}` handler at `path` on the server's router,
 creating a router first if the server has none.
 
-## Removed in v2.10: the builder layer
+## Removed in v3.0.0: the builder layer
 
 The builder type (`uvhttp_server_builder_t`) and its family -
 `uvhttp_server_create`, the chained `uvhttp_get/post/put/delete/any`,
 `uvhttp_set_max_connections`, `uvhttp_server_run`, `uvhttp_server_stop_simple`,
 `uvhttp_server_simple_free` and the one-key `uvhttp_serve` - were removed in
-v2.10.
+v3.0.0.
 
 uvhttp is an HTTP **library**: it provides primitives the caller composes, and
 it does not take over construction, run the caller's event loop, or own the

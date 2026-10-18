@@ -66,7 +66,7 @@ connection management.
 - **Error conditions**:
   - `UVHTTP_ERROR_INVALID_PARAM`: `server` is NULL, or the server already owns a different router (overwriting would leak the previous one)
 - **Thread safety**: Not thread-safe.
-- **History**: Renamed from `uvhttp_server_set_router` in v2.10. "set" implied a borrow while the behavior was a transfer - that mismatch made the official embedding example double-free on its listen-failure path.
+- **History**: Renamed from `uvhttp_server_set_router` in v3.0.0. "set" implied a borrow while the behavior was a transfer - that mismatch made the official embedding example double-free on its listen-failure path.
 
 ### uvhttp_server_take_context
 - **Signature**: `uvhttp_error_t uvhttp_server_take_context(uvhttp_server_t* server, struct uvhttp_context* context)`
@@ -76,7 +76,7 @@ connection management.
 - **Error conditions**:
   - `UVHTTP_ERROR_INVALID_PARAM`: `server` is NULL, or the server already owns a different context
 - **Thread safety**: Not thread-safe.
-- **History**: Renamed from `uvhttp_server_set_context` in v2.10, for the same reason as `uvhttp_server_take_router`.
+- **History**: Renamed from `uvhttp_server_set_context` in v3.0.0, for the same reason as `uvhttp_server_take_router`.
 
 ### uvhttp_server_listen_routes
 - **Signature**: `uvhttp_error_t uvhttp_server_listen_routes(uv_loop_t* loop, const uvhttp_route_t* routes, size_t route_count, const char* host, int port, uvhttp_server_t** server)`
@@ -100,7 +100,7 @@ connection management.
 - **Thread safety**: Not thread-safe.
 - **Note**: Prefer `uvhttp_server_new(loop, &server)` - the caller-owns-the-loop shape is what most embedding code already does. This entry exists for the rare case where the server should outlive the caller's loop.
 
-### Removed in v2.10: the builder layer
+### Removed in v3.0.0: the builder layer
 
 `uvhttp_server_create`, `uvhttp_get/post/put/delete/any`,
 `uvhttp_set_max_connections`, `uvhttp_server_run`, `uvhttp_server_stop_simple`,

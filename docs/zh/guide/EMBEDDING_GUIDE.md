@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
 
     /* 原子构造：一次调用完成 server + 路由 + 监听
      *
-     * v2.10 之前这里需要 5 步，每个失败分支都要手写回滚。listen 失败
+     * v3.0.0 之前这里需要 5 步，每个失败分支都要手写回滚。listen 失败
      * 分支里的 uvhttp_router_free 释放的是 server 已经接管的 router
      * （take_router 转移所有权），随后 uvhttp_server_free 再释放一次 ——
      * 二次释放。uvhttp_server_listen_routes 不存在中间态，无需回滚。 */

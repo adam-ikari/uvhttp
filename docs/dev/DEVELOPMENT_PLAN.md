@@ -650,7 +650,7 @@ Implement the core features required for cloud-native scenarios.
 
 1. **HTTP/1.1 streaming** (Planned)
 2. **WebSocket compression** (permessage-deflate)
-3. **Request rate limiting enhancement** - superseded: v2.10 removed the built-in limiter, the policy is the caller's request filter
+3. **Request rate limiting enhancement** - superseded: v3.0.0 removed the built-in limiter, the policy is the caller's request filter
 4. **Connection reuse optimization**
 5. **Server-Sent Events (SSE)** (Research phase)
 

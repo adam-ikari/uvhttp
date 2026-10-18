@@ -149,7 +149,7 @@ int main() {
      * concurrent connections, backlog sizes the listen queue, and
      * connection_timeout drives the per-connection idle timer
      * (connection.c). Limits that look configurable but are not were
-     * removed in v2.10 - body/header/URL/read-buffer sizes are owned by
+     * removed in v3.0.0 - body/header/URL/read-buffer sizes are owned by
      * the compile-time constants in uvhttp_constants.h. */
     config->max_connections = 500;
     config->backlog = 128;

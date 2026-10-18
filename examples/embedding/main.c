@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
 
     /* 创建服务器 + 注册路由 + 监听：一次调用完成（原子构造）
      *
-     * v2.10 之前这里需要 5 步（server_new / router_new / add_route /
+     * v3.0.0 之前这里需要 5 步（server_new / router_new / add_route /
      * take_router / listen），并且每个失败分支都要手写回滚。那段回滚代码
      * 在 listen 失败时会先 router_free 再 server_free —— 而 server 已经
      * 通过 take_router 接管了 router，于是二次释放（ASan 可复现的

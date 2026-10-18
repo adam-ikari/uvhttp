@@ -41,7 +41,7 @@ TEST(UvhttpConfigEnhancedCoverageTest, SetDefaults) {
     /* 测试设置默认值 */
     uvhttp_config_set_defaults(config);
 
-    /* 验证存活字段的默认值（v2.10 删除了 14 个无人读取的字段） */
+    /* 验证存活字段的默认值（v3.0.0 删除了 14 个无人读取的字段） */
     EXPECT_GT(config->max_connections, 0);
     EXPECT_GT(config->backlog, 0);
     EXPECT_GT(config->connection_timeout, 0);
@@ -133,7 +133,7 @@ TEST(UvhttpConfigEnhancedCoverageTest, DynamicUpdate) {
 
     uvhttp_config_set_defaults(config);
 
-    /* 更新入口只剩 max_connections 一个（v2.10 删除了
+    /* 更新入口只剩 max_connections 一个（v3.0.0 删除了
      * update_read_buffer_size / update_size_limits —— 它们写入的字段无人读取，
      * 却返回成功并打印 "Limits updated" 日志） */
     int update_result = uvhttp_config_update_max_connections(NULL, 2000);

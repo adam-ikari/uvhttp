@@ -243,7 +243,7 @@ TEST_F(UvhttpVersionFullCoverageTest, IsFeatureEnabledLRUCache) {
 }
 
 TEST_F(UvhttpVersionFullCoverageTest, IsFeatureEnabledRateLimit) {
-    /* The built-in limiter was removed in v2.10. The name stays accepted so
+    /* The built-in limiter was removed in v3.0.0. The name stays accepted so
      * callers never crash, but it must always report "unavailable" (0). */
     int result = uvhttp_is_feature_enabled("rate_limit");
     

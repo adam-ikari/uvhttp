@@ -650,7 +650,7 @@ TEST(ServerTest, Routing) {
 
 1. **HTTP/1.1 流式传输** (计划中)
 2. **WebSocket 压缩** (permessage-deflate)
-3. **请求限流增强** —— 已作废：v2.10 删除内置限流，策略归调用方的 request filter
+3. **请求限流增强** —— 已作废：v3.0.0 删除内置限流，策略归调用方的 request filter
 4. **连接复用优化**
 5. **Server-Sent Events (SSE)** (研究阶段)
 

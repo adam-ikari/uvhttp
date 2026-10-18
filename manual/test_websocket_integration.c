@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
     }
     
         /* 库提供原语，组合权在调用方：先建 server 与 router，装载路由后
-         * 一次性 listening（v2.10 起 builder / 一键启动已移除）。 */
+         * 一次性 listening（v3.0.0 起 builder / 一键启动已移除）。 */
         uv_loop_t* loop = uv_default_loop();
         uvhttp_server_t* server = NULL;
         if (uvhttp_server_new(loop, &server) != UVHTTP_OK || !server) {

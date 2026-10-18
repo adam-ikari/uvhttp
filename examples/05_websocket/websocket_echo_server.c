@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
     
     printf("启动WebSocket Echo服务器，端口: %d\n", port);
 
-    // 库提供原语：server_new + take_router + listen（v2.10 起 builder /
+    // 库提供原语：server_new + take_router + listen（v3.0.0 起 builder /
     // 一键启动已移除，事件循环归调用方所有）
     uv_loop_t* loop = uv_default_loop();
     uvhttp_server_t* server = NULL;

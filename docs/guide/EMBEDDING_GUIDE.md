@@ -164,7 +164,7 @@ int main(int argc, char** argv) {
 
     /* Atomic construction: server + routes + listen in one call.
      *
-     * Before v2.10 this was five calls with a hand-written rollback per
+     * Before v3.0.0 this was five calls with a hand-written rollback per
      * failure. The listen-failure branch called uvhttp_router_free on a
      * router the server already owned (take_router transfers ownership) and
      * then uvhttp_server_free freed it again - a double free.

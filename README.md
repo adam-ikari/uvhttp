@@ -247,7 +247,7 @@ int main() {
         return 1;
     }
     // Hand the router to the server; the server owns it from here and frees
-    // it in uvhttp_server_free (v2.10: renamed from uvhttp_server_set_router,
+    // it in uvhttp_server_free (v3.0.0: renamed from uvhttp_server_set_router,
     // which implied a borrow while the behavior was always a transfer)
     uvhttp_server_take_router(server, router);
 

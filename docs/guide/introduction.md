@@ -157,7 +157,7 @@ server->tls_ctx = tls_ctx;
 
 // Example: Set reasonable resource limits (fields an execution path reads).
 // Body/header/URL limits are compile-time constants (UVHTTP_MAX_BODY_SIZE etc.),
-// not config entries — v2.10 removed the config fields that never took effect.
+// not config entries — v3.0.0 removed the config fields that never took effect.
 server->config->max_connections = 1000;
 server->config->max_file_size = 10 * 1024 * 1024; // 10MB
 ```
