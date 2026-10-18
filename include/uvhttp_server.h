@@ -389,10 +389,11 @@ uvhttp_error_t uvhttp_server_take_context(uvhttp_server_t* server,
  *
  * @note A filter that stops a request is expected to reply itself (status,
  *       Retry-After, body) before returning. If it returns without sending,
- *       the library replies so the client is never left waiting: it keeps any
- *       status the filter wrote and otherwise sends 403 "Forbidden" with a
- *       text body. The sent-guard in uvhttp_response_send makes that fallback
- *       a no-op when the filter already replied.
+ *       the library replies so the client is never left waiting: the status
+ *       the filter wrote is kept (403 when it wrote none) and the body is
+ *       always the plain-text "Forbidden" message. The sent-guard in
+ *       uvhttp_response_send makes that fallback a no-op when the filter
+ *       already replied.
  *
  * @note One slot, not a chain - compose inside your own callback. It runs on
  *       the event loop thread: keep it O(1) and never block in it.
