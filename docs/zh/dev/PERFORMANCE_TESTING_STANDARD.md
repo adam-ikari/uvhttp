@@ -683,7 +683,7 @@ docs/performance/
 - TLS/HTTPS 加密通信
 - WebSocket 通信
 - 静态文件服务
-- 限流功能
+- 请求过滤器
 - CORS 支持
 
 #### 场景范围

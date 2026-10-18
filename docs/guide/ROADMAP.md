@@ -14,7 +14,7 @@ What this library is deliberately **not** responsible for. Each was evaluated an
 | HTTP/3 (QUIC) | Requires a different transport layer; outside the scope of a lightweight C library |
 | IPv6 **listening** | Gateway / network-stack concern. Client-side IPv6 address extraction *is* supported |
 | YAML/JSON config files | The framework or application embedding this library owns its own configuration format |
-| Per-user / per-IP rate limiting | Gateway / reverse-proxy concern. A global token bucket with whitelist *is* provided |
+| Per-user / per-IP rate limiting | Gateway / reverse-proxy concern. The global token bucket was removed in v2.10; the pre-dispatch request filter is where you implement it |
 | Observability (metrics, tracing, dashboards) | Prometheus / OpenTelemetry territory |
 | Auth, DDoS protection, certificate management | Gateway / security-layer concern |
 | Plugin system, microservices, cloud-native, serverless | Infrastructure. Compile-time feature selection (27 CMake options) covers capability needs |

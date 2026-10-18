@@ -650,7 +650,7 @@ Implement the core features required for cloud-native scenarios.
 
 1. **HTTP/1.1 streaming** (Planned)
 2. **WebSocket compression** (permessage-deflate)
-3. **Request rate limiting enhancement** (sliding window)
+3. **Request rate limiting enhancement** - superseded: v2.10 removed the built-in limiter, the policy is the caller's request filter
 4. **Connection reuse optimization**
 5. **Server-Sent Events (SSE)** (Research phase)
 
@@ -667,11 +667,6 @@ Implement the core features required for cloud-native scenarios.
    - Add compression level configuration
    - Performance tests
 
-3. **Request rate limiting enhancement**
-   - Implement sliding window algorithm
-   - Support distributed rate limiting
-   - Add rate limit statistics
-
 3. **Connection reuse optimization**
    - Improve Keep-Alive policies
    - Optimize connection pool management
@@ -680,7 +675,6 @@ Implement the core features required for cloud-native scenarios.
 #### Acceptance Criteria
 
 - [ ] WebSocket compression works correctly
-- [ ] Sliding window rate limiting is correct
 - [ ] Connection reuse performance improves
 
 ---

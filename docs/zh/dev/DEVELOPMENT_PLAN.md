@@ -650,7 +650,7 @@ TEST(ServerTest, Routing) {
 
 1. **HTTP/1.1 流式传输** (计划中)
 2. **WebSocket 压缩** (permessage-deflate)
-3. **请求限流增强** (滑动窗口)
+3. **请求限流增强** —— 已作废：v2.10 删除内置限流，策略归调用方的 request filter
 4. **连接复用优化**
 5. **Server-Sent Events (SSE)** (研究阶段)
 
@@ -667,11 +667,6 @@ TEST(ServerTest, Routing) {
    - 添加压缩级别配置
    - 性能测试
 
-3. **请求限流增强**
-   - 实现滑动窗口算法
-   - 支持分布式限流
-   - 添加限流统计
-
 3. **连接复用优化**
    - 改进 Keep-Alive 策略
    - 优化连接池管理
@@ -680,7 +675,6 @@ TEST(ServerTest, Routing) {
 #### 验收标准
 
 - [ ] WebSocket 压缩正常工作
-- [ ] 滑动窗口限流正确
 - [ ] 连接复用性能提升
 
 ---

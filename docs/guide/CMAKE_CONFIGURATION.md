@@ -90,14 +90,6 @@ set(UVHTTP_MAX_HEADER_VALUE_SIZE 8192 CACHE STRING "Max HTTP header value size")
 | `UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE` | 2 | LRU cache batch eviction size | 1-10 |
 | `UVHTTP_ZEROCOPY_MIN_BODY` | 4096 | Minimum response body size (bytes) using the zero-copy writev send path | 4096-8192 |
 
-### Rate Limiting
-
-| Constant | Default | Description | Recommended |
-|----------|---------|-------------|-------------|
-| `UVHTTP_RATE_LIMIT_MAX_REQUESTS` | 1000000 | Maximum number of rate-limit requests | Adjust per requirements |
-| `UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS` | 86400 | Maximum rate-limit time window (seconds) | Adjust per requirements |
-| `UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS` | 10 | Minimum rate-limit timeout (seconds) | 5-30 |
-
 ### Other
 
 | Constant | Default | Description | Recommended |

@@ -343,7 +343,7 @@ The UVHTTP project uses the following test timeout configuration:
   run: |
     cd build
     ctest --output-on-failure -j$(nproc) --timeout 600 \
-      --exclude-regex "test_deps_full_coverage|test_lru_cache_full_coverage|test_server_full_coverage|test_server_rate_limit_coverage|test_server_simple_api_coverage"
+      --exclude-regex "test_deps_full_coverage|test_lru_cache_full_coverage|test_server_full_coverage|test_server_simple_api_coverage"
 ```
 
 **Timeout configuration notes:**
@@ -358,7 +358,6 @@ The UVHTTP project uses the following test timeout configuration:
    - `test_deps_full_coverage`: contains long-running dependency initialization operations
    - `test_lru_cache_full_coverage`: contains `sleep(2)` calls to test cache expiration
    - `test_server_full_coverage`: server-related tests that may require more time
-   - `test_server_rate_limit_coverage`: rate limiting feature tests that may require waiting
    - `test_server_simple_api_coverage`: simple API tests that may have timeout issues
 
 3. **Future optimization directions**:

@@ -193,7 +193,7 @@ make api_demo
 - [教程](../docs/guide/TUTORIAL.md)
 - [WebSocket 指南](../docs/guide/websocket.md)
 - [静态文件服务](../docs/guide/STATIC_FILE_SERVER.md)
-- [限流 API](../docs/guide/RATE_LIMIT_API.md)
+- [请求过滤器 API](../docs/guide/REQUEST_FILTER_API.md)
 
 ## 注意事项
 
