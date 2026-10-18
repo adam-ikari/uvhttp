@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [api, design, roadmap, v2.10]
 created: "2026-10-09T00:27:12"
-updated: "2026-10-18T01:58:58"
+updated: "2026-10-18T04:24:29"
 ---
 
 <!-- compiled_truth -->
@@ -40,6 +40,11 @@ v2.9.x 的实测结论把"加功能"这条路堵死了：性能（[[alloc-hotpat
 
 逐字段核实（脚本按 `config->field` 限定匹配，排除 `conn->field` 同名字段干扰）
 后得到的真相：**`uvhttp_config_t` 26 个字段中，14 个从不被任何执行路径读取。**
+
+> **已执行（2026-10-11，PR #472 `d257c92`）**：这 14 个字段连同 4 个谎报成功的假旋钮
+> API 一并删除，`uvhttp_config_t` 现为 12 字段、逐字段都有执行路径读取（判据写在
+> `include/uvhttp_config.h` 的结构体注释里）。下面的分类表与证据是**删除前**的诊断，
+> 保留作为「为什么选删、不选接线」的依据。
 
 | 分类 | 数量 | 字段 |
 |---|---|---|
@@ -128,8 +133,8 @@ v2.9.x 的实测结论把"加功能"这条路堵死了：性能（[[alloc-hotpat
 
 ## 改造原则（按 B 校准）
 
-1. **配置只留真生效的** —— 删 14 个零读点字段 + 3 个假 setter，
-   或者接线。**需用户在"删"与"接"之间拍板**（见下方待决）。
+1. **配置只留真生效的** —— 已定并已执行（2026-10-11）：删掉 14 个零读点字段
+   与 4 个假 setter。裁决过程与被否的「接线」方案见下方「已拍板并已执行」。
 2. **单一构造入口**：`loop` 归谁由参数表达，不由函数名表达。
    builder 与其 10 个全局方法一并移除。
 3. **释放原子**：失败回滚不需调用方置 NULL。
@@ -138,16 +143,22 @@ v2.9.x 的实测结论把"加功能"这条路堵死了：性能（[[alloc-hotpat
    **用语义测试锁死**。
 6. **子模块独立生命周期**：限流 / TLS / WS / 压缩拆成独立对象。
 
-## 待用户拍板（阻塞第一刀）
+## 已拍板并已执行：删（2026-10-11）
 
-**`uvhttp_config_t` 那 14 个不生效的字段：删掉，还是接线？**
+配置这一项的裁决是**删**，不留兼容层（策略 B）。落地在 v2.10 的第一刀：
+PR #470（原子构造 + 所有权进名字）、#472（删死字段）、#473（set_body 原子替换 +
+LRU setter 写点不变量）、#474（合并后评审修复）。
 
-- 删：符合"还债不加班"定位，零性能风险，但缩减了表面能力
-  （`uvhttp_set_max_body_size` 等要一并删或改语义）
-- 接：是**新特性**（运行时可调 body/buffer 上限），与特性冻结矛盾，
-  且动 per-connection 分配，需基准门禁验证
+删掉的 4 个假旋钮 API：`uvhttp_config_update_size_limits`、
+`uvhttp_config_update_read_buffer_size`，以及 builder 的
+`uvhttp_set_max_body_size`、`uvhttp_set_timeout`。
 
-这是路线级选择，不是实现细节，不替他决定。
+「接线」那条路被否决：把 `read_buffer_size` / `max_body_size` 变成运行时可调是新特性，
+与本轮「还债不加班」的定位矛盾，且要动 per-connection 分配、必须过基准门禁。
+
+这些上限的真实权威保持为编译期常量：`UVHTTP_READ_BUFFER_SIZE`、`UVHTTP_MAX_BODY_SIZE`、
+`MAX_URL_LEN`、`UVHTTP_CACHE_DEFAULT_*`；限流改由 `uvhttp_server_enable_rate_limit()`
+在 server 上表达。需要某个运行时旋钮时，连同读取它的代码一起加回来。
 
 ## 影响范围
 
@@ -209,4 +220,55 @@ v2.9.x 的实测结论把"加功能"这条路堵死了：性能（[[alloc-hotpat
   kind: decision
   summary: Rewrote compiled_truth to the new best understanding
   source: "PR #479 评审复核：builder 层已删（#479）、构造回滚范式已修（#475），修正 server->config 非死字段"
+  affects: [api-atomization-orthogonalization]
+
+
+## Timeline
+
+- time: 2026-10-09T00:27:12
+  kind: decision
+  summary: "Created this page: v2.10 方向：API 原子化与正交化，停止新增特性"
+  source: "2026-10-09 与用户讨论确定的下个版本方向"
+  affects: [api-atomization-orthogonalization]
+
+- time: 2026-10-09T00:27:30
+  kind: decision
+  summary: "确立 v2.10 方向：停止新增特性，公共 API 原子化与正交化"
+  source: "读 include/ 现状（299 符号 / 28 头文件）+ 追踪 server.c / request.c / config.c 实现"
+  affects: [api-atomization-orthogonalization]
+
+- time: 2026-10-09T00:39:16
+  kind: decision
+  summary: "兼容策略定为 B：2.10 直接破坏性改，不留 deprecated 兼容层"
+  source: "用户拍板（2026-10-09）"
+  affects: [api-atomization-orthogonalization]
+
+- time: 2026-10-09T00:39:33
+  kind: decision
+  summary: "确定兼容策略 B：2.10 直接破坏性改造，不留兼容层"
+  source: "用户拍板 2026-10-09"
+  affects: [api-atomization-orthogonalization]
+
+- time: 2026-10-09T00:43:09
+  kind: evidence
+  summary: "深入核实后修正：配置问题不止双通道 —— 三个 update_* 中有两个写的字段在全库无任何执行点读它们"
+  source: "2026-10-09 grep 全 src 读点核实"
+  affects: [api-atomization-orthogonalization]
+
+- time: 2026-10-09T00:46:40
+  kind: decision
+  summary: "第一性原理重估：配置问题的真因不是双通道，而是 uvhttp_config_t 26 字段中 14 个从不被执行路径读取 —— config 是装饰品，不是控制面"
+  source: "2026-10-09 逐字段读点核实（脚本按 config 对象限定匹配）"
+  affects: [api-atomization-orthogonalization]
+
+- time: 2026-10-18T01:58:58
+  kind: decision
+  summary: Rewrote compiled_truth to the new best understanding
+  source: "PR #479 评审复核：builder 层已删（#479）、构造回滚范式已修（#475），修正 server->config 非死字段"
+  affects: [api-atomization-orthogonalization]
+
+- time: 2026-10-18T04:24:29
+  kind: decision
+  summary: "配置 14 死字段已随 PR #472 删除：诊断标为删除前，待拍板段改为已拍板并已执行"
+  source: brain update-truth
   affects: [api-atomization-orthogonalization]
