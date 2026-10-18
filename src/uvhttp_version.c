@@ -153,9 +153,6 @@ uvhttp_error_t uvhttp_get_build_info(uvhttp_build_info_t* info) {
 #ifdef UVHTTP_LRU_CACHE_ENABLED
     info->feature_lru_cache = 1;
 #endif
-#ifdef UVHTTP_RATE_LIMIT_ENABLED
-    info->feature_rate_limit = 1;
-#endif
     info->feature_protocol_upgrade = 1;
 
     /* Allocator configuration */
@@ -239,11 +236,7 @@ int uvhttp_is_feature_enabled(const char* feature) {
         return 0;
 #endif
     } else if (strcmp(feature, "rate_limit") == 0) {
-#ifdef UVHTTP_RATE_LIMIT_ENABLED
-        return 1;
-#else
         return 0;
-#endif
     } else if (strcmp(feature, "protocol_upgrade") == 0) {
         return 1;
     } else if (strcmp(feature, "allocator") == 0) {
@@ -333,8 +326,6 @@ void uvhttp_print_build_info(void) {
            info.feature_router_cache ? "Enabled" : "Disabled");
     printf("  LRU Cache:       %s\n",
            info.feature_lru_cache ? "Enabled" : "Disabled");
-    printf("  Rate Limit:      %s\n",
-           info.feature_rate_limit ? "Enabled" : "Disabled");
     printf("  Protocol Upgrade: %s\n",
            info.feature_protocol_upgrade ? "Enabled" : "Disabled");
     printf("\n");

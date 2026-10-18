@@ -21,7 +21,6 @@ INSTALL_PREFIX := "/usr/local"
 # Feature flags
 FEATURE_WEBSOCKET := "ON"
 FEATURE_STATIC_FILES := "ON"
-FEATURE_RATE_LIMIT := "ON"
 FEATURE_TLS := "ON"
 
 # ============================================================================
@@ -39,7 +38,6 @@ build type="release":
         -DCMAKE_BUILD_TYPE={{type}} \
         -DBUILD_WITH_WEBSOCKET={{FEATURE_WEBSOCKET}} \
         -DBUILD_WITH_STATIC_FILES={{FEATURE_STATIC_FILES}} \
-        -DBUILD_WITH_RATE_LIMIT={{FEATURE_RATE_LIMIT}} \
         -DBUILD_WITH_TLS={{FEATURE_TLS}} \
         -DCMAKE_INSTALL_PREFIX={{INSTALL_PREFIX}}
     make -j{{JOBS}}

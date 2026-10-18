@@ -642,33 +642,6 @@
 #    endif
 
 /**
- * Rate limit configuration validation constants
- */
-#    ifndef UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS
-#        define UVHTTP_RATE_LIMIT_MIN_MAX_REQUESTS 1
-#    endif
-
-#    ifndef UVHTTP_RATE_LIMIT_MAX_MAX_REQUESTS
-#        define UVHTTP_RATE_LIMIT_MAX_MAX_REQUESTS 10000000
-#    endif
-
-#    ifndef UVHTTP_RATE_LIMIT_MIN_WINDOW_SECONDS
-#        define UVHTTP_RATE_LIMIT_MIN_WINDOW_SECONDS 1
-#    endif
-
-#    ifndef UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS
-#        define UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS 86400 /* 24 hours */
-#    endif
-
-#    ifndef UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS
-#        define UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS 1
-#    endif
-
-#    ifndef UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS
-#        define UVHTTP_RATE_LIMIT_MAX_TIMEOUT_SECONDS 3600 /* 1 hour */
-#    endif
-
-/**
  * Socket buffer size
  *
  * CMake configuration:
@@ -842,14 +815,6 @@
 #    define UVHTTP_TLS_SAN_BUFFER_SIZE 256
 #    define UVHTTP_TLS_PATH_MAX_SIZE 256
 
-/* ========== Middleware Configuration ========== */
-
-/**
- * Rate limit window
- */
-#    define UVHTTP_RATE_LIMIT_WINDOW 60 /* seconds */
-#    define UVHTTP_RATE_LIMIT_MAX_AGE 17
-
 /* ========== Error Handling Configuration ========== */
 
 /**
@@ -1020,45 +985,6 @@
 #    endif
 
 /* ========== Rate Limit ========== */
-
-/**
- * Rate limit configuration
- *
- * Performance test (2026-01-30 Rate limit Performance test):
- *
- * 1. UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS = 10
- *    - Test environment: Rate limit stress test
- *    - Results:
- *      * 1 second timeout: Rejection rate 15%, User experience poor
- *      * 5 seconds timeout: Rejection rate 5%, User experience acceptable
- *      * 10 seconds timeout: Rejection rate 1%, User experience good
- * (Recommended)
- *      * 30 seconds timeout: Rejection rate 0.5%, Response time increases
- *    - Conclusion: 10 seconds timeout balances rejection rate and user
- * experience
- *
- * CMake configuration:
- * - Configure through CMakeLists.txt or command line parameters
- * - Example: cmake -DUVHTTP_RATE_LIMIT_MAX_REQUESTS=500000 ..
- */
-
-#    ifndef UVHTTP_RATE_LIMIT_MAX_REQUESTS
-
-#        define UVHTTP_RATE_LIMIT_MAX_REQUESTS 1000000
-
-#    endif
-
-#    ifndef UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS
-
-#        define UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS 86400
-
-#    endif
-
-#    ifndef UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS
-
-#        define UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS 10
-
-#    endif
 
 /* ========== Error Code Range ========== */
 

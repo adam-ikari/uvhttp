@@ -70,8 +70,8 @@ typedef struct {
  * lru_cache_batch_eviction_size) - they were set, validated, printed, and then
  * ignored by every code path. Behaviour for those limits is owned by the
  * compile-time constants in uvhttp_constants.h (UVHTTP_MAX_BODY_SIZE,
- * UVHTTP_READ_BUFFER_SIZE, MAX_URL_LEN, UVHTTP_CACHE_DEFAULT_*), or, for rate
- * limiting, by uvhttp_server_enable_rate_limit() on the server itself.
+ * UVHTTP_READ_BUFFER_SIZE, MAX_URL_LEN, UVHTTP_CACHE_DEFAULT_*). Request policy
+ * is not a config concern at all: it runs in the server's request filter.
  * A field that is neither authoritative nor absent is noise: if you need one
  * of these knobs, add it back together with the code that reads it. */
 

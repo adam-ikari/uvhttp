@@ -37,12 +37,6 @@ extern "C" {
 #    define UVHTTP_FEATURE_LRU_CACHE 1 /* LRUCacheSupport */
 #endif
 
-#ifndef UVHTTP_FEATURE_RATE_LIMIT
-#    define UVHTTP_FEATURE_RATE_LIMIT          \
-        1 /* Rate limitSupport - DefaultEnable \
-           */
-#endif
-
 #ifndef UVHTTP_FEATURE_COMPRESSION
 #    define UVHTTP_FEATURE_COMPRESSION 0  // HTTP response compression support
 #endif
@@ -72,10 +66,6 @@ extern "C" {
 
 #if UVHTTP_FEATURE_ROUTER_CACHE
 #    define UVHTTP_ROUTER_CACHE_ENABLED
-#endif
-
-#if UVHTTP_FEATURE_RATE_LIMIT
-#    define UVHTTP_RATE_LIMIT_ENABLED
 #endif
 
 #if UVHTTP_FEATURE_COMPRESSION

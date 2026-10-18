@@ -13,8 +13,6 @@
 #include "uvhttp_utils.h"
 #include "uvhttp_validation.h"
 
-#include "uthash.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,10 +59,6 @@ static uvhttp_method_t llhttp_method_to_uvhttp(llhttp_method_t m) {
     }
 }
 
-#if UVHTTP_FEATURE_RATE_LIMIT
-static int check_rate_limit_whitelist(uvhttp_connection_t* conn);
-static int is_client_whitelisted(uvhttp_connection_t* conn);
-#endif
 static void ensure_valid_url(uvhttp_request_t* request);
 
 uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request,
@@ -326,56 +320,6 @@ static int on_body(llhttp_t* parser, const char* at, size_t length) {
     return 0;
 }
 
-#if UVHTTP_FEATURE_RATE_LIMIT
-/* check if client is in whitelist */
-static int is_client_whitelisted(uvhttp_connection_t* conn) {
-    if (!conn->server->rate_limit_whitelist ||
-        conn->server->rate_limit_whitelist_count == 0) {
-        return 0;
-    }
-
-    struct sockaddr_in client_addr;
-    int addr_len = sizeof(client_addr);
-    if (uv_tcp_getpeername(&conn->tcp_handle, (struct sockaddr*)&client_addr,
-                           &addr_len) != 0) {
-        return 0;
-    }
-
-    char client_ip[INET_ADDRSTRLEN];
-    uv_inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, sizeof(client_ip));
-
-    struct whitelist_item* item;
-    HASH_FIND_STR(conn->server->rate_limit_whitelist_hash, client_ip, item);
-    return item != NULL;
-}
-
-/* check and execute rate limiting */
-static int check_rate_limit_whitelist(uvhttp_connection_t* conn) {
-    if (!conn->server || !conn->server->rate_limit_enabled) {
-        return 0;
-    }
-
-    if (is_client_whitelisted(conn)) {
-        return 0;
-    }
-
-    if (uvhttp_server_check_rate_limit(conn->server) != UVHTTP_OK) {
-        uvhttp_response_set_status(conn->response, 429);
-        uvhttp_response_set_header(conn->response, UVHTTP_HEADER_CONTENT_TYPE,
-                                   UVHTTP_CONTENT_TYPE_TEXT);
-        uvhttp_response_set_header(conn->response, UVHTTP_HEADER_RETRY_AFTER,
-                                   UVHTTP_VALUE_RETRY_AFTER_SECONDS);
-        uvhttp_response_set_body(conn->response,
-                                 UVHTTP_MESSAGE_TOO_MANY_REQUESTS,
-                                 strlen(UVHTTP_MESSAGE_TOO_MANY_REQUESTS));
-        uvhttp_response_send(conn->response);
-        return -1;
-    }
-
-    return 0;
-}
-#endif
-
 /* process WebSocket handshakerequest */
 
 /* ensure URL is valid, if null then set to "/" */
@@ -413,12 +357,37 @@ static int on_message_complete(llhttp_t* parser) {
     conn->parsing_complete = 1;
     conn->read_buffer_used = 0;
 
-#if UVHTTP_FEATURE_RATE_LIMIT
-    /* rate limiting check */
-    if (check_rate_limit_whitelist(conn) != 0) {
-        return 0;
+    /* Pre-dispatch filter: the library runs the seam, the caller owns the
+     * policy (rate limiting, admission control, allow/deny lists). */
+    if (conn->server && conn->server->request_filter) {
+        int status_before = conn->response->status_code;
+        uvhttp_error_t filter_rc = conn->server->request_filter(
+            conn->request, conn->response,
+            conn->server->request_filter_user_data);
+        if (filter_rc != UVHTTP_OK) {
+            if (!conn->response->sent) {
+                /* Only a status the filter actually wrote is kept. The
+                 * untouched value is 200 on a fresh connection
+                 * (uvhttp_response_new sets UVHTTP_STATUS_OK) and 0 on a
+                 * recycled one (uvhttp_connection.c resets it), and
+                 * uvhttp_response_build_data serializes whatever is set, so
+                 * comparing against the pre-call value is what keeps a denial
+                 * from going out as "HTTP/1.1 0 " or as an unmodified 200. */
+                if (conn->response->status_code == status_before) {
+                    uvhttp_response_set_status(conn->response,
+                                               UVHTTP_STATUS_FORBIDDEN);
+                }
+                uvhttp_response_set_header(conn->response,
+                                           UVHTTP_HEADER_CONTENT_TYPE,
+                                           UVHTTP_CONTENT_TYPE_TEXT);
+                uvhttp_response_set_body(conn->response,
+                                         UVHTTP_MESSAGE_FORBIDDEN,
+                                         strlen(UVHTTP_MESSAGE_FORBIDDEN));
+                uvhttp_response_send(conn->response);
+            }
+            return 0;
+        }
     }
-#endif
 
     /* Fast path: check if Upgrade header is present */
     const char* upgrade_header =

@@ -40,9 +40,6 @@ set(USER_BUILD_WITH_WEBSOCKET "ON" CACHE BOOL "Enable WebSocket support")
 # Enable static file serving
 set(USER_BUILD_WITH_STATIC_FILES "ON" CACHE BOOL "Enable static file serving")
 
-# Enable rate limiting
-set(USER_BUILD_WITH_RATE_LIMIT "ON" CACHE BOOL "Enable rate limiting")
-
 # Enable TLS/SSL support
 set(USER_BUILD_WITH_TLS "ON" CACHE BOOL "Enable TLS/SSL support")
 
@@ -153,10 +150,6 @@ if(NOT DEFINED BUILD_WITH_STATIC_FILES)
     set(BUILD_WITH_STATIC_FILES ${USER_BUILD_WITH_STATIC_FILES})
 endif()
 
-if(NOT DEFINED BUILD_WITH_RATE_LIMIT)
-    set(BUILD_WITH_RATE_LIMIT ${USER_BUILD_WITH_RATE_LIMIT})
-endif()
-
 if(NOT DEFINED BUILD_WITH_TLS)
     set(BUILD_WITH_TLS ${USER_BUILD_WITH_TLS})
 endif()
@@ -199,7 +192,6 @@ message(STATUS "Build Type:            ${CMAKE_BUILD_TYPE}")
 message(STATUS "Allocator:             ${USER_ALLOCATOR_TYPE} ($BUILD_WITH_MIMALLOC)")
 message(STATUS "WebSocket:             ${USER_BUILD_WITH_WEBSOCKET}")
 message(STATUS "Static Files:          ${USER_BUILD_WITH_STATIC_FILES}")
-message(STATUS "Rate Limit:            ${USER_BUILD_WITH_RATE_LIMIT}")
 message(STATUS "TLS Support:           ${USER_BUILD_WITH_TLS}")
 message(STATUS "Build Tests:           ${USER_BUILD_TESTS}")
 message(STATUS "Build Examples:        ${USER_BUILD_EXAMPLES}")

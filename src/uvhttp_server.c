@@ -306,16 +306,9 @@ uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
     s->ws_connection_manager = NULL;
 #endif
 
-#if UVHTTP_FEATURE_RATE_LIMIT
-    // Initialize rate limit function field
-    s->rate_limit_enabled = 0;
-    s->rate_limit_max_requests = 0;
-    s->rate_limit_window_seconds = 0;
-    s->rate_limit_request_count = 0;
-    s->rate_limit_window_start_time = 0;
-    s->rate_limit_whitelist = NULL;
-    s->rate_limit_whitelist_count = 0;
-#endif
+    // Initialize the pre-dispatch request filter seam
+    s->request_filter = NULL;
+    s->request_filter_user_data = NULL;
 
     // Loop must be provided by application layer
     s->loop = loop;
@@ -453,32 +446,8 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
     }
 #endif
 
-#if UVHTTP_FEATURE_RATE_LIMIT
-    // Clean rate limit whitelist
-    if (server->rate_limit_whitelist) {
-        for (size_t i = 0; i < server->rate_limit_whitelist_count; i++) {
-            if (server->rate_limit_whitelist[i]) {
-                uvhttp_free(server->rate_limit_whitelist[i]);
-            }
-        }
-        uvhttp_free(server->rate_limit_whitelist);
-        server->rate_limit_whitelist = NULL;
-        server->rate_limit_whitelist_count = 0;
-    }
-
-    // Clean whitelist hash table
-    struct whitelist_item *current, *tmp;
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wunused-value"
-    HASH_ITER(hh, server->rate_limit_whitelist_hash, current, tmp) {
-        HASH_DEL(server->rate_limit_whitelist_hash, current);
-        uvhttp_free(current);
-    }
-#    pragma GCC diagnostic pop
-    server->rate_limit_whitelist_hash = NULL;
-
-    // Rate limit state has been embedded in struct, no need for extra cleanup
-#endif
+    /* The request filter's user_data is borrowed (same contract as
+     * server->handler): the server never frees it. */
 
     // Clean protocol registry
     if (server->protocol_registry) {
@@ -1044,201 +1013,20 @@ uvhttp_error_t uvhttp_server_ws_close(uvhttp_ws_connection_t* ws_conn, int code,
 
 #endif  // UVHTTP_FEATURE_WEBSOCKET
 
-// ========== rate limiting function implementation (core function) ==========
+// ========== pre-dispatch request filter ==========
 
-#if UVHTTP_FEATURE_RATE_LIMIT
-// ========== rate limiting function implementation ==========
-
-// rate limiting parameter limit
-#    define MAX_RATE_LIMIT_REQUESTS 1000000  // maximum request count: 1 million
-#    define MAX_RATE_LIMIT_WINDOW_SECONDS \
-        86400  // maximum time window: 24 hours
-
-// enable rate limiting function
-uvhttp_error_t uvhttp_server_enable_rate_limit(uvhttp_server_t* server,
-                                               int max_requests,
-                                               int window_seconds) {
+uvhttp_error_t uvhttp_server_set_request_filter(uvhttp_server_t* server,
+                                                uvhttp_request_filter_t filter,
+                                                void* user_data) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    if (max_requests <= 0 || max_requests > MAX_RATE_LIMIT_REQUESTS) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    if (window_seconds <= 0 || window_seconds > MAX_RATE_LIMIT_WINDOW_SECONDS) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    // initialize rate limiting state
-    server->rate_limit_enabled = 1;
-    server->rate_limit_max_requests = max_requests;
-    server->rate_limit_window_seconds = window_seconds;
-    server->rate_limit_request_count = 0;
-    server->rate_limit_window_start_time = 0;
+    server->request_filter = filter;
+    server->request_filter_user_data = user_data;
 
     return UVHTTP_OK;
 }
-
-// disable rate limiting function
-uvhttp_error_t uvhttp_server_disable_rate_limit(uvhttp_server_t* server) {
-    if (!server) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    server->rate_limit_enabled = 0;
-    server->rate_limit_request_count = 0;
-    server->rate_limit_window_start_time = 0;
-
-    return UVHTTP_OK;
-}
-
-// check rate limiting state
-uvhttp_error_t uvhttp_server_check_rate_limit(uvhttp_server_t* server) {
-    if (!server || !server->rate_limit_enabled) {
-        return UVHTTP_OK;  // rate limiting not enabled, allow request
-    }
-
-    // get current time (milliseconds)
-    uint64_t current_time = uv_hrtime() / 1000000;
-    uint64_t window_duration = server->rate_limit_window_seconds * 1000;
-
-    // check if time window has expired
-    if (current_time - server->rate_limit_window_start_time >=
-        window_duration) {
-        // reset counter
-        server->rate_limit_request_count = 0;
-        server->rate_limit_window_start_time = current_time;
-    }
-
-    // check if exceeds limit
-    if (server->rate_limit_request_count >= server->rate_limit_max_requests) {
-        return UVHTTP_ERROR_RATE_LIMIT_EXCEEDED;
-    }
-
-    // increase count
-    server->rate_limit_request_count++;
-
-    return UVHTTP_OK;
-}
-
-// add rate limiting whitelist IP address
-uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(uvhttp_server_t* server,
-                                                      const char* client_ip) {
-    if (!server || !client_ip) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    // verifyIPaddressformat
-    if (!uvhttp_is_valid_ip_address(client_ip)) {
-        return UVHTTP_ERROR_INVALID_PARAM;  // invalid IP address
-    }
-
-    // check if already exists in hash table (avoid duplicate add)
-    struct whitelist_item* existing_item;
-    HASH_FIND_STR(server->rate_limit_whitelist_hash, client_ip, existing_item);
-    if (existing_item) {
-        return UVHTTP_OK;  // already exists, no need to add again
-    }
-
-    // reallocate whitelist array
-    size_t new_count = server->rate_limit_whitelist_count + 1;
-    void** new_whitelist =
-        uvhttp_realloc(server->rate_limit_whitelist, sizeof(void*) * new_count);
-    if (!new_whitelist) {
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
-    }
-
-    server->rate_limit_whitelist = new_whitelist;
-    server->rate_limit_whitelist_count = new_count;
-
-    // copyIPaddress
-    size_t ip_len = strlen(client_ip) + 1;
-    char* ip_copy = uvhttp_alloc(ip_len);
-    if (!ip_copy) {
-        // fallback: resume original array size
-        server->rate_limit_whitelist_count = new_count - 1;
-        void** old_whitelist = uvhttp_realloc(server->rate_limit_whitelist,
-                                              sizeof(void*) * (new_count - 1));
-        if (old_whitelist) {
-            server->rate_limit_whitelist = old_whitelist;
-        }
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
-    }
-    memcpy(ip_copy, client_ip, ip_len);
-    server->rate_limit_whitelist[new_count - 1] = ip_copy;
-
-    // add to hash table (for O(1) lookup)
-    struct whitelist_item* hash_item =
-        uvhttp_alloc(sizeof(struct whitelist_item));
-    if (!hash_item) {
-        // fallback: clean allocated IP string
-        uvhttp_free(ip_copy);
-        server->rate_limit_whitelist_count = new_count - 1;
-        void** old_whitelist = uvhttp_realloc(server->rate_limit_whitelist,
-                                              sizeof(void*) * (new_count - 1));
-        if (old_whitelist) {
-            server->rate_limit_whitelist = old_whitelist;
-        }
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
-    }
-    uvhttp_safe_strncpy(hash_item->ip, client_ip, INET_ADDRSTRLEN);
-    HASH_ADD_STR(server->rate_limit_whitelist_hash, ip, hash_item);
-
-    return UVHTTP_OK;
-}
-
-// get client rate limiting state
-uvhttp_error_t uvhttp_server_get_rate_limit_status(uvhttp_server_t* server,
-                                                   const char* client_ip,
-                                                   int* remaining,
-                                                   uint64_t* reset_time) {
-    if (!server || !client_ip || !remaining) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    if (!server->rate_limit_enabled) {
-        *remaining = -1;  // rate limiting not enabled
-        return UVHTTP_OK;
-    }
-
-    *remaining =
-        server->rate_limit_max_requests - server->rate_limit_request_count;
-
-    if (reset_time) {
-        uint64_t window_duration = server->rate_limit_window_seconds * 1000;
-        *reset_time = server->rate_limit_window_start_time + window_duration;
-    }
-
-    return UVHTTP_OK;
-}
-
-// clear all rate limiting states
-uvhttp_error_t uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server) {
-    if (!server) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    server->rate_limit_request_count = 0;
-    server->rate_limit_window_start_time = 0;
-
-    return UVHTTP_OK;
-}
-
-// reset client rate limiting state
-uvhttp_error_t uvhttp_server_reset_rate_limit_client(uvhttp_server_t* server,
-                                                     const char* client_ip) {
-    if (!server || !client_ip) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    // simplified implementation: reset entire server's rate limiting counter
-    server->rate_limit_request_count = 0;
-    server->rate_limit_window_start_time = uv_hrtime() / 1000000;
-
-    return UVHTTP_OK;
-}
-#endif /* UVHTTP_FEATURE_RATE_LIMIT */
 
 // ========== WebSocket connectionmanageimplement ==========
 

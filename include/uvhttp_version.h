@@ -45,7 +45,6 @@ typedef struct {
     int feature_logging;          /**< Logging support enabled */
     int feature_router_cache;     /**< Router cache enabled */
     int feature_lru_cache;        /**< LRU cache enabled */
-    int feature_rate_limit;       /**< Rate limit enabled */
     int feature_protocol_upgrade; /**< Protocol upgrade enabled */
 
     /* Allocator configuration */
@@ -133,7 +132,8 @@ uvhttp_error_t uvhttp_get_build_info(uvhttp_build_info_t* info);
  *       - "router_cache": Router cache
  *       - "lru_cache": LRU cache
  *       - "cors": CORS support
- *       - "rate_limit": Rate limit
+ *       - "rate_limit": always 0 - v2.10 removed the built-in limiter;
+ *         policy belongs to the caller via uvhttp_server_set_request_filter
  *       - "protocol_upgrade": Protocol upgrade
  *       - "allocator": Custom allocator
  */
