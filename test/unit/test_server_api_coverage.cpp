@@ -217,15 +217,12 @@ TEST_F(UvhttpServerApiTest, ServerStopNull) {
 /* stop_simple 已随 builder 移除；等价的停止能力是 uvhttp_server_stop */
 TEST_F(UvhttpServerApiTest, ServerStopStopsListening) {
     ASSERT_EQ(create_server(), UVHTTP_OK);
-    ASSERT_EQ(uvhttp_server_listen(server, "127.0.0.1", 18080), UVHTTP_OK);
+    /* 端口 0 由内核分配空闲端口：写死 18080 的话，别的测试或残留进程占住该口
+     * 就会让这条用例变红，而它要测的是 stop 的行为，不是端口可用性。 */
+    ASSERT_EQ(uvhttp_server_listen(server, "127.0.0.1", 0), UVHTTP_OK);
 
     EXPECT_EQ(uvhttp_server_stop(server), UVHTTP_OK);
     EXPECT_EQ(server->is_listening, 0);
-}
-
-TEST_F(UvhttpServerApiTest, ServerStopNullServer) {
-    /* 不应该崩溃 */
-    EXPECT_NE(uvhttp_server_stop(NULL), UVHTTP_OK);
 }
 
 /* 测试服务器释放简单模式 */

@@ -451,8 +451,20 @@ uvhttp_error_t uvhttp_server_reset_rate_limit_client(uvhttp_server_t* server,
 uvhttp_error_t uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server);
 #endif /* UVHTTP_FEATURE_RATE_LIMIT */
 
-/* ========== Unified API Functions ========== */
+/* ========== Misc ========== */
 
+/**
+ * @brief Register a health-check endpoint
+ *
+ * Adds a handler at @p path that replies HTTP 200 with the JSON body
+ * {"status":"ok"}. Intended for load balancer and orchestration probes. If the
+ * server has no router yet, one is created and owned by the server.
+ *
+ * @param server Server
+ * @param path Route path (e.g. "/health")
+ * @return UVHTTP_OK on success, UVHTTP_ERROR_INVALID_PARAM if @p server or
+ *         @p path is NULL
+ */
 uvhttp_error_t uvhttp_server_enable_health_check(uvhttp_server_t* server,
                                                  const char* path);
 

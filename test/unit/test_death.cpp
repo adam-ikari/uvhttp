@@ -204,28 +204,23 @@ TEST(DeathTest, InvalidPortListen) {
 
 /**
  * @brief 测试过大端口监听
- * 注意：libuv 可能会接受某些超大端口值，这是 libuv 的行为
+ *
+ * uvhttp_server_listen 自己范围校验，不等 libuv 拒绝：uv_ip4_addr 用 htons()
+ * 写端口，越界值会被静默截断（65536 -> 0 即临时端口）。断言必须是具体错误码，
+ * 写成 if (result == UVHTTP_OK) / else 容错分支的话，两个分支都算通过，这条
+ * 测试就恒绿了。
  */
 TEST(DeathTest, ExcessivePortListen) {
     uv_loop_t* loop = uv_default_loop();
     uvhttp_server_t* server = NULL;
-    uvhttp_error_t result = uvhttp_server_new(loop, &server);
-    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_EQ(uvhttp_server_new(loop, &server), UVHTTP_OK);
     ASSERT_NE(server, nullptr);
-    result = uvhttp_server_listen(server, "127.0.0.1", 65536);
-    // libuv 可能会接受 65536，所以我们只测试函数不会崩溃
-    if (result == UVHTTP_OK) {
-        // 如果 libuv 接受了 65536，这是一个已知行为
-        // 我们确保服务器可以正常关闭
-        uvhttp_server_free(server);
-        uv_loop_close(loop);
-        SUCCEED();
-    } else {
-        // 如果返回错误，这是期望的行为
-        uvhttp_server_free(server);
-        uv_loop_close(loop);
-        EXPECT_NE(result, UVHTTP_OK);
-    }
+    EXPECT_EQ(uvhttp_server_listen(server, "127.0.0.1", 65536),
+              UVHTTP_ERROR_INVALID_PARAM);
+    EXPECT_EQ(uvhttp_server_listen(server, "127.0.0.1", -1),
+              UVHTTP_ERROR_INVALID_PARAM);
+    uvhttp_server_free(server);
+    uv_loop_close(loop);
 }
 
 /**
