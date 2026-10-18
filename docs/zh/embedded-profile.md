@@ -85,7 +85,6 @@ cmake -B build-32bit \
 | TLS（mbedtls） | `BUILD_WITH_HTTPS` | ON |
 | 静态文件 | `UVHTTP_FEATURE_STATIC_FILES` | ON |
 | 压缩 | `BUILD_WITH_COMPRESSION` | ON |
-| 速率限制 | `UVHTTP_FEATURE_RATE_LIMIT` | ON |
 | mimalloc 分配器 | `BUILD_WITH_MIMALLOC` | OFF |
 
 一个最小化的嵌入式构建（仅 HTTP/1.1，不含 TLS/WebSocket/静态文件/压缩）通过禁用未用功能，链接一个更小的库。

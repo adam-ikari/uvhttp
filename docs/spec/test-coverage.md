@@ -41,7 +41,7 @@ criteria for the UVHTTP test suite.
 ### Integration Tests (20 files)
 - Test end-to-end scenarios with real libuv
 - Standalone C programs that start a server and test it
-- Cover HTTP methods, TLS, WebSocket, rate limiting, static files
+- Cover HTTP methods, TLS, WebSocket, request filter, static files
 - Not automatically registered with CTest (manual execution)
 
 ### Fuzz Tests (1 harness)

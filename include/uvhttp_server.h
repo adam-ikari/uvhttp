@@ -5,19 +5,10 @@
 #include "uvhttp_common.h"
 #include "uvhttp_config.h"
 #include "uvhttp_error.h"
+#include "uvhttp_features.h"
 #include "uvhttp_platform.h"
 
 #include <uv.h>
-
-/* Include uthash header for hash table implementation */
-#include "uthash.h"
-
-/* Whitelist hash table item */
-struct whitelist_item {
-    char ip[INET_ADDRSTRLEN];
-    UT_hash_handle hh;
-};
-#include "uvhttp_features.h"
 
 // Forward declarations
 typedef struct uvhttp_request uvhttp_request_t;
@@ -87,6 +78,22 @@ typedef void (*uvhttp_timeout_callback_t)(uvhttp_server_t* server,
                                           uvhttp_connection_t* conn,
                                           uint64_t timeout_ms, void* user_data);
 
+/* ========== Pre-dispatch Request Filter ========== */
+/**
+ * @brief Filter callback invoked before a request is dispatched
+ *
+ * The library does not implement request policy (rate limiting, admission
+ * control, IP allow/deny lists). It provides this one seam instead: the
+ * callback sees every parsed request before routing, and the policy is the
+ * caller's.
+ *
+ * @return UVHTTP_OK to let the request continue to routing; any other code
+ *         stops dispatch for this request
+ */
+typedef uvhttp_error_t (*uvhttp_request_filter_t)(uvhttp_request_t* request,
+                                                  uvhttp_response_t* response,
+                                                  void* user_data);
+
 struct uvhttp_server {
     /* ========== Cache line 1 (0-63 bytes): hot path fields - most frequently
      * accessed ========== */
@@ -139,22 +146,14 @@ struct uvhttp_server {
 #endif
     /* Cache line 4 total: 64 bytes */
 
-    /* ========== Cache line 5-6 (256-383 bytes): rate limiting functionality
-     * ========== */
-#if UVHTTP_FEATURE_RATE_LIMIT
-    int rate_limit_enabled;                /* 4 bytes - Rate limituseEnable */
-    int rate_limit_max_requests;           /* 4 bytes - Request */
-    int rate_limit_window_seconds;         /* 4 bytes - whenwindow(seconds) */
-    int rate_limit_request_count;          /* 4 bytes - currentRequest */
-    uint64_t rate_limit_window_start_time; /* 8 bytes - windowwhen */
-    void** rate_limit_whitelist;           /* 8 bytes - Whitelist */
-    size_t rate_limit_whitelist_count;     /* 8 bytes - Whitelistquantity */
-    struct whitelist_item*
-        rate_limit_whitelist_hash; /* 8 bytes - Whitelisthash */
-    int _padding5[8];              /* 32bytes - paddingto64bytes */
-#else
-    int _padding5[16]; /* 64bytes - paddingto64bytes */
-#endif
+    /* ========== Cache line 5 (256-319 bytes): request filter seam ==========
+     */
+    /* Unconditional: the seam costs one pointer pair, so it needs no feature
+     * gate. v2.10 replaced the built-in rate limiter (8 fields + its feature
+     * flag) with these two - policy belongs to the caller. */
+    uvhttp_request_filter_t request_filter; /* 8 bytes - pre-dispatch filter */
+    void* request_filter_user_data;         /* 8 bytes - filter context */
+    int _padding5[12];                      /* 48 bytes - padding to 64 bytes */
     /* Cache line 5 total: 64 bytes */
 
     /* ========== Cache line 6 (320-383 bytes): protocol upgrade ========== */
@@ -361,95 +360,47 @@ uvhttp_error_t uvhttp_server_take_router(uvhttp_server_t* server,
 uvhttp_error_t uvhttp_server_take_context(uvhttp_server_t* server,
                                           struct uvhttp_context* context);
 
-#if UVHTTP_FEATURE_RATE_LIMIT
-/* ========== Rate Limiting API (Core Functionality) ========== */
+/* ========== Pre-dispatch Request Filter ========== */
 
 /**
- * EnableServerRate limitfunction
+ * @brief Install a filter that runs before request dispatch
  *
- * @param server Server
- * @param max_requests whenwindowallowRequest(scope: 1-1000000)
- * @param window_seconds whenwindow(seconds, scope: 1-86400)
- * @return UVHTTP_OK Success, othervaluerepresentsFailure
+ * The library ships no rate limiter on purpose: window size, the key to count
+ * by (client IP, tenant, API key), storage and eviction are application
+ * policy. This seam is where that policy runs. The filter is called once per
+ * parsed request, before protocol-upgrade detection and before router lookup,
+ * so it gates upgrades as well.
  *
- * Note:
- * - Rate limitfunctionpairofRequest(ServerRate limit)
- * - Rate limitstateServermanage, ofClientcounter
- * - Used forprevent DDoS , Used forClientRate limit
- * -  uvhttp_server_listen
- * - Usewindow
+ * Identify the client with uvhttp_request_get_client_ip(). It covers IPv6 and
+ * honors X-Forwarded-For/X-Real-IP only when config->trust_proxy_headers is
+ * set; the built-in limiter it replaces matched IPv4 peer addresses and
+ * nothing else.
+ *
+ * @param server Server to configure
+ * @param filter Callback, or NULL to remove the one currently installed
+ * @param user_data Context passed back to @p filter. Borrowed: the library
+ *        never frees it, exactly like uvhttp_server_set_handler. It must
+ *        outlive the server, or be cleared by installing a NULL filter first.
+ * @return UVHTTP_OK on success, UVHTTP_ERROR_INVALID_PARAM if @p server is
+ * NULL
+ *
+ * @note Returning UVHTTP_OK lets the request continue. Any other code stops
+ *       dispatch for that request.
+ *
+ * @note A filter that stops a request is expected to reply itself (status,
+ *       Retry-After, body) before returning. If it returns without sending,
+ *       the library replies so the client is never left waiting: the status
+ *       the filter wrote is kept (403 when it wrote none) and the body is
+ *       always the plain-text "Forbidden" message. The sent-guard in
+ *       uvhttp_response_send makes that fallback a no-op when the filter
+ *       already replied.
+ *
+ * @note One slot, not a chain - compose inside your own callback. It runs on
+ *       the event loop thread: keep it O(1) and never block in it.
  */
-uvhttp_error_t uvhttp_server_enable_rate_limit(uvhttp_server_t* server,
-                                               int max_requests,
-                                               int window_seconds);
-
-/**
- * DisableRate limitfunction
- *
- * @param server Server
- * @return UVHTTP_OK Success, othervaluerepresentsFailure
- */
-uvhttp_error_t uvhttp_server_disable_rate_limit(uvhttp_server_t* server);
-
-/**
- * Rate limitstate(internalUse)
- *
- * @param server Server
- * @return UVHTTP_OK allowRequest, UVHTTP_ERROR_RATE_LIMIT_EXCEEDED exceedRate
- * limit
- */
-uvhttp_error_t uvhttp_server_check_rate_limit(uvhttp_server_t* server);
-
-/**
- * addRate limitWhitelistIPaddress(Rate limit)
- *
- * @param server Server
- * @param client_ip ClientIPaddress( "127.0.0.1")
- * @return UVHTTP_OK Success, othervaluerepresentsFailure
- */
-uvhttp_error_t uvhttp_server_add_rate_limit_whitelist(uvhttp_server_t* server,
-                                                      const char* client_ip);
-
-/**
- * getServerRate limitstate
- *
- * @param server Server
- * @param client_ip ClientIPaddress(currentUse, Parameterextend)
- * @param remaining remainingRequest(output)
- * @param reset_time Timestamp(output, seconds)
- * @return UVHTTP_OK Success, othervaluerepresentsFailure
- *
- * Note:
- * - currenttoServerRate limit, client_ip ParameterUse
- * - ReturnServerRate limitstate, Clientstate
- */
-uvhttp_error_t uvhttp_server_get_rate_limit_status(uvhttp_server_t* server,
-                                                   const char* client_ip,
-                                                   int* remaining,
-                                                   uint64_t* reset_time);
-
-/**
- * ServerRate limitstate
- *
- * @param server Server
- * @param client_ip ClientIPaddress(currentUse, Parameterextend)
- * @return UVHTTP_OK Success, othervaluerepresentsFailure
- *
- * Note:
- * - currenttoServerRate limit, client_ip ParameterUse
- * - ServerRate limitcounter, Clientcounter
- */
-uvhttp_error_t uvhttp_server_reset_rate_limit_client(uvhttp_server_t* server,
-                                                     const char* client_ip);
-
-/**
- * nullofRate limitstate
- *
- * @param server Server
- * @return UVHTTP_OK Success, othervaluerepresentsFailure
- */
-uvhttp_error_t uvhttp_server_clear_rate_limit_all(uvhttp_server_t* server);
-#endif /* UVHTTP_FEATURE_RATE_LIMIT */
+uvhttp_error_t uvhttp_server_set_request_filter(uvhttp_server_t* server,
+                                                uvhttp_request_filter_t filter,
+                                                void* user_data);
 
 /* ========== Misc ========== */
 

@@ -265,7 +265,6 @@ test/
 │   ├── test_tls_e2e.c                # TLS end-to-end tests
 │   ├── test_performance_e2e.c        # Performance tests
 │   ├── test_error_handling_e2e.c     # Error handling tests
-│   ├── test_rate_limit_e2e.c         # Rate limit tests
 │   ├── test_simple.c                 # Simple test
 │   ├── test_route.c                  # Routing test
 │   ├── test_no_router.c              # No-router test

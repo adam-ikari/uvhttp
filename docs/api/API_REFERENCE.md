@@ -829,7 +829,7 @@ TLS also defines two positive non-blocking states: `UVHTTP_ERROR_TLS_WANT_READ
 
 | Error Code | Value | Description |
 |------------|-------|-------------|
-| UVHTTP_ERROR_RATE_LIMIT_EXCEEDED | -550 | Rate limit exceeded |
+| UVHTTP_ERROR_RATE_LIMIT_EXCEEDED | -550 | Rate limit exceeded (reserved for the application's request filter) |
 
 ### Allocator (-600s)
 
@@ -934,7 +934,6 @@ UVHTTP_FEATURE_STATIC_FILES       # Static file serving
 UVHTTP_FEATURE_TLS                # TLS support
 UVHTTP_FEATURE_LRU_CACHE          # LRU cache
 UVHTTP_FEATURE_ROUTER_CACHE       # Router cache
-UVHTTP_FEATURE_RATE_LIMIT         # Rate limiting
 UVHTTP_FEATURE_COMPRESSION        # Response compression
 UVHTTP_FEATURE_LOGGING            # Logging system
 UVHTTP_ALLOCATOR_TYPE             # Allocator type (0=system, 1=mimalloc, 2=custom)

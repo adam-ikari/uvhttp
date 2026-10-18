@@ -57,7 +57,7 @@ UVHTTP provides full support for 32-bit architectures with optimizations for res
 - 🚀 **Keep-Alive Optimization**: ~1000x performance improvement through connection reuse
 
 ### Architecture
-- 🔧 **Modular Design**: Compile-time feature selection for WebSocket, static files, rate limiting
+- 🔧 **Modular Design**: Compile-time feature selection for WebSocket, static files, TLS
 - ⚙️ **Zero Overhead**: All abstractions are compile-time macros with zero runtime cost
 - 📐 **Event-Driven**: Non-blocking I/O based on libuv event loop
 - 🎯 **Direct API Calls**: No abstraction layer between application and libuv
@@ -76,7 +76,7 @@ UVHTTP provides full support for 32-bit architectures with optimizations for res
 
 ### Advanced Features
 - 🔄 **Connection Management**: Connection pool, timeout detection, heartbeat monitoring
-- 📊 **Rate Limiting**: Token bucket algorithm with whitelist support
+- 📊 **Request Filter**: Pre-dispatch seam - rate limiting and admission control are yours to write
 - 🌐 **WebSocket**: Full-duplex communication with Ping/Pong support
 - ⚙️ **Highly Configurable**: 27 compile-time options for different deployment scenarios
 - 🎛️ **Memory Optimization**: Optional mimalloc for faster allocations
@@ -316,8 +316,8 @@ UVHTTP follows a modular, event-driven architecture designed for performance and
 │  │ O(1)     │  │ Pipeline  │  │ Support  │            │  │
 │  └──────────┘  └──────────┘  └──────────┘            │  │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐            │  │
-│  │ Static   │  │ Rate     │  │  TLS     │            │  │
-│  │ Files    │  │ Limit    │  │ Support  │            │  │
+│  │ Static   │  │  Filter  │  │  TLS     │            │  │
+│  │ Files    │  │  Seam    │  │ Support  │            │  │
 │  └──────────┘  └──────────┘  └──────────┘            │  │
 └─────────────────────┬───────────────────────────────────┘
                       │
@@ -355,7 +355,7 @@ UVHTTP follows a modular, event-driven architecture designed for performance and
 ### Advanced Topics
 - **[WebSocket Guide](docs/guide/websocket.md)** - Real-time communication
 - **[Static File Server](docs/guide/STATIC_FILE_SERVER.md)** - File serving optimization
-- **[Rate Limit API](docs/guide/RATE_LIMIT_API.md)** - Rate limiting implementation
+- **[Request Filter API](docs/guide/REQUEST_FILTER_API.md)** - Pre-dispatch admission policy (rate limiting, allow/deny lists)
 
 ## 🏗️ Project Structure
 

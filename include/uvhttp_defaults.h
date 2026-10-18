@@ -153,11 +153,6 @@ extern "C" {
  */
 #define UVHTTP_DEFAULT_MAX_REQUESTS_PER_CONN 100
 
-/**
- * Rate limiting time window(seconds)
- */
-#define UVHTTP_DEFAULT_RATE_LIMIT_WINDOW 60
-
 /* ========== WebSocket Configuration Default Values ========== */
 
 /**

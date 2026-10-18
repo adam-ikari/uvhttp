@@ -354,15 +354,29 @@ size_t active_connections = server->active_connections;
 printf("活动连接数: %zu\n", active_connections);
 ```
 
-### Q24: 如何配置速率限制？
+### Q24: 如何实现速率限制？
+
+库自身不再内置限流。它在分派每个请求之前调用你的过滤器，计数策略完全由你掌握：
 
 ```c
-// 在服务器上启用限流（每秒 1000 请求）
-uvhttp_server_enable_rate_limit(server, 1000, 1);
+static uvhttp_error_t limit_filter(uvhttp_request_t* request,
+                                   uvhttp_response_t* response,
+                                   void* user_data) {
+    if (client_is_over_budget(user_data,
+                              uvhttp_request_get_client_ip(request))) {
+        uvhttp_response_set_status(response, 429);
+        uvhttp_response_set_header(response, "Retry-After", "1");
+        uvhttp_response_send(response);
+        return UVHTTP_ERROR_RATE_LIMIT_EXCEEDED;
+    }
+    return UVHTTP_OK;
+}
 
-// 添加 IP 到白名单（可选）
-uvhttp_server_add_rate_limit_whitelist(server, "192.168.1.100");
+uvhttp_server_set_request_filter(server, limit_filter, &my_state);
 ```
+
+按客户端的完整固定窗口实现（含表容量上限与淘汰）见
+[请求过滤器 API](REQUEST_FILTER_API.md)。
 
 ---
 
@@ -457,7 +471,7 @@ make build
 ### 安全性
 - 生产环境始终使用 HTTPS
 - 验证所有用户输入
-- 实现速率限制
+- 用分派前请求过滤器做限流（库不再内置限流）
 - 保持依赖项更新
 - 使用强密码套件
 

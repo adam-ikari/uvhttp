@@ -1,6 +1,6 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-10-18T04:24:29.829Z._
+_Auto-generated. Last updated 2026-10-18T06:37:38.750Z._
 
 - [alloc-hotpath-measured](pages/alloc-hotpath-measured.md) — category: decision | tags: [performance, benchmark, allocator, methodology, yagni] | # 每请求分配已实测：省一次仅 0.026%，内存分配优化不做
 - [api-atomicity-audit](pages/api-atomicity-audit.md) — category: decision | tags: [api, atomicity, orthogonality, audit, v2.10] | <!-- compiled_truth -->
@@ -19,9 +19,11 @@ _Auto-generated. Last updated 2026-10-18T04:24:29.829Z._
 - [docs-vitepress-ssr-event-build-fail](pages/docs-vitepress-ssr-event-build-fail.md) — category: project | tags: [docs, ci, vitepress] | # VitePress 文档构建失败（已修复）
 - [embedding-cmake-public-deps](pages/embedding-cmake-public-deps.md) — category: decision | tags: [embedding, cmake, build, add_subdirectory] | ## 发现
 - [embedding-guide-examples](pages/embedding-guide-examples.md) — category: decision | tags: [embedding, guide, examples, add_subdirectory] | ## 交付物
+- [handler-ignored-without-router](pages/handler-ignored-without-router.md) — category: decision | tags: [api, defect, dispatch] | # `server->handler` 只在挂了 router 时才跑：与文档正好相反
 - [integration-tests-are-servers](pages/integration-tests-are-servers.md) — category: decision | tags: [test, integration, assert, ci, cleanup] | # test/integration 下 19 个文件不是测试
 - [io-uring-evaluation](pages/io-uring-evaluation.md) — category: decision | tags: [performance, architecture, io-uring, libuv, yagni] | # io_uring 评估：当前架构下不可达，待办关闭
 - [lcov-mock-aggregation-underestimate](pages/lcov-mock-aggregation-underestimate.md) — category: decision | tags: [coverage, lcov, test-infra, mock] | # lcov 聚合低估 mock 测试覆盖（connection.c 45.3% 实为 ~79.6%）
+- [middleware-stop-does-not-short-circuit-handler](pages/middleware-stop-does-not-short-circuit-handler.md) — category: decision | tags: [middleware, api, defect, v2.10] | # 中间件 STOP 不短路 handler 体（已知缺陷，本次未修）
 - [no-config-file-parsing](pages/no-config-file-parsing.md) — category: decision | tags: [config, scope, roadmap] | ## 约束（2026-10-17 用户确认，记录为项目约束）
 - [perf-regression-gate](pages/perf-regression-gate.md) — category: decision | tags: [performance, benchmark, ci, gate] | ## 现状
 - [performance-benchmark-update](pages/performance-benchmark-update.md) — category: decision | tags: [performance, benchmark, release-v2.6.2] | ## 变更（v2.7.0，commit aecb053，2026-08-21）
@@ -33,6 +35,7 @@ _Auto-generated. Last updated 2026-10-18T04:24:29.829Z._
 - [release-v280](pages/release-v280.md) — category: decision | tags: [release, performance, quality] | # v2.8.0 发布记录
 - [release-v290](pages/release-v290.md) — category: decision | tags: [release, v2.9.0, benchmark, quality] | # 发布 v2.9.0
 - [release-v291-prep](pages/release-v291-prep.md) — category: decision | tags: [release, v2.9.1, ci, quality, pre-release] | ## 预发布转正式的条件（来源：docs/release-strategy.md）
+- [request-filter-seam-replaces-rate-limiter](pages/request-filter-seam-replaces-rate-limiter.md) — category: decision | tags: [api, design, v2.10, rate-limit, roadmap-d3] | # 库不实现限流：只给分派前接缝，策略归调用方
 - [router-cache-parity](pages/router-cache-parity.md) — category: decision | tags: [router, cache, ci] | # 路由缓存实现必须与非缓存路由器行为对齐
 - [sanitizer-feature-blindspot](pages/sanitizer-feature-blindspot.md) — category: project | tags: [ci, asan, ubsan, coverage, static-files] | # Sanitizer 门禁的 feature 盲区
 - [silent-skip-audit-101-to-18](pages/silent-skip-audit-101-to-18.md) — category: project | tags: [test, ci, quality, false-positive] | # 静默跳过测试治理：101→18（4 个 PR）

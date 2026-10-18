@@ -58,7 +58,6 @@ validated, printed — and then ignored by the whole library:
 | `max_url_size` | `MAX_URL_LEN` (2048) in `request.h` |
 | `max_requests_per_connection` | nothing enforced it at all |
 | `request_timeout`, `keepalive_timeout` | `connection_timeout` (`connection.c` idle timer) — these were two extra names for the same knob |
-| `rate_limit_window`, `rate_limit_max_requests`, `rate_limit_max_window_seconds`, `rate_limit_min_timeout_seconds` | `server->rate_limit_*`, set by `uvhttp_server_enable_rate_limit()` |
 | `cache_default_max_entries`, `cache_default_ttl` | compile-time `UVHTTP_CACHE_DEFAULT_MAX_ENTRIES` / `_TTL` |
 | `lru_cache_batch_eviction_size` | compile-time `UVHTTP_LRU_CACHE_*_BATCH_EVICTION_SIZE` |
 

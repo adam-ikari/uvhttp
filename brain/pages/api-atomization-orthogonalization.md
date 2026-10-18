@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [api, design, roadmap, v2.10]
 created: "2026-10-09T00:27:12"
-updated: "2026-10-18T04:24:29"
+updated: "2026-10-18T06:32:43"
 ---
 
 <!-- compiled_truth -->
@@ -126,6 +126,19 @@ v2.9.x 的实测结论把"加功能"这条路堵死了：性能（[[alloc-hotpat
 白名单却真按 IP（`request.c:358`）。**per-IP 白名单 + per-server 计数**
 混在一套 API 里。A 打满 → B 一起 429。
 
+> **已执行（2026-10-18，路线 d3）：两条预设路线都没走。** 「真 per-client」要新增一张
+> 按 key 的表 + 淘汰策略 + 内存上限 —— 那是**新特性**，与本轮特性冻结矛盾；
+> 「改签名承认 per-server」则留下一个没人敢用的 API。改为**删除整块限流**
+> （7 个 API + `uvhttp_server_t` 的 8 个 `rate_limit_*` 字段 + `struct whitelist_item`
+> + `UVHTTP_FEATURE_RATE_LIMIT` 全线），替换为单槽分派前接缝
+> `uvhttp_server_set_request_filter()`：窗口长度、计数维度（client IP / tenant / API key）、
+> 存储与淘汰、信不信 XFF 全部由调用方的回调决定。原动机（一个客户端连坐全站）
+> 由「按 key 计数是调用方的代码」解决，不再由库猜。`UVHTTP_ERROR_RATE_LIMIT_EXCEEDED`
+> (-550) 保留为应用层惯用码。契约与被否方案见
+> [[request-filter-seam-replaces-rate-limiter]]；本次顺带定位到两个既有分派缺陷
+> [[middleware-stop-does-not-short-circuit-handler]]、
+> [[handler-ignored-without-router]]（均未在本次修）。
+
 ### 5. `server` 是 6 cache line 的大 struct
 
 限流状态、WS 连接管理、gzip cache、protocol registry 全部内联
@@ -140,8 +153,12 @@ v2.9.x 的实测结论把"加功能"这条路堵死了：性能（[[alloc-hotpat
 3. **释放原子**：失败回滚不需调用方置 NULL。
 4. **所有权进类型**：接管用 `**` 或明确标注。
 5. **限流语义二选一**：真 per-client，或改签名承认 per-server，
-   **用语义测试锁死**。
-6. **子模块独立生命周期**：限流 / TLS / WS / 压缩拆成独立对象。
+   **用语义测试锁死**。→ **已定，且走的是第三条路**（2026-10-18）：两条都不选，
+   **整块删除内置限流**，只留分派前接缝 `uvhttp_server_set_request_filter()`，
+   策略语义全归调用方。理由见「### 4」下方的执行注记与
+   [[request-filter-seam-replaces-rate-limiter]]。
+6. **子模块独立生命周期**：~~限流~~ / TLS / WS / 压缩拆成独立对象
+   （限流已随 d3 删除，本条只剩三件）。
 
 ## 已拍板并已执行：删（2026-10-11）
 
@@ -157,8 +174,10 @@ LRU setter 写点不变量）、#474（合并后评审修复）。
 与本轮「还债不加班」的定位矛盾，且要动 per-connection 分配、必须过基准门禁。
 
 这些上限的真实权威保持为编译期常量：`UVHTTP_READ_BUFFER_SIZE`、`UVHTTP_MAX_BODY_SIZE`、
-`MAX_URL_LEN`、`UVHTTP_CACHE_DEFAULT_*`；限流改由 `uvhttp_server_enable_rate_limit()`
-在 server 上表达。需要某个运行时旋钮时，连同读取它的代码一起加回来。
+`MAX_URL_LEN`、`UVHTTP_CACHE_DEFAULT_*`；~~限流改由
+`uvhttp_server_enable_rate_limit()` 在 server 上表达~~（**该 API 已于 2026-10-18
+随 d3 删除**，请求策略现在的表达位置是 `uvhttp_server_set_request_filter()`）。
+需要某个运行时旋钮时，连同读取它的代码一起加回来。
 
 ## 影响范围
 
@@ -222,53 +241,20 @@ LRU setter 写点不变量）、#474（合并后评审修复）。
   source: "PR #479 评审复核：builder 层已删（#479）、构造回滚范式已修（#475），修正 server->config 非死字段"
   affects: [api-atomization-orthogonalization]
 
-
-## Timeline
-
-- time: 2026-10-09T00:27:12
-  kind: decision
-  summary: "Created this page: v2.10 方向：API 原子化与正交化，停止新增特性"
-  source: "2026-10-09 与用户讨论确定的下个版本方向"
-  affects: [api-atomization-orthogonalization]
-
-- time: 2026-10-09T00:27:30
-  kind: decision
-  summary: "确立 v2.10 方向：停止新增特性，公共 API 原子化与正交化"
-  source: "读 include/ 现状（299 符号 / 28 头文件）+ 追踪 server.c / request.c / config.c 实现"
-  affects: [api-atomization-orthogonalization]
-
-- time: 2026-10-09T00:39:16
-  kind: decision
-  summary: "兼容策略定为 B：2.10 直接破坏性改，不留 deprecated 兼容层"
-  source: "用户拍板（2026-10-09）"
-  affects: [api-atomization-orthogonalization]
-
-- time: 2026-10-09T00:39:33
-  kind: decision
-  summary: "确定兼容策略 B：2.10 直接破坏性改造，不留兼容层"
-  source: "用户拍板 2026-10-09"
-  affects: [api-atomization-orthogonalization]
-
-- time: 2026-10-09T00:43:09
-  kind: evidence
-  summary: "深入核实后修正：配置问题不止双通道 —— 三个 update_* 中有两个写的字段在全库无任何执行点读它们"
-  source: "2026-10-09 grep 全 src 读点核实"
-  affects: [api-atomization-orthogonalization]
-
-- time: 2026-10-09T00:46:40
-  kind: decision
-  summary: "第一性原理重估：配置问题的真因不是双通道，而是 uvhttp_config_t 26 字段中 14 个从不被执行路径读取 —— config 是装饰品，不是控制面"
-  source: "2026-10-09 逐字段读点核实（脚本按 config 对象限定匹配）"
-  affects: [api-atomization-orthogonalization]
-
-- time: 2026-10-18T01:58:58
-  kind: decision
-  summary: Rewrote compiled_truth to the new best understanding
-  source: "PR #479 评审复核：builder 层已删（#479）、构造回滚范式已修（#475），修正 server->config 非死字段"
-  affects: [api-atomization-orthogonalization]
-
 - time: 2026-10-18T04:24:29
   kind: decision
   summary: "配置 14 死字段已随 PR #472 删除：诊断标为删除前，待拍板段改为已拍板并已执行"
   source: brain update-truth
   affects: [api-atomization-orthogonalization]
+
+- time: 2026-10-18T06:32:38
+  kind: decision
+  summary: "d3 落地：限流「二选一」改为第三条路 —— 删内置限流、只留分派前 request filter 接缝"
+  source: "2026-10-18 PR refactor/drop-builtin-rate-limit（路线 d3）"
+  affects: [api-atomization-orthogonalization]
+
+- time: 2026-10-18T06:32:43
+  kind: reversal
+  summary: "推翻「限流语义二选一（真 per-client / 改签名承认 per-server）」与「限流改由 uvhttp_server_enable_rate_limit() 在 server 上表达」：改为删除内置限流、只留 uvhttp_server_set_request_filter() 分派前接缝"
+  source: "2026-10-18 用户拍板「不做限流，只设计扩展接口由使用者实现」；落地 PR refactor/drop-builtin-rate-limit"
+  affects: [api-atomization-orthogonalization, request-filter-seam-replaces-rate-limiter]

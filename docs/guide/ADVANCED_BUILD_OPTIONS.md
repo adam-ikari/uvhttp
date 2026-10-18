@@ -424,29 +424,6 @@ void* uvhttp_custom_calloc(size_t nmemb, size_t size) {
 - **Usage**: Should not be changed
 - **Impact**: Changing this value may cause incorrect IP address parsing
 
-## Rate Limit Configuration
-
-### UVHTTP_RATE_LIMIT_MAX_REQUESTS
-- **Type**: STRING
-- **Default**: 1000000
-- **Description**: Rate limit maximum number of requests
-- **Usage**: Adjust based on your application's rate limiting needs
-- **Impact**: Higher values allow more requests but may increase server load
-
-### UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS
-- **Type**: STRING
-- **Default**: 86400
-- **Description**: Rate limit maximum time window in seconds
-- **Usage**: Adjust based on your application's rate limiting needs
-- **Impact**: Longer windows allow more flexibility but may reduce rate limiting effectiveness
-
-### UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS
-- **Type**: STRING
-- **Default**: 10
-- **Description**: Rate limit minimum timeout in seconds
-- **Usage**: Adjust based on your application's rate limiting needs
-- **Impact**: Shorter timeouts may cause more false positives
-
 ## How to Use Advanced Options
 
 To configure advanced options, use CMake's `-D` flag:

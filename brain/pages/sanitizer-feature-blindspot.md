@@ -5,7 +5,7 @@ category: project
 status: active
 tags: [ci, asan, ubsan, coverage, static-files]
 created: "2026-10-03T03:34:47"
-updated: "2026-10-07T06:36:58"
+updated: "2026-10-18T06:37:38"
 ---
 
 <!-- compiled_truth -->
@@ -98,4 +98,10 @@ nm dist/lib/libuvhttp.a | grep -w uvhttp_static_resolve_safe_path
   kind: reversal
   summary: "盲区已修：ci-release-gate 的 asan-gate 与 ci-nightly 的 test-ubsan / coverage(ubuntu-build-all) 三处 cmake 已加 -DBUILD_WITH_ROUTER_CACHE=ON。至此 BUILD_WITH_STATIC_FILES 与 BUILD_WITH_ROUTER_CACHE 两个默认 OFF 的 feature 在 ASan/UBSan/coverage 下均纳入编译——router_cache/lru_cache 约 772 行代码不再处于 sanitizer 盲区。本地 ASan+ROUTER_CACHE=ON 跑 119 测试全过、零泄漏验证安全。"
   source: "2026-10-07 修复"
+  affects: [sanitizer-feature-blindspot]
+
+- time: 2026-10-18T06:37:38
+  kind: evidence
+  summary: "minimal 配置（WEBSOCKET=OFF）下 test_protocol_upgrade_boost_coverage 段错误 + 1 个用例失败，属既有缺陷且与 d3 无关：protocol_registry 只在 #if UVHTTP_FEATURE_WEBSOCKET 的 register_websocket_upgrade 里分配（src/uvhttp_server.c:329），registry 恒为 NULL，而 test/unit/test_protocol_upgrade_boost_coverage.cpp:240 直接 reg->protocol_count 解引用"
+  source: "2026-10-18 d3 验证跑 minimal 组合时定位"
   affects: [sanitizer-feature-blindspot]

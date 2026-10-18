@@ -107,7 +107,6 @@ Footprint is configurable at compile time — only pay for what you use:
 | TLS (mbedtls) | `BUILD_WITH_HTTPS` | ON |
 | Static files | `UVHTTP_FEATURE_STATIC_FILES` | ON |
 | Compression | `BUILD_WITH_COMPRESSION` | ON |
-| Rate limiting | `UVHTTP_FEATURE_RATE_LIMIT` | ON |
 | mimalloc allocator | `BUILD_WITH_MIMALLOC` | OFF |
 
 A minimal embedded build (HTTP/1.1 only, no TLS/WebSocket/static/compression)

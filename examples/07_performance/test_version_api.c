@@ -35,7 +35,6 @@ int main(void) {
     printf("  Router Cache:    %s\n", uvhttp_is_feature_enabled("router_cache") ? "Enabled" : "Disabled");
     printf("  LRU Cache:       %s\n", uvhttp_is_feature_enabled("lru_cache") ? "Enabled" : "Disabled");
     printf("  CORS:            %s\n", uvhttp_is_feature_enabled("cors") ? "Enabled" : "Disabled");
-    printf("  Rate Limit:      %s\n", uvhttp_is_feature_enabled("rate_limit") ? "Enabled" : "Disabled");
     printf("  Protocol Upgrade: %s\n", uvhttp_is_feature_enabled("protocol_upgrade") ? "Enabled" : "Disabled");
 
     printf("\n");

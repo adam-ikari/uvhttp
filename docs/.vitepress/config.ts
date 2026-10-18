@@ -120,7 +120,7 @@ export default defineConfig({
             {
               text: 'Features',
               items: [
-                { text: 'Rate Limit API', link: '/guide/RATE_LIMIT_API' },
+                { text: 'Request Filter API', link: '/guide/REQUEST_FILTER_API' },
                 { text: 'Static File Server', link: '/guide/STATIC_FILE_SERVER' }
               ]
             },
@@ -241,7 +241,7 @@ export default defineConfig({
             {
               text: '功能模块',
               items: [
-                { text: '限流 API', link: '/zh/guide/RATE_LIMIT_API' },
+                { text: '请求过滤器 API', link: '/zh/guide/REQUEST_FILTER_API' },
                 { text: '静态文件服务', link: '/zh/guide/STATIC_FILE_SERVER' }
               ]
             },

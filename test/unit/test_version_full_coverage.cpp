@@ -243,10 +243,11 @@ TEST_F(UvhttpVersionFullCoverageTest, IsFeatureEnabledLRUCache) {
 }
 
 TEST_F(UvhttpVersionFullCoverageTest, IsFeatureEnabledRateLimit) {
+    /* The built-in limiter was removed in v2.10. The name stays accepted so
+     * callers never crash, but it must always report "unavailable" (0). */
     int result = uvhttp_is_feature_enabled("rate_limit");
     
-    ASSERT_GE(result, 0);
-    ASSERT_LE(result, 1);
+    EXPECT_EQ(result, 0);
 }
 
 TEST_F(UvhttpVersionFullCoverageTest, IsFeatureEnabledProtocolUpgrade) {
@@ -300,9 +301,6 @@ TEST_F(UvhttpVersionFullCoverageTest, FeatureConsistencyWithBuildInfo) {
     
     int lru_enabled = uvhttp_is_feature_enabled("lru_cache");
     EXPECT_EQ(lru_enabled, info.feature_lru_cache);
-    
-    int rl_enabled = uvhttp_is_feature_enabled("rate_limit");
-    EXPECT_EQ(rl_enabled, info.feature_rate_limit);
     
     int pu_enabled = uvhttp_is_feature_enabled("protocol_upgrade");
     EXPECT_EQ(pu_enabled, info.feature_protocol_upgrade);
@@ -538,9 +536,6 @@ TEST_F(UvhttpVersionFullCoverageTest, BuildInfoFeatureFlagsRange) {
     
     EXPECT_GE(info.feature_lru_cache, 0);
     EXPECT_LE(info.feature_lru_cache, 1);
-    
-    EXPECT_GE(info.feature_rate_limit, 0);
-    EXPECT_LE(info.feature_rate_limit, 1);
 }
 
 /* ========== Memory Configuration Tests ========== */

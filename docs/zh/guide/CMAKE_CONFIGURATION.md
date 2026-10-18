@@ -90,14 +90,6 @@ set(UVHTTP_MAX_HEADER_VALUE_SIZE 8192 CACHE STRING "Max HTTP header value size")
 | `UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE` | 2 | LRU 缓存批量驱逐大小 | 1-10 |
 | `UVHTTP_ZEROCOPY_MIN_BODY` | 4096 | 走零拷贝 writev 发送路径的最小响应 body 大小（字节） | 4096-8192 |
 
-### 限流
-
-| 常量名 | 默认值 | 说明 | 推荐配置 |
-|--------|--------|------|----------|
-| `UVHTTP_RATE_LIMIT_MAX_REQUESTS` | 1000000 | 限流最大请求数 | 根据需求调整 |
-| `UVHTTP_RATE_LIMIT_MAX_WINDOW_SECONDS` | 86400 | 限流最大时间窗口（秒） | 根据需求调整 |
-| `UVHTTP_RATE_LIMIT_MIN_TIMEOUT_SECONDS` | 10 | 限流最小超时（秒） | 5-30 |
-
 ### 其他
 
 | 常量名 | 默认值 | 说明 | 推荐配置 |

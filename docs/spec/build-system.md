@@ -53,7 +53,6 @@ configuration, C standard, compiler flags, and CI build matrix.
 | `BUILD_EXAMPLES` | OFF | Build example programs |
 | `BUILD_BENCHMARKS` | OFF | Build benchmark server |
 | `UVHTTP_FEATURE_STATIC_FILES` | ON | Static file serving |
-| `UVHTTP_FEATURE_RATE_LIMIT` | ON | Rate limiting |
 | `UVHTTP_FEATURE_LRU_CACHE` | ON | LRU cache |
 | `UVHTTP_FEATURE_MIDDLEWARE` | ON | Middleware support |
 | `UVHTTP_ALLOCATOR_TYPE` | 0 | 0=system, 1=mimalloc, 2=custom |

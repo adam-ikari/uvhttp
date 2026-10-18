@@ -6,8 +6,7 @@
  * Targets:
  * - request.c: protocol upgrade paths (lines 378-437),
  *              ensure_valid_url (line 327),
- *              get_client_ip TCP peer name (lines 762-776),
- *              rate limit whitelist (lines 276, 280-292)
+ *              get_client_ip TCP peer name (lines 762-776)
  * - response.c: control char header skip (line 160),
  *               header realloc path (lines 337-338),
  *               null header in build_response_headers (line 160)
@@ -869,69 +868,6 @@ TEST_F(ClientIpTcpTest, GetClientIp_TcpPeerName_WithXForwardedFor_Untrusted) {
     const char* ip = uvhttp_request_get_client_ip(&req);
     ASSERT_NE(ip, nullptr);
     EXPECT_STREQ(ip, "127.0.0.1");
-}
-
-// ============================================================================
-// Rate limit whitelist (lines 276, 280-292)
-//
-// is_client_whitelisted calls uv_tcp_getpeername on conn->tcp_handle.
-// We need a real connected connection for the peer name lookup.
-// This is tested via a full parser callback flow with rate limiting enabled.
-// ============================================================================
-
-TEST_F(ClientIpTcpTest, RateLimitWhitelist_GetpeernameFails) {
-    // Test rate limit whitelist path when getpeername fails (no real peer).
-    // Covers lines 276, 280-285 in request.c where getpeername returns != 0.
-
-    uvhttp_server_t* srv = nullptr;
-    ASSERT_EQ(uvhttp_server_new(&loop, &srv), UVHTTP_OK);
-
-    // Enable rate limiting with whitelist
-    ASSERT_EQ(uvhttp_server_enable_rate_limit(srv, 10, 60), UVHTTP_OK);
-    ASSERT_EQ(uvhttp_server_add_rate_limit_whitelist(srv, "10.0.0.1"),
-              UVHTTP_OK);
-
-    // Create a connection using the server
-    uvhttp_connection_t* test_conn = nullptr;
-    ASSERT_EQ(uvhttp_connection_new(srv, &test_conn), UVHTTP_OK);
-    ASSERT_NE(test_conn, nullptr);
-
-    // The connection's tcp_handle is not connected to a real peer,
-    // so uv_tcp_getpeername will fail -> is_client_whitelisted returns 0.
-    // The request still proceeds because rate limit allows it (max 10).
-
-    llhttp_reset(test_conn->request->parser);
-    const char* raw = "GET /test HTTP/1.1\r\nHost: x\r\n\r\n";
-    int rc = llhttp_execute(test_conn->request->parser, raw, strlen(raw));
-    EXPECT_EQ(rc, 0);
-    EXPECT_EQ(test_conn->response->status_code, 200);
-
-    uvhttp_connection_free(test_conn);
-    uv_run(&loop, UV_RUN_DEFAULT);
-    uvhttp_server_free(srv);
-}
-
-TEST_F(ClientIpTcpTest, RateLimitWhitelist_DisabledRateLimit) {
-    // When rate_limit_enabled is 0, check_rate_limit_whitelist returns 0 early
-    // Covers line 297-298
-
-    uvhttp_server_t* srv = nullptr;
-    ASSERT_EQ(uvhttp_server_new(&loop, &srv), UVHTTP_OK);
-
-    // Don't enable rate limiting - rate_limit_enabled stays 0
-
-    uvhttp_connection_t* test_conn = nullptr;
-    ASSERT_EQ(uvhttp_connection_new(srv, &test_conn), UVHTTP_OK);
-
-    llhttp_reset(test_conn->request->parser);
-    const char* raw = "GET /test HTTP/1.1\r\nHost: x\r\n\r\n";
-    int rc = llhttp_execute(test_conn->request->parser, raw, strlen(raw));
-    EXPECT_EQ(rc, 0);
-    EXPECT_EQ(test_conn->response->status_code, 200);
-
-    uvhttp_connection_free(test_conn);
-    uv_run(&loop, UV_RUN_DEFAULT);
-    uvhttp_server_free(srv);
 }
 
 // ============================================================================

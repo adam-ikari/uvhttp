@@ -173,7 +173,7 @@ server->config->max_file_size = 10 * 1024 * 1024; // 10MB
 - **[统一响应指南](UNIFIED_RESPONSE_GUIDE.md)**：标准响应模式
 
 ### 高级特性
-- **[限流 API](RATE_LIMIT_API.md)**：令牌桶限流
+- **[请求过滤器 API](REQUEST_FILTER_API.md)**：分派前准入策略，限流由此实现
 - **[静态文件服务器](STATIC_FILE_SERVER.md)**：文件服务
 - **压缩**：零开销压缩
 

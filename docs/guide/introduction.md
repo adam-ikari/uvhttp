@@ -179,7 +179,7 @@ server->config->max_file_size = 10 * 1024 * 1024; // 10MB
 - **[Unified Response Guide](../zh/guide/UNIFIED_RESPONSE_GUIDE.md)**: Standard response patterns
 
 ### Advanced Features
-- **[Rate Limit API](../zh/guide/RATE_LIMIT_API.md)**: Token bucket rate limiting
+- **[Request Filter API](REQUEST_FILTER_API.md)**: Pre-dispatch admission policy, including rate limiting
 - **[Static File Server](STATIC_FILE_SERVER.md)**: Efficient file serving
 - **Compression**: Zero-overhead compression
 

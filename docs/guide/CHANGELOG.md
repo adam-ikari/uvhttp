@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+- **Built-in rate limiting deleted** (v2.10 route d3): `uvhttp_server_enable_rate_limit`, `uvhttp_server_disable_rate_limit`, `uvhttp_server_check_rate_limit`, `uvhttp_server_get_rate_limit_status`, `uvhttp_server_reset_rate_limit_client`, `uvhttp_server_add_rate_limit_whitelist` and `uvhttp_server_clear_rate_limit_all`, together with the eight `rate_limit_*` fields in `uvhttp_server_t`, `struct whitelist_item`, and the `UVHTTP_FEATURE_RATE_LIMIT` flag across `include/uvhttp_features.h`, `CMakeLists.txt`, `cmake/UserOptions.cmake`, `cmake/uvhttp-config.in.cmake`, `justfile` and `.github/workflows/reusable/security.yml`. The implementation being removed was broken in ways the API hid: one `rate_limit_request_count` on the server made the window per-server, so a single client over quota 429'd every other client, while `get_rate_limit_status` and `reset_rate_limit_client` accepted a `client_ip` argument they never read (`reset` said so in its own comment). Keying the whitelist through `sockaddr_in`/`INET_ADDRSTRLEN` additionally excluded IPv6 clients. Window length, counting dimension (client IP, tenant, API key), storage and eviction are application policy, so the library stopped guessing them
+- **`uvhttp_version_info_t.feature_rate_limit`** removed; the fields after it shift, which breaks callers that initialize the struct by position (assigning by name is unaffected). `uvhttp_has_feature("rate_limit")` now reports the feature as unsupported instead of reading a deleted field
+
+### Added
+- **`uvhttp_server_set_request_filter(server, filter, user_data)`**: a single-slot pre-dispatch seam installed exactly where the deleted limiter used to run in `on_message_complete` — before protocol-upgrade detection, so a filter can refuse an upgrade too, and before the router lookup. Returning `UVHTTP_OK` continues dispatch; any other error code stops it. The filter is expected to send its own reply (429 plus `Retry-After` is now the caller's decision); when it returns an error without sending, the library keeps whatever status the filter wrote and otherwise sends 403 `Forbidden` as `text/plain`, so a client is never left waiting. Passing `NULL` clears the seam. `user_data` is borrowed, exactly like `server->handler`
+- **`docs/guide/REQUEST_FILTER_API.md`** (and the Chinese counterpart) documents the contract, with a per-client fixed-window snippet written entirely in user code. `examples/03_middleware/rate_limit_demo.c` is that snippet made runnable: per-IP accounting via `uvhttp_request_get_client_ip()`, so saturating one client leaves other clients untouched — the behavior the deleted per-server counter could not produce
+
+### Compatibility
+- `UVHTTP_ERROR_RATE_LIMIT_EXCEEDED` (-550) stays. It changes from a code the library returned internally to an idiomatic code for the application's filter to return
+- Downstream builds still passing `-DBUILD_WITH_RATE_LIMIT=OFF` get a CMake unused-variable warning and nothing else
+
 ## [2.9.2] - 2026-10-02
 
 ### Removed

@@ -288,7 +288,6 @@ add_definitions(-DUVHTTP_FEATURE_MIDDLEWARE=1)
 add_definitions(-DUVHTTP_FEATURE_STATIC_FILES=1)
 add_definitions(-DUVHTTP_FEATURE_TLS=1)
 add_definitions(-DUVHTTP_FEATURE_LRU_CACHE=1)
-add_definitions(-DUVHTTP_FEATURE_RATE_LIMIT=1)
 ```
 
 #### Platform Detection
@@ -879,7 +878,6 @@ set_tests_properties(${test_name} PROPERTIES
 
 - test_server_full_coverage
 - test_deps_full_coverage
-- test_server_rate_limit_coverage
 - test_server_simple_api_coverage
 - test_static_prewarm_coverage
 - test_stress

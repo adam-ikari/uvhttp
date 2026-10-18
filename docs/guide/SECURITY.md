@@ -184,10 +184,12 @@ mbedtls_ssl_conf_ciphersuites(&conf, ciphers);
 
 UVHTTP applies several DoS protections:
 
-1. **Rate Limiting**
-   - Token bucket algorithm
-   - Configurable limits per IP
-   - Whitelist support
+1. **Request Filter** (application-supplied)
+   - The library runs a pre-dispatch hook and ships no limiter of its own
+   - You decide the key, the window and the reply - per-client IP counting is
+     documented in the Request Filter API
+   - A limiter placed behind a proxy must not trust `X-Forwarded-For` unless
+     `trust_proxy_headers` is configured
 
 2. **Connection Limits**
    - Maximum connections: 2048 (configurable)
