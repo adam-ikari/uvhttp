@@ -2,7 +2,7 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-10-18T06:31:44"
+updated: "2026-10-18T07:44:16"
 ---
 
 # Roadmap
@@ -30,7 +30,7 @@ gantt
   Fuzz 测试增强            :done, c4, after b2, 14d
   社区贡献指南             :done, c4b, after c4, 3d
   测试基建清理              :done, c4c, after c4b, 1d
-  section v2.10.x — API 原子化与正交化（特性冻结）
+  section v3.0.0（原 v2.10.x）— API 原子化与正交化（特性冻结）
   router 迁移致路由全丢（修复） :done, d1, 2026-10-09, 2d
   配置静默失效全线（14 字段）  :done, d2, after d1, 4d
   删内置限流 + request filter 接缝 :done, d3, after d2, 3d
@@ -81,7 +81,7 @@ gantt
 | 测试有效性治理 | P0 | ✅ 已完成 | 静默跳过 101 → 18（#453-#456）；恒绿零验证修复（#457）；TLS 覆盖率 60.3% → 67.9%（#461-#463）；PR 测试移至 pre-release 门禁（#465） |
 | Sanitizer 盲区修复 | P0 | ✅ 已完成 | STATIC_FILES（#449）与 ROUTER_CACHE（#468）纳入 ASan/UBSan/coverage——此前 feature 默认 OFF 致守卫源文件整文件不编译 |
 
-### v2.10.x — API 原子化与正交化（特性冻结）
+### v3.0.0（原 v2.10.x）— API 原子化与正交化（特性冻结）
 
 **方向已定：不加新特性。** 详见 [[api-atomization-orthogonalization]]。
 理由：性能、测试、CI 三条抓手在 v2.9.x 已各自走到实测收益为零或治理完毕，
@@ -104,8 +104,10 @@ gantt
 
 > ✅ **兼容策略已定：直接破坏性改（B）**（2026-10-09）。不留 deprecated 兼容层，
 > 不做新旧 API 并行 —— 双份测试与"哪个是新的"心智负担正是本轮要消灭的东西。
-> 一次改干净，v2.10 即干净的新 API，3.0 不再背清理义务。版本号保留 2.10
-> 只为不跳号，靠 CHANGELOG + 迁移说明交代。
+> 一次改干净，窗口内容就是干净的新 API。**跳号豁免已撤销**（2026-10-18）：本窗口
+> 按 `docs/release-strategy.md` 的 MAJOR 判号发布为 **v3.0.0**，因为里面没有一条属于
+> 「向后兼容的新功能」。策略 B 仍然有效的部分是「不留 deprecated 兼容层、不做新旧
+> API 并行」—— 见 [[release-v300]]。
 
 ### 最低优先级（长期 / 按需）
 
@@ -127,6 +129,6 @@ gantt
 - ✅ LRU 缓存（静态文件 + 压缩）
 - ✅ gzip 压缩（RFC 1952）
 - ✅ 32-bit 嵌入式支持
-- ~~✅ 限流（令牌桶 + 白名单）~~ **已于 v2.10 整块删除**（路线 d3）：实现是 per-server 单计数、白名单只支持 IPv4，库改为只提供分派前接缝 `uvhttp_server_set_request_filter()`，策略归调用方 —— 见 [[request-filter-seam-replaces-rate-limiter]]
+- ~~✅ 限流（令牌桶 + 白名单）~~ **已于 v3.0.0 整块删除**（路线 d3）：实现是 per-server 单计数、白名单只支持 IPv4，库改为只提供分派前接缝 `uvhttp_server_set_request_filter()`，策略归调用方 —— 见 [[request-filter-seam-replaces-rate-limiter]]
 - ✅ ASan/UBSan CI 门禁（101/101 测试通过）
 - ✅ 编译时裁剪（36 个选项）

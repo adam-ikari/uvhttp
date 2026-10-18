@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [api, design, roadmap, v2.10]
 created: "2026-10-09T00:27:12"
-updated: "2026-10-18T06:32:43"
+updated: "2026-10-18T07:41:34"
 ---
 
 <!-- compiled_truth -->
@@ -258,3 +258,9 @@ LRU setter 写点不变量）、#474（合并后评审修复）。
   summary: "推翻「限流语义二选一（真 per-client / 改签名承认 per-server）」与「限流改由 uvhttp_server_enable_rate_limit() 在 server 上表达」：改为删除内置限流、只留 uvhttp_server_set_request_filter() 分派前接缝"
   source: "2026-10-18 用户拍板「不做限流，只设计扩展接口由使用者实现」；落地 PR refactor/drop-builtin-rate-limit"
   affects: [api-atomization-orthogonalization, request-filter-seam-replaces-rate-limiter]
+
+- time: 2026-10-18T07:41:34
+  kind: reversal
+  summary: "改号：本窗口不发布为 v2.10，按 docs/release-strategy.md 的 MAJOR 判据发布为 v3.0.0（2026-10-18 用户拍板）。撤销的是「版本号留在 2.10 只为不跳号」这半截；策略 B 的另一半（不留 deprecated 兼容层、不做新旧 API 并行）仍然有效。理由：窗口内 4 次删除 + 2 次改名没有一条属于「向后兼容的新功能」，其中 uvhttp_version_info_t 删字段还是 ABI 破坏；而 2.10 从未发布（最新 tag v2.9.2），此刻改号零迁移成本，以 2.10 发出反而会让 ^2.x 依赖静默破坏。详见 [[release-v300]]"
+  source: "2026-10-18 用户拍板：发布 3.0.0"
+  affects: [api-atomization-orthogonalization, roadmap, request-filter-seam-replaces-rate-limiter]
