@@ -1,6 +1,6 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-10-09T01:08:06.656Z._
+_Auto-generated. Last updated 2026-10-17T17:47:47.518Z._
 
 - [alloc-hotpath-measured](pages/alloc-hotpath-measured.md) — category: decision | tags: [performance, benchmark, allocator, methodology, yagni] | # 每请求分配已实测：省一次仅 0.026%，内存分配优化不做
 - [api-atomicity-audit](pages/api-atomicity-audit.md) — category: decision | tags: [api, atomicity, orthogonality, audit, v2.10] | # API 原子化与正交性审计
@@ -22,6 +22,7 @@ _Auto-generated. Last updated 2026-10-09T01:08:06.656Z._
 - [integration-tests-are-servers](pages/integration-tests-are-servers.md) — category: decision | tags: [test, integration, assert, ci, cleanup] | # test/integration 下 19 个文件不是测试
 - [io-uring-evaluation](pages/io-uring-evaluation.md) — category: decision | tags: [performance, architecture, io-uring, libuv, yagni] | # io_uring 评估：当前架构下不可达，待办关闭
 - [lcov-mock-aggregation-underestimate](pages/lcov-mock-aggregation-underestimate.md) — category: decision | tags: [coverage, lcov, test-infra, mock] | # lcov 聚合低估 mock 测试覆盖（connection.c 45.3% 实为 ~79.6%）
+- [no-config-file-parsing](pages/no-config-file-parsing.md) — category: decision | tags: [config, scope, roadmap] | ## 约束（2026-10-17 用户确认，记录为项目约束）
 - [perf-regression-gate](pages/perf-regression-gate.md) — category: decision | tags: [performance, benchmark, ci, gate] | ## 现状
 - [performance-benchmark-update](pages/performance-benchmark-update.md) — category: decision | tags: [performance, benchmark, release-v2.6.2] | ## 变更（v2.7.0，commit aecb053，2026-08-21）
 - [release-checklist-enforced](pages/release-checklist-enforced.md) — category: decision | tags: [release, ci, quality] | # 发布检查清单：从靠人读到脚本门禁
