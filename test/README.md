@@ -26,7 +26,6 @@ test/
 ├── scripts/                        # 测试脚本
 │   ├── generate_test_certs.sh      # 生成测试证书脚本
 │   ├── run_performance_tests.sh    # 性能测试脚本
-│   ├── run_rate_limit_tests.sh     # 限流测试脚本
 │   └── run_uvhttp_performance_local.sh # UVHTTP 本地性能测试脚本
 └── unit/                           # 单元测试
     ├── simple_test.cpp             # Google Test 示例测试
@@ -108,13 +107,6 @@ bash test/scripts/run_performance_tests.sh
 cd build
 make performance_allocator
 ./dist/bin/performance_allocator
-```
-
-## 限流测试
-
-```bash
-# 运行限流功能测试
-bash test/scripts/run_rate_limit_tests.sh
 ```
 
 ## 配置测试

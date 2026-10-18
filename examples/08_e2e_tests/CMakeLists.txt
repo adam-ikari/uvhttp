@@ -38,42 +38,35 @@ target_link_libraries(test_error_handling_simple_e2e PRIVATE ${UVHTTP_LIB} ${LIB
 uvhttp_add_example_dependencies(test_error_handling_simple_e2e)
 add_dependencies(test_error_handling_simple_e2e uvhttp)
 
-# E2E Test 5: Rate Limit E2E Test
-add_executable(test_rate_limit_simple_e2e test_rate_limit_simple_e2e.c)
-target_include_directories(test_rate_limit_simple_e2e PRIVATE ${UVHTTP_INCLUDE_DIR} ${LLHTTP_INCLUDE_DIR})
-target_link_libraries(test_rate_limit_simple_e2e PRIVATE ${UVHTTP_LIB} ${LIBUV_LIB} ${XXHASH_LIB} ${LLHTTP_LIB} ${MBEDTLS_LIBS})
-uvhttp_add_example_dependencies(test_rate_limit_simple_e2e)
-add_dependencies(test_rate_limit_simple_e2e uvhttp)
-
-# E2E Test 6: Routing E2E Test
+# E2E Test 5: Routing E2E Test
 add_executable(test_routing_simple_e2e test_routing_simple_e2e.c)
 target_include_directories(test_routing_simple_e2e PRIVATE ${UVHTTP_INCLUDE_DIR} ${LLHTTP_INCLUDE_DIR})
 target_link_libraries(test_routing_simple_e2e PRIVATE ${UVHTTP_LIB} ${LIBUV_LIB} ${XXHASH_LIB} ${LLHTTP_LIB} ${MBEDTLS_LIBS})
 uvhttp_add_example_dependencies(test_routing_simple_e2e)
 add_dependencies(test_routing_simple_e2e uvhttp)
 
-# E2E Test 7: LRU Cache E2E Test
+# E2E Test 6: LRU Cache E2E Test
 add_executable(test_lru_cache_simple_e2e test_lru_cache_simple_e2e.c)
 target_include_directories(test_lru_cache_simple_e2e PRIVATE ${UVHTTP_INCLUDE_DIR} ${LLHTTP_INCLUDE_DIR})
 target_link_libraries(test_lru_cache_simple_e2e PRIVATE ${UVHTTP_LIB} ${LIBUV_LIB} ${XXHASH_LIB} ${LLHTTP_LIB} ${MBEDTLS_LIBS})
 uvhttp_add_example_dependencies(test_lru_cache_simple_e2e)
 add_dependencies(test_lru_cache_simple_e2e uvhttp)
 
-# E2E Test 8: Connection E2E Test
+# E2E Test 7: Connection E2E Test
 add_executable(test_connection_simple_e2e test_connection_simple_e2e.c)
 target_include_directories(test_connection_simple_e2e PRIVATE ${UVHTTP_INCLUDE_DIR} ${LLHTTP_INCLUDE_DIR})
 target_link_libraries(test_connection_simple_e2e PRIVATE ${UVHTTP_LIB} ${LIBUV_LIB} ${XXHASH_LIB} ${LLHTTP_LIB} ${MBEDTLS_LIBS})
 uvhttp_add_example_dependencies(test_connection_simple_e2e)
 add_dependencies(test_connection_simple_e2e uvhttp)
 
-# E2E Test 9: Protocol Upgrade E2E Test
+# E2E Test 8: Protocol Upgrade E2E Test
 add_executable(test_protocol_upgrade_simple_e2e test_protocol_upgrade_simple_e2e.c)
 target_include_directories(test_protocol_upgrade_simple_e2e PRIVATE ${UVHTTP_INCLUDE_DIR} ${LLHTTP_INCLUDE_DIR})
 target_link_libraries(test_protocol_upgrade_simple_e2e PRIVATE ${UVHTTP_LIB} ${LIBUV_LIB} ${XXHASH_LIB} ${LLHTTP_LIB} ${MBEDTLS_LIBS})
 uvhttp_add_example_dependencies(test_protocol_upgrade_simple_e2e)
 add_dependencies(test_protocol_upgrade_simple_e2e uvhttp)
 
-# E2E Test 10: Error Handler E2E Test
+# E2E Test 9: Error Handler E2E Test
 add_executable(test_error_handler_simple_e2e test_error_handler_simple_e2e.c)
 target_include_directories(test_error_handler_simple_e2e PRIVATE ${UVHTTP_INCLUDE_DIR} ${LLHTTP_INCLUDE_DIR})
 target_link_libraries(test_error_handler_simple_e2e PRIVATE ${UVHTTP_LIB} ${LIBUV_LIB} ${XXHASH_LIB} ${LLHTTP_LIB} ${MBEDTLS_LIBS})

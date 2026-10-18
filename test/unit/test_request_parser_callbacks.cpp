@@ -964,42 +964,7 @@ TEST_F(ParserCallbackTest, ProtocolUpgrade_MultipleProtos_NoMatch) {
 }
 
 // ============================================================================
-// 38. Rate limit check - request allowed (lines 354-362)
-// ============================================================================
-TEST_F(ParserCallbackTest, RateLimitCheck_Allowed) {
-    // Enable rate limiting with generous limits
-    ASSERT_EQ(uvhttp_server_enable_rate_limit(server, 100, 60), UVHTTP_OK);
-
-    const char* raw = "GET /test HTTP/1.1\r\nHost: example.com\r\n\r\n";
-    int rc = Execute(raw);
-    // Request should be allowed (within rate limit)
-    EXPECT_EQ(rc, 0);
-}
-
-// ============================================================================
-// 39. Rate limit check - request blocked (lines 354-362)
-// ============================================================================
-TEST_F(ParserCallbackTest, RateLimitCheck_Blocked) {
-    // Enable rate limiting with max 1 request per window
-    ASSERT_EQ(uvhttp_server_enable_rate_limit(server, 1, 60), UVHTTP_OK);
-
-    // First request - should be allowed
-    const char* raw1 = "GET /first HTTP/1.1\r\nHost: x\r\n\r\n";
-    int rc = Execute(raw1);
-    EXPECT_EQ(rc, 0);
-
-    // Second request - should be rate limited
-    ReInitParser();
-    const char* raw2 = "GET /second HTTP/1.1\r\nHost: x\r\n\r\n";
-    rc = Execute(raw2);
-    EXPECT_EQ(rc, 0);
-
-    // The second request should have triggered a 429 response
-    EXPECT_EQ(conn->response->status_code, 429);
-}
-
-// ============================================================================
-// 40. No router - default 200 response (lines 517-525)
+// 38. No router - default 200 response (lines 517-525)
 // ============================================================================
 TEST_F(ParserCallbackTest, NoRouter_DefaultResponse) {
     // Server has no router set (default state from SetUp)

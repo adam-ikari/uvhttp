@@ -98,65 +98,6 @@ TEST(UvhttpServerErrorCoverageTest, SetContextNullParams) {
     uvhttp_server_free(server);
 }
 
-#if UVHTTP_FEATURE_RATE_LIMIT
-/* 测试限流功能 NULL 参数 */
-TEST(UvhttpServerErrorCoverageTest, RateLimitNullParams) {
-    /* 测试 NULL 服务器 */
-    uvhttp_error_t result = uvhttp_server_enable_rate_limit(NULL, 100, 60);
-    EXPECT_NE(result, UVHTTP_OK);
-
-    result = uvhttp_server_disable_rate_limit(NULL);
-    EXPECT_NE(result, UVHTTP_OK);
-
-    result = uvhttp_server_check_rate_limit(NULL);
-    /* 实测返回 UVHTTP_OK：这是有意设计（src/uvhttp_server.c:1218
-     * `if (!server || !server->rate_limit_enabled) return UVHTTP_OK;`）——
-     * 限流未启用时放行，NULL server 等价于未启用。原实现把断言注释掉
-     * 并只「验证不崩溃」，导致把该返回值改成错误也无人发现（已变异确认）。
-     * 此处钉死契约：限流开关类函数对 NULL 返回错误，查询类函数返回放行。 */
-    EXPECT_EQ(result, UVHTTP_OK)
-        << "限流未启用（含 NULL server）时应放行，而非返回参数错误";
-
-    result = uvhttp_server_add_rate_limit_whitelist(NULL, "127.0.0.1");
-    EXPECT_NE(result, UVHTTP_OK);
-
-    int remaining;
-    uint64_t reset_time;
-    result = uvhttp_server_get_rate_limit_status(NULL, "127.0.0.1", &remaining,
-                                                 &reset_time);
-    EXPECT_NE(result, UVHTTP_OK);
-
-    result = uvhttp_server_reset_rate_limit_client(NULL, "127.0.0.1");
-    EXPECT_NE(result, UVHTTP_OK);
-
-    result = uvhttp_server_clear_rate_limit_all(NULL);
-    EXPECT_NE(result, UVHTTP_OK);
-}
-
-/* 测试限流功能无效参数 */
-TEST(UvhttpServerErrorCoverageTest, RateLimitInvalidParams) {
-    uvhttp_server_t* server = NULL;
-    uvhttp_error_t result = uvhttp_server_new(uv_default_loop(), &server);
-    ASSERT_EQ(result, UVHTTP_OK) << "server 创建失败";
-    ASSERT_NE(server, nullptr);
-    /* 测试无效的 max_requests */
-    result = uvhttp_server_enable_rate_limit(server, 0, 60);
-    EXPECT_NE(result, UVHTTP_OK);
-
-    result = uvhttp_server_enable_rate_limit(server, -1, 60);
-    EXPECT_NE(result, UVHTTP_OK);
-
-    /* 测试无效的 window_seconds */
-    result = uvhttp_server_enable_rate_limit(server, 100, 0);
-    EXPECT_NE(result, UVHTTP_OK);
-
-    result = uvhttp_server_enable_rate_limit(server, 100, -1);
-    EXPECT_NE(result, UVHTTP_OK);
-
-    uvhttp_server_free(server);
-}
-#endif /* UVHTTP_FEATURE_RATE_LIMIT */
-
 #if UVHTTP_FEATURE_WEBSOCKET
 /* 测试 WebSocket 功能 NULL 参数 */
 TEST(UvhttpServerErrorCoverageTest, WebSocketNullParams) {

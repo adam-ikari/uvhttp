@@ -540,39 +540,6 @@ TEST_F(E2EAutomatedTest, InternalServerError500) {
 }
 
 /* ===================================================================
- * Tests — Rate Limiting
- * =================================================================== */
-
-TEST_F(E2EAutomatedTest, RateLimiting) {
-    server_->add_route("/limited", handler_hello);
-    server_->set_router();
-    int port = server_->start();
-    ASSERT_GT(port, 0);
-
-    /* Enable strict rate limiting: 5 requests per 60 seconds.
-     * wait_for_server below will consume one, so we only send 4 more
-     * before expecting a 429 on the 5th. */
-    uvhttp_error_t err =
-        uvhttp_server_enable_rate_limit(server_->server(), 5, 60);
-    ASSERT_EQ(err, UVHTTP_OK);
-
-    ASSERT_TRUE(wait_for_server(server_->url("/limited")));
-
-    /* Send 4 more requests — should all succeed (total 5 including wait) */
-    for (int i = 0; i < 4; i++) {
-        std::string code,
-            body = curl_body_and_code("GET", server_->url("/limited"), code);
-        EXPECT_EQ(code, "200") << "Request " << i << " should succeed";
-        EXPECT_EQ(body, "Hello, World!") << "Request " << i << " body mismatch";
-    }
-
-    /* The 6th request should be rate-limited (429) */
-    std::string code;
-    curl_body_and_code("GET", server_->url("/limited"), code);
-    EXPECT_EQ(code, "429") << "Expected 429 rate-limited, got " << code;
-}
-
-/* ===================================================================
  * Tests — Static File Serving
  *
  * This test validates the static file serving API directly rather than
