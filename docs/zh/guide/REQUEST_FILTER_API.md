@@ -33,7 +33,7 @@ uvhttp_error_t uvhttp_server_set_request_filter(uvhttp_server_t* server,
 | 放行 | 返回 `UVHTTP_OK`。 |
 | 停止 | 返回任何其他错误码。`UVHTTP_ERROR_RATE_LIMIT_EXCEEDED`（-550）保留在错误码表里，就是这个场景的惯用值。 |
 | 响应 | 停止请求的 filter 应当自己把响应发完（状态码、`Retry-After`、响应体）再返回。 |
-| 兜底 | 若返回时什么都没发送，库代为回复：filter 写过的状态码原样保留，否则发 403 `Forbidden`，`text/plain` 响应体。`uvhttp_response_send()` 的 `sent` 保护会在 filter 已发送时把兜底变成空操作，因此不存在重复发送。 |
+| 兜底 | 若返回时什么都没发送，库代为回复：状态码保留 filter 写过的值（没写过就是 403 `Forbidden`），响应体固定是 `text/plain` 的 `Forbidden` —— 想要自带载荷的拒绝（比如带 JSON 体的 429）就得在 filter 里自己 send。`uvhttp_response_send()` 的 `sent` 保护会在 filter 已发送时把兜底变成空操作，因此不存在重复发送。 |
 | 连接 | 拒绝请求不会关闭连接。keep-alive 客户端可以在同一条连接上继续发下一个请求。 |
 | 槽位 | 只有一个 filter，不是链。要串多步就在自己的回调里串。 |
 | 线程 | 在事件循环线程上运行。保持 O(1)，不要在里面阻塞。 |
