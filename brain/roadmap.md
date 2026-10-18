@@ -2,7 +2,7 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-10-18T04:23:24"
+updated: "2026-10-18T06:31:44"
 ---
 
 # Roadmap
@@ -33,7 +33,7 @@ gantt
   section v2.10.x — API 原子化与正交化（特性冻结）
   router 迁移致路由全丢（修复） :done, d1, 2026-10-09, 2d
   配置静默失效全线（14 字段）  :done, d2, after d1, 4d
-  限流语义修正 per-client      :pending, d3, after d2, 3d
+  删内置限流 + request filter 接缝 :done, d3, after d2, 3d
   set_body 原子性 + cache setter 校验 :active, d4, after d3, 2d
   构造/释放原子化              :done, d5, after d4, 5d
   所有权进类型 + builder 收敛   :active, d6, after d5, 5d
@@ -93,10 +93,10 @@ gantt
 | 配置静默失效全线 | P0 | ✅ 已完成（2026-10-11，PR #472 `d257c92`） | 原诊断：`uvhttp_config_t` 26 字段中 14 个从不被执行路径读取（3 个「仅写不读」+ 11 个零读点），`update_size_limits` / `set_max_body_size` 返回 `UVHTTP_OK` 并打 INFO 日志，实际执行用编译期常量 —— 零应用且报告成功。已按「不留兼容层」的决定整刀删除：14 字段 + 4 个假旋钮 API。现结构体 12 字段全部有执行路径读取，判据写在 `include/uvhttp_config.h` 的结构体注释里 —— 需要这些旋钮时，连同读取它的代码一起加回来 |
 | set_body 原子性 | P1 | ✅ 已完成（2026-10-11，PR #473 `886b73f`） | 原问题：先 `free` 旧 body 再 `alloc`，OOM 时旧值不可恢复，而同对象上 `set_header` 因 `uvhttp_realloc` 失败保留原块而天然原子 —— 两个 setter 失败语义不一致。现改为先分配新块、成功后才释放旧块，与 `set_header` 对齐 |
 | cache setter 入参校验 | P2 | 🔶 部分完成（2026-10-11，PR #473 `886b73f`） | 不变量已在写点建立：`lru_cache_set_max_entries` 拒绝非正值并告警（与 create 同一规则）、`lru_cache_set_batch_eviction_size` 对 <1 告警并回退默认 2、`gzip_cache_set_max_entries` 拒绝非正值并按新上限收缩数组。仍无校验的只剩 TTL：`lru_cache_set_cache_ttl` 与 `gzip_cache_set_cache_ttl` 把任意整数直写（负 TTL 静默接受），response 系 setter 可作模板 |
-| 限流语义修正 | P0 | 📋 待办 | 签名 per-client（`client_ip` 参数）实现 per-server 全局单计数；`reset_rate_limit_client` 注释自承 "simplified implementation: reset entire server's"。A 打满会连带 429 B |
+| 限流语义修正 | P0 | ✅ 已完成（2026-10-18，走第三条路） | 原诊断成立（签名 per-client、实现 per-server 单计数，A 打满连带 429 B；白名单走 `sockaddr_in`，IPv6 进不了键），但两条预设路线都没选：真 per-client 要新增一张按 IP 的表 + 淘汰策略 + 内存上限，是**新特性**，与本轮特性冻结矛盾；改签名承认 per-server 则保留一个没人敢用的 API。改为**整块删除内置限流**（7 个 API + 8 个 server 字段 + `UVHTTP_FEATURE_RATE_LIMIT`），只留一个分派前接缝 `uvhttp_server_set_request_filter()`，窗口/维度/存储/淘汰全归调用方。原动机（全站连坐）由「按 key 计数是调用方的代码」解决。详见 [[request-filter-seam-replaces-rate-limiter]] |
 | 构造/释放原子化 | P1 | ✅ 已完成 | 原问题（`uvhttp_server_create` 错误回滚逐步手工置 `server->config/router = NULL`）先由 #475 改成「局部持有 + 单一移交点」，该入口随后被 #479 整体删除 —— 载体已不存在，范式保留在 `listen_routes` |
 | 所有权进类型 + builder 收敛 | P1 | 🔶 部分完成 | 后半截已完成（#479，**破坏性**移除 builder 层：`uvhttp_server_builder_t` / `server_create` / `uvhttp_get|post|put|delete|any` / `set_max_connections` / `server_run` / `stop_simple` / `simple_free` / `uvhttp_serve`，`uvhttp_delete` 的命名空间污染随之消失）。前半截待办：`set_router`/`set_context` 接管所有权仍只写在 `@note`，未进类型 |
-| 子模块独立生命周期 | P2 | 📋 待办 | 限流 / TLS / WS / 压缩内联在同一个 6-cache-line `server` struct 内，`#if` + `_padding` 拼布局 |
+| 子模块独立生命周期 | P2 | 📋 待办 | TLS / WS / 压缩内联在同一个 6-cache-line `server` struct 内，`#if` + `_padding` 拼布局（限流原属本条，已随 d3 整块删除，接缝只占两个指针字段） |
 | 构造入口收敛 | P2 | 🔶 剩两个 | #479 已删 `uvhttp_server_create`，`server_new` / `server_new_with_loop` 仍在，差别只在「谁管 loop」 |
 | API 参考与示例同步 | P1 | 📋 待办 | 改造后 `docs/` API 参考与 `examples/` 需同步 |
 
@@ -127,6 +127,6 @@ gantt
 - ✅ LRU 缓存（静态文件 + 压缩）
 - ✅ gzip 压缩（RFC 1952）
 - ✅ 32-bit 嵌入式支持
-- ✅ 限流（令牌桶 + 白名单）
+- ~~✅ 限流（令牌桶 + 白名单）~~ **已于 v2.10 整块删除**（路线 d3）：实现是 per-server 单计数、白名单只支持 IPv4，库改为只提供分派前接缝 `uvhttp_server_set_request_filter()`，策略归调用方 —— 见 [[request-filter-seam-replaces-rate-limiter]]
 - ✅ ASan/UBSan CI 门禁（101/101 测试通过）
 - ✅ 编译时裁剪（36 个选项）

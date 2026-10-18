@@ -9,6 +9,21 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
 本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)规范。
+
+## [Unreleased]
+
+### 移除
+- **删除内置限流**（v2.10 路线 d3）：`uvhttp_server_enable_rate_limit`、`uvhttp_server_disable_rate_limit`、`uvhttp_server_check_rate_limit`、`uvhttp_server_get_rate_limit_status`、`uvhttp_server_reset_rate_limit_client`、`uvhttp_server_add_rate_limit_whitelist`、`uvhttp_server_clear_rate_limit_all` 七个 API，连同 `uvhttp_server_t` 里的八个 `rate_limit_*` 字段、`struct whitelist_item`，以及 `UVHTTP_FEATURE_RATE_LIMIT` 在 `include/uvhttp_features.h`、`CMakeLists.txt`、`cmake/UserOptions.cmake`、`cmake/uvhttp-config.in.cmake`、`justfile`、`.github/workflows/reusable/security.yml` 全线。被删的实现坏在 API 看不见的地方：server 上只有一个 `rate_limit_request_count`，窗口因此是 per-server 的 —— 一个客户端打满会让其他客户端一起 429；`get_rate_limit_status` 与 `reset_rate_limit_client` 收了 `client_ip` 却不读，reset 的注释自承是「simplified implementation」。白名单走 `sockaddr_in`/`INET_ADDRSTRLEN`，IPv6 客户端根本进不了键。窗口长度、计数维度（client IP / tenant / API key）、存储与淘汰都是应用层策略，库不再替使用者猜
+- **`uvhttp_version_info_t.feature_rate_limit`** 删除，其后字段前移 —— 按位置初始化结构体的调用方会受影响，按名字赋值不受影响。`uvhttp_has_feature("rate_limit")` 现在报「不支持」，而不是读一个已删字段
+
+### 新增
+- **`uvhttp_server_set_request_filter(server, filter, user_data)`**：单槽的分派前接缝，位置正是被删限流原来跑的地方 —— `on_message_complete` 里、协议升级探测之前（因此它也拦得住升级）、router 查找之前。返回 `UVHTTP_OK` 继续分派，其他任何错误码停止分派。接缝期望 filter 自己把响应发完（429 加 `Retry-After` 从此由调用方决定）；如果 filter 返错却没发，库保留它写好的状态码，否则兜底发 403 `Forbidden`（`text/plain`），客户端不会被晾在那里。传 `NULL` 关闭接缝。`user_data` 是借用语义，与 `server->handler` 一致
+- **`docs/zh/guide/REQUEST_FILTER_API.md`**（与英文版成对）写清契约，并给一段纯用户代码的 per-client 固定窗口。`examples/03_middleware/rate_limit_demo.c` 就是那段代码的可运行版本：用 `uvhttp_request_get_client_ip()` 按 IP 计数，打满一个客户端不影响其他客户端 —— 这正是原来的 per-server 计数器做不到的行为
+
+### 兼容性
+- `UVHTTP_ERROR_RATE_LIMIT_EXCEEDED` (-550) 保留，从「库内部返回值」变成「应用层 filter 可用的惯用码」
+- 下游若还在传 `-DBUILD_WITH_RATE_LIMIT=OFF`，只会得到 CMake unused-variable 警告，没有其他影响
+
 ## [2.9.2] - 2026-10-02
 
 ### 移除
