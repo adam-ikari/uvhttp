@@ -10,19 +10,38 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
 本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)规范。
 
-## [Unreleased]
+## [3.0.0] - 2026-10-18
+
+原本按「v2.10」起草的那个窗口。它按主版本号发布，因为里面没有一处向后兼容：四次删除（#470、#472、#479、#483）、两处改名（#470），以及这些改动牵出来的原子性缺陷（#471、#473、#474、#475）。`docs/release-strategy.md` 把「不兼容 API 变更」定为 MAJOR，所以此前那条「版本号保留 2.10 不跳号」的例外不再续期，而是撤销。
 
 ### 移除
-- **删除内置限流**（v2.10 路线 d3）：`uvhttp_server_enable_rate_limit`、`uvhttp_server_disable_rate_limit`、`uvhttp_server_check_rate_limit`、`uvhttp_server_get_rate_limit_status`、`uvhttp_server_reset_rate_limit_client`、`uvhttp_server_add_rate_limit_whitelist`、`uvhttp_server_clear_rate_limit_all` 七个 API，连同 `uvhttp_server_t` 里的八个 `rate_limit_*` 字段、`struct whitelist_item`，以及 `UVHTTP_FEATURE_RATE_LIMIT` 在 `include/uvhttp_features.h`、`CMakeLists.txt`、`cmake/UserOptions.cmake`、`cmake/uvhttp-config.in.cmake`、`justfile`、`.github/workflows/reusable/security.yml` 全线。被删的实现坏在 API 看不见的地方：server 上只有一个 `rate_limit_request_count`，窗口因此是 per-server 的 —— 一个客户端打满会让其他客户端一起 429；`get_rate_limit_status` 与 `reset_rate_limit_client` 收了 `client_ip` 却不读，reset 的注释自承是「simplified implementation」。白名单走 `sockaddr_in`/`INET_ADDRSTRLEN`，IPv6 客户端根本进不了键。窗口长度、计数维度（client IP / tenant / API key）、存储与淘汰都是应用层策略，库不再替使用者猜
-- **`uvhttp_version_info_t.feature_rate_limit`** 删除，其后字段前移 —— 按位置初始化结构体的调用方会受影响，按名字赋值不受影响。`uvhttp_has_feature("rate_limit")` 现在报「不支持」，而不是读一个已删字段
+- **`uvhttp_config_t` 的 14 个字段**（#472）：`read_buffer_size`、`max_body_size`、`max_header_size`、`max_url_size`、`max_requests_per_connection`、`request_timeout`、`keepalive_timeout`、`rate_limit_window`、`rate_limit_max_requests`、`rate_limit_max_window_seconds`、`rate_limit_min_timeout_seconds`、`cache_default_max_entries`、`cache_default_ttl`、`lru_cache_batch_eviction_size`。`uvhttp_config_set_defaults` 给它们全部赋值，`uvhttp_config_validate` 全部校验范围，`uvhttp_config_print` 全部打印，而没有任何执行路径读取其中任何一个 —— 那个入口是文档，不是控制。`uvhttp_config_update_size_limits()` 与 `uvhttp_config_update_read_buffer_size()` 立刻随删，因为把字段写完再返回成功就是它们的全部实现；另外两个写入者 `uvhttp_set_timeout()` 与 `uvhttp_set_max_body_size()` 随 builder 层一起删除（#479）。`docs/spec/config-api.md` 记下每个上限现在由哪个编译期常量持有（`UVHTTP_MAX_BODY_SIZE`、`UVHTTP_READ_BUFFER_SIZE`、`MAX_URL_LEN`、`UVHTTP_CACHE_DEFAULT_*`）
+- **builder 层与一键启动**（#479）：`uvhttp_server_builder_t`、`uvhttp_server_create`、`uvhttp_server_run`、`uvhttp_server_stop_simple`、`uvhttp_server_simple_free`、`uvhttp_serve` 及其 `default_handler`，被当 builder 方法用的动词函数 `uvhttp_get` / `uvhttp_post` / `uvhttp_put` / `uvhttp_delete` / `uvhttp_any`，以及只在 builder 上有意义的旋钮 `uvhttp_set_max_connections` / `uvhttp_set_timeout` / `uvhttp_set_max_body_size`。uvhttp 是 HTTP 服务库，不是框架，而 `uvhttp_serve` 正是框架行为：自带默认路由、阻塞到 Ctrl+C、替调用方跑事件循环、往 stdout 打印。`uvhttp_delete` 一并消失，也终结了一个迟早与别人的宏撞名的全局符号。原语全部保留 —— `uvhttp_server_new` / `new_with_loop` / `take_router` / `take_context` / `listen_routes` / `stop` / `free` 以及整个 router API —— 而且 `max_connections` 仍是真实 config 字段，消失的只是它的 builder setter
+- **不带 request 前缀的取值函数**（#470）：`uvhttp_get_body`、`uvhttp_get_header`、`uvhttp_get_param`。它们声明在 `uvhttp_server.h` 里，名字不说明操作对象，而 `uvhttp_get_param` 其实只查 *query* 串却不写明。`uvhttp_request_get_body()` / `uvhttp_request_get_header()` / `uvhttp_request_get_query_param()` 是同一批操作写全的名字
+- **`auto_cleanup`**（#475）：构造路径写入、无人读取 —— 最后一个没过「要么权威要么不存在」判据的字段
+- **删除内置限流**（路线 d3，#483）：`uvhttp_server_enable_rate_limit`、`uvhttp_server_disable_rate_limit`、`uvhttp_server_check_rate_limit`、`uvhttp_server_get_rate_limit_status`、`uvhttp_server_reset_rate_limit_client`、`uvhttp_server_add_rate_limit_whitelist`、`uvhttp_server_clear_rate_limit_all` 七个 API，连同 `uvhttp_server_t` 里的八个 `rate_limit_*` 字段、`struct whitelist_item`，以及 `UVHTTP_FEATURE_RATE_LIMIT` 在 `include/uvhttp_features.h`、`CMakeLists.txt`、`cmake/UserOptions.cmake`、`cmake/uvhttp-config.in.cmake`、`justfile`、`.github/workflows/reusable/security.yml` 全线。被删的实现坏在 API 看不见的地方：server 上只有一个 `rate_limit_request_count`，窗口因此是 per-server 的 —— 一个客户端打满会让其他客户端一起 429；`get_rate_limit_status` 与 `reset_rate_limit_client` 收了 `client_ip` 却不读，reset 的注释自承是「simplified implementation」。白名单走 `sockaddr_in`/`INET_ADDRSTRLEN`，IPv6 客户端根本进不了键。窗口长度、计数维度（client IP / tenant / API key）、存储与淘汰都是应用层策略，库不再替使用者猜
+- **`uvhttp_version_info_t.feature_rate_limit`**（#483）删除，其后字段前移 —— 按位置初始化结构体的调用方会受影响，按名字赋值不受影响。`uvhttp_has_feature("rate_limit")` 现在报「不支持」，而不是读一个已删字段
+
+### 变更
+- **`uvhttp_server_set_router` → `uvhttp_server_take_router`，`uvhttp_server_set_context` → `uvhttp_server_take_context`**（#470）：「set」暗示借用，行为却是移交。这个错位正是官方嵌入示例在 listen 失败分支上 double-free 的原因 —— 它释放了 server 已经接手的 router。所有权从此写进名字，`uvhttp_server_free()` 是唯一释放点
+- **`uvhttp_server_listen()` 负责端口校验**（#479）：范围检查原先挂在 `uvhttp_serve` 上；那个入口删除后，检查移到所有 listen 路径必经的收口点，端口非法就此报错而不是照样尝试
+- **request 声明从 `uvhttp_server.h` 移入 `uvhttp_request.h`**（#476）：原先只 include `server.h` 就间接拿到 request API 的调用方，现在必须自己 include `request.h`
+- **构造失败如实报告原因**（#475）：host 为 NULL 是调用方错误（`UVHTTP_ERROR_INVALID_PARAM`），端口被占是运行时错误（`UVHTTP_ERROR_SERVER_LISTEN`）；此前两者一起塌缩成 `SERVER_LISTEN`，叫调用方去修一个自己还没用上的端口
 
 ### 新增
-- **`uvhttp_server_set_request_filter(server, filter, user_data)`**：单槽的分派前接缝，位置正是被删限流原来跑的地方 —— `on_message_complete` 里、协议升级探测之前（因此它也拦得住升级）、router 查找之前。返回 `UVHTTP_OK` 继续分派，其他任何错误码停止分派。接缝期望 filter 自己把响应发完（429 加 `Retry-After` 从此由调用方决定）；如果 filter 返错却没发，库保留它写好的状态码，否则兜底发 403 `Forbidden`（`text/plain`），客户端不会被晾在那里。传 `NULL` 关闭接缝。`user_data` 是借用语义，与 `server->handler` 一致
-- **`docs/zh/guide/REQUEST_FILTER_API.md`**（与英文版成对）写清契约，并给一段纯用户代码的 per-client 固定窗口。`examples/03_middleware/rate_limit_demo.c` 就是那段代码的可运行版本：用 `uvhttp_request_get_client_ip()` 按 IP 计数，打满一个客户端不影响其他客户端 —— 这正是原来的 per-server 计数器做不到的行为
+- **`uvhttp_server_listen_routes(loop, routes, route_count, host, port, &server)`**（#470）连同 `uvhttp_route_t` 表项：一次调用完成路由注册与监听，是 `uvhttp_serve` 的正当替代。失败时什么都没分配、`*server` 保持 NULL，调用方没有半成品要回滚
+- **`uvhttp_server_set_request_filter(server, filter, user_data)`**（#483）：单槽的分派前接缝，位置正是被删限流原来跑的地方 —— `on_message_complete` 里、协议升级探测之前（因此它也拦得住升级）、router 查找之前。返回 `UVHTTP_OK` 继续分派，其他任何错误码停止分派。接缝期望 filter 自己把响应发完（429 加 `Retry-After` 从此由调用方决定）；如果 filter 返错却没发，库保留它写好的状态码，否则兜底发 403 `Forbidden`（`text/plain`），客户端不会被晾在那里。传 `NULL` 关闭接缝。`user_data` 是借用语义，与 `server->handler` 一致
+- **`docs/zh/guide/REQUEST_FILTER_API.md`**（与英文版成对，#483）写清契约，并给一段纯用户代码的 per-client 固定窗口。`examples/03_middleware/rate_limit_demo.c` 就是那段代码的可运行版本：用 `uvhttp_request_get_client_ip()` 按 IP 计数，打满一个客户端不影响其他客户端 —— 这正是原来的 per-server 计数器做不到的行为
+
+### 修复
+- **router 迁移失败不再销毁它正在转换的路由**（#471）：`uvhttp_router_migrate_to_trie()` 在失败路径上释放了已注册的路由链表，于是继续使用线性 router 或重试迁移的调用方手里什么都不剩。这是自 v2.7.2 起存在的数据丢失
+- **`uvhttp_response_set_body()` 改为原子替换**（#473）：原先是「先 free 旧 body、再 alloc 新 body」，分配失败时响应仍带着旧长度指向已释放的内存
+- **LRU cache 的 setter 在写点建立不变量**（#473、#474）：`uvhttp_lru_cache_set_max_entries()` 与 `uvhttp_lru_cache_set_max_memory_usage()` 曾接受 `uvhttp_lru_cache_create()` 会拒绝的值。危害最大的是 `uvhttp_lru_cache_set_max_file_size(0)` —— `put()` 拿内容长度与该字段做硬比较且再无其他守卫，写入 0 之后每一次 `put()` 都返回 `UVHTTP_ERROR_INVALID_PARAM`，缓存就此永久不可用，调用方只看到一串 "File size exceeds limit" 的 WARN
+- **跨 server 移交明确写为不支持**（#474）：`take_*` 的护栏只比对单个 server 自己的当前指针，所以把同一个 router（或 context）交给两个 server 仍然会在 `uvhttp_server_free()` 处 double free。强制它需要一张所有权登记表，那是又一次破坏性变更；头文件契约现写明「一个对象只属于一个 server」
 
 ### 兼容性
-- `UVHTTP_ERROR_RATE_LIMIT_EXCEEDED` (-550) 保留，从「库内部返回值」变成「应用层 filter 可用的惯用码」
-- 下游若还在传 `-DBUILD_WITH_RATE_LIMIT=OFF`，只会得到 CMake unused-variable 警告，没有其他影响
+- `UVHTTP_ERROR_RATE_LIMIT_EXCEEDED` (-550) 保留（#483），从「库内部返回值」变成「应用层 filter 可用的惯用码」
+- 下游若还在传 `-DBUILD_WITH_RATE_LIMIT=OFF`，只会得到 CMake unused-variable 警告，没有其他影响（#483）
 
 ## [2.9.2] - 2026-10-02
 

@@ -15,6 +15,13 @@
 | **次要 (MINOR)** | 新功能（向后兼容） | 2.5.0 → 2.6.0 |
 | **主要 (MAJOR)** | 不兼容 API 变更 | 2.5.0 → 3.0.0 |
 
+版本号按**实际兼容性**定，不按起草时给窗口起的名字定。一个先被称作「x.y 小版本」
+的改造窗口，只要合并内容里出现不兼容变更，发布时就改叫 MAJOR —— 不得以「窗口本来
+记作 MINOR」为理由保留小数号。v3.0.0 就是这么来的：该窗口全程以「v2.10」名义开发
+（见 brain 页 `api-atomization-orthogonalization`），发布时按上表改号。曾拟过的「兼容策略
+B：2.10 直接破坏性改而不跳号」的**跳号豁免**已撤销；策略 B 的另一半 —— 破坏性改动
+不留 deprecated 兼容层、不做新旧 API 并行 —— 仍然有效。
+
 ## 发布流程
 
 > **分支策略**：所有 main 变更（含发布 commit）必须走 PR 合并，禁止直推 main。
@@ -72,6 +79,7 @@
 
 | 版本 | 日期 | 主要内容 |
 |------|------|---------|
+| v3.0.0 | 2026-10-18 | API 原子化窗口（全程以「v2.10」名义开发，按上表改号）：**删** `uvhttp_config_t` 里 14 个从不被读取的字段与 4 个假旋钮 setter（#472）、builder 层与 `uvhttp_serve` 及动词函数（#479）、内置限流 7 个 API 与 8 个 server 字段（#483）、不带 request 前缀的取值函数（#470）；**改名** `set_router`/`set_context` → `take_router`/`take_context`，所有权进名字（#470）；**新增** `uvhttp_server_listen_routes`（#470）与分派前接缝 `uvhttp_server_set_request_filter`（#483）；**修** router 迁移失败销毁已注册路由（#471，数据丢失自 v2.7.2）、`set_body` 非原子（#473）、LRU setter 写点校验（#473/#474）、构造路径原子化与错误码如实（#475） |
 | v2.9.2 | 2026-10-02 | 行为测试补全 11 组 132 个测试（TLS 证书 / URL 编码 / 条件请求 / gzip 与 LRU 缓存边界 / 响应头扩容 / 跨读续写 / query 参数 / 路由 trie 上限 / 连接超时 / accept 计数配对，均经变异验证）、库版本号改为从 VERSION 文件注入、修一个永远不可能失败的测试、删 format-check 门禁与 ci-daily、ROADMAP 精简 |
 | v2.9.1 | 2026-10-01 | CI 门禁修复（format-check 空转 + clang-format 版本钉住 + trend 改推分支开 PR）、CI 权限最小化、死代码清理 |
 | v2.9.0 | 2026-10-01 | Fuzz 覆盖扩展（request/websocket/static_path 三 harness）、header 名称 control-char 检查（防响应分割）、integration→manual/ 测试基建清理 |
