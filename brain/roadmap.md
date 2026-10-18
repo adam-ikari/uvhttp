@@ -2,7 +2,7 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-10-18T01:58:28"
+updated: "2026-10-18T03:16:14"
 ---
 
 # Roadmap
@@ -31,7 +31,7 @@ gantt
   社区贡献指南             :done, c4b, after c4, 3d
   测试基建清理              :done, c4c, after c4b, 1d
   section v2.10.x — API 原子化与正交化（特性冻结）
-  router 迁移致路由全丢（修复） :active, d1, 2026-10-09, 2d
+  router 迁移致路由全丢（修复） :done, d1, 2026-10-09, 2d
   配置静默失效全线（14 字段）  :active, d2, after d1, 4d
   限流语义修正 per-client      :pending, d3, after d2, 3d
   set_body 原子性 + cache setter 校验 :pending, d4, after d3, 2d
@@ -89,7 +89,7 @@ gantt
 
 | 目标 | 优先级 | 状态 | 说明 |
 |------|--------|------|------|
-| **router 迁移致路由全丢** | **P0** | **📋 下一步（已实测复现）** | **13+ 个不同顶层路由 + 任意 `:param` 路由 → `migrate_to_trie` 中途失败 → 全部已注册路由静默丢失，`find_handler` 返回 NULL。** 机制：`child_indices[12]` 定长上限撞顶后，失败分支 detach 并释放 `old_routes`，但已迁入 trie 的条目因 `use_trie` 仍为 0 而永不可达。当前**无测试覆盖** |
+| router 迁移致路由全丢 | P0 | ✅ 已完成（2026-10-09，`84707d7`） | 原缺陷：`migrate_to_trie` 中途失败（`child_indices[12]` 撞顶）时 detach 并 free 整张 array 路由表，而 `use_trie` 仍为 0 —— 已注册路由静默全丢、整站 404 且无报错。改为**原子迁移**：要么全迁成，要么什么都不变（保留 array 表、`use_trie` 保持 0，仅触发迁移的那条注册失败）。测试：`test/unit/test_router_child_limit.cpp` 的 `RouterMigrationAtomicity` 6 用例（默认构建 + ASan 16/16）。brain 页 10-09 之后未同步，本次仅更正状态 |
 | 配置静默失效全线 | P0 | 📋 待办 | 诊断已修正：`uvhttp_config_t` 26 字段中 **14 个从不被执行路径读取**（3 个"仅写不读" + 11 个零读点）。`update_size_limits` / `set_max_body_size` 返回 `UVHTTP_OK` 并打 INFO 日志，实际执行用编译期常量 —— **零应用且报告成功**。非"双通道矛盾" |
 | set_body 原子性 | P1 | 📋 待办 | `uvhttp_response_set_body` 先 `free` 旧 body 再 `alloc`，OOM 下旧值不可恢复。同对象上 `set_header` 的 realloc 路径却是原子的 —— 两个 setter 失败语义不一致 |
 | cache setter 入参校验 | P2 | 📋 待办 | `lru_cache_set_max_entries` / `set_cache_ttl` 等直接赋值无范围校验，不变量不在写入点建立（response 系已是正确范式，可作模板） |
