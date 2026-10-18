@@ -23,11 +23,11 @@ interface VersionConfig {
 
 // 默认版本配置
 const DEFAULT_VERSION: Version = {
-  version: '2.9.2',
+  version: '3.0.0',
   status: 'current',
-  releaseDate: '2026-10-02',
+  releaseDate: '2026-10-18',
   url: '/',
-  githubUrl: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.9.2'
+  githubUrl: 'https://github.com/adam-ikari/uvhttp/releases/tag/v3.0.0'
 }
 
 const versionsConfig = ref<VersionConfig | null>(null)

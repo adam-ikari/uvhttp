@@ -1,13 +1,13 @@
 {
-  "current": "2.9.2",
+  "current": "3.0.0",
   "baseUrl": "/uvhttp",
   "versions": [
     {
-      "version": "2.9.2",
+      "version": "3.0.0",
       "status": "current",
-      "releaseDate": "2026-10-02",
+      "releaseDate": "2026-10-18",
       "url": "/",
-      "githubUrl": "https://github.com/adam-ikari/uvhttp/releases/tag/v2.9.2"
+      "githubUrl": "https://github.com/adam-ikari/uvhttp/releases/tag/v3.0.0"
     }
   ],
   "statusLabels": {
