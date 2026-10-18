@@ -20,7 +20,6 @@ class UvhttpServerApiTest : public ::testing::Test {
     uv_loop_t* loop;
     uvhttp_server_t* server;
     uvhttp_router_t* router;
-    uvhttp_server_builder_t* builder;
 
     void SetUp() override {
         /* 初始化 libuv loop */
@@ -30,16 +29,9 @@ class UvhttpServerApiTest : public ::testing::Test {
         /* 初始化服务器指针 */
         server = nullptr;
         router = nullptr;
-        builder = nullptr;
     }
 
     void TearDown() override {
-        /* 清理 builder */
-        if (builder) {
-            uvhttp_server_simple_free(builder);
-            builder = nullptr;
-        }
-
         /* 清理路由 - 在释放 server 之前检查是否被 server 拥有 */
         bool router_owned_by_server = (server && server->router == router);
 
@@ -71,11 +63,6 @@ class UvhttpServerApiTest : public ::testing::Test {
     /* 辅助函数：创建路由 */
     uvhttp_error_t create_router() {
         return uvhttp_router_new(&router);
-    }
-
-    /* 辅助函数：创建 builder 服务器（使用不太可能被占用的端口） */
-    uvhttp_error_t create_builder_server() {
-        return uvhttp_server_create(loop, "127.0.0.1", 18080, &builder);
     }
 };
 
@@ -227,192 +214,21 @@ TEST_F(UvhttpServerApiTest, ServerStopNull) {
     EXPECT_NE(result, UVHTTP_OK);
 }
 
-/* 测试服务器创建（Builder 模式） */
-TEST_F(UvhttpServerApiTest, ServerCreate) {
-    uvhttp_server_builder_t* builder = NULL;
-    uv_loop_t* loop = uv_default_loop();
+/* stop_simple 已随 builder 移除；等价的停止能力是 uvhttp_server_stop */
+TEST_F(UvhttpServerApiTest, ServerStopStopsListening) {
+    ASSERT_EQ(create_server(), UVHTTP_OK);
+    /* 端口 0 由内核分配空闲端口：写死 18080 的话，别的测试或残留进程占住该口
+     * 就会让这条用例变红，而它要测的是 stop 的行为，不是端口可用性。 */
+    ASSERT_EQ(uvhttp_server_listen(server, "127.0.0.1", 0), UVHTTP_OK);
 
-    /* 创建服务器 - 使用一个不太可能被占用的端口 */
-    /* 注意：这个测试需要实际的网络绑定，可能会因为端口占用而失败 */
-    uvhttp_error_t result =
-        uvhttp_server_create(loop, "127.0.0.1", 18080, &builder);
-    if (result == UVHTTP_OK) {
-        ASSERT_NE(builder, nullptr);
-
-        /* 释放服务器 */
-        uvhttp_server_simple_free(builder);
-    } else {
-        /* 如果端口被占用，跳过测试 */
-        GTEST_SKIP() << "Port 18080 is already in use, skipping test";
-    }
-}
-
-/* 测试服务器创建 NULL 参数 */
-TEST_F(UvhttpServerApiTest, ServerCreateNullLoop) {
-    uvhttp_server_builder_t* builder = NULL;
-
-    uvhttp_error_t result =
-        uvhttp_server_create(NULL, "127.0.0.1", 8080, &builder);
-    EXPECT_NE(result, UVHTTP_OK);
-}
-
-TEST_F(UvhttpServerApiTest, ServerCreateNullHost) {
-    uvhttp_server_builder_t* builder = NULL;
-    uv_loop_t* loop = uv_default_loop();
-
-    uvhttp_error_t result = uvhttp_server_create(loop, NULL, 8080, &builder);
-    EXPECT_NE(result, UVHTTP_OK);
-}
-
-TEST_F(UvhttpServerApiTest, ServerCreateNullBuilder) {
-    uv_loop_t* loop = uv_default_loop();
-    uvhttp_error_t result = uvhttp_server_create(loop, "127.0.0.1", 8080, NULL);
-    EXPECT_NE(result, UVHTTP_OK);
-}
-
-/* 测试服务器 Builder 模式 */
-TEST_F(UvhttpServerApiTest, ServerBuilderGet) {
-    uvhttp_server_builder_t* builder = NULL;
-    uv_loop_t* loop = uv_default_loop();
-
-    /* 创建服务器 */
-    uvhttp_error_t result =
-        uvhttp_server_create(loop, "127.0.0.1", 18080, &builder);
-    if (result != UVHTTP_OK) {
-        GTEST_SKIP() << "Port 18080 is already in use, skipping test";
-    }
-
-    /* 添加 GET 路由 */
-    uvhttp_server_builder_t* result2 =
-        uvhttp_get(builder, "/test", test_handler);
-    EXPECT_NE(result2, nullptr);
-
-    /* 释放服务器 */
-    uvhttp_server_simple_free(builder);
-}
-
-/* 测试服务器 Builder NULL 参数 */
-TEST_F(UvhttpServerApiTest, ServerBuilderGetNull) {
-    uvhttp_server_builder_t* result = uvhttp_get(NULL, "/test", test_handler);
-    EXPECT_EQ(result, nullptr);
-}
-
-TEST_F(UvhttpServerApiTest, ServerBuilderGetNullPath) {
-    uvhttp_server_builder_t* builder = NULL;
-    uv_loop_t* loop = uv_default_loop();
-
-    uvhttp_error_t result =
-        uvhttp_server_create(loop, "127.0.0.1", 18080, &builder);
-    if (result != UVHTTP_OK) {
-        GTEST_SKIP() << "Port 18080 is already in use, skipping test";
-    }
-
-    /* NULL path时，返回builder指针而不是nullptr（允许链式调用） */
-    uvhttp_server_builder_t* result2 = uvhttp_get(builder, NULL, test_handler);
-    EXPECT_EQ(result2, builder);
-
-    uvhttp_server_simple_free(builder);
-}
-
-TEST_F(UvhttpServerApiTest, ServerBuilderGetNullHandler) {
-    uvhttp_server_builder_t* builder = NULL;
-    uv_loop_t* loop = uv_default_loop();
-
-    uvhttp_error_t result =
-        uvhttp_server_create(loop, "127.0.0.1", 18080, &builder);
-    if (result != UVHTTP_OK) {
-        GTEST_SKIP() << "Port 18080 is already in use, skipping test";
-    }
-
-    /* NULL handler时，返回builder指针而不是nullptr（允许链式调用） */
-    uvhttp_server_builder_t* result2 = uvhttp_get(builder, "/test", NULL);
-    EXPECT_EQ(result2, builder);
-
-    uvhttp_server_simple_free(builder);
-}
-
-/* 测试服务器 Builder 其他方法 */
-TEST_F(UvhttpServerApiTest, ServerBuilderMethods) {
-    uvhttp_server_builder_t* builder = NULL;
-    uv_loop_t* loop = uv_default_loop();
-
-    /* 创建服务器 */
-    uvhttp_error_t result =
-        uvhttp_server_create(loop, "127.0.0.1", 18080, &builder);
-    if (result != UVHTTP_OK) {
-        GTEST_SKIP() << "Port 18080 is already in use, skipping test";
-    }
-
-    /* 测试各种方法 */
-    uvhttp_server_builder_t* result2;
-
-    result2 = uvhttp_post(builder, "/test", test_handler);
-    EXPECT_NE(result2, nullptr);
-
-    result2 = uvhttp_put(builder, "/test", test_handler);
-    EXPECT_NE(result2, nullptr);
-
-    result2 = uvhttp_delete(builder, "/test", test_handler);
-    EXPECT_NE(result2, nullptr);
-
-    result2 = uvhttp_any(builder, "/test", test_handler);
-    EXPECT_NE(result2, nullptr);
-
-    result2 = uvhttp_set_max_connections(builder, 100);
-    EXPECT_NE(result2, nullptr);
-
-    /* 释放服务器 */
-    uvhttp_server_simple_free(builder);
-}
-
-/* 测试服务器 Builder NULL 参数 */
-TEST_F(UvhttpServerApiTest, ServerBuilderMethodsNull) {
-    uvhttp_server_builder_t* result;
-
-    result = uvhttp_post(NULL, "/test", test_handler);
-    EXPECT_EQ(result, nullptr);
-
-    result = uvhttp_put(NULL, "/test", test_handler);
-    EXPECT_EQ(result, nullptr);
-
-    result = uvhttp_delete(NULL, "/test", test_handler);
-    EXPECT_EQ(result, nullptr);
-
-    result = uvhttp_any(NULL, "/test", test_handler);
-    EXPECT_EQ(result, nullptr);
-
-    result = uvhttp_set_max_connections(NULL, 100);
-    EXPECT_EQ(result, nullptr);
-}
-
-/* 测试服务器停止简单模式 */
-TEST_F(UvhttpServerApiTest, ServerStopSimple) {
-    uvhttp_server_builder_t* builder = NULL;
-    uv_loop_t* loop = uv_default_loop();
-
-    /* 创建服务器 */
-    uvhttp_error_t result =
-        uvhttp_server_create(loop, "127.0.0.1", 18080, &builder);
-    if (result != UVHTTP_OK) {
-        GTEST_SKIP() << "Port 18080 is already in use, skipping test";
-    }
-
-    /* 停止服务器 */
-    uvhttp_server_stop_simple(builder);
-
-    /* 释放服务器 */
-    uvhttp_server_simple_free(builder);
-}
-
-TEST_F(UvhttpServerApiTest, ServerStopSimpleNull) {
-    /* 不应该崩溃 */
-    uvhttp_server_stop_simple(NULL);
+    EXPECT_EQ(uvhttp_server_stop(server), UVHTTP_OK);
+    EXPECT_EQ(server->is_listening, 0);
 }
 
 /* 测试服务器释放简单模式 */
-TEST_F(UvhttpServerApiTest, ServerSimpleFreeNull) {
-    /* 不应该崩溃 */
-    uvhttp_server_simple_free(NULL);
+TEST_F(UvhttpServerApiTest, ServerFreeNullIsNoOp) {
+    /* NULL 释放是安全的 no-op（v2.10：server_free 取代 simple_free） */
+    EXPECT_EQ(uvhttp_server_free(NULL), UVHTTP_OK);
 }
 
 /* ========== 测试 uvhttp_server_new_with_loop ========== */

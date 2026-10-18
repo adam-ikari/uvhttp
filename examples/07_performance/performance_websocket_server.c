@@ -39,7 +39,7 @@
 typedef struct {
     volatile sig_atomic_t running;
     uv_loop_t* loop;
-    uvhttp_server_builder_t* server;
+    uvhttp_server_t* server;
 
     /* Statistics */
     unsigned long long total_connections;
@@ -185,8 +185,8 @@ static void on_signal(uv_signal_t* handle, int signum) {
         g_ctx->running = 0;
 
         /* Stop the server */
-        if (g_ctx->server && g_ctx->server->server) {
-            uvhttp_server_stop(g_ctx->server->server);
+        if (g_ctx->server) {
+            uvhttp_server_stop(g_ctx->server);
         }
 
         /* Stop the event loop */
@@ -291,14 +291,23 @@ int main(int argc, char* argv[]) {
         printf("Verbose mode enabled\n");
     }
 
-    /* Create server (simple API: creates loop-bound server, router and config) */
-    uvhttp_server_builder_t* server = NULL;
-    uvhttp_error_t err = uvhttp_server_create(ctx.loop, host, port, &server);
+    /* Library stance: the caller composes primitives. server_new + a
+     * caller-owned router + take_router + listen - no builder, no loop
+     * ownership by the library. */
+    uvhttp_server_t* server = NULL;
+    uvhttp_error_t err = uvhttp_server_new(ctx.loop, &server);
     if (err != UVHTTP_OK || !server) {
         fprintf(stderr, "Error: Failed to create server: %d\n", err);
         return 1;
     }
     ctx.server = server;
+
+    uvhttp_router_t* router = NULL;
+    if (uvhttp_router_new(&router) != UVHTTP_OK) {
+        fprintf(stderr, "Error: Failed to create router\n");
+        uvhttp_server_free(server);
+        return 1;
+    }
 
     /* Register WebSocket echo handler on /ws */
     uvhttp_ws_handler_t ws_handler;
@@ -307,23 +316,40 @@ int main(int argc, char* argv[]) {
     ws_handler.on_message = on_ws_message;
     ws_handler.on_close = on_ws_close;
 
-    err = uvhttp_server_register_ws_handler(server->server, "/ws", &ws_handler);
+    err = uvhttp_server_register_ws_handler(server, "/ws", &ws_handler);
     if (err != UVHTTP_OK) {
         fprintf(stderr, "Error: Failed to register WebSocket handler: %d\n", err);
-        uvhttp_server_simple_free(server);
+        uvhttp_server_free(server);
         return 1;
     }
 
-    /* HTTP routes (health check + info) */
-    uvhttp_get(server, "/", on_http_request);
-    uvhttp_get(server, "/health", on_http_request);
+    /* HTTP routes (health check + info) on the caller-owned router */
+    uvhttp_router_add_route(router, "/", on_http_request);
+    uvhttp_router_add_route(router, "/health", on_http_request);
+
+    /* The router joins the server here; server_free releases it. */
+    err = uvhttp_server_take_router(server, router);
+    if (err != UVHTTP_OK) {
+        fprintf(stderr, "Error: Failed to attach router: %d\n", err);
+        uvhttp_router_free(router);
+        uvhttp_server_free(server);
+        return 1;
+    }
+
+    err = uvhttp_server_listen(server, host, port);
+    if (err != UVHTTP_OK) {
+        fprintf(stderr, "Error: Failed to listen on %s:%d: %d\n", host, port,
+                err);
+        uvhttp_server_free(server);
+        return 1;
+    }
 
     printf("WebSocket server listening on ws://%s:%d/ws\n", host, port);
     printf("Health check: http://%s:%d/health\n", host, port);
     printf("Press Ctrl+C to stop\n\n");
 
-    /* Run event loop */
-    uvhttp_server_run(server);
+    /* Run event loop - the loop belongs to the caller, not the library */
+    uv_run(ctx.loop, UV_RUN_DEFAULT);
 
     /* Cleanup */
     printf("\n\n========================================\n");
@@ -341,7 +367,7 @@ int main(int argc, char* argv[]) {
     uv_close((uv_handle_t*)&sigint, NULL);
     uv_close((uv_handle_t*)&sigterm, NULL);
 
-    uvhttp_server_simple_free(server);
+    uvhttp_server_free(server);  /* releases the router it owns */
     uv_loop_close(ctx.loop);
 
     printf("Server stopped gracefully\n");

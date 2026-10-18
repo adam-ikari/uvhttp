@@ -61,17 +61,29 @@ int main(int argc, char** argv) {
         }
     }
     
-        /* 创建服务器 */
+        /* 库提供原语，组合权在调用方：先建 server 与 router，装载路由后
+         * 一次性 listening（v2.10 起 builder / 一键启动已移除）。 */
         uv_loop_t* loop = uv_default_loop();
-        uvhttp_server_builder_t* server = NULL;
-        uvhttp_error_t result = uvhttp_server_create(loop, host, port, &server);
-    if (!server) {
-        fprintf(stderr, "无法创建服务器\n");
-        return 1;
-    }
+        uvhttp_server_t* server = NULL;
+        if (uvhttp_server_new(loop, &server) != UVHTTP_OK || !server) {
+            fprintf(stderr, "无法创建服务器\n");
+            return 1;
+        }
 
-    /* 添加 HTTP 路由 */
-    uvhttp_get(server, "/", http_handler);
+        uvhttp_router_t* router = NULL;
+        if (uvhttp_router_new(&router) != UVHTTP_OK) {
+            fprintf(stderr, "无法创建路由器\n");
+            uvhttp_server_free(server);
+            return 1;
+        }
+        uvhttp_router_add_route(router, "/", http_handler);
+        /* take_router 之后 router 归 server 所有，server_free 会释放它 */
+        if (uvhttp_server_take_router(server, router) != UVHTTP_OK) {
+            fprintf(stderr, "无法挂载路由器\n");
+            uvhttp_router_free(router);
+            uvhttp_server_free(server);
+            return 1;
+        }
 
     /* 注册 WebSocket 处理器 */
     uvhttp_ws_handler_t ws_handler = {
@@ -81,18 +93,26 @@ int main(int argc, char** argv) {
         .user_data = NULL
     };
 
-    result = uvhttp_server_register_ws_handler(server->server, "/ws", &ws_handler);
+    uvhttp_error_t result =
+        uvhttp_server_register_ws_handler(server, "/ws", &ws_handler);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "无法注册 WebSocket 处理器: %d\n", result);
-        uvhttp_server_simple_free(server);
+        uvhttp_server_free(server);
         return 1;
     }
 
-    /* 运行服务器 */
-    int run_result = uvhttp_server_run(server);
+    /* 监听是调用方显式发起的动作，不是构造的副产品 */
+    if (uvhttp_server_listen(server, host, port) != UVHTTP_OK) {
+        fprintf(stderr, "无法监听 %s:%d\n", host, port);
+        uvhttp_server_free(server);
+        return 1;
+    }
+
+    /* 事件循环归调用方所有：库只注册句柄，不替你跑 */
+    uv_run(loop, UV_RUN_DEFAULT);
 
     /* 清理 */
-    uvhttp_server_simple_free(server);
+    uvhttp_server_free(server);
 
-    return run_result;
+    return 0;
 }

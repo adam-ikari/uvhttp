@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [api, design, roadmap, v2.10]
 created: "2026-10-09T00:27:12"
-updated: "2026-10-09T00:46:40"
+updated: "2026-10-18T01:58:58"
 ---
 
 <!-- compiled_truth -->
@@ -94,18 +94,15 @@ v2.9.x 的实测结论把"加功能"这条路堵死了：性能（[[alloc-hotpat
 
 - `uvhttp_server_new(loop, **server)` —— `server->config` 保持 NULL
 - `uvhttp_server_new_with_loop(**server)`
-- `uvhttp_server_create(loop, host, port, **builder)` —— **唯一会建 config 的入口**
+- ~~`uvhttp_server_create(loop, host, port, **builder)` —— 唯一会建 config 的入口~~（**已由 #479 删除**，见下）
 
-关键后果：`server->config` 对裸 `server_new` 用户恒为 NULL，于是
-`server.c:109-120` 的 fallback 链决定行为 —— 同一 API 调用在不同装配下
-结果不同。且 builder 写的 3 个字段仅在 builder 路径下存在。
+关键后果：`server->config` 对裸 `server_new` 用户恒为 NULL，于是 `server.c` 的 fallback 链决定行为 —— 同一 API 调用在不同装配下结果不同。
 
-### 2. 释放路径非原子：靠调用方手动置 NULL
+**2026-10-18 复核**：#479 已删 `uvhttp_server_create`，`server_new` / `server_new_with_loop` 两个入口仍在，本条尚未完全兑现。另注：「src 里已没人给 `server->config` 赋值」不等于该字段死透 —— `examples/01_basics/helloworld.c:204`、`examples/06_advanced/config_demo.c:360`、`simple_config.c:138` 仍直接写这个公共字段，`on_connection` 的 `if (server->config)` 分支不是死代码，别按死代码清理。
 
-`uvhttp_server_create` 错误回滚（`src/uvhttp_server.c:795-848`）逐步手工置
-`server->config = NULL` / `server->router = NULL`。注释自承
-"Do NOT null them here - that would defeat the free and leak" ——
-**同一字段在相邻错误分支一会儿置一会儿不置**，正确性靠注释维护。
+### 2. 释放路径非原子：靠调用方手动置 NULL（历史，已修）
+
+`uvhttp_server_create` 错误回滚曾逐步手工置 `server->config = NULL` / `server->router = NULL`，注释自承 "Do NOT null them here - that would defeat the free and leak" —— 同一字段在相邻错误分支一会儿置一会儿不置，正确性靠注释维护。**#475** 改成子对象局部持有 + 单一移交点；**#479** 把该入口连同 builder 一并删除。「一次建立、单一移交点」的范式现在由 `uvhttp_server_listen_routes` 承载。
 
 ### 3. 所有权契约只存在于文档注释
 
@@ -206,4 +203,10 @@ v2.9.x 的实测结论把"加功能"这条路堵死了：性能（[[alloc-hotpat
   kind: decision
   summary: "第一性原理重估：配置问题的真因不是双通道，而是 uvhttp_config_t 26 字段中 14 个从不被执行路径读取 —— config 是装饰品，不是控制面"
   source: "2026-10-09 逐字段读点核实（脚本按 config 对象限定匹配）"
+  affects: [api-atomization-orthogonalization]
+
+- time: 2026-10-18T01:58:58
+  kind: decision
+  summary: Rewrote compiled_truth to the new best understanding
+  source: "PR #479 评审复核：builder 层已删（#479）、构造回滚范式已修（#475），修正 server->config 非死字段"
   affects: [api-atomization-orthogonalization]

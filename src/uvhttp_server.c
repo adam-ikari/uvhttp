@@ -110,11 +110,15 @@ static void on_connection(uv_stream_t* server_handle, int status) {
         server->max_connections;  // authoritative per-server value
     if (server->config) {
         max_connections = server->config->max_connections;
-    } else {
-        // Fall back to global config (use server->context)
-        uvhttp_context_t* context = server->context;
+    } else if (server->context) {
+        // Fall back to the context's config. Guarded on context: a server
+        // with neither a config nor a context is the normal shape since
+        // v2.10 (nothing sets server->config any more; take_context is
+        // optional), and uvhttp_config_get_current(NULL) logs a misleading
+        // "Context is NULL" warning - once per accepted connection. Same
+        // guard as uvhttp_server_listen already uses when it reads backlog.
         const uvhttp_config_t* global_config =
-            uvhttp_config_get_current(context);
+            uvhttp_config_get_current(server->context);
         if (global_config) {
             max_connections = global_config->max_connections;
         }
@@ -549,6 +553,21 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    /* Range-check the port here rather than trusting uv_ip4_addr: libuv
+     * writes it with htons(), so an out-of-range value is silently truncated
+     * (65536 -> 0, i.e. an ephemeral port; 99999 -> 34463) and the caller
+     * ends up listening somewhere else with no error. This used to live in
+     * uvhttp_serve, which was the only caller that validated it; when that
+     * entry went away in v2.10 the check moved to the choke point both
+     * uvhttp_server_listen and uvhttp_server_listen_routes pass through.
+     * Port 0 stays legal: "bind an ephemeral port" is meaningful libuv
+     * semantics at this layer (uvhttp_serve rejected it, but that was its
+     * own one-key-start policy, not a property of listen). */
+    if (port < 0 || port > 65535) {
+        UVHTTP_LOG_ERROR("port %d out of range (must be 0-65535)", port);
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+
     struct sockaddr_in addr;
     if (uv_ip4_addr(host, port, &addr) != 0) {
         UVHTTP_LOG_ERROR("Invalid listen host: %s\n", host);
@@ -890,242 +909,6 @@ int uvhttp_server_is_tls_enabled(uvhttp_server_t* server) {
 #endif
 
 // ========== Unified API Implementation ==========
-
-// Internal auxiliary function
-static uvhttp_error_t create_simple_server_internal(
-    uv_loop_t* loop, const char* host, int port,
-    uvhttp_server_builder_t** server) {
-    if (!server) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-    /* One out-param invariant, established once here instead of being
-     * re-asserted in every failure branch: the caller either gets a fully
-     * listening builder or NULL. */
-    *server = NULL;
-
-    // Loop must be provided by application layer
-    if (!loop) {
-        UVHTTP_LOG_ERROR("loop parameter is required - must be provided by "
-                         "application layer");
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    uvhttp_server_builder_t* simple =
-        uvhttp_alloc(sizeof(uvhttp_server_builder_t));
-    if (!simple) {
-        return UVHTTP_ERROR_OUT_OF_MEMORY;
-    }
-    memset(simple, 0, sizeof(uvhttp_server_builder_t));
-    simple->loop = loop;
-
-    /* Each sub-object is owned by a local until the single handover point
-     * below. Every failure between here and there frees its own object by
-     * name, so no branch ever has to "un-own" anything from the server -
-     * which is what the previous shape required (it nulled server->config /
-     * server->router on some branches and not others, and needed a comment
-     * warning against "fixing" the one branch where nulling would leak). */
-    uvhttp_server_t* srv = NULL;
-    uvhttp_error_t err = uvhttp_server_new(loop, &srv);
-    if (err != UVHTTP_OK) {
-        uvhttp_free(simple);
-        return err;
-    }
-
-    uvhttp_router_t* router = NULL;
-    err = uvhttp_router_new(&router);
-    if (err != UVHTTP_OK) {
-        uvhttp_server_free(srv);
-        uvhttp_free(simple);
-        return err;
-    }
-
-    uvhttp_config_t* config = NULL;
-    err = uvhttp_config_new(&config);
-    if (err != UVHTTP_OK) {
-        uvhttp_router_free(router);
-        uvhttp_server_free(srv);
-        uvhttp_free(simple);
-        return err;
-    }
-
-    /* Ownership handover: exactly one point, reached only on the path that
-     * built everything. From here on, uvhttp_server_free releases srv, the
-     * router and the config; the builder struct holds the handles for the
-     * caller's convenience but owns none of them. */
-    simple->server = srv;
-    simple->router = router;
-    simple->config = config;
-    srv->config = config;
-    srv->router = router;
-
-    // startlisten
-    err = uvhttp_server_listen(srv, host, port);
-    if (err != UVHTTP_OK) {
-        UVHTTP_LOG_ERROR("Failed to start server on %s:%d\n", host ? host : "",
-                         port);
-        /* Propagate the real reason instead of collapsing every listen
-         * failure into SERVER_LISTEN: a NULL host is a caller mistake
-         * (INVALID_PARAM), an occupied port is a runtime one
-         * (SERVER_LISTEN), and the two deserve different remediation. */
-        uvhttp_server_free(srv);
-        uvhttp_free(simple);
-        return err;
-    }
-
-    *server = simple;
-    return UVHTTP_OK;
-}
-
-// Quick create and start server
-uvhttp_error_t uvhttp_server_create(uv_loop_t* loop, const char* host, int port,
-                                    uvhttp_server_builder_t** server) {
-    return create_simple_server_internal(loop, host, port, server);
-}
-
-// routeraddauxiliaryfunction
-static uvhttp_server_builder_t* add_route_internal(
-    uvhttp_server_builder_t* server, const char* path, uvhttp_method_t method,
-    uvhttp_request_handler_t handler) {
-    if (!server || !path || !handler)
-        return server;
-
-    uvhttp_error_t err =
-        uvhttp_router_add_route_method(server->router, path, method, handler);
-    if (err != UVHTTP_OK) {
-        UVHTTP_LOG_ERROR("Failed to add route %s: %d\n", path, err);
-    }
-    return server;
-}
-
-// Chained router API
-uvhttp_server_builder_t* uvhttp_get(uvhttp_server_builder_t* server,
-                                    const char* path,
-                                    uvhttp_request_handler_t handler) {
-    return add_route_internal(server, path, UVHTTP_GET, handler);
-}
-
-uvhttp_server_builder_t* uvhttp_post(uvhttp_server_builder_t* server,
-                                     const char* path,
-                                     uvhttp_request_handler_t handler) {
-    return add_route_internal(server, path, UVHTTP_POST, handler);
-}
-
-uvhttp_server_builder_t* uvhttp_put(uvhttp_server_builder_t* server,
-                                    const char* path,
-                                    uvhttp_request_handler_t handler) {
-    return add_route_internal(server, path, UVHTTP_PUT, handler);
-}
-
-uvhttp_server_builder_t* uvhttp_delete(uvhttp_server_builder_t* server,
-                                       const char* path,
-                                       uvhttp_request_handler_t handler) {
-    return add_route_internal(server, path, UVHTTP_DELETE, handler);
-}
-
-uvhttp_server_builder_t* uvhttp_any(uvhttp_server_builder_t* server,
-                                    const char* path,
-                                    uvhttp_request_handler_t handler) {
-    return add_route_internal(server, path, UVHTTP_ANY, handler);
-}
-
-// Simplified config API
-uvhttp_server_builder_t* uvhttp_set_max_connections(
-    uvhttp_server_builder_t* server, int max_conn) {
-    if (server && server->config) {
-        server->config->max_connections = max_conn;
-    }
-    return server;
-}
-
-// Server run and cleanup
-int uvhttp_server_run(uvhttp_server_builder_t* server) {
-    if (!server || !server->loop)
-        return -1;
-    return uv_run(server->loop, UV_RUN_DEFAULT);
-}
-
-void uvhttp_server_stop_simple(uvhttp_server_builder_t* server) {
-    if (server && server->server) {
-        uvhttp_server_stop(server->server);
-    }
-}
-
-void uvhttp_server_simple_free(uvhttp_server_builder_t* server) {
-    if (!server)
-        return;
-
-    if (server->server) {
-        uvhttp_server_free(server->server);
-    }
-
-    // Note: router and config are released by server, do not release repeatedly
-
-    uvhttp_free(server);
-}
-
-// default handler (for one-key start)
-static int default_handler(uvhttp_request_t* request,
-                           uvhttp_response_t* response) {
-    const char* method = uvhttp_request_get_method(request);
-    const char* url = uvhttp_request_get_url(request);
-
-    char response_body[512];
-    snprintf(response_body, sizeof(response_body),
-             "UVHTTP unified API server\n\n"
-             "requestinfo:\n"
-             "- method: %s\n"
-             "- URL: %s\n"
-             "- time: %ld\n"
-             "\nWelcome to UVHTTP unified API!",
-             method, url, time(NULL));
-
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, response_body, strlen(response_body));
-    uvhttp_response_send(response);
-    return 0;
-}
-
-// One-key start function (simplest API)
-int uvhttp_serve(uv_loop_t* loop, const char* host, int port) {
-    // Parameter verify
-    if (!loop) {
-        UVHTTP_LOG_ERROR("loop parameter is required - must be provided "
-                         "by application layer\n");
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    if (port < 1 || port > 65535) {
-        UVHTTP_LOG_ERROR("port number must be in 1-65535 range\n");
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    if (!host) {
-        UVHTTP_LOG_WARN("host parameter is NULL, use default value 0.0.0.0\n");
-    }
-
-    uvhttp_server_builder_t* server = NULL;
-    uvhttp_error_t create_result =
-        uvhttp_server_create(loop, host, port, &server);
-    if (create_result != UVHTTP_OK)
-        return create_result;
-
-    // adddefaultrouter
-    uvhttp_any(server, "/", default_handler);
-
-    printf("UVHTTP server running on http://%s:%d\n", host ? host : "0.0.0.0",
-           port);
-    printf("Press Ctrl+C to stop server\n");
-
-    int run_result = uvhttp_server_run(server);
-
-    // only release after successfully creating server
-    if (server) {
-        uvhttp_server_simple_free(server);
-    }
-
-    return run_result;
-}
 
 // ========== WebSocket implement ==========
 

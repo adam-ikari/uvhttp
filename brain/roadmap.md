@@ -2,7 +2,7 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-10-09T00:53:21"
+updated: "2026-10-18T01:58:28"
 ---
 
 # Roadmap
@@ -35,8 +35,8 @@ gantt
   配置静默失效全线（14 字段）  :active, d2, after d1, 4d
   限流语义修正 per-client      :pending, d3, after d2, 3d
   set_body 原子性 + cache setter 校验 :pending, d4, after d3, 2d
-  构造/释放原子化              :pending, d5, after d4, 5d
-  所有权进类型 + builder 收敛   :pending, d6, after d5, 5d
+  构造/释放原子化              :done, d5, after d4, 5d
+  所有权进类型 + builder 收敛   :active, d6, after d5, 5d
   子模块独立生命周期            :pending, d7, after d6, 7d
   API 参考与示例同步           :pending, d8, after d7, 3d
 ```
@@ -94,10 +94,10 @@ gantt
 | set_body 原子性 | P1 | 📋 待办 | `uvhttp_response_set_body` 先 `free` 旧 body 再 `alloc`，OOM 下旧值不可恢复。同对象上 `set_header` 的 realloc 路径却是原子的 —— 两个 setter 失败语义不一致 |
 | cache setter 入参校验 | P2 | 📋 待办 | `lru_cache_set_max_entries` / `set_cache_ttl` 等直接赋值无范围校验，不变量不在写入点建立（response 系已是正确范式，可作模板） |
 | 限流语义修正 | P0 | 📋 待办 | 签名 per-client（`client_ip` 参数）实现 per-server 全局单计数；`reset_rate_limit_client` 注释自承 "simplified implementation: reset entire server's"。A 打满会连带 429 B |
-| 构造/释放原子化 | P1 | 📋 待办 | `uvhttp_server_create` 错误回滚靠手工置 `server->config/router = NULL`，相邻分支一会儿置一会儿不置，正确性靠注释维护 |
-| 所有权进类型 + builder 收敛 | P1 | 📋 待办 | **破坏性**：`set_router`/`set_context` 接管所有权只写在 `@note`；`uvhttp_get/post/put/delete` 等 10 个全局函数当 builder 方法，**随 builder 一并移除**（`uvhttp_delete` 命名空间污染随之消失） |
+| 构造/释放原子化 | P1 | ✅ 已完成 | 原问题（`uvhttp_server_create` 错误回滚逐步手工置 `server->config/router = NULL`）先由 #475 改成「局部持有 + 单一移交点」，该入口随后被 #479 整体删除 —— 载体已不存在，范式保留在 `listen_routes` |
+| 所有权进类型 + builder 收敛 | P1 | 🔶 部分完成 | 后半截已完成（#479，**破坏性**移除 builder 层：`uvhttp_server_builder_t` / `server_create` / `uvhttp_get|post|put|delete|any` / `set_max_connections` / `server_run` / `stop_simple` / `simple_free` / `uvhttp_serve`，`uvhttp_delete` 的命名空间污染随之消失）。前半截待办：`set_router`/`set_context` 接管所有权仍只写在 `@note`，未进类型 |
 | 子模块独立生命周期 | P2 | 📋 待办 | 限流 / TLS / WS / 压缩内联在同一个 6-cache-line `server` struct 内，`#if` + `_padding` 拼布局 |
-| 构造入口收敛 | P2 | 📋 待办 | **破坏性**：`server_new` / `server_new_with_loop` / `server_create` 三个平级入口删成只剩一个，差别只在"谁管 loop" |
+| 构造入口收敛 | P2 | 🔶 剩两个 | #479 已删 `uvhttp_server_create`，`server_new` / `server_new_with_loop` 仍在，差别只在「谁管 loop」 |
 | API 参考与示例同步 | P1 | 📋 待办 | 改造后 `docs/` API 参考与 `examples/` 需同步 |
 
 > 完整的原子性判据、12 条违约点与清理清单见 [[api-atomicity-audit]]。

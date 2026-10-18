@@ -16,7 +16,7 @@
 ## 2. 方法枚举映射
 
 - [ ] 所有 HTTP 方法（GET/POST/PUT/DELETE/HEAD/OPTIONS/PATCH）在 router 中正确注册和匹配
-- [ ] 使用 `uvhttp_any()` 注册的路由对所有请求方法生效
+- [ ] 使用 `uvhttp_server_listen_routes()` 路由表中 `UVHTTP_ANY` 方法注册的路由对所有请求方法生效
 - [ ] 使用 `uvhttp_router_add_route()`（隐含 UVHTTP_ANY）注册的路由对所有请求方法生效
 - [ ] 嵌入者的 HTTP 客户端库（如 undici、fetch）发送的请求方法被正确解析
 
