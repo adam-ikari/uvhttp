@@ -5,9 +5,10 @@ category: decision
 status: active
 tags: [api, atomicity, orthogonality, audit, v2.10]
 created: "2026-10-09T00:49:13"
-updated: "2026-10-09T01:08:06"
+updated: "2026-10-18T04:23:07"
 ---
 
+<!-- compiled_truth -->
 <!-- compiled_truth -->
 # API 原子化与正交性审计
 
@@ -228,12 +229,14 @@ gzip cache 是它的一个策略选择，而不是两个平行 API。
   （`set_status` 验范围、`set_header` 验字符与控制符）。
   这是 cache 系 setter（直接赋值无校验）应统一的模板。
 
-## 五、待定（不属本次审计范围）
+## 五、不属本次审计范围的两项（均已修复）
 
 - `uvhttp_config_t` 26 字段中 14 个不生效 —— 属功能缺陷，
-  见 [[api-atomization-orthogonalization]]，不重复。
+  见 [[api-atomization-orthogonalization]]，不重复。**已修**：2026-10-11 PR #472
+  `d257c92` 删字段 + 4 个假 setter。
 - router 迁移致路由全丢（13+ 顶层路由 + 参数路由）—— 属数据丢失 bug，
-  已实测复现，见 [[api-atomicity-audit]] timeline 的 evidence 条目。
+  已实测复现，见 [[api-atomicity-audit]] timeline 的 evidence 条目。**已修**：
+  `84707d7` 改原子迁移，`RouterMigrationAtomicity` 6 用例覆盖。
 
 ## 关联
 
@@ -291,4 +294,10 @@ gzip cache 是它的一个策略选择，而不是两个平行 API。
   kind: evidence
   summary: "N1 的实证升级：examples/embedding/main.c 的 listen 失败回滚分支在 ASan 下确认 double-free（set_router 已转移所有权，示例仍 router_free）"
   source: "2026-10-09 ASan 探针复现，栈指向 uvhttp_server_free→uvhttp_router_free"
+  affects: [api-atomicity-audit]
+
+- time: 2026-10-18T04:23:07
+  kind: decision
+  summary: "审计第五节两项（config 14 死字段、router 迁移丢路由）标注已修复及对应 commit"
+  source: brain update-truth
   affects: [api-atomicity-audit]
