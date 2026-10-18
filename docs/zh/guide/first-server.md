@@ -46,7 +46,11 @@ int main() {
 
     uv_loop_t* loop = uv_default_loop();
 
-    /* 原子构造：一次调用完成 server + 路由 + 监听，无中间态、无需回滚 */
+    /* 原子构造：一次调用完成 server + 路由 + 监听，无中间态、无需回滚。
+     *
+     * （v3.0.0 之前这里要 5 步，每个失败分支都得自己写清理。而最顺手的那种清理
+     * 恰恰是错的：take_router 之后 router 已归 server 所有，再对它调一次
+     * uvhttp_router_free 就是 double free。）*/
     const uvhttp_route_t routes[] = {
         {"/", UVHTTP_ANY, hello_handler},
     };
