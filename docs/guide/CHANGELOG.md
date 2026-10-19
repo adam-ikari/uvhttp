@@ -1409,6 +1409,8 @@ uvhttp_router_add_route(router, "/health", health_check_handler);
 - 可扩展的插件系统
 - 详细的文档和示例
 
+[3.0.0]: https://github.com/adam-ikari/uvhttp/compare/v2.9.2...v3.0.0
+[2.9.2]: https://github.com/adam-ikari/uvhttp/compare/v2.9.1...v2.9.2
 [2.9.1]: https://github.com/adam-ikari/uvhttp/compare/v2.9.0...v2.9.1
 [2.9.0]: https://github.com/adam-ikari/uvhttp/compare/v2.8.1...v2.9.0
 [1.1.0]: https://github.com/adam-ikari/uvhttp/compare/v1.0.0...v1.1.0
