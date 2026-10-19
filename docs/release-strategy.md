@@ -79,7 +79,7 @@ B：2.10 直接破坏性改而不跳号」的**跳号豁免**已撤销；策略 
 
 | 版本 | 日期 | 主要内容 |
 |------|------|---------|
-| v3.0.0 | 2026-10-18 | API 原子化窗口（全程以「v2.10」名义开发，按上表改号）：**删** `uvhttp_config_t` 里 14 个从不被读取的字段与 4 个假旋钮 setter（#472）、builder 层与 `uvhttp_serve` 及动词函数（#479）、内置限流 7 个 API 与 8 个 server 字段（#483）、不带 request 前缀的取值函数（#470）；**改名** `set_router`/`set_context` → `take_router`/`take_context`，所有权进名字（#470）；**新增** `uvhttp_server_listen_routes`（#470）与分派前接缝 `uvhttp_server_set_request_filter`（#483）；**修** router 迁移失败销毁已注册路由（#471，数据丢失自 v2.7.2）、`set_body` 非原子（#473）、LRU setter 写点校验（#473/#474）、构造路径原子化与错误码如实（#475） |
+| v3.0.0 | 2026-10-18 | API 原子化窗口（全程以「v2.10」名义开发，按上表改号）：**删** `uvhttp_config_t` 里 14 个从不被读取的字段与 4 个假旋钮 setter（#472）、builder 层与 `uvhttp_serve` 及动词函数（#479）、内置限流 7 个 API 与 8 个 server 字段（#483）、不带 request 前缀的取值函数（#470）；**改名** `set_router`/`set_context` → `take_router`/`take_context`，所有权进名字（#470）；**新增** `uvhttp_server_listen_routes`（#470）与分派前接缝 `uvhttp_server_set_request_filter`（#483）；**修** router 迁移失败销毁已注册路由（#471，数据丢失自 v2.7.2）、`set_body` 非原子（#473）、LRU setter 写点校验（#473/#474）、构造路径原子化与错误码如实（#475）、手工 `Content-Length` 遇压缩时分帧错位（#464，数据损坏级）、prewarm 每个成功文件漏一次缓冲（#449）；**收紧** 空 header 名不再被接受（#457，RFC 7230 §3.2）；另含 2.9.2 之后的测试有效性普查与把 `STATIC_FILES`/`ROUTER_CACHE` 纳入 sanitizer 构建（#448/#453–#457/#468） |
 | v2.9.2 | 2026-10-02 | 行为测试补全 11 组 132 个测试（TLS 证书 / URL 编码 / 条件请求 / gzip 与 LRU 缓存边界 / 响应头扩容 / 跨读续写 / query 参数 / 路由 trie 上限 / 连接超时 / accept 计数配对，均经变异验证）、库版本号改为从 VERSION 文件注入、修一个永远不可能失败的测试、删 format-check 门禁与 ci-daily、ROADMAP 精简 |
 | v2.9.1 | 2026-10-01 | CI 门禁修复（format-check 空转 + clang-format 版本钉住 + trend 改推分支开 PR）、CI 权限最小化、死代码清理 |
 | v2.9.0 | 2026-10-01 | Fuzz 覆盖扩展（request/websocket/static_path 三 harness）、header 名称 control-char 检查（防响应分割）、integration→manual/ 测试基建清理 |
