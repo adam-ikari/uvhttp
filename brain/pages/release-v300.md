@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [release, versioning, api, roadmap-v2.10]
 created: "2026-10-18T07:41:03"
-updated: "2026-10-19T14:08:01"
+updated: "2026-10-20T17:16:29"
 ---
 
 <!-- compiled_truth -->
@@ -56,6 +56,29 @@ brain 页与 roadmap 时间线里此前写下的 `v2.10` 是当时对该窗口�
 改号由本条与 `api-atomization-orthogonalization` 的 reversal 时间线项记录，不追溯改写
 历史条目。
 
+## 发布结果（2026-10-20）
+
+v3.0.0 已发布并转为 latest，`--post` 6/6 通过（线上 `versions.json` current=3.0.0）。
+
+过程比预期多出一次 tag 重打，原因值得记住：
+
+1. **首发**：tag `045a160` → prerelease 07:12Z。两条 release 门禁零运行记录。
+   直接原因是 tag 内 workflow 写着无效的 `types: [prerelease]`（0dafa69 引入）。
+2. **第一次修复**（#485）：改 `types: [prereleased]`。重建 prerelease 后仍然零运行 ——
+   `prereleased` 不覆盖「从 draft 发布的预发布」，而 `gh release create --prerelease` 正走该路径。
+3. **第二次修复**（#486）：改回 `published`。但 release 事件使用的是 **tag 提交上的
+   workflow 文件**，不是默认分支；改 main 对已存在的 tag 无效。用临时探针 tag
+   （`05ed4a3`）验证后，把 v3.0.0 重打到 `8376f1b`（#486 的 merge commit）。
+4. **重打后的 tag** 相对 `045a160` 只多出 CI/构建修复：cJSON 的 CMake 4 policy flag、
+   空 CLOSE 帧缓冲区零初始化、workflow 触发器与 env、文档/大脑。无 API 变化。
+
+门禁结果（tag `8376f1b`）：
+
+- `ci-release-gate`：9/9 job 全绿（fast / 各配置矩阵 / ASan）
+- `ci-benchmark`：paired base = `v2.9.2`；`/` 100.8%、`/json` 102.0%、`/large` 101.4%，全部 PASS
+- `scripts/ci/release_checklist.sh --gates`：5/5
+- 转 latest 后 `--post`：6/6
+
 
 ## Timeline
 
@@ -76,3 +99,15 @@ brain 页与 roadmap 时间线里此前写下的 `v2.10` 是当时对该窗口�
   summary: "评审两处修正：(1) CHANGELOG 的 3.0.0 段补齐 2.9.2 之后漏记的行为修复（#449 prewarm 泄漏、#457 拒绝空 header 名、#464 手工 Content-Length 与压缩的分帧错位）与测试/CI 两项分段，EN/ZH 分段条数逐项对齐；详见 [[release-checklist-enforced]] 的覆盖面缺口。(2) docs/zh/dev/ROADMAP.md 把 v3.0.0 预留给 2027 Q1 的「重大更新（计划中）」，与本次发布撞号，改为其后一号；该文件其余内容是废弃状态（自称 v2.0.0 为当前版本、v2.1.0 计划发布于 2026-03-15），维护版路线图是 docs/guide/ROADMAP.md，废弃件留待单独决定重写或删除，发布 PR 里不顺手清理。"
   source: "v3.0.0 发布评审（2026-10-19）"
   affects: [release-v300]
+
+- time: 2026-10-20T17:16:29
+  kind: decision
+  summary: Rewrote compiled_truth to the new best understanding
+  source: "v3.0.0 发布完成（2026-10-20）"
+  affects: [release-v300]
+
+- time: 2026-10-20T17:16:29
+  kind: decision
+  summary: "v3.0.0 正式发布：tag 重打至 8376f1b（含 CI/构建修复，无 API 变化）；release 门禁 9/9、benchmark 对 v2.9.2 全 PASS、--gates 5/5、--post 6/6，已转 latest"
+  source: "GitHub Release v3.0.0；runs 39460475038 / 39460475053"
+  affects: [release-v300, runner-toolchain-drift, perf-regression-gate]
