@@ -1,7 +1,7 @@
 name: CI - Performance Benchmark
 
-# Trigger: manual, or a prerelease being created
-# - release prerelease event = the regression benchmark gate on the staging
+# Trigger: manual, or a release being published
+# - release published event (prerelease included) = the regression benchmark gate on the staging
 #   path (docs/release-strategy.md 阶段一 step 3: gh release create --prerelease)
 #   It fires there and NOT on the later --latest promotion, so a red gate
 #   blocks the promotion to a formal release instead of post-dating it.
@@ -29,13 +29,14 @@ on:
         default: ''
   release:
     # Only the staging prerelease (created with `gh release create --prerelease`)
-    # is gated. 'released' would fire only after the --latest promotion. The
-    # activity type is 'prereleased' (past tense): 'prerelease' is not a valid
-    # type, and an unknown type matches nothing silently rather than failing
-    # validation. Both release gates were dead from 2026-10-16 until v3.0.0's
-    # prerelease fired no run at all (nightly-272's prerelease fired none
-    # either, which is the counterfactual that proves it).
-    types: [prereleased]
+    # is gated; 'released' would fire after the --latest promotion. Use
+    # 'published', which covers stable releases and pre-releases alike.
+    # 'prereleased' does NOT fire for pre-releases published from a draft —
+    # the path `gh release create --prerelease` takes — so v3.0.0 produced no
+    # run under it. 'prerelease' is not a valid type at all and matches
+    # silently. (nightly-272 proves nothing here: nightly publishes with
+    # GITHUB_TOKEN, and those events never trigger workflows.)
+    types: [published]
 
 env:
   # Same reason as ci-release-gate.yml: both the release commit and the base
@@ -343,7 +344,7 @@ jobs:
 
       # 回归门禁：优先用同机配对结果（head vs base 同一 runner 交替测量）。
       # 只有解析不到 base 版本时才退回绝对基线——绝对基线在共享 runner 上
-      # 方差 ~40%，只能当参考。门禁只在 release prerelease 事件上判定；workflow_dispatch
+      # 方差 ~40%，只能当参考。门禁只在 release published 事件上判定；workflow_dispatch
       # 出报告不判红。
       - name: Regression gate check
         if: github.event_name == 'release'
