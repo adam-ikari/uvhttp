@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [performance, benchmark, ci, gate]
 created: "2026-08-26T04:20:15"
-updated: "2026-10-19T14:08:01"
+updated: "2026-10-20T15:54:08"
 ---
 
 <!-- compiled_truth -->
@@ -120,3 +120,9 @@ updated: "2026-10-19T14:08:01"
   summary: "release 事件的 base 解析首次在真实数据上核验（对着 v3.0.0 预演）：把 workflow 里那段表达式原样重放到实时 API（cur=v3.0.0）得 base = v2.9.2 —— v2.5.0 与 v2.2.0 是 draft 被过滤掉，其余 Release 对象全是 nightly*，按 tag 前缀跳过。教训：判断 base 会解析成什么不能看 gh release list，它的输出不足以反映 API 返回顺序与 draft 标志，会得出「只有 nightly、必然退化到绝对基线」的错误结论（本次就因此写错了一版 PR 描述）。要判就把那段过滤逻辑连 per_page=100 的 API 结果一起重放。发布时以 run 日志的 Paired gate base: v2.9.2 为准。"
   source: "v3.0.0 发布评审（2026-10-19）"
   affects: [perf-regression-gate]
+
+- time: 2026-10-20T15:54:08
+  kind: reversal
+  summary: "「prerelease 触发器待一次真实 pre-release 验证」已有答案：它是坏的。0dafa69（2026-10-16）把 types 从 published 改成 prerelease，而 GitHub Actions 的 release 事件没有这个 activity type（正确名 prereleased，过去式）；未知类型不报错、不校验，只是永不匹配。v3.0.0 建好 pre-release 后两条门禁零运行记录；nightly-272（2026-10-19 02:44 的 prerelease）同样零记录——而 workflow 里 if: 专门写着要跳过 nightly 的 prerelease，恰好证明作者预期它命中。判定方式：gh run list --workflow <file> --event release 按 head_sha==tag 提交筛（release 事件的 head_sha 实测等于 tag 提交，v2.9.2/v2.9.1 均如此）。修复在 PR #485，同时 release_checklist.sh 新增 --gates 把「确认门禁跑过」变成可判红的检查。另：手动 dispatch ci-release-gate 会真跑测试（v3.0.0 上 9/9 全绿），但 benchmark 的 workflow_dispatch 不判红（if: event_name=='release'），所以『手动跑过测试』不能替代 release 事件。"
+  source: "v3.0.0 发布（2026-10-20）"
+  affects: [ci-benchmark, ci-release-gate]

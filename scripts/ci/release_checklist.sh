@@ -4,10 +4,18 @@
 #
 # 用法：
 #   scripts/ci/release_checklist.sh --pre      # 发布前：本地可验证项
+#   scripts/ci/release_checklist.sh --gates    # 转正式前：release 门禁确实跑过且全绿
 #   scripts/ci/release_checklist.sh --post     # 发布后：GitHub / 站点可验证项
 #
-# 两阶段分开是因为部分项只能在发布动作完成后查（tag、release、线上
-# versions.json）。pre 在合并版本 PR 前跑；post 在转正式 latest 后跑。
+# 三段分开是因为部分项只能在发布动作的特定时点查（tag、release、线上
+# versions.json）。pre 在合并版本 PR 前跑；gates 在 gh release create --prerelease
+# 之后、--latest 之前跑；post 在转正式 latest 后跑。
+#
+# gates 这一段的唯一理由是「门禁没触发」不会以任何方式报错：release 事件的
+# activity type 写错时 GitHub 只是不跑，看起来一切正常。v3.0.0 就撞上这个 ——
+# types: [prerelease]（正确名是 prereleased）从 2026-10-16 起让两条 release
+# 门禁全哑，pre-release 建好、页面正常、测试却一行没跑。流程写「等门禁全绿」
+# 而没人去查它们跑没跑，那句话就是空的。
 #
 # 退出码：0=全过；1=有未过项（列出原因）；2=用法错。
 set -euo pipefail
@@ -16,8 +24,8 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$REPO_ROOT"
 
 mode="${1:-}"
-if [ "$mode" != "--pre" ] && [ "$mode" != "--post" ]; then
-    echo "用法: $0 --pre | $0 --post" >&2
+if [ "$mode" != "--pre" ] && [ "$mode" != "--gates" ] && [ "$mode" != "--post" ]; then
+    echo "用法: $0 --pre | $0 --gates | $0 --post" >&2
     exit 2
 fi
 
@@ -112,7 +120,7 @@ if [ "$mode" = "--pre" ]; then
     fi
 
 # ---------------------------------------------------------------------------
-else  # --post：需要 gh CLI 与网络
+elif [ "$mode" = "--post" ]; then  # 需要 gh CLI 与网络
     echo "[Git tag]"
     tag="v$version"
     # gh release view 的 --json 字段不统一（isLatest 在 view 不可用、在 list 可用），
@@ -149,6 +157,37 @@ else: print(('latest' if rs[0].get('isLatest') else ('prerelease' if rs[0].get('
         fi
     else
         bad "取不到 $versions_json"
+    fi
+
+# ---------------------------------------------------------------------------
+else  # --gates：转正式前，确认 release 门禁真的因为这个 tag 跑过
+    echo "[release 门禁运行记录]"
+    tag="v$version"
+    sha="$(git rev-parse --verify "$tag^{commit}" 2>/dev/null || echo "")"
+    if [ -z "$sha" ]; then
+        bad "本地解析不到 $tag 指向的提交（tag 未打或未 fetch）"
+    else
+        # release 事件的运行记录里 head_sha 就是 tag 指向的提交（v2.9.2/v2.9.1
+        # 的运行都如此），所以按 sha 精确匹配，不看标题之类的软证据。
+        # 只认 event=release：手动 workflow_dispatch 的基准不判红（见
+        # perf-regression-gate），拿来当门禁通过等于自欺。
+        for wf in "ci-release-gate.yml|CI - Pre-Release Test Gate" "ci-benchmark.yml|CI - Performance Benchmark"; do
+            wf_file="${wf%%|*}"; wf_name="${wf##*|}"
+            state=$(gh run list --workflow "$wf_file" --event release --limit 50 \
+                       --json headSha,conclusion 2>/dev/null | python3 -c "import json,sys
+rs=[r for r in json.load(sys.stdin) if r['headSha']=='$sha']
+if not rs: print('none')
+elif all(r['conclusion']=='success' for r in rs): print('success')
+elif any(str(r['conclusion']) in ('', 'None', 'action_required', 'queued', 'in_progress', 'pending') for r in rs): print('running')
+else: print('not-green')" 2>/dev/null || echo "query-failed")
+            case "$state" in
+                success)     pass "$wf_name：$tag（${sha:0:7}）的 release 运行全绿" ;;
+                running)     bad "$wf_name：$tag 的 release 运行还没结束，等它绿" ;;
+                not-green)   bad "$wf_name：$tag 的 release 运行未通过（gh run list --workflow \"$wf_file\" --event release）" ;;
+                none)        bad "$wf_name：没有 $tag 的 release 事件运行 —— 门禁根本没被触发，禁止转 latest" ;;
+                *)           bad "$wf_name：查询失败（gh 未登录或网络）" ;;
+            esac
+        done
     fi
 fi
 

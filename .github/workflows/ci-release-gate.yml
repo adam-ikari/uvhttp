@@ -12,8 +12,17 @@ name: CI - Pre-Release Test Gate
 # e.g. PR #464 的 unused-function 只在 COMPRESSION=OFF 暴露）。编译验证 ≠ 测试。
 on:
   release:
-    types: [prerelease]
+    # The activity type is 'prereleased' (past tense), not 'prerelease'.
+    types: [prereleased]
   workflow_dispatch:
+
+env:
+  # The gate builds the tag's source, and v3.0.0 predates the cJSON policy
+  # fix. CMake 4 rejects vendored cJSON's cmake_minimum_required(VERSION 3.0);
+  # the environment variable initialises the cache entry in every new build
+  # tree, including the nested configure Dependencies.cmake spawns via
+  # execute_process. Ignored by CMake < 4.
+  CMAKE_POLICY_VERSION_MINIMUM: "3.5"
 
 permissions:
   contents: read

@@ -47,10 +47,12 @@ B：2.10 直接破坏性改而不跳号」的**跳号豁免**已撤销；策略 
      - `ci-release-gate.yml`（完整测试：fast tests / 各配置矩阵测试 / ASan 内存安全）
      - `ci-benchmark.yml`（性能回归门禁：同机配对，10% 阈值）
   - 两条门禁全绿才可转正式
+  - 触发条件是 `release: types: [prereleased]`。**必须是 `prereleased`（过去式）**：写成 `prerelease` 时 GitHub 不报错、只是永不匹配，门禁静默不跑（v3.0.0 发布时发现的真实事故，两条门禁从 2026-10-16 起全哑）。所以下一步不是「等门禁绿」，而是先确认它们被触发了
 
 ### 阶段二：正式发布
 
 4. **确认门禁**
+   - 运行 `scripts/ci/release_checklist.sh --gates`：按 tag 指向的提交查两条门禁的 `release` 事件运行记录，查不到就判红。**先过这一项再看颜色** —— 没有运行记录时「全绿」是空话
    - 确认 `ci-release-gate` 测试门禁为绿（完整测试：fast / 各配置 / ASan 内存安全）
    - 确认 benchmark 回归门禁为绿（由创建 pre-release 的 `release` 事件自动触发；开发期需要看趋势时手动 `workflow_dispatch`，手动跑只出报告不判红。项目没有 pre-release 分支发布路径，PR 侧不设自动门禁）
    - gate 以同一 runner 上 head/base 交替测量的比值判定（配对比值中位数 < 90% 且多数配对也在 90% 以下才失败）；绝对 RPS 基线只作为报告信息，不参与判定（GitHub runner 跨 run 方差约 40%，绝对阈值会 gate 到 runner 运气而非代码）
@@ -70,6 +72,7 @@ B：2.10 直接破坏性改而不跳号」的**跳号豁免**已撤销；策略 
 - [ ] VERSION 已更新
 - [ ] Git tag 已创建并推送
 - [ ] 预发布 Release 已创建（--prerelease）
+- [ ] **`release_checklist.sh --gates` 通过**（两条门禁的 release 事件运行记录确实存在）
 - [ ] **`ci-release-gate` 测试门禁通过**（fast / 各配置 / ASan 内存安全）
 - [ ] Benchmark 回归门禁通过（CI / gate 绿）
 - [ ] 正式 Release 已确认（--latest）

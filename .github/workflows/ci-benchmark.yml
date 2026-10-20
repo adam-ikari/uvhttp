@@ -28,10 +28,20 @@ on:
         required: false
         default: ''
   release:
-    # Only 'prerelease' (gh release create --prerelease), i.e. the staging
-    # release the gate is supposed to block on. 'released' would fire only
-    # after the --latest promotion.
-    types: [prerelease]
+    # Only the staging prerelease (created with `gh release create --prerelease`)
+    # is gated. 'released' would fire only after the --latest promotion. The
+    # activity type is 'prereleased' (past tense): 'prerelease' is not a valid
+    # type, and an unknown type matches nothing silently rather than failing
+    # validation. Both release gates were dead from 2026-10-16 until v3.0.0's
+    # prerelease fired no run at all (nightly-272's prerelease fired none
+    # either, which is the counterfactual that proves it).
+    types: [prereleased]
+
+env:
+  # Same reason as ci-release-gate.yml: both the release commit and the base
+  # (v2.9.2) predate the cJSON policy fix, and CMake 4 rejects the vendored
+  # cJSON's cmake_minimum_required(VERSION 3.0). Ignored by CMake < 4.
+  CMAKE_POLICY_VERSION_MINIMUM: "3.5"
 
 jobs:
   benchmark:

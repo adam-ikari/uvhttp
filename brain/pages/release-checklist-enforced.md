@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [release, ci, quality]
 created: "2026-10-04T14:24:33"
-updated: "2026-10-19T14:07:50"
+updated: "2026-10-20T15:54:08"
 ---
 
 <!-- compiled_truth -->
@@ -75,4 +75,10 @@ updated: "2026-10-19T14:07:50"
   kind: decision
   summary: "门禁的覆盖面缺口（v3.0.0 准备时暴露）：--pre 只查 CHANGELOG 里有没有 ## [版本号] 段落、release-strategy 里有没有对应历史行，不查这一段是否覆盖了整个未发布窗口。本次 [Unreleased] 只剩最后一个 PR（#483）的条目，照它成文就会漏掉 2.9.2 之后 34 个 first-parent 合并里带 src/ 改动的 #449（prewarm 每文件漏一次缓冲）、#457（空 header 名开始被拒，行为收紧）、#464（手工 Content-Length + 压缩分帧错位，数据损坏级）。打 tag 前的固定动作：git log --first-parent <上个tag>..main 与 changelog 段落逐条对，尤其筛 git diff --name-only c^1 c 命中 src/ 或 include/ 的合并——merge commit 要用 c^1 对比，git show --name-only 对合并提交输出为空，据此判断会漏。"
   source: "v3.0.0 发布评审（2026-10-19）"
+  affects: [release-checklist-enforced]
+
+- time: 2026-10-20T15:54:08
+  kind: decision
+  summary: "新增 --gates 模式（PR #485）：转 latest 前按 tag 提交核对两条 release 门禁的 release 事件运行记录，none / 未跑完 / 未全绿一律判红。动机是 v3.0.0 发布时发现 activity type 写错会让门禁静默不跑、而流程里『等两条门禁全绿』在没触发时是空话。--gates 只认 event=release 的记录，手动 dispatch 的 benchmark 不算。已实测：对 v3.0.0 判红（2 未过），对 v2.9.2 的 benchmark 记录判绿。"
+  source: "v3.0.0 发布（2026-10-20）"
   affects: [release-checklist-enforced]
