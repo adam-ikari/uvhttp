@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [performance, benchmark, ci, gate]
 created: "2026-08-26T04:20:15"
-updated: "2026-10-20T15:54:08"
+updated: "2026-10-20T16:34:06"
 ---
 
 <!-- compiled_truth -->
@@ -16,8 +16,8 @@ updated: "2026-10-20T15:54:08"
 - 判定：`regression_check.py --compare` 按 round 配对取每轮 head/base 比值。**失败需同时满足两条**：比值中位数 < `1 − threshold`（默认 10%），且**多数**单个配对也低于该限。中位数在限内但多数配对不在 → 打印 `NOISE`，不判失败。
 - **fail closed（四种测不出结论的情形都算失败）**：base 无数据、配对 < 3 轮、被 gate 的端点在 head CSV 缺失、在 base CSV 缺失。端点清单**单一来源**是 workflow 的 job env `GATE_ENDPOINTS`，以 `--gate` 传给脚本——否则"脚本默认基线键"与"实测端点"两处真源会漂移。
 - 绝对基线（`/` 83K、`/json` 81K、`/large` 8.8K）在配对模式下仍打印，但只是报告信息。
-- 触发条件（2026-10-17 定稿）：**`release: [prerelease]`** + 手动 `workflow_dispatch`，**PR 侧没有自动门禁**。判据是"发布流程实际走哪条路"，不是"哪种配置看起来更严"：项目用 tag + `gh release create --prerelease` 暂存，所有变更 PR → main，`pre-release` 分支末次提交停在 2026-07-25 且无流程向其发 PR。因此三种 PR 触发都是死配置，历次都属同一类错误：`benchmark` 标签（标签 2026-09-28 才建，PR 侧门禁历史上等于没跑）、`push: branches: [pre-release]`（见 [[release-process-benchmark-gate]]）、`pull_request.branches: [pre-release]`（PR #481，2026-10-16 引入，2026-10-17 评审否决）。「每个 PR 自动跑」另有一次独立否决：每次 PR/push 排队 ~29 分钟。
-- **触发器类型是 `prerelease` 而非 `published`**：门禁的意义是在转正式**之前**判红。`published` 只在 `gh release edit --latest` 之后触发，门禁会跑到结论后面去；`prerelease` 与 `ci-release-gate.yml` 同点触发，两条门禁一起构成 `docs/release-strategy.md` 阶段一步骤 3 宣称的"自动触发两条门禁"（该宣称在 `published` 时代是错的）。
+- 触发条件：**`release: [published]`** + 手动 `workflow_dispatch`，**PR 侧没有自动门禁**。判据是"发布流程实际走哪条路"，不是"哪种配置看起来更严"：项目用 tag + `gh release create --prerelease` 暂存，所有变更 PR → main，`pre-release` 分支末次提交停在 2026-07-25 且无流程向其发 PR。因此三种 PR 触发都是死配置，历次都属同一类错误：`benchmark` 标签（标签 2026-09-28 才建，PR 侧门禁历史上等于没跑）、`push: branches: [pre-release]`（见 [[release-process-benchmark-gate]]）、`pull_request.branches: [pre-release]`（PR #481，2026-10-16 引入，2026-10-17 评审否决）。「每个 PR 自动跑」另有一次独立否决：每次 PR/push 排队 ~29 分钟。
+- **触发器类型必须是 `published`**：它同时覆盖正式版与预发布，在 `gh release create --prerelease` 时就触发，因此门禁仍在转正式**之前**判红。`prereleased` 不会为「从 draft 发布的预发布」触发，而 gh CLI 正走这条路径——v3.0.0 重发时实测零运行记录；`prerelease` 则是无效类型，静默不匹配（2026-10-16 起两条门禁全哑的直接原因）。`released` 只在 `--latest` 转正时触发，太晚，不能用。nightly-272 的无记录不能作为类型错误的证据：nightly 用 `GITHUB_TOKEN` 创建 release，该身份触发的事件本就不产生 workflow run。
 
 ## exit code 契约（CI 依赖它，改动要同步）
 `regression_check.py`：`0` = 通过；`1` = 门禁判红；`2` = **数据不可用**（CSV 解析不到结果、配对模式下任一侧没有 round 数据）。`2` 与 `1` 都必须让 job 失败，但语义不同：`1` 是"测出了回归"，`2` 是"根本没测到"。空 CSV 走 `2` 而不是静默通过，是 fail-closed 链条的第一环。
@@ -26,7 +26,7 @@ updated: "2026-10-20T15:54:08"
 - **内置基线，不依赖外部文件**：`DEFAULT_BASELINE` 写在脚本里，随代码版本一起更新；引入外部 baseline JSON 会让基线与代码版本脱钩（`--baseline` 参数保留给临时实验）。
 - **比中位数，不比均值**：单轮 wrk 掉尾会把均值拉偏，median 对离群轮鲁棒。配对模式继承了这一点（比的是逐轮比值的**中位数**）。
 - **每端点取 10 轮的 median**，不是单次采样。
-- **`workflow_dispatch` 不阻塞**：手动跑基准只出报告、不判红，开发期看趋势用；门禁只在 `release` 的 `prerelease` 事件上生效。
+- **`workflow_dispatch` 不阻塞**：手动跑基准只出报告、不判红，开发期看趋势用；门禁只在 `release` 的 `published` 事件上生效。
 
 ## 三层噪声，各自对应一个对策
 1. **run 间**（跨机器）：同一 commit 小响应中位数可从记录的 83K 漂到 40–54K（~40%）。绝对阈值 gate 的是这个 → 同机配对消除。旧口径"CI CV < 5%"只在**单次运行内**成立。
@@ -44,7 +44,7 @@ updated: "2026-10-20T15:54:08"
 - 合成样本 7 个场景 + fail-closed 场景（gate 端点缺失 → exit 1；空 CSV → exit 2，不会变绿）。
 - GitHub 同码自测连续 4 轮绿：run 5 `/` 103.3%（1/10）、run 6 `/` 103.5%（0/10）、run 7（docs-only）、run 8（fail-closed 规则上线后首轮）`/` 103.9%、`/json` 115.2%、`/large` 101.6%。同批绝对基线报 `/` 73–80% —— 正是被降级为报告信息的那个跨 run 层。
 - 首次实测真实修复（PR #387，base = 含全量 writev 的 main）：`/` **123.4%**、`/json` **127.6%**、`/large` 101.8%，MAD 2–4%，0/10 配对在限下。
-- `prerelease` 触发器本身待一次真实 pre-release 验证（本地无法触发 release 事件）；改的是 `on:` 与 `if:`，测量与判定逻辑未动。
+- 触发器实证：v2.9.2 的 prerelease 在 `published` 下产生过运行记录；v3.0.0 用 `gh release create --prerelease` 两次（2026-10-20）在无效类型 / `prereleased` 下均无记录，官方文档明确 `prereleased` 不覆盖「从 draft 发布的预发布」。2026-10-20 改回 `published` 并重发事件，两条门禁首次在修复后真实运行。
 
 
 ## Timeline
@@ -126,3 +126,15 @@ updated: "2026-10-20T15:54:08"
   summary: "「prerelease 触发器待一次真实 pre-release 验证」已有答案：它是坏的。0dafa69（2026-10-16）把 types 从 published 改成 prerelease，而 GitHub Actions 的 release 事件没有这个 activity type（正确名 prereleased，过去式）；未知类型不报错、不校验，只是永不匹配。v3.0.0 建好 pre-release 后两条门禁零运行记录；nightly-272（2026-10-19 02:44 的 prerelease）同样零记录——而 workflow 里 if: 专门写着要跳过 nightly 的 prerelease，恰好证明作者预期它命中。判定方式：gh run list --workflow <file> --event release 按 head_sha==tag 提交筛（release 事件的 head_sha 实测等于 tag 提交，v2.9.2/v2.9.1 均如此）。修复在 PR #485，同时 release_checklist.sh 新增 --gates 把「确认门禁跑过」变成可判红的检查。另：手动 dispatch ci-release-gate 会真跑测试（v3.0.0 上 9/9 全绿），但 benchmark 的 workflow_dispatch 不判红（if: event_name=='release'），所以『手动跑过测试』不能替代 release 事件。"
   source: "v3.0.0 发布（2026-10-20）"
   affects: [ci-benchmark, ci-release-gate]
+
+- time: 2026-10-20T16:33:58
+  kind: decision
+  summary: Rewrote compiled_truth to the new best understanding
+  source: "v3.0.0 门禁重发诊断（2026-10-20）：activity type 应为 published"
+  affects: [perf-regression-gate]
+
+- time: 2026-10-20T16:34:06
+  kind: reversal
+  summary: "推翻「触发器应为 prerelease、published 只在 --latest 后触发」：GitHub 文档明确 published 覆盖预发布；prereleased 不为「从 draft 发布的预发布」触发，gh release create --prerelease 正走该路径。v3.0.0 两次重发实测零记录。正确类型是 published。nightly 反例因 GITHUB_TOKEN 触发而被污染，不成立"
+  source: "GitHub Actions 文档 release 事件说明 + v3.0.0 实测（PR #486）"
+  affects: [perf-regression-gate, release-checklist-enforced, release-v300]

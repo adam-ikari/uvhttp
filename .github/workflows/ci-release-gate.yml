@@ -12,8 +12,12 @@ name: CI - Pre-Release Test Gate
 # e.g. PR #464 的 unused-function 只在 COMPRESSION=OFF 暴露）。编译验证 ≠ 测试。
 on:
   release:
-    # The activity type is 'prereleased' (past tense), not 'prerelease'.
-    types: [prereleased]
+    # 'published' covers both stable releases and pre-releases. Do not use
+    # 'prereleased': it does not fire for pre-releases published from a draft,
+    # which is how `gh release create --prerelease` publishes — v3.0.0
+    # produced no run under it. 'released' fires only on the later --latest
+    # promotion, after this gate should already have run.
+    types: [published]
   workflow_dispatch:
 
 env:

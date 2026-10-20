@@ -47,7 +47,7 @@ B：2.10 直接破坏性改而不跳号」的**跳号豁免**已撤销；策略 
      - `ci-release-gate.yml`（完整测试：fast tests / 各配置矩阵测试 / ASan 内存安全）
      - `ci-benchmark.yml`（性能回归门禁：同机配对，10% 阈值）
   - 两条门禁全绿才可转正式
-  - 触发条件是 `release: types: [prereleased]`。**必须是 `prereleased`（过去式）**：写成 `prerelease` 时 GitHub 不报错、只是永不匹配，门禁静默不跑（v3.0.0 发布时发现的真实事故，两条门禁从 2026-10-16 起全哑）。所以下一步不是「等门禁绿」，而是先确认它们被触发了
+  - 触发条件是 `release: types: [published]`。**必须是 `published`**：它同时覆盖正式版和预发布。`prereleased` 不会为「从 draft 发布的预发布」触发，而 `gh release create --prerelease` 正走这条路径（v3.0.0 实测两条门禁均无运行记录）；`prerelease` 则是无效类型，GitHub 不报错、只是永不匹配（两条门禁从 2026-10-16 起全哑）。所以下一步不是「等门禁绿」，而是先确认它们被触发了
 
 ### 阶段二：正式发布
 

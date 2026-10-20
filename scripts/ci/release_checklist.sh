@@ -13,9 +13,11 @@
 #
 # gates 这一段的唯一理由是「门禁没触发」不会以任何方式报错：release 事件的
 # activity type 写错时 GitHub 只是不跑，看起来一切正常。v3.0.0 就撞上这个 ——
-# types: [prerelease]（正确名是 prereleased）从 2026-10-16 起让两条 release
-# 门禁全哑，pre-release 建好、页面正常、测试却一行没跑。流程写「等门禁全绿」
-# 而没人去查它们跑没跑，那句话就是空的。
+# 两条 release 门禁从 2026-10-16 起全哑：先写成无效的 [prerelease]，改成
+# [prereleased] 后仍不跑（它对从 draft 发布的预发布不触发，而
+# gh release create --prerelease 正是这样发布），正确类型是 [published]。
+# pre-release 建好、页面正常、测试却一行没跑。流程写「等门禁全绿」而没人
+# 去查它们跑没跑，那句话就是空的。
 #
 # 退出码：0=全过；1=有未过项（列出原因）；2=用法错。
 set -euo pipefail
