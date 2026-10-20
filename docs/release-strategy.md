@@ -48,6 +48,7 @@ B：2.10 直接破坏性改而不跳号」的**跳号豁免**已撤销；策略 
      - `ci-benchmark.yml`（性能回归门禁：同机配对，10% 阈值）
   - 两条门禁全绿才可转正式
   - 触发条件是 `release: types: [published]`。**必须是 `published`**：它同时覆盖正式版和预发布。`prereleased` 不会为「从 draft 发布的预发布」触发，而 `gh release create --prerelease` 正走这条路径（v3.0.0 实测两条门禁均无运行记录）；`prerelease` 则是无效类型，GitHub 不报错、只是永不匹配（两条门禁从 2026-10-16 起全哑）。所以下一步不是「等门禁绿」，而是先确认它们被触发了
+  - **release 事件使用的是 tag 提交上的 workflow 文件**，不是默认分支。所以打 tag 前必须确认该提交里的两个 workflow 触发器有效；改 main 不会让已经带着坏触发器的 tag 受益，只能重打 tag（v3.0.0：tag 内的 `types: [prerelease]` 让事件即使已发出也不产生运行，最终把 tag 重打到含修复的提交才触发）
 
 ### 阶段二：正式发布
 
