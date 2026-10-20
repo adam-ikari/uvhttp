@@ -7,7 +7,7 @@ description: UVHTTP's pre-dispatch request filter - the seam where application-l
 
 ## Overview
 
-UVHTTP ships no rate limiter. Since v2.10 the built-in one is gone, replaced by
+UVHTTP ships no rate limiter. Since v3.0.0 the built-in one is gone, replaced by
 a single hook that runs before a request is dispatched:
 
 ```c

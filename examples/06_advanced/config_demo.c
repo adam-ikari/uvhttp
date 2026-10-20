@@ -182,7 +182,7 @@ int config_api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         return uvhttp_response_send(response);
     }
 
-    /* 只报告真正生效的字段。v2.10 删除了 14 个"设置成功但无人读取"的
+    /* 只报告真正生效的字段。v3.0.0 删除了 14 个"设置成功但无人读取"的
      * 配置字段（max_body_size / read_buffer_size / max_header_size 等）——
      * 它们的真实上限来自编译期常量，报告出来只会误导使用者。 */
     cJSON_AddNumberToObject(json_obj, "max_connections", config->max_connections);

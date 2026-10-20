@@ -227,7 +227,7 @@ TEST_F(UvhttpServerApiTest, ServerStopStopsListening) {
 
 /* 测试服务器释放简单模式 */
 TEST_F(UvhttpServerApiTest, ServerFreeNullIsNoOp) {
-    /* NULL 释放是安全的 no-op（v2.10：server_free 取代 simple_free） */
+    /* NULL 释放是安全的 no-op（v3.0.0：server_free 取代 simple_free） */
     EXPECT_EQ(uvhttp_server_free(NULL), UVHTTP_OK);
 }
 

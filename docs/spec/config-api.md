@@ -47,10 +47,10 @@ set at the server level and can be shared across multiple server instances.
 ## Configurable Options
 
 **Rule: a field is either authoritative or absent.** Every field below is read
-by at least one execution path. v2.10 deleted the 14 fields that were set,
+by at least one execution path. v3.0.0 deleted the 14 fields that were set,
 validated, printed — and then ignored by the whole library:
 
-| Removed field (v2.10) | What actually owned that limit |
+| Removed field (v3.0.0) | What actually owned that limit |
 |---|---|
 | `read_buffer_size` | compile-time `UVHTTP_READ_BUFFER_SIZE` (per-connection buffer, `connection.c`) |
 | `max_body_size` | compile-time `UVHTTP_MAX_BODY_SIZE` (`request.c` / `response.c` / `utils.c`) |

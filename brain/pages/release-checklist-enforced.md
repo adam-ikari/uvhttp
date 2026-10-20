@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [release, ci, quality]
 created: "2026-10-04T14:24:33"
-updated: "2026-10-04T14:24:33"
+updated: "2026-10-19T14:07:50"
 ---
 
 <!-- compiled_truth -->
@@ -69,4 +69,10 @@ updated: "2026-10-04T14:24:33"
   kind: decision
   summary: Rewrote compiled_truth to the new best understanding
   source: "PR #452"
+  affects: [release-checklist-enforced]
+
+- time: 2026-10-19T14:07:50
+  kind: decision
+  summary: "门禁的覆盖面缺口（v3.0.0 准备时暴露）：--pre 只查 CHANGELOG 里有没有 ## [版本号] 段落、release-strategy 里有没有对应历史行，不查这一段是否覆盖了整个未发布窗口。本次 [Unreleased] 只剩最后一个 PR（#483）的条目，照它成文就会漏掉 2.9.2 之后 34 个 first-parent 合并里带 src/ 改动的 #449（prewarm 每文件漏一次缓冲）、#457（空 header 名开始被拒，行为收紧）、#464（手工 Content-Length + 压缩分帧错位，数据损坏级）。打 tag 前的固定动作：git log --first-parent <上个tag>..main 与 changelog 段落逐条对，尤其筛 git diff --name-only c^1 c 命中 src/ 或 include/ 的合并——merge commit 要用 c^1 对比，git show --name-only 对合并提交输出为空，据此判断会漏。"
+  source: "v3.0.0 发布评审（2026-10-19）"
   affects: [release-checklist-enforced]

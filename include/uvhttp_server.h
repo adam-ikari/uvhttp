@@ -149,7 +149,7 @@ struct uvhttp_server {
     /* ========== Cache line 5 (256-319 bytes): request filter seam ==========
      */
     /* Unconditional: the seam costs one pointer pair, so it needs no feature
-     * gate. v2.10 replaced the built-in rate limiter (8 fields + its feature
+     * gate. v3.0.0 replaced the built-in rate limiter (8 fields + its feature
      * flag) with these two - policy belongs to the caller. */
     uvhttp_request_filter_t request_filter; /* 8 bytes - pre-dispatch filter */
     void* request_filter_user_data;         /* 8 bytes - filter context */
@@ -250,7 +250,7 @@ uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server);
  * @note On success the server owns the routes (it builds and holds the
  *       router internally) and releases them in uvhttp_server_free.
  *
- * @note Added in v2.10. The five-step sequence remains available for callers
+ * @note Added in v3.0.0. The five-step sequence remains available for callers
  *       that need to keep the router handle - prefer this for everything else.
  *
  * @note This entry builds a bare server: no `uvhttp_context_t` and no
@@ -315,7 +315,7 @@ uvhttp_error_t uvhttp_server_set_handler(uvhttp_server_t* server,
  *       and releases it in uvhttp_server_free. Do NOT call uvhttp_router_free
  *       on it yourself - doing so is a double free.
  *
- * @note Renamed from uvhttp_server_set_router in v2.10. The old name implied
+ * @note Renamed from uvhttp_server_set_router in v3.0.0. The old name implied
  *       a borrow while the behavior was a transfer; that mismatch is what made
  *       examples/embedding/main.c double-free on its listen-failure path.
  *
@@ -348,7 +348,7 @@ uvhttp_error_t uvhttp_server_take_router(uvhttp_server_t* server,
  * @note OWNERSHIP TRANSFERS HERE. After this call the server owns the context
  *       and releases it in uvhttp_server_free. Do NOT free it yourself.
  *
- * @note Renamed from uvhttp_server_set_context in v2.10, for the same reason
+ * @note Renamed from uvhttp_server_set_context in v3.0.0, for the same reason
  *       as uvhttp_server_take_router. No detach operation exists: a NULL
  *       context is only a no-op when the server holds none already, and is
  *       rejected once one has been taken.

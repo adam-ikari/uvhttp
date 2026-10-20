@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
     printf("启动WebSocket测试服务器，端口: %d\n", port);
 
     // 库提供原语：server_new + 调用方自己的 router + take_router + listen
-    // （v2.10 起 builder / 一键启动已移除，循环归调用方所有）
+    // （v3.0.0 起 builder / 一键启动已移除，循环归调用方所有）
     uv_loop_t* loop = uv_default_loop();
     uvhttp_server_t* server = NULL;
     if (uvhttp_server_new(loop, &server) != UVHTTP_OK || !server) {

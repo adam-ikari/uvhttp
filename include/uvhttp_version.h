@@ -132,7 +132,7 @@ uvhttp_error_t uvhttp_get_build_info(uvhttp_build_info_t* info);
  *       - "router_cache": Router cache
  *       - "lru_cache": LRU cache
  *       - "cors": CORS support
- *       - "rate_limit": always 0 - v2.10 removed the built-in limiter;
+ *       - "rate_limit": always 0 - v3.0.0 removed the built-in limiter;
  *         policy belongs to the caller via uvhttp_server_set_request_filter
  *       - "protocol_upgrade": Protocol upgrade
  *       - "allocator": Custom allocator

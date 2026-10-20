@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [performance, benchmark, ci, gate]
 created: "2026-08-26T04:20:15"
-updated: "2026-10-17T17:39:29"
+updated: "2026-10-19T14:08:01"
 ---
 
 <!-- compiled_truth -->
@@ -114,3 +114,9 @@ updated: "2026-10-17T17:39:29"
   summary: "否决 PR #481 的 pull_request.branches:[pre-release] 触发：项目发布路径是 tag + gh release create --prerelease，所有变更 PR→main，pre-release 分支末次提交停在 2026-07-25 且无流程向其发 PR，故该触发永不命中——与当年 benchmark 标签、push:pre-release 同属死配置。PR 侧改为无自动门禁"
   source: "2026-10-17 评审 PR #481，用户要求修正"
   affects: [perf-regression-gate, release-process-benchmark-gate]
+
+- time: 2026-10-19T14:08:01
+  kind: decision
+  summary: "release 事件的 base 解析首次在真实数据上核验（对着 v3.0.0 预演）：把 workflow 里那段表达式原样重放到实时 API（cur=v3.0.0）得 base = v2.9.2 —— v2.5.0 与 v2.2.0 是 draft 被过滤掉，其余 Release 对象全是 nightly*，按 tag 前缀跳过。教训：判断 base 会解析成什么不能看 gh release list，它的输出不足以反映 API 返回顺序与 draft 标志，会得出「只有 nightly、必然退化到绝对基线」的错误结论（本次就因此写错了一版 PR 描述）。要判就把那段过滤逻辑连 per_page=100 的 API 结果一起重放。发布时以 run 日志的 Paired gate base: v2.9.2 为准。"
+  source: "v3.0.0 发布评审（2026-10-19）"
+  affects: [perf-regression-gate]

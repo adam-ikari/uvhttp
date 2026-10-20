@@ -1,7 +1,7 @@
 /* Atomicity tests for uvhttp_server_listen_routes and the ownership
  * contract of uvhttp_server_take_router / uvhttp_server_take_context.
  *
- * Background: before v2.10, starting a server took five separate calls
+ * Background: before v3.0.0, starting a server took five separate calls
  * (server_new -> router_new -> add_route xN -> set_router -> listen) and the
  * caller had to hand-write the rollback for each failure. The official
  * embedding example got that rollback wrong: on listen failure it called
@@ -14,7 +14,7 @@
  *   - ownership transfer is total and cannot be double-applied
  *
  * (The builder entry point that used to pair with these - uvhttp_server_create
- *  and its chaining API - was removed in v2.10 along with the whole builder
+ *  and its chaining API - was removed in v3.0.0 along with the whole builder
  *  layer: a library hands out primitives, it does not run the caller's loop or
  *  own construction on their behalf. Its rollback invariants now live in
  *  uvhttp_server_listen_routes, which every test below covers.)
@@ -161,7 +161,7 @@ TEST(UvhttpServerAtomicConstruct, NullHostIsRejected) {
  * it with htons(): -1 becomes 65535 and 65536 becomes 0 (an ephemeral port),
  * so the server would silently listen somewhere the caller did not ask for.
  * uvhttp_serve was the only entry that range-checked, and it was removed in
- * v2.10 - the check now lives on uvhttp_server_listen, the choke point below
+ * v3.0.0 - the check now lives on uvhttp_server_listen, the choke point below
  * listen_routes. Port 0 is deliberately NOT in this set: it is the legal
  * "bind an ephemeral port" request that several tests (and callers) rely on. */
 TEST(UvhttpServerAtomicConstruct, OutOfRangePortIsRejected) {
@@ -393,7 +393,7 @@ TEST(UvhttpServerOwnership, SecondContextIsRejected) {
 
 /* ---------- ownership: NULL is not a detach ----------
  *
- * Before v2.10, take_router / take_context were "set_*" and passing NULL was
+ * Before v3.0.0, take_router / take_context were "set_*" and passing NULL was
  * documented as clearing the field. That only ever worked when the server
  * held nothing: once an object is taken, the reject-if-different guard turns
  * NULL into an error too. There is no detach operation - a taken object

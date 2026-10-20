@@ -81,7 +81,7 @@ int uvhttp_config_validate(const uvhttp_config_t* config) {
      * file descriptor limit
      *
      * Only fields that an execution path actually reads are validated here;
-     * v2.10 removed the 14 fields whose values never reached the server (see
+     * v3.0.0 removed the 14 fields whose values never reached the server (see
      * the "fields are either authoritative or absent" rule in docs/spec/
      * config-api.md).
      *

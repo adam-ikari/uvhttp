@@ -11,7 +11,7 @@
  * Lives here rather than in uvhttp_request.h because both uvhttp_request.h
  * and uvhttp_server.h need it and the two are mutually reachable; common.h
  * is the shared dependency that breaks the cycle.
- * Moved in v2.10 for that reason - the type itself is unchanged. */
+ * Moved in v3.0.0 for that reason - the type itself is unchanged. */
 typedef enum uvhttp_method {
     UVHTTP_ANY = 0,
     UVHTTP_GET,

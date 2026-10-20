@@ -2527,7 +2527,7 @@ if (result != UVHTTP_OK) {
 Every parameter below is read by the server at runtime. Limits that look
 configurable but are not (body/header/URL size, read buffer size, request
 timeout, requests per connection) are compile-time constants in
-`uvhttp_constants.h` — v2.10 removed the config fields that never took effect.
+`uvhttp_constants.h` — v3.0.0 removed the config fields that never took effect.
 
 | Parameter | Default | Description |
 |------|--------|------|

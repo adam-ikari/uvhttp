@@ -113,7 +113,7 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     } else if (server->context) {
         // Fall back to the context's config. Guarded on context: a server
         // with neither a config nor a context is the normal shape since
-        // v2.10 (nothing sets server->config any more; take_context is
+        // v3.0.0 (nothing sets server->config any more; take_context is
         // optional), and uvhttp_config_get_current(NULL) logs a misleading
         // "Context is NULL" warning - once per accepted connection. Same
         // guard as uvhttp_server_listen already uses when it reads backlog.
@@ -527,7 +527,7 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
      * (65536 -> 0, i.e. an ephemeral port; 99999 -> 34463) and the caller
      * ends up listening somewhere else with no error. This used to live in
      * uvhttp_serve, which was the only caller that validated it; when that
-     * entry went away in v2.10 the check moved to the choke point both
+     * entry went away in v3.0.0 the check moved to the choke point both
      * uvhttp_server_listen and uvhttp_server_listen_routes pass through.
      * Port 0 stays legal: "bind an ephemeral port" is meaningful libuv
      * semantics at this layer (uvhttp_serve rejected it, but that was its
@@ -731,7 +731,7 @@ uvhttp_error_t uvhttp_server_take_router(uvhttp_server_t* server,
     }
 
     /* Ownership transfer is deliberate and is now named as such
-     * (uvhttp_server_take_router, v2.10; was uvhttp_server_set_router).
+     * (uvhttp_server_take_router, v3.0.0; was uvhttp_server_set_router).
      * "set" implied a borrow, but the server frees the router in
      * uvhttp_server_free - a mismatch that made the official embedding
      * example double-free on its listen-failure path.

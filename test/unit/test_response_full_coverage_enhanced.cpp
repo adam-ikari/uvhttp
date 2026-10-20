@@ -335,7 +335,7 @@ TEST(UvhttpResponseEnhancedTest, Http11OptimizationFields) {
 /* ========== set_body 的替换语义：失败不得破坏已有 body ========== */
 
 /*
- * v2.10：set_body 此前是"先 free 旧 body、再 alloc 新 body"。分配失败时
+ * v3.0.0：set_body 此前是"先 free 旧 body、再 alloc 新 body"。分配失败时
  * 返回 OUT_OF_MEMORY，而旧值已被释放且 body_length 被清零 —— 调用方拿到
  * 一个空响应，无法回退，也没有重试的素材。
  *

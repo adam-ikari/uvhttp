@@ -50,7 +50,7 @@ int main() {
      * listening in one call. Either we get a fully listening server or
      * nothing at all — no rollback branches to get wrong.
      *
-     * (Before v2.10 this took five calls and each failure branch needed its
+     * (Before v3.0.0 this took five calls and each failure branch needed its
      * own cleanup. The obvious cleanup was wrong: after take_router the
      * server owns the router, so calling uvhttp_router_free on it too is a
      * double free.) */

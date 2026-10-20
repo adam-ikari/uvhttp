@@ -1,7 +1,7 @@
 /*
  * UVHTTP 分派前 request filter 接缝测试
  *
- * v2.10 删掉了内置限流（per-server 单计数器会让一个客户端打满全站 429），
+ * v3.0.0 删掉了内置限流（per-server 单计数器会让一个客户端打满全站 429），
  * 换成一个库只负责「跑」、策略完全归调用方的接缝：
  * uvhttp_server_set_request_filter() 与 on_message_complete 里的调用点
  * （src/uvhttp_request.c:362）。被删的限流测试没有留下任何等价覆盖，

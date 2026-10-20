@@ -1,6 +1,6 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-10-18T06:37:38.750Z._
+_Auto-generated. Last updated 2026-10-19T14:08:01.705Z._
 
 - [alloc-hotpath-measured](pages/alloc-hotpath-measured.md) — category: decision | tags: [performance, benchmark, allocator, methodology, yagni] | # 每请求分配已实测：省一次仅 0.026%，内存分配优化不做
 - [api-atomicity-audit](pages/api-atomicity-audit.md) — category: decision | tags: [api, atomicity, orthogonality, audit, v2.10] | <!-- compiled_truth -->
@@ -35,6 +35,7 @@ _Auto-generated. Last updated 2026-10-18T06:37:38.750Z._
 - [release-v280](pages/release-v280.md) — category: decision | tags: [release, performance, quality] | # v2.8.0 发布记录
 - [release-v290](pages/release-v290.md) — category: decision | tags: [release, v2.9.0, benchmark, quality] | # 发布 v2.9.0
 - [release-v291-prep](pages/release-v291-prep.md) — category: decision | tags: [release, v2.9.1, ci, quality, pre-release] | ## 预发布转正式的条件（来源：docs/release-strategy.md）
+- [release-v300](pages/release-v300.md) — category: decision | tags: [release, versioning, api, roadmap-v2.10] | # 发布 v3.0.0
 - [request-filter-seam-replaces-rate-limiter](pages/request-filter-seam-replaces-rate-limiter.md) — category: decision | tags: [api, design, v2.10, rate-limit, roadmap-d3] | # 库不实现限流：只给分派前接缝，策略归调用方
 - [router-cache-parity](pages/router-cache-parity.md) — category: decision | tags: [router, cache, ci] | # 路由缓存实现必须与非缓存路由器行为对齐
 - [sanitizer-feature-blindspot](pages/sanitizer-feature-blindspot.md) — category: project | tags: [ci, asan, ubsan, coverage, static-files] | # Sanitizer 门禁的 feature 盲区
