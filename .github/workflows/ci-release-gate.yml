@@ -12,7 +12,8 @@ name: CI - Pre-Release Test Gate
 # e.g. PR #464 的 unused-function 只在 COMPRESSION=OFF 暴露）。编译验证 ≠ 测试。
 on:
   release:
-    types: [prerelease]
+    # The activity type is 'prereleased' (past tense), not 'prerelease'.
+    types: [prereleased]
   workflow_dispatch:
 
 permissions:
