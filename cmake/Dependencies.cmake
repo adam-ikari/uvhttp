@@ -514,6 +514,10 @@ if(NOT EXISTS ${CJSON_LIB})
             -DENABLE_CJSON_TEST=OFF
             -DENABLE_CJSON_UTILS=OFF
             -DENABLE_FUZZING=OFF
+            # Vendored cJSON declares cmake_minimum_required(VERSION 3.0),
+            # which CMake 4 rejects outright; 3.5 is the oldest policy level
+            # it still accepts. Unknown to CMake < 4, where it is ignored.
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/cjson
         RESULT_VARIABLE CJSON_CONFIG_RESULT
     )
