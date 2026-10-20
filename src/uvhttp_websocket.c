@@ -1063,7 +1063,7 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
              * left waiting for the close handshake; best effort, only when
              * the connection is wired to a server context. */
             if (srv_ctx) {
-                uint8_t close_payload[2 + 125];
+                uint8_t close_payload[2 + 125] = {0};
                 size_t close_len = 0;
                 if (header.payload_length >= 2) {
                     close_payload[0] = payload[0];
