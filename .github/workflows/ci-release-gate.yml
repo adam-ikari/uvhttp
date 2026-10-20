@@ -87,7 +87,7 @@ jobs:
           submodules: recursive
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@v8.0.2
         with:
           name: build-release-${{ github.event.release.tag_name || github.run_id }}
           path: build/
