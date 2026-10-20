@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [release, ci, quality]
 created: "2026-10-04T14:24:33"
-updated: "2026-10-20T15:54:08"
+updated: "2026-10-20T16:34:07"
 ---
 
 <!-- compiled_truth -->
@@ -81,4 +81,10 @@ updated: "2026-10-20T15:54:08"
   kind: decision
   summary: "新增 --gates 模式（PR #485）：转 latest 前按 tag 提交核对两条 release 门禁的 release 事件运行记录，none / 未跑完 / 未全绿一律判红。动机是 v3.0.0 发布时发现 activity type 写错会让门禁静默不跑、而流程里『等两条门禁全绿』在没触发时是空话。--gates 只认 event=release 的记录，手动 dispatch 的 benchmark 不算。已实测：对 v3.0.0 判红（2 未过），对 v2.9.2 的 benchmark 记录判绿。"
   source: "v3.0.0 发布（2026-10-20）"
+  affects: [release-checklist-enforced]
+
+- time: 2026-10-20T16:34:07
+  kind: note
+  summary: "v3.0.0 重发诊断补充：门禁不触发的最终原因是 activity type 应为 published；prereleased 对 gh 从 draft 发布的预发布不触发，prerelease 则无效。--gates 的判定逻辑不受影响（按 event=release 与 headSha 过滤）"
+  source: "PR #486；GitHub Actions 文档"
   affects: [release-checklist-enforced]
