@@ -37,6 +37,12 @@ on:
     # either, which is the counterfactual that proves it).
     types: [prereleased]
 
+env:
+  # Same reason as ci-release-gate.yml: both the release commit and the base
+  # (v2.9.2) predate the cJSON policy fix, and CMake 4 rejects the vendored
+  # cJSON's cmake_minimum_required(VERSION 3.0). Ignored by CMake < 4.
+  CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+
 jobs:
   benchmark:
     # Nightly creates a prerelease too (tag 'nightly-<run>'), which would fire
