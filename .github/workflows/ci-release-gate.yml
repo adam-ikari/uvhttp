@@ -228,7 +228,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     # always() keeps the summary on gate failures; the release guard keeps a
-    # nightly release from producing a run at all (see ubuntu-build).
+    # nightly release from running any jobs (the run itself still exists, with
+    # a 'skipped' conclusion — see ubuntu-build).
     if: always() && (github.event_name != 'release' || !startsWith(github.event.release.tag_name, 'nightly'))
 
     steps:

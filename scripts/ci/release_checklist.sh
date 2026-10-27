@@ -181,8 +181,11 @@ else  # --gates：转正式前，确认 release 门禁真的因为这个 tag 跑
         # tag 被移回一个曾经全绿的提交会借旧运行假通过。
         # 只认 event=release：手动 workflow_dispatch 的基准不判红（见
         # perf-regression-gate），拿来当门禁通过等于自欺。
-        # 多次运行（rerun/重触发都是新增、不替换）以 createdAt 最新的一条为准；
-        # cancelled 不算证据 —— 否则任何一次取消都会让判定永久卡死。
+        # 同一 tag 可能因重新创建 release 产生多条 run，以 createdAt 最新的一条
+        # 为准，旧 run 的失败/取消不再拖累。rerun 不是新 run，而是同一 run 的
+        # 新 attempt（gh run list 只显示最新 attempt 的结论），所以重跑最新 run
+        # 就能把它翻绿。cancelled 视为未通过：取消可能发生在运行已开始变红之后，
+        # 不能拿更早的成功 run 背书。
         for wf in "ci-release-gate.yml|CI - Pre-Release Test Gate" "ci-benchmark.yml|CI - Performance Benchmark"; do
             wf_file="${wf%%|*}"; wf_name="${wf##*|}"
             state=$(gh run list --workflow "$wf_file" --event release --limit 50 \
@@ -190,19 +193,18 @@ else  # --gates：转正式前，确认 release 门禁真的因为这个 tag 跑
 tag='$tag'; sha='$sha'
 rs=[r for r in json.load(sys.stdin)
     if r['headSha']==sha and r.get('headBranch')==tag]
-live=[r for r in rs if r['conclusion']!='cancelled']
 if not rs: print('none')
-elif not live: print('cancelled')
 else:
-    c=max(live, key=lambda r: r['createdAt'])['conclusion']
+    c=str(max(rs, key=lambda r: r['createdAt'])['conclusion'])
     if c=='success': print('success')
     elif c in ('', 'None', 'action_required', 'queued', 'in_progress', 'pending'): print('running')
+    elif c=='cancelled': print('cancelled')
     else: print('not-green')" 2>/dev/null || echo "query-failed")
             case "$state" in
                 success)     pass "$wf_name：$tag（${sha:0:7}）最新的 release 运行成功" ;;
                 running)     bad "$wf_name：$tag 最新的 release 运行还没结束，等它绿" ;;
                 not-green)   bad "$wf_name：$tag 最新的 release 运行未通过 —— 用 gh run rerun <run-id> 重跑，不要移动 tag" ;;
-                cancelled)   bad "$wf_name：$tag 只有被取消的 release 运行 —— 用 gh run rerun <run-id> 重跑，不要移动 tag" ;;
+                cancelled)   bad "$wf_name：$tag 最新的 release 运行被取消 —— 用 gh run rerun <run-id> 重跑，不要移动 tag" ;;
                 none)        bad "$wf_name：没有 $tag 的 release 事件运行 —— 门禁根本没被触发，禁止转 latest" ;;
                 *)           bad "$wf_name：查询失败（gh 未登录或网络）" ;;
             esac

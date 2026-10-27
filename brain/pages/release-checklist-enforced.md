@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [release, ci, quality]
 created: "2026-10-04T14:24:33"
-updated: "2026-10-27T14:17:22"
+updated: "2026-10-27T14:27:38"
 ---
 
 <!-- compiled_truth -->
@@ -33,7 +33,7 @@ updated: "2026-10-27T14:17:22"
 |阶段|何时|检查项|
 |---|---|---|
 |`--pre`|合并版本 PR 前|VERSION/EN/ZH CHANGELOG/release-strategy 一致、ctest、docs:build、本次改动 clang-format、test_version_consistency|
-|`--gates`|建好预发布、转 latest 前|按远端 tag 的提交与 tag 名，核对两条 release 门禁最新的非 cancelled 运行；查不到/未完成/未通过判红|
+|`--gates`|建好预发布、转 latest 前|按远端 tag 的提交与 tag 名，核对两条 release 门禁最新一次运行（cancelled 判红）；查不到/未完成/未通过判红|
 |`--post`|转正式 latest 后|同上 + 远端 tag、Release isLatest、线上 versions.json 的 current 与 VERSION 一致|
 
 分阶段是因为 tag / release / 线上站点只能在发布动作完成后查。
@@ -45,12 +45,17 @@ updated: "2026-10-27T14:17:22"
   成新 tag 的绿。
 - **同时匹配 `headSha` 与 `headBranch==tag`**：只看 sha 时，tag 移回一个
   曾全绿的提交会借旧运行假通过。
-- **以最新一次运行判定**（`createdAt` 最大），`cancelled` 不计入证据。
-  旧规则 `all(success)` 下，`gh run rerun`/重触发只会新增运行、不替换旧
-  的，任何一次取消或失败都会把判定永久钉死在红，唯一出路反而变成移动
-  tag——恢复手段制造新的污染。失败/取消的正确恢复是 `gh run rerun <id>`。
-- 已用伪造 run 列表实测：旧成功+新取消→绿；旧成功+新失败→红；只有取消
-  →红并提示 rerun；同 sha 不同 tag→none；最新未完成→等。
+- **以最新一次运行判定**（`createdAt` 最大）。同一 tag 因重新创建 release
+  会产生多条 run，旧 run 的失败/取消不再拖累；`cancelled` 判红 —— 取消
+  可能发生在运行已开始变红之后，不能拿更早的成功 run 背书。
+- **rerun 不是新 run，而是同一 run 的新 attempt**：`run_attempt` 递增，
+  `gh run list` 只显示该 run 与最新 attempt 的结论（实证：actions/runner
+  run 40339492476，attempt=2，created_at 14:25 / run_started_at 14:44）。
+  因此失败/取消的恢复是 `gh run rerun <run-id>`，重跑成功即翻绿；移动
+  tag 才是错误恢复。真正会留下历史 run 的是重新创建 release（新 run）。
+- 已用伪造 run 列表实测：旧成功+新取消→红并提示 rerun；旧成功+新失败
+  →红；只有取消→红；同 sha 不同 tag→none；最新未完成（conclusion 空或
+  null）→等；单条成功→绿。
 
 ## 设计取舍（为什么不都放进去）
 
@@ -114,4 +119,16 @@ updated: "2026-10-27T14:17:22"
   kind: reversal
   summary: "修订 --gates 的匹配与判定（推翻 #485 引入的仅 headSha + all(success)）：提交改从远端 ls-remote 解析；运行记录同时匹配 headSha 与 headBranch==tag；以 createdAt 最新的非 cancelled 运行为准，cancelled 不算证据。原因：rerun/重触发只新增运行，任何一次取消/失败会永久判红，唯一恢复变成移动 tag；而只看 sha 时 tag 移回曾全绿提交会借旧运行假通过。失败/取消统一用 gh run rerun <id>，不动 tag。"
   source: "v3.0.0 发布后评审；scripts/ci/release_checklist.sh --gates"
+  affects: [release-checklist-enforced]
+
+- time: 2026-10-27T14:27:38
+  kind: decision
+  summary: Rewrote compiled_truth to the new best understanding
+  source: "PR #490 评审修正（run_attempt 实证）"
+  affects: [release-checklist-enforced]
+
+- time: 2026-10-27T14:27:38
+  kind: reversal
+  summary: "纠正上一轮 reversal 的 rerun 语义：rerun 不是新增 run，而是同一 run 的新 attempt（run_attempt 递增，gh run list 只显示该 run 与最新 attempt 的结论；实证 actions/runner run 40339492476：attempt=2，created_at 14:25 / run_started_at 14:44）。真正留下历史 run 的是重新创建 release。据此 cancelled 不再忽略：最新 run 为 cancelled 判红并提示 gh run rerun <id>，避免最新 run 在运行中变红后被取消、旧成功 run 给出假绿。"
+  source: "PR #490 评审；actions/runner run 40339492476"
   affects: [release-checklist-enforced]

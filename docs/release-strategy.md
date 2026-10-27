@@ -53,7 +53,7 @@ B：2.10 直接破坏性改而不跳号」的**跳号豁免**已撤销；策略 
 ### 阶段二：正式发布
 
 4. **确认门禁**
-   - 运行 `scripts/ci/release_checklist.sh --gates`：按**远端** tag 指向的提交与 tag 名查两条门禁的 `release` 事件运行记录，以最新一次非 cancelled 运行为准；查不到就判红。**先过这一项再看颜色** —— 没有运行记录时「全绿」是空话。失败或取消用 `gh run rerun <run-id>` 重跑，不要移动 tag：移动 tag 既改变已发布内容，又会借同一提交上的旧运行制造假通过
+   - 运行 `scripts/ci/release_checklist.sh --gates`：按**远端** tag 指向的提交与 tag 名查两条门禁的 `release` 事件运行记录，以最新一次运行为准（cancelled 判红，重跑后再转 latest）；查不到就判红。**先过这一项再看颜色** —— 没有运行记录时「全绿」是空话。失败或取消用 `gh run rerun <run-id>` 重跑（重跑是同一 run 的新 attempt，不会留下新的 run），不要移动 tag：移动 tag 既改变已发布内容，又会借同一提交上的旧运行制造假通过
    - 确认 `ci-release-gate` 测试门禁为绿（完整测试：fast / 各配置 / ASan 内存安全）
    - 确认 benchmark 回归门禁为绿（由创建 pre-release 的 `release` 事件自动触发；开发期需要看趋势时手动 `workflow_dispatch`，手动跑只出报告不判红。项目没有 pre-release 分支发布路径，PR 侧不设自动门禁）
    - gate 以同一 runner 上 head/base 交替测量的比值判定（配对比值中位数 < 90% 且多数配对也在 90% 以下才失败）；绝对 RPS 基线只作为报告信息，不参与判定（GitHub runner 跨 run 方差约 40%，绝对阈值会 gate 到 runner 运气而非代码）
