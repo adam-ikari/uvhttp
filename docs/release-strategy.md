@@ -53,7 +53,7 @@ B：2.10 直接破坏性改而不跳号」的**跳号豁免**已撤销；策略 
 ### 阶段二：正式发布
 
 4. **确认门禁**
-   - 运行 `scripts/ci/release_checklist.sh --gates`：按 tag 指向的提交查两条门禁的 `release` 事件运行记录，查不到就判红。**先过这一项再看颜色** —— 没有运行记录时「全绿」是空话
+   - 运行 `scripts/ci/release_checklist.sh --gates`：按**远端** tag 指向的提交与 tag 名查两条门禁的 `release` 事件运行记录，以最新一次非 cancelled 运行为准；查不到就判红。**先过这一项再看颜色** —— 没有运行记录时「全绿」是空话。失败或取消用 `gh run rerun <run-id>` 重跑，不要移动 tag：移动 tag 既改变已发布内容，又会借同一提交上的旧运行制造假通过
    - 确认 `ci-release-gate` 测试门禁为绿（完整测试：fast / 各配置 / ASan 内存安全）
    - 确认 benchmark 回归门禁为绿（由创建 pre-release 的 `release` 事件自动触发；开发期需要看趋势时手动 `workflow_dispatch`，手动跑只出报告不判红。项目没有 pre-release 分支发布路径，PR 侧不设自动门禁）
    - gate 以同一 runner 上 head/base 交替测量的比值判定（配对比值中位数 < 90% 且多数配对也在 90% 以下才失败）；绝对 RPS 基线只作为报告信息，不参与判定（GitHub runner 跨 run 方差约 40%，绝对阈值会 gate 到 runner 运气而非代码）
@@ -73,13 +73,15 @@ B：2.10 直接破坏性改而不跳号」的**跳号豁免**已撤销；策略 
 - [ ] VERSION 已更新
 - [ ] Git tag 已创建并推送
 - [ ] 预发布 Release 已创建（--prerelease）
-- [ ] **`release_checklist.sh --gates` 通过**（两条门禁的 release 事件运行记录确实存在）
+- [ ] **`release_checklist.sh --gates` 通过**（按 tag 名与提交匹配，最新一次 release 运行成功）
 - [ ] **`ci-release-gate` 测试门禁通过**（fast / 各配置 / ASan 内存安全）
 - [ ] Benchmark 回归门禁通过（CI / gate 绿）
 - [ ] 正式 Release 已确认（--latest）
 - [ ] 网站已部署
 
 ## 版本历史
+
+版本历史、CHANGELOG 与 `versions.json` 记的是**打 tag 的日期**；GitHub Release 的 `publishedAt` 会更晚（预发布删除重建、门禁通过后才转 latest），两者不必一致（v3.0.0：tag 为 2026-10-18，转 latest 为 2026-10-20）。
 
 | 版本 | 日期 | 主要内容 |
 |------|------|---------|
