@@ -17,7 +17,7 @@ description: 几分钟上手 UVHTTP——用 CMake 与 Make 构建 C99 HTTP/WebS
 
 ## 环境要求
 
-- CMake 3.10 或更高版本
+- CMake 3.13 或更高版本
 - C99 编译器（GCC 4.9+、Clang 3.5+）
 - libuv 1.x（作为子模块自动克隆）
 - llhttp（作为子模块自动克隆）

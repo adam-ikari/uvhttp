@@ -392,6 +392,31 @@ class E2ETestServer {
     std::thread loop_thread_;
 };
 
+#if UVHTTP_FEATURE_STATIC_FILES
+static uvhttp_static_context_t* g_static_ctx_for_http_test = nullptr;
+
+static int static_handler_for_http_test(uvhttp_request_t* request,
+                                        uvhttp_response_t* response) {
+    return uvhttp_static_handle_request(g_static_ctx_for_http_test, request,
+                                        response);
+}
+
+static std::string curl_headers_and_body(const std::string& url) {
+    std::string cmd = "curl -s -i --max-time 5 '" + url + "' 2>/dev/null";
+    FILE* pipe = popen(cmd.c_str(), "r");
+    if (!pipe)
+        return "";
+    std::string result;
+    char buf[4096];
+    size_t n;
+    while ((n = fread(buf, 1, sizeof(buf), pipe)) > 0) {
+        result.append(buf, n);
+    }
+    pclose(pipe);
+    return result;
+}
+#endif
+
 /* ===================================================================
  * Test fixture
  * =================================================================== */
@@ -565,8 +590,6 @@ TEST_F(E2EAutomatedTest, StaticFileServing) {
     config.max_cache_size = 1024 * 1024;
     config.cache_ttl = 3600;
     config.max_cache_entries = 100;
-    config.enable_sendfile = 0;
-    config.enable_etag = 0;
 
     uvhttp_static_context_t* static_ctx = nullptr;
     uvhttp_error_t result = uvhttp_static_create(&config, &static_ctx);
@@ -603,6 +626,52 @@ TEST_F(E2EAutomatedTest, StaticFileServing) {
     /* Clean up */
     uvhttp_static_free(static_ctx);
     unlink(filepath.c_str());
+}
+
+TEST_F(E2EAutomatedTest, StaticFileCustomHeadersOverHttp) {
+    char dir_template[] = "/tmp/uvhttp_static_hdr_XXXXXX";
+    char* dir = mkdtemp(dir_template);
+    ASSERT_NE(dir, nullptr);
+
+    std::string filepath = std::string(dir) + "/hello.txt";
+    FILE* f = fopen(filepath.c_str(), "wb");
+    ASSERT_NE(f, nullptr);
+    fputs("static body", f);
+    fclose(f);
+
+    uvhttp_static_config_t config;
+    memset(&config, 0, sizeof(config));
+    strncpy(config.root_directory, dir, sizeof(config.root_directory) - 1);
+    config.max_cache_size = 1024 * 1024;
+    config.cache_ttl = 3600;
+    strncpy(config.custom_headers,
+            "X-Custom-Header: custom-value\r\nX-Second: two",
+            sizeof(config.custom_headers) - 1);
+
+    uvhttp_static_context_t* static_ctx = nullptr;
+    ASSERT_EQ(uvhttp_static_create(&config, &static_ctx), UVHTTP_OK);
+    ASSERT_NE(static_ctx, nullptr);
+
+    g_static_ctx_for_http_test = static_ctx;
+    server_->add_route("/hello.txt", static_handler_for_http_test);
+    server_->set_router();
+    ASSERT_GT(server_->start(), 0);
+    ASSERT_TRUE(wait_for_server(server_->url("/hello.txt")));
+
+    /* 第一次走磁盘，第二次走缓存：两条路径都必须带上自定义响应头。 */
+    for (int i = 0; i < 2; i++) {
+        std::string raw = curl_headers_and_body(server_->url("/hello.txt"));
+        EXPECT_NE(raw.find("200 OK"), std::string::npos) << raw;
+        EXPECT_NE(raw.find("X-Custom-Header: custom-value"), std::string::npos)
+            << raw;
+        EXPECT_NE(raw.find("X-Second: two"), std::string::npos) << raw;
+        EXPECT_NE(raw.find("static body"), std::string::npos) << raw;
+    }
+
+    g_static_ctx_for_http_test = nullptr;
+    uvhttp_static_free(static_ctx);
+    unlink(filepath.c_str());
+    rmdir(dir);
 }
 #endif /* UVHTTP_FEATURE_STATIC_FILES */
 

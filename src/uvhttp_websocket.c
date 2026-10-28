@@ -117,10 +117,6 @@ void uvhttp_ws_connection_free(struct uvhttp_ws_connection* conn) {
         uvhttp_free(conn->recv_buffer);
     }
 
-    if (conn->send_buffer) {
-        uvhttp_free(conn->send_buffer);
-    }
-
     if (conn->fragmented_message) {
         uvhttp_free(conn->fragmented_message);
     }

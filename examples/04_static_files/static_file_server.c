@@ -205,8 +205,6 @@ int main() {
         .root_directory = "./public",
         .index_file = "index.html",
         .enable_directory_listing = 1,
-        .enable_etag = 1,
-        .enable_last_modified = 1,
         .max_cache_size = 10 * 1024 * 1024,  /* 10MB缓存 */
         .cache_ttl = 3600,                   /* 1小时TTL */
         .custom_headers = ""

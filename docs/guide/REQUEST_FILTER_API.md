@@ -162,7 +162,7 @@ check.
 | `uvhttp_server_add_rate_limit_whitelist()` / `clear_rate_limit_all()` | An allow-list is a `strcmp` at the top of your filter. |
 | `uvhttp_server_get_rate_limit_status()` / `reset_rate_limit_client()` | Read or clear your own table. |
 | `server->rate_limit_*` fields, `UVHTTP_FEATURE_RATE_LIMIT`, `BUILD_WITH_RATE_LIMIT` | Gone. The seam is a pair of pointers and costs no build option. |
-| `uvhttp_has_feature("rate_limit")` | Still answers, now always "not available". |
+| `uvhttp_is_feature_enabled("rate_limit")` | Still answers, now always "not available". |
 
 `UVHTTP_ERROR_RATE_LIMIT_EXCEEDED` (-550) and its `uvhttp_error_string()` text
 stay: the code is now an application-level convention rather than something the

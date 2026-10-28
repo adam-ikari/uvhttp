@@ -1,6 +1,6 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-10-28T02:48:51.948Z._
+_Auto-generated. Last updated 2026-10-28T06:54:38.342Z._
 
 - [alloc-hotpath-measured](pages/alloc-hotpath-measured.md) — category: decision | tags: [performance, benchmark, allocator, methodology, yagni] | # 每请求分配已实测：省一次仅 0.026%，内存分配优化不做
 - [api-atomicity-audit](pages/api-atomicity-audit.md) — category: decision | tags: [api, atomicity, orthogonality, audit, v2.10] | <!-- compiled_truth -->
@@ -19,7 +19,7 @@ _Auto-generated. Last updated 2026-10-28T02:48:51.948Z._
 - [docs-vitepress-ssr-event-build-fail](pages/docs-vitepress-ssr-event-build-fail.md) — category: project | tags: [docs, ci, vitepress] | # VitePress 文档构建失败（已修复）
 - [embedding-cmake-public-deps](pages/embedding-cmake-public-deps.md) — category: decision | tags: [embedding, cmake, build, add_subdirectory] | ## 发现
 - [embedding-guide-examples](pages/embedding-guide-examples.md) — category: decision | tags: [embedding, guide, examples, add_subdirectory] | ## 交付物
-- [handler-ignored-without-router](pages/handler-ignored-without-router.md) — category: decision | tags: [api, defect, dispatch] | # `server->handler` 只在挂了 router 时才跑：与文档正好相反
+- [handler-ignored-without-router](pages/handler-ignored-without-router.md) — category: decision | tags: [api, defect, dispatch] | # `server->handler` 在无 router 时已真正执行（2026-10-28 修复）
 - [integration-tests-are-servers](pages/integration-tests-are-servers.md) — category: decision | tags: [test, integration, assert, ci, cleanup] | # test/integration 下 19 个文件不是测试
 - [io-uring-evaluation](pages/io-uring-evaluation.md) — category: decision | tags: [performance, architecture, io-uring, libuv, yagni] | # io_uring 评估：当前架构下不可达，待办关闭
 - [lcov-mock-aggregation-underestimate](pages/lcov-mock-aggregation-underestimate.md) — category: decision | tags: [coverage, lcov, test-infra, mock] | # lcov 聚合低估 mock 测试覆盖（connection.c 45.3% 实为 ~79.6%）
@@ -43,5 +43,6 @@ _Auto-generated. Last updated 2026-10-28T02:48:51.948Z._
 - [silent-skip-audit-101-to-18](pages/silent-skip-audit-101-to-18.md) — category: project | tags: [test, ci, quality, false-positive] | # 静默跳过测试治理：101→18（4 个 PR）
 - [test-validity-always-green](pages/test-validity-always-green.md) — category: project | tags: [test, ci, mutation, quality] | # 测试有效性：恒绿零验证的普查与门禁
 - [tls-session-cache](pages/tls-session-cache.md) — category: decision | tags: [tls, performance, session-cache] | ## 决策（v2.7.0，commit aecb053，P0）
+- [v300-mechanism-audit](pages/v300-mechanism-audit.md) — category: decision | tags: [audit, cmake, packaging, api, docs] | # v3.0.0 后机制有效性审计
 - [websocket-tls-pr335-merge](pages/websocket-tls-pr335-merge.md) — category: decision | tags: [websocket, tls, pr] | ## 背景
 - [zerocopy-small-body-regression](pages/zerocopy-small-body-regression.md) — category: decision | tags: [performance, benchmark, writev, methodology] | 评估完毕（2026-09-30）：维持「代价大于收益」，正式关闭重构。

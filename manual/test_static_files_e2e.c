@@ -238,8 +238,6 @@ int main(int argc, char** argv) {
     strcpy(static_config.root_directory, static_dir);
     strcpy(static_config.index_file, "index.html");
     static_config.enable_directory_listing = 1;
-    static_config.enable_etag = 1;
-    static_config.enable_last_modified = 1;
     static_config.max_cache_size = 10 * 1024 * 1024; /* 10MB 缓存 */
     static_config.cache_ttl = 3600; /* 1小时缓存 */
     

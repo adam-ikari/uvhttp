@@ -127,8 +127,6 @@ int main(int argc, char** argv) {
     uvhttp_static_config_t static_config;
     memset(&static_config, 0, sizeof(static_config));
     static_config.enable_directory_listing = 1;
-    static_config.enable_etag = 1;
-    static_config.enable_last_modified = 1;
     static_config.max_cache_size = 10 * 1024 * 1024;
     static_config.cache_ttl = 3600;
     snprintf(static_config.root_directory, sizeof(static_config.root_directory),

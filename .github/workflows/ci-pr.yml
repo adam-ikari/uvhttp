@@ -181,7 +181,7 @@ jobs:
             flags: "-DBUILD_WITH_STATIC_FILES=ON -DBUILD_WITH_ROUTER_CACHE=ON"
           - name: minimal
             description: "核心 HTTP/1.1 最小化（验证编译时裁剪）"
-            flags: "-DBUILD_WITH_WEBSOCKET=OFF -DBUILD_WITH_HTTPS=OFF -DBUILD_WITH_STATIC_FILES=OFF -DBUILD_WITH_LRU_CACHE=OFF -DBUILD_WITH_COMPRESSION=OFF"
+            flags: "-DBUILD_WITH_WEBSOCKET=OFF -DBUILD_WITH_HTTPS=OFF -DBUILD_WITH_STATIC_FILES=OFF -DBUILD_WITH_COMPRESSION=OFF"
           - name: router-cache
             flags: "-DBUILD_WITH_ROUTER_CACHE=ON"
           - name: static-files

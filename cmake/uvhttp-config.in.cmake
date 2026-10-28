@@ -65,7 +65,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/uvhttp-targets.cmake")
 # Set package variables
 set(UVHTTP_VERSION "@UVHTTP_VERSION@")
 set(UVHTTP_INCLUDE_DIRS "${UVHTTP_DEP_INCLUDEDIR}")
-set(UVHTTP_LIBRARIES uvhttp)
+set(UVHTTP_LIBRARIES uvhttp::uvhttp)
 set(UVHTTP_LIBRARY_DIRS "${UVHTTP_DEP_LIBDIR}")
 
 check_required_components(uvhttp)

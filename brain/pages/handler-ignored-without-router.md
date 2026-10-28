@@ -5,55 +5,43 @@ category: decision
 status: active
 tags: [api, defect, dispatch]
 created: "2026-10-18T06:31:17"
-updated: "2026-10-18T06:33:13"
+updated: "2026-10-28T14:54:14"
 ---
 
 <!-- compiled_truth -->
-# `server->handler` 只在挂了 router 时才跑：与文档正好相反
+# `server->handler` 在无 router 时已真正执行（2026-10-28 修复）
 
-## 事实（2026-10-18 定位，非本次引入）
+## 当前事实
 
-`uvhttp_server_set_handler` 的头文件注释写的是
-「Set the request handler used when **no router is attached**」
-（`include/uvhttp_server.h:299`）。实现是反的：
+`uvhttp_server_set_handler` 的语义恢复为头文件注释所写：
+「no router attached 时使用的请求处理器」。
 
-- `src/uvhttp_request.c:566` —— `else` 分支「no router」直接发硬编码
-  `200 OK` + body `"OK"`，**从不读 `server->handler`**。
-- `server->handler` 唯一的两个调用点（`:539` static miss 兜底、`:553` router
-  未命中兜底）都在 `if (conn->server->router)` 块内部。
+分派路径现在有三层，且三层都可达：
 
-所以「不挂 router、只设一个 catch-all handler」这种装配方式下，
-handler 恒不被调用，每个请求得到库自己的 200 "OK"。
-调用方拿到 200，没有任何信号说明自己装的回调一次都没执行。
+1. 有 router 且命中 → router handler；
+2. 有 router 但未命中（含 static miss 兜底）→ `server->handler`（若设置）；
+3. **无 router → `server->handler`（若设置）**，否则库的默认 200 "OK"。
 
-## 怎么发现的
+第 3 层是本次补上的（`src/uvhttp_request.c` 的 no-router `else` 分支）。
+之前该分支从不读 `server->handler`，只发硬编码 200 "OK"，调用方装的回调
+一次都不执行且没有任何信号。
 
-d3 新增 `test/unit/test_server_request_filter.cpp` 时，5 个「filter 放行 →
-handler 应执行」的用例全红：断言的是 handler 计数，计数恒为 0。
-修法不是改测试 —— 测试夹具改成挂一个空 router（`uvhttp_server_take_router`），
-用例转绿，同时把这条缺陷写进测试注释。
-**测试的价值就在这里**：这类形状缺陷单靠读代码会在 `if (server->router)`
-的嵌套里看漏。
+## 回归测试
 
-## 本次决定：不在 d3 范围内修
+`test/unit/test_server_request_filter.cpp` 新增
+`HandlerInvokedWithoutRouter`：只设 handler、不挂 router，发一个真实 HTTP
+请求，断言 200、响应体来自 handler、且 `g_handler_calls == 1`。
+断言计数而不是响应体 —— 默认 200 "OK" 无法蒙过计数。
+该用例在修复前为红、修复后为绿（已做 mutation 验证）。
 
-d3 那一刀是「删限流 + 给分派前接缝」，动 `else` 分支属于分派语义变更，
-与本 PR 的评审焦点无关，且需要先裁决文档与实现哪个是权威。
+## 判据（保留）
 
-## 修的时候（未开工）
+- 文档与实现冲突时，以 API 的存在意义为准：这个 API 就是给「不挂 router」
+  的用户用的，因此修实现而不是改注释。
+- 分派接缝的测试必须断言「用户代码被调用了 N 次」，不能只断言响应状态/内容。
 
-两处都改才自洽，只改一处会留下新的说谎：
-1. `src/uvhttp_request.c:566` 的 no-router 分支补上 `if (server->handler)`，
-   否则 404/默认响应；
-2. 或者把 `include/uvhttp_server.h:299` 的注释改成实话（「仅在有 router
-   且未命中/未命中 static 时作为兜底」）—— 但这条 API 的存在意义就是
-   给不挂 router 的用户用，改注释等于承认 API 无用。
-
-倾向第 1 条。判据：测试必须断言「handler 计数 > 0」而不是「响应体等于某串」，
-后者用库的默认 200 "OK" 也能蒙过一部分写法。
 关联 [[request-filter-seam-replaces-rate-limiter]]、
-[[middleware-stop-does-not-short-circuit-handler]]（同属「分派路径上的
-用户代码接缝」这一族）。
+[[middleware-stop-does-not-short-circuit-handler]]。
 
 
 ## Timeline
@@ -68,4 +56,10 @@ d3 那一刀是「删限流 + 给分派前接缝」，动 `else` 分支属于分
   kind: decision
   summary: "写入分派死路证据、发现过程与修法判据"
   source: "2026-10-18 新增 test_server_request_filter.cpp 时定位"
+  affects: [handler-ignored-without-router]
+
+- time: 2026-10-28T14:54:14
+  kind: decision
+  summary: "no-router 分支已调用 server->handler 并加回归测试；缺陷修复"
+  source: "2026-10-28 机制审计：src/uvhttp_request.c 分派 else 分支补 handler 调用，test_server_request_filter.cpp 新增 HandlerInvokedWithoutRouter"
   affects: [handler-ignored-without-router]

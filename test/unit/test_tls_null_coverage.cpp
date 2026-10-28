@@ -1,8 +1,9 @@
 /* uvhttp_tls.c NULL参数覆盖率测试 */
 
-#include <gtest/gtest.h>
-#include "uvhttp_tls.h"
 #include "uvhttp_context.h"
+#include "uvhttp_tls.h"
+
+#include <gtest/gtest.h>
 
 /* 测试TLS初始化 */
 TEST(UvhttpTlsNullCoverageTest, TlsInit) {
@@ -176,19 +177,6 @@ TEST(UvhttpTlsNullCoverageTest, TlsContextAddExtraChainCertNull) {
 TEST(UvhttpTlsNullCoverageTest, TlsGetCertChainNull) {
     mbedtls_x509_crt* chain = NULL;
     uvhttp_error_t err = uvhttp_tls_get_cert_chain(NULL, &chain);
-    EXPECT_NE(err, UVHTTP_OK);
-}
-
-/* 测试获取统计信息NULL */
-TEST(UvhttpTlsNullCoverageTest, TlsGetStatsNull) {
-    uvhttp_tls_stats_t stats;
-    uvhttp_error_t err = uvhttp_tls_get_stats(NULL, &stats);
-    EXPECT_NE(err, UVHTTP_OK);
-}
-
-/* 测试重置统计信息NULL */
-TEST(UvhttpTlsNullCoverageTest, TlsResetStatsNull) {
-    uvhttp_error_t err = uvhttp_tls_reset_stats(NULL);
     EXPECT_NE(err, UVHTTP_OK);
 }
 

@@ -947,8 +947,6 @@ TEST(UvhttpWebsocketAutomatedTest, ConnectionStructFields) {
     EXPECT_EQ(conn->fd, -1);
     EXPECT_EQ(conn->ssl, nullptr);
     EXPECT_EQ(conn->user_data, nullptr);
-    EXPECT_EQ(conn->send_buffer, nullptr);
-    EXPECT_EQ(conn->send_buffer_size, 0U);
     EXPECT_EQ(conn->fragmented_message, nullptr);
     EXPECT_EQ(conn->fragmented_size, 0U);
     EXPECT_EQ(conn->fragmented_capacity, 0U);

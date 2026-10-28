@@ -3,6 +3,7 @@
 #include "uvhttp_allocator.h"
 #include "uvhttp_connection.h"
 #include "uvhttp_constants.h"
+#include "uvhttp_context.h"
 #include "uvhttp_error_handler.h"
 #include "uvhttp_features.h"
 #include "uvhttp_logging.h"
@@ -357,6 +358,10 @@ static int on_message_complete(llhttp_t* parser) {
     conn->parsing_complete = 1;
     conn->read_buffer_used = 0;
 
+    if (conn->server && conn->server->context) {
+        conn->server->context->total_requests++;
+    }
+
     /* Pre-dispatch filter: the library runs the seam, the caller owns the
      * policy (rate limiting, admission control, allow/deny lists). */
     if (conn->server && conn->server->request_filter) {
@@ -563,6 +568,9 @@ static int on_message_complete(llhttp_t* parser) {
                                      strlen(UVHTTP_MESSAGE_NOT_FOUND));
             uvhttp_response_send(conn->response);
         }
+    } else if (conn->server && conn->server->handler) {
+        /* no router — the server-level handler is the whole dispatch table */
+        conn->server->handler(conn->request, conn->response);
     } else {
         /* no router, send default response */
         uvhttp_response_set_status(conn->response, 200);

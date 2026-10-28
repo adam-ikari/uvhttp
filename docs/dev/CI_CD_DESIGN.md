@@ -51,7 +51,7 @@ UVHTTP is an HTTP/1.1 and WebSocket server library based on libuv, written in C9
 ### Technology Stack
 
 - **CI/CD platform**: GitHub Actions
-- **Build system**: CMake 3.10+
+- **Build system**: CMake 3.13+
 - **Test framework**: Google Test
 - **Performance testing**: wrk, ab
 - **Code coverage**: lcov, gcov

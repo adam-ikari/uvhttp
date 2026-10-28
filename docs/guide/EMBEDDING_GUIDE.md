@@ -50,7 +50,7 @@ CMake target (static library) that you link against.
 Put uvhttp in your tree (e.g. `third_party/uvhttp`), then:
 
 ```cmake
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(myapp C)
 
 set(CMAKE_C_STANDARD 11)
@@ -71,7 +71,7 @@ project(myapp C)
 include(FetchContent)
 FetchContent_Declare(uvhttp
   GIT_REPOSITORY https://github.com/adam-ikari/uvhttp.git
-  GIT_TAG        v2.8.1
+  GIT_TAG        v3.0.0
 )
 FetchContent_MakeAvailable(uvhttp)
 
@@ -98,7 +98,7 @@ cmake --install . --prefix /usr/local
 ```
 
 ```cmake
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(myapp C)
 
 find_package(uvhttp REQUIRED)
@@ -233,8 +233,7 @@ cmake -DBUILD_WITH_WEBSOCKET=OFF -DBUILD_WITH_HTTPS=OFF ..
 |--------|---------|--------|
 | `BUILD_WITH_WEBSOCKET` | ON | WebSocket support (RFC 6455) |
 | `BUILD_WITH_HTTPS` | ON | HTTPS/TLS via mbedtls |
-| `BUILD_WITH_STATIC_FILES` | OFF | Static file serving (sendfile) |
-| `BUILD_WITH_LRU_CACHE` | ON | Static file / compression LRU cache |
+| `BUILD_WITH_STATIC_FILES` | OFF | Static file serving (sendfile), also compiles the LRU cache |
 | `BUILD_WITH_ROUTER_CACHE` | OFF | Router lookup cache |
 | `BUILD_WITH_COMPRESSION` | ON | gzip response compression |
 | `BUILD_WITH_MIMALLOC` | OFF* | mimalloc allocator (`UVHTTP_ALLOCATOR_TYPE=1`) |

@@ -3,7 +3,9 @@
 #if UVHTTP_FEATURE_STATIC_FILES
 
 #    include "uvhttp_allocator.h"
+#    include "uvhttp_constants.h"
 #    include "uvhttp_error.h"
+#    include "uvhttp_lru_cache.h"
 #    include "uvhttp_static.h"
 
 #    include <gtest/gtest.h>
@@ -22,9 +24,6 @@ TEST(UvhttpStaticMoreCoverageTest, ConfigStructureInit) {
     EXPECT_EQ(config.sendfile_timeout_ms, 0);
     EXPECT_EQ(config.sendfile_max_retry, 0);
     EXPECT_EQ(config.enable_directory_listing, 0);
-    EXPECT_EQ(config.enable_etag, 0);
-    EXPECT_EQ(config.enable_last_modified, 0);
-    EXPECT_EQ(config.enable_sendfile, 0);
     EXPECT_STREQ(config.root_directory, "");
     EXPECT_STREQ(config.index_file, "");
     EXPECT_STREQ(config.custom_headers, "");
@@ -184,8 +183,44 @@ TEST(UvhttpStaticMoreCoverageTest, HandleRequestEdgeCases) {
     uvhttp_static_free(ctx);
 }
 
-/* 测试缓存预热边界情况 */
-TEST(UvhttpStaticMoreCoverageTest, CachePrewarmEdgeCases) {
+TEST(UvhttpStaticMoreCoverageTest, CreateDefaultsMaxFileSize) {
+    uvhttp_static_config_t config;
+    memset(&config, 0, sizeof(config));
+    config.max_cache_size = 1024 * 1024;
+    strncpy(config.root_directory, ".", sizeof(config.root_directory) - 1);
+
+    uvhttp_static_context_t* ctx = NULL;
+    ASSERT_EQ(uvhttp_static_create(&config, &ctx), UVHTTP_OK);
+    ASSERT_NE(ctx, nullptr);
+    /* 0 必须落成内置默认值；否则 handle_request 会把它当成 0 字节上限，
+     * 每个非空文件都被 413。 */
+    EXPECT_EQ(ctx->config.max_file_size, UVHTTP_STATIC_MAX_FILE_SIZE);
+    uvhttp_static_free(ctx);
+}
+
+TEST(UvhttpStaticMoreCoverageTest, CreateHonorsMaxCacheEntries) {
+    uvhttp_static_config_t config;
+    memset(&config, 0, sizeof(config));
+    config.max_cache_size = 1024 * 1024;
+    config.max_cache_entries = 7;
+    strncpy(config.root_directory, ".", sizeof(config.root_directory) - 1);
+
+    uvhttp_static_context_t* ctx = NULL;
+    ASSERT_EQ(uvhttp_static_create(&config, &ctx), UVHTTP_OK);
+    ASSERT_NE(ctx, nullptr);
+
+    size_t max_memory = 0;
+    int entries = 0;
+    int ttl = 0;
+    int batch = 0;
+    uvhttp_lru_cache_get_config(ctx->cache, &max_memory, &entries, &ttl, &batch,
+                                nullptr, nullptr);
+    EXPECT_EQ(entries, 7);
+    uvhttp_static_free(ctx);
+}
+
+/* 测试缓存预热边界情况 */ TEST(UvhttpStaticMoreCoverageTest,
+                                CachePrewarmEdgeCases) {
     uvhttp_static_config_t config;
     memset(&config, 0, sizeof(config));
 

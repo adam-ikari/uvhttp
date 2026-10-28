@@ -22,7 +22,7 @@ This document answers common questions about using the UVHTTP library.
 **Answer:**
 - **Operating System**: Linux, macOS, Windows
 - **Compiler**: GCC 4.8+, Clang 3.4+, MSVC 2015+
-- **Build System**: CMake 3.10+
+- **Build System**: CMake 3.13+
 - **Dependencies**: libuv (included), llhttp (included)
 
 **Build Commands:**

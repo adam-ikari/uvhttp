@@ -197,21 +197,6 @@ cmake -DBUILD_WITH_WEBSOCKET=OFF ..
 cmake -DCMAKE_C_FLAGS="-m32" ..
 ```
 
-### Custom Configuration
-
-For advanced users, you can create a custom configuration file:
-
-```bash
-# Copy the user options template
-cp cmake/UserOptions.cmake cmake/UserOptions.local.cmake
-
-# Edit the file to customize build options
-vim cmake/UserOptions.local.cmake
-
-# Build with custom configuration
-cmake -DCMAKE_USER_CONFIG=ON ..
-```
-
 ### Basic Usage
 
 ```c

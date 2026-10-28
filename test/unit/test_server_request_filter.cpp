@@ -20,6 +20,7 @@
  */
 
 extern "C" {
+#include "uvhttp_context.h"
 #include "uvhttp_protocol_upgrade.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
@@ -189,22 +190,22 @@ class LiveServer {
     LiveServer(const LiveServer&) = delete;
     LiveServer& operator=(const LiveServer&) = delete;
 
-    void start() {
+    void start(bool with_router = true) {
         ASSERT_EQ(uv_loop_init(&loop_), 0);
         loop_ready_ = true;
         ASSERT_EQ(uvhttp_server_new(&loop_, &server_), UVHTTP_OK);
         ASSERT_NE(server_, nullptr);
         ASSERT_EQ(uvhttp_server_set_handler(server_, HandleRequest), UVHTTP_OK);
 
-        /* 空 router 是必需的，不是冗余：on_message_complete 的分派块整体在
-         * `if (server->router)` 里，没有 router 时请求直接落到硬编码的 200
-         * 默认响应，server->handler 根本不会被调用（uvhttp_request.c:564）。
-         * 挂一个不匹配任何路径的 router，find_handler 返回 NULL，才走到
-         * server->handler 这条 catch-all 分支。 */
-        uvhttp_router_t* router = nullptr;
-        ASSERT_EQ(uvhttp_router_new(&router), UVHTTP_OK);
-        ASSERT_NE(router, nullptr);
-        ASSERT_EQ(uvhttp_server_take_router(server_, router), UVHTTP_OK);
+        /* empty router 用于验证 find_handler 落空后的 server->handler
+         * catch-all 分支；with_router=false 则覆盖「根本没有 router」时
+         * 的同一分派路径。 */
+        if (with_router) {
+            uvhttp_router_t* router = nullptr;
+            ASSERT_EQ(uvhttp_router_new(&router), UVHTTP_OK);
+            ASSERT_NE(router, nullptr);
+            ASSERT_EQ(uvhttp_server_take_router(server_, router), UVHTTP_OK);
+        }
 
         ASSERT_EQ(uvhttp_server_listen(server_, "127.0.0.1", 0), UVHTTP_OK);
         struct sockaddr_in addr {};
@@ -251,6 +252,10 @@ class LiveServer {
 
     uvhttp_server_t* server() {
         return server_;
+    }
+
+    uv_loop_t& loop() {
+        return loop_;
     }
 
     std::string url(const std::string& path = "/") {
@@ -355,6 +360,34 @@ TEST_F(RequestFilter, NullFilterDispatchesNormally) {
     EXPECT_EQ(code_of(got), "200");
     EXPECT_EQ(body_of(got), "handled");
     EXPECT_EQ(g_handler_calls, 1);
+}
+
+TEST_F(RequestFilter, HandlerInvokedWithoutRouter) {
+    /* 没有 router 时 server->handler 就是整张分发表，不能被硬编码默认响应
+     * 绕过。 */
+    LiveServer srv;
+    srv.start(/*with_router=*/false);
+
+    auto got = fetch(srv.url("/no-router"));
+    EXPECT_EQ(code_of(got), "200");
+    EXPECT_EQ(body_of(got), "handled");
+    EXPECT_EQ(g_handler_calls, 1);
+}
+
+TEST_F(RequestFilter, ContextCountersTrackTraffic) {
+    LiveServer srv;
+    srv.start();
+    uvhttp_context_t* context = nullptr;
+    ASSERT_EQ(uvhttp_context_create(&srv.loop(), &context), UVHTTP_OK);
+    ASSERT_EQ(uvhttp_server_take_context(srv.server(), context), UVHTTP_OK);
+
+    size_t requests_before = context->total_requests;
+    size_t connections_before = context->total_connections;
+
+    auto got = fetch(srv.url("/counted"));
+    EXPECT_EQ(code_of(got), "200");
+    EXPECT_EQ(context->total_requests, requests_before + 1);
+    EXPECT_GT(context->total_connections, connections_before);
 }
 
 TEST_F(RequestFilter, FilterRunsOncePerRequestWithUsableContext) {

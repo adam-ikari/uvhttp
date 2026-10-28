@@ -8,7 +8,8 @@ This directory contains automation scripts organized by function.
 scripts/
 ├── .doxygen_templates/  # Doxygen templates
 ├── build_docs.sh        # Unified documentation build script
-├── check_links.sh       # Check for broken links in markdown docs
+├── check-links.sh       # Check internal markdown links
+├── check-doc-sync.sh    # Check EN/ZH documentation sync
 ├── ci/                  # CI/CD automation scripts
 ├── docs/                # Documentation generation scripts
 └── performance/         # Performance analysis scripts

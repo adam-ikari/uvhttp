@@ -81,8 +81,6 @@ int main() {
         .root_directory = "./public",
         .index_file = "index.html",
         .enable_directory_listing = 1,
-        .enable_etag = 1,
-        .enable_last_modified = 1,
         .max_cache_size = 10 * 1024 * 1024,  // 10MB
         .cache_ttl = 3600                    // 1 小时
     };
@@ -120,8 +118,6 @@ uvhttp_static_config_t advanced_config = {
     .root_directory = "/var/www/html",
     .index_file = "index.html",
     .enable_directory_listing = 0,
-    .enable_etag = 1,
-    .enable_last_modified = 1,
     .max_cache_size = 100 * 1024 * 1024,  // 100MB
     .cache_ttl = 7200,                      // 2 小时
     .custom_headers = "X-Content-Type-Options: nosniff\r\n"
@@ -139,16 +135,15 @@ uvhttp_static_config_t advanced_config = {
 |------|------|--------|------|
 | `root_directory` | `const char*` | `"./public"` | 静态文件根目录 |
 | `index_file` | `const char*` | `"index.html"` | 默认首页文件 |
-| `enable_directory_listing` | `int` | `1` | 是否启用目录列表 |
-| `enable_etag` | `int` | `1` | 是否启用 ETag |
-| `enable_last_modified` | `int` | `1` | 是否启用 Last-Modified |
+| `enable_directory_listing` | `int` | `0` | 是否启用目录列表 |
 
 ### 缓存配置
 
 | 选项 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `max_cache_size` | `size_t` | `10*1024*1024` | 最大缓存大小（字节） |
-| `cache_ttl` | `int` | `3600` | 缓存 TTL（秒） |
+| `max_cache_size` | `size_t` | 必填（须 > 0） | 最大缓存大小（字节） |
+| `cache_ttl` | `int` | `0` | 缓存 TTL（秒），`0` 表示永不过期 |
+| `max_cache_entries` | `int` | `0` | 最大条目数，`0` 表示使用内置默认值 |
 
 ### 安全配置
 
@@ -312,18 +307,15 @@ UVHTTP 使用 sendfile 系统调用实现零拷贝文件传输。
 
 ```c
 typedef struct uvhttp_static_config {
-    int enable_etag;
-    int enable_last_modified;
-    int enable_directory_listing;
-
-    int enable_sendfile;
-    int sendfile_timeout_ms;
-    int sendfile_max_retry;
-    size_t sendfile_chunk_size;
-
     size_t max_cache_size;
+    size_t sendfile_chunk_size;
+    size_t max_file_size;
+
     int cache_ttl;
     int max_cache_entries;
+    int sendfile_timeout_ms;
+    int sendfile_max_retry;
+    int enable_directory_listing;
 
     char root_directory[UVHTTP_MAX_FILE_PATH_SIZE];
     char index_file[UVHTTP_MAX_PATH_SIZE];
@@ -365,12 +357,9 @@ uvhttp_error_t uvhttp_static_set_sendfile_config(
 uvhttp_static_config_t config;
 memset(&config, 0, sizeof(config));
 strncpy(config.root_directory, "./public", sizeof(config.root_directory) - 1);
-config.enable_etag = 1;
-config.enable_last_modified = 1;
 config.max_cache_size = 100 * 1024 * 1024;  // 100MB
 config.cache_ttl = 7200;  // 2 小时
 
-config.enable_sendfile = 1;
 config.sendfile_timeout_ms = 15000;  // 15 秒超时
 config.sendfile_max_retry = 3;
 config.sendfile_chunk_size = 128 * 1024;  // 128KB 分块
@@ -708,7 +697,7 @@ void print_cache_stats(uvhttp_static_context_t* ctx) {
 
 ### 调试技巧
 
-调试日志是编译期开关，不是运行时配置：以 `-DENABLE_LOG_DEBUG=ON` 构建后使用 `UVHTTP_LOG_DEBUG`。
+调试日志是编译期开关，不是运行时配置：以 `-DENABLE_DEV_MODE=ON` 构建后使用 `UVHTTP_LOG_DEBUG`。
 
 ```c
 UVHTTP_LOG_DEBUG("处理请求: %s %s",

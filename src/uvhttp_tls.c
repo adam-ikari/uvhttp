@@ -32,7 +32,6 @@ struct uvhttp_tls_context {
     mbedtls_ssl_cache_context cache;
     int is_server;
     int initialized;
-    uvhttp_tls_stats_t stats;
 };
 
 /* Custom network callback — handles EINTR (retry) and maps ECONNRESET/EPIPE
@@ -712,26 +711,6 @@ uvhttp_error_t uvhttp_tls_get_cert_chain(mbedtls_ssl_context* ssl,
 
     *chain = (mbedtls_x509_crt*)peer_cert;
 
-    return UVHTTP_OK;
-}
-
-// TLSperformancemonitor
-uvhttp_error_t uvhttp_tls_get_stats(uvhttp_tls_context_t* ctx,
-                                    uvhttp_tls_stats_t* stats) {
-    if (!ctx || !stats) {
-        return UVHTTP_ERROR_TLS_INVALID_PARAM;
-    }
-
-    memcpy(stats, &ctx->stats, sizeof(uvhttp_tls_stats_t));
-    return UVHTTP_OK;
-}
-
-uvhttp_error_t uvhttp_tls_reset_stats(uvhttp_tls_context_t* ctx) {
-    if (!ctx) {
-        return UVHTTP_ERROR_TLS_INVALID_PARAM;
-    }
-
-    memset(&ctx->stats, 0, sizeof(uvhttp_tls_stats_t));
     return UVHTTP_OK;
 }
 

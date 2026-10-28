@@ -17,7 +17,7 @@ This guide will help you get started with UVHTTP in just a few minutes.
 
 ## Prerequisites
 
-- CMake 3.10 or higher
+- CMake 3.13 or higher
 - C99 compiler (GCC 4.9+, Clang 3.5+)
 - libuv 1.x (cloned automatically as a submodule)
 - llhttp (cloned automatically as a submodule)

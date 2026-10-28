@@ -98,10 +98,6 @@ typedef struct uvhttp_ws_connection {
     size_t recv_buffer_size;
     size_t recv_buffer_pos;
 
-    /* Send buffer */
-    uint8_t* send_buffer;
-    size_t send_buffer_size;
-
     /* Fragment reassembly */
     uint8_t* fragmented_message;
     size_t fragmented_size;
