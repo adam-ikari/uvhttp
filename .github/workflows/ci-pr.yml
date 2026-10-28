@@ -68,7 +68,7 @@ jobs:
           fi
       
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: build-ubuntu-pr-${{ github.event.pull_request.number }}
           path: build/dist/
@@ -118,7 +118,7 @@ jobs:
 
       - name: Upload code quality results
         if: always()
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: code-quality-pr-${{ github.event.pull_request.number }}
           path: cppcheck-results.xml
