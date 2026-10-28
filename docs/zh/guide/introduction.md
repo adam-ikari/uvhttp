@@ -9,11 +9,11 @@ UVHTTP 是基于 libuv 的 HTTP/1.1 与 WebSocket 服务器库，面向现代 C 
 
 ## 什么是 UVHTTP？
 
-- **性能**：峰值约 20K RPS，亚毫秒级延迟
+- **性能**：GitHub CI runner 上约 139K RPS，亚毫秒级延迟（见[性能](performance.md)）
 - **资源**：零拷贝优化，低内存与 CPU 占用
 - **架构**：64 位与 32 位嵌入式系统
 - **API**：简洁直观，错误处理完善
-- **质量**：零编译警告，101 项测试通过，ASan/UBSan 验证
+- **质量**：零编译警告，119 项测试通过，ASan/UBSan 验证
 
 ### 核心理念
 
@@ -86,35 +86,18 @@ UVHTTP 借助 libuv 的事件驱动架构实现高并发：
 
 ## 性能特征
 
-### 基准测试（v2.7.1）
+### 基准测试（v3.0.0）
 
-```yaml
-配置:
-  - Server: 4-core CPU, 16GB RAM
-  - Client: wrk, 4 threads, 100 connections
-  - Duration: 30 seconds
+在 GitHub Actions `ubuntu-latest` 上使用 `benchmark_unified` 测量（Release 构建、10 连接、每轮 10 秒、10 轮）。共享 runner 上绝对 RPS 会跨 run 漂移，因此回归门禁使用同机配对比较；方法论见[性能](performance.md)。
 
-HTTP/1.1:
-  低并发:
-    - Throughput: ~20,000 RPS
-    - Latency: ~0.4 ms avg (P50)
-    - Error Rate: 0.00%
-
-  高并发:
-    - Throughput: ~17,000-19,000 RPS
-    - Latency: ~9 ms avg (P50), ~58 ms (P99)
-    - Error Rate: 0.00%
-
-  静态文件 (1MB):
-    - Throughput: 12,510 RPS
-    - Latency: 15.3 ms avg
-    - Zero-Copy: Enabled (sendfile)
-
-API 路由:
-  - Throughput: 13,950 RPS
-  - Route Lookup: O(1)
-  - Middleware Overhead: < 10μs
-```
+| 场景 | 吞吐量 | 延迟 | 备注 |
+|----------|-----------|---------|-------|
+| `/`（HTTP/1.1） | 约 139K RPS | 约 70 µs 平均 | 10 连接 |
+| `/json` | 约 140K RPS | 约 70 µs 平均 | JSON 端点 |
+| `/large`（约 100KB） | 约 18K RPS | — | 零拷贝 writev |
+| `/sse` | 约 157K RPS | 约 63 µs 平均 | 服务器发送事件 |
+| `/stream` | 约 21K RPS | 约 468 µs 平均 | 流式 body |
+| 高并发 | 约 117K RPS | 约 28 ms 平均 | 1000 连接；过载时客户端出现读超时 |
 
 ### 性能优化
 

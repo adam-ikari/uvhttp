@@ -11,7 +11,7 @@ UVHTTP is an event-driven HTTP/1.1 and WebSocket server library for C, built on 
 
 UVHTTP is an **event-driven HTTP server library** for C, built on libuv:
 
-- **Throughput**: peak 23,226 RPS, sub-millisecond latency
+- **Throughput**: ~139K RPS on GitHub CI runners, sub-millisecond latency — see [Performance](performance.md)
 - **Resource use**: small memory footprint and CPU usage via zero-copy
 - **Architecture**: 64-bit and 32-bit embedded support
 - **API**: clean, with error handling built in
@@ -92,35 +92,18 @@ UVHTTP is built for portability:
 
 ## 🚀 Performance Characteristics
 
-### Benchmark Results (v2.7.1)
+### Benchmark Results (v3.0.0)
 
-```yaml
-Configuration:
-  - Server: 4-core CPU, 16GB RAM
-  - Client: wrk, 4 threads, 100 connections
-  - Test Duration: 30 seconds
+Measured on GitHub Actions `ubuntu-latest` with `benchmark_unified` (Release build, 10 connections, 10 s per round, 10 rounds). Absolute RPS drifts between runs on shared runners, so the regression gate uses a same-runner paired comparison; see [Performance](performance.md) for the methodology.
 
-HTTP/1.1 Benchmarks:
-  Low Concurrency:
-    - Throughput: 23,226 RPS
-    - Latency: 2.92 ms avg (P50)
-    - Error Rate: 0.00%
-  
-  High Concurrency:
-    - Throughput: 31,409 RPS
-    - Latency: 43.59 ms avg (P99)
-    - Error Rate: 0.00%
-  
-  Static Files (1MB):
-    - Throughput: 12,510 RPS
-    - Latency: 15.3 ms avg
-    - Zero-Copy: Enabled (sendfile)
-
-API Routing:
-  - Throughput: 13,950 RPS
-  - Route Lookup: O(1) complexity
-  - Middleware Overhead: < 10μs per request
-```
+| Scenario | Throughput | Latency | Notes |
+|----------|-----------|---------|-------|
+| `/` (HTTP/1.1) | ~139K RPS | ~70 µs avg | 10 conn |
+| `/json` | ~140K RPS | ~70 µs avg | JSON endpoint |
+| `/large` (~100KB) | ~18K RPS | — | zero-copy writev |
+| `/sse` | ~157K RPS | ~63 µs avg | server-sent events |
+| `/stream` | ~21K RPS | ~468 µs avg | streamed body |
+| High concurrency | ~117K RPS | ~28 ms avg | 1000 conn; client read timeouts under overload |
 
 ### Performance Optimizations
 

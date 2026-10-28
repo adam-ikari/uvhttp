@@ -7,7 +7,7 @@ import apiSidebar from '../api/generated/sidebar.js'
 export default defineConfig({
   title: 'UVHTTP',
   titleTemplate: ':title — UVHTTP',
-  description: 'Lightweight, embeddable C99 HTTP/1.1 & WebSocket server library with ASan/UBSan-verified memory safety, 32-bit embedded support, and zero-copy performance (~20K RPS).',
+  description: 'Lightweight, embeddable C99 HTTP/1.1 & WebSocket server library with ASan/UBSan-verified memory safety, 32-bit embedded support, and zero-copy performance (~140K RPS on GitHub CI runners).',
   // 本地开发使用 '/'，部署到 GitHub Pages 使用 '/uvhttp/'
   base: process.env.DEPLOY === 'pages' ? '/uvhttp/' : '/',
   lang: 'en-US',
@@ -18,8 +18,7 @@ export default defineConfig({
 
   // Auto-generate a sitemap.xml on build (replaces the stale static one).
   sitemap: {
-    hostname: 'https://adam-ikari.github.io/uvhttp/',
-    lastmodDate: new Date('2026-07-13')
+    hostname: 'https://adam-ikari.github.io/uvhttp/'
   },
 
   // Disable clean URLs for GitHub Pages compatibility
@@ -37,7 +36,7 @@ export default defineConfig({
       content: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://adam-ikari.github.io; object-src 'none'; base-uri 'self'; form-action 'self';"
     }],
     ['meta', { property: 'og:title', content: 'UVHTTP — Memory-Safety-Verified C HTTP Server Library' }],
-    ['meta', { property: 'og:description', content: 'Lightweight, embeddable C99 HTTP/1.1 & WebSocket library with ASan+UBSan-verified memory safety, 32-bit embedded support, and ~20K RPS. Throughput you can measure, memory safety you can prove.' }],
+    ['meta', { property: 'og:description', content: 'Lightweight, embeddable C99 HTTP/1.1 & WebSocket library with ASan+UBSan-verified memory safety, 32-bit embedded support, and ~140K RPS on GitHub CI runners. Throughput you can measure, memory safety you can prove.' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:url', content: 'https://adam-ikari.github.io/uvhttp' }],
     ['meta', { property: 'og:site_name', content: 'UVHTTP' }],
@@ -45,7 +44,7 @@ export default defineConfig({
     ['meta', { property: 'og:locale:alternate', content: 'zh_CN' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     ['meta', { name: 'twitter:title', content: 'UVHTTP — Memory-Safety-Verified C HTTP Server Library' }],
-    ['meta', { name: 'twitter:description', content: 'Lightweight, embeddable C99 HTTP/1.1 & WebSocket library with ASan+UBSan-verified memory safety, 32-bit embedded support, ~20K RPS.' }],
+    ['meta', { name: 'twitter:description', content: 'Lightweight, embeddable C99 HTTP/1.1 & WebSocket library with ASan+UBSan-verified memory safety, 32-bit embedded support, ~140K RPS on GitHub CI runners.' }],
     ['link', { rel: 'canonical', href: 'https://adam-ikari.github.io/uvhttp/' }],
     // Structured data: helps search engines understand this is a software library.
     ['script', { type: 'application/ld+json' }, JSON.stringify({
@@ -54,17 +53,17 @@ export default defineConfig({
       name: 'UVHTTP',
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Linux',
-      softwareVersion: "2.7.1",
+      softwareVersion: "3.0.0",
       programmingLanguage: 'C (C99)',
       description: 'Lightweight, embeddable HTTP/1.1 and WebSocket server library built on libuv, with ASan/UBSan-verified memory safety and 32-bit embedded support.',
       url: 'https://adam-ikari.github.io/uvhttp',
-      downloadUrl: "https://github.com/adam-ikari/uvhttp/releases/tag/v2.7.1",
+      downloadUrl: "https://github.com/adam-ikari/uvhttp/releases/tag/v3.0.0",
       author: { '@type': 'Organization', name: 'UVHTTP Contributors' },
       license: 'https://github.com/adam-ikari/uvhttp/blob/main/LICENSE',
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
       featureList: [
         'HTTP/1.1 and WebSocket server',
-        'ASan/UBSan-verified memory safety (101/101 tests)',
+        'ASan/UBSan-verified memory safety (119/119 tests)',
         '32-bit embedded support',
         'Zero-copy sendfile for large files',
         'TLS 1.3 via mbedtls',
@@ -85,11 +84,12 @@ export default defineConfig({
           { text: 'Memory Safety', link: '/MEMORY_SAFETY' },
           { text: 'Performance', link: '/guide/performance' },
           { text: 'Embedded Profile', link: '/embedded-profile' },
+          { text: 'Releases', link: '/releases/' },
           {
             text: 'Download',
             items: [
               { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' },
-              { text: 'Release v2.7.1', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.7.1' }
+              { text: 'Release v3.0.0', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v3.0.0' }
             ]
           }
         ],
@@ -147,6 +147,7 @@ export default defineConfig({
                 { text: 'Security', link: '/guide/SECURITY' },
                 { text: 'Roadmap', link: '/guide/ROADMAP' },
                 { text: 'Changelog', link: '/guide/CHANGELOG' },
+                { text: 'Releases', link: '/releases/' },
                 { text: 'Performance', link: '/guide/performance' },
                 { text: 'Specifications', link: '/spec/' }
               ]
@@ -206,11 +207,12 @@ export default defineConfig({
           { text: '内存安全', link: '/zh/MEMORY_SAFETY' },
           { text: '性能', link: '/zh/guide/performance' },
           { text: '嵌入式与长期运行', link: '/zh/embedded-profile' },
+          { text: '发布记录', link: '/releases/' },
           { 
             text: '下载', 
             items: [
               { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' },
-              { text: 'v2.7.1 发布', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v2.7.1' }
+              { text: 'v3.0.0 发布', link: 'https://github.com/adam-ikari/uvhttp/releases/tag/v3.0.0' }
             ]
           }
         ],
@@ -268,6 +270,7 @@ export default defineConfig({
                 { text: '安全指南', link: '/zh/guide/SECURITY' },
                 { text: '路线图', link: '/zh/guide/ROADMAP' },
                 { text: '更新日志', link: '/zh/guide/CHANGELOG' },
+                { text: '发布记录', link: '/releases/' },
                 { text: '性能指标', link: '/zh/guide/performance' },
                 { text: '规格文档', link: '/spec/' }
               ]

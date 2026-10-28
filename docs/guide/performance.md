@@ -1,6 +1,6 @@
 ---
 title: Performance Benchmarks
-description: UVHTTP performance benchmarks — ~83K RPS on GitHub CI runners, 81K RPS JSON, 8.8K RPS large responses, zero socket errors, P50 ~117µs latency. Includes reproduce commands, optimization tips, and monitoring.
+description: UVHTTP performance benchmarks — ~139K RPS on GitHub CI runners, ~140K RPS JSON, ~18K RPS large responses, ~70µs average latency, and a same-runner paired regression gate. Includes reproduce commands, optimization tips, and monitoring.
 ---
 
 # Performance
@@ -11,15 +11,21 @@ UVHTTP is designed for high performance and low latency. This document provides 
 
 ### CI Baseline (Authoritative)
 
-The authoritative baseline is measured on **GitHub Actions `ubuntu-latest` runners** with `benchmark_unified` (Release build, system allocator, 2 threads, 10 concurrent connections, 10s per round, 10 rounds per endpoint). CI runners remove the CPU thermal-throttling variance that plagues local benchmarks (within-run CV 0.4–2.4% on CI vs 40%+ locally). That stability holds only *inside* a run: across runs of the same commit the medians move by tens of percent, because runners are shared VMs. These numbers are therefore the reference for documentation, while the **regression gate compares head against base on the same runner in the same job**. Full methodology and the exact runner environment are recorded in [Performance Targets](../PERFORMANCE_TARGETS.md).
+The authoritative baseline is measured on **GitHub Actions `ubuntu-latest` runners** with `benchmark_unified` (Release build, system allocator, 2 threads, 10 concurrent connections, 10s per round, 10 rounds per endpoint). CI runners remove the CPU thermal-throttling variance that plagues local benchmarks (within-run CV 0.9–2.6% on CI vs 40%+ locally). That stability holds only *inside* a run: across runs of the same commit the medians move by tens of percent, because runners are shared VMs. These numbers are therefore the reference for documentation, while the **regression gate compares head against base on the same runner in the same job**. Full methodology and the exact runner environment are recorded in [Performance Targets](../PERFORMANCE_TARGETS.md).
+
+The figures below are the **v3.0.0 release gate run** (2026-10-20); they are medians over 10 rounds, not a promise about any other runner.
 
 | Endpoint | RPS | Avg Latency | Notes |
 |----------|-----|-------------|-------|
-| `/` (simple text) | **~83K** | ~117µs | HTTP/1.1, 10 conn, GitHub CI runner |
-| `/json` | **~81K** | ~117µs | JSON endpoint |
-| `/large` (~100KB body) | **~8.8K** | — | Large responses; zero-copy writev optimization (5.1K → 8.8K, +72.7%) |
-| High concurrency (1000 conn) | **~55K** | ~27ms | graceful degradation |
-| Socket errors | **0** | — | zero errors under load |
+| `/` (simple text) | **~139K** | ~70µs | HTTP/1.1, 10 conn, GitHub CI runner |
+| `/json` | **~140K** | ~70µs | JSON endpoint |
+| `/large` (~100KB body) | **~18K** | — | Large responses; zero-copy writev optimization |
+| `/sse` | **~157K** | ~63µs | Server-sent events |
+| `/stream` | **~21K** | ~468µs | Streamed body |
+| High concurrency (1000 conn) | **~117K** | ~28ms | graceful degradation; client read timeouts under overload |
+| Socket errors (10 conn) | **0** | — | zero errors under load |
+
+> **Regression evidence (v3.0.0)**: paired against v2.9.2 on the same runner in one job, the gate measured `/` **100.8%**, `/json` **102.0%** and `/large` **101.4%**, with MAD 2.8% / 0.8% / 1.0% and 0 of 30 paired rounds below the 90% limit.
 
 > **Note**: `benchmark_unified` `/large` returns a ~100KB body — much larger than the ~1KB body in `test_performance_e2e`. The two binaries are not directly comparable.
 
@@ -60,7 +66,7 @@ wrk -t4 -c100 -d10s http://127.0.0.1:18090/simple
 
 ### Memory-Safety Verification
 
-Performance is meaningless without correctness. The full 101-test suite is verified
+Performance is meaningless without correctness. The full 119-test suite is verified
 clean under both sanitizers before any performance work is considered done:
 
 ```bash
@@ -76,10 +82,10 @@ cmake --build build_ubsan -j$(nproc) && (cd build_ubsan && ctest -j4)
 ### Stability
 
 - **Concurrency Range**: 10-1000 concurrent connections (tested)
-- **RPS Fluctuation**: < 5% across all concurrency levels locally; CV 0.4–2.4% on CI
+- **RPS Fluctuation**: < 5% across all concurrency levels locally; CV 0.9–2.6% within a CI run
 - **Memory Usage**: Stable, no leaks detected (no CLOSE_WAIT connections)
 - **CPU Usage**: Efficient, scales with load
-- **Socket Errors**: Zero errors at all tested concurrency levels
+- **Socket Errors**: Zero at all tested levels locally; at 1000 connections on CI, client read timeouts appear under overload
 
 ### Performance Improvements (v2.3.1)
 
@@ -223,13 +229,13 @@ kill $SERVER_PID 2>/dev/null || true
 
 | Library | Throughput (RPS) | Latency (ms) | Memory Usage |
 |---------|------------------|--------------|--------------|
-| **UVHTTP** | **~83,000** | **~0.117 (P50, CI)** | **Low** |
+| **UVHTTP** | **~139,000** | **~0.070 (avg, CI)** | **Low** |
 | libuv-http | 18,500 | 3.45 | Medium |
 | microhttpd | 15,200 | 4.20 | Low |
 | mongoose | 12,800 | 5.10 | Medium |
 
 *Note: Results may vary based on hardware, host load, and test duration. The
-UVHTTP figure is the GitHub CI baseline (~83K RPS, 10 connections, `benchmark_unified`).
+UVHTTP figure is the v3.0.0 release gate baseline (~139K RPS, 10 connections, `benchmark_unified`).
 Competitor figures are indicative local measurements and are not directly
 comparable to the CI numbers. Full historical baselines are in
 `docs/performance/baseline-history.json`.*

@@ -1,6 +1,6 @@
 ---
 title: Memory Safety — ASan & UBSan Verified
-description: "UVHTTP's memory-safety guarantee: the full 101-test suite is verified clean under AddressSanitizer and UndefinedBehaviorSanitizer, nightly in CI, reproducible with one command. Bug classes fixed, defense in depth, and why it matters for long-running and embedded deployments."
+description: "UVHTTP's memory-safety guarantee: the full 119-test suite is verified clean under AddressSanitizer and UndefinedBehaviorSanitizer, nightly in CI, reproducible with one command. Bug classes fixed, defense in depth, and why it matters for long-running and embedded deployments."
 ---
 
 # Memory Safety
@@ -16,12 +16,12 @@ This document is the engineering evidence.
 
 ## The guarantee
 
-The full 101-test suite is verified clean under **both**:
+The full 119-test suite is verified clean under **both**:
 
 | Sanitizer | What it catches | Result |
 |-----------|-----------------|--------|
-| **AddressSanitizer** (with leak detection) | heap use-after-free, heap-buffer-overflow, stack-buffer-overflow, memory leaks | **101/101 pass, zero findings** |
-| **UndefinedBehaviorSanitizer** | signed integer overflow, invalid shifts, null dereference, misalignment, out-of-bounds | **101/101 pass, zero findings** |
+| **AddressSanitizer** (with leak detection) | heap use-after-free, heap-buffer-overflow, stack-buffer-overflow, memory leaks | **119/119 pass, zero findings** |
+| **UndefinedBehaviorSanitizer** | signed integer overflow, invalid shifts, null dereference, misalignment, out-of-bounds | **119/119 pass, zero findings** |
 
 ASan and UBSan cannot be combined in a single build, so they run as two separate
 configurations. Both must be green.
@@ -33,11 +33,11 @@ make verify-memory-safety
 ```
 
 This configures and builds the suite under ASan and UBSan, runs the full
-101-test suite under each, and exits non-zero if any test fails or any sanitizer
+119-test suite under each, and exits non-zero if any test fails or any sanitizer
 reports a finding. A clean run prints:
 
 ```
-==> PASS: full suite clean under ASan and UBSan (101/101 each).
+==> PASS: full suite clean under ASan and UBSan (119/119 each).
 ```
 
 The equivalent manual commands:
