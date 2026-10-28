@@ -788,7 +788,6 @@ Phase 2: Full testing
 └─ test-coverage: coverage report generation
 
 Phase 3: Deep testing
-├─ coverage-report: coverage HTML report
 ├─ test-stress: stress test (5 minutes)
 ├─ performance-full: full performance benchmark
 └─ test-memory: memory leak detection (ASan)
