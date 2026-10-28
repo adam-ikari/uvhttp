@@ -1,6 +1,6 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-10-27T06:27:38.725Z._
+_Auto-generated. Last updated 2026-10-28T02:17:22.916Z._
 
 - [alloc-hotpath-measured](pages/alloc-hotpath-measured.md) — category: decision | tags: [performance, benchmark, allocator, methodology, yagni] | # 每请求分配已实测：省一次仅 0.026%，内存分配优化不做
 - [api-atomicity-audit](pages/api-atomicity-audit.md) — category: decision | tags: [api, atomicity, orthogonality, audit, v2.10] | <!-- compiled_truth -->
@@ -38,7 +38,7 @@ _Auto-generated. Last updated 2026-10-27T06:27:38.725Z._
 - [release-v300](pages/release-v300.md) — category: decision | tags: [release, versioning, api, roadmap-v2.10] | # 发布 v3.0.0
 - [request-filter-seam-replaces-rate-limiter](pages/request-filter-seam-replaces-rate-limiter.md) — category: decision | tags: [api, design, v2.10, rate-limit, roadmap-d3] | # 库不实现限流：只给分派前接缝，策略归调用方
 - [router-cache-parity](pages/router-cache-parity.md) — category: decision | tags: [router, cache, ci] | # 路由缓存实现必须与非缓存路由器行为对齐
-- [runner-toolchain-drift](pages/runner-toolchain-drift.md) — category: project | tags: [ci, cmake, cppcheck, runner] | ## 事实
+- [runner-toolchain-drift](pages/runner-toolchain-drift.md) — category: project | tags: [ci, cmake, cppcheck, lcov, coverage, runner] | ## 事实
 - [sanitizer-feature-blindspot](pages/sanitizer-feature-blindspot.md) — category: project | tags: [ci, asan, ubsan, coverage, static-files] | # Sanitizer 门禁的 feature 盲区
 - [silent-skip-audit-101-to-18](pages/silent-skip-audit-101-to-18.md) — category: project | tags: [test, ci, quality, false-positive] | # 静默跳过测试治理：101→18（4 个 PR）
 - [test-validity-always-green](pages/test-validity-always-green.md) — category: project | tags: [test, ci, mutation, quality] | # 测试有效性：恒绿零验证的普查与门禁
