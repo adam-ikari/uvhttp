@@ -66,19 +66,15 @@ uvhttp_router_add_route(router, "/*", static_file_handler);  // 回退路由
 
 见 `examples/04_static_files/static_file_server.c` 完整示例。
 
-### 关键点
-- 使用 `uvhttp_router_add_route()` 添加静态文件路由
-- 创建包装函数调用 `uvhttp_static_handle_request()`
-- 通过 `server->context` 或 `loop->data` 传递应用上下文
-- 使用通配符路由处理多个静态文件路径
-
-## 最佳实践
-
-### 关键点
-
 ```c
 #include "uvhttp.h"
 #include "uvhttp_static.h"
+
+static uvhttp_static_context_t* g_static_ctx = NULL;
+
+static int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    return uvhttp_static_handle_request(g_static_ctx, request, response);
+}
 
 int main() {
     uvhttp_static_config_t config = {
@@ -88,11 +84,12 @@ int main() {
         .enable_etag = 1,
         .enable_last_modified = 1,
         .max_cache_size = 10 * 1024 * 1024,  // 10MB
-        .cache_ttl = 3600                      // 1 小时
+        .cache_ttl = 3600                    // 1 小时
     };
 
-    uvhttp_static_context_t* ctx = NULL;
-    uvhttp_static_create(&config, &ctx);
+    if (uvhttp_static_create(&config, &g_static_ctx) != UVHTTP_OK) {
+        return 1;
+    }
 
     uv_loop_t* loop = uv_default_loop();
     uvhttp_server_t* server = NULL;
@@ -110,6 +107,12 @@ int main() {
 }
 ```
 
+### 关键点
+- 使用 `uvhttp_router_add_route()` 添加静态文件路由
+- 创建包装函数调用 `uvhttp_static_handle_request()`
+- 通过 `server->context` 或 `loop->data` 传递应用上下文
+- 使用通配符路由处理多个静态文件路径
+
 ### 高级配置
 
 ```c
@@ -124,8 +127,7 @@ uvhttp_static_config_t advanced_config = {
     .custom_headers = "X-Content-Type-Options: nosniff\r\n"
                      "X-Frame-Options: DENY\r\n"
                      "X-XSS-Protection: 1; mode=block",
-    .max_file_size = 50 * 1024 * 1024,     // 50MB
-    .enable_compression = 1
+    .max_file_size = 50 * 1024 * 1024     // 50MB
 };
 ```
 
@@ -165,16 +167,17 @@ uvhttp_static_config_t advanced_config = {
 
 ### 核心函数
 
-#### `uvhttp_static_context_t* uvhttp_static_create(const uvhttp_static_config_t* config)`
+#### `uvhttp_error_t uvhttp_static_create(const uvhttp_static_config_t* config, uvhttp_static_context_t** context)`
 
 创建静态文件服务上下文。
 
 **参数:**
 - `config`: 静态文件配置
+- `context`: 输出参数，返回创建的上下文
 
 **返回值:**
-- 成功: 上下文指针
-- 失败: `NULL`
+- `UVHTTP_OK`: 成功
+- 其他值: 错误码
 
 #### `void uvhttp_static_free(uvhttp_static_context_t* ctx)`
 
@@ -183,7 +186,7 @@ uvhttp_static_config_t advanced_config = {
 **参数:**
 - `ctx`: 静态文件服务上下文
 
-#### `int uvhttp_static_handle_request(uvhttp_static_context_t* ctx, uvhttp_request_t* request, uvhttp_response_t* response)`
+#### `uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx, uvhttp_request_t* request, uvhttp_response_t* response)`
 
 处理静态文件请求。
 
@@ -193,8 +196,8 @@ uvhttp_static_config_t advanced_config = {
 - `response`: HTTP 响应对象
 
 **返回值:**
-- `0`: 成功
-- 非 `0`: 错误码
+- `UVHTTP_OK`: 成功
+- 其他值: 错误码
 
 ### 工具函数
 
@@ -290,17 +293,20 @@ UVHTTP 使用 sendfile 系统调用实现零拷贝文件传输。
 
 | 文件大小 | 传输方式 | 原因 |
 |---------|---------|------|
-| < 4KB | 传统方式（open/read/close） | 减少系统调用开销 |
-| 4KB - 10MB | 分块 sendfile | 平衡性能和可靠性 |
-| > 10MB | 分块 sendfile | 避免长时间阻塞 |
+| ≤ 64KB | 传统读取（open/read/close） | sendfile 在小文件上收益不足以抵消额外开销 |
+| > 64KB | 分块 sendfile | 零拷贝，避免将整个文件读入内存 |
+
+阈值由 `UVHTTP_SENDFILE_MIN_FILE_SIZE`（默认 64KB）控制。
 
 #### 配置参数
 
 ```c
-#define SENDFILE_DEFAULT_TIMEOUT_MS  10000  // 10 秒超时
-#define SENDFILE_DEFAULT_MAX_RETRY    2      // 最大重试次数
-#define SENDFILE_DEFAULT_CHUNK_SIZE   (64 * 1024)  // 64KB 分块
+#define UVHTTP_SENDFILE_DEFAULT_TIMEOUT_MS   30000       // 30 秒超时
+#define UVHTTP_SENDFILE_DEFAULT_MAX_RETRY    2           // 最大重试次数
+#define UVHTTP_SENDFILE_DEFAULT_CHUNK_SIZE   (256 * 1024) // 256KB 分块
 ```
+
+也可通过 `uvhttp_static_set_sendfile_config()` 在运行时覆盖，或在配置结构体中设置 `sendfile_timeout_ms` / `sendfile_max_retry` / `sendfile_chunk_size`（传 0 表示使用默认值）。
 
 **配置结构体**：
 
@@ -327,17 +333,17 @@ typedef struct uvhttp_static_config {
 
 **参数选择依据**：
 
-1. **sendfile_timeout_ms（默认 10 秒）**：
+1. **sendfile_timeout_ms（默认 30 秒）**：
    - 更快失败，减少资源占用
    - 适合大多数网络环境
-   - 可通过配置文件自定义
+   - 可经配置结构体自定义
 
 2. **sendfile_max_retry（默认 2 次）**：
    - 减少重试以降低延迟
    - 仅对可恢复错误（UV_EINTR、UV_EAGAIN）重试
    - 避免无限重试导致资源浪费
 
-3. **sendfile_chunk_size（默认 64KB）**：
+3. **sendfile_chunk_size（默认 256KB）**：
    - 优化小文件传输，减少延迟
    - 平衡系统调用次数和内存使用
    - 适合大多数文件系统
@@ -702,24 +708,18 @@ void print_cache_stats(uvhttp_static_context_t* ctx) {
 
 ### 调试技巧
 
-```c
-g_error_config.min_logLevel = UVHTTP_LOG_LEVEL_DEBUG;
+调试日志是编译期开关，不是运行时配置：以 `-DENABLE_LOG_DEBUG=ON` 构建后使用 `UVHTTP_LOG_DEBUG`。
 
-UVHTTP_LOG_INFO("处理请求: %s %s",
-                uvhttp_request_get_method(request),
-                uvhttp_request_get_url(request));
+```c
+UVHTTP_LOG_DEBUG("处理请求: %s %s",
+                 uvhttp_request_get_method(request),
+                 uvhttp_request_get_url(request));
 ```
 
 ## 示例项目
 
-- `examples/static_file_server.c` - 基础静态文件服务器
-- `examples/cache_test_server.c` - 缓存功能测试服务器
-
-## 版本历史
-
-- **v1.0.0** - 初始版本，基础静态文件服务功能
-- **v1.1.0** - 添加 LRU 缓存支持
-- **v1.2.0** - 增强安全特性和性能优化
+- `examples/04_static_files/static_file_server.c` - 基础静态文件服务器
+- `examples/04_static_files/cache_test_server.c` - 缓存功能测试服务器
 
 ## 许可证
 

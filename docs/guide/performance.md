@@ -106,11 +106,11 @@ cmake --build build_ubsan -j$(nproc) && (cd build_ubsan && ctest -j4)
 
 ### 1. Zero-Copy Optimization
 
-Large files (> 1MB) use `sendfile` for zero-copy transmission:
+Large files (> 64KB) use `sendfile` for zero-copy transmission:
 
 ```c
 // Automatically used in uvhttp_static_handle_request
-// Files > 1MB use sendfile automatically
+// Files larger than UVHTTP_SENDFILE_MIN_FILE_SIZE (64KB) use sendfile
 ```
 
 **Performance Gain**: 50%+ improvement for large files

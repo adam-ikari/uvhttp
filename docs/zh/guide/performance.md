@@ -105,11 +105,11 @@ cmake --build build_ubsan -j$(nproc) && (cd build_ubsan && ctest -j4)
 
 ### 1. 零拷贝优化
 
-大文件（> 1MB）使用 `sendfile` 进行零拷贝传输：
+大文件（> 64KB）使用 `sendfile` 进行零拷贝传输：
 
 ```c
 // 在 uvhttp_static_handle_request 中自动使用
-// 超过 1MB 的文件自动使用 sendfile
+// 超过 UVHTTP_SENDFILE_MIN_FILE_SIZE（64KB）的文件自动使用 sendfile
 ```
 
 **性能收益**：大文件性能提升 50%+

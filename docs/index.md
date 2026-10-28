@@ -132,7 +132,7 @@ A unified error type carries codes, descriptions, and recovery hints. Every fail
 
 ### Current Status
 - **✅ Linux**: Fully supported (primary platform)
-- **🔨 macOS**: Work in progress
+- **🔨 macOS**: Planned (lowest priority, unscheduled)
 - **🔨 Windows**: Planned
 - **🔨 FreeBSD**: Planned
 - **🔨 WebAssembly**: Planned

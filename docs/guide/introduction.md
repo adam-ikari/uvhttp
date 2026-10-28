@@ -15,7 +15,7 @@ UVHTTP is an **event-driven HTTP server library** for C, built on libuv:
 - **Resource use**: small memory footprint and CPU usage via zero-copy
 - **Architecture**: 64-bit and 32-bit embedded support
 - **API**: clean, with error handling built in
-- **Production state**: zero warnings, full test coverage, security-first defaults
+- **Production state**: zero warnings, 119/119 tests passing, ASan/UBSan verified, security-first defaults
 
 ### Core Philosophy
 

@@ -428,19 +428,6 @@ cmake -DCMAKE_BUILD_TYPE=MinSizeRel \
 - **性能测试程序**: 增加 ~500KB 二进制体积
 - **Debug 模式**: 性能下降 50-80%
 
-### BUILD_BENCHMARKS
-- **类型**: BOOL
-- **默认值**: OFF
-- **说明**: 编译性能测试程序
-- **影响**:
-  - 编译 benchmark/ 目录下的所有性能测试程序
-  - 生成可执行文件到 build/dist/bin/
-  - 包含以下测试程序：
-    - `benchmark_unified` - 综合性能测试服务器（包含所有测试场景）
-    - `performance_allocator` - 内存分配器性能测试
-    - `performance_allocator_compare` - 内存分配器对比测试
-    - `test_bitfield` - 位域性能测试
-
 ## 内存分配器配置
 
 ### UVHTTP_ALLOCATOR_TYPE
@@ -628,7 +615,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 - **体积**: 较大（包含示例程序）
 - **性能**: 良好
 
-### 12. 32 位兼容性检查
+### 11. 32 位兼容性检查
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release \
       -DBUILD_WITH_WEBSOCKET=ON \
@@ -643,7 +630,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 - **用途**: 32 位系统兼容性测试
 - **注意**: 需要系统支持 32 位编译
 
-### 13. 静态分析准备
+### 12. 静态分析准备
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Debug \
       -DBUILD_WITH_WEBSOCKET=OFF \
