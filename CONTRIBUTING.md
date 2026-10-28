@@ -26,62 +26,54 @@ UVHTTP 项目定义了三种构建模式（Release、Debug、Coverage），详�
 
 ### 分支策略
 
-我们使用 Git Flow 工作流：
-
-```
-main (生产分支)
-  ↑
-  │ (合并)
-  │
-develop (开发分支)
-  ↑
-  │ (合并)
-  │
-feature/* (功能分支)
-fix/* (修复分支)
-```
+`main` 是唯一的长期分支且受保护；不存在 `develop` 分支。所有改动都通过短生命周期分支和 PR 合入 `main`，发布通过 tag / prerelease 触发门禁。
 
 **分支命名规范**：
-- `feature/功能描述` - 新功能开发
+- `feat/功能描述` - 新功能开发
 - `fix/问题描述` - Bug 修复
 - `refactor/重构描述` - 代码重构
 - `docs/文档更新` - 文档更新
 - `test/测试相关` - 测试相关
+- `chore/工具链描述` - 构建、CI、依赖维护
 
 ### 开发步骤
 
-1. **创建功能分支**
+1. **从最新的 main 创建分支**
    ```bash
-   git checkout -b feature/your-feature-name develop
+   git switch main
+   git pull --ff-only
+   git switch -c fix/your-fix
    ```
 
-2. **开发和测试**
-   - 编写代码
-   - 添加单元测试
-   - 确保所有测试通过
-   - 遵循代码风格规范
+2. **开发和本地验证**
+   ```bash
+   make build          # Debug 构建
+   make test           # ctest，跑全部已注册测试
+   make check-syntax   # 源码语法检查
+   make check-docs     # 中英文同步 + 内部链接
+   ```
+   新增行为必须有能在改坏实现后变红的测试，并遵循代码风格规范。
 
 3. **提交更改**
    ```bash
-   git add .
+   git add <files>
    git commit -m "feat: 添加新功能描述"
    ```
 
-4. **推送分支**
+4. **推送并创建 PR**
    ```bash
-   git push origin feature/your-feature-name
+   git push -u origin fix/your-fix
+   gh pr create --base main
    ```
 
-5. **创建 Pull Request**
-   - 在 GitHub 上创建 PR
-   - 目标分支选择 `develop`
-   - 填写 PR 描述模板
-   - 等待代码审查
+5. **等待门禁**
+   - PR CI（`ci-pr.yml`）只做编译、cppcheck、文档同步和裁剪配置编译，**不跑完整测试**；完整测试在 prerelease 的 `ci-release-gate.yml` 中执行。
+   - 因此提交 PR 前必须在本地跑过 `make test`，不能把「CI 没红」当作测试通过。
+   - 文档改动必须中英文同一次提交更新，`doc-sync-check` 会比较两侧文件的提交时间。
 
 6. **合并 PR**
-   - 至少需要 1 人审查批准
-   - 所有 CI/CD 检查必须通过
-   - 审查通过后合并到 develop
+   - 至少 1 人审查批准
+   - 所有必需检查通过后 squash/merge 到 `main`；不要直接推送 `main`
 
 ## 代码规范
 
@@ -159,40 +151,34 @@ Closes #123
 
 UVHTTP 项目要求所有非代码生成的文档必须提供中英双语版本，以支持全球贡献者和用户。
 
-**详细的文档双语规范请参考**：[docs/zh/DOCUMENTATION_STANDARDS.md](docs/zh/DOCUMENTATION_STANDARDS.md)
+- 中英文必须**同一次提交**更新；`doc-sync-check` 比较成对文件最后一次提交的时间，中文版不能早于英文版。
+- 本地检查：`bash scripts/check-doc-sync.sh --check`（CI 覆盖 `docs/` 下除 `docs/api/`、`docs/dev/`、`docs/spec/`、`docs/zh/` 之外的 Markdown）。
+- 内部链接检查：`bash scripts/check-links.sh`；也可直接运行 `make check-docs`。
+- Markdown 写作规范见 [docs/dev/MARKDOWN_STYLE_GUIDE.md](docs/dev/MARKDOWN_STYLE_GUIDE.md)。
 
 ### 文档分类
 
 #### 1. 代码生成文档（无需双语）
 
-**位置**: `docs/api/`
+**位置**: `docs/api/.doxygen/xml/`（Doxygen XML）与 `docs/api/generated/`（转换后的 Markdown）
 
-这些文档从代码注释自动生成，使用 Doxygen 工具，不需要人工翻译。
+这些文档从代码注释自动生成，不需要人工翻译。由 `make docs` 重新生成，不要手改。
 
-**示例**:
-- `docs/api/defines/uvhttp_*.h.md`
-- `docs/api/functions/uvhttp_*.h.md`
+#### 2. 人工维护文档（必须双语）
 
-#### 2. 核心文档（必须双语）
+**站点与参考**：
+- `docs/index.md` ↔ `docs/zh/index.md`
+- `docs/MEMORY_SAFETY.md` ↔ `docs/zh/MEMORY_SAFETY.md`
+- `docs/guide/CHANGELOG.md` ↔ `docs/zh/guide/CHANGELOG.md`
+- `docs/guide/FAQ.md` ↔ `docs/zh/guide/FAQ.md`
+- `docs/guide/SECURITY.md` ↔ `docs/zh/guide/SECURITY.md`
 
-这些文档是项目的重要组成部分，必须提供中英双语版本。
-
-**根目录文档**：
-- `docs/CHANGELOG.md` ↔ `docs/zh/CHANGELOG.md` ✅
-- `docs/FAQ.md` ↔ `docs/zh/FAQ.md` ✅
-- `docs/SECURITY.md` ↔ `docs/zh/SECURITY.md` ✅
-- `docs/versions.md` ↔ `docs/zh/versions.md` ✅
-- `docs/index.md` ↔ `docs/zh/index.md` ✅
-- `docs/performance.md` ↔ `docs/zh/performance.md` ✅
-
-**使用者文档（`/guide/`）**：
-- `docs/guide/getting-started.md` ↔ `docs/zh/guide/getting-started.md` ✅
-- 其他 guide 文档需要补充双语版本
-
-**贡献者文档（`/dev/`）**：
-- `docs/dev/ARCHITECTURE.md` ↔ `docs/zh/dev/ARCHITECTURE.md` ✅
-- `docs/dev/BUILD_MODES.md` ↔ `docs/zh/dev/BUILD_MODES.md` ✅
-- `docs/dev/DEVELOPER_GUIDE.md` ↔ `docs/zh/guide/DEVELOPER_GUIDE.md` ✅
+**开发者文档**：
+- `docs/guide/DEVELOPER_GUIDE.md` ↔ `docs/zh/guide/DEVELOPER_GUIDE.md`
+- `docs/guide/TESTING_GUIDE.md` ↔ `docs/zh/guide/TESTING_GUIDE.md`
+- `docs/dev/ARCHITECTURE.md` ↔ `docs/zh/dev/ARCHITECTURE.md`
+- `docs/dev/BUILD_MODES.md` ↔ `docs/zh/dev/BUILD_MODES.md`
+- `docs/dev/CI_CD.md` ↔ `docs/zh/dev/CI_CD.md`
 
 ### 术语规范
 

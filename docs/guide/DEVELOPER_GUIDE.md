@@ -9,11 +9,13 @@ This document is intended for contributors to the UVHTTP library. It describes h
 ### System Requirements
 
 - **Operating System**: Linux, macOS, Windows
-- **Compiler**: GCC 4.8+, Clang 3.4+, MSVC 2015+
-- **CMake**: 3.10+
-- **Dependencies**:
+- **Compiler**: GCC or Clang with C11 support
+- **CMake**: 3.13+
+- **Dependencies** (vendored as submodules under `deps/`):
   - libuv 1.x
-  - mbedtls 2.x (optional, for TLS)
+  - llhttp
+  - mbedtls (for TLS)
+  - googletest (tests)
   - mimalloc (optional, high-performance memory allocator)
 
 ### Installing Dependencies
@@ -56,46 +58,67 @@ The UVHTTP project defines three build modes, each suited to different scenarios
 
 ### Basic Build
 
-#### Release Mode (recommended for performance testing)
+Use the Makefile targets; they create separate build directories and pass the correct flags.
 
 ```bash
+# Debug build (default): build/
 make build
+
+# Release build: build_release/
+make build-release
+
+# Coverage build: build_coverage/
+make build-coverage
 ```
 
-#### Debug Mode (for development and debugging)
+Equivalent raw CMake commands:
 
 ```bash
-make build
+cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build -j"$(nproc)"
 ```
 
-#### Coverage Mode (for coverage analysis)
-
-```bash
-make build
-```
+Release is required for benchmarks and production. The project also supports
+`ENABLE_DEBUG=ON` as an explicit switch; `CMAKE_BUILD_TYPE=Debug` is enforced to
+`-O0` without `NDEBUG`, so either form gives a real debug build.
 
 ### Compilation Options
 
-Edit the `option()` defaults in `CMakeLists.txt`, then run `make build`:
+Pass options at configure time instead of editing `CMakeLists.txt`:
 
 ```bash
-# Enable WebSocket support — set BUILD_WITH_WEBSOCKET to ON in CMakeLists.txt
-# Enable the mimalloc allocator — set BUILD_WITH_MIMALLOC to ON in CMakeLists.txt
-# Enable TLS support — set BUILD_WITH_HTTPS to ON in CMakeLists.txt
-# Debug mode — set ENABLE_DEBUG to ON in CMakeLists.txt
-# Enable code coverage — set ENABLE_COVERAGE to ON in CMakeLists.txt
-# Enable example programs — set BUILD_EXAMPLES to ON in CMakeLists.txt
-make build
+# Feature switches (defaults shown)
+cmake -B build -DCMAKE_BUILD_TYPE=Debug \
+  -DBUILD_WITH_WEBSOCKET=ON \
+  -DBUILD_WITH_HTTPS=ON \
+  -DBUILD_WITH_STATIC_FILES=OFF \
+  -DBUILD_WITH_ROUTER_CACHE=OFF \
+  -DBUILD_WITH_COMPRESSION=ON \
+  -DBUILD_TESTS=ON \
+  -DBUILD_EXAMPLES=OFF \
+  -DBUILD_BENCHMARKS=ON
 ```
+
+The Makefile forwards extra flags through `CMAKE_FLAGS`:
+
+```bash
+make build CMAKE_FLAGS="-DBUILD_WITH_STATIC_FILES=ON"
+```
+
+`make cmake-options` lists the currently supported options, and
+[Build Configuration Matrix](BUILD_CONFIGURATION_MATRIX.md) documents each one.
 
 ### Selecting the Memory Allocator
 
-Edit `CMakeLists.txt`, modify the value of `UVHTTP_ALLOCATOR_TYPE`, then run `make build`:
+`UVHTTP_ALLOCATOR_TYPE` selects the allocator. `1` requires the mimalloc
+submodule and the matching flag; `2` means a user-provided allocator.
 
 ```bash
-# System allocator (default) — UVHTTP_ALLOCATOR_TYPE=0
-# mimalloc allocator — UVHTTP_ALLOCATOR_TYPE=1
-make build
+# System allocator (default)
+cmake -B build -DUVHTTP_ALLOCATOR_TYPE=0
+
+# mimalloc allocator
+cmake -B build -DUVHTTP_ALLOCATOR_TYPE=1 -DBUILD_WITH_MIMALLOC=ON
 ```
 
 ## Coding Standards
@@ -109,7 +132,7 @@ make build
 
 ### Code Style
 
-- **Standard**: C99
+- **Standard**: C11
 - **Indentation**: 4 spaces
 - **Braces**: K&R style
 - **Line length**: 120 characters maximum
@@ -159,27 +182,29 @@ if (!ptr) {
 
 #### Allocator Types
 
-UVHTTP supports two allocator types:
+`UVHTTP_ALLOCATOR_TYPE` supports three values:
 
-1. **System allocator** (default)
+1. **System allocator** (`0`, default)
    - Stable and reliable, no extra dependencies
    - Zero abstraction overhead
    - Suitable for most scenarios
 
-2. **mimalloc allocator**
+2. **mimalloc allocator** (`1`)
    - Modern allocator
    - Built-in small-object optimization
    - Multithreaded scalability
    - Reduced memory fragmentation
 
+3. **Custom allocator** (`2`) — supplied by the embedder
+
 #### Compile-Time Configuration
 
-Edit `CMakeLists.txt`, modify the value of `UVHTTP_ALLOCATOR_TYPE`, then run `make build`:
-
 ```bash
-# System allocator (default) — UVHTTP_ALLOCATOR_TYPE=0
-# mimalloc allocator — UVHTTP_ALLOCATOR_TYPE=1
-make build
+# System allocator (default)
+cmake -B build -DUVHTTP_ALLOCATOR_TYPE=0
+
+# mimalloc allocator
+cmake -B build -DUVHTTP_ALLOCATOR_TYPE=1 -DBUILD_WITH_MIMALLOC=ON
 ```
 
 #### Performance Characteristics
@@ -228,14 +253,15 @@ void example_memory_usage(void) {
 
 ### Memory Leak Detection
 
-Use Valgrind to detect memory leaks:
+The sanitizer targets are the primary leak check; Valgrind is optional.
 
 ```bash
-# Build the Debug version — set ENABLE_DEBUG to ON in CMakeLists.txt, then run:
-make build
+# Debug build with ASan + UBSan, runs the full registered suite
+make verify-memory-safety
 
-# Run Valgrind
-valgrind --leak-check=full --show-leak-kinds=all ./dist/bin/helloworld
+# Optional: Valgrind on a debug binary or test executable
+make build
+valgrind --leak-check=full --show-leak-kinds=all build/dist/bin/<binary>
 ```
 
 ## Error Handling
@@ -285,32 +311,42 @@ if (result != UVHTTP_OK && uvhttp_error_is_recoverable(result)) {
 ### Running Tests
 
 ```bash
-# Run all tests
-./run_tests.sh
+# Build (Debug) and run every ctest-registered test
+make build
+make test
 
-# Run a specific test
-./dist/bin/test_router_full_coverage
+# Or invoke ctest directly
+ctest --test-dir build --output-on-failure
 
-# Generate a coverage report
-./run_tests.sh --detailed
+# Run one test binary by name
+ctest --test-dir build -R test_router --output-on-failure
+build/dist/bin/test_router_full_coverage
+
+# ASan + UBSan over the full suite
+make verify-memory-safety
+
+# Coverage report (build_coverage/coverage_html/index.html)
+make build-coverage
+make coverage
 ```
 
 ### Writing Tests
 
-```c
+Tests live in `test/unit/test_*.cpp`. CMake globs them, builds each file into
+its own binary, and registers it with `add_test`; there is no `test/CMakeLists.txt`
+to edit. Files under `manual/` are compiled but deliberately not registered in
+ctest — do not put assertion tests there.
+
+```cpp
 #include <gtest/gtest.h>
 
 TEST(UvhttpTest, BasicFunctionality) {
-    // Test code
     EXPECT_EQ(result, UVHTTP_OK);
 }
 ```
 
-### Test Coverage
-
-- **Unit tests**: test individual functions
-- **Integration tests**: test module interactions
-- **Performance tests**: test performance metrics
+See [Testing Guide](TESTING_GUIDE.md) for the mock framework, naming rules, and
+sanitizer coverage workflow.
 
 ## Performance Optimization
 
@@ -353,14 +389,17 @@ const char* data = uvhttp_request_get_body(request, &len);
 ### Enabling Debug Output
 
 ```bash
-# Set ENABLE_DEBUG to ON in CMakeLists.txt, then run:
+# Debug build (assertions on, -O0 -g)
 make build
+
+# Also enable development-mode logging
+make build CMAKE_FLAGS="-DENABLE_DEV_MODE=ON"
 ```
 
 ### Using GDB
 
 ```bash
-gdb ./dist/bin/helloworld
+gdb build/dist/bin/<binary>
 (gdb) run
 (gdb) backtrace
 (gdb) print variable
@@ -475,9 +514,14 @@ A:
 
 ## Reference Materials
 
+- [Developer Documentation Hub](../dev/index.md)
 - [Architecture Design](../dev/ARCHITECTURE.md)
+- [Build Modes](../dev/BUILD_MODES.md)
+- [Testing Guide](TESTING_GUIDE.md)
+- [Testing Standards](../dev/TESTING_STANDARDS.md)
+- [CI/CD Guide](../dev/CI_CD.md)
 - [API Reference](../api/API_REFERENCE.md)
-- [Tutorial](../guide/TUTORIAL.md)
+- [Tutorial](TUTORIAL.md)
 - [libuv Documentation](https://docs.libuv.org/)
 - [HTTP/1.1 Specification](https://tools.ietf.org/html/rfc7230)
 

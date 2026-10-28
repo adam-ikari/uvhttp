@@ -1,5 +1,8 @@
 # UVHTTP CI/CD 方案设计文档
 
+> **历史设计文档。** 本文描述 2.2.0 时期的设计，其中 `develop` 分支与
+> `ci-push.yml` 已被移除。当前工作流与触发条件见 [CI_CD.md](CI_CD.md)。
+
 ## 文档信息
 
 - **项目**: UVHTTP

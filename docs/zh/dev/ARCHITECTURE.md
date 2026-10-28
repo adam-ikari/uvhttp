@@ -314,15 +314,21 @@ typedef enum {
 
 ```
 docs/
-├── api/                    # API 文档
-│   └── API_REFERENCE.md
+├── api/                    # 生成的 API 文档 + 手写 API 参考
+│   ├── API_REFERENCE.md
+│   └── generated/
 ├── dev/                    # 贡献者文档
+│   ├── index.md            # 开发者文档入口
 │   ├── ARCHITECTURE.md     # 架构设计（本文档）
-│   ├── DEVELOPER_GUIDE.md  # 开发指南
-│   └── ROADMAP.md          # 路线图
-└── guide/                  # 用户指南
-    ├── TUTORIAL.md         # 教程
-    └── DEVELOPER_GUIDE.md  # 开发指南
+│   ├── BUILD_MODES.md
+│   ├── CI_CD.md
+│   ├── DEPENDENCIES.md
+│   └── TESTING_STANDARDS.md
+├── guide/                  # 用户与贡献者指南
+│   ├── DEVELOPER_GUIDE.md
+│   ├── TESTING_GUIDE.md
+│   └── TUTORIAL.md
+└── zh/                     # 与英文相同结构的中文镜像
 ```
 
 ## 版本历史

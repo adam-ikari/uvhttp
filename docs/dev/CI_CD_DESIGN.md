@@ -1,5 +1,9 @@
 # UVHTTP CI/CD Design Document
 
+> **Historical design document.** This describes the 2.2.0-era design, including
+> the removed `develop` branch and `ci-push.yml`. Current workflows and
+> triggers are documented in [CI_CD.md](CI_CD.md).
+
 ## Document Information
 
 - **Project**: UVHTTP
