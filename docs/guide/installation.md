@@ -223,7 +223,7 @@ target_link_libraries(your_target ${LIBUV_LIB} ${MBEDTLS_LIBS} ...)
 
 ### CMake Version Too Old
 
-**Problem**: CMake 3.10+ required
+**Problem**: CMake 3.13+ required
 
 **Solution**:
 ```bash

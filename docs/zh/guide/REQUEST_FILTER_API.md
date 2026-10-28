@@ -155,7 +155,7 @@ int main(void) {
 | `uvhttp_server_add_rate_limit_whitelist()` / `clear_rate_limit_all()` | 白名单就是 filter 开头的一次 `strcmp`。 |
 | `uvhttp_server_get_rate_limit_status()` / `reset_rate_limit_client()` | 直接读写你自己的表。 |
 | `server->rate_limit_*` 字段、`UVHTTP_FEATURE_RATE_LIMIT`、`BUILD_WITH_RATE_LIMIT` | 没了。接缝只是一对指针，不需要编译选项。 |
-| `uvhttp_has_feature("rate_limit")` | 仍可调用，现在恒定回答「不支持」。 |
+| `uvhttp_is_feature_enabled("rate_limit")` | 仍可调用，现在恒定回答「不支持」。 |
 
 `UVHTTP_ERROR_RATE_LIMIT_EXCEEDED`（-550）及其 `uvhttp_error_string()` 文案保留：
 它从库内部返回值变成应用层的约定码，库自己不再返回它。

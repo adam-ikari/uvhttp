@@ -325,7 +325,31 @@ TEST(UvhttpConnectionApiTest, SetStateValid) {
 }
 
 /* ========== 测试 uvhttp_connection_get_state_string ========== */
-/* 注意：此函数未在 uvhttp_connection.c 中实现，跳过测试 */
+
+TEST(UvhttpConnectionApiTest, GetStateString) {
+    EXPECT_STREQ(uvhttp_connection_get_state_string(UVHTTP_CONN_STATE_NEW),
+                 "NEW");
+    EXPECT_STREQ(
+        uvhttp_connection_get_state_string(UVHTTP_CONN_STATE_TLS_HANDSHAKE),
+        "TLS_HANDSHAKE");
+    EXPECT_STREQ(
+        uvhttp_connection_get_state_string(UVHTTP_CONN_STATE_HTTP_READING),
+        "HTTP_READING");
+    EXPECT_STREQ(
+        uvhttp_connection_get_state_string(UVHTTP_CONN_STATE_HTTP_PROCESSING),
+        "HTTP_PROCESSING");
+    EXPECT_STREQ(
+        uvhttp_connection_get_state_string(UVHTTP_CONN_STATE_HTTP_WRITING),
+        "HTTP_WRITING");
+    EXPECT_STREQ(
+        uvhttp_connection_get_state_string(UVHTTP_CONN_STATE_PROTOCOL_UPGRADED),
+        "PROTOCOL_UPGRADED");
+    EXPECT_STREQ(uvhttp_connection_get_state_string(UVHTTP_CONN_STATE_CLOSING),
+                 "CLOSING");
+    EXPECT_STREQ(
+        uvhttp_connection_get_state_string((uvhttp_connection_state_t)99),
+        "UNKNOWN");
+}
 
 /* ========== 测试 uvhttp_connection_start_timeout ========== */
 

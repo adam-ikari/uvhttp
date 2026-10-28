@@ -223,7 +223,7 @@ target_link_libraries(your_target ${LIBUV_LIB} ${MBEDTLS_LIBS} ...)
 
 ### CMake 版本过低
 
-**问题**: CMake 3.10+ required
+**问题**: CMake 3.13+ required
 
 **解决方案**:
 ```bash

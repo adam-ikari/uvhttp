@@ -9,10 +9,10 @@ must satisfy before being merged.
 ## Sanitizer Gates
 
 ### AddressSanitizer (ASan)
-- **Requirement**: The full test suite (101 tests) must pass with zero findings under ASan with leak detection enabled.
+- **Requirement**: The full test suite (119 tests) must pass with zero findings under ASan with leak detection enabled.
 - **Build**: `cmake -B build_asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON`
 - **Run**: `cd build_asan && ctest --output-on-failure`
-- **CI gate**: `.github/workflows/ci-pr.yml` — every PR must pass ASan
+- **CI gate**: `.github/workflows/ci-release-gate.yml` — pre-release gate (the full ASan suite runs there, not on every PR)
 
 ### UndefinedBehaviorSanitizer (UBSan)
 - **Requirement**: The full test suite must pass with zero findings under UBSan.
@@ -49,7 +49,7 @@ make verify-memory-safety
 
 This builds and runs both ASan and UBSan configurations. A clean run prints:
 ```
-==> PASS: full suite clean under ASan and UBSan (101/101 each).
+==> PASS: full suite clean under ASan and UBSan (119/119 each).
 ```
 
 ## Defense in Depth

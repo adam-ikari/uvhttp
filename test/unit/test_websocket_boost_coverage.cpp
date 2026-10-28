@@ -1707,19 +1707,13 @@ TEST_F(WsBoostTest, ProcessData_PingFrame_WithWrapper_AutoReply) {
     close(fds[1]);
 }
 
-/* ========== uvhttp_ws_connection_free: with send_buffer and fragmented_message
- * ========== Targets lines 103-105 (send_buffer free) and 107-109
- * (fragmented_message free). */
+/* ========== uvhttp_ws_connection_free: with fragmented_message ==========
+ * ========== Targets the fragmented_message free path. */
 
-TEST_F(WsBoostTest, ConnectionFree_WithSendBufferAndFragmented) {
+TEST_F(WsBoostTest, ConnectionFree_WithFragmented) {
     uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
         0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
-
-    /* Manually allocate send_buffer and fragmented_message */
-    conn->send_buffer = (uint8_t*)uvhttp_alloc(64);
-    ASSERT_NE(conn->send_buffer, nullptr);
-    conn->send_buffer_size = 64;
 
     conn->fragmented_message = (uint8_t*)uvhttp_alloc(32);
     ASSERT_NE(conn->fragmented_message, nullptr);
@@ -1727,23 +1721,6 @@ TEST_F(WsBoostTest, ConnectionFree_WithSendBufferAndFragmented) {
     conn->fragmented_capacity = 32;
 
     /* Free should not crash and should release all buffers */
-    uvhttp_ws_connection_free(conn);
-}
-
-/* ========== uvhttp_ws_connection_free: with send_buffer only ========== */
-
-TEST_F(WsBoostTest, ConnectionFree_WithSendBufferOnly) {
-    uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
-        0, NULL, 1, NULL);
-    ASSERT_NE(conn, nullptr);
-
-    conn->send_buffer = (uint8_t*)uvhttp_alloc(128);
-    ASSERT_NE(conn->send_buffer, nullptr);
-    conn->send_buffer_size = 128;
-
-    /* fragmented_message is NULL, send_buffer is non-NULL */
-    EXPECT_EQ(conn->fragmented_message, nullptr);
-
     uvhttp_ws_connection_free(conn);
 }
 
@@ -1759,9 +1736,6 @@ TEST_F(WsBoostTest, ConnectionFree_WithFragmentedOnly) {
     ASSERT_NE(conn->fragmented_message, nullptr);
     conn->fragmented_size = 20;
     conn->fragmented_capacity = 48;
-
-    /* send_buffer is NULL, fragmented_message is non-NULL */
-    EXPECT_EQ(conn->send_buffer, nullptr);
 
     uvhttp_ws_connection_free(conn);
 }

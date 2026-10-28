@@ -471,10 +471,6 @@ TEST(UvhttpWebsocketFullCoverageTest, WsBufferInitialization) {
     EXPECT_EQ(conn->recv_buffer_size, 64 * 1024);
     EXPECT_EQ(conn->recv_buffer_pos, 0);
     
-    /* 验证发送缓冲区未分配 */
-    EXPECT_EQ(conn->send_buffer, nullptr);
-    EXPECT_EQ(conn->send_buffer_size, 0);
-    
     /* 验证分片消息未分配 */
     EXPECT_EQ(conn->fragmented_message, nullptr);
     EXPECT_EQ(conn->fragmented_size, 0);

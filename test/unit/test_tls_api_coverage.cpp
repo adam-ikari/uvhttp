@@ -427,27 +427,6 @@ TEST(UvhttpTlsApiCoverageTest, PrintError) {
     /* 应该安全 */
 }
 
-/* ========== 测试重置统计信息 ========== */
-
-TEST(UvhttpTlsApiCoverageTest, ResetStatsNullContext) {
-    uvhttp_error_t result = uvhttp_tls_reset_stats(nullptr);
-
-    EXPECT_NE(result, UVHTTP_OK);
-}
-
-TEST(UvhttpTlsApiCoverageTest, ResetStatsValid) {
-    uvhttp_tls_context_t* ctx = nullptr;
-    uvhttp_tls_context_new(&ctx);
-
-    if (ctx) {
-        uvhttp_error_t result = uvhttp_tls_reset_stats(ctx);
-
-        /* 不强制检查结果 */
-
-        uvhttp_tls_context_free(ctx);
-    }
-}
-
 /* ========== 测试证书验证函数 ========== */
 
 TEST(UvhttpTlsApiCoverageTest, VerifyPeerCertNull) {

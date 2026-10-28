@@ -21,7 +21,7 @@ UVHTTP 常见问题。
 
 - **操作系统**: Linux, macOS, Windows
 - **编译器**: GCC 4.8+, Clang 3.4+, MSVC 2015+
-- **构建系统**: CMake 3.10+
+- **构建系统**: CMake 3.13+
 - **依赖**: libuv (已包含), llhttp (已包含)
 
 **构建命令：**

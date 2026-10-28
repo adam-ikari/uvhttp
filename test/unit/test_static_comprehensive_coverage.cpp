@@ -108,8 +108,6 @@ TEST(UvhttpStaticComprehensiveTest, ClearCacheNullContext) {
     uvhttp_static_clear_cache(NULL);
 }
 
-/* uvhttp_static_enable_cache 函数未实现，跳过此测试 */
-
 TEST(UvhttpStaticComprehensiveTest, CleanupExpiredCacheNullContext) {
     int count = uvhttp_static_cleanup_expired_cache(NULL);
     EXPECT_EQ(count, 0);
@@ -328,9 +326,6 @@ TEST(UvhttpStaticComprehensiveTest, FullWorkflow) {
     config.max_cache_size = 1024 * 1024;
     config.cache_ttl = 3600;
     config.max_cache_entries = 100;
-    config.enable_etag = 1;
-    config.enable_last_modified = 1;
-    config.enable_sendfile = 1;
     config.sendfile_timeout_ms = 5000;
     config.sendfile_max_retry = 3;
     config.sendfile_chunk_size = 8192;

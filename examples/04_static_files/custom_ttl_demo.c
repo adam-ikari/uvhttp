@@ -91,8 +91,6 @@ int main(void) {
             sizeof(config.root_directory) - 1);
     strncpy(config.index_file, "index.html", sizeof(config.index_file) - 1);
     config.enable_directory_listing = 1;
-    config.enable_etag = 1;
-    config.enable_last_modified = 1;
     config.max_cache_size = 10 * 1024 * 1024;
     config.cache_ttl = 3600;
 

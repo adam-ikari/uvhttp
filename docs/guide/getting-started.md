@@ -1,44 +1,53 @@
 ---
 title: Quick Start
-description: Get started with UVHTTP in minutes — build the C99 HTTP/WebSocket server library, run the hello-world example, and add your first route. Covers build with CMake/Just, example servers, and first request.
+description: Get started with UVHTTP in minutes — build the C99 HTTP/WebSocket server library with CMake and Make, run the hello-world example, and add your first route.
 ---
 
 # Quick Start
 
 This guide will help you get started with UVHTTP in just a few minutes.
 
-## Prerequisites
+## Platform Support
 
-- **Operating System**: Linux
-  - **Future Plans**: macOS, Windows, FreeBSD, WebAssembly (WASM), and other Unix-like systems
-- C compiler (GCC or Clang)
-- CMake 3.10 or higher
-- libuv (will be downloaded automatically)
+**Current support**: Linux
+
+**Future plans**: macOS, Windows, FreeBSD, WebAssembly (WASM), and other Unix-like systems
 
 > **Note**: UVHTTP currently supports Linux platforms only. We plan to expand support to other operating systems in future releases.
 
+## Prerequisites
+
+- CMake 3.13 or higher
+- C99 compiler (GCC 4.9+, Clang 3.5+)
+- libuv 1.x (cloned automatically as a submodule)
+- llhttp (cloned automatically as a submodule)
+
 ## Installation
 
-### Clone the Repository
+### Install Dependencies
+
+#### Ubuntu/Debian
 
 ```bash
+sudo apt-get update
+sudo apt-get install -y cmake build-essential
+```
+
+### Clone and Build
+
+```bash
+# Clone the repository (including submodules)
 git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
-```
 
-> **Note**: The `--recurse-submodules` flag automatically clones all dependencies. If you forget this flag, you can run `git submodule update --init --recursive` afterward.
-
-### Build the Library
-
-```bash
+# Build the library
 make build
-```
 
-### Run Tests
-
-```bash
+# Run tests (optional)
 make test
 ```
+
+> **Note**: The `--recurse-submodules` flag clones libuv, llhttp, and the other dependencies. If you forget it, run `git submodule update --init --recursive` afterward.
 
 ## Your First Server
 
@@ -46,66 +55,37 @@ Create a file `hello.c`:
 
 ```c
 #include <uvhttp.h>
+#include <stdio.h>
 #include <string.h>
 
+int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
+    uvhttp_response_set_status(response, 200);
+    uvhttp_response_set_header(response, "Content-Type", "text/plain");
+    uvhttp_response_set_body(response, "Hello, World!", strlen("Hello, World!"));
+    return uvhttp_response_send(response);
+}
+
 int main() {
-    // Create event loop
     uv_loop_t* loop = uv_default_loop();
-    
-    // Create server
-    uvhttp_server_t* server;
-    uvhttp_error_t result = uvhttp_server_new(loop, &server);
-    if (result != UVHTTP_OK) {
-        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(result));
-        return 1;
-    }
-    
-    // Create router
+    uvhttp_server_t* server = NULL;
+    uvhttp_server_new(loop, &server);
     uvhttp_router_t* router = NULL;
-    result = uvhttp_router_new(&router);
-    if (result != UVHTTP_OK) {
-        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(result));
-        return 1;
-    }
-    result = uvhttp_server_take_router(server, router);
-    if (result != UVHTTP_OK) {
-        fprintf(stderr, "Failed to set router: %s\n", uvhttp_error_string(result));
-        return 1;
-    }
+    uvhttp_router_new(&router);
+    uvhttp_server_take_router(server, router);
 
-    // Add a route handler. Handlers take (request, response) and return int.
-    int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-        // Set status code
-        uvhttp_response_set_status(res, 200);
+    // Add a route
+    uvhttp_router_add_route(router, "/", hello_handler);
 
-        // Set headers
-        uvhttp_response_set_header(res, "Content-Type", "text/plain");
-
-        // Set body
-        uvhttp_response_set_body(res, "Hello, World!", strlen("Hello, World!"));
-
-        // Send response
-        return uvhttp_response_send(res);
-    }
-
-    result = uvhttp_router_add_route(router, "/hello", hello_handler);
-    if (result != UVHTTP_OK) {
-        fprintf(stderr, "Failed to add route: %s\n", uvhttp_error_string(result));
-        return 1;
-    }
-    
-    // Start server
-    result = uvhttp_server_listen(server, "0.0.0.0", 8080);
+    // Start the server
+    uvhttp_error_t result = uvhttp_server_listen(server, "0.0.0.0", 8080);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to start server: %s\n", uvhttp_error_string(result));
         return 1;
     }
-    
-    printf("Server running on http://0.0.0.0:8080\n");
-    
-    // Run event loop
+
+    printf("Server running at http://localhost:8080\n");
     uv_run(loop, UV_RUN_DEFAULT);
-    
+
     return 0;
 }
 ```
@@ -113,11 +93,11 @@ int main() {
 ### Compile and Run
 
 ```bash
-gcc hello.c -Iinclude -Lbuild/dist/lib -luvhttp -lpthread -luv -o hello
+gcc -o hello hello.c -I./include -L./build/dist/lib -luvhttp -luv -lpthread
 ./hello
 ```
 
-Visit `http://localhost:8080/hello` in your browser!
+Visit `http://localhost:8080` to see "Hello, World!".
 
 ## Project Structure
 
@@ -133,7 +113,7 @@ uvhttp/
 
 ## Configuration Options
 
-Build options can be configured by editing `option()` entries in `CMakeLists.txt`, then rebuilding:
+Build options can be configured by editing the `option()` entries in `CMakeLists.txt`, then rebuilding:
 
 ```bash
 # Rebuild after editing CMakeLists.txt options
@@ -142,9 +122,9 @@ make build
 
 ## Next Steps
 
-- Learn about [routing](../zh/guide/TUTORIAL.md)
-- Explore [WebSocket support](./websocket.md)
-- Check out [API reference](../api/API_REFERENCE.md)
+- [API Reference](../api/API_REFERENCE.md) - Learn the complete API
+- [Tutorial](./TUTORIAL.md) - Build a complete application
+- [WebSocket support](./websocket.md) - Real-time messaging
 
 ## Need Help?
 

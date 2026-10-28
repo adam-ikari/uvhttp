@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(uvhttp_examples C)
 
 # 设置编译中间产物输出到统一构建目录

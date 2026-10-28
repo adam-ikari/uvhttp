@@ -109,17 +109,6 @@ UVHTTP 支持通过 CMake 配置选项灵活地组合不同的功能模块，以
 - **依赖**: `CMAKE_BUILD_TYPE=Release`（推荐）
 - **冲突**: `ENABLE_DEBUG=ON`、`ENABLE_ASAN=ON`、`ENABLE_TSAN=ON`
 
-### ENABLE_PGO
-- **类型**: BOOL
-- **默认值**: OFF
-- **说明**: 启用配置文件引导优化（PGO）
-- **影响**:
-  - 基于实际运行数据优化
-  - 可能提升性能 10-20%
-  - 需要两步编译过程
-- **依赖**: `CMAKE_BUILD_TYPE=Release`
-- **冲突**: `ENABLE_DEBUG=ON`
-
 ### ENABLE_FASTER_MATH
 - **类型**: BOOL
 - **默认值**: OFF
@@ -166,15 +155,6 @@ UVHTTP 支持通过 CMake 配置选项灵活地组合不同的功能模块，以
 - **依赖**: `ENABLE_DEBUG=ON`（推荐）
 - **冲突**: `ENABLE_LTO=ON`、`ENABLE_ASAN=ON`
 
-### ENABLE_VALGRIND
-- **类型**: BOOL
-- **默认值**: OFF
-- **说明**: 启用 Valgrind 支持
-- **影响**:
-  - 添加 Valgrind 兼容性代码
-  - 便于内存泄漏检测
-- **依赖**: 无
-
 ### ENABLE_DEV_MODE
 - **类型**: BOOL
 - **默认值**: OFF
@@ -183,44 +163,6 @@ UVHTTP 支持通过 CMake 配置选项灵活地组合不同的功能模块，以
   - 启用日志系统（UVHTTP_FEATURE_LOGGING=1）
   - 添加开发调试辅助
   - 生产环境应禁用以获得最佳性能
-- **依赖**: 无
-
-## 日志选项
-- **类型**: BOOL
-- **默认值**: OFF
-- **说明**: 启用 Valgrind 支持
-- **影响**:
-  - 添加 Valgrind 兼容性代码
-  - 便于内存泄漏检测
-- **依赖**: 无
-
-这些选项控制日志详细程度。
-
-### ENABLE_LOG_DEBUG
-- **类型**: BOOL
-- **默认值**: OFF
-- **说明**: 启用调试日志级别
-- **影响**:
-  - 输出详细调试信息
-  - 可能影响性能
-- **依赖**: 无
-
-### ENABLE_LOG_TRACE
-- **类型**: BOOL
-- **默认值**: OFF
-- **说明**: 启用跟踪日志级别
-- **影响**:
-  - 输出最详细的跟踪信息
-  - 显著影响性能
-- **依赖**: 无
-
-### ENABLE_LOG_PERFORMANCE
-- **类型**: BOOL
-- **默认值**: OFF
-- **说明**: 启用性能日志
-- **影响**:
-  - 记录性能指标
-  - 轻微性能影响
 - **依赖**: 无
 
 ## 安全选项
@@ -295,10 +237,6 @@ ENABLE_LTO (OFF)
     └─> !ENABLE_ASAN [冲突]
     └─> !ENABLE_TSAN [冲突]
 
-ENABLE_PGO (OFF)
-    └─> CMAKE_BUILD_TYPE=Release [必需]
-    └─> !ENABLE_DEBUG [冲突]
-
 ENABLE_ASAN (OFF)
     └─> ENABLE_DEBUG=ON [推荐]
     └─> !ENABLE_LTO [冲突]
@@ -313,15 +251,6 @@ ENABLE_TSAN (OFF)
     └─> !ENABLE_LTO [冲突]
     └─> !ENABLE_ASAN [冲突]
 
-ENABLE_LOG_DEBUG (OFF)
-    └─> 无依赖
-
-ENABLE_LOG_TRACE (OFF)
-    └─> 无依赖
-
-ENABLE_LOG_PERFORMANCE (OFF)
-    └─> 无依赖
-
 ENABLE_HARDENING (ON)
     └─> 无依赖
 
@@ -332,9 +261,6 @@ ENABLE_FORTIFY_SOURCE (ON)
     └─> 无依赖
 
 ENABLE_FASTER_MATH (OFF)
-    └─> 无依赖
-
-ENABLE_VALGRIND (OFF)
     └─> 无依赖
 
 ENABLE_DEV_MODE (OFF)
@@ -350,8 +276,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug \
       -DBUILD_WITH_MIMALLOC=OFF \
       -DBUILD_WITH_HTTPS=ON \
       -DENABLE_DEBUG=ON \
-      -DENABLE_LOG_DEBUG=ON \
-      -DENABLE_LOG_TRACE=ON \
+      -DENABLE_DEV_MODE=ON \
       -DBUILD_EXAMPLES=ON
 ```
 
@@ -393,8 +318,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
       -DBUILD_WITH_WEBSOCKET=ON \
       -DBUILD_WITH_MIMALLOC=ON \
       -DBUILD_WITH_HTTPS=ON \
-      -DBUILD_BENCHMARKS=ON \
-      -DENABLE_LOG_PERFORMANCE=ON
+      -DBUILD_BENCHMARKS=ON
 ```
 
 ### 最小化部署
@@ -427,19 +351,6 @@ cmake -DCMAKE_BUILD_TYPE=MinSizeRel \
 - **WebSocket + HTTPS (mbedtls)**: 增加 ~250KB 二进制体积
 - **性能测试程序**: 增加 ~500KB 二进制体积
 - **Debug 模式**: 性能下降 50-80%
-
-### BUILD_BENCHMARKS
-- **类型**: BOOL
-- **默认值**: OFF
-- **说明**: 编译性能测试程序
-- **影响**:
-  - 编译 benchmark/ 目录下的所有性能测试程序
-  - 生成可执行文件到 build/dist/bin/
-  - 包含以下测试程序：
-    - `benchmark_unified` - 综合性能测试服务器（包含所有测试场景）
-    - `performance_allocator` - 内存分配器性能测试
-    - `performance_allocator_compare` - 内存分配器对比测试
-    - `test_bitfield` - 位域性能测试
 
 ## 内存分配器配置
 
@@ -628,7 +539,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 - **体积**: 较大（包含示例程序）
 - **性能**: 良好
 
-### 12. 32 位兼容性检查
+### 11. 32 位兼容性检查
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release \
       -DBUILD_WITH_WEBSOCKET=ON \
@@ -643,7 +554,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 - **用途**: 32 位系统兼容性测试
 - **注意**: 需要系统支持 32 位编译
 
-### 13. 静态分析准备
+### 12. 静态分析准备
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Debug \
       -DBUILD_WITH_WEBSOCKET=OFF \
@@ -749,7 +660,6 @@ cmake -DCMAKE_BUILD_TYPE=Debug \
 - **用途**: 线程安全检测
 - **体积**: 很大
 - **性能**: 下降 50-70%
-- **用途**: 并发调试
 
 ### 19. 调试日志
 ```bash
@@ -757,8 +667,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug \
       -DBUILD_WITH_WEBSOCKET=ON \
       -DBUILD_WITH_MIMALLOC=OFF \
       -DBUILD_WITH_HTTPS=OFF \
-      -DENABLE_LOG_DEBUG=ON \
-      -DENABLE_LOG_TRACE=ON \
+      -DENABLE_DEV_MODE=ON \
       -DENABLE_DEBUG=ON \
       -DENABLE_COVERAGE=OFF \
       -DBUILD_EXAMPLES=OFF

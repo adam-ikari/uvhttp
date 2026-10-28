@@ -159,15 +159,6 @@ The Static File module serves static files from a root directory via HTTP. It pr
   - `UVHTTP_ERROR_INVALID_PARAM`: `response` or `file_path` is NULL
 - **Thread safety**: Not thread-safe.
 
-### uvhttp_static_enable_cache / uvhttp_static_disable_cache
-- **Signature**: `uvhttp_result_t uvhttp_static_enable_cache(uvhttp_static_context_t* ctx, size_t max_memory, int max_entries, int ttl)` / `void uvhttp_static_disable_cache(uvhttp_static_context_t* ctx)`
-- **Purpose**: Enable or disable the LRU cache at runtime
-- **Preconditions**: `ctx` must be valid.
-- **Postconditions**: Cache is enabled with the specified parameters or disabled (all entries freed).
-- **Error conditions**:
-  - `UVHTTP_ERROR_INVALID_PARAM`: `ctx` is NULL
-  - `UVHTTP_ERROR_OUT_OF_MEMORY`: cache allocation failure
-
 ### uvhttp_static_set_cache_config
 - **Signature**: `uvhttp_error_t uvhttp_static_set_cache_config(uvhttp_static_context_t* ctx, size_t max_cache_size, int max_entries, int cache_ttl)`
 - **Purpose**: Update cache configuration parameters at runtime
@@ -181,7 +172,7 @@ The Static File module serves static files from a root directory via HTTP. It pr
 
 1. **Root directory isolation**: All file paths are resolved relative to the configured root directory. Path traversal is prevented via `realpath` canonicalization and prefix comparison.
 
-2. **Send strategy by file size**: Files smaller than 4KB use direct read I/O. Files between 4KB and 10MB use chunked async sendfile. Files larger than 10MB use sendfile zero-copy. On sendfile failure, the system falls back to chunked transfer.
+2. **Send strategy by file size**: Files up to 64KB are read into memory and sent directly. Larger files use sendfile zero-copy, falling back to chunked transfer on failure.
 
 3. **LRU cache integration**: The cache stores file content, MIME type, ETag, and last-modified time. Cache lookups use the canonicalized file path as key. Cache expiry is based on TTL (default 3600 seconds).
 

@@ -11,10 +11,10 @@ set -e
 # Handle clean option
 if [ "$1" = "clean" ]; then
     echo "Cleaning generated documentation..."
-    rm -rf docs/api/xml
-    rm -rf docs/api/markdown_from_xml
+    rm -rf docs/api/generated
     rm -rf docs/api/html
     rm -rf docs/api/latex
+    rm -rf docs/api/.doxygen
     rm -rf docs/.vitepress/dist
     rm -rf docs/.vitepress/cache
     echo "Documentation cleaned successfully"
@@ -72,7 +72,7 @@ echo -e "${YELLOW}[2/4] Generating API documentation with Doxygen...${NC}"
 # Create necessary directories (only XML is generated per Doxyfile configuration)
 # NOTE: .doxygen/xml must be pre-created — doxygen 1.9.1 cannot create
 # hidden output directories itself (fails with "Could not create output directory").
-mkdir -p docs/api/xml docs/api/markdown_from_xml docs/api/.doxygen/xml
+mkdir -p docs/api/.doxygen/xml
 
 # Run Doxygen
 doxygen docs/Doxyfile
@@ -123,14 +123,14 @@ if [ $? -eq 0 ]; then
     echo -e "${GREEN}========================================${NC}"
     echo ""
     echo "Generated files:"
-    echo -e "  • API XML: ${GREEN}docs/api/xml/${NC}"
-    echo -e "  • API Markdown: ${GREEN}docs/api/markdown_from_xml/${NC}"
+    echo -e "  • API XML: ${GREEN}docs/api/.doxygen/xml/${NC}"
+    echo -e "  • API Markdown: ${GREEN}docs/api/generated/${NC}"
     echo -e "  • VitePress Site: ${GREEN}docs/.vitepress/dist/${NC}"
     echo ""
     echo "To preview the VitePress site:"
-    echo -e "  ${YELLOW}cd docs && npm run dev${NC}"
+    echo -e "  ${YELLOW}cd docs && npm run docs:dev${NC}"
     echo ""
-    echo "Then open: ${GREEN}http://localhost:5173${NC}"
+    echo -e "Then open: ${GREEN}http://localhost:5173${NC}"
     echo ""
 else
     echo -e "${RED}✗ VitePress build failed${NC}"

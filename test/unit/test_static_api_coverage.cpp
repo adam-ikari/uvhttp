@@ -533,10 +533,4 @@ TEST(UvhttpStaticApiTest, CleanupExpiredCacheValidContext) {
     uvhttp_static_free(ctx);
 }
 
-/* ========== 测试 uvhttp_static_enable_cache ========== */
-/* 注意：此函数未在 uvhttp_static.c 中实现，跳过测试 */
-
-/* ========== 测试 uvhttp_static_disable_cache ========== */
-/* 注意：此函数未在 uvhttp_static.c 中实现，跳过测试 */
-
 #endif /* UVHTTP_FEATURE_STATIC_FILES */

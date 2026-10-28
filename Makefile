@@ -105,10 +105,10 @@ check-syntax:
 	@echo "Checking syntax of all source files..."
 	@errors=0; \
 	for f in src/uvhttp_*.c; do \
-		result=$$(gcc -fsyntax-only -std=c99 -pthread -D_GNU_SOURCE \
+		result=$$(gcc -fsyntax-only -std=c11 -pthread -D_GNU_SOURCE \
 			-Iinclude -Ideps/llhttp/include -Ideps/uthash/src \
-			-Ideps/mbedtls/include -Ideps/libuv/include \
-			-DUVHTTP_FEATURE_TLS=1 -DBUILD_WITH_HTTPS=1 \
+			-Ideps/mbedtls/include -Ideps/libuv/include -Ideps/xxhash \
+			-DUVHTTP_FEATURE_TLS=1 \
 			$$f 2>&1); \
 		if echo "$$result" | grep -q "error:"; then \
 			echo "FAIL: $$f"; \
@@ -133,13 +133,13 @@ docs:
 
 docs-clean:
 	@echo "Cleaning generated documentation..."
-	@rm -rf docs/api/xml docs/api/generated docs/api/html docs/api/latex docs/api/.doxygen
+	@rm -rf docs/api/generated docs/api/html docs/api/latex docs/api/.doxygen
 	@rm -rf docs/.vitepress/dist docs/.vitepress/cache
 	@echo "Documentation cleaned successfully"
 
 docs-preview:
 	@echo "Starting VitePress documentation server..."
-	@cd docs && npm run dev
+	@cd docs && npm run docs:dev
 
 .PHONY: check-docs
 check-docs:
@@ -162,15 +162,28 @@ clean-all:
 	@echo "All build artifacts cleaned"
 
 cmake-options:
-	@echo "Available CMake options:"
-	@echo "  BUILD_WITH_WEBSOCKET=ON/OFF     - Enable WebSocket support (default: ON)"
-	@echo "  BUILD_WITH_MIMALLOC=ON/OFF      - Use mimalloc allocator (default: OFF)"
-	@echo "  UVHTTP_ALLOCATOR_TYPE=0/1/2     - 0=system, 1=mimalloc, 2=custom (default: 0)"
-	@echo "  ENABLE_COVERAGE=ON/OFF           - Enable code coverage (default: OFF)"
-	@echo "  BUILD_EXAMPLES=ON/OFF            - Build example programs (default: OFF)"
-	@echo "  ENABLE_DEBUG=ON/OFF              - Enable debug mode (default: OFF)"
+	@echo "Available CMake options (defaults in parentheses):"
+	@echo "  BUILD_WITH_WEBSOCKET=ON/OFF     - WebSocket support (ON)"
+	@echo "  BUILD_WITH_HTTPS=ON/OFF         - TLS/HTTPS support (ON)"
+	@echo "  BUILD_WITH_STATIC_FILES=ON/OFF  - Static file serving + LRU cache (OFF)"
+	@echo "  BUILD_WITH_ROUTER_CACHE=ON/OFF  - Router cache (OFF)"
+	@echo "  BUILD_WITH_COMPRESSION=ON/OFF   - Response compression (ON)"
+	@echo "  UVHTTP_ALLOCATOR_TYPE=0/1/2     - system/mimalloc/custom (0)"
+	@echo "  BUILD_WITH_MIMALLOC=ON/OFF      - mimalloc allocator (OFF)"
+	@echo "  BUILD_TESTS=ON/OFF              - Unit tests (ON)"
+	@echo "  BUILD_BENCHMARKS=ON/OFF         - benchmark_unified (ON)"
+	@echo "  BUILD_EXAMPLES=ON/OFF           - Example programs (OFF)"
+	@echo "  ENABLE_DEBUG=ON/OFF             - -O0 + logging (OFF)"
+	@echo "  ENABLE_DEV_MODE=ON/OFF          - Logging without -O0 (OFF)"
+	@echo "  ENABLE_COVERAGE=ON/OFF          - gcov coverage (OFF)"
+	@echo "  ENABLE_LTO=ON/OFF               - Link-time optimization (OFF)"
+	@echo "  ENABLE_FASTER_MATH=ON/OFF       - -ffast-math (OFF)"
+	@echo "  ENABLE_ASAN/UBSAN/TSAN=ON/OFF   - Sanitizers (OFF)"
+	@echo "  ENABLE_HARDENING=ON/OFF         - RELRO + BIND_NOW (ON)"
+	@echo "  ENABLE_STACK_PROTECTION=ON/OFF  - -fstack-protector-all (ON)"
+	@echo "  ENABLE_FORTIFY_SOURCE=ON/OFF    - _FORTIFY_SOURCE=2 (ON)"
 	@echo ""
-	@echo "Example: cmake -B build -DBUILD_WITH_WEBSOCKET=ON -DUVHTTP_ALLOCATOR_TYPE=1"
+	@echo "Example: cmake -B build -DBUILD_WITH_STATIC_FILES=ON -DUVHTTP_ALLOCATOR_TYPE=1"
 
 install-deps:
 	@echo "Installing development dependencies..."
@@ -190,4 +203,4 @@ bench:
 	@cmake --build build_bench -j$$(nproc)
 	@echo "Benchmark build completed successfully"
 	@echo ""
-	@echo "Run benchmark: ./build_bench/dist/bin/test_performance_e2e <port>"
+	@echo "Run benchmark: ./build_bench/dist/bin/benchmark_unified"

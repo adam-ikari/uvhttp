@@ -13,7 +13,7 @@ git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 然后在项目的 `CMakeLists.txt` 中：
 
 ```cmake
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(myapp C)
 
 # 将 uvhttp 作为子目录
@@ -22,9 +22,8 @@ add_subdirectory(path/to/uvhttp)
 # 创建可执行文件
 add_executable(myapp main.c)
 
-# 链接 uvhttp（静态）
-target_link_libraries(myapp uvhttp)
-target_include_directories(myapp PRIVATE path/to/uvhttp/include)
+# 链接 uvhttp（静态）；include 目录由 target 自动传播
+target_link_libraries(myapp PRIVATE uvhttp)
 ```
 
 构建：
@@ -38,7 +37,7 @@ make build
 如果 uvhttp 在已知位置：
 
 ```cmake
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(myapp C)
 
 # 查找 uvhttp 包
@@ -48,13 +47,13 @@ find_package(uvhttp REQUIRED)
 add_executable(myapp main.c)
 
 # 链接 uvhttp
-target_link_libraries(myapp uvhttp)
+target_link_libraries(myapp PRIVATE uvhttp::uvhttp)
 ```
 
 ## 方法 2：使用 pkg-config
 
 ```cmake
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(myapp C)
 
 find_package(PkgConfig REQUIRED)
@@ -106,27 +105,11 @@ add_subdirectory(path/to/uvhttp)
 
 | 变量 | 说明 |
 |----------|-------------|
-| `UVHTTP_VERSION` | 包版本（如 "2.7.1"） |
+| `UVHTTP_VERSION` | 包版本（如 "3.0.0"） |
 | `UVHTTP_INCLUDE_DIRS` | 包含目录 |
-| `UVHTTP_LIBRARIES` | 库名称（uvhttp） |
+| `UVHTTP_LIBRARIES` | 链接 target（`uvhttp::uvhttp`） |
 | `UVHTTP_LIBRARY_DIRS` | 库目录路径 |
 | `UVHTTP_FOUND` | 如果找到包则为 True |
-
-## 功能标志
-
-以下功能标志指示哪些功能可用：
-
-```cmake
-if(UVHTTP_FEATURE_WEBSOCKET)
-    # WebSocket 支持可用
-    add_definitions(-DUVHTTP_FEATURE_WEBSOCKET=1)
-endif()
-
-if(UVHTTP_FEATURE_HTTPS)
-    # TLS/HTTPS 支持可用
-    add_definitions(-DUVHTTP_FEATURE_HTTPS=1)
-endif()
-```
 
 ## 示例项目
 
@@ -134,7 +117,7 @@ endif()
 
 ```cmake
 # CMakeLists.txt
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(http_server C)
 
 add_subdirectory(uvhttp)
@@ -142,9 +125,6 @@ add_subdirectory(uvhttp)
 add_executable(server server.c)
 
 target_link_libraries(server uvhttp)
-
-# 可选：启用特定功能
-target_compile_definitions(server PRIVATE -DUVHTTP_FEATURE_WEBSOCKET=1)
 ```
 
 ```c

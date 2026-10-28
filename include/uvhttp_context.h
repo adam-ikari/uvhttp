@@ -71,8 +71,7 @@ typedef struct uvhttp_context {
     void* ws_drbg;    /* mbedtls_ctr_drbg_context* */
 
     /* Configuration management */
-    void* current_config;  /* uvhttp_config_t* */
-    void* config_callback; /* uvhttp_config_change_callback_t */
+    void* current_config; /* uvhttp_config_t* */
     /* Ownership of current_config:
      * 1 = the context created it (uvhttp_context_init_config) and releases it
      *     in uvhttp_context_cleanup_config;

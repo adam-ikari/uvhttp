@@ -230,6 +230,10 @@ static void on_connection(uv_stream_t* server_handle, int status) {
         return;
     }
 
+    if (server->context) {
+        server->context->total_connections++;
+    }
+
     UVHTTP_LOG_DEBUG("Connection accepted, TLS enabled: %d\n",
                      conn->tls_enabled);
 

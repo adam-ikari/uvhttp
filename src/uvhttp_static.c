@@ -799,12 +799,19 @@ uvhttp_error_t uvhttp_static_create(const uvhttp_static_config_t* config,
     /* copyconfig */
     memcpy(&ctx->config, config, sizeof(uvhttp_static_config_t));
 
+    /* 0 means "use the built-in default" for the file-size limit */
+    if (ctx->config.max_file_size == 0) {
+        ctx->config.max_file_size = UVHTTP_STATIC_MAX_FILE_SIZE;
+    }
+
     /* createLRUcache */
     uvhttp_error_t result = uvhttp_lru_cache_create(
-        config->max_cache_size,           /* maximum memory usage */
-        UVHTTP_CACHE_DEFAULT_MAX_ENTRIES, /* maximum entry count */
-        config->cache_ttl,                /* cacheTTL */
-        &ctx->cache                       /* outputparameter */
+        config->max_cache_size, /* maximum memory usage */
+        ctx->config.max_cache_entries > 0
+            ? ctx->config.max_cache_entries
+            : UVHTTP_CACHE_DEFAULT_MAX_ENTRIES, /* maximum entries */
+        config->cache_ttl,                      /* cacheTTL */
+        &ctx->cache                             /* outputparameter */
     );
 
     if (result != UVHTTP_OK) {
@@ -814,30 +821,8 @@ uvhttp_error_t uvhttp_static_create(const uvhttp_static_config_t* config,
         return result;
     }
 
-    /* set max file size in cache */
-    if (config->max_file_size > 0) {
-        uvhttp_lru_cache_set_max_file_size(ctx->cache, config->max_file_size);
-    } else {
-        uvhttp_lru_cache_set_max_file_size(ctx->cache,
-                                           UVHTTP_STATIC_MAX_FILE_SIZE);
-    }
-
-    if (!ctx->cache) {
-        uvhttp_free(ctx);
-        return UVHTTP_ERROR_IO_ERROR;
-    }
-
-    if (result != UVHTTP_OK) {
-        UVHTTP_LOG_ERROR("Failed to create LRU cache: %s",
-                         uvhttp_error_string(result));
-        uvhttp_free(ctx);
-        return result;
-    }
-
-    if (!ctx->cache) {
-        uvhttp_free(ctx);
-        return UVHTTP_ERROR_IO_ERROR;
-    }
+    /* keep the cache and the request path on the same limit */
+    uvhttp_lru_cache_set_max_file_size(ctx->cache, ctx->config.max_file_size);
 
     *context = ctx;
     return UVHTTP_OK;
@@ -951,6 +936,47 @@ int uvhttp_static_resolve_safe_path(const char* root_dir, const char* file_path,
 }
 
 /**
+ * apply configured custom headers: "Name: value" lines separated by CRLF
+ */
+static void apply_custom_headers(uvhttp_response_t* response,
+                                 const char* headers) {
+    if (!response || !headers || !*headers) {
+        return;
+    }
+
+    char buf[UVHTTP_MAX_HEADER_VALUE_SIZE];
+    if (uvhttp_safe_strncpy(buf, headers, sizeof(buf)) != 0) {
+        return;
+    }
+
+    char* line = buf;
+    while (line && *line) {
+        char* next = strstr(line, "\r\n");
+        if (next) {
+            *next = '\0';
+        }
+
+        char* colon = strchr(line, ':');
+        if (colon && colon != line) {
+            *colon = '\0';
+            char* value = colon + 1;
+            while (*value == ' ' || *value == '\t') {
+                value++;
+            }
+            char* end = value + strlen(value);
+            while (end > value && (end[-1] == ' ' || end[-1] == '\t')) {
+                *--end = '\0';
+            }
+            if (*value) {
+                uvhttp_response_set_header(response, line, value);
+            }
+        }
+
+        line = next ? next + 2 : NULL;
+    }
+}
+
+/**
  * main function to process static file request
  */
 uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
@@ -1019,6 +1045,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
         if (uvhttp_static_check_conditional_request(
                 request, cache_entry->etag, cache_entry->last_modified)) {
             uvhttp_response_set_status(response, 304); /* Not Modified */
+            apply_custom_headers(response, ctx->config.custom_headers);
         } else {
             uvhttp_static_set_response_headers(
                 response, cache_entry->file_path, cache_entry->content_length,
@@ -1026,6 +1053,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
             uvhttp_response_set_body(response, cache_entry->content,
                                      cache_entry->content_length);
             uvhttp_response_set_status(response, 200);
+            apply_custom_headers(response, ctx->config.custom_headers);
         }
         uvhttp_response_send(response);
         return UVHTTP_OK;
@@ -1050,6 +1078,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                                                "text/html");
                     uvhttp_response_set_body(response, dir_html,
                                              strlen(dir_html));
+                    apply_custom_headers(response, ctx->config.custom_headers);
                     uvhttp_free(dir_html);
                     return UVHTTP_OK;
                 }
@@ -1120,8 +1149,11 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
         if (uvhttp_static_check_conditional_request(request, etag,
                                                     last_modified)) {
             uvhttp_response_set_status(response, 304); /* Not Modified */
+            apply_custom_headers(response, ctx->config.custom_headers);
             return 0;
         }
+
+        apply_custom_headers(response, ctx->config.custom_headers);
 
         /* use sendfile to send (pass config) */
         uvhttp_result_t sendfile_result = uvhttp_static_sendfile_with_config(
@@ -1160,6 +1192,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     if (uvhttp_static_check_conditional_request(request, etag, last_modified)) {
         uvhttp_free(file_content);
         uvhttp_response_set_status(response, 304); /* Not Modified */
+        apply_custom_headers(response, ctx->config.custom_headers);
         return UVHTTP_OK;
     }
 
@@ -1175,6 +1208,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                                        last_modified, etag);
     uvhttp_response_set_body(response, file_content, file_size);
     uvhttp_response_set_status(response, 200);
+    apply_custom_headers(response, ctx->config.custom_headers);
     uvhttp_response_send(response);
 
     /* cache_put and response_set_body both copy the content, so the

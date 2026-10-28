@@ -43,8 +43,8 @@ jobs:
       
       - name: Generate all documentation
         run: |
-          # Create necessary directories
-          mkdir -p docs/api/html docs/api/latex docs/api/xml docs/api/.doxygen
+          # Doxygen cannot create hidden output dirs itself
+          mkdir -p docs/api/.doxygen/xml
           
           # Generate Doxygen API documentation
           doxygen docs/Doxyfile
@@ -87,8 +87,8 @@ jobs:
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Generated Documentation" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ API XML: docs/api/xml/" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ API Markdown: docs/api/markdown_from_xml/" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ API XML: docs/api/.doxygen/xml/" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ API Markdown: docs/api/generated/" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ VitePress Site: docs/.vitepress/dist/" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Changed Files" >> $GITHUB_STEP_SUMMARY

@@ -1245,8 +1245,7 @@ uvhttp_static_prewarm_cache(ctx, "/static/index.html");
 #### 3. Connection Pool
 
 ```c
-/* Automatic Keep-Alive connection management */
-config->keep_alive_timeout = 60;
+/* Keep-Alive is managed per connection automatically; no timeout field exists */
 ```
 
 **Performance improvement**: 1000x
@@ -1254,8 +1253,8 @@ config->keep_alive_timeout = 60;
 #### 4. Fast Hashing
 
 ```c
-/* Use xxHash */
-uint64_t hash = xxhash64(key, key_len);
+/* Use the library's xxHash wrapper */
+uint64_t hash = uvhttp_hash(key, key_len, UVHTTP_HASH_DEFAULT_SEED);
 ```
 
 **Performance improvement**: 10x
@@ -1289,9 +1288,11 @@ python scripts/performance_regression.py
 #### Built-in Metrics
 
 ```c
-/* Get connection statistics */
-size_t active_connections = server->stats.active_connections;
-size_t total_requests = server->stats.total_requests;
+/* Traffic counters live on the context attached via uvhttp_server_take_context */
+uvhttp_context_t* context = server->context;
+size_t active_connections = context->active_connections;
+uint64_t total_requests = context->total_requests;
+uint64_t total_connections = context->total_connections;
 ```
 
 #### External Tools

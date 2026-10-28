@@ -57,8 +57,6 @@ int main(int argc, char* argv[]) {
     static_config.root_directory[sizeof(static_config.root_directory) - 1] = '\0';
     strncpy(static_config.index_file, "index.html", sizeof(static_config.index_file) - 1);
     static_config.enable_directory_listing = 1;
-    static_config.enable_etag = 1;
-    static_config.enable_last_modified = 1;
     static_config.max_cache_size = 100 * 1024 * 1024;
     static_config.cache_ttl = 7200;
     

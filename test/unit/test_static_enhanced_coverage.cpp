@@ -893,9 +893,6 @@ TEST(UvhttpStaticEnhancedCoverageTest, Create_FullConfig) {
     config.cache_ttl = 3600;
     config.max_cache_entries = 100;
     config.max_file_size = 1024 * 1024;
-    config.enable_etag = 1;
-    config.enable_last_modified = 1;
-    config.enable_sendfile = 1;
     config.sendfile_timeout_ms = 5000;
     config.sendfile_max_retry = 3;
     config.sendfile_chunk_size = 8192;

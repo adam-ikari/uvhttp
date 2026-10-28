@@ -109,17 +109,6 @@ These options control the build mode (debug, release, coverage).
 - **Dependencies**: `CMAKE_BUILD_TYPE=Release` (recommended)
 - **Conflicts**: `ENABLE_DEBUG=ON`, `ENABLE_ASAN=ON`, `ENABLE_TSAN=ON`
 
-### ENABLE_PGO
-- **Type**: BOOL
-- **Default**: OFF
-- **Description**: Enable Profile Guided Optimization (PGO)
-- **Impact**:
-  - Optimize based on actual runtime data
-  - Potential performance improvement of 10-20%
-  - Requires two-step compilation process
-- **Dependencies**: `CMAKE_BUILD_TYPE=Release`
-- **Conflicts**: `ENABLE_DEBUG=ON`
-
 ### ENABLE_FASTER_MATH
 - **Type**: BOOL
 - **Default**: OFF
@@ -166,15 +155,6 @@ These options enable runtime error detection tools (Sanitizers).
 - **Dependencies**: `ENABLE_DEBUG=ON` (recommended)
 - **Conflicts**: `ENABLE_LTO=ON`, `ENABLE_ASAN=ON`
 
-### ENABLE_VALGRIND
-- **Type**: BOOL
-- **Default**: OFF
-- **Description**: Enable Valgrind support
-- **Impact**:
-  - Add Valgrind compatibility code
-  - Facilitate memory leak detection
-- **Dependencies**: None
-
 ### ENABLE_DEV_MODE
 - **Type**: BOOL
 - **Default**: OFF
@@ -183,37 +163,6 @@ These options enable runtime error detection tools (Sanitizers).
   - Enable logging system (UVHTTP_FEATURE_LOGGING=1)
   - Add development debugging aids
   - Should be disabled in production for optimal performance
-- **Dependencies**: None
-
-## Logging Options
-
-These options control logging verbosity.
-
-### ENABLE_LOG_DEBUG
-- **Type**: BOOL
-- **Default**: OFF
-- **Description**: Enable debug log level
-- **Impact**:
-  - Output detailed debug information
-  - May affect performance
-- **Dependencies**: None
-
-### ENABLE_LOG_TRACE
-- **Type**: BOOL
-- **Default**: OFF
-- **Description**: Enable trace log level
-- **Impact**:
-  - Output most detailed trace information
-  - Significantly affects performance
-- **Dependencies**: None
-
-### ENABLE_LOG_PERFORMANCE
-- **Type**: BOOL
-- **Default**: OFF
-- **Description**: Enable performance logging
-- **Impact**:
-  - Record performance metrics
-  - Minor performance impact
 - **Dependencies**: None
 
 ## Security Options
@@ -288,10 +237,6 @@ ENABLE_LTO (OFF)
     └─> !ENABLE_ASAN [conflict]
     └─> !ENABLE_TSAN [conflict]
 
-ENABLE_PGO (OFF)
-    └─> CMAKE_BUILD_TYPE=Release [required]
-    └─> !ENABLE_DEBUG [conflict]
-
 ENABLE_ASAN (OFF)
     └─> ENABLE_DEBUG=ON [recommended]
     └─> !ENABLE_LTO [conflict]
@@ -306,15 +251,6 @@ ENABLE_TSAN (OFF)
     └─> !ENABLE_LTO [conflict]
     └─> !ENABLE_ASAN [conflict]
 
-ENABLE_LOG_DEBUG (OFF)
-    └─> No dependencies
-
-ENABLE_LOG_TRACE (OFF)
-    └─> No dependencies
-
-ENABLE_LOG_PERFORMANCE (OFF)
-    └─> No dependencies
-
 ENABLE_HARDENING (ON)
     └─> No dependencies
 
@@ -325,9 +261,6 @@ ENABLE_FORTIFY_SOURCE (ON)
     └─> No dependencies
 
 ENABLE_FASTER_MATH (OFF)
-    └─> No dependencies
-
-ENABLE_VALGRIND (OFF)
     └─> No dependencies
 
 ENABLE_DEV_MODE (OFF)
@@ -343,8 +276,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug \
       -DBUILD_WITH_MIMALLOC=OFF \
       -DBUILD_WITH_HTTPS=ON \
       -DENABLE_DEBUG=ON \
-      -DENABLE_LOG_DEBUG=ON \
-      -DENABLE_LOG_TRACE=ON \
+      -DENABLE_DEV_MODE=ON \
       -DBUILD_EXAMPLES=ON
 ```
 
@@ -734,8 +666,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug \
       -DBUILD_WITH_MIMALLOC=OFF \
       -DBUILD_WITH_HTTPS=ON \
       -DENABLE_DEBUG=ON \
-      -DENABLE_LOG_DEBUG=ON \
-      -DENABLE_LOG_TRACE=ON \
+      -DENABLE_DEV_MODE=ON \
       -DENABLE_COVERAGE=OFF \
       -DBUILD_EXAMPLES=OFF
 ```

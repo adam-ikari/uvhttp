@@ -918,7 +918,6 @@ int main(int argc, char* argv[]) {
     static_config.cache_ttl = 3600;
     static_config.max_cache_entries = 100;
     static_config.max_file_size = 200 * 1024 * 1024;
-    static_config.enable_sendfile = 1;
 
     char cwd[UVHTTP_MAX_FILE_PATH_SIZE];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {

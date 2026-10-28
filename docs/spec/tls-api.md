@@ -194,15 +194,6 @@ The TLS module provides Transport Layer Security (TLS) for HTTP connections, imp
 - **Postconditions**: Returns 1 if the certificate is valid (not yet expired and not before its valid_from date), 0 otherwise.
 - **Thread safety**: Thread-safe for reads.
 
-### uvhttp_tls_get_stats / uvhttp_tls_reset_stats
-- **Signature**: `uvhttp_error_t uvhttp_tls_get_stats(uvhttp_tls_context_t* ctx, uvhttp_tls_stats_t* stats)` / `uvhttp_error_t uvhttp_tls_reset_stats(uvhttp_tls_context_t* ctx)`
-- **Purpose**: Get or reset TLS performance statistics
-- **Preconditions**: `ctx` must be valid. For `uvhttp_tls_get_stats`, `stats` must be non-NULL.
-- **Postconditions**: Statistics are copied to the output struct or zeroed.
-- **Error conditions**:
-  - `UVHTTP_ERROR_TLS_INVALID_PARAM`: `ctx` or `stats` (for get) is NULL
-- **Thread safety**: Not thread-safe.
-
 ### uvhttp_tls_get_connection_info
 - **Signature**: `uvhttp_error_t uvhttp_tls_get_connection_info(mbedtls_ssl_context* ssl, char* buf, size_t buf_size)`
 - **Purpose**: Get a human-readable string with TLS version and cipher suite

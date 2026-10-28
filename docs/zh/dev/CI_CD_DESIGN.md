@@ -51,7 +51,7 @@ UVHTTP 是基于 libuv 的 HTTP/1.1 和 WebSocket 服务器库，采用 C99 标�
 ### 技术栈
 
 - **CI/CD 平台**: GitHub Actions
-- **构建系统**: CMake 3.10+
+- **构建系统**: CMake 3.13+
 - **测试框架**: Google Test
 - **性能测试**: wrk、ab
 - **代码覆盖率**: lcov、gcov

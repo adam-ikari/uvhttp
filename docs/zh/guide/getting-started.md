@@ -1,9 +1,11 @@
 ---
 title: 快速开始
-description: 几分钟上手 UVHTTP——构建 C99 HTTP/WebSocket 服务器库，运行 hello-world 示例，添加第一条路由。涵盖 CMake/Just 构建、示例服务器与首个请求。
+description: 几分钟上手 UVHTTP——用 CMake 与 Make 构建 C99 HTTP/WebSocket 服务器库，运行 hello-world 示例，添加第一条路由。
 ---
 
 # 快速开始
+
+本指南帮助你在几分钟内上手 UVHTTP。
 
 ## 📌 平台支持
 
@@ -11,18 +13,27 @@ description: 几分钟上手 UVHTTP——构建 C99 HTTP/WebSocket 服务器库�
 
 **未来计划**: macOS, Windows, FreeBSD, WebAssembly (WASM) 和其他 Unix-like 系统
 
-UVHTTP 目前针对 Linux 平台进行了优化。我们计划在未来版本中扩展对其他操作系统和平台的支持。
+> **注意**：UVHTTP 目前仅支持 Linux 平台。我们计划在未来版本中扩展对其他操作系统的支持。
 
 ## 环境要求
 
-- CMake 3.10+
-- C99 编译器（GCC 4.9+, Clang 3.5+）
-- libuv 1.x
-- llhttp
+- CMake 3.13 或更高版本
+- C99 编译器（GCC 4.9+、Clang 3.5+）
+- libuv 1.x（作为子模块自动克隆）
+- llhttp（作为子模块自动克隆）
 
 ## 安装
 
-### 从源码编译
+### 安装依赖
+
+#### Ubuntu/Debian
+
+```bash
+sudo apt-get update
+sudo apt-get install -y cmake build-essential
+```
+
+### 克隆并构建
 
 ```bash
 # 克隆仓库（包含子模块）
@@ -36,28 +47,7 @@ make build
 make test
 ```
 
-### 安装依赖
-
-#### Ubuntu/Debian
-
-```bash
-sudo apt-get update
-sudo apt-get install -y cmake build-essential
-```
-
-#### macOS（未来支持）
-
-```bash
-brew install cmake
-```
-
-#### Windows（未来支持）
-
-使用 vcpkg 安装依赖：
-
-```bash
-vcpkg install libuv
-```
+> **注意**：`--recurse-submodules` 会克隆 libuv、llhttp 及其他依赖。若忘记该参数，可事后运行 `git submodule update --init --recursive`。
 
 ## 第一个程序
 
@@ -100,15 +90,10 @@ int main() {
 }
 ```
 
-### 编译
+### 编译并运行
 
 ```bash
 gcc -o hello hello.c -I./include -L./build/dist/lib -luvhttp -luv -lpthread
-```
-
-### 运行
-
-```bash
 ./hello
 ```
 
@@ -119,16 +104,16 @@ gcc -o hello hello.c -I./include -L./build/dist/lib -luvhttp -luv -lpthread
 ```
 uvhttp/
 ├── include/           # 公共头文件
-├── src/              # 源代码实现
-├── docs/             # 文档
-├── examples/         # 示例程序
-├── test/             # 测试
-└── build/            # 构建输出目录
+├── src/               # 源代码实现
+├── docs/              # 文档
+├── examples/          # 示例程序
+├── test/              # 测试
+└── build/             # 构建输出目录
 ```
 
 ## 配置选项
 
-可通过修改 `CMakeLists.txt` 中的 `option()` 配置编译选项，然后运行 `make build`：
+可通过修改 `CMakeLists.txt` 中的 `option()` 配置编译选项，然后重新构建：
 
 ```bash
 # 修改 CMakeLists.txt 中的选项后构建
@@ -137,7 +122,9 @@ make build
 
 ## 下一步
 
-- [API 文档](/api/introduction) - 学习完整的 API
+- [API 参考](/api/introduction) - 学习完整的 API
+- [教程](./TUTORIAL.md) - 构建完整应用
+- [WebSocket 支持](./websocket.md) - 实时消息
 
 ## 需要帮助？
 

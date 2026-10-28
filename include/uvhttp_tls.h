@@ -113,20 +113,6 @@ uvhttp_error_t uvhttp_tls_context_add_extra_chain_cert(
 uvhttp_error_t uvhttp_tls_get_cert_chain(mbedtls_ssl_context* ssl,
                                          mbedtls_x509_crt** chain);
 
-/* TLS */
-typedef struct uvhttp_tls_stats {
-    unsigned long long handshake_count;
-    unsigned long long handshake_errors;
-    unsigned long long bytes_sent;
-    unsigned long long bytes_received;
-    unsigned long long session_hits;
-    unsigned long long session_misses;
-    double avg_handshake_time_ms;
-} uvhttp_tls_stats_t;
-
-uvhttp_error_t uvhttp_tls_get_stats(uvhttp_tls_context_t* ctx,
-                                    uvhttp_tls_stats_t* stats);
-uvhttp_error_t uvhttp_tls_reset_stats(uvhttp_tls_context_t* ctx);
 uvhttp_error_t uvhttp_tls_get_connection_info(mbedtls_ssl_context* ssl,
                                               char* buf, size_t buf_size);
 

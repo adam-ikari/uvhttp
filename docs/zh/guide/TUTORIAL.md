@@ -181,7 +181,7 @@ mkdir -p examples
 
 # 创建 CMakeLists.txt
 cat > CMakeLists.txt << 'EOF'
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(hello_world C)
 
 set(CMAKE_C_STANDARD 11)
@@ -997,8 +997,6 @@ int main() {
         .root_directory = "./public",
         .index_file = "index.html",
         .enable_directory_listing = 1,
-        .enable_etag = 1,
-        .enable_last_modified = 1,
         .max_cache_size = 10 * 1024 * 1024,  // 10MB 缓存
         .cache_ttl = 3600,                   // 1 小时 TTL
         .custom_headers = ""
@@ -2572,8 +2570,6 @@ uvhttp_static_config_t static_config = {
     .root_directory = "./public",
     .index_file = "index.html",
     .enable_directory_listing = 1,
-    .enable_etag = 1,
-    .enable_last_modified = 1,
     .max_cache_size = 10 * 1024 * 1024,
     .cache_ttl = 3600
 };
@@ -2701,7 +2697,7 @@ make examples
 ```bash
 # 在 examples/ 目录创建 CMakeLists.txt
 cat > CMakeLists.txt << 'EOF'
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(uvhttp_examples C)
 
 set(CMAKE_C_STANDARD 11)

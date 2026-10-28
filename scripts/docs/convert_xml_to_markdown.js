@@ -4,7 +4,7 @@
  * This script parses Doxygen XML files and generates clean Markdown documentation.
  * 
  * @example
- * node convert_xml_to_markdown.js docs/api/xml docs/api/markdown_from_xml
+ * node convert_xml_to_markdown.js docs/api/.doxygen/xml docs/api/generated
  */
 
 const fs = require('fs');
@@ -709,7 +709,7 @@ try {
   const args = process.argv.slice(2);
   if (args.length !== 2) {
     console.log('Usage: node convert_xml_to_markdown.js <xml_dir> <output_dir>');
-    console.log('Example: node convert_xml_to_markdown.js docs/api/xml docs/api/markdown_from_xml');
+    console.log('Example: node convert_xml_to_markdown.js docs/api/.doxygen/xml docs/api/generated');
     process.exit(1);
   }
 

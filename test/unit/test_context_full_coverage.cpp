@@ -416,18 +416,6 @@ TEST_F(UvhttpContextTest, ContextMultipleDestroy) {
     uvhttp_context_destroy(context);
 }
 
-// Config callback field test
-TEST_F(UvhttpContextTest, ContextConfigCallback) {
-    uvhttp_context_t* context = nullptr;
-    uvhttp_error_t err = uvhttp_context_create(&loop, &context);
-    ASSERT_EQ(err, UVHTTP_OK);
-    
-    // Config callback should be NULL initially
-    EXPECT_EQ(context->config_callback, nullptr);
-    
-    uvhttp_context_destroy(context);
-}
-
 // Created timestamp test
 TEST_F(UvhttpContextTest, ContextCreatedTimestamp) {
     uvhttp_context_t* context = nullptr;

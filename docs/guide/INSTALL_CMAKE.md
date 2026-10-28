@@ -13,7 +13,7 @@ git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 Then in your project's `CMakeLists.txt`:
 
 ```cmake
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(myapp C)
 
 # Add uvhttp as a subdirectory
@@ -22,9 +22,8 @@ add_subdirectory(path/to/uvhttp)
 # Create executable
 add_executable(myapp main.c)
 
-# Link against uvhttp (static)
-target_link_libraries(myapp uvhttp)
-target_include_directories(myapp PRIVATE path/to/uvhttp/include)
+# Link against uvhttp (static); include dirs propagate via the target
+target_link_libraries(myapp PRIVATE uvhttp)
 ```
 
 Build:
@@ -38,7 +37,7 @@ make build
 If uvhttp is in a known location:
 
 ```cmake
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(myapp C)
 
 # Find uvhttp package
@@ -48,13 +47,13 @@ find_package(uvhttp REQUIRED)
 add_executable(myapp main.c)
 
 # Link against uvhttp
-target_link_libraries(myapp uvhttp)
+target_link_libraries(myapp PRIVATE uvhttp::uvhttp)
 ```
 
 ## Method 2: Using pkg-config
 
 ```cmake
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(myapp C)
 
 find_package(PkgConfig REQUIRED)
@@ -106,27 +105,11 @@ After finding uvhttp, the following variables are available:
 
 | Variable | Description |
 |----------|-------------|
-| `UVHTTP_VERSION` | Package version (e.g., "2.7.1") |
+| `UVHTTP_VERSION` | Package version (e.g., "3.0.0") |
 | `UVHTTP_INCLUDE_DIRS` | Include directories |
-| `UVHTTP_LIBRARIES` | Library names (uvhttp) |
+| `UVHTTP_LIBRARIES` | Link target (`uvhttp::uvhttp`) |
 | `UVHTTP_LIBRARY_DIRS` | Library directory paths |
 | `UVHTTP_FOUND` | True if package was found |
-
-## Feature Flags
-
-The following feature flags indicate which features are available:
-
-```cmake
-if(UVHTTP_FEATURE_WEBSOCKET)
-    # WebSocket support is available
-    add_definitions(-DUVHTTP_FEATURE_WEBSOCKET=1)
-endif()
-
-if(UVHTTP_FEATURE_HTTPS)
-    # TLS/HTTPS support is available
-    add_definitions(-DUVHTTP_FEATURE_HTTPS=1)
-endif()
-```
 
 ## Example Project
 
@@ -134,7 +117,7 @@ Here's a complete example project using uvhttp:
 
 ```cmake
 # CMakeLists.txt
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(http_server C)
 
 add_subdirectory(uvhttp)
@@ -142,9 +125,6 @@ add_subdirectory(uvhttp)
 add_executable(server server.c)
 
 target_link_libraries(server uvhttp)
-
-# Optional: Enable specific features
-target_compile_definitions(server PRIVATE -DUVHTTP_FEATURE_WEBSOCKET=1)
 ```
 
 ```c

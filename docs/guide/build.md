@@ -34,6 +34,15 @@ make build
 make build
 ```
 
+### 3. Use It in Your Project
+
+Once built, consume the library from your own CMake project with `add_subdirectory`:
+
+```cmake
+add_subdirectory(path/to/uvhttp)
+target_link_libraries(myapp uvhttp)
+```
+
 ## Build Options
 
 | Option | Default | Description |
@@ -66,10 +75,10 @@ Common options available in `CMakeLists.txt`:
 
 ## Output Files
 
-编译后的文件位于 `build/dist/` 目录：
-- `bin/` - 可执行文件（示例程序、测试程序）
-- `lib/` - 库文件（libuvhttp.a）
-- `include/` - 头文件
+Build output is located in `build/dist/`:
+- `bin/` - Executables (examples, tests)
+- `lib/` - Library (libuvhttp.a)
+- `include/` - Headers
 
 ## Performance Testing
 
@@ -103,12 +112,17 @@ For detailed coverage report:
 ./run_tests.sh --detailed
 ```
 
-## Output Files
+## Installation Path
 
-Build output is located in `build/dist/`:
-- `bin/` - Executables (examples, tests)
-- `lib/` - Library (libuvhttp.a)
-- `include/` - Headers
+The default install prefix is `/usr/local`. Override it with `CMAKE_INSTALL_PREFIX`:
+
+```bash
+cmake -B build -DCMAKE_INSTALL_PREFIX=/custom/path
+cmake --build build -j$(nproc)
+cmake --install build
+```
+
+Installed files land in `lib/`, `include/`, and the CMake package config in `lib/cmake/uvhttp/`.
 
 ## Cross-Compilation
 

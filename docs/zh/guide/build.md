@@ -122,17 +122,15 @@ ab -n 10000 -c 100 http://localhost:8080/
 
 ## 安装路径
 
-默认情况下，UVHTTP 安装到以下位置：
-
-- **库文件**: `/usr/local/lib/libuvhttp.a`
-- **头文件**: `/usr/local/include/uvhttp/`
-- **示例程序**: `/usr/local/bin/`
-
-你可以通过 `make build` 的 `PREFIX` 参数更改安装路径：
+CMake 默认安装前缀为 `/usr/local`。通过 `CMAKE_INSTALL_PREFIX` 覆盖：
 
 ```bash
-make build PREFIX=/custom/path
+cmake -B build -DCMAKE_INSTALL_PREFIX=/custom/path
+cmake --build build -j$(nproc)
+cmake --install build
 ```
+
+安装后库、头文件与 CMake 包配置分别位于 `lib/`、`include/` 与 `lib/cmake/uvhttp/`。
 
 ## 交叉编译
 

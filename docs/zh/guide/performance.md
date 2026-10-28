@@ -1,6 +1,6 @@
 ---
 title: 性能基准
-description: UVHTTP 性能基准——GitHub CI runner 上约 83K RPS、JSON 81K RPS、大响应 8.8K RPS、零 socket 错误、P50 约 117µs 延迟。含复现命令、优化建议与监控。
+description: UVHTTP 性能基准——GitHub CI runner 上约 139K RPS、JSON 约 140K RPS、大响应约 18K RPS、平均延迟约 70µs，以及同机配对回归门禁。含复现命令、优化建议与监控。
 ---
 
 # 性能
@@ -11,15 +11,21 @@ UVHTTP 专为高性能与低延迟而设计。本文档提供性能指标与优�
 
 ### CI 基线（权威）
 
-权威基线在 **GitHub Actions `ubuntu-latest` runner** 上使用 `benchmark_unified` 测量（Release 构建、系统分配器、2 线程、10 并发连接、每轮 10 秒、每端点 10 轮）。CI runner 消除了困扰本地基准的 CPU 热降频方差（同一次运行内 CV 0.4–2.4%，本地 40%+）。但这种稳定性只在**单次运行内部**成立：同一 commit 跨 run 的中位数会漂移数十个百分点，因为 runner 是共享虚拟机。因此下表数值是文档参考基线，而**回归门禁在同一 runner、同一 job 内配对比较 head 与 base**。完整方法论与 runner 环境记录见 [性能目标](../../PERFORMANCE_TARGETS.md)。
+权威基线在 **GitHub Actions `ubuntu-latest` runner** 上使用 `benchmark_unified` 测量（Release 构建、系统分配器、2 线程、10 并发连接、每轮 10 秒、每端点 10 轮）。CI runner 消除了困扰本地基准的 CPU 热降频方差（同一次运行内 CV 0.9–2.6%，本地 40%+）。但这种稳定性只在**单次运行内部**成立：同一 commit 跨 run 的中位数会漂移数十个百分点，因为 runner 是共享虚拟机。因此下表数值是文档参考基线，而**回归门禁在同一 runner、同一 job 内配对比较 head 与 base**。完整方法论与 runner 环境记录见 [性能目标](../../PERFORMANCE_TARGETS.md)。
+
+下表为 **v3.0.0 发布门禁那次运行**（2026-10-20）的中位数，不代表其他 runner 上的结果。
 
 | 端点 | RPS | 平均延迟 | 备注 |
 |----------|-----|-------------|-------|
-| `/`（纯文本） | **约 83K** | 约 117µs | HTTP/1.1，10 连接，GitHub CI runner |
-| `/json` | **约 81K** | 约 117µs | JSON 端点 |
-| `/large`（约 100KB body） | **约 8.8K** | — | 大响应；零拷贝 writev 优化（5.1K → 8.8K，+72.7%） |
-| 高并发（1000 连接） | **约 55K** | 约 27ms | 平滑退化 |
-| Socket 错误 | **0** | — | 负载下零错误 |
+| `/`（纯文本） | **约 139K** | 约 70µs | HTTP/1.1，10 连接，GitHub CI runner |
+| `/json` | **约 140K** | 约 70µs | JSON 端点 |
+| `/large`（约 100KB body） | **约 18K** | — | 大响应；零拷贝 writev 优化 |
+| `/sse` | **约 157K** | 约 63µs | 服务器发送事件 |
+| `/stream` | **约 21K** | 约 468µs | 流式响应 body |
+| 高并发（1000 连接） | **约 117K** | 约 28ms | 平滑退化；过载时客户端出现读超时 |
+| Socket 错误（10 连接） | **0** | — | 负载下零错误 |
+
+> **回归证据（v3.0.0）**：在同一 runner、同一 job 内与 v2.9.2 配对，门禁测得 `/` **100.8%**、`/json` **102.0%**、`/large` **101.4%**，MAD 分别为 2.8% / 0.8% / 1.0%，30 个配对轮次无一低于 90% 限制。
 
 > **注意**：`benchmark_unified` 的 `/large` 返回约 100KB body，远大于 `test_performance_e2e` 的约 1KB body。两个二进制不可直接比较。
 
@@ -60,7 +66,7 @@ wrk -t4 -c100 -d10s http://127.0.0.1:18090/simple
 
 ### 内存安全验证
 
-没有正确性，性能便毫无意义。完整的 101 项测试套件在任何性能工作被视为完成之前，都必须在两种 sanitizer 下验证通过：
+没有正确性，性能便毫无意义。完整的 119 项测试套件在任何性能工作被视为完成之前，都必须在两种 sanitizer 下验证通过：
 
 ```bash
 # AddressSanitizer（泄漏、use-after-free、溢出）
@@ -75,10 +81,10 @@ cmake --build build_ubsan -j$(nproc) && (cd build_ubsan && ctest -j4)
 ### 稳定性
 
 - **并发范围**：10-1000 并发连接（已测试）
-- **RPS 波动**：本地所有并发级别下 < 5%；CI 上 CV 0.4–2.4%
+- **RPS 波动**：本地所有并发级别下 < 5%；CI 单次运行内 CV 0.9–2.6%
 - **内存占用**：稳定，未检测到泄漏（无 CLOSE_WAIT 连接）
 - **CPU 占用**：高效，随负载扩展
-- **Socket 错误**：所有测试并发级别下零错误
+- **Socket 错误**：本地所有测试级别零错误；CI 上 1000 连接过载时客户端出现读超时
 
 ### 性能改进（v2.3.1）
 
@@ -99,11 +105,11 @@ cmake --build build_ubsan -j$(nproc) && (cd build_ubsan && ctest -j4)
 
 ### 1. 零拷贝优化
 
-大文件（> 1MB）使用 `sendfile` 进行零拷贝传输：
+大文件（> 64KB）使用 `sendfile` 进行零拷贝传输：
 
 ```c
 // 在 uvhttp_static_handle_request 中自动使用
-// 超过 1MB 的文件自动使用 sendfile
+// 超过 UVHTTP_SENDFILE_MIN_FILE_SIZE（64KB）的文件自动使用 sendfile
 ```
 
 **性能收益**：大文件性能提升 50%+
@@ -222,12 +228,12 @@ kill $SERVER_PID 2>/dev/null || true
 
 | 库 | 吞吐量（RPS） | 延迟（ms） | 内存占用 |
 |---------|------------------|--------------|--------------|
-| **UVHTTP** | **约 83,000** | **约 0.117（P50，CI）** | **低** |
+| **UVHTTP** | **约 139,000** | **约 0.070（平均，CI）** | **低** |
 | libuv-http | 18,500 | 3.45 | 中 |
 | microhttpd | 15,200 | 4.20 | 低 |
 | mongoose | 12,800 | 5.10 | 中 |
 
-*注：结果可能因硬件、主机负载和测试时长而异。UVHTTP 数据为 GitHub CI 基线（约 83K RPS，10 连接，`benchmark_unified`）。竞品数据为指示性本地测量，与 CI 数字不可直接比较。完整历史基线见 `docs/performance/baseline-history.json`。*
+*注：结果可能因硬件、主机负载和测试时长而异。UVHTTP 数据为 v3.0.0 发布门禁基线（约 139K RPS，10 连接，`benchmark_unified`）。竞品数据为指示性本地测量，与 CI 数字不可直接比较。完整历史基线见 `docs/performance/baseline-history.json`。*
 
 ## 监控性能
 

@@ -197,21 +197,6 @@ cmake -DBUILD_WITH_WEBSOCKET=OFF ..
 cmake -DCMAKE_C_FLAGS="-m32" ..
 ```
 
-### 自定义配置
-
-高级用户可创建自定义配置文件：
-
-```bash
-# 复制用户选项模板
-cp cmake/UserOptions.cmake cmake/UserOptions.local.cmake
-
-# 编辑文件自定义构建选项
-vim cmake/UserOptions.local.cmake
-
-# 使用自定义配置构建
-cmake -DCMAKE_USER_CONFIG=ON ..
-```
-
 ### 基本用法
 
 ```c

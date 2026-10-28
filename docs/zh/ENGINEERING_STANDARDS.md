@@ -1243,8 +1243,7 @@ uvhttp_static_prewarm_cache(ctx, "/static/index.html");
 #### 3. 连接池
 
 ```c
-/* Keep-Alive 连接自动管理 */
-config->keep_alive_timeout = 60;
+/* Keep-Alive 由连接自动管理，无超时配置项 */
 ```
 
 **性能提升**：1000x
@@ -1252,8 +1251,8 @@ config->keep_alive_timeout = 60;
 #### 4. 快速哈希
 
 ```c
-/* 使用 xxHash */
-uint64_t hash = xxhash64(key, key_len);
+/* 使用库内的 xxHash 封装 */
+uint64_t hash = uvhttp_hash(key, key_len, UVHTTP_HASH_DEFAULT_SEED);
 ```
 
 **性能提升**：10x
@@ -1287,9 +1286,11 @@ python scripts/performance_regression.py
 #### 内置指标
 
 ```c
-/* 获取连接统计 */
-size_t active_connections = server->stats.active_connections;
-size_t total_requests = server->stats.total_requests;
+/* 流量计数挂在通过 uvhttp_server_take_context 绑定的 context 上 */
+uvhttp_context_t* context = server->context;
+size_t active_connections = context->active_connections;
+uint64_t total_requests = context->total_requests;
+uint64_t total_connections = context->total_connections;
 ```
 
 #### 外部工具

@@ -1002,6 +1002,28 @@ void uvhttp_connection_set_state(uvhttp_connection_t* conn,
     }
 }
 
+const char* uvhttp_connection_get_state_string(
+    uvhttp_connection_state_t state) {
+    switch (state) {
+    case UVHTTP_CONN_STATE_NEW:
+        return "NEW";
+    case UVHTTP_CONN_STATE_TLS_HANDSHAKE:
+        return "TLS_HANDSHAKE";
+    case UVHTTP_CONN_STATE_HTTP_READING:
+        return "HTTP_READING";
+    case UVHTTP_CONN_STATE_HTTP_PROCESSING:
+        return "HTTP_PROCESSING";
+    case UVHTTP_CONN_STATE_HTTP_WRITING:
+        return "HTTP_WRITING";
+    case UVHTTP_CONN_STATE_PROTOCOL_UPGRADED:
+        return "PROTOCOL_UPGRADED";
+    case UVHTTP_CONN_STATE_CLOSING:
+        return "CLOSING";
+    default:
+        return "UNKNOWN";
+    }
+}
+
 uvhttp_error_t uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn) {
 #if UVHTTP_FEATURE_TLS
     if (!conn || !conn->server || !conn->server->tls_ctx) {

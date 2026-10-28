@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 
 # Read version configuration
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
@@ -16,7 +16,6 @@ project(uvhttp VERSION ${PROJECT_VERSION} LANGUAGES C CXX)
 option(BUILD_WITH_WEBSOCKET "Build with WebSocket support" ON)
 option(BUILD_WITH_HTTPS "Build with HTTPS support" ON)
 option(BUILD_WITH_STATIC_FILES "Build with static file service support" OFF)
-option(BUILD_WITH_LRU_CACHE "Build with LRU cache support" ON)
 option(BUILD_WITH_ROUTER_CACHE "Build with router cache support" OFF)
 option(BUILD_WITH_COMPRESSION "Build with HTTP response compression support" ON)
 
@@ -55,7 +54,7 @@ endif()
 
 option(BUILD_EXAMPLES "Build example programs" OFF)
 option(BUILD_BENCHMARKS "Build performance benchmark programs" ON)
-option(BUILD_TESTS "Build unit and integration tests" ON)
+option(BUILD_TESTS "Build unit tests" ON)
 
 # ========== Build Mode Options ==========
 # These options control the build mode (debug, release, coverage)
@@ -66,7 +65,6 @@ option(ENABLE_DEV_MODE "Enable development mode with logging" OFF)
 # ========== Optimization Options ==========
 # These options control performance optimizations
 option(ENABLE_LTO "Enable Link Time Optimization (LTO)" OFF)
-option(ENABLE_PGO "Enable Profile Guided Optimization (PGO)" OFF)
 option(ENABLE_FASTER_MATH "Enable faster math optimizations" OFF)
 
 # ========== Debugging Tools ==========
@@ -74,13 +72,10 @@ option(ENABLE_FASTER_MATH "Enable faster math optimizations" OFF)
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
 option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
-option(ENABLE_VALGRIND "Enable Valgrind support" OFF)
 
-# ========== Logging Options ==========
-# These options control logging verbosity
-option(ENABLE_LOG_DEBUG "Enable debug log level" OFF)
-option(ENABLE_LOG_TRACE "Enable trace log level" OFF)
-option(ENABLE_LOG_PERFORMANCE "Enable performance logging" OFF)
+# Logging is a compile-time switch owned by ENABLE_DEV_MODE/ENABLE_DEBUG:
+# uvhttp_logging.h compiles log macros to no-ops unless UVHTTP_FEATURE_LOGGING
+# is 1. There is no per-level switch.
 
 # ========== Security Options ==========
 # These options enable security hardening features
@@ -127,12 +122,19 @@ elseif(ENABLE_ASAN OR ENABLE_UBSAN OR ENABLE_TSAN)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O1 -fno-omit-frame-pointer")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O1 -fno-omit-frame-pointer")
 else()
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -DNDEBUG -ffunction-sections -fdata-sections")
+    # CMAKE_BUILD_TYPE=Debug must actually produce a debug build (-O0, no
+    # NDEBUG), otherwise `make build` compiles with -O2 and asserts vanish.
+    string(TOUPPER "${CMAKE_BUILD_TYPE}" _uvhttp_build_type_upper)
+    if("${_uvhttp_build_type_upper}" STREQUAL "DEBUG")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g -ffunction-sections -fdata-sections")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -ffunction-sections -fdata-sections")
+    else()
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -DNDEBUG -ffunction-sections -fdata-sections")
+    endif()
     # Only strip (-s) release-style builds. A Debug build type (or any build
     # passing -fsanitize via CMAKE_C_FLAGS, as the CI memory job does) must keep
     # symbols so sanitizer stack traces are resolvable. Check the upper-cased
     # build type and scan C_FLAGS for an active sanitizer.
-    string(TOUPPER "${CMAKE_BUILD_TYPE}" _uvhttp_build_type_upper)
     string(FIND "${CMAKE_C_FLAGS} ${CMAKE_CXX_FLAGS}" "-fsanitize=" _uvhttp_has_sanitize)
     if(NOT "${_uvhttp_build_type_upper}" STREQUAL "DEBUG" AND _uvhttp_has_sanitize EQUAL -1)
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections -s")
@@ -151,22 +153,18 @@ if(ENABLE_COVERAGE)
 endif()
 
 # Security compiler options
+# Hardening flags are gated by ENABLE_STACK_PROTECTION / ENABLE_HARDENING below
+# so those switches can actually turn them off.
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
     -Wall \
     -Wextra \
     -Wformat=2 \
     -Wformat-security \
-    -fstack-protector-strong \
     -fno-common \
     -Werror \
     -Werror=implicit-function-declaration \
     -Werror=format-security \
     -Werror=return-type \
-")
-
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
-    -Wl,-z,relro \
-    -Wl,-z,now \
 ")
 
 # ========== Feature Definitions Based on Options ==========
@@ -180,12 +178,15 @@ else()
 endif()
 
 # LRU cache support
-if(BUILD_WITH_LRU_CACHE)
+# The static file implementation is its only consumer, so the feature follows
+# BUILD_WITH_STATIC_FILES. A separate switch could only turn off code that the
+# static handler needs.
+if(BUILD_WITH_STATIC_FILES)
     add_definitions(-DUVHTTP_FEATURE_LRU_CACHE=1)
-    message(STATUS "LRU cache support: ENABLED")
+    message(STATUS "LRU cache support: ENABLED (with static files)")
 else()
     add_definitions(-DUVHTTP_FEATURE_LRU_CACHE=0)
-    message(STATUS "LRU cache support: DISABLED (reduced memory usage)")
+    message(STATUS "LRU cache support: DISABLED (no static files)")
 endif()
 
 # Router cache support
@@ -304,27 +305,10 @@ if(ENABLE_TSAN)
     message(STATUS "ThreadSanitizer enabled")
 endif()
 
-# ========== Apply Logging Options ==========
-if(ENABLE_LOG_DEBUG)
-    add_definitions(-DUVHTTP_LOG_LEVEL_DEBUG=1)
-    message(STATUS "Debug log level enabled")
-endif()
-
-if(ENABLE_LOG_TRACE)
-    add_definitions(-DUVHTTP_LOG_LEVEL_TRACE=1)
-    message(STATUS "Trace log level enabled")
-endif()
-
-if(ENABLE_LOG_PERFORMANCE)
-    add_definitions(-DUVHTTP_LOG_PERFORMANCE=1)
-    message(STATUS "Performance logging enabled")
-endif()
-
 # ========== Apply Security Options ==========
 if(ENABLE_HARDENING)
-    add_compile_options(-fstack-protector-strong -D_FORTIFY_SOURCE=2)
     add_link_options(-Wl,-z,relro,-z,now)
-    message(STATUS "Security hardening enabled")
+    message(STATUS "Security hardening enabled (RELRO, BIND_NOW)")
 endif()
 
 if(ENABLE_STACK_PROTECTION)
@@ -436,7 +420,6 @@ add_definitions(-DUVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE=${UVHTTP_LRU_CACHE_BATCH_
 add_definitions(-DUVHTTP_IP_OCTET_MAX_VALUE=${UVHTTP_IP_OCTET_MAX_VALUE})
 
 # ========== Development Mode - Enable Logging ==========
-option(ENABLE_DEV_MODE "Enable development mode with logging" OFF)
 if(ENABLE_DEV_MODE)
     add_definitions(-DUVHTTP_DEV_MODE)
     add_definitions(-DUVHTTP_FEATURE_LOGGING=1)
@@ -470,11 +453,7 @@ else()
     set(UVHTTP_FEATURE_STATIC_FILES_VALUE 0)
 endif()
 
-if(BUILD_WITH_LRU_CACHE)
-    set(UVHTTP_FEATURE_LRU_CACHE_VALUE 1)
-else()
-    set(UVHTTP_FEATURE_LRU_CACHE_VALUE 0)
-endif()
+set(UVHTTP_FEATURE_LRU_CACHE_VALUE ${UVHTTP_FEATURE_STATIC_FILES_VALUE})
 
 if(BUILD_WITH_ROUTER_CACHE)
     set(UVHTTP_FEATURE_ROUTER_CACHE_VALUE 1)
@@ -1053,7 +1032,7 @@ endif()
 # ============================================================================
 # Performance benchmarks
 # ============================================================================
-if(EXISTS ${CMAKE_SOURCE_DIR}/benchmark/benchmark.cmake)
+if(EXISTS ${CMAKE_SOURCE_DIR}/benchmark/benchmark.cmake AND BUILD_BENCHMARKS)
     include(${CMAKE_SOURCE_DIR}/benchmark/benchmark.cmake)
 endif()
 

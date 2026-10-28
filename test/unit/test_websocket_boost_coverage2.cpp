@@ -944,17 +944,13 @@ TEST(WsApplyMaskEdgeTest, ApplyMaskSixBytes) {
 /* ========== uvhttp_ws_connection_free: with all buffers ========== */
 
 /*
- * Test connection_free with recv_buffer, send_buffer, AND fragmented_message
- * all set. This targets all three free paths in connection_free.
+ * Test connection_free with recv_buffer and fragmented_message set. This
+ * targets the extra-buffer free path in connection_free.
  */
 TEST(WsConnectionFreeEdgeTest, ConnectionFree_AllBuffers) {
     uvhttp_ws_connection_t* conn = uvhttp_ws_connection_create(
         0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
-
-    conn->send_buffer = (uint8_t*)uvhttp_alloc(64);
-    ASSERT_NE(conn->send_buffer, nullptr);
-    conn->send_buffer_size = 64;
 
     conn->fragmented_message = (uint8_t*)uvhttp_alloc(32);
     ASSERT_NE(conn->fragmented_message, nullptr);
@@ -976,8 +972,7 @@ TEST(WsConnectionFreeEdgeTest, ConnectionFree_RecvBufferOnly) {
         0, NULL, 1, NULL);
     ASSERT_NE(conn, nullptr);
 
-    /* send_buffer and fragmented_message are NULL by default */
-    EXPECT_EQ(conn->send_buffer, nullptr);
+    /* fragmented_message is NULL by default */
     EXPECT_EQ(conn->fragmented_message, nullptr);
     EXPECT_NE(conn->recv_buffer, nullptr);
 

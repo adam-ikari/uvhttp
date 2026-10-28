@@ -35,13 +35,10 @@ typedef struct uvhttp_static_config {
 
     /* 4-byte aligned fields - medium access frequency */
     int cache_ttl;                /* Cache TTL (seconds) */
-    int max_cache_entries;        /* Maximum cache entries */
+    int max_cache_entries;        /* Maximum entries (0 = built-in default) */
     int sendfile_timeout_ms;      /* sendfile timeout (milliseconds) */
     int sendfile_max_retry;       /* sendfile max retry count */
     int enable_directory_listing; /* Enable directory listing */
-    int enable_etag;              /* Enable ETag */
-    int enable_last_modified;     /* Enable Last-Modified */
-    int enable_sendfile;          /* Enable sendfile zero-copy optimization */
 
     /* String fields - cold path */
     char root_directory[UVHTTP_MAX_FILE_PATH_SIZE];    /* Root directory path */
@@ -263,26 +260,6 @@ double uvhttp_static_get_cache_hit_rate(uvhttp_static_context_t* ctx);
  * @return entryquantity
  */
 int uvhttp_static_cleanup_expired_cache(uvhttp_static_context_t* ctx);
-
-/**
- * EnableCache(ifisDisable)
- *
- * @param ctx Static file
- * @param max_memory memoryUse
- * @param max_entries maximum entries
- * @param ttl CacheTTL(seconds)
- * @return UVHTTP_OKSuccess, othervaluerepresentsFailure
- */
-uvhttp_result_t uvhttp_static_enable_cache(uvhttp_static_context_t* ctx,
-                                           size_t max_memory, int max_entries,
-                                           int ttl);
-
-/**
- * DisableCache
- *
- * @param ctx Static file
- */
-void uvhttp_static_disable_cache(uvhttp_static_context_t* ctx);
 
 /* ========== Static File Middleware Interface ========== */
 
