@@ -134,10 +134,13 @@ jobs:
       - name: Generate coverage report
         run: |
           cd build
-          lcov --capture --directory . --output-file coverage.info
-          lcov --remove coverage.info '/usr/*' --output-file coverage.info
-          lcov --list coverage.info
-          genhtml coverage.info --output-directory coverage-report
+          # lcov 2.x（ubuntu-latest 当前 2.4）把 vendored deps/miniz.c 的 gcov
+          # 计数器不一致当成致命错误。这与本库代码无关，但不能跳过整个报告；
+          # 忽略该错误类，并把 deps 从报告里移除（与 CMake 的 coverage 目标一致）。
+          lcov --capture --directory . --output-file coverage.info --ignore-errors inconsistent
+          lcov --remove coverage.info '/usr/*' '*/deps/*' --output-file coverage.info --ignore-errors inconsistent
+          lcov --list coverage.info --ignore-errors inconsistent
+          genhtml coverage.info --output-directory coverage-report --ignore-errors inconsistent
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v7.0.1
