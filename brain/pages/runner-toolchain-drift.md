@@ -5,7 +5,7 @@ category: project
 status: active
 tags: [ci, cmake, cppcheck, lcov, coverage, runner]
 created: "2026-10-20T16:12:46"
-updated: "2026-10-28T10:17:22"
+updated: "2026-10-28T10:48:51"
 ---
 
 <!-- compiled_truth -->
@@ -85,4 +85,10 @@ CI runner（`ubuntu-latest`）的工具版本不固定。2026-10-20 前后出现
   kind: evidence
   summary: "lcov 2.4-0 本地复核：合成 inconsistent 数据下 lcov --list / genhtml 无 flag 退出 1、加 --ignore-errors inconsistent 退出 0；真实 repo coverage 构建 119/119 测试后，capture/remove/list/genhtml 全链路加 flag 均退出 0，报告中 deps 记录为 0"
   source: "PR #491 验证（lcov 2.4-0）"
+  affects: [runner-toolchain-drift]
+
+- time: 2026-10-28T10:48:51
+  kind: evidence
+  summary: "修复后实测：nightly run 40621049392（workflow_dispatch, main）全绿，test-coverage 通过，覆盖率 20 个源文件 / 行 74.5% / 函数 93.2%，报告无 deps、无错误消息；nightly-281 为 prerelease，v3.0.0 仍为 latest；issue #489 已关闭"
+  source: "PR #491 merge 5a1a347; nightly run 40621049392"
   affects: [runner-toolchain-drift]
