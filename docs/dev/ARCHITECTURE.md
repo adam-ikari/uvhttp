@@ -316,15 +316,21 @@ typedef enum {
 
 ```
 docs/
-├── api/                    # API documentation
-│   └── API_REFERENCE.md
+├── api/                    # Generated API docs + handwritten API reference
+│   ├── API_REFERENCE.md
+│   └── generated/
 ├── dev/                    # Contributor documentation
+│   ├── index.md            # Developer documentation hub
 │   ├── ARCHITECTURE.md     # Architecture design (this document)
-│   ├── DEVELOPER_GUIDE.md  # Developer guide
-│   └── ROADMAP.md          # Roadmap
-└── guide/                  # User guide
-    ├── TUTORIAL.md         # Tutorial
-    └── DEVELOPER_GUIDE.md  # Developer guide
+│   ├── BUILD_MODES.md
+│   ├── CI_CD.md
+│   ├── DEPENDENCIES.md
+│   └── TESTING_STANDARDS.md
+├── guide/                  # User and contributor guides
+│   ├── DEVELOPER_GUIDE.md
+│   ├── TESTING_GUIDE.md
+│   └── TUTORIAL.md
+└── zh/                     # Chinese mirror of the same structure
 ```
 
 ## Version History

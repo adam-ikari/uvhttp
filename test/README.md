@@ -1,188 +1,57 @@
 # 测试目录
 
-本目录包含 UVHTTP 项目的所有测试文件和测试脚本。
+自动化测试全部位于 `test/unit/`，由顶层 CMake 自动发现并注册进 ctest。
+`manual/` 下是手动 server，不属于自动化测试。
 
 ## 目录结构
 
-```
+```text
 test/
-├── certs/                          # TLS 测试证书
-├── cmake_build/                    # CMake 构建测试
-├── config/                         # 测试配置文件和文档
-│   ├── config_invalid.conf         # 无效配置示例
-│   ├── config_test.conf            # 测试配置
-│   ├── config_valid.conf           # 有效配置示例
-│   ├── PERFORMANCE_COMPARISON_REPORT.md # 性能对比综合报告
-│   └── README.md                   # 测试说明文档
-├── performance/                    # 性能测试
-│   ├── performance_allocator.c     # 分配器性能测试
-│   ├── performance_allocator_compare.c # 分配器性能对比
-│   ├── performance_hierarchical_allocator.c # 层次化分配器测试
-│   └── test_bitfield.c             # 位域测试
-├── results/                        # 测试结果
-│   ├── nginx_single_thread_results/ # Nginx 单线程性能测试结果
-│   ├── uvhttp_performance_results/  # UVHTTP 性能测试结果
-│   └── uvhttp_single_thread_results/ # UVHTTP 单线程性能测试结果
-├── scripts/                        # 测试脚本
-│   ├── generate_test_certs.sh      # 生成测试证书脚本
-│   ├── run_performance_tests.sh    # 性能测试脚本
-│   └── run_uvhttp_performance_local.sh # UVHTTP 本地性能测试脚本
-└── unit/                           # 单元测试
-    ├── simple_test.cpp             # Google Test 示例测试
-    ├── test_*.c                    # 其他单元测试文件
-    └── uvhttp_test_framework.h     # 测试框架头文件
+├── unit/       # GoogleTest *.cpp；每个文件编译为独立可执行文件并 add_test
+├── mock/       # libuv_mock.c/.h；文件名匹配 test_*_mock*.cpp 时自动链接
+├── certs/      # TLS 测试证书
+├── scripts/    # 证书等辅助脚本
+├── coverage/   # 覆盖率辅助文件
+└── README.md
 ```
 
-## 单元测试
+不存在 `test/CMakeLists.txt`，也不需要手工登记测试文件。
 
-### 运行单元测试
+## 运行测试
 
 ```bash
-# 运行所有单元测试
-./run_tests.sh
+make build
+make test
 
-# 运行特定单元测试
-cd build
-./uvhttp_unit_tests
+# 单个测试
+ctest --test-dir build -R test_router --output-on-failure
+build/dist/bin/test_router_full_coverage
 
-# 使用 ctest 运行测试
-cd build
-ctest
+# ASan + UBSan
+make verify-memory-safety
 
-# 运行特定测试
-cd build
-ctest -R gtest_example
+# 覆盖率
+make build-coverage && make coverage
 ```
 
-### Google Test 框架
+测试二进制位于 `build/dist/bin/`。完整规范见
+[docs/guide/TESTING_GUIDE.md](../docs/guide/TESTING_GUIDE.md)。
 
-项目使用 Google Test 框架进行单元测试。测试文件使用 `.cpp` 扩展名，使用 gtest 的断言宏。
+## 手动测试工具
 
-```cpp
-TEST(TestSuiteName, TestName) {
-    EXPECT_EQ(expected, actual);
-    EXPECT_STREQ(expected, actual);
-    // 更多断言...
-}
-```
-
-## 手动测试工具（manual/）
-
-这些是**手动工具，不是自动化测试**——长驻 server，需人用 curl/wrk 驱动。
-它们位于 `manual/` 目录，CMake 仅编译（glob `manual/*.c`）、**不注册进
-ctest**，因为 `uv_run(UV_RUN_DEFAULT)` 永不返回。
-
-```bash
-# 编译并运行一个（build/dist/bin/ 下）
-cd build && make test_simple
-./dist/bin/test_simple &
-curl -i http://127.0.0.1:8081/
-```
-
-注意：构建是 `Release`（`NDEBUG`），这些文件里的 `assert()` 全部是 no-op。
-想写真正的断言测试放 `test/unit/*.cpp`（gtest，被 CI 执行）。详见
-`manual/README.md`。
+`manual/*.c` 会被编译，但**不注册进 ctest**：它们运行 `uv_run(UV_RUN_DEFAULT)`
+永不返回，需要人用 curl/wrk 驱动。用法与限制见
+[manual/README.md](../manual/README.md)。
 
 ## 性能测试
 
-### 性能对比报告
-
-完整的性能对比测试报告请查看: [config/PERFORMANCE_COMPARISON_REPORT.md](config/PERFORMANCE_COMPARISON_REPORT.md)
-
-该报告包含以下对比测试：
-- Nginx (多线程) vs UVHTTP
-- Nginx (单线程) vs UVHTTP
-- UVHTTP vs Python HTTP Server
-
-### 运行性能测试
-
-```bash
-# 运行 UVHTTP 性能测试
-bash test/scripts/run_uvhttp_performance_local.sh
-
-# 运行性能测试（包含所有测试）
-bash test/scripts/run_performance_tests.sh
-
-# 运行分配器性能测试
-cd build
-make performance_allocator
-./dist/bin/performance_allocator
-```
-
-## 配置测试
-
-测试配置文件位于 `test/config/` 目录：
-- `config_valid.conf` - 有效的配置示例
-- `config_invalid.conf` - 无效的配置示例
-- `config_test.conf` - 测试配置
-
-## WebSocket 测试
-
-WebSocket 测试页面: `manual/websocket_test.html`
-
-启动 WebSocket 服务器后，在浏览器中打开该页面进行测试。
-
-## TLS 测试
-
-生成测试证书：
-
-```bash
-bash test/scripts/generate_test_certs.sh
-```
-
-测试证书将保存在 `test/certs/` 目录中。
-
-## 测试结果
-
-性能测试结果保存在 `test/results/` 目录：
-- `nginx_single_thread_results/` - Nginx 单线程测试结果
-- `uvhttp_performance_results/` - UVHTTP 性能测试结果
-- `uvhttp_single_thread_results/` - UVHTTP 单线程测试结果
-
-## 清理测试文件
-
-```bash
-# 清理构建文件
-./run_tests.sh -c
-
-# 清理测试结果
-rm -rf test/results/*
-
-# 清理构建目录
-cd build
-make clean
-```
+性能基准不在 `test/` 下。使用 `make bench` 构建 Release 版
+`benchmark_unified`，或走 CI 的同机配对门禁。不要用本机连续多轮数字下结论，
+原因见 [CONTRIBUTING.md](../CONTRIBUTING.md) 的性能测量章节。
 
 ## 注意事项
 
-- 所有性能测试都在本地环境运行
-- 测试端口：Nginx (8888), UVHTTP (8080)
-- 测试工具：wrk
-- 测试配置：4线程, 100并发连接, 30秒持续时间
-- 单元测试使用 Google Test 框架
-- 集成测试和性能测试使用自定义框架
-
-## 测试覆盖率
-
-项目目标覆盖率：80%
-
-生成覆盖率报告：
-
-```bash
-# 启用覆盖率编译
-cd build
-cmake -DENABLE_COVERAGE=ON ..
-make
-
-# 运行测试
-ctest
-
-# 生成覆盖率报告
-lcov --capture --directory . --output-file coverage.info
-genhtml coverage.info --output-directory coverage_html
-```
-
-查看覆盖率报告：
-```bash
-open coverage_html/index.html
-```
+- 新增测试必须放 `test/unit/test_*.cpp`，否则 CI 不会执行。
+- 裁剪构建（WebSocket/HTTPS/static/compression 关闭）下测试仍需能编译，
+  因此要直接 include 自己用到的头文件。
+- 新测试要做变异验证：改坏被测实现时测试必须变红。

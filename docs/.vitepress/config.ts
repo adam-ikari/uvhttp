@@ -86,6 +86,16 @@ export default defineConfig({
           { text: 'Embedded Profile', link: '/embedded-profile' },
           { text: 'Releases', link: '/releases/' },
           {
+            text: 'Developers',
+            items: [
+              { text: 'Developer Hub', link: '/dev/' },
+              { text: 'Developer Guide', link: '/guide/DEVELOPER_GUIDE' },
+              { text: 'Testing Guide', link: '/guide/TESTING_GUIDE' },
+              { text: 'Architecture', link: '/dev/ARCHITECTURE' },
+              { text: 'CI/CD', link: '/dev/CI_CD' }
+            ]
+          },
+          {
             text: 'Download',
             items: [
               { text: 'GitHub', link: 'https://github.com/adam-ikari/uvhttp' },
@@ -134,9 +144,11 @@ export default defineConfig({
               ]
             },
             {
-              text: 'Developer Guide',
+              text: 'Developer',
               items: [
-                { text: 'Developer Guide', link: '/guide/DEVELOPER_GUIDE' }
+                { text: 'Developer Hub', link: '/dev/' },
+                { text: 'Developer Guide', link: '/guide/DEVELOPER_GUIDE' },
+                { text: 'Testing Guide', link: '/guide/TESTING_GUIDE' }
               ]
             },
             {
@@ -153,7 +165,23 @@ export default defineConfig({
               ]
             }
           ],
-          '/api/': apiSidebar
+          '/api/': apiSidebar,
+          '/dev/': [
+            {
+              text: 'Developer Documentation',
+              items: [
+                { text: 'Overview', link: '/dev/' },
+                { text: 'Architecture', link: '/dev/ARCHITECTURE' },
+                { text: 'Build Modes', link: '/dev/BUILD_MODES' },
+                { text: 'CI/CD', link: '/dev/CI_CD' },
+                { text: 'Dependencies', link: '/dev/DEPENDENCIES' },
+                { text: 'Testing Standards', link: '/dev/TESTING_STANDARDS' },
+                { text: 'Testability', link: '/dev/TESTABILITY_GUIDE' },
+                { text: 'Header Include Order', link: '/dev/HEADER_INCLUDE_ORDER' },
+                { text: 'Markdown Style', link: '/dev/MARKDOWN_STYLE_GUIDE' }
+              ]
+            }
+          ]
         },
         
         search: {
@@ -208,6 +236,16 @@ export default defineConfig({
           { text: '性能', link: '/zh/guide/performance' },
           { text: '嵌入式与长期运行', link: '/zh/embedded-profile' },
           { text: '发布记录', link: '/releases/' },
+          {
+            text: '开发者',
+            items: [
+              { text: '开发者文档', link: '/zh/dev/' },
+              { text: '开发者指南', link: '/zh/guide/DEVELOPER_GUIDE' },
+              { text: '测试指南', link: '/zh/guide/TESTING_GUIDE' },
+              { text: '架构设计', link: '/zh/dev/ARCHITECTURE' },
+              { text: 'CI/CD', link: '/zh/dev/CI_CD' }
+            ]
+          },
           { 
             text: '下载', 
             items: [
@@ -257,9 +295,11 @@ export default defineConfig({
               ]
             },
             {
-              text: '开发指南',
+              text: '开发者',
               items: [
-                { text: '开发者指南', link: '/zh/guide/DEVELOPER_GUIDE' }
+                { text: '开发者文档', link: '/zh/dev/' },
+                { text: '开发者指南', link: '/zh/guide/DEVELOPER_GUIDE' },
+                { text: '测试指南', link: '/zh/guide/TESTING_GUIDE' }
               ]
             },
             {
@@ -277,6 +317,22 @@ export default defineConfig({
             }
           ],
           '/zh/api/': apiSidebar,
+          '/zh/dev/': [
+            {
+              text: '开发者文档',
+              items: [
+                { text: '总览', link: '/zh/dev/' },
+                { text: '架构设计', link: '/zh/dev/ARCHITECTURE' },
+                { text: '构建模式', link: '/zh/dev/BUILD_MODES' },
+                { text: 'CI/CD', link: '/zh/dev/CI_CD' },
+                { text: '依赖说明', link: '/zh/dev/DEPENDENCIES' },
+                { text: '测试规范', link: '/zh/dev/TESTING_STANDARDS' },
+                { text: '可测试性', link: '/zh/dev/TESTABILITY_GUIDE' },
+                { text: '头文件包含顺序', link: '/zh/dev/HEADER_INCLUDE_ORDER' },
+                { text: 'Markdown 风格', link: '/zh/dev/MARKDOWN_STYLE_GUIDE' }
+              ]
+            }
+          ]
         },
         
         search: {
