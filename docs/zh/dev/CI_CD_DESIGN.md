@@ -787,7 +787,6 @@ on:
 └─ test-coverage: 覆盖率报告生成
 
 阶段 3: 深度测试
-├─ coverage-report: 覆盖率 HTML 报告
 ├─ test-stress: 压力测试 (5 分钟)
 ├─ performance-full: 完整性能基准
 └─ test-memory: 内存泄漏检测 (ASan)
