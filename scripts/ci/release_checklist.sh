@@ -165,27 +165,46 @@ else: print(('latest' if rs[0].get('isLatest') else ('prerelease' if rs[0].get('
 else  # --gates：转正式前，确认 release 门禁真的因为这个 tag 跑过
     echo "[release 门禁运行记录]"
     tag="v$version"
-    sha="$(git rev-parse --verify "$tag^{commit}" 2>/dev/null || echo "")"
+    # 从远端解析 tag 提交，不用本地 ref：移动 tag 是文档化的恢复路径，本地
+    # 未重新 fetch 时会拿旧 sha 匹配运行记录，把旧 tag 的绿当成新 tag 的绿。
+    # 注解 tag 的 peeled 行（refs/tags/<tag>^{}）才是提交 sha。
+    tag_refs="$(git ls-remote --tags origin "refs/tags/$tag*" 2>/dev/null || true)"
+    sha="$(printf '%s\n' "$tag_refs" | awk -v r="refs/tags/$tag^{}" '$2==r {print $1; exit}')"
     if [ -z "$sha" ]; then
-        bad "本地解析不到 $tag 指向的提交（tag 未打或未 fetch）"
+        sha="$(printf '%s\n' "$tag_refs" | awk -v r="refs/tags/$tag" '$2==r {print $1; exit}')"
+    fi
+    if [ -z "$sha" ]; then
+        bad "解析不到远端 $tag 指向的提交（tag 未打、未 push 或网络不通）"
     else
         # release 事件的运行记录里 head_sha 就是 tag 指向的提交（v2.9.2/v2.9.1
-        # 的运行都如此），所以按 sha 精确匹配，不看标题之类的软证据。
+        # 的运行都如此），head_branch 是 tag 名。两者都要匹配：只看 sha 时，
+        # tag 被移回一个曾经全绿的提交会借旧运行假通过。
         # 只认 event=release：手动 workflow_dispatch 的基准不判红（见
         # perf-regression-gate），拿来当门禁通过等于自欺。
+        # 同一 tag 可能因重新创建 release 产生多条 run，以 createdAt 最新的一条
+        # 为准，旧 run 的失败/取消不再拖累。rerun 不是新 run，而是同一 run 的
+        # 新 attempt（gh run list 只显示最新 attempt 的结论），所以重跑最新 run
+        # 就能把它翻绿。cancelled 视为未通过：取消可能发生在运行已开始变红之后，
+        # 不能拿更早的成功 run 背书。
         for wf in "ci-release-gate.yml|CI - Pre-Release Test Gate" "ci-benchmark.yml|CI - Performance Benchmark"; do
             wf_file="${wf%%|*}"; wf_name="${wf##*|}"
             state=$(gh run list --workflow "$wf_file" --event release --limit 50 \
-                       --json headSha,conclusion 2>/dev/null | python3 -c "import json,sys
-rs=[r for r in json.load(sys.stdin) if r['headSha']=='$sha']
+                       --json headSha,headBranch,conclusion,createdAt 2>/dev/null | python3 -c "import json,sys
+tag='$tag'; sha='$sha'
+rs=[r for r in json.load(sys.stdin)
+    if r['headSha']==sha and r.get('headBranch')==tag]
 if not rs: print('none')
-elif all(r['conclusion']=='success' for r in rs): print('success')
-elif any(str(r['conclusion']) in ('', 'None', 'action_required', 'queued', 'in_progress', 'pending') for r in rs): print('running')
-else: print('not-green')" 2>/dev/null || echo "query-failed")
+else:
+    c=str(max(rs, key=lambda r: r['createdAt'])['conclusion'])
+    if c=='success': print('success')
+    elif c in ('', 'None', 'action_required', 'queued', 'in_progress', 'pending'): print('running')
+    elif c=='cancelled': print('cancelled')
+    else: print('not-green')" 2>/dev/null || echo "query-failed")
             case "$state" in
-                success)     pass "$wf_name：$tag（${sha:0:7}）的 release 运行全绿" ;;
-                running)     bad "$wf_name：$tag 的 release 运行还没结束，等它绿" ;;
-                not-green)   bad "$wf_name：$tag 的 release 运行未通过（gh run list --workflow \"$wf_file\" --event release）" ;;
+                success)     pass "$wf_name：$tag（${sha:0:7}）最新的 release 运行成功" ;;
+                running)     bad "$wf_name：$tag 最新的 release 运行还没结束，等它绿" ;;
+                not-green)   bad "$wf_name：$tag 最新的 release 运行未通过 —— 用 gh run rerun <run-id> 重跑，不要移动 tag" ;;
+                cancelled)   bad "$wf_name：$tag 最新的 release 运行被取消 —— 用 gh run rerun <run-id> 重跑，不要移动 tag" ;;
                 none)        bad "$wf_name：没有 $tag 的 release 事件运行 —— 门禁根本没被触发，禁止转 latest" ;;
                 *)           bad "$wf_name：查询失败（gh 未登录或网络）" ;;
             esac

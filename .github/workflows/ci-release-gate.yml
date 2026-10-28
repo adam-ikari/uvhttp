@@ -34,6 +34,11 @@ permissions:
 jobs:
   # ========== 编译 ==========
   ubuntu-build:
+    # Nightly also publishes a prerelease; it is not a release candidate, and
+    # ci-nightly.yml already covers it. Matches the benchmark workflow's guard
+    # (in practice GITHUB_TOKEN-created nightly releases never fire workflows;
+    # this covers a user-token publish).
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, 'nightly')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     outputs:
@@ -119,6 +124,7 @@ jobs:
 
   # ========== 各配置矩阵（编译 + 测试） ==========
   build-matrix:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, 'nightly')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -221,7 +227,10 @@ jobs:
     needs: [ubuntu-build, ubuntu-test-fast, build-matrix, asan-gate]
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: always()
+    # always() keeps the summary on gate failures; the release guard keeps a
+    # nightly release from running any jobs (the run itself still exists, with
+    # a 'skipped' conclusion — see ubuntu-build).
+    if: always() && (github.event_name != 'release' || !startsWith(github.event.release.tag_name, 'nightly'))
 
     steps:
       - name: Generate summary

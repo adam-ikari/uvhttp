@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [release, versioning, api, roadmap-v2.10]
 created: "2026-10-18T07:41:03"
-updated: "2026-10-20T17:16:29"
+updated: "2026-10-27T14:17:31"
 ---
 
 <!-- compiled_truth -->
@@ -111,3 +111,9 @@ v3.0.0 已发布并转为 latest，`--post` 6/6 通过（线上 `versions.json` 
   summary: "v3.0.0 正式发布：tag 重打至 8376f1b（含 CI/构建修复，无 API 变化）；release 门禁 9/9、benchmark 对 v2.9.2 全 PASS、--gates 5/5、--post 6/6，已转 latest"
   source: "GitHub Release v3.0.0；runs 39460475038 / 39460475053"
   affects: [release-v300, runner-toolchain-drift, perf-regression-gate]
+
+- time: 2026-10-27T14:17:31
+  kind: note
+  summary: "发布正文修正：PR 计数 35→37，#485/#486 在 tag 内但正文漏记；补 CMake 4 构建修复（CMAKE_POLICY_VERSION_MINIMUM）与 published 触发器修正两条。日期口径写入 release-strategy：仓库内（CHANGELOG/versions.json/版本历史）记打 tag 日期 2026-10-18，GitHub publishedAt 是转 latest 日期 2026-10-20，两者不必一致。"
+  source: "v3.0.0 发布后评审（本次 PR）"
+  affects: [release-v300]
