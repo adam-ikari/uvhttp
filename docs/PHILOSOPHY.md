@@ -218,17 +218,21 @@ Compile-time macros control every optional feature (`UVHTTP_FEATURE_COMPRESSION`
 
 ---
 
-## 8. C Standard: C11
+## 8. C Standard: C99
 
-UVHTTP builds with C11, not C99: `CMakeLists.txt` sets `CMAKE_C_STANDARD 11`. The code relies on C11 facilities such as `_Static_assert`, which C99 lacks.
+UVHTTP builds as C99: `CMakeLists.txt` sets `CMAKE_C_STANDARD 99` with
+extensions off. Source files use C99 features only. `UVHTTP_STATIC_ASSERT` maps
+to `_Static_assert` when the compiler provides it and otherwise falls back to a
+negative-array-size check, so the same code builds on either language mode.
 
 **Chosen:**
-- Portability: GCC 4.8+ and Clang 3.3+ support the C11 features the code uses.
-- Embedded toolchains: cross-compilers in this space support C11.
-- Least surprise: C11 behavior is known.
+- Embedded toolchains: many cross-compilers support C99 but lag on C11.
+- Portability: GCC and Clang in C99 mode are ubiquitous.
+- Least surprise: C99 behavior is known.
 
 **Not used:**
-- Optional C11/C17 features (anonymous structs, generic expressions): they raise compiler requirements for little gain.
+- C11/C17 features (anonymous structs, generic expressions, required
+  `_Static_assert`): they raise compiler requirements for little gain.
 - C23 features: most embedded compilers do not support them yet.
 
 ---

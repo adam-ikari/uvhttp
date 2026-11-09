@@ -28,10 +28,17 @@
 
 /* ========== Compile-time validation ========== */
 /* Validate structure size to ensure memory layout optimization is not broken */
-#ifdef __cplusplus
+#if defined(__cplusplus) && __cplusplus >= 201103L
 #    define UVHTTP_STATIC_ASSERT(cond, msg) static_assert(cond, msg)
-#else
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 #    define UVHTTP_STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
+#else
+#    define UVHTTP_STATIC_ASSERT_CAT_(a, b) a##b
+#    define UVHTTP_STATIC_ASSERT_CAT(a, b) UVHTTP_STATIC_ASSERT_CAT_(a, b)
+#    define UVHTTP_STATIC_ASSERT(cond, msg)                              \
+        typedef char UVHTTP_STATIC_ASSERT_CAT(uvhttp_static_assert_,     \
+                                              __COUNTER__)[(cond) ? 1    \
+                                                                  : -1]
 #endif
 
 /* ========== Structure size validation ========== */

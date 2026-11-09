@@ -152,7 +152,7 @@ export LD_LIBRARY_PATH=../build/dist/lib:$LD_LIBRARY_PATH
 ### 前置依赖
 
 - **Just 命令运行器**：可选，偏好 `just` 的开发者（`cargo install just` 或参见 [just.systems](https://just.systems））
-- **C 编译器**：GCC 4.8+ 或 Clang 3.4+，支持 C11
+- **C 编译器**：GCC 4.8+ 或 Clang 3.4+，支持 C99
 - **CMake**：3.10 或更高版本
 - **构建工具**：make、git
 - **可选**：mimalloc 用于提升内存性能
@@ -423,7 +423,7 @@ ab -n 10000 -c 100 http://localhost:8080/
 欢迎贡献！请遵循以下指南：
 
 1. 阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 了解贡献规范
-2. 遵循代码风格：C11 标准，4 空格缩进，K&R 大括号
+2. 遵循代码风格：C99 标准，4 空格缩进，K&R 大括号
 3. 确保所有测试通过：`make test`
 4. 零编译警告：已启用 `-Werror`
 5. 为新功能添加测试
