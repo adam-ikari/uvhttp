@@ -26,6 +26,7 @@ static app_context_t* g_app_context = NULL;
 
 // 处理 GET /api/info - 返回服务器信息（使用统一响应处理）
 uvhttp_result_t info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;
     // 创建 JSON 响应
     cJSON* info = cJSON_CreateObject();
     cJSON_AddStringToObject(info, "server", "UVHTTP");
@@ -56,6 +57,7 @@ uvhttp_result_t info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 // 主页处理器 - 返回主页（使用统一响应处理）
 uvhttp_result_t home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;
     const char* html_content = 
         "<!DOCTYPE html>"
         "<html>"
@@ -100,6 +102,7 @@ uvhttp_result_t home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 // JSON 响应演示
 uvhttp_result_t demo_json_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;
     const char* json_demo = 
         "{"
         "  \"message\": \"这是一个 JSON 响应演示\","
@@ -128,6 +131,7 @@ uvhttp_result_t demo_json_handler(uvhttp_request_t* req, uvhttp_response_t* res)
 
 // HTML 响应演示
 uvhttp_result_t demo_html_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;
     const char* html_demo = 
         "<!DOCTYPE html>"
         "<html><head><title>HTML 演示</title></head>"
@@ -146,6 +150,7 @@ uvhttp_result_t demo_html_handler(uvhttp_request_t* req, uvhttp_response_t* res)
 
 // 文本响应演示
 uvhttp_result_t demo_text_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;
     const char* text_demo_template = 
         "这是一个纯文本响应演示。\n"
         "Content-Type 由使用者设置为 text/plain。\n"
@@ -168,6 +173,7 @@ uvhttp_result_t demo_text_handler(uvhttp_request_t* req, uvhttp_response_t* res)
 
 // 错误响应演示
 uvhttp_result_t demo_error_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;
     // 使用统一的错误响应函数
     uvhttp_error_t result = uvhttp_send_error_response(res, 400, "演示错误", "这是一个演示错误响应");
     return (result == UVHTTP_OK) ? UVHTTP_OK : UVHTTP_ERROR_RESPONSE_SEND;

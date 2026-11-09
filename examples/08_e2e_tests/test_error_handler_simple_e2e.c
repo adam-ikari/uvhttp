@@ -1,6 +1,6 @@
 /*
- * Error Handler E2E Test - Custom error handler tests
- * 自定义错误处理器的端到端测试
+ * Error status E2E test - HTTP 4xx/5xx responses
+ * HTTP 错误状态码端到端测试
  */
 
 #include "uvhttp_error_handler.h"
@@ -17,7 +17,6 @@ typedef struct {
     uvhttp_server_t* server;
     uvhttp_router_t* router;
     uv_loop_t* loop;
-    int custom_error_count;
 } app_context_t;
 
 /* Signal handler */
@@ -26,20 +25,11 @@ static void signal_handler(int sig) {
     exit(0);
 }
 
-/* ==================== Custom Error Handler ==================== */
-
-static void custom_error_handler(uvhttp_error_t error, const char* message,
-                                 void* user_data) {
-    app_context_t* app = (app_context_t*)user_data;
-    app->custom_error_count++;
-
-    printf("[Custom Error Handler] Error: %d, Message: %s\n", error, message);
-}
-
 /* ==================== Request Handlers ==================== */
 
 static int success_handler(uvhttp_request_t* request,
                            uvhttp_response_t* response) {
+    (void)request;
     const char* body = "Success response";
 
     uvhttp_response_set_status(response, 200);
@@ -53,6 +43,7 @@ static int success_handler(uvhttp_request_t* request,
 static int trigger_400_handler(uvhttp_request_t* request,
                                uvhttp_response_t* response) {
     /* Trigger a bad request error */
+    (void)request;
     const char* body = "Bad request - invalid input";
 
     uvhttp_response_set_status(response, 400);
@@ -66,6 +57,7 @@ static int trigger_400_handler(uvhttp_request_t* request,
 static int trigger_401_handler(uvhttp_request_t* request,
                                uvhttp_response_t* response) {
     /* Trigger an unauthorized error */
+    (void)request;
     const char* body = "Unauthorized - authentication required";
 
     uvhttp_response_set_status(response, 401);
@@ -79,6 +71,7 @@ static int trigger_401_handler(uvhttp_request_t* request,
 
 static int trigger_403_handler(uvhttp_request_t* request,
                                uvhttp_response_t* response) {
+    (void)request;
     /* Trigger a forbidden error */
     const char* body = "Forbidden - insufficient permissions";
 
@@ -92,32 +85,13 @@ static int trigger_403_handler(uvhttp_request_t* request,
 
 static int trigger_500_handler(uvhttp_request_t* request,
                                uvhttp_response_t* response) {
+    (void)request;
     /* Trigger an internal server error */
     const char* body = "Internal server error - something went wrong";
 
     uvhttp_response_set_status(response, 500);
     uvhttp_response_set_header(response, "Content-Type", "text/plain");
     uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
-
-    return 0;
-}
-
-static int error_stats_handler(uvhttp_request_t* request,
-                               uvhttp_response_t* response) {
-    app_context_t* app = (app_context_t*)((uv_loop_t*)request->client->data);
-
-    char stats[256];
-    snprintf(stats, sizeof(stats),
-             "Error Handler Statistics:\n"
-             "Custom Errors Handled: %d",
-             app->custom_error_count);
-
-    size_t len = strlen(stats);
-
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, stats, len);
     uvhttp_response_send(response);
 
     return 0;
@@ -171,7 +145,6 @@ int main(int argc, char** argv) {
     app_context_t app;
     memset(&app, 0, sizeof(app));
     app.loop = loop;
-    app.custom_error_count = 0;
 
     /* Create server */
     uvhttp_error_t result = uvhttp_server_new(loop, &app.server);
@@ -190,9 +163,6 @@ int main(int argc, char** argv) {
 
     app.server->router = app.router;
 
-    /* Set custom error handler */
-    printf("\nSetting custom error handler...\n");
-
     /* Add routes */
     printf("\nRegistering routes...\n");
     printf("  ✓ GET /success\n");
@@ -200,14 +170,12 @@ int main(int argc, char** argv) {
     printf("  ✓ GET /error/401\n");
     printf("  ✓ GET /error/403\n");
     printf("  ✓ GET /error/500\n");
-    printf("  ✓ GET /error/stats\n");
 
     uvhttp_router_add_route(app.router, "/success", success_handler);
     uvhttp_router_add_route(app.router, "/error/400", trigger_400_handler);
     uvhttp_router_add_route(app.router, "/error/401", trigger_401_handler);
     uvhttp_router_add_route(app.router, "/error/403", trigger_403_handler);
     uvhttp_router_add_route(app.router, "/error/500", trigger_500_handler);
-    uvhttp_router_add_route(app.router, "/error/stats", error_stats_handler);
 
     /* Start server */
     printf("\nStarting server on port %s...\n", port);
@@ -263,13 +231,6 @@ int main(int argc, char** argv) {
     assert(strstr(response, "Internal server error") != NULL);
     assert(strstr(response, "500") != NULL);
     printf("✓ 500 Internal Server Error test passed\n");
-
-    /* Test error handler statistics */
-    printf("\n=== Testing Error Handler Statistics ===\n");
-    send_http_request("GET", "/error/stats", response, sizeof(response));
-    assert(strstr(response, "Error Handler Statistics") != NULL);
-    assert(strstr(response, "Custom Errors Handled") != NULL);
-    printf("✓ Error handler statistics test passed\n");
 
     printf("\n========================================\n");
     printf("  All tests passed!\n");

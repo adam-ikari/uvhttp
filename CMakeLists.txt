@@ -687,6 +687,7 @@ list(FILTER GTEST_TEST_FILES EXCLUDE REGEX ".*test_.*_libuv_fail\\.cpp")
 
 # Add test helper files
 set(TEST_HELPER_FILES test/unit/test_time_mock.cpp test/unit/test_loop_helper.cpp)
+set(UVHTTP_ENABLED_TEST_TARGETS "")
 
 foreach(test_file ${GTEST_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
@@ -700,6 +701,15 @@ foreach(test_file ${GTEST_TEST_FILES})
     endif()
 # Server WebSocket API tests require WebSocket support
     if(${test_name} STREQUAL "test_server_simple_api_coverage")
+        if(NOT BUILD_WITH_WEBSOCKET)
+            message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
+            continue()
+        endif()
+    endif()
+
+    # Protocol-upgrade tests assume the WebSocket upgrade registered by
+    # uvhttp_server_new, which only happens when WebSocket support is compiled in.
+    if(${test_name} STREQUAL "test_protocol_upgrade_boost_coverage")
         if(NOT BUILD_WITH_WEBSOCKET)
             message(WARNING "Test ${test_name} requires WebSocket support, skipping...")
             continue()
@@ -737,6 +747,8 @@ foreach(test_file ${GTEST_TEST_FILES})
             continue()
         endif()
     endif()
+
+    list(APPEND UVHTTP_ENABLED_TEST_TARGETS ${test_name})
 
     # All test files are C++ files
     add_executable(${test_name} ${test_file} ${SOURCES})
@@ -889,14 +901,10 @@ endif()
 enable_testing()
 
 # Add unit tests to CTest
-foreach(test_file ${GTEST_TEST_FILES})
-    get_filename_component(test_name ${test_file} NAME_WE)
-
-    # Skip compression tests when compression is disabled
-    if(${test_name} MATCHES ".*compression.*" AND NOT BUILD_WITH_COMPRESSION)
-        continue()
-    endif()
-
+# Register only the tests whose targets were actually created above; feature-
+# cropped builds skip some targets, and registering a missing executable makes
+# ctest report "Not Run" (a failure) for tests that cannot exist in that config.
+foreach(test_name ${UVHTTP_ENABLED_TEST_TARGETS})
     add_test(NAME ${test_name} COMMAND ${CMAKE_BINARY_DIR}/dist/bin/${test_name})
 endforeach()
 

@@ -27,6 +27,7 @@ static void signal_handler(int sig) {
 
 static int success_handler(uvhttp_request_t* request,
                            uvhttp_response_t* response) {
+    (void)request;
     const char* body = "Success";
 
     uvhttp_response_set_status(response, 200);
@@ -39,6 +40,7 @@ static int success_handler(uvhttp_request_t* request,
 
 static int not_found_handler(uvhttp_request_t* request,
                              uvhttp_response_t* response) {
+    (void)request;
     const char* body = "Resource not found";
 
     uvhttp_response_set_status(response, 404);
@@ -51,6 +53,7 @@ static int not_found_handler(uvhttp_request_t* request,
 
 static int internal_error_handler(uvhttp_request_t* request,
                                   uvhttp_response_t* response) {
+    (void)request;
     const char* body = "Internal server error";
 
     uvhttp_response_set_status(response, 500);
