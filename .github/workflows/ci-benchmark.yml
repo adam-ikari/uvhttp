@@ -388,7 +388,7 @@ jobs:
         # A red gate must still ship its evidence: the paired CSVs are what the
         # verdict table was computed from.
         if: always()
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: benchmark-results-${{ github.run_id }}
           path: |
