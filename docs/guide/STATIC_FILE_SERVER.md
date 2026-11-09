@@ -2,16 +2,16 @@
 
 ## Overview
 
-UVHTTP's static file server serves static files with automatic MIME type detection, file caching, conditional request support, and related features.
+The static file server serves files from disk with MIME type detection, caching, and conditional request support.
 
 ## Design Principles
 
 ### Application Layer Implementation
-Static file routing is implemented by the application layer, not built into the framework. This follows UVHTTP's "Focus on Core" principle:
+The application layer routes static files; the framework does not. That follows UVHTTP's "Focus on Core" principle:
 
-- **Framework Core**: `uvhttp_static_handle_request()` handles individual static file requests
-- **Application Layer**: responsible for routing configuration, path mapping, context passing
-- **Flexibility**: the application controls static file service routing strategies
+- `uvhttp_static_handle_request()` handles one static file request
+- Your code owns routing, path mapping, and context passing
+- You choose how static file requests are routed
 
 ### Recommended Implementation
 ```c
@@ -32,30 +32,30 @@ uvhttp_router_add_route(router, "/*", static_file_handler);  // Fallback route
 ```
 
 ### Why Not Built-in?
-- Avoids framework bloat
-- Keeps application layer flexibility and control
-- Follows the "Less is More" minimalist principle
+- The framework stays small
+- The application keeps control
+- It follows the "Less is More" principle
 
 ## Core Features
 
 ### Performance Optimization
-- **LRU Cache System**: in-memory cache reduces disk I/O
-- **Zero-Copy Optimization**: sendfile-based file transfer
-- **Connection Reuse**: libuv event-driven architecture
-- **Compression Support**: gzip/deflate compression interface
+- An in-memory LRU cache cuts disk I/O
+- sendfile moves files without a copy
+- libuv's event loop keeps connections reusable
+- A gzip/deflate interface handles compression
 
 ### Security Features
-- **Path Safety Validation**: prevents directory traversal attacks
-- **File Type Checking**: configurable file type whitelist
-- **Access Control**: path-based access restriction
-- **Resource Limits**: guards against large-file DoS
+- Path validation blocks directory traversal
+- A configurable whitelist sets which file types are served
+- Access can be restricted by path
+- Size limits guard against large-file DoS
 
 ### Functional Features
-- **Automatic MIME Type Detection**: common file types
-- **Conditional Requests**: ETag and Last-Modified support
-- **Directory Listing**: configurable directory browsing
-- **Custom Headers**: add custom HTTP headers
-- **Error Handling**: error pages and logging
+- MIME types are detected for common file types
+- ETag and Last-Modified drive conditional requests
+- Directory listing can be turned on
+- Custom HTTP headers can be added
+- Error pages and logging are available
 
 ## Quick Start
 
@@ -64,10 +64,10 @@ uvhttp_router_add_route(router, "/*", static_file_handler);  // Fallback route
 See `examples/04_static_files/static_file_server.c` for a complete example of static file routing.
 
 ### Key Points
-- Use `uvhttp_router_add_route()` to add static file routes
-- Create wrapper functions to call `uvhttp_static_handle_request()`
+- Add static file routes with `uvhttp_router_add_route()`
+- Call `uvhttp_static_handle_request()` from a wrapper handler
 - Pass application context through `server->context` or `loop->data`
-- Use wildcard routes to handle multiple static file paths
+- Use a wildcard route to cover many static file paths
 
 ## API Reference
 
@@ -77,24 +77,24 @@ For detailed API documentation, see:
 
 ## Best Practices
 
-1. **Route Configuration**
+1. Route configuration
    - Use specific routes when possible (e.g., `/static/*`)
    - Place wildcard routes last to avoid blocking other routes
    - Consider separating static and dynamic content
 
-2. **Security**
+2. Security
    - Always validate file paths
    - Configure file size limits
    - Use proper directory permissions
 
-3. **Performance**
+3. Performance
    - Enable LRU cache for frequently accessed files
    - Use appropriate cache TTL values
    - Consider CDN for large-scale deployments
 
 ## Cache Prewarming Strategies
 
-UVHTTP provides cache prewarming APIs so the application layer can implement strategies for its own use cases. The framework provides the infrastructure; the application decides the strategy.
+The library exposes prewarming APIs; the application decides the strategy.
 
 ### Available Prewarming APIs
 
@@ -311,25 +311,25 @@ void print_cache_stats(uvhttp_static_context_t* ctx) {
 
 ### Best Practices for Prewarming
 
-1. **Start simple**: begin with directory-based prewarming before complex strategies
-2. **Watch memory**: track cache usage to avoid excess memory consumption
-3. **Prioritize**: set higher priorities for frequently accessed files
-4. **Be selective**: don't prewarm everything — focus on critical resources
-5. **Profile**: use cache statistics to find hot files and tune the strategy
+1. Start simple: begin with directory-based prewarming before complex strategies
+2. Watch memory: track cache usage so it does not grow without bound
+3. Prioritize: set higher priorities for frequently accessed files
+4. Be selective: prewarm critical resources, not everything
+5. Profile: use cache statistics to find hot files and tune the strategy
 
 ### When to Use Prewarming
 
-- **Production deployment**: preload critical assets before accepting traffic
-- **Zero-downtime deployments**: warm new instances before routing traffic
-- **High-traffic events**: prepare cache for expected spikes
-- **Performance tuning**: optimize based on access patterns
+- Production deployment: preload critical assets before accepting traffic
+- Zero-downtime deployments: warm new instances before routing traffic
+- High-traffic events: prepare the cache for expected spikes
+- Performance tuning: tune based on access patterns
 
 ### When NOT to Use Prewarming
 
-- **Development**: unnecessary during development
-- **Small-scale apps**: cache may not help
-- **Dynamically generated content**: static cache won't help
-- **Memory-constrained environments**: may cause memory pressure
+- Development: unnecessary during development
+- Small-scale apps: the cache may not help
+- Dynamically generated content: a static cache won't help
+- Memory-constrained environments: may cause memory pressure
 
 ## See Also
 

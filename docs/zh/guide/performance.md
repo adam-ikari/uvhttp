@@ -5,7 +5,7 @@ description: UVHTTP 性能基准——GitHub CI runner 上约 139K RPS、JSON �
 
 # 性能
 
-UVHTTP 专为高性能与低延迟而设计。本文档提供性能指标与优化建议。
+这一页记录两组测量：CI runner 上的权威基线，以及本机 wrk 测出的开发参考。后面是复现命令、优化手段和监控方式。脱离测量条件，这些数字没有可比性。
 
 ## 性能指标
 
@@ -56,7 +56,7 @@ UVHTTP 专为高性能与低延迟而设计。本文档提供性能指标与优�
 - 内存分配器：系统分配器
 - 路由缓存：仅哈希表（热路径缓存已移除）
 
-**注意**：生产环境性能测试请使用 Release 模式：
+**注意**：生产环境的测量要用 Release 构建。Debug 构建带着断言、优化关闭，测出来的数不能拿来比较：
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=OFF .
 cmake --build . -j$(nproc) --target test_performance_e2e
@@ -66,7 +66,7 @@ wrk -t4 -c100 -d10s http://127.0.0.1:18090/simple
 
 ### 内存安全验证
 
-没有正确性，性能便毫无意义。完整的 119 项测试套件在任何性能工作被视为完成之前，都必须在两种 sanitizer 下验证通过：
+性能数字只在测试全绿时才算数。119 项测试必须在两种 sanitizer 下各跑一遍，才谈得上性能优化：
 
 ```bash
 # AddressSanitizer（泄漏、use-after-free、溢出）
@@ -83,7 +83,7 @@ cmake --build build_ubsan -j$(nproc) && (cd build_ubsan && ctest -j4)
 - **并发范围**：10-1000 并发连接（已测试）
 - **RPS 波动**：本地所有并发级别下 < 5%；CI 单次运行内 CV 0.9–2.6%
 - **内存占用**：稳定，未检测到泄漏（无 CLOSE_WAIT 连接）
-- **CPU 占用**：高效，随负载扩展
+- **CPU 占用**：随负载增长
 - **Socket 错误**：本地所有测试级别零错误；CI 上 1000 连接过载时客户端出现读超时
 
 ### 性能改进（v2.3.1）
@@ -116,7 +116,7 @@ cmake --build build_ubsan -j$(nproc) && (cd build_ubsan && ctest -j4)
 
 ### 2. 智能缓存
 
-带缓存预热的 LRU 缓存：
+LRU 缓存可以在启动时预热：
 
 ```c
 // 启动时预热缓存
@@ -138,7 +138,7 @@ Keep-Alive 连接降低连接开销：
 
 ### 4. 快速哈希
 
-集成 xxHash 实现超快速哈希运算：
+路由和缓存内部用 xxHash 算哈希值：
 
 ```c
 // 内部用于路由和缓存
@@ -151,7 +151,7 @@ Keep-Alive 连接降低连接开销：
 
 ### 1. 启用 mimalloc
 
-使用 mimalloc 获得更好的内存分配性能：
+换分配器只需要打开一个构建选项：
 
 ```bash
 cmake -DBUILD_WITH_MIMALLOC=ON ..
@@ -161,7 +161,7 @@ cmake -DBUILD_WITH_MIMALLOC=ON ..
 
 ### 2. 大文件使用零拷贝
 
-要服务大文件，请用普通 C 处理函数注册静态文件模块：
+静态文件服务不在路由里内建，要自己写一个处理函数把它挂上去：
 
 ```c
 int static_file_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
@@ -173,7 +173,7 @@ uvhttp_router_add_route(router, "/static/*", static_file_handler);
 
 ### 3. 预热缓存
 
-预热频繁访问的文件：
+把热点文件先读进缓存，第一个请求就不用等磁盘：
 
 ```c
 uvhttp_static_prewarm_cache(ctx, "/static/index.html");
@@ -182,7 +182,7 @@ uvhttp_static_prewarm_cache(ctx, "/static/css/style.css");
 
 ### 4. 优化路由
 
-使用具体路由而非通配符：
+路由写具体路径，通配符留给确实需要兜底的地方。前缀匹配下，通配符更慢：
 
 ```c
 // 推荐：具体路由
@@ -207,7 +207,7 @@ config->connection_timeout = 60; // 秒
 
 ## 性能测试
 
-运行性能测试：
+先起 benchmark_unified，再用 wrk 打，结束后把进程杀掉。中间的 sleep 是留给监听端口起来的时间：
 
 ```bash
 # 启动测试服务器
@@ -248,7 +248,7 @@ size_t active_connections = server->active_connections;
 
 ### 外部工具
 
-使用标准工具进行监控：
+系统里现成的几个工具就能看：
 
 ```bash
 # CPU 使用率
@@ -265,7 +265,7 @@ netstat -s
 
 ### 编译器优化
 
-启用编译器优化：
+Debug 构建默认不做优化，测吞吐前先换成 Release：
 
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release ..
@@ -273,7 +273,7 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 
 ### 系统配置
 
-优化系统设置：
+文件描述符上限和 TCP 队列长度是两个常调的参数：
 
 ```bash
 # 提高文件描述符限制

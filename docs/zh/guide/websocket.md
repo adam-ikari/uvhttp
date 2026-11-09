@@ -2,13 +2,13 @@
 
 ## 概述
 
-UVHTTP 提供了完整的 WebSocket 支持，允许你轻松实现实时双向通信。WebSocket 协议建立在 HTTP 协议之上，通过一个握手阶段从 HTTP 升级到 WebSocket。
+WebSocket 从 HTTP 升级而来：客户端发一个带 Upgrade 头的请求，服务器回升级成功的响应，之后同一条连接双向传消息。UVHTTP 把握手、帧解析和回调分发都放在库里，应用只需要填几个回调。
 
 ## WebSocket 工作原理
 
 ### 握手过程
 
-1. 客户端发起 HTTP 请求，包含特殊的头部：
+1. 客户端发起 HTTP 请求，带上升级所需的头部：
    ```
    Upgrade: websocket
    Connection: Upgrade
@@ -16,7 +16,7 @@ UVHTTP 提供了完整的 WebSocket 支持，允许你轻松实现实时双向�
    Sec-WebSocket-Version: 13
    ```
 
-2. 服务器响应升级请求：
+2. 服务器接受升级，回切换协议的状态码和计算出的 Sec-WebSocket-Accept：
    ```
    HTTP/1.1 101 Switching Protocols
    Upgrade: websocket
@@ -24,11 +24,13 @@ UVHTTP 提供了完整的 WebSocket 支持，允许你轻松实现实时双向�
    Sec-WebSocket-Accept: <计算后的字符串>
    ```
 
-3. 连接建立后，双方可以双向发送消息
+3. 握手完成后，双方在同一个连接上双向发送消息
 
 ## 基本使用
 
 ### 创建 WebSocket 服务器
+
+注册处理器时把路径一起给出。on_message 负责收消息并回写，on_connect 的返回值决定接受还是拒绝。
 
 ```c
 #include "uvhttp.h"
@@ -103,7 +105,7 @@ int main() {
 
 ## WebSocket 消息类型
 
-WebSocket 支持多种消息类型（opcode）：
+opcode 决定这一帧是什么内容：
 
 - `0x0`: Continuation Frame（连续帧）
 - `0x1`: Text Frame（文本帧）
@@ -113,6 +115,8 @@ WebSocket 支持多种消息类型（opcode）：
 - `0xA`: Pong Frame（心跳响应帧）
 
 ### 发送不同类型的消息
+
+文本和二进制都走同一个发送接口，ping 和 close 各有专用接口。
 
 ```c
 // 发送文本消息
@@ -132,7 +136,7 @@ uvhttp_server_ws_close(ws_conn, 1000, "正常关闭");
 
 ## 应用层认证
 
-由于认证功能应该在应用层实现，你可以在 `on_connect` 回调中接受或拒绝连接。注意 `on_connect` 只接收连接对象——原始 HTTP 请求头（如 `Authorization`）在此不可访问。基于请求头的认证必须在 WebSocket 升级完成前、于 HTTP 层进行：
+认证放在应用层。`on_connect` 只拿到连接对象，看不到原始 HTTP 请求头，`Authorization` 这类信息在这里取不到。要按请求头判断，就在升级前于 HTTP 处理器或中间件里校验，再让 `on_connect` 决定收不收：
 
 ```c
 int on_connect(uvhttp_ws_connection_t* ws_conn) {
@@ -147,6 +151,8 @@ int on_connect(uvhttp_ws_connection_t* ws_conn) {
 ## 最佳实践
 
 ### 1. 连接管理
+
+广播和清理都要用到连接表，自己维护一份。数组满了就拒绝新连接，别让它继续长：
 
 ```c
 // 维护活跃连接列表
@@ -191,6 +197,8 @@ void broadcast_message(const char* message, size_t len) {
 
 ### 2. 心跳检测
 
+定时发 ping，两端都知道连接还活着，中间设备也不容易把空闲连接掐掉：
+
 ```c
 // 定期发送 Ping
 void heartbeat_timer_callback(uv_timer_t* handle) {
@@ -218,6 +226,8 @@ int main() {
 
 ### 3. 消息大小限制
 
+在 on_message 里先看长度，超限就关连接并返回错误码，别把内存喂爆：
+
 ```c
 #define MAX_MESSAGE_SIZE (1024 * 1024)  // 1MB
 
@@ -242,6 +252,8 @@ int on_message(uvhttp_ws_connection_t* ws_conn,
 ```
 
 ### 4. 错误处理
+
+关闭码分开处理：正常关闭记一笔，协议错误和数据类型不支持各自记日志，其余交给默认分支：
 
 ```c
 int on_error(uvhttp_ws_connection_t* ws_conn, 
@@ -271,6 +283,8 @@ int on_error(uvhttp_ws_connection_t* ws_conn,
 ```
 
 ## 客户端示例
+
+两个最小客户端，用来验证服务器行为。浏览器里直接用 WebSocket 对象，Python 侧需要 websockets 库。
 
 ### JavaScript 客户端
 
@@ -318,6 +332,8 @@ asyncio.run(websocket_client())
 
 ### curl 测试
 
+这个场景 curl 不好用，拿 websocat 连上去，敲一行发一行：
+
 ```bash
 # 使用 websocat 测试 WebSocket 连接
 websocat ws://localhost:8080/ws
@@ -354,6 +370,6 @@ A: 客户端实现自动重连逻辑，服务器端维护连接状态。
 ## 相关资源
 
 - [WebSocket 协议规范](https://tools.ietf.org/html/rfc6455)
-- [WebSocket API 参考](../../api/API_REFERENCE.md#websocket)
+- [WebSocket API 参考](../../api/API_REFERENCE.md#websocket-700s)
 - [WebSocket 示例代码](https://github.com/adam-ikari/uvhttp/tree/main/examples/05_websocket)
 - 最佳实践

@@ -2,6 +2,15 @@
 slug: architecture
 title: System architecture
 role: system architecture
+updated: "2026-11-09T17:50:49"
+---
+
+# System architecture
+
+---
+slug: architecture
+title: System architecture
+role: system architecture
 updated: "2026-08-21T03:20:06"
 ---
 
@@ -66,5 +75,5 @@ graph TD
 - **零全局变量**：所有状态通过 libuv handle->data 指针传递，支持多实例
 - **编译时裁剪**：未使用的功能不编译，不增加 ROM/RAM 占用
 - **缓存行对齐**：热路径结构体（request/response/connection）按 64 字节对齐，避免伪共享
-- **C99 兼容**：最低 C99 标准，实际构建使用 C11，嵌入式编译器兼容
+- **C99 构建**：`CMAKE_C_STANDARD 99`（关闭编译器扩展）；重复前向 typedef 由 `-Wno-typedef-redefinition` 兼容，`UVHTTP_STATIC_ASSERT` 带 C99 回退
 - **零拷贝路径**：大文件通过 sendfile 直接发送，不经过用户态缓冲

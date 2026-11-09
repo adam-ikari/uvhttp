@@ -1,16 +1,16 @@
 # 在 CMake 项目中使用 uvhttp
 
-本指南介绍如何将 uvhttp 作为静态库依赖集成到 CMake 项目中。
+uvhttp 以静态库形式接入 CMake 工程。下面几种方式里，add_subdirectory 最省事。
 
 ## 快速开始：add_subdirectory
 
-最简单的方式是将 uvhttp 作为子目录：
+把 uvhttp 放进源码树当子目录，链接一个 target 就够：
 
 ```bash
 git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 ```
 
-然后在项目的 `CMakeLists.txt` 中：
+项目的 `CMakeLists.txt` 里加这几行：
 
 ```cmake
 cmake_minimum_required(VERSION 3.13)
@@ -34,7 +34,7 @@ make build
 
 ## 方法 1：使用 find_package()
 
-如果 uvhttp 在已知位置：
+uvhttp 已经装进系统，或者装在 CMAKE_PREFIX_PATH 能找到的位置：
 
 ```cmake
 cmake_minimum_required(VERSION 3.13)
@@ -90,7 +90,7 @@ target_link_libraries(myapp uvhttp)
 
 ## 使用特定功能构建
 
-使用特定功能构建 uvhttp 时，确保启用相同的功能：
+uvhttp 按哪套特性编译，使用方就得按同一套特性链接。在 add_subdirectory 之前把开关写进缓存：
 
 ```cmake
 # 使用功能构建
@@ -113,7 +113,7 @@ add_subdirectory(path/to/uvhttp)
 
 ## 示例项目
 
-以下是使用 uvhttp 的完整示例项目：
+一个能直接跑的最小工程，两个文件：
 
 ```cmake
 # CMakeLists.txt
@@ -166,6 +166,6 @@ int main() {
 ## 注意
 
 - uvhttp 遵循 CMake 包命名约定
-- 推荐使用 `add_subdirectory` 或 `FetchContent` 方式，而非系统安装
+- 优先用 `add_subdirectory` 或 `FetchContent`；系统安装适合多个项目共用同一份库
 - 库依赖（libuv、mbedtls、xxhash）会自动链接
-- 功能兼容性：构建和使用 uvhttp 时确保启用相同的功能
+- 功能兼容性：构建和使用 uvhttp 时，两边启用同一套开关

@@ -1,10 +1,10 @@
 # Advanced Build Options
 
-This document describes advanced build configuration options for UVHTTP that are typically only needed by advanced users or for specific performance tuning scenarios.
+These build options tune internal parameters. They are only needed for specific performance tuning or constrained environments.
 
 ## Overview
 
-Most users should use the default configuration values. These advanced options allow fine-tuning of internal parameters for specific use cases, performance optimization, or resource-constrained environments.
+Start with the defaults. Change the options below only for a specific workload, performance tuning, or a tight memory budget.
 
 ## Memory Allocator Configuration
 
@@ -55,17 +55,9 @@ void* uvhttp_custom_calloc(size_t nmemb, size_t size) {
 }
 ```
 
-**Example Use Cases**:
-- Memory pool allocation for embedded systems
-- Tracking memory usage for debugging
-- Implementing custom allocation strategies
-- Integrating with application-specific memory managers
+Typical uses are memory pools on embedded systems, allocation tracking for debugging, custom allocation strategies, and hooks into an application's own memory manager.
 
-**Important Notes**:
-- These functions must be implemented before including any UVHTTP headers
-- Thread safety is the responsibility of the implementer
-- All allocation functions must properly handle NULL returns
-- Free must safely handle NULL pointers
+Implement these functions before including any UVHTTP headers. The implementer is responsible for thread safety. Every allocation function must handle NULL returns, and free must accept NULL pointers.
 
 ## HTTP Protocol Configuration
 
@@ -438,7 +430,7 @@ cmake -DUVHTTP_MAX_HEADER_NAME_SIZE=512 \
 ## Performance Tuning Guidelines
 
 ### Memory-Constrained Environments
-For memory-constrained environments, consider reducing:
+For a host with limited memory, reduce:
 - `UVHTTP_MAX_CONNECTIONS_DEFAULT`
 - `UVHTTP_MAX_HEADERS`
 - `UVHTTP_MAX_BODY_SIZE`
@@ -446,7 +438,7 @@ For memory-constrained environments, consider reducing:
 - `UVHTTP_READ_BUFFER_SIZE`
 
 ### High-Throughput Environments
-For high-throughput environments, consider increasing:
+For high throughput, increase:
 - `UVHTTP_MAX_CONNECTIONS_DEFAULT`
 - `UVHTTP_READ_BUFFER_SIZE`
 - `UVHTTP_SOCKET_SEND_BUF_SIZE`
@@ -454,7 +446,7 @@ For high-throughput environments, consider increasing:
 - `UVHTTP_CACHE_DEFAULT_MAX_ENTRIES`
 
 ### Low-Latency Environments
-For low-latency environments, consider:
+For low latency:
 - Reducing `UVHTTP_CONNECTION_TIMEOUT_DEFAULT`
 - Reducing `UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL`
 - Increasing `UVHTTP_READ_BUFFER_SIZE`

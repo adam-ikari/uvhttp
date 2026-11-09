@@ -2,7 +2,7 @@
 
 ## 概述
 
-UVHTTP 集成 **xxHash** 作为核心哈希算法，用于路由查找、缓存键生成和数据完整性校验。
+UVHTTP 使用 **xxHash** 作为哈希算法，用于路由查找、缓存键生成和数据完整性校验。
 
 ## 性能特性
 
@@ -20,7 +20,7 @@ UVHTTP 集成 **xxHash** 作为核心哈希算法，用于路由查找、缓存�
 
 - 比 CRC32 快 3-5 倍
 - 接近 RAM 速度限制
-- 零分配设计，无内存开销
+- 零分配，无内存开销
 - 良好的缓存局部性
 
 ## API 接口
@@ -76,56 +76,34 @@ uint64_t session_hash = uvhttp_hash_string(session_key);
 
 ## 内部集成
 
-### 路由系统优化
+### 路由缓存
 
-xxHash 在路由系统中用于：
-
-1. **路由哈希表查找**
-   ```c
-   // 路由节点哈希（内部使用）
-   uint32_t route_hash = uvhttp_route_hash("/api/users", UVHTTP_GET);
-   ```
-
-2. **缓存键生成**
-   ```c
-   // 路径缓存键
-   uint64_t path_cache_key = uvhttp_hash_string("/static/css/style.css");
-   ```
-
-3. **参数提取优化**
-   ```c
-   // URL参数哈希
-   uint64_t param_hash = uvhttp_hash_string("user_id=123");
-   ```
-
-### 字符串池优化
-
-字符串池使用 xxHash 进行：
-
-```c
-// 字符串池中的快速哈希查找
-static inline uint32_t uvhttp_string_hash(const char* str, size_t length) {
-    return (uint32_t)uvhttp_hash_string(str);
-}
-```
-
-### 安全特性
-
-#### 哈希冲突攻击防护
+`src/uvhttp_router_cache.c` 用一个文件内静态函数对路由路径做哈希：
 
 ```c
 static inline uint32_t route_hash(const char* str) {
-    if (!str) return 0;
-    
-    // 限制最大字符串长度以防止哈希冲突攻击
+    if (!str)
+        return 0;
+
     size_t len = strlen(str);
-    if (len > 1024) {
-        len = 1024;  // 截断过长的字符串
-    }
-    
+    if (len > UVHTTP_MAX_ROUTE_PATH_LEN - 1)
+        len = UVHTTP_MAX_ROUTE_PATH_LEN - 1;
+
     return (uint32_t)XXH64(str, len, UVHTTP_HASH_DEFAULT_SEED);
 }
 ```
+
+`UVHTTP_MAX_ROUTE_PATH_LEN` 为 256（`include/uvhttp_constants.h`）。长度上限限制了攻击者可控路径的哈希开销。`route_hash` 只在该编译单元内使用，不属于公开 API。
+
+### gzip 缓存键
+
+`src/uvhttp_response.c` 用响应体哈希加长度作为压缩体缓存的键：
+
+```c
+uvhttp_hash_default(response->body, response->body_length)
+```
+
+同一份 body 只压缩一次，后续响应复用缓存的压缩结果。
 
 ## 最佳实践
 
@@ -199,7 +177,7 @@ xxHash 不适用于以下加密场景：
 
 ### 安全增强
 
-对于需要更高安全性的场景，可以考虑：
+需要更高安全性时，可以加盐：
 
 ```c
 // 结合盐值使用
@@ -213,7 +191,7 @@ uint64_t secure_hash = uvhttp_hash_string(combined_data);
 
 ### 编译优化
 
-确保在 Release 模式下编译以获得最佳性能：
+在 Release 模式下编译以获得最佳性能：
 
 ```cmake
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -223,7 +201,7 @@ endif()
 
 ### 内存对齐
 
-xxHash 对内存对齐敏感，确保数据结构对齐：
+xxHash 对内存对齐敏感，需对齐数据结构：
 
 ```c
 // 推荐：对齐的数据结构
@@ -236,7 +214,7 @@ typedef struct __attribute__((aligned(8))) {
 
 ### 批量处理
 
-对于大量数据的哈希计算，考虑批量处理：
+大量数据的哈希计算宜批量处理：
 
 ```c
 // 批量哈希计算示例

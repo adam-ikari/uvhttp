@@ -105,7 +105,7 @@ check-syntax:
 	@echo "Checking syntax of all source files..."
 	@errors=0; \
 	for f in src/uvhttp_*.c; do \
-		result=$$(gcc -fsyntax-only -std=c11 -pthread -D_GNU_SOURCE \
+		result=$$(gcc -fsyntax-only -std=c99 -pthread -D_GNU_SOURCE \
 			-Iinclude -Ideps/llhttp/include -Ideps/uthash/src \
 			-Ideps/mbedtls/include -Ideps/libuv/include -Ideps/xxhash \
 			-DUVHTTP_FEATURE_TLS=1 \

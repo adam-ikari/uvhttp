@@ -1,20 +1,19 @@
 # Embedding Guide
 
-This guide walks a **new embedder** — someone adding uvhttp to their own CMake
-project for the first time — through the full integration: prerequisites,
-each integration method, a minimal working server, feature trimming, and
-troubleshooting.
+This guide is for a new embedder: someone adding uvhttp to an existing CMake
+project for the first time. It covers prerequisites, each integration method,
+a minimal working server, feature trimming, and troubleshooting.
 
-> A runnable, self-contained example project lives in
-> [`examples/embedding/`](https://github.com/adam-ikari/uvhttp/tree/main/examples/embedding). Everything in this guide
-> is reflected there — use it as a template.
+> A runnable example project lives in
+> [`examples/embedding/`](https://github.com/adam-ikari/uvhttp/tree/main/examples/embedding). It matches this guide;
+> use it as a template.
 
 ---
 
 ## 1. Prerequisites
 
-- **Linux** (the currently supported platform).
-- **CMake ≥ 3.10** and a **C11** compiler (GCC or Clang).
+- Linux, the currently supported platform.
+- CMake ≥ 3.10 and a C11 compiler (GCC or Clang).
 - uvhttp's dependencies live under `deps/` as **git submodules**. You must
   clone recursively:
 
@@ -83,8 +82,8 @@ target_link_libraries(myapp PRIVATE uvhttp)
 > `deps/` submodules are populated by its own CMakeLists when present, so pin
 > to a tagged release and, if a submodule issue arises, add
 > `FetchContent_Populate` + `git submodule update --init --recursive` steps in
-> the checkout directory. `add_subdirectory` (Method A) is the more robust
-> choice when you control the checkout.
+> the checkout directory. When you control the checkout, `add_subdirectory`
+> (Method A) is the safer choice.
 
 ### Method C — system install + `find_package`
 
@@ -258,14 +257,16 @@ See [Build Configuration Matrix](./BUILD_CONFIGURATION_MATRIX.md) and
 
 ## 5. Verifying your integration
 
-1. **Compile** — your project builds with uvhttp linked statically.
-2. **Smoke test** — start the server, `curl` a route, confirm the response.
-3. **Clean shutdown** — send SIGINT/SIGTERM; the process exits without leaks.
-4. **Memory safety** — rebuild with sanitizers and rerun:
+1. Compile: your project builds with uvhttp linked statically.
+2. Smoke test: start the server, `curl` a route, confirm the response.
+3. Clean shutdown: send SIGINT/SIGTERM; the process exits without leaks.
+4. Memory safety: rebuild with sanitizers and rerun:
 
    ```bash
-   cmake -DENABLE_ASAN=ON -DENABLE_UBSAN=ON ..
+   cmake -DENABLE_ASAN=ON ..
    ```
+
+   `ENABLE_ASAN`, `ENABLE_UBSAN`, and `ENABLE_TSAN` are mutually exclusive; configure rejects more than one at a time. Run UBSan and TSan in separate build directories.
 
 5. Run uvhttp's own suite once to confirm the library is healthy:
 

@@ -5,23 +5,15 @@ description: "UVHTTP's embedded and long-running metrics: flat RSS over sustaine
 
 # Embedded & Long-Run Profile
 
-Peak single-host throughput is not UVHTTP's pitch (nginx and h2o win there).
-For embedded devices and long-running services, the metrics that matter are
-different: does memory stay flat over days of uptime? how small is the
-footprint? does it run on 32-bit? how fast does it start? This page covers each.
+UVHTTP does not sell peak single-host throughput; nginx and h2o win there. On an embedded device or a service that runs for months, other numbers decide whether it works: does RSS stay flat, how large is the binary, does it run on 32-bit, how long does startup take. This page measures each.
 
-These measurements complement the [memory-safety guarantee](./MEMORY_SAFETY.md):
-sanitizer-clean status tells you there are *no leaks by construction*; the
-long-run RSS profile below shows it *in practice under sustained load*.
+The measurements complement the [memory-safety guarantee](./MEMORY_SAFETY.md). A sanitizer-clean suite says no allocation is lost along a tested path. The RSS curve below shows what happens under sustained traffic.
 
 ## Long-run memory stability (no leak under sustained load)
 
-The invariant: under continuous load, the server's resident set size (RSS) must
-not grow unboundedly. A slow per-connection leak that passes a 10-second
-functional test will OOM an embedded device over a week.
+The invariant: under continuous load, the server's resident set size must not grow without bound. A slow per-connection leak can pass a 10-second functional test and still OOM an embedded device within a week.
 
-Measured with `scripts/performance/long_run_memory.sh`, which drives sustained
-`wrk -t4 -c100` load and samples the server's RSS every 10 seconds.
+`scripts/performance/long_run_memory.sh` drives sustained `wrk -t4 -c100` load and samples the server's RSS every 10 seconds.
 
 | Elapsed (s) | RSS (KB) | Notes |
 |-------------|----------|-------|
@@ -32,18 +24,14 @@ Measured with `scripts/performance/long_run_memory.sh`, which drives sustained
 | 50 | 5,372 | |
 | 60 | 5,372 | |
 
-**Result: RSS flat — 0 KB growth over 60s of sustained load, ~20K RPS, zero
-socket errors.** Re-run for hours to extend the curve; the expectation is a flat
-line.
+**Result: RSS flat, 0 KB growth over 60s of sustained load at ~20K RPS, zero socket errors.** Run it for hours to extend the curve; the expected shape is a horizontal line.
 
 ```bash
 # Reproduce (60s default; pass a longer duration for a longer profile)
 scripts/performance/long_run_memory.sh 300
 ```
 
-> This is the runtime complement to the ASan-clean guarantee. ASan proves no
-> allocation is lost along any tested code path; the RSS profile proves the
-> allocator reaches steady state and does not drift under real traffic.
+> ASan proves no allocation is lost along a tested path. The RSS profile shows the allocator reaching steady state and staying there under real traffic.
 
 ## Footprint
 
@@ -55,12 +43,9 @@ Default Release build (`-O2 -DNDEBUG`, stripped), 64-bit, system allocator:
 | Example server binary (`test_performance_e2e`) | ~1.0 MB (stripped, statically linked) |
 | Steady-state RSS under 100 connections | ~5.3 MB |
 
-The ~257 KB static library is the embedded-relevant figure — a device linking
-UVHTTP adds roughly a quarter-megabyte of code, plus libuv/mbedtls only if the
-features are enabled (both are compile-time optional).
+The ~257 KB static library is the number that matters on a device. Linking UVHTTP adds about a quarter of a megabyte of code, plus libuv or mbedtls only when those features are enabled.
 
-> **Note on `-Os`:** the project's Release mode currently forces `-O2 -DNDEBUG`
-> (see `CMakeLists.txt`). To build for minimal size, override
+> **Note on `-Os`:** Release mode forces `-O2 -DNDEBUG` (see `CMakeLists.txt`). For a smaller binary, override
 > `CMAKE_C_FLAGS_RELEASE`:
 > ```bash
 > cmake -DCMAKE_BUILD_TYPE=Release \
@@ -70,20 +55,17 @@ features are enabled (both are compile-time optional).
 
 ## Cold start
 
-Time from process launch to first byte served (includes process startup, event
-loop init, server bind, and one request):
+Time from process launch to the first byte served, including process startup, event-loop init, server bind and one request:
 
 | Metric | Value |
 |--------|-------|
 | First byte after launch | ~310 ms |
 
-Suitable for on-demand/lazy-start embedded services and serverless-style
-invocations.
+That fits on-demand or lazy-start embedded services and serverless-style invocations.
 
 ## 32-bit support
 
-UVHTTP explicitly supports 32-bit targets (the v2.5.0 release theme was
-"32-bit Support & Compression"). The 32-bit CI build configures with:
+UVHTTP supports 32-bit targets; the v2.5.0 release theme was "32-bit Support & Compression". A 32-bit build uses:
 
 ```bash
 cmake -B build-32bit \
@@ -92,34 +74,26 @@ cmake -B build-32bit \
   ...
 ```
 
-(See `.github/workflows/ci-32bit.yml`.) On 32-bit, pointers halve and the
-connection/request/response structs shrink accordingly, making the footprint
-suitable for resource-constrained devices. 32-bit build correctness is gated in
-CI.
+On 32-bit, pointers halve and the connection, request and response structs shrink with them. That matters on devices with little RAM. The `.github/workflows/ci-32bit.yml` workflow is not part of the current CI set, so a 32-bit build is something you run yourself.
 
 ## Compile-time minimization
 
-Footprint is configurable at compile time — only pay for what you use:
+Footprint is a compile-time choice. You link what you use:
 
 | Feature | CMake option | Default |
 |---------|--------------|---------|
 | WebSocket | `BUILD_WITH_WEBSOCKET` | ON |
 | TLS (mbedtls) | `BUILD_WITH_HTTPS` | ON |
-| Static files | `UVHTTP_FEATURE_STATIC_FILES` | ON |
+| Static files | `BUILD_WITH_STATIC_FILES` | OFF |
 | Compression | `BUILD_WITH_COMPRESSION` | ON |
 | mimalloc allocator | `BUILD_WITH_MIMALLOC` | OFF |
 
-A minimal embedded build (HTTP/1.1 only, no TLS/WebSocket/static/compression)
-links a smaller library by disabling the unused features.
+A minimal embedded build (HTTP/1.1 only) disables TLS, WebSocket, static files and compression, and links a smaller library.
 
 ## Why this matters
 
 For a device management endpoint or a long-running edge service:
 
-- A leak that adds 1 KB/connection is invisible in a 10s `wrk` run but costs
-  ~10 MB/day at 100 req/s with keep-alive churn. UVHTTP's flat RSS profile and
-  ASan-clean status mean this failure mode is eliminated by construction.
-- A ~257 KB library that runs on 32-bit fits where nginx (a standalone daemon
-  with its own runtime) does not.
-- Sanitizer-clean + 32-bit + small footprint is a combination most lightweight C
-  HTTP libraries do not offer — see the [comparison table on the home page](./).
+- A leak of 1 KB per connection is invisible in a 10s `wrk` run and costs about 10 MB/day at 100 req/s with keep-alive churn. UVHTTP's flat RSS profile and ASan-clean status remove that failure mode by construction.
+- A ~257 KB library that runs on 32-bit fits where nginx, a standalone daemon with its own runtime, does not.
+- Sanitizer-clean, 32-bit, small footprint: most lightweight C HTTP libraries offer at most two of the three. The [comparison table on the home page](./) has the details.

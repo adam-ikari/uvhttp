@@ -2,8 +2,8 @@
 
 ## Overview
 
-The Allocator module provides a unified memory allocation interface. The
-allocation backend is selected at compile time.
+One allocation interface covers every backend, and the build selects the
+backend at compile time. All modules allocate and free through this interface.
 
 ## Interfaces
 
@@ -52,19 +52,14 @@ allocation backend is selected at compile time.
 
 1. **Rule 1**: Never mix allocators. Memory allocated with `uvhttp_alloc` must be freed with `uvhttp_free`.
 
-2. **Rule 2**: Always check allocation results. NULL means out of memory.
+2. **Rule 2**: Check every allocation result. NULL means out of memory.
 
-3. **Rule 3**: Every allocation must have a matching free. No leaks.
+3. **Rule 3**: Pair every allocation with a free. The code must not leak.
 
-4. **Rule 4**: NULL can be passed to `uvhttp_free` safely (no-op).
+4. **Rule 4**: `uvhttp_free` accepts NULL and does nothing.
 
 ## Test Requirements
 
-- Basic allocation and free
-- Zero-size allocation
-- Large allocation
-- Reallocation
-- Calloc zero-initialization
-- NULL free (no-op)
-- Allocator name retrieval
-- No leaks under ASan
+The tests cover basic allocation and free, zero-size allocation, large
+allocation, and reallocation. They also check calloc zero-initialization, NULL
+free (no-op), allocator name retrieval, and a leak-free run under ASan.

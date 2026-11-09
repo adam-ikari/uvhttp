@@ -2,14 +2,14 @@
 
 ## Overview
 
-This spec defines the writing standards for UVHTTP documentation and website
-content. All documentation must be written in a natural, professional tone
-free of AI-generated patterns.
+This spec sets the writing standards for UVHTTP documentation and website
+content. Documentation uses a natural, professional tone and avoids
+AI-generated patterns.
 
 ## AI Flavor — Prohibited Patterns
 
-The following patterns are considered "AI flavor" and must be removed from
-all documentation:
+The following patterns count as "AI flavor" and must be removed from all
+documentation:
 
 ### Universal Patterns (EN + ZH)
 - **Hype adjectives**: "robust", "seamless", "cutting-edge", "state-of-the-art",
@@ -34,15 +34,16 @@ all documentation:
 
 ## Target Voice
 
-- **Terse**: Say what it does, not what it's for
-- **Factual**: Claims must be verifiable (test results, performance data)
-- **Concrete**: Use specific numbers, not "fast" or "efficient"
-- **Active**: "The server handles requests" not "Requests are handled by the server"
+Write terse sentences that say what the code does, not what it is for. Every
+claim needs verification from test results or performance data. Use specific
+numbers instead of "fast" or "efficient". Prefer the active voice: "The server
+handles requests", not "Requests are handled by the server".
 
 ## Enforcement
 
-The `de-ai-docs` skill (in the Claude Code skills directory) is used to scan
-and rewrite AI-sounding passages. It operates on:
+The `de-ai-docs` skill (in the Claude Code skills directory) scans and
+rewrites AI-sounding passages. It operates on:
+
 - VitePress documentation pages (`.md`)
 - Website copy (`index.md`, feature cards)
 - API documentation

@@ -1669,7 +1669,6 @@ wrk -t4 -c100 -d30s http://localhost:8080/
 
 - 项目主页：https://github.com/adam-ikari/uvhttp
 - 问题反馈：https://github.com/adam-ikari/uvhttp/issues
-- 讨论：https://github.com/adam-ikari/uvhttp/discussions
 
 ---
 

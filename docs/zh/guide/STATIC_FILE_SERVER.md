@@ -5,15 +5,13 @@ title: UVHTTP 静态文件服务器指南
 
 ## 概述
 
-静态文件服务由应用层实现，框架提供 `uvhttp_static_handle_request()` 处理单个请求。
+静态文件服务由应用层实现。`uvhttp_static_handle_request()` 一次处理一个请求，路由、路径映射和上下文传递都留在应用侧。
 
 ## 设计原则
 
 ### 应用层实现
 
-- **框架核心**: `uvhttp_static_handle_request()` 处理单个静态文件请求
-- **应用层**: 负责路由配置、路径映射、上下文传递
-- **灵活性**: 应用层控制静态文件服务的路由策略
+`uvhttp_static_handle_request()` 只认请求和响应，不认 URL 前缀。同一份处理逻辑既能挂在 /static/* 下，也能当全站回退，取决于你在路由表里怎么排。
 
 ### 实现方式
 
@@ -35,26 +33,26 @@ uvhttp_router_add_route(router, "/*", static_file_handler);  // 回退路由
 
 ### 不提供内置静态路由的原因
 
-- 避免框架臃肿
-- 保持应用层的灵活性和控制力
-- 符合极简工程原则
+- 库不认识你的 URL 布局，也就不需要为静态服务另立一套规则
+- 哪些前缀进静态服务、哪些留给 API，由应用自己排
+- 同一套处理函数可以复用到不同前缀和回退位置
 
 ## 核心特性
 
 ### 性能优化
 - **LRU 缓存**: 内存缓存，减少磁盘 I/O
 - **零拷贝**: sendfile 文件传输
-- **连接复用**: 基于 libuv 的事件驱动架构
+- **连接复用**: 由 libuv 的事件循环承担
 - **压缩支持**: 预留 gzip/deflate 接口
 
 ### 安全特性
 - **路径安全验证**: 防止目录遍历
-- **文件类型检查**: 可配置的文件类型白名单
+- **文件类型检查**: 白名单可配置
 - **访问控制**: 基于路径的访问限制
 - **资源限制**: 防止大文件 DoS
 
 ### 功能特性
-- **自动 MIME 类型检测**: 支持常见文件类型
+- **自动 MIME 类型检测**: 覆盖常见文件类型
 - **条件请求**: ETag 和 Last-Modified
 - **目录列表**: 可配置的目录浏览
 - **自定义头部**: 支持添加自定义 HTTP 头部
@@ -64,7 +62,7 @@ uvhttp_router_add_route(router, "/*", static_file_handler);  // 回退路由
 
 ### 基础示例
 
-见 `examples/04_static_files/static_file_server.c` 完整示例。
+完整示例在 `examples/04_static_files/static_file_server.c`。下面这段是骨架，把 root_directory 换成你的站点目录就能跑：
 
 ```c
 #include "uvhttp.h"
@@ -106,10 +104,10 @@ int main() {
 ```
 
 ### 关键点
-- 使用 `uvhttp_router_add_route()` 添加静态文件路由
-- 创建包装函数调用 `uvhttp_static_handle_request()`
-- 通过 `server->context` 或 `loop->data` 传递应用上下文
-- 使用通配符路由处理多个静态文件路径
+- 路由用 `uvhttp_router_add_route()` 添加，前缀写成通配符才能覆盖子路径
+- 处理函数只做一层包装，真正的逻辑在 `uvhttp_static_handle_request()`
+- 上下文从 `server->context` 或 `loop->data` 取，别用全局变量
+- 通配符路由是多个静态路径共用的入口，它也会接住没匹配上的请求
 
 ### 高级配置
 
@@ -256,10 +254,9 @@ static const uvhttp_mime_mapping_t default_mime_types[] = {
 
 ### 特点
 
-- 无需配置扩展名列表
-- 编译时确定，无运行时解析开销
-- 基于 MIME 类型而非简单扩展名匹配
-- MIME 类型由内置映射表（`uvhttp_mime_mapping_t`）驱动，无需配置扩展名列表
+- 扩展名到 MIME 类型的对应关系在编译期定死，运行时不做解析
+- 映射由内置表 `uvhttp_mime_mapping_t` 驱动，应用不用再配一份扩展名列表
+- 常见的 Web 类型都收在表里，覆盖大多数站点
 
 ### 扩展控制
 
@@ -267,6 +264,7 @@ static const uvhttp_mime_mapping_t default_mime_types[] = {
    MIME 类型由内置映射表（`uvhttp_mime_mapping_t`）驱动。当前库未提供运行时新增映射的 API；如需自定义类型，请在源码的 MIME 映射表中添加条目后重新编译。
 
 2. **使用请求处理器**：
+   需要按路径放行时，先在包装函数里判断，不合规的请求直接回状态码：
 ```c
 int custom_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* path = uvhttp_request_get_path(req);
@@ -282,7 +280,7 @@ int custom_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 ### 零拷贝文件传输
 
-UVHTTP 使用 sendfile 系统调用实现零拷贝文件传输。
+文件传输走 sendfile，数据从页缓存直接进 socket，不经过用户态中转。
 
 #### 文件大小分类策略
 
@@ -326,19 +324,19 @@ typedef struct uvhttp_static_config {
 **参数选择依据**：
 
 1. **sendfile_timeout_ms（默认 30 秒）**：
-   - 更快失败，减少资源占用
-   - 适合大多数网络环境
-   - 可经配置结构体自定义
+   - 超时后放弃这次传输，fd 不会一直开着
+   - 默认值面向常见网络环境，慢链路可以调大
+   - 可以经配置结构体覆盖
 
 2. **sendfile_max_retry（默认 2 次）**：
-   - 减少重试以降低延迟
-   - 仅对可恢复错误（UV_EINTR、UV_EAGAIN）重试
-   - 避免无限重试导致资源浪费
+   - 只对可恢复错误重试，次数用完就关 fd
+   - 重试仅限 UV_EINTR、UV_EAGAIN
+   - 无限重试只会把问题拖得更久
 
 3. **sendfile_chunk_size（默认 256KB）**：
-   - 优化小文件传输，减少延迟
-   - 平衡系统调用次数和内存使用
-   - 适合大多数文件系统
+   - 分块小，系统调用次数多；分块大，单次占用内存多
+   - 默认值取的是两者之间的折中
+   - 对多数文件系统都适用
 
 **动态配置 API**：
 
@@ -370,7 +368,7 @@ uvhttp_static_create(&config, &ctx);
 
 #### 超时检测机制
 
-使用 libuv 定时器实现主动超时检测：
+超时靠 libuv 定时器主动查，不等 sendfile 回调：
 
 ```c
 uv_timer_init(loop, &ctx->timeout_timer);
@@ -384,9 +382,9 @@ static void on_sendfile_timeout(uv_timer_t* timer) {
 ```
 
 **特点**：
-- 主动检测，即使网络完全阻塞也能及时响应
+- 网络完全阻塞时也能按时收尾
 - 不依赖 sendfile 回调
-- 自动清理资源，避免泄漏
+- 到点后自己关 fd，不留悬挂资源
 
 #### 错误处理和重试
 
@@ -410,12 +408,16 @@ if (req->result < 0) {
 
 ### LRU 缓存系统
 
+命中率不看不知道。把日志级别调到 DEBUG 再启动示例，命中、未命中和淘汰都会打出来：
+
 ```bash
 export UVHTTP_LOG_LEVEL=DEBUG
 ./static_file_server
 ```
 
 ### 性能监控
+
+运行时可以直接读缓存的几个计数：
 
 ```c
 size_t total_memory, hit_count, miss_count;
@@ -431,7 +433,7 @@ printf("  命中率: %.2f%%\n",
 
 ## 缓存预热策略
 
-UVHTTP 提供缓存预热 API，应用层可据此为自己的使用场景实现策略。框架提供基础设施，策略由应用决定。
+预热 API 只负责把文件读进缓存。什么时候预热、预热哪些文件，由应用按访问模式决定。
 
 ### 可用的预热 API
 
@@ -455,7 +457,7 @@ uvhttp_error_t uvhttp_lru_cache_prewarm(cache_manager_t* cache,
 
 ### 策略 1：按文件类型预热目录
 
-从目录预加载常见的 Web 资源类型：
+启动时把 CSS、JS、图片这类共用资源读进缓存，首个访客就不用逐个等磁盘：
 
 ```c
 int prewarm_web_assets(uvhttp_static_context_t* ctx, const char* dir_path) {
@@ -494,7 +496,7 @@ prewarm_web_assets(static_ctx, "./public/static");
 
 ### 策略 2：从 HTML 预加载关联文件
 
-解析 HTML 提取并预加载引用的资源：
+入口 HTML 引用的资源通常就是首屏要用的，扫一遍 href 和 src 就能找到：
 
 ```c
 int preload_html_resources(uvhttp_static_context_t* ctx, const char* html_path) {
@@ -545,7 +547,7 @@ preload_html_resources(static_ctx, "./public/index.html");
 
 ### 策略 3：按优先级预热
 
-为不同文件类型设置不同优先级：
+给文件设不同优先级，缓存满时先淘汰低分的：
 
 ```c
 void prewarm_with_priority(uvhttp_static_context_t* ctx) {
@@ -576,7 +578,7 @@ void prewarm_with_priority(uvhttp_static_context_t* ctx) {
 
 ### 策略 4：服务器启动时渐进预热
 
-在服务器初始化期间逐步预热缓存：
+分批读，启动阶段不会一次把大量文件拉进内存：
 
 ```c
 void gradual_prewarm(uvhttp_static_context_t* ctx, const char* dir_path) {
@@ -602,7 +604,7 @@ void gradual_prewarm(uvhttp_static_context_t* ctx, const char* dir_path) {
 
 ### 策略 5：按需预热
 
-在首次请求文件时预加载：
+首次请求时顺手把同目录的资源带进缓存，适合 URL 不固定的站点：
 
 ```c
 int smart_file_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
@@ -631,7 +633,7 @@ int smart_file_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 ### 性能监控
 
-监控缓存效果：
+看命中率和条目数，判断策略有没有起作用：
 
 ```c
 void print_cache_stats(uvhttp_static_context_t* ctx) {
@@ -651,49 +653,49 @@ void print_cache_stats(uvhttp_static_context_t* ctx) {
 
 ### 预热最佳实践
 
-1. **从简单开始**：先使用目录级预热，再考虑复杂策略
-2. **关注内存**：跟踪缓存用量，避免过度消耗内存
-3. **设置优先级**：为频繁访问的文件设置更高优先级
-4. **有所取舍**：不要预热所有内容——聚焦关键资源
-5. **性能剖析**：使用缓存统计找出热点文件并调整策略
+1. 先跑目录级预热，不够再上按 HTML 解析或按优先级那几套。
+2. 缓存不是越大越好，盯着内存用量。
+3. 常访问的文件给更高优先级，淘汰时先走冷数据。
+4. 别什么都预热，只挑关键资源。
+5. 用缓存统计找热点，再调整策略。
 
 ### 何时使用预热
 
-- **生产部署**：在接收流量前预加载关键资源
-- **零停机部署**：在路由流量前预热新实例
+- **生产部署**：接收流量之前先加载关键资源
+- **零停机部署**：新实例接流量前预热
 - **高流量事件**：为预期峰值准备缓存
-- **性能调优**：根据访问模式优化
+- **性能调优**：按访问模式调整
 
 ### 何时不应使用预热
 
-- **开发阶段**：开发时无此必要
-- **小型应用**：缓存可能没有帮助
-- **动态生成内容**：静态缓存无济于事
-- **内存受限环境**：可能导致内存压力
+- **开发阶段**：文件一直在改，预热很快失效
+- **小型应用**：缓存带来的收益抵不过维护成本
+- **动态生成内容**：静态缓存无从下手
+- **内存受限环境**：预热会挤占本就不够的内存
 
 ## 故障排除
 
 ### 常见问题
 
 1. **404 错误**
-   - 检查文件路径是否正确
-   - 确认文件存在于根目录下
-   - 验证文件权限
+   - 先核对请求路径和磁盘路径的映射规则
+   - 确认文件在根目录下，注意大小写
+   - 看进程有没有读权限
 
 2. **403 错误**
-   - 检查文件权限设置
-   - 确认文件类型在允许列表中
-   - 验证路径安全性
+   - 查权限位，确认进程读得了这个文件
+   - 确认扩展名在白名单里
+   - 看路径是不是被判为越界
 
 3. **性能问题**
-   - 增加缓存大小
-   - 启用文件压缩
-   - 检查磁盘 I/O 性能
+   - 缓存配大一点，看命中率有没有变化
+   - 打开压缩，减少传输量
+   - 测一下磁盘 I/O，排除硬件问题
 
 4. **内存使用过高**
-   - 减少缓存大小
-   - 缩短缓存 TTL
-   - 监控内存使用情况
+   - 调小缓存上限
+   - 缩短 TTL，让冷数据尽快淘汰
+   - 用缓存统计确认占用来源
 
 ### 调试技巧
 

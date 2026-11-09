@@ -26,62 +26,54 @@ UVHTTP 项目定义了三种构建模式（Release、Debug、Coverage），详�
 
 ### 分支策略
 
-我们使用 Git Flow 工作流：
-
-```
-main (生产分支)
-  ↑
-  │ (合并)
-  │
-develop (开发分支)
-  ↑
-  │ (合并)
-  │
-feature/* (功能分支)
-fix/* (修复分支)
-```
+`main` 是唯一的长期分支且受保护；不存在 `develop` 分支。所有改动都通过短生命周期分支和 PR 合入 `main`，发布通过 tag / prerelease 触发门禁。
 
 **分支命名规范**：
-- `feature/功能描述` - 新功能开发
+- `feat/功能描述` - 新功能开发
 - `fix/问题描述` - Bug 修复
 - `refactor/重构描述` - 代码重构
 - `docs/文档更新` - 文档更新
 - `test/测试相关` - 测试相关
+- `chore/工具链描述` - 构建、CI、依赖维护
 
 ### 开发步骤
 
-1. **创建功能分支**
+1. **从最新的 main 创建分支**
    ```bash
-   git checkout -b feature/your-feature-name develop
+   git switch main
+   git pull --ff-only
+   git switch -c fix/your-fix
    ```
 
-2. **开发和测试**
-   - 编写代码
-   - 添加单元测试
-   - 确保所有测试通过
-   - 遵循代码风格规范
+2. **开发和本地验证**
+   ```bash
+   make build          # Debug 构建
+   make test           # ctest，跑全部已注册测试
+   make check-syntax   # 源码语法检查
+   make check-docs     # 中英文同步 + 内部链接
+   ```
+   新增行为必须有能在改坏实现后变红的测试，并遵循代码风格规范。
 
 3. **提交更改**
    ```bash
-   git add .
+   git add <files>
    git commit -m "feat: 添加新功能描述"
    ```
 
-4. **推送分支**
+4. **推送并创建 PR**
    ```bash
-   git push origin feature/your-feature-name
+   git push -u origin fix/your-fix
+   gh pr create --base main
    ```
 
-5. **创建 Pull Request**
-   - 在 GitHub 上创建 PR
-   - 目标分支选择 `develop`
-   - 填写 PR 描述模板
-   - 等待代码审查
+5. **等待门禁**
+   - PR CI（`ci-pr.yml`）只做编译、cppcheck、文档同步和裁剪配置编译，**不跑完整测试**；完整测试在 prerelease 的 `ci-release-gate.yml` 中执行。
+   - 因此提交 PR 前必须在本地跑过 `make test`，不能把「CI 没红」当作测试通过。
+   - 文档改动必须中英文同一次提交更新，`doc-sync-check` 会比较两侧文件的提交时间。
 
 6. **合并 PR**
-   - 至少需要 1 人审查批准
-   - 所有 CI/CD 检查必须通过
-   - 审查通过后合并到 develop
+   - 至少 1 人审查批准
+   - 所有必需检查通过后合并到 `main`（仓库使用 merge commit）；不要直接推送 `main`
 
 ## 代码规范
 
@@ -120,7 +112,7 @@ Closes #123
 
 ### 代码风格
 
-- 使用 C11 标准
+- 使用 C99 标准
 - 4 空格缩进
 - K&R 风格大括号
 - 函数命名：`uvhttp_module_action`
@@ -138,7 +130,7 @@ Closes #123
 - [ ] 更新了相关文档
 - [ ] 提交信息格式正确
 - [ ] 没有引入新的安全漏洞
-- [ ] 内存管理正确（使用 UVHTTP_MALLOC/UVHTTP_FREE）
+- [ ] 内存管理正确（使用 `uvhttp_alloc`/`uvhttp_free`，不要混用 `malloc`/`free`）
 - [ ] 错误处理完整
 
 ### 本项目易漏的检查点
@@ -159,40 +151,34 @@ Closes #123
 
 UVHTTP 项目要求所有非代码生成的文档必须提供中英双语版本，以支持全球贡献者和用户。
 
-**详细的文档双语规范请参考**：[docs/zh/DOCUMENTATION_STANDARDS.md](docs/zh/DOCUMENTATION_STANDARDS.md)
+- 中英文必须**同一次提交**更新；`doc-sync-check` 比较成对文件最后一次提交的时间，中文版不能早于英文版。
+- 本地检查：`bash scripts/check-doc-sync.sh --check`。CI 只配对面向用户的英文文档：`docs/api/`、`docs/dev/`、`docs/spec/`、`docs/releases/`、`docs/superpowers/`、`docs/code-review/` 以及 `AGILE.md`、`development-rhythm.md`、`release-strategy.md` 等流程文档被排除，`docs/zh/` 作为中文侧单独处理；完整名单见脚本的 `is_in_scope`。
+- 内部链接检查：`bash scripts/check-links.sh`；也可直接运行 `make check-docs`。
+- Markdown 写作规范见 [docs/dev/MARKDOWN_STYLE_GUIDE.md](docs/dev/MARKDOWN_STYLE_GUIDE.md)。
 
 ### 文档分类
 
 #### 1. 代码生成文档（无需双语）
 
-**位置**: `docs/api/`
+**位置**: `docs/api/.doxygen/xml/`（Doxygen XML）与 `docs/api/generated/`（转换后的 Markdown）
 
-这些文档从代码注释自动生成，使用 Doxygen 工具，不需要人工翻译。
+这些文档从代码注释自动生成，不需要人工翻译。由 `make docs` 重新生成，不要手改。
 
-**示例**:
-- `docs/api/defines/uvhttp_*.h.md`
-- `docs/api/functions/uvhttp_*.h.md`
+#### 2. 人工维护文档（必须双语）
 
-#### 2. 核心文档（必须双语）
+**站点与参考**：
+- `docs/index.md` ↔ `docs/zh/index.md`
+- `docs/MEMORY_SAFETY.md` ↔ `docs/zh/MEMORY_SAFETY.md`
+- `docs/guide/CHANGELOG.md` ↔ `docs/zh/guide/CHANGELOG.md`
+- `docs/guide/FAQ.md` ↔ `docs/zh/guide/FAQ.md`
+- `docs/guide/SECURITY.md` ↔ `docs/zh/guide/SECURITY.md`
 
-这些文档是项目的重要组成部分，必须提供中英双语版本。
-
-**根目录文档**：
-- `docs/CHANGELOG.md` ↔ `docs/zh/CHANGELOG.md` ✅
-- `docs/FAQ.md` ↔ `docs/zh/FAQ.md` ✅
-- `docs/SECURITY.md` ↔ `docs/zh/SECURITY.md` ✅
-- `docs/versions.md` ↔ `docs/zh/versions.md` ✅
-- `docs/index.md` ↔ `docs/zh/index.md` ✅
-- `docs/performance.md` ↔ `docs/zh/performance.md` ✅
-
-**使用者文档（`/guide/`）**：
-- `docs/guide/getting-started.md` ↔ `docs/zh/guide/getting-started.md` ✅
-- 其他 guide 文档需要补充双语版本
-
-**贡献者文档（`/dev/`）**：
-- `docs/dev/ARCHITECTURE.md` ↔ `docs/zh/dev/ARCHITECTURE.md` ✅
-- `docs/dev/BUILD_MODES.md` ↔ `docs/zh/dev/BUILD_MODES.md` ✅
-- `docs/dev/DEVELOPER_GUIDE.md` ↔ `docs/zh/guide/DEVELOPER_GUIDE.md` ✅
+**开发者文档**：
+- `docs/guide/DEVELOPER_GUIDE.md` ↔ `docs/zh/guide/DEVELOPER_GUIDE.md`
+- `docs/guide/TESTING_GUIDE.md` ↔ `docs/zh/guide/TESTING_GUIDE.md`
+- `docs/dev/ARCHITECTURE.md` ↔ `docs/zh/dev/ARCHITECTURE.md`
+- `docs/dev/BUILD_MODES.md` ↔ `docs/zh/dev/BUILD_MODES.md`
+- `docs/dev/CI_CD.md` ↔ `docs/zh/dev/CI_CD.md`
 
 ### 术语规范
 
@@ -284,14 +270,7 @@ ctest
 
 **`manual/` 里的文件全部是长驻 server，不是自动化测试。** 它们从 `test/integration/` 移到 `manual/` 就是为了不让人误以为 CI 会跑：都是 `uv_run(loop, UV_RUN_DEFAULT)` 永不返回 + 打印 usage 等人用 curl 驱动。CMake 只对 `test/unit/*.cpp` 调 `add_test`，manual 目录的文件仅被编译、**从不被执行**——注册进去会撞 `ctest --timeout 90` 被杀。
 
-**不要在这些文件里用 `assert()` 做验证。** CI 与本地都用 `CMAKE_BUILD_TYPE=Release`，Release 定义 `NDEBUG`，`assert()` 全部展开为 no-op：
-
-```bash
-nm build/dist/bin/test_middleware_compile_time | grep -c __assert_fail
-# → 0
-```
-
-仓库里已有 4 个文件（42 处断言）处于这个状态：它们 `exit=0` 不是"通过"，是"什么都没检查"，手动跑时给出的是**虚假绿灯**。要断言就用 gtest 放 `test/unit/`。
+**不要在这些文件里用 `assert()` 做验证。** CI 只编译不运行它们；Release 构建定义 `NDEBUG`，`assert()` 会整体消失，`exit=0` 不代表检查过。本地 `make build` 是 Debug，`assert()` 反而会触发——两种结果都不是可复现的测试信号。要断言就用 gtest 放 `test/unit/`。
 
 **改 `.c` 前先确认它在哪些配置下会被编译。** 部分源文件整个内容被 `#if UVHTTP_FEATURE_*` 整体包裹（例如 `src/uvhttp_lru_cache.c` 被 `UVHTTP_FEATURE_STATIC_FILES` 包裹），而本地默认 `build/` 是该 feature 关闭的——**这个文件在本地根本不编译**，本地 `make` 通过不构成任何证据。判断方法：
 
@@ -313,10 +292,10 @@ grep -n 'if UVHTTP_FEATURE' src/<file>.c
 
 ### 发布前检查清单
 
-- [ ] 所有测试通过（ctest 102/102）
+- [ ] 所有测试通过（`make test` 全套通过）
 - [ ] ASan 零发现（`asan-gate`）
 - [ ] UBSan 零发现（`ci-nightly` 的 `test-ubsan`）
-- [ ] `build-matrix` 全配置编译通过（minimal / static-files / no-compression / router-cache / all-on）
+- [ ] `build-matrix` 全配置编译通过（all-on / minimal / router-cache / static-files / no-compression）
 - [ ] `code-quality-check`（cppcheck）通过
 - [ ] `doc-sync-check` + `check-links` 通过
 - [ ] ci-fuzz 四 harness 无崩溃

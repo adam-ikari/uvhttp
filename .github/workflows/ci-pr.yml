@@ -3,10 +3,10 @@ name: CI - PR Build & Quality
 # PR 快速门禁：只做编译 + 代码质量 + 裁剪配置编译验证，**不跑测试**。
 # 完整测试矩阵（fast tests / 各配置测试 / ASan 内存安全）移到
 # ci-release-gate.yml，仅在发布 pre-release 时触发。
-# 触发条件：PR 打开、同步、重新打开到 main 或 develop 分支
+# 触发条件：PR 打开、同步、重新打开到 main 分支
 on:
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
     types: [opened, synchronize, reopened]
 
 # 并发控制：取消同一 PR 的旧运行

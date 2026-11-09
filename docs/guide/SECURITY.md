@@ -7,7 +7,7 @@ description: UVHTTP security features — buffer-overflow protection, HTTP respo
 
 ## Overview
 
-This document covers the UVHTTP security policy: dependency management, vulnerability response, and security practices.
+This page covers dependency management, vulnerability response, and security practices.
 
 ## Dependency Management
 
@@ -27,9 +27,9 @@ This document covers the UVHTTP security policy: dependency management, vulnerab
 ### Dependency Update Policy
 
 #### 1. Security Updates (High Priority)
-- **Trigger**: CVE vulnerability or serious security issue discovered
-- **Response Time**: 7 days for assessment, 14 days for fix
-- **Process**:
+- Trigger: a CVE or serious security issue is discovered
+- Response time: 7 days for assessment, 14 days for fix
+- Process:
   1. Assess vulnerability impact scope
   2. Check upstream fix version
   3. Update dependency version
@@ -37,9 +37,9 @@ This document covers the UVHTTP security policy: dependency management, vulnerab
   5. Release security patch version
 
 #### 2. Feature Updates (Medium Priority)
-- **Trigger**: New features, performance improvements, API changes
-- **Response Time**: Quarterly assessment
-- **Process**:
+- Trigger: new features, performance improvements, API changes
+- Response time: quarterly assessment
+- Process:
   1. Evaluate new feature value
   2. Check API compatibility
   3. Update dependency version
@@ -47,9 +47,9 @@ This document covers the UVHTTP security policy: dependency management, vulnerab
   5. Release minor version
 
 #### 3. Maintenance Updates (Low Priority)
-- **Trigger**: Dependency version outdated (> 1 year)
-- **Response Time**: Semi-annual assessment
-- **Process**:
+- Trigger: dependency version outdated (> 1 year)
+- Response time: semi-annual assessment
+- Process:
   1. Check compatibility
   2. Update dependency version
   3. Run tests
@@ -59,16 +59,16 @@ This document covers the UVHTTP security policy: dependency management, vulnerab
 
 All dependency versions are pinned in `.gitmodules` to ensure reproducible builds.
 
-**Advantages**:
+Advantages:
 - Reproducible builds
 - Avoid unexpected breaking changes
 - Easier issue tracking
 
-**Disadvantages**:
+Disadvantages:
 - Manual dependency updates required
 - May miss security updates
 
-**Mitigation**:
+Mitigation:
 - Regular security scanning
 - Subscribe to security advisories
 - Establish automated checks
@@ -88,32 +88,32 @@ All dependency versions are pinned in `.gitmodules` to ensure reproducible build
 
 Use the following tools for automated security scanning:
 
-1. **Dependency Scanning**
+1. Dependency scanning
    ```bash
    # Use GitHub Dependabot
    # Configuration file: .github/dependabot.yml
    ```
 
-2. **Static Code Analysis**
+2. Static code analysis
    ```bash
    # Use cppcheck
    cppcheck --enable=all src/
    ```
 
-3. **Memory Safety Checks**
+3. Memory safety checks
    ```bash
    # Use Valgrind
    valgrind --leak-check=full --show-leak-kinds=all ./uvhttp_server
    ```
 
-4. **AddressSanitizer (leaks, use-after-free, overflows)**
+4. AddressSanitizer (leaks, use-after-free, overflows)
    ```bash
    cmake -B build_asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON ..
    cmake --build build_asan -j$(nproc)
    (cd build_asan && ctest --output-on-failure)   # full suite, leak detection on
    ```
 
-5. **UndefinedBehaviorSanitizer (signed overflow, shifts, alignment, ...)**
+5. UndefinedBehaviorSanitizer (signed overflow, shifts, alignment, ...)
    ```bash
    cmake -B build_ubsan -DCMAKE_BUILD_TYPE=Debug -DENABLE_UBSAN=ON ..
    cmake --build build_ubsan -j$(nproc)
@@ -127,17 +127,17 @@ Use the following tools for automated security scanning:
 
 UVHTTP validates input:
 
-1. **URL Validation**
+1. URL validation
    - Maximum URL length: 2048 bytes
    - Path traversal protection
    - URL encoding validation
 
-2. **Header Validation**
+2. Header validation
    - Maximum header count: 64
    - Maximum header name length: 256 bytes
    - Maximum header value length: 4096 bytes
 
-3. **Body Size Limits**
+3. Body size limits
    - Maximum body size: 10MB (configurable)
    - Chunked transfer encoding support
 
@@ -184,19 +184,19 @@ mbedtls_ssl_conf_ciphersuites(&conf, ciphers);
 
 UVHTTP applies several DoS protections:
 
-1. **Request Filter** (application-supplied)
+1. Request filter (application-supplied)
    - The library runs a pre-dispatch hook and ships no limiter of its own
    - You decide the key, the window and the reply - per-client IP counting is
      documented in the Request Filter API
    - A limiter placed behind a proxy must not trust `X-Forwarded-For` unless
      `trust_proxy_headers` is configured
 
-2. **Connection Limits**
+2. Connection limits
    - Maximum connections: 2048 (configurable)
    - Connection timeout: 60 seconds
    - Request timeout: 30 seconds
 
-3. **Resource Limits**
+3. Resource limits
    - Maximum body size: 10MB
    - Maximum header size: 8KB
    - Maximum concurrent requests per connection: 100
@@ -205,31 +205,31 @@ UVHTTP applies several DoS protections:
 
 ### Reporting Process
 
-If you discover a security vulnerability, please report it responsibly:
+Report a security vulnerability privately:
 
-1. **Do not create a public issue**
-2. **Send email to**: security@uvhttp.org
-3. **Include**: Vulnerability description, reproduction steps, affected versions
-4. **Response Time**: We will respond within 48 hours
+1. Do not create a public issue
+2. Send email to security@uvhttp.org
+3. Include the vulnerability description, reproduction steps, and affected versions
+4. We respond within 48 hours
 
 ### Vulnerability Handling Process
 
-1. **Acknowledgment** (within 48 hours)
+1. Acknowledgment (within 48 hours)
    - Confirm receipt of report
    - Assign severity level
    - Estimate fix timeline
 
-2. **Assessment** (within 7 days)
+2. Assessment (within 7 days)
    - Reproduce vulnerability
    - Assess impact
    - Develop fix
 
-3. **Fix Development** (within 14 days)
+3. Fix development (within 14 days)
    - Implement fix
    - Write tests
    - Review code
 
-4. **Release** (within 21 days)
+4. Release (within 21 days)
    - Prepare security advisory
    - Release patch version
    - Coordinate disclosure
@@ -247,25 +247,24 @@ If you discover a security vulnerability, please report it responsibly:
 
 ### Memory Safety
 
-- **Sanitizer-verified**: The full 91-test suite passes clean under AddressSanitizer (with leak detection — zero leaks, zero use-after-free, zero buffer overflows) and UndefinedBehaviorSanitizer (zero undefined behavior). See `.github/workflows/ci-nightly.yml` (`test-memory` + `test-ubsan` jobs).
-- **Zero compilation warnings**: All code compiles with `-Werror`
-- **Memory allocator**: mimalloc for improved memory safety (optional; system allocator also supported)
-- **Buffer overflow protection**: all string operations validated
-- **Memory leak detection**: regular Valgrind and AddressSanitizer testing
+- The full 119-test suite passes clean under AddressSanitizer (with leak detection: zero leaks, zero use-after-free, zero buffer overflows) and UndefinedBehaviorSanitizer (zero undefined behavior). The pre-release gate runs the ASan build (`.github/workflows/ci-release-gate.yml`, job `asan-gate`); UBSan runs nightly (`.github/workflows/ci-nightly.yml`, job `test-ubsan`).
+- All code compiles with `-Werror`
+- mimalloc is available for memory safety, and the system allocator is also supported
+- All string operations are validated
 
 ### Input Validation
 
-- **URL validation**: Length limits, path traversal protection
-- **Header validation**: Size limits, format validation
-- **Body validation**: Size limits, encoding validation
-- **Parameter validation**: Type checking, range validation
+- URL validation: length limits, path traversal protection
+- Header validation: size limits, format validation
+- Body validation: size limits, encoding validation
+- Parameter validation: type checking, range validation
 
 ### Secure Defaults
 
-- **TLS 1.2/1.3**: both enabled by default, TLS 1.3 as maximum
-- **Certificate verification**: Required by default
-- **Secure cipher suites**: Pre-configured
-- **Rate limiting**: Enabled by default
+- TLS 1.2/1.3: both enabled by default, TLS 1.3 as maximum
+- Certificate verification: required by default
+- Secure cipher suites: pre-configured
+- Rate limiting: not built in; implement it as a request filter
 
 ## Security Checklist
 
@@ -274,8 +273,8 @@ Before deploying to production, ensure:
 - [ ] All dependencies are up to date
 - [ ] No known vulnerabilities in dependencies
 - [ ] TLS is properly configured
-- [ ] Rate limiting is enabled
-- [ ] Input validation is comprehensive
+- [ ] Rate limiting is implemented in a request filter
+- [ ] Input validation covers every entry point
 - [ ] Error messages don't leak sensitive information
 - [ ] Logging doesn't expose sensitive data
 - [ ] File permissions are correct

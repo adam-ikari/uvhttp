@@ -1,98 +1,98 @@
-# UVHTTP 嵌入验证清单
+# UVHTTP Embedding Validation Checklist
 
-> 这份清单供嵌入者（将 uvhttp 作为 submodule 集成到自有项目中的开发者）使用。
-> 每次重要发布或嵌入后，应逐项验证。
+> This checklist is for embedders: developers who integrate uvhttp into their own project as a submodule.
+> Run every item after each significant release or embedding.
 
 ---
 
-## 1. 构建集成
+## 1. Build integration
 
-- [x] 项目能以 submodule 方式成功克隆：`git clone --recurse-submodules`
-- [x] 项目能成功编译：`mkdir build && cd build && cmake .. && make`
-- [x] 嵌入者能通过 CMake `add_subdirectory` 集成
-- [x] 嵌入者能选择裁剪特性：`cmake .. -DBUILD_WITH_WEBSOCKET=OFF`
-- [ ] 所有特性开关组合均能编译（见 [BUILD_CONFIGURATION_MATRIX.md](guide/BUILD_CONFIGURATION_MATRIX.md)）
+- [x] The project clones as a submodule: `git clone --recurse-submodules`
+- [x] The project builds: `mkdir build && cd build && cmake .. && make`
+- [x] An embedder can integrate it with CMake `add_subdirectory`
+- [x] An embedder can trim features: `cmake .. -DBUILD_WITH_WEBSOCKET=OFF`
+- [ ] Every feature-switch combination builds (see [BUILD_CONFIGURATION_MATRIX.md](guide/BUILD_CONFIGURATION_MATRIX.md))
 
-## 2. 方法枚举映射
+## 2. Method enum mapping
 
-- [ ] 所有 HTTP 方法（GET/POST/PUT/DELETE/HEAD/OPTIONS/PATCH）在 router 中正确注册和匹配
-- [ ] 使用 `uvhttp_server_listen_routes()` 路由表中 `UVHTTP_ANY` 方法注册的路由对所有请求方法生效
-- [ ] 使用 `uvhttp_router_add_route()`（隐含 UVHTTP_ANY）注册的路由对所有请求方法生效
-- [ ] 嵌入者的 HTTP 客户端库（如 undici、fetch）发送的请求方法被正确解析
+- [ ] All HTTP methods (GET/POST/PUT/DELETE/HEAD/OPTIONS/PATCH) register and match correctly in the router
+- [ ] Routes registered with the `UVHTTP_ANY` method in a `uvhttp_server_listen_routes()` route table match every request method
+- [ ] Routes registered with `uvhttp_router_add_route()` (implicit UVHTTP_ANY) match every request method
+- [ ] Request methods sent by the embedder's HTTP client library (such as undici or fetch) parse correctly
 
-## 3. 标准兼容性
+## 3. Standards compatibility
 
-- [ ] gzip 压缩输出的 `Content-Encoding: gzip` 能被标准 `gunzip` 解码
-- [ ] gzip 流的 magic 字节为 `0x1f8b`（不是 zlib 的 `0x78`）
-- [ ] WebSocket 握手头名大小写不敏感（`Sec-WebSocket-Key:` 与 `sec-websocket-key:` 均被接受）
-- [ ] HTTP 头名大小写不敏感（`Content-Type:` 与 `content-type:` 均被接受）
-- [ ] `Connection: Upgrade`、`connection: upgrade`、`CONNECTION: UPGRADE` 均被识别
-- [ ] 控制帧（PING/PONG/CLOSE）payload 长度检查（RFC 6455 §5.5：≤125 字节）
-- [ ] RSV 位校验（RFC 6455 §5.2：未协商扩展时 RSV 非零应关闭连接）
+- [ ] gzip output with `Content-Encoding: gzip` decodes with standard `gunzip`
+- [ ] The gzip stream magic bytes are `0x1f8b` (not zlib's `0x78`)
+- [ ] WebSocket handshake header names are case-insensitive (`Sec-WebSocket-Key:` and `sec-websocket-key:` are both accepted)
+- [ ] HTTP header names are case-insensitive (`Content-Type:` and `content-type:` are both accepted)
+- [ ] `Connection: Upgrade`, `connection: upgrade` and `CONNECTION: UPGRADE` are all recognized
+- [ ] Control frames (PING/PONG/CLOSE) payload length check (RFC 6455 §5.5: ≤125 bytes)
+- [ ] RSV bit validation (RFC 6455 §5.2: with no negotiated extension, a non-zero RSV closes the connection)
 
-## 4. 静态文件服务
+## 4. Static file serving
 
-- [ ] 根路径 `/` 正确返回 index 文件（如 index.html）
-- [ ] 子路径 `/static/file.txt` 正确返回文件
-- [ ] 不存在的路径返回 404 且不崩溃
-- [ ] 嵌入者配置的 index_file 无论是否有前导 `/` 均正常工作
-- [ ] 大文件（>1MB）通过 sendfile 路径发送，无内存溢出
+- [ ] The root path `/` returns the index file (for example index.html)
+- [ ] The subpath `/static/file.txt` returns the file
+- [ ] A missing path returns 404 without crashing
+- [ ] An embedder-configured index_file works with or without a leading `/`
+- [ ] Large files (>1MB) go through the sendfile path without memory blowup
 
-## 5. 处理管线
+## 5. Processing pipeline
 
-- [ ] 路由匹配时调用 handler
-- [ ] 路由未匹配但 static 命中时调用 static handler
-- [ ] 路由未匹配且 static 未命中时，若设置了 `server->handler`，回调该 handler（而非硬编码 404）
-- [ ] 路由未匹配且 static 未命中且未设置 handler，返回 404
-- [ ] 嵌入者 handler 可以正常发送响应（set_status、set_header、set_body、send）
+- [ ] A matching route calls its handler
+- [ ] No route matches but static serving hits, so the static handler runs
+- [ ] No route matches and static serving misses: if `server->handler` is set, call that handler instead of a hard-coded 404
+- [ ] No route matches, static misses and no handler is set: return 404
+- [ ] An embedder handler can send a response normally (set_status, set_header, set_body, send)
 
-## 6. 内存安全
+## 6. Memory safety
 
-- [ ] 嵌入者项目在 ASan 下运行无泄漏
-- [ ] 嵌入者项目在 UBSan 下运行无未定义行为
-- [ ] 长时间运行（>1 小时）无 RSS 增长
-- [ ] 高并发（100 连接）下无 socket 错误
-- [ ] 通过 `make verify-memory-safety` 验证
+- [ ] The embedder's project runs under ASan with no leaks
+- [ ] The embedder's project runs under UBSan with no undefined behavior
+- [ ] Long runs (>1 hour) show no RSS growth
+- [ ] High concurrency (100 connections) produces no socket errors
+- [ ] `make verify-memory-safety` passes
 
-## 7. 多实例与隔离
+## 7. Multiple instances and isolation
 
-- [ ] 同一进程启动多个 uvhttp_server_t 实例正常工作
-- [ ] 每个实例的 gzip 缓存独立（无静态全局变量冲突）
-- [ ] 每个实例的 router 独立
-- [ ] 一个实例停止不影响其他实例
+- [ ] Several uvhttp_server_t instances in one process work
+- [ ] Each instance has its own gzip cache (no static global conflicts)
+- [ ] Each instance has its own router
+- [ ] Stopping one instance does not affect the others
 
-## 8. 特性组合验证
+## 8. Feature combination validation
 
-| 特性组合 | 验证 |
+| Feature combination | Verified |
 |---------|------|
-| HTTP 纯文本 | [ ] |
+| Plain HTTP | [ ] |
 | HTTP + WebSocket | [ ] |
-| HTTP + 静态文件 | [ ] |
-| HTTP + 压缩 | [ ] |
+| HTTP + static files | [ ] |
+| HTTP + compression | [ ] |
 | HTTP + TLS | [ ] |
 | HTTP + WebSocket + TLS | [ ] |
-| HTTP + 路由缓存（ROUTER_CACHE=1） | [ ] |
-| 所有特性全开 | [ ] |
+| HTTP + router cache (ROUTER_CACHE=1) | [ ] |
+| All features on | [ ] |
 
-## 9. 嵌入者接入清单（新嵌入者专用）
+## 9. Embedder onboarding checklist (new embedders)
 
-第一次将 uvhttp 作为 submodule 添加时，按以下步骤验证。
-完整的接入指南见 [EMBEDDING_GUIDE.md](guide/EMBEDDING_GUIDE.md)，
-可运行的独立示例项目见 [examples/embedding/](https://github.com/adam-ikari/uvhttp/tree/main/examples/embedding)。
+When adding uvhttp as a submodule for the first time, verify these steps.
+The full integration guide is [EMBEDDING_GUIDE.md](guide/EMBEDDING_GUIDE.md),
+and a runnable standalone example is [examples/embedding/](https://github.com/adam-ikari/uvhttp/tree/main/examples/embedding).
 
-1. [ ] 在嵌入项目的 `CMakeLists.txt` 中添加 `add_subdirectory` 或 `FetchContent`
-2. [ ] 编译嵌入项目，确认 uvhttp 头文件可引用
-3. [ ] 创建最小 HTTP 服务器示例（~20 行，可直接参考 `examples/embedding/main.c`），验证 `hello world` 响应
-4. [ ] 运行 uvhttp 的测试套件：`cd <uvhttp>/build && ctest --output-on-failure`
-5. [ ] 在嵌入项目上运行 ASan：`cmake -DENABLE_ASAN=ON .. && make && ./your-server`
-6. [ ] 发送一个完整的 HTTP 请求并验证响应
+1. [ ] Add `add_subdirectory` or `FetchContent` to the embedder's `CMakeLists.txt`
+2. [ ] Build the embedding project and confirm the uvhttp headers are reachable
+3. [ ] Create a minimal HTTP server (~20 lines; `examples/embedding/main.c` is a direct reference) and confirm a `hello world` response
+4. [ ] Run uvhttp's test suite: `cd <uvhttp>/build && ctest --output-on-failure`
+5. [ ] Run ASan on the embedding project: `cmake -DENABLE_ASAN=ON .. && make && ./your-server`
+6. [ ] Send a complete HTTP request and verify the response
 
 ---
 
-## 版本历史
+## Version history
 
-| 版本 | 日期 | 变更 |
+| Version | Date | Change |
 |------|------|------|
-| 1.0 | 2026-08-20 | 初始版本，基于 qwrt 嵌入经验 |
-| 1.1 | 2026-08-25 | 第二轮验证：add_subdirectory 集成，CMake 依赖可见性修复 |
-| 1.2 | 2026-08-27 | 新嵌入者接入：新增独立示例 `examples/embedding/` 与完整指南 `EMBEDDING_GUIDE.md` |
+| 1.0 | 2026-08-20 | Initial version, based on embedding uvhttp in qwrt |
+| 1.1 | 2026-08-25 | Second validation round: add_subdirectory integration, CMake dependency visibility fix |
+| 1.2 | 2026-08-27 | New embedder onboarding: standalone `examples/embedding/` example and full `EMBEDDING_GUIDE.md` |

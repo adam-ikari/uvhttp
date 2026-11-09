@@ -101,7 +101,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -155,6 +155,10 @@ endif()
 # Security compiler options
 # Hardening flags are gated by ENABLE_STACK_PROTECTION / ENABLE_HARDENING below
 # so those switches can actually turn them off.
+# Headers repeat a few forward typedefs (uvhttp_response_t etc.) for
+# standalone include use. C11 made that legal; in C99 clang warns.
+# The definitions are identical, so silence the warning rather than
+# forcing every header to include a shared forward-declaration header.
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
     -Wall \
     -Wextra \
@@ -165,6 +169,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
     -Werror=implicit-function-declaration \
     -Werror=format-security \
     -Werror=return-type \
+    -Wno-typedef-redefinition \
 ")
 
 # ========== Feature Definitions Based on Options ==========
@@ -1015,7 +1020,7 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
         add_dependencies(${test_name} mimalloc)
     endif()
 
-    target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error-unused-function)
+    target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
     target_link_libraries(${test_name} ${LIBS})
     
     # Add mimalloc include directory if using mimalloc

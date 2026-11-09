@@ -26,7 +26,7 @@ and its whitelist matched IPv4 peer addresses only. Any policy better than that
 needs decisions an embedded library has no business making: which window
 length, which key (client IP, tenant, API key), whether to trust a proxy
 header, how much memory the table may take and what gets evicted. So the
-library runs the seam and you own the semantics.
+library runs the hook; the policy stays yours to write.
 
 ## Contract
 
@@ -43,18 +43,18 @@ library runs the seam and you own the semantics.
 | `user_data` | Borrowed, exactly like `server->handler`: the library never frees it. It must outlive the server, or be cleared by installing a `NULL` filter first. |
 
 Passing `NULL` as the filter removes the one currently installed; a server from
-`uvhttp_server_new()` starts with the seam closed.
+`uvhttp_server_new()` starts with no filter installed.
 
 Identify the client with `uvhttp_request_get_client_ip()`. It returns the IPv6
 or IPv4 peer address, and honors `X-Forwarded-For` / `X-Real-IP` only when
-`config->trust_proxy_headers` is set — proxy headers are client-controlled and
-trivially spoofable, so leave that off unless you really do sit behind a proxy.
+`config->trust_proxy_headers` is set, because proxy headers are client-controlled
+and trivially spoofable. Leave that off unless you really do sit behind a proxy.
 The returned pointer may address an internal buffer that the next call
 overwrites; copy it if you keep it.
 
 ## Per-client fixed window
 
-The example below is complete user code: no library support beyond the seam.
+The example below is complete user code: no library support beyond the hook.
 One slot per client IP, a 1-second window, 100 requests per window, and a
 bounded table so a spray of source addresses cannot grow memory without limit.
 
@@ -170,9 +170,9 @@ library returns on its own.
 
 ## See also
 
-- [Middleware API](/spec/middleware-api) - in-handler composition. Note that a
-  middleware `STOP` only breaks out of the middleware loop, the handler body
-  still runs; use this filter when you need to stop dispatch itself.
+- [Middleware API](/spec/middleware-api) - in-handler composition. A middleware
+  `STOP` only breaks out of the middleware loop, the handler body still runs;
+  use this filter when you need to stop dispatch itself.
 - [Request API](/spec/request-api) - `uvhttp_request_get_client_ip()` and the
   headers it reads.
 - [CMake configuration](/guide/CMAKE_CONFIGURATION) - `trust_proxy_headers`.

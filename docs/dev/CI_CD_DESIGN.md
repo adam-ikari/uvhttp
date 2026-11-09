@@ -1,5 +1,9 @@
 # UVHTTP CI/CD Design Document
 
+> **Historical design document.** This describes the 2.2.0-era design, including
+> the removed `develop` branch and `ci-push.yml`. Current workflows and
+> triggers are documented in [CI_CD.md](CI_CD.md).
+
 ## Document Information
 
 - **Project**: UVHTTP
@@ -2043,7 +2047,7 @@ lcov --list coverage.info
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [CMake Documentation](https://cmake.org/documentation/)
 - [Google Test Documentation](https://google.github.io/googletest/)
-- [lcov Documentation](http://ltp.sourceforge.net/coverage/lcov.php)
+- [lcov Documentation](https://github.com/linux-test-project/lcov)
 - [wrk Documentation](https://github.com/wg/wrk)
 - [CodeQL Documentation](https://codeql.github.com/docs/)
 

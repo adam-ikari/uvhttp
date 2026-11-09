@@ -2,19 +2,21 @@
 
 ## 概述
 
-本文档面向 UVHTTP 库的贡献者，介绍如何参与库的开发、代码规范、最佳实践等。
+这份指南讲在本仓库里怎么编译、写代码、跑测试、提 PR。第一次提交之前，至少把编译和测试两节读完。
 
 ## 开发环境
 
 ### 系统要求
 
 - **操作系统**: Linux, macOS, Windows
-- **编译器**: GCC 4.8+, Clang 3.4+, MSVC 2015+
-- **CMake**: 3.10+
-- **依赖库**:
+- **编译器**: 支持 C11 的 GCC 或 Clang
+- **CMake**: 3.13+
+- **依赖库**（以 submodule 形式放在 `deps/`）:
   - libuv 1.x
-  - mbedtls 2.x (可选，用于 TLS)
-  - mimalloc (可选，高性能内存分配器)
+  - llhttp
+  - mbedtls（TLS）
+  - googletest（测试）
+  - mimalloc（可选，高性能内存分配器）
 
 ### 安装依赖
 
@@ -42,7 +44,7 @@ brew install cmake
 
 ### 构建模式规范
 
-UVHTTP 项目定义了三种构建模式，每种模式适用于不同的场景：
+构建分三种模式，用途不同：
 
 | 构建模式 | 用途 | 编译选项 | 适用程序 |
 |----------|------|----------|----------|
@@ -51,51 +53,71 @@ UVHTTP 项目定义了三种构建模式，每种模式适用于不同的场景�
 | **Coverage** | 代码覆盖率分析 | `-O0 --coverage` | 覆盖率测试 |
 
 **重要提示**：
-- 性能测试必须使用 Release 模式，否则数据不准确（Debug 模式性能可能低 10-100 倍）
-- 详细的构建模式规范请参考 [BUILD_MODES.md](../dev/BUILD_MODES.md)
+- 性能测试必须使用 Release 模式，Debug 的数据不能拿来比（性能可能低 10-100 倍）
+- 构建模式的完整规范见 [BUILD_MODES.md](../dev/BUILD_MODES.md)
 
 ### 基本编译
 
-#### Release 模式（推荐用于性能测试）
+直接用 Makefile 目标，它会建好独立目录、传对参数：
 
 ```bash
+# Debug 构建（默认）：build/
 make build
+
+# Release 构建：build_release/
+make build-release
+
+# 覆盖率构建：build_coverage/
+make build-coverage
 ```
 
-#### Debug 模式（用于开发调试）
+等价的原始 CMake 命令：
 
 ```bash
-make build
+cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build -j"$(nproc)"
 ```
 
-#### Coverage 模式（用于覆盖率分析）
-
-```bash
-make build
-```
+性能测试与生产必须使用 Release。也可以显式传 `ENABLE_DEBUG=ON`；
+`CMAKE_BUILD_TYPE=Debug` 会被强制为 `-O0` 且不定义 `NDEBUG`，两种写法都是真正的 Debug 构建。
 
 ### 编译选项
 
-编辑 `CMakeLists.txt` 中的 `option()` 默认值，然后运行 `make build`：
+在 configure 阶段传 `-D`，不要编辑 `CMakeLists.txt`：
 
 ```bash
-# 启用 WebSocket 支持 — 在 CMakeLists.txt 中将 BUILD_WITH_WEBSOCKET 设为 ON
-# 启用 mimalloc 分配器 — 在 CMakeLists.txt 中将 BUILD_WITH_MIMALLOC 设为 ON
-# 启用 TLS 支持 — 在 CMakeLists.txt 中将 BUILD_WITH_HTTPS 设为 ON
-# Debug 模式 — 在 CMakeLists.txt 中将 ENABLE_DEBUG 设为 ON
-# 启用代码覆盖率 — 在 CMakeLists.txt 中将 ENABLE_COVERAGE 设为 ON
-# 启用示例程序 — 在 CMakeLists.txt 中将 BUILD_EXAMPLES 设为 ON
-make build
+# 特性开关（括号内为默认值）
+cmake -B build -DCMAKE_BUILD_TYPE=Debug \
+  -DBUILD_WITH_WEBSOCKET=ON \
+  -DBUILD_WITH_HTTPS=ON \
+  -DBUILD_WITH_STATIC_FILES=OFF \
+  -DBUILD_WITH_ROUTER_CACHE=OFF \
+  -DBUILD_WITH_COMPRESSION=ON \
+  -DBUILD_TESTS=ON \
+  -DBUILD_EXAMPLES=OFF \
+  -DBUILD_BENCHMARKS=ON
 ```
+
+Makefile 通过 `CMAKE_FLAGS` 透传额外参数：
+
+```bash
+make build CMAKE_FLAGS="-DBUILD_WITH_STATIC_FILES=ON"
+```
+
+`make cmake-options` 列出当前支持的选项，
+[构建配置矩阵](BUILD_CONFIGURATION_MATRIX.md) 说明每个选项的含义。
 
 ### 选择内存分配器
 
-编辑 `CMakeLists.txt`，修改 `UVHTTP_ALLOCATOR_TYPE` 的值，然后运行 `make build`：
+`UVHTTP_ALLOCATOR_TYPE` 选择分配器。`1` 需要 mimalloc submodule 和对应开关；
+`2` 表示由使用者提供分配器。
 
 ```bash
-# 系统分配器（默认）— UVHTTP_ALLOCATOR_TYPE=0
-# mimalloc 分配器 — UVHTTP_ALLOCATOR_TYPE=1
-make build
+# 系统分配器（默认）
+cmake -B build -DUVHTTP_ALLOCATOR_TYPE=0
+
+# mimalloc 分配器
+cmake -B build -DUVHTTP_ALLOCATOR_TYPE=1 -DBUILD_WITH_MIMALLOC=ON
 ```
 
 ## 代码规范
@@ -105,11 +127,11 @@ make build
 - **函数**: `uvhttp_module_action` (如 `uvhttp_server_new`)
 - **类型**: `uvhttp_name_t` (如 `uvhttp_server_t`)
 - **常量**: `UVHTTP_UPPER_CASE` (如 `UVHTTP_MAX_HEADERS`)
-- **宏**: `UVHTTP_UPPER_CASE` (如 `UVHTTP_MALLOC`)
+- **宏**: `UVHTTP_UPPER_CASE` (如 `UVHTTP_FEATURE_TLS`)
 
 ### 代码风格
 
-- **标准**: C99
+- **标准**: C11
 - **缩进**: 4 个空格
 - **大括号**: K&R 风格
 - **行长度**: 最大 120 字符
@@ -130,7 +152,7 @@ uvhttp_error_t uvhttp_function(int param1, const char* param2);
 
 ### 统一分配器
 
-UVHTTP 提供统一的内存管理接口，通过编译期选择分配器类型。
+分配器在编译期选定，之后代码只走 uvhttp_alloc 这一套分配接口。
 
 #### 基本操作
 
@@ -159,27 +181,20 @@ if (!ptr) {
 
 #### 分配器类型
 
-UVHTTP 支持两种分配器类型：
+`UVHTTP_ALLOCATOR_TYPE` 支持三种取值：
 
-1. **系统分配器**（默认）
-   - 稳定可靠，无额外依赖
-   - 零抽象开销
-   - 适合大多数场景
-
-2. **mimalloc 分配器**
-   - 现代分配器
-   - 内置小对象优化
-   - 多线程扩展性
-   - 降低内存碎片
+1. **系统分配器**（`0`，默认）：标准 malloc/free，无额外依赖，也没有包装层开销
+2. **mimalloc 分配器**（`1`）：小对象有专门优化，多线程下扩展性好，碎片更少
+3. **自定义分配器**（`2`）：由嵌入方提供
 
 #### 编译配置
 
-编辑 `CMakeLists.txt`，修改 `UVHTTP_ALLOCATOR_TYPE` 的值，然后运行 `make build`：
-
 ```bash
-# 系统分配器（默认）— UVHTTP_ALLOCATOR_TYPE=0
-# mimalloc 分配器 — UVHTTP_ALLOCATOR_TYPE=1
-make build
+# 系统分配器（默认）
+cmake -B build -DUVHTTP_ALLOCATOR_TYPE=0
+
+# mimalloc 分配器
+cmake -B build -DUVHTTP_ALLOCATOR_TYPE=1 -DBUILD_WITH_MIMALLOC=ON
 ```
 
 #### 性能特性
@@ -228,14 +243,15 @@ void example_memory_usage(void) {
 
 ### 内存泄漏检测
 
-使用 Valgrind 检测内存泄漏：
+首选 sanitizer 目标；Valgrind 作为可选的补充检查。
 
 ```bash
-# 编译 Debug 版本 — 在 CMakeLists.txt 中将 ENABLE_DEBUG 设为 ON，然后运行：
-make build
+# Debug + ASan + UBSan，跑全部已注册测试
+make verify-memory-safety
 
-# 运行 Valgrind
-valgrind --leak-check=full --show-leak-kinds=all ./dist/bin/helloworld
+# 可选：对 Debug 二进制或测试可执行文件跑 Valgrind
+make build
+valgrind --leak-check=full --show-leak-kinds=all build/dist/bin/<binary>
 ```
 
 ## 错误处理
@@ -285,32 +301,40 @@ if (result != UVHTTP_OK && uvhttp_error_is_recoverable(result)) {
 ### 运行测试
 
 ```bash
-# 运行所有测试
-./run_tests.sh
+# Debug 构建并运行全部 ctest 已注册测试
+make build
+make test
 
-# 运行特定测试
-./dist/bin/test_router_full_coverage
+# 或直接调用 ctest
+ctest --test-dir build --output-on-failure
 
-# 生成覆盖率报告
-./run_tests.sh --detailed
+# 按名称运行单个测试
+ctest --test-dir build -R test_router --output-on-failure
+build/dist/bin/test_router_full_coverage
+
+# 全套 ASan + UBSan
+make verify-memory-safety
+
+# 覆盖率报告（build_coverage/coverage_html/index.html）
+make build-coverage
+make coverage
 ```
 
 ### 编写测试
 
-```c
+测试放在 `test/unit/test_*.cpp`。CMake 会自动 glob 编译每个文件并注册到
+`add_test`，不存在需要编辑的 `test/CMakeLists.txt`。`manual/` 下的文件会被编译，
+但故意不注册进 ctest，断言测试不要放在那里。
+
+```cpp
 #include <gtest/gtest.h>
 
 TEST(UvhttpTest, BasicFunctionality) {
-    // 测试代码
     EXPECT_EQ(result, UVHTTP_OK);
 }
 ```
 
-### 测试覆盖
-
-- **单元测试**: 测试单个函数
-- **集成测试**: 测试模块交互
-- **性能测试**: 测试性能指标
+Mock 框架、命名规范和 sanitizer 流程见 [测试指南](TESTING_GUIDE.md)。
 
 ## 性能优化
 
@@ -353,14 +377,17 @@ const char* data = uvhttp_request_get_body(request, &len);
 ### 启用调试输出
 
 ```bash
-# 在 CMakeLists.txt 中将 ENABLE_DEBUG 设为 ON，然后运行：
+# Debug 构建（断言开启，-O0 -g）
 make build
+
+# 同时开启开发模式日志
+make build CMAKE_FLAGS="-DENABLE_DEV_MODE=ON"
 ```
 
 ### 使用 GDB
 
 ```bash
-gdb ./dist/bin/helloworld
+gdb build/dist/bin/<binary>
 (gdb) run
 (gdb) backtrace
 (gdb) print variable
@@ -432,7 +459,7 @@ Closes #123
 ### 审查流程
 
 1. 创建 Pull Request
-2. 自动运行 CI/CD 测试
+2. 自动运行 CI 检查；测试在预发布门禁执行
 3. 代码审查
 4. 修改并重新审查
 5. 合并到主分支
@@ -442,20 +469,18 @@ Closes #123
 ### Q: 如何选择内存分配器？
 
 A:
-- **系统分配器**: 适合大多数场景，稳定可靠
-- **mimalloc**: 适合高并发、多线程场景，性能更好
+默认的系统分配器够用。多线程分配压力大时再换 mimalloc，用下面的开关一起打开。
 
 ```bash
-# 编辑 CMakeLists.txt，将 UVHTTP_ALLOCATOR_TYPE 设为 1，然后运行：
-make build
+cmake -B build -DUVHTTP_ALLOCATOR_TYPE=1 -DBUILD_WITH_MIMALLOC=ON
 ```
 
 ### Q: 如何处理内存泄漏？
 
 A:
-1. 使用 Valgrind 检测泄漏
+1. 先跑内存安全门禁（ASan + UBSan），泄漏通常出在这里
 2. 确保每个 `uvhttp_alloc` 都有对应的 `uvhttp_free`
-3. 使用 RAII 模式管理资源
+3. 每条提前返回的路径都要释放已分配的资源
 
 ### Q: 如何优化性能？
 
@@ -475,9 +500,14 @@ A:
 
 ## 参考资料
 
+- [开发者文档入口](../dev/index.md)
 - [架构设计文档](../dev/ARCHITECTURE.md)
+- [构建模式](../dev/BUILD_MODES.md)
+- [测试指南](TESTING_GUIDE.md)
+- [测试规范](../dev/TESTING_STANDARDS.md)
+- [CI/CD 指南](../dev/CI_CD.md)
 - [API 参考文档](../../api/API_REFERENCE.md)
-- [教程](../guide/TUTORIAL.md)
+- [教程](TUTORIAL.md)
 - [libuv 文档](https://docs.libuv.org/)
 - [HTTP/1.1 规范](https://tools.ietf.org/html/rfc7230)
 

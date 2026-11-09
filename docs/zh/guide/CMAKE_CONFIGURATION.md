@@ -2,19 +2,19 @@
 
 ## 概述
 
-UVHTTP 支持通过 CMake 配置各种编译时常量，允许用户根据实际需求调整库的行为和性能。
+头部长度上限、连接数、缓冲区大小、静态文件缓存这类限制都是编译期常量。它们在 CMake 里定，编进库以后运行期改不了；要改只能重新编译。
 
 ## 配置方法
 
 ### 1. 基本配置
 
-编辑 `CMakeLists.txt` 中的 `option()` 或 `set()` 配置常量的值，然后运行 `make build`：
+改 `CMakeLists.txt` 里 `option()` 或 `set()` 的值，再执行 `make build`：
 
 ```bash
 make build
 ```
 
-在 `CMakeLists.txt` 中预设配置：
+在 `CMakeLists.txt` 里预设：
 
 ```cmake
 set(UVHTTP_MAX_HEADER_NAME_SIZE 512 CACHE STRING "Max HTTP header name size")
@@ -86,7 +86,6 @@ set(UVHTTP_MAX_HEADER_VALUE_SIZE 8192 CACHE STRING "Max HTTP header value size")
 |--------|--------|------|----------|
 | `UVHTTP_SENDFILE_CHUNK_SIZE` | 65536 | sendfile 块大小（字节） | 32768-131072 |
 | `UVHTTP_SENDFILE_TIMEOUT_MS` | 30000 | sendfile 超时（毫秒） | 10000-60000 |
-| `UVHTTP_STATIC_MAX_CACHE_SIZE` | 10485760 | 静态文件缓存大小（字节，10MB） | 5242880-52428800 |
 | `UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE` | 2 | LRU 缓存批量驱逐大小 | 1-10 |
 | `UVHTTP_ZEROCOPY_MIN_BODY` | 4096 | 走零拷贝 writev 发送路径的最小响应 body 大小（字节） | 4096-8192 |
 
@@ -101,7 +100,7 @@ set(UVHTTP_MAX_HEADER_VALUE_SIZE 8192 CACHE STRING "Max HTTP header value size")
 
 ### 示例 1：高并发场景
 
-编辑 `CMakeLists.txt`，添加或修改以下配置，然后运行 `make build`：
+并发能力取决于「连接管理」里的连接上限、backlog 和超时。改 `CMakeLists.txt` 中这组值，再 `make build`：
 
 ```bash
 make build
@@ -109,7 +108,7 @@ make build
 
 ### 示例 2：大文件传输
 
-编辑 `CMakeLists.txt`，添加或修改以下配置，然后运行 `make build`：
+大文件先看 sendfile 块大小，再看异步文件的大小上限和并发数，两张表都在上面。改 `CMakeLists.txt` 后 `make build`：
 
 ```bash
 make build
@@ -117,7 +116,7 @@ make build
 
 ### 示例 3：内存受限环境
 
-编辑 `CMakeLists.txt`，添加或修改以下配置，然后运行 `make build`：
+先降「缓冲区管理」的初始缓冲和读缓冲，再收紧「连接管理」的并发上限。改 `CMakeLists.txt` 后 `make build`：
 
 ```bash
 make build
@@ -125,7 +124,7 @@ make build
 
 ### 示例 4：WebSocket 优化
 
-编辑 `CMakeLists.txt`，添加或修改以下配置，然后运行 `make build`：
+帧、消息和接收缓冲区三个上限在「WebSocket」表里，按实际消息尺寸取。改 `CMakeLists.txt` 后 `make build`：
 
 ```bash
 make build
@@ -141,7 +140,7 @@ make build
 
 ## 验证配置
 
-编译后，可以通过以下方式验证配置：
+编译后确认这些值真的进了构建：
 
 ```bash
 # 构建项目

@@ -2,7 +2,7 @@
 
 ## Overview
 
-UVHTTP supports configuring various compile-time constants through CMake, allowing you to adjust the library's behavior and performance to suit your needs.
+CMake sets compile-time constants that control library behavior and performance.
 
 ## Configuration Methods
 
@@ -86,7 +86,6 @@ set(UVHTTP_MAX_HEADER_VALUE_SIZE 8192 CACHE STRING "Max HTTP header value size")
 |----------|---------|-------------|-------------|
 | `UVHTTP_SENDFILE_CHUNK_SIZE` | 65536 | sendfile chunk size (bytes) | 32768-131072 |
 | `UVHTTP_SENDFILE_TIMEOUT_MS` | 30000 | sendfile timeout (milliseconds) | 10000-60000 |
-| `UVHTTP_STATIC_MAX_CACHE_SIZE` | 10485760 | Static file cache size (bytes, 10MB) | 5242880-52428800 |
 | `UVHTTP_LRU_CACHE_BATCH_EVICTION_SIZE` | 2 | LRU cache batch eviction size | 1-10 |
 | `UVHTTP_ZEROCOPY_MIN_BODY` | 4096 | Minimum response body size (bytes) using the zero-copy writev send path | 4096-8192 |
 
@@ -101,7 +100,7 @@ set(UVHTTP_MAX_HEADER_VALUE_SIZE 8192 CACHE STRING "Max HTTP header value size")
 
 ### Example 1: High Concurrency Scenario
 
-Edit `CMakeLists.txt`, add or modify the following configuration, then run `make build`:
+For high concurrency, set the connection limits in `CMakeLists.txt`, then run `make build`:
 
 ```bash
 make build
@@ -109,7 +108,7 @@ make build
 
 ### Example 2: Large File Transfer
 
-Edit `CMakeLists.txt`, add or modify the following configuration, then run `make build`:
+For large file transfers, set the file size limits in `CMakeLists.txt`, then run `make build`:
 
 ```bash
 make build
@@ -117,7 +116,7 @@ make build
 
 ### Example 3: Memory-Constrained Environments
 
-Edit `CMakeLists.txt`, add or modify the following configuration, then run `make build`:
+For a memory-constrained host, lower the buffer and cache sizes in `CMakeLists.txt`, then run `make build`:
 
 ```bash
 make build
@@ -125,7 +124,7 @@ make build
 
 ### Example 4: WebSocket Optimization
 
-Edit `CMakeLists.txt`, add or modify the following configuration, then run `make build`:
+For WebSocket traffic, set the frame and buffer sizes in `CMakeLists.txt`, then run `make build`:
 
 ```bash
 make build
@@ -133,15 +132,15 @@ make build
 
 ## Notes
 
-1. **Memory Impact**: Increasing buffer and cache sizes increases memory usage
-2. **Performance Trade-off**: Larger buffers can improve performance but increase memory usage
-3. **Platform Limitations**: Some values are constrained by operating system limits (such as the number of file descriptors)
-4. **Test Verification**: Conduct thorough performance testing after modifying configuration
-5. **Documentation Updates**: If you change default values, please update the relevant documentation
+1. Larger buffer and cache sizes use more memory.
+2. Larger buffers can raise throughput and memory use together.
+3. Operating system limits, such as the number of file descriptors, cap some values.
+4. Run performance tests after changing any value.
+5. Update the documentation when you change a default.
 
 ## Verifying Configuration
 
-After compilation, you can verify your configuration in the following ways:
+After a build, check the configuration:
 
 ```bash
 # Build the project

@@ -2,7 +2,7 @@
 
 ## Overview
 
-UVHTTP integrates **xxHash** as its core hashing algorithm for route lookup, cache key generation, and data integrity verification.
+UVHTTP uses **xxHash** as the hashing algorithm for route lookup, cache key generation, and data integrity verification.
 
 ## Performance Characteristics
 
@@ -20,7 +20,7 @@ UVHTTP integrates **xxHash** as its core hashing algorithm for route lookup, cac
 
 - 3-5x faster than CRC32
 - Approaches the RAM speed limit
-- Zero-allocation design, no memory overhead
+- Zero allocation, no memory overhead
 - Good cache locality
 
 ## API Interface
@@ -76,56 +76,34 @@ uint64_t session_hash = uvhttp_hash_string(session_key);
 
 ## Internal Integration
 
-### Routing System Optimization
+### Router Cache
 
-xxHash is used in the routing system for:
-
-1. **Route hash table lookup**
-   ```c
-   // Route node hashing (internal use)
-   uint32_t route_hash = uvhttp_route_hash("/api/users", UVHTTP_GET);
-   ```
-
-2. **Cache key generation**
-   ```c
-   // Path cache key
-   uint64_t path_cache_key = uvhttp_hash_string("/static/css/style.css");
-   ```
-
-3. **Parameter extraction optimization**
-   ```c
-   // URL parameter hashing
-   uint64_t param_hash = uvhttp_hash_string("user_id=123");
-   ```
-
-### String Pool Optimization
-
-The string pool uses xxHash for:
-
-```c
-// Fast hash lookup in the string pool
-static inline uint32_t uvhttp_string_hash(const char* str, size_t length) {
-    return (uint32_t)uvhttp_hash_string(str);
-}
-```
-
-### Security Features
-
-#### Hash Collision Attack Protection
+`src/uvhttp_router_cache.c` hashes route paths with a file-local helper:
 
 ```c
 static inline uint32_t route_hash(const char* str) {
-    if (!str) return 0;
-    
-    // Limit the maximum string length to prevent hash collision attacks
+    if (!str)
+        return 0;
+
     size_t len = strlen(str);
-    if (len > 1024) {
-        len = 1024;  // Truncate overly long strings
-    }
-    
+    if (len > UVHTTP_MAX_ROUTE_PATH_LEN - 1)
+        len = UVHTTP_MAX_ROUTE_PATH_LEN - 1;
+
     return (uint32_t)XXH64(str, len, UVHTTP_HASH_DEFAULT_SEED);
 }
 ```
+
+`UVHTTP_MAX_ROUTE_PATH_LEN` is 256 (`include/uvhttp_constants.h`). The cap bounds hashing work on attacker-controlled paths. `route_hash` is internal to that translation unit, not part of the public API.
+
+### Gzip Cache Keys
+
+`src/uvhttp_response.c` keys the compressed-body cache by body hash plus length:
+
+```c
+uvhttp_hash_default(response->body, response->body_length)
+```
+
+The same body compresses once and later responses reuse the cached bytes.
 
 ## Best Practices
 
@@ -199,7 +177,7 @@ xxHash is not suitable for the following cryptographic scenarios:
 
 ### Security Enhancement
 
-For scenarios requiring higher security, consider:
+For higher security, add a salt:
 
 ```c
 // Combine with a salt value
@@ -213,7 +191,7 @@ uint64_t secure_hash = uvhttp_hash_string(combined_data);
 
 ### Compilation Optimization
 
-Ensure compilation in Release mode for optimal performance:
+Build in Release mode for best performance:
 
 ```cmake
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -223,7 +201,7 @@ endif()
 
 ### Memory Alignment
 
-xxHash is sensitive to memory alignment. Ensure data structures are aligned:
+xxHash is sensitive to memory alignment. Align data structures:
 
 ```c
 // Recommended: aligned data structure
@@ -236,7 +214,7 @@ typedef struct __attribute__((aligned(8))) {
 
 ### Batch Processing
 
-For hashing large amounts of data, consider batch processing:
+Hash large volumes in batches:
 
 ```c
 // Batch hash computation example

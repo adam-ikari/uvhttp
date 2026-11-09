@@ -1,16 +1,16 @@
 # UVHTTP 构建配置矩阵
 
-本文档详细说明了 UVHTTP 支持的各种构建配置组合及其用途。
+UVHTTP 的功能模块都在编译期开关。这份文档逐个说明选项开与关各编译什么、依赖谁，然后给出依赖图和常用组合。
 
 ## 概述
 
-UVHTTP 支持通过 CMake 配置选项灵活地组合不同的功能模块，以满足不同的使用场景需求。
+开关之间彼此牵连：WebSocket 要 mbedtls，TLS 也要 mbedtls，两个都关才彻底不编；几个 Sanitizer 之间还互斥。先看选项，再看依赖，最后是组合。
 
-本文档主要介绍常用的核心配置选项。高级配置选项（如缓冲区大小、连接限制、缓存参数等）请参考 [高级编译选项](ADVANCED_BUILD_OPTIONS.md)。
+本文档只讲核心开关。缓冲区大小、连接限制、缓存参数在 [高级编译选项](ADVANCED_BUILD_OPTIONS.md) 里。
 
 ## 功能选项
 
-这些选项控制编译到库中的功能模块。
+这组开关决定哪些源文件编进库。
 
 ### BUILD_WITH_WEBSOCKET
 - **类型**: BOOL
@@ -87,7 +87,7 @@ UVHTTP 支持通过 CMake 配置选项灵活地组合不同的功能模块，以
 
 ## 构建模式选项
 
-这些选项控制构建模式（调试、发布、覆盖率）。
+这组影响优化级别、调试信息和编译时间。
 
 ### BUILD_BENCHMARKS
 - **类型**: BOOL
@@ -121,7 +121,7 @@ UVHTTP 支持通过 CMake 配置选项灵活地组合不同的功能模块，以
 
 ## 调试工具
 
-这些选项启用运行时错误检测工具（Sanitizers）。
+Sanitizers 在运行时抓内存和线程错误，代价是速度。
 
 ### ENABLE_ASAN
 - **类型**: BOOL
@@ -167,7 +167,7 @@ UVHTTP 支持通过 CMake 配置选项灵活地组合不同的功能模块，以
 
 ## 安全选项
 
-这些选项启用安全加固特性。
+这几项默认全开，改动只影响编译参数，不改变库对外行为。
 
 ### ENABLE_HARDENING
 - **类型**: BOOL
@@ -198,17 +198,11 @@ UVHTTP 支持通过 CMake 配置选项灵活地组合不同的功能模块，以
 
 ## 高级配置选项
 
-高级配置选项（如缓冲区大小、连接限制、缓存参数等）已移至单独的文档：
+缓冲区大小、连接限制、缓存参数这类选项在单独一篇里：
 
 **[高级编译选项](ADVANCED_BUILD_OPTIONS.md)**
 
-高级配置选项主要用于：
-- 性能调优
-- 内存受限环境
-- 特定场景优化
-- 资源约束环境
-
-大多数用户不需要修改这些选项，默认值已经针对通用场景进行了优化。
+那一篇面向性能调优、内存受限和资源约束的部署。默认值针对通用场景，多数项目不需要改。
 
 ## 配置依赖关系图
 
@@ -222,7 +216,7 @@ BUILD_WITH_HTTPS (ON)
 mbedtls 库
     └─> 当 BUILD_WITH_HTTPS=ON 或 BUILD_WITH_WEBSOCKET=ON 时编译
 
-BUILD_WITH_MIMALLOC (ON)
+BUILD_WITH_MIMALLOC (OFF)
     └─> 无依赖
 
 ENABLE_DEBUG (OFF)
@@ -335,7 +329,7 @@ cmake -DCMAKE_BUILD_TYPE=MinSizeRel \
 ## 注意事项
 
 ### 依赖关系
-1. **WebSocket 依赖 HTTPS**：启用 `BUILD_WITH_WEBSOCKET` 时必须启用 `BUILD_WITH_HTTPS`
+1. **WebSocket 自带 TLS**：`BUILD_WITH_WEBSOCKET=ON` 时，即使 `BUILD_WITH_HTTPS=OFF`，仓库照样编译 mbedtls 供 `wss://` 使用
 2. **HTTPS 依赖 mbedtls**：启用 `BUILD_WITH_HTTPS` 需要链接 mbedtls 库
 3. **WebSocket 依赖 mbedtls**：启用 `BUILD_WITH_WEBSOCKET` 需要 mbedtls 提供 base64、SHA1 和随机数生成功能
 4. **Sanitizer 互斥**：`ENABLE_ASAN`、`ENABLE_TSAN` 不能同时启用
@@ -488,7 +482,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 cmake -DCMAKE_BUILD_TYPE=Release \
       -DBUILD_WITH_WEBSOCKET=ON \
       -DBUILD_WITH_MIMALLOC=OFF \
-      -DBUILD_WITH_HTTPS=ON \
+      -DBUILD_WITH_HTTPS=OFF \
       -DENABLE_DEBUG=OFF \
       -DENABLE_COVERAGE=OFF \
       -DBUILD_EXAMPLES=OFF
@@ -702,7 +696,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 ./test_cmake_configs.sh
 ```
 
-该脚本会测试上述前 14 种配置组合，并报告通过/失败状态。
+该脚本按顺序跑上述前 14 种组合，逐条报通过或失败。
 
 ### 编译性能测试程序
 

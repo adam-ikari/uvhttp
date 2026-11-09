@@ -10,15 +10,16 @@
 
 ## 1. Purpose
 
-This document defines the standard specification for benchmark performance testing in the UVHTTP project, ensuring that all performance tests are conducted under consistent conditions and that test results are reliable, repeatable, and comparable.
+This standard defines the benchmark performance testing specification for the UVHTTP project. It ensures all performance tests run under consistent conditions and produce reliable, repeatable, comparable results.
 
 ## 2. Scope
 
-This standard applies to:
+The standard applies to:
+
 - Performance benchmarking of the UVHTTP core library
 - Performance regression testing between versions
-- Performance validation testing of new features
-- Evaluation of performance optimization results
+- Performance validation of new features
+- Evaluation of optimization results
 
 ## 3. Test Environment Standards
 
@@ -123,7 +124,7 @@ ulimit -n
 
 ### 4.3 Tool Verification
 
-Before starting the test, verify that all tools are installed correctly:
+Verify all tools are installed before testing:
 ```bash
 wrk --version
 ab -V
@@ -420,14 +421,14 @@ awk '{sum+=$1; sumsq+=$1*$1; count++} END {print sqrt(sumsq/count - (sum/count)^
 ### 6.3 Data Validation
 
 #### Reasonableness Checks
-- Throughput should be within a reasonable range (1000-100000 RPS)
-- Latency should increase with concurrency
-- CPU usage should not exceed 100%
-- Memory usage should remain stable
+- Throughput within a reasonable range (1000-100000 RPS)
+- Latency increases with concurrency
+- CPU usage does not exceed 100%
+- Memory usage remains stable
 
 #### Consistency Checks
-- The standard deviation of multiple test results should be less than 10% of the average
-- No outliers should appear (outside the average ±3 standard deviations)
+- Standard deviation of repeated results below 10% of the average
+- No outliers outside the average ±3 standard deviations
 
 ## 7. Test Report Standards
 
@@ -654,23 +655,21 @@ docs/performance/
 - [Apache Bench Documentation](https://httpd.apache.org/docs/2.4/programs/ab.html)
 - [Linux Performance Tuning Guide](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/)
 
-### 11.3 Contact Information
-
 ---
 
 ## Appendix A: Performance Test Plan
 
-> **Note**: This appendix contains the detailed contents of the performance test plan. For information about test execution flow, test scripts, and risk management, refer to the complete content.
+> **Note**: This appendix contains the detailed performance test plan: execution flow, test scripts, and risk management.
 
 ### A.1 Test Objectives
 
-This test plan aims to evaluate the performance of the UVHTTP project in various scenarios, including:
+Evaluate UVHTTP performance across scenarios:
 
-- Establishing performance baseline data
-- Identifying performance bottlenecks
-- Verifying the effect of optimizations
-- Ensuring performance stability
-- Supporting performance regression testing
+- Establish performance baseline data
+- Identify performance bottlenecks
+- Verify the effect of optimizations
+- Ensure performance stability
+- Support performance regression testing
 
 ### A.2 Test Scope
 
@@ -859,12 +858,6 @@ main
 
 ---
 
-**End of Document**
-
 - **Maintainer**: UVHTTP Development Team
 - **Email**: dev@uvhttp.org
 - **Issue**: https://github.com/adam-ikari/uvhttp/issues
-
----
-
-**End of Document**

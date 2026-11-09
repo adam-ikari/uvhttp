@@ -2,15 +2,16 @@
 
 ## Overview
 
-UVHTTP unified response handling.
+A handler sets the status, the headers and the body, then sends. UVHTTP does
+not infer the content type for you.
 
 ## Core Features
 
-- **Direct Control**: application developers directly set the response status code, headers, and body
-- **Type Safety**: compile-time type checking and runtime validation
-- **Flexibility**: supports arbitrary content types and custom headers
-- **Performance Optimization**: zero-overhead abstraction that maps directly to libuv operations
-- **Error Handling**: unified error response format and handling
+- The handler sets the status code, headers and body directly.
+- Argument types are checked at compile time and validated at run time.
+- Any content type and any custom header is allowed.
+- The calls map straight to libuv operations with no layer in between.
+- Errors share one response format.
 
 ## Core API Reference
 
@@ -137,16 +138,17 @@ uvhttp_result_t error_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 ### Caller Control Principle
 
-UVHTTP unified response handling follows the caller control principle:
+The library never guesses a content type:
 
-1. **Content-Type is fully controlled by the caller**: no automatic detection or inference
-2. **Unified send interface**: simplifies the response sending flow and reduces code duplication
-3. **Explicit intent**: the caller must explicitly specify the content type
-4. **Flexibility first**: supports any Content-Type, not limited to predefined types
+1. You set the Content-Type header; nothing is detected or inferred.
+2. One send call covers every response, so the sending code lives in one place.
+3. The content type is explicit at the call site.
+4. Any content type works; there is no fixed list.
 
 ### Recommended Content-Types
 
-Although no automatic detection is performed, the use of standard Content-Types is recommended:
+Although no automatic detection is performed, standard Content-Types are the
+safe choice:
 
 - JSON: `application/json`
 - HTML: `text/html; charset=utf-8`
@@ -157,29 +159,31 @@ Although no automatic detection is performed, the use of standard Content-Types 
 
 ## Best Practices
 
-1. **Set Content-Type explicitly**: always set the correct Content-Type before using `uvhttp_send_unified_response()`
-2. **Use convenience functions for unambiguous scenarios**: when the content type is clear, use convenience functions such as `uvhttp_send_unified_response()` (set the `Content-Type` header first, e.g. `uvhttp_response_set_header(res, "Content-Type", "application/json")`)
-3. **Unified error handling**: use `uvhttp_send_error_response()` for consistent error response format
-4. **Content validation**: validate content correctness before sending the response
-5. **Maintain consistency**: keep Content-Type settings consistent within the same project
+1. Set the Content-Type before you call `uvhttp_send_unified_response()`.
+2. When the type is clear, a convenience function such as `uvhttp_send_unified_response()` does the work; set the `Content-Type` header first with `uvhttp_response_set_header(res, "Content-Type", "application/json")`.
+3. Send errors through `uvhttp_send_error_response()` so the format stays the same everywhere.
+4. Check the content before sending it.
+5. Keep the Content-Type values consistent across the project.
 
 ## Performance Considerations
 
-- Unified response handling functions optimize memory usage internally
-- Convenience functions reduce function call overhead, making them suitable for performance-sensitive scenarios
-- No content type detection avoids extra computational overhead
+- The response functions manage memory internally
+- Convenience functions cut the number of calls per response, which matters in performance-sensitive paths
+- Skipping content type detection leaves that work out of every response
 
 ## Compatibility
 
-- The new unified response handling APIs are fully compatible with the existing response handling APIs
-- New and old APIs can be mixed within the same project
-- New code is recommended to use unified response handling; existing code can migrate incrementally
+- The unified response APIs stay compatible with the existing response APIs
+- Old and new calls can be mixed in the same project
+- New code should use the unified response handling; existing code can migrate one handler at a time
 
 ## Example Projects
 
-- `examples/unified_response_demo.c` - a complete unified response handling demonstration
-- `examples/json_api_demo.c` - the updated JSON API example demonstrating unified response handling
+- `examples/unified_response_demo.c` - shows the unified response API end to end
+- `examples/json_api_demo.c` - the JSON API example, updated to use it
 
 ## Summary
 
-Unified response handling simplifies the HTTP response sending flow. Application developers can use a unified API to handle all types of response content while maintaining full control over Content-Type. This design provides both convenience and flexibility with explicitness, improving development efficiency and code maintainability.
+One send path handles every response. The caller still sets the Content-Type,
+so nothing changes behind your back, and every handler follows the same
+sequence: status, headers, body, send.

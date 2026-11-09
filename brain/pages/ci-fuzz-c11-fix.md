@@ -5,24 +5,15 @@ category: decision
 status: active
 tags: [ci, fuzz, c11, clang]
 created: "2026-08-25T01:24:41"
-updated: "2026-08-25T01:25:00"
+updated: "2026-11-09T17:51:56"
 ---
 
 <!-- compiled_truth -->
-## 根因（连续失败 5 天：2026-08-20 ~ 08-24）
-ci-fuzz 是唯一用 clang 编译的工作流。项目 `USER_WARNINGS_AS_ERRORS` 默认 ON 且 `CMAKE_C_STANDARD 99`，clang 在 C99 下对同 TU 内重复 typedef 报 `-Wtypedef-redefinition`（C11 起才合法）。GCC 不报此警告，所以主 CI 一直绿。
+## 现状（2026-11-09 起）
+`CMAKE_C_STANDARD 99`，`CMAKE_C_EXTENSIONS OFF`，构建与 `make check-syntax` 都用严格 C99。clang 在 C99 下对同 TU 内重复前向 typedef 报 `-Wtypedef-redefinition`，GCC 不报；构建用 `-Wno-typedef-redefinition` 显式压制（头文件里的重复定义内容一致，属便利性写法）。`UVHTTP_STATIC_ASSERT` 在编译器不支持 `_Static_assert` 时回退为负数组长度 `typedef`，因此 C99 下仍有编译期断言。GCC 与 clang 的 C99 构建均已通过 119/119 测试。
 
-## 修复内容
-1. **CMakeLists.txt**: `CMAKE_C_STANDARD` 99 → 11。PHILOSOPHY.md 本来就说"实际构建使用 C11 标准"，代码与文档对齐。
-2. **src/uvhttp_connection.c**: 删除从未被调用的 `static inline uvhttp_validate_buffer_state`（clang `-Wunused-function` 报错，被 typedef 错误掩盖）。
-3. **.github/workflows/ci-fuzz.yml**: fuzz_router 链接补齐 `libminiz.a`、`libxxhash.a`（此前漏链接，被编译失败掩盖）；fuzz_request 链接命令改用 `$INCLUDES` 补齐 uthash/mbedtls 头路径。
-
-## fuzz_request 过时处理
-`test/fuzz/fuzz_request.c` 引用已不存在的内部 API（`uvhttp_request_parse`、`UVHTTP_REQUEST_STATE_DONE`、`req->conn`），无法编译。因 fuzz_router 已覆盖完整请求解析路径（lihttp parse + router + handler），从 CI 移除 fuzz_request 步骤，保留文件待后续重写。
-
-## 验证
-- 本地 clang + ASan 复现 typedef 错误 → 修复后零错误
-- fuzz_router 链接成功，跑 5s：442K execs, 0 crash, 0 timeout
+## 历史（2026-08-25 的修复）
+ci-fuzz 连续失败 5 天（2026-08-20 ~ 08-24）时，项目为 clang 的 `-Wtypedef-redefinition` 把标准从 99 升到 11。2026-11-09 按要求切回 C99，改用抑制告警 + 静态断言回退，不再依赖 C11 的 typedef 重定义规则。同期修复了测试目标里 `-Wno-error-unused-function` 的非法写法（应为 `-Wno-error=unused-function`），该错误此前只在 clang 构建测试时暴露。
 
 
 ## Timeline
@@ -37,4 +28,16 @@ ci-fuzz 是唯一用 clang 编译的工作流。项目 `USER_WARNINGS_AS_ERRORS`
   kind: decision
   summary: "记录 ci-fuzz 修复根因与方案"
   source: "ci-fuzz 排查会话"
+  affects: [ci-fuzz-c11-fix]
+
+- time: 2026-11-09T17:51:56
+  kind: decision
+  summary: "标准切回 C99：clang typedef 告警改为显式抑制，静态断言加 C99 回退"
+  source: "C99 构建切换"
+  affects: [ci-fuzz-c11-fix]
+
+- time: 2026-11-09T17:51:56
+  kind: reversal
+  summary: "2026-11-09：CMAKE_C_STANDARD 11→99；用 -Wno-typedef-redefinition 与 UVHTTP_STATIC_ASSERT 回退替代 C11 依赖；GCC/Clang C99 均过 119 测试"
+  source: "C99 构建切换"
   affects: [ci-fuzz-c11-fix]

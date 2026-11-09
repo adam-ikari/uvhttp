@@ -7,10 +7,9 @@ criteria for the UVHTTP test suite.
 
 ## Test Suite
 
-- **Framework**: Google Test (C++), with some C integration tests
-- **Total tests**: 91 unit tests
-- **Integration tests**: 20 standalone C programs
-- **Fuzz harness**: 1 (router)
+The suite uses Google Test (C++) for unit tests, with some C integration
+tests. It holds 119 unit tests, 20 standalone C integration programs, and 1
+fuzz harness for the router.
 
 ## Coverage Targets
 
@@ -31,40 +30,37 @@ criteria for the UVHTTP test suite.
 
 ## Test Categories
 
-### Unit Tests (91 files)
-- Test individual functions in isolation
-- Use Google Test framework
-- Use libuv mock for dependency isolation
-- Cover normal paths, error paths, and boundary conditions
-- Each test file corresponds to one source module
+### Unit Tests (119 files)
+Unit tests call one module in isolation under Google Test, with the libuv mock
+standing in for the event loop. Each file corresponds to one source module and
+covers normal paths, error paths, and boundary conditions.
 
 ### Integration Tests (20 files)
-- Test end-to-end scenarios with real libuv
-- Standalone C programs that start a server and test it
-- Cover HTTP methods, TLS, WebSocket, request filter, static files
-- Not automatically registered with CTest (manual execution)
+Integration tests start a real server on real libuv and exercise it end to
+end. The standalone C programs cover HTTP methods, TLS, WebSocket, the
+request filter, and static files. CTest does not register them; run them by
+hand.
 
 ### Fuzz Tests (1 harness)
-- libFuzzer harness for router path matching
-- Runs with ASan for memory safety
-- 60 seconds per target in CI
-- 256 byte max input length
+The libFuzzer harness targets router path matching and runs under ASan. CI
+gives each target 60 seconds and caps input at 256 byte.
 
 ## Test Quality Criteria
 
-1. **Every public API function must have at least one test**
-2. **NULL parameter paths must be tested for every public function**
-3. **Error conditions must be tested (not just success paths)**
-4. **Boundary conditions must be tested (min/max values)**
-5. **Tests must be independent** — no shared mutable state between tests
-6. **Tests must not leak memory** — verified by ASan
-7. **Tests must be deterministic** — no timing-dependent assertions
+1. Every public API function has at least one test.
+2. Every public function has its NULL parameter paths tested.
+3. Tests cover error conditions as well as success paths.
+4. Tests cover boundary conditions at the minimum and maximum values.
+5. Tests share no mutable state and run independently.
+6. Tests leak no memory; ASan verifies this.
+7. Tests make no timing-dependent assertions, so results stay deterministic.
 
 ## Test Naming
 
-- Test files: `test_<module>_<functionality>.cpp`
-- Test cases: `TEST(<Module>Test, <TestCaseName>)` or `TEST_F(<Module>Test, <TestCaseName>)`
-- Test case names describe the scenario: `CreateServer`, `ListenWithNullHost`, `AddRouteWithNullPath`
+Test files follow `test_<module>_<functionality>.cpp`. Test cases use
+`TEST(<Module>Test, <TestCaseName>)` or `TEST_F(<Module>Test, <TestCaseName>)`,
+and the case name describes the scenario: `CreateServer`,
+`ListenWithNullHost`, `AddRouteWithNullPath`.
 
 ## Running Tests
 
@@ -84,6 +80,9 @@ make coverage
 
 ## Continuous Verification
 
-- **PR gate**: ASan + unit tests must pass (ci-pr.yml)
-- **Nightly**: Full test suite, ASan, UBSan, fuzzing (ci-nightly.yml, ci-fuzz.yml)
-- **Coverage**: Generated nightly, published to coverage report
+PR CI (ci-pr.yml) compiles the default configuration, runs cppcheck, checks
+test validity and docs, and builds the feature matrix. It does not run the
+test suite or ASan. The full ASan suite runs in the pre-release gate, and the
+nightly workflow (ci-nightly.yml) runs UBSan, coverage, and stress. Fuzzing
+runs in ci-fuzz.yml. Coverage is generated nightly and published to the
+coverage report.

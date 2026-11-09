@@ -1671,7 +1671,6 @@ wrk -t4 -c100 -d30s http://localhost:8080/
 
 - Project homepage: https://github.com/adam-ikari/uvhttp
 - Issue reporting: https://github.com/adam-ikari/uvhttp/issues
-- Discussion: https://github.com/adam-ikari/uvhttp/discussions
 
 ---
 

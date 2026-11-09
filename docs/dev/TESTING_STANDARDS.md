@@ -14,7 +14,7 @@ This document defines the testing standards for the UVHTTP project, including st
 6. [Assertion Usage Standards](#assertion-usage-standards)
 7. [Test Coverage Requirements](#test-coverage-requirements)
 8. [Test Documentation Requirements](#test-documentation-requirements)
-9. [CI/CD Integration](#cicd-integration)
+9. [CI/CD Integration](#ci-cd-integration)
 10. [Test Maintenance](#test-maintenance)
 
 ## Test Types
@@ -56,7 +56,7 @@ This document defines the testing standards for the UVHTTP project, including st
 **Framework**: Google Test (gtest)
 
 **Advantages**:
-- Feature-rich with comprehensive assertions
+- Rich assertion library
 - Cross-platform support
 - Active community and complete documentation
 - Well integrated with CMake

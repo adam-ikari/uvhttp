@@ -5,24 +5,24 @@ description: UVHTTP 是基于 libuv 的 HTTP/1.1 与 WebSocket 服务器库，C9
 
 # UVHTTP 简介
 
-UVHTTP 是基于 libuv 的 HTTP/1.1 与 WebSocket 服务器库，面向现代 C 应用。
+UVHTTP 是基于 libuv 的 HTTP/1.1 与 WebSocket 服务器库，用标准 C 编写。协议解析、连接管理、路由分派都在库里完成，业务逻辑留给应用。
 
 ## 什么是 UVHTTP？
 
-- **性能**：GitHub CI runner 上约 139K RPS，亚毫秒级延迟（见[性能](performance.md)）
-- **资源**：零拷贝优化，低内存与 CPU 占用
+- **性能**：GitHub CI runner 上约 139K RPS，延迟在亚毫秒级（见[性能](performance.md)）
+- **资源**：零拷贝优化，内存与 CPU 占用低
 - **架构**：64 位与 32 位嵌入式系统
-- **API**：简洁直观，错误处理完善
-- **生产状态**：零编译警告，119/119 测试通过，ASan/UBSan 验证，安全优先默认值
+- **API**：路由、请求、响应各有独立对象，错误码统一
+- **生产状态**：零编译警告，119/119 测试通过，ASan/UBSan 验证，默认值按安全优先设置
 
 ### 核心理念
 
-1. **聚焦协议**：HTTP/1.1 与 WebSocket 处理，不约束业务逻辑
-2. **零开销抽象**：编译期宏，运行时零成本
-3. **极简工程**：消除不必要的复杂性
-4. **测试分离**：生产代码不含测试代码或调试插桩
-5. **零全局变量**：状态通过 libuv 数据指针管理，支持多实例
-6. **错误处理**：统一错误系统，提供诊断与恢复指引
+1. **聚焦协议**：只处理 HTTP/1.1 与 WebSocket，业务逻辑不归它管
+2. **零开销抽象**：开关是编译期宏，运行时没有额外成本
+3. **极简工程**：用不上的复杂度直接删掉
+4. **测试分离**：生产代码不含测试代码，也不含调试插桩
+5. **零全局变量**：状态挂在 libuv 数据指针上，同进程可跑多个实例
+6. **错误处理**：统一错误系统，出错时给出诊断和恢复方向
 
 ---
 
@@ -30,7 +30,7 @@ UVHTTP 是基于 libuv 的 HTTP/1.1 与 WebSocket 服务器库，面向现代 C 
 
 ### 事件驱动设计
 
-UVHTTP 借助 libuv 的事件驱动架构实现高并发：
+UVHTTP 跑在 libuv 的事件循环上：定时器、I/O 和信号事件汇到同一处，再交给请求处理器完成路由匹配、中间件处理和响应生成。
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -77,10 +77,10 @@ UVHTTP 借助 libuv 的事件驱动架构实现高并发：
 
 ### 跨平台考量
 
-- **C99 标准**：无需编译器专用扩展
+- **C99 标准**：不依赖编译器专用扩展
 - **自包含依赖**：外部库以子模块形式内置
-- **条件编译**：平台专用代码隔离在特性宏之后
-- **POSIX**：在可用处复用 POSIX API
+- **条件编译**：平台专用代码隔在特性宏后面
+- **POSIX**：能用 POSIX API 的地方直接复用
 
 ---
 
@@ -101,13 +101,13 @@ UVHTTP 借助 libuv 的事件驱动架构实现高并发：
 
 ### 性能优化
 
-1. **Keep-Alive**：连接复用
-2. **TCP 优化**：默认启用 TCP_NODELAY 与 TCP_KEEPALIVE
+1. **Keep-Alive**：复用连接，省掉反复握手
+2. **TCP 优化**：默认打开 TCP_NODELAY 与 TCP_KEEPALIVE
 3. **路由优化**：O(1) 前缀匹配
 4. **内存分配**：可选 mimalloc
-5. **直接调用 libuv**：无抽象层
+5. **直接调用 libuv**：中间不隔抽象层
 6. **LRU 缓存**：静态文件自动缓存
-7. **零拷贝 I/O**：sendfile 大文件传输
+7. **零拷贝 I/O**：大文件走 sendfile
 
 ---
 
@@ -116,11 +116,11 @@ UVHTTP 借助 libuv 的事件驱动架构实现高并发：
 ### 内置安全
 
 - **缓冲区溢出防护**：边界检查
-- **输入校验**：HTTP 头部与请求数据
-- **TLS 1.2/1.3**：mbedtls 集成
-- **内存安全**：AddressSanitizer 与 Valgrind 兼容
+- **输入校验**：HTTP 头部与请求数据都检查
+- **TLS 1.2/1.3**：集成 mbedtls
+- **内存安全**：兼容 AddressSanitizer 与 Valgrind
 - **错误处理**：不泄露敏感信息
-- **资源限制**：连接数、头部数量、请求体大小上限
+- **资源限制**：连接数、头部数量、请求体大小都有上限
 
 ### 安全示例
 
@@ -144,26 +144,26 @@ server->config->max_file_size = 10 * 1024 * 1024; // 10MB
 ## 文档结构
 
 ### 用户指南
-- **[快速开始](getting-started.md)**：5 分钟运行
-- **[安装](installation.md)**：安装说明
-- **[第一个服务器](first-server.md)**：构建 HTTP 服务器
-- **[WebSocket](websocket.md)**：实时通信
+- **[快速开始](getting-started.md)**：5 分钟跑起来
+- **[安装](installation.md)**：编译与依赖
+- **[第一个服务器](first-server.md)**：从空文件写起
+- **[WebSocket](websocket.md)**：双向实时通信
 
 ### 核心概念
-- **[教程](TUTORIAL.md)**：渐进式学习
-- **[libuv 数据指针](LIBUV_DATA_POINTER.md)**：上下文传递
+- **[教程](TUTORIAL.md)**：从基础到高级
+- **[libuv 数据指针](LIBUV_DATA_POINTER.md)**：上下文怎么传
 - **中间件系统**：请求/响应流水线
-- **[统一响应指南](UNIFIED_RESPONSE_GUIDE.md)**：标准响应模式
+- **[统一响应指南](UNIFIED_RESPONSE_GUIDE.md)**：标准响应写法
 
 ### 高级特性
 - **[请求过滤器 API](REQUEST_FILTER_API.md)**：分派前准入策略，限流由此实现
-- **[静态文件服务器](STATIC_FILE_SERVER.md)**：文件服务
+- **[静态文件服务器](STATIC_FILE_SERVER.md)**：sendfile 与缓存
 - **压缩**：零开销压缩
 
 ### 开发者资源
-- **[开发者指南](DEVELOPER_GUIDE.md)**：开发实践
-- **[CMake 配置](CMAKE_CONFIGURATION.md)**：构建系统定制
-- **[API 参考](../api/introduction)**：完整 API 文档
+- **[开发者指南](DEVELOPER_GUIDE.md)**：开发规范
+- **[CMake 配置](CMAKE_CONFIGURATION.md)**：构建选项
+- **[API 参考](../api/introduction)**：逐个接口的说明
 
 ---
 
@@ -210,7 +210,7 @@ int main() {
 }
 ```
 
-**编译与运行**：
+编译与运行：
 ```bash
 gcc -o server server.c -I./include -L./build/dist/lib -luvhttp -luv
 export LD_LIBRARY_PATH=./build/dist/lib:$LD_LIBRARY_PATH
@@ -227,8 +227,8 @@ export LD_LIBRARY_PATH=./build/dist/lib:$LD_LIBRARY_PATH
 
 ### 获取帮助
 
-- **GitHub Issues**：报告 Bug 与功能需求
-- **Discussions**：提问与分享想法
+- **GitHub Issues**：报 Bug、提功能需求
+- **Discussions**：提问，或者讲讲你怎么用它
 - **文档**：指南与 API 参考
 
 ### 许可证
@@ -243,11 +243,11 @@ MIT 许可证，详见 [LICENSE](https://github.com/adam-ikari/uvhttp/blob/main/
 
 | 平台 | 版本 | 状态 |
 |----------|---------|--------|
-| Linux x86_64 | 2.2.0+ | ✅ 稳定 |
-| Linux i386 | 2.2.0+ | ✅ 稳定 |
-| macOS x86_64 | 2.2.0+ | ✅ 稳定 |
-| macOS ARM64 | 2.2.0+ | ✅ 稳定 |
-| Windows x86_64 | 2.2.0+ | ⚠️ 实验性 |
+| Linux x86_64 | 3.0.0 | ✅ 稳定 |
+| Linux i386 | 3.0.0 | ✅ 稳定 |
+| macOS x86_64 | — | 已规划 |
+| macOS ARM64 | — | 已规划 |
+| Windows x86_64 | — | 已规划 |
 
 ### 编译器支持
 
@@ -255,7 +255,7 @@ MIT 许可证，详见 [LICENSE](https://github.com/adam-ikari/uvhttp/blob/main/
 |----------|---------|--------|
 | GCC | 4.8+ | ✅ 稳定 |
 | Clang | 3.4+ | ✅ 稳定 |
-| MSVC | 2019+ | ⚠️ 实验性 |
+| MSVC | — | 已规划 |
 
 ### 依赖版本
 
@@ -272,6 +272,6 @@ MIT 许可证，详见 [LICENSE](https://github.com/adam-ikari/uvhttp/blob/main/
 ## 下一步
 
 - **[快速开始指南](getting-started.md)**：构建第一个服务器
-- **[API 参考](../api/introduction)**：探索完整 API
-- **[示例](https://github.com/adam-ikari/uvhttp/tree/main/examples)**：浏览实用示例
-- **[性能基准](./performance.md)**：了解性能特征
+- **[API 参考](../api/introduction)**：按模块查接口
+- **[示例](https://github.com/adam-ikari/uvhttp/tree/main/examples)**：可直接编译的示例
+- **[性能基准](./performance.md)**：实测数字与测量方法

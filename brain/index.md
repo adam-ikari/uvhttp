@@ -1,6 +1,6 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-10-28T06:54:38.342Z._
+_Auto-generated. Last updated 2026-11-09T09:51:56.315Z._
 
 - [alloc-hotpath-measured](pages/alloc-hotpath-measured.md) — category: decision | tags: [performance, benchmark, allocator, methodology, yagni] | # 每请求分配已实测：省一次仅 0.026%，内存分配优化不做
 - [api-atomicity-audit](pages/api-atomicity-audit.md) — category: decision | tags: [api, atomicity, orthogonality, audit, v2.10] | <!-- compiled_truth -->
@@ -9,7 +9,7 @@ _Auto-generated. Last updated 2026-10-28T06:54:38.342Z._
 - [build-system-make-cmake](pages/build-system-make-cmake.md) — category: decision | tags: [build-system, cmake, make, just, embedded] | ## 决策
 - [chunked-encoding-absent](pages/chunked-encoding-absent.md) — category: decision | tags: [http, chunked, sse, rfc7230] | # 响应侧 chunked encoding 缺失：现状与判断
 - [ci-format-check-gate-noop](pages/ci-format-check-gate-noop.md) — category: decision | tags: [ci, gates, format] | ## 结论
-- [ci-fuzz-c11-fix](pages/ci-fuzz-c11-fix.md) — category: decision | tags: [ci, fuzz, c11, clang] | ## 根因（连续失败 5 天：2026-08-20 ~ 08-24）
+- [ci-fuzz-c11-fix](pages/ci-fuzz-c11-fix.md) — category: decision | tags: [ci, fuzz, c11, clang] | ## 现状（2026-11-09 起）
 - [ci-gate-real-fixes](pages/ci-gate-real-fixes.md) — category: decision | tags: [ci, gate, format, clang-format, cppcheck, dead-code, trend] | # CI 门禁修复（#416/#417/#418，2026-10-01）
 - [ci-tests-only-on-prerelease](pages/ci-tests-only-on-prerelease.md) — category: decision | tags: [ci, workflow, testing, release] | # CI 测试只在 pre-release 跑
 - [code-quality-l3-l5-fixes](pages/code-quality-l3-l5-fixes.md) — category: decision | tags: [code-quality, gzip-cache, comments] | ## 内容（v2.7.0，commit aecb053）

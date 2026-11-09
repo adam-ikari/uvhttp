@@ -2,7 +2,7 @@
 
 ## Overview
 
-UVHTTP provides full WebSocket support, allowing you to easily implement real-time bidirectional communication. The WebSocket protocol is built on top of the HTTP protocol, upgrading from HTTP to WebSocket through a handshake phase.
+UVHTTP implements WebSocket. A connection starts as HTTP: the client sends an upgrade request, and after the handshake both sides exchange messages in either direction.
 
 ## How WebSocket Works
 
@@ -24,7 +24,7 @@ UVHTTP provides full WebSocket support, allowing you to easily implement real-ti
    Sec-WebSocket-Accept: <computed string>
    ```
 
-3. Once the connection is established, both parties can send messages in both directions
+3. After the handshake, either side can send messages at any time
 
 ## Basic Usage
 
@@ -138,7 +138,7 @@ uvhttp_server_ws_close(ws_conn, 1000, "Normal closure");
 
 ## Application-Level Authentication
 
-Since authentication should be implemented at the application layer, you can accept or reject connections in the `on_connect` callback. Note that `on_connect` receives only the connection object — the original HTTP request headers (e.g. `Authorization`) are not accessible there. Header-based authentication must be performed at the HTTP layer before the WebSocket upgrade completes:
+Authentication belongs to the application layer. The `on_connect` callback can accept or reject a connection, but `on_connect` receives only the connection object: the original HTTP request headers (e.g. `Authorization`) are not accessible there. Header-based authentication must run at the HTTP layer before the WebSocket upgrade completes:
 
 ```c
 int on_connect(uvhttp_ws_connection_t* ws_conn) {
@@ -367,6 +367,5 @@ A: Implement automatic reconnection logic on the client, and maintain connection
 ## Related Resources
 
 - [WebSocket Protocol Specification](https://tools.ietf.org/html/rfc6455)
-- [WebSocket API Reference](../api/API_REFERENCE.md#websocket)
+- [WebSocket API Reference](../api/API_REFERENCE.md#websocket-700s)
 - [WebSocket Example Code](https://github.com/adam-ikari/uvhttp/tree/main/examples/05_websocket)
-- best practices

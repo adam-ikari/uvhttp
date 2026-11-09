@@ -5,7 +5,7 @@ description: "UVHTTP 构建指南——从源码编译、构建选项、交叉�
 
 # 构建指南
 
-本指南介绍安装与构建 UVHTTP 的不同方式。
+UVHTTP 从源码构建，顶层 Makefile 转发给 CMake。下面按顺序讲系统要求、编译、在自己项目里引用、安装与交叉编译，最后是几类常见的构建失败。
 
 ## 系统要求
 
@@ -16,7 +16,7 @@ description: "UVHTTP 构建指南——从源码编译、构建选项、交叉�
 - **内存**: 至少 1GB RAM
 - **磁盘空间**: 至少 500MB
 
-> **注意**: UVHTTP 目前仅支持 Linux 平台。我们计划在未来版本中扩展对其他操作系统的支持。
+> **注意**: 现在只有 Linux 能跑。macOS、Windows、FreeBSD 和 WASM 还在计划里。
 
 ## 从源码构建
 
@@ -27,8 +27,7 @@ git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
 ```
 
-> **注意**: `--recurse-submodules` 参数会自动克隆所有依赖。如果忘记使用此参数，可以运行 `git submodule update --init --recursive` 来补全。
-```
+> **注意**: `--recurse-submodules` 会把 deps 下的依赖一起拉下来。已经克隆过仓库却漏了这一步，运行 `git submodule update --init --recursive` 补齐即可。
 
 ### 2. 编译
 
@@ -56,30 +55,15 @@ target_link_libraries(myapp uvhttp)
 | 选项 | 默认值 | 说明 |
 |--------|---------|-------------|
 | `BUILD_WITH_WEBSOCKET` | ON | 启用 WebSocket 支持 |
-| `BUILD_WITH_MIMALLOC` | ON | 使用 mimalloc 分配器 |
+| `BUILD_WITH_HTTPS` | ON | 启用 TLS（mbedtls） |
+| `BUILD_WITH_MIMALLOC` | OFF | 使用 mimalloc 分配器 |
 | `BUILD_EXAMPLES` | OFF | 编译示例程序 |
 | `ENABLE_COVERAGE` | OFF | 启用代码覆盖率 |
 | `ENABLE_DEBUG` | OFF | 启用 Debug 模式 |
 | `CMAKE_BUILD_TYPE` | Release | 构建类型（Debug/Release） |
-| `UVHTTP_ALLOCATOR_TYPE` | 1 | 内存分配器（0=系统分配器，1=mimalloc） |
+| `UVHTTP_ALLOCATOR_TYPE` | 0 | 0 = 系统分配器，1 = mimalloc，2 = 自定义 |
 
-### 高级构建选项
-
-高级选项可直接修改 `CMakeLists.txt` 中的 `option()` 配置，然后重新编译：
-
-```bash
-make build
-```
-
-`CMakeLists.txt` 中可用的通用选项：
-
-| 选项 | 默认值 | 说明 |
-|--------|---------|-------------|
-| `BUILD_WITH_WEBSOCKET` | ON | 启用 WebSocket 支持 |
-| `BUILD_WITH_MIMALLOC` | ON | 使用 mimalloc 分配器 |
-| `BUILD_EXAMPLES` | OFF | 编译示例程序 |
-| `ENABLE_COVERAGE` | OFF | 启用代码覆盖率 |
-| `ENABLE_DEBUG` | OFF | 启用 Debug 模式 |
+`UVHTTP_ALLOCATOR_TYPE=1` 要求同时打开 `BUILD_WITH_MIMALLOC`，否则配置阶段直接报错退出。
 
 ## 输出文件
 
@@ -90,34 +74,29 @@ make build
 
 ## 性能测试
 
-性能测试程序位于 `build/dist/bin/`：
-- `performance_test` - 基础性能测试
-- `performance_test_static` - 静态文件服务性能测试
+`BUILD_BENCHMARKS` 默认开启，产出 `benchmark_unified`，默认在 18081 端口提供基准端点（第一个参数可以换端口）：
 
-运行性能测试：
 ```bash
-# 启动测试服务器
-./build/dist/bin/performance_static_server -d ./public -p 8080
+./build/dist/bin/benchmark_unified 18081 &
 
-# 使用 wrk 进行性能测试
-wrk -t4 -c100 -d30s http://localhost:8080/
-
-# 使用 ab 进行性能测试
-ab -n 10000 -c 100 http://localhost:8080/
+wrk -t2 -c10 -d10s http://localhost:18081/
+wrk -t2 -c10 -d10s http://localhost:18081/json
+wrk -t2 -c10 -d10s http://localhost:18081/large
 ```
+
+单机数字换台机器就变了。CI 门禁怎么在同一条 runner 上比较两个版本，见[性能目标](../../PERFORMANCE_TARGETS.md)。
 
 ## 运行测试
 
-编译完成后，运行测试套件：
-
 ```bash
-./run_tests.sh
+make test
 ```
 
-获取详细的覆盖率报告：
+这条命令在 `build/` 里跑 `ctest`，遇到第一个失败就停下。要覆盖率报告：
 
 ```bash
-./run_tests.sh --detailed
+make build-coverage
+make coverage
 ```
 
 ## 安装路径
@@ -162,7 +141,7 @@ git submodule update --init --recursive
 
 ### 编译错误
 
-确保你使用的是兼容 C99 的编译器：
+确保你使用的是兼容 C11 的编译器：
 
 ```bash
 gcc --version  # 应为 4.8 或更高版本
@@ -173,8 +152,10 @@ gcc --version  # 应为 4.8 或更高版本
 如果出现链接错误，请确保链接了所需的库：
 
 ```bash
--luvhttp -lpthread -luv
+cc app.c -o app -luvhttp -lpthread -luv
 ```
+
+通过 CMake 链接时，`uvhttp` target 会带上自己的依赖（`uv`、`pthread`，开启 HTTPS 时还有 mbedtls），不需要手工维护这份列表。
 
 ### 依赖编译失败
 

@@ -1,10 +1,10 @@
 # 高级构建选项
 
-本文档介绍 UVHTTP 的高级构建配置选项，通常仅高级用户或特定性能调优场景需要。
+这些选项调的是缓冲区、连接上限、缓存和协议限额本身。默认值按通用场景定过，只有手里有明确的调优目标，或者跑在资源受限的机器上，才需要动。
 
 ## 概述
 
-大多数用户应使用默认值。这些高级选项允许针对特定用例、性能优化或资源受限环境微调内部参数。
+默认值不用改。真要改，先弄清动的资源是哪一种：内存、吞吐还是单请求延迟。具体参数按子系统分组列在下面，各自标了默认值和调大调小的后果。
 
 ## 内存分配器配置
 
@@ -438,7 +438,7 @@ cmake -DUVHTTP_MAX_HEADER_NAME_SIZE=512 \
 ## 性能调优指南
 
 ### 内存受限环境
-内存受限环境中考虑减小：
+内存紧张时先减这几项：
 - `UVHTTP_MAX_CONNECTIONS_DEFAULT`
 - `UVHTTP_MAX_HEADERS`
 - `UVHTTP_MAX_BODY_SIZE`
@@ -446,7 +446,7 @@ cmake -DUVHTTP_MAX_HEADER_NAME_SIZE=512 \
 - `UVHTTP_READ_BUFFER_SIZE`
 
 ### 高吞吐环境
-高吞吐环境中考虑增大：
+吞吐优先就加大这几项，代价是常驻内存：
 - `UVHTTP_MAX_CONNECTIONS_DEFAULT`
 - `UVHTTP_READ_BUFFER_SIZE`
 - `UVHTTP_SOCKET_SEND_BUF_SIZE`
@@ -454,7 +454,7 @@ cmake -DUVHTTP_MAX_HEADER_NAME_SIZE=512 \
 - `UVHTTP_CACHE_DEFAULT_MAX_ENTRIES`
 
 ### 低延迟环境
-低延迟环境中考虑：
+低延迟的调整方向不统一，超时类的往下压，缓冲类的往上加：
 - 减小 `UVHTTP_CONNECTION_TIMEOUT_DEFAULT`
 - 减小 `UVHTTP_WEBSOCKET_DEFAULT_PING_INTERVAL`
 - 增大 `UVHTTP_READ_BUFFER_SIZE`

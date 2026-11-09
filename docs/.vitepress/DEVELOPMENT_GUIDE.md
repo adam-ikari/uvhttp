@@ -443,7 +443,7 @@ git push origin main
 
 如有问题或建议，请联系：
 - GitHub Issues: https://github.com/adam-ikari/uvhttp/issues
-- GitHub Discussions: https://github.com/adam-ikari/uvhttp/discussions
+- GitHub Issues: https://github.com/adam-ikari/uvhttp/issues
 
 ## 📚 参考资料
 

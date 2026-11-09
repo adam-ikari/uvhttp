@@ -1,5 +1,8 @@
 # UVHTTP CI/CD 方案设计文档
 
+> **历史设计文档。** 本文描述 2.2.0 时期的设计，其中 `develop` 分支与
+> `ci-push.yml` 已被移除。当前工作流与触发条件见 [CI_CD.md](CI_CD.md)。
+
 ## 文档信息
 
 - **项目**: UVHTTP
@@ -2042,7 +2045,7 @@ lcov --list coverage.info
 - [GitHub Actions 文档](https://docs.github.com/en/actions)
 - [CMake 文档](https://cmake.org/documentation/)
 - [Google Test 文档](https://google.github.io/googletest/)
-- [lcov 文档](http://ltp.sourceforge.net/coverage/lcov.php)
+- [lcov 文档](https://github.com/linux-test-project/lcov)
 - [wrk 文档](https://github.com/wg/wrk)
 - [CodeQL 文档](https://codeql.github.com/docs/)
 
