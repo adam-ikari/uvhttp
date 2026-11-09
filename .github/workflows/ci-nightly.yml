@@ -87,18 +87,11 @@ jobs:
         with:
           output: codeql-results
 
-      - name: Run dependency check
-        run: |
-          # 检查依赖库版本
-          echo "Checking dependencies..."
-
       - name: Upload security results
         uses: actions/upload-artifact@v7.0.1
         with:
           name: security-results-nightly-${{ github.run_number }}
-          path: |
-            codeql-results/
-            dependency-check-results.txt
+          path: codeql-results/
           retention-days: 30
   
   # ========== 阶段 2: 完整测试 ==========
