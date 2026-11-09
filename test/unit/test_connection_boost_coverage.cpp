@@ -528,7 +528,11 @@ TEST(ConnectionBoostCoverage, StartTlsHandshake_Delegates) {
     ASSERT_EQ(result, UVHTTP_OK);
 
     result = uvhttp_connection_start_tls_handshake(conn);
+#if UVHTTP_FEATURE_TLS
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+#else
+    EXPECT_EQ(result, UVHTTP_ERROR_NOT_SUPPORTED);
+#endif
 
     close_and_drain(conn, loop);
     destroy_server_and_loop(server, loop);
@@ -547,7 +551,11 @@ TEST(ConnectionBoostCoverage, TlsRead_NullSsl) {
 
     ASSERT_EQ(conn->ssl, nullptr);
     result = uvhttp_connection_tls_read(conn);
+#if UVHTTP_FEATURE_TLS
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+#else
+    EXPECT_EQ(result, UVHTTP_ERROR_NOT_SUPPORTED);
+#endif
 
     close_and_drain(conn, loop);
     destroy_server_and_loop(server, loop);
@@ -566,7 +574,11 @@ TEST(ConnectionBoostCoverage, TlsWrite_NullSsl) {
 
     const char data[] = "test data";
     result = uvhttp_connection_tls_write(conn, data, sizeof(data));
+#if UVHTTP_FEATURE_TLS
     EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
+#else
+    EXPECT_EQ(result, UVHTTP_ERROR_NOT_SUPPORTED);
+#endif
 
     close_and_drain(conn, loop);
     destroy_server_and_loop(server, loop);
