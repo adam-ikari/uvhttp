@@ -179,7 +179,9 @@ void uvhttp_context_cleanup_tls(uvhttp_context_t* context) {
 }
 #else
 uvhttp_error_t uvhttp_context_init_tls(uvhttp_context_t* context) {
-    (void)context;
+    if (!context) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
     return UVHTTP_ERROR_NOT_SUPPORTED;
 }
 
@@ -259,7 +261,9 @@ void uvhttp_context_cleanup_websocket(uvhttp_context_t* context) {
 }
 #else
 uvhttp_error_t uvhttp_context_init_websocket(uvhttp_context_t* context) {
-    (void)context;
+    if (!context) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
     return UVHTTP_ERROR_NOT_SUPPORTED;
 }
 

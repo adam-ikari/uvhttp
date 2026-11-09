@@ -1050,7 +1050,9 @@ uvhttp_error_t uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn) {
 
     return UVHTTP_OK;
 #else
-    (void)conn;
+    if (!conn || !conn->server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
     return UVHTTP_ERROR_NOT_SUPPORTED;
 #endif
 }
@@ -1079,7 +1081,9 @@ uvhttp_error_t uvhttp_connection_tls_read(uvhttp_connection_t* conn) {
     conn->read_buffer_used = ret;
     return UVHTTP_OK;
 #else
-    (void)conn;
+    if (!conn) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
     return UVHTTP_ERROR_NOT_SUPPORTED;
 #endif
 }
@@ -1150,8 +1154,9 @@ uvhttp_error_t uvhttp_connection_tls_write(uvhttp_connection_t* conn,
 
     return UVHTTP_OK;
 #else
-    (void)conn;
-    (void)data;
+    if (!conn || !data) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
     (void)len;
     return UVHTTP_ERROR_NOT_SUPPORTED;
 #endif
