@@ -23,7 +23,7 @@ uvhttp_error_t uvhttp_server_set_request_filter(uvhttp_server_t* server,
 删除是刻意的。旧的限流器把整个服务器共用一个计数器，一个恶意客户端能让所有访客
 都收到 429；它的白名单又只匹配 IPv4 对端地址。想做得比这更好，就得回答嵌入库
 无权代答的问题：窗口多长、按什么维度计数（客户端 IP、租户、API key）、是否信任
-代理头、这张表最多占多少内存、满了淘汰谁。所以库只负责跑接缝，语义归你。
+代理头、这张表最多占多少内存、满了淘汰谁。所以库只负责运行钩子，策略由你写。
 
 ## 契约
 
@@ -40,16 +40,16 @@ uvhttp_error_t uvhttp_server_set_request_filter(uvhttp_server_t* server,
 | `user_data` | 借用，与 `server->handler` 一致：库永不 free。它必须比 server 活得久，或者先安装 `NULL` filter 把它清掉。 |
 
 `filter` 传 `NULL` 即移除当前安装的过滤器；`uvhttp_server_new()` 出来的 server
-默认接缝是关着的。
+默认没有安装过滤器。
 
 识别客户端用 `uvhttp_request_get_client_ip()`。它返回 IPv6 或 IPv4 的对端地址，
 只有在 `config->trust_proxy_headers` 置位时才认 `X-Forwarded-For` /
-`X-Real-IP` —— 代理头由客户端控制，极易伪造，不是真的站在代理后面就别开。返回
-的指针可能指向内部缓冲区，下一次调用就会覆盖它，需要保留就立刻拷走。
+`X-Real-IP`，因为代理头由客户端控制、极易伪造。不是真的站在代理后面就别开。
+返回的指针可能指向内部缓冲区，下一次调用就会覆盖它，需要保留就立刻拷走。
 
 ## 按客户端的固定窗口
 
-下面的示例全是用户代码，除了接缝之外不依赖任何库支持。每个客户端 IP 一个槽位，
+下面的示例全是用户代码，除了这个钩子之外不依赖任何库支持。每个客户端 IP 一个槽位，
 1 秒窗口，每窗口 100 个请求，表容量固定，因此海量源地址无法无限撑大内存。
 
 ```c

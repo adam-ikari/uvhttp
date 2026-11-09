@@ -1,6 +1,6 @@
 # UVHTTP 测试指南
 
-本文说明 UVHTTP 3.x 的测试如何编译、注册和运行。
+本文讲 UVHTTP 3.x 的测试如何编译、注册和运行。
 
 ## 测试如何被发现
 
@@ -10,8 +10,8 @@
 
 项目没有 `test/CMakeLists.txt`，不要新增它，也不要手工维护测试文件清单。
 
-`manual/` 下的文件会被编译，但**故意不注册**进 ctest：它们运行
-`uv_run(UV_RUN_DEFAULT)` 且永不返回。断言测试必须放在 `test/unit/`。
+`manual/` 下的文件会被编译，但**故意不注册**进 ctest，因为它们运行
+`uv_run(UV_RUN_DEFAULT)` 且永不返回。断言测试放在 `test/unit/`。
 
 ## 测试目录结构
 
