@@ -1,6 +1,6 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-11-09T09:51:56.315Z._
+_Auto-generated. Last updated 2026-11-09T23:35:21.067Z._
 
 - [alloc-hotpath-measured](pages/alloc-hotpath-measured.md) — category: decision | tags: [performance, benchmark, allocator, methodology, yagni] | # 每请求分配已实测：省一次仅 0.026%，内存分配优化不做
 - [api-atomicity-audit](pages/api-atomicity-audit.md) — category: decision | tags: [api, atomicity, orthogonality, audit, v2.10] | <!-- compiled_truth -->
@@ -27,6 +27,7 @@ _Auto-generated. Last updated 2026-11-09T09:51:56.315Z._
 - [no-config-file-parsing](pages/no-config-file-parsing.md) — category: decision | tags: [config, scope, roadmap] | ## 约束（2026-10-17 用户确认，记录为项目约束）
 - [perf-regression-gate](pages/perf-regression-gate.md) — category: decision | tags: [performance, benchmark, ci, gate] | ## 现状
 - [performance-benchmark-update](pages/performance-benchmark-update.md) — category: decision | tags: [performance, benchmark, release-v2.6.2] | ## 变更（v2.7.0，commit aecb053，2026-08-21）
+- [quality-audit-security-hardening](pages/quality-audit-security-hardening.md) — category: decision | tags: [security, http, static, ci, coverage] | 2026-11-10 对全库做产品级质量审计（两个只读审计 agent + 本地门禁），落地以下结论：
 - [release-checklist-enforced](pages/release-checklist-enforced.md) — category: decision | tags: [release, ci, quality] | # 发布检查清单：从靠人读到脚本门禁
 - [release-process-benchmark-gate](pages/release-process-benchmark-gate.md) — category: decision | tags: [release, ci, benchmark] | ## 决定
 - [release-v262](pages/release-v262.md) — category: decision | tags: [release, memory-safety, websocket] | # v2.6.2 发布记录
