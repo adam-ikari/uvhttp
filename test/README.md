@@ -27,7 +27,7 @@ make test
 ctest --test-dir build -R test_router --output-on-failure
 build/dist/bin/test_router_full_coverage
 
-# ASan + UBSan
+# 本地 ASan + UBSan（CI 的 asan-gate 只跑 ASan，本命令是超集）
 make verify-memory-safety
 
 # 覆盖率

@@ -8,15 +8,11 @@ UVHTTP 有三种构建模式。Release 模式用于生产环境和基准测试�
 
 ### 1. Release 模式（生产环境）
 
-Release 模式用于生产部署、性能基准测试和发布构建。所有性能测试程序和所有示例程序都以 Release 模式构建。
+Release 模式用于生产部署、性能基准测试和发布构建。示例程序按配置的构建类型构建，CMake 不会强制使用 Release。
 
 必须使用 Release 模式的程序：
 
 - `benchmark_unified`：完整的性能测试服务器，包含所有测试场景。
-- `performance_allocator`：测量分配器。
-- `performance_allocator_compare`：对比分配器。
-- `test_bitfield`：测量位域访问。
-- examples/ 下的所有示例程序。
 
 构建选项：
 
@@ -127,8 +123,8 @@ Debug 模式的数据会误导。优化关闭时吞吐量可能下降 10-100 倍
 # 错误：用 Debug 模式运行性能测试
 mkdir build && cd build
 cmake -DENABLE_DEBUG=ON ..
-make benchmark_rps
-./dist/bin/benchmark_rps 8080
+make benchmark_unified
+./dist/bin/benchmark_unified 8080
 wrk -t4 -c100 -d30s http://127.0.0.1:8080/
 # 结果：~10,000 RPS（不准确）
 
@@ -189,48 +185,41 @@ make
 
 ### 性能测试程序配置
 
-基准测试目标位于 `benchmark/benchmark.cmake`，必须保持 Release 优化。
+基准测试目标位于 `benchmark/benchmark.cmake`，构建类型随配置继承；测性能时用 Release 构建。
 
 ```cmake
 # benchmark/benchmark.cmake
 
-# 性能测试可执行文件
-add_executable(benchmark_rps
-    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_rps.c
+add_executable(benchmark_unified
+    benchmark/benchmark_unified.c
 )
-target_link_libraries(benchmark_rps
+target_link_libraries(benchmark_unified PRIVATE
     uvhttp
-    ${UVHTTP_CORE_DEPS}
+    libuv
+    xxhash
+    llhttp
+    ${CMAKE_DL_LIBS}
 )
-
-# 确保使用 Release 优化
-set_target_properties(benchmark_unified PROPERTIES
-    CMAKE_BUILD_TYPE Release
-)
+add_dependencies(benchmark_unified libuv xxhash llhttp)
 ```
 
 ### 单元测试程序配置
 
-单元测试目标位于 `test/CMakeLists.txt`，可以用 Debug 模式构建。
+单元测试目标在顶层 `CMakeLists.txt` 中注册，可以用 Debug 模式构建。
 
 ```cmake
-# test/CMakeLists.txt
+# CMakeLists.txt（顶层）
 
-# 单元测试
-add_executable(uvhttp_unit_tests
-    ${TEST_SOURCES}
-)
-target_link_libraries(uvhttp_unit_tests
-    uvhttp
-    ${UVHTTP_TEST_DEPS}
-)
+# 每个 test/unit/test_*.cpp 编译为独立可执行文件并注册为 ctest 用例
+file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
 
-# 可以使用 Debug 模式
-if(ENABLE_DEBUG)
-    set_target_properties(uvhttp_unit_tests PROPERTIES
-        CMAKE_BUILD_TYPE Debug
-    )
-endif()
+foreach(test_file ${GTEST_TEST_FILES})
+    get_filename_component(test_name ${test_file} NAME_WE)
+    add_executable(${test_name} ${test_file} ${SOURCES})
+    set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
+    target_link_libraries(${test_name} PRIVATE ${GTEST_LIBS} ${LIBS} llhttp)
+    add_test(NAME ${test_name} COMMAND ${CMAKE_BINARY_DIR}/dist/bin/${test_name})
+endforeach()
 ```
 
 ## 验证构建模式
@@ -246,7 +235,7 @@ cd build
 cmake -L | grep CMAKE_BUILD_TYPE
 
 # 方法 3：检查二进制文件
-file build/dist/bin/benchmark_rps
+file build/dist/bin/benchmark_unified
 ```
 
 ### 验证优化级别

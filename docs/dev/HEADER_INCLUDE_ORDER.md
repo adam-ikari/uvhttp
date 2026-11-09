@@ -162,15 +162,14 @@ typedef struct uvhttp_tls_context uvhttp_tls_context_t;
 `clang-format` sorts the includes for you:
 
 ```bash
-# Check format
-make format-check
+# Format files in place
+clang-format -i src/uvhttp_server.c
 
-# Fix format
-make format-fix
-
-# Format all files
-make format-all
+# Check without writing
+clang-format --dry-run --Werror src/uvhttp_server.c
 ```
+
+`just fmt` formats every C source and header under `src/`, `include/`, and `test/`; `just check-style` runs the same check without writing.
 
 ## Rule Explanations
 
@@ -268,17 +267,14 @@ The project runs `clang-format` over its code, include order included.
 
 Configuration file: `.clang-format`
 
-### Makefile Commands
+### Justfile Commands
 
 ```bash
-# Check format
-make format-check
+# Format every C source and header
+just fmt
 
-# Fix format
-make format-fix
-
-# Format all files
-make format-all
+# Check style without writing
+just check-style
 ```
 
 ## CI/CD Integration
@@ -288,7 +284,7 @@ A format check can join the CI/CD workflow:
 ```yaml
 - name: Check code format
   run: |
-    make format-check
+    clang-format --dry-run --Werror $(find src include test -name '*.c' -o -name '*.h')
 ```
 
 ## Reference Resources

@@ -2,108 +2,60 @@
 
 ## Overview
 
-uvhttp offers three router search modes, selected at compile time.
+Route lookup is selected at build time by one CMake option: `BUILD_WITH_ROUTER_CACHE`, default `OFF`. It defines `UVHTTP_FEATURE_ROUTER_CACHE` as 0 or 1, and exactly one implementation is compiled:
 
-Mode 0 searches routes linearly and suits small applications. Mode 1 keeps a pure hash table and suits medium-sized deployments. Mode 2 mixes a hash table with a hot-path cache, ships as the default, and targets large, high-concurrency deployments.
+| Value | Source file | Route storage |
+|-------|-------------|---------------|
+| `OFF` (0) | `src/uvhttp_router.c` | Array of routes, migrating to a trie |
+| `ON` (1) | `src/uvhttp_router_cache.c` | Open-addressing hash table |
+
+There is no runtime switch and no separate search-mode macro.
 
 ## Build Configuration
 
-### Basic Usage
-
 ```bash
-# Default hybrid strategy
-gcc ...
+# Default: array + trie
+cmake -B build -DBUILD_WITH_ROUTER_CACHE=OFF ..
 
-# Pure linear search (embedded/small-scale applications)
-gcc -DUVHTTP_ROUTER_SEARCH_MODE=0 ...
-
-# Pure hash search (medium-scale applications)
-gcc -DUVHTTP_ROUTER_SEARCH_MODE=1 ...
-
-# Hybrid strategy (large-scale applications)
-gcc -DUVHTTP_ROUTER_SEARCH_MODE=2 ...
+# Hash table implementation
+cmake -B build -DBUILD_WITH_ROUTER_CACHE=ON ..
 ```
 
-### Related Configuration Options
+## How Routes Are Stored
 
-```bash
-# Disable route cache optimization
-gcc -DUVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION=0 ...
+### Array + Trie (`BUILD_WITH_ROUTER_CACHE=OFF`)
 
-# Enable statistics
-gcc -DUVHTTP_ENABLE_ROUTER_CACHE_STATS=1 ...
+- `uvhttp_router_new` allocates `HYBRID_THRESHOLD` (100) `array_route_t` slots and a 64-node trie node pool.
+- Routes are appended to the array while the router is in array mode. Lookup scans the array and compares path and method.
+- A route containing `:` (path parameter), `array_route_count` reaching `HYBRID_THRESHOLD`, or `use_trie` already being set selects the trie path. On the first switch, `migrate_to_trie` copies every array route into the trie; the new route is then added there.
+- Migration is all-or-nothing. If it fails, `use_trie` stays 0, existing routes keep working, and the route that triggered migration returns the error.
+- Trie lookup walks path segments; a parameter segment matches any value.
 
-# Enable dynamic adjustment
-gcc -DUVHTTP_ENABLE_ROUTER_CACHE_DYNAMIC=1 ...
+### Hash Table (`BUILD_WITH_ROUTER_CACHE=ON`)
 
-# Enable performance monitoring
-gcc -DUVHTTP_ENABLE_ROUTER_CACHE_MONITORING=1 ...
-```
+- All routes are stored in one hash table with open addressing and linear probing. Entries are keyed by path plus method; the hash is computed from the path with XXH64.
+- The table starts at `UVHTTP_ROUTER_HASH_BASE_SIZE` (256) slots and doubles when the count reaches `UVHTTP_ROUTER_HASH_LOAD_FACTOR` (0.75) of capacity, capped at `UVHTTP_ROUTER_HASH_MAX_SIZE` (4096).
+- Exact paths are matched by hash. Parameterized routes (`:`) are matched by a second linear pass over the table entries.
+- `uvhttp_router_add_route_method` applies the same threshold test and sets `use_trie` at 100 routes or on the first parameterized route, keeping the public `uvhttp_router_t` fields consistent with the array implementation. This build has no trie; lookups stay in the hash table.
 
-## Mode Comparison
+## Threshold and Measured Costs
 
-| Mode | Memory Overhead | Lookup Performance | Use Case | Recommended Configuration |
-|------|---------|---------|---------|---------|
-| 0 - Linear | Minimal | O(n) | Embedded, <10 routes | `SEARCH_MODE=0` |
-| 1 - Hash | Medium | O(1) | Medium scale, 10-50 routes | `SEARCH_MODE=1` |
-| 2 - Hybrid | Larger | O(1) optimal | Large scale, >50 routes | `SEARCH_MODE=2` |
+`HYBRID_THRESHOLD` is a per-file constant (100 in both implementations), not a build option. To change the crossover, edit it in the source and re-run the benchmarks.
 
-## Scenario Recommendations
+Timings recorded in `src/uvhttp_router.c` (1000 lookups, array vs trie):
 
-### Embedded Devices
-```bash
-gcc -DUVHTTP_ROUTER_SEARCH_MODE=0 \
-     -DUVHTTP_ENABLE_ROUTER_CACHE_OPTIMIZATION=0 \
-     -Os -DCONFIG_SMALL_MEMORY
-```
+| Routes | Array | Trie |
+|--------|-------|------|
+| 50 | 0.02 ms | 0.03 ms |
+| 100 | 0.04 ms | 0.04 ms |
+| 200 | 0.08 ms | 0.05 ms |
+| 500 | 0.20 ms | 0.06 ms |
 
-### Microservice Architecture
-```bash
-gcc -DUVHTTP_ROUTER_SEARCH_MODE=1 \
-     -DUVHTTP_ENABLE_ROUTER_CACHE_STATS=1 \
-     -O2
-```
+No equivalent timings are recorded for the hash table implementation.
 
-### High-Concurrency Servers
-```bash
-gcc -DUVHTTP_ROUTER_SEARCH_MODE=2 \
-     -DUVHTTP_ENABLE_ROUTER_CACHE_STATS=1 \
-     -DUVHTTP_ENABLE_ROUTER_CACHE_DYNAMIC=1 \
-     -O3 -march=native
-```
+## Choosing an Implementation
 
-## Performance Tuning
-
-### Memory Optimization
-
-Use `SEARCH_MODE=0` to keep the footprint smallest. Disabling cache optimization saves 4KB+.
-
-### Performance Optimization
-
-Use `SEARCH_MODE=2` for the fastest lookup. Statistics show what the cache is doing. Compile with `-O3 -march=native` when you want the last bit of speed.
-
-### Debug Friendly
-
-Use `SEARCH_MODE=0` when you want the simplest control flow. Leave the cache logic out.
-
-## Performance Benchmarks
-
-Theoretical performance estimates (50 routes):
-
-| Mode | Average Lookup Time | Memory Overhead | Cache Hit Rate |
-|------|-------------|---------|-----------|
-| Linear | ~1500ns | 0KB | N/A |
-| Hash | ~200ns | ~4KB | N/A |
-| Hybrid | ~180ns | ~8KB | ~60% |
-
-## Best Practices
-
-1. During development, use `SEARCH_MODE=0`; the control flow is easiest to follow.
-2. In testing, switch to `SEARCH_MODE=1` to exercise the hash path.
-3. In production, keep `SEARCH_MODE=2`.
-4. On embedded targets, stay on `SEARCH_MODE=0`.
-5. Under high concurrency, run `SEARCH_MODE=2` with statistics enabled.
-
----
-
-*Each mode targets a different deployment shape. Pick the one that matches your route count and memory budget.*
+- Fewer than 100 static routes: leave the option `OFF`. The array scan is competitive (faster in the recorded 50-route measurement), and memory use is bounded by the preallocated array and node pool.
+- 100 or more routes, or parameterized routes: `OFF` gives a trie whose lookup cost follows path depth; `ON` gives average O(1) exact-path lookup with a linear scan for parameterized routes.
+- Memory: `OFF` preallocates 100 array slots plus a 64-node pool. `ON` starts with a 256-entry hash table, each entry holding a full 256-byte path buffer, so it uses more memory at low route counts and grows dynamically.
+- Do not change the option per request; it is fixed for the whole build.

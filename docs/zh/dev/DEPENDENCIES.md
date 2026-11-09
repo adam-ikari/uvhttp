@@ -26,7 +26,7 @@ uthash 提供哈希表数据结构，是纯头文件库，版本锁定在 v1.9.8
 
 ### WebSocket 实现
 
-WebSocket 由 uvhttp_websocket_native.c 原生实现，不依赖第三方 WebSocket 库。代码量小，行为可控，构建时也不用多带一个依赖。
+WebSocket 由 `src/uvhttp_websocket.c` 原生实现，不依赖第三方 WebSocket 库。代码量小，行为可控，构建时也不用多带一个依赖。
 
 ## 可选依赖
 
@@ -77,12 +77,9 @@ cmocka 已经移除。项目实际用的是 googletest，cmocka 从未派上用�
 | llhttp | latest | v6.0.0 | latest |
 | xxhash | v0.7.4 | v0.7.0 | v0.7.4 |
 | uthash | v1.9.8 | v1.9.0 | v1.9.8 |
-| libwebsockets | v4.5.0 | v4.3.0 | v4.5.0 |
 | cjson | v1.7.15 | v1.7.0 | v1.7.15 |
 | mimalloc | v3.1.5 | v2.0.0 | v3.1.5 |
 | googletest | release-1.12.1 | release-1.10.0 | release-1.12.1 |
-
-表格里保留了 libwebsockets 的版本行，但项目自身的 TLS 功能完全基于 mbedtls。预编译的 libwebsockets 内部链接 OpenSSL，这和项目的 TLS 实现是两回事。
 
 ## 编译选项
 

@@ -26,7 +26,7 @@ uthash v1.9.8 provides the hash table. It is header-only, required, licensed und
 
 ### WebSocket Implementation
 
-The WebSocket layer is implemented natively in uvhttp_websocket_native.c rather than on a third-party library. That keeps the dependency list short and leaves the code under our control.
+The WebSocket layer is implemented natively in `src/uvhttp_websocket.c` rather than on a third-party library. That keeps the dependency list short and leaves the code under our control.
 
 ## Optional Dependencies
 
@@ -77,12 +77,9 @@ cmocka was removed on 2026-01-05. The project uses googletest, and cmocka was ne
 | llhttp | latest | v6.0.0 | latest |
 | xxhash | v0.7.4 | v0.7.0 | v0.7.4 |
 | uthash | v1.9.8 | v1.9.0 | v1.9.8 |
-| libwebsockets | v4.5.0 | v4.3.0 | v4.5.0 |
 | cjson | v1.7.15 | v1.7.0 | v1.7.15 |
 | mimalloc | v3.1.5 | v2.0.0 | v3.1.5 |
 | googletest | release-1.12.1 | release-1.10.0 | release-1.12.1 |
-
-**Note**: The project uses mbedtls as its TLS library implementation. The libwebsockets precompiled library uses OpenSSL, but the project's own TLS functionality is entirely based on mbedtls.
 
 ## Compile Options
 

@@ -155,6 +155,89 @@ ctest --output-on-failure -R <test_name>
 Because PR CI does not execute tests, run `make test` locally before opening a
 PR.
 
+## Common Questions
+
+### Q1: How do I test asynchronous callbacks?
+
+Use the mock to feed bytes and fire the read callback directly. See
+[Mocking libuv](#mocking-libuv) for the wrap mechanics.
+
+```cpp
+const char* data = "GET / HTTP/1.1\r\n\r\n";
+libuv_mock_set_read_data(data, strlen(data));
+uv_buf_t buf = uv_buf_init((char*)data, strlen(data));
+libuv_mock_trigger_read_cb((uv_stream_t*)&conn->tcp_handle, strlen(data), &buf);
+EXPECT_NE(conn->request, nullptr);
+```
+
+### Q2: How do I test timeout scenarios?
+
+Start the timer, then invoke its callback to force the timeout path.
+
+```cpp
+uvhttp_connection_start_timeout(conn);
+uv_timer_t* timer = &conn->timeout_timer;
+timer->cb(timer);
+EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_CLOSING);
+```
+
+### Q3: How do I test for memory leaks?
+
+[Sanitizers and Coverage](#sanitizers-and-coverage) runs the whole suite under
+ASan and UBSan via `make verify-memory-safety`. To build ASan manually:
+
+```bash
+cmake -B build_asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON
+cmake --build build_asan -j$(nproc)
+cd build_asan && ctest --output-on-failure
+```
+
+### Q4: How do I test concurrency?
+
+Drive several connections through one server and assert each reaches the
+expected state.
+
+```cpp
+for (int i = 0; i < num_connections; i++) {
+    uvhttp_connection_new(server, &conns[i]);
+    EXPECT_EQ(conns[i]->state, UVHTTP_CONN_STATE_NEW);
+}
+```
+
+### Q5: How do I test WebSocket?
+
+Feed a handshake request through the mock, then assert the connection upgraded.
+
+```cpp
+libuv_mock_set_read_data(request, strlen(request));
+uv_buf_t buf = uv_buf_init((char*)request, strlen(request));
+libuv_mock_trigger_read_cb((uv_stream_t*)&conn->tcp_handle, strlen(request), &buf);
+EXPECT_EQ(conn->is_websocket, 1);
+EXPECT_NE(conn->ws_connection, nullptr);
+```
+
+## Improving Coverage
+
+1. **Analyze uncovered code.** Build and open the report:
+
+   ```bash
+   make build-coverage && make coverage
+   ```
+
+   The HTML report lands at `build_coverage/coverage_html/index.html`.
+
+2. **Identify scenarios** for uncovered lines: error returns, null/zero/max
+   boundaries, state transitions, concurrent connections.
+
+3. **Write tests** for each scenario, following [Writing a Test](#writing-a-test).
+
+4. **Verify the gain:**
+
+   ```bash
+   make test
+   lcov --list build_coverage/coverage.info | grep uvhttp_connection
+   ```
+
 ## Further Reading
 
 - [Developer Guide](DEVELOPER_GUIDE.md)

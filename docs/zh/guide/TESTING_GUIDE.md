@@ -146,6 +146,87 @@ ctest --output-on-failure -R <test_name>
 
 由于 PR CI 不执行测试，开 PR 前必须在本地跑 `make test`。
 
+## 常见问题
+
+### Q1：如何测试异步回调？
+
+用 mock 注入字节并直接触发读回调。wrap 机制见 [Mock libuv](#mock-libuv)。
+
+```cpp
+const char* data = "GET / HTTP/1.1\r\n\r\n";
+libuv_mock_set_read_data(data, strlen(data));
+uv_buf_t buf = uv_buf_init((char*)data, strlen(data));
+libuv_mock_trigger_read_cb((uv_stream_t*)&conn->tcp_handle, strlen(data), &buf);
+EXPECT_NE(conn->request, nullptr);
+```
+
+### Q2：如何测试超时场景？
+
+启动定时器，再调用其回调强制走超时路径。
+
+```cpp
+uvhttp_connection_start_timeout(conn);
+uv_timer_t* timer = &conn->timeout_timer;
+timer->cb(timer);
+EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_CLOSING);
+```
+
+### Q3：如何测试内存泄漏？
+
+[Sanitizer 与覆盖率](#sanitizer-与覆盖率) 通过 `make verify-memory-safety`
+在 ASan 和 UBSan 下跑全套测试。手动构建 ASan：
+
+```bash
+cmake -B build_asan -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON
+cmake --build build_asan -j$(nproc)
+cd build_asan && ctest --output-on-failure
+```
+
+### Q4：如何测试并发？
+
+让多个连接走同一个 server，断言各自到达预期状态。
+
+```cpp
+for (int i = 0; i < num_connections; i++) {
+    uvhttp_connection_new(server, &conns[i]);
+    EXPECT_EQ(conns[i]->state, UVHTTP_CONN_STATE_NEW);
+}
+```
+
+### Q5：如何测试 WebSocket？
+
+通过 mock 注入握手请求，再断言连接已升级。
+
+```cpp
+libuv_mock_set_read_data(request, strlen(request));
+uv_buf_t buf = uv_buf_init((char*)request, strlen(request));
+libuv_mock_trigger_read_cb((uv_stream_t*)&conn->tcp_handle, strlen(request), &buf);
+EXPECT_EQ(conn->is_websocket, 1);
+EXPECT_NE(conn->ws_connection, nullptr);
+```
+
+## 提升覆盖率
+
+1. **分析未覆盖代码。** 构建并打开报告：
+
+   ```bash
+   make build-coverage && make coverage
+   ```
+
+   HTML 报告生成在 `build_coverage/coverage_html/index.html`。
+
+2. **识别场景**：针对未覆盖行——错误返回、空指针/零/最大值边界、状态转换、
+   并发连接。
+
+3. **编写测试**，遵循 [编写测试](#编写测试)。
+
+4. **验证提升：**
+
+   ```bash
+   make test
+   lcov --list build_coverage/coverage.info | grep uvhttp_connection
+   ```
+
 ## 延伸阅读
 
 - [开发者指南](DEVELOPER_GUIDE.md)

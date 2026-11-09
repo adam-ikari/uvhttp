@@ -8,15 +8,11 @@ UVHTTP builds in one of three modes. Release mode is for production and benchmar
 
 ### 1. Release Mode (Production)
 
-Release mode serves production deployment, performance benchmarking, and release builds. Every performance test program and every example program builds in Release.
+Release mode serves production deployment, performance benchmarking, and release builds. Example programs build with the configured build type; CMake does not force Release for them.
 
-The programs that must use Release mode:
+The program that must use Release mode:
 
 - `benchmark_unified` is the full performance test server and includes all test scenarios.
-- `performance_allocator` measures the allocator.
-- `performance_allocator_compare` compares allocators.
-- `test_bitfield` measures bitfield access.
-- Every example program under examples/.
 
 Build options:
 
@@ -127,8 +123,8 @@ The example below runs the same test both ways:
 # Incorrect: running performance tests in Debug mode
 mkdir build && cd build
 cmake -DENABLE_DEBUG=ON ..
-make benchmark_rps
-./dist/bin/benchmark_rps 8080
+make benchmark_unified
+./dist/bin/benchmark_unified 8080
 wrk -t4 -c100 -d30s http://127.0.0.1:8080/
 # Result: ~10,000 RPS (inaccurate)
 
@@ -189,48 +185,41 @@ make
 
 ### Performance Test Program Configuration
 
-Benchmark targets live in `benchmark/benchmark.cmake` and must keep Release optimization.
+Benchmark targets live in `benchmark/benchmark.cmake` and inherit the configured build type; measure performance with a Release build.
 
 ```cmake
 # benchmark/benchmark.cmake
 
-# Performance test executables
-add_executable(benchmark_rps
-    ${CMAKE_SOURCE_DIR}/benchmark/benchmark_rps.c
+add_executable(benchmark_unified
+    benchmark/benchmark_unified.c
 )
-target_link_libraries(benchmark_rps
+target_link_libraries(benchmark_unified PRIVATE
     uvhttp
-    ${UVHTTP_CORE_DEPS}
+    libuv
+    xxhash
+    llhttp
+    ${CMAKE_DL_LIBS}
 )
-
-# Ensure Release optimization
-set_target_properties(benchmark_unified PROPERTIES
-    CMAKE_BUILD_TYPE Release
-)
+add_dependencies(benchmark_unified libuv xxhash llhttp)
 ```
 
 ### Unit Test Program Configuration
 
-Unit test targets live in `test/CMakeLists.txt` and may build in Debug.
+Unit test targets are registered from the top-level `CMakeLists.txt` and may build in Debug.
 
 ```cmake
-# test/CMakeLists.txt
+# CMakeLists.txt (top level)
 
-# Unit tests
-add_executable(uvhttp_unit_tests
-    ${TEST_SOURCES}
-)
-target_link_libraries(uvhttp_unit_tests
-    uvhttp
-    ${UVHTTP_TEST_DEPS}
-)
+# Each test/unit/test_*.cpp becomes its own executable and ctest case
+file(GLOB_RECURSE GTEST_TEST_FILES test/unit/test_*.cpp)
 
-# May use Debug mode
-if(ENABLE_DEBUG)
-    set_target_properties(uvhttp_unit_tests PROPERTIES
-        CMAKE_BUILD_TYPE Debug
-    )
-endif()
+foreach(test_file ${GTEST_TEST_FILES})
+    get_filename_component(test_name ${test_file} NAME_WE)
+    add_executable(${test_name} ${test_file} ${SOURCES})
+    set_target_properties(${test_name} PROPERTIES LINKER_LANGUAGE CXX)
+    target_link_libraries(${test_name} PRIVATE ${GTEST_LIBS} ${LIBS} llhttp)
+    add_test(NAME ${test_name} COMMAND ${CMAKE_BINARY_DIR}/dist/bin/${test_name})
+endforeach()
 ```
 
 ## Verifying the Build Mode
@@ -246,7 +235,7 @@ cd build
 cmake -L | grep CMAKE_BUILD_TYPE
 
 # Method 3: check the binary
-file build/dist/bin/benchmark_rps
+file build/dist/bin/benchmark_unified
 ```
 
 ### Verifying the Optimization Level
