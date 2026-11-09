@@ -428,16 +428,20 @@ uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response,
                                           UVHTTP_INLINE_HEADERS_CAPACITY];
     }
 
-    // use safe string copy function
-    if (uvhttp_safe_strcpy(header->name, UVHTTP_MAX_HEADER_NAME_SIZE, name) !=
-        0) {
-        UVHTTP_LOG_ERROR("Failed to copy header name: %s\n", name);
+    /* Reject values that do not fit instead of truncating them (a truncated
+     * Content-Security-Policy or Set-Cookie is worse than an error), and copy
+     * with the real destination sizes. UVHTTP_MAX_HEADER_VALUE_SIZE (4096)
+     * exceeds the field size (UVHTTP_HEADER_VALUE_BUFFER_SIZE, 2048); using
+     * it as the copy bound overflowed the last inline header by up to 2KB. */
+    if (strlen(name) >= sizeof(header->name) ||
+        strlen(value) >= sizeof(header->value)) {
+        UVHTTP_LOG_ERROR("Header name or value too long\n");
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    if (uvhttp_safe_strcpy(header->value, UVHTTP_MAX_HEADER_VALUE_SIZE,
-                           value) != 0) {
-        UVHTTP_LOG_ERROR("Failed to copy header value: %s\n", value);
+    if (uvhttp_safe_strcpy(header->name, sizeof(header->name), name) != 0 ||
+        uvhttp_safe_strcpy(header->value, sizeof(header->value), value) != 0) {
+        UVHTTP_LOG_ERROR("Failed to copy header\n");
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 

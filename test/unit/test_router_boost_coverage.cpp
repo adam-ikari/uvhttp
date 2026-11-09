@@ -22,6 +22,7 @@ extern "C" {
 }
 
 #include <string.h>
+#include <stdio.h>
 #include <uv.h>
 
 // ============================================================================
@@ -2005,6 +2006,29 @@ TEST_F(RouterBoostCoverageTest, AddBinaryRoute_WithOtherRoutes) {
     EXPECT_NE(uvhttp_router_find_handler(router, "/api/binary", "GET"),
               nullptr);
 }
+
+#if UVHTTP_FEATURE_ROUTER_CACHE
+// The open-addressing table is capped at UVHTTP_ROUTER_HASH_MAX_SIZE. Once
+// full, find_slot used to return UINT32_MAX and the insert indexed
+// entries[UINT32_MAX]; the 4097th registration must fail cleanly instead.
+TEST(RouterCacheCapacity, RejectsRegistrationWhenTableFull) {
+    uvhttp_router_t* router = nullptr;
+    ASSERT_EQ(uvhttp_router_new(&router), UVHTTP_OK);
+
+    uvhttp_error_t err = UVHTTP_OK;
+    for (size_t i = 0; i <= UVHTTP_ROUTER_HASH_MAX_SIZE; i++) {
+        char path[64];
+        snprintf(path, sizeof(path), "/r%zu", i);
+        err = uvhttp_router_add_route(router, path, dummy_handler);
+        if (err != UVHTTP_OK) {
+            break;
+        }
+    }
+
+    EXPECT_EQ(err, UVHTTP_ERROR_OUT_OF_MEMORY);
+    uvhttp_router_free(router);
+}
+#endif
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);

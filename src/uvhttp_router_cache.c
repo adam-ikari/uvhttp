@@ -255,8 +255,13 @@ static uvhttp_error_t add_to_hash_table(cache_optimized_router_t* cr,
         }
     }
 
-    /* Find slot */
+    /* Find slot. The table is capped at UVHTTP_ROUTER_HASH_MAX_SIZE, so a
+     * full table cannot grow; find_slot then returns UINT32_MAX. Without this
+     * guard the entry pointer below would index out of bounds. */
     uint32_t slot = find_slot(table, path, method);
+    if (slot == UINT32_MAX) {
+        return UVHTTP_ERROR_OUT_OF_MEMORY;
+    }
     hash_entry_t* entry = &table->entries[slot];
 
     /* Check if already exists */

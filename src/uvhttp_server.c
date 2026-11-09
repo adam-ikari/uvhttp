@@ -436,6 +436,13 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
 
 // Release WebSocket router table
 #if UVHTTP_FEATURE_WEBSOCKET
+    /* The optional connection manager owns two timer handles and a list of
+     * connections; without this call server_free would leak the manager and
+     * leave live handles that make uv_loop_close report UV_EBUSY. */
+    if (server->ws_connection_manager) {
+        uvhttp_server_ws_disable_connection_management(server);
+    }
+
     if (server->ws_routes) {
         ws_route_entry_t* current = (ws_route_entry_t*)server->ws_routes;
         while (current) {

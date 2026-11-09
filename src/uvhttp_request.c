@@ -72,7 +72,7 @@ uvhttp_error_t uvhttp_request_init(uvhttp_request_t* request,
 
     request->client = client;
     request->method = UVHTTP_GET;   // defaultmethod
-    request->headers_capacity = 32; /* initial capacity: 32 inline headers */
+    request->headers_capacity = UVHTTP_INLINE_HEADERS_CAPACITY;
 
     // initialize HTTP parser
     request->parser_settings = uvhttp_alloc(sizeof(llhttp_settings_t));
@@ -147,7 +147,20 @@ static int on_message_begin(llhttp_t* parser) {
         UVHTTP_LOG_ERROR("on_message_begin: conn or request is NULL\n");
         return -1;
     }
-
+    /* A message started while the previous one is still being answered:
+     * the client pipelined two requests in one read window. This server
+     * holds a single request/response pair per connection and has no
+     * response queue, so continuing would overwrite the in-flight response
+     * (and can free the body its uv_write still references). Pause parsing
+     * and close after the current response; the remaining bytes are dropped
+     * rather than answered out of order. */
+    if (conn->parsing_complete) {
+        conn->keepalive = 0;
+        if (conn->response) {
+            conn->response->keepalive = 0;
+        }
+        return HPE_PAUSED;
+    }
     // resetparsestate
     conn->parsing_complete = 0;
     conn->content_length = 0;
@@ -250,9 +263,12 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
         return -1;
     }
 
-    // checkheadervaluelengthlimit
-    if (length >= UVHTTP_MAX_HEADER_VALUE_SIZE) {
-        return -1;  // value too long
+    /* Values are stored in uvhttp_header_t::value, which holds
+     * UVHTTP_HEADER_VALUE_BUFFER_SIZE bytes including the terminator. Reject
+     * oversized values instead of silently truncating them, so callers never
+     * see a partial Cookie/Authorization value. */
+    if (length >= UVHTTP_HEADER_VALUE_BUFFER_SIZE) {
+        return -1;
     }
 
     // construct header name and value
@@ -264,11 +280,8 @@ static int on_header_value(llhttp_t* parser, const char* at, size_t length) {
     memcpy(header_name, conn->current_header_field, field_len);
     header_name[field_len] = '\0';
 
-    char header_value[UVHTTP_MAX_HEADER_VALUE_SIZE];
+    char header_value[UVHTTP_HEADER_VALUE_BUFFER_SIZE];
     size_t value_len = length;
-    if (value_len >= sizeof(header_value)) {
-        value_len = sizeof(header_value) - 1;
-    }
     memcpy(header_value, at, value_len);
     header_value[value_len] = '\0';
 
@@ -742,7 +755,10 @@ const char* uvhttp_request_get_query_param(uvhttp_request_t* request,
     const char* p = query_string;
 
     while (*p) {
-        if (strncmp(p, name, name_len) == 0 && p[name_len] == '=') {
+        /* p[name_len] is only dereferenced when p is longer than name, so
+         * the probe cannot run past the terminating NUL. */
+        if (strlen(p) > name_len &&
+            strncmp(p, name, name_len) == 0 && p[name_len] == '=') {
             const char* value = p + name_len + 1;
             const char* end = strchr(value, '&');
 

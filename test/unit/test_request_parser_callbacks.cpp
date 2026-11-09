@@ -341,7 +341,7 @@ TEST_F(ParserCallbackTest, BodySplitAcrossChunksReassemblesExactly) {
         "\r\n\r\n";
     ASSERT_EQ(Execute(head.c_str()), 0);
 
-    std::string payload(kSize, ' ');
+    std::string payload(kSize, '\0');
     for (size_t i = 0; i < kSize; i++) {
         payload[i] = (char)('a' + (i % 26)); /* non-uniform, order-sensitive */
     }
@@ -977,3 +977,47 @@ TEST_F(ParserCallbackTest, NoRouter_DefaultResponse) {
     // Should get default 200 OK response
     EXPECT_EQ(conn->response->status_code, 200);
 }
+
+// ============================================================================
+// 39. Header values are bounded by the storage field, not the 4096 constant
+// ============================================================================
+TEST_F(ParserCallbackTest, HeaderValueAtFieldLimitAccepted) {
+    std::string value(UVHTTP_HEADER_VALUE_BUFFER_SIZE - 1, 'v');
+    std::string raw = "GET / HTTP/1.1\r\nHost: example.com\r\nX-Long: " +
+                      value + "\r\n\r\n";
+
+    EXPECT_EQ(ExecuteN(raw.data(), raw.size()), 0);
+
+    const char* stored = uvhttp_request_get_header(conn->request, "X-Long");
+    ASSERT_NE(stored, nullptr);
+    EXPECT_EQ(strlen(stored), value.size());
+}
+
+TEST_F(ParserCallbackTest, HeaderValueOverFieldLimitRejected) {
+    std::string value(UVHTTP_HEADER_VALUE_BUFFER_SIZE, 'v');
+    std::string raw = "GET / HTTP/1.1\r\nHost: example.com\r\nX-Long: " +
+                      value + "\r\n\r\n";
+
+    /* Rejected at parse time: a silently truncated Cookie/Authorization is
+     * worse than a 400. */
+    EXPECT_NE(ExecuteN(raw.data(), raw.size()), 0);
+}
+
+// ============================================================================
+// 40. Pipelined second request is refused without touching the first
+// ============================================================================
+TEST_F(ParserCallbackTest, PipelinedSecondRequestPausesAndDisablesKeepAlive) {
+    const char* raw = "GET /first HTTP/1.1\r\nHost: x\r\n\r\n"
+                      "GET /second HTTP/1.1\r\nHost: x\r\n\r\n";
+
+    int rc = Execute(raw);
+    EXPECT_EQ(rc, HPE_PAUSED);
+
+    /* First request was parsed and answered; the connection is marked for
+     * close instead of dropping the second response and desyncing the
+     * response stream. */
+    EXPECT_STREQ(conn->request->url, "/first");
+    ASSERT_NE(conn->response, nullptr);
+    EXPECT_EQ(conn->response->keepalive, 0);
+}
+
