@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: UVHTTP
-  text: 内存安全已验证的 C HTTP 服务器
-  tagline: 轻量、可嵌入的 C99 HTTP/1.1 与 WebSocket 库——同类中唯一经 ASan 与 UBSan 验证零内存安全问题者。支持 32 位嵌入式，GitHub CI runner 上约 140K RPS，零泄漏。吞吐可测，内存安全可证。
+  text: 内存安全有 CI 门禁的 C HTTP 库
+  tagline: C99 写的 HTTP/1.1 与 WebSocket 库。可嵌入，支持 32 位；119 项测试在 ASan 与 UBSan 下零问题，GitHub CI runner 上约 140K RPS。
   actions:
     - theme: brand
       text: 快速开始
@@ -17,30 +17,26 @@ hero:
       link: https://github.com/adam-ikari/uvhttp
 
 features:
-  - title: 🛡️ 内存安全已验证
-    details: ASan + UBSan 零问题——119/119 测试，零泄漏，CI 持续验证。
-  - title: 🚀 稳定吞吐
-    details: GitHub CI runner 上约 140K RPS；10 轮测试同一次运行内 CV 0.9–2.6%。
-  - title: 📦 轻量且 32 位
-    details: 静态库 ~257 KB，支持 32 位，冷启动 ~310ms。
-  - title: ⚡ 零拷贝文件
-    details: 超过 1MB 的文件走 sendfile，大内存 body 走双 iovec writev。
-  - title: 💾 智能缓存
-    details: LRU 缓存 + 自动预热，热门内容直出内存。
-  - title: 🔒 安全为先
-    details: 溢出防护、防响应拆分、TLS 1.2/1.3。
-  - title: 🧩 模块化
-    details: WebSocket / 静态文件 / TLS / 路由缓存编译期开关。
-  - title: 📐 干净 API
-    details: 一致命名、统一错误，易学难误用。
+  - title: 内存安全
+    details: ASan 与 UBSan 跑完整 119 项测试，零泄漏、零 use-after-free、零越界；发布门禁每夜复跑。
+  - title: 吞吐
+    details: GitHub CI runner 上约 140K RPS；同一次运行内 CV 0.9–2.6%。
+  - title: 体积小
+    details: 静态库约 257 KB，支持 32 位，冷启动约 310 ms。
+  - title: 零拷贝
+    details: 超过 1 MB 的文件走 sendfile，大 body 走双 iovec writev。
+  - title: 缓存
+    details: LRU 缓存加自动预热，热门文件直接从内存出。
+  - title: TLS
+    details: 支持 TLS 1.2/1.3，另有溢出与响应拆分防护。
 
 ---
 
-## 📊 性能基准
+## 性能基准
 
 ### 关键指标（v3.0.0 发布门禁，GitHub CI runner）
 
-以下数据来自 v3.0.0 发布基准：**GitHub Actions `ubuntu-latest`**、Release 构建、系统分配器、10 并发连接、每轮 10 秒、每端点 10 轮。同一次运行内中位数稳定（CV 0.9–2.6%）；同一 commit 跨 run 的绝对值会因共享 runner 漂移数十个百分点，因此绝对 RPS 仅作文档参考。回归门禁在**同一 runner、同一 job 内**配对比较 head 与 base：v3.0.0 相对 v2.9.2 为 `/` 100.8%、`/json` 102.0%、`/large` 101.4%，30 个配对所有轮次均未低于 90% 限制。
+这些数字来自 v3.0.0 的发布基准：GitHub Actions 的 `ubuntu-latest`、Release 构建、系统分配器、10 个并发连接，每个端点 10 轮、每轮 10 秒。同一次运行内中位数稳定（CV 0.9–2.6%）；跨 run 的绝对值会跟着共享 runner 漂移几十个百分点，所以绝对 RPS 只当参考。回归门禁在同一个 runner、同一个 job 内配对比较 head 与 base：v3.0.0 对 v2.9.2 是 `/` 100.8%、`/json` 102.0%、`/large` 101.4%，30 个配对轮次没有一轮低于 90%。
 
 | 指标 | 数值 | 说明 |
 |--------|-------|-------|
@@ -56,59 +52,57 @@ features:
 
 ### v3.0.0 变化
 
-v3.0.0 是一次刻意破坏兼容的发布：删掉无法兑现契约的 API，而不是留着它继续假装。
+v3.0.0 刻意打破了兼容：兑现不了契约的 API 直接删除。
 
-- **内置限流已移除。** 每个 server 一个计数器，导致单个客户端超限时其余所有客户端都收到 429。取而代之的是分派前的[请求过滤器](/zh/guide/REQUEST_FILTER_API)：窗口长度、计数维度与存储都由应用决定。
-- **所有权写进函数名。** `uvhttp_server_set_router` / `set_context` 改名为 `take_router` / `take_context`，builder 层与 `uvhttp_serve` 一并删除。
-- **原子性缺陷修复。** `uvhttp_response_set_body()` 不再先释放旧 body 再分配新 body；LRU 缓存 setter 在写入点校验。
-- **压缩响应不再声明过期的 `Content-Length`**，静态文件预热不再泄漏它成功处理的每个文件。
+- 内置限流删了。每个 server 一个计数器，结果是一个客户端超限，所有客户端一起收 429。现在换成分派前的[请求过滤器](/zh/guide/REQUEST_FILTER_API)：窗口长度、计数维度和存储交给应用决定。
+- 所有权写进了函数名。`uvhttp_server_set_router` / `set_context` 改名为 `take_router` / `take_context`，builder 层与 `uvhttp_serve` 一起删除。
+- `uvhttp_response_set_body()` 不再先释放旧 body 再分配新的；LRU 缓存 setter 在写入点校验。
+- 压缩响应不再带过期的 `Content-Length`；静态文件预热不再泄漏它处理过的每个文件。
 
 完整迁移清单见 [v3.0.0 发布说明](/releases/v3.0.0-release-notes)，逐 PR 记录见[更新日志](/zh/guide/CHANGELOG)。
 
 ### 内存安全与质量亮点
 
-- **AddressSanitizer**：完整 119 项测试套件在启用泄漏检测下通过——零泄漏、零 use-after-free、零缓冲区溢出
-- **UndefinedBehaviorSanitizer**：完整套件通过——零未定义行为
-- **测试用例**：119 项单元/集成测试，全部通过
-- **CI/CD**：ASan 在发布门禁运行；UBSan、覆盖率与压力测试每夜运行。Sanitizer 构建启用 `BUILD_WITH_STATIC_FILES` 与 `BUILD_WITH_ROUTER_CACHE`，静态文件与路由缓存代码真正被插桩
-- **一键验证**：`make verify-memory-safety`——参见[内存安全](./MEMORY_SAFETY.md)
-- **覆盖率**：每夜测量并作为 CI 产物发布
+- AddressSanitizer 跑完整 119 项测试，开着泄漏检测：零泄漏、零 use-after-free、零缓冲区溢出。
+- UndefinedBehaviorSanitizer 跑完整套件：零未定义行为。
+- 119 项单元与集成测试全部通过。
+- ASan 在发布门禁跑；UBSan、覆盖率与压力测试每夜跑。Sanitizer 构建打开 `BUILD_WITH_STATIC_FILES` 与 `BUILD_WITH_ROUTER_CACHE`，静态文件和路由缓存代码真的被插桩。
+- `make verify-memory-safety` 一条命令复现，见[内存安全](./MEMORY_SAFETY.md)。
+- 覆盖率每夜测量，作为 CI 产物发布。
 
 ### 性能优化
 
-- **Keep-Alive**：连接复用避免每请求重新建立 TCP
-- **TCP**：默认启用 `TCP_NODELAY` 和 `TCP_KEEPALIVE`
-- **路由**：O(1) 前缀匹配路由解析
-- **分配器**：可选 mimalloc
-- **libuv**：直接调用，无抽象层
+连接复用（Keep-Alive）省掉每个请求重新建 TCP 的开销；默认开 `TCP_NODELAY` 和 `TCP_KEEPALIVE`。路由用 O(1) 前缀匹配，分配器可选 mimalloc。库直接调 libuv，中间不隔抽象层。
 
----
-
-## 🎯 核心原则
+## 核心原则
 
 ### 1. 专注核心功能
-UVHTTP 处理 HTTP/1.1 和 WebSocket 协议细节，不强加业务逻辑。应用层控制认证、数据库等特性。
+
+UVHTTP 只处理 HTTP/1.1 和 WebSocket 的协议细节，业务逻辑不进来。认证、数据库这些由应用自己决定。
 
 ### 2. 零开销抽象
-抽象均为编译期宏，生产构建无运行时成本。库直接调用 libuv，无中间层。
+
+抽象都是编译期宏，生产构建没有运行时成本。库直接调 libuv，中间不隔层。
 
 ### 3. 极简工程
-代码库崇尚简洁。自包含依赖和干净架构保持维护成本低。
+
+代码能少写就少写。依赖自带、结构干净，维护成本才压得住。
 
 ### 4. 测试分离
-生产代码不含测试专用代码。测试使用链接器包装和外部 mock 框架，库保持干净。
+
+生产代码里没有测试专用代码。测试靠链接器 wrap 和外部 mock，库本身保持干净。
 
 ### 5. 零全局变量
-所有状态保存在 libuv 数据指针（`loop->data` 或 `server->context`）中。支持多实例和单元测试，无全局状态污染。
+
+状态都放在 libuv 的数据指针里（`loop->data` 或 `server->context`），多实例和单元测试互不污染。
 
 ### 6. 错误处理
-统一的错误类型携带代码、描述和恢复提示。每个失败点都被检查和报告。
 
----
+统一的错误类型带代码、描述和恢复提示。每个可能失败的点都检查并上报。
 
 ## 为什么选 UVHTTP（对比其他轻量 C HTTP 库）
 
-大多数轻量 C HTTP 库只追求峰值 RPS。UVHTTP 优化的核心是**内存安全**——这是生产环境不可妥协的属性。一个能在 10 秒基准测试中存活下来的每连接泄漏或 use-after-free，会在一周内让嵌入式设备 OOM。UVHTTP 是轻量、可嵌入、支持 32 位的 C 库，并在发布门禁与每夜 CI 中以 ASan 与 UBSan 双重验证，证明这类 bug 已根除。
+多数轻量 C HTTP 库把峰值 RPS 当目标。UVHTTP 先把内存安全做成门槛：10 秒基准里看不出来的每连接泄漏或 use-after-free，放到跑一周的嵌入式设备上就是 OOM。UVHTTP 本身是轻量、可嵌入、支持 32 位的 C 库，发布门禁和每夜 CI 都用 ASan 与 UBSan 跑全套，这类 bug 藏不住。
 
 | 库 | 可嵌入 C 库 | 32 位 | ASan-clean（已验证） | UBSan-clean（已验证） |
 |---------|:----------------:|:------:|:---------------------:|:-----------------------:|
@@ -118,28 +112,27 @@ UVHTTP 处理 HTTP/1.1 和 WebSocket 协议细节，不强加业务逻辑。应�
 | mongoose | ✅ | ✅ | ❓ 未公开 | ❓ 未公开 |
 | nginx | ❌（独立进程） | ✅ | ✅（大团队） | ❓ |
 
-> “未公开”表示该项目未发布 sanitizer-clean 测试门禁，故“无 finding”不可验证。
-> UVHTTP 的可通过 `make verify-memory-safety` 一键复现。
+> “未公开”表示该项目没有公开的 sanitizer-clean 门禁，所以“无 finding”没法验证。UVHTTP 的可以 `make verify-memory-safety` 一键复现。
 
----
-
-## 🌍 平台支持
+## 平台支持
 
 ### 当前状态
-- **✅ Linux**：完整支持（主要平台）
-- **🔨 macOS**：计划中（优先级最低，无排期）
-- **🔨 Windows**：计划中
-- **🔨 FreeBSD**：计划中
-- **🔨 WebAssembly**：计划中
+
+- Linux：完整支持，也是主平台。
+- macOS：计划中，优先级最低，没有排期。
+- Windows、FreeBSD、WebAssembly：计划中。
 
 ### 架构支持
-- **✅ x86_64（64 位）**：完整支持
-- **✅ x86（32 位）**：完整支持，含嵌入式优化
-- **🔨 ARM64**：计划于未来版本
 
-UVHTTP 以 Linux 为主平台，并支持 32 位嵌入式。跨平台扩展在路线图中。
+- x86_64（64 位）：完整支持。
+- x86（32 位）：完整支持，带嵌入式优化。
+- ARM64：计划在未来版本。
 
-## 🔧 快速安装
+UVHTTP 以 Linux 为主平台，32 位嵌入式能用。跨平台扩展还在路线图上。
+
+## 快速安装
+
+克隆仓库时带上子模块，然后用默认选项构建：
 
 ```bash
 # 克隆仓库（含子模块）
@@ -153,15 +146,8 @@ make build
 ./build/dist/bin/hello_world
 ```
 
-详细的安装说明和构建选项请参见[安装指南](/zh/guide/build)。
+安装细节和构建选项见[安装指南](/zh/guide/build)。
 
----
+## 文档
 
-## 📚 文档
-
-- **[快速开始](/zh/guide/getting-started)** - 入门和快速上手
-- **[API 参考](/zh/api/introduction)** - 完整的 API 文档
-- **[安装指南](/zh/guide/INSTALL_CMAKE)** - 安装和构建指南
-- **[性能指南](/zh/guide/performance)** - 性能优化建议
-- **[发布记录](/releases/)** - 各版本变更与迁移说明
-- **[常见问题](/zh/guide/FAQ)** - 常见问题解答
+先看[快速开始](/zh/guide/getting-started)；API 查[API 参考](/zh/api/introduction)，构建看[安装指南](/zh/guide/INSTALL_CMAKE)，性能调优看[性能指南](/zh/guide/performance)，版本变更在[发布记录](/releases/)，常见问题在[常见问题](/zh/guide/FAQ)。

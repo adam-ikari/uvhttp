@@ -5,7 +5,7 @@ title: UVHTTP Linux 优化指南
 
 ## Linux 专属优化
 
-UVHTTP 主要面向 Linux 平台进行设计与优化。本文档介绍 Linux 专属的优化、配置与最佳实践。
+UVHTTP 只按 Linux 设计和优化。下面是 Linux 上值得调的内核参数，从文件描述符和 TCP backlog 开始。
 
 ## 内核调优
 
@@ -82,3 +82,7 @@ net.netfilter.nf_conntrack_max = 524288
 # 性能
 net.ipv4.tcp_slow_start_after_idle = 1
 net.ipv4.tcp_no_metrics_save = 1
+EOF
+
+sudo sysctl --system
+```

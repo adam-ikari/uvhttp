@@ -2,14 +2,15 @@
 
 ## Overview
 
-UVHTTP uses CMake as its build system. This spec defines the build
-configuration, C standard, compiler flags, and CI build matrix.
+UVHTTP builds with CMake. This spec covers the build configuration, C
+standard, compiler flags, and the CI build matrix.
 
 ## C Standard
 
-- **Standard**: C99 (`CMAKE_C_STANDARD 99`)
-- **Enforcement**: `CMAKE_C_STANDARD_REQUIRED ON`
-- **Compiler support**: GCC 4.8+, Clang 3.4+
+The project compiles as C11. CMake sets `CMAKE_C_STANDARD 11` and
+`CMAKE_C_STANDARD_REQUIRED ON`, so a compiler without support for that
+standard fails at configure time. Supported compilers are GCC 4.8+ and
+Clang 3.4+.
 
 ## Build Types
 
@@ -24,6 +25,8 @@ configuration, C standard, compiler flags, and CI build matrix.
 
 ## Compiler Flags (All Builds)
 
+Every build passes these flags:
+
 ```cmake
 -Wall -Wextra -Wformat=2 -Wformat-security
 -fstack-protector-strong
@@ -37,6 +40,8 @@ configuration, C standard, compiler flags, and CI build matrix.
 
 ## Linker Flags (All Builds)
 
+Every build links with these flags:
+
 ```cmake
 -Wl,-z,relro -Wl,-z,now
 ```
@@ -48,7 +53,7 @@ configuration, C standard, compiler flags, and CI build matrix.
 | `BUILD_WITH_WEBSOCKET` | ON | WebSocket support |
 | `BUILD_WITH_HTTPS` | ON | TLS support (mbedtls) |
 | `BUILD_WITH_MIMALLOC` | OFF | Use mimalloc allocator |
-| `BUILD_WITH_COMPRESSION` | OFF | Compression support (zlib) |
+| `BUILD_WITH_COMPRESSION` | ON | Compression support (zlib) |
 | `BUILD_TESTING` | ON | Build test suite |
 | `BUILD_EXAMPLES` | OFF | Build example programs |
 | `BUILD_BENCHMARKS` | OFF | Build benchmark server |
@@ -59,20 +64,23 @@ configuration, C standard, compiler flags, and CI build matrix.
 
 ## Allocator
 
-The allocator is selected at compile time via `UVHTTP_ALLOCATOR_TYPE`:
-
-- **0**: System allocator (`malloc`/`free`)
-- **1**: mimalloc (when `BUILD_WITH_MIMALLOC=ON`)
-- **2**: Custom allocator (user-provided)
+`UVHTTP_ALLOCATOR_TYPE` selects the allocator at compile time. Value 0 uses
+the system allocator (`malloc`/`free`). Value 1 selects mimalloc and requires
+`BUILD_WITH_MIMALLOC=ON`. Value 2 uses an allocator the application provides.
 
 ## CI Build Matrix
 
 | Workflow | Trigger | Scope |
 |----------|---------|-------|
-| `ci-pr.yml` | Every PR | Build, unit tests, ASan gate, code quality |
-| `ci-nightly.yml` | Nightly | Full build matrix, coverage, stress, ASan+UBSan |
+| `ci-pr.yml` | Every PR | Compile, cppcheck, test-validity, doc checks, build matrix |
+| `ci-nightly.yml` | Nightly | Full build matrix, coverage, stress, UBSan |
 | `ci-fuzz.yml` | Nightly | libFuzzer + ASan (60s per target) |
 | `deploy-docs.yml` | Push to main | Build and deploy VitePress docs |
+
+PR CI does not run the unit tests or ASan. It checks that the code compiles,
+that cppcheck reports nothing, that test registration is valid, and that the
+docs match the code, and it builds the feature matrix. The full ASan suite
+runs in the pre-release gate (ci-release-gate.yml, job asan-gate).
 
 ## Makefile Targets
 
@@ -88,10 +96,10 @@ The allocator is selected at compile time via `UVHTTP_ALLOCATOR_TYPE`:
 
 ## Test Registration
 
-- Unit tests: 91 test files, discovered via `file(GLOB_RECURSE ...)`
-- Each test file becomes its own CTest test
-- Integration tests: standalone server programs (not registered with CTest)
-- Fuzz tests: libFuzzer harness (not registered with CTest)
+CTest registers 119 unit test files, discovered with
+`file(GLOB_RECURSE ...)`; each file becomes its own CTest test. Integration
+tests are standalone server programs and fuzz tests are libFuzzer harnesses.
+Neither of the latter two is registered with CTest.
 
 ## Directory Structure
 

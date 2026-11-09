@@ -1,10 +1,10 @@
 # Using uvhttp in Your CMake Project
 
-This guide explains how to integrate uvhttp as a static library dependency in your CMake project.
+Add uvhttp to a CMake project as a static library dependency.
 
 ## Quick Start: add_subdirectory
 
-The simplest way is to add uvhttp as a subdirectory:
+Add uvhttp as a subdirectory:
 
 ```bash
 git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
@@ -90,7 +90,7 @@ target_link_libraries(myapp uvhttp)
 
 ## Building with Specific Features
 
-When building uvhttp with specific features, ensure the same features are enabled:
+Enable the same features when building uvhttp and when using it:
 
 ```cmake
 # Build with features
@@ -101,7 +101,7 @@ add_subdirectory(path/to/uvhttp)
 
 ## CMake Variables
 
-After finding uvhttp, the following variables are available:
+Finding uvhttp sets these variables:
 
 | Variable | Description |
 |----------|-------------|
@@ -113,7 +113,7 @@ After finding uvhttp, the following variables are available:
 
 ## Example Project
 
-Here's a complete example project using uvhttp:
+A complete example project:
 
 ```cmake
 # CMakeLists.txt
@@ -166,6 +166,6 @@ int main() {
 ## Notes
 
 - uvhttp follows CMake package naming conventions
-- The `add_subdirectory` or `FetchContent` approach is recommended over system installation
-- Library dependencies (libuv, mbedtls, xxhash) are automatically linked
-- Feature compatibility: Ensure the same features are enabled when building and using uvhttp
+- Prefer `add_subdirectory` or `FetchContent` over a system install
+- The build links libuv, mbedtls, and xxhash automatically
+- Enable the same features when you build uvhttp and when you consume it

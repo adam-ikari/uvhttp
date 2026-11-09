@@ -2,7 +2,7 @@
 
 ## Linux-Specific Optimizations
 
-UVHTTP is primarily designed and optimized for Linux platforms. This document covers Linux-specific optimizations, configurations, and best practices.
+UVHTTP targets Linux. This page lists kernel settings and limits worth tuning.
 
 ## Kernel Tuning
 
@@ -79,3 +79,7 @@ net.netfilter.nf_conntrack_max = 524288
 # Performance
 net.ipv4.tcp_slow_start_after_idle = 1
 net.ipv4.tcp_no_metrics_save = 1
+EOF
+
+sudo sysctl --system
+```

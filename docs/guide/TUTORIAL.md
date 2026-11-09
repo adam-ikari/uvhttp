@@ -1,6 +1,6 @@
 # UVHTTP Complete Tutorial
 
-> This tutorial describes how to build an HTTP server with UVHTTP.
+> Walks from a first hello-world server through routing, static files, threading, load balancing and production settings, with the full source for each step.
 
 ## Prerequisites
 
@@ -10,14 +10,14 @@
 - **Git** - version control (optional)
 
 ### Dependency Notes
-UVHTTP uses a self-contained dependency management approach; all dependencies are included in the project source:
+All dependencies are vendored in the repository:
 - **libuv** - asynchronous I/O library (at `deps/libuv/`)
 - **llhttp** - HTTP parser (at `deps/llhttp/`)
 - **mbedtls** - TLS/SSL support (at `deps/mbedtls/`)
 - **cjson** - JSON handling (at `deps/cjson/`)
 - **mimalloc** - memory allocator (at `deps/mimalloc/`)
 
-**No additional system dependencies are required**; all dependencies are built automatically at compile time.
+**No additional system dependencies are required**; the bundled copies build with the library.
 
 ### Quick Start
 ```bash
@@ -35,7 +35,7 @@ See also: [Appendix: Dependency Management and Building](#appendix-dependency-ma
 ## Table of Contents
 
 - [Part One: Getting Started](#part-one-getting-started)
-  - [Chapter 1: Hello World - Your First HTTP Server](#chapter-1-hello-world---your-first-http-server)
+  - [Chapter 1: Hello World - Your First HTTP Server](#chapter-1-hello-world-your-first-http-server)
   - [Chapter 2: Understanding Core Concepts](#chapter-2-understanding-core-concepts)
   - [Chapter 3: Routing System Basics](#chapter-3-routing-system-basics)
 - [Part Two: Advanced Development](#part-two-advanced-development)
@@ -60,7 +60,7 @@ See also: [Appendix: Dependency Management and Building](#appendix-dependency-ma
 
 #### 1.1 Environment Preparation
 
-**Install build tools**:
+Install a compiler and CMake:
 ```bash
 # Ubuntu/Debian
 sudo apt-get install build-essential cmake git
@@ -73,7 +73,7 @@ xcode-select --install
 brew install cmake git
 ```
 
-**Get the source code**:
+Clone the repository, or enter an existing checkout:
 ```bash
 # Clone the repository (includes all dependencies)
 git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
@@ -85,13 +85,13 @@ cd uvhttp
 cd /path/to/uvhttp
 ```
 
-**Build UVHTTP** (using the project's bundled dependencies):
+Build UVHTTP from the root of the checkout:
 ```bash
 make build
 ```
 
-**Dependency notes**:
-The UVHTTP project already includes the following dependencies; no additional installation is needed:
+The repository already contains these dependencies, so there is nothing to
+install:
 - **libuv** - located in the `deps/libuv/` directory
 - **llhttp** - located in the `deps/llhttp/` directory
 - **mbedtls** - located in the `deps/mbedtls/` directory
@@ -104,7 +104,8 @@ These dependencies are compiled and linked into the UVHTTP library automatically
 
 #### 1.2 The Simplest HTTP Server
 
-Create `hello_world.c`:
+Create `hello_world.c`. The handler sets a status, a content type and a body;
+the rest of the file wires that handler to the root path and runs the loop.
 
 ```c
 #include "uvhttp.h"
@@ -169,7 +170,8 @@ int main() {
 }
 ```
 
-**Build and run**:
+Build and run it in one of two ways. The first writes a CMakeLists.txt next to
+the example; the second uses the repository's make targets.
 ```bash
 # Method 1: compile with CMake (recommended)
 # In the project root directory
@@ -199,7 +201,7 @@ make build
 ./hello_world
 ```
 
-**Or use the project's unified build system**:
+Or use the repository's make targets:
 ```bash
 # In the project root directory
 make build
@@ -209,20 +211,25 @@ make hello_world
 ./examples/hello_world
 ```
 
-**Test**:
+Test it. Start the server in one terminal; it prints the address it listens on.
+Then run curl from another:
 ```bash
 curl http://localhost:8080/
 ```
 
+The body that comes back is the text the handler set. A not-found response
+means the route did not match.
+
 #### 1.3 Code Breakdown
 
-**Core components**:
-1. **Event loop (uv_loop_t)**: libuv's event loop, which handles all asynchronous operations
-2. **Server (uvhttp_server_t)**: the HTTP server instance
-3. **Router (uvhttp_router_t)**: route matching and dispatch
-4. **Request handler**: the callback function that processes HTTP requests
+The example has four moving parts:
 
-**Workflow**:
+1. The event loop comes from libuv and drives every asynchronous operation.
+2. The server object represents the HTTP server.
+3. The router matches request paths and dispatches to handlers.
+4. The handler is the callback that builds each response.
+
+A request moves through these stages:
 ```
 client request → libuv receives → uvhttp parses → route matching → handler executes → response sent
 ```
@@ -232,6 +239,8 @@ client request → libuv receives → uvhttp parses → route matching → handl
 ### Chapter 2: Understanding Core Concepts
 
 #### 2.1 UVHTTP Architecture
+
+The stack has four layers, and each one calls down to the layer below it.
 
 ```
 ┌─────────────────────────────────────────┐
@@ -291,7 +300,8 @@ typedef struct uvhttp_response {
 
 #### 2.3 Event-Driven Model
 
-**Single-threaded event loop**:
+One thread runs the loop, and the loop does not return until there is nothing
+left to wait for:
 ```c
 // The event loop keeps running
 uv_run(loop, UV_RUN_DEFAULT);
@@ -302,7 +312,8 @@ UV_RUN_ONCE     // run one iteration
 UV_RUN_NOWAIT   // run once without blocking
 ```
 
-**Asynchronous operations**:
+Every I/O call returns before the work finishes; the callback runs later and
+the loop stays free in between:
 ```c
 // All I/O operations are asynchronous
 // They do not block the event loop
@@ -316,7 +327,8 @@ uv_read_start(stream, alloc_buffer, on_read_complete);
 
 #### 3.1 Basic Routing
 
-Create `examples/02_routing/01_simple_routing.c`:
+Create `examples/02_routing/01_simple_routing.c`. Three handlers map to three
+paths, so the URL alone decides which response comes back.
 
 ```c
 #include "uvhttp.h"
@@ -383,7 +395,7 @@ int main() {
 }
 ```
 
-**Build and run**:
+Build the library, then start the example and query each path:
 ```bash
 # Build with CMake
 make build
@@ -399,7 +411,9 @@ curl http://localhost:8080/api
 
 #### 3.2 Routing Parameters
 
-Create `route_params.c`:
+Create `route_params.c`. The handler reads the raw URL and parses the user id
+itself. The comment in the code points out that a router parameter would be the
+better tool.
 
 ```c
 #include "uvhttp.h"
@@ -457,7 +471,8 @@ int main() {
 
 #### 3.3 HTTP Method Routing
 
-Create `method_routing.c`:
+Create `method_routing.c`. It registers a separate handler for each HTTP method
+on the same path, and the comments in the code show the matching curl call.
 
 ```c
 #include "uvhttp.h"
@@ -566,7 +581,8 @@ int main() {
 
 #### 4.1 Middleware Pattern
 
-Create `auth.c`:
+Create `auth.c`. The handler checks the Authorization header and replies
+unauthorized when the token does not match the expected string.
 
 ```c
 #include "uvhttp.h"
@@ -648,7 +664,8 @@ int main() {
 
 #### 4.2 Route Groups
 
-Create `route_groups.c`:
+Create `route_groups.c`. Four handlers cover two API versions; the version
+shows up in the path prefix and in the JSON each one returns.
 
 ```c
 #include "uvhttp.h"
@@ -735,7 +752,9 @@ int main() {
 
 #### 5.1 Request Header Handling
 
-Create `request_headers.c`:
+Create `request_headers.c`. The handler copies the method, URL and a few common
+headers into a JSON body. The Authorization value is replaced with asterisks
+before it leaves the server.
 
 ```c
 #include "uvhttp.h"
@@ -817,7 +836,9 @@ int main() {
 
 #### 5.2 Request Body Handling
 
-Create `request_body.c`:
+Create `request_body.c`. The JSON handler rejects an empty body and a non-JSON
+content type, each with its own error status. The upload handler reports the
+size of whatever body it received.
 
 ```c
 #include "uvhttp.h"
@@ -918,7 +939,9 @@ int main() {
 
 #### 6.1 Static File Middleware
 
-Create `static_files.c`:
+Create `static_files.c`. The handler passes each request to the static context
+and turns a failed lookup into a not-found response. The configuration further
+down points the context at the public directory.
 
 ```c
 #include "uvhttp.h"
@@ -1043,7 +1066,7 @@ int main() {
 }
 ```
 
-**Create test files**:
+Create the files the server will serve:
 ```bash
 # Create the public directory
 mkdir -p public
@@ -1100,7 +1123,7 @@ a:hover {
 EOF
 ```
 
-**Build and run**:
+Build and start it, then fetch the home page and one static file:
 ```bash
 make build
 ./examples/static_files
@@ -1112,7 +1135,9 @@ curl http://localhost:8080/static/index.html
 
 #### 6.2 Unified Response Handling
 
-Create `unified_response.c`:
+Create `unified_response.c`. A JSON helper and an HTML helper keep the status,
+header and body calls in one place. The handler picks one by method and sends an
+error response for anything it does not support.
 
 ```c
 #include "uvhttp.h"
@@ -1195,11 +1220,14 @@ int main() {
 }
 ```
 
-**For more details**, refer to the [Unified Response Guide](UNIFIED_RESPONSE_GUIDE.md).
+The [Unified Response Guide](UNIFIED_RESPONSE_GUIDE.md) covers the rest of the
+response API.
 
 #### 6.3 Streaming Responses
 
-Create `streaming_response.c`:
+Create `streaming_response.c`. Both handlers send the headers first and the body
+after. The comments in the code say what a real streaming implementation would
+need on top of this.
 
 ```c
 #include "uvhttp.h"
@@ -1284,20 +1312,21 @@ int main() {
 
 #### 7.1 Why Do You Need the Data Pointer
 
-When developing an HTTP server, we often need to store application state, such as:
+An HTTP server usually needs state that outlives a single request:
+
 - Server configuration
 - Request counters
 - Database connection pools
 - Cache objects
 
-**Problems with traditional methods**:
+Globals break once two threads each run a loop:
 ```c
 // ❌ Global variables - not thread-safe
 static uvhttp_server_t* g_server = NULL;
 static int g_request_count = 0;
 ```
 
-**A better approach**:
+The loop's data pointer keeps that state per loop:
 ```c
 // ✅ libuv data pointer - thread-safe
 typedef struct {
@@ -1508,13 +1537,15 @@ void* worker_thread(void* arg) {
 }
 ```
 
-**Detailed tutorial**: see the [Complete Guide to the libuv Data Pointer](LIBUV_DATA_POINTER.md)
+The [Complete Guide to the libuv Data Pointer](LIBUV_DATA_POINTER.md) covers
+nesting, cleanup and async callbacks in more detail.
 
 ### Chapter 8: Multithreaded Server
 
 #### 8.1 Understanding the Multithreaded Architecture
 
-**Single-threaded vs multithreaded**:
+One loop handles every request in turn. One loop per thread lets requests run in
+parallel:
 
 ```
 Single-threaded model:
@@ -1544,7 +1575,8 @@ Multithreaded model:
 
 #### 8.2 Multithreaded Server Implementation
 
-Create `multithreaded_server.c`:
+Create `multithreaded_server.c`. Each worker gets its own loop, server and port;
+the main thread starts them all and shuts them down with an async handle.
 
 ```c
 #include "uvhttp.h"
@@ -1697,7 +1729,8 @@ int main() {
 }
 ```
 
-**Build and run**:
+This one links against the built library directly, so the include and library
+paths point into the checkout:
 ```bash
 gcc -o multithreaded_server multithreaded_server.c \
     -I../include \
@@ -1707,7 +1740,8 @@ gcc -o multithreaded_server multithreaded_server.c \
 ./multithreaded_server
 ```
 
-**Test**:
+Each port answers from its own thread, and the body names the thread that
+handled it:
 ```bash
 # Test different threads
 curl http://localhost:8080/
@@ -1722,7 +1756,9 @@ curl http://localhost:8083/
 
 #### 9.1 Asynchronous Database Connections
 
-Create `async_database.c`:
+Create `async_database.c`. The handler queues the query on the thread pool and
+sends the response from the completion callback, so the event loop never waits
+on the database.
 
 ```c
 #include "uvhttp.h"
@@ -1910,7 +1946,8 @@ int main() {
 
 #### 9.2 Connection Pool Management
 
-Create `connection_pool.c`:
+Create `connection_pool.c`. The pool holds a fixed array of connections and
+hands out a free one. When none is free it returns NULL instead of blocking.
 
 ```c
 #include "uvhttp.h"
@@ -2067,7 +2104,7 @@ int main() {
 
 #### 10.1 Understanding Load Balancing
 
-**Load balancing strategies**:
+Requests arrive at one front end and leave for one of several backends:
 
 ```
 client request
@@ -2082,7 +2119,9 @@ load balancer
 
 #### 10.2 A Simple Load Balancer
 
-Create `load_balancer.c`:
+Create `load_balancer.c`. The balancer picks a healthy backend, bumps its
+counter, and answers with the backend it chose. The forward itself is simulated,
+so the response says where the request would have gone.
 
 ```c
 #include "uvhttp.h"
@@ -2275,6 +2314,9 @@ int main() {
 
 #### 11.1 Memory Optimization
 
+The pool reserves one block up front. The allocation function is a stub in this
+example; the setup is the part worth copying.
+
 ```c
 // Use a memory pool
 typedef struct {
@@ -2404,33 +2446,33 @@ void update_stats(size_t bytes_sent, double response_time) {
 
 ## Summary
 
-This tutorial covers the complete learning path for UVHTTP, from beginner to expert:
+This tutorial runs from a first server to production settings:
 
-1. **Getting started**: Hello World, core concepts, routing system
-2. **Advanced development**: complex routing, request handling, response optimization
-3. **Advanced architecture**: libuv data pointer, multithreading, asynchronous database, load balancing
-4. **Production practices**: performance optimization, security configuration, monitoring and logging
-5. **IoT communication**: real-time communication, device management, message push
+1. Getting started: Hello World, core concepts, routing system
+2. Advanced development: complex routing, request handling, response optimization
+3. Advanced architecture: libuv data pointer, multithreading, asynchronous database, load balancing
+4. Production practices: performance optimization, security configuration, monitoring and logging
+5. IoT communication: real-time communication, device management, message push
 
 ### Next Steps
 
-- Review the complete examples in the `examples/` directory
+- The `examples/` directory holds runnable versions of the chapters
 - Read `docs/API_REFERENCE.md` for the complete API
 - Refer to `docs/ARCHITECTURE.md` for the architecture design
 - Run the test suite with `make test`
 
 ### Best Practices Summary
 
-1. **Use the core API**: avoid over-abstraction and use core functions directly
-2. **Async first**: fully leverage libuv's asynchronous features
-3. **Error handling**: check all return values and handle error cases
-4. **Memory management**: use the unified allocator and avoid memory leaks
-5. **Performance optimization**: configure connection counts, buffer sizes, and other parameters appropriately
-6. **Security first**: enable TLS, set secure headers, and validate input
-7. **Monitoring and logging**: log requests and monitor performance metrics
-8. **Avoid global variables**: store application state with the libuv data pointer
-9. **Thread safety**: use mutexes to protect shared data in multithreaded environments
-10. **Context management**: follow RAII principles when creating and destroying contexts
+1. Call the core functions directly instead of wrapping them.
+2. Keep I/O asynchronous; do not block the loop.
+3. Check every return value and handle the failure.
+4. Allocate through the library allocator and free everything you allocate.
+5. Tune connection counts, buffer sizes and the other parameters to the workload.
+6. Enable TLS, set security headers and validate input.
+7. Log requests and watch the metrics you care about.
+8. Keep application state in the loop's data pointer, not in globals.
+9. Protect shared data with a mutex when threads touch it.
+10. Follow RAII principles when you create and destroy contexts.
 
 ---
 
@@ -2525,7 +2567,7 @@ if (result != UVHTTP_OK) {
 Every parameter below is read by the server at runtime. Limits that look
 configurable but are not (body/header/URL size, read buffer size, request
 timeout, requests per connection) are compile-time constants in
-`uvhttp_constants.h` — v3.0.0 removed the config fields that never took effect.
+`uvhttp_constants.h`. v3.0.0 removed the config fields that never took effect.
 
 | Parameter | Default | Description |
 |------|--------|------|
@@ -2608,16 +2650,16 @@ uvhttp_server_ws_close(ws_conn, 1000, "Normal closure");
 
 ### G. Performance Optimization Recommendations
 
-1. **Connection pooling**: reuse database connections
-2. **Caching**: use an LRU cache to reduce database queries
-3. **Compression**: enable response compression
-4. **Asynchronous**: use asynchronous I/O to avoid blocking
-5. **Load balancing**: process requests with multiple threads or processes
-6. **Monitoring**: monitor performance metrics in real time
-7. **Logging**: log critical operations and errors
-8. **Static files**: enable file caching and ETag
-9. **WebSocket**: use connection pooling to manage WebSocket connections
-10. **Memory allocation**: use mimalloc to improve memory allocation performance
+1. Reuse database connections through a pool
+2. Cache results in an LRU cache so the database sees fewer queries
+3. Turn on response compression
+4. Keep I/O asynchronous
+5. Spread requests over several threads or processes
+6. Watch performance metrics in real time
+7. Log the operations and errors worth keeping
+8. Cache static files and send ETags
+9. Manage WebSocket connections through a pool
+10. Use mimalloc to speed up allocation
 
 ### H. Security Checklist
 
@@ -2642,7 +2684,7 @@ uvhttp_server_ws_close(ws_conn, 1000, "Normal closure");
 
 ### Dependency Notes
 
-UVHTTP uses a self-contained dependency management approach; all required dependencies are included in the `deps/` directory:
+Every dependency is vendored under `deps/`:
 
 | Dependency | Directory | Purpose |
 |------|------|------|
@@ -2784,16 +2826,16 @@ export LD_LIBRARY_PATH=../build:$LD_LIBRARY_PATH
 
 ### In-Application Load Balancing vs. External Gateway
 
-**In-application load balancing** (recommended for simple scenarios):
+In-application load balancing suits simple deployments:
 - ✅ No extra components needed
 - ✅ Fewer network hops
 - ✅ Simpler deployment
 - ✅ Lower latency
-- ❌ Relatively simple functionality
+- ❌ Limited feature set
 - ❌ Limited scalability
 
-**External load balancing** (recommended for production environments):
-- ✅ Powerful
+External load balancing suits production deployments:
+- ✅ More features
 - ✅ Easy to scale
 - ✅ Supports multiple algorithms
 - ❌ Requires additional deployment
@@ -2884,4 +2926,4 @@ int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 ---
 
-Build HTTP servers with UVHTTP.
+Build flags and code style live in the developer guide.

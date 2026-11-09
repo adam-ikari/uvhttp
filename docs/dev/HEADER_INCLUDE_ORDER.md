@@ -1,21 +1,19 @@
 # Header Include Order Specification
 
-This document defines the header include order specification for the UVHTTP project, to ensure code consistency and maintainability.
-
 ## Specification Overview
 
-Header include order follows these principles:
+Includes follow four rules:
 
-1. **Relevance first**: related headers should be grouped together
-2. **Local first**: project internal headers take precedence over system headers
-3. **Group by type**: group by type (local, system, third-party)
-4. **Alphabetical order**: sort alphabetically within the same group
+1. Related headers sit together.
+2. Local headers come before system headers.
+3. Headers are grouped by type: local, system, third-party.
+4. Each group is sorted alphabetically.
 
 ## Include Order
 
 ### 1. Corresponding Header (for .c files)
 
-Each .c file should first include its corresponding .h file (if present).
+A .c file includes its own header first, if it has one.
 
 ```c
 #include "uvhttp_server.h"
@@ -23,7 +21,7 @@ Each .c file should first include its corresponding .h file (if present).
 
 ### 2. UVHTTP Project Headers
 
-All project headers prefixed with `uvhttp_`, sorted alphabetically.
+Project headers carry the `uvhttp_` prefix. Sort them alphabetically.
 
 ```c
 #include "uvhttp_allocator.h"
@@ -45,7 +43,7 @@ All project headers prefixed with `uvhttp_`, sorted alphabetically.
 
 ### 3. Other Internal Project Headers
 
-Other internal project headers (not prefixed with `uvhttp_`), sorted alphabetically.
+Internal headers without the `uvhttp_` prefix come next, sorted alphabetically.
 
 ```c
 #include "uthash.h"
@@ -53,7 +51,7 @@ Other internal project headers (not prefixed with `uvhttp_`), sorted alphabetica
 
 ### 4. Standard Library Headers
 
-C standard library headers, sorted alphabetically.
+The C standard library headers follow, sorted alphabetically.
 
 ```c
 #include <assert.h>
@@ -64,7 +62,7 @@ C standard library headers, sorted alphabetically.
 
 ### 5. Third-Party Library Headers
 
-Third-party library headers, sorted alphabetically.
+Third-party library headers come next, sorted alphabetically.
 
 ```c
 #include <uv.h>
@@ -72,7 +70,7 @@ Third-party library headers, sorted alphabetically.
 
 ### 6. Conditional Compilation Includes
 
-Conditional compilation headers should be placed last, sorted alphabetically.
+Conditional includes go last, sorted alphabetically.
 
 ```c
 #if UVHTTP_FEATURE_WEBSOCKET
@@ -161,7 +159,7 @@ typedef struct uvhttp_tls_context uvhttp_tls_context_t;
 
 ## Automatic Formatting
 
-Use `clang-format` to automatically format the include order:
+`clang-format` sorts the includes for you:
 
 ```bash
 # Check format
@@ -178,44 +176,33 @@ make format-all
 
 ### 1. Corresponding Header First
 
-- Each .c file should first include its corresponding .h file
-- This helps verify header self-containment
+Each .c file includes its own header first. That is what proves the header is self-contained.
 
 ### 2. UVHTTP Project Header Grouping
 
-- All headers prefixed with `uvhttp_` are grouped together
-- Sorted alphabetically
-- Easier to find and maintain
+Headers with the `uvhttp_` prefix form one group, sorted alphabetically. The grouping makes them easy to find and maintain.
 
 ### 3. Other Internal Project Headers
 
-- Project headers not prefixed with `uvhttp_`
-- e.g. `uthash.h`
-- Sorted alphabetically
+Internal headers without the `uvhttp_` prefix get their own alphabetized group, such as `uthash.h`.
 
 ### 4. Standard Library Headers
 
-- C standard library headers (`<*.h>`)
-- Sorted alphabetically
-- Easier to identify dependencies
+C standard library headers (`<*.h>`) are sorted alphabetically, which makes the dependencies of a file obvious.
 
 ### 5. Third-Party Library Headers
 
-- Third-party library headers (`<*>`)
-- e.g. `<uv.h>`, `<mbedtls/*.h>`
-- Sorted alphabetically
+Third-party headers (`<*>`) come next, for example `<uv.h>` and `<mbedtls/*.h>`. Sort them alphabetically.
 
 ### 6. Conditional Compilation Includes
 
-- All conditional compilation includes are placed last
-- Sorted alphabetically
-- Easier to read and maintain
+Conditional includes go last, sorted alphabetically. Keeping them out of the middle makes the unconditional list easy to scan.
 
 ## Common Mistakes
 
 ### Mistake 1: System Headers First
 
-❌ Wrong:
+Wrong:
 
 ```c
 #include <stdio.h>
@@ -224,7 +211,7 @@ make format-all
 #include "uvhttp_config.h"
 ```
 
-✅ Correct:
+Correct:
 
 ```c
 #include "uvhttp_server.h"
@@ -235,7 +222,7 @@ make format-all
 
 ### Mistake 2: Not Alphabetical
 
-❌ Wrong:
+Wrong:
 
 ```c
 #include "uvhttp_utils.h"
@@ -243,7 +230,7 @@ make format-all
 #include "uvhttp_server.h"
 ```
 
-✅ Correct:
+Correct:
 
 ```c
 #include "uvhttp_config.h"
@@ -253,7 +240,7 @@ make format-all
 
 ### Mistake 3: Conditional Compilation Includes Mixed In The Middle
 
-❌ Wrong:
+Wrong:
 
 ```c
 #include "uvhttp_server.h"
@@ -263,7 +250,7 @@ make format-all
 #include "uvhttp_config.h"
 ```
 
-✅ Correct:
+Correct:
 
 ```c
 #include "uvhttp_server.h"
@@ -277,7 +264,7 @@ make format-all
 
 ### clang-format
 
-The project uses `clang-format` to automatically format code, including header include order.
+The project runs `clang-format` over its code, include order included.
 
 Configuration file: `.clang-format`
 
@@ -296,7 +283,7 @@ make format-all
 
 ## CI/CD Integration
 
-Format checks can be added to the CI/CD workflow:
+A format check can join the CI/CD workflow:
 
 ```yaml
 - name: Check code format

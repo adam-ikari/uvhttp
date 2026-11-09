@@ -11,22 +11,22 @@ UVHTTP is an event-driven HTTP/1.1 and WebSocket server library for C, built on 
 
 UVHTTP is an **event-driven HTTP server library** for C, built on libuv:
 
-- **Throughput**: ~139K RPS on GitHub CI runners, sub-millisecond latency — see [Performance](performance.md)
-- **Resource use**: small memory footprint and CPU usage via zero-copy
-- **Architecture**: 64-bit and 32-bit embedded support
-- **API**: clean, with error handling built in
-- **Production state**: zero warnings, 119/119 tests passing, ASan/UBSan verified, security-first defaults
+- Requests reach ~139K RPS on GitHub CI runners with sub-millisecond latency; see [Performance](performance.md)
+- Memory and CPU use stay small through zero-copy
+- It builds for 64-bit and 32-bit embedded targets
+- The API is clean, and error handling is built in
+- The production build has zero warnings, passes 119/119 tests, and is verified under ASan/UBSan with security-first defaults
 
 ### Core Philosophy
 
 UVHTTP follows these principles:
 
-1. **Focus on Core Protocol Handling**: HTTP/1.1 and WebSocket processing only; no business logic
-2. **Zero Overhead Abstractions**: all abstractions are compile-time macros with no runtime cost
-3. **Minimalist Engineering**: cut unnecessary complexity, keep functionality
-4. **Test Separation**: production code contains no test-specific code or debug instrumentation
-5. **Zero Global Variables**: all state held in libuv data pointers for multi-instance support
-6. **Error Handling**: unified error system with diagnostics and recovery guidance
+1. Handle the protocol and nothing else: HTTP/1.1 and WebSocket processing, no business logic
+2. Abstract at compile time: all abstractions are macros with no runtime cost
+3. Keep the engineering minimal: cut unnecessary complexity, keep functionality
+4. Keep tests out of production code: no test-specific code or debug instrumentation
+5. Hold no global variables: all state lives in libuv data pointers, so multiple instances work
+6. Report errors through one system, with diagnostics and recovery guidance
 
 ---
 
@@ -83,10 +83,10 @@ UVHTTP uses libuv's event loop for high concurrency without threads:
 
 UVHTTP is built for portability:
 
-- **Standard C99**: no compiler-specific extensions required
-- **Self-contained dependencies**: all external libraries included as submodules
-- **Conditional compilation**: platform-specific code isolated behind feature macros
-- **POSIX**: uses POSIX APIs where available
+- The code is standard C99, with no compiler-specific extensions required
+- All external libraries ship as submodules, so dependencies are self-contained
+- Platform-specific code sits behind feature macros for conditional compilation
+- POSIX APIs are used where available
 
 ---
 
@@ -107,13 +107,13 @@ Measured on GitHub Actions `ubuntu-latest` with `benchmark_unified` (Release bui
 
 ### Performance Optimizations
 
-1. **Keep-Alive**: connection reuse avoids per-request TCP setup
-2. **TCP**: `TCP_NODELAY` and `TCP_KEEPALIVE` enabled by default
-3. **Router**: O(1) prefix matching, no linear search
-4. **Allocation**: optional mimalloc
-5. **Direct libuv calls**: no abstraction layer between application and libuv
-6. **LRU caching**: static files cached with preheating
-7. **Zero-copy I/O**: `sendfile` for large file transfers
+1. Keep-Alive: connections are reused, so a request skips TCP setup
+2. `TCP_NODELAY` and `TCP_KEEPALIVE` are on by default
+3. The router matches prefixes in O(1), with no linear search
+4. Allocation can use mimalloc
+5. Application calls reach libuv directly, with no abstraction layer
+6. Static files are cached in an LRU and preheated
+7. `sendfile` serves large files with zero copy
 
 ---
 
@@ -121,12 +121,12 @@ Measured on GitHub Actions `ubuntu-latest` with `benchmark_unified` (Release bui
 
 ### Built-in Security
 
-- **Buffer Overflow Protection**: bounds checking on all buffers
-- **Input Validation**: HTTP headers and request data validated
-- **TLS 1.2/1.3 Support**: via mbedtls
-- **Memory Safety**: AddressSanitizer and Valgrind compatible
-- **Error Handling**: detailed errors without information leakage
-- **Resource Limits**: configurable connections, headers, and body size
+- Bounds are checked on every buffer
+- HTTP headers and request data are validated
+- TLS 1.2/1.3 support comes from mbedtls
+- The code is compatible with AddressSanitizer and Valgrind
+- Errors carry detail without leaking information
+- Connection, header, and body sizes can be limited
 
 ### Security Best Practices
 
@@ -150,26 +150,26 @@ server->config->max_file_size = 10 * 1024 * 1024; // 10MB
 ## 📚 Documentation Structure
 
 ### User Guides
-- **[Quick Start](getting-started.md)**: Get running in 5 minutes
-- **[Installation](../zh/guide/installation.md)**: Detailed installation instructions
-- **[First Server](../zh/guide/first-server.md)**: Build your first HTTP server
-- **[WebSocket](../zh/guide/websocket.md)**: Real-time communication setup
+- [Quick Start](getting-started.md): build and run in 5 minutes
+- [Installation](../zh/guide/installation.md): installation instructions
+- [First Server](../zh/guide/first-server.md): build your first HTTP server
+- [WebSocket](../zh/guide/websocket.md): real-time communication
 
 ### Core Concepts
-- **[Tutorial](../zh/guide/TUTORIAL.md)**: Progressive learning from basics to advanced
-- **[libuv Data Pointer](../zh/guide/LIBUV_DATA_POINTER.md)**: Understanding context passing
-- **Middleware System**: Request/response processing pipeline
-- **[Unified Response Guide](../zh/guide/UNIFIED_RESPONSE_GUIDE.md)**: Standard response patterns
+- [Tutorial](../zh/guide/TUTORIAL.md): basics to advanced, step by step
+- [libuv Data Pointer](../zh/guide/LIBUV_DATA_POINTER.md): how context passes through callbacks
+- Middleware system: a request/response processing pipeline
+- [Unified Response Guide](../zh/guide/UNIFIED_RESPONSE_GUIDE.md): standard response patterns
 
 ### Advanced Features
-- **[Request Filter API](REQUEST_FILTER_API.md)**: Pre-dispatch admission policy, including rate limiting
-- **[Static File Server](STATIC_FILE_SERVER.md)**: Efficient file serving
-- **Compression**: Zero-overhead compression
+- [Request Filter API](REQUEST_FILTER_API.md): pre-dispatch admission policy, including rate limiting
+- [Static File Server](STATIC_FILE_SERVER.md): file serving
+- Compression: zero-overhead compression
 
 ### Developer Resources
-- **[Developer Guide](../zh/guide/DEVELOPER_GUIDE.md)**: Development best practices
-- **[CMake Configuration](../zh/guide/CMAKE_CONFIGURATION.md)**: Build system customization
-- **[API Reference](../api/introduction)**: Complete API documentation
+- [Developer Guide](../zh/guide/DEVELOPER_GUIDE.md): development practices
+- [CMake Configuration](../zh/guide/CMAKE_CONFIGURATION.md): build system options
+- [API Reference](../api/introduction): the full API
 
 ---
 
@@ -241,17 +241,17 @@ export LD_LIBRARY_PATH=./build/dist/lib:$LD_LIBRARY_PATH
 
 ### Contributing
 
-We welcome contributions! Please read our [Contributing Guidelines](https://github.com/adam-ikari/uvhttp/blob/main/CONTRIBUTING.md) before submitting pull requests.
+Read the [Contributing Guidelines](https://github.com/adam-ikari/uvhttp/blob/main/CONTRIBUTING.md) before you open a pull request.
 
 ### Getting Help
 
-- **GitHub Issues**: report bugs and request features
-- **Discussions**: ask questions and share ideas
-- **Documentation**: guides and API reference
+- GitHub Issues: report bugs and request features
+- Discussions: ask questions and share ideas
+- Documentation: guides and API reference
 
 ### License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/adam-ikari/uvhttp/blob/main/LICENSE) file for details.
+The project uses the MIT License; see the [LICENSE](https://github.com/adam-ikari/uvhttp/blob/main/LICENSE) file.
 
 ---
 
@@ -261,11 +261,11 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 
 | Platform | Version | Status |
 |----------|---------|--------|
-| Linux x86_64 | 2.2.0+ | ✅ Stable |
-| Linux i386 | 2.2.0+ | ✅ Stable |
-| macOS x86_64 | 2.2.0+ | ✅ Stable |
-| macOS ARM64 | 2.2.0+ | ✅ Stable |
-| Windows x86_64 | 2.2.0+ | ⚠️ Experimental |
+| Linux x86_64 | 3.0.0 | ✅ Stable |
+| Linux i386 | 3.0.0 | ✅ Stable |
+| macOS x86_64 | — | 📋 Planned |
+| macOS ARM64 | — | 📋 Planned |
+| Windows x86_64 | — | 📋 Planned |
 
 ### Compiler Support
 
@@ -273,7 +273,7 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 |----------|---------|--------|
 | GCC | 4.8+ | ✅ Stable |
 | Clang | 3.4+ | ✅ Stable |
-| MSVC | 2019+ | ⚠️ Experimental |
+| MSVC | — | 📋 Planned |
 
 ### Dependency Versions
 
@@ -289,7 +289,7 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 
 ## 📖 Next Steps
 
-- **[Quick Start Guide](getting-started.md)**: Begin building your first server
-- **[API Reference](../api/introduction)**: Explore the complete API
-- **[Examples](https://github.com/adam-ikari/uvhttp/tree/main/examples)**: Browse practical examples
-- **[Performance Benchmarks](./performance.md)**: Understand performance characteristics
+- [Quick Start Guide](getting-started.md): build your first server
+- [API Reference](../api/introduction): the complete API
+- [Examples](https://github.com/adam-ikari/uvhttp/tree/main/examples): working examples
+- [Performance Benchmarks](./performance.md): measured throughput and latency

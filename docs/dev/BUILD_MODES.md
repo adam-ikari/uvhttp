@@ -2,55 +2,43 @@
 
 ## Overview
 
-This document defines the build mode specification for the UVHTTP project, clarifying which programs must be compiled in Release mode, which may use Debug mode, and the corresponding build options and best practices.
+UVHTTP builds in one of three modes. Release mode is for production and benchmarks, Debug mode is for development, and Coverage mode is for coverage analysis. This page describes what each mode changes and when to use it.
 
 ## Build Mode Classification
 
 ### 1. Release Mode (Production)
 
-**Use cases**:
-- All performance test programs
-- Production deployment
-- Performance benchmarking
-- Release builds
+Release mode serves production deployment, performance benchmarking, and release builds. Every performance test program and every example program builds in Release.
 
-**Programs that must use Release mode**:
-- `benchmark_unified` - comprehensive performance test server (includes all test scenarios)
-- `performance_allocator` - allocator performance tests
-- `performance_allocator_compare` - allocator comparison tests
-- `test_bitfield` - bitfield performance tests
-- All example programs (examples/)
+The programs that must use Release mode:
 
-**Build options**:
+- `benchmark_unified` is the full performance test server and includes all test scenarios.
+- `performance_allocator` measures the allocator.
+- `performance_allocator_compare` compares allocators.
+- `test_bitfield` measures bitfield access.
+- Every example program under examples/.
+
+Build options:
+
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release ..
 ```
 
-**Optimization level**: `-O2` (default)
-- Code-size optimization
-- Performance optimization
-- No debug symbols
-- `NDEBUG` macro enabled
+The optimization level is `-O2` by default. The build optimizes for code size and speed, leaves out debug symbols, and defines `NDEBUG`.
 
-**Performance characteristics**:
-- Maximum performance
-- Minimum memory footprint
-- Minimum binary size
+Release mode gives the highest throughput, the smallest memory footprint, and the smallest binary.
 
 ### 2. Debug Mode (Development)
 
-**Use cases**:
-- Unit tests
-- Integration tests
-- Code coverage analysis
-- Debugging and problem troubleshooting
-- Development phase
+Debug mode serves unit tests, integration tests, coverage analysis, debugging, and day-to-day development.
 
-**Programs that may use Debug mode**:
-- `uvhttp_unit_tests` - unit tests
-- All test programs (test/)
+The programs that may use Debug mode:
 
-**Build options**:
+- `uvhttp_unit_tests`, the unit test binary.
+- Every test program under test/.
+
+Build options:
+
 ```bash
 cmake -DENABLE_DEBUG=ON ..
 ```
@@ -61,38 +49,23 @@ or
 cmake -DCMAKE_BUILD_TYPE=Debug ..
 ```
 
-**Optimization level**: `-O0`
-- No optimization
-- Full debug symbols
-- `NDEBUG` macro disabled
-- Assertions enabled
+The optimization level is `-O0`. Optimization is off, debug symbols are complete, `NDEBUG` is undefined, and assertions stay active.
 
-**Debugging characteristics**:
-- Complete debug information
-- Supports GDB/LLDB debugging
-- Supports Valgrind memory checking
-- Supports AddressSanitizer
+Debug mode gives complete debug information and works with GDB/LLDB, Valgrind, and AddressSanitizer.
 
 ### 3. Coverage Mode (Code Coverage)
 
-**Use cases**:
-- Code coverage analysis
-- Test quality assessment
+Coverage mode exists for coverage analysis and test quality assessment.
 
-**Build options**:
+Build options:
+
 ```bash
 cmake -DENABLE_COVERAGE=ON ..
 ```
 
-**Optimization level**: `-O0`
-- No optimization
-- gcov coverage collection enabled
-- Generates `.gcda` and `.gcno` files
+The optimization level is `-O0`. Optimization is off, gcov collection is on, and the build writes `.gcda` and `.gcno` files.
 
-**Coverage characteristics**:
-- Supports line coverage
-- Supports branch coverage
-- Supports function coverage
+Coverage mode reports line coverage, branch coverage, and function coverage.
 
 ## Build Mode Comparison
 
@@ -117,11 +90,7 @@ set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "" FORCE)
 ```
 
-**Description**:
-- `-O2`: enables advanced optimizations, balancing performance and compilation time
-- `-DNDEBUG`: disables assertions to improve performance
-- `-ffunction-sections -fdata-sections`: function and data section placement
-- `-Wl,--gc-sections -s`: removes unused sections at link time, strips the symbol table
+`-O2` turns on the optimizations that pay for themselves without slowing compilation much. `-DNDEBUG` removes assertions. `-ffunction-sections -fdata-sections` place each function and data item in its own section, and `-Wl,--gc-sections -s` drops unused sections at link time and strips the symbol table.
 
 ### Debug Mode Options
 
@@ -132,10 +101,7 @@ if(ENABLE_DEBUG)
 endif()
 ```
 
-**Description**:
-- `-g`: generates debug information
-- `-O0`: disables all optimizations
-- Retains all assertions and debug code
+`-g` emits debug information, and `-O0` turns optimization off. Assertions and debug code stay in the binary.
 
 ### Coverage Mode Options
 
@@ -147,21 +113,16 @@ if(ENABLE_COVERAGE)
 endif()
 ```
 
-**Description**:
-- `--coverage`: enables code coverage collection
-- `-fprofile-arcs`: generates the program flow graph
-- `-ftest-coverage`: generates coverage data
+`--coverage` turns on coverage collection, `-fprofile-arcs` records the program flow graph, and `-ftest-coverage` writes the coverage data.
 
 ## Build Best Practices
 
 ### 1. Performance Tests Must Use Release Mode
 
-**Reason**:
-- Performance data from Debug mode is not representative
-- Debug mode disables all optimizations; performance can be 10-100x lower
-- Performance tests must run under production configuration
+Debug numbers mislead. With optimization off, throughput can drop by 10-100x, so a benchmark has to run the production configuration.
 
-**Example**:
+The example below runs the same test both ways:
+
 ```bash
 # Incorrect: running performance tests in Debug mode
 mkdir build && cd build
@@ -182,12 +143,8 @@ wrk -t4 -c100 -d30s http://127.0.0.1:8080/
 
 ### 2. Use Debug Mode for Development and Debugging
 
-**Reason**:
-- Complete debug information
-- Assertions enabled to catch problems early
-- Convenient GDB/LLDB debugging
+Debug mode keeps complete debug information and leaves assertions on, so a bad state surfaces close to where it was created. GDB and LLDB both work.
 
-**Example**:
 ```bash
 mkdir build && cd build
 cmake -DENABLE_DEBUG=ON ..
@@ -197,11 +154,8 @@ make uvhttp_unit_tests
 
 ### 3. Use Coverage Mode for Code Coverage
 
-**Reason**:
-- Accurate coverage data
-- Supports generating detailed coverage reports
+Coverage mode produces accurate coverage data and can generate a detailed report.
 
-**Example**:
 ```bash
 mkdir build && cd build
 cmake -DENABLE_COVERAGE=ON ..
@@ -212,7 +166,8 @@ gcovr --html --html-details -o coverage.html
 
 ### 4. Separate Build Directories
 
-**Recommended practice**:
+Keep one build directory per mode:
+
 ```bash
 # Debug build
 mkdir build-debug && cd build-debug
@@ -234,7 +189,7 @@ make
 
 ### Performance Test Program Configuration
 
-All performance test programs should be configured in `benchmark/benchmark.cmake` and must ensure Release mode optimization.
+Benchmark targets live in `benchmark/benchmark.cmake` and must keep Release optimization.
 
 ```cmake
 # benchmark/benchmark.cmake
@@ -256,7 +211,7 @@ set_target_properties(benchmark_unified PROPERTIES
 
 ### Unit Test Program Configuration
 
-Unit test programs should be configured in `test/CMakeLists.txt` and may use Debug mode.
+Unit test targets live in `test/CMakeLists.txt` and may build in Debug.
 
 ```cmake
 # test/CMakeLists.txt
@@ -296,6 +251,8 @@ file build/dist/bin/benchmark_rps
 
 ### Verifying the Optimization Level
 
+The build log shows which optimization flag the compiler received:
+
 ```bash
 # Check build options
 make VERBOSE=1 | grep -E "\-O[0-3]"
@@ -310,11 +267,12 @@ nm build/dist/bin/benchmark_unified | wc -l
 
 ### Q1: Why are performance test results unstable?
 
-**A**: Possible causes:
-1. Compiled in Debug mode
-2. System load too high
-3. Network bottleneck
-4. Port in use
+Four causes account for most of it:
+
+1. The binary was compiled in Debug mode.
+2. The machine is under heavy load.
+3. The network is the bottleneck.
+4. The port is already in use.
 
 **Solution**:
 ```bash
@@ -333,7 +291,7 @@ done
 
 ### Q2: How to debug in Release mode?
 
-**A**: You can add debug information in Release mode:
+Release mode can carry debug information:
 
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release \
@@ -344,12 +302,14 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 
 ### Q3: When should `-O3` optimization be used?
 
-**A**: Using `-O3` is generally not recommended because:
-1. It may increase code size
-2. It may introduce unstable optimizations
-3. `-O2` already provides a good performance balance
+`-O3` is usually a bad trade:
 
-If maximum performance is required, you can try:
+1. It can grow the code size.
+2. It can introduce unstable optimizations.
+3. `-O2` already balances speed and size well.
+
+If you need the last bit of performance, try:
+
 ```bash
 cmake -DCMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG" \
       -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG" \
@@ -369,12 +329,12 @@ cmake -DCMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG" \
 
 ### Debug Mode Performance Degradation
 
-Debug mode performance is typically **10-100x lower** than Release mode, therefore:
+Debug mode typically runs 10-100x slower than Release mode. Therefore:
 
-- Do not use Debug mode performance data as a baseline
-- Do not base optimization decisions on Debug mode performance
-- Performance tests must use Release mode
-- Performance comparisons must be made in the same build mode
+- Do not use Debug mode performance data as a baseline.
+- Do not base optimization decisions on Debug mode performance.
+- Run performance tests in Release mode.
+- Compare numbers only within the same build mode.
 
 ## Summary
 

@@ -6,14 +6,14 @@
 ## Table of Contents
 
 - [Quick Start](#quick-start)
-- [Overview](#-overview)
-- [Architecture Improvements](#-architecture-improvements)
-- [Compilation Macro Control](#-compilation-macro-control)
-- [Usage Guide](#-usage-guide)
-- [Performance Impact Analysis](#-performance-impact-analysis)
-- [Best Practices](#-best-practices)
-- [Migration Guide](#-migration-guide)
-- [Verification Results](#-verification-results)
+- [Overview](#📖-overview)
+- [Architecture Improvements](#🏗️-architecture-improvements)
+- [Compilation Macro Control](#🔧-compilation-macro-control)
+- [Usage Guide](#📝-usage-guide)
+- [Performance Impact Analysis](#📊-performance-impact-analysis)
+- [Best Practices](#🔍-best-practices)
+- [Migration Guide](#🚀-migration-guide)
+- [Verification Results](#📈-verification-results)
 - [Summary](#summary)
 
 ## Quick Start

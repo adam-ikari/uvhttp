@@ -1,6 +1,6 @@
 # UVHTTP 常见问题解答 (FAQ)
 
-UVHTTP 常见问题。
+下面按安装、服务器、请求、响应、TLS、WebSocket、性能的顺序排，每条配一段最小代码。
 
 ## 目录
 
@@ -8,7 +8,7 @@ UVHTTP 常见问题。
 2. [服务器管理](#服务器管理)
 3. [请求处理](#请求处理)
 4. [响应处理](#响应处理)
-5. [TLS/SSL 配置](#tlsssl-配置)
+5. [TLS/SSL 配置](#tls-ssl-配置)
 6. [WebSocket](#websocket)
 7. [性能优化](#性能优化)
 8. [常见问题](#常见问题)
@@ -31,7 +31,7 @@ make build
 
 ### Q2: 如何启用可选功能如 WebSocket？
 
-使用 CMake 选项配置构建。编辑 `CMakeLists.txt` 中的 `option()` 默认值，然后运行 `make build`：
+可选项在配置阶段定下来，改的是 `CMakeLists.txt` 里的 `option()` 默认值。改完重新跑 `make build`，配置阶段会读新的值。
 
 ```bash
 # 启用 WebSocket — 在 CMakeLists.txt 中将 BUILD_WITH_WEBSOCKET 设为 ON
@@ -42,7 +42,7 @@ make build
 
 ### Q3: 如何在系统分配器和 mimalloc 之间切换？
 
-使用编译时的分配器类型标志。编辑 `CMakeLists.txt`，修改 `UVHTTP_ALLOCATOR_TYPE` 的值，然后运行 `make build`：
+分配器类型是编译期选项，改 `CMakeLists.txt` 里 `UVHTTP_ALLOCATOR_TYPE` 的值，再跑一次 `make build`。这个值不会在运行时切换，换分配器就得重编：
 
 ```bash
 # 系统分配器（默认）— UVHTTP_ALLOCATOR_TYPE=0
@@ -55,6 +55,8 @@ make build
 ## 服务器管理
 
 ### Q4: 如何优雅地关闭服务器？
+
+信号处理器只做一件事：让事件循环停下来。uv_run 返回后再依次调用停止和释放接口，进程不会带着半开的连接退出。在信号处理器里直接退出会跳过后面这段清理。
 
 ```c
 #include <signal.h>
@@ -94,6 +96,8 @@ int main() {
 
 ### Q5: 如何更改服务器的地址绑定？
 
+第二个参数决定监听范围。绑回环地址只收本机流量，绑所有接口则对同网段可见：
+
 ```c
 // 绑定到特定 IP
 uvhttp_server_listen(server, "192.168.1.100", 8080);
@@ -106,6 +110,8 @@ uvhttp_server_listen(server, "127.0.0.1", 8080);
 ```
 
 ### Q6: 如何在同一循环上运行多个服务器？
+
+每个 server 有自己的监听句柄，共用一个事件循环。回调里靠数据指针分辨请求来自哪个实例：
 
 ```c
 uv_loop_t* loop = uv_default_loop();
@@ -150,6 +156,8 @@ const char* client_ip = uvhttp_request_get_client_ip(request);
 
 ### Q9: 如何处理请求体？
 
+请求体指针和长度分开取。长度必须单独读，body 里有空字符时字符串函数会提前截断：
+
 ```c
 // 获取请求体
 const char* body = uvhttp_request_get_body(request);
@@ -185,7 +193,7 @@ uvhttp_response_set_header(response, "Set-Cookie",
 
 ### Q12: 如何启用 CORS？
 
-CORS（跨域资源共享）在应用层实现。通过设置响应头启用：
+CORS 在应用层做：设置几个响应头，再拦下预检请求直接回状态码，不进业务处理器。
 
 ```c
 uvhttp_response_set_header(response, "Access-Control-Allow-Origin", "*");
@@ -200,9 +208,9 @@ if (uvhttp_request_get_method(request) == UVHTTP_METHOD_OPTIONS) {
 }
 ```
 
-对于更高级的 CORS 处理，可以使用中间件系统创建可重用的 CORS 中间件。请参阅 `examples/03_middleware/` 中的中间件示例。
+要在多个服务间复用，可以写成中间件，`examples/03_middleware/` 里有现成的写法。
 
-**注意：** UVHTTP 不提供内置的 CORS 支持，因为 CORS 是应用层的关注点。
+**注意：** UVHTTP 不内置 CORS。放行哪些来源、要不要带凭据，取决于你的应用，库替不了这个决定。
 
 ### Q13: 如何发送文件附件？
 
@@ -469,25 +477,25 @@ make build
 ## 最佳实践
 
 ### 安全性
-- 生产环境始终使用 HTTPS
-- 验证所有用户输入
-- 用分派前请求过滤器做限流（库不再内置限流）
-- 保持依赖项更新
-- 使用强密码套件
+- 线上流量走 HTTPS
+- 所有用户输入都校验长度和内容
+- 限流放在请求过滤器里，库不再提供
+- 依赖跟着上游更新
+- 密码套件只用安全的
 
 ### 性能
-- 启用 Keep-Alive 连接
-- 使用连接池
-- 为静态文件启用缓存
-- 监控资源使用
-- 分析性能瓶颈
+- 打开 Keep-Alive
+- 复用连接，别每次请求都新建
+- 静态文件走缓存
+- 盯住 CPU 和内存的占用
+- 先用性能分析找到瓶颈，再改代码
 
 ### 可靠性
 - 实现优雅关闭
-- 添加适当的错误处理
-- 记录重要事件
-- 负载测试
-- 监控服务器健康状况
+- 每个失败分支都要处理
+- 关键事件写进日志
+- 上线前跑负载测试
+- 监控进程是否还活着
 
 ---
 
@@ -502,5 +510,5 @@ make build
 ## 版本
 
 - **文档版本**: 1.0.0
-- **最后更新**: 2026-02-03
-- **UVHTTP 版本**: 2.2.0+
+- **最后更新**: 2026-10-30
+- **UVHTTP 版本**: 3.0.0

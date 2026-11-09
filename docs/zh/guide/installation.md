@@ -1,6 +1,6 @@
 # 安装指南
 
-本指南介绍如何安装和构建 UVHTTP。
+UVHTTP 从源码构建，再通过 CMake 安装或直接引入项目。Linux 是当前唯一的目标平台。
 
 ## 平台支持
 
@@ -8,7 +8,7 @@
 
 **计划**: macOS, Windows, FreeBSD, WebAssembly (WASM) 和其他类 Unix 系统
 
-UVHTTP 目前针对 Linux 平台进行了优化。计划在未来版本中扩展对其他操作系统和平台的支持。
+库按 Linux 编写。macOS 和 Windows 的构建步骤列在下面，属于计划中的平台支持，现在还不能当作可用平台。
 
 ## 系统要求
 
@@ -56,7 +56,7 @@ sudo apt-get install -y \
     build-essential
 ```
 
-> 注意：libuv 已作为子模块包含在项目中，无需单独安装。构建时会自动构建。
+> 注意：libuv 以子模块形式放在仓库里，不用单独安装，构建时一起编译。
 
 #### 构建
 
@@ -78,7 +78,7 @@ sudo yum install -y \
     openssl-devel
 ```
 
-> 注意：libuv 已作为子模块包含在项目中，无需单独安装。构建时会自动构建。
+> 注意：libuv 以子模块形式放在仓库里，不用单独安装，构建时一起编译。
 
 #### 构建
 
@@ -149,9 +149,9 @@ make build
 | 选项 | 默认值 | 说明 |
 |------|--------|------|
 | `BUILD_WITH_WEBSOCKET` | `ON` | 启用 WebSocket 支持 |
-| `BUILD_WITH_MIMALLOC` | `ON` | 启用 mimalloc 内存分配器 |
+| `BUILD_WITH_MIMALLOC` | `OFF` | 启用 mimalloc 内存分配器 |
 | `BUILD_WITH_HTTPS` | `ON` | 启用 TLS 支持 |
-| `BUILD_EXAMPLES` | `ON` | 构建示例程序 |
+| `BUILD_EXAMPLES` | `OFF` | 构建示例程序 |
 | `ENABLE_DEBUG` | `OFF` | 启用 Debug 模式（-O0） |
 | `ENABLE_COVERAGE` | `OFF` | 启用代码覆盖率 |
 
@@ -243,14 +243,14 @@ make build
 
 ## 下一步
 
-安装完成后，请继续阅读：
+装好之后按顺序看：
 - [快速开始](./getting-started.md) - 5 分钟快速上手
-- [第一个服务器](./first-server.md) - 创建你的第一个 HTTP 服务器
+- [第一个服务器](./first-server.md) - 第一个 HTTP 服务器
 - [完整教程](./TUTORIAL.md) - 从基础到高级的完整教程
 
 ## 获取帮助
 
-如果遇到安装问题：
+安装卡住时：
 - 查看 [常见问题](./FAQ.md)
 - 提交 [Issue](https://github.com/adam-ikari/uvhttp/issues)
 - 查看错误码参考

@@ -9,35 +9,35 @@
 
 ## Reporting a Vulnerability
 
-UVHTTP takes memory safety and security seriously. We use AddressSanitizer and UndefinedBehaviorSanitizer in CI to verify every commit, and we encourage responsible disclosure.
+UVHTTP runs AddressSanitizer and UndefinedBehaviorSanitizer in CI, and bugs that reach a release are treated as security bugs. Report them privately.
 
 To report a security vulnerability:
 
-1. **Do not open a public GitHub issue.** Instead, email the maintainer directly or open a [GitHub Security Advisory](https://github.com/adam-ikari/uvhttp/security/advisories/new).
+1. **Do not open a public GitHub issue.** Email the maintainer directly, or open a [GitHub Security Advisory](https://github.com/adam-ikari/uvhttp/security/advisories/new).
 
-2. Include the following in your report:
+2. Include in your report:
    - Description of the vulnerability
    - Steps to reproduce
    - Affected versions
    - Potential impact
    - Suggested fix (if any)
 
-3. You should receive a response within 48 hours. If not, follow up via the same channel.
+3. You should get a response within 48 hours. If you do not, follow up through the same channel.
 
 ## Disclosure Policy
 
-- Vulnerabilities are disclosed publicly only after a fix has been released and users have had reasonable time to update.
-- Contributors who report valid vulnerabilities will be acknowledged in the release notes (unless they request anonymity).
+- A vulnerability becomes public only after a fix ships and users have had time to update.
+- Reporters of valid vulnerabilities are named in the release notes, unless they ask to stay anonymous.
 
 ## Memory Safety
 
-UVHTTP is committed to memory safety. The project maintains a CI gate (`make verify-memory-safety`) that runs the full test suite under both AddressSanitizer and UndefinedBehaviorSanitizer. Any regression is blocked before merge.
+Memory safety is a release condition, not an aspiration. The `make verify-memory-safety` target runs the full suite under AddressSanitizer and UndefinedBehaviorSanitizer, and the release gate blocks on a finding.
 
-For details, see [MEMORY_SAFETY.md](./MEMORY_SAFETY.md).
+Details are in [MEMORY_SAFETY.md](./MEMORY_SAFETY.md).
 
 ## Security-Related Configuration
 
-See the [TLS documentation](./guide/build.md) for best practices on:
+The [TLS documentation](./guide/build.md) covers:
 - Certificate management
 - Cipher suite selection
 - TLS version configuration

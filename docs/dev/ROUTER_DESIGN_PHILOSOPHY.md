@@ -25,15 +25,11 @@
 
 ## Overview
 
-The UVHTTP routing system is the HTTP request dispatching mechanism. It supports static routes, parameter routes, method routes, and prefix routes.
+The routing system dispatches HTTP requests. It matches static routes, parameter routes, method routes, and prefix routes.
 
 ### Core Features
 
-- **High performance**: O(1) prefix matching, supporting 128+ routes
-- **Flexibility**: supports static routes, parameter routes, and method routes
-- **Memory optimization**: compact memory layout (128-byte nodes), CPU cache friendly
-- **Ease of use**: clean API design, intuitive route definition
-- **Extensibility**: supports custom fallback routes and static file routes
+Prefix matching is O(1), and the structure keeps that cost past 128 routes. Nodes are 128 bytes, so a lookup reads two cache lines instead of scattering across the heap. The same entry point takes static, parameter, method and prefix routes, and a custom fallback route or static-file route attaches at the same place.
 
 ---
 
@@ -41,14 +37,11 @@ The UVHTTP routing system is the HTTP request dispatching mechanism. It supports
 
 ### 1. Performance First
 
-**Principle**: Route matching is on the critical path of every HTTP request and must be optimized.
+**Principle**: Route matching sits on the critical path of every HTTP request, so it gets optimized.
 
 **Practice**:
 
-- **O(1) prefix matching**: uses a Trie data structure for fast prefix matching
-- **CPU cache friendly**: route nodes are designed to be 128 bytes (2 cache lines), optimizing memory locality
-- **Compact storage**: uses a compact child index array (48 bytes stores 12 children)
-- **Zero dynamic allocation**: the route node pool is pre-allocated, avoiding runtime memory allocation
+A Trie gives O(1) prefix matching. Route nodes are 128 bytes, two cache lines, which keeps memory locality on the hot path. Children sit in a packed index: 48 bytes hold 12 of them. The node pool is pre-allocated, so matching allocates nothing at runtime.
 
 **Benefits**:
 

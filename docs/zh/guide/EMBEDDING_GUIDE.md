@@ -1,11 +1,10 @@
 # 嵌入式接入指南
 
-本指南面向**新嵌入者**——第一次把 uvhttp 集成到自己 CMake 项目中的开发者——
-完整走一遍接入流程：前置条件、每种集成方式、最小可运行服务器、特性裁剪与故障排查。
+第一次把 uvhttp 接进自己的 CMake 项目，卡住的地方通常就那么几个：子模块没拉全、链接参数重复、特性开关没关。这一页按接入顺序走一遍，从克隆到跑通第一个请求。
 
-> 可独立运行、自包含的示例项目位于
-> [`examples/embedding/`](https://github.com/adam-ikari/uvhttp/tree/main/examples/embedding)。本指南的所有内容
-> 都在那里得到体现——可以直接作为模板使用。
+> 可独立构建的示例在
+> [`examples/embedding/`](https://github.com/adam-ikari/uvhttp/tree/main/examples/embedding)。本页的步骤与它一致，
+> 照着改就能用。
 
 ---
 
@@ -195,7 +194,7 @@ int main(int argc, char** argv) {
 }
 ```
 
-构建并运行：
+构建并运行。第一次会连依赖一起编，比后面几次慢：
 
 ```bash
 cmake -S . -B build
@@ -236,7 +235,7 @@ cmake -DBUILD_WITH_WEBSOCKET=OFF -DBUILD_WITH_HTTPS=OFF ..
 \* `BUILD_WITH_MIMALLOC` 默认值取决于 `UVHTTP_ALLOCATOR_TYPE`，精确规则见
 `CMakeLists.txt`。
 
-嵌入时建议同时传入：
+嵌入时把基准、示例和测试都关掉，构建能快不少：
 
 ```bash
 cmake -DBUILD_BENCHMARKS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=OFF ..
@@ -249,14 +248,18 @@ cmake -DBUILD_BENCHMARKS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=OFF ..
 
 ## 5. 验证你的集成
 
-1. **编译**——你的项目静态链接 uvhttp 并构建成功。
-2. **冒烟测试**——启动服务器，`curl` 一个路由，确认响应正确。
-3. **优雅退出**——发送 SIGINT/SIGTERM，进程无泄漏退出。
-4. **内存安全**——开启 sanitizer 重新构建并重跑：
+集成完先过这几项：
+
+1. **编译**：你的项目静态链接 uvhttp 并构建成功。
+2. **冒烟测试**：启动服务器，`curl` 一个路由，确认响应正确。
+3. **优雅退出**：发送 SIGINT/SIGTERM，进程无泄漏退出。
+4. **内存安全**：开启 sanitizer 重新构建并重跑：
 
    ```bash
-   cmake -DENABLE_ASAN=ON -DENABLE_UBSAN=ON ..
+   cmake -DENABLE_ASAN=ON ..
    ```
+
+   `ENABLE_ASAN`、`ENABLE_UBSAN`、`ENABLE_TSAN` 三者互斥，同时打开任意两个，配置阶段直接报错。UBSan 和 TSan 各用一个独立的构建目录。
 
 5. 运行一次 uvhttp 自带的测试套件，确认库本身健康：
 

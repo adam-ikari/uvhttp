@@ -1,12 +1,12 @@
 # Build Configuration Matrix
 
-This document details the various build configuration combinations supported by UVHTTP and their purposes.
+UVHTTP builds from a set of CMake options. This page lists them and the combinations that work together.
 
 ## Overview
 
-UVHTTP supports flexible combination of different functional modules through CMake configuration options to meet various usage scenario requirements.
+The options select which functional modules the build compiles. They combine freely except where a conflict is noted.
 
-This document primarily covers common core configuration options. For advanced configuration options (such as buffer sizes, connection limits, cache parameters, etc.), please refer to [Advanced Build Options](ADVANCED_BUILD_OPTIONS.md).
+This page covers the core options. Buffer sizes, connection limits, and cache parameters are on [Advanced Build Options](ADVANCED_BUILD_OPTIONS.md).
 
 ## Feature Options
 
@@ -198,17 +198,13 @@ These options enable security hardening features.
 
 ## Advanced Configuration Options
 
-Advanced configuration options (such as buffer sizes, connection limits, cache parameters) have been moved to a separate document:
+Buffer sizes, connection limits, and cache parameters are in a separate document:
 
 **[Advanced Build Options](ADVANCED_BUILD_OPTIONS.md)**
 
-Advanced configuration options are primarily used for:
-- Performance tuning
-- Memory-constrained environments
-- Specific scenario optimization
-- Resource-constrained environments
+Use those options for performance tuning, memory limits, a specific workload, or other constrained resources.
 
-Most users do not need to modify these options. Default values have been optimized for general scenarios.
+Most deployments do not change them. The defaults cover general use.
 
 ## Configuration Dependency Graph
 
@@ -222,7 +218,7 @@ BUILD_WITH_HTTPS (ON)
 mbedtls library
     └─> Compiled if BUILD_WITH_HTTPS=ON or BUILD_WITH_WEBSOCKET=ON
 
-BUILD_WITH_MIMALLOC (ON)
+BUILD_WITH_MIMALLOC (OFF)
     └─> No dependencies
 
 ENABLE_DEBUG (OFF)
@@ -342,8 +338,8 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 ## Notes
 
 ### Dependencies
-- WebSocket depends on HTTPS (mbedtls library)
-- If BUILD_WITH_HTTPS=OFF, WebSocket must also be disabled
+- WebSocket pulls in mbedtls for `wss://` on its own; turning `BUILD_WITH_HTTPS` off does not remove TLS from a WebSocket build
+- mbedtls is compiled when either `BUILD_WITH_HTTPS` or `BUILD_WITH_WEBSOCKET` is ON, and dropped only when both are OFF
 - Sanitizers (ASAN, UBSAN, TSAN) should be used with ENABLE_DEBUG=ON
 
 ### Performance Impact
@@ -484,14 +480,14 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 - **Size**: Medium
 - **Performance**: Faster memory allocation (30-50% improvement)
 
-**Note**: For more memory allocator configuration options (custom allocator, etc.), please refer to [Advanced Build Options](ADVANCED_BUILD_OPTIONS.md).
+**Note**: For more memory allocator options, including the custom allocator, see [Advanced Build Options](ADVANCED_BUILD_OPTIONS.md).
 
 ### 7. WebSocket Only
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Release \
       -DBUILD_WITH_WEBSOCKET=ON \
       -DBUILD_WITH_MIMALLOC=ON \
-      -DBUILD_WITH_HTTPS=ON \
+      -DBUILD_WITH_HTTPS=OFF \
       -DENABLE_DEBUG=OFF \
       -DENABLE_COVERAGE=OFF \
       -DBUILD_EXAMPLES=OFF
@@ -699,7 +695,7 @@ Use the provided test script to validate all configuration combinations:
 ./test_cmake_configs.sh
 ```
 
-This script will test the above 20 configuration combinations and report pass/fail status.
+This script tests the 20 configuration combinations above and reports pass or fail.
 
 ### Compile Performance Benchmark Programs
 
@@ -740,7 +736,7 @@ When `BUILD_WITH_HTTPS=OFF`, TLS-related code in the source files needs to be wr
 - `src/uvhttp_context.c` - TLS cleanup functions
 - `src/uvhttp_websocket.c` - TLS-related WebSocket functionality
 
-**Recommendation**: If you need to disable TLS, you should first modify these source files to add conditional compilation directives.
+**Recommendation**: To disable TLS, first add the conditional compilation directives to these source files.
 
 ### Performance Impact
 - **mimalloc**: 30-50% faster memory allocation

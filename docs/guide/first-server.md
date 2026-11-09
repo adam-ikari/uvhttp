@@ -319,10 +319,10 @@ curl http://localhost:8080/users/bob?format=json
 
 ## Next Steps
 
-- Routing system - more complex routing configuration
-- Request handling - HTTP request handling
-- Response handling - sending different types of responses
-- [Full tutorial](./TUTORIAL.md) - from basics to advanced
+- Routing: more complex route configuration
+- Request handling: work with incoming HTTP requests
+- Response handling: send different response types
+- [Full tutorial](./TUTORIAL.md): basics to advanced
 
 ## FAQ
 

@@ -2,8 +2,8 @@
 
 ## Overview
 
-The Config module provides server configuration options. Configuration is
-set at the server level and can be shared across multiple server instances.
+The Config module holds server configuration options. Configuration lives at
+the server level and can be shared across server instances.
 
 ## Interfaces
 
@@ -46,9 +46,9 @@ set at the server level and can be shared across multiple server instances.
 
 ## Configurable Options
 
-**Rule: a field is either authoritative or absent.** Every field below is read
-by at least one execution path. v3.0.0 deleted the 14 fields that were set,
-validated, printed — and then ignored by the whole library:
+A field is either authoritative or absent. Every field below is read by at
+least one execution path. v3.0.0 deleted the 14 fields that were set,
+validated, and printed, but ignored by the rest of the library:
 
 | Removed field (v3.0.0) | What actually owned that limit |
 |---|---|
@@ -64,9 +64,9 @@ validated, printed — and then ignored by the whole library:
 `uvhttp_set_timeout()`, `uvhttp_set_max_body_size()`,
 `uvhttp_config_update_size_limits()` and
 `uvhttp_config_update_read_buffer_size()` were removed with them: they wrote
-those fields and reported success. If you need one of these limits to be
-runtime-tunable, add the field back **together with the code that reads it** —
-a config entry nobody reads is documentation, not control.
+those fields and reported success. To make one of these limits tunable at
+runtime, add the field back together with the code that reads it. A config
+entry nobody reads documents an intention; it does not control anything.
 
 ### Surviving fields
 
@@ -87,19 +87,19 @@ a config entry nobody reads is documentation, not control.
 
 ## Behavior Rules
 
-1. **Defaults**: All fields have sensible defaults. Callers can create a config and only change the fields they need.
+1. Every field has a sensible default, so a caller can create a config and
+   change only the fields it needs.
 
-2. **Validation**: `uvhttp_config_validate` checks all fields against their valid ranges. Out-of-range values return `UVHTTP_ERROR_INVALID_PARAM`.
+2. `uvhttp_config_validate` checks every field against its range. An
+   out-of-range value returns `UVHTTP_ERROR_INVALID_PARAM`.
 
-3. **Immutability**: Config should not be modified while the server is listening. Changes take effect on the next listen.
+3. Do not modify a config while the server is listening. Changes take effect
+   on the next listen.
 
 ## Test Requirements
 
-- Config creation with defaults
-- Individual field modification
-- Validation of valid and invalid values
-- Boundary testing (min/max for each field)
-- NULL parameter handling
-- Config free (no-op on NULL)
-- Config set/get on context
-- Complete workflow (create, modify, validate, use, free)
+Tests cover config creation with defaults, modifying individual fields, and
+validation of valid and invalid values. They check the minimum and maximum of
+every field, NULL parameters, and freeing a NULL config (a no-op). They also
+check setting and getting a config on a context and the full workflow: create,
+modify, validate, use, free.

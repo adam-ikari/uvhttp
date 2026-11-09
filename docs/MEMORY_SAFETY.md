@@ -5,14 +5,9 @@ description: "UVHTTP's memory-safety guarantee: the full 119-test suite is verif
 
 # Memory Safety
 
-UVHTTP's headline differentiator is not peak single-host throughput (nginx and
-h2o win there) — it is **verified memory safety in a lightweight, embeddable,
-32-bit-capable C library**. For long-running production services and embedded
-devices that cannot tolerate a slow memory leak or a use-after-free after weeks
-of uptime, this is the property that matters, and it is the one most comparable
-lightweight C HTTP libraries do not provide.
+UVHTTP does not win on peak single-host throughput; nginx and h2o are faster there. It wins on memory safety in a small, embeddable, 32-bit-capable C library. Production services run for months and embedded devices cannot restart to clear a leak. A slow leak or a rare use-after-free kills both. Most lightweight C HTTP libraries do not test for these bugs at all.
 
-This document is the engineering evidence.
+This page is the evidence, not the claim.
 
 ## The guarantee
 
@@ -23,8 +18,7 @@ The full 119-test suite is verified clean under **both**:
 | **AddressSanitizer** (with leak detection) | heap use-after-free, heap-buffer-overflow, stack-buffer-overflow, memory leaks | **119/119 pass, zero findings** |
 | **UndefinedBehaviorSanitizer** | signed integer overflow, invalid shifts, null dereference, misalignment, out-of-bounds | **119/119 pass, zero findings** |
 
-ASan and UBSan cannot be combined in a single build, so they run as two separate
-configurations. Both must be green.
+ASan and UBSan cannot run in the same build, so they are two separate configurations. Both have to pass.
 
 ## Reproduce it yourself (one command)
 
@@ -54,34 +48,27 @@ cmake --build build_ubsan -j$(nproc)
 (cd build_ubsan && ctest --output-on-failure)
 ```
 
-Sanitizer builds keep debug symbols (no `-s` strip) so any finding produces a
-resolvable, source-level stack trace.
+Sanitizer builds keep debug symbols and never pass `-s`, so a finding produces a stack trace with file and line.
 
 ## Continuous verification
 
-Memory safety is a **non-regressing invariant**, not a one-time check:
+Memory safety is an invariant that has to keep holding, so the checks sit in the release and nightly pipelines:
 
 > **Coverage**: 86% line / 99% function coverage on project code (excl. deps/).
 
-
-
-- **PR CI gate** (`.github/workflows/ci-pr.yml`): the `asan-gate` job runs the
-  suite under ASan on every pull request — memory safety cannot regress into
-  `main`.
-- **Nightly CI** (`.github/workflows/ci-nightly.yml`): the `test-memory` (ASan
-  with leak detection) and `test-ubsan` jobs run the full suite under each
-  sanitizer every night.
+- **PR CI** (`.github/workflows/ci-pr.yml`) builds and lints every change bound for `main`, but it does not run the test suite.
+- **Pre-release gate** (ci-release-gate.yml): the `asan-gate` job builds with AddressSanitizer and runs the full suite. A finding blocks the release.
+- **Nightly CI** (`.github/workflows/ci-nightly.yml`): the `test-ubsan` job runs the full suite under UBSan every night. `test-memory` was removed because it duplicated the ASan job in the release gate.
 - **Nightly fuzzing** (`.github/workflows/ci-fuzz.yml`): a libFuzzer harness
   (`test/fuzz/fuzz_router.c`) drives the router with millions of arbitrary
-  inputs under ASan — finding bugs the fixed test inputs do not reach (it
-  already found one; see below).
-- **Build-system guard**: sanitizer/Debug builds are never stripped, so CI
-  findings are always debuggable.
+  inputs under ASan. It reaches states the fixed test inputs never do, and it
+  has already found one bug (below).
+- **Build-system guard**: sanitizer and Debug builds are never stripped, so CI
+  findings stay debuggable.
 
 ## Fuzzing
 
-Sanitizers cover the code paths the test suite exercises. Fuzzing covers the
-paths it doesn't. UVHTTP ships a libFuzzer harness for the router
+Sanitizers cover the paths the test suite exercises. Fuzzing covers the rest. UVHTTP ships a libFuzzer harness for the router
 (`test/fuzz/fuzz_router.c`), run nightly in CI.
 
 ```bash
@@ -103,17 +90,11 @@ clang -g -O1 -fsanitize=fuzzer,address -fno-omit-frame-pointer \
 ./fuzz_router -max_total_time=60 -max_len=256
 ```
 
-A clean run exits 0 with no `ERROR:` line. The harness already found the
-`add_route_method` heap-buffer-overflow listed in the table below (a
-post-migration non-parameter route registration that the unit tests never
-performed in that order) — which is exactly the point of fuzzing.
+A clean run exits 0 and prints no `ERROR:` line. The harness found the `add_route_method` heap-buffer-overflow in the table below: a post-migration non-parameter route registration that the unit tests never performed in that order. That is what fuzzing is for.
 
 ## Bug classes fixed to reach this guarantee
 
-The suite did not start clean. Reaching zero sanitizer findings required fixing
-genuine memory-safety defects in production library code — bugs that passed the
-normal test suite but corrupted memory under sanitizers. Representative fixes
-(full list in the [Changelog](./guide/CHANGELOG.md)):
+The suite did not start clean. Reaching zero findings meant fixing real defects in library code, bugs that passed the functional tests and then corrupted memory under a sanitizer. Representative fixes are below; the full list is in the [Changelog](./guide/CHANGELOG.md).
 
 | Bug class | Location | Detail |
 |-----------|----------|--------|
@@ -129,23 +110,17 @@ normal test suite but corrupted memory under sanitizers. Representative fixes
 | memory leak | `uvhttp_error_helpers.c` | `uv_strerror` on non-libuv errno triggered an unfreeable libuv `uv__strdup` |
 | undefined behavior | `uvhttp_connection.c` `switch_to_websocket` | re-entry clobbered CLOSING state, breaking close accounting (caught as a UBSan-time hang) |
 
-Each was root-caused (not masked) and fixed at the source.
+Each one was traced to its cause and fixed there, not masked.
 
 ## Why this matters (and why most lightweight C libraries lack it)
 
-A C HTTP library that "passes its tests" can still leak a few kilobytes per
-connection, dereference freed memory on a rare close race, or build an
-unterminated string into a response. None of these fail a functional test. They
-surface as:
+A C HTTP library can pass its tests and still leak a few kilobytes per connection, dereference freed memory on a rare close race, or build an unterminated string into a response. No functional test fails. The damage shows up later as:
 
-- **Slow RSS growth** over days/weeks of uptime (embedded devices cannot restart).
-- **Intermittent crashes** under load patterns the test suite never hit.
-- **Security-reachable corruption** (buffer overflows in header/body parsing).
+- **Slow RSS growth** over days or weeks, on devices that cannot restart.
+- **Intermittent crashes** under load patterns the test suite never produced.
+- **Memory corruption reachable from the network**, through buffer overflows in header or body parsing.
 
-Sanitizers catch these *before* deployment. Most lightweight C HTTP libraries do
-not advertise sanitizer-clean status — not because they are clean, but because
-they have not run the check. UVHTTP runs it nightly and treats any finding as a
-release blocker.
+Sanitizers catch these before deployment. Most lightweight C HTTP libraries do not advertise sanitizer-clean status because they never ran the check, not because their code is clean. UVHTTP runs it in the release gate and every night, and treats a finding as a release blocker.
 
 ## Defense in depth
 
@@ -159,15 +134,15 @@ Beyond sanitizers, the codebase applies:
 - **Input validation**: URL length/path-traversal, header size/format, body size
   limits.
 - **Idempotent resource cleanup**: `*_cleanup`/`*_free_resources` paths null
-  pointers after freeing and guard on a `freed` flag to be robust against
-  double-free at the API boundary.
+  pointers after freeing and guard on a `freed` flag, so a double free at the
+  API boundary does not read freed memory.
 
 ## When a sanitizer finding is reported
 
-1. Reproduce with `make verify-memory-safety` (or the specific sanitizer build).
-2. Root-cause from the source-level stack trace (sanitizer builds are unstripped).
-3. Fix at the source — do not suppress.
+1. Reproduce with `make verify-memory-safety`, or with the specific sanitizer build.
+2. Read the source-level stack trace; sanitizer builds are unstripped.
+3. Fix the cause. Do not suppress.
 4. Confirm both ASan and UBSan are green before merging.
 
-Report security-relevant findings via the process in
+Report security-relevant findings through the process in
 [SECURITY.md](./guide/SECURITY.md).

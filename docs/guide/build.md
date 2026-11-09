@@ -1,6 +1,6 @@
 # Installation
 
-This guide covers different ways to install and build UVHTTP.
+Build UVHTTP from source on Linux and install it.
 
 ## System Requirements
 
@@ -11,7 +11,7 @@ This guide covers different ways to install and build UVHTTP.
 - **Memory**: At least 1GB RAM
 - **Disk Space**: At least 500MB
 
-> **Note**: UVHTTP currently supports Linux platforms only. We plan to expand support to other operating systems in future releases.
+> **Note**: Linux is the only supported platform today. macOS, Windows, FreeBSD, and WASM are planned.
 
 ## Building from Source
 
@@ -28,7 +28,7 @@ cd uvhttp
 make build
 ```
 
-**Custom configuration:** edit `option()` entries in `CMakeLists.txt`, then build:
+To change the configuration, edit the `option()` entries in `CMakeLists.txt` and build again:
 
 ```bash
 make build
@@ -36,7 +36,7 @@ make build
 
 ### 3. Use It in Your Project
 
-Once built, consume the library from your own CMake project with `add_subdirectory`:
+Link the built library from your own CMake project with `add_subdirectory`:
 
 ```cmake
 add_subdirectory(path/to/uvhttp)
@@ -48,30 +48,15 @@ target_link_libraries(myapp uvhttp)
 | Option | Default | Description |
 |--------|---------|-------------|
 | `BUILD_WITH_WEBSOCKET` | ON | Enable WebSocket support |
-| `BUILD_WITH_MIMALLOC` | ON | Use mimalloc allocator |
+| `BUILD_WITH_HTTPS` | ON | Enable TLS support (mbedtls) |
+| `BUILD_WITH_MIMALLOC` | OFF | Use the mimalloc allocator |
 | `BUILD_EXAMPLES` | OFF | Build example programs |
 | `ENABLE_COVERAGE` | OFF | Enable code coverage |
 | `ENABLE_DEBUG` | OFF | Enable debug mode |
 | `CMAKE_BUILD_TYPE` | Release | Build type (Debug/Release) |
-| `UVHTTP_ALLOCATOR_TYPE` | 1 | Memory allocator (0=system, 1=mimalloc) |
+| `UVHTTP_ALLOCATOR_TYPE` | 0 | 0 = system, 1 = mimalloc, 2 = custom |
 
-### Advanced Build Options
-
-Advanced options can be configured by editing the `option()` entries in `CMakeLists.txt` directly, then rebuild:
-
-```bash
-make build
-```
-
-Common options available in `CMakeLists.txt`:
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `BUILD_WITH_WEBSOCKET` | ON | Enable WebSocket support |
-| `BUILD_WITH_MIMALLOC` | ON | Use mimalloc allocator |
-| `BUILD_EXAMPLES` | OFF | Build example programs |
-| `ENABLE_COVERAGE` | OFF | Enable code coverage |
-| `ENABLE_DEBUG` | OFF | Enable debug mode |
+`UVHTTP_ALLOCATOR_TYPE=1` requires `BUILD_WITH_MIMALLOC=ON`; the configure step stops with an error otherwise.
 
 ## Output Files
 
@@ -82,34 +67,29 @@ Build output is located in `build/dist/`:
 
 ## Performance Testing
 
-性能测试程序位于 `build/dist/bin/`：
-- `performance_test` - 基础性能测试
-- `performance_test_static` - 静态文件服务性能测试
+`BUILD_BENCHMARKS` defaults to ON and produces `benchmark_unified`, which serves the benchmark endpoints on port 18081 (or on the port passed as its first argument):
 
-运行性能测试：
 ```bash
-# 启动测试服务器
-./build/dist/bin/performance_static_server -d ./public -p 8080
+./build/dist/bin/benchmark_unified 18081 &
 
-# 使用 wrk 进行性能测试
-wrk -t4 -c100 -d30s http://localhost:8080/
-
-# 使用 ab 进行性能测试
-ab -n 10000 -c 100 http://localhost:8080/
+wrk -t2 -c10 -d10s http://localhost:18081/
+wrk -t2 -c10 -d10s http://localhost:18081/json
+wrk -t2 -c10 -d10s http://localhost:18081/large
 ```
+
+Numbers from one machine say little about another; [Performance Targets](../PERFORMANCE_TARGETS.md) explains how the CI gate compares two revisions on the same runner instead.
 
 ## Running Tests
 
-After building, run the test suite:
-
 ```bash
-./run_tests.sh
+make test
 ```
 
-For detailed coverage report:
+This runs `ctest` inside `build/` and stops on the first failure. For a coverage report:
 
 ```bash
-./run_tests.sh --detailed
+make build-coverage
+make coverage
 ```
 
 ## Installation Path
@@ -150,7 +130,7 @@ git submodule update --init --recursive
 
 ### Compilation Errors
 
-Make sure you have a C99-compliant compiler:
+Make sure you have a C11-compliant compiler:
 
 ```bash
 gcc --version  # Should be 4.8 or higher
@@ -161,35 +141,37 @@ gcc --version  # Should be 4.8 or higher
 If you see linker errors, make sure you're linking against the required libraries:
 
 ```bash
--luvhttp -lpthread -luv
+cc app.c -o app -luvhttp -lpthread -luv
 ```
 
-### 依赖编译失败
+The `uvhttp` CMake target carries its own link dependencies (`uv`, `pthread`, and mbedtls when HTTPS is on), so linking through CMake avoids hand-maintaining this list.
 
-如果依赖编译失败，可以手动编译：
+### Dependency Build Failures
+
+If a bundled dependency fails to build, build it by hand:
 
 ```bash
-# 编译 libuv
+# libuv
 cd deps/libuv && make -f Makefile
 
-# 编译 mbedtls
+# mbedtls
 cd deps/mbedtls && python3 scripts/config.py set MBEDTLS_X509_USE_C && make -j$(nproc)
 
-# 编译 llhttp
+# llhttp
 cd deps/cllhttp && gcc -c llhttp.c -o llhttp.o && ar rcs libllhttp.a llhttp.o
 ```
 
-### 完全重新构建
+### Full Rebuild
 
-如果遇到构建问题，可以完全重新构建：
+For unexplained build failures, wipe and rebuild:
 
 ```bash
 make rebuild
 ```
 
-### 内存分配器问题
+### Allocator Problems
 
-如果遇到内存分配器相关问题，可修改 `CMakeLists.txt` 中的 `UVHTTP_ALLOCATOR_TYPE` 选项，然后重新编译：
+If the allocator is implicated, change `UVHTTP_ALLOCATOR_TYPE` in `CMakeLists.txt` and rebuild:
 
 ```bash
 make build
@@ -197,6 +179,4 @@ make build
 
 ## Next Steps
 
-- [Quick Start](getting-started.md) - Create your first server
-- [API Reference](../api/API_REFERENCE.md) - Complete API documentation
-- [Examples](https://github.com/adam-ikari/uvhttp/tree/main/examples) - Example programs
+Start with [Quick Start](getting-started.md). The [API Reference](../api/API_REFERENCE.md) covers the API, and [Examples](https://github.com/adam-ikari/uvhttp/tree/main/examples) holds runnable programs.

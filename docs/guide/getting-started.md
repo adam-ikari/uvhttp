@@ -5,7 +5,7 @@ description: Get started with UVHTTP in minutes — build the C99 HTTP/WebSocket
 
 # Quick Start
 
-This guide will help you get started with UVHTTP in just a few minutes.
+You can have a server running in a few minutes: build the library, compile one C file, add one route.
 
 ## Platform Support
 
@@ -13,7 +13,7 @@ This guide will help you get started with UVHTTP in just a few minutes.
 
 **Future plans**: macOS, Windows, FreeBSD, WebAssembly (WASM), and other Unix-like systems
 
-> **Note**: UVHTTP currently supports Linux platforms only. We plan to expand support to other operating systems in future releases.
+> **Note**: UVHTTP supports Linux only right now. Support for other operating systems is planned for later releases.
 
 ## Prerequisites
 
@@ -47,7 +47,7 @@ make build
 make test
 ```
 
-> **Note**: The `--recurse-submodules` flag clones libuv, llhttp, and the other dependencies. If you forget it, run `git submodule update --init --recursive` afterward.
+> **Note**: The `--recurse-submodules` flag is what pulls in libuv, llhttp and the rest. If you forget it, run `git submodule update --init --recursive` afterward.
 
 ## Your First Server
 
@@ -90,6 +90,8 @@ int main() {
 }
 ```
 
+The handler sets the status, the content type and the body, then calls uvhttp_response_send and returns its result. uvhttp_server_take_router hands the router to the server, which owns it from then on.
+
 ### Compile and Run
 
 ```bash
@@ -97,7 +99,9 @@ gcc -o hello hello.c -I./include -L./build/dist/lib -luvhttp -luv -lpthread
 ./hello
 ```
 
-Visit `http://localhost:8080` to see "Hello, World!".
+The -I flag points at the public headers and -L at the built library under build/dist/lib.
+
+Visit `http://localhost:8080` to see "Hello, World!". If the port is already taken, the program exits with the error string from uvhttp_server_listen.
 
 ## Project Structure
 
@@ -113,7 +117,7 @@ uvhttp/
 
 ## Configuration Options
 
-Build options can be configured by editing the `option()` entries in `CMakeLists.txt`, then rebuilding:
+Build options are the `option()` entries in `CMakeLists.txt`. Set them when you configure the build, then rebuild:
 
 ```bash
 # Rebuild after editing CMakeLists.txt options

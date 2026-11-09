@@ -5,7 +5,7 @@ description: 几分钟上手 UVHTTP——用 CMake 与 Make 构建 C99 HTTP/WebS
 
 # 快速开始
 
-本指南帮助你在几分钟内上手 UVHTTP。
+构建库、编译一个 C 文件、加一条路由，服务器就能跑起来。
 
 ## 📌 平台支持
 
@@ -13,7 +13,7 @@ description: 几分钟上手 UVHTTP——用 CMake 与 Make 构建 C99 HTTP/WebS
 
 **未来计划**: macOS, Windows, FreeBSD, WebAssembly (WASM) 和其他 Unix-like 系统
 
-> **注意**：UVHTTP 目前仅支持 Linux 平台。我们计划在未来版本中扩展对其他操作系统的支持。
+> **注意**：UVHTTP 目前只支持 Linux。其他操作系统放在后续版本的计划里。
 
 ## 环境要求
 
@@ -47,7 +47,7 @@ make build
 make test
 ```
 
-> **注意**：`--recurse-submodules` 会克隆 libuv、llhttp 及其他依赖。若忘记该参数，可事后运行 `git submodule update --init --recursive`。
+> **注意**：libuv、llhttp 和其他依赖都靠 `--recurse-submodules` 拉下来。忘了带这个参数，事后运行 `git submodule update --init --recursive` 补上即可。
 
 ## 第一个程序
 
@@ -90,6 +90,8 @@ int main() {
 }
 ```
 
+handler 设置状态码、Content-Type 和 body，调用 uvhttp_response_send 并把它的返回值交出去。uvhttp_server_take_router 把 router 交给 server，此后所有权归 server。
+
 ### 编译并运行
 
 ```bash
@@ -97,7 +99,9 @@ gcc -o hello hello.c -I./include -L./build/dist/lib -luvhttp -luv -lpthread
 ./hello
 ```
 
-访问 `http://localhost:8080` 查看 "Hello, World!"。
+-I 指向公共头文件，-L 指向 build/dist/lib 下构建好的库。
+
+访问 `http://localhost:8080` 查看 "Hello, World!"。端口被占用时，程序会打印 uvhttp_server_listen 返回的错误信息并退出。
 
 ## 项目结构
 
@@ -113,7 +117,7 @@ uvhttp/
 
 ## 配置选项
 
-可通过修改 `CMakeLists.txt` 中的 `option()` 配置编译选项，然后重新构建：
+构建选项就是 `CMakeLists.txt` 里的 `option()` 条目。在配置阶段设好，再重新构建：
 
 ```bash
 # 修改 CMakeLists.txt 中的选项后构建

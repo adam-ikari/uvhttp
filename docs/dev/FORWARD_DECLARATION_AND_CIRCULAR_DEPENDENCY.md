@@ -1,80 +1,78 @@
 # Forward Declaration and Circular Dependency Guidelines
 
-This document defines the forward declaration and circular dependency guidelines for the UVHTTP project, ensuring code maintainability and compilation efficiency.
-
 ## Overview
 
-Forward declarations and circular dependencies are common design issues in C/C++ projects. Using forward declarations correctly avoids unnecessary includes, reduces compilation time, and improves code maintainability.
+Forward declarations and circular dependencies are common C/C++ design issues. Correct forward declarations avoid unnecessary includes, cut compilation time, and keep headers maintainable.
 
 ## Forward Declaration Guidelines
 
 ### When to Use Forward Declarations
 
-**Cases where forward declarations should be used**:
+**Use forward declarations when:**
 
-1. **Only a pointer or reference is needed in the header file**
+1. **The header needs only a pointer or reference**
    ```c
    // Correct
    typedef struct uvhttp_server uvhttp_server_t;
-   
+
    struct uvhttp_connection {
        struct uvhttp_server* server;  // Only a pointer is needed
    };
    ```
 
-2. **To avoid circular dependencies**
+2. **A circular dependency must be broken**
    ```c
    // uvhttp_server.h
    typedef struct uvhttp_connection uvhttp_connection_t;
-   
+
    // uvhttp_connection.h
    typedef struct uvhttp_server uvhttp_server_t;
    ```
 
-3. **Using pointer parameters in function declarations**
+3. **A function declaration takes pointer parameters**
    ```c
    // Correct
    uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
                                         uvhttp_connection_t** conn);
    ```
 
-**Cases where forward declarations should not be used**:
+**Do not forward-declare when:**
 
-1. **When members need to be accessed**
+1. **Members must be accessed**
    ```c
    // Incorrect
    typedef struct uvhttp_request uvhttp_request_t;
-   
+
    void func(uvhttp_request_t* req) {
        req->method = UVHTTP_GET;  // Members need to be accessed
    }
-   
+
    // Correct
    #include "uvhttp_request.h"
    ```
 
-2. **When struct methods need to be called**
+2. **Struct methods must be called**
    ```c
    // Incorrect
    typedef struct uvhttp_response uvhttp_response_t;
-   
+
    void func(uvhttp_response_t* resp) {
        uvhttp_response_set_status(resp, 200);  // Methods need to be called
    }
-   
+
    // Correct
    #include "uvhttp_response.h"
    ```
 
-3. **When a complete type definition is needed**
+3. **A complete type definition is needed**
    ```c
    // Incorrect
    typedef struct uvhttp_request uvhttp_request_t;
-   
+
    void func() {
        uvhttp_request_t req;  // A complete type is needed
    }
-   
+
    // Correct
    #include "uvhttp_request.h"
    ```
@@ -396,17 +394,17 @@ void func() {
 
 ### Compilation Time
 
-- **Using forward declarations**: reduces unnecessary includes and speeds up compilation
-- **Circular references**: increase compilation time and may cause infinite recursion
+- **Forward declarations**: fewer unnecessary includes, faster compilation
+- **Circular references**: slower compilation, possible infinite recursion
 
 ### Binary Size
 
-- **Using forward declarations**: no impact on binary size
-- **Circular references**: no impact on binary size (only affects compilation)
+- **Forward declarations**: no impact
+- **Circular references**: no impact (compilation only)
 
 ### Runtime Performance
 
-- **Using forward declarations**: no impact
+- **Forward declarations**: no impact
 - **Circular references**: no impact
 
 ## Reference Resources

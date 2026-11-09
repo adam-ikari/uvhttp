@@ -2,7 +2,7 @@
 
 ## Overview
 
-libuv's event loop provides a `data` pointer field that can store user-defined data. This is a best practice for avoiding global variables, especially in multithreaded environments.
+Every libuv event loop has a `data` field you can point at anything. It keeps application state out of globals, which matters once more than one thread runs a loop.
 
 ## Basic Concepts
 
@@ -18,10 +18,10 @@ typedef struct uv_loop_s {
 
 ### Why Use the data Pointer?
 
-1. **Avoid global variables**: global variables cause race conditions in multithreaded environments
-2. **Thread safety**: each event loop has its own data, isolated from one another
-3. **Code encapsulation**: groups related data together, improving maintainability
-4. **Context passing**: makes it easy to access application context from within callbacks
+1. Globals cause race conditions once threads are involved.
+2. Each loop carries its own pointer, so loops do not share state.
+3. Related state sits in one struct instead of scattered statics.
+4. Callbacks reach the application context through the loop they already have.
 
 ## Basic Usage
 
@@ -530,7 +530,7 @@ A: No. libuv never modifies the data pointer; it is entirely under user control.
 
 ### Q: Can I store arbitrary data in the data pointer?
 
-A: Yes. `data` is of type `void*` and can store any pointer. Using a struct to organize related data is recommended.
+A: Yes. `data` is of type `void*` and can store any pointer. Put related data in a struct.
 
 ### Q: How do I handle the case where the data pointer is NULL?
 
@@ -552,11 +552,12 @@ void callback(uv_async_t* handle) {
 
 ## Summary
 
-Using the libuv loop's data pointer is a best practice for avoiding global variables:
+Point the loop's data field at your application context instead of using globals:
 
-1. **Encapsulation**: encapsulates related data in a struct
-2. **Thread safety**: each event loop has its own data copy
-3. **Flexibility**: the context can be modified dynamically at runtime
-4. **Maintainability**: clear code structure, easy to understand and maintain
+1. Related state lives in one struct.
+2. Each event loop keeps its own pointer.
+3. The context can change at run time.
+4. Callbacks find it without a global lookup.
 
-In multithreaded and complex applications, always use the data pointer to manage application state!
+Nothing enforces the pattern. The loop stores whatever pointer you give it, and
+freeing that memory is your job.

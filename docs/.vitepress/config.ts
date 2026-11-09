@@ -385,8 +385,7 @@ export default defineConfig({
 
   themeConfig: {
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/adam-ikari/uvhttp' },
-      { icon: 'twitter', link: 'https://twitter.com/uvhttp_lib' }
+      { icon: 'github', link: 'https://github.com/adam-ikari/uvhttp' }
     ]
   },
   transformHead: ({ page }) => {

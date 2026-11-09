@@ -1,37 +1,37 @@
-# Backlog 与每日工作流
+# Backlog and Daily Workflow
 
-## 每日工作流
+## Daily workflow
 
-1. 检查 `ci-nightly` 昨晚的结果
-   - 有失败 → 认领对应的自动 issue（带 `bug` label）
-   - 全部通过 → 继续推进原有任务
+1. Check last night's `ci-nightly` result
+   - Failure → claim the matching automatic issue (with the `bug` label)
+   - All passing → continue with existing tasks
 
-2. 从 open Issues 中选取优先级最高的任务（P0 → P3）
+2. Pick the highest-priority open issue (P0 → P3)
 
-3. 实现并提交 PR，合并后关闭 Issue
+3. Implement and submit a PR; close the issue after merge
 
-## 当前 Backlog
+## Current backlog
 
-最新 Issue 列表: https://github.com/adam-ikari/uvhttp/issues?q=is%3Aissue+is%3Aopen
+Latest issue list: https://github.com/adam-ikari/uvhttp/issues?q=is%3Aissue+is%3Aopen
 
-## 速查命令
+## Quick commands
 
 ```bash
-# 查看夜间深度测试（nightly）结果（含 Debug 构建 + 测试，失败自动建 issue）
+# Check last night's deep test run (coverage, stress, UBSan; failures open an issue automatically)
 gh run list --workflow ci-nightly.yml --limit 1 --json conclusion
 
-# 查看当前 open Issues（按优先级）
+# List open issues by priority
 gh issue list --state open --label P0,P1
 
-# 查看自动创建的 CI 失败 issue
+# List the automatically created CI failure issues
 gh issue list --label nightly --state open
 
-# 创建新 Issue
+# Create an issue
 gh issue create --label "P1" --title "..."
 
-# 关闭完成的 Issue
+# Close a finished issue
 gh issue close <number>
 
-# 本周复盘是否已写
+# Check whether this week's retro file exists
 ls docs/dev/weekly/
 ```

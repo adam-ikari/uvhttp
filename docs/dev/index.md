@@ -1,6 +1,6 @@
 # Developer Documentation
 
-Start here if you are contributing to the library rather than embedding it.
+Contributors start here. If you are embedding the library instead, read the user guides.
 
 ## Quick Start
 
@@ -16,9 +16,7 @@ git push -u origin fix/your-fix
 gh pr create --base main
 ```
 
-PR CI compiles and runs static checks but does **not** execute tests. Run
-`make test` locally before opening a PR; the prerelease gate runs the full
-matrix.
+PR CI compiles the code and runs static checks. It does not run tests, so run `make test` locally before opening a PR. The prerelease gate runs the full matrix.
 
 ## Core Guides
 
@@ -55,5 +53,5 @@ matrix.
 ## Historical Documents
 
 `DEVELOPMENT_PLAN.md`, `GLOBAL_VARIABLE_REFACTOR_PLAN.md`, and
-`CI_CD_DESIGN.md` describe earlier plans or designs. They are kept for context
-only; use the guides above for current behavior.
+`CI_CD_DESIGN.md` describe plans and designs from earlier in the project. We
+keep them for context. The guides above describe how the code works today.

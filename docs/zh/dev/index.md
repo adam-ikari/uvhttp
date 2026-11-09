@@ -48,8 +48,8 @@ PR CI 只做编译和静态检查，**不执行测试**。开 PR 前请在本地
 | [可测试性指南](TESTABILITY_GUIDE.md) | 为确定性测试设计代码 |
 | [性能测试标准](PERFORMANCE_TESTING_STANDARD.md) | 基准构造与 CI 门禁规则 |
 | [Markdown 风格指南](MARKDOWN_STYLE_GUIDE.md) | 文档格式规范 |
-| [开发节奏](../../development-rhythm.md) | 每周节奏与复盘产物 |
-| [发布策略](../../release-strategy.md) | 预发布、性能门禁与转正流程 |
+| [开发节奏（英文）](../../development-rhythm.md) | 每周节奏与复盘产物 |
+| [发布策略（英文）](../../release-strategy.md) | 预发布、性能门禁与转正流程 |
 
 ## 历史文档
 

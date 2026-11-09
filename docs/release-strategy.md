@@ -1,101 +1,95 @@
-# UVHTTP 版本发布策略
+# UVHTTP Release Strategy
 
-## 发布节奏
+## Release cadence
 
-**按需发布**：有可发布内容且所有门禁通过时才发版，不是每周义务。无新
-内容时跳过发布，不强制每周一个版本。
+**Release on demand.** Ship only when there is something to release and every gate passes. A week with no new content skips the release; the project does not force one version per week.
 
-## 版本号规则
+## Version rules
 
-遵循 SemVer 2.0: `MAJOR.MINOR.PATCH`
+SemVer 2.0: `MAJOR.MINOR.PATCH`
 
-| 版本类型 | 触发条件 | 示例 |
+| Version type | Trigger | Example |
 |---------|---------|---------|
-| **补丁 (PATCH)** | 测试、文档、bug 修复 | 2.5.0 → 2.5.1 |
-| **次要 (MINOR)** | 新功能（向后兼容） | 2.5.0 → 2.6.0 |
-| **主要 (MAJOR)** | 不兼容 API 变更 | 2.5.0 → 3.0.0 |
+| **Patch (PATCH)** | Tests, docs, bug fixes | 2.5.0 → 2.5.1 |
+| **Minor (MINOR)** | New features (backward compatible) | 2.5.0 → 2.6.0 |
+| **Major (MAJOR)** | Incompatible API changes | 2.5.0 → 3.0.0 |
 
-版本号按**实际兼容性**定，不按起草时给窗口起的名字定。一个先被称作「x.y 小版本」
-的改造窗口，只要合并内容里出现不兼容变更，发布时就改叫 MAJOR —— 不得以「窗口本来
-记作 MINOR」为理由保留小数号。v3.0.0 就是这么来的：该窗口全程以「v2.10」名义开发
-（见 brain 页 `api-atomization-orthogonalization`），发布时按上表改号。曾拟过的「兼容策略
-B：2.10 直接破坏性改而不跳号」的**跳号豁免**已撤销；策略 B 的另一半 —— 破坏性改动
-不留 deprecated 兼容层、不做新旧 API 并行 —— 仍然有效。
+The version number follows **actual compatibility**, not the name a work window had when it started. When a window called "x.y minor" ends up merging incompatible changes, the release takes a MAJOR number; "the window was labelled MINOR" is not a reason to keep the decimal. That is where v3.0.0 came from: the window was developed as "v2.10" throughout (see brain page `api-atomization-orthogonalization`) and renumbered at release under the table above. The earlier "compatibility strategy B: change 2.10 destructively without a major bump" **skip-number exemption is revoked**. The other half of strategy B still holds: no deprecated compatibility layer and no parallel old and new APIs.
 
-## 发布流程
+## Release process
 
-> **分支策略**：所有 main 变更（含发布 commit）必须走 PR 合并，禁止直推 main。
+> **Branch policy**: every change to main, release commits included, goes through a PR. Direct pushes to main are forbidden.
 
-### 阶段一：预发布
+### Phase one: pre-release
 
-1. **全面测试**
-   - `make test` (Debug 101/101)
+1. **Full test pass**
+   - `make test` (Debug 119/119)
    - `make verify-memory-safety` (ASan + UBSan)
    - `cd docs && npm run docs:build`
 
-2. **版本准备**
-   - 更新 `VERSION` 文件
-   - 更新 `docs/guide/CHANGELOG.md`
-   - 通过 PR 合并到 main（PR-only，禁止直推）
-   - 运行 `scripts/ci/release_checklist.sh --pre`：本地可验证项全过才推进
+2. **Version preparation**
+   - Update the `VERSION` file
+   - Update `docs/guide/CHANGELOG.md`
+   - Merge into main through a PR (PR only, no direct pushes)
+   - Run `scripts/ci/release_checklist.sh --pre`: proceed only when every locally verifiable item passes
 
-3. **创建预发布 Release**
-  - 创建 Git tag: `git tag v2.x.y`
-  - 推送 tag: `git push origin v2.x.y`
-  - 创建 pre-release: `gh release create v2.x.y --prerelease`
-  - **自动触发两条门禁**：
-     - `ci-release-gate.yml`（完整测试：fast tests / 各配置矩阵测试 / ASan 内存安全）
-     - `ci-benchmark.yml`（性能回归门禁：同机配对，10% 阈值）
-  - 两条门禁全绿才可转正式
-  - 触发条件是 `release: types: [published]`。**必须是 `published`**：它同时覆盖正式版和预发布。`prereleased` 不会为「从 draft 发布的预发布」触发，而 `gh release create --prerelease` 正走这条路径（v3.0.0 实测两条门禁均无运行记录）；`prerelease` 则是无效类型，GitHub 不报错、只是永不匹配（两条门禁从 2026-10-16 起全哑）。所以下一步不是「等门禁绿」，而是先确认它们被触发了
-  - **release 事件使用的是 tag 提交上的 workflow 文件**，不是默认分支。所以打 tag 前必须确认该提交里的两个 workflow 触发器有效；改 main 不会让已经带着坏触发器的 tag 受益，只能重打 tag（v3.0.0：tag 内的 `types: [prerelease]` 让事件即使已发出也不产生运行，最终把 tag 重打到含修复的提交才触发）
+3. **Create the pre-release**
+  - Create a git tag: `git tag v2.x.y`
+  - Push the tag: `git push origin v2.x.y`
+  - Create a pre-release: `gh release create v2.x.y --prerelease`
+  - **Two gates start automatically**:
+     - `ci-release-gate.yml` (full tests: fast tests / configuration matrix tests / ASan memory safety)
+     - `ci-benchmark.yml` (performance regression gate: same-machine paired runs, 10% threshold)
+  - Move to the final release only when both gates are green
+  - The trigger is `release: types: [published]`. It **must be `published`**: that type covers both final and pre-releases. `prereleased` does not fire for a pre-release published from a draft, and `gh release create --prerelease` takes that path (for v3.0.0 neither gate had a run); `prerelease` is not a valid type, so GitHub accepts it without error and never matches (both gates were silent from 2026-10-16). The next step is therefore to confirm the gates fired, not to wait for them.
+  - **A release event uses the workflow files on the tagged commit**, not on the default branch. Before tagging, confirm that both workflow triggers work on that commit. Editing main does not help a tag that already carries a broken trigger; retag instead (v3.0.0: the tag's `types: [prerelease]` meant the event produced no run even when sent, and only a retag onto the fixed commit fired the gates).
 
-### 阶段二：正式发布
+### Phase two: final release
 
-4. **确认门禁**
-   - 运行 `scripts/ci/release_checklist.sh --gates`：按**远端** tag 指向的提交与 tag 名查两条门禁的 `release` 事件运行记录，以最新一次运行为准（cancelled 判红，重跑后再转 latest）；查不到就判红。**先过这一项再看颜色** —— 没有运行记录时「全绿」是空话。失败或取消用 `gh run rerun <run-id>` 重跑（重跑是同一 run 的新 attempt，不会留下新的 run），不要移动 tag：移动 tag 既改变已发布内容，又会借同一提交上的旧运行制造假通过
-   - 确认 `ci-release-gate` 测试门禁为绿（完整测试：fast / 各配置 / ASan 内存安全）
-   - 确认 benchmark 回归门禁为绿（由创建 pre-release 的 `release` 事件自动触发；开发期需要看趋势时手动 `workflow_dispatch`，手动跑只出报告不判红。项目没有 pre-release 分支发布路径，PR 侧不设自动门禁）
-   - gate 以同一 runner 上 head/base 交替测量的比值判定（配对比值中位数 < 90% 且多数配对也在 90% 以下才失败）；绝对 RPS 基线只作为报告信息，不参与判定（GitHub runner 跨 run 方差约 40%，绝对阈值会 gate 到 runner 运气而非代码）
+4. **Confirm the gates**
+   - Run `scripts/ci/release_checklist.sh --gates`: it looks up `release` event runs for both gates on the commit and tag name at the **remote** tag, using the latest run (a cancelled run counts as red until a rerun makes it latest); no run counts as red. **Check this before reading colors**: "all green" means nothing when there are no runs. On failure or cancellation, rerun with `gh run rerun <run-id>` (a rerun is a new attempt of the same run and leaves no extra run). Do not move the tag: moving it changes what was published and can fake a pass from an old run on the same commit.
+   - Confirm the `ci-release-gate` test gate is green (full tests: fast / configurations / ASan memory safety)
+   - Confirm the benchmark regression gate is green (triggered by the `release` event that creates the pre-release; during development, run `workflow_dispatch` manually to see trends, and manual runs only report, they do not fail. The project has no pre-release branch path, so PR CI has no automatic gate here.)
+   - The gate compares paired head/base measurements on the same runner (it fails when the median paired ratio is below 90% and most pairs are also below 90%). Absolute RPS baselines are report information only (GitHub runner variance across runs is about 40%, so an absolute threshold would gate on runner luck, not code).
 
-5. **转正式**
-   - `gh release edit v2.x.y --latest`（移除 prerelease 标记）
-   - main 经 PR 合并触发文档自动部署
-   - 运行 `scripts/ci/release_checklist.sh --post`：tag / release latest / 线上 versions.json 全过才算发布完成
-   - 确认网站更新
+5. **Promote to final**
+   - `gh release edit v2.x.y --latest` (removes the prerelease flag)
+   - Merging to main through a PR triggers the docs deployment
+   - Run `scripts/ci/release_checklist.sh --post`: the release is done only when the tag, the latest release and the live versions.json all pass
+   - Confirm the site updated
 
-## 发布检查清单
+## Release checklist
 
-- [ ] 本地 `make test` 通过（Release 全量，Debug 由 pre-release 门禁覆盖）
-- [ ] `make verify-memory-safety` 通过（ASan + UBSan）
-- [ ] 文档构建通过
-- [ ] CHANGELOG 已更新
-- [ ] VERSION 已更新
-- [ ] Git tag 已创建并推送
-- [ ] 预发布 Release 已创建（--prerelease）
-- [ ] **`release_checklist.sh --gates` 通过**（按 tag 名与提交匹配，最新一次 release 运行成功）
-- [ ] **`ci-release-gate` 测试门禁通过**（fast / 各配置 / ASan 内存安全）
-- [ ] Benchmark 回归门禁通过（CI / gate 绿）
-- [ ] 正式 Release 已确认（--latest）
-- [ ] 网站已部署
+- [ ] Local `make test` passes (Release full suite; Debug is covered by the pre-release gate)
+- [ ] `make verify-memory-safety` passes (ASan + UBSan)
+- [ ] Docs build passes
+- [ ] CHANGELOG updated
+- [ ] VERSION updated
+- [ ] Git tag created and pushed
+- [ ] Pre-release created (--prerelease)
+- [ ] **`release_checklist.sh --gates` passes** (tag name and commit match; the latest release run succeeded)
+- [ ] **`ci-release-gate` test gate passes** (fast / configurations / ASan memory safety)
+- [ ] Benchmark regression gate passes (CI / gate green)
+- [ ] Final release confirmed (--latest)
+- [ ] Site deployed
 
-## 版本历史
+## Version history
 
-版本历史、CHANGELOG 与 `versions.json` 记的是**打 tag 的日期**；GitHub Release 的 `publishedAt` 会更晚（预发布删除重建、门禁通过后才转 latest），两者不必一致（v3.0.0：tag 为 2026-10-18，转 latest 为 2026-10-20）。
+Version history, the CHANGELOG and `versions.json` record the **tag date**. A GitHub Release `publishedAt` is later (pre-releases are deleted and recreated, and a release becomes latest only after the gates pass), so the two need not match (v3.0.0: tag on 2026-10-18, latest on 2026-10-20).
 
-| 版本 | 日期 | 主要内容 |
+| Version | Date | Main changes |
 |------|------|---------|
-| v3.0.0 | 2026-10-18 | API 原子化窗口（全程以「v2.10」名义开发，按上表改号）：**删** `uvhttp_config_t` 里 14 个从不被读取的字段与 4 个假旋钮 setter（#472）、builder 层与 `uvhttp_serve` 及动词函数（#479）、内置限流 7 个 API 与 8 个 server 字段（#483）、不带 request 前缀的取值函数（#470）；**改名** `set_router`/`set_context` → `take_router`/`take_context`，所有权进名字（#470）；**新增** `uvhttp_server_listen_routes`（#470）与分派前接缝 `uvhttp_server_set_request_filter`（#483）；**修** router 迁移失败销毁已注册路由（#471，数据丢失自 v2.7.2）、`set_body` 非原子（#473）、LRU setter 写点校验（#473/#474）、构造路径原子化与错误码如实（#475）、手工 `Content-Length` 遇压缩时分帧错位（#464，数据损坏级）、prewarm 每个成功文件漏一次缓冲（#449）；**收紧** 空 header 名不再被接受（#457，RFC 7230 §3.2）；另含 2.9.2 之后的测试有效性普查与把 `STATIC_FILES`/`ROUTER_CACHE` 纳入 sanitizer 构建（#448/#453–#457/#468） |
-| v2.9.2 | 2026-10-02 | 行为测试补全 11 组 132 个测试（TLS 证书 / URL 编码 / 条件请求 / gzip 与 LRU 缓存边界 / 响应头扩容 / 跨读续写 / query 参数 / 路由 trie 上限 / 连接超时 / accept 计数配对，均经变异验证）、库版本号改为从 VERSION 文件注入、修一个永远不可能失败的测试、删 format-check 门禁与 ci-daily、ROADMAP 精简 |
-| v2.9.1 | 2026-10-01 | CI 门禁修复（format-check 空转 + clang-format 版本钉住 + trend 改推分支开 PR）、CI 权限最小化、死代码清理 |
-| v2.9.0 | 2026-10-01 | Fuzz 覆盖扩展（request/websocket/static_path 三 harness）、header 名称 control-char 检查（防响应分割）、integration→manual/ 测试基建清理 |
-| v2.8.1 | 2026-09-29 | 同机配对门禁、零拷贝小 body 阈值修复 |
-| v2.8.0 | 2026-09-23 | 零拷贝 writev（/large +72.7%）、第二轮评审 17 项修复 |
-| v2.7.0 | 2026-08-21 | TLS 会话缓存、CI 性能基准、Platinum tier |
-| v2.6.1 | 2026-08-12 | 文档同步、CI 修复与内存安全 |
-| v2.6.0 | 2026-08-03 | Health Check、SSE 与可测试性 |
-| v2.5.1 | 2026-07-24 | 测试覆盖提升 + 规格完善 |
-| v2.5.0 | 2026-03-15 | 版本号更新 |
-| v2.4.4 | 2026-02-26 | 发布说明 |
-| v2.4.3 | 2026-02-26 | 合并 pre-release：内存泄漏修复 + 文档修复 |
-| v2.4.2 | 2026-02-25 | 版本号更新 |
+| v3.0.0 | 2026-10-18 | API atomization window (developed as "v2.10" throughout, renumbered at release under the table above): **removed** 14 never-read fields from `uvhttp_config_t` and 4 fake-knob setters (#472), the builder layer, `uvhttp_serve` and the verb functions (#479), the built-in rate limiter's 7 APIs and 8 server fields (#483), and getters without the request prefix (#470); **renamed** `set_router`/`set_context` to `take_router`/`take_context`, putting ownership in the name (#470); **added** `uvhttp_server_listen_routes` (#470) and the pre-dispatch seam `uvhttp_server_set_request_filter` (#483); **fixed** router migration destroying registered routes on failure (#471, data loss since v2.7.2), `set_body` not atomic (#473), LRU setter write-point validation (#473/#474), construction-path atomicity and truthful error codes (#475), framing misalignment when a manual `Content-Length` meets compression (#464, data corruption), and prewarm leaking one buffer per successful file (#449); **tightened** empty header names are no longer accepted (#457, RFC 7230 §3.2); also includes the post-2.9.2 test-validity audit and bringing `STATIC_FILES`/`ROUTER_CACHE` into the sanitizer build (#448/#453–#457/#468) |
+| v2.9.2 | 2026-10-02 | Behavior tests: 11 groups, 132 tests (TLS certificates / URL encoding / conditional requests / gzip and LRU cache boundaries / response header growth / resumed writes across reads / query parameters / router trie limits / connection timeouts / accept count pairing, all mutation-verified); library version now injected from the VERSION file; fixed a test that could never fail; removed the format-check gate and ci-daily; trimmed ROADMAP |
+| v2.9.1 | 2026-10-01 | CI gate fixes (format-check no-op + pinned clang-format version + trend workflow moved to a branch PR), least-privilege CI permissions, dead code cleanup |
+| v2.9.0 | 2026-10-01 | Fuzz coverage expansion (request/websocket/static_path harnesses), header name control-character check (response splitting defense), integration→manual/ test infrastructure cleanup |
+| v2.8.1 | 2026-09-29 | Same-machine paired gate, zero-copy small-body threshold fix |
+| v2.8.0 | 2026-09-23 | Zero-copy writev (/large +72.7%), 17 fixes from the second review round |
+| v2.7.0 | 2026-08-21 | TLS session cache, CI performance benchmarks, Platinum tier |
+| v2.6.1 | 2026-08-12 | Docs sync, CI fixes and memory safety |
+| v2.6.0 | 2026-08-03 | Health check, SSE and testability |
+| v2.5.1 | 2026-07-24 | Test coverage increase + spec completion |
+| v2.5.0 | 2026-03-15 | Version number update |
+| v2.4.4 | 2026-02-26 | Release notes |
+| v2.4.3 | 2026-02-26 | Merged pre-release: memory leak fix + docs fixes |
+| v2.4.2 | 2026-02-25 | Version number update |

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This migration guide helps you update your code to use the simplified LRU Cache API introduced in UVHTTP 2.3.0.
+UVHTTP 2.3.0 replaces the LRU Cache API. This page lists the removed calls and what to do with each.
 
 ## Breaking Changes
 
@@ -18,10 +18,10 @@ The following functions have been removed:
 
 ### Removed Features
 
-- **LFU Eviction Mode**: Least Frequently Used eviction
-- **Hybrid Eviction Mode**: Combined LRU/LFU eviction
-- **Dual-Threshold Eviction**: 80%/95% eviction thresholds
-- **Task Queue Mechanism**: Async eviction via uv_async_t
+- LFU eviction mode
+- Hybrid LRU/LFU eviction
+- Dual thresholds at 80% and 95%
+- An async eviction task queue built on uv_async_t
 
 ## Migration Steps
 
@@ -89,7 +89,7 @@ The cache now uses a single threshold (90%) instead of dual thresholds (80%/95%)
 
 ### Synchronous Eviction
 
-Eviction is now performed synchronously in the request path, eliminating the task queue overhead.
+Eviction now runs synchronously in the request path. There is no task queue and no scheduling overhead.
 
 **Before:**
 ```c
@@ -143,15 +143,15 @@ uvhttp_lru_cache_set_cache_ttl(cache, 7200);
 
 ### Memory Savings
 
-- **Instance overhead**: -132 bytes per cache instance
-- **Entry overhead**: -4 bytes per cache entry
-- **Code size**: -200 lines of code
+- Instance overhead drops by 132 bytes per cache instance
+- Entry overhead drops by 4 bytes per cache entry
+- Code size drops by 200 lines
 
 ### Performance Improvements
 
-- **Zero libuv dependency**: No async handles or task queue
-- **Simpler eviction logic**: Faster eviction decisions
-- **Reduced overhead**: No task queue scheduling
+- No libuv dependency, so no async handles
+- Simpler eviction logic makes decisions faster
+- No task queue scheduling
 
 ## Testing
 
@@ -193,11 +193,6 @@ If you encounter issues during migration:
 
 ## Summary
 
-The simplified LRU Cache API provides:
+The simplified API removes eviction mode selection and the task queue. Cache instances and entries take less memory, and there are fewer code paths to maintain.
 
-- ✅ **Simpler configuration**: No eviction mode selection
-- ✅ **Better performance**: No task queue overhead
-- ✅ **Less memory**: Reduced memory footprint
-- ✅ **Easier maintenance**: Fewer code paths
-
-For most use cases, the migration is straightforward - just remove calls to the deprecated functions.
+For most callers the migration is removing calls to the removed functions.

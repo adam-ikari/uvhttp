@@ -1,49 +1,48 @@
-# UVHTTP 开发节奏
+# UVHTTP Development Rhythm
 
-## 每周周期
+## Weekly cycle
 
-单人 AI 开发，执行者是 Claude。不做 2 周 Sprint，按周循环推进。
+Solo AI development, with Claude as the executor. No 2-week sprints; the cycle is weekly.
 
-| 天 | 活动 | 产出 |
+| Day | Activity | Output |
 |----|------|------|
-| 周一 | 基线检查 + 定本周目标 | 基线通过；目标清单 |
-| 周二至周四 | 从 Issues 选取任务实现 | 2-5 个主题 PR（按优先级从高到低） |
-| 周五 | 收尾 + 发布（按需）+ 复盘 | 版本 tag（如有）；`docs/dev/weekly/` 复盘 |
+| Monday | Baseline check + set the week's goals | Baseline passes; goal list |
+| Tuesday to Thursday | Pick tasks from Issues and implement | 2-5 topic PRs, highest priority first |
+| Friday | Wrap up + release (as needed) + retrospective | Version tag (if any); retrospective in `docs/dev/weekly/` |
 
-周一基线：`make test && make verify-memory-safety && make check-syntax`。
+Monday baseline: `make test && make verify-memory-safety && make check-syntax`.
 
-## 每日节奏
+## Daily rhythm
 
-1. **确认日期**: `date "+%Y-%m-%d %A"` 确定周几，判断阶段
-2. **检查 CI 结果**: 查看 `ci-nightly` 运行结果，有失败则认领对应的自动 issue
-3. **从 GitHub Issues 选取最高优先级任务**（以 Issues 为准，sprint-backlog.md 为概览参考）
-4. **实现并提交 PR**
-5. **持续推进直到当日目标完成**
+1. **Confirm the date**: run `date "+%Y-%m-%d %A"` to see the weekday and the phase
+2. **Check CI results**: read the latest `ci-nightly` run and claim the matching automatic issue on failure
+3. **Pick the highest-priority task from GitHub Issues** (Issues are authoritative; sprint-backlog.md is an overview)
+4. **Implement and submit a PR**
+5. **Keep going until the day's goal is met**
 
-### 各天确认要点
+### Checks by day
 
-| 天 | 确认要点 |
+| Day | Check |
 |----|---------|
-| 周一 | 基线通过；从 Issues 选取 P0/P1 任务定本周目标 |
-| 周二至周四 | 开发，从 GitHub Issues 选取 P0/P1 任务 |
-| 周五 | 代码冻结；测试 + 发布（按需）+ 写复盘 |
-| 周末 | 判断是否有溢出任务或紧急 bug，否则不开发 |
+| Monday | Baseline passes; pick P0/P1 tasks from Issues and set the week's goals |
+| Tuesday to Thursday | Develop; pick P0/P1 tasks from GitHub Issues |
+| Friday | Code freeze; test + release (as needed) + retrospective |
+| Weekend | Decide whether spillover tasks or urgent bugs exist; otherwise no development |
 
-## CI 失败处理
+## CI failure handling
 
-CI 失败自动建 issue，无需人工记挂：
+CI failures open issues automatically, so nobody has to remember:
 
-- **nightly 失败** → 自动创建/更新带 `nightly` label 的 `[nightly] CI 失败` issue
-- **周五复盘缺失** → 自动创建带 `retro` label 的提醒 issue
+- **Nightly failure** → creates or updates a `[nightly] CI 失败` issue with the `nightly` label
+- **Missing Friday retrospective** → creates a reminder issue with the `retro` label
 
-开发者在每日节奏第 2 步认领这些 issue 并修复。
+The developer claims these issues in step 2 of the daily rhythm and fixes them.
 
-## 周五复盘
+## Friday retrospective
 
-周五收尾时写复盘，产物为 `docs/dev/weekly/<YYYY>-W<WW>.md`（周数为 ISO 周号）。
-缺失时 weekly-retro-check workflow 会自动提醒。
+Write the retrospective at Friday wrap-up. The artifact is `docs/dev/weekly/<YYYY>-W<WW>.md`, with the ISO week number. If it is missing, the weekly-retro-check workflow posts a reminder.
 
-模板：
+Template:
 
 ```markdown
 # W<WW> 复盘（<YYYY>-MM-DD 至 MM-DD）
@@ -65,27 +64,26 @@ CI 失败自动建 issue，无需人工记挂：
 - 与上周对比：<变化>
 ```
 
-## 周末判断标准
+## Weekend criteria
 
-周末是否开发：
-- **有溢出任务** → 继续开发
-- **有紧急 bug（P0）** → 修复
-- **以上都没有** → 不开发
+Whether to develop on the weekend:
+- **Spillover tasks exist** → keep developing
+- **An urgent bug (P0) exists** → fix it
+- **Neither** → do not develop
 
-## 任务管理
+## Task management
 
-- **GitHub Issues** 是唯一任务来源，带优先级 label（P0-P3）
-- **docs/sprint-backlog.md** 只作为概览参考，不单独维护
-- 每天从 Issues 中选取优先级最高的任务
+- **GitHub Issues** are the only task source, with priority labels (P0-P3)
+- **docs/sprint-backlog.md** is an overview only and is not maintained separately
+- Each day, pick the highest-priority task from Issues
 
-## 每日容量
+## Daily capacity
 
-每天 2-5 个主题 PR，按优先级从高到低推进。单 PR 对应单 Issue，PR 合并即
-Issue 完成。
+2-5 topic PRs per day, highest priority first. One PR maps to one issue; merging the PR completes the issue.
 
-## 自动化
+## Automation
 
-- **ci-nightly**（每日，`.github/workflows/ci-nightly.yml`）: 深度测试 + 覆盖率 + ASan + UBSan，失败自动建 issue
-- **weekly-retro-check**（每周五，`.github/workflows/weekly-retro-check.yml`）: 复盘缺失提醒
-- **PR CI**: 每次 PR 自动验证（ci-pr.yml）
-- **deploy**: 合并 main 自动部署网站
+- **ci-nightly** (daily, `.github/workflows/ci-nightly.yml`): deep tests + coverage + UBSan, with automatic issues on failure
+- **weekly-retro-check** (every Friday, `.github/workflows/weekly-retro-check.yml`): reminds when the retrospective is missing
+- **PR CI**: validates every PR (ci-pr.yml)
+- **deploy**: deploys the site when main changes

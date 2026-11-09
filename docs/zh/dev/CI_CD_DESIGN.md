@@ -2045,7 +2045,7 @@ lcov --list coverage.info
 - [GitHub Actions 文档](https://docs.github.com/en/actions)
 - [CMake 文档](https://cmake.org/documentation/)
 - [Google Test 文档](https://google.github.io/googletest/)
-- [lcov 文档](http://ltp.sourceforge.net/coverage/lcov.php)
+- [lcov 文档](https://github.com/linux-test-project/lcov)
 - [wrk 文档](https://github.com/wg/wrk)
 - [CodeQL 文档](https://codeql.github.com/docs/)
 

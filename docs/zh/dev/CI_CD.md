@@ -59,7 +59,7 @@ Job：
 `ci-nightly.yml` 运行：
 
 - all-on 构建（`BUILD_WITH_STATIC_FILES=ON`、`BUILD_WITH_ROUTER_CACHE=ON`）；
-- 安全扫描（CodeQL 与依赖检查）；
+- 安全扫描（CodeQL）；
 - 覆盖率（lcov，上传报告与 Codecov）；
 - 压力测试；
 - UBSan 测试；
@@ -96,11 +96,11 @@ make check-docs    # 文档同步 + 内部链接
 
 | CI job | 本地命令 |
 |---|---|
-| `ubuntu-build` | `make build-release` |
-| `code-quality-check` | `cppcheck --enable=warning,performance,portability --error-exitcode=1 src/` |
+| `ubuntu-build` | `make build-release CMAKE_FLAGS="-DBUILD_EXAMPLES=ON"` |
+| `code-quality-check` | `cppcheck --enable=warning,performance,portability --error-exitcode=1 --suppress=toomanyconfigs -D'UVHTTP_STRINGIFY(x)=#x' -DUVHTTP_FEATURE_TLS=1 src/` |
 | `doc-sync-check` | `make check-docs`（另跑 `bash scripts/check-brain.sh`） |
-| `build-matrix` | `make build CMAKE_FLAGS="..."`，传入矩阵 flag |
-| `ubuntu-test-fast` | `make test` |
+| `build-matrix` | `make build-release CMAKE_FLAGS="<matrix flags>"` |
+| `ubuntu-test-fast` | `ctest --test-dir build_release --output-on-failure` |
 | `asan-gate` | `make verify-memory-safety` |
 | 覆盖率 | `make build-coverage && make coverage` |
 | 文档部署 | `make docs` |

@@ -73,7 +73,7 @@ UVHTTP 项目定义了三种构建模式（Release、Debug、Coverage），详�
 
 6. **合并 PR**
    - 至少 1 人审查批准
-   - 所有必需检查通过后 squash/merge 到 `main`；不要直接推送 `main`
+   - 所有必需检查通过后合并到 `main`（仓库使用 merge commit）；不要直接推送 `main`
 
 ## 代码规范
 
@@ -130,7 +130,7 @@ Closes #123
 - [ ] 更新了相关文档
 - [ ] 提交信息格式正确
 - [ ] 没有引入新的安全漏洞
-- [ ] 内存管理正确（使用 UVHTTP_MALLOC/UVHTTP_FREE）
+- [ ] 内存管理正确（使用 `uvhttp_alloc`/`uvhttp_free`，不要混用 `malloc`/`free`）
 - [ ] 错误处理完整
 
 ### 本项目易漏的检查点
@@ -152,7 +152,7 @@ Closes #123
 UVHTTP 项目要求所有非代码生成的文档必须提供中英双语版本，以支持全球贡献者和用户。
 
 - 中英文必须**同一次提交**更新；`doc-sync-check` 比较成对文件最后一次提交的时间，中文版不能早于英文版。
-- 本地检查：`bash scripts/check-doc-sync.sh --check`（CI 覆盖 `docs/` 下除 `docs/api/`、`docs/dev/`、`docs/spec/`、`docs/zh/` 之外的 Markdown）。
+- 本地检查：`bash scripts/check-doc-sync.sh --check`。CI 只配对面向用户的英文文档：`docs/api/`、`docs/dev/`、`docs/spec/`、`docs/releases/`、`docs/superpowers/`、`docs/code-review/` 以及 `AGILE.md`、`development-rhythm.md`、`release-strategy.md` 等流程文档被排除，`docs/zh/` 作为中文侧单独处理；完整名单见脚本的 `is_in_scope`。
 - 内部链接检查：`bash scripts/check-links.sh`；也可直接运行 `make check-docs`。
 - Markdown 写作规范见 [docs/dev/MARKDOWN_STYLE_GUIDE.md](docs/dev/MARKDOWN_STYLE_GUIDE.md)。
 
@@ -270,14 +270,7 @@ ctest
 
 **`manual/` 里的文件全部是长驻 server，不是自动化测试。** 它们从 `test/integration/` 移到 `manual/` 就是为了不让人误以为 CI 会跑：都是 `uv_run(loop, UV_RUN_DEFAULT)` 永不返回 + 打印 usage 等人用 curl 驱动。CMake 只对 `test/unit/*.cpp` 调 `add_test`，manual 目录的文件仅被编译、**从不被执行**——注册进去会撞 `ctest --timeout 90` 被杀。
 
-**不要在这些文件里用 `assert()` 做验证。** CI 与本地都用 `CMAKE_BUILD_TYPE=Release`，Release 定义 `NDEBUG`，`assert()` 全部展开为 no-op：
-
-```bash
-nm build/dist/bin/test_middleware_compile_time | grep -c __assert_fail
-# → 0
-```
-
-仓库里已有 4 个文件（42 处断言）处于这个状态：它们 `exit=0` 不是"通过"，是"什么都没检查"，手动跑时给出的是**虚假绿灯**。要断言就用 gtest 放 `test/unit/`。
+**不要在这些文件里用 `assert()` 做验证。** CI 只编译不运行它们；Release 构建定义 `NDEBUG`，`assert()` 会整体消失，`exit=0` 不代表检查过。本地 `make build` 是 Debug，`assert()` 反而会触发——两种结果都不是可复现的测试信号。要断言就用 gtest 放 `test/unit/`。
 
 **改 `.c` 前先确认它在哪些配置下会被编译。** 部分源文件整个内容被 `#if UVHTTP_FEATURE_*` 整体包裹（例如 `src/uvhttp_lru_cache.c` 被 `UVHTTP_FEATURE_STATIC_FILES` 包裹），而本地默认 `build/` 是该 feature 关闭的——**这个文件在本地根本不编译**，本地 `make` 通过不构成任何证据。判断方法：
 
@@ -299,10 +292,10 @@ grep -n 'if UVHTTP_FEATURE' src/<file>.c
 
 ### 发布前检查清单
 
-- [ ] 所有测试通过（ctest 102/102）
+- [ ] 所有测试通过（`make test` 全套通过）
 - [ ] ASan 零发现（`asan-gate`）
 - [ ] UBSan 零发现（`ci-nightly` 的 `test-ubsan`）
-- [ ] `build-matrix` 全配置编译通过（minimal / static-files / no-compression / router-cache / all-on）
+- [ ] `build-matrix` 全配置编译通过（all-on / minimal / router-cache / static-files / no-compression）
 - [ ] `code-quality-check`（cppcheck）通过
 - [ ] `doc-sync-check` + `check-links` 通过
 - [ ] ci-fuzz 四 harness 无崩溃

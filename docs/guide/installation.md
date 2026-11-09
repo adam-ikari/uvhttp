@@ -1,6 +1,6 @@
 # Installation Guide
 
-This guide explains how to install and build UVHTTP.
+Install and build UVHTTP from source.
 
 ## Platform Support
 
@@ -8,7 +8,7 @@ This guide explains how to install and build UVHTTP.
 
 **Planned**: macOS, Windows, FreeBSD, WebAssembly (WASM), and other Unix-like systems
 
-UVHTTP is currently optimized for the Linux platform. Support for other operating systems and platforms is planned for future releases.
+UVHTTP targets Linux. Support for other operating systems and platforms is planned for future releases.
 
 ## System Requirements
 
@@ -34,7 +34,7 @@ git clone --recurse-submodules https://github.com/adam-ikari/uvhttp.git
 cd uvhttp
 ```
 
-> **Note**: The `--recurse-submodules` argument automatically clones all dependencies. If you forget to use it, run `git submodule update --init --recursive` to fetch them.
+> **Note**: The `--recurse-submodules` argument clones the dependencies along with the repository. If you skipped it, run `git submodule update --init --recursive` to fetch them.
 
 ### 2. Configure and Build the Project
 
@@ -56,7 +56,7 @@ sudo apt-get install -y \
     build-essential
 ```
 
-> Note: libuv is included in the project as a submodule and does not need to be installed separately. It is built automatically during compilation.
+> Note: libuv ships as a submodule and builds with the project. You do not need to install it separately.
 
 #### Build
 
@@ -78,7 +78,7 @@ sudo yum install -y \
     openssl-devel
 ```
 
-> Note: libuv is included in the project as a submodule and does not need to be installed separately. It is built automatically during compilation.
+> Note: libuv ships as a submodule and builds with the project. You do not need to install it separately.
 
 #### Build
 
@@ -149,9 +149,9 @@ make build
 | Option | Default | Description |
 |--------|---------|-------------|
 | `BUILD_WITH_WEBSOCKET` | `ON` | Enable WebSocket support |
-| `BUILD_WITH_MIMALLOC` | `ON` | Enable the mimalloc memory allocator |
+| `BUILD_WITH_MIMALLOC` | `OFF` | Enable the mimalloc memory allocator |
 | `BUILD_WITH_HTTPS` | `ON` | Enable TLS support |
-| `BUILD_EXAMPLES` | `ON` | Build the example programs |
+| `BUILD_EXAMPLES` | `OFF` | Build the example programs |
 | `ENABLE_DEBUG` | `OFF` | Enable Debug mode (-O0) |
 | `ENABLE_COVERAGE` | `OFF` | Enable code coverage |
 
@@ -202,9 +202,8 @@ make
 
 ### Compilation Errors
 
-**Problem**: Dependencies not found
+If a dependency is missing, initialize the submodules:
 
-**Solution**:
 ```bash
 # Ensure submodules are initialized
 git submodule update --init --recursive
@@ -212,9 +211,8 @@ git submodule update --init --recursive
 
 ### Linker Errors
 
-**Problem**: undefined reference to `uv_*`
+An undefined reference to `uv_*` means the libraries are not linked. Link them to your target:
 
-**Solution**:
 ```bash
 # Ensure the correct libraries are linked
 # Add to CMakeLists.txt:
@@ -223,9 +221,8 @@ target_link_libraries(your_target ${LIBUV_LIB} ${MBEDTLS_LIBS} ...)
 
 ### CMake Version Too Old
 
-**Problem**: CMake 3.13+ required
+CMake 3.13 or newer is required. Install it:
 
-**Solution**:
 ```bash
 # Linux
 sudo apt-get install cmake3
@@ -243,14 +240,8 @@ make build
 
 ## Next Steps
 
-After installation, continue with:
-- [Getting Started](./getting-started.md) - 5-minute quick start
-- [First Server](./first-server.md) - Create your first HTTP server
-- [Full Tutorial](./TUTORIAL.md) - Complete tutorial from basics to advanced
+[Getting Started](./getting-started.md) covers the 5-minute quick start, [First Server](./first-server.md) builds an HTTP server, and [Full Tutorial](./TUTORIAL.md) goes from basics to advanced use.
 
 ## Getting Help
 
-If you encounter installation problems:
-- See [FAQ](./FAQ.md)
-- Open an [Issue](https://github.com/adam-ikari/uvhttp/issues)
-- See the Error Code Reference
+If installation fails, check the [FAQ](./FAQ.md), open an [Issue](https://github.com/adam-ikari/uvhttp/issues), or read the Error Code Reference.

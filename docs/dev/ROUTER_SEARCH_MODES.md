@@ -2,11 +2,9 @@
 
 ## Overview
 
-uvhttp provides three router search modes:
+uvhttp offers three router search modes, selected at compile time.
 
-- **Mode 0**: pure linear search - suitable for small-scale applications
-- **Mode 1**: pure hash search - suitable for medium-scale applications
-- **Mode 2**: hybrid strategy - suitable for large-scale high-concurrency applications (default)
+Mode 0 searches routes linearly and suits small applications. Mode 1 keeps a pure hash table and suits medium-sized deployments. Mode 2 mixes a hash table with a hot-path cache, ships as the default, and targets large, high-concurrency deployments.
 
 ## Build Configuration
 
@@ -77,17 +75,16 @@ gcc -DUVHTTP_ROUTER_SEARCH_MODE=2 \
 ## Performance Tuning
 
 ### Memory Optimization
-- Use `SEARCH_MODE=0` to reduce memory usage
-- Disable cache optimization to save 4KB+ of memory
+
+Use `SEARCH_MODE=0` to keep the footprint smallest. Disabling cache optimization saves 4KB+.
 
 ### Performance Optimization
-- Use `SEARCH_MODE=2` for the best lookup performance
-- Enable statistics to monitor performance
-- Use `-O3 -march=native` for optimized compilation
+
+Use `SEARCH_MODE=2` for the fastest lookup. Statistics show what the cache is doing. Compile with `-O3 -march=native` when you want the last bit of speed.
 
 ### Debug Friendly
-- Use `SEARCH_MODE=0` to simplify debugging
-- Disable complex cache logic
+
+Use `SEARCH_MODE=0` when you want the simplest control flow. Leave the cache logic out.
 
 ## Performance Benchmarks
 
@@ -101,12 +98,12 @@ Theoretical performance estimates (50 routes):
 
 ## Best Practices
 
-1. **Development phase**: use `SEARCH_MODE=0` for easier debugging
-2. **Testing phase**: use `SEARCH_MODE=1` to verify functionality
-3. **Production**: use `SEARCH_MODE=2` to ensure performance
-4. **Embedded**: always use `SEARCH_MODE=0`
-5. **High concurrency**: use `SEARCH_MODE=2` + statistics
+1. During development, use `SEARCH_MODE=0`; the control flow is easiest to follow.
+2. In testing, switch to `SEARCH_MODE=1` to exercise the hash path.
+3. In production, keep `SEARCH_MODE=2`.
+4. On embedded targets, stay on `SEARCH_MODE=0`.
+5. Under high concurrency, run `SEARCH_MODE=2` with statistics enabled.
 
 ---
 
-*Based on the uvhttp HTTP server design, providing an optimal router lookup strategy for different scenarios.*
+*Each mode targets a different deployment shape. Pick the one that matches your route count and memory budget.*

@@ -5,7 +5,7 @@ description: UVHTTP performance benchmarks — ~139K RPS on GitHub CI runners, ~
 
 # Performance
 
-UVHTTP is designed for high performance and low latency. This document provides performance metrics and optimization tips.
+This page records the measured throughput and latency, the commands that reproduce the numbers, and the settings that change them.
 
 ## Performance Metrics
 
@@ -66,8 +66,7 @@ wrk -t4 -c100 -d10s http://127.0.0.1:18090/simple
 
 ### Memory-Safety Verification
 
-Performance is meaningless without correctness. The full 119-test suite is verified
-clean under both sanitizers before any performance work is considered done:
+The full 119-test suite runs clean under both sanitizers before performance work counts as done:
 
 ```bash
 # AddressSanitizer (leaks, use-after-free, overflows)
@@ -81,84 +80,84 @@ cmake --build build_ubsan -j$(nproc) && (cd build_ubsan && ctest -j4)
 
 ### Stability
 
-- **Concurrency Range**: 10-1000 concurrent connections (tested)
-- **RPS Fluctuation**: < 5% across all concurrency levels locally; CV 0.9–2.6% within a CI run
-- **Memory Usage**: Stable, no leaks detected (no CLOSE_WAIT connections)
-- **CPU Usage**: Efficient, scales with load
-- **Socket Errors**: Zero at all tested levels locally; at 1000 connections on CI, client read timeouts appear under overload
+- Concurrency range: 10-1000 concurrent connections (tested)
+- RPS fluctuation: < 5% across all concurrency levels locally; CV 0.9–2.6% within a CI run
+- Memory usage: stable, no leaks detected (no CLOSE_WAIT connections)
+- CPU usage: scales with load
+- Socket errors: zero at all tested levels locally; at 1000 connections on CI, client read timeouts appear under overload
 
 ### Performance Improvements (v2.3.1)
 
-- **Event Loop Blocking Fix**: Removed synchronous `uv_run()` calls from connection cleanup
-- **Performance Recovery**: Restored performance from 7-10,691 RPS to 31,000+ RPS
-- **Zero Socket Errors**: Eliminated socket read errors (from 95%+ to 0%)
-- **No Connection Leaks**: Eliminated CLOSE_WAIT state connections
-- **Code Simplification**: Reduced `uvhttp_connection.c` by 38 lines
+- Connection cleanup no longer makes synchronous `uv_run()` calls
+- Throughput recovered from 7-10,691 RPS to 31,000+ RPS
+- Socket read errors went from 95%+ to 0%
+- No CLOSE_WAIT connections remain
+- `uvhttp_connection.c` lost 38 lines
 
 ### Performance Improvements (v2.3.0)
 
-- **Router Cache Optimization**: Removed hot path cache to avoid negative performance impact
-- **Benchmark Compilation**: Unified compilation options with project for consistency
-- **Memory Optimization**: Reduced memory footprint by removing redundant cache layers
-- **Simplified Architecture**: Code simplification improves maintainability without sacrificing performance
+- The hot path cache was removed because it hurt performance
+- Benchmark builds use the same compilation options as the project
+- Removing redundant cache layers cut memory use
+- Simpler code is easier to maintain, with no performance loss
 
 ## Performance Features
 
 ### 1. Zero-Copy Optimization
 
-Large files (> 64KB) use `sendfile` for zero-copy transmission:
+Large files (> 64KB) move with `sendfile`, without a copy:
 
 ```c
 // Automatically used in uvhttp_static_handle_request
 // Files larger than UVHTTP_SENDFILE_MIN_FILE_SIZE (64KB) use sendfile
 ```
 
-**Performance Gain**: 50%+ improvement for large files
+The gain on large files is 50%+.
 
 ### 2. Smart Caching
 
-LRU cache with cache preheating:
+The LRU cache supports preheating:
 
 ```c
 // Preheat cache on startup
 uvhttp_static_prewarm_cache(ctx, "/static/index.html");
 ```
 
-**Performance Gain**: 300%+ improvement for repeated requests
+The gain is 300%+ for repeated requests.
 
 ### 3. Connection Pooling
 
-Keep-Alive connections reduce connection overhead:
+Keep-Alive connections cut connection overhead:
 
 ```c
 // Automatically managed by UVHTTP
 // Connections are reused when possible
 ```
 
-**Performance Gain**: 1000x improvement for repeated requests
+The gain is 1000x for repeated requests.
 
 ### 4. Fast Hashing
 
-Integrated xxHash for ultra-fast hash operations:
+xxHash handles the hash operations:
 
 ```c
 // Used internally for routing and caching
 // xxHash is one of the fastest non-cryptographic hash functions
 ```
 
-**Performance Gain**: 10x faster than standard hash functions
+It runs 10x faster than standard hash functions.
 
 ## Optimization Tips
 
 ### 1. Enable mimalloc
 
-Use mimalloc for better memory allocation performance:
+mimalloc allocates faster:
 
 ```bash
 cmake -DBUILD_WITH_MIMALLOC=ON ..
 ```
 
-**Performance Gain**: 20-30% improvement in allocation-heavy workloads
+Allocation-heavy workloads gain 20-30%.
 
 ### 2. Use Zero-Copy for Large Files
 

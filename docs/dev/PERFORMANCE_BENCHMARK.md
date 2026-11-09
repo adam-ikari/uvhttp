@@ -1,6 +1,6 @@
 # UVHTTP Performance Benchmark
 
-This document records the performance benchmark data and design philosophy of the UVHTTP server.
+Benchmark data, test environment, and design rationale for the UVHTTP server.
 
 ## Performance Goals
 
@@ -79,7 +79,7 @@ This document records the performance benchmark data and design philosophy of th
 - **Peak RPS**: **21,991** (high concurrency scenario, simple text)
 - **Best latency**: **551 μs** (low concurrency scenario)
 - **Highest throughput**: **23.02 MB/s** (small response scenario)
-- **High concurrency stability**: 10-200 concurrent connections, RPS fluctuation of only 30%
+- **High concurrency stability**: RPS varies by only 30% across 10-200 connections
 - **Performance goal achievement rate**: 95.3% (target 23,070 RPS)
 
 ### Historical Data Comparison
@@ -104,20 +104,20 @@ This document records the performance benchmark data and design philosophy of th
 ### 1. Single-Threaded Event Loop Architecture
 
 **Design principle**:
-- All HTTP request handling executes serially in the same event loop thread
-- Avoids multi-threaded lock contention and improves cache hit rate
-- Simplifies code logic and reduces maintenance cost
+- All HTTP request handling runs serially on one event loop thread
+- No cross-thread lock contention; higher cache hit rate
+- Simpler code, lower maintenance cost
 
 **Advantages**:
-- No locking mechanism required; data access is safe
+- No locks; data access is safe
 - Predictable execution flow, easy to debug
-- Good memory access locality, high cache hit rate
+- Good memory locality, high cache hit rate
 
 ### 2. Automatic Inline Strategy
 
 **Design principle**:
-- Does not limit the compiler's inlining; lets the compiler decide automatically
-- Uses the `inline` keyword only on hot path functions to hint the compiler
+- No limit on compiler inlining; the compiler decides
+- `inline` on hot path functions only, as a hint
 - Balances performance and code size
 
 **Hot path functions**:
@@ -129,21 +129,21 @@ This document records the performance benchmark data and design philosophy of th
 
 **Design principle**:
 - Large files (> 1MB) use sendfile zero-copy transfer
-- Avoids data copies between kernel space and user space
-- Significantly improves large file transfer performance
+- No copies between kernel space and user space
+- Higher throughput for large files
 
 **Implementation**:
 ```c
-// Automatic integration: automatically used in uvhttp_static_handle_request
-// Automatically uses sendfile for files > 1MB
+// Automatic: used inside uvhttp_static_handle_request
+// Files > 1MB use sendfile
 ```
 
 ### 4. LRU Cache Mechanism
 
 **Design principle**:
-- Caches static file content to reduce disk I/O
-- LRU policy evicts the least recently used cache entries
-- Supports cache warming to reduce first request latency
+- Caches static file content; cuts disk I/O
+- LRU policy evicts the least recently used entries
+- Cache warming lowers first request latency
 
 **Advantages**:
 - Significantly improves repeated request performance
@@ -153,9 +153,9 @@ This document records the performance benchmark data and design philosophy of th
 ### 5. Keep-Alive Connection Reuse
 
 **Design principle**:
-- Reuses TCP connections to reduce connection establishment overhead
-- Approximately 1000x performance improvement
-- Reduces server resource consumption
+- Reuses TCP connections; skips connection setup
+- About 1000x performance gain
+- Lower server resource usage
 
 **Implementation**:
 - Keep-Alive is enabled by default
@@ -165,9 +165,9 @@ This document records the performance benchmark data and design philosophy of th
 ### 6. Memory Optimization
 
 **Design principle**:
-- Uses the mimalloc allocator to improve memory allocation performance
-- Dynamic header allocation strategy to reduce memory usage
-- Connection object pool to reduce frequent allocation/deallocation
+- mimalloc improves allocation performance
+- Dynamic header allocation reduces memory usage
+- Connection object pool avoids repeated allocation and free
 
 **Advantages**:
 - Memory allocation performance improved by 50%+
@@ -177,9 +177,9 @@ This document records the performance benchmark data and design philosophy of th
 ### 7. Route Optimization
 
 **Design principle**:
-- Hash table + hot path cache, O(1) fast lookup
-- xxHash extremely fast hashing algorithm
-- Avoids wildcard routes to improve matching speed
+- Hash table + hot path cache, O(1) lookup
+- xxHash for fast hashing
+- No wildcard routes; faster matching
 
 **Implementation**:
 - 16 hot path cache entries
@@ -199,10 +199,10 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -march=native -mtune=native")
 
 ### Runtime Optimization
 
-1. **Enable Keep-Alive**: enabled by default, significantly improves performance
+1. **Enable Keep-Alive**: on by default; large gain
 2. **Use mimalloc**: 50% faster than the system allocator
 3. **Pre-warm the cache**: warm frequently used files at startup
-4. **Adjust connection count**: adjust the maximum connections based on the hardware configuration
+4. **Adjust connection count**: match the hardware configuration
 
 ### Monitoring Metrics
 
@@ -279,15 +279,15 @@ Test URL: `http://127.0.0.1:8080/static/large.html`
 
 ### Performance Inflection Point Analysis
 
-UVHTTP uses a single-threaded event loop architecture (based on libuv) and exhibits distinct performance inflection point characteristics at different concurrency levels. Understanding these inflection points is essential for estimating performance requirements and configuring the server.
+UVHTTP runs a single-threaded event loop on libuv. Latency inflects at specific concurrency levels; those points drive capacity planning and server configuration.
 
 #### Single-Threaded Event Loop Architecture Characteristics
 
 **Core principle**:
-- All HTTP request handling executes serially in the same event loop thread
-- The event loop continuously polls I/O events via `uv_run()`
-- Lock-free mechanism, avoiding multi-threaded contention
-- Non-blocking I/O, high concurrency handling capability
+- All HTTP request handling runs serially on one event loop thread
+- The event loop polls I/O events continuously via `uv_run()`
+- Lock-free; no multi-thread contention
+- Non-blocking I/O handles high concurrency
 
 **Event loop processing flow**:
 ```
@@ -317,10 +317,10 @@ uv_run(loop, UV_RUN_DEFAULT) loop execution:
 **Phenomenon**: latency jumps from 310 μs to 2.20 ms (increase of 7.1x)
 
 **Root cause**:
-- **First queue backlog in the event queue**: the single-threaded event loop transitions from an easy state to a saturated state
-- **CPU utilization surge**: increases from ~20% to ~80%, longer processing time
-- **Requests queue and wait**: the event loop polling rate cannot keep up with the request arrival rate
-- **Keep-Alive connection reuse**: 50 connections are frequently reused, so the event loop processes more events
+- **First queue backlog**: the event loop moves from idle to saturated
+- **CPU utilization jump**: ~20% to ~80%, processing takes longer
+- **Requests queue up**: poll rate falls behind arrival rate
+- **Keep-Alive reuse**: 50 connections are reused constantly, so each poll handles more events
 
 **Technical details**:
 ```
@@ -340,17 +340,17 @@ Medium concurrency (50 connections):
 **Phenomenon**: latency jumps from 2.20 ms to 4.58 ms (increase of 2.1x)
 
 **Root cause**:
-- **CPU fully saturated**: utilization approaches 100%, the event loop processing capacity reaches its limit
-- **Persistent event queue backlog**: request queuing time lengthens
-- **Increased network stack pressure**: TCP connection management and packet processing volume double
+- **CPU saturated**: utilization approaches 100%, the event loop hits its limit
+- **Queue backlog persists**: request queuing time grows
+- **Network stack pressure rises**: TCP connection management and packet processing volume double
 
 **3. High → Ultra-high concurrency inflection point**
 
 **Phenomenon**: latency jumps from 4.58 ms to 9.49 ms (increase of 2.1x)
 
 **Root cause**:
-- **Severe queue backlog**: the event loop processing capacity is insufficient, request wait times lengthen significantly
-- **Intensified resource contention**: contention for resources such as memory allocation and network buffers increases
+- **Severe queue backlog**: the event loop cannot keep up; wait times grow sharply
+- **Resource contention grows**: memory allocation and network buffers come under pressure
 
 #### Performance Characteristics Summary
 
@@ -408,7 +408,7 @@ config->max_connections = 100; // medium concurrency
 
 **4. Monitoring metrics**
 
-In production, it is recommended to monitor the following metrics to identify performance inflection points:
+Monitor these metrics in production to identify inflection points:
 
 - **Average latency**: exceeding 2ms indicates entry into the medium concurrency inflection point
 - **P99 latency**: exceeding 10ms indicates proximity to saturation
@@ -571,7 +571,7 @@ After the fix, all tests returned correct 2xx responses, with an error rate of 0
 
 ### Production Compilation Configuration
 
-To obtain accurate, repeatable performance benchmark data, the benchmark program must use the following production compilation configuration:
+For accurate, repeatable data, benchmark builds use this production configuration:
 
 #### CMake Configuration
 
@@ -663,7 +663,7 @@ pkill -9 benchmark_unified
 
 ### Performance Baseline (Production Configuration)
 
-The benchmark program compiled with the above configuration should achieve the following performance metrics:
+Benchmarks built with the above configuration should reach:
 
 | Test Scenario | Target RPS | Actual RPS | Status |
 |---------|---------|---------|------|
@@ -673,7 +673,7 @@ The benchmark program compiled with the above configuration should achieve the f
 
 ### Verifying the Compilation Configuration
 
-The following commands can be used to verify the compilation configuration:
+Verify the compilation configuration:
 
 ```bash
 # Check the binary size (should be smaller in production)
@@ -688,8 +688,8 @@ objdump -g build/dist/bin/benchmark_unified 2>&1 | grep -i "optimization"
 
 ### Notes
 
-1. **Consistency**: all performance tests must use the same compilation configuration
+1. **Consistency**: all performance tests use the same compilation configuration
 2. **Repeatability**: record the compilation configuration to ensure repeatable test results
 3. **Production parity**: the benchmark program's compilation configuration should match production
-4. **Documentation**: every performance test should record the compilation configuration information
+4. **Documentation**: record the build configuration with each test result
 5. **Version control**: include the compilation configuration in version control to ensure team consistency

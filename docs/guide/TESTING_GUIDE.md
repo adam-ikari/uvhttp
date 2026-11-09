@@ -1,6 +1,6 @@
 # UVHTTP Testing Guide
 
-This guide describes how tests are built, registered, and run. It applies to
+This page covers how tests are built, registered, and run. It applies to
 UVHTTP 3.x.
 
 ## How Tests Are Discovered
@@ -12,9 +12,9 @@ registered with `add_test`, so `ctest` picks it up automatically.
 There is no `test/CMakeLists.txt`. Do not add one, and do not maintain a manual
 list of test files.
 
-Files under `manual/` are compiled but deliberately **not** registered in ctest:
-they run `uv_run(UV_RUN_DEFAULT)` and never return. Assertion tests belong in
-`test/unit/`.
+Files under `manual/` are compiled but deliberately **not** registered in ctest,
+because they run `uv_run(UV_RUN_DEFAULT)` and never return. Put assertion tests
+in `test/unit/`.
 
 ## Test Layout
 

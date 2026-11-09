@@ -1,6 +1,6 @@
 # UVHTTP Frequently Asked Questions (FAQ)
 
-This document answers common questions about using the UVHTTP library.
+Answers to common questions about using UVHTTP.
 
 ## Table of Contents
 
@@ -8,7 +8,7 @@ This document answers common questions about using the UVHTTP library.
 2. [Server Management](#server-management)
 3. [Request Processing](#request-processing)
 4. [Response Handling](#response-handling)
-5. [TLS/SSL Configuration](#tlsssl-configuration)
+5. [TLS/SSL Configuration](#tls-ssl-configuration)
 6. [WebSocket](#websocket)
 7. [Performance Optimization](#performance-optimization)
 8. [Common Issues](#common-issues)
@@ -190,7 +190,7 @@ uvhttp_response_set_header(response, "Set-Cookie",
 
 ### Q12: How do I enable CORS?
 
-**Answer:** CORS (Cross-Origin Resource Sharing) is implemented at the application layer. You can enable CORS by setting the appropriate response headers:
+**Answer:** CORS (Cross-Origin Resource Sharing) belongs to the application layer. Set the response headers yourself:
 
 ```c
 uvhttp_response_set_header(response, "Access-Control-Allow-Origin", "*");
@@ -205,9 +205,9 @@ if (uvhttp_request_get_method(request) == UVHTTP_METHOD_OPTIONS) {
 }
 ```
 
-For more advanced CORS handling, you can use the middleware system to create a reusable CORS middleware. See the middleware examples in `examples/03_middleware/`.
+For a reusable version, build a CORS middleware; see the examples in `examples/03_middleware/`.
 
-**Note:** UVHTTP does not provide built-in CORS support because CORS is an application-level concern. The library provides the flexibility to implement CORS exactly as needed for your use case.
+**Note:** UVHTTP ships no CORS support. CORS is an application concern, and the library leaves the policy to you.
 
 ### Q13: How do I send a file attachment?
 
@@ -531,13 +531,13 @@ make build
 ## Related Documentation
 
 - [API Reference](../api/API_REFERENCE.md)
-- [Developer Guide](../zh/guide/DEVELOPER_GUIDE.md)
-- [Tutorial](../zh/guide/TUTORIAL.md)
+- [Developer Guide](./DEVELOPER_GUIDE.md)
+- [Tutorial](./TUTORIAL.md)
 
 ---
 
 ## Version
 
 - **Document Version**: 1.0.0
-- **Last Updated**: 2026-02-03
-- **UVHTTP Version**: 2.2.0+
+- **Last Updated**: 2026-10-30
+- **UVHTTP Version**: 3.0.0

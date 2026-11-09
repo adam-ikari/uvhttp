@@ -66,7 +66,7 @@ event, so a red benchmark blocks promotion to a stable release.
 `ci-nightly.yml` runs:
 
 - all-on build (`BUILD_WITH_STATIC_FILES=ON`, `BUILD_WITH_ROUTER_CACHE=ON`);
-- security scan (CodeQL and dependency checks);
+- security scan (CodeQL);
 - coverage (`lcov`, report artifact, Codecov upload);
 - stress tests;
 - UBSan tests;
@@ -105,11 +105,11 @@ make check-docs    # doc sync + internal links
 
 | CI job | Local command |
 |---|---|
-| `ubuntu-build` | `make build-release` |
-| `code-quality-check` | `cppcheck --enable=warning,performance,portability --error-exitcode=1 src/` |
+| `ubuntu-build` | `make build-release CMAKE_FLAGS="-DBUILD_EXAMPLES=ON"` |
+| `code-quality-check` | `cppcheck --enable=warning,performance,portability --error-exitcode=1 --suppress=toomanyconfigs -D'UVHTTP_STRINGIFY(x)=#x' -DUVHTTP_FEATURE_TLS=1 src/` |
 | `doc-sync-check` | `make check-docs` (also `bash scripts/check-brain.sh`) |
-| `build-matrix` | `make build CMAKE_FLAGS="..."` with the matrix flags |
-| `ubuntu-test-fast` | `make test` |
+| `build-matrix` | `make build-release CMAKE_FLAGS="<matrix flags>"` |
+| `ubuntu-test-fast` | `ctest --test-dir build_release --output-on-failure` |
 | `asan-gate` | `make verify-memory-safety` |
 | coverage | `make build-coverage && make coverage` |
 | docs deployment | `make docs` |

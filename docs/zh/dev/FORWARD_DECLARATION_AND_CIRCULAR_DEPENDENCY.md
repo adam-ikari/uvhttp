@@ -1,81 +1,79 @@
 # 前向声明和循环引用规范
 
-本文档定义了 UVHTTP 项目的前向声明和循环引用规范，确保代码的可维护性和编译效率。
-
 ## 概述
 
-前向声明（Forward Declaration）和循环引用（Circular Dependency）是 C/C++ 项目中常见的设计问题。正确使用前向声明可以避免不必要的包含，减少编译时间，提高代码的可维护性。
+前向声明（Forward Declaration）和循环引用（Circular Dependency）是 C/C++ 项目的常见设计问题。正确使用前向声明可避免不必要的包含，减少编译时间，保持头文件易维护。
 
 ## 前向声明规范
 
 ### 何时使用前向声明
 
-**应该使用前向声明的情况**：
+**应该使用前向声明的情况：**
 
-1. **在头文件中只需要指针或引用**
+1. **头文件中只需要指针或引用**
    ```c
-   // ✅ 正确
+   // 正确
    typedef struct uvhttp_server uvhttp_server_t;
-   
+
    struct uvhttp_connection {
        struct uvhttp_server* server;  // 只需要指针
    };
    ```
 
-2. **避免循环引用**
+2. **需要打破循环引用**
    ```c
    // uvhttp_server.h
    typedef struct uvhttp_connection uvhttp_connection_t;
-   
+
    // uvhttp_connection.h
    typedef struct uvhttp_server uvhttp_server_t;
    ```
 
-3. **在函数声明中使用指针参数**
+3. **函数声明使用指针参数**
    ```c
-   // ✅ 正确
+   // 正确
    uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
                                         uvhttp_connection_t** conn);
    ```
 
-**不应该使用前向声明的情况**：
+**不应该使用前向声明的情况：**
 
 1. **需要访问结构体成员**
    ```c
-   // ❌ 错误
+   // 错误
    typedef struct uvhttp_request uvhttp_request_t;
-   
+
    void func(uvhttp_request_t* req) {
        req->method = UVHTTP_GET;  // 需要访问成员
    }
-   
-   // ✅ 正确
+
+   // 正确
    #include "uvhttp_request.h"
    ```
 
 2. **需要调用结构体方法**
    ```c
-   // ❌ 错误
+   // 错误
    typedef struct uvhttp_response uvhttp_response_t;
-   
+
    void func(uvhttp_response_t* resp) {
        uvhttp_response_set_status(resp, 200);  // 需要调用方法
    }
-   
-   // ✅ 正确
+
+   // 正确
    #include "uvhttp_response.h"
    ```
 
 3. **需要完整类型定义**
    ```c
-   // ❌ 错误
+   // 错误
    typedef struct uvhttp_request uvhttp_request_t;
-   
+
    void func() {
        uvhttp_request_t req;  // 需要完整类型
    }
-   
-   // ✅ 正确
+
+   // 正确
    #include "uvhttp_request.h"
    ```
 
@@ -107,10 +105,10 @@ struct uvhttp_connection {
 
 ```c
 // uvhttp_server.h
-#include "uvhttp_connection.h"  // ❌ 循环引用
+#include "uvhttp_connection.h"  // 循环引用
 
 // uvhttp_connection.h
-#include "uvhttp_server.h"  // ❌ 循环引用
+#include "uvhttp_server.h"  // 循环引用
 ```
 
 #### 类型 2：A 包含 B，B 包含 C，C 包含 A
@@ -123,7 +121,7 @@ struct uvhttp_connection {
 #include "uvhttp_request.h"
 
 // uvhttp_request.h
-#include "uvhttp_server.h"  // ❌ 循环引用
+#include "uvhttp_server.h"  // 循环引用
 ```
 
 ### 解决循环引用的方法
@@ -132,14 +130,14 @@ struct uvhttp_connection {
 
 ```c
 // uvhttp_server.h
-typedef struct uvhttp_connection uvhttp_connection_t;  // ✅ 前向声明
+typedef struct uvhttp_connection uvhttp_connection_t;  // 前向声明
 
 struct uvhttp_server {
     uvhttp_connection_t* connections;
 };
 
 // uvhttp_connection.h
-typedef struct uvhttp_server uvhttp_server_t;  // ✅ 前向声明
+typedef struct uvhttp_server uvhttp_server_t;  // 前向声明
 
 struct uvhttp_connection {
     struct uvhttp_server* server;
@@ -156,16 +154,16 @@ typedef struct uvhttp_connection uvhttp_connection_t;
 typedef struct uvhttp_server uvhttp_server_t;
 
 // uvhttp_server.h
-#include "uvhttp_common.h"  // ✅ 使用公共接口
+#include "uvhttp_common.h"  // 使用公共接口
 
 // uvhttp_connection.h
-#include "uvhttp_common.h"  // ✅ 使用公共接口
+#include "uvhttp_common.h"  // 使用公共接口
 ```
 
 #### 方法 3：使用 void* 指针（不推荐）
 
 ```c
-// ❌ 不推荐：失去类型安全
+// 不推荐：失去类型安全
 struct uvhttp_connection {
     void* server;  // 失去类型信息
 };
@@ -180,31 +178,31 @@ struct uvhttp_connection {
 **修复前**：
 ```c
 // uvhttp_server.h
-#include "uvhttp_connection.h"  // ❌ 循环引用
+#include "uvhttp_connection.h"  // 循环引用
 
 // uvhttp_connection.h
-#include "uvhttp_server.h"  // ❌ 循环引用
+#include "uvhttp_server.h"  // 循环引用
 ```
 
 **修复后**：
 ```c
 // uvhttp_server.h
-typedef struct uvhttp_connection uvhttp_connection_t;  // ✅ 前向声明
+typedef struct uvhttp_connection uvhttp_connection_t;  // 前向声明
 
 // uvhttp_connection.h
-typedef struct uvhttp_server uvhttp_server_t;  // ✅ 前向声明
+typedef struct uvhttp_server uvhttp_server_t;  // 前向声明
 ```
 
 #### 2. uvhttp_response.h
 
 **修复前**：
 ```c
-#include "uvhttp_connection.h"  // ❌ 可能导致循环引用
+#include "uvhttp_connection.h"  // 可能导致循环引用
 ```
 
 **修复后**：
 ```c
-typedef struct uvhttp_connection uvhttp_connection_t;  // ✅ 前向声明
+typedef struct uvhttp_connection uvhttp_connection_t;  // 前向声明
 ```
 
 ### 当前的前向声明使用情况
@@ -255,7 +253,7 @@ typedef struct uvhttp_response uvhttp_response_t;
 ### 2. 在 .c 文件中包含完整定义
 
 ```c
-// ✅ 正确：在 .c 文件中包含完整定义
+// 正确：在 .c 文件中包含完整定义
 #include "uvhttp_server.h"
 #include "uvhttp_connection.h"
 #include "uvhttp_request.h"
@@ -265,19 +263,19 @@ typedef struct uvhttp_response uvhttp_response_t;
 void some_function() {
     uvhttp_server_t* server = ...;
     uvhttp_connection_t* conn = ...;
-    conn->server = server;  // ✅ 可以访问成员
+    conn->server = server;  // 可以访问成员
 }
 ```
 
 ### 3. 在 .h 文件中使用前向声明
 
 ```c
-// ✅ 正确：在 .h 文件中使用前向声明
+// 正确：在 .h 文件中使用前向声明
 typedef struct uvhttp_server uvhttp_server_t;
 typedef struct uvhttp_connection uvhttp_connection_t;
 
 struct uvhttp_connection {
-    struct uvhttp_server* server;  // ✅ 只需要指针
+    struct uvhttp_server* server;  // 只需要指针
     uvhttp_request_t* request;
     uvhttp_response_t* response;
 };
@@ -292,7 +290,7 @@ typedef struct uvhttp_response uvhttp_response_t;
 typedef int (*uvhttp_request_handler_t)(uvhttp_request_t*, uvhttp_response_t*);
 
 // 其他头文件
-#include "uvhttp_common.h"  // ✅ 使用公共接口
+#include "uvhttp_common.h"  // 使用公共接口
 ```
 
 ## 检测工具
@@ -329,32 +327,32 @@ include-what-you-use src/*.c include/*.h
 ### 错误 1：在头文件中访问成员
 
 ```c
-// ❌ 错误
+// 错误
 typedef struct uvhttp_request uvhttp_request_t;
 
 void func(uvhttp_request_t* req) {
-    req->method = UVHTTP_GET;  // ❌ 需要完整定义
+    req->method = UVHTTP_GET;  // 需要完整定义
 }
 
-// ✅ 正确
+// 正确
 #include "uvhttp_request.h"
 
 void func(uvhttp_request_t* req) {
-    req->method = UVHTTP_GET;  // ✅ 可以访问成员
+    req->method = UVHTTP_GET;  // 可以访问成员
 }
 ```
 
 ### 错误 2：循环引用导致编译错误
 
 ```c
-// ❌ 错误：循环引用
+// 错误：循环引用
 // uvhttp_server.h
 #include "uvhttp_connection.h"
 
 // uvhttp_connection.h
 #include "uvhttp_server.h"
 
-// ✅ 正确：使用前向声明
+// 正确：使用前向声明
 // uvhttp_server.h
 typedef struct uvhttp_connection uvhttp_connection_t;
 
@@ -365,7 +363,7 @@ typedef struct uvhttp_server uvhttp_server_t
 ### 错误 3：过度使用前向声明
 
 ```c
-// ❌ 错误：过度使用前向声明
+// 错误：过度使用前向声明
 typedef struct uvhttp_request uvhttp_request_t;
 typedef struct uvhttp_response uvhttp_response_t;
 typedef struct uvhttp_connection uvhttp_connection_t;
@@ -373,19 +371,19 @@ typedef struct uvhttp_server uvhttp_server_t;
 typedef struct uvhttp_router uvhttp_router_t;
 
 void func() {
-    uvhttp_request_t req;  // ❌ 需要完整定义
+    uvhttp_request_t req;  // 需要完整定义
     uvhttp_response_t resp;
     uvhttp_connection_t conn;
     // ...
 }
 
-// ✅ 正确：在 .c 文件中包含完整定义
+// 正确：在 .c 文件中包含完整定义
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_connection.h"
 
 void func() {
-    uvhttp_request_t req;  // ✅ 可以使用完整类型
+    uvhttp_request_t req;  // 可以使用完整类型
     uvhttp_response_t resp;
     uvhttp_connection_t conn;
     // ...
@@ -419,4 +417,3 @@ void func() {
 
 **最后更新**: 2026-01-29
 **维护者**: UVHTTP 开发团队
-**许可证**: MIT License

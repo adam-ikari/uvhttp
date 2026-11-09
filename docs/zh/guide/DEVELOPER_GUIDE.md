@@ -2,7 +2,7 @@
 
 ## 概述
 
-本文档面向 UVHTTP 库的贡献者，介绍如何参与库的开发、代码规范、最佳实践等。
+这份指南讲在本仓库里怎么编译、写代码、跑测试、提 PR。第一次提交之前，至少把编译和测试两节读完。
 
 ## 开发环境
 
@@ -44,7 +44,7 @@ brew install cmake
 
 ### 构建模式规范
 
-UVHTTP 项目定义了三种构建模式，每种模式适用于不同的场景：
+构建分三种模式，用途不同：
 
 | 构建模式 | 用途 | 编译选项 | 适用程序 |
 |----------|------|----------|----------|
@@ -53,12 +53,12 @@ UVHTTP 项目定义了三种构建模式，每种模式适用于不同的场景�
 | **Coverage** | 代码覆盖率分析 | `-O0 --coverage` | 覆盖率测试 |
 
 **重要提示**：
-- 性能测试必须使用 Release 模式，否则数据不准确（Debug 模式性能可能低 10-100 倍）
-- 详细的构建模式规范请参考 [BUILD_MODES.md](../dev/BUILD_MODES.md)
+- 性能测试必须使用 Release 模式，Debug 的数据不能拿来比（性能可能低 10-100 倍）
+- 构建模式的完整规范见 [BUILD_MODES.md](../dev/BUILD_MODES.md)
 
 ### 基本编译
 
-使用 Makefile 目标即可，它们会创建独立构建目录并传入正确参数：
+直接用 Makefile 目标，它会建好独立目录、传对参数：
 
 ```bash
 # Debug 构建（默认）：build/
@@ -127,7 +127,7 @@ cmake -B build -DUVHTTP_ALLOCATOR_TYPE=1 -DBUILD_WITH_MIMALLOC=ON
 - **函数**: `uvhttp_module_action` (如 `uvhttp_server_new`)
 - **类型**: `uvhttp_name_t` (如 `uvhttp_server_t`)
 - **常量**: `UVHTTP_UPPER_CASE` (如 `UVHTTP_MAX_HEADERS`)
-- **宏**: `UVHTTP_UPPER_CASE` (如 `UVHTTP_MALLOC`)
+- **宏**: `UVHTTP_UPPER_CASE` (如 `UVHTTP_FEATURE_TLS`)
 
 ### 代码风格
 
@@ -152,7 +152,7 @@ uvhttp_error_t uvhttp_function(int param1, const char* param2);
 
 ### 统一分配器
 
-UVHTTP 提供统一的内存管理接口，通过编译期选择分配器类型。
+分配器在编译期选定，之后代码只走 uvhttp_alloc 这一套分配接口。
 
 #### 基本操作
 
@@ -183,18 +183,9 @@ if (!ptr) {
 
 `UVHTTP_ALLOCATOR_TYPE` 支持三种取值：
 
-1. **系统分配器**（`0`，默认）
-   - 稳定可靠，无额外依赖
-   - 零抽象开销
-   - 适合大多数场景
-
-2. **mimalloc 分配器**（`1`）
-   - 现代分配器
-   - 内置小对象优化
-   - 多线程扩展性
-   - 降低内存碎片
-
-3. **自定义分配器**（`2`）— 由嵌入方提供
+1. **系统分配器**（`0`，默认）：标准 malloc/free，无额外依赖，也没有包装层开销
+2. **mimalloc 分配器**（`1`）：小对象有专门优化，多线程下扩展性好，碎片更少
+3. **自定义分配器**（`2`）：由嵌入方提供
 
 #### 编译配置
 
@@ -333,7 +324,7 @@ make coverage
 
 测试放在 `test/unit/test_*.cpp`。CMake 会自动 glob 编译每个文件并注册到
 `add_test`，不存在需要编辑的 `test/CMakeLists.txt`。`manual/` 下的文件会被编译，
-但故意不注册进 ctest——不要把断言测试放在那里。
+但故意不注册进 ctest，断言测试不要放在那里。
 
 ```cpp
 #include <gtest/gtest.h>
@@ -468,7 +459,7 @@ Closes #123
 ### 审查流程
 
 1. 创建 Pull Request
-2. 自动运行 CI/CD 测试
+2. 自动运行 CI 检查；测试在预发布门禁执行
 3. 代码审查
 4. 修改并重新审查
 5. 合并到主分支
@@ -478,8 +469,7 @@ Closes #123
 ### Q: 如何选择内存分配器？
 
 A:
-- **系统分配器**: 适合大多数场景，稳定可靠
-- **mimalloc**: 适合高并发、多线程场景，性能更好
+默认的系统分配器够用。多线程分配压力大时再换 mimalloc，用下面的开关一起打开。
 
 ```bash
 cmake -B build -DUVHTTP_ALLOCATOR_TYPE=1 -DBUILD_WITH_MIMALLOC=ON
@@ -488,9 +478,9 @@ cmake -B build -DUVHTTP_ALLOCATOR_TYPE=1 -DBUILD_WITH_MIMALLOC=ON
 ### Q: 如何处理内存泄漏？
 
 A:
-1. 使用 Valgrind 检测泄漏
+1. 先跑内存安全门禁（ASan + UBSan），泄漏通常出在这里
 2. 确保每个 `uvhttp_alloc` 都有对应的 `uvhttp_free`
-3. 使用 RAII 模式管理资源
+3. 每条提前返回的路径都要释放已分配的资源
 
 ### Q: 如何优化性能？
 
