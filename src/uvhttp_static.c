@@ -171,6 +171,38 @@ static void html_escape(char* dest, const char* src, size_t dest_size) {
 }
 
 /**
+ * Percent-encode a file name for use inside an href. Only RFC 3986
+ * unreserved characters pass through; everything else (including ':', '/',
+ * '%', quotes and spaces) is %XX-encoded. This keeps the value a relative
+ * path — otherwise a file named "javascript:alert(1)" would become an
+ * executable URL in the directory listing.
+ */
+static void url_path_escape(char* dest, const char* src, size_t dest_size) {
+    static const char hex[] = "0123456789ABCDEF";
+    size_t j = 0;
+
+    if (!dest || !src || dest_size == 0) {
+        return;
+    }
+
+    for (size_t i = 0; src[i] != '\0' && j + 4 < dest_size; i++) {
+        unsigned char c = (unsigned char)src[i];
+        if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+            (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.' ||
+            c == '~') {
+            dest[j++] = (char)c;
+        } else {
+            dest[j++] = '%';
+            dest[j++] = hex[c >> 4];
+            dest[j++] = hex[c & 0x0F];
+        }
+    }
+
+    dest[j] = '\0';
+}
+
+
+/**
  * @brief Get MIME type from file path
  *
  * @param file_path Path to the file
@@ -558,9 +590,12 @@ static char* generate_directory_listing(const char* dir_path,
             time_str[1] = '\0';
         }
 
-        /* HTML escape file name */
+        /* HTML-escape the visible text and percent-encode the href; the raw
+         * file name must never reach the markup unescaped. */
         char escaped_name[UVHTTP_MAX_FILE_PATH_SIZE * 6];
+        char escaped_href[UVHTTP_MAX_FILE_PATH_SIZE * 3];
         html_escape(escaped_name, dir_entry->name, sizeof(escaped_name));
+        url_path_escape(escaped_href, dir_entry->name, sizeof(escaped_href));
 
         /* generate table row */
         if (dir_entry->is_dir) {
@@ -568,12 +603,12 @@ static char* generate_directory_listing(const char* dir_path,
                 html + offset, buffer_size - offset,
                 "<tr><td><a href=\"%s/\" class=\"dir\">%s/</a></td><td "
                 "class=\"dir\">-</td><td>%s</td></tr>\n",
-                dir_entry->name, escaped_name, time_str);
+                escaped_href, escaped_name, time_str);
         } else {
             offset += snprintf(html + offset, buffer_size - offset,
                                "<tr><td><a href=\"%s\">%s</a></td><td "
                                "class=\"size\">%zu</td><td>%s</td></tr>\n",
-                               dir_entry->name, escaped_name, dir_entry->size,
+                               escaped_href, escaped_name, dir_entry->size,
                                time_str);
         }
     }
@@ -1123,8 +1158,10 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
             if (ret > 0 && ret < (int)sizeof(gz_path)) {
                 size_t gz_size;
                 time_t gz_mtime;
+                /* The .gz variant must obey the same limit as the original:
+                 * switching after the check above would bypass it. */
                 if (get_file_info(gz_path, &gz_size, &gz_mtime) == 0 &&
-                    gz_size > 0) {
+                    gz_size > 0 && gz_size <= ctx->config.max_file_size) {
                     uvhttp_safe_strncpy(safe_path, gz_path, sizeof(safe_path));
                     file_size = gz_size;
                     last_modified = gz_mtime;
@@ -1804,7 +1841,6 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
 
         uvhttp_response_set_status(resp, 200);
         uvhttp_response_set_header(resp, "Content-Type", mime_type);
-        uvhttp_response_set_header(resp, "Content-Length", "");
         uvhttp_response_set_body(resp, buffer, (size_t)bytes_read);
 
         uvhttp_free(buffer);

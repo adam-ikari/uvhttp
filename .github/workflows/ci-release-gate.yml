@@ -136,8 +136,8 @@ jobs:
             run-tests: true
           - name: minimal
             description: "核心 HTTP/1.1 最小化（验证编译时裁剪）"
-            flags: "-DBUILD_WITH_WEBSOCKET=OFF -DBUILD_WITH_HTTPS=OFF -DBUILD_WITH_STATIC_FILES=OFF -DBUILD_WITH_COMPRESSION=OFF"
-            run-tests: false
+            flags: "-DBUILD_WITH_WEBSOCKET=OFF -DBUILD_WITH_HTTPS=OFF -DBUILD_WITH_STATIC_FILES=OFF -DBUILD_WITH_COMPRESSION=OFF -DBUILD_WITH_MIMALLOC=OFF"
+            run-tests: true
           - name: router-cache
             flags: "-DBUILD_WITH_ROUTER_CACHE=ON"
             run-tests: true

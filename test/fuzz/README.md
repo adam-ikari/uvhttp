@@ -32,6 +32,7 @@ clang -g -O1 -fsanitize=fuzzer,address -fno-omit-frame-pointer \
   deps/llhttp/build/libllhttp.a deps/cjson/build/libcjson.a \
   deps/mbedtls/build/library/libmbedtls.a deps/mbedtls/build/library/libmbedx509.a \
   deps/mbedtls/build/library/libmbedcrypto.a deps/libuv/build/libuv.a \
+  build_fuzz/dist/lib/libminiz.a deps/xxhash/libxxhash.a \
   -Wl,--end-group -lpthread -lm -ldl -o build_fuzz/fuzz_router
 
 clang -g -O1 -fsanitize=fuzzer,address -fno-omit-frame-pointer \
@@ -42,6 +43,7 @@ clang -g -O1 -fsanitize=fuzzer,address -fno-omit-frame-pointer \
   deps/llhttp/build/libllhttp.a deps/cjson/build/libcjson.a \
   deps/mbedtls/build/library/libmbedtls.a deps/mbedtls/build/library/libmbedx509.a \
   deps/mbedtls/build/library/libmbedcrypto.a deps/libuv/build/libuv.a \
+  build_fuzz/dist/lib/libminiz.a deps/xxhash/libxxhash.a \
   -Wl,--end-group -lpthread -lm -ldl -o build_fuzz/fuzz_request
 
 clang -g -O1 -fsanitize=fuzzer,address -fno-omit-frame-pointer \
@@ -52,6 +54,7 @@ clang -g -O1 -fsanitize=fuzzer,address -fno-omit-frame-pointer \
   deps/llhttp/build/libllhttp.a deps/cjson/build/libcjson.a \
   deps/mbedtls/build/library/libmbedtls.a deps/mbedtls/build/library/libmbedx509.a \
   deps/mbedtls/build/library/libmbedcrypto.a deps/libuv/build/libuv.a \
+  build_fuzz/dist/lib/libminiz.a deps/xxhash/libxxhash.a \
   -Wl,--end-group -lpthread -lm -ldl -o build_fuzz/fuzz_websocket
 
 # 2b. fuzz_static_path needs a library built with static files enabled — the
@@ -68,6 +71,7 @@ clang -g -O1 -fsanitize=fuzzer,address -fno-omit-frame-pointer \
   deps/llhttp/build/libllhttp.a deps/cjson/build/libcjson.a \
   deps/mbedtls/build/library/libmbedtls.a deps/mbedtls/build/library/libmbedx509.a \
   deps/mbedtls/build/library/libmbedcrypto.a deps/libuv/build/libuv.a \
+  build_fuzz_static/dist/lib/libminiz.a deps/xxhash/libxxhash.a \
   -Wl,--end-group -lpthread -lm -ldl -o build_fuzz/fuzz_static_path
 
 # 3. Run (60s by default).

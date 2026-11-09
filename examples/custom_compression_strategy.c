@@ -112,6 +112,7 @@ static int custom_strategy_3(uvhttp_request_t* request, size_t response_size) {
  * @brief 使用策略 1 的处理器
  */
 static int handler_strategy_1(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     /* 生成较大的可压缩文本内容 (~8KB) */
     static char large_content[8192];
     static int content_initialized = 0;
@@ -147,6 +148,7 @@ static int handler_strategy_1(uvhttp_request_t* request, uvhttp_response_t* resp
  * @brief 使用策略 2 的处理器
  */
 static int handler_strategy_2(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     /* 生成较大的可压缩 JSON 内容 (~4KB) */
     static char json_content[4096];
     static int json_initialized = 0;
@@ -219,6 +221,7 @@ static int handler_strategy_3(uvhttp_request_t* request, uvhttp_response_t* resp
  * @brief 使用 UVHTTP 便捷函数的处理器
  */
 static int handler_convenient(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     /* 生成较大的 HTML 内容 (~3KB) */
     static char content[3072];
     static int content_initialized = 0;

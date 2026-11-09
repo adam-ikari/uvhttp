@@ -28,6 +28,7 @@
  * Handler for the root path "/"
  */
 int root_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;
     // Set HTTP status code
     uvhttp_response_set_status(res, 200);
 
@@ -50,6 +51,7 @@ int root_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
  * Handler for the "/hello" path
  */
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "text/plain");
     {
@@ -63,6 +65,7 @@ int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
  * Handler for the "/api/data" path (JSON response)
  */
 int api_data_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    (void)req;
     uvhttp_response_set_status(res, 200);
     uvhttp_response_set_header(res, "Content-Type", "application/json");
     {

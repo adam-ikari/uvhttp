@@ -27,6 +27,7 @@ static void signal_handler(int sig) {
 
 static int api_v1_handler(uvhttp_request_t* request,
                           uvhttp_response_t* response) {
+    (void)request;
     const char* body = "API v1 endpoint";
 
     uvhttp_response_set_status(response, 200);
@@ -39,6 +40,7 @@ static int api_v1_handler(uvhttp_request_t* request,
 
 static int api_v2_handler(uvhttp_request_t* request,
                           uvhttp_response_t* response) {
+    (void)request;
     const char* body = "API v2 endpoint";
 
     uvhttp_response_set_status(response, 200);
@@ -51,6 +53,7 @@ static int api_v2_handler(uvhttp_request_t* request,
 
 static int user_handler(uvhttp_request_t* request,
                         uvhttp_response_t* response) {
+    (void)request;
     const char* body = "User endpoint";
 
     uvhttp_response_set_status(response, 200);
@@ -63,6 +66,7 @@ static int user_handler(uvhttp_request_t* request,
 
 static int post_handler(uvhttp_request_t* request,
                         uvhttp_response_t* response) {
+    (void)request;
     const char* body = "Post endpoint";
 
     uvhttp_response_set_status(response, 200);

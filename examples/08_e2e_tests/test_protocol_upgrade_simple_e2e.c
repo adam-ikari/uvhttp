@@ -29,6 +29,7 @@ static void signal_handler(int sig) {
 
 static int http_handler(uvhttp_request_t* request,
                         uvhttp_response_t* response) {
+    (void)request;
     const char* body = "HTTP/1.1 response";
 
     uvhttp_response_set_status(response, 200);

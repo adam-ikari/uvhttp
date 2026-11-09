@@ -100,17 +100,6 @@ static int delay_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     return rc;
 }
 
-static int notfound_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
-    UVHTTP_EXECUTE_MIDDLEWARE(req, resp, logging_middleware);
-
-    uvhttp_response_set_status(resp, 404);
-    uvhttp_response_set_header(resp, "Content-Type", "text/plain");
-    uvhttp_response_set_body(resp, "Not Found", 9);
-    int rc = uvhttp_response_send(resp);
-    log_response(resp, time(NULL));
-    return rc;
-}
-
 /* ========== Main ========== */
 
 int main(void) {

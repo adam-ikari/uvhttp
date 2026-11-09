@@ -44,6 +44,7 @@ static app_context_t* g_ctx = NULL;
 
 /* Simple response handler */
 static int on_request(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     /* Set status and headers */
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "text/plain");
@@ -67,6 +68,7 @@ static int on_request(uvhttp_request_t* request, uvhttp_response_t* response) {
 
 /* JSON response handler for API testing */
 static int on_request_json(uvhttp_request_t* request, uvhttp_response_t* response) {
+    (void)request;
     /* Set status and headers */
     uvhttp_response_set_status(response, 200);
     uvhttp_response_set_header(response, "Content-Type", "application/json");

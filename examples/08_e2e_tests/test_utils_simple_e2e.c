@@ -124,6 +124,7 @@ static int encoding_handler(uvhttp_request_t* request,
 
 static int timestamp_handler(uvhttp_request_t* request,
                              uvhttp_response_t* response) {
+    (void)request;
     time_t now = time(NULL);
     struct tm* tm_info = localtime(&now);
     char time_str[64];

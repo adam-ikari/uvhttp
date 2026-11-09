@@ -371,9 +371,12 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
             llhttp_execute(parser, conn->read_buffer, conn->read_buffer_used);
         /* HPE_PAUSED_UPGRADE is the normal result for Upgrade requests
          * (WebSocket handshake): the request was fully parsed and the
-         * connection is being handed over to the upgraded protocol. It is not
-         * a parse error. */
-        if (err != HPE_OK && err != HPE_PAUSED_UPGRADE) {
+         * connection is being handed over to the upgraded protocol.
+         * HPE_PAUSED is returned when a pipelined second request is refused
+         * (on_message_begin pauses); the first response is still in flight.
+         * Neither is a parse error. */
+        if (err != HPE_OK && err != HPE_PAUSED_UPGRADE &&
+            err != HPE_PAUSED) {
             const char* err_name = llhttp_errno_name(err);
             UVHTTP_LOG_ERROR("HTTP parse error: %d (%s)\n", err,
                              err_name ? err_name : "unknown");
@@ -552,6 +555,13 @@ uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
 static void connection_new_close_cb(uv_handle_t* handle) {
     uvhttp_connection_t* c = (uvhttp_connection_t*)handle->data;
     if (c && --c->close_pending == 0) {
+#if UVHTTP_FEATURE_TLS
+        /* Construction-failure paths free read_buffer inline but never reach
+         * free_resources, so release the lazily allocated ciphertext buffer
+         * here. It is NULL on the normal close path (already freed there). */
+        uvhttp_free(c->tls_cipher_buf);
+        c->tls_cipher_buf = NULL;
+#endif
         uvhttp_free(c);
     }
 }
@@ -1249,7 +1259,25 @@ static void on_websocket_read(uv_stream_t* stream, ssize_t nread,
          * fill level (on_alloc_buffer handed uv the space, but the read
          * callback must advance tls_cipher_used) then decrypt into
          * read_buffer (plaintext) before handing frames to the WS parser. */
-        conn->tls_cipher_used += (size_t)nread;
+        if (conn->tls_cipher_used == conn->tls_cipher_cap) {
+            /* Buffer was full when libuv allocated: it handed a 1-byte
+             * scratch window. Drain consumable records, then copy the byte
+             * in. The HTTP path does the same in on_read; without it the
+             * ciphertext buffer would be over-run by one byte. */
+            if (tls_decrypt_pending(conn, 0) != 0) {
+                return;
+            }
+            if (conn->tls_cipher_used == conn->tls_cipher_cap) {
+                UVHTTP_LOG_ERROR(
+                    "TLS ciphertext buffer full and not drainable\n");
+                uvhttp_connection_websocket_close(conn);
+                return;
+            }
+            memcpy(conn->tls_cipher_buf + conn->tls_cipher_used, buf->base, 1);
+            conn->tls_cipher_used += 1;
+        } else {
+            conn->tls_cipher_used += (size_t)nread;
+        }
         for (;;) {
             int ret = mbedtls_ssl_read((mbedtls_ssl_context*)conn->ssl,
                                        (unsigned char*)conn->read_buffer,
