@@ -727,7 +727,7 @@ TEST(ConnectionTest, WithMock) {
 | 模块 | 实测行覆盖率 | 目标 | 优先级 |
 |------|-------------|------|--------|
 | uvhttp_connection.c | 46.8% | 60% | 高 |
-| uvhttp_static.c | 52.5% | 60% | 高 |
+| uvhttp_static.c | 52.9% | 60% | 高 |
 | uvhttp_server.c | 84.6% | 80% | 中 |
 | uvhttp_websocket.c | 81.1% | 80% | 中 |
 | uvhttp_router.c | 89.5% | 80% | 中 |

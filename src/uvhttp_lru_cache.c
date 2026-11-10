@@ -361,14 +361,13 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
     }
     size_t memory_usage = sizeof(cache_entry_t) + content_length;
 
-    /* An entry that cannot fit the whole budget must not be stored: evicting
-     * the remaining cache for it would empty the cache and still leave the
-     * memory budget exceeded. Reject it before evicting anything, matching
-     * the "cache is empty and still needs space" contract. */
-    if (cache->max_memory_usage > 0 &&
-        memory_usage > cache->max_memory_usage) {
+    /* Eviction below targets 90% of the budget; an entry that cannot fit an
+     * empty cache at that target would only clear the cache and still fail.
+     * Reject it before evicting anything. */
+    double budget_target = (double)cache->max_memory_usage * 0.9;
+    if (cache->max_memory_usage > 0 && (double)memory_usage > budget_target) {
         UVHTTP_LOG_ERROR("Entry exceeds cache budget: %s (%zu > %zu)",
-                         file_path, memory_usage, cache->max_memory_usage);
+                         file_path, memory_usage, (size_t)budget_target);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
     UVHTTP_LOG_DEBUG("Adding cache entry: %s (size: %zu, type: %s)", file_path,

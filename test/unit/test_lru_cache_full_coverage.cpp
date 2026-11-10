@@ -1191,6 +1191,35 @@ TEST(UvhttpLruCacheFullCoverageTest, OversizedEntryKeepsExistingEntries) {
     uvhttp_lru_cache_free(cache);
 }
 
+/* Eviction targets 90% of the budget, so an entry that fits the raw budget but
+ * not that target must also be rejected before anything is evicted. */
+TEST(UvhttpLruCacheFullCoverageTest, EntryAboveEvictionTargetKeepsCache) {
+    cache_manager_t* cache = NULL;
+    uvhttp_error_t result =
+        uvhttp_lru_cache_create(65536, 10, 0, &cache);
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    char small[64];
+    memset(small, 'K', sizeof(small));
+    result = uvhttp_lru_cache_put(cache, "/keep.txt", small, sizeof(small),
+                                  "text/plain", time(NULL), "\"etag\"");
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    /* 60000 bytes plus entry overhead is under the 65536 budget but above
+     * the 58982-byte (90%) eviction target. */
+    char mid[60000];
+    memset(mid, 'M', sizeof(mid));
+    result = uvhttp_lru_cache_put(cache, "/mid.bin", mid, sizeof(mid),
+                                  "application/octet-stream", time(NULL),
+                                  "\"etag2\"");
+    EXPECT_EQ(result, UVHTTP_ERROR_OUT_OF_MEMORY);
+    EXPECT_EQ(cache->entry_count, 1);
+    EXPECT_NE(uvhttp_lru_cache_find(cache, "/keep.txt"), nullptr);
+    EXPECT_EQ(uvhttp_lru_cache_find(cache, "/mid.bin"), nullptr);
+
+    uvhttp_lru_cache_free(cache);
+}
+
 /* Test: cache stats with NULL cache (no crash) */
 TEST(UvhttpLruCacheFullCoverageTest, ResetStatsNullCache) {
     uvhttp_lru_cache_reset_stats(NULL);

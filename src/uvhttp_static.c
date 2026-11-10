@@ -246,40 +246,42 @@ static char* read_file_content(const char* file_path, size_t* file_size) {
     if (!file_path || !file_size)
         return NULL;
 
-    FILE* file = fopen(file_path, "rb");
-    if (!file) {
+    /* Open and size the same descriptor: a path that is swapped for a symlink
+     * between resolve_safe_path() and this call cannot be followed. */
+    int fd = open(file_path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+    if (fd < 0) {
         return NULL;
     }
 
-    /* getfilesize */
-    if (fseek(file, 0, SEEK_END) != 0) {
-        fclose(file);
+    struct stat st;
+    if (fstat(fd, &st) != 0 || !S_ISREG(st.st_mode) || st.st_size < 0) {
+        close(fd);
         return NULL;
     }
 
-    long size = ftell(file);
-    if (size < 0) {
-        fclose(file);
-        return NULL;
-    }
-
-    *file_size = (size_t)size;
-
-    if (fseek(file, 0, SEEK_SET) != 0) {
-        fclose(file);
-        return NULL;
-    }
+    *file_size = (size_t)st.st_size;
 
     /* allocate memory and read file */
-    char* content = uvhttp_alloc(*file_size);
+    char* content = uvhttp_alloc(*file_size ? *file_size : 1);
     if (!content) {
-        fclose(file);
+        close(fd);
         uvhttp_handle_memory_failure("file_content", NULL, NULL);
         return NULL;
     }
 
-    size_t bytes_read = fread(content, 1, *file_size, file);
-    fclose(file);
+    size_t bytes_read = 0;
+    while (bytes_read < *file_size) {
+        ssize_t n = read(fd, content + bytes_read, *file_size - bytes_read);
+        if (n < 0) {
+            if (errno == EINTR)
+                continue;
+            break;
+        }
+        if (n == 0)
+            break;
+        bytes_read += (size_t)n;
+    }
+    close(fd);
 
     if (bytes_read != *file_size) {
         uvhttp_free(content);
@@ -1099,6 +1101,9 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                                              strlen(dir_html));
                     apply_custom_headers(response, ctx->config.custom_headers);
                     uvhttp_free(dir_html);
+                    /* Same contract as the cache and read paths: the handler
+                     * owns the send; callers only translate the result. */
+                    uvhttp_response_send(response);
                     return UVHTTP_OK;
                 }
             }
@@ -1938,6 +1943,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         if (timer_result != 0) {
             UVHTTP_LOG_ERROR("Failed to init timeout timer: %s",
                              uv_strerror(timer_result));
+            close(ctx->in_fd);
             uvhttp_free(ctx->file_path);
             uvhttp_free(ctx);
             return UVHTTP_ERROR_SERVER_INIT;
@@ -2071,6 +2077,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         if (timer_result != 0) {
             UVHTTP_LOG_ERROR("Failed to init timeout timer: %s",
                              uv_strerror(timer_result));
+            close(ctx->in_fd);
             uvhttp_free(ctx->file_path);
             uvhttp_free(ctx);
             return UVHTTP_ERROR_SERVER_INIT;

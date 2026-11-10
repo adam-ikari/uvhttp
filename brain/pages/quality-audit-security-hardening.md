@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [security, http, static, ci, coverage]
 created: "2026-11-10T05:19:04"
-updated: "2026-11-10T09:30:45"
+updated: "2026-11-10T10:42:38"
 ---
 
 <!-- compiled_truth -->
@@ -53,4 +53,10 @@ updated: "2026-11-10T09:30:45"
   kind: decision
   summary: "静态/缓存审计补充：sendfile 改为单次 open(O_NOFOLLOW)+fstat 消除 stat→open 竞态；根路径不再预先替换成 index_file（否则 index 缺失时目录列表不可达且返回 403，改 404）；static_file_handler_wrapper 现在会使用 fallback_context；LRU put 拒绝超过整体内存预算的条目，不再清空缓存后仍超预算"
   source: fix pass
+  affects: [quality-audit-security-hardening]
+
+- time: 2026-11-10T10:42:38
+  kind: decision
+  summary: "代码评审补充修复：静态处理函数负责发送响应，目录列表分支此前只设置 body 不 send，启用 listing 时请求挂起；read_file_content（≤64KB 及 index 文件）同样改为 open(O_NOFOLLOW)+fstat 消除同一 TOCTOU；LRU 拒绝阈值改为与淘汰目标一致的 90% 预算，避免 90%–100% 区间条目清空缓存后仍失败"
+  source: "PR #503 review"
   affects: [quality-audit-security-hardening]

@@ -728,7 +728,7 @@ For detailed usage, refer to the [Testing Guide](./guide/TESTING_GUIDE.md).
 | Module | Measured lines | Target | Priority |
 |--------|----------------|--------|----------|
 | uvhttp_connection.c | 46.8% | 60% | High |
-| uvhttp_static.c | 52.5% | 60% | High |
+| uvhttp_static.c | 52.9% | 60% | High |
 | uvhttp_server.c | 84.6% | 80% | Medium |
 | uvhttp_websocket.c | 81.1% | 80% | Medium |
 | uvhttp_router.c | 89.5% | 80% | Medium |
