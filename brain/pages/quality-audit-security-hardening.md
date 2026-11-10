@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [security, http, static, ci, coverage]
 created: "2026-11-10T05:19:04"
-updated: "2026-11-10T07:35:21"
+updated: "2026-11-10T09:30:45"
 ---
 
 <!-- compiled_truth -->
@@ -47,4 +47,10 @@ updated: "2026-11-10T07:35:21"
   kind: decision
   summary: "PR #501 已合并到 main（5e96c38），main 上 Release 120/120 通过"
   source: merge verification
+  affects: [quality-audit-security-hardening]
+
+- time: 2026-11-10T09:30:45
+  kind: decision
+  summary: "静态/缓存审计补充：sendfile 改为单次 open(O_NOFOLLOW)+fstat 消除 stat→open 竞态；根路径不再预先替换成 index_file（否则 index 缺失时目录列表不可达且返回 403，改 404）；static_file_handler_wrapper 现在会使用 fallback_context；LRU put 拒绝超过整体内存预算的条目，不再清空缓存后仍超预算"
+  source: fix pass
   affects: [quality-audit-security-hardening]

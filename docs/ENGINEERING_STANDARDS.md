@@ -717,8 +717,9 @@ For detailed usage, refer to the [Testing Guide](./guide/TESTING_GUIDE.md).
 #### Target Coverage
 
 - **Overall target**: 80%
-- **Measured 2026-11-10** (`make build-coverage && make coverage`, all
-  features on): 70.9% lines, 86.3% functions
+- **Measured 2026-11-10** (all features on, static files included): 72.5%
+  lines, 87.8% functions. Reproduce with
+  `make build-coverage CMAKE_FLAGS="-DBUILD_WITH_STATIC_FILES=ON" && make coverage`.
 - Coverage is reported, not gated: no CI job fails on a percentage drop. Keep
   new code covered; treat the 80% figure as the goal, not a claim.
 
@@ -727,10 +728,10 @@ For detailed usage, refer to the [Testing Guide](./guide/TESTING_GUIDE.md).
 | Module | Measured lines | Target | Priority |
 |--------|----------------|--------|----------|
 | uvhttp_connection.c | 46.8% | 60% | High |
-| uvhttp_static.c | 38.5% | 60% | High |
+| uvhttp_static.c | 52.5% | 60% | High |
 | uvhttp_server.c | 84.6% | 80% | Medium |
 | uvhttp_websocket.c | 81.1% | 80% | Medium |
-| uvhttp_router.c | 89.3% | 80% | Medium |
+| uvhttp_router.c | 89.5% | 80% | Medium |
 | uvhttp_request.c | 86.9% | 80% | Medium |
 | uvhttp_response.c | 88.3% | 80% | Medium |
 
@@ -1030,7 +1031,7 @@ TEST(ConnectionTest, CreateConnection) {
 1. **Every new feature must have tests**
 2. **Bug fixes must include regression tests**
 3. **New and changed code must be covered**; overall coverage targets 80%
-   (measured 70.9% on 2026-11-10, see Coverage Targets)
+   (measured 72.5% on 2026-11-10, see Coverage Targets)
 4. **Test names must be clear and understandable**
 5. **Use assertions to verify expected behavior**
 6. **Avoid dependencies between tests**

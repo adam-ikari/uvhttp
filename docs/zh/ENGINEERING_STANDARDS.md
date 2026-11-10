@@ -716,8 +716,9 @@ TEST(ConnectionTest, WithMock) {
 #### 目标覆盖率
 
 - **整体目标**：80%
-- **2026-11-10 实测**（`make build-coverage && make coverage`，全特性开启）：
-  行覆盖率 70.9%，函数覆盖率 86.3%
+- **2026-11-10 实测**（全特性开启，含静态文件）：
+  行覆盖率 72.5%，函数覆盖率 87.8%。复现：
+  `make build-coverage CMAKE_FLAGS="-DBUILD_WITH_STATIC_FILES=ON" && make coverage`
 - 覆盖率只报告、不设门禁：没有 CI 任务会因百分比下降而失败。新代码应补测试；
   80% 是目标，不是现状。
 
@@ -726,10 +727,10 @@ TEST(ConnectionTest, WithMock) {
 | 模块 | 实测行覆盖率 | 目标 | 优先级 |
 |------|-------------|------|--------|
 | uvhttp_connection.c | 46.8% | 60% | 高 |
-| uvhttp_static.c | 38.5% | 60% | 高 |
+| uvhttp_static.c | 52.5% | 60% | 高 |
 | uvhttp_server.c | 84.6% | 80% | 中 |
 | uvhttp_websocket.c | 81.1% | 80% | 中 |
-| uvhttp_router.c | 89.3% | 80% | 中 |
+| uvhttp_router.c | 89.5% | 80% | 中 |
 | uvhttp_request.c | 86.9% | 80% | 中 |
 | uvhttp_response.c | 88.3% | 80% | 中 |
 
@@ -1029,7 +1030,7 @@ TEST(ConnectionTest, CreateConnection) {
 1. **每个新功能必须有测试**
 2. **Bug 修复必须有回归测试**
 3. **新增与改动的代码必须有测试覆盖**；整体覆盖率目标 80%
-   （2026-11-10 实测 70.9%，见《覆盖率目标》）
+   （2026-11-10 实测 72.5%，见《覆盖率目标》）
 4. **测试命名清晰易懂**
 5. **使用断言验证预期行为**
 6. **避免测试之间的依赖**

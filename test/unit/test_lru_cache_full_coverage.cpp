@@ -1163,6 +1163,34 @@ TEST(UvhttpLruCacheFullCoverageTest, EvictFromEmptyCache) {
     uvhttp_lru_cache_free(cache);
 }
 
+/* An entry larger than the whole budget must be rejected before eviction:
+ * otherwise the cache is emptied for content it still cannot hold. */
+TEST(UvhttpLruCacheFullCoverageTest, OversizedEntryKeepsExistingEntries) {
+    cache_manager_t* cache = NULL;
+    uvhttp_error_t result =
+        uvhttp_lru_cache_create(65536, 10, 0, &cache);
+    ASSERT_EQ(result, UVHTTP_OK);
+
+    char small[64];
+    memset(small, 'K', sizeof(small));
+    result = uvhttp_lru_cache_put(cache, "/keep.txt", small, sizeof(small),
+                                  "text/plain", time(NULL), "\"etag\"");
+    ASSERT_EQ(result, UVHTTP_OK);
+    ASSERT_EQ(cache->entry_count, 1);
+
+    char big[131072];
+    memset(big, 'B', sizeof(big));
+    result = uvhttp_lru_cache_put(cache, "/big.bin", big, sizeof(big),
+                                  "application/octet-stream", time(NULL),
+                                  "\"etag2\"");
+    EXPECT_EQ(result, UVHTTP_ERROR_OUT_OF_MEMORY);
+    EXPECT_EQ(cache->entry_count, 1);
+    EXPECT_NE(uvhttp_lru_cache_find(cache, "/keep.txt"), nullptr);
+    EXPECT_EQ(uvhttp_lru_cache_find(cache, "/big.bin"), nullptr);
+
+    uvhttp_lru_cache_free(cache);
+}
+
 /* Test: cache stats with NULL cache (no crash) */
 TEST(UvhttpLruCacheFullCoverageTest, ResetStatsNullCache) {
     uvhttp_lru_cache_reset_stats(NULL);
