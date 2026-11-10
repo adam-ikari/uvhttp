@@ -673,6 +673,104 @@ TEST_F(E2EAutomatedTest, StaticFileCustomHeadersOverHttp) {
     unlink(filepath.c_str());
     rmdir(dir);
 }
+
+TEST_F(E2EAutomatedTest, StaticRootDirectoryListingOverHttp) {
+    char dir_template[] = "/tmp/uvhttp_static_list_XXXXXX";
+    char* dir = mkdtemp(dir_template);
+    ASSERT_NE(dir, nullptr);
+
+    std::string plain = std::string(dir) + "/a b.txt";
+    FILE* f = fopen(plain.c_str(), "wb");
+    ASSERT_NE(f, nullptr);
+    fputs("plain", f);
+    fclose(f);
+
+    std::string odd = std::string(dir) + "/<svg onload=alert(1)>.txt";
+    f = fopen(odd.c_str(), "wb");
+    ASSERT_NE(f, nullptr);
+    fputs("odd", f);
+    fclose(f);
+
+    ASSERT_EQ(mkdir((std::string(dir) + "/sub").c_str(), 0755), 0);
+
+    uvhttp_static_config_t config;
+    memset(&config, 0, sizeof(config));
+    strncpy(config.root_directory, dir, sizeof(config.root_directory) - 1);
+    config.max_cache_size = 1024 * 1024;
+    config.cache_ttl = 3600;
+    config.enable_directory_listing = 1;
+
+    uvhttp_static_context_t* static_ctx = nullptr;
+    ASSERT_EQ(uvhttp_static_create(&config, &static_ctx), UVHTTP_OK);
+    ASSERT_NE(static_ctx, nullptr);
+
+    g_static_ctx_for_http_test = static_ctx;
+    server_->add_route("/", static_handler_for_http_test);
+    server_->set_router();
+    ASSERT_GT(server_->start(), 0);
+    ASSERT_TRUE(wait_for_server(server_->url("/")));
+
+    /* The root request resolves to the directory and must reach the listing
+     * branch, which owns sending its own response. */
+    std::string raw = curl_headers_and_body(server_->url("/"));
+    EXPECT_NE(raw.find("200 OK"), std::string::npos) << raw;
+    EXPECT_NE(raw.find("href=\"a%20b.txt\""), std::string::npos) << raw;
+    EXPECT_NE(raw.find("href=\"%3Csvg%20onload%3Dalert%281%29%3E.txt\""),
+              std::string::npos)
+        << raw;
+    EXPECT_NE(raw.find("&lt;svg"), std::string::npos) << raw;
+    EXPECT_EQ(raw.find("<svg"), std::string::npos) << raw;
+    EXPECT_NE(raw.find("href=\"sub/\""), std::string::npos) << raw;
+
+    std::string code;
+    curl_body_and_code("GET", server_->url("/missing.txt"), code);
+    EXPECT_EQ(code, "404");
+
+    g_static_ctx_for_http_test = nullptr;
+    uvhttp_static_free(static_ctx);
+    unlink(plain.c_str());
+    unlink(odd.c_str());
+    rmdir((std::string(dir) + "/sub").c_str());
+    rmdir(dir);
+}
+
+TEST_F(E2EAutomatedTest, StaticRootServesIndexOverHttp) {
+    char dir_template[] = "/tmp/uvhttp_static_root_XXXXXX";
+    char* dir = mkdtemp(dir_template);
+    ASSERT_NE(dir, nullptr);
+
+    std::string filepath = std::string(dir) + "/index.html";
+    FILE* f = fopen(filepath.c_str(), "wb");
+    ASSERT_NE(f, nullptr);
+    fputs("root index body", f);
+    fclose(f);
+
+    uvhttp_static_config_t config;
+    memset(&config, 0, sizeof(config));
+    strncpy(config.root_directory, dir, sizeof(config.root_directory) - 1);
+    config.max_cache_size = 1024 * 1024;
+    config.cache_ttl = 3600;
+    strncpy(config.index_file, "index.html", sizeof(config.index_file) - 1);
+
+    uvhttp_static_context_t* static_ctx = nullptr;
+    ASSERT_EQ(uvhttp_static_create(&config, &static_ctx), UVHTTP_OK);
+    ASSERT_NE(static_ctx, nullptr);
+
+    g_static_ctx_for_http_test = static_ctx;
+    server_->add_route("/", static_handler_for_http_test);
+    server_->set_router();
+    ASSERT_GT(server_->start(), 0);
+    ASSERT_TRUE(wait_for_server(server_->url("/")));
+
+    std::string raw = curl_headers_and_body(server_->url("/"));
+    EXPECT_NE(raw.find("200 OK"), std::string::npos) << raw;
+    EXPECT_NE(raw.find("root index body"), std::string::npos) << raw;
+
+    g_static_ctx_for_http_test = nullptr;
+    uvhttp_static_free(static_ctx);
+    unlink(filepath.c_str());
+    rmdir(dir);
+}
 #endif /* UVHTTP_FEATURE_STATIC_FILES */
 
 /* ===================================================================

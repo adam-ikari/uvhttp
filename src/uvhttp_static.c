@@ -246,40 +246,42 @@ static char* read_file_content(const char* file_path, size_t* file_size) {
     if (!file_path || !file_size)
         return NULL;
 
-    FILE* file = fopen(file_path, "rb");
-    if (!file) {
+    /* Open and size the same descriptor: a path that is swapped for a symlink
+     * between resolve_safe_path() and this call cannot be followed. */
+    int fd = open(file_path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+    if (fd < 0) {
         return NULL;
     }
 
-    /* getfilesize */
-    if (fseek(file, 0, SEEK_END) != 0) {
-        fclose(file);
+    struct stat st;
+    if (fstat(fd, &st) != 0 || !S_ISREG(st.st_mode) || st.st_size < 0) {
+        close(fd);
         return NULL;
     }
 
-    long size = ftell(file);
-    if (size < 0) {
-        fclose(file);
-        return NULL;
-    }
-
-    *file_size = (size_t)size;
-
-    if (fseek(file, 0, SEEK_SET) != 0) {
-        fclose(file);
-        return NULL;
-    }
+    *file_size = (size_t)st.st_size;
 
     /* allocate memory and read file */
-    char* content = uvhttp_alloc(*file_size);
+    char* content = uvhttp_alloc(*file_size ? *file_size : 1);
     if (!content) {
-        fclose(file);
+        close(fd);
         uvhttp_handle_memory_failure("file_content", NULL, NULL);
         return NULL;
     }
 
-    size_t bytes_read = fread(content, 1, *file_size, file);
-    fclose(file);
+    size_t bytes_read = 0;
+    while (bytes_read < *file_size) {
+        ssize_t n = read(fd, content + bytes_read, *file_size - bytes_read);
+        if (n < 0) {
+            if (errno == EINTR)
+                continue;
+            break;
+        }
+        if (n == 0)
+            break;
+        bytes_read += (size_t)n;
+    }
+    close(fd);
 
     if (bytes_read != *file_size) {
         uvhttp_free(content);
@@ -1040,35 +1042,19 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     memcpy(clean_path, url, path_len);
     clean_path[path_len] = '\0';
 
-    /* process root path */
-    if (strcmp(clean_path, "/") == 0) {
-        /* index_file must keep the leading '/' — uvhttp_validate_url_path()
-         * rejects paths that do not start with '/' */
-        char buf[UVHTTP_MAX_PATH_SIZE];
-        if (uvhttp_safe_strncpy(buf, ctx->config.index_file, sizeof(buf)) ==
-            0) {
-            if (buf[0] == '/') {
-                uvhttp_safe_strncpy(clean_path, buf, sizeof(clean_path));
-            } else {
-                size_t blen = strlen(buf);
-                if (blen + 1 >= sizeof(clean_path)) {
-                    blen = sizeof(clean_path) - 2; /* keep room for '/' + NUL */
-                }
-                clean_path[0] = '/';
-                memcpy(clean_path + 1, buf, blen);
-                clean_path[blen + 1] = '\0';
-            }
-        } else {
-            /* index_file too long, use default value */
-            uvhttp_safe_strncpy(clean_path, "/index.html", sizeof(clean_path));
-        }
-    }
+    /* A request for "/" is resolved as the directory itself: the directory
+     * branch below applies index_file and directory_listing. Mapping it to
+     * index_file before resolution made both unreachable when the index was
+     * absent - resolve_safe_path() requires an existing path, so the request
+     * turned into a blanket 403. */
 
     /* build safe file path */
     char safe_path[UVHTTP_MAX_FILE_PATH_SIZE];
     if (!uvhttp_static_resolve_safe_path(ctx->config.root_directory, clean_path,
                                          safe_path, sizeof(safe_path))) {
-        uvhttp_response_set_status(response, 403); /* Forbidden */
+        /* Invalid (traversal) and nonexistent paths are indistinguishable here;
+         * 404 avoids leaking which candidate paths exist under the root. */
+        uvhttp_response_set_status(response, 404);
         return UVHTTP_ERROR_NOT_FOUND;
     }
 
@@ -1115,6 +1101,9 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                                              strlen(dir_html));
                     apply_custom_headers(response, ctx->config.custom_headers);
                     uvhttp_free(dir_html);
+                    /* Same contract as the cache and read paths: the handler
+                     * owns the send; callers only translate the result. */
+                    uvhttp_response_send(response);
                     return UVHTTP_OK;
                 }
             }
@@ -1795,10 +1784,19 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
     const uvhttp_static_config_t* config) {
     uvhttp_response_t* resp = (uvhttp_response_t*)response;
 
-    /* getfilesize */
+    /* Open once and derive the size from the descriptor: stat() followed by
+     * open() races with a symlink swapped in after realpath verification.
+     * O_NOFOLLOW rejects a symlink at the final component. */
+    int fd = open(file_path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+    if (fd < 0) {
+        UVHTTP_LOG_ERROR("Failed to open file: %s", file_path);
+        return UVHTTP_ERROR_NOT_FOUND;
+    }
+
     struct stat st;
-    if (stat(file_path, &st) != 0) {
-        UVHTTP_LOG_ERROR("Failed to stat file: %s", file_path);
+    if (fstat(fd, &st) != 0 || !S_ISREG(st.st_mode)) {
+        UVHTTP_LOG_ERROR("Not a regular file: %s", file_path);
+        close(fd);
         return UVHTTP_ERROR_NOT_FOUND;
     }
 
@@ -1812,12 +1810,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
             "Small file detected, using optimized I/O: %s (%zu bytes)",
             file_path, file_size);
 
-        /* use open() instead of fopen(), reduce system call overhead */
-        int fd = open(file_path, O_RDONLY);
-        if (fd < 0) {
-            UVHTTP_LOG_ERROR("Failed to open file: %s", file_path);
-            return UVHTTP_ERROR_NOT_FOUND;
-        }
+        /* fd is already open */
 
         /* readfilecontent */
         char* buffer = (char*)uvhttp_alloc(file_size + 1);
@@ -1858,6 +1851,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         sendfile_context_t* ctx =
             (sendfile_context_t*)uvhttp_alloc(sizeof(sendfile_context_t));
         if (!ctx) {
+            close(fd);
             return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
 
@@ -1881,6 +1875,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         size_t path_len = strlen(file_path);
         ctx->file_path = (char*)uvhttp_alloc(path_len + 1);
         if (!ctx->file_path) {
+            close(fd);
             uvhttp_free(ctx);
             return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
@@ -1892,19 +1887,14 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         if (fd_result < 0) {
             UVHTTP_LOG_ERROR("Failed to get client fd: %s",
                              uv_strerror(fd_result));
+            close(fd);
             uvhttp_free(ctx->file_path);
             uvhttp_free(ctx);
             return UVHTTP_ERROR_SERVER_INIT;
         }
 
-        /* openinputfile */
-        ctx->in_fd = open(file_path, O_RDONLY);
-        if (ctx->in_fd < 0) {
-            UVHTTP_LOG_ERROR("Failed to open file for sendfile: %s", file_path);
-            uvhttp_free(ctx->file_path);
-            uvhttp_free(ctx);
-            return UVHTTP_ERROR_NOT_FOUND;
-        }
+        /* reuse the descriptor already opened above */
+        ctx->in_fd = fd;
 
         /* getMIMEtype */
         char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
@@ -1953,6 +1943,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         if (timer_result != 0) {
             UVHTTP_LOG_ERROR("Failed to init timeout timer: %s",
                              uv_strerror(timer_result));
+            close(ctx->in_fd);
             uvhttp_free(ctx->file_path);
             uvhttp_free(ctx);
             return UVHTTP_ERROR_SERVER_INIT;
@@ -1994,6 +1985,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         sendfile_context_t* ctx =
             (sendfile_context_t*)uvhttp_alloc(sizeof(sendfile_context_t));
         if (!ctx) {
+            close(fd);
             return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
 
@@ -2017,6 +2009,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         size_t path_len = strlen(file_path);
         ctx->file_path = (char*)uvhttp_alloc(path_len + 1);
         if (!ctx->file_path) {
+            close(fd);
             uvhttp_free(ctx);
             return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
@@ -2028,19 +2021,14 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         if (fd_result < 0) {
             UVHTTP_LOG_ERROR("Failed to get client fd: %s",
                              uv_strerror(fd_result));
+            close(fd);
             uvhttp_free(ctx->file_path);
             uvhttp_free(ctx);
             return UVHTTP_ERROR_SERVER_INIT;
         }
 
-        /* openinputfile */
-        ctx->in_fd = open(file_path, O_RDONLY);
-        if (ctx->in_fd < 0) {
-            UVHTTP_LOG_ERROR("Failed to open file for sendfile: %s", file_path);
-            uvhttp_free(ctx->file_path);
-            uvhttp_free(ctx);
-            return UVHTTP_ERROR_NOT_FOUND;
-        }
+        /* reuse the descriptor already opened above */
+        ctx->in_fd = fd;
 
         /* getMIMEtype */
         char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
@@ -2089,6 +2077,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         if (timer_result != 0) {
             UVHTTP_LOG_ERROR("Failed to init timeout timer: %s",
                              uv_strerror(timer_result));
+            close(ctx->in_fd);
             uvhttp_free(ctx->file_path);
             uvhttp_free(ctx);
             return UVHTTP_ERROR_SERVER_INIT;

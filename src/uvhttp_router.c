@@ -587,12 +587,15 @@ static int static_file_handler_wrapper(uvhttp_request_t* request,
     /* get router */
     uvhttp_router_t* router = conn->server->router;
 
-    /* call static file processing function */
-    if (router->static_context) {
+    /* call static file processing function - a handler returned for
+     * fallback_context must not fall through to a 404 just because
+     * static_context is unset. */
+    void* static_ctx = router->static_context ? router->static_context
+                                              : router->fallback_context;
+    if (static_ctx) {
 #    ifdef UVHTTP_STATIC_FILES_ENABLED
         uvhttp_result_t result = uvhttp_static_handle_request(
-            (uvhttp_static_context_t*)router->static_context, request,
-            response);
+            (uvhttp_static_context_t*)static_ctx, request, response);
 
         if (result == UVHTTP_OK) {
             return 0;
