@@ -139,7 +139,7 @@ jobs:
           ./build_fuzz/fuzz_static_path -max_total_time=60 -max_len=256 -print_final_stats=1
       - name: Upload crash artifacts (if any)
         if: failure()
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: fuzz-crash-artifacts
           path: |

@@ -55,7 +55,7 @@ jobs:
           cd build && make -j$(nproc)
       
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: build-ubuntu-nightly-${{ github.run_number }}
           path: build/
@@ -88,7 +88,7 @@ jobs:
           output: codeql-results
 
       - name: Upload security results
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: security-results-nightly-${{ github.run_number }}
           path: codeql-results/
@@ -139,7 +139,7 @@ jobs:
           genhtml coverage.info --output-directory coverage-report --ignore-errors inconsistent
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: coverage-report-nightly-${{ github.run_number }}
           path: build/coverage-report/
@@ -191,7 +191,7 @@ jobs:
           kill $SERVER_PID 2>/dev/null || true
 
       - name: Upload stress test results
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: stress-test-results-nightly-${{ github.run_number }}
           path: |
@@ -236,7 +236,7 @@ jobs:
           parallel: 1
 
       - name: Upload UBSan test results
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: ubsan-test-results-nightly-${{ github.run_number }}
           path: |
