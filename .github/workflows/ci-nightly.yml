@@ -108,7 +108,7 @@ jobs:
           submodules: recursive
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@v8.0.2
         with:
           name: build-ubuntu-nightly-${{ github.run_number }}
           path: build/
@@ -166,7 +166,7 @@ jobs:
           submodules: recursive
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@v8.0.2
         with:
           name: build-ubuntu-nightly-${{ github.run_number }}
           path: build/
@@ -211,7 +211,7 @@ jobs:
           submodules: recursive
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@v8.0.2
         with:
           name: build-ubuntu-nightly-${{ github.run_number }}
           path: build/
