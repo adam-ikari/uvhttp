@@ -1176,6 +1176,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
                                                     last_modified)) {
             uvhttp_response_set_status(response, 304); /* Not Modified */
             apply_custom_headers(response, ctx->config.custom_headers);
+            uvhttp_response_send(response);
             return 0;
         }
 
@@ -1219,6 +1220,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
         uvhttp_free(file_content);
         uvhttp_response_set_status(response, 304); /* Not Modified */
         apply_custom_headers(response, ctx->config.custom_headers);
+        uvhttp_response_send(response);
         return UVHTTP_OK;
     }
 

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Conditional static-file requests no longer hang** (#501 follow-up): the two 304 branches outside the cache path — files above the 64KB sendfile threshold and cold-cache small files — set the status but never called `uvhttp_response_send`. Because the handler owns the send, a matching `If-None-Match` / `If-Modified-Since` left the client waiting until its own timeout. Both branches now send, matching the cache-hit path. The 304 status text is also correct (`Not Modified` instead of `Unknown`).
+
+### Changed
+- **Header values at or above 2048 bytes are rejected** (#501): `uvhttp_response_set_header` used a 4096-byte copy bound for a 2048-byte field, which overflowed the last inline header; the request parser likewise used 4096 and silently truncated. Both now reject oversized values with an error instead of truncating, so callers no longer observe partial `Cookie`, `Authorization`, `Set-Cookie` or `Content-Security-Policy` values. Callers that depended on values in [2048, 4095] being silently accepted must handle the error.
+
 ## [3.0.0] - 2026-10-18
 
 The window that was drafted as "v2.10". It ships as a major version because nothing in
