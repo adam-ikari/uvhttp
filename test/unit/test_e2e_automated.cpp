@@ -708,7 +708,7 @@ TEST_F(E2EAutomatedTest, StaticConditionalRequestReturns304OverHttp) {
     FILE* f = fopen(big.c_str(), "wb");
     ASSERT_NE(f, nullptr);
     std::string payload(128 * 1024, 'x');
-    fwrite(payload.data(), 1, payload.size(), f);
+    ASSERT_EQ(fwrite(payload.data(), 1, payload.size(), f), payload.size());
     fclose(f);
 
     /* Small file for the cold-cache branch, covering :1220. */
@@ -741,6 +741,10 @@ TEST_F(E2EAutomatedTest, StaticConditionalRequestReturns304OverHttp) {
         std::string code = raw.substr(raw.find_last_of('\n') + 1);
         EXPECT_EQ(code, "304") << what << ": " << raw;
         EXPECT_NE(raw.find("304 Not Modified"), std::string::npos)
+            << what << ": " << raw;
+        /* RFC 9110 §15.4.5: a 304 must carry the validators its 200 would. */
+        EXPECT_NE(raw.find("ETag:"), std::string::npos) << what << ": " << raw;
+        EXPECT_NE(raw.find("Last-Modified:"), std::string::npos)
             << what << ": " << raw;
     };
 
