@@ -716,6 +716,24 @@ uvhttp_result_t uvhttp_static_set_response_headers(void* response,
     return UVHTTP_OK;
 }
 
+/* RFC 9110 §15.4.5: a 304 must carry the validators the corresponding 200
+ * would have sent, otherwise the client cannot refresh its cached copy. */
+static void set_304_validators(void* response, const char* etag,
+                               time_t last_modified) {
+    if (etag && *etag) {
+        uvhttp_response_set_header(response, "ETag", etag);
+    }
+    if (last_modified > 0) {
+        char time_str[64];
+        strftime(time_str, sizeof(time_str), "%a, %d %b %Y %H:%M:%S GMT",
+                 gmtime(&last_modified));
+        uvhttp_response_set_header(response, "Last-Modified", time_str);
+    }
+    uvhttp_response_set_header(
+        response, "Cache-Control",
+        "public, max-age=" UVHTTP_STRINGIFY(UVHTTP_CACHE_DEFAULT_TTL));
+}
+
 /**
  * checkconditionrequest(If-None-Match, If-Modified-Since)
  */
@@ -1066,6 +1084,8 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
         if (uvhttp_static_check_conditional_request(
                 request, cache_entry->etag, cache_entry->last_modified)) {
             uvhttp_response_set_status(response, 304); /* Not Modified */
+            set_304_validators(response, cache_entry->etag,
+                               cache_entry->last_modified);
             apply_custom_headers(response, ctx->config.custom_headers);
         } else {
             uvhttp_static_set_response_headers(
@@ -1175,7 +1195,9 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
         if (uvhttp_static_check_conditional_request(request, etag,
                                                     last_modified)) {
             uvhttp_response_set_status(response, 304); /* Not Modified */
+            set_304_validators(response, etag, last_modified);
             apply_custom_headers(response, ctx->config.custom_headers);
+            uvhttp_response_send(response);
             return 0;
         }
 
@@ -1218,7 +1240,9 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     if (uvhttp_static_check_conditional_request(request, etag, last_modified)) {
         uvhttp_free(file_content);
         uvhttp_response_set_status(response, 304); /* Not Modified */
+        set_304_validators(response, etag, last_modified);
         apply_custom_headers(response, ctx->config.custom_headers);
+        uvhttp_response_send(response);
         return UVHTTP_OK;
     }
 

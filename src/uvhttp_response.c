@@ -136,6 +136,9 @@ static const char* get_status_text(int status_code) {
         return "Created";
     case UVHTTP_STATUS_NO_CONTENT:
         return "No Content";
+    case 304: /* No UVHTTP_STATUS_NOT_MODIFIED constant; static conditional
+                  responses use the literal code. */
+        return "Not Modified";
     case UVHTTP_STATUS_BAD_REQUEST:
         return "Bad Request";
     case UVHTTP_STATUS_UNAUTHORIZED:

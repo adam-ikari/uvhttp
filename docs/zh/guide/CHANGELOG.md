@@ -10,6 +10,14 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
 本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)规范。
 
+## [未发布]
+
+### 修复
+- **条件静态文件请求不再挂起，其 304 响应携带验证器**（#501 后续）：缓存路径之外的两处 304 分支 —— 超过 64KB sendfile 阈值的文件与冷缓存小文件 —— 只设置状态却未调用 `uvhttp_response_send`。由于 handler 负责发送，匹配 `If-None-Match` / `If-Modified-Since` 时客户端会一直等到自身超时。三处 304 分支（含缓存命中）现在都会发送，并按 RFC 9110 §15.4.5 带上 `ETag`、`Last-Modified` 与 `Cache-Control`。304 状态文本也修正为 `Not Modified`（此前是 `Unknown`）。
+
+### 变更
+- **长度达到或超过 2048 字节的 header 值现在被拒绝**（#501）：`uvhttp_response_set_header` 曾以 4096 字节的拷贝上界写入 2048 字节的字段，导致最后一个内联 header 溢出；请求解析器同样使用 4096 并静默截断。两者现在都拒绝超长值而非截断，调用方不会再看到残缺的 `Cookie`、`Authorization`、`Set-Cookie` 或 `Content-Security-Policy`。依赖 [2048, 4095] 区间的值被静默接受的调用方必须处理该错误。
+
 ## [3.0.0] - 2026-10-18
 
 原本按「v2.10」起草的那个窗口。它按主版本号发布，因为里面没有一处向后兼容：四次删除（#470、#472、#479、#483）、两处改名（#470），以及这些改动牵出来的原子性缺陷（#471、#473、#474、#475）。`docs/release-strategy.md` 把「不兼容 API 变更」定为 MAJOR，所以此前那条「版本号保留 2.10 不跳号」的例外不再续期，而是撤销。

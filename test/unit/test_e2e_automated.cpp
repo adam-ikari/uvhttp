@@ -415,6 +415,26 @@ static std::string curl_headers_and_body(const std::string& url) {
     pclose(pipe);
     return result;
 }
+
+/* Returns "<headers+body>\n<http_code>". A hung conditional response shows
+ * up as http_code 000 (curl --max-time elapsed), which the test asserts
+ * against — this is what catches a missing uvhttp_response_send on 304. */
+static std::string curl_with_header(const std::string& url,
+                                    const std::string& header) {
+    std::string cmd = "curl -s -i --max-time 5 -H '" + header + "' '" + url +
+                      "' -w '\\n%{http_code}' 2>/dev/null";
+    FILE* pipe = popen(cmd.c_str(), "r");
+    if (!pipe)
+        return "";
+    std::string result;
+    char buf[4096];
+    size_t n;
+    while ((n = fread(buf, 1, sizeof(buf), pipe)) > 0) {
+        result.append(buf, n);
+    }
+    pclose(pipe);
+    return result;
+}
 #endif
 
 /* ===================================================================
@@ -671,6 +691,83 @@ TEST_F(E2EAutomatedTest, StaticFileCustomHeadersOverHttp) {
     g_static_ctx_for_http_test = nullptr;
     uvhttp_static_free(static_ctx);
     unlink(filepath.c_str());
+    rmdir(dir);
+}
+
+/* A conditional request that matches must produce a 304 response. Two paths
+ * used to set status 304 and return without calling uvhttp_response_send:
+ * the >64KB sendfile path and the cold-cache small-file path. The handler
+ * owns the send, so the client hung until curl's --max-time elapsed. */
+TEST_F(E2EAutomatedTest, StaticConditionalRequestReturns304OverHttp) {
+    char dir_template[] = "/tmp/uvhttp_static_cond_XXXXXX";
+    char* dir = mkdtemp(dir_template);
+    ASSERT_NE(dir, nullptr);
+
+    /* >64KB forces the sendfile branch (no cache write), covering :1177. */
+    std::string big = std::string(dir) + "/big.bin";
+    FILE* f = fopen(big.c_str(), "wb");
+    ASSERT_NE(f, nullptr);
+    std::string payload(128 * 1024, 'x');
+    ASSERT_EQ(fwrite(payload.data(), 1, payload.size(), f), payload.size());
+    fclose(f);
+
+    /* Small file for the cold-cache branch, covering :1220. */
+    std::string small = std::string(dir) + "/small.txt";
+    f = fopen(small.c_str(), "wb");
+    ASSERT_NE(f, nullptr);
+    fputs("small body", f);
+    fclose(f);
+
+    uvhttp_static_config_t config;
+    memset(&config, 0, sizeof(config));
+    strncpy(config.root_directory, dir, sizeof(config.root_directory) - 1);
+    config.max_cache_size = 1024 * 1024;
+    config.cache_ttl = 3600;
+
+    uvhttp_static_context_t* static_ctx = nullptr;
+    ASSERT_EQ(uvhttp_static_create(&config, &static_ctx), UVHTTP_OK);
+    ASSERT_NE(static_ctx, nullptr);
+
+    g_static_ctx_for_http_test = static_ctx;
+    server_->add_route("/big.bin", static_handler_for_http_test);
+    server_->add_route("/small.txt", static_handler_for_http_test);
+    server_->set_router();
+    ASSERT_GT(server_->start(), 0);
+    ASSERT_TRUE(wait_for_server(server_->url("/big.bin")));
+
+    auto expect304 = [](const std::string& raw, const std::string& what) {
+        /* curl -w appends the http_code as the last line; 000 means the
+         * request timed out (the old missing-send bug). */
+        std::string code = raw.substr(raw.find_last_of('\n') + 1);
+        EXPECT_EQ(code, "304") << what << ": " << raw;
+        EXPECT_NE(raw.find("304 Not Modified"), std::string::npos)
+            << what << ": " << raw;
+        /* RFC 9110 §15.4.5: a 304 must carry the validators its 200 would. */
+        EXPECT_NE(raw.find("ETag:"), std::string::npos) << what << ": " << raw;
+        EXPECT_NE(raw.find("Last-Modified:"), std::string::npos)
+            << what << ": " << raw;
+    };
+
+    /* If-None-Match: * matches any current entity (RFC 7232 §3.2), so it
+     * forces the 304 branch without depending on which headers each path
+     * emits. */
+    std::string first = curl_headers_and_body(server_->url("/big.bin"));
+    EXPECT_NE(first.find("200 OK"), std::string::npos) << first;
+    expect304(curl_with_header(server_->url("/big.bin"), "If-None-Match: *"),
+              "sendfile path");
+
+    /* Cold-cache small-file path: warm it once, then drop the cache so the
+     * conditional request takes the disk read branch. */
+    EXPECT_NE(curl_headers_and_body(server_->url("/small.txt")).find("200 OK"),
+              std::string::npos);
+    uvhttp_static_clear_cache(static_ctx);
+    expect304(curl_with_header(server_->url("/small.txt"), "If-None-Match: *"),
+              "cold-cache path");
+
+    g_static_ctx_for_http_test = nullptr;
+    uvhttp_static_free(static_ctx);
+    unlink(big.c_str());
+    unlink(small.c_str());
     rmdir(dir);
 }
 
