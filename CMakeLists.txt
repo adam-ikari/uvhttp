@@ -803,6 +803,10 @@ endforeach()
 # ============================================================================
 # Compile mock tests with libuv mock library
 # ============================================================================
+# The mock tests link with GNU ld's --wrap, which Apple ld does not support.
+# They still run in the Linux CI; skip them on macOS so the cross-platform
+# compile job can build the library itself.
+if(NOT APPLE)
 file(GLOB MOCK_TEST_FILES test/unit/test_*_mock*.cpp test/unit/test_*_libuv_fail*.cpp)
 list(FILTER MOCK_TEST_FILES EXCLUDE REGEX ".*disabled.*")
 # 排除辅助文件（test_time_mock.cpp 和 test_loop_helper.cpp）
@@ -884,6 +888,7 @@ foreach(test_file ${MOCK_TEST_FILES})
         )
     endif()
 endforeach()
+endif() # NOT APPLE (mock tests need GNU ld --wrap)
 
 # Add gtest sample test (compiled with C++)
 add_executable(uvhttp_unit_tests test/unit/simple_test.cpp ${SOURCES})
