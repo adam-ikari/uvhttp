@@ -1,6 +1,6 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-11-23T17:32:28.885Z._
+_Auto-generated. Last updated 2026-11-23T17:53:38.153Z._
 
 - [alloc-hotpath-measured](pages/alloc-hotpath-measured.md) — category: decision | tags: [performance, benchmark, allocator, methodology, yagni] | # 每请求分配已实测：省一次仅 0.026%，内存分配优化不做
 - [api-atomicity-audit](pages/api-atomicity-audit.md) — category: decision | tags: [api, atomicity, orthogonality, audit, v2.10] | <!-- compiled_truth -->
@@ -23,7 +23,7 @@ _Auto-generated. Last updated 2026-11-23T17:32:28.885Z._
 - [integration-tests-are-servers](pages/integration-tests-are-servers.md) — category: decision | tags: [test, integration, assert, ci, cleanup] | # test/integration 下 19 个文件不是测试
 - [io-uring-evaluation](pages/io-uring-evaluation.md) — category: decision | tags: [performance, architecture, io-uring, libuv, yagni] | # io_uring 评估：当前架构下不可达，待办关闭
 - [lcov-mock-aggregation-underestimate](pages/lcov-mock-aggregation-underestimate.md) — category: decision | tags: [coverage, lcov, test-infra, mock] | # lcov 聚合低估 mock 测试覆盖（connection.c 45.3% 实为 ~79.6%）
-- [macos-cross-platform-build](pages/macos-cross-platform-build.md) — category: decision | tags: [ci, portability, macos, build] | # macOS 跨平台编译：4 个 GNU-only 障碍与 non-blocking 门禁
+- [macos-cross-platform-build](pages/macos-cross-platform-build.md) — category: decision | tags: [ci, portability, macos, build] | # macOS 跨平台编译：5 个 GNU-only 障碍与 non-blocking 门禁
 - [middleware-stop-does-not-short-circuit-handler](pages/middleware-stop-does-not-short-circuit-handler.md) — category: decision | tags: [middleware, api, defect, v2.10] | # 中间件 STOP 不短路 handler 体（已知缺陷，本次未修）
 - [no-config-file-parsing](pages/no-config-file-parsing.md) — category: decision | tags: [config, scope, roadmap] | ## 约束（2026-10-17 用户确认，记录为项目约束）
 - [perf-regression-gate](pages/perf-regression-gate.md) — category: decision | tags: [performance, benchmark, ci, gate] | ## 现状
