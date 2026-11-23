@@ -5,13 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.0.1] - 2026-11-23
+
+Security and correctness fixes accumulated after 3.0.0. No API changes: all
+merged PRs were bug fixes, CI/test corrections or dependency updates.
 
 ### Fixed
-- **Conditional static-file requests no longer hang, and their 304s carry validators** (#501 follow-up): the two 304 branches outside the cache path — files above the 64KB sendfile threshold and cold-cache small files — set the status but never called `uvhttp_response_send`. Because the handler owns the send, a matching `If-None-Match` / `If-Modified-Since` left the client waiting until its own timeout. All three 304 branches (cache hit included) now send and include `ETag`, `Last-Modified` and `Cache-Control`, as RFC 9110 §15.4.5 requires. The 304 status text is also correct (`Not Modified` instead of `Unknown`).
+- **Response header heap overflow** (#501): `uvhttp_response_set_header` used `UVHTTP_MAX_HEADER_VALUE_SIZE` (4096) as the copy bound for a 2048-byte field, so a value of 2048–4095 bytes could overflow the last inline header. The bound is now the real field size.
+- **Directory-listing XSS** (#501): the `href` inserted the raw file name into the markup; a file named `x"><svg onload=...>` or `javascript:...` could execute. Hrefs are now percent-encoded (RFC 3986 unreserved only) and visible text remains HTML-escaped.
+- **HTTP pipelining use-after-free** (#501): a second request in the same read window re-entered `on_message_complete` before the first response finished, overwriting or freeing a body still referenced by `uv_write`. The parser now pauses and closes after the first response when a message starts with `parsing_complete` set.
+- **Router cache out-of-bounds write** (#501): once the 4096-entry hash table was full, `find_slot` returned `UINT32_MAX` and the code indexed `entries[slot]`. It now returns `OUT_OF_MEMORY`.
+- **WebSocket connection-manager leak** (#501): `uvhttp_server_free` did not release `ws_connection_manager` or its two timers, leaving live handles that made `uv_loop_close` report `UV_EBUSY`.
+- **Static file TOCTOU** (#503): `stat` followed by `open` let a path be swapped for a symlink between checks. The hot paths now use one `open(O_RDONLY|O_CLOEXEC|O_NOFOLLOW)` + `fstat` and read from the same descriptor; empty files no longer fail with a 500.
+- **Directory listings were never sent** (#503): the listing branch set the body but did not call `uvhttp_response_send`, hanging the request whenever listing was enabled.
+- **Cache budget threshold mismatch** (#503): the LRU admission guard used a different threshold from the eviction target, so entries in the 90–100% band emptied the cache and still failed. Both now use 90%.
+- **Fallback routes ignored the static context** (#503): the wrapper only consulted `static_context`, so a fallback route registered via `fallback_context` fell through to 404.
+- **Conditional static-file requests hung, and their 304s lacked validators** (#504): two 304 branches outside the cache path set the status but never sent the response; with handler-owned sends the client waited until its own timeout. All three 304 branches now send and include `ETag`, `Last-Modified` and `Cache-Control` per RFC 9110 §15.4.5, and the reason phrase is `Not Modified` instead of `Unknown`.
 
 ### Changed
-- **Header values at or above 2048 bytes are rejected** (#501): `uvhttp_response_set_header` used a 4096-byte copy bound for a 2048-byte field, which overflowed the last inline header; the request parser likewise used 4096 and silently truncated. Both now reject oversized values with an error instead of truncating, so callers no longer observe partial `Cookie`, `Authorization`, `Set-Cookie` or `Content-Security-Policy` values. Callers that depended on values in [2048, 4095] being silently accepted must handle the error.
+- **Header values at or above 2048 bytes are rejected** (#501): request parsing and response headers used 4096-byte limits where the storage is 2048. Both now reject oversized values rather than silently truncating them, so callers no longer see partial `Cookie`, `Authorization`, `Set-Cookie` or `Content-Security-Policy` values. Callers that depended on values in [2048, 4095] being silently accepted must handle the error.
+- **403 → 404 for unresolved static paths** (#503): traversal attempts and nonexistent files are now indistinguishable, avoiding disclosure of which candidate paths exist under the root.
+- **CTest registers only targets that were actually built** (#501): feature-cropped builds no longer register missing executables, which previously made ctest report "Not Run" as a failure.
+
+### Dependencies
+- `actions/upload-artifact` 7.0.1 → 7.0.2 (#478), `actions/download-artifact` 8.0.1 → 8.0.2 (#477), `fast-xml-parser` 5.11.2 → 5.12.0 (#497).
 
 ## [3.0.0] - 2026-10-18
 
