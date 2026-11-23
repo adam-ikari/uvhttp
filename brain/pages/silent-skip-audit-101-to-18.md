@@ -5,7 +5,7 @@ category: project
 status: active
 tags: [test, ci, quality, false-positive]
 created: "2026-10-05T01:30:20"
-updated: "2026-10-05T04:20:27"
+updated: "2026-11-23T23:43:41"
 ---
 
 <!-- compiled_truth -->
@@ -87,4 +87,10 @@ if (result == UVHTTP_OK) {     // create 对合法输入恒 OK → 守卫恒真
 - time: 2026-10-05T04:20:27
   kind: decision
   summary: "静跳过治理收官：101→15。#453-#457 消除 86 项真假阳性。剩余 15 项经逐项核实为合规守卫（tls 12 项 if(ctx) 是 OOM 防御、version 3 项是 feature 条件），不应改。#457 顺带修了 add_header 空名产品缺口（RFC 7230）——修复刻意只拒空名不连带改长名截断，因为长名截断是独立决策。"
+  affects: [silent-skip-audit-101-to-18]
+
+- time: 2026-11-23T23:43:41
+  kind: decision
+  summary: "剩余 18→15：request_extended AddHeaderEmptyName、router_enhanced ParsePathParamsNoParams、server_api ServerNewWithLoopSuccess 三项已改为显式断言；现余 12 TLS if(ctx)(OOM) + 3 version feature 守卫，均合法，不再下调"
+  source: "2026-11-23 复核 scripts/ci/check_test_validity.py 实际 15 项"
   affects: [silent-skip-audit-101-to-18]
