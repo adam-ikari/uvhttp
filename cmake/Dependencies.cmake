@@ -43,16 +43,22 @@ if(NOT EXISTS ${LIBUV_LIB})
         -DLIBUV_BUILD_BENCH=OFF
         -DLIBUV_BUILD_EXAMPLES=OFF
     )
-    # Add C flags if they're set (for 32-bit builds)
+    # Vendored libuv predates AppleClang's stricter const-qualifier check in
+    # uv__free (uv-common.c:960). Our -Werror propagates here, so demote just
+    # that upstream warning when building the dependency on macOS.
+    set(LIBUV_EXTRA_FLAGS "-Wno-format-truncation")
+    if(APPLE)
+        string(APPEND LIBUV_EXTRA_FLAGS " -Wno-error=incompatible-pointer-types-discards-qualifiers")
+    endif()
     if(DEFINED CMAKE_C_FLAGS)
-        list(APPEND LIBUV_CMAKE_ARGS "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -Wno-format-truncation")
+        list(APPEND LIBUV_CMAKE_ARGS "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} ${LIBUV_EXTRA_FLAGS}")
     else()
-        list(APPEND LIBUV_CMAKE_ARGS "-DCMAKE_C_FLAGS=-Wno-format-truncation")
+        list(APPEND LIBUV_CMAKE_ARGS "-DCMAKE_C_FLAGS=${LIBUV_EXTRA_FLAGS}")
     endif()
     if(DEFINED CMAKE_CXX_FLAGS)
-        list(APPEND LIBUV_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -Wno-format-truncation")
+        list(APPEND LIBUV_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} ${LIBUV_EXTRA_FLAGS}")
     else()
-        list(APPEND LIBUV_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=-Wno-format-truncation")
+        list(APPEND LIBUV_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${LIBUV_EXTRA_FLAGS}")
     endif()
     if(DEFINED EXE_LINKER_FLAGS)
         list(APPEND LIBUV_CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=${EXE_LINKER_FLAGS}")
