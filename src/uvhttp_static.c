@@ -1042,8 +1042,10 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
 
     const char* url = uvhttp_request_get_url(request);
     if (!url) {
-        uvhttp_response_set_status(response, 400);
-        return UVHTTP_ERROR_MALFORMED_REQUEST;
+        /* Handler owns the send: returning an error here would let the outer
+         * dispatch overwrite the status with a generic 404. */
+        uvhttp_send_error_response(response, 400, "Bad Request", NULL);
+        return UVHTTP_OK;
     }
 
     /* parse URL path, remove query parameters */
@@ -1052,8 +1054,8 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     size_t path_len = query_start ? (size_t)(query_start - url) : strlen(url);
 
     if (path_len >= sizeof(clean_path)) {
-        uvhttp_response_set_status(response, 414); /* URI Too Long */
-        return UVHTTP_ERROR_HEADER_TOO_LARGE;
+        uvhttp_send_error_response(response, 414, "URI Too Long", NULL);
+        return UVHTTP_OK;
     }
 
     /* use safe string copy */
@@ -1132,8 +1134,8 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
             int result = snprintf(index_path, sizeof(index_path), "%s/%s",
                                   safe_path, ctx->config.index_file);
             if (result >= (int)sizeof(index_path)) {
-                uvhttp_response_set_status(response, 414); /* URI Too Long */
-                return UVHTTP_ERROR_HEADER_TOO_LARGE;
+                uvhttp_send_error_response(response, 414, "URI Too Long", NULL);
+                return UVHTTP_OK;
             }
 
             if (get_file_info(index_path, &file_size, &last_modified) == 0) {
@@ -1153,8 +1155,8 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     if (file_size > ctx->config.max_file_size) {
         UVHTTP_LOG_WARN("File too large: %s (size: %zu, limit: %zu)", safe_path,
                         file_size, ctx->config.max_file_size);
-        uvhttp_response_set_status(response, 413); /* Payload Too Large */
-        return UVHTTP_ERROR_FILE_TOO_LARGE;
+        uvhttp_send_error_response(response, 413, "Payload Too Large", NULL);
+        return UVHTTP_OK;
     }
 
     /* check if a pre-compressed .gz version exists and client accepts gzip */
@@ -1223,8 +1225,9 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     /* read file content (small file or fallback when sendfile fails) */
     char* file_content = read_file_content(safe_path, &file_size);
     if (!file_content) {
-        uvhttp_response_set_status(response, 500); /* Internal Server Error */
-        return UVHTTP_ERROR_IO_ERROR;
+        uvhttp_send_error_response(response, 500, "Internal Server Error",
+                                   NULL);
+        return UVHTTP_OK;
     }
 
     /* getMIMEtype */

@@ -771,6 +771,48 @@ TEST_F(E2EAutomatedTest, StaticConditionalRequestReturns304OverHttp) {
     rmdir(dir);
 }
 
+/* Error branches that match a request (400/413/414/500) must send their own
+ * response. Returning a non-OK result let the outer dispatch overwrite the
+ * status with a generic 404. This exercises the 413 file-size branch. */
+TEST_F(E2EAutomatedTest, StaticPayloadTooLargeStatusOverHttp) {
+    char dir_template[] = "/tmp/uvhttp_static_413_XXXXXX";
+    char* dir = mkdtemp(dir_template);
+    ASSERT_NE(dir, nullptr);
+
+    std::string big = std::string(dir) + "/big.bin";
+    FILE* f = fopen(big.c_str(), "wb");
+    ASSERT_NE(f, nullptr);
+    std::string payload(4096, 'x');
+    ASSERT_EQ(fwrite(payload.data(), 1, payload.size(), f), payload.size());
+    fclose(f);
+
+    uvhttp_static_config_t config;
+    memset(&config, 0, sizeof(config));
+    strncpy(config.root_directory, dir, sizeof(config.root_directory) - 1);
+    config.max_file_size = 1024; /* the 4KB file exceeds the limit */
+    config.max_cache_size = 1024 * 1024;
+    config.cache_ttl = 3600;
+
+    uvhttp_static_context_t* static_ctx = nullptr;
+    ASSERT_EQ(uvhttp_static_create(&config, &static_ctx), UVHTTP_OK);
+    ASSERT_NE(static_ctx, nullptr);
+
+    g_static_ctx_for_http_test = static_ctx;
+    server_->add_route("/big.bin", static_handler_for_http_test);
+    server_->set_router();
+    ASSERT_GT(server_->start(), 0);
+    ASSERT_TRUE(wait_for_server(server_->url("/big.bin")));
+
+    std::string raw = curl_headers_and_body(server_->url("/big.bin"));
+    EXPECT_NE(raw.find("413"), std::string::npos) << raw;
+    EXPECT_EQ(raw.find("404 Not Found"), std::string::npos) << raw;
+
+    g_static_ctx_for_http_test = nullptr;
+    uvhttp_static_free(static_ctx);
+    unlink(big.c_str());
+    rmdir(dir);
+}
+
 TEST_F(E2EAutomatedTest, StaticRootDirectoryListingOverHttp) {
     char dir_template[] = "/tmp/uvhttp_static_list_XXXXXX";
     char* dir = mkdtemp(dir_template);
