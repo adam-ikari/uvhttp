@@ -73,7 +73,11 @@ message(STATUS "UVHTTP_ROOT: ${UVHTTP_ROOT}")
 message(STATUS "CMAKE_BINARY_DIR: ${CMAKE_BINARY_DIR}")
 
 # 为所有示例禁用未使用参数警告
-add_compile_options(-Wno-error=unused-parameter -Wno-error=unused-function -Wno-error=unused-result -Wno-error=format -Wno-error=discarded-qualifiers)
+add_compile_options(-Wno-error=unused-parameter -Wno-error=unused-function -Wno-error=unused-result -Wno-error=format)
+# `-Wdiscarded-qualifiers` 是 GCC 专有名，AppleClang 对应 `-Wignored-qualifiers`
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    add_compile_options(-Wno-error=discarded-qualifiers)
+endif()
 
 # 为所有示例添加 zlib 链接（如果启用压缩）
 if(BUILD_WITH_COMPRESSION)
