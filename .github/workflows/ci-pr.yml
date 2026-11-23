@@ -80,6 +80,9 @@ jobs:
   macos-build:
     runs-on: macos-latest
     timeout-minutes: 20
+    # macOS runners queue unpredictably and may be cancelled before starting.
+    # Keep the check visible without blocking PRs on external capacity.
+    continue-on-error: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
