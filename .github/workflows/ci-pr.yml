@@ -73,7 +73,25 @@ jobs:
           name: build-ubuntu-pr-${{ github.event.pull_request.number }}
           path: build/dist/
           retention-days: 7
-  
+
+  # 任务 1b: macOS 编译验证（跨平台可编译性，不跑测试）
+  # PR 门禁本来只编译不测试；macOS runner 自带 cmake + AppleClang，
+  # 不需要 setup-build action（那个只支持 Ubuntu）。
+  macos-build:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          submodules: recursive
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
+
+      - name: Build project
+        run: cmake --build build -j$(sysctl -n hw.ncpu)
+
   # 任务 2: 代码质量检查（真实 cppcheck 静态分析，任何告警即阻塞 PR 门禁）
   code-quality-check:
     runs-on: ubuntu-latest
