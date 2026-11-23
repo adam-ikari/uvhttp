@@ -13,9 +13,10 @@ UVHTTP_ERROR_INVALID_PARAM，15 个测试仍然全绿——恒绿零验证。
   [2] 断言被包在 if 里且该 if 内无 GTEST_SKIP —— 零容忍新增
   [3] 零断言测试（函数体只有调用，验证的是「不崩溃」）—— 零容忍新增
 
-[3] 类既有 274 个，多为 NULL 安全测试，在 ASan/UBSan 门禁下仍能捕获内存
-错误，故不要求立即清零，只拦新增。[2] 类既有 101 个需逐项人工核实后治理，
-先记基线、只拦新增。基线下调即为治理进度。
+[3] 类当前 246 个（历史普查 274），多为 NULL 安全测试，在 ASan/UBSan 门禁下
+仍能捕获内存错误，故不要求清零，只拦新增。[2] 类已从历史 101 治至 15：
+剩余 12 个 TLS `if (ctx)`（OOM 守卫）与 3 个 version feature 守卫，均经
+变异核实为合法条件，不再下调。基线下调即治理进度。
 
 用法：
     python3 scripts/ci/check_test_validity.py            # 报告
@@ -29,9 +30,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 TEST_DIR = REPO / "test" / "unit"
 
-# 既有存量（2026-10-03 普查）。逐项修复后下调，下调即治理进度。
+# 既有存量（历史普查 101/274，治理后 15/246）。逐项修复后下调，下调即治理进度。
 BASELINE_SILENT_SKIP = 15
-BASELINE_ZERO_ASSERT = 267
+BASELINE_ZERO_ASSERT = 246
 
 ASSERT_CALL = re.compile(r'\b(EXPECT|ASSERT)_[A-Z]+\s*\(')
 ASSERT_COMMENT = re.compile(r'^\s*(//|/\*)\s*(EXPECT|ASSERT)_[A-Z]+')

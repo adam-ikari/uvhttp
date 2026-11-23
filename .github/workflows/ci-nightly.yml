@@ -134,6 +134,12 @@ jobs:
           # 计数器不一致当成致命错误。这与本库代码无关，但不能跳过整个报告；
           # 忽略该错误类，并把 deps 从报告里移除（与 CMake 的 coverage 目标一致）。
           lcov --capture --directory . --output-file coverage.info --ignore-errors inconsistent
+          # Each test target compiles the sources independently, so lcov emits
+          # many SF blocks per file. lcov 2.x merges them incorrectly for files
+          # exercised mainly by mocks (connection.c 45.3% vs ~79.6% actual).
+          # Sum DA/BRDA/FNDA hits across every block before reporting.
+          python3 ../scripts/ci/fix_lcov_aggregation.py -i coverage.info -o coverage-merged.info
+          mv coverage-merged.info coverage.info
           lcov --remove coverage.info '/usr/*' '*/deps/*' --output-file coverage.info --ignore-errors inconsistent
           lcov --list coverage.info --ignore-errors inconsistent
           genhtml coverage.info --output-directory coverage-report --ignore-errors inconsistent
