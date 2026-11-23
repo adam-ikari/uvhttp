@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [coverage, lcov, test-infra, mock]
 created: "2026-10-06T01:07:51"
-updated: "2026-10-06T01:08:15"
+updated: "2026-11-24T01:32:28"
 ---
 
 <!-- compiled_truth -->
@@ -67,4 +67,10 @@ for block in records:
   kind: decision
   summary: Rewrote compiled_truth to the new best understanding
   source: "lcov 聚合缺陷确认"
+  affects: [lcov-mock-aggregation-underestimate]
+
+- time: 2026-11-24T01:32:28
+  kind: decision
+  summary: "PR #507 落地修复：scripts/ci/fix_lcov_aggregation.py 跨 SF 块求和 DA/BRDA/FNDA，已接入 ci-nightly.yml coverage 步骤（lcov capture 后、remove 前）。本地用 test/coverage/request_coverage.info 合成重复块验证合并后与原始一致；真实 connection.c 45.3%→~79.6% 需在 nightly CI 用 lcov 2.x 复验"
+  source: "2026-11-23 PR #507 合并"
   affects: [lcov-mock-aggregation-underestimate]
