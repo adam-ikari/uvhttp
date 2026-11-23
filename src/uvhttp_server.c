@@ -596,10 +596,16 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
         setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recv_buf_size,
                    sizeof(recv_buf_size));
 
-        /* Set TCP_CORK (latency send to optimize small packets) - only used
-         * when sending large files */
-        int cork = 0; /* Default disabled, enable when sending large files */
+        /* Set TCP_CORK/TCP_NOPUSH (delay small packets, used only when
+         * sending large files). Default disabled; platforms without either
+         * option simply skip it. */
+        int cork = 0;
+#if defined(__linux__)
         setsockopt(sockfd, IPPROTO_TCP, TCP_CORK, &cork, sizeof(cork));
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || \
+    defined(__NetBSD__)
+        setsockopt(sockfd, IPPROTO_TCP, TCP_NOPUSH, &cork, sizeof(cork));
+#endif
     }
 
     /* Use config system's backlog setting */
