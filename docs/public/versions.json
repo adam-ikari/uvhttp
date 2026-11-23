@@ -1,12 +1,19 @@
 {
-  "current": "3.0.0",
+  "current": "3.0.1",
   "baseUrl": "/uvhttp",
   "versions": [
     {
-      "version": "3.0.0",
+      "version": "3.0.1",
       "status": "current",
-      "releaseDate": "2026-10-18",
+      "releaseDate": "2026-11-23",
       "url": "/",
+      "githubUrl": "https://github.com/adam-ikari/uvhttp/releases/tag/v3.0.1"
+    },
+    {
+      "version": "3.0.0",
+      "status": "deprecated",
+      "releaseDate": "2026-10-18",
+      "url": "https://github.com/adam-ikari/uvhttp/tree/v3.0.0",
       "githubUrl": "https://github.com/adam-ikari/uvhttp/releases/tag/v3.0.0"
     }
   ],

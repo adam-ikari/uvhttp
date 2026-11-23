@@ -2,12 +2,12 @@
 # This file defines the current version information for the project
 
 # Current version number (semantic version: MAJOR.MINOR.PATCH)
-VERSION=3.0.0
-VERSION_TYPE=major
-RELEASE_DATE=2026-10-18
-PREVIOUS_VERSION=2.9.2
-NEXT_VERSION=3.0.1
-VERSION_NAME="API 原子化窗口（原 v2.10）：删配置假旋钮 / builder 层 / 内置限流，改供原语与接缝" # v3.0.0
+VERSION=3.0.1
+VERSION_TYPE=patch
+RELEASE_DATE=2026-11-23
+PREVIOUS_VERSION=3.0.0
+NEXT_VERSION=3.0.2
+VERSION_NAME="安全与正确性修复：header 溢出 / 目录列表 XSS / 流水线 UAF / TOCTOU / 304 挂起" # v3.0.1
 IS_PRERELEASE=false
 PRERELEASE_IDENTIFIER=""
 

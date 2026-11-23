@@ -10,13 +10,29 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
 本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)规范。
 
-## [未发布]
+## [3.0.1] - 2026-11-23
+
+3.0.0 之后累积的安全与正确性修复。无 API 变更：合入的 PR 全部是缺陷修复、CI/测试纠正或依赖升级。
 
 ### 修复
-- **条件静态文件请求不再挂起，其 304 响应携带验证器**（#501 后续）：缓存路径之外的两处 304 分支 —— 超过 64KB sendfile 阈值的文件与冷缓存小文件 —— 只设置状态却未调用 `uvhttp_response_send`。由于 handler 负责发送，匹配 `If-None-Match` / `If-Modified-Since` 时客户端会一直等到自身超时。三处 304 分支（含缓存命中）现在都会发送，并按 RFC 9110 §15.4.5 带上 `ETag`、`Last-Modified` 与 `Cache-Control`。304 状态文本也修正为 `Not Modified`（此前是 `Unknown`）。
+- **响应 header 堆溢出**（#501）：`uvhttp_response_set_header` 曾把 `UVHTTP_MAX_HEADER_VALUE_SIZE`（4096）当作 2048 字节字段的拷贝上界，2048–4095 字节的值可越过最后一个内联 header。现按字段实际大小拷贝。
+- **目录列表 XSS**（#501）：`href` 直接插入原始文件名，名为 `x"><svg onload=...>` 或 `javascript:...` 的文件可执行脚本。现 href 做百分号编码（仅保留 RFC 3986 unreserved），可见文本仍做 HTML 转义。
+- **HTTP 流水线释放后使用**（#501）：同一读窗口的第二个请求会在首个响应完成前重入 `on_message_complete`，覆盖或释放仍被 `uv_write` 引用的 body。解析器现在在 `parsing_complete` 已置位时暂停，首个响应写完即关闭连接。
+- **路由缓存越界写**（#501）：4096 项哈希表满后 `find_slot` 返回 `UINT32_MAX`，代码仍以 `entries[slot]` 索引。现返回 `OUT_OF_MEMORY`。
+- **WebSocket 连接管理器泄漏**（#501）：`uvhttp_server_free` 未释放 `ws_connection_manager` 及其两个 timer，留下活跃 handle 使 `uv_loop_close` 报 `UV_EBUSY`。
+- **静态文件 TOCTOU**（#503）：`stat` 后 `open` 之间可把路径换成符号链接。热路径现用单次 `open(O_RDONLY|O_CLOEXEC|O_NOFOLLOW)` + `fstat`，并从同一描述符读取；空文件不再返回 500。
+- **目录列表从未发送**（#503）：列表分支设置了 body 却不调用 `uvhttp_response_send`，启用列表时请求会挂起。
+- **缓存预算阈值不一致**（#503）：LRU 准入守卫与淘汰目标使用不同阈值，90–100% 区间的条目会清空缓存后仍失败。现统一为 90%。
+- **fallback 路由忽略静态上下文**（#503）：wrapper 只查 `static_context`，通过 `fallback_context` 注册的回退路由会落到 404。
+- **条件静态文件请求挂起，304 缺少验证器**（#504）：缓存路径之外的两处 304 分支只设置状态却不发送；handler 负责发送时客户端会等到自身超时。三处 304 分支现都会发送并按 RFC 9110 §15.4.5 带上 `ETag`、`Last-Modified` 与 `Cache-Control`，状态文本也改为 `Not Modified`（此前是 `Unknown`）。
 
 ### 变更
-- **长度达到或超过 2048 字节的 header 值现在被拒绝**（#501）：`uvhttp_response_set_header` 曾以 4096 字节的拷贝上界写入 2048 字节的字段，导致最后一个内联 header 溢出；请求解析器同样使用 4096 并静默截断。两者现在都拒绝超长值而非截断，调用方不会再看到残缺的 `Cookie`、`Authorization`、`Set-Cookie` 或 `Content-Security-Policy`。依赖 [2048, 4095] 区间的值被静默接受的调用方必须处理该错误。
+- **长度达到或超过 2048 字节的 header 值现在被拒绝**（#501）：请求解析与响应 header 曾使用 4096 字节上界而存储只有 2048。现两者都拒绝超长值而非静默截断，调用方不会再看到残缺的 `Cookie`、`Authorization`、`Set-Cookie` 或 `Content-Security-Policy`。依赖 [2048, 4095] 区间的值被静默接受的调用方必须处理该错误。
+- **无法解析的静态路径由 403 改为 404**（#503）：路径穿越与不存在的文件不再可区分，避免泄漏根目录下哪些候选路径存在。
+- **CTest 只注册实际构建出的目标**（#501）：特性裁剪配置不再注册不存在的可执行文件，此前 ctest 会把 "Not Run" 计为失败。
+
+### 依赖
+- `actions/upload-artifact` 7.0.1 → 7.0.2（#478）、`actions/download-artifact` 8.0.1 → 8.0.2（#477）、`fast-xml-parser` 5.11.2 → 5.12.0（#497）。
 
 ## [3.0.0] - 2026-10-18
 
