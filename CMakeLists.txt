@@ -136,10 +136,18 @@ else()
     # symbols so sanitizer stack traces are resolvable. Check the upper-cased
     # build type and scan C_FLAGS for an active sanitizer.
     string(FIND "${CMAKE_C_FLAGS} ${CMAKE_CXX_FLAGS}" "-fsanitize=" _uvhttp_has_sanitize)
-    if(NOT "${_uvhttp_build_type_upper}" STREQUAL "DEBUG" AND _uvhttp_has_sanitize EQUAL -1)
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections -s")
+    if(APPLE)
+        # Apple ld has no --gc-sections; -dead_strip is the equivalent.
+        set(_uvhttp_gc_sections "-Wl,-dead_strip")
+        set(_uvhttp_strip "")
     else()
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections")
+        set(_uvhttp_gc_sections "-Wl,--gc-sections")
+        set(_uvhttp_strip "-s")
+    endif()
+    if(NOT "${_uvhttp_build_type_upper}" STREQUAL "DEBUG" AND _uvhttp_has_sanitize EQUAL -1)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${_uvhttp_gc_sections} ${_uvhttp_strip}")
+    else()
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${_uvhttp_gc_sections}")
     endif()
 endif()
 
@@ -312,8 +320,12 @@ endif()
 
 # ========== Apply Security Options ==========
 if(ENABLE_HARDENING)
-    add_link_options(-Wl,-z,relro,-z,now)
-    message(STATUS "Security hardening enabled (RELRO, BIND_NOW)")
+    if(NOT APPLE)
+        add_link_options(-Wl,-z,relro,-z,now)
+        message(STATUS "Security hardening enabled (RELRO, BIND_NOW)")
+    else()
+        message(STATUS "Security hardening: RELRO/BIND_NOW not available on macOS")
+    endif()
 endif()
 
 if(ENABLE_STACK_PROTECTION)
