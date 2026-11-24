@@ -140,7 +140,10 @@ jobs:
           # Sum DA/BRDA/FNDA hits across every block before reporting.
           python3 ../scripts/ci/fix_lcov_aggregation.py -i coverage.info -o coverage-merged.info
           mv coverage-merged.info coverage.info
-          lcov --remove coverage.info '/usr/*' '*/deps/*' --output-file coverage.info --ignore-errors inconsistent
+          # lcov 2.x treats an unused exclude pattern as a fatal error (exit 25).
+          # '/usr/*' is defensive (some toolchains instrument system headers)
+          # and is legitimately unused in our builds, so allow it.
+          lcov --remove coverage.info '/usr/*' '*/deps/*' --output-file coverage.info --ignore-errors inconsistent,unused
           lcov --list coverage.info --ignore-errors inconsistent
           genhtml coverage.info --output-directory coverage-report --ignore-errors inconsistent
 
