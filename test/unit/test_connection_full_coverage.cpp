@@ -28,14 +28,11 @@ TEST(UvhttpConnectionFullCoverageTest, ConnectionCreateAndFree) {
     /* 验证初始状态 */
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_NEW);
     EXPECT_GE(conn->parsing_complete, 0);
-    EXPECT_GE(conn->keepalive, 0);
     
     /* 测试状态设置 */
     conn->state = UVHTTP_CONN_STATE_HTTP_READING;
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_HTTP_READING);
     
-    conn->keepalive = 1;
-    EXPECT_EQ(conn->keepalive, 1);
     
     /* 测试分块编码 */
     conn->chunked_encoding = 1;

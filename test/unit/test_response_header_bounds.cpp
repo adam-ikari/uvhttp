@@ -10,6 +10,7 @@
  */
 
 #include <gtest/gtest.h>
+#include "uvhttp_response_internal.h"
 #include <stdio.h>
 #include <string.h>
 #include <string>

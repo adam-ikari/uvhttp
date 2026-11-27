@@ -51,7 +51,9 @@ struct uvhttp_response {
     int compress_algorithm; /* 4 bytes - Compression algorithm (0=auto, 1=gzip)
                              */
     int compress_threshold; /* 4 bytes - Compression threshold (bytes) */
-    int _padding1;          /* 4 bytes - padding to 32 bytes */
+    int head_request;       /* 4 bytes - 1 when the request method was HEAD;
+                             * headers (incl. Content-Length) are built as
+                             * usual but the body bytes must not be sent */
     size_t header_count;    /* 8 bytes - header quantity */
     size_t body_length;     /* 8 bytes - body length */
     uv_tcp_t* client;       /* 8 bytes - TCP Client */
@@ -98,12 +100,9 @@ UVHTTP_STATIC_ASSERT(offsetof(uvhttp_response_t, headers) >= 64,
 
 /* ============ Core API Functions ============ */
 uvhttp_error_t uvhttp_response_init(uvhttp_response_t* response, void* client);
-uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response,
-                                          int status_code);
-uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response,
-                                          const char* name, const char* value);
-uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response,
-                                        const char* body, size_t length);
+
+/* State mutators and the raw send are library-internal building blocks; use
+ * uvhttp_respond / uvhttp_respond_with_headers / uvhttp_response_prepare. */
 
 /* ============ Refactored functions: Separating pure functions and side effects
  * ============ */
@@ -247,56 +246,64 @@ int uvhttp_should_compress_by_extension(const char* filename);
  */
 int uvhttp_should_compress_by_content_type(const char* content_type);
 
-/**
- * @brief 根据文件扩展名自动应用压缩策略
- *
- * @param response 响应对象
- * @param filename 文件名或路径
- * @return uvhttp_error_t UVHTTP_OK 成功，错误码失败
- *
- * @note 便捷函数：结合判断和应用
- * @note 自动设置压缩阈值 (1024 字节)
- * @note 如果文件扩展名不支持压缩，则禁用压缩
- *
- * 使用示例:
- * @code
- * uvhttp_response_set_compress_by_filename(response, "index.html");
- * // 等价于:
- * if (uvhttp_should_compress_by_extension("index.html")) {
- *     uvhttp_response_set_compress(response, 1);
- *     uvhttp_response_set_compress_threshold(response, 1024);
- * }
- * @endcode
- */
-uvhttp_error_t uvhttp_response_set_compress_by_filename(
-    uvhttp_response_t* response, const char* filename);
+/* Compression policy: the pure predicates uvhttp_should_compress_by_*
+ * are the single decision point. To apply one, call uvhttp_response_set_compress
+ * with the predicate result. The former set_compress_by_filename /
+ * set_compress_by_content_type convenience wrappers were pure overlays on
+ * that same decision and have been removed (strategy B: no duplicate entry
+ * points). */
 
 /**
- * @brief 根据内容类型自动应用压缩策略
+ * @brief Atomic "set status + content type + body + send"
  *
- * @param response 响应对象
- * @param content_type MIME 类型
- * @return uvhttp_error_t UVHTTP_OK 成功，错误码失败
+ * Validates all inputs before touching @p response. On a validation or setter
+ * failure the status code and the visible header count are restored, so the
+ * response looks exactly as it did before the call. A body length of 0 (with
+ * @p body NULL) is allowed: Content-Length: 0 is emitted and no body is sent —
+ * use it for 204/304. Once every setter succeeded the response is sent; a send
+ * error is returned as-is and is not retried (send is idempotent).
  *
- * @note 便捷函数：结合判断和应用
- * @note 自动设置压缩阈值 (1024 字节)
- * @note 如果内容类型不支持压缩，则禁用压缩
- *
- * 使用示例:
- * @code
- * uvhttp_response_set_compress_by_content_type(response, "application/json");
- * // 等价于:
- * if (uvhttp_should_compress_by_content_type("application/json")) {
- *     uvhttp_response_set_compress(response, 1);
- *     uvhttp_response_set_compress_threshold(response, 1024);
- * }
- * @endcode
+ * @param response Response to fill and send (must be non-NULL, unsent)
+ * @param status_code HTTP status code
+ * @param content_type Value for Content-Type, or NULL to keep the default
+ * @param body Body bytes, or NULL when @p body_length is 0
+ * @param body_length Number of body bytes
+ * @return UVHTTP_OK, or the failing setter's / send's error code
  */
-uvhttp_error_t uvhttp_response_set_compress_by_content_type(
-    uvhttp_response_t* response, const char* content_type);
+uvhttp_error_t uvhttp_respond(uvhttp_response_t* response, int status_code,
+                              const char* content_type, const char* body,
+                              size_t body_length);
 
-/* Response sending functions */
-uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
+/** @brief One header for uvhttp_respond_with_headers (borrowed for the call). */
+typedef struct uvhttp_header_view {
+    const char* name;
+    const char* value;
+} uvhttp_header_view_t;
+
+/**
+ * @brief Atomic status + N headers + body + send
+ *
+ * The multi-header form of uvhttp_respond. All inputs are validated before
+ * the response is touched; a setter failure restores status and the visible
+ * header count. An empty headers array (or NULL with count 0) is allowed.
+ */
+/**
+ * @brief Atomic status + headers + body WITHOUT sending
+ *
+ * The incremental counterpart of uvhttp_respond: lets a caller build a
+ * complete response in one validated call without transmitting it, so a
+ * middleware or embedding layer can inspect the result before the library
+ * sends it. Same validation and rollback guarantees as uvhttp_respond.
+ */
+uvhttp_error_t uvhttp_response_prepare(
+    uvhttp_response_t* response, int status_code,
+    const uvhttp_header_view_t* headers, size_t header_count, const char* body,
+    size_t body_length);
+
+uvhttp_error_t uvhttp_respond_with_headers(
+    uvhttp_response_t* response, int status_code,
+    const uvhttp_header_view_t* headers, size_t header_count, const char* body,
+    size_t body_length);
 
 /* ============ Legacy functions ============ */
 void uvhttp_response_cleanup(uvhttp_response_t* response);

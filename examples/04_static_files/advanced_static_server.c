@@ -37,22 +37,22 @@ void signal_handler(int signal) {
 int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     app_context_t* ctx = (app_context_t*)request->client->loop->data;
     if (!ctx || !ctx->static_ctx) {
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "application/json");
+        
+        
         const char* error = "{\"error\":\"Static context not initialized\"}";
-        uvhttp_response_set_body(response, error, strlen(error));
-        uvhttp_response_send(response);
+        
+        uvhttp_respond(response, 500, "application/json", error, strlen(error));
         return -1;
     }
 
     /* 使用 cJSON 创建 JSON 响应 */
     cJSON* json_obj = cJSON_CreateObject();
     if (!json_obj) {
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "application/json");
+        
+        
         const char* error = "{\"error\":\"Failed to create JSON\"}";
-        uvhttp_response_set_body(response, error, strlen(error));
-        uvhttp_response_send(response);
+        
+        uvhttp_respond(response, 500, "application/json", error, strlen(error));
         return -1;
     }
 
@@ -64,19 +64,15 @@ int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     cJSON_Delete(json_obj);
 
     if (!json_string) {
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "application/json");
+        
+        
         const char* error = "{\"error\":\"Failed to generate JSON\"}";
-        uvhttp_response_set_body(response, error, strlen(error));
-        uvhttp_response_send(response);
+        
+        uvhttp_respond(response, 500, "application/json", error, strlen(error));
         return -1;
     }
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_body(response, json_string, strlen(json_string));
-
-    int result = uvhttp_response_send(response);
+    int result = uvhttp_respond(response, 200, "application/json", json_string, strlen(json_string));
     uvhttp_free(json_string);
 
     return result;
@@ -140,10 +136,7 @@ int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         "</body>\n"
         "</html>";
     
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/html; charset=UTF-8");
-    uvhttp_response_set_body(response, html, strlen(html));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/html; charset=UTF-8", html, strlen(html));
     return 0;
 }
 
@@ -151,21 +144,16 @@ int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
 int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     app_context_t* ctx = (app_context_t*)request->client->loop->data;
     if (!ctx || !ctx->static_ctx) {
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, "Static context not initialized", 32);
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 500, "text/plain", "Static context not initialized", strlen("Static context not initialized"));
         return -1;
     }
     
     int result = uvhttp_static_handle_request(ctx->static_ctx, request, response);
     if (result != 0) {
         const char* error_body = "Error processing static file request";
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error_body, strlen(error_body));
+        uvhttp_respond(response, 500, "text/plain", error_body,
+                       strlen(error_body));
     }
-    
-    uvhttp_response_send(response);
     return 0;
 }
 

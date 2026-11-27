@@ -17,6 +17,7 @@
  */
 
 #include "uvhttp_allocator.h"
+#include "uvhttp_response_internal.h"
 #include "uvhttp_response.h"
 
 #include <gtest/gtest.h>

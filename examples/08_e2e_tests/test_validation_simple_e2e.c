@@ -34,10 +34,7 @@ static int validate_json_handler(uvhttp_request_t* request,
 
     if (!content_type || strstr(content_type, "application/json") == NULL) {
         const char* body = "Invalid Content-Type. Expected application/json";
-        uvhttp_response_set_status(response, 415);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, body, strlen(body));
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 415, "text/plain", body, strlen(body));
         return 0;
     }
 
@@ -46,28 +43,19 @@ static int validate_json_handler(uvhttp_request_t* request,
 
     if (!body || body_len == 0) {
         const char* error = "Empty request body";
-        uvhttp_response_set_status(response, 400);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error, strlen(error));
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 400, "text/plain", error, strlen(error));
         return 0;
     }
 
     /* Simple JSON validation (check for { and }) */
     if (body[0] != '{' || body[body_len - 1] != '}') {
         const char* error = "Invalid JSON format";
-        uvhttp_response_set_status(response, 400);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error, strlen(error));
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 400, "text/plain", error, strlen(error));
         return 0;
     }
 
     const char* success = "Valid JSON received";
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, success, strlen(success));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", success, strlen(success));
 
     return 0;
 }
@@ -79,30 +67,21 @@ static int validate_path_handler(uvhttp_request_t* request,
     /* Validate path format */
     if (!path || strlen(path) == 0) {
         const char* error = "Invalid path";
-        uvhttp_response_set_status(response, 400);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error, strlen(error));
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 400, "text/plain", error, strlen(error));
         return 0;
     }
 
     /* Check for path traversal attempts */
     if (strstr(path, "..") != NULL) {
         const char* error = "Path traversal detected";
-        uvhttp_response_set_status(response, 403);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error, strlen(error));
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 403, "text/plain", error, strlen(error));
         return 0;
     }
 
     char response_body[256];
     snprintf(response_body, sizeof(response_body), "Valid path: %s", path);
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, response_body, strlen(response_body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", response_body, strlen(response_body));
 
     return 0;
 }
@@ -113,28 +92,19 @@ static int validate_query_handler(uvhttp_request_t* request,
 
     if (!query_string || strlen(query_string) == 0) {
         const char* error = "Missing query parameters";
-        uvhttp_response_set_status(response, 400);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error, strlen(error));
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 400, "text/plain", error, strlen(error));
         return 0;
     }
 
     /* Check for required parameters */
     if (strstr(query_string, "name=") == NULL) {
         const char* error = "Missing required parameter: name";
-        uvhttp_response_set_status(response, 400);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error, strlen(error));
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 400, "text/plain", error, strlen(error));
         return 0;
     }
 
     const char* success = "Valid query parameters";
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, success, strlen(success));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", success, strlen(success));
 
     return 0;
 }
@@ -146,27 +116,18 @@ static int validate_headers_handler(uvhttp_request_t* request,
 
     if (!user_agent) {
         const char* error = "Missing User-Agent header";
-        uvhttp_response_set_status(response, 400);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error, strlen(error));
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 400, "text/plain", error, strlen(error));
         return 0;
     }
 
     if (!accept) {
         const char* error = "Missing Accept header";
-        uvhttp_response_set_status(response, 400);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error, strlen(error));
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 400, "text/plain", error, strlen(error));
         return 0;
     }
 
     const char* success = "Valid headers";
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, success, strlen(success));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", success, strlen(success));
 
     return 0;
 }

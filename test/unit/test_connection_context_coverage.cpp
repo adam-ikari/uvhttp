@@ -279,18 +279,17 @@ TEST(ConnectionContextCoverage, StartTimeoutWithServerConfig) {
     ASSERT_EQ(result, UVHTTP_OK);
 
     config->connection_timeout = 45;
-    server->config = config;
+    ASSERT_EQ(uvhttp_server_take_config(server, config), UVHTTP_OK);
 
     result = uvhttp_connection_start_timeout(conn);
-    /* Exercises the conn->server->config branch in start_timeout */
+    /* Exercises the config-based branch in start_timeout */
     EXPECT_EQ(result, UVHTTP_OK);
 
     uvhttp_connection_close(conn);
     uv_run(loop, UV_RUN_NOWAIT);
 
     /* Restore config ownership so server_free doesn't double-free */
-    server->config = nullptr;
-    uvhttp_config_free(config);
+    ASSERT_EQ(uvhttp_server_take_config(server, nullptr), UVHTTP_OK);
     destroy_server_and_loop(server, loop);
 }
 
@@ -820,7 +819,7 @@ TEST(ConnectionContextCoverage, TimeoutConfigToggle) {
     ASSERT_EQ(result, UVHTTP_OK);
 
     /* Start with no config (default timeout path) */
-    server->config = nullptr;
+    ASSERT_EQ(uvhttp_server_take_config(server, nullptr), UVHTTP_OK);
     result = uvhttp_connection_start_timeout(conn);
     EXPECT_EQ(result, UVHTTP_OK);
 
@@ -829,14 +828,13 @@ TEST(ConnectionContextCoverage, TimeoutConfigToggle) {
     result = uvhttp_config_new(&config);
     ASSERT_EQ(result, UVHTTP_OK);
     config->connection_timeout = 120;
-    server->config = config;
+    ASSERT_EQ(uvhttp_server_take_config(server, config), UVHTTP_OK);
 
     result = uvhttp_connection_start_timeout(conn);
     EXPECT_EQ(result, UVHTTP_OK);
 
     /* Restore */
-    server->config = nullptr;
-    uvhttp_config_free(config);
+    ASSERT_EQ(uvhttp_server_take_config(server, nullptr), UVHTTP_OK);
 
     uvhttp_connection_close(conn);
     uv_run(loop, UV_RUN_NOWAIT);
@@ -857,7 +855,6 @@ TEST(ConnectionContextCoverage, ConnectionInitialFields) {
 
     /* Verify all initial field values set by connection_new */
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_NEW);
-    EXPECT_EQ(conn->keepalive, 1);
     EXPECT_EQ(conn->chunked_encoding, 0);
     EXPECT_EQ(conn->close_pending, 0);
     EXPECT_EQ(conn->freed, 0);

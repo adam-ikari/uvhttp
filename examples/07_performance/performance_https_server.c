@@ -46,17 +46,17 @@ static app_context_t* g_ctx = NULL;
 static int on_request(uvhttp_request_t* request, uvhttp_response_t* response) {
     (void)request;
     /* Set status and headers */
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_header(response, "Server", "uvhttp/https-perf");
-    uvhttp_response_set_header(response, "Connection", "keep-alive");
+    
+    
+    
+    
 
     /* Simple response body */
     const char* body = "HTTPS Performance Test OK";
-    uvhttp_response_set_body(response, body, strlen(body));
+    
 
     /* Send response */
-    uvhttp_response_send(response);
+    uvhttp_respond_with_headers(response, 200, (uvhttp_header_view_t[]){{"Content-Type", "text/plain"}, {"Server", "uvhttp/https-perf"}, {"Connection", "keep-alive"}}, 3, body, strlen(body));
 
     /* Update statistics */
     if (g_ctx) {
@@ -70,16 +70,16 @@ static int on_request(uvhttp_request_t* request, uvhttp_response_t* response) {
 static int on_request_json(uvhttp_request_t* request, uvhttp_response_t* response) {
     (void)request;
     /* Set status and headers */
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_header(response, "Server", "uvhttp/https-perf");
+    
+    
+    
 
     /* JSON response body */
     const char* json_body = "{\"status\":\"ok\",\"message\":\"HTTPS performance test\",\"requests\":0}";
-    uvhttp_response_set_body(response, json_body, strlen(json_body));
+    
 
     /* Send response */
-    uvhttp_response_send(response);
+    uvhttp_respond_with_headers(response, 200, (uvhttp_header_view_t[]){{"Content-Type", "application/json"}, {"Server", "uvhttp/https-perf"}}, 2, json_body, strlen(json_body));
 
     if (g_ctx) {
         g_ctx->total_requests++;

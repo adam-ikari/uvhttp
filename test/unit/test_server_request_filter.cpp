@@ -21,6 +21,7 @@
 
 extern "C" {
 #include "uvhttp_context.h"
+#include "uvhttp_response_internal.h"
 #include "uvhttp_protocol_upgrade.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"

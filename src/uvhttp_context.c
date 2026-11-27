@@ -302,11 +302,9 @@ void uvhttp_context_cleanup_config(uvhttp_context_t* context) {
         return;
     }
 
-    /* Free only the config the context created itself. A config installed
-     * via uvhttp_config_set_current is borrowed: the caller retains
-     * ownership (it may also be owned by the server, which frees
-     * server->config in uvhttp_server_free - freeing it here again would be
-     * a double free). */
+    /* Free only the config the context owns. A config merely borrowed via
+     * uvhttp_config_set_current stays the caller's; uvhttp_server_take_config
+     * flips config_owned so the single owner is this context. */
     if (context->current_config && context->config_owned) {
         uvhttp_config_free((uvhttp_config_t*)context->current_config);
     }

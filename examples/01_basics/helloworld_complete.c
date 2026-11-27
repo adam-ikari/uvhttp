@@ -42,7 +42,7 @@ static app_context_t* app_context_new(uv_loop_t* loop) {
 }
 
 /* Release an application context. The router and config are owned by the
- * server (set via uvhttp_server_take_router / server->config), so they are
+ * server (take_router / take_config / take_context), so they are
  * freed together with the server. */
 static void app_context_free(app_context_t* ctx) {
     if (ctx) {
@@ -51,12 +51,9 @@ static void app_context_free(app_context_t* ctx) {
             ctx->server = NULL;
         }
         /* Router is freed by uvhttp_server_free. */
-        /* Config is owned by the server (server->config) and freed by
-         * uvhttp_server_free. Do not free it here. */
-        if (ctx->uvhttp_ctx) {
-            uvhttp_context_destroy(ctx->uvhttp_ctx);
-            ctx->uvhttp_ctx = NULL;
-        }
+        /* Both config and context are owned by the server after
+         * uvhttp_server_take_config / take_context; do not free them here. */
+        ctx->uvhttp_ctx = NULL;
         uvhttp_free(ctx);
     }
 }
@@ -82,10 +79,10 @@ static int hello_handler(uvhttp_request_t* request,
     app_context_t* ctx = g_ctx;
     if (!ctx || !ctx->config) {
         fprintf(stderr, "Error: Application context not found\n");
-        uvhttp_response_set_status(response, 500);
+        
         const char* err = "Internal Server Error";
-        uvhttp_response_set_body(response, err, strlen(err));
-        return uvhttp_response_send(response);
+        
+        return uvhttp_respond(response, 500, NULL, err, strlen(err));
     }
 
     ctx->request_count++;
@@ -111,9 +108,9 @@ static int hello_handler(uvhttp_request_t* request,
         (size_t)UVHTTP_MAX_BODY_SIZE / (1024 * 1024)
     );
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain; charset=utf-8");
-    uvhttp_response_set_body(response, response_body, strlen(response_body));
+    
+    
+    
 
     printf("Request handled: %s %s (Active connections: %zu/%d)\n",
            uvhttp_method_to_string(request->method),
@@ -121,7 +118,7 @@ static int hello_handler(uvhttp_request_t* request,
            active_connections,
            config->max_connections);
 
-    return uvhttp_response_send(response);
+    return uvhttp_respond(response, 200, "text/plain; charset=utf-8", response_body, strlen(response_body));
 }
 
 int main() {
@@ -207,7 +204,6 @@ int main() {
 
     /* Attach the application context and configuration to the server. */
     ctx->server->user_data = ctx;
-    ctx->server->config = config;
     printf("Server created successfully: %p\n", (void*)ctx->server);
     printf("Applied configuration with max_connections=%d\n",
            config->max_connections);
@@ -225,11 +221,11 @@ int main() {
     /* Publish the config globally via the context (avoids the
      * "Global configuration not initialized" warning) and attach the
      * context to the server. */
-    uvhttp_config_set_current(ctx->uvhttp_ctx, config);
-    printf("Global configuration set\n");
-
     uvhttp_server_take_context(ctx->server, ctx->uvhttp_ctx);
     printf("uvhttp context set to server\n");
+
+    uvhttp_server_take_config(ctx->server, config);
+    printf("Global configuration set\n");
 
     /* Create the router (output-parameter style). */
     printf("Creating router...\n");

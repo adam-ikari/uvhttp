@@ -85,11 +85,7 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "</body>\n"
         "</html>\n";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(res, html, strlen(html));
-    
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "text/html; charset=utf-8", html, strlen(html));
 }
 
 /**
@@ -128,11 +124,7 @@ int about_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "</body>\n"
         "</html>\n";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(res, html, strlen(html));
-    
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "text/html; charset=utf-8", html, strlen(html));
 }
 
 /**
@@ -144,11 +136,11 @@ int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // 使用 cJSON 创建 JSON 对象
     cJSON* json_obj = cJSON_CreateObject();
     if (!json_obj) {
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
+        
+        
         const char* error = "{\"error\":\"Failed to create JSON\"}";
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+        
+        return uvhttp_respond(res, 500, "application/json; charset=utf-8", error, strlen(error));
     }
 
     cJSON_AddStringToObject(json_obj, "name", "UVHTTP");
@@ -170,18 +162,14 @@ int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     cJSON_Delete(json_obj);
 
     if (!json_string) {
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
+        
+        
         const char* error = "{\"error\":\"Failed to generate JSON\"}";
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+        
+        return uvhttp_respond(res, 500, "application/json; charset=utf-8", error, strlen(error));
     }
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json_string, strlen(json_string));
-
-    int result = uvhttp_response_send(res);
+    int result = uvhttp_respond(res, 200, "application/json; charset=utf-8", json_string, strlen(json_string));
     free(json_string);
 
     return result;
@@ -198,11 +186,11 @@ int status_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // 使用 cJSON 创建 JSON 对象
     cJSON* json_obj = cJSON_CreateObject();
     if (!json_obj) {
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
+        
+        
         const char* error = "{\"error\":\"Failed to create JSON\"}";
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+        
+        return uvhttp_respond(res, 500, "application/json; charset=utf-8", error, strlen(error));
     }
 
     cJSON_AddStringToObject(json_obj, "status", "healthy");
@@ -220,18 +208,14 @@ int status_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     cJSON_Delete(json_obj);
 
     if (!json_string) {
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
+        
+        
         const char* error = "{\"error\":\"Failed to generate JSON\"}";
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+        
+        return uvhttp_respond(res, 500, "application/json; charset=utf-8", error, strlen(error));
     }
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json_string, strlen(json_string));
-
-    int result = uvhttp_response_send(res);
+    int result = uvhttp_respond(res, 200, "application/json; charset=utf-8", json_string, strlen(json_string));
     free(json_string);
 
     return result;

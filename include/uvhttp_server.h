@@ -56,8 +56,6 @@ typedef struct {
 extern "C" {
 #endif
 
-#define MAX_CONNECTIONS 1000
-
 typedef struct uvhttp_server uvhttp_server_t;
 
 /* One route table entry, for uvhttp_server_listen_routes. UVHTTP_ANY means
@@ -78,6 +76,18 @@ typedef void (*uvhttp_timeout_callback_t)(uvhttp_server_t* server,
                                           uvhttp_connection_t* conn,
                                           uint64_t timeout_ms, void* user_data);
 
+/**
+ * @brief Register the connection-timeout observer
+ *
+ * The callback fires on the connection's timeout path with the elapsed
+ * milliseconds. Passing NULL clears it. Must be called on the loop thread.
+ *
+ * @return UVHTTP_OK, or UVHTTP_ERROR_INVALID_PARAM if @p server is NULL
+ */
+uvhttp_error_t uvhttp_server_set_timeout_callback(
+    uvhttp_server_t* server, uvhttp_timeout_callback_t callback,
+    void* user_data);
+
 /* ========== Pre-dispatch Request Filter ========== */
 /**
  * @brief Filter callback invoked before a request is dispatched
@@ -94,6 +104,18 @@ typedef uvhttp_error_t (*uvhttp_request_filter_t)(uvhttp_request_t* request,
                                                   uvhttp_response_t* response,
                                                   void* user_data);
 
+/* ========== Error observer seam ========== */
+/**
+ * Callback for asynchronous failures that have no return path to the caller:
+ * llhttp parse errors and failed uv_write completions. `error` is the library
+ * error code, `conn` is the affected connection (NULL when unavailable).
+ * Called on the loop thread; keep work here short and non-blocking.
+ */
+typedef void (*uvhttp_error_callback_t)(uvhttp_server_t* server,
+                                        uvhttp_error_t error,
+                                        uvhttp_connection_t* conn,
+                                        void* user_data);
+
 struct uvhttp_server {
     /* ========== Cache line 1 (0-63 bytes): hot path fields - most frequently
      * accessed ========== */
@@ -101,7 +123,7 @@ struct uvhttp_server {
     int is_listening;          /* 4 bytes - useparsinglisten */
     int owns_loop;             /* 4 bytes - useloop */
     int freed;                 /* 4 bytes - flag to prevent double free */
-    int _padding1;             /* 4 bytes - padding to 16 bytes */
+    int draining;              /* 4 bytes - reject new requests with 503 */
     size_t active_connections; /* 8 bytes - Connection */
     size_t max_connections;    /* 8 bytes - Connection */
     size_t max_message_size;   /* 8 bytes - messagesize */
@@ -116,7 +138,8 @@ struct uvhttp_server {
     /* Frequently accessed in server initialization, request routing */
     uv_loop_t* loop;                /* 8 bytes - Eventloop */
     uvhttp_router_t* router;        /* 8 bytes - Router */
-    uvhttp_config_t* config;        /* 8 bytes -  */
+    void* _padding_config;          /* 8 bytes - former config channel; kept
+                                     * as padding to preserve cache offsets */
     struct uvhttp_context* context; /* 8 bytes -  */
     void* user_data;                /* 8 bytes -  */
 #if UVHTTP_FEATURE_TLS
@@ -153,7 +176,9 @@ struct uvhttp_server {
      * flag) with these two - policy belongs to the caller. */
     uvhttp_request_filter_t request_filter; /* 8 bytes - pre-dispatch filter */
     void* request_filter_user_data;         /* 8 bytes - filter context */
-    int _padding5[12];                      /* 48 bytes - padding to 64 bytes */
+    uvhttp_error_callback_t error_callback; /* 8 bytes - async error observer */
+    void* error_callback_user_data;         /* 8 bytes - observer context */
+    int _padding5[8];                       /* 32 bytes - padding to 64 bytes */
     /* Cache line 5 total: 64 bytes */
 
     /* ========== Cache line 6 (320-383 bytes): protocol upgrade ========== */
@@ -166,6 +191,16 @@ struct uvhttp_server {
     int _padding6[14]; /* 56bytes - paddingto64bytes */
 #endif
     /* Cache line 6 total: 64 bytes */
+
+    /* Embedded at the end so all existing cache-line offsets stay unchanged.
+     * Embedding (rather than heap-allocating) means embedders that close every
+     * handle with uv_walk before server_free cannot leak it. */
+#if UVHTTP_FEATURE_ASYNC_STOP
+    uv_async_t async_stop_handle;
+#endif
+    /* Intrusive list of accepted connections, used by stop to close them. */
+    struct uvhttp_connection* connections;
+    size_t backpressure_pauses; /* times reads were paused */
 };
 
 /* ========== Memory Layout Verification Static Assertions ========== */
@@ -173,7 +208,7 @@ struct uvhttp_server {
 /* Verify pointer alignment (platform adaptive) */
 UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, loop, UVHTTP_POINTER_ALIGNMENT);
 UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, router, UVHTTP_POINTER_ALIGNMENT);
-UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, config, UVHTTP_POINTER_ALIGNMENT);
+UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, error_callback, UVHTTP_POINTER_ALIGNMENT);
 
 /* Verify size_t alignment (platform adaptive) */
 UVHTTP_CHECK_ALIGNMENT(uvhttp_server_t, active_connections,
@@ -230,6 +265,51 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
 uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server);
 
 /**
+ * @brief Request a stop from any thread
+ *
+ * `uvhttp_server_stop` must run on the loop thread (it touches libuv
+ * handles). This posts an `uv_async_t` to that loop instead; the callback
+ * then calls `uvhttp_server_stop` there. The async handle is unref'd, so it
+ * does not keep an otherwise idle loop alive.
+ *
+ * @note The caller must not race this against `uvhttp_server_free` — join all
+ *       producer threads before freeing the server.
+ */
+#if UVHTTP_FEATURE_ASYNC_STOP
+uvhttp_error_t uvhttp_server_async_stop(uvhttp_server_t* server);
+#else
+/* Compiled out: no uv_async_t instance cost. Callers can still stop on the
+ * loop thread with uvhttp_server_stop. */
+#    define uvhttp_server_async_stop(server) \
+        UVHTTP_ERROR_NOT_SUPPORTED
+#endif
+
+/**
+ * @brief Enter/leave draining mode
+ *
+ * While draining, every newly parsed request gets 503 + `Connection: close`
+ * before the request filter and routing run. Existing in-flight requests are
+ * unaffected. Intended for rolling deploys: mark draining, let the load
+ * balancer's health probe fail, then stop once the active count reaches zero
+ * (see uvhttp_server_get_stats).
+ *
+ * @note Must be called on the loop thread. The flag is a plain int read by
+ *       the request parser; cross-thread callers must post through their own
+ *       synchronisation. Use uvhttp_server_async_stop (when compiled in) for
+ *       the stop side.
+ */
+uvhttp_error_t uvhttp_server_set_draining(uvhttp_server_t* server, int enabled);
+
+/**
+ * @brief Close every accepted connection the server still tracks
+ *
+ * Stop closes the listening handle only; this closes live connections too,
+ * so uv_run(UV_RUN_DEFAULT) can actually return after a stop. Closing is
+ * asynchronous: callers must pump the loop for the close callbacks to run.
+ */
+uvhttp_error_t uvhttp_server_close_connections(uvhttp_server_t* server);
+
+/**
  * @brief Create a server, register routes, and start listening - atomically
  *
  * @param loop Event loop (owned by the caller; the server never closes it)
@@ -280,6 +360,35 @@ uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server,
                                         uvhttp_tls_context_t* tls_ctx);
 uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server);
 #endif
+/** @return 1 when TLS has been enabled on @p server, 0 otherwise (NULL-safe). */
+int uvhttp_server_is_tls_enabled(uvhttp_server_t* server);
+/**
+ * @brief Install a configuration on the server (transfers ownership)
+ *
+ * One step replaces the former "pick server->config or context->current_config,
+ * attach a context, then set the field" sequence. The config is installed on
+ * the server's context (created if absent) and released by the server on free.
+ * Every execution path reads configuration through that one channel. Passing
+ * NULL clears it and returns to built-in defaults.
+ */
+uvhttp_error_t uvhttp_server_take_config(uvhttp_server_t* server,
+                                         uvhttp_config_t* config);
+
+/** @return the single active configuration, or NULL when none is installed. */
+const uvhttp_config_t* uvhttp_server_get_config(
+    const uvhttp_server_t* server);
+
+/**
+ * @brief Install the observer for asynchronous protocol/write errors
+ *
+ * NULL clears it. Unlike the request filter this is purely observational: the
+ * server still closes the connection / drops the failed write as before. Its
+ * purpose is to let an embedder count and log failures that used to vanish
+ * because the write callbacks cast `status` to void.
+ */
+uvhttp_error_t uvhttp_server_set_error_callback(
+    uvhttp_server_t* server, uvhttp_error_callback_t callback, void* user_data);
+
 /**
  * @brief Release a server and everything it owns
  *
@@ -295,6 +404,24 @@ uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server);
  *       internal event loop is also closed here.
  */
 uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server);
+
+/** @brief Read-only snapshot of the counters the server already maintains. */
+typedef struct uvhttp_server_stats {
+    size_t active_connections; /* authoritative value used by the limit */
+    uint64_t total_connections;
+    uint64_t total_requests;
+    size_t backpressure_pauses; /* reads paused due to write queue */
+} uvhttp_server_stats_t;
+
+/**
+ * @brief Copy the server's live counters into @p out
+ *
+ * No allocation, no mutation. All three values come from fields that were
+ * already being written on the accept/request/close paths; this is the read
+ * side that lets an embedder expose them through its own metrics sink.
+ */
+uvhttp_error_t uvhttp_server_get_stats(uvhttp_server_t* server,
+                                       uvhttp_server_stats_t* out);
 /**
  * @brief Set the request handler used when no router is attached
  *

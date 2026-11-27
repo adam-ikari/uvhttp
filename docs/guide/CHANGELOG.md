@@ -5,6 +5,128 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.1] - 2026-11-26
+
+Follow-up to 3.1.0 within the same 3.0 breaking window. The version was
+bumped to a patch because the ownership callback signature change below is a
+source-level break and should not be hidden inside 3.1.0's MINOR entry. All
+other fixes in this section were developed together with 3.1.0 and share its
+verification matrix.
+
+### Removed (breaking)
+- **`uvhttp_connection_ownership_callback_t` signature change**: gained
+  `const char* buffered, size_t buffered_len` parameters. Custom upgrade
+  handlers now receive bytes that followed the upgrade headers in the same
+  read window; previously those bytes were read into the connection buffer
+  and then discarded, so the new owner never saw the first protocol frame.
+  Callbacks must accept the two extra parameters (ignore them if unused).
+
+### Fixed
+- **TLS handshake WANT_WRITE no longer deadlocks**: a full socket send buffer
+  during the handshake used to be folded into WANT_READ, leaving the server
+  waiting for readability while the peer waited for the handshake record. A
+  writable poll now retries the handshake.
+- **Custom-protocol upgrade first frame is preserved** via the buffered
+  parameters above.
+
+### Validation
+- Release 134/134, static files 135/135, ASan 134/134, UBSan 134/134,
+  32-bit 134/134; doc sync and test-validity gates pass.
+
+## [3.1.0] - 2026-11-26
+
+The closing slice of the 3.0 breaking window. 3.0.0 already removed the config
+dead fields, the builder layer and the built-in rate limiter; this release
+finishes the same API-atomization work and adds the production seams. It is
+numbered MINOR rather than a new MAJOR because it continues that window, not a
+new break cycle. The breaking changes below are listed explicitly — consumers
+upgrading from 3.0.x must update those call sites despite the MINOR number.
+SemVer's usual MINOR promise is knowingly compressed here; the explicit list
+is what preserves the signal for downstream users.
+
+### Removed (breaking)
+- **The public response setters** (`uvhttp_response_set_status`,
+  `uvhttp_response_set_header`, `uvhttp_response_set_body`,
+  `uvhttp_response_send`): removed from `include/uvhttp_response.h`. The
+  implementations remain internal (`src/uvhttp_response_internal.h`) for the
+  library's incremental construction paths; callers use `uvhttp_respond`,
+  `uvhttp_respond_with_headers` or `uvhttp_response_prepare`.
+- **`uvhttp_response_set_compress_by_filename` and
+  `uvhttp_response_set_compress_by_content_type`**: pure wrappers around the
+  `uvhttp_should_compress_by_*` predicates. Call the predicate then
+  `uvhttp_response_set_compress`.
+- **`MAX_CONNECTIONS`**: a dead macro whose value (1000) contradicted the real
+  default (2048). No replacement; use the config field.
+- **`uvhttp_server_t::config`**: configuration now lives on the context. Use
+  `uvhttp_server_take_config` / `uvhttp_server_get_config`.
+- **`uvhttp_connection_t::keepalive`**: a dead state field — every decision
+  read `response->keepalive`. No replacement.
+- **`uvhttp_tls_setup_ssl` signature change**: the `int fd` parameter became
+  `const int* fd_storage`. mbedtls keeps the BIO context pointer, so passing a
+  stack local made TLS I/O read freed memory. Callers must pass long-lived fd
+  storage.
+- **Cache type names**: `cache_manager_t` → `uvhttp_lru_cache_t`,
+  `cache_entry_t` → `uvhttp_lru_cache_entry_t` (the CONTRIBUTING `uvhttp_`
+  prefix rule). No behavior change.
+
+### Changed
+- **HEAD responses carry no body** on both the normal and static sendfile
+  paths; Content-Length is preserved.
+- **`Connection: close` and HTTP/1.0** now close the connection per RFC 7230
+  §6.6. Connection is parsed as a comma-separated token list across repeated
+  headers, not a substring.
+- **Oversized request bodies get 413** instead of a silent disconnect.
+- **TLS upgrade detection** uses exact token matching — `Connection:
+  not-upgrade` no longer triggers a 101.
+- **A single sendfile branch** replaces the duplicate medium/large branches.
+- **mbedTLS 3.6.5 → 3.6.8** (the 2026 CVE fix release).
+
+### Added
+- **Atomic response API**: `uvhttp_respond`, `uvhttp_respond_with_headers`,
+  `uvhttp_response_prepare` (validate + build without sending).
+- **Config single channel**: `uvhttp_server_take_config`,
+  `uvhttp_server_get_config`.
+- **Operational seams**: `uvhttp_server_get_stats`, `uvhttp_server_set_draining`
+  (503 before dispatch for rolling deploys), `uvhttp_server_set_error_callback`
+  (async parse/write failures).
+- **Backpressure**: `write_queue_high_water` config field and
+  `uvhttp_connection_apply_backpressure` — reads pause when the pending write
+  queue is high and resume when it drains, without resetting parser state.
+- **Cross-thread stop**: opt-in `ENABLE_ASYNC_STOP` adds
+  `uvhttp_server_async_stop`, posting to the loop thread via `uv_async_t`.
+- **Logging interface**: `uvhttp_log_sink_t` / `uvhttp_log_set_sink` are
+  declared for the embedder to implement; the library itself has no global
+  log state and keeps log sites compile-time gated.
+
+### Fixed
+- **sendfile keep-alive interleaving**: reads are paused during sendfile and
+  resumed on completion, so a pipelined second request cannot be written
+  between body chunks.
+- **sendfile timeout use-after-free**: `uv_cancel` plus single cleanup path.
+- **WebSocket first frame coalesced with the handshake** is handed to the WS
+  parser instead of dropped.
+- **Reserved WS opcodes** and non-NUL-terminated CLOSE reasons are rejected /
+  copied into bounded buffers.
+- **`server_free` use-after-free**: live connections are closed before the
+  server is released; direct `uvhttp_connection_new` no longer underflows
+  `active_connections`.
+- **TLS context lifetime**: `enable_tls`/`disable_tls` close live connections
+  before freeing a context still referenced by `ssl->conf`.
+- **`send_raw` no longer casts arbitrary `client->data`** to a connection.
+- **Idle timeout is now an idle timeout**, refreshed on request/frame activity.
+- **WS partial writes** return an error instead of silently truncating a frame.
+- **Protocol-upgrade `on_close` fires once** and ownership transfer unlinks the
+  connection from the server registry.
+
+### CI and validation
+- 32-bit is a blocking gate on both PR and pre-release; mbedTLS 3.6.8,
+  libuv 1.52.1 and llhttp 9.3.1 pinned.
+- A complete embedding example (`examples/10_embedding/production_app.c`)
+  exercises config, filter, observer, stats, draining, atomic responses,
+  static files and the embedder-owned logging interface.
+- All configurations (Release, static files, ASan, UBSan, 32-bit) pass; every
+  fix above has a mutation-verified regression test.
+
 ## [3.0.1] - 2026-11-23
 
 Security and correctness fixes accumulated after 3.0.0. No API changes: all
@@ -66,7 +188,7 @@ handled successfully (#449).
 
 ### Fixed
 - **A failed router migration no longer destroys the routes it was converting** (#471): `uvhttp_router_migrate_to_trie()` freed the registered route list on its failure path, so a caller that kept using the linear router or retried the migration had nothing left. Data loss since v2.7.2
-- **`uvhttp_response_set_body()` replaces atomically** (#473): it freed the old body before allocating the new one, so an allocation failure left the response carrying a stale length over freed memory
+- **Body replacement is atomic** (#473): it freed the old body before allocating the new one, so an allocation failure left the response carrying a stale length over freed memory
 - **LRU cache setters validate at the write point** (#473, #474): `uvhttp_lru_cache_set_max_entries()` and `uvhttp_lru_cache_set_max_memory_usage()` accepted values `uvhttp_lru_cache_create()` would have rejected. `uvhttp_lru_cache_set_max_file_size(0)` was the harmful one — `put()` compares content length against that field with no other guard, so after writing 0 every later `put()` returned `UVHTTP_ERROR_INVALID_PARAM` and the cache stayed bricked behind a stream of "File size exceeds limit" warnings
 - **Cross-server handover is documented as unsupported** (#474): the `take_*` guards compared each server's own pointer, so passing one router (or context) to two servers still double-freed at `uvhttp_server_free()`. Enforcing it needs an ownership registry, which is another breaking change; the header contract now states that one object belongs to one server
 - **A caller-set `Content-Length` was left stale when the body got compressed** (#464): after a successful gzip the response's `body_length` becomes the compressed length, but the `has_content_length` gate in `build_response_headers()` only consulted it when the caller had *not* set the header. Setting `Content-Length` yourself on a compressing response therefore advertised the pre-compression size while writing the compressed bytes to the socket — clients mis-frame the stream, which is data corruption, not a cosmetic header mismatch. Probe before the fix: `Content-Length: 10000` over a 45-byte gzip body. The compressed length is now written back in place, keeping the caller's header position. Trigger is narrow — it needs `compress=1` together with a manual `Content-Length`, and compression is off by default
@@ -1200,10 +1322,8 @@ See `docs/MIGRATION_GUIDE_LRU_CACHE.md` for detailed migration instructions.
 
 ```c
 void health_check_handler(uvhttp_request_t* request) {
-    uvhttp_response_set_status(request, 200);
-    uvhttp_response_set_header(request, "Content-Type", "application/json");
-    uvhttp_response_set_body(request, "{\"status\":\"ok\"}");
-    uvhttp_response_send(request);
+    uvhttp_respond(request, 200, "application/json",
+                   "{\"status\":\"ok\"}", 13);
 }
 
 // 在路由中添加

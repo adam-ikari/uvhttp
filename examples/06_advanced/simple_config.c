@@ -37,9 +37,7 @@ void signal_handler(int sig) {
 int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     // 从请求中获取服务器
     if (!request->client || !request->client->data) {
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_body(response, "Internal error", 14);
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 500, NULL, "Internal error", 14);
         return -1;
     }
     
@@ -63,10 +61,7 @@ int simple_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         config->connection_timeout
     );
     
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain; charset=utf-8");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain; charset=utf-8", body, strlen(body));
     
     return 0;
 }
@@ -134,22 +129,21 @@ int main() {
         return 1;
     }
     
-    // 应用配置
-    g_app_context->server->config = config;
 
     // 创建上下文
     uvhttp_error_t result_context = uvhttp_context_create(loop, &g_app_context->context);
     if (result_context != UVHTTP_OK) {
         fprintf(stderr, "上下文创建失败\n");
-        /* config is owned by the server (server->config was set above);
-         * uvhttp_server_free releases it. Do not free it here. */
+        uvhttp_config_free(config);
+        /* config will be owned by the server context. */
         uvhttp_server_free(g_app_context->server);
         free(g_app_context);
         return 1;
     }
 
-    // 设置全局配置（重要：这会消除"Global configuration not initialized"警告）
-    uvhttp_config_set_current(g_app_context->context, config);
+    // 单一通道：context 交给 server，config 通过 take_config 原子安装
+    uvhttp_server_take_context(g_app_context->server, g_app_context->context);
+    uvhttp_server_take_config(g_app_context->server, config);
 
     // 创建路由
     uvhttp_router_t* router = NULL;
@@ -180,13 +174,11 @@ int main() {
 
     uv_run(loop, UV_RUN_DEFAULT);
 
-    // 清理资源（服务器释放配置；上下文未挂到服务器，需单独销毁）
+    // 清理资源：server 持有 context 与 config，server_free 一并释放
     if (g_app_context && g_app_context->server) {
         uvhttp_server_free(g_app_context->server);
         g_app_context->server = NULL;
-    }
-    if (g_app_context && g_app_context->context) {
-        uvhttp_context_destroy(g_app_context->context);
+        g_app_context->context = NULL;
     }
     if (g_app_context) {
         free(g_app_context);

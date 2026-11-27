@@ -1,4 +1,5 @@
 #include "../include/uvhttp.h"
+#include "uvhttp_response_internal.h"
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>

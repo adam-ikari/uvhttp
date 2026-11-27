@@ -29,22 +29,13 @@
  */
 int root_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     (void)req;
-    // Set HTTP status code
-    uvhttp_response_set_status(res, 200);
-
-    // Set response headers
-    uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_header(res, "X-Powered-By", "UVHTTP/2.5.0");
-
-    // Set response body
-    {
-        const char* body = "Welcome to UVHTTP Simple Server!\n"
-                            "Try: /hello, /api/data";
-        uvhttp_response_set_body(res, body, strlen(body));
-    }
-
-    // Send response
-    return uvhttp_response_send(res);
+    const char* body = "Welcome to UVHTTP Simple Server!\n"
+                        "Try: /hello, /api/data";
+    return uvhttp_respond_with_headers(
+        res, 200,
+        (uvhttp_header_view_t[]){{"Content-Type", "text/plain"},
+                                 {"X-Powered-By", "UVHTTP/2.5.0"}},
+        2, body, strlen(body));
 }
 
 /**
@@ -52,13 +43,8 @@ int root_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
  */
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     (void)req;
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    {
-        const char* body = "Hello, World!";
-        uvhttp_response_set_body(res, body, strlen(body));
-    }
-    return uvhttp_response_send(res);
+    const char* body = "Hello, World!";
+    return uvhttp_respond(res, 200, "text/plain", body, strlen(body));
 }
 
 /**
@@ -66,18 +52,13 @@ int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
  */
 int api_data_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     (void)req;
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    {
-        const char* body =
-            "{"
-            "  \"message\": \"Hello from UVHTTP\","
-            "  \"version\": \"2.5.0\","
-            "  \"status\": \"success\""
-            "}";
-        uvhttp_response_set_body(res, body, strlen(body));
-    }
-    return uvhttp_response_send(res);
+    const char* body =
+        "{"
+        "  \"message\": \"Hello from UVHTTP\","
+        "  \"version\": \"2.5.0\","
+        "  \"status\": \"success\""
+        "}";
+    return uvhttp_respond(res, 200, "application/json", body, strlen(body));
 }
 
 /**

@@ -442,11 +442,11 @@ int list_users_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // ... 添加用户数据
     
     char* json_str = cJSON_PrintUnformatted(json);
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, json_str, strlen(json_str));
+
+
+
     
-    int result = uvhttp_response_send(res);
+    int result = uvhttp_respond(res, 200, "application/json", json_str, strlen(json_str));
     free(json_str);
     cJSON_Delete(json);
     return result;
@@ -474,11 +474,11 @@ int get_user_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     cJSON_AddStringToObject(json, "name", "John Doe");
     
     char* json_str = cJSON_PrintUnformatted(json);
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, json_str, strlen(json_str));
+
+
+
     
-    int result = uvhttp_response_send(res);
+    int result = uvhttp_respond(res, 200, "application/json", json_str, strlen(json_str));
     free(json_str);
     cJSON_Delete(json);
     return result;
@@ -526,11 +526,11 @@ int user_service_proxy_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // 3. 获取响应
     // 4. 返回响应
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, proxy_response, proxy_response_len);
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json", proxy_response, proxy_response_len);
 }
 ```
 
@@ -563,11 +563,11 @@ int v1_list_users_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // ... 添加用户数据
     
     char* json_str = cJSON_PrintUnformatted(json);
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, json_str, strlen(json_str));
+
+
+
     
-    int result = uvhttp_response_send(res);
+    int result = uvhttp_respond(res, 200, "application/json", json_str, strlen(json_str));
     free(json_str);
     cJSON_Delete(json);
     return result;
@@ -580,12 +580,12 @@ int v2_list_users_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // ... 添加用户数据（包含更多信息）
     
     char* json_str = cJSON_PrintUnformatted(json);
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_header(res, "X-API-Version", "v2");
-    uvhttp_response_set_body(res, json_str, strlen(json_str));
+
+
+
+
     
-    int result = uvhttp_response_send(res);
+    int result = uvhttp_respond_with_headers(res, 200, (uvhttp_header_view_t[]){{"Content-Type", "application/json"}, {"X-API-Version", "v2"}}, 2, json_str, strlen(json_str));
     free(json_str);
     cJSON_Delete(json);
     return result;
@@ -668,11 +668,11 @@ int wrapped_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     
     // 2. 验证令牌
     if (!verify_token(auth_header)) {
-        uvhttp_response_set_status(res, 401);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
+
+
         const char* error = "{\"error\":\"Unauthorized\"}";
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+
+        return uvhttp_respond(res, 401, "application/json", error, strlen(error));
     }
     
     // 3. 调用实际处理器
@@ -731,11 +731,11 @@ void send_error_response(uvhttp_response_t* res, int status, const char* message
     cJSON_AddStringToObject(json, "error", message);
     
     char* json_str = cJSON_PrintUnformatted(json);
-    uvhttp_response_set_status(res, status);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, json_str, strlen(json_str));
+
+
+
     
-    uvhttp_response_send(res);
+    uvhttp_respond(res, status, "application/json", json_str, strlen(json_str));
     free(json_str);
     cJSON_Delete(json);
 }
@@ -868,13 +868,11 @@ void setup_post_routes(uvhttp_router_t* router) {
 
 ```c
 int redirect_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    uvhttp_response_set_status(res, 301);
-    uvhttp_response_set_header(res, "Location", "https://example.com/new-path");
-    uvhttp_response_set_header(res, "Content-Type", "text/plain");
     const char* message = "Moved Permanently";
-    uvhttp_response_set_body(res, message, strlen(message));
-    
-    return uvhttp_response_send(res);
+    uvhttp_header_view_t h[] = {{"Location", "https://example.com/new-path"},
+                                {"Content-Type", "text/plain"}};
+    uvhttp_respond_with_headers(res, 301, h, 2, message, strlen(message));
+    return 0;
 }
 ```
 
@@ -884,16 +882,17 @@ int redirect_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
 ```c
 int cors_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    // 添加 CORS 头
-    uvhttp_response_set_header(res, "Access-Control-Allow-Origin", "*");
-    uvhttp_response_set_header(res, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    uvhttp_response_set_header(res, "Access-Control-Allow-Headers", "Content-Type, Authorization");
+    // 添加 CORS 头（只准备，不发送）
+    uvhttp_header_view_t cors[] = {
+        {"Access-Control-Allow-Origin", "*"},
+        {"Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"},
+        {"Access-Control-Allow-Headers", "Content-Type, Authorization"}};
+    uvhttp_response_prepare(res, 200, cors, 3, NULL, 0);
     
     // 处理 OPTIONS 请求
     const char* method = uvhttp_request_get_method(req);
     if (strcmp(method, "OPTIONS") == 0) {
-        uvhttp_response_set_status(res, 200);
-        return uvhttp_response_send(res);
+        uvhttp_respond(res, 200, NULL, NULL, 0);
     }
     
     // 处理其他请求

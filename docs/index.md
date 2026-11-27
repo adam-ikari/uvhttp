@@ -56,7 +56,7 @@ v3.0.0 breaks compatibility on purpose. It removes API that could not keep its c
 
 - **The built-in rate limiter is gone.** One counter per server meant a single client over quota got 429 responses sent to every other client. A pre-dispatch [request filter](/guide/REQUEST_FILTER_API) replaces it; window length, keying and storage are application policy now.
 - **Ownership is in the name.** `uvhttp_server_set_router` / `set_context` became `take_router` / `take_context`. The builder layer and `uvhttp_serve` were removed.
-- **Two atomicity bugs fixed.** `uvhttp_response_set_body()` no longer frees the old body before allocating the new one, and the LRU cache setters validate at the write point.
+- **Two atomicity bugs fixed.** Body replacement no longer frees the old body before allocating the new one, and the LRU cache setters validate at the write point.
 - **A compressed response can no longer advertise a stale `Content-Length`**, and the static-file prewarm no longer leaks every file it handles.
 
 The [v3.0.0 release notes](/releases/v3.0.0-release-notes) list the full migration; the [changelog](/guide/CHANGELOG) tracks every PR.
@@ -115,6 +115,26 @@ State lives in libuv data pointers (`loop->data` or `server->context`). That sup
 A single error type carries a code, a description and a recovery hint. Every failure point is checked and reported.
 
 ---
+
+## Why UVHTTP (vs other lightweight C HTTP libraries)
+
+Most lightweight C HTTP libraries optimize for peak RPS. UVHTTP treats memory
+safety as a gate first: a per-connection leak that a 10-second benchmark cannot
+see becomes an OOM on an embedded device after a week. UVHTTP is itself a
+lightweight, embeddable C library with 32-bit support, and both the release gate
+and nightly CI run the full suite under ASan and UBSan so such bugs cannot hide.
+
+| Library | Embeddable C library | 32-bit | ASan-clean (verified) | UBSan-clean (verified) |
+|---------|:--------------------:|:------:|:---------------------:|:-----------------------:|
+| **UVHTTP** | ✅ | ✅ | ✅ CI gate | ✅ CI gate |
+| libuv-http | ✅ | ⚠️ | ❓ not published | ❓ not published |
+| microhttpd | ✅ | ⚠️ | ❓ not published | ❓ not published |
+| mongoose | ✅ | ✅ | ❓ not published | ❓ not published |
+| nginx | ❌ (standalone) | ✅ | ✅ (large team) | ❓ |
+
+> "Not published" means the project has no public sanitizer-clean gate, so a
+> "no findings" claim cannot be verified. UVHTTP's can be reproduced with
+> `make verify-memory-safety`.
 
 ## Platform Support
 

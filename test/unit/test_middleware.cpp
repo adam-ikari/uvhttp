@@ -79,6 +79,29 @@ static int failing_route_handler(uvhttp_request_t* req, uvhttp_response_t* resp)
     return -1;
 }
 
+/* 守卫宏回归：STOP 之后 handler 体的副作用必须不发生 */
+static int g_handler_body_side_effect = 0;
+
+static int guarded_handler_stop(uvhttp_request_t* req, uvhttp_response_t* resp) {
+    UVHTTP_MIDDLEWARE_GUARD(req, resp, blocking_middleware);
+    g_handler_body_side_effect++;
+    return UVHTTP_OK;
+}
+
+static int guarded_handler_continue(uvhttp_request_t* req, uvhttp_response_t* resp) {
+    UVHTTP_MIDDLEWARE_GUARD(req, resp, counting_middleware);
+    g_handler_body_side_effect++;
+    return UVHTTP_OK;
+}
+
+UVHTTP_DEFINE_MIDDLEWARE_CHAIN(guard_test_chain, counting_middleware, blocking_middleware);
+
+static int guarded_chain_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
+    UVHTTP_MIDDLEWARE_CHAIN_GUARD(req, resp, guard_test_chain);
+    g_handler_body_side_effect++;
+    return UVHTTP_OK;
+}
+
 /* 调用顺序追踪 */
 static int call_order[8];
 static int call_order_idx = 0;
@@ -156,6 +179,7 @@ protected:
         g_mw_call_count = 0;
         g_route_handler_called = 0;
         g_cleanup_called = 0;
+        g_handler_body_side_effect = 0;
         call_order_idx = 0;
         memset(call_order, 0, sizeof(call_order));
         g_multi_idx = 0;
@@ -206,6 +230,53 @@ TEST_F(MiddlewareTest, ExecuteMiddleware_StopThenContinue) {
         blocking_middleware,
         counting_middleware);
 
+    EXPECT_EQ(g_mw_call_count, 1);
+}
+
+TEST_F(MiddlewareTest, RunnerReturnsChainStatus) {
+    uvhttp_request_t* req = nullptr;
+    uvhttp_response_t* resp = nullptr;
+    static const uvhttp_middleware_handler_t cont[] = {counting_middleware};
+    static const uvhttp_middleware_handler_t stop[] = {blocking_middleware};
+
+    EXPECT_EQ(uvhttp_middleware_run(cont, 1, req, resp),
+              UVHTTP_MIDDLEWARE_CONTINUE);
+    EXPECT_EQ(uvhttp_middleware_run(stop, 1, req, resp),
+              UVHTTP_MIDDLEWARE_STOP);
+    EXPECT_EQ(UVHTTP_EXECUTE_MIDDLEWARE_CHAIN(req, resp, guard_test_chain),
+              UVHTTP_MIDDLEWARE_STOP);
+}
+
+/* 核心回归：旧宏形态下 STOP 只断链，handler 体副作用照常发生 —— 这里必须不执行 */
+TEST_F(MiddlewareTest, Guard_StopPreventsHandlerBodySideEffect) {
+    uvhttp_request_t* req = nullptr;
+    uvhttp_response_t* resp = nullptr;
+
+    int rc = guarded_handler_stop(req, resp);
+
+    EXPECT_EQ(rc, UVHTTP_OK);
+    EXPECT_EQ(g_handler_body_side_effect, 0);
+}
+
+TEST_F(MiddlewareTest, Guard_ContinueRunsHandlerBodySideEffect) {
+    uvhttp_request_t* req = nullptr;
+    uvhttp_response_t* resp = nullptr;
+
+    int rc = guarded_handler_continue(req, resp);
+
+    EXPECT_EQ(rc, UVHTTP_OK);
+    EXPECT_EQ(g_handler_body_side_effect, 1);
+    EXPECT_EQ(g_mw_call_count, 1);
+}
+
+TEST_F(MiddlewareTest, ChainGuard_StopPreventsHandlerBodySideEffect) {
+    uvhttp_request_t* req = nullptr;
+    uvhttp_response_t* resp = nullptr;
+
+    int rc = guarded_chain_handler(req, resp);
+
+    EXPECT_EQ(rc, UVHTTP_OK);
+    EXPECT_EQ(g_handler_body_side_effect, 0);
     EXPECT_EQ(g_mw_call_count, 1);
 }
 

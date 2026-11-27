@@ -135,8 +135,8 @@ server->tls_ctx = tls_ctx;
 // 设置资源限制（只列执行路径真正读取的字段）。请求体 / 请求头 / URL 上限
 // 是编译期常量（UVHTTP_MAX_BODY_SIZE 等），不是配置项 —— v3.0.0 删除了那些
 // 从未生效的配置字段。
-server->config->max_connections = 1000;
-server->config->max_file_size = 10 * 1024 * 1024; // 10MB
+config->max_connections = 1000; /* before take_config */
+config->max_file_size = 10 * 1024 * 1024; /* before take_config */
 ```
 
 ---
@@ -175,14 +175,14 @@ server->config->max_file_size = 10 * 1024 * 1024; // 10MB
 #include <string.h>
 
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_header(res, "X-Powered-By", "UVHTTP/2.7.1");
+
+
+
 
     const char* body = "{\"message\":\"Hello from UVHTTP\",\"version\":\"2.7.1\"}";
-    uvhttp_response_set_body(res, body, strlen(body));
 
-    return uvhttp_response_send(res);
+
+    return uvhttp_respond_with_headers(res, 200, (uvhttp_header_view_t[]){{"Content-Type", "application/json"}, {"X-Powered-By", "UVHTTP/2.7.1"}}, 2, body, strlen(body));
 }
 
 int main() {

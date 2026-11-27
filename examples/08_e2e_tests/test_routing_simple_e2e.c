@@ -30,10 +30,7 @@ static int api_v1_handler(uvhttp_request_t* request,
     (void)request;
     const char* body = "API v1 endpoint";
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
 
     return 0;
 }
@@ -43,10 +40,7 @@ static int api_v2_handler(uvhttp_request_t* request,
     (void)request;
     const char* body = "API v2 endpoint";
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
 
     return 0;
 }
@@ -56,10 +50,7 @@ static int user_handler(uvhttp_request_t* request,
     (void)request;
     const char* body = "User endpoint";
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
 
     return 0;
 }
@@ -69,10 +60,7 @@ static int post_handler(uvhttp_request_t* request,
     (void)request;
     const char* body = "Post endpoint";
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
 
     return 0;
 }

@@ -44,7 +44,7 @@
 - [ ] No route matches but static serving hits, so the static handler runs
 - [ ] No route matches and static serving misses: if `server->handler` is set, call that handler instead of a hard-coded 404
 - [ ] No route matches, static misses and no handler is set: return 404
-- [ ] An embedder handler can send a response normally (set_status, set_header, set_body, send)
+- [ ] An embedder handler can send a response normally (uvhttp_respond / uvhttp_respond_with_headers)
 
 ## 6. Memory safety
 
@@ -79,6 +79,9 @@
 When adding uvhttp as a submodule for the first time, verify these steps.
 The full integration guide is [EMBEDDING_GUIDE.md](guide/EMBEDDING_GUIDE.md),
 and a runnable standalone example is [examples/embedding/](https://github.com/adam-ikari/uvhttp/tree/main/examples/embedding).
+A production-shaped example (`examples/10_embedding/production_app.c`) exercises the 3.1.x
+seams — config, stats, draining, error observer and the embedder-owned logging
+interface — with a Web dashboard at `examples/10_embedding/www/dashboard.html`.
 
 1. [ ] Add `add_subdirectory` or `FetchContent` to the embedder's `CMakeLists.txt`
 2. [ ] Build the embedding project and confirm the uvhttp headers are reachable
@@ -96,3 +99,4 @@ and a runnable standalone example is [examples/embedding/](https://github.com/ad
 | 1.0 | 2026-08-20 | Initial version, based on embedding uvhttp in qwrt |
 | 1.1 | 2026-08-25 | Second validation round: add_subdirectory integration, CMake dependency visibility fix |
 | 1.2 | 2026-08-27 | New embedder onboarding: standalone `examples/embedding/` example and full `EMBEDDING_GUIDE.md` |
+| 1.3 | 2026-11-26 | Production-shaped example + Web dashboard exercising config/stats/draining/observer/log interface |

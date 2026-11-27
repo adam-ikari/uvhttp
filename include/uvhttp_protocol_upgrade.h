@@ -63,10 +63,18 @@ typedef uvhttp_error_t (*uvhttp_protocol_upgrade_handler_t)(
  *
  * @param tcp_handle TCP handle
  * @param fd File descriptor
+ * @param buffered bytes that followed the upgrade request headers in the
+ *        same read window (e.g. the first protocol frame), borrowed for the
+ *        duration of this callback — copy them if the new owner needs them
+ *        after it returns. NULL with buffered_len 0 when none were buffered.
+ * @param buffered_len number of borrowed bytes
  * @param user_data User data
  */
 typedef void (*uvhttp_connection_ownership_callback_t)(uv_tcp_t* tcp_handle,
-                                                       int fd, void* user_data);
+                                                       int fd,
+                                                       const char* buffered,
+                                                       size_t buffered_len,
+                                                       void* user_data);
 
 /**
  * @brief Connection lifecycle callback structure

@@ -162,10 +162,7 @@ static int index_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
                        "</script>"
                        "</body></html>";
 
-    uvhttp_response_set_status(resp, 200);
-    uvhttp_response_set_header(resp, "Content-Type", "text/html");
-    uvhttp_response_set_body(resp, html, strlen(html));
-    return uvhttp_response_send(resp);
+    return uvhttp_respond(resp, 200, "text/html", html, strlen(html));
 }
 
 /* ========== Main ========== */

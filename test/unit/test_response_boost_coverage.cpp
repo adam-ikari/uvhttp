@@ -7,6 +7,7 @@
  */
 
 #include <gtest/gtest.h>
+#include "uvhttp_response_internal.h"
 
 extern "C" {
 #include "uvhttp_allocator.h"
@@ -601,37 +602,11 @@ TEST_F(ResponseBoostTest, ShouldCompressByContentType_Unknown_ReturnsZero) {
 
 // ========== Compression API ==========
 
-TEST_F(ResponseBoostTest, SetCompressByFilename_NullResponse_ReturnsError) {
-    EXPECT_EQ(uvhttp_response_set_compress_by_filename(nullptr, "test.html"), UVHTTP_ERROR_INVALID_PARAM);
-}
 
-TEST_F(ResponseBoostTest, SetCompressByFilename_Compressible_EnablesCompress) {
-    EXPECT_EQ(uvhttp_response_set_compress_by_filename(resp, "index.html"), UVHTTP_OK);
-    EXPECT_EQ(resp->compress, 1);
-    EXPECT_EQ(resp->compress_threshold, 1024);
-}
 
-TEST_F(ResponseBoostTest, SetCompressByFilename_NonCompressible_DisablesCompress) {
-    resp->compress = 1;
-    EXPECT_EQ(uvhttp_response_set_compress_by_filename(resp, "image.jpg"), UVHTTP_OK);
-    EXPECT_EQ(resp->compress, 0);
-}
 
-TEST_F(ResponseBoostTest, SetCompressByContentType_NullResponse_ReturnsError) {
-    EXPECT_EQ(uvhttp_response_set_compress_by_content_type(nullptr, "text/html"), UVHTTP_ERROR_INVALID_PARAM);
-}
 
-TEST_F(ResponseBoostTest, SetCompressByContentType_Compressible_EnablesCompress) {
-    EXPECT_EQ(uvhttp_response_set_compress_by_content_type(resp, "text/html"), UVHTTP_OK);
-    EXPECT_EQ(resp->compress, 1);
-    EXPECT_EQ(resp->compress_threshold, 1024);
-}
 
-TEST_F(ResponseBoostTest, SetCompressByContentType_NonCompressible_DisablesCompress) {
-    resp->compress = 1;
-    EXPECT_EQ(uvhttp_response_set_compress_by_content_type(resp, "image/jpeg"), UVHTTP_OK);
-    EXPECT_EQ(resp->compress, 0);
-}
 
 TEST_F(ResponseBoostTest, SetCompress_NullResponse_ReturnsError) {
     EXPECT_EQ(uvhttp_response_set_compress(nullptr, 1), UVHTTP_ERROR_INVALID_PARAM);

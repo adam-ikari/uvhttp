@@ -5,7 +5,7 @@
  * 是超时统计回调的唯一触发点，函数体有四条分支：
  *
  *     1. !conn || !conn->server → 直接 return
- *     2. server->config 有 → timeout_ms = config->connection_timeout * 1000
+ *     2. 有 config → timeout_ms = config->connection_timeout * 1000
  *        无 config → 走 UVHTTP_CONNECTION_TIMEOUT_DEFAULT
  *     3. server->timeout_callback 非空 → 回调 (server, conn, timeout_ms,
  * user_data) 为空 → 跳过回调，直接关闭
@@ -125,10 +125,10 @@ TEST_F(ConnectionTimeoutCallback, CallbackFiresOnceThenClosesConnection) {
     int marker = 42;
     server_->timeout_callback = RecordingTimeoutCallback;
     server_->timeout_callback_user_data = &marker;
-    /* uvhttp_server_new 不分配 config，故此处 config 为 NULL——
+    /* 未安装 config，故 get_config 为 NULL——
      * 走 connection_timeout_cb 的分支 2 else 侧：用
      * UVHTTP_CONNECTION_TIMEOUT_DEFAULT(60) 而非 config 值。 */
-    ASSERT_EQ(server_->config, nullptr)
+    EXPECT_EQ(uvhttp_server_get_config(server_), nullptr)
         << "本用例依赖 config 为 NULL 的默认分支";
 
     ASSERT_EQ(uvhttp_connection_start_timeout_custom(conn_, kMinTimeout),

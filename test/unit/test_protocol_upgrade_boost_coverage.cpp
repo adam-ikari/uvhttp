@@ -8,6 +8,7 @@
  */
 
 #include <gtest/gtest.h>
+#include "uvhttp_response_internal.h"
 
 extern "C" {
 #include "uvhttp_protocol_upgrade.h"
@@ -374,7 +375,7 @@ TEST_F(ProtocolUpgradeTest, TransferOwnership_WrongState_ReturnsError) {
 
     // Connection starts in UVHTTP_CONN_STATE_NEW (not HTTP_PROCESSING)
     // transfer_ownership should reject this state
-    auto dummy_callback = [](uv_tcp_t*, int, void*) {};
+    auto dummy_callback = [](uv_tcp_t*, int, const char*, size_t, void*) {};
     result = uvhttp_connection_transfer_ownership(
         conn, (uvhttp_connection_ownership_callback_t)dummy_callback, nullptr);
     EXPECT_EQ(result, UVHTTP_ERROR_CONNECTION_INIT);
@@ -419,6 +420,30 @@ TEST_F(ProtocolUpgradeTest, SetLifecycle_Overwrite_Works) {
               lifecycle_on_close_2);
 
     uvhttp_connection_free(conn);
+}
+
+// ========== lifecycle on_close actually fires on connection close ==========
+
+static int g_lifecycle_close_calls = 0;
+
+static void count_lifecycle_close(void* user_data) {
+    (void)user_data;
+    ++g_lifecycle_close_calls;
+}
+
+TEST_F(ProtocolUpgradeTest, LifecycleOnCloseFiresExactlyOnce) {
+    uvhttp_connection_t* conn = nullptr;
+    ASSERT_EQ(uvhttp_connection_new(server, &conn), UVHTTP_OK);
+    g_lifecycle_close_calls = 0;
+    uvhttp_connection_lifecycle_t life = {nullptr, count_lifecycle_close};
+    ASSERT_EQ(uvhttp_connection_set_lifecycle(conn, &life), UVHTTP_OK);
+
+    uvhttp_connection_close(conn);
+    for (int i = 0; i < 30; ++i) {
+        uv_run(&loop, UV_RUN_NOWAIT);
+    }
+    EXPECT_EQ(g_lifecycle_close_calls, 1)
+        << "on_close must fire once when the connection is released";
 }
 
 // ========== uvhttp_connection_get_fd and get_peer_address with accepted

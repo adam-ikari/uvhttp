@@ -3,6 +3,7 @@
  * Fully self-implemented WebSocket protocol support based on RFC 6455
  */
 
+#include "uvhttp_response_internal.h"
 #include "uvhttp_websocket.h"
 
 #include "uvhttp_allocator.h"
@@ -565,9 +566,12 @@ uvhttp_error_t uvhttp_ws_send_frame(uvhttp_context_t* context,
             }
             break;
         }
-        if (sent == 0) {
+        if (sent < (size_t)frame_len) {
+            /* A TLS write that stopped early (error or exhausted WANT_WRITE
+             * retries) left a partial frame on the wire. Reporting OK let the
+             * caller count a frame the peer can never frame correctly. */
             uvhttp_free(buffer);
-            return UVHTTP_ERROR_INVALID_PARAM;
+            return UVHTTP_ERROR_CONNECTION_BROKEN;
         }
         ret = (int)sent;
     } else {
@@ -589,7 +593,9 @@ uvhttp_error_t uvhttp_ws_send_frame(uvhttp_context_t* context,
             }
             sent += (size_t)ret;
         }
-        if (sent == 0) {
+        if (sent < (size_t)frame_len) {
+            /* Short write that could not be completed: the frame is
+             * truncated. Never report success for a partial frame. */
             uvhttp_free(buffer);
             return UVHTTP_ERROR_CONNECTION_BROKEN;
         }
@@ -911,6 +917,15 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
             return UVHTTP_ERROR_INVALID_PARAM;
         }
 
+        /* RFC 6455 §5.2: opcodes 0x3-0x7 and 0xB-0xF are reserved. They used
+         * to fall through the dispatch chain below and be consumed silently,
+         * so a peer could send a reserved control/data opcode and the
+         * connection stayed open as if nothing happened. */
+        if ((header.opcode >= 0x3 && header.opcode <= 0x7) ||
+            (header.opcode >= 0xB && header.opcode <= 0xF)) {
+            return UVHTTP_ERROR_INVALID_PARAM;
+        }
+
         /* RFC 6455 §5.5/§5.6: control frames (CLOSE/PING/PONG) MUST have a
          * payload <= 125 bytes and MUST NOT be fragmented (FIN must be set);
          * violations are protocol errors (review M2). */
@@ -1030,12 +1045,20 @@ uvhttp_error_t uvhttp_ws_process_data(struct uvhttp_ws_connection* conn,
         } else if (header.opcode == UVHTTP_WS_OPCODE_CLOSE) {
             /* closeframe */
             int close_code = 1000;
-            const char* close_reason = "";
+            /* A slice of recv_buffer is not NUL-terminated: an embedder's
+             * on_close using %s or strlen read past the frame into adjacent
+             * buffered bytes. Copy into a bounded, terminated buffer. */
+            char close_reason[125 + 1] = {0};
 
             if (header.payload_length >= 2) {
                 close_code = (payload[0] << 8) | payload[1];
                 if (header.payload_length > 2) {
-                    close_reason = (const char*)(payload + 2);
+                    size_t reason_len = (size_t)header.payload_length - 2;
+                    if (reason_len > 125) {
+                        reason_len = 125;
+                    }
+                    memcpy(close_reason, payload + 2, reason_len);
+                    close_reason[reason_len] = '\0';
                 }
             }
 
@@ -1180,9 +1203,11 @@ static int websocket_protocol_detector(uvhttp_request_t* request,
         return 0;
     }
 
-    /* Check Connection header (may contain multiple values); header names
-     * and the token are case-insensitive — review M4 */
-    if (uvhttp_ws_strcasestr(connection_header, "upgrade") == NULL) {
+    /* Check Connection header as a token list. A substring match accepted
+     * "not-upgrade" / "xupgrade-foo", and get_header only returned the first
+     * of several Connection headers — both wrong (review M4). */
+    if (!uvhttp_request_has_header_token(request, UVHTTP_HEADER_CONNECTION,
+                                         "upgrade")) {
         return 0;
     }
 

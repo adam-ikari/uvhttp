@@ -66,7 +66,16 @@ uvhttp_error_t uvhttp_tls_context_set_dh_parameters(uvhttp_tls_context_t* ctx,
 
 /* TLSConnectionmanage */
 mbedtls_ssl_context* uvhttp_tls_create_ssl(uvhttp_tls_context_t* ctx);
-uvhttp_error_t uvhttp_tls_setup_ssl(mbedtls_ssl_context* ssl, int fd);
+/**
+ * @brief Bind an SSL context to a socket descriptor
+ *
+ * @p fd_storage must remain alive (and hold the descriptor) for the lifetime
+ * of the SSL context: mbedtls keeps its address as the BIO context. Passing
+ * a pointer to a stack local that goes out of scope makes every TLS I/O
+ * read freed stack memory.
+ */
+uvhttp_error_t uvhttp_tls_setup_ssl(mbedtls_ssl_context* ssl,
+                                    const int* fd_storage);
 uvhttp_error_t uvhttp_tls_handshake(mbedtls_ssl_context* ssl);
 uvhttp_error_t uvhttp_tls_read(mbedtls_ssl_context* ssl, void* buf, size_t len);
 uvhttp_error_t uvhttp_tls_write(mbedtls_ssl_context* ssl, const void* buf,

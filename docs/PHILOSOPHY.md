@@ -80,7 +80,7 @@ memory safety > memory stability > binary size > startup time > peak throughput
 | Memory leaks | 0 (proven by ASan) | ASan gate on every release |
 | Long-run RSS | No growth | `scripts/performance/long_run_memory.sh` |
 | Static library size | ~257 KB | Release build, stripped |
-| 32-bit support | Required | Manual `-m32` build; no CI job |
+| 32-bit support | Required | i386 blocking gate on PR + pre-release (lib, deps, tests, consumer link) |
 | Cold start | ~310 ms | Process start to first byte |
 | Compile-time trimming | Pay for what you use | CMake feature switches |
 
@@ -288,15 +288,17 @@ UVHTTP's validation stack:
 
 ```
 ┌─────────────────────────────────────┐
-│ Layer 3: embedding validation       │ ← defined in this chapter
+│ Layer 4: embedding validation       │ ← defined in this chapter
 ├─────────────────────────────────────┤
-│ Layer 2: build-configuration matrix │ ← covered (build-matrix)
+│ Layer 3: build matrix + 32-bit      │ ← 4 feature configs + i386 blocking gate
 ├─────────────────────────────────────┤
-│ Layer 1: tests + ASan/UBSan (base)  │ ← complete
+│ Layer 2: tests + ASan/UBSan (base)  │ ← complete
+├─────────────────────────────────────┤
+│ Layer 1: PR compile + quality gates │ ← cppcheck, validity, docs, lengths
 └─────────────────────────────────────┘
 ```
 
-Layer one is complete. Layer two is covered by the build-matrix job in ci-pr.yml, which validates all-on, minimal, ROUTER_CACHE, static files and no-compression builds. Layer three runs through the embedding checklist. This chapter bridges layer one and layer three.
+Layer 1 (PR compile and quality gates) blocks on cppcheck, test-validity, doc sync and response-body-length checks. Layer 2 (tests plus ASan/UBSan) is complete. Layer 3 is the build matrix (all-on, minimal, ROUTER_CACHE, static files, no-compression) plus the i386 blocking gate on both PR and pre-release. Layer 4 runs through the embedding checklist. This chapter bridges the automated layers and real embedder validation.
 
 ---
 
@@ -308,3 +310,4 @@ Layer one is complete. Layer two is covered by the build-matrix job in ci-pr.yml
 | 1.1 | 2026-08-20 | Added "low resource use first"; fixed section 9 formatting |
 | 1.2 | 2026-08-20 | Added the top-level chapter "Zero-Cost Abstraction" |
 | 1.3 | 2026-08-20 | Updated the validation stack: layer two build-matrix is covered by ci-pr.yml |
+| 1.4 | 2026-11-26 | 32-bit blocking CI gate; i386 library+deps+tests+consumer |

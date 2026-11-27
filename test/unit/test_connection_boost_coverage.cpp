@@ -13,6 +13,7 @@
 #include "uvhttp_connection.h"
 #include "uvhttp_context.h"
 #include "uvhttp_error.h"
+#include "uvhttp_protocol_upgrade.h"
 #include "uvhttp_server.h"
 
 #include "llhttp.h"
@@ -287,7 +288,11 @@ TEST(ConnectionBoostCoverage, FreeResources_WithLifecycle) {
     uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
 
-    conn->lifecycle = uvhttp_alloc(64);
+    /* Use the public setter: conn->lifecycle is a void* and the free path
+     * now invokes its on_close callback, so a raw uninitialised block would
+     * call a garbage function pointer. */
+    uvhttp_connection_lifecycle_t life = {nullptr, nullptr};
+    ASSERT_EQ(uvhttp_connection_set_lifecycle(conn, &life), UVHTTP_OK);
     ASSERT_NE(conn->lifecycle, nullptr);
 
     close_and_drain(conn, loop);
@@ -330,7 +335,6 @@ TEST(ConnectionBoostCoverage, ConnectionNew_InitialFields) {
     uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
 
-    EXPECT_EQ(conn->keepalive, 1);
     EXPECT_EQ(conn->state, UVHTTP_CONN_STATE_NEW);
     EXPECT_EQ(conn->chunked_encoding, 0);
     EXPECT_EQ(conn->close_pending, 0);
@@ -423,13 +427,12 @@ TEST(ConnectionBoostCoverage, StartTimeout_WithConfig) {
     result = uvhttp_config_new(&config);
     ASSERT_EQ(result, UVHTTP_OK);
     config->connection_timeout = 30;
-    server->config = config;
+    ASSERT_EQ(uvhttp_server_take_config(server, config), UVHTTP_OK);
 
     result = uvhttp_connection_start_timeout(conn);
     EXPECT_EQ(result, UVHTTP_OK);
 
-    server->config = nullptr;
-    uvhttp_config_free(config);
+    ASSERT_EQ(uvhttp_server_take_config(server, nullptr), UVHTTP_OK);
 
     close_and_drain(conn, loop);
     destroy_server_and_loop(server, loop);
@@ -446,7 +449,7 @@ TEST(ConnectionBoostCoverage, StartTimeout_NoConfig) {
     uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
 
-    server->config = nullptr;
+    ASSERT_EQ(uvhttp_server_take_config(server, nullptr), UVHTTP_OK);
 
     result = uvhttp_connection_start_timeout(conn);
     EXPECT_EQ(result, UVHTTP_OK);

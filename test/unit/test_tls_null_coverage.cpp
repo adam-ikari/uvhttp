@@ -89,7 +89,8 @@ TEST(UvhttpTlsNullCoverageTest, TlsContextSetDhParametersNull) {
 
 /* 测试设置SSL NULL */
 TEST(UvhttpTlsNullCoverageTest, TlsSetupSslNull) {
-    uvhttp_error_t err = uvhttp_tls_setup_ssl(NULL, -1);
+    int fd = -1;
+    uvhttp_error_t err = uvhttp_tls_setup_ssl(NULL, &fd);
     EXPECT_NE(err, UVHTTP_OK);
 }
 

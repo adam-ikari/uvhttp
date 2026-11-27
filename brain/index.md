@@ -1,9 +1,9 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-11-23T17:53:38.153Z._
+_Auto-generated. Last updated 2026-11-27T04:58:55.773Z._
 
 - [alloc-hotpath-measured](pages/alloc-hotpath-measured.md) — category: decision | tags: [performance, benchmark, allocator, methodology, yagni] | # 每请求分配已实测：省一次仅 0.026%，内存分配优化不做
-- [api-atomicity-audit](pages/api-atomicity-audit.md) — category: decision | tags: [api, atomicity, orthogonality, audit, v2.10] | <!-- compiled_truth -->
+- [api-atomicity-audit](pages/api-atomicity-audit.md) — category: decision | tags: [api, atomicity, orthogonality, audit, v2.10] | # API 原子化审计 — 状态更新（2026-11-25）
 - [api-atomization-orthogonalization](pages/api-atomization-orthogonalization.md) — category: decision | tags: [api, design, roadmap, v2.10] | # v2.10 方向：API 原子化与正交化
 - [benchmark-thermal-throttling](pages/benchmark-thermal-throttling.md) — category: decision | tags: [performance, benchmark, methodology] | # 禁止在本机做性能测量 —— 连配对 A/B 也不行
 - [build-system-make-cmake](pages/build-system-make-cmake.md) — category: decision | tags: [build-system, cmake, make, just, embedded] | ## 决策
@@ -16,6 +16,8 @@ _Auto-generated. Last updated 2026-11-23T17:53:38.153Z._
 - [connection-limit-503-memory-safety](pages/connection-limit-503-memory-safety.md) — category: decision | tags: [memory-safety, server, connection-limit] | # 结论
 - [content-length-compression-misalign](pages/content-length-compression-misalign.md) — category: decision | tags: [bug, compression, response, content-length] | # 手动 Content-Length + 压缩分帧错位（#464 已修复）
 - [coverage-tls-improvement](pages/coverage-tls-improvement.md) — category: decision | tags: [tls, coverage, test, quality] | # TLS 覆盖率提升三 PR（#461-#463）
+- [cve-exposure-audit](pages/cve-exposure-audit.md) — category: decision | tags: [security, cve, deps, audit] | # CVE 暴露面自查（2026-11-26）— 升级后状态
+- [docs-site-review-3126](pages/docs-site-review-3126.md) — category: decision | tags: [docs, website, benchmark, review] | # 文档与网站评审（2026-11-27）— 修复后
 - [docs-vitepress-ssr-event-build-fail](pages/docs-vitepress-ssr-event-build-fail.md) — category: project | tags: [docs, ci, vitepress] | # VitePress 文档构建失败（已修复）
 - [embedding-cmake-public-deps](pages/embedding-cmake-public-deps.md) — category: decision | tags: [embedding, cmake, build, add_subdirectory] | ## 发现
 - [embedding-guide-examples](pages/embedding-guide-examples.md) — category: decision | tags: [embedding, guide, examples, add_subdirectory] | ## 交付物
@@ -24,10 +26,11 @@ _Auto-generated. Last updated 2026-11-23T17:53:38.153Z._
 - [io-uring-evaluation](pages/io-uring-evaluation.md) — category: decision | tags: [performance, architecture, io-uring, libuv, yagni] | # io_uring 评估：当前架构下不可达，待办关闭
 - [lcov-mock-aggregation-underestimate](pages/lcov-mock-aggregation-underestimate.md) — category: decision | tags: [coverage, lcov, test-infra, mock] | # lcov 聚合低估 mock 测试覆盖（connection.c 45.3% 实为 ~79.6%）
 - [macos-cross-platform-build](pages/macos-cross-platform-build.md) — category: decision | tags: [ci, portability, macos, build] | # macOS 跨平台编译：5 个 GNU-only 障碍与 non-blocking 门禁
-- [middleware-stop-does-not-short-circuit-handler](pages/middleware-stop-does-not-short-circuit-handler.md) — category: decision | tags: [middleware, api, defect, v2.10] | # 中间件 STOP 不短路 handler 体（已知缺陷，本次未修）
+- [middleware-stop-does-not-short-circuit-handler](pages/middleware-stop-does-not-short-circuit-handler.md) — category: decision | tags: [middleware, api, defect, v2.10] | # 中间件 STOP 现已可真正短路 handler 体（2026-11-24 修复）
 - [no-config-file-parsing](pages/no-config-file-parsing.md) — category: decision | tags: [config, scope, roadmap] | ## 约束（2026-10-17 用户确认，记录为项目约束）
 - [perf-regression-gate](pages/perf-regression-gate.md) — category: decision | tags: [performance, benchmark, ci, gate] | ## 现状
 - [performance-benchmark-update](pages/performance-benchmark-update.md) — category: decision | tags: [performance, benchmark, release-v2.6.2] | ## 变更（v2.7.0，commit aecb053，2026-08-21）
+- [production-readiness-push](pages/production-readiness-push.md) — category: decision | tags: [production, roadmap, audit, api, ops] | # 生产级可用推进（2026-11-26）— 内部审计全部清空
 - [quality-audit-security-hardening](pages/quality-audit-security-hardening.md) — category: decision | tags: [security, http, static, ci, coverage] | 2026-11-10 对全库做产品级质量审计（两个只读审计 agent + 本地门禁），落地以下结论：
 - [release-checklist-enforced](pages/release-checklist-enforced.md) — category: decision | tags: [release, ci, quality] | # 发布检查清单：从靠人读到脚本门禁
 - [release-process-benchmark-gate](pages/release-process-benchmark-gate.md) — category: decision | tags: [release, ci, benchmark] | ## 决定
@@ -46,5 +49,6 @@ _Auto-generated. Last updated 2026-11-23T17:53:38.153Z._
 - [test-validity-always-green](pages/test-validity-always-green.md) — category: project | tags: [test, ci, mutation, quality] | # 测试有效性：恒绿零验证的普查与门禁
 - [tls-session-cache](pages/tls-session-cache.md) — category: decision | tags: [tls, performance, session-cache] | ## 决策（v2.7.0，commit aecb053，P0）
 - [v300-mechanism-audit](pages/v300-mechanism-audit.md) — category: decision | tags: [audit, cmake, packaging, api, docs] | # v3.0.0 后机制有效性审计
+- [version-310-decision](pages/version-310-decision.md) — category: decision | tags: [version, semver, release, decision] | # 版本决策（2026-11-26）— 3.1.1
 - [websocket-tls-pr335-merge](pages/websocket-tls-pr335-merge.md) — category: decision | tags: [websocket, tls, pr] | ## 背景
 - [zerocopy-small-body-regression](pages/zerocopy-small-body-regression.md) — category: decision | tags: [performance, benchmark, writev, methodology] | 评估完毕（2026-09-30）：维持「代价大于收益」，正式关闭重构。

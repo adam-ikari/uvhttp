@@ -74,8 +74,9 @@ uvhttp_result_t info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     char* json_string = create_json_response(200, "获取成功", info);
     cJSON_Delete(info);
     
-    // 设置 Content-Type 为 JSON
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
+    // 设置 Content-Type 为 JSON（只准备头部，不发送）
+    uvhttp_header_view_t json_headers[] = {{"Content-Type", "application/json"}};
+    uvhttp_response_prepare(res, 200, json_headers, 1, NULL, 0);
     
     // 使用统一响应处理 - 由使用者设置 Content-Type
     uvhttp_error_t result = uvhttp_send_unified_response(res, json_string, strlen(json_string), 200);
@@ -89,10 +90,7 @@ uvhttp_result_t create_user_handler(uvhttp_request_t* req, uvhttp_response_t* re
     const char* body = uvhttp_request_get_body(req);
     if (!body || strlen(body) == 0) {
         char* error_json = create_error_response("missing_body", "请求体为空");
-        uvhttp_response_set_status(res, 400);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error_json, strlen(error_json));
-        uvhttp_response_send(res);
+        uvhttp_respond(res, 400, "application/json", error_json, strlen(error_json));
         free(error_json);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -102,10 +100,7 @@ uvhttp_result_t create_user_handler(uvhttp_request_t* req, uvhttp_response_t* re
     if (!user_data) {
         const char* error_ptr = cJSON_GetErrorPtr();
         char* error_json = create_error_response("invalid_json", error_ptr ? error_ptr : "JSON 格式错误");
-        uvhttp_response_set_status(res, 400);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error_json, strlen(error_json));
-        uvhttp_response_send(res);
+        uvhttp_respond(res, 400, "application/json", error_json, strlen(error_json));
         free(error_json);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
@@ -118,10 +113,7 @@ uvhttp_result_t create_user_handler(uvhttp_request_t* req, uvhttp_response_t* re
     // 验证必需字段
     if (!cJSON_IsString(name) || !cJSON_IsString(email)) {
         char* error_json = create_error_response("missing_fields", "缺少必需字段: name, email");
-        uvhttp_response_set_status(res, 400);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error_json, strlen(error_json));
-        uvhttp_response_send(res);
+        uvhttp_respond(res, 400, "application/json", error_json, strlen(error_json));
         free(error_json);
         cJSON_Delete(user_data);
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -141,10 +133,7 @@ uvhttp_result_t create_user_handler(uvhttp_request_t* req, uvhttp_response_t* re
     cJSON_Delete(created_user);
     cJSON_Delete(user_data);
     
-    uvhttp_response_set_status(res, 201);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, json_string, strlen(json_string));
-    uvhttp_response_send(res);
+    uvhttp_respond(res, 201, "application/json", json_string, strlen(json_string));
     
     free(json_string);
     return UVHTTP_OK;
@@ -193,10 +182,7 @@ uvhttp_result_t list_users_handler(uvhttp_request_t* req, uvhttp_response_t* res
     char* json_string = create_json_response(200, "获取成功", response_data);
     cJSON_Delete(response_data);
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, json_string, strlen(json_string));
-    uvhttp_response_send(res);
+    uvhttp_respond(res, 200, "application/json", json_string, strlen(json_string));
     
     free(json_string);
     return UVHTTP_OK;
@@ -227,10 +213,7 @@ uvhttp_result_t health_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     char* json_string = create_json_response(200, "服务正常", health);
     cJSON_Delete(health);
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, json_string, strlen(json_string));
-    uvhttp_response_send(res);
+    uvhttp_respond(res, 200, "application/json", json_string, strlen(json_string));
     
     free(json_string);
     return UVHTTP_OK;
@@ -267,7 +250,7 @@ uvhttp_result_t home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "<div class='new'>"
         "<h3>🆕 统一响应处理</h3>"
         "<p>现在可以使用 <code>uvhttp_send_unified_response()</code> 自动检测内容类型并设置正确的 Content-Type！</p>"
-        "<pre><code>// 旧方式（需要手动设置 Content-Type）\nuvhttp_response_set_status(res, 200);\nuvhttp_response_set_header(res, \"Content-Type\", \"application/json\");\nuvhttp_response_set_body(res, json_string, strlen(json_string));\nuvhttp_response_send(res);\n\n// 新方式（自动检测内容类型）\nuvhttp_send_unified_response(res, json_string, strlen(json_string), 200);</code></pre>"
+        "<pre><code>// 旧方式（需要手动设置 Content-Type）\nuvhttp_respond(res, 200, \"application/json\", json_string, strlen(json_string));\n\n// 新方式（自动检测内容类型）\nuvhttp_send_unified_response(res, json_string, strlen(json_string), 200);</code></pre>"
         "</div>"
         
         "<h2>📋 API 端点</h2>"
@@ -319,8 +302,9 @@ uvhttp_result_t home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "</body>"
         "</html>";
     
-    // 设置 Content-Type 为 HTML
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
+    // 设置 Content-Type 为 HTML（只准备头部，不发送）
+    uvhttp_header_view_t html_headers[] = {{"Content-Type", "text/html; charset=utf-8"}};
+    uvhttp_response_prepare(res, 200, html_headers, 1, NULL, 0);
     
     // 使用统一响应处理 - 由使用者设置 Content-Type
     uvhttp_error_t result = uvhttp_send_unified_response(res, html, strlen(html), 200);

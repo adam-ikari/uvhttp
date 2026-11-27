@@ -113,11 +113,11 @@ int request_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         ctx->request_count,
         time(NULL) - ctx->start_time);
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, response, strlen(response));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json", response, strlen(response));
 }
 ```
 
@@ -160,13 +160,13 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         time(NULL) - ctx->start_time,
         ctx->server ? ctx->server->active_connections : 0);
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, response, strlen(response));
+
+
+
     
     ctx->request_count++;
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json", response, strlen(response));
 }
 
 /**
@@ -251,11 +251,11 @@ int worker_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         ctx->thread_id,
         ++ctx->request_count);
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, response, strlen(response));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json", response, strlen(response));
 }
 
 /**
@@ -439,10 +439,10 @@ int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // 检查上下文是否存在
     if (!ctx) {
         const char* error = "{\"error\":\"上下文未初始化\"}";
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+
+
+
+        return uvhttp_respond(res, 500, "application/json", error, strlen(error));
     }
     
     // 使用上下文

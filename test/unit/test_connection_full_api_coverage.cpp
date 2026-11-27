@@ -412,16 +412,6 @@ TEST(UvhttpConnectionFullApiTest, ConnectionKeepalive) {
     uvhttp_error_t result = uvhttp_connection_new(server, &conn);
     ASSERT_EQ(result, UVHTTP_OK);
     
-    /* 测试 keepalive 标志 */
-    conn->keepalive = 0;
-    EXPECT_EQ(conn->keepalive, 0);
-    
-    conn->keepalive = 1;
-    EXPECT_EQ(conn->keepalive, 1);
-    
-    conn->keepalive = 0;
-    EXPECT_EQ(conn->keepalive, 0);
-    
     uvhttp_connection_free(conn);
     destroy_server_and_loop(loop, server);
 }

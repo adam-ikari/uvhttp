@@ -53,8 +53,8 @@ static int test_hello_world() {
     uvhttp_mock_response_t* response = uvhttp_mock_response_create(client);
     
     // Set response data
-    UVHTTP_TEST_ASSERT_SUCCESS(uvhttp_response_set_status(&response->base, 200));
-    UVHTTP_TEST_ASSERT_SUCCESS(uvhttp_response_set_body(&response->base, "Hello", 5));
+    UVHTTP_TEST_ASSERT_SUCCESS(uvhttp_respond(&response->base, 200,
+                                              NULL, "Hello", 5));
     
     // Test a pure function
     char* data = NULL;
@@ -189,7 +189,9 @@ typedef struct uvhttp_context {
 #### Refactoring Example
 ```c
 // Original function: mixes business logic and network I/O
-uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
+uvhttp_error_t uvhttp_respond(uvhttp_response_t* response, int status_code,
+                              const char* content_type, const char* body,
+                              size_t body_length);
 
 // After refactoring: separate pure functions and side effects
 uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response, 
@@ -264,8 +266,7 @@ static int test_response_building() {
     uvhttp_mock_response_t* response = uvhttp_mock_response_create(client);
     
     // Set test data
-    uvhttp_response_set_status(&response->base, 200);
-    uvhttp_response_set_body(&response->base, "Hello", 5);
+    uvhttp_respond(&response->base, 200, NULL, "Hello", 5);
     
     // Test a pure function
     char* data = NULL;
@@ -404,8 +405,8 @@ uvhttp_test_simulate_connection_timeout();
 uvhttp_test_simulate_memory_exhaustion();
 
 // Test boundary conditions
-uvhttp_response_set_body(response, NULL, 0);  // invalid arguments
-uvhttp_response_set_status(response, 999);    // invalid status code
+uvhttp_respond(response, 200, NULL, NULL, 1);  // invalid arguments
+uvhttp_respond(response, 999, NULL, NULL, 0);    // invalid status code
 ```
 
 ## 🚀 Migration Guide
@@ -421,7 +422,7 @@ uvhttp_response_set_status(response, 999);    // invalid status code
 2. **Modify test code**
    ```c
    // Old approach: test directly
-   uvhttp_response_send(response);
+   uvhttp_respond(response, 200, NULL, NULL, 0);
    
    // New approach: test using the pure function
    char* data = NULL;

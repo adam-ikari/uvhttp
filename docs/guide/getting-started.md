@@ -59,10 +59,10 @@ Create a file `hello.c`:
 #include <string.h>
 
 int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, "Hello, World!", strlen("Hello, World!"));
-    return uvhttp_response_send(response);
+
+
+
+    return uvhttp_respond(response, 200, "text/plain", "Hello, World!", strlen("Hello, World!"));
 }
 
 int main() {
@@ -90,7 +90,7 @@ int main() {
 }
 ```
 
-The handler sets the status, the content type and the body, then calls uvhttp_response_send and returns its result. uvhttp_server_take_router hands the router to the server, which owns it from then on.
+The handler sets the status, the content type and the body, then calls uvhttp_respond and returns its result. uvhttp_server_take_router hands the router to the server, which owns it from then on.
 
 ### Compile and Run
 

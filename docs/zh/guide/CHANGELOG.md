@@ -1,6 +1,6 @@
 ---
 title: 更新日志
-description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，遵循语义化版本规范。涵盖 1.0.0 至 2.7.2 各版本的新增、修复、变更、安全与性能改进，以及生产级内存安全验证。
+description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，遵循语义化版本规范。涵盖 1.0.0 至 3.1.1 各版本的新增、修复、变更、安全与性能改进，以及生产级内存安全验证。
 ---
 
 # 更新日志
@@ -9,6 +9,66 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
 本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)规范。
+
+## [3.1.1] - 2026-11-26
+
+3.1.0 在同一 3.0 破坏窗口内的后续版本。版本号提升为 patch，是因为下列 ownership 回调签名变更属于源码级破坏，不应藏在 3.1.0 的 MINOR 条目里。本节其余修复与 3.1.0 同期开发，共用其验证矩阵。
+
+### 移除（破坏性）
+- **`uvhttp_connection_ownership_callback_t` 签名变更**：新增 `const char* buffered, size_t buffered_len` 参数。自定义升级处理器现在能收到与升级请求头在同一读窗口内到达的后续字节；此前这些字节被读入连接缓冲后直接丢弃，新 owner 永远看不到首帧。回调需接受这两个额外参数（不用则忽略）。
+
+### 修复
+- **TLS 握手 WANT_WRITE 不再死锁**：握手期发送缓冲满此前被折叠成 WANT_READ，导致服务端等可读、对端等握手记录。现在用可写 poll 重试握手。
+- **自定义协议升级的首帧不再丢失**，通过上面的 buffered 参数传递。
+
+### 验证
+- Release 134/134、静态文件 135/135、ASan 134/134、UBSan 134/134、32-bit 134/134；文档同步与测试有效性门禁通过。
+
+## [3.1.0] - 2026-11-26
+
+3.0 破坏性窗口的收尾。3.0.0 已删除 config 死字段、builder 层和内置限流器；本版本完成同一轮 API 原子化并补齐生产接缝。版本号取 MINOR 而非新的 MAJOR，是因为它延续该窗口，而非开启新一轮破坏。下列破坏项明确列出——从 3.0.x 升级的调用方尽管面对的是 MINOR 号，仍需修改对应调用点。此处有意压缩了 SemVer 通常的 MINOR 承诺，明确的清单就是给下游保留的信号。
+
+### 移除（破坏性）
+- **公共 response setter**（`uvhttp_response_set_status`、`uvhttp_response_set_header`、`uvhttp_response_set_body`、`uvhttp_response_send`）：从 `include/uvhttp_response.h` 删除。实现保留为内部函数（`src/uvhttp_response_internal.h`），供库的增量构造路径使用；调用方改用 `uvhttp_respond`、`uvhttp_respond_with_headers` 或 `uvhttp_response_prepare`。
+- **`uvhttp_response_set_compress_by_filename` 与 `uvhttp_response_set_compress_by_content_type`**：只是 `uvhttp_should_compress_by_*` 谓词的包装。改为先调谓词再调 `uvhttp_response_set_compress`。
+- **`MAX_CONNECTIONS`**：值为 1000 的死宏，与真实默认值 2048 冲突。无替代，改用 config 字段。
+- **`uvhttp_server_t::config`**：配置现在挂在 context 上。改用 `uvhttp_server_take_config` / `uvhttp_server_get_config`。
+- **`uvhttp_connection_t::keepalive`**：只写不读的死状态，所有判断实际读 `response->keepalive`。无替代。
+- **`uvhttp_tls_setup_ssl` 签名变更**：`int fd` 改为 `const int* fd_storage`。mbedtls 保存 BIO 上下文指针，传栈上局部变量会让 TLS I/O 读已失效的栈内存。调用方必须传入长期存活的 fd 存储。
+- **缓存类型改名**：`cache_manager_t` → `uvhttp_lru_cache_t`，`cache_entry_t` → `uvhttp_lru_cache_entry_t`（遵循 CONTRIBUTING 的 `uvhttp_` 前缀规则），无行为变化。
+
+### 变更
+- **HEAD 响应不带 body**，普通路径和静态 sendfile 路径均是；保留 Content-Length。
+- **`Connection: close` 与 HTTP/1.0** 按 RFC 7230 §6.6 关闭连接。Connection 作为逗号分隔的 token 列表跨重复头解析，不再做子串匹配。
+- **请求体超限返回 413**，而不是静默断连。
+- **TLS 升级检测**使用精确 token 匹配——`Connection: not-upgrade` 不再触发 101。
+- **sendfile 的 medium/large 两分支合并为一个**。
+- **mbedTLS 3.6.5 → 3.6.8**（2026 年 CVE 修复版本）。
+
+### 新增
+- **原子响应 API**：`uvhttp_respond`、`uvhttp_respond_with_headers`、`uvhttp_response_prepare`（校验并构造但不发送）。
+- **配置单通道**：`uvhttp_server_take_config`、`uvhttp_server_get_config`。
+- **运维接缝**：`uvhttp_server_get_stats`、`uvhttp_server_set_draining`（滚动发布时分派前回 503）、`uvhttp_server_set_error_callback`（异步解析/写失败）。
+- **背压**：`write_queue_high_water` config 字段与 `uvhttp_connection_apply_backpressure`——待写队列高时暂停读、排空后恢复，且不重置解析器状态。
+- **跨线程停止**：可选的 `ENABLE_ASYNC_STOP` 增加 `uvhttp_server_async_stop`，通过 `uv_async_t` 投递到 loop 线程。
+- **日志接口**：声明 `uvhttp_log_sink_t` / `uvhttp_log_set_sink` 供嵌入方实现；库自身无全局日志状态，日志站点保持编译期开关。
+
+### 修复
+- **sendfile keep-alive 响应交错**：sendfile 期间暂停读、完成后恢复，流水线中的第二个请求不会插进 body 分块之间。
+- **sendfile 超时 use-after-free**：`uv_cancel` 加单一清理路径。
+- **与握手请求合并的 WebSocket 首帧**交给 WS 解析器，不再丢弃。
+- **WS 保留 opcode 与非 NUL 结尾的 CLOSE reason** 被拒绝或复制到有界缓冲。
+- **`server_free` use-after-free**：释放 server 前先关闭活跃连接；直接调 `uvhttp_connection_new` 不再让 `active_connections` 下溢。
+- **TLS context 生命周期**：`enable_tls`/`disable_tls` 在释放仍被 `ssl->conf` 引用的 context 前先关闭活跃连接。
+- **`send_raw` 不再把任意 `client->data` 强转为连接指针**。
+- **空闲超时现在是真正的空闲超时**，在请求/帧活动时重新武装。
+- **WS 部分写入**返回错误，不再静默截断帧。
+- **协议升级的 `on_close` 恰好触发一次**，所有权转让时从 server 注册表摘除连接。
+
+### CI 与验证
+- 32-bit 成为 PR 与 pre-release 的双重阻塞门禁；mbedTLS 3.6.8、libuv 1.52.1、llhttp 9.3.1 版本固定。
+- 完整的嵌入示例（`examples/10_embedding/production_app.c`）覆盖配置、过滤器、观测器、统计、排水、原子响应、静态文件与嵌入方自有的日志接口。
+- 所有配置（Release、静态文件、ASan、UBSan、32-bit）通过；上述每项修复都有变异验证的回归测试。
 
 ## [3.0.1] - 2026-11-23
 
@@ -62,7 +122,7 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 
 ### 修复
 - **router 迁移失败不再销毁它正在转换的路由**（#471）：`uvhttp_router_migrate_to_trie()` 在失败路径上释放了已注册的路由链表，于是继续使用线性 router 或重试迁移的调用方手里什么都不剩。这是自 v2.7.2 起存在的数据丢失
-- **`uvhttp_response_set_body()` 改为原子替换**（#473）：原先是「先 free 旧 body、再 alloc 新 body」，分配失败时响应仍带着旧长度指向已释放的内存
+- **响应体替换改为原子操作**（#473）：原先是「先 free 旧 body、再 alloc 新 body」，分配失败时响应仍带着旧长度指向已释放的内存
 - **LRU cache 的 setter 在写点建立不变量**（#473、#474）：`uvhttp_lru_cache_set_max_entries()` 与 `uvhttp_lru_cache_set_max_memory_usage()` 曾接受 `uvhttp_lru_cache_create()` 会拒绝的值。危害最大的是 `uvhttp_lru_cache_set_max_file_size(0)` —— `put()` 拿内容长度与该字段做硬比较且再无其他守卫，写入 0 之后每一次 `put()` 都返回 `UVHTTP_ERROR_INVALID_PARAM`，缓存就此永久不可用，调用方只看到一串 "File size exceeds limit" 的 WARN
 - **跨 server 移交明确写为不支持**（#474）：`take_*` 的护栏只比对单个 server 自己的当前指针，所以把同一个 router（或 context）交给两个 server 仍然会在 `uvhttp_server_free()` 处 double free。强制它需要一张所有权登记表，那是又一次破坏性变更；头文件契约现写明「一个对象只属于一个 server」
 - **响应被压缩后，调用方自设的 `Content-Length` 留在旧值上**（#464）：gzip 成功后 `body_length` 换成压缩后长度，而 `build_response_headers()` 的 `has_content_length` 门只在调用方**没有**设该头时才参考它。于是在开启压缩的响应上自己写 `Content-Length`，声明的是压缩前的尺寸、发出的是压缩后的字节 —— 客户端对不上帧边界，这是数据损坏，不只是头字段难看。修复前实测：`Content-Length: 10000` 配 45 字节的 gzip body。现在把压缩后长度就地写回头字段，并保留调用方设置它的位置。触发面很窄：要 `compress=1` 且手工写了 `Content-Length`，而压缩默认是关的
@@ -1196,10 +1256,8 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 
 ```c
 void health_check_handler(uvhttp_request_t* request) {
-    uvhttp_response_set_status(request, 200);
-    uvhttp_response_set_header(request, "Content-Type", "application/json");
-    uvhttp_response_set_body(request, "{\"status\":\"ok\"}");
-    uvhttp_response_send(request);
+    uvhttp_respond(request, 200, "application/json",
+                   "{\"status\":\"ok\"}", 13);
 }
 
 // 在路由中添加

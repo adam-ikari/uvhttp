@@ -58,10 +58,7 @@ static int string_ops_handler(uvhttp_request_t* request,
     offset += snprintf(response_body + offset, sizeof(response_body) - offset,
                        "Contains 'test': %s\n", contains ? "Yes" : "No");
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, response_body, strlen(response_body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", response_body, strlen(response_body));
 
     return 0;
 }
@@ -87,10 +84,7 @@ static int number_ops_handler(uvhttp_request_t* request,
              num_str, num, (num < 0) ? -num : num, (num > 0) ? "Yes" : "No",
              (num % 2 == 0) ? "Yes" : "No");
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, response_body, strlen(response_body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", response_body, strlen(response_body));
 
     return 0;
 }
@@ -114,10 +108,7 @@ static int encoding_handler(uvhttp_request_t* request,
              input, strlen(input), (strchr(input, ' ') != NULL) ? "Yes" : "No",
              input[0], input[strlen(input) - 1]);
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, response_body, strlen(response_body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", response_body, strlen(response_body));
 
     return 0;
 }
@@ -141,10 +132,7 @@ static int timestamp_handler(uvhttp_request_t* request,
              (long)now, time_str, tm_info->tm_year + 1900, tm_info->tm_mon + 1,
              tm_info->tm_mday);
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, response_body, strlen(response_body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", response_body, strlen(response_body));
 
     return 0;
 }

@@ -6,6 +6,7 @@
  */
 
 #include "uvhttp_allocator.h"
+#include "uvhttp_response_internal.h"
 #include "uvhttp_config.h"
 #include "uvhttp_response.h"
 #include "uvhttp_router.h"

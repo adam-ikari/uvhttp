@@ -42,10 +42,7 @@ static int logging_demo_handler(uvhttp_request_t* request, uvhttp_response_t* re
     const char* body = "Logging macros are only available in Debug mode.\n"
                       "They use stderr for output.\n"
                       "See uvhttp_logging.h for details.";
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
     return 0;
 }
 
@@ -76,10 +73,7 @@ static int log_level_info_handler(uvhttp_request_t* request, uvhttp_response_t* 
              "        In Release mode, all log macros are no-ops.\n"
              "        Use UVHTTP_FEATURE_LOGGING to enable.");
     
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
     return 0;
 }
 

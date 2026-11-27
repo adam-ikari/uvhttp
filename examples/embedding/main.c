@@ -41,11 +41,11 @@ static void on_signal(uv_signal_t* handle, int signum) {
 
 static int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     (void)req;
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/plain; charset=utf-8");
+    
+    
     const char* body = "Hello from embedded uvhttp!\n";
-    uvhttp_response_set_body(res, body, strlen(body));
-    return (int)uvhttp_response_send(res);
+    
+    return (int)uvhttp_respond(res, 200, "text/plain; charset=utf-8", body, strlen(body));
 }
 
 int main(int argc, char** argv) {

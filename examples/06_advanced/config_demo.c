@@ -60,10 +60,10 @@ int demo_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     }
 
     if (!g_app) {
-        uvhttp_response_set_status(response, 500);
+        
         const char* err = "Internal error";
-        uvhttp_response_set_body(response, err, strlen(err));
-        return uvhttp_response_send(response);
+        
+        return uvhttp_respond(response, 500, NULL, err, strlen(err));
     }
 
     g_app->request_count++;
@@ -94,20 +94,14 @@ int demo_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         ctime(&(time_t){time(NULL)})
     );
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(response, response_body, strlen(response_body));
-    return uvhttp_response_send(response);
+    return uvhttp_respond(response, 200, "text/html; charset=utf-8", response_body, strlen(response_body));
 }
 
 // 配置管理API演示处理器
 int config_api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     if (!g_app) {
         const char* error = "{\"error\":\"server not initialized\"}";
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "application/json");
-        uvhttp_response_set_body(response, error, strlen(error));
-        return uvhttp_response_send(response);
+        return uvhttp_respond(response, 500, "application/json", error, strlen(error));
     }
 
     const uvhttp_config_t* config = uvhttp_config_get_current(g_app->context);
@@ -130,11 +124,11 @@ int config_api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         // 使用 cJSON 创建 JSON 响应
         cJSON* json_obj = cJSON_CreateObject();
         if (!json_obj) {
-            uvhttp_response_set_status(response, 500);
-            uvhttp_response_set_header(response, "Content-Type", "application/json");
+            
+            
             const char* error = "{\"error\":\"Failed to create JSON\"}";
-            uvhttp_response_set_body(response, error, strlen(error));
-            return uvhttp_response_send(response);
+            
+            return uvhttp_respond(response, 500, "application/json", error, strlen(error));
         }
 
         if (result == UVHTTP_OK) {
@@ -155,17 +149,14 @@ int config_api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         cJSON_Delete(json_obj);
 
         if (!json_string) {
-            uvhttp_response_set_status(response, 500);
-            uvhttp_response_set_header(response, "Content-Type", "application/json");
+            
+            
             const char* error = "{\"error\":\"Failed to generate JSON\"}";
-            uvhttp_response_set_body(response, error, strlen(error));
-            return uvhttp_response_send(response);
+            
+            return uvhttp_respond(response, 500, "application/json", error, strlen(error));
         }
 
-        uvhttp_response_set_status(response, 200);
-        uvhttp_response_set_header(response, "Content-Type", "application/json");
-        uvhttp_response_set_body(response, json_string, strlen(json_string));
-        int rc = uvhttp_response_send(response);
+        int rc = uvhttp_respond(response, 200, "application/json", json_string, strlen(json_string));
         free(json_string);
         return rc;
     }
@@ -175,11 +166,11 @@ int config_api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     cJSON* json_obj = cJSON_CreateObject();
 
     if (!json_obj) {
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "application/json");
+        
+        
         const char* error = "{\"error\":\"Failed to create JSON\"}";
-        uvhttp_response_set_body(response, error, strlen(error));
-        return uvhttp_response_send(response);
+        
+        return uvhttp_respond(response, 500, "application/json", error, strlen(error));
     }
 
     /* 只报告真正生效的字段。v3.0.0 删除了 14 个"设置成功但无人读取"的
@@ -198,17 +189,14 @@ int config_api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     cJSON_Delete(json_obj);
 
     if (!json_string) {
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "application/json");
+        
+        
         const char* error = "{\"error\":\"Failed to generate JSON\"}";
-        uvhttp_response_set_body(response, error, strlen(error));
-        return uvhttp_response_send(response);
+        
+        return uvhttp_respond(response, 500, "application/json", error, strlen(error));
     }
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_body(response, json_string, strlen(json_string));
-    int rc = uvhttp_response_send(response);
+    int rc = uvhttp_respond(response, 200, "application/json", json_string, strlen(json_string));
     free(json_string);
     return rc;
 }
@@ -356,23 +344,21 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // 应用配置
-    g_app->server->config = config;
 
     // 创建上下文
     uvhttp_error_t result_context = uvhttp_context_create(loop, &g_app->context);
     if (result_context != UVHTTP_OK) {
         fprintf(stderr, " 上下文创建失败\n");
         uvhttp_server_free(g_app->server);
-        /* config is owned by the server (server->config was set above);
-         * uvhttp_server_free releases it. Do not free it here. */
+        /* config and context are owned by the server; do not free here. */
         free(g_app);
         g_app = NULL;
         return 1;
     }
 
-    // 设置全局配置（重要：这会消除"Global configuration not initialized"警告）
-    uvhttp_config_set_current(g_app->context, config);
+    // 单一配置通道：context 交给 server，config 通过 take_config 原子安装
+    uvhttp_server_take_context(g_app->server, g_app->context);
+    uvhttp_server_take_config(g_app->server, config);
 
     printf(" 服务器创建成功\n");
 
@@ -382,8 +368,8 @@ int main(int argc, char* argv[]) {
     if (router_result != UVHTTP_OK) {
         fprintf(stderr, " 路由器创建失败: %s\n", uvhttp_error_string(router_result));
         uvhttp_server_free(g_app->server);
-        uvhttp_context_destroy(g_app->context);
-        /* config is owned by the server; uvhttp_server_free releases it. */
+        g_app->context = NULL; /* owned by server, freed by server_free */
+        /* config and context are owned by the server. */
         free(g_app);
         g_app = NULL;
         return 1;
@@ -417,8 +403,8 @@ int main(int argc, char* argv[]) {
     if (result != UVHTTP_OK) {
         fprintf(stderr, " 服务器启动失败，错误码: %d\n", result);
         uvhttp_server_free(g_app->server);
-        uvhttp_context_destroy(g_app->context);
-        /* config is owned by the server; uvhttp_server_free releases it. */
+        g_app->context = NULL; /* owned by server, freed by server_free */
+        /* config and context are owned by the server. */
         free(g_app);
         g_app = NULL;
         return 1;
@@ -439,7 +425,7 @@ int main(int argc, char* argv[]) {
         g_app->server = NULL;
     }
     if (g_app->context) {
-        uvhttp_context_destroy(g_app->context);
+        g_app->context = NULL; /* owned by server, freed by server_free */
     }
 
     printf("服务器已停止\n");

@@ -1,6 +1,7 @@
 /* uvhttp_response.c 完整覆盖率测试 */
 
 #include <gtest/gtest.h>
+#include "uvhttp_response_internal.h"
 #include "uvhttp_response.h"
 #include "uvhttp_allocator.h"
 #include "uvhttp_constants.h"

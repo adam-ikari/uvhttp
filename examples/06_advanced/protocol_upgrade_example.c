@@ -26,9 +26,11 @@
 
 /* ========== Function declarations ========== */
 
-void on_transfer_to_ipps(uv_tcp_t* tcp_handle, int fd, void* user_data);
+void on_transfer_to_ipps(uv_tcp_t* tcp_handle, int fd, const char* buffered,
+                         size_t buffered_len, void* user_data);
 void on_ipps_connection_close(void* user_data);
-void on_transfer_to_grpc(uv_tcp_t* tcp_handle, int fd, void* user_data);
+void on_transfer_to_grpc(uv_tcp_t* tcp_handle, int fd, const char* buffered,
+                         size_t buffered_len, void* user_data);
 
 /* ========== Simulate IPPS protocol ========== */
 
@@ -80,10 +82,7 @@ static uvhttp_error_t ipps_upgrade_handler(uvhttp_connection_t* conn,
     ipps_context_t* ctx = (ipps_context_t*)user_data;
     
     /* 1. Send 101 Switching Protocols response */
-    uvhttp_response_set_status(conn->response, 101);
-    uvhttp_response_set_header(conn->response, "Upgrade", "ipps");
-    uvhttp_response_set_header(conn->response, "Connection", "Upgrade");
-    uvhttp_response_send(conn->response);
+    uvhttp_respond_with_headers(conn->response, 101, (uvhttp_header_view_t[]){{"Upgrade", "ipps"}, {"Connection", "Upgrade"}}, 2, NULL, 0);
     
     /* 2. Transfer connection ownership */
     return uvhttp_connection_transfer_ownership(conn, on_transfer_to_ipps, ctx);
@@ -92,8 +91,11 @@ static uvhttp_error_t ipps_upgrade_handler(uvhttp_connection_t* conn,
 /**
  * @brief Ownership transfer callback
  */
-void on_transfer_to_ipps(uv_tcp_t* tcp_handle, int fd, void* user_data) {
+void on_transfer_to_ipps(uv_tcp_t* tcp_handle, int fd, const char* buffered,
+                         size_t buffered_len, void* user_data) {
     (void)tcp_handle;  // Unused parameter
+    (void)buffered;
+    (void)buffered_len;
     
     ipps_context_t* ctx = (ipps_context_t*)user_data;
     
@@ -207,8 +209,11 @@ static uvhttp_error_t grpc_upgrade_handler(uvhttp_connection_t* conn,
 /**
  * @brief Ownership transfer callback
  */
-void on_transfer_to_grpc(uv_tcp_t* tcp_handle, int fd, void* user_data) {
+void on_transfer_to_grpc(uv_tcp_t* tcp_handle, int fd, const char* buffered,
+                         size_t buffered_len, void* user_data) {
     (void)tcp_handle;  // Unused parameter
+    (void)buffered;
+    (void)buffered_len;
     
     grpc_context_t* ctx = (grpc_context_t*)user_data;
     
@@ -252,10 +257,7 @@ void on_transfer_to_grpc(uv_tcp_t* tcp_handle, int fd, void* user_data) {
 static int http_request_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     (void)request;  /* Unused parameter */
     
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, "Hello from HTTP server", strlen("Hello from HTTP server"));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", "Hello from HTTP server", strlen("Hello from HTTP server"));
     
     return 0;
 }

@@ -41,6 +41,10 @@ extern "C" {
 #    define UVHTTP_FEATURE_COMPRESSION 0  // HTTP response compression support
 #endif
 
+#ifndef UVHTTP_FEATURE_ASYNC_STOP
+#    define UVHTTP_FEATURE_ASYNC_STOP 0 /* cross-thread stop wakeup */
+#endif
+
 /* ============ Conditional Compilation Macros ============ */
 
 /* Basic feature macros */

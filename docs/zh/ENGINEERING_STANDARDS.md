@@ -106,7 +106,7 @@ static void process_request(uvhttp_request_t* request) {
   uvhttp_server_listen()
   uvhttp_router_add_route()
   uvhttp_request_get_method()
-  uvhttp_response_set_status()
+  uvhttp_respond()
   ```
 
 #### 类型命名

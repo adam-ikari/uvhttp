@@ -178,6 +178,20 @@ jobs:
           timeout: 60
           parallel: $(nproc)
 
+  # ========== 响应体长度门禁 ==========
+  # examples 的 body 长度必须是 C 字符串字节数（UTF-8 中文按字节），
+  # 手数字符数会截断响应或留尾随 NUL —— 与 PR 门禁同一脚本。
+  response-length-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          submodules: recursive
+      - name: Check response body lengths
+        run: python3 scripts/ci/check_response_lengths.py
+
   # ========== ASan 内存安全门禁 ==========
   # 内存安全是不可回退的不变量。此处跑完整 ASan 套件（此前 PR 阶段只跑快速
   # 子集，现全部集中到 pre-release）。完整 ASan+UBSan 仍由 ci-nightly.yml 覆盖。
@@ -222,9 +236,78 @@ jobs:
           path: build-asan/Testing/
           retention-days: 7
 
+  # ========== 32-bit 架构门禁 ==========
+  # 32-bit 是发布前提：pre-release 必须在 i386 下端到端验证库、依赖、
+  # 测试套件与最小消费者链接。与 ci-pr.yml 的同名 job 保持同一套步骤；
+  # 不使用 cache-deps（跨架构复用 64 位产物会污染），deps 产物不进 git，
+  # checkout 即干净源码，由 CMake 用 -m32 重建。
+  build-32bit:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, 'nightly')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          submodules: recursive
+
+      - name: Install 32-bit toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib
+
+      - name: Configure CMake (i386)
+        run: |
+          cmake -B build-32bit \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_FLAGS=-m32 \
+            -DCMAKE_CXX_FLAGS=-m32 \
+            -DCMAKE_EXE_LINKER_FLAGS=-m32
+
+      - name: Build project (i386)
+        run: cmake --build build-32bit -j$(nproc)
+
+      - name: Verify library is 32-bit
+        run: |
+          file build-32bit/dist/lib/libuvhttp.a
+          objdump -f build-32bit/CMakeFiles/uvhttp.dir/src/uvhttp_server.c.o \
+            | grep -q 'architecture: i386'
+          echo "libuvhttp.a object code is i386"
+
+      - name: Run tests (i386)
+        run: ctest --test-dir build-32bit --output-on-failure -j4
+
+      - name: Link and run a 32-bit consumer
+        run: |
+          cat > /tmp/consumer32.c <<'EOF'
+          #include <uvhttp.h>
+          #include <stdio.h>
+          int main(void) {
+              printf("version=%s sizeof_server=%zu\n",
+                     uvhttp_get_version_string(), sizeof(uvhttp_server_t));
+              return 0;
+          }
+          EOF
+          gcc -m32 /tmp/consumer32.c -o /tmp/consumer32 \
+            -Iinclude -Ideps/libuv/include -Ideps/llhttp/include \
+            -Ideps/uthash/src -Ideps/mbedtls/include -Ideps/cjson \
+            build-32bit/dist/lib/libuvhttp.a \
+            deps/libuv/build/libuv.a \
+            deps/llhttp/build/libllhttp.a \
+            build-32bit/dist/lib/libminiz.a \
+            deps/xxhash/libxxhash.a \
+            deps/cjson/build/libcjson.a \
+            deps/mbedtls/build/library/libmbedtls.a \
+            deps/mbedtls/build/library/libmbedx509.a \
+            deps/mbedtls/build/library/libmbedcrypto.a \
+            -lpthread -lm -ldl
+          file /tmp/consumer32 | grep -q 'ELF 32-bit'
+          /tmp/consumer32
+
   # ========== 汇总 ==========
   generate-summary:
-    needs: [ubuntu-build, ubuntu-test-fast, build-matrix, asan-gate]
+    needs: [ubuntu-build, ubuntu-test-fast, build-matrix, asan-gate, build-32bit, response-length-check]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     # always() keeps the summary on gate failures; the release guard keeps a
@@ -243,5 +326,6 @@ jobs:
           echo "| Fast Tests (default) | ${{ needs.ubuntu-test-fast.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Build Matrix (per-config tests) | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| ASan memory-safety | ${{ needs.asan-gate.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 32-bit (i386) | ${{ needs.build-32bit.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Tests: ${{ needs.ubuntu-test-fast.outputs.test-passed || 'N/A' }} passed / ${{ needs.ubuntu-test-fast.outputs.test-total || 'N/A' }} total" >> $GITHUB_STEP_SUMMARY

@@ -24,7 +24,7 @@
 /**
  * Set cache entry metadata (MIME type and ETag)
  */
-static void set_cache_entry_metadata(cache_entry_t* entry,
+static void set_cache_entry_metadata(uvhttp_lru_cache_entry_t* entry,
                                      const char* mime_type, const char* etag) {
     if (mime_type) {
         uvhttp_safe_strncpy(entry->mime_type, mime_type,
@@ -45,7 +45,7 @@ static void set_cache_entry_metadata(cache_entry_t* entry,
  * Create LRU cache manager
  */
 uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
-                                       int cache_ttl, cache_manager_t** cache) {
+                                       int cache_ttl, uvhttp_lru_cache_t** cache) {
     UVHTTP_LOG_DEBUG(
         "Creating LRU cache: max_memory=%zu, max_entries=%d, ttl=%d",
         max_memory_usage, max_entries, cache_ttl);
@@ -68,14 +68,14 @@ uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    cache_manager_t* cache_ptr = uvhttp_alloc(sizeof(cache_manager_t));
+    uvhttp_lru_cache_t* cache_ptr = uvhttp_alloc(sizeof(uvhttp_lru_cache_t));
     if (!cache_ptr) {
         UVHTTP_LOG_ERROR("Failed to create LRU cache: memory allocation error");
         uvhttp_handle_memory_failure("cache_manager", NULL, NULL);
         return UVHTTP_ERROR_OUT_OF_MEMORY;
     }
 
-    memset(cache_ptr, 0, sizeof(cache_manager_t));
+    memset(cache_ptr, 0, sizeof(uvhttp_lru_cache_t));
     cache_ptr->max_memory_usage = max_memory_usage;
     cache_ptr->max_entries = max_entries;
     cache_ptr->cache_ttl = cache_ttl;
@@ -96,7 +96,7 @@ uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
 /**
  * Free cache entry
  */
-static void free_cache_entry(cache_entry_t* entry) {
+static void free_cache_entry(uvhttp_lru_cache_entry_t* entry) {
     if (!entry)
         return;
 
@@ -109,7 +109,7 @@ static void free_cache_entry(cache_entry_t* entry) {
 /**
  * Free LRU cache manager
  */
-void uvhttp_lru_cache_free(cache_manager_t* cache) {
+void uvhttp_lru_cache_free(uvhttp_lru_cache_t* cache) {
     if (!cache)
         return;
 
@@ -127,7 +127,7 @@ void uvhttp_lru_cache_free(cache_manager_t* cache) {
 /**
  * Find cache entry - single-threaded version
  */
-cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache,
+uvhttp_lru_cache_entry_t* uvhttp_lru_cache_find(uvhttp_lru_cache_t* cache,
                                      const char* file_path) {
     if (!cache || !file_path) {
         UVHTTP_LOG_WARN(
@@ -138,7 +138,7 @@ cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache,
 
     UVHTTP_LOG_DEBUG("Looking up cache entry: %s", file_path);
 
-    cache_entry_t* entry = NULL;
+    uvhttp_lru_cache_entry_t* entry = NULL;
 
     /* single-thread version: no need to add locks */
 
@@ -171,8 +171,8 @@ cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache,
 /**
  * move entry to LRU list header
  */
-void uvhttp_lru_cache_move_to_head(cache_manager_t* cache,
-                                   cache_entry_t* entry) {
+void uvhttp_lru_cache_move_to_head(uvhttp_lru_cache_t* cache,
+                                   uvhttp_lru_cache_entry_t* entry) {
     if (!cache || !entry)
         return;
 
@@ -233,11 +233,11 @@ void uvhttp_lru_cache_move_to_head(cache_manager_t* cache,
 /**
  * remove entry from LRU list tail
  */
-cache_entry_t* uvhttp_lru_cache_remove_tail(cache_manager_t* cache) {
+uvhttp_lru_cache_entry_t* uvhttp_lru_cache_remove_tail(uvhttp_lru_cache_t* cache) {
     if (!cache || !cache->lru_tail)
         return NULL;
 
-    cache_entry_t* entry = cache->lru_tail;
+    uvhttp_lru_cache_entry_t* entry = cache->lru_tail;
 
     /* update tail pointer */
     cache->lru_tail = entry->lru_prev;
@@ -260,11 +260,11 @@ cache_entry_t* uvhttp_lru_cache_remove_tail(cache_manager_t* cache) {
  * remove entry with lowest priority
  * Skips entries with priority >= min_priority_threshold
  */
-cache_entry_t* uvhttp_lru_cache_remove_lowest_priority(cache_manager_t* cache) {
+uvhttp_lru_cache_entry_t* uvhttp_lru_cache_remove_lowest_priority(uvhttp_lru_cache_t* cache) {
     if (!cache || !cache->lru_tail)
         return NULL;
 
-    cache_entry_t* entry = cache->lru_tail;
+    uvhttp_lru_cache_entry_t* entry = cache->lru_tail;
 
     /* Find the lowest priority entry that can be evicted */
     while (entry) {
@@ -319,7 +319,7 @@ __attribute__((weak)) time_t get_current_time() {
     return time(NULL);
 }
 
-int uvhttp_lru_cache_is_expired(cache_entry_t* entry, int cache_ttl) {
+int uvhttp_lru_cache_is_expired(uvhttp_lru_cache_entry_t* entry, int cache_ttl) {
     if (!entry)
         return 1; /* NULL entry considered expired */
     if (cache_ttl <= 0)
@@ -333,7 +333,7 @@ int uvhttp_lru_cache_is_expired(cache_entry_t* entry, int cache_ttl) {
 /**
  * add or update cache entry - single-thread version
  */
-uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
+uvhttp_error_t uvhttp_lru_cache_put(uvhttp_lru_cache_t* cache,
                                     const char* file_path, char* content,
                                     size_t content_length,
                                     const char* mime_type, time_t last_modified,
@@ -353,13 +353,13 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
     }
 
     /* calculate memory usage, check integer overflow */
-    if (content_length > SIZE_MAX - sizeof(cache_entry_t)) {
+    if (content_length > SIZE_MAX - sizeof(uvhttp_lru_cache_entry_t)) {
         UVHTTP_LOG_ERROR(
             "Content length too large: %zu (causes integer overflow)",
             content_length);
         return UVHTTP_ERROR_INVALID_PARAM;
     }
-    size_t memory_usage = sizeof(cache_entry_t) + content_length;
+    size_t memory_usage = sizeof(uvhttp_lru_cache_entry_t) + content_length;
 
     /* Eviction below targets 90% of the budget; an entry that cannot fit an
      * empty cache at that target would only clear the cache and still fail.
@@ -404,7 +404,7 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
              i++) {
 
             /* Evict entry based on policy */
-            cache_entry_t* evicted;
+            uvhttp_lru_cache_entry_t* evicted;
             if (cache->enable_priority_eviction) {
                 evicted = uvhttp_lru_cache_remove_lowest_priority(cache);
             } else {
@@ -464,7 +464,7 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
     }
 
     /* find if already exists */
-    cache_entry_t* entry = NULL;
+    uvhttp_lru_cache_entry_t* entry = NULL;
     HASH_FIND_STR(cache->hash_table, file_path, entry);
 
     /* Allocate and copy the new content BEFORE touching the existing entry:
@@ -491,7 +491,7 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
         cache->total_memory_usage -= entry->memory_usage;
     } else {
         /* create new entry */
-        entry = uvhttp_alloc(sizeof(cache_entry_t));
+        entry = uvhttp_alloc(sizeof(uvhttp_lru_cache_entry_t));
         if (!entry) {
             UVHTTP_LOG_ERROR(
                 "Failed to create cache entry: memory allocation error");
@@ -500,7 +500,7 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
             return UVHTTP_ERROR_OUT_OF_MEMORY;
         }
 
-        memset(entry, 0, sizeof(cache_entry_t));
+        memset(entry, 0, sizeof(uvhttp_lru_cache_entry_t));
 
         /* Set default priority */
         entry->priority = 0; /* Default: lowest priority */
@@ -559,7 +559,7 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
 /**
  * delete cache entry - single-thread version
  */
-uvhttp_error_t uvhttp_lru_cache_remove(cache_manager_t* cache,
+uvhttp_error_t uvhttp_lru_cache_remove(uvhttp_lru_cache_t* cache,
                                        const char* file_path) {
     if (!cache || !file_path) {
         UVHTTP_LOG_WARN(
@@ -572,7 +572,7 @@ uvhttp_error_t uvhttp_lru_cache_remove(cache_manager_t* cache,
 
     /* single-thread version: no need to add locks */
 
-    cache_entry_t* entry = NULL;
+    uvhttp_lru_cache_entry_t* entry = NULL;
     HASH_FIND_STR(cache->hash_table, file_path, entry);
 
     if (!entry) {
@@ -613,7 +613,7 @@ uvhttp_error_t uvhttp_lru_cache_remove(cache_manager_t* cache,
 /**
  * clear all cache - single-thread version
  */
-void uvhttp_lru_cache_clear(cache_manager_t* cache) {
+void uvhttp_lru_cache_clear(uvhttp_lru_cache_t* cache) {
     if (!cache)
         return;
 
@@ -628,7 +628,7 @@ void uvhttp_lru_cache_clear(cache_manager_t* cache) {
     UVHTTP_UNUSED int cleared_count = 0;
     UVHTTP_UNUSED size_t freed_memory = 0;
 
-    cache_entry_t *entry, *tmp;
+    uvhttp_lru_cache_entry_t *entry, *tmp;
     HASH_ITER(hh, cache->hash_table, entry, tmp) {
         HASH_DEL(cache->hash_table, entry);
         freed_memory += entry->memory_usage;
@@ -649,7 +649,7 @@ void uvhttp_lru_cache_clear(cache_manager_t* cache) {
 /**
  * get cache statistics info - single-thread version
  */
-void uvhttp_lru_cache_get_stats(cache_manager_t* cache,
+void uvhttp_lru_cache_get_stats(uvhttp_lru_cache_t* cache,
                                 size_t* total_memory_usage, int* entry_count,
                                 int* hit_count, int* miss_count,
                                 int* eviction_count) {
@@ -673,7 +673,7 @@ void uvhttp_lru_cache_get_stats(cache_manager_t* cache,
 /**
  * reset statistics info - single-thread version
  */
-void uvhttp_lru_cache_reset_stats(cache_manager_t* cache) {
+void uvhttp_lru_cache_reset_stats(uvhttp_lru_cache_t* cache) {
     if (!cache)
         return;
 
@@ -695,7 +695,7 @@ void uvhttp_lru_cache_reset_stats(cache_manager_t* cache) {
  * only a WARN as explanation - so it is rejected like the two setters above
  * instead of being written silently.
  */
-void uvhttp_lru_cache_set_max_file_size(cache_manager_t* cache,
+void uvhttp_lru_cache_set_max_file_size(uvhttp_lru_cache_t* cache,
                                         size_t max_file_size) {
     if (!cache)
         return;
@@ -717,7 +717,7 @@ void uvhttp_lru_cache_set_max_file_size(cache_manager_t* cache,
  * and the eviction path reads the limit as "enabled only when > 0". A setter
  * that accepted 0 therefore silently disabled the memory ceiling on a live
  * cache — a value create refuses to build in the first place. */
-void uvhttp_lru_cache_set_max_memory_usage(cache_manager_t* cache,
+void uvhttp_lru_cache_set_max_memory_usage(uvhttp_lru_cache_t* cache,
                                            size_t max_memory_usage) {
     if (!cache)
         return;
@@ -738,7 +738,7 @@ void uvhttp_lru_cache_set_max_memory_usage(cache_manager_t* cache,
 /* Same rule as create: max_entries must be positive. The eviction path
  * treats "> 0" as "limit enabled", so accepting 0 here would turn a bounded
  * cache into an unbounded one behind the caller's back. */
-void uvhttp_lru_cache_set_max_entries(cache_manager_t* cache, int max_entries) {
+void uvhttp_lru_cache_set_max_entries(uvhttp_lru_cache_t* cache, int max_entries) {
     if (!cache)
         return;
 
@@ -755,7 +755,7 @@ void uvhttp_lru_cache_set_max_entries(cache_manager_t* cache, int max_entries) {
 /**
  * set cache TTL
  */
-void uvhttp_lru_cache_set_cache_ttl(cache_manager_t* cache, int cache_ttl) {
+void uvhttp_lru_cache_set_cache_ttl(uvhttp_lru_cache_t* cache, int cache_ttl) {
     if (!cache)
         return;
 
@@ -765,7 +765,7 @@ void uvhttp_lru_cache_set_cache_ttl(cache_manager_t* cache, int cache_ttl) {
 /**
  * set batch eviction size
  */
-void uvhttp_lru_cache_set_batch_eviction_size(cache_manager_t* cache,
+void uvhttp_lru_cache_set_batch_eviction_size(uvhttp_lru_cache_t* cache,
                                               int batch_size) {
     if (!cache)
         return;
@@ -784,7 +784,7 @@ void uvhttp_lru_cache_set_batch_eviction_size(cache_manager_t* cache,
 /**
  * clean expired entries - single-thread version
  */
-int uvhttp_lru_cache_cleanup_expired(cache_manager_t* cache) {
+int uvhttp_lru_cache_cleanup_expired(uvhttp_lru_cache_t* cache) {
     if (!cache || cache->cache_ttl <= 0)
         return 0;
 
@@ -800,9 +800,9 @@ int uvhttp_lru_cache_cleanup_expired(cache_manager_t* cache) {
     UVHTTP_UNUSED size_t freed_memory = 0;
     time_t now = get_current_time();
 
-    cache_entry_t* entry = cache->lru_tail;
+    uvhttp_lru_cache_entry_t* entry = cache->lru_tail;
     while (entry) {
-        cache_entry_t* next = entry->lru_prev;
+        uvhttp_lru_cache_entry_t* next = entry->lru_prev;
 
         if ((now - entry->cache_time) > cache->cache_ttl) {
             UVHTTP_LOG_DEBUG(
@@ -852,7 +852,7 @@ int uvhttp_lru_cache_cleanup_expired(cache_manager_t* cache) {
 /**
  * calculate cache hit rate - single-thread version
  */
-double uvhttp_lru_cache_get_hit_rate(cache_manager_t* cache) {
+double uvhttp_lru_cache_get_hit_rate(uvhttp_lru_cache_t* cache) {
     if (!cache || (cache->hit_count + cache->miss_count) == 0) {
         UVHTTP_LOG_DEBUG("Cache hit rate calculation: no statistics available");
         return 0.0;
@@ -873,8 +873,8 @@ double uvhttp_lru_cache_get_hit_rate(cache_manager_t* cache) {
  * set eviction callback
  */
 void uvhttp_lru_cache_set_eviction_callback(
-    cache_manager_t* cache,
-    void (*callback)(cache_entry_t* entry, void* user_data), void* user_data) {
+    uvhttp_lru_cache_t* cache,
+    void (*callback)(uvhttp_lru_cache_entry_t* entry, void* user_data), void* user_data) {
     if (!cache) {
         UVHTTP_LOG_ERROR("Failed to set eviction callback: cache is NULL");
         return;
@@ -889,7 +889,7 @@ void uvhttp_lru_cache_set_eviction_callback(
 /**
  * enable priority-based eviction
  */
-void uvhttp_lru_cache_enable_priority_eviction(cache_manager_t* cache,
+void uvhttp_lru_cache_enable_priority_eviction(uvhttp_lru_cache_t* cache,
                                                int enable) {
     if (!cache) {
         UVHTTP_LOG_ERROR("Failed to enable priority eviction: cache is NULL");
@@ -905,7 +905,7 @@ void uvhttp_lru_cache_enable_priority_eviction(cache_manager_t* cache,
 /**
  * set minimum priority threshold
  */
-void uvhttp_lru_cache_set_min_priority_threshold(cache_manager_t* cache,
+void uvhttp_lru_cache_set_min_priority_threshold(uvhttp_lru_cache_t* cache,
                                                  int threshold) {
     if (!cache) {
         UVHTTP_LOG_ERROR("Failed to set priority threshold: cache is NULL");
@@ -926,7 +926,7 @@ void uvhttp_lru_cache_set_min_priority_threshold(cache_manager_t* cache,
 /**
  * set entry priority
  */
-uvhttp_error_t uvhttp_lru_cache_set_entry_priority(cache_manager_t* cache,
+uvhttp_error_t uvhttp_lru_cache_set_entry_priority(uvhttp_lru_cache_t* cache,
                                                    const char* file_path,
                                                    int priority) {
     if (!cache || !file_path) {
@@ -939,7 +939,7 @@ uvhttp_error_t uvhttp_lru_cache_set_entry_priority(cache_manager_t* cache,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    cache_entry_t* entry = uvhttp_lru_cache_find(cache, file_path);
+    uvhttp_lru_cache_entry_t* entry = uvhttp_lru_cache_find(cache, file_path);
     if (!entry) {
         UVHTTP_LOG_DEBUG("Entry not found for priority update: %s", file_path);
         return UVHTTP_ERROR_NOT_FOUND;
@@ -958,14 +958,14 @@ uvhttp_error_t uvhttp_lru_cache_set_entry_priority(cache_manager_t* cache,
 /**
  * get entry priority
  */
-int uvhttp_lru_cache_get_entry_priority(cache_manager_t* cache,
+int uvhttp_lru_cache_get_entry_priority(uvhttp_lru_cache_t* cache,
                                         const char* file_path) {
     if (!cache || !file_path) {
         UVHTTP_LOG_ERROR("Failed to get entry priority: invalid parameters");
         return -1;
     }
 
-    cache_entry_t* entry = uvhttp_lru_cache_find(cache, file_path);
+    uvhttp_lru_cache_entry_t* entry = uvhttp_lru_cache_find(cache, file_path);
     if (!entry) {
         return -1;
     }
@@ -976,7 +976,7 @@ int uvhttp_lru_cache_get_entry_priority(cache_manager_t* cache,
 /**
  * prewarm cache
  */
-uvhttp_error_t uvhttp_lru_cache_prewarm(cache_manager_t* cache,
+uvhttp_error_t uvhttp_lru_cache_prewarm(uvhttp_lru_cache_t* cache,
                                         const char* file_path, char* content,
                                         size_t content_length,
                                         const char* mime_type,
@@ -993,7 +993,7 @@ uvhttp_error_t uvhttp_lru_cache_prewarm(cache_manager_t* cache,
     }
 
     /* Check if entry already exists */
-    cache_entry_t* existing = uvhttp_lru_cache_find(cache, file_path);
+    uvhttp_lru_cache_entry_t* existing = uvhttp_lru_cache_find(cache, file_path);
     if (existing) {
         /* Update existing entry with new priority */
         existing->priority = priority;
@@ -1024,7 +1024,7 @@ uvhttp_error_t uvhttp_lru_cache_prewarm(cache_manager_t* cache,
 /**
  * get cache configuration
  */
-void uvhttp_lru_cache_get_config(cache_manager_t* cache,
+void uvhttp_lru_cache_get_config(uvhttp_lru_cache_t* cache,
                                  size_t* max_memory_usage, int* max_entries,
                                  int* cache_ttl, int* batch_eviction_size,
                                  int* enable_priority_eviction,
@@ -1057,7 +1057,7 @@ void uvhttp_lru_cache_get_config(cache_manager_t* cache,
 /**
  * force eviction
  */
-int uvhttp_lru_cache_force_eviction(cache_manager_t* cache, int count) {
+int uvhttp_lru_cache_force_eviction(uvhttp_lru_cache_t* cache, int count) {
     if (!cache) {
         UVHTTP_LOG_ERROR("Failed to force eviction: cache is NULL");
         return 0;
@@ -1070,7 +1070,7 @@ int uvhttp_lru_cache_force_eviction(cache_manager_t* cache, int count) {
 
     int evicted = 0;
     for (int i = 0; i < count; i++) {
-        cache_entry_t* entry = uvhttp_lru_cache_remove_tail(cache);
+        uvhttp_lru_cache_entry_t* entry = uvhttp_lru_cache_remove_tail(cache);
         if (!entry) {
             UVHTTP_LOG_DEBUG("No more entries to evict");
             break;

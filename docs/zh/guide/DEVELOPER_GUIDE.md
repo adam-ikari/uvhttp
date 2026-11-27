@@ -356,7 +356,7 @@ uvhttp_static_sendfile("/path/to/file", response);
 uvhttp_static_prewarm_cache(ctx, "/static/index.html");
 
 // 使用 LRU 缓存
-cache_manager_t* cache = NULL;
+uvhttp_lru_cache_t* cache = NULL;
 uvhttp_lru_cache_create(1024 * 1024, 256, 0, &cache);
 ```
 

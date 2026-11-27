@@ -75,7 +75,7 @@ class AcceptFailureCounting : public ::testing::Test {
         ASSERT_EQ(uvhttp_config_new(&config), UVHTTP_OK);
         ASSERT_NE(config, nullptr);
         config->max_connections = max_conn;
-        server->config = config;
+        ASSERT_EQ(uvhttp_server_take_config(server, config), UVHTTP_OK);
     }
 
     /* 触发一次 on_connection */

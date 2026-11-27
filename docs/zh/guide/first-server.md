@@ -30,12 +30,12 @@ void signal_handler(int sig) {
 }
 
 int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain; charset=utf-8");
+
+
 
     const char* body = "Hello, World!";
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+
+    uvhttp_respond(response, 200, "text/plain; charset=utf-8", body, strlen(body));
 
     return 0;
 }
@@ -133,8 +133,8 @@ void signal_handler(int sig) {
 }
 
 int api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json; charset=utf-8");
+
+
 
     const char* json_body = "{"
         "\"status\": \"success\","
@@ -142,8 +142,8 @@ int api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         "\"version\": \"1.0.0\""
     "}";
 
-    uvhttp_response_set_body(response, json_body, strlen(json_body));
-    uvhttp_response_send(response);
+
+    uvhttp_respond(response, 200, "application/json; charset=utf-8", json_body, strlen(json_body));
 
     return 0;
 }
@@ -246,25 +246,25 @@ int user_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
 
     printf("Requested user: %s\n", username);
 
-    uvhttp_response_set_status(response, 200);
-
+    const char* body;
+    size_t body_len;
+    const char* content_type;
     if (format && strcmp(format, "json") == 0) {
-        char json_body[256];
+        static char json_body[256];
         snprintf(json_body, sizeof(json_body),
                  "{\"username\":\"%s\",\"status\":\"active\"}", username);
-
-        uvhttp_response_set_header(response, "Content-Type", "application/json");
-        uvhttp_response_set_body(response, json_body, strlen(json_body));
+        body = json_body;
+        body_len = strlen(json_body);
+        content_type = "application/json";
     } else {
-        char text_body[256];
+        static char text_body[256];
         snprintf(text_body, sizeof(text_body),
                  "User: %s\nStatus: Active", username);
-
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, text_body, strlen(text_body));
+        body = text_body;
+        body_len = strlen(text_body);
+        content_type = "text/plain";
     }
-
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, content_type, body, body_len);
     return 0;
 }
 

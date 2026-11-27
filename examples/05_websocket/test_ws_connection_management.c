@@ -93,10 +93,7 @@ static int http_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
         "</body>"
         "</html>";
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/html");
-    uvhttp_response_set_body(response, html, strlen(html));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/html", html, strlen(html));
 
     return 0;
 }

@@ -22,6 +22,7 @@
  */
 
 #include "uvhttp_allocator.h"
+#include "uvhttp_response_internal.h"
 #include "uvhttp_error.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"

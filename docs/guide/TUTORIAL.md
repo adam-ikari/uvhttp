@@ -115,17 +115,17 @@ the rest of the file wires that handler to the root path and runs the loop.
 // Request handler function
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // Set the response status code
-    uvhttp_response_set_status(res, 200);
+
 
     // Set the response header
-    uvhttp_response_set_header(res, "Content-Type", "text/plain; charset=utf-8");
+
 
     // Set the response body
     const char* body = "Hello, World!";
-    uvhttp_response_set_body(res, body, strlen(body));
+
 
     // Send the response
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "text/plain; charset=utf-8", body, strlen(body));
 }
 
 int main() {
@@ -338,33 +338,33 @@ paths, so the URL alone decides which response comes back.
 int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* html = "<html><body><h1>Home</h1><p>Welcome to UVHTTP</p></body></html>";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(res, html, strlen(html));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "text/html; charset=utf-8", html, strlen(html));
 }
 
 // About page handler
 int about_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* html = "<html><body><h1>About</h1><p>UVHTTP HTTP server</p></body></html>";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(res, html, strlen(html));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "text/html; charset=utf-8", html, strlen(html));
 }
 
 // API handler
 int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"message\":\"API response\",\"status\":\"ok\"}";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 int main() {
@@ -433,17 +433,15 @@ int user_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
             "{\"user_id\":\"%s\",\"name\":\"User %s\",\"email\":\"user%s@example.com\"}",
             user_id, user_id, user_id);
 
-        uvhttp_response_set_status(res, 200);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, response, strlen(response));
+        uvhttp_respond(res, 200, "application/json; charset=utf-8",
+                       response, strlen(response));
     } else {
         const char* error = "{\"error\":\"invalid user ID\"}";
-        uvhttp_response_set_status(res, 400);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
+        uvhttp_respond(res, 400, "application/json; charset=utf-8",
+                       error, strlen(error));
     }
 
-    return uvhttp_response_send(res);
+    return 0;
 }
 
 int main() {
@@ -483,11 +481,11 @@ on the same path, and the comments in the code show the matching curl call.
 int get_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"method\":\"GET\",\"message\":\"Get resource\"}";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 // POST request handler
@@ -504,11 +502,11 @@ int post_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
             "{\"method\":\"POST\",\"message\":\"Create resource\",\"received\":null}");
     }
 
-    uvhttp_response_set_status(res, 201);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 201, "application/json; charset=utf-8", response, strlen(response));
 }
 
 // PUT request handler
@@ -525,22 +523,22 @@ int put_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
             "{\"method\":\"PUT\",\"message\":\"Update resource\",\"received\":null}");
     }
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", response, strlen(response));
 }
 
 // DELETE request handler
 int delete_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"method\":\"DELETE\",\"message\":\"Delete resource\"}";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 int main() {
@@ -596,12 +594,12 @@ int check_auth(uvhttp_request_t* req, uvhttp_response_t* res) {
     if (!auth || strcmp(auth, "Bearer secret-token") != 0) {
         const char* error = "{\"error\":\"unauthorized\",\"message\":\"Invalid auth token\"}";
 
-        uvhttp_response_set_status(res, 401);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_header(res, "WWW-Authenticate", "Bearer");
-        uvhttp_response_set_body(res, error, strlen(error));
 
-        return uvhttp_response_send(res);
+
+
+
+
+        return uvhttp_respond_with_headers(res, 401, (uvhttp_header_view_t[]){{"Content-Type", "application/json; charset=utf-8"}, {"WWW-Authenticate", "Bearer"}}, 2, error, strlen(error));
     }
 
     // Authentication succeeded, continue processing
@@ -617,22 +615,22 @@ int protected_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
     const char* json = "{\"message\":\"Access granted\",\"data\":\"Sensitive info\"}";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 // Public handler
 int public_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"message\":\"Public access\"}";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 int main() {
@@ -676,42 +674,42 @@ shows up in the path prefix and in the JSON each one returns.
 int api_v1_users_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"version\":\"v1\",\"resource\":\"users\"}";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 int api_v1_posts_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"version\":\"v1\",\"resource\":\"posts\"}";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 // API v2 route group
 int api_v2_users_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"version\":\"v2\",\"resource\":\"users\",\"features\":[\"pagination\",\"filtering\"]}";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 int api_v2_posts_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"version\":\"v2\",\"resource\":\"posts\",\"features\":[\"pagination\",\"filtering\",\"sorting\"]}";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 int main() {
@@ -805,11 +803,11 @@ int headers_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     pos += snprintf(response + pos, sizeof(response) - pos, "  }\n");
     pos += snprintf(response + pos, sizeof(response) - pos, "}\n");
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", response, strlen(response));
 }
 
 int main() {
@@ -852,11 +850,11 @@ int json_post_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     if (!body || strlen(body) == 0) {
         const char* error = "{\"error\":\"Empty request body\"}";
 
-        uvhttp_response_set_status(res, 400);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
 
-        return uvhttp_response_send(res);
+
+
+
+        return uvhttp_respond(res, 400, "application/json; charset=utf-8", error, strlen(error));
     }
 
     // Validate Content-Type
@@ -864,11 +862,11 @@ int json_post_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     if (!content_type || strstr(content_type, "application/json") == NULL) {
         const char* error = "{\"error\":\"Unsupported Content-Type\",\"expected\":\"application/json\"}";
 
-        uvhttp_response_set_status(res, 415);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
 
-        return uvhttp_response_send(res);
+
+
+
+        return uvhttp_respond(res, 415, "application/json; charset=utf-8", error, strlen(error));
     }
 
     // Process the JSON data (simple echo here)
@@ -877,11 +875,11 @@ int json_post_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "{\"status\":\"success\",\"received\":\"%s\",\"length\":%zu}",
         body, strlen(body));
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", response, strlen(response));
 }
 
 // File upload handler
@@ -898,11 +896,11 @@ int upload_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "{\"status\":\"received\",\"filename\":\"uploaded.dat\",\"size\":%zu}",
         body_length);
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", response, strlen(response));
 }
 
 int main() {
@@ -958,20 +956,20 @@ static uvhttp_static_context_t* g_static_ctx = NULL;
 int static_file_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     if (!g_static_ctx) {
         const char* error = "{\"error\":\"Static file service not initialized\"}";
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+
+
+
+        return uvhttp_respond(res, 500, "application/json", error, strlen(error));
     }
 
     // Handle the static file request
     int result = uvhttp_static_handle_request(g_static_ctx, req, res);
     if (result != 0) {
         const char* error = "{\"error\":\"File not found\"}";
-        uvhttp_response_set_status(res, 404);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+
+
+
+        return uvhttp_respond(res, 404, "application/json", error, strlen(error));
     }
 
     return 0;
@@ -999,11 +997,11 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "</body>"
         "</html>";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(res, html, strlen(html));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "text/html; charset=utf-8", html, strlen(html));
 }
 
 int main() {
@@ -1146,18 +1144,18 @@ error response for anything it does not support.
 
 // JSON response helper function
 void send_json_response(uvhttp_response_t* res, int status, const char* json_data) {
-    uvhttp_response_set_status(res, status);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json_data, strlen(json_data));
-    uvhttp_response_send(res);
+
+
+
+    uvhttp_respond(res, status, "application/json; charset=utf-8", json_data, strlen(json_data));
 }
 
 // HTML response helper function
 void send_html_response(uvhttp_response_t* res, int status, const char* html_data) {
-    uvhttp_response_set_status(res, status);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(res, html_data, strlen(html_data));
-    uvhttp_response_send(res);
+
+
+
+    uvhttp_respond(res, status, "text/html; charset=utf-8", html_data, strlen(html_data));
 }
 
 // Error response helper function
@@ -1237,13 +1235,13 @@ need on top of this.
 // Streaming data handler
 int stream_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // Set streaming response headers
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/plain; charset=utf-8");
-    uvhttp_response_set_header(res, "Transfer-Encoding", "chunked");
-    uvhttp_response_set_header(res, "Cache-Control", "no-cache");
+
+
+
+
 
     // Send the initial response headers
-    uvhttp_response_send(res);
+    uvhttp_respond_with_headers(res, 200, (uvhttp_header_view_t[]){{"Content-Type", "text/plain; charset=utf-8"}, {"Transfer-Encoding", "chunked"}, {"Cache-Control", "no-cache"}}, 3, NULL, 0);
 
     // Note: real streaming responses require a more complex implementation
     // This only demonstrates the concept
@@ -1254,7 +1252,7 @@ int stream_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // 3. Keep the connection open and keep sending data
 
     const char* message = "Streaming response data\n";
-    uvhttp_response_set_body(res, message, strlen(message));
+    uvhttp_response_prepare(res, 200, NULL, 0, message, strlen(message));
 
     return 0;
 }
@@ -1262,19 +1260,16 @@ int stream_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 // Server-Sent Events (SSE) handler
 int sse_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // Set SSE response headers
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/event-stream");
-    uvhttp_response_set_header(res, "Cache-Control", "no-cache");
-    uvhttp_response_set_header(res, "Connection", "keep-alive");
-
-    // Send the response headers
-    uvhttp_response_send(res);
+    uvhttp_header_view_t sse_headers[] = {
+        {"Content-Type", "text/event-stream"},
+        {"Cache-Control", "no-cache"},
+        {"Connection", "keep-alive"}};
+    uvhttp_respond_with_headers(res, 200, sse_headers, 3, NULL, 0);
 
     // Note: real SSE requires continuously sending events
     // This only demonstrates the concept
 
-    const char* event = "event: message\ndata: Hello from SSE\n\n";
-    uvhttp_response_set_body(res, event, strlen(event));
+    /* Real SSE keeps the connection open and writes further events later. */
 
     return 0;
 }
@@ -1436,10 +1431,8 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // Check whether the context exists
     if (!ctx) {
         const char* error = "{\"error\":\"context not initialized\"}";
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+        return uvhttp_respond(res, 500, "application/json", error,
+                              strlen(error));
     }
 
     // Use the context data
@@ -1460,11 +1453,11 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         uptime,
         ctx->server ? ctx->server->active_connections : 0);
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, response, strlen(response));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json", response, strlen(response));
 }
 ```
 
@@ -1606,11 +1599,11 @@ int request_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "{\"message\":\"Hello from thread\",\"thread_id\":%d}",
         pthread_self() % 1000);
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", response, strlen(response));
 }
 
 // Worker thread function
@@ -1817,10 +1810,10 @@ void on_db_query_complete(uv_work_t* req, int status) {
         query_req->query);
 
     // Send the response
-    uvhttp_response_set_status(query_req->response, 200);
-    uvhttp_response_set_header(query_req->response, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(query_req->response, result, strlen(result));
-    uvhttp_response_send(query_req->response);
+
+
+
+    uvhttp_respond(query_req->response, 200, "application/json; charset=utf-8", result, strlen(result));
 
     // Cleanup
     free(query_req);
@@ -1849,10 +1842,10 @@ int get_users_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     db_query_request_t* query_req = malloc(sizeof(db_query_request_t));
     if (!query_req) {
         const char* error = "{\"error\":\"Memory allocation failed\"}";
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
-        uvhttp_response_send(res);
+
+
+
+        uvhttp_respond(res, 500, "application/json; charset=utf-8", error, strlen(error));
         return 0;
     }
 
@@ -1877,10 +1870,10 @@ int create_user_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
     if (!body) {
         const char* error = "{\"error\":\"Empty request body\"}";
-        uvhttp_response_set_status(res, 400);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
-        uvhttp_response_send(res);
+
+
+
+        uvhttp_respond(res, 400, "application/json; charset=utf-8", error, strlen(error));
         return 0;
     }
 
@@ -1888,10 +1881,10 @@ int create_user_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     db_query_request_t* query_req = malloc(sizeof(db_query_request_t));
     if (!query_req) {
         const char* error = "{\"error\":\"Memory allocation failed\"}";
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
-        uvhttp_response_send(res);
+
+
+
+        uvhttp_respond(res, 500, "application/json; charset=utf-8", error, strlen(error));
         return 0;
     }
 
@@ -2039,10 +2032,10 @@ int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
     if (!conn) {
         const char* error = "{\"error\":\"No available database connection\"}";
-        uvhttp_response_set_status(res, 503);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
-        uvhttp_response_send(res);
+
+
+
+        uvhttp_respond(res, 503, "application/json; charset=utf-8", error, strlen(error));
         return 0;
     }
 
@@ -2054,10 +2047,10 @@ int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
     // Send the response
     const char* json = "{\"status\":\"success\",\"connection_id\":1}";
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
-    uvhttp_response_send(res);
+
+
+
+    uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 
     // Release the connection
     connection_pool_release(&g_pool, conn);
@@ -2203,10 +2196,10 @@ int load_balance_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
     if (!backend) {
         const char* error = "{\"error\":\"No available backend server\"}";
-        uvhttp_response_set_status(res, 503);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
-        uvhttp_response_send(res);
+
+
+
+        uvhttp_respond(res, 503, "application/json; charset=utf-8", error, strlen(error));
         return 0;
     }
 
@@ -2224,10 +2217,10 @@ int load_balance_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "{\"status\":\"forwarded\",\"backend\":\"%s:%d\",\"request_count\":%d}",
         backend->host, backend->port, backend->request_count);
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
-    uvhttp_response_send(res);
+
+
+
+    uvhttp_respond(res, 200, "application/json; charset=utf-8", response, strlen(response));
 
     // Decrement the request count
     pthread_mutex_lock(&backend->mutex);
@@ -2259,10 +2252,10 @@ int health_check_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     pos += snprintf(response + pos, sizeof(response) - pos, "  ]\n");
     pos += snprintf(response + pos, sizeof(response) - pos, "}\n");
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
-    uvhttp_response_send(res);
+
+
+
+    uvhttp_respond(res, 200, "application/json; charset=utf-8", response, strlen(response));
 
     return 0;
 }
@@ -2352,7 +2345,7 @@ void* memory_pool_alloc(memory_pool_t* pool) {
 // connection timer reads (5-300 seconds).
 uvhttp_config_t* config = uvhttp_config_new();
 config->connection_timeout = 30; // 30 seconds
-server->config = config;
+uvhttp_server_take_config(server, config);
 
 // Connection reuse
 // In a real application, implement connection pooling and reuse logic
@@ -2380,17 +2373,17 @@ uvhttp_server_enable_tls(server, tls_ctx);
 ```c
 // Set secure response headers
 int secure_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_header(res, "X-Content-Type-Options", "nosniff");
-    uvhttp_response_set_header(res, "X-Frame-Options", "DENY");
-    uvhttp_response_set_header(res, "X-XSS-Protection", "1; mode=block");
-    uvhttp_response_set_header(res, "Strict-Transport-Security", "max-age=31536000");
+
+
+
+
+
+
 
     const char* json = "{\"message\":\"Secure response\"}";
-    uvhttp_response_set_body(res, json, strlen(json));
 
-    return uvhttp_response_send(res);
+
+    return uvhttp_respond_with_headers(res, 200, (uvhttp_header_view_t[]){{"Content-Type", "application/json"}, {"X-Content-Type-Options", "nosniff"}, {"X-Frame-Options", "DENY"}, {"X-XSS-Protection", "1; mode=block"}, {"Strict-Transport-Security", "max-age=31536000"}}, 5, json, strlen(json));
 }
 ```
 
@@ -2545,10 +2538,10 @@ ctx->count++;
 
 ```c
 const char* json = "{\"message\":\"Hello\"}";
-uvhttp_response_set_status(res, 200);
-uvhttp_response_set_header(res, "Content-Type", "application/json");
-uvhttp_response_set_body(res, json, strlen(json));
-return uvhttp_response_send(res);
+
+
+
+return uvhttp_respond(res, 200, "application/json", json, strlen(json));
 ```
 
 #### Error Handling

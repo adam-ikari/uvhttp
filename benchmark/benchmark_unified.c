@@ -35,10 +35,6 @@
 /* Forward declarations for compression helper functions */
 int uvhttp_should_compress_by_extension(const char* filename);
 int uvhttp_should_compress_by_content_type(const char* content_type);
-uvhttp_error_t uvhttp_response_set_compress_by_filename(uvhttp_response_t* response,
-                                                        const char* filename);
-uvhttp_error_t uvhttp_response_set_compress_by_content_type(uvhttp_response_t* response,
-                                                           const char* content_type);
 #endif
 
 #define DEFAULT_PORT 18081
@@ -151,15 +147,15 @@ static void on_db_query_complete(uv_timer_t* handle) {
     }
 
     /* Send response */
-    uvhttp_response_set_status(ctx->response, 200);
-    uvhttp_response_set_header(ctx->response, "Content-Type", "application/json");
+    
+    
     
     char content_length_str[32];
     snprintf(content_length_str, sizeof(content_length_str), "%zu", ctx->response_length);
-    uvhttp_response_set_header(ctx->response, "Content-Length", content_length_str);
     
-    uvhttp_response_set_body(ctx->response, ctx->response_body, ctx->response_length);
-    uvhttp_response_send(ctx->response);
+    
+    
+    uvhttp_respond_with_headers(ctx->response, 200, (uvhttp_header_view_t[]){{"Content-Type", "application/json"}, {"Content-Length", content_length_str}}, 2, ctx->response_body, ctx->response_length);
 
     /* Cleanup */
     uv_timer_stop(&ctx->timer);
@@ -176,11 +172,7 @@ static int get_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     }
 
     const char* body = "Hello, World!";
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_header(response, "Content-Length", "13");
-    uvhttp_response_set_body(response, body, 13);
-    uvhttp_response_send(response);
+    uvhttp_respond_with_headers(response, 200, (uvhttp_header_view_t[]){{"Content-Type", "text/plain"}, {"Content-Length", "13"}}, 2, body, 13);
 
     return 0;
 }
@@ -194,11 +186,7 @@ static int json_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
     }
 
     const char* body = "{\"status\":\"ok\",\"message\":\"Hello from UVHTTP\"}";
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_header(response, "Content-Length", "50");
-    uvhttp_response_set_body(response, body, 50);
-    uvhttp_response_send(response);
+    uvhttp_respond_with_headers(response, 200, (uvhttp_header_view_t[]){{"Content-Type", "application/json"}, {"Content-Length", "50"}}, 2, body, 50);
 
     return 0;
 }
@@ -212,11 +200,7 @@ static int post_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
     }
 
     const char* body = "{\"status\":\"received\"}";
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_header(response, "Content-Length", "23");
-    uvhttp_response_set_body(response, body, 23);
-    uvhttp_response_send(response);
+    uvhttp_respond_with_headers(response, 200, (uvhttp_header_view_t[]){{"Content-Type", "application/json"}, {"Content-Length", "23"}}, 2, body, 23);
 
     return 0;
 }
@@ -238,11 +222,7 @@ static int small_handler(uvhttp_request_t* request, uvhttp_response_t* response)
         small_initialized = 1;
     }
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_header(response, "Content-Length", "1023");
-    uvhttp_response_set_body(response, small_body, 1023);
-    uvhttp_response_send(response);
+    uvhttp_respond_with_headers(response, 200, (uvhttp_header_view_t[]){{"Content-Type", "text/plain"}, {"Content-Length", "1023"}}, 2, small_body, 1023);
 
     return 0;
 }
@@ -264,11 +244,7 @@ static int medium_handler(uvhttp_request_t* request, uvhttp_response_t* response
         medium_initialized = 1;
     }
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_header(response, "Content-Length", "10239");
-    uvhttp_response_set_body(response, medium_body, 10239);
-    uvhttp_response_send(response);
+    uvhttp_respond_with_headers(response, 200, (uvhttp_header_view_t[]){{"Content-Type", "text/plain"}, {"Content-Length", "10239"}}, 2, medium_body, 10239);
 
     return 0;
 }
@@ -290,11 +266,7 @@ static int large_handler(uvhttp_request_t* request, uvhttp_response_t* response)
         large_initialized = 1;
     }
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_header(response, "Content-Length", "102399");
-    uvhttp_response_set_body(response, large_body, 102399);
-    uvhttp_response_send(response);
+    uvhttp_respond_with_headers(response, 200, (uvhttp_header_view_t[]){{"Content-Type", "text/plain"}, {"Content-Length", "102399"}}, 2, large_body, 102399);
 
     return 0;
 }
@@ -423,20 +395,21 @@ static int compression_text_handler(uvhttp_request_t* request, uvhttp_response_t
 
     size_t text_len = strlen(compressible_text);
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, compressible_text, text_len);
+    
+    
+    
     
 #if UVHTTP_FEATURE_COMPRESSION
     /* Use helper function for smart compression decision */
-    uvhttp_response_set_compress_by_filename(response, "compressible.txt");
+    uvhttp_response_set_compress(
+        response, uvhttp_should_compress_by_extension("compressible.txt"));
     uvhttp_response_set_compress_threshold(response, 512);  /* Lower threshold for testing */
 #else
     /* Compression not available */
     (void)0;
 #endif
     
-    return uvhttp_response_send(response);
+    return uvhttp_respond(response, 200, "text/plain", compressible_text, text_len);
 }
 
 #endif /* UVHTTP_FEATURE_COMPRESSION */
@@ -472,20 +445,21 @@ static int compression_json_handler(uvhttp_request_t* request, uvhttp_response_t
 
     size_t json_len = strlen(json_data);
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_body(response, json_data, json_len);
+    
+    
+    
     
 #if UVHTTP_FEATURE_COMPRESSION
     /* Use helper function for smart compression decision */
-    uvhttp_response_set_compress_by_content_type(response, "application/json");
+    uvhttp_response_set_compress(
+        response, uvhttp_should_compress_by_content_type("application/json"));
     uvhttp_response_set_compress_threshold(response, 512);
 #else
     /* Compression not available */
     (void)0;
 #endif
     
-    return uvhttp_response_send(response);
+    return uvhttp_respond(response, 200, "application/json", json_data, json_len);
 }
 
 #endif /* UVHTTP_FEATURE_COMPRESSION */
@@ -501,11 +475,7 @@ static int latency_handler(uvhttp_request_t* request, uvhttp_response_t* respons
     uint64_t start_time = get_timestamp_us();
 
     const char* body = "OK";
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_header(response, "Content-Length", "2");
-    uvhttp_response_set_body(response, body, 2);
-    uvhttp_response_send(response);
+    uvhttp_respond_with_headers(response, 200, (uvhttp_header_view_t[]){{"Content-Type", "text/plain"}, {"Content-Length", "2"}}, 2, body, 2);
 
     /* Record latency */
     uint64_t latency = get_timestamp_us() - start_time;
@@ -640,11 +610,7 @@ static int stats_handler(uvhttp_request_t* request, uvhttp_response_t* response)
         elapsed, rps);
     snprintf(content_length_str, sizeof(content_length_str), "%d", len);
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_header(response, "Content-Length", content_length_str);
-    uvhttp_response_set_body(response, stats_body, len);
-    uvhttp_response_send(response);
+    uvhttp_respond_with_headers(response, 200, (uvhttp_header_view_t[]){{"Content-Type", "application/json"}, {"Content-Length", content_length_str}}, 2, stats_body, (size_t)len);
 
     return 0;
 }
@@ -658,11 +624,7 @@ static int health_handler(uvhttp_request_t* request, uvhttp_response_t* response
     }
 
     const char* body = "{\"status\":\"healthy\"}";
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_header(response, "Content-Length", "22");
-    uvhttp_response_set_body(response, body, 22);
-    uvhttp_response_send(response);
+    uvhttp_respond_with_headers(response, 200, (uvhttp_header_view_t[]){{"Content-Type", "application/json"}, {"Content-Length", "22"}}, 2, body, 22);
 
     return 0;
 }
@@ -702,10 +664,8 @@ static int ws_echo_close_handler(uvhttp_ws_connection_t* ws_conn) {
 static int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     /* Get application context from global context */
     if (!g_ctx || !g_ctx->static_ctx) {
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, "Static file service not initialized", 35);
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 500, "text/plain",
+                       "Static file service not initialized", 35);
         return -1;
     }
 
@@ -713,9 +673,8 @@ static int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* res
     int result = uvhttp_static_handle_request(g_ctx->static_ctx, request, response);
     if (result != 0) {
         const char* error_body = "Error processing static file request";
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error_body, strlen(error_body));
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 200, "text/plain", error_body,
+                       strlen(error_body));
         return -1;
     }
 

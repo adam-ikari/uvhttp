@@ -18,6 +18,7 @@
  */
 
 #include <gtest/gtest.h>
+#include "uvhttp_response_internal.h"
 #include <cstring>
 #include <string>
 

@@ -269,10 +269,9 @@ static const uvhttp_mime_mapping_t default_mime_types[] = {
 int custom_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* path = uvhttp_request_get_path(req);
     if (!is_allowed_file(path)) {
-        uvhttp_response_set_status(res, 403);
-        return uvhttp_response_send(res);
+        return uvhttp_respond(res, 403, NULL, NULL, 0);
     }
-    return uvhttp_response_send(res);
+    return 0;
 }
 ```
 
@@ -447,7 +446,7 @@ int uvhttp_static_prewarm_directory(uvhttp_static_context_t* ctx,
                                     const char* dir_path, int max_files);
 
 // 直接预热缓存（底层）
-uvhttp_error_t uvhttp_lru_cache_prewarm(cache_manager_t* cache,
+uvhttp_error_t uvhttp_lru_cache_prewarm(uvhttp_lru_cache_t* cache,
                                         const char* file_path, char* content,
                                         size_t content_length,
                                         const char* mime_type,
@@ -715,3 +714,9 @@ UVHTTP_LOG_DEBUG("处理请求: %s %s",
 ## 许可证
 
 MIT License - 详见 LICENSE 文件
+
+## 另见
+
+- [常见问题](./FAQ.md) - 常见问题与解答
+- [API 参考](../../api/API_REFERENCE.md) - 完整 API 文档
+- [性能指南](./performance.md) - 性能基准与指标

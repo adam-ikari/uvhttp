@@ -38,10 +38,7 @@ static int slow_handler(uvhttp_request_t* request,
     char body[256];
     snprintf(body, sizeof(body), "Slow response #%d", app->request_count);
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
 
     return 0;
 }
@@ -54,10 +51,7 @@ static int fast_handler(uvhttp_request_t* request,
     char body[256];
     snprintf(body, sizeof(body), "Fast response #%d", app->request_count);
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
 
     return 0;
 }
@@ -79,10 +73,7 @@ static int connection_info_handler(uvhttp_request_t* request,
 
     size_t len = strlen(info);
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, info, len);
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", info, len);
 
     return 0;
 }

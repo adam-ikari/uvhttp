@@ -119,9 +119,9 @@ The TLS module provides Transport Layer Security (TLS) for HTTP connections, imp
 - **Thread safety**: Not thread-safe.
 
 ### uvhttp_tls_setup_ssl
-- **Signature**: `uvhttp_error_t uvhttp_tls_setup_ssl(mbedtls_ssl_context* ssl, int fd)`
+- **Signature**: `uvhttp_error_t uvhttp_tls_setup_ssl(mbedtls_ssl_context* ssl, const int* fd_storage)`
 - **Purpose**: Attach a socket file descriptor to an SSL context for BIO
-- **Preconditions**: `ssl` must be non-NULL. `fd` must be a valid socket descriptor.
+- **Preconditions**: `ssl` must be non-NULL. `fd_storage` (must outlive the SSL context: mbedtls keeps its address) must be a valid socket descriptor.
 - **Postconditions**: Custom BIO callbacks (`mbedtls_net_send`/`mbedtls_net_recv`) are set on the SSL context, using the provided file descriptor.
 - **Error conditions**:
   - `UVHTTP_ERROR_TLS_INVALID_PARAM`: `ssl` is NULL

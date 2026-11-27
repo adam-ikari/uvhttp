@@ -38,16 +38,19 @@ extern "C" {
 
 /* API usage instructions:
  *
- * Core API:
- *   uvhttp_server_t* server = NULL;
- *   uvhttp_error_t err = uvhttp_server_new(loop, &server);
- *   uvhttp_router_t* router = NULL;
- *   err = uvhttp_router_new(&router);
- *   uvhttp_router_add_route(router, "/", handler);
+ * One atomic call creates the server, builds its router and starts listening.
+ * All-or-nothing: *server stays NULL on any failure, so there is no rollback
+ * code and no moment where ownership of the router is ambiguous.
  *
- * Start server:
- *   uvhttp_server_listen(server, "0.0.0.0", 8080);
+ *   uvhttp_route_t routes[] = {{"/", UVHTTP_ANY, handler}};
+ *   uvhttp_server_t* server = NULL;
+ *   uvhttp_error_t err = uvhttp_server_listen_routes(
+ *       loop, routes, 1, "0.0.0.0", 8080, &server);
+ *   if (err != UVHTTP_OK) { ... }
  *   uv_run(loop, UV_RUN_DEFAULT);
+ *
+ * The primitive calls (server_new / router_new / add_route / take_router /
+ * listen) remain available when the router must be assembled dynamically.
  */
 
 #ifdef __cplusplus

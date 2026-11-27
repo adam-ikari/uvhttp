@@ -57,7 +57,7 @@
    typedef struct uvhttp_response uvhttp_response_t;
 
    void func(uvhttp_response_t* resp) {
-       uvhttp_response_set_status(resp, 200);  // 需要调用方法
+       uvhttp_respond(resp, 200, NULL, NULL, 0);  // 需要调用方法
    }
 
    // 正确

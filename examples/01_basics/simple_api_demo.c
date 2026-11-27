@@ -32,8 +32,8 @@ static int simple_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         method = "UNKNOWN";
     }
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
+    
+    
 
     char response[1024];
     snprintf(response, sizeof(response),
@@ -42,9 +42,9 @@ static int simple_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "</body>"
         "</html>", html_prefix, path, method);
 
-    uvhttp_response_set_body(res, response, strlen(response));
+    
 
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "text/html; charset=utf-8", response, strlen(response));
 }
 
 int main() {

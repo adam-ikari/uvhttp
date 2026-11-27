@@ -124,7 +124,6 @@ TEST(UvhttpConnectionEnhancedCoverageTest, ConnectionStructureInit) {
     /* 验证初始状态 */
     EXPECT_EQ(conn.state, UVHTTP_CONN_STATE_NEW);
     EXPECT_EQ(conn.parsing_complete, 0);
-    EXPECT_EQ(conn.keepalive, 0);
     EXPECT_EQ(conn.chunked_encoding, 0);
     EXPECT_EQ(conn.server, nullptr);
     EXPECT_EQ(conn.request, nullptr);

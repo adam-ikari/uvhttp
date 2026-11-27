@@ -5,6 +5,7 @@
  */
 
 #include <gtest/gtest.h>
+#include "uvhttp_response_internal.h"
 #include "uvhttp_connection.h"
 #include "uvhttp_server.h"
 #include "uvhttp_context.h"

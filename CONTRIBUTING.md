@@ -142,7 +142,8 @@ Closes #123
 - [ ] **`.clang-format` 无重复键** — clang-format 18 拒绝解析含重复 mapping key 的配置。用工具校验而非凭印象；PyYAML 的 `safe_load` 默认**接受**重复键，是假阴性。
 - [ ] **socket/loop 类测试的 fd 与 handle 释放** — 内存测试的 fd 泄漏 ASan 查不到（fd 不在 malloc 域）。fixture 内每条 `return`/提前退出路径都要 `close(fd)`；read 循环的退出条件要基于**实际收到的 body 长度**，而非 `Content-Length` 值混算，否则 TCP 分段投递时会读到截断 body 假失败。
 - [ ] **CI 步骤顺序本身是正确性的一部分** — `upload-artifact`/`if: failure()` 只对**已执行过**的步骤生效。crash artifact 上传等收尾步骤必须排在**所有**会被 crash 打断的 Run 步骤之后，否则最需要留证时反而丢证据。
-- [ ] **变异验证新测试有牙齿** — 造一个该测试本应捕获的 bug（如丢一个 iovec、破坏阈值边界），确认测试**变红**。一个改错了也照样绿的新测试，等于没有测试。
+- [ ] **响应体长度写字节数，不写字符数** — `uvhttp_respond` 的 body 长度参数是 C 字符串的**字节数**。UTF-8 中文按字节算：`"中间件测试"` 是 15 字节，不是 5 个字符。写错会截断响应或留下尾随 NUL，前端 `JSON.parse` 直接失败。优先写 `strlen("...")` 让编译器算；examples 由 `scripts/ci/check_response_lengths.py` 在 PR 和发布门禁中扫描。
+- [ ] **变异验证新测试有牙齿** — 造一个该测试本应捕获的 bug（如丢一个 iovec、破坏阈值边界），确认测试**变红**。一个改错了也照样绿的新测试，等于没有测试。门禁同理：本次长度门禁用「把 15 改成 5」验证过确实 exit 1。
 - [ ] **新增 fuzz harness 能在空 corpus 下命中回调** — 从空 corpus 起步跑短程，若 cov 长期停在个位数说明没触达目标函数。构造函数要「用真实 API 驱动」，不要自造不存在的接口（历史 `fuzz_request.c` 曾引用不存在的 `uvhttp_request_parse` 而从未编译）。
 
 ## 文档规范

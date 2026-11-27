@@ -1,7 +1,7 @@
 # UVHTTP API Reference
 
-**Version**: v2.8.1  
-**Updated**: 2026-09-29  
+**Version**: v3.1.1  
+**Updated**: 2026-11-26  
 **C Standard**: C99
 
 ## Overview
@@ -392,78 +392,41 @@ Gets the request body length in bytes.
 
 ## Response Handling API
 
-### uvhttp_response_set_status
+### uvhttp_respond
 
 ```c
-uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response,
-                                          int status_code);
+uvhttp_error_t uvhttp_respond(uvhttp_response_t* response, int status_code,
+                              const char* content_type, const char* body,
+                              size_t body_length);
 ```
 
-Sets the response status code.
-
-**Parameters**:
-- `response`: Response object
-- `status_code`: HTTP status code (e.g., 200, 404)
-
-**Example**:
-```c
-uvhttp_response_set_status(response, 200);
-```
-
-### uvhttp_response_set_header
-
-```c
-uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response,
-                                          const char* name,
-                                          const char* value);
-```
-
-Sets a response header.
-
-**Parameters**:
-- `response`: Response object
-- `name`: Header name
-- `value`: Header value
-
-**Example**:
-```c
-uvhttp_response_set_header(response, "Content-Type", "application/json");
-```
-
-### uvhttp_response_set_body
-
-```c
-uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response,
-                                        const char* body,
-                                        size_t len);
-```
-
-Sets the response body.
-
-**Parameters**:
-- `response`: Response object
-- `body`: Response body data
-- `len`: Response body length
+Validates every input before touching the response, then sets the status, an optional `Content-Type` and the body, and sends. On failure the status and visible header count are restored.
 
 **Example**:
 ```c
 const char* body = "Hello, World!";
-uvhttp_response_set_body(response, body, strlen(body));
+uvhttp_respond(response, 200, "text/plain", body, strlen(body));
 ```
 
-### uvhttp_response_send
+### uvhttp_respond_with_headers
 
 ```c
-uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
+uvhttp_error_t uvhttp_respond_with_headers(
+    uvhttp_response_t* response, int status_code,
+    const uvhttp_header_view_t* headers, size_t header_count,
+    const char* body, size_t body_length);
 ```
+N-header form of `uvhttp_respond`; `uvhttp_header_view_t` is `{const char* name, const char* value}`.
 
-Sends the response.
+### uvhttp_response_prepare
 
-**Return Value**:
-- `UVHTTP_OK`: Success
-- Other values: Error code
-
-## Context API
+```c
+uvhttp_error_t uvhttp_response_prepare(
+    uvhttp_response_t* response, int status_code,
+    const uvhttp_header_view_t* headers, size_t header_count,
+    const char* body, size_t body_length);
+```
+Same validation and rollback as `uvhttp_respond`, but does not send — for middleware that only prepares headers.
 
 ### uvhttp_context_create
 
@@ -947,11 +910,8 @@ UVHTTP_ALLOCATOR_TYPE             # Allocator type (0=system, 1=mimalloc, 2=cust
 #include "uvhttp.h"
 
 int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
     const char* body = "Hello, World!";
-    uvhttp_response_set_body(response, body, strlen(body));
-    return uvhttp_response_send(response);
+    return uvhttp_respond(response, 200, "text/plain", body, strlen(body));
 }
 
 int main(void) {

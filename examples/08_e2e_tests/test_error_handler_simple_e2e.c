@@ -32,10 +32,7 @@ static int success_handler(uvhttp_request_t* request,
     (void)request;
     const char* body = "Success response";
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
 
     return 0;
 }
@@ -46,10 +43,7 @@ static int trigger_400_handler(uvhttp_request_t* request,
     (void)request;
     const char* body = "Bad request - invalid input";
 
-    uvhttp_response_set_status(response, 400);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 400, "text/plain", body, strlen(body));
 
     return 0;
 }
@@ -60,11 +54,7 @@ static int trigger_401_handler(uvhttp_request_t* request,
     (void)request;
     const char* body = "Unauthorized - authentication required";
 
-    uvhttp_response_set_status(response, 401);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_header(response, "WWW-Authenticate", "Bearer");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond_with_headers(response, 401, (uvhttp_header_view_t[]){{"Content-Type", "text/plain"}, {"WWW-Authenticate", "Bearer"}}, 2, body, strlen(body));
 
     return 0;
 }
@@ -75,10 +65,7 @@ static int trigger_403_handler(uvhttp_request_t* request,
     /* Trigger a forbidden error */
     const char* body = "Forbidden - insufficient permissions";
 
-    uvhttp_response_set_status(response, 403);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 403, "text/plain", body, strlen(body));
 
     return 0;
 }
@@ -89,10 +76,7 @@ static int trigger_500_handler(uvhttp_request_t* request,
     /* Trigger an internal server error */
     const char* body = "Internal server error - something went wrong";
 
-    uvhttp_response_set_status(response, 500);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 500, "text/plain", body, strlen(body));
 
     return 0;
 }

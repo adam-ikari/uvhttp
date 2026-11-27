@@ -57,7 +57,7 @@ Forward declarations and circular dependencies are common C/C++ design issues. C
    typedef struct uvhttp_response uvhttp_response_t;
 
    void func(uvhttp_response_t* resp) {
-       uvhttp_response_set_status(resp, 200);  // Methods need to be called
+       uvhttp_respond(resp, 200, NULL, NULL, 0);  // Methods need to be called
    }
 
    // Correct

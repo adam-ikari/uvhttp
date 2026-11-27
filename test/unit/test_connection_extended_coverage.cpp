@@ -194,7 +194,6 @@ TEST(UvhttpConnectionExtendedTest, ConnectionFieldsInitialization) {
     /* Verify all important fields are initialized to zero */
     EXPECT_EQ(conn.state, (uvhttp_connection_state_t)0);
     EXPECT_EQ(conn.parsing_complete, 0);
-    EXPECT_EQ(conn.keepalive, 0);
     EXPECT_EQ(conn.chunked_encoding, 0);
     EXPECT_EQ(conn.close_pending, 0);
     EXPECT_EQ(conn.need_restart_read, 0);

@@ -41,8 +41,8 @@ static int ws_close_handler(uvhttp_ws_connection_t* ws_conn) {
 static int http_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     (void)request;  // 避免未使用参数警告
     
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/html; charset=utf-8");
+    
+    
     
     const char* html = 
         "<!DOCTYPE html>"
@@ -81,8 +81,8 @@ static int http_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
         "</body>"
         "</html>";
     
-    uvhttp_response_set_body(response, html, strlen(html));
-    uvhttp_response_send(response);
+    
+    uvhttp_respond(response, 200, "text/html; charset=utf-8", html, strlen(html));
     
     return 0;
 }

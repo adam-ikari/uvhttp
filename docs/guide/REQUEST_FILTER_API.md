@@ -36,7 +36,7 @@ library runs the hook; the policy stays yours to write.
 | Continue | Return `UVHTTP_OK`. |
 | Stop | Return any other error code. `UVHTTP_ERROR_RATE_LIMIT_EXCEEDED` (-550) is kept in the error enum as the idiomatic value for exactly this case. |
 | Reply | A filter that stops a request should send its own response (status, `Retry-After`, body) before returning. |
-| Fallback | If it returns without sending anything, the library replies for it: the status the filter wrote is kept (403 `Forbidden` when it wrote none), and the body is always the `text/plain` `Forbidden` message — so a denial that needs its own payload (a 429 with a JSON body, say) has to send it inside the filter. The `sent` guard in `uvhttp_response_send()` makes the fallback a no-op when the filter already replied, so there is no double-send. |
+| Fallback | If it returns without sending anything, the library replies for it: the status the filter wrote is kept (403 `Forbidden` when it wrote none), and the body is always the `text/plain` `Forbidden` message — so a denial that needs its own payload (a 429 with a JSON body, say) has to send it inside the filter. The library's `sent` guard makes the fallback a no-op when the filter already replied, so there is no double-send. |
 | Connection | Stopping a request does not close it. Keep-alive clients can send the next request on the same connection. |
 | Slot | One filter, not a chain. Compose your steps inside your own callback. |
 | Thread | Runs on the event loop thread. Keep it O(1) and never block in it. |
@@ -121,13 +121,11 @@ static uvhttp_error_t limit_filter(uvhttp_request_t* request,
     }
 
     if (++s->count > MAX_REQUESTS_PER_WINDOW) {
-        uvhttp_response_set_status(response, 429);
-        uvhttp_response_set_header(response, "Retry-After", "1");
-        uvhttp_response_set_header(response, UVHTTP_HEADER_CONTENT_TYPE,
-                                   UVHTTP_CONTENT_TYPE_TEXT);
-        uvhttp_response_set_body(response, "Too Many Requests",
-                                 strlen("Too Many Requests"));
-        uvhttp_response_send(response);
+
+
+
+
+        uvhttp_respond_with_headers(response, 429, (uvhttp_header_view_t[]){{"Retry-After", "1"}, {UVHTTP_HEADER_CONTENT_TYPE, UVHTTP_CONTENT_TYPE_TEXT}}, 2, "Too Many Requests", strlen("Too Many Requests"));
         return UVHTTP_ERROR_RATE_LIMIT_EXCEEDED;
     }
     return UVHTTP_OK;

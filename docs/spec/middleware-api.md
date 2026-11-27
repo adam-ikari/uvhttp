@@ -6,6 +6,13 @@ The Middleware module provides a compile-time, zero-overhead middleware system
 using C preprocessor macros. Middleware are chained at compile time, with no
 runtime registration or dispatch overhead.
 
+STOP has two distinct layers. `UVHTTP_EXECUTE_MIDDLEWARE` / `_CHAIN` only stop
+the chain — the handler body continues (correct for logging/timing). For
+enforcement (auth, rate limiting, billing) use `UVHTTP_MIDDLEWARE_GUARD` /
+`UVHTTP_MIDDLEWARE_CHAIN_GUARD`: on STOP they send the response already set by
+the middleware and `return UVHTTP_OK` from the handler, so no business side
+effect runs. The guard requires an `int`-returning handler.
+
 ## Interfaces
 
 ### UVHTTP_EXECUTE_MIDDLEWARE
@@ -27,6 +34,13 @@ runtime registration or dispatch overhead.
 - **Purpose**: Execute a pre-defined middleware chain
 - **Preconditions**: `chain` must be a name previously defined with `UVHTTP_DEFINE_MIDDLEWARE_CHAIN`.
 - **Postconditions**: Same as `UVHTTP_EXECUTE_MIDDLEWARE`.
+- **Thread safety**: Not thread-safe.
+
+### UVHTTP_MIDDLEWARE_GUARD / UVHTTP_MIDDLEWARE_CHAIN_GUARD
+- **Signature**: `UVHTTP_MIDDLEWARE_GUARD(req, resp, mw1, ...)` / `UVHTTP_MIDDLEWARE_CHAIN_GUARD(req, resp, chain)`
+- **Purpose**: Enforcement form — on STOP send the response and return from the handler.
+- **Preconditions**: must be used inside a handler returning `int` (the standard `uvhttp_request_handler_t`). The stopping middleware must set the response status/body before returning STOP.
+- **Postconditions**: no statement after the guard executes when a middleware returns STOP; the shared context cleanup still runs exactly once.
 - **Thread safety**: Not thread-safe.
 
 ### UVHTTP_DEFINE_MIDDLEWARE_HANDLER

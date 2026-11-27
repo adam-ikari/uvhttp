@@ -7,6 +7,7 @@
 #   make -f Makefile.examples            # Build all examples
 #   make -f Makefile.examples simple     # Build specific example
 #   make -f Makefile.examples clean      # Clean build artifacts
+#   make -f Makefile.examples production_app  # Real embedder example
 ###############################################################################
 
 # Configuration
@@ -44,7 +45,7 @@ else
 endif
 
 # Examples (source files under examples/)
-EXAMPLES = simple_server hello_world basic_routing
+EXAMPLES = simple_server hello_world basic_routing production_app
 
 # Targets
 .PHONY: all clean help check_uvhttp $(EXAMPLES)
@@ -104,6 +105,15 @@ basic_routing: $(BIN_DIR) check_uvhttp
 	@echo "Building basic_routing..."
 	$(CC) $(CFLAGS) $(SRC_DIR)/02_routing/01_simple_routing.c -o $(BIN_DIR)/basic_routing $(LDFLAGS)
 	@echo "  ✓ basic_routing built"
+
+# Real embedder example: exercises config, filter, observer, stats, draining,
+# atomic responses, static files and the declared logging interface.
+# Static file serving requires the STATIC_FILES=ON build.
+production_app: BUILD_DIR = ../build_static
+production_app: $(BIN_DIR) check_uvhttp
+	@echo "Building production_app..."
+	$(CC) $(CFLAGS) $(SRC_DIR)/10_embedding/production_app.c -o $(BIN_DIR)/production_app $(LDFLAGS)
+	@echo "  ✓ production_app built"
 
 # Clean build artifacts
 clean:

@@ -30,10 +30,7 @@ static int success_handler(uvhttp_request_t* request,
     (void)request;
     const char* body = "Success";
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
 
     return 0;
 }
@@ -43,10 +40,7 @@ static int not_found_handler(uvhttp_request_t* request,
     (void)request;
     const char* body = "Resource not found";
 
-    uvhttp_response_set_status(response, 404);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 404, "text/plain", body, strlen(body));
 
     return 0;
 }
@@ -56,10 +50,7 @@ static int internal_error_handler(uvhttp_request_t* request,
     (void)request;
     const char* body = "Internal server error";
 
-    uvhttp_response_set_status(response, 500);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 500, "text/plain", body, strlen(body));
 
     return 0;
 }

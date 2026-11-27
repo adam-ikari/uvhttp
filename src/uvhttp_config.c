@@ -64,6 +64,7 @@ void uvhttp_config_set_defaults(uvhttp_config_t* config) {
     config->tcp_keepalive_timeout = UVHTTP_TCP_KEEPALIVE_TIMEOUT;
     config->sendfile_timeout_ms = UVHTTP_SENDFILE_TIMEOUT_MS;
     config->sendfile_max_retry = UVHTTP_SENDFILE_DEFAULT_MAX_RETRY;
+    config->write_queue_high_water = UVHTTP_WRITE_QUEUE_HIGH_WATER;
 }
 
 /* Validate configuration */
@@ -301,12 +302,9 @@ void uvhttp_config_set_current(uvhttp_context_t* context,
         return;
     }
 
-    /* Installing a configuration does NOT transfer ownership to the
-     * context: the context only borrows the pointer and will not free it in
-     * uvhttp_context_cleanup_config. The caller retains ownership and stays
-     * responsible for releasing it (directly via uvhttp_config_free, or via
-     * the server once the same object is assigned to server->config -
-     * uvhttp_server_free frees it). */
+    /* Installing a configuration does NOT by itself transfer ownership:
+     * the context borrows the pointer. uvhttp_server_take_config explicitly
+     * marks the installed config as owned so the context frees it once. */
     if (context->config_owned && context->current_config &&
         context->current_config != (void*)config) {
         /* The context created its own default config earlier: release it so

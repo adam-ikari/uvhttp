@@ -87,11 +87,7 @@ int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "</body>"
         "</html>";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(res, html, strlen(html));
-    
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "text/html; charset=utf-8", html, strlen(html));
 }
 
 int main() {

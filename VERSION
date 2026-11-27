@@ -2,12 +2,12 @@
 # This file defines the current version information for the project
 
 # Current version number (semantic version: MAJOR.MINOR.PATCH)
-VERSION=3.0.1
+VERSION=3.1.1
 VERSION_TYPE=patch
-RELEASE_DATE=2026-11-23
-PREVIOUS_VERSION=3.0.0
-NEXT_VERSION=3.0.2
-VERSION_NAME="安全与正确性修复：header 溢出 / 目录列表 XSS / 流水线 UAF / TOCTOU / 304 挂起" # v3.0.1
+RELEASE_DATE=2026-11-26
+PREVIOUS_VERSION=3.1.0
+NEXT_VERSION=3.1.2
+VERSION_NAME="3.1.0 收尾：TLS WANT_WRITE 与非 WS 升级残留字节修复" # v3.1.1
 IS_PRERELEASE=false
 PRERELEASE_IDENTIFIER=""
 

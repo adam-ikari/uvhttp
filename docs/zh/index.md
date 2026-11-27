@@ -56,7 +56,7 @@ v3.0.0 刻意打破了兼容：兑现不了契约的 API 直接删除。
 
 - 内置限流删了。每个 server 一个计数器，结果是一个客户端超限，所有客户端一起收 429。现在换成分派前的[请求过滤器](/zh/guide/REQUEST_FILTER_API)：窗口长度、计数维度和存储交给应用决定。
 - 所有权写进了函数名。`uvhttp_server_set_router` / `set_context` 改名为 `take_router` / `take_context`，builder 层与 `uvhttp_serve` 一起删除。
-- `uvhttp_response_set_body()` 不再先释放旧 body 再分配新的；LRU 缓存 setter 在写入点校验。
+- 响应体替换不再先释放旧 body 再分配新的；LRU 缓存 setter 在写入点校验。
 - 压缩响应不再带过期的 `Content-Length`；静态文件预热不再泄漏它处理过的每个文件。
 
 完整迁移清单见 [v3.0.0 发布说明](/releases/v3.0.0-release-notes)，逐 PR 记录见[更新日志](/zh/guide/CHANGELOG)。

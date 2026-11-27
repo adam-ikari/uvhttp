@@ -117,7 +117,7 @@ uvhttp_lru_cache_init_task_queue(cache, loop);
 
 **迁移后:**
 ```c
-cache_manager_t* cache = NULL;
+uvhttp_lru_cache_t* cache = NULL;
 uvhttp_lru_cache_create(1024 * 1024, 1000, 3600, &cache);
 // 缓存立即可用
 ```

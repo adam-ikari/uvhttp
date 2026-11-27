@@ -131,9 +131,9 @@ static int handler_strategy_1(uvhttp_request_t* request, uvhttp_response_t* resp
     
     size_t content_len = strlen(large_content);
     
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, large_content, content_len);
+    
+    
+    
     
     /* 使用自定义策略 1 */
     if (custom_strategy_1("sample.txt", content_len)) {
@@ -141,7 +141,7 @@ static int handler_strategy_1(uvhttp_request_t* request, uvhttp_response_t* resp
         uvhttp_response_set_compress_threshold(response, 5120);
     }
     
-    return uvhttp_response_send(response);
+    return uvhttp_respond(response, 200, "text/plain", large_content, content_len);
 }
 
 /**
@@ -170,9 +170,9 @@ static int handler_strategy_2(uvhttp_request_t* request, uvhttp_response_t* resp
     
     size_t content_len = strlen(json_content);
     
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_body(response, json_content, content_len);
+    
+    
+    
     
     /* 使用自定义策略 2 */
     if (custom_strategy_2("application/json", content_len)) {
@@ -180,7 +180,7 @@ static int handler_strategy_2(uvhttp_request_t* request, uvhttp_response_t* resp
         uvhttp_response_set_compress_threshold(response, 2048);
     }
     
-    return uvhttp_response_send(response);
+    return uvhttp_respond(response, 200, "application/json", json_content, content_len);
 }
 
 /**
@@ -205,16 +205,16 @@ static int handler_strategy_3(uvhttp_request_t* request, uvhttp_response_t* resp
     
     size_t content_len = strlen(content);
     
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, content, content_len);
+    
+    
+    
     
     /* 使用自定义策略 3（最灵活，考虑客户端支持） */
     if (custom_strategy_3(request, content_len)) {
         uvhttp_response_set_compress(response, 1);
     }
     
-    return uvhttp_response_send(response);
+    return uvhttp_respond(response, 200, "text/plain", content, content_len);
 }
 
 /**
@@ -240,23 +240,15 @@ static int handler_convenient(uvhttp_request_t* request, uvhttp_response_t* resp
     
     size_t content_len = strlen(content);
     
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/html");
-    uvhttp_response_set_body(response, content, content_len);
     
-    /* 方式 1: 使用基于文件名的便捷函数 */
-    // uvhttp_response_set_compress_by_filename(response, "index.html");
     
-    /* 方式 2: 使用基于内容类型的便捷函数 */
-    uvhttp_response_set_compress_by_content_type(response, "text/html");
     
-    /* 方式 3: 手动组合辅助函数 */
-    // if (uvhttp_should_compress_by_content_type("text/html")) {
-    //     uvhttp_response_set_compress(response, 1);
-    //     uvhttp_response_set_compress_threshold(response, 1024);
-    // }
     
-    return uvhttp_response_send(response);
+    /* 单一判定点：纯谓词 + 设置动作，便捷包装已删除 */
+    uvhttp_response_set_compress(
+        response, uvhttp_should_compress_by_content_type("text/html"));
+    
+    return uvhttp_respond(response, 200, "text/html", content, content_len);
 }
 
 /* ========== 主程序 ========== */

@@ -31,37 +31,25 @@ int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) 
     /* 从 server->context 获取应用上下文 */
     uv_loop_t* loop = request->client ? request->client->loop : uv_default_loop();
     if (!loop || !loop->data) {
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, "Server context not initialized", 32);
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 500, "text/plain", "Server context not initialized", strlen("Server context not initialized"));
         return -1;
     }
     
     app_context_t* app_ctx = (app_context_t*)loop->data;
     
     if (!app_ctx->static_ctx) {
-        uvhttp_response_set_status(response, 500);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, "Static file service not initialized", 35);
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 500, "text/plain", "Static file service not initialized", 35);
         return -1;
     }
     
     /* 处理静态文件请求 */
     int result = uvhttp_static_handle_request(app_ctx->static_ctx, request, response);
     if (result != 0) {
-        /* 设置错误响应 - 使用默认错误消息 */
+        /* 静态服务失败分支：显式给出状态码并原子发送 */
         const char* error_body = "Error processing static file request";
-        const char* content_type = "text/plain";
-        
-        if (error_body) {
-            uvhttp_response_set_header(response, "Content-Type", content_type);
-            uvhttp_response_set_body(response, error_body, strlen(error_body));
-        }
+        uvhttp_respond(response, 500, "text/plain", error_body,
+                       strlen(error_body));
     }
-    
-    uvhttp_response_send(response);
     return 0;
 }
 
@@ -112,10 +100,7 @@ int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
         "</body>\n"
         "</html>";
     
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(response, html_content, strlen(html_content));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/html; charset=utf-8", html_content, strlen(html_content));
     return 0;
 }
 

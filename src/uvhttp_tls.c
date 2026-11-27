@@ -363,12 +363,17 @@ mbedtls_ssl_context* uvhttp_tls_create_ssl(uvhttp_tls_context_t* ctx) {
     return ssl;
 }
 
-uvhttp_error_t uvhttp_tls_setup_ssl(mbedtls_ssl_context* ssl, int fd) {
-    if (!ssl) {
+uvhttp_error_t uvhttp_tls_setup_ssl(mbedtls_ssl_context* ssl,
+                                    const int* fd_storage) {
+    if (!ssl || !fd_storage) {
         return UVHTTP_ERROR_TLS_INVALID_PARAM;
     }
 
-    mbedtls_ssl_set_bio(ssl, &fd, mbedtls_net_send, mbedtls_net_recv, NULL);
+    /* mbedtls stores this pointer as the BIO context and dereferences it on
+     * every send/recv. The caller owns the storage; a stack local here would
+     * become a dangling pointer as soon as this function returns. */
+    mbedtls_ssl_set_bio(ssl, (void*)fd_storage, mbedtls_net_send,
+                        mbedtls_net_recv, NULL);
 
     return UVHTTP_OK;
 }

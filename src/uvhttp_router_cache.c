@@ -4,6 +4,7 @@
 #    include "uvhttp_connection.h"
 #    include "uvhttp_constants.h"
 #    include "uvhttp_hash.h"
+#    include "uvhttp_response_internal.h"
 #    include "uvhttp_router.h"
 #    include "uvhttp_server.h"
 #    include "uvhttp_static.h"

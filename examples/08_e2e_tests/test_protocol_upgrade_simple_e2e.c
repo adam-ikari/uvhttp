@@ -32,10 +32,7 @@ static int http_handler(uvhttp_request_t* request,
     (void)request;
     const char* body = "HTTP/1.1 response";
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
 
     return 0;
 }
@@ -67,10 +64,7 @@ static int upgrade_check_handler(uvhttp_request_t* request,
 
     size_t len = strlen(response_body);
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, response_body, len);
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", response_body, len);
 
     return 0;
 }
@@ -85,23 +79,11 @@ static int websocket_upgrade_handler(uvhttp_request_t* request,
         const char* body =
             "WebSocket upgrade requested (101 Switching Protocols)";
 
-        uvhttp_response_set_status(response, 101);
-        uvhttp_response_set_header(response, "Upgrade", "websocket");
-        uvhttp_response_set_header(response, "Connection", "Upgrade");
-        uvhttp_response_set_header(response, "Sec-WebSocket-Accept",
-                                   "simulated");
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, body, strlen(body));
-        uvhttp_response_send(response);
+        uvhttp_respond_with_headers(response, 101, (uvhttp_header_view_t[]){{"Upgrade", "websocket"}, {"Connection", "Upgrade"}, {"Sec-WebSocket-Accept", "simulated"}, {"Content-Type", "text/plain"}}, 4, body, strlen(body));
     } else {
         const char* body = "WebSocket upgrade required";
 
-        uvhttp_response_set_status(response, 426);
-        uvhttp_response_set_header(response, "Upgrade", "websocket");
-        uvhttp_response_set_header(response, "Connection", "Upgrade");
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, body, strlen(body));
-        uvhttp_response_send(response);
+        uvhttp_respond_with_headers(response, 426, (uvhttp_header_view_t[]){{"Upgrade", "websocket"}, {"Connection", "Upgrade"}, {"Content-Type", "text/plain"}}, 3, body, strlen(body));
     }
 
     return 0;

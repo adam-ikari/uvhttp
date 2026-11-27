@@ -93,12 +93,7 @@ static uvhttp_error_t rate_limit_filter(uvhttp_request_t* request,
     int body_len =
         snprintf(body, sizeof(body),
                  "{\"error\":\"请求过于频繁\",\"client\":\"%s\"}", ip);
-    uvhttp_response_set_status(response, 429);
-    uvhttp_response_set_header(response, UVHTTP_HEADER_CONTENT_TYPE,
-                               "application/json; charset=utf-8");
-    uvhttp_response_set_header(response, UVHTTP_HEADER_RETRY_AFTER, "1");
-    uvhttp_response_set_body(response, body, (size_t)body_len);
-    uvhttp_response_send(response);
+    uvhttp_respond_with_headers(response, 429, (uvhttp_header_view_t[]){{UVHTTP_HEADER_CONTENT_TYPE, "application/json; charset=utf-8"}, {UVHTTP_HEADER_RETRY_AFTER, "1"}}, 2, body, (size_t)body_len);
 
     printf("[LIMIT] %s 超出窗口配额\n", ip);
     return UVHTTP_ERROR_RATE_LIMIT_EXCEEDED;
@@ -125,12 +120,8 @@ static int api_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
 
     const char* json = "{\"message\":\"API 响应\"}";
 
-    uvhttp_response_set_status(resp, 200);
-    uvhttp_response_set_header(resp, UVHTTP_HEADER_CONTENT_TYPE,
-                               "application/json; charset=utf-8");
-    uvhttp_response_set_body(resp, json, strlen(json));
-
-    return uvhttp_response_send(resp);
+    return uvhttp_respond(resp, 200, "application/json; charset=utf-8",
+                          json, strlen(json));
 }
 
 /* ============ 主函数 ============ */

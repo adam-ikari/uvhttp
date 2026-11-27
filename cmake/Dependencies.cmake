@@ -177,10 +177,18 @@ message(STATUS "Configuring xxhash...")
 set(XXHASH_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/xxhash)
 set(XXHASH_LIB ${XXHASH_BUILD_DIR}/libxxhash.a)
 
+# xxhash's Makefile appends MOREFLAGS to CFLAGS. Propagate -m32 (and other
+# C flags) so a 32-bit build produces an i386 archive instead of reusing a
+# stale 64-bit libxxhash.a from an earlier build.
+set(XXHASH_MOREFLAGS "")
+if(DEFINED CMAKE_C_FLAGS AND CMAKE_C_FLAGS MATCHES "-m32")
+    set(XXHASH_MOREFLAGS "-m32")
+endif()
+
 if(NOT EXISTS ${XXHASH_LIB})
     message(STATUS "Building xxhash...")
     execute_process(
-        COMMAND make libxxhash.a
+        COMMAND make MOREFLAGS=${XXHASH_MOREFLAGS} libxxhash.a
         WORKING_DIRECTORY ${XXHASH_BUILD_DIR}
         RESULT_VARIABLE XXHASH_BUILD_RESULT
     )
@@ -428,6 +436,15 @@ if(BUILD_WITH_COMPRESSION)
     )
     target_compile_definitions(miniz PRIVATE MINIZ_NO_STDIO MINIZ_NO_TIME MINIZ_NO_ARCHIVE_APIS)
 
+    # Third-party code is not held to our -Werror standard. On 32-bit,
+    # mz_ulong is 32-bit, so miniz's "cast to 64-bit and compare against
+    # 0xFFFFFFFF" guard is trivially false (a legitimate no-op) and GCC's
+    # -Wtype-limits flags it. Do not patch vendored source for a warning
+    # that has no runtime consequence.
+    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(miniz PRIVATE -Wno-type-limits)
+    endif()
+
     # Install miniz library
     set_target_properties(miniz PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/dist/lib"
@@ -460,18 +477,32 @@ set(GTEST_LIBS
     ${GTEST_BUILD_DIR}/lib/libgmock.a
 )
 
+# Propagate toolchain flags for 32-bit builds, same as libuv/mbedtls above.
+set(GTEST_CMAKE_ARGS
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DBUILD_GTEST=ON
+    -DBUILD_GMOCK=ON
+    -DINSTALL_GTEST=OFF
+    -DBUILD_SHARED_LIBS=OFF
+    -Dgtest_force_shared_crt=OFF
+    -Dgtest_build_samples=OFF
+    -Dgtest_build_tests=OFF
+)
+if(DEFINED CMAKE_C_FLAGS)
+    list(APPEND GTEST_CMAKE_ARGS "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}")
+endif()
+if(DEFINED CMAKE_CXX_FLAGS)
+    list(APPEND GTEST_CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
+endif()
+if(DEFINED CMAKE_EXE_LINKER_FLAGS)
+    list(APPEND GTEST_CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}")
+endif()
+
 if(NOT EXISTS ${GTEST_BUILD_DIR}/lib/libgtest.a)
     message(STATUS "Building googletest...")
     execute_process(
         COMMAND ${CMAKE_COMMAND} -S ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest -B ${GTEST_BUILD_DIR}
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -DBUILD_GTEST=ON
-            -DBUILD_GMOCK=ON
-            -DINSTALL_GTEST=OFF
-            -DBUILD_SHARED_LIBS=OFF
-            -Dgtest_force_shared_crt=OFF
-            -Dgtest_build_samples=OFF
-            -Dgtest_build_tests=OFF
+            ${GTEST_CMAKE_ARGS}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest
         RESULT_VARIABLE GTEST_CONFIG_RESULT
     )

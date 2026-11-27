@@ -322,7 +322,10 @@ TEST_F(ParserCallbackTest, BodyLargerThanMaxIsRejected) {
     }
 
     EXPECT_NE(rc, 0) << "body over the ceiling was accepted in full";
-    EXPECT_EQ(llhttp_get_errno(conn->request->parser), HPE_USER);
+    /* on_body now pauses with HPE_PAUSED and records a status for on_read to
+     * send, instead of returning an errno that silently dropped the socket. */
+    EXPECT_EQ(llhttp_get_errno(conn->request->parser), HPE_PAUSED);
+    EXPECT_EQ(conn->body_error_status, UVHTTP_STATUS_REQUEST_ENTITY_TOO_LARGE);
     // The refusal must happen before the whole oversized body is buffered.
     EXPECT_LT(conn->request->body_length, kOverLimit)
         << "body buffered past the ceiling before being refused";

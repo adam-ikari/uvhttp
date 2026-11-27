@@ -3,47 +3,28 @@
 ## Overview
 
 The Response module builds and sends HTTP responses. It provides functions
-to set response status, headers, body, and control response sending.
+to build a response in one validated call and send it, or prepare it without sending.
 
 ## Interfaces
 
-### uvhttp_response_set_status
-- **Signature**: `uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int status_code)`
-- **Purpose**: Set the HTTP response status code
-- **Preconditions**: `response` must be valid. `status_code` should be a valid HTTP status code.
-- **Postconditions**: `response->status_code` is set.
-- **Error conditions**:
-  - `UVHTTP_ERROR_INVALID_PARAM`: response is NULL
+### uvhttp_respond
+- **Signature**: `uvhttp_error_t uvhttp_respond(uvhttp_response_t* response, int status_code, const char* content_type, const char* body, size_t body_length)`
+- **Purpose**: Validate all inputs, set status + optional Content-Type + body, and send in one call
+- **Preconditions**: `response` must be valid and unsent; `(body == NULL) == (body_length == 0)`
+- **Postconditions**: On success the response is sent and marked sent; on failure status and header count are restored
+- **Error conditions**: `UVHTTP_ERROR_INVALID_PARAM` for bad input; setter/send error codes otherwise
 - **Thread safety**: Not thread-safe.
 
-### uvhttp_response_set_header
-- **Signature**: `uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response, const char* name, const char* value)`
-- **Purpose**: Set a response header
-- **Preconditions**: `response` must be valid. `name` and `value` must be non-NULL.
-- **Postconditions**: The header is added to the response. If the header already exists, it is overwritten.
-- **Error conditions**:
-  - `UVHTTP_ERROR_INVALID_PARAM`: response, name, or value is NULL
-  - Header value contains control characters (response splitting guard)
+### uvhttp_respond_with_headers
+- **Signature**: `uvhttp_error_t uvhttp_respond_with_headers(uvhttp_response_t* response, int status_code, const uvhttp_header_view_t* headers, size_t header_count, const char* body, size_t body_length)`
+- **Purpose**: N-header form of `uvhttp_respond`; all headers are validated before the response is touched
+- **Error conditions**: Same as `uvhttp_respond`
 - **Thread safety**: Not thread-safe.
 
-### uvhttp_response_set_body
-- **Signature**: `uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length)`
-- **Purpose**: Set the response body
-- **Preconditions**: `response` must be valid. `body` can be NULL (empty body).
-- **Postconditions**: The body is copied into the response. Content-Length is NOT set automatically.
-- **Error conditions**:
-  - `UVHTTP_ERROR_INVALID_PARAM`: response is NULL
-  - `UVHTTP_ERROR_OUT_OF_MEMORY`: allocation failure
-- **Thread safety**: Not thread-safe.
-
-### uvhttp_response_send
-- **Signature**: `uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response)`
-- **Purpose**: Send the response to the client
-- **Preconditions**: `response` must be valid. Status code must be set.
-- **Postconditions**: The response is sent. Headers are flushed, then the body is sent.
-- **Error conditions**:
-  - `UVHTTP_ERROR_INVALID_PARAM`: response is NULL
-  - `UVHTTP_ERROR_RESPONSE_SEND`: write failure
+### uvhttp_response_prepare
+- **Signature**: `uvhttp_error_t uvhttp_response_prepare(uvhttp_response_t* response, int status_code, const uvhttp_header_view_t* headers, size_t header_count, const char* body, size_t body_length)`
+- **Purpose**: Same validated status + headers + body construction, **without sending** — for middleware that only prepares a response
+- **Error conditions**: Same as `uvhttp_respond`
 - **Thread safety**: Not thread-safe.
 
 ### uvhttp_response_cleanup
@@ -75,10 +56,9 @@ to set response status, headers, body, and control response sending.
 
 ## Test Requirements
 
-- Status code setting
-- Header setting and overwriting
-- Body setting (empty, small, large)
-- Response sending
+- Atomic status + headers + body validation and rollback
+- Empty, small and large bodies
+- Send and no-send (prepare) forms
 - NULL parameter handling for all functions
 - Response splitting guard (control character rejection)
 - Cleanup (no leaks)

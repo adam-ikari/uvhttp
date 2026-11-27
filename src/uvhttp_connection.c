@@ -6,8 +6,10 @@
 #include "uvhttp_error_helpers.h"
 #include "uvhttp_features.h"
 #include "uvhttp_logging.h"
+#include "uvhttp_protocol_upgrade.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
+#include "uvhttp_response_internal.h"
 #include "uvhttp_router.h"
 #include "uvhttp_server.h"
 #include "uvhttp_tls.h"
@@ -236,6 +238,10 @@ static int tls_decrypt_pending(uvhttp_connection_t* conn, size_t start) {
 }
 #endif
 
+#if UVHTTP_FEATURE_TLS
+static void arm_tls_writable_poll(uvhttp_connection_t* conn);
+#endif
+
 static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)stream->data;
     if (!conn || !conn->request) {
@@ -327,8 +333,12 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
         if (conn->state == UVHTTP_CONN_STATE_TLS_HANDSHAKE) {
             /* Continue TLS handshake */
             int ret = mbedtls_ssl_handshake((mbedtls_ssl_context*)conn->ssl);
-            if (ret == MBEDTLS_ERR_SSL_WANT_READ ||
-                ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+            if (ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+                /* Send buffer was full: wait for writable, not readable. */
+                arm_tls_writable_poll(conn);
+                return;
+            }
+            if (ret == MBEDTLS_ERR_SSL_WANT_READ) {
                 /* Handshake in progress, wait for more data */
                 return;
             } else if (ret != 0) {
@@ -362,13 +372,15 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 
     /* single-threaded HTTP parse - no synchronization needed */
     llhttp_t* parser = (llhttp_t*)conn->request->parser;
+    enum llhttp_errno parse_err = HPE_OK;
     if (parser) {
         UVHTTP_LOG_DEBUG("on_read: Parsing %zu bytes\n",
                          conn->read_buffer_used);
         UVHTTP_LOG_DEBUG("on_read: parser->data = %p, conn = %p\n",
                          parser->data, conn);
-        enum llhttp_errno err =
+        parse_err =
             llhttp_execute(parser, conn->read_buffer, conn->read_buffer_used);
+        enum llhttp_errno err = parse_err;
         /* HPE_PAUSED_UPGRADE is the normal result for Upgrade requests
          * (WebSocket handshake): the request was fully parsed and the
          * connection is being handed over to the upgraded protocol.
@@ -383,8 +395,40 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
             UVHTTP_LOG_ERROR("HTTP parse error reason: %s\n",
                              llhttp_get_error_reason(parser));
             uvhttp_log_safe_error(err, "http_parse", err_name);
+            /* Parse failures have no caller to return to — report them
+             * through the server's observer seam before closing. */
+            if (conn->server && conn->server->error_callback) {
+                /* llhttp_errno values are small positive integers; casting
+                 * them to uvhttp_error_t produced codes outside the enum and
+                 * uvhttp_error_string returned "Unknown error". Map to the
+                 * library's protocol-level error instead; the raw errno is
+                 * already in the log line above. */
+                conn->server->error_callback(
+                    conn->server, UVHTTP_ERROR_INVALID_PARAM, conn,
+                    conn->server->error_callback_user_data);
+            }
             /* async close connection on parse error */
             uvhttp_connection_close(conn);
+            return;
+        }
+
+        /* on_body paused because the request body exceeded the configured
+         * limit (or allocation failed). Send a real status before closing so
+         * the peer can distinguish 413 from a dropped connection. */
+        if (conn->body_error_status && conn->response) {
+            int status = conn->body_error_status;
+            conn->body_error_status = 0;
+            conn->response->keepalive = 0;
+            uvhttp_response_set_status(conn->response, status);
+            uvhttp_response_set_header(conn->response,
+                                       UVHTTP_HEADER_CONTENT_TYPE,
+                                       UVHTTP_CONTENT_TYPE_TEXT);
+            const char* body = (status == UVHTTP_STATUS_REQUEST_ENTITY_TOO_LARGE)
+                                   ? "Payload Too Large"
+                                   : "Internal Server Error";
+            uvhttp_response_set_body(conn->response, body, strlen(body));
+            uvhttp_response_send(conn->response);
+            conn->read_buffer_used = 0;
             return;
         }
 
@@ -395,6 +439,44 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
         UVHTTP_LOG_ERROR("on_read: parser is NULL\n");
     }
 
+#if UVHTTP_FEATURE_WEBSOCKET
+    /* A client may write its first WebSocket frame in the same TCP write (or
+     * TLS record batch) as the upgrade request. llhttp stops at the upgrade
+     * boundary and leaves those bytes unconsumed; switch_to_websocket has
+     * already installed the WS read callback on an empty buffer, so without
+     * this hand-off the first frame is silently dropped. error_pos for
+     * HPE_PAUSED_UPGRADE is exactly the byte after the request headers. */
+    if (parse_err == HPE_PAUSED_UPGRADE && conn->ws_connection) {
+        const char* stop = llhttp_get_error_pos(parser);
+        if (stop && stop >= conn->read_buffer &&
+            stop <= conn->read_buffer + conn->read_buffer_used) {
+            size_t consumed = (size_t)(stop - conn->read_buffer);
+            size_t remaining = conn->read_buffer_used - consumed;
+            if (remaining > 0) {
+                int ws_rc = uvhttp_ws_process_data(
+                    (uvhttp_ws_connection_t*)conn->ws_connection,
+                    (const uint8_t*)(conn->read_buffer + consumed), remaining);
+                if (ws_rc != 0) {
+                    /* Same RFC 6455 §7.1.7 response as the normal WS read
+                     * path: a malformed first frame still gets a 1002 Close
+                     * before the connection is torn down. */
+                    uvhttp_ws_close(NULL,
+                                    (uvhttp_ws_connection_t*)conn->ws_connection,
+                                    1002, "protocol error");
+                    uvhttp_connection_websocket_close(conn);
+                    return;
+                }
+            }
+        }
+    }
+#endif
+
+    /* Backpressure: if queued writes are large, stop reading until the write
+     * completion callback drains the queue. Explicitly passing the queue size
+     * keeps the decision testable without a real backlog. */
+    uvhttp_connection_apply_backpressure(
+        conn, uv_stream_get_write_queue_size((uv_stream_t*)&conn->tcp_handle));
+
     /* Clear read buffer after parsing */
     conn->read_buffer_used = 0;
 #if UVHTTP_FEATURE_TLS
@@ -402,6 +484,33 @@ static void on_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
      * next read callback. */
     (void)0;
 #endif
+}
+
+void uvhttp_connection_apply_backpressure(uvhttp_connection_t* conn,
+                                          size_t write_queue_size) {
+    if (!conn || !conn->server ||
+        conn->state == UVHTTP_CONN_STATE_CLOSING) {
+        return;
+    }
+    const uvhttp_config_t* cfg = uvhttp_server_get_config(conn->server);
+    size_t high = cfg ? cfg->write_queue_high_water : 0;
+    if (high == 0) {
+        return;
+    }
+    if (!conn->read_paused && write_queue_size >= high) {
+        if (uv_read_stop((uv_stream_t*)&conn->tcp_handle) == 0) {
+            conn->read_paused = 1;
+            ++conn->server->backpressure_pauses;
+        }
+    } else if (conn->read_paused && write_queue_size < high) {
+        /* Resume the SAME parse state: uv_read_start directly, not
+         * restart_read, which would reset the half-parsed request. */
+        if (uv_read_start((uv_stream_t*)&conn->tcp_handle,
+                          (uv_alloc_cb)on_alloc_buffer,
+                          (uv_read_cb)on_read) == 0) {
+            conn->read_paused = 0;
+        }
+    }
 }
 
 /* restart read for new request - used for keep-alive connection */
@@ -496,6 +605,7 @@ uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
     conn->response->sent = 0;
     conn->response->finished = 0;
     conn->response->keepalive = 1; /* HTTP/1.1 default: keep connection alive */
+    conn->response->head_request = 0;
     conn->response->compress = 0;
     conn->response->cache_ttl = 0;
     conn->response->compress_algorithm = 0;
@@ -520,9 +630,9 @@ uvhttp_error_t uvhttp_connection_restart_read(uvhttp_connection_t* conn) {
 
     /* reset HTTP/1.1 state flags of connection */
     conn->parsing_complete = 0;
+    conn->body_error_status = 0;
     conn->content_length = 0;
     conn->body_received = 0;
-    conn->keepalive = 1;        /* continue keep-alive */
     conn->chunked_encoding = 0; /* reset chunked transmission encoding flag */
     conn->current_header_is_important = 0;
     conn->parsing_header_field = 0;
@@ -617,7 +727,6 @@ uvhttp_error_t uvhttp_connection_new(struct uvhttp_server* server,
     c->timeout_timer.data = c;
 
     // HTTP/1.1optimize: initializedefaultvalue
-    c->keepalive = 1;         /* HTTP/1.1defaultkeepconnection */
     c->chunked_encoding = 0;  /* default: no chunked transmission */
     c->close_pending = 0;     /* initialize pending close handle count */
     c->freed = 0;             /* initialize freed flag */
@@ -787,6 +896,20 @@ void uvhttp_connection_free(uvhttp_connection_t* conn) {
     return;
 }
 
+void uvhttp_connection_unlink_registry(uvhttp_connection_t* conn) {
+    if (!conn || !conn->server) {
+        return;
+    }
+    uvhttp_connection_t** link = &conn->server->connections;
+    while (*link && *link != conn) {
+        link = &(*link)->registry_next;
+    }
+    if (*link == conn) {
+        *link = conn->registry_next;
+    }
+    conn->registry_next = NULL;
+}
+
 /* Internal function to free connection resources.
  * Called when all handles are closed (close_pending == 0). */
 static void uvhttp_connection_free_resources(uvhttp_connection_t* conn) {
@@ -805,6 +928,21 @@ static void uvhttp_connection_free_resources(uvhttp_connection_t* conn) {
         void (*cb)(uvhttp_connection_t*) = conn->on_destroy;
         conn->on_destroy = NULL;
         cb(conn);
+    }
+    /* Protocol-upgrade lifecycle: the API promises on_close when the
+     * connection closes so the external protocol can release its state.
+     * Fire it exactly once (clear the pointer first to guard re-entry). */
+    if (conn->lifecycle) {
+        /* set_lifecycle copies into an owned block; embedders may also set
+         * conn->lifecycle directly (a borrowed pointer). Never mutate that
+         * memory here. Take a local copy so firing the callback cannot be
+         * re-entered through a modified on_close field, and the block stays
+         * exactly as the caller left it until it is freed below. */
+        uvhttp_connection_lifecycle_t life;
+        memcpy(&life, conn->lifecycle, sizeof(life));
+        if (life.on_close) {
+            life.on_close(life.user_data);
+        }
     }
 #if UVHTTP_FEATURE_WEBSOCKET
     /* Any path that reaches free_resources (timeout, read error, EOF) must
@@ -871,6 +1009,8 @@ static void uvhttp_connection_free_resources(uvhttp_connection_t* conn) {
         conn->lifecycle = NULL;
     }
 
+    uvhttp_connection_unlink_registry(conn);
+
     /* Set freed flag */
     conn->freed = 1;
 
@@ -928,8 +1068,11 @@ static void on_handle_close(uv_handle_t* handle) {
     /* release connection when all handles are closed */
     if (conn->close_pending == 0) {
         /* single-threaded safe connection count decrement */
-        if (conn->server) {
-            conn->server->active_connections--;
+        if (conn->server && conn->counted_by_accept) {
+            if (conn->server->active_connections > 0) {
+                conn->server->active_connections--;
+            }
+            conn->counted_by_accept = 0;
         }
         /* release connection resources - safe to execute in event loop thread
          */
@@ -977,6 +1120,17 @@ void uvhttp_connection_close(uvhttp_connection_t* conn) {
     } else if (uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
         already_closing++;
     }
+
+#if UVHTTP_FEATURE_TLS
+    /* The writable poll is lazily created; close it if armed. */
+    if (conn->tls_poll_active &&
+        !uv_is_closing((uv_handle_t*)&conn->tls_write_poll)) {
+        uv_poll_stop(&conn->tls_write_poll);
+        uv_close((uv_handle_t*)&conn->tls_write_poll, on_handle_close);
+        conn->close_pending++;
+        conn->tls_poll_active = 0;
+    }
+#endif
 
     /* close TCP handle */
     if (!uv_is_closing((uv_handle_t*)&conn->tcp_handle)) {
@@ -1026,6 +1180,73 @@ const char* uvhttp_connection_get_state_string(
     }
 }
 
+#if UVHTTP_FEATURE_TLS
+/* Retry a handshake that stalled on a full socket send buffer. The poll handle
+ * is one-shot: stop it before re-entering mbedtls so a second WANT_WRITE can
+ * re-arm cleanly. */
+static void on_tls_writable(uv_poll_t* handle, int status, int events) {
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
+    if (!conn || conn->state == UVHTTP_CONN_STATE_CLOSING) {
+        return;
+    }
+    uv_poll_stop(handle);
+    conn->tls_poll_active = 0;
+    if (status < 0 || !(events & UV_WRITABLE)) {
+        uvhttp_connection_close(conn);
+        return;
+    }
+    int ret = mbedtls_ssl_handshake((mbedtls_ssl_context*)conn->ssl);
+    if (ret == 0) {
+        uvhttp_connection_set_state(conn, UVHTTP_CONN_STATE_HTTP_READING);
+        return;
+    }
+    if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
+        UVHTTP_LOG_ERROR("TLS handshake failed after writable: %d\n", ret);
+        uvhttp_connection_close(conn);
+        return;
+    }
+    /* Still blocked: re-arm for the next writable event. */
+    uv_poll_start(handle, UV_WRITABLE, on_tls_writable);
+    conn->tls_poll_active = 1;
+}
+
+/* Arm a one-shot writable poll when mbedtls reports WANT_WRITE. */
+static void arm_tls_writable_poll(uvhttp_connection_t* conn) {
+    if (conn->tls_poll_active) {
+        return;
+    }
+    int fd = -1;
+    if (uv_fileno((uv_handle_t*)&conn->tcp_handle, &fd) != 0 || fd < 0) {
+        uvhttp_connection_close(conn);
+        return;
+    }
+    if (!uv_is_active((uv_handle_t*)&conn->tls_write_poll)) {
+        if (uv_poll_init_socket(uv_handle_get_loop((uv_handle_t*)&conn->tcp_handle),
+                            &conn->tls_write_poll,
+                                (uv_os_sock_t)fd) != 0) {
+            uvhttp_connection_close(conn);
+            return;
+        }
+        conn->tls_write_poll.data = conn;
+    }
+    uv_poll_start(&conn->tls_write_poll, UV_WRITABLE, on_tls_writable);
+    conn->tls_poll_active = 1;
+}
+#endif
+
+uvhttp_error_t uvhttp_tls_map_handshake_result(int ret) {
+    if (ret == 0) {
+        return UVHTTP_OK;
+    }
+    if (ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+        return UVHTTP_ERROR_TLS_WANT_WRITE;
+    }
+    if (ret == MBEDTLS_ERR_SSL_WANT_READ) {
+        return UVHTTP_ERROR_TLS_WANT_READ;
+    }
+    return UVHTTP_ERROR_TLS_HANDSHAKE;
+}
+
 uvhttp_error_t uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn) {
 #if UVHTTP_FEATURE_TLS
     if (!conn || !conn->server || !conn->server->tls_ctx) {
@@ -1049,16 +1270,10 @@ uvhttp_error_t uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn) {
 
     /* Perform TLS handshake */
     int ret = mbedtls_ssl_handshake((mbedtls_ssl_context*)conn->ssl);
-    if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
-        return UVHTTP_ERROR_TLS_WANT_READ;
-    } else if (ret != 0) {
-        char error_buf[256];
-        mbedtls_strerror(ret, error_buf, sizeof(error_buf));
-        UVHTTP_LOG_ERROR("TLS handshake failed: %s\n", error_buf);
-        return UVHTTP_ERROR_TLS_HANDSHAKE;
+    if (ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+        arm_tls_writable_poll(conn);
     }
-
-    return UVHTTP_OK;
+    return uvhttp_tls_map_handshake_result(ret);
 #else
     if (!conn || !conn->server) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -1316,6 +1531,11 @@ static void on_websocket_read(uv_stream_t* stream, ssize_t nread,
         result =
             uvhttp_ws_process_data(ws_conn, (const uint8_t*)buf->base, nread);
     }
+    if (result == 0) {
+        /* A valid frame is activity: keep the idle timer from firing on a
+         * long-lived WebSocket that is otherwise healthy. */
+        uvhttp_connection_refresh_timeout(conn);
+    }
     if (result != 0) {
         UVHTTP_LOG_ERROR("WebSocket data processing failed: %d\n", result);
         /* RFC 6455 §7.1.7: on a protocol error, send a Close frame with
@@ -1456,7 +1676,8 @@ uvhttp_error_t uvhttp_connection_handle_websocket_handshake(
      * writes go through mbedtls (encrypted); passing NULL makes send_frame
      * fall back to raw send() and leak plaintext frames onto the TLS socket. */
     uvhttp_ws_connection_t* ws_conn =
-        uvhttp_ws_connection_create(fd, conn->ssl, 1, conn->server->config);
+        uvhttp_ws_connection_create(fd, conn->ssl, 1,
+                                    uvhttp_server_get_config(conn->server));
     if (!ws_conn) {
         UVHTTP_LOG_ERROR("Failed to create WebSocket connection object\n");
         return UVHTTP_ERROR_IO_ERROR;
@@ -1587,6 +1808,32 @@ void uvhttp_connection_websocket_close(uvhttp_connection_t* conn) {
 }
 
 #endif /* UVHTTP_FEATURE_WEBSOCKET */
+/* Single source of truth for the idle timeout in milliseconds. */
+static uint64_t connection_timeout_ms(uvhttp_connection_t* conn) {
+    int seconds = UVHTTP_CONNECTION_TIMEOUT_DEFAULT;
+    const uvhttp_config_t* cfg = uvhttp_server_get_config(conn->server);
+    if (cfg) {
+        seconds = cfg->connection_timeout;
+    }
+    return (uint64_t)seconds * 1000;
+}
+
+static void connection_timeout_cb(uv_timer_t* handle);
+
+/* Refresh the idle timeout after activity. The timer is started once at
+ * accept with repeat=0, so without this a busy keep-alive connection (or a
+ * long-lived WebSocket) is closed at a fixed age from accept — contradicting
+ * the documented idle-timeout semantics. Re-arming with uv_timer_start is
+ * safe on an already-active timer (libuv stops and restarts it). */
+void uvhttp_connection_refresh_timeout(uvhttp_connection_t* conn) {
+    if (!conn || !conn->server ||
+        uv_is_closing((uv_handle_t*)&conn->timeout_timer)) {
+        return;
+    }
+    (void)uv_timer_start(&conn->timeout_timer, connection_timeout_cb,
+                         connection_timeout_ms(conn), 0);
+}
+
 /* connectiontimeoutcallbackfunction */
 static void connection_timeout_cb(uv_timer_t* handle) {
     uvhttp_connection_t* conn = (uvhttp_connection_t*)handle->data;
@@ -1594,13 +1841,8 @@ static void connection_timeout_cb(uv_timer_t* handle) {
         return;
     }
 
-    /* get timeout time, if config is NULL then use default value */
-    int timeout_ms = UVHTTP_CONNECTION_TIMEOUT_DEFAULT * 1000;
-    if (conn->server->config) {
-        timeout_ms = conn->server->config->connection_timeout * 1000;
-    }
-
     /* trigger application layer timeout statistics callback */
+    uint64_t timeout_ms = connection_timeout_ms(conn);
     if (conn->server->timeout_callback) {
         conn->server->timeout_callback(
             conn->server, conn, timeout_ms,
@@ -1622,15 +1864,9 @@ uvhttp_error_t uvhttp_connection_start_timeout(uvhttp_connection_t* conn) {
         uv_timer_stop(&conn->timeout_timer);
     }
 
-    /* get timeout time, if config is NULL then use default value */
-    int timeout_ms = UVHTTP_CONNECTION_TIMEOUT_DEFAULT * 1000;
-    if (conn->server->config) {
-        timeout_ms = conn->server->config->connection_timeout * 1000;
-    }
-
     /* start timer */
-    if (uv_timer_start(&conn->timeout_timer, connection_timeout_cb, timeout_ms,
-                       0) != 0) {
+    if (uv_timer_start(&conn->timeout_timer, connection_timeout_cb,
+                       connection_timeout_ms(conn), 0) != 0) {
         UVHTTP_LOG_ERROR("Failed to start connection timeout timer\n");
         return UVHTTP_ERROR_CONNECTION_TIMEOUT;
     }

@@ -20,8 +20,8 @@ extern "C" {
 #    endif
 
 /* Forward declarations */
-typedef struct cache_entry cache_entry_t;
-typedef struct cache_manager cache_manager_t;
+typedef struct cache_entry uvhttp_lru_cache_entry_t;
+typedef struct cache_manager uvhttp_lru_cache_t;
 
 /* LRU cache entry structure */
 struct cache_entry {
@@ -47,9 +47,9 @@ struct cache_entry {
 
 /* LRU cache manager */
 struct cache_manager {
-    cache_entry_t* hash_table; /* hash */
-    cache_entry_t* lru_head;   /* LRU */
-    cache_entry_t* lru_tail;   /* LRU */
+    uvhttp_lru_cache_entry_t* hash_table; /* hash */
+    uvhttp_lru_cache_entry_t* lru_head;   /* LRU */
+    uvhttp_lru_cache_entry_t* lru_tail;   /* LRU */
     size_t total_memory_usage; /* memoryUse */
     size_t max_memory_usage;   /* memory */
     size_t max_file_size;      /* maximum file size */
@@ -59,7 +59,7 @@ struct cache_manager {
     int batch_eviction_size;   /* Number of entries to evict per batch */
 
     /* Eviction callback */
-    void (*eviction_callback)(cache_entry_t* entry, void* user_data);
+    void (*eviction_callback)(uvhttp_lru_cache_entry_t* entry, void* user_data);
     void* eviction_callback_data;
 
     /* Cache policy */
@@ -82,14 +82,14 @@ struct cache_manager {
  * @return UVHTTP_OK Success, othervaluerepresentsError
  */
 uvhttp_error_t uvhttp_lru_cache_create(size_t max_memory_usage, int max_entries,
-                                       int cache_ttl, cache_manager_t** cache);
+                                       int cache_ttl, uvhttp_lru_cache_t** cache);
 
 /**
  * releaseLRUCachemanage
  *
  * @param cache Cachemanage
  */
-void uvhttp_lru_cache_free(cache_manager_t* cache);
+void uvhttp_lru_cache_free(uvhttp_lru_cache_t* cache);
 
 /**
  * Cacheentry
@@ -98,7 +98,7 @@ void uvhttp_lru_cache_free(cache_manager_t* cache);
  * @param file_path File path
  * @return Cacheentry, toReturnNULL
  */
-cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache,
+uvhttp_lru_cache_entry_t* uvhttp_lru_cache_find(uvhttp_lru_cache_t* cache,
                                      const char* file_path);
 
 /**
@@ -113,7 +113,7 @@ cache_entry_t* uvhttp_lru_cache_find(cache_manager_t* cache,
  * @param etag ETagvalue
  * @return UVHTTP_OKSuccess, othervaluerepresentsFailure
  */
-uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
+uvhttp_error_t uvhttp_lru_cache_put(uvhttp_lru_cache_t* cache,
                                     const char* file_path, char* content,
                                     size_t content_length,
                                     const char* mime_type, time_t last_modified,
@@ -126,7 +126,7 @@ uvhttp_error_t uvhttp_lru_cache_put(cache_manager_t* cache,
  * @param file_path File path
  * @return UVHTTP_OKSuccess, othervaluerepresentsFailure
  */
-uvhttp_error_t uvhttp_lru_cache_remove(cache_manager_t* cache,
+uvhttp_error_t uvhttp_lru_cache_remove(uvhttp_lru_cache_t* cache,
                                        const char* file_path);
 
 /**
@@ -134,7 +134,7 @@ uvhttp_error_t uvhttp_lru_cache_remove(cache_manager_t* cache,
  *
  * @param cache Cachemanage
  */
-void uvhttp_lru_cache_clear(cache_manager_t* cache);
+void uvhttp_lru_cache_clear(uvhttp_lru_cache_t* cache);
 
 /**
  * getCachestatisticsinfo
@@ -146,7 +146,7 @@ void uvhttp_lru_cache_clear(cache_manager_t* cache);
  * @param miss_count outputtimes
  * @param eviction_count outputevicttimes
  */
-void uvhttp_lru_cache_get_stats(cache_manager_t* cache,
+void uvhttp_lru_cache_get_stats(uvhttp_lru_cache_t* cache,
                                 size_t* total_memory_usage, int* entry_count,
                                 int* hit_count, int* miss_count,
                                 int* eviction_count);
@@ -156,7 +156,7 @@ void uvhttp_lru_cache_get_stats(cache_manager_t* cache,
  *
  * @param cache Cachemanage
  */
-void uvhttp_lru_cache_reset_stats(cache_manager_t* cache);
+void uvhttp_lru_cache_reset_stats(uvhttp_lru_cache_t* cache);
 
 /**
  * set maximum file size for cache
@@ -164,7 +164,7 @@ void uvhttp_lru_cache_reset_stats(cache_manager_t* cache);
  * @param cache Cache manager
  * @param max_file_size Maximum file size in bytes
  */
-void uvhttp_lru_cache_set_max_file_size(cache_manager_t* cache,
+void uvhttp_lru_cache_set_max_file_size(uvhttp_lru_cache_t* cache,
                                         size_t max_file_size);
 
 /**
@@ -173,7 +173,7 @@ void uvhttp_lru_cache_set_max_file_size(cache_manager_t* cache,
  * @param cache Cache manager
  * @param max_memory_usage Maximum memory usage in bytes
  */
-void uvhttp_lru_cache_set_max_memory_usage(cache_manager_t* cache,
+void uvhttp_lru_cache_set_max_memory_usage(uvhttp_lru_cache_t* cache,
                                            size_t max_memory_usage);
 
 /**
@@ -182,7 +182,7 @@ void uvhttp_lru_cache_set_max_memory_usage(cache_manager_t* cache,
  * @param cache Cache manager
  * @param max_entries Maximum number of entries
  */
-void uvhttp_lru_cache_set_max_entries(cache_manager_t* cache, int max_entries);
+void uvhttp_lru_cache_set_max_entries(uvhttp_lru_cache_t* cache, int max_entries);
 
 /**
  * set cache TTL
@@ -190,7 +190,7 @@ void uvhttp_lru_cache_set_max_entries(cache_manager_t* cache, int max_entries);
  * @param cache Cache manager
  * @param cache_ttl Cache TTL in seconds (0 means never expires)
  */
-void uvhttp_lru_cache_set_cache_ttl(cache_manager_t* cache, int cache_ttl);
+void uvhttp_lru_cache_set_cache_ttl(uvhttp_lru_cache_t* cache, int cache_ttl);
 
 /**
  * set batch eviction size
@@ -198,7 +198,7 @@ void uvhttp_lru_cache_set_cache_ttl(cache_manager_t* cache, int cache_ttl);
  * @param cache Cache manager
  * @param batch_size Number of entries to evict per batch (default: 2)
  */
-void uvhttp_lru_cache_set_batch_eviction_size(cache_manager_t* cache,
+void uvhttp_lru_cache_set_batch_eviction_size(uvhttp_lru_cache_t* cache,
                                               int batch_size);
 
 /**
@@ -207,7 +207,7 @@ void uvhttp_lru_cache_set_batch_eviction_size(cache_manager_t* cache,
  * @param cache Cachemanage
  * @return entryquantity
  */
-int uvhttp_lru_cache_cleanup_expired(cache_manager_t* cache);
+int uvhttp_lru_cache_cleanup_expired(uvhttp_lru_cache_t* cache);
 
 /**
  * Cacheentrywhether
@@ -216,7 +216,7 @@ int uvhttp_lru_cache_cleanup_expired(cache_manager_t* cache);
  * @param cache_ttl CacheTTL
  * @return 1, 0
  */
-int uvhttp_lru_cache_is_expired(cache_entry_t* entry, int cache_ttl);
+int uvhttp_lru_cache_is_expired(uvhttp_lru_cache_entry_t* entry, int cache_ttl);
 
 /**
  * entrytoLRUheader
@@ -224,8 +224,8 @@ int uvhttp_lru_cache_is_expired(cache_entry_t* entry, int cache_ttl);
  * @param cache Cachemanage
  * @param entry Cacheentry
  */
-void uvhttp_lru_cache_move_to_head(cache_manager_t* cache,
-                                   cache_entry_t* entry);
+void uvhttp_lru_cache_move_to_head(uvhttp_lru_cache_t* cache,
+                                   uvhttp_lru_cache_entry_t* entry);
 
 /**
  * LRUremoveentry
@@ -233,7 +233,7 @@ void uvhttp_lru_cache_move_to_head(cache_manager_t* cache,
  * @param cache Cachemanage
  * @return isremoveentry
  */
-cache_entry_t* uvhttp_lru_cache_remove_tail(cache_manager_t* cache);
+uvhttp_lru_cache_entry_t* uvhttp_lru_cache_remove_tail(uvhttp_lru_cache_t* cache);
 
 /**
  * calculateCacherate
@@ -241,7 +241,7 @@ cache_entry_t* uvhttp_lru_cache_remove_tail(cache_manager_t* cache);
  * @param cache Cachemanage
  * @return rate(0.0-1.0)
  */
-double uvhttp_lru_cache_get_hit_rate(cache_manager_t* cache);
+double uvhttp_lru_cache_get_hit_rate(uvhttp_lru_cache_t* cache);
 
 /**
  * set eviction callback
@@ -252,8 +252,8 @@ double uvhttp_lru_cache_get_hit_rate(cache_manager_t* cache);
  * @param user_data User data passed to callback
  */
 void uvhttp_lru_cache_set_eviction_callback(
-    cache_manager_t* cache,
-    void (*callback)(cache_entry_t* entry, void* user_data), void* user_data);
+    uvhttp_lru_cache_t* cache,
+    void (*callback)(uvhttp_lru_cache_entry_t* entry, void* user_data), void* user_data);
 
 /**
  * enable priority-based eviction
@@ -262,7 +262,7 @@ void uvhttp_lru_cache_set_eviction_callback(
  * @param cache Cache manager
  * @param enable 1 to enable, 0 to disable
  */
-void uvhttp_lru_cache_enable_priority_eviction(cache_manager_t* cache,
+void uvhttp_lru_cache_enable_priority_eviction(uvhttp_lru_cache_t* cache,
                                                int enable);
 
 /**
@@ -272,7 +272,7 @@ void uvhttp_lru_cache_enable_priority_eviction(cache_manager_t* cache,
  * @param cache Cache manager
  * @param threshold Minimum priority (0-255)
  */
-void uvhttp_lru_cache_set_min_priority_threshold(cache_manager_t* cache,
+void uvhttp_lru_cache_set_min_priority_threshold(uvhttp_lru_cache_t* cache,
                                                  int threshold);
 
 /**
@@ -284,7 +284,7 @@ void uvhttp_lru_cache_set_min_priority_threshold(cache_manager_t* cache,
  * @param priority Priority (0-255, higher = more important)
  * @return UVHTTP_OK on success, error code otherwise
  */
-uvhttp_error_t uvhttp_lru_cache_set_entry_priority(cache_manager_t* cache,
+uvhttp_error_t uvhttp_lru_cache_set_entry_priority(uvhttp_lru_cache_t* cache,
                                                    const char* file_path,
                                                    int priority);
 
@@ -296,7 +296,7 @@ uvhttp_error_t uvhttp_lru_cache_set_entry_priority(cache_manager_t* cache,
  * @param file_path File path
  * @return Priority (0-255), or -1 if entry not found
  */
-int uvhttp_lru_cache_get_entry_priority(cache_manager_t* cache,
+int uvhttp_lru_cache_get_entry_priority(uvhttp_lru_cache_t* cache,
                                         const char* file_path);
 
 /**
@@ -313,7 +313,7 @@ int uvhttp_lru_cache_get_entry_priority(cache_manager_t* cache,
  * @param priority Priority (0-255, higher = more important)
  * @return UVHTTP_OK on success, error code otherwise
  */
-uvhttp_error_t uvhttp_lru_cache_prewarm(cache_manager_t* cache,
+uvhttp_error_t uvhttp_lru_cache_prewarm(uvhttp_lru_cache_t* cache,
                                         const char* file_path, char* content,
                                         size_t content_length,
                                         const char* mime_type,
@@ -332,7 +332,7 @@ uvhttp_error_t uvhttp_lru_cache_prewarm(cache_manager_t* cache,
  * @param enable_priority_eviction Output: priority eviction enabled
  * @param min_priority_threshold Output: min priority threshold
  */
-void uvhttp_lru_cache_get_config(cache_manager_t* cache,
+void uvhttp_lru_cache_get_config(uvhttp_lru_cache_t* cache,
                                  size_t* max_memory_usage, int* max_entries,
                                  int* cache_ttl, int* batch_eviction_size,
                                  int* enable_priority_eviction,
@@ -347,7 +347,7 @@ void uvhttp_lru_cache_get_config(cache_manager_t* cache,
  * @param count Number of entries to evict
  * @return Number of entries actually evicted
  */
-int uvhttp_lru_cache_force_eviction(cache_manager_t* cache, int count);
+int uvhttp_lru_cache_force_eviction(uvhttp_lru_cache_t* cache, int count);
 
 #    ifdef __cplusplus
 }

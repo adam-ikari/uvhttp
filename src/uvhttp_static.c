@@ -9,6 +9,7 @@
 #    include "uvhttp_static.h"
 
 #    include "uvhttp_allocator.h"
+#    include "uvhttp_connection.h"
 #    include "uvhttp_constants.h"
 #    include "uvhttp_error_handler.h"
 #    include "uvhttp_error_helpers.h"
@@ -17,6 +18,7 @@
 #    include "uvhttp_platform.h"
 #    include "uvhttp_request.h"
 #    include "uvhttp_response.h"
+#    include "uvhttp_response_internal.h"
 #    include "uvhttp_utils.h"
 #    include "uvhttp_validation.h"
 
@@ -1079,7 +1081,7 @@ uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx,
     }
 
     /* checkcache */
-    cache_entry_t* cache_entry = uvhttp_lru_cache_find(ctx->cache, safe_path);
+    uvhttp_lru_cache_entry_t* cache_entry = uvhttp_lru_cache_find(ctx->cache, safe_path);
 
     if (cache_entry) {
         /* send response from cache */
@@ -1524,6 +1526,8 @@ typedef struct {
     size_t bytes_sent;
     int64_t offset;
     int completed;
+    int timed_out;            /* timeout fired: defer free until the pending
+                               * uv_fs_sendfile callback has run */
     uv_os_fd_t out_fd;        /* output file descriptor */
     uint64_t start_time;      /* start time (for timeout detection) */
     int retry_count;          /* retry count */
@@ -1597,16 +1601,43 @@ static void on_sendfile_timeout(uv_timer_t* timer) {
                      ctx->file_path, ctx->bytes_sent, ctx->file_size,
                      ctx->timeout_ms);
 
-    /* mark as complete, prevent duplicate processing */
+    /* Mark complete and remember that cleanup must wait for the in-flight
+     * sendfile callback. Freeing the context here would leave the pending
+     * uv_fs_t->data and on_sendfile_complete dereferencing freed memory. */
     ctx->completed = 1;
+    ctx->timed_out = 1;
 
     /* stop timer */
     uv_timer_stop(timer);
     uv_close((uv_handle_t*)timer, NULL);
 
-    /* close file and clean resources */
-    uv_loop_t* loop = ctx->loop;
-    uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
+    /* Cancel the pending fs request. libuv still invokes its callback with
+     * UV_ECANCELED; that callback closes the file and frees ctx. If the
+     * request already completed, uv_cancel fails and the pending callback
+     * does the same. Either way exactly one cleanup path remains. */
+    (void)uv_cancel((uv_req_t*)&ctx->sendfile_req);
+}
+
+/* The header block was sent with response=NULL precisely so its write
+ * completion would not restart HTTP reads. This is the single terminal point
+ * for every sendfile transfer (success, error, timeout), so it is the one
+ * place that may now hand the connection back to the HTTP state machine —
+ * after the last body chunk is on the wire, never before. */
+static void sendfile_finish_connection(uvhttp_response_t* resp) {
+    if (!resp || !resp->client || !resp->client->data) {
+        return;
+    }
+    uvhttp_connection_t* conn = (uvhttp_connection_t*)resp->client->data;
+    if (!resp->keepalive) {
+        uvhttp_connection_close(conn);
+    }
+#    if UVHTTP_FEATURE_WEBSOCKET
+    else if (!conn->is_websocket) {
+#    else
+    else {
+#    endif
+        uvhttp_connection_schedule_restart_read(conn);
+    }
 }
 
 /* sendfile callbackfunction */
@@ -1622,6 +1653,7 @@ static void on_file_close(uv_fs_t* req) {
 
     /* releasecontextmemory */
     if (ctx) {
+        sendfile_finish_connection(ctx->response);
         if (ctx->file_path) {
             uvhttp_free(ctx->file_path);
             ctx->file_path = NULL;
@@ -1634,7 +1666,19 @@ static void on_file_close(uv_fs_t* req) {
 static void on_sendfile_complete(uv_fs_t* req) {
     sendfile_context_t* ctx = (sendfile_context_t*)req->data;
 
-    if (!ctx || ctx->completed) {
+    if (!ctx) {
+        return;
+    }
+    if (ctx->timed_out) {
+        /* The timeout already declared the transfer finished. This is the
+         * last callback holding a reference to ctx, so close the fd and let
+         * on_file_close release it. Must not touch ctx fields after the
+         * close request is issued. */
+        uv_fs_req_cleanup(req);
+        uv_fs_close(ctx->loop, &ctx->close_req, ctx->in_fd, on_file_close);
+        return;
+    }
+    if (ctx->completed) {
         return;
     }
 
@@ -1865,10 +1909,11 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
 
         uvhttp_free(buffer);
         return UVHTTP_OK;
-    } else if (file_size <= UVHTTP_FILE_SIZE_MEDIUM) {
+    } else {
+        /* Medium and large files use the same chunked sendfile path;
+         * init_sendfile_config picks the chunk size from the file size. */
         /* medium file: use chunked async sendfile (same as large file) */
-        UVHTTP_LOG_DEBUG("Medium file detected, using chunked async sendfile: "
-                         "%s (%zu bytes)",
+        UVHTTP_LOG_DEBUG("Sendfile transfer: %s (%zu bytes)",
                          file_path, file_size);
 
         /* getevent loop */
@@ -1934,6 +1979,18 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         uvhttp_response_set_header(resp, "Content-Type", mime_type);
         uvhttp_response_set_header(resp, "Content-Length", content_length);
 
+        /* The body is streamed asynchronously after these headers. HTTP reads
+         * are NOT implicitly stopped when a request is parsed, so without
+         * this pause a second request arriving mid-transfer is parsed while
+         * parsing_complete is still set (and hits the pipeline guard), or its
+         * response is written between sendfile chunks. Pause here; the idle
+         * handle scheduled by on_file_close resets parser state and resumes
+         * reads once the last body byte has been written. */
+        if (resp->client &&
+            ((uv_stream_t*)resp->client)->type == UV_TCP) {
+            uv_read_stop((uv_stream_t*)resp->client);
+        }
+
         /* build response header data */
         char* header_data = NULL;
         size_t header_length = 0;
@@ -1948,8 +2005,13 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
 
         /* send response headers (using send_raw, don't mark response as
          * complete) */
+        /* response=NULL: the header write's completion must NOT restart HTTP
+         * reads. sendfile streams the body afterwards; restarting here lets
+         * a pipelined second request be dispatched and interleaved into the
+         * middle of this body. on_file_close hands the connection back once
+         * the last chunk is written. */
         uvhttp_error_t send_result = uvhttp_response_send_raw(
-            header_data, header_length, resp->client, resp);
+            header_data, header_length, resp->client, NULL);
         uvhttp_free(header_data); /* release built response header data */
 
         if (send_result != UVHTTP_OK) {
@@ -1957,6 +2019,14 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
                              uvhttp_error_string(send_result));
             uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
             return send_result;
+        }
+
+        /* HEAD: Content-Length was built from the real file size, but no body
+         * bytes may follow. Close the descriptor through the normal terminal
+         * path so the connection is handed back exactly once. */
+        if (resp->head_request) {
+            uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
+            return UVHTTP_OK;
         }
 
         /* performance optimization: enable TCP_CORK to optimize large file
@@ -1970,6 +2040,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         if (timer_result != 0) {
             UVHTTP_LOG_ERROR("Failed to init timeout timer: %s",
                              uv_strerror(timer_result));
+            sendfile_finish_connection(resp);
             close(ctx->in_fd);
             uvhttp_free(ctx->file_path);
             uvhttp_free(ctx);
@@ -2000,140 +2071,7 @@ static uvhttp_result_t uvhttp_static_sendfile_with_config(
         }
 
         return UVHTTP_OK;
-    } else {
-        /* large file: use sendfile zero-copy optimization */
-        UVHTTP_LOG_DEBUG("Large file detected, using sendfile: %s (%zu bytes)",
-                         file_path, file_size);
 
-        /* getevent loop */
-        uv_loop_t* loop = uv_handle_get_loop((uv_handle_t*)resp->client);
-
-        /* create sendfile context */
-        sendfile_context_t* ctx =
-            (sendfile_context_t*)uvhttp_alloc(sizeof(sendfile_context_t));
-        if (!ctx) {
-            close(fd);
-            return UVHTTP_ERROR_OUT_OF_MEMORY;
-        }
-
-        memset(ctx, 0, sizeof(sendfile_context_t));
-        ctx->response = resp;
-        ctx->loop = loop;
-        ctx->file_size = file_size;
-        ctx->offset = 0;
-        ctx->bytes_sent = 0;
-        ctx->completed = 0;
-        ctx->start_time = uv_now(loop);
-        ctx->retry_count = 0;
-        ctx->cork_enabled = 0;        /* initialize as disabled */
-        ctx->sendfile_req.data = ctx; /* setcallbackdata */
-        ctx->close_req.data = ctx;    /* on_file_close releases ctx via this */
-
-        /* initializeconfigparameter */
-        init_sendfile_config(ctx, file_size, config);
-
-        /* allocatefilepathmemory */
-        size_t path_len = strlen(file_path);
-        ctx->file_path = (char*)uvhttp_alloc(path_len + 1);
-        if (!ctx->file_path) {
-            close(fd);
-            uvhttp_free(ctx);
-            return UVHTTP_ERROR_OUT_OF_MEMORY;
-        }
-        memcpy(ctx->file_path, file_path, path_len);
-        ctx->file_path[path_len] = '\0';
-
-        /* get output file descriptor */
-        int fd_result = uv_fileno((uv_handle_t*)resp->client, &ctx->out_fd);
-        if (fd_result < 0) {
-            UVHTTP_LOG_ERROR("Failed to get client fd: %s",
-                             uv_strerror(fd_result));
-            close(fd);
-            uvhttp_free(ctx->file_path);
-            uvhttp_free(ctx);
-            return UVHTTP_ERROR_SERVER_INIT;
-        }
-
-        /* reuse the descriptor already opened above */
-        ctx->in_fd = fd;
-
-        /* getMIMEtype */
-        char mime_type[UVHTTP_MAX_HEADER_VALUE_SIZE];
-        uvhttp_static_get_mime_type(file_path, mime_type, sizeof(mime_type));
-
-        char content_length[64];
-        snprintf(content_length, sizeof(content_length), "%zu", file_size);
-
-        uvhttp_response_set_status(resp, 200);
-        uvhttp_response_set_header(resp, "Content-Type", mime_type);
-        uvhttp_response_set_header(resp, "Content-Length", content_length);
-
-        /* build response header data */
-        char* header_data = NULL;
-        size_t header_length = 0;
-        uvhttp_error_t build_result =
-            uvhttp_response_build_data(resp, &header_data, &header_length);
-        if (build_result != UVHTTP_OK) {
-            UVHTTP_LOG_ERROR("Failed to build response headers: %s",
-                             uvhttp_error_string(build_result));
-            uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
-            return build_result;
-        }
-
-        /* send response headers (using send_raw, don't mark response as
-         * complete) */
-        uvhttp_error_t send_result = uvhttp_response_send_raw(
-            header_data, header_length, resp->client, resp);
-        uvhttp_free(header_data); /* release built response header data */
-
-        if (send_result != UVHTTP_OK) {
-            UVHTTP_LOG_ERROR("Failed to send response headers: %s",
-                             uvhttp_error_string(send_result));
-            uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
-            return send_result;
-        }
-
-        /* performance optimization: enable TCP_CORK to optimize large file
-         * transmission */
-        int cork = 1;
-        setsockopt(ctx->out_fd, IPPROTO_TCP, TCP_CORK, &cork, sizeof(cork));
-        ctx->cork_enabled = 1;
-
-        /* initialize timeout timer */
-        int timer_result = uv_timer_init(loop, &ctx->timeout_timer);
-        if (timer_result != 0) {
-            UVHTTP_LOG_ERROR("Failed to init timeout timer: %s",
-                             uv_strerror(timer_result));
-            close(ctx->in_fd);
-            uvhttp_free(ctx->file_path);
-            uvhttp_free(ctx);
-            return UVHTTP_ERROR_SERVER_INIT;
-        }
-        ctx->timeout_timer.data = ctx;
-
-        /* start chunked sendfile (send config's chunk size each time) */
-        size_t chunk_size = ctx->chunk_size;
-
-        uv_timer_start(&ctx->timeout_timer, on_sendfile_timeout,
-                       ctx->timeout_ms, 0);
-
-        int sendfile_result =
-            uv_fs_sendfile(loop, &ctx->sendfile_req, ctx->out_fd, ctx->in_fd,
-                           ctx->offset, chunk_size, on_sendfile_complete);
-
-        /* check if sendfile failed synchronously */
-        if (sendfile_result < 0) {
-            UVHTTP_LOG_ERROR("Failed to start sendfile: %s",
-                             uv_strerror(sendfile_result));
-            /* clean resources */
-            uv_timer_stop(&ctx->timeout_timer);
-            uv_close((uv_handle_t*)&ctx->timeout_timer, NULL);
-            /* on_file_close (close_req.data == ctx) frees file_path + ctx */
-            uv_fs_close(loop, &ctx->close_req, ctx->in_fd, on_file_close);
-            return UVHTTP_ERROR_RESPONSE_SEND;
-        }
-
-        return UVHTTP_OK;
     }
 }
 

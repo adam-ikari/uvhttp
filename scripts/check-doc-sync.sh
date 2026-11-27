@@ -50,6 +50,14 @@ file_timestamp() {
   echo "${t:-0}"
 }
 
+# Count level-2 headings (## only). This catches a ZH file that has whole
+# sections the EN file lacks — a content asymmetry the timestamp check cannot
+# see (both files can be committed at the same time). We count headings, not
+# their text, so translated headings stay valid.
+h2_count() {
+  grep -c '^## ' "$1" 2>/dev/null || echo 0
+}
+
 # Check if ZH is outdated relative to EN.
 # Returns 0 (in-sync) if ZH commit timestamp >= EN commit timestamp,
 # meaning ZH was last modified at or after EN's latest change.
@@ -66,8 +74,10 @@ declare -A zh_hashes
 declare -A en_timestamps
 declare -A zh_timestamps
 declare -A missing_hashes
+declare -A structural_files
 missing_count=0
 outdated_count=0
+structural_count=0
 total_count=0
 
 # --- Scan EN files in scope ---
@@ -95,6 +105,17 @@ while IFS= read -r -d '' en_file; do
   zh_hashes["$rel"]="$zh_hash"
   en_timestamps["$rel"]="$en_ts"
   zh_timestamps["$rel"]="$zh_ts"
+
+  # Content asymmetry: a ZH file missing whole sections that EN has (or the
+  # reverse) is out of sync even when both were committed at the same time.
+  # Count level-2 headings only; translated heading text is not compared.
+  en_h2=$(h2_count "$en_file")
+  zh_h2=$(h2_count "$zh_file")
+  if [ "$en_h2" -ne "$zh_h2" ]; then
+    echo "STRUCTURE MISMATCH: $rel (EN has $en_h2 '##' headings, ZH has $zh_h2)" >&2
+    structural_count=$((structural_count + 1))
+    structural_files["$rel"]="$en_h2/$zh_h2"
+  fi
 done < <(find "$DOCS_DIR" -name "*.md" -type f -not -path "*/zh/*" -not -path "*/node_modules/*" -not -path "*/.vitepress/*" -print0 | sort -z)
 
 # --- Handle modes that don't write JSON ---
@@ -111,7 +132,11 @@ if [ "$MODE" = "--list" ]; then
   for rel in $(printf '%s\n' "${!missing_hashes[@]}" | sort); do
     echo "$rel"
   done
-  exit $(( (outdated_count + missing_count) > 0 ? 1 : 0 ))
+  # Structurally mismatched pairs
+  for rel in $(printf '%s\n' "${!structural_files[@]}" | sort); do
+    echo "$rel"
+  done
+  exit $(( (outdated_count + missing_count + structural_count) > 0 ? 1 : 0 ))
 fi
 
 # --- Generate sync-status.json ---
@@ -133,20 +158,25 @@ fi
     fi
 
     if [ "$first" = true ]; then first=false; else echo ","; fi
-    printf '  "%s": {\n    "en": "%s",\n    "zh": %s,\n    "outdated": %s\n  }' \
-      "$rel" "$en_h" "$zh_h" "$outdated"
+    if [ "${structural_files[$rel]+set}" = "set" ]; then
+      structural=1
+    else
+      structural=0
+    fi
+    printf '  "%s": {\n    "en": "%s",\n    "zh": %s,\n    "outdated": %s,\n    "structure_mismatch": %s\n  }' \
+      "$rel" "$en_h" "$zh_h" "$outdated" "$structural"
   done
   echo ""
   echo "}"
 } > "$OUTPUT_FILE"
 
-echo "sync-status.json: $total_count EN files ($outdated_count outdated, $missing_count missing ZH)"
+echo "sync-status.json: $total_count EN files ($outdated_count outdated, $missing_count missing ZH, $structural_count structural mismatch)"
 
 if [ "$MODE" = "--check" ]; then
-  if [ $((outdated_count + missing_count)) -gt 0 ]; then
-    echo "FAIL: $outdated_count outdated, $missing_count missing ZH translation(s)." >&2
+  if [ $((outdated_count + missing_count + structural_count)) -gt 0 ]; then
+    echo "FAIL: $outdated_count outdated, $missing_count missing ZH, $structural_count structurally mismatched." >&2
     echo "Run: bash scripts/check-doc-sync.sh --list to see out-of-sync files." >&2
     exit 1
   fi
-  echo "OK: all $total_count EN/ZH pairs in sync."
+  echo "OK: all $total_count EN/ZH pairs in sync (timestamps + section structure)."
 fi

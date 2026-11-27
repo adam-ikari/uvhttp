@@ -4,6 +4,7 @@
  */
 
 #include "uvhttp.h"
+#include "uvhttp_response_internal.h"
 #include "uvhttp_allocator.h"
 #include <signal.h>
 #include <string.h>

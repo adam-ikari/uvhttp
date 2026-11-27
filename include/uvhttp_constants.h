@@ -209,6 +209,12 @@
 #        define UVHTTP_READ_BUFFER_SIZE 16384
 #    endif
 
+/* Default for uvhttp_config_t::write_queue_high_water, applied only when a
+ * config is installed. Without a config, backpressure is off (high=0). */
+#ifndef UVHTTP_WRITE_QUEUE_HIGH_WATER
+#    define UVHTTP_WRITE_QUEUE_HIGH_WATER (4 * 1024 * 1024)
+#endif
+
 /* ========== HTTP Header Configuration ========== */
 
 /**

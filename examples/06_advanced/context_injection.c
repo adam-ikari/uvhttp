@@ -197,19 +197,13 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     app_context_t* ctx = get_app_context_from_request(req);
     if (!ctx) {
         const char* error = "{\"error\":\"服务器未初始化\"}";
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+        return uvhttp_respond(res, 500, "application/json", error, strlen(error));
     }
 
     // 从 request 获取 server
     if (!req->client || !req->client->data) {
         const char* error = "{\"error\":\"连接未初始化\"}";
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+        return uvhttp_respond(res, 500, "application/json", error, strlen(error));
     }
 
     uvhttp_connection_t* conn = (uvhttp_connection_t*)req->client->data;
@@ -218,10 +212,7 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
     if (!uvhttp_ctx) {
         const char* error = "{\"error\":\"上下文未初始化\"}";
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+        return uvhttp_respond(res, 500, "application/json", error, strlen(error));
     }
 
     // 从服务器的 config 获取配置
@@ -275,11 +266,7 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         max_connections,
         server->active_connections);
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
-    
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "text/html; charset=utf-8", response, strlen(response));
 }
 
 /**
@@ -290,19 +277,13 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     app_context_t* ctx = get_app_context_from_request(req);
     if (!ctx) {
         const char* error = "{\"error\":\"服务器未初始化\"}";
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+        return uvhttp_respond(res, 500, "application/json", error, strlen(error));
     }
 
     // 从 request 获取 server
     if (!req->client || !req->client->data) {
         const char* error = "{\"error\":\"连接未初始化\"}";
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+        return uvhttp_respond(res, 500, "application/json", error, strlen(error));
     }
 
     uvhttp_connection_t* conn = (uvhttp_connection_t*)req->client->data;
@@ -311,20 +292,17 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
     if (!uvhttp_ctx) {
         const char* error = "{\"error\":\"上下文未初始化\"}";
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+        return uvhttp_respond(res, 500, "application/json", error, strlen(error));
     }
 
     // 使用 cJSON 创建 JSON 响应
     cJSON* json_obj = cJSON_CreateObject();
     if (!json_obj) {
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
+        
+        
         const char* error = "{\"error\":\"Failed to create JSON\"}";
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+        
+        return uvhttp_respond(res, 500, "application/json", error, strlen(error));
     }
 
     cJSON_AddStringToObject(json_obj, "description", "使用 server->context 而非 loop->data");
@@ -336,18 +314,14 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     cJSON_Delete(json_obj);
 
     if (!json_string) {
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
+        
+        
         const char* error = "{\"error\":\"Failed to generate JSON\"}";
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+        
+        return uvhttp_respond(res, 500, "application/json", error, strlen(error));
     }
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, json_string, strlen(json_string));
-
-    int result = uvhttp_response_send(res);
+    int result = uvhttp_respond(res, 200, "application/json", json_string, strlen(json_string));
     free(json_string);
 
     return result;
@@ -362,11 +336,11 @@ int info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // 使用 cJSON 创建 JSON 响应
     cJSON* json_obj = cJSON_CreateObject();
     if (!json_obj) {
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
+        
+        
         const char* error = "{\"error\":\"Failed to create JSON\"}";
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+        
+        return uvhttp_respond(res, 500, "application/json", error, strlen(error));
     }
 
     cJSON_AddStringToObject(json_obj, "example", "shared_loop_data");
@@ -378,18 +352,14 @@ int info_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     cJSON_Delete(json_obj);
 
     if (!json_string) {
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
+        
+        
         const char* error = "{\"error\":\"Failed to generate JSON\"}";
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+        
+        return uvhttp_respond(res, 500, "application/json", error, strlen(error));
     }
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, json_string, strlen(json_string));
-
-    int result = uvhttp_response_send(res);
+    int result = uvhttp_respond(res, 200, "application/json", json_string, strlen(json_string));
     free(json_string);
 
     return result;

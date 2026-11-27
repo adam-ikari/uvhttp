@@ -10,61 +10,27 @@
 
 ## 核心 API 参考
 
-### 响应对象操作
+### 原子响应 API
 
-#### `uvhttp_response_set_status()`
-
-设置 HTTP 状态码。
+逐步 setter 已不再公开，改用三个经过校验的入口：
 
 ```c
-uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int status_code);
+uvhttp_error_t uvhttp_respond(uvhttp_response_t* response, int status_code,
+                              const char* content_type, const char* body,
+                              size_t body_length);
+
+uvhttp_error_t uvhttp_respond_with_headers(
+    uvhttp_response_t* response, int status_code,
+    const uvhttp_header_view_t* headers, size_t header_count,
+    const char* body, size_t body_length);
+
+uvhttp_error_t uvhttp_response_prepare(
+    uvhttp_response_t* response, int status_code,
+    const uvhttp_header_view_t* headers, size_t header_count,
+    const char* body, size_t body_length);
 ```
 
-**参数：**
-- `response`: 响应对象
-- `status_code`: HTTP 状态码（如 200、404 等）
-
-**返回值：**
-- `UVHTTP_OK`: 成功
-- 其他值：错误代码
-
-#### `uvhttp_response_set_header()`
-
-设置响应头。
-
-```c
-uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response,
-                                         const char* name,
-                                         const char* value);
-```
-
-**参数：**
-- `response`: 响应对象
-- `name`: 头部名称
-- `value`: 头部值
-
-#### `uvhttp_response_set_body()`
-
-设置响应体。
-
-```c
-uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response,
-                                       const char* body,
-                                       size_t length);
-```
-
-**参数：**
-- `response`: 响应对象
-- `body`: 响应体内容
-- `length`: 内容长度
-
-#### `uvhttp_response_send()`
-
-发送响应。
-
-```c
-uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
-```
+`uvhttp_respond` 设置状态码、可选的 `Content-Type` 和响应体，然后发送；`uvhttp_respond_with_headers` 是多头部版本；`uvhttp_response_prepare` 做同样的校验和填充但**不发送**，适合只准备头部的中间件。三者都会在改动响应前完成校验，失败时恢复状态码和头部数量。
 
 ## 使用示例
 
@@ -74,11 +40,11 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
 int json_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"message\":\"Hello World\"}";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 ```
 
@@ -88,11 +54,11 @@ int json_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 int html_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* html = "<html><body><h1>Hello World</h1></body></html>";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(res, html, strlen(html));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "text/html; charset=utf-8", html, strlen(html));
 }
 ```
 
@@ -106,16 +72,16 @@ int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
     if (accept_header && strstr(accept_header, "application/json")) {
         const char* json = "{\"message\":\"Hello World\"}";
-        uvhttp_response_set_status(res, 200);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, json, strlen(json));
-        return uvhttp_response_send(res);
+
+
+
+        return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
     } else {
         const char* html = "<html><body><h1>Hello World</h1></body></html>";
-        uvhttp_response_set_status(res, 200);
-        uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-        uvhttp_response_set_body(res, html, strlen(html));
-        return uvhttp_response_send(res);
+
+
+
+        return uvhttp_respond(res, 200, "text/html; charset=utf-8", html, strlen(html));
     }
 }
 ```
@@ -154,7 +120,7 @@ uvhttp_result_t error_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 ## 最佳实践
 
 1. **先设 Content-Type**：头要在 `uvhttp_send_unified_response()` 之前设置，写错了没有兜底
-2. **便捷函数用于明确场景**：当内容类型明确时，可以使用便捷函数如 `uvhttp_send_unified_response()`（先设置 `Content-Type` 头，例如 `uvhttp_response_set_header(res, "Content-Type", "application/json")`）
+2. **便捷函数用于明确场景**：当内容类型明确时，可以使用便捷函数如 `uvhttp_send_unified_response()`（`Content-Type` 直接传给 `uvhttp_respond`，或先用 `uvhttp_response_prepare` 准备头部）
 3. **错误响应走统一入口**：`uvhttp_send_error_response()`，这样格式才一致
 4. **发送前检查内容**：长度参数要和实际数据一致，否则发出去的内容不受控
 5. **同一项目里统一 Content-Type 写法**：带不带 charset、用哪种别名，定下来就别改

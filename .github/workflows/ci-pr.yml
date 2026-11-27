@@ -137,6 +137,12 @@ jobs:
       - name: Check test validity (no always-green tests)
         run: python3 scripts/ci/check_test_validity.py --strict
 
+      # Response body lengths in examples must be C byte counts, not character
+      # counts: a UTF-8 literal like "中间件测试" is 15 bytes, not 5. A wrong
+      # number truncates the body or leaves a trailing NUL (JSON.parse fails).
+      - name: Check response body lengths (no hand-counted bytes)
+        run: python3 scripts/ci/check_response_lengths.py
+
       - name: Upload code quality results
         if: always()
         uses: actions/upload-artifact@v7.0.2
@@ -231,10 +237,79 @@ jobs:
         run: |
           cd build-${{ matrix.config.name }} && make -j$(nproc)
 
+  # ========== 32-bit 架构门禁 ==========
+  # 32-bit 是发布前提，不是手动验证项：库源码、vendored 依赖、测试套件与
+  # 最小消费者链接全部必须在 i386 下端到端成立。
+  # 关键点：deps/* 的预编译产物不进 git，checkout 后是干净源码；所有 flags
+  # 必须同时传给 C/CXX 编译器与链接器，否则依赖产出 64 位归档、链接阶段
+  # 出现 "i386 architecture ... incompatible with i386:x86-64 output"。
+  # 不用 cache-deps：那会跨架构复用 64 位产物，污染本 job。
+  build-32bit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          submodules: recursive
+
+      - name: Install 32-bit toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib
+
+      - name: Configure CMake (i386)
+        run: |
+          cmake -B build-32bit \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_FLAGS=-m32 \
+            -DCMAKE_CXX_FLAGS=-m32 \
+            -DCMAKE_EXE_LINKER_FLAGS=-m32
+
+      - name: Build project (i386)
+        run: cmake --build build-32bit -j$(nproc)
+
+      - name: Verify library is 32-bit
+        run: |
+          file build-32bit/dist/lib/libuvhttp.a
+          objdump -f build-32bit/CMakeFiles/uvhttp.dir/src/uvhttp_server.c.o \
+            | grep -q 'architecture: i386'
+          echo "libuvhttp.a object code is i386"
+
+      - name: Run tests (i386)
+        run: ctest --test-dir build-32bit --output-on-failure -j4
+
+      - name: Link and run a 32-bit consumer
+        run: |
+          cat > /tmp/consumer32.c <<'EOF'
+          #include <uvhttp.h>
+          #include <stdio.h>
+          int main(void) {
+              printf("version=%s sizeof_server=%zu\n",
+                     uvhttp_get_version_string(), sizeof(uvhttp_server_t));
+              return 0;
+          }
+          EOF
+          gcc -m32 /tmp/consumer32.c -o /tmp/consumer32 \
+            -Iinclude -Ideps/libuv/include -Ideps/llhttp/include \
+            -Ideps/uthash/src -Ideps/mbedtls/include -Ideps/cjson \
+            build-32bit/dist/lib/libuvhttp.a \
+            deps/libuv/build/libuv.a \
+            deps/llhttp/build/libllhttp.a \
+            build-32bit/dist/lib/libminiz.a \
+            deps/xxhash/libxxhash.a \
+            deps/cjson/build/libcjson.a \
+            deps/mbedtls/build/library/libmbedtls.a \
+            deps/mbedtls/build/library/libmbedx509.a \
+            deps/mbedtls/build/library/libmbedcrypto.a \
+            -lpthread -lm -ldl
+          file /tmp/consumer32 | grep -q 'ELF 32-bit'
+          /tmp/consumer32
+
   # ========== 阶段 2: 生成总结 ==========
 
   generate-summary:
-    needs: [ubuntu-build, code-quality-check, doc-sync-check, build-matrix]
+    needs: [ubuntu-build, code-quality-check, doc-sync-check, build-matrix, build-32bit]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
@@ -249,6 +324,7 @@ jobs:
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Ubuntu (Linux) | ${{ needs.ubuntu-build.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Build Matrix | ${{ needs.build-matrix.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 32-bit (i386) | ${{ needs.build-32bit.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Code Quality" >> $GITHUB_STEP_SUMMARY
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY

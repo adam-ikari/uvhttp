@@ -95,9 +95,7 @@ static int handle_large_text(uvhttp_request_t* req, uvhttp_response_t* res) {
     // Generate 10KB of text
     const char* text = generate_large_text(10 * 1024);
     if (!text) {
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_body(res, "Internal Server Error", 21);
-        return uvhttp_response_send(res);
+        return uvhttp_respond(res, 500, NULL, "Internal Server Error", 21);
     }
     
     // Enable compression
@@ -107,13 +105,13 @@ static int handle_large_text(uvhttp_request_t* req, uvhttp_response_t* res) {
     }
     
     // Set response
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, text, strlen(text));
+    
+    
+    
     
     uvhttp_free((void*)text);
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "text/plain", text, strlen(text));
 }
 
 // Handler for large JSON response (with compression)
@@ -123,9 +121,7 @@ static int handle_large_json(uvhttp_request_t* req, uvhttp_response_t* res) {
     // Generate 20KB of JSON
     const char* json = generate_large_json(20 * 1024);
     if (!json) {
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_body(res, "Internal Server Error", 21);
-        return uvhttp_response_send(res);
+        return uvhttp_respond(res, 500, NULL, "Internal Server Error", 21);
     }
     
     // Enable compression with custom threshold
@@ -137,13 +133,13 @@ static int handle_large_json(uvhttp_request_t* req, uvhttp_response_t* res) {
     uvhttp_response_set_compress_threshold(res, 512);  // Lower threshold
     
     // Set response
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, json, strlen(json));
+    
+    
+    
     
     uvhttp_free((void*)json);
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json", json, strlen(json));
 }
 
 // Handler for small response (no compression)
@@ -152,11 +148,7 @@ static int handle_small(uvhttp_request_t* req, uvhttp_response_t* res) {
     
     const char* body = "Hello, World! This is a small response that won't be compressed.";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, body, strlen(body));
-    
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "text/plain", body, strlen(body));
 }
 
 // Handler for status endpoint
@@ -169,11 +161,7 @@ static int handle_status(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* status = "Compression: DISABLED\n";
 #endif
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, status, strlen(status));
-    
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "text/plain", status, strlen(status));
 }
 
 int main(int argc, char** argv) {

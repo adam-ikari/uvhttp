@@ -44,10 +44,7 @@ static int index_handler(uvhttp_request_t* request,
                          uvhttp_response_t* response) {
     const char* body = "Welcome to the static files server";
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/html");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/html", body, strlen(body));
 
     return 0;
 }

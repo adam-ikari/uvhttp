@@ -116,17 +116,17 @@ UVHTTP 项目已经包含了以下依赖，无需额外安装：
 // 请求处理器函数
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // 设置响应状态码
-    uvhttp_response_set_status(res, 200);
+
     
     // 设置响应头
-    uvhttp_response_set_header(res, "Content-Type", "text/plain; charset=utf-8");
+
     
     // 设置响应体
     const char* body = "Hello, World!";
-    uvhttp_response_set_body(res, body, strlen(body));
+
     
     // 发送响应
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "text/plain; charset=utf-8", body, strlen(body));
 }
 
 int main() {
@@ -324,33 +324,33 @@ uv_read_start(stream, alloc_buffer, on_read_complete);
 int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* html = "<html><body><h1>主页</h1><p>欢迎访问 UVHTTP</p></body></html>";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(res, html, strlen(html));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "text/html; charset=utf-8", html, strlen(html));
 }
 
 // 关于页面处理器
 int about_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* html = "<html><body><h1>关于</h1><p>UVHTTP HTTP 服务器</p></body></html>";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(res, html, strlen(html));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "text/html; charset=utf-8", html, strlen(html));
 }
 
 // API 处理器
 int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"message\":\"API 响应\",\"status\":\"ok\"}";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 int main() {
@@ -417,17 +417,15 @@ int user_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
             "{\"user_id\":\"%s\",\"name\":\"用户 %s\",\"email\":\"user%s@example.com\"}",
             user_id, user_id, user_id);
         
-        uvhttp_response_set_status(res, 200);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, response, strlen(response));
+        uvhttp_respond(res, 200, "application/json; charset=utf-8",
+                       response, strlen(response));
     } else {
         const char* error = "{\"error\":\"无效的用户ID\"}";
-        uvhttp_response_set_status(res, 400);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
+        uvhttp_respond(res, 400, "application/json; charset=utf-8",
+                       error, strlen(error));
     }
     
-    return uvhttp_response_send(res);
+    return 0;
 }
 
 int main() {
@@ -466,11 +464,11 @@ int main() {
 int get_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"method\":\"GET\",\"message\":\"获取资源\"}";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 // POST 请求处理器
@@ -487,11 +485,11 @@ int post_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
             "{\"method\":\"POST\",\"message\":\"创建资源\",\"received\":null}");
     }
     
-    uvhttp_response_set_status(res, 201);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 201, "application/json; charset=utf-8", response, strlen(response));
 }
 
 // PUT 请求处理器
@@ -508,22 +506,22 @@ int put_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
             "{\"method\":\"PUT\",\"message\":\"更新资源\",\"received\":null}");
     }
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", response, strlen(response));
 }
 
 // DELETE 请求处理器
 int delete_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"method\":\"DELETE\",\"message\":\"删除资源\"}";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 int main() {
@@ -580,12 +578,12 @@ int check_auth(uvhttp_request_t* req, uvhttp_response_t* res) {
     if (!auth || strcmp(auth, "Bearer secret-token") != 0) {
         const char* error = "{\"error\":\"未授权\",\"message\":\"无效的认证令牌\"}";
         
-        uvhttp_response_set_status(res, 401);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_header(res, "WWW-Authenticate", "Bearer");
-        uvhttp_response_set_body(res, error, strlen(error));
+
+
+
+
         
-        return uvhttp_response_send(res);
+        return uvhttp_respond_with_headers(res, 401, (uvhttp_header_view_t[]){{"Content-Type", "application/json; charset=utf-8"}, {"WWW-Authenticate", "Bearer"}}, 2, error, strlen(error));
     }
     
     // 认证成功，继续处理
@@ -601,22 +599,22 @@ int protected_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     
     const char* json = "{\"message\":\"访问成功\",\"data\":\"敏感信息\"}";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 // 公开处理器
 int public_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"message\":\"公开访问\"}";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 int main() {
@@ -659,42 +657,42 @@ int main() {
 int api_v1_users_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"version\":\"v1\",\"resource\":\"users\"}";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 int api_v1_posts_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"version\":\"v1\",\"resource\":\"posts\"}";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 // API v2 路由组
 int api_v2_users_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"version\":\"v2\",\"resource\":\"users\",\"features\":[\"pagination\",\"filtering\"]}";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 int api_v2_posts_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"version\":\"v2\",\"resource\":\"posts\",\"features\":[\"pagination\",\"filtering\",\"sorting\"]}";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 
 int main() {
@@ -786,11 +784,11 @@ int headers_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     pos += snprintf(response + pos, sizeof(response) - pos, "  }\n");
     pos += snprintf(response + pos, sizeof(response) - pos, "}\n");
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", response, strlen(response));
 }
 
 int main() {
@@ -831,11 +829,11 @@ int json_post_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     if (!body || strlen(body) == 0) {
         const char* error = "{\"error\":\"请求体为空\"}";
         
-        uvhttp_response_set_status(res, 400);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
+
+
+
         
-        return uvhttp_response_send(res);
+        return uvhttp_respond(res, 400, "application/json; charset=utf-8", error, strlen(error));
     }
     
     // 验证 Content-Type
@@ -843,11 +841,11 @@ int json_post_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     if (!content_type || strstr(content_type, "application/json") == NULL) {
         const char* error = "{\"error\":\"不支持的 Content-Type\",\"expected\":\"application/json\"}";
         
-        uvhttp_response_set_status(res, 415);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
+
+
+
         
-        return uvhttp_response_send(res);
+        return uvhttp_respond(res, 415, "application/json; charset=utf-8", error, strlen(error));
     }
     
     // 处理 JSON 数据（这里简单回显）
@@ -856,11 +854,11 @@ int json_post_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "{\"status\":\"success\",\"received\":\"%s\",\"length\":%zu}",
         body, strlen(body));
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", response, strlen(response));
 }
 
 // 文件上传处理器
@@ -877,11 +875,11 @@ int upload_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "{\"status\":\"received\",\"filename\":\"uploaded.dat\",\"size\":%zu}",
         body_length);
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", response, strlen(response));
 }
 
 int main() {
@@ -937,20 +935,20 @@ static uvhttp_static_context_t* g_static_ctx = NULL;
 int static_file_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     if (!g_static_ctx) {
         const char* error = "{\"error\":\"静态文件服务未初始化\"}";
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+
+
+
+        return uvhttp_respond(res, 500, "application/json", error, strlen(error));
     }
     
     // 处理静态文件请求
     int result = uvhttp_static_handle_request(g_static_ctx, req, res);
     if (result != 0) {
         const char* error = "{\"error\":\"文件未找到\"}";
-        uvhttp_response_set_status(res, 404);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+
+
+
+        return uvhttp_respond(res, 404, "application/json", error, strlen(error));
     }
     
     return 0;
@@ -978,11 +976,11 @@ int home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "</body>"
         "</html>";
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(res, html, strlen(html));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "text/html; charset=utf-8", html, strlen(html));
 }
 
 int main() {
@@ -1122,18 +1120,18 @@ curl http://localhost:8080/static/index.html
 
 // JSON 响应助手函数
 void send_json_response(uvhttp_response_t* res, int status, const char* json_data) {
-    uvhttp_response_set_status(res, status);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json_data, strlen(json_data));
-    uvhttp_response_send(res);
+
+
+
+    uvhttp_respond(res, status, "application/json; charset=utf-8", json_data, strlen(json_data));
 }
 
 // HTML 响应助手函数
 void send_html_response(uvhttp_response_t* res, int status, const char* html_data) {
-    uvhttp_response_set_status(res, status);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(res, html_data, strlen(html_data));
-    uvhttp_response_send(res);
+
+
+
+    uvhttp_respond(res, status, "text/html; charset=utf-8", html_data, strlen(html_data));
 }
 
 // 错误响应助手函数
@@ -1208,13 +1206,13 @@ int main() {
 // 流式数据处理器
 int stream_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // 设置流式响应头
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/plain; charset=utf-8");
-    uvhttp_response_set_header(res, "Transfer-Encoding", "chunked");
-    uvhttp_response_set_header(res, "Cache-Control", "no-cache");
+
+
+
+
     
     // 发送初始响应头
-    uvhttp_response_send(res);
+    uvhttp_respond_with_headers(res, 200, (uvhttp_header_view_t[]){{"Content-Type", "text/plain; charset=utf-8"}, {"Transfer-Encoding", "chunked"}, {"Cache-Control", "no-cache"}}, 3, NULL, 0);
     
     // 注意：实际的流式响应需要更复杂的实现
     // 这里只是演示概念
@@ -1225,7 +1223,7 @@ int stream_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // 3. 保持连接打开，持续发送数据
     
     const char* message = "流式响应数据\n";
-    uvhttp_response_set_body(res, message, strlen(message));
+    uvhttp_response_prepare(res, 200, NULL, 0, message, strlen(message));
     
     return 0;
 }
@@ -1233,19 +1231,16 @@ int stream_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 // 服务器推送事件 (SSE) 处理器
 int sse_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // 设置 SSE 响应头
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/event-stream");
-    uvhttp_response_set_header(res, "Cache-Control", "no-cache");
-    uvhttp_response_set_header(res, "Connection", "keep-alive");
-    
-    // 发送响应头
-    uvhttp_response_send(res);
+    uvhttp_header_view_t sse_headers[] = {
+        {"Content-Type", "text/event-stream"},
+        {"Cache-Control", "no-cache"},
+        {"Connection", "keep-alive"}};
+    uvhttp_respond_with_headers(res, 200, sse_headers, 3, NULL, 0);
     
     // 注意：实际的 SSE 需要持续发送事件
     // 这里只是演示概念
     
-    const char* event = "event: message\ndata: Hello from SSE\n\n";
-    uvhttp_response_set_body(res, event, strlen(event));
+    /* Real SSE keeps the connection open and writes further events later. */
     
     return 0;
 }
@@ -1402,10 +1397,10 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // 检查上下文是否存在
     if (!ctx) {
         const char* error = "{\"error\":\"上下文未初始化\"}";
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json");
-        uvhttp_response_set_body(res, error, strlen(error));
-        return uvhttp_response_send(res);
+
+
+
+        return uvhttp_respond(res, 500, "application/json", error, strlen(error));
     }
     
     // 使用上下文数据
@@ -1426,11 +1421,11 @@ int stats_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         uptime,
         ctx->server ? ctx->server->active_connections : 0);
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_body(res, response, strlen(response));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json", response, strlen(response));
 }
 ```
 
@@ -1567,11 +1562,11 @@ int request_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "{\"message\":\"Hello from thread\",\"thread_id\":%d}",
         pthread_self() % 1000);
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
+
+
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", response, strlen(response));
 }
 
 // 工作线程函数
@@ -1774,10 +1769,10 @@ void on_db_query_complete(uv_work_t* req, int status) {
         query_req->query);
     
     // 发送响应
-    uvhttp_response_set_status(query_req->response, 200);
-    uvhttp_response_set_header(query_req->response, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(query_req->response, result, strlen(result));
-    uvhttp_response_send(query_req->response);
+
+
+
+    uvhttp_respond(query_req->response, 200, "application/json; charset=utf-8", result, strlen(result));
     
     // 清理
     free(query_req);
@@ -1806,10 +1801,10 @@ int get_users_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     db_query_request_t* query_req = malloc(sizeof(db_query_request_t));
     if (!query_req) {
         const char* error = "{\"error\":\"内存分配失败\"}";
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
-        uvhttp_response_send(res);
+
+
+
+        uvhttp_respond(res, 500, "application/json; charset=utf-8", error, strlen(error));
         return 0;
     }
     
@@ -1834,10 +1829,10 @@ int create_user_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     
     if (!body) {
         const char* error = "{\"error\":\"请求体为空\"}";
-        uvhttp_response_set_status(res, 400);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
-        uvhttp_response_send(res);
+
+
+
+        uvhttp_respond(res, 400, "application/json; charset=utf-8", error, strlen(error));
         return 0;
     }
     
@@ -1845,10 +1840,10 @@ int create_user_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     db_query_request_t* query_req = malloc(sizeof(db_query_request_t));
     if (!query_req) {
         const char* error = "{\"error\":\"内存分配失败\"}";
-        uvhttp_response_set_status(res, 500);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
-        uvhttp_response_send(res);
+
+
+
+        uvhttp_respond(res, 500, "application/json; charset=utf-8", error, strlen(error));
         return 0;
     }
     
@@ -1995,10 +1990,10 @@ int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     
     if (!conn) {
         const char* error = "{\"error\":\"无可用数据库连接\"}";
-        uvhttp_response_set_status(res, 503);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
-        uvhttp_response_send(res);
+
+
+
+        uvhttp_respond(res, 503, "application/json; charset=utf-8", error, strlen(error));
         return 0;
     }
     
@@ -2010,10 +2005,10 @@ int api_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     
     // 发送响应
     const char* json = "{\"status\":\"success\",\"connection_id\":1}";
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
-    uvhttp_response_send(res);
+
+
+
+    uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
     
     // 释放连接
     connection_pool_release(&g_pool, conn);
@@ -2157,10 +2152,10 @@ int load_balance_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     
     if (!backend) {
         const char* error = "{\"error\":\"无可用后端服务器\"}";
-        uvhttp_response_set_status(res, 503);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, error, strlen(error));
-        uvhttp_response_send(res);
+
+
+
+        uvhttp_respond(res, 503, "application/json; charset=utf-8", error, strlen(error));
         return 0;
     }
     
@@ -2178,10 +2173,10 @@ int load_balance_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "{\"status\":\"forwarded\",\"backend\":\"%s:%d\",\"request_count\":%d}",
         backend->host, backend->port, backend->request_count);
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
-    uvhttp_response_send(res);
+
+
+
+    uvhttp_respond(res, 200, "application/json; charset=utf-8", response, strlen(response));
     
     // 减少请求计数
     pthread_mutex_lock(&backend->mutex);
@@ -2213,10 +2208,10 @@ int health_check_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     pos += snprintf(response + pos, sizeof(response) - pos, "  ]\n");
     pos += snprintf(response + pos, sizeof(response) - pos, "}\n");
     
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, response, strlen(response));
-    uvhttp_response_send(res);
+
+
+
+    uvhttp_respond(res, 200, "application/json; charset=utf-8", response, strlen(response));
     
     return 0;
 }
@@ -2302,7 +2297,7 @@ void* memory_pool_alloc(memory_pool_t* pool) {
 // 启用 Keep-Alive
 uvhttp_config_t* config = uvhttp_config_new();
 config->connection_timeout = 30; // 30秒（Keep-Alive 默认开启）
-server->config = config;
+uvhttp_server_take_config(server, config);
 
 // 连接复用
 // 在实际应用中，实现连接池和复用逻辑
@@ -2330,17 +2325,17 @@ uvhttp_server_enable_tls(server, tls_ctx);
 ```c
 // 设置安全响应头
 int secure_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_header(res, "X-Content-Type-Options", "nosniff");
-    uvhttp_response_set_header(res, "X-Frame-Options", "DENY");
-    uvhttp_response_set_header(res, "X-XSS-Protection", "1; mode=block");
-    uvhttp_response_set_header(res, "Strict-Transport-Security", "max-age=31536000");
+
+
+
+
+
+
     
     const char* json = "{\"message\":\"安全响应\"}";
-    uvhttp_response_set_body(res, json, strlen(json));
+
     
-    return uvhttp_response_send(res);
+    return uvhttp_respond_with_headers(res, 200, (uvhttp_header_view_t[]){{"Content-Type", "application/json"}, {"X-Content-Type-Options", "nosniff"}, {"X-Frame-Options", "DENY"}, {"X-XSS-Protection", "1; mode=block"}, {"Strict-Transport-Security", "max-age=31536000"}}, 5, json, strlen(json));
 }
 ```
 
@@ -2497,10 +2492,10 @@ ctx->count++;
 
 ```c
 const char* json = "{\"message\":\"Hello\"}";
-uvhttp_response_set_status(res, 200);
-uvhttp_response_set_header(res, "Content-Type", "application/json");
-uvhttp_response_set_body(res, json, strlen(json));
-return uvhttp_response_send(res);
+
+
+
+return uvhttp_respond(res, 200, "application/json", json, strlen(json));
 ```
 
 #### 错误处理

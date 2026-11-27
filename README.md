@@ -2,11 +2,11 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.8.1-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-3.1.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
-![Tests](https://img.shields.io/badge/tests-101%2F101%20passing-success.svg)
+![Tests](https://img.shields.io/badge/tests-135%2F135%20passing-success.svg)
 [![ASan](https://img.shields.io/badge/ASan-clean-success.svg)](https://github.com/adam-ikari/uvhttp/actions/workflows/ci-nightly.yml)
 [![UBSan](https://img.shields.io/badge/UBSan-clean-success.svg)](https://github.com/adam-ikari/uvhttp/actions/workflows/ci-nightly.yml)
 ![Performance](https://img.shields.io/badge/performance-~83K%20RPS%20(CI)-brightgreen.svg)
@@ -21,7 +21,7 @@ Lightweight & Embeddable • 32-bit Support • Zero-Copy • ASan/UBSan-Verifie
 
 UVHTTP is a production-grade, event-driven HTTP server library built on libuv for modern C applications. It delivers exceptional performance with minimal resource consumption, making it ideal for both high-performance servers and embedded systems.
 
-### Key Metrics (v2.8.1, GitHub CI baseline)
+### Key Metrics (v3.1.1, GitHub CI baseline)
 
 Performance baselines are measured on **GitHub Actions `ubuntu-latest` runners** for hardware consistency. Previous local baselines (v2.6.x, ~20K RPS) were measured on developer hardware with 40%+ variance from CPU thermal throttling. The CI runner eliminates this variance (CV 0.4–2.4%), providing an authoritative, reproducible baseline.
 
@@ -33,7 +33,7 @@ Performance baselines are measured on **GitHub Actions `ubuntu-latest` runners**
 | **API Routing** | 81K RPS | JSON endpoint |
 | **Average Latency** | ~117µs | P50, 10 connections |
 | **Error Rate** | 0% | Zero socket errors under load (10 conn) |
-| **Test Suite** | 101/101 pass | ASan + UBSan verified clean |
+| **Test Suite** | 135/135 pass | ASan + UBSan verified clean |
 
 ## 🌍 Platform Support
 
@@ -206,45 +206,22 @@ cmake -DCMAKE_C_FLAGS="-m32" ..
 
 // Request handler
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello from UVHTTP v2.8.1!", strlen("Hello from UVHTTP v2.8.1!"));
-    return uvhttp_response_send(res);
+    (void)req;
+    /* One atomic call: validates status/type/body, then sends. */
+    return uvhttp_respond(res, 200, "text/plain", "Hello from UVHTTP v3.1.1!", 24);
 }
 
 int main() {
     // Create event loop
     uv_loop_t* loop = uv_default_loop();
 
-    // Create server (output parameter + error code)
+    // One atomic call: create server + router + route, then start listening.
+    // On any failure *server stays NULL, so there is no rollback code and no
+    // ambiguity about who owns the router.
+    uvhttp_route_t routes[] = {{"/hello", UVHTTP_ANY, hello_handler}};
     uvhttp_server_t* server = NULL;
-    uvhttp_error_t result = uvhttp_server_new(loop, &server);
-    if (result != UVHTTP_OK) {
-        fprintf(stderr, "Failed to create server: %s\n", uvhttp_error_string(result));
-        return 1;
-    }
-
-    // Create router and attach it to the server
-    uvhttp_router_t* router = NULL;
-    result = uvhttp_router_new(&router);
-    if (result != UVHTTP_OK) {
-        fprintf(stderr, "Failed to create router: %s\n", uvhttp_error_string(result));
-        return 1;
-    }
-    // Hand the router to the server; the server owns it from here and frees
-    // it in uvhttp_server_free (v3.0.0: renamed from uvhttp_server_set_router,
-    // which implied a borrow while the behavior was always a transfer)
-    uvhttp_server_take_router(server, router);
-
-    // Add route
-    result = uvhttp_router_add_route(router, "/hello", hello_handler);
-    if (result != UVHTTP_OK) {
-        fprintf(stderr, "Failed to add route: %s\n", uvhttp_error_string(result));
-        return 1;
-    }
-
-    // Start server
-    result = uvhttp_server_listen(server, "0.0.0.0", 8080);
+    uvhttp_error_t result = uvhttp_server_listen_routes(
+        loop, routes, 1, "0.0.0.0", 8080, &server);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "Failed to start server: %s\n", uvhttp_error_string(result));
         return 1;
@@ -506,18 +483,32 @@ UVHTTP is built upon excellent open-source projects:
 - [x] Benchmark coverage for SSE / streaming / WebSocket (PR #379)
 - [x] `BUILD_TESTS` option, real PR gates, examples compiled in CI (PR #376/#377/#385)
 
-### v2.9.0 (Planned)
-- [ ] io_uring exploration for static file path
-- [ ] Memory allocation optimization
-- [ ] Fuzz testing enhancement
-- [ ] Chinese/English doc completeness
-- [ ] Community contribution guide
-- [ ] macOS/FreeBSD support (lowest priority)
+### v3.0.0 (Released 2026-10-18)
+- [x] API atomization: removed 14 dead config fields, builder layer, built-in rate limiter; `take_*` ownership naming
+- [x] Added `uvhttp_server_listen_routes` and `uvhttp_server_set_request_filter`
+- [x] Atomic `set_body` replacement and cache setter validation
+
+### v3.0.1 (Released 2026-11-23)
+- [x] Security/correctness patch: response header heap overflow, directory-listing XSS, pipeline UAF, static TOCTOU, 304 conditional responses
+
+### v3.1.0 (Released 2026-11-26)
+- [x] API atomization finished: `uvhttp_respond` / `_with_headers` / `response_prepare` replace public setters
+- [x] Single config channel (`take_config` / `get_config`), stats, draining, error observer, opt-in async stop
+- [x] RFC correctness: HEAD bodyless, `Connection: close`, 413 oversized body, sendfile keep-alive ordering, WS coalesced frame
+- [x] mbedTLS 3.6.8; 32-bit blocking CI gate; production embedder example + Web dashboard
+
+### v3.1.1 (Released 2026-11-26)
+- [x] TLS WANT_WRITE deadlock fix; custom-upgrade first-frame preservation (ownership callback now carries buffered bytes)
+- [x] Response body length CI gate; all examples use byte lengths
 
 ## 📊 Version History
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v3.1.1** | 2026-11-26 | TLS WANT_WRITE 死锁修复、自定义升级首帧保留、响应体长度门禁 |
+| **v3.1.0** | 2026-11-26 | API 原子化收尾 / 生产接缝 / RFC 正确性 / mbedTLS 3.6.8 / 32-bit CI |
+| **v3.0.1** | 2026-11-23 | 安全与正确性补丁：header 溢出 / 目录列表 XSS / 流水线 UAF / TOCTOU / 304 |
+| **v3.0.0** | 2026-10-18 | API 原子化破坏性升级：删 14 死字段 / builder / 限流器，新增 listen_routes 与 request filter |
 | **v2.8.1** | 2026-09-29 | Zero-copy threshold `UVHTTP_ZEROCOPY_MIN_BODY` restores small-response throughput (PR #387), benchmark gate rewritten as same-runner paired comparison (PR #388) |
 | **v2.8.0** | 2026-09-23 | Large-response zero-copy writev (/large 5.1K→8.8K RPS, PR #378), second-round review fixes (17 defects, PR #380), public API / build-system fixes (PR #381), SSE/streaming/WebSocket benchmarks (PR #379) |
 | **v2.7.2** | 2026-09-07 | 34 项代码评审缺陷修复：query string 路由匹配、MAX_PARAMS 边界、WS 短写截帧、If-Modified-Since 时区/3 种日期格式、accept 下溢等；/large 零拷贝 writev（5.1K→8.8K RPS） |
@@ -525,7 +516,7 @@ UVHTTP is built upon excellent open-source projects:
 | **v2.7.0** | 2026-08-21 | TLS session cache re-enabled, CI benchmark workflow (ci-benchmark.yml), code quality fixes (L3-L5), brain documentation, Platinum tier baseline (83K RPS on CI) |
 | **v2.6.2** | 2026-08-17 | Connection-limit memory safety fix (uv_close on accept failure), WebSocket RFC 6455/memory-safety fixes (PR #336), uv_strerror_r consistency |
 | **v2.6.0** | 2026-07-31 | Health check endpoint, SSE example, mock testing infrastructure, Makefile build entry |
-| **v2.5.1** | 2026-07-27 | Coverage 86% lines / 99% functions, 101/101 tests |
+| **v2.5.1** | 2026-07-27 | Coverage 86% lines / 99% functions, 135/135 tests |
 | **v2.5.0** | 2026-03-15 | 32-bit embedded support, compression features |
 | **v2.4.4** | 2026-01-28 | Performance optimizations, code cleanup |
 | **v2.3.0** | 2026-02-10 | Performance fix for connection cleanup |

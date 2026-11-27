@@ -69,11 +69,82 @@ See `examples/04_static_files/static_file_server.c` for a complete example of st
 - Pass application context through `server->context` or `loop->data`
 - Use a wildcard route to cover many static file paths
 
+## Configuration Options
+
+### Basic
+
+| Option | Type | Default | Meaning |
+|--------|------|---------|---------|
+| `root_directory` | `const char*` | `"./public"` | Root directory for static files |
+| `index_file` | `const char*` | `"index.html"` | Default index document |
+| `enable_directory_listing` | `int` | `0` | Whether directory listings are served |
+
+### Cache
+
+| Option | Type | Default | Meaning |
+|--------|------|---------|---------|
+| `max_cache_size` | `size_t` | required (> 0) | Maximum cache memory in bytes |
+| `cache_ttl` | `int` | `0` | Entry TTL in seconds; `0` means never expire |
+| `max_cache_entries` | `int` | `0` | Maximum entries; `0` uses the built-in default |
+
+### Security
+
+| Option | Type | Default | Meaning |
+|--------|------|---------|---------|
+| `max_file_size` | `size_t` | `50*1024*1024` | Maximum served file size |
+| `enable_compression` | `int` | `0` | Whether compression is enabled |
+
+### HTTP headers
+
+| Option | Type | Default | Meaning |
+|--------|------|---------|---------|
+| `custom_headers` | `const char*` | `""` | Extra HTTP headers appended to responses |
+
 ## API Reference
 
 For detailed API documentation, see:
 - `include/uvhttp_static.h` - Static file service API
 - `examples/04_static_files/` - Example programs
+
+## File Type Control
+
+### MIME mapping
+
+UVHTTP uses a built-in MIME mapping table:
+
+```c
+static const uvhttp_mime_mapping_t default_mime_types[] = {
+    {".html", "text/html"},
+    {".css", "text/css"},
+    {".js", "application/javascript"},
+    {".json", "application/json"},
+    {".png", "image/png"},
+    {".jpg", "image/jpeg"},
+    {".gif", "image/gif"},
+    {".svg", "image/svg+xml"},
+    {".ico", "image/x-icon"},
+    {NULL, NULL}
+};
+```
+
+The extension-to-MIME mapping is fixed at compile time and not parsed at
+runtime. There is no API to add mappings at runtime; to support a custom type,
+add an entry to the source table and rebuild.
+
+### Per-path admission
+
+When a request must be filtered by path, do it in the wrapper handler and
+reply with a status directly:
+
+```c
+int custom_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
+    const char* path = uvhttp_request_get_path(req);
+    if (!is_allowed_file(path)) {
+        return uvhttp_respond(res, 403, NULL, NULL, 0);
+    }
+    return 0;
+}
+```
 
 ## Best Practices
 
@@ -108,7 +179,7 @@ int uvhttp_static_prewarm_directory(uvhttp_static_context_t* ctx,
                                     const char* dir_path, int max_files);
 
 // Direct cache prewarming (low-level)
-uvhttp_error_t uvhttp_lru_cache_prewarm(cache_manager_t* cache,
+uvhttp_error_t uvhttp_lru_cache_prewarm(uvhttp_lru_cache_t* cache,
                                         const char* file_path, char* content,
                                         size_t content_length,
                                         const char* mime_type,
@@ -330,6 +401,44 @@ void print_cache_stats(uvhttp_static_context_t* ctx) {
 - Small-scale apps: the cache may not help
 - Dynamically generated content: a static cache won't help
 - Memory-constrained environments: may cause memory pressure
+
+## Performance Tuning
+
+### Zero-copy transfer
+
+Files are streamed with `sendfile`, moving data from the page cache straight
+to the socket without a user-space copy. Size classes are selected by compile
+-time constants (`UVHTTP_FILE_SIZE_SMALL` / `_MEDIUM` / `_LARGE`); bodies below
+the threshold use a buffered read instead. The LRU cache holds hot file
+content with a configurable memory budget and TTL; oversized entries are
+rejected before they can evict the whole cache.
+
+### Timeouts and retries
+
+`sendfile_timeout_ms` bounds a stalled transfer, with `sendfile_max_retry`
+retries on `EINTR`/`EAGAIN`. On timeout the request context is torn down through
+a single cleanup path so a pending fs request cannot dereference freed memory.
+
+## Troubleshooting
+
+| Symptom | Cause / Fix |
+|---------|-------------|
+| 404 | Check the URL-to-disk mapping, confirm the file is under the root directory (case matters), and verify read permission. |
+| 403 | Check permission bits and the extension allow-list, and whether path validation classified the path as traversal. |
+| Slow responses | Increase the cache size and watch the hit rate; enable compression; measure disk I/O to rule out hardware. |
+| High memory use | Lower the cache budget, shorten the TTL so cold entries expire sooner, and inspect cache stats for the source. |
+
+Debug logging is a compile-time switch, not a runtime setting: build with
+`-DENABLE_DEV_MODE=ON` and use `UVHTTP_LOG_DEBUG`.
+
+## Example Programs
+
+- `examples/04_static_files/static_file_server.c` - basic static server
+- `examples/04_static_files/cache_test_server.c` - cache behavior test server
+
+## License
+
+MIT License — see the LICENSE file.
 
 ## See Also
 

@@ -79,6 +79,9 @@
 第一次把 uvhttp 作为 submodule 加入时，验证以下步骤。
 完整接入指南见 [EMBEDDING_GUIDE.md](guide/EMBEDDING_GUIDE.md)，
 可运行的独立示例见 [examples/embedding/](https://github.com/adam-ikari/uvhttp/tree/main/examples/embedding)。
+贴近生产的示例（`examples/10_embedding/production_app.c`）覆盖 3.1.x 的新接缝——
+配置、统计、排水、错误观测器与嵌入方自有的日志接口，并附带 Web 管理台
+`examples/10_embedding/www/dashboard.html`。
 
 1. [ ] 在嵌入项目的 `CMakeLists.txt` 中添加 `add_subdirectory` 或 `FetchContent`
 2. [ ] 编译嵌入项目，确认 uvhttp 头文件可引用

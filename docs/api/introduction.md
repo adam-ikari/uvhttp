@@ -92,25 +92,19 @@ const char* uvhttp_request_get_body(uvhttp_request_t* req, size_t* len);
 #### Set Status Code
 
 ```c
-uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int status);
-```
-
-#### Set Response Header
-
-```c
-uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response, const char* name, const char* value);
-```
-
-#### Set Response Body
-
-```c
-uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response, const char* body, size_t length);
-```
-
-#### Send Response
-
-```c
-uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
+uvhttp_error_t uvhttp_respond(uvhttp_response_t* response, int status_code,
+                              const char* content_type, const char* body,
+                              size_t body_length);
+uvhttp_error_t uvhttp_respond_with_headers(uvhttp_response_t* response,
+                              int status_code,
+                              const uvhttp_header_view_t* headers,
+                              size_t header_count, const char* body,
+                              size_t body_length);
+uvhttp_error_t uvhttp_response_prepare(uvhttp_response_t* response,
+                              int status_code,
+                              const uvhttp_header_view_t* headers,
+                              size_t header_count, const char* body,
+                              size_t body_length);
 ```
 
 ## Error Handling
@@ -145,18 +139,18 @@ if (result != UVHTTP_OK) {
 #include <string.h>
 
 int index_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/html");
-    uvhttp_response_set_body(response, "<h1>Hello, UVHTTP!</h1>", strlen("<h1>Hello, UVHTTP!</h1>"));
-    return uvhttp_response_send(response);
+
+
+
+    return uvhttp_respond(response, 200, "text/html", "<h1>Hello, UVHTTP!</h1>", strlen("<h1>Hello, UVHTTP!</h1>"));
 }
 
 int api_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
+
+
     const char* json_body = "{\"message\":\"API response\"}";
-    uvhttp_response_set_body(response, json_body, strlen(json_body));
-    return uvhttp_response_send(response);
+
+    return uvhttp_respond(response, 200, "application/json", json_body, strlen(json_body));
 }
 
 int main() {

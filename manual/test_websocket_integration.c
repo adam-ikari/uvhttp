@@ -4,6 +4,7 @@
  */
 
 #include "uvhttp.h"
+#include "uvhttp_response_internal.h"
 #include "uvhttp_websocket.h"
 #include "uvhttp_connection.h"
 #include "uvhttp_context.h"

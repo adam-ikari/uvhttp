@@ -9,6 +9,7 @@
 #include "uvhttp.h"
 #include "uvhttp_middleware.h"
 #include <stdio.h>
+#include <string.h>
 
 /* ============ 测试中间件 ============ */
 
@@ -18,11 +19,7 @@ static int test_middleware(uvhttp_request_t* req, uvhttp_response_t* resp, uvhtt
     
     printf("[TEST] 中间件被调用！\n");
     
-    uvhttp_response_set_status(resp, 200);
-    uvhttp_response_set_header(resp, "Content-Type", "text/plain");
-    uvhttp_response_set_body(resp, "中间件测试", 11);
-    
-    uvhttp_response_send(resp);
+    uvhttp_respond(resp, 200, "text/plain", "中间件测试", strlen("中间件测试"));
     return UVHTTP_MIDDLEWARE_STOP;
 }
 

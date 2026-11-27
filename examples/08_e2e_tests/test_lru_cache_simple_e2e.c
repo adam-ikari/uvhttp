@@ -31,10 +31,7 @@ static int cache_info_handler(uvhttp_request_t* request, uvhttp_response_t* resp
     const char* body = "LRU cache is automatically managed by static file service.\n"
                       "It is not exposed as a public API.\n"
                       "Cache functionality is configured via uvhttp_config_t.";
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
     return 0;
 }
 

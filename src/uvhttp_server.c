@@ -22,6 +22,7 @@
 #include "uvhttp_protocol_upgrade.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
+#include "uvhttp_response_internal.h"
 #include "uvhttp_router.h"
 #include "uvhttp_tls.h"
 #include "uvhttp_utils.h"
@@ -105,23 +106,12 @@ static void on_connection(uv_stream_t* server_handle, int status) {
     UVHTTP_LOG_DEBUG("Server TLS disabled (feature not compiled)\n");
 #endif
 
-    /* Single-threaded connection count check - use server specific config */
-    size_t max_connections =
-        server->max_connections;  // authoritative per-server value
-    if (server->config) {
-        max_connections = server->config->max_connections;
-    } else if (server->context) {
-        // Fall back to the context's config. Guarded on context: a server
-        // with neither a config nor a context is the normal shape since
-        // v3.0.0 (nothing sets server->config any more; take_context is
-        // optional), and uvhttp_config_get_current(NULL) logs a misleading
-        // "Context is NULL" warning - once per accepted connection. Same
-        // guard as uvhttp_server_listen already uses when it reads backlog.
-        const uvhttp_config_t* global_config =
-            uvhttp_config_get_current(server->context);
-        if (global_config) {
-            max_connections = global_config->max_connections;
-        }
+    /* One channel: the config installed on the context. No fallback chain
+     * between two fields whose values could disagree. */
+    size_t max_connections = server->max_connections;
+    const uvhttp_config_t* cfg = uvhttp_server_get_config(server);
+    if (cfg) {
+        max_connections = cfg->max_connections;
     }
 
     if (server->active_connections >= max_connections) {
@@ -218,6 +208,7 @@ static void on_connection(uv_stream_t* server_handle, int status) {
      * underflowing the size_t counter (-> SIZE_MAX) and locking the server
      * into a permanent 503 "connection limit reached" state. */
     server->active_connections++;
+    conn->counted_by_accept = 1;
 
     /* acceptconnection */
     int accept_result =
@@ -254,6 +245,10 @@ static void on_connection(uv_stream_t* server_handle, int status) {
         uvhttp_connection_close(conn);
         return;
     }
+    /* Track live connections so stop can close them. Registration happens
+     * only after a successful start; failure paths already close the handle. */
+    conn->registry_next = server->connections;
+    server->connections = conn;
 }
 
 /* Create single-threaded event-driven HTTP server
@@ -264,6 +259,16 @@ static void on_connection(uv_stream_t* server_handle, int status) {
  * 2. Memory access is safer, no atomic operations needed
  * 3. Performance is predictable, avoid thread switching overhead
  * 4. Debug is simple, execution stream is clear */
+#if UVHTTP_FEATURE_ASYNC_STOP
+/* Posted from a foreign thread, executed on the loop thread. */
+static void on_async_stop(uv_async_t* handle) {
+    uvhttp_server_t* server = (uvhttp_server_t*)handle->data;
+    if (server) {
+        (void)uvhttp_server_stop(server);
+    }
+}
+#endif /* UVHTTP_FEATURE_ASYNC_STOP */
+
 uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -323,6 +328,19 @@ uvhttp_error_t uvhttp_server_new(uv_loop_t* loop, uvhttp_server_t** server) {
         return UVHTTP_ERROR_IO_ERROR;
     }
     s->tcp_handle.data = s;
+
+#if UVHTTP_FEATURE_ASYNC_STOP
+    /* Cross-thread stop wakeup. Initialized on the loop thread and unref'd so
+     * an idle server loop is still allowed to exit. */
+    if (uv_async_init(s->loop, &s->async_stop_handle, on_async_stop) != 0) {
+        uv_close((uv_handle_t*)&s->tcp_handle, NULL);
+        uv_run(s->loop, UV_RUN_NOWAIT);
+        uvhttp_free(s);
+        return UVHTTP_ERROR_IO_ERROR;
+    }
+    s->async_stop_handle.data = s;
+    uv_unref((uv_handle_t*)&s->async_stop_handle);
+#endif /* UVHTTP_FEATURE_ASYNC_STOP */
     s->active_connections = 0;
 #if UVHTTP_FEATURE_TLS
     s->tls_enabled = 0;
@@ -380,10 +398,24 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
     /* Set freed flag before releasing any resources. */
     server->freed = 1;
 
+    /* Close live connections BEFORE releasing the server. Each connection
+     * holds conn->server; leaving them alive let their callbacks (timeout,
+     * parse, keep-alive) dereference this object after it is freed, and left
+     * UV_EBUSY handles at uv_loop_close. The drain below then fires their
+     * close callbacks while server (and its owned resources) are still valid. */
+    (void)uvhttp_server_close_connections(server);
+
     /* close TCP handle */
     if (!uv_is_closing((uv_handle_t*)&server->tcp_handle)) {
         uv_close((uv_handle_t*)&server->tcp_handle, NULL);
     }
+
+    /* Close the embedded async wakeup handle; no allocation to release. */
+#if UVHTTP_FEATURE_ASYNC_STOP
+    if (!uv_is_closing((uv_handle_t*)&server->async_stop_handle)) {
+        uv_close((uv_handle_t*)&server->async_stop_handle, NULL);
+    }
+#endif
 
     /* Run loop multiple times to process close callback
      * Fix: Regardless of whether owning loop, need to run loop to process close
@@ -404,15 +436,6 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
             uv_run(server->loop, UV_RUN_NOWAIT);
         }
     }
-    /* TODO(structural): the server keeps only an active_connections counter,
-     * no connection list, so live connections' handles cannot be force-closed
-     * here — the drain above only completes close callbacks already in flight
-     * (listen handle, 503 temp clients, connections mid-close). Fully closing
-     * live HTTP connections before uv_loop_close requires a connection
-     * registry on the server; adding one was ruled out as too invasive for
-     * this fix. Callers that own live connections should close them before
-     * uvhttp_server_free, else uv_loop_close reports UV_EBUSY. */
-
     /* Clean connection pool */
     if (server->router) {
         uvhttp_router_free(server->router);
@@ -424,9 +447,8 @@ uvhttp_error_t uvhttp_server_free(uvhttp_server_t* server) {
         server->tls_ctx = NULL; /* Prevent double-free */
     }
 #endif
-    if (server->config) {
-        uvhttp_config_free(server->config);
-    }
+    /* The config is owned by the context (uvhttp_server_take_config), so
+     * uvhttp_context_destroy below releases it. No second owner here. */
 
     /* cleancontext */
     if (server->context) {
@@ -548,6 +570,19 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    /* A validator that nobody calls protects nothing. Reject invalid config
+     * before bind/listen consumes a socket, and name the real cause instead
+     * of letting a bogus value reach uv_timer_start / uv_listen later. */
+    const uvhttp_config_t* cfg = uvhttp_server_get_config(server);
+    if (cfg) {
+        int cfg_err = uvhttp_config_validate(cfg);
+        if (cfg_err != UVHTTP_OK) {
+            UVHTTP_LOG_ERROR("Invalid config: %s",
+                             uvhttp_error_string((uvhttp_error_t)cfg_err));
+            return UVHTTP_ERROR_SERVER_INVALID_CONFIG;
+        }
+    }
+
     struct sockaddr_in addr;
     if (uv_ip4_addr(host, port, &addr) != 0) {
         UVHTTP_LOG_ERROR("Invalid listen host: %s\n", host);
@@ -573,9 +608,10 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
     uv_tcp_nodelay(&server->tcp_handle, enable);
 
     /* setkeepalive */
-    unsigned int keepalive_timeout = server->config
-                                         ? server->config->tcp_keepalive_timeout
-                                         : UVHTTP_TCP_KEEPALIVE_TIMEOUT;
+    const uvhttp_config_t* keepalive_cfg = uvhttp_server_get_config(server);
+    unsigned int keepalive_timeout =
+        keepalive_cfg ? keepalive_cfg->tcp_keepalive_timeout
+                      : UVHTTP_TCP_KEEPALIVE_TIMEOUT;
     if (keepalive_timeout == 0) {
         /* config 0 disables the keepalive idle time — fall back to default
          * instead of passing 0 to TCP_KEEPIDLE (EINVAL, silently ignored). */
@@ -608,14 +644,8 @@ uvhttp_error_t uvhttp_server_listen(uvhttp_server_t* server, const char* host,
 #endif
     }
 
-    /* Use config system's backlog setting */
-    // Use server->context instead of loop->data, avoid monopolizing loop->data
-    uvhttp_context_t* context = server->context;
-    const uvhttp_config_t* config = NULL;
-
-    if (context) {
-        config = uvhttp_config_get_current(context);
-    }
+    /* Single read path for the active config. */
+    const uvhttp_config_t* config = uvhttp_server_get_config(server);
 
     int backlog = UVHTTP_BACKLOG;
     if (config && config->backlog > 0) {
@@ -825,6 +855,99 @@ uvhttp_error_t uvhttp_server_take_context(uvhttp_server_t* server,
     return UVHTTP_OK;
 }
 
+uvhttp_error_t uvhttp_server_close_connections(uvhttp_server_t* server) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    /* Callers must be on the loop thread. Closing is asynchronous: each
+     * connection unlinks itself in free_resources once its handles close. */
+    uvhttp_connection_t* conn = server->connections;
+    while (conn) {
+        uvhttp_connection_t* next = conn->registry_next;
+        uvhttp_connection_close(conn);
+        conn = next;
+    }
+    return UVHTTP_OK;
+}
+
+uvhttp_error_t uvhttp_server_set_draining(uvhttp_server_t* server,
+                                          int enabled) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    server->draining = enabled ? 1 : 0;
+    return UVHTTP_OK;
+}
+
+const uvhttp_config_t* uvhttp_server_get_config(
+    const uvhttp_server_t* server) {
+    if (!server || !server->context) {
+        return NULL;
+    }
+    /* Read the field directly: uvhttp_config_get_current logs a warning for
+     * a context with no config, which is the normal "defaults" state. */
+    return (const uvhttp_config_t*)server->context->current_config;
+}
+
+uvhttp_error_t uvhttp_server_take_config(uvhttp_server_t* server,
+                                         uvhttp_config_t* config) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    if (!config) {
+        /* Clear the channel: release an owned config, keep built-in defaults. */
+        if (server->context) {
+            uvhttp_config_set_current(server->context, NULL);
+            server->context->config_owned = 0;
+        }
+        return UVHTTP_OK;
+    }
+    if (!server->context) {
+        uvhttp_context_t* context = NULL;
+        uvhttp_error_t err = uvhttp_context_create(server->loop, &context);
+        if (err != UVHTTP_OK) {
+            return err;
+        }
+        err = uvhttp_server_take_context(server, context);
+        if (err != UVHTTP_OK) {
+            uvhttp_context_destroy(context);
+            return err;
+        }
+    }
+    /* set_current releases a previously owned config; mark this one owned so
+     * the context (and therefore server_free) releases it exactly once. */
+    uvhttp_config_set_current(server->context, config);
+    server->context->config_owned = 1;
+    return UVHTTP_OK;
+}
+
+uvhttp_error_t uvhttp_server_get_stats(uvhttp_server_t* server,
+                                       uvhttp_server_stats_t* out) {
+    if (!server || !out) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    out->active_connections = server->active_connections;
+    out->total_connections = 0;
+    out->total_requests = 0;
+    if (server->context) {
+        out->total_connections = server->context->total_connections;
+        out->total_requests = server->context->total_requests;
+    }
+    out->backpressure_pauses = server->backpressure_pauses;
+    return UVHTTP_OK;
+}
+
+#if UVHTTP_FEATURE_ASYNC_STOP
+uvhttp_error_t uvhttp_server_async_stop(uvhttp_server_t* server) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    return uv_async_send(&server->async_stop_handle) == 0
+               ? UVHTTP_OK
+               : UVHTTP_ERROR_IO_ERROR;
+}
+#endif /* UVHTTP_FEATURE_ASYNC_STOP */
+
 uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server) {
     if (!server) {
         return UVHTTP_ERROR_INVALID_PARAM;
@@ -833,10 +956,26 @@ uvhttp_error_t uvhttp_server_stop(uvhttp_server_t* server) {
     if (server->is_listening) {
         uv_close((uv_handle_t*)&server->tcp_handle, NULL);
         server->is_listening = 0;
-        return UVHTTP_OK;
     }
 
-    /* already stopped: idempotent, not an error */
+    /* Closing the listening handle alone leaves accepted connections alive,
+     * so uv_run(UV_RUN_DEFAULT) never returns after stop. Close them too. */
+    (void)uvhttp_server_close_connections(server);
+
+    /* The WS keepalive timers are handles on this loop. Without this, a
+     * stopped server with ws management enabled keeps uv_run(UV_RUN_DEFAULT)
+     * alive forever — stop claimed to shut down but the loop never returned.
+     * The call is idempotent; server_free may safely call it again. */
+#if UVHTTP_FEATURE_WEBSOCKET
+    uvhttp_error_t ws_rc =
+        uvhttp_server_ws_disable_connection_management(server);
+    if (ws_rc != UVHTTP_OK) {
+        return ws_rc;
+    }
+#else
+    (void)0;
+#endif
+
     return UVHTTP_OK;
 }
 
@@ -847,7 +986,11 @@ uvhttp_error_t uvhttp_server_enable_tls(uvhttp_server_t* server,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    if (server->tls_ctx) {
+    /* Established TLS connections keep ssl->conf pointing into the old
+     * context. Replace it only after those connections are gone, otherwise
+     * their next mbedtls read dereferences freed memory. */
+    if (server->tls_ctx && server->tls_ctx != tls_ctx) {
+        (void)uvhttp_server_close_connections(server);
         uvhttp_tls_context_free(server->tls_ctx);
     }
 
@@ -862,7 +1005,10 @@ uvhttp_error_t uvhttp_server_disable_tls(uvhttp_server_t* server) {
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
+    /* Same lifetime rule as enable_tls: connections using this context must
+     * be closed before the context (and its conf/session cache) is freed. */
     if (server->tls_ctx) {
+        (void)uvhttp_server_close_connections(server);
         uvhttp_tls_context_free(server->tls_ctx);
         server->tls_ctx = NULL;
     }
@@ -1560,5 +1706,16 @@ uvhttp_error_t uvhttp_server_set_timeout_callback(
     server->timeout_callback = callback;
     server->timeout_callback_user_data = user_data;
 
+    return UVHTTP_OK;
+}
+
+uvhttp_error_t uvhttp_server_set_error_callback(
+    uvhttp_server_t* server, uvhttp_error_callback_t callback,
+    void* user_data) {
+    if (!server) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    server->error_callback = callback;
+    server->error_callback_user_data = user_data;
     return UVHTTP_OK;
 }

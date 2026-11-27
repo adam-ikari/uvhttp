@@ -37,13 +37,15 @@ struct uvhttp_connection {
     /* Frequently accessed in on_read, on_write, connection management */
     uvhttp_connection_state_t state; /* 4 bytes - Connectionstate */
     int parsing_complete;            /* 4 bytes - parsingusecompleted */
-    int keepalive;                   /* 4 bytes - usekeepConnection */
+    int _padding_keepalive;          /* 4 bytes - former conn->keepalive,
+                                      * dead state: all decisions read
+                                      * response->keepalive instead */
     int chunked_encoding;            /* 4 bytes - useUsechunkedtransfer */
     int close_pending;               /* 4 bytes - pendingclose handle count */
     int need_restart_read;           /* 4 bytes - useneedrestartread */
     int tls_enabled;                 /* 4 bytes - TLS useEnable */
     int freed;                       /* 4 bytes - flag to prevent double free */
-    int _padding1;                   /* 4 bytes - paddingto32bytes */
+    int body_error_status;           /* 4 bytes - 413/500 from on_body */
     size_t body_received;            /* 8 bytes - receive body length */
     size_t content_length;           /* 8 bytes - Content-Length */
     size_t read_buffer_used;         /* 8 bytes - BufferUse */
@@ -68,7 +70,7 @@ struct uvhttp_connection {
 #if UVHTTP_FEATURE_WEBSOCKET
     int is_websocket; /* 4 bytes - useto WebSocket connection */
 #endif
-    int _padding2; /* 4 bytes - paddingto64bytes */
+    int read_paused;  /* 4 bytes - reads paused by backpressure */
     /* Cache line 2 total: approximately 64 bytes (depends on whether WebSocket
      * is enabled) */
 
@@ -105,6 +107,19 @@ struct uvhttp_connection {
     char* tls_cipher_buf;
     size_t tls_cipher_used;
     size_t tls_cipher_cap;
+
+    /* Intrusive registry link owned by the server. Added at the end so all
+     * existing field offsets are unchanged. */
+    struct uvhttp_connection* registry_next;
+    int counted_by_accept; /* 1 when accept() incremented server counter */
+
+    /* Lazily initialised when a TLS handshake write hits EAGAIN. The poll
+     * handle retries the handshake when the socket becomes writable; without
+     * it WANT_WRITE was treated as WANT_READ and the connection deadlocked. */
+#if UVHTTP_FEATURE_TLS
+    uv_poll_t tls_write_poll;
+    int tls_poll_active;
+#endif
 };
 
 /* ========== Memory Layout Verification Static Assertions ========== */
@@ -151,6 +166,15 @@ uvhttp_error_t uvhttp_connection_tls_read(uvhttp_connection_t* conn);
 uvhttp_error_t uvhttp_connection_tls_write(uvhttp_connection_t* conn,
                                            const void* data, size_t len);
 uvhttp_error_t uvhttp_connection_tls_handshake_func(uvhttp_connection_t* conn);
+
+/**
+ * @brief Map an mbedtls handshake return code to a uvhttp error
+ *
+ * WANT_READ and WANT_WRITE stay distinct: folding WANT_WRITE into WANT_READ
+ * made a full send buffer deadlock the handshake (the peer waits for the
+ * server's record while the server waits for readability).
+ */
+uvhttp_error_t uvhttp_tls_map_handshake_result(int ret);
 void uvhttp_connection_tls_cleanup(uvhttp_connection_t* conn);
 
 /* statemanage */
@@ -191,6 +215,23 @@ uvhttp_error_t uvhttp_connection_start_timeout(uvhttp_connection_t* conn);
  */
 uvhttp_error_t uvhttp_connection_start_timeout_custom(uvhttp_connection_t* conn,
                                                       int timeout_seconds);
+
+/**
+ * @brief Pause or resume HTTP reads based on the pending write queue
+ *
+ * Called by on_read after parsing and by every write-completion callback.
+ * @p write_queue_size is uv_stream_get_write_queue_size(); passing it
+ * explicitly keeps this decision a pure function that tests can drive.
+ * With a zero high-water mark this is a no-op.
+ */
+void uvhttp_connection_apply_backpressure(uvhttp_connection_t* conn,
+                                          size_t write_queue_size);
+
+/** @brief Re-arm the idle timer after request/frame activity. */
+void uvhttp_connection_refresh_timeout(uvhttp_connection_t* conn);
+
+/** @brief Unlink a connection from the server's live registry. */
+void uvhttp_connection_unlink_registry(uvhttp_connection_t* conn);
 
 /* WebSockethandleFunction(internal) */
 #if UVHTTP_FEATURE_WEBSOCKET

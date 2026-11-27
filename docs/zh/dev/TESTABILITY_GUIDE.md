@@ -53,8 +53,8 @@ static int test_hello_world() {
     uvhttp_mock_response_t* response = uvhttp_mock_response_create(client);
     
     // 设置响应数据
-    UVHTTP_TEST_ASSERT_SUCCESS(uvhttp_response_set_status(&response->base, 200));
-    UVHTTP_TEST_ASSERT_SUCCESS(uvhttp_response_set_body(&response->base, "Hello", 5));
+    UVHTTP_TEST_ASSERT_SUCCESS(uvhttp_respond(&response->base, 200,
+                                              NULL, "Hello", 5));
     
     // 测试纯函数
     char* data = NULL;
@@ -189,7 +189,9 @@ typedef struct uvhttp_context {
 #### 重构示例
 ```c
 // 原始函数：混合了业务逻辑和网络I/O
-uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
+uvhttp_error_t uvhttp_respond(uvhttp_response_t* response, int status_code,
+                              const char* content_type, const char* body,
+                              size_t body_length);
 
 // 重构后：分离纯函数和副作用
 uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response, 
@@ -264,8 +266,7 @@ static int test_response_building() {
     uvhttp_mock_response_t* response = uvhttp_mock_response_create(client);
     
     // 设置测试数据
-    uvhttp_response_set_status(&response->base, 200);
-    uvhttp_response_set_body(&response->base, "Hello", 5);
+    uvhttp_respond(&response->base, 200, NULL, "Hello", 5);
     
     // 测试纯函数
     char* data = NULL;
@@ -404,8 +405,8 @@ uvhttp_test_simulate_connection_timeout();
 uvhttp_test_simulate_memory_exhaustion();
 
 // 测试边界条件
-uvhttp_response_set_body(response, NULL, 0);  // 无效参数
-uvhttp_response_set_status(response, 999);    // 无效状态码
+uvhttp_respond(response, 200, NULL, NULL, 1);  // 无效参数
+uvhttp_respond(response, 999, NULL, NULL, 0);    // 无效状态码
 ```
 
 ## 🚀 迁移指南
@@ -421,7 +422,7 @@ uvhttp_response_set_status(response, 999);    // 无效状态码
 2. **修改测试代码**
    ```c
    // 旧方式：直接测试
-   uvhttp_response_send(response);
+   uvhttp_respond(response, 200, NULL, NULL, 0);
    
    // 新方式：使用纯函数测试
    char* data = NULL;

@@ -134,11 +134,11 @@ static void on_signal(uv_signal_t* handle, int signum) {
 
 static int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     (void)req;
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/plain; charset=utf-8");
+
+
     const char* body = "Hello from embedded uvhttp!\n";
-    uvhttp_response_set_body(res, body, strlen(body));
-    return (int)uvhttp_response_send(res);
+
+    return (int)uvhttp_respond(res, 200, "text/plain; charset=utf-8", body, strlen(body));
 }
 
 int main(int argc, char** argv) {
@@ -287,6 +287,7 @@ cmake -DBUILD_BENCHMARKS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=OFF ..
 ## 7. 下一步
 
 - 运行实际示例：[`examples/embedding/`](https://github.com/adam-ikari/uvhttp/tree/main/examples/embedding)
+- 贴近生产的可运行示例：`examples/10_embedding/production_app.c`（含 Web 管理台 `examples/10_embedding/www/dashboard.html`）
 - 嵌入式配置与画像：[嵌入式配置](../embedded-profile.md)
 - CMake 细节：[CMake 集成](./INSTALL_CMAKE.md)、[CMake 配置](./CMAKE_CONFIGURATION.md)
 - 逐版本验证：[嵌入验证清单](../embedding-checklist.md)

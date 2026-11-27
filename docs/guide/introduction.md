@@ -141,8 +141,8 @@ server->tls_ctx = tls_ctx;
 // Example: Set reasonable resource limits (fields an execution path reads).
 // Body/header/URL limits are compile-time constants (UVHTTP_MAX_BODY_SIZE etc.),
 // not config entries — v3.0.0 removed the config fields that never took effect.
-server->config->max_connections = 1000;
-server->config->max_file_size = 10 * 1024 * 1024; // 10MB
+config->max_connections = 1000; /* before take_config */
+config->max_file_size = 10 * 1024 * 1024; /* before take_config */
 ```
 
 ---
@@ -183,18 +183,18 @@ server->config->max_file_size = 10 * 1024 * 1024; // 10MB
 // Request handler function
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     // Set response status
-    uvhttp_response_set_status(res, 200);
+
     
     // Set response headers
-    uvhttp_response_set_header(res, "Content-Type", "application/json");
-    uvhttp_response_set_header(res, "X-Powered-By", "UVHTTP/2.7.1");
+
+
     
     // Set response body
     const char* body = "{\"message\":\"Hello from UVHTTP\",\"version\":\"2.7.1\"}";
-    uvhttp_response_set_body(res, body, strlen(body));
+
     
     // Send response
-    return uvhttp_response_send(res);
+    return uvhttp_respond_with_headers(res, 200, (uvhttp_header_view_t[]){{"Content-Type", "application/json"}, {"X-Powered-By", "UVHTTP/2.7.1"}}, 2, body, strlen(body));
 }
 
 int main() {

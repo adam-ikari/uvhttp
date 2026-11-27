@@ -29,7 +29,7 @@ The Static File module serves static files from a root directory via HTTP. It pr
 - **Signature**: `uvhttp_result_t uvhttp_static_handle_request(uvhttp_static_context_t* ctx, void* request, void* response)`
 - **Purpose**: Handle an HTTP request by serving a static file
 - **Preconditions**: `ctx` must be valid. `request` and `response` must be valid `uvhttp_request_t`/`uvhttp_response_t` pointers.
-- **Postconditions**: On success, the file is served with appropriate headers. The response is sent via `uvhttp_response_send`. On failure, an appropriate HTTP status is set on the response.
+- **Postconditions**: On success, the file is served with appropriate headers. The response is sent by the library send path after the handler returns. On failure, an appropriate HTTP status is set on the response.
 - **Error conditions**:
   - `UVHTTP_ERROR_INVALID_PARAM`: any argument is NULL
   - `UVHTTP_ERROR_MALFORMED_REQUEST`: URL is NULL

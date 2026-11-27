@@ -57,9 +57,13 @@ protected:
     }
 
     // Mock ownership transfer callback
-    static void mock_ownership_callback(uv_tcp_t* tcp_handle, int fd, void* user_data) {
+    static void mock_ownership_callback(uv_tcp_t* tcp_handle, int fd,
+                                        const char* buffered,
+                                        size_t buffered_len, void* user_data) {
         (void)tcp_handle;
         (void)fd;
+        (void)buffered;
+        (void)buffered_len;
         (void)user_data;
     }
 

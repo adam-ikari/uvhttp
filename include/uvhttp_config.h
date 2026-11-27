@@ -59,6 +59,10 @@ typedef struct {
                                   performance and reliability */
     int sendfile_max_retry;    /* sendfile maximum retry count, default 3 times,
                                   empirical value */
+
+    /* Backpressure: pause reads while the pending write queue reaches this
+     * many bytes. 0 disables. Read by on_read / write completion. */
+    size_t write_queue_high_water;
 } uvhttp_config_t;
 
 /* Every field above is read by at least one execution path: these are the

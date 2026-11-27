@@ -2,8 +2,10 @@
 
 ## Overview
 
-The Config module holds server configuration options. Configuration lives at
-the server level and can be shared across server instances.
+The Config module holds server configuration options. As of 3.1.x configuration
+lives on the server's context, installed with `uvhttp_server_take_config()` and
+read with `uvhttp_server_get_config()`. There is no second config channel on
+`uvhttp_server_t`.
 
 ## Interfaces
 

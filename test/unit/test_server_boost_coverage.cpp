@@ -10,6 +10,7 @@
  */
 
 #include <gtest/gtest.h>
+#include "uvhttp_response_internal.h"
 
 extern "C" {
 #include "uvhttp_allocator.h"
@@ -28,13 +29,6 @@ extern "C" {
 #include <thread>
 #include <time.h>
 #include <unistd.h>
-
-// Declaration not in any public header - defined in uvhttp_server.c
-extern "C" {
-uvhttp_error_t uvhttp_server_set_timeout_callback(
-    uvhttp_server_t* server, uvhttp_timeout_callback_t callback,
-    void* user_data);
-}
 
 // ============================================================================
 // Helper: dummy request handler for builder API tests
@@ -872,11 +866,6 @@ TEST_F(WsDisableMgmtTest, WsDisableMgmt_NoManager) {
 // ============================================================================
 #if UVHTTP_FEATURE_TLS
 
-// Declaration not in any public header - defined in uvhttp_server.c
-extern "C" {
-int uvhttp_server_is_tls_enabled(uvhttp_server_t* server);
-}
-
 class TlsBoostTest : public ::testing::Test {
    protected:
     uv_loop_t loop{};
@@ -1180,14 +1169,17 @@ TEST_F(OnConnectionTest, NormalConnectionAcceptance) {
 // Test 2: Max connections reached - 503 response path
 // Exercises on_connection lines 105-163
 TEST_F(OnConnectionTest, MaxConnectionsReached_503Response) {
-    // Create a config with max_connections = 0 to trigger 503 immediately
+    // Use a valid limit of 1 and pre-fill the counter to reach it. Setting
+    // max_connections=0 used to be a shortcut, but the validator (now wired
+    // into listen) correctly rejects it: 0 is not a documented setting.
     uvhttp_config_t* config = nullptr;
     uvhttp_error_t cerr = uvhttp_config_new(&config);
     ASSERT_EQ(cerr, UVHTTP_OK);
     ASSERT_NE(config, nullptr);
-    config->max_connections = 0;
+    config->max_connections = 1;
+    server->active_connections = 1;
     // Assign config to server - server_free will free it
-    server->config = config;
+    ASSERT_EQ(uvhttp_server_take_config(server, config), UVHTTP_OK);
 
     // Listen on port 0
     uvhttp_error_t err = uvhttp_server_listen(server, "127.0.0.1", 0);
@@ -1219,14 +1211,15 @@ TEST_F(OnConnectionTest, MaxConnectionsReached_503Response) {
     // and write callback
     pump_loop(&loop, 100);
 
-    // active_connections should still be 0 (normal path was not taken)
-    EXPECT_EQ(server->active_connections, (size_t)0);
+    // active_connections stays at the seeded value: the normal increase path
+    // was not taken (the 503 branch returns before incrementing).
+    EXPECT_EQ(server->active_connections, (size_t)1);
 
     // Close client handle and drain the loop
     uv_close((uv_handle_t*)&client, test_on_close);
     pump_loop(&loop, 100);
 
-    // Leave server->config set: uvhttp_server_new does not allocate a config
+    // The config is owned by the server context; server_free releases it
     // (it starts NULL), so the config we assigned at line 1707 is the sole one
     // and is owned by the server. TearDown's uvhttp_server_free will free it.
     // (Nulling it here, as the old code did, leaks the config.)
@@ -1559,9 +1552,8 @@ TEST_F(TcpHttpCycleTest, SendResponseData_DirectCall_WithRealConnection) {
 }
 
 // ============================================================================
-// Keepalive=0 path in response_send_raw (lines 749-753 in response.c)
-// When response->keepalive is 0, after uv_write succeeds, the code sets
-// conn->keepalive = 0 on the underlying connection.
+// Keepalive=0 path in response_send_raw: when response->keepalive is 0,
+// after uv_write succeeds the connection is closed rather than resumed.
 // ============================================================================
 
 // Handler that explicitly sets response->keepalive = 0 before sending.

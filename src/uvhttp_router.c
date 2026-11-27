@@ -1,4 +1,5 @@
 #if !UVHTTP_FEATURE_ROUTER_CACHE
+#    include "uvhttp_response_internal.h"
 #    include "uvhttp_router.h"
 
 #    include "uvhttp_allocator.h"

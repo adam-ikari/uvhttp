@@ -116,15 +116,15 @@ TEST_F(UvhttpConnectionMockTest, ServerListenListenFails) {
  * uv_run / uv_loop_close.
  */
 TEST_F(UvhttpConnectionMockTest, ConnectionLimitAcceptFailClosesTempClient) {
-    /* Force the 503 path: max_connections = 0 so a single new connection
-     * already exceeds the limit. The config is owned by the server (freed by
-     * uvhttp_server_free in TearDown). */
+    /* Force the 503 path with a valid limit of 1 and a pre-filled counter.
+     * 0 is rejected by uvhttp_config_validate at listen time. */
     uvhttp_config_t* config = nullptr;
     uvhttp_error_t cerr = uvhttp_config_new(&config);
     ASSERT_EQ(cerr, UVHTTP_OK);
     ASSERT_NE(config, nullptr);
-    config->max_connections = 0;
-    server->config = config;
+    config->max_connections = 1;
+    server->active_connections = 1;
+    ASSERT_EQ(uvhttp_server_take_config(server, config), UVHTTP_OK);
 
     /* Listen so uv_listen registers on_connection as the connection callback */
     uvhttp_error_t err = uvhttp_server_listen(server, "127.0.0.1", 0);
@@ -153,7 +153,7 @@ TEST_F(UvhttpConnectionMockTest, ConnectionLimitAcceptFailClosesTempClient) {
  * never entered.
  */
 TEST_F(UvhttpConnectionMockTest, ServerMaxConnectionsFieldIsAuthoritative) {
-    /* No server->config: on_connection must fall back to
+    /* No installed config: on_connection must fall back to
      * server->max_connections. Setting it to 0 forces the 503 path (a single
      * new connection exceeds it). */
     server->max_connections = 0;

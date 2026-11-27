@@ -39,10 +39,7 @@ void signal_handler(int sig) {
 int static_file_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     int result = uvhttp_static_handle_request(g_static_ctx, request, response);
     if (result != UVHTTP_OK) {
-        uvhttp_response_set_status(response, 404);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, "Not Found", 9);
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 404, "text/plain", "Not Found", 9);
     }
     return result;
 }

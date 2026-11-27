@@ -4,6 +4,7 @@
 #include "uvhttp_common.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_response.h"
+#include "uvhttp_response_internal.h"
 
 #include <arpa/inet.h>
 #include <ctype.h>

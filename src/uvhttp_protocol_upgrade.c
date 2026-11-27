@@ -210,8 +210,45 @@ uvhttp_error_t uvhttp_connection_transfer_ownership(
     /* Mark connection as upgraded */
     conn->state = UVHTTP_CONN_STATE_PROTOCOL_UPGRADED;
 
+    /* Remove from the server's live registry: after this point the external
+     * protocol owns the fd/handle. Leaving it registered made server_stop /
+     * server_free uv_close a handle the new owner is using. Do not free the
+     * connection struct itself here — its handles still need a normal close
+     * path; the unlink alone removes the server's claim. */
+    if (conn->server) {
+        /* accept() incremented the counter; the connection's close callback
+         * will no longer find conn->server, so balance it here exactly once. */
+        if (conn->counted_by_accept) {
+            if (conn->server->active_connections > 0) {
+                conn->server->active_connections--;
+            }
+            conn->counted_by_accept = 0;
+        }
+        uvhttp_connection_unlink_registry(conn);
+    }
+    conn->server = NULL;
+
+    /* Hand over any bytes that arrived after the upgrade request headers in
+     * the same read window. on_read clears read_buffer_used unconditionally,
+     * so without this the new owner never sees the first protocol frame.
+     * Locate the header terminator; the remainder is the protocol payload. */
+    const char* buffered = NULL;
+    size_t buffered_len = 0;
+    if (conn->read_buffer && conn->read_buffer_used >= 4) {
+        for (size_t i = 0; i + 4 <= conn->read_buffer_used; ++i) {
+            if (memcmp(conn->read_buffer + i, "\r\n\r\n", 4) == 0) {
+                size_t start = i + 4;
+                if (start < conn->read_buffer_used) {
+                    buffered = conn->read_buffer + start;
+                    buffered_len = conn->read_buffer_used - start;
+                }
+                break;
+            }
+        }
+    }
+
     /* Call callback to transfer ownership */
-    callback(&conn->tcp_handle, fd, user_data);
+    callback(&conn->tcp_handle, fd, buffered, buffered_len, user_data);
 
     UVHTTP_LOG_DEBUG("Connection ownership transferred, fd=%d", fd);
 

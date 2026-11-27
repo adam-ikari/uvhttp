@@ -3,48 +3,45 @@
  * @brief 编译时零开销中间件系统
  *
  * 设计哲学：
- * - 编译时宏展开，无运行时注册/查找开销
- * - 短路语义：中间件返回 STOP 立即中断链
- * - 共享上下文：所有中间件共享同一个 context
- * - 运行时中间件由用户自行实现
+ * - 链在编译期展开为静态数组，无运行时注册/查找开销
+ * - 共享上下文：链内中间件共享同一个 context，链末统一清理
+ * - 短路语义分两层，调用方必须按用途选对：
+ *     - UVHTTP_EXECUTE_MIDDLEWARE / _CHAIN：只执行链，返回 CONTINUE/STOP。
+ *       STOP 只停止链内后续中间件，**不会**跳出 handler 函数体。用于日志、
+ *       计时这类即使 STOP 也无害的中间件。
+ *     - UVHTTP_MIDDLEWARE_GUARD / _CHAIN_GUARD：在前者基础上，STOP 时发送
+ *       当前响应并 `return UVHTTP_OK`，handler 体的副作用真正不发生。用于
+ *       鉴权、限流、计费这类必须拦住的策略点。
+ *   「STOP 不短路 handler 体」曾是本模块的已知缺陷；守卫宏是修复形态。
  *
  * 核心宏：
  * - UVHTTP_EXECUTE_MIDDLEWARE(req, resp, mw1, mw2, ...)
- *     内联执行中间件链，每个中间件按序调用
- *     任一返回 STOP 则跳过后续中间件
- *
+ *     内联执行中间件链，表达式值为 CONTINUE(0) / STOP(1)
+ * - UVHTTP_MIDDLEWARE_GUARD(req, resp, mw1, mw2, ...)
+ *     鉴权式执行：STOP 时发响应并立即返回，必须在返回 int 的 handler 体内用
  * - UVHTTP_DEFINE_MIDDLEWARE_CHAIN(name, mw1, mw2, ...)
  *     定义可复用的中间件链（静态数组）
- *
- * - UVHTTP_EXECUTE_MIDDLEWARE_CHAIN(req, resp, chain)
- *     执行预定义的中间件链
- *
+ * - UVHTTP_EXECUTE_MIDDLEWARE_CHAIN / UVHTTP_MIDDLEWARE_CHAIN_GUARD
+ *     预定义链对应的执行 / 守卫版本
  * - UVHTTP_DEFINE_MIDDLEWARE_HANDLER(handler)
  *     将路由处理器包装为中间件（返回 0 = CONTINUE，非 0 = STOP）
  *
  * 用法示例：
  * @code
  *   int my_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
- *       UVHTTP_EXECUTE_MIDDLEWARE(req, resp,
- *           auth_middleware,
- *           logging_middleware);
- *       // ... 处理请求 ...
- *       return 0;
+ *       UVHTTP_MIDDLEWARE_GUARD(req, resp, auth_middleware);
+ *       // auth 返回 STOP 时，上面这行直接 return，下面不会执行
+ *       UVHTTP_EXECUTE_MIDDLEWARE(req, resp, logging_middleware);
+ *       uvhttp_response_prepare(resp, 200, NULL, 0, NULL, 0);
+ *       ...
  *   }
- *
- *   // 定义可复用链
- *   UVHTTP_DEFINE_MIDDLEWARE_CHAIN(api_chain,
- *       auth_middleware,
- *       rate_limit_middleware,
- *       logging_middleware);
- *
- *   // 执行链
- *   UVHTTP_EXECUTE_MIDDLEWARE_CHAIN(req, resp, api_chain);
  * @endcode
  */
 
 #ifndef UVHTTP_MIDDLEWARE_H
 #define UVHTTP_MIDDLEWARE_H
+
+#include <stddef.h>
 
 #include "uvhttp_common.h"
 #include "uvhttp_request.h"
@@ -69,38 +66,73 @@ typedef int (*uvhttp_middleware_handler_t)(uvhttp_request_t* request,
                                            uvhttp_response_t* response,
                                            uvhttp_middleware_context_t* ctx);
 
-/* Execute middleware chain */
-#define _UVHTTP_MW_EXECUTE_IMPL_(counter, req, resp, ...)                    \
+/*
+ * 链执行器：链内共享一个 context，正常走完或因 STOP 中断都恰好清理一次。
+ * 返回 UVHTTP_MIDDLEWARE_CONTINUE(0) 或 UVHTTP_MIDDLEWARE_STOP(1)。
+ */
+static inline int uvhttp_middleware_run(
+    const uvhttp_middleware_handler_t* handlers, size_t count,
+    uvhttp_request_t* request, uvhttp_response_t* response) {
+    uvhttp_middleware_context_t ctx = {0, NULL};
+    for (size_t i = 0; i < count; ++i) {
+        if (handlers[i] != NULL &&
+            handlers[i](request, response, &ctx) != UVHTTP_MIDDLEWARE_CONTINUE) {
+            if (ctx.cleanup) {
+                ctx.cleanup(ctx.data);
+            }
+            return UVHTTP_MIDDLEWARE_STOP;
+        }
+    }
+    if (ctx.cleanup) {
+        ctx.cleanup(ctx.data);
+    }
+    return UVHTTP_MIDDLEWARE_CONTINUE;
+}
+
+/*
+ * Inline chains keep their handler array in a call-site-unique static const
+ * object instead of a compound literal. A compound literal is valid C99 but
+ * a GNU extension in C++, which broke -pedantic C++ consumers of this public
+ * header. The array lives in .rodata; no runtime allocation or copy.
+ */
+#define _UVHTTP_MW_RUN(counter, req, resp, ...)                              \
     do {                                                                     \
-        static const uvhttp_middleware_handler_t                             \
-            _uvhttp_mw_handlers_##counter[] = {__VA_ARGS__};                 \
-        uvhttp_middleware_context_t _uvhttp_mw_ctx_##counter = {0};          \
-        for (size_t _uvhttp_mw_i = 0;                                        \
-             _uvhttp_mw_i < sizeof(_uvhttp_mw_handlers_##counter) /          \
-                                sizeof(_uvhttp_mw_handlers_##counter[0]);    \
-             _uvhttp_mw_i++) {                                               \
-            if (_uvhttp_mw_handlers_##counter[_uvhttp_mw_i] &&               \
-                _uvhttp_mw_handlers_##counter[_uvhttp_mw_i](                 \
-                    req, resp, &_uvhttp_mw_ctx_##counter) !=                 \
-                    UVHTTP_MIDDLEWARE_CONTINUE) {                            \
-                goto _uvhttp_mw_stop_##counter;                              \
-            }                                                                \
-        }                                                                    \
-        if (_uvhttp_mw_ctx_##counter.cleanup) {                              \
-            _uvhttp_mw_ctx_##counter.cleanup(_uvhttp_mw_ctx_##counter.data); \
-        }                                                                    \
-        goto _uvhttp_mw_done_##counter;                                      \
-        _uvhttp_mw_stop_##counter : if (_uvhttp_mw_ctx_##counter.cleanup) {  \
-            _uvhttp_mw_ctx_##counter.cleanup(_uvhttp_mw_ctx_##counter.data); \
-        }                                                                    \
-        _uvhttp_mw_done_##counter :;                                         \
+        static const uvhttp_middleware_handler_t _mw_handlers_##counter[] =  \
+            {__VA_ARGS__};                                                   \
+        (void)uvhttp_middleware_run(_mw_handlers_##counter,                  \
+                                    sizeof(_mw_handlers_##counter) /         \
+                                        sizeof(_mw_handlers_##counter[0]),   \
+                                    (req), (resp));                          \
     } while (0)
 
-#define _UVHTTP_MW_EXECUTE_IMPL(counter, req, resp, ...) \
-    _UVHTTP_MW_EXECUTE_IMPL_(counter, req, resp, __VA_ARGS__)
-
 #define UVHTTP_EXECUTE_MIDDLEWARE(req, resp, ...) \
-    _UVHTTP_MW_EXECUTE_IMPL(__COUNTER__, req, resp, __VA_ARGS__)
+    _UVHTTP_MW_RUN(__COUNTER__, req, resp, __VA_ARGS__)
+
+/*
+ * 守卫版本：STOP 时原子地发送中间件已设置好的状态/头部/响应体，并立即从
+ * handler 返回。发送走公共 uvhttp_respond：读回响应里已经准备好的字段，
+ * 因此中间件应当用 uvhttp_response_prepare 写入，而不是逐步 setter。
+ * handler 返回类型必须是 int（库的标准 handler 签名），否则不要用本宏。
+ */
+#define _UVHTTP_MW_GUARD(counter, req, resp, ...)                            \
+    do {                                                                     \
+        static const uvhttp_middleware_handler_t _mw_guard_##counter[] =     \
+            {__VA_ARGS__};                                                   \
+        if (uvhttp_middleware_run(_mw_guard_##counter,                       \
+                                  sizeof(_mw_guard_##counter) /              \
+                                      sizeof(_mw_guard_##counter[0]),        \
+                                  (req), (resp)) !=                          \
+            UVHTTP_MIDDLEWARE_CONTINUE) {                                    \
+            if (resp) {                                                       \
+                uvhttp_respond((resp), (resp)->status_code, NULL,             \
+                               (resp)->body, (resp)->body_length);           \
+            }                                                                 \
+            return UVHTTP_OK;                                                \
+        }                                                                    \
+    } while (0)
+
+#define UVHTTP_MIDDLEWARE_GUARD(req, resp, ...) \
+    _UVHTTP_MW_GUARD(__COUNTER__, req, resp, __VA_ARGS__)
 
 /* Define middleware chain (for reuse) */
 #define UVHTTP_DEFINE_MIDDLEWARE_CHAIN(name, ...)                  \
@@ -109,34 +141,19 @@ typedef int (*uvhttp_middleware_handler_t)(uvhttp_request_t* request,
     static const size_t name##_count =                             \
         sizeof(name##_handlers) / sizeof(name##_handlers[0])
 
-/* Execute predefined middleware chain */
-#define _UVHTTP_MW_CHAIN_IMPL_(counter, req, resp, name)                     \
+#define UVHTTP_EXECUTE_MIDDLEWARE_CHAIN(req, resp, name)     uvhttp_middleware_run((name##_handlers), (name##_count), (req), (resp))
+
+#define UVHTTP_MIDDLEWARE_CHAIN_GUARD(req, resp, name)                        \
     do {                                                                     \
-        uvhttp_middleware_context_t _uvhttp_mw_ctx_##counter = {0};          \
-        for (size_t _uvhttp_mw_i = 0; _uvhttp_mw_i < name##_count;           \
-             _uvhttp_mw_i++) {                                               \
-            if (name##_handlers[_uvhttp_mw_i] &&                             \
-                name##_handlers[_uvhttp_mw_i](req, resp,                     \
-                                              &_uvhttp_mw_ctx_##counter) !=  \
-                    UVHTTP_MIDDLEWARE_CONTINUE) {                            \
-                goto _uvhttp_mw_stop_##counter;                              \
-            }                                                                \
+        if (UVHTTP_EXECUTE_MIDDLEWARE_CHAIN((req), (resp), name) !=           \
+            UVHTTP_MIDDLEWARE_CONTINUE) {                                    \
+            if (resp) {                                                       \
+                uvhttp_respond((resp), (resp)->status_code, NULL,             \
+                               (resp)->body, (resp)->body_length);           \
+            }                                                                 \
+            return UVHTTP_OK;                                                \
         }                                                                    \
-        if (_uvhttp_mw_ctx_##counter.cleanup) {                              \
-            _uvhttp_mw_ctx_##counter.cleanup(_uvhttp_mw_ctx_##counter.data); \
-        }                                                                    \
-        goto _uvhttp_mw_done_##counter;                                      \
-        _uvhttp_mw_stop_##counter : if (_uvhttp_mw_ctx_##counter.cleanup) {  \
-            _uvhttp_mw_ctx_##counter.cleanup(_uvhttp_mw_ctx_##counter.data); \
-        }                                                                    \
-        _uvhttp_mw_done_##counter :;                                         \
     } while (0)
-
-#define _UVHTTP_MW_CHAIN_IMPL(counter, req, resp, name) \
-    _UVHTTP_MW_CHAIN_IMPL_(counter, req, resp, name)
-
-#define UVHTTP_EXECUTE_MIDDLEWARE_CHAIN(req, resp, name) \
-    _UVHTTP_MW_CHAIN_IMPL(__COUNTER__, req, resp, name)
 
 /**
  * UVHTTP_MIDDLEWARE_HANDLER(handler)

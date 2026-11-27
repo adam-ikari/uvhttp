@@ -58,18 +58,18 @@ int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     (void)req;  // 未使用的参数
 
     // 1. 设置 HTTP 状态码
-    uvhttp_response_set_status(res, 200);
+    
 
     // 2. 设置响应头
-    uvhttp_response_set_header(res, "Content-Type", "text/plain; charset=utf-8");
-    uvhttp_response_set_header(res, "Server", "UVHTTP/1.0");
+    
+    
 
     // 3. 设置响应体
     const char* body = "Hello, World! Welcome to UVHTTP.\n";
-    uvhttp_response_set_body(res, body, strlen(body));
+    
 
     // 4. 发送响应
-    return uvhttp_response_send(res);
+    return uvhttp_respond_with_headers(res, 200, (uvhttp_header_view_t[]){{"Content-Type", "text/plain; charset=utf-8"}, {"Server", "UVHTTP/1.0"}}, 2, body, strlen(body));
 }
 
 /**

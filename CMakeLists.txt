@@ -72,10 +72,11 @@ option(ENABLE_FASTER_MATH "Enable faster math optimizations" OFF)
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
 option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
+option(ENABLE_ASYNC_STOP "Enable cross-thread stop wakeup (adds uv_async_t per server)" OFF)
 
 # Logging is a compile-time switch owned by ENABLE_DEV_MODE/ENABLE_DEBUG:
 # uvhttp_logging.h compiles log macros to no-ops unless UVHTTP_FEATURE_LOGGING
-# is 1. There is no per-level switch.
+# is 1. There is no runtime sink (see PHILOSOPHY §7 "No global variables").
 
 # ========== Security Options ==========
 # These options enable security hardening features
@@ -442,7 +443,7 @@ if(ENABLE_DEV_MODE)
     add_definitions(-DUVHTTP_FEATURE_LOGGING=1)
     message(STATUS "Development mode: ENABLED (logging enabled)")
 else()
-    # Production mode - disable logging for performance (unless DEBUG build)
+    # Production builds compile log sites to no-ops: zero runtime cost.
     if(ENABLE_DEBUG)
         add_definitions(-DUVHTTP_FEATURE_LOGGING=1)
         message(STATUS "Development mode: DISABLED (logging enabled for DEBUG build)")
@@ -504,6 +505,12 @@ if(ENABLE_DEV_MODE OR ENABLE_DEBUG)
 else()
     set(UVHTTP_FEATURE_LOGGING_VALUE 0)
 endif()
+if(ENABLE_ASYNC_STOP)
+    set(UVHTTP_FEATURE_ASYNC_STOP_VALUE 1)
+else()
+    set(UVHTTP_FEATURE_ASYNC_STOP_VALUE 0)
+endif()
+add_definitions(-DUVHTTP_FEATURE_ASYNC_STOP=${UVHTTP_FEATURE_ASYNC_STOP_VALUE})
 
 # ============================================================================
 # Include dependency build configuration
@@ -624,6 +631,7 @@ target_compile_definitions(uvhttp PUBLIC
     UVHTTP_FEATURE_ROUTER_CACHE=${UVHTTP_FEATURE_ROUTER_CACHE_VALUE}
     UVHTTP_FEATURE_COMPRESSION=${UVHTTP_FEATURE_COMPRESSION_VALUE}
     UVHTTP_FEATURE_LOGGING=${UVHTTP_FEATURE_LOGGING_VALUE}
+    UVHTTP_FEATURE_ASYNC_STOP=${UVHTTP_FEATURE_ASYNC_STOP_VALUE}
     UVHTTP_ALLOCATOR_TYPE=${UVHTTP_ALLOCATOR_TYPE}
     UVHTTP_MAX_HEADER_NAME_SIZE=${UVHTTP_MAX_HEADER_NAME_SIZE}
     UVHTTP_MAX_HEADER_VALUE_SIZE=${UVHTTP_MAX_HEADER_VALUE_SIZE}
@@ -704,6 +712,14 @@ set(UVHTTP_ENABLED_TEST_TARGETS "")
 foreach(test_file ${GTEST_TEST_FILES})
     get_filename_component(test_name ${test_file} NAME_WE)
 
+    # sendfile wire tests have no cases when static files are off; registering
+    # the empty binary would silently inflate the CTest pass count.
+    if(${test_name} MATCHES ".*static_sendfile.*")
+        if(NOT BUILD_WITH_STATIC_FILES)
+            continue()
+        endif()
+    endif()
+
     # WebSocket-related tests require WebSocket support
     if(${test_name} STREQUAL "test_connection_api_coverage" OR ${test_name} STREQUAL "test_connection_enhanced_coverage" OR ${test_name} STREQUAL "test_connection_full_api_coverage" OR ${test_name} STREQUAL "test_connection_missing_coverage" OR ${test_name} STREQUAL "test_server_missing_coverage")
         if(NOT BUILD_WITH_WEBSOCKET)
@@ -752,6 +768,14 @@ foreach(test_file ${GTEST_TEST_FILES})
         endif()
     endif()
 
+    # sendfile wire tests have no cases when static files are off; registering
+    # the empty binary would silently inflate the CTest pass count.
+    if(${test_name} MATCHES ".*static_sendfile.*")
+        if(NOT BUILD_WITH_STATIC_FILES)
+            continue()
+        endif()
+    endif()
+
     # WebSocket-related tests require WebSocket support
     if(${test_name} MATCHES ".*websocket.*")
         if(NOT BUILD_WITH_WEBSOCKET)
@@ -786,6 +810,7 @@ foreach(test_file ${GTEST_TEST_FILES})
     
     # Common include directories
     target_include_directories(${test_name} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
@@ -874,6 +899,7 @@ foreach(test_file ${MOCK_TEST_FILES})
     target_compile_definitions(${test_name} PRIVATE UVHTTP_FEATURE_STATISTICS=1)
     
     target_include_directories(${test_name} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/libuv/include
@@ -903,7 +929,7 @@ endif()
 target_compile_options(uvhttp_unit_tests PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
 # Link googletest first, then LIBS (gmock_main depends on gtest)
 target_link_libraries(uvhttp_unit_tests ${GTEST_LIBS} ${LIBS})
-target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/include)
+target_include_directories(uvhttp_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googletest/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/googletest/googlemock/include ${CMAKE_CURRENT_SOURCE_DIR}/deps/llhttp/include)
 
 # Add mimalloc include directory if using mimalloc
 if(BUILD_WITH_MIMALLOC)
@@ -942,6 +968,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test/test_stress.c)
         add_dependencies(test_stress mimalloc)
     endif()
     target_compile_options(test_stress PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+    target_include_directories(test_stress PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
     target_link_libraries(test_stress ${LIBS})
 endif()
 
@@ -1028,6 +1055,14 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
         endif()
     endif()
 
+    # sendfile wire tests have no cases when static files are off; registering
+    # the empty binary would silently inflate the CTest pass count.
+    if(${test_name} MATCHES ".*static_sendfile.*")
+        if(NOT BUILD_WITH_STATIC_FILES)
+            continue()
+        endif()
+    endif()
+
     # WebSocket-related tests require WebSocket support
     if(${test_name} MATCHES ".*websocket.*")
         if(NOT BUILD_WITH_WEBSOCKET)
@@ -1046,6 +1081,7 @@ foreach(test_file ${INTEGRATION_TEST_FILES})
     endif()
 
     target_compile_options(${test_name} PRIVATE -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=unused-function)
+    target_include_directories(${test_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
     target_link_libraries(${test_name} ${LIBS})
     
     # Add mimalloc include directory if using mimalloc

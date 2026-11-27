@@ -104,13 +104,6 @@ TEST(UvhttpConnectionLifecycleTest, ConnectionFlags) {
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
 
-    /* Test keepalive Flag */
-    conn->keepalive = 1;
-    EXPECT_EQ(conn->keepalive, 1);
-
-    conn->keepalive = 0;
-    EXPECT_EQ(conn->keepalive, 0);
-
     /* Test分块编码Flag */
     conn->chunked_encoding = 1;
     EXPECT_EQ(conn->chunked_encoding, 1);
@@ -356,7 +349,6 @@ TEST(UvhttpConnectionLifecycleTest, EdgeCases) {
     conn->body_received = SIZE_MAX;
 
     /* Test负值（如果允许） */
-    conn->keepalive = -1;
     conn->chunked_encoding = -1;
     conn->parsing_complete = -1;
 

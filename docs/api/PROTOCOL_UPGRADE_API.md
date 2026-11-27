@@ -101,9 +101,11 @@ uvhttp_error_t ipps_upgrade_handler(uvhttp_connection_t* conn,
                                      const char* protocol_name,
                                      void* user_data) {
     // 发送 101 响应
-    uvhttp_response_set_status(conn->response, 101);
-    uvhttp_response_set_header(conn->response, "Upgrade", "ipps");
-    uvhttp_response_send(conn->response);
+    uvhttp_respond_with_headers(
+        conn->response, 101,
+        (uvhttp_header_view_t[]){{"Upgrade", "ipps"},
+                                 {"Connection", "Upgrade"}},
+        2, NULL, 0);
     
     // 转移连接所有权
     uvhttp_connection_transfer_ownership(conn, on_transfer_to_ipps, user_data);
@@ -417,10 +419,10 @@ uvhttp_error_t ipps_upgrade_handler(uvhttp_connection_t* conn,
     ipps_context_t* ctx = (ipps_context_t*)user_data;
     
     // 1. 发送 101 Switching Protocols 响应
-    uvhttp_response_set_status(conn->response, 101);
-    uvhttp_response_set_header(conn->response, "Upgrade", "ipps");
-    uvhttp_response_set_header(conn->response, "Connection", "Upgrade");
-    uvhttp_response_send(conn->response);
+
+
+
+    uvhttp_respond_with_headers(conn->response, 101, (uvhttp_header_view_t[]){{"Upgrade", "ipps"}, {"Connection", "Upgrade"}}, 2, NULL, 0);
     
     // 2. 转移连接所有权
     uvhttp_error_t result = uvhttp_connection_transfer_ownership(
@@ -467,10 +469,10 @@ void on_ipps_connection_close(void* user_data) {
 
 // HTTP 请求处理器（用于普通 HTTP 请求）
 int http_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, "Hello from HTTP", 17);
-    return uvhttp_response_send(response);
+
+
+
+    return uvhttp_respond(response, 200, "text/plain", "Hello from HTTP", 17);
 }
 
 int main() {

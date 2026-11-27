@@ -2,11 +2,11 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-2.8.1-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-3.1.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
-![Tests](https://img.shields.io/badge/tests-101%2F101%20passing-success.svg)
+![Tests](https://img.shields.io/badge/tests-135%2F135%20passing-success.svg)
 [![ASan](https://img.shields.io/badge/ASan-clean-success.svg)](https://github.com/adam-ikari/uvhttp/actions/workflows/ci-nightly.yml)
 [![UBSan](https://img.shields.io/badge/UBSan-clean-success.svg)](https://github.com/adam-ikari/uvhttp/actions/workflows/ci-nightly.yml)
 ![Performance](https://img.shields.io/badge/performance-~83K%20RPS%20(CI)-brightgreen.svg)
@@ -21,7 +21,7 @@
 
 UVHTTP 是一个基于 libuv 的生产级事件驱动 HTTP 服务器库，专为现代 C 应用设计。它在极低资源消耗下提供卓越性能，既适用于高性能服务器，也适用于嵌入式系统。
 
-### 关键指标 (v2.8.1, GitHub CI 基准)
+### 关键指标 (v3.1.1, GitHub CI 基准)
 
 性能基准在 **GitHub Actions `ubuntu-latest` runner** 上测量，以确保硬件一致性。此前的本地基准（v2.6.x，约 20K RPS）在开发者硬件上测量，受 CPU 热降频影响方差高达 40%+。CI runner 消除了这一方差（CV 0.4–2.4%），提供了权威的、可复现的基线。
 
@@ -33,7 +33,7 @@ UVHTTP 是一个基于 libuv 的生产级事件驱动 HTTP 服务器库，专为
 | **API 路由** | 81K RPS | JSON 端点 |
 | **平均延迟** | ~117µs | P50，10 连接 |
 | **错误率** | 0% | 负载下零 socket 错误（10 连接） |
-| **测试套件** | 101/101 通过 | ASan + UBSan 验证通过 |
+| **测试套件** | 135/135 通过 | ASan + UBSan 验证通过 |
 
 ## 🌍 平台支持
 
@@ -206,45 +206,22 @@ cmake -DCMAKE_C_FLAGS="-m32" ..
 
 // 请求处理函数
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/plain");
-    uvhttp_response_set_body(res, "Hello from UVHTTP v2.8.1!", strlen("Hello from UVHTTP v2.8.1!"));
-    return uvhttp_response_send(res);
+    (void)req;
+    /* 一次原子调用：校验 status/type/body 后直接发送。 */
+    return uvhttp_respond(res, 200, "text/plain", "Hello from UVHTTP v3.1.1!", 24);
 }
 
 int main() {
     // 创建事件循环
     uv_loop_t* loop = uv_default_loop();
 
-    // 创建服务器（输出参数 + 错误码）
+    // 一次原子调用：创建 server + router + 路由，然后开始监听。
+    // 任一步失败时 *server 保持 NULL，无需手写回滚，也不存在 router
+    // 所有权何时转移的歧义。
+    uvhttp_route_t routes[] = {{"/hello", UVHTTP_ANY, hello_handler}};
     uvhttp_server_t* server = NULL;
-    uvhttp_error_t result = uvhttp_server_new(loop, &server);
-    if (result != UVHTTP_OK) {
-        fprintf(stderr, "创建服务器失败: %s\n", uvhttp_error_string(result));
-        return 1;
-    }
-
-    // 创建路由器并挂载到服务器
-    uvhttp_router_t* router = NULL;
-    result = uvhttp_router_new(&router);
-    if (result != UVHTTP_OK) {
-        fprintf(stderr, "创建路由器失败: %s\n", uvhttp_error_string(result));
-        return 1;
-    }
-    // 把 router 交给服务器；从此刻起服务器持有它，并在 uvhttp_server_free
-    // 中释放（v3.0.0：由 uvhttp_server_set_router 改名而来——旧名字暗示借用，
-    // 而行为一直是所有权转移）
-    uvhttp_server_take_router(server, router);
-
-    // 添加路由
-    result = uvhttp_router_add_route(router, "/hello", hello_handler);
-    if (result != UVHTTP_OK) {
-        fprintf(stderr, "添加路由失败: %s\n", uvhttp_error_string(result));
-        return 1;
-    }
-
-    // 启动服务器
-    result = uvhttp_server_listen(server, "0.0.0.0", 8080);
+    uvhttp_error_t result = uvhttp_server_listen_routes(
+        loop, routes, 1, "0.0.0.0", 8080, &server);
     if (result != UVHTTP_OK) {
         fprintf(stderr, "服务器启动失败: %s\n", uvhttp_error_string(result));
         return 1;
@@ -492,7 +469,7 @@ UVHTTP 基于以下优秀的开源项目构建：
 - [x] TLS EINTR 重试、If-None-Match weak/多值 ETag、目录列表 TOCTOU 修复
 - [x] 默认不信任 X-Forwarded-For（`trust_proxy_headers` 可选开启）、listen 参数校验、`server_stop` 幂等
 
-### v2.8.1（已发布 2026-09-29）
+### v3.1.1（已发布 2026-09-29）
 - [x] 零拷贝 writev 增加 `UVHTTP_ZEROCOPY_MIN_BODY` 阈值（默认 4096）——小响应回到拷贝路径（`/` +23.4%、`/json` +27.6%，`/large` 增益不变）（PR #387）
 - [x] 基准回归门禁改为同机配对比较（head 18081 vs base 18082，10 轮交替，比值中位数 + 多数规则）；绝对 RPS 基线降级为报告信息（PR #388）
 
@@ -503,18 +480,32 @@ UVHTTP 基于以下优秀的开源项目构建：
 - [x] 基准测试覆盖 SSE / 流式 / WebSocket（PR #379）
 - [x] `BUILD_TESTS` 编译选项、真实 PR 门禁、examples 纳入 CI 编译（PR #376/#377/#385）
 
-### v2.9.0（计划中）
-- [ ] io_uring 静态文件路径探索
-- [ ] 内存分配优化
-- [ ] Fuzz 测试增强
-- [ ] 中英文档完善
-- [ ] 社区贡献指南
-- [ ] macOS/FreeBSD 支持（最低优先级）
+### v3.0.0（发布于 2026-10-18）
+- [x] API 原子化：删除 14 个死 config 字段、builder 层、内置限流器；`take_*` 所有权命名
+- [x] 新增 `uvhttp_server_listen_routes` 与 `uvhttp_server_set_request_filter`
+- [x] `set_body` 原子替换与 cache setter 校验
+
+### v3.0.1（发布于 2026-11-23）
+- [x] 安全与正确性补丁：响应 header 堆溢出、目录列表 XSS、流水线 UAF、静态 TOCTOU、304 条件响应
+
+### v3.1.0（发布于 2026-11-26）
+- [x] API 原子化收尾：`uvhttp_respond` / `_with_headers` / `response_prepare` 取代公共 setter
+- [x] 配置单通道（`take_config` / `get_config`）、统计、排水、错误观测器、可选 async stop
+- [x] RFC 正确性：HEAD 无 body、`Connection: close`、请求体超限 413、sendfile keep-alive 顺序、WS 合并首帧
+- [x] mbedTLS 3.6.8；32-bit 阻塞 CI 门禁；生产 embedder 示例 + Web 管理台
+
+### v3.1.1（发布于 2026-11-26）
+- [x] TLS WANT_WRITE 死锁修复；自定义升级首帧保留（ownership 回调携带 buffered 字节）
+- [x] 响应体长度 CI 门禁；所有示例改用字节数
 
 ## 📊 版本历史
 
 | 版本 | 日期 | 亮点 |
 |---------|------|------------|
+| **v3.1.1** | 2026-11-26 | TLS WANT_WRITE 死锁修复、自定义升级首帧保留、响应体长度门禁 |
+| **v3.1.0** | 2026-11-26 | API 原子化收尾 / 生产接缝 / RFC 正确性 / mbedTLS 3.6.8 / 32-bit CI |
+| **v3.0.1** | 2026-11-23 | 安全与正确性补丁：header 溢出 / 目录列表 XSS / 流水线 UAF / TOCTOU / 304 |
+| **v3.0.0** | 2026-10-18 | API 原子化破坏性升级：删 14 死字段 / builder / 限流器，新增 listen_routes 与 request filter |
 | **v2.8.1** | 2026-09-29 | 零拷贝阈值 `UVHTTP_ZEROCOPY_MIN_BODY` 恢复小响应吞吐（PR #387）、基准门禁改为同机配对比较（PR #388） |
 | **v2.8.0** | 2026-09-23 | 大响应零拷贝 writev（/large 5.1K→8.8K RPS，PR #378）、第二轮评审 17 项缺陷修复（PR #380）、公共 API/构建系统修复（PR #381）、SSE/流式/WebSocket 基准（PR #379） |
 | **v2.7.2** | 2026-09-07 | 34 项代码评审缺陷修复：query string 路由匹配、MAX_PARAMS 边界、WS 短写截帧、If-Modified-Since 时区/3 种日期格式、accept 下溢等；/large 零拷贝 writev（5.1K→8.8K RPS） |
@@ -522,7 +513,7 @@ UVHTTP 基于以下优秀的开源项目构建：
 | **v2.7.0** | 2026-08-21 | TLS 会话缓存重新启用、CI 基准工作流 (ci-benchmark.yml)、代码质量修复 (L3-L5)、Brain 文档、Platinum 层级基线（CI 上 83K RPS） |
 | **v2.6.2** | 2026-08-17 | 连接上限内存安全修复（accept 失败时 uv_close）、WebSocket RFC 6455/内存安全修复（PR #336）、uv_strerror_r 一致性 |
 | **v2.6.0** | 2026-07-31 | 健康检查端点、SSE 示例、mock 测试基础设施、Makefile 构建入口 |
-| **v2.5.1** | 2026-07-27 | 覆盖率 86% 行 / 99% 函数，101/101 测试 |
+| **v2.5.1** | 2026-07-27 | 覆盖率 86% 行 / 99% 函数，135/135 测试 |
 | **v2.5.0** | 2026-03-15 | 32 位嵌入式支持，压缩特性 |
 | **v2.4.4** | 2026-01-28 | 性能优化，代码清理 |
 | **v2.3.0** | 2026-02-10 | 连接清理性能修复 |

@@ -13,6 +13,7 @@
  */
 
 #include <gtest/gtest.h>
+#include "uvhttp_response_internal.h"
 
 extern "C" {
 #include "uvhttp_allocator.h"

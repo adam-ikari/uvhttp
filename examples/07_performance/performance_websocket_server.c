@@ -134,43 +134,37 @@ static int on_http_request(uvhttp_request_t* request, uvhttp_response_t* respons
 
     /* Only handle GET requests */
     if (strcmp(method, "GET") != 0) {
-        uvhttp_response_set_status(response, 405);
-        uvhttp_response_set_body(response, "Method Not Allowed", 18);
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 405, NULL, "Method Not Allowed", 18);
         return UVHTTP_ERROR_INVALID_HTTP_METHOD;
     }
 
     /* Health check endpoint */
     if (strcmp(path, "/health") == 0) {
-        uvhttp_response_set_status(response, 200);
-        uvhttp_response_set_header(response, "Content-Type", "application/json");
-
+        char stats[256];
+        const char* body;
         if (g_ctx) {
-            char stats[256];
             snprintf(stats, sizeof(stats),
                     "{\"status\":\"ok\",\"connections\":%llu,\"total_messages\":%llu}",
                     g_ctx->current_connections,
                     g_ctx->total_messages_received);
-            uvhttp_response_set_body(response, stats, strlen(stats));
+            body = stats;
         } else {
-            const char* body = "{\"status\":\"ok\",\"connections\":0,\"total_messages\":0}";
-            uvhttp_response_set_body(response, body, strlen(body));
+            body = "{\"status\":\"ok\",\"connections\":0,\"total_messages\":0}";
         }
-
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 200, "application/json", body, strlen(body));
         return UVHTTP_OK;
     }
 
     /* Default response */
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
+    
+    
 
     const char* body = "WebSocket Performance Test Server\n\nEndpoints:\n"
                       "  /ws - WebSocket endpoint (echo server)\n"
                       "  /health - Health check\n";
-    uvhttp_response_set_body(response, body, strlen(body));
+    
 
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
     return UVHTTP_OK;
 }
 

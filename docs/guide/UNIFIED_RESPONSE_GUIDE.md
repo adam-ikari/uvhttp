@@ -15,61 +15,27 @@ not infer the content type for you.
 
 ## Core API Reference
 
-### Response Object Operations
+### Atomic Response API
 
-#### `uvhttp_response_set_status()`
-
-Sets the HTTP status code.
+The step-by-step setters are no longer public. Use one of three validated entry points:
 
 ```c
-uvhttp_error_t uvhttp_response_set_status(uvhttp_response_t* response, int status_code);
+uvhttp_error_t uvhttp_respond(uvhttp_response_t* response, int status_code,
+                              const char* content_type, const char* body,
+                              size_t body_length);
+
+uvhttp_error_t uvhttp_respond_with_headers(
+    uvhttp_response_t* response, int status_code,
+    const uvhttp_header_view_t* headers, size_t header_count,
+    const char* body, size_t body_length);
+
+uvhttp_error_t uvhttp_response_prepare(
+    uvhttp_response_t* response, int status_code,
+    const uvhttp_header_view_t* headers, size_t header_count,
+    const char* body, size_t body_length);
 ```
 
-**Parameters:**
-- `response`: the response object
-- `status_code`: the HTTP status code (e.g., 200, 404)
-
-**Return value:**
-- `UVHTTP_OK`: success
-- Other values: error codes
-
-#### `uvhttp_response_set_header()`
-
-Sets a response header.
-
-```c
-uvhttp_error_t uvhttp_response_set_header(uvhttp_response_t* response,
-                                         const char* name,
-                                         const char* value);
-```
-
-**Parameters:**
-- `response`: the response object
-- `name`: the header name
-- `value`: the header value
-
-#### `uvhttp_response_set_body()`
-
-Sets the response body.
-
-```c
-uvhttp_error_t uvhttp_response_set_body(uvhttp_response_t* response,
-                                       const char* body,
-                                       size_t length);
-```
-
-**Parameters:**
-- `response`: the response object
-- `body`: the response body content
-- `length`: the content length
-
-#### `uvhttp_response_send()`
-
-Sends the response.
-
-```c
-uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
-```
+`uvhttp_respond` sets the status, an optional `Content-Type`, and the body, then sends. `uvhttp_respond_with_headers` is the N-header form. `uvhttp_response_prepare` validates and fills the same fields **without sending** — use it in middleware that only prepares headers. All three validate inputs before touching the response and restore status and header count on failure.
 
 ## Usage Examples
 
@@ -79,11 +45,11 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response);
 int json_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* json = "{\"message\":\"Hello World\"}";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-    uvhttp_response_set_body(res, json, strlen(json));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
 }
 ```
 
@@ -93,11 +59,11 @@ int json_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 int html_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     const char* html = "<html><body><h1>Hello World</h1></body></html>";
 
-    uvhttp_response_set_status(res, 200);
-    uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-    uvhttp_response_set_body(res, html, strlen(html));
 
-    return uvhttp_response_send(res);
+
+
+
+    return uvhttp_respond(res, 200, "text/html; charset=utf-8", html, strlen(html));
 }
 ```
 
@@ -111,16 +77,16 @@ int handler(uvhttp_request_t* req, uvhttp_response_t* res) {
 
     if (accept_header && strstr(accept_header, "application/json")) {
         const char* json = "{\"message\":\"Hello World\"}";
-        uvhttp_response_set_status(res, 200);
-        uvhttp_response_set_header(res, "Content-Type", "application/json; charset=utf-8");
-        uvhttp_response_set_body(res, json, strlen(json));
-        return uvhttp_response_send(res);
+
+
+
+        return uvhttp_respond(res, 200, "application/json; charset=utf-8", json, strlen(json));
     } else {
         const char* html = "<html><body><h1>Hello World</h1></body></html>";
-        uvhttp_response_set_status(res, 200);
-        uvhttp_response_set_header(res, "Content-Type", "text/html; charset=utf-8");
-        uvhttp_response_set_body(res, html, strlen(html));
-        return uvhttp_response_send(res);
+
+
+
+        return uvhttp_respond(res, 200, "text/html; charset=utf-8", html, strlen(html));
     }
 }
 ```
@@ -160,7 +126,7 @@ safe choice:
 ## Best Practices
 
 1. Set the Content-Type before you call `uvhttp_send_unified_response()`.
-2. When the type is clear, a convenience function such as `uvhttp_send_unified_response()` does the work; set the `Content-Type` header first with `uvhttp_response_set_header(res, "Content-Type", "application/json")`.
+2. When the type is clear, a convenience function such as `uvhttp_send_unified_response()` does the work; pass `Content-Type` to `uvhttp_respond`, or prepare the header with `uvhttp_response_prepare` first.
 3. Send errors through `uvhttp_send_error_response()` so the format stays the same everywhere.
 4. Check the content before sending it.
 5. Keep the Content-Type values consistent across the project.

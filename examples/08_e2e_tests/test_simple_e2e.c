@@ -31,10 +31,7 @@ static int get_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     (void)request;
     const char* body = "GET method response";
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
 
     return 0;
 }
@@ -50,10 +47,7 @@ static int post_handler(uvhttp_request_t* request,
              "POST method received %zu bytes: %.*s", body_len, (int)body_len,
              body ? body : "(empty)");
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, response_body, strlen(response_body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", response_body, strlen(response_body));
 
     printf("POST %s - 200 OK\n", path);
     return 0;
@@ -63,10 +57,7 @@ static int put_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     (void)request;
     const char* body = "PUT method response";
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
 
     return 0;
 }
@@ -76,10 +67,7 @@ static int delete_handler(uvhttp_request_t* request,
     (void)request;
     const char* body = "DELETE method response";
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, body, strlen(body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", body, strlen(body));
 
     return 0;
 }
@@ -90,10 +78,7 @@ static int json_handler(uvhttp_request_t* request,
     const char* json_body =
         "{\"status\":\"success\",\"message\":\"JSON response\"}";
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "application/json");
-    uvhttp_response_set_body(response, json_body, strlen(json_body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "application/json", json_body, strlen(json_body));
 
     return 0;
 }

@@ -182,10 +182,10 @@ const char* page = uvhttp_request_get_query_param(request, "page");
 
 **Answer:**
 ```c
-uvhttp_response_set_header(response, "Set-Cookie", 
-    "session=abc123; Path=/; HttpOnly; Secure; SameSite=Strict");
-uvhttp_response_set_header(response, "Set-Cookie", 
-    "theme=dark; Path=/; Max-Age=31536000");
+uvhttp_header_view_t cookies[] = {
+    {"Set-Cookie", "session=abc123; Path=/; HttpOnly; Secure; SameSite=Strict"},
+    {"Set-Cookie", "theme=dark; Path=/; Max-Age=31536000"}};
+uvhttp_response_prepare(response, UVHTTP_STATUS_OK, cookies, 2, NULL, 0);
 ```
 
 ### Q12: How do I enable CORS?
@@ -193,14 +193,16 @@ uvhttp_response_set_header(response, "Set-Cookie",
 **Answer:** CORS (Cross-Origin Resource Sharing) belongs to the application layer. Set the response headers yourself:
 
 ```c
-uvhttp_response_set_header(response, "Access-Control-Allow-Origin", "*");
-uvhttp_response_set_header(response, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-uvhttp_response_set_header(response, "Access-Control-Allow-Headers", "Content-Type, Authorization");
+uvhttp_header_view_t cors[] = {
+    {"Access-Control-Allow-Origin", "*"},
+    {"Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"},
+    {"Access-Control-Allow-Headers", "Content-Type, Authorization"}};
+uvhttp_response_prepare(response, UVHTTP_STATUS_OK, cors, 3, NULL, 0);
 
 // Handle preflight request
 if (uvhttp_request_get_method(request) == UVHTTP_METHOD_OPTIONS) {
-    uvhttp_response_set_status(response, 204);
-    uvhttp_response_send(response);
+
+    uvhttp_respond(response, 204, NULL, NULL, 0);
     return 0;
 }
 ```
@@ -213,12 +215,12 @@ For a reusable version, build a CORS middleware; see the examples in `examples/0
 
 **Answer:**
 ```c
-uvhttp_response_set_header(response, "Content-Disposition", 
-    "attachment; filename=\"example.txt\"");
-
 const char* file_content = "File content here...";
-uvhttp_response_set_body(response, file_content, strlen(file_content));
-uvhttp_response_send(response);
+uvhttp_respond_with_headers(
+    response, 200,
+    (uvhttp_header_view_t[]){{"Content-Disposition",
+                              "attachment; filename=\"example.txt\""}},
+    1, file_content, strlen(file_content));
 ```
 
 ### Q14: How do I handle large responses?
@@ -230,9 +232,9 @@ uvhttp_response_send(response);
 const char* large_data = get_large_data();  // Your data source
 size_t data_length = get_data_length();
 
-uvhttp_response_set_status(response, 200);
-uvhttp_response_set_body(response, large_data, data_length);
-uvhttp_response_send(response);
+
+
+uvhttp_respond(response, 200, NULL, large_data, data_length);
 ```
 
 ---
@@ -351,7 +353,7 @@ config->connection_timeout = 60;  // 60 seconds
 
 uvhttp_server_t* server = NULL;
 uvhttp_server_new(loop, &server);
-server->config = config;
+uvhttp_server_take_config(server, config);
 ```
 
 ### Q22: How do I optimize static file serving?
@@ -395,9 +397,9 @@ static uvhttp_error_t limit_filter(uvhttp_request_t* request,
                                    void* user_data) {
     if (client_is_over_budget(user_data,
                               uvhttp_request_get_client_ip(request))) {
-        uvhttp_response_set_status(response, 429);
-        uvhttp_response_set_header(response, "Retry-After", "1");
-        uvhttp_response_send(response);
+        uvhttp_respond_with_headers(
+            response, 429,
+            (uvhttp_header_view_t[]){{"Retry-After", "1"}}, 1, NULL, 0);
         return UVHTTP_ERROR_RATE_LIMIT_EXCEEDED;
     }
     return UVHTTP_OK;
@@ -443,7 +445,7 @@ config->connection_timeout = 300;  // 5 minutes
 
 uvhttp_server_t* server = NULL;
 uvhttp_server_new(loop, &server);
-server->config = config;
+uvhttp_server_take_config(server, config);
 ```
 
 ### Q27: Memory usage keeps increasing

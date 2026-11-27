@@ -1,5 +1,7 @@
 #include "uvhttp_request.h"
 
+#include "uvhttp_response_internal.h"
+
 #include "uvhttp_allocator.h"
 #include "uvhttp_connection.h"
 #include "uvhttp_constants.h"
@@ -155,7 +157,6 @@ static int on_message_begin(llhttp_t* parser) {
      * and close after the current response; the remaining bytes are dropped
      * rather than answered out of order. */
     if (conn->parsing_complete) {
-        conn->keepalive = 0;
         if (conn->response) {
             conn->response->keepalive = 0;
         }
@@ -312,15 +313,19 @@ static int on_body(llhttp_t* parser, const char* at, size_t length) {
             new_capacity = conn->request->body_length + length;
         }
 
-        // check if exceeds maximum limit
+        // check if exceeds maximum limit. Returning -1 here made llhttp fail
+        // and the connection was closed with no response at all; the client
+        // had no way to learn why. Pause parsing and let on_read send 413.
         if (new_capacity > UVHTTP_MAX_BODY_SIZE) {
-            return -1;  // body too large
+            conn->body_error_status = UVHTTP_STATUS_REQUEST_ENTITY_TOO_LARGE;
+            return HPE_PAUSED;
         }
 
         // reallocate memory
         char* new_body = uvhttp_realloc(conn->request->body, new_capacity);
         if (!new_body) {
-            return -1;  // memoryallocatefailure
+            conn->body_error_status = UVHTTP_STATUS_INTERNAL_ERROR;
+            return HPE_PAUSED;
         }
 
         conn->request->body = new_body;
@@ -369,10 +374,48 @@ static int on_message_complete(llhttp_t* parser) {
      * are not aligned; a direct cast would corrupt POST/PUT/DELETE/HEAD) */
     conn->request->method = llhttp_method_to_uvhttp(llhttp_get_method(parser));
     conn->parsing_complete = 1;
-    conn->read_buffer_used = 0;
+    /* A parsed request is activity: re-arm the idle timer so a busy keep-alive
+     * connection is not closed at a fixed age from accept. */
+    uvhttp_connection_refresh_timeout(conn);
+    /* Do not clear read_buffer_used here. With an Upgrade request the bytes
+     * after the headers are the client's first WebSocket frame; on_read uses
+     * that count to hand them to the WS parser after llhttp pauses. For
+     * ordinary requests on_read still clears the buffer after execute. */
+
+    /* HEAD: build headers as usual but never emit body bytes (RFC 7231 §4.3.2) */
+    conn->response->head_request =
+        (conn->request->method == UVHTTP_HEAD) ? 1 : 0;
+
+    /* Keep-alive is a property of the request, not a library default:
+     * HTTP/1.0 closes unless `Connection: keep-alive`; HTTP/1.1 stays open
+     * unless `Connection: close` (RFC 7230 §6.6). */
+    {
+        int keepalive = 1;
+        if (parser->http_major == 1 && parser->http_minor == 0) {
+            keepalive = uvhttp_request_has_header_token(
+                conn->request, UVHTTP_HEADER_CONNECTION, "keep-alive");
+        } else if (uvhttp_request_has_header_token(
+                       conn->request, UVHTTP_HEADER_CONNECTION, "close")) {
+            keepalive = 0;
+        }
+        conn->response->keepalive = keepalive;
+    }
 
     if (conn->server && conn->server->context) {
         conn->server->context->total_requests++;
+    }
+
+    /* Draining: reject new work before any user code (filter, router, static
+     * files) runs. In-flight responses are untouched. */
+    if (conn->server && conn->server->draining) {
+        conn->response->keepalive = 0;
+        uvhttp_response_set_status(conn->response,
+                                   UVHTTP_STATUS_SERVICE_UNAVAILABLE);
+        uvhttp_response_set_header(conn->response, UVHTTP_HEADER_CONTENT_TYPE,
+                                   UVHTTP_CONTENT_TYPE_TEXT);
+        uvhttp_response_set_body(conn->response, "Service Unavailable", 19);
+        uvhttp_response_send(conn->response);
+        return 0;
     }
 
     /* Pre-dispatch filter: the library runs the seam, the caller owns the
@@ -677,6 +720,35 @@ const char* uvhttp_request_get_header(uvhttp_request_t* request,
     return NULL;
 }
 
+int uvhttp_request_has_header_token(uvhttp_request_t* request,
+                                    const char* name, const char* token) {
+    if (!request || !name || !token || !*token) {
+        return 0;
+    }
+    size_t token_len = strlen(token);
+    for (size_t i = 0; i < request->header_count; ++i) {
+        uvhttp_header_t* header = uvhttp_request_get_header_at(request, i);
+        if (!header || strcasecmp(header->name, name) != 0) {
+            continue;
+        }
+        const char* p = header->value;
+        while (*p) {
+            while (*p == ' ' || *p == '\t' || *p == ',') {
+                ++p;
+            }
+            const char* start = p;
+            while (*p && *p != ',' && *p != ' ' && *p != '\t') {
+                ++p;
+            }
+            if ((size_t)(p - start) == token_len &&
+                strncasecmp(start, token, token_len) == 0) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 const char* uvhttp_request_get_body(uvhttp_request_t* request) {
     if (!request)
         return NULL;
@@ -811,8 +883,10 @@ const char* uvhttp_request_get_client_ip(uvhttp_request_t* request) {
      * zeroes data, so standalone requests resolve to NULL here. */
     if (request->parser) {
         uvhttp_connection_t* conn = (uvhttp_connection_t*)request->parser->data;
-        if (conn && conn->server && conn->server->config) {
-            trust_proxy = conn->server->config->trust_proxy_headers;
+        const uvhttp_config_t* cfg =
+            conn ? uvhttp_server_get_config(conn->server) : NULL;
+        if (cfg) {
+            trust_proxy = cfg->trust_proxy_headers;
         }
     }
 

@@ -1,4 +1,5 @@
 #include "uvhttp_response.h"
+#include "uvhttp_response_internal.h"
 
 #include "uvhttp_allocator.h"
 #include "uvhttp_common.h"
@@ -9,6 +10,7 @@
 #include "uvhttp_gzip_cache.h"
 #include "uvhttp_hash.h"
 #include "uvhttp_logging.h"
+#include "uvhttp_server.h"
 #include "uvhttp_validation.h"
 
 #include <limits.h>
@@ -584,8 +586,34 @@ static void uvhttp_response_after_write(uvhttp_response_t* response) {
          * request (skip for websocket: its read callback was
          * already set up by switch_to_websocket; restarting
          * HTTP read here would override it) */
-        uvhttp_connection_schedule_restart_read(conn);
+        if (conn->read_paused) {
+            /* A paused read must be resumed without resetting parser state;
+             * apply_backpressure decides from the now-drained queue. */
+            uvhttp_connection_apply_backpressure(
+                conn,
+                uv_stream_get_write_queue_size((uv_stream_t*)&conn->tcp_handle));
+        } else {
+            uvhttp_connection_schedule_restart_read(conn);
+        }
     }
+}
+
+/* A failed uv_write has no synchronous caller left to report to: report it
+ * through the server's observer seam so an embedder can count/log it. This
+ * only observes — it never changes the release/close decisions below. */
+static void uvhttp_report_write_error(uvhttp_response_t* response,
+                                      int status) {
+    if (status >= 0 || !response || !response->client ||
+        !response->client->data) {
+        return;
+    }
+    uvhttp_connection_t* conn =
+        (uvhttp_connection_t*)response->client->data;
+    if (!conn->server || !conn->server->error_callback) {
+        return;
+    }
+    conn->server->error_callback(conn->server, UVHTTP_ERROR_RESPONSE_SEND, conn,
+                                 conn->server->error_callback_user_data);
 }
 
 /* single-thread safe write complete callback
@@ -594,9 +622,9 @@ static void uvhttp_response_after_write(uvhttp_response_t* response) {
  * predictable
  */
 static void uvhttp_free_write_data(uv_write_t* req, int status) {
-    (void)status;  // avoid unused parameter warning
     uvhttp_write_data_t* write_data = (uvhttp_write_data_t*)req->data;
     if (write_data) {
+        uvhttp_report_write_error(write_data->response, status);
         uvhttp_response_after_write(write_data->response);
         /* release write_data (data buffer is part of struct, no need to
          * separately release) */
@@ -649,7 +677,7 @@ static void uvhttp_response_sync_content_length(uvhttp_response_t* response,
     }
 }
 #endif /* UVHTTP_FEATURE_COMPRESSION */
-static uvhttp_error_t uvhttp_response_prepare(
+static uvhttp_error_t uvhttp_response_prepare_wire(
     uvhttp_response_t* response, char** out_headers, size_t* out_headers_len,
     const char** out_body, size_t* out_body_len, char** out_owned) {
     *out_headers = NULL;
@@ -782,6 +810,13 @@ static uvhttp_error_t uvhttp_response_prepare(
 
     *out_headers = headers_buffer;
     *out_headers_len = headers_length;
+    /* RFC 7231 §4.3.2: a HEAD response carries the same headers (including
+     * Content-Length) as the GET would, but no body bytes. Suppress here so
+     * both the copy and the zero-copy send paths share the rule. */
+    if (response->head_request) {
+        body_to_send = NULL;
+        body_length = 0;
+    }
     *out_body = body_to_send;
     *out_body_len = body_length;
     *out_owned = compressed_body;
@@ -809,7 +844,7 @@ uvhttp_error_t uvhttp_response_build_data(uvhttp_response_t* response,
     size_t body_length = 0;
     char* compressed_body = NULL;
     uvhttp_error_t err =
-        uvhttp_response_prepare(response, &headers_buffer, &headers_length,
+        uvhttp_response_prepare_wire(response, &headers_buffer, &headers_length,
                                 &body_to_send, &body_length, &compressed_body);
     if (err != UVHTTP_OK) {
         return err;
@@ -910,8 +945,15 @@ uvhttp_error_t uvhttp_response_send_raw(const char* data, size_t length,
         return UVHTTP_ERROR_INVALID_PARAM;
     }
 
-    /* For TLS connections, encrypt data before sending */
-    uvhttp_connection_t* conn = (uvhttp_connection_t*)stream->data;
+    /* For TLS connections, encrypt data before sending. client is void* in
+     * the public API: only treat stream->data as a connection when the stream
+     * IS that connection's own handle. An embedder's uv_tcp_t with its own
+     * data pointer must not be read as a uvhttp_connection_t (OOB read). */
+    uvhttp_connection_t* conn = NULL;
+    uvhttp_connection_t* candidate = (uvhttp_connection_t*)stream->data;
+    if (candidate && (uv_stream_t*)&candidate->tcp_handle == stream) {
+        conn = candidate;
+    }
     if (conn && conn->tls_enabled && conn->ssl) {
         /* Encrypt data using TLS write */
         uvhttp_error_t tls_result =
@@ -989,9 +1031,9 @@ typedef struct {
 
 /* write completion callback for the zero-copy send path */
 static void uvhttp_resp_write_done(uv_write_t* req, int status) {
-    (void)status; /* avoid unused parameter warning */
     uvhttp_resp_write_t* w = (uvhttp_resp_write_t*)req->data;
     uvhttp_response_t* response = w->response;
+    uvhttp_report_write_error(response, status);
     if (w->owned_body) {
         uvhttp_free(w->owned_body);
     }
@@ -1012,7 +1054,7 @@ static uvhttp_error_t uvhttp_response_send_zerocopy(
     const char* body = NULL;
     size_t body_len = 0;
     char* owned = NULL;
-    uvhttp_error_t err = uvhttp_response_prepare(
+    uvhttp_error_t err = uvhttp_response_prepare_wire(
         response, &headers, &headers_len, &body, &body_len, &owned);
     if (err != UVHTTP_OK) {
         return err;
@@ -1124,6 +1166,87 @@ uvhttp_error_t uvhttp_response_send(uvhttp_response_t* response) {
         response->finished = 1;
     }
     return err;
+}
+
+uvhttp_error_t uvhttp_response_prepare(
+    uvhttp_response_t* response, int status_code,
+    const uvhttp_header_view_t* headers, size_t header_count, const char* body,
+    size_t body_length) {
+    if (!response || response->sent) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    if (status_code < UVHTTP_STATUS_MIN_CONTINUE ||
+        status_code > UVHTTP_STATUS_MAX) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    if ((body == NULL) != (body_length == 0) ||
+        body_length > UVHTTP_MAX_BODY_SIZE) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    if (header_count > 0 && !headers) {
+        return UVHTTP_ERROR_INVALID_PARAM;
+    }
+    for (size_t i = 0; i < header_count; ++i) {
+        const char* name = headers[i].name;
+        const char* value = headers[i].value;
+        if (!name || !value || uvhttp_validate_header_name(name) == 0 ||
+            uvhttp_validate_header_value_safe(value) == 0 ||
+            contains_control_chars(value) ||
+            strlen(name) >= UVHTTP_HEADER_NAME_BUFFER_SIZE ||
+            strlen(value) >= UVHTTP_HEADER_VALUE_BUFFER_SIZE) {
+            return UVHTTP_ERROR_INVALID_PARAM;
+        }
+    }
+
+    int saved_status = response->status_code;
+    size_t saved_header_count = response->header_count;
+
+    uvhttp_error_t err = uvhttp_response_set_status(response, status_code);
+    if (err != UVHTTP_OK) {
+        return err;
+    }
+    for (size_t i = 0; i < header_count; ++i) {
+        err = uvhttp_response_set_header(response, headers[i].name,
+                                         headers[i].value);
+        if (err != UVHTTP_OK) {
+            response->status_code = saved_status;
+            response->header_count = saved_header_count;
+            return err;
+        }
+    }
+    if (body_length > 0) {
+        err = uvhttp_response_set_body(response, body, body_length);
+        if (err != UVHTTP_OK) {
+            response->status_code = saved_status;
+            response->header_count = saved_header_count;
+            return err;
+        }
+    }
+    return UVHTTP_OK;
+}
+
+uvhttp_error_t uvhttp_respond_with_headers(
+    uvhttp_response_t* response, int status_code,
+    const uvhttp_header_view_t* headers, size_t header_count, const char* body,
+    size_t body_length) {
+    uvhttp_error_t err = uvhttp_response_prepare(
+        response, status_code, headers, header_count, body, body_length);
+    if (err != UVHTTP_OK) {
+        return err;
+    }
+    return uvhttp_response_send(response);
+}
+
+uvhttp_error_t uvhttp_respond(uvhttp_response_t* response, int status_code,
+                              const char* content_type, const char* body,
+                              size_t body_length) {
+    if (content_type) {
+        uvhttp_header_view_t header = {"Content-Type", content_type};
+        return uvhttp_respond_with_headers(response, status_code, &header, 1,
+                                           body, body_length);
+    }
+    return uvhttp_respond_with_headers(response, status_code, NULL, 0, body,
+                                       body_length);
 }
 
 /* ========== Compression API Implementation ========== */
@@ -1304,59 +1427,12 @@ int uvhttp_should_compress_by_content_type(const char* content_type) {
     return 0;
 }
 
-uvhttp_error_t uvhttp_response_set_compress_by_filename(
-    uvhttp_response_t* response, const char* filename) {
-    if (!response) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    /* 判断是否应该压缩 */
-    int should_compress = uvhttp_should_compress_by_extension(filename);
-
-    if (should_compress) {
-        /* 启用压缩并设置默认阈值 */
-        response->compress = 1;
-        if (response->compress_threshold == 0) {
-            response->compress_threshold = 1024;
-        }
-    } else {
-        /* 禁用压缩 */
-        response->compress = 0;
-    }
-
-    return UVHTTP_OK;
-}
-
-uvhttp_error_t uvhttp_response_set_compress_by_content_type(
-    uvhttp_response_t* response, const char* content_type) {
-    if (!response) {
-        return UVHTTP_ERROR_INVALID_PARAM;
-    }
-
-    /* 判断是否应该压缩 */
-    int should_compress = uvhttp_should_compress_by_content_type(content_type);
-
-    if (should_compress) {
-        /* 启用压缩并设置默认阈值 */
-        response->compress = 1;
-        if (response->compress_threshold == 0) {
-            response->compress_threshold = 1024;
-        }
-    } else {
-        /* 禁用压缩 */
-        response->compress = 0;
-    }
-
-    return UVHTTP_OK;
-}
-
 #endif /* UVHTTP_FEATURE_COMPRESSION */
 
 void uvhttp_response_free(uvhttp_response_t* response) {
     if (!response) {
         return;
     }
-
     uvhttp_response_cleanup(response);
     uvhttp_free(response);
 }

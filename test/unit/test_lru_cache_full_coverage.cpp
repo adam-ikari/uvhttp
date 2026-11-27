@@ -11,7 +11,7 @@
 /* 测试LRU缓存创建和释放 */
 TEST(UvhttpLruCacheFullCoverageTest, CacheCreateAndFree) {
     /* 创建缓存 */
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 3600, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(cache, nullptr);
@@ -40,7 +40,7 @@ TEST(UvhttpLruCacheFullCoverageTest, CacheCreateFailure) {
     EXPECT_NE(result, UVHTTP_OK);
     
     /* 测试零内存限制 */
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     result = uvhttp_lru_cache_create(0, 100, 3600, &cache);
     EXPECT_NE(result, UVHTTP_OK);
     
@@ -51,7 +51,7 @@ TEST(UvhttpLruCacheFullCoverageTest, CacheCreateFailure) {
 
 /* 测试LRU缓存添加和查找 */
 TEST(UvhttpLruCacheFullCoverageTest, CachePutAndFind) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 3600, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
     
@@ -72,7 +72,7 @@ TEST(UvhttpLruCacheFullCoverageTest, CachePutAndFind) {
     EXPECT_GT(cache->total_memory_usage, 0);
     
     /* 查找缓存条目 */
-    cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/test.txt");
+    uvhttp_lru_cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/test.txt");
     ASSERT_NE(entry, nullptr);
     EXPECT_STREQ(entry->file_path, "/test.txt");
     EXPECT_EQ(entry->content_length, content_length);
@@ -93,7 +93,7 @@ TEST(UvhttpLruCacheFullCoverageTest, CachePutAndFind) {
 
 /* 测试LRU缓存删除 */
 TEST(UvhttpLruCacheFullCoverageTest, CacheRemove) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 3600, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
     
@@ -109,7 +109,7 @@ TEST(UvhttpLruCacheFullCoverageTest, CacheRemove) {
     
     /* 验证条目被删除 */
     EXPECT_EQ(cache->entry_count, 0);
-    cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/test.txt");
+    uvhttp_lru_cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/test.txt");
     EXPECT_EQ(entry, nullptr);
     
     /* 删除不存在的条目 */
@@ -122,7 +122,7 @@ TEST(UvhttpLruCacheFullCoverageTest, CacheRemove) {
 
 /* 测试LRU缓存清空 */
 TEST(UvhttpLruCacheFullCoverageTest, CacheClear) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 3600, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
     
@@ -151,7 +151,7 @@ TEST(UvhttpLruCacheFullCoverageTest, CacheClear) {
 
 /* 测试LRU缓存统计信息 */
 TEST(UvhttpLruCacheFullCoverageTest, CacheStats) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 3600, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
     
@@ -195,7 +195,7 @@ TEST(UvhttpLruCacheFullCoverageTest, CacheStats) {
 
 /* 测试LRU缓存过期清理 */
 TEST(UvhttpLruCacheFullCoverageTest, CacheCleanupExpired) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 1, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
     
@@ -219,7 +219,7 @@ TEST(UvhttpLruCacheFullCoverageTest, CacheCleanupExpired) {
 
 /* 测试LRU缓存内存限制 */
 TEST(UvhttpLruCacheFullCoverageTest, CacheMemoryLimit) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     /* 创建足够大的缓存以容纳2-3个条目，但不足以容纳5个 */
     uvhttp_error_t result = uvhttp_lru_cache_create(32 * 1024, 10, 3600, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
@@ -245,7 +245,7 @@ TEST(UvhttpLruCacheFullCoverageTest, CacheMemoryLimit) {
 
 /* 测试LRU缓存条目数限制 */
 TEST(UvhttpLruCacheFullCoverageTest, CacheEntryLimit) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 3, 3600, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
     
@@ -269,11 +269,11 @@ TEST(UvhttpLruCacheFullCoverageTest, CacheEntryLimit) {
 /* 测试LRU缓存NULL参数 */
 TEST(UvhttpLruCacheFullCoverageTest, CacheNullParameters) {
     /* 测试NULL缓存管理器 */
-    cache_entry_t* entry = uvhttp_lru_cache_find(NULL, "/test.txt");
+    uvhttp_lru_cache_entry_t* entry = uvhttp_lru_cache_find(NULL, "/test.txt");
     EXPECT_EQ(entry, nullptr);
     
     /* 测试NULL文件路径 */
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 3600, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
     
@@ -320,8 +320,8 @@ TEST(UvhttpLruCacheFullCoverageTest, CacheClearNull) {
  *  Additional Edge-Case Tests
  * ==================================================================== */
 
-/* Helper to free a cache_entry_t* that was removed from the LRU (not in hash) */
-static void free_cache_entry_for_test(cache_entry_t* entry) {
+/* Helper to free a uvhttp_lru_cache_entry_t* that was removed from the LRU (not in hash) */
+static void free_cache_entry_for_test(uvhttp_lru_cache_entry_t* entry) {
     if (!entry) return;
     if (entry->content) free(entry->content);
     free(entry);
@@ -330,7 +330,7 @@ static void free_cache_entry_for_test(cache_entry_t* entry) {
 /* Test: hit rate calculation edge cases */
 TEST(UvhttpLruCacheFullCoverageTest, HitRateEdgeCases) {
     /* No statistics yet (zero total) => returns 0.0 */
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
     double rate = uvhttp_lru_cache_get_hit_rate(cache);
@@ -366,7 +366,7 @@ TEST(UvhttpLruCacheFullCoverageTest, SetterNullCache) {
 
 /* Test: set batch eviction size edge cases */
 TEST(UvhttpLruCacheFullCoverageTest, BatchEvictionSizeEdgeCases) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -395,7 +395,7 @@ TEST(UvhttpLruCacheFullCoverageTest, IsExpiredEdgeCases) {
     EXPECT_EQ(expired, 1);
 
     /* TTL <= 0 => never expires */
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -405,7 +405,7 @@ TEST(UvhttpLruCacheFullCoverageTest, IsExpiredEdgeCases) {
     ASSERT_EQ(result, UVHTTP_OK);
 
     /* Find with TTL=0 (never expires) */
-    cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/test.txt");
+    uvhttp_lru_cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/test.txt");
     ASSERT_NE(entry, nullptr);
 
     /* is_expired with TTL=0 returns 0 */
@@ -417,7 +417,7 @@ TEST(UvhttpLruCacheFullCoverageTest, IsExpiredEdgeCases) {
 
 /* Test: move_to_head with NULL params */
 TEST(UvhttpLruCacheFullCoverageTest, MoveToHeadNullParams) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -433,11 +433,11 @@ TEST(UvhttpLruCacheFullCoverageTest, MoveToHeadNullParams) {
 /* Test: remove_tail edge cases */
 TEST(UvhttpLruCacheFullCoverageTest, RemoveTailEdgeCases) {
     /* NULL cache => returns NULL */
-    cache_entry_t* entry = uvhttp_lru_cache_remove_tail(NULL);
+    uvhttp_lru_cache_entry_t* entry = uvhttp_lru_cache_remove_tail(NULL);
     EXPECT_EQ(entry, nullptr);
 
     /* Empty cache => returns NULL */
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -473,16 +473,16 @@ TEST(UvhttpLruCacheFullCoverageTest, RemoveTailEdgeCases) {
 
 /* Test: eviction callback */
 TEST(UvhttpLruCacheFullCoverageTest, EvictionCallback) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 3, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
     static int callback_called = 0;
-    static cache_entry_t* callback_entry = NULL;
+    static uvhttp_lru_cache_entry_t* callback_entry = NULL;
     callback_called = 0;
     callback_entry = NULL;
 
-    auto cb = [](cache_entry_t* entry, void* user_data) {
+    auto cb = [](uvhttp_lru_cache_entry_t* entry, void* user_data) {
         callback_called++;
         callback_entry = entry;
         (void)user_data;
@@ -515,7 +515,7 @@ TEST(UvhttpLruCacheFullCoverageTest, EvictionCallback) {
 
 /* Test: priority eviction */
 TEST(UvhttpLruCacheFullCoverageTest, PriorityEviction) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 3, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -577,7 +577,7 @@ TEST(UvhttpLruCacheFullCoverageTest, PriorityEviction) {
     ASSERT_EQ(result, UVHTTP_OK);
 
     /* Low priority entry should have been evicted */
-    cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/low.txt");
+    uvhttp_lru_cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/low.txt");
     EXPECT_EQ(entry, nullptr);
 
     /* High priority should still be present (protected by threshold >= 50) */
@@ -597,7 +597,7 @@ TEST(UvhttpLruCacheFullCoverageTest, PriorityEviction) {
 
 /* Test: set/get entry priority edge cases */
 TEST(UvhttpLruCacheFullCoverageTest, EntryPriorityEdgeCases) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -650,7 +650,7 @@ TEST(UvhttpLruCacheFullCoverageTest, EntryPriorityEdgeCases) {
 
 /* Test: prewarm cache edge cases */
 TEST(UvhttpLruCacheFullCoverageTest, PrewarmCacheEdgeCases) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -708,7 +708,7 @@ TEST(UvhttpLruCacheFullCoverageTest, GetConfigNullCache) {
 
 /* Test: get_config with valid cache and partial output pointers */
 TEST(UvhttpLruCacheFullCoverageTest, GetConfigPartialPointers) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 300, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -743,7 +743,7 @@ TEST(UvhttpLruCacheFullCoverageTest, GetConfigPartialPointers) {
 
 /* Test: force eviction edge cases */
 TEST(UvhttpLruCacheFullCoverageTest, ForceEvictionEdgeCases) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -789,14 +789,14 @@ TEST(UvhttpLruCacheFullCoverageTest, ForceEvictionEdgeCases) {
 
 /* Test: force eviction with eviction callback */
 TEST(UvhttpLruCacheFullCoverageTest, ForceEvictionWithCallback) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
     static int cb_count = 0;
     cb_count = 0;
 
-    auto cb = [](cache_entry_t* entry, void* user_data) {
+    auto cb = [](uvhttp_lru_cache_entry_t* entry, void* user_data) {
         cb_count++;
         (void)entry;
         (void)user_data;
@@ -822,7 +822,7 @@ TEST(UvhttpLruCacheFullCoverageTest, ForceEvictionWithCallback) {
 
 /* Test: expired entry found during find() */
 TEST(UvhttpLruCacheFullCoverageTest, FindExpiredEntry) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     /* Use TTL = 1 second */
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 1, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
@@ -834,7 +834,7 @@ TEST(UvhttpLruCacheFullCoverageTest, FindExpiredEntry) {
     EXPECT_EQ(cache->entry_count, 1);
 
     /* Immediately find should work */
-    cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/expire.txt");
+    uvhttp_lru_cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/expire.txt");
     ASSERT_NE(entry, nullptr);
 
     /* Wait for expiry */
@@ -850,7 +850,7 @@ TEST(UvhttpLruCacheFullCoverageTest, FindExpiredEntry) {
 
 /* Test: update existing cache entry */
 TEST(UvhttpLruCacheFullCoverageTest, UpdateExistingEntry) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -868,7 +868,7 @@ TEST(UvhttpLruCacheFullCoverageTest, UpdateExistingEntry) {
     EXPECT_EQ(cache->entry_count, 1);
 
     /* Verify content updated */
-    cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/update.txt");
+    uvhttp_lru_cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/update.txt");
     ASSERT_NE(entry, nullptr);
     EXPECT_EQ(entry->content_length, strlen(content2));
     EXPECT_STREQ(entry->mime_type, "text/html");
@@ -879,7 +879,7 @@ TEST(UvhttpLruCacheFullCoverageTest, UpdateExistingEntry) {
 
 /* Test: NULL mime_type and etag */
 TEST(UvhttpLruCacheFullCoverageTest, PutNullMimeTypeAndEtag) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -889,7 +889,7 @@ TEST(UvhttpLruCacheFullCoverageTest, PutNullMimeTypeAndEtag) {
                                    NULL, time(NULL), NULL);
     EXPECT_EQ(result, UVHTTP_OK);
 
-    cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/test.txt");
+    uvhttp_lru_cache_entry_t* entry = uvhttp_lru_cache_find(cache, "/test.txt");
     ASSERT_NE(entry, nullptr);
     /* Should have default mime type */
     EXPECT_STREQ(entry->mime_type, "application/octet-stream");
@@ -907,7 +907,7 @@ TEST(UvhttpLruCacheFullCoverageTest, GetStatsNullCache) {
 
 /* Test: file path too long */
 TEST(UvhttpLruCacheFullCoverageTest, FilePathTooLong) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -926,7 +926,7 @@ TEST(UvhttpLruCacheFullCoverageTest, FilePathTooLong) {
 
 /* Test: file size exceeds max_file_size */
 TEST(UvhttpLruCacheFullCoverageTest, FileSizeExceedsLimit) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -943,14 +943,14 @@ TEST(UvhttpLruCacheFullCoverageTest, FileSizeExceedsLimit) {
     uvhttp_lru_cache_free(cache);
 }
 
-/* Test: content_length overflow check (SIZE_MAX - sizeof(cache_entry_t)) */
+/* Test: content_length overflow check (SIZE_MAX - sizeof(uvhttp_lru_cache_entry_t)) */
 TEST(UvhttpLruCacheFullCoverageTest, ContentLengthOverflow) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
     /* Use a content_length that would cause overflow */
-    size_t huge_size = SIZE_MAX - sizeof(cache_entry_t) + 1;
+    size_t huge_size = SIZE_MAX - sizeof(uvhttp_lru_cache_entry_t) + 1;
 
     char content[] = "test";
     result = uvhttp_lru_cache_put(cache, "/huge.txt", content, huge_size,
@@ -962,7 +962,7 @@ TEST(UvhttpLruCacheFullCoverageTest, ContentLengthOverflow) {
 
 /* Test: cleanup_expired with TTL <= 0 (early return) */
 TEST(UvhttpLruCacheFullCoverageTest, CleanupExpiredTtlZero) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -981,7 +981,7 @@ TEST(UvhttpLruCacheFullCoverageTest, CleanupExpiredTtlZero) {
 
 /* Test: cache entry limit eviction with priority protection */
 TEST(UvhttpLruCacheFullCoverageTest, PriorityEvictionAllProtected) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     /* Use a large max memory so we only hit the entry count limit */
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 3, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
@@ -1019,7 +1019,7 @@ TEST(UvhttpLruCacheFullCoverageTest, PriorityEvictionAllProtected) {
 
 /* Test: force eviction with priority protection (remove_lowest_priority path) */
 TEST(UvhttpLruCacheFullCoverageTest, ForceEvictionPriorityProtected) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -1054,7 +1054,7 @@ TEST(UvhttpLruCacheFullCoverageTest, ForceEvictionPriorityProtected) {
 
 /* Test: multiple batched evictions (more than one batch needed) */
 TEST(UvhttpLruCacheFullCoverageTest, MultiBatchEviction) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     /* Small but reasonable max memory (each entry is ~2.5KB due to file_path) */
     uvhttp_error_t result = uvhttp_lru_cache_create(512 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
@@ -1084,7 +1084,7 @@ TEST(UvhttpLruCacheFullCoverageTest, MultiBatchEviction) {
 
 /* Test: NULL content in put */
 TEST(UvhttpLruCacheFullCoverageTest, PutNullContent) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -1097,7 +1097,7 @@ TEST(UvhttpLruCacheFullCoverageTest, PutNullContent) {
 
 /* Test: content allocation failure simulation (file_path[0] check after alloc fail) */
 TEST(UvhttpLruCacheFullCoverageTest, RemoveAfterContentAllocFail) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 100, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -1114,14 +1114,14 @@ TEST(UvhttpLruCacheFullCoverageTest, RemoveAfterContentAllocFail) {
 
 /* Test: eviction callback during force eviction */
 TEST(UvhttpLruCacheFullCoverageTest, ForceEvictionCallbackTrigger) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(1024 * 1024, 10, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
     static int evict_cb_count = 0;
     evict_cb_count = 0;
 
-    auto cb = [](cache_entry_t* entry, void* user_data) {
+    auto cb = [](uvhttp_lru_cache_entry_t* entry, void* user_data) {
         evict_cb_count++;
         (void)entry;
         (void)user_data;
@@ -1147,7 +1147,7 @@ TEST(UvhttpLruCacheFullCoverageTest, ForceEvictionCallbackTrigger) {
 
 /* Test: eviction when cache is empty during put */
 TEST(UvhttpLruCacheFullCoverageTest, EvictFromEmptyCache) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result = uvhttp_lru_cache_create(100, 1, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
 
@@ -1166,7 +1166,7 @@ TEST(UvhttpLruCacheFullCoverageTest, EvictFromEmptyCache) {
 /* An entry larger than the whole budget must be rejected before eviction:
  * otherwise the cache is emptied for content it still cannot hold. */
 TEST(UvhttpLruCacheFullCoverageTest, OversizedEntryKeepsExistingEntries) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result =
         uvhttp_lru_cache_create(65536, 10, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);
@@ -1194,7 +1194,7 @@ TEST(UvhttpLruCacheFullCoverageTest, OversizedEntryKeepsExistingEntries) {
 /* Eviction targets 90% of the budget, so an entry that fits the raw budget but
  * not that target must also be rejected before anything is evicted. */
 TEST(UvhttpLruCacheFullCoverageTest, EntryAboveEvictionTargetKeepsCache) {
-    cache_manager_t* cache = NULL;
+    uvhttp_lru_cache_t* cache = NULL;
     uvhttp_error_t result =
         uvhttp_lru_cache_create(65536, 10, 0, &cache);
     ASSERT_EQ(result, UVHTTP_OK);

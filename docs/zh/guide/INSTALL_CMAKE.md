@@ -136,11 +136,11 @@ target_link_libraries(server uvhttp)
 
 int home_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
     (void)request;
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
+
+
     const char* body = "Hello, World!";
-    uvhttp_response_set_body(response, body, strlen(body));
-    return uvhttp_response_send(response);
+
+    return uvhttp_respond(response, 200, "text/plain", body, strlen(body));
 }
 
 int main() {

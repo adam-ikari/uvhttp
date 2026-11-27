@@ -13,7 +13,7 @@
  *     }
  *
  * 现有 test_lru_cache_full_coverage.cpp 的内存预算都远大于单条目
- * （sizeof(cache_entry_t) 约 10KB，因内含 etag[4096] + safe_path[1024] 等），
+ * （sizeof(uvhttp_lru_cache_entry_t) 约 10KB，因内含 etag[4096] + safe_path[1024] 等），
  * 因此淘汰循环总是有对象可淘汰，lru_tail==NULL 的早退分支永不触发。
  *
  * 该分支的价值：它是「单条目就超过内存预算」时的唯一防线。缺失则 put 会
@@ -34,7 +34,7 @@ extern "C" {
 
 class LruCacheCapacity : public ::testing::Test {
    protected:
-    cache_manager_t* cache_ = nullptr;
+    uvhttp_lru_cache_t* cache_ = nullptr;
 
     void TearDown() override {
         if (cache_) {
@@ -58,7 +58,7 @@ class LruCacheCapacity : public ::testing::Test {
     }
 };
 
-/* sizeof(cache_entry_t) 约 10KB（内含 etag[4096] + safe_path[1024]
+/* sizeof(uvhttp_lru_cache_entry_t) 约 10KB（内含 etag[4096] + safe_path[1024]
  * 等固定数组）， 故 16KB 预算能容纳一个小条目，但容不下 8KB 内容条目。 */
 static constexpr size_t kBudget = 16 * 1024;
 

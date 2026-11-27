@@ -4,6 +4,7 @@
  */
 
 #include <gtest/gtest.h>
+#include "uvhttp_response_internal.h"
 #include <uvhttp.h>
 #include <string>
 
@@ -150,80 +151,47 @@ TEST_F(CompressionHelpersTest, ShouldCompressByContentType_NullContentType) {
     EXPECT_EQ(uvhttp_should_compress_by_content_type(""), 0);
 }
 
-/* ========== uvhttp_response_set_compress_by_filename Tests ========== */
+/* ========== Predicate + setter (the single decision path) ========== */
 
-TEST_F(CompressionHelpersTest, SetCompressByFilename_CompressibleFile) {
-    uvhttp_error_t result = uvhttp_response_set_compress_by_filename(&response, "index.html");
-    EXPECT_EQ(result, UVHTTP_OK);
+TEST_F(CompressionHelpersTest, ExtensionPredicateDrivesSetCompress) {
+    EXPECT_EQ(uvhttp_should_compress_by_extension("index.html"), 1);
+    EXPECT_EQ(uvhttp_should_compress_by_extension("data.json"), 1);
+    EXPECT_EQ(uvhttp_should_compress_by_extension("photo.jpg"), 0);
+
+    ASSERT_EQ(uvhttp_response_set_compress(
+                  &response, uvhttp_should_compress_by_extension("index.html")),
+              UVHTTP_OK);
     EXPECT_EQ(response.compress, 1);
-    EXPECT_EQ(response.compress_threshold, 1024);
-}
-
-TEST_F(CompressionHelpersTest, SetCompressByFilename_NonCompressibleFile) {
-    uvhttp_error_t result = uvhttp_response_set_compress_by_filename(&response, "photo.jpg");
-    EXPECT_EQ(result, UVHTTP_OK);
+    ASSERT_EQ(uvhttp_response_set_compress(
+                  &response, uvhttp_should_compress_by_extension("photo.jpg")),
+              UVHTTP_OK);
     EXPECT_EQ(response.compress, 0);
 }
 
-TEST_F(CompressionHelpersTest, SetCompressByFilename_JsonFile) {
-    uvhttp_error_t result = uvhttp_response_set_compress_by_filename(&response, "data.json");
-    EXPECT_EQ(result, UVHTTP_OK);
-    EXPECT_EQ(response.compress, 1);
-    EXPECT_EQ(response.compress_threshold, 1024);
-}
-
-TEST_F(CompressionHelpersTest, SetCompressByFilename_NullResponse) {
-    uvhttp_error_t result = uvhttp_response_set_compress_by_filename(NULL, "index.html");
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(CompressionHelpersTest, SetCompressByFilename_WithExistingThreshold) {
-    /* 先设置阈值 */
+TEST_F(CompressionHelpersTest, SetCompressDoesNotResetExistingThreshold) {
+    /* The removed convenience wrapper had a test for this; the behaviour
+     * lives in uvhttp_response_set_compress and must stay covered. */
     response.compress_threshold = 2048;
-    
-    uvhttp_error_t result = uvhttp_response_set_compress_by_filename(&response, "index.html");
-    EXPECT_EQ(result, UVHTTP_OK);
+    ASSERT_EQ(uvhttp_response_set_compress(&response, 1), UVHTTP_OK);
     EXPECT_EQ(response.compress, 1);
-    /* 阈值应该保持不变 */
     EXPECT_EQ(response.compress_threshold, 2048);
 }
 
-/* ========== uvhttp_response_set_compress_by_content_type Tests ========== */
+TEST_F(CompressionHelpersTest, ContentTypePredicateDrivesSetCompress) {
+    EXPECT_EQ(uvhttp_should_compress_by_content_type("text/html"), 1);
+    EXPECT_EQ(uvhttp_should_compress_by_content_type("application/json"), 1);
+    EXPECT_EQ(uvhttp_should_compress_by_content_type("image/jpeg"), 0);
 
-TEST_F(CompressionHelpersTest, SetCompressByContentType_CompressibleType) {
-    uvhttp_error_t result = uvhttp_response_set_compress_by_content_type(&response, "text/html");
-    EXPECT_EQ(result, UVHTTP_OK);
+    ASSERT_EQ(uvhttp_response_set_compress(
+                  &response,
+                  uvhttp_should_compress_by_content_type("text/html")),
+              UVHTTP_OK);
     EXPECT_EQ(response.compress, 1);
-    EXPECT_EQ(response.compress_threshold, 1024);
-}
-
-TEST_F(CompressionHelpersTest, SetCompressByContentType_NonCompressibleType) {
-    uvhttp_error_t result = uvhttp_response_set_compress_by_content_type(&response, "image/jpeg");
-    EXPECT_EQ(result, UVHTTP_OK);
+    ASSERT_EQ(uvhttp_response_set_compress(
+                  &response,
+                  uvhttp_should_compress_by_content_type("image/jpeg")),
+              UVHTTP_OK);
     EXPECT_EQ(response.compress, 0);
-}
-
-TEST_F(CompressionHelpersTest, SetCompressByContentType_JsonType) {
-    uvhttp_error_t result = uvhttp_response_set_compress_by_content_type(&response, "application/json");
-    EXPECT_EQ(result, UVHTTP_OK);
-    EXPECT_EQ(response.compress, 1);
-    EXPECT_EQ(response.compress_threshold, 1024);
-}
-
-TEST_F(CompressionHelpersTest, SetCompressByContentType_NullResponse) {
-    uvhttp_error_t result = uvhttp_response_set_compress_by_content_type(NULL, "text/html");
-    EXPECT_EQ(result, UVHTTP_ERROR_INVALID_PARAM);
-}
-
-TEST_F(CompressionHelpersTest, SetCompressByContentType_WithExistingThreshold) {
-    /* 先设置阈值 */
-    response.compress_threshold = 2048;
-    
-    uvhttp_error_t result = uvhttp_response_set_compress_by_content_type(&response, "text/html");
-    EXPECT_EQ(result, UVHTTP_OK);
-    EXPECT_EQ(response.compress, 1);
-    /* 阈值应该保持不变 */
-    EXPECT_EQ(response.compress_threshold, 2048);
 }
 
 /* ========== Integration Tests ========== */
@@ -234,8 +202,9 @@ TEST_F(CompressionHelpersTest, Integration_CompressibleHtmlFile) {
     /* 设置响应体 */
     uvhttp_response_set_body(&response, html_content, strlen(html_content));
     
-    /* 根据文件名自动设置压缩 */
-    uvhttp_response_set_compress_by_filename(&response, "index.html");
+    /* 单一判定点：谓词 + 显式阈值 */
+    uvhttp_response_set_compress(&response, 1);
+    uvhttp_response_set_compress_threshold(&response, 1024);
     
     /* 验证压缩已启用 */
     EXPECT_EQ(response.compress, 1);
@@ -249,8 +218,7 @@ TEST_F(CompressionHelpersTest, Integration_NonCompressibleImageFile) {
     /* 设置响应体 */
     uvhttp_response_set_body(&response, image_data, 8);
     
-    /* 根据文件名自动设置压缩 */
-    uvhttp_response_set_compress_by_filename(&response, "photo.png");
+    uvhttp_response_set_compress(&response, 0);
     
     /* 验证压缩已禁用 */
     EXPECT_EQ(response.compress, 0);
@@ -262,8 +230,8 @@ TEST_F(CompressionHelpersTest, Integration_JsonApi) {
     /* 设置响应体 */
     uvhttp_response_set_body(&response, json_body.c_str(), json_body.length());
     
-    /* 根据内容类型自动设置压缩 */
-    uvhttp_response_set_compress_by_content_type(&response, "application/json");
+    uvhttp_response_set_compress(&response, 1);
+    uvhttp_response_set_compress_threshold(&response, 1024);
     
     /* 验证压缩已启用 */
     EXPECT_EQ(response.compress, 1);

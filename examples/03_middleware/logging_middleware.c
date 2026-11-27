@@ -77,10 +77,7 @@ static void log_response(uvhttp_response_t* resp, time_t start) {
 static int hello_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     UVHTTP_EXECUTE_MIDDLEWARE(req, resp, logging_middleware);
 
-    uvhttp_response_set_status(resp, 200);
-    uvhttp_response_set_header(resp, "Content-Type", "text/plain");
-    uvhttp_response_set_body(resp, "Hello, World!", 13);
-    int rc = uvhttp_response_send(resp);
+    int rc = uvhttp_respond(resp, 200, "text/plain", "Hello, World!", 13);
     log_response(resp, time(NULL));
     return rc;
 }
@@ -92,10 +89,7 @@ static int delay_handler(uvhttp_request_t* req, uvhttp_response_t* resp) {
     struct timespec ts = {1, 0};
     nanosleep(&ts, NULL);
 
-    uvhttp_response_set_status(resp, 200);
-    uvhttp_response_set_header(resp, "Content-Type", "text/plain");
-    uvhttp_response_set_body(resp, "Delayed response", 16);
-    int rc = uvhttp_response_send(resp);
+    int rc = uvhttp_respond(resp, 200, "text/plain", "Delayed response", 16);
     log_response(resp, time(NULL));
     return rc;
 }

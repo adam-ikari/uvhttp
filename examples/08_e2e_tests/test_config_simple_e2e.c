@@ -45,10 +45,7 @@ static int config_get_handler(uvhttp_request_t* request,
              app->config->connection_timeout,
              app->config->max_file_size);
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, response_body, strlen(response_body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", response_body, strlen(response_body));
 
     return 0;
 }
@@ -60,10 +57,7 @@ static int config_update_handler(uvhttp_request_t* request,
 
     if (!action) {
         const char* error = "Missing X-Config-Action header";
-        uvhttp_response_set_status(response, 400);
-        uvhttp_response_set_header(response, "Content-Type", "text/plain");
-        uvhttp_response_set_body(response, error, strlen(error));
-        uvhttp_response_send(response);
+        uvhttp_respond(response, 400, "text/plain", error, strlen(error));
         return 0;
     }
 
@@ -77,10 +71,7 @@ static int config_update_handler(uvhttp_request_t* request,
              "Real configuration updates require uvhttp_context_t",
              action);
 
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, response_body, strlen(response_body));
-    uvhttp_response_send(response);
+    uvhttp_respond(response, 200, "text/plain", response_body, strlen(response_body));
 
     return 0;
 }

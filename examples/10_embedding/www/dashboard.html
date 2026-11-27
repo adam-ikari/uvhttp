@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UVHTTP 管理台</title>
+<style>
+  :root {
+    --bg: #12141a;
+    --panel: #1c1f28;
+    --line: #2c3140;
+    --text: #e7e9ee;
+    --dim: #9aa0b0;
+    --accent: #5ea0ff;
+    --ok: #4ec9a0;
+    --warn: #e8b74a;
+    --bad: #e2686f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.5 -apple-system, "Segoe UI", "Noto Sans SC", sans-serif;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; padding: 18px 24px; border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  .conn { display: flex; align-items: center; gap: 8px; color: var(--dim); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); }
+  .dot.on { background: var(--ok); }
+  main { max-width: 960px; margin: 0 auto; padding: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 16px 18px;
+  }
+  .card .label { color: var(--dim); font-size: 12px; letter-spacing: .04em; }
+  .card .value { font-size: 26px; font-weight: 600; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .card .value.ok { color: var(--ok); }
+  .card .value.warn { color: var(--warn); }
+  .card .value.bad { color: var(--bad); }
+  section { margin-top: 26px; }
+  section h2 { font-size: 14px; color: var(--dim); font-weight: 600; margin: 0 0 10px; }
+  pre {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; margin: 0; overflow-x: auto; color: var(--text);
+    font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  button {
+    background: var(--accent); color: #fff; border: 0; border-radius: 8px;
+    padding: 9px 16px; font-size: 14px; cursor: pointer; font-weight: 600;
+  }
+  button:hover { filter: brightness(1.1); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.danger { background: var(--warn); color: #1a1400; }
+  label.toggle { display: flex; align-items: center; gap: 6px; color: var(--dim); cursor: pointer; }
+  .msg { color: var(--dim); font-size: 13px; min-height: 20px; }
+  .endpoints { color: var(--dim); font: 13px ui-monospace, monospace; }
+  .endpoints span { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>UVHTTP 服务器管理台</h1>
+  <div class="conn">
+    <span class="dot" id="dot"></span>
+    <span id="conn-text">未连接</span>
+    <label class="toggle"><input type="checkbox" id="auto" checked> 自动刷新</label>
+  </div>
+</header>
+
+<main>
+  <section>
+    <h2>运行状态</h2>
+    <div class="grid">
+      <div class="card"><div class="label">Health</div><div class="value" id="health">—</div></div>
+      <div class="card"><div class="label">活跃连接</div><div class="value" id="active">—</div></div>
+      <div class="card"><div class="label">排水状态</div><div class="value" id="draining">—</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>累计计数</h2>
+    <div class="grid">
+      <div class="card"><div class="label">总连接</div><div class="value" id="connections">—</div></div>
+      <div class="card"><div class="label">总请求</div><div class="value" id="requests">—</div></div>
+      <div class="card"><div class="label">拒绝</div><div class="value" id="denied">—</div></div>
+      <div class="card"><div class="label">异步错误</div><div class="value" id="errors">—</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>控制</h2>
+    <div class="bar">
+      <button id="refresh">刷新</button>
+      <button id="drain" class="danger">进入排水</button>
+      <span class="msg" id="msg"></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>原始响应</h2>
+    <pre id="raw">点击「刷新」获取数据</pre>
+  </section>
+
+  <section>
+    <h2>端点</h2>
+    <div class="endpoints">
+      <span>GET</span> /health &nbsp; <span>GET</span> /metrics &nbsp;
+      <span>GET</span> /json &nbsp; <span>POST</span> /admin/drain
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+let timer = null;
+
+async function getJSON(path) {
+  const r = await fetch(path, { cache: 'no-store' });
+  if (!r.ok) throw new Error(`${path} → HTTP ${r.status}`);
+  return r.json();
+}
+
+function setText(id, value, cls) {
+  const el = $(id);
+  el.textContent = value;
+  el.className = 'value' + (cls ? ' ' + cls : '');
+}
+
+async function refresh() {
+  try {
+    const [health, m] = await Promise.all([getJSON('/health'), getJSON('/metrics')]);
+    $('dot').classList.add('on');
+    $('conn-text').textContent = '已连接';
+    setText('health', health.status === 'ok' ? 'OK' : JSON.stringify(health),
+            health.status === 'ok' ? 'ok' : 'bad');
+    setText('active', m.active);
+    setText('connections', m.connections);
+    setText('requests', m.requests);
+    setText('denied', m.denied, m.denied > 0 ? 'warn' : '');
+    setText('errors', m.errors, m.errors > 0 ? 'bad' : '');
+    setText('draining', m.draining ? 'DRAINING' : '正常',
+            m.draining ? 'warn' : 'ok');
+    $('raw').textContent =
+      '/health  ' + JSON.stringify(health) + '\n' +
+      '/metrics ' + JSON.stringify(m);
+    $('msg').textContent = '';
+  } catch (e) {
+    $('dot').classList.remove('on');
+    $('conn-text').textContent = '未连接';
+    $('msg').textContent = '刷新失败：' + e.message;
+  }
+}
+
+async function drain() {
+  try {
+    const r = await fetch('/admin/drain', { method: 'POST', cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    $('msg').textContent = '已进入排水，1 秒后服务器将停止';
+    $('drain').disabled = true;
+    await refresh();
+  } catch (e) {
+    $('msg').textContent = '排水失败：' + e.message;
+  }
+}
+
+$('refresh').addEventListener('click', refresh);
+$('drain').addEventListener('click', drain);
+$('auto').addEventListener('change', e => {
+  if (timer) { clearInterval(timer); timer = null; }
+  if (e.target.checked) timer = setInterval(refresh, 2000);
+});
+
+refresh();
+timer = setInterval(refresh, 2000);
+</script>
+</body>
+</html>

@@ -423,8 +423,12 @@ TEST(UvhttpWebsocketFullCoverageTest, WsStateValues) {
 
 /* 测试帧头结构大小 */
 TEST(UvhttpWebsocketFullCoverageTest, WsFrameHeaderSize) {
-    /* fin..payload_len 位域 2 字节 + payload_length (uint64_t) 8 字节 + 对齐 */
-    EXPECT_EQ(sizeof(uvhttp_ws_frame_header_t), 16);
+    /* 2 bytes of bitfields + 8-byte payload_length. On 64-bit uint64_t is
+     * 8-aligned (size 16); on 32-bit it is 4-aligned (size 12). Assert the
+     * layout rule, not one platform's number — 32-bit support is required. */
+    const size_t expected =
+        (UVHTTP_UINT64_ALIGNMENT == 8) ? 16u : 12u;
+    EXPECT_EQ(sizeof(uvhttp_ws_frame_header_t), expected);
 }
 
 /* 测试连接结构大小 */

@@ -19,8 +19,8 @@
 #    endif
 
 /* Forward declarations */
-typedef struct cache_manager cache_manager_t;
-typedef struct cache_entry cache_entry_t;
+typedef struct cache_manager uvhttp_lru_cache_t;
+typedef struct cache_entry uvhttp_lru_cache_entry_t;
 
 #    ifdef __cplusplus
 extern "C" {
@@ -50,7 +50,7 @@ typedef struct uvhttp_static_config {
 /* Static file serving context */
 typedef struct uvhttp_static_context {
     uvhttp_static_config_t config; /*  */
-    cache_manager_t* cache;        /* LRUCachemanage */
+    uvhttp_lru_cache_t* cache;        /* LRUCachemanage */
 } uvhttp_static_context_t;
 
 /* MIME type mapping entry */

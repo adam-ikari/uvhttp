@@ -108,6 +108,17 @@ size_t uvhttp_request_get_body_length(uvhttp_request_t* request);
 /* get header quantity */
 size_t uvhttp_request_get_header_count(uvhttp_request_t* request);
 
+/**
+ * @brief True when any header named @p name contains @p token as a
+ * comma-separated, case-insensitive token.
+ *
+ * Unlike uvhttp_request_get_header (which returns only the first header of a
+ * name), this scans every occurrence — needed for headers like Connection
+ * that legally repeat and whose value is a token list.
+ */
+int uvhttp_request_has_header_token(uvhttp_request_t* request,
+                                    const char* name, const char* token);
+
 /* getspecifiedindex header(internalUse) */
 uvhttp_header_t* uvhttp_request_get_header_at(uvhttp_request_t* request,
                                               size_t index);

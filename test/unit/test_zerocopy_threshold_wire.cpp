@@ -20,6 +20,7 @@
  */
 
 #include "uvhttp_allocator.h"
+#include "uvhttp_response_internal.h"
 #include "uvhttp_constants.h"
 #include "uvhttp_features.h"
 #include "uvhttp_request.h"

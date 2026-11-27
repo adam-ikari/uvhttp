@@ -101,13 +101,6 @@ TEST(UvhttpConnectionComprehensiveTest, ConnectionFlags) {
     ASSERT_EQ(result, UVHTTP_OK);
     ASSERT_NE(conn, nullptr);
 
-    /* Test keepalive Flag */
-    conn->keepalive = 0;
-    EXPECT_EQ(conn->keepalive, 0);
-
-    conn->keepalive = 1;
-    EXPECT_EQ(conn->keepalive, 1);
-
     /* Test分块编码Flag */
     conn->chunked_encoding = 0;
     EXPECT_EQ(conn->chunked_encoding, 0);

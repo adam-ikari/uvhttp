@@ -59,10 +59,10 @@ make test
 #include <string.h>
 
 int hello_handler(uvhttp_request_t* request, uvhttp_response_t* response) {
-    uvhttp_response_set_status(response, 200);
-    uvhttp_response_set_header(response, "Content-Type", "text/plain");
-    uvhttp_response_set_body(response, "Hello, World!", strlen("Hello, World!"));
-    return uvhttp_response_send(response);
+
+
+
+    return uvhttp_respond(response, 200, "text/plain", "Hello, World!", strlen("Hello, World!"));
 }
 
 int main() {
@@ -90,7 +90,7 @@ int main() {
 }
 ```
 
-handler 设置状态码、Content-Type 和 body，调用 uvhttp_response_send 并把它的返回值交出去。uvhttp_server_take_router 把 router 交给 server，此后所有权归 server。
+handler 设置状态码、Content-Type 和 body，调用 uvhttp_respond 并把它的返回值交出去。uvhttp_server_take_router 把 router 交给 server，此后所有权归 server。
 
 ### 编译并运行
 
