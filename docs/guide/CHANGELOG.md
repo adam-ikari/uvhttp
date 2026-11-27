@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.2] - 2026-11-27
+
+Follow-up to 3.1.1. This patch makes the shipped examples reachable from the
+documentation and fixes an umbrella-header omission that hid the logging macros
+from translation units including only `<uvhttp.h>`.
+
+### Added
+- **Makefile.examples auto-discovers all 52 examples**: target names are file
+  basenames; feature macros are extracted from `build_static`'s `flags.make`
+  so an example build cannot drift out of ABI sync with the library.
+- **examples/README.md rewritten around real commands**: the six make targets
+  it used to teach did not exist; the directory listing now covers
+  `07_performance/`, `08_e2e_tests/`, `10_embedding/`, and the production
+  embedder with its Web dashboard.
+
+### Fixed
+- **uvhttp.h now includes uvhttp_logging.h**: the umbrella header documented
+  "define UVHTTP_LOG_EMIT before including <uvhttp.h>" but omitted the include,
+  so translation units using only the umbrella got undefined `UVHTTP_LOG_*`.
+- **unified_response_demo.c** cleaned four body strings naming the removed
+  `uvhttp_response_set_body`, plus a misleading "old/new way" demo that showed
+  the same `uvhttp_respond` call twice.
+- **production_app.c** dropped the stale `LD_LIBRARY_PATH` hint (the library is
+  linked statically).
+
+### Verification
+- 52/52 examples compile; Release 135/135, Static 136/136, ASan 135/135,
+  UBSan 135/135; response-body-length, test-validity, doc-sync (31 EN/ZH pairs)
+  and link checks pass.
+
 ## [3.1.1] - 2026-11-26
 
 Follow-up to 3.1.0 within the same 3.0 breaking window. The version was

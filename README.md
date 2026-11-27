@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-3.1.1-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-3.1.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
@@ -21,7 +21,7 @@ Lightweight & Embeddable • 32-bit Support • Zero-Copy • ASan/UBSan-Verifie
 
 UVHTTP is a production-grade, event-driven HTTP server library built on libuv for modern C applications. It delivers exceptional performance with minimal resource consumption, making it ideal for both high-performance servers and embedded systems.
 
-### Key Metrics (v3.1.1, GitHub CI baseline)
+### Key Metrics (v3.1.2, GitHub CI baseline)
 
 Performance baselines are measured on **GitHub Actions `ubuntu-latest` runners** for hardware consistency. Previous local baselines (v2.6.x, ~20K RPS) were measured on developer hardware with 40%+ variance from CPU thermal throttling. The CI runner eliminates this variance (CV 0.4–2.4%), providing an authoritative, reproducible baseline.
 
@@ -208,7 +208,7 @@ cmake -DCMAKE_C_FLAGS="-m32" ..
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     (void)req;
     /* One atomic call: validates status/type/body, then sends. */
-    return uvhttp_respond(res, 200, "text/plain", "Hello from UVHTTP v3.1.1!", 24);
+    return uvhttp_respond(res, 200, "text/plain", "Hello from UVHTTP v3.1.2!", 24);
 }
 
 int main() {
@@ -497,6 +497,10 @@ UVHTTP is built upon excellent open-source projects:
 - [x] RFC correctness: HEAD bodyless, `Connection: close`, 413 oversized body, sendfile keep-alive ordering, WS coalesced frame
 - [x] mbedTLS 3.6.8; 32-bit blocking CI gate; production embedder example + Web dashboard
 
+### v3.1.2 (Released 2026-11-27)
+- [x] Example reachability: all 52 examples auto-discovered by Makefile.examples, README rewritten around real commands
+- [x] umbrella header exposes logging macros; stale API strings and LD_LIBRARY_PATH hint cleaned
+
 ### v3.1.1 (Released 2026-11-26)
 - [x] TLS WANT_WRITE deadlock fix; custom-upgrade first-frame preservation (ownership callback now carries buffered bytes)
 - [x] Response body length CI gate; all examples use byte lengths
@@ -505,6 +509,7 @@ UVHTTP is built upon excellent open-source projects:
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v3.1.2** | 2026-11-27 | 示例可达性（52 个 make 目标）/ 日志接口 umbrella 暴露 / 过时 API 字符串清理 |
 | **v3.1.1** | 2026-11-26 | TLS WANT_WRITE 死锁修复、自定义升级首帧保留、响应体长度门禁 |
 | **v3.1.0** | 2026-11-26 | API 原子化收尾 / 生产接缝 / RFC 正确性 / mbedTLS 3.6.8 / 32-bit CI |
 | **v3.0.1** | 2026-11-23 | 安全与正确性补丁：header 溢出 / 目录列表 XSS / 流水线 UAF / TOCTOU / 304 |

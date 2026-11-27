@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![uvhttp](https://img.shields.io/badge/uvhttp-3.1.1-blue.svg)
+![uvhttp](https://img.shields.io/badge/uvhttp-3.1.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%2032--bit-orange.svg)
@@ -21,7 +21,7 @@
 
 UVHTTP 是一个基于 libuv 的生产级事件驱动 HTTP 服务器库，专为现代 C 应用设计。它在极低资源消耗下提供卓越性能，既适用于高性能服务器，也适用于嵌入式系统。
 
-### 关键指标 (v3.1.1, GitHub CI 基准)
+### 关键指标 (v3.1.2, GitHub CI 基准)
 
 性能基准在 **GitHub Actions `ubuntu-latest` runner** 上测量，以确保硬件一致性。此前的本地基准（v2.6.x，约 20K RPS）在开发者硬件上测量，受 CPU 热降频影响方差高达 40%+。CI runner 消除了这一方差（CV 0.4–2.4%），提供了权威的、可复现的基线。
 
@@ -208,7 +208,7 @@ cmake -DCMAKE_C_FLAGS="-m32" ..
 int hello_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
     (void)req;
     /* 一次原子调用：校验 status/type/body 后直接发送。 */
-    return uvhttp_respond(res, 200, "text/plain", "Hello from UVHTTP v3.1.1!", 24);
+    return uvhttp_respond(res, 200, "text/plain", "Hello from UVHTTP v3.1.2!", 24);
 }
 
 int main() {
@@ -494,6 +494,10 @@ UVHTTP 基于以下优秀的开源项目构建：
 - [x] RFC 正确性：HEAD 无 body、`Connection: close`、请求体超限 413、sendfile keep-alive 顺序、WS 合并首帧
 - [x] mbedTLS 3.6.8；32-bit 阻塞 CI 门禁；生产 embedder 示例 + Web 管理台
 
+### v3.1.2（发布于 2026-11-27）
+- [x] 示例可达性：Makefile.examples 自动发现全部 52 个示例，README 按真实命令重写
+- [x] umbrella header 暴露日志宏；清理过时 API 字符串与 LD_LIBRARY_PATH 提示
+
 ### v3.1.1（发布于 2026-11-26）
 - [x] TLS WANT_WRITE 死锁修复；自定义升级首帧保留（ownership 回调携带 buffered 字节）
 - [x] 响应体长度 CI 门禁；所有示例改用字节数
@@ -502,6 +506,7 @@ UVHTTP 基于以下优秀的开源项目构建：
 
 | 版本 | 日期 | 亮点 |
 |---------|------|------------|
+| **v3.1.2** | 2026-11-27 | 示例可达性（52 个 make 目标）/ 日志接口 umbrella 暴露 / 过时 API 字符串清理 |
 | **v3.1.1** | 2026-11-26 | TLS WANT_WRITE 死锁修复、自定义升级首帧保留、响应体长度门禁 |
 | **v3.1.0** | 2026-11-26 | API 原子化收尾 / 生产接缝 / RFC 正确性 / mbedTLS 3.6.8 / 32-bit CI |
 | **v3.0.1** | 2026-11-23 | 安全与正确性补丁：header 溢出 / 目录列表 XSS / 流水线 UAF / TOCTOU / 304 |

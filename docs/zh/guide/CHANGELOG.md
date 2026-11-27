@@ -1,6 +1,6 @@
 ---
 title: 更新日志
-description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，遵循语义化版本规范。涵盖 1.0.0 至 3.1.1 各版本的新增、修复、变更、安全与性能改进，以及生产级内存安全验证。
+description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，遵循语义化版本规范。涵盖 1.0.0 至 3.1.2 各版本的新增、修复、变更、安全与性能改进，以及生产级内存安全验证。
 ---
 
 # 更新日志
@@ -9,6 +9,22 @@ description: UVHTTP 全部重要变更记录。格式基于 Keep a Changelog，�
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
 本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)规范。
+
+## [3.1.2] - 2026-11-27
+
+3.1.1 的后续 patch。本版让随库发布的示例真正可达，并修复 umbrella header 漏包含日志头、导致只 include `<uvhttp.h>` 的编译单元拿不到日志宏的问题。
+
+### 新增
+- **Makefile.examples 自动发现全部 52 个示例**：目标名即文件 basename；feature 宏从 `build_static` 的 `flags.make` 抽取，避免示例构建与库 ABI 漂移。
+- **examples/README.md 按真实命令重写**：此前教的 6 个 make 目标都不存在；目录补 `07_performance/`、`08_e2e_tests/`、`10_embedding/`，加入生产 embedder 与 Web 管理台入口。
+
+### 修复
+- **uvhttp.h 补包含 uvhttp_logging.h**：umbrella header 注释写"define UVHTTP_LOG_EMIT before including <uvhttp.h>"，却漏掉该 include，导致只用 umbrella 的编译单元拿到未定义的 `UVHTTP_LOG_*`。
+- **unified_response_demo.c** 清理 4 处写着已删 API `uvhttp_response_set_body` 的响应体字符串，以及"旧方式/新方式"两段相同 `uvhttp_respond` 调用的误导演示。
+- **production_app.c** 去掉过时的 `LD_LIBRARY_PATH` 提示（库为静态链接）。
+
+### 验证
+- 52/52 示例编译通过；Release 135/135、静态 136/136、ASan 135/135、UBSan 135/135；响应体长度、测试有效性、文档同步（31 对中英）与链接检查全过。
 
 ## [3.1.1] - 2026-11-26
 
