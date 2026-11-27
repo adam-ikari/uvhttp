@@ -1,195 +1,108 @@
 # UVHTTP 示例程序
 
-本目录包含 UVHTTP 的各种示例程序，按功能分类组织，帮助应用开发者快速学习和使用 UVHTTP。
+`examples/` 下有 52 个 `.c` 示例，由一个 Makefile 自动发现并构建。目标名就是文件 basename（52 个全部唯一），不存在需要单独登记的目标。
+
+## 先构建库
+
+示例链接的 feature 宏必须和库的构建一致，否则 ABI 不匹配。默认 `build/` 关掉了 static / LRU / router cache，而示例按功能超集写，统一用 `build_static/`：
+
+```bash
+# 仓库根目录
+cmake -S . -B build_static -DBUILD_WITH_STATIC_FILES=ON -DBUILD_WITH_ROUTER_CACHE=ON
+cmake --build build_static -j$(nproc)
+```
+
+## 编译示例
+
+从 `examples/` 目录执行：
+
+```bash
+cd examples
+make -f Makefile.examples           # 全部 52 个
+make -f Makefile.examples help      # 列出所有目标
+make -f Makefile.examples api_demo  # 单个示例
+```
+
+产物在 `examples/bin/`。库是静态 `.a`，运行时不需要 `LD_LIBRARY_PATH`。
+
+调试构建：`make -f Makefile.examples BUILD_TYPE=debug`。
 
 ## 目录结构
 
 ```
 examples/
-├── 01_basics/           # 基础示例
-├── 02_routing/          # 路由示例
-├── 03_middleware/       # 中间件示例
-├── 04_static_files/     # 静态文件服务示例
-├── 05_websocket/        # WebSocket 示例
-├── 06_advanced/         # 高级功能示例
-└── README.md            # 本文件
+├── 01_basics/           6 个  基础 HTTP 服务器
+├── 02_routing/          2 个  路由与方法分发
+├── 03_middleware/       5 个  中间件链、限流
+├── 04_static_files/     5 个  静态文件与缓存
+├── 05_websocket/        3 个  WebSocket 回显与连接管理
+├── 06_advanced/        10 个  配置、JSON、升级、统一响应、分配器
+├── 07_performance/      4 个  压缩、HTTPS、WebSocket 性能
+├── 08_e2e_tests/       13 个  各功能的端到端测试
+├── 10_embedding/        1 个  生产 embedder 示例 + Web 管理台
+├── embedding/           1 个  早期嵌入示例
+├── simple_server.c            单体服务器示例
+├── custom_compression_strategy.c
+└── Makefile.examples
 ```
 
-## 01_basics - 基础示例
+## 生产示例：production_app
 
-最简单的 HTTP 服务器示例，适合初学者入门。
-
-| 文件 | 描述 |
-|------|------|
-| `01_hello_world.c` | 最简单的 Hello World 服务器 |
-| `helloworld.c` | 完整的 Hello World 示例 |
-| `helloworld_complete.c` | 带完整错误处理的 Hello World |
-| `quick_api_demo.c` | 快速 API 演示 |
-| `simple_api_demo.c` | 简单 API 演示 |
-
-**快速开始**:
-```bash
-cd build
-make helloworld
-./dist/bin/helloworld
-```
-
-## 02_routing - 路由示例
-
-演示如何使用路由系统处理不同的 URL 和 HTTP 方法。
-
-| 文件 | 描述 |
-|------|------|
-| `01_simple_routing.c` | 简单路由示例 |
-| `02_method_routing.c` | HTTP 方法路由（GET、POST、PUT、DELETE） |
-
-**快速开始**:
-```bash
-cd build
-make simple_routing
-./dist/bin/simple_routing
-```
-
-## 03_middleware - 中间件示例
-
-演示如何使用中间件系统扩展服务器功能。
-
-| 文件 | 描述 |
-|------|------|
-| `middleware_compile_time_demo.c` | 编译时中间件示例 |
-| `middleware_chain_demo.c` | 中间件链示例 |
-| `rate_limit_demo.c` | 限流中间件示例 |
-| `test_middleware.c` | 中间件测试 |
-
-**快速开始**:
-```bash
-cd build
-make middleware_chain_demo
-./dist/bin/middleware_chain_demo
-```
-
-## 04_static_files - 静态文件服务示例
-
-演示如何提供静态文件服务，包括缓存优化。
-
-| 文件 | 描述 |
-|------|------|
-| `simple_static_test.c` | 简单静态文件测试 |
-| `static_file_server.c` | 静态文件服务器 |
-| `cache_test_server.c` | 缓存测试服务器 |
-| `advanced_static_server.c` | 高级静态文件服务器（带统计） |
-
-**快速开始**:
-```bash
-cd build
-make static_file_server
-./dist/bin/static_file_server -d ../public -p 8080
-```
-
-## 05_websocket - WebSocket 示例
-
-演示如何使用 WebSocket 功能实现实时通信。
-
-| 文件 | 描述 |
-|------|------|
-| `websocket_echo_server.c` | WebSocket 回显服务器 |
-| `websocket_test_server.c` | WebSocket 测试服务器 |
-| `test_ws_connection_management.c` | WebSocket 连接管理测试 |
-
-**快速开始**:
-```bash
-cd build
-make websocket_echo_server
-./dist/bin/websocket_echo_server
-```
-
-## 06_advanced - 高级功能示例
-
-演示高级功能和最佳实践。
-
-| 文件 | 描述 |
-|------|------|
-| `api_demo.c` | REST API 演示 |
-| `json_api_demo.c` | JSON API 演示 |
-| `config_demo.c` | 配置管理演示 |
-| `simple_config.c` | 简单配置示例 |
-| `context_injection.c` | 上下文注入示例 |
-| `unified_response_demo.c` | 统一响应处理示例 |
-| `app_advanced_memory.c` | 高级内存管理示例 |
-| `hierarchical_allocator_example.c` | 分层分配器示例 |
-
-**快速开始**:
-```bash
-cd build
-make api_demo
-./dist/bin/api_demo
-```
-
-## 编译示例
-
-所有示例程序都可以通过以下方式编译：
+`production_app` 展示 embedder 实际会用到的接缝：config 单通道（`take_config` / `get_config`）、请求过滤、错误回调、`get_stats`、`set_draining` + `async stop`、原子响应（`uvhttp_respond`）、由应用层实现的日志接口、静态文件 catch-all。端口必填，不设默认值：
 
 ```bash
-# 创建构建目录
-mkdir build && cd build
-
-# 配置项目（启用示例程序）
-cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON ..
-
-# 编译所有示例
-make
-
-# 编译特定示例
-make helloworld
-make simple_routing
-make middleware_chain_demo
-make static_file_server
-make websocket_echo_server
-make api_demo
+cd examples
+make -f Makefile.examples production_app
+./bin/production_app 18080
 ```
 
-## 运行示例
-
-编译完成后，示例程序位于 `build/dist/bin/` 目录：
+Web 管理台文件在 `10_embedding/www/`（`index.html`、`dashboard.html`）。
 
 ```bash
-# 运行示例
-./build/dist/bin/helloworld
-./build/dist/bin/simple_routing
-./build/dist/bin/middleware_chain_demo
-./build/dist/bin/static_file_server -d ../public -p 8080
-./build/dist/bin/websocket_echo_server
-./build/dist/bin/api_demo
+curl localhost:18080/
+curl localhost:18080/json
+curl localhost:18080/metrics
+curl localhost:18080/index.html
+curl -H 'X-Deny: 1' localhost:18080/        # 403，请求过滤生效
+curl -X POST localhost:18080/admin/drain    # 进入 draining
+kill -TERM <pid>                            # drain 后停止
 ```
 
-## 端口说明
+## 各目录主要示例
 
-为避免冲突，不同示例使用不同的端口：
+| 目录 | make 目标 | 说明 |
+|------|-----------|------|
+| 01_basics | `helloworld` / `01_hello_world` / `helloworld_complete` | 从最简到带完整错误处理 |
+| 02_routing | `01_simple_routing` / `02_method_routing` | 路径与方法路由 |
+| 03_middleware | `middleware_chain_demo` / `rate_limit_demo` | 中间件链与限流 |
+| 04_static_files | `static_file_server` / `cache_test_server` | 静态服务与缓存 |
+| 05_websocket | `websocket_echo_server` | WebSocket 回显 |
+| 06_advanced | `api_demo` / `json_api_demo` / `unified_response_demo` | 高级 API 用法 |
+| 07_performance | `compression_server` / `performance_https_server` | 压缩与 TLS 性能 |
+| 08_e2e_tests | `test_simple_e2e` / `test_websocket_simple_e2e` | 端到端测试程序 |
+| 10_embedding | `production_app` | 生产 embedder + Web 管理台 |
 
-| 示例类型 | 默认端口 |
-|---------|---------|
-| 基础示例 | 8080 |
-| 路由示例 | 8081 |
-| 中间件示例 | 8082 |
-| 静态文件示例 | 8083 |
-| WebSocket 示例 | 8084 |
-| 高级示例 | 8085 |
+完整目标列表见 `make -f Makefile.examples help`。
+
+## 端口
+
+教学示例多数把端口硬编码为 `8080`，仅用于本机演示，同时运行多个会冲突。`production_app` 的端口由命令行参数必填（`1..65535`），并行运行不会撞端口。早期示例（如 `02_method_routing`）可能用其他固定端口，运行前看源码开头的 curl 示例。
 
 ## 学习路径
 
-建议按照以下顺序学习：
-
-1. **01_basics** - 从最简单的 Hello World 开始
-2. **02_routing** - 学习如何处理不同的 URL
-3. **03_middleware** - 学习如何扩展服务器功能
-4. **04_static_files** - 学习如何提供静态文件
-5. **05_websocket** - 学习实时通信
-6. **06_advanced** - 学习高级功能和最佳实践
+1. `01_basics` — 最简服务器与完整错误处理
+2. `02_routing` — URL 与 HTTP 方法分发
+3. `03_middleware` — 中间件扩展
+4. `04_static_files` — 静态文件与缓存
+5. `05_websocket` — 实时通信
+6. `06_advanced` — 配置、JSON、协议升级、统一响应
+7. `10_embedding/production_app` — 把上面这些接缝拼成可运行的应用
 
 ## 相关文档
 
-- [API 参考](../docs/api/)
+- [API 参考](../docs/api/API_REFERENCE.md)
 - [开发者指南](../docs/guide/DEVELOPER_GUIDE.md)
+- [嵌入指南](../docs/guide/EMBEDDING_GUIDE.md)
 - [教程](../docs/guide/TUTORIAL.md)
 - [WebSocket 指南](../docs/guide/websocket.md)
 - [静态文件服务](../docs/guide/STATIC_FILE_SERVER.md)
@@ -197,15 +110,11 @@ make api_demo
 
 ## 注意事项
 
-- 所有示例程序都遵循 UVHTTP 的设计原则
-- 使用 `loop->data` 传递应用上下文（参考 [LIBUV_DATA_POINTER.md](../docs/guide/LIBUV_DATA_POINTER.md)）
-- 使用统一的错误处理机制
-- 遵循代码风格和命名约定
+- 应用上下文通过 `loop->data` 传递，参考 [LIBUV_DATA_POINTER.md](../docs/guide/LIBUV_DATA_POINTER.md)
+- 日志接口只声明、不实现；embedder 自行实现 `uvhttp_log_set_sink`，或定义 `UVHTTP_LOG_EMIT` 重定向到自己的 logger
+- 响应体字面量用 `strlen` 给出长度，中文按 UTF-8 字节计，不手数字符数
+- 新增示例时只要放一个 `.c` 文件，Makefile 会自动发现，无需登记目标
 
-## 贡献
+## 贡献与许可证
 
-如果您有新的示例程序想法，欢迎提交 Pull Request！
-
-## 许可证
-
-MIT License
+欢迎提交新的示例程序。许可证 MIT，见仓库 LICENSE 文件。

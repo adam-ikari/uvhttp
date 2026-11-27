@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [docs, website, benchmark, review]
 created: "2026-11-27T11:54:48"
-updated: "2026-11-27T12:58:55"
+updated: "2026-11-27T14:48:20"
 ---
 
 <!-- compiled_truth -->
@@ -52,4 +52,10 @@ updated: "2026-11-27T12:58:55"
   kind: decision
   summary: Rewrote compiled_truth to the new best understanding
   source: "2026-11-27 开发者支持缺口修复完成：中英结构对等门禁 + 5 条缺口清零"
+  affects: [docs-site-review-3126]
+
+- time: 2026-11-27T14:48:20
+  kind: reversal
+  summary: "上一轮结论'开发者支持达生产级'漏查示例可达性：52 个示例只有 4 个构建目标，README 教 6 个不存在的 make 目标。本轮补齐：Makefile.examples 自动发现 52 个目标并抽取 build_static 的 feature 宏；修复 umbrella header 漏包含 uvhttp_logging.h 导致的 UVHTTP_LOG_* 未定义；清理过时 API 字符串；README 按真实命令重写。52/52 编译通过，四配置 ctest 全绿"
+  source: "examples/Makefile.examples + include/uvhttp.h + examples/README.md + 52 个示例编译验证"
   affects: [docs-site-review-3126]

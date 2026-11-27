@@ -8,6 +8,7 @@
 /* Core modules */
 #include "uvhttp_constants.h"
 #include "uvhttp_error.h"
+#include "uvhttp_logging.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
 #include "uvhttp_router.h"

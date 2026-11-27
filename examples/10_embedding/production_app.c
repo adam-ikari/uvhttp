@@ -16,8 +16,9 @@
  *
  * Build (from examples/):
  *   make -f Makefile.examples production_app
- * Run (from examples/), port is required:
- *   LD_LIBRARY_PATH=../build_static/dist/lib ./bin/production_app <port>
+ * Run (from examples/), port is required — the library is linked statically,
+ * so no LD_LIBRARY_PATH is needed:
+ *   ./bin/production_app 18080
  *   (build_static because static file serving needs that feature on)
  * Try:
  *   curl localhost:18080/

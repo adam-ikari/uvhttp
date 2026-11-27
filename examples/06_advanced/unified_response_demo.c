@@ -87,7 +87,7 @@ uvhttp_result_t home_handler(uvhttp_request_t* req, uvhttp_response_t* res) {
         "<div class='new'>"
         "<h3>🆕 统一响应处理</h3>"
         "<p>使用 <code>uvhttp_send_unified_response()</code> 简化响应发送，由使用者自行设置 Content-Type！</p>"
-        "<pre><code>// 旧方式（多个步骤）\nuvhttp_respond(res, 200, \"application/json\", json_string, strlen(json_string));\n\n// 新方式（统一处理）\nuvhttp_respond(res, 200, \"application/json\", json_string, strlen(json_string));\nuvhttp_send_unified_response(res, json_string, strlen(json_string), 200);</code></pre>"
+        "<pre><code>// 一次调用完成响应（自带 Content-Type）\nuvhttp_respond(res, 200, \"application/json\", json_string, strlen(json_string));\n\n// 或由使用者自行控制 Content-Type\nuvhttp_send_unified_response(res, json_string, strlen(json_string), 200);</code></pre>"
         "</div>"
         "</div>"
         "</body>"
@@ -204,19 +204,19 @@ uvhttp_result_t demo_convenience_handler(uvhttp_request_t* req, uvhttp_response_
     
     if (accept_header && strstr(accept_header, "application/json")) {
         // 使用 JSON 便捷函数
-        const char* json_response = "{\"message\":\"使用核心API发送的JSON响应\",\"method\":\"uvhttp_response_set_body\"}";
+        const char* json_response = "{\"message\":\"使用核心API发送的JSON响应\",\"method\":\"uvhttp_respond\"}";
         uvhttp_error_t result = uvhttp_respond(res, 200, "application/json; charset=utf-8", json_response, strlen(json_response));
         return (result == UVHTTP_OK) ? UVHTTP_OK : UVHTTP_ERROR_RESPONSE_SEND;
     }
     else if (accept_header && strstr(accept_header, "text/html")) {
         // 使用 HTML 便捷函数
-        const char* html_response = "<html><body><h1>HTML 核心API演示</h1><p>使用 uvhttp_response_set_body 发送</p></body></html>";
+        const char* html_response = "<html><body><h1>HTML 核心API演示</h1><p>使用 uvhttp_respond 发送</p></body></html>";
         uvhttp_error_t result = uvhttp_respond(res, 200, "text/html; charset=utf-8", html_response, strlen(html_response));
         return (result == UVHTTP_OK) ? UVHTTP_OK : UVHTTP_ERROR_RESPONSE_SEND;
     }
     else {
         // 使用文本便捷函数
-        const char* text_response = "使用 uvhttp_response_set_body 发送的文本响应";
+        const char* text_response = "使用 uvhttp_respond 发送的文本响应";
         uvhttp_error_t result = uvhttp_respond(res, 200, "text/plain; charset=utf-8", text_response, strlen(text_response));
         return (result == UVHTTP_OK) ? UVHTTP_OK : UVHTTP_ERROR_RESPONSE_SEND;
     }

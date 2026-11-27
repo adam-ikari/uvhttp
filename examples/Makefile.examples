@@ -1,136 +1,104 @@
 ###############################################################################
 # UVHTTP Examples Makefile
 #
-# Simplified Makefile for compiling UVHTTP examples
+# Builds every .c file under examples/ with one rule. Source files are
+# auto-discovered; the target name is the file's basename (all 52 are unique).
 #
 # Usage:
-#   make -f Makefile.examples            # Build all examples
-#   make -f Makefile.examples simple     # Build specific example
-#   make -f Makefile.examples clean      # Clean build artifacts
-#   make -f Makefile.examples production_app  # Real embedder example
+#   make -f Makefile.examples                  # build all examples
+#   make -f Makefile.examples <name>           # build one (e.g. api_demo)
+#   make -f Makefile.examples production_app   # real embedder + Web dashboard
+#   make -f Makefile.examples clean
 ###############################################################################
 
-# Configuration
-BUILD_DIR ?= ../build
+BUILD_DIR ?= ../build_static
 SRC_DIR ?= .
 INCLUDE_DIR ?= ../include
 DEPS_DIR ?= ../deps
 LIB_DIR ?= $(BUILD_DIR)/dist/lib
 BIN_DIR ?= ./bin
 
-# Compiler and flags
 CC ?= gcc
-CFLAGS = -Wall -Wextra -pthread -I$(INCLUDE_DIR) -I$(DEPS_DIR)/uthash/src \
+
+# Feature macros MUST match the library we link against. Derive them from the
+# build tree's flags.make so a stale manual list cannot drift out of sync.
+FEATURE_FLAGS = $(shell sed -n 's/^C_DEFINES = //p' $(BUILD_DIR)/CMakeFiles/uvhttp.dir/flags.make 2>/dev/null | grep -oE '\-DUVHTTP_[A-Z0-9_]+(=[^ ]+)?' | grep -E 'FEATURE|ALLOCATOR|ENABLE_TLS|ZEROCOPY|MAX_|BUFFER_SIZE')
+
+CFLAGS = -Wall -Wextra -pthread $(FEATURE_FLAGS) \
+         -I$(INCLUDE_DIR) -I$(DEPS_DIR)/uthash/src \
          -I$(DEPS_DIR)/llhttp/include -I$(DEPS_DIR)/cjson \
          -I$(DEPS_DIR)/mbedtls/include -I$(DEPS_DIR)/libuv/include \
          -std=gnu99
-# UVHTTP links against its vendored dependencies (mbedtls / llhttp / xxhash /
-# cjson / miniz) and libuv; keep the same set here so static linking succeeds.
-# miniz (a zlib drop-in) is built into $(LIB_DIR) as libminiz.a when
-# BUILD_WITH_COMPRESSION=ON (the default).
+# The lib is static; uvhttp's PUBLIC deps are linked explicitly here.
 LDFLAGS = -L$(LIB_DIR) \
           -L$(DEPS_DIR)/mbedtls/build/library -L$(DEPS_DIR)/llhttp/build \
           -L$(DEPS_DIR)/xxhash -L$(DEPS_DIR)/cjson/build \
           -luvhttp -luv -lmbedtls -lmbedx509 -lmbedcrypto \
           -lxxhash -lllhttp -lcjson -lminiz -lpthread -lm -ldl
+
 DEBUG_FLAGS = -g -O0
 RELEASE_FLAGS = -O2
-
-# Build type (default: release)
 BUILD_TYPE ?= release
 ifeq ($(BUILD_TYPE),debug)
-    CFLAGS += $(DEBUG_FLAGS)
+  CFLAGS += $(DEBUG_FLAGS)
 else
-    CFLAGS += $(RELEASE_FLAGS)
+  CFLAGS += $(RELEASE_FLAGS)
 endif
 
-# Examples (source files under examples/)
-EXAMPLES = simple_server hello_world basic_routing production_app
+# Auto-discover every example source; target = basename without .c.
+SOURCES := $(shell find $(SRC_DIR) -name '*.c' -type f)
+EXAMPLES := $(notdir $(basename $(SOURCES)))
+# Map a target name back to its source path (works because names are unique).
+src_of = $(firstword $(filter %/$(1).c,$(SOURCES)) $(filter $(1).c,$(SOURCES)))
 
-# Targets
 .PHONY: all clean help check_uvhttp $(EXAMPLES)
 
-all: $(BIN_DIR) $(EXAMPLES)
+all: $(BIN_DIR) check_uvhttp $(EXAMPLES)
 	@echo ""
-	@echo "========================================"
-	@echo "All examples built successfully!"
-	@echo "========================================"
-	@echo ""
-	@echo "To run an example:"
-	@echo "  export LD_LIBRARY_PATH=$(LIB_DIR):$$LD_LIBRARY_PATH"
-	@echo "  ./bin/<example_name>"
-	@echo ""
+	@echo "Built $$(echo $(EXAMPLES) | wc -w) examples into $(BIN_DIR)/"
 
 help:
 	@echo "UVHTTP Examples Makefile"
 	@echo ""
-	@echo "Usage:"
-	@echo "  make -f Makefile.examples [target] [options]"
+	@echo "Usage: make -f Makefile.examples [target] [options]"
 	@echo ""
 	@echo "Targets:"
-	@echo "  all              Build all examples (default)"
-	@echo "  simple_server    Build simple server example"
-	@echo "  hello_world      Build hello world example"
-	@echo "  basic_routing    Build basic routing example"
+	@echo "  all              Build all $$(echo $(EXAMPLES) | wc -w) examples (default)"
+	@echo "  <name>           Build one example by basename"
 	@echo "  clean            Remove build artifacts"
-	@echo "  help             Show this help message"
+	@echo "  help             Show this help"
 	@echo ""
 	@echo "Options:"
-	@echo "  BUILD_TYPE=debug     Build with debug symbols"
-	@echo "  BUILD_DIR=...       Specify build directory"
-	@echo "  CC=...               Specify C compiler"
+	@echo "  BUILD_TYPE=debug   Build with -g -O0"
+	@echo "  BUILD_DIR=...      Library build tree (default ../build_static)"
+	@echo "  CC=...             C compiler"
 	@echo ""
-	@echo "Examples:"
-	@echo "  make -f Makefile.examples"
-	@echo "  make -f Makefile.examples BUILD_TYPE=debug"
-	@echo "  make -f Makefile.examples simple_server"
+	@echo "Selected targets: $(EXAMPLES)"
 	@echo ""
 
-# Create bin directory
 $(BIN_DIR):
 	@mkdir -p $(BIN_DIR)
 
-# Build individual examples
-simple_server: $(BIN_DIR) check_uvhttp
-	@echo "Building simple_server..."
-	$(CC) $(CFLAGS) $(SRC_DIR)/simple_server.c -o $(BIN_DIR)/simple_server $(LDFLAGS)
-	@echo "  ✓ simple_server built"
+# One pattern-like rule per example via a generated explicit rule.
+define make_example
+$(1): $(BIN_DIR) check_uvhttp
+	@echo "Building $(1) from $(call src_of,$(1))..."
+	$$(CC) $$(CFLAGS) $$(call src_of,$(1)) -o $$(BIN_DIR)/$(1) $$(LDFLAGS)
+	@echo "  ✓ $(1)"
+endef
+$(foreach e,$(EXAMPLES),$(eval $(call make_example,$(e))))
 
-hello_world: $(BIN_DIR) check_uvhttp
-	@echo "Building hello_world..."
-	$(CC) $(CFLAGS) $(SRC_DIR)/01_basics/01_hello_world.c -o $(BIN_DIR)/hello_world $(LDFLAGS)
-	@echo "  ✓ hello_world built"
-
-basic_routing: $(BIN_DIR) check_uvhttp
-	@echo "Building basic_routing..."
-	$(CC) $(CFLAGS) $(SRC_DIR)/02_routing/01_simple_routing.c -o $(BIN_DIR)/basic_routing $(LDFLAGS)
-	@echo "  ✓ basic_routing built"
-
-# Real embedder example: exercises config, filter, observer, stats, draining,
-# atomic responses, static files and the declared logging interface.
-# Static file serving requires the STATIC_FILES=ON build.
-production_app: BUILD_DIR = ../build_static
-production_app: $(BIN_DIR) check_uvhttp
-	@echo "Building production_app..."
-	$(CC) $(CFLAGS) $(SRC_DIR)/10_embedding/production_app.c -o $(BIN_DIR)/production_app $(LDFLAGS)
-	@echo "  ✓ production_app built"
-
-# Clean build artifacts
 clean:
-	@echo "Cleaning build artifacts..."
 	@rm -rf $(BIN_DIR)
 	@echo "  ✓ Clean completed"
 
-# Check if UVHTTP is built
 check_uvhttp:
 	@if [ ! -f $(LIB_DIR)/libuvhttp.a ]; then \
 		echo ""; \
-		echo "Error: UVHTTP library not found!"; \
-		echo ""; \
-		echo "Please build UVHTTP first:"; \
-		echo "  mkdir $(BUILD_DIR) && cd $(BUILD_DIR)"; \
-		echo "  cmake .."; \
-		echo "  make -j$$(nproc)"; \
+		echo "Error: UVHTTP library not found at $(LIB_DIR)/libuvhttp.a"; \
+		echo "Build a feature-complete tree first:"; \
+		echo "  cmake -S .. -B $(BUILD_DIR) -DBUILD_WITH_STATIC_FILES=ON"; \
+		echo "  cmake --build $(BUILD_DIR) -j$$(nproc)"; \
 		echo ""; \
 		exit 1; \
 	fi

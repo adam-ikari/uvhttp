@@ -62,6 +62,8 @@ CTestTestfile.cmake
 examples/*/Makefile
 examples/Makefile
 examples/CMakeFiles/
+# Makefile.examples output (52 auto-discovered example binaries)
+examples/bin/
 
 # Python cache and bytecode
 __pycache__/
