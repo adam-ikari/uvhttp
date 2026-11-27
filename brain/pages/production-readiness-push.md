@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [production, roadmap, audit, api, ops]
 created: "2026-11-24T14:05:24"
-updated: "2026-11-27T13:16:44"
+updated: "2026-11-27T13:57:21"
 ---
 
 <!-- compiled_truth -->
@@ -236,4 +236,10 @@ updated: "2026-11-27T13:16:44"
   kind: decision
   summary: "用户授权仅本地提交+本地tag：commit b0424ea（217文件，Conventional Commits refactor(api)!），annotated tag v3.1.1 已创建，未 push。本地领先 origin/main 2 提交（含会话前已有的 a18b76e）"
   source: git commit / git tag / git status
+  affects: [production-readiness-push]
+
+- time: 2026-11-27T13:57:21
+  kind: evidence
+  summary: "用户授权 push 完成：分支 fix/nightly-lcov-unused 推到 6b1637d，tag v3.1.1 推到远端指向 b0424ea；ls-remote 验证两端一致，工作区干净"
+  source: "git push + git ls-remote 验证"
   affects: [production-readiness-push]
