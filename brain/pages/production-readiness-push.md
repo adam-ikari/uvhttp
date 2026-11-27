@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [production, roadmap, audit, api, ops]
 created: "2026-11-24T14:05:24"
-updated: "2026-11-27T10:33:46"
+updated: "2026-11-27T13:16:44"
 ---
 
 <!-- compiled_truth -->
@@ -230,4 +230,10 @@ updated: "2026-11-27T10:33:46"
   kind: decision
   summary: "用户授权决定：把响应体长度扫描固化为 CI 门禁（scripts/ci/check_response_lengths.py），接入 PR 与 pre-release 双 job；变异验证「15→5」确认 exit 1；CONTRIBUTING 写入字节数判据"
   source: "check_response_lengths.py + ci-pr.yml + ci-release-gate.yml + CONTRIBUTING.md"
+  affects: [production-readiness-push]
+
+- time: 2026-11-27T13:16:44
+  kind: decision
+  summary: "用户授权仅本地提交+本地tag：commit b0424ea（217文件，Conventional Commits refactor(api)!），annotated tag v3.1.1 已创建，未 push。本地领先 origin/main 2 提交（含会话前已有的 a18b76e）"
+  source: git commit / git tag / git status
   affects: [production-readiness-push]
