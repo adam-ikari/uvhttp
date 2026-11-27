@@ -5,7 +5,7 @@ category: decision
 status: active
 tags: [production, roadmap, audit, api, ops]
 created: "2026-11-24T14:05:24"
-updated: "2026-11-27T13:57:21"
+updated: "2026-11-27T16:40:23"
 ---
 
 <!-- compiled_truth -->
@@ -242,4 +242,10 @@ updated: "2026-11-27T13:57:21"
   kind: evidence
   summary: "用户授权 push 完成：分支 fix/nightly-lcov-unused 推到 6b1637d，tag v3.1.1 推到远端指向 b0424ea；ls-remote 验证两端一致，工作区干净"
   source: "git push + git ls-remote 验证"
+  affects: [production-readiness-push]
+
+- time: 2026-11-27T16:40:23
+  kind: decision
+  summary: "用户授权发布 3.1.2：版本 bump（VERSION/CHANGELOG EN+ZH 38 h2 对齐/README+CN/VitePress 元数据）提交 ce81937；tag v3.1.2 已 push；经 question 确认后 gh release create --prerelease 成功，触发 ci-release-gate(45967170068) 与 ci-benchmark(45967170039)。本地全门禁绿：52/52 示例、doc-sync 31 对、check-docs、长度门禁、test-validity、VitePress build、四配置 ctest 135/136/135/135"
+  source: "VERSION + CHANGELOG + README + VitePress config + gh release create + gh run list"
   affects: [production-readiness-push]
