@@ -65,7 +65,7 @@ void FillPattern(char* buf, size_t n, unsigned seed) {
 }
 
 std::string TempDir() {
-    char tmpl[] = "/tmp/opencode/uvhttp-sf-ka-XXXXXX";
+    char tmpl[] = "/tmp/uvhttp_sf_ka_XXXXXX";
     char* dir = mkdtemp(tmpl);
     return dir ? std::string(dir) : std::string();
 }

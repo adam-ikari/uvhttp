@@ -11,6 +11,7 @@
 #include <gtest/gtest.h>
 
 #include "uvhttp_allocator.h"
+#include "uvhttp_connection.h"
 #include "uvhttp_context.h"
 #include "uvhttp_error.h"
 #include "uvhttp_features.h"

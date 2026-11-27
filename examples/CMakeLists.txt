@@ -8,6 +8,15 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/dist/lib)
 
 set(CMAKE_C_STANDARD 11)
 
+# Dependency targets are declared by cmake/Dependencies.cmake only when HTTPS
+# or WebSocket is enabled. Example targets reference `mbedtls` unconditionally
+# (it is a transitive link dependency of the library), so provide an empty
+# interface target in the fully stripped-down configuration to keep `-lmbedtls`
+# from being emitted when no mbedTLS library was built.
+if(NOT BUILD_WITH_HTTPS AND NOT BUILD_WITH_WEBSOCKET)
+    add_library(mbedtls INTERFACE)
+endif()
+
 # 查找 UVHTTP
 find_path(UVHTTP_INCLUDE_DIR uvhttp.h PATHS ../include NO_DEFAULT_PATH)
 

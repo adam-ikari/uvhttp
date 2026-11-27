@@ -7,6 +7,7 @@
 
 #include "../include/uvhttp.h"
 #include "../include/uvhttp_config.h"
+#include "../include/uvhttp_connection.h"
 #include "../include/uvhttp_context.h"
 #include <stdio.h>
 #include <stdlib.h>

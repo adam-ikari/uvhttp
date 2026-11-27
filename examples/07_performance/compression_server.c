@@ -104,14 +104,12 @@ static int handle_large_text(uvhttp_request_t* req, uvhttp_response_t* res) {
         fprintf(stderr, "Failed to enable compression: %d\n", result);
     }
     
-    // Set response
-    
-    
-    
-    
+    // uvhttp_respond copies the body into the response, so the generated
+    // buffer can be released only after the call returns.
+    uvhttp_error_t respond_result =
+        uvhttp_respond(res, 200, "text/plain", text, strlen(text));
     uvhttp_free((void*)text);
-    
-    return uvhttp_respond(res, 200, "text/plain", text, strlen(text));
+    return respond_result;
 }
 
 // Handler for large JSON response (with compression)
@@ -132,14 +130,12 @@ static int handle_large_json(uvhttp_request_t* req, uvhttp_response_t* res) {
     
     uvhttp_response_set_compress_threshold(res, 512);  // Lower threshold
     
-    // Set response
-    
-    
-    
-    
+    // uvhttp_respond copies the body into the response, so the generated
+    // buffer can be released only after the call returns.
+    uvhttp_error_t respond_result =
+        uvhttp_respond(res, 200, "application/json", json, strlen(json));
     uvhttp_free((void*)json);
-    
-    return uvhttp_respond(res, 200, "application/json", json, strlen(json));
+    return respond_result;
 }
 
 // Handler for small response (no compression)

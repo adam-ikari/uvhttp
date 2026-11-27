@@ -11,6 +11,7 @@
 #include "uvhttp_logging.h"
 #include "uvhttp_request.h"
 #include "uvhttp_response.h"
+#include "uvhttp_connection.h"
 #include "uvhttp_router.h"
 #include "uvhttp_server.h"
 #include "uvhttp_utils.h"
